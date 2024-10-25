@@ -229,4 +229,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "breezesr",
 		authorDiscordId: "342369454719631361",
 	},
+	{
+		displayName: "THE GLAZE GAUNTLET",
+		fileName: "glaze",
+		authorDiscordId: "528851510222782474",
+	},
 ];
