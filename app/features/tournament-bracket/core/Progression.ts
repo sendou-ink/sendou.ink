@@ -181,3 +181,42 @@ export function isBrackets(
 ): input is ValidatedBracket[] {
 	return Array.isArray(input);
 }
+
+/** Given bracketIdx and bracketProgression will resolve if this the "final stage" of the tournament that decides the final standings  */
+export function isFinals(idx: number, brackets: ValidatedBracket[]) {
+	invariant(idx < brackets.length, "Bracket index out of bounds");
+
+	return resolveMainBracketProgression(brackets).at(-1) === idx;
+}
+
+/** Given bracketIdx and bracketProgression will resolve if this an "underground bracket".
+ * Underground bracket is defined as a bracket that is not part of the main tournament progression e.g. optional bracket for early losers
+ */
+export function isUnderground(idx: number, brackets: ValidatedBracket[]) {
+	invariant(idx < brackets.length, "Bracket index out of bounds");
+
+	return !resolveMainBracketProgression(brackets).includes(idx);
+}
+
+function resolveMainBracketProgression(brackets: ValidatedBracket[]) {
+	if (brackets.length === 1) return [0];
+
+	let bracketIdxToFind = 0;
+	const result = [0];
+	while (true) {
+		const bracket = brackets.findIndex((bracket) =>
+			bracket.sources?.some(
+				(source) =>
+					source.placements.includes(1) &&
+					source.bracketIdx === bracketIdxToFind,
+			),
+		);
+
+		if (bracket === -1) break;
+
+		bracketIdxToFind = bracket;
+		result.push(bracketIdxToFind);
+	}
+
+	return result;
+}

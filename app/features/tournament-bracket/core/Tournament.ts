@@ -107,6 +107,7 @@ export class Tournament {
 				this.brackets.push(
 					Bracket.create({
 						id: inProgressStage.id,
+						idx: bracketIdx,
 						tournament: this,
 						preview: false,
 						name,
@@ -148,6 +149,7 @@ export class Tournament {
 				this.brackets.push(
 					Bracket.create({
 						id: -1 * bracketIdx,
+						idx: bracketIdx,
 						tournament: this,
 						seeding: checkedInTeams,
 						preview: true,
@@ -202,6 +204,7 @@ export class Tournament {
 				this.brackets.push(
 					Bracket.create({
 						id: -1 * bracketIdx,
+						idx: bracketIdx,
 						tournament: this,
 						seeding: checkedInTeamsWithReplaysAvoided,
 						preview: true,

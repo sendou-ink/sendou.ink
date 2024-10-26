@@ -12,6 +12,7 @@
 
 import { describe, expect, it } from "vitest";
 import * as Progression from "./Progression";
+import { progressions } from "./tests/test-utils";
 
 // approximate number of teams
 
@@ -157,7 +158,86 @@ describe("validatedSources - other rules", () => {
 
 		expect(error.type).toBe("NOT_RESOLVING_WINNER");
 	});
+
+	// xxx: test first sources = null
 });
 
-// separate tests for known valid rules
-// - swiss, 1 group
+describe("isFinals", () => {
+	it("handles SE", () => {
+		expect(Progression.isFinals(0, progressions.singleElimination)).toBe(true);
+	});
+
+	it("handles RR->SE", () => {
+		expect(
+			Progression.isFinals(0, progressions.roundRobinToSingleElimination),
+		).toBe(false);
+		expect(
+			Progression.isFinals(1, progressions.roundRobinToSingleElimination),
+		).toBe(true);
+	});
+
+	it("handles low ink", () => {
+		expect(Progression.isFinals(0, progressions.lowInk)).toBe(false);
+		expect(Progression.isFinals(1, progressions.lowInk)).toBe(false);
+		expect(Progression.isFinals(2, progressions.lowInk)).toBe(false);
+		expect(Progression.isFinals(3, progressions.lowInk)).toBe(true);
+	});
+
+	it("many starter brackets", () => {
+		expect(Progression.isFinals(0, progressions.manyStartBrackets)).toBe(false);
+		expect(Progression.isFinals(1, progressions.manyStartBrackets)).toBe(false);
+		expect(Progression.isFinals(2, progressions.manyStartBrackets)).toBe(true);
+		expect(Progression.isFinals(3, progressions.manyStartBrackets)).toBe(false);
+	});
+
+	it("throws if given idx is out of bounds", () => {
+		expect(() =>
+			Progression.isFinals(1, progressions.singleElimination),
+		).toThrow();
+	});
+});
+
+describe("isUnderground", () => {
+	it("handles SE", () => {
+		expect(Progression.isUnderground(0, progressions.singleElimination)).toBe(
+			false,
+		);
+	});
+
+	it("handles RR->SE", () => {
+		expect(
+			Progression.isUnderground(0, progressions.roundRobinToSingleElimination),
+		).toBe(false);
+		expect(
+			Progression.isUnderground(1, progressions.roundRobinToSingleElimination),
+		).toBe(false);
+	});
+
+	it("handles low ink", () => {
+		expect(Progression.isUnderground(0, progressions.lowInk)).toBe(false);
+		expect(Progression.isUnderground(1, progressions.lowInk)).toBe(true);
+		expect(Progression.isUnderground(2, progressions.lowInk)).toBe(false);
+		expect(Progression.isUnderground(3, progressions.lowInk)).toBe(false);
+	});
+
+	it("many starter brackets", () => {
+		expect(Progression.isUnderground(0, progressions.manyStartBrackets)).toBe(
+			false,
+		);
+		expect(Progression.isUnderground(1, progressions.manyStartBrackets)).toBe(
+			true,
+		);
+		expect(Progression.isUnderground(2, progressions.manyStartBrackets)).toBe(
+			false,
+		);
+		expect(Progression.isUnderground(3, progressions.manyStartBrackets)).toBe(
+			true,
+		);
+	});
+
+	it("throws if given idx is out of bounds", () => {
+		expect(() =>
+			Progression.isUnderground(1, progressions.singleElimination),
+		).toThrow();
+	});
+});

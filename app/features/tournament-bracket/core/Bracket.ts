@@ -11,9 +11,12 @@ import type { OptionalIdObject, Tournament } from "./Tournament";
 import type { TournamentDataTeam } from "./Tournament.server";
 import { getTournamentManager } from "./brackets-manager";
 import type { BracketMapCounts } from "./toMapList";
+import * as Progression from "./Progression";
 
 interface CreateBracketArgs {
 	id: number;
+	/** Index of the bracket in the bracket progression */
+	idx: number;
 	preview: boolean;
 	data?: TournamentManagerDataSet;
 	type: Tables["TournamentStage"]["type"];
@@ -50,6 +53,7 @@ export interface Standing {
 
 export abstract class Bracket {
 	id;
+	idx;
 	preview;
 	data;
 	simulatedData: TournamentManagerDataSet | undefined;
@@ -66,6 +70,7 @@ export abstract class Bracket {
 
 	constructor({
 		id,
+		idx,
 		preview,
 		data,
 		canBeStarted,
@@ -84,6 +89,7 @@ export abstract class Bracket {
 		}
 
 		this.id = id;
+		this.idx = idx;
 		this.preview = preview;
 		this.seeding = seeding;
 		this.tournament = tournament;
@@ -297,16 +303,18 @@ export abstract class Bracket {
 		return manager.get.tournamentData(virtualTournamentId);
 	}
 
-	// xxx: fix
 	get isUnderground() {
-		return Boolean(
-			this.sources?.flatMap((s) => s.placements).every((p) => p !== 1),
+		return Progression.isUnderground(
+			this.idx,
+			this.tournament.ctx.settings.bracketProgression,
 		);
 	}
 
-	// xxx: fix
 	get isFinals() {
-		return Boolean(this.sources?.some((s) => s.placements.includes(1)));
+		return Progression.isFinals(
+			this.idx,
+			this.tournament.ctx.settings.bracketProgression,
+		);
 	}
 
 	get everyMatchOver() {

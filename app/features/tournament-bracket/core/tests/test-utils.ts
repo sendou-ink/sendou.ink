@@ -2,6 +2,7 @@ import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types"
 import { removeDuplicates } from "~/utils/arrays";
 import { Tournament } from "../Tournament";
 import type { TournamentData } from "../Tournament.server";
+import type * as Progression from "../Progression";
 
 const tournamentCtxTeam = (
 	teamId: number,
@@ -147,3 +148,109 @@ export const adjustResults = (
 		}),
 	};
 };
+
+const DEFAULT_PROGRESSION_ARGS = {
+	requiresCheckIn: false,
+	settings: {},
+	name: "Main Bracket",
+};
+
+export const progressions = {
+	singleElimination: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+		},
+	],
+	roundRobinToSingleElimination: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "round_robin",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [1, 2],
+				},
+			],
+		},
+	],
+	lowInk: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "swiss",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "double_elimination",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [3, 4],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "round_robin",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [1, 2],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "double_elimination",
+			sources: [
+				{
+					bracketIdx: 2,
+					placements: [1, 2],
+				},
+			],
+		},
+	],
+	manyStartBrackets: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "round_robin",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "round_robin",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [1, 2],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			sources: [
+				{
+					bracketIdx: 1,
+					placements: [1, 2],
+				},
+			],
+		},
+	],
+	swissOneGroup: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "swiss",
+			settings: {
+				groupCount: 1,
+			},
+		},
+	],
+} satisfies Record<string, Progression.ValidatedBracket[]>;
