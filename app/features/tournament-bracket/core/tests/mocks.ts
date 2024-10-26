@@ -2166,10 +2166,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709744421,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -2290,10 +2292,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709745740,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -2401,10 +2405,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709745184,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -2512,10 +2518,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709744449,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -2636,10 +2644,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709745518,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -2760,10 +2770,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709744823,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -2884,10 +2896,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709745022,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -2995,10 +3009,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709745881,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -3132,10 +3148,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709747762,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -3256,10 +3274,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709745432,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -3380,10 +3400,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709747270,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -3514,10 +3536,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709745210,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -3638,10 +3662,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709744780,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -3775,10 +3801,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709745686,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -3886,14 +3914,17 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709744515,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 						{
 							bracketIdx: 2,
+							isCheckOut: 0,
 							checkedInAt: 1709752224,
 						},
 					],
@@ -4001,14 +4032,17 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709746734,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 						{
 							bracketIdx: 2,
+							isCheckOut: 0,
 							checkedInAt: 1709752183,
 						},
 					],
@@ -4129,10 +4163,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709746000,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -4250,10 +4286,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709747494,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -4361,14 +4399,17 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709746233,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 						{
 							bracketIdx: 2,
+							isCheckOut: 0,
 							checkedInAt: 1709752048,
 						},
 					],
@@ -4473,10 +4514,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709745168,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -4584,10 +4627,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709745819,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -4695,10 +4740,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709744651,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -4806,14 +4853,17 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709744419,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 						{
 							bracketIdx: 2,
+							isCheckOut: 0,
 							checkedInAt: 1709752471,
 						},
 					],
@@ -4934,14 +4984,17 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709745527,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 						{
 							bracketIdx: 2,
+							isCheckOut: 0,
 							checkedInAt: 1709752537,
 						},
 					],
@@ -5046,14 +5099,17 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709744409,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 						{
 							bracketIdx: 2,
+							isCheckOut: 0,
 							checkedInAt: 1709752696,
 						},
 					],
@@ -5174,14 +5230,17 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709744680,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 						{
 							bracketIdx: 2,
+							isCheckOut: 0,
 							checkedInAt: 1709751465,
 						},
 					],
@@ -5302,10 +5361,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709745222,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -5413,10 +5474,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709746416,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -5550,10 +5613,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709746997,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -5658,14 +5723,17 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709744925,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 						{
 							bracketIdx: 2,
+							isCheckOut: 0,
 							checkedInAt: 1709752730,
 						},
 					],
@@ -5773,10 +5841,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709744524,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -5884,14 +5954,17 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709745142,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 						{
 							bracketIdx: 2,
+							isCheckOut: 0,
 							checkedInAt: 1709752271,
 						},
 					],
@@ -6012,14 +6085,17 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709747473,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 						{
 							bracketIdx: 2,
+							isCheckOut: 0,
 							checkedInAt: 1709752784,
 						},
 					],
@@ -6127,10 +6203,12 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709744935,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 					],
@@ -6251,14 +6329,17 @@ export const PADDLING_POOL_257 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1709744853,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1709748010,
 						},
 						{
 							bracketIdx: 2,
+							isCheckOut: 0,
 							checkedInAt: 1709751622,
 						},
 					],
@@ -8071,10 +8152,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708535630,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -8182,10 +8265,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708537098,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -8306,10 +8391,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708535249,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -8427,10 +8514,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708538200,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -8538,10 +8627,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708537583,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -8662,10 +8753,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708535572,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -8773,10 +8866,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708536552,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -8881,10 +8976,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708535748,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -9018,10 +9115,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708535511,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -9129,10 +9228,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708537695,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -9250,10 +9351,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708535009,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -9374,10 +9477,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708535098,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -9508,10 +9613,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708535993,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -9619,10 +9726,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708535078,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -9743,10 +9852,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708537172,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -9854,10 +9965,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708536622,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -9965,10 +10078,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708534892,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -10086,10 +10201,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708537506,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -10210,10 +10327,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708535420,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -10321,14 +10440,17 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708534935,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 						{
 							bracketIdx: 2,
+							isCheckOut: 0,
 							checkedInAt: 1708543301,
 						},
 					],
@@ -10449,14 +10571,17 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708538374,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 						{
 							bracketIdx: 2,
+							isCheckOut: 0,
 							checkedInAt: 1708543244,
 						},
 					],
@@ -10577,14 +10702,17 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708536800,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 						{
 							bracketIdx: 2,
+							isCheckOut: 0,
 							checkedInAt: 1708542803,
 						},
 					],
@@ -10702,10 +10830,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708537322,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -10813,10 +10943,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708536634,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -10937,10 +11069,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708536541,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -11061,10 +11195,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708536812,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -11172,10 +11308,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708537379,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -11309,14 +11447,17 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708538059,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 						{
 							bracketIdx: 2,
+							isCheckOut: 0,
 							checkedInAt: 1708543321,
 						},
 					],
@@ -11437,10 +11578,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708534835,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -11561,14 +11704,17 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708534936,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 						{
 							bracketIdx: 2,
+							isCheckOut: 0,
 							checkedInAt: 1708543391,
 						},
 					],
@@ -11689,14 +11835,17 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708537625,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 						{
 							bracketIdx: 2,
+							isCheckOut: 0,
 							checkedInAt: 1708543318,
 						},
 					],
@@ -11801,10 +11950,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708536740,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -11912,14 +12063,17 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708537655,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 						{
 							bracketIdx: 2,
+							isCheckOut: 0,
 							checkedInAt: 1708542789,
 						},
 					],
@@ -12066,14 +12220,17 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708536232,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 						{
 							bracketIdx: 2,
+							isCheckOut: 0,
 							checkedInAt: 1708543311,
 						},
 					],
@@ -12207,10 +12364,12 @@ export const PADDLING_POOL_255 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1708536479,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1708538411,
 						},
 					],
@@ -12754,7 +12913,10 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 	},
 ];
 
-export const IN_THE_ZONE_32 = () =>
+export const IN_THE_ZONE_32 = ({
+	undergroundRequiresCheckIn = true,
+	hasCheckedOutTeam = false,
+}) =>
 	({
 		data: {
 			stage: [
@@ -14159,7 +14321,7 @@ export const IN_THE_ZONE_32 = () =>
 					{
 						name: "Underground bracket",
 						type: "single_elimination",
-						requiresCheckIn: false,
+						requiresCheckIn: undergroundRequiresCheckIn,
 						settings: {},
 						sources: [
 							{
@@ -14289,6 +14451,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707585473,
 						},
 					],
@@ -14388,6 +14551,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707584712,
 						},
 					],
@@ -14487,6 +14651,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707584440,
 						},
 					],
@@ -14612,6 +14777,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707585966,
 						},
 					],
@@ -14724,6 +14890,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707584938,
 						},
 					],
@@ -14836,6 +15003,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707585077,
 						},
 					],
@@ -14961,6 +15129,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707585480,
 						},
 					],
@@ -15086,6 +15255,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707585114,
 						},
 					],
@@ -15185,6 +15355,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707585711,
 						},
 					],
@@ -15284,6 +15455,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707585627,
 						},
 					],
@@ -15383,6 +15555,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707584566,
 						},
 					],
@@ -15482,6 +15655,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707584879,
 						},
 					],
@@ -15594,6 +15768,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707586430,
 						},
 					],
@@ -15693,6 +15868,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707584839,
 						},
 					],
@@ -15792,6 +15968,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707584487,
 						},
 					],
@@ -15904,6 +16081,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707584774,
 						},
 					],
@@ -16016,10 +16194,12 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707584763,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1707593849,
 						},
 					],
@@ -16132,6 +16312,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707587552,
 						},
 					],
@@ -16257,6 +16438,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707587686,
 						},
 					],
@@ -16356,6 +16538,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707584597,
 						},
 					],
@@ -16481,10 +16664,12 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707584623,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1707593753,
 						},
 					],
@@ -16691,6 +16876,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707587652,
 						},
 					],
@@ -16790,6 +16976,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707587079,
 						},
 					],
@@ -16915,6 +17102,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707586610,
 						},
 					],
@@ -17027,6 +17215,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707586360,
 						},
 					],
@@ -17139,10 +17328,12 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707587551,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1707592696,
 						},
 					],
@@ -17255,6 +17446,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707584843,
 						},
 					],
@@ -17367,6 +17559,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707587553,
 						},
 					],
@@ -17489,6 +17682,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707584415,
 						},
 					],
@@ -17601,10 +17795,12 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707584649,
 						},
 						{
 							bracketIdx: 1,
+							isCheckOut: 0,
 							checkedInAt: 1707593906,
 						},
 					],
@@ -17701,6 +17897,7 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707587518,
 						},
 					],
@@ -17813,9 +18010,17 @@ export const IN_THE_ZONE_32 = () =>
 					checkIns: [
 						{
 							bracketIdx: null,
+							isCheckOut: 0,
 							checkedInAt: 1707585754,
 						},
-					],
+						hasCheckedOutTeam
+							? {
+									bracketIdx: 1,
+									isCheckOut: 1,
+									checkedInAt: 1707585754,
+								}
+							: null,
+					].filter((c) => c !== null),
 					mapPool: [
 						{
 							stageId: 6,

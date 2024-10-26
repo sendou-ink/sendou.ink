@@ -11,7 +11,16 @@ import {
 describe("Follow-up bracket progression", () => {
 	const tournamentPP257 = new Tournament(PADDLING_POOL_257());
 	const tournamentPP255 = new Tournament(PADDLING_POOL_255());
-	const tournamentITZ32 = new Tournament(IN_THE_ZONE_32());
+	const tournamentITZ32 = new Tournament(IN_THE_ZONE_32({}));
+	const tournamentITZ32UndergroundWithoutCheckIn = new Tournament(
+		IN_THE_ZONE_32({ undergroundRequiresCheckIn: false }),
+	);
+	const tournamentITZ32UndergroundWithoutCheckInWithCheckedOut = new Tournament(
+		IN_THE_ZONE_32({
+			undergroundRequiresCheckIn: false,
+			hasCheckedOutTeam: true,
+		}),
+	);
 
 	test("correct amount of teams in the top cut", () => {
 		expect(tournamentPP257.brackets[1].seeding?.length).toBe(18);
@@ -41,6 +50,19 @@ describe("Follow-up bracket progression", () => {
 
 	test("underground bracket includes checked in teams (DE->SE)", () => {
 		expect(tournamentITZ32.brackets[1].seeding?.length).toBe(4);
+	});
+
+	test("underground bracket includes all teams if does not require check in (DE->SE)", () => {
+		expect(
+			tournamentITZ32UndergroundWithoutCheckIn.brackets[1].seeding?.length,
+		).toBe(16);
+	});
+
+	test("underground bracket excludes checked out teams", () => {
+		expect(
+			tournamentITZ32UndergroundWithoutCheckInWithCheckedOut.brackets[1].seeding
+				?.length,
+		).toBe(15);
 	});
 
 	const AMOUNT_OF_WORSE_VS_BEST = 5;

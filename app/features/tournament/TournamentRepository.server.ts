@@ -177,6 +177,7 @@ export async function findById(id: number) {
 								.select([
 									"TournamentTeamCheckIn.bracketIdx",
 									"TournamentTeamCheckIn.checkedInAt",
+									"TournamentTeamCheckIn.isCheckOut",
 								])
 								.whereRef(
 									"TournamentTeamCheckIn.tournamentTeamId",
@@ -541,14 +542,27 @@ export function checkIn({
 	tournamentTeamId: number;
 	bracketIdx: number | null;
 }) {
-	return db
-		.insertInto("TournamentTeamCheckIn")
-		.values({
-			checkedInAt: dateToDatabaseTimestamp(new Date()),
-			tournamentTeamId,
-			bracketIdx,
-		})
-		.execute();
+	return db.transaction().execute(async (trx) => {
+		let query = trx
+			.deleteFrom("TournamentTeamCheckIn")
+			.where("TournamentTeamCheckIn.tournamentTeamId", "=", tournamentTeamId)
+			.where("TournamentTeamCheckIn.isCheckOut", "=", 1);
+
+		if (typeof bracketIdx === "number") {
+			query = query.where("TournamentTeamCheckIn.bracketIdx", "=", bracketIdx);
+		}
+
+		await query.execute();
+
+		await trx
+			.insertInto("TournamentTeamCheckIn")
+			.values({
+				checkedInAt: dateToDatabaseTimestamp(new Date()),
+				tournamentTeamId,
+				bracketIdx,
+			})
+			.execute();
+	});
 }
 
 export function checkOut({
@@ -558,15 +572,29 @@ export function checkOut({
 	tournamentTeamId: number;
 	bracketIdx: number | null;
 }) {
-	let query = db
-		.deleteFrom("TournamentTeamCheckIn")
-		.where("TournamentTeamCheckIn.tournamentTeamId", "=", tournamentTeamId);
+	return db.transaction().execute(async (trx) => {
+		let query = trx
+			.deleteFrom("TournamentTeamCheckIn")
+			.where("TournamentTeamCheckIn.tournamentTeamId", "=", tournamentTeamId);
 
-	if (typeof bracketIdx === "number") {
-		query = query.where("TournamentTeamCheckIn.bracketIdx", "=", bracketIdx);
-	}
+		if (typeof bracketIdx === "number") {
+			query = query.where("TournamentTeamCheckIn.bracketIdx", "=", bracketIdx);
+		}
 
-	return query.execute();
+		await query.execute();
+
+		if (typeof bracketIdx === "number") {
+			await trx
+				.insertInto("TournamentTeamCheckIn")
+				.values({
+					checkedInAt: dateToDatabaseTimestamp(new Date()),
+					tournamentTeamId,
+					bracketIdx,
+					isCheckOut: 1,
+				})
+				.execute();
+		}
+	});
 }
 
 export function updateTeamName({

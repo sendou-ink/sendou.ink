@@ -405,7 +405,6 @@ export interface TournamentSettings {
 	/** @deprecated use bracketProgression instead */
 	thirdPlaceMatch?: boolean;
 	isRanked?: boolean;
-	autoCheckInAll?: boolean;
 	enableNoScreenToggle?: boolean;
 	deadlines?: "STRICT" | "DEFAULT";
 	requireInGameNames?: boolean;
@@ -582,15 +581,6 @@ export interface TournamentStage {
 	type: (typeof TOURNAMENT_STAGE_TYPES)[number];
 	// not Generated<> because SQLite doesn't allow altering tables to add columns with default values :(
 	createdAt: number | null;
-	/** If omitted, stage starts right after the stages leading up to it have been resolved */
-	startTime: number | null;
-	requiresCheckIn: Generated<number>;
-	// xxx: name?
-	newSettings: ColumnType<
-		TournamentStageSettings | null,
-		string | null,
-		string | null
-	>;
 }
 
 export interface TournamentSub {
@@ -635,6 +625,8 @@ export interface TournamentTeamCheckIn {
 	/** Which bracket checked in for. If missing is check in for the whole event. */
 	bracketIdx: number | null;
 	tournamentTeamId: number;
+	/** Indicates that this bracket defaults to checked in and this team has been explicitly checked out from it */
+	isCheckOut: Generated<number>;
 }
 
 export interface TournamentTeamMember {

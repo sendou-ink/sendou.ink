@@ -9,7 +9,7 @@ const tournamentCtxTeam = (
 	partial?: Partial<TournamentData["ctx"]["teams"][0]>,
 ): TournamentData["ctx"]["teams"][0] => {
 	return {
-		checkIns: [{ checkedInAt: 1705858841, bracketIdx: null }],
+		checkIns: [{ checkedInAt: 1705858841, bracketIdx: null, isCheckOut: 0 }],
 		createdAt: 0,
 		id: teamId,
 		inviteCode: null,

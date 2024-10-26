@@ -95,7 +95,14 @@ export class Tournament {
 	private initBrackets(data: TournamentManagerDataSet) {
 		for (const [
 			bracketIdx,
-			{ type, name, sources, requiresCheckIn, startTime, settings },
+			{
+				type,
+				name,
+				sources,
+				requiresCheckIn = false,
+				startTime = null,
+				settings,
+			},
 		] of this.ctx.settings.bracketProgression.entries()) {
 			const inProgressStage = data.stage.find((stage) => stage.name === name);
 
@@ -144,6 +151,8 @@ export class Tournament {
 					this.divideTeamsToCheckedInAndNotCheckedIn({
 						teams,
 						bracketIdx,
+						usesRegularCheckIn: !sources,
+						requiresCheckIn,
 					});
 
 				this.brackets.push(
@@ -189,6 +198,8 @@ export class Tournament {
 					this.divideTeamsToCheckedInAndNotCheckedIn({
 						teams,
 						bracketIdx,
+						usesRegularCheckIn: !sources,
+						requiresCheckIn,
 					});
 
 				const checkedInTeamsWithReplaysAvoided =
@@ -396,29 +407,46 @@ export class Tournament {
 	private divideTeamsToCheckedInAndNotCheckedIn({
 		teams,
 		bracketIdx,
+		usesRegularCheckIn,
+		requiresCheckIn,
 	}: {
 		teams: number[];
 		bracketIdx: number;
+		usesRegularCheckIn: boolean;
+		requiresCheckIn: boolean;
 	}) {
 		return teams.reduce(
 			(acc, cur) => {
 				const team = this.teamById(cur);
 				invariant(team, "Team not found");
 
-				const usesRegularCheckIn = bracketIdx === 0;
 				if (usesRegularCheckIn) {
 					if (team.checkIns.length > 0 || !this.regularCheckInStartInThePast) {
 						acc.checkedInTeams.push(cur);
 					} else {
 						acc.notCheckedInTeams.push(cur);
 					}
-				} else {
-					if (
-						team.checkIns.some((checkIn) => checkIn.bracketIdx === bracketIdx)
-					) {
+				} else if (requiresCheckIn) {
+					const isCheckedIn = team.checkIns.some(
+						(checkIn) =>
+							checkIn.bracketIdx === bracketIdx && !checkIn.isCheckOut,
+					);
+
+					if (isCheckedIn) {
 						acc.checkedInTeams.push(cur);
 					} else {
 						acc.notCheckedInTeams.push(cur);
+					}
+				} else {
+					const isCheckedOut = team.checkIns.some(
+						(checkIn) =>
+							checkIn.bracketIdx === bracketIdx && checkIn.isCheckOut,
+					);
+
+					if (isCheckedOut) {
+						acc.notCheckedInTeams.push(cur);
+					} else {
+						acc.checkedInTeams.push(cur);
 					}
 				}
 
@@ -609,12 +637,11 @@ export class Tournament {
 	}
 
 	get standings() {
-		for (const bracket of this.brackets) {
-			// xxx: fixme
-			if (bracket.name === "fixme!") {
-				return bracket.standings;
-			}
+		if (this.brackets.length === 1) {
+			return this.brackets[0].standings;
+		}
 
+		for (const bracket of this.brackets) {
 			if (bracket.isFinals) {
 				const finalsStandings = bracket.standings;
 
@@ -940,6 +967,7 @@ export class Tournament {
 		);
 	}
 
+	// xxx: progress "waiting for bracket check in"?
 	teamMemberOfProgressStatus(user: OptionalIdObject) {
 		const team = this.teamMemberOfByUser(user);
 		if (!team) return null;

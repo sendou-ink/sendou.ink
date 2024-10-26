@@ -98,7 +98,6 @@ export const action: ActionFunction = async ({ request }) => {
 		deadlines: data.strictDeadline ? ("STRICT" as const) : ("DEFAULT" as const),
 		enableNoScreenToggle: data.enableNoScreenToggle ?? undefined,
 		requireInGameNames: data.requireInGameNames ?? undefined,
-		autoCheckInAll: data.autoCheckInAll ?? undefined,
 		autonomousSubs: data.autonomousSubs ?? undefined,
 		swissGroupCount: data.swissGroupCount ?? undefined,
 		swissRoundCount: data.swissRoundCount ?? undefined,
@@ -287,7 +286,6 @@ export const newCalendarEventActionSchema = z
 			checkboxValueToBoolean,
 			z.boolean().nullish(),
 		),
-		autoCheckInAll: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
 		teamsPerGroup: z.coerce
 			.number()
 			.min(TOURNAMENT.MIN_GROUP_SIZE)

@@ -28,13 +28,11 @@ import { currentSeason } from "~/features/mmr/season";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import { TOURNAMENT, tournamentIdFromParams } from "~/features/tournament";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import { checkInMany } from "~/features/tournament/queries/checkInMany.server";
 import { createSwissBracketInTransaction } from "~/features/tournament/queries/createSwissBracketInTransaction.server";
 import { updateRoundMaps } from "~/features/tournament/queries/updateRoundMaps.server";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { useVisibilityChange } from "~/hooks/useVisibilityChange";
-import { nullFilledArray } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { parseRequestPayload, validate } from "~/utils/remix.server";
@@ -141,33 +139,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 						bracket,
 					}),
 				);
-
-				// xxx: remove
-				// check in teams to the final stage ahead of time so they don't have to do it
-				// separately, but also allow for TO's to check them out if needed
-				if (data.bracketIdx === 0 && tournament.brackets.length > 1) {
-					const finalStageIdx = tournament.brackets.findIndex(
-						(b) => b.isFinals,
-					);
-
-					if (finalStageIdx !== -1) {
-						const allFollowUpBracketIdxs = nullFilledArray(
-							tournament.brackets.length,
-						)
-							.map((_, i) => i)
-							// filter out groups stage
-							.filter((i) => i !== 0);
-
-						checkInMany({
-							bracketIdxs: tournament.ctx.settings.autoCheckInAll
-								? allFollowUpBracketIdxs
-								: [finalStageIdx],
-							tournamentTeamIds: tournament.ctx.teams
-								.filter((t) => t.checkIns.length > 0)
-								.map((t) => t.id),
-						});
-					}
-				}
 			})();
 
 			break;
@@ -486,7 +457,7 @@ export default function TournamentBracketsPage() {
 						</div>
 					) : null}
 					{bracket.sources?.every((s) => !s.placements.includes(1)) &&
-					!tournament.ctx.settings.autoCheckInAll ? (
+					bracket.checkInRequired ? (
 						<div className="text-center text-sm font-semi-bold text-lighter mt-2 text-warning">
 							Bracket requires check-in
 						</div>

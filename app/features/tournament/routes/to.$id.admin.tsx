@@ -147,6 +147,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			await TournamentRepository.checkIn({
 				tournamentTeamId: data.teamId,
+				// xxx: not correct with multi start brackets
 				// 0 = regular check in
 				bracketIdx: data.bracketIdx === 0 ? null : data.bracketIdx,
 			});
@@ -167,6 +168,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			await TournamentRepository.checkOut({
 				tournamentTeamId: data.teamId,
+				// xxx: not correct with multi start brackets
 				// 0 = regular check in
 				bracketIdx: data.bracketIdx === 0 ? null : data.bracketIdx,
 			});

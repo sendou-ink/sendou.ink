@@ -442,7 +442,6 @@ type CreateArgs = Pick<
 	minMembersPerTeam?: number;
 	teamsPerGroup?: number;
 	thirdPlaceMatch?: boolean;
-	autoCheckInAll?: boolean;
 	requireInGameNames?: boolean;
 	isRanked?: boolean;
 	isInvitational?: boolean;
@@ -482,7 +481,6 @@ export async function create(args: CreateArgs) {
 				enableNoScreenToggle: args.enableNoScreenToggle,
 				autonomousSubs: args.autonomousSubs,
 				regClosesAt: args.regClosesAt,
-				autoCheckInAll: args.autoCheckInAll,
 				requireInGameNames: args.requireInGameNames,
 				minMembersPerTeam: args.minMembersPerTeam,
 				swiss:
@@ -632,7 +630,6 @@ export async function update(args: UpdateArgs) {
 				enableNoScreenToggle: args.enableNoScreenToggle,
 				autonomousSubs: args.autonomousSubs,
 				regClosesAt: args.regClosesAt,
-				autoCheckInAll: args.autoCheckInAll,
 				requireInGameNames: args.requireInGameNames,
 				minMembersPerTeam: args.minMembersPerTeam,
 				swiss:
