@@ -1,4 +1,8 @@
-import type { Tables, TournamentStage } from "~/db/tables";
+import type {
+	Tables,
+	TournamentStage,
+	TournamentStageSettings,
+} from "~/db/tables";
 import { TOURNAMENT } from "~/features/tournament";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import { tournamentIsRanked } from "~/features/tournament/tournament-utils";
@@ -91,7 +95,7 @@ export class Tournament {
 	private initBrackets(data: TournamentManagerDataSet) {
 		for (const [
 			bracketIdx,
-			{ type, name, sources },
+			{ type, name, sources, requiresCheckIn, startTime, settings },
 		] of this.ctx.settings.bracketProgression.entries()) {
 			const inProgressStage = data.stage.find((stage) => stage.name === name);
 
@@ -108,6 +112,9 @@ export class Tournament {
 						name,
 						sources,
 						createdAt: inProgressStage.createdAt,
+						checkInRequired: requiresCheckIn ?? false,
+						startTime: startTime ? databaseTimestampToDate(startTime) : null,
+						settings: settings ?? null,
 						data: {
 							...data,
 							group: data.group.filter(
@@ -145,11 +152,18 @@ export class Tournament {
 						seeding: checkedInTeams,
 						preview: true,
 						name,
+						checkInRequired: requiresCheckIn ?? false,
+						startTime: startTime ? databaseTimestampToDate(startTime) : null,
+						settings: settings ?? null,
 						data: Swiss.create({
 							tournamentId: this.ctx.id,
 							name,
 							seeding: checkedInTeams,
-							settings: this.bracketSettings(type, checkedInTeams.length),
+							settings: this.bracketSettings(
+								settings,
+								type,
+								checkedInTeams.length,
+							),
 						}),
 						type,
 						sources,
@@ -176,10 +190,14 @@ export class Tournament {
 					});
 
 				const checkedInTeamsWithReplaysAvoided =
-					this.avoidReplaysOfPreviousBracketOpponent(checkedInTeams, {
-						sources,
-						type,
-					});
+					this.avoidReplaysOfPreviousBracketOpponent(
+						checkedInTeams,
+						{
+							sources,
+							type,
+						},
+						settings,
+					);
 
 				this.brackets.push(
 					Bracket.create({
@@ -188,10 +206,9 @@ export class Tournament {
 						seeding: checkedInTeamsWithReplaysAvoided,
 						preview: true,
 						name,
-						data: this.generateMatchesData(
-							checkedInTeamsWithReplaysAvoided,
-							type,
-						),
+						checkInRequired: requiresCheckIn ?? false,
+						startTime: startTime ? databaseTimestampToDate(startTime) : null,
+						settings: settings ?? null,
 						type,
 						sources,
 						createdAt: null,
@@ -205,26 +222,6 @@ export class Tournament {
 				);
 			}
 		}
-	}
-
-	generateMatchesData(teams: number[], type: TournamentStage["type"]) {
-		const manager = getTournamentManager();
-
-		// we need some number but does not matter what it is as the manager only contains one tournament
-		const virtualTournamentId = 1;
-
-		if (teams.length >= TOURNAMENT.ENOUGH_TEAMS_TO_START) {
-			manager.create({
-				tournamentId: virtualTournamentId,
-				name: "Virtual",
-				type,
-				seeding:
-					type === "round_robin" ? teams : fillWithNullTillPowerOfTwo(teams),
-				settings: this.bracketSettings(type, teams.length),
-			});
-		}
-
-		return manager.get.tournamentData(virtualTournamentId);
 	}
 
 	private resolveTeamsFromSources(
@@ -254,6 +251,7 @@ export class Tournament {
 			sources: Progression.ValidatedBracket["sources"];
 			type: Tables["TournamentStage"]["type"];
 		},
+		settings: TournamentStageSettings,
 	) {
 		// rather arbitrary limit, but with smaller brackets avoiding replays is not possible
 		// and then later while loop hits iteration limit
@@ -306,7 +304,11 @@ export class Tournament {
 					"round_robin" | "swiss"
 				>,
 				seeding: fillWithNullTillPowerOfTwo(candidateTeams),
-				settings: this.bracketSettings(bracket.type, candidateTeams.length),
+				settings: this.bracketSettings(
+					settings,
+					bracket.type,
+					candidateTeams.length,
+				),
 			});
 
 			const matches = manager.get.tournamentData(this.ctx.id).match;
@@ -427,32 +429,48 @@ export class Tournament {
 	}
 
 	bracketSettings(
+		selectedSettings: TournamentStageSettings | null,
 		type: Tables["TournamentStage"]["type"],
 		participantsCount: number,
 	): Stage["settings"] {
 		switch (type) {
-			case "single_elimination":
+			case "single_elimination": {
 				if (participantsCount < 4) {
 					return { consolationFinal: false };
 				}
 
-				return { consolationFinal: this.ctx.settings.thirdPlaceMatch ?? true };
-			case "double_elimination":
+				return {
+					consolationFinal:
+						selectedSettings?.thirdPlaceMatch ??
+						this.ctx.settings.thirdPlaceMatch ??
+						true,
+				};
+			}
+			case "double_elimination": {
 				return {
 					grandFinal: "double",
 				};
-			case "round_robin":
+			}
+			case "round_robin": {
+				const teamsPerGroup =
+					selectedSettings?.teamsPerGroup ??
+					this.ctx.settings.teamsPerGroup ??
+					TOURNAMENT.DEFAULT_TEAM_COUNT_PER_RR_GROUP;
+
 				return {
-					groupCount: Math.ceil(
-						participantsCount /
-							(this.ctx.settings.teamsPerGroup ??
-								TOURNAMENT.DEFAULT_TEAM_COUNT_PER_RR_GROUP),
-					),
+					groupCount: Math.ceil(participantsCount / teamsPerGroup),
 					seedOrdering: ["groups.seed_optimized"],
 				};
+			}
 			case "swiss": {
 				return {
-					swiss: this.ctx.settings.swiss,
+					swiss:
+						selectedSettings?.groupCount && selectedSettings.roundCount
+							? {
+									groupCount: selectedSettings.groupCount,
+									roundCount: selectedSettings.roundCount,
+								}
+							: this.ctx.settings.swiss,
 				};
 			}
 			default: {

@@ -400,7 +400,9 @@ type TournamentMapPickingStyle =
 
 export interface TournamentSettings {
 	bracketProgression: Progression.ValidatedBracket[];
+	/** @deprecated use bracketProgression instead */
 	teamsPerGroup?: number;
+	/** @deprecated use bracketProgression instead */
 	thirdPlaceMatch?: boolean;
 	isRanked?: boolean;
 	autoCheckInAll?: boolean;
@@ -412,6 +414,7 @@ export interface TournamentSettings {
 	autonomousSubs?: boolean;
 	/** Timestamp (SQLite format) when reg closes, if missing then means closes at start time */
 	regClosesAt?: number;
+	/** @deprecated use bracketProgression instead */
 	swiss?: {
 		groupCount: number;
 		roundCount: number;

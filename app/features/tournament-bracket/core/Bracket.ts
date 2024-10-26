@@ -1,4 +1,4 @@
-import type { Tables } from "~/db/tables";
+import type { Tables, TournamentStageSettings } from "~/db/tables";
 import { TOURNAMENT } from "~/features/tournament";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { Round } from "~/modules/brackets-model";
@@ -6,6 +6,7 @@ import { removeDuplicates } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
+import { fillWithNullTillPowerOfTwo } from "../tournament-bracket-utils";
 import type { OptionalIdObject, Tournament } from "./Tournament";
 import type { TournamentDataTeam } from "./Tournament.server";
 import { getTournamentManager } from "./brackets-manager";
@@ -14,7 +15,7 @@ import type { BracketMapCounts } from "./toMapList";
 interface CreateBracketArgs {
 	id: number;
 	preview: boolean;
-	data: TournamentManagerDataSet;
+	data?: TournamentManagerDataSet;
 	type: Tables["TournamentStage"]["type"];
 	canBeStarted?: boolean;
 	name: string;
@@ -26,6 +27,9 @@ interface CreateBracketArgs {
 		placements: number[];
 	}[];
 	seeding?: number[];
+	settings: TournamentStageSettings | null;
+	checkInRequired: boolean;
+	startTime: Date | null;
 }
 
 export interface Standing {
@@ -56,6 +60,9 @@ export abstract class Bracket {
 	sources;
 	createdAt;
 	seeding;
+	settings;
+	checkInRequired;
+	startTime;
 
 	constructor({
 		id,
@@ -68,18 +75,29 @@ export abstract class Bracket {
 		sources,
 		createdAt,
 		seeding,
+		settings,
+		checkInRequired,
+		startTime,
 	}: Omit<CreateBracketArgs, "format">) {
+		if (!data && !seeding) {
+			throw new Error("Bracket: seeding or data required");
+		}
+
 		this.id = id;
 		this.preview = preview;
-		this.data = data;
+		this.seeding = seeding;
+		this.tournament = tournament;
+		this.data = data ?? this.generateMatchesData(this.seeding!);
 		this.canBeStarted = canBeStarted;
 		this.name = name;
 		this.teamsPendingCheckIn = teamsPendingCheckIn;
-		this.tournament = tournament;
 		this.sources = sources;
 		this.createdAt = createdAt;
-		this.seeding = seeding;
+		this.settings = settings;
+		this.checkInRequired = checkInRequired;
+		this.startTime = startTime;
 
+		// xxx: only in frontend
 		this.createdSimulation();
 	}
 
@@ -251,6 +269,32 @@ export abstract class Bracket {
 				},
 			};
 		});
+	}
+
+	generateMatchesData(teams: number[]) {
+		const manager = getTournamentManager();
+
+		// we need some number but does not matter what it is as the manager only contains one tournament
+		const virtualTournamentId = 1;
+
+		if (teams.length >= TOURNAMENT.ENOUGH_TEAMS_TO_START) {
+			manager.create({
+				tournamentId: virtualTournamentId,
+				name: "Virtual",
+				type: this.type,
+				seeding:
+					this.type === "round_robin"
+						? teams
+						: fillWithNullTillPowerOfTwo(teams),
+				settings: this.tournament.bracketSettings(
+					this.settings,
+					this.type,
+					teams.length,
+				),
+			});
+		}
+
+		return manager.get.tournamentData(virtualTournamentId);
 	}
 
 	// xxx: fix

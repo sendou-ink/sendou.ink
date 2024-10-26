@@ -112,6 +112,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 									seeding,
 									tournamentId,
 									settings: tournament.bracketSettings(
+										bracket.settings,
 										bracket.type,
 										seeding.length,
 									),
@@ -126,6 +127,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 										? seeding
 										: fillWithNullTillPowerOfTwo(seeding),
 								settings: tournament.bracketSettings(
+									bracket.settings,
 									bracket.type,
 									seeding.length,
 								),
