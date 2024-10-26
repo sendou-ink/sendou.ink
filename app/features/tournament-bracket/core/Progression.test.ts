@@ -10,7 +10,7 @@
 // - startTime???
 
 import { describe, expect, it } from "vitest";
-import * as Progression from "./Progression.server";
+import * as Progression from "./Progression";
 
 // approximate number of teams
 
