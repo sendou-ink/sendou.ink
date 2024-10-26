@@ -1,6 +1,7 @@
 // todo
 
 import type { Tables, TournamentStageSettings } from "~/db/tables";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "../../../utils/invariant";
 
 export interface DBSource {
@@ -21,6 +22,7 @@ interface BracketBase {
 	type: Tables["TournamentStage"]["type"];
 	settings: TournamentStageSettings;
 	name: string;
+	requiresCheckIn: boolean;
 }
 
 // Note sources is array for future proofing reasons. Currently the array is always of length 1 if it exists.
@@ -28,10 +30,12 @@ interface BracketBase {
 export interface InputBracket extends BracketBase {
 	id: string;
 	sources?: EditableSource[];
+	startTime?: Date;
 }
 
 export interface ValidatedBracket extends BracketBase {
 	sources?: DBSource[];
+	startTime?: number;
 }
 
 export type ValidationError =
@@ -78,7 +82,7 @@ export type ValidationError =
 	  };
 
 /** Takes bracket progression as entered by user as input and returns the validated brackets ready for input to the database or errors if any. */
-export function validatedSources(
+export function validatedBrackets(
 	brackets: InputBracket[],
 ): ValidatedBracket[] | ValidationError {
 	let parsed: ValidatedBracket[];
@@ -106,11 +110,15 @@ export function validatedSources(
 
 function toOutputBracketFormat(brackets: InputBracket[]): ValidatedBracket[] {
 	const result = brackets.map((bracket) => {
-		const { id, sources, ...rest } = bracket;
-
 		return {
-			...rest,
-			sources: sources?.map((source) => {
+			type: bracket.type,
+			settings: bracket.settings,
+			name: bracket.name,
+			requiresCheckIn: bracket.requiresCheckIn,
+			startTime: bracket.startTime
+				? dateToDatabaseTimestamp(bracket.startTime)
+				: undefined,
+			sources: bracket.sources?.map((source) => {
 				const placements = parsePlacements(source.placements);
 				if (!placements) {
 					throw { badBracketId: bracket.id };
@@ -160,9 +168,16 @@ function parsePlacements(placements: string) {
 	return result;
 }
 
-function resolvesWinner(brackets: ValidatedBracket[]) {
+function resolvesWinner(_brackets: ValidatedBracket[]) {
 	return true;
 }
 
-// xxx: tests & export?
-function resolveFinals() {}
+// // xxx: tests & export?
+// function resolveFinals() {}
+
+/** Takes the return type of `Progression.validatedBrackets` as an input and narrows the type to a successful validation */
+export function isBrackets(
+	input: ValidatedBracket[] | ValidationError,
+): input is ValidatedBracket[] {
+	return Array.isArray(input);
+}

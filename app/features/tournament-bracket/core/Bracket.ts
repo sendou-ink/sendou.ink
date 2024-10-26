@@ -1,4 +1,4 @@
-import type { Tables, TournamentBracketProgression } from "~/db/tables";
+import type { Tables } from "~/db/tables";
 import { TOURNAMENT } from "~/features/tournament";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { Round } from "~/modules/brackets-model";
@@ -215,7 +215,7 @@ export abstract class Bracket {
 		return false;
 	}
 
-	get type(): TournamentBracketProgression[number]["type"] {
+	get type(): Tables["TournamentStage"]["type"] {
 		throw new Error("not implemented");
 	}
 
@@ -350,7 +350,7 @@ export abstract class Bracket {
 }
 
 class SingleEliminationBracket extends Bracket {
-	get type(): TournamentBracketProgression[number]["type"] {
+	get type(): Tables["TournamentStage"]["type"] {
 		return "single_elimination";
 	}
 
@@ -504,7 +504,7 @@ class SingleEliminationBracket extends Bracket {
 }
 
 class DoubleEliminationBracket extends Bracket {
-	get type(): TournamentBracketProgression[number]["type"] {
+	get type(): Tables["TournamentStage"]["type"] {
 		return "double_elimination";
 	}
 
@@ -1052,7 +1052,7 @@ class RoundRobinBracket extends Bracket {
 		);
 	}
 
-	get type(): TournamentBracketProgression[number]["type"] {
+	get type(): Tables["TournamentStage"]["type"] {
 		return "round_robin";
 	}
 
@@ -1425,7 +1425,7 @@ class SwissBracket extends Bracket {
 		);
 	}
 
-	get type(): TournamentBracketProgression[number]["type"] {
+	get type(): Tables["TournamentStage"]["type"] {
 		return "swiss";
 	}
 

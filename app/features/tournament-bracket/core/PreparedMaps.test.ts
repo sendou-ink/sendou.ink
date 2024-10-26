@@ -11,11 +11,15 @@ describe("PreparedMaps - resolvePreparedForTheBracket", () => {
 					{
 						type: "round_robin",
 						name: "Round Robin",
+						requiresCheckIn: false,
+						settings: {},
 						sources: [],
 					},
 					{
 						type: "single_elimination",
 						name: "Top Cut",
+						requiresCheckIn: false,
+						settings: {},
 						sources: [
 							{
 								bracketIdx: 0,
@@ -26,6 +30,8 @@ describe("PreparedMaps - resolvePreparedForTheBracket", () => {
 					{
 						type: "single_elimination",
 						name: "Underground Bracket",
+						requiresCheckIn: false,
+						settings: {},
 						sources: [
 							{
 								bracketIdx: 0,

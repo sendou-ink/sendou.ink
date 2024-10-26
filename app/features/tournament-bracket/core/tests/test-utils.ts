@@ -1,4 +1,3 @@
-import { BRACKET_NAMES } from "~/features/tournament/tournament-constants";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import { removeDuplicates } from "~/utils/arrays";
 import { Tournament } from "../Tournament";
@@ -77,7 +76,12 @@ export const testTournament = ({
 			mapPickingStyle: "AUTO_SZ",
 			settings: {
 				bracketProgression: [
-					{ name: BRACKET_NAMES.MAIN, type: "double_elimination" },
+					{
+						name: "Main Bracket",
+						type: "double_elimination",
+						requiresCheckIn: false,
+						settings: {},
+					},
 				],
 			},
 			castedMatchesInfo: null,

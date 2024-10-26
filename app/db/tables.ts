@@ -7,6 +7,7 @@ import type {
 } from "kysely";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type { TEAM_MEMBER_ROLES } from "~/features/team";
+import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { ParticipantResult } from "~/modules/brackets-model";
 import type {
 	Ability,
@@ -397,20 +398,8 @@ type TournamentMapPickingStyle =
 	| "AUTO_RM"
 	| "AUTO_CB";
 
-export type TournamentBracketProgression = {
-	type: TournamentStage["type"];
-	name: string;
-	/** Where do the teams come from? If missing then it means the source is the full registered teams list. */
-	sources?: {
-		/** Index of the bracket where the teams come from */
-		bracketIdx: number;
-		/** Team placements that join this bracket. E.g. [1, 2] would mean top 1 & 2 teams. [-1] would mean the last placing teams. */
-		placements: number[];
-	}[];
-}[];
-
 export interface TournamentSettings {
-	bracketProgression: TournamentBracketProgression;
+	bracketProgression: Progression.ValidatedBracket[];
 	teamsPerGroup?: number;
 	thirdPlaceMatch?: boolean;
 	isRanked?: boolean;
@@ -573,6 +562,13 @@ export interface TournamentStageSettings {
 	roundCount?: number;
 }
 
+export const TOURNAMENT_STAGE_TYPES = [
+	"single_elimination",
+	"double_elimination",
+	"round_robin",
+	"swiss",
+] as const;
+
 /** A stage is an intermediate phase in a tournament. In essence a bracket. */
 export interface TournamentStage {
 	id: GeneratedAlways<number>;
@@ -580,7 +576,7 @@ export interface TournamentStage {
 	number: number;
 	settings: string;
 	tournamentId: number;
-	type: "double_elimination" | "single_elimination" | "round_robin" | "swiss";
+	type: (typeof TOURNAMENT_STAGE_TYPES)[number];
 	// not Generated<> because SQLite doesn't allow altering tables to add columns with default values :(
 	createdAt: number | null;
 	/** If omitted, stage starts right after the stages leading up to it have been resolved */

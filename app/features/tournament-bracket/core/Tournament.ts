@@ -1,9 +1,6 @@
-import type {
-	TournamentBracketProgression,
-	TournamentStage,
-} from "~/db/tables";
+import type { Tables, TournamentStage } from "~/db/tables";
 import { TOURNAMENT } from "~/features/tournament";
-import { BRACKET_NAMES } from "~/features/tournament/tournament-constants";
+import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import { tournamentIsRanked } from "~/features/tournament/tournament-utils";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { Match, Stage } from "~/modules/brackets-model";
@@ -231,7 +228,7 @@ export class Tournament {
 	}
 
 	private resolveTeamsFromSources(
-		sources: NonNullable<TournamentBracketProgression[number]["sources"]>,
+		sources: NonNullable<Progression.ValidatedBracket["sources"]>,
 	) {
 		const teams: number[] = [];
 
@@ -254,8 +251,8 @@ export class Tournament {
 	private avoidReplaysOfPreviousBracketOpponent(
 		teams: number[],
 		bracket: {
-			sources: TournamentBracketProgression[number]["sources"];
-			type: TournamentBracketProgression[number]["type"];
+			sources: Progression.ValidatedBracket["sources"];
+			type: Tables["TournamentStage"]["type"];
 		},
 	) {
 		// rather arbitrary limit, but with smaller brackets avoiding replays is not possible
@@ -430,7 +427,7 @@ export class Tournament {
 	}
 
 	bracketSettings(
-		type: TournamentBracketProgression[number]["type"],
+		type: Tables["TournamentStage"]["type"],
 		participantsCount: number,
 	): Stage["settings"] {
 		switch (type) {
@@ -592,7 +589,8 @@ export class Tournament {
 
 	get standings() {
 		for (const bracket of this.brackets) {
-			if (bracket.name === BRACKET_NAMES.MAIN) {
+			// xxx: fixme
+			if (bracket.name === "fixme!") {
 				return bracket.standings;
 			}
 

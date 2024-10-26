@@ -8,75 +8,51 @@ import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { Toggle } from "~/components/Toggle";
 import { PlusIcon } from "~/components/icons/Plus";
-import type {
-	Tables,
-	TournamentBracketProgression,
-	TournamentStageSettings,
-} from "~/db/tables";
 import { TOURNAMENT } from "~/features/tournament";
-
-// type EditingSources = Array<
-// 	Omit<
-// 		NonNullable<TournamentBracketProgression[number]["sources"]>[number],
-// 		"bracketIdx"
-// 	> & { bracketId: string }
-// >;
-interface EditingSource {
-	bracketId: string;
-	placements: string;
-}
-// type SourcesForDB = NonNullable<
-// 	TournamentBracketProgression[number]["sources"]
-// >;
-
-// xxx: id?
-export interface TournamentFormatBracket {
-	id: string;
-	name: string;
-	type: Tables["TournamentStage"]["type"];
-	requiresCheckIn: boolean;
-	startTime: Date | null;
-	settings: TournamentStageSettings;
-	source: EditingSource | null;
-}
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 
 export function TournamentFormatSelector() {
 	// xxx: what default?
-	const [brackets, setBrackets] = React.useState<TournamentFormatBracket[]>([
+	const [brackets, setBrackets] = React.useState<Progression.InputBracket[]>([
 		{
 			id: nanoid(),
 			name: "Main Bracket",
 			type: "double_elimination",
 			requiresCheckIn: false,
-			startTime: null,
 			settings: {
 				thirdPlaceMatch: false,
 			},
-			source: null,
 		},
 	]);
 
 	const handleAddBracket = () => {
-		const newBracket: TournamentFormatBracket =
+		const newBracket: Progression.InputBracket =
 			brackets.length === 1
 				? {
 						id: nanoid(),
 						name: "",
 						type: "single_elimination",
 						requiresCheckIn: true,
-						startTime: null,
 						settings: {
 							thirdPlaceMatch: false,
 						},
-						source: null,
 					}
 				: { ...brackets.at(-1)!, id: nanoid(), name: "" };
 
 		setBrackets([...brackets, newBracket]);
 	};
 
+	const validated = Progression.validatedBrackets(brackets);
+
 	return (
 		<div className="stack lg items-start">
+			{Progression.isBrackets(validated) ? (
+				<input
+					type="hidden"
+					name="bracketProgression"
+					value={JSON.stringify(validated)}
+				/>
+			) : null}
 			<div className="stack lg">
 				{brackets.map((bracket, i) => (
 					<TournamentFormatBracketSelector
@@ -111,9 +87,9 @@ function TournamentFormatBracketSelector({
 	onChange,
 	count,
 }: {
-	bracket: TournamentFormatBracket;
-	brackets: TournamentFormatBracket[];
-	onChange: (newBracket: TournamentFormatBracket) => void;
+	bracket: Progression.InputBracket;
+	brackets: Progression.InputBracket[];
+	onChange: (newBracket: Progression.InputBracket) => void;
 	count: number;
 }) {
 	const id = React.useId();
@@ -124,7 +100,7 @@ function TournamentFormatBracketSelector({
 
 	const isFirstBracket = count === 1;
 
-	const updateBracket = (newProps: Partial<TournamentFormatBracket>) => {
+	const updateBracket = (newProps: Partial<Progression.InputBracket>) => {
 		onChange({ ...bracket, ...newProps });
 	};
 
@@ -139,6 +115,7 @@ function TournamentFormatBracketSelector({
 						id={createId("name")}
 						value={bracket.name}
 						onChange={(e) => updateBracket({ name: e.target.value })}
+						maxLength={TOURNAMENT.BRACKET_NAME_MAX_LENGTH}
 					/>
 				</div>
 
@@ -148,7 +125,9 @@ function TournamentFormatBracketSelector({
 						<DateInput
 							id={createId("startTime")}
 							defaultValue={bracket.startTime ?? undefined}
-							onChange={(newDate) => updateBracket({ startTime: newDate })}
+							onChange={(newDate) =>
+								updateBracket({ startTime: newDate ?? undefined })
+							}
 						/>
 						<FormMessage type="info">
 							If missing, bracket can be started when the previous brackets have
@@ -179,7 +158,7 @@ function TournamentFormatBracketSelector({
 						value={bracket.type}
 						onChange={(e) =>
 							updateBracket({
-								type: e.target.value as TournamentFormatBracket["type"],
+								type: e.target.value as Progression.InputBracket["type"],
 							})
 						}
 						className="w-max"
@@ -304,8 +283,8 @@ function TournamentFormatBracketSelector({
 							brackets={brackets.filter(
 								(bracket2) => bracket.id !== bracket2.id && bracket2.name,
 							)}
-							source={bracket.source}
-							onChange={(source) => updateBracket({ source })}
+							source={bracket.sources?.[0] ?? null}
+							onChange={(source) => updateBracket({ sources: [source] })}
 						/>
 					)}
 				</div>
@@ -319,9 +298,9 @@ function SourcesSelector({
 	source,
 	onChange,
 }: {
-	brackets: TournamentFormatBracket[];
-	source: EditingSource | null;
-	onChange: (sources: EditingSource) => void;
+	brackets: Progression.InputBracket[];
+	source: Progression.EditableSource | null;
+	onChange: (sources: Progression.EditableSource) => void;
 }) {
 	const id = React.useId();
 

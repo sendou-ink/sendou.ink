@@ -1,6 +1,7 @@
 import type { ActionFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { z } from "zod";
+import { TOURNAMENT_STAGE_TYPES } from "~/db/tables";
 import type { CalendarEventTag } from "~/db/types";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
@@ -10,10 +11,7 @@ import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import {
-	FORMATS_SHORT,
-	TOURNAMENT,
-} from "~/features/tournament/tournament-constants";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { canEditCalendarEvent } from "~/permissions";
 import {
@@ -45,7 +43,6 @@ import {
 	canAddNewEvent,
 	regClosesAtDate,
 } from "../calendar-utils";
-import { formValuesToBracketProgression } from "../calendar-utils.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = await requireUser(request);
@@ -92,7 +89,7 @@ export const action: ActionFunction = async ({ request }) => {
 			: 0,
 		toToolsMode:
 			rankedModesShort.find((mode) => mode === data.toToolsMode) ?? null,
-		bracketProgression: formValuesToBracketProgression(data),
+		bracketProgression: data.bracketProgression ?? null,
 		minMembersPerTeam: data.minMembersPerTeam ?? undefined,
 		teamsPerGroup: data.teamsPerGroup ?? undefined,
 		thirdPlaceMatch: data.thirdPlaceMatch ?? undefined,
@@ -255,7 +252,33 @@ export const newCalendarEventActionSchema = z
 		//
 		// tournament format related fields
 		//
-		format: z.enum(FORMATS_SHORT).nullish(),
+		bracketProgression: z
+			.preprocess(
+				safeJSONParse,
+				z.array(
+					z.object({
+						type: z.enum(TOURNAMENT_STAGE_TYPES),
+						name: z.string().min(1).max(TOURNAMENT.BRACKET_NAME_MAX_LENGTH),
+						settings: z.object({
+							thirdPlaceMatch: z.boolean().optional(),
+							teamsPerGroup: z.number().int().optional(),
+							groupCount: z.number().int().optional(),
+							roundCount: z.number().int().optional(),
+						}),
+						requiresCheckIn: z.boolean(),
+						startTime: z.number().optional(),
+						sources: z
+							.array(
+								z.object({
+									bracketIdx: z.number(),
+									placements: z.array(z.number()),
+								}),
+							)
+							.optional(),
+					}),
+				),
+			)
+			.nullish(),
 		minMembersPerTeam: z.coerce.number().int().min(1).max(4).nullish(),
 		withUndergroundBracket: z.preprocess(checkboxValueToBoolean, z.boolean()),
 		thirdPlaceMatch: z.preprocess(
