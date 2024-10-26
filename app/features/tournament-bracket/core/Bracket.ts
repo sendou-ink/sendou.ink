@@ -7,11 +7,11 @@ import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
 import { fillWithNullTillPowerOfTwo } from "../tournament-bracket-utils";
+import * as Progression from "./Progression";
 import type { OptionalIdObject, Tournament } from "./Tournament";
 import type { TournamentDataTeam } from "./Tournament.server";
 import { getTournamentManager } from "./brackets-manager";
 import type { BracketMapCounts } from "./toMapList";
-import * as Progression from "./Progression";
 
 interface CreateBracketArgs {
 	id: number;

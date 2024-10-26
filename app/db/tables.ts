@@ -399,7 +399,7 @@ type TournamentMapPickingStyle =
 	| "AUTO_CB";
 
 export interface TournamentSettings {
-	bracketProgression: Progression.ValidatedBracket[];
+	bracketProgression: Progression.ParsedBracket[];
 	/** @deprecated use bracketProgression instead */
 	teamsPerGroup?: number;
 	/** @deprecated use bracketProgression instead */

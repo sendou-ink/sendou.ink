@@ -1,8 +1,8 @@
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import { removeDuplicates } from "~/utils/arrays";
+import type * as Progression from "../Progression";
 import { Tournament } from "../Tournament";
 import type { TournamentData } from "../Tournament.server";
-import type * as Progression from "../Progression";
 
 const tournamentCtxTeam = (
 	teamId: number,
@@ -253,4 +253,4 @@ export const progressions = {
 			},
 		},
 	],
-} satisfies Record<string, Progression.ValidatedBracket[]>;
+} satisfies Record<string, Progression.ParsedBracket[]>;

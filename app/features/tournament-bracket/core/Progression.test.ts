@@ -18,6 +18,40 @@ import { progressions } from "./tests/test-utils";
 
 // standings to new bracket participants
 
+describe("bracketsToValidationError - valid formats", () => {
+	it("accepts SE", () => {
+		expect(
+			Progression.bracketsToValidationError(progressions.singleElimination),
+		).toBeNull();
+	});
+
+	it("accepts RR->SE", () => {
+		expect(
+			Progression.bracketsToValidationError(
+				progressions.roundRobinToSingleElimination,
+			),
+		).toBeNull();
+	});
+
+	it("accepts low ink", () => {
+		expect(
+			Progression.bracketsToValidationError(progressions.lowInk),
+		).toBeNull();
+	});
+
+	it("accepts many starter brackets", () => {
+		expect(
+			Progression.bracketsToValidationError(progressions.manyStartBrackets),
+		).toBeNull();
+	});
+
+	it("accepts swiss (one group)", () => {
+		expect(
+			Progression.bracketsToValidationError(progressions.swissOneGroup),
+		).toBeNull();
+	});
+});
+
 describe("validatedSources - PLACEMENTS_PARSE_ERROR", () => {
 	const getValidatedBracketsFromPlacements = (placements: string) => {
 		return Progression.validatedBrackets([
@@ -47,7 +81,7 @@ describe("validatedSources - PLACEMENTS_PARSE_ERROR", () => {
 	it("parses placements correctly (separated by comma)", () => {
 		const result = getValidatedBracketsFromPlacements(
 			"1,2,3,4",
-		) as Progression.ValidatedBracket[];
+		) as Progression.ParsedBracket[];
 
 		expect(result[1].sources).toEqual([
 			{ bracketIdx: 0, placements: [1, 2, 3, 4] },
@@ -57,7 +91,7 @@ describe("validatedSources - PLACEMENTS_PARSE_ERROR", () => {
 	it("parses placements correctly (separated by line)", () => {
 		const result = getValidatedBracketsFromPlacements(
 			"1-4",
-		) as Progression.ValidatedBracket[];
+		) as Progression.ParsedBracket[];
 
 		expect(result[1].sources).toEqual([
 			{ bracketIdx: 0, placements: [1, 2, 3, 4] },
@@ -67,7 +101,7 @@ describe("validatedSources - PLACEMENTS_PARSE_ERROR", () => {
 	it("parses placements correctly (separated by a mix)", () => {
 		const result = getValidatedBracketsFromPlacements(
 			"1,2,3-4",
-		) as Progression.ValidatedBracket[];
+		) as Progression.ParsedBracket[];
 
 		expect(result[1].sources).toEqual([
 			{ bracketIdx: 0, placements: [1, 2, 3, 4] },
@@ -77,7 +111,7 @@ describe("validatedSources - PLACEMENTS_PARSE_ERROR", () => {
 	it("handles placement where ranges start and end is the same", () => {
 		const result = getValidatedBracketsFromPlacements(
 			"1-1",
-		) as Progression.ValidatedBracket[];
+		) as Progression.ParsedBracket[];
 
 		expect(result[1].sources).toEqual([{ bracketIdx: 0, placements: [1] }]);
 	});
@@ -85,7 +119,7 @@ describe("validatedSources - PLACEMENTS_PARSE_ERROR", () => {
 	it("handles parsing with extra white space", () => {
 		const result = getValidatedBracketsFromPlacements(
 			"1, 2, 3,4 ",
-		) as Progression.ValidatedBracket[];
+		) as Progression.ParsedBracket[];
 
 		expect(result[1].sources).toEqual([
 			{ bracketIdx: 0, placements: [1, 2, 3, 4] },

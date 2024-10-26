@@ -228,7 +228,7 @@ export class Tournament {
 	}
 
 	private resolveTeamsFromSources(
-		sources: NonNullable<Progression.ValidatedBracket["sources"]>,
+		sources: NonNullable<Progression.ParsedBracket["sources"]>,
 	) {
 		const teams: number[] = [];
 
@@ -251,7 +251,7 @@ export class Tournament {
 	private avoidReplaysOfPreviousBracketOpponent(
 		teams: number[],
 		bracket: {
-			sources: Progression.ValidatedBracket["sources"];
+			sources: Progression.ParsedBracket["sources"];
 			type: Tables["TournamentStage"]["type"];
 		},
 		settings: TournamentStageSettings,

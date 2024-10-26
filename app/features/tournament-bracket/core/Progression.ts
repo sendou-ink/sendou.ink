@@ -33,7 +33,7 @@ export interface InputBracket extends BracketBase {
 	startTime?: Date;
 }
 
-export interface ValidatedBracket extends BracketBase {
+export interface ParsedBracket extends BracketBase {
 	sources?: DBSource[];
 	startTime?: number;
 }
@@ -84,8 +84,8 @@ export type ValidationError =
 /** Takes bracket progression as entered by user as input and returns the validated brackets ready for input to the database or errors if any. */
 export function validatedBrackets(
 	brackets: InputBracket[],
-): ValidatedBracket[] | ValidationError {
-	let parsed: ValidatedBracket[];
+): ParsedBracket[] | ValidationError {
+	let parsed: ParsedBracket[];
 	try {
 		parsed = toOutputBracketFormat(brackets);
 	} catch (e) {
@@ -99,16 +99,29 @@ export function validatedBrackets(
 		throw e;
 	}
 
-	if (!resolvesWinner(parsed)) {
-		return {
-			type: "NOT_RESOLVING_WINNER",
-		};
+	const validationError = bracketsToValidationError(parsed);
+
+	if (validationError) {
+		return validationError;
 	}
 
 	return parsed;
 }
 
-function toOutputBracketFormat(brackets: InputBracket[]): ValidatedBracket[] {
+/** Checks parsed brackets for any errors related to how the progression is laid out  */
+export function bracketsToValidationError(
+	brackets: ParsedBracket[],
+): ValidationError | null {
+	if (!resolvesWinner(brackets)) {
+		return {
+			type: "NOT_RESOLVING_WINNER",
+		};
+	}
+
+	return null;
+}
+
+function toOutputBracketFormat(brackets: InputBracket[]): ParsedBracket[] {
 	const result = brackets.map((bracket) => {
 		return {
 			type: bracket.type,
@@ -168,7 +181,7 @@ function parsePlacements(placements: string) {
 	return result;
 }
 
-function resolvesWinner(_brackets: ValidatedBracket[]) {
+function resolvesWinner(_brackets: ParsedBracket[]) {
 	return true;
 }
 
@@ -177,13 +190,13 @@ function resolvesWinner(_brackets: ValidatedBracket[]) {
 
 /** Takes the return type of `Progression.validatedBrackets` as an input and narrows the type to a successful validation */
 export function isBrackets(
-	input: ValidatedBracket[] | ValidationError,
-): input is ValidatedBracket[] {
+	input: ParsedBracket[] | ValidationError,
+): input is ParsedBracket[] {
 	return Array.isArray(input);
 }
 
 /** Given bracketIdx and bracketProgression will resolve if this the "final stage" of the tournament that decides the final standings  */
-export function isFinals(idx: number, brackets: ValidatedBracket[]) {
+export function isFinals(idx: number, brackets: ParsedBracket[]) {
 	invariant(idx < brackets.length, "Bracket index out of bounds");
 
 	return resolveMainBracketProgression(brackets).at(-1) === idx;
@@ -192,13 +205,13 @@ export function isFinals(idx: number, brackets: ValidatedBracket[]) {
 /** Given bracketIdx and bracketProgression will resolve if this an "underground bracket".
  * Underground bracket is defined as a bracket that is not part of the main tournament progression e.g. optional bracket for early losers
  */
-export function isUnderground(idx: number, brackets: ValidatedBracket[]) {
+export function isUnderground(idx: number, brackets: ParsedBracket[]) {
 	invariant(idx < brackets.length, "Bracket index out of bounds");
 
 	return !resolveMainBracketProgression(brackets).includes(idx);
 }
 
-function resolveMainBracketProgression(brackets: ValidatedBracket[]) {
+function resolveMainBracketProgression(brackets: ParsedBracket[]) {
 	if (brackets.length === 1) return [0];
 
 	let bracketIdxToFind = 0;
