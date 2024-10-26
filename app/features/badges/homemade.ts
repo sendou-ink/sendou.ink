@@ -15,6 +15,11 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Liftoff",
+		fileName: "liftoff",
+		authorDiscordId: "789943264370884708",
+	},
+	{
 		displayName: "Treetop Tussle",
 		fileName: "tree",
 		authorDiscordId: "789943264370884708",
