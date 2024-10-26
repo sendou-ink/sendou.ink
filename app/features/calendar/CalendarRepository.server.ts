@@ -559,7 +559,7 @@ export async function create(args: CreateArgs) {
 					: "calendarEventId",
 		});
 
-		return eventId;
+		return { eventId, tournamentId };
 	});
 }
 

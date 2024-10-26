@@ -163,14 +163,16 @@ export const action: ActionFunction = async ({ request }) => {
 
 		return "AUTO_ALL" as const;
 	};
-	const createdEventId = await CalendarRepository.create({
-		mapPoolMaps: deserializedMaps,
-		isFullTournament: data.toToolsEnabled,
-		mapPickingStyle: mapPickingStyle(),
-		...commonArgs,
-	});
+	const { eventId: createdEventId, tournamentId: createdTournamentId } =
+		await CalendarRepository.create({
+			mapPoolMaps: deserializedMaps,
+			isFullTournament: data.toToolsEnabled,
+			mapPickingStyle: mapPickingStyle(),
+			...commonArgs,
+		});
 
-	if (data.toToolsEnabled) {
+	if (createdTournamentId) {
+		clearTournamentDataCache(createdTournamentId);
 		ShowcaseTournaments.clearParticipationInfoMap();
 		ShowcaseTournaments.clearCachedTournaments();
 	}
