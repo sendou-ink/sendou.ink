@@ -15,6 +15,11 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Peashooter Achievement",
+		fileName: "peashooter",
+		authorDiscordId: "789943264370884708",
+	},
+	{
 		displayName: "TFS Tourneys",
 		fileName: "tfstourney",
 		authorDiscordId: "789943264370884708",
