@@ -43,7 +43,7 @@ export type ValidationError =
 	// user written placements can not be parsed
 	| {
 			type: "PLACEMENTS_PARSE_ERROR";
-			bracketId: string;
+			bracketIdx: number;
 	  }
 	// tournament is ending with a format that does not resolve a winner such as round robin or grouped swiss
 	| {
@@ -51,23 +51,23 @@ export type ValidationError =
 	  }
 	// from each bracket one placement can lead to only one bracket
 	| {
-			type: "SAME_PLACEMENT_TO_TWO_BRACKETS";
-			bracketIds: string[];
+			type: "SAME_PLACEMENT_TO_MULTIPLE_BRACKETS";
+			bracketIdxs: number[];
 	  }
 	// from one bracket e.g. if 1st goes somewhere and 3rd goes somewhere then 2nd must also go somewhere
 	| {
 			type: "GAP_IN_PLACEMENTS";
-			bracketId: string;
+			bracketIdx: number;
 	  }
 	// if round robin groups size is 4 then it doesn't make sense to have destination for 5
 	| {
 			type: "TOO_MANY_PLACEMENTS";
-			bracketId: string;
+			bracketIdx: number;
 	  }
 	// two brackets can not have the same name
 	| {
 			type: "DUPLICATE_BRACKET_NAME";
-			bracketIds: string[];
+			bracketIdxs: number[];
 	  }
 	// all brackets must have a name that is not an empty string
 	| {
@@ -90,10 +90,10 @@ export function validatedBrackets(
 	try {
 		parsed = toOutputBracketFormat(brackets);
 	} catch (e) {
-		if ((e as { badBracketId: string }).badBracketId) {
+		if ((e as { badBracketIdx: number }).badBracketIdx) {
 			return {
 				type: "PLACEMENTS_PARSE_ERROR",
-				bracketId: (e as { badBracketId: string }).badBracketId,
+				bracketIdx: (e as { badBracketIdx: number }).badBracketIdx,
 			};
 		}
 
@@ -119,11 +119,19 @@ export function bracketsToValidationError(
 		};
 	}
 
+	const faultyBracketIdxs = samePlacementToMultipleBrackets(brackets);
+	if (faultyBracketIdxs) {
+		return {
+			type: "SAME_PLACEMENT_TO_MULTIPLE_BRACKETS",
+			bracketIdxs: faultyBracketIdxs,
+		};
+	}
+
 	return null;
 }
 
 function toOutputBracketFormat(brackets: InputBracket[]): ParsedBracket[] {
-	const result = brackets.map((bracket) => {
+	const result = brackets.map((bracket, bracketIdx) => {
 		return {
 			type: bracket.type,
 			settings: bracket.settings,
@@ -135,7 +143,7 @@ function toOutputBracketFormat(brackets: InputBracket[]): ParsedBracket[] {
 			sources: bracket.sources?.map((source) => {
 				const placements = parsePlacements(source.placements);
 				if (!placements) {
-					throw { badBracketId: bracket.id };
+					throw { badBracketIdx: bracketIdx };
 				}
 
 				return {
@@ -195,6 +203,36 @@ function resolvesWinner(brackets: ParsedBracket[]) {
 	}
 
 	return true;
+}
+
+function samePlacementToMultipleBrackets(brackets: ParsedBracket[]) {
+	const map = new Map<string, number[]>();
+
+	for (const [bracketIdx, bracket] of brackets.entries()) {
+		if (!bracket.sources) continue;
+
+		for (const source of bracket.sources) {
+			for (const placement of source.placements) {
+				const id = `${source.bracketIdx}-${placement}`;
+
+				if (!map.has(id)) {
+					map.set(id, []);
+				}
+
+				map.get(id)!.push(bracketIdx);
+			}
+		}
+	}
+
+	const result: number[] = [];
+
+	for (const [_, bracketIdxs] of map) {
+		if (bracketIdxs.length > 1) {
+			result.push(...bracketIdxs);
+		}
+	}
+
+	return result.length ? result : null;
 }
 
 // // xxx: tests & export?

@@ -193,6 +193,38 @@ describe("validatedSources - other rules", () => {
 		expect(error.type).toBe("NOT_RESOLVING_WINNER");
 	});
 
+	it("handles SAME_PLACEMENT_TO_MULTIPLE_BRACKETS", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+				],
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "2-3",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("SAME_PLACEMENT_TO_MULTIPLE_BRACKETS");
+		expect((error as any).bracketIdxs).toEqual([1, 2]);
+	});
+
 	// xxx: test first sources = null
 });
 
