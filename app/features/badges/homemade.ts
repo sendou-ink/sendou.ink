@@ -229,7 +229,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "breezesr",
 		authorDiscordId: "342369454719631361",
 	},
-  {
+	{
 		displayName: "Frostbite Ascent",
 		fileName: "frostbitegold2x",
 		authorDiscordId: "354880982890971136",
