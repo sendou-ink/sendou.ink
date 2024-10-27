@@ -230,6 +230,16 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "342369454719631361",
 	},
 	{
+		displayName: "Scrap Bin (Smidge)",
+		fileName: "cc-smidge",
+		authorDiscordId: "148874365105078272",
+	},
+	{
+		displayName: "Supply Closet (Smudge)",
+		fileName: "cc-smudge",
+		authorDiscordId: "148874365105078272",
+	},
+	{
 		displayName: "Frostbite Ascent",
 		fileName: "frostbitegold2x",
 		authorDiscordId: "354880982890971136",
