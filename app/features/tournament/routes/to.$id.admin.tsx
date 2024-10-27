@@ -147,9 +147,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			await TournamentRepository.checkIn({
 				tournamentTeamId: data.teamId,
-				// xxx: not correct with multi start brackets
-				// 0 = regular check in
-				bracketIdx: data.bracketIdx === 0 ? null : data.bracketIdx,
+				// no sources = regular check in
+				bracketIdx: !bracket.sources ? null : data.bracketIdx,
 			});
 			break;
 		}
@@ -168,9 +167,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			await TournamentRepository.checkOut({
 				tournamentTeamId: data.teamId,
-				// xxx: not correct with multi start brackets
-				// 0 = regular check in
-				bracketIdx: data.bracketIdx === 0 ? null : data.bracketIdx,
+				// no sources = regular check in
+				bracketIdx: !bracket.sources ? null : data.bracketIdx,
 			});
 			logger.info(
 				`Checked out: tournament team id: ${data.teamId} - user id: ${user.id} - tournament id: ${tournamentId} - bracket idx: ${data.bracketIdx}`,
