@@ -59,6 +59,8 @@ export const action: ActionFunction = async ({ request }) => {
 
 	validate(canAddNewEvent(user), "Not authorized", 401);
 
+	// xxx: validate progression ok via the progression module
+
 	const startTimes = data.date.map((date) => dateToDatabaseTimestamp(date));
 	const commonArgs = {
 		authorId: user.id,

@@ -113,17 +113,28 @@ export function validatedBrackets(
 export function bracketsToValidationError(
 	brackets: ParsedBracket[],
 ): ValidationError | null {
+	let faultyBracketIdx: number | null = null;
+	let faultyBracketIdxs: number[] | null = null;
+
 	if (!resolvesWinner(brackets)) {
 		return {
 			type: "NOT_RESOLVING_WINNER",
 		};
 	}
 
-	const faultyBracketIdxs = samePlacementToMultipleBrackets(brackets);
+	faultyBracketIdxs = samePlacementToMultipleBrackets(brackets);
 	if (faultyBracketIdxs) {
 		return {
 			type: "SAME_PLACEMENT_TO_MULTIPLE_BRACKETS",
 			bracketIdxs: faultyBracketIdxs,
+		};
+	}
+
+	faultyBracketIdx = gapInPlacements(brackets);
+	if (faultyBracketIdx) {
+		return {
+			type: "GAP_IN_PLACEMENTS",
+			bracketIdx: faultyBracketIdx,
 		};
 	}
 
@@ -233,6 +244,10 @@ function samePlacementToMultipleBrackets(brackets: ParsedBracket[]) {
 	}
 
 	return result.length ? result : null;
+}
+
+function gapInPlacements(_brackets: ParsedBracket[]) {
+	return null;
 }
 
 // // xxx: tests & export?
