@@ -148,7 +148,7 @@ const getValidatedBrackets = (
 	);
 
 describe("validatedSources - other rules", () => {
-	it.todo("handles NOT_RESOLVING_WINNER (only round robin)", () => {
+	it("handles NOT_RESOLVING_WINNER (only round robin)", () => {
 		const error = getValidatedBrackets([
 			{
 				settings: {},
@@ -159,7 +159,7 @@ describe("validatedSources - other rules", () => {
 		expect(error.type).toBe("NOT_RESOLVING_WINNER");
 	});
 
-	it.todo("handles NOT_RESOLVING_WINNER (ends in round robin)", () => {
+	it("handles NOT_RESOLVING_WINNER (ends in round robin)", () => {
 		const error = getValidatedBrackets([
 			{
 				settings: {},
@@ -180,7 +180,7 @@ describe("validatedSources - other rules", () => {
 		expect(error.type).toBe("NOT_RESOLVING_WINNER");
 	});
 
-	it.todo("handles NOT_RESOLVING_WINNER (swiss with many groups)", () => {
+	it("handles NOT_RESOLVING_WINNER (swiss with many groups)", () => {
 		const error = getValidatedBrackets([
 			{
 				settings: {

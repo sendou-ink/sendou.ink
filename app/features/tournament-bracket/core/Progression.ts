@@ -1,6 +1,7 @@
 // todo
 
 import type { Tables, TournamentStageSettings } from "~/db/tables";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "../../../utils/invariant";
 
@@ -181,7 +182,18 @@ function parsePlacements(placements: string) {
 	return result;
 }
 
-function resolvesWinner(_brackets: ParsedBracket[]) {
+function resolvesWinner(brackets: ParsedBracket[]) {
+	const finals = brackets.find((_, idx) => isFinals(idx, brackets));
+
+	if (!finals) return false;
+	if (finals?.type === "round_robin") return false;
+	if (
+		finals.type === "swiss" &&
+		(finals.settings.groupCount ?? TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT) > 1
+	) {
+		return false;
+	}
+
 	return true;
 }
 

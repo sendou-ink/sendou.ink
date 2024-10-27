@@ -1,6 +1,7 @@
 // separate from brackets-manager as this wasn't part of the original brackets-manager library
 
 import type { TournamentRepositoryInsertableMatch } from "~/features/tournament/TournamentRepository.server";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { InputStage, Match } from "~/modules/brackets-model";
 import { nullFilledArray } from "~/utils/arrays";
@@ -12,8 +13,10 @@ export function create(
 ): TournamentManagerDataSet {
 	const swissSettings = args.settings?.swiss;
 
-	const groupCount = swissSettings?.groupCount ?? 1;
-	const roundCount = swissSettings?.roundCount ?? 5;
+	const groupCount =
+		swissSettings?.groupCount ?? TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT;
+	const roundCount =
+		swissSettings?.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT;
 
 	const group = nullFilledArray(groupCount).map((_, i) => ({
 		id: i,
