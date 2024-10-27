@@ -36,8 +36,17 @@ export type OptionalIdObject = { id: number } | undefined;
 export class Tournament {
 	brackets: Bracket[] = [];
 	ctx;
+	simulateBrackets;
 
-	constructor({ data, ctx }: TournamentData) {
+	constructor({
+		data,
+		ctx,
+		simulateBrackets = true,
+	}: {
+		data: TournamentData["data"];
+		ctx: TournamentData["ctx"];
+		simulateBrackets?: boolean;
+	}) {
 		const hasStarted = data.stage.length > 0;
 
 		const teamsInSeedOrder = ctx.teams.sort((a, b) => {
@@ -55,6 +64,7 @@ export class Tournament {
 
 			return this.compareUnseededTeams(a, b);
 		});
+		this.simulateBrackets = simulateBrackets;
 		this.ctx = {
 			...ctx,
 			teams: hasStarted

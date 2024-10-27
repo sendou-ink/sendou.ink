@@ -86,7 +86,7 @@ export async function tournamentFromDB(args: {
 }) {
 	const data = notFoundIfFalsy(await tournamentData(args));
 
-	return new Tournament(data);
+	return new Tournament({ ...data, simulateBrackets: false });
 }
 
 // caching promise ensures that if many requests are made for the same tournament

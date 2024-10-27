@@ -103,8 +103,9 @@ export abstract class Bracket {
 		this.checkInRequired = checkInRequired;
 		this.startTime = startTime;
 
-		// xxx: only in frontend
-		this.createdSimulation();
+		if (this.tournament.simulateBrackets) {
+			this.createdSimulation();
+		}
 	}
 
 	private createdSimulation() {
