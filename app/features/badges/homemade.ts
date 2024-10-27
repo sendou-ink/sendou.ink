@@ -234,4 +234,34 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "fountain_of_dreams",
 		authorDiscordId: "164695301007998979",
 	},
+	{
+		displayName: "Scrap Bin (Smidge)",
+		fileName: "cc-smidge",
+		authorDiscordId: "148874365105078272",
+	},
+	{
+		displayName: "Supply Closet (Smudge)",
+		fileName: "cc-smudge",
+		authorDiscordId: "148874365105078272",
+	},
+	{
+		displayName: "THE GLAZE GAUNTLET",
+		fileName: "glaze",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Frostbite Ascent",
+		fileName: "frostbitegold2x",
+		authorDiscordId: "354880982890971136",
+	},
+	{
+		displayName: "Frostbite Ascent (Top Bracket)",
+		fileName: "frostbitesilver2x",
+		authorDiscordId: "354880982890971136",
+	},
+	{
+		displayName: "Frostbite Ascent (Top 8)",
+		fileName: "frostbitebase2x",
+		authorDiscordId: "354880982890971136",
+	},
 ];
