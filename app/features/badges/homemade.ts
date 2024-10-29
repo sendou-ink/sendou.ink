@@ -279,4 +279,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "wiper",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "Chi-Shoals",
+		fileName: "chishoals",
+		authorDiscordId: "528851510222782474",
+	},
 ];
