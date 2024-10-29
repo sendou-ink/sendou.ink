@@ -274,4 +274,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "frostbitebase2x",
 		authorDiscordId: "354880982890971136",
 	},
+	{
+		displayName: "Squeaky Clean Scrap",
+		fileName: "wiper",
+		authorDiscordId: "528851510222782474",
+	},
 ];
