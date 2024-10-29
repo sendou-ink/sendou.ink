@@ -2,7 +2,10 @@
 
 import type { Tables, TournamentStageSettings } from "~/db/tables";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import {
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
 import invariant from "../../../utils/invariant";
 
 export interface DBSource {
@@ -32,6 +35,8 @@ export interface InputBracket extends BracketBase {
 	id: string;
 	sources?: EditableSource[];
 	startTime?: Date;
+	/** This bracket cannot be edited (because it is already underway) */
+	disabled?: boolean;
 }
 
 export interface ParsedBracket extends BracketBase {
@@ -81,6 +86,65 @@ export type ValidationError =
 	| {
 			type: "NEGATIVE_PROGRESSION";
 	  };
+
+/** Takes validated brackets and returns them in the format that is ready for user input. */
+export function validatedBracketsToInputFormat(
+	brackets: ParsedBracket[],
+): InputBracket[] {
+	return brackets.map((bracket, bracketIdx) => {
+		return {
+			id: String(bracketIdx),
+			name: bracket.name,
+			settings: bracket.settings ?? {},
+			type: bracket.type,
+			requiresCheckIn: bracket.requiresCheckIn ?? false,
+			startTime: bracket.startTime
+				? databaseTimestampToDate(bracket.startTime)
+				: undefined,
+			sources: bracket.sources?.map((source) => ({
+				bracketId: String(source.bracketIdx),
+				placements: placementsToString(source.placements),
+			})),
+		};
+	});
+}
+
+function placementsToString(placements: number[]): string {
+	if (placements.length === 0) return "";
+
+	placements.sort((a, b) => a - b);
+
+	if (placements.some((p) => p < 0)) {
+		placements.sort((a, b) => b - a);
+		return placements.join(",");
+	}
+
+	const ranges: string[] = [];
+	let start = placements[0];
+	let end = placements[0];
+
+	for (let i = 1; i < placements.length; i++) {
+		if (placements[i] === end + 1) {
+			end = placements[i];
+		} else {
+			if (start === end) {
+				ranges.push(`${start}`);
+			} else {
+				ranges.push(`${start}-${end}`);
+			}
+			start = placements[i];
+			end = placements[i];
+		}
+	}
+
+	if (start === end) {
+		ranges.push(String(start));
+	} else {
+		ranges.push(`${start}-${end}`);
+	}
+
+	return ranges.join(",");
+}
 
 /** Takes bracket progression as entered by user as input and returns the validated brackets ready for input to the database or errors if any. */
 export function validatedBrackets(

@@ -809,6 +809,7 @@ class DoubleEliminationBracket extends Bracket {
 			return orderedRoundsIds.slice(0, amountOfRounds);
 		};
 
+		// xxx: something about this should be handled
 		invariant(
 			placements.every((placement) => placement < 0),
 			"Positive placements in DE not implemented",

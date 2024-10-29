@@ -24,6 +24,7 @@ import type { Tables } from "~/db/tables";
 import type { Badge as BadgeType, CalendarEventTag } from "~/db/types";
 import { useUser } from "~/features/auth/core/user";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import type { RankedModeShort } from "~/modules/in-game-lists";
 import { isDefined } from "~/utils/arrays";
@@ -80,6 +81,8 @@ export default function CalendarNewEventPage() {
 	const baseEvent = useBaseEvent();
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
+
+	// xxx: error message + disable if necessary because of format
 
 	if (!user || !canAddNewEvent(user)) {
 		return (
@@ -222,17 +225,23 @@ function EventForm() {
 				</>
 			) : null}
 			{data.isAddingTournament ? (
-				<div className="stack md w-full items-start">
-					<Divider>Tournament maps</Divider>
-					<TournamentMapPickingStyleSelect />
-				</div>
+				<TournamentMapPickingStyleSelect />
 			) : (
 				<MapPoolSection />
 			)}
 			{data.isAddingTournament ? (
 				<div className="stack md w-full">
 					<Divider>Tournament format</Divider>
-					<TournamentFormatSelector />
+					<TournamentFormatSelector
+						initialBrackets={
+							data.eventToEdit?.tournament?.ctx.settings.bracketProgression
+								? Progression.validatedBracketsToInputFormat(
+										data.eventToEdit?.tournament?.ctx.settings
+											.bracketProgression,
+									)
+								: undefined
+						}
+					/>
 				</div>
 			) : null}
 			<Button
@@ -998,7 +1007,8 @@ function TournamentMapPickingStyleSelect() {
 	}
 
 	return (
-		<>
+		<div className="stack md w-full items-start">
+			<Divider>Tournament maps</Divider>
 			<div>
 				<label htmlFor={id}>Map picking style</label>
 				<select
@@ -1031,7 +1041,7 @@ function TournamentMapPickingStyleSelect() {
 					/>
 				</>
 			) : null}
-		</>
+		</div>
 	);
 }
 

@@ -2,7 +2,13 @@ import { type Insertable, type NotNull, type Transaction, sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { nanoid } from "nanoid";
 import { db } from "~/db/sql";
-import type { CastedMatchesInfo, DB, PreparedMaps, Tables } from "~/db/tables";
+import type {
+	CastedMatchesInfo,
+	DB,
+	PreparedMaps,
+	Tables,
+	TournamentSettings,
+} from "~/db/tables";
 import { Status } from "~/modules/brackets-model";
 import { modesShort } from "~/modules/in-game-lists";
 import { nullFilledArray } from "~/utils/arrays";
@@ -594,6 +600,33 @@ export function checkOut({
 				})
 				.execute();
 		}
+	});
+}
+
+export function updateProgression({
+	tournamentId,
+	bracketProgression,
+}: {
+	tournamentId: number;
+	bracketProgression: TournamentSettings["bracketProgression"];
+}) {
+	return db.transaction().execute(async (trx) => {
+		const existingSettings = await trx
+			.selectFrom("Tournament")
+			.select("settings")
+			.where("id", "=", tournamentId)
+			.executeTakeFirstOrThrow();
+
+		await trx
+			.updateTable("Tournament")
+			.set({
+				settings: JSON.stringify({
+					...existingSettings.settings,
+					bracketProgression,
+				}),
+			})
+			.where("id", "=", tournamentId)
+			.execute();
 	});
 }
 

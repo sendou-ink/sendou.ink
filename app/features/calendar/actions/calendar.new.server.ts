@@ -181,6 +181,32 @@ export const action: ActionFunction = async ({ request }) => {
 	throw redirect(calendarEventPage(createdEventId));
 };
 
+export const bracketProgressionSchema = z.preprocess(
+	safeJSONParse,
+	z.array(
+		z.object({
+			type: z.enum(TOURNAMENT_STAGE_TYPES),
+			name: z.string().min(1).max(TOURNAMENT.BRACKET_NAME_MAX_LENGTH),
+			settings: z.object({
+				thirdPlaceMatch: z.boolean().optional(),
+				teamsPerGroup: z.number().int().optional(),
+				groupCount: z.number().int().optional(),
+				roundCount: z.number().int().optional(),
+			}),
+			requiresCheckIn: z.boolean(),
+			startTime: z.number().optional(),
+			sources: z
+				.array(
+					z.object({
+						bracketIdx: z.number(),
+						placements: z.array(z.number()),
+					}),
+				)
+				.optional(),
+		}),
+	),
+);
+
 export const newCalendarEventActionSchema = z
 	.object({
 		eventToEditId: z.preprocess(actualNumber, id.nullish()),
@@ -255,33 +281,7 @@ export const newCalendarEventActionSchema = z
 		//
 		// tournament format related fields
 		//
-		bracketProgression: z
-			.preprocess(
-				safeJSONParse,
-				z.array(
-					z.object({
-						type: z.enum(TOURNAMENT_STAGE_TYPES),
-						name: z.string().min(1).max(TOURNAMENT.BRACKET_NAME_MAX_LENGTH),
-						settings: z.object({
-							thirdPlaceMatch: z.boolean().optional(),
-							teamsPerGroup: z.number().int().optional(),
-							groupCount: z.number().int().optional(),
-							roundCount: z.number().int().optional(),
-						}),
-						requiresCheckIn: z.boolean(),
-						startTime: z.number().optional(),
-						sources: z
-							.array(
-								z.object({
-									bracketIdx: z.number(),
-									placements: z.array(z.number()),
-								}),
-							)
-							.optional(),
-					}),
-				),
-			)
-			.nullish(),
+		bracketProgression: bracketProgressionSchema.nullish(),
 		minMembersPerTeam: z.coerce.number().int().min(1).max(4).nullish(),
 		withUndergroundBracket: z.preprocess(checkboxValueToBoolean, z.boolean()),
 		thirdPlaceMatch: z.preprocess(

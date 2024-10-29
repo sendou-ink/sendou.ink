@@ -11,35 +11,50 @@ import { PlusIcon } from "~/components/icons/Plus";
 import { TOURNAMENT } from "~/features/tournament";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 
-export function TournamentFormatSelector() {
-	// xxx: what default?
-	const [brackets, setBrackets] = React.useState<Progression.InputBracket[]>([
-		{
-			id: nanoid(),
-			name: "Main Bracket",
-			type: "double_elimination",
-			requiresCheckIn: false,
-			settings: {
-				thirdPlaceMatch: false,
-			},
-		},
-	]);
+const defaultBracket = (): Progression.InputBracket => ({
+	id: nanoid(),
+	name: "Main Bracket",
+	type: "double_elimination",
+	requiresCheckIn: false,
+	settings: {},
+});
+
+export function TournamentFormatSelector({
+	initialBrackets,
+}: {
+	initialBrackets?: Progression.InputBracket[];
+}) {
+	const [brackets, setBrackets] = React.useState<Progression.InputBracket[]>(
+		initialBrackets ?? [defaultBracket()],
+	);
 
 	const handleAddBracket = () => {
 		const newBracket: Progression.InputBracket =
 			brackets.length === 1
-				? {
-						id: nanoid(),
-						name: "",
-						type: "single_elimination",
-						requiresCheckIn: true,
-						settings: {
-							thirdPlaceMatch: false,
-						},
-					}
+				? defaultBracket()
 				: { ...brackets.at(-1)!, id: nanoid(), name: "" };
 
 		setBrackets([...brackets, newBracket]);
+	};
+
+	const handleDeleteBracket = (idx: number) => {
+		const newBrackets = brackets.filter((_, i) => i !== idx);
+		const newBracketIds = new Set(newBrackets.map((b) => b.id));
+
+		const updatedBrackets = newBrackets.map((b) => ({
+			...b,
+			sources:
+				newBrackets.length === 1
+					? undefined
+					: b.sources?.map((source) => ({
+							...source,
+							bracketId: newBracketIds.has(source.bracketId)
+								? source.bracketId
+								: newBrackets[0].id,
+						})),
+		}));
+
+		setBrackets(updatedBrackets);
 	};
 
 	const validated = Progression.validatedBrackets(brackets);
@@ -64,6 +79,7 @@ export function TournamentFormatSelector() {
 							newBrackets[i] = newBracket;
 							setBrackets(newBrackets);
 						}}
+						onDelete={() => handleDeleteBracket(i)}
 						count={i + 1}
 					/>
 				))}
@@ -85,11 +101,13 @@ function TournamentFormatBracketSelector({
 	bracket,
 	brackets,
 	onChange,
+	onDelete,
 	count,
 }: {
 	bracket: Progression.InputBracket;
 	brackets: Progression.InputBracket[];
 	onChange: (newBracket: Progression.InputBracket) => void;
+	onDelete: () => void;
 	count: number;
 }) {
 	const id = React.useId();
@@ -106,7 +124,19 @@ function TournamentFormatBracketSelector({
 
 	return (
 		<div className="stack horizontal md items-center">
-			<div className="format-selector__count">Bracket #{count}</div>
+			<div>
+				<div className="format-selector__count">Bracket #{count}</div>
+				{!bracket.disabled ? (
+					<Button
+						size="tiny"
+						variant="minimal-destructive"
+						onClick={onDelete}
+						className="mx-auto"
+					>
+						Delete
+					</Button>
+				) : null}
+			</div>
 			<div className="format-selector__divider" />
 			<div className="stack md items-start">
 				<div>
@@ -116,6 +146,7 @@ function TournamentFormatBracketSelector({
 						value={bracket.name}
 						onChange={(e) => updateBracket({ name: e.target.value })}
 						maxLength={TOURNAMENT.BRACKET_NAME_MAX_LENGTH}
+						readOnly={bracket.disabled}
 					/>
 				</div>
 
@@ -128,6 +159,7 @@ function TournamentFormatBracketSelector({
 							onChange={(newDate) =>
 								updateBracket({ startTime: newDate ?? undefined })
 							}
+							readOnly={bracket.disabled}
 						/>
 						<FormMessage type="info">
 							If missing, bracket can be started when the previous brackets have
@@ -144,6 +176,7 @@ function TournamentFormatBracketSelector({
 							setChecked={(checked) =>
 								updateBracket({ requiresCheckIn: checked })
 							}
+							disabled={bracket.disabled}
 						/>
 						<FormMessage type="info">
 							Check-in starts 1 hour before start time or right after the
@@ -164,6 +197,7 @@ function TournamentFormatBracketSelector({
 						className="w-max"
 						name="format"
 						id={createId("format")}
+						disabled={bracket.disabled}
 					>
 						<option value="single_elimination">Single-elimination</option>
 						<option value="double_elimination">Double-elimination</option>
@@ -184,6 +218,7 @@ function TournamentFormatBracketSelector({
 									settings: { ...bracket.settings, thirdPlaceMatch: checked },
 								})
 							}
+							disabled={bracket.disabled}
 						/>
 					</div>
 				) : null}
@@ -204,6 +239,7 @@ function TournamentFormatBracketSelector({
 							className="w-max"
 							name="teamsPerGroup"
 							id="teamsPerGroup"
+							disabled={bracket.disabled}
 						>
 							<option value="3">3</option>
 							<option value="4">4</option>
@@ -229,6 +265,7 @@ function TournamentFormatBracketSelector({
 							className="w-max"
 							name="swissGroupCount"
 							id="swissGroupCount"
+							disabled={bracket.disabled}
 						>
 							<option value="1">1</option>
 							<option value="2">2</option>
@@ -256,6 +293,7 @@ function TournamentFormatBracketSelector({
 							className="w-max"
 							name="swissRoundCount"
 							id="swissRoundCount"
+							disabled={bracket.disabled}
 						>
 							<option value="3">3</option>
 							<option value="4">4</option>
