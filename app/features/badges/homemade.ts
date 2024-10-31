@@ -15,6 +15,16 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Turf Takedown 4v4s",
+		fileName: "turf1230",
+		authorDiscordId: "354880982890971136",
+	},
+	{
+		displayName: "Turf Takedown 2v2s",
+		fileName: "turf12300",
+		authorDiscordId: "354880982890971136",
+	},
+	{
 		displayName: "TFS Tourneys",
 		fileName: "tfstourney",
 		authorDiscordId: "789943264370884708",
