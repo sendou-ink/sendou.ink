@@ -274,4 +274,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "frostbitebase2x",
 		authorDiscordId: "354880982890971136",
 	},
+	{
+		displayName: "Faze Cup",
+		fileName: "Faze Cup",
+		authorDiscordId: "633861275826388993",
+	},
 ];
