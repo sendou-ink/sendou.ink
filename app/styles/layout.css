@@ -78,7 +78,7 @@
 	display: grid;
 	position: fixed;
 	right: 27.5px;
-	bottom: 27.5px;
+	bottom: 105px;
 	border-radius: 100%;
 	width: 3.75rem;
 	height: 3.75rem;
@@ -368,8 +368,7 @@
 	}
 }
 
-/** Reference to .front-page__side-nav **/
-@media screen and (min-width: 1130px) and (min-height: 900px) {
+@media screen and (min-width: 600px) {
 	.layout__hamburger-fab {
 		display: none;
 	}

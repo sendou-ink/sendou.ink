@@ -58,7 +58,8 @@ export async function findById(id: number) {
 								.select([
 									"TournamentOrganizationMember.userId",
 									"TournamentOrganizationMember.role",
-									"User.username",
+									...COMMON_USER_FIELDS,
+									userChatNameColor,
 								])
 								.whereRef(
 									"TournamentOrganizationMember.organizationId",

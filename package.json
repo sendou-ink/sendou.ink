@@ -19,7 +19,7 @@
 		"biome:fix": "npx @biomejs/biome check --write .",
 		"biome:fix:unsafe": "npx @biomejs/biome check --write --unsafe .",
 		"typecheck": "tsc --noEmit",
-		"test:unit": "cross-env VITE_SITE_DOMAIN=http://localhost:5173 vitest run",
+		"test:unit": "cross-env VITE_SITE_DOMAIN=http://localhost:5173 USE_TEST_SEASONS=false vitest run",
 		"test:e2e": "npx playwright test",
 		"checks": "npm run biome:fix && npm run test:unit && npm run check-translation-jsons && npm run typecheck"
 	},
