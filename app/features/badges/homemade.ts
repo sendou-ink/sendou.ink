@@ -245,7 +245,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "354880982890971136",
 	},
 	{
-		displayName: "Frostbite Ascent (Top Bracket)",
+		displayName: "Frostbite Ascent (Summit Bracket)",
 		fileName: "frostbitesilver2x",
 		authorDiscordId: "354880982890971136",
 	},
