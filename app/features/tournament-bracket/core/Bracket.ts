@@ -1,3 +1,4 @@
+import { sub } from "date-fns";
 import type { Tables, TournamentStageSettings } from "~/db/tables";
 import { TOURNAMENT } from "~/features/tournament";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
@@ -347,6 +348,16 @@ export abstract class Bracket {
 	canCheckIn(user: OptionalIdObject) {
 		// using regular check-in
 		if (!this.teamsPendingCheckIn) return false;
+
+		if (!this.checkInRequired) return false;
+
+		if (this.startTime) {
+			const checkInOpen =
+				sub(this.startTime.getTime(), { hours: 1 }).getTime() < Date.now() &&
+				this.startTime.getTime() > Date.now();
+
+			if (!checkInOpen) return false;
+		}
 
 		const team = this.tournament.ownedTeamByUser(user);
 		if (!team) return false;

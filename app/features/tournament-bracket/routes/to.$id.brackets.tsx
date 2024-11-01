@@ -1,6 +1,7 @@
 import type { ActionFunction } from "@remix-run/node";
 import { useRevalidator } from "@remix-run/react";
 import clsx from "clsx";
+import { add } from "date-fns";
 import * as React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
@@ -459,7 +460,26 @@ export default function TournamentBracketsPage() {
 					{bracket.sources?.every((s) => !s.placements.includes(1)) &&
 					bracket.checkInRequired ? (
 						<div className="text-center text-sm font-semi-bold text-lighter mt-2 text-warning">
-							Bracket requires check-in
+							Bracket requires check-in{" "}
+							{bracket.startTime ? (
+								<span suppressHydrationWarning>
+									(open{" "}
+									{bracket.startTime.toLocaleString("en-US", {
+										hour: "numeric",
+										minute: "numeric",
+										weekday: "long",
+									})}{" "}
+									-{" "}
+									{add(bracket.startTime, { hours: 1 }).toLocaleTimeString(
+										"en-US",
+										{
+											hour: "numeric",
+											minute: "numeric",
+										},
+									)}
+									)
+								</span>
+							) : null}
 						</div>
 					) : null}
 				</div>

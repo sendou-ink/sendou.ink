@@ -126,6 +126,35 @@ describe("validatedSources - PLACEMENTS_PARSE_ERROR", () => {
 		]);
 	});
 
+	it("handles parsing with negative placements", () => {
+		const result = Progression.validatedBrackets([
+			{
+				id: "1",
+				name: "Bracket 1",
+				type: "double_elimination",
+				settings: {},
+				requiresCheckIn: false,
+			},
+			{
+				id: "2",
+				name: "Bracket 2",
+				type: "single_elimination",
+				settings: {},
+				requiresCheckIn: false,
+				sources: [
+					{
+						bracketId: "1",
+						placements: "-1,-2",
+					},
+				],
+			},
+		]) as Progression.ParsedBracket[];
+
+		expect(result[1].sources).toEqual([
+			{ bracketIdx: 0, placements: [-1, -2] },
+		]);
+	});
+
 	it("parsing fails if invalid characters", () => {
 		const error = getValidatedBracketsFromPlacements(
 			"1st,2nd,3rd,4th",

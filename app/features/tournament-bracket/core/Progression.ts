@@ -248,6 +248,13 @@ function parsePlacements(placements: string) {
 
 	for (let part of parts) {
 		part = part.trim();
+
+		const isNegative = part.match(/^-\d+$/);
+		if (isNegative) {
+			result.push(Number(part));
+			continue;
+		}
+
 		const isValid = part.match(/^\d+(-\d+)?$/);
 		if (!isValid) return null;
 
@@ -314,14 +321,18 @@ function gapInPlacements(_brackets: ParsedBracket[]) {
 	return null;
 }
 
-// // xxx: tests & export?
-// function resolveFinals() {}
-
 /** Takes the return type of `Progression.validatedBrackets` as an input and narrows the type to a successful validation */
 export function isBrackets(
 	input: ParsedBracket[] | ValidationError,
 ): input is ParsedBracket[] {
 	return Array.isArray(input);
+}
+
+/** Takes the return type of `Progression.validatedBrackets` as an input and narrows the type to a unsuccessful validation */
+export function isError(
+	input: ParsedBracket[] | ValidationError,
+): input is ValidationError {
+	return !Array.isArray(input);
 }
 
 /** Given bracketIdx and bracketProgression will resolve if this the "final stage" of the tournament that decides the final standings  */

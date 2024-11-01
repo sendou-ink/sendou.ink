@@ -57,8 +57,6 @@ import { seedsActionSchema } from "../tournament-schemas.server";
 import { tournamentIdFromParams } from "../tournament-utils";
 import { useTournament } from "./to.$id";
 
-// xxx: show dividers to select which go to which starting bracket?
-
 export const action: ActionFunction = async ({ request, params }) => {
 	const data = await parseRequestPayload({
 		request,

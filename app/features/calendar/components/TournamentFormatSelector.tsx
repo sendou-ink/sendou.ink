@@ -93,6 +93,10 @@ export function TournamentFormatSelector({
 			>
 				Add bracket
 			</Button>
+			{/** xxx: show error correctly */}
+			{Progression.isError(validated) ? (
+				<FormMessage type="error">{JSON.stringify(validated)}</FormMessage>
+			) : null}
 		</div>
 	);
 }
