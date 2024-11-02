@@ -165,12 +165,15 @@ describe("validatedSources - PLACEMENTS_PARSE_ERROR", () => {
 });
 
 const getValidatedBrackets = (
-	brackets: Omit<Progression.InputBracket, "id" | "name" | "requiresCheckIn">[],
+	brackets: (Omit<
+		Progression.InputBracket,
+		"id" | "name" | "requiresCheckIn"
+	> & { name?: string })[],
 ) =>
 	Progression.validatedBrackets(
 		brackets.map((b, i) => ({
 			id: String(i),
-			name: `Bracket ${i + 1}`,
+			name: b.name ?? `Bracket ${i + 1}`,
 			requiresCheckIn: false,
 			...b,
 		})),
@@ -254,7 +257,7 @@ describe("validatedSources - other rules", () => {
 		expect((error as any).bracketIdxs).toEqual([1, 2]);
 	});
 
-	it.todo("handles GAP_IN_PLACEMENTS", () => {
+	it("handles GAP_IN_PLACEMENTS", () => {
 		const error = getValidatedBrackets([
 			{
 				settings: {},
@@ -283,6 +286,77 @@ describe("validatedSources - other rules", () => {
 		]) as Progression.ValidationError;
 
 		expect(error.type).toBe("GAP_IN_PLACEMENTS");
+		expect((error as any).bracketIdx).toEqual(0);
+	});
+
+	it("handles TOO_MANY_PLACEMENTS", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {
+					teamsPerGroup: 4,
+				},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1,2,3,4,5",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("TOO_MANY_PLACEMENTS");
+		expect((error as any).bracketIdx).toEqual(1);
+	});
+
+	it("handles DUPLICATE_BRACKET_NAME", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {},
+				type: "round_robin",
+				name: "Bracket 1",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				name: "Bracket 1",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("DUPLICATE_BRACKET_NAME");
+		expect((error as any).bracketIdxs).toEqual([0, 1]);
+	});
+
+	it("handles NAME_MISSING", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {},
+				type: "round_robin",
+				name: "",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("NAME_MISSING");
 		expect((error as any).bracketIdx).toEqual(0);
 	});
 

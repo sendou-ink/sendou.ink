@@ -33,7 +33,6 @@ import { useTournament } from "./to.$id";
 import { action } from "../actions/to.$id.admin.server";
 export { action };
 
-// xxx: after start "Edit event info" becomes "Edit format" popup
 export default function TournamentAdminPage() {
 	const { t } = useTranslation(["calendar"]);
 	const tournament = useTournament();

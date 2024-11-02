@@ -11,8 +11,6 @@ import { useTournament } from "~/features/tournament/routes/to.$id";
 import { logger } from "~/utils/logger";
 import { tournamentMatchPage, tournamentRegisterPage } from "~/utils/urls";
 
-// xxx: bracket check in which is potentially delayed
-
 export function TournamentTeamActions() {
 	const tournament = useTournament();
 	const user = useUser();

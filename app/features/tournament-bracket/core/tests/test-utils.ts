@@ -170,6 +170,7 @@ export const progressions = {
 		{
 			...DEFAULT_PROGRESSION_ARGS,
 			type: "single_elimination",
+			name: "B1",
 			sources: [
 				{
 					bracketIdx: 0,
@@ -185,6 +186,7 @@ export const progressions = {
 		},
 		{
 			...DEFAULT_PROGRESSION_ARGS,
+			name: "B1",
 			type: "double_elimination",
 			sources: [
 				{
@@ -195,6 +197,7 @@ export const progressions = {
 		},
 		{
 			...DEFAULT_PROGRESSION_ARGS,
+			name: "B2",
 			type: "round_robin",
 			sources: [
 				{
@@ -205,6 +208,7 @@ export const progressions = {
 		},
 		{
 			...DEFAULT_PROGRESSION_ARGS,
+			name: "B3",
 			type: "double_elimination",
 			sources: [
 				{
@@ -222,10 +226,12 @@ export const progressions = {
 		{
 			...DEFAULT_PROGRESSION_ARGS,
 			type: "round_robin",
+			name: "B1",
 		},
 		{
 			...DEFAULT_PROGRESSION_ARGS,
 			type: "single_elimination",
+			name: "B2",
 			sources: [
 				{
 					bracketIdx: 0,
@@ -236,6 +242,7 @@ export const progressions = {
 		{
 			...DEFAULT_PROGRESSION_ARGS,
 			type: "single_elimination",
+			name: "B3",
 			sources: [
 				{
 					bracketIdx: 1,

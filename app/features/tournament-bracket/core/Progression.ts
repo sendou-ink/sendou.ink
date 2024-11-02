@@ -77,6 +77,7 @@ export type ValidationError =
 	// all brackets must have a name that is not an empty string
 	| {
 			type: "NAME_MISSING";
+			bracketIdx: number;
 	  }
 	// bracket cannot be both source and destination at the same time
 	| {
@@ -177,14 +178,13 @@ export function validatedBrackets(
 export function bracketsToValidationError(
 	brackets: ParsedBracket[],
 ): ValidationError | null {
-	let faultyBracketIdx: number | null = null;
-	let faultyBracketIdxs: number[] | null = null;
-
 	if (!resolvesWinner(brackets)) {
 		return {
 			type: "NOT_RESOLVING_WINNER",
 		};
 	}
+
+	let faultyBracketIdxs: number[] | null = null;
 
 	faultyBracketIdxs = samePlacementToMultipleBrackets(brackets);
 	if (faultyBracketIdxs) {
@@ -194,10 +194,36 @@ export function bracketsToValidationError(
 		};
 	}
 
+	faultyBracketIdxs = duplicateNames(brackets);
+	if (faultyBracketIdxs) {
+		return {
+			type: "DUPLICATE_BRACKET_NAME",
+			bracketIdxs: faultyBracketIdxs,
+		};
+	}
+
+	let faultyBracketIdx: number | null = null;
+
 	faultyBracketIdx = gapInPlacements(brackets);
-	if (faultyBracketIdx) {
+	if (typeof faultyBracketIdx === "number") {
 		return {
 			type: "GAP_IN_PLACEMENTS",
+			bracketIdx: faultyBracketIdx,
+		};
+	}
+
+	faultyBracketIdx = tooManyPlacements(brackets);
+	if (typeof faultyBracketIdx === "number") {
+		return {
+			type: "TOO_MANY_PLACEMENTS",
+			bracketIdx: faultyBracketIdx,
+		};
+	}
+
+	faultyBracketIdx = nameMissing(brackets);
+	if (typeof faultyBracketIdx === "number") {
+		return {
+			type: "NAME_MISSING",
 			bracketIdx: faultyBracketIdx,
 		};
 	}
@@ -317,7 +343,81 @@ function samePlacementToMultipleBrackets(brackets: ParsedBracket[]) {
 	return result.length ? result : null;
 }
 
-function gapInPlacements(_brackets: ParsedBracket[]) {
+function duplicateNames(brackets: ParsedBracket[]) {
+	const names = new Set<string>();
+
+	for (const [bracketIdx, bracket] of brackets.entries()) {
+		if (names.has(bracket.name)) {
+			return [brackets.findIndex((b) => b.name === bracket.name), bracketIdx];
+		}
+
+		names.add(bracket.name);
+	}
+
+	return null;
+}
+
+function gapInPlacements(brackets: ParsedBracket[]) {
+	const placementsMap = new Map<number, number[]>();
+
+	for (const bracket of brackets) {
+		if (!bracket.sources) continue;
+
+		for (const source of bracket.sources) {
+			if (!placementsMap.has(source.bracketIdx)) {
+				placementsMap.set(source.bracketIdx, []);
+			}
+
+			placementsMap.get(source.bracketIdx)!.push(...source.placements);
+		}
+	}
+
+	for (const [sourceBracketIdx, placements] of placementsMap.entries()) {
+		placements.sort((a, b) => a - b);
+
+		for (let i = 0; i < placements.length - 1; i++) {
+			if (placements[i] + 1 !== placements[i + 1]) {
+				return sourceBracketIdx;
+			}
+		}
+	}
+
+	return null;
+}
+
+function tooManyPlacements(brackets: ParsedBracket[]) {
+	const roundRobins = brackets.flatMap((bracket, bracketIdx) =>
+		bracket.type === "round_robin" ? [bracketIdx] : [],
+	);
+	// technically not correct but i guess not too common to have different round robins in the same bracket
+	const size = Math.min(
+		...roundRobins.map(
+			(bracketIdx) =>
+				brackets[bracketIdx].settings.teamsPerGroup ?? Number.POSITIVE_INFINITY,
+		),
+	);
+
+	for (const [bracketIdx, bracket] of brackets.entries()) {
+		for (const source of bracket.sources ?? []) {
+			if (
+				roundRobins.includes(source.bracketIdx) &&
+				source.placements.some((placement) => placement > size)
+			) {
+				return bracketIdx;
+			}
+		}
+	}
+
+	return null;
+}
+
+function nameMissing(brackets: ParsedBracket[]) {
+	for (const [bracketIdx, bracket] of brackets.entries()) {
+		if (!bracket.name) {
+			return bracketIdx;
+		}
+	}
+
 	return null;
 }
 

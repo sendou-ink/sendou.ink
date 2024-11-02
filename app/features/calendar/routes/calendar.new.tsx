@@ -82,8 +82,6 @@ export default function CalendarNewEventPage() {
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
 
-	// xxx: error message + disable if necessary because of format
-
 	if (!user || !canAddNewEvent(user)) {
 		return (
 			<Main className="stack items-center">

@@ -7,6 +7,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
@@ -58,8 +59,6 @@ export const action: ActionFunction = async ({ request }) => {
 	});
 
 	validate(canAddNewEvent(user), "Not authorized", 401);
-
-	// xxx: validate progression ok via the progression module
 
 	const startTimes = data.date.map((date) => dateToDatabaseTimestamp(date));
 	const commonArgs = {
@@ -183,28 +182,34 @@ export const action: ActionFunction = async ({ request }) => {
 
 export const bracketProgressionSchema = z.preprocess(
 	safeJSONParse,
-	z.array(
-		z.object({
-			type: z.enum(TOURNAMENT_STAGE_TYPES),
-			name: z.string().min(1).max(TOURNAMENT.BRACKET_NAME_MAX_LENGTH),
-			settings: z.object({
-				thirdPlaceMatch: z.boolean().optional(),
-				teamsPerGroup: z.number().int().optional(),
-				groupCount: z.number().int().optional(),
-				roundCount: z.number().int().optional(),
+	z
+		.array(
+			z.object({
+				type: z.enum(TOURNAMENT_STAGE_TYPES),
+				name: z.string().min(1).max(TOURNAMENT.BRACKET_NAME_MAX_LENGTH),
+				settings: z.object({
+					thirdPlaceMatch: z.boolean().optional(),
+					teamsPerGroup: z.number().int().optional(),
+					groupCount: z.number().int().optional(),
+					roundCount: z.number().int().optional(),
+				}),
+				requiresCheckIn: z.boolean(),
+				startTime: z.number().optional(),
+				sources: z
+					.array(
+						z.object({
+							bracketIdx: z.number(),
+							placements: z.array(z.number()),
+						}),
+					)
+					.optional(),
 			}),
-			requiresCheckIn: z.boolean(),
-			startTime: z.number().optional(),
-			sources: z
-				.array(
-					z.object({
-						bracketIdx: z.number(),
-						placements: z.array(z.number()),
-					}),
-				)
-				.optional(),
-		}),
-	),
+		)
+		.refine(
+			(progression) =>
+				Progression.bracketsToValidationError(progression) === null,
+			"Invalid bracket progression",
+		),
 );
 
 export const newCalendarEventActionSchema = z

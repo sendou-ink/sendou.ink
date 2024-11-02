@@ -315,7 +315,6 @@ function TournamentFormatBracketSelector({
 						<InfoPopover tiny>xxx: link to docs here</InfoPopover>
 					</div>
 					{/** xxx: If invitational "Participants added by the organizer" */}
-					{/** xxx: Allow many brackets joining from sign-up */}
 					{isFirstBracket ? (
 						<FormMessage type="info">
 							Participants join from sign-up

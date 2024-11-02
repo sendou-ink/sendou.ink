@@ -977,7 +977,6 @@ export class Tournament {
 		);
 	}
 
-	// xxx: progress "waiting for bracket check in"?
 	teamMemberOfProgressStatus(user: OptionalIdObject) {
 		const team = this.teamMemberOfByUser(user);
 		if (!team) return null;
