@@ -274,4 +274,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "frostbitebase2x",
 		authorDiscordId: "354880982890971136",
 	},
+	{
+		displayName: "Biggest Fish in the Sea",
+		fileName: "bfis",
+		authorDiscordId: "629773997822967819",
+	},
 ];
