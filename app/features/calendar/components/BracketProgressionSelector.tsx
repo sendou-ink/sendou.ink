@@ -23,9 +23,11 @@ const defaultBracket = (): Progression.InputBracket => ({
 export function BracketProgressionSelector({
 	initialBrackets,
 	isInvitationalTournament,
+	setErrored,
 }: {
 	initialBrackets?: Progression.InputBracket[];
 	isInvitationalTournament: boolean;
+	setErrored: (errored: boolean) => void;
 }) {
 	const [brackets, setBrackets] = React.useState<Progression.InputBracket[]>(
 		initialBrackets ?? [defaultBracket()],
@@ -69,6 +71,12 @@ export function BracketProgressionSelector({
 	};
 
 	const validated = Progression.validatedBrackets(brackets);
+
+	if (Progression.isError(validated)) {
+		setErrored(true);
+	} else {
+		setErrored(false);
+	}
 
 	return (
 		<div className="stack lg items-start">

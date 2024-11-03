@@ -161,6 +161,8 @@ function EventForm() {
 		baseEvent?.tournament?.ctx.settings.isInvitational ?? false,
 	);
 	const data = useLoaderData<typeof loader>();
+	const [bracketProgressionErrored, setBracketProgressionErrored] =
+		React.useState(false);
 
 	const handleSubmit = () => {
 		const formData = new FormData(ref.current!);
@@ -182,6 +184,7 @@ function EventForm() {
 
 	const submitButtonDisabled = () => {
 		if (fetcher.state !== "idle") return true;
+		if (bracketProgressionErrored) return true;
 
 		return false;
 	};
@@ -247,6 +250,7 @@ function EventForm() {
 								: undefined
 						}
 						isInvitationalTournament={isInvitational}
+						setErrored={setBracketProgressionErrored}
 					/>
 				</div>
 			) : null}

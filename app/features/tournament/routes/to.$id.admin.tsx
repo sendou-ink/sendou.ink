@@ -721,12 +721,12 @@ function BracketReset() {
 function BracketProgressionEditDialog({ close }: { close: () => void }) {
 	const tournament = useTournament();
 	const fetcher = useFetcher();
+	const [bracketProgressionErrored, setBracketProgressionErrored] =
+		React.useState(false);
 
 	const disabledBracketIdxs = tournament.brackets
 		.filter((bracket) => !bracket.preview)
 		.map((bracket) => bracket.idx);
-
-	// xxx: error message + disable if necessary
 
 	return (
 		<Dialog isOpen className="w-max">
@@ -739,9 +739,13 @@ function BracketProgressionEditDialog({ close }: { close: () => void }) {
 						disabled: disabledBracketIdxs.includes(idx),
 					}))}
 					isInvitationalTournament={tournament.isInvitational}
+					setErrored={setBracketProgressionErrored}
 				/>
 				<div className="stack md horizontal justify-center mt-6">
-					<SubmitButton _action="UPDATE_TOURNAMENT_PROGRESSION">
+					<SubmitButton
+						_action="UPDATE_TOURNAMENT_PROGRESSION"
+						disabled={bracketProgressionErrored}
+					>
 						Save changes
 					</SubmitButton>
 					<Button variant="destructive" onClick={close}>
