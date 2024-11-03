@@ -284,4 +284,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "chishoals",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "Shark Tank: Deep Waters",
+		fileName: "blahajopen",
+		authorDiscordId: "528851510222782474",
+	},
 ];
