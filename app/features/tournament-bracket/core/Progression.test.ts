@@ -392,6 +392,50 @@ describe("validatedSources - other rules", () => {
 		expect((error as any).bracketIdx).toEqual(1);
 	});
 
+	it("handles NO_SE_SOURCE", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {},
+				type: "single_elimination",
+			},
+			{
+				settings: {},
+				type: "double_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("NO_SE_SOURCE");
+		expect((error as any).bracketIdx).toEqual(1);
+	});
+
+	it("handles NO_DE_POSITIVE", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {},
+				type: "double_elimination",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("NO_DE_POSITIVE");
+		expect((error as any).bracketIdx).toEqual(1);
+	});
+
 	it("throws an error if many missing sources", () => {
 		expect(() =>
 			getValidatedBrackets([
