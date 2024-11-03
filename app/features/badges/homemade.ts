@@ -25,6 +25,11 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "1170249805373657093",
 	},
 	{
+		displayName: "Peashooter Achievement",
+		fileName: "peashooter",
+		authorDiscordId: "789943264370884708",
+	},
+	{
 		displayName: "TFS Tourneys",
 		fileName: "tfstourney",
 		authorDiscordId: "789943264370884708",
@@ -125,6 +130,21 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "354880982890971136",
 	},
 	{
+		displayName: "Pinch Zach's Bank",
+		fileName: "pinchzachsbank",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Pou Basket",
+		fileName: "pou",
+		authorDiscordId: "285896534380511234",
+	},
+	{
+		displayName: "Blue Pou Achievement",
+		fileName: "pou_b",
+		authorDiscordId: "285896534380511234",
+	},
+	{
 		displayName: "Junior's Draft",
 		fileName: "jrs_draft",
 		authorDiscordId: "118724226994667523",
@@ -178,6 +198,21 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Splat'n'Go",
 		fileName: "splat-n-go",
 		authorDiscordId: "570323825669963972",
+	},
+	{
+		displayName: "Minus One Cup",
+		fileName: "minus-one-cup",
+		authorDiscordId: "569271521776762896",
+	},
+	{
+		displayName: "Minus One Cup (Coach)",
+		fileName: "minus-one-cup-coach",
+		authorDiscordId: "569271521776762896",
+	},
+	{
+		displayName: "Minus One Open",
+		fileName: "minus-one-open",
+		authorDiscordId: "569271521776762896",
 	},
 	{
 		displayName: "Karot's Tourneys (100 KT Power)",
@@ -283,5 +318,20 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Frostbite Ascent (Top 8)",
 		fileName: "frostbitebase2x",
 		authorDiscordId: "354880982890971136",
+	},
+	{
+		displayName: "Squeaky Clean Scrap",
+		fileName: "wiper",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Chi-Shoals",
+		fileName: "chishoals",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Shark Tank: Deep Waters",
+		fileName: "blahajopen",
+		authorDiscordId: "528851510222782474",
 	},
 ];
