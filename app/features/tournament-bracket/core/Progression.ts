@@ -1,5 +1,6 @@
 // todo
 
+import compare from "just-compare";
 import type { Tables, TournamentStageSettings } from "~/db/tables";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import {
@@ -566,4 +567,25 @@ function resolveMainBracketProgression(brackets: ParsedBracket[]) {
 	}
 
 	return result;
+}
+
+/** Returns array of bracket indexes that were changed */
+export function changedBracketProgression(
+	oldProgression: ParsedBracket[],
+	newProgression: ParsedBracket[],
+) {
+	const changed: number[] = [];
+
+	for (let i = 0; i < oldProgression.length; i++) {
+		const oldBracket = oldProgression[i];
+		const newBracket = newProgression.at(i);
+
+		if (!newBracket) continue;
+
+		if (!compare(oldBracket, newBracket)) {
+			changed.push(i);
+		}
+	}
+
+	return changed;
 }

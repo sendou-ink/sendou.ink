@@ -531,3 +531,24 @@ describe("isUnderground", () => {
 		).toThrow();
 	});
 });
+
+describe("changedBracketProgression", () => {
+	it("reports changed bracket indexes", () => {
+		const withChanges = structuredClone(progressions.lowInk);
+		withChanges[0].name = "New name";
+		withChanges[1].type = "swiss";
+
+		expect(
+			Progression.changedBracketProgression(progressions.lowInk, withChanges),
+		).toEqual([0, 1]);
+	});
+
+	it("returns an empty array if nothing changed", () => {
+		expect(
+			Progression.changedBracketProgression(
+				progressions.lowInk,
+				progressions.lowInk,
+			),
+		).toEqual([]);
+	});
+});

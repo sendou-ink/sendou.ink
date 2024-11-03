@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireUserId } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
@@ -350,7 +351,16 @@ export const action: ActionFunction = async ({ request, params }) => {
 			validateIsTournamentOrganizer();
 			validate(!tournament.ctx.isFinalized, "Tournament is finalized");
 
-			// xxx: validate did not change any in progress stages
+			validate(
+				Progression.changedBracketProgression(
+					tournament.ctx.settings.bracketProgression,
+					data.bracketProgression,
+				).every(
+					(changedBracketIdx) =>
+						tournament.bracketByIdx(changedBracketIdx)?.preview,
+				),
+			);
+
 			await TournamentRepository.updateProgression({
 				tournamentId: tournament.ctx.id,
 				bracketProgression: data.bracketProgression,
