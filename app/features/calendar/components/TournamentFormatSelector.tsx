@@ -21,8 +21,10 @@ const defaultBracket = (): Progression.InputBracket => ({
 
 export function TournamentFormatSelector({
 	initialBrackets,
+	isInvitationalTournament,
 }: {
 	initialBrackets?: Progression.InputBracket[];
+	isInvitationalTournament: boolean;
 }) {
 	const [brackets, setBrackets] = React.useState<Progression.InputBracket[]>(
 		initialBrackets ?? [defaultBracket()],
@@ -81,6 +83,7 @@ export function TournamentFormatSelector({
 						}}
 						onDelete={() => handleDeleteBracket(i)}
 						count={i + 1}
+						isInvitationalTournament={isInvitationalTournament}
 					/>
 				))}
 			</div>
@@ -107,12 +110,14 @@ function TournamentFormatBracketSelector({
 	onChange,
 	onDelete,
 	count,
+	isInvitationalTournament,
 }: {
 	bracket: Progression.InputBracket;
 	brackets: Progression.InputBracket[];
 	onChange: (newBracket: Progression.InputBracket) => void;
 	onDelete: () => void;
 	count: number;
+	isInvitationalTournament: boolean;
 }) {
 	const id = React.useId();
 
@@ -314,10 +319,13 @@ function TournamentFormatBracketSelector({
 						<Label htmlFor={createId("source")}>Source</Label>{" "}
 						<InfoPopover tiny>xxx: link to docs here</InfoPopover>
 					</div>
-					{/** xxx: If invitational "Participants added by the organizer" */}
 					{isFirstBracket ? (
 						<FormMessage type="info">
-							Participants join from sign-up
+							{isInvitationalTournament ? (
+								<>Participants added by the organizer</>
+							) : (
+								<>Participants join from sign-up</>
+							)}
 						</FormMessage>
 					) : (
 						<SourcesSelector

@@ -156,6 +156,10 @@ function EventForm() {
 	const { eventToEdit, eventToCopy } = useLoaderData<typeof loader>();
 	const ref = React.useRef<HTMLFormElement>(null);
 	const [avatarImg, setAvatarImg] = React.useState<File | null>(null);
+	const baseEvent = useBaseEvent();
+	const [isInvitational, setIsInvitational] = React.useState(
+		baseEvent?.tournament?.ctx.settings.isInvitational ?? false,
+	);
 	const data = useLoaderData<typeof loader>();
 
 	const handleSubmit = () => {
@@ -218,7 +222,10 @@ function EventForm() {
 					<EnableNoScreenToggle />
 					<AutonomousSubsToggle />
 					<RequireIGNToggle />
-					<InvitationalToggle />
+					<InvitationalToggle
+						isInvitational={isInvitational}
+						setIsInvitational={setIsInvitational}
+					/>
 					<StrictDeadlinesToggle />
 				</>
 			) : null}
@@ -239,6 +246,7 @@ function EventForm() {
 									)
 								: undefined
 						}
+						isInvitationalTournament={isInvitational}
 					/>
 				</div>
 			) : null}
@@ -873,11 +881,13 @@ function RequireIGNToggle() {
 	);
 }
 
-function InvitationalToggle() {
-	const baseEvent = useBaseEvent();
-	const [isInvitational, setIsInvitational] = React.useState(
-		baseEvent?.tournament?.ctx.settings.isInvitational ?? false,
-	);
+function InvitationalToggle({
+	isInvitational,
+	setIsInvitational,
+}: {
+	isInvitational: boolean;
+	setIsInvitational: (value: boolean) => void;
+}) {
 	const id = React.useId();
 
 	return (

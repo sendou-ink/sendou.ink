@@ -738,6 +738,7 @@ function BracketProgressionEditDialog({ close }: { close: () => void }) {
 						...bracket,
 						disabled: disabledBracketIdxs.includes(idx),
 					}))}
+					isInvitationalTournament={tournament.isInvitational}
 				/>
 				<div className="stack md horizontal justify-center mt-6">
 					<SubmitButton _action="UPDATE_TOURNAMENT_PROGRESSION">
