@@ -392,7 +392,20 @@ describe("validatedSources - other rules", () => {
 		expect((error as any).bracketIdx).toEqual(1);
 	});
 
-	// xxx: test first sources = null
+	it("throws an error if many missing sources", () => {
+		expect(() =>
+			getValidatedBrackets([
+				{
+					settings: {},
+					type: "round_robin",
+				},
+				{
+					settings: {},
+					type: "single_elimination",
+				},
+			]),
+		).toThrow();
+	});
 });
 
 describe("isFinals", () => {
