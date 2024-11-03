@@ -19,7 +19,7 @@ const defaultBracket = (): Progression.InputBracket => ({
 	settings: {},
 });
 
-export function TournamentFormatSelector({
+export function BracketProgressionSelector({
 	initialBrackets,
 	isInvitationalTournament,
 }: {

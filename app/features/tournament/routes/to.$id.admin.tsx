@@ -27,7 +27,7 @@ import {
 	tournamentPage,
 } from "~/utils/urls";
 import { Dialog } from "../../../components/Dialog";
-import { TournamentFormatSelector } from "../../calendar/components/TournamentFormatSelector";
+import { BracketProgressionSelector } from "../../calendar/components/BracketProgressionSelector";
 import { useTournament } from "./to.$id";
 
 import { action } from "../actions/to.$id.admin.server";
@@ -731,7 +731,7 @@ function BracketProgressionEditDialog({ close }: { close: () => void }) {
 	return (
 		<Dialog isOpen className="w-max">
 			<fetcher.Form method="post">
-				<TournamentFormatSelector
+				<BracketProgressionSelector
 					initialBrackets={Progression.validatedBracketsToInputFormat(
 						tournament.ctx.settings.bracketProgression,
 					).map((bracket, idx) => ({

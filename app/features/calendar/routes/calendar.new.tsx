@@ -49,13 +49,13 @@ import {
 	regClosesAtToDisplayName,
 } from "../calendar-utils";
 import { canAddNewEvent } from "../calendar-utils";
+import { BracketProgressionSelector } from "../components/BracketProgressionSelector";
 import { Tags } from "../components/Tags";
 
 import "~/styles/calendar-new.css";
 import "~/styles/maps.css";
 
 import { action } from "../actions/calendar.new.server";
-import { TournamentFormatSelector } from "../components/TournamentFormatSelector";
 import { loader } from "../loaders/calendar.new.server";
 export { loader, action };
 
@@ -237,7 +237,7 @@ function EventForm() {
 			{data.isAddingTournament ? (
 				<div className="stack md w-full">
 					<Divider>Tournament format</Divider>
-					<TournamentFormatSelector
+					<BracketProgressionSelector
 						initialBrackets={
 							data.eventToEdit?.tournament?.ctx.settings.bracketProgression
 								? Progression.validatedBracketsToInputFormat(
