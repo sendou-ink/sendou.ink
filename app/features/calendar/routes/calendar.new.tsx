@@ -68,7 +68,7 @@ export const meta: MetaFunction = (args) => {
 };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["calendar", "game-misc"],
+	i18n: ["calendar", "game-misc", "tournament"],
 };
 
 const useBaseEvent = () => {

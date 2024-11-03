@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid";
 import * as React from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "~/components/Button";
 import { DateInput } from "~/components/DateInput";
 import { FormMessage } from "~/components/FormMessage";
@@ -31,12 +32,20 @@ export function BracketProgressionSelector({
 	);
 
 	const handleAddBracket = () => {
-		const newBracket: Progression.InputBracket =
-			brackets.length === 1
-				? defaultBracket()
-				: { ...brackets.at(-1)!, id: nanoid(), name: "" };
-
-		setBrackets([...brackets, newBracket]);
+		setBrackets([
+			...brackets,
+			{
+				...defaultBracket(),
+				id: nanoid(),
+				name: "",
+				sources: [
+					{
+						bracketId: brackets[0].id,
+						placements: "",
+					},
+				],
+			},
+		]);
 	};
 
 	const handleDeleteBracket = (idx: number) => {
@@ -81,7 +90,11 @@ export function BracketProgressionSelector({
 							newBrackets[i] = newBracket;
 							setBrackets(newBrackets);
 						}}
-						onDelete={() => handleDeleteBracket(i)}
+						onDelete={
+							i !== 0 && !bracket.disabled
+								? () => handleDeleteBracket(i)
+								: undefined
+						}
 						count={i + 1}
 						isInvitationalTournament={isInvitationalTournament}
 					/>
@@ -96,9 +109,8 @@ export function BracketProgressionSelector({
 			>
 				Add bracket
 			</Button>
-			{/** xxx: show error correctly */}
 			{Progression.isError(validated) ? (
-				<FormMessage type="error">{JSON.stringify(validated)}</FormMessage>
+				<ErrorMessage error={validated} />
 			) : null}
 		</div>
 	);
@@ -115,7 +127,7 @@ function TournamentFormatBracketSelector({
 	bracket: Progression.InputBracket;
 	brackets: Progression.InputBracket[];
 	onChange: (newBracket: Progression.InputBracket) => void;
-	onDelete: () => void;
+	onDelete?: () => void;
 	count: number;
 	isInvitationalTournament: boolean;
 }) {
@@ -135,7 +147,7 @@ function TournamentFormatBracketSelector({
 		<div className="stack horizontal md items-center">
 			<div>
 				<div className="format-selector__count">Bracket #{count}</div>
-				{!bracket.disabled ? (
+				{onDelete ? (
 					<Button
 						size="tiny"
 						variant="minimal-destructive"
@@ -391,5 +403,30 @@ function SourcesSelector({
 				/>
 			</div>
 		</div>
+	);
+}
+
+function ErrorMessage({ error }: { error: Progression.ValidationError }) {
+	const { t } = useTranslation(["tournament"]);
+
+	const bracketIdxsArr = (() => {
+		if (typeof (error as { bracketIdx: number }).bracketIdx === "number") {
+			return [(error as { bracketIdx: number }).bracketIdx];
+		}
+		if ((error as { bracketIdxs: number[] }).bracketIdxs) {
+			return (error as { bracketIdxs: number[] }).bracketIdxs;
+		}
+
+		return null;
+	})();
+
+	return (
+		<FormMessage type="error">
+			Problems with the bracket progression
+			{bracketIdxsArr ? (
+				<> (Bracket {bracketIdxsArr.map((idx) => `#${idx + 1}`).join(", ")})</>
+			) : null}
+			: {t(`tournament:progression.error.${error.type}`)}
+		</FormMessage>
 	);
 }

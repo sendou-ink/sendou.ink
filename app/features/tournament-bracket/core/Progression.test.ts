@@ -18,6 +18,8 @@ import { progressions } from "./tests/test-utils";
 
 // standings to new bracket participants
 
+// xxx: test that bracketIdx reported makes sense for each
+
 describe("bracketsToValidationError - valid formats", () => {
 	it("accepts SE", () => {
 		expect(
