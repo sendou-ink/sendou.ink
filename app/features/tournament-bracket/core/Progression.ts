@@ -79,13 +79,10 @@ export type ValidationError =
 			type: "NAME_MISSING";
 			bracketIdx: number;
 	  }
-	// bracket cannot be both source and destination at the same time
-	| {
-			type: "CIRCULAR_PROGRESSION";
-	  }
 	// negative progression (e.g. losers of first round go somewhere) is only for elimination bracket
 	| {
 			type: "NEGATIVE_PROGRESSION";
+			bracketIdx: number;
 	  };
 
 /** Takes validated brackets and returns them in the format that is ready for user input. */
@@ -224,6 +221,14 @@ export function bracketsToValidationError(
 	if (typeof faultyBracketIdx === "number") {
 		return {
 			type: "NAME_MISSING",
+			bracketIdx: faultyBracketIdx,
+		};
+	}
+
+	faultyBracketIdx = negativeProgression(brackets);
+	if (typeof faultyBracketIdx === "number") {
+		return {
+			type: "NEGATIVE_PROGRESSION",
 			bracketIdx: faultyBracketIdx,
 		};
 	}
@@ -373,10 +378,12 @@ function gapInPlacements(brackets: ParsedBracket[]) {
 	}
 
 	for (const [sourceBracketIdx, placements] of placementsMap.entries()) {
-		placements.sort((a, b) => a - b);
+		const placementsToConsider = placements
+			.filter((placement) => placement > 0)
+			.sort((a, b) => a - b);
 
-		for (let i = 0; i < placements.length - 1; i++) {
-			if (placements[i] + 1 !== placements[i + 1]) {
+		for (let i = 0; i < placementsToConsider.length - 1; i++) {
+			if (placementsToConsider[i] + 1 !== placementsToConsider[i + 1]) {
 				return sourceBracketIdx;
 			}
 		}
@@ -415,6 +422,26 @@ function nameMissing(brackets: ParsedBracket[]) {
 	for (const [bracketIdx, bracket] of brackets.entries()) {
 		if (!bracket.name) {
 			return bracketIdx;
+		}
+	}
+
+	return null;
+}
+
+function negativeProgression(brackets: ParsedBracket[]) {
+	for (const [bracketIdx, bracket] of brackets.entries()) {
+		for (const source of bracket.sources ?? []) {
+			const sourceBracket = brackets[source.bracketIdx];
+			if (
+				sourceBracket.type === "double_elimination" ||
+				sourceBracket.type === "single_elimination"
+			) {
+				continue;
+			}
+
+			if (source.placements.some((placement) => placement < 0)) {
+				return bracketIdx;
+			}
 		}
 	}
 

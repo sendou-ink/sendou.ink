@@ -360,6 +360,38 @@ describe("validatedSources - other rules", () => {
 		expect((error as any).bracketIdx).toEqual(0);
 	});
 
+	it("handles NEGATIVE_PROGRESSION", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "-1,-2",
+					},
+				],
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("NEGATIVE_PROGRESSION");
+		expect((error as any).bracketIdx).toEqual(1);
+	});
+
 	// xxx: test first sources = null
 });
 
