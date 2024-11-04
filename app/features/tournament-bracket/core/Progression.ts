@@ -63,7 +63,7 @@ export type ValidationError =
 	// from one bracket e.g. if 1st goes somewhere and 3rd goes somewhere then 2nd must also go somewhere
 	| {
 			type: "GAP_IN_PLACEMENTS";
-			bracketIdx: number;
+			bracketIdxs: number[];
 	  }
 	// if round robin groups size is 4 then it doesn't make sense to have destination for 5
 	| {
@@ -222,15 +222,15 @@ export function bracketsToValidationError(
 		};
 	}
 
-	let faultyBracketIdx: number | null = null;
-
-	faultyBracketIdx = gapInPlacements(brackets);
-	if (typeof faultyBracketIdx === "number") {
+	faultyBracketIdxs = gapInPlacements(brackets);
+	if (faultyBracketIdxs) {
 		return {
 			type: "GAP_IN_PLACEMENTS",
-			bracketIdx: faultyBracketIdx,
+			bracketIdxs: faultyBracketIdxs,
 		};
 	}
+
+	let faultyBracketIdx: number | null = null;
 
 	faultyBracketIdx = tooManyPlacements(brackets);
 	if (typeof faultyBracketIdx === "number") {
@@ -416,19 +416,33 @@ function gapInPlacements(brackets: ParsedBracket[]) {
 		}
 	}
 
+	let problematicBracketIdx: number | null = null;
 	for (const [sourceBracketIdx, placements] of placementsMap.entries()) {
+		if (problematicBracketIdx !== null) break;
+
 		const placementsToConsider = placements
 			.filter((placement) => placement > 0)
 			.sort((a, b) => a - b);
 
 		for (let i = 0; i < placementsToConsider.length - 1; i++) {
 			if (placementsToConsider[i] + 1 !== placementsToConsider[i + 1]) {
-				return sourceBracketIdx;
+				problematicBracketIdx = sourceBracketIdx;
+				break;
 			}
 		}
 	}
 
-	return null;
+	if (problematicBracketIdx === null) return null;
+
+	return brackets.flatMap((bracket, bracketIdx) => {
+		if (!bracket.sources) return [];
+
+		return bracket.sources.flatMap(
+			(source) => source.bracketIdx === problematicBracketIdx,
+		)
+			? [bracketIdx]
+			: [];
+	});
 }
 
 function tooManyPlacements(brackets: ParsedBracket[]) {

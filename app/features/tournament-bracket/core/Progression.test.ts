@@ -1,24 +1,6 @@
-// validate progression
-// - ends in not rr or grouped
-// - no two placements to different brackets
-// - no "gap" in placements
-// - not too much placements relative to teams per group (RR only)
-// - no two brackets with the same name
-// - all brackets have names
-// - no dupe names
-// - no same source bracket twice in the same object
-// - many starting brackets https://discord.com/channels/299182152161951744/1288567178836312194/1288567178836312194
-// - startTime???
-
 import { describe, expect, it } from "vitest";
 import * as Progression from "./Progression";
 import { progressions } from "./tests/test-utils";
-
-// approximate number of teams
-
-// standings to new bracket participants
-
-// xxx: test that bracketIdx reported makes sense for each
 
 describe("bracketsToValidationError - valid formats", () => {
 	it("accepts SE", () => {
@@ -288,7 +270,7 @@ describe("validatedSources - other rules", () => {
 		]) as Progression.ValidationError;
 
 		expect(error.type).toBe("GAP_IN_PLACEMENTS");
-		expect((error as any).bracketIdx).toEqual(0);
+		expect((error as any).bracketIdxs).toEqual([1, 2]);
 	});
 
 	it("handles TOO_MANY_PLACEMENTS", () => {
