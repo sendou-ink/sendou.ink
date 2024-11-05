@@ -583,7 +583,7 @@ function resolveMainBracketProgression(brackets: ParsedBracket[]) {
 	return result;
 }
 
-/** Returns array of bracket indexes that were changed */
+/** Considering all fields. Returns array of bracket indexes that were changed */
 export function changedBracketProgression(
 	oldProgression: ParsedBracket[],
 	newProgression: ParsedBracket[],
@@ -594,12 +594,33 @@ export function changedBracketProgression(
 		const oldBracket = oldProgression[i];
 		const newBracket = newProgression.at(i);
 
-		if (!newBracket) continue;
-
-		if (!compare(oldBracket, newBracket)) {
+		if (!newBracket || !compare(oldBracket, newBracket)) {
 			changed.push(i);
 		}
 	}
 
 	return changed;
+}
+
+/** Considering only fields that affect the format. Returns true if the tournament bracket format was changed and false otherwise */
+export function changedBracketProgressionFormat(
+	oldProgression: ParsedBracket[],
+	newProgression: ParsedBracket[],
+): boolean {
+	for (let i = 0; i < oldProgression.length; i++) {
+		const oldBracket = oldProgression[i];
+		const newBracket = newProgression.at(i);
+
+		// sources, startTime or requiresCheckIn are not considered
+		if (
+			!newBracket ||
+			newBracket.name !== oldBracket.name ||
+			newBracket.type !== oldBracket.type ||
+			!compare(newBracket.settings, oldBracket.settings)
+		) {
+			return true;
+		}
+	}
+
+	return false;
 }

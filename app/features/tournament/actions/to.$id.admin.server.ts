@@ -359,15 +359,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 					(changedBracketIdx) =>
 						tournament.bracketByIdx(changedBracketIdx)?.preview,
 				),
+				"Can't change started brackets",
 			);
 
 			await TournamentRepository.updateProgression({
 				tournamentId: tournament.ctx.id,
 				bracketProgression: data.bracketProgression,
 			});
-
-			// xxx: what about check ins? <------- especially if removing brackets
-			// xxx: what about prepared maps? <---- "in the middle"
 
 			break;
 		}

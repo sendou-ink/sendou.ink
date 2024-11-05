@@ -9,6 +9,7 @@ import type {
 	Tables,
 	TournamentSettings,
 } from "~/db/tables";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { Status } from "~/modules/brackets-model";
 import { modesShort } from "~/modules/in-game-lists";
 import { nullFilledArray } from "~/utils/arrays";
@@ -611,19 +612,53 @@ export function updateProgression({
 	bracketProgression: TournamentSettings["bracketProgression"];
 }) {
 	return db.transaction().execute(async (trx) => {
-		const existingSettings = await trx
+		const { settings: existingSettings } = await trx
 			.selectFrom("Tournament")
 			.select("settings")
 			.where("id", "=", tournamentId)
 			.executeTakeFirstOrThrow();
 
+		if (
+			Progression.changedBracketProgressionFormat(
+				existingSettings.bracketProgression,
+				bracketProgression,
+			)
+		) {
+			const allTournamentTeamsOfTournament = (
+				await trx
+					.selectFrom("TournamentTeam")
+					.select("id")
+					.where("tournamentId", "=", tournamentId)
+					.execute()
+			).map((t) => t.id);
+
+			// delete all bracket check-ins
+			await trx
+				.deleteFrom("TournamentTeamCheckIn")
+				.where("TournamentTeamCheckIn.bracketIdx", "is not", null)
+				.where(
+					"TournamentTeamCheckIn.tournamentTeamId",
+					"in",
+					allTournamentTeamsOfTournament,
+				)
+				.execute();
+		}
+
+		const newSettings: Tables["Tournament"]["settings"] = {
+			...existingSettings,
+			bracketProgression,
+		};
+
 		await trx
 			.updateTable("Tournament")
 			.set({
-				settings: JSON.stringify({
-					...existingSettings.settings,
+				settings: JSON.stringify(newSettings),
+				preparedMaps: Progression.changedBracketProgressionFormat(
+					existingSettings.bracketProgression,
 					bracketProgression,
-				}),
+				)
+					? null
+					: undefined,
 			})
 			.where("id", "=", tournamentId)
 			.execute();
