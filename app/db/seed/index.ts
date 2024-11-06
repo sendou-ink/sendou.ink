@@ -965,7 +965,7 @@ function calendarEventWithToTools(
 								{
 									type: "single_elimination",
 									name: "Underground bracket",
-									requiresCheckIn: false,
+									requiresCheckIn: true,
 									settings: {},
 									sources: [{ bracketIdx: 0, placements: [3, 4] }],
 								},

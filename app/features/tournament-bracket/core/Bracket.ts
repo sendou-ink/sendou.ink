@@ -349,8 +349,6 @@ export abstract class Bracket {
 		// using regular check-in
 		if (!this.teamsPendingCheckIn) return false;
 
-		if (!this.checkInRequired) return false;
-
 		if (this.startTime) {
 			const checkInOpen =
 				sub(this.startTime.getTime(), { hours: 1 }).getTime() < Date.now() &&
