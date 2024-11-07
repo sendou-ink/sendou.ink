@@ -389,7 +389,11 @@ export function addSkillRangeToGroups({
 	groups,
 	hasLeviathan,
 	isPreview,
-}: { groups: DividedGroups; hasLeviathan: boolean; isPreview: boolean }) {
+}: {
+	groups: DividedGroups;
+	hasLeviathan: boolean;
+	isPreview: boolean;
+}): DividedGroups {
 	const addRange = (group: LookingGroup) => {
 		if (group.members && group.members.length !== FULL_GROUP_SIZE) return group;
 
@@ -413,7 +417,12 @@ export function addSkillRangeToGroups({
 			hasLeviathan,
 		});
 
-		if (!Array.isArray(range.tier)) return group;
+		if (!Array.isArray(range.tier)) {
+			return {
+				...group,
+				tierRange: { diff: range.diff },
+			};
+		}
 
 		return {
 			...group,
