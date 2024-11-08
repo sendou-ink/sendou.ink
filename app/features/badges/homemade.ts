@@ -341,7 +341,7 @@ export const homemadeBadges: BadgeInfo[] = [
 	},
 	{
 		displayName: "Get Coupled",
-		filename: "getcoupled",
+		fileName: "getcoupled",
 		authorDiscordId: "418496741088690177",
 	},
 ];
