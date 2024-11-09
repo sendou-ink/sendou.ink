@@ -9,12 +9,15 @@ import { getServerTournamentManager } from "./brackets-manager/manager.server";
 
 const manager = getServerTournamentManager();
 
+export const tournamentManagerData = (tournamentId: number) =>
+	manager.get.tournamentData(tournamentId);
+
 const combinedTournamentData = async (tournamentId: number) => {
 	const ctx = await TournamentRepository.findById(tournamentId);
 	if (!ctx) return null;
 
 	return {
-		data: manager.get.tournamentData(tournamentId),
+		data: tournamentManagerData(tournamentId),
 		ctx,
 	};
 };

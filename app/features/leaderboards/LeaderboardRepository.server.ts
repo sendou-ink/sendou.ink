@@ -55,8 +55,8 @@ const teamLeaderboardBySeasonQuery = (season: number) =>
 				eb
 					.selectFrom("SkillTeamUser")
 					.innerJoin("User", "SkillTeamUser.userId", "User.id")
-					.leftJoin("TeamMember", "TeamMember.userId", "User.id")
-					.leftJoin("Team", "Team.id", "TeamMember.teamId")
+					.innerJoin("TeamMember", "TeamMember.userId", "User.id")
+					.innerJoin("Team", "Team.id", "TeamMember.teamId")
 					.leftJoin(
 						"UserSubmittedImage",
 						"UserSubmittedImage.id",
