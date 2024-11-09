@@ -339,4 +339,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "blahajopen",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "SquidWest Events",
+		fileName: "sw",
+		authorDiscordId: "528851510222782474",
+	},
 ];
