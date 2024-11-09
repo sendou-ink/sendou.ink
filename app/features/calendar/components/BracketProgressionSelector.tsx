@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { Button } from "~/components/Button";
 import { DateInput } from "~/components/DateInput";
 import { FormMessage } from "~/components/FormMessage";
-import { InfoPopover } from "~/components/InfoPopover";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { Toggle } from "~/components/Toggle";
@@ -72,11 +71,13 @@ export function BracketProgressionSelector({
 
 	const validated = Progression.validatedBrackets(brackets);
 
-	if (Progression.isError(validated)) {
-		setErrored(true);
-	} else {
-		setErrored(false);
-	}
+	React.useEffect(() => {
+		if (Progression.isError(validated)) {
+			setErrored(true);
+		} else {
+			setErrored(false);
+		}
+	}, [validated, setErrored]);
 
 	return (
 		<div className="stack lg items-start">
@@ -338,7 +339,6 @@ function TournamentFormatBracketSelector({
 				<div>
 					<div className="stack horizontal sm">
 						<Label htmlFor={createId("source")}>Source</Label>{" "}
-						<InfoPopover tiny>xxx: link to docs here</InfoPopover>
 					</div>
 					{isFirstBracket ? (
 						<FormMessage type="info">
