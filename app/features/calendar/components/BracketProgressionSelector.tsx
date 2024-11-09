@@ -161,6 +161,7 @@ function TournamentFormatBracketSelector({
 						variant="minimal-destructive"
 						onClick={onDelete}
 						className="mx-auto"
+						testId="delete-bracket-button"
 					>
 						Delete
 					</Button>
@@ -401,6 +402,7 @@ function SourcesSelector({
 					id={createId("placements")}
 					placeholder="1,2,3"
 					value={source?.placements ?? ""}
+					testId="placements-input"
 					onChange={(e) =>
 						onChange({
 							bracketId: brackets[0].id,
