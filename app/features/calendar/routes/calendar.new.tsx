@@ -36,7 +36,7 @@ import {
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { pathnameFromPotentialURL } from "~/utils/strings";
-import { userSubmittedImage } from "~/utils/urls";
+import { CREATING_TOURNAMENT_DOC_LINK, userSubmittedImage } from "~/utils/urls";
 import {
 	CALENDAR_EVENT,
 	REG_CLOSES_AT_OPTIONS,
@@ -106,6 +106,20 @@ export default function CalendarNewEventPage() {
 	return (
 		<Main className="calendar-new__container">
 			<div className="stack md">
+				<div className="stack horizontal md items-center">
+					<h1 className="text-lg">
+						{data.isAddingTournament ? "New tournament" : "New calendar event"}
+					</h1>
+					<a
+						href={CREATING_TOURNAMENT_DOC_LINK}
+						className="text-lg text-bold"
+						title="Documentation about creating tournaments"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						?
+					</a>
+				</div>
 				{data.isAddingTournament ? <TemplateTournamentForm /> : null}
 				<EventForm key={baseEvent?.eventId} />
 			</div>
