@@ -1,4 +1,5 @@
-import type { Tables, TournamentBracketProgression } from "~/db/tables";
+import { sub } from "date-fns";
+import type { Tables, TournamentStageSettings } from "~/db/tables";
 import { TOURNAMENT } from "~/features/tournament";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { Round } from "~/modules/brackets-model";
@@ -6,6 +7,8 @@ import { removeDuplicates } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
+import { fillWithNullTillPowerOfTwo } from "../tournament-bracket-utils";
+import * as Progression from "./Progression";
 import type { OptionalIdObject, Tournament } from "./Tournament";
 import type { TournamentDataTeam } from "./Tournament.server";
 import { getTournamentManager } from "./brackets-manager";
@@ -13,8 +16,10 @@ import type { BracketMapCounts } from "./toMapList";
 
 interface CreateBracketArgs {
 	id: number;
+	/** Index of the bracket in the bracket progression */
+	idx: number;
 	preview: boolean;
-	data: TournamentManagerDataSet;
+	data?: TournamentManagerDataSet;
 	type: Tables["TournamentStage"]["type"];
 	canBeStarted?: boolean;
 	name: string;
@@ -26,6 +31,9 @@ interface CreateBracketArgs {
 		placements: number[];
 	}[];
 	seeding?: number[];
+	settings: TournamentStageSettings | null;
+	checkInRequired: boolean;
+	startTime: Date | null;
 }
 
 export interface Standing {
@@ -46,6 +54,7 @@ export interface Standing {
 
 export abstract class Bracket {
 	id;
+	idx;
 	preview;
 	data;
 	simulatedData: TournamentManagerDataSet | undefined;
@@ -56,9 +65,13 @@ export abstract class Bracket {
 	sources;
 	createdAt;
 	seeding;
+	settings;
+	checkInRequired;
+	startTime;
 
 	constructor({
 		id,
+		idx,
 		preview,
 		data,
 		canBeStarted,
@@ -68,19 +81,32 @@ export abstract class Bracket {
 		sources,
 		createdAt,
 		seeding,
+		settings,
+		checkInRequired,
+		startTime,
 	}: Omit<CreateBracketArgs, "format">) {
+		if (!data && !seeding) {
+			throw new Error("Bracket: seeding or data required");
+		}
+
 		this.id = id;
+		this.idx = idx;
 		this.preview = preview;
-		this.data = data;
+		this.seeding = seeding;
+		this.tournament = tournament;
+		this.data = data ?? this.generateMatchesData(this.seeding!);
 		this.canBeStarted = canBeStarted;
 		this.name = name;
 		this.teamsPendingCheckIn = teamsPendingCheckIn;
-		this.tournament = tournament;
 		this.sources = sources;
 		this.createdAt = createdAt;
-		this.seeding = seeding;
+		this.settings = settings;
+		this.checkInRequired = checkInRequired;
+		this.startTime = startTime;
 
-		this.createdSimulation();
+		if (this.tournament.simulateBrackets) {
+			this.createdSimulation();
+		}
 	}
 
 	private createdSimulation() {
@@ -215,7 +241,7 @@ export abstract class Bracket {
 		return false;
 	}
 
-	get type(): TournamentBracketProgression[number]["type"] {
+	get type(): Tables["TournamentStage"]["type"] {
 		throw new Error("not implemented");
 	}
 
@@ -253,14 +279,44 @@ export abstract class Bracket {
 		});
 	}
 
+	generateMatchesData(teams: number[]) {
+		const manager = getTournamentManager();
+
+		// we need some number but does not matter what it is as the manager only contains one tournament
+		const virtualTournamentId = 1;
+
+		if (teams.length >= TOURNAMENT.ENOUGH_TEAMS_TO_START) {
+			manager.create({
+				tournamentId: virtualTournamentId,
+				name: "Virtual",
+				type: this.type,
+				seeding:
+					this.type === "round_robin"
+						? teams
+						: fillWithNullTillPowerOfTwo(teams),
+				settings: this.tournament.bracketSettings(
+					this.settings,
+					this.type,
+					teams.length,
+				),
+			});
+		}
+
+		return manager.get.tournamentData(virtualTournamentId);
+	}
+
 	get isUnderground() {
-		return Boolean(
-			this.sources?.flatMap((s) => s.placements).every((p) => p !== 1),
+		return Progression.isUnderground(
+			this.idx,
+			this.tournament.ctx.settings.bracketProgression,
 		);
 	}
 
 	get isFinals() {
-		return Boolean(this.sources?.some((s) => s.placements.includes(1)));
+		return Progression.isFinals(
+			this.idx,
+			this.tournament.ctx.settings.bracketProgression,
+		);
 	}
 
 	get everyMatchOver() {
@@ -292,6 +348,14 @@ export abstract class Bracket {
 	canCheckIn(user: OptionalIdObject) {
 		// using regular check-in
 		if (!this.teamsPendingCheckIn) return false;
+
+		if (this.startTime) {
+			const checkInOpen =
+				sub(this.startTime.getTime(), { hours: 1 }).getTime() < Date.now() &&
+				this.startTime.getTime() > Date.now();
+
+			if (!checkInOpen) return false;
+		}
 
 		const team = this.tournament.ownedTeamByUser(user);
 		if (!team) return false;
@@ -348,7 +412,7 @@ export abstract class Bracket {
 }
 
 class SingleEliminationBracket extends Bracket {
-	get type(): TournamentBracketProgression[number]["type"] {
+	get type(): Tables["TournamentStage"]["type"] {
 		return "single_elimination";
 	}
 
@@ -502,7 +566,7 @@ class SingleEliminationBracket extends Bracket {
 }
 
 class DoubleEliminationBracket extends Bracket {
-	get type(): TournamentBracketProgression[number]["type"] {
+	get type(): Tables["TournamentStage"]["type"] {
 		return "double_elimination";
 	}
 
@@ -1050,7 +1114,7 @@ class RoundRobinBracket extends Bracket {
 		);
 	}
 
-	get type(): TournamentBracketProgression[number]["type"] {
+	get type(): Tables["TournamentStage"]["type"] {
 		return "round_robin";
 	}
 
@@ -1423,7 +1487,7 @@ class SwissBracket extends Bracket {
 		);
 	}
 
-	get type(): TournamentBracketProgression[number]["type"] {
+	get type(): Tables["TournamentStage"]["type"] {
 		return "swiss";
 	}
 

@@ -891,7 +891,14 @@ function calendarEventWithToTools(
 	const settings: Tables["Tournament"]["settings"] =
 		event === "DEPTHS"
 			? {
-					bracketProgression: [{ type: "swiss", name: "Swiss" }],
+					bracketProgression: [
+						{
+							type: "swiss",
+							name: "Swiss",
+							requiresCheckIn: false,
+							settings: {},
+						},
+					],
 					enableNoScreenToggle: true,
 					isRanked: false,
 					swiss: {
@@ -902,25 +909,38 @@ function calendarEventWithToTools(
 			: event === "SOS"
 				? {
 						bracketProgression: [
-							{ type: "round_robin", name: "Groups stage" },
+							{
+								type: "round_robin",
+								name: "Groups stage",
+								requiresCheckIn: false,
+								settings: {},
+							},
 							{
 								type: "single_elimination",
 								name: "Great White",
+								requiresCheckIn: false,
+								settings: {},
 								sources: [{ bracketIdx: 0, placements: [1] }],
 							},
 							{
 								type: "single_elimination",
 								name: "Hammerhead",
+								requiresCheckIn: false,
+								settings: {},
 								sources: [{ bracketIdx: 0, placements: [2] }],
 							},
 							{
 								type: "single_elimination",
 								name: "Mako",
+								requiresCheckIn: false,
+								settings: {},
 								sources: [{ bracketIdx: 0, placements: [3] }],
 							},
 							{
 								type: "single_elimination",
 								name: "Lantern",
+								requiresCheckIn: false,
+								settings: {},
 								sources: [{ bracketIdx: 0, placements: [4] }],
 							},
 						],
@@ -929,15 +949,24 @@ function calendarEventWithToTools(
 				: event === "PP"
 					? {
 							bracketProgression: [
-								{ type: "round_robin", name: "Groups stage" },
+								{
+									type: "round_robin",
+									name: "Groups stage",
+									requiresCheckIn: false,
+									settings: {},
+								},
 								{
 									type: "single_elimination",
 									name: "Final stage",
+									requiresCheckIn: false,
+									settings: {},
 									sources: [{ bracketIdx: 0, placements: [1, 2] }],
 								},
 								{
 									type: "single_elimination",
 									name: "Underground bracket",
+									requiresCheckIn: true,
+									settings: {},
 									sources: [{ bracketIdx: 0, placements: [3, 4] }],
 								},
 							],
@@ -945,17 +974,29 @@ function calendarEventWithToTools(
 					: event === "ITZ"
 						? {
 								bracketProgression: [
-									{ type: "double_elimination", name: "Main bracket" },
+									{
+										type: "double_elimination",
+										name: "Main bracket",
+										requiresCheckIn: false,
+										settings: {},
+									},
 									{
 										type: "single_elimination",
 										name: "Underground bracket",
+										requiresCheckIn: false,
+										settings: {},
 										sources: [{ bracketIdx: 0, placements: [-1, -2] }],
 									},
 								],
 							}
 						: {
 								bracketProgression: [
-									{ type: "double_elimination", name: "Main bracket" },
+									{
+										type: "double_elimination",
+										name: "Main bracket",
+										requiresCheckIn: false,
+										settings: {},
+									},
 								],
 							};
 

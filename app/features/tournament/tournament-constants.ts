@@ -7,22 +7,10 @@ export const TOURNAMENT = {
 	ENOUGH_TEAMS_TO_START: 2,
 	MIN_GROUP_SIZE: 3,
 	MAX_GROUP_SIZE: 6,
+	MAX_BRACKETS_PER_TOURNAMENT: 10,
+	BRACKET_NAME_MAX_LENGTH: 32,
 	// just a fallback, normally this should be set by user explicitly
 	DEFAULT_TEAM_COUNT_PER_RR_GROUP: 4,
+	SWISS_DEFAULT_GROUP_COUNT: 1,
+	SWISS_DEFAULT_ROUND_COUNT: 5,
 } as const;
-
-export const BRACKET_NAMES = {
-	UNDERGROUND: "Underground bracket",
-	MAIN: "Main bracket",
-	GROUPS: "Group stage",
-	FINALS: "Final stage",
-};
-
-export const FORMATS_SHORT = [
-	"DE",
-	"SE",
-	"RR_TO_SE",
-	"SWISS",
-	"SWISS_TO_SE",
-] as const;
-export type TournamentFormatShort = (typeof FORMATS_SHORT)[number];

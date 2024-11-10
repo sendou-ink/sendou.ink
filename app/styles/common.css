@@ -1911,3 +1911,15 @@ html[dir="rtl"] .fix-rtl {
 	font-size: var(--fonts-xxxs);
 	font-weight: var(--bold);
 }
+
+.format-selector__count {
+	color: var(--theme);
+	font-size: var(--fonts-sm);
+	white-space: nowrap;
+}
+
+.format-selector__divider {
+	background-color: var(--theme-transparent);
+	width: 2px;
+	align-self: stretch;
+}
