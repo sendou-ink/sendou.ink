@@ -339,4 +339,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "blahajopen",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "Inkray Cup",
+		fileName: "inkraycup",
+		authorDiscordId: "842371851606949909",
+	},
 ];
