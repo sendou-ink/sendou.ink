@@ -310,7 +310,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "354880982890971136",
 	},
 	{
-		displayName: "Frostbite Ascent (Top Bracket)",
+		displayName: "Frostbite Ascent (Summit Bracket)",
 		fileName: "frostbitesilver2x",
 		authorDiscordId: "354880982890971136",
 	},
@@ -340,7 +340,18 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "528851510222782474",
 	},
 	{
-		displayName: "Inkray Cup",
+
+		displayName: "SquidWest Events",
+		fileName: "sw",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Get Coupled",
+		fileName: "getcoupled",
+		authorDiscordId: "418496741088690177",
+  },
+  {
+  displayName: "Inkray Cup",
 		fileName: "inkraycup",
 		authorDiscordId: "842371851606949909",
 	},

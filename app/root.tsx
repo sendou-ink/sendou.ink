@@ -137,7 +137,8 @@ function Document({
 	const { i18n } = useTranslation();
 	const locale = data?.locale ?? DEFAULT_LANGUAGE;
 
-	useRevalidateOnRevisit();
+	// TODO: re-enable after testing if it causes bug where JS is not loading on revisit
+	// useRevalidateOnRevisit();
 	useChangeLanguage(locale);
 	usePreloadTranslation();
 	useLoadingIndicator();
@@ -220,6 +221,7 @@ function usePreloadTranslation() {
 	}, []);
 }
 
+// @ts-expect-error to be used in the future
 function useRevalidateOnRevisit() {
 	const visibility = useVisibilityChange();
 	const { revalidate } = useRevalidator();

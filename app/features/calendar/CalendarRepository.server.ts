@@ -5,6 +5,7 @@ import { db } from "~/db/sql";
 import type { DB, Tables, TournamentSettings } from "~/db/tables";
 import type { CalendarEventTag } from "~/db/types";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { sumArray } from "~/utils/number";
@@ -442,7 +443,6 @@ type CreateArgs = Pick<
 	minMembersPerTeam?: number;
 	teamsPerGroup?: number;
 	thirdPlaceMatch?: boolean;
-	autoCheckInAll?: boolean;
 	requireInGameNames?: boolean;
 	isRanked?: boolean;
 	isInvitational?: boolean;
@@ -482,7 +482,6 @@ export async function create(args: CreateArgs) {
 				enableNoScreenToggle: args.enableNoScreenToggle,
 				autonomousSubs: args.autonomousSubs,
 				regClosesAt: args.regClosesAt,
-				autoCheckInAll: args.autoCheckInAll,
 				requireInGameNames: args.requireInGameNames,
 				minMembersPerTeam: args.minMembersPerTeam,
 				swiss:
@@ -559,7 +558,7 @@ export async function create(args: CreateArgs) {
 					: "calendarEventId",
 		});
 
-		return eventId;
+		return { eventId, tournamentId };
 	});
 }
 
@@ -632,7 +631,6 @@ export async function update(args: UpdateArgs) {
 				enableNoScreenToggle: args.enableNoScreenToggle,
 				autonomousSubs: args.autonomousSubs,
 				regClosesAt: args.regClosesAt,
-				autoCheckInAll: args.autoCheckInAll,
 				requireInGameNames: args.requireInGameNames,
 				minMembersPerTeam: args.minMembersPerTeam,
 				swiss:
@@ -644,14 +642,25 @@ export async function update(args: UpdateArgs) {
 						: undefined,
 			};
 
+			const existingBracketProgression = (
+				await trx
+					.selectFrom("Tournament")
+					.select("settings")
+					.where("id", "=", tournamentId)
+					.executeTakeFirstOrThrow()
+			).settings.bracketProgression;
+
 			const { mapPickingStyle: _mapPickingStyle } = await trx
 				.updateTable("Tournament")
 				.set({
 					settings: JSON.stringify(settings),
 					rules: args.rules,
-					// when tournament is updated clear the preparedMaps just in case the format changed
-					// in the future though we might want to be smarter with this i.e. only clear if the format really did change
-					preparedMaps: null,
+					preparedMaps: Progression.changedBracketProgressionFormat(
+						existingBracketProgression,
+						args.bracketProgression,
+					)
+						? null
+						: undefined,
 				})
 				.where("id", "=", tournamentId)
 				.returning("mapPickingStyle")

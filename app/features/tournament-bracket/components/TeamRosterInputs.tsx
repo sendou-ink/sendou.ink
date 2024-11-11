@@ -191,11 +191,7 @@ function _TeamRoster({
 				team={team}
 				tournamentId={tournament.ctx.id}
 			/>
-			<div
-				className={clsx("stack horizontal md justify-center", {
-					"mt-1": hasPoints && !presentational,
-				})}
-			>
+			<div className="stack horizontal md justify-center mt-1">
 				{showWinnerRadio ? (
 					<WinnerRadio
 						presentational={presentational || Boolean(revising)}
