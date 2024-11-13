@@ -348,10 +348,10 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Get Coupled",
 		fileName: "getcoupled",
 		authorDiscordId: "418496741088690177",
-    },
+	},
 	{
 		displayName: "Inkray Cup",
 		fileName: "inkraycup",
 		authorDiscordId: "842371851606949909",
 	},
-]; 
+];
