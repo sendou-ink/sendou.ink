@@ -108,6 +108,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				userId: data.id,
 				role: "MANAGER",
 			});
+			await QRepository.refreshTrust({
+				trustGiverUserId: data.id,
+				trustReceiverUserId: user.id,
+			});
 
 			return null;
 		}

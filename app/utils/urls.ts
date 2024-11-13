@@ -55,6 +55,9 @@ export const SENDOU_INK_BASE_URL = "https://sendou.ink";
 export const BADGES_DOC_LINK =
 	"https://github.com/Sendouc/sendou.ink/blob/rewrite/docs/badges.md";
 
+export const CREATING_TOURNAMENT_DOC_LINK =
+	"https://github.com/Sendouc/sendou.ink/blob/rewrite/docs/tournament-creation.md";
+
 const USER_SUBMITTED_IMAGE_ROOT =
 	"https://sendou.nyc3.cdn.digitaloceanspaces.com";
 export const userSubmittedImage = (fileName: string) =>

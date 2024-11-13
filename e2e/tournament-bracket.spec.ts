@@ -459,9 +459,8 @@ test.describe("Tournament bracket", () => {
 		});
 
 		await page.getByTestId("edit-event-info-button").click();
-		await page.getByLabel("Auto check-in to follow-up brackets").check();
-		await page.getByTestId("remove-bracket").click();
-		await page.getByTestId("placement-3-4").click();
+		await page.getByTestId("delete-bracket-button").last().click();
+		await page.getByTestId("placements-input").last().fill("3,4");
 
 		await submit(page);
 

@@ -3,7 +3,6 @@ import type {
 	LoaderFunction,
 	MetaFunction,
 } from "@remix-run/node";
-import { json } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import { formatDistance } from "date-fns";
 import * as React from "react";
@@ -153,11 +152,11 @@ export const loader: LoaderFunction = async ({ request }) => {
 	const nextVotingRange = nextNonCompletedVoting(now);
 
 	if (!nextVotingRange) {
-		return json<PlusVotingLoaderData>({ type: "noTimeDefinedInfo" });
+		return { type: "noTimeDefinedInfo" };
 	}
 
 	if (!isVotingActive()) {
-		return json<PlusVotingLoaderData>({
+		return {
 			type: "timeInfo",
 			timeInfo: {
 				relativeTime: formatDistance(nextVotingRange.startDate, now, {
@@ -166,7 +165,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 				timestamp: nextVotingRange.startDate.getTime(),
 				timing: "starts",
 			},
-		});
+		};
 	}
 
 	const usersForVoting = user?.plusTier
@@ -183,7 +182,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 		: false;
 
 	if (!usersForVoting || hasVoted) {
-		return json<PlusVotingLoaderData>({
+		return {
 			type: "timeInfo",
 			voted: hasVoted,
 			timeInfo: {
@@ -193,10 +192,10 @@ export const loader: LoaderFunction = async ({ request }) => {
 				timestamp: nextVotingRange.endDate.getTime(),
 				timing: "ends",
 			},
-		});
+		};
 	}
 
-	return json<PlusVotingLoaderData>({
+	return {
 		type: "voting",
 		usersForVoting,
 		votingEnds: {
@@ -205,7 +204,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 				addSuffix: true,
 			}),
 		},
-	});
+	};
 };
 
 export default function PlusVotingPage() {

@@ -310,7 +310,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "354880982890971136",
 	},
 	{
-		displayName: "Frostbite Ascent (Top Bracket)",
+		displayName: "Frostbite Ascent (Summit Bracket)",
 		fileName: "frostbitesilver2x",
 		authorDiscordId: "354880982890971136",
 	},
@@ -318,6 +318,11 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Frostbite Ascent (Top 8)",
 		fileName: "frostbitebase2x",
 		authorDiscordId: "354880982890971136",
+	},
+	{
+		displayName: "Biggest Fish in the Sea",
+		fileName: "bfis",
+		authorDiscordId: "629773997822967819",
 	},
 	{
 		displayName: "Squeaky Clean Scrap",
@@ -333,5 +338,15 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Shark Tank: Deep Waters",
 		fileName: "blahajopen",
 		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "SquidWest Events",
+		fileName: "sw",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Get Coupled",
+		fileName: "getcoupled",
+		authorDiscordId: "418496741088690177",
 	},
 ];

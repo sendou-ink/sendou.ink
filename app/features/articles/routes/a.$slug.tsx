@@ -1,8 +1,7 @@
-import {
-	type LoaderFunctionArgs,
-	type MetaFunction,
-	type SerializeFrom,
-	json,
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
 } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import Markdown from "markdown-to-jsx";
@@ -66,7 +65,7 @@ export const loader = ({ params }: LoaderFunctionArgs) => {
 
 	const article = notFoundIfFalsy(articleBySlug(params.slug));
 
-	return json({ ...article, slug: params.slug });
+	return { ...article, slug: params.slug };
 };
 
 export default function ArticlePage() {

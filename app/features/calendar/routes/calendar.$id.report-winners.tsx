@@ -1,4 +1,4 @@
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import type {
 	ActionFunction,
 	LoaderFunctionArgs,
@@ -156,11 +156,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		}),
 	);
 
-	return json({
+	return {
 		name: event.name,
 		participantCount: event.participantCount,
 		winners: await CalendarRepository.findResultsByEventId(parsedParams.id),
-	});
+	};
 };
 
 export default function ReportWinnersPage() {

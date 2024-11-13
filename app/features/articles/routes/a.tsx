@@ -1,4 +1,3 @@
-import { json } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
@@ -19,9 +18,9 @@ export const handle: SendouRouteHandle = {
 };
 
 export const loader = async () => {
-	return json({
+	return {
 		articles: await mostRecentArticles(MAX_ARTICLES_COUNT),
-	});
+	};
 };
 
 export default function ArticlesMainPage() {

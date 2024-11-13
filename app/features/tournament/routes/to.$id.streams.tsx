@@ -3,6 +3,7 @@ import { useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Redirect } from "~/components/Redirect";
 import { tournamentData } from "~/features/tournament-bracket/core/Tournament.server";
+import { notFoundIfFalsy } from "~/utils/remix.server";
 import { tournamentRegisterPage } from "~/utils/urls";
 import { TournamentStream } from "../components/TournamentStream";
 import { streamsByTournamentId } from "../core/streams.server";
@@ -13,7 +14,7 @@ export type TournamentStreamsLoader = typeof loader;
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const tournamentId = tournamentIdFromParams(params);
-	const tournament = await tournamentData({ tournamentId });
+	const tournament = notFoundIfFalsy(await tournamentData({ tournamentId }));
 
 	return {
 		streams: await streamsByTournamentId(tournament.ctx),
