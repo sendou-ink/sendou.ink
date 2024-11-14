@@ -13,6 +13,7 @@ import {
 } from "~/features/mmr/mmr-utils";
 import { removeDuplicates } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
+import type { Tables } from "../../../db/tables";
 import type { AllMatchResult } from "../queries/allMatchResultsByTournamentId.server";
 import type { Standing } from "./Bracket";
 
@@ -21,6 +22,7 @@ export interface TournamentSummary {
 		Skill,
 		"tournamentId" | "id" | "ordinal" | "season" | "groupMatchId"
 	>[];
+	seedingSkills: Tables["SeedingSkill"][];
 	mapResultDeltas: Omit<MapResult, "season">[];
 	playerResultDeltas: Omit<PlayerResult, "season">[];
 	tournamentResults: Omit<TournamentResult, "tournamentId" | "isHighlight">[];
@@ -62,6 +64,8 @@ export function tournamentSummary({
 					queryTeamPlayerRatingAverage,
 				})
 			: [],
+		// xxx: resolve if needed
+		seedingSkills: [],
 		mapResultDeltas: calculateSeasonalStats
 			? mapResultDeltas({ results, userIdsToTeamId })
 			: [],
@@ -75,7 +79,7 @@ export function tournamentSummary({
 	};
 }
 
-function userIdsToTeamIdRecord(teams: TeamsArg) {
+export function userIdsToTeamIdRecord(teams: TeamsArg) {
 	const result: UserIdToTeamId = {};
 
 	for (const team of teams) {
@@ -102,7 +106,7 @@ function skills(args: {
 	return result;
 }
 
-function calculateIndividualPlayerSkills({
+export function calculateIndividualPlayerSkills({
 	results,
 	userIdsToTeamId,
 	queryCurrentUserRating,

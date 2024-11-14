@@ -528,6 +528,20 @@ export class Tournament {
 		});
 	}
 
+	/** What seeding skill rating this tournament counts for */
+	get skillCountsFor() {
+		if (this.ranked) {
+			return "RANKED";
+		}
+
+		// exclude gimmicky tournaments
+		if (this.minMembersPerTeam === 4 && !this.ctx.tags?.includes("SPECIAL")) {
+			return "UNRANKED";
+		}
+
+		return null;
+	}
+
 	get minMembersPerTeam() {
 		return this.ctx.settings.minMembersPerTeam ?? 4;
 	}

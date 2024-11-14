@@ -366,8 +366,8 @@ export interface Skill {
 	matchesCount: number;
 	mu: number;
 	ordinal: number;
-	season: number;
 	sigma: number;
+	season: number;
 	tournamentId: number | null;
 	userId: number | null;
 }
@@ -375,6 +375,14 @@ export interface Skill {
 export interface SkillTeamUser {
 	skillId: number;
 	userId: number;
+}
+
+export interface SeedingSkill {
+	mu: number;
+	ordinal: number;
+	sigma: number;
+	userId: number;
+	type: "RANKED" | "UNRANKED";
 }
 
 export interface SplatoonPlayer {
@@ -878,7 +886,6 @@ export interface DB {
 	LFGPost: LFGPost;
 	MapPoolMap: MapPoolMap;
 	MapResult: MapResult;
-	migrations: Migrations;
 	PlayerResult: PlayerResult;
 	PlusSuggestion: PlusSuggestion;
 	PlusTier: PlusTier;
@@ -887,6 +894,7 @@ export interface DB {
 	ReportedWeapon: ReportedWeapon;
 	Skill: Skill;
 	SkillTeamUser: SkillTeamUser;
+	SeedingSkill: SeedingSkill;
 	SplatoonPlayer: SplatoonPlayer;
 	TaggedArt: TaggedArt;
 	Team: Team;

@@ -33,6 +33,7 @@ export async function findById(id: number) {
 			"Tournament.id",
 			"CalendarEvent.id as eventId",
 			"CalendarEvent.discordUrl",
+			"CalendarEvent.tags",
 			"Tournament.settings",
 			"Tournament.castTwitchAccounts",
 			"Tournament.castedMatchesInfo",
@@ -155,6 +156,13 @@ export async function findById(id: number) {
 								.selectFrom("TournamentTeamMember")
 								.innerJoin("User", "TournamentTeamMember.userId", "User.id")
 								.leftJoin("PlusTier", "User.id", "PlusTier.userId")
+								.leftJoin(
+									"SeedingSkill",
+									(join) =>
+										join
+											.onRef("User.id", "=", "SeedingSkill.userId")
+											.on("SeedingSkill.type", "=", "RANKED"), // xxx: make this conditional
+								)
 								.select([
 									"User.id as userId",
 									"User.username",
@@ -163,6 +171,8 @@ export async function findById(id: number) {
 									"User.customUrl",
 									"User.country",
 									"User.twitch",
+									// xxx: should be array i guess
+									"SeedingSkill.ordinal",
 									"PlusTier.tier as plusTier",
 									"TournamentTeamMember.isOwner",
 									"TournamentTeamMember.createdAt",
@@ -271,7 +281,8 @@ export async function findById(id: number) {
 		...result,
 		logoSrc: result.logoUrl
 			? userSubmittedImage(result.logoUrl)
-			: `${import.meta.env.VITE_SITE_DOMAIN}${HACKY_resolvePicture(result)}`,
+			: // xxx: how to do relative so it works i nscript?
+				HACKY_resolvePicture(result),
 		participatedUsers: result.participatedUsers.map((user) => user.userId),
 	};
 }
