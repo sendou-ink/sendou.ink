@@ -94,8 +94,10 @@ if (!global.appStartSignal && process.env.NODE_ENV === "production") {
 	// every hour
 	cron.schedule("0 */1 * * *", async () => {
 		const { numDeletedRows } = await QRepository.deleteOldTrust();
-
 		logger.info(`Deleted ${numDeletedRows} old trusts`);
+
+		const { numUpdatedRows } = await QRepository.setOldGroupsAsInactive();
+		logger.info(`Set ${numUpdatedRows} as inactive`);
 	});
 }
 

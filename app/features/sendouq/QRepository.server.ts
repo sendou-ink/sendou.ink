@@ -359,3 +359,35 @@ export async function deleteOldTrust() {
 		.where("lastUsedAt", "<", dateToDatabaseTimestamp(twoMonthsAgo))
 		.executeTakeFirst();
 }
+
+export async function setOldGroupsAsInactive() {
+	const oneHourAgo = sub(new Date(), { hours: 1 });
+
+	return db.transaction().execute(async (trx) => {
+		const groupsToSetInactive = await trx
+			.selectFrom("Group")
+			.leftJoin("GroupMatch", (join) =>
+				join.on((eb) =>
+					eb.or([
+						eb("GroupMatch.alphaGroupId", "=", eb.ref("Group.id")),
+						eb("GroupMatch.bravoGroupId", "=", eb.ref("Group.id")),
+					]),
+				),
+			)
+			.select(["Group.id"])
+			.where("status", "!=", "INACTIVE")
+			.where("GroupMatch.id", "is", null)
+			.where("latestActionAt", "<", dateToDatabaseTimestamp(oneHourAgo))
+			.execute();
+
+		return trx
+			.updateTable("Group")
+			.set({ status: "INACTIVE" })
+			.where(
+				"Group.id",
+				"in",
+				groupsToSetInactive.map((g) => g.id),
+			)
+			.executeTakeFirst();
+	});
+}
