@@ -200,6 +200,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "570323825669963972",
 	},
 	{
+<<<<<<< HEAD
+
+=======
 		displayName: "Minus One Cup",
 		fileName: "minus-one-cup",
 		authorDiscordId: "569271521776762896",
@@ -215,17 +218,18 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "569271521776762896",
 	},
 	{
-		displayName: "Karot's Tourneys (100 KT Power)",
+		displayName: "Reef Reunion (100 KT Power)",
+>>>>>>> ab9262fe20d31dd7a10048ddd373f786329b4c46
 		fileName: "ktlow",
 		authorDiscordId: "1170249805373657093",
 	},
 	{
-		displayName: "Karot's Tourneys (500 KT Power)",
+		displayName: "Reef Reunion (500 KT Power)",
 		fileName: "ktmed",
 		authorDiscordId: "1170249805373657093",
 	},
 	{
-		displayName: "Karot's Tourneys (999 KT Power)",
+		displayName: "Reef Reunion (999 KT Power)",
 		fileName: "kthigh",
 		authorDiscordId: "1170249805373657093",
 	},
