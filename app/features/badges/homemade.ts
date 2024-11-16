@@ -349,4 +349,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "getcoupled",
 		authorDiscordId: "418496741088690177",
 	},
+	{
+		displayName: "Abandon Ship",
+		fileName: "ship",
+		authorDiscordId: "528851510222782474",
+	},
 ];
