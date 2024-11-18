@@ -354,4 +354,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "ship",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "H-Town Splashdown",
+		fileName: "texaslan",
+		authorDiscordId: "528851510222782474",
+	},
 ];
