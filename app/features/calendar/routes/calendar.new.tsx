@@ -256,10 +256,9 @@ function EventForm() {
 					<Divider>Tournament format</Divider>
 					<BracketProgressionSelector
 						initialBrackets={
-							data.eventToEdit?.tournament?.ctx.settings.bracketProgression
+							baseEvent?.tournament?.ctx.settings.bracketProgression
 								? Progression.validatedBracketsToInputFormat(
-										data.eventToEdit?.tournament?.ctx.settings
-											.bracketProgression,
+										baseEvent.tournament?.ctx.settings.bracketProgression,
 									)
 								: undefined
 						}
