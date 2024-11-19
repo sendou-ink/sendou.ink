@@ -352,6 +352,6 @@ export const homemadeBadges: BadgeInfo[] = [
 	{
 		displayName: "Twin Squiddies",
 		fileName: "twinsquiddies",
-		authorDiscordId: "329095803224457216",
+		authorDiscordId: "789943264370884708",
 	},
 ];
