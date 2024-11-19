@@ -155,7 +155,6 @@ export async function findById(id: number) {
 							innerEb
 								.selectFrom("TournamentTeamMember")
 								.innerJoin("User", "TournamentTeamMember.userId", "User.id")
-								.leftJoin("PlusTier", "User.id", "PlusTier.userId")
 								.leftJoin(
 									"SeedingSkill",
 									(join) =>
@@ -171,9 +170,7 @@ export async function findById(id: number) {
 									"User.customUrl",
 									"User.country",
 									"User.twitch",
-									// xxx: should be array i guess
 									"SeedingSkill.ordinal",
-									"PlusTier.tier as plusTier",
 									"TournamentTeamMember.isOwner",
 									"TournamentTeamMember.createdAt",
 									sql<string | null> /*sql*/`coalesce(
@@ -279,12 +276,26 @@ export async function findById(id: number) {
 
 	return {
 		...result,
+		teams: result.teams.map((team) => ({
+			...team,
+			members: team.members.map(({ ordinal, ...member }) => member),
+			avgSeedingSkillOrdinal: nullifyingAvg(
+				team.members
+					.map((member) => member.ordinal)
+					.filter((ordinal) => typeof ordinal === "number"),
+			),
+		})),
 		logoSrc: result.logoUrl
 			? userSubmittedImage(result.logoUrl)
 			: // xxx: how to do relative so it works i nscript?
 				HACKY_resolvePicture(result),
 		participatedUsers: result.participatedUsers.map((user) => user.userId),
 	};
+}
+
+function nullifyingAvg(values: number[]) {
+	if (values.length === 0) return null;
+	return values.reduce((acc, cur) => acc + cur, 0) / values.length;
 }
 
 export async function findTOSetMapPoolById(tournamentId: number) {
