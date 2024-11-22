@@ -1,5 +1,6 @@
 import shuffle from "just-shuffle";
 import type { Rating } from "node_modules/openskill/dist/types";
+import { ordinal } from "openskill";
 import type {
 	MapResult,
 	PlayerResult,
@@ -42,6 +43,8 @@ export function tournamentSummary({
 	queryCurrentTeamRating,
 	queryTeamPlayerRatingAverage,
 	queryCurrentUserRating,
+	queryCurrentSeedingRating,
+	seedingSkillCountsFor,
 	calculateSeasonalStats = true,
 }: {
 	results: AllMatchResult[];
@@ -50,6 +53,8 @@ export function tournamentSummary({
 	queryCurrentTeamRating: (identifier: string) => Rating;
 	queryTeamPlayerRatingAverage: (identifier: string) => Rating;
 	queryCurrentUserRating: (userId: number) => Rating;
+	queryCurrentSeedingRating: (userId: number) => Rating;
+	seedingSkillCountsFor: Tables["SeedingSkill"]["type"] | null;
 	calculateSeasonalStats?: boolean;
 }): TournamentSummary {
 	const userIdsToTeamId = userIdsToTeamIdRecord(teams);
@@ -64,8 +69,17 @@ export function tournamentSummary({
 					queryTeamPlayerRatingAverage,
 				})
 			: [],
-		// xxx: resolve if needed
-		seedingSkills: [],
+		seedingSkills: seedingSkillCountsFor
+			? calculateIndividualPlayerSkills({
+					queryCurrentUserRating: queryCurrentSeedingRating,
+					results,
+					userIdsToTeamId,
+				}).map((skill) => ({
+					...skill,
+					type: seedingSkillCountsFor,
+					ordinal: ordinal(skill),
+				}))
+			: [],
 		mapResultDeltas: calculateSeasonalStats
 			? mapResultDeltas({ results, userIdsToTeamId })
 			: [],

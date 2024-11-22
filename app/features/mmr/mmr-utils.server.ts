@@ -1,7 +1,9 @@
 import { rating } from "openskill";
+import type { Tables } from "../../db/tables";
 import { identifierToUserIds } from "./mmr-utils";
 import { findCurrentSkillByUserId } from "./queries/findCurrentSkillByUserId.server";
 import { findCurrentTeamSkillByIdentifier } from "./queries/findCurrentTeamSkillByIdentifier.server";
+import { findSeedingSkill } from "./queries/findSeedingSkill.server";
 
 export function queryCurrentUserRating({
 	userId,
@@ -17,6 +19,17 @@ export function queryCurrentUserRating({
 	}
 
 	return { rating: rating(skill), matchesCount: skill.matchesCount };
+}
+
+export function queryCurrentUserSeedingRating(args: {
+	userId: number;
+	type: Tables["SeedingSkill"]["type"];
+}) {
+	const skill = findSeedingSkill(args);
+
+	if (!skill) return rating();
+
+	return skill;
 }
 
 export function queryCurrentTeamRating({

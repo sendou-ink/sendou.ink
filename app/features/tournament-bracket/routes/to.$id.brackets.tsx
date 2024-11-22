@@ -23,6 +23,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import {
 	queryCurrentTeamRating,
 	queryCurrentUserRating,
+	queryCurrentUserSeedingRating,
 	queryTeamPlayerRatingAverage,
 } from "~/features/mmr/mmr-utils.server";
 import { currentSeason } from "~/features/mmr/season";
@@ -208,23 +209,36 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			const season = currentSeason(tournament.ctx.startTime)?.nth;
 
+			const seedingSkillCountsFor = tournament.skillCountsFor;
+			const summary = tournamentSummary({
+				teams: tournament.ctx.teams,
+				finalStandings: _finalStandings,
+				results,
+				calculateSeasonalStats: tournament.ranked,
+				queryCurrentTeamRating: (identifier) =>
+					queryCurrentTeamRating({ identifier, season: season! }).rating,
+				queryCurrentUserRating: (userId) =>
+					queryCurrentUserRating({ userId, season: season! }).rating,
+				queryTeamPlayerRatingAverage: (identifier) =>
+					queryTeamPlayerRatingAverage({
+						identifier,
+						season: season!,
+					}),
+				queryCurrentSeedingRating: (userId) =>
+					queryCurrentUserSeedingRating({
+						userId,
+						type: seedingSkillCountsFor!,
+					}),
+				seedingSkillCountsFor,
+			});
+
+			logger.info(
+				`Inserting tournament summary. Tournament id: ${tournamentId}, mapResultDeltas.lenght: ${summary.mapResultDeltas.length}, playerResultDeltas.length ${summary.playerResultDeltas.length}, tournamentResults.length ${summary.tournamentResults.length}, skills.length ${summary.skills.length}, seedingSkills.length ${summary.seedingSkills.length}`,
+			);
+
 			addSummary({
 				tournamentId,
-				summary: tournamentSummary({
-					teams: tournament.ctx.teams,
-					finalStandings: _finalStandings,
-					results,
-					calculateSeasonalStats: tournament.ranked,
-					queryCurrentTeamRating: (identifier) =>
-						queryCurrentTeamRating({ identifier, season: season! }).rating,
-					queryCurrentUserRating: (userId) =>
-						queryCurrentUserRating({ userId, season: season! }).rating,
-					queryTeamPlayerRatingAverage: (identifier) =>
-						queryTeamPlayerRatingAverage({
-							identifier,
-							season: season!,
-						}),
-				}),
+				summary,
 				season,
 			});
 

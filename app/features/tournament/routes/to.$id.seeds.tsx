@@ -34,6 +34,8 @@ import { useTimeoutState } from "~/hooks/useTimeoutState";
 import invariant from "~/utils/invariant";
 import { parseRequestPayload, validate } from "~/utils/remix.server";
 import { tournamentBracketsPage, userResultsPage } from "~/utils/urls";
+import { Avatar } from "../../../components/Avatar";
+import { InfoPopover } from "../../../components/InfoPopover";
 import { ordinalToRoundedSp } from "../../mmr/mmr-utils";
 import { updateTeamSeeds } from "../queries/updateTeamSeeds.server";
 import { seedsActionSchema } from "../tournament-schemas.server";
@@ -111,36 +113,55 @@ export default function TournamentSeedsPage() {
 		return Boolean(previousTeam.avgSeedingSkillOrdinal);
 	};
 
+	const noOrganizerSetSeeding = tournament.ctx.teams.every(
+		(team) => !team.seed,
+	);
+
 	return (
 		<div className="stack lg">
 			<SeedAlert teamOrder={teamOrder} />
-			<div className="stack horizontal justify-between">
-				<Button
-					className="tournament__seeds__order-button"
-					variant="minimal"
-					size="tiny"
-					type="button"
-					onClick={() => {
-						setTeamOrder(
-							clone(tournament.ctx.teams)
-								.sort(
-									(a, b) =>
-										(b.avgSeedingSkillOrdinal ?? Number.NEGATIVE_INFINITY) -
-										(a.avgSeedingSkillOrdinal ?? Number.NEGATIVE_INFINITY),
-								)
-								.map((t) => t.id),
-						);
-					}}
-				>
-					Sort automatically
-				</Button>
+			<div>
+				{noOrganizerSetSeeding ? (
+					<div className="text-lighter text-xs">
+						As long as you don't manually set the seeding, the teams are
+						automatically sorted by their seeding points value as participating
+						players change
+					</div>
+				) : (
+					<Button
+						className="tournament__seeds__order-button"
+						variant="minimal"
+						size="tiny"
+						type="button"
+						onClick={() => {
+							setTeamOrder(
+								clone(tournament.ctx.teams)
+									.sort(
+										(a, b) =>
+											(b.avgSeedingSkillOrdinal ?? Number.NEGATIVE_INFINITY) -
+											(a.avgSeedingSkillOrdinal ?? Number.NEGATIVE_INFINITY),
+									)
+									.map((t) => t.id),
+							);
+						}}
+					>
+						Sort automatically
+					</Button>
+				)}
 			</div>
 			<ul>
 				<li className="tournament__seeds__teams-list-row">
-					<div className="tournament__seeds__teams-container__header">Seed</div>
+					<div className="tournament__seeds__teams-container__header" />
+					<div className="tournament__seeds__teams-container__header" />
 					<div className="tournament__seeds__teams-container__header">Name</div>
-					<div className="tournament__seeds__teams-container__header">SP</div>
-					{/** xxx: popover to explain? */}
+					<div className="tournament__seeds__teams-container__header stack horizontal xxs">
+						SP
+						<InfoPopover tiny>
+							Seeding point is a value that tracks players' head-to-head
+							performances in tournaments. Ranked and unranked tournaments have
+							different points.
+						</InfoPopover>
+					</div>
 					<div className="tournament__seeds__teams-container__header">
 						Players
 					</div>
@@ -286,9 +307,16 @@ function RowContents({
 		outOfOrder: boolean;
 	};
 }) {
+	const tournament = useTournament();
+
 	return (
 		<>
 			<div>{seed}</div>
+			<div>
+				{team.team?.logoUrl ? (
+					<Avatar url={tournament.tournamentTeamLogoSrc(team)} size="xxs" />
+				) : null}
+			</div>
 			<div className="tournament__seeds__team-name">
 				{team.checkIns.length > 0 ? "✅ " : "❌ "} {team.name}
 			</div>

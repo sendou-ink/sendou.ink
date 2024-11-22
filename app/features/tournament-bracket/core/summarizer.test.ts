@@ -124,6 +124,8 @@ describe("tournamentSummary()", () => {
 			queryCurrentTeamRating: () => rating(),
 			queryCurrentUserRating: () => rating(),
 			queryTeamPlayerRatingAverage: () => rating(),
+			queryCurrentSeedingRating: () => rating(),
+			seedingSkillCountsFor: null,
 		});
 	}
 

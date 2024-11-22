@@ -21,6 +21,13 @@ import { HACKY_resolvePicture } from "./tournament-utils";
 
 export type FindById = NonNullable<Unwrapped<typeof findById>>;
 export async function findById(id: number) {
+	const isSetAsRanked = await db
+		.selectFrom("Tournament")
+		.select("settings")
+		.where("id", "=", id)
+		.executeTakeFirst()
+		.then((row) => row?.settings.isRanked ?? false);
+
 	const result = await db
 		.selectFrom("Tournament")
 		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
@@ -155,12 +162,14 @@ export async function findById(id: number) {
 							innerEb
 								.selectFrom("TournamentTeamMember")
 								.innerJoin("User", "TournamentTeamMember.userId", "User.id")
-								.leftJoin(
-									"SeedingSkill",
-									(join) =>
-										join
-											.onRef("User.id", "=", "SeedingSkill.userId")
-											.on("SeedingSkill.type", "=", "RANKED"), // xxx: make this conditional
+								.leftJoin("SeedingSkill", (join) =>
+									join
+										.onRef("User.id", "=", "SeedingSkill.userId")
+										.on(
+											"SeedingSkill.type",
+											"=",
+											isSetAsRanked ? "RANKED" : "UNRANKED",
+										),
 								)
 								.select([
 									"User.id as userId",
@@ -287,8 +296,7 @@ export async function findById(id: number) {
 		})),
 		logoSrc: result.logoUrl
 			? userSubmittedImage(result.logoUrl)
-			: // xxx: how to do relative so it works i nscript?
-				HACKY_resolvePicture(result),
+			: HACKY_resolvePicture(result),
 		participatedUsers: result.participatedUsers.map((user) => user.userId),
 	};
 }
