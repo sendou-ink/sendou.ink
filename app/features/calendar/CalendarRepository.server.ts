@@ -143,11 +143,13 @@ export type FindAllBetweenTwoTimestampsItem = Unwrapped<
 export async function findAllBetweenTwoTimestamps({
 	startTime,
 	endTime,
+	tagsToFilterBy,
 }: {
 	startTime: Date;
 	endTime: Date;
+	tagsToFilterBy: Array<CalendarEventTag>;
 }) {
-	const rows = await db
+	let query = db
 		.selectFrom("CalendarEvent")
 		.innerJoin(
 			"CalendarEventDate",
@@ -211,8 +213,13 @@ export async function findAllBetweenTwoTimestamps({
 			"<=",
 			dateToDatabaseTimestamp(endTime),
 		)
-		.orderBy("CalendarEventDate.startTime", "asc")
-		.execute();
+		.orderBy("CalendarEventDate.startTime", "asc");
+
+	for (const tag of tagsToFilterBy) {
+		query = query.where("CalendarEvent.tags", "like", `%${tag}%`);
+	}
+
+	const rows = await query.execute();
 
 	return Promise.all(
 		rows
@@ -305,17 +312,24 @@ async function tournamentParticipantCount({
 export async function startTimesOfRange({
 	startTime,
 	endTime,
+	tagsToFilterBy,
 }: {
 	startTime: Date;
 	endTime: Date;
+	tagsToFilterBy: Array<CalendarEventTag>;
 }) {
-	const rows = await db
+	let query = db
 		.selectFrom("CalendarEventDate")
+		.innerJoin("CalendarEvent", "CalendarEvent.id", "CalendarEventDate.eventId")
 		.select(["startTime"])
 		.where("startTime", ">=", dateToDatabaseTimestamp(startTime))
-		.where("startTime", "<=", dateToDatabaseTimestamp(endTime))
-		.execute();
+		.where("startTime", "<=", dateToDatabaseTimestamp(endTime));
 
+	for (const tag of tagsToFilterBy) {
+		query = query.where("CalendarEvent.tags", "like", `%${tag}%`);
+	}
+
+	const rows = await query.execute();
 	return rows.map((row) => row.startTime);
 }
 

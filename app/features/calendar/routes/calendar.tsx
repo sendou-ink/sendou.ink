@@ -45,8 +45,10 @@ import {
 	tournamentPage,
 	userSubmittedImage,
 } from "~/utils/urls";
-import { actualNumber } from "~/utils/zod";
+import { actualNumber, safeSplit } from "~/utils/zod";
+import type { CalendarEventTag } from "../../../db/types";
 import * as CalendarRepository from "../CalendarRepository.server";
+import { calendarEventTagSchema } from "../actions/calendar.new.server";
 import { Tags } from "../components/Tags";
 
 import "~/styles/calendar.css";
@@ -78,29 +80,41 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-const loaderSearchParamsSchema = z.object({
+const loaderWeekSearchParamsSchema = z.object({
 	week: z.preprocess(actualNumber, z.number().int().min(1).max(53)),
 	year: z.preprocess(actualNumber, z.number().int()),
+});
+
+const loaderTagsSearchParamsSchema = z.object({
+	tags: z.preprocess(safeSplit(), z.array(calendarEventTagSchema)),
 });
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await getUserId(request);
 	const t = await i18next.getFixedT(request);
 	const url = new URL(request.url);
-	const parsedParams = loaderSearchParamsSchema.safeParse({
+
+	// separate from tags parse so they can fail independently
+	const parsedWeekParams = loaderWeekSearchParamsSchema.safeParse({
 		year: url.searchParams.get("year"),
 		week: url.searchParams.get("week"),
+	});
+	const parsedTagParams = loaderTagsSearchParamsSchema.safeParse({
+		tags: url.searchParams.get("tags"),
 	});
 
 	const mondayDate = dateToThisWeeksMonday(new Date());
 	const currentWeek = dateToWeekNumber(mondayDate);
 
-	const displayedWeek = parsedParams.success
-		? parsedParams.data.week
+	const displayedWeek = parsedWeekParams.success
+		? parsedWeekParams.data.week
 		: currentWeek;
-	const displayedYear = parsedParams.success
-		? parsedParams.data.year
+	const displayedYear = parsedWeekParams.success
+		? parsedWeekParams.data.year
 		: mondayDate.getFullYear();
+	const tagsToFilterBy = parsedTagParams.success
+		? (parsedTagParams.data.tags as CalendarEventTag[])
+		: [];
 
 	return {
 		currentWeek,
@@ -115,11 +129,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				weekNumberToDate({ week: displayedWeek, year: displayedYear }),
 				1,
 			),
+			tagsToFilterBy,
 		}),
 		weeks: closeByWeeks({ week: displayedWeek, year: displayedYear }),
 		events: await fetchEventsOfWeek({
 			week: displayedWeek,
 			year: displayedYear,
+			tagsToFilterBy,
 		}),
 		eventsToReport: user
 			? await CalendarRepository.eventsToReport(user.id)
@@ -144,7 +160,11 @@ function closeByWeeks(args: { week: number; year: number }) {
 	});
 }
 
-function fetchEventsOfWeek(args: { week: number; year: number }) {
+function fetchEventsOfWeek(args: {
+	week: number;
+	year: number;
+	tagsToFilterBy: CalendarEventTag[];
+}) {
 	const startTime = weekNumberToDate(args);
 
 	const endTime = new Date(startTime);
@@ -154,7 +174,11 @@ function fetchEventsOfWeek(args: { week: number; year: number }) {
 	startTime.setHours(startTime.getHours() - 12);
 	endTime.setHours(endTime.getHours() + 12);
 
-	return CalendarRepository.findAllBetweenTwoTimestamps({ startTime, endTime });
+	return CalendarRepository.findAllBetweenTwoTimestamps({
+		startTime,
+		endTime,
+		tagsToFilterBy: args.tagsToFilterBy,
+	});
 }
 
 export default function CalendarPage() {

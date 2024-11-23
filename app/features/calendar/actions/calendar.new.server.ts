@@ -212,6 +212,10 @@ export const bracketProgressionSchema = z.preprocess(
 		),
 );
 
+export const calendarEventTagSchema = z
+	.string()
+	.refine((val) => CALENDAR_EVENT.TAGS.includes(val as CalendarEventTag));
+
 export const newCalendarEventActionSchema = z
 	.object({
 		eventToEditId: z.preprocess(actualNumber, id.nullish()),
@@ -252,15 +256,7 @@ export const newCalendarEventActionSchema = z
 		),
 		tags: z.preprocess(
 			processMany(safeJSONParse, removeDuplicates),
-			z
-				.array(
-					z
-						.string()
-						.refine((val) =>
-							CALENDAR_EVENT.TAGS.includes(val as CalendarEventTag),
-						),
-				)
-				.nullable(),
+			z.array(calendarEventTagSchema).nullable(),
 		),
 		badges: z.preprocess(
 			processMany(safeJSONParse, removeDuplicates),
