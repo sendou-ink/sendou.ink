@@ -190,7 +190,7 @@ test.describe("Tournament bracket", () => {
 		});
 
 		// 1)
-		await navigateToMatch(page, 6);
+		await navigateToMatch(page, 5);
 		await reportResult({ page, amountOfMapsToReport: 2 });
 		await backToBracket(page);
 
@@ -200,7 +200,7 @@ test.describe("Tournament bracket", () => {
 			page,
 			url: tournamentBracketsPage({ tournamentId }),
 		});
-		await navigateToMatch(page, 5);
+		await navigateToMatch(page, 6);
 		await reportResult({ page, amountOfMapsToReport: 2 });
 		await backToBracket(page);
 
@@ -214,7 +214,7 @@ test.describe("Tournament bracket", () => {
 		await backToBracket(page);
 
 		// 4)
-		await navigateToMatch(page, 6);
+		await navigateToMatch(page, 5);
 		await isNotVisible(page.getByTestId("reopen-match-button"));
 		await backToBracket(page);
 
@@ -225,7 +225,7 @@ test.describe("Tournament bracket", () => {
 		await backToBracket(page);
 
 		// 6)
-		await navigateToMatch(page, 6);
+		await navigateToMatch(page, 5);
 		await page.getByTestId("reopen-match-button").click();
 		await expectScore(page, [1, 0]);
 
@@ -235,7 +235,7 @@ test.describe("Tournament bracket", () => {
 			page,
 			url: tournamentBracketsPage({ tournamentId }),
 		});
-		await navigateToMatch(page, 6);
+		await navigateToMatch(page, 5);
 		await page.getByTestId("undo-score-button").click();
 		await expectScore(page, [0, 0]);
 		await reportResult({
@@ -731,11 +731,11 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("finalize-bracket-button").click();
 		await page.getByTestId("confirm-finalize-bracket-button").click();
 
-		await page.locator('[data-match-id="7"]').click();
+		await page.locator('[data-match-id="2"]').click();
 		await expect(page.getByTestId("screen-allowed")).toBeVisible();
 		await backToBracket(page);
 
-		await page.locator('[data-match-id="8"]').click();
+		await page.locator('[data-match-id="1"]').click();
 		await expect(page.getByTestId("screen-banned")).toBeVisible();
 	});
 
