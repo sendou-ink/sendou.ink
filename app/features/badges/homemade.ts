@@ -365,7 +365,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "842371851606949909",
 	},
 	{
-		displayName: "Burried Treasure",
+		displayName: "Buried Treasure",
 		fileName: "treasure",
 		authorDiscordId: "528851510222782474",
 	},
