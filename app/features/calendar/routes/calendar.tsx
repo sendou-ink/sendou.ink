@@ -3,7 +3,7 @@ import type {
 	MetaFunction,
 	SerializeFrom,
 } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import clsx from "clsx";
 import { addDays, addMonths, subDays, subMonths } from "date-fns";
 import React from "react";
@@ -14,15 +14,12 @@ import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton } from "~/components/Button";
 import { Divider } from "~/components/Divider";
-import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { Toggle } from "~/components/Toggle";
 import { UsersIcon } from "~/components/icons/Users";
 import { getUserId } from "~/features/auth/core/user.server";
 import { currentSeason } from "~/features/mmr/season";
 import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { i18next } from "~/modules/i18n/i18next.server";
 import { joinListToNaturalString } from "~/utils/arrays";
 import {
@@ -49,6 +46,7 @@ import { actualNumber, safeSplit } from "~/utils/zod";
 import type { CalendarEventTag } from "../../../db/types";
 import * as CalendarRepository from "../CalendarRepository.server";
 import { calendarEventTagSchema } from "../actions/calendar.new.server";
+import { CALENDAR_EVENT } from "../calendar-constants";
 import { Tags } from "../components/Tags";
 
 import "~/styles/calendar.css";
@@ -181,67 +179,46 @@ function fetchEventsOfWeek(args: {
 	});
 }
 
+// xxx: link from front page
+
 export default function CalendarPage() {
 	const { t } = useTranslation("calendar");
 	const data = useLoaderData<typeof loader>();
 	const isMounted = useIsMounted();
-	const [onlySendouInkEvents, setOnlySendouInkEvents] = useSearchParamState({
-		defaultValue: false,
-		name: "tournaments",
-		revive: (val) => val === "true",
-	});
-
-	const filteredEvents = onlySendouInkEvents
-		? data.events.filter((event) => event.tournamentId)
-		: data.events;
 
 	// we don't know which events are starting in user's time zone on server
 	// so that's why this calculation is not in the loader
 	const thisWeeksEvents = isMounted
-		? filteredEvents.filter(
+		? data.events.filter(
 				(event) =>
 					dateToWeekNumber(
 						dateToSixHoursAgo(databaseTimestampToDate(event.startTime)),
 					) === data.displayedWeek,
 			)
-		: filteredEvents;
+		: data.events;
 
 	return (
 		<Main classNameOverwrite="stack lg main layout__main">
 			<WeekLinks />
 			<EventsToReport />
-			<div>
-				<div className="stack horizontal justify-end">
-					<div className="stack horizontal sm items-center">
-						<Toggle
-							id="onlySendouInk"
-							tiny
-							checked={onlySendouInkEvents}
-							setChecked={setOnlySendouInkEvents}
-						/>
-						<Label spaced={false} htmlFor="onlySendouInk">
-							Only sendou.ink events
-						</Label>
-					</div>
-				</div>
-				{isMounted ? (
-					<>
-						{thisWeeksEvents.length > 0 ? (
-							<>
-								<EventsList events={thisWeeksEvents} />
-								<div className="calendar__time-zone-info">
-									{t("inYourTimeZone")}{" "}
-									{Intl.DateTimeFormat().resolvedOptions().timeZone}
-								</div>
-							</>
-						) : (
-							<h2 className="calendar__no-events">{t("noEvents")}</h2>
-						)}
-					</>
-				) : (
-					<div className="calendar__placeholder" />
-				)}
-			</div>
+			<TagsFilter />
+			{isMounted ? (
+				<>
+					{thisWeeksEvents.length > 0 ? (
+						<>
+							<EventsList events={thisWeeksEvents} />
+							<div className="calendar__time-zone-info">
+								{t("inYourTimeZone")}{" "}
+								{Intl.DateTimeFormat().resolvedOptions().timeZone}
+							</div>
+						</>
+					) : (
+						<h2 className="calendar__no-events">{t("noEvents")}</h2>
+					)}
+				</>
+			) : (
+				<div className="calendar__placeholder" />
+			)}
 		</Main>
 	);
 }
@@ -380,6 +357,68 @@ function EventsToReport() {
 				</React.Fragment>
 			))}
 		</Alert>
+	);
+}
+
+// xxx: styling
+// xxx: i18n
+// xxx: when changing page, remember tags to filter by
+
+function TagsFilter() {
+	const { t } = useTranslation(["calendar", "common"]);
+	const id = React.useId();
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	const tagsToFilterBy = (searchParams
+		.get("tags")
+		?.split(",")
+		.filter((tag) => CALENDAR_EVENT.TAGS.includes(tag as CalendarEventTag)) ??
+		[]) as CalendarEventTag[];
+	const setTagsToFilterBy = (tags: CalendarEventTag[]) => {
+		setSearchParams((params) => {
+			if (tags.length === 0) {
+				params.delete("tags");
+				return params;
+			}
+
+			params.set("tags", tags.join(","));
+			return params;
+		});
+	};
+
+	const tagsForSelect = CALENDAR_EVENT.TAGS.filter(
+		(tag) => !tagsToFilterBy.includes(tag),
+	);
+
+	return (
+		<div>
+			<div>
+				<label htmlFor={id}>Filter by tags</label>
+				<select
+					id={id}
+					className="calendar-new__select"
+					onChange={(e) =>
+						setTagsToFilterBy([
+							...tagsToFilterBy,
+							e.target.value as CalendarEventTag,
+						])
+					}
+				>
+					<option value="">{t("calendar:forms.tags.placeholder")}</option>
+					{tagsForSelect.map((tag) => (
+						<option key={tag} value={tag}>
+							{t(`common:tag.name.${tag}`)}
+						</option>
+					))}
+				</select>
+			</div>
+			<Tags
+				tags={tagsToFilterBy}
+				onDelete={(tagToDelete) =>
+					setTagsToFilterBy(tagsToFilterBy.filter((tag) => tag !== tagToDelete))
+				}
+			/>
+		</div>
 	);
 }
 
