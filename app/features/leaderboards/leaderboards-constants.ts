@@ -20,3 +20,10 @@ export const LEADERBOARD_TYPES = [
 		(id) => `XP-WEAPON-${id}`,
 	) as `XP-WEAPON-${(typeof mainWeaponIds)[number]}`[]),
 ] as const;
+
+/** Teams that are ignored from the main leaderboard, because e.g. they want to qualify with another group.
+ * Map key is season.
+ */
+export const IGNORED_TEAMS: Map<number, number[][]> = new Map().set(5, [
+	[9403, 13562, 15916, 38062], // Snooze
+]);

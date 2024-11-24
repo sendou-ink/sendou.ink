@@ -21,6 +21,13 @@ import { HACKY_resolvePicture } from "./tournament-utils";
 
 export type FindById = NonNullable<Unwrapped<typeof findById>>;
 export async function findById(id: number) {
+	const isSetAsRanked = await db
+		.selectFrom("Tournament")
+		.select("settings")
+		.where("id", "=", id)
+		.executeTakeFirst()
+		.then((row) => row?.settings.isRanked ?? false);
+
 	const result = await db
 		.selectFrom("Tournament")
 		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
@@ -33,6 +40,7 @@ export async function findById(id: number) {
 			"Tournament.id",
 			"CalendarEvent.id as eventId",
 			"CalendarEvent.discordUrl",
+			"CalendarEvent.tags",
 			"Tournament.settings",
 			"Tournament.castTwitchAccounts",
 			"Tournament.castedMatchesInfo",
@@ -154,7 +162,15 @@ export async function findById(id: number) {
 							innerEb
 								.selectFrom("TournamentTeamMember")
 								.innerJoin("User", "TournamentTeamMember.userId", "User.id")
-								.leftJoin("PlusTier", "User.id", "PlusTier.userId")
+								.leftJoin("SeedingSkill", (join) =>
+									join
+										.onRef("User.id", "=", "SeedingSkill.userId")
+										.on(
+											"SeedingSkill.type",
+											"=",
+											isSetAsRanked ? "RANKED" : "UNRANKED",
+										),
+								)
 								.select([
 									"User.id as userId",
 									"User.username",
@@ -163,7 +179,7 @@ export async function findById(id: number) {
 									"User.customUrl",
 									"User.country",
 									"User.twitch",
-									"PlusTier.tier as plusTier",
+									"SeedingSkill.ordinal",
 									"TournamentTeamMember.isOwner",
 									"TournamentTeamMember.createdAt",
 									sql<string | null> /*sql*/`coalesce(
@@ -269,11 +285,25 @@ export async function findById(id: number) {
 
 	return {
 		...result,
+		teams: result.teams.map((team) => ({
+			...team,
+			members: team.members.map(({ ordinal, ...member }) => member),
+			avgSeedingSkillOrdinal: nullifyingAvg(
+				team.members
+					.map((member) => member.ordinal)
+					.filter((ordinal) => typeof ordinal === "number"),
+			),
+		})),
 		logoSrc: result.logoUrl
 			? userSubmittedImage(result.logoUrl)
-			: `${import.meta.env.VITE_SITE_DOMAIN}${HACKY_resolvePicture(result)}`,
+			: HACKY_resolvePicture(result),
 		participatedUsers: result.participatedUsers.map((user) => user.userId),
 	};
+}
+
+function nullifyingAvg(values: number[]) {
+	if (values.length === 0) return null;
+	return values.reduce((acc, cur) => acc + cur, 0) / values.length;
 }
 
 export async function findTOSetMapPoolById(tournamentId: number) {

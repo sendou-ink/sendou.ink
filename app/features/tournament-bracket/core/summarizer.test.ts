@@ -1,6 +1,7 @@
 import { ordinal, rating } from "openskill";
 import { describe, expect, test } from "vitest";
 import invariant from "~/utils/invariant";
+import type { Tables } from "../../../db/tables";
 import type { AllMatchResult } from "../queries/allMatchResultsByTournamentId.server";
 import type { TournamentDataTeam } from "./Tournament.server";
 import { tournamentSummary } from "./summarizer.server";
@@ -14,6 +15,7 @@ describe("tournamentSummary()", () => {
 		createdAt: 0,
 		id: teamId,
 		inviteCode: null,
+		avgSeedingSkillOrdinal: null,
 		mapPool: [],
 		members: userIds.map((userId) => ({
 			country: null,
@@ -38,7 +40,13 @@ describe("tournamentSummary()", () => {
 		pickupAvatarUrl: null,
 	});
 
-	function summarize({ results }: { results?: AllMatchResult[] } = {}) {
+	function summarize({
+		results,
+		seedingSkillCountsFor,
+	}: {
+		results?: AllMatchResult[];
+		seedingSkillCountsFor?: Tables["SeedingSkill"]["type"];
+	} = {}) {
 		return tournamentSummary({
 			finalStandings: [
 				{
@@ -123,6 +131,8 @@ describe("tournamentSummary()", () => {
 			queryCurrentTeamRating: () => rating(),
 			queryCurrentUserRating: () => rating(),
 			queryTeamPlayerRatingAverage: () => rating(),
+			queryCurrentSeedingRating: () => rating(),
+			seedingSkillCountsFor: seedingSkillCountsFor ?? null,
 		});
 	}
 
@@ -139,6 +149,31 @@ describe("tournamentSummary()", () => {
 		invariant(winnerSkill, "winnerSkill should be defined");
 		invariant(loserSkill, "loserSkill should be defined");
 		expect(ordinal(winnerSkill)).toBeGreaterThan(ordinal(loserSkill));
+	});
+
+	test("seeding skill is calculated the same as normal skill", () => {
+		const summary = summarize({ seedingSkillCountsFor: "RANKED" });
+		const winnerSkill = summary.skills.find((s) => s.userId === 1);
+		const winnerSeedingSkill = summary.skills.find((s) => s.userId === 1);
+
+		invariant(winnerSkill, "winnerSkill should be defined");
+		invariant(winnerSeedingSkill, "winnerSeedingSkill should be defined");
+
+		expect(ordinal(winnerSkill)).toBe(ordinal(winnerSeedingSkill));
+	});
+
+	test("no seeding skill calculated if seedingSkillCountsFor is null", () => {
+		const summary = summarize();
+
+		expect(summary.seedingSkills.length).toBe(0);
+	});
+
+	test("seeding skills type matches the given seedingSkillCountsFor", () => {
+		const summary = summarize({ seedingSkillCountsFor: "RANKED" });
+		expect(summary.seedingSkills[0].type).toBe("RANKED");
+
+		const summary2 = summarize({ seedingSkillCountsFor: "UNRANKED" });
+		expect(summary2.seedingSkills[0].type).toBe("UNRANKED");
 	});
 
 	const resultsWith20: AllMatchResult[] = [

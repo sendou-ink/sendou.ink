@@ -3,7 +3,6 @@ import type {
 	MetaFunction,
 	SerializeFrom,
 } from "@remix-run/node";
-import { json } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import { addDays, addMonths, subDays, subMonths } from "date-fns";
@@ -103,7 +102,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		? parsedParams.data.year
 		: mondayDate.getFullYear();
 
-	return json({
+	return {
 		currentWeek,
 		displayedWeek,
 		currentDay: new Date().getDay(),
@@ -126,7 +125,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			? await CalendarRepository.eventsToReport(user.id)
 			: [],
 		title: makeTitle([`Week ${displayedWeek}`, t("pages.calendar")]),
-	});
+	};
 };
 
 function closeByWeeks(args: { week: number; year: number }) {

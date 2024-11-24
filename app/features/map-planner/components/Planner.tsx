@@ -30,6 +30,7 @@ import {
 import { modesShort } from "~/modules/in-game-lists/modes";
 import {
 	mainWeaponImageUrl,
+	modeImageUrl,
 	outlinedMainWeaponImageUrl,
 	specialWeaponImageUrl,
 	stageMinimapImageUrlWithEnding,
@@ -294,7 +295,7 @@ function WeaponImageSelector({
 }: {
 	handleAddWeapon: (src: string) => void;
 }) {
-	const { t, i18n } = useTranslation(["weapons", "common"]);
+	const { t, i18n } = useTranslation(["weapons", "common", "game-misc"]);
 
 	const isWide = i18n.language === "fr";
 
@@ -395,6 +396,31 @@ function WeaponImageSelector({
 									alt={t(`weapons:SPECIAL_${specialWeaponId}`)}
 									title={t(`weapons:SPECIAL_${specialWeaponId}`)}
 									path={specialWeaponImageUrl(specialWeaponId)}
+									width={28}
+									height={28}
+								/>
+							</Button>
+						);
+					})}
+				</div>
+			</details>
+			<details>
+				<summary className="plans__weapons-summary">
+					<Image path={modeImageUrl("RM")} width={24} height={24} alt="" />
+					{t("common:plans.adder.objective")}
+				</summary>
+				<div className="plans__weapons-container">
+					{(["TC", "RM", "CB"] as const).map((mode) => {
+						return (
+							<Button
+								key={mode}
+								variant="minimal"
+								onClick={() => handleAddWeapon(`${modeImageUrl(mode)}.png`)}
+							>
+								<Image
+									alt={t(`game-misc:MODE_LONG_${mode}`)}
+									title={t(`game-misc:MODE_LONG_${mode}`)}
+									path={modeImageUrl(mode)}
 									width={28}
 									height={28}
 								/>

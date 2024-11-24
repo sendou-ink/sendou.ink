@@ -94,13 +94,13 @@ export abstract class Bracket {
 		this.preview = preview;
 		this.seeding = seeding;
 		this.tournament = tournament;
+		this.settings = settings;
 		this.data = data ?? this.generateMatchesData(this.seeding!);
 		this.canBeStarted = canBeStarted;
 		this.name = name;
 		this.teamsPendingCheckIn = teamsPendingCheckIn;
 		this.sources = sources;
 		this.createdAt = createdAt;
-		this.settings = settings;
 		this.checkInRequired = checkInRequired;
 		this.startTime = startTime;
 
@@ -294,7 +294,7 @@ export abstract class Bracket {
 					this.type === "round_robin"
 						? teams
 						: fillWithNullTillPowerOfTwo(teams),
-				settings: this.tournament.bracketSettings(
+				settings: this.tournament.bracketManagerSettings(
 					this.settings,
 					this.type,
 					teams.length,

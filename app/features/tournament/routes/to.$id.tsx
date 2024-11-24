@@ -55,6 +55,18 @@ export const meta: MetaFunction = (args) => {
 
 	const title = makeTitle(data.tournament.ctx.name);
 
+	const ogImage = () => {
+		if (
+			!data.tournament.ctx.logoSrc ||
+			data.tournament.ctx.logoSrc.startsWith("https")
+		) {
+			return data.tournament.ctx.logoSrc;
+		}
+
+		// opengraph does not support relative urls
+		return `${import.meta.env.VITE_SITE_DOMAIN}${data.tournament.ctx.logoSrc}`;
+	};
+
 	return [
 		{ title },
 		{
@@ -71,7 +83,7 @@ export const meta: MetaFunction = (args) => {
 		},
 		{
 			property: "og:image",
-			content: data.tournament.ctx.logoSrc,
+			content: ogImage(),
 		},
 		// Twitter special snowflake tags, see https://developer.x.com/en/docs/twitter-for-websites/cards/overview/summary
 		{

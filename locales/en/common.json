@@ -153,6 +153,7 @@
 	"plans.blueprint": "Blueprint",
 	"plans.bgStyle.OVER": "Overhead",
 	"plans.bgStyle.MINI": "Minimap",
+	"plans.adder.objective": "Objective",
 
 	"articles.by": "by {{author}}",
 

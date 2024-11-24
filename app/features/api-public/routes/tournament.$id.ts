@@ -33,11 +33,16 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 				"CalendarEventDate.eventId",
 				"CalendarEvent.id",
 			)
-			.select(({ eb }) => [
+			.select(({ eb, exists, selectFrom }) => [
 				"CalendarEvent.name",
 				"CalendarEvent.organizationId",
 				"CalendarEventDate.startTime",
 				"Tournament.settings",
+				exists(
+					selectFrom("TournamentResult")
+						.where("TournamentResult.tournamentId", "=", id)
+						.select("TournamentResult.tournamentId"),
+				).as("isFinalized"),
 				eb
 					.selectFrom("UserSubmittedImage")
 					.select(["UserSubmittedImage.url"])
@@ -80,6 +85,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			type: bp.type,
 		})),
 		organizationId: tournament.organizationId,
+		isFinalized: Boolean(tournament.isFinalized),
 	};
 
 	return await cors(request, json(result));

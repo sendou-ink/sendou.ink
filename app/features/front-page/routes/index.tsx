@@ -109,6 +109,7 @@ function SeasonBanner() {
 	const { t, i18n } = useTranslation(["front"]);
 	const season = nextSeason(new Date()) ?? currentOrPreviousSeason(new Date())!;
 	const _previousSeason = previousSeason(new Date());
+	const isMounted = useIsMounted();
 
 	const isInFuture = new Date() < season.starts;
 	const isShowingPreviousSeason = _previousSeason?.nth === season.nth;
@@ -121,17 +122,21 @@ function SeasonBanner() {
 				<div className="front__season-banner__header">
 					{t("front:sq.season", { nth: season.nth })}
 				</div>
-				<div className="front__season-banner__dates">
-					{season.starts.toLocaleDateString(i18n.language, {
-						month: "long",
-						day: "numeric",
-					})}{" "}
-					-{" "}
-					{season.ends.toLocaleDateString(i18n.language, {
-						month: "long",
-						day: "numeric",
-					})}
-				</div>
+				{isMounted ? (
+					<div className="front__season-banner__dates">
+						{season.starts.toLocaleDateString(i18n.language, {
+							month: "long",
+							day: "numeric",
+						})}{" "}
+						-{" "}
+						{season.ends.toLocaleDateString(i18n.language, {
+							month: "long",
+							day: "numeric",
+						})}
+					</div>
+				) : (
+					<div className="front__season-banner__dates invisible">X</div>
+				)}
 				<Image
 					className="front__season-banner__img"
 					path={sqHeaderGuyImageUrl(season.nth)}

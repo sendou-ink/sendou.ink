@@ -85,6 +85,8 @@ export interface GetTournamentResponse {
 	};
 	brackets: TournamentBracket[];
 	organizationId: number | null;
+	/** Has the tournament concluded (results added to user profiles & no editing possible anymore) */
+	isFinalized: boolean;
 }
 
 /** GET /api/tournament/{tournamentId}/teams */

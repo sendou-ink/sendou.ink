@@ -1,3 +1,4 @@
+import { sub } from "date-fns";
 import { sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { nanoid } from "nanoid";
@@ -8,7 +9,7 @@ import type {
 	TablesInsertable,
 	UserMapModePreferences,
 } from "~/db/tables";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { userIsBanned } from "../ban/core/banned.server";
 import type { LookingGroupWithInviteCode } from "./q-types";
@@ -332,4 +333,61 @@ export async function usersThatTrusted(userId: number) {
 		teams: teams.sort((a, b) => b.isMainTeam - a.isMainTeam),
 		trusters: deduplicatedRows,
 	};
+}
+
+/** Update the timestamp of the trust relationship, delaying its automatic deletion */
+export async function refreshTrust({
+	trustGiverUserId,
+	trustReceiverUserId,
+}: {
+	trustGiverUserId: number;
+	trustReceiverUserId: number;
+}) {
+	return db
+		.updateTable("TrustRelationship")
+		.set({ lastUsedAt: databaseTimestampNow() })
+		.where("trustGiverUserId", "=", trustGiverUserId)
+		.where("trustReceiverUserId", "=", trustReceiverUserId)
+		.execute();
+}
+
+export async function deleteOldTrust() {
+	const twoMonthsAgo = sub(new Date(), { months: 2 });
+
+	return db
+		.deleteFrom("TrustRelationship")
+		.where("lastUsedAt", "<", dateToDatabaseTimestamp(twoMonthsAgo))
+		.executeTakeFirst();
+}
+
+export async function setOldGroupsAsInactive() {
+	const oneHourAgo = sub(new Date(), { hours: 1 });
+
+	return db.transaction().execute(async (trx) => {
+		const groupsToSetInactive = await trx
+			.selectFrom("Group")
+			.leftJoin("GroupMatch", (join) =>
+				join.on((eb) =>
+					eb.or([
+						eb("GroupMatch.alphaGroupId", "=", eb.ref("Group.id")),
+						eb("GroupMatch.bravoGroupId", "=", eb.ref("Group.id")),
+					]),
+				),
+			)
+			.select(["Group.id"])
+			.where("status", "!=", "INACTIVE")
+			.where("GroupMatch.id", "is", null)
+			.where("latestActionAt", "<", dateToDatabaseTimestamp(oneHourAgo))
+			.execute();
+
+		return trx
+			.updateTable("Group")
+			.set({ status: "INACTIVE" })
+			.where(
+				"Group.id",
+				"in",
+				groupsToSetInactive.map((g) => g.id),
+			)
+			.executeTakeFirst();
+	});
 }

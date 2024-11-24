@@ -13,6 +13,7 @@ const tournamentCtxTeam = (
 		createdAt: 0,
 		id: teamId,
 		inviteCode: null,
+		avgSeedingSkillOrdinal: null,
 		team: null,
 		mapPool: [],
 		members: [],
@@ -58,6 +59,7 @@ export const testTournament = ({
 		ctx: {
 			eventId: 1,
 			id: 1,
+			tags: null,
 			description: null,
 			organization: null,
 			rules: null,

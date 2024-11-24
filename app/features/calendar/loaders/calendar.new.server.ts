@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
@@ -71,7 +71,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		);
 	}
 
-	return json({
+	return {
 		isAddingTournament: Boolean(
 			url.searchParams.has("tournament") || url.searchParams.has("copyEventId"),
 		),
@@ -91,5 +91,5 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		organizations: await TournamentOrganizationRepository.findByOrganizerUserId(
 			user.id,
 		),
-	});
+	};
 };
