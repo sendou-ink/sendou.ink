@@ -3,7 +3,7 @@ import { sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables, TournamentSettings } from "~/db/tables";
-import type { CalendarEventTag } from "~/db/types";
+import type { CalendarEventTag, PersistedCalendarEventTag } from "~/db/types";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
@@ -144,10 +144,12 @@ export async function findAllBetweenTwoTimestamps({
 	startTime,
 	endTime,
 	tagsToFilterBy,
+	onlyTournaments,
 }: {
 	startTime: Date;
 	endTime: Date;
-	tagsToFilterBy: Array<CalendarEventTag>;
+	tagsToFilterBy: Array<PersistedCalendarEventTag>;
+	onlyTournaments: boolean;
 }) {
 	let query = db
 		.selectFrom("CalendarEvent")
@@ -217,6 +219,10 @@ export async function findAllBetweenTwoTimestamps({
 
 	for (const tag of tagsToFilterBy) {
 		query = query.where("CalendarEvent.tags", "like", `%${tag}%`);
+	}
+
+	if (onlyTournaments) {
+		query = query.where("CalendarEvent.tournamentId", "is not", null);
 	}
 
 	const rows = await query.execute();
@@ -313,10 +319,12 @@ export async function startTimesOfRange({
 	startTime,
 	endTime,
 	tagsToFilterBy,
+	onlyTournaments,
 }: {
 	startTime: Date;
 	endTime: Date;
-	tagsToFilterBy: Array<CalendarEventTag>;
+	tagsToFilterBy: Array<PersistedCalendarEventTag>;
+	onlyTournaments: boolean;
 }) {
 	let query = db
 		.selectFrom("CalendarEventDate")
@@ -327,6 +335,10 @@ export async function startTimesOfRange({
 
 	for (const tag of tagsToFilterBy) {
 		query = query.where("CalendarEvent.tags", "like", `%${tag}%`);
+	}
+
+	if (onlyTournaments) {
+		query = query.where("CalendarEvent.tournamentId", "is not", null);
 	}
 
 	const rows = await query.execute();

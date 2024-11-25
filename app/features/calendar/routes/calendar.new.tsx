@@ -574,9 +574,8 @@ function TagsAdder() {
 	const [tags, setTags] = React.useState(baseEvent?.tags ?? []);
 	const id = React.useId();
 
-	const tagsForSelect = CALENDAR_EVENT.TAGS.filter(
-		// @ts-expect-error TODO: fix this (5.5 version)
-		(tag) => !tags.includes(tag) && tag !== "BADGE",
+	const tagsForSelect = CALENDAR_EVENT.PERSISTED_TAGS.filter(
+		(tag) => !tags.includes(tag),
 	);
 
 	return (

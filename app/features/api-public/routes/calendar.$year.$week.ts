@@ -48,5 +48,6 @@ function fetchEventsOfWeek(args: { week: number; year: number }) {
 		startTime,
 		endTime,
 		tagsToFilterBy: [],
+		onlyTournaments: false,
 	});
 }

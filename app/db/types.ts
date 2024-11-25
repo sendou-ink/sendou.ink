@@ -1,4 +1,7 @@
-import type { tags } from "~/features/calendar/calendar-constants";
+import type {
+	persistedTags,
+	tags,
+} from "~/features/calendar/calendar-constants";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type { TEAM_MEMBER_ROLES } from "~/features/team";
 import type {
@@ -135,6 +138,7 @@ export interface CalendarEvent {
 	tournamentId: number | null;
 }
 
+export type PersistedCalendarEventTag = keyof typeof persistedTags;
 export type CalendarEventTag = keyof typeof tags;
 
 export interface CalendarEventDate {

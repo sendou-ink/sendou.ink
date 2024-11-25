@@ -33,7 +33,7 @@ import { mySlugify } from "~/utils/urls";
 import type { SeedVariation } from "~/features/api-private/routes/seed";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
-import { tags } from "~/features/calendar/calendar-constants";
+import { persistedTags } from "~/features/calendar/calendar-constants";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
@@ -698,9 +698,7 @@ function calendarEvents() {
 	const userIds = userIdsInRandomOrder();
 
 	for (let id = 1; id <= AMOUNT_OF_CALENDAR_EVENTS; id++) {
-		const shuffledTags = shuffle(Object.keys(tags)).filter(
-			(tag) => tag !== "BADGE",
-		);
+		const shuffledTags = shuffle(Object.keys(persistedTags));
 
 		sql
 			.prepare(

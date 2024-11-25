@@ -43,7 +43,12 @@ import {
 	userSubmittedImage,
 } from "~/utils/urls";
 import { actualNumber, safeSplit } from "~/utils/zod";
-import type { CalendarEventTag } from "../../../db/types";
+import { Label } from "../../../components/Label";
+import { Toggle } from "../../../components/Toggle";
+import type {
+	CalendarEventTag,
+	PersistedCalendarEventTag,
+} from "../../../db/types";
 import * as CalendarRepository from "../CalendarRepository.server";
 import { calendarEventTagSchema } from "../actions/calendar.new.server";
 import { CALENDAR_EVENT } from "../calendar-constants";
@@ -83,8 +88,9 @@ const loaderWeekSearchParamsSchema = z.object({
 	year: z.preprocess(actualNumber, z.number().int()),
 });
 
-const loaderTagsSearchParamsSchema = z.object({
+const loaderFilterSearchParamsSchema = z.object({
 	tags: z.preprocess(safeSplit(), z.array(calendarEventTagSchema)),
+	tournaments: z.literal("true").nullish(),
 });
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -97,8 +103,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		year: url.searchParams.get("year"),
 		week: url.searchParams.get("week"),
 	});
-	const parsedTagParams = loaderTagsSearchParamsSchema.safeParse({
+	const parsedFilterParams = loaderFilterSearchParamsSchema.safeParse({
 		tags: url.searchParams.get("tags"),
+		tournaments: url.searchParams.get("tournaments"),
 	});
 
 	const mondayDate = dateToThisWeeksMonday(new Date());
@@ -110,9 +117,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const displayedYear = parsedWeekParams.success
 		? parsedWeekParams.data.year
 		: mondayDate.getFullYear();
-	const tagsToFilterBy = parsedTagParams.success
-		? (parsedTagParams.data.tags as CalendarEventTag[])
+	const tagsToFilterBy = parsedFilterParams.success
+		? (parsedFilterParams.data.tags as PersistedCalendarEventTag[])
 		: [];
+	const onlyTournaments = parsedFilterParams.success
+		? Boolean(parsedFilterParams.data.tournaments)
+		: false;
 
 	return {
 		currentWeek,
@@ -128,12 +138,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				1,
 			),
 			tagsToFilterBy,
+			onlyTournaments,
 		}),
 		weeks: closeByWeeks({ week: displayedWeek, year: displayedYear }),
 		events: await fetchEventsOfWeek({
 			week: displayedWeek,
 			year: displayedYear,
 			tagsToFilterBy,
+			onlyTournaments,
 		}),
 		eventsToReport: user
 			? await CalendarRepository.eventsToReport(user.id)
@@ -161,7 +173,8 @@ function closeByWeeks(args: { week: number; year: number }) {
 function fetchEventsOfWeek(args: {
 	week: number;
 	year: number;
-	tagsToFilterBy: CalendarEventTag[];
+	tagsToFilterBy: PersistedCalendarEventTag[];
+	onlyTournaments: boolean;
 }) {
 	const startTime = weekNumberToDate(args);
 
@@ -176,10 +189,9 @@ function fetchEventsOfWeek(args: {
 		startTime,
 		endTime,
 		tagsToFilterBy: args.tagsToFilterBy,
+		onlyTournaments: args.onlyTournaments,
 	});
 }
-
-// xxx: link from front page
 
 export default function CalendarPage() {
 	const { t } = useTranslation("calendar");
@@ -201,24 +213,29 @@ export default function CalendarPage() {
 		<Main classNameOverwrite="stack lg main layout__main">
 			<WeekLinks />
 			<EventsToReport />
-			<TagsFilter />
-			{isMounted ? (
-				<>
-					{thisWeeksEvents.length > 0 ? (
-						<>
-							<EventsList events={thisWeeksEvents} />
-							<div className="calendar__time-zone-info">
-								{t("inYourTimeZone")}{" "}
-								{Intl.DateTimeFormat().resolvedOptions().timeZone}
-							</div>
-						</>
-					) : (
-						<h2 className="calendar__no-events">{t("noEvents")}</h2>
-					)}
-				</>
-			) : (
-				<div className="calendar__placeholder" />
-			)}
+			<div>
+				<div className="stack horizontal justify-between">
+					<TagsFilter />
+					<OnSendouInkToggle />
+				</div>
+				{isMounted ? (
+					<>
+						{thisWeeksEvents.length > 0 ? (
+							<>
+								<EventsList events={thisWeeksEvents} />
+								<div className="calendar__time-zone-info">
+									{t("inYourTimeZone")}{" "}
+									{Intl.DateTimeFormat().resolvedOptions().timeZone}
+								</div>
+							</>
+						) : (
+							<h2 className="calendar__no-events">{t("noEvents")}</h2>
+						)}
+					</>
+				) : (
+					<div className="calendar__placeholder" />
+				)}
+			</div>
 		</Main>
 	);
 }
@@ -226,10 +243,19 @@ export default function CalendarPage() {
 function WeekLinks() {
 	const data = useLoaderData<typeof loader>();
 	const isMounted = useIsMounted();
+	const [searchParams] = useSearchParams();
 
 	const eventCounts = isMounted
 		? getEventsCountPerWeek(data.nearbyStartTimes)
 		: null;
+
+	const linkTo = (args: { week: number; year: number }) => {
+		const params = new URLSearchParams(searchParams);
+		params.set("week", String(args.week));
+		params.set("year", String(args.year));
+
+		return `?${params.toString()}`;
+	};
 
 	return (
 		<Flipper flipKey={data.weeks.map(({ number }) => number).join("")}>
@@ -248,7 +274,7 @@ function WeekLinks() {
 						return (
 							<Flipped key={week.number} flipId={week.number}>
 								<Link
-									to={`?week=${week.number}&year=${week.year}`}
+									to={linkTo({ week: week.number, year: week.year })}
 									className={clsx("calendar__week", { invisible: hidden })}
 									aria-hidden={hidden}
 									tabIndex={hidden || isCurrentWeek ? -1 : 0}
@@ -360,10 +386,6 @@ function EventsToReport() {
 	);
 }
 
-// xxx: styling
-// xxx: i18n
-// xxx: when changing page, remember tags to filter by
-
 function TagsFilter() {
 	const { t } = useTranslation(["calendar", "common"]);
 	const id = React.useId();
@@ -386,17 +408,17 @@ function TagsFilter() {
 		});
 	};
 
-	const tagsForSelect = CALENDAR_EVENT.TAGS.filter(
+	const tagsForSelect = CALENDAR_EVENT.PERSISTED_TAGS.filter(
 		(tag) => !tagsToFilterBy.includes(tag),
 	);
 
 	return (
-		<div>
+		<div className="stack sm">
 			<div>
-				<label htmlFor={id}>Filter by tags</label>
+				<label htmlFor={id}>{t("calendar:tag.filter.label")}</label>
 				<select
 					id={id}
-					className="calendar-new__select"
+					className="w-max"
 					onChange={(e) =>
 						setTagsToFilterBy([
 							...tagsToFilterBy,
@@ -404,7 +426,7 @@ function TagsFilter() {
 						])
 					}
 				>
-					<option value="">{t("calendar:forms.tags.placeholder")}</option>
+					<option value="">—</option>
 					{tagsForSelect.map((tag) => (
 						<option key={tag} value={tag}>
 							{t(`common:tag.name.${tag}`)}
@@ -418,6 +440,40 @@ function TagsFilter() {
 					setTagsToFilterBy(tagsToFilterBy.filter((tag) => tag !== tagToDelete))
 				}
 			/>
+		</div>
+	);
+}
+
+function OnSendouInkToggle() {
+	const { t } = useTranslation(["calendar"]);
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	const onlyTournaments = searchParams.get("tournaments") === "true";
+
+	const setOnlyTournaments = (value: boolean) => {
+		setSearchParams((params) => {
+			if (value) {
+				params.set("tournaments", "true");
+			} else {
+				params.delete("tournaments");
+			}
+
+			return params;
+		});
+	};
+
+	return (
+		<div className="stack horizontal justify-end">
+			<div className="stack items-end">
+				<Label htmlFor="onlyTournaments">
+					{t("calendar:tournament.filter.label")}
+				</Label>
+				<Toggle
+					id="onlyTournaments"
+					checked={onlyTournaments}
+					setChecked={setOnlyTournaments}
+				/>
+			</div>
 		</div>
 	);
 }
