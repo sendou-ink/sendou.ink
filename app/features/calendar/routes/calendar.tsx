@@ -90,6 +90,9 @@ const loaderWeekSearchParamsSchema = z.object({
 
 const loaderFilterSearchParamsSchema = z.object({
 	tags: z.preprocess(safeSplit(), z.array(calendarEventTagSchema)),
+});
+
+const loaderTournamentsOnlySearchParamsSchema = z.object({
 	tournaments: z.literal("true").nullish(),
 });
 
@@ -105,8 +108,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	});
 	const parsedFilterParams = loaderFilterSearchParamsSchema.safeParse({
 		tags: url.searchParams.get("tags"),
-		tournaments: url.searchParams.get("tournaments"),
 	});
+	const parsedTournamentsOnlyParams =
+		loaderTournamentsOnlySearchParamsSchema.safeParse({
+			tournaments: url.searchParams.get("tournaments"),
+		});
 
 	const mondayDate = dateToThisWeeksMonday(new Date());
 	const currentWeek = dateToWeekNumber(mondayDate);
@@ -120,8 +126,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const tagsToFilterBy = parsedFilterParams.success
 		? (parsedFilterParams.data.tags as PersistedCalendarEventTag[])
 		: [];
-	const onlyTournaments = parsedFilterParams.success
-		? Boolean(parsedFilterParams.data.tournaments)
+	const onlyTournaments = parsedTournamentsOnlyParams.success
+		? Boolean(parsedTournamentsOnlyParams.data.tournaments)
 		: false;
 
 	return {
