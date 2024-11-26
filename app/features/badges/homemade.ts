@@ -374,4 +374,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "treasure",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "Anarchy NoVA",
+		fileName: "punkshrimp",
+		authorDiscordId: "528851510222782474",
+	},
 ];
