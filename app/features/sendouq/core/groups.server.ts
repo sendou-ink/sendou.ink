@@ -1,5 +1,6 @@
 import clone from "just-clone";
-import type { Tables } from "~/db/tables";
+import compare from "just-compare";
+import type { Tables, UserGroupReformingOpinion } from "~/db/tables";
 import type { Group } from "~/db/types";
 import { TIERS } from "~/features/mmr/mmr-constants";
 import { defaultOrdinal } from "~/features/mmr/mmr-utils";
@@ -553,4 +554,23 @@ export function tierDifferenceToRangeOrExact({
 	const upperTier = tiers[upperBound];
 
 	return { diff: idxDiff, tier: [clone(lowerTier), clone(upperTier)] };
+}
+
+export function insertIntoGroupReformingOpinions(args: {
+	existing: UserGroupReformingOpinion[];
+	newOpinion: UserGroupReformingOpinion;
+}) {
+	const isAlreadyIncluded = args.existing.some((opinion) =>
+		compare(opinion, args.newOpinion),
+	);
+
+	if (isAlreadyIncluded) return args.existing;
+
+	if (args.newOpinion.type === "AGAINST") {
+		return args.existing
+			.filter((opinion) => opinion.userId !== args.newOpinion.userId)
+			.concat(args.newOpinion);
+	}
+
+	return args.existing.concat(args.newOpinion);
 }

@@ -43,6 +43,7 @@ export function findById(id: number) {
 export interface GroupForMatch {
 	id: Tables["Group"]["id"];
 	chatCode: Tables["Group"]["chatCode"];
+	status: Tables["Group"]["status"];
 	tier?: ParsedMemento["groups"][number]["tier"];
 	skillDifference?: ParsedMemento["groups"][number]["skillDifference"];
 	team?: {
@@ -91,6 +92,7 @@ export async function findGroupById({
 		.select(({ eb }) => [
 			"Group.id",
 			"Group.chatCode",
+			"Group.status",
 			"GroupMatch.memento",
 			jsonObjectFrom(
 				eb
@@ -150,6 +152,7 @@ export async function findGroupById({
 	return {
 		id: row.id,
 		chatCode: row.chatCode,
+		status: row.status,
 		tier: row.memento?.groups[row.id]?.tier,
 		skillDifference: row.memento?.groups[row.id]?.skillDifference,
 		team: row.team,

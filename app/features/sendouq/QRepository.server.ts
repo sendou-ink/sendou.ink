@@ -7,11 +7,14 @@ import { db } from "~/db/sql";
 import type {
 	Tables,
 	TablesInsertable,
+	UserGroupReformingOpinion,
 	UserMapModePreferences,
 } from "~/db/tables";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import invariant from "../../utils/invariant";
 import { userIsBanned } from "../ban/core/banned.server";
+import { insertIntoGroupReformingOpinions } from "./core/groups.server";
 import type { LookingGroupWithInviteCode } from "./q-types";
 
 export function mapModePreferencesByGroupId(groupId: number) {
@@ -24,6 +27,44 @@ export function mapModePreferencesByGroupId(groupId: number) {
 		.execute() as Promise<
 		{ userId: number; preferences: UserMapModePreferences }[]
 	>;
+}
+
+export async function findActiveGroupByUserId(userId: number) {
+	const groups = await db
+		.selectFrom("Group")
+		.innerJoin("GroupMember", "GroupMember.groupId", "Group.id")
+		.leftJoin("GroupMatch", (join) =>
+			join.on((eb) =>
+				eb.or([
+					eb("GroupMatch.alphaGroupId", "=", eb.ref("Group.id")),
+					eb("GroupMatch.bravoGroupId", "=", eb.ref("Group.id")),
+				]),
+			),
+		)
+		.select([
+			"Group.id",
+			"Group.status",
+			"Group.latestActionAt",
+			"Group.chatCode",
+			"Group.opinionsAboutReforming",
+			"GroupMatch.id as matchId",
+			"GroupMember.role",
+		])
+		.where("Group.status", "!=", "INACTIVE")
+		.where("GroupMember.userId", "=", userId)
+		.execute();
+
+	const valid = groups.filter(
+		(group) =>
+			group.status !== "REFORMING" ||
+			!(group.opinionsAboutReforming ?? []).some(
+				(opinion) => opinion.userId === userId && opinion.type === "AGAINST",
+			),
+	);
+
+	invariant(valid.length <= 1, `user id: ${userId} in many groups`);
+
+	return valid.at(0);
 }
 
 // groups visible for longer to make development easier
@@ -206,7 +247,9 @@ export async function createGroupFromPrevious(
 						"Group.teamId",
 						"Group.chatCode",
 						eb.val(nanoid(INVITE_CODE_LENGTH)).as("inviteCode"),
-						eb.val("PREPARING").as("status"),
+						eb
+							.val("PREPARING")
+							.as("status"), // xxx: should be active
 					])
 					.where("Group.id", "=", args.previousGroupId),
 			)
@@ -225,6 +268,35 @@ export async function createGroupFromPrevious(
 			.execute();
 
 		return createdGroup;
+	});
+}
+
+export async function addOpinionAboutReforming(args: {
+	groupId: number;
+	opinion: UserGroupReformingOpinion;
+}) {
+	return db.transaction().execute(async (trx) => {
+		const existingOpinions =
+			(
+				await trx
+					.selectFrom("Group")
+					.select("Group.opinionsAboutReforming")
+					.where("id", "=", args.groupId)
+					.executeTakeFirstOrThrow()
+			).opinionsAboutReforming ?? [];
+
+		await trx
+			.updateTable("Group")
+			.set({
+				opinionsAboutReforming: JSON.stringify(
+					insertIntoGroupReformingOpinions({
+						existing: existingOpinions,
+						newOpinion: args.opinion,
+					}),
+				),
+			})
+			.where("id", "=", args.groupId)
+			.execute();
 	});
 }
 

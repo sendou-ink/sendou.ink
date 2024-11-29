@@ -6,7 +6,8 @@ export type SystemMessageType =
 	| "SCORE_REPORTED"
 	| "SCORE_CONFIRMED"
 	| "CANCEL_REPORTED"
-	| "CANCEL_CONFIRMED";
+	| "CANCEL_CONFIRMED"
+	| "REFORMING_OPINION_SET";
 
 export type SystemMessageContext = {
 	name: string;

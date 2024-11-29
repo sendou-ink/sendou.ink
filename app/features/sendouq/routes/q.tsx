@@ -64,7 +64,6 @@ import {
 } from "../q-utils";
 import { addMember } from "../queries/addMember.server";
 import { deleteLikesByGroupId } from "../queries/deleteLikesByGroupId.server";
-import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
 import { findGroupByInviteCode } from "../queries/findGroupByInviteCode.server";
 
 import "../q.css";
@@ -94,8 +93,10 @@ const validateCanJoinQ = async (user: { id: number; discordId: string }) => {
 	validate(friendCode, "No friend code");
 	const canJoinQueue = userCanJoinQueueAt(user, friendCode) === "NOW";
 
+	const activeGroup = await QRepository.findActiveGroupByUserId(user.id);
+
 	validate(currentSeason(new Date()), "Season is not active");
-	validate(!findCurrentGroupByUserId(user.id), "Already in a group");
+	validate(!activeGroup, "Already in a group");
 	validate(canJoinQueue, "Can't join queue right now");
 };
 
@@ -185,7 +186,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	);
 
 	const redirectLocation = groupRedirectLocationByCurrentLocation({
-		group: user ? findCurrentGroupByUserId(user.id) : undefined,
+		group: user
+			? await QRepository.findActiveGroupByUserId(user.id)
+			: undefined,
 		currentLocation: "default",
 	});
 

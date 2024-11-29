@@ -6,6 +6,7 @@ import {
 	falsyToNull,
 	id,
 	modeShort,
+	numericEnum,
 	safeJSONParse,
 	stageId,
 	weaponSplId,
@@ -144,6 +145,18 @@ export const matchSchema = z.union([
 	z.object({
 		_action: _action("LOOK_AGAIN"),
 		previousGroupId: id,
+	}),
+	z.object({
+		_action: _action("ADD_REFORM_OPINION"),
+		opinion: z.union([
+			z.object({
+				type: z.literal("AGAINST"),
+			}),
+			z.object({
+				type: z.literal("FOR"),
+				forSize: numericEnum([2, 3, 4]),
+			}),
+		]),
 	}),
 	z.object({
 		_action: _action("REPORT_WEAPONS"),

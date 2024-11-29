@@ -57,7 +57,6 @@ import { addSkills } from "~/features/sendouq/queries/addSkills.server";
 import { createMatch } from "~/features/sendouq/queries/createMatch.server";
 import { findMatchById } from "~/features/sendouq/queries/findMatchById.server";
 import { reportScore } from "~/features/sendouq/queries/reportScore.server";
-import { setGroupAsInactive } from "~/features/sendouq/queries/setGroupAsInactive.server";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -2150,8 +2149,9 @@ async function playedMatches() {
 				groupMatchId: match.id,
 				oldMatchMemento: { users: {}, groups: {} },
 			});
-			setGroupAsInactive(groupAlpha);
-			setGroupAsInactive(groupBravo);
+			// xxx: fix seed
+			// setGroupAsInactive(groupAlpha);
+			// setGroupAsInactive(groupBravo);
 			addMapResults(summarizeMaps({ match: finishedMatch, members, winners }));
 			addPlayerResults(
 				summarizePlayerResults({ match: finishedMatch, members, winners }),

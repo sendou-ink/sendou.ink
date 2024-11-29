@@ -31,7 +31,6 @@ import { FULL_GROUP_SIZE } from "../q-constants";
 import { preparingSchema } from "../q-schemas.server";
 import { groupRedirectLocationByCurrentLocation } from "../q-utils";
 import { addMember } from "../queries/addMember.server";
-import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
 import { findPreparingGroup } from "../queries/findPreparingGroup.server";
 import { refreshGroup } from "../queries/refreshGroup.server";
 import { setGroupAsActive } from "../queries/setGroupAsActive.server";
@@ -60,7 +59,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		schema: preparingSchema,
 	});
 
-	const currentGroup = findCurrentGroupByUserId(user.id);
+	const currentGroup = await QRepository.findActiveGroupByUserId(user.id);
 	validate(currentGroup, "No group found");
 
 	if (!hasGroupManagerPerms(currentGroup.role)) {
@@ -124,7 +123,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await getUser(request);
 
-	const currentGroup = user ? findCurrentGroupByUserId(user.id) : undefined;
+	const currentGroup = user
+		? await QRepository.findActiveGroupByUserId(user.id)
+		: undefined;
 	const redirectLocation = groupRedirectLocationByCurrentLocation({
 		group: currentGroup,
 		currentLocation: "preparing",

@@ -169,13 +169,30 @@ export interface FreshPlusTier {
 	userId: number;
 }
 
+export type UserGroupReformingOpinion =
+	| {
+			type: "FOR";
+			userId: number;
+			/** What size of group are they for reforming? For example they might want to queue up again with a full group but not a partial one. */
+			forSize: number;
+	  }
+	| {
+			type: "AGAINST";
+			userId: number;
+	  };
+
 export interface Group {
 	chatCode: string | null;
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
 	inviteCode: string;
 	latestActionAt: Generated<number>;
-	status: "PREPARING" | "ACTIVE" | "INACTIVE";
+	status: "PREPARING" | "ACTIVE" | "REFORMING" | "INACTIVE";
+	opinionsAboutReforming: ColumnType<
+		UserGroupReformingOpinion[] | null,
+		string | null,
+		string | null
+	>;
 	teamId: number | null;
 }
 

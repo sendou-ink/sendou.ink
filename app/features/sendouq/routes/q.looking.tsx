@@ -71,7 +71,6 @@ import { addManagerRole } from "../queries/addManagerRole.server";
 import { chatCodeByGroupId } from "../queries/chatCodeByGroupId.server";
 import { createMatch } from "../queries/createMatch.server";
 import { deleteLike } from "../queries/deleteLike.server";
-import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
 import { findLikes } from "../queries/findLikes";
 import { findRecentMatchPlayersByUserId } from "../queries/findRecentMatchPlayersByUserId.server";
 import { groupHasMatch } from "../queries/groupHasMatch.server";
@@ -108,7 +107,7 @@ export const action: ActionFunction = async ({ request }) => {
 		request,
 		schema: lookingSchema,
 	});
-	const currentGroup = findCurrentGroupByUserId(user.id);
+	const currentGroup = await QRepository.findActiveGroupByUserId(user.id);
 	if (!currentGroup) return null;
 
 	// this throws because there should normally be no way user loses ownership by the action of some other user
@@ -424,7 +423,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	);
 
 	const currentGroup =
-		user && !isPreview ? findCurrentGroupByUserId(user.id) : undefined;
+		user && !isPreview
+			? await QRepository.findActiveGroupByUserId(user.id)
+			: undefined;
 	const redirectLocation = isPreview
 		? undefined
 		: groupRedirectLocationByCurrentLocation({

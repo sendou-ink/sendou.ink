@@ -1,4 +1,3 @@
-import type { Group } from "~/db/types";
 import { stageIds } from "~/modules/in-game-lists";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -9,11 +8,12 @@ import {
 	sendouQMatchPage,
 } from "~/utils/urls";
 import { accountCreatedInTheLastSixMonths } from "~/utils/users";
+import type { Tables } from "../../db/tables";
 import type { MapPool } from "../map-list-generator/core/map-pool";
 import { SENDOUQ } from "./q-constants";
 
 function groupRedirectLocation(
-	group?: Pick<Group, "status"> & { matchId?: number },
+	group?: Pick<Tables["Group"], "status"> & { matchId: number | null },
 ) {
 	if (group?.status === "PREPARING") return SENDOUQ_PREPARING_PAGE;
 	if (group?.matchId) return sendouQMatchPage(group.matchId);
@@ -26,7 +26,7 @@ export function groupRedirectLocationByCurrentLocation({
 	group,
 	currentLocation,
 }: {
-	group?: Pick<Group, "status"> & { matchId?: number };
+	group?: Pick<Tables["Group"], "status"> & { matchId: number | null };
 	currentLocation: "default" | "preparing" | "looking" | "match";
 }) {
 	const newLocation = groupRedirectLocation(group);

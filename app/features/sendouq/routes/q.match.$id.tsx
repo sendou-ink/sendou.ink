@@ -106,11 +106,10 @@ import { addPlayerResults } from "../queries/addPlayerResults.server";
 import { addReportedWeapons } from "../queries/addReportedWeapons.server";
 import { addSkills } from "../queries/addSkills.server";
 import { deleteReporterWeaponsByMatchId } from "../queries/deleteReportedWeaponsByMatchId.server";
-import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
 import { findMatchById } from "../queries/findMatchById.server";
 import { reportScore } from "../queries/reportScore.server";
 import { reportedWeaponsByMatchId } from "../queries/reportedWeaponsByMatchId.server";
-import { setGroupAsInactive } from "../queries/setGroupAsInactive.server";
+import { setGroupAsReforming } from "../queries/setGroupAsReforming";
 
 import "../q.css";
 
@@ -262,8 +261,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 						winners: data.winners,
 					});
 				}
-				// own group gets set inactive
-				if (groupMemberOfId) setGroupAsInactive(groupMemberOfId);
+				// own group gets set to reforming
+				if (groupMemberOfId) setGroupAsReforming(groupMemberOfId);
 				// skills & map/player results only update after both teams have reported
 				if (newSkills) {
 					addMapResults(
@@ -288,10 +287,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				if (compared === "FIX_PREVIOUS") {
 					deleteReporterWeaponsByMatchId(matchId);
 				}
-				// admin reporting, just set both groups inactive
+				// admin reporting, just set both groups reforming
 				if (data.adminReport) {
-					setGroupAsInactive(match.alphaGroupId);
-					setGroupAsInactive(match.bravoGroupId);
+					setGroupAsReforming(match.alphaGroupId);
+					setGroupAsReforming(match.bravoGroupId);
 				}
 			})();
 
@@ -340,6 +339,36 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			break;
 		}
+		// xxx: is it possible to update reforming opinion and get into two groups?
+		case "ADD_REFORM_OPINION": {
+			const match = notFoundIfFalsy(findMatchById(matchId));
+
+			const ownGroup = [
+				(await QMatchRepository.findGroupById({
+					groupId: match.alphaGroupId,
+				}))!,
+				(await QMatchRepository.findGroupById({
+					groupId: match.bravoGroupId,
+				}))!,
+			].find((g) => g.members.some((m) => m.id === user.id));
+
+			invariant(ownGroup, "User is not a member of a group in this match");
+			invariant(ownGroup.status === "REFORMING", "Group is not reforming");
+
+			await QRepository.addOpinionAboutReforming({
+				groupId: ownGroup.id,
+				opinion: { ...data.opinion, userId: user.id },
+			});
+
+			NotificationService.notify({
+				room: ownGroup.chatCode!,
+				type: "REFORMING_OPINION_SET",
+				revalidateOnly: true,
+			});
+
+			break;
+		}
+		// xxx: delete
 		case "LOOK_AGAIN": {
 			const season = currentSeason(new Date());
 			validate(season, "Season is not active");
@@ -350,7 +379,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			validate(previousGroup, "Previous group not found");
 
 			for (const member of previousGroup.members) {
-				const currentGroup = findCurrentGroupByUserId(member.id);
+				const currentGroup = await QRepository.findActiveGroupByUserId(
+					member.id,
+				);
 				validate(!currentGroup, "Member is already in a group");
 				if (member.id === user.id) {
 					validate(
@@ -406,6 +437,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	return null;
 };
 
+// xxx: auto redirect once reformed
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const user = await getUserId(request);
 	const matchId = parseParams({
