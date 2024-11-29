@@ -1,5 +1,6 @@
 import shuffle from "just-shuffle";
 import type { Rating } from "node_modules/openskill/dist/types";
+import { ordinal } from "openskill";
 import type {
 	MapResult,
 	PlayerResult,
@@ -13,6 +14,7 @@ import {
 } from "~/features/mmr/mmr-utils";
 import { removeDuplicates } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
+import type { Tables } from "../../../db/tables";
 import type { AllMatchResult } from "../queries/allMatchResultsByTournamentId.server";
 import type { Standing } from "./Bracket";
 
@@ -21,6 +23,7 @@ export interface TournamentSummary {
 		Skill,
 		"tournamentId" | "id" | "ordinal" | "season" | "groupMatchId"
 	>[];
+	seedingSkills: Tables["SeedingSkill"][];
 	mapResultDeltas: Omit<MapResult, "season">[];
 	playerResultDeltas: Omit<PlayerResult, "season">[];
 	tournamentResults: Omit<TournamentResult, "tournamentId" | "isHighlight">[];
@@ -40,6 +43,8 @@ export function tournamentSummary({
 	queryCurrentTeamRating,
 	queryTeamPlayerRatingAverage,
 	queryCurrentUserRating,
+	queryCurrentSeedingRating,
+	seedingSkillCountsFor,
 	calculateSeasonalStats = true,
 }: {
 	results: AllMatchResult[];
@@ -48,6 +53,8 @@ export function tournamentSummary({
 	queryCurrentTeamRating: (identifier: string) => Rating;
 	queryTeamPlayerRatingAverage: (identifier: string) => Rating;
 	queryCurrentUserRating: (userId: number) => Rating;
+	queryCurrentSeedingRating: (userId: number) => Rating;
+	seedingSkillCountsFor: Tables["SeedingSkill"]["type"] | null;
 	calculateSeasonalStats?: boolean;
 }): TournamentSummary {
 	const userIdsToTeamId = userIdsToTeamIdRecord(teams);
@@ -62,6 +69,17 @@ export function tournamentSummary({
 					queryTeamPlayerRatingAverage,
 				})
 			: [],
+		seedingSkills: seedingSkillCountsFor
+			? calculateIndividualPlayerSkills({
+					queryCurrentUserRating: queryCurrentSeedingRating,
+					results,
+					userIdsToTeamId,
+				}).map((skill) => ({
+					...skill,
+					type: seedingSkillCountsFor,
+					ordinal: ordinal(skill),
+				}))
+			: [],
 		mapResultDeltas: calculateSeasonalStats
 			? mapResultDeltas({ results, userIdsToTeamId })
 			: [],
@@ -75,7 +93,7 @@ export function tournamentSummary({
 	};
 }
 
-function userIdsToTeamIdRecord(teams: TeamsArg) {
+export function userIdsToTeamIdRecord(teams: TeamsArg) {
 	const result: UserIdToTeamId = {};
 
 	for (const team of teams) {
@@ -102,7 +120,7 @@ function skills(args: {
 	return result;
 }
 
-function calculateIndividualPlayerSkills({
+export function calculateIndividualPlayerSkills({
 	results,
 	userIdsToTeamId,
 	queryCurrentUserRating,

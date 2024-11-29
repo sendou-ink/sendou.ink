@@ -3,10 +3,16 @@ import type { BuildAbilitiesTupleWithUnknown } from "./modules/in-game-lists";
 export const TWEET_LENGTH_MAX_LENGTH = 280;
 export const DISCORD_MESSAGE_MAX_LENGTH = 2000;
 
+const EMPTY_CHARACTERS = ["\u200B", "\u200C", "\u200D", "\u200E", "\u200F"];
+export const notAllEmptyCharactersRegExp = new RegExp(
+	`^(?!(${EMPTY_CHARACTERS.join("|")})+$).*$`,
+);
+
 export const USER = {
 	BIO_MAX_LENGTH: DISCORD_MESSAGE_MAX_LENGTH,
 	CUSTOM_URL_MAX_LENGTH: 32,
 	CUSTOM_NAME_MAX_LENGTH: 32,
+	CUSTOM_NAME_REGEXP: notAllEmptyCharactersRegExp,
 	BATTLEFY_MAX_LENGTH: 32,
 	BSKY_MAX_LENGTH: 50,
 	IN_GAME_NAME_TEXT_MAX_LENGTH: 20,
@@ -89,17 +95,25 @@ export const findSplatoon3XpBadgeValue = (xPower: number) => {
 
 export const PATCHES = [
 	{
+		patch: "9.2.0",
+		date: "2024-11-20",
+	},
+	{
+		patch: "9.0.0",
+		date: "2024-08-29",
+	},
+	{
 		patch: "8.1.0",
 		date: "2024-07-17",
 	},
-	{
-		patch: "8.0.0",
-		date: "2024-05-31",
-	},
-	{
-		patch: "7.2.0",
-		date: "2024-04-17",
-	},
+	// {
+	// 	patch: "8.0.0",
+	// 	date: "2024-05-31",
+	// },
+	// {
+	// 	patch: "7.2.0",
+	// 	date: "2024-04-17",
+	// },
 	// {
 	// 	patch: "7.0.0",
 	// 	date: "2024-02-21",

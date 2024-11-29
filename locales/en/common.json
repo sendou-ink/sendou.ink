@@ -153,6 +153,7 @@
 	"plans.blueprint": "Blueprint",
 	"plans.bgStyle.OVER": "Overhead",
 	"plans.bgStyle.MINI": "Minimap",
+	"plans.adder.objective": "Objective",
 
 	"articles.by": "by {{author}}",
 
@@ -224,6 +225,7 @@
 	"leaderboard.noTeams": "No teams on the leaderboard yet",
 	"leaderboard.updateInfo": "Leaderboard is updated once every 30 minutes",
 	"leaderboard.qualification": "Qualification for Season Finale",
+	"leaderboard.qualification.info": "Every player of the roster needs 7 sets of SendouQ played during the season. Every unique roster of 4 have their own points.",
 
 	"chat.connected": "Connected",
 	"chat.disconnected": "Disconnected",

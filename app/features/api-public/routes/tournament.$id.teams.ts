@@ -72,6 +72,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 						"User.discordId",
 						"User.discordAvatar",
 						"User.battlefy",
+						"TournamentTeamMember.inGameName",
 						"TournamentTeamMember.isOwner",
 						"TournamentTeamMember.createdAt",
 					])
@@ -122,6 +123,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 						? `https://cdn.discordapp.com/avatars/${member.discordId}/${member.discordAvatar}.png`
 						: null,
 					captain: Boolean(member.isOwner),
+					inGameName: member.inGameName,
 					joinedAt: databaseTimestampToDate(member.createdAt).toISOString(),
 				};
 			}),

@@ -177,7 +177,7 @@ export function GroupCard({
 						</div>
 					</div>
 				) : null}
-				{group.skillDifference && !group.tier ? (
+				{group.skillDifference ? (
 					<GroupSkillDifference skillDifference={group.skillDifference} />
 				) : null}
 				{action &&

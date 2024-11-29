@@ -82,7 +82,7 @@ import {
 
 import "../analyzer.css";
 
-export const CURRENT_PATCH = "9.0";
+export const CURRENT_PATCH = "9.2";
 
 export const meta: MetaFunction = () => {
 	return [

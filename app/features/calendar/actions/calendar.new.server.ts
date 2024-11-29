@@ -1,19 +1,18 @@
 import type { ActionFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { z } from "zod";
-import type { CalendarEventTag } from "~/db/types";
+import { TOURNAMENT_STAGE_TYPES } from "~/db/tables";
+import type { CalendarEventTag, PersistedCalendarEventTag } from "~/db/types";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import {
-	FORMATS_SHORT,
-	TOURNAMENT,
-} from "~/features/tournament/tournament-constants";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { canEditCalendarEvent } from "~/permissions";
 import {
@@ -45,7 +44,6 @@ import {
 	canAddNewEvent,
 	regClosesAtDate,
 } from "../calendar-utils";
-import { formValuesToBracketProgression } from "../calendar-utils.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = await requireUser(request);
@@ -92,7 +90,7 @@ export const action: ActionFunction = async ({ request }) => {
 			: 0,
 		toToolsMode:
 			rankedModesShort.find((mode) => mode === data.toToolsMode) ?? null,
-		bracketProgression: formValuesToBracketProgression(data),
+		bracketProgression: data.bracketProgression ?? null,
 		minMembersPerTeam: data.minMembersPerTeam ?? undefined,
 		teamsPerGroup: data.teamsPerGroup ?? undefined,
 		thirdPlaceMatch: data.thirdPlaceMatch ?? undefined,
@@ -100,8 +98,8 @@ export const action: ActionFunction = async ({ request }) => {
 		isInvitational: data.isInvitational ?? false,
 		deadlines: data.strictDeadline ? ("STRICT" as const) : ("DEFAULT" as const),
 		enableNoScreenToggle: data.enableNoScreenToggle ?? undefined,
+		enableSubs: data.enableSubs ?? undefined,
 		requireInGameNames: data.requireInGameNames ?? undefined,
-		autoCheckInAll: data.autoCheckInAll ?? undefined,
 		autonomousSubs: data.autonomousSubs ?? undefined,
 		swissGroupCount: data.swissGroupCount ?? undefined,
 		swissRoundCount: data.swissRoundCount ?? undefined,
@@ -166,20 +164,60 @@ export const action: ActionFunction = async ({ request }) => {
 
 		return "AUTO_ALL" as const;
 	};
-	const createdEventId = await CalendarRepository.create({
-		mapPoolMaps: deserializedMaps,
-		isFullTournament: data.toToolsEnabled,
-		mapPickingStyle: mapPickingStyle(),
-		...commonArgs,
-	});
+	const { eventId: createdEventId, tournamentId: createdTournamentId } =
+		await CalendarRepository.create({
+			mapPoolMaps: deserializedMaps,
+			isFullTournament: data.toToolsEnabled,
+			mapPickingStyle: mapPickingStyle(),
+			...commonArgs,
+		});
 
-	if (data.toToolsEnabled) {
+	if (createdTournamentId) {
+		clearTournamentDataCache(createdTournamentId);
 		ShowcaseTournaments.clearParticipationInfoMap();
 		ShowcaseTournaments.clearCachedTournaments();
 	}
 
 	throw redirect(calendarEventPage(createdEventId));
 };
+
+export const bracketProgressionSchema = z.preprocess(
+	safeJSONParse,
+	z
+		.array(
+			z.object({
+				type: z.enum(TOURNAMENT_STAGE_TYPES),
+				name: z.string().min(1).max(TOURNAMENT.BRACKET_NAME_MAX_LENGTH),
+				settings: z.object({
+					thirdPlaceMatch: z.boolean().optional(),
+					teamsPerGroup: z.number().int().optional(),
+					groupCount: z.number().int().optional(),
+					roundCount: z.number().int().optional(),
+				}),
+				requiresCheckIn: z.boolean(),
+				startTime: z.number().optional(),
+				sources: z
+					.array(
+						z.object({
+							bracketIdx: z.number(),
+							placements: z.array(z.number()),
+						}),
+					)
+					.optional(),
+			}),
+		)
+		.refine(
+			(progression) =>
+				Progression.bracketsToValidationError(progression) === null,
+			"Invalid bracket progression",
+		),
+);
+
+export const calendarEventTagSchema = z
+	.string()
+	.refine((val) =>
+		CALENDAR_EVENT.PERSISTED_TAGS.includes(val as PersistedCalendarEventTag),
+	);
 
 export const newCalendarEventActionSchema = z
 	.object({
@@ -221,15 +259,7 @@ export const newCalendarEventActionSchema = z
 		),
 		tags: z.preprocess(
 			processMany(safeJSONParse, removeDuplicates),
-			z
-				.array(
-					z
-						.string()
-						.refine((val) =>
-							CALENDAR_EVENT.TAGS.includes(val as CalendarEventTag),
-						),
-				)
-				.nullable(),
+			z.array(calendarEventTagSchema).nullable(),
 		),
 		badges: z.preprocess(
 			processMany(safeJSONParse, removeDuplicates),
@@ -245,6 +275,7 @@ export const newCalendarEventActionSchema = z
 			checkboxValueToBoolean,
 			z.boolean().nullish(),
 		),
+		enableSubs: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
 		autonomousSubs: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
 		strictDeadline: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
 		isInvitational: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
@@ -255,14 +286,13 @@ export const newCalendarEventActionSchema = z
 		//
 		// tournament format related fields
 		//
-		format: z.enum(FORMATS_SHORT).nullish(),
+		bracketProgression: bracketProgressionSchema.nullish(),
 		minMembersPerTeam: z.coerce.number().int().min(1).max(4).nullish(),
 		withUndergroundBracket: z.preprocess(checkboxValueToBoolean, z.boolean()),
 		thirdPlaceMatch: z.preprocess(
 			checkboxValueToBoolean,
 			z.boolean().nullish(),
 		),
-		autoCheckInAll: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
 		teamsPerGroup: z.coerce
 			.number()
 			.min(TOURNAMENT.MIN_GROUP_SIZE)
@@ -295,5 +325,23 @@ export const newCalendarEventActionSchema = z
 		},
 		{
 			message: "Tournament must have exactly one date",
+		},
+	)
+	.refine(
+		(schema) => {
+			if (schema.toToolsMode !== "ALL") {
+				return true;
+			}
+
+			const maps = schema.pool ? MapPool.toDbList(schema.pool) : [];
+
+			return (
+				maps.length === 4 &&
+				rankedModesShort.every((mode) => maps.some((map) => map.mode === mode))
+			);
+		},
+		{
+			message:
+				'Map pool must contain a map for each ranked mode if using "Prepicked by teams - All modes"',
 		},
 	);

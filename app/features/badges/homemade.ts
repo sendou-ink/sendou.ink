@@ -215,17 +215,17 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "569271521776762896",
 	},
 	{
-		displayName: "Karot's Tourneys (100 KT Power)",
+		displayName: "Reef Reunion (100 KT Power)",
 		fileName: "ktlow",
 		authorDiscordId: "1170249805373657093",
 	},
 	{
-		displayName: "Karot's Tourneys (500 KT Power)",
+		displayName: "Reef Reunion (500 KT Power)",
 		fileName: "ktmed",
 		authorDiscordId: "1170249805373657093",
 	},
 	{
-		displayName: "Karot's Tourneys (999 KT Power)",
+		displayName: "Reef Reunion (999 KT Power)",
 		fileName: "kthigh",
 		authorDiscordId: "1170249805373657093",
 	},
@@ -310,7 +310,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "354880982890971136",
 	},
 	{
-		displayName: "Frostbite Ascent (Top Bracket)",
+		displayName: "Frostbite Ascent (Summit Bracket)",
 		fileName: "frostbitesilver2x",
 		authorDiscordId: "354880982890971136",
 	},
@@ -337,6 +337,41 @@ export const homemadeBadges: BadgeInfo[] = [
 	{
 		displayName: "Shark Tank: Deep Waters",
 		fileName: "blahajopen",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "SquidWest Events",
+		fileName: "sw",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Get Coupled",
+		fileName: "getcoupled",
+		authorDiscordId: "418496741088690177",
+	},
+	{
+		displayName: "Twin Squiddies",
+		fileName: "twinsquiddies",
+		authorDiscordId: "789943264370884708",
+	},
+	{
+		displayName: "Abandon Ship",
+		fileName: "ship",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "H-Town Splashdown",
+		fileName: "texaslan",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Inkray Cup",
+		fileName: "inkraycup",
+		authorDiscordId: "842371851606949909",
+	},
+	{
+		displayName: "Buried Treasure",
+		fileName: "treasure",
 		authorDiscordId: "528851510222782474",
 	},
 ];

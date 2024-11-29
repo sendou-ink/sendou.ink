@@ -44,5 +44,10 @@ function fetchEventsOfWeek(args: { week: number; year: number }) {
 	const endTime = new Date(startTime);
 	endTime.setDate(endTime.getDate() + 7);
 
-	return CalendarRepository.findAllBetweenTwoTimestamps({ startTime, endTime });
+	return CalendarRepository.findAllBetweenTwoTimestamps({
+		startTime,
+		endTime,
+		tagsToFilterBy: [],
+		onlyTournaments: false,
+	});
 }

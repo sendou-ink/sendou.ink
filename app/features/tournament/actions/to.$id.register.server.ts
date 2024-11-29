@@ -239,6 +239,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 					userId: data.userId,
 				}),
 			});
+			await QRepository.refreshTrust({
+				trustGiverUserId: data.userId,
+				trustReceiverUserId: user.id,
+			});
 
 			ShowcaseTournaments.addToParticipationInfoMap({
 				tournamentId,

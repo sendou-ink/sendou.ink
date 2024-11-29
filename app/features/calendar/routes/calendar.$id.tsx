@@ -4,7 +4,7 @@ import type {
 	MetaFunction,
 	SerializeFrom,
 } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Link } from "@remix-run/react/dist/components";
 import clsx from "clsx";
@@ -148,11 +148,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		throw redirect(tournamentPage(event.tournamentId));
 	}
 
-	return json({
+	return {
 		event,
 		title: makeTitle([event.name, t("pages.calendar")]),
 		results: await CalendarRepository.findResultsByEventId(parsedParams.id),
-	});
+	};
 };
 
 export default function CalendarEventPage() {

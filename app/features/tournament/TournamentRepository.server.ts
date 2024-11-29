@@ -2,7 +2,14 @@ import { type Insertable, type NotNull, type Transaction, sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { nanoid } from "nanoid";
 import { db } from "~/db/sql";
-import type { CastedMatchesInfo, DB, PreparedMaps, Tables } from "~/db/tables";
+import type {
+	CastedMatchesInfo,
+	DB,
+	PreparedMaps,
+	Tables,
+	TournamentSettings,
+} from "~/db/tables";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { Status } from "~/modules/brackets-model";
 import { modesShort } from "~/modules/in-game-lists";
 import { nullFilledArray } from "~/utils/arrays";
@@ -14,6 +21,13 @@ import { HACKY_resolvePicture } from "./tournament-utils";
 
 export type FindById = NonNullable<Unwrapped<typeof findById>>;
 export async function findById(id: number) {
+	const isSetAsRanked = await db
+		.selectFrom("Tournament")
+		.select("settings")
+		.where("id", "=", id)
+		.executeTakeFirst()
+		.then((row) => row?.settings.isRanked ?? false);
+
 	const result = await db
 		.selectFrom("Tournament")
 		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
@@ -26,6 +40,7 @@ export async function findById(id: number) {
 			"Tournament.id",
 			"CalendarEvent.id as eventId",
 			"CalendarEvent.discordUrl",
+			"CalendarEvent.tags",
 			"Tournament.settings",
 			"Tournament.castTwitchAccounts",
 			"Tournament.castedMatchesInfo",
@@ -147,7 +162,15 @@ export async function findById(id: number) {
 							innerEb
 								.selectFrom("TournamentTeamMember")
 								.innerJoin("User", "TournamentTeamMember.userId", "User.id")
-								.leftJoin("PlusTier", "User.id", "PlusTier.userId")
+								.leftJoin("SeedingSkill", (join) =>
+									join
+										.onRef("User.id", "=", "SeedingSkill.userId")
+										.on(
+											"SeedingSkill.type",
+											"=",
+											isSetAsRanked ? "RANKED" : "UNRANKED",
+										),
+								)
 								.select([
 									"User.id as userId",
 									"User.username",
@@ -156,7 +179,7 @@ export async function findById(id: number) {
 									"User.customUrl",
 									"User.country",
 									"User.twitch",
-									"PlusTier.tier as plusTier",
+									"SeedingSkill.ordinal",
 									"TournamentTeamMember.isOwner",
 									"TournamentTeamMember.createdAt",
 									sql<string | null> /*sql*/`coalesce(
@@ -177,6 +200,7 @@ export async function findById(id: number) {
 								.select([
 									"TournamentTeamCheckIn.bracketIdx",
 									"TournamentTeamCheckIn.checkedInAt",
+									"TournamentTeamCheckIn.isCheckOut",
 								])
 								.whereRef(
 									"TournamentTeamCheckIn.tournamentTeamId",
@@ -261,11 +285,25 @@ export async function findById(id: number) {
 
 	return {
 		...result,
+		teams: result.teams.map((team) => ({
+			...team,
+			members: team.members.map(({ ordinal, ...member }) => member),
+			avgSeedingSkillOrdinal: nullifyingAvg(
+				team.members
+					.map((member) => member.ordinal)
+					.filter((ordinal) => typeof ordinal === "number"),
+			),
+		})),
 		logoSrc: result.logoUrl
 			? userSubmittedImage(result.logoUrl)
-			: `${import.meta.env.VITE_SITE_DOMAIN}${HACKY_resolvePicture(result)}`,
+			: HACKY_resolvePicture(result),
 		participatedUsers: result.participatedUsers.map((user) => user.userId),
 	};
+}
+
+function nullifyingAvg(values: number[]) {
+	if (values.length === 0) return null;
+	return values.reduce((acc, cur) => acc + cur, 0) / values.length;
 }
 
 export async function findTOSetMapPoolById(tournamentId: number) {
@@ -541,14 +579,27 @@ export function checkIn({
 	tournamentTeamId: number;
 	bracketIdx: number | null;
 }) {
-	return db
-		.insertInto("TournamentTeamCheckIn")
-		.values({
-			checkedInAt: dateToDatabaseTimestamp(new Date()),
-			tournamentTeamId,
-			bracketIdx,
-		})
-		.execute();
+	return db.transaction().execute(async (trx) => {
+		let query = trx
+			.deleteFrom("TournamentTeamCheckIn")
+			.where("TournamentTeamCheckIn.tournamentTeamId", "=", tournamentTeamId)
+			.where("TournamentTeamCheckIn.isCheckOut", "=", 1);
+
+		if (typeof bracketIdx === "number") {
+			query = query.where("TournamentTeamCheckIn.bracketIdx", "=", bracketIdx);
+		}
+
+		await query.execute();
+
+		await trx
+			.insertInto("TournamentTeamCheckIn")
+			.values({
+				checkedInAt: dateToDatabaseTimestamp(new Date()),
+				tournamentTeamId,
+				bracketIdx,
+			})
+			.execute();
+	});
 }
 
 export function checkOut({
@@ -558,15 +609,90 @@ export function checkOut({
 	tournamentTeamId: number;
 	bracketIdx: number | null;
 }) {
-	let query = db
-		.deleteFrom("TournamentTeamCheckIn")
-		.where("TournamentTeamCheckIn.tournamentTeamId", "=", tournamentTeamId);
+	return db.transaction().execute(async (trx) => {
+		let query = trx
+			.deleteFrom("TournamentTeamCheckIn")
+			.where("TournamentTeamCheckIn.tournamentTeamId", "=", tournamentTeamId);
 
-	if (typeof bracketIdx === "number") {
-		query = query.where("TournamentTeamCheckIn.bracketIdx", "=", bracketIdx);
-	}
+		if (typeof bracketIdx === "number") {
+			query = query.where("TournamentTeamCheckIn.bracketIdx", "=", bracketIdx);
+		}
 
-	return query.execute();
+		await query.execute();
+
+		if (typeof bracketIdx === "number") {
+			await trx
+				.insertInto("TournamentTeamCheckIn")
+				.values({
+					checkedInAt: dateToDatabaseTimestamp(new Date()),
+					tournamentTeamId,
+					bracketIdx,
+					isCheckOut: 1,
+				})
+				.execute();
+		}
+	});
+}
+
+export function updateProgression({
+	tournamentId,
+	bracketProgression,
+}: {
+	tournamentId: number;
+	bracketProgression: TournamentSettings["bracketProgression"];
+}) {
+	return db.transaction().execute(async (trx) => {
+		const { settings: existingSettings } = await trx
+			.selectFrom("Tournament")
+			.select("settings")
+			.where("id", "=", tournamentId)
+			.executeTakeFirstOrThrow();
+
+		if (
+			Progression.changedBracketProgressionFormat(
+				existingSettings.bracketProgression,
+				bracketProgression,
+			)
+		) {
+			const allTournamentTeamsOfTournament = (
+				await trx
+					.selectFrom("TournamentTeam")
+					.select("id")
+					.where("tournamentId", "=", tournamentId)
+					.execute()
+			).map((t) => t.id);
+
+			// delete all bracket check-ins
+			await trx
+				.deleteFrom("TournamentTeamCheckIn")
+				.where("TournamentTeamCheckIn.bracketIdx", "is not", null)
+				.where(
+					"TournamentTeamCheckIn.tournamentTeamId",
+					"in",
+					allTournamentTeamsOfTournament,
+				)
+				.execute();
+		}
+
+		const newSettings: Tables["Tournament"]["settings"] = {
+			...existingSettings,
+			bracketProgression,
+		};
+
+		await trx
+			.updateTable("Tournament")
+			.set({
+				settings: JSON.stringify(newSettings),
+				preparedMaps: Progression.changedBracketProgressionFormat(
+					existingSettings.bracketProgression,
+					bracketProgression,
+				)
+					? null
+					: undefined,
+			})
+			.where("id", "=", tournamentId)
+			.execute();
+	});
 }
 
 export function updateTeamName({

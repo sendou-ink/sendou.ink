@@ -143,5 +143,16 @@
 	"subs.weapons.info": "Choose between {{min}} and {{max}}",
 	"subs.message.header": "Message",
 	"subs.visibility.header": "Visibility",
-	"subs.visibility.everyone": "Everyone"
+	"subs.visibility.everyone": "Everyone",
+
+	"progression.error.PLACEMENTS_PARSE_ERROR": "Error parsing placements",
+	"progression.error.NOT_RESOLVING_WINNER": "Progression does not resolve winner",
+	"progression.error.SAME_PLACEMENT_TO_MULTIPLE_BRACKETS": "Same placement leads to multiple brackets",
+	"progression.error.GAP_IN_PLACEMENTS": "Gap in placements that advance",
+	"progression.error.TOO_MANY_PLACEMENTS": "Too many placements (more than teams in groups)",
+	"progression.error.DUPLICATE_BRACKET_NAME": "Duplicate bracket name",
+	"progression.error.NAME_MISSING": "Bracket name missing",
+	"progression.error.NEGATIVE_PROGRESSION": "Negative progression only possible for double elimination",
+	"progression.error.NO_SE_SOURCE": "Single elimination is not a valid source bracket",
+	"progression.error.NO_DE_POSITIVE": "Double elimination is not valid for positive progression"
 }

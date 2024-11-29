@@ -5,6 +5,10 @@
 	top: 66px;
 	flex-direction: column;
 	gap: var(--s-3);
+	overflow-y: auto;
+	height: 100vh;
+	padding-block-end: var(--s-24);
+	padding-inline-end: var(--s-4);
 }
 
 .front-page__side-nav picture {
@@ -50,7 +54,7 @@
 }
 
 /** Reference to .layout__hamburger-fab **/
-@media screen and (min-width: 1130px) and (min-height: 900px) {
+@media screen and (min-width: 1130px) {
 	.front-page__side-nav {
 		display: flex;
 	}

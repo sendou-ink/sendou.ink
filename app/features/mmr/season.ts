@@ -1,5 +1,5 @@
 export const SEASONS =
-	import.meta.env.USE_TEST_SEASONS === "true"
+	process.env.NODE_ENV === "development"
 		? ([
 				{
 					nth: 0,

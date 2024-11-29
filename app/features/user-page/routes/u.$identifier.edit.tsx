@@ -88,7 +88,12 @@ const userEditActionSchema = z
 		),
 		customName: z.preprocess(
 			falsyToNull,
-			z.string().trim().max(USER.CUSTOM_NAME_MAX_LENGTH).nullable(),
+			z
+				.string()
+				.trim()
+				.regex(USER.CUSTOM_NAME_REGEXP)
+				.max(USER.CUSTOM_NAME_MAX_LENGTH)
+				.nullable(),
 		),
 		battlefy: z.preprocess(
 			falsyToNull,

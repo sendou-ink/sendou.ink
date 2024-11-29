@@ -33,6 +33,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 				"User.discordName",
 				"User.twitch",
 				"User.twitter",
+				"User.battlefy",
+				"User.bsky",
 				"User.customUrl",
 				"User.discordId",
 				"User.discordAvatar",
@@ -81,15 +83,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			.executeTakeFirst(),
 	);
 
-	// const season = currentOrPreviousSeason(new Date())!.nth;
-	// const fullUserLeaderboard = await cachedFullUserLeaderboard(season);
-	// const ownLeaderboardEntry = await ownEntryPeek({
-	//   leaderboard: fullUserLeaderboard,
-	//   season,
-	//   userId: user.id,
-	//   searchFullLeaderboard: true,
-	// });
-
 	const result: GetUserResponse = {
 		id: user.id,
 		name: user.discordName,
@@ -103,6 +96,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		socials: {
 			twitch: user.twitch,
 			twitter: user.twitter,
+			battlefy: user.battlefy,
+			bsky: user.bsky,
 		},
 		peakXp:
 			user.xRankPlacements.length > 0
@@ -122,26 +117,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			gifUrl: `https://sendou.ink/static-assets/badges/${badge.code}.gif`,
 			imageUrl: `https://sendou.ink/static-assets/badges/${badge.code}.png`,
 		})),
-		// TODO:
-		// leaderboardEntry: ownLeaderboardEntry
-		//   ? {
-		//       position: ownLeaderboardEntry.entry.placementRank,
-		//       power: ownLeaderboardEntry.entry.power,
-		//       season,
-		//       tier: `${ownLeaderboardEntry.entry.tier.name}${
-		//         ownLeaderboardEntry.entry.tier.isPlus ? "+" : ""
-		//       }`,
-		//       weapon:
-		//         typeof ownLeaderboardEntry.entry.weaponSplId === "number"
-		//           ? {
-		//               id: ownLeaderboardEntry.entry.weaponSplId,
-		//               name: t(
-		//                 `weapons:MAIN_${ownLeaderboardEntry.entry.weaponSplId}`,
-		//               ),
-		//             }
-		//           : null,
-		//     }
-		//   : null,
 	};
 
 	return await cors(request, json(result));

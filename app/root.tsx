@@ -137,7 +137,8 @@ function Document({
 	const { i18n } = useTranslation();
 	const locale = data?.locale ?? DEFAULT_LANGUAGE;
 
-	useRevalidateOnRevisit();
+	// TODO: re-enable after testing if it causes bug where JS is not loading on revisit
+	// useRevalidateOnRevisit();
 	useChangeLanguage(locale);
 	usePreloadTranslation();
 	useLoadingIndicator();
@@ -146,6 +147,17 @@ function Document({
 	return (
 		<html lang={locale} dir={i18n.dir()} className={htmlThemeClass}>
 			<head>
+				<script
+					// biome-ignore lint/security/noDangerouslySetInnerHtml: needed for Ramp.tsx
+					dangerouslySetInnerHTML={{
+						__html: `
+              window.ramp = window.ramp || {};
+              window.ramp.que = window.ramp.que || [];
+              window.ramp.passiveMode = true;
+							window._pwRampComponentLoaded = window._pwRampComponentLoaded || false;
+         `,
+					}}
+				/>
 				<meta charSet="utf-8" />
 				<meta
 					name="viewport"
@@ -220,6 +232,7 @@ function usePreloadTranslation() {
 	}, []);
 }
 
+// @ts-expect-error to be used in the future
 function useRevalidateOnRevisit() {
 	const visibility = useVisibilityChange();
 	const { revalidate } = useRevalidator();

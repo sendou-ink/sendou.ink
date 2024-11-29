@@ -97,6 +97,21 @@ export function safeJSONParse(value: unknown): unknown {
 	}
 }
 
+/**
+ * Safely splits a string by a specified delimiter as Zod preprocess function.
+ *
+ * @param splitBy - The delimiter to split the string by. Defaults to a comma (",").
+ * @returns A function that takes a value and returns the split string if the value is a string,
+ *          otherwise returns the original value.
+ */
+export const safeSplit =
+	(splitBy = ",") =>
+	(value: unknown): unknown => {
+		if (typeof value !== "string") return value;
+
+		return value.split(splitBy);
+	};
+
 export function falsyToNull(value: unknown): unknown {
 	if (value) return value;
 

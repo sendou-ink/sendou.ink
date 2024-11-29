@@ -61,8 +61,7 @@ export function BracketMapListDialog({
 				PreparedMaps.trimPreparedEliminationMaps({
 					preparedMaps: untrimmedPreparedMaps,
 					teamCount: bracketTeamsCount,
-					tournament,
-					type: bracket.type,
+					bracket,
 				})
 			: untrimmedPreparedMaps;
 
@@ -82,7 +81,6 @@ export function BracketMapListDialog({
 	const bracketData = isPreparing
 		? teamCountAdjustedBracketData({
 				bracket,
-				tournament,
 				teamCount: eliminationTeamCount,
 			})
 		: bracket.data;
@@ -290,7 +288,6 @@ export function BracketMapListDialog({
 										setCount={(newCount) => {
 											const newBracketData = teamCountAdjustedBracketData({
 												bracket,
-												tournament,
 												teamCount: newCount,
 											});
 
@@ -569,30 +566,23 @@ function authorIdToUsername(tournament: Tournament, authorId: number) {
 
 function teamCountAdjustedBracketData({
 	bracket,
-	tournament,
 	teamCount,
-}: { bracket: Bracket; tournament: Tournament; teamCount: number }) {
+}: { bracket: Bracket; teamCount: number }) {
 	switch (bracket.type) {
 		case "swiss":
 			// always has the same amount of rounds even if 0 participants
 			return bracket.data;
 		case "round_robin":
 			// ensure a full bracket (no bye round) gets generated even if registration is underway
-			return tournament.generateMatchesData(
+			return bracket.generateMatchesData(
 				nullFilledArray(TOURNAMENT.DEFAULT_TEAM_COUNT_PER_RR_GROUP).map(
 					(_, i) => i + 1,
 				),
-				bracket.type,
 			);
 		case "single_elimination":
-			return tournament.generateMatchesData(
-				nullFilledArray(teamCount).map((_, i) => i + 1),
-				"single_elimination",
-			);
 		case "double_elimination":
-			return tournament.generateMatchesData(
+			return bracket.generateMatchesData(
 				nullFilledArray(teamCount).map((_, i) => i + 1),
-				"double_elimination",
 			);
 	}
 }
@@ -750,6 +740,7 @@ function RoundMapList({
 }) {
 	const id = React.useId();
 	const [editing, setEditing] = React.useState(false);
+	const tournament = useTournament();
 
 	return (
 		<div>
@@ -816,12 +807,16 @@ function RoundMapList({
 					}
 
 					const isTeamsPick = !maps.list && i === 0;
+					const isLast = i === maps.count - 1;
 
 					return (
 						<MysteryRow
 							key={i}
 							number={i + 1}
 							isCounterpicks={!isTeamsPick && maps.pickBan === "COUNTERPICK"}
+							isTiebreaker={
+								tournament.ctx.mapPickingStyle === "AUTO_ALL" && isLast
+							}
 						/>
 					);
 				})}
@@ -898,9 +893,11 @@ function MapListRow({
 function MysteryRow({
 	number,
 	isCounterpicks,
+	isTiebreaker,
 }: {
 	number: number;
 	isCounterpicks: boolean;
+	isTiebreaker: boolean;
 }) {
 	return (
 		<li className="map-list-dialog__map-list-row">
@@ -910,7 +907,13 @@ function MysteryRow({
 				})}
 			>
 				<span className="text-lg">{number}.</span>
-				{isCounterpicks ? <>Counterpick</> : <>Team&apos;s pick</>}
+				{isCounterpicks ? (
+					<>Counterpick</>
+				) : isTiebreaker ? (
+					<>Tiebreaker</>
+				) : (
+					<>Team&apos;s pick</>
+				)}
 			</div>
 		</li>
 	);

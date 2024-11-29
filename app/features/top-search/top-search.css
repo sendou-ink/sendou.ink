@@ -57,6 +57,8 @@ a.placements__table__row:hover {
 	font-weight: var(--semi-bold);
 	justify-content: center;
 	background-color: var(--bg-lightest);
+	display: flex;
+	gap: var(--s-2);
 }
 
 .placements__table__weapon {

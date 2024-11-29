@@ -2,6 +2,7 @@ import compare from "just-compare";
 import type { PreparedMaps } from "~/db/tables";
 import { nullFilledArray, removeDuplicates } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
+import type { Bracket } from "./Bracket";
 import type { Tournament } from "./Tournament";
 
 /** Returns the prepared maps for one exact bracket index OR maps of a "sibling bracket" i.e. bracket that has the same sources  */
@@ -71,8 +72,7 @@ export function isValidMaxEliminationTeamCount(count: number) {
 interface TrimPreparedEliminationMapsAgs {
 	preparedMaps: PreparedMaps | null;
 	teamCount: number;
-	tournament: Tournament;
-	type: "double_elimination" | "single_elimination";
+	bracket: Bracket;
 }
 
 /** Trim prepared elimination bracket maps to match the actual number. If not prepared or prepared for too few returns null */
@@ -109,12 +109,10 @@ export function trimPreparedEliminationMaps({
 function trimMapsByTeamCount({
 	preparedMaps,
 	teamCount,
-	tournament,
-	type,
+	bracket,
 }: TrimPreparedEliminationMapsAgs & { preparedMaps: PreparedMaps }) {
-	const actualRounds = tournament.generateMatchesData(
+	const actualRounds = bracket.generateMatchesData(
 		nullFilledArray(teamCount).map((_, i) => i + 1),
-		type,
 	).round;
 
 	const groupIds = removeDuplicates(preparedMaps.maps.map((r) => r.groupId));

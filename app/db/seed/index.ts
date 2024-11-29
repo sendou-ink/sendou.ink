@@ -33,7 +33,7 @@ import { mySlugify } from "~/utils/urls";
 import type { SeedVariation } from "~/features/api-private/routes/seed";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
-import { tags } from "~/features/calendar/calendar-constants";
+import { persistedTags } from "~/features/calendar/calendar-constants";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
@@ -465,9 +465,9 @@ function fakeUser(usedNames: Set<string>) {
 }
 
 function uniqueDiscordName(usedNames: Set<string>) {
-	let result = faker.internet.userName();
+	let result = faker.internet.username();
 	while (usedNames.has(result)) {
-		result = faker.internet.userName();
+		result = faker.internet.username();
 	}
 	usedNames.add(result);
 
@@ -698,9 +698,7 @@ function calendarEvents() {
 	const userIds = userIdsInRandomOrder();
 
 	for (let id = 1; id <= AMOUNT_OF_CALENDAR_EVENTS; id++) {
-		const shuffledTags = shuffle(Object.keys(tags)).filter(
-			(tag) => tag !== "BADGE",
-		);
+		const shuffledTags = shuffle(Object.keys(persistedTags));
 
 		sql
 			.prepare(
@@ -891,7 +889,14 @@ function calendarEventWithToTools(
 	const settings: Tables["Tournament"]["settings"] =
 		event === "DEPTHS"
 			? {
-					bracketProgression: [{ type: "swiss", name: "Swiss" }],
+					bracketProgression: [
+						{
+							type: "swiss",
+							name: "Swiss",
+							requiresCheckIn: false,
+							settings: {},
+						},
+					],
 					enableNoScreenToggle: true,
 					isRanked: false,
 					swiss: {
@@ -902,25 +907,38 @@ function calendarEventWithToTools(
 			: event === "SOS"
 				? {
 						bracketProgression: [
-							{ type: "round_robin", name: "Groups stage" },
+							{
+								type: "round_robin",
+								name: "Groups stage",
+								requiresCheckIn: false,
+								settings: {},
+							},
 							{
 								type: "single_elimination",
 								name: "Great White",
+								requiresCheckIn: false,
+								settings: {},
 								sources: [{ bracketIdx: 0, placements: [1] }],
 							},
 							{
 								type: "single_elimination",
 								name: "Hammerhead",
+								requiresCheckIn: false,
+								settings: {},
 								sources: [{ bracketIdx: 0, placements: [2] }],
 							},
 							{
 								type: "single_elimination",
 								name: "Mako",
+								requiresCheckIn: false,
+								settings: {},
 								sources: [{ bracketIdx: 0, placements: [3] }],
 							},
 							{
 								type: "single_elimination",
 								name: "Lantern",
+								requiresCheckIn: false,
+								settings: {},
 								sources: [{ bracketIdx: 0, placements: [4] }],
 							},
 						],
@@ -929,15 +947,24 @@ function calendarEventWithToTools(
 				: event === "PP"
 					? {
 							bracketProgression: [
-								{ type: "round_robin", name: "Groups stage" },
+								{
+									type: "round_robin",
+									name: "Groups stage",
+									requiresCheckIn: false,
+									settings: {},
+								},
 								{
 									type: "single_elimination",
 									name: "Final stage",
+									requiresCheckIn: false,
+									settings: {},
 									sources: [{ bracketIdx: 0, placements: [1, 2] }],
 								},
 								{
 									type: "single_elimination",
 									name: "Underground bracket",
+									requiresCheckIn: true,
+									settings: {},
 									sources: [{ bracketIdx: 0, placements: [3, 4] }],
 								},
 							],
@@ -945,17 +972,29 @@ function calendarEventWithToTools(
 					: event === "ITZ"
 						? {
 								bracketProgression: [
-									{ type: "double_elimination", name: "Main bracket" },
+									{
+										type: "double_elimination",
+										name: "Main bracket",
+										requiresCheckIn: false,
+										settings: {},
+									},
 									{
 										type: "single_elimination",
 										name: "Underground bracket",
+										requiresCheckIn: false,
+										settings: {},
 										sources: [{ bracketIdx: 0, placements: [-1, -2] }],
 									},
 								],
 							}
 						: {
 								bracketProgression: [
-									{ type: "double_elimination", name: "Main bracket" },
+									{
+										type: "double_elimination",
+										name: "Main bracket",
+										requiresCheckIn: false,
+										settings: {},
+									},
 								],
 							};
 
@@ -1046,6 +1085,7 @@ function calendarEventWithToToolsTieBreakerMapPool() {
 	for (const tieBreakerCalendarEventId of [
 		TO_TOOLS_CALENDAR_EVENT_ID, // PICNIC
 		TO_TOOLS_CALENDAR_EVENT_ID + 2, // Paddling Pool
+		TO_TOOLS_CALENDAR_EVENT_ID + 4, // The Depths
 	]) {
 		for (const { mode, stageId } of tiebreakerPicks.stageModePairs) {
 			sql
@@ -1572,7 +1612,7 @@ function otherTeams() {
 				name: teamName,
 				customUrl: teamCustomUrl,
 				inviteCode: nanoid(INVITE_CODE_LENGTH),
-				twitter: faker.internet.userName(),
+				twitter: faker.internet.username(),
 				bio: faker.lorem.paragraph(),
 			});
 

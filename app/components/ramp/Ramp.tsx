@@ -5,11 +5,7 @@
 //
 
 import React from "react";
-
-window.ramp = window.ramp || {};
-window.ramp.que = window.ramp.que || [];
-window.ramp.passiveMode = true;
-window._pwRampComponentLoaded = window._pwRampComponentLoaded || false;
+import { logger } from "../../utils/logger";
 
 const oopUnits = [
 	"trendi_slideshow",
@@ -71,6 +67,8 @@ export default class Ramp extends React.Component {
 	}
 
 	displayTaglessUnits() {
+		logger.info("Displaying tagless units");
+
 		window.ramp.que.push(() => {
 			window.ramp
 				.addUnits([

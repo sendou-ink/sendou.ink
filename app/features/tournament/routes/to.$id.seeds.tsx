@@ -13,18 +13,9 @@ import {
 	sortableKeyboardCoordinates,
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import type {
-	ActionFunction,
-	LoaderFunctionArgs,
-	SerializeFrom,
-} from "@remix-run/node";
+import type { ActionFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
-import {
-	Link,
-	useFetcher,
-	useLoaderData,
-	useNavigation,
-} from "@remix-run/react";
+import { Link, useFetcher, useNavigation } from "@remix-run/react";
 import clsx from "clsx";
 import clone from "just-clone";
 import * as React from "react";
@@ -32,13 +23,8 @@ import { Alert } from "~/components/Alert";
 import { Button } from "~/components/Button";
 import { Catcher } from "~/components/Catcher";
 import { Draggable } from "~/components/Draggable";
-import { Image, TierImage } from "~/components/Image";
-import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
-import { Toggle } from "~/components/Toggle";
 import { requireUser } from "~/features/auth/core/user.server";
-import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
-import { currentOrPreviousSeason } from "~/features/mmr/season";
 import {
 	type TournamentDataTeam,
 	clearTournamentDataCache,
@@ -47,11 +33,10 @@ import {
 import { useTimeoutState } from "~/hooks/useTimeoutState";
 import invariant from "~/utils/invariant";
 import { parseRequestPayload, validate } from "~/utils/remix.server";
-import {
-	navIconUrl,
-	tournamentBracketsPage,
-	userResultsPage,
-} from "~/utils/urls";
+import { tournamentBracketsPage, userResultsPage } from "~/utils/urls";
+import { Avatar } from "../../../components/Avatar";
+import { InfoPopover } from "../../../components/InfoPopover";
+import { ordinalToRoundedSp } from "../../mmr/mmr-utils";
 import { updateTeamSeeds } from "../queries/updateTeamSeeds.server";
 import { seedsActionSchema } from "../tournament-schemas.server";
 import { tournamentIdFromParams } from "../tournament-utils";
@@ -85,28 +70,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		throw redirect(tournamentBracketsPage({ tournamentId }));
 	}
 
-	const powers = async (season: number) => {
-		const leaderboard = await cachedFullUserLeaderboard(season);
-
-		return Object.fromEntries(
-			leaderboard.map((entry) => {
-				return [entry.id, { power: entry.power, tier: entry.tier }];
-			}),
-		);
-	};
-
-	const currentSeason = currentOrPreviousSeason(new Date())!.nth;
-
-	return {
-		powers: {
-			current: await powers(currentSeason),
-			previous: await powers(currentSeason - 1),
-		},
-	};
+	return null;
 };
 
 export default function TournamentSeedsPage() {
-	const data = useLoaderData<typeof loader>();
 	const tournament = useTournament();
 	const navigation = useNavigation();
 	const [teamOrder, setTeamOrder] = React.useState(
@@ -115,8 +82,6 @@ export default function TournamentSeedsPage() {
 	const [activeTeam, setActiveTeam] = React.useState<TournamentDataTeam | null>(
 		null,
 	);
-	const [usingPreviousSeasonPowers, setUsingPreviousSeasonPowers] =
-		React.useState(false);
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
 			activationConstraint: {
@@ -132,51 +97,71 @@ export default function TournamentSeedsPage() {
 		(a, b) => teamOrder.indexOf(a.id) - teamOrder.indexOf(b.id),
 	);
 
-	const activePowers = usingPreviousSeasonPowers
-		? data.powers.previous
-		: data.powers.current;
+	const isOutOfOrder = (
+		team: TournamentDataTeam,
+		previousTeam?: TournamentDataTeam,
+	) => {
+		if (!previousTeam) return false;
 
-	const rankTeam = (team: TournamentDataTeam) => {
-		const powers = team.members
-			.map((m) => activePowers[m.userId]?.power)
-			.filter(Boolean);
+		if (
+			typeof team.avgSeedingSkillOrdinal === "number" &&
+			typeof previousTeam.avgSeedingSkillOrdinal === "number"
+		) {
+			return team.avgSeedingSkillOrdinal > previousTeam.avgSeedingSkillOrdinal;
+		}
 
-		if (powers.length === 0) return 0;
-
-		return powers.reduce((acc, cur) => acc + cur, 0) / powers.length;
+		return Boolean(previousTeam.avgSeedingSkillOrdinal);
 	};
+
+	const noOrganizerSetSeeding = tournament.ctx.teams.every(
+		(team) => !team.seed,
+	);
 
 	return (
 		<div className="stack lg">
 			<SeedAlert teamOrder={teamOrder} />
-			<div className="stack horizontal justify-between">
-				<Button
-					className="tournament__seeds__order-button"
-					variant="minimal"
-					size="tiny"
-					type="button"
-					onClick={() => {
-						setTeamOrder(
-							clone(tournament.ctx.teams)
-								.sort((a, b) => rankTeam(b) - rankTeam(a))
-								.map((t) => t.id),
-						);
-					}}
-				>
-					Sort automatically
-				</Button>
-				<div className="stack horizontal sm items-center">
-					<Label spaced={false}>Previous season powers</Label>
-					<Toggle
-						checked={usingPreviousSeasonPowers}
-						setChecked={setUsingPreviousSeasonPowers}
-					/>
-				</div>
+			<div>
+				{noOrganizerSetSeeding ? (
+					<div className="text-lighter text-xs">
+						As long as you don't manually set the seeding, the teams are
+						automatically sorted by their seeding points value as participating
+						players change
+					</div>
+				) : (
+					<Button
+						className="tournament__seeds__order-button"
+						variant="minimal"
+						size="tiny"
+						type="button"
+						onClick={() => {
+							setTeamOrder(
+								clone(tournament.ctx.teams)
+									.sort(
+										(a, b) =>
+											(b.avgSeedingSkillOrdinal ?? Number.NEGATIVE_INFINITY) -
+											(a.avgSeedingSkillOrdinal ?? Number.NEGATIVE_INFINITY),
+									)
+									.map((t) => t.id),
+							);
+						}}
+					>
+						Sort automatically
+					</Button>
+				)}
 			</div>
 			<ul>
 				<li className="tournament__seeds__teams-list-row">
-					<div className="tournament__seeds__teams-container__header">Seed</div>
+					<div className="tournament__seeds__teams-container__header" />
+					<div className="tournament__seeds__teams-container__header" />
 					<div className="tournament__seeds__teams-container__header">Name</div>
+					<div className="tournament__seeds__teams-container__header stack horizontal xxs">
+						SP
+						<InfoPopover tiny>
+							Seeding point is a value that tracks players' head-to-head
+							performances in tournaments. Ranked and unranked tournaments have
+							different points.
+						</InfoPopover>
+					</div>
 					<div className="tournament__seeds__teams-container__header">
 						Players
 					</div>
@@ -225,7 +210,16 @@ export default function TournamentSeedsPage() {
 									},
 								)}
 							>
-								<RowContents team={team} seed={i + 1} powers={activePowers} />
+								<RowContents
+									team={team}
+									seed={i + 1}
+									teamSeedingSkill={{
+										sp: team.avgSeedingSkillOrdinal
+											? ordinalToRoundedSp(team.avgSeedingSkillOrdinal)
+											: null,
+										outOfOrder: isOutOfOrder(team, teamsSorted[i - 1]),
+									}}
+								/>
 							</Draggable>
 						))}
 					</SortableContext>
@@ -233,7 +227,15 @@ export default function TournamentSeedsPage() {
 					<DragOverlay>
 						{activeTeam && (
 							<li className="tournament__seeds__teams-list-row active">
-								<RowContents team={activeTeam} powers={activePowers} />
+								<RowContents
+									team={activeTeam}
+									teamSeedingSkill={{
+										sp: activeTeam.avgSeedingSkillOrdinal
+											? ordinalToRoundedSp(activeTeam.avgSeedingSkillOrdinal)
+											: null,
+										outOfOrder: false,
+									}}
+								/>
 							</li>
 						)}
 					</DragOverlay>
@@ -296,24 +298,33 @@ function SeedAlert({ teamOrder }: { teamOrder: number[] }) {
 function RowContents({
 	team,
 	seed,
-	powers,
+	teamSeedingSkill,
 }: {
 	team: TournamentDataTeam;
 	seed?: number;
-	powers: SerializeFrom<typeof loader>["powers"]["current"];
+	teamSeedingSkill: {
+		sp: number | null;
+		outOfOrder: boolean;
+	};
 }) {
+	const tournament = useTournament();
+
 	return (
 		<>
 			<div>{seed}</div>
+			<div>
+				{team.team?.logoUrl ? (
+					<Avatar url={tournament.tournamentTeamLogoSrc(team)} size="xxs" />
+				) : null}
+			</div>
 			<div className="tournament__seeds__team-name">
 				{team.checkIns.length > 0 ? "✅ " : "❌ "} {team.name}
 			</div>
+			<div className={clsx({ "text-warning": teamSeedingSkill.outOfOrder })}>
+				{teamSeedingSkill.sp}
+			</div>
 			<div className="stack horizontal sm">
 				{team.members.map((member) => {
-					const { power, tier } = powers[member.userId] ?? {};
-					const lonely =
-						(!power && member.plusTier) || (!member.plusTier && power);
-
 					return (
 						<div key={member.userId} className="tournament__seeds__team-member">
 							<Link
@@ -323,27 +334,6 @@ function RowContents({
 							>
 								{member.username}
 							</Link>
-							{member.plusTier ? (
-								<div
-									className={clsx("stack horizontal items-center xxs", {
-										"add tournament__seeds__lonely-stat": lonely,
-									})}
-								>
-									<Image path={navIconUrl("plus")} alt="" width={16} /> +
-									{member.plusTier}
-								</div>
-							) : (
-								<div />
-							)}
-							{power ? (
-								<div
-									className={clsx("stack horizontal items-center xxs", {
-										"add tournament__seeds__lonely-stat": lonely,
-									})}
-								>
-									<TierImage tier={tier} width={32} /> {power}
-								</div>
-							) : null}
 						</div>
 					);
 				})}

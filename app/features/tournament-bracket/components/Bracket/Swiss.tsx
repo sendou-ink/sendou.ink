@@ -315,6 +315,7 @@ function PlacementsTable({
 					setLosses: 0,
 					setWins: 0,
 					winsAgainstTied: 0,
+					lossesAgainstTied: 0,
 				},
 				placement: Math.max(..._standings.map((s) => s.placement)) + 1,
 				groupId,
@@ -346,7 +347,7 @@ function PlacementsTable({
 						<abbr title="Set wins and losses">W/L</abbr>
 					</th>
 					<th>
-						<abbr title="Wins against tied opponents">TB</abbr>
+						<abbr title="Losses against tied opponents">TB</abbr>
 					</th>
 					<th>
 						<abbr title="Map wins and losses">W/L (M)</abbr>
@@ -398,7 +399,7 @@ function PlacementsTable({
 								</span>
 							</td>
 							<td>
-								<span>{stats.winsAgainstTied}</span>
+								<span>{(stats.lossesAgainstTied ?? 0) * -1}</span>
 							</td>
 							<td>
 								<span>

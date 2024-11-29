@@ -27,6 +27,23 @@ const addSkillStm = sql.prepare(/* sql */ `
   ) returning *
 `);
 
+// on conflict it replaces (set in migration)
+const addSeedingSkillStm = sql.prepare(/* sql */ `
+  insert into "SeedingSkill" (
+    "type",
+    "mu",
+    "sigma",
+    "ordinal",
+    "userId"
+  ) values (
+    @type,
+    @mu,
+    @sigma,
+    @ordinal,
+    @userId
+  )
+`);
+
 const addSkillTeamUserStm = sql.prepare(/* sql */ `
   insert into "SkillTeamUser" (
     "skillId",
@@ -133,6 +150,16 @@ export const addSummary = sql.transaction(
 					});
 				}
 			}
+		}
+
+		for (const seedingSkill of summary.seedingSkills) {
+			addSeedingSkillStm.run({
+				type: seedingSkill.type,
+				mu: seedingSkill.mu,
+				sigma: seedingSkill.sigma,
+				ordinal: seedingSkill.ordinal,
+				userId: seedingSkill.userId,
+			});
 		}
 
 		for (const mapResultDelta of summary.mapResultDeltas) {

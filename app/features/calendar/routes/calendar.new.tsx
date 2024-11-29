@@ -15,7 +15,6 @@ import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { MapPoolSelector } from "~/components/MapPoolSelector";
-import { Placement } from "~/components/Placement";
 import { RequiredHiddenInput } from "~/components/RequiredHiddenInput";
 import { SubmitButton } from "~/components/SubmitButton";
 import { Toggle } from "~/components/Toggle";
@@ -25,13 +24,10 @@ import type { Tables } from "~/db/tables";
 import type { Badge as BadgeType, CalendarEventTag } from "~/db/types";
 import { useUser } from "~/features/auth/core/user";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import {
-	BRACKET_NAMES,
-	type TournamentFormatShort,
-} from "~/features/tournament/tournament-constants";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import type { RankedModeShort } from "~/modules/in-game-lists";
-import { isDefined, nullFilledArray } from "~/utils/arrays";
+import { isDefined } from "~/utils/arrays";
 import {
 	databaseTimestampToDate,
 	getDateAtNextFullHour,
@@ -40,22 +36,20 @@ import {
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { pathnameFromPotentialURL } from "~/utils/strings";
-import { userSubmittedImage } from "~/utils/urls";
+import { CREATING_TOURNAMENT_DOC_LINK, userSubmittedImage } from "~/utils/urls";
 import {
 	CALENDAR_EVENT,
 	REG_CLOSES_AT_OPTIONS,
 	type RegClosesAtOption,
 } from "../calendar-constants";
-import type { FollowUpBracket } from "../calendar-types";
 import {
-	bracketProgressionToShortTournamentFormat,
 	calendarEventMaxDate,
 	calendarEventMinDate,
 	datesToRegClosesAt,
 	regClosesAtToDisplayName,
-	validateFollowUpBrackets,
 } from "../calendar-utils";
 import { canAddNewEvent } from "../calendar-utils";
+import { BracketProgressionSelector } from "../components/BracketProgressionSelector";
 import { Tags } from "../components/Tags";
 
 import "~/styles/calendar-new.css";
@@ -74,7 +68,7 @@ export const meta: MetaFunction = (args) => {
 };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["calendar", "game-misc"],
+	i18n: ["calendar", "game-misc", "tournament"],
 };
 
 const useBaseEvent = () => {
@@ -112,6 +106,22 @@ export default function CalendarNewEventPage() {
 	return (
 		<Main className="calendar-new__container">
 			<div className="stack md">
+				<div className="stack horizontal md items-center">
+					<h1 className="text-lg">
+						{data.isAddingTournament ? "New tournament" : "New calendar event"}
+					</h1>
+					{data.isAddingTournament ? (
+						<a
+							href={CREATING_TOURNAMENT_DOC_LINK}
+							className="text-lg text-bold"
+							title="Documentation about creating tournaments"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							?
+						</a>
+					) : null}
+				</div>
 				{data.isAddingTournament ? <TemplateTournamentForm /> : null}
 				<EventForm key={baseEvent?.eventId} />
 			</div>
@@ -160,10 +170,15 @@ function EventForm() {
 	const fetcher = useFetcher();
 	const { t } = useTranslation();
 	const { eventToEdit, eventToCopy } = useLoaderData<typeof loader>();
-
 	const ref = React.useRef<HTMLFormElement>(null);
 	const [avatarImg, setAvatarImg] = React.useState<File | null>(null);
+	const baseEvent = useBaseEvent();
+	const [isInvitational, setIsInvitational] = React.useState(
+		baseEvent?.tournament?.ctx.settings.isInvitational ?? false,
+	);
 	const data = useLoaderData<typeof loader>();
+	const [bracketProgressionErrored, setBracketProgressionErrored] =
+		React.useState(false);
 
 	const handleSubmit = () => {
 		const formData = new FormData(ref.current!);
@@ -185,6 +200,7 @@ function EventForm() {
 
 	const submitButtonDisabled = () => {
 		if (fetcher.state !== "idle") return true;
+		if (bracketProgressionErrored) return true;
 
 		return false;
 	};
@@ -219,12 +235,17 @@ function EventForm() {
 			{data.isAddingTournament ? (
 				<>
 					<Divider>Tournament settings</Divider>
+					<MemberCountSelect />
 					<RegClosesAtSelect />
 					<RankedToggle />
 					<EnableNoScreenToggle />
+					<EnableSubsToggle />
 					<AutonomousSubsToggle />
 					<RequireIGNToggle />
-					<InvitationalToggle />
+					<InvitationalToggle
+						isInvitational={isInvitational}
+						setIsInvitational={setIsInvitational}
+					/>
 					<StrictDeadlinesToggle />
 				</>
 			) : null}
@@ -233,7 +254,22 @@ function EventForm() {
 			) : (
 				<MapPoolSection />
 			)}
-			{data.isAddingTournament ? <TournamentFormatSelector /> : null}
+			{data.isAddingTournament ? (
+				<div className="stack md w-full">
+					<Divider>Tournament format</Divider>
+					<BracketProgressionSelector
+						initialBrackets={
+							baseEvent?.tournament?.ctx.settings.bracketProgression
+								? Progression.validatedBracketsToInputFormat(
+										baseEvent.tournament?.ctx.settings.bracketProgression,
+									)
+								: undefined
+						}
+						isInvitationalTournament={isInvitational}
+						setErrored={setBracketProgressionErrored}
+					/>
+				</div>
+			) : null}
 			<Button
 				className="mt-4"
 				onClick={handleSubmit}
@@ -539,9 +575,8 @@ function TagsAdder() {
 	const [tags, setTags] = React.useState(baseEvent?.tags ?? []);
 	const id = React.useId();
 
-	const tagsForSelect = CALENDAR_EVENT.TAGS.filter(
-		// @ts-expect-error TODO: fix this (5.5 version)
-		(tag) => !tags.includes(tag) && tag !== "BADGE",
+	const tagsForSelect = CALENDAR_EVENT.PERSISTED_TAGS.filter(
+		(tag) => !tags.includes(tag),
 	);
 
 	return (
@@ -810,6 +845,33 @@ function EnableNoScreenToggle() {
 	);
 }
 
+function EnableSubsToggle() {
+	const baseEvent = useBaseEvent();
+	const [enableSubs, setEnableSubs] = React.useState(
+		baseEvent?.tournament?.ctx.settings.enableSubs ?? true,
+	);
+	const id = React.useId();
+
+	return (
+		<div>
+			<label htmlFor={id} className="w-max">
+				Subs tab
+			</label>
+			<Toggle
+				name="enableSubs"
+				id={id}
+				tiny
+				checked={enableSubs}
+				setChecked={setEnableSubs}
+			/>
+			<FormMessage type="info">
+				Allow users to sign up as "subs" in addition to the normal event
+				sign-up.
+			</FormMessage>
+		</div>
+	);
+}
+
 function AutonomousSubsToggle() {
 	const baseEvent = useBaseEvent();
 	const [autonomousSubs, setAutonomousSubs] = React.useState(
@@ -865,11 +927,13 @@ function RequireIGNToggle() {
 	);
 }
 
-function InvitationalToggle() {
-	const baseEvent = useBaseEvent();
-	const [isInvitational, setIsInvitational] = React.useState(
-		baseEvent?.tournament?.ctx.settings.isInvitational ?? false,
-	);
+function InvitationalToggle({
+	isInvitational,
+	setIsInvitational,
+}: {
+	isInvitational: boolean;
+	setIsInvitational: (value: boolean) => void;
+}) {
 	const id = React.useId();
 
 	return (
@@ -997,7 +1061,8 @@ function TournamentMapPickingStyleSelect() {
 	}
 
 	return (
-		<>
+		<div className="stack md w-full items-start">
+			<Divider>Tournament maps</Divider>
 			<div>
 				<label htmlFor={id}>Map picking style</label>
 				<select
@@ -1030,7 +1095,7 @@ function TournamentMapPickingStyleSelect() {
 					/>
 				</>
 			) : null}
-		</>
+		</div>
 	);
 }
 
@@ -1158,169 +1223,6 @@ function MapPoolValidationStatusMessage({
 	);
 }
 
-function TournamentFormatSelector() {
-	const baseEvent = useBaseEvent();
-	const [format, setFormat] = React.useState<TournamentFormatShort>(
-		baseEvent?.tournament?.ctx.settings.bracketProgression
-			? bracketProgressionToShortTournamentFormat(
-					baseEvent.tournament.ctx.settings.bracketProgression,
-				)
-			: "DE",
-	);
-	const [withUndergroundBracket, setWithUndergroundBracket] = React.useState(
-		baseEvent?.tournament
-			? baseEvent.tournament.ctx.settings.bracketProgression.some(
-					(b) => b.name === BRACKET_NAMES.UNDERGROUND,
-				)
-			: false,
-	);
-	const [thirdPlaceMatch, setThirdPlaceMatch] = React.useState(
-		baseEvent?.tournament?.ctx.settings.thirdPlaceMatch ?? true,
-	);
-	const [teamsPerGroup, setTeamsPerGroup] = React.useState(
-		baseEvent?.tournament?.ctx.settings.teamsPerGroup ?? 4,
-	);
-	const [swissGroupCount, setSwissGroupCount] = React.useState(
-		baseEvent?.tournament?.ctx.settings.swiss?.groupCount ?? 1,
-	);
-	const [swissRoundCount, setSwissRoundCount] = React.useState(
-		baseEvent?.tournament?.ctx.settings.swiss?.roundCount ?? 5,
-	);
-
-	return (
-		<div className="stack md w-full">
-			<Divider>Tournament format</Divider>
-			<MemberCountSelect />
-
-			<div>
-				<Label htmlFor="format">Format</Label>
-				<select
-					value={format}
-					onChange={(e) => setFormat(e.target.value as TournamentFormatShort)}
-					className="w-max"
-					name="format"
-					id="format"
-				>
-					<option value="SE">Single-elimination</option>
-					<option value="DE">Double-elimination</option>
-					<option value="RR_TO_SE">
-						Round robin -{">"} Single-elimination
-					</option>
-					<option value="SWISS">Swiss</option>
-					<option value="SWISS_TO_SE">Swiss -{">"} Single-elimination</option>
-				</select>
-			</div>
-
-			{format === "DE" ? (
-				<div>
-					<Label htmlFor="withUndergroundBracket">
-						With underground bracket
-					</Label>
-					<Toggle
-						checked={withUndergroundBracket}
-						setChecked={setWithUndergroundBracket}
-						name="withUndergroundBracket"
-						id="withUndergroundBracket"
-					/>
-					<FormMessage type="info">
-						Optional bracket for teams who lose in the first two rounds of
-						losers bracket.
-					</FormMessage>
-				</div>
-			) : null}
-
-			{format === "RR_TO_SE" ? (
-				<div>
-					<Label htmlFor="teamsPerGroup">Teams per group</Label>
-					<select
-						value={teamsPerGroup}
-						onChange={(e) => setTeamsPerGroup(Number(e.target.value))}
-						className="w-max"
-						name="teamsPerGroup"
-						id="teamsPerGroup"
-					>
-						<option value="3">3</option>
-						<option value="4">4</option>
-						<option value="5">5</option>
-						<option value="6">6</option>
-					</select>
-				</div>
-			) : null}
-
-			{format === "SWISS_TO_SE" ? (
-				<div>
-					<Label htmlFor="swissGroupCount">Swiss groups count</Label>
-					<select
-						value={swissGroupCount}
-						onChange={(e) => setSwissGroupCount(Number(e.target.value))}
-						className="w-max"
-						name="swissGroupCount"
-						id="swissGroupCount"
-					>
-						<option value="1">1</option>
-						<option value="2">2</option>
-						<option value="3">3</option>
-						<option value="4">4</option>
-						<option value="5">5</option>
-						<option value="6">6</option>
-					</select>
-				</div>
-			) : null}
-			{/* Without a follow-up bracket there can only be one swiss group */}
-			{format === "SWISS" ? (
-				<input type="hidden" name="swissGroupCount" value="1" />
-			) : null}
-
-			{format === "SWISS" || format === "SWISS_TO_SE" ? (
-				<div>
-					<Label htmlFor="swissRoundCount">Swiss round count</Label>
-					<select
-						value={swissRoundCount}
-						onChange={(e) => setSwissRoundCount(Number(e.target.value))}
-						className="w-max"
-						name="swissRoundCount"
-						id="swissRoundCount"
-					>
-						<option value="3">3</option>
-						<option value="4">4</option>
-						<option value="5">5</option>
-						<option value="6">6</option>
-						<option value="7">7</option>
-						<option value="8">8</option>
-					</select>
-					{format === "SWISS" ? (
-						<FormMessage type="info">
-							In swiss using the correct round count corresponding to the player
-							count is recommended. Examples: at most 16 players = 4 rounds, at
-							most 32 players = 5 rounds, at most 64 players = 6 rounds.
-						</FormMessage>
-					) : null}
-				</div>
-			) : null}
-
-			{format === "RR_TO_SE" ||
-			format === "SWISS_TO_SE" ||
-			format === "SE" ||
-			(format === "DE" && withUndergroundBracket) ? (
-				<div>
-					<Label htmlFor="thirdPlaceMatch">Third place match</Label>
-					<Toggle
-						checked={thirdPlaceMatch}
-						setChecked={setThirdPlaceMatch}
-						name="thirdPlaceMatch"
-						id="thirdPlaceMatch"
-						tiny
-					/>
-				</div>
-			) : null}
-
-			{format === "RR_TO_SE" || format === "SWISS_TO_SE" ? (
-				<FollowUpBrackets teamsPerGroup={teamsPerGroup} format={format} />
-			) : null}
-		</div>
-	);
-}
-
 function MemberCountSelect() {
 	const baseEvent = useBaseEvent();
 	const id = React.useId();
@@ -1343,284 +1245,6 @@ function MemberCountSelect() {
 					</option>
 				))}
 			</select>
-		</div>
-	);
-}
-
-function FollowUpBrackets({
-	teamsPerGroup,
-	format,
-}: {
-	teamsPerGroup: number;
-	format: TournamentFormatShort;
-}) {
-	const baseEvent = useBaseEvent();
-	const [autoCheckInAll, setAutoCheckInAll] = React.useState(
-		baseEvent?.tournament?.ctx.settings.autoCheckInAll ?? false,
-	);
-	const [_brackets, setBrackets] = React.useState<Array<FollowUpBracket>>(
-		() => {
-			if (
-				baseEvent?.tournament &&
-				["round_robin", "swiss"].includes(
-					baseEvent.tournament.ctx.settings.bracketProgression[0].type,
-				)
-			) {
-				return baseEvent.tournament.ctx.settings.bracketProgression
-					.slice(1)
-					.map((b) => ({
-						name: b.name,
-						placements: b.sources?.flatMap((s) => s.placements) ?? [],
-					}));
-			}
-
-			return [{ name: "Top cut", placements: [1, 2] }];
-		},
-	);
-
-	const brackets = _brackets.map((b) => ({
-		...b,
-		// handle teams per group changing after group placements have been set
-		placements:
-			format === "RR_TO_SE"
-				? b.placements.filter((p) => p <= teamsPerGroup)
-				: b.placements,
-	}));
-
-	const validationErrorMsg = validateFollowUpBrackets(
-		brackets,
-		format,
-		teamsPerGroup,
-	);
-
-	return (
-		<>
-			{brackets.length > 1 ? (
-				<div>
-					<Label htmlFor="autoCheckInAll">
-						Auto check-in to follow-up brackets
-					</Label>
-					<Toggle
-						checked={autoCheckInAll}
-						setChecked={setAutoCheckInAll}
-						name="autoCheckInAll"
-						id="autoCheckInAll"
-						tiny
-					/>
-					<FormMessage type="info">
-						If disabled, the only follow-up bracket with automatic check-in is
-						the top cut
-					</FormMessage>
-				</div>
-			) : null}
-			<div>
-				<RequiredHiddenInput
-					isValid={!validationErrorMsg}
-					name="followUpBrackets"
-					value={JSON.stringify(brackets)}
-				/>
-				<Label>Follow-up brackets</Label>
-				<div className="stack lg">
-					{brackets.map((b, i) => (
-						<FollowUpBracketInputs
-							key={i}
-							teamsPerGroup={teamsPerGroup}
-							onChange={(newBracket) => {
-								setBrackets(
-									brackets.map((oldBracket, j) =>
-										j === i ? newBracket : oldBracket,
-									),
-								);
-							}}
-							bracket={b}
-							nth={i + 1}
-							format={format}
-						/>
-					))}
-					<div className="stack sm horizontal">
-						<Button
-							size="tiny"
-							onClick={() => {
-								const currentMaxPlacement = Math.max(
-									...brackets.flatMap((b) => b.placements),
-								);
-
-								const placements =
-									format === "RR_TO_SE"
-										? []
-										: [currentMaxPlacement + 1, currentMaxPlacement + 2];
-
-								setBrackets([...brackets, { name: "", placements }]);
-							}}
-							data-testid="add-bracket"
-						>
-							Add bracket
-						</Button>
-						<Button
-							size="tiny"
-							variant="destructive"
-							onClick={() => {
-								setBrackets(brackets.slice(0, -1));
-							}}
-							disabled={brackets.length === 1}
-							testId="remove-bracket"
-						>
-							Remove bracket
-						</Button>
-					</div>
-
-					{validationErrorMsg ? (
-						<FormMessage type="error">{validationErrorMsg}</FormMessage>
-					) : null}
-				</div>
-			</div>
-		</>
-	);
-}
-
-function FollowUpBracketInputs({
-	teamsPerGroup,
-	bracket,
-	onChange,
-	nth,
-	format,
-}: {
-	teamsPerGroup: number;
-	bracket: FollowUpBracket;
-	onChange: (bracket: FollowUpBracket) => void;
-	nth: number;
-	format: TournamentFormatShort;
-}) {
-	const id = React.useId();
-	return (
-		<div className="stack sm">
-			<div className="stack items-center horizontal sm">
-				<Label spaced={false} htmlFor={id}>
-					{nth}. Name
-				</Label>
-				<Input
-					value={bracket.name}
-					onChange={(e) => onChange({ ...bracket, name: e.target.value })}
-					id={id}
-				/>
-			</div>
-			{format === "RR_TO_SE" ? (
-				<FollowUpBracketGroupPlacementCheckboxes
-					teamsPerGroup={teamsPerGroup}
-					bracket={bracket}
-					onChange={onChange}
-					nth={nth}
-				/>
-			) : (
-				<FollowUpBracketRangeInputs bracket={bracket} onChange={onChange} />
-			)}
-		</div>
-	);
-}
-
-function FollowUpBracketGroupPlacementCheckboxes({
-	teamsPerGroup,
-	bracket,
-	onChange,
-	nth,
-}: {
-	teamsPerGroup: number;
-	bracket: FollowUpBracket;
-	onChange: (bracket: FollowUpBracket) => void;
-	nth: number;
-}) {
-	const id = React.useId();
-
-	return (
-		<div className="stack items-center horizontal md flex-wrap">
-			<Label spaced={false}>Group placements</Label>
-			{nullFilledArray(teamsPerGroup).map((_, i) => {
-				const placement = i + 1;
-				return (
-					<div key={placement} className="stack horizontal items-center xs">
-						<Label spaced={false} htmlFor={id}>
-							<Placement placement={placement} />
-						</Label>
-						<input
-							id={id}
-							data-testid={`placement-${nth}-${placement}`}
-							type="checkbox"
-							checked={bracket.placements.includes(placement)}
-							onChange={(e) => {
-								const newPlacements = e.target.checked
-									? [...bracket.placements, placement]
-									: bracket.placements.filter((p) => p !== placement);
-								onChange({ ...bracket, placements: newPlacements });
-							}}
-						/>
-					</div>
-				);
-			})}
-		</div>
-	);
-}
-
-const rangeToPlacements = ([start, end]: [number, number]) => {
-	if (start > end) {
-		return [];
-	}
-
-	const result: number[] = [];
-
-	for (let i = start; i <= end; i++) {
-		result.push(i);
-	}
-
-	return result;
-};
-
-const placementsToRange = (placements: number[]): [number, number] => {
-	if (placements.length === 0) {
-		return [1, 2];
-	}
-
-	return [placements[0], placements[placements.length - 1]];
-};
-
-function FollowUpBracketRangeInputs({
-	bracket,
-	onChange,
-}: {
-	bracket: FollowUpBracket;
-	onChange: (bracket: FollowUpBracket) => void;
-}) {
-	const [range, setRange] = React.useState<[number, number]>(
-		placementsToRange(bracket.placements),
-	);
-
-	const handleRangeChange = (newRange: [number, number]) => {
-		setRange(newRange);
-		onChange({ ...bracket, placements: rangeToPlacements(newRange) });
-	};
-
-	return (
-		<div className="stack items-center horizontal md flex-wrap">
-			<Label spaced={false}>Group placements (both inclusive)</Label>
-			<div className="stack horizontal sm items-center text-xs">
-				from
-				<Input
-					className="calendar-new__range-input"
-					type="number"
-					value={String(range[0])}
-					onChange={(e) =>
-						handleRangeChange([Number(e.target.value), range[1]])
-					}
-				/>
-				to
-				<Input
-					className="calendar-new__range-input"
-					type="number"
-					value={String(range[1])}
-					onChange={(e) =>
-						handleRangeChange([range[0], Number(e.target.value)])
-					}
-				/>
-			</div>
 		</div>
 	);
 }

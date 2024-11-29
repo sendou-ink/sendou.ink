@@ -362,7 +362,7 @@
 	border-radius: var(--rounded);
 	column-gap: var(--s-1);
 	font-size: var(--fonts-xs);
-	grid-template-columns: 3rem 8rem 1fr;
+	grid-template-columns: 1.5rem 2rem 8rem 3rem 1fr;
 	list-style: none;
 	row-gap: var(--s-1-5);
 }

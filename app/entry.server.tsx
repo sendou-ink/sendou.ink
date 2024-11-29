@@ -9,10 +9,12 @@ import { isbot } from "isbot";
 import cron from "node-cron";
 import { renderToPipeableStream } from "react-dom/server";
 import { I18nextProvider, initReactI18next } from "react-i18next";
+import * as QRepository from "~/features/sendouq/QRepository.server";
 import { config } from "~/modules/i18n/config"; // your i18n configuration file
 import i18next from "~/modules/i18n/i18next.server";
 import { resources } from "./modules/i18n/resources.server";
 import { updatePatreonData } from "./modules/patreon";
+import { logger } from "./utils/logger";
 
 const ABORT_DELAY = 5000;
 
@@ -88,6 +90,15 @@ if (!global.appStartSignal && process.env.NODE_ENV === "production") {
 	cron.schedule("0 */2 * * *", () =>
 		updatePatreonData().catch((err) => console.error(err)),
 	);
+
+	// every hour
+	cron.schedule("0 */1 * * *", async () => {
+		const { numDeletedRows } = await QRepository.deleteOldTrust();
+		logger.info(`Deleted ${numDeletedRows} old trusts`);
+
+		const { numUpdatedRows } = await QRepository.setOldGroupsAsInactive();
+		logger.info(`Set ${numUpdatedRows} as inactive`);
+	});
 }
 
 process.on("unhandledRejection", (reason: string, p: Promise<any>) => {

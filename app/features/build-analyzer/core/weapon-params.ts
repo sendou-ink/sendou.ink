@@ -109,8 +109,8 @@ export const weaponParams = {
 			MoveSpeed: 0.072,
 			DamageParam_ValueMax: 360,
 			DamageParam_ValueMin: 180,
-			Jump_DegSwerve: 12,
-			Stand_DegSwerve: 5,
+			Jump_DegSwerve: 11.66,
+			Stand_DegSwerve: 4.86,
 			InkConsume: 0.0092,
 		},
 		"41": {
@@ -120,8 +120,8 @@ export const weaponParams = {
 			MoveSpeed: 0.072,
 			DamageParam_ValueMax: 360,
 			DamageParam_ValueMin: 180,
-			Jump_DegSwerve: 12,
-			Stand_DegSwerve: 5,
+			Jump_DegSwerve: 11.66,
+			Stand_DegSwerve: 4.86,
 			InkConsume: 0.0092,
 		},
 		"45": {
@@ -131,8 +131,8 @@ export const weaponParams = {
 			MoveSpeed: 0.072,
 			DamageParam_ValueMax: 360,
 			DamageParam_ValueMin: 180,
-			Jump_DegSwerve: 12,
-			Stand_DegSwerve: 5,
+			Jump_DegSwerve: 11.66,
+			Stand_DegSwerve: 4.86,
 			InkConsume: 0.0092,
 		},
 		"46": {
@@ -142,8 +142,8 @@ export const weaponParams = {
 			MoveSpeed: 0.072,
 			DamageParam_ValueMax: 360,
 			DamageParam_ValueMin: 180,
-			Jump_DegSwerve: 12,
-			Stand_DegSwerve: 5,
+			Jump_DegSwerve: 11.66,
+			Stand_DegSwerve: 4.86,
 			InkConsume: 0.0092,
 		},
 		"47": {
@@ -153,8 +153,8 @@ export const weaponParams = {
 			MoveSpeed: 0.072,
 			DamageParam_ValueMax: 360,
 			DamageParam_ValueMin: 180,
-			Jump_DegSwerve: 12,
-			Stand_DegSwerve: 5,
+			Jump_DegSwerve: 11.66,
+			Stand_DegSwerve: 4.86,
 			InkConsume: 0.0092,
 		},
 		"50": {
@@ -217,7 +217,7 @@ export const weaponParams = {
 			DamageParam_ValueMax: 450,
 			DamageParam_ValueMin: 225,
 			Jump_DegSwerve: 6,
-			Stand_DegSwerve: 2.7,
+			Stand_DegSwerve: 2.5,
 			InkConsume: 0.02,
 		},
 		"71": {
@@ -234,7 +234,7 @@ export const weaponParams = {
 			DamageParam_ValueMax: 450,
 			DamageParam_ValueMin: 225,
 			Jump_DegSwerve: 6,
-			Stand_DegSwerve: 2.7,
+			Stand_DegSwerve: 2.5,
 			InkConsume: 0.02,
 		},
 		"80": {
@@ -322,11 +322,11 @@ export const weaponParams = {
 			BlastParam_DistanceDamage: [
 				{
 					Damage: 700,
-					Distance: 1.5,
+					Distance: 1.6,
 				},
 				{
 					Damage: 500,
-					Distance: 3.57,
+					Distance: 3.8,
 				},
 			],
 			Jump_DegSwerve: 6,
@@ -353,11 +353,11 @@ export const weaponParams = {
 			BlastParam_DistanceDamage: [
 				{
 					Damage: 700,
-					Distance: 1.5,
+					Distance: 1.6,
 				},
 				{
 					Damage: 500,
-					Distance: 3.57,
+					Distance: 3.8,
 				},
 			],
 			Jump_DegSwerve: 6,
@@ -384,11 +384,11 @@ export const weaponParams = {
 			BlastParam_DistanceDamage: [
 				{
 					Damage: 700,
-					Distance: 1.5,
+					Distance: 1.6,
 				},
 				{
 					Damage: 500,
-					Distance: 3.57,
+					Distance: 3.8,
 				},
 			],
 			Jump_DegSwerve: 6,
@@ -721,7 +721,7 @@ export const weaponParams = {
 			Jump_DegSwerve: 6,
 			Stand_DegSwerve: 1,
 			InkRecoverStop: 25,
-			InkConsume: 0.0115,
+			InkConsume: 0.011,
 		},
 		"301": {
 			SpecialPoint: 200,
@@ -734,7 +734,7 @@ export const weaponParams = {
 			Jump_DegSwerve: 6,
 			Stand_DegSwerve: 1,
 			InkRecoverStop: 25,
-			InkConsume: 0.0115,
+			InkConsume: 0.011,
 		},
 		"310": {
 			SpecialPoint: 190,
@@ -753,7 +753,7 @@ export const weaponParams = {
 			Jump_DegSwerve: 1,
 			Stand_DegSwerve: 1,
 			InkRecoverStop: 25,
-			InkConsume: 0.0225,
+			InkConsume: 0.0208,
 		},
 		"311": {
 			SpecialPoint: 200,
@@ -772,7 +772,7 @@ export const weaponParams = {
 			Jump_DegSwerve: 1,
 			Stand_DegSwerve: 1,
 			InkRecoverStop: 25,
-			InkConsume: 0.0225,
+			InkConsume: 0.0208,
 		},
 		"400": {
 			SpecialPoint: 220,
@@ -1204,7 +1204,7 @@ export const weaponParams = {
 			DamageParam_ValueFullCharge: 1800,
 			DamageParam_ValueMaxCharge: 1300,
 			DamageParam_ValueMinCharge: 400,
-			ChargeFrameFullCharge: 75,
+			ChargeFrameFullCharge: 71,
 			KeepChargeFullFrame: 300,
 			InkConsumeFullCharge: 0.15,
 			InkConsumeMinCharge: 0.02,
@@ -1217,7 +1217,7 @@ export const weaponParams = {
 			DamageParam_ValueFullCharge: 1800,
 			DamageParam_ValueMaxCharge: 1300,
 			DamageParam_ValueMinCharge: 400,
-			ChargeFrameFullCharge: 75,
+			ChargeFrameFullCharge: 71,
 			KeepChargeFullFrame: 300,
 			InkConsumeFullCharge: 0.15,
 			InkConsumeMinCharge: 0.02,
@@ -1414,7 +1414,7 @@ export const weaponParams = {
 			InkConsumeFullChargeSplatling: 0.15,
 		},
 		"4001": {
-			SpecialPoint: 190,
+			SpecialPoint: 200,
 			subWeaponId: 11,
 			specialWeaponId: 2,
 			overwrites: {
@@ -2114,7 +2114,7 @@ export const weaponParams = {
 			InkConsumeFullCharge_ChargeParam: 0.06,
 		},
 		"8020": {
-			SpecialPoint: 200,
+			SpecialPoint: 210,
 			subWeaponId: 1,
 			specialWeaponId: 2,
 			DamageParam_SplatanaVerticalDirect: 1600,
@@ -2409,9 +2409,9 @@ export const weaponParams = {
 		"12": {
 			overwrites: {
 				SpawnSpeedZSpecUp: {
-					High: 6.48,
-					Low: 6,
-					Mid: 6.24,
+					High: 6.8,
+					Low: 6.3,
+					Mid: 6.55,
 				},
 				MarkingFrameSubSpec: {
 					High: 600,
@@ -2427,9 +2427,9 @@ export const weaponParams = {
 		"13": {
 			overwrites: {
 				SpawnSpeedZSpecUp: {
-					High: 1.84,
-					Low: 1.36,
-					Mid: 1.6,
+					High: 1.9,
+					Low: 1.4,
+					Mid: 1.65,
 				},
 			},
 			SubInkSaveLv: 2,

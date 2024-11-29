@@ -27,6 +27,8 @@ export interface GetUserResponse {
 	socials: {
 		twitch: string | null;
 		twitter: string | null;
+		battlefy: string | null;
+		bsky: string | null;
 	};
 	plusServerTier: 1 | 2 | 3 | null;
 	weaponPool: Array<ProfileWeapon>;
@@ -85,6 +87,8 @@ export interface GetTournamentResponse {
 	};
 	brackets: TournamentBracket[];
 	organizationId: number | null;
+	/** Has the tournament concluded (results added to user profiles & no editing possible anymore) */
+	isFinalized: boolean;
 }
 
 /** GET /api/tournament/{tournamentId}/teams */
@@ -138,6 +142,13 @@ export type GetTournamentTeamsResponse = Array<{
 		avatarUrl: string | null;
 		captain: boolean;
 		/**
+		 * Splatoon 3 splashtag name & ID. Notice the value returned is the player's set name at the time of the tournament.
+		 * Only available for tournaments with the "Require IGN's" option enabled.
+		 *
+		 * @example "Sendou#2955"
+		 */
+		inGameName: string | null;
+		/**
 		 * @example "2024-01-12T20:00:00.000Z"
 		 */
 		joinedAt: string;
@@ -183,6 +194,7 @@ export interface GetTournamentBracketStandingsResponse {
 			mapLosses: number;
 			points: number;
 			winsAgainstTied: number;
+			lossesAgainstTied?: number;
 			buchholzSets?: number;
 			buchholzMaps?: number;
 		};
