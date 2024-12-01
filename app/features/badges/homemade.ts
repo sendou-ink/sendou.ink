@@ -379,4 +379,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "punkshrimp",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "Specials To The Power Of Four!",
+		fileName: "special4",
+		authorDiscordId: "1170249805373657093",
+	},
 ];
