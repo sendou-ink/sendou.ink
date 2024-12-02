@@ -1,4 +1,5 @@
 import type { Standing } from "~/features/tournament-bracket/core/Bracket";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { removeDuplicates } from "~/utils/arrays";
 
@@ -41,20 +42,23 @@ export function matchesPlayed({
 	tournament,
 	teamId,
 }: { tournament: Tournament; teamId: number }) {
-	// not considering underground brackets
-	const brackets = tournament.brackets.filter(
-		(b) =>
-			!b.sources || b.sources.some((source) => source.placements.includes(1)),
-	);
+	const brackets = Progression.bracketIdxsForStandings(
+		tournament.ctx.settings.bracketProgression,
+	)
+		.reverse()
+		.map((bracketIdx) => tournament.bracketByIdx(bracketIdx)!);
 
-	const matches = brackets.flatMap((bracket) =>
-		bracket.data.match.filter(
-			(match) =>
-				match.opponent1 &&
-				match.opponent2 &&
-				(match.opponent1?.id === teamId || match.opponent2?.id === teamId) &&
-				(match.opponent1.result === "win" || match.opponent2?.result === "win"),
-		),
+	const matches = brackets.flatMap((bracket, bracketIdx) =>
+		bracket.data.match
+			.filter(
+				(match) =>
+					match.opponent1 &&
+					match.opponent2 &&
+					(match.opponent1?.id === teamId || match.opponent2?.id === teamId) &&
+					(match.opponent1.result === "win" ||
+						match.opponent2?.result === "win"),
+			)
+			.map((match) => ({ ...match, bracketIdx })),
 	);
 
 	return matches.map((match) => {
@@ -74,6 +78,41 @@ export function matchesPlayed({
 			vsSeed: team?.seed ?? 0,
 			// defensive fallback
 			result: result ?? "win",
+			bracketIdx: match.bracketIdx,
 		};
 	});
+}
+
+export function tournamentStandings(tournament: Tournament): Standing[] {
+	const bracketIdxs = Progression.bracketIdxsForStandings(
+		tournament.ctx.settings.bracketProgression,
+	);
+
+	const result: Standing[] = [];
+	const pendingCheckIn = new Set<number>();
+
+	let offSet = 0;
+	for (const bracketIdx of bracketIdxs) {
+		const bracket = tournament.bracketByIdx(bracketIdx);
+		if (!bracket) continue;
+
+		const standings = bracket.standings.filter(
+			(standing) =>
+				!result.some((row) => row.team.id === standing.team.id) &&
+				!pendingCheckIn.has(standing.team.id),
+		);
+		result.push(
+			...standings.map((s) => ({ ...s, placement: s.placement + offSet })),
+		);
+
+		if (bracket.teamsPendingCheckIn) {
+			for (const teamId of bracket.teamsPendingCheckIn) {
+				pendingCheckIn.add(teamId);
+			}
+		}
+
+		offSet = result.length;
+	}
+
+	return result;
 }

@@ -536,3 +536,47 @@ describe("changedBracketProgression", () => {
 		).toEqual([]);
 	});
 });
+
+describe("bracketIdxsForStandings", () => {
+	it("handles SE", () => {
+		expect(
+			Progression.bracketIdxsForStandings(progressions.singleElimination),
+		).toEqual([0]);
+	});
+
+	it("handles RR->SE", () => {
+		expect(
+			Progression.bracketIdxsForStandings(
+				progressions.roundRobinToSingleElimination,
+			),
+		).toEqual([1, 0]);
+	});
+
+	it("handles low ink", () => {
+		expect(Progression.bracketIdxsForStandings(progressions.lowInk)).toEqual([
+			3, 1,
+			0,
+			// NOTE: 2 is omitted as it's an "intermediate" bracket
+		]);
+	});
+
+	it("handles many starter brackets", () => {
+		expect(
+			Progression.bracketIdxsForStandings(progressions.manyStartBrackets),
+		).toEqual([2, 0]); // NOTE, 3,1 excluded because they are not in the main progression
+	});
+
+	it("handles swiss (one group)", () => {
+		expect(
+			Progression.bracketIdxsForStandings(progressions.swissOneGroup),
+		).toEqual([0]);
+	});
+
+	it("handles DE w/ underground bracket", () => {
+		expect(
+			Progression.bracketIdxsForStandings(
+				progressions.doubleEliminationWithUnderground,
+			),
+		).toEqual([0]); // missing 1 because it's underground when DE is the source
+	});
+});

@@ -688,7 +688,15 @@ function BracketNav({
 }) {
 	const tournament = useTournament();
 
-	if (tournament.ctx.settings.bracketProgression.length < 2) return null;
+	const shouldRender = () => {
+		const brackets = tournament.ctx.isFinalized
+			? tournament.brackets.filter((b) => !b.preview)
+			: tournament.ctx.settings.bracketProgression;
+
+		return brackets.length > 1;
+	};
+
+	if (!shouldRender()) return null;
 
 	const visibleBrackets = tournament.ctx.settings.bracketProgression.filter(
 		// an underground bracket was never played despite being in the format
