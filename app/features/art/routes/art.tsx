@@ -8,11 +8,9 @@ import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { Toggle } from "~/components/Toggle";
 import { CrossIcon } from "~/components/icons/Cross";
-import i18next from "~/modules/i18n/i18next.server";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import { artPage, navIconUrl } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
+import { type SerializeFrom, openGraph } from "../../../utils/remix";
 import { ArtGrid } from "../components/ArtGrid";
 import { allArtTags } from "../queries/allArtTags.server";
 import {
@@ -46,12 +44,16 @@ export const meta: MetaFunction = (args) => {
 
 	if (!data) return [];
 
-	return [{ title: data.title }];
+	return openGraph({
+		title: "Art",
+		ogTitle: "Splatoon art showcase (traditional, digital, 3D, SFM, etc.)",
+		description:
+			"Splatoon art filterable by various tags. Find artist to commission for your own custom art.",
+		url: artPage(),
+	});
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const t = await i18next.getFixedT(request);
-
 	const allTags = allArtTags();
 
 	const filteredTagName = new URL(request.url).searchParams.get(
@@ -62,7 +64,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	return {
 		arts: filteredTag ? showcaseArtsByTag(filteredTag.id) : showcaseArts(),
 		allTags,
-		title: makeTitle(t("pages.art")),
 	};
 };
 

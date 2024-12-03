@@ -18,14 +18,13 @@ import { useIsMounted } from "~/hooks/useIsMounted";
 import { isAdmin } from "~/permissions";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import {
 	tournamentOrganizationPage,
 	tournamentPage,
 	userSubmittedImage,
 } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
+import { type SerializeFrom, openGraph } from "../../../utils/remix";
 import { streamsByTournamentId } from "../core/streams.server";
 import {
 	HACKY_resolvePicture,
@@ -50,8 +49,6 @@ export const meta: MetaFunction = (args) => {
 
 	if (!data) return [];
 
-	const title = makeTitle(data.tournament.ctx.name);
-
 	const ogImage = () => {
 		if (
 			!data.tournament.ctx.logoSrc ||
@@ -64,38 +61,21 @@ export const meta: MetaFunction = (args) => {
 		return `${import.meta.env.VITE_SITE_DOMAIN}${data.tournament.ctx.logoSrc}`;
 	};
 
-	return [
-		{ title },
-		{
-			property: "og:title",
-			content: title,
-		},
-		{
-			property: "og:description",
-			content: data.tournament.ctx.description,
-		},
-		{
-			property: "og:type",
-			content: "website",
-		},
-		{
-			property: "og:image",
-			content: ogImage(),
-		},
-		// Twitter special snowflake tags, see https://developer.x.com/en/docs/twitter-for-websites/cards/overview/summary
-		{
-			name: "twitter:card",
-			content: "summary",
-		},
-		{
-			name: "twitter:title",
-			content: title,
-		},
-		{
-			name: "twitter:site",
-			content: "@sendouink",
-		},
-	];
+	const description = () => {
+		const firstParagraph = data.tournament.ctx.description?.split("\n")[0];
+
+		if (!firstParagraph) return;
+
+		return firstParagraph.replace(/#/g, "").replace(/\*/g, "").trim();
+	};
+
+	return openGraph({
+		title: data.tournament.ctx.name,
+		description: description(),
+		image: { url: ogImage(), dimensions: { width: 124, height: 124 } },
+		// xxx: url for each
+		url: tournamentPage(data.tournament.ctx.id),
+	});
 };
 
 export const handle: SendouRouteHandle = {

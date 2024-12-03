@@ -37,8 +37,8 @@ import { useVisibilityChange } from "./hooks/useVisibilityChange";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
 import i18next, { i18nCookie } from "./modules/i18n/i18next.server";
 import type { Namespace } from "./modules/i18n/resources.server";
-import { type SerializeFrom, isRevalidation } from "./utils/remix";
-import { COMMON_PREVIEW_IMAGE, SUSPENDED_PAGE } from "./utils/urls";
+import { type SerializeFrom, isRevalidation, openGraph } from "./utils/remix";
+import { SUSPENDED_PAGE } from "./utils/urls";
 
 import "nprogress/nprogress.css";
 import "~/styles/common.css";
@@ -58,18 +58,13 @@ export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 };
 
 export const meta: MetaFunction = () => {
-	return [
-		{ title: "sendou.ink" },
-		{
-			name: "description",
-			content:
-				"Competitive Splatoon Hub featuring gear planner, event calendar, builds by top players, and more!",
-		},
-		{
-			property: "og:image",
-			content: COMMON_PREVIEW_IMAGE,
-		},
-	];
+	return openGraph({
+		title: "sendou.ink",
+		ogTitle: "sendou.ink - Competitive Splatoon Hub",
+		url: "/",
+		description:
+			"Sendou.ink is the home of competitive Splatoon featuring daily tournaments and a seasonal ladder. Variety of tools and the largest collection of builds by top players allow you to level up your skill in Splatoon 3.",
+	});
 };
 
 export type RootLoaderData = SerializeFrom<typeof loader>;
