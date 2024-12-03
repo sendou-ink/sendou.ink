@@ -89,29 +89,58 @@ export function tournamentStandings(tournament: Tournament): Standing[] {
 	);
 
 	const result: Standing[] = [];
-	const pendingCheckIn = new Set<number>();
+	const alreadyIncludedTeamIds = new Set<number>();
 
-	let offSet = 0;
 	for (const bracketIdx of bracketIdxs) {
 		const bracket = tournament.bracketByIdx(bracketIdx);
 		if (!bracket) continue;
 
-		const standings = bracket.standings.filter(
-			(standing) =>
-				!result.some((row) => row.team.id === standing.team.id) &&
-				!pendingCheckIn.has(standing.team.id),
-		);
-		result.push(
-			...standings.map((s) => ({ ...s, placement: s.placement + offSet })),
-		);
+		const standings = standingsToMergeable({
+			alreadyIncludedTeamIds,
+			standings: bracket.standings,
+			teamsAboveCount: alreadyIncludedTeamIds.size,
+		});
+		result.push(...standings);
 
-		if (bracket.teamsPendingCheckIn) {
-			for (const teamId of bracket.teamsPendingCheckIn) {
-				pendingCheckIn.add(teamId);
-			}
+		for (const teamId of bracket.participantTournamentTeamIds) {
+			alreadyIncludedTeamIds.add(teamId);
+		}
+		for (const teamId of bracket.teamsPendingCheckIn ?? []) {
+			alreadyIncludedTeamIds.add(teamId);
+		}
+	}
+
+	return result;
+}
+
+function standingsToMergeable<
+	T extends { team: { id: number }; placement: number },
+>({
+	alreadyIncludedTeamIds,
+	standings,
+	teamsAboveCount,
+}: {
+	alreadyIncludedTeamIds: Set<number>;
+	standings: T[];
+	teamsAboveCount: number;
+}) {
+	const result: T[] = [];
+
+	const filtered = standings.filter(
+		(standing) => !alreadyIncludedTeamIds.has(standing.team.id),
+	);
+
+	let placement = teamsAboveCount + 1;
+
+	for (const [i, standing] of filtered.entries()) {
+		const placementChanged =
+			i !== 0 && standing.placement !== filtered[i - 1].placement;
+
+		if (placementChanged) {
+			placement = teamsAboveCount + i + 1;
 		}
 
-		offSet = result.length;
+		result.push({ ...standing, placement });
 	}
 
 	return result;
