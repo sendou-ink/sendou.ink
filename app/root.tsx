@@ -21,6 +21,7 @@ import { useChangeLanguage } from "remix-i18next/react";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Catcher } from "./components/Catcher";
 import { Layout } from "./components/layout";
+import { Ramp } from "./components/ramp/Ramp";
 import { CUSTOMIZED_CSS_VARS_NAME } from "./constants";
 import { getUser } from "./features/auth/core/user.server";
 import { userIsBanned } from "./features/ban/core/banned.server";
@@ -39,7 +40,6 @@ import i18next, { i18nCookie } from "./modules/i18n/i18next.server";
 import type { Namespace } from "./modules/i18n/resources.server";
 import { type SerializeFrom, isRevalidation } from "./utils/remix";
 import { COMMON_PREVIEW_IMAGE, SUSPENDED_PAGE } from "./utils/urls";
-import { Ramp } from "./components/ramp/Ramp";
 
 import "nprogress/nprogress.css";
 import "~/styles/common.css";
