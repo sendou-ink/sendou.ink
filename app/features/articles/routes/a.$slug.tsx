@@ -6,14 +6,13 @@ import { Main } from "~/components/Main";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { notFoundIfFalsy } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import {
 	ARTICLES_MAIN_PAGE,
 	articlePage,
 	articlePreviewUrl,
 	navIconUrl,
 } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
+import { type SerializeFrom, openGraph } from "../../../utils/remix";
 import { articleBySlug } from "../core/bySlug.server";
 
 export const handle: SendouRouteHandle = {
@@ -45,16 +44,14 @@ export const meta: MetaFunction = (args) => {
 
 	const description = data.content.trim().split("\n")[0];
 
-	return [
-		{ title: makeTitle(data.title) },
-		{ property: "og:title", content: data.title },
-		{ name: "description", content: description },
-		{ property: "og:description", content: description },
-		{ name: "twitter:card", content: "summary_large_image" },
-		{ property: "og:image", content: articlePreviewUrl(args.params.slug) },
-		{ property: "og:type", content: "article" },
-		{ property: "og:site_name", content: "sendou.ink" },
-	];
+	return openGraph({
+		title: data.title,
+		description,
+		image: {
+			url: articlePreviewUrl(args.params.slug),
+		},
+		url: articlePage(args.params.slug),
+	});
 };
 
 export const loader = ({ params }: LoaderFunctionArgs) => {

@@ -24,7 +24,7 @@ import {
 	PATCHES,
 } from "~/constants";
 import { safeJSONParse } from "~/utils/json";
-import { type SerializeFrom, isRevalidation } from "~/utils/remix";
+import { type SerializeFrom, isRevalidation, openGraph } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
 import {
@@ -130,7 +130,12 @@ export const meta: MetaFunction = (args) => {
 
 	if (!data) return [];
 
-	return [{ title: data.title }];
+	return openGraph({
+		title: `${data.weaponName} builds`,
+		ogTitle: `${data.weaponName} Splatoon 3 builds`,
+		description: `Collection of ${data.weaponName} builds from the top competitive players. Find the best combination of abilities and level up your gameplay.`,
+		url: weaponBuildPage(data.slug),
+	});
 };
 
 export const handle: SendouRouteHandle = {

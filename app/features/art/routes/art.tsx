@@ -46,9 +46,9 @@ export const meta: MetaFunction = (args) => {
 
 	return openGraph({
 		title: "Art",
-		ogTitle: "Splatoon art showcase (traditional, digital, 3D, SFM, etc.)",
+		ogTitle: "Splatoon art showcase",
 		description:
-			"Splatoon art filterable by various tags. Find artist to commission for your own custom art.",
+			"Splatoon art filterable by various tags. Find artist to commission for your own custom art. Includes various styles such as traditional, digital, 3D and SFM.",
 		url: artPage(),
 	});
 };

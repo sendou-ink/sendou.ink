@@ -7,7 +7,6 @@ import { useSetTitle } from "~/hooks/useSetTitle";
 import type { MainWeaponId } from "~/modules/in-game-lists";
 import { weaponCategories, weaponIdIsNotAlt } from "~/modules/in-game-lists";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import {
 	BUILDS_PAGE,
 	mainWeaponImageUrl,
@@ -16,17 +15,18 @@ import {
 	weaponBuildPage,
 	weaponCategoryUrl,
 } from "~/utils/urls";
+import { openGraph } from "../../../utils/remix";
 
 import "~/styles/builds.css";
 
 export const meta: MetaFunction = () => {
-	return [
-		{ title: makeTitle("Builds") },
-		{
-			name: "description",
-			content: "View Splatoon 3 builds for all weapons by the best players",
-		},
-	];
+	return openGraph({
+		title: "Builds",
+		ogTitle: "Splatoon 3 builds for all weapons",
+		description:
+			"View Splatoon 3 builds for all weapons by the best players. Includes collection of user submitted builds and an aggregation of ability stats.",
+		url: BUILDS_PAGE,
+	});
 };
 
 export const handle: SendouRouteHandle = {

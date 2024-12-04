@@ -1,8 +1,10 @@
+import type { MetaFunction } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { ARTICLES_MAIN_PAGE, articlePage, navIconUrl } from "~/utils/urls";
+import { openGraph } from "../../../utils/remix";
 import { mostRecentArticles } from "../core/list.server";
 
 import "~/styles/front.css";
@@ -15,6 +17,16 @@ export const handle: SendouRouteHandle = {
 		href: ARTICLES_MAIN_PAGE,
 		type: "IMAGE",
 	}),
+};
+
+export const meta: MetaFunction = () => {
+	return openGraph({
+		title: "Articles",
+		ogTitle: "Splatoon articles",
+		description:
+			"Articles about the competitive side of Splatoon. Written by various community members.",
+		url: ARTICLES_MAIN_PAGE,
+	});
 };
 
 export const loader = async () => {

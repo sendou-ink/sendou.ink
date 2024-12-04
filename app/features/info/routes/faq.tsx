@@ -9,6 +9,7 @@ import "~/styles/faq.css";
 
 const AMOUNT_OF_QUESTIONS = 9;
 
+// xxx: meta
 export const meta: MetaFunction = () => {
 	return [
 		{ title: makeTitle("FAQ") },

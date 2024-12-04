@@ -29,7 +29,6 @@ import {
 	tournamentManagerData,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import { i18next } from "~/modules/i18n/i18next.server";
 import {
 	canDeleteCalendarEvent,
 	canEditCalendarEvent,
@@ -41,7 +40,6 @@ import {
 	notFoundIfFalsy,
 	validate,
 } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import {
 	CALENDAR_PAGE,
 	calendarEditPage,
@@ -54,7 +52,7 @@ import {
 	userPage,
 } from "~/utils/urls";
 import { actualNumber, id } from "~/utils/zod";
-import type { SerializeFrom } from "../../../utils/remix";
+import { type SerializeFrom, openGraph } from "../../../utils/remix";
 import { Tags } from "../components/Tags";
 
 import "~/styles/calendar-event.css";
@@ -103,10 +101,13 @@ export const meta: MetaFunction = (args) => {
 
 	if (!data) return [];
 
-	return [
-		{ title: data.title },
-		{ name: "description", content: data.event.description },
-	];
+	return openGraph({
+		title: data.event.name,
+		url: calendarEventPage(data.event.eventId),
+		description:
+			data.event.description ??
+			`Splatoon competitive event hosted on ${resolveBaseUrl(data.event.bracketUrl)}`,
+	});
 };
 
 export const handle: SendouRouteHandle = {
@@ -131,8 +132,7 @@ export const handle: SendouRouteHandle = {
 	},
 };
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const t = await i18next.getFixedT(request);
+export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const parsedParams = z
 		.object({ id: z.preprocess(actualNumber, id) })
 		.parse(params);
@@ -150,7 +150,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 	return {
 		event,
-		title: makeTitle([event.name, t("pages.calendar")]),
 		results: await CalendarRepository.findResultsByEventId(parsedParams.id),
 	};
 };

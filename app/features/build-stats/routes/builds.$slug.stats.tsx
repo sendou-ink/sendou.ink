@@ -26,6 +26,7 @@ import { averageAbilityPoints } from "../queries/averageAbilityPoints.server";
 
 import "../build-stats.css";
 
+// xxx: adjust meta
 export const meta: MetaFunction = (args) => {
 	const data = args.data as SerializeFrom<typeof loader> | null;
 

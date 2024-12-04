@@ -45,7 +45,7 @@ import type {
 	CalendarEventTag,
 	PersistedCalendarEventTag,
 } from "../../../db/types";
-import type { SerializeFrom } from "../../../utils/remix";
+import { type SerializeFrom, openGraph } from "../../../utils/remix";
 import * as CalendarRepository from "../CalendarRepository.server";
 import { calendarEventTagSchema } from "../actions/calendar.new.server";
 import { CALENDAR_EVENT } from "../calendar-constants";
@@ -58,17 +58,26 @@ export const meta: MetaFunction = (args) => {
 
 	if (!data) return [];
 
-	return [
-		{ title: data.title },
-		{
-			name: "description",
-			content: `${data.events.length} events happening during week ${
-				data.displayedWeek
-			} including ${joinListToNaturalString(
-				data.events.slice(0, 3).map((e) => e.name),
-			)}`,
-		},
-	];
+	const events = data.events.slice().sort((a, b) => {
+		const aParticipants = a.participantCounts?.teams ?? 0;
+		const bParticipants = b.participantCounts?.teams ?? 0;
+
+		if (aParticipants > bParticipants) return -1;
+		if (aParticipants < bParticipants) return 1;
+
+		return 0;
+	});
+
+	return openGraph({
+		title: "Calendar",
+		ogTitle: "Splatoon competitive event calendar",
+		url: CALENDAR_PAGE,
+		description: `${data.events.length} events on sendou.ink happening during week ${
+			data.displayedWeek
+		} including ${joinListToNaturalString(
+			events.slice(0, 3).map((e) => e.name),
+		)}`,
+	});
 };
 
 export const handle: SendouRouteHandle = {

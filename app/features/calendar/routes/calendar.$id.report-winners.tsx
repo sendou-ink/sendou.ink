@@ -26,6 +26,8 @@ import { calendarEventPage } from "~/utils/urls";
 import { actualNumber, id, safeJSONParse, toArray } from "~/utils/zod";
 import type { SerializeFrom } from "../../../utils/remix";
 
+// xxx: meta
+
 const playersSchema = z
 	.array(
 		z.union([

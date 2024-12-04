@@ -1,3 +1,4 @@
+import type { MetaFunction } from "@remix-run/node";
 import { NavLink, Outlet, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -9,7 +10,7 @@ import { SearchIcon } from "~/components/icons/Search";
 import { useUser } from "~/features/auth/core/user";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { BADGES_DOC_LINK, BADGES_PAGE, navIconUrl } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
+import { type SerializeFrom, openGraph } from "../../../utils/remix";
 import * as BadgeRepository from "../BadgeRepository.server";
 
 import "~/styles/badges.css";
@@ -21,6 +22,16 @@ export const handle: SendouRouteHandle = {
 		href: BADGES_PAGE,
 		type: "IMAGE",
 	}),
+};
+
+export const meta: MetaFunction = () => {
+	return openGraph({
+		title: "Badges",
+		ogTitle: "Splatoon badges (tournament prizes list)",
+		url: BADGES_PAGE,
+		description:
+			"Over 400 badge tournament prizes and counting! Check out the full list including the owners.",
+	});
 };
 
 export type BadgesLoaderData = SerializeFrom<typeof loader>;

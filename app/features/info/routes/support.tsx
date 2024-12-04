@@ -15,6 +15,7 @@ import {
 
 import "../support.css";
 
+// xxx: meta
 export const meta: MetaFunction = () => {
 	return [{ title: makeTitle("Support") }];
 };

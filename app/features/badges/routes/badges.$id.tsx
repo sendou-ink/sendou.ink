@@ -17,6 +17,8 @@ export interface BadgeDetailsContext {
 	badgeName: string;
 }
 
+// xxx: meta
+
 export type BadgeDetailsLoaderData = SerializeFrom<typeof loader>;
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const badgeId = Number(params.id);

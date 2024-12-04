@@ -21,6 +21,8 @@ import * as BadgeRepository from "../BadgeRepository.server";
 import { editBadgeActionSchema } from "../badges-schemas.server";
 import type { BadgeDetailsContext, BadgeDetailsLoaderData } from "./badges.$id";
 
+// xxx: meta
+
 export const action: ActionFunction = async ({ request, params }) => {
 	const data = await parseRequestPayload({
 		request,

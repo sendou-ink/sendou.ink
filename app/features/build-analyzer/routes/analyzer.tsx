@@ -39,7 +39,6 @@ import { atOrError, nullFilledArray, removeDuplicates } from "~/utils/arrays";
 import { damageTypeTranslationString } from "~/utils/i18next";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import {
 	ANALYZER_URL,
 	mainWeaponImageUrl,
@@ -79,19 +78,20 @@ import {
 	isMainOnlyAbility,
 	isStackableAbility,
 } from "../core/utils";
+import { openGraph } from "../../../utils/remix";
 
 import "../analyzer.css";
 
 export const CURRENT_PATCH = "9.2";
 
 export const meta: MetaFunction = () => {
-	return [
-		{ title: makeTitle("Build Analyzer") },
-		{
-			name: "description",
-			content: "Detailed stats for any weapon and build in Splatoon 3.",
-		},
-	];
+	return openGraph({
+		title: "Build analyzer",
+		ogTitle: "Splatoon 3 build analyzer/simulator",
+		url: ANALYZER_URL,
+		description:
+			"Analyze and compare Splatoon 3 builds. Find out what exactly each combination of abilities does.",
+	});
 };
 
 export const handle: SendouRouteHandle = {

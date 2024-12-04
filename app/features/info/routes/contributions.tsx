@@ -19,6 +19,7 @@ import {
 	YAGA_TWITTER,
 } from "~/utils/urls";
 
+// xxx: meta
 export const meta: MetaFunction = () => {
 	return [{ title: makeTitle("Contributions") }];
 };

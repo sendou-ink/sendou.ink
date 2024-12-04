@@ -24,6 +24,7 @@ import type { SerializeFrom } from "../../../utils/remix";
 import { popularBuilds } from "../build-stats-utils";
 import { abilitiesByWeaponId } from "../queries/abilitiesByWeaponId.server";
 
+// xxx: adjust meta
 export const meta: MetaFunction = (args) => {
 	const data = args.data as SerializeFrom<typeof loader> | null;
 
