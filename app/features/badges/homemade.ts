@@ -379,4 +379,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "punkshrimp",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "Sunday Run",
+		fileName: "sunday-run",
+		authorDiscordId: "570323825669963972",
+	},
 ];
