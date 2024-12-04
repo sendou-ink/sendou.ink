@@ -48,6 +48,7 @@ import {
 	subWeaponImageUrl,
 	userNewBuildPage,
 } from "~/utils/urls";
+import { openGraph } from "../../../utils/remix";
 import {
 	MAX_LDE_INTENSITY,
 	damageTypeToWeaponType,
@@ -78,7 +79,6 @@ import {
 	isMainOnlyAbility,
 	isStackableAbility,
 } from "../core/utils";
-import { openGraph } from "../../../utils/remix";
 
 import "../analyzer.css";
 
