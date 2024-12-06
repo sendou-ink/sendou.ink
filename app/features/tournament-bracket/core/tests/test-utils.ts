@@ -262,4 +262,21 @@ export const progressions = {
 			},
 		},
 	],
+	doubleEliminationWithUnderground: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "double_elimination",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "double_elimination",
+			name: "Underground",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [-1, -2],
+				},
+			],
+		},
+	],
 } satisfies Record<string, Progression.ParsedBracket[]>;

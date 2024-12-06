@@ -174,7 +174,7 @@ function MapPicker({
 							})}
 						</div>
 						{pickersLastWonMode === mode && modes.length > 1 ? (
-							<div className="text-error text-xs text-center">
+							<div className="text-error text-xs text-center mt-2">
 								Can&apos;t pick the same mode team last won on
 							</div>
 						) : null}

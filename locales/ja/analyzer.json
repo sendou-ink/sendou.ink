@@ -159,5 +159,6 @@
 	"noDmgData": "このブキのダメージデータはまだわかっていません。もう少しお待ちください！",
 	"perInkTankGrid.header_one": "サブウェポン {{weapon}} 使用後 ×{{count}}発",
 	"perInkTankGrid.header_other": "サブウェポン {{weapon}} 使用後 ×{{count}}発",
-	"bigBubblerExplanation": "{{weapon}} 耐久値が上がるにつれて継続時間も増えます。"
+	"bigBubblerExplanation": "{{weapon}} 耐久値が上がるにつれて継続時間も増えます。",
+	"button.showChart": "表を表示"
 }

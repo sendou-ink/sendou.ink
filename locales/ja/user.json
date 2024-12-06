@@ -13,6 +13,8 @@
 	"weaponPool": "使用ブキ",
 	"discordExplanation": "ユーザー名、プロファイル画像、YouTube、Twitter と Twitch アカウントは Discord のアカウントに設定されているものが使用されます。詳しくは <1>FAQ</1> をご覧ください。",
 	"favoriteBadge": "お気に入りバッジ",
+	"battlefy": "Battlefyアカウント名",
+	"bsky": "Blueskyアカウント名",
 
 	"forms.showDiscordUniqueName": "Discord のユーザー名を表示する",
 	"forms.showDiscordUniqueName.info": "Discord のユニーク名 ({{discordUniqueName}}) 公表しますか?",
@@ -39,11 +41,13 @@
 	"forms.errors.invalidCustomUrl.duplicate": "このカスタム URL はすでに使用されています",
 	"forms.errors.invalidSens": "右スティックの感度が設定されていない場合、感度を設定することはできません",
 	"forms.info.favoriteBadge": "お気に入りバッジはデフォルトでプロファイルに大きく表示されます",
+	"forms.info.battlefy": "Battlefyのアカウント名は特定のトーナメンでシーディング及びにプレイヤー情報の確認に使用されます。",
 
 	"search.info": "Discord, Splatoon 3, Twitter アカウント名でユーザーを検索する",
 	"search.noResults": "該当ユーザーが見つかりません '{{query}}'",
 
 	"seasons": "シーズン",
+	"seasons.noQ": "このプレイヤーは今シーズンSendouQをプレイしていません",
 	"seasons.tabs.weapons": "武器",
 	"seasons.tabs.stages": "ステージ",
 	"seasons.tabs.self": "自分",
@@ -59,5 +63,21 @@
 	"seasons.noReportedWeapons": "報告された武器がありません",
 	"seasons.clickARow": "武器の使用統計を見るには行を選択してください",
 	"seasons.loading": "読み込み中...",
-	"seasons.matchBeingProcessed": "このマッチはまだ処理されていません。"
+	"seasons.matchBeingProcessed": "このマッチはまだ処理されていません。",
+
+	"builds.sorting.changeButton": "並べ替え変更",
+	"builds.sorting.header": "ギアの並べ替えを変更",
+	"builds.sorting.backToDefaults": "デフォルトに戻す",
+	"builds.sorting.info": "プロファイルのギア表示を変更しました。ギアのビルドを閲覧してるユーザー、自分両方を影響します。",
+	"builds.sorting.UPDATED_AT": "最終更新日",
+	"builds.sorting.TOP_500": "Xランク上位500",
+	"builds.sorting.WEAPON_POOL": "武器プール",
+	"builds.sorting.WEAPON_IN_GAME_ORDER": "武器、ゲーム内の順番",
+	"builds.sorting.ALPHABETICAL_TITLE": "タイトル、アルファベット順",
+	"builds.sorting.MODE": "モード",
+	"builds.sorting.HEADGEAR_ID": "アタマ(ギア)ゲーム内の順番",
+	"builds.sorting.CLOTHES_ID": "フク(ギア)ゲーム内の順番",
+	"builds.sorting.SHOES_ID": "クツ(ギア)ゲーム内の順番",
+	"builds.sorting.PUBLIC_BUILD": "公開ビルド",
+	"builds.sorting.PRIVATE_BUILD": "非公開ビルド"
 }

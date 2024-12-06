@@ -2,6 +2,7 @@ import type { ZodType } from "zod";
 import { z } from "zod";
 import type { abilitiesShort } from "~/modules/in-game-lists";
 import { abilities, mainWeaponIds, stageIds } from "~/modules/in-game-lists";
+import { FRIEND_CODE_REGEXP } from "../features/sendouq/q-constants";
 import type { Unpacked } from "./types";
 import { assertType } from "./types";
 
@@ -32,6 +33,22 @@ export const shoesMainSlotAbility = z
 export const stackableAbility = z
 	.string()
 	.refine((val) => abilityNameToType(val) === "STACKABLE");
+
+export const normalizeFriendCode = (value: string) => {
+	const onlyNumbers = value.replace(/\D/g, "");
+
+	const withDashes = onlyNumbers
+		.split(/(\d{4})/)
+		.filter(Boolean)
+		.join("-");
+
+	return withDashes;
+};
+
+export const friendCode = z
+	.string()
+	.regex(FRIEND_CODE_REGEXP)
+	.transform(normalizeFriendCode);
 
 export const ability = z.enum([
 	"ISM",

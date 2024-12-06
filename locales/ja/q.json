@@ -29,6 +29,7 @@
 	"front.noFriendCode": "グループをジョインする前にフレンドコードをセットしよう",
 	"front.upcomingSeason.header": "オフシーズンだよ！",
 	"front.upcomingSeason.date": "{{date}}に開始するシーズン{{nth}}をジョインする ",
+	"front.noUpcomingSeason": "来シーズンの開始日時は近いうちに発表されます。",
 	"front.nav.rules.title": "ルール",
 	"front.nav.rules.description": "遊ぶ前に読んで",
 	"front.nav.info.title": "情報",
@@ -108,6 +109,7 @@
 	"looking.groups.actions.goBack": "戻る",
 	"looking.groups.adder.quickAdd": "クイック追加",
 	"looking.groups.adder.error": "そのユーザーはグループに入っています",
+	"looking.groups.adder.others": "その他",
 	"looking.groups.adder.inviteLink": "インバイトリンク",
 	"looking.groups.editNote": "メモを編集する",
 	"looking.groups.addNote": "メモを追加する",
@@ -120,6 +122,7 @@
 	"looking.rankCalculating": "遊んだセットが{{count}}個以下です。ランクはまだ計算中です...",
 	"looking.allTiers": "全てのティア",
 	"looking.joinQPrompt": "グループを見つけるには列に入ってください",
+	"looking.range.or": "か",
 
 	"match.header": "マッチ #{{number}}番",
 	"match.spInfo": "SP は両チームが同じ結果を報告してからアップデートされます。",

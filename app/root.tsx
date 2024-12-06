@@ -21,6 +21,7 @@ import { useChangeLanguage } from "remix-i18next/react";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Catcher } from "./components/Catcher";
 import { Layout } from "./components/layout";
+import { Ramp } from "./components/ramp/Ramp";
 import { CUSTOMIZED_CSS_VARS_NAME } from "./constants";
 import { getUser } from "./features/auth/core/user.server";
 import { userIsBanned } from "./features/ban/core/banned.server";
@@ -143,17 +144,6 @@ function Document({
 	return (
 		<html lang={locale} dir={i18n.dir()} className={htmlThemeClass}>
 			<head>
-				<script
-					// biome-ignore lint/security/noDangerouslySetInnerHtml: needed for Ramp.tsx
-					dangerouslySetInnerHTML={{
-						__html: `
-              window.ramp = window.ramp || {};
-              window.ramp.que = window.ramp.que || [];
-              window.ramp.passiveMode = true;
-							window._pwRampComponentLoaded = window._pwRampComponentLoaded || false;
-         `,
-					}}
-				/>
 				<meta charSet="utf-8" />
 				<meta
 					name="viewport"
@@ -500,24 +490,14 @@ function PWALinks() {
 	);
 }
 
-const Ramp = React.lazy(() => import("./components/ramp/Ramp"));
 function MyRamp({ data }: { data: RootLoaderData | undefined }) {
-	if (
-		!data ||
-		data.user?.patronTier ||
-		!import.meta.env.VITE_PLAYWIRE_PUBLISHER_ID ||
-		!import.meta.env.VITE_PLAYWIRE_WEBSITE_ID ||
-		typeof window === "undefined"
-	) {
+	if (!data || data.user?.patronTier) {
 		return null;
 	}
 
 	return (
 		<ClientErrorBoundary fallback={null}>
-			<Ramp
-				publisherId={import.meta.env.VITE_PLAYWIRE_PUBLISHER_ID}
-				id={import.meta.env.VITE_PLAYWIRE_WEBSITE_ID}
-			/>
+			<Ramp />
 		</ClientErrorBoundary>
 	);
 }

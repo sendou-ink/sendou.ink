@@ -645,3 +645,9 @@
 	align-items: center;
 	color: var(--text);
 }
+
+.tournament__standings__divider {
+	width: 5px;
+	background-color: var(--theme-transparent);
+	border-radius: var(--rounded);
+}

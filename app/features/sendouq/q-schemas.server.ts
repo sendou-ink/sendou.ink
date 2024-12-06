@@ -4,6 +4,7 @@ import {
 	checkboxValueToBoolean,
 	deduplicate,
 	falsyToNull,
+	friendCode,
 	id,
 	modeShort,
 	safeJSONParse,
@@ -11,7 +12,7 @@ import {
 	weaponSplId,
 } from "~/utils/zod";
 import { matchEndedAtIndex } from "./core/match";
-import { FRIEND_CODE_REGEXP, SENDOUQ, SENDOUQ_BEST_OF } from "./q-constants";
+import { SENDOUQ, SENDOUQ_BEST_OF } from "./q-constants";
 
 export const frontPageSchema = z.union([
 	z.object({
@@ -26,10 +27,7 @@ export const frontPageSchema = z.union([
 	}),
 	z.object({
 		_action: _action("ADD_FRIEND_CODE"),
-		friendCode: z.string().regex(FRIEND_CODE_REGEXP, {
-			message:
-				"Invalid friend code. Did you include dashes? Example: 1234-5678-9012",
-		}),
+		friendCode,
 	}),
 ]);
 

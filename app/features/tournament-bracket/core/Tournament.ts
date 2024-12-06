@@ -5,6 +5,7 @@ import type {
 } from "~/db/tables";
 import { TOURNAMENT } from "~/features/tournament";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
+import * as Standings from "~/features/tournament/core/Standings";
 import { tournamentIsRanked } from "~/features/tournament/tournament-utils";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { Match, Stage } from "~/modules/brackets-model";
@@ -671,46 +672,7 @@ export class Tournament {
 	}
 
 	get standings() {
-		if (this.brackets.length === 1) {
-			return this.brackets[0].standings;
-		}
-
-		for (const bracket of this.brackets) {
-			if (bracket.isFinals) {
-				const finalsStandings = bracket.standings;
-
-				const firstStageStandings = this.brackets[0].standings;
-
-				const uniqueFinalsPlacements = new Set<number>();
-				const firstStageWithoutFinalsParticipants = firstStageStandings.filter(
-					(firstStageStanding) => {
-						const isFinalsParticipant = finalsStandings.some(
-							(finalsStanding) =>
-								finalsStanding.team.id === firstStageStanding.team.id,
-						);
-
-						if (isFinalsParticipant) {
-							uniqueFinalsPlacements.add(firstStageStanding.placement);
-						}
-
-						return !isFinalsParticipant;
-					},
-				);
-
-				return [
-					...finalsStandings,
-					...firstStageWithoutFinalsParticipants.filter(
-						// handle edge case where teams didn't check in to the final stage despite being qualified
-						// although this would bug out if all teams of certain placement fail to check in
-						// but probably that should not happen too likely
-						(p) => !uniqueFinalsPlacements.has(p.placement),
-					),
-				];
-			}
-		}
-
-		logger.warn("Standings not found");
-		return [];
+		return Standings.tournamentStandings(this);
 	}
 
 	canFinalize(user: OptionalIdObject) {

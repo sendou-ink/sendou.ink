@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import clsx from "clsx";
-import { addDays, addMonths, subDays, subMonths } from "date-fns";
+import { addMonths, subMonths } from "date-fns";
 import React from "react";
 import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
@@ -49,6 +49,7 @@ import type { SerializeFrom } from "../../../utils/remix";
 import * as CalendarRepository from "../CalendarRepository.server";
 import { calendarEventTagSchema } from "../actions/calendar.new.server";
 import { CALENDAR_EVENT } from "../calendar-constants";
+import { closeByWeeks } from "../calendar-utils";
 import { Tags } from "../components/Tags";
 
 import "~/styles/calendar.css";
@@ -156,22 +157,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		title: makeTitle([`Week ${displayedWeek}`, t("pages.calendar")]),
 	};
 };
-
-function closeByWeeks(args: { week: number; year: number }) {
-	const dateFromWeekNumber = weekNumberToDate(args);
-
-	return [-4, -3, -2, -1, 0, 1, 2, 3, 4].map((week) => {
-		const date =
-			week < 0
-				? subDays(dateFromWeekNumber, Math.abs(week) * 7)
-				: addDays(dateFromWeekNumber, week * 7);
-
-		return {
-			number: dateToWeekNumber(date),
-			year: date.getFullYear(),
-		};
-	});
-}
 
 function fetchEventsOfWeek(args: {
 	week: number;

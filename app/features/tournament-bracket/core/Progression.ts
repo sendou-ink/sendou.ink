@@ -624,3 +624,71 @@ export function changedBracketProgressionFormat(
 
 	return false;
 }
+
+/** Returns the order of brackets as is to be considered for standings. Teams from the bracket of lower index are considered to be above those from the lower bracket.
+ *  A participant's standing is the first bracket to appear in order that has the participant in it.
+ */
+export function bracketIdxsForStandings(progression: ParsedBracket[]) {
+	const bracketsToConsider = bracketsReachableFrom(0, progression);
+
+	const withoutIntermediateBrackets = bracketsToConsider.filter(
+		(bracket, bracketIdx) => {
+			if (bracketIdx === 0) return true;
+
+			return progression.every(
+				(b) => !b.sources?.some((s) => s.bracketIdx === bracket),
+			);
+		},
+	);
+
+	const withoutUnderground = withoutIntermediateBrackets.filter(
+		(bracketIdx) => {
+			const sources = progression[bracketIdx].sources;
+
+			if (!sources) return true;
+
+			return !sources.some(
+				(source) =>
+					progression[source.bracketIdx].type === "double_elimination",
+			);
+		},
+	);
+
+	return withoutUnderground.sort((a, b) => {
+		const minSourcedPlacementA = Math.min(
+			...(progression[a].sources?.flatMap((s) => s.placements) ?? [
+				Number.POSITIVE_INFINITY,
+			]),
+		);
+		const minSourcedPlacementB = Math.min(
+			...(progression[b].sources?.flatMap((s) => s.placements) ?? [
+				Number.POSITIVE_INFINITY,
+			]),
+		);
+
+		if (minSourcedPlacementA === minSourcedPlacementB) {
+			return a - b;
+		}
+
+		return minSourcedPlacementA - minSourcedPlacementB;
+	});
+}
+
+function bracketsReachableFrom(
+	bracketIdx: number,
+	progression: ParsedBracket[],
+): number[] {
+	const result = [bracketIdx];
+
+	for (const [newBracketIdx, bracket] of progression.entries()) {
+		if (!bracket.sources) continue;
+
+		for (const source of bracket.sources) {
+			if (source.bracketIdx === bracketIdx) {
+				result.push(...bracketsReachableFrom(newBracketIdx, progression));
+			}
+		}
+	}
+
+	return result;
+}

@@ -23,6 +23,7 @@
 	"pages.art": "イラスト",
 	"pages.sendouq": "SendouQ",
 	"pages.lfg": "グループ探し",
+	"pages.settings": "設定",
 
 	"header.profile": "プロファイル",
 	"header.logout": "ログアウト",
@@ -30,6 +31,14 @@
 	"header.language": "言語",
 	"header.loggedInAs": "{{userName}} でログインしています",
 	"header.theme": "テーマ",
+	"header.adder.tournament": "トーナメント",
+	"header.adder.calendarEvent": "カレンダーイベント",
+	"header.adder.build": "ギア",
+	"header.adder.team": "チーム",
+	"header.adder.lfgPost": "グループ探し",
+	"header.adder.art": "イラスト",
+	"header.adder.vod": "動画一覧",
+	"header.adder.plusSuggestion": "sendou.ink プラスの提案",
 
 	"auth.errors.aborted": "ログインを中断しました",
 	"auth.errors.failed": "ログインに失敗しました",
@@ -62,6 +71,8 @@
 	"actions.selectAll": "すべてを選択",
 	"actions.search": "検索",
 	"actions.setBg": "ステージ背景を設定する",
+	"actions.outlined": "アウトラインあり",
+	"actions.noOutline": "アウトラインなし",
 	"actions.join": "参加する",
 	"actions.nevermind": "やーめた",
 	"actions.upload": "アップロード",
@@ -117,6 +128,9 @@
 	"tag.name.QUALIFIER": "参加資格",
 	"tag.name.SZ": "エリアのみ",
 	"tag.name.TW": "ナワバリあり",
+	"tag.name.ONES": "タイマン (一対一)",
+	"tag.name.DUOS": "二対二",
+	"tag.name.TRIOS": "三対三",
 	"tag.name.S1": "スプラトゥーン 1",
 	"tag.name.S2": "スプラトゥーン 2",
 	"tag.name.SR": "サーモンラン",
@@ -138,6 +152,8 @@
 
 	"plans.blueprint": "計画",
 	"plans.bgStyle.OVER": "頭上マップ",
+	"plans.bgStyle.MINI": "ミニマップ",
+	"plans.adder.objective": "目的",
 
 	"articles.by": "作者: {{author}}",
 
@@ -151,6 +167,7 @@
 	"upload.title": "{{type}}のアップロード: 推奨サイズは {{width}}×{{height}} です",
 	"upload.type.team-pfp": "チームプロファイル画像",
 	"upload.type.team-banner": "チームバナー",
+	"upload.type.org-pfp": "トーナメント主催者プロファイル画像",
 	"upload.commonExplanation": "画像が正式に使用される前に、モデレーターが承認を行います。パトロンによるアップロードの場合はチェックされません。",
 	"upload.afterExplanation_one": "現在 {{count}} 枚の画像が承認待ちです。承認が完了次第、自動的に画像が表示されます。",
 	"upload.afterExplanation_other": "現在 {{count}} 枚の画像が承認待ちです。承認が完了次第、自動的に画像が表示されます。",
@@ -178,6 +195,7 @@
 	"support.perk.prioritySupport": "優先サポート",
 	"support.perk.prioritySupport.extra": "私(主)が優先的に見るヘルプデスクへのアクセス",
 	"support.perk.previewQ": "SendouQ でジョインする前にグループを見る",
+	"support.perk.joinFive": "5チームまで参加",
 
 	"custom.colors.title": "カスタムカラー",
 	"custom.colors.bg": "バックグラウンド",
@@ -186,6 +204,7 @@
 	"custom.colors.text": "テキスト",
 	"custom.colors.text-lighter": "テキスト 明るめ",
 	"custom.colors.theme": "テーマ",
+	"custom.colors.theme-secondary": "テーマ(セカンダリー)",
 	"custom.colors.chat": "チャットネーム",
 
 	"divisions.WEST": "アロメ",
@@ -206,6 +225,7 @@
 	"leaderboard.noTeams": "リーダボードに載っているチームはまだいません",
 	"leaderboard.updateInfo": "リーダーボードは三十分に一回アップデートされます。",
 	"leaderboard.qualification": "今シーズンのフィナーレへの参加権",
+	"leaderboard.qualification.info": "名簿に載っている全てのプレイヤーは今シーズンSendouQを七セットプレイしてないといけません。四人のユニークな名簿ごとにポイントが計算されます。",
 
 	"chat.connected": "接続されています",
 	"chat.disconnected": "接続されていません",

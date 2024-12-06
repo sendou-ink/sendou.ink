@@ -1268,7 +1268,7 @@ function calendarEventWithToToolsTeams(
 				});
 		}
 
-		if (Math.random() < 0.8 || id === 1) {
+		if (event !== "SOS" && (Math.random() < 0.8 || id === 1)) {
 			const shuffledPairs = shuffle(availablePairs.slice());
 
 			let SZ = 0;
