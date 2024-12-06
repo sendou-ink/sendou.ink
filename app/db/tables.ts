@@ -857,6 +857,49 @@ export interface XRankPlacement {
 	year: number;
 }
 
+// xxx: first look for X then if still 1 hour before like that then for everyone?
+export interface ScrimPost {
+	id: GeneratedAlways<number>;
+	/** When is the scrim scheduled to happen */
+	at: number;
+	/** Highest LUTI div accepted */
+	maxDiv: number | null;
+	/** Lowest LUTI div accepted */
+	minDiv: number | null;
+	/** Plus Tier visibility, e.g. 2 would mean only +1 & +2 members can see the post */
+	visibility: number | null;
+	/** Any additional info */
+	text: string | null;
+	/** The key to access the scrim chat, used after scrim is scheduled with another team */
+	chatCode: string;
+	/** Refers to the team looking for the team (can also be a pick-up) */
+	teamId: number | null;
+	/** User who posted the scrim posting */
+	authorId: number;
+	createdAt: GeneratedAlways<number>;
+	updatedAt: Generated<number>;
+}
+
+export interface ScrimPostUser {
+	scrimPostId: number;
+	userId: number;
+}
+
+export interface ScrimPostRequest {
+	id: GeneratedAlways<number>;
+	scrimPostId: number;
+	teamId: number | null;
+	authorId: number;
+	text: string | null;
+	isAccepted: Generated<number>;
+	createdAt: GeneratedAlways<number>;
+}
+
+export interface ScrimPostRequestUser {
+	scrimPostRequestId: number;
+	userId: number;
+}
+
 export type Tables = { [P in keyof DB]: Selectable<DB[P]> };
 export type TablesInsertable = { [P in keyof DB]: Insertable<DB[P]> };
 
@@ -933,4 +976,8 @@ export interface DB {
 	VideoMatch: VideoMatch;
 	VideoMatchPlayer: VideoMatchPlayer;
 	XRankPlacement: XRankPlacement;
+	ScrimPost: ScrimPost;
+	ScrimPostUser: ScrimPostUser;
+	ScrimPostRequest: ScrimPostRequest;
+	ScrimPostRequestUser: ScrimPostRequestUser;
 }

@@ -160,6 +160,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	groups,
 	friendCodes,
 	lfgPosts,
+	scrimPosts,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -179,6 +180,7 @@ export async function seed(variation?: SeedVariation | null) {
 
 function wipeDB() {
 	const tablesToDelete = [
+		"ScrimPost",
 		"LFGPost",
 		"Skill",
 		"ReportedWeapon",
@@ -2225,4 +2227,8 @@ async function lfgPosts() {
 		type: "TEAM_FOR_PLAYER",
 		teamId: 1,
 	});
+}
+
+async function scrimPosts() {
+	// for (let i = 0; i < 20; i++) {}
 }
