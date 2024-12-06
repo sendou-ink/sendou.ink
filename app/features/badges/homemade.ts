@@ -384,4 +384,19 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "special4",
 		authorDiscordId: "1170249805373657093",
 	},
+	{
+		displayName: "Badge Palooza",
+		fileName: "badgepalooza",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "SpaceDog Showdown",
+		fileName: "spacedog",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "SpaceDog Showdown (Jolly Edition)",
+		fileName: "spacedogjolly",
+		authorDiscordId: "528851510222782474",
+	},
 ];
