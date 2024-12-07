@@ -361,10 +361,7 @@
 	}
 
 	.layout__main {
-		padding-block-start: calc(
-			env(safe-area-inset-top) +
-			var(--leaderboard-top-spacing)
-		);
+		padding-block-start: env(safe-area-inset-top);
 	}
 }
 

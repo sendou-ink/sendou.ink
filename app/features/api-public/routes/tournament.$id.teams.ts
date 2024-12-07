@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import { type LoaderFunctionArgs, json } from "@remix-run/node";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { cors } from "remix-utils/cors";
 import { z } from "zod";
@@ -143,5 +143,5 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		};
 	});
 
-	return await cors(request, Response.json(result));
+	return await cors(request, json(result));
 };

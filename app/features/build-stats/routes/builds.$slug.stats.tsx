@@ -1,5 +1,9 @@
 import { cachified } from "@epic-web/cachified";
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Ability } from "~/components/Ability";
@@ -20,7 +24,6 @@ import {
 	outlinedMainWeaponImageUrl,
 	weaponBuildPage,
 } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
 import { abilityPointCountsToAverages } from "../build-stats-utils";
 import { averageAbilityPoints } from "../queries/averageAbilityPoints.server";
 

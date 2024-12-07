@@ -3,6 +3,7 @@ import type {
 	ActionFunctionArgs,
 	LoaderFunctionArgs,
 	MetaFunction,
+	SerializeFrom,
 } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import type { FetcherWithComponents } from "@remix-run/react";
@@ -82,7 +83,6 @@ import {
 	teamPage,
 	userSubmittedImage,
 } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
 import { GroupCard } from "../components/GroupCard";
 import { matchEndedAtIndex } from "../core/match";
 import { compareMatchToReportedScores } from "../core/match.server";

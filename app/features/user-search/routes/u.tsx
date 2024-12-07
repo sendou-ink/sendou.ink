@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
 import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -15,7 +15,6 @@ import {
 } from "~/utils/remix.server";
 import { USER_SEARCH_PAGE, navIconUrl, userPage } from "~/utils/urls";
 import { queryToUserIdentifier } from "~/utils/users";
-import type { SerializeFrom } from "../../../utils/remix";
 
 import "~/styles/u.css";
 

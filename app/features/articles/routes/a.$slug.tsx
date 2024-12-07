@@ -1,4 +1,8 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import Markdown from "markdown-to-jsx";
 import * as React from "react";
@@ -13,7 +17,6 @@ import {
 	articlePreviewUrl,
 	navIconUrl,
 } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
 import { articleBySlug } from "../core/bySlug.server";
 
 export const handle: SendouRouteHandle = {

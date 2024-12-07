@@ -1,9 +1,9 @@
+import type { SerializeFrom } from "@remix-run/node";
 import clsx from "clsx";
 import { LinkButton } from "~/components/Button";
 import type { MonthYear } from "~/features/plus-voting/core";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { databaseTimestampToDate, nullPaddedDatesOfMonth } from "~/utils/dates";
-import type { SerializeFrom } from "../../../utils/remix";
 import type { loader } from "../loaders/org.$slug.server";
 
 interface EventCalendarProps {

@@ -380,8 +380,28 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "528851510222782474",
 	},
 	{
+		displayName: "Sunday Run",
+		fileName: "sunday-run",
+		authorDiscordId: "570323825669963972",
+	},
+	{
 		displayName: "Specials To The Power Of Four!",
 		fileName: "special4",
 		authorDiscordId: "1170249805373657093",
+	},
+	{
+		displayName: "Badge Palooza",
+		fileName: "badgepalooza",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "SpaceDog Showdown",
+		fileName: "spacedog",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "SpaceDog Showdown (Jolly Edition)",
+		fileName: "spacedogjolly",
+		authorDiscordId: "528851510222782474",
 	},
 ];

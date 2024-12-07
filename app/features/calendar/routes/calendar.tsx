@@ -1,4 +1,8 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
 import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import clsx from "clsx";
 import { addMonths, subMonths } from "date-fns";
@@ -45,7 +49,6 @@ import type {
 	CalendarEventTag,
 	PersistedCalendarEventTag,
 } from "../../../db/types";
-import type { SerializeFrom } from "../../../utils/remix";
 import * as CalendarRepository from "../CalendarRepository.server";
 import { calendarEventTagSchema } from "../actions/calendar.new.server";
 import { CALENDAR_EVENT } from "../calendar-constants";

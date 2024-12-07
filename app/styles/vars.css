@@ -93,7 +93,6 @@ html {
 	--sparse: 0.4px;
 	--label-margin: var(--s-1);
 	--inactive-image-filter: grayscale(100%) brightness(30%);
-	--leaderboard-top-spacing: var(--s-4);
 	--sticky-top: 60px;
 }
 

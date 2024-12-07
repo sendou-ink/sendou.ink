@@ -1,4 +1,8 @@
-import type { ActionFunction, MetaFunction } from "@remix-run/node";
+import type {
+	ActionFunction,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
 import { Link, Outlet, useLoaderData, useSearchParams } from "@remix-run/react";
 import clsx from "clsx";
@@ -37,7 +41,6 @@ import { makeTitle } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import { userPage } from "~/utils/urls";
 import { _action, actualNumber } from "~/utils/zod";
-import type { SerializeFrom } from "../../../utils/remix";
 
 export const meta: MetaFunction = () => {
 	return [
@@ -338,7 +341,7 @@ function SuggestedUser({
 						size="tiny"
 						variant="outlined"
 						to={`comment/${tier}/${suggestion.suggested.id}?tier=${tier}`}
-						prefetch="intent"
+						prefetch="render"
 					>
 						Comment
 					</LinkButton>

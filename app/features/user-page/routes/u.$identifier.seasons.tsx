@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
 import {
 	Link,
 	useLoaderData,
@@ -55,7 +55,6 @@ import invariant from "~/utils/invariant";
 import { cutToNDecimalPlaces, roundToNDecimalPlaces } from "~/utils/number";
 import { type SendouRouteHandle, notFoundIfFalsy } from "~/utils/remix.server";
 import { TIERS_PAGE, sendouQMatchPage, userSeasonsPage } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
 import {
 	seasonsSearchParamsSchema,
 	userParamsSchema,

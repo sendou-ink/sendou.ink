@@ -2,6 +2,7 @@ import type {
 	ActionFunction,
 	LoaderFunctionArgs,
 	MetaFunction,
+	SerializeFrom,
 } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { Link, useFetcher, useLoaderData } from "@remix-run/react";
@@ -55,7 +56,6 @@ import {
 	userSeasonsPage,
 } from "~/utils/urls";
 import { isAtLeastFiveDollarTierPatreon } from "~/utils/users";
-import type { SerializeFrom } from "../../../utils/remix";
 import { FULL_GROUP_SIZE, JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
 import { frontPageSchema } from "../q-schemas.server";
 import {

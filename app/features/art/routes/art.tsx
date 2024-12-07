@@ -1,4 +1,8 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
 import { useLoaderData, useSearchParams } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
@@ -12,7 +16,6 @@ import i18next from "~/modules/i18n/i18next.server";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { makeTitle } from "~/utils/strings";
 import { artPage, navIconUrl } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
 import { ArtGrid } from "../components/ArtGrid";
 import { allArtTags } from "../queries/allArtTags.server";
 import {

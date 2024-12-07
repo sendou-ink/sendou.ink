@@ -75,7 +75,7 @@ function DesktopSideNav() {
 					<Link
 						to={`/${item.url}`}
 						key={item.name}
-						prefetch={item.prefetch ? "intent" : undefined}
+						prefetch={item.prefetch ? "render" : undefined}
 						className="front-page__side-nav-item"
 					>
 						<Image

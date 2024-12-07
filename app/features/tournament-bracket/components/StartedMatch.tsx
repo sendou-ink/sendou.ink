@@ -1,3 +1,4 @@
+import type { SerializeFrom } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import type { TFunction } from "i18next";
@@ -26,7 +27,6 @@ import {
 	specialWeaponImageUrl,
 	stageImageUrl,
 } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
 import type { Bracket } from "../core/Bracket";
 import * as PickBan from "../core/PickBan";
 import type { TournamentDataTeam } from "../core/Tournament.server";

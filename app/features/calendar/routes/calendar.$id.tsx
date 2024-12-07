@@ -2,6 +2,7 @@ import type {
 	ActionFunction,
 	LoaderFunctionArgs,
 	MetaFunction,
+	SerializeFrom,
 } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
@@ -54,7 +55,6 @@ import {
 	userPage,
 } from "~/utils/urls";
 import { actualNumber, id } from "~/utils/zod";
-import type { SerializeFrom } from "../../../utils/remix";
 import { Tags } from "../components/Tags";
 
 import "~/styles/calendar-event.css";

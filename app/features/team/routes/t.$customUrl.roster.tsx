@@ -3,6 +3,7 @@ import type {
 	ActionFunction,
 	LoaderFunctionArgs,
 	MetaFunction,
+	SerializeFrom,
 } from "@remix-run/node";
 import { Form, useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
@@ -31,7 +32,6 @@ import {
 	navIconUrl,
 	teamPage,
 } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
 import * as TeamRepository from "../TeamRepository.server";
 import { editRole } from "../queries/editRole.server";
 import { inviteCodeById } from "../queries/inviteCodeById.server";

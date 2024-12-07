@@ -1,4 +1,4 @@
-import type { MetaFunction } from "@remix-run/node";
+import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import {
 	type ShouldRevalidateFunction,
 	useLoaderData,
@@ -24,7 +24,7 @@ import {
 	PATCHES,
 } from "~/constants";
 import { safeJSONParse } from "~/utils/json";
-import { type SerializeFrom, isRevalidation } from "~/utils/remix";
+import { isRevalidation } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
 import {

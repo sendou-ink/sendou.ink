@@ -1,6 +1,5 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
 import { parseSearchParams } from "~/utils/remix.server";
-import type { SerializeFrom } from "../../../utils/remix";
 import { weaponUsageSearchParamsSchema } from "../q-schemas.server";
 import { weaponUsageStats } from "../queries/weaponUsageStats.server";
 

@@ -1,7 +1,6 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
 import { requireUserId } from "~/features/auth/core/user.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
-import type { SerializeFrom } from "../../../utils/remix";
 
 export type TrustersLoaderData = SerializeFrom<typeof loader>;
 

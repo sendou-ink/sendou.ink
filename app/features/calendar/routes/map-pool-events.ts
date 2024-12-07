@@ -1,5 +1,5 @@
+import type { SerializeFrom } from "@remix-run/node";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
-import type { SerializeFrom } from "../../../utils/remix";
 
 export const loader = async () => {
 	return {

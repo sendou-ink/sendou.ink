@@ -28,7 +28,7 @@ export default [
 		),
 		route("results", "features/user-page/routes/u.$identifier.results.tsx"),
 		route(
-			"highlights",
+			"results/highlights",
 			"features/user-page/routes/u.$identifier.results.highlights.tsx",
 		),
 	]),

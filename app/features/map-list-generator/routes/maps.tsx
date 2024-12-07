@@ -1,4 +1,8 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
 import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import * as React from "react";
@@ -24,7 +28,6 @@ import {
 	ipLabsMaps,
 	navIconUrl,
 } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
 import { generateMapList } from "../core/map-list-generator/map-list";
 import { modesOrder } from "../core/map-list-generator/modes";
 import { mapPoolToNonEmptyModes } from "../core/map-list-generator/utils";

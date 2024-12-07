@@ -1,4 +1,8 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
 import {
 	Outlet,
 	type ShouldRevalidateFunction,
@@ -25,7 +29,6 @@ import {
 	tournamentPage,
 	userSubmittedImage,
 } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
 import { streamsByTournamentId } from "../core/streams.server";
 import {
 	HACKY_resolvePicture,
@@ -245,10 +248,10 @@ export function TournamentLayout() {
 				<SubNavLink to="register" data-testid="register-tab" prefetch="intent">
 					{tournament.hasStarted ? "Info" : t("tournament:tabs.register")}
 				</SubNavLink>
-				<SubNavLink to="brackets" data-testid="brackets-tab" prefetch="intent">
+				<SubNavLink to="brackets" data-testid="brackets-tab" prefetch="render">
 					{t("tournament:tabs.brackets")}
 				</SubNavLink>
-				<SubNavLink to="teams" end={false} prefetch="intent">
+				<SubNavLink to="teams" end={false} prefetch="render">
 					{t("tournament:tabs.teams", { count: tournament.ctx.teams.length })}
 				</SubNavLink>
 				{!tournament.everyBracketOver && tournament.subsFeatureEnabled && (
