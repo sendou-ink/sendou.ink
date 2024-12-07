@@ -1,22 +1,143 @@
+import { sub } from "date-fns";
+import type { Insertable } from "kysely";
+import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
 import { nanoid } from "nanoid";
+import type { Tables } from "~/db/tables";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { INVITE_CODE_LENGTH } from "../../constants";
 import { db } from "../../db/sql";
-import { databaseTimestampNow } from "../../utils/dates";
+import type { LutiDiv, ScrimPost } from "./scrims-types";
 
-export function insert() {
+type InsertArgs = Pick<
+	Insertable<Tables["ScrimPost"]>,
+	"at" | "authorId" | "maxDiv" | "minDiv" | "teamId" | "text" | "visibility"
+>;
+
+export function insert(args: InsertArgs) {
 	return db.transaction().execute(async (trx) => {
 		await trx
 			.insertInto("ScrimPost")
 			.values({
-				at: databaseTimestampNow(),
-				authorId: 1,
+				at: args.at,
+				authorId: args.authorId,
+				maxDiv: args.maxDiv,
+				minDiv: args.minDiv,
+				teamId: args.teamId,
+				text: args.text,
+				visibility: args.visibility,
 				chatCode: nanoid(INVITE_CODE_LENGTH),
-				maxDiv: 1,
-				minDiv: 2,
-				teamId: 1,
-				text: "helloo",
-				visibility: 1,
 			})
 			.execute();
+	});
+}
+
+const parseLutiDiv = (div: number): LutiDiv => {
+	if (div === 0) return "X";
+
+	return String(div) as LutiDiv;
+};
+
+export async function findAllRelevant(): Promise<ScrimPost[]> {
+	const min = sub(new Date(), { hours: 2 });
+
+	const rows = await db
+		.selectFrom("ScrimPost")
+		.leftJoin("Team", "ScrimPost.teamId", "Team.id")
+		.leftJoin("UserSubmittedImage", "Team.avatarImgId", "UserSubmittedImage.id")
+		.select((eb) => [
+			"ScrimPost.id",
+			"ScrimPost.at",
+			"ScrimPost.maxDiv",
+			"ScrimPost.minDiv",
+			"ScrimPost.text",
+			jsonBuildObject({
+				name: eb.ref("Team.name"),
+				customUrl: eb.ref("Team.customUrl"),
+				avatarUrl: eb.ref("UserSubmittedImage.url"),
+			}).as("team"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("ScrimPostUser")
+					.innerJoin("User", "ScrimPostUser.userId", "User.id")
+					.select(COMMON_USER_FIELDS)
+					.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id"),
+			).as("users"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("ScrimPostRequest")
+					.leftJoin("Team", "ScrimPost.teamId", "Team.id")
+					.leftJoin(
+						"UserSubmittedImage",
+						"Team.avatarImgId",
+						"UserSubmittedImage.id",
+					)
+					.select((innerEb) => [
+						"ScrimPostRequest.isAccepted",
+						"ScrimPostRequest.text",
+						"ScrimPostRequest.createdAt",
+						jsonBuildObject({
+							name: innerEb.ref("Team.name"),
+							customUrl: innerEb.ref("Team.customUrl"),
+							avatarUrl: innerEb.ref("UserSubmittedImage.url"),
+						}).as("team"),
+						jsonArrayFrom(
+							innerEb
+								.selectFrom("ScrimPostUser")
+								.innerJoin("User", "ScrimPostUser.userId", "User.id")
+								.select(COMMON_USER_FIELDS)
+								.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id"),
+						).as("users"),
+					]),
+			).as("requests"),
+		])
+		.orderBy("at", "asc")
+		.where("ScrimPost.at", ">=", dateToDatabaseTimestamp(min))
+		.execute();
+
+	return rows.map((row) => {
+		return {
+			id: row.id,
+			at: row.at,
+			text: row.text,
+			divs:
+				typeof row.maxDiv === "number" && typeof row.minDiv === "number"
+					? { max: parseLutiDiv(row.maxDiv), min: parseLutiDiv(row.minDiv) }
+					: null,
+			chatCode: null,
+			team: row.team.name
+				? {
+						name: row.team.name,
+						customUrl: row.team.customUrl!,
+						avatarUrl: row.team.avatarUrl,
+					}
+				: null,
+			requests: row.requests.map((request) => {
+				return {
+					isAccepted: Boolean(request.isAccepted),
+					text: request.text,
+					createdAt: request.createdAt,
+					team: request.team.name
+						? {
+								name: request.team.name,
+								customUrl: request.team.customUrl!,
+								avatarUrl: request.team.avatarUrl,
+							}
+						: null,
+					users: row.users.map((user) => {
+						return {
+							...user,
+							isVerified: false,
+						};
+					}),
+				};
+			}),
+			users: row.users.map((user) => {
+				return {
+					...user,
+					isVerified: false,
+				};
+			}),
+		};
 	});
 }

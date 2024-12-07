@@ -1,22 +1,11 @@
 import type { CommonUser } from "../../utils/kysely.server";
+import type { LUTI_DIVS } from "./scrims-constants";
 
-type LutiDiv =
-	| "X"
-	| "1"
-	| "2"
-	| "3"
-	| "4"
-	| "5"
-	| "6"
-	| "7"
-	| "8"
-	| "9"
-	| "10"
-	| "11";
+export type LutiDiv = (typeof LUTI_DIVS)[number];
 
 export interface ScrimPost {
 	id: number;
-	at: Date;
+	at: number;
 	text: string | null;
 	divs: {
 		/** Max div in the whole system is "X" */
@@ -32,7 +21,7 @@ export interface ScrimPost {
 		text: string | null;
 		users: Array<ScrimPostUser>;
 		team: ScrimPostTeam | null;
-		createdAt: Date;
+		createdAt: number;
 	}>;
 }
 
@@ -43,5 +32,5 @@ interface ScrimPostUser extends CommonUser {
 interface ScrimPostTeam {
 	name: string;
 	customUrl: string;
-	avatarUrl?: string;
+	avatarUrl: string | null;
 }

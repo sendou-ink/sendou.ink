@@ -26,6 +26,7 @@ export function up(db) {
 		db.prepare(
 			/*sql*/ `create index scrim_post_team_id on "ScrimPost"("teamId")`,
 		).run();
+		db.prepare(/*sql*/ `create index scrim_post_at on "ScrimPost"("at")`).run();
 
 		db.prepare(
 			/*sql*/ `

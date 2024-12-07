@@ -1,43 +1,25 @@
 import { faker } from "@faker-js/faker";
+import { add } from "date-fns";
 import capitalize from "just-capitalize";
 import shuffle from "just-shuffle";
 import { nanoid } from "nanoid";
 import { ADMIN_DISCORD_ID, ADMIN_ID, INVITE_CODE_LENGTH } from "~/constants";
 import { db, sql } from "~/db/sql";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import {
-	lastCompletedVoting,
-	nextNonCompletedVoting,
-	rangeToMonthYear,
-} from "~/features/plus-voting/core";
-import { createVod } from "~/features/vods/queries/createVod.server";
-import type {
-	AbilityType,
-	MainWeaponId,
-	StageId,
-} from "~/modules/in-game-lists";
-import {
-	abilities,
-	clothesGearIds,
-	headGearIds,
-	mainWeaponIds,
-	modesShort,
-	shoesGearIds,
-	stageIds,
-} from "~/modules/in-game-lists";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
-import invariant from "~/utils/invariant";
-import { mySlugify } from "~/utils/urls";
-
 import type { SeedVariation } from "~/features/api-private/routes/seed";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { persistedTags } from "~/features/calendar/calendar-constants";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
+import {
+	lastCompletedVoting,
+	nextNonCompletedVoting,
+	rangeToMonthYear,
+} from "~/features/plus-voting/core";
+import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
 import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
@@ -61,9 +43,28 @@ import { setGroupAsInactive } from "~/features/sendouq/queries/setGroupAsInactiv
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { createVod } from "~/features/vods/queries/createVod.server";
+import type {
+	AbilityType,
+	MainWeaponId,
+	StageId,
+} from "~/modules/in-game-lists";
+import {
+	abilities,
+	clothesGearIds,
+	headGearIds,
+	mainWeaponIds,
+	modesShort,
+	shoesGearIds,
+	stageIds,
+} from "~/modules/in-game-lists";
+import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
 import { SENDOUQ_DEFAULT_MAPS } from "~/modules/tournament-map-list-generator/constants";
 import { nullFilledArray, pickRandomItem } from "~/utils/arrays";
+import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import invariant from "~/utils/invariant";
+import { mySlugify } from "~/utils/urls";
 import type { Tables, UserMapModePreferences } from "../tables";
 import type { Art, UserSubmittedImage } from "../types";
 import {
@@ -2230,5 +2231,64 @@ async function lfgPosts() {
 }
 
 async function scrimPosts() {
-	// for (let i = 0; i < 20; i++) {}
+	const date = () => {
+		const isNow = Math.random() > 0.5;
+
+		if (isNow) {
+			return databaseTimestampNow();
+		}
+
+		const randomFuture = faker.date.between({
+			from: new Date(),
+			to: add(new Date(), { days: 7 }),
+		});
+
+		randomFuture.setMinutes(0);
+		randomFuture.setSeconds(0);
+		randomFuture.setMilliseconds(0);
+
+		return dateToDatabaseTimestamp(randomFuture);
+	};
+
+	const team = () => {
+		const hasTeam = Math.random() > 0.5;
+
+		if (!hasTeam) {
+			return null;
+		}
+
+		return faker.helpers.rangeToNumber({ min: 5, max: 50 });
+	};
+
+	const divRange = () => {
+		const hasDivRange = Math.random() > 0.2;
+
+		if (!hasDivRange) {
+			return null;
+		}
+
+		const maxDiv = faker.helpers.arrayElement([0, 1, 2, 3, 4, 5]);
+		const minDiv = faker.helpers.arrayElement([6, 7, 8, 9, 10, 11]);
+
+		return { maxDiv, minDiv };
+	};
+
+	for (let i = 0; i < 20; i++) {
+		const allUsers = userIdsInRandomOrder(true);
+
+		const divs = divRange();
+
+		await ScrimPostRepository.insert({
+			at: date(),
+			authorId: allUsers.shift()!,
+			maxDiv: divs?.maxDiv,
+			minDiv: divs?.minDiv,
+			teamId: team(),
+			text:
+				Math.random() > 0.5 ? faker.lorem.sentences({ min: 1, max: 5 }) : null,
+			visibility: null,
+		});
+
+		// xxx: for admin one booked and some requests for another
+	}
 }
