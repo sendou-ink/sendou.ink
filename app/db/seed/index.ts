@@ -2231,6 +2231,8 @@ async function lfgPosts() {
 }
 
 async function scrimPosts() {
+	const allUsers = userIdsInRandomOrder(true);
+
 	const date = () => {
 		const isNow = Math.random() > 0.5;
 
@@ -2273,20 +2275,34 @@ async function scrimPosts() {
 		return { maxDiv, minDiv };
 	};
 
-	for (let i = 0; i < 20; i++) {
-		const allUsers = userIdsInRandomOrder(true);
+	const users = () => {
+		const count = faker.helpers.arrayElement([4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 7]);
 
+		const result: Array<{ userId: number; isOwner: number }> = [];
+		for (let i = 0; i < count; i++) {
+			const user = allUsers.shift()!;
+
+			result.push({
+				userId: user,
+				isOwner: Number(i === 0),
+			});
+		}
+
+		return result;
+	};
+
+	for (let i = 0; i < 20; i++) {
 		const divs = divRange();
 
 		await ScrimPostRepository.insert({
 			at: date(),
-			authorId: allUsers.shift()!,
 			maxDiv: divs?.maxDiv,
 			minDiv: divs?.minDiv,
 			teamId: team(),
 			text:
 				Math.random() > 0.5 ? faker.lorem.sentences({ min: 1, max: 5 }) : null,
 			visibility: null,
+			users: users(),
 		});
 
 		// xxx: for admin one booked and some requests for another

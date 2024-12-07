@@ -1,0 +1,16 @@
+.scrims__placeholder {
+	min-height: 100vh;
+}
+
+.scrims__post__time {
+	border-radius: var(--rounded-sm);
+	background-color: var(--border);
+	text-transform: uppercase;
+	padding: var(--s-0-5) var(--s-2);
+	font-weight: var(--bold);
+	width: max-content;
+}
+
+.scrims__post__icon {
+	min-width: 24px;
+}

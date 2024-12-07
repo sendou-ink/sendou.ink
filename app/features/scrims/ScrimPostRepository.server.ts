@@ -11,16 +11,22 @@ import type { LutiDiv, ScrimPost } from "./scrims-types";
 
 type InsertArgs = Pick<
 	Insertable<Tables["ScrimPost"]>,
-	"at" | "authorId" | "maxDiv" | "minDiv" | "teamId" | "text" | "visibility"
->;
+	"at" | "maxDiv" | "minDiv" | "teamId" | "text" | "visibility"
+> & {
+	/** users related to the post other than the author */
+	users: Array<Pick<Insertable<Tables["ScrimPostUser"]>, "userId" | "isOwner">>;
+};
 
 export function insert(args: InsertArgs) {
+	if (args.users.length === 0) {
+		throw new Error("At least one user must be provided");
+	}
+
 	return db.transaction().execute(async (trx) => {
-		await trx
+		const newPost = await trx
 			.insertInto("ScrimPost")
 			.values({
 				at: args.at,
-				authorId: args.authorId,
 				maxDiv: args.maxDiv,
 				minDiv: args.minDiv,
 				teamId: args.teamId,
@@ -28,6 +34,12 @@ export function insert(args: InsertArgs) {
 				visibility: args.visibility,
 				chatCode: nanoid(INVITE_CODE_LENGTH),
 			})
+			.returning("id")
+			.executeTakeFirstOrThrow();
+
+		await trx
+			.insertInto("ScrimPostUser")
+			.values(args.users.map((user) => ({ ...user, scrimPostId: newPost.id })))
 			.execute();
 	});
 }
@@ -60,7 +72,7 @@ export async function findAllRelevant(): Promise<ScrimPost[]> {
 				eb
 					.selectFrom("ScrimPostUser")
 					.innerJoin("User", "ScrimPostUser.userId", "User.id")
-					.select(COMMON_USER_FIELDS)
+					.select([...COMMON_USER_FIELDS, "ScrimPostUser.isOwner"])
 					.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id"),
 			).as("users"),
 			jsonArrayFrom(
@@ -85,7 +97,7 @@ export async function findAllRelevant(): Promise<ScrimPost[]> {
 							innerEb
 								.selectFrom("ScrimPostUser")
 								.innerJoin("User", "ScrimPostUser.userId", "User.id")
-								.select(COMMON_USER_FIELDS)
+								.select([...COMMON_USER_FIELDS, "ScrimPostUser.isOwner"])
 								.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id"),
 						).as("users"),
 					]),
@@ -128,6 +140,7 @@ export async function findAllRelevant(): Promise<ScrimPost[]> {
 						return {
 							...user,
 							isVerified: false,
+							isOwner: Boolean(user.isOwner),
 						};
 					}),
 				};
@@ -136,6 +149,7 @@ export async function findAllRelevant(): Promise<ScrimPost[]> {
 				return {
 					...user,
 					isVerified: false,
+					isOwner: Boolean(user.isOwner),
 				};
 			}),
 		};

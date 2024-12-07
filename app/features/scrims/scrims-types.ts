@@ -27,6 +27,7 @@ export interface ScrimPost {
 
 interface ScrimPostUser extends CommonUser {
 	isVerified: boolean;
+	isOwner: boolean;
 }
 
 interface ScrimPostTeam {

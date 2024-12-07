@@ -874,8 +874,6 @@ export interface ScrimPost {
 	chatCode: string;
 	/** Refers to the team looking for the team (can also be a pick-up) */
 	teamId: number | null;
-	/** User who posted the scrim posting */
-	authorId: number;
 	createdAt: GeneratedAlways<number>;
 	updatedAt: Generated<number>;
 }
@@ -883,6 +881,8 @@ export interface ScrimPost {
 export interface ScrimPostUser {
 	scrimPostId: number;
 	userId: number;
+	/** User is the author of the post */
+	isOwner: number;
 }
 
 export interface ScrimPostRequest {

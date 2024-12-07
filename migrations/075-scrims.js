@@ -11,18 +11,13 @@ export function up(db) {
       "text" text,
       "chatCode" text not null,
       "teamId" integer,
-      "authorId" integer not null,
       "createdAt" integer default (strftime('%s', 'now')) not null,
       "updatedAt" integer default (strftime('%s', 'now')) not null,
-      foreign key ("teamId") references "AllTeam"("id") on delete cascade,
-      foreign key ("authorId") references "User"("id") on delete restrict
+      foreign key ("teamId") references "AllTeam"("id") on delete cascade
       ) strict
 `,
 		).run();
 
-		db.prepare(
-			/*sql*/ `create index scrim_post_author_id on "ScrimPost"("authorId")`,
-		).run();
 		db.prepare(
 			/*sql*/ `create index scrim_post_team_id on "ScrimPost"("teamId")`,
 		).run();
@@ -33,6 +28,7 @@ export function up(db) {
   create table "ScrimPostUser" (
   "scrimPostId" integer not null,
   "userId" integer not null,
+  "isOwner" integer not null,
   unique("scrimPostId", "userId") on conflict rollback,
   foreign key ("scrimPostId") references "ScrimPost"("id") on delete cascade,
   foreign key ("userId") references "User"("id") on delete cascade
