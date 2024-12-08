@@ -15,7 +15,13 @@ export const acceptRequestSchema = z.object({
 	scrimPostRequestId: id,
 });
 
+export const cancelRequestSchema = z.object({
+	_action: _action("CANCEL_REQUEST"),
+	scrimPostRequestId: id,
+});
+
 export const scrimsActionSchema = z.union([
 	newRequestSchema,
 	acceptRequestSchema,
+	cancelRequestSchema,
 ]);

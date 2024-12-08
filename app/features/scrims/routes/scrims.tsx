@@ -6,19 +6,21 @@ import { Avatar } from "~/components/Avatar";
 import { Button } from "~/components/Button";
 import { Dialog } from "~/components/Dialog";
 import { Divider } from "~/components/Divider";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Popover } from "~/components/Popover";
 import { Table } from "~/components/Table";
 import { MyForm } from "~/components/form/MyForm";
 import { SpeechBubbleIcon } from "~/components/icons/SpeechBubble";
 import { UsersIcon } from "~/components/icons/Users";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { joinListToNaturalString } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { userPage, userSubmittedImage } from "~/utils/urls";
 import { Main } from "../../../components/Main";
+import { FromFormField } from "../components/FromFormField";
 import { newRequestSchema } from "../scrims-schemas";
 import type { ScrimPost } from "../scrims-types";
-import { FromFormField } from "../components/FromFormField";
 
 import { action } from "../actions/scrims.server";
 import { loader } from "../loaders/scrims.server";
@@ -45,25 +47,30 @@ export default function ScrimsPage() {
 	return (
 		<Main>
 			{typeof scrimToRequestId === "number" ? (
-				<RequestScrimModal postId={scrimToRequestId} />
+				<RequestScrimModal
+					postId={scrimToRequestId}
+					close={() => setScrimToRequestId(undefined)}
+				/>
 			) : null}
 			<ScrimsDaySeparatedTables
 				posts={data.posts}
 				requestScrim={setScrimToRequestId}
-				showText={false}
 			/>
 		</Main>
 	);
 }
 
-function RequestScrimModal({ postId }: { postId: number }) {
+function RequestScrimModal({
+	postId,
+	close,
+}: { postId: number; close: () => void }) {
 	const data = useLoaderData<typeof loader>();
 
 	const post = data.posts.find((post) => post.id === postId);
 	invariant(post, "Post not found");
 
 	return (
-		<Dialog isOpen closeOnAnyClick>
+		<Dialog isOpen>
 			<MyForm
 				schema={newRequestSchema}
 				title="Sending a scrim request"
@@ -78,8 +85,12 @@ function RequestScrimModal({ postId }: { postId: number }) {
 									users: [],
 								},
 				}}
+				handleCancel={close}
 			>
-				<ScrimsDaySeparatedTables posts={[post]} />
+				<ScrimsDaySeparatedTables posts={[post]} showPopovers={false} />
+				<div className="font-semi-bold text-lighter italic">
+					{joinListToNaturalString(post.users.map((u) => u.username))}
+				</div>
 				{post.text ? (
 					<div className="text-sm text-lighter italic">{post.text}</div>
 				) : null}
@@ -92,11 +103,11 @@ function RequestScrimModal({ postId }: { postId: number }) {
 
 function ScrimsDaySeparatedTables({
 	posts,
-	showText = true,
+	showPopovers = true,
 	requestScrim,
 }: {
 	posts: ScrimPost[];
-	showText?: boolean;
+	showPopovers?: boolean;
 	requestScrim?: (postId: number) => void;
 }) {
 	const { i18n } = useTranslation();
@@ -124,7 +135,7 @@ function ScrimsDaySeparatedTables({
 						<ScrimsTable
 							posts={posts!}
 							requestScrim={requestScrim}
-							showText={showText}
+							showPopovers={showPopovers}
 						/>
 					</div>
 				);
@@ -135,11 +146,11 @@ function ScrimsDaySeparatedTables({
 
 function ScrimsTable({
 	posts,
-	showText = true,
+	showPopovers = true,
 	requestScrim,
 }: {
 	posts: ScrimPost[];
-	showText?: boolean;
+	showPopovers?: boolean;
 	requestScrim?: (postId: number) => void;
 }) {
 	const { i18n } = useTranslation();
@@ -150,7 +161,7 @@ function ScrimsTable({
 				<tr>
 					<th>Time</th>
 					<th>Team</th>
-					{showText ? <th /> : null}
+					{showPopovers ? <th /> : null}
 					<th>Divs</th>
 					{requestScrim ? <th /> : null}
 				</tr>
@@ -180,24 +191,26 @@ function ScrimsTable({
 							</td>
 							<td>
 								<div className="stack horizontal md items-center">
-									<Popover
-										buttonChildren={
-											<UsersIcon className="scrims__post__icon" />
-										}
-									>
-										<div className="stack md">
-											{post.users.map((user) => (
-												<Link
-													to={userPage(user)}
-													key={user.id}
-													className="stack horizontal sm"
-												>
-													<Avatar size="xxs" user={user} />
-													{user.username}
-												</Link>
-											))}
-										</div>
-									</Popover>
+									{showPopovers ? (
+										<Popover
+											buttonChildren={
+												<UsersIcon className="scrims__post__icon" />
+											}
+										>
+											<div className="stack md">
+												{post.users.map((user) => (
+													<Link
+														to={userPage(user)}
+														key={user.id}
+														className="stack horizontal sm"
+													>
+														<Avatar size="xxs" user={user} />
+														{user.username}
+													</Link>
+												))}
+											</div>
+										</Popover>
+									) : null}
 									{post.team?.avatarUrl ? (
 										<Avatar
 											size="xxs"
@@ -209,7 +222,7 @@ function ScrimsTable({
 									{post.team?.name ?? `${owner.username}'s pickup`}
 								</div>
 							</td>
-							{showText ? (
+							{showPopovers ? (
 								<td>
 									{post.text ? (
 										<Popover
@@ -229,11 +242,32 @@ function ScrimsTable({
 									</>
 								) : null}
 							</td>
-							{requestScrim ? (
+							{requestScrim && post.requests.length === 0 ? (
 								<td>
 									<Button size="tiny" onClick={() => requestScrim(post.id)}>
 										Book
 									</Button>
+								</td>
+							) : null}
+							{requestScrim && post.requests.length !== 0 ? (
+								<td>
+									<FormWithConfirm
+										dialogHeading="Cancel request"
+										deleteButtonText="Cancel"
+										cancelButtonText="Nevermind"
+										fields={[
+											["scrimPostRequestId", post.requests[0].id],
+											["_action", "CANCEL_REQUEST"],
+										]}
+									>
+										<Button
+											size="tiny"
+											variant="destructive"
+											onClick={() => requestScrim(post.id)}
+										>
+											Cancel
+										</Button>
+									</FormWithConfirm>
 								</td>
 							) : null}
 						</tr>

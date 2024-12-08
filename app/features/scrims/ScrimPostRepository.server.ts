@@ -8,6 +8,7 @@ import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { INVITE_CODE_LENGTH } from "../../constants";
 import { db } from "../../db/sql";
 import type { LutiDiv, ScrimPost } from "./scrims-types";
+import { getPostRequestCensor } from "./scrims-utils";
 
 type InsertArgs = Pick<
 	Insertable<Tables["ScrimPost"]>,
@@ -80,13 +81,20 @@ export function insertRequest(args: InsertRequestArgs) {
 	});
 }
 
+export function deleteRequest(scrimPostRequestId: number) {
+	return db
+		.deleteFrom("ScrimPostRequest")
+		.where("id", "=", scrimPostRequestId)
+		.execute();
+}
+
 const parseLutiDiv = (div: number): LutiDiv => {
 	if (div === 0) return "X";
 
 	return String(div) as LutiDiv;
 };
 
-export async function findAllRelevant(): Promise<ScrimPost[]> {
+export async function findAllRelevant(userId?: number): Promise<ScrimPost[]> {
 	const min = sub(new Date(), { hours: 2 });
 
 	const rows = await db
@@ -121,6 +129,7 @@ export async function findAllRelevant(): Promise<ScrimPost[]> {
 						"UserSubmittedImage.id",
 					)
 					.select((innerEb) => [
+						"ScrimPostRequest.id",
 						"ScrimPostRequest.isAccepted",
 						"ScrimPostRequest.createdAt",
 						jsonBuildObject({
@@ -135,14 +144,15 @@ export async function findAllRelevant(): Promise<ScrimPost[]> {
 								.select([...COMMON_USER_FIELDS, "ScrimPostUser.isOwner"])
 								.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id"),
 						).as("users"),
-					]),
+					])
+					.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id"),
 			).as("requests"),
 		])
 		.orderBy("at", "asc")
 		.where("ScrimPost.at", ">=", dateToDatabaseTimestamp(min))
 		.execute();
 
-	return rows.map((row) => {
+	const mapped = rows.map((row) => {
 		return {
 			id: row.id,
 			at: row.at,
@@ -161,6 +171,7 @@ export async function findAllRelevant(): Promise<ScrimPost[]> {
 				: null,
 			requests: row.requests.map((request) => {
 				return {
+					id: request.id,
 					isAccepted: Boolean(request.isAccepted),
 					createdAt: request.createdAt,
 					team: request.team.name
@@ -188,4 +199,8 @@ export async function findAllRelevant(): Promise<ScrimPost[]> {
 			}),
 		};
 	});
+
+	if (!userId) return mapped.map((post) => ({ ...post, requests: [] }));
+
+	return mapped.map(getPostRequestCensor(userId));
 }

@@ -12,7 +12,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		request,
 		schema: scrimsActionSchema,
 	});
-
 	switch (data._action) {
 		case "NEW_REQUEST": {
 			const usersList = async () => {
@@ -26,6 +25,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				);
 				validate(team, "User is not a member of this team");
 
+				// xxx: account for role
 				return team.members.map((member) => member.id);
 			};
 
@@ -42,6 +42,23 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		}
 		case "ACCEPT_REQUEST": {
 			// ...
+			break;
+		}
+		// xxx: not working
+		case "CANCEL_REQUEST": {
+			const request = (await ScrimPostRepository.findAllRelevant(user.id))
+				.flatMap((post) => post.requests)
+				.find(
+					(request) =>
+						request.id === data.scrimPostRequestId &&
+						!request.isAccepted &&
+						request.users.some((rUser) => rUser.id === user.id),
+				);
+
+			validate(request, "Request not found");
+
+			await ScrimPostRepository.deleteRequest(data.scrimPostRequestId);
+
 			break;
 		}
 		default: {

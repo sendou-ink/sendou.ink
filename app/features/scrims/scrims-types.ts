@@ -16,12 +16,15 @@ export interface ScrimPost {
 	team: ScrimPostTeam | null;
 	users: Array<ScrimPostUser>;
 	chatCode: string | null;
-	requests: Array<{
-		isAccepted: boolean;
-		users: Array<ScrimPostUser>;
-		team: ScrimPostTeam | null;
-		createdAt: number;
-	}>;
+	requests: Array<ScrimPostRequest>;
+}
+
+export interface ScrimPostRequest {
+	id: number;
+	isAccepted: boolean;
+	users: Array<ScrimPostUser>;
+	team: ScrimPostTeam | null;
+	createdAt: number;
 }
 
 interface ScrimPostUser extends CommonUser {

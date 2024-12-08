@@ -7,7 +7,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await getUser(request);
 
 	return {
-		posts: await ScrimPostRepository.findAllRelevant(),
+		posts: await ScrimPostRepository.findAllRelevant(user?.id),
 		teams: user ? await TeamRepository.teamsByMemberUserId(user.id) : [],
 	};
 };
