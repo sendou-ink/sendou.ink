@@ -55,7 +55,7 @@ export function Catcher() {
 				{errorText ? (
 					<>
 						<div className="mt-4 stack sm items-center">
-							<textarea readOnly>{errorText}</textarea>
+							<textarea readOnly value={errorText} />
 							<Button onClick={() => copyToClipboard(errorText)}>
 								Copy to clipboard
 							</Button>

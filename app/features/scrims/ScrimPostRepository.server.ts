@@ -44,6 +44,42 @@ export function insert(args: InsertArgs) {
 	});
 }
 
+type InsertRequestArgs = Pick<
+	Insertable<Tables["ScrimPostRequest"]>,
+	"scrimPostId" | "teamId"
+> & {
+	users: Array<
+		Pick<Insertable<Tables["ScrimPostRequestUser"]>, "userId" | "isOwner">
+	>;
+};
+
+export function insertRequest(args: InsertRequestArgs) {
+	if (args.users.length === 0) {
+		throw new Error("At least one user must be provided");
+	}
+
+	return db.transaction().execute(async (trx) => {
+		const newRequest = await trx
+			.insertInto("ScrimPostRequest")
+			.values({
+				scrimPostId: args.scrimPostId,
+				teamId: args.teamId,
+			})
+			.returning("id")
+			.executeTakeFirstOrThrow();
+
+		await trx
+			.insertInto("ScrimPostRequestUser")
+			.values(
+				args.users.map((user) => ({
+					...user,
+					scrimPostRequestId: newRequest.id,
+				})),
+			)
+			.execute();
+	});
+}
+
 const parseLutiDiv = (div: number): LutiDiv => {
 	if (div === 0) return "X";
 
@@ -86,7 +122,6 @@ export async function findAllRelevant(): Promise<ScrimPost[]> {
 					)
 					.select((innerEb) => [
 						"ScrimPostRequest.isAccepted",
-						"ScrimPostRequest.text",
 						"ScrimPostRequest.createdAt",
 						jsonBuildObject({
 							name: innerEb.ref("Team.name"),
@@ -127,7 +162,6 @@ export async function findAllRelevant(): Promise<ScrimPost[]> {
 			requests: row.requests.map((request) => {
 				return {
 					isAccepted: Boolean(request.isAccepted),
-					text: request.text,
 					createdAt: request.createdAt,
 					team: request.team.name
 						? {

@@ -889,8 +889,6 @@ export interface ScrimPostRequest {
 	id: GeneratedAlways<number>;
 	scrimPostId: number;
 	teamId: number | null;
-	authorId: number;
-	text: string | null;
 	isAccepted: Generated<number>;
 	createdAt: GeneratedAlways<number>;
 }
@@ -898,6 +896,8 @@ export interface ScrimPostRequest {
 export interface ScrimPostRequestUser {
 	scrimPostRequestId: number;
 	userId: number;
+	/** User made the request */
+	isOwner: number;
 }
 
 export type Tables = { [P in keyof DB]: Selectable<DB[P]> };

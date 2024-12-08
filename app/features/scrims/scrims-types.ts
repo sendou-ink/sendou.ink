@@ -18,7 +18,6 @@ export interface ScrimPost {
 	chatCode: string | null;
 	requests: Array<{
 		isAccepted: boolean;
-		text: string | null;
 		users: Array<ScrimPostUser>;
 		team: ScrimPostTeam | null;
 		createdAt: number;
@@ -26,7 +25,6 @@ export interface ScrimPost {
 }
 
 interface ScrimPostUser extends CommonUser {
-	isVerified: boolean;
 	isOwner: boolean;
 }
 
