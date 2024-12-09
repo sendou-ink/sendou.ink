@@ -186,6 +186,12 @@ export const action: ActionFunction = async ({ params, request }) => {
 			validate(teamOneRoster, "Team one has no active roster");
 			validate(teamTwoRoster, "Team two has no active roster");
 
+			validate(
+				new Set([...teamOneRoster, ...teamTwoRoster]).size ===
+					tournament.minMembersPerTeam * 2,
+				"Duplicate user in rosters",
+			);
+
 			sql.transaction(() => {
 				manager.update.match({
 					id: match.id,

@@ -216,12 +216,12 @@ function _TeamRoster({
 				teamId={team.id}
 				checkedPlayers={checkedInputPlayerIds()}
 				presentational={!revising && (presentational || !editingRoster)}
-				handlePlayerClick={(playerId: number) => {
+				handlePlayerClick={(playerId) => {
 					if (!setCheckedPlayers) return;
 
 					setCheckedPlayers((oldPlayers) => {
 						const newPlayers = clone(oldPlayers);
-						if (oldPlayers.flat().includes(playerId)) {
+						if (oldPlayers[idx].includes(playerId)) {
 							newPlayers[idx] = newPlayers[idx].filter((id) => id !== playerId);
 						} else {
 							newPlayers[idx].push(playerId);
@@ -452,6 +452,7 @@ function TeamRosterInputsCheckboxes({
 								name="playerName"
 								disabled={mode() === "DISABLED" || mode() === "PRESENTATIONAL"}
 								value={member.id}
+								// xxx: check
 								checked={checkedPlayers.flat().includes(member.id)}
 								onChange={() => handlePlayerClick(member.id)}
 								data-testid={`player-checkbox-${i}`}

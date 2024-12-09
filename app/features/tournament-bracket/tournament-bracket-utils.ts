@@ -12,6 +12,7 @@ import { removeDuplicates } from "~/utils/arrays";
 import { sumArray } from "~/utils/number";
 import type { FindMatchById } from "../tournament-bracket/queries/findMatchById.server";
 import type { TournamentLoaderData } from "../tournament/routes/to.$id";
+import type { Standing } from "./core/Bracket";
 import type { Tournament } from "./core/Tournament";
 import type { TournamentDataTeam } from "./core/Tournament.server";
 
@@ -269,4 +270,45 @@ export function tournamentTeamToActiveRosterUserIds(
 	}
 
 	return null;
+}
+
+// xxx: adjust
+export function isMatchTeamMember(args: {
+	matchIsOver: boolean;
+	team?: TournamentDataTeam;
+	participant: { id: number; tournamentTeamId: number };
+	tournament: Tournament;
+	results: Array<{ createdAt: number }>;
+}) {
+	const isTeamMember = args.participant.tournamentTeamId === args.team?.id;
+	if (!isTeamMember) return false;
+	if (!args.matchIsOver) return isTeamMember;
+
+	// it's possible they were added after the match ended
+	// so it could be a situation "Player" vs. "Player"
+	const matchEndedAt = args.results[args.results.length - 1].createdAt;
+	const memberAddedAt =
+		args.team?.members.find((member) => member.userId === args.participant.id)
+			?.createdAt ?? 0;
+
+	return memberAddedAt < matchEndedAt;
+}
+
+// deal with user getting added to multiple teams by the TO
+export function ensureOneStandingPerUser(standings: Standing[]) {
+	const userIds = new Set<number>();
+
+	return standings.map((standing) => {
+		return {
+			...standing,
+			team: {
+				...standing.team,
+				members: standing.team.members.filter((member) => {
+					if (userIds.has(member.userId)) return false;
+					userIds.add(member.userId);
+					return true;
+				}),
+			},
+		};
+	});
 }

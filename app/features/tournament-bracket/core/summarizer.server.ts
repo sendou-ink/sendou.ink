@@ -16,6 +16,7 @@ import { removeDuplicates } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import type { Tables } from "../../../db/tables";
 import type { AllMatchResult } from "../queries/allMatchResultsByTournamentId.server";
+import { ensureOneStandingPerUser } from "../tournament-bracket-utils";
 import type { Standing } from "./Bracket";
 
 export interface TournamentSummary {
@@ -88,7 +89,7 @@ export function tournamentSummary({
 			: [],
 		tournamentResults: tournamentResults({
 			participantCount: teams.length,
-			finalStandings,
+			finalStandings: ensureOneStandingPerUser(finalStandings),
 		}),
 	};
 }

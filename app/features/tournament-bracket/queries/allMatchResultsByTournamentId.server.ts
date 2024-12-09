@@ -54,6 +54,7 @@ export interface AllMatchResult {
 		stageId: StageId;
 		mode: ModeShort;
 		winnerTeamId: number;
+		// xxx: not enough info for result creation etc.
 		userIds: number[];
 	}>;
 }
