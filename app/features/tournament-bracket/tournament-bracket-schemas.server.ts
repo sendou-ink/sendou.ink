@@ -145,6 +145,12 @@ export const bracketSchema = z.union([
 		_action: _action("BRACKET_CHECK_IN"),
 		bracketIdx,
 	}),
+	z.object({
+		_action: _action("OVERRIDE_BRACKET_PROGRESSION"),
+		tournamentTeamId: id,
+		sourceBracketIdx: bracketIdx,
+		destinationBracketIdx: bracketIdx,
+	}),
 ]);
 
 export const matchPageParamsSchema = z.object({ mid: id });

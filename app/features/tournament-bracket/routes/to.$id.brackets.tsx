@@ -267,6 +267,32 @@ export const action: ActionFunction = async ({ params, request }) => {
 			});
 			break;
 		}
+		case "OVERRIDE_BRACKET_PROGRESSION": {
+			const allDestinationBrackets =
+				// xxx: to progression module with tests
+				tournament.ctx.settings.bracketProgression.flatMap(
+					(progression, bracketIdx) =>
+						progression.sources?.some(
+							(source) => source.bracketIdx === data.sourceBracketIdx,
+						)
+							? [bracketIdx]
+							: [],
+				);
+			validate(
+				allDestinationBrackets.every(
+					(bracketIdx) => tournament.bracketByIdx(bracketIdx)!.preview,
+				),
+				"Can't override progression if follow-up brackets are started",
+			);
+
+			await TournamentRepository.overrideTeamBracketProgression({
+				tournamentTeamId: data.tournamentTeamId,
+				sourceBracketIdx: data.sourceBracketIdx,
+				destinationBracketIdx: data.destinationBracketIdx,
+				tournamentId,
+			});
+			break;
+		}
 		default: {
 			assertUnreachable(data);
 		}
