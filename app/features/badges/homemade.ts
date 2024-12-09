@@ -404,4 +404,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "spacedogjolly",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "Mimikyu Monday",
+		fileName: "mimikyu",
+		authorDiscordId: "528851510222782474",
+	},
 ];
