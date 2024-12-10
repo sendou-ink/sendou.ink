@@ -149,7 +149,7 @@ export const bracketSchema = z.union([
 		_action: _action("OVERRIDE_BRACKET_PROGRESSION"),
 		tournamentTeamId: id,
 		sourceBracketIdx: bracketIdx,
-		destinationBracketIdx: bracketIdx,
+		destinationBracketIdx: z.union([bracketIdx, z.literal(-1)]),
 	}),
 ]);
 

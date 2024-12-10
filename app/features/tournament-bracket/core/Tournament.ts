@@ -162,7 +162,7 @@ export class Tournament {
 				);
 			} else if (type === "swiss") {
 				const { teams, relevantMatchesFinished } = sources
-					? this.resolveTeamsFromSources(sources)
+					? this.resolveTeamsFromSources(sources, bracketIdx)
 					: {
 							teams: this.ctx.teams.map((team) => team.id),
 							relevantMatchesFinished: true,
@@ -209,7 +209,7 @@ export class Tournament {
 				);
 			} else {
 				const { teams, relevantMatchesFinished } = sources
-					? this.resolveTeamsFromSources(sources)
+					? this.resolveTeamsFromSources(sources, bracketIdx)
 					: {
 							teams: this.ctx.teams.map((team) => team.id),
 							relevantMatchesFinished: true,
@@ -261,23 +261,43 @@ export class Tournament {
 
 	private resolveTeamsFromSources(
 		sources: NonNullable<Progression.ParsedBracket["sources"]>,
+		bracketIdx: number,
 	) {
 		const teams: number[] = [];
 
 		let allRelevantMatchesFinished = true;
-		for (const { bracketIdx, placements } of sources) {
-			const sourceBracket = this.bracketByIdx(bracketIdx);
+		for (const source of sources) {
+			const sourceBracket = this.bracketByIdx(source.bracketIdx);
 			invariant(sourceBracket, "Bracket not found");
 
 			const { teams: sourcedTeams, relevantMatchesFinished } =
-				sourceBracket.source(placements);
+				sourceBracket.source(source.placements);
 			if (!relevantMatchesFinished) {
 				allRelevantMatchesFinished = false;
 			}
 			teams.push(...sourcedTeams);
 		}
 
-		return { teams, relevantMatchesFinished: allRelevantMatchesFinished };
+		const teamsFromOverride: number[] = [];
+		for (const source of sources) {
+			for (const override of this.ctx.bracketProgressionOverrides) {
+				if (override.sourceBracketIdx !== source.bracketIdx) continue;
+				if (override.destinationBracketIdx !== bracketIdx) continue;
+
+				teamsFromOverride.push(override.tournamentTeamId);
+			}
+		}
+
+		const overridesWithoutRepeats = teamsFromOverride.filter(
+			(teamId) => !teams.includes(teamId),
+		);
+		// xxx: sort by placement
+		// xxx: sometime need to remove from teams
+
+		return {
+			teams: teams.concat(overridesWithoutRepeats),
+			relevantMatchesFinished: allRelevantMatchesFinished,
+		};
 	}
 
 	private avoidReplaysOfPreviousBracketOpponent(

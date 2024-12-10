@@ -29,6 +29,7 @@ import {
 import { currentSeason } from "~/features/mmr/season";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import { TOURNAMENT, tournamentIdFromParams } from "~/features/tournament";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { createSwissBracketInTransaction } from "~/features/tournament/queries/createSwissBracketInTransaction.server";
 import { updateRoundMaps } from "~/features/tournament/queries/updateRoundMaps.server";
@@ -173,6 +174,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "ADVANCE_BRACKET": {
+			validate(tournament.isOrganizer(user));
+
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			validate(bracket, "Bracket not found");
 			validate(bracket.type === "swiss", "Can't advance non-swiss bracket");
@@ -187,6 +190,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "UNADVANCE_BRACKET": {
+			validate(tournament.isOrganizer(user));
+
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			validate(bracket, "Bracket not found");
 			validate(bracket.type === "swiss", "Can't unadvance non-swiss bracket");
@@ -268,16 +273,17 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "OVERRIDE_BRACKET_PROGRESSION": {
-			const allDestinationBrackets =
-				// xxx: to progression module with tests
-				tournament.ctx.settings.bracketProgression.flatMap(
-					(progression, bracketIdx) =>
-						progression.sources?.some(
-							(source) => source.bracketIdx === data.sourceBracketIdx,
-						)
-							? [bracketIdx]
-							: [],
-				);
+			validate(tournament.isOrganizer(user));
+
+			const allDestinationBrackets = Progression.destinationsFromBracketIdx(
+				data.sourceBracketIdx,
+				tournament.ctx.settings.bracketProgression,
+			);
+			validate(
+				data.destinationBracketIdx === -1 ||
+					allDestinationBrackets.includes(data.destinationBracketIdx),
+				"Invalid destination bracket",
+			);
 			validate(
 				allDestinationBrackets.every(
 					(bracketIdx) => tournament.bracketByIdx(bracketIdx)!.preview,

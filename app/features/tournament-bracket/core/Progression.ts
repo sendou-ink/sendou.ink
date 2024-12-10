@@ -692,3 +692,22 @@ function bracketsReachableFrom(
 
 	return result;
 }
+
+export function destinationsFromBracketIdx(
+	sourceBracketIdx: number,
+	progression: ParsedBracket[],
+): number[] {
+	const destinations: number[] = [];
+
+	for (const [destinationBracketIdx, bracket] of progression.entries()) {
+		if (!bracket.sources) continue;
+
+		for (const source of bracket.sources) {
+			if (source.bracketIdx === sourceBracketIdx) {
+				destinations.push(destinationBracketIdx);
+			}
+		}
+	}
+
+	return destinations;
+}
