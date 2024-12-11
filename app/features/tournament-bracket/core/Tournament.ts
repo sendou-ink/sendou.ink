@@ -275,24 +275,56 @@ export class Tournament {
 			if (!relevantMatchesFinished) {
 				allRelevantMatchesFinished = false;
 			}
-			teams.push(...sourcedTeams);
+
+			const excludedOverridenTeams = sourcedTeams.filter(
+				(teamId) =>
+					!this.ctx.bracketProgressionOverrides.some(
+						(override) =>
+							override.sourceBracketIdx === source.bracketIdx &&
+							override.tournamentTeamId === teamId &&
+							// "no progression" override
+							override.destinationBracketIdx !== -1 &&
+							// redundant override
+							override.destinationBracketIdx !== bracketIdx,
+					),
+			);
+
+			teams.push(...excludedOverridenTeams);
 		}
 
-		const teamsFromOverride: number[] = [];
+		const teamsFromOverride: { id: number; sourceBracketIdx: number }[] = [];
 		for (const source of sources) {
 			for (const override of this.ctx.bracketProgressionOverrides) {
 				if (override.sourceBracketIdx !== source.bracketIdx) continue;
 				if (override.destinationBracketIdx !== bracketIdx) continue;
 
-				teamsFromOverride.push(override.tournamentTeamId);
+				teamsFromOverride.push({
+					id: override.tournamentTeamId,
+					sourceBracketIdx: source.bracketIdx,
+				});
 			}
 		}
 
-		const overridesWithoutRepeats = teamsFromOverride.filter(
-			(teamId) => !teams.includes(teamId),
-		);
-		// xxx: sort by placement
-		// xxx: sometime need to remove from teams
+		const overridesWithoutRepeats = teamsFromOverride
+			.filter(({ id }) => !teams.includes(id))
+			.sort((a, b) => {
+				if (a.sourceBracketIdx !== b.sourceBracketIdx) return 0;
+
+				const bracket = this.bracketByIdx(a.sourceBracketIdx);
+				if (!bracket) return 0;
+
+				const aStanding = bracket.standings.find(
+					(standing) => standing.team.id === a.id,
+				);
+				const bStanding = bracket.standings.find(
+					(standing) => standing.team.id === b.id,
+				);
+
+				if (!aStanding || !bStanding) return 0;
+
+				return aStanding.placement - bStanding.placement;
+			})
+			.map(({ id }) => id);
 
 		return {
 			teams: teams.concat(overridesWithoutRepeats),

@@ -277,8 +277,6 @@ function EditableDestination({
 		? (["ELIMINATED", ..._possibleDestinations] as const)
 		: _possibleDestinations;
 
-	// xxx: how to reset back to the original destination?
-	// xxx: how to handle "no progression" especially related to check-ins?
 	if (editingDestination) {
 		return (
 			<>
