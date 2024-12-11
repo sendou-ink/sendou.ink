@@ -42,8 +42,6 @@ export default function ScrimsPage() {
 			</Main>
 		);
 
-	// console.log(data);
-
 	return (
 		<Main>
 			{typeof scrimToRequestId === "number" ? (
@@ -51,6 +49,11 @@ export default function ScrimsPage() {
 					postId={scrimToRequestId}
 					close={() => setScrimToRequestId(undefined)}
 				/>
+			) : null}
+			{data.posts.length === 0 ? (
+				<div className="text-lighter text-lg font-semi-bold text-center mt-6">
+					No scrims available right now. Check back later or add your own!
+				</div>
 			) : null}
 			<ScrimsDaySeparatedTables
 				posts={data.posts}
