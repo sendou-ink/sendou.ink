@@ -331,6 +331,7 @@ select:focus {
 	border-style: solid;
 	border-width: 0px;
 	border-bottom-width: 1px;
+	border-color: var(--border);
 }
 
 .my-table tbody tr:hover {

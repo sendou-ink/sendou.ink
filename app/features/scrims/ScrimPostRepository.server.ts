@@ -7,6 +7,7 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { INVITE_CODE_LENGTH } from "../../constants";
 import { db } from "../../db/sql";
+import invariant from "../../utils/invariant";
 import type { LutiDiv, ScrimPost } from "./scrims-types";
 import { getPostRequestCensor } from "./scrims-utils";
 
@@ -55,9 +56,7 @@ type InsertRequestArgs = Pick<
 };
 
 export function insertRequest(args: InsertRequestArgs) {
-	if (args.users.length === 0) {
-		throw new Error("At least one user must be provided");
-	}
+	invariant(args.users.length > 0, "At least one user must be provided");
 
 	return db.transaction().execute(async (trx) => {
 		const newRequest = await trx
@@ -73,12 +72,21 @@ export function insertRequest(args: InsertRequestArgs) {
 			.insertInto("ScrimPostRequestUser")
 			.values(
 				args.users.map((user) => ({
-					...user,
+					isOwner: user.isOwner,
+					userId: user.userId,
 					scrimPostRequestId: newRequest.id,
 				})),
 			)
 			.execute();
 	});
+}
+
+export function acceptRequest(scrimPostRequestId: number) {
+	return db
+		.updateTable("ScrimPostRequest")
+		.set({ isAccepted: 1 })
+		.where("id", "=", scrimPostRequestId)
+		.execute();
 }
 
 export function deleteRequest(scrimPostRequestId: number) {
@@ -139,10 +147,14 @@ export async function findAllRelevant(userId?: number): Promise<ScrimPost[]> {
 						}).as("team"),
 						jsonArrayFrom(
 							innerEb
-								.selectFrom("ScrimPostUser")
-								.innerJoin("User", "ScrimPostUser.userId", "User.id")
-								.select([...COMMON_USER_FIELDS, "ScrimPostUser.isOwner"])
-								.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id"),
+								.selectFrom("ScrimPostRequestUser")
+								.innerJoin("User", "ScrimPostRequestUser.userId", "User.id")
+								.select([...COMMON_USER_FIELDS, "ScrimPostRequestUser.isOwner"])
+								.whereRef(
+									"ScrimPostRequestUser.scrimPostRequestId",
+									"=",
+									"ScrimPostRequest.id",
+								),
 						).as("users"),
 					])
 					.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id"),
@@ -181,7 +193,7 @@ export async function findAllRelevant(userId?: number): Promise<ScrimPost[]> {
 								avatarUrl: request.team.avatarUrl,
 							}
 						: null,
-					users: row.users.map((user) => {
+					users: request.users.map((user) => {
 						return {
 							...user,
 							isVerified: false,

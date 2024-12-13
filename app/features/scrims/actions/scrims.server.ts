@@ -41,21 +41,41 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "ACCEPT_REQUEST": {
-			// ...
+			const post = (await ScrimPostRepository.findAllRelevant(user.id)).find(
+				(post) =>
+					post.requests.some(
+						(request) => request.id === data.scrimPostRequestId,
+					),
+			);
+			const request = post?.requests.find(
+				(request) => request.id === data.scrimPostRequestId,
+			);
+
+			validate(post && request, "Request not found");
+			validate(!request.isAccepted, "Request is already accepted");
+			validate(
+				post.users.some((rUser) => rUser.id === user.id && rUser.isOwner),
+				"No permission to accept request",
+				401,
+			);
+
+			await ScrimPostRepository.acceptRequest(data.scrimPostRequestId);
+
 			break;
 		}
 		// xxx: not working
 		case "CANCEL_REQUEST": {
 			const request = (await ScrimPostRepository.findAllRelevant(user.id))
 				.flatMap((post) => post.requests)
-				.find(
-					(request) =>
-						request.id === data.scrimPostRequestId &&
-						!request.isAccepted &&
-						request.users.some((rUser) => rUser.id === user.id),
-				);
+				.find((request) => request.id === data.scrimPostRequestId);
 
 			validate(request, "Request not found");
+			validate(!request.isAccepted, "Can't cancel an accepted request");
+			validate(
+				request.users.some((rUser) => rUser.id === user.id && rUser.isOwner),
+				"No permission to cancel request",
+				401,
+			);
 
 			await ScrimPostRepository.deleteRequest(data.scrimPostRequestId);
 

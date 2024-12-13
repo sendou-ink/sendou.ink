@@ -18,6 +18,7 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { userPage, userSubmittedImage } from "~/utils/urls";
 import { Main } from "../../../components/Main";
+import { NewTabs } from "../../../components/NewTabs";
 import { FromFormField } from "../components/FromFormField";
 import { newRequestSchema } from "../scrims-schemas";
 import type { ScrimPost } from "../scrims-types";
@@ -35,6 +36,11 @@ export default function ScrimsPage() {
 	const isMounted = useIsMounted();
 	const [scrimToRequestId, setScrimToRequestId] = React.useState<number>();
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: clear modal on submit
+	React.useEffect(() => {
+		setScrimToRequestId(undefined);
+	}, [data]);
+
 	if (!isMounted)
 		return (
 			<Main>
@@ -50,14 +56,53 @@ export default function ScrimsPage() {
 					close={() => setScrimToRequestId(undefined)}
 				/>
 			) : null}
-			{data.posts.length === 0 ? (
-				<div className="text-lighter text-lg font-semi-bold text-center mt-6">
-					No scrims available right now. Check back later or add your own!
-				</div>
-			) : null}
-			<ScrimsDaySeparatedTables
-				posts={data.posts}
-				requestScrim={setScrimToRequestId}
+			<NewTabs
+				sticky
+				disappearing
+				tabs={[
+					{
+						label: "Own posts",
+						number: data.posts.owned.length,
+					},
+					{
+						label: "Requests sent",
+						number: data.posts.requested.length,
+					},
+					{
+						label: "Available",
+						number: data.posts.neutral.length,
+					},
+				]}
+				content={[
+					{
+						key: "owned",
+						element: <ScrimsDaySeparatedTables posts={data.posts.owned} />,
+					},
+					{
+						key: "requested",
+						element: (
+							<ScrimsDaySeparatedTables
+								posts={data.posts.requested}
+								requestScrim={setScrimToRequestId}
+							/>
+						),
+					},
+					{
+						key: "available",
+						element:
+							data.posts.neutral.length > 0 ? (
+								<ScrimsDaySeparatedTables
+									posts={data.posts.neutral}
+									requestScrim={setScrimToRequestId}
+								/>
+							) : (
+								<div className="text-lighter text-lg font-semi-bold text-center mt-6">
+									No scrims available right now. Check back later or add your
+									own!
+								</div>
+							),
+					},
+				]}
 			/>
 		</Main>
 	);
@@ -69,7 +114,10 @@ function RequestScrimModal({
 }: { postId: number; close: () => void }) {
 	const data = useLoaderData<typeof loader>();
 
-	const post = data.posts.find((post) => post.id === postId);
+	// both to avoid crash when requesting
+	const post = [...data.posts.neutral, ...data.posts.requested].find(
+		(post) => post.id === postId,
+	);
 	invariant(post, "Post not found");
 
 	return (
