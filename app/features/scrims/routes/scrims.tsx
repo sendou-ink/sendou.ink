@@ -16,6 +16,7 @@ import { useIsMounted } from "~/hooks/useIsMounted";
 import { joinListToNaturalString } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import { userPage, userSubmittedImage } from "~/utils/urls";
 import { Main } from "../../../components/Main";
 import { NewTabs } from "../../../components/NewTabs";
@@ -28,10 +29,16 @@ import { loader } from "../loaders/scrims.server";
 export { loader, action };
 
 import "../scrims.css";
+import { useUser } from "~/features/auth/core/user";
 
 export type NewRequestFormFields = z.infer<typeof newRequestSchema>;
 
+export const handle: SendouRouteHandle = {
+	i18n: "calendar",
+};
+
 export default function ScrimsPage() {
+	const { t } = useTranslation(["calendar"]);
 	const data = useLoaderData<typeof loader>();
 	const isMounted = useIsMounted();
 	const [scrimToRequestId, setScrimToRequestId] = React.useState<number>();
@@ -109,6 +116,10 @@ export default function ScrimsPage() {
 					},
 				]}
 			/>
+			<div className="mt-6 text-xs text-center text-lighter">
+				{t("calendar:inYourTimeZone")}{" "}
+				{Intl.DateTimeFormat().resolvedOptions().timeZone}
+			</div>
 		</Main>
 	);
 }
@@ -214,6 +225,7 @@ function ScrimsTable({
 	showDeletePost?: boolean;
 	requestScrim?: (postId: number) => void;
 }) {
+	const user = useUser();
 	const { i18n } = useTranslation();
 
 	invariant(
@@ -317,19 +329,28 @@ function ScrimsTable({
 							) : null}
 							{showDeletePost ? (
 								<td>
-									<FormWithConfirm
-										dialogHeading="Delete scrim post"
-										deleteButtonText="Delete"
-										cancelButtonText="Nevermind"
-										fields={[
-											["scrimPostId", post.id],
-											["_action", "DELETE_POST"],
-										]}
-									>
-										<Button size="tiny" variant="destructive">
-											Delete
-										</Button>
-									</FormWithConfirm>
+									{owner.id === user?.id ? (
+										<FormWithConfirm
+											dialogHeading="Delete scrim post"
+											deleteButtonText="Delete"
+											cancelButtonText="Nevermind"
+											fields={[
+												["scrimPostId", post.id],
+												["_action", "DELETE_POST"],
+											]}
+										>
+											<Button size="tiny" variant="destructive">
+												Delete
+											</Button>
+										</FormWithConfirm>
+									) : (
+										<Popover
+											buttonChildren={<>Delete</>}
+											triggerClassName="destructive tiny"
+										>
+											The post must be deleted by the owner ({owner.username})
+										</Popover>
+									)}
 								</td>
 							) : null}
 							{requestScrim && post.requests.length !== 0 ? (
