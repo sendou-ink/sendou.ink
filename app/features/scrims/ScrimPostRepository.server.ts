@@ -81,26 +81,9 @@ export function insertRequest(args: InsertRequestArgs) {
 	});
 }
 
-export function acceptRequest(scrimPostRequestId: number) {
-	return db
-		.updateTable("ScrimPostRequest")
-		.set({ isAccepted: 1 })
-		.where("id", "=", scrimPostRequestId)
-		.execute();
+export function del(scrimPostId: number) {
+	return db.deleteFrom("ScrimPost").where("id", "=", scrimPostId).execute();
 }
-
-export function deleteRequest(scrimPostRequestId: number) {
-	return db
-		.deleteFrom("ScrimPostRequest")
-		.where("id", "=", scrimPostRequestId)
-		.execute();
-}
-
-const parseLutiDiv = (div: number): LutiDiv => {
-	if (div === 0) return "X";
-
-	return String(div) as LutiDiv;
-};
 
 export async function findAllRelevant(userId?: number): Promise<ScrimPost[]> {
 	const min = sub(new Date(), { hours: 2 });
@@ -216,3 +199,24 @@ export async function findAllRelevant(userId?: number): Promise<ScrimPost[]> {
 
 	return mapped.map(getPostRequestCensor(userId));
 }
+
+export function acceptRequest(scrimPostRequestId: number) {
+	return db
+		.updateTable("ScrimPostRequest")
+		.set({ isAccepted: 1 })
+		.where("id", "=", scrimPostRequestId)
+		.execute();
+}
+
+export function deleteRequest(scrimPostRequestId: number) {
+	return db
+		.deleteFrom("ScrimPostRequest")
+		.where("id", "=", scrimPostRequestId)
+		.execute();
+}
+
+const parseLutiDiv = (div: number): LutiDiv => {
+	if (div === 0) return "X";
+
+	return String(div) as LutiDiv;
+};

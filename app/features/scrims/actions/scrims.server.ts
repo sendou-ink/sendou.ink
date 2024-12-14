@@ -13,6 +13,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		schema: scrimsActionSchema,
 	});
 	switch (data._action) {
+		case "DELETE_POST": {
+			const post = await findPost({
+				userId: user.id,
+				postId: data.scrimPostId,
+			});
+
+			validate(
+				post.users.some((rUser) => rUser.id === user.id && rUser.isOwner),
+				"No permission to manage the post",
+				401,
+			);
+
+			await ScrimPostRepository.del(post.id);
+
+			break;
+		}
 		case "NEW_REQUEST": {
 			const usersList = async () => {
 				if (data.from.mode === "PICKUP") {
@@ -41,17 +57,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "ACCEPT_REQUEST": {
-			const post = (await ScrimPostRepository.findAllRelevant(user.id)).find(
-				(post) =>
-					post.requests.some(
-						(request) => request.id === data.scrimPostRequestId,
-					),
-			);
-			const request = post?.requests.find(
-				(request) => request.id === data.scrimPostRequestId,
-			);
+			const { post, request } = await findRequest({
+				userId: user.id,
+				requestId: data.scrimPostRequestId,
+			});
 
-			validate(post && request, "Request not found");
 			validate(!request.isAccepted, "Request is already accepted");
 			validate(
 				post.users.some((rUser) => rUser.id === user.id && rUser.isOwner),
@@ -63,13 +73,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 			break;
 		}
-		// xxx: not working
 		case "CANCEL_REQUEST": {
-			const request = (await ScrimPostRepository.findAllRelevant(user.id))
-				.flatMap((post) => post.requests)
-				.find((request) => request.id === data.scrimPostRequestId);
+			const { request } = await findRequest({
+				userId: user.id,
+				requestId: data.scrimPostRequestId,
+			});
 
-			validate(request, "Request not found");
 			validate(!request.isAccepted, "Can't cancel an accepted request");
 			validate(
 				request.users.some((rUser) => rUser.id === user.id && rUser.isOwner),
@@ -88,3 +97,30 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	return null;
 };
+
+async function findPost({
+	userId,
+	postId,
+}: { userId: number; postId: number }) {
+	const posts = await ScrimPostRepository.findAllRelevant(userId);
+	const post = posts.find((post) => post.id === postId);
+
+	validate(post, "Post not found");
+
+	return post;
+}
+
+async function findRequest({
+	userId,
+	requestId,
+}: { userId: number; requestId: number }) {
+	const posts = await ScrimPostRepository.findAllRelevant(userId);
+	const post = posts.find((post) =>
+		post.requests.some((request) => request.id === requestId),
+	);
+	const request = post?.requests.find((request) => request.id === requestId);
+
+	validate(post && request, "Request not found");
+
+	return { post, request };
+}

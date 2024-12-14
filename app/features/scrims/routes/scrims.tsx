@@ -76,7 +76,12 @@ export default function ScrimsPage() {
 				content={[
 					{
 						key: "owned",
-						element: <ScrimsDaySeparatedTables posts={data.posts.owned} />,
+						element: (
+							<ScrimsDaySeparatedTables
+								posts={data.posts.owned}
+								showDeletePost
+							/>
+						),
 					},
 					{
 						key: "requested",
@@ -155,10 +160,12 @@ function RequestScrimModal({
 function ScrimsDaySeparatedTables({
 	posts,
 	showPopovers = true,
+	showDeletePost = false,
 	requestScrim,
 }: {
 	posts: ScrimPost[];
 	showPopovers?: boolean;
+	showDeletePost?: boolean;
 	requestScrim?: (postId: number) => void;
 }) {
 	const { i18n } = useTranslation();
@@ -186,6 +193,7 @@ function ScrimsDaySeparatedTables({
 						<ScrimsTable
 							posts={posts!}
 							requestScrim={requestScrim}
+							showDeletePost={showDeletePost}
 							showPopovers={showPopovers}
 						/>
 					</div>
@@ -198,13 +206,20 @@ function ScrimsDaySeparatedTables({
 function ScrimsTable({
 	posts,
 	showPopovers = true,
+	showDeletePost = false,
 	requestScrim,
 }: {
 	posts: ScrimPost[];
 	showPopovers?: boolean;
+	showDeletePost?: boolean;
 	requestScrim?: (postId: number) => void;
 }) {
 	const { i18n } = useTranslation();
+
+	invariant(
+		!(requestScrim && showDeletePost),
+		"Can't have both request scrim and delete post",
+	);
 
 	return (
 		<Table>
@@ -214,7 +229,7 @@ function ScrimsTable({
 					<th>Team</th>
 					{showPopovers ? <th /> : null}
 					<th>Divs</th>
-					{requestScrim ? <th /> : null}
+					{requestScrim || showDeletePost ? <th /> : null}
 				</tr>
 			</thead>
 			<tbody>
@@ -298,6 +313,23 @@ function ScrimsTable({
 									<Button size="tiny" onClick={() => requestScrim(post.id)}>
 										Book
 									</Button>
+								</td>
+							) : null}
+							{showDeletePost ? (
+								<td>
+									<FormWithConfirm
+										dialogHeading="Delete scrim post"
+										deleteButtonText="Delete"
+										cancelButtonText="Nevermind"
+										fields={[
+											["scrimPostId", post.id],
+											["_action", "DELETE_POST"],
+										]}
+									>
+										<Button size="tiny" variant="destructive">
+											Delete
+										</Button>
+									</FormWithConfirm>
 								</td>
 							) : null}
 							{requestScrim && post.requests.length !== 0 ? (
