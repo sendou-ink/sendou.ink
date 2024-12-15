@@ -63,7 +63,17 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "UPDATE_STARTING_BRACKETS": {
-			// xxx: validate bracket idxs are good
+			const validBracketIdxs =
+				tournament.ctx.settings.bracketProgression.flatMap(
+					(bracket, bracketIdx) => (!bracket.sources ? [bracketIdx] : []),
+				);
+
+			validate(
+				data.startingBrackets.every((t) =>
+					validBracketIdxs.includes(t.startingBracketIdx),
+				),
+				"Invalid starting bracket idx",
+			);
 
 			await TournamentTeamRepository.updateStartingBrackets(
 				data.startingBrackets,
@@ -295,8 +305,9 @@ function StartingBracketDialog() {
 			<Button size="tiny" onClick={() => setIsOpen(true)}>
 				Set starting brackets
 			</Button>
-			<Dialog isOpen={isOpen} close={() => setIsOpen(false)}>
+			<Dialog isOpen={isOpen} close={() => setIsOpen(false)} className="w-full">
 				<fetcher.Form className="stack lg items-center" method="post">
+					<h2 className="text-lg self-start">Setting starting brackets</h2>
 					<input
 						type="hidden"
 						name="_action"

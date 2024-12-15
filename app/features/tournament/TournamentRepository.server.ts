@@ -687,6 +687,14 @@ export function updateProgression({
 					allTournamentTeamsOfTournament,
 				)
 				.execute();
+
+			await trx
+				.updateTable("TournamentTeam")
+				.set({
+					startingBracketIdx: null,
+				})
+				.where("tournamentId", "=", tournamentId)
+				.execute();
 		}
 
 		const newSettings: Tables["Tournament"]["settings"] = {

@@ -347,7 +347,6 @@ function TournamentFormatBracketSelector({
 								checked={Boolean(bracket.sources)}
 								setChecked={(checked) =>
 									updateBracket({
-										// xxx: is empty array correct?
 										sources: checked ? [] : undefined,
 									})
 								}

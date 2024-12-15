@@ -695,6 +695,19 @@ export async function update(args: UpdateArgs) {
 				.returning("mapPickingStyle")
 				.executeTakeFirstOrThrow();
 
+			if (
+				Progression.changedBracketProgressionFormat(
+					existingBracketProgression,
+					args.bracketProgression,
+				)
+			) {
+				await trx
+					.updateTable("TournamentTeam")
+					.set({ startingBracketIdx: null })
+					.where("tournamentId", "=", tournamentId)
+					.execute();
+			}
+
 			mapPickingStyle = _mapPickingStyle;
 		}
 

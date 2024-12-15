@@ -355,3 +355,16 @@ describe("Bracket progression override", () => {
 		expect(tournament.brackets[1].seeding?.at(-1)).toBe(14737);
 	});
 });
+
+// xxx: implement tests
+describe("Adjusting team starting bracket", () => {
+	it("defaults to bracket idx = 0");
+
+	it(
+		"moves team from one bracket to another by changing their starting bracket idx",
+	);
+
+	it("handles too high bracket idx gracefully");
+
+	it("handles bracket idx is not a valid starting bracket idx gracefully");
+});
