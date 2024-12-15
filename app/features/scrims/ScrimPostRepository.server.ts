@@ -148,6 +148,15 @@ export async function findAllRelevant(userId?: number): Promise<ScrimPost[]> {
 		.execute();
 
 	const mapped = rows.map((row) => {
+		const someRequestIsAccepted = row.requests.some(
+			(request) => request.isAccepted,
+		);
+
+		// once one is accepted, rest are not relevant
+		const requests = someRequestIsAccepted
+			? row.requests.filter((request) => request.isAccepted)
+			: row.requests;
+
 		return {
 			id: row.id,
 			at: row.at,
@@ -164,7 +173,7 @@ export async function findAllRelevant(userId?: number): Promise<ScrimPost[]> {
 						avatarUrl: row.team.avatarUrl,
 					}
 				: null,
-			requests: row.requests.map((request) => {
+			requests: requests.map((request) => {
 				return {
 					id: request.id,
 					isAccepted: Boolean(request.isAccepted),

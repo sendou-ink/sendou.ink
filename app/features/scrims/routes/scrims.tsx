@@ -1,41 +1,45 @@
-import { Link, useLoaderData } from "@remix-run/react";
+import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod";
 import { Avatar } from "~/components/Avatar";
-import { Button } from "~/components/Button";
+import { Button, LinkButton } from "~/components/Button";
 import { Dialog } from "~/components/Dialog";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Popover } from "~/components/Popover";
+import { SubmitButton } from "~/components/SubmitButton";
 import { Table } from "~/components/Table";
 import { MyForm } from "~/components/form/MyForm";
 import { SpeechBubbleIcon } from "~/components/icons/SpeechBubble";
 import { UsersIcon } from "~/components/icons/Users";
+import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { joinListToNaturalString } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { userPage, userSubmittedImage } from "~/utils/urls";
+import { scrimPage, userPage, userSubmittedImage } from "~/utils/urls";
 import { Main } from "../../../components/Main";
 import { NewTabs } from "../../../components/NewTabs";
 import { FromFormField } from "../components/FromFormField";
 import { newRequestSchema } from "../scrims-schemas";
-import type { ScrimPost } from "../scrims-types";
+import type { ScrimPost, ScrimPostRequest } from "../scrims-types";
 
 import { action } from "../actions/scrims.server";
 import { loader } from "../loaders/scrims.server";
 export { loader, action };
 
 import "../scrims.css";
-import { useUser } from "~/features/auth/core/user";
 
 export type NewRequestFormFields = z.infer<typeof newRequestSchema>;
 
 export const handle: SendouRouteHandle = {
 	i18n: "calendar",
 };
+
+// xxx: default should not be empty "Own posts" tab
+// xxx: mobile better (button visible always)
 
 export default function ScrimsPage() {
 	const { t } = useTranslation(["calendar"]);
@@ -87,6 +91,7 @@ export default function ScrimsPage() {
 							<ScrimsDaySeparatedTables
 								posts={data.posts.owned}
 								showDeletePost
+								showRequestRows
 							/>
 						),
 					},
@@ -172,11 +177,13 @@ function ScrimsDaySeparatedTables({
 	posts,
 	showPopovers = true,
 	showDeletePost = false,
+	showRequestRows = false,
 	requestScrim,
 }: {
 	posts: ScrimPost[];
 	showPopovers?: boolean;
 	showDeletePost?: boolean;
+	showRequestRows?: boolean;
 	requestScrim?: (postId: number) => void;
 }) {
 	const { i18n } = useTranslation();
@@ -205,6 +212,7 @@ function ScrimsDaySeparatedTables({
 							posts={posts!}
 							requestScrim={requestScrim}
 							showDeletePost={showDeletePost}
+							showRequestRows={showRequestRows}
 							showPopovers={showPopovers}
 						/>
 					</div>
@@ -216,13 +224,15 @@ function ScrimsDaySeparatedTables({
 
 function ScrimsTable({
 	posts,
-	showPopovers = true,
-	showDeletePost = false,
+	showPopovers,
+	showDeletePost,
+	showRequestRows,
 	requestScrim,
 }: {
 	posts: ScrimPost[];
-	showPopovers?: boolean;
-	showDeletePost?: boolean;
+	showPopovers: boolean;
+	showDeletePost: boolean;
+	showRequestRows: boolean;
 	requestScrim?: (postId: number) => void;
 }) {
 	const user = useUser();
@@ -252,132 +262,206 @@ function ScrimsTable({
 					const date = databaseTimestampToDate(post.at);
 					const inThePast = date < new Date();
 
+					const requests = showRequestRows
+						? post.requests.map((request) => (
+								<RequestRow key={request.id} request={request} />
+							))
+						: [];
+
+					const isAccepted = post.requests.some(
+						(request) => request.isAccepted,
+					);
+
 					return (
-						<tr key={post.id}>
-							<td>
-								<div className="scrims__post__time">
-									{inThePast
-										? "Now"
-										: databaseTimestampToDate(post.at).toLocaleTimeString(
-												i18n.language,
-												{
-													hour: "numeric",
-													minute: "numeric",
-												},
-											)}
-								</div>
-							</td>
-							<td>
-								<div className="stack horizontal md items-center">
-									{showPopovers ? (
-										<Popover
-											buttonChildren={
-												<UsersIcon className="scrims__post__icon" />
-											}
-										>
-											<div className="stack md">
-												{post.users.map((user) => (
-													<Link
-														to={userPage(user)}
-														key={user.id}
-														className="stack horizontal sm"
-													>
-														<Avatar size="xxs" user={user} />
-														{user.username}
-													</Link>
-												))}
-											</div>
-										</Popover>
-									) : null}
-									{post.team?.avatarUrl ? (
-										<Avatar
-											size="xxs"
-											url={userSubmittedImage(post.team.avatarUrl)}
-										/>
-									) : (
-										<Avatar size="xxs" user={owner} />
-									)}
-									{post.team?.name ?? `${owner.username}'s pickup`}
-								</div>
-							</td>
-							{showPopovers ? (
+						<React.Fragment key={post.id}>
+							<tr>
 								<td>
-									{post.text ? (
-										<Popover
-											buttonChildren={
-												<SpeechBubbleIcon className="scrims__post__icon" />
-											}
-										>
-											{post.text}
-										</Popover>
-									) : null}
+									<div className="scrims__post__time">
+										{inThePast
+											? "Now"
+											: databaseTimestampToDate(post.at).toLocaleTimeString(
+													i18n.language,
+													{
+														hour: "numeric",
+														minute: "numeric",
+													},
+												)}
+									</div>
 								</td>
-							) : null}
-							<td>
-								{post.divs ? (
-									<>
-										{post.divs.max} - {post.divs.min}
-									</>
+								<td>
+									<div className="stack horizontal md items-center">
+										{showPopovers ? (
+											<Popover
+												buttonChildren={
+													<UsersIcon className="scrims__post__icon" />
+												}
+											>
+												<div className="stack md">
+													{post.users.map((user) => (
+														<Link
+															to={userPage(user)}
+															key={user.id}
+															className="stack horizontal sm"
+														>
+															<Avatar size="xxs" user={user} />
+															{user.username}
+														</Link>
+													))}
+												</div>
+											</Popover>
+										) : null}
+										{post.team?.avatarUrl ? (
+											<Avatar
+												size="xxs"
+												url={userSubmittedImage(post.team.avatarUrl)}
+											/>
+										) : (
+											<Avatar size="xxs" user={owner} />
+										)}
+										{post.team?.name ?? `${owner.username}'s pickup`}
+									</div>
+								</td>
+								{showPopovers ? (
+									<td>
+										{post.text ? (
+											<Popover
+												buttonChildren={
+													<SpeechBubbleIcon className="scrims__post__icon" />
+												}
+											>
+												{post.text}
+											</Popover>
+										) : null}
+									</td>
 								) : null}
-							</td>
-							{requestScrim && post.requests.length === 0 ? (
 								<td>
-									<Button size="tiny" onClick={() => requestScrim(post.id)}>
-										Book
-									</Button>
+									{post.divs ? (
+										<>
+											{post.divs.max} - {post.divs.min}
+										</>
+									) : null}
 								</td>
-							) : null}
-							{showDeletePost ? (
-								<td>
-									{owner.id === user?.id ? (
+								{requestScrim && post.requests.length === 0 ? (
+									<td>
+										<Button size="tiny" onClick={() => requestScrim(post.id)}>
+											Book
+										</Button>
+									</td>
+								) : null}
+								{showDeletePost && !isAccepted ? (
+									<td>
+										{owner.id === user?.id ? (
+											<FormWithConfirm
+												dialogHeading="Delete scrim post"
+												deleteButtonText="Delete"
+												cancelButtonText="Nevermind"
+												fields={[
+													["scrimPostId", post.id],
+													["_action", "DELETE_POST"],
+												]}
+											>
+												<Button size="tiny" variant="destructive">
+													Delete
+												</Button>
+											</FormWithConfirm>
+										) : (
+											<Popover
+												buttonChildren={<>Delete</>}
+												triggerClassName="destructive tiny"
+											>
+												The post must be deleted by the owner ({owner.username})
+											</Popover>
+										)}
+									</td>
+								) : null}
+								{requestScrim && post.requests.length !== 0 ? (
+									<td>
 										<FormWithConfirm
-											dialogHeading="Delete scrim post"
-											deleteButtonText="Delete"
+											dialogHeading="Cancel request"
+											deleteButtonText="Cancel"
 											cancelButtonText="Nevermind"
 											fields={[
-												["scrimPostId", post.id],
-												["_action", "DELETE_POST"],
+												["scrimPostRequestId", post.requests[0].id],
+												["_action", "CANCEL_REQUEST"],
 											]}
 										>
 											<Button size="tiny" variant="destructive">
-												Delete
+												Cancel
 											</Button>
 										</FormWithConfirm>
-									) : (
-										<Popover
-											buttonChildren={<>Delete</>}
-											triggerClassName="destructive tiny"
-										>
-											The post must be deleted by the owner ({owner.username})
-										</Popover>
-									)}
-								</td>
-							) : null}
-							{requestScrim && post.requests.length !== 0 ? (
-								<td>
-									<FormWithConfirm
-										dialogHeading="Cancel request"
-										deleteButtonText="Cancel"
-										cancelButtonText="Nevermind"
-										fields={[
-											["scrimPostRequestId", post.requests[0].id],
-											["_action", "CANCEL_REQUEST"],
-										]}
-									>
-										<Button
-											size="tiny"
-											variant="destructive"
-											onClick={() => requestScrim(post.id)}
-										>
-											Cancel
-										</Button>
-									</FormWithConfirm>
-								</td>
-							) : null}
-						</tr>
+									</td>
+								) : null}
+								{isAccepted ? (
+									<td>
+										<LinkButton to={scrimPage(post.id)} size="tiny">
+											View
+										</LinkButton>
+									</td>
+								) : null}
+							</tr>
+							{requests}
+						</React.Fragment>
 					);
 				})}
 			</tbody>
 		</Table>
+	);
+}
+
+function RequestRow({ request }: { request: ScrimPostRequest }) {
+	const fetcher = useFetcher();
+
+	const owner = request.users.find((user) => user.isOwner) ?? request.users[0];
+
+	return (
+		<tr className="bg-theme-transparent-important">
+			<td />
+			<td>
+				<div className="stack horizontal md items-center">
+					<Popover
+						buttonChildren={<UsersIcon className="scrims__post__icon" />}
+					>
+						<div className="stack md">
+							{request.users.map((user) => (
+								<Link
+									to={userPage(user)}
+									key={user.id}
+									className="stack horizontal sm"
+								>
+									<Avatar size="xxs" user={user} />
+									{user.username}
+								</Link>
+							))}
+						</div>
+					</Popover>
+					{request.team?.avatarUrl ? (
+						<Avatar
+							size="xxs"
+							url={userSubmittedImage(request.team.avatarUrl)}
+						/>
+					) : (
+						<Avatar size="xxs" user={owner} />
+					)}
+					{request.team?.name ?? `${owner.username}'s pickup`}
+				</div>
+			</td>
+			<td />
+			<td />
+			<td>
+				{/** xxx: some kind of confirm? */}
+				{!request.isAccepted ? (
+					<fetcher.Form method="post">
+						<input type="hidden" name="scrimPostRequestId" value={request.id} />
+						<SubmitButton
+							_action="ACCEPT_REQUEST"
+							state={fetcher.state}
+							size="tiny"
+						>
+							Accept
+						</SubmitButton>
+					</fetcher.Form>
+				) : null}
+			</td>
+		</tr>
 	);
 }

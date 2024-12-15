@@ -361,6 +361,14 @@ export const sendouQMatchPage = (id: GroupMatch["id"]) => {
 	return `${SENDOUQ_PAGE}/match/${id}`;
 };
 
+export const scrimsPage = () => {
+	return "/scrims";
+};
+
+export const scrimPage = (id: number) => {
+	return `${scrimsPage()}/${id}`;
+};
+
 export const getWeaponUsage = ({
 	userId,
 	season,
