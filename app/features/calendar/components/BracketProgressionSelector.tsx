@@ -340,7 +340,25 @@ function TournamentFormatBracketSelector({
 					<div className="stack horizontal sm">
 						<Label htmlFor={createId("source")}>Source</Label>{" "}
 					</div>
-					{isFirstBracket ? (
+					{!isFirstBracket ? (
+						<div className="stack sm horizontal mt-1 mb-2">
+							<Toggle
+								tiny
+								checked={Boolean(bracket.sources)}
+								setChecked={(checked) =>
+									updateBracket({
+										// xxx: is empty array correct?
+										sources: checked ? [] : undefined,
+									})
+								}
+								disabled={bracket.disabled}
+							/>
+							<Label htmlFor={createId("thirdPlaceMatch")} spaced={false}>
+								Is follow-up bracket
+							</Label>
+						</div>
+					) : null}
+					{!bracket.sources ? (
 						<FormMessage type="info">
 							{isInvitationalTournament ? (
 								<>Participants added by the organizer</>

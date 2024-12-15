@@ -22,8 +22,10 @@ import * as React from "react";
 import { Alert } from "~/components/Alert";
 import { Button } from "~/components/Button";
 import { Catcher } from "~/components/Catcher";
+import { Dialog } from "~/components/Dialog";
 import { Draggable } from "~/components/Draggable";
 import { SubmitButton } from "~/components/SubmitButton";
+import { Table } from "~/components/Table";
 import { requireUser } from "~/features/auth/core/user.server";
 import {
 	type TournamentDataTeam,
@@ -37,6 +39,7 @@ import { tournamentBracketsPage, userResultsPage } from "~/utils/urls";
 import { Avatar } from "../../../components/Avatar";
 import { InfoPopover } from "../../../components/InfoPopover";
 import { ordinalToRoundedSp } from "../../mmr/mmr-utils";
+import * as TournamentTeamRepository from "../TournamentTeamRepository.server";
 import { updateTeamSeeds } from "../queries/updateTeamSeeds.server";
 import { seedsActionSchema } from "../tournament-schemas.server";
 import { tournamentIdFromParams } from "../tournament-utils";
@@ -54,7 +57,20 @@ export const action: ActionFunction = async ({ request, params }) => {
 	validate(tournament.isOrganizer(user));
 	validate(!tournament.hasStarted, "Tournament has started");
 
-	updateTeamSeeds({ tournamentId, teamIds: data.seeds });
+	switch (data._action) {
+		case "UPDATE_SEEDS": {
+			updateTeamSeeds({ tournamentId, teamIds: data.seeds });
+			break;
+		}
+		case "UPDATE_STARTING_BRACKETS": {
+			// xxx: validate bracket idxs are good
+
+			await TournamentTeamRepository.updateStartingBrackets(
+				data.startingBrackets,
+			);
+			break;
+		}
+	}
 
 	clearTournamentDataCache(tournamentId);
 
@@ -149,6 +165,13 @@ export default function TournamentSeedsPage() {
 					</Button>
 				)}
 			</div>
+			{tournament.isMultiStartingBracket ? (
+				<StartingBracketDialog
+					key={tournament.ctx.teams
+						.map((team) => team.startingBracketIdx ?? 0)
+						.join()}
+				/>
+			) : null}
 			<ul>
 				<li className="tournament__seeds__teams-list-row">
 					<div className="tournament__seeds__teams-container__header" />
@@ -241,6 +264,104 @@ export default function TournamentSeedsPage() {
 					</DragOverlay>
 				</DndContext>
 			</ul>
+		</div>
+	);
+}
+
+function StartingBracketDialog() {
+	const fetcher = useFetcher();
+	const tournament = useTournament();
+
+	const [isOpen, setIsOpen] = React.useState(false);
+	const [teamStartingBrackets, setTeamStartingBrackets] = React.useState(
+		tournament.ctx.teams
+			.toSorted((a, b) => {
+				if (!a.avgSeedingSkillOrdinal || !b.avgSeedingSkillOrdinal) return 0;
+
+				return b.avgSeedingSkillOrdinal - a.avgSeedingSkillOrdinal;
+			})
+			.map((team) => ({
+				tournamentTeamId: team.id,
+				startingBracketIdx: team.startingBracketIdx ?? 0,
+			})),
+	);
+
+	const startingBrackets = tournament.ctx.settings.bracketProgression
+		.flatMap((bracket, bracketIdx) => (!bracket.sources ? [bracketIdx] : []))
+		.map((bracketIdx) => tournament.bracketByIdx(bracketIdx)!);
+
+	return (
+		<div>
+			<Button size="tiny" onClick={() => setIsOpen(true)}>
+				Set starting brackets
+			</Button>
+			<Dialog isOpen={isOpen} close={() => setIsOpen(false)}>
+				<fetcher.Form className="stack lg items-center" method="post">
+					<input
+						type="hidden"
+						name="_action"
+						value="UPDATE_STARTING_BRACKETS"
+					/>
+					<input
+						type="hidden"
+						name="startingBrackets"
+						value={JSON.stringify(teamStartingBrackets)}
+					/>
+
+					<Table>
+						<thead>
+							<tr>
+								<th>Team</th>
+								<th>SP</th>
+								{startingBrackets.map((bracket) => (
+									<th key={bracket.id} className="whitespace-nowrap">
+										{bracket.name}
+									</th>
+								))}
+							</tr>
+						</thead>
+
+						<tbody>
+							{tournament.ctx.teams.map((team) => {
+								const { startingBracketIdx } = teamStartingBrackets.find(
+									({ tournamentTeamId }) => tournamentTeamId === team.id,
+								)!;
+
+								return (
+									<tr key={team.id}>
+										<td>{team.name}</td>
+										<td>{team.avgSeedingSkillOrdinal}</td>
+										{startingBrackets.map((bracket) => (
+											<th key={bracket.id} className="text-center">
+												<input
+													type="radio"
+													checked={startingBracketIdx === bracket.idx}
+													onChange={() => {
+														setTeamStartingBrackets((teamStartingBrackets) =>
+															teamStartingBrackets.map((t) =>
+																t.tournamentTeamId === team.id
+																	? { ...t, startingBracketIdx: bracket.idx }
+																	: t,
+															),
+														);
+													}}
+												/>
+											</th>
+										))}
+									</tr>
+								);
+							})}
+						</tbody>
+					</Table>
+					<SubmitButton
+						state={fetcher.state}
+						_action="UPDATE_STARTING_BRACKETS"
+						size="big"
+					>
+						Save
+					</SubmitButton>
+				</fetcher.Form>
+			</Dialog>
 		</div>
 	);
 }

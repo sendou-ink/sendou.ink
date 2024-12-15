@@ -171,6 +171,7 @@ export async function findById(id: number) {
 						"TournamentTeam.inviteCode",
 						"TournamentTeam.createdAt",
 						"TournamentTeam.activeRosterUserIds",
+						"TournamentTeam.startingBracketIdx",
 						"UserSubmittedImage.url as pickupAvatarUrl",
 						jsonArrayFrom(
 							innerEb

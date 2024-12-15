@@ -14,6 +14,7 @@ const tournamentCtxTeam = (
 		id: teamId,
 		inviteCode: null,
 		avgSeedingSkillOrdinal: null,
+		startingBracketIdx: null,
 		team: null,
 		mapPool: [],
 		members: [],

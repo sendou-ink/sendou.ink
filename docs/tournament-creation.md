@@ -140,6 +140,5 @@ Current limitations. Feel free to leave feedback if it's blocking you from runni
 
 - Single-elimination can not be a source bracket
 - Double-elimination can only be a source bracket when it comes to people who drop in the losers round (negative placements)
-- All teams start the tournament in the same bracket
 - Only one source bracket per target bracket.
 

@@ -419,21 +419,6 @@ describe("validatedSources - other rules", () => {
 		expect(error.type).toBe("NO_DE_POSITIVE");
 		expect((error as any).bracketIdx).toEqual(1);
 	});
-
-	it("throws an error if many missing sources", () => {
-		expect(() =>
-			getValidatedBrackets([
-				{
-					settings: {},
-					type: "round_robin",
-				},
-				{
-					settings: {},
-					type: "single_elimination",
-				},
-			]),
-		).toThrow();
-	});
 });
 
 describe("isFinals", () => {

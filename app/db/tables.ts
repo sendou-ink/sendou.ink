@@ -622,6 +622,8 @@ export interface TournamentTeam {
 	noScreen: Generated<number>;
 	droppedOut: Generated<number>;
 	seed: number | null;
+	/** For formats that have many starting brackets, where should the team start? */
+	startingBracketIdx: number | null;
 	activeRosterUserIds: ColumnType<
 		number[] | null,
 		string | null,
