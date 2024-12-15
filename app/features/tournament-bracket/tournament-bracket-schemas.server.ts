@@ -13,7 +13,10 @@ import * as PreparedMaps from "./core/PreparedMaps";
 
 const activeRosterPlayerIds = z.preprocess(safeJSONParse, z.array(id));
 
-const bothTeamPlayerIds = z.preprocess(safeJSONParse, z.array(id));
+const bothTeamPlayerIds = z.preprocess(
+	safeJSONParse,
+	z.tuple([z.array(id), z.array(id)]),
+);
 
 const reportedMatchPosition = z.preprocess(
 	Number,

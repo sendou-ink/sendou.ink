@@ -181,6 +181,12 @@ function EventForm() {
 		React.useState(false);
 
 	const handleSubmit = () => {
+		const isValid = ref.current?.checkValidity();
+		if (!isValid) {
+			ref.current?.reportValidity();
+			return;
+		}
+
 		const formData = new FormData(ref.current!);
 
 		// if "avatarImgId" it means they want to reuse an existing avatar

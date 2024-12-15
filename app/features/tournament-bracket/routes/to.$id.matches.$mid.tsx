@@ -211,10 +211,18 @@ export const action: ActionFunction = async ({ params, request }) => {
 					opponentTwoPoints: data.points?.[1] ?? null,
 				});
 
-				for (const userId of [...teamOneRoster, ...teamTwoRoster]) {
+				for (const userId of teamOneRoster) {
 					insertTournamentMatchGameResultParticipant({
 						matchGameResultId: result.id,
 						userId,
+						tournamentTeamId: match.opponentOne!.id!,
+					});
+				}
+				for (const userId of teamTwoRoster) {
+					insertTournamentMatchGameResultParticipant({
+						matchGameResultId: result.id,
+						userId,
+						tournamentTeamId: match.opponentTwo!.id!,
 					});
 				}
 			})();
@@ -333,7 +341,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 			);
 			validate(result, "Result not found");
 			validate(
-				data.rosters.length === tournament.minMembersPerTeam * 2,
+				data.rosters[0].length === tournament.minMembersPerTeam &&
+					data.rosters[1].length === tournament.minMembersPerTeam,
 				"Invalid roster length",
 			);
 
@@ -377,10 +386,18 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 				deleteParticipantsByMatchGameResultId(result.id);
 
-				for (const userId of data.rosters) {
+				for (const userId of data.rosters[0]) {
 					insertTournamentMatchGameResultParticipant({
 						matchGameResultId: result.id,
 						userId,
+						tournamentTeamId: match.opponentOne!.id!,
+					});
+				}
+				for (const userId of data.rosters[1]) {
+					insertTournamentMatchGameResultParticipant({
+						matchGameResultId: result.id,
+						userId,
+						tournamentTeamId: match.opponentTwo!.id!,
 					});
 				}
 			})();

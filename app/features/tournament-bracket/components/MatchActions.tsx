@@ -346,7 +346,7 @@ function EditScoreForm({
 				<input
 					type="hidden"
 					name="rosters"
-					value={JSON.stringify(checkedPlayers.flat())}
+					value={JSON.stringify(checkedPlayers)}
 				/>
 				{points ? (
 					<input type="hidden" name="points" value={JSON.stringify(points)} />
