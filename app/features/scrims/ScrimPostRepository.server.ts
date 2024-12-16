@@ -86,7 +86,7 @@ export function del(scrimPostId: number) {
 }
 
 export async function findAllRelevant(userId?: number): Promise<ScrimPost[]> {
-	const min = sub(new Date(), { hours: 2 });
+	const min = sub(new Date(), { hours: 3 });
 
 	const rows = await db
 		.selectFrom("ScrimPost")
@@ -147,62 +147,70 @@ export async function findAllRelevant(userId?: number): Promise<ScrimPost[]> {
 		.where("ScrimPost.at", ">=", dateToDatabaseTimestamp(min))
 		.execute();
 
-	const mapped = rows.map((row) => {
-		const someRequestIsAccepted = row.requests.some(
-			(request) => request.isAccepted,
-		);
+	const mapped = rows
+		.map((row) => {
+			const someRequestIsAccepted = row.requests.some(
+				(request) => request.isAccepted,
+			);
 
-		// once one is accepted, rest are not relevant
-		const requests = someRequestIsAccepted
-			? row.requests.filter((request) => request.isAccepted)
-			: row.requests;
+			// once one is accepted, rest are not relevant
+			const requests = someRequestIsAccepted
+				? row.requests.filter((request) => request.isAccepted)
+				: row.requests;
 
-		return {
-			id: row.id,
-			at: row.at,
-			text: row.text,
-			divs:
-				typeof row.maxDiv === "number" && typeof row.minDiv === "number"
-					? { max: parseLutiDiv(row.maxDiv), min: parseLutiDiv(row.minDiv) }
-					: null,
-			chatCode: null,
-			team: row.team.name
-				? {
-						name: row.team.name,
-						customUrl: row.team.customUrl!,
-						avatarUrl: row.team.avatarUrl,
-					}
-				: null,
-			requests: requests.map((request) => {
-				return {
-					id: request.id,
-					isAccepted: Boolean(request.isAccepted),
-					createdAt: request.createdAt,
-					team: request.team.name
-						? {
-								name: request.team.name,
-								customUrl: request.team.customUrl!,
-								avatarUrl: request.team.avatarUrl,
-							}
+			return {
+				id: row.id,
+				at: row.at,
+				text: row.text,
+				divs:
+					typeof row.maxDiv === "number" && typeof row.minDiv === "number"
+						? { max: parseLutiDiv(row.maxDiv), min: parseLutiDiv(row.minDiv) }
 						: null,
-					users: request.users.map((user) => {
-						return {
-							...user,
-							isVerified: false,
-							isOwner: Boolean(user.isOwner),
-						};
-					}),
-				};
-			}),
-			users: row.users.map((user) => {
-				return {
-					...user,
-					isVerified: false,
-					isOwner: Boolean(user.isOwner),
-				};
-			}),
-		};
-	});
+				chatCode: null,
+				team: row.team.name
+					? {
+							name: row.team.name,
+							customUrl: row.team.customUrl!,
+							avatarUrl: row.team.avatarUrl,
+						}
+					: null,
+				requests: requests.map((request) => {
+					return {
+						id: request.id,
+						isAccepted: Boolean(request.isAccepted),
+						createdAt: request.createdAt,
+						team: request.team.name
+							? {
+									name: request.team.name,
+									customUrl: request.team.customUrl!,
+									avatarUrl: request.team.avatarUrl,
+								}
+							: null,
+						users: request.users.map((user) => {
+							return {
+								...user,
+								isVerified: false,
+								isOwner: Boolean(user.isOwner),
+							};
+						}),
+					};
+				}),
+				users: row.users.map((user) => {
+					return {
+						...user,
+						isVerified: false,
+						isOwner: Boolean(user.isOwner),
+					};
+				}),
+			};
+		})
+		.filter(
+			(post) =>
+				// xxx: helpers?
+				!post.requests[0]?.isAccepted ||
+				post.requests[0].users.some((user) => user.id === userId) ||
+				post.users.some((user) => user.id === userId),
+		);
 
 	if (!userId) return mapped.map((post) => ({ ...post, requests: [] }));
 

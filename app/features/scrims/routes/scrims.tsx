@@ -1,4 +1,5 @@
 import { Link, useFetcher, useLoaderData } from "@remix-run/react";
+import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod";
@@ -22,6 +23,13 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { scrimPage, userPage, userSubmittedImage } from "~/utils/urls";
 import { Main } from "../../../components/Main";
 import { NewTabs } from "../../../components/NewTabs";
+import { ArrowDownOnSquareIcon } from "../../../components/icons/ArrowDownOnSquare";
+import { ArrowUpOnSquareIcon } from "../../../components/icons/ArrowUpOnSquare";
+import { CheckmarkIcon } from "../../../components/icons/Checkmark";
+import { ClockIcon } from "../../../components/icons/Clock";
+import { CrossIcon } from "../../../components/icons/Cross";
+import { MegaphoneIcon } from "../../../components/icons/MegaphoneIcon";
+import { SpeechBubbleFilledIcon } from "../../../components/icons/SpeechBubbleFilled";
 import { FromFormField } from "../components/FromFormField";
 import { newRequestSchema } from "../scrims-schemas";
 import type { ScrimPost, ScrimPostRequest } from "../scrims-types";
@@ -74,14 +82,17 @@ export default function ScrimsPage() {
 					{
 						label: "Own posts",
 						number: data.posts.owned.length,
+						icon: <ArrowDownOnSquareIcon />,
 					},
 					{
-						label: "Requests sent",
+						label: "Requests",
 						number: data.posts.requested.length,
+						icon: <ArrowUpOnSquareIcon />,
 					},
 					{
 						label: "Available",
 						number: data.posts.neutral.length,
+						icon: <MegaphoneIcon />,
 					},
 				]}
 				content={[
@@ -101,6 +112,7 @@ export default function ScrimsPage() {
 							<ScrimsDaySeparatedTables
 								posts={data.posts.requested}
 								requestScrim={setScrimToRequestId}
+								showStatus
 							/>
 						),
 					},
@@ -178,12 +190,14 @@ function ScrimsDaySeparatedTables({
 	showPopovers = true,
 	showDeletePost = false,
 	showRequestRows = false,
+	showStatus = false,
 	requestScrim,
 }: {
 	posts: ScrimPost[];
 	showPopovers?: boolean;
 	showDeletePost?: boolean;
 	showRequestRows?: boolean;
+	showStatus?: boolean;
 	requestScrim?: (postId: number) => void;
 }) {
 	const { i18n } = useTranslation();
@@ -214,6 +228,7 @@ function ScrimsDaySeparatedTables({
 							showDeletePost={showDeletePost}
 							showRequestRows={showRequestRows}
 							showPopovers={showPopovers}
+							showStatus={showStatus}
 						/>
 					</div>
 				);
@@ -227,12 +242,14 @@ function ScrimsTable({
 	showPopovers,
 	showDeletePost,
 	showRequestRows,
+	showStatus,
 	requestScrim,
 }: {
 	posts: ScrimPost[];
 	showPopovers: boolean;
 	showDeletePost: boolean;
 	showRequestRows: boolean;
+	showStatus: boolean;
 	requestScrim?: (postId: number) => void;
 }) {
 	const user = useUser();
@@ -243,6 +260,17 @@ function ScrimsTable({
 		"Can't have both request scrim and delete post",
 	);
 
+	const getStatus = (post: ScrimPost) => {
+		if (post.requests.at(0)?.isAccepted) return "CONFIRMED";
+		if (
+			post.requests.some((r) => r.users.some((rUser) => user?.id === rUser.id))
+		) {
+			return "PENDING";
+		}
+
+		return null;
+	};
+
 	return (
 		<Table>
 			<thead>
@@ -251,6 +279,7 @@ function ScrimsTable({
 					<th>Team</th>
 					{showPopovers ? <th /> : null}
 					<th>Divs</th>
+					{showStatus ? <th>Status</th> : null}
 					{requestScrim || showDeletePost ? <th /> : null}
 				</tr>
 			</thead>
@@ -264,13 +293,19 @@ function ScrimsTable({
 
 					const requests = showRequestRows
 						? post.requests.map((request) => (
-								<RequestRow key={request.id} request={request} />
+								<RequestRow
+									key={request.id}
+									request={request}
+									postId={post.id}
+								/>
 							))
 						: [];
 
 					const isAccepted = post.requests.some(
 						(request) => request.isAccepted,
 					);
+
+					const status = getStatus(post);
 
 					return (
 						<React.Fragment key={post.id}>
@@ -341,10 +376,35 @@ function ScrimsTable({
 										</>
 									) : null}
 								</td>
+								{showStatus ? (
+									<td>
+										<div
+											className={clsx("scrims__post__status", {
+												scrims__post__status__confirmed: status === "CONFIRMED",
+												scrims__post__status__pending: status === "PENDING",
+											})}
+										>
+											{status === "CONFIRMED" ? (
+												<>
+													<CheckmarkIcon /> Booked
+												</>
+											) : null}
+											{status === "PENDING" ? (
+												<>
+													<ClockIcon /> Pending
+												</>
+											) : null}
+										</div>
+									</td>
+								) : null}
 								{requestScrim && post.requests.length === 0 ? (
 									<td>
-										<Button size="tiny" onClick={() => requestScrim(post.id)}>
-											Book
+										<Button
+											size="tiny"
+											onClick={() => requestScrim(post.id)}
+											icon={<ArrowUpOnSquareIcon />}
+										>
+											Request
 										</Button>
 									</td>
 								) : null}
@@ -374,7 +434,9 @@ function ScrimsTable({
 										)}
 									</td>
 								) : null}
-								{requestScrim && post.requests.length !== 0 ? (
+								{requestScrim &&
+								post.requests.length !== 0 &&
+								!post.requests.at(0)?.isAccepted ? (
 									<td>
 										<FormWithConfirm
 											dialogHeading="Cancel request"
@@ -385,17 +447,22 @@ function ScrimsTable({
 												["_action", "CANCEL_REQUEST"],
 											]}
 										>
-											<Button size="tiny" variant="destructive">
+											<Button
+												size="tiny"
+												variant="destructive"
+												icon={<CrossIcon />}
+											>
 												Cancel
 											</Button>
 										</FormWithConfirm>
 									</td>
 								) : null}
-								{isAccepted ? (
+								{isAccepted &&
+								post.requests
+									.at(0)
+									?.users.some((rUser) => rUser.id === user?.id) ? (
 									<td>
-										<LinkButton to={scrimPage(post.id)} size="tiny">
-											View
-										</LinkButton>
+										<ContactButton postId={post.id} />
 									</td>
 								) : null}
 							</tr>
@@ -408,7 +475,23 @@ function ScrimsTable({
 	);
 }
 
-function RequestRow({ request }: { request: ScrimPostRequest }) {
+function ContactButton({ postId }: { postId: number }) {
+	return (
+		<LinkButton
+			to={scrimPage(postId)}
+			size="tiny"
+			className="w-max"
+			icon={<SpeechBubbleFilledIcon />}
+		>
+			Contact
+		</LinkButton>
+	);
+}
+
+function RequestRow({
+	request,
+	postId,
+}: { request: ScrimPostRequest; postId: number }) {
 	const fetcher = useFetcher();
 
 	const owner = request.users.find((user) => user.isOwner) ?? request.users[0];
@@ -460,7 +543,9 @@ function RequestRow({ request }: { request: ScrimPostRequest }) {
 							Accept
 						</SubmitButton>
 					</fetcher.Form>
-				) : null}
+				) : (
+					<ContactButton postId={postId} />
+				)}
 			</td>
 		</tr>
 	);

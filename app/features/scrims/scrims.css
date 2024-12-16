@@ -14,3 +14,33 @@
 .scrims__post__icon {
 	min-width: 24px;
 }
+
+.scrims__post__status {
+	display: flex;
+	gap: var(--s-1);
+	font-weight: var(--semi-bold);
+	padding-block: var(--s-1);
+	padding-inline: var(--s-2);
+	width: max-content;
+	border-radius: var(--rounded-sm);
+}
+
+.scrims__post__status__confirmed {
+	background-color: var(--theme-success-transparent);
+}
+
+.scrims__post__status svg {
+	width: 18px;
+}
+
+.scrims__post__status__confirmed svg {
+	fill: var(--theme-success);
+}
+
+.scrims__post__status__pending {
+	background-color: var(--theme-info-transparent);
+}
+
+.scrims__post__status__pending svg {
+	fill: var(--theme-info);
+}
