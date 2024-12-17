@@ -44,3 +44,54 @@
 .scrims__post__status__pending svg {
 	fill: var(--theme-info);
 }
+
+.scrims__groups-container {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: var(--s-8);
+}
+
+@media screen and (min-width: 640px) {
+	.scrims__groups-container {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+.scrims__group-card {
+	border-radius: var(--rounded);
+	background-color: var(--bg-lighter-solid);
+	padding: var(--s-2-5);
+	display: flex;
+	gap: var(--s-4);
+	flex-direction: column;
+}
+
+.scrims__group-card__member-row {
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+	background-color: var(--bg-darker);
+	border-radius: var(--rounded);
+	font-size: var(--fonts-xsm);
+	font-weight: var(--semi-bold);
+	padding-inline-end: var(--s-2-5);
+}
+
+.scrims__info__header {
+	text-transform: uppercase;
+	color: var(--text-lighter);
+	font-size: var(--fonts-xs);
+	line-height: 1.1;
+}
+
+.scrims__info__value {
+	font-size: var(--fonts-xl);
+	font-weight: var(--semi-bold);
+	letter-spacing: 1px;
+}
+
+.scrims__chat-container {
+	border-radius: var(--rounded);
+	background-color: var(--bg-lighter-solid);
+	padding: var(--s-2-5);
+}

@@ -8,7 +8,9 @@ import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { INVITE_CODE_LENGTH } from "../../constants";
 import { db } from "../../db/sql";
 import invariant from "../../utils/invariant";
-import type { LutiDiv, ScrimPost } from "./scrims-types";
+import type { Unwrapped } from "../../utils/types";
+import * as ScrimPost from "./core/ScrimPost";
+import type { LutiDiv, ScrimPost as ScrimPostType } from "./scrims-types";
 import { getPostRequestCensor } from "./scrims-utils";
 
 type InsertArgs = Pick<
@@ -85,117 +87,112 @@ export function del(scrimPostId: number) {
 	return db.deleteFrom("ScrimPost").where("id", "=", scrimPostId).execute();
 }
 
-export async function findAllRelevant(userId?: number): Promise<ScrimPost[]> {
+const baseFindQuery = db
+	.selectFrom("ScrimPost")
+	.leftJoin("Team", "ScrimPost.teamId", "Team.id")
+	.leftJoin("UserSubmittedImage", "Team.avatarImgId", "UserSubmittedImage.id")
+	.select((eb) => [
+		"ScrimPost.id",
+		"ScrimPost.at",
+		"ScrimPost.maxDiv",
+		"ScrimPost.minDiv",
+		"ScrimPost.text",
+		jsonBuildObject({
+			name: eb.ref("Team.name"),
+			customUrl: eb.ref("Team.customUrl"),
+			avatarUrl: eb.ref("UserSubmittedImage.url"),
+		}).as("team"),
+		jsonArrayFrom(
+			eb
+				.selectFrom("ScrimPostUser")
+				.innerJoin("User", "ScrimPostUser.userId", "User.id")
+				.select([...COMMON_USER_FIELDS, "ScrimPostUser.isOwner"])
+				.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id"),
+		).as("users"),
+		jsonArrayFrom(
+			eb
+				.selectFrom("ScrimPostRequest")
+				.leftJoin("Team", "ScrimPost.teamId", "Team.id")
+				.leftJoin(
+					"UserSubmittedImage",
+					"Team.avatarImgId",
+					"UserSubmittedImage.id",
+				)
+				.select((innerEb) => [
+					"ScrimPostRequest.id",
+					"ScrimPostRequest.isAccepted",
+					"ScrimPostRequest.createdAt",
+					jsonBuildObject({
+						name: innerEb.ref("Team.name"),
+						customUrl: innerEb.ref("Team.customUrl"),
+						avatarUrl: innerEb.ref("UserSubmittedImage.url"),
+					}).as("team"),
+					jsonArrayFrom(
+						innerEb
+							.selectFrom("ScrimPostRequestUser")
+							.innerJoin("User", "ScrimPostRequestUser.userId", "User.id")
+							.select([...COMMON_USER_FIELDS, "ScrimPostRequestUser.isOwner"])
+							.whereRef(
+								"ScrimPostRequestUser.scrimPostRequestId",
+								"=",
+								"ScrimPostRequest.id",
+							),
+					).as("users"),
+				])
+				.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id"),
+		).as("requests"),
+	]);
+
+function findMany() {
 	const min = sub(new Date(), { hours: 3 });
 
-	const rows = await db
-		.selectFrom("ScrimPost")
-		.leftJoin("Team", "ScrimPost.teamId", "Team.id")
-		.leftJoin("UserSubmittedImage", "Team.avatarImgId", "UserSubmittedImage.id")
-		.select((eb) => [
-			"ScrimPost.id",
-			"ScrimPost.at",
-			"ScrimPost.maxDiv",
-			"ScrimPost.minDiv",
-			"ScrimPost.text",
-			jsonBuildObject({
-				name: eb.ref("Team.name"),
-				customUrl: eb.ref("Team.customUrl"),
-				avatarUrl: eb.ref("UserSubmittedImage.url"),
-			}).as("team"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("ScrimPostUser")
-					.innerJoin("User", "ScrimPostUser.userId", "User.id")
-					.select([...COMMON_USER_FIELDS, "ScrimPostUser.isOwner"])
-					.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id"),
-			).as("users"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("ScrimPostRequest")
-					.leftJoin("Team", "ScrimPost.teamId", "Team.id")
-					.leftJoin(
-						"UserSubmittedImage",
-						"Team.avatarImgId",
-						"UserSubmittedImage.id",
-					)
-					.select((innerEb) => [
-						"ScrimPostRequest.id",
-						"ScrimPostRequest.isAccepted",
-						"ScrimPostRequest.createdAt",
-						jsonBuildObject({
-							name: innerEb.ref("Team.name"),
-							customUrl: innerEb.ref("Team.customUrl"),
-							avatarUrl: innerEb.ref("UserSubmittedImage.url"),
-						}).as("team"),
-						jsonArrayFrom(
-							innerEb
-								.selectFrom("ScrimPostRequestUser")
-								.innerJoin("User", "ScrimPostRequestUser.userId", "User.id")
-								.select([...COMMON_USER_FIELDS, "ScrimPostRequestUser.isOwner"])
-								.whereRef(
-									"ScrimPostRequestUser.scrimPostRequestId",
-									"=",
-									"ScrimPostRequest.id",
-								),
-						).as("users"),
-					])
-					.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id"),
-			).as("requests"),
-		])
+	return baseFindQuery
 		.orderBy("at", "asc")
 		.where("ScrimPost.at", ">=", dateToDatabaseTimestamp(min))
 		.execute();
+}
 
-	const mapped = rows
-		.map((row) => {
-			const someRequestIsAccepted = row.requests.some(
-				(request) => request.isAccepted,
-			);
+const mapDBRowToScrimPost = (
+	row: Unwrapped<typeof findMany> & { chatCode?: string },
+): ScrimPostType => {
+	const someRequestIsAccepted = row.requests.some(
+		(request) => request.isAccepted,
+	);
 
-			// once one is accepted, rest are not relevant
-			const requests = someRequestIsAccepted
-				? row.requests.filter((request) => request.isAccepted)
-				: row.requests;
+	// once one is accepted, rest are not relevant
+	const requests = someRequestIsAccepted
+		? row.requests.filter((request) => request.isAccepted)
+		: row.requests;
 
+	return {
+		id: row.id,
+		at: row.at,
+		text: row.text,
+		divs:
+			typeof row.maxDiv === "number" && typeof row.minDiv === "number"
+				? { max: parseLutiDiv(row.maxDiv), min: parseLutiDiv(row.minDiv) }
+				: null,
+		chatCode: row.chatCode ?? null,
+		team: row.team.name
+			? {
+					name: row.team.name,
+					customUrl: row.team.customUrl!,
+					avatarUrl: row.team.avatarUrl,
+				}
+			: null,
+		requests: requests.map((request) => {
 			return {
-				id: row.id,
-				at: row.at,
-				text: row.text,
-				divs:
-					typeof row.maxDiv === "number" && typeof row.minDiv === "number"
-						? { max: parseLutiDiv(row.maxDiv), min: parseLutiDiv(row.minDiv) }
-						: null,
-				chatCode: null,
-				team: row.team.name
+				id: request.id,
+				isAccepted: Boolean(request.isAccepted),
+				createdAt: request.createdAt,
+				team: request.team.name
 					? {
-							name: row.team.name,
-							customUrl: row.team.customUrl!,
-							avatarUrl: row.team.avatarUrl,
+							name: request.team.name,
+							customUrl: request.team.customUrl!,
+							avatarUrl: request.team.avatarUrl,
 						}
 					: null,
-				requests: requests.map((request) => {
-					return {
-						id: request.id,
-						isAccepted: Boolean(request.isAccepted),
-						createdAt: request.createdAt,
-						team: request.team.name
-							? {
-									name: request.team.name,
-									customUrl: request.team.customUrl!,
-									avatarUrl: request.team.avatarUrl,
-								}
-							: null,
-						users: request.users.map((user) => {
-							return {
-								...user,
-								isVerified: false,
-								isOwner: Boolean(user.isOwner),
-							};
-						}),
-					};
-				}),
-				users: row.users.map((user) => {
+				users: request.users.map((user) => {
 					return {
 						...user,
 						isVerified: false,
@@ -203,13 +200,41 @@ export async function findAllRelevant(userId?: number): Promise<ScrimPost[]> {
 					};
 				}),
 			};
-		})
+		}),
+		users: row.users.map((user) => {
+			return {
+				...user,
+				isVerified: false,
+				isOwner: Boolean(user.isOwner),
+			};
+		}),
+	};
+};
+
+export async function findById(
+	scrimPostId: number,
+): Promise<ScrimPostType | null> {
+	const row = await baseFindQuery
+		.select(["ScrimPost.chatCode"])
+		.where("ScrimPost.id", "=", scrimPostId)
+		.executeTakeFirst();
+
+	if (!row) return null;
+
+	return mapDBRowToScrimPost(row);
+}
+
+export async function findAllRelevant(
+	userId?: number,
+): Promise<ScrimPostType[]> {
+	const rows = await findMany();
+
+	const mapped = rows
+		.map(mapDBRowToScrimPost)
 		.filter(
 			(post) =>
-				// xxx: helpers?
-				!post.requests[0]?.isAccepted ||
-				post.requests[0].users.some((user) => user.id === userId) ||
-				post.users.some((user) => user.id === userId),
+				!ScrimPost.isAccepted(post) ||
+				(userId && ScrimPost.isParticipating(post, userId)),
 		);
 
 	if (!userId) return mapped.map((post) => ({ ...post, requests: [] }));
