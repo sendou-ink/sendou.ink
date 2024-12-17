@@ -15,6 +15,11 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Academy Showcase",
+		fileName: "academy_showcase",
+		authorDiscordId: "643355948265766912",
+	},
+	{
 		displayName: "Turf War Takedown",
 		fileName: "turf1230",
 		authorDiscordId: "1170249805373657093",
