@@ -14,7 +14,8 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	fileName: "example",
 	// 	authorDiscordId: "123456789012345678",
 	// },
-	{	displayName: "BrushMommy's Birthday Bash",
+	{	
+    displayName: "BrushMommy's Birthday Bash",
 		fileName: "goldenbrush",
 		authorDiscordId: "338806780446638082",
 	},
