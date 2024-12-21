@@ -181,7 +181,7 @@ function TournamentFormatBracketSelector({
 					/>
 				</div>
 
-				{!isFirstBracket ? (
+				{bracket.sources ? (
 					<div>
 						<Label htmlFor={createId("startTime")}>Start time</Label>
 						<DateInput
@@ -199,7 +199,7 @@ function TournamentFormatBracketSelector({
 					</div>
 				) : null}
 
-				{!isFirstBracket ? (
+				{bracket.sources ? (
 					<div>
 						<Label htmlFor={createId("checkIn")}>Check-in required</Label>
 						<Toggle
@@ -348,6 +348,8 @@ function TournamentFormatBracketSelector({
 								setChecked={(checked) =>
 									updateBracket({
 										sources: checked ? [] : undefined,
+										requiresCheckIn: false,
+										startTime: undefined,
 									})
 								}
 								disabled={bracket.disabled}
