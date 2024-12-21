@@ -41,12 +41,26 @@ export function MatchActions({
 	>(() => {
 		if (result) {
 			return [
-				result.participantIds.filter((id) =>
-					teams[0].members.some((member) => member.userId === id),
-				),
-				result.participantIds.filter((id) =>
-					teams[1].members.some((member) => member.userId === id),
-				),
+				result.participants
+					.filter((participant) =>
+						teams[0].members.some(
+							(member) =>
+								member.userId === participant.userId &&
+								(!participant.tournamentTeamId ||
+									teams[0].id === participant.tournamentTeamId),
+						),
+					)
+					.map((p) => p.userId),
+				result.participants
+					.filter((participant) =>
+						teams[1].members.some(
+							(member) =>
+								member.userId === participant.userId &&
+								(!participant.tournamentTeamId ||
+									teams[1].id === participant.tournamentTeamId),
+						),
+					)
+					.map((p) => p.userId),
 			];
 		}
 
