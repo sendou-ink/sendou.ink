@@ -284,16 +284,10 @@ function StartingBracketDialog() {
 
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [teamStartingBrackets, setTeamStartingBrackets] = React.useState(
-		tournament.ctx.teams
-			.toSorted((a, b) => {
-				if (!a.avgSeedingSkillOrdinal || !b.avgSeedingSkillOrdinal) return 0;
-
-				return b.avgSeedingSkillOrdinal - a.avgSeedingSkillOrdinal;
-			})
-			.map((team) => ({
-				tournamentTeamId: team.id,
-				startingBracketIdx: team.startingBracketIdx ?? 0,
-			})),
+		tournament.ctx.teams.map((team) => ({
+			tournamentTeamId: team.id,
+			startingBracketIdx: team.startingBracketIdx ?? 0,
+		})),
 	);
 
 	const startingBrackets = tournament.ctx.settings.bracketProgression
@@ -305,9 +299,23 @@ function StartingBracketDialog() {
 			<Button size="tiny" onClick={() => setIsOpen(true)}>
 				Set starting brackets
 			</Button>
-			<Dialog isOpen={isOpen} close={() => setIsOpen(false)} className="w-full">
+			<Dialog isOpen={isOpen} close={() => setIsOpen(false)} className="w-max">
 				<fetcher.Form className="stack lg items-center" method="post">
 					<h2 className="text-lg self-start">Setting starting brackets</h2>
+					<div>
+						{startingBrackets.map((bracket) => {
+							const teamCount = teamStartingBrackets.filter(
+								(t) => t.startingBracketIdx === bracket.idx,
+							).length;
+
+							return (
+								<div key={bracket.id} className="stack horizontal sm text-xs">
+									<span>{bracket.name}</span>
+									<span>({teamCount} teams)</span>
+								</div>
+							);
+						})}
+					</div>
 					<input
 						type="hidden"
 						name="_action"
@@ -323,12 +331,7 @@ function StartingBracketDialog() {
 						<thead>
 							<tr>
 								<th>Team</th>
-								<th>SP</th>
-								{startingBrackets.map((bracket) => (
-									<th key={bracket.id} className="whitespace-nowrap">
-										{bracket.name}
-									</th>
-								))}
+								<th>Starting bracket</th>
 							</tr>
 						</thead>
 
@@ -341,24 +344,28 @@ function StartingBracketDialog() {
 								return (
 									<tr key={team.id}>
 										<td>{team.name}</td>
-										<td>{team.avgSeedingSkillOrdinal}</td>
-										{startingBrackets.map((bracket) => (
-											<th key={bracket.id} className="text-center">
-												<input
-													type="radio"
-													checked={startingBracketIdx === bracket.idx}
-													onChange={() => {
-														setTeamStartingBrackets((teamStartingBrackets) =>
-															teamStartingBrackets.map((t) =>
-																t.tournamentTeamId === team.id
-																	? { ...t, startingBracketIdx: bracket.idx }
-																	: t,
-															),
-														);
-													}}
-												/>
-											</th>
-										))}
+										<td>
+											<select
+												className="w-max"
+												value={startingBracketIdx}
+												onChange={(e) => {
+													const newBracketIdx = Number(e.target.value);
+													setTeamStartingBrackets((teamStartingBrackets) =>
+														teamStartingBrackets.map((t) =>
+															t.tournamentTeamId === team.id
+																? { ...t, startingBracketIdx: newBracketIdx }
+																: t,
+														),
+													);
+												}}
+											>
+												{startingBrackets.map((bracket) => (
+													<option key={bracket.id} value={bracket.idx}>
+														{bracket.name}
+													</option>
+												))}
+											</select>
+										</td>
 									</tr>
 								);
 							})}
