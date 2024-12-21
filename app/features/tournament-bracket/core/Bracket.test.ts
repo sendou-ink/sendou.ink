@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
+import invariant from "../../../utils/invariant";
 import { Tournament } from "./Tournament";
 import { LOW_INK_DECEMBER_2024 } from "./tests/mocks-li";
-import invariant from "../../../utils/invariant";
 
 const TEAM_ERROR_404_ID = 17354;
 const TEAM_THIS_IS_FINE_ID = 17513;
