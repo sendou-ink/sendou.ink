@@ -810,7 +810,9 @@ function MatchHeader() {
 	return (
 		<div className="line-height-tight" data-testid="match-header">
 			<h2 className="text-lg">{roundName}</h2>
-			<div className="text-lighter text-xs font-bold">{bracketName}</div>
+			{tournament.ctx.settings.bracketProgression.length > 1 ? (
+				<div className="text-lighter text-xs font-bold">{bracketName}</div>
+			) : null}
 		</div>
 	);
 }

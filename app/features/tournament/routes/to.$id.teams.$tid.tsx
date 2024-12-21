@@ -209,7 +209,10 @@ function SetInfo({ set, team }: { set: PlayedSet; team: TournamentDataTeam }) {
 					})}
 					className="tournament__team__set__round-name"
 				>
-					{roundNameWithoutMatchIdentifier} - {bracketName}
+					{roundNameWithoutMatchIdentifier}{" "}
+					{tournament.ctx.settings.bracketProgression.length > 1 ? (
+						<>- {bracketName}</>
+					) : null}
 				</Link>
 			</div>
 			<div className="overlap-divider">
