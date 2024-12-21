@@ -343,6 +343,7 @@ function TournamentFormatBracketSelector({
 					{!isFirstBracket ? (
 						<div className="stack sm horizontal mt-1 mb-2">
 							<Toggle
+								id={createId("follow-up-bracket")}
 								tiny
 								checked={Boolean(bracket.sources)}
 								setChecked={(checked) =>
@@ -354,7 +355,7 @@ function TournamentFormatBracketSelector({
 								}
 								disabled={bracket.disabled}
 							/>
-							<Label htmlFor={createId("thirdPlaceMatch")} spaced={false}>
+							<Label htmlFor={createId("follow-up-bracket")} spaced={false}>
 								Is follow-up bracket
 							</Label>
 						</div>

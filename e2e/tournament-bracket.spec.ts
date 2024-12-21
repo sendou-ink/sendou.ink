@@ -492,6 +492,51 @@ test.describe("Tournament bracket", () => {
 		await expect(page.getByTestId("back-to-bracket-button")).toBeVisible();
 	});
 
+	test("conducts a tournament with many starting brackets", async ({
+		page,
+	}) => {
+		const tournamentId = 4;
+
+		await seed(page, "SMALL_SOS");
+		await impersonate(page);
+
+		await navigate({
+			page,
+			url: tournamentAdminPage(tournamentId),
+		});
+
+		await page.getByTestId("edit-event-info-button").click();
+		await page.getByTestId("delete-bracket-button").last().click();
+		await page.getByTestId("delete-bracket-button").last().click();
+		await page.getByTestId("delete-bracket-button").last().click();
+
+		await page.getByLabel("Is follow-up bracket").click();
+		await page.getByLabel("Format").first().selectOption("Single-elimination");
+
+		await submit(page);
+
+		await page.getByText("Seeds").click();
+		await page.getByTestId("set-starting-brackets").click();
+
+		await page
+			.getByTestId("starting-bracket-select")
+			.first()
+			.selectOption("Great White");
+		await page
+			.getByTestId("starting-bracket-select")
+			.nth(1)
+			.selectOption("Great White");
+
+		await submit(page, "set-starting-brackets-submit-button");
+		await page.getByTestId("brackets-tab").click();
+		await page.getByText("Great White").click();
+		await page.getByTestId("finalize-bracket-button").click();
+		await page.getByTestId("confirm-finalize-bracket-button").click();
+
+		await expect(page.locator('[data-match-id="1"]')).toBeVisible();
+		await isNotVisible(page.locator('[data-match-id="2"]'));
+	});
+
 	test("organizer edits a match after it is done", async ({ page }) => {
 		const tournamentId = 3;
 

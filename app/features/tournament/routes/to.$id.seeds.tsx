@@ -296,7 +296,11 @@ function StartingBracketDialog() {
 
 	return (
 		<div>
-			<Button size="tiny" onClick={() => setIsOpen(true)}>
+			<Button
+				size="tiny"
+				onClick={() => setIsOpen(true)}
+				testId="set-starting-brackets"
+			>
 				Set starting brackets
 			</Button>
 			<Dialog isOpen={isOpen} close={() => setIsOpen(false)} className="w-max">
@@ -347,6 +351,7 @@ function StartingBracketDialog() {
 										<td>
 											<select
 												className="w-max"
+												data-testid="starting-bracket-select"
 												value={startingBracketIdx}
 												onChange={(e) => {
 													const newBracketIdx = Number(e.target.value);
@@ -375,6 +380,7 @@ function StartingBracketDialog() {
 						state={fetcher.state}
 						_action="UPDATE_STARTING_BRACKETS"
 						size="big"
+						testId="set-starting-brackets-submit-button"
 					>
 						Save
 					</SubmitButton>
