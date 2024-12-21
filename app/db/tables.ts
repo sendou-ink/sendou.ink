@@ -530,6 +530,8 @@ export interface TournamentMatchGameResult {
 export interface TournamentMatchGameResultParticipant {
 	matchGameResultId: number;
 	userId: number;
+	// it only started mattering when we added the possibility to join many teams in a tournament, null for legacy events
+	tournamentTeamId: number | null;
 }
 
 export interface TournamentResult {
@@ -684,6 +686,13 @@ export interface TournamentOrganizationSeries {
 	description: string | null;
 	substringMatches: ColumnType<string[], string, string>;
 	showLeaderboard: Generated<number>;
+}
+
+export interface TournamentBracketProgressionOverride {
+	sourceBracketIdx: number;
+	destinationBracketIdx: number;
+	tournamentTeamId: number;
+	tournamentId: number;
 }
 
 export interface TrustRelationship {
@@ -921,6 +930,7 @@ export interface DB {
 	TournamentOrganizationMember: TournamentOrganizationMember;
 	TournamentOrganizationBadge: TournamentOrganizationBadge;
 	TournamentOrganizationSeries: TournamentOrganizationSeries;
+	TournamentBracketProgressionOverride: TournamentBracketProgressionOverride;
 	TrustRelationship: TrustRelationship;
 	UnvalidatedUserSubmittedImage: UnvalidatedUserSubmittedImage;
 	UnvalidatedVideo: UnvalidatedVideo;

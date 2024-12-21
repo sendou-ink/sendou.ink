@@ -1981,6 +1981,7 @@ export const PADDLING_POOL_257 = () =>
 			organization: null,
 			tags: null,
 			eventId: 1352,
+			bracketProgressionOverrides: [],
 			settings: {
 				bracketProgression: [
 					{
@@ -7882,6 +7883,7 @@ export const PADDLING_POOL_255 = () =>
 			organization: null,
 			tags: null,
 			eventId: 1286,
+			bracketProgressionOverrides: [],
 			settings: {
 				bracketProgression: [
 					{
@@ -14119,6 +14121,7 @@ export const IN_THE_ZONE_32 = ({
 			organization: null,
 			tags: null,
 			eventId: 1134,
+			bracketProgressionOverrides: [],
 			settings: {
 				bracketProgression: [
 					{

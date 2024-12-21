@@ -71,6 +71,7 @@ export const testTournament = ({
 			isFinalized: 0,
 			name: "test",
 			castTwitchAccounts: [],
+			bracketProgressionOverrides: [],
 			subCounts: [],
 			staff: [],
 			tieBreakerMapPool: [],

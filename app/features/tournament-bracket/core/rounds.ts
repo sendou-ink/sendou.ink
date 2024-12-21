@@ -52,7 +52,7 @@ export function getRounds(args: {
 	const hasThirdPlaceMatch =
 		args.type === "single" &&
 		removeDuplicates(args.bracketData.match.map((m) => m.group_id)).length > 1;
-	return rounds.map((round, i) => {
+	const namedRounds = rounds.map((round, i) => {
 		const name = () => {
 			if (
 				showingBracketReset &&
@@ -100,4 +100,15 @@ export function getRounds(args: {
 			name: name(),
 		};
 	});
+
+	return adjustRoundNumbers(namedRounds);
+}
+
+// adjusting losers bracket round numbers to start from 1, can sometimes start with 2 if byes are certain way
+export function adjustRoundNumbers<T extends { number: number }>(rounds: T[]) {
+	if (rounds.at(0)?.number === 1) {
+		return rounds;
+	}
+
+	return rounds.map((round) => ({ ...round, number: round.number - 1 }));
 }

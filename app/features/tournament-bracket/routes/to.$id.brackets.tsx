@@ -29,6 +29,7 @@ import {
 import { currentSeason } from "~/features/mmr/season";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import { TOURNAMENT, tournamentIdFromParams } from "~/features/tournament";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { createSwissBracketInTransaction } from "~/features/tournament/queries/createSwissBracketInTransaction.server";
 import { updateRoundMaps } from "~/features/tournament/queries/updateRoundMaps.server";
@@ -173,6 +174,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "ADVANCE_BRACKET": {
+			validate(tournament.isOrganizer(user));
+
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			validate(bracket, "Bracket not found");
 			validate(bracket.type === "swiss", "Can't advance non-swiss bracket");
@@ -187,6 +190,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "UNADVANCE_BRACKET": {
+			validate(tournament.isOrganizer(user));
+
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			validate(bracket, "Bracket not found");
 			validate(bracket.type === "swiss", "Can't unadvance non-swiss bracket");
@@ -264,6 +269,33 @@ export const action: ActionFunction = async ({ params, request }) => {
 			await TournamentRepository.checkIn({
 				bracketIdx: data.bracketIdx,
 				tournamentTeamId: ownTeam.id,
+			});
+			break;
+		}
+		case "OVERRIDE_BRACKET_PROGRESSION": {
+			validate(tournament.isOrganizer(user));
+
+			const allDestinationBrackets = Progression.destinationsFromBracketIdx(
+				data.sourceBracketIdx,
+				tournament.ctx.settings.bracketProgression,
+			);
+			validate(
+				data.destinationBracketIdx === -1 ||
+					allDestinationBrackets.includes(data.destinationBracketIdx),
+				"Invalid destination bracket",
+			);
+			validate(
+				allDestinationBrackets.every(
+					(bracketIdx) => tournament.bracketByIdx(bracketIdx)!.preview,
+				),
+				"Can't override progression if follow-up brackets are started",
+			);
+
+			await TournamentRepository.overrideTeamBracketProgression({
+				tournamentTeamId: data.tournamentTeamId,
+				sourceBracketIdx: data.sourceBracketIdx,
+				destinationBracketIdx: data.destinationBracketIdx,
+				tournamentId,
 			});
 			break;
 		}

@@ -580,3 +580,26 @@ describe("bracketIdxsForStandings", () => {
 		).toEqual([0]); // missing 1 because it's underground when DE is the source
 	});
 });
+
+describe("destinationsFromBracketIdx", () => {
+	it("returns correct destination (one destination)", () => {
+		expect(
+			Progression.destinationsFromBracketIdx(
+				0,
+				progressions.roundRobinToSingleElimination,
+			),
+		).toEqual([1]);
+	});
+
+	it("returns correct destination (many destinations)", () => {
+		expect(
+			Progression.destinationsFromBracketIdx(0, progressions.lowInk),
+		).toEqual([1, 2]);
+	});
+
+	it("returns an empty array if no destinations", () => {
+		expect(
+			Progression.destinationsFromBracketIdx(0, progressions.singleElimination),
+		).toEqual([]);
+	});
+});
