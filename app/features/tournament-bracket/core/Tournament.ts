@@ -163,10 +163,7 @@ export class Tournament {
 			} else if (type === "swiss") {
 				const { teams, relevantMatchesFinished } = sources
 					? this.resolveTeamsFromSources(sources, bracketIdx)
-					: this.resolveTeamsFromSignups({
-							bracketIdx,
-							bracketsCount: this.ctx.settings.bracketProgression.length,
-						});
+					: this.resolveTeamsFromSignups(bracketIdx);
 
 				const { checkedInTeams, notCheckedInTeams } =
 					this.divideTeamsToCheckedInAndNotCheckedIn({
@@ -210,10 +207,7 @@ export class Tournament {
 			} else {
 				const { teams, relevantMatchesFinished } = sources
 					? this.resolveTeamsFromSources(sources, bracketIdx)
-					: this.resolveTeamsFromSignups({
-							bracketIdx,
-							bracketsCount: this.ctx.settings.bracketProgression.length,
-						});
+					: this.resolveTeamsFromSignups(bracketIdx);
 
 				const { checkedInTeams, notCheckedInTeams } =
 					this.divideTeamsToCheckedInAndNotCheckedIn({
@@ -332,10 +326,7 @@ export class Tournament {
 		};
 	}
 
-	private resolveTeamsFromSignups({
-		bracketIdx,
-		bracketsCount,
-	}: { bracketIdx: number; bracketsCount: number }) {
+	private resolveTeamsFromSignups(bracketIdx: number) {
 		const teams = this.isMultiStartingBracket
 			? this.ctx.teams.filter((team) => {
 					// 0 is the default
@@ -343,9 +334,12 @@ export class Tournament {
 						return bracketIdx === 0;
 					}
 
-					if (team.startingBracketIdx >= bracketsCount) {
+					const startingBracket = this.ctx.settings.bracketProgression.at(
+						team.startingBracketIdx,
+					);
+					if (!startingBracket || startingBracket.sources) {
 						logger.warn(
-							"resolveTeamsFromSignups: Starting bracket index out of bounds",
+							"resolveTeamsFromSignups: Starting bracket index invalid",
 						);
 						return bracketIdx === 0;
 					}

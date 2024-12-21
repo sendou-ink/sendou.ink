@@ -4,7 +4,7 @@ import type * as Progression from "../Progression";
 import { Tournament } from "../Tournament";
 import type { TournamentData } from "../Tournament.server";
 
-const tournamentCtxTeam = (
+export const tournamentCtxTeam = (
 	teamId: number,
 	partial?: Partial<TournamentData["ctx"]["teams"][0]>,
 ): TournamentData["ctx"]["teams"][0] => {
