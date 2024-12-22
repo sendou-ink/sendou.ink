@@ -174,8 +174,14 @@ function _TeamRoster({
 	);
 
 	const checkedInputPlayerIds = () => {
-		if (result?.participantIds && !revising) {
-			return result.participantIds;
+		if (result?.participants && !revising) {
+			return result.participants
+				.filter(
+					(participant) =>
+						!participant.tournamentTeamId ||
+						participant.tournamentTeamId === team.id,
+				)
+				.map((participant) => participant.userId);
 		}
 		if (editingRoster) return checkedPlayers.split(",").map(Number);
 
