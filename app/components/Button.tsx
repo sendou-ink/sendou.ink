@@ -57,6 +57,7 @@ export function Button(props: ButtonProps) {
 			{icon &&
 				React.cloneElement(icon, {
 					className: clsx("button-icon", { lonely: !children }),
+					title: rest.title,
 				})}
 			{loading && loadingText ? loadingText : children}
 		</button>

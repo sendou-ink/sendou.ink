@@ -15,6 +15,31 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "BrushMommy's Birthday Bash",
+		fileName: "goldenbrush",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Academy Showcase",
+		fileName: "academy_showcase",
+		authorDiscordId: "643355948265766912",
+	},
+	{
+		displayName: "50 Caliber League (First Place)",
+		fileName: "50-cal-fir",
+		authorDiscordId: "530093822806458368",
+	},
+	{
+		displayName: "50 Caliber League (Second Place)",
+		fileName: "50-cal-sec",
+		authorDiscordId: "530093822806458368",
+	},
+	{
+		displayName: "50 Caliber League (Third Place)",
+		fileName: "50-cal-thi",
+		authorDiscordId: "530093822806458368",
+	},
+	{
 		displayName: "Turf War Takedown",
 		fileName: "turf1230",
 		authorDiscordId: "1170249805373657093",
@@ -402,6 +427,11 @@ export const homemadeBadges: BadgeInfo[] = [
 	{
 		displayName: "SpaceDog Showdown (Jolly Edition)",
 		fileName: "spacedogjolly",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Mimikyu Monday",
+		fileName: "mimikyu",
 		authorDiscordId: "528851510222782474",
 	},
 ];

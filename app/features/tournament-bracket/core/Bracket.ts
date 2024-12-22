@@ -1388,7 +1388,13 @@ class SwissBracket extends Bracket {
 			for (const team of teams) {
 				for (const team2 of teams) {
 					if (team.id === team2.id) continue;
-					if (team.setWins !== team2.setWins) continue;
+					if (
+						team.setWins !== team2.setWins ||
+						// check also set losses to account for dropped teams
+						team.setLosses !== team2.setLosses
+					) {
+						continue;
+					}
 
 					// they are different teams and are tied, let's check who won
 

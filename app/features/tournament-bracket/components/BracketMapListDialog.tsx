@@ -575,9 +575,10 @@ function teamCountAdjustedBracketData({
 		case "round_robin":
 			// ensure a full bracket (no bye round) gets generated even if registration is underway
 			return bracket.generateMatchesData(
-				nullFilledArray(TOURNAMENT.DEFAULT_TEAM_COUNT_PER_RR_GROUP).map(
-					(_, i) => i + 1,
-				),
+				nullFilledArray(
+					bracket.settings?.teamsPerGroup ??
+						TOURNAMENT.DEFAULT_TEAM_COUNT_PER_RR_GROUP,
+				).map((_, i) => i + 1),
 			);
 		case "single_elimination":
 		case "double_elimination":

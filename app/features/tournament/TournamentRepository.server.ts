@@ -134,6 +134,20 @@ export async function findById(id: number) {
 					.where("TournamentSub.tournamentId", "=", id)
 					.groupBy("TournamentSub.visibility"),
 			).as("subCounts"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentBracketProgressionOverride")
+					.select([
+						"TournamentBracketProgressionOverride.sourceBracketIdx",
+						"TournamentBracketProgressionOverride.destinationBracketIdx",
+						"TournamentBracketProgressionOverride.tournamentTeamId",
+					])
+					.whereRef(
+						"TournamentBracketProgressionOverride.tournamentId",
+						"=",
+						"Tournament.id",
+					),
+			).as("bracketProgressionOverrides"),
 			exists(
 				selectFrom("TournamentResult")
 					.where("TournamentResult.tournamentId", "=", id)
@@ -157,6 +171,7 @@ export async function findById(id: number) {
 						"TournamentTeam.inviteCode",
 						"TournamentTeam.createdAt",
 						"TournamentTeam.activeRosterUserIds",
+						"TournamentTeam.startingBracketIdx",
 						"UserSubmittedImage.url as pickupAvatarUrl",
 						jsonArrayFrom(
 							innerEb
@@ -672,6 +687,14 @@ export function updateProgression({
 					allTournamentTeamsOfTournament,
 				)
 				.execute();
+
+			await trx
+				.updateTable("TournamentTeam")
+				.set({
+					startingBracketIdx: null,
+				})
+				.where("tournamentId", "=", tournamentId)
+				.execute();
 		}
 
 		const newSettings: Tables["Tournament"]["settings"] = {
@@ -693,6 +716,29 @@ export function updateProgression({
 			.where("id", "=", tournamentId)
 			.execute();
 	});
+}
+
+export function overrideTeamBracketProgression({
+	tournamentId,
+	tournamentTeamId,
+	sourceBracketIdx,
+	destinationBracketIdx,
+}: {
+	tournamentId: number;
+	tournamentTeamId: number;
+	sourceBracketIdx: number;
+	destinationBracketIdx: number;
+}) {
+	// set in migration: unique("sourceBracketIdx", "tournamentTeamId") on conflict replace
+	return db
+		.insertInto("TournamentBracketProgressionOverride")
+		.values({
+			tournamentId,
+			tournamentTeamId,
+			sourceBracketIdx,
+			destinationBracketIdx,
+		})
+		.execute();
 }
 
 export function updateTeamName({

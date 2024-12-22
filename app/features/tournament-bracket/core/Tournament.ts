@@ -162,11 +162,8 @@ export class Tournament {
 				);
 			} else if (type === "swiss") {
 				const { teams, relevantMatchesFinished } = sources
-					? this.resolveTeamsFromSources(sources)
-					: {
-							teams: this.ctx.teams.map((team) => team.id),
-							relevantMatchesFinished: true,
-						};
+					? this.resolveTeamsFromSources(sources, bracketIdx)
+					: this.resolveTeamsFromSignups(bracketIdx);
 
 				const { checkedInTeams, notCheckedInTeams } =
 					this.divideTeamsToCheckedInAndNotCheckedIn({
@@ -209,11 +206,8 @@ export class Tournament {
 				);
 			} else {
 				const { teams, relevantMatchesFinished } = sources
-					? this.resolveTeamsFromSources(sources)
-					: {
-							teams: this.ctx.teams.map((team) => team.id),
-							relevantMatchesFinished: true,
-						};
+					? this.resolveTeamsFromSources(sources, bracketIdx)
+					: this.resolveTeamsFromSignups(bracketIdx);
 
 				const { checkedInTeams, notCheckedInTeams } =
 					this.divideTeamsToCheckedInAndNotCheckedIn({
@@ -261,23 +255,103 @@ export class Tournament {
 
 	private resolveTeamsFromSources(
 		sources: NonNullable<Progression.ParsedBracket["sources"]>,
+		bracketIdx: number,
 	) {
 		const teams: number[] = [];
 
 		let allRelevantMatchesFinished = true;
-		for (const { bracketIdx, placements } of sources) {
-			const sourceBracket = this.bracketByIdx(bracketIdx);
+		for (const source of sources) {
+			const sourceBracket = this.bracketByIdx(source.bracketIdx);
 			invariant(sourceBracket, "Bracket not found");
 
 			const { teams: sourcedTeams, relevantMatchesFinished } =
-				sourceBracket.source(placements);
+				sourceBracket.source(source.placements);
 			if (!relevantMatchesFinished) {
 				allRelevantMatchesFinished = false;
 			}
-			teams.push(...sourcedTeams);
+
+			const excludedOverridenTeams = sourcedTeams.filter(
+				(teamId) =>
+					!this.ctx.bracketProgressionOverrides.some(
+						(override) =>
+							override.sourceBracketIdx === source.bracketIdx &&
+							override.tournamentTeamId === teamId &&
+							// "no progression" override
+							override.destinationBracketIdx !== -1 &&
+							// redundant override
+							override.destinationBracketIdx !== bracketIdx,
+					),
+			);
+
+			teams.push(...excludedOverridenTeams);
 		}
 
-		return { teams, relevantMatchesFinished: allRelevantMatchesFinished };
+		const teamsFromOverride: { id: number; sourceBracketIdx: number }[] = [];
+		for (const source of sources) {
+			for (const override of this.ctx.bracketProgressionOverrides) {
+				if (override.sourceBracketIdx !== source.bracketIdx) continue;
+				if (override.destinationBracketIdx !== bracketIdx) continue;
+
+				teamsFromOverride.push({
+					id: override.tournamentTeamId,
+					sourceBracketIdx: source.bracketIdx,
+				});
+			}
+		}
+
+		const overridesWithoutRepeats = teamsFromOverride
+			.filter(({ id }) => !teams.includes(id))
+			.sort((a, b) => {
+				if (a.sourceBracketIdx !== b.sourceBracketIdx) return 0;
+
+				const bracket = this.bracketByIdx(a.sourceBracketIdx);
+				if (!bracket) return 0;
+
+				const aStanding = bracket.standings.find(
+					(standing) => standing.team.id === a.id,
+				);
+				const bStanding = bracket.standings.find(
+					(standing) => standing.team.id === b.id,
+				);
+
+				if (!aStanding || !bStanding) return 0;
+
+				return aStanding.placement - bStanding.placement;
+			})
+			.map(({ id }) => id);
+
+		return {
+			teams: teams.concat(overridesWithoutRepeats),
+			relevantMatchesFinished: allRelevantMatchesFinished,
+		};
+	}
+
+	private resolveTeamsFromSignups(bracketIdx: number) {
+		const teams = this.isMultiStartingBracket
+			? this.ctx.teams.filter((team) => {
+					// 0 is the default
+					if (typeof team.startingBracketIdx !== "number") {
+						return bracketIdx === 0;
+					}
+
+					const startingBracket = this.ctx.settings.bracketProgression.at(
+						team.startingBracketIdx,
+					);
+					if (!startingBracket || startingBracket.sources) {
+						logger.warn(
+							"resolveTeamsFromSignups: Starting bracket index invalid",
+						);
+						return bracketIdx === 0;
+					}
+
+					return team.startingBracketIdx === bracketIdx;
+				})
+			: this.ctx.teams;
+
+		return {
+			teams: teams.map((team) => team.id),
+			relevantMatchesFinished: true,
+		};
 	}
 
 	private avoidReplaysOfPreviousBracketOpponent(
@@ -941,6 +1015,15 @@ export class Tournament {
 		if (!bracket) return null;
 
 		return bracket;
+	}
+
+	get isMultiStartingBracket() {
+		let count = 0;
+		for (const bracket of this.ctx.settings.bracketProgression) {
+			if (!bracket.sources) count++;
+		}
+
+		return count > 1;
 	}
 
 	ownedTeamByUser(

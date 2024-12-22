@@ -209,3 +209,31 @@ export function deleteLogo(tournamentTeamId: number) {
 		.where("TournamentTeam.id", "=", tournamentTeamId)
 		.execute();
 }
+
+export function updateStartingBrackets(
+	startingBrackets: {
+		tournamentTeamId: number;
+		startingBracketIdx: number;
+	}[],
+) {
+	const grouped = Object.groupBy(
+		startingBrackets,
+		(sb) => sb.startingBracketIdx,
+	);
+
+	return db.transaction().execute(async (trx) => {
+		for (const [startingBracketIdx, tournamentTeamIds = []] of Object.entries(
+			grouped,
+		)) {
+			await trx
+				.updateTable("TournamentTeam")
+				.set({ startingBracketIdx: Number(startingBracketIdx) })
+				.where(
+					"TournamentTeam.id",
+					"in",
+					tournamentTeamIds.map((t) => t.tournamentTeamId),
+				)
+				.execute();
+		}
+	});
+}

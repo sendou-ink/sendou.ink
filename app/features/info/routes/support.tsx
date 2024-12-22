@@ -93,6 +93,11 @@ const PERKS = [
 		name: "joinFive",
 		extraInfo: false,
 	},
+	{
+		tier: 2,
+		name: "tournamentsBeta",
+		extraInfo: false,
+	},
 ] as const;
 
 export default function SupportPage() {

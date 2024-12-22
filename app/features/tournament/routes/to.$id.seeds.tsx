@@ -22,8 +22,10 @@ import * as React from "react";
 import { Alert } from "~/components/Alert";
 import { Button } from "~/components/Button";
 import { Catcher } from "~/components/Catcher";
+import { Dialog } from "~/components/Dialog";
 import { Draggable } from "~/components/Draggable";
 import { SubmitButton } from "~/components/SubmitButton";
+import { Table } from "~/components/Table";
 import { requireUser } from "~/features/auth/core/user.server";
 import {
 	type TournamentDataTeam,
@@ -37,6 +39,7 @@ import { tournamentBracketsPage, userResultsPage } from "~/utils/urls";
 import { Avatar } from "../../../components/Avatar";
 import { InfoPopover } from "../../../components/InfoPopover";
 import { ordinalToRoundedSp } from "../../mmr/mmr-utils";
+import * as TournamentTeamRepository from "../TournamentTeamRepository.server";
 import { updateTeamSeeds } from "../queries/updateTeamSeeds.server";
 import { seedsActionSchema } from "../tournament-schemas.server";
 import { tournamentIdFromParams } from "../tournament-utils";
@@ -54,7 +57,30 @@ export const action: ActionFunction = async ({ request, params }) => {
 	validate(tournament.isOrganizer(user));
 	validate(!tournament.hasStarted, "Tournament has started");
 
-	updateTeamSeeds({ tournamentId, teamIds: data.seeds });
+	switch (data._action) {
+		case "UPDATE_SEEDS": {
+			updateTeamSeeds({ tournamentId, teamIds: data.seeds });
+			break;
+		}
+		case "UPDATE_STARTING_BRACKETS": {
+			const validBracketIdxs =
+				tournament.ctx.settings.bracketProgression.flatMap(
+					(bracket, bracketIdx) => (!bracket.sources ? [bracketIdx] : []),
+				);
+
+			validate(
+				data.startingBrackets.every((t) =>
+					validBracketIdxs.includes(t.startingBracketIdx),
+				),
+				"Invalid starting bracket idx",
+			);
+
+			await TournamentTeamRepository.updateStartingBrackets(
+				data.startingBrackets,
+			);
+			break;
+		}
+	}
 
 	clearTournamentDataCache(tournamentId);
 
@@ -149,6 +175,13 @@ export default function TournamentSeedsPage() {
 					</Button>
 				)}
 			</div>
+			{tournament.isMultiStartingBracket ? (
+				<StartingBracketDialog
+					key={tournament.ctx.teams
+						.map((team) => team.startingBracketIdx ?? 0)
+						.join()}
+				/>
+			) : null}
 			<ul>
 				<li className="tournament__seeds__teams-list-row">
 					<div className="tournament__seeds__teams-container__header" />
@@ -241,6 +274,118 @@ export default function TournamentSeedsPage() {
 					</DragOverlay>
 				</DndContext>
 			</ul>
+		</div>
+	);
+}
+
+function StartingBracketDialog() {
+	const fetcher = useFetcher();
+	const tournament = useTournament();
+
+	const [isOpen, setIsOpen] = React.useState(false);
+	const [teamStartingBrackets, setTeamStartingBrackets] = React.useState(
+		tournament.ctx.teams.map((team) => ({
+			tournamentTeamId: team.id,
+			startingBracketIdx: team.startingBracketIdx ?? 0,
+		})),
+	);
+
+	const startingBrackets = tournament.ctx.settings.bracketProgression
+		.flatMap((bracket, bracketIdx) => (!bracket.sources ? [bracketIdx] : []))
+		.map((bracketIdx) => tournament.bracketByIdx(bracketIdx)!);
+
+	return (
+		<div>
+			<Button
+				size="tiny"
+				onClick={() => setIsOpen(true)}
+				testId="set-starting-brackets"
+			>
+				Set starting brackets
+			</Button>
+			<Dialog isOpen={isOpen} close={() => setIsOpen(false)} className="w-max">
+				<fetcher.Form className="stack lg items-center" method="post">
+					<h2 className="text-lg self-start">Setting starting brackets</h2>
+					<div>
+						{startingBrackets.map((bracket) => {
+							const teamCount = teamStartingBrackets.filter(
+								(t) => t.startingBracketIdx === bracket.idx,
+							).length;
+
+							return (
+								<div key={bracket.id} className="stack horizontal sm text-xs">
+									<span>{bracket.name}</span>
+									<span>({teamCount} teams)</span>
+								</div>
+							);
+						})}
+					</div>
+					<input
+						type="hidden"
+						name="_action"
+						value="UPDATE_STARTING_BRACKETS"
+					/>
+					<input
+						type="hidden"
+						name="startingBrackets"
+						value={JSON.stringify(teamStartingBrackets)}
+					/>
+
+					<Table>
+						<thead>
+							<tr>
+								<th>Team</th>
+								<th>Starting bracket</th>
+							</tr>
+						</thead>
+
+						<tbody>
+							{tournament.ctx.teams.map((team) => {
+								const { startingBracketIdx } = teamStartingBrackets.find(
+									({ tournamentTeamId }) => tournamentTeamId === team.id,
+								)!;
+
+								return (
+									<tr key={team.id}>
+										<td>{team.name}</td>
+										<td>
+											<select
+												className="w-max"
+												data-testid="starting-bracket-select"
+												value={startingBracketIdx}
+												onChange={(e) => {
+													const newBracketIdx = Number(e.target.value);
+													setTeamStartingBrackets((teamStartingBrackets) =>
+														teamStartingBrackets.map((t) =>
+															t.tournamentTeamId === team.id
+																? { ...t, startingBracketIdx: newBracketIdx }
+																: t,
+														),
+													);
+												}}
+											>
+												{startingBrackets.map((bracket) => (
+													<option key={bracket.id} value={bracket.idx}>
+														{bracket.name}
+													</option>
+												))}
+											</select>
+										</td>
+									</tr>
+								);
+							})}
+						</tbody>
+					</Table>
+					<SubmitButton
+						state={fetcher.state}
+						_action="UPDATE_STARTING_BRACKETS"
+						size="big"
+						testId="set-starting-brackets-submit-button"
+					>
+						Save
+					</SubmitButton>
+				</fetcher.Form>
+			</Dialog>
 		</div>
 	);
 }

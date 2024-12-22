@@ -173,8 +173,6 @@ export function validatedBrackets(
 		throw e;
 	}
 
-	validateOnlyOneEntry(parsed);
-
 	const validationError = bracketsToValidationError(parsed);
 
 	if (validationError) {
@@ -182,16 +180,6 @@ export function validatedBrackets(
 	}
 
 	return parsed;
-}
-
-function validateOnlyOneEntry(brackets: ParsedBracket[]) {
-	const entryBracketCount = brackets.filter(
-		(bracket) => !bracket.sources,
-	).length;
-
-	if (entryBracketCount !== 1) {
-		throw new Error("Only one bracket can have no sources");
-	}
 }
 
 /** Checks parsed brackets for any errors related to how the progression is laid out  */
@@ -691,4 +679,23 @@ function bracketsReachableFrom(
 	}
 
 	return result;
+}
+
+export function destinationsFromBracketIdx(
+	sourceBracketIdx: number,
+	progression: ParsedBracket[],
+): number[] {
+	const destinations: number[] = [];
+
+	for (const [destinationBracketIdx, bracket] of progression.entries()) {
+		if (!bracket.sources) continue;
+
+		for (const source of bracket.sources) {
+			if (source.bracketIdx === sourceBracketIdx) {
+				destinations.push(destinationBracketIdx);
+			}
+		}
+	}
+
+	return destinations;
 }

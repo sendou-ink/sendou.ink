@@ -419,21 +419,6 @@ describe("validatedSources - other rules", () => {
 		expect(error.type).toBe("NO_DE_POSITIVE");
 		expect((error as any).bracketIdx).toEqual(1);
 	});
-
-	it("throws an error if many missing sources", () => {
-		expect(() =>
-			getValidatedBrackets([
-				{
-					settings: {},
-					type: "round_robin",
-				},
-				{
-					settings: {},
-					type: "single_elimination",
-				},
-			]),
-		).toThrow();
-	});
 });
 
 describe("isFinals", () => {
@@ -578,5 +563,28 @@ describe("bracketIdxsForStandings", () => {
 				progressions.doubleEliminationWithUnderground,
 			),
 		).toEqual([0]); // missing 1 because it's underground when DE is the source
+	});
+});
+
+describe("destinationsFromBracketIdx", () => {
+	it("returns correct destination (one destination)", () => {
+		expect(
+			Progression.destinationsFromBracketIdx(
+				0,
+				progressions.roundRobinToSingleElimination,
+			),
+		).toEqual([1]);
+	});
+
+	it("returns correct destination (many destinations)", () => {
+		expect(
+			Progression.destinationsFromBracketIdx(0, progressions.lowInk),
+		).toEqual([1, 2]);
+	});
+
+	it("returns an empty array if no destinations", () => {
+		expect(
+			Progression.destinationsFromBracketIdx(0, progressions.singleElimination),
+		).toEqual([]);
 	});
 });

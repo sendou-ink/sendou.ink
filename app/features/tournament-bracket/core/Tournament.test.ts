@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, it, test } from "vitest";
 import type { Match } from "~/modules/brackets-model";
 import { Tournament } from "./Tournament";
 import {
@@ -7,6 +7,12 @@ import {
 	PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES,
 	PADDLING_POOL_257,
 } from "./tests/mocks";
+import { SWIM_OR_SINK_167 } from "./tests/mocks-sos";
+import {
+	progressions,
+	testTournament,
+	tournamentCtxTeam,
+} from "./tests/test-utils";
 
 describe("Follow-up bracket progression", () => {
 	const tournamentPP257 = new Tournament(PADDLING_POOL_257());
@@ -176,5 +182,222 @@ describe("Follow-up bracket progression", () => {
 
 		// 1 team should get swapped meaning two matches are now different
 		expect(different, "Amount of different matches is incorrect").toBe(2);
+	});
+});
+
+describe("Bracket progression override", () => {
+	it("handles no override", () => {
+		const tournament = new Tournament({
+			...SWIM_OR_SINK_167(),
+		});
+
+		expect(tournament.brackets[1].participantTournamentTeamIds).toHaveLength(
+			11,
+		);
+		expect(tournament.brackets[2].participantTournamentTeamIds).toHaveLength(
+			11,
+		);
+		expect(tournament.brackets[3].participantTournamentTeamIds).toHaveLength(
+			11,
+		);
+		expect(tournament.brackets[4].participantTournamentTeamIds).toHaveLength(
+			11,
+		);
+	});
+
+	it("overrides causing the team to go to another bracket", () => {
+		const tournament = new Tournament({
+			...SWIM_OR_SINK_167([
+				{
+					tournamentTeamId: 14809,
+					destinationBracketIdx: 1,
+					sourceBracketIdx: 0,
+				},
+			]),
+		});
+
+		expect(
+			tournament.brackets[1].participantTournamentTeamIds.includes(14809),
+		).toBeTruthy();
+	});
+
+	it("overrides causing the team not to go to their original bracket", () => {
+		const tournament = new Tournament({
+			...SWIM_OR_SINK_167([
+				{
+					tournamentTeamId: 14809,
+					destinationBracketIdx: 1,
+					sourceBracketIdx: 0,
+				},
+			]),
+		});
+
+		expect(
+			tournament.brackets[2].participantTournamentTeamIds.includes(14809),
+		).toBeFalsy();
+	});
+
+	it("ignores -1 override (used to indicate no progression)", () => {
+		const tournament = new Tournament({
+			...SWIM_OR_SINK_167([
+				{
+					tournamentTeamId: 14809,
+					destinationBracketIdx: -1,
+					sourceBracketIdx: 0,
+				},
+			]),
+		});
+
+		expect(tournament.brackets[1].participantTournamentTeamIds).toHaveLength(
+			11,
+		);
+		expect(tournament.brackets[2].participantTournamentTeamIds).toHaveLength(
+			11,
+		);
+		expect(tournament.brackets[3].participantTournamentTeamIds).toHaveLength(
+			11,
+		);
+		expect(tournament.brackets[4].participantTournamentTeamIds).toHaveLength(
+			11,
+		);
+	});
+
+	it("override teams seeded at the end", () => {
+		const tournament = new Tournament({
+			...SWIM_OR_SINK_167([
+				{
+					tournamentTeamId: 14809,
+					destinationBracketIdx: 1,
+					sourceBracketIdx: 0,
+				},
+			]),
+		});
+
+		expect(tournament.brackets[1].seeding?.at(-1)).toBe(14809);
+	});
+
+	it("if redundant override, still in the right bracket", () => {
+		const tournament = new Tournament({
+			...SWIM_OR_SINK_167([
+				{
+					tournamentTeamId: 14809,
+					destinationBracketIdx: 2,
+					sourceBracketIdx: 0,
+				},
+			]),
+		});
+
+		expect(
+			tournament.brackets[2].participantTournamentTeamIds.includes(14809),
+		).toBeTruthy();
+	});
+
+	it("redundants override does not affect the seed", () => {
+		const tournamentTeamId = 14735;
+		const tournament = new Tournament({
+			...SWIM_OR_SINK_167(),
+		});
+		const tournamentWOverride = new Tournament({
+			...SWIM_OR_SINK_167([
+				{
+					tournamentTeamId,
+					destinationBracketIdx: 2,
+					sourceBracketIdx: 0,
+				},
+			]),
+		});
+
+		const seedingIdx =
+			tournament.brackets[2].seeding?.indexOf(tournamentTeamId);
+		const seedingIdxWOverride =
+			tournamentWOverride.brackets[2].seeding?.indexOf(tournamentTeamId);
+
+		expect(typeof seedingIdx === "number").toBeTruthy();
+		expect(seedingIdx).toBe(seedingIdxWOverride);
+	});
+
+	// note there is also logic for avoiding replays
+	it("override teams seeded according to their placement in the source bracket", () => {
+		const tournament = new Tournament({
+			...SWIM_OR_SINK_167([
+				// throw these to different brackets to avoid replays
+				{
+					tournamentTeamId: 14657,
+					destinationBracketIdx: 2,
+					sourceBracketIdx: 0,
+				},
+				{
+					tournamentTeamId: 14800,
+					destinationBracketIdx: 2,
+					sourceBracketIdx: 0,
+				},
+				{
+					tournamentTeamId: 14743,
+					destinationBracketIdx: 2,
+					sourceBracketIdx: 0,
+				},
+				// ---
+				{
+					tournamentTeamId: 14737,
+					destinationBracketIdx: 1,
+					sourceBracketIdx: 0,
+				},
+				{
+					tournamentTeamId: 14809,
+					destinationBracketIdx: 1,
+					sourceBracketIdx: 0,
+				},
+				{
+					tournamentTeamId: 14796,
+					destinationBracketIdx: 1,
+					sourceBracketIdx: 0,
+				},
+			]),
+		});
+
+		expect(tournament.brackets[1].seeding?.at(-3)).toBe(14809);
+		expect(tournament.brackets[1].seeding?.at(-2)).toBe(14796);
+		expect(tournament.brackets[1].seeding?.at(-1)).toBe(14737);
+	});
+});
+
+describe("Adjusting team starting bracket", () => {
+	const createTournament = (teamStartingBracketIdx: (number | null)[]) => {
+		return testTournament({
+			ctx: {
+				teams: teamStartingBracketIdx.map((startingBracketIdx, i) =>
+					tournamentCtxTeam(i + 1, { startingBracketIdx }),
+				),
+				settings: {
+					bracketProgression: progressions.manyStartBrackets,
+				},
+			},
+		});
+	};
+
+	it("defaults to bracket idx = 0", () => {
+		const tournament = createTournament([null, null, null, null]);
+
+		expect(tournament.brackets[0].participantTournamentTeamIds).toHaveLength(4);
+	});
+
+	it("setting starting bracket idx has an effect", () => {
+		const tournament = createTournament([0, 0, 1, 1]);
+
+		expect(tournament.brackets[0].participantTournamentTeamIds).toHaveLength(2);
+		expect(tournament.brackets[1].participantTournamentTeamIds).toHaveLength(2);
+	});
+
+	it("handles too high bracket idx gracefully", () => {
+		const tournament = createTournament([0, 0, 0, 10]);
+
+		expect(tournament.brackets[0].participantTournamentTeamIds).toHaveLength(4);
+	});
+
+	it("handles bracket idx is not a valid starting bracket idx gracefully", () => {
+		// 2 is not valid because it is a follow-up bracket
+		const tournament = createTournament([0, 0, 0, 2]);
+
+		expect(tournament.brackets[0].participantTournamentTeamIds).toHaveLength(4);
 	});
 });

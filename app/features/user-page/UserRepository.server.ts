@@ -263,6 +263,12 @@ export function findBannedStatusByUserId(userId: number) {
 		.executeTakeFirst();
 }
 
+const userIsTournamentOrganizer = sql<
+	string | null
+>`IIF(COALESCE("User"."patronTier", 0) >= 2, 1, "User"."isTournamentOrganizer")`.as(
+	"isTournamentOrganizer",
+);
+
 export function findLeanById(id: number) {
 	return db
 		.selectFrom("User")
@@ -272,7 +278,7 @@ export function findLeanById(id: number) {
 			...COMMON_USER_FIELDS,
 			"User.isArtist",
 			"User.isVideoAdder",
-			"User.isTournamentOrganizer",
+			userIsTournamentOrganizer,
 			"User.patronTier",
 			"User.favoriteBadgeId",
 			"User.languages",
