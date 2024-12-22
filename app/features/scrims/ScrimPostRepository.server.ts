@@ -10,8 +10,8 @@ import { db } from "../../db/sql";
 import invariant from "../../utils/invariant";
 import type { Unwrapped } from "../../utils/types";
 import * as ScrimPost from "./core/ScrimPost";
-import type { LutiDiv, ScrimPost as ScrimPostType } from "./scrims-types";
-import { getPostRequestCensor } from "./scrims-utils";
+import type { ScrimPost as ScrimPostType } from "./scrims-types";
+import { getPostRequestCensor, parseLutiDiv } from "./scrims-utils";
 
 type InsertArgs = Pick<
 	Insertable<Tables["ScrimPost"]>,
@@ -256,9 +256,3 @@ export function deleteRequest(scrimPostRequestId: number) {
 		.where("id", "=", scrimPostRequestId)
 		.execute();
 }
-
-const parseLutiDiv = (div: number): LutiDiv => {
-	if (div === 0) return "X";
-
-	return String(div) as LutiDiv;
-};

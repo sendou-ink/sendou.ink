@@ -1,4 +1,4 @@
-import type { ScrimPost } from "./scrims-types";
+import type { LutiDiv, ScrimPost } from "./scrims-types";
 
 // xxx: rename?
 export const getPostRequestCensor =
@@ -42,3 +42,15 @@ export function dividePosts(posts: Array<ScrimPost>, userId?: number) {
 		neutral: grouped.NEUTRAL ?? [],
 	};
 }
+
+export const parseLutiDiv = (div: number): LutiDiv => {
+	if (div === 0) return "X";
+
+	return String(div) as LutiDiv;
+};
+
+export const serializeLutiDiv = (div: LutiDiv): number => {
+	if (div === "X") return 0;
+
+	return Number(div);
+};
