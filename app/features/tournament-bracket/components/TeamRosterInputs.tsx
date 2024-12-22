@@ -458,8 +458,7 @@ function TeamRosterInputsCheckboxes({
 								name="playerName"
 								disabled={mode() === "DISABLED" || mode() === "PRESENTATIONAL"}
 								value={member.id}
-								// xxx: check
-								checked={checkedPlayers.flat().includes(member.id)}
+								checked={checkedPlayers.includes(member.id)}
 								onChange={() => handlePlayerClick(member.id)}
 								data-testid={`player-checkbox-${i}`}
 							/>{" "}

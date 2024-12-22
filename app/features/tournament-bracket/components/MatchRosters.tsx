@@ -4,7 +4,6 @@ import { Avatar } from "~/components/Avatar";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { tournamentTeamPage, userPage } from "~/utils/urls";
 import type { TournamentMatchLoaderData } from "../routes/to.$id.matches.$mid";
-import { isMatchTeamMember } from "../tournament-bracket-utils";
 
 const INACTIVE_PLAYER_CSS =
 	"tournament__team-with-roster__member__inactive text-lighter-important";
@@ -18,24 +17,11 @@ export function MatchRosters({
 
 	const teamOne = teams[0] ? tournament.teamById(teams[0]) : undefined;
 	const teamTwo = teams[1] ? tournament.teamById(teams[1]) : undefined;
-	teamOne?.members[0].createdAt;
-	const teamOnePlayers = data.match.players.filter((participant) =>
-		isMatchTeamMember({
-			matchIsOver: data.matchIsOver,
-			team: teamOne,
-			participant,
-			tournament,
-			results: data.results,
-		}),
+	const teamOnePlayers = data.match.players.filter(
+		(p) => p.tournamentTeamId === teamOne?.id,
 	);
-	const teamTwoPlayers = data.match.players.filter((participant) =>
-		isMatchTeamMember({
-			matchIsOver: data.matchIsOver,
-			team: teamTwo,
-			participant,
-			tournament,
-			results: data.results,
-		}),
+	const teamTwoPlayers = data.match.players.filter(
+		(p) => p.tournamentTeamId === teamTwo?.id,
 	);
 
 	const teamOneParticipatedPlayers = teamOnePlayers.filter((p) =>

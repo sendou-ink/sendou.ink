@@ -354,7 +354,7 @@ function EditScoreForm({
 		return (
 			<fetcher.Form
 				method="post"
-				className="stack horizontal md justify-center"
+				className="stack horizontal md justify-center mt-6"
 			>
 				<input type="hidden" name="resultId" value={resultId} />
 				<input

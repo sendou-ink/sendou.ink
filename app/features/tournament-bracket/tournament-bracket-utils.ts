@@ -272,28 +272,6 @@ export function tournamentTeamToActiveRosterUserIds(
 	return null;
 }
 
-// xxx: adjust
-export function isMatchTeamMember(args: {
-	matchIsOver: boolean;
-	team?: TournamentDataTeam;
-	participant: { id: number; tournamentTeamId: number };
-	tournament: Tournament;
-	results: Array<{ createdAt: number }>;
-}) {
-	const isTeamMember = args.participant.tournamentTeamId === args.team?.id;
-	if (!isTeamMember) return false;
-	if (!args.matchIsOver) return isTeamMember;
-
-	// it's possible they were added after the match ended
-	// so it could be a situation "Player" vs. "Player"
-	const matchEndedAt = args.results[args.results.length - 1].createdAt;
-	const memberAddedAt =
-		args.team?.members.find((member) => member.userId === args.participant.id)
-			?.createdAt ?? 0;
-
-	return memberAddedAt < matchEndedAt;
-}
-
 // deal with user getting added to multiple teams by the TO
 export function ensureOneStandingPerUser(standings: Standing[]) {
 	const userIds = new Set<number>();
