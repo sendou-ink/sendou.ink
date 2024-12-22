@@ -3,10 +3,7 @@ import { type Rating, ordinal, rating } from "openskill";
 import { db } from "../app/db/sql";
 import type { Tables } from "../app/db/tables";
 import { tournamentFromDB } from "../app/features/tournament-bracket/core/Tournament.server";
-import {
-	calculateIndividualPlayerSkills,
-	userIdsToTeamIdRecord,
-} from "../app/features/tournament-bracket/core/summarizer.server";
+import { calculateIndividualPlayerSkills } from "../app/features/tournament-bracket/core/summarizer.server";
 import { allMatchResultsByTournamentId } from "../app/features/tournament-bracket/queries/allMatchResultsByTournamentId.server";
 import invariant from "../app/utils/invariant";
 import { logger } from "../app/utils/logger";
@@ -29,7 +26,6 @@ async function main() {
 					return ratings.get(userId) ?? rating();
 				},
 				results,
-				userIdsToTeamId: userIdsToTeamIdRecord(tournament.ctx.teams),
 			});
 
 			for (const { userId, mu, sigma } of skills) {
