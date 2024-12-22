@@ -20,17 +20,17 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "643355948265766912",
 	},
 	{
-		displayName: "50 Caliber League (First Place)",
+		displayName: "Gun (Winning 50 Calibur League)",
 		fileName: "50-cal-fir",
 		authorDiscordId: "530093822806458368",
 	},
 	{
-		displayName: "50 Caliber League (Second Place)",
+		displayName: "Gold Bullet (Qualifying for 50 Calibur League)",
 		fileName: "50-cal-sec",
 		authorDiscordId: "530093822806458368",
 	},
 	{
-		displayName: "50 Caliber League (Third Place)",
+		displayName: "Silver Bullet (Winning Silver Bracket 50 Calibur)",
 		fileName: "50-cal-thi",
 		authorDiscordId: "530093822806458368",
 	},
