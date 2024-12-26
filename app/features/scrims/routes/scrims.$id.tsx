@@ -70,14 +70,14 @@ function GroupCard({
 }) {
 	return (
 		<div className="stack sm">
-			<div className="stack justify-between">
+			<div className="stack horizontal justify-between">
 				<div className="text-lighter text-xs">
 					{side === "ALPHA" ? "Alpha" : "Bravo"}
 				</div>
 				{group.team ? (
 					<Link
 						to={teamPage(group.team.customUrl)}
-						className="stack horizontal items-center xs font-bold"
+						className="stack horizontal items-center xs font-bold text-xs"
 					>
 						{group.team.avatarUrl ? (
 							<Avatar

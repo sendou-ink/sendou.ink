@@ -112,7 +112,7 @@ const baseFindQuery = db
 		jsonArrayFrom(
 			eb
 				.selectFrom("ScrimPostRequest")
-				.leftJoin("Team", "ScrimPost.teamId", "Team.id")
+				.leftJoin("Team", "ScrimPostRequest.teamId", "Team.id")
 				.leftJoin(
 					"UserSubmittedImage",
 					"Team.avatarImgId",

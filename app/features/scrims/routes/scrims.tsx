@@ -295,6 +295,7 @@ function ScrimsTable({
 						? post.requests.map((request) => (
 								<RequestRow
 									key={request.id}
+									canAccept={owner.id === user?.id}
 									request={request}
 									postId={post.id}
 								/>
@@ -489,12 +490,14 @@ function ContactButton({ postId }: { postId: number }) {
 }
 
 function RequestRow({
+	canAccept,
 	request,
 	postId,
-}: { request: ScrimPostRequest; postId: number }) {
+}: { canAccept: boolean; request: ScrimPostRequest; postId: number }) {
 	const fetcher = useFetcher();
 
-	const owner = request.users.find((user) => user.isOwner) ?? request.users[0];
+	const requestOwner =
+		request.users.find((user) => user.isOwner) ?? request.users[0];
 
 	return (
 		<tr className="bg-theme-transparent-important">
@@ -523,16 +526,16 @@ function RequestRow({
 							url={userSubmittedImage(request.team.avatarUrl)}
 						/>
 					) : (
-						<Avatar size="xxs" user={owner} />
+						<Avatar size="xxs" user={requestOwner} />
 					)}
-					{request.team?.name ?? `${owner.username}'s pickup`}
+					{request.team?.name ?? `${requestOwner.username}'s pickup`}
 				</div>
 			</td>
 			<td />
 			<td />
 			<td>
 				{/** xxx: some kind of confirm? */}
-				{!request.isAccepted ? (
+				{!request.isAccepted && canAccept ? (
 					<fetcher.Form method="post">
 						<input type="hidden" name="scrimPostRequestId" value={request.id} />
 						<SubmitButton
@@ -543,6 +546,10 @@ function RequestRow({
 							Accept
 						</SubmitButton>
 					</fetcher.Form>
+				) : !request.isAccepted && !canAccept ? (
+					<Popover buttonChildren={<>Accept</>} triggerClassName="tiny">
+						Ask the person who posted the scrim to accept this request
+					</Popover>
 				) : (
 					<ContactButton postId={postId} />
 				)}
