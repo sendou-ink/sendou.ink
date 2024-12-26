@@ -255,6 +255,14 @@ export async function findProfileByIdentifier(
 	};
 }
 
+export function findByCustomUrl(customUrl: string) {
+	return db
+		.selectFrom("User")
+		.select(["User.id", "User.discordId", "User.customUrl", "User.patronTier"])
+		.where("customUrl", "=", customUrl)
+		.executeTakeFirst();
+}
+
 export function findBannedStatusByUserId(userId: number) {
 	return db
 		.selectFrom("User")

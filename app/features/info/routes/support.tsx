@@ -50,6 +50,11 @@ const PERKS = [
 	},
 	{
 		tier: 2,
+		name: "userShortLink",
+		extraInfo: true,
+	},
+	{
+		tier: 2,
 		name: "customizedColorsUser",
 		extraInfo: false,
 	},

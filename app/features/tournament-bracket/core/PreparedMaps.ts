@@ -35,7 +35,8 @@ export function resolvePreparedForTheBracket({
 			compare(
 				bracket.sources?.map((s) => s.bracketIdx),
 				bracketPreparingFor.sources?.map((s) => s.bracketIdx),
-			)
+			) &&
+			compare(bracket.settings, bracketPreparingFor.settings)
 		) {
 			const bracketMaps = preparedByBracket?.[anotherBracketIdx];
 

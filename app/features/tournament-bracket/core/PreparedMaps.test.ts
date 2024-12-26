@@ -3,8 +3,8 @@ import type { PreparedMaps as PreparedMapsType } from "~/db/tables";
 import * as PreparedMaps from "./PreparedMaps";
 import { testTournament } from "./tests/test-utils";
 
-describe("PreparedMaps - resolvePreparedForTheBracket", () => {
-	const tournament = testTournament({
+const getTestTournament = (thirdPlaceMatchesForBoth = true) =>
+	testTournament({
 		ctx: {
 			settings: {
 				bracketProgression: [
@@ -19,7 +19,9 @@ describe("PreparedMaps - resolvePreparedForTheBracket", () => {
 						type: "single_elimination",
 						name: "Top Cut",
 						requiresCheckIn: false,
-						settings: {},
+						settings: {
+							thirdPlaceMatch: true,
+						},
 						sources: [
 							{
 								bracketIdx: 0,
@@ -31,7 +33,9 @@ describe("PreparedMaps - resolvePreparedForTheBracket", () => {
 						type: "single_elimination",
 						name: "Underground Bracket",
 						requiresCheckIn: false,
-						settings: {},
+						settings: {
+							thirdPlaceMatch: thirdPlaceMatchesForBoth,
+						},
 						sources: [
 							{
 								bracketIdx: 0,
@@ -43,6 +47,9 @@ describe("PreparedMaps - resolvePreparedForTheBracket", () => {
 			},
 		},
 	});
+
+describe("PreparedMaps - resolvePreparedForTheBracket", () => {
+	const tournament = getTestTournament();
 
 	test("returns null if no prepared maps at all", () => {
 		const prepared = PreparedMaps.resolvePreparedForTheBracket({
@@ -105,6 +112,26 @@ describe("PreparedMaps - resolvePreparedForTheBracket", () => {
 		});
 
 		expect(prepared).not.toBeNull();
+	});
+
+	test("returns null if the sibling does not have third place match while this one does", () => {
+		const tournament = getTestTournament(false);
+
+		const prepared = PreparedMaps.resolvePreparedForTheBracket({
+			tournament,
+			bracketIdx: 1,
+			preparedByBracket: [
+				null,
+				null,
+				{
+					authorId: 1,
+					createdAt: 1,
+					maps: [],
+				},
+			],
+		});
+
+		expect(prepared).toBeNull();
 	});
 });
 

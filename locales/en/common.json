@@ -187,6 +187,8 @@
 	"support.perk.seePlusPercentage.extra": "Normally only failed suggests see their voting percentage. With this, you can always see your own percentage.",
 	"support.perk.autoValidatePictures": "Auto validate uploaded pictures",
 	"support.perk.autoValidatePictures.extra": "Any images you upload (e.g. team profile/banner picture) get automatically validated. Normally it needs a moderator's approval first. Note that this doesn't apply to images that were already submitted.",
+	"support.perk.userShortLink": "User page short link",
+	"support.perk.userShortLink.extra": "Instead of e.g. sendou.ink/u/sendou you can also use snd.ink/sendou when linking to your user profile.",
 	"support.perk.customizedColorsUser": "Customize colors (user page)",
 	"support.perk.customizedColorsTeam": "Customize colors (team page)",
 	"support.perk.customizedColorsTeam.extra": "It is enough that one member of the team is a patron to get this perk.",
