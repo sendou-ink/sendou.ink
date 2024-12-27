@@ -434,4 +434,14 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "mimikyu",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "Zones Royale",
+		fileName: "szroyale",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Bastard München",
+		fileName: "muchen",
+		authorDiscordId: "528851510222782474",
+	},
 ];
