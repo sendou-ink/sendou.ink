@@ -447,6 +447,7 @@ test.describe("Tournament bracket", () => {
 		).toHaveCount(3);
 	});
 
+	// xxx: e2e test for adding dupe player
 	test("changes SOS format and progresses with it", async ({ page }) => {
 		const tournamentId = 4;
 

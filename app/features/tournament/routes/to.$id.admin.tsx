@@ -26,6 +26,7 @@ import {
 	tournamentEditPage,
 	tournamentPage,
 } from "~/utils/urls";
+import { Alert } from "../../../components/Alert";
 import { Dialog } from "../../../components/Dialog";
 import { BracketProgressionSelector } from "../../calendar/components/BracketProgressionSelector";
 import { useTournament } from "./to.$id";
@@ -201,6 +202,7 @@ function TeamActions() {
 			? actions.find((a) => a.when.length === 0)!
 			: actions[0],
 	);
+	const [selectedUserId, setSelectedUserId] = React.useState<number>();
 
 	const selectedTeam = tournament.teamById(selectedTeamId);
 
@@ -251,113 +253,137 @@ function TeamActions() {
 		return true;
 	});
 
+	const showAlreadyInTeamAlert = () => {
+		if (selectedAction.type !== "ADD_MEMBER") return false;
+		if (
+			!selectedUserId ||
+			!tournament.teamMemberOfByUser({ id: selectedUserId })
+		) {
+			return false;
+		}
+
+		return true;
+	};
+
 	return (
-		<fetcher.Form
-			method="post"
-			className="stack horizontal sm items-end flex-wrap"
-		>
-			<div>
-				<label htmlFor="action">Action</label>
-				<select
-					id="action"
-					name="action"
-					value={selectedAction.type}
-					onChange={(e) =>
-						setSelectedAction(actions.find((a) => a.type === e.target.value)!)
-					}
-				>
-					{actionsToShow.map((action) => (
-						<option key={action.type} value={action.type}>
-							{t(`tournament:admin.actions.${action.type}`)}
-						</option>
-					))}
-				</select>
-			</div>
-			{selectedAction.inputs.includes("REGISTERED_TEAM") ? (
+		<div className="stack md">
+			<fetcher.Form
+				method="post"
+				className="stack horizontal sm items-end flex-wrap"
+			>
 				<div>
-					<label htmlFor="teamId">Team</label>
+					<label htmlFor="action">Action</label>
 					<select
-						id="teamId"
-						name="teamId"
-						value={selectedTeamId}
-						onChange={(e) => setSelectedTeamId(Number(e.target.value))}
+						id="action"
+						name="action"
+						value={selectedAction.type}
+						onChange={(e) => {
+							setSelectedAction(
+								actions.find((a) => a.type === e.target.value)!,
+							);
+							setSelectedUserId(undefined);
+						}}
 					>
-						{tournament.ctx.teams
-							.slice()
-							.sort((a, b) => a.name.localeCompare(b.name))
-							.map((team) => (
-								<option key={team.id} value={team.id}>
-									{team.name}
+						{actionsToShow.map((action) => (
+							<option key={action.type} value={action.type}>
+								{t(`tournament:admin.actions.${action.type}`)}
+							</option>
+						))}
+					</select>
+				</div>
+				{selectedAction.inputs.includes("REGISTERED_TEAM") ? (
+					<div>
+						<label htmlFor="teamId">Team</label>
+						<select
+							id="teamId"
+							name="teamId"
+							value={selectedTeamId}
+							onChange={(e) => setSelectedTeamId(Number(e.target.value))}
+						>
+							{tournament.ctx.teams
+								.slice()
+								.sort((a, b) => a.name.localeCompare(b.name))
+								.map((team) => (
+									<option key={team.id} value={team.id}>
+										{team.name}
+									</option>
+								))}
+						</select>
+					</div>
+				) : null}
+				{selectedAction.inputs.includes("TEAM_NAME") ? (
+					<div>
+						<label htmlFor="teamName">Team name</label>
+						<input id="teamName" name="teamName" />
+					</div>
+				) : null}
+				{selectedTeam && selectedAction.inputs.includes("ROSTER_MEMBER") ? (
+					<div>
+						<label htmlFor="memberId">Member</label>
+						<select id="memberId" name="memberId">
+							{selectedTeam.members.map((member) => (
+								<option key={member.userId} value={member.userId}>
+									{member.username}
 								</option>
 							))}
-					</select>
-				</div>
-			) : null}
-			{selectedAction.inputs.includes("TEAM_NAME") ? (
-				<div>
-					<label htmlFor="teamName">Team name</label>
-					<input id="teamName" name="teamName" />
-				</div>
-			) : null}
-			{selectedTeam && selectedAction.inputs.includes("ROSTER_MEMBER") ? (
-				<div>
-					<label htmlFor="memberId">Member</label>
-					<select id="memberId" name="memberId">
-						{selectedTeam.members.map((member) => (
-							<option key={member.userId} value={member.userId}>
-								{member.username}
-							</option>
-						))}
-					</select>
-				</div>
-			) : null}
-			{selectedAction.inputs.includes("USER") ? (
-				<div>
-					<label htmlFor="user">User</label>
-					<UserSearch inputName="userId" id="user" />
-				</div>
-			) : null}
-			{selectedAction.inputs.includes("BRACKET") ? (
-				<div>
-					<label htmlFor="bracket">Bracket</label>
-					<select id="bracket" name="bracketIdx">
-						{tournament.brackets.map((bracket, bracketIdx) => (
-							<option key={bracket.name} value={bracketIdx}>
-								{bracket.name}
-							</option>
-						))}
-					</select>
-				</div>
-			) : null}
-			{selectedTeam && selectedAction.inputs.includes("IN_GAME_NAME") ? (
-				<div className="stack items-start">
-					<Label>New IGN</Label>
-					<div className="stack horizontal sm items-center">
-						<Input
-							name="inGameNameText"
-							aria-label="In game name"
-							maxLength={USER.IN_GAME_NAME_TEXT_MAX_LENGTH}
-						/>
-						<div className="u-edit__in-game-name-hashtag">#</div>
-						<Input
-							name="inGameNameDiscriminator"
-							aria-label="In game name discriminator"
-							maxLength={USER.IN_GAME_NAME_DISCRIMINATOR_MAX_LENGTH}
-							pattern="[0-9a-z]{4,5}"
+						</select>
+					</div>
+				) : null}
+				{selectedAction.inputs.includes("USER") ? (
+					<div>
+						<label htmlFor="user">User</label>
+						<UserSearch
+							inputName="userId"
+							id="user"
+							onChange={(newUser) => setSelectedUserId(newUser.id)}
 						/>
 					</div>
-				</div>
+				) : null}
+				{selectedAction.inputs.includes("BRACKET") ? (
+					<div>
+						<label htmlFor="bracket">Bracket</label>
+						<select id="bracket" name="bracketIdx">
+							{tournament.brackets.map((bracket, bracketIdx) => (
+								<option key={bracket.name} value={bracketIdx}>
+									{bracket.name}
+								</option>
+							))}
+						</select>
+					</div>
+				) : null}
+				{selectedTeam && selectedAction.inputs.includes("IN_GAME_NAME") ? (
+					<div className="stack items-start">
+						<Label>New IGN</Label>
+						<div className="stack horizontal sm items-center">
+							<Input
+								name="inGameNameText"
+								aria-label="In game name"
+								maxLength={USER.IN_GAME_NAME_TEXT_MAX_LENGTH}
+							/>
+							<div className="u-edit__in-game-name-hashtag">#</div>
+							<Input
+								name="inGameNameDiscriminator"
+								aria-label="In game name discriminator"
+								maxLength={USER.IN_GAME_NAME_DISCRIMINATOR_MAX_LENGTH}
+								pattern="[0-9a-z]{4,5}"
+							/>
+						</div>
+					</div>
+				) : null}
+				<SubmitButton
+					_action={selectedAction.type}
+					state={fetcher.state}
+					variant={
+						selectedAction.type === "DELETE_TEAM" ? "destructive" : undefined
+					}
+				>
+					Go
+				</SubmitButton>
+			</fetcher.Form>
+			{showAlreadyInTeamAlert() ? (
+				<Alert variation="INFO">This player is already in a team</Alert>
 			) : null}
-			<SubmitButton
-				_action={selectedAction.type}
-				state={fetcher.state}
-				variant={
-					selectedAction.type === "DELETE_TEAM" ? "destructive" : undefined
-				}
-			>
-				Go
-			</SubmitButton>
-		</fetcher.Form>
+		</div>
 	);
 }
 
