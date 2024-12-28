@@ -43,15 +43,20 @@ describe("tournamentSummary()", () => {
 	function summarize({
 		results,
 		seedingSkillCountsFor,
+		withMemberInTwoTeams = false,
 	}: {
 		results?: AllMatchResult[];
 		seedingSkillCountsFor?: Tables["SeedingSkill"]["type"];
+		withMemberInTwoTeams?: boolean;
 	} = {}) {
 		return tournamentSummary({
 			finalStandings: [
 				{
 					placement: 1,
-					team: createTeam(1, [1, 2, 3, 4]),
+					team: createTeam(
+						1,
+						withMemberInTwoTeams ? [1, 2, 3, 4, 5] : [1, 2, 3, 4],
+					),
 				},
 				{
 					placement: 2,
@@ -156,6 +161,16 @@ describe("tournamentSummary()", () => {
 
 	test("calculates final standings", () => {
 		const summary = summarize();
+		expect(summary.tournamentResults.length).toBe(4 * 4);
+	});
+
+	test("calculates final standings, handling a player in two teams", () => {
+		const summary = summarize({ withMemberInTwoTeams: true });
+		expect(
+			summary.tournamentResults.some(
+				(result) => result.tournamentTeamId === 1 && result.userId === 5,
+			),
+		).toBeTruthy();
 		expect(summary.tournamentResults.length).toBe(4 * 4);
 	});
 
@@ -452,5 +467,3 @@ describe("tournamentSummary()", () => {
 		expect(result.every((r) => r.wins === 1 && r.losses === 0)).toBeTruthy();
 	});
 });
-
-// xxx: test dupes
