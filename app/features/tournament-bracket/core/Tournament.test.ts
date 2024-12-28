@@ -8,6 +8,11 @@ import {
 	PADDLING_POOL_257,
 } from "./tests/mocks";
 import { SWIM_OR_SINK_167 } from "./tests/mocks-sos";
+import {
+	progressions,
+	testTournament,
+	tournamentCtxTeam,
+} from "./tests/test-utils";
 
 describe("Follow-up bracket progression", () => {
 	const tournamentPP257 = new Tournament(PADDLING_POOL_257());
@@ -353,5 +358,46 @@ describe("Bracket progression override", () => {
 		expect(tournament.brackets[1].seeding?.at(-3)).toBe(14809);
 		expect(tournament.brackets[1].seeding?.at(-2)).toBe(14796);
 		expect(tournament.brackets[1].seeding?.at(-1)).toBe(14737);
+	});
+});
+
+describe("Adjusting team starting bracket", () => {
+	const createTournament = (teamStartingBracketIdx: (number | null)[]) => {
+		return testTournament({
+			ctx: {
+				teams: teamStartingBracketIdx.map((startingBracketIdx, i) =>
+					tournamentCtxTeam(i + 1, { startingBracketIdx }),
+				),
+				settings: {
+					bracketProgression: progressions.manyStartBrackets,
+				},
+			},
+		});
+	};
+
+	it("defaults to bracket idx = 0", () => {
+		const tournament = createTournament([null, null, null, null]);
+
+		expect(tournament.brackets[0].participantTournamentTeamIds).toHaveLength(4);
+	});
+
+	it("setting starting bracket idx has an effect", () => {
+		const tournament = createTournament([0, 0, 1, 1]);
+
+		expect(tournament.brackets[0].participantTournamentTeamIds).toHaveLength(2);
+		expect(tournament.brackets[1].participantTournamentTeamIds).toHaveLength(2);
+	});
+
+	it("handles too high bracket idx gracefully", () => {
+		const tournament = createTournament([0, 0, 0, 10]);
+
+		expect(tournament.brackets[0].participantTournamentTeamIds).toHaveLength(4);
+	});
+
+	it("handles bracket idx is not a valid starting bracket idx gracefully", () => {
+		// 2 is not valid because it is a follow-up bracket
+		const tournament = createTournament([0, 0, 0, 2]);
+
+		expect(tournament.brackets[0].participantTournamentTeamIds).toHaveLength(4);
 	});
 });

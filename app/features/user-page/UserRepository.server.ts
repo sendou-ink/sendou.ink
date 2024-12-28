@@ -255,6 +255,14 @@ export async function findProfileByIdentifier(
 	};
 }
 
+export function findByCustomUrl(customUrl: string) {
+	return db
+		.selectFrom("User")
+		.select(["User.id", "User.discordId", "User.customUrl", "User.patronTier"])
+		.where("customUrl", "=", customUrl)
+		.executeTakeFirst();
+}
+
 export function findBannedStatusByUserId(userId: number) {
 	return db
 		.selectFrom("User")
@@ -262,6 +270,12 @@ export function findBannedStatusByUserId(userId: number) {
 		.where("User.id", "=", userId)
 		.executeTakeFirst();
 }
+
+const userIsTournamentOrganizer = sql<
+	string | null
+>`IIF(COALESCE("User"."patronTier", 0) >= 2, 1, "User"."isTournamentOrganizer")`.as(
+	"isTournamentOrganizer",
+);
 
 export function findLeanById(id: number) {
 	return db
@@ -272,7 +286,7 @@ export function findLeanById(id: number) {
 			...COMMON_USER_FIELDS,
 			"User.isArtist",
 			"User.isVideoAdder",
-			"User.isTournamentOrganizer",
+			userIsTournamentOrganizer,
 			"User.patronTier",
 			"User.favoriteBadgeId",
 			"User.languages",

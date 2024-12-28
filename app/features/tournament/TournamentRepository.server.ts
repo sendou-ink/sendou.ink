@@ -171,6 +171,7 @@ export async function findById(id: number) {
 						"TournamentTeam.inviteCode",
 						"TournamentTeam.createdAt",
 						"TournamentTeam.activeRosterUserIds",
+						"TournamentTeam.startingBracketIdx",
 						"UserSubmittedImage.url as pickupAvatarUrl",
 						jsonArrayFrom(
 							innerEb
@@ -685,6 +686,14 @@ export function updateProgression({
 					"in",
 					allTournamentTeamsOfTournament,
 				)
+				.execute();
+
+			await trx
+				.updateTable("TournamentTeam")
+				.set({
+					startingBracketIdx: null,
+				})
+				.where("tournamentId", "=", tournamentId)
 				.execute();
 		}
 

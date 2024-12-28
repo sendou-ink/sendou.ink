@@ -40,6 +40,7 @@
 	"forms.errors.invalidCustomUrl.strangeCharacter": "Custom URL can't contain special characters",
 	"forms.errors.invalidCustomUrl.duplicate": "Someone is already using this custom URL",
 	"forms.errors.invalidSens": "Motion sens can't be set if R-stick sens isn't",
+	"forms.info.customUrl": "For patrons (Supporter & above) short link is available. E.g. instead of sendou.ink/u/sendou, snd.ink/sendou can be used.",
 	"forms.info.favoriteBadge": "Your favorite badge is shown as big by default on your profile.",
 	"forms.info.battlefy": "Battlefy account name is used for seeding and verification in some tournaments",
 

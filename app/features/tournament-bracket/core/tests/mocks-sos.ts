@@ -2548,6 +2548,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14800,
@@ -2640,6 +2641,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14743,
@@ -2744,6 +2746,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14801,
@@ -2836,6 +2839,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14792,
@@ -2928,6 +2932,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14670,
@@ -3049,6 +3054,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14661,
@@ -3158,6 +3164,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14804,
@@ -3267,6 +3274,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14732,
@@ -3364,6 +3372,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14747,
@@ -3468,6 +3477,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14748,
@@ -3572,6 +3582,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14803,
@@ -3664,6 +3675,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14795,
@@ -3773,6 +3785,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14445,
@@ -3894,6 +3907,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14810,
@@ -3948,6 +3962,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14777,
@@ -4040,6 +4055,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14805,
@@ -4132,6 +4148,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14806,
@@ -4224,6 +4241,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14653,
@@ -4345,6 +4363,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14708,
@@ -4454,6 +4473,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14715,
@@ -4551,6 +4571,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14796,
@@ -4643,6 +4664,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14797,
@@ -4735,6 +4757,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14750,
@@ -4818,6 +4841,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14809,
@@ -4927,6 +4951,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14709,
@@ -5024,6 +5049,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14783,
@@ -5071,6 +5097,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14702,
@@ -5163,6 +5190,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14735,
@@ -5272,6 +5300,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14798,
@@ -5376,6 +5405,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14663,
@@ -5473,6 +5503,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14517,
@@ -5582,6 +5613,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14741,
@@ -5691,6 +5723,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14711,
@@ -5774,6 +5807,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14655,
@@ -5895,6 +5929,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14634,
@@ -5966,6 +6001,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14799,
@@ -6063,6 +6099,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14784,
@@ -6129,6 +6166,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14733,
@@ -6221,6 +6259,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14611,
@@ -6304,6 +6343,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14713,
@@ -6408,6 +6448,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14687,
@@ -6517,6 +6558,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14742,
@@ -6638,6 +6680,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14764,
@@ -6730,6 +6773,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14802,
@@ -6834,6 +6878,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14696,
@@ -6943,6 +6988,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14808,
@@ -7035,6 +7081,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14620,
@@ -7151,6 +7198,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14737,
@@ -7260,6 +7308,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14503,
@@ -7331,6 +7380,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14739,
@@ -7423,6 +7473,7 @@ export const SWIM_OR_SINK_167 = (
 				mapPool: [],
 				team: null,
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 			{
 				id: 14607,
@@ -7520,6 +7571,7 @@ export const SWIM_OR_SINK_167 = (
 					deletedAt: null,
 				},
 				avgSeedingSkillOrdinal: null,
+				startingBracketIdx: null,
 			},
 		],
 		tieBreakerMapPool: [],

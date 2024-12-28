@@ -163,10 +163,7 @@ export class Tournament {
 			} else if (type === "swiss") {
 				const { teams, relevantMatchesFinished } = sources
 					? this.resolveTeamsFromSources(sources, bracketIdx)
-					: {
-							teams: this.ctx.teams.map((team) => team.id),
-							relevantMatchesFinished: true,
-						};
+					: this.resolveTeamsFromSignups(bracketIdx);
 
 				const { checkedInTeams, notCheckedInTeams } =
 					this.divideTeamsToCheckedInAndNotCheckedIn({
@@ -210,10 +207,7 @@ export class Tournament {
 			} else {
 				const { teams, relevantMatchesFinished } = sources
 					? this.resolveTeamsFromSources(sources, bracketIdx)
-					: {
-							teams: this.ctx.teams.map((team) => team.id),
-							relevantMatchesFinished: true,
-						};
+					: this.resolveTeamsFromSignups(bracketIdx);
 
 				const { checkedInTeams, notCheckedInTeams } =
 					this.divideTeamsToCheckedInAndNotCheckedIn({
@@ -329,6 +323,34 @@ export class Tournament {
 		return {
 			teams: teams.concat(overridesWithoutRepeats),
 			relevantMatchesFinished: allRelevantMatchesFinished,
+		};
+	}
+
+	private resolveTeamsFromSignups(bracketIdx: number) {
+		const teams = this.isMultiStartingBracket
+			? this.ctx.teams.filter((team) => {
+					// 0 is the default
+					if (typeof team.startingBracketIdx !== "number") {
+						return bracketIdx === 0;
+					}
+
+					const startingBracket = this.ctx.settings.bracketProgression.at(
+						team.startingBracketIdx,
+					);
+					if (!startingBracket || startingBracket.sources) {
+						logger.warn(
+							"resolveTeamsFromSignups: Starting bracket index invalid",
+						);
+						return bracketIdx === 0;
+					}
+
+					return team.startingBracketIdx === bracketIdx;
+				})
+			: this.ctx.teams;
+
+		return {
+			teams: teams.map((team) => team.id),
+			relevantMatchesFinished: true,
 		};
 	}
 
@@ -993,6 +1015,15 @@ export class Tournament {
 		if (!bracket) return null;
 
 		return bracket;
+	}
+
+	get isMultiStartingBracket() {
+		let count = 0;
+		for (const bracket of this.ctx.settings.bracketProgression) {
+			if (!bracket.sources) count++;
+		}
+
+		return count > 1;
 	}
 
 	ownedTeamByUser(

@@ -413,11 +413,22 @@ export default function TournamentBracketsPage() {
 		return null;
 	};
 
-	const totalTeamsAvailableForTheBracket = () =>
-		bracketIdx === 0
-			? tournament.ctx.teams.length
-			: (bracket.teamsPendingCheckIn ?? []).length +
-				bracket.participantTournamentTeamIds.length;
+	const totalTeamsAvailableForTheBracket = () => {
+		if (bracket.sources) {
+			return (
+				(bracket.teamsPendingCheckIn ?? []).length +
+				bracket.participantTournamentTeamIds.length
+			);
+		}
+
+		if (!tournament.isMultiStartingBracket) {
+			return tournament.ctx.teams.length;
+		}
+
+		return tournament.ctx.teams.filter(
+			(team) => (team.startingBracketIdx ?? 0) === bracketIdx,
+		).length;
+	};
 
 	return (
 		<div>

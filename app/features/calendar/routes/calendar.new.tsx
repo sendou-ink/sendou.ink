@@ -96,8 +96,8 @@ export default function CalendarNewEventPage() {
 		return (
 			<Main className="stack items-center">
 				<Alert variation="WARNING">
-					No permissions to add tournaments. Access to tournaments beta can be
-					applied from Discord helpdesk for established TO&apos;s.
+					No permissions to add tournaments. Tournaments are in beta, accessible
+					by Patreon supporters and established TO&apos;s.
 				</Alert>
 			</Main>
 		);

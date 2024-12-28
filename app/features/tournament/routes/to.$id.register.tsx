@@ -40,6 +40,7 @@ import invariant from "~/utils/invariant";
 import {
 	LOG_IN_URL,
 	SENDOU_INK_BASE_URL,
+	SENDOU_INK_DISCORD_URL,
 	navIconUrl,
 	readonlyMapsPage,
 	tournamentJoinPage,
@@ -859,7 +860,14 @@ function FriendCode() {
 			</section>
 			{user?.friendCode ? (
 				<div className="tournament__section__warning">
-					Is the friend code above wrong? Post a message on our Discord helpdesk
+					Is the friend code above wrong? Post a message on the{" "}
+					<a
+						href={SENDOU_INK_DISCORD_URL}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						sendou.ink Discord helpdesk
+					</a>{" "}
 					to change it.
 				</div>
 			) : null}

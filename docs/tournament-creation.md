@@ -113,6 +113,10 @@ Choose the tournament format. You can have at most 10 brackets with teams advanc
 
 Source bracket means a bracket where teams come from. Target bracket means a bracket where teams go to after first playing some other bracket. A bracket can be both at the same time.
 
+### Is follow-up bracket
+
+If toggled off, teams join from the sign-up. Turns this bracket into a source bracket. You can set which teams start from which bracket in the seeding page. Note that when this option is enabled you are creating a tournament where teams that start in separate brackets will not meet (so in essence they are separate tournaments but just happening on the same tournament page).
+
 ### Placements
 
 Placements is a comma separated list of placements. So e.g. the following are valid:
@@ -140,6 +144,5 @@ Current limitations. Feel free to leave feedback if it's blocking you from runni
 
 - Single-elimination can not be a source bracket
 - Double-elimination can only be a source bracket when it comes to people who drop in the losers round (negative placements)
-- All teams start the tournament in the same bracket
 - Only one source bracket per target bracket.
 
