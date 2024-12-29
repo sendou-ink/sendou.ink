@@ -454,4 +454,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "saladbowl",
 		authorDiscordId: "336683473714544641",
 	},
+	{
+		displayName: "Low Tier Bouts",
+		fileName: "low-tier-bouts",
+		authorDiscordId: "430487372015206410",
+	},
 ];
