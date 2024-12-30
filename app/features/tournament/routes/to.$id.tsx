@@ -251,7 +251,12 @@ export function TournamentLayout() {
 				<SubNavLink to="brackets" data-testid="brackets-tab" prefetch="render">
 					{t("tournament:tabs.brackets")}
 				</SubNavLink>
-				<SubNavLink to="teams" end={false} prefetch="render">
+				<SubNavLink
+					to="teams"
+					end={false}
+					prefetch="render"
+					data-testid="teams-tab"
+				>
 					{t("tournament:tabs.teams", { count: tournament.ctx.teams.length })}
 				</SubNavLink>
 				{!tournament.everyBracketOver && tournament.subsFeatureEnabled && (

@@ -630,7 +630,9 @@ function StartedMatchTabs({
 				teams[1],
 				tournament.minMembersPerTeam,
 			),
-			result?.participantIds,
+			result?.participants
+				.map((p) => `${p.userId}-${p.tournamentTeamId}`)
+				.join(","),
 			result?.opponentOnePoints,
 			result?.opponentTwoPoints,
 		].join("-");

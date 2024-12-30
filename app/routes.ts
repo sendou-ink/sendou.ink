@@ -227,6 +227,8 @@ export default [
 		route("/org/:id", "features/api-public/routes/org.$id.ts"),
 	]),
 
+	route("/short/:customUrl", "features/user-page/routes/short.$customUrl.tsx"),
+
 	route("/theme", "features/theme/routes/theme.ts"),
 
 	...prefix("/auth", [

@@ -213,4 +213,28 @@ test.describe("Tournament", () => {
 		data = await fetchTournamentLoaderData();
 		expect(data.tournament.ctx.teams.find((t) => t.id === 1)).toBeFalsy();
 	});
+
+	test("adjusts seeds", async ({ page }) => {
+		await seed(page);
+		await impersonate(page);
+
+		await navigate({
+			page,
+			url: `${tournamentPage(1)}/seeds`,
+		});
+
+		await page.getByTestId("seed-team-1").hover();
+		await page.mouse.down();
+		// i think the drag & drop library might actually be a bit buggy
+		// so we have to do it in steps like this to allow for testing
+		await page.mouse.move(0, 500, { steps: 10 });
+		await page.mouse.up();
+
+		await submit(page);
+
+		await page.getByTestId("teams-tab").click();
+		await expect(page.getByTestId("team-name").first()).not.toHaveText(
+			"Chimera",
+		);
+	});
 });

@@ -321,6 +321,7 @@ function CustomUrlInput({
 				maxLength={USER.CUSTOM_URL_MAX_LENGTH}
 				defaultValue={parentRouteData.user.customUrl ?? undefined}
 			/>
+			<FormMessage type="info">{t("user:forms.info.customUrl")}</FormMessage>
 		</div>
 	);
 }

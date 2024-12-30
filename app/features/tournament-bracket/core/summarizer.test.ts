@@ -44,15 +44,20 @@ describe("tournamentSummary()", () => {
 	function summarize({
 		results,
 		seedingSkillCountsFor,
+		withMemberInTwoTeams = false,
 	}: {
 		results?: AllMatchResult[];
 		seedingSkillCountsFor?: Tables["SeedingSkill"]["type"];
+		withMemberInTwoTeams?: boolean;
 	} = {}) {
 		return tournamentSummary({
 			finalStandings: [
 				{
 					placement: 1,
-					team: createTeam(1, [1, 2, 3, 4]),
+					team: createTeam(
+						1,
+						withMemberInTwoTeams ? [1, 2, 3, 4, 5] : [1, 2, 3, 4],
+					),
 				},
 				{
 					placement: 2,
@@ -73,13 +78,31 @@ describe("tournamentSummary()", () => {
 						{
 							mode: "SZ",
 							stageId: 1,
-							userIds: [1, 2, 3, 4, 5, 6, 7, 8],
+							participants: [
+								{ tournamentTeamId: 1, userId: 1 },
+								{ tournamentTeamId: 1, userId: 2 },
+								{ tournamentTeamId: 1, userId: 3 },
+								{ tournamentTeamId: 1, userId: 4 },
+								{ tournamentTeamId: 2, userId: 5 },
+								{ tournamentTeamId: 2, userId: 6 },
+								{ tournamentTeamId: 2, userId: 7 },
+								{ tournamentTeamId: 2, userId: 8 },
+							],
 							winnerTeamId: 1,
 						},
 						{
 							mode: "TC",
 							stageId: 2,
-							userIds: [1, 2, 3, 4, 5, 6, 7, 8],
+							participants: [
+								{ tournamentTeamId: 1, userId: 1 },
+								{ tournamentTeamId: 1, userId: 2 },
+								{ tournamentTeamId: 1, userId: 3 },
+								{ tournamentTeamId: 1, userId: 4 },
+								{ tournamentTeamId: 2, userId: 5 },
+								{ tournamentTeamId: 2, userId: 6 },
+								{ tournamentTeamId: 2, userId: 7 },
+								{ tournamentTeamId: 2, userId: 8 },
+							],
 							winnerTeamId: 1,
 						},
 					],
@@ -142,6 +165,16 @@ describe("tournamentSummary()", () => {
 		expect(summary.tournamentResults.length).toBe(4 * 4);
 	});
 
+	test("calculates final standings, handling a player in two teams", () => {
+		const summary = summarize({ withMemberInTwoTeams: true });
+		expect(
+			summary.tournamentResults.some(
+				(result) => result.tournamentTeamId === 1 && result.userId === 5,
+			),
+		).toBeTruthy();
+		expect(summary.tournamentResults.length).toBe(4 * 4);
+	});
+
 	test("winners skill should go up, losers skill should go down", () => {
 		const summary = summarize();
 		const winnerSkill = summary.skills.find((s) => s.userId === 1);
@@ -183,13 +216,31 @@ describe("tournamentSummary()", () => {
 				{
 					mode: "SZ",
 					stageId: 1,
-					userIds: [1, 2, 3, 4, 5, 6, 7, 8],
+					participants: [
+						{ tournamentTeamId: 1, userId: 1 },
+						{ tournamentTeamId: 1, userId: 2 },
+						{ tournamentTeamId: 1, userId: 3 },
+						{ tournamentTeamId: 1, userId: 4 },
+						{ tournamentTeamId: 2, userId: 5 },
+						{ tournamentTeamId: 2, userId: 6 },
+						{ tournamentTeamId: 2, userId: 7 },
+						{ tournamentTeamId: 2, userId: 8 },
+					],
 					winnerTeamId: 1,
 				},
 				{
 					mode: "TC",
 					stageId: 2,
-					userIds: [1, 2, 3, 4, 5, 6, 7, 8],
+					participants: [
+						{ tournamentTeamId: 1, userId: 1 },
+						{ tournamentTeamId: 1, userId: 2 },
+						{ tournamentTeamId: 1, userId: 3 },
+						{ tournamentTeamId: 1, userId: 4 },
+						{ tournamentTeamId: 2, userId: 5 },
+						{ tournamentTeamId: 2, userId: 6 },
+						{ tournamentTeamId: 2, userId: 7 },
+						{ tournamentTeamId: 2, userId: 8 },
+					],
 					winnerTeamId: 1,
 				},
 			],
@@ -209,13 +260,31 @@ describe("tournamentSummary()", () => {
 				{
 					mode: "SZ",
 					stageId: 1,
-					userIds: [1, 20, 3, 4, 5, 6, 7, 8],
+					participants: [
+						{ tournamentTeamId: 1, userId: 1 },
+						{ tournamentTeamId: 1, userId: 20 },
+						{ tournamentTeamId: 1, userId: 3 },
+						{ tournamentTeamId: 1, userId: 4 },
+						{ tournamentTeamId: 2, userId: 5 },
+						{ tournamentTeamId: 2, userId: 6 },
+						{ tournamentTeamId: 2, userId: 7 },
+						{ tournamentTeamId: 2, userId: 8 },
+					],
 					winnerTeamId: 1,
 				},
 				{
 					mode: "TC",
 					stageId: 2,
-					userIds: [1, 20, 3, 4, 5, 6, 7, 8],
+					participants: [
+						{ tournamentTeamId: 1, userId: 1 },
+						{ tournamentTeamId: 1, userId: 20 },
+						{ tournamentTeamId: 1, userId: 3 },
+						{ tournamentTeamId: 1, userId: 4 },
+						{ tournamentTeamId: 2, userId: 5 },
+						{ tournamentTeamId: 2, userId: 6 },
+						{ tournamentTeamId: 2, userId: 7 },
+						{ tournamentTeamId: 2, userId: 8 },
+					],
 					winnerTeamId: 1,
 				},
 			],
@@ -266,19 +335,46 @@ describe("tournamentSummary()", () => {
 				{
 					mode: "SZ",
 					stageId: 1,
-					userIds: [1, 2, 3, 4, 5, 6, 7, 8],
+					participants: [
+						{ tournamentTeamId: 1, userId: 1 },
+						{ tournamentTeamId: 1, userId: 2 },
+						{ tournamentTeamId: 1, userId: 3 },
+						{ tournamentTeamId: 1, userId: 4 },
+						{ tournamentTeamId: 2, userId: 5 },
+						{ tournamentTeamId: 2, userId: 6 },
+						{ tournamentTeamId: 2, userId: 7 },
+						{ tournamentTeamId: 2, userId: 8 },
+					],
 					winnerTeamId: 1,
 				},
 				{
 					mode: "TC",
 					stageId: 2,
-					userIds: [1, 2, 3, 4, 5, 6, 7, 8],
+					participants: [
+						{ tournamentTeamId: 1, userId: 1 },
+						{ tournamentTeamId: 1, userId: 2 },
+						{ tournamentTeamId: 1, userId: 3 },
+						{ tournamentTeamId: 1, userId: 4 },
+						{ tournamentTeamId: 2, userId: 5 },
+						{ tournamentTeamId: 2, userId: 6 },
+						{ tournamentTeamId: 2, userId: 7 },
+						{ tournamentTeamId: 2, userId: 8 },
+					],
 					winnerTeamId: 2,
 				},
 				{
 					mode: "TC",
 					stageId: 2,
-					userIds: [1, 20, 3, 4, 5, 6, 7, 8],
+					participants: [
+						{ tournamentTeamId: 1, userId: 1 },
+						{ tournamentTeamId: 1, userId: 20 },
+						{ tournamentTeamId: 1, userId: 3 },
+						{ tournamentTeamId: 1, userId: 4 },
+						{ tournamentTeamId: 2, userId: 5 },
+						{ tournamentTeamId: 2, userId: 6 },
+						{ tournamentTeamId: 2, userId: 7 },
+						{ tournamentTeamId: 2, userId: 8 },
+					],
 					winnerTeamId: 1,
 				},
 			],

@@ -195,14 +195,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			const previousTeam = tournament.teamMemberOfByUser({ id: data.userId });
 
-			if (tournament.hasStarted) {
-				validate(
-					!previousTeam || previousTeam.checkIns.length === 0,
-					"User is already on a checked in team",
-				);
-			} else {
-				validate(!previousTeam, "User is already on a team");
-			}
+			validate(
+				tournament.hasStarted || !previousTeam,
+				"User is already in a team",
+			);
 
 			validate(
 				!userIsBanned(data.userId),
@@ -213,8 +209,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 				newTeamId: team.id,
 				previousTeamId: previousTeam?.id,
-				// this team is not checked in so we can simply delete it
-				whatToDoWithPreviousTeam: previousTeam ? "DELETE" : undefined,
+				// this team is not checked in & tournament started, so we can simply delete it
+				whatToDoWithPreviousTeam:
+					previousTeam &&
+					previousTeam.checkIns.length === 0 &&
+					tournament.hasStarted
+						? "DELETE"
+						: undefined,
 				tournamentId,
 				inGameName: await inGameNameIfNeeded({
 					tournament,

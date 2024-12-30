@@ -6,6 +6,7 @@ import {
 	isNotVisible,
 	navigate,
 	seed,
+	selectUser,
 	submit,
 } from "~/utils/playwright";
 import {
@@ -131,13 +132,6 @@ const backToBracket = async (page: Page) => {
 const expectScore = (page: Page, score: [number, number]) =>
 	expect(page.getByText(score.join("-"))).toBeVisible();
 
-// 1) Report winner of N-ZAP's first match
-// 2) Report winner of the adjacent match by using admin powers
-// 3) Report one match on the only losers side match available
-// 4) Try to reopen N-ZAP's first match and fail
-// 5) Undo score of first losers match
-// 6) Try to reopen N-ZAP's first match and succeed
-// 7) As N-ZAP, undo all scores and switch to different team sweeping
 test.describe("Tournament bracket", () => {
 	test("sets active roster as regular member", async ({ page }) => {
 		const tournamentId = 1;
@@ -179,6 +173,13 @@ test.describe("Tournament bracket", () => {
 		).not.toBeChecked();
 	});
 
+	// 1) Report winner of N-ZAP's first match
+	// 2) Report winner of the adjacent match by using admin powers
+	// 3) Report one match on the only losers side match available
+	// 4) Try to reopen N-ZAP's first match and fail
+	// 5) Undo score of first losers match
+	// 6) Try to reopen N-ZAP's first match and succeed
+	// 7) As N-ZAP, undo all scores and switch to different team sweeping
 	test("reports score and sees bracket update", async ({ page }) => {
 		const tournamentId = 2;
 		await startBracket(page);
@@ -447,7 +448,9 @@ test.describe("Tournament bracket", () => {
 		).toHaveCount(3);
 	});
 
-	test("changes SOS format and progresses with it", async ({ page }) => {
+	test("changes SOS format and progresses with it & adds a member to another team", async ({
+		page,
+	}) => {
 		const tournamentId = 4;
 
 		await seed(page, "SMALL_SOS");
@@ -490,6 +493,22 @@ test.describe("Tournament bracket", () => {
 
 		await page.locator('[data-match-id="7"]').click();
 		await expect(page.getByTestId("back-to-bracket-button")).toBeVisible();
+
+		await page.getByTestId("admin-tab").click();
+		await page.getByLabel("Action").selectOption("ADD_MEMBER");
+		await page.getByLabel("Team", { exact: true }).selectOption("303"); // a team in the Mako bracket
+		await selectUser({
+			labelName: "User",
+			userName: "Sendou",
+			page,
+		});
+		await submit(page);
+
+		await page.getByTestId("teams-tab").click();
+
+		await expect(
+			page.getByTestId("team-member-name").getByText("Sendou"),
+		).toHaveCount(2);
 	});
 
 	test("conducts a tournament with many starting brackets", async ({

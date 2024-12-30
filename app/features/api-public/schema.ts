@@ -171,6 +171,10 @@ export interface GetTournamentMatchResponse {
 
 export interface GetTournamentBracketResponse {
 	data: TournamentBracketData;
+	teams: Array<{
+		id: number;
+		checkedIn: boolean;
+	}>;
 	meta: {
 		/** How many teams per group? (round robin only) */
 		teamsPerGroup?: number;

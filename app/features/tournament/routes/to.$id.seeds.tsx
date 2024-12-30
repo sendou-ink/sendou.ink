@@ -233,6 +233,7 @@ export default function TournamentSeedsPage() {
 							<Draggable
 								key={team.id}
 								id={team.id}
+								testId={`seed-team-${team.id}`}
 								disabled={navigation.state !== "idle"}
 								liClassName={clsx(
 									"tournament__seeds__teams-list-row",

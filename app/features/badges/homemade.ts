@@ -15,6 +15,11 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Squids For Palestinian Kids",
+		fileName: "three_course_pal",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "BrushMommy's Birthday Bash",
 		fileName: "goldenbrush",
 		authorDiscordId: "338806780446638082",
@@ -25,17 +30,17 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "643355948265766912",
 	},
 	{
-		displayName: "50 Caliber League (First Place)",
+		displayName: "Gun (Winning 50 Calibur League)",
 		fileName: "50-cal-fir",
 		authorDiscordId: "530093822806458368",
 	},
 	{
-		displayName: "50 Caliber League (Second Place)",
+		displayName: "Gold Bullet (Qualifying for 50 Calibur League)",
 		fileName: "50-cal-sec",
 		authorDiscordId: "530093822806458368",
 	},
 	{
-		displayName: "50 Caliber League (Third Place)",
+		displayName: "Silver Bullet (Winning Silver Bracket 50 Calibur)",
 		fileName: "50-cal-thi",
 		authorDiscordId: "530093822806458368",
 	},
@@ -435,8 +440,18 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "528851510222782474",
 	},
 	{
-		displayName: "Splashdown Saturday",
-		fileName: "splashdownsat",
-		authorDiscordId: "631246535560265749",
-	}
+		displayName: "Zones Royale",
+		fileName: "szroyale",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Bastard München",
+		fileName: "muchen",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Salad Sundays",
+		fileName: "saladbowl",
+		authorDiscordId: "336683473714544641",
+	},
 ];

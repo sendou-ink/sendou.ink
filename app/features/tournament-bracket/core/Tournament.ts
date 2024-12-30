@@ -1041,9 +1041,22 @@ export class Tournament {
 	teamMemberOfByUser(user: OptionalIdObject) {
 		if (!user) return null;
 
-		return this.ctx.teams.find((team) =>
+		const teams = this.ctx.teams.filter((team) =>
 			team.members.some((member) => member.userId === user.id),
 		);
+
+		let result: (typeof teams)[number] | null = null;
+		let latestCreatedAt = 0;
+		for (const team of teams) {
+			const member = team.members.find((member) => member.userId === user.id)!;
+
+			if (member.createdAt > latestCreatedAt) {
+				result = team;
+				latestCreatedAt = member.createdAt;
+			}
+		}
+
+		return result;
 	}
 
 	teamMemberOfProgressStatus(user: OptionalIdObject) {

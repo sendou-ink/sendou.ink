@@ -41,12 +41,26 @@ export function MatchActions({
 	>(() => {
 		if (result) {
 			return [
-				result.participantIds.filter((id) =>
-					teams[0].members.some((member) => member.userId === id),
-				),
-				result.participantIds.filter((id) =>
-					teams[1].members.some((member) => member.userId === id),
-				),
+				result.participants
+					.filter((participant) =>
+						teams[0].members.some(
+							(member) =>
+								member.userId === participant.userId &&
+								(!participant.tournamentTeamId ||
+									teams[0].id === participant.tournamentTeamId),
+						),
+					)
+					.map((p) => p.userId),
+				result.participants
+					.filter((participant) =>
+						teams[1].members.some(
+							(member) =>
+								member.userId === participant.userId &&
+								(!participant.tournamentTeamId ||
+									teams[1].id === participant.tournamentTeamId),
+						),
+					)
+					.map((p) => p.userId),
 			];
 		}
 
@@ -340,7 +354,7 @@ function EditScoreForm({
 		return (
 			<fetcher.Form
 				method="post"
-				className="stack horizontal md justify-center"
+				className="stack horizontal md justify-center mt-6"
 			>
 				<input type="hidden" name="resultId" value={resultId} />
 				<input
