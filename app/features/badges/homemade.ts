@@ -450,7 +450,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "528851510222782474",
 	},
 	{
-		displayName: "Salad Sundays",
+		displayName: "Eggs and Salad",
 		fileName: "saladbowl",
 		authorDiscordId: "336683473714544641",
 	},
