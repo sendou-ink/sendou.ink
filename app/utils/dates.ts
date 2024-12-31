@@ -32,6 +32,16 @@ export function dateToThisWeeksMonday(date: Date) {
 	return copiedDate;
 }
 
+export function dateToThisWeeksSunday(date: Date) {
+	const copiedDate = new Date(date.getTime());
+
+	while (copiedDate.getDay() !== 0) {
+		copiedDate.setDate(copiedDate.getDate() + 1);
+	}
+
+	return copiedDate;
+}
+
 export function getWeekStartsAtMondayDay(date: Date) {
 	const currentDay = date.getDay();
 
