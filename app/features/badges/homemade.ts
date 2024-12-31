@@ -20,6 +20,16 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "338806780446638082",
 	},
 	{
+		displayName: "Hatsune Miku",
+		fileName: "hatsunemiku",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "New InkLAN",
+		fileName: "pinknes",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "BrushMommy's Birthday Bash",
 		fileName: "goldenbrush",
 		authorDiscordId: "338806780446638082",
