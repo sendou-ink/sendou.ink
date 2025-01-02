@@ -15,6 +15,11 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Plus 12",
+		fileName: "plus-12",
+		authorDiscordId: "157241128909930496",
+	},
+	{
 		displayName: "Squids For Palestinian Kids",
 		fileName: "three_course_pal",
 		authorDiscordId: "338806780446638082",
