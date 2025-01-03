@@ -458,5 +458,10 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Splashdown Saturday",
 		fileName: "splashdownsat",
 		authorDiscordId: "631246535560265749",
-	}
+	},
+	{
+		displayName: "Low Tier Bouts",
+		fileName: "low-tier-bouts",
+		authorDiscordId: "430487372015206410",
+	},
 ];

@@ -18,10 +18,10 @@ import { DiscordIcon } from "../icons/Discord";
 import { GitHubIcon } from "../icons/GitHub";
 import { PatreonIcon } from "../icons/Patreon";
 
-const currentYear = new Date().getFullYear();
-
 function _Footer() {
 	const { t } = useTranslation();
+
+	const currentYear = new Date().getFullYear();
 
 	return (
 		<footer className="layout__footer">
