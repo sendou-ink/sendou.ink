@@ -25,6 +25,7 @@ import { joinListToNaturalString } from "~/utils/arrays";
 import {
 	databaseTimestampToDate,
 	dateToThisWeeksMonday,
+	dateToThisWeeksSunday,
 	dateToWeekNumber,
 	dayToWeekStartsAtMondayDay,
 	getWeekStartsAtMondayDay,
@@ -116,6 +117,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		});
 
 	const mondayDate = dateToThisWeeksMonday(new Date());
+	const sundayDate = dateToThisWeeksSunday(new Date());
 	const currentWeek = dateToWeekNumber(mondayDate);
 
 	const displayedWeek = parsedWeekParams.success
@@ -123,7 +125,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		: currentWeek;
 	const displayedYear = parsedWeekParams.success
 		? parsedWeekParams.data.year
-		: mondayDate.getFullYear();
+		: currentWeek === 1 // handle first week of the year special case
+			? sundayDate.getFullYear()
+			: mondayDate.getFullYear();
 	const tagsToFilterBy = parsedFilterParams.success
 		? (parsedFilterParams.data.tags as PersistedCalendarEventTag[])
 		: [];
