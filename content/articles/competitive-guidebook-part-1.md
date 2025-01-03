@@ -1,7 +1,11 @@
 ---
 title: Competitive Splatoon Guidebook
 date: 2025-01-04
-author: [Samino](https://sendou.ink/u/samino) & [Radha](https://sendou.ink/u/wiper) with [Splatoon Stronghold](https://www.splatoonstronghold.com/)
+author:
+  - name: Samino
+    link: https://sendou.ink/u/samino
+  - name: Radha
+    link: https://sendou.ink/u/wiper
 ---
 
 Article ported from the [Splatoon Stronghold](https://www.splatoonstronghold.com/guides/competitive-splatoon-guidebook-part-1-competitive) website
