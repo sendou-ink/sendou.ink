@@ -34,7 +34,7 @@ Any badge to be added has to follow these rules. Badges that do not follow the r
 - .png file (static). TODO: info on how to ceate
 - .avif file (static). Create via e.g. [Squoosh](https://squoosh.app/) from the .png file
 - All files should be squares. 512x512 is a good size for example
-- For the animation, rotating speed should match those of the borzoic badges (a full rotation should take about 3 seconds). You can control this via left & right arrow keys on picoCAD Web Viewer.
+- For the animation, rotating speed should match those of the borzoic badges (a full rotation should take about 3 seconds, rotating counterclockwise). You can control this via left & right arrow keys on picoCAD Web Viewer.
 3. Make a pull request to the project
 - If you don't know how a pull request is made you can ask someone you know that is familiar with GitHub or refer to the guide pinned in the #badges Discord channel
 - In the PR add the 3 needed files to public/static-assets/badges folder:

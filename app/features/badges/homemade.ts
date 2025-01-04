@@ -464,7 +464,27 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "low-tier-bouts",
 		authorDiscordId: "430487372015206410",
 	},
+  {
+		displayName: "Level Up",
+		fileName: "magikarp",
+		authorDiscordId: "528851510222782474",
+	},
 	{
+		displayName: "Level Up: Shiny Hunt",
+		fileName: "shinymagikarp",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "FC Barcha",
+		fileName: "barcha",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Manshine City",
+		fileName: "manshine",
+		authorDiscordId: "528851510222782474",
+	},
+  {
 		displayName: "Reef-Lux Achievement",
 		fileName: "flux",
 		authorDiscordId: "631246535560265749",
@@ -473,5 +493,5 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Meet Your Match",
 		fileName: "matchmeet",
 		authorDiscordId: "631246535560265749",
-	},
+  },
 ];
