@@ -473,5 +473,5 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Meet Your Match",
 		fileName: "matchmeet",
 		authorDiscordId:"631246535560265749",
-	}
+	},
 ];
