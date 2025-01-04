@@ -464,7 +464,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "low-tier-bouts",
 		authorDiscordId: "430487372015206410",
 	},
-  {
+	{
 		displayName: "Level Up",
 		fileName: "magikarp",
 		authorDiscordId: "528851510222782474",
