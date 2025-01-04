@@ -434,18 +434,6 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "spacedogjolly",
 		authorDiscordId: "528851510222782474",
 	},
-<<<<<<< HEAD
-	{
-		displayName: "Reef-Lux Achievement",
-		fileName: "flux",
-		authorDiscordId:"631246535560265749",
-	}
-	{
-		displayName: "Meet Your Match",
-		fileName: "matchmeet",
-		authorDiscordId:"631246535560265749",
-	}
-=======
 	{
 		displayName: "Mimikyu Monday",
 		fileName: "mimikyu",
@@ -476,5 +464,14 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "low-tier-bouts",
 		authorDiscordId: "430487372015206410",
 	},
->>>>>>> 4e4b82b2f30bc072fa3199944515876cea6f2e72
+	{
+		displayName: "Reef-Lux Achievement",
+		fileName: "flux",
+		authorDiscordId:"631246535560265749",
+	},
+	{
+		displayName: "Meet Your Match",
+		fileName: "matchmeet",
+		authorDiscordId:"631246535560265749",
+	}
 ];
