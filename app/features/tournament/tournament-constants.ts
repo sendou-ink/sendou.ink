@@ -14,3 +14,11 @@ export const TOURNAMENT = {
 	SWISS_DEFAULT_GROUP_COUNT: 1,
 	SWISS_DEFAULT_ROUND_COUNT: 5,
 } as const;
+
+export const LEAGUES = {
+	LUTI: [
+		{
+			tournamentId: 1,
+		},
+	],
+};

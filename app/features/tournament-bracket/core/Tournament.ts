@@ -6,6 +6,7 @@ import type {
 import { TOURNAMENT } from "~/features/tournament";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as Standings from "~/features/tournament/core/Standings";
+import { LEAGUES } from "~/features/tournament/tournament-constants";
 import { tournamentIsRanked } from "~/features/tournament/tournament-utils";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { Match, Stage } from "~/modules/brackets-model";
@@ -32,6 +33,8 @@ import { getTournamentManager } from "./brackets-manager";
 import { getRounds } from "./rounds";
 
 export type OptionalIdObject = { id: number } | undefined;
+
+// xxx: registration closes at how to handle?
 
 /** Extends and providers utility functions on top of the bracket-manager library. Updating data after the bracket has started is responsibility of bracket-manager. */
 export class Tournament {
@@ -898,6 +901,12 @@ export class Tournament {
 
 	get autonomousSubs() {
 		return this.ctx.settings.autonomousSubs ?? true;
+	}
+
+	get isLeagueSignup() {
+		return Object.values(LEAGUES)
+			.flat()
+			.some((entry) => entry.tournamentId === this.ctx.id);
 	}
 
 	matchNameById(matchId: number) {

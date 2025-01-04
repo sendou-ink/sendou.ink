@@ -455,6 +455,8 @@ export interface Tournament {
 		string | null
 	>;
 	rules: string | null;
+	/** Related "parent tournament", the tournament that contains the original sign-ups (for leagues) */
+	parentTournamentId: number | null;
 }
 
 export interface PreparedMaps {

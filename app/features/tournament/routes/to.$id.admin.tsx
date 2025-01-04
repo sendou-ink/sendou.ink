@@ -62,22 +62,24 @@ export default function TournamentAdminPage() {
 					>
 						Edit event info
 					</LinkButton>
-					<FormWithConfirm
-						dialogHeading={t("calendar:actions.delete.confirm", {
-							name: tournament.ctx.name,
-						})}
-						action={calendarEventPage(tournament.ctx.eventId)}
-						submitButtonTestId="delete-submit-button"
-					>
-						<Button
-							className="ml-auto"
-							size="tiny"
-							variant="minimal-destructive"
-							type="submit"
+					{!tournament.isLeagueSignup ? (
+						<FormWithConfirm
+							dialogHeading={t("calendar:actions.delete.confirm", {
+								name: tournament.ctx.name,
+							})}
+							action={calendarEventPage(tournament.ctx.eventId)}
+							submitButtonTestId="delete-submit-button"
 						>
-							{t("calendar:actions.delete")}
-						</Button>
-					</FormWithConfirm>
+							<Button
+								className="ml-auto"
+								size="tiny"
+								variant="minimal-destructive"
+								type="submit"
+							>
+								{t("calendar:actions.delete")}
+							</Button>
+						</FormWithConfirm>
+					) : null}
 				</div>
 			) : null}
 			{tournament.isAdmin(user) &&
@@ -111,8 +113,12 @@ export default function TournamentAdminPage() {
 			<CastTwitchAccounts />
 			<Divider smallText>Participant list download</Divider>
 			<DownloadParticipants />
-			<Divider smallText>Bracket reset</Divider>
-			<BracketReset />
+			{!tournament.isLeagueSignup ? (
+				<>
+					<Divider smallText>Bracket reset</Divider>
+					<BracketReset />
+				</>
+			) : null}
 		</div>
 	);
 }
@@ -534,6 +540,7 @@ function RemoveStaffButton({
 	);
 }
 
+// xxx: some kind of "league friendly" format?
 function DownloadParticipants() {
 	const tournament = useTournament();
 
@@ -609,6 +616,16 @@ function DownloadParticipants() {
 			.join("\n");
 	}
 
+	function leagueFormat() {
+		const header = "Team id,Team name,Div";
+
+		return `${header}\n${tournament.ctx.teams
+			.map((team) => {
+				return `${team.id},${team.name},`;
+			})
+			.join("\n")}`;
+	}
+
 	return (
 		<div>
 			<div className="stack horizontal sm flex-wrap">
@@ -656,6 +673,19 @@ function DownloadParticipants() {
 				>
 					Simple list in seeded order
 				</Button>
+				{tournament.isLeagueSignup ? (
+					<Button
+						size="tiny"
+						onClick={() =>
+							handleDownload({
+								filename: "league-format.csv",
+								content: leagueFormat(),
+							})
+						}
+					>
+						League format
+					</Button>
+				) : null}
 			</div>
 		</div>
 	);

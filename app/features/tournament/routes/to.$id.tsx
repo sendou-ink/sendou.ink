@@ -25,6 +25,7 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { makeTitle } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import {
+	tournamentDivisionsPage,
 	tournamentOrganizationPage,
 	tournamentPage,
 	userSubmittedImage,
@@ -248,9 +249,20 @@ export function TournamentLayout() {
 				<SubNavLink to="register" data-testid="register-tab" prefetch="intent">
 					{tournament.hasStarted ? "Info" : t("tournament:tabs.register")}
 				</SubNavLink>
-				<SubNavLink to="brackets" data-testid="brackets-tab" prefetch="render">
-					{t("tournament:tabs.brackets")}
-				</SubNavLink>
+				{!tournament.isLeagueSignup ? (
+					<SubNavLink
+						to="brackets"
+						data-testid="brackets-tab"
+						prefetch="render"
+					>
+						{t("tournament:tabs.brackets")}
+					</SubNavLink>
+				) : null}
+				{tournament.isLeagueSignup ? (
+					<SubNavLink to={tournamentDivisionsPage(tournament.ctx.id)}>
+						Divisions
+					</SubNavLink>
+				) : null}
 				<SubNavLink
 					to="teams"
 					end={false}
@@ -276,9 +288,11 @@ export function TournamentLayout() {
 						{t("tournament:tabs.results")}
 					</SubNavLink>
 				) : null}
-				{tournament.isOrganizer(user) && !tournament.hasStarted && (
-					<SubNavLink to="seeds">{t("tournament:tabs.seeds")}</SubNavLink>
-				)}
+				{tournament.isOrganizer(user) &&
+					!tournament.hasStarted &&
+					!tournament.isLeagueSignup && (
+						<SubNavLink to="seeds">{t("tournament:tabs.seeds")}</SubNavLink>
+					)}
 				{tournament.isOrganizer(user) && !tournament.everyBracketOver && (
 					<SubNavLink to="admin" data-testid="admin-tab">
 						{t("tournament:tabs.admin")}

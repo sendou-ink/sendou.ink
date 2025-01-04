@@ -80,6 +80,10 @@ export default [
 
 		route("brackets", "features/tournament-bracket/routes/to.$id.brackets.tsx"),
 		route(
+			"divisions",
+			"features/tournament-bracket/routes/to.$id.divisions.tsx",
+		),
+		route(
 			"brackets/subscribe",
 			"features/tournament-bracket/routes/to.$id.brackets.subscribe.tsx",
 		),

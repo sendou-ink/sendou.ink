@@ -450,6 +450,8 @@ export async function allEventsWithMapPools() {
 	}));
 }
 
+// xxx: parent tournament id
+// xxx: hidden calendar event
 type CreateArgs = Pick<
 	Tables["CalendarEvent"],
 	| "name"

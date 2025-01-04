@@ -63,6 +63,8 @@ import { loader } from "../loaders/to.$id.register.server";
 
 export { loader, action };
 
+// xxx: prevent unregister by user if reg over in league mode
+
 export default function TournamentRegisterPage() {
 	const user = useUser();
 	const isMounted = useIsMounted();
@@ -76,6 +78,7 @@ export default function TournamentRegisterPage() {
 		!tournament.ctx.logoValidatedAt &&
 		tournament.isOrganizer(user);
 
+	// xxx: "LEAGUE" badge?
 	return (
 		<div className={clsx("stack lg", containerClassName("normal"))}>
 			<div className="tournament__logo-container">
@@ -411,10 +414,12 @@ function RegistrationProgress({
 					completed: mapPool && mapPool.length > 0,
 				}
 			: null,
-		{
-			name: t("tournament:pre.steps.check-in"),
-			completed: checkedIn,
-		},
+		!tournament.isLeagueSignup
+			? {
+					name: t("tournament:pre.steps.check-in"),
+					completed: checkedIn,
+				}
+			: null,
 	]);
 
 	const regClosesBeforeStart =
@@ -456,19 +461,21 @@ function RegistrationProgress({
 						);
 					})}
 				</div>
-				<CheckIn
-					canCheckIn={steps.filter((step) => !step.completed).length === 1}
-					status={
-						tournament.regularCheckInIsOpen
-							? "OPEN"
-							: tournament.regularCheckInHasEnded
-								? "OVER"
-								: "UPCOMING"
-					}
-					startDate={tournament.regularCheckInStartsAt}
-					endDate={tournament.regularCheckInEndsAt}
-					checkedIn={checkedIn}
-				/>
+				{!tournament.isLeagueSignup ? (
+					<CheckIn
+						canCheckIn={steps.filter((step) => !step.completed).length === 1}
+						status={
+							tournament.regularCheckInIsOpen
+								? "OPEN"
+								: tournament.regularCheckInHasEnded
+									? "OVER"
+									: "UPCOMING"
+						}
+						startDate={tournament.regularCheckInStartsAt}
+						endDate={tournament.regularCheckInEndsAt}
+						checkedIn={checkedIn}
+					/>
+				) : null}
 			</section>
 			<div className="tournament__section__warning">
 				{regClosesBeforeStart ? (
