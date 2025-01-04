@@ -467,11 +467,11 @@ export const homemadeBadges: BadgeInfo[] = [
 	{
 		displayName: "Reef-Lux Achievement",
 		fileName: "flux",
-		authorDiscordId:"631246535560265749",
+		authorDiscordId: "631246535560265749",
 	},
 	{
 		displayName: "Meet Your Match",
 		fileName: "matchmeet",
-		authorDiscordId:"631246535560265749",
+		authorDiscordId: "631246535560265749",
 	},
 ];
