@@ -484,7 +484,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "manshine",
 		authorDiscordId: "528851510222782474",
 	},
-  {
+	{
 		displayName: "Reef-Lux Achievement",
 		fileName: "flux",
 		authorDiscordId: "631246535560265749",
@@ -493,5 +493,5 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Meet Your Match",
 		fileName: "matchmeet",
 		authorDiscordId: "631246535560265749",
-  },
+	},
 ];
