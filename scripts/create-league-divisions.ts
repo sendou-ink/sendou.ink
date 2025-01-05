@@ -3,10 +3,14 @@
 import "dotenv/config";
 import { z } from "zod";
 import { ADMIN_ID } from "~/constants";
+import { db } from "~/db/sql";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
+import { logger } from "~/utils/logger";
 
 const csv = `Team id,Team name,Div
 1,Chimera,X
@@ -34,6 +38,8 @@ invariant(
 );
 
 async function main() {
+	console.time("create-league-divisions");
+
 	const tournament = await tournamentFromDB({
 		tournamentId,
 		user: { id: ADMIN_ID },
@@ -46,25 +52,54 @@ async function main() {
 	}
 	validateDivs(teams);
 
-	const grouped = Object.groupBy(teams, (t) => t.division);
+	const grouped = Object.entries(Object.groupBy(teams, (t) => t.division)).sort(
+		(a, b) => {
+			const divAIndex = teams.findIndex((t) => t.division === a[0]);
+			const divBIndex = teams.findIndex((t) => t.division === b[0]);
 
-	for (const [div, _teams = []] of Object.entries(grouped)) {
-		await CalendarRepository.create({
+			return divAIndex - divBIndex;
+		},
+	);
+
+	for (const [, divsTeams] of grouped) {
+		divsTeams!.sort((a, b) => {
+			const teamAIndex = teams.findIndex((t) => t.id === a.id);
+			const teamBIndex = teams.findIndex((t) => t.id === b.id);
+
+			return teamAIndex - teamBIndex;
+		});
+	}
+
+	const calendarEvent = await db
+		.selectFrom("CalendarEvent")
+		.selectAll()
+		.where("CalendarEvent.id", "=", tournament.ctx.eventId)
+		.executeTakeFirstOrThrow();
+
+	for (const [div, divsTeams] of grouped) {
+		logger.info(`Creating division ${div}...`);
+
+		const createdEvent = await CalendarRepository.create({
 			authorId: tournament.ctx.author.id,
 			bracketProgression: tournament.ctx.settings.bracketProgression,
 			description: tournament.ctx.description,
 			deadlines: tournament.ctx.settings.deadlines,
-			discordInviteCode: "", // xxx: todo
+			discordInviteCode:
+				tournament.ctx.discordUrl?.replace("https://discord.gg/", "") ?? null,
 			mapPickingStyle: tournament.ctx.mapPickingStyle,
 			name: `${tournament.ctx.name} - Division ${div}`,
 			organizationId: tournament.ctx.organization?.id ?? null,
 			rules: tournament.ctx.rules,
-			startTimes: [], // xxx: Todo:
-			tags: null, // xxx: Todo:
+			startTimes: [dateToDatabaseTimestamp(tournament.ctx.startTime)],
+			tags: null,
 			tournamentToCopyId: tournament.ctx.id,
-			avatarImgId: undefined, // xxx: Todo:
-			mapPoolMaps: [], // xxx: todo
-			badges: [], // xxx: todo
+			avatarImgId: calendarEvent.avatarImgId ?? undefined,
+			avatarFileName: undefined,
+			mapPoolMaps:
+				tournament.ctx.mapPickingStyle !== "TO"
+					? tournament.ctx.tieBreakerMapPool
+					: tournament.ctx.toSetMapPool,
+			badges: [],
 			enableNoScreenToggle: tournament.ctx.settings.enableNoScreenToggle,
 			enableSubs: tournament.ctx.settings.enableSubs,
 			isInvitational: true,
@@ -76,7 +111,6 @@ async function main() {
 			bracketUrl: "https://sendou.ink",
 			isFullTournament: true,
 			autoValidateAvatar: true,
-			avatarFileName: undefined, // reuse from signup tournament
 			// these come from progression
 			swissGroupCount: undefined,
 			swissRoundCount: undefined,
@@ -84,8 +118,17 @@ async function main() {
 			thirdPlaceMatch: undefined,
 		});
 
-		// xxx: then add teams
+		for (const team of divsTeams!) {
+			await TournamentTeamRepository.copyFromAnotherTournament({
+				destinationTournamentId: createdEvent.tournamentId!,
+				tournamentTeamId: team.id,
+			});
+		}
+
+		logger.info(`Created division ${div} (id: ${createdEvent.tournamentId})`);
 	}
+
+	console.timeEnd("create-league-divisions");
 }
 
 const csvSchema = z.array(
