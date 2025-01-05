@@ -1,8 +1,8 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { redirect } from "react-router-dom";
 import { getUser } from "~/features/auth/core/user.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { tournamentIdFromParams } from "~/features/tournament/tournament-utils";
-import { tournamentPage } from "~/utils/urls";
+import { notFoundIfFalsy } from "~/utils/remix.server";
 import { tournamentFromDB } from "../core/Tournament.server";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -11,9 +11,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 	const tournament = await tournamentFromDB({ tournamentId, user });
 
-	if (!tournament.isLeagueSignup) {
-		return redirect(tournamentPage(tournamentId));
-	}
+	notFoundIfFalsy(tournament.isLeagueSignup);
 
-	return null;
+	const divisions =
+		await TournamentRepository.findChildTournaments(tournamentId);
+	notFoundIfFalsy(divisions.length);
+
+	return {
+		divisions,
+	};
 };

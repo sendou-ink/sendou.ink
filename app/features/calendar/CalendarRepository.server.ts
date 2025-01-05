@@ -486,6 +486,7 @@ type CreateArgs = Pick<
 	avatarFileName?: string;
 	avatarImgId?: number;
 	autoValidateAvatar?: boolean;
+	parentTournamentId?: number;
 };
 export async function create(args: CreateArgs) {
 	const copiedStaff = args.tournamentToCopyId
@@ -529,6 +530,7 @@ export async function create(args: CreateArgs) {
 					.values({
 						mapPickingStyle: args.mapPickingStyle,
 						settings: JSON.stringify(settings),
+						parentTournamentId: args.parentTournamentId,
 						rules: args.rules,
 					})
 					.returning("id")
@@ -570,6 +572,7 @@ export async function create(args: CreateArgs) {
 				bracketUrl: args.bracketUrl,
 				avatarImgId: args.avatarImgId ?? avatarImgId,
 				organizationId: args.organizationId,
+				hidden: args.parentTournamentId ? 1 : 0,
 				tournamentId,
 			})
 			.returning("id")

@@ -321,6 +321,23 @@ function nullifyingAvg(values: number[]) {
 	return values.reduce((acc, cur) => acc + cur, 0) / values.length;
 }
 
+export function findChildTournaments(parentTournamentId: number) {
+	return db
+		.selectFrom("Tournament")
+		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
+		.select((eb) => [
+			"Tournament.id",
+			"CalendarEvent.name",
+			eb
+				.selectFrom("TournamentTeam")
+				.select(({ fn }) => [fn.countAll<number>().as("teamsCount")])
+				.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+				.as("teamsCount"),
+		])
+		.where("Tournament.parentTournamentId", "=", parentTournamentId)
+		.execute();
+}
+
 export async function findTOSetMapPoolById(tournamentId: number) {
 	return (
 		await db

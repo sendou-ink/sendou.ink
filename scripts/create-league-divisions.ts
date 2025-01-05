@@ -80,6 +80,7 @@ async function main() {
 		logger.info(`Creating division ${div}...`);
 
 		const createdEvent = await CalendarRepository.create({
+			parentTournamentId: tournament.ctx.id,
 			authorId: tournament.ctx.author.id,
 			bracketProgression: tournament.ctx.settings.bracketProgression,
 			description: tournament.ctx.description,

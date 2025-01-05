@@ -129,6 +129,7 @@ export interface CalendarEvent {
 	name: string;
 	participantCount: number | null;
 	tags: string | null;
+	hidden: Generated<number>;
 	tournamentId: number | null;
 	organizationId: number | null;
 	avatarImgId: number | null;
