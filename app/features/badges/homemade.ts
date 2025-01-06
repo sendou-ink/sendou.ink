@@ -494,4 +494,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "matchmeet",
 		authorDiscordId: "631246535560265749",
 	},
+	{
+		displayName: "Low Tier Experiments",
+		fileName: "lte-badge",
+		authorDiscordId: "430487372015206410"
+	},
 ];
