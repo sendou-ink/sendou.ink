@@ -187,6 +187,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 const TournamentContext = React.createContext<Tournament>(null!);
 
+// xxx: does showing all teams on the sign up tournament make sense after divs are created?
+// xxx: select to show previous league select
+
 export default function TournamentLayoutShell() {
 	const isMounted = useIsMounted();
 
@@ -258,8 +261,12 @@ export function TournamentLayout() {
 						{t("tournament:tabs.brackets")}
 					</SubNavLink>
 				) : null}
-				{tournament.isLeagueSignup ? (
-					<SubNavLink to={tournamentDivisionsPage(tournament.ctx.id)}>
+				{tournament.isLeagueSignup || tournament.isLeagueDivision ? (
+					<SubNavLink
+						to={tournamentDivisionsPage(
+							tournament.ctx.parentTournamentId ?? tournament.ctx.id,
+						)}
+					>
 						Divisions
 					</SubNavLink>
 				) : null}

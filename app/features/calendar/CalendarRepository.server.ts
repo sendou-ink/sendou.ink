@@ -215,6 +215,7 @@ export async function findAllBetweenTwoTimestamps({
 			"<=",
 			dateToDatabaseTimestamp(endTime),
 		)
+		.where("CalendarEvent.hidden", "=", 0)
 		.orderBy("CalendarEventDate.startTime", "asc");
 
 	for (const tag of tagsToFilterBy) {
@@ -362,6 +363,7 @@ export async function eventsToReport(authorId: number) {
 			fn.max("CalendarEventDate.startTime").as("startTime"),
 		])
 		.where("CalendarEvent.authorId", "=", authorId)
+		.where("CalendarEvent.hidden", "=", 0)
 		.where("startTime", ">=", dateToDatabaseTimestamp(oneMonthAgo))
 		.where("startTime", "<=", dateToDatabaseTimestamp(new Date()))
 		.where("CalendarEvent.participantCount", "is", null)
@@ -382,6 +384,7 @@ export async function findRecentMapPoolsByAuthorId(authorId: number) {
 			withMapPool(eb),
 		])
 		.where("CalendarEvent.authorId", "=", authorId)
+		.where("CalendarEvent.hidden", "=", 0)
 		.orderBy("CalendarEvent.id", "desc")
 		.groupBy("CalendarEvent.id")
 		.limit(5)
@@ -450,8 +453,6 @@ export async function allEventsWithMapPools() {
 	}));
 }
 
-// xxx: parent tournament id
-// xxx: hidden calendar event
 type CreateArgs = Pick<
 	Tables["CalendarEvent"],
 	| "name"

@@ -98,8 +98,6 @@ const loaderTournamentsOnlySearchParamsSchema = z.object({
 	tournaments: z.literal("true").nullish(),
 });
 
-// xxx: handle hidden
-
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await getUserId(request);
 	const t = await i18next.getFixedT(request);

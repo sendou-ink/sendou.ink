@@ -1,4 +1,3 @@
-// xxx: can child tournaments not have calendar event linked?
 export function up(db) {
 	db.transaction(() => {
 		db.prepare(

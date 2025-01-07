@@ -5,6 +5,9 @@ import { tournamentIdFromParams } from "~/features/tournament/tournament-utils";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 import { tournamentFromDB } from "../core/Tournament.server";
 
+// xxx: handle "is playing in div"
+// xxx: cache?
+
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const user = await getUser(request);
 	const tournamentId = tournamentIdFromParams(params);
@@ -19,5 +22,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 	return {
 		divisions,
+		divsParticipantOf: user
+			? divisions
+					.filter((division) => division.participantUserIds.has(user?.id))
+					.map((division) => division.tournamentId)
+			: [],
 	};
 };

@@ -588,7 +588,9 @@ export class Tournament {
 
 				return {
 					groupCount: Math.ceil(participantsCount / teamsPerGroup),
-					seedOrdering: ["groups.seed_optimized"],
+					seedOrdering: [
+						this.isLeagueDivision ? "natural" : "groups.seed_optimized",
+					],
 				};
 			}
 			case "swiss": {
@@ -907,6 +909,10 @@ export class Tournament {
 		return Object.values(LEAGUES)
 			.flat()
 			.some((entry) => entry.tournamentId === this.ctx.id);
+	}
+
+	get isLeagueDivision() {
+		return Boolean(this.ctx.parentTournamentId);
 	}
 
 	matchNameById(matchId: number) {

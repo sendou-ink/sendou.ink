@@ -46,6 +46,7 @@ export async function findById(id: number) {
 			"Tournament.castedMatchesInfo",
 			"Tournament.mapPickingStyle",
 			"Tournament.rules",
+			"Tournament.parentTournamentId",
 			"CalendarEvent.name",
 			"CalendarEvent.description",
 			"CalendarEventDate.startTime",
@@ -321,21 +322,38 @@ function nullifyingAvg(values: number[]) {
 	return values.reduce((acc, cur) => acc + cur, 0) / values.length;
 }
 
-export function findChildTournaments(parentTournamentId: number) {
-	return db
+export async function findChildTournaments(parentTournamentId: number) {
+	const rows = await db
 		.selectFrom("Tournament")
 		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
 		.select((eb) => [
-			"Tournament.id",
+			"Tournament.id as tournamentId",
 			"CalendarEvent.name",
 			eb
 				.selectFrom("TournamentTeam")
 				.select(({ fn }) => [fn.countAll<number>().as("teamsCount")])
 				.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
 				.as("teamsCount"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentTeam")
+					.innerJoin(
+						"TournamentTeamMember",
+						"TournamentTeamMember.tournamentTeamId",
+						"TournamentTeam.id",
+					)
+					.select(["TournamentTeamMember.userId"])
+					.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id"),
+			).as("teamMembers"),
 		])
 		.where("Tournament.parentTournamentId", "=", parentTournamentId)
+		.$narrowType<{ teamsCount: NotNull }>()
 		.execute();
+
+	return rows.map((row) => ({
+		...row,
+		participantUserIds: new Set(row.teamMembers.map((member) => member.userId)),
+	}));
 }
 
 export async function findTOSetMapPoolById(tournamentId: number) {

@@ -1,5 +1,3 @@
-// xxx: implement
-
 import "dotenv/config";
 import { z } from "zod";
 import { ADMIN_ID } from "~/constants";
@@ -12,6 +10,7 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 
+// xxx: load from remote url
 const csv = `Team id,Team name,Div
 1,Chimera,X
 2,Drop it Like It's Hot,X
@@ -102,7 +101,7 @@ async function main() {
 					: tournament.ctx.toSetMapPool,
 			badges: [],
 			enableNoScreenToggle: tournament.ctx.settings.enableNoScreenToggle,
-			enableSubs: tournament.ctx.settings.enableSubs,
+			enableSubs: false,
 			isInvitational: true,
 			autonomousSubs: false,
 			isRanked: tournament.ctx.settings.isRanked,
