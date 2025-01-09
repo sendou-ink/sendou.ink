@@ -494,4 +494,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "matchmeet",
 		authorDiscordId: "631246535560265749",
 	},
+	{
+		displayName: "Proxy Training",
+		fileName: "eous",
+		authorDiscordId: "528851510222782474",
+	},
 ];
