@@ -19,6 +19,7 @@ import {
 import generalI18next from "i18next";
 import NProgress from "nprogress";
 import * as React from "react";
+import { I18nProvider } from "react-aria-components";
 import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
 import { useChangeLanguage } from "remix-i18next/react";
@@ -38,20 +39,21 @@ import {
 } from "./features/theme/core/provider";
 import { getThemeSession } from "./features/theme/core/session.server";
 import { useIsMounted } from "./hooks/useIsMounted";
+import { useVisibilityChange } from "./hooks/useVisibilityChange";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
 import i18next, { i18nCookie } from "./modules/i18n/i18next.server";
 import type { Namespace } from "./modules/i18n/resources.server";
+import { isRevalidation } from "./utils/remix";
 import { COMMON_PREVIEW_IMAGE, SUSPENDED_PAGE } from "./utils/urls";
 
 import "nprogress/nprogress.css";
 import "~/styles/common.css";
+import "~/styles/components.css";
 import "~/styles/flags.css";
 import "~/styles/layout.css";
 import "~/styles/reset.css";
 import "~/styles/utils.css";
 import "~/styles/vars.css";
-import { useVisibilityChange } from "./hooks/useVisibilityChange";
-import { isRevalidation } from "./utils/remix";
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	if (isRevalidation(args)) return true;
@@ -170,10 +172,12 @@ function Document({
 			<body style={customizedCSSVars}>
 				{process.env.NODE_ENV === "development" && <HydrationTestIndicator />}
 				<React.StrictMode>
-					<MyRamp data={data} />
-					<Layout data={data} isErrored={isErrored}>
-						{children}
-					</Layout>
+					<I18nProvider locale={i18n.language}>
+						<MyRamp data={data} />
+						<Layout data={data} isErrored={isErrored}>
+							{children}
+						</Layout>
+					</I18nProvider>
 				</React.StrictMode>
 				<ScrollRestoration />
 				<Scripts />

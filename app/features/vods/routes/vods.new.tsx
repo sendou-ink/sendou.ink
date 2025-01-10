@@ -38,6 +38,7 @@ import {
 } from "~/utils/remix.server";
 import { VODS_PAGE, vodVideoPage } from "~/utils/urls";
 import { actualNumber, id } from "~/utils/zod";
+import { DatePicker } from "../../../components/DatePicker";
 import { createVod, updateVodByReplacing } from "../queries/createVod.server";
 import { findVodById } from "../queries/findVodById.server";
 import { VOD, videoMatchTypes } from "../vods-constants";
@@ -197,6 +198,8 @@ export default function NewVodPage() {
 						required
 					/>
 				</div>
+
+				<DatePicker label={t("vods:forms.title.videoDate")} required />
 
 				<div>
 					<Label required htmlFor="date">

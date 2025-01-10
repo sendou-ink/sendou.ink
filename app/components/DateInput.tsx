@@ -13,6 +13,7 @@ export interface DateInputProps
 	onChange?: (newDate: Date | null) => void;
 }
 
+// xxx: deprecate
 export function DateInput({
 	name,
 	defaultValue,
