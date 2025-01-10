@@ -499,4 +499,14 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "eous",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "Ubers",
+		fileName: "ubers",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Zones Classic",
+		fileName: "szclassic",
+		authorDiscordId: "528851510222782474",
+	},
 ];
