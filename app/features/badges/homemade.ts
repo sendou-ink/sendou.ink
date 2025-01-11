@@ -15,6 +15,21 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Splat Charger",
+		fileName: "vchargersplash",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Hatsune Miku",
+		fileName: "hatsunemiku",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "New InkLAN",
+		fileName: "pinknes",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "Squids For Palestinian Kids",
 		fileName: "three_course_pal",
 		authorDiscordId: "338806780446638082",
