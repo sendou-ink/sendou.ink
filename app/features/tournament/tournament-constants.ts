@@ -15,10 +15,25 @@ export const TOURNAMENT = {
 	SWISS_DEFAULT_ROUND_COUNT: 5,
 } as const;
 
+// xxx: set for prod
 export const LEAGUES = {
 	LUTI: [
 		{
 			tournamentId: 1,
+			weeks: [
+				{
+					weekNumber: 2,
+					year: 2025,
+				},
+				{
+					weekNumber: 3,
+					year: 2025,
+				},
+				{
+					weekNumber: 4,
+					year: 2025,
+				},
+			],
 		},
 	],
 };

@@ -7154,6 +7154,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 	ctx: {
 		id: 815,
 		eventId: 2614,
+		parentTournamentId: null,
 		discordUrl: "https://discord.gg/F7RaNUR",
 		tags: "LOW",
 		settings: {

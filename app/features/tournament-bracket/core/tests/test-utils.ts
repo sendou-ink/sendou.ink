@@ -63,6 +63,7 @@ export const testTournament = ({
 			tags: null,
 			description: null,
 			organization: null,
+			parentTournamentId: null,
 			rules: null,
 			logoUrl: null,
 			logoSrc: "/test.png",
