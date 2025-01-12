@@ -509,4 +509,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "szclassic",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "P.X.G",
+		fileName: "pxg",
+		authorDiscordId: "528851510222782474",
+	},
 ];
