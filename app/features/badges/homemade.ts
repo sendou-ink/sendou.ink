@@ -15,7 +15,7 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
-		displayName: "Splat Charger",
+		displayName: "Charger Assault",
 		fileName: "vchargersplash",
 		authorDiscordId: "338806780446638082",
 	},
