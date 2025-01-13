@@ -177,7 +177,7 @@ export function copyFromAnotherTournament({
 				"TournamentTeamMember.inGameName",
 				"TournamentTeamMember.isOwner",
 				"TournamentTeamMember.userId",
-				
+
 				// -- exclude these
 				// "TournamentTeamMember.tournamentTeamId"
 			])
