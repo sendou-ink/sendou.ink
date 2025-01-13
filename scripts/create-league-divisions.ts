@@ -1,3 +1,5 @@
+// for testing use the command `npx tsx ./scripts/create-league-divisions.ts 6 'https://gist.githubusercontent.com/Sendouc/38aa4d5d8426035ce178c09598ae627f/raw/17be9bb53a9f017c2097d0624f365d1c5a029f01/league.csv'`
+
 import "dotenv/config";
 import { z } from "zod";
 import { ADMIN_ID } from "~/constants";
@@ -10,31 +12,16 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 
-// xxx: load from remote url
-const csv = `Team id,Team name,Div
-1,Chimera,X
-2,Drop it Like It's Hot,X
-3,We Built This City,X
-4,My Sweet Lord,X
-5,Losing My Religion,X
-6,The Joker,X
-7,Mony Mony,X
-8,Will You Love Me Tomorrow,X
-9,The Wanderer,1
-10,What's Going On?,1
-11,Let's Dance,1
-12,Just the Way You Are,1
-13,Jive Talkin',1
-14,Le Freak,1
-15,There goes my baby,1
-16,Why Do Fools Fall in Love?,1`;
-
 const tournamentId = Number(process.argv[2]?.trim());
 
 invariant(
 	tournamentId && !Number.isNaN(tournamentId),
 	"tournament id is required (argument 1)",
 );
+
+const csvUrl = process.argv[3]?.trim();
+
+invariant(z.string().url().parse(csvUrl), "csv url is required (argument 2)");
 
 async function main() {
 	console.time("create-league-divisions");
@@ -44,6 +31,8 @@ async function main() {
 		user: { id: ADMIN_ID },
 	});
 	invariant(tournament.isLeagueSignup, "Tournament is not a league signup");
+
+	const csv = await loadCsv();
 
 	const teams = parseCsv(csv);
 	for (const team of teams) {
@@ -129,6 +118,11 @@ async function main() {
 	}
 
 	console.timeEnd("create-league-divisions");
+}
+
+async function loadCsv() {
+	const response = await fetch(csvUrl);
+	return response.text();
 }
 
 const csvSchema = z.array(

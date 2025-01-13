@@ -255,6 +255,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 		case "UNREGISTER": {
 			validate(ownTeam, "You are not registered to this tournament");
 			validate(!ownTeamCheckedIn, "You cannot unregister after checking in");
+			validate(
+				!tournament.isLeagueSignup || tournament.registrationOpen,
+				"Unregistering from leagues is not possible after registration has closed",
+			);
 
 			deleteTeam(ownTeam.id);
 

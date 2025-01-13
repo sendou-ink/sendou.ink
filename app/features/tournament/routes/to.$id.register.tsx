@@ -63,8 +63,6 @@ import { loader } from "../loaders/to.$id.register.server";
 
 export { loader, action };
 
-// xxx: prevent unregister by user if reg over in league mode
-
 export default function TournamentRegisterPage() {
 	const user = useUser();
 	const isMounted = useIsMounted();
@@ -78,7 +76,6 @@ export default function TournamentRegisterPage() {
 		!tournament.ctx.logoValidatedAt &&
 		tournament.isOrganizer(user);
 
-	// xxx: "LEAGUE" badge?
 	return (
 		<div className={clsx("stack lg", containerClassName("normal"))}>
 			<div className="tournament__logo-container">
@@ -122,20 +119,22 @@ export default function TournamentRegisterPage() {
 							</Link>
 						)}
 					</div>
-					<div className="tournament__by mt-2">
-						<div className="stack horizontal xs items-center">
-							<ClockIcon className="tournament__info__icon" />{" "}
-							{isMounted
-								? tournament.ctx.startTime.toLocaleString(i18n.language, {
-										timeZoneName: "short",
-										minute: startsAtEvenHour ? undefined : "numeric",
-										hour: "numeric",
-										day: "numeric",
-										month: "long",
-									})
-								: null}
+					{!tournament.isLeagueSignup ? (
+						<div className="tournament__by mt-2">
+							<div className="stack horizontal xs items-center">
+								<ClockIcon className="tournament__info__icon" />{" "}
+								{isMounted
+									? tournament.ctx.startTime.toLocaleString(i18n.language, {
+											timeZoneName: "short",
+											minute: startsAtEvenHour ? undefined : "numeric",
+											hour: "numeric",
+											day: "numeric",
+											month: "long",
+										})
+									: null}
+							</div>
 						</div>
-					</div>
+					) : null}
 					<div className="stack horizontal sm mt-1">
 						{tournament.ranked ? (
 							<div className="tournament__badge tournament__badge__ranked">
@@ -427,7 +426,10 @@ function RegistrationProgress({
 		tournament.ctx.startTime.getTime();
 
 	const registrationClosesAtString = isMounted
-		? tournament.registrationClosesAt.toLocaleTimeString(i18n.language, {
+		? (tournament.isLeagueSignup
+				? tournament.ctx.startTime
+				: tournament.registrationClosesAt
+			).toLocaleTimeString(i18n.language, {
 				minute: "numeric",
 				hour: "numeric",
 				day: "2-digit",
@@ -478,7 +480,7 @@ function RegistrationProgress({
 				) : null}
 			</section>
 			<div className="tournament__section__warning">
-				{regClosesBeforeStart ? (
+				{regClosesBeforeStart || tournament.isLeagueSignup ? (
 					<span className="text-warning">
 						Registration closes at {registrationClosesAtString}
 					</span>
@@ -678,6 +680,17 @@ function TeamInfo({
 							{t("tournament:pre.info.unregister")}
 						</Button>
 					</FormWithConfirm>
+				) : null}
+				{canUnregister &&
+				tournament.isLeagueSignup &&
+				!tournament.registrationOpen ? (
+					<Popover
+						triggerClassName="minimal-destructive tiny build__small-text"
+						buttonChildren={t("tournament:pre.info.unregister")}
+					>
+						Unregistration from a league after the registration has ended is
+						handled by the organizers
+					</Popover>
 				) : null}
 			</div>
 			<section className="tournament__section">

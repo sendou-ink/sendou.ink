@@ -23,6 +23,7 @@ import invariant from "~/utils/invariant";
 import { assertUnreachable } from "~/utils/types";
 import {
 	calendarEventPage,
+	teamPage,
 	tournamentEditPage,
 	tournamentPage,
 } from "~/utils/urls";
@@ -540,7 +541,6 @@ function RemoveStaffButton({
 	);
 }
 
-// xxx: some kind of "league friendly" format?
 function DownloadParticipants() {
 	const tournament = useTournament();
 
@@ -617,11 +617,30 @@ function DownloadParticipants() {
 	}
 
 	function leagueFormat() {
-		const header = "Team id,Team name,Div";
+		const memberColumnsCount = tournament.ctx.teams.reduce(
+			(max, team) => Math.max(max, team.members.length),
+			0,
+		);
+		const header = `Team id,Team name,Team page URL,Div${Array.from({
+			length: memberColumnsCount,
+		})
+			.map((_, i) => `,Member ${i + 1} name,Member${i + 1} URL`)
+			.join("")}`;
 
 		return `${header}\n${tournament.ctx.teams
 			.map((team) => {
-				return `${team.id},${team.name},`;
+				return `${team.id},${team.name},${team.team ? teamPage(team.team.customUrl) : ""},,${team.members
+					.map(
+						(member) =>
+							`${member.username},https://sendou.ink/u/${member.discordId}`,
+					)
+					.join(",")}${Array(
+					memberColumnsCount - team.members.length === 0
+						? 0
+						: memberColumnsCount - team.members.length + 1,
+				)
+					.fill(",")
+					.join("")}`;
 			})
 			.join("\n")}`;
 	}

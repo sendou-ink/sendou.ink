@@ -347,3 +347,14 @@
 	gap: var(--s-1);
 	padding: var(--s-0-5) var(--s-1-5);
 }
+
+.front__luti-banner {
+	background-color: #4874a0;
+	color: #fff;
+	border-radius: var(--rounded);
+	padding: var(--s-2);
+	justify-content: center;
+	display: flex;
+	gap: var(--s-2);
+	flex-wrap: wrap;
+}

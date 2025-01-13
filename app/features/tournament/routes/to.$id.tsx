@@ -28,6 +28,7 @@ import {
 	tournamentDivisionsPage,
 	tournamentOrganizationPage,
 	tournamentPage,
+	tournamentRegisterPage,
 	userSubmittedImage,
 } from "~/utils/urls";
 import { streamsByTournamentId } from "../core/streams.server";
@@ -187,9 +188,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 const TournamentContext = React.createContext<Tournament>(null!);
 
-// xxx: does showing all teams on the sign up tournament make sense after divs are created?
-// xxx: select to show previous league select
-
 export default function TournamentLayoutShell() {
 	const isMounted = useIsMounted();
 
@@ -249,8 +247,18 @@ export function TournamentLayout() {
 	return (
 		<Main bigger>
 			<SubNav>
-				<SubNavLink to="register" data-testid="register-tab" prefetch="intent">
-					{tournament.hasStarted ? "Info" : t("tournament:tabs.register")}
+				<SubNavLink
+					to={tournamentRegisterPage(
+						tournament.isLeagueDivision
+							? tournament.ctx.parentTournamentId!
+							: tournament.ctx.id,
+					)}
+					data-testid="register-tab"
+					prefetch="intent"
+				>
+					{tournament.hasStarted || tournament.isLeagueDivision
+						? "Info"
+						: t("tournament:tabs.register")}
 				</SubNavLink>
 				{!tournament.isLeagueSignup ? (
 					<SubNavLink

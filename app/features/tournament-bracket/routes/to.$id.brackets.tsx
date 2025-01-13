@@ -430,7 +430,6 @@ export default function TournamentBracketsPage() {
 		).length;
 	};
 
-	// xxx: handle better?
 	if (tournament.isLeagueSignup) {
 		return null;
 	}

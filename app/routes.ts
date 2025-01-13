@@ -96,6 +96,7 @@ export default [
 			"features/tournament-bracket/routes/to.$id.matches.$mid.subscribe.tsx",
 		),
 	]),
+	route("luti", "features/tournament/routes/luti.tsx"),
 
 	...prefix("/org/:slug", [
 		index("features/tournament-organization/routes/org.$slug.tsx"),

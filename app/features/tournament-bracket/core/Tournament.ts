@@ -34,8 +34,6 @@ import { getRounds } from "./rounds";
 
 export type OptionalIdObject = { id: number } | undefined;
 
-// xxx: registration closes at how to handle?
-
 /** Extends and providers utility functions on top of the bracket-manager library. Updating data after the bracket has started is responsibility of bracket-manager. */
 export class Tournament {
 	brackets: Bracket[] = [];

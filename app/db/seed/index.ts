@@ -98,6 +98,10 @@ const calendarEventWithToToolsDepths = () => calendarEventWithToTools("DEPTHS");
 const calendarEventWithToToolsTeamsDepths = () =>
 	calendarEventWithToToolsTeams("DEPTHS");
 
+const calendarEventWithToToolsLUTI = () => calendarEventWithToTools("LUTI");
+const calendarEventWithToToolsTeamsLUTI = () =>
+	calendarEventWithToToolsTeams("LUTI");
+
 const basicSeeds = (variation?: SeedVariation | null) => [
 	adminUser,
 	makeAdminPatron,
@@ -145,6 +149,8 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	calendarEventWithToToolsToSetMapPool,
 	calendarEventWithToToolsDepths,
 	calendarEventWithToToolsTeamsDepths,
+	calendarEventWithToToolsLUTI,
+	calendarEventWithToToolsTeamsLUTI,
 	tournamentSubs,
 	adminBuilds,
 	manySplattershotBuilds,
@@ -218,6 +224,12 @@ function wipeDB() {
 	];
 
 	for (const table of tablesToDelete) {
+		if (table === "Tournament") {
+			// foreign key constraint reasons
+			sql
+				.prepare("delete from Tournament where parentTournamentId is not null")
+				.run();
+		}
 		sql.prepare(`delete from "${table}"`).run();
 	}
 }
@@ -861,7 +873,7 @@ async function calendarEventResults() {
 
 const TO_TOOLS_CALENDAR_EVENT_ID = 201;
 function calendarEventWithToTools(
-	event: "PICNIC" | "ITZ" | "PP" | "SOS" | "DEPTHS" = "PICNIC",
+	event: "PICNIC" | "ITZ" | "PP" | "SOS" | "DEPTHS" | "LUTI" = "PICNIC",
 	registrationOpen = false,
 ) {
 	const tournamentId = {
@@ -870,6 +882,7 @@ function calendarEventWithToTools(
 		PP: 3,
 		SOS: 4,
 		DEPTHS: 5,
+		LUTI: 6,
 	}[event];
 	const eventId = {
 		PICNIC: TO_TOOLS_CALENDAR_EVENT_ID + 0,
@@ -877,6 +890,7 @@ function calendarEventWithToTools(
 		PP: TO_TOOLS_CALENDAR_EVENT_ID + 2,
 		SOS: TO_TOOLS_CALENDAR_EVENT_ID + 3,
 		DEPTHS: TO_TOOLS_CALENDAR_EVENT_ID + 4,
+		LUTI: TO_TOOLS_CALENDAR_EVENT_ID + 5,
 	}[event];
 	const name = {
 		PICNIC: "PICNIC #2",
@@ -884,6 +898,7 @@ function calendarEventWithToTools(
 		PP: "Paddling Pool 253",
 		SOS: "Swim or Sink 101",
 		DEPTHS: "The Depths 5",
+		LUTI: "Leagues Under The Ink Season 15",
 	}[event];
 
 	const settings: Tables["Tournament"]["settings"] =
@@ -987,16 +1002,34 @@ function calendarEventWithToTools(
 									},
 								],
 							}
-						: {
-								bracketProgression: [
-									{
-										type: "double_elimination",
-										name: "Main bracket",
-										requiresCheckIn: false,
-										settings: {},
-									},
-								],
-							};
+						: event === "LUTI"
+							? {
+									bracketProgression: [
+										{
+											type: "round_robin",
+											name: "Groups stage",
+											requiresCheckIn: false,
+											settings: {},
+										},
+										{
+											type: "single_elimination",
+											name: "Play-offs",
+											requiresCheckIn: false,
+											settings: {},
+											sources: [{ bracketIdx: 0, placements: [1, 2] }],
+										},
+									],
+								}
+							: {
+									bracketProgression: [
+										{
+											type: "double_elimination",
+											name: "Main bracket",
+											requiresCheckIn: false,
+											settings: {},
+										},
+									],
+								};
 
 	sql
 		.prepare(
@@ -1016,7 +1049,11 @@ function calendarEventWithToTools(
 			id: tournamentId,
 			settings: JSON.stringify(settings),
 			mapPickingStyle:
-				event === "SOS" ? "TO" : event === "ITZ" ? "AUTO_SZ" : "AUTO_ALL",
+				event === "SOS" || event === "LUTI"
+					? "TO"
+					: event === "ITZ"
+						? "AUTO_SZ"
+						: "AUTO_ALL",
 		});
 
 	sql
@@ -1156,7 +1193,7 @@ const availablePairs = rankedModesShort
 	)
 	.filter((pair) => !tiebreakerPicks.has(pair));
 function calendarEventWithToToolsTeams(
-	event: "PICNIC" | "ITZ" | "PP" | "SOS" | "DEPTHS" = "PICNIC",
+	event: "PICNIC" | "ITZ" | "PP" | "SOS" | "DEPTHS" | "LUTI" = "PICNIC",
 	isSmall = false,
 ) {
 	const userIds = userIdsInAscendingOrderById();
@@ -1170,6 +1207,7 @@ function calendarEventWithToToolsTeams(
 		PP: 3,
 		SOS: 4,
 		DEPTHS: 5,
+		LUTI: 6,
 	}[event];
 
 	const teamIdAddition = {
@@ -1178,6 +1216,7 @@ function calendarEventWithToToolsTeams(
 		PP: 200,
 		SOS: 300,
 		DEPTHS: 400,
+		LUTI: 500,
 	}[event];
 
 	for (let id = 1; id <= (isSmall ? 4 : 16); id++) {
@@ -1212,8 +1251,8 @@ function calendarEventWithToToolsTeams(
 				inviteCode: nanoid(INVITE_CODE_LENGTH),
 			});
 
-		// in PICNIC & PP Chimera is not checked in
-		if (teamId !== 1 && teamId !== 201) {
+		// in PICNIC & PP Chimera is not checked in + in LUTI no check-ins at all
+		if (teamId !== 1 && teamId !== 201 && event !== "LUTI") {
 			sql
 				.prepare(
 					`
@@ -1268,7 +1307,11 @@ function calendarEventWithToToolsTeams(
 				});
 		}
 
-		if (event !== "SOS" && (Math.random() < 0.8 || id === 1)) {
+		if (
+			event !== "SOS" &&
+			event !== "LUTI" &&
+			(Math.random() < 0.8 || id === 1)
+		) {
 			const shuffledPairs = shuffle(availablePairs.slice());
 
 			let SZ = 0;
