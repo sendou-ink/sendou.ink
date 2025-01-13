@@ -9,7 +9,6 @@ Note: leagues are not an open feature available for everyone and require some am
 3) Once the registration closes from the admin tab download participant list as "league format" (.csv file).
 4) Order the teams as you wish. Fill the "div" column with the desired division per participant.
 5) Give sendou back the .csv file.
-xxx: how to do prepared maps if start time is already?
 6) Division brackets will be generated. You get the chance to edit each as you wish before starting it. If you want to use the same maps for each division, just do them for one bracket then let Sendou know. There is an admin script that can be ran that copies them across all divisions.
 7) (Optional): let Sendou know the start time of each bracket to control during which week which round of groups is played.
 8) When everything looks good start divisions and play out the tournament as normal.
