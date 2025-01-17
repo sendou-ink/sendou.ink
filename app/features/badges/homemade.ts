@@ -494,4 +494,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "matchmeet",
 		authorDiscordId: "631246535560265749",
 	},
+	{
+		displayName: "StarZ Impact Star",
+	 	fileName: "starz",
+	 	authorDiscordId: "1136346891630682224",
+	 },
 ];
