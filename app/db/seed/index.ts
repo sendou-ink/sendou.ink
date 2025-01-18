@@ -1643,7 +1643,7 @@ function realVideo() {
 	createVod({
 		type: "TOURNAMENT",
 		youtubeId: "M4aV-BQWlVg",
-		youtubeDate: dateToDatabaseTimestamp(new Date("02-02-2023")),
+		date: { day: 2, month: 2, year: 2023 },
 		submitterUserId: ADMIN_ID,
 		title: "LUTI Division X Tournament - ABBF (THRONE) vs. Ascension",
 		povUserId: NZAP_TEST_ID,
@@ -1694,7 +1694,7 @@ function realVideoCast() {
 	createVod({
 		type: "CAST",
 		youtubeId: "M4aV-BQWlVg",
-		youtubeDate: dateToDatabaseTimestamp(new Date("02-02-2023")),
+		date: { day: 2, month: 2, year: 2023 },
 		submitterUserId: ADMIN_ID,
 		title: "LUTI Division X Tournament - ABBF (THRONE) vs. Ascension",
 		isValidated: true,

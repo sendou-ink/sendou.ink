@@ -1,3 +1,4 @@
+import { getLocalTimeZone, today } from "@internationalized/date";
 import {
 	type ActionFunction,
 	type LoaderFunctionArgs,
@@ -25,18 +26,13 @@ import {
 	stageIds,
 } from "~/modules/in-game-lists";
 import { modesShort } from "~/modules/in-game-lists/modes";
-import {
-	databaseTimestampToDate,
-	dateToDatabaseTimestamp,
-	dateToYearMonthDayString,
-} from "~/utils/dates";
 import { secondsToMinutesNumberTuple } from "~/utils/number";
 import {
 	type SendouRouteHandle,
 	notFoundIfFalsy,
 	parseRequestPayload,
 } from "~/utils/remix.server";
-import { VODS_PAGE, vodVideoPage } from "~/utils/urls";
+import { vodVideoPage } from "~/utils/urls";
 import { actualNumber, id } from "~/utils/zod";
 import { DatePicker } from "../../../components/DatePicker";
 import { createVod, updateVodByReplacing } from "../queries/createVod.server";
@@ -99,10 +95,6 @@ const newVodLoaderParamsSchema = z.object({
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await requireUser(request);
 
-	if (!canAddVideo(user)) {
-		throw redirect(VODS_PAGE);
-	}
-
 	const url = new URL(request.url);
 	const params = newVodLoaderParamsSchema.safeParse(
 		Object.fromEntries(url.searchParams),
@@ -137,7 +129,7 @@ export default function NewVodPage() {
 			matches: [newMatch()],
 			youtubeId: "",
 			title: "",
-			youtubeDate: dateToDatabaseTimestamp(new Date()),
+			date: null, // xxx: not set anywhere atm
 		},
 	);
 	const user = useUser();
@@ -199,28 +191,11 @@ export default function NewVodPage() {
 					/>
 				</div>
 
-				<DatePicker label={t("vods:forms.title.videoDate")} required />
-
-				<div>
-					<Label required htmlFor="date">
-						{t("vods:forms.title.videoDate")}
-					</Label>
-					<Input
-						id="date"
-						type="date"
-						max={dateToYearMonthDayString(new Date())}
-						value={dateToYearMonthDayString(
-							databaseTimestampToDate(video.youtubeDate),
-						)}
-						onChange={(e) => {
-							setVideo({
-								...video,
-								youtubeDate: dateToDatabaseTimestamp(new Date(e.target.value)),
-							});
-						}}
-						required
-					/>
-				</div>
+				<DatePicker
+					label={t("vods:forms.title.videoDate")}
+					isRequired
+					maxValue={today(getLocalTimeZone())}
+				/>
 
 				{video.youtubeId ? (
 					<>

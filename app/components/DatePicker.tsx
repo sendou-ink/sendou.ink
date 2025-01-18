@@ -1,10 +1,10 @@
-import { getLocalTimeZone, today } from "@internationalized/date";
 import {
 	Button,
 	Calendar,
 	CalendarCell,
 	CalendarGrid,
 	DateInput,
+	type DatePickerProps,
 	DateSegment,
 	type DateValue,
 	Dialog,
@@ -18,30 +18,18 @@ import { ArrowLeftIcon } from "./icons/ArrowLeft";
 import { ArrowRightIcon } from "./icons/ArrowRight";
 import { CalendarIcon } from "./icons/Calendar";
 
-// xxx: clicking in the center should focus something
-export function DatePicker({
-	label,
-	required = false,
-	onChange,
-}: {
+interface MyDatePickerProps<T extends DateValue> extends DatePickerProps<T> {
 	label: string;
-	required: boolean;
-	onChange?: (date: Date | null) => void;
-}) {
-	const handleDateChange = (newDate: DateValue | null) => {
-		onChange!(
-			newDate
-				? new Date(Date.UTC(newDate.year, newDate.month, newDate.day))
-				: null,
-		);
-	};
+}
 
+// xxx: clicking in the center should focus something
+export function DatePicker<T extends DateValue>({
+	label,
+	...rest
+}: MyDatePickerProps<T>) {
 	return (
-		<ReactAriaDatePicker
-			onChange={onChange ? handleDateChange : undefined}
-			maxValue={today(getLocalTimeZone())}
-		>
-			<Label required={required}>{label}</Label>
+		<ReactAriaDatePicker {...rest}>
+			<Label required={rest.isRequired}>{label}</Label>
 			<Group>
 				<DateInput>{(segment) => <DateSegment segment={segment} />}</DateInput>
 				<Button>

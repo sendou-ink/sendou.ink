@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+	dayMonthYear,
 	id,
 	modeShort,
 	safeJSONParse,
@@ -21,7 +22,7 @@ export const videoSchema = z
 		eventId: z.number().optional(),
 		youtubeId: z.string(),
 		title: z.string().min(VOD.TITLE_MIN_LENGTH).max(VOD.TITLE_MAX_LENGTH),
-		youtubeDate: z.number(),
+		date: dayMonthYear,
 		povUserId: z.number().optional(),
 		povUserName: z
 			.string()

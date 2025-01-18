@@ -250,3 +250,11 @@ export function numericEnum<TValues extends readonly number[]>(
 		}
 	}) as ZodType<TValues[number]>;
 }
+
+export const dayMonthYear = z.object({
+	day: z.number().int().min(1).max(31),
+	month: z.number().int().min(1).max(12),
+	year: z.number().int().min(2015).max(2100),
+});
+
+export type DayMonthYear = z.infer<typeof dayMonthYear>;

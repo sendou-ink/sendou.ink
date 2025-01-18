@@ -1,6 +1,10 @@
 import { sql } from "~/db/sql";
 import type { Video } from "~/db/types";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import {
+	dateToDatabaseTimestamp,
+	dayMonthYearToDatabaseTimestamp,
+} from "~/utils/dates";
+import type { DayMonthYear } from "../../../utils/zod";
 import type { VideoBeingAdded } from "../vods-types";
 
 const createVideoStm = sql.prepare(/* sql */ `
@@ -34,6 +38,7 @@ const createVideoMatchPlayerStm = sql.prepare(/* sql */ `
 export const createVod = sql.transaction(
 	(
 		args: VideoBeingAdded & {
+			date: DayMonthYear;
 			submitterUserId: number;
 			isValidated: boolean;
 			id?: number;
@@ -43,7 +48,7 @@ export const createVod = sql.transaction(
 			id: args.id ?? null,
 			title: args.title,
 			type: args.type,
-			youtubeDate: args.youtubeDate,
+			youtubeDate: dayMonthYearToDatabaseTimestamp(args.date),
 			eventId: args.eventId ?? null,
 			youtubeId: args.youtubeId,
 			submitterUserId: args.submitterUserId,
@@ -78,6 +83,7 @@ export const createVod = sql.transaction(
 export const updateVodByReplacing = sql.transaction(
 	(
 		args: VideoBeingAdded & {
+			date: DayMonthYear;
 			submitterUserId: number;
 			isValidated: boolean;
 			id: number;
