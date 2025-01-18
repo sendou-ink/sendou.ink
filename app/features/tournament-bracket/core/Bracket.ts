@@ -1491,6 +1491,9 @@ class SwissBracket extends Bracket {
 						if (a.mapWins > b.mapWins) return -1;
 						if (a.mapWins < b.mapWins) return 1;
 
+						if (a.mapLosses < b.mapLosses) return -1;
+						if (a.mapLosses > b.mapLosses) return 1;
+
 						const aSeed = Number(this.tournament.teamById(a.id)?.seed);
 						const bSeed = Number(this.tournament.teamById(b.id)?.seed);
 
