@@ -539,4 +539,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "pxg",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "StarZ Impact Star",
+		fileName: "starz",
+		authorDiscordId: "1136346891630682224",
+	},
 ];
