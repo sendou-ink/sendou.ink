@@ -20,6 +20,21 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "324396128906903552",
 	},
 	{
+		displayName: "Charger Assault",
+		fileName: "vchargersplash",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Hatsune Miku",
+		fileName: "hatsunemiku",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "New InkLAN",
+		fileName: "pinknes",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "Squids For Palestinian Kids",
 		fileName: "three_course_pal",
 		authorDiscordId: "338806780446638082",
@@ -498,5 +513,25 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Meet Your Match",
 		fileName: "matchmeet",
 		authorDiscordId: "631246535560265749",
+	},
+	{
+		displayName: "Proxy Training",
+		fileName: "eous",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Ubers",
+		fileName: "ubers",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Zones Classic",
+		fileName: "szclassic",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "P.X.G",
+		fileName: "pxg",
+		authorDiscordId: "528851510222782474",
 	},
 ];
