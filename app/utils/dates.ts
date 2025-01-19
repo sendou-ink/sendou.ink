@@ -15,14 +15,17 @@ export function databaseTimestampNow() {
 }
 
 /**
+ * Converts a date represented by day, month, and year into a JavaScript Date object, noon UTC.
+ */
+export function dayMonthYearToDate({ day, month, year }: DayMonthYear) {
+	return new Date(Date.UTC(year, month, day, 12));
+}
+
+/**
  * Converts a date represented by day, month, and year into a database timestamp, noon UTC.
  */
-export function dayMonthYearToDatabaseTimestamp({
-	day,
-	month,
-	year,
-}: DayMonthYear) {
-	return dateToDatabaseTimestamp(new Date(Date.UTC(year, month, day, 12)));
+export function dayMonthYearToDatabaseTimestamp(args: DayMonthYear) {
+	return dateToDatabaseTimestamp(dayMonthYearToDate(args));
 }
 
 export function databaseCreatedAt() {

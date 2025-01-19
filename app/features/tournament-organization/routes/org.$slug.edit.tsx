@@ -220,7 +220,7 @@ function MemberFieldset({
 				name={`members.${idx}.userId` as const}
 			/>
 
-			<SelectFormField
+			<SelectFormField<FormFields>
 				label={t("org:edit.form.members.role.title")}
 				name={`members.${idx}.role` as const}
 				values={TOURNAMENT_ORGANIZATION_ROLES.map((role) => ({

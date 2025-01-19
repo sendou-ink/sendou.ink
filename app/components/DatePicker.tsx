@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import {
 	Button,
 	Calendar,
@@ -14,28 +15,44 @@ import {
 	DatePicker as ReactAriaDatePicker,
 	Label as ReactAriaLabel,
 } from "react-aria-components";
+import { FormMessage } from "./FormMessage";
+import {
+	type FormFieldSize,
+	formFieldSizeToClassName,
+} from "./form/form-utils";
 import { ArrowLeftIcon } from "./icons/ArrowLeft";
 import { ArrowRightIcon } from "./icons/ArrowRight";
 import { CalendarIcon } from "./icons/Calendar";
 
 interface MyDatePickerProps<T extends DateValue> extends DatePickerProps<T> {
 	label: string;
+	bottomText?: string;
+	errorText?: string;
+	size?: FormFieldSize;
 }
 
-// xxx: clicking in the center should focus something
 export function DatePicker<T extends DateValue>({
 	label,
+	errorText,
+	bottomText,
+	size,
 	...rest
 }: MyDatePickerProps<T>) {
 	return (
 		<ReactAriaDatePicker {...rest}>
 			<Label required={rest.isRequired}>{label}</Label>
-			<Group>
+			<Group
+				className={clsx("react-aria-Group", formFieldSizeToClassName(size))}
+			>
 				<DateInput>{(segment) => <DateSegment segment={segment} />}</DateInput>
 				<Button>
 					<CalendarIcon />
 				</Button>
 			</Group>
+			{errorText && <FormMessage type="error">{errorText}</FormMessage>}
+			{bottomText && !errorText ? (
+				<FormMessage type="info">{bottomText}</FormMessage>
+			) : null}
 			<Popover>
 				<Dialog>
 					<Calendar>

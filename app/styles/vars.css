@@ -95,6 +95,9 @@ html {
 	--label-margin: var(--s-1);
 	--inactive-image-filter: grayscale(100%) brightness(30%);
 	--sticky-top: 60px;
+	--input-width-extra-small: 10rem;
+	--input-width-small: 12rem;
+	--input-width-medium: 18rem;
 }
 
 html.dark {

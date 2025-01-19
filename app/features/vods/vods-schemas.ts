@@ -1,3 +1,4 @@
+import { add } from "date-fns";
 import { z } from "zod";
 import {
 	dayMonthYear,
@@ -7,6 +8,7 @@ import {
 	stageId,
 	weaponSplId,
 } from "~/utils/zod";
+import { dayMonthYearToDate } from "../../utils/dates";
 import { VOD, videoMatchTypes } from "./vods-constants";
 
 export const videoMatchSchema = z.object({
@@ -22,7 +24,16 @@ export const videoSchema = z
 		eventId: z.number().optional(),
 		youtubeId: z.string(),
 		title: z.string().min(VOD.TITLE_MIN_LENGTH).max(VOD.TITLE_MAX_LENGTH),
-		date: dayMonthYear,
+		date: dayMonthYear.refine(
+			(data) => {
+				const date = dayMonthYearToDate(data);
+
+				return date < add(new Date(), { days: 1 });
+			},
+			{
+				message: "Date must not be in the future",
+			},
+		),
 		povUserId: z.number().optional(),
 		povUserName: z
 			.string()

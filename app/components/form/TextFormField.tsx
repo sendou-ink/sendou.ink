@@ -7,12 +7,23 @@ import {
 } from "react-hook-form";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
+import { type FormFieldSize, formFieldSizeToClassName } from "./form-utils";
 
 export function TextFormField<T extends FieldValues>({
 	label,
 	name,
 	bottomText,
-}: { label: string; name: FieldPath<T>; bottomText?: string }) {
+	placeholder,
+	required,
+	size = "small",
+}: {
+	label: string;
+	name: FieldPath<T>;
+	bottomText?: string;
+	placeholder?: string;
+	required?: boolean; // xxx: can this be inferred?
+	size?: FormFieldSize;
+}) {
 	const methods = useFormContext();
 	const id = React.useId();
 
@@ -20,8 +31,15 @@ export function TextFormField<T extends FieldValues>({
 
 	return (
 		<div>
-			<Label htmlFor={id}>{label}</Label>
-			<input id={id} {...methods.register(name)} />
+			<Label htmlFor={id} required={required}>
+				{label}
+			</Label>
+			<input
+				id={id}
+				placeholder={placeholder}
+				{...methods.register(name)}
+				className={formFieldSizeToClassName(size)}
+			/>
 			{error && (
 				<FormMessage type="error">{error.message as string}</FormMessage>
 			)}

@@ -200,6 +200,18 @@ input:user-invalid {
 	opacity: 0.5;
 }
 
+.input__extra-small {
+	min-width: var(--input-width-extra-small);
+}
+
+.input__small {
+	min-width: var(--input-width-small);
+}
+
+.input__medium {
+	min-width: var(--input-width-medium);
+}
+
 input:not(.plain, .combobox-input):focus-within {
 	border-color: transparent;
 

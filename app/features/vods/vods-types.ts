@@ -1,14 +1,11 @@
 import type { z } from "zod";
 import type { User, Video, VideoMatch } from "~/db/types";
 import type { MainWeaponId } from "~/modules/in-game-lists";
-import type { DayMonthYear } from "../../utils/zod";
 import type { videoMatchSchema, videoSchema } from "./vods-schemas";
 
 export type VideoBeingAddedPartial = Partial<VideoBeingAdded>;
 
-export type VideoBeingAdded = Omit<z.infer<typeof videoSchema>, "date"> & {
-	date: DayMonthYear | null;
-};
+export type VideoBeingAdded = z.infer<typeof videoSchema>;
 
 export type VideoMatchBeingAdded = z.infer<typeof videoMatchSchema>;
 

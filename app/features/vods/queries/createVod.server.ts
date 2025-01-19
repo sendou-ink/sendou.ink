@@ -4,7 +4,6 @@ import {
 	dateToDatabaseTimestamp,
 	dayMonthYearToDatabaseTimestamp,
 } from "~/utils/dates";
-import type { DayMonthYear } from "../../../utils/zod";
 import type { VideoBeingAdded } from "../vods-types";
 
 const createVideoStm = sql.prepare(/* sql */ `
@@ -38,7 +37,6 @@ const createVideoMatchPlayerStm = sql.prepare(/* sql */ `
 export const createVod = sql.transaction(
 	(
 		args: VideoBeingAdded & {
-			date: DayMonthYear;
 			submitterUserId: number;
 			isValidated: boolean;
 			id?: number;
@@ -83,7 +81,6 @@ export const createVod = sql.transaction(
 export const updateVodByReplacing = sql.transaction(
 	(
 		args: VideoBeingAdded & {
-			date: DayMonthYear;
 			submitterUserId: number;
 			isValidated: boolean;
 			id: number;

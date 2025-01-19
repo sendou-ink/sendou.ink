@@ -26,7 +26,7 @@ export function ToggleFormField<T extends FieldValues>({
 			<Controller
 				control={methods.control}
 				name={name}
-				render={({ field: { onChange, value } }) => (
+				render={({ field: { value, onChange } }) => (
 					<Toggle checked={value} setChecked={onChange} />
 				)}
 			/>
