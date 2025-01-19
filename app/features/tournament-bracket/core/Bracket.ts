@@ -1419,15 +1419,19 @@ class SwissBracket extends Bracket {
 
 					// they are different teams and are tied, let's check who won
 
-					const finishedMatchBetweenTeams = matches.find(
-						(match) =>
+					const finishedMatchBetweenTeams = matches.find((match) => {
+						const isBetweenTeams =
 							(match.opponent1?.id === team.id &&
 								match.opponent2?.id === team2.id) ||
 							(match.opponent1?.id === team2.id &&
-								match.opponent2?.id === team.id &&
-								(match.opponent1?.result === "win" ||
-									match.opponent2?.result === "win")),
-					);
+								match.opponent2?.id === team.id);
+
+						const isFinished =
+							match.opponent1?.result === "win" ||
+							match.opponent2?.result === "win";
+
+						return isBetweenTeams && isFinished;
+					});
 
 					// they did not play each other
 					if (!finishedMatchBetweenTeams) continue;
