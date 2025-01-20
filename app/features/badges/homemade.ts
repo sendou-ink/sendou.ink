@@ -539,4 +539,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "pxg",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "JJaeigh's Jamboree",
+		fileName: "jamboree",
+		authorDiscordId: "528851510222782474",
+	},
 ];
