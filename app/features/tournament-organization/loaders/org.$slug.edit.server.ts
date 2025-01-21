@@ -11,10 +11,24 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
 	unauthorizedIfFalsy(canEditTournamentOrganization({ organization, user }));
 
+	const badgeOptions = async () => {
+		const result = await BadgeRepository.findByManagersList(
+			organization.members.map((member) => member.id),
+		);
+
+		// handles edge case where the badge is not managed by the org anymore for whatever reason
+		// -> let's still keep it still deletable
+		for (const badge of organization.badges) {
+			if (!result.find((b) => b.id === badge.id)) {
+				result.push(badge);
+			}
+		}
+
+		return result;
+	};
+
 	return {
 		organization,
-		badgeOptions: await BadgeRepository.findByManagersList(
-			organization.members.map((member) => member.id),
-		),
+		badgeOptions: await badgeOptions(),
 	};
 }
