@@ -539,4 +539,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "pxg",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "Low Tier Experiments",
+		fileName: "lte_badge",
+		authorDiscordId: "430487372015206410",
+	},
 ];
