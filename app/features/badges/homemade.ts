@@ -15,6 +15,11 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Mug Cup Mini",
+		fileName: "mugcupmini",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "Dr. Meowser's Cat Food Bowl",
 		fileName: "catfoodbowl",
 		authorDiscordId: "324396128906903552",
