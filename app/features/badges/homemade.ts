@@ -539,4 +539,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "pxg",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "Nether-Portal Achievement",
+		fileName: "netherportal",
+		authorDiscordId: "1320944066002681876",
+	},
 ];
