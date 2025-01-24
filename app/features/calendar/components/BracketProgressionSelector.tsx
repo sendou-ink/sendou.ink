@@ -23,10 +23,12 @@ export function BracketProgressionSelector({
 	initialBrackets,
 	isInvitationalTournament,
 	setErrored,
+	isTournamentInProgress,
 }: {
 	initialBrackets?: Progression.InputBracket[];
 	isInvitationalTournament: boolean;
 	setErrored: (errored: boolean) => void;
+	isTournamentInProgress: boolean;
 }) {
 	const [brackets, setBrackets] = React.useState<Progression.InputBracket[]>(
 		initialBrackets ?? [defaultBracket()],
@@ -106,6 +108,7 @@ export function BracketProgressionSelector({
 						}
 						count={i + 1}
 						isInvitationalTournament={isInvitationalTournament}
+						isTournamentInProgress={isTournamentInProgress}
 					/>
 				))}
 			</div>
@@ -132,6 +135,7 @@ function TournamentFormatBracketSelector({
 	onDelete,
 	count,
 	isInvitationalTournament,
+	isTournamentInProgress,
 }: {
 	bracket: Progression.InputBracket;
 	brackets: Progression.InputBracket[];
@@ -139,6 +143,7 @@ function TournamentFormatBracketSelector({
 	onDelete?: () => void;
 	count: number;
 	isInvitationalTournament: boolean;
+	isTournamentInProgress: boolean;
 }) {
 	const id = React.useId();
 
@@ -353,7 +358,7 @@ function TournamentFormatBracketSelector({
 										startTime: undefined,
 									})
 								}
-								disabled={bracket.disabled}
+								disabled={bracket.disabled || isTournamentInProgress}
 							/>
 							<Label htmlFor={createId("follow-up-bracket")} spaced={false}>
 								Is follow-up bracket
