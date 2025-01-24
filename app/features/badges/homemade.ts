@@ -15,6 +15,16 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Climb The Spire",
+		fileName: "climbspire",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Tea Bag",
+		fileName: "teabag",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "Mug Cup Mini",
 		fileName: "mugcupmini",
 		authorDiscordId: "338806780446638082",
