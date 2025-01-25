@@ -565,6 +565,11 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "528851510222782474",
 	},
 	{
+		displayName: "Low Tier Experiments",
+		fileName: "lte_badge",
+		authorDiscordId: "430487372015206410",
+	},
+	{
 		displayName: "JJaeigh's Jamboree",
 		fileName: "jamboree",
 		authorDiscordId: "528851510222782474",
