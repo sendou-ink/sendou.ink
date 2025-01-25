@@ -23,7 +23,7 @@ export function SelectFormField<T extends FieldValues>({
 	values: Array<{ value: string | number; label: string }>;
 	bottomText?: string;
 	size?: FormFieldSize;
-	required?: boolean; // xxx: can this be inferred?
+	required?: boolean;
 }) {
 	const methods = useFormContext();
 	const id = React.useId();

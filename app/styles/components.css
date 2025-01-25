@@ -34,7 +34,6 @@
 	outline-color: var(--theme-transparent);
 }
 
-/** xxx: make button focus invisible, show border around the whole input instead */
 .react-aria-DatePicker .react-aria-Button {
 	margin-inline-start: auto;
 	background-color: transparent;

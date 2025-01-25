@@ -21,7 +21,7 @@ export function TextFormField<T extends FieldValues>({
 	name: FieldPath<T>;
 	bottomText?: string;
 	placeholder?: string;
-	required?: boolean; // xxx: can this be inferred?
+	required?: boolean;
 	size?: FormFieldSize;
 }) {
 	const methods = useFormContext();

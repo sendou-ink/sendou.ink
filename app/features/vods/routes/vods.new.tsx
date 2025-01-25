@@ -209,7 +209,6 @@ function FormFields() {
 	);
 }
 
-// xxx: controller onChange should be typed, right?
 function PovFormField() {
 	const { t } = useTranslation(["vods", "calendar"]);
 	const methods = useFormContext<VodFormFields>();

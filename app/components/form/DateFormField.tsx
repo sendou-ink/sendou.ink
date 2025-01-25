@@ -8,7 +8,7 @@ import {
 } from "react-hook-form";
 import { dateToYYYYMMDD } from "../../utils/dates";
 import type { DayMonthYear } from "../../utils/zod";
-import { DatePicker } from "../DatePicker";
+import { DatePicker } from "../elements/DatePicker";
 import type { FormFieldSize } from "./form-utils";
 
 export function DateFormField<T extends FieldValues>({
@@ -21,7 +21,7 @@ export function DateFormField<T extends FieldValues>({
 	label: string;
 	name: FieldPath<T>;
 	bottomText?: string;
-	required?: boolean; // xxx: can this be inferred?
+	required?: boolean;
 	size?: FormFieldSize;
 }) {
 	const methods = useFormContext();
@@ -36,7 +36,7 @@ export function DateFormField<T extends FieldValues>({
 				const value = () => {
 					const originalValue = field.value as DayMonthYear | null;
 
-					if (!originalValue) return originalValue;
+					if (!originalValue) return null;
 
 					const isoString = dateToYYYYMMDD(
 						new Date(

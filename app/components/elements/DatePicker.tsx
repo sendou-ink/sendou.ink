@@ -13,16 +13,16 @@ import {
 	Heading,
 	Popover,
 	DatePicker as ReactAriaDatePicker,
-	Label as ReactAriaLabel,
 } from "react-aria-components";
-import { FormMessage } from "./FormMessage";
+import { FormMessage } from "../FormMessage";
+import { Label } from "../Label";
 import {
 	type FormFieldSize,
 	formFieldSizeToClassName,
-} from "./form/form-utils";
-import { ArrowLeftIcon } from "./icons/ArrowLeft";
-import { ArrowRightIcon } from "./icons/ArrowRight";
-import { CalendarIcon } from "./icons/Calendar";
+} from "../form/form-utils";
+import { ArrowLeftIcon } from "../icons/ArrowLeft";
+import { ArrowRightIcon } from "../icons/ArrowRight";
+import { CalendarIcon } from "../icons/Calendar";
 
 interface MyDatePickerProps<T extends DateValue> extends DatePickerProps<T> {
 	label: string;
@@ -31,7 +31,6 @@ interface MyDatePickerProps<T extends DateValue> extends DatePickerProps<T> {
 	size?: FormFieldSize;
 }
 
-// xxx:  component changed from uncontrolled to controlled. Error Component
 export function DatePicker<T extends DateValue>({
 	label,
 	errorText,
@@ -76,20 +75,5 @@ export function DatePicker<T extends DateValue>({
 				</Dialog>
 			</Popover>
 		</ReactAriaDatePicker>
-	);
-}
-
-// xxx: TODO: move to its own file
-function Label({
-	children,
-	required,
-}: {
-	children: React.ReactNode;
-	required?: boolean;
-}) {
-	return (
-		<ReactAriaLabel>
-			{children} {required && <span className="text-error">*</span>}
-		</ReactAriaLabel>
 	);
 }
