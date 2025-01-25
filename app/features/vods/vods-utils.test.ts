@@ -52,6 +52,18 @@ describe("secondsToHoursMinutesSecondString", () => {
 		const result = secondsToHoursMinutesSecondString(0);
 		expect(result).toBe("0:00");
 	});
+
+	it("should throw an error for a negative number of seconds", () => {
+		expect(() => secondsToHoursMinutesSecondString(-1)).toThrow(
+			"Negative number of seconds",
+		);
+	});
+
+	it("should throw an error for a non-integer number of seconds", () => {
+		expect(() => secondsToHoursMinutesSecondString(1.5)).toThrow(
+			"Non-integer number of seconds",
+		);
+	});
 });
 
 describe("hoursMinutesSecondsStringToSeconds", () => {
@@ -73,5 +85,11 @@ describe("hoursMinutesSecondsStringToSeconds", () => {
 	it("should handle zero seconds", () => {
 		const result = hoursMinutesSecondsStringToSeconds("0:00");
 		expect(result).toBe(0);
+	});
+
+	it("should throw an error for an invalid format", () => {
+		expect(() => hoursMinutesSecondsStringToSeconds("1:01:01:01")).toThrow(
+			"Invalid time format",
+		);
 	});
 });

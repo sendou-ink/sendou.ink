@@ -2,6 +2,7 @@ import type { User } from "~/db/types";
 import { isAdmin } from "~/permissions";
 import { databaseTimestampToDate } from "../../utils/dates";
 import type { VideoBeingAdded, Vod } from "./vods-types";
+import { HOURS_MINUTES_SECONDS_REGEX } from "./vods-schemas";
 
 export function canAddVideo(args: { isVideoAdder: number | null }) {
 	return args.isVideoAdder;
@@ -61,6 +62,14 @@ export function extractYoutubeIdFromVideoUrl(url: string): string | null {
 }
 
 export function secondsToHoursMinutesSecondString(seconds: number) {
+	if (seconds < 0) {
+		throw new Error("Negative number of seconds");
+	}
+
+	if (!Number.isInteger(seconds)) {
+		throw new Error("Non-integer number of seconds");
+	}
+
 	const hours = Math.floor(seconds / 3600);
 	const minutes = Math.floor((seconds % 3600) / 60);
 	const secondsLeft = seconds % 60;
@@ -73,6 +82,10 @@ export function secondsToHoursMinutesSecondString(seconds: number) {
 export function hoursMinutesSecondsStringToSeconds(
 	hoursMinutesSecondsString: string,
 ) {
+	if (!HOURS_MINUTES_SECONDS_REGEX.test(hoursMinutesSecondsString)) {
+		throw new Error("Invalid time format. Expected format: HH:MM:SS");
+	}
+
 	const parts = hoursMinutesSecondsString
 		.split(":")
 		.map((part) => Number(part));

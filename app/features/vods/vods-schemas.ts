@@ -12,8 +12,10 @@ import { dayMonthYearToDate } from "../../utils/dates";
 import { VOD, videoMatchTypes } from "./vods-constants";
 import { extractYoutubeIdFromVideoUrl } from "./vods-utils";
 
+export const HOURS_MINUTES_SECONDS_REGEX = /^(\d{1,2}:)?\d{1,2}:\d{2}$/;
+
 export const videoMatchSchema = z.object({
-	startsAt: z.string().regex(/^(\d{1,2}:)?\d{1,2}:\d{2}$/, {
+	startsAt: z.string().regex(HOURS_MINUTES_SECONDS_REGEX, {
 		message: "Invalid time format. Use HH:MM:SS or MM:SS",
 	}),
 	stageId: stageId,
