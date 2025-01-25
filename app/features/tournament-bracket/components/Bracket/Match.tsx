@@ -172,6 +172,8 @@ function MatchRow({
 	const logoSrc =
 		!simulated && team ? tournament.tournamentTeamLogoSrc(team) : null;
 
+	const isBigSeedNumber = team?.seed && team.seed > 99;
+
 	return (
 		<div
 			className={clsx("stack horizontal", { "text-lighter": isLoser })}
@@ -181,6 +183,7 @@ function MatchRow({
 			<div
 				className={clsx("bracket__match__seed", {
 					"text-lighter-important italic opaque": simulated,
+					bracket__match__seed__wide: isBigSeedNumber,
 				})}
 			>
 				{team?.seed}
@@ -191,7 +194,11 @@ function MatchRow({
 					"text-theme-secondary":
 						!simulated && ownTeam && ownTeam?.id === team?.id,
 					"text-lighter italic opaque": simulated,
-					"bracket__match__team-name__narrow": logoSrc,
+					"bracket__match__team-name__narrow":
+						// either but not both
+						(logoSrc || isBigSeedNumber) && !(logoSrc && isBigSeedNumber),
+					// both
+					"bracket__match__team-name__narrowest": logoSrc && isBigSeedNumber,
 					invisible: !team,
 				})}
 			>

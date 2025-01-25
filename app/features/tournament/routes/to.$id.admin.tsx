@@ -815,6 +815,7 @@ function BracketProgressionEditDialog({ close }: { close: () => void }) {
 					}))}
 					isInvitationalTournament={tournament.isInvitational}
 					setErrored={setBracketProgressionErrored}
+					isTournamentInProgress
 				/>
 				<div className="stack md horizontal justify-center mt-6">
 					<SubmitButton

@@ -296,7 +296,7 @@
 }
 
 .front__tournament-card__first-placers__team-name {
-	max-width: 200px;
+	max-width: 150px;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;

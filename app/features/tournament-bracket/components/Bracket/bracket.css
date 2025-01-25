@@ -83,6 +83,11 @@ a.bracket__match:hover {
 	max-width: 15px;
 }
 
+.bracket__match__seed__wide {
+	min-width: 20px;
+	max-width: 20px;
+}
+
 .bracket__match__team-name {
 	max-width: 95px;
 	overflow: hidden;
@@ -92,6 +97,10 @@ a.bracket__match:hover {
 
 .bracket__match__team-name__narrow {
 	max-width: 75px;
+}
+
+.bracket__match__team-name__narrowest {
+	max-width: 70px;
 }
 
 .bracket__match__score {

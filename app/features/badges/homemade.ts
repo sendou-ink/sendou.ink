@@ -15,6 +15,31 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Climb The Spire",
+		fileName: "climbspire",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Tea Bag",
+		fileName: "teabag",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Mug Cup Mini",
+		fileName: "mugcupmini",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Token Of Appreciation",
+		fileName: "bucketmeow12",
+		authorDiscordId: "1170249805373657093",
+	},
+	{
+		displayName: "Tough Tides",
+		fileName: "wave1234567_4",
+		authorDiscordId: "1170249805373657093",
+	},
+	{
 		displayName: "Dr. Meowser's Cat Food Bowl",
 		fileName: "catfoodbowl",
 		authorDiscordId: "324396128906903552",
@@ -543,5 +568,10 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Low Tier Experiments",
 		fileName: "lte_badge",
 		authorDiscordId: "430487372015206410",
+	},
+	{
+		displayName: "JJaeigh's Jamboree",
+		fileName: "jamboree",
+		authorDiscordId: "528851510222782474",
 	},
 ];

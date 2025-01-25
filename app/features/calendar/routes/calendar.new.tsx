@@ -273,6 +273,7 @@ function EventForm() {
 						}
 						isInvitationalTournament={isInvitational}
 						setErrored={setBracketProgressionErrored}
+						isTournamentInProgress={false}
 					/>
 				</div>
 			) : null}

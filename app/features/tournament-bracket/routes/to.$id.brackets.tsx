@@ -45,6 +45,7 @@ import {
 	tournamentBracketsSubscribePage,
 	tournamentJoinPage,
 } from "~/utils/urls";
+import { updateTeamSeeds } from "../../tournament/queries/updateTeamSeeds.server";
 import {
 	useBracketExpanded,
 	useTournament,
@@ -142,6 +143,17 @@ export const action: ActionFunction = async ({ params, request }) => {
 						bracket,
 					}),
 				);
+
+				// ensures autoseeding is disabled
+				const isAllSeedsPersisted = tournament.ctx.teams.every(
+					(team) => typeof team.seed === "number",
+				);
+				if (!isAllSeedsPersisted) {
+					updateTeamSeeds({
+						tournamentId: tournament.ctx.id,
+						teamIds: tournament.ctx.teams.map((team) => team.id),
+					});
+				}
 			})();
 
 			break;
