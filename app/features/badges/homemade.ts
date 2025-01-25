@@ -30,6 +30,16 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "338806780446638082",
 	},
 	{
+		displayName: "Token Of Appreciation",
+		fileName: "bucketmeow12",
+		authorDiscordId: "1170249805373657093",
+	},
+	{
+		displayName: "Tough Tides",
+		fileName: "wave1234567_4",
+		authorDiscordId: "1170249805373657093",
+	},
+	{
 		displayName: "Dr. Meowser's Cat Food Bowl",
 		fileName: "catfoodbowl",
 		authorDiscordId: "324396128906903552",
@@ -552,6 +562,11 @@ export const homemadeBadges: BadgeInfo[] = [
 	{
 		displayName: "P.X.G",
 		fileName: "pxg",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "JJaeigh's Jamboree",
+		fileName: "jamboree",
 		authorDiscordId: "528851510222782474",
 	},
 ];

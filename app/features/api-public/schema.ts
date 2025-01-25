@@ -34,14 +34,6 @@ export interface GetUserResponse {
 	weaponPool: Array<ProfileWeapon>;
 	badges: Array<Badge>;
 	peakXp: number | null;
-	// TODO: can be added to this endpoint / another one if use case arises
-	// leaderboardEntry: {
-	//   season: number;
-	//   position: number;
-	//   power: number;
-	//   tier: Tier;
-	//   weapon: Weapon | null;
-	// } | null;
 }
 
 /** GET /api/calendar/{year}/{week} */
@@ -155,6 +147,33 @@ export type GetTournamentTeamsResponse = Array<{
 	}>;
 }>;
 
+/** GET /api/tournament/{tournamentId}/casted */
+
+export interface GetCastedTournamentMatchesResponse {
+	/*
+	 * Matches that are currently being played and casted. Note: at the moment only one match can be casted at a time but this is an array for future proofing.
+	 */
+	current: Array<{
+		matchId: number;
+		channel: TournamentCastChannel;
+	}>;
+	/*
+	 * Matches that are locked to be casted.
+	 */
+	future: Array<{
+		matchId: number;
+		channel: TournamentCastChannel | null;
+	}>;
+}
+
+type TournamentCastChannel = {
+	type: "TWITCH";
+	/**
+	 * @example "iplsplatoon"
+	 */
+	channelId: string;
+};
+
 /** GET /api/tournament-match/{matchId} */
 
 export interface GetTournamentMatchResponse {
@@ -264,22 +283,6 @@ type Badge = {
 	 */
 	gifUrl: string;
 };
-
-// type Tier =
-//   | "LEVIATHAN+"
-//   | "DIAMOND+"
-//   | "PLATINUM+"
-//   | "GOLD+"
-//   | "SILVER+"
-//   | "BRONZE+"
-//   | "IRON+"
-//   | "LEVIATHAN"
-//   | "DIAMOND"
-//   | "PLATINUM"
-//   | "GOLD"
-//   | "SILVER"
-//   | "BRONZE"
-//   | "IRON";
 
 type ModeShort = "TW" | "SZ" | "TC" | "RM" | "CB";
 type Stage = {
