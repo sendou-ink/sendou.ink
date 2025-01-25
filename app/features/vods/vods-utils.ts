@@ -12,13 +12,16 @@ export function vodToVideoBeingAdded(vod: Vod): VideoBeingAdded {
 
 	return {
 		title: vod.title,
-		youtubeId: vod.youtubeId,
+		youtubeUrl: youtubeIdToYoutubeUrl(vod.youtubeId),
 		date: {
 			day: dateObj.getDate(),
 			month: dateObj.getMonth() + 1,
 			year: dateObj.getFullYear(),
 		},
-		matches: vod.matches,
+		matches: vod.matches.map((match) => ({
+			...match,
+			startsAt: secondsToHoursMinutesSecondString(match.startsAt),
+		})),
 		type: vod.type,
 		pov:
 			typeof vod.pov === "string"
@@ -48,4 +51,38 @@ export function canEditVideo({
 		userId === submitterUserId ||
 		userId === povUserId
 	);
+}
+
+export function extractYoutubeIdFromVideoUrl(url: string): string | null {
+	const match = url.match(
+		/^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|live\/)|youtu\.be\/)([^&\/\?]+)/,
+	);
+	return match ? match[1] : null;
+}
+
+export function secondsToHoursMinutesSecondString(seconds: number) {
+	const hours = Math.floor(seconds / 3600);
+	const minutes = Math.floor((seconds % 3600) / 60);
+	const secondsLeft = seconds % 60;
+
+	return `${hours ? `${hours}:` : ""}${hours && minutes < 10 ? `0${minutes}` : minutes}:${secondsLeft
+		.toString()
+		.padStart(2, "0")}`;
+}
+
+export function hoursMinutesSecondsStringToSeconds(
+	hoursMinutesSecondsString: string,
+) {
+	const parts = hoursMinutesSecondsString
+		.split(":")
+		.map((part) => Number(part));
+	const seconds = parts.pop() || 0;
+	const minutes = parts.pop() || 0;
+	const hours = parts.pop() || 0;
+
+	return hours * 3600 + minutes * 60 + seconds;
+}
+
+export function youtubeIdToYoutubeUrl(youtubeId: string) {
+	return `https://www.youtube.com/watch?v=${youtubeId}`;
 }

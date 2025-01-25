@@ -4,7 +4,9 @@ import {
 	dateToDatabaseTimestamp,
 	dayMonthYearToDatabaseTimestamp,
 } from "~/utils/dates";
+import invariant from "~/utils/invariant";
 import type { VideoBeingAdded } from "../vods-types";
+import { extractYoutubeIdFromVideoUrl } from "../vods-utils";
 
 const createVideoStm = sql.prepare(/* sql */ `
   insert into "UnvalidatedVideo"
@@ -42,13 +44,16 @@ export const createVod = sql.transaction(
 			id?: number;
 		},
 	) => {
+		const youtubeId = extractYoutubeIdFromVideoUrl(args.youtubeUrl);
+		invariant(youtubeId, "Invalid YouTube URL");
+
 		const video = createVideoStm.get({
 			id: args.id ?? null,
 			title: args.title,
 			type: args.type,
 			youtubeDate: dayMonthYearToDatabaseTimestamp(args.date),
 			eventId: args.eventId ?? null,
-			youtubeId: args.youtubeId,
+			youtubeId,
 			submitterUserId: args.submitterUserId,
 			validatedAt: args.isValidated
 				? dateToDatabaseTimestamp(new Date())

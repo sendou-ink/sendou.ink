@@ -10,9 +10,12 @@ import {
 } from "~/utils/zod";
 import { dayMonthYearToDate } from "../../utils/dates";
 import { VOD, videoMatchTypes } from "./vods-constants";
+import { extractYoutubeIdFromVideoUrl } from "./vods-utils";
 
 export const videoMatchSchema = z.object({
-	startsAt: z.number(),
+	startsAt: z.string().regex(/^(\d{1,2}:)?\d{1,2}:\d{2}$/, {
+		message: "Invalid time format. Use HH:MM:SS or MM:SS",
+	}),
 	stageId: stageId,
 	mode: modeShort,
 	weapons: z.array(weaponSplId),
@@ -22,7 +25,16 @@ export const videoSchema = z
 	.object({
 		type: z.enum(videoMatchTypes),
 		eventId: z.number().optional(),
-		youtubeId: z.string(),
+		youtubeUrl: z.string().refine(
+			(val) => {
+				const id = extractYoutubeIdFromVideoUrl(val);
+
+				return id !== null;
+			},
+			{
+				message: "Invalid YouTube URL",
+			},
+		),
 		title: z.string().min(VOD.TITLE_MIN_LENGTH).max(VOD.TITLE_MAX_LENGTH),
 		date: dayMonthYear.refine(
 			(data) => {

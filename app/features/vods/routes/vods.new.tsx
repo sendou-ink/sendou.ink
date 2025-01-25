@@ -4,15 +4,25 @@ import {
 	redirect,
 } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { Controller, useFormContext, useWatch } from "react-hook-form";
+import * as React from "react";
+import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { Button } from "~/components/Button";
+import { WeaponCombobox } from "~/components/Combobox";
+import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { UserSearch } from "~/components/UserSearch";
+import { AddFieldButton } from "~/components/form/AddFieldButton";
+import { RemoveFieldButton } from "~/components/form/RemoveFieldButton";
 import type { Video } from "~/db/types";
 import { requireUser } from "~/features/auth/core/user.server";
+import {
+	type MainWeaponId,
+	modesShort,
+	stageIds,
+} from "~/modules/in-game-lists";
 import {
 	type SendouRouteHandle,
 	notFoundIfFalsy,
@@ -132,6 +142,10 @@ export default function NewVodPage() {
 							}
 						: {
 								video: {
+									type: "TOURNAMENT",
+									matches: [
+										{ mode: "SZ", stageId: 1, startsAt: "", weapons: [] },
+									],
 									pov: { type: "USER" } as VodFormFields["video"]["pov"],
 								},
 							}
@@ -145,14 +159,14 @@ export default function NewVodPage() {
 
 function FormFields() {
 	const { t } = useTranslation(["vods"]);
-	const videoType = useWatch<VodFormFields>({ name: "video.type" });
+	const { watch } = useFormContext<VodFormFields>();
+	const videoType = watch("video.type");
 
 	return (
 		<>
-			{/** xxx: handle extract youtube id */}
 			<TextFormField<VodFormFields>
 				label={t("vods:forms.title.youtubeUrl")}
-				name="video.youtubeId"
+				name="video.youtubeUrl"
 				placeholder="https://www.youtube.com/watch?v=-dQ6JsVIKdY"
 				required
 				size="medium"
@@ -184,10 +198,13 @@ function FormFields() {
 			/>
 
 			{videoType !== "CAST" ? <PovFormField /> : null}
+
+			<MatchesFormfield videoType={videoType} />
 		</>
 	);
 }
 
+// xxx: controller onChange should be typed, right?
 function PovFormField() {
 	const { t } = useTranslation(["vods", "calendar"]);
 	const methods = useFormContext<VodFormFields>();
@@ -235,7 +252,6 @@ function PovFormField() {
 								}
 								min={VOD.PLAYER_NAME_MIN_LENGTH}
 								max={VOD.PLAYER_NAME_MAX_LENGTH}
-								required
 								onBlur={onBlur}
 							/>
 						) : (
@@ -250,7 +266,6 @@ function PovFormField() {
 									})
 								}
 								onBlur={onBlur}
-								required
 							/>
 						)}
 					</div>
@@ -260,490 +275,176 @@ function PovFormField() {
 	);
 }
 
-// 				{video.type !== "CAST" ? (
-// 					<TransformingPlayerInput
-// 						match={video}
-// 						onChange={(newUser) => setVideo({ ...video, ...newUser })}
-// 						toggleInputType={() => {
-// 							const isPlainInput = typeof video.povUserName === "string";
+function MatchesFormfield({ videoType }: { videoType: Video["type"] }) {
+	const {
+		formState: { errors },
+	} = useFormContext<VodFormFields>();
+	const { fields, append, remove } = useFieldArray<VodFormFields>({
+		name: "video.matches",
+	});
 
-// 							if (isPlainInput) {
-// 								setVideo({
-// 									...video,
-// 									povUserId: undefined,
-// 									povUserName: undefined,
-// 								});
-// 							} else {
-// 								setVideo({
-// 									...video,
-// 									povUserId: undefined,
-// 									povUserName: "",
-// 								});
-// 							}
-// 						}}
-// 					/>
-// 				) : null}
+	const rootError = errors.video?.matches?.root;
 
-// export function _NewVodPage() {
-// 	const data = useLoaderData<typeof loader>();
-// 	const { t } = useTranslation(["vods", "common"]);
-// 	const [video, setVideo] = React.useState<VideoBeingAdded>(
-// 		data.vodToEdit ?? {
-// 			type: "TOURNAMENT",
-// 			matches: [newMatch()],
-// 			youtubeId: "",
-// 			title: "",
-// 			date: null, // xxx: not set anywhere atm
-// 		},
-// 	);
-// 	const user = useUser();
+	return (
+		<div>
+			<div className="stack md">
+				{fields.map((field, i) => {
+					return (
+						<MatchesFieldset
+							key={field.id}
+							idx={i}
+							remove={remove}
+							canRemove={fields.length > 1}
+							videoType={videoType}
+						/>
+					);
+				})}
+				<AddFieldButton
+					onClick={() => {
+						append({ mode: "SZ", stageId: 1, startsAt: "", weapons: [] });
+					}}
+				/>
+				{rootError && (
+					<FormMessage type="error">{rootError.message as string}</FormMessage>
+				)}
+			</div>
+		</div>
+	);
+}
 
-// 	if (!user || !user.isVideoAdder) {
-// 		return (
-// 			<Main className="stack items-center">
-// 				<Alert variation="WARNING">{t("vods:gainPerms")}</Alert>
-// 			</Main>
-// 		);
-// 	}
+function MatchesFieldset({
+	idx,
+	remove,
+	canRemove,
+	videoType,
+}: {
+	idx: number;
+	remove: (idx: number) => void;
+	canRemove: boolean;
+	videoType: Video["type"];
+}) {
+	const id = React.useId();
+	const { t } = useTranslation(["vods", "game-misc"]);
 
-// 	return (
-// 		<Form method="post">
-// 			<input type="hidden" name="video" value={JSON.stringify(video)} />
-// 			{data.vodToEdit ? (
-// 				<input type="hidden" name="vodToEditId" value={data.vodToEditId} />
-// 			) : null}
-// 			<Main halfWidth className="stack md">
-// 				<div>
-// 					<Label required htmlFor="url">
-// 						{t("vods:forms.title.youtubeUrl")}
-// 					</Label>
-// 					<Input
-// 						id="url"
-// 						defaultValue={
-// 							data.vodToEdit && video.youtubeId
-// 								? `https://www.youtube.com/watch?v=${video.youtubeId}`
-// 								: undefined
-// 						}
-// 						onChange={(e) =>
-// 							setVideo({
-// 								...video,
-// 								youtubeId: extractYoutubeIdFromVideoUrl(e.target.value),
-// 							})
-// 						}
-// 						placeholder="https://www.youtube.com/watch?v=-dQ6JsVIKdY"
-// 						required
-// 					/>
-// 				</div>
+	return (
+		<div className="stack md">
+			<div className="stack horizontal sm">
+				<h2 className="text-md">{t("vods:gameCount", { count: idx + 1 })}</h2>
+				{canRemove ? <RemoveFieldButton onClick={() => remove(idx)} /> : null}
+			</div>
 
-// 				<div>
-// 					<Label required htmlFor="title">
-// 						{t("vods:forms.title.videoTitle")}
-// 					</Label>
-// 					<Input
-// 						id="title"
-// 						value={video.title}
-// 						onChange={(e) =>
-// 							setVideo({
-// 								...video,
-// 								title: e.target.value,
-// 							})
-// 						}
-// 						placeholder="[SCL 47] (Grand Finals) Team Olive vs. Kraken Paradise"
-// 						minLength={VOD.TITLE_MIN_LENGTH}
-// 						maxLength={VOD.TITLE_MAX_LENGTH}
-// 						required
-// 					/>
-// 				</div>
+			<TextFormField<VodFormFields>
+				required
+				label={t("vods:forms.title.startTimestamp")}
+				name={`video.matches.${idx}.startsAt`}
+				placeholder="10:22"
+			/>
 
-// 				<DatePicker
-// 					label={t("vods:forms.title.videoDate")}
-// 					isRequired
-// 					maxValue={today(getLocalTimeZone())}
-// 				/>
+			<div className="stack horizontal sm">
+				<SelectFormField<VodFormFields>
+					required
+					label={t("vods:forms.title.mode")}
+					name={`video.matches.${idx}.mode`}
+					values={modesShort.map((mode) => ({
+						value: mode,
+						label: t(`game-misc:MODE_SHORT_${mode}`),
+					}))}
+				/>
 
-// 				{video.youtubeId ? (
-// 					<>
-// 						<YouTubeEmbed id={video.youtubeId} />
-// 					</>
-// 				) : null}
+				<SelectFormField<VodFormFields>
+					required
+					label={t("vods:forms.title.stage")}
+					name={`video.matches.${idx}.stageId`}
+					values={stageIds.map((stageId) => ({
+						value: stageId,
+						label: t(`game-misc:STAGE_${stageId}`),
+					}))}
+				/>
+			</div>
 
-// 				<div>
-// 					<Label required htmlFor="type">
-// 						{t("vods:forms.title.type")}
-// 					</Label>
-// 					<select
-// 						id="type"
-// 						name="type"
-// 						value={video.type}
-// 						onChange={(e) =>
-// 							setVideo({ ...video, type: e.target.value as Video["type"] })
-// 						}
-// 					>
-// 						{videoMatchTypes.map((type) => {
-// 							return (
-// 								<option key={type} value={type}>
-// 									{t(`vods:type.${type}`)}
-// 								</option>
-// 							);
-// 						})}
-// 					</select>
-// 				</div>
+			<Controller
+				control={useFormContext<VodFormFields>().control}
+				name={`video.matches.${idx}.weapons`}
+				render={({ field: { onChange, value } }) => {
+					return (
+						<div>
+							{videoType === "CAST" ? (
+								<div>
+									<Label required>{t("vods:forms.title.weaponsTeamOne")}</Label>
+									<div className="stack sm">
+										{new Array(4).fill(null).map((_, i) => {
+											return (
+												<WeaponCombobox
+													fullWidth
+													key={i}
+													inputName={`player-${i}-weapon`}
+													initialWeaponId={value[i]}
+													onChange={(selected) => {
+														if (!selected) return;
+														const weapons = [...value];
+														weapons[i] = Number(selected.value) as MainWeaponId;
 
-// 				{video.type !== "CAST" ? (
-// 					<TransformingPlayerInput
-// 						match={video}
-// 						onChange={(newUser) => setVideo({ ...video, ...newUser })}
-// 						toggleInputType={() => {
-// 							const isPlainInput = typeof video.povUserName === "string";
+														onChange(weapons);
+													}}
+													required
+												/>
+											);
+										})}
+									</div>
+									<div className="mt-4">
+										<Label required>
+											{t("vods:forms.title.weaponsTeamTwo")}
+										</Label>
+										<div className="stack sm">
+											{new Array(4).fill(null).map((_, i) => {
+												const adjustedI = i + 4;
+												return (
+													<WeaponCombobox
+														fullWidth
+														key={i}
+														inputName={`player-${adjustedI}-weapon`}
+														initialWeaponId={value[adjustedI]}
+														onChange={(selected) => {
+															if (!selected) return;
+															const weapons = [...value];
+															weapons[adjustedI] = Number(
+																selected.value,
+															) as MainWeaponId;
 
-// 							if (isPlainInput) {
-// 								setVideo({
-// 									...video,
-// 									povUserId: undefined,
-// 									povUserName: undefined,
-// 								});
-// 							} else {
-// 								setVideo({
-// 									...video,
-// 									povUserId: undefined,
-// 									povUserName: "",
-// 								});
-// 							}
-// 						}}
-// 					/>
-// 				) : null}
-
-// 				{video.matches.map((match, i) => {
-// 					return (
-// 						<Match
-// 							key={i}
-// 							match={match}
-// 							number={i + 1}
-// 							onChange={(newMatch) => {
-// 								setVideo({
-// 									...video,
-// 									matches: video.matches.map((match, j) =>
-// 										i === j ? newMatch : match,
-// 									),
-// 								});
-// 							}}
-// 							type={video.type}
-// 						/>
-// 					);
-// 				})}
-// 				<div className="stack horizontal md justify-end">
-// 					<Button
-// 						className="self-start mt-4"
-// 						variant="outlined"
-// 						onClick={() =>
-// 							setVideo({
-// 								...video,
-// 								matches: [...video.matches, newMatch(video.matches)],
-// 							})
-// 						}
-// 						size="tiny"
-// 						testId="add-match"
-// 					>
-// 						{t("vods:forms.action.addMatch")}
-// 					</Button>
-// 					{video.matches.length > 1 ? (
-// 						<Button
-// 							className="self-start mt-4"
-// 							variant="destructive"
-// 							onClick={() =>
-// 								setVideo({
-// 									...video,
-// 									matches: video.matches.filter(
-// 										(_, i) => i !== video.matches.length - 1,
-// 									),
-// 								})
-// 							}
-// 							size="tiny"
-// 						>
-// 							{t("vods:forms.action.deleteMatch")}
-// 						</Button>
-// 					) : null}
-// 				</div>
-
-// 				<div className="stack items-start">
-// 					<SubmitButton size="big">{t("common:actions.submit")}</SubmitButton>
-// 				</div>
-// 			</Main>
-// 		</Form>
-// 	);
-// }
-
-// function newMatch(matches?: VideoBeingAdded["matches"]): VideoMatchBeingAdded {
-// 	const previousMatch = matches?.[matches.length - 1];
-// 	if (!previousMatch) {
-// 		return { weapons: [], mode: "SZ", stageId: 1, startsAt: 0 };
-// 	}
-
-// 	return {
-// 		weapons: previousMatch.weapons,
-// 		mode: "SZ",
-// 		stageId: 1,
-// 		startsAt: 0,
-// 	};
-// }
-
-// function extractYoutubeIdFromVideoUrl(url: string): string {
-// 	const match = url.match(
-// 		/^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=)?(.+)$/,
-// 	);
-
-// 	const found = match?.[1];
-// 	if (!found) return "";
-
-// 	const withoutSearchParams = found.split("&")[0];
-
-// 	return withoutSearchParams;
-// }
-
-// function TransformingPlayerInput({
-// 	match,
-// 	onChange,
-// 	toggleInputType,
-// }: {
-// 	match: Pick<VideoBeingAdded, "povUserId" | "povUserName">;
-// 	onChange: (match: Pick<VideoBeingAdded, "povUserId" | "povUserName">) => void;
-// 	toggleInputType: () => void;
-// }) {
-// 	const { t } = useTranslation(["calendar", "vods"]);
-
-// 	// if null or number we render combobox
-// 	const asPlainInput = typeof match.povUserName === "string";
-
-// 	return (
-// 		<div>
-// 			<div className="stack horizontal md items-center mb-1">
-// 				<Label required htmlFor="pov" className="mb-0">
-// 					{t("vods:forms.title.pov")}
-// 				</Label>
-// 				<Button
-// 					size="tiny"
-// 					variant="minimal"
-// 					onClick={toggleInputType}
-// 					className="outline-theme"
-// 				>
-// 					{asPlainInput
-// 						? t("calendar:forms.team.player.addAsUser")
-// 						: t("calendar:forms.team.player.addAsText")}
-// 				</Button>
-// 			</div>
-// 			{asPlainInput ? (
-// 				<input
-// 					id="pov"
-// 					value={match.povUserName ?? ""}
-// 					onChange={(e) => onChange({ ...match, povUserName: e.target.value })}
-// 					min={VOD.PLAYER_NAME_MIN_LENGTH}
-// 					max={VOD.PLAYER_NAME_MAX_LENGTH}
-// 					required
-// 				/>
-// 			) : (
-// 				<UserSearch
-// 					id="pov"
-// 					inputName="team-player"
-// 					initialUserId={match.povUserId}
-// 					onChange={(newUser) =>
-// 						onChange({
-// 							...match,
-// 							povUserId: newUser.id,
-// 						})
-// 					}
-// 					required
-// 				/>
-// 			)}
-// 		</div>
-// 	);
-// }
-
-// function Match({
-// 	match,
-// 	onChange,
-// 	number,
-// 	type,
-// }: {
-// 	match: VideoMatchBeingAdded;
-// 	onChange: (match: VideoMatchBeingAdded) => void;
-// 	number: number;
-// 	type: Video["type"];
-// }) {
-// 	const id = React.useId();
-
-// 	const [minutes, setMinutes] = React.useState(
-// 		secondsToMinutesNumberTuple(match.startsAt)[0],
-// 	);
-// 	const [seconds, setSeconds] = React.useState(
-// 		secondsToMinutesNumberTuple(match.startsAt)[1],
-// 	);
-
-// 	const { t } = useTranslation(["game-misc", "vods"]);
-
-// 	const handleChange = (matchWithNewFields: Partial<VideoMatchBeingAdded>) => {
-// 		onChange({ ...match, ...matchWithNewFields });
-// 	};
-
-// 	return (
-// 		<div className="stack md">
-// 			<h2>{t("vods:gameCount", { count: number })}</h2>
-
-// 			<div>
-// 				<Label required>{t("vods:forms.title.startTimestamp")}</Label>
-// 				<div className="stack horizontal sm">
-// 					<div className="stack horizontal sm items-center text-sm">
-// 						<Input
-// 							type="number"
-// 							min={0}
-// 							value={String(minutes)}
-// 							onChange={(e) => {
-// 								const value = Number(e.target.value);
-
-// 								setMinutes(value);
-// 								onChange({ ...match, startsAt: value * 60 + seconds });
-// 							}}
-// 							testId={`match-${number}-minutes`}
-// 						/>
-// 						{t("vods:minShort")}
-// 					</div>
-// 					<div className="stack horizontal sm items-center text-sm">
-// 						<Input
-// 							type="number"
-// 							min={0}
-// 							max={59}
-// 							value={String(seconds)}
-// 							onChange={(e) => {
-// 								const value = Number(e.target.value);
-
-// 								setSeconds(value);
-// 								onChange({ ...match, startsAt: value + minutes * 60 });
-// 							}}
-// 							testId={`match-${number}-seconds`}
-// 						/>
-// 						{t("vods:secShort")}
-// 					</div>
-// 				</div>
-// 			</div>
-
-// 			<div className="stack horizontal sm">
-// 				<div>
-// 					<Label required htmlFor={`match-${number}-mode`}>
-// 						{t("vods:forms.title.mode")}
-// 					</Label>
-// 					<select
-// 						id={`match-${number}-mode`}
-// 						data-testid={`match-${number}-mode`}
-// 						value={match.mode}
-// 						onChange={(e) =>
-// 							handleChange({ mode: e.target.value as VideoMatch["mode"] })
-// 						}
-// 					>
-// 						{modesShort.map((mode) => {
-// 							return (
-// 								<option key={mode} value={mode}>
-// 									{t(`game-misc:MODE_SHORT_${mode}`)}
-// 								</option>
-// 							);
-// 						})}
-// 					</select>
-// 				</div>
-// 				<div>
-// 					<Label required htmlFor={`match-${number}-stage`}>
-// 						{t("vods:forms.title.stage")}
-// 					</Label>
-// 					<select
-// 						id={`match-${number}-stage`}
-// 						data-testid={`match-${number}-stage`}
-// 						value={match.stageId}
-// 						onChange={(e) =>
-// 							handleChange({ stageId: Number(e.target.value) as StageId })
-// 						}
-// 					>
-// 						{stageIds.map((stageId) => {
-// 							return (
-// 								<option key={stageId} value={stageId}>
-// 									{t(`game-misc:STAGE_${stageId}`)}
-// 								</option>
-// 							);
-// 						})}
-// 					</select>
-// 				</div>
-// 			</div>
-
-// 			<div>
-// 				{type === "CAST" ? (
-// 					<div>
-// 						<Label required>{t("vods:forms.title.weaponsTeamOne")}</Label>
-// 						<div className="stack sm">
-// 							{new Array(4).fill(null).map((_, i) => {
-// 								return (
-// 									<WeaponCombobox
-// 										fullWidth
-// 										key={i}
-// 										inputName={`player-${i}-weapon`}
-// 										initialWeaponId={match.weapons[i]}
-// 										onChange={(selected) => {
-// 											if (!selected) return;
-// 											const weapons = [...match.weapons];
-// 											weapons[i] = Number(selected.value) as MainWeaponId;
-
-// 											onChange({ ...match, weapons });
-// 										}}
-// 										required
-// 									/>
-// 								);
-// 							})}
-// 						</div>
-// 						<div className="mt-4">
-// 							<Label required>{t("vods:forms.title.weaponsTeamTwo")}</Label>
-// 							<div className="stack sm">
-// 								{new Array(4).fill(null).map((_, i) => {
-// 									const adjustedI = i + 4;
-// 									return (
-// 										<WeaponCombobox
-// 											fullWidth
-// 											key={i}
-// 											inputName={`player-${adjustedI}-weapon`}
-// 											initialWeaponId={match.weapons[adjustedI]}
-// 											onChange={(selected) => {
-// 												if (!selected) return;
-// 												const weapons = [...match.weapons];
-// 												weapons[adjustedI] = Number(
-// 													selected.value,
-// 												) as MainWeaponId;
-
-// 												onChange({ ...match, weapons });
-// 											}}
-// 											required
-// 										/>
-// 									);
-// 								})}
-// 							</div>
-// 						</div>
-// 					</div>
-// 				) : (
-// 					<>
-// 						<Label required htmlFor={id}>
-// 							{t("vods:forms.title.weapon")}
-// 						</Label>
-// 						<WeaponCombobox
-// 							fullWidth
-// 							id={id}
-// 							inputName={`match-${number}-weapon`}
-// 							initialWeaponId={match.weapons[0]}
-// 							onChange={(selected) =>
-// 								onChange({
-// 									...match,
-// 									weapons: selected?.value
-// 										? [Number(selected.value) as MainWeaponId]
-// 										: [],
-// 								})
-// 							}
-// 							required
-// 						/>
-// 					</>
-// 				)}
-// 			</div>
-// 		</div>
-// 	);
-// }
+															onChange(weapons);
+														}}
+														required
+													/>
+												);
+											})}
+										</div>
+									</div>
+								</div>
+							) : (
+								<>
+									<Label required htmlFor={id}>
+										{t("vods:forms.title.weapon")}
+									</Label>
+									<WeaponCombobox
+										fullWidth
+										id={id}
+										inputName={`match-${idx}-weapon`}
+										initialWeaponId={value[0]}
+										onChange={(selected) =>
+											onChange(
+												selected?.value
+													? [Number(selected.value) as MainWeaponId]
+													: [],
+											)
+										}
+										required
+									/>
+								</>
+							)}
+						</div>
+					);
+				}}
+			/>
+		</div>
+	);
+}
