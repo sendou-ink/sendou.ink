@@ -31,16 +31,18 @@ interface MyDatePickerProps<T extends DateValue> extends DatePickerProps<T> {
 	size?: FormFieldSize;
 }
 
+// xxx:  component changed from uncontrolled to controlled. Error Component
 export function DatePicker<T extends DateValue>({
 	label,
 	errorText,
 	bottomText,
 	size,
+	isRequired,
 	...rest
 }: MyDatePickerProps<T>) {
 	return (
 		<ReactAriaDatePicker {...rest}>
-			<Label required={rest.isRequired}>{label}</Label>
+			<Label required={isRequired}>{label}</Label>
 			<Group
 				className={clsx("react-aria-Group", formFieldSizeToClassName(size))}
 			>

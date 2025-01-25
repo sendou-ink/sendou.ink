@@ -1,8 +1,8 @@
 import type { User } from "~/db/types";
 import { isAdmin } from "~/permissions";
 import { databaseTimestampToDate } from "../../utils/dates";
-import type { VideoBeingAdded, Vod } from "./vods-types";
 import { HOURS_MINUTES_SECONDS_REGEX } from "./vods-schemas";
+import type { VideoBeingAdded, Vod } from "./vods-types";
 
 export function canAddVideo(args: { isVideoAdder: number | null }) {
 	return args.isVideoAdder;

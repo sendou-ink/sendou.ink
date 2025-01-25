@@ -5,7 +5,12 @@ import {
 } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import * as React from "react";
-import { Controller, useFieldArray, useFormContext } from "react-hook-form";
+import {
+	Controller,
+	get,
+	useFieldArray,
+	useFormContext,
+} from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { Button } from "~/components/Button";
@@ -209,6 +214,8 @@ function PovFormField() {
 	const { t } = useTranslation(["vods", "calendar"]);
 	const methods = useFormContext<VodFormFields>();
 
+	const error = get(methods.formState.errors, "video.pov");
+
 	return (
 		<Controller
 			control={methods.control}
@@ -267,6 +274,9 @@ function PovFormField() {
 								}
 								onBlur={onBlur}
 							/>
+						)}
+						{error && (
+							<FormMessage type="error">{error.message as string}</FormMessage>
 						)}
 					</div>
 				);
@@ -375,8 +385,9 @@ function MatchesFieldset({
 										{new Array(4).fill(null).map((_, i) => {
 											return (
 												<WeaponCombobox
-													fullWidth
 													key={i}
+													required
+													fullWidth
 													inputName={`player-${i}-weapon`}
 													initialWeaponId={value[i]}
 													onChange={(selected) => {
@@ -386,7 +397,6 @@ function MatchesFieldset({
 
 														onChange(weapons);
 													}}
-													required
 												/>
 											);
 										})}
@@ -400,8 +410,9 @@ function MatchesFieldset({
 												const adjustedI = i + 4;
 												return (
 													<WeaponCombobox
-														fullWidth
 														key={i}
+														required
+														fullWidth
 														inputName={`player-${adjustedI}-weapon`}
 														initialWeaponId={value[adjustedI]}
 														onChange={(selected) => {
@@ -413,7 +424,6 @@ function MatchesFieldset({
 
 															onChange(weapons);
 														}}
-														required
 													/>
 												);
 											})}
@@ -426,8 +436,9 @@ function MatchesFieldset({
 										{t("vods:forms.title.weapon")}
 									</Label>
 									<WeaponCombobox
-										fullWidth
 										id={id}
+										required
+										fullWidth
 										inputName={`match-${idx}-weapon`}
 										initialWeaponId={value[0]}
 										onChange={(selected) =>
@@ -437,7 +448,6 @@ function MatchesFieldset({
 													: [],
 											)
 										}
-										required
 									/>
 								</>
 							)}

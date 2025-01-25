@@ -6,8 +6,12 @@ import { FRIEND_CODE_REGEXP } from "../features/sendouq/q-constants";
 import type { Unpacked } from "./types";
 import { assertType } from "./types";
 
-export const id = z.coerce.number().int().positive();
+export const id = z.coerce.number({ message: "Required" }).int().positive();
 export const optionalId = z.coerce.number().int().positive().optional();
+
+export const nonEmptyString = z.string().trim().min(1, {
+	message: "Required",
+});
 
 export const dbBoolean = z.coerce.number().min(0).max(1).int();
 

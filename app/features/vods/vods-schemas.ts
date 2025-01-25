@@ -4,6 +4,7 @@ import {
 	dayMonthYear,
 	id,
 	modeShort,
+	nonEmptyString,
 	safeJSONParse,
 	stageId,
 	weaponSplId,
@@ -37,7 +38,7 @@ export const videoSchema = z
 				message: "Invalid YouTube URL",
 			},
 		),
-		title: z.string().min(VOD.TITLE_MIN_LENGTH).max(VOD.TITLE_MAX_LENGTH),
+		title: nonEmptyString.max(VOD.TITLE_MAX_LENGTH),
 		date: dayMonthYear.refine(
 			(data) => {
 				const date = dayMonthYearToDate(data);
@@ -56,10 +57,7 @@ export const videoSchema = z
 				}),
 				z.object({
 					type: z.literal("NAME"),
-					name: z
-						.string()
-						.min(VOD.PLAYER_NAME_MIN_LENGTH)
-						.max(VOD.PLAYER_NAME_MAX_LENGTH),
+					name: nonEmptyString.max(VOD.PLAYER_NAME_MAX_LENGTH),
 				}),
 			])
 			.optional(),
@@ -70,17 +68,15 @@ export const videoSchema = z
 			data.type === "CAST" &&
 			data.matches.some((match) => match.weapons.length !== 8)
 		) {
-			return [false, { message: "CAST matches must have 8 weapons" }];
+			return false;
 		}
 
 		if (
 			data.type !== "CAST" &&
 			data.matches.some((match) => match.weapons.length !== 1)
 		) {
-			return [false, { message: "Non-CAST matches must have 1 weapon" }];
+			return false;
 		}
-
-		// xxx: if not cast, must have pov
 
 		return true;
 	});
