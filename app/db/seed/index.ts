@@ -1646,7 +1646,10 @@ function realVideo() {
 		date: { day: 2, month: 2, year: 2023 },
 		submitterUserId: ADMIN_ID,
 		title: "LUTI Division X Tournament - ABBF (THRONE) vs. Ascension",
-		povUserId: NZAP_TEST_ID,
+		pov: {
+			type: "USER",
+			userId: NZAP_TEST_ID,
+		},
 		isValidated: true,
 		matches: [
 			{

@@ -20,8 +20,15 @@ export function vodToVideoBeingAdded(vod: Vod): VideoBeingAdded {
 		},
 		matches: vod.matches,
 		type: vod.type,
-		povUserId: typeof vod.pov === "string" ? undefined : vod.pov?.id,
-		povUserName: typeof vod.pov === "string" ? vod.pov : undefined,
+		pov:
+			typeof vod.pov === "string"
+				? { type: "NAME", name: vod.pov }
+				: vod.pov
+					? {
+							type: "USER",
+							userId: vod.pov.id,
+						}
+					: undefined,
 	};
 }
 

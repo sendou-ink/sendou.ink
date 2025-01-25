@@ -4,9 +4,13 @@ import {
 	redirect,
 } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
+import { Button } from "~/components/Button";
+import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
+import { UserSearch } from "~/components/UserSearch";
 import type { Video } from "~/db/types";
 import { requireUser } from "~/features/auth/core/user.server";
 import {
@@ -22,7 +26,7 @@ import { SelectFormField } from "../../../components/form/SelectFormField";
 import { TextFormField } from "../../../components/form/TextFormField";
 import { createVod, updateVodByReplacing } from "../queries/createVod.server";
 import { findVodById } from "../queries/findVodById.server";
-import { videoMatchTypes } from "../vods-constants";
+import { VOD, videoMatchTypes } from "../vods-constants";
 import { videoInputSchema } from "../vods-schemas";
 import { canAddVideo, canEditVideo, vodToVideoBeingAdded } from "../vods-utils";
 
@@ -95,7 +99,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		!canEditVideo({
 			submitterUserId: vod.submitterUserId,
 			userId: user.id,
-			povUserId: vodToEdit.povUserId,
+			povUserId:
+				vodToEdit.pov?.type === "USER" ? vodToEdit.pov.userId : undefined,
 		})
 	) {
 		return { vodToEdit: null };
@@ -108,7 +113,7 @@ export type VodFormFields = z.infer<typeof videoInputSchema>;
 
 export default function NewVodPage() {
 	const data = useLoaderData<typeof loader>();
-	const { t } = useTranslation(["vods", "common"]);
+	const { t } = useTranslation(["vods"]);
 
 	return (
 		<Main halfWidth>
@@ -125,46 +130,159 @@ export default function NewVodPage() {
 								vodToEditId: data.vodToEdit.id,
 								video: data.vodToEdit,
 							}
-						: undefined
+						: {
+								video: {
+									pov: { type: "USER" } as VodFormFields["video"]["pov"],
+								},
+							}
 				}
 			>
-				{/** xxx: handle extract youtube id */}
-				<TextFormField<VodFormFields>
-					label={t("vods:forms.title.youtubeUrl")}
-					name="video.youtubeId"
-					placeholder="https://www.youtube.com/watch?v=-dQ6JsVIKdY"
-					required
-					size="medium"
-				/>
-
-				<TextFormField<VodFormFields>
-					label={t("vods:forms.title.videoTitle")}
-					name="video.title"
-					placeholder="[SCL 47] (Grand Finals) Team Olive vs. Kraken Paradise"
-					required
-					size="medium"
-				/>
-
-				<DateFormField<VodFormFields>
-					label={t("vods:forms.title.videoDate")}
-					name="video.date"
-					required
-					size="extra-small"
-				/>
-
-				<SelectFormField<VodFormFields>
-					label={t("vods:forms.title.type")}
-					name="video.type"
-					values={videoMatchTypes.map((role) => ({
-						value: role,
-						label: t(`vods:type.${role}`),
-					}))}
-					required
-				/>
+				<FormFields />
 			</MyForm>
 		</Main>
 	);
 }
+
+function FormFields() {
+	const { t } = useTranslation(["vods"]);
+	const videoType = useWatch<VodFormFields>({ name: "video.type" });
+
+	return (
+		<>
+			{/** xxx: handle extract youtube id */}
+			<TextFormField<VodFormFields>
+				label={t("vods:forms.title.youtubeUrl")}
+				name="video.youtubeId"
+				placeholder="https://www.youtube.com/watch?v=-dQ6JsVIKdY"
+				required
+				size="medium"
+			/>
+
+			<TextFormField<VodFormFields>
+				label={t("vods:forms.title.videoTitle")}
+				name="video.title"
+				placeholder="[SCL 47] (Grand Finals) Team Olive vs. Kraken Paradise"
+				required
+				size="medium"
+			/>
+
+			<DateFormField<VodFormFields>
+				label={t("vods:forms.title.videoDate")}
+				name="video.date"
+				required
+				size="extra-small"
+			/>
+
+			<SelectFormField<VodFormFields>
+				label={t("vods:forms.title.type")}
+				name="video.type"
+				values={videoMatchTypes.map((role) => ({
+					value: role,
+					label: t(`vods:type.${role}`),
+				}))}
+				required
+			/>
+
+			{videoType !== "CAST" ? <PovFormField /> : null}
+		</>
+	);
+}
+
+function PovFormField() {
+	const { t } = useTranslation(["vods", "calendar"]);
+	const methods = useFormContext<VodFormFields>();
+
+	return (
+		<Controller
+			control={methods.control}
+			name="video.pov"
+			render={({ field: { onChange, onBlur, value } }) => {
+				if (!value) return <></>;
+
+				const asPlainInput = value.type === "NAME";
+
+				const toggleInputType = () => {
+					if (asPlainInput) {
+						onChange({ type: "USER", userId: undefined });
+					} else {
+						onChange({ type: "NAME", name: "" });
+					}
+				};
+
+				return (
+					<div>
+						<div className="stack horizontal md items-center mb-1">
+							<Label required htmlFor="pov" className="mb-0">
+								{t("vods:forms.title.pov")}
+							</Label>
+							<Button
+								size="tiny"
+								variant="minimal"
+								onClick={toggleInputType}
+								className="outline-theme"
+							>
+								{asPlainInput
+									? t("calendar:forms.team.player.addAsUser")
+									: t("calendar:forms.team.player.addAsText")}
+							</Button>
+						</div>
+						{asPlainInput ? (
+							<input
+								id="pov"
+								value={value.name ?? ""}
+								onChange={(e) =>
+									onChange({ type: "NAME", value: e.target.value })
+								}
+								min={VOD.PLAYER_NAME_MIN_LENGTH}
+								max={VOD.PLAYER_NAME_MAX_LENGTH}
+								required
+								onBlur={onBlur}
+							/>
+						) : (
+							<UserSearch
+								id="pov"
+								inputName="team-player"
+								initialUserId={value.userId}
+								onChange={(newUser) =>
+									onChange({
+										type: "USER",
+										userId: newUser.id,
+									})
+								}
+								onBlur={onBlur}
+								required
+							/>
+						)}
+					</div>
+				);
+			}}
+		/>
+	);
+}
+
+// 				{video.type !== "CAST" ? (
+// 					<TransformingPlayerInput
+// 						match={video}
+// 						onChange={(newUser) => setVideo({ ...video, ...newUser })}
+// 						toggleInputType={() => {
+// 							const isPlainInput = typeof video.povUserName === "string";
+
+// 							if (isPlainInput) {
+// 								setVideo({
+// 									...video,
+// 									povUserId: undefined,
+// 									povUserName: undefined,
+// 								});
+// 							} else {
+// 								setVideo({
+// 									...video,
+// 									povUserId: undefined,
+// 									povUserName: "",
+// 								});
+// 							}
+// 						}}
+// 					/>
+// 				) : null}
 
 // export function _NewVodPage() {
 // 	const data = useLoaderData<typeof loader>();

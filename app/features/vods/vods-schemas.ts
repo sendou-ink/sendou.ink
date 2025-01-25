@@ -34,11 +34,20 @@ export const videoSchema = z
 				message: "Date must not be in the future",
 			},
 		),
-		povUserId: z.number().optional(),
-		povUserName: z
-			.string()
-			.min(VOD.PLAYER_NAME_MIN_LENGTH)
-			.max(VOD.PLAYER_NAME_MAX_LENGTH)
+		pov: z
+			.union([
+				z.object({
+					type: z.literal("USER"),
+					userId: id,
+				}),
+				z.object({
+					type: z.literal("NAME"),
+					name: z
+						.string()
+						.min(VOD.PLAYER_NAME_MIN_LENGTH)
+						.max(VOD.PLAYER_NAME_MAX_LENGTH),
+				}),
+			])
 			.optional(),
 		matches: z.array(videoMatchSchema),
 	})
@@ -57,12 +66,7 @@ export const videoSchema = z
 			return [false, { message: "Non-CAST matches must have 1 weapon" }];
 		}
 
-		if (!data.povUserId && !data.povUserName) {
-			return [
-				false,
-				{ message: "Either povUserId or povUserName must be provided" },
-			];
-		}
+		// xxx: if not cast, must have pov
 
 		return true;
 	});

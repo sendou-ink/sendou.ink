@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFetcher } from "@remix-run/react";
 import * as React from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { type DefaultValues, FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod";
 import type { ActionError } from "~/utils/remix.server";
@@ -14,7 +14,7 @@ export function MyForm<T extends z.ZodTypeAny>({
 	children,
 }: {
 	schema: T;
-	defaultValues?: z.infer<T>;
+	defaultValues?: DefaultValues<z.infer<T>>;
 	title?: string;
 	children: React.ReactNode;
 }) {

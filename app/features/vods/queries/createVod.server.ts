@@ -66,8 +66,14 @@ export const createVod = sql.transaction(
 			for (const [i, weaponSplId] of match.weapons.entries()) {
 				createVideoMatchPlayerStm.run({
 					videoMatchId: videoMatch.id,
-					playerUserId: args.povUserId ?? null,
-					playerName: args.povUserName ?? null,
+					playerUserId:
+						args.pov?.type === "USER" && args.type !== "CAST"
+							? args.pov.userId
+							: null,
+					playerName:
+						args.pov?.type === "NAME" && args.type !== "CAST"
+							? args.pov.name
+							: null,
 					weaponSplId,
 					player: i + 1,
 				});
