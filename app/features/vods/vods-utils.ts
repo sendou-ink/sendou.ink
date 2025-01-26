@@ -16,7 +16,7 @@ export function vodToVideoBeingAdded(vod: Vod): VideoBeingAdded {
 		youtubeUrl: youtubeIdToYoutubeUrl(vod.youtubeId),
 		date: {
 			day: dateObj.getDate(),
-			month: dateObj.getMonth() + 1,
+			month: dateObj.getMonth(),
 			year: dateObj.getFullYear(),
 		},
 		matches: vod.matches.map((match) => ({
