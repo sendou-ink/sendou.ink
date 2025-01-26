@@ -1580,7 +1580,6 @@ function detailedTeam() {
           'Alliance Rogue',
           'alliance-rogue',
           '${nanoid(INVITE_CODE_LENGTH)}',
-          'AllianceRogueFR',
           '${faker.lorem.paragraph()}',
           1,
           2

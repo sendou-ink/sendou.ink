@@ -164,6 +164,7 @@ function BskyLink() {
 	return (
 		<a
 			className="team__bsky-link"
+			data-testid="bsky-link"
 			href={bskyUrl(team.bsky)}
 			target="_blank"
 			rel="noreferrer"
