@@ -34,7 +34,6 @@
 	"auth.errors.aborted": "Login Abortado",
 	"auth.errors.failed": "Login Falhou",
 	"auth.errors.discordPermissions": "Para o seu perfil do sendou.ink, o site precisa de acesso ao nome do perfil do seu Discord, incluindo também o avatar e conexões sociais.",
-	"auth.errors.unknown": "A sua conta do Discord possui um endereço de e-mail verificado? Para obter ajuda por favor entre em contato conosco (em inglês) pelo canal #helpdesk no nosso Discord:",
 
 	"footer.github.subtitle": "Código fonte",
 	"footer.discord.subtitle": "Ajuda e Feedback",

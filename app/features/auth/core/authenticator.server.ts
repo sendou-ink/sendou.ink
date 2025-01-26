@@ -1,16 +1,9 @@
 import { Authenticator } from "remix-auth";
-import { DiscordStrategy } from "./DiscordStrategy.server";
-import type { LoggedInUser } from "./DiscordStrategy.server";
-import { authSessionStorage } from "./session.server";
+import { DiscordStrategy, type LoggedInUser } from "./DiscordStrategy.server";
 
 export const SESSION_KEY = "user";
 export const IMPERSONATED_SESSION_KEY = "impersonated_user";
 
-export const authenticator = new Authenticator<LoggedInUser>(
-	authSessionStorage,
-	{
-		sessionKey: SESSION_KEY,
-	},
-);
+export const authenticator = new Authenticator<LoggedInUser>();
 
-authenticator.use(new DiscordStrategy());
+authenticator.use(DiscordStrategy(), "discord");

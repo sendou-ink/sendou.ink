@@ -44,7 +44,7 @@
 	"auth.errors.aborted": "Login Aborted",
 	"auth.errors.failed": "Login Failed",
 	"auth.errors.discordPermissions": "For your sendou.ink profile, the site needs access to your Discord profile's name, avatar and social connections.",
-	"auth.errors.unknown": "Does your Discord account have a verified email? For help please reach out to us via the #helpdesk channel on our Discord:",
+	"auth.errors.unknown": "Unknown error, try again a bit later. Verify also that your Discord account has a verified email. For help please reach out to us via the #helpdesk channel on our Discord:",
 
 	"footer.github.subtitle": "Source code",
 	"footer.discord.subtitle": "Help & feedback",

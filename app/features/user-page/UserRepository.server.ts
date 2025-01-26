@@ -573,6 +573,7 @@ export function upsert(
 		| "discordUniqueName"
 		| "twitch"
 		| "youtubeId"
+		| "bsky"
 	>,
 ) {
 	return db
