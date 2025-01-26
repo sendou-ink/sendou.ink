@@ -19,7 +19,6 @@ export function SelectFormField<T extends FieldValues>({
 }: {
 	label: string;
 	name: FieldPath<T>;
-	// xxx: this could also be strongly typed
 	values: Array<{ value: string | number; label: string }>;
 	bottomText?: string;
 	size?: FormFieldSize;

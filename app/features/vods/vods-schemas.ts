@@ -10,7 +10,7 @@ import {
 	weaponSplId,
 } from "~/utils/zod";
 import { dayMonthYearToDate } from "../../utils/dates";
-import { VOD, videoMatchTypes } from "./vods-constants";
+import { videoMatchTypes } from "./vods-constants";
 import { extractYoutubeIdFromVideoUrl } from "./vods-utils";
 
 export const HOURS_MINUTES_SECONDS_REGEX = /^(\d{1,2}:)?\d{1,2}:\d{2}$/;
@@ -40,7 +40,7 @@ export const videoSchema = z.preprocess(
 					message: "Invalid YouTube URL",
 				},
 			),
-			title: nonEmptyString.max(VOD.TITLE_MAX_LENGTH),
+			title: nonEmptyString.max(100),
 			date: dayMonthYear.refine(
 				(data) => {
 					const date = dayMonthYearToDate(data);
@@ -59,7 +59,7 @@ export const videoSchema = z.preprocess(
 					}),
 					z.object({
 						type: z.literal("NAME"),
-						name: nonEmptyString.max(VOD.PLAYER_NAME_MAX_LENGTH),
+						name: nonEmptyString.max(100),
 					}),
 				])
 				.optional(),

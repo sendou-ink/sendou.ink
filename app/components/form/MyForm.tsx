@@ -26,7 +26,7 @@ export function MyForm<T extends z.ZodTypeAny>({
 		defaultValues,
 	});
 
-	if (methods.formState.errors) {
+	if (methods.formState.isSubmitted && methods.formState.errors) {
 		logger.error(methods.formState.errors);
 	}
 

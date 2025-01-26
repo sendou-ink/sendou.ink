@@ -41,7 +41,7 @@ import { SelectFormField } from "../../../components/form/SelectFormField";
 import { TextFormField } from "../../../components/form/TextFormField";
 import { createVod, updateVodByReplacing } from "../queries/createVod.server";
 import { findVodById } from "../queries/findVodById.server";
-import { VOD, videoMatchTypes } from "../vods-constants";
+import { videoMatchTypes } from "../vods-constants";
 import { videoInputSchema } from "../vods-schemas";
 import { canAddVideo, canEditVideo, vodToVideoBeingAdded } from "../vods-utils";
 
@@ -213,13 +213,16 @@ function PovFormField() {
 	const { t } = useTranslation(["vods", "calendar"]);
 	const methods = useFormContext<VodFormFields>();
 
-	const error = get(methods.formState.errors, "video.pov");
+	const povNameError = get(methods.formState.errors, "video.pov.name");
 
 	return (
 		<Controller
 			control={methods.control}
 			name="video.pov"
-			render={({ field: { onChange, onBlur, value } }) => {
+			render={({
+				field: { onChange, onBlur, value },
+				fieldState: { error },
+			}) => {
 				if (!value) return <></>;
 
 				const asPlainInput = value.type === "NAME";
@@ -253,11 +256,9 @@ function PovFormField() {
 							<input
 								id="pov"
 								value={value.name ?? ""}
-								onChange={(e) =>
-									onChange({ type: "NAME", value: e.target.value })
-								}
-								min={VOD.PLAYER_NAME_MIN_LENGTH}
-								max={VOD.PLAYER_NAME_MAX_LENGTH}
+								onChange={(e) => {
+									onChange({ type: "NAME", name: e.target.value });
+								}}
 								onBlur={onBlur}
 							/>
 						) : (
@@ -276,6 +277,11 @@ function PovFormField() {
 						)}
 						{error && (
 							<FormMessage type="error">{error.message as string}</FormMessage>
+						)}
+						{povNameError && (
+							<FormMessage type="error">
+								{povNameError.message as string}
+							</FormMessage>
 						)}
 					</div>
 				);
