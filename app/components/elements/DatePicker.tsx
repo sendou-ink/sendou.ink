@@ -14,7 +14,6 @@ import {
 	Popover,
 	DatePicker as ReactAriaDatePicker,
 } from "react-aria-components";
-import { FormMessage } from "../FormMessage";
 import {
 	type FormFieldSize,
 	formFieldSizeToClassName,
@@ -22,41 +21,39 @@ import {
 import { ArrowLeftIcon } from "../icons/ArrowLeft";
 import { ArrowRightIcon } from "../icons/ArrowRight";
 import { CalendarIcon } from "../icons/Calendar";
-import { Label } from "./Label";
+import { SendouFieldError } from "./FieldError";
+import { SendouFieldMessage } from "./FieldMessage";
+import { SendouLabel } from "./Label";
 
 interface MyDatePickerProps<T extends DateValue> extends DatePickerProps<T> {
 	label: string;
 	bottomText?: string;
 	errorText?: string;
 	size?: FormFieldSize;
-	testId?: string;
 }
 
-export function DatePicker<T extends DateValue>({
+export function SendouDatePicker<T extends DateValue>({
 	label,
 	errorText,
 	bottomText,
 	size,
 	isRequired,
-	testId,
 	...rest
 }: MyDatePickerProps<T>) {
 	return (
 		<ReactAriaDatePicker {...rest} validationBehavior="aria">
-			<Label required={isRequired}>{label}</Label>
+			<SendouLabel required={isRequired}>{label}</SendouLabel>
 			<Group
 				className={clsx("react-aria-Group", formFieldSizeToClassName(size))}
 			>
-				<DateInput data-testid={testId}>
-					{(segment) => <DateSegment segment={segment} />}
-				</DateInput>
+				<DateInput>{(segment) => <DateSegment segment={segment} />}</DateInput>
 				<Button data-testid="open-calendar-button">
 					<CalendarIcon />
 				</Button>
 			</Group>
-			{errorText && <FormMessage type="error">{errorText}</FormMessage>}
+			{errorText && <SendouFieldError>{errorText}</SendouFieldError>}
 			{bottomText && !errorText ? (
-				<FormMessage type="info">{bottomText}</FormMessage>
+				<SendouFieldMessage>{bottomText}</SendouFieldMessage>
 			) : null}
 			<Popover>
 				<Dialog>

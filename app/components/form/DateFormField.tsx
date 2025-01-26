@@ -3,12 +3,11 @@ import {
 	Controller,
 	type FieldPath,
 	type FieldValues,
-	get,
 	useFormContext,
 } from "react-hook-form";
 import { dateToYYYYMMDD } from "../../utils/dates";
 import type { DayMonthYear } from "../../utils/zod";
-import { DatePicker } from "../elements/DatePicker";
+import { SendouDatePicker } from "../elements/DatePicker";
 import type { FormFieldSize } from "./form-utils";
 
 export function DateFormField<T extends FieldValues>({
@@ -17,26 +16,22 @@ export function DateFormField<T extends FieldValues>({
 	bottomText,
 	required,
 	size,
-	testId,
 }: {
 	label: string;
 	name: FieldPath<T>;
 	bottomText?: string;
 	required?: boolean;
 	size?: FormFieldSize;
-	testId?: string;
 }) {
 	const methods = useFormContext();
-
-	const error = get(methods.formState.errors, name);
 
 	return (
 		<Controller
 			name={name}
 			control={methods.control}
 			render={({
-				field: { name, value, onChange },
-				fieldState: { invalid },
+				field: { name, value, onChange, onBlur },
+				fieldState: { invalid, error },
 			}) => {
 				const getValue = () => {
 					const originalValue = value as DayMonthYear | null;
@@ -58,16 +53,16 @@ export function DateFormField<T extends FieldValues>({
 				};
 
 				return (
-					<DatePicker
+					<SendouDatePicker
 						label={label}
 						granularity="day"
 						isRequired={required}
 						errorText={error?.message as string | undefined}
 						value={getValue()}
 						size={size}
-						testId={testId}
 						isInvalid={invalid}
 						name={name}
+						onBlur={onBlur}
 						onChange={(value) => {
 							if (value) {
 								onChange({

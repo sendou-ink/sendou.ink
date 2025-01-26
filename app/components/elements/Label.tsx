@@ -1,6 +1,6 @@
 import { Label as ReactAriaLabel } from "react-aria-components";
 
-export function Label({
+export function SendouLabel({
 	children,
 	required,
 }: {

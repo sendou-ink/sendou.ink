@@ -190,7 +190,6 @@ function FormFields() {
 				name="video.date"
 				required
 				size="extra-small"
-				testId="video-date"
 			/>
 
 			<SelectFormField<VodFormFields>
