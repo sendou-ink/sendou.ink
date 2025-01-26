@@ -30,7 +30,7 @@ export function DateFormField<T extends FieldValues>({
 			name={name}
 			control={methods.control}
 			render={({
-				field: { name, value, onChange, onBlur },
+				field: { name, value, onChange, onBlur /*, ref*/ }, // TODO: figure out where ref goes (to focus on error) and put it there
 				fieldState: { invalid, error },
 			}) => {
 				const getValue = () => {
