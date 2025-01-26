@@ -18,7 +18,6 @@ import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { secondsToMinutes } from "~/utils/number";
 import { type SendouRouteHandle, notFoundIfFalsy } from "~/utils/remix.server";
 import { makeTitle } from "~/utils/strings";
 import type { Unpacked } from "~/utils/types";
@@ -33,7 +32,7 @@ import {
 import { PovUser } from "../components/VodPov";
 import { findVodById } from "../queries/findVodById.server";
 import type { Vod } from "../vods-types";
-import { canEditVideo } from "../vods-utils";
+import { canEditVideo, secondsToHoursMinutesSecondString } from "../vods-utils";
 
 import "../vods.css";
 
@@ -240,7 +239,7 @@ function Match({
 				onClick={() => setStart(match.startsAt)}
 				variant="outlined"
 			>
-				{secondsToMinutes(match.startsAt)}
+				{secondsToHoursMinutesSecondString(match.startsAt)}
 			</Button>
 		</div>
 	);

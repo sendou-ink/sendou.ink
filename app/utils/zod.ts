@@ -6,8 +6,12 @@ import { FRIEND_CODE_REGEXP } from "../features/sendouq/q-constants";
 import type { Unpacked } from "./types";
 import { assertType } from "./types";
 
-export const id = z.coerce.number().int().positive();
+export const id = z.coerce.number({ message: "Required" }).int().positive();
 export const optionalId = z.coerce.number().int().positive().optional();
+
+export const nonEmptyString = z.string().trim().min(1, {
+	message: "Required",
+});
 
 export const dbBoolean = z.coerce.number().min(0).max(1).int();
 
@@ -250,3 +254,11 @@ export function numericEnum<TValues extends readonly number[]>(
 		}
 	}) as ZodType<TValues[number]>;
 }
+
+export const dayMonthYear = z.object({
+	day: z.number().int().min(1).max(31),
+	month: z.number().int().min(0).max(11),
+	year: z.number().int().min(2015).max(2100),
+});
+
+export type DayMonthYear = z.infer<typeof dayMonthYear>;
