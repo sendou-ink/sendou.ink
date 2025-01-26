@@ -21,7 +21,6 @@
 	"roles.FLEX": "Fleksibel",
 	"roles.SUB": "Vikar",
 	"roles.COACH": "Træner",
-	"forms.fields.teamTwitter": "Holdets Twitter",
 	"forms.fields.bio": "Bio",
 	"forms.fields.uploadImages": "Upload billeder",
 	"forms.fields.uploadImages.pfp": "Profilbillede",

@@ -3,7 +3,7 @@ import { pathnameFromPotentialURL } from "./strings";
 
 describe("pathnameFromPotentialURL()", () => {
 	test("Resolves path name from valid URL", () => {
-		expect(pathnameFromPotentialURL("https://twitter.com/sendouc")).toBe(
+		expect(pathnameFromPotentialURL("https://bsky.app/sendouc")).toBe(
 			"sendouc",
 		);
 	});

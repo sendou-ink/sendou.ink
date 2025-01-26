@@ -58,6 +58,7 @@ test.describe("Team page", () => {
 		await page.getByTestId("name-input").clear();
 		await page.getByTestId("name-input").fill("Better Alliance Rogue");
 
+		// xxx: bsky
 		await page.getByTestId("twitter-input").clear();
 		await page.getByTestId("twitter-input").fill("BetterAllianceRogue");
 

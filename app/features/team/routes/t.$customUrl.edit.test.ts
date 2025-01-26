@@ -31,7 +31,6 @@ describe("team creation", () => {
 				bio: null,
 				bsky: null,
 				css: null,
-				twitter: null,
 			},
 			{ user: "regular", params: { customUrl: "team-1" } },
 		);
@@ -50,7 +49,6 @@ describe("team creation", () => {
 					bio: null,
 					bsky: null,
 					css: null,
-					twitter: null,
 				},
 				{ user: "regular", params: { customUrl: "team-1" } },
 			),

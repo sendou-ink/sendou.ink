@@ -5,7 +5,6 @@ import type { User } from "~/db/types";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
-import { DISCORD_AUTH_KEY } from "./authenticator.server";
 
 interface DiscordExtraParams extends Record<string, string | number> {
 	scope: string;
@@ -40,7 +39,7 @@ export class DiscordStrategy extends OAuth2Strategy<
 	OAuth2Profile,
 	DiscordExtraParams
 > {
-	name = DISCORD_AUTH_KEY;
+	name = "discord";
 	scope: string;
 
 	constructor() {
@@ -133,11 +132,9 @@ export class DiscordStrategy extends OAuth2Strategy<
 
 		const result: {
 			twitch: string | null;
-			twitter: string | null;
 			youtubeId: string | null;
 		} = {
 			twitch: null,
-			twitter: null,
 			youtubeId: null,
 		};
 
@@ -147,9 +144,6 @@ export class DiscordStrategy extends OAuth2Strategy<
 			switch (connection.type) {
 				case "twitch":
 					result.twitch = connection.name;
-					break;
-				case "twitter":
-					result.twitter = connection.name;
 					break;
 				case "youtube":
 					result.youtubeId = connection.id;

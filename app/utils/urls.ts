@@ -67,7 +67,6 @@ export const conditionalUserSubmittedImage = (fileName: string) =>
 
 export const PLUS_SERVER_DISCORD_URL = "https://discord.gg/FW4dKrY";
 export const SENDOU_INK_DISCORD_URL = "https://discord.gg/sendou";
-export const SENDOU_TWITTER_URL = "https://twitter.com/sendouc";
 export const SENDOU_INK_PATREON_URL = "https://patreon.com/sendou";
 export const NINTENDO_COMMUNITY_TOURNAMENTS_GUIDELINES_URL =
 	"https://en-americas-support.nintendo.com/app/answers/detail/a_id/63454";
@@ -76,11 +75,6 @@ export const PATREON_HOW_TO_CONNECT_DISCORD_URL =
 export const SENDOU_INK_GITHUB_URL = "https://github.com/Sendouc/sendou.ink";
 export const GITHUB_CONTRIBUTORS_URL =
 	"https://github.com/Sendouc/sendou.ink/graphs/contributors";
-export const BORZOIC_TWITTER = "https://twitter.com/borzoic_";
-export const LEAN_TWITTER = "https://twitter.com/LeanYoshi";
-export const UBERU_TWITTER = "https://twitter.com/uberu5";
-export const YAGA_TWITTER = "https://twitter.com/a_bog_hag";
-export const ANTARISKA_TWITTER = "https://twitter.com/antariska_spl";
 export const ipLabsMaps = (pool: string) =>
 	`https://maps.iplabs.ink/?3&pool=${pool}`;
 export const SPLATOON_3_INK = "https://splatoon3.ink/";
@@ -89,8 +83,6 @@ export const RHODESMAS_FREESOUND_PROFILE_URL =
 export const SPR_INFO_URL =
 	"https://www.pgstats.com/articles/introducing-spr-and-uf";
 
-export const twitterUrl = (accountName: string) =>
-	`https://twitter.com/${accountName}`;
 export const bskyUrl = (accountName: string) =>
 	`https://bsky.app/profile/${accountName}`;
 export const twitchUrl = (accountName: string) =>

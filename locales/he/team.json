@@ -20,7 +20,6 @@
 	"roles.BACKLINE": "קו אחורי",
 	"roles.FLEX": "מעורב",
 	"roles.COACH": "מאמן",
-	"forms.fields.teamTwitter": "Twitter של הצוות",
 	"forms.fields.bio": "ביו",
 	"forms.fields.uploadImages": "העלאת תמונות",
 	"forms.fields.uploadImages.pfp": "תמונת פרופיל",

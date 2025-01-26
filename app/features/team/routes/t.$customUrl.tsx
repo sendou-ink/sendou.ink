@@ -13,7 +13,6 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { BskyIcon } from "~/components/icons/Bsky";
 import { EditIcon } from "~/components/icons/Edit";
 import { StarIcon } from "~/components/icons/Star";
-import { TwitterIcon } from "~/components/icons/Twitter";
 import { UsersIcon } from "~/components/icons/Users";
 import { useUser } from "~/features/auth/core/user";
 import { isAdmin } from "~/permissions";
@@ -27,7 +26,6 @@ import {
 	manageTeamRosterPage,
 	navIconUrl,
 	teamPage,
-	twitterUrl,
 	userPage,
 	userSubmittedImage,
 } from "~/utils/urls";
@@ -128,7 +126,7 @@ function TeamBanner() {
 					})}
 				</div>
 				<div className="team__banner__name">
-					{team.name} <TwitterLink testId="twitter-link" /> <BskyLink />
+					{team.name} <BskyLink />
 				</div>
 			</div>
 			{team.avatarSrc ? <div className="team__banner__avatar__spacer" /> : null}
@@ -152,28 +150,9 @@ function MobileTeamNameCountry() {
 			</div>
 			<div className="team__mobile-team-name">
 				{team.name}
-				<TwitterLink />
 				<BskyLink />
 			</div>
 		</div>
-	);
-}
-
-function TwitterLink({ testId }: { testId?: string }) {
-	const { team } = useLoaderData<typeof loader>();
-
-	if (!team.twitter) return null;
-
-	return (
-		<a
-			className="team__twitter-link"
-			href={twitterUrl(team.twitter)}
-			target="_blank"
-			rel="noreferrer"
-			data-testid={testId}
-		>
-			<TwitterIcon />
-		</a>
 	);
 }
 

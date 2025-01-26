@@ -32,7 +32,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 				"User.country",
 				"User.discordName",
 				"User.twitch",
-				"User.twitter",
 				"User.battlefy",
 				"User.bsky",
 				"User.customUrl",
@@ -95,9 +94,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		plusServerTier: user.tier as GetUserResponse["plusServerTier"],
 		socials: {
 			twitch: user.twitch,
-			twitter: user.twitter,
 			battlefy: user.battlefy,
 			bsky: user.bsky,
+			twitter: null, // deprecated field
 		},
 		peakXp:
 			user.xRankPlacements.length > 0

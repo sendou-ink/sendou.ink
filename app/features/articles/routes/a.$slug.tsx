@@ -53,7 +53,6 @@ export const meta: MetaFunction = (args) => {
 		{ property: "og:title", content: data.title },
 		{ name: "description", content: description },
 		{ property: "og:description", content: description },
-		{ name: "twitter:card", content: "summary_large_image" },
 		{ property: "og:image", content: articlePreviewUrl(args.params.slug) },
 		{ property: "og:type", content: "article" },
 		{ property: "og:site_name", content: "sendou.ink" },

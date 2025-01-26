@@ -19,7 +19,6 @@
 	"roles.MIDLINE": "Midline",
 	"roles.BACKLINE": "Backline",
 	"roles.COACH": "Coach",
-	"forms.fields.teamTwitter": "Team-Twitter",
 	"forms.fields.bio": "Bio",
 	"forms.fields.uploadImages": "Bilder hochladen",
 	"forms.fields.uploadImages.pfp": "Profilbild",

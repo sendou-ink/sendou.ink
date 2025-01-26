@@ -34,7 +34,6 @@ export interface Team {
 	id: GeneratedAlways<number>;
 	inviteCode: string;
 	name: string;
-	twitter: string | null;
 	bsky: string | null;
 }
 
@@ -784,7 +783,6 @@ export interface User {
 	showDiscordUniqueName: Generated<number>;
 	stickSens: number | null;
 	twitch: string | null;
-	twitter: string | null;
 	bsky: string | null;
 	battlefy: string | null;
 	vc: Generated<"YES" | "NO" | "LISTEN_ONLY">;

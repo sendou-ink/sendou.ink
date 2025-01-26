@@ -10,7 +10,6 @@ import { createLogInLink } from "../queries/createLogInLink.server";
 import { deleteLogInLinkByCode } from "../queries/deleteLogInLinkByCode.server";
 import { userIdByLogInLinkCode } from "../queries/userIdByLogInLinkCode.server";
 import {
-	DISCORD_AUTH_KEY,
 	IMPERSONATED_SESSION_KEY,
 	SESSION_KEY,
 	authenticator,
@@ -29,7 +28,7 @@ export const callbackLoader: LoaderFunction = async ({ request }) => {
 		throw redirect(authErrorUrl("aborted"));
 	}
 
-	await authenticator.authenticate(DISCORD_AUTH_KEY, request, {
+	await authenticator.authenticate("discord", request, {
 		successRedirect: "/",
 		failureRedirect: authErrorUrl("unknown"),
 	});
@@ -47,7 +46,7 @@ export const logInAction: ActionFunction = async ({ request }) => {
 		"Login is temporarily disabled",
 	);
 
-	return await authenticator.authenticate(DISCORD_AUTH_KEY, request);
+	return await authenticator.authenticate("discord", request);
 };
 
 export const impersonateAction: ActionFunction = async ({ request }) => {

@@ -25,7 +25,6 @@
 	"roles.SUB": "補欠",
 	"roles.COACH": "コーチ",
 	"roles.CHEERLEADER": "引き立て役(チアリーダー)",
-	"forms.fields.teamTwitter": "チームの X(旧Twitter)",
 	"forms.fields.teamBsky": "チームの Bluesky",
 	"forms.fields.bio": "Bio",
 	"forms.fields.uploadImages": "画像をアップロード",
