@@ -573,5 +573,10 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "JJaeigh's Jamboree",
 		fileName: "jamboree",
 		authorDiscordId: "528851510222782474",
-	},
+	}
+	{
+		displayName: "Nether Portal Achievement",
+		fileName: "netherportal",
+		authorDiscordId: "1320944066002681876",
+	}
 ];
