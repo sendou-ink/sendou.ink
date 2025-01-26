@@ -17,12 +17,14 @@ export function DateFormField<T extends FieldValues>({
 	bottomText,
 	required,
 	size,
+	testId,
 }: {
 	label: string;
 	name: FieldPath<T>;
 	bottomText?: string;
 	required?: boolean;
 	size?: FormFieldSize;
+	testId?: string;
 }) {
 	const methods = useFormContext();
 
@@ -32,9 +34,12 @@ export function DateFormField<T extends FieldValues>({
 		<Controller
 			name={name}
 			control={methods.control}
-			render={({ field }) => {
-				const value = () => {
-					const originalValue = field.value as DayMonthYear | null;
+			render={({
+				field: { name, value, onChange },
+				fieldState: { invalid },
+			}) => {
+				const getValue = () => {
+					const originalValue = value as DayMonthYear | null;
 
 					if (!originalValue) return null;
 
@@ -42,7 +47,7 @@ export function DateFormField<T extends FieldValues>({
 						new Date(
 							Date.UTC(
 								originalValue.year,
-								originalValue.month - 1,
+								originalValue.month,
 								originalValue.day,
 								12,
 							),
@@ -58,19 +63,22 @@ export function DateFormField<T extends FieldValues>({
 						granularity="day"
 						isRequired={required}
 						errorText={error?.message as string | undefined}
-						value={value()}
+						value={getValue()}
 						size={size}
+						testId={testId}
+						isInvalid={invalid}
+						name={name}
 						onChange={(value) => {
 							if (value) {
-								field.onChange({
+								onChange({
 									day: value.day,
-									month: value.month,
+									month: value.month - 1,
 									year: value.year,
 								});
 							}
 
 							if (!value) {
-								field.onChange(null);
+								onChange(null);
 							}
 						}}
 						bottomText={bottomText}

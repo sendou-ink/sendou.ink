@@ -37,6 +37,7 @@ export function SelectFormField<T extends FieldValues>({
 			</Label>
 			<select
 				{...methods.register(name)}
+				id={id}
 				className={formFieldSizeToClassName(size)}
 			>
 				{values.map((option) => (

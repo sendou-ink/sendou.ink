@@ -6,7 +6,10 @@ import {
 } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import type { VideoBeingAdded } from "../vods-types";
-import { extractYoutubeIdFromVideoUrl } from "../vods-utils";
+import {
+	extractYoutubeIdFromVideoUrl,
+	hoursMinutesSecondsStringToSeconds,
+} from "../vods-utils";
 
 const createVideoStm = sql.prepare(/* sql */ `
   insert into "UnvalidatedVideo"
@@ -63,7 +66,7 @@ export const createVod = sql.transaction(
 		for (const match of args.matches) {
 			const videoMatch = createVideoMatchStm.get({
 				videoId: video.id,
-				startsAt: match.startsAt,
+				startsAt: hoursMinutesSecondsStringToSeconds(match.startsAt),
 				stageId: match.stageId,
 				mode: match.mode,
 			}) as any;

@@ -15,7 +15,6 @@ import {
 	DatePicker as ReactAriaDatePicker,
 } from "react-aria-components";
 import { FormMessage } from "../FormMessage";
-import { Label } from "../Label";
 import {
 	type FormFieldSize,
 	formFieldSizeToClassName,
@@ -23,12 +22,14 @@ import {
 import { ArrowLeftIcon } from "../icons/ArrowLeft";
 import { ArrowRightIcon } from "../icons/ArrowRight";
 import { CalendarIcon } from "../icons/Calendar";
+import { Label } from "./Label";
 
 interface MyDatePickerProps<T extends DateValue> extends DatePickerProps<T> {
 	label: string;
 	bottomText?: string;
 	errorText?: string;
 	size?: FormFieldSize;
+	testId?: string;
 }
 
 export function DatePicker<T extends DateValue>({
@@ -37,16 +38,19 @@ export function DatePicker<T extends DateValue>({
 	bottomText,
 	size,
 	isRequired,
+	testId,
 	...rest
 }: MyDatePickerProps<T>) {
 	return (
-		<ReactAriaDatePicker {...rest}>
+		<ReactAriaDatePicker {...rest} validationBehavior="aria">
 			<Label required={isRequired}>{label}</Label>
 			<Group
 				className={clsx("react-aria-Group", formFieldSizeToClassName(size))}
 			>
-				<DateInput>{(segment) => <DateSegment segment={segment} />}</DateInput>
-				<Button>
+				<DateInput data-testid={testId}>
+					{(segment) => <DateSegment segment={segment} />}
+				</DateInput>
+				<Button data-testid="open-calendar-button">
 					<CalendarIcon />
 				</Button>
 			</Group>
@@ -68,7 +72,9 @@ export function DatePicker<T extends DateValue>({
 						</header>
 						<CalendarGrid>
 							{(date) => {
-								return <CalendarCell date={date} />;
+								return (
+									<CalendarCell date={date} data-testid="choose-date-button" />
+								);
 							}}
 						</CalendarGrid>
 					</Calendar>
