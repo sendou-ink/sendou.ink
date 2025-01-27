@@ -581,22 +581,22 @@ export const homemadeBadges: BadgeInfo[] = [
 	},
 	{
 		displayName: "Mesozoic Mayhem: Gold Triceratrials",
-		filename: "triceragold",
+		fileName: "triceragold",
 		authorDiscordId: "352207524390240257",
 	},
 	{
 		displayName: "Mesozoic Mayhem: Special Spino",
-		filename: "spino",
+		fileName: "spino",
 		authorDiscordId: "352207524390240257",
 	},
 	{
 		displayName: "Mesozoic Mayhem: Gold Special Spino",
-		filename: "spinogold",
+		fileName: "spinogold",
 		authorDiscordId: "352207524390240257",
 	},
 	{
 		displayName: "Mesozoic Mayhem: Dreadnoughtus Undefeated",
-		filename: "dreadnoughtus",
+		fileName: "dreadnoughtus",
 		authorDiscordId: "352207524390240257",
 	},
 ];
