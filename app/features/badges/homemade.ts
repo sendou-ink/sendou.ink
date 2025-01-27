@@ -576,7 +576,7 @@ export const homemadeBadges: BadgeInfo[] = [
 	},
 	{
 		displayName: "Mesozoic Mayhem: Triceratrials",
-		filename: "tricera",
+		fileName: "tricera",
 		authorDiscordId: "352207524390240257",
 	},
 	{
