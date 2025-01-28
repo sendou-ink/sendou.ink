@@ -20,7 +20,6 @@
 	"roles.BACKLINE": "Linha de trás (backline)",
 	"roles.FLEX": "Flex",
 	"roles.COACH": "Treinador",
-	"forms.fields.teamTwitter": "Twitter do Time",
 	"forms.fields.bio": "Bio",
 	"forms.fields.uploadImages": "Fazer upload de imagens",
 	"forms.fields.uploadImages.pfp": "Imagem do perfil",

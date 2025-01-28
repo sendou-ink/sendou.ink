@@ -58,8 +58,8 @@ test.describe("Team page", () => {
 		await page.getByTestId("name-input").clear();
 		await page.getByTestId("name-input").fill("Better Alliance Rogue");
 
-		await page.getByTestId("twitter-input").clear();
-		await page.getByTestId("twitter-input").fill("BetterAllianceRogue");
+		await page.getByLabel("Team Bluesky").clear();
+		await page.getByLabel("Team Bluesky").fill("BetterAllianceRogue");
 
 		await page.getByTestId("bio-textarea").clear();
 		await page.getByTestId("bio-textarea").fill("shorter bio");
@@ -68,9 +68,9 @@ test.describe("Team page", () => {
 
 		await expect(page).toHaveURL(/better-alliance-rogue/);
 		await page.getByText("shorter bio").isVisible();
-		await expect(page.getByTestId("twitter-link")).toHaveAttribute(
+		await expect(page.getByTestId("bsky-link").first()).toHaveAttribute(
 			"href",
-			"https://twitter.com/BetterAllianceRogue",
+			"https://bsky.app/profile/BetterAllianceRogue",
 		);
 	});
 

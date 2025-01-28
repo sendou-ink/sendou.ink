@@ -26,7 +26,8 @@ export interface GetUserResponse {
 	country: string | null;
 	socials: {
 		twitch: string | null;
-		twitter: string | null;
+		// @deprecated
+		twitter: null;
 		battlefy: string | null;
 		bsky: string | null;
 	};

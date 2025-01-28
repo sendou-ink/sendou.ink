@@ -99,10 +99,6 @@ const userEditActionSchema = z
 			falsyToNull,
 			z.string().max(USER.BATTLEFY_MAX_LENGTH).nullable(),
 		),
-		bsky: z.preprocess(
-			falsyToNull,
-			z.string().max(USER.BSKY_MAX_LENGTH).nullable(),
-		),
 		stickSens: z.preprocess(
 			processMany(actualNumber, undefinedToNull),
 			z
@@ -269,7 +265,6 @@ export default function UserEditPage() {
 				<InGameNameInputs />
 				<SensSelects />
 				<BattlefyInput />
-				<BskyInput />
 				<CountrySelect />
 				<FavBadgeSelect />
 				<WeaponPoolSelect />
@@ -292,7 +287,7 @@ export default function UserEditPage() {
 				)}
 				<FormMessage type="info">
 					<Trans i18nKey={"user:discordExplanation"} t={t}>
-						Username, profile picture, YouTube, Twitter and Twitch accounts come
+						Username, profile picture, YouTube, Bluesky and Twitch accounts come
 						from your Discord account. See <Link to={FAQ_PAGE}>FAQ</Link> for
 						more information.
 					</Trans>
@@ -465,24 +460,6 @@ function BattlefyInput() {
 				leftAddon="https://battlefy.com/users/"
 			/>
 			<FormMessage type="info">{t("user:forms.info.battlefy")}</FormMessage>
-		</div>
-	);
-}
-
-function BskyInput() {
-	const { t } = useTranslation(["user"]);
-	const data = useLoaderData<typeof loader>();
-
-	return (
-		<div className="w-full">
-			<Label htmlFor="bsky">{t("user:bsky")}</Label>
-			<Input
-				name="bsky"
-				id="bsky"
-				maxLength={USER.BSKY_MAX_LENGTH}
-				defaultValue={data.user.bsky ?? undefined}
-				leftAddon="https://bsky.app/profile/"
-			/>
 		</div>
 	);
 }

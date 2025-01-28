@@ -13,7 +13,7 @@
 	"q5": "Findes der en sendou.ink app?",
 	"a5": "Nej, men man kan installere Sendou ink som en ”Progressive Web App”, som fungerer som en traditionel app. Hvor man understøttelse af fuld skærm, skrivebordsikon og kører som en proces separat fra en webbrowser. Google ”How to install pwa on *din browser’ for at sfinde en vejledning til at gøre dette.",
 
-	"q6": "Hvordan tilføjer man en Twitch/Twitter/YouTube-profil til min sendou.ink-profil?",
+	"q6": "Hvordan tilføjer man en Twitch/Bluesky/YouTube-profil til min sendou.ink-profil?",
 	"a6": "Vi bruger Discord til dette formål. Tilknyt profilerne til Discord og verificér dem. Log derefter af og på sendou.ink for at få tilknyttet dine profiler på sendou.ink. ",
 
 	"q7": "Hvordan kan jeg uploade videoer?",

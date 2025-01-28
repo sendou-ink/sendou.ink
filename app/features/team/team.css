@@ -84,19 +84,6 @@
 	gap: var(--s-3);
 }
 
-.team__twitter-link {
-	padding: var(--s-1);
-	border: 1px solid;
-	border-radius: 50%;
-	border-color: #1da1f2;
-	background-color: #1da0f22f;
-}
-
-.team__twitter-link > svg {
-	width: 0.9rem;
-	fill: #1da1f2;
-}
-
 .team__bsky-link {
 	padding: var(--s-1);
 	border: 1px solid;

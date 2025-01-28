@@ -23,7 +23,6 @@ export interface User {
 	discordUniqueName: string | null;
 	showDiscordUniqueName: number;
 	twitch: string | null;
-	twitter: string | null;
 	youtubeId: string | null;
 	bio: string | null;
 	css: string | null;
@@ -419,7 +418,6 @@ export interface Team {
 	customUrl: string;
 	inviteCode: string;
 	css: string | null;
-	twitter: string | null;
 	bio: string | null;
 	avatarImgId: number | null;
 	bannerImgId: number | null;

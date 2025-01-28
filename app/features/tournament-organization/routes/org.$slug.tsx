@@ -61,14 +61,6 @@ export const meta: MetaFunction = (args) => {
 				? userSubmittedImage(data.organization.avatarUrl)
 				: undefined,
 		},
-		{
-			name: "twitter:card",
-			content: "summary",
-		},
-		{
-			name: "twitter:title",
-			content: title,
-		},
 	];
 };
 

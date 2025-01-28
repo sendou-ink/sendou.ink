@@ -14,7 +14,7 @@
 	"q5": "Is there a sendou.ink app?",
 	"a5": "No, but sendou.ink can be installed as a 'Progressive Web App' that gets many of the same benefits such as full-screen, an icon on the home screen and a separate process from the browser. Google 'how to install PWA on *your browser*' to see how.",
 
-	"q6": "How to add Twitch/Twitter/YouTube to my profile?",
+	"q6": "How to add Twitch/Bluesky/YouTube to my profile?",
 	"a6": "We use your Discord profile for that. Connect and verify them on Discord then log out and back in on sendou.ink to have them update.",
 
 	"q7": "How can I add videos?",

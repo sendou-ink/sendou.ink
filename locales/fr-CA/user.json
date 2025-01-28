@@ -10,7 +10,7 @@
 	"stick": "Stick",
 	"sens": "Sens",
 	"weaponPool": "Armes jouées",
-	"discordExplanation": "Votre pseudo, votre photo de profil et vos comptes Youtube, Twitter et Twitch viennent de votre compte Discord. Voir la <1>FAQ</1> pour plus d'informations.",
+	"discordExplanation": "Votre pseudo, votre photo de profil et vos comptes Youtube, Bluesky et Twitch viennent de votre compte Discord. Voir la <1>FAQ</1> pour plus d'informations.",
 	"favoriteBadge": "Badge favori",
 
 	"forms.showDiscordUniqueName": "Montrer le pseudo Discord",
@@ -35,6 +35,5 @@
 	"forms.errors.invalidSens": "La sensibilité du gyroscope ne peut pas être choisie si la sensibilité du stick droit ne l'est pas",
 	"forms.info.favoriteBadge": "Votre badge favoris est affiché en grand par défaut sur votre profil.",
 
-	"search.info": "Rechercher des utilisateurs par le pseudo Discord, Splatoon 3 ou Twitter",
 	"search.noResults": "Aucun utilisateur correspondant à '{{query}}' n'a été trouvé"
 }

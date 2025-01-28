@@ -392,15 +392,7 @@ function OtherTopics() {
 				less points than they do. This is possible because of “confidence
 				rating” which is an internal value that goes down when you perform as
 				the algorithm expects you to perform and goes up when it&apos;s the
-				opposite. Check Joy&apos;s{" "}
-				<a
-					target="_blank"
-					rel="noreferrer"
-					href="https://twitter.com/JoyTheDataNerd/status/1709651029971570960"
-				>
-					Twitter thread
-				</a>{" "}
-				on a longer explanation.
+				opposite.
 			</p>
 			<p>
 				Only the whole set&apos;s result matters so points gained/lost are the

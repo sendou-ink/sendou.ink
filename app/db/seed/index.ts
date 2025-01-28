@@ -245,7 +245,6 @@ async function adminUser() {
 		twitch: "Sendou",
 		youtubeId: "UCWbJLXByvsfQvTcR4HLPs5Q",
 		discordAvatar: ADMIN_TEST_AVATAR,
-		twitter: "sendouc",
 		discordUniqueName: "sendou",
 	});
 }
@@ -294,7 +293,6 @@ function nzapUser() {
 		twitch: null,
 		youtubeId: null,
 		discordAvatar: NZAP_TEST_AVATAR,
-		twitter: null,
 		discordUniqueName: null,
 	});
 }
@@ -474,7 +472,6 @@ function fakeUser(usedNames: Set<string>) {
 		discordId: String(faker.string.numeric(17)),
 		discordName: uniqueDiscordName(usedNames),
 		twitch: null,
-		twitter: null,
 		youtubeId: null,
 		discordUniqueName: null,
 	});
@@ -1578,12 +1575,11 @@ function detailedTeam() {
 	sql
 		.prepare(
 			/* sql */ `
-      insert into "AllTeam" ("name", "customUrl", "inviteCode", "twitter", "bio", "avatarImgId", "bannerImgId")
+      insert into "AllTeam" ("name", "customUrl", "inviteCode", "bio", "avatarImgId", "bannerImgId")
        values (
           'Alliance Rogue',
           'alliance-rogue',
           '${nanoid(INVITE_CODE_LENGTH)}',
-          'AllianceRogueFR',
           '${faker.lorem.paragraph()}',
           1,
           2
@@ -1643,13 +1639,12 @@ function otherTeams() {
 		sql
 			.prepare(
 				/* sql */ `
-      insert into "AllTeam" ("id", "name", "customUrl", "inviteCode", "twitter", "bio")
+      insert into "AllTeam" ("id", "name", "customUrl", "inviteCode", "bio")
        values (
           @id,
           @name,
           @customUrl,
           @inviteCode,
-          @twitter,
           @bio
        )
     `,
@@ -1659,7 +1654,6 @@ function otherTeams() {
 				name: teamName,
 				customUrl: teamCustomUrl,
 				inviteCode: nanoid(INVITE_CODE_LENGTH),
-				twitter: faker.internet.username(),
 				bio: faker.lorem.paragraph(),
 			});
 

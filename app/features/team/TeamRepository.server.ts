@@ -67,7 +67,6 @@ export function findByCustomUrl(customUrl: string) {
 		.select(({ eb }) => [
 			"Team.id",
 			"Team.name",
-			"Team.twitter",
 			"Team.bsky",
 			"Team.bio",
 			"Team.customUrl",
@@ -148,12 +147,11 @@ export async function update({
 	name,
 	customUrl,
 	bio,
-	twitter,
 	bsky,
 	css,
 }: Pick<
 	Insertable<Tables["Team"]>,
-	"id" | "name" | "customUrl" | "bio" | "twitter" | "bsky"
+	"id" | "name" | "customUrl" | "bio" | "bsky"
 > & { css: string | null }) {
 	return db
 		.updateTable("AllTeam")
@@ -161,7 +159,6 @@ export async function update({
 			name,
 			customUrl,
 			bio,
-			twitter,
 			bsky,
 			css,
 		})

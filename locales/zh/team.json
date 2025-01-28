@@ -20,7 +20,6 @@
 	"roles.BACKLINE": "后排",
 	"roles.FLEX": "自由人",
 	"roles.COACH": "教练",
-	"forms.fields.teamTwitter": "队伍Twitter",
 	"forms.fields.bio": "简介",
 	"forms.fields.uploadImages": "上传图片",
 	"forms.fields.uploadImages.pfp": "头像",

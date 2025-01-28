@@ -87,19 +87,6 @@ export const meta: MetaFunction = (args) => {
 			property: "og:image",
 			content: ogImage(),
 		},
-		// Twitter special snowflake tags, see https://developer.x.com/en/docs/twitter-for-websites/cards/overview/summary
-		{
-			name: "twitter:card",
-			content: "summary",
-		},
-		{
-			name: "twitter:title",
-			content: title,
-		},
-		{
-			name: "twitter:site",
-			content: "@sendouink",
-		},
 	];
 };
 

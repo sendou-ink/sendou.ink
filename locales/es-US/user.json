@@ -11,7 +11,7 @@
 	"stick": "Palanca",
 	"sens": "Sens",
 	"weaponPool": "Grupo de armas",
-	"discordExplanation": "Tu nombre, foto, y cuentas de YouTube, Twitter y Twitch se obtienen por tu cuenta en Discord. Ver <1>FAQ</1> para más información.",
+	"discordExplanation": "Tu nombre, foto, y cuentas de YouTube, Bluesky y Twitch se obtienen por tu cuenta en Discord. Ver <1>FAQ</1> para más información.",
 	"favoriteBadge": "Insignia favorita",
 	"battlefy": "Nombre de cuenta de Battlefy",
 
@@ -43,7 +43,6 @@
 	"forms.info.favoriteBadge": "Tu insignia favorita se muestra en forma grande en tu perfil.",
 	"forms.info.battlefy": "El nombre de tu cuenta de Battlefy se utiliza para la clasificación y verificación en algunos torneos.",
 
-	"search.info": "Buscar usuarios usando su nombre en Discord, Splatoon 3 o Twitter",
 	"search.noResults": "No se encontraron usuarios que coincidan con '{{query}}'",
 
 	"seasons": "Temporadas",

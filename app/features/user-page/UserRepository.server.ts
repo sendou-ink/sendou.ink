@@ -137,7 +137,6 @@ export async function findProfileByIdentifier(
 		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.select(({ eb }) => [
 			"User.twitch",
-			"User.twitter",
 			"User.youtubeId",
 			"User.battlefy",
 			"User.bsky",
@@ -461,7 +460,6 @@ export async function search({
 					eb("User.username", "like", query),
 					eb("User.inGameName", "like", query),
 					eb("User.discordUniqueName", "like", query),
-					eb("User.twitter", "like", query),
 					eb("User.customUrl", "like", query),
 				]),
 			)
@@ -490,7 +488,6 @@ export async function search({
 					eb("User.username", "like", fuzzyQuery),
 					eb("User.inGameName", "like", fuzzyQuery),
 					eb("User.discordUniqueName", "like", fuzzyQuery),
-					eb("User.twitter", "like", fuzzyQuery),
 				])
 				.and(
 					"User.id",
@@ -575,8 +572,8 @@ export function upsert(
 		| "discordAvatar"
 		| "discordUniqueName"
 		| "twitch"
-		| "twitter"
 		| "youtubeId"
+		| "bsky"
 	>,
 ) {
 	return db
@@ -601,7 +598,6 @@ type UpdateProfileArgs = Pick<
 	| "stickSens"
 	| "inGameName"
 	| "battlefy"
-	| "bsky"
 	| "css"
 	| "favoriteBadgeId"
 	| "showDiscordUniqueName"
@@ -644,7 +640,6 @@ export function updateProfile(args: UpdateProfileArgs) {
 				inGameName: args.inGameName,
 				css: args.css,
 				battlefy: args.battlefy,
-				bsky: args.bsky,
 				favoriteBadgeId: args.favoriteBadgeId,
 				showDiscordUniqueName: args.showDiscordUniqueName,
 				commissionText: args.commissionText,
