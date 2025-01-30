@@ -15,12 +15,32 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "All 4 One: Clam Blitz",
+		fileName: "newa41cb",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "All 4 One: Rainmaker",
+		fileName: "newa41rm",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "All 4 One: Splat Zones",
+		fileName: "newa41sz",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "All 4 One: Tower Control",
+		fileName: "newa41tc",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "Climb The Spire",
 		fileName: "climbspire",
 		authorDiscordId: "338806780446638082",
 	},
 	{
-		displayName: "Tea Bag",
+		displayName: "TeaCup",
 		fileName: "teabag",
 		authorDiscordId: "338806780446638082",
 	},
