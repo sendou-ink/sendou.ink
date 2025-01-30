@@ -25,7 +25,8 @@ import { SendouFieldError } from "./FieldError";
 import { SendouFieldMessage } from "./FieldMessage";
 import { SendouLabel } from "./Label";
 
-interface MyDatePickerProps<T extends DateValue> extends DatePickerProps<T> {
+interface SendouDatePickerProps<T extends DateValue>
+	extends DatePickerProps<T> {
 	label: string;
 	bottomText?: string;
 	errorText?: string;
@@ -39,7 +40,7 @@ export function SendouDatePicker<T extends DateValue>({
 	size,
 	isRequired,
 	...rest
-}: MyDatePickerProps<T>) {
+}: SendouDatePickerProps<T>) {
 	return (
 		<ReactAriaDatePicker {...rest} validationBehavior="aria">
 			<SendouLabel required={isRequired}>{label}</SendouLabel>

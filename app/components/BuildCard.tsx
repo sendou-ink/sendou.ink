@@ -29,13 +29,14 @@ import {
 	weaponBuildPage,
 } from "~/utils/urls";
 import { Ability } from "./Ability";
-import { Button, LinkButton } from "./Button";
+import { LinkButton } from "./Button";
 import { FormWithConfirm } from "./FormWithConfirm";
 import { Image } from "./Image";
-import { Popover } from "./Popover";
+import { SendouButton } from "./elements/Button";
+import { SendouPopover } from "./elements/Popover";
 import { EditIcon } from "./icons/Edit";
-import { InfoIcon } from "./icons/Info";
 import { LockIcon } from "./icons/Lock";
+import { SpeechBubbleIcon } from "./icons/SpeechBubble";
 import { TrashIcon } from "./icons/Trash";
 
 interface BuildProps {
@@ -198,12 +199,17 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 					/>
 				</Link>
 				{description ? (
-					<Popover
-						buttonChildren={<InfoIcon className="build__icon" />}
-						triggerClassName="minimal tiny build__small-text"
+					<SendouPopover
+						trigger={
+							<SendouButton
+								variant="minimal"
+								icon={<SpeechBubbleIcon />}
+								className="build__small-text"
+							/>
+						}
 					>
 						{description}
-					</Popover>
+					</SendouPopover>
 				) : null}
 				{canEdit && (
 					<>
@@ -223,14 +229,12 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 								["_action", "DELETE_BUILD"],
 							]}
 						>
-							<Button
+							<SendouButton
+								icon={<TrashIcon className="build__icon" />}
 								className="build__small-text"
 								variant="minimal-destructive"
-								size="tiny"
 								type="submit"
-							>
-								<TrashIcon className="build__icon" />
-							</Button>
+							/>
 						</FormWithConfirm>
 					</>
 				)}
