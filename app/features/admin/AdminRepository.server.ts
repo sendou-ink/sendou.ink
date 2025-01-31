@@ -48,6 +48,11 @@ export function migrate(args: { newUserId: number; oldUserId: number }) {
 			.deleteFrom("UserFriendCode")
 			.where("userId", "=", args.newUserId)
 			.execute();
+		await trx
+			.updateTable("GroupMember")
+			.where("userId", "=", args.newUserId)
+			.set({ userId: args.oldUserId })
+			.execute();
 
 		const deletedUser = await trx
 			.deleteFrom("User")
