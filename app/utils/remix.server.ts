@@ -8,7 +8,7 @@ import type { Params, UIMatch } from "@remix-run/react";
 import type { Namespace, TFunction } from "i18next";
 import { nanoid } from "nanoid";
 import { z } from "zod";
-import type navItems from "~/components/layout/nav-items.json";
+import type { navItems } from "~/components/layout/nav-items";
 import { s3UploadHandler } from "~/features/img-upload";
 import invariant from "./invariant";
 
@@ -247,7 +247,7 @@ export type SendouRouteHandle = {
 		t: TFunction<"common", undefined>;
 	}) => Breadcrumb | Array<Breadcrumb> | undefined;
 
-	/** The name of a navItem that is active on this route. See nav-items.json */
+	/** The name of a navItem that is active on this route. See nav-items.ts */
 	navItemName?: (typeof navItems)[number]["name"];
 };
 

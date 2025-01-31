@@ -1,7 +1,7 @@
 import type { ActionFunction } from "@remix-run/node";
 import { useRevalidator } from "@remix-run/react";
 import clsx from "clsx";
-import { add } from "date-fns";
+import { sub } from "date-fns";
 import * as React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
@@ -45,6 +45,7 @@ import {
 	tournamentBracketsSubscribePage,
 	tournamentJoinPage,
 } from "~/utils/urls";
+import { updateTeamSeeds } from "../../tournament/queries/updateTeamSeeds.server";
 import {
 	useBracketExpanded,
 	useTournament,
@@ -142,6 +143,17 @@ export const action: ActionFunction = async ({ params, request }) => {
 						bracket,
 					}),
 				);
+
+				// ensures autoseeding is disabled
+				const isAllSeedsPersisted = tournament.ctx.teams.every(
+					(team) => typeof team.seed === "number",
+				);
+				if (!isAllSeedsPersisted) {
+					updateTeamSeeds({
+						tournamentId: tournament.ctx.id,
+						teamIds: tournament.ctx.teams.map((team) => team.id),
+					});
+				}
 			})();
 
 			break;
@@ -430,6 +442,10 @@ export default function TournamentBracketsPage() {
 		).length;
 	};
 
+	if (tournament.isLeagueSignup) {
+		return null;
+	}
+
 	return (
 		<div>
 			{visibility !== "hidden" && !tournament.everyBracketOver ? (
@@ -471,6 +487,8 @@ export default function TournamentBracketsPage() {
 								⚠️{" "}
 								{bracketIdx === 0 ? (
 									<>Tournament start time is in the future</>
+								) : bracket.startTime && bracket.startTime > new Date() ? (
+									<>Bracket start time is in the future</>
 								) : (
 									<>Teams pending from the previous bracket</>
 								)}{" "}
@@ -520,19 +538,19 @@ export default function TournamentBracketsPage() {
 							{bracket.startTime ? (
 								<span suppressHydrationWarning>
 									(open{" "}
-									{bracket.startTime.toLocaleString("en-US", {
-										hour: "numeric",
-										minute: "numeric",
-										weekday: "long",
-									})}{" "}
-									-{" "}
-									{add(bracket.startTime, { hours: 1 }).toLocaleTimeString(
+									{sub(bracket.startTime, { hours: 1 }).toLocaleString(
 										"en-US",
 										{
 											hour: "numeric",
 											minute: "numeric",
+											weekday: "long",
 										},
-									)}
+									)}{" "}
+									-{" "}
+									{bracket.startTime.toLocaleTimeString("en-US", {
+										hour: "numeric",
+										minute: "numeric",
+									})}
 									)
 								</span>
 							) : null}

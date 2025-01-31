@@ -1,4 +1,4 @@
-import test, { expect } from "@playwright/test";
+import test, { expect, type Page } from "@playwright/test";
 import {
 	impersonate,
 	isNotVisible,
@@ -9,6 +9,15 @@ import {
 	submit,
 } from "~/utils/playwright";
 import { VODS_PAGE, newVodPage, vodVideoPage } from "~/utils/urls";
+
+const chooseVideoDate = async (page: Page) => {
+	await page.getByTestId("open-calendar-button").click();
+	await page
+		.getByTestId("choose-date-button")
+		.filter({ has: page.locator(`text="1"`) })
+		.first()
+		.click();
+};
 
 test.describe("VoDs page", () => {
 	test("adds video (pov)", async ({ page }) => {
@@ -27,7 +36,7 @@ test.describe("VoDs page", () => {
 			.getByLabel("Video title")
 			.fill("ITZXI Finals - Team Olive vs. Astral [CAMO TENTA PoV]");
 
-		await page.getByLabel("Video date").fill("2021-06-20");
+		await chooseVideoDate(page);
 
 		await page.getByLabel("Type").selectOption("SCRIM");
 
@@ -37,31 +46,31 @@ test.describe("VoDs page", () => {
 			userName: "Sendou",
 		});
 
-		await page.getByTestId("match-1-seconds").clear();
-		await page.getByTestId("match-1-seconds").fill("20");
-		await page.getByTestId("match-1-mode").selectOption("TC");
-		await page.getByTestId("match-1-stage").selectOption("5");
+		await page.getByLabel("Start timestamp").fill("0:20");
+		await page.getByLabel("Mode").selectOption("TC");
+		await page.getByLabel("Stage").selectOption("5");
 		await selectWeapon({
 			name: "Zink Mini Splatling",
+			page,
+			inputName: "match-0-weapon",
+		});
+
+		await page.getByTestId("add-field-button").click();
+
+		await page.getByLabel("Start timestamp").last().fill("5:55");
+		await page.getByLabel("Mode").last().selectOption("RM");
+		await page.getByLabel("Stage").last().selectOption("6");
+		await selectWeapon({
+			name: "Tenta Brella",
 			page,
 			inputName: "match-1-weapon",
 		});
 
-		await page.getByTestId("add-match").click();
-
-		await page.getByTestId("match-2-seconds").fill("55");
-		await page.getByTestId("match-2-minutes").fill("5");
-		await page.getByTestId("match-2-mode").selectOption("RM");
-		await page.getByTestId("match-2-stage").selectOption("6");
-		await selectWeapon({
-			name: "Tenta Brella",
-			page,
-			inputName: "match-2-weapon",
-		});
-
 		await submit(page);
 
-		await page.getByText("6/20/2021").isVisible();
+		const now = new Date();
+		const formattedDate = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
+		await page.getByText(formattedDate).isVisible();
 		await page.getByTestId("weapon-img-4001").isVisible();
 		await page.getByTestId("weapon-img-6010").isVisible();
 	});
@@ -82,16 +91,15 @@ test.describe("VoDs page", () => {
 			.getByLabel("Video title")
 			.fill("BIG ! vs Starburst - Splatoon 3 Grand Finals - The Big House 10");
 
-		await page.getByLabel("Video date").fill("2022-07-21");
+		await chooseVideoDate(page);
 
 		await page.getByLabel("Type").selectOption("CAST");
 
 		await page.keyboard.press("Enter");
 
-		await page.getByTestId("match-1-seconds").clear();
-		await page.getByTestId("match-1-seconds").fill("25");
-		await page.getByTestId("match-1-mode").selectOption("CB");
-		await page.getByTestId("match-1-stage").selectOption("10");
+		await page.getByLabel("Start timestamp").fill("0:25");
+		await page.getByLabel("Mode").selectOption("CB");
+		await page.getByLabel("Stage").selectOption("10");
 
 		for (let i = 0; i < 8; i++) {
 			await selectWeapon({
@@ -123,7 +131,7 @@ test.describe("VoDs page", () => {
 		await selectWeapon({
 			name: "Luna Blaster",
 			page,
-			inputName: "match-4-weapon",
+			inputName: "match-3-weapon",
 		});
 
 		await submit(page);

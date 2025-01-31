@@ -20,7 +20,6 @@
 	"roles.BACKLINE": "Бэклайн",
 	"roles.FLEX": "Флекс",
 	"roles.COACH": "Тренер",
-	"forms.fields.teamTwitter": "Твиттер команды",
 	"forms.fields.bio": "Описание",
 	"forms.fields.uploadImages": "Загрузить изображения",
 	"forms.fields.uploadImages.pfp": "Аватар команды",

@@ -34,7 +34,6 @@ export interface Team {
 	id: GeneratedAlways<number>;
 	inviteCode: string;
 	name: string;
-	twitter: string | null;
 	bsky: string | null;
 }
 
@@ -129,6 +128,7 @@ export interface CalendarEvent {
 	name: string;
 	participantCount: number | null;
 	tags: string | null;
+	hidden: Generated<number>;
 	tournamentId: number | null;
 	organizationId: number | null;
 	avatarImgId: number | null;
@@ -455,6 +455,8 @@ export interface Tournament {
 		string | null
 	>;
 	rules: string | null;
+	/** Related "parent tournament", the tournament that contains the original sign-ups (for leagues) */
+	parentTournamentId: number | null;
 }
 
 export interface PreparedMaps {
@@ -781,7 +783,6 @@ export interface User {
 	showDiscordUniqueName: Generated<number>;
 	stickSens: number | null;
 	twitch: string | null;
-	twitter: string | null;
 	bsky: string | null;
 	battlefy: string | null;
 	vc: Generated<"YES" | "NO" | "LISTEN_ONLY">;

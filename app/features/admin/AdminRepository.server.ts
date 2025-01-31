@@ -35,6 +35,20 @@ export const cleanUp = () => {
 
 export function migrate(args: { newUserId: number; oldUserId: number }) {
 	return db.transaction().execute(async (trx) => {
+		// delete some limited data from the target user
+		// idea is to make the migration a bit more smooth
+		// since it won't fail if some small thing has been added
+		// but for bigger things (e.g. has played tournaments)
+		// it will still fail
+		await trx
+			.deleteFrom("UserWeapon")
+			.where("userId", "=", args.newUserId)
+			.execute();
+		await trx
+			.deleteFrom("UserFriendCode")
+			.where("userId", "=", args.newUserId)
+			.execute();
+
 		const deletedUser = await trx
 			.deleteFrom("User")
 			.where("User.id", "=", args.newUserId)

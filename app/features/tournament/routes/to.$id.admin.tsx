@@ -23,6 +23,7 @@ import invariant from "~/utils/invariant";
 import { assertUnreachable } from "~/utils/types";
 import {
 	calendarEventPage,
+	teamPage,
 	tournamentEditPage,
 	tournamentPage,
 } from "~/utils/urls";
@@ -62,22 +63,24 @@ export default function TournamentAdminPage() {
 					>
 						Edit event info
 					</LinkButton>
-					<FormWithConfirm
-						dialogHeading={t("calendar:actions.delete.confirm", {
-							name: tournament.ctx.name,
-						})}
-						action={calendarEventPage(tournament.ctx.eventId)}
-						submitButtonTestId="delete-submit-button"
-					>
-						<Button
-							className="ml-auto"
-							size="tiny"
-							variant="minimal-destructive"
-							type="submit"
+					{!tournament.isLeagueSignup ? (
+						<FormWithConfirm
+							dialogHeading={t("calendar:actions.delete.confirm", {
+								name: tournament.ctx.name,
+							})}
+							action={calendarEventPage(tournament.ctx.eventId)}
+							submitButtonTestId="delete-submit-button"
 						>
-							{t("calendar:actions.delete")}
-						</Button>
-					</FormWithConfirm>
+							<Button
+								className="ml-auto"
+								size="tiny"
+								variant="minimal-destructive"
+								type="submit"
+							>
+								{t("calendar:actions.delete")}
+							</Button>
+						</FormWithConfirm>
+					) : null}
 				</div>
 			) : null}
 			{tournament.isAdmin(user) &&
@@ -111,8 +114,12 @@ export default function TournamentAdminPage() {
 			<CastTwitchAccounts />
 			<Divider smallText>Participant list download</Divider>
 			<DownloadParticipants />
-			<Divider smallText>Bracket reset</Divider>
-			<BracketReset />
+			{!tournament.isLeagueSignup ? (
+				<>
+					<Divider smallText>Bracket reset</Divider>
+					<BracketReset />
+				</>
+			) : null}
 		</div>
 	);
 }
@@ -609,6 +616,35 @@ function DownloadParticipants() {
 			.join("\n");
 	}
 
+	function leagueFormat() {
+		const memberColumnsCount = tournament.ctx.teams.reduce(
+			(max, team) => Math.max(max, team.members.length),
+			0,
+		);
+		const header = `Team id,Team name,Team page URL,Div${Array.from({
+			length: memberColumnsCount,
+		})
+			.map((_, i) => `,Member ${i + 1} name,Member${i + 1} URL`)
+			.join("")}`;
+
+		return `${header}\n${tournament.ctx.teams
+			.map((team) => {
+				return `${team.id},${team.name},${team.team ? teamPage(team.team.customUrl) : ""},,${team.members
+					.map(
+						(member) =>
+							`${member.username},https://sendou.ink/u/${member.discordId}`,
+					)
+					.join(",")}${Array(
+					memberColumnsCount - team.members.length === 0
+						? 0
+						: memberColumnsCount - team.members.length + 1,
+				)
+					.fill(",")
+					.join("")}`;
+			})
+			.join("\n")}`;
+	}
+
 	return (
 		<div>
 			<div className="stack horizontal sm flex-wrap">
@@ -656,6 +692,19 @@ function DownloadParticipants() {
 				>
 					Simple list in seeded order
 				</Button>
+				{tournament.isLeagueSignup ? (
+					<Button
+						size="tiny"
+						onClick={() =>
+							handleDownload({
+								filename: "league-format.csv",
+								content: leagueFormat(),
+							})
+						}
+					>
+						League format
+					</Button>
+				) : null}
 			</div>
 		</div>
 	);
@@ -766,6 +815,7 @@ function BracketProgressionEditDialog({ close }: { close: () => void }) {
 					}))}
 					isInvitationalTournament={tournament.isInvitational}
 					setErrored={setBracketProgressionErrored}
+					isTournamentInProgress
 				/>
 				<div className="stack md horizontal justify-center mt-6">
 					<SubmitButton

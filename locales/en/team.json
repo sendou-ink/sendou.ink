@@ -25,7 +25,6 @@
 	"roles.SUB": "Sub",
 	"roles.COACH": "Coach",
 	"roles.CHEERLEADER": "Cheerleader",
-	"forms.fields.teamTwitter": "Team Twitter",
 	"forms.fields.teamBsky": "Team Bluesky",
 	"forms.fields.bio": "Bio",
 	"forms.fields.uploadImages": "Upload images",

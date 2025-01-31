@@ -11,10 +11,9 @@
 	"stick": "Stick",
 	"sens": "Sens",
 	"weaponPool": "Weapon pool",
-	"discordExplanation": "Username, profile picture, YouTube, Twitter and Twitch accounts come from your Discord account. See <1>FAQ</1> for more information.",
+	"discordExplanation": "Username, profile picture, YouTube, Bluesky and Twitch accounts come from your Discord account. See <1>FAQ</1> for more information.",
 	"favoriteBadge": "Favorite Badge",
 	"battlefy": "Battlefy account name",
-	"bsky": "Bluesky account name",
 
 	"forms.showDiscordUniqueName": "Show Discord username",
 	"forms.showDiscordUniqueName.info": "Show your unique Discord name ({{discordUniqueName}}) publicly?",
@@ -44,7 +43,7 @@
 	"forms.info.favoriteBadge": "Your favorite badge is shown as big by default on your profile.",
 	"forms.info.battlefy": "Battlefy account name is used for seeding and verification in some tournaments",
 
-	"search.info": "Search for users by Discord, Splatoon 3 or Twitter name",
+	"search.info": "Search for users by Discord or Splatoon 3 name",
 	"search.noResults": "No users found matching '{{query}}'",
 
 	"seasons": "Seasons",

@@ -15,6 +15,51 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Climb The Spire",
+		fileName: "climbspire",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Tea Bag",
+		fileName: "teabag",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Mug Cup Mini",
+		fileName: "mugcupmini",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Token Of Appreciation",
+		fileName: "bucketmeow12",
+		authorDiscordId: "1170249805373657093",
+	},
+	{
+		displayName: "Tough Tides",
+		fileName: "wave1234567_4",
+		authorDiscordId: "1170249805373657093",
+	},
+	{
+		displayName: "Dr. Meowser's Cat Food Bowl",
+		fileName: "catfoodbowl",
+		authorDiscordId: "324396128906903552",
+	},
+	{
+		displayName: "Charger Assault",
+		fileName: "vchargersplash",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Hatsune Miku",
+		fileName: "hatsunemiku",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "New InkLAN",
+		fileName: "pinknes",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "Squids For Palestinian Kids",
 		fileName: "three_course_pal",
 		authorDiscordId: "338806780446638082",
@@ -453,5 +498,80 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Eggs and Salad",
 		fileName: "saladbowl",
 		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "Splashdown Saturday",
+		fileName: "splashdownsat",
+		authorDiscordId: "631246535560265749",
+	},
+	{
+		displayName: "Low Tier Bouts",
+		fileName: "low-tier-bouts",
+		authorDiscordId: "430487372015206410",
+	},
+	{
+		displayName: "Level Up",
+		fileName: "magikarp",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Level Up: Shiny Hunt",
+		fileName: "shinymagikarp",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "FC Barcha",
+		fileName: "barcha",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Manshine City",
+		fileName: "manshine",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Catgirl Challenge",
+		fileName: "headband",
+		authorDiscordId: "789943264370884708",
+	},
+	{
+		displayName: "Reef-Lux Achievement",
+		fileName: "flux",
+		authorDiscordId: "631246535560265749",
+	},
+	{
+		displayName: "Meet Your Match",
+		fileName: "matchmeet",
+		authorDiscordId: "631246535560265749",
+	},
+	{
+		displayName: "Proxy Training",
+		fileName: "eous",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Ubers",
+		fileName: "ubers",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Zones Classic",
+		fileName: "szclassic",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "P.X.G",
+		fileName: "pxg",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Low Tier Experiments",
+		fileName: "lte_badge",
+		authorDiscordId: "430487372015206410",
+	},
+	{
+		displayName: "JJaeigh's Jamboree",
+		fileName: "jamboree",
+		authorDiscordId: "528851510222782474",
 	},
 ];

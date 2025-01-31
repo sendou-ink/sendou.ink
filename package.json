@@ -64,6 +64,7 @@
 		"nprogress": "^0.2.0",
 		"openskill": "^4.1.0",
 		"react": "^18.3.1",
+		"react-aria-components": "^1.5.0",
 		"react-charts": "^3.0.0-beta.57",
 		"react-dom": "^18.3.1",
 		"react-error-boundary": "^4.1.2",
@@ -75,8 +76,8 @@
 		"react-use": "^17.6.0",
 		"react-use-draggable-scroll": "^0.4.7",
 		"reconnecting-websocket": "^4.4.0",
-		"remix-auth": "^3.7.0",
-		"remix-auth-oauth2": "^1.11.2",
+		"remix-auth": "^4.1.0",
+		"remix-auth-oauth2": "^3.2.2",
 		"remix-i18next": "^6.4.1",
 		"remix-utils": "^7.7.0",
 		"slugify": "^1.6.6",
@@ -99,7 +100,7 @@
 		"sql-formatter": "^15.4.7",
 		"tsm": "^2.3.0",
 		"typescript": "^5.7.2",
-		"vite": "^5.4.10",
+		"vite": "^5.4.14",
 		"vite-tsconfig-paths": "^5.1.4",
 		"vitest": "^2.1.8"
 	}

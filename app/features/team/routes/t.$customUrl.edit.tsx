@@ -25,7 +25,7 @@ import {
 	parseRequestPayload,
 	validate,
 } from "~/utils/remix.server";
-import { makeTitle, pathnameFromPotentialURL } from "~/utils/strings";
+import { makeTitle } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import {
 	TEAM_SEARCH_PAGE,
@@ -158,7 +158,6 @@ export default function EditTeamPage() {
 					<CustomizedColorsInput initialColors={css} />
 				) : null}
 				<NameInput />
-				<TwitterInput />
 				<BlueskyInput />
 				<BioTextarea />
 				<SubmitButton
@@ -226,27 +225,6 @@ function NameInput() {
 				data-testid="name-input"
 			/>
 			<FormMessage type="info">{t("team:forms.info.name")}</FormMessage>
-		</div>
-	);
-}
-
-function TwitterInput() {
-	const { t } = useTranslation(["team"]);
-	const { team } = useLoaderData<typeof loader>();
-	const [value, setValue] = React.useState(team.twitter ?? "");
-
-	return (
-		<div>
-			<Label htmlFor="twitter">{t("team:forms.fields.teamTwitter")}</Label>
-			<Input
-				leftAddon="https://twitter.com/"
-				id="twitter"
-				name="twitter"
-				maxLength={TEAM.TWITTER_MAX_LENGTH}
-				value={value}
-				onChange={(e) => setValue(pathnameFromPotentialURL(e.target.value))}
-				testId="twitter-input"
-			/>
 		</div>
 	);
 }

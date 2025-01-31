@@ -10,7 +10,7 @@
 	"stick": "Analógico",
 	"sens": "Sens",
 	"weaponPool": "Seleção de armas",
-	"discordExplanation": "Nome de usuário, foto de perfil, conta do YouTube, Twitter e Twitch vêm da sua conta do Discord. Veja o <1>Perguntas Frequentes</1> para mais informações.",
+	"discordExplanation": "Nome de usuário, foto de perfil, conta do YouTube, Bluesky e Twitch vêm da sua conta do Discord. Veja o <1>Perguntas Frequentes</1> para mais informações.",
 	"favoriteBadge": "Insígnia Favorita",
 
 	"forms.showDiscordUniqueName": "Mostrar nome de usuário Discord",
@@ -35,7 +35,6 @@
 	"forms.errors.invalidSens": "A sensibilidade de Movimento não pode ser definida se a sensibilidade do Analógico Direito não está",
 	"forms.info.favoriteBadge": "Por padrão, sua insígnia favorita é mostrada em tamanho maior no seu perfil.",
 
-	"search.info": "Procurar por usuários pelo nome do Discord, Splatoon 3 ou Twitter",
 	"search.noResults": "Nenhum usuário encontrado com o termo '{{query}}'",
 
 	"seasons": "Temporadas",

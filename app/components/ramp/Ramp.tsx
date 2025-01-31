@@ -15,8 +15,6 @@ export const Ramp = () => {
 	const [rampComponentLoaded, setRampComponentLoaded] = useState(false);
 	const location = useLocation();
 
-	const asPath = `${location.pathname}${location.search}`;
-
 	useEffect(() => {
 		if (!PUBLISHER_ID || !WEBSITE_ID) {
 			logger.info("RAMP: Missing Publisher Id or Website Id");
@@ -43,10 +41,10 @@ export const Ramp = () => {
 		// Cleanup function to handle component unmount and updating page state
 		return () => {
 			window.ramp.que.push(() => {
-				window.ramp.spaNewPage(asPath);
+				window.ramp.spaNewPage(location.pathname);
 			});
 		};
-	}, [rampComponentLoaded, asPath]);
+	}, [rampComponentLoaded, location.pathname]);
 
 	return null;
 };

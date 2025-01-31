@@ -11,6 +11,6 @@
 	"q5": "Esiste un app per sendou.ink?",
 	"a5": "No, ma il sito può essere installato come una 'Progressive Web App', che porta un sacco degli stessi benefici come l'uso a schermo pieno, l'icona sulla schermata home e un processo separato dal browser. Cerca 'Come installare progressive web app su *il tuo browser*' per imparare come si fa.",
 
-	"q6": "Come faccio ad aggiungere un link per Twitch/Twitter/Youtube al mio profilo?",
+	"q6": "Come faccio ad aggiungere un link per Twitch/Bluesky/Youtube al mio profilo?",
 	"a6": "Il sito sincronizza i profili con le tue connessioni al profilo Discord. Per connettere un account a sendou.ink, connettilo e verificalo su Discord, quindi esci e riaccedi qui per aggiornare il profilo."
 }

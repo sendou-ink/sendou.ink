@@ -81,7 +81,7 @@ export default function SendouqRules() {
 			<h2 className="text-lg mt-4">Player eligibility</h2>
 			<div>
 				Players banned by{" "}
-				<a href="https://twitter.com/splatsafety">
+				<a href="https://bsky.app/profile/splatsafety.bsky.social">
 					Splatoon Competitive Community Safety
 				</a>{" "}
 				are not allowed to participate. Playing with banned players is not

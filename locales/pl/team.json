@@ -18,7 +18,6 @@
 	"roles.SUPPORT": "Support",
 	"roles.BACKLINE": "Backline",
 	"roles.COACH": "Trener",
-	"forms.fields.teamTwitter": "Twitter drużyny",
 	"forms.fields.bio": "Opis",
 	"forms.fields.uploadImages": "Wstaw zdjęcia",
 	"forms.fields.uploadImages.pfp": "Zdjęcie profilowe",

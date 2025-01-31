@@ -70,15 +70,6 @@
 	fill: #f00;
 }
 
-.u__social-link.twitter {
-	border-color: #1da1f2;
-	background-color: #1da0f22f;
-}
-
-.u__social-link.twitter > svg {
-	fill: #1da1f2;
-}
-
 .u__social-link.twitch {
 	border-color: #9146ff;
 	background-color: #9146ff2f;

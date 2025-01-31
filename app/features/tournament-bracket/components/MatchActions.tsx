@@ -6,6 +6,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { EditIcon } from "~/components/icons/Edit";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import { resolveLeagueRoundStartDate } from "~/features/tournament/tournament-utils";
 import invariant from "~/utils/invariant";
 import * as PickBan from "../core/PickBan";
 import type { TournamentDataTeam } from "../core/Tournament.server";
@@ -223,12 +224,25 @@ function ReportScoreButtons({
 	matchLocked: boolean;
 	newScore: [number, number];
 }) {
+	const data = useLoaderData<TournamentMatchLoaderData>();
 	const user = useUser();
 	const tournament = useTournament();
 	const confirmCheckId = React.useId();
 	const pointConfirmCheckId = React.useId();
 	const [endConfirmation, setEndConfirmation] = React.useState(false);
 	const [pointConfirmation, setPointConfirmation] = React.useState(false);
+
+	const leagueRoundStartDate = resolveLeagueRoundStartDate(
+		tournament,
+		data.match.roundId,
+	);
+	if (leagueRoundStartDate && leagueRoundStartDate > new Date()) {
+		return (
+			<p className="tournament-bracket__during-match-actions__amount-warning-paragraph">
+				League round has not started yet
+			</p>
+		);
+	}
 
 	if (matchLocked) {
 		return (

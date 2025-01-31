@@ -17,6 +17,7 @@ export function AddFieldButton({
 			variant="minimal"
 			onClick={onClick}
 			className="self-start"
+			testId="add-field-button"
 		>
 			{t("common:actions.add")}
 		</Button>

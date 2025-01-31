@@ -50,6 +50,7 @@ import {
 	userPage,
 	userSubmittedImage,
 } from "~/utils/urls";
+import { AlertIcon } from "../../../components/icons/Alert";
 import type { TournamentRegisterPageLoader } from "../loaders/to.$id.register.server";
 import { TOURNAMENT } from "../tournament-constants";
 import {
@@ -119,20 +120,22 @@ export default function TournamentRegisterPage() {
 							</Link>
 						)}
 					</div>
-					<div className="tournament__by mt-2">
-						<div className="stack horizontal xs items-center">
-							<ClockIcon className="tournament__info__icon" />{" "}
-							{isMounted
-								? tournament.ctx.startTime.toLocaleString(i18n.language, {
-										timeZoneName: "short",
-										minute: startsAtEvenHour ? undefined : "numeric",
-										hour: "numeric",
-										day: "numeric",
-										month: "long",
-									})
-								: null}
+					{!tournament.isLeagueSignup ? (
+						<div className="tournament__by mt-2">
+							<div className="stack horizontal xs items-center">
+								<ClockIcon className="tournament__info__icon" />{" "}
+								{isMounted
+									? tournament.ctx.startTime.toLocaleString(i18n.language, {
+											timeZoneName: "short",
+											minute: startsAtEvenHour ? undefined : "numeric",
+											hour: "numeric",
+											day: "numeric",
+											month: "long",
+										})
+									: null}
+							</div>
 						</div>
-					</div>
+					) : null}
 					<div className="stack horizontal sm mt-1">
 						{tournament.ranked ? (
 							<div className="tournament__badge tournament__badge__ranked">
@@ -371,6 +374,7 @@ function RegistrationForms() {
 					) : null}
 				</>
 			) : null}
+			{tournament.isLeagueSignup ? <GoogleFormsLink /> : null}
 			{ownTeam ? (
 				<>
 					<FillRoster ownTeam={ownTeam} ownTeamCheckedIn={ownTeamCheckedIn} />
@@ -396,25 +400,41 @@ function RegistrationProgress({
 	const tournament = useTournament();
 	const isMounted = useIsMounted();
 
-	const steps = filterOutFalsy([
+	const completedIfTruthy = (condition: unknown) =>
+		condition ? "completed" : "incomplete";
+
+	const steps: Array<{
+		name: string;
+		status: "completed" | "incomplete" | "notice";
+	}> = filterOutFalsy([
 		{
 			name: t("tournament:pre.steps.name"),
-			completed: Boolean(name),
+			status: completedIfTruthy(name),
 		},
 		{
 			name: t("tournament:pre.steps.roster"),
-			completed: members && members.length >= tournament.minMembersPerTeam,
+			status: completedIfTruthy(
+				members && members.length >= tournament.minMembersPerTeam,
+			),
 		},
 		tournament.teamsPrePickMaps
 			? {
 					name: t("tournament:pre.steps.pool"),
-					completed: mapPool && mapPool.length > 0,
+					status: completedIfTruthy(mapPool && mapPool.length > 0),
 				}
 			: null,
-		{
-			name: t("tournament:pre.steps.check-in"),
-			completed: checkedIn,
-		},
+		!tournament.isLeagueSignup
+			? {
+					name: t("tournament:pre.steps.check-in"),
+					status: completedIfTruthy(checkedIn),
+				}
+			: null,
+		tournament.isLeagueSignup
+			? {
+					name: "Google Sheet",
+					status: "notice",
+				}
+			: null,
 	]);
 
 	const regClosesBeforeStart =
@@ -422,7 +442,10 @@ function RegistrationProgress({
 		tournament.ctx.startTime.getTime();
 
 	const registrationClosesAtString = isMounted
-		? tournament.registrationClosesAt.toLocaleTimeString(i18n.language, {
+		? (tournament.isLeagueSignup
+				? tournament.ctx.startTime
+				: tournament.registrationClosesAt
+			).toLocaleTimeString(i18n.language, {
 				minute: "numeric",
 				hour: "numeric",
 				day: "2-digit",
@@ -444,11 +467,13 @@ function RegistrationProgress({
 								className="stack sm items-center text-center"
 							>
 								{step.name}
-								{step.completed ? (
+								{step.status === "completed" ? (
 									<CheckmarkIcon
 										className="tournament__section__icon fill-success"
 										testId={`checkmark-icon-num-${i + 1}`}
 									/>
+								) : step.status === "notice" ? (
+									<AlertIcon className="tournament__section__icon fill-info p-1" />
 								) : (
 									<CrossIcon className="tournament__section__icon fill-error" />
 								)}
@@ -456,22 +481,26 @@ function RegistrationProgress({
 						);
 					})}
 				</div>
-				<CheckIn
-					canCheckIn={steps.filter((step) => !step.completed).length === 1}
-					status={
-						tournament.regularCheckInIsOpen
-							? "OPEN"
-							: tournament.regularCheckInHasEnded
-								? "OVER"
-								: "UPCOMING"
-					}
-					startDate={tournament.regularCheckInStartsAt}
-					endDate={tournament.regularCheckInEndsAt}
-					checkedIn={checkedIn}
-				/>
+				{!tournament.isLeagueSignup ? (
+					<CheckIn
+						canCheckIn={
+							steps.filter((step) => step.status === "incomplete").length === 1
+						}
+						status={
+							tournament.regularCheckInIsOpen
+								? "OPEN"
+								: tournament.regularCheckInHasEnded
+									? "OVER"
+									: "UPCOMING"
+						}
+						startDate={tournament.regularCheckInStartsAt}
+						endDate={tournament.regularCheckInEndsAt}
+						checkedIn={checkedIn}
+					/>
+				) : null}
 			</section>
 			<div className="tournament__section__warning">
-				{regClosesBeforeStart ? (
+				{regClosesBeforeStart || tournament.isLeagueSignup ? (
 					<span className="text-warning">
 						Registration closes at {registrationClosesAtString}
 					</span>
@@ -657,7 +686,17 @@ function TeamInfo({
 				<h3 className="tournament__section-header">
 					2. {t("tournament:pre.info.header")}
 				</h3>
-				{canUnregister ? (
+				{canUnregister &&
+				tournament.isLeagueSignup &&
+				!tournament.registrationOpen ? (
+					<Popover
+						triggerClassName="minimal-destructive tiny build__small-text"
+						buttonChildren={t("tournament:pre.info.unregister")}
+					>
+						Unregistration from a league after the registration has ended is
+						handled by the organizers
+					</Popover>
+				) : canUnregister ? (
 					<FormWithConfirm
 						dialogHeading={t("tournament:pre.info.unregister.confirm")}
 						deleteButtonText={t("tournament:pre.info.unregister")}
@@ -871,6 +910,30 @@ function FriendCode() {
 					to change it.
 				</div>
 			) : null}
+		</div>
+	);
+}
+
+function GoogleFormsLink() {
+	return (
+		<div>
+			<h3 className="tournament__section-header">
+				Additional Requirement: Google Form
+			</h3>
+			<section className="tournament__section stack lg items-center">
+				<a
+					href={import.meta.env.VITE_LEAGUE_GOOGLE_FORM_URL}
+					className="py-4 font-bold"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					Answer survey hosted on Google Forms
+				</a>
+			</section>
+			<div className="tournament__section__warning">
+				Answer to additional question about your team's preferred match time and
+				info to help with seeding
+			</div>
 		</div>
 	);
 }

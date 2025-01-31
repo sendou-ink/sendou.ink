@@ -335,7 +335,6 @@ function SuggestedUser({
 					suggested: { id: suggestion.suggested.id },
 					targetPlusTier: Number(tier),
 				}) ? (
-					// TODO: resetScroll={false} https://twitter.com/ryanflorence/status/1527775882797907969
 					<LinkButton
 						className="plus__comment-button"
 						size="tiny"

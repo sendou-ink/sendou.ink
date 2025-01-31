@@ -160,7 +160,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 			const team = tournament.teamById(data.teamId);
 			validate(team, "Invalid team id");
 			validate(
-				team.checkIns.length === 0 || team.members.length > 4,
+				team.checkIns.length === 0 ||
+					team.members.length > tournament.minMembersPerTeam,
 				"Can't remove last member from checked in team",
 			);
 			validate(
