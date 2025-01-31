@@ -496,7 +496,7 @@ export const homemadeBadges: BadgeInfo[] = [
 	},
 	{
 		displayName: "Eggs and Salad",
-		fileName: "saladbowl",
+		fileName: "eggs_and_salad",
 		authorDiscordId: "336683473714544641",
 	},
 	{
