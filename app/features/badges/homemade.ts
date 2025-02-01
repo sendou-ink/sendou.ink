@@ -1,7 +1,7 @@
 interface BadgeInfo {
 	// The name of the badge as it shows on the web page: "Awarded for winning {displayName}"
 	displayName: string;
-	// The file name of the badge: fileName.png, fileName.avif & fileName.gif
+	// The file name of the badge: fileName.png, fileName.avif & fileName.gif. Should not be edited after the badge is added.
 	fileName: string;
 	// The Discord ID of the person who made the badge (not the person who commissioned it)
 	authorDiscordId: string;
@@ -516,7 +516,7 @@ export const homemadeBadges: BadgeInfo[] = [
 	},
 	{
 		displayName: "Eggs and Salad",
-		fileName: "eggs_and_salad",
+		fileName: "saladbowl",
 		authorDiscordId: "336683473714544641",
 	},
 	{
