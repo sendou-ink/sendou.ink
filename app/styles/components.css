@@ -119,7 +119,6 @@
 }
 
 .sendou-popover-content {
-	z-index: 1;
 	max-width: 20rem;
 	padding: var(--s-2);
 	border: 2px solid var(--border);
@@ -128,10 +127,6 @@
 	font-size: var(--fonts-sm);
 	font-weight: var(--semi-bold);
 	white-space: pre-wrap;
-}
-
-.sendou-popover-content .react-aria-Dialog {
-	outline: none;
 }
 
 .react-aria-Label {

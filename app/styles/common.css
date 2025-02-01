@@ -677,7 +677,7 @@ dialog::backdrop {
 	white-space: pre-wrap;
 }
 
-.info-popover__trigger {
+.react-aria-Button.info-popover__trigger {
 	border: 2px solid var(--bg-lightest);
 	border-radius: 100%;
 	background-color: transparent;
@@ -688,7 +688,7 @@ dialog::backdrop {
 	height: 28px;
 }
 
-.info-popover__trigger__tiny {
+.react-aria-Button.info-popover__trigger__tiny {
 	width: 20px;
 	height: 20px;
 	font-size: var(--fonts-xs);
