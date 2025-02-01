@@ -12,7 +12,7 @@ import type {
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { Status } from "~/modules/brackets-model";
 import { modesShort } from "~/modules/in-game-lists";
-import { nullFilledArray } from "~/utils/arrays";
+import { nullFilledArray, nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
@@ -315,11 +315,6 @@ export async function findById(id: number) {
 			: HACKY_resolvePicture(result),
 		participatedUsers: result.participatedUsers.map((user) => user.userId),
 	};
-}
-
-function nullifyingAvg(values: number[]) {
-	if (values.length === 0) return null;
-	return values.reduce((acc, cur) => acc + cur, 0) / values.length;
 }
 
 export async function findChildTournaments(parentTournamentId: number) {
