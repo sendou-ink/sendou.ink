@@ -38,4 +38,32 @@ export const LEAGUES =
 					},
 				],
 			}
-		: {};
+		: {
+				LUTI: [
+					{
+						tournamentId: 1066,
+						weeks: [
+							{
+								weekNumber: 10,
+								year: 2025,
+							},
+							{
+								weekNumber: 11,
+								year: 2025,
+							},
+							{
+								weekNumber: 12,
+								year: 2025,
+							},
+							{
+								weekNumber: 13,
+								year: 2025,
+							},
+							{
+								weekNumber: 14,
+								year: 2025,
+							},
+						],
+					},
+				],
+			};

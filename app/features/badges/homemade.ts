@@ -1,7 +1,7 @@
 interface BadgeInfo {
 	// The name of the badge as it shows on the web page: "Awarded for winning {displayName}"
 	displayName: string;
-	// The file name of the badge: fileName.png, fileName.avif & fileName.gif
+	// The file name of the badge: fileName.png, fileName.avif & fileName.gif. Should not be edited after the badge is added.
 	fileName: string;
 	// The Discord ID of the person who made the badge (not the person who commissioned it)
 	authorDiscordId: string;
@@ -15,12 +15,32 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "All 4 One: Clam Blitz",
+		fileName: "newa41cb",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "All 4 One: Rainmaker",
+		fileName: "newa41rm",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "All 4 One: Splat Zones",
+		fileName: "newa41sz",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "All 4 One: Tower Control",
+		fileName: "newa41tc",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "Climb The Spire",
 		fileName: "climbspire",
 		authorDiscordId: "338806780446638082",
 	},
 	{
-		displayName: "Tea Bag",
+		displayName: "TeaCup",
 		fileName: "teabag",
 		authorDiscordId: "338806780446638082",
 	},
@@ -573,5 +593,30 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "JJaeigh's Jamboree",
 		fileName: "jamboree",
 		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Mesozoic Mayhem: Triceratrials",
+		fileName: "tricera",
+		authorDiscordId: "352207524390240257",
+	},
+	{
+		displayName: "Mesozoic Mayhem: Gold Triceratrials",
+		fileName: "triceragold",
+		authorDiscordId: "352207524390240257",
+	},
+	{
+		displayName: "Mesozoic Mayhem: Special Spino",
+		fileName: "spino",
+		authorDiscordId: "352207524390240257",
+	},
+	{
+		displayName: "Mesozoic Mayhem: Gold Special Spino",
+		fileName: "spinogold",
+		authorDiscordId: "352207524390240257",
+	},
+	{
+		displayName: "Mesozoic Mayhem: Dreadnoughtus Undefeated",
+		fileName: "dreadnoughtus",
+		authorDiscordId: "352207524390240257",
 	},
 ];

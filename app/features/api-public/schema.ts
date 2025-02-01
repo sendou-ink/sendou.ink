@@ -115,6 +115,15 @@ export type GetTournamentTeamsResponse = Array<{
 	logoUrl: string | null;
 	seed: number | null;
 	mapPool: Array<StageWithMode> | null;
+	/**
+	 *  Seeding power is a non-resetting MMR value that is used for sendou.ink's autoseeding capabilities.
+	 *  It is calculated as the average of the team's members' seeding power.
+	 *  Ranked and unranked tournaments contribute to different seeding power values.
+	 */
+	seedingPower: {
+		ranked: number | null;
+		unranked: number | null;
+	};
 	members: Array<{
 		userId: number;
 		/**
@@ -141,6 +150,12 @@ export type GetTournamentTeamsResponse = Array<{
 		 * @example "Sendou#2955"
 		 */
 		inGameName: string | null;
+		/**
+		 *  Switch friend code used for identification purposes.
+		 *
+		 * @example "1234-5678-9101"
+		 */
+		friendCode: string;
 		/**
 		 * @example "2024-01-12T20:00:00.000Z"
 		 */
