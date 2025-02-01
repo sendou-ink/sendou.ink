@@ -55,6 +55,8 @@ import {
 	userSeasonsPage,
 } from "~/utils/urls";
 import { isAtLeastFiveDollarTierPatreon } from "~/utils/users";
+import { SendouButton } from "../../../components/elements/Button";
+import { SendouPopover } from "../../../components/elements/Popover";
 import { FULL_GROUP_SIZE, JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
 import { frontPageSchema } from "../q-schemas.server";
 import {
@@ -65,8 +67,6 @@ import { addMember } from "../queries/addMember.server";
 import { deleteLikesByGroupId } from "../queries/deleteLikesByGroupId.server";
 import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
 import { findGroupByInviteCode } from "../queries/findGroupByInviteCode.server";
-import { SendouPopover } from "../../../components/elements/Popover";
-import { SendouButton } from "../../../components/elements/Button";
 
 import "../q.css";
 

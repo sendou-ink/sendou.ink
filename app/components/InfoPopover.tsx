@@ -1,6 +1,6 @@
 import clsx from "clsx";
-import { SendouPopover } from "./elements/Popover";
 import { SendouButton } from "./elements/Button";
+import { SendouPopover } from "./elements/Popover";
 
 export function InfoPopover({
 	children,

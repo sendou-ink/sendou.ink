@@ -11,8 +11,8 @@ import {
 	PATREON_HOW_TO_CONNECT_DISCORD_URL,
 	SENDOU_INK_PATREON_URL,
 } from "~/utils/urls";
-import { SendouPopover } from "../../../components/elements/Popover";
 import { SendouButton } from "../../../components/elements/Button";
+import { SendouPopover } from "../../../components/elements/Popover";
 
 import "../support.css";
 

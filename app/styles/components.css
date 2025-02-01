@@ -129,6 +129,10 @@
 	white-space: pre-wrap;
 }
 
+.react-aria-Dialog {
+	outline: none;
+}
+
 .react-aria-Label {
 	font-size: var(--fonts-xs);
 	font-weight: var(--bold);
