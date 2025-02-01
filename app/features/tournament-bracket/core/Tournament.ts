@@ -858,6 +858,8 @@ export class Tournament {
 		// special format
 		if (this.minMembersPerTeam !== 4) return this.minMembersPerTeam;
 
+		if (this.isLeagueSignup || this.isLeagueDivision) return 8;
+
 		const maxMembersBeforeStart = this.isInvitational ? 5 : 6;
 
 		if (this.hasStarted) {
