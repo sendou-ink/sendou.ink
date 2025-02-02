@@ -10,6 +10,8 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, ModeImage, TierImage, WeaponImage } from "~/components/Image";
 import { Popover } from "~/components/Popover";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { EditIcon } from "~/components/icons/Edit";
 import { MicrophoneIcon } from "~/components/icons/Microphone";
 import { SpeakerIcon } from "~/components/icons/Speaker";
@@ -645,12 +647,17 @@ function MemberRoleManager({
 	if (displayOnly && member.role !== "OWNER") return null;
 
 	return (
-		<Popover
-			buttonChildren={
-				<Icon
-					className={clsx("q__group-member__star", {
-						"q__group-member__star__inactive": member.role === "REGULAR",
-					})}
+		<SendouPopover
+			trigger={
+				<SendouButton
+					variant="minimal"
+					icon={
+						<Icon
+							className={clsx("q__group-member__star", {
+								"q__group-member__star__inactive": member.role === "REGULAR",
+							})}
+						/>
+					}
 				/>
 			}
 		>
@@ -696,7 +703,7 @@ function MemberRoleManager({
 					</fetcher.Form>
 				) : null}
 			</div>
-		</Popover>
+		</SendouPopover>
 	);
 }
 
@@ -726,7 +733,13 @@ function TierInfo({ skill }: { skill: TieredSkill | "CALCULATING" }) {
 
 	return (
 		<div className="q__group-member__tier">
-			<Popover buttonChildren={<TierImage tier={skill.tier} width={38} />}>
+			<SendouPopover
+				trigger={
+					<SendouButton variant="minimal">
+						<TierImage tier={skill.tier} width={38} />
+					</SendouButton>
+				}
+			>
 				<div className="stack sm items-center">
 					<div className="stack items-center">
 						<TierImage tier={skill.tier} width={80} />
@@ -746,7 +759,7 @@ function TierInfo({ skill }: { skill: TieredSkill | "CALCULATING" }) {
 						</div>
 					) : null}
 				</div>
-			</Popover>
+			</SendouPopover>
 		</div>
 	);
 }
@@ -794,14 +807,16 @@ function VoiceChatInfo({
 			: null;
 
 	return (
-		<Popover
-			buttonChildren={
-				<Icon className={clsx("q__group-member-vc-icon", color())} />
+		<SendouPopover
+			trigger={
+				<SendouButton
+					variant="minimal"
+					size="tiny"
+					icon={<Icon className={clsx("q__group-member-vc-icon", color())} />}
+				/>
 			}
-			triggerClassName="minimal tiny"
-			containerClassName="ml-auto"
 		>
 			{t(`q:vc.${member.vc}`)} {languagesString}
-		</Popover>
+		</SendouPopover>
 	);
 }
