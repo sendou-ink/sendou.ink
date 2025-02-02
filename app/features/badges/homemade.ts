@@ -15,6 +15,11 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Reach",
+		fileName: "reachbadge",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "All 4 One: Clam Blitz",
 		fileName: "newa41cb",
 		authorDiscordId: "338806780446638082",
