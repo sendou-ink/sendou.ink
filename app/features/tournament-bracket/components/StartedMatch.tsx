@@ -6,8 +6,9 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
 import { NewTabs } from "~/components/NewTabs";
-import { Popover } from "~/components/Popover";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { CrossIcon } from "~/components/icons/Cross";
 import { PickIcon } from "~/components/icons/Pick";
@@ -496,17 +497,22 @@ function ModeProgressIndicator({
 					)?.name;
 
 					return (
-						<Popover
+						<SendouPopover
 							key={i}
-							triggerClassName="minimal tiny tournament-bracket__mode-progress__image__banned__popover-trigger"
-							buttonChildren={
-								<Image
-									containerClassName="tournament-bracket__mode-progress__image tournament-bracket__mode-progress__image__banned"
-									path={modeImageUrl(map.mode)}
-									height={20}
-									width={20}
-									alt={t(`game-misc:MODE_LONG_${map.mode}`)}
-								/>
+							trigger={
+								<SendouButton
+									variant="minimal"
+									size="tiny"
+									className="tournament-bracket__mode-progress__image__banned__popover-trigger"
+								>
+									<Image
+										containerClassName="tournament-bracket__mode-progress__image tournament-bracket__mode-progress__image__banned"
+										path={modeImageUrl(map.mode)}
+										height={20}
+										width={20}
+										alt={t(`game-misc:MODE_LONG_${map.mode}`)}
+									/>
+								</SendouButton>
 							}
 						>
 							<div className="text-center">
@@ -516,7 +522,7 @@ function ModeProgressIndicator({
 							<div className="text-xs text-lighter">
 								Banned by {bannerTeamName}
 							</div>
-						</Popover>
+						</SendouPopover>
 					);
 				}
 

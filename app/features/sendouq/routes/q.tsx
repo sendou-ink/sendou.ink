@@ -17,7 +17,6 @@ import { FormMessage } from "~/components/FormMessage";
 import { FriendCodeInput } from "~/components/FriendCodeInput";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
-import { Popover } from "~/components/Popover";
 import { SubmitButton } from "~/components/SubmitButton";
 import { UserIcon } from "~/components/icons/User";
 import { UsersIcon } from "~/components/icons/Users";
@@ -56,6 +55,8 @@ import {
 	userSeasonsPage,
 } from "~/utils/urls";
 import { isAtLeastFiveDollarTierPatreon } from "~/utils/users";
+import { SendouButton } from "../../../components/elements/Button";
+import { SendouPopover } from "../../../components/elements/Popover";
 import { FULL_GROUP_SIZE, JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
 import { frontPageSchema } from "../q-schemas.server";
 import {
@@ -599,12 +600,15 @@ function PreviewQueueButton() {
 
 	if (!isAtLeastFiveDollarTierPatreon(user)) {
 		return (
-			<Popover
-				buttonChildren={t("q:front.preview")}
-				triggerClassName="minimal mx-auto text-xs"
+			<SendouPopover
+				trigger={
+					<SendouButton className="mx-auto text-xs" variant="minimal">
+						{t("q:front.preview")}
+					</SendouButton>
+				}
 			>
 				{t("q:front.preview.explanation")}
-			</Popover>
+			</SendouPopover>
 		);
 	}
 

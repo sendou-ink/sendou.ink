@@ -11,11 +11,6 @@
 	width: 25px;
 }
 
-.support__popover {
-	display: inline;
-	margin-inline-start: var(--s-2);
-}
-
 .support__popover-trigger {
 	display: inline;
 	height: 1rem;

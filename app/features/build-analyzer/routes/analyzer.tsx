@@ -10,7 +10,6 @@ import Chart from "~/components/Chart";
 import { WeaponCombobox } from "~/components/Combobox";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
-import { Popover } from "~/components/Popover";
 import { Table } from "~/components/Table";
 import { Tab, Tabs } from "~/components/Tabs";
 import { Toggle } from "~/components/Toggle";
@@ -49,6 +48,8 @@ import {
 	subWeaponImageUrl,
 	userNewBuildPage,
 } from "~/utils/urls";
+import { SendouButton } from "../../../components/elements/Button";
+import { SendouPopover } from "../../../components/elements/Popover";
 import {
 	MAX_LDE_INTENSITY,
 	damageTypeToWeaponType,
@@ -971,21 +972,25 @@ function StatChartPopover(props: StatChartProps) {
 	const { t } = useTranslation(["analyzer"]);
 
 	return (
-		<Popover
-			buttonChildren={
-				<BeakerIcon
-					className="analyzer__stat-popover-trigger__icon"
-					title={t("analyzer:button.showChart")}
+		<SendouPopover
+			popoverClassName="analyzer__stat-popover"
+			trigger={
+				<SendouButton
+					className={
+						props.simple ? undefined : "analyzer__stat-popover-trigger"
+					}
+					icon={
+						<BeakerIcon
+							className="analyzer__stat-popover-trigger__icon"
+							title={t("analyzer:button.showChart")}
+						/>
+					}
 				/>
-			}
-			contentClassName="analyzer__stat-popover"
-			triggerClassName={
-				props.simple ? undefined : "analyzer__stat-popover-trigger"
 			}
 		>
 			<h2 className="text-center text-lg">{props.title}</h2>
 			<StatChart {...props} />
-		</Popover>
+		</SendouPopover>
 	);
 }
 
@@ -1440,13 +1445,15 @@ function StatCard({
 				<h3 className="analyzer__stat-card__title">
 					{title}{" "}
 					{popoverInfo && (
-						<Popover
-							containerClassName="analyzer__stat-card__popover"
-							triggerClassName="analyzer__stat-card__popover-trigger"
-							buttonChildren={<>?</>}
+						<SendouPopover
+							trigger={
+								<SendouButton className="analyzer__stat-card__popover-trigger">
+									?
+								</SendouButton>
+							}
 						>
 							{popoverInfo}
-						</Popover>
+						</SendouPopover>
 					)}
 				</h3>
 				<div className="analyzer__stat-card-values">

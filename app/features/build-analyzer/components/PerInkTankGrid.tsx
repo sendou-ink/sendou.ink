@@ -2,9 +2,10 @@ import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Ability } from "~/components/Ability";
-import { Popover } from "~/components/Popover";
 import { MAX_AP } from "~/constants";
 import type { MainWeaponId } from "~/modules/in-game-lists";
+import { SendouButton } from "../../../components/elements/Button";
+import { SendouPopover } from "../../../components/elements/Popover";
 import type { FullInkTankOption } from "../analyzer-types";
 import { fullInkTankOptions } from "../core/stats";
 import { weaponParams } from "../core/utils";
@@ -14,13 +15,19 @@ interface PerInkTankGridProps {
 }
 
 export function PerInkTankGrid(props: PerInkTankGridProps) {
+	const { t } = useTranslation(["analyzer"]);
+
 	return (
-		<Popover
-			buttonChildren={<>Show consumption grid</>}
-			contentClassName="analyzer__ink-grid__container"
+		<SendouPopover
+			popoverClassName="analyzer__ink-grid__container"
+			trigger={
+				<SendouButton variant="minimal" size="tiny">
+					{t("analyzer:button.showConsumptionGrid")}
+				</SendouButton>
+			}
 		>
 			<Grid {...props} />
-		</Popover>
+		</SendouPopover>
 	);
 }
 

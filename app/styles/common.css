@@ -26,7 +26,7 @@ a {
 	text-decoration: none;
 }
 
-:is(button, .button) {
+.button {
 	display: flex;
 	width: auto;
 	align-items: center;
@@ -46,50 +46,50 @@ a {
 	user-select: none;
 }
 
-:is(button, .button):focus-visible {
+.button:focus-visible {
 	outline: 2px solid var(--theme);
 }
 
-:is(button, .button):active {
+.button:active {
 	transform: translateY(1px);
 }
 
-:is(button, .button):disabled {
+.button:disabled {
 	cursor: not-allowed;
 	opacity: 0.5;
 	transform: initial;
 }
 
-:is(button, .button).outlined {
+.button.outlined {
 	background-color: var(--theme-very-transparent);
 	color: var(--theme);
 }
 
-:is(button, .button).outlined-success {
+.button.outlined-success {
 	border-color: var(--theme-success);
 	background-color: transparent;
 	color: var(--theme-success);
 }
 
-:is(button, .button).tiny {
+.button.tiny {
 	font-size: var(--fonts-xs);
 	padding-block: var(--s-1);
 	padding-inline: var(--s-2);
 }
 
-:is(button, .button).miniscule {
+.button.miniscule {
 	font-size: var(--fonts-xxs);
 	padding-block: var(--s-1);
 	padding-inline: var(--s-2);
 }
 
-:is(button, .button).big {
+.button.big {
 	font-size: var(--fonts-md);
 	padding-block: var(--s-2-5);
 	padding-inline: var(--s-6);
 }
 
-:is(button, .button).minimal {
+.button.minimal {
 	padding: 0;
 	border: none;
 	background-color: transparent;
@@ -97,31 +97,31 @@ a {
 	outline: initial;
 }
 
-:is(button, .button).minimal:focus-visible {
+.button.minimal:focus-visible {
 	outline: 2px solid var(--theme);
 }
 
-:is(button, .button).minimal-success {
+.button.minimal-success {
 	padding: 0;
 	border: none;
 	background-color: transparent;
 	color: var(--theme-success);
 }
 
-:is(button, .button).success {
+.button.success {
 	border-color: var(--theme-success);
 	background-color: var(--theme-success);
 	outline-color: var(--theme-success);
 }
 
-:is(button, .button).destructive {
+.button.destructive {
 	border-color: var(--theme-error);
 	background-color: transparent;
 	color: var(--theme-error);
 	outline-color: var(--theme-error);
 }
 
-:is(button, .button).minimal-destructive {
+.button.minimal-destructive {
 	padding: 0;
 	border: none;
 	background-color: transparent;
@@ -129,7 +129,7 @@ a {
 	outline-color: var(--theme-error);
 }
 
-:is(button, .button).loading {
+.button.loading {
 	cursor: not-allowed;
 	opacity: 0.6;
 }
@@ -143,7 +143,7 @@ a {
 	margin-inline-end: 0 !important;
 }
 
-:is(button, .button).tiny > .button-icon {
+.button.tiny > .button-icon {
 	width: 1rem;
 	margin-inline-end: var(--s-1);
 }
@@ -664,19 +664,7 @@ dialog::backdrop {
 	color: var(--text);
 }
 
-.popover-content {
-	z-index: 1;
-	max-width: 20rem;
-	padding: var(--s-2);
-	border: 2px solid var(--border);
-	border-radius: var(--rounded);
-	background-color: var(--bg-darker);
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
-	white-space: pre-wrap;
-}
-
-.info-popover__trigger {
+.react-aria-Button.info-popover__trigger {
 	border: 2px solid var(--bg-lightest);
 	border-radius: 100%;
 	background-color: transparent;
@@ -687,7 +675,7 @@ dialog::backdrop {
 	height: 28px;
 }
 
-.info-popover__trigger__tiny {
+.react-aria-Button.info-popover__trigger__tiny {
 	width: 20px;
 	height: 20px;
 	font-size: var(--fonts-xs);
@@ -1770,6 +1758,7 @@ html[dir="rtl"] .fix-rtl {
 	border: none;
 	background-color: transparent;
 	transition: filter, opacity 0.2s;
+	border-radius: var(--rounded);
 }
 
 @keyframes wiggle {

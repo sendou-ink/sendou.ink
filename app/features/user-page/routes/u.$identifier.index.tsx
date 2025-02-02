@@ -4,7 +4,8 @@ import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { Flag } from "~/components/Flag";
 import { Image, WeaponImage } from "~/components/Image";
-import { Popover } from "~/components/Popover";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { BattlefyIcon } from "~/components/icons/Battlefy";
 import { BskyIcon } from "~/components/icons/Bsky";
 import { DiscordIcon } from "~/components/icons/Discord";
@@ -124,16 +125,21 @@ function SecondaryTeamsPopover() {
 	if (data.user.secondaryTeams.length === 0) return null;
 
 	return (
-		<Popover
-			buttonChildren={
-				<span
-					className="text-sm font-bold text-main-forced"
-					data-testid="secondary-team-trigger"
+		<SendouPopover
+			trigger={
+				<SendouButton
+					className="focus-text-decoration self-start"
+					variant="minimal"
+					size="tiny"
 				>
-					+{data.user.secondaryTeams.length}
-				</span>
+					<span
+						className="text-sm font-bold text-main-forced"
+						data-testid="secondary-team-trigger"
+					>
+						+{data.user.secondaryTeams.length}
+					</span>
+				</SendouButton>
 			}
-			triggerClassName="minimal tiny focus-text-decoration"
 		>
 			<div className="stack sm">
 				{data.user.secondaryTeams.map((team) => (
@@ -164,7 +170,7 @@ function SecondaryTeamsPopover() {
 					</div>
 				))}
 			</div>
-		</Popover>
+		</SendouPopover>
 	);
 }
 
