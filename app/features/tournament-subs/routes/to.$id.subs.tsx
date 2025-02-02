@@ -11,7 +11,6 @@ import { Button, LinkButton } from "~/components/Button";
 import { Flag } from "~/components/Flag";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { WeaponImage } from "~/components/Image";
-import { Popover } from "~/components/Popover";
 import { Redirect } from "~/components/Redirect";
 import { MicrophoneIcon } from "~/components/icons/Microphone";
 import { TrashIcon } from "~/components/icons/Trash";
@@ -32,6 +31,8 @@ import {
 	findSubsByTournamentId,
 } from "../queries/findSubsByTournamentId.server";
 import { deleteSubSchema } from "../tournament-subs-schemas.server";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 
 import "../tournament-subs.css";
 
@@ -133,11 +134,13 @@ function AddOrEditSubButton() {
 
 	if (!tournament.canAddNewSubPost) {
 		return (
-			<Popover buttonChildren={buttonText} triggerClassName="tiny">
+			<SendouPopover
+				trigger={<SendouButton size="tiny">{buttonText}</SendouButton>}
+			>
 				{data.hasOwnSubPost
 					? "Sub post can't be edited anymore since registration has closed"
 					: "Sub post can't be added anymore since registration has closed"}
-			</Popover>
+			</SendouPopover>
 		);
 	}
 

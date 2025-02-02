@@ -1771,6 +1771,7 @@ html[dir="rtl"] .fix-rtl {
 	border: none;
 	background-color: transparent;
 	transition: filter, opacity 0.2s;
+	border-radius: var(--rounded);
 }
 
 @keyframes wiggle {

@@ -8,7 +8,6 @@ import { Avatar } from "~/components/Avatar";
 import { Button, LinkButton } from "~/components/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, ModeImage, TierImage, WeaponImage } from "~/components/Image";
-import { Popover } from "~/components/Popover";
 import { SubmitButton } from "~/components/SubmitButton";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -263,16 +262,18 @@ function GroupMember({
 			<div className="q__group-member">
 				<div className="text-main-forced stack xs horizontal items-center">
 					{showNote && member.privateNote ? (
-						<Popover
-							buttonChildren={
-								<Avatar
-									user={member}
-									size="xs"
-									className={clsx(
-										"q__group-member__avatar",
-										`q__group-member__avatar__${member.privateNote.sentiment}`,
-									)}
-								/>
+						<SendouPopover
+							trigger={
+								<SendouButton variant="minimal">
+									<Avatar
+										user={member}
+										size="xs"
+										className={clsx(
+											"q__group-member__avatar",
+											`q__group-member__avatar__${member.privateNote.sentiment}`,
+										)}
+									/>
+								</SendouButton>
 							}
 						>
 							{member.privateNote.text}
@@ -298,7 +299,7 @@ function GroupMember({
 									targetId={member.id}
 								/>
 							</div>
-						</Popover>
+						</SendouPopover>
 					) : (
 						<Avatar user={member} size="xs" />
 					)}
@@ -344,12 +345,15 @@ function GroupMember({
 						</div>
 					) : null}
 					{member.friendCode ? (
-						<Popover
-							buttonChildren={<>FC</>}
-							triggerClassName="q__group-member__extra-info-button"
+						<SendouPopover
+							trigger={
+								<SendouButton className="q__group-member__extra-info-button">
+									FC
+								</SendouButton>
+							}
 						>
 							SW-{member.friendCode}
-						</Popover>
+						</SendouPopover>
 					) : null}
 					{showAddNote ? (
 						<LinkButton
@@ -713,20 +717,22 @@ function TierInfo({ skill }: { skill: TieredSkill | "CALCULATING" }) {
 	if (skill === "CALCULATING") {
 		return (
 			<div className="q__group-member__tier">
-				<Popover
-					buttonChildren={
-						<Image
-							path={tierImageUrl("CALCULATING")}
-							alt=""
-							height={32.965}
-							className="q__group-member__tier__placeholder"
-						/>
+				<SendouPopover
+					trigger={
+						<SendouButton variant="minimal">
+							<Image
+								path={tierImageUrl("CALCULATING")}
+								alt=""
+								height={32.965}
+								className="q__group-member__tier__placeholder"
+							/>
+						</SendouButton>
 					}
 				>
 					{t("q:looking.rankCalculating", {
 						count: MATCHES_COUNT_NEEDED_FOR_LEADERBOARD,
 					})}
-				</Popover>
+				</SendouPopover>
 			</div>
 		);
 	}

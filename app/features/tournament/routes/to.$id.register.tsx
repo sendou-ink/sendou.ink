@@ -17,7 +17,6 @@ import { Label } from "~/components/Label";
 import { containerClassName } from "~/components/Main";
 import { MapPoolStages } from "~/components/MapPoolSelector";
 import { NewTabs } from "~/components/NewTabs";
-import { Popover } from "~/components/Popover";
 import { Section } from "~/components/Section";
 import { SubmitButton } from "~/components/SubmitButton";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
@@ -58,6 +57,8 @@ import {
 	validateCounterPickMapPool,
 } from "../tournament-utils";
 import { useTournament } from "./to.$id";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 
 import { action } from "../actions/to.$id.register.server";
 import { loader } from "../loaders/to.$id.register.server";
@@ -579,12 +580,15 @@ function CheckIn({
 	if (!canCheckIn) {
 		return (
 			<div className="stack items-center">
-				<Popover
-					buttonChildren={t("tournament:pre.checkIn.button")}
-					triggerClassName="tiny"
+				<SendouPopover
+					trigger={
+						<SendouButton size="tiny">
+							{t("tournament:pre.checkIn.button")}
+						</SendouButton>
+					}
 				>
 					{t("tournament:pre.checkIn.cant")}
-				</Popover>
+				</SendouPopover>
 			</div>
 		);
 	}
@@ -689,13 +693,20 @@ function TeamInfo({
 				{canUnregister &&
 				tournament.isLeagueSignup &&
 				!tournament.registrationOpen ? (
-					<Popover
-						triggerClassName="minimal-destructive tiny build__small-text"
-						buttonChildren={t("tournament:pre.info.unregister")}
+					<SendouPopover
+						trigger={
+							<SendouButton
+								size="tiny"
+								variant="minimal-destructive"
+								className="build__small-text"
+							>
+								{t("tournament:pre.info.unregister")}
+							</SendouButton>
+						}
 					>
 						Unregistration from a league after the registration has ended is
 						handled by the organizers
-					</Popover>
+					</SendouPopover>
 				) : canUnregister ? (
 					<FormWithConfirm
 						dialogHeading={t("tournament:pre.info.unregister.confirm")}

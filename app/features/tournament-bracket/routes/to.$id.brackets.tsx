@@ -12,7 +12,6 @@ import { Button } from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Menu } from "~/components/Menu";
-import { Popover } from "~/components/Popover";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { EyeIcon } from "~/components/icons/Eye";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
@@ -72,6 +71,8 @@ import {
 	bracketSubscriptionKey,
 	fillWithNullTillPowerOfTwo,
 } from "../tournament-bracket-utils";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 
 import "../components/Bracket/bracket.css";
 import "../tournament-bracket.css";
@@ -691,16 +692,7 @@ function AddSubsPopOver() {
 		const teamMemberOf = tournament.teamMemberOfByUser(user);
 		if (!teamMemberOf) return null;
 
-		return (
-			<Popover
-				buttonChildren={t("tournament:actions.addSub")}
-				triggerClassName="tiny outlined ml-auto"
-				triggerTestId="add-sub-button"
-				contentClassName="text-xs"
-			>
-				Only team captain or a TO can add subs
-			</Popover>
-		);
+		return <SubsPopover>Only team captain or a TO can add subs</SubsPopover>;
 	}
 
 	const subsAvailableToAdd =
@@ -712,12 +704,7 @@ function AddSubsPopOver() {
 	})}`;
 
 	return (
-		<Popover
-			buttonChildren={t("tournament:actions.addSub")}
-			triggerClassName="tiny outlined ml-auto"
-			triggerTestId="add-sub-button"
-			contentClassName="text-xs"
-		>
+		<SubsPopover>
 			{t("tournament:actions.sub.prompt", { count: subsAvailableToAdd })}
 			{subsAvailableToAdd > 0 ? (
 				<>
@@ -736,7 +723,29 @@ function AddSubsPopOver() {
 					</div>
 				</>
 			) : null}
-		</Popover>
+		</SubsPopover>
+	);
+}
+
+function SubsPopover({ children }: { children: React.ReactNode }) {
+	const { t } = useTranslation(["tournament"]);
+
+	return (
+		<SendouPopover
+			popoverClassName="text-xs"
+			trigger={
+				<SendouButton
+					className="ml-auto"
+					variant="outlined"
+					size="tiny"
+					data-testid="add-sub-button"
+				>
+					{t("tournament:actions.addSub")}
+				</SendouButton>
+			}
+		>
+			{children}
+		</SendouPopover>
 	);
 }
 

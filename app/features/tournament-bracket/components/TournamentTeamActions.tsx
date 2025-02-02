@@ -3,8 +3,9 @@ import clsx from "clsx";
 import { sub } from "date-fns";
 import * as React from "react";
 import { LinkButton } from "~/components/Button";
-import { Popover } from "~/components/Popover";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
@@ -60,14 +61,17 @@ export function TournamentTeamActions() {
 								Check-in now
 							</SubmitButton>
 						) : (
-							<Popover
-								buttonChildren={<>Check-in now</>}
-								triggerClassName="minimal tiny"
+							<SendouPopover
+								trigger={
+									<SendouButton variant="minimal" size="tiny">
+										Check-in now
+									</SendouButton>
+								}
 							>
 								{tournament.ctx.mapPickingStyle !== "TO"
 									? "Can't check-in, registration needs to be finished by the captain (full roster & map pool picked)"
 									: "Can't check-in, registration needs to be finished by the captain (full roster)"}
-							</Popover>
+							</SendouPopover>
 						)}
 					</fetcher.Form>
 				</Container>
