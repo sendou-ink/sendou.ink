@@ -12,6 +12,8 @@ import { Button } from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Menu } from "~/components/Menu";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { EyeIcon } from "~/components/icons/Eye";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
@@ -71,8 +73,6 @@ import {
 	bracketSubscriptionKey,
 	fillWithNullTillPowerOfTwo,
 } from "../tournament-bracket-utils";
-import { SendouButton } from "~/components/elements/Button";
-import { SendouPopover } from "~/components/elements/Popover";
 
 import "../components/Bracket/bracket.css";
 import "../tournament-bracket.css";

@@ -29,6 +29,8 @@ import { Main } from "~/components/Main";
 import { NewTabs } from "~/components/NewTabs";
 import { SubmitButton } from "~/components/SubmitButton";
 import { Toggle } from "~/components/Toggle";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { ArchiveBoxIcon } from "~/components/icons/ArchiveBox";
 import { CrossIcon } from "~/components/icons/Cross";
 import { DiscordIcon } from "~/components/icons/Discord";
@@ -110,8 +112,6 @@ import { findMatchById } from "../queries/findMatchById.server";
 import { reportScore } from "../queries/reportScore.server";
 import { reportedWeaponsByMatchId } from "../queries/reportedWeaponsByMatchId.server";
 import { setGroupAsInactive } from "../queries/setGroupAsInactive.server";
-import { SendouButton } from "~/components/elements/Button";
-import { SendouPopover } from "~/components/elements/Popover";
 
 import "../q.css";
 

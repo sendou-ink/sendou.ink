@@ -12,6 +12,8 @@ import { Flag } from "~/components/Flag";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { WeaponImage } from "~/components/Image";
 import { Redirect } from "~/components/Redirect";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { MicrophoneIcon } from "~/components/icons/Microphone";
 import { TrashIcon } from "~/components/icons/Trash";
 import { useUser } from "~/features/auth/core/user";
@@ -31,8 +33,6 @@ import {
 	findSubsByTournamentId,
 } from "../queries/findSubsByTournamentId.server";
 import { deleteSubSchema } from "../tournament-subs-schemas.server";
-import { SendouButton } from "~/components/elements/Button";
-import { SendouPopover } from "~/components/elements/Popover";
 
 import "../tournament-subs.css";
 

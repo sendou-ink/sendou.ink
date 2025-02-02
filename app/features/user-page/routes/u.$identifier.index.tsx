@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { Flag } from "~/components/Flag";
 import { Image, WeaponImage } from "~/components/Image";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { BattlefyIcon } from "~/components/icons/Battlefy";
 import { BskyIcon } from "~/components/icons/Bsky";
 import { DiscordIcon } from "~/components/icons/Discord";
@@ -25,8 +27,6 @@ import {
 	userSubmittedImage,
 } from "~/utils/urls";
 import type { UserPageLoaderData } from "./u.$identifier";
-import { SendouButton } from "~/components/elements/Button";
-import { SendouPopover } from "~/components/elements/Popover";
 
 import { loader } from "../loaders/u.$identifier.index.server";
 export { loader };

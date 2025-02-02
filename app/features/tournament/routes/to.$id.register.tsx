@@ -19,6 +19,8 @@ import { MapPoolStages } from "~/components/MapPoolSelector";
 import { NewTabs } from "~/components/NewTabs";
 import { Section } from "~/components/Section";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { ClockIcon } from "~/components/icons/Clock";
 import { CrossIcon } from "~/components/icons/Cross";
@@ -57,8 +59,6 @@ import {
 	validateCounterPickMapPool,
 } from "../tournament-utils";
 import { useTournament } from "./to.$id";
-import { SendouButton } from "~/components/elements/Button";
-import { SendouPopover } from "~/components/elements/Popover";
 
 import { action } from "../actions/to.$id.register.server";
 import { loader } from "../loaders/to.$id.register.server";

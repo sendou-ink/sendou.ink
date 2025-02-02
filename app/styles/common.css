@@ -664,19 +664,6 @@ dialog::backdrop {
 	color: var(--text);
 }
 
-/** xxx: delete */
-.popover-content {
-	z-index: 1;
-	max-width: 20rem;
-	padding: var(--s-2);
-	border: 2px solid var(--border);
-	border-radius: var(--rounded);
-	background-color: var(--bg-darker);
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
-	white-space: pre-wrap;
-}
-
 .react-aria-Button.info-popover__trigger {
 	border: 2px solid var(--bg-lightest);
 	border-radius: 100%;
