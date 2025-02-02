@@ -620,7 +620,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "352207524390240257",
 	},
   {
-    displayName: "XP4000 (Splatoon 3)",
+		displayName: "4000XP (Splatoon 3)",
 		fileName: "4000",
 		authorDiscordId: "218883697007394816",
 	},
