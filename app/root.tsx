@@ -48,7 +48,7 @@ import { COMMON_PREVIEW_IMAGE, SUSPENDED_PAGE } from "./utils/urls";
 
 import "nprogress/nprogress.css";
 import "~/styles/common.css";
-import "~/styles/components.css";
+import "~/styles/elements.css";
 import "~/styles/flags.css";
 import "~/styles/layout.css";
 import "~/styles/reset.css";
