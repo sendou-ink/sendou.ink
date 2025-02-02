@@ -619,4 +619,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "dreadnoughtus",
 		authorDiscordId: "352207524390240257",
 	},
+  {
+    displayName: "XP4000 (Splatoon 3)",
+		fileName: "4000",
+		authorDiscordId: "218883697007394816",
+	},
 ];
