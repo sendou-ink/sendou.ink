@@ -277,19 +277,24 @@ export function addNewTeamMember({
 	});
 }
 
-export function removeTeamMember({
+export function handleMemberLeaving({
 	userId,
 	teamId,
+	newOwnerUserId,
 }: {
 	userId: number;
 	teamId: number;
+	newOwnerUserId?: number;
 }) {
 	return db.transaction().execute(async (trx) => {
 		const currentTeams = await teamsByMemberUserId(userId, trx);
 
 		const teamToLeave = currentTeams.find((team) => team.id === teamId);
 		invariant(teamToLeave, "User is not a member of this team");
-		invariant(!teamToLeave.isOwner, "Owner cannot leave the team");
+		invariant(
+			!teamToLeave.isOwner || newOwnerUserId,
+			"New owner id must be provided when old is leaving",
+		);
 
 		const wasMainTeam = teamToLeave.isMainTeam;
 		const newMainTeam = currentTeams.find((team) => team.id !== teamId);
@@ -309,9 +314,22 @@ export function removeTeamMember({
 			.set({
 				leftAt: databaseTimestampNow(),
 				isMainTeam: 0,
+				isOwner: 0,
+				isManager: 0,
 			})
 			.where("userId", "=", userId)
 			.where("teamId", "=", teamId)
 			.execute();
+		if (newOwnerUserId) {
+			await trx
+				.updateTable("AllTeamMember")
+				.set({
+					isOwner: 1,
+					isManager: 0,
+				})
+				.where("userId", "=", newOwnerUserId)
+				.where("teamId", "=", teamId)
+				.execute();
+		}
 	});
 }

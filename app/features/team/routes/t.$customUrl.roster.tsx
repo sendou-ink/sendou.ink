@@ -36,7 +36,6 @@ import {
 } from "~/utils/urls";
 import * as TeamMemberRepository from "../TeamMemberRepository.server";
 import * as TeamRepository from "../TeamRepository.server";
-import { editRole } from "../queries/editRole.server";
 import { inviteCodeById } from "../queries/inviteCodeById.server";
 import { resetInviteLink } from "../queries/resetInviteLink.server";
 import { TEAM_MEMBER_ROLES } from "../team-constants";
@@ -75,7 +74,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			validate(member.id !== user.id, "Can't delete yourself");
 			validate(!member.isOwner, "Can't delete owner");
 
-			await TeamRepository.removeTeamMember({
+			await TeamRepository.handleMemberLeaving({
 				teamId: team.id,
 				userId: data.userId,
 			});
@@ -110,11 +109,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "UPDATE_MEMBER_ROLE": {
-			editRole({
-				role: data.role || null,
-				teamId: team.id,
-				userId: data.userId,
-			});
+			await TeamMemberRepository.update(
+				{ teamId: team.id, userId: data.userId },
+				{
+					role: data.role || null,
+				},
+			);
+
 			break;
 		}
 		default: {

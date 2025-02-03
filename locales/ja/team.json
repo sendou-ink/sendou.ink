@@ -3,7 +3,6 @@
 	"teamSearch.placeholder": "チーム・プレイヤーを検索...",
 	"actionButtons.leaveTeam": "チームを抜ける",
 	"actionButtons.makeMainTeam": "新しいメインチームを作る",
-	"leaveTeam.header": "チーム {{teamName}} を抜けますか?",
 	"actionButtons.leaveTeam.confirm": "チームを抜ける",
 	"actionButtons.editTeam": "チームを編集",
 	"actionButtons.manageRoster": "名簿管理",

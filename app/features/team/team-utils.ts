@@ -50,3 +50,25 @@ export function canAddCustomizedColors(team: {
 		(member) => member.patronTier && member.patronTier >= 2,
 	);
 }
+
+/** Returns the user who will become the new owner after old one leaves */
+export function resolveNewOwner(
+	members: Array<{
+		id: number;
+		username: string;
+		isOwner: number;
+		isManager: number;
+	}>,
+) {
+	const managers = members.filter((m) => m.isManager && !m.isOwner);
+	if (managers.length > 0) {
+		return managers.sort((a, b) => a.id - b.id)[0];
+	}
+
+	const regularMembers = members.filter((m) => !m.isOwner);
+	if (regularMembers.length > 0) {
+		return regularMembers.sort((a, b) => a.id - b.id)[0];
+	}
+
+	return null;
+}

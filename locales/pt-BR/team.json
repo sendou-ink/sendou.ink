@@ -2,7 +2,6 @@
 	"newTeam.header": "Criando um novo time",
 	"teamSearch.placeholder": "Pesquisar por um time ou jogador...",
 	"actionButtons.leaveTeam": "Sair do Time",
-	"leaveTeam.header": "Você tem certeza que quer sair do Time {{teamName}}?",
 	"actionButtons.leaveTeam.confirm": "Sair",
 	"actionButtons.editTeam": "Editar Time",
 	"actionButtons.manageRoster": "Gerenciar a lista",

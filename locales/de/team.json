@@ -2,7 +2,6 @@
 	"newTeam.header": "Neues Team erstellen",
 	"teamSearch.placeholder": "Suche nach einem Team oder Spieler...",
 	"actionButtons.leaveTeam": "Team verlassen",
-	"leaveTeam.header": "Möchtest du {{teamName}} wirklich verlassen?",
 	"actionButtons.leaveTeam.confirm": "Verlassen",
 	"actionButtons.editTeam": "Team bearbeiten",
 	"actionButtons.manageRoster": "Aufstellung bearbeiten",

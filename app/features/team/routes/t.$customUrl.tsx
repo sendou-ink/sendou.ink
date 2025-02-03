@@ -32,7 +32,7 @@ import {
 import type * as TeamRepository from "../TeamRepository.server";
 import { action } from "../actions/t.$customUrl.server";
 import { loader } from "../loaders/t.$customUrl.server";
-import { isTeamManager, isTeamMember } from "../team-utils";
+import { isTeamManager, isTeamMember, resolveNewOwner } from "../team-utils";
 import "../team.css";
 export { action, loader };
 
@@ -185,7 +185,6 @@ function ActionButtons() {
 		(member) => user?.id === member.id && member.isMainTeam,
 	);
 
-	// xxx: when leaving as an owner, explain what happens to the team
 	return (
 		<div className="team__action-buttons">
 			{isTeamMember({ user, team }) && !isMainTeam ? (
@@ -193,7 +192,10 @@ function ActionButtons() {
 			) : null}
 			{isTeamMember({ user, team }) ? (
 				<FormWithConfirm
-					dialogHeading={t("team:leaveTeam.header", { teamName: team.name })}
+					dialogHeading={t("team:leaveTeam.header", {
+						teamName: team.name,
+						newOwner: resolveNewOwner(team.members)?.username,
+					})}
 					deleteButtonText={t("team:actionButtons.leaveTeam.confirm")}
 					fields={[["_action", "LEAVE_TEAM"]]}
 				>
