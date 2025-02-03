@@ -82,7 +82,7 @@ export default function UserBuildsPage() {
 				<div className="stack sm horizontal items-center justify-end">
 					<SendouButton
 						onPress={() => setChangingSorting(true)}
-						size="tiny"
+						size="small"
 						variant="outlined"
 						icon={<SortIcon />}
 						data-testid="change-sorting-button"
@@ -173,7 +173,7 @@ function BuildsFilters({
 			<SendouButton
 				onPress={() => setWeaponFilter("ALL")}
 				variant={weaponFilter === "ALL" ? undefined : "outlined"}
-				size="tiny"
+				size="small"
 				className="u__build-filter-button"
 			>
 				{t("builds:stats.all")} ({data.builds.length})

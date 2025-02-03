@@ -177,7 +177,7 @@ export default function ManageTeamRosterPage() {
 				trigger={
 					<SendouButton
 						className="self-start italic"
-						size="tiny"
+						size="small"
 						variant="minimal"
 					>
 						{t("team:editorsInfo.button")}

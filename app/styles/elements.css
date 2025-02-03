@@ -45,7 +45,7 @@
 	color: var(--theme-success);
 }
 
-.react-aria-Button.tiny {
+.react-aria-Button.small {
 	font-size: var(--fonts-xs);
 	padding-block: var(--s-1);
 	padding-inline: var(--s-2);
@@ -112,7 +112,7 @@
 	margin-inline-end: 0 !important;
 }
 
-.react-aria-Button.tiny > .button-icon {
+.react-aria-Button.small > .button-icon {
 	width: 1rem;
 	margin-inline-end: var(--s-1);
 }
@@ -273,7 +273,7 @@
 	border-radius: 1.143rem;
 }
 
-.react-aria-Switch.tiny .indicator {
+.react-aria-Switch.small .indicator {
 	width: 2rem;
 	height: 1.143rem;
 }
@@ -289,7 +289,7 @@
 	transition: transform 200ms;
 }
 
-.react-aria-Switch.tiny .indicator:before {
+.react-aria-Switch.small .indicator:before {
 	width: 0.857rem;
 	height: 0.857rem;
 	margin: 0.143rem;
@@ -307,7 +307,7 @@
 	transform: translateX(125%);
 }
 
-.react-aria-Switch.tiny[data-selected] .indicator:before {
+.react-aria-Switch.small[data-selected] .indicator:before {
 	transform: translateX(100%);
 }
 

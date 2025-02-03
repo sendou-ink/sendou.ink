@@ -63,7 +63,7 @@ export function TournamentTeamActions() {
 						) : (
 							<SendouPopover
 								trigger={
-									<SendouButton variant="minimal" size="tiny">
+									<SendouButton variant="minimal" size="small">
 										Check-in now
 									</SendouButton>
 								}

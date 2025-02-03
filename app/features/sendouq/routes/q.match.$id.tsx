@@ -733,7 +733,7 @@ function DisputePopover() {
 			popoverClassName="text-main-forced"
 			trigger={
 				<SendouButton
-					size="tiny"
+					size="small"
 					variant="minimal-destructive"
 					className="mt-2"
 				>
@@ -1304,7 +1304,7 @@ function ScreenLegalityInfo({ ban }: { ban: boolean }) {
 				trigger={
 					<SendouButton
 						variant="minimal"
-						size="tiny"
+						size="small"
 						className="q-match__screen-legality__button"
 					>
 						<Alert variation={ban ? "ERROR" : "SUCCESS"}>
