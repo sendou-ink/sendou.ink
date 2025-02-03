@@ -81,6 +81,7 @@ export function findByCustomUrl(customUrl: string) {
 						...COMMON_USER_FIELDS,
 						"TeamMemberWithSecondary.role",
 						"TeamMemberWithSecondary.isOwner",
+						"TeamMemberWithSecondary.isManager",
 						"TeamMemberWithSecondary.isMainTeam",
 						"User.country",
 						"User.patronTier",

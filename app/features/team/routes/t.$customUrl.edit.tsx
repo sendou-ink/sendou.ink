@@ -37,9 +37,13 @@ import {
 import * as TeamRepository from "../TeamRepository.server";
 import { TEAM } from "../team-constants";
 import { editTeamSchema, teamParamsSchema } from "../team-schemas.server";
-import { canAddCustomizedColors, isTeamOwner } from "../team-utils";
-
+import {
+	canAddCustomizedColors,
+	isTeamManager,
+	isTeamOwner,
+} from "../team-utils";
 import "../team.css";
+import { useUser } from "~/features/auth/core/user";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
 	if (!data) return [];
@@ -76,8 +80,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));
 
 	validate(
-		isTeamOwner({ team, user }) || isAdmin(user),
-		"You are not the team owner",
+		isTeamManager({ team, user }) || isAdmin(user),
+		"You are not a team manager",
 	);
 
 	const data = await parseRequestPayload({
@@ -87,6 +91,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	switch (data._action) {
 		case "DELETE": {
+			validate(isTeamOwner({ team, user }), "You are not the team owner");
+
 			await TeamRepository.del(team.id);
 
 			throw redirect(TEAM_SEARCH_PAGE);
@@ -127,7 +133,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));
 
-	if (!isTeamOwner({ team, user }) && !isAdmin(user)) {
+	if (!isTeamManager({ team, user }) && !isAdmin(user)) {
 		throw redirect(teamPage(customUrl));
 	}
 
@@ -136,22 +142,25 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 export default function EditTeamPage() {
 	const { t } = useTranslation(["common", "team"]);
+	const user = useUser();
 	const { team, css } = useLoaderData<typeof loader>();
 
 	return (
 		<Main className="half-width">
-			<FormWithConfirm
-				dialogHeading={t("team:deleteTeam.header", { teamName: team.name })}
-				fields={[["_action", "DELETE"]]}
-			>
-				<Button
-					className="ml-auto"
-					variant="minimal-destructive"
-					data-testid="delete-team-button"
+			{isTeamOwner({ team, user }) ? (
+				<FormWithConfirm
+					dialogHeading={t("team:deleteTeam.header", { teamName: team.name })}
+					fields={[["_action", "DELETE"]]}
 				>
-					{t("team:actionButtons.deleteTeam")}
-				</Button>
-			</FormWithConfirm>
+					<Button
+						className="ml-auto"
+						variant="minimal-destructive"
+						data-testid="delete-team-button"
+					>
+						{t("team:actionButtons.deleteTeam")}
+					</Button>
+				</FormWithConfirm>
+			) : null}
 			<Form method="post" className="stack md items-start">
 				<ImageUploadLinks />
 				{canAddCustomizedColors(team) ? (

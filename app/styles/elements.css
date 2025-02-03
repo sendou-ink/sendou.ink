@@ -254,3 +254,72 @@
 	background-color: var(--theme-transparent);
 	outline: initial;
 }
+
+.react-aria-Switch {
+	display: flex;
+	align-items: center;
+	gap: 0.571rem;
+	color: var(--text-color);
+	forced-color-adjust: none;
+	font-size: var(--fonts-xs);
+	font-weight: var(--bold);
+	margin-block-end: 0;
+}
+
+.react-aria-Switch .indicator {
+	width: var(--s-11);
+	height: var(--s-6);
+	background: var(--theme-transparent);
+	border-radius: 1.143rem;
+}
+
+.react-aria-Switch.tiny .indicator {
+	width: 2rem;
+	height: 1.143rem;
+}
+
+.react-aria-Switch .indicator:before {
+	content: "";
+	display: block;
+	margin: 0.26rem;
+	width: var(--s-4);
+	height: var(--s-4);
+	background: white;
+	border-radius: 16px;
+	transition: transform 200ms;
+}
+
+.react-aria-Switch.tiny .indicator:before {
+	width: 0.857rem;
+	height: 0.857rem;
+	margin: 0.143rem;
+}
+
+.react-aria-Switch[data-pressed] .indicator:before {
+	opacity: 0.8;
+}
+
+.react-aria-Switch[data-selected] .indicator {
+	background: var(--theme-vibrant);
+}
+
+.react-aria-Switch[data-selected] .indicator:before {
+	transform: translateX(125%);
+}
+
+.react-aria-Switch.tiny[data-selected] .indicator:before {
+	transform: translateX(100%);
+}
+
+.react-aria-Switch[data-focus-visible] .indicator {
+	outline: 2px solid var(--theme-vibrant);
+	outline-offset: 2px;
+}
+
+.react-aria-Switch[data-disabled] .indicator {
+	opacity: 0.65;
+}
+
+.react-aria-Switch[data-disabled] {
+	cursor: not-allowed;
+}

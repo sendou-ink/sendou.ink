@@ -23,6 +23,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const { customUrl } = teamParamsSchema.parse(params);
 	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));
 
+	// xxx: handle owner leaving
 	switch (data._action) {
 		case "LEAVE_TEAM": {
 			validate(

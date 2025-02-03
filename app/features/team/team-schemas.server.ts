@@ -45,8 +45,12 @@ export const manageRosterSchema = z.union([
 		userId: id,
 	}),
 	z.object({
-		_action: _action("TRANSFER_OWNERSHIP"),
-		newOwnerId: id,
+		_action: _action("ADD_MANAGER"),
+		userId: id,
+	}),
+	z.object({
+		_action: _action("REMOVE_MANAGER"),
+		userId: id,
 	}),
 	z.object({
 		_action: _action("UPDATE_MEMBER_ROLE"),

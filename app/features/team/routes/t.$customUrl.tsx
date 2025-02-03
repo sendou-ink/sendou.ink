@@ -30,13 +30,11 @@ import {
 	userSubmittedImage,
 } from "~/utils/urls";
 import type * as TeamRepository from "../TeamRepository.server";
-import { isTeamMember, isTeamOwner } from "../team-utils";
-
 import { action } from "../actions/t.$customUrl.server";
 import { loader } from "../loaders/t.$customUrl.server";
-export { action, loader };
-
+import { isTeamManager, isTeamMember } from "../team-utils";
 import "../team.css";
+export { action, loader };
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
 	if (!data) return [];
@@ -187,12 +185,13 @@ function ActionButtons() {
 		(member) => user?.id === member.id && member.isMainTeam,
 	);
 
+	// xxx: when leaving as an owner, explain what happens to the team
 	return (
 		<div className="team__action-buttons">
 			{isTeamMember({ user, team }) && !isMainTeam ? (
 				<ChangeMainTeamButton />
 			) : null}
-			{!isTeamOwner({ user, team }) && isTeamMember({ user, team }) ? (
+			{isTeamMember({ user, team }) ? (
 				<FormWithConfirm
 					dialogHeading={t("team:leaveTeam.header", { teamName: team.name })}
 					deleteButtonText={t("team:actionButtons.leaveTeam.confirm")}
@@ -207,7 +206,7 @@ function ActionButtons() {
 					</Button>
 				</FormWithConfirm>
 			) : null}
-			{isTeamOwner({ user, team }) || isAdmin(user) ? (
+			{isTeamManager({ user, team }) || isAdmin(user) ? (
 				<LinkButton
 					size="tiny"
 					to={manageTeamRosterPage(team.customUrl)}
@@ -219,7 +218,7 @@ function ActionButtons() {
 					{t("team:actionButtons.manageRoster")}
 				</LinkButton>
 			) : null}
-			{isTeamOwner({ user, team }) || isAdmin(user) ? (
+			{isTeamManager({ user, team }) || isAdmin(user) ? (
 				<LinkButton
 					size="tiny"
 					to={editTeamPage(team.customUrl)}

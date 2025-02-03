@@ -15,6 +15,8 @@ import { Button } from "~/components/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouSwitch } from "~/components/elements/Switch";
+import { TrashIcon } from "~/components/icons/Trash";
 import { useUser } from "~/features/auth/core/user";
 import { requireUserId } from "~/features/auth/core/user.server";
 import { isAdmin } from "~/permissions";
@@ -32,16 +34,17 @@ import {
 	navIconUrl,
 	teamPage,
 } from "~/utils/urls";
+import * as TeamMemberRepository from "../TeamMemberRepository.server";
 import * as TeamRepository from "../TeamRepository.server";
 import { editRole } from "../queries/editRole.server";
 import { inviteCodeById } from "../queries/inviteCodeById.server";
 import { resetInviteLink } from "../queries/resetInviteLink.server";
-import { transferOwnership } from "../queries/transferOwnership.server";
 import { TEAM_MEMBER_ROLES } from "../team-constants";
 import { manageRosterSchema, teamParamsSchema } from "../team-schemas.server";
-import { isTeamFull, isTeamOwner } from "../team-utils";
-
+import { isTeamFull, isTeamManager } from "../team-utils";
 import "../team.css";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
 	if (!data) return [];
@@ -55,8 +58,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const { customUrl } = teamParamsSchema.parse(params);
 	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));
 	validate(
-		isTeamOwner({ team, user }) || isAdmin(user),
-		"Only team owner can manage roster",
+		isTeamManager({ team, user }) || isAdmin(user),
+		"Only team manager or owner can manage roster",
 	);
 
 	const data = await parseRequestPayload({
@@ -66,7 +69,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	switch (data._action) {
 		case "DELETE_MEMBER": {
-			validate(data.userId !== user.id, "Can't delete yourself");
+			const member = team.members.find((m) => m.id === data.userId);
+
+			validate(member, "Member not found");
+			validate(member.id !== user.id, "Can't delete yourself");
+			validate(!member.isOwner, "Can't delete owner");
+
 			await TeamRepository.removeTeamMember({
 				teamId: team.id,
 				userId: data.userId,
@@ -77,14 +85,29 @@ export const action: ActionFunction = async ({ request, params }) => {
 			resetInviteLink(team.id);
 			break;
 		}
-		case "TRANSFER_OWNERSHIP": {
-			transferOwnership({
-				teamId: team.id,
-				newOwnerUserId: data.newOwnerId,
-				oldOwnerUserId: user.id,
-			});
+		case "ADD_MANAGER": {
+			await TeamMemberRepository.update(
+				{ teamId: team.id, userId: data.userId },
+				{
+					isManager: 1,
+				},
+			);
 
-			throw redirect(teamPage(customUrl));
+			break;
+		}
+		case "REMOVE_MANAGER": {
+			const member = team.members.find((m) => m.id === data.userId);
+			validate(member, "Member not found");
+			validate(member.id !== user.id, "Can't remove yourself as manager");
+
+			await TeamMemberRepository.update(
+				{ teamId: team.id, userId: data.userId },
+				{
+					isManager: 0,
+				},
+			);
+
+			break;
 		}
 		case "UPDATE_MEMBER_ROLE": {
 			editRole({
@@ -130,7 +153,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));
 
-	if (!isTeamOwner({ team, user }) && !isAdmin(user)) {
+	if (!isTeamManager({ team, user }) && !isAdmin(user)) {
 		throw redirect(teamPage(customUrl));
 	}
 
@@ -140,10 +163,25 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 };
 
 export default function ManageTeamRosterPage() {
+	const { t } = useTranslation(["team"]);
+
 	return (
 		<Main className="stack lg">
 			<InviteCodeSection />
 			<MemberActions />
+			<SendouPopover
+				trigger={
+					<SendouButton
+						className="self-start italic"
+						size="tiny"
+						variant="minimal"
+					>
+						{t("team:editorsInfo.button")}
+					</SendouButton>
+				}
+			>
+				{t("team:editorsInfo.popover")}
+			</SendouPopover>
 		</Main>
 	);
 }
@@ -219,10 +257,24 @@ function MemberRow({
 	const { team } = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["team"]);
 	const user = useUser();
+
 	const roleFetcher = useFetcher();
+	const editorFetcher = useFetcher();
 
 	const isSelf = user!.id === member.id;
 	const role = team.members.find((m) => m.id === member.id)?.role ?? NO_ROLE;
+
+	const isThisMemberOwner = Boolean(
+		team.members.find((m) => m.id === member.id)?.isOwner,
+	);
+	const isThisMemberManager = Boolean(
+		team.members.find((m) => m.id === member.id)?.isManager,
+	);
+
+	const editorIsBeingAdded =
+		editorFetcher.formData?.get("_action") === "ADD_MANAGER";
+	const editorIsBeingRemoved =
+		editorFetcher.formData?.get("_action") === "REMOVE_MANAGER";
 
 	return (
 		<React.Fragment key={member.id}>
@@ -258,7 +310,29 @@ function MemberRow({
 					})}
 				</select>
 			</div>
-			<div className={clsx({ invisible: isSelf })}>
+			<div className={clsx({ invisible: isThisMemberOwner || isSelf })}>
+				<SendouSwitch
+					onChange={(isSelected) =>
+						editorFetcher.submit(
+							{
+								_action: isSelected ? "ADD_MANAGER" : "REMOVE_MANAGER",
+								userId: String(member.id),
+							},
+							{ method: "post" },
+						)
+					}
+					isSelected={
+						editorIsBeingAdded
+							? true
+							: editorIsBeingRemoved
+								? false
+								: isThisMemberManager
+					}
+				>
+					Editor
+				</SendouSwitch>
+			</div>
+			<div className={clsx({ invisible: isThisMemberOwner || isSelf })}>
 				<FormWithConfirm
 					dialogHeading={t("team:kick.header", {
 						teamName: team.name,
@@ -272,31 +346,11 @@ function MemberRow({
 				>
 					<Button
 						size="tiny"
-						variant="minimal-destructive"
+						variant="destructive"
+						icon={<TrashIcon />}
 						testId={!isSelf ? "kick-button" : undefined}
 					>
 						{t("team:actionButtons.kick")}
-					</Button>
-				</FormWithConfirm>
-			</div>
-			<div className={clsx({ invisible: isSelf })}>
-				<FormWithConfirm
-					dialogHeading={t("team:transferOwnership.header", {
-						teamName: team.name,
-						user: member.username,
-					})}
-					deleteButtonText={t("team:actionButtons.transferOwnership.confirm")}
-					fields={[
-						["_action", "TRANSFER_OWNERSHIP"],
-						["newOwnerId", member.id],
-					]}
-				>
-					<Button
-						size="tiny"
-						variant="minimal-destructive"
-						testId={!isSelf ? "transfer-ownership-button" : undefined}
-					>
-						{t("team:actionButtons.transferOwnership")}
 					</Button>
 				</FormWithConfirm>
 			</div>
