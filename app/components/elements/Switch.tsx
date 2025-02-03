@@ -5,7 +5,7 @@ import {
 } from "react-aria-components";
 
 interface SendouSwitchProps extends ReactAriaSwitchProps {
-	children: React.ReactNode;
+	children?: React.ReactNode;
 	size?: "small" | "medium";
 }
 

@@ -45,7 +45,6 @@ import {
 } from "~/utils/urls";
 import { actualNumber, safeSplit } from "~/utils/zod";
 import { Label } from "../../../components/Label";
-import { Toggle } from "../../../components/Toggle";
 import type {
 	CalendarEventTag,
 	PersistedCalendarEventTag,
@@ -55,8 +54,8 @@ import { calendarEventTagSchema } from "../actions/calendar.new.server";
 import { CALENDAR_EVENT } from "../calendar-constants";
 import { closeByWeeks } from "../calendar-utils";
 import { Tags } from "../components/Tags";
-
 import "~/styles/calendar.css";
+import { SendouSwitch } from "~/components/elements/Switch";
 
 export const meta: MetaFunction = (args) => {
 	const data = args.data as SerializeFrom<typeof loader> | null;
@@ -463,10 +462,10 @@ function OnSendouInkToggle() {
 				<Label htmlFor="onlyTournaments">
 					{t("calendar:tournament.filter.label")}
 				</Label>
-				<Toggle
+				<SendouSwitch
 					id="onlyTournaments"
-					checked={onlyTournaments}
-					setChecked={setOnlyTournaments}
+					isSelected={onlyTournaments}
+					onChange={setOnlyTournaments}
 				/>
 			</div>
 		</div>

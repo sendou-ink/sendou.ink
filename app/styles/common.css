@@ -405,55 +405,6 @@ dialog::backdrop {
 	}
 }
 
-.toggle {
-	all: unset;
-	position: relative;
-	display: inline-flex;
-	width: var(--s-11);
-	height: var(--s-6);
-	align-items: center;
-	border-radius: var(--rounded);
-	background-color: var(--theme-transparent);
-	cursor: pointer;
-}
-
-.toggle.tiny {
-	width: var(--s-6);
-	height: var(--s-3);
-}
-
-.toggle.checked {
-	background-color: var(--theme-vibrant);
-}
-
-.toggle:active {
-	transform: initial;
-}
-
-.toggle-dot {
-	display: inline-block;
-	width: var(--s-4);
-	height: var(--s-4);
-	border-radius: 50%;
-	background-color: white;
-	transform: translateX(var(--s-1));
-	transition: transform 0.2s ease;
-}
-
-.toggle-dot.tiny {
-	width: var(--s-3);
-	height: var(--s-3);
-	transform: translateX(-0.2rem);
-}
-
-.toggle-dot.checked {
-	transform: translateX(var(--s-6));
-}
-
-.toggle-dot.checked.tiny {
-	transform: translateX(var(--s-4));
-}
-
 .button-text-paragraph {
 	display: flex;
 	gap: var(--s-1);

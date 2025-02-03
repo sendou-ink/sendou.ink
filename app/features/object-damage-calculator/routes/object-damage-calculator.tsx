@@ -7,7 +7,6 @@ import { AllWeaponCombobox } from "~/components/Combobox";
 import { Image, WeaponImage } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { Toggle } from "~/components/Toggle";
 import type { AnyWeapon, DamageType } from "~/features/build-analyzer";
 import { possibleApValues } from "~/features/build-analyzer";
 import { useSetTitle } from "~/hooks/useSetTitle";
@@ -38,8 +37,8 @@ import {
 } from "~/utils/urls";
 import { useObjectDamage } from "../calculator-hooks";
 import type { DamageReceiver } from "../calculator-types";
-
 import "../calculator.css";
+import { SendouSwitch } from "~/components/elements/Switch";
 
 export const CURRENT_PATCH = "9.2";
 
@@ -111,12 +110,12 @@ export default function ObjectDamagePage() {
 						<label className="plain" htmlFor="multi">
 							×{multiShotCount}
 						</label>
-						<Toggle
+						<SendouSwitch
 							id="multi"
 							name="multi"
-							checked={isMultiShot}
-							setChecked={(checked) =>
-								handleChange({ newIsMultiShot: checked })
+							isSelected={isMultiShot}
+							onChange={(isSelected) =>
+								handleChange({ newIsMultiShot: isSelected })
 							}
 						/>
 					</div>

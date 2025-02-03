@@ -28,7 +28,6 @@ import { Image, ModeImage, StageImage, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { NewTabs } from "~/components/NewTabs";
 import { SubmitButton } from "~/components/SubmitButton";
-import { Toggle } from "~/components/Toggle";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { ArchiveBoxIcon } from "~/components/icons/ArchiveBox";
@@ -112,8 +111,8 @@ import { findMatchById } from "../queries/findMatchById.server";
 import { reportScore } from "../queries/reportScore.server";
 import { reportedWeaponsByMatchId } from "../queries/reportedWeaponsByMatchId.server";
 import { setGroupAsInactive } from "../queries/setGroupAsInactive.server";
-
 import "../q.css";
+import { SendouSwitch } from "~/components/elements/Switch";
 
 export const meta: MetaFunction = (args) => {
 	const data = args.data as SerializeFrom<typeof loader> | null;
@@ -1437,10 +1436,10 @@ function MapList({
 			</Flipper>
 			{scoreCanBeReported && isMod(user) ? (
 				<div className="stack sm horizontal items-center text-sm font-semi-bold">
-					<Toggle
+					<SendouSwitch
 						name="adminReport"
-						checked={adminToggleChecked}
-						setChecked={setAdminToggleChecked}
+						isSelected={adminToggleChecked}
+						onChange={setAdminToggleChecked}
 					/>
 					Report as admin
 				</div>

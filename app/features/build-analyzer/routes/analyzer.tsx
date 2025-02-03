@@ -12,7 +12,6 @@ import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { Table } from "~/components/Table";
 import { Tab, Tabs } from "~/components/Tabs";
-import { Toggle } from "~/components/Toggle";
 import { BeakerIcon } from "~/components/icons/Beaker";
 import { MAX_AP } from "~/constants";
 import { useUser } from "~/features/auth/core/user";
@@ -80,8 +79,8 @@ import {
 	isMainOnlyAbility,
 	isStackableAbility,
 } from "../core/utils";
-
 import "../analyzer.css";
+import { SendouSwitch } from "~/components/elements/Switch";
 
 export const CURRENT_PATCH = "9.2";
 
@@ -1299,14 +1298,14 @@ function EffectsSelector({
 									})}
 								</select>
 							) : (
-								<Toggle
-									checked={effects.includes(effect.type)}
-									setChecked={(checked) =>
-										checked
+								<SendouSwitch
+									isSelected={effects.includes(effect.type)}
+									onChange={(isSelected) =>
+										isSelected
 											? handleAddEffect(effect.type)
 											: handleRemoveEffect(effect.type)
 									}
-									tiny
+									size="small"
 								/>
 							)}
 						</div>

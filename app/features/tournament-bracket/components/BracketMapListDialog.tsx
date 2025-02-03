@@ -7,7 +7,7 @@ import { Dialog } from "~/components/Dialog";
 import { ModeImage, StageImage } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
-import { Toggle } from "~/components/Toggle";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { RefreshArrowsIcon } from "~/components/icons/RefreshArrows";
 import type { TournamentRoundMaps } from "~/db/tables";
 import {
@@ -711,7 +711,7 @@ function SZFirstToggle({
 	return (
 		<div className="stack items-center">
 			<Label htmlFor="sz-first">SZ first</Label>
-			<Toggle id="sz-first" checked={szFirst} setChecked={setSzFirst} />
+			<SendouSwitch id="sz-first" isSelected={szFirst} onChange={setSzFirst} />
 		</div>
 	);
 }
@@ -772,10 +772,10 @@ function RoundMapList({
 					{onPickBanChange ? (
 						<div>
 							<Label htmlFor={`pick-ban-${id}`}>Pick/ban</Label>
-							<Toggle
-								tiny
-								checked={Boolean(maps.pickBan)}
-								setChecked={onPickBanChange}
+							<SendouSwitch
+								size="small"
+								isSelected={Boolean(maps.pickBan)}
+								onChange={onPickBanChange}
 								id={`pick-ban-${id}`}
 							/>
 						</div>
