@@ -36,8 +36,6 @@ import {
 } from "~/utils/urls";
 import * as TeamMemberRepository from "../TeamMemberRepository.server";
 import * as TeamRepository from "../TeamRepository.server";
-import { inviteCodeById } from "../queries/inviteCodeById.server";
-import { resetInviteLink } from "../queries/resetInviteLink.server";
 import { TEAM_MEMBER_ROLES } from "../team-constants";
 import { manageRosterSchema, teamParamsSchema } from "../team-schemas.server";
 import { isTeamFull, isTeamManager } from "../team-utils";
@@ -81,7 +79,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "RESET_INVITE_LINK": {
-			resetInviteLink(team.id);
+			await TeamRepository.resetInviteCode(team.id);
+
 			break;
 		}
 		case "ADD_MANAGER": {
@@ -152,14 +151,18 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const user = await requireUserId(request);
 	const { customUrl } = teamParamsSchema.parse(params);
 
-	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));
+	const team = notFoundIfFalsy(
+		await TeamRepository.findByCustomUrl(customUrl, {
+			includeInviteCode: true,
+		}),
+	);
 
 	if (!isTeamManager({ team, user }) && !isAdmin(user)) {
 		throw redirect(teamPage(customUrl));
 	}
 
 	return {
-		team: { ...team, inviteCode: inviteCodeById(team.id)! },
+		team,
 	};
 };
 
@@ -202,7 +205,7 @@ function InviteCodeSection() {
 
 	const inviteLink = `${import.meta.env.VITE_SITE_DOMAIN}${joinTeamPage({
 		customUrl: team.customUrl,
-		inviteCode: team.inviteCode,
+		inviteCode: team.inviteCode!,
 	})}`;
 
 	return (

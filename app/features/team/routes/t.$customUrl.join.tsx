@@ -13,7 +13,6 @@ import {
 } from "~/utils/remix.server";
 import { teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
-import { inviteCodeById } from "../queries/inviteCodeById.server";
 import { TEAM } from "../team-constants";
 import { teamParamsSchema } from "../team-schemas.server";
 import { isTeamFull, isTeamMember } from "../team-utils";
@@ -24,10 +23,14 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const user = await requireUser(request);
 	const { customUrl } = teamParamsSchema.parse(params);
 
-	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));
+	const team = notFoundIfFalsy(
+		await TeamRepository.findByCustomUrl(customUrl, {
+			includeInviteCode: true,
+		}),
+	);
 
 	const inviteCode = new URL(request.url).searchParams.get("code") ?? "";
-	const realInviteCode = inviteCodeById(team.id)!;
+	const realInviteCode = team.inviteCode!;
 
 	validate(
 		validateInviteCode({
@@ -60,10 +63,14 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const user = await requireUser(request);
 	const { customUrl } = teamParamsSchema.parse(params);
 
-	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));
+	const team = notFoundIfFalsy(
+		await TeamRepository.findByCustomUrl(customUrl, {
+			includeInviteCode: true,
+		}),
+	);
 
 	const inviteCode = new URL(request.url).searchParams.get("code") ?? "";
-	const realInviteCode = inviteCodeById(team.id)!;
+	const realInviteCode = team.inviteCode!;
 
 	const teamCount = (await TeamRepository.teamsByMemberUserId(user.id)).length;
 

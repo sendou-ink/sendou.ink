@@ -51,7 +51,10 @@ export type findByCustomUrl = NonNullable<
 	Awaited<ReturnType<typeof findByCustomUrl>>
 >;
 
-export function findByCustomUrl(customUrl: string) {
+export function findByCustomUrl(
+	customUrl: string,
+	{ includeInviteCode = false } = {},
+) {
 	return db
 		.selectFrom("Team")
 		.leftJoin(
@@ -95,6 +98,7 @@ export function findByCustomUrl(customUrl: string) {
 					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id"),
 			).as("members"),
 		])
+		.$if(includeInviteCode, (qb) => qb.select("Team.inviteCode"))
 		.where("Team.customUrl", "=", customUrl.toLowerCase())
 		.executeTakeFirst();
 }
@@ -244,6 +248,16 @@ export function del(teamId: number) {
 			.where("id", "=", teamId)
 			.execute();
 	});
+}
+
+export function resetInviteCode(teamId: number) {
+	return db
+		.updateTable("AllTeam")
+		.set({
+			inviteCode: nanoid(INVITE_CODE_LENGTH),
+		})
+		.where("id", "=", teamId)
+		.execute();
 }
 
 export function addNewTeamMember({
