@@ -23,6 +23,7 @@ const showcaseArtsStm = sql.prepare(/* sql */ `
 export function showcaseArts(): ListedArt[] {
 	return showcaseArtsStm.all().map((a: any) => ({
 		id: a.id,
+		createdAt: a.createdAt,
 		url: a.url,
 		author: {
 			commissionsOpen: a.commissionsOpen,
@@ -69,6 +70,7 @@ export function showcaseArtsByTag(tagId: ArtTag["id"]): ListedArt[] {
 		})
 		.map((a: any) => ({
 			id: a.id,
+			createdAt: a.createdAt,
 			url: a.url,
 			author: {
 				commissionsOpen: a.commissionsOpen,
