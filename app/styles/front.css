@@ -2,7 +2,7 @@
 	display: none;
 	position: fixed;
 	left: 15px;
-	top: 66px;
+	top: 60px;
 	flex-direction: column;
 	gap: var(--s-3);
 	overflow-y: auto;
@@ -14,7 +14,7 @@
 .front-page__side-nav picture {
 	background-color: var(--bg-lightest);
 	border-radius: var(--rounded);
-	padding: var(--s-1);
+	padding: 0.225rem;
 }
 
 .front-page__side-nav-item {
