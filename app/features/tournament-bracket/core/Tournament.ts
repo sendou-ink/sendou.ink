@@ -1017,7 +1017,7 @@ export class Tournament {
 			if (!roundName) return;
 
 			if (roundName.includes("Semis")) {
-				return roundName.replace(/\d/g, "");
+				return roundName.replace(/\d/g, "").trim();
 			}
 
 			return roundName.split(".")[0];
