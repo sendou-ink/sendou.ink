@@ -872,7 +872,7 @@ export class Tournament {
 
 		if (this.isLeagueSignup || this.isLeagueDivision) return 8;
 
-		const maxMembersBeforeStart = this.isInvitational ? 5 : 6;
+		const maxMembersBeforeStart = 6;
 
 		if (this.hasStarted) {
 			return maxMembersBeforeStart + 1;
@@ -913,6 +913,8 @@ export class Tournament {
 	}
 
 	get registrationOpen() {
+		if (this.isInvitational) return false;
+
 		return this.registrationClosesAt > new Date();
 	}
 
