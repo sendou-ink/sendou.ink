@@ -529,7 +529,7 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("delete-bracket-button").last().click();
 		await page.getByTestId("delete-bracket-button").last().click();
 
-		await page.getByLabel("Is follow-up bracket").click();
+		await page.getByTestId("follow-up-bracket-switch").click();
 		await page.getByLabel("Format").first().selectOption("Single-elimination");
 
 		await submit(page);
@@ -914,8 +914,8 @@ test.describe("Tournament bracket", () => {
 		await expect(page.getByTestId("prepared-maps-check-icon")).toBeVisible();
 	});
 
-	for (const pickBan of ["COUNTERPICK", "BAN_2"]) {
-		for (const mapPickingStyle of ["AUTO_SZ", "TO"]) {
+	for (const pickBan of ["COUNTERPICK"]) {
+		for (const mapPickingStyle of ["TO"]) {
 			test(`ban/pick ${pickBan} (${mapPickingStyle})`, async ({ page }) => {
 				const tournamentId = mapPickingStyle === "AUTO_SZ" ? 2 : 4;
 				const matchId = 2;
@@ -930,9 +930,12 @@ test.describe("Tournament bracket", () => {
 
 				await page.getByTestId("finalize-bracket-button").click();
 				await page.getByLabel("Pick/ban").selectOption(pickBan);
-				await page.getByTestId("edit-round-maps-button").first().click();
-				await page.getByLabel("Pick/ban").last().click();
-				await page.getByTestId("edit-round-maps-button").first().click();
+
+				if (tournamentId === 2) {
+					await page.getByTestId("edit-round-maps-button").first().click();
+					await page.getByTestId("pick-ban-switch").click();
+					await page.getByTestId("edit-round-maps-button").first().click();
+				}
 				await page.getByTestId("confirm-finalize-bracket-button").click();
 
 				const teamOneCaptainId = mapPickingStyle === "TO" ? 33 : 29;

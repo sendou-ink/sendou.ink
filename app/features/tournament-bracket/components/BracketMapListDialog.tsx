@@ -683,6 +683,7 @@ function PickBanSelect({
 		<div>
 			<Label htmlFor="pick-ban-style">Pick/ban</Label>
 			<select
+				className="map-list-dialog__pick-ban-select"
 				id="pick-ban-style"
 				value={pickBanStyle ?? "NONE"}
 				onChange={(e) =>

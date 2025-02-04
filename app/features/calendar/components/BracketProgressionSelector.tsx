@@ -364,6 +364,7 @@ function TournamentFormatBracketSelector({
 									})
 								}
 								isDisabled={bracket.disabled || isTournamentInProgress}
+								data-testid="follow-up-bracket-switch"
 							/>
 							<Label htmlFor={createId("follow-up-bracket")} spaced={false}>
 								Is follow-up bracket

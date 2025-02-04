@@ -332,8 +332,9 @@ function MemberRow({
 								? false
 								: isThisMemberManager
 					}
+					data-testid="editor-switch"
 				>
-					Editor
+					{t("team:editor.label")}
 				</SendouSwitch>
 			</div>
 			<div className={clsx({ invisible: isThisMemberOwner || isSelf })}>

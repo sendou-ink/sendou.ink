@@ -112,11 +112,11 @@ export default function ObjectDamagePage() {
 						</label>
 						<SendouSwitch
 							id="multi"
-							name="multi"
 							isSelected={isMultiShot}
 							onChange={(isSelected) =>
 								handleChange({ newIsMultiShot: isSelected })
 							}
+							data-testid="multi-switch"
 						/>
 					</div>
 				) : null}
