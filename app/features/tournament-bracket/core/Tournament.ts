@@ -695,12 +695,19 @@ export class Tournament {
 			/[^a-zA-Z ]/g,
 			"",
 		);
-		const prefix = tournamentNameWithoutOnlyLetters
+		let prefix = tournamentNameWithoutOnlyLetters
 			.split(" ")
 			.map((word) => word[0])
 			.join("")
 			.toUpperCase()
 			.slice(0, 3);
+
+		// handle tournament name not having letters by using a default prefix
+		if (!prefix) {
+			prefix = ["AB", "CD", "EF", "GH", "IJ", "KL", "MN", "OP", "QR", "ST"][
+				this.ctx.id % 10
+			];
+		}
 
 		return {
 			prefix,
