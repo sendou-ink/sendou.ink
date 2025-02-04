@@ -1,10 +1,4 @@
-import { redirect } from "@remix-run/node";
-import type {
-	ActionFunction,
-	LoaderFunctionArgs,
-	MetaFunction,
-	SerializeFrom,
-} from "@remix-run/node";
+import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import { Form, useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
@@ -15,114 +9,32 @@ import { Button } from "~/components/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { TrashIcon } from "~/components/icons/Trash";
 import { useUser } from "~/features/auth/core/user";
-import { requireUserId } from "~/features/auth/core/user.server";
-import { isAdmin } from "~/permissions";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import {
-	notFoundIfFalsy,
-	parseRequestPayload,
-	validate,
-} from "~/utils/remix.server";
 import { makeTitle } from "~/utils/strings";
-import { assertUnreachable } from "~/utils/types";
 import {
 	TEAM_SEARCH_PAGE,
 	joinTeamPage,
 	navIconUrl,
 	teamPage,
 } from "~/utils/urls";
-import * as TeamMemberRepository from "../TeamMemberRepository.server";
-import * as TeamRepository from "../TeamRepository.server";
+import type * as TeamRepository from "../TeamRepository.server";
 import { TEAM_MEMBER_ROLES } from "../team-constants";
-import { manageRosterSchema, teamParamsSchema } from "../team-schemas.server";
-import { isTeamFull, isTeamManager } from "../team-utils";
+import { isTeamFull } from "../team-utils";
 import "../team.css";
-import { SendouButton } from "~/components/elements/Button";
-import { SendouPopover } from "~/components/elements/Popover";
+import { action } from "../actions/t.$customUrl.roster.server";
+import { loader } from "../loaders/t.$customUrl.roster.server";
+
+export { loader, action };
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
 	if (!data) return [];
 
 	return [{ title: makeTitle(data.team.name) }];
-};
-
-export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUserId(request);
-
-	const { customUrl } = teamParamsSchema.parse(params);
-	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));
-	validate(
-		isTeamManager({ team, user }) || isAdmin(user),
-		"Only team manager or owner can manage roster",
-	);
-
-	const data = await parseRequestPayload({
-		request,
-		schema: manageRosterSchema,
-	});
-
-	switch (data._action) {
-		case "DELETE_MEMBER": {
-			const member = team.members.find((m) => m.id === data.userId);
-
-			validate(member, "Member not found");
-			validate(member.id !== user.id, "Can't delete yourself");
-			validate(!member.isOwner, "Can't delete owner");
-
-			await TeamRepository.handleMemberLeaving({
-				teamId: team.id,
-				userId: data.userId,
-			});
-			break;
-		}
-		case "RESET_INVITE_LINK": {
-			await TeamRepository.resetInviteCode(team.id);
-
-			break;
-		}
-		case "ADD_MANAGER": {
-			await TeamMemberRepository.update(
-				{ teamId: team.id, userId: data.userId },
-				{
-					isManager: 1,
-				},
-			);
-
-			break;
-		}
-		case "REMOVE_MANAGER": {
-			const member = team.members.find((m) => m.id === data.userId);
-			validate(member, "Member not found");
-			validate(member.id !== user.id, "Can't remove yourself as manager");
-
-			await TeamMemberRepository.update(
-				{ teamId: team.id, userId: data.userId },
-				{
-					isManager: 0,
-				},
-			);
-
-			break;
-		}
-		case "UPDATE_MEMBER_ROLE": {
-			await TeamMemberRepository.update(
-				{ teamId: team.id, userId: data.userId },
-				{
-					role: data.role || null,
-				},
-			);
-
-			break;
-		}
-		default: {
-			assertUnreachable(data);
-		}
-	}
-
-	return null;
 };
 
 export const handle: SendouRouteHandle = {
@@ -145,25 +57,6 @@ export const handle: SendouRouteHandle = {
 			},
 		];
 	},
-};
-
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const user = await requireUserId(request);
-	const { customUrl } = teamParamsSchema.parse(params);
-
-	const team = notFoundIfFalsy(
-		await TeamRepository.findByCustomUrl(customUrl, {
-			includeInviteCode: true,
-		}),
-	);
-
-	if (!isTeamManager({ team, user }) && !isAdmin(user)) {
-		throw redirect(teamPage(customUrl));
-	}
-
-	return {
-		team,
-	};
 };
 
 export default function ManageTeamRosterPage() {
