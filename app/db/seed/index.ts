@@ -158,7 +158,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	tournamentSubs,
 	adminBuilds,
 	manySplattershotBuilds,
-	detailedTeam,
+	detailedTeam(variation),
 	otherTeams,
 	realVideo,
 	realVideoCast,
@@ -1560,7 +1560,7 @@ async function manySplattershotBuilds() {
 	}
 }
 
-function detailedTeam() {
+const detailedTeam = (seedVariation?: SeedVariation | null) => () => {
 	sql
 		.prepare(
 			/* sql */ `
@@ -1591,6 +1591,9 @@ function detailedTeam() {
 	const userIds = userIdsInRandomOrder(true).filter(
 		(id) => id !== NZAP_TEST_ID,
 	);
+	if (seedVariation === "NZAP_IN_TEAM") {
+		userIds.unshift(NZAP_TEST_ID);
+	}
 	for (let i = 0; i < 5; i++) {
 		const userId = i === 0 ? ADMIN_ID : userIds.shift()!;
 
@@ -1609,7 +1612,7 @@ function detailedTeam() {
 			)
 			.run();
 	}
-}
+};
 
 function otherTeams() {
 	const usersInTeam = (

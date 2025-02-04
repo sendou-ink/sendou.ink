@@ -582,7 +582,7 @@ function CheckIn({
 			<div className="stack items-center">
 				<SendouPopover
 					trigger={
-						<SendouButton size="tiny">
+						<SendouButton size="small">
 							{t("tournament:pre.checkIn.button")}
 						</SendouButton>
 					}
@@ -696,7 +696,7 @@ function TeamInfo({
 					<SendouPopover
 						trigger={
 							<SendouButton
-								size="tiny"
+								size="small"
 								variant="minimal-destructive"
 								className="build__small-text"
 							>

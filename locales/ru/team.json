@@ -2,7 +2,6 @@
 	"newTeam.header": "Создать новую команду",
 	"teamSearch.placeholder": "Поиск игрока или команды...",
 	"actionButtons.leaveTeam": "Покинуть команду",
-	"leaveTeam.header": "Вы уверены, что хотите покинуть {{teamName}}?",
 	"actionButtons.leaveTeam.confirm": "Покинуть",
 	"actionButtons.editTeam": "Редактировать команду",
 	"actionButtons.manageRoster": "Управлять составом",

@@ -130,7 +130,7 @@ function SecondaryTeamsPopover() {
 				<SendouButton
 					className="focus-text-decoration self-start"
 					variant="minimal"
-					size="tiny"
+					size="small"
 				>
 					<span
 						className="text-sm font-bold text-main-forced"

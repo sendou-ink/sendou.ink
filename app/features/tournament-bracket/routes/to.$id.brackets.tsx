@@ -737,7 +737,7 @@ function SubsPopover({ children }: { children: React.ReactNode }) {
 				<SendouButton
 					className="ml-auto"
 					variant="outlined"
-					size="tiny"
+					size="small"
 					data-testid="add-sub-button"
 				>
 					{t("tournament:actions.addSub")}

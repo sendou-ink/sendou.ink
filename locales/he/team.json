@@ -2,7 +2,6 @@
 	"newTeam.header": "יצירת צוות חדש",
 	"teamSearch.placeholder": "חיפוש צוות או שחקן...",
 	"actionButtons.leaveTeam": "לעזוב צוות",
-	"leaveTeam.header": "הנכם בטוחים שאתם רוצים לעזוב את {{teamName}}?",
 	"actionButtons.leaveTeam.confirm": "לעזוב",
 	"actionButtons.editTeam": "עריכת צוות",
 	"actionButtons.manageRoster": "ניהול חברי צוות",

@@ -21,7 +21,7 @@ export function SendouPopover({
 		<DialogTrigger>
 			{trigger}
 			<Popover
-				className={clsx("popover-content", popoverClassName)}
+				className={clsx("sendou-popover-content", popoverClassName)}
 				placement={placement}
 			>
 				<Dialog>{children}</Dialog>

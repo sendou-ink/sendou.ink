@@ -14,7 +14,7 @@ interface MyDatePickerProps extends ReactAriaButtonProps {
 		| "minimal"
 		| "minimal-success"
 		| "minimal-destructive";
-	size?: "miniscule" | "tiny" | "big";
+	size?: "miniscule" | "small" | "medium" | "big";
 	icon?: JSX.Element;
 	children?: React.ReactNode;
 }
@@ -34,7 +34,7 @@ export function SendouButton({
 				"react-aria-Button",
 				variant,
 				{
-					tiny: size === "tiny",
+					small: size === "small",
 					big: size === "big",
 					miniscule: size === "miniscule",
 				},

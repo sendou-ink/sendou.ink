@@ -8,7 +8,7 @@ import {
 } from "react-hook-form";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
-import { Toggle } from "../Toggle";
+import { SendouSwitch } from "../elements/Switch";
 
 export function ToggleFormField<T extends FieldValues>({
 	label,
@@ -27,7 +27,7 @@ export function ToggleFormField<T extends FieldValues>({
 				control={methods.control}
 				name={name}
 				render={({ field: { value, onChange } }) => (
-					<Toggle checked={value} setChecked={onChange} />
+					<SendouSwitch id={id} isSelected={value} onChange={onChange} />
 				)}
 			/>
 			{error && (

@@ -817,7 +817,7 @@ function VoiceChatInfo({
 			trigger={
 				<SendouButton
 					variant="minimal"
-					size="tiny"
+					size="small"
 					icon={<Icon className={clsx("q__group-member-vc-icon", color())} />}
 				/>
 			}

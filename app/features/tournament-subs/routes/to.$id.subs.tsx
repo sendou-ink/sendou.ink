@@ -135,7 +135,7 @@ function AddOrEditSubButton() {
 	if (!tournament.canAddNewSubPost) {
 		return (
 			<SendouPopover
-				trigger={<SendouButton size="tiny">{buttonText}</SendouButton>}
+				trigger={<SendouButton size="small">{buttonText}</SendouButton>}
 			>
 				{data.hasOwnSubPost
 					? "Sub post can't be edited anymore since registration has closed"

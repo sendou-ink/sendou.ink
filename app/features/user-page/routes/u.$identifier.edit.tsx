@@ -18,7 +18,6 @@ import { WeaponImage } from "~/components/Image";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
-import { Toggle } from "~/components/Toggle";
 import { StarIcon } from "~/components/icons/Star";
 import { StarFilledIcon } from "~/components/icons/StarFilled";
 import { TrashIcon } from "~/components/icons/Trash";
@@ -54,8 +53,8 @@ import {
 } from "~/utils/zod";
 import { userParamsSchema } from "../user-page-schemas.server";
 import type { UserPageLoaderData } from "./u.$identifier";
-
 import "~/styles/u-edit.css";
+import { SendouSwitch } from "~/components/elements/Switch";
 
 const userEditActionSchema = z
 	.object({
@@ -624,9 +623,9 @@ function ShowUniqueDiscordNameToggle() {
 			<label htmlFor="showDiscordUniqueName">
 				{t("user:forms.showDiscordUniqueName")}
 			</label>
-			<Toggle
-				checked={checked}
-				setChecked={setChecked}
+			<SendouSwitch
+				isSelected={checked}
+				onChange={setChecked}
 				name="showDiscordUniqueName"
 			/>
 			<FormMessage type="info">
@@ -651,9 +650,9 @@ function CommissionsOpenToggle({
 	return (
 		<div>
 			<label htmlFor="commissionsOpen">{t("user:forms.commissionsOpen")}</label>
-			<Toggle
-				checked={checked}
-				setChecked={setChecked}
+			<SendouSwitch
+				isSelected={checked}
+				onChange={setChecked}
 				name="commissionsOpen"
 			/>
 		</div>

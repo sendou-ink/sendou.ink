@@ -502,7 +502,7 @@ function ModeProgressIndicator({
 							trigger={
 								<SendouButton
 									variant="minimal"
-									size="tiny"
+									size="small"
 									className="tournament-bracket__mode-progress__image__banned__popover-trigger"
 								>
 									<Image

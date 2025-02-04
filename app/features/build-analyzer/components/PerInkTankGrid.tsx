@@ -21,7 +21,7 @@ export function PerInkTankGrid(props: PerInkTankGridProps) {
 		<SendouPopover
 			popoverClassName="analyzer__ink-grid__container"
 			trigger={
-				<SendouButton variant="minimal" size="tiny">
+				<SendouButton variant="minimal" size="small">
 					{t("analyzer:button.showConsumptionGrid")}
 				</SendouButton>
 			}

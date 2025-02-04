@@ -6,7 +6,7 @@ import { DateInput } from "~/components/DateInput";
 import { FormMessage } from "~/components/FormMessage";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
-import { Toggle } from "~/components/Toggle";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { PlusIcon } from "~/components/icons/Plus";
 import { TOURNAMENT } from "~/features/tournament";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
@@ -207,12 +207,13 @@ function TournamentFormatBracketSelector({
 				{bracket.sources ? (
 					<div>
 						<Label htmlFor={createId("checkIn")}>Check-in required</Label>
-						<Toggle
-							checked={bracket.requiresCheckIn}
-							setChecked={(checked) =>
-								updateBracket({ requiresCheckIn: checked })
+						<SendouSwitch
+							id={createId("checkIn")}
+							isSelected={bracket.requiresCheckIn}
+							onChange={(isSelected) =>
+								updateBracket({ requiresCheckIn: isSelected })
 							}
-							disabled={bracket.disabled}
+							isDisabled={bracket.disabled}
 						/>
 						<FormMessage type="info">
 							Check-in starts 1 hour before start time or right after the
@@ -247,14 +248,18 @@ function TournamentFormatBracketSelector({
 						<Label htmlFor={createId("thirdPlaceMatch")}>
 							Third place match
 						</Label>
-						<Toggle
-							checked={Boolean(bracket.settings.thirdPlaceMatch)}
-							setChecked={(checked) =>
+						<SendouSwitch
+							id={createId("thirdPlaceMatch")}
+							isSelected={Boolean(bracket.settings.thirdPlaceMatch)}
+							onChange={(isSelected) =>
 								updateBracket({
-									settings: { ...bracket.settings, thirdPlaceMatch: checked },
+									settings: {
+										...bracket.settings,
+										thirdPlaceMatch: isSelected,
+									},
 								})
 							}
-							disabled={bracket.disabled}
+							isDisabled={bracket.disabled}
 						/>
 					</div>
 				) : null}
@@ -347,18 +352,19 @@ function TournamentFormatBracketSelector({
 					</div>
 					{!isFirstBracket ? (
 						<div className="stack sm horizontal mt-1 mb-2">
-							<Toggle
+							<SendouSwitch
 								id={createId("follow-up-bracket")}
-								tiny
-								checked={Boolean(bracket.sources)}
-								setChecked={(checked) =>
+								size="small"
+								isSelected={Boolean(bracket.sources)}
+								onChange={(isSelected) =>
 									updateBracket({
-										sources: checked ? [] : undefined,
+										sources: isSelected ? [] : undefined,
 										requiresCheckIn: false,
 										startTime: undefined,
 									})
 								}
-								disabled={bracket.disabled || isTournamentInProgress}
+								isDisabled={bracket.disabled || isTournamentInProgress}
+								data-testid="follow-up-bracket-switch"
 							/>
 							<Label htmlFor={createId("follow-up-bracket")} spaced={false}>
 								Is follow-up bracket
