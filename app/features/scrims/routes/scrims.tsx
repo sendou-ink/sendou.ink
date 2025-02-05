@@ -8,7 +8,6 @@ import { Button, LinkButton } from "~/components/Button";
 import { Dialog } from "~/components/Dialog";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { Popover } from "~/components/Popover";
 import { SubmitButton } from "~/components/SubmitButton";
 import { Table } from "~/components/Table";
 import { MyForm } from "~/components/form/MyForm";
@@ -33,12 +32,12 @@ import { SpeechBubbleFilledIcon } from "../../../components/icons/SpeechBubbleFi
 import { FromFormField } from "../components/FromFormField";
 import { newRequestSchema } from "../scrims-schemas";
 import type { ScrimPost, ScrimPostRequest } from "../scrims-types";
-
 import { action } from "../actions/scrims.server";
 import { loader } from "../loaders/scrims.server";
 export { loader, action };
-
 import "../scrims.css";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 
 export type NewRequestFormFields = z.infer<typeof newRequestSchema>;
 
@@ -327,9 +326,12 @@ function ScrimsTable({
 								<td>
 									<div className="stack horizontal md items-center">
 										{showPopovers ? (
-											<Popover
-												buttonChildren={
-													<UsersIcon className="scrims__post__icon" />
+											<SendouPopover
+												trigger={
+													<SendouButton
+														variant="minimal"
+														icon={<UsersIcon className="scrims__post__icon" />}
+													/>
 												}
 											>
 												<div className="stack md">
@@ -344,7 +346,7 @@ function ScrimsTable({
 														</Link>
 													))}
 												</div>
-											</Popover>
+											</SendouPopover>
 										) : null}
 										{post.team?.avatarUrl ? (
 											<Avatar
@@ -360,13 +362,18 @@ function ScrimsTable({
 								{showPopovers ? (
 									<td>
 										{post.text ? (
-											<Popover
-												buttonChildren={
-													<SpeechBubbleIcon className="scrims__post__icon" />
+											<SendouPopover
+												trigger={
+													<SendouButton
+														variant="minimal"
+														icon={
+															<SpeechBubbleIcon className="scrims__post__icon" />
+														}
+													/>
 												}
 											>
 												{post.text}
-											</Popover>
+											</SendouPopover>
 										) : null}
 									</td>
 								) : null}
@@ -426,12 +433,15 @@ function ScrimsTable({
 												</Button>
 											</FormWithConfirm>
 										) : (
-											<Popover
-												buttonChildren={<>Delete</>}
-												triggerClassName="destructive tiny"
+											<SendouPopover
+												trigger={
+													<SendouButton variant="destructive" size="small">
+														Delete
+													</SendouButton>
+												}
 											>
 												The post must be deleted by the owner ({owner.username})
-											</Popover>
+											</SendouPopover>
 										)}
 									</td>
 								) : null}
@@ -504,8 +514,13 @@ function RequestRow({
 			<td />
 			<td>
 				<div className="stack horizontal md items-center">
-					<Popover
-						buttonChildren={<UsersIcon className="scrims__post__icon" />}
+					<SendouPopover
+						trigger={
+							<SendouButton
+								icon={<UsersIcon className="scrims__post__icon" />}
+								variant="minimal"
+							/>
+						}
 					>
 						<div className="stack md">
 							{request.users.map((user) => (
@@ -519,7 +534,7 @@ function RequestRow({
 								</Link>
 							))}
 						</div>
-					</Popover>
+					</SendouPopover>
 					{request.team?.avatarUrl ? (
 						<Avatar
 							size="xxs"
@@ -547,9 +562,11 @@ function RequestRow({
 						</SubmitButton>
 					</fetcher.Form>
 				) : !request.isAccepted && !canAccept ? (
-					<Popover buttonChildren={<>Accept</>} triggerClassName="tiny">
+					<SendouPopover
+						trigger={<SendouButton size="small">Accept</SendouButton>}
+					>
 						Ask the person who posted the scrim to accept this request
-					</Popover>
+					</SendouPopover>
 				) : (
 					<ContactButton postId={postId} />
 				)}

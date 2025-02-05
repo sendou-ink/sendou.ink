@@ -1,7 +1,6 @@
 import { useLoaderData } from "@remix-run/react";
 import type { z } from "zod";
 import { Label } from "~/components/Label";
-import { DateFormField } from "~/components/form/DateFormField";
 import { MyForm } from "~/components/form/MyForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import { Main } from "../../../components/Main";
@@ -12,7 +11,7 @@ import {
 	scrimsNewActionSchema,
 } from "../scrims-schemas";
 import type { LutiDiv } from "../scrims-types";
-
+import { DateTimeFormField } from "~/components/form/DateTimeFormField";
 import { action } from "../actions/scrims.new.server";
 import { loader } from "../loaders/scrims.new.server";
 export { loader, action };
@@ -42,10 +41,11 @@ export default function NewScrimPage() {
 			>
 				<FromFormField usersTeams={data.teams} />
 
-				<DateFormField<FormFields> label="When" name="at" />
+				<DateTimeFormField<FormFields> label="When" name="at" />
 
+				{/** xxx: todo implement luti form field */}
 				<LutiDivsFormField
-					value={null}
+					value={null as any}
 					onChange={(newVal) => console.log(newVal)}
 				/>
 
