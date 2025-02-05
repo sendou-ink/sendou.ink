@@ -42,10 +42,10 @@ import { FAQ_PAGE, isCustomUrl, userPage } from "~/utils/urls";
 import {
 	actualNumber,
 	checkboxValueToDbBoolean,
+	customCssVarObject,
 	dbBoolean,
 	falsyToNull,
 	id,
-	jsonParseable,
 	processMany,
 	safeJSONParse,
 	undefinedToNull,
@@ -56,7 +56,7 @@ import type { UserPageLoaderData } from "./u.$identifier";
 import "~/styles/u-edit.css";
 import { SendouSwitch } from "~/components/elements/Switch";
 
-const userEditActionSchema = z
+export const userEditActionSchema = z
 	.object({
 		country: z.preprocess(
 			falsyToNull,
@@ -127,7 +127,7 @@ const userEditActionSchema = z
 				.refine((val) => /^[0-9a-z]{4,5}$/.test(val))
 				.nullable(),
 		),
-		css: z.preprocess(falsyToNull, z.string().refine(jsonParseable).nullable()),
+		css: customCssVarObject,
 		weapons: z.preprocess(
 			safeJSONParse,
 			z

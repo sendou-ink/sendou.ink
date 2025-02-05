@@ -1,5 +1,6 @@
 import type { ZodType } from "zod";
 import { z } from "zod";
+import { CUSTOM_CSS_VAR_COLORS } from "~/constants";
 import type { abilitiesShort } from "~/modules/in-game-lists";
 import { abilities, mainWeaponIds, stageIds } from "~/modules/in-game-lists";
 import { FRIEND_CODE_REGEXP } from "../features/sendouq/q-constants";
@@ -15,7 +16,8 @@ export const nonEmptyString = z.string().trim().min(1, {
 
 export const dbBoolean = z.coerce.number().min(0).max(1).int();
 
-export const hexCode = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+const hexCodeRegex = /^#(?:[0-9a-fA-F]{3}){1,2}$/; // https://stackoverflow.com/a/1636354
+export const hexCode = z.string().regex(hexCodeRegex);
 
 const abilityNameToType = (val: string) =>
 	abilities.find((ability) => ability.name === val)?.type;
@@ -262,3 +264,27 @@ export const dayMonthYear = z.object({
 });
 
 export type DayMonthYear = z.infer<typeof dayMonthYear>;
+
+export const customCssVarObject = z.preprocess(
+	falsyToNull,
+	z.string().nullable().refine(validSerializedCustomCssVarObject, {
+		message: "Invalid custom CSS var object",
+	}),
+);
+
+function validSerializedCustomCssVarObject(value: unknown) {
+	if (!value) return true;
+
+	try {
+		const parsedValue = JSON.parse(value as string);
+
+		for (const [key, value] of Object.entries(parsedValue)) {
+			if (!CUSTOM_CSS_VAR_COLORS.includes(key as any)) return false;
+			if (!hexCodeRegex.test(value as string)) return false;
+		}
+
+		return true;
+	} catch {
+		return false;
+	}
+}
