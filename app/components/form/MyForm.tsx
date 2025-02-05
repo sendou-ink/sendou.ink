@@ -1,9 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFetcher } from "@remix-run/react";
 import * as React from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { type DefaultValues, FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod";
+import { logger } from "~/utils/logger";
 import type { ActionError } from "~/utils/remix.server";
 import { Button } from "../Button";
 import { SubmitButton } from "../SubmitButton";
@@ -16,7 +17,7 @@ export function MyForm<T extends z.ZodTypeAny>({
 	handleCancel,
 }: {
 	schema: T;
-	defaultValues?: z.infer<T>;
+	defaultValues?: DefaultValues<z.infer<T>>;
 	title?: string;
 	children: React.ReactNode;
 	handleCancel?: () => void;
@@ -27,6 +28,10 @@ export function MyForm<T extends z.ZodTypeAny>({
 		resolver: zodResolver(schema),
 		defaultValues,
 	});
+
+	if (methods.formState.isSubmitted && methods.formState.errors) {
+		logger.error(methods.formState.errors);
+	}
 
 	React.useEffect(() => {
 		if (!fetcher.data?.isError) return;

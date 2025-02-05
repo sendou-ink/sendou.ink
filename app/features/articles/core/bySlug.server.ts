@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
-import { ZodError } from "zod";
+import { ZodError, type z } from "zod";
 import { ARTICLES_FOLDER_PATH } from "../articles-constants";
 import { articleDataSchema } from "../articles-schemas.server";
 
@@ -23,8 +23,8 @@ export function articleBySlug(slug: string) {
 				month: "long",
 				year: "numeric",
 			}),
-			authorLink: authorToLink(restParsed.author),
-			...restParsed,
+			authors: normalizeAuthors(restParsed.author),
+			title: restParsed.title,
 		};
 	} catch (e) {
 		if (!(e instanceof Error)) throw e;
@@ -37,8 +37,20 @@ export function articleBySlug(slug: string) {
 	}
 }
 
-function authorToLink(author: string) {
-	if (author === "Riczi") return "https://twitter.com/Riczi2k";
+export function normalizeAuthors(
+	authors: z.infer<typeof articleDataSchema>["author"],
+): Array<{ name: string; link: string | null }> {
+	if (Array.isArray(authors)) {
+		return authors.map((author) => {
+			if (typeof author === "string") {
+				return { name: author, link: null };
+			}
+			return author;
+		});
+	}
 
-	return;
+	if (typeof authors === "string") {
+		return [{ name: authors, link: null }];
+	}
+	return [authors];
 }

@@ -25,6 +25,7 @@ import { joinListToNaturalString } from "~/utils/arrays";
 import {
 	databaseTimestampToDate,
 	dateToThisWeeksMonday,
+	dateToThisWeeksSunday,
 	dateToWeekNumber,
 	dayToWeekStartsAtMondayDay,
 	getWeekStartsAtMondayDay,
@@ -44,7 +45,6 @@ import {
 } from "~/utils/urls";
 import { actualNumber, safeSplit } from "~/utils/zod";
 import { Label } from "../../../components/Label";
-import { Toggle } from "../../../components/Toggle";
 import type {
 	CalendarEventTag,
 	PersistedCalendarEventTag,
@@ -54,8 +54,8 @@ import { calendarEventTagSchema } from "../actions/calendar.new.server";
 import { CALENDAR_EVENT } from "../calendar-constants";
 import { closeByWeeks } from "../calendar-utils";
 import { Tags } from "../components/Tags";
-
 import "~/styles/calendar.css";
+import { SendouSwitch } from "~/components/elements/Switch";
 
 export const meta: MetaFunction = (args) => {
 	const data = args.data as SerializeFrom<typeof loader> | null;
@@ -116,6 +116,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		});
 
 	const mondayDate = dateToThisWeeksMonday(new Date());
+	const sundayDate = dateToThisWeeksSunday(new Date());
 	const currentWeek = dateToWeekNumber(mondayDate);
 
 	const displayedWeek = parsedWeekParams.success
@@ -123,7 +124,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		: currentWeek;
 	const displayedYear = parsedWeekParams.success
 		? parsedWeekParams.data.year
-		: mondayDate.getFullYear();
+		: currentWeek === 1 // handle first week of the year special case
+			? sundayDate.getFullYear()
+			: mondayDate.getFullYear();
 	const tagsToFilterBy = parsedFilterParams.success
 		? (parsedFilterParams.data.tags as PersistedCalendarEventTag[])
 		: [];
@@ -459,10 +462,10 @@ function OnSendouInkToggle() {
 				<Label htmlFor="onlyTournaments">
 					{t("calendar:tournament.filter.label")}
 				</Label>
-				<Toggle
+				<SendouSwitch
 					id="onlyTournaments"
-					checked={onlyTournaments}
-					setChecked={setOnlyTournaments}
+					isSelected={onlyTournaments}
+					onChange={setOnlyTournaments}
 				/>
 			</div>
 		</div>

@@ -44,6 +44,10 @@ import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { createVod } from "~/features/vods/queries/createVod.server";
+import {
+	secondsToHoursMinutesSecondString,
+	youtubeIdToYoutubeUrl,
+} from "~/features/vods/vods-utils";
 import type {
 	AbilityType,
 	MainWeaponId,
@@ -99,6 +103,10 @@ const calendarEventWithToToolsDepths = () => calendarEventWithToTools("DEPTHS");
 const calendarEventWithToToolsTeamsDepths = () =>
 	calendarEventWithToToolsTeams("DEPTHS");
 
+const calendarEventWithToToolsLUTI = () => calendarEventWithToTools("LUTI");
+const calendarEventWithToToolsTeamsLUTI = () =>
+	calendarEventWithToToolsTeams("LUTI");
+
 const basicSeeds = (variation?: SeedVariation | null) => [
 	adminUser,
 	makeAdminPatron,
@@ -146,10 +154,12 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	calendarEventWithToToolsToSetMapPool,
 	calendarEventWithToToolsDepths,
 	calendarEventWithToToolsTeamsDepths,
+	calendarEventWithToToolsLUTI,
+	calendarEventWithToToolsTeamsLUTI,
 	tournamentSubs,
 	adminBuilds,
 	manySplattershotBuilds,
-	detailedTeam,
+	detailedTeam(variation),
 	otherTeams,
 	realVideo,
 	realVideoCast,
@@ -221,6 +231,12 @@ function wipeDB() {
 	];
 
 	for (const table of tablesToDelete) {
+		if (table === "Tournament") {
+			// foreign key constraint reasons
+			sql
+				.prepare("delete from Tournament where parentTournamentId is not null")
+				.run();
+		}
 		sql.prepare(`delete from "${table}"`).run();
 	}
 }
@@ -232,7 +248,6 @@ async function adminUser() {
 		twitch: "Sendou",
 		youtubeId: "UCWbJLXByvsfQvTcR4HLPs5Q",
 		discordAvatar: ADMIN_TEST_AVATAR,
-		twitter: "sendouc",
 		discordUniqueName: "sendou",
 	});
 }
@@ -281,7 +296,6 @@ function nzapUser() {
 		twitch: null,
 		youtubeId: null,
 		discordAvatar: NZAP_TEST_AVATAR,
-		twitter: null,
 		discordUniqueName: null,
 	});
 }
@@ -461,7 +475,6 @@ function fakeUser(usedNames: Set<string>) {
 		discordId: String(faker.string.numeric(17)),
 		discordName: uniqueDiscordName(usedNames),
 		twitch: null,
-		twitter: null,
 		youtubeId: null,
 		discordUniqueName: null,
 	});
@@ -864,7 +877,7 @@ async function calendarEventResults() {
 
 const TO_TOOLS_CALENDAR_EVENT_ID = 201;
 function calendarEventWithToTools(
-	event: "PICNIC" | "ITZ" | "PP" | "SOS" | "DEPTHS" = "PICNIC",
+	event: "PICNIC" | "ITZ" | "PP" | "SOS" | "DEPTHS" | "LUTI" = "PICNIC",
 	registrationOpen = false,
 ) {
 	const tournamentId = {
@@ -873,6 +886,7 @@ function calendarEventWithToTools(
 		PP: 3,
 		SOS: 4,
 		DEPTHS: 5,
+		LUTI: 6,
 	}[event];
 	const eventId = {
 		PICNIC: TO_TOOLS_CALENDAR_EVENT_ID + 0,
@@ -880,6 +894,7 @@ function calendarEventWithToTools(
 		PP: TO_TOOLS_CALENDAR_EVENT_ID + 2,
 		SOS: TO_TOOLS_CALENDAR_EVENT_ID + 3,
 		DEPTHS: TO_TOOLS_CALENDAR_EVENT_ID + 4,
+		LUTI: TO_TOOLS_CALENDAR_EVENT_ID + 5,
 	}[event];
 	const name = {
 		PICNIC: "PICNIC #2",
@@ -887,6 +902,7 @@ function calendarEventWithToTools(
 		PP: "Paddling Pool 253",
 		SOS: "Swim or Sink 101",
 		DEPTHS: "The Depths 5",
+		LUTI: "Leagues Under The Ink Season 15",
 	}[event];
 
 	const settings: Tables["Tournament"]["settings"] =
@@ -990,16 +1006,34 @@ function calendarEventWithToTools(
 									},
 								],
 							}
-						: {
-								bracketProgression: [
-									{
-										type: "double_elimination",
-										name: "Main bracket",
-										requiresCheckIn: false,
-										settings: {},
-									},
-								],
-							};
+						: event === "LUTI"
+							? {
+									bracketProgression: [
+										{
+											type: "round_robin",
+											name: "Groups stage",
+											requiresCheckIn: false,
+											settings: {},
+										},
+										{
+											type: "single_elimination",
+											name: "Play-offs",
+											requiresCheckIn: false,
+											settings: {},
+											sources: [{ bracketIdx: 0, placements: [1, 2] }],
+										},
+									],
+								}
+							: {
+									bracketProgression: [
+										{
+											type: "double_elimination",
+											name: "Main bracket",
+											requiresCheckIn: false,
+											settings: {},
+										},
+									],
+								};
 
 	sql
 		.prepare(
@@ -1019,7 +1053,11 @@ function calendarEventWithToTools(
 			id: tournamentId,
 			settings: JSON.stringify(settings),
 			mapPickingStyle:
-				event === "SOS" ? "TO" : event === "ITZ" ? "AUTO_SZ" : "AUTO_ALL",
+				event === "SOS" || event === "LUTI"
+					? "TO"
+					: event === "ITZ"
+						? "AUTO_SZ"
+						: "AUTO_ALL",
 		});
 
 	sql
@@ -1159,7 +1197,7 @@ const availablePairs = rankedModesShort
 	)
 	.filter((pair) => !tiebreakerPicks.has(pair));
 function calendarEventWithToToolsTeams(
-	event: "PICNIC" | "ITZ" | "PP" | "SOS" | "DEPTHS" = "PICNIC",
+	event: "PICNIC" | "ITZ" | "PP" | "SOS" | "DEPTHS" | "LUTI" = "PICNIC",
 	isSmall = false,
 ) {
 	const userIds = userIdsInAscendingOrderById();
@@ -1173,6 +1211,7 @@ function calendarEventWithToToolsTeams(
 		PP: 3,
 		SOS: 4,
 		DEPTHS: 5,
+		LUTI: 6,
 	}[event];
 
 	const teamIdAddition = {
@@ -1181,6 +1220,7 @@ function calendarEventWithToToolsTeams(
 		PP: 200,
 		SOS: 300,
 		DEPTHS: 400,
+		LUTI: 500,
 	}[event];
 
 	for (let id = 1; id <= (isSmall ? 4 : 16); id++) {
@@ -1215,8 +1255,8 @@ function calendarEventWithToToolsTeams(
 				inviteCode: nanoid(INVITE_CODE_LENGTH),
 			});
 
-		// in PICNIC & PP Chimera is not checked in
-		if (teamId !== 1 && teamId !== 201) {
+		// in PICNIC & PP Chimera is not checked in + in LUTI no check-ins at all
+		if (teamId !== 1 && teamId !== 201 && event !== "LUTI") {
 			sql
 				.prepare(
 					`
@@ -1271,7 +1311,11 @@ function calendarEventWithToToolsTeams(
 				});
 		}
 
-		if (event !== "SOS" && (Math.random() < 0.8 || id === 1)) {
+		if (
+			event !== "SOS" &&
+			event !== "LUTI" &&
+			(Math.random() < 0.8 || id === 1)
+		) {
 			const shuffledPairs = shuffle(availablePairs.slice());
 
 			let SZ = 0;
@@ -1519,7 +1563,7 @@ async function manySplattershotBuilds() {
 	}
 }
 
-function detailedTeam() {
+const detailedTeam = (seedVariation?: SeedVariation | null) => () => {
 	sql
 		.prepare(
 			/* sql */ `
@@ -1534,12 +1578,11 @@ function detailedTeam() {
 	sql
 		.prepare(
 			/* sql */ `
-      insert into "AllTeam" ("name", "customUrl", "inviteCode", "twitter", "bio", "avatarImgId", "bannerImgId")
+      insert into "AllTeam" ("name", "customUrl", "inviteCode", "bio", "avatarImgId", "bannerImgId")
        values (
           'Alliance Rogue',
           'alliance-rogue',
           '${nanoid(INVITE_CODE_LENGTH)}',
-          'AllianceRogueFR',
           '${faker.lorem.paragraph()}',
           1,
           2
@@ -1551,6 +1594,9 @@ function detailedTeam() {
 	const userIds = userIdsInRandomOrder(true).filter(
 		(id) => id !== NZAP_TEST_ID,
 	);
+	if (seedVariation === "NZAP_IN_TEAM") {
+		userIds.unshift(NZAP_TEST_ID);
+	}
 	for (let i = 0; i < 5; i++) {
 		const userId = i === 0 ? ADMIN_ID : userIds.shift()!;
 
@@ -1569,7 +1615,7 @@ function detailedTeam() {
 			)
 			.run();
 	}
-}
+};
 
 function otherTeams() {
 	const usersInTeam = (
@@ -1599,13 +1645,12 @@ function otherTeams() {
 		sql
 			.prepare(
 				/* sql */ `
-      insert into "AllTeam" ("id", "name", "customUrl", "inviteCode", "twitter", "bio")
+      insert into "AllTeam" ("id", "name", "customUrl", "inviteCode", "bio")
        values (
           @id,
           @name,
           @customUrl,
           @inviteCode,
-          @twitter,
           @bio
        )
     `,
@@ -1615,7 +1660,6 @@ function otherTeams() {
 				name: teamName,
 				customUrl: teamCustomUrl,
 				inviteCode: nanoid(INVITE_CODE_LENGTH),
-				twitter: faker.internet.username(),
 				bio: faker.lorem.paragraph(),
 			});
 
@@ -1645,47 +1689,50 @@ function otherTeams() {
 function realVideo() {
 	createVod({
 		type: "TOURNAMENT",
-		youtubeId: "M4aV-BQWlVg",
-		youtubeDate: dateToDatabaseTimestamp(new Date("02-02-2023")),
+		youtubeUrl: youtubeIdToYoutubeUrl("M4aV-BQWlVg"),
+		date: { day: 2, month: 2, year: 2023 },
 		submitterUserId: ADMIN_ID,
 		title: "LUTI Division X Tournament - ABBF (THRONE) vs. Ascension",
-		povUserId: NZAP_TEST_ID,
+		pov: {
+			type: "USER",
+			userId: NZAP_TEST_ID,
+		},
 		isValidated: true,
 		matches: [
 			{
 				mode: "SZ",
 				stageId: 8,
-				startsAt: 13,
+				startsAt: secondsToHoursMinutesSecondString(13),
 				weapons: [3040],
 			},
 			{
 				mode: "CB",
 				stageId: 6,
-				startsAt: 307,
+				startsAt: secondsToHoursMinutesSecondString(307),
 				weapons: [3040],
 			},
 			{
 				mode: "TC",
 				stageId: 2,
-				startsAt: 680,
+				startsAt: secondsToHoursMinutesSecondString(680),
 				weapons: [3040],
 			},
 			{
 				mode: "SZ",
 				stageId: 9,
-				startsAt: 1186,
+				startsAt: secondsToHoursMinutesSecondString(1186),
 				weapons: [3040],
 			},
 			{
 				mode: "RM",
 				stageId: 2,
-				startsAt: 1386,
+				startsAt: secondsToHoursMinutesSecondString(1386),
 				weapons: [3000],
 			},
 			{
 				mode: "TC",
 				stageId: 4,
-				startsAt: 1586,
+				startsAt: secondsToHoursMinutesSecondString(1586),
 				weapons: [1110],
 			},
 			// there are other matches too...
@@ -1696,8 +1743,8 @@ function realVideo() {
 function realVideoCast() {
 	createVod({
 		type: "CAST",
-		youtubeId: "M4aV-BQWlVg",
-		youtubeDate: dateToDatabaseTimestamp(new Date("02-02-2023")),
+		youtubeUrl: youtubeIdToYoutubeUrl("M4aV-BQWlVg"),
+		date: { day: 2, month: 2, year: 2023 },
 		submitterUserId: ADMIN_ID,
 		title: "LUTI Division X Tournament - ABBF (THRONE) vs. Ascension",
 		isValidated: true,
@@ -1705,25 +1752,25 @@ function realVideoCast() {
 			{
 				mode: "SZ",
 				stageId: 8,
-				startsAt: 13,
+				startsAt: secondsToHoursMinutesSecondString(13),
 				weapons: [3040, 1000, 2000, 4000, 5000, 6000, 7010, 8000],
 			},
 			{
 				mode: "CB",
 				stageId: 6,
-				startsAt: 307,
+				startsAt: secondsToHoursMinutesSecondString(307),
 				weapons: [3040, 1001, 2010, 4001, 5001, 6010, 7020, 8010],
 			},
 			{
 				mode: "TC",
 				stageId: 2,
-				startsAt: 680,
+				startsAt: secondsToHoursMinutesSecondString(680),
 				weapons: [3040, 1010, 2020, 4010, 5010, 6020, 7010, 8000],
 			},
 			{
 				mode: "SZ",
 				stageId: 9,
-				startsAt: 1186,
+				startsAt: secondsToHoursMinutesSecondString(1186),
 				weapons: [3040, 1020, 2030, 4020, 5020, 6020, 7020, 8010],
 			},
 			// there are other matches too...

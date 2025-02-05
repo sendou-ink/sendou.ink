@@ -1979,6 +1979,7 @@ export const PADDLING_POOL_257 = () =>
 		ctx: {
 			id: 27,
 			organization: null,
+			parentTournamentId: null,
 			tags: null,
 			eventId: 1352,
 			bracketProgressionOverrides: [],
@@ -6528,6 +6529,7 @@ export const PADDLING_POOL_255 = () =>
 					},
 					tournament_id: 18,
 					type: "round_robin",
+					createdAt: 1708538411,
 				},
 			],
 			group: [
@@ -6583,162 +6585,189 @@ export const PADDLING_POOL_255 = () =>
 					group_id: 56,
 					number: 1,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 286,
 					group_id: 56,
 					number: 2,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 287,
 					group_id: 56,
 					number: 3,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 288,
 					group_id: 57,
 					number: 1,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 289,
 					group_id: 57,
 					number: 2,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 290,
 					group_id: 57,
 					number: 3,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 291,
 					group_id: 58,
 					number: 1,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 292,
 					group_id: 58,
 					number: 2,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 293,
 					group_id: 58,
 					number: 3,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 294,
 					group_id: 59,
 					number: 1,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 295,
 					group_id: 59,
 					number: 2,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 296,
 					group_id: 59,
 					number: 3,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 297,
 					group_id: 60,
 					number: 1,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 298,
 					group_id: 60,
 					number: 2,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 299,
 					group_id: 60,
 					number: 3,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 300,
 					group_id: 61,
 					number: 1,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 301,
 					group_id: 61,
 					number: 2,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 302,
 					group_id: 61,
 					number: 3,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 303,
 					group_id: 62,
 					number: 1,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 304,
 					group_id: 62,
 					number: 2,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 305,
 					group_id: 62,
 					number: 3,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 306,
 					group_id: 63,
 					number: 1,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 307,
 					group_id: 63,
 					number: 2,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 308,
 					group_id: 63,
 					number: 3,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 309,
 					group_id: 64,
 					number: 1,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 310,
 					group_id: 64,
 					number: 2,
 					stage_id: 20,
+					maps: null,
 				},
 				{
 					id: 311,
 					group_id: 64,
 					number: 3,
 					stage_id: 20,
+					maps: null,
 				},
 			],
 			match: [
@@ -6755,6 +6784,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 2,
 					lastGameFinishedAt: null,
+					createdAt: null,
 				},
 				{
 					id: 1427,
@@ -6778,6 +6808,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708539630,
+					createdAt: null,
 				},
 				{
 					id: 1428,
@@ -6792,6 +6823,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 2,
 					lastGameFinishedAt: null,
+					createdAt: null,
 				},
 				{
 					id: 1429,
@@ -6815,6 +6847,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708540764,
+					createdAt: null,
 				},
 				{
 					id: 1430,
@@ -6829,6 +6862,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 2,
 					lastGameFinishedAt: null,
+					createdAt: null,
 				},
 				{
 					id: 1431,
@@ -6852,6 +6886,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708541779,
+					createdAt: null,
 				},
 				{
 					id: 1432,
@@ -6875,6 +6910,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708539432,
+					createdAt: null,
 				},
 				{
 					id: 1433,
@@ -6898,6 +6934,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708540260,
+					createdAt: null,
 				},
 				{
 					id: 1434,
@@ -6921,6 +6958,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708541534,
+					createdAt: null,
 				},
 				{
 					id: 1435,
@@ -6944,6 +6982,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708541061,
+					createdAt: null,
 				},
 				{
 					id: 1436,
@@ -6967,6 +7006,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708543160,
+					createdAt: null,
 				},
 				{
 					id: 1437,
@@ -6990,6 +7030,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708542086,
+					createdAt: null,
 				},
 				{
 					id: 1438,
@@ -7013,6 +7054,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708540004,
+					createdAt: null,
 				},
 				{
 					id: 1439,
@@ -7036,6 +7078,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708539745,
+					createdAt: null,
 				},
 				{
 					id: 1440,
@@ -7059,6 +7102,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708541376,
+					createdAt: null,
 				},
 				{
 					id: 1441,
@@ -7082,6 +7126,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708541456,
+					createdAt: null,
 				},
 				{
 					id: 1442,
@@ -7105,6 +7150,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708543165,
+					createdAt: null,
 				},
 				{
 					id: 1443,
@@ -7128,6 +7174,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708543022,
+					createdAt: null,
 				},
 				{
 					id: 1444,
@@ -7151,6 +7198,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708539666,
+					createdAt: null,
 				},
 				{
 					id: 1445,
@@ -7174,6 +7222,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708539674,
+					createdAt: null,
 				},
 				{
 					id: 1446,
@@ -7197,6 +7246,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708540981,
+					createdAt: null,
 				},
 				{
 					id: 1447,
@@ -7220,6 +7270,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708540741,
+					createdAt: null,
 				},
 				{
 					id: 1448,
@@ -7243,6 +7294,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708542080,
+					createdAt: null,
 				},
 				{
 					id: 1449,
@@ -7266,6 +7318,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708542786,
+					createdAt: null,
 				},
 				{
 					id: 1450,
@@ -7289,6 +7342,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708539616,
+					createdAt: null,
 				},
 				{
 					id: 1451,
@@ -7312,6 +7366,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708539686,
+					createdAt: null,
 				},
 				{
 					id: 1452,
@@ -7335,6 +7390,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708541068,
+					createdAt: null,
 				},
 				{
 					id: 1453,
@@ -7358,6 +7414,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708540768,
+					createdAt: null,
 				},
 				{
 					id: 1454,
@@ -7381,6 +7438,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708541871,
+					createdAt: null,
 				},
 				{
 					id: 1455,
@@ -7404,6 +7462,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708542578,
+					createdAt: null,
 				},
 				{
 					id: 1456,
@@ -7427,6 +7486,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708539276,
+					createdAt: null,
 				},
 				{
 					id: 1457,
@@ -7450,6 +7510,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708539414,
+					createdAt: null,
 				},
 				{
 					id: 1458,
@@ -7473,6 +7534,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708540235,
+					createdAt: null,
 				},
 				{
 					id: 1459,
@@ -7496,6 +7558,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708541059,
+					createdAt: null,
 				},
 				{
 					id: 1460,
@@ -7519,6 +7582,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708542478,
+					createdAt: null,
 				},
 				{
 					id: 1461,
@@ -7542,6 +7606,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708543244,
+					createdAt: null,
 				},
 				{
 					id: 1462,
@@ -7565,6 +7630,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708540410,
+					createdAt: null,
 				},
 				{
 					id: 1463,
@@ -7588,6 +7654,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708539690,
+					createdAt: null,
 				},
 				{
 					id: 1464,
@@ -7611,6 +7678,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708540751,
+					createdAt: null,
 				},
 				{
 					id: 1465,
@@ -7634,6 +7702,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708541418,
+					createdAt: null,
 				},
 				{
 					id: 1466,
@@ -7657,6 +7726,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708543162,
+					createdAt: null,
 				},
 				{
 					id: 1467,
@@ -7680,6 +7750,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708542607,
+					createdAt: null,
 				},
 				{
 					id: 1468,
@@ -7703,6 +7774,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708540075,
+					createdAt: null,
 				},
 				{
 					id: 1469,
@@ -7726,6 +7798,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708539852,
+					createdAt: null,
 				},
 				{
 					id: 1470,
@@ -7749,6 +7822,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708541400,
+					createdAt: null,
 				},
 				{
 					id: 1471,
@@ -7772,6 +7846,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708541516,
+					createdAt: null,
 				},
 				{
 					id: 1472,
@@ -7795,6 +7870,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708543015,
+					createdAt: null,
 				},
 				{
 					id: 1473,
@@ -7818,6 +7894,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708541932,
+					createdAt: null,
 				},
 				{
 					id: 1474,
@@ -7841,6 +7918,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708540286,
+					createdAt: null,
 				},
 				{
 					id: 1475,
@@ -7864,6 +7942,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708539762,
+					createdAt: null,
 				},
 				{
 					id: 1476,
@@ -7887,6 +7966,7 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708541235,
+					createdAt: null,
 				},
 				{
 					id: 1477,
@@ -7910,12 +7990,62 @@ export const PADDLING_POOL_255 = () =>
 					stage_id: 20,
 					status: 4,
 					lastGameFinishedAt: 1708541417,
+					createdAt: null,
+				},
+				{
+					id: 1478,
+					group_id: 64,
+					number: 1,
+					opponent1: {
+						id: 723,
+						position: 27,
+						score: 1,
+						result: "loss",
+						totalPoints: 110,
+					},
+					opponent2: {
+						id: 725,
+						position: 28,
+						score: 2,
+						result: "win",
+						totalPoints: 187,
+					},
+					round_id: 311,
+					stage_id: 20,
+					status: 4,
+					lastGameFinishedAt: 1708543181,
+					createdAt: null,
+				},
+				{
+					id: 1479,
+					group_id: 64,
+					number: 2,
+					opponent1: {
+						id: 709,
+						position: 10,
+						score: 2,
+						result: "win",
+						totalPoints: 188,
+					},
+					opponent2: {
+						id: 701,
+						position: 9,
+						score: 0,
+						result: "loss",
+						totalPoints: 155,
+					},
+					round_id: 311,
+					stage_id: 20,
+					status: 4,
+					lastGameFinishedAt: 1708542582,
+					createdAt: null,
 				},
 			],
 		},
 		ctx: {
 			id: 18,
 			organization: null,
+			parentTournamentId: null,
 			tags: null,
 			eventId: 1286,
 			bracketProgressionOverrides: [],
@@ -12476,7 +12606,10 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 0,
 		status: 0,
-		opponent1: { id: 698, position: 1 },
+		opponent1: {
+			id: 698,
+			position: 1,
+		},
 		opponent2: null,
 	},
 	{
@@ -12486,8 +12619,14 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 0,
 		status: 2,
-		opponent1: { id: 674, position: 16 },
-		opponent2: { id: 706, position: 17 },
+		opponent1: {
+			id: 674,
+			position: 16,
+		},
+		opponent2: {
+			id: 706,
+			position: 17,
+		},
 	},
 	{
 		id: 2,
@@ -12496,7 +12635,10 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 0,
 		status: 0,
-		opponent1: { id: 697, position: 8 },
+		opponent1: {
+			id: 697,
+			position: 8,
+		},
 		opponent2: null,
 	},
 	{
@@ -12506,7 +12648,10 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 0,
 		status: 0,
-		opponent1: { id: 701, position: 9 },
+		opponent1: {
+			id: 709,
+			position: 9,
+		},
 		opponent2: null,
 	},
 	{
@@ -12516,7 +12661,10 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 0,
 		status: 0,
-		opponent1: { id: 724, position: 4 },
+		opponent1: {
+			id: 724,
+			position: 4,
+		},
 		opponent2: null,
 	},
 	{
@@ -12526,7 +12674,10 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 0,
 		status: 0,
-		opponent1: { id: 719, position: 13 },
+		opponent1: {
+			id: 719,
+			position: 13,
+		},
 		opponent2: null,
 	},
 	{
@@ -12536,7 +12687,10 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 0,
 		status: 0,
-		opponent1: { id: 713, position: 5 },
+		opponent1: {
+			id: 713,
+			position: 5,
+		},
 		opponent2: null,
 	},
 	{
@@ -12546,7 +12700,10 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 0,
 		status: 0,
-		opponent1: { id: 702, position: 12 },
+		opponent1: {
+			id: 702,
+			position: 12,
+		},
 		opponent2: null,
 	},
 	{
@@ -12556,7 +12713,10 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 0,
 		status: 0,
-		opponent1: { id: 718, position: 2 },
+		opponent1: {
+			id: 718,
+			position: 2,
+		},
 		opponent2: null,
 	},
 	{
@@ -12566,8 +12726,14 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 0,
 		status: 2,
-		opponent1: { id: 720, position: 15 },
-		opponent2: { id: 709, position: 18 },
+		opponent1: {
+			id: 720,
+			position: 15,
+		},
+		opponent2: {
+			id: 701,
+			position: 18,
+		},
 	},
 	{
 		id: 10,
@@ -12576,7 +12742,10 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 0,
 		status: 0,
-		opponent1: { id: 722, position: 7 },
+		opponent1: {
+			id: 722,
+			position: 7,
+		},
 		opponent2: null,
 	},
 	{
@@ -12586,7 +12755,10 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 0,
 		status: 0,
-		opponent1: { id: 673, position: 10 },
+		opponent1: {
+			id: 673,
+			position: 10,
+		},
 		opponent2: null,
 	},
 	{
@@ -12596,7 +12768,10 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 0,
 		status: 0,
-		opponent1: { id: 716, position: 3 },
+		opponent1: {
+			id: 716,
+			position: 3,
+		},
 		opponent2: null,
 	},
 	{
@@ -12606,7 +12781,10 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 0,
 		status: 0,
-		opponent1: { id: 715, position: 14 },
+		opponent1: {
+			id: 715,
+			position: 14,
+		},
 		opponent2: null,
 	},
 	{
@@ -12616,7 +12794,10 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 0,
 		status: 0,
-		opponent1: { id: 677, position: 6 },
+		opponent1: {
+			id: 677,
+			position: 6,
+		},
 		opponent2: null,
 	},
 	{
@@ -12626,7 +12807,10 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 0,
 		status: 0,
-		opponent1: { id: 678, position: 11 },
+		opponent1: {
+			id: 678,
+			position: 11,
+		},
 		opponent2: null,
 	},
 	{
@@ -12636,8 +12820,12 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 1,
 		status: 1,
-		opponent1: { id: 698, position: undefined },
-		opponent2: { id: null, position: undefined },
+		opponent1: {
+			id: 698,
+		},
+		opponent2: {
+			id: null,
+		},
 	},
 	{
 		id: 17,
@@ -12646,8 +12834,12 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 1,
 		status: 2,
-		opponent1: { id: 697, position: undefined },
-		opponent2: { id: 701, position: undefined },
+		opponent1: {
+			id: 697,
+		},
+		opponent2: {
+			id: 709,
+		},
 	},
 	{
 		id: 18,
@@ -12656,8 +12848,12 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 1,
 		status: 2,
-		opponent1: { id: 724, position: undefined },
-		opponent2: { id: 719, position: undefined },
+		opponent1: {
+			id: 724,
+		},
+		opponent2: {
+			id: 719,
+		},
 	},
 	{
 		id: 19,
@@ -12666,8 +12862,12 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 1,
 		status: 2,
-		opponent1: { id: 713, position: undefined },
-		opponent2: { id: 702, position: undefined },
+		opponent1: {
+			id: 713,
+		},
+		opponent2: {
+			id: 702,
+		},
 	},
 	{
 		id: 20,
@@ -12676,8 +12876,12 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 1,
 		status: 1,
-		opponent1: { id: 718, position: undefined },
-		opponent2: { id: null, position: undefined },
+		opponent1: {
+			id: 718,
+		},
+		opponent2: {
+			id: null,
+		},
 	},
 	{
 		id: 21,
@@ -12686,8 +12890,12 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 1,
 		status: 2,
-		opponent1: { id: 722, position: undefined },
-		opponent2: { id: 673, position: undefined },
+		opponent1: {
+			id: 722,
+		},
+		opponent2: {
+			id: 673,
+		},
 	},
 	{
 		id: 22,
@@ -12696,8 +12904,12 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 1,
 		status: 2,
-		opponent1: { id: 716, position: undefined },
-		opponent2: { id: 715, position: undefined },
+		opponent1: {
+			id: 716,
+		},
+		opponent2: {
+			id: 715,
+		},
 	},
 	{
 		id: 23,
@@ -12706,8 +12918,12 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 1,
 		status: 2,
-		opponent1: { id: 677, position: undefined },
-		opponent2: { id: 678, position: undefined },
+		opponent1: {
+			id: 677,
+		},
+		opponent2: {
+			id: 678,
+		},
 	},
 	{
 		id: 24,
@@ -12716,8 +12932,12 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 2,
 		status: 0,
-		opponent1: { id: null, position: undefined },
-		opponent2: { id: null, position: undefined },
+		opponent1: {
+			id: null,
+		},
+		opponent2: {
+			id: null,
+		},
 	},
 	{
 		id: 25,
@@ -12726,8 +12946,12 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 2,
 		status: 0,
-		opponent1: { id: null, position: undefined },
-		opponent2: { id: null, position: undefined },
+		opponent1: {
+			id: null,
+		},
+		opponent2: {
+			id: null,
+		},
 	},
 	{
 		id: 26,
@@ -12736,8 +12960,12 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 2,
 		status: 0,
-		opponent1: { id: null, position: undefined },
-		opponent2: { id: null, position: undefined },
+		opponent1: {
+			id: null,
+		},
+		opponent2: {
+			id: null,
+		},
 	},
 	{
 		id: 27,
@@ -12746,8 +12974,12 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 2,
 		status: 0,
-		opponent1: { id: null, position: undefined },
-		opponent2: { id: null, position: undefined },
+		opponent1: {
+			id: null,
+		},
+		opponent2: {
+			id: null,
+		},
 	},
 	{
 		id: 28,
@@ -12756,8 +12988,12 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 3,
 		status: 0,
-		opponent1: { id: null, position: undefined },
-		opponent2: { id: null, position: undefined },
+		opponent1: {
+			id: null,
+		},
+		opponent2: {
+			id: null,
+		},
 	},
 	{
 		id: 29,
@@ -12766,8 +13002,12 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 3,
 		status: 0,
-		opponent1: { id: null, position: undefined },
-		opponent2: { id: null, position: undefined },
+		opponent1: {
+			id: null,
+		},
+		opponent2: {
+			id: null,
+		},
 	},
 	{
 		id: 30,
@@ -12776,8 +13016,12 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 0,
 		round_id: 4,
 		status: 0,
-		opponent1: { id: null, position: undefined },
-		opponent2: { id: null, position: undefined },
+		opponent1: {
+			id: null,
+		},
+		opponent2: {
+			id: null,
+		},
 	},
 	{
 		id: 31,
@@ -12786,8 +13030,14 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		group_id: 1,
 		round_id: 5,
 		status: 0,
-		opponent1: { id: null, position: 1 },
-		opponent2: { id: null, position: 2 },
+		opponent1: {
+			id: null,
+			position: 1,
+		},
+		opponent2: {
+			id: null,
+			position: 2,
+		},
 	},
 ];
 
@@ -14188,6 +14438,7 @@ export const IN_THE_ZONE_32 = ({
 		},
 		ctx: {
 			id: 11,
+			parentTournamentId: null,
 			organization: null,
 			tags: null,
 			eventId: 1134,

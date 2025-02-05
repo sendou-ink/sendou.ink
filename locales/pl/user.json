@@ -27,6 +27,5 @@
 	"forms.errors.invalidCustomUrl.duplicate": "Te niestandardowe URl jest już przez kogoś zajęte",
 	"forms.errors.invalidSens": "Motion sens nie może być ustawione jeśli R-stick sens nie jest",
 
-	"search.info": "Wyszukaj kogoś poprzez ich nazwe na Discordzie, Splatoon 3 lub Twitterze",
 	"search.noResults": "Nie znaleziono użytkownika o nazwie '{{query}}'"
 }

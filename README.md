@@ -132,7 +132,7 @@ sendou.ink/
 │   ├── components/ -- React components
 │   ├── db/ -- Database layer
 │   ├── hooks/ -- React hooks
-│   ├── modules/ -- "nodu_modules but part of the app" https://twitter.com/ryanflorence/status/1535103735952658432
+│   ├── modules/ -- "node_modules but part of the app"
 │   ├── routes/ -- Routes see: https://remix.run/docs/en/v1/guides/routing
 │   ├── styles/ -- All .css files of the project for styling
 │   ├── utils/ -- Random helper functions used in many places

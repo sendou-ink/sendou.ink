@@ -12,7 +12,7 @@ import type {
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { Status } from "~/modules/brackets-model";
 import { modesShort } from "~/modules/in-game-lists";
-import { nullFilledArray } from "~/utils/arrays";
+import { nullFilledArray, nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
@@ -46,6 +46,7 @@ export async function findById(id: number) {
 			"Tournament.castedMatchesInfo",
 			"Tournament.mapPickingStyle",
 			"Tournament.rules",
+			"Tournament.parentTournamentId",
 			"CalendarEvent.name",
 			"CalendarEvent.description",
 			"CalendarEventDate.startTime",
@@ -316,9 +317,38 @@ export async function findById(id: number) {
 	};
 }
 
-function nullifyingAvg(values: number[]) {
-	if (values.length === 0) return null;
-	return values.reduce((acc, cur) => acc + cur, 0) / values.length;
+export async function findChildTournaments(parentTournamentId: number) {
+	const rows = await db
+		.selectFrom("Tournament")
+		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
+		.select((eb) => [
+			"Tournament.id as tournamentId",
+			"CalendarEvent.name",
+			eb
+				.selectFrom("TournamentTeam")
+				.select(({ fn }) => [fn.countAll<number>().as("teamsCount")])
+				.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+				.as("teamsCount"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentTeam")
+					.innerJoin(
+						"TournamentTeamMember",
+						"TournamentTeamMember.tournamentTeamId",
+						"TournamentTeam.id",
+					)
+					.select(["TournamentTeamMember.userId"])
+					.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id"),
+			).as("teamMembers"),
+		])
+		.where("Tournament.parentTournamentId", "=", parentTournamentId)
+		.$narrowType<{ teamsCount: NotNull }>()
+		.execute();
+
+	return rows.map((row) => ({
+		...row,
+		participantUserIds: new Set(row.teamMembers.map((member) => member.userId)),
+	}));
 }
 
 export async function findTOSetMapPoolById(tournamentId: number) {

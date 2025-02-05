@@ -4,12 +4,12 @@ import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { Flag } from "~/components/Flag";
 import { Image, WeaponImage } from "~/components/Image";
-import { Popover } from "~/components/Popover";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { BattlefyIcon } from "~/components/icons/Battlefy";
 import { BskyIcon } from "~/components/icons/Bsky";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { TwitchIcon } from "~/components/icons/Twitch";
-import { TwitterIcon } from "~/components/icons/Twitter";
 import { YouTubeIcon } from "~/components/icons/YouTube";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { modesShort } from "~/modules/in-game-lists";
@@ -59,9 +59,6 @@ export default function UserInfoPage() {
 				<div className="u__socials">
 					{data.user.twitch ? (
 						<SocialLink type="twitch" identifier={data.user.twitch} />
-					) : null}
-					{data.user.twitter ? (
-						<SocialLink type="twitter" identifier={data.user.twitter} />
 					) : null}
 					{data.user.youtubeId ? (
 						<SocialLink type="youtube" identifier={data.user.youtubeId} />
@@ -128,16 +125,21 @@ function SecondaryTeamsPopover() {
 	if (data.user.secondaryTeams.length === 0) return null;
 
 	return (
-		<Popover
-			buttonChildren={
-				<span
-					className="text-sm font-bold text-main-forced"
-					data-testid="secondary-team-trigger"
+		<SendouPopover
+			trigger={
+				<SendouButton
+					className="focus-text-decoration self-start"
+					variant="minimal"
+					size="small"
 				>
-					+{data.user.secondaryTeams.length}
-				</span>
+					<span
+						className="text-sm font-bold text-main-forced"
+						data-testid="secondary-team-trigger"
+					>
+						+{data.user.secondaryTeams.length}
+					</span>
+				</SendouButton>
 			}
-			triggerClassName="minimal tiny focus-text-decoration"
 		>
 			<div className="stack sm">
 				{data.user.secondaryTeams.map((team) => (
@@ -168,12 +170,12 @@ function SecondaryTeamsPopover() {
 					</div>
 				))}
 			</div>
-		</Popover>
+		</SendouPopover>
 	);
 }
 
 interface SocialLinkProps {
-	type: "youtube" | "twitter" | "twitch" | "battlefy" | "bsky";
+	type: "youtube" | "twitch" | "battlefy" | "bsky";
 	identifier: string;
 }
 
@@ -188,8 +190,6 @@ export function SocialLink({
 		switch (type) {
 			case "twitch":
 				return `https://www.twitch.tv/${identifier}`;
-			case "twitter":
-				return `https://www.twitter.com/${identifier}`;
 			case "youtube":
 				return `https://www.youtube.com/channel/${identifier}`;
 			case "battlefy":
@@ -205,7 +205,6 @@ export function SocialLink({
 		<a
 			className={clsx("u__social-link", {
 				youtube: type === "youtube",
-				twitter: type === "twitter",
 				twitch: type === "twitch",
 				battlefy: type === "battlefy",
 				bsky: type === "bsky",
@@ -221,8 +220,6 @@ function SocialLinkIcon({ type }: Pick<SocialLinkProps, "type">) {
 	switch (type) {
 		case "twitch":
 			return <TwitchIcon />;
-		case "twitter":
-			return <TwitterIcon />;
 		case "youtube":
 			return <YouTubeIcon />;
 		case "battlefy":

@@ -13,6 +13,7 @@ import { TrashIcon } from "~/components/icons/Trash";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { usePagination } from "~/hooks/usePagination";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
+import { databaseTimestampToDate } from "~/utils/dates";
 import {
 	artPage,
 	conditionalUserSubmittedImage,
@@ -89,6 +90,7 @@ export function ArtGrid({
 }
 
 function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
+	const { i18n } = useTranslation();
 	const [imageLoaded, setImageLoaded] = React.useState(false);
 
 	return (
@@ -134,6 +136,16 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 					{art.description}
 				</div>
 			) : null}
+			<div className="text-xxs text-lighter">
+				{databaseTimestampToDate(art.createdAt).toLocaleDateString(
+					i18n.language,
+					{
+						year: "numeric",
+						month: "long",
+						day: "numeric",
+					},
+				)}
+			</div>
 		</Dialog>
 	);
 }

@@ -12,6 +12,7 @@ import { removeDuplicates } from "~/utils/arrays";
 import { sumArray } from "~/utils/number";
 import type { FindMatchById } from "../tournament-bracket/queries/findMatchById.server";
 import type { TournamentLoaderData } from "../tournament/routes/to.$id";
+import type { Standing } from "./core/Bracket";
 import type { Tournament } from "./core/Tournament";
 import type { TournamentDataTeam } from "./core/Tournament.server";
 
@@ -269,4 +270,23 @@ export function tournamentTeamToActiveRosterUserIds(
 	}
 
 	return null;
+}
+
+// deal with user getting added to multiple teams by the TO
+export function ensureOneStandingPerUser(standings: Standing[]) {
+	const userIds = new Set<number>();
+
+	return standings.map((standing) => {
+		return {
+			...standing,
+			team: {
+				...standing.team,
+				members: standing.team.members.filter((member) => {
+					if (userIds.has(member.userId)) return false;
+					userIds.add(member.userId);
+					return true;
+				}),
+			},
+		};
+	});
 }

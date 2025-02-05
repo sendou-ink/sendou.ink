@@ -98,6 +98,10 @@
 	fill: var(--theme-error);
 }
 
+.fill-info {
+	fill: var(--theme-info);
+}
+
 .bg-transparent-important {
 	background-color: transparent !important;
 }
@@ -164,6 +168,10 @@
 
 .w-min {
 	width: min-content;
+}
+
+.p-1 {
+	padding: var(--s-1);
 }
 
 .p-1-5 {

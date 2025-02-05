@@ -14,3 +14,56 @@ export const TOURNAMENT = {
 	SWISS_DEFAULT_GROUP_COUNT: 1,
 	SWISS_DEFAULT_ROUND_COUNT: 5,
 } as const;
+
+export const LEAGUES =
+	process.env.NODE_ENV === "development"
+		? {
+				LUTI: [
+					{
+						tournamentId: 6,
+						weeks: [
+							{
+								weekNumber: 2,
+								year: 2025,
+							},
+							{
+								weekNumber: 3,
+								year: 2025,
+							},
+							{
+								weekNumber: 4,
+								year: 2025,
+							},
+						],
+					},
+				],
+			}
+		: {
+				LUTI: [
+					{
+						tournamentId: 1066,
+						weeks: [
+							{
+								weekNumber: 10,
+								year: 2025,
+							},
+							{
+								weekNumber: 11,
+								year: 2025,
+							},
+							{
+								weekNumber: 12,
+								year: 2025,
+							},
+							{
+								weekNumber: 13,
+								year: 2025,
+							},
+							{
+								weekNumber: 14,
+								year: 2025,
+							},
+						],
+					},
+				],
+			};

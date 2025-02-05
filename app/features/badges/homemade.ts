@@ -1,7 +1,7 @@
 interface BadgeInfo {
 	// The name of the badge as it shows on the web page: "Awarded for winning {displayName}"
 	displayName: string;
-	// The file name of the badge: fileName.png, fileName.avif & fileName.gif
+	// The file name of the badge: fileName.png, fileName.avif & fileName.gif. Should not be edited after the badge is added.
 	fileName: string;
 	// The Discord ID of the person who made the badge (not the person who commissioned it)
 	authorDiscordId: string;
@@ -15,6 +15,76 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "All 4 One: Clam Blitz",
+		fileName: "newa41cb",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "All 4 One: Rainmaker",
+		fileName: "newa41rm",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "All 4 One: Splat Zones",
+		fileName: "newa41sz",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "All 4 One: Tower Control",
+		fileName: "newa41tc",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Climb The Spire",
+		fileName: "climbspire",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "TeaCup",
+		fileName: "teabag",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Mug Cup Mini",
+		fileName: "mugcupmini",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Token Of Appreciation",
+		fileName: "bucketmeow12",
+		authorDiscordId: "1170249805373657093",
+	},
+	{
+		displayName: "Tough Tides",
+		fileName: "wave1234567_4",
+		authorDiscordId: "1170249805373657093",
+	},
+	{
+		displayName: "Dr. Meowser's Cat Food Bowl",
+		fileName: "catfoodbowl",
+		authorDiscordId: "324396128906903552",
+	},
+	{
+		displayName: "Charger Assault",
+		fileName: "vchargersplash",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Hatsune Miku",
+		fileName: "hatsunemiku",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "New InkLAN",
+		fileName: "pinknes",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Squids For Palestinian Kids",
+		fileName: "three_course_pal",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "BrushMommy's Birthday Bash",
 		fileName: "goldenbrush",
 		authorDiscordId: "338806780446638082",
@@ -25,17 +95,17 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "643355948265766912",
 	},
 	{
-		displayName: "50 Caliber League (First Place)",
+		displayName: "Gun (Winning 50 Calibur League)",
 		fileName: "50-cal-fir",
 		authorDiscordId: "530093822806458368",
 	},
 	{
-		displayName: "50 Caliber League (Second Place)",
+		displayName: "Gold Bullet (Qualifying for 50 Calibur League)",
 		fileName: "50-cal-sec",
 		authorDiscordId: "530093822806458368",
 	},
 	{
-		displayName: "50 Caliber League (Third Place)",
+		displayName: "Silver Bullet (Winning Silver Bracket 50 Calibur)",
 		fileName: "50-cal-thi",
 		authorDiscordId: "530093822806458368",
 	},
@@ -433,5 +503,120 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Mimikyu Monday",
 		fileName: "mimikyu",
 		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Zones Royale",
+		fileName: "szroyale",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Bastard München",
+		fileName: "muchen",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Eggs and Salad",
+		fileName: "saladbowl",
+		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "Splashdown Saturday",
+		fileName: "splashdownsat",
+		authorDiscordId: "631246535560265749",
+	},
+	{
+		displayName: "Low Tier Bouts",
+		fileName: "low-tier-bouts",
+		authorDiscordId: "430487372015206410",
+	},
+	{
+		displayName: "Level Up",
+		fileName: "magikarp",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Level Up: Shiny Hunt",
+		fileName: "shinymagikarp",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "FC Barcha",
+		fileName: "barcha",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Manshine City",
+		fileName: "manshine",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Catgirl Challenge",
+		fileName: "headband",
+		authorDiscordId: "789943264370884708",
+	},
+	{
+		displayName: "Reef-Lux Achievement",
+		fileName: "flux",
+		authorDiscordId: "631246535560265749",
+	},
+	{
+		displayName: "Meet Your Match",
+		fileName: "matchmeet",
+		authorDiscordId: "631246535560265749",
+	},
+	{
+		displayName: "Proxy Training",
+		fileName: "eous",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Ubers",
+		fileName: "ubers",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Zones Classic",
+		fileName: "szclassic",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "P.X.G",
+		fileName: "pxg",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Low Tier Experiments",
+		fileName: "lte_badge",
+		authorDiscordId: "430487372015206410",
+	},
+	{
+		displayName: "JJaeigh's Jamboree",
+		fileName: "jamboree",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Mesozoic Mayhem: Triceratrials",
+		fileName: "tricera",
+		authorDiscordId: "352207524390240257",
+	},
+	{
+		displayName: "Mesozoic Mayhem: Gold Triceratrials",
+		fileName: "triceragold",
+		authorDiscordId: "352207524390240257",
+	},
+	{
+		displayName: "Mesozoic Mayhem: Special Spino",
+		fileName: "spino",
+		authorDiscordId: "352207524390240257",
+	},
+	{
+		displayName: "Mesozoic Mayhem: Gold Special Spino",
+		fileName: "spinogold",
+		authorDiscordId: "352207524390240257",
+	},
+	{
+		displayName: "Mesozoic Mayhem: Dreadnoughtus Undefeated",
+		fileName: "dreadnoughtus",
+		authorDiscordId: "352207524390240257",
 	},
 ];

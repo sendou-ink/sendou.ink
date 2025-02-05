@@ -34,7 +34,6 @@
 	"auth.errors.aborted": "Ingreso cancelado",
 	"auth.errors.failed": "Ingreso fallido",
 	"auth.errors.discordPermissions": "Para tu perfil en sendou.ink, el sitio requiere aceso a tu nombre en Discord, avatar, y redes sociales.",
-	"auth.errors.unknown": "Ingreso fallido debido a un error de servidor. Por favor intenta más tarde o usa /login a travez de Lohi bot. Se puede encontrar en el Discord de sendou.ink:",
 
 	"footer.github.subtitle": "Código fuente",
 	"footer.discord.subtitle": "Ayuda y comentarios",

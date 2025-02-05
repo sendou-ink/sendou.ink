@@ -1,34 +1,85 @@
-import * as React from "react";
+import { parseDate } from "@internationalized/date";
 import {
+	Controller,
 	type FieldPath,
 	type FieldValues,
-	get,
 	useFormContext,
 } from "react-hook-form";
-import { FormMessage } from "~/components/FormMessage";
-import { Label } from "~/components/Label";
+import { dateToYYYYMMDD } from "../../utils/dates";
+import type { DayMonthYear } from "../../utils/zod";
+import { SendouDatePicker } from "../elements/DatePicker";
+import type { FormFieldSize } from "./form-utils";
 
 export function DateFormField<T extends FieldValues>({
 	label,
 	name,
 	bottomText,
-}: { label: string; name: FieldPath<T>; bottomText?: string }) {
+	required,
+	size,
+}: {
+	label: string;
+	name: FieldPath<T>;
+	bottomText?: string;
+	required?: boolean;
+	size?: FormFieldSize;
+}) {
 	const methods = useFormContext();
-	const id = React.useId();
 
-	const error = get(methods.formState.errors, name);
-
-	// xxx: or use the custom component?
 	return (
-		<div>
-			<Label htmlFor={id}>{label}</Label>
-			<input id={id} {...methods.register(name)} type="datetime-local" />
-			{error && (
-				<FormMessage type="error">{error.message as string}</FormMessage>
-			)}
-			{bottomText && !error ? (
-				<FormMessage type="info">{bottomText}</FormMessage>
-			) : null}
-		</div>
+		<Controller
+			name={name}
+			control={methods.control}
+			render={({
+				field: { name, value, onChange, onBlur /*, ref*/ }, // TODO: figure out where ref goes (to focus on error) and put it there
+				fieldState: { invalid, error },
+			}) => {
+				const getValue = () => {
+					const originalValue = value as DayMonthYear | null;
+
+					if (!originalValue) return null;
+
+					const isoString = dateToYYYYMMDD(
+						new Date(
+							Date.UTC(
+								originalValue.year,
+								originalValue.month,
+								originalValue.day,
+								12,
+							),
+						),
+					);
+
+					return parseDate(isoString);
+				};
+
+				return (
+					<SendouDatePicker
+						label={label}
+						granularity="day"
+						isRequired={required}
+						errorText={error?.message as string | undefined}
+						value={getValue()}
+						size={size}
+						isInvalid={invalid}
+						name={name}
+						onBlur={onBlur}
+						onChange={(value) => {
+							if (value) {
+								onChange({
+									day: value.day,
+									month: value.month - 1,
+									year: value.year,
+								});
+							}
+
+							if (!value) {
+								onChange(null);
+							}
+						}}
+						bottomText={bottomText}
+					/>
+				);
+			}}
+		/>
 	);
 }

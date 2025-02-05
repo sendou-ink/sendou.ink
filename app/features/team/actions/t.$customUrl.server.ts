@@ -11,7 +11,7 @@ import {
 	teamParamsSchema,
 	teamProfilePageActionSchema,
 } from "../team-schemas.server";
-import { isTeamMember, isTeamOwner } from "../team-utils";
+import { isTeamMember, isTeamOwner, resolveNewOwner } from "../team-utils";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = await requireUserId(request);
@@ -26,13 +26,22 @@ export const action: ActionFunction = async ({ request, params }) => {
 	switch (data._action) {
 		case "LEAVE_TEAM": {
 			validate(
-				isTeamMember({ user, team }) && !isTeamOwner({ user, team }),
-				"You are not a regular member of this team",
+				isTeamMember({ user, team }),
+				"You are not a member of this team",
 			);
 
-			await TeamRepository.removeTeamMember({
+			const newOwner = isTeamOwner({ user, team })
+				? resolveNewOwner(team.members)
+				: null;
+			validate(
+				!isTeamOwner({ user, team }) || newOwner,
+				"You can't leave the team if you are the owner and there is no other member to become the owner",
+			);
+
+			await TeamRepository.handleMemberLeaving({
 				teamId: team.id,
 				userId: user.id,
+				newOwnerUserId: newOwner?.id,
 			});
 
 			break;

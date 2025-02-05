@@ -10,7 +10,7 @@ import { Button } from "~/components/Button";
 import { Combobox } from "~/components/Combobox";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { Toggle } from "~/components/Toggle";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { CrossIcon } from "~/components/icons/Cross";
 import i18next from "~/modules/i18n/i18next.server";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -85,9 +85,9 @@ export default function ArtPage() {
 		<Main className="stack lg">
 			<div className="stack horizontal md justify-between items-center flex-wrap">
 				<div className="stack horizontal sm text-sm font-semi-bold">
-					<Toggle
-						checked={showOpenCommissions}
-						setChecked={() =>
+					<SendouSwitch
+						isSelected={showOpenCommissions}
+						onChange={() =>
 							setSearchParams((prev) => {
 								prev.set(OPEN_COMMISIONS_KEY, String(!showOpenCommissions));
 								return prev;

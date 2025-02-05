@@ -9,7 +9,12 @@ import {
 	seed,
 	submit,
 } from "~/utils/playwright";
-import { TEAM_SEARCH_PAGE, teamPage, userPage } from "~/utils/urls";
+import {
+	TEAM_SEARCH_PAGE,
+	editTeamPage,
+	teamPage,
+	userPage,
+} from "~/utils/urls";
 
 test.describe("Team search page", () => {
 	test("filters teams", async ({ page }) => {
@@ -58,8 +63,8 @@ test.describe("Team page", () => {
 		await page.getByTestId("name-input").clear();
 		await page.getByTestId("name-input").fill("Better Alliance Rogue");
 
-		await page.getByTestId("twitter-input").clear();
-		await page.getByTestId("twitter-input").fill("BetterAllianceRogue");
+		await page.getByLabel("Team Bluesky").clear();
+		await page.getByLabel("Team Bluesky").fill("BetterAllianceRogue");
 
 		await page.getByTestId("bio-textarea").clear();
 		await page.getByTestId("bio-textarea").fill("shorter bio");
@@ -68,13 +73,13 @@ test.describe("Team page", () => {
 
 		await expect(page).toHaveURL(/better-alliance-rogue/);
 		await page.getByText("shorter bio").isVisible();
-		await expect(page.getByTestId("twitter-link")).toHaveAttribute(
+		await expect(page.getByTestId("bsky-link").first()).toHaveAttribute(
 			"href",
-			"https://twitter.com/BetterAllianceRogue",
+			"https://bsky.app/profile/BetterAllianceRogue",
 		);
 	});
 
-	test("manages roster", async ({ page }) => {
+	test("kicks a member & changes a role", async ({ page }) => {
 		await seed(page);
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url: teamPage("alliance-rogue") });
@@ -91,15 +96,9 @@ test.describe("Team page", () => {
 		await modalClickConfirmButton(page);
 		await isNotVisible(page.getByTestId("member-row-3"));
 
-		await page.getByTestId("transfer-ownership-button").first().click();
-		await modalClickConfirmButton(page);
+		await navigate({ page, url: teamPage("alliance-rogue") });
 
 		await expect(page.getByTestId("member-row-role-0")).toHaveText("Support");
-
-		await expect(page).not.toHaveURL(/roster/);
-
-		// Owner is not Sendou
-		await isNotVisible(page.getByTestId(`member-owner-${ADMIN_ID}`));
 	});
 
 	test("deletes team", async ({ page }) => {
@@ -175,5 +174,35 @@ test.describe("Team page", () => {
 
 		await isNotVisible(page.getByTestId("secondary-team-trigger"));
 		await expect(page.getByText("Alliance Rogue")).toBeVisible();
+	});
+
+	test("makes another user editor, who can edit the page & becomes owner after the original leaves", async ({
+		page,
+	}) => {
+		await seed(page, "NZAP_IN_TEAM");
+		await impersonate(page, ADMIN_ID);
+		await navigate({ page, url: teamPage("alliance-rogue") });
+
+		await page.getByTestId("manage-roster-button").click();
+
+		await page.getByTestId("editor-switch").first().click();
+
+		await impersonate(page, NZAP_TEST_ID);
+		await navigate({ page, url: editTeamPage("alliance-rogue") });
+
+		await page.getByTestId("bio-textarea").clear();
+		await page.getByTestId("bio-textarea").fill("from editor");
+		await page.getByTestId("edit-team-submit-button").click();
+
+		await expect(page).toHaveURL(/alliance-rogue/);
+		await page.getByText("from editor").isVisible();
+
+		await impersonate(page, ADMIN_ID);
+		await navigate({ page, url: teamPage("alliance-rogue") });
+		await page.getByTestId("leave-team-button").click();
+		await page.getByText("New owner will be N-ZAP").isVisible();
+		await modalClickConfirmButton(page);
+
+		await isNotVisible(page.getByTestId("leave-team-button"));
 	});
 });

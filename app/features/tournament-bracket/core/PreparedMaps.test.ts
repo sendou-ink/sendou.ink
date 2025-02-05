@@ -209,6 +209,17 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		expect(trimmed).toBe(FOUR_TEAM_SE_PREPARED);
 	});
 
+	test("returns trimmed if third place match disappeared", () => {
+		const trimmed = PreparedMaps.trimPreparedEliminationMaps({
+			preparedMaps: FOUR_TEAM_SE_PREPARED,
+			teamCount: 3,
+			bracket: tournament.bracketByIdx(0)!,
+		});
+
+		expect(trimmed?.maps.length).toBe(FOUR_TEAM_SE_PREPARED.maps.length - 1);
+		expect(trimmed?.maps.some((m) => m.groupId === 1)).toBe(false);
+	});
+
 	test("trims the maps (SE - 1 extra round)", () => {
 		const trimmed = PreparedMaps.trimPreparedEliminationMaps({
 			preparedMaps: EIGHT_TEAM_SE_PREPARED,

@@ -43,7 +43,6 @@
 	"auth.errors.aborted": "ログインを中断しました",
 	"auth.errors.failed": "ログインに失敗しました",
 	"auth.errors.discordPermissions": "sendou.ink は、Discord のプロファイル名、アバター、SNS連携をサイトのプロファイルに使用します。",
-	"auth.errors.unknown": "ディスコードのアカウントにバリデートされたイーメールはありますか？助けが必要な場合ディスコードの #helpdeskチャンネルでお聞きください。:",
 
 	"footer.github.subtitle": "ソースコード",
 	"footer.discord.subtitle": "ヘルプ & フィードバック",

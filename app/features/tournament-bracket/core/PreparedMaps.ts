@@ -101,6 +101,10 @@ export function trimPreparedEliminationMaps({
 		eliminationTeamCountOptions(teamCount)[0].max;
 
 	if (isPerfectCountMatch) {
+		if (thirdPlaceMatchDisappeared({ preparedMaps, teamCount, ...rest })) {
+			return filterOutThirdPlaceMatch(preparedMaps);
+		}
+
 		return preparedMaps;
 	}
 
@@ -159,4 +163,29 @@ function roundsWithVirtualIds<T extends { roundId: number }>(
 	invariant(rounds.length === virtualIds.length, "Round id length mismatch");
 
 	return rounds.map((r, i) => ({ ...r, roundId: virtualIds[i] }));
+}
+
+function thirdPlaceMatchDisappeared({
+	bracket,
+	preparedMaps,
+	teamCount,
+}: TrimPreparedEliminationMapsAgs & { preparedMaps: PreparedMaps }) {
+	if (
+		bracket.type !== "single_elimination" ||
+		!bracket.settings?.thirdPlaceMatch
+	) {
+		return false;
+	}
+
+	const preparedHasThirdPlace =
+		removeDuplicates(preparedMaps.maps.map((r) => r.groupId)).length > 1;
+
+	return preparedHasThirdPlace && teamCount < 4;
+}
+
+function filterOutThirdPlaceMatch(prepared: PreparedMaps): PreparedMaps {
+	return {
+		...prepared,
+		maps: prepared.maps.filter((map) => map.groupId === 0),
+	};
 }

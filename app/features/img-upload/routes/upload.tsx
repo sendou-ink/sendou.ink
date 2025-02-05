@@ -7,15 +7,14 @@ import { useTranslation } from "react-i18next";
 import { Button } from "~/components/Button";
 import { Main } from "~/components/Main";
 import { requireUser } from "~/features/auth/core/user.server";
-import { isTeamOwner } from "~/features/team";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
+import { isTeamManager } from "~/features/team/team-utils";
 import invariant from "~/utils/invariant";
+import { action } from "../actions/upload.server";
 import { countUnvalidatedImg } from "../queries/countUnvalidatedImg.server";
 import { imgTypeToDimensions, imgTypeToStyle } from "../upload-constants";
 import type { ImageUploadType } from "../upload-types";
 import { requestToImgType } from "../upload-utils";
-
-import { action } from "../actions/upload.server";
 export { action };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -38,7 +37,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 		const detailedTeam = await TeamRepository.findByCustomUrl(team.customUrl);
 
-		if (!detailedTeam || !isTeamOwner({ team: detailedTeam, user })) {
+		if (!detailedTeam || !isTeamManager({ team: detailedTeam, user })) {
 			throw redirect("/");
 		}
 	}

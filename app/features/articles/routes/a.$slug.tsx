@@ -3,7 +3,7 @@ import type {
 	MetaFunction,
 	SerializeFrom,
 } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { Link, useLoaderData } from "@remix-run/react";
 import Markdown from "markdown-to-jsx";
 import * as React from "react";
 import { Main } from "~/components/Main";
@@ -53,7 +53,6 @@ export const meta: MetaFunction = (args) => {
 		{ property: "og:title", content: data.title },
 		{ name: "description", content: description },
 		{ property: "og:description", content: description },
-		{ name: "twitter:card", content: "summary_large_image" },
 		{ property: "og:image", content: articlePreviewUrl(args.params.slug) },
 		{ property: "og:type", content: "article" },
 		{ property: "og:site_name", content: "sendou.ink" },
@@ -88,9 +87,22 @@ export default function ArticlePage() {
 function Author() {
 	const data = useLoaderData<typeof loader>();
 
-	if (data.authorLink) {
-		return <a href={data.authorLink}>{data.author}</a>;
-	}
+	return data.authors.map((author, i) => {
+		if (!author.link) return author.name;
 
-	return <>{data.author}</>;
+		const authorLink = author.link.includes("https://sendou.ink")
+			? author.link.replace("https://sendou.ink", "")
+			: author.link;
+
+		return (
+			<React.Fragment key={author.name}>
+				{author.link.includes("https://sendou.ink") ? (
+					<Link to={authorLink}>{author.name}</Link>
+				) : (
+					<a href={author.link}>{author.name}</a>
+				)}
+				{i < data.authors.length - 1 ? " & " : ""}
+			</React.Fragment>
+		);
+	});
 }

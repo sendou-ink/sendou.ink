@@ -160,5 +160,6 @@
 	"perInkTankGrid.header_one": "{{weapon}} shots after ×{{count}} sub weapon used",
 	"perInkTankGrid.header_other": "{{weapon}} shots after ×{{count}} sub weapons used",
 	"bigBubblerExplanation": "{{weapon}} duration is also increased as the durability increases",
-	"button.showChart": "Show chart"
+	"button.showChart": "Show chart",
+	"button.showConsumptionGrid": "Show consumption grid"
 }

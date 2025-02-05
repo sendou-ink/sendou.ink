@@ -1,7 +1,7 @@
 import type { ActionFunction } from "@remix-run/node";
 import { useRevalidator } from "@remix-run/react";
 import clsx from "clsx";
-import { add } from "date-fns";
+import { sub } from "date-fns";
 import * as React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
@@ -12,7 +12,8 @@ import { Button } from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Menu } from "~/components/Menu";
-import { Popover } from "~/components/Popover";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { EyeIcon } from "~/components/icons/Eye";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
@@ -45,6 +46,7 @@ import {
 	tournamentBracketsSubscribePage,
 	tournamentJoinPage,
 } from "~/utils/urls";
+import { updateTeamSeeds } from "../../tournament/queries/updateTeamSeeds.server";
 import {
 	useBracketExpanded,
 	useTournament,
@@ -142,6 +144,17 @@ export const action: ActionFunction = async ({ params, request }) => {
 						bracket,
 					}),
 				);
+
+				// ensures autoseeding is disabled
+				const isAllSeedsPersisted = tournament.ctx.teams.every(
+					(team) => typeof team.seed === "number",
+				);
+				if (!isAllSeedsPersisted) {
+					updateTeamSeeds({
+						tournamentId: tournament.ctx.id,
+						teamIds: tournament.ctx.teams.map((team) => team.id),
+					});
+				}
 			})();
 
 			break;
@@ -430,6 +443,10 @@ export default function TournamentBracketsPage() {
 		).length;
 	};
 
+	if (tournament.isLeagueSignup) {
+		return null;
+	}
+
 	return (
 		<div>
 			{visibility !== "hidden" && !tournament.everyBracketOver ? (
@@ -471,6 +488,8 @@ export default function TournamentBracketsPage() {
 								⚠️{" "}
 								{bracketIdx === 0 ? (
 									<>Tournament start time is in the future</>
+								) : bracket.startTime && bracket.startTime > new Date() ? (
+									<>Bracket start time is in the future</>
 								) : (
 									<>Teams pending from the previous bracket</>
 								)}{" "}
@@ -520,19 +539,19 @@ export default function TournamentBracketsPage() {
 							{bracket.startTime ? (
 								<span suppressHydrationWarning>
 									(open{" "}
-									{bracket.startTime.toLocaleString("en-US", {
-										hour: "numeric",
-										minute: "numeric",
-										weekday: "long",
-									})}{" "}
-									-{" "}
-									{add(bracket.startTime, { hours: 1 }).toLocaleTimeString(
+									{sub(bracket.startTime, { hours: 1 }).toLocaleString(
 										"en-US",
 										{
 											hour: "numeric",
 											minute: "numeric",
+											weekday: "long",
 										},
-									)}
+									)}{" "}
+									-{" "}
+									{bracket.startTime.toLocaleTimeString("en-US", {
+										hour: "numeric",
+										minute: "numeric",
+									})}
 									)
 								</span>
 							) : null}
@@ -673,16 +692,7 @@ function AddSubsPopOver() {
 		const teamMemberOf = tournament.teamMemberOfByUser(user);
 		if (!teamMemberOf) return null;
 
-		return (
-			<Popover
-				buttonChildren={t("tournament:actions.addSub")}
-				triggerClassName="tiny outlined ml-auto"
-				triggerTestId="add-sub-button"
-				contentClassName="text-xs"
-			>
-				Only team captain or a TO can add subs
-			</Popover>
-		);
+		return <SubsPopover>Only team captain or a TO can add subs</SubsPopover>;
 	}
 
 	const subsAvailableToAdd =
@@ -694,12 +704,7 @@ function AddSubsPopOver() {
 	})}`;
 
 	return (
-		<Popover
-			buttonChildren={t("tournament:actions.addSub")}
-			triggerClassName="tiny outlined ml-auto"
-			triggerTestId="add-sub-button"
-			contentClassName="text-xs"
-		>
+		<SubsPopover>
 			{t("tournament:actions.sub.prompt", { count: subsAvailableToAdd })}
 			{subsAvailableToAdd > 0 ? (
 				<>
@@ -718,7 +723,29 @@ function AddSubsPopOver() {
 					</div>
 				</>
 			) : null}
-		</Popover>
+		</SubsPopover>
+	);
+}
+
+function SubsPopover({ children }: { children: React.ReactNode }) {
+	const { t } = useTranslation(["tournament"]);
+
+	return (
+		<SendouPopover
+			popoverClassName="text-xs"
+			trigger={
+				<SendouButton
+					className="ml-auto"
+					variant="outlined"
+					size="small"
+					data-testid="add-sub-button"
+				>
+					{t("tournament:actions.addSub")}
+				</SendouButton>
+			}
+		>
+			{children}
+		</SendouPopover>
 	);
 }
 

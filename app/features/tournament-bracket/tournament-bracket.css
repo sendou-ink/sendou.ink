@@ -540,6 +540,10 @@
 	gap: var(--s-5);
 }
 
+.map-list-dialog__pick-ban-select {
+	text-align: start;
+}
+
 .map-list-dialog__map-list-row {
 	display: flex;
 	gap: var(--s-2);
@@ -547,4 +551,5 @@
 	margin-block: var(--s-2);
 	list-style: none;
 	min-width: 275px;
+	text-align: start;
 }

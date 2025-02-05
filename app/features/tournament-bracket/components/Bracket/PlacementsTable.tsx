@@ -116,6 +116,18 @@ export function PlacementsTable({
 							<abbr title="Losses against tied opponents">TB</abbr>
 						</th>
 					) : null}
+					{bracket.type === "swiss" ? (
+						<>
+							<th>
+								<abbr title="Opponents' set win percentage average">OW%</abbr>
+							</th>
+							<th>
+								<abbr title="Opponents' map win percentage average">
+									OW% (M)
+								</abbr>
+							</th>
+						</>
+					) : null}
 					<th>
 						<abbr title="Map wins and losses">W/L (M)</abbr>
 					</th>
@@ -123,20 +135,6 @@ export function PlacementsTable({
 						<th>
 							<abbr title="Score summed up">Scr</abbr>
 						</th>
-					) : null}
-					{bracket.type === "swiss" ? (
-						<>
-							<th>
-								<abbr title="Buchholz (summed set wins of opponents)">
-									Buch.
-								</abbr>
-							</th>
-							<th>
-								<abbr title="Buchholz (summed map wins of opponents)">
-									Buch. (M)
-								</abbr>
-							</th>
-						</>
 					) : null}
 					<th>Seed</th>
 					<th />
@@ -199,6 +197,16 @@ export function PlacementsTable({
 									<span>{(stats.lossesAgainstTied ?? 0) * -1}</span>
 								</td>
 							) : null}
+							{bracket.type === "swiss" ? (
+								<>
+									<td>
+										<span>{stats.opponentSetWinPercentage?.toFixed(2)}</span>
+									</td>
+									<td>
+										<span>{stats.opponentMapWinPercentage?.toFixed(2)}</span>
+									</td>
+								</>
+							) : null}
 							<td>
 								<span>
 									{stats.mapWins}/{stats.mapLosses}
@@ -208,16 +216,6 @@ export function PlacementsTable({
 								<td>
 									<span>{stats.points}</span>
 								</td>
-							) : null}
-							{bracket.type === "swiss" ? (
-								<>
-									<td>
-										<span>{stats.buchholzSets}</span>
-									</td>
-									<td>
-										<span>{stats.buchholzMaps}</span>
-									</td>
-								</>
 							) : null}
 							<td>{team?.seed}</td>
 							<EditableDestination
