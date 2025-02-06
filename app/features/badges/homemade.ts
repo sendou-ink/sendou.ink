@@ -15,6 +15,11 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Inkstrike Invitational",
+		fileName: "inkstrikeinv",
+		authorDiscordId: "789943264370884708",
+	},
+	{
 		displayName: "All 4 One: Clam Blitz",
 		fileName: "newa41cb",
 		authorDiscordId: "338806780446638082",
