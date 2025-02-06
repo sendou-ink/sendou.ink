@@ -20,6 +20,11 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "338806780446638082",
 	},
 	{
+		displayName: "A41 GG Gold Bracket",
+		fileName: "newa41gggold",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "A41 GG Silver Bracket",
 		fileName: "newa41ggsilver",
 		authorDiscordId: "338806780446638082",
