@@ -46,9 +46,9 @@ import {
 	subWeaponImageUrl,
 	userNewBuildPage,
 } from "~/utils/urls";
-import { openGraph } from "../../../utils/remix";
 import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
+import { openGraph } from "../../../utils/remix";
 import {
 	MAX_LDE_INTENSITY,
 	damageTypeToWeaponType,
