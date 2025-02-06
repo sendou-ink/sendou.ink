@@ -215,6 +215,7 @@ export async function findAllBetweenTwoTimestamps({
 			"<=",
 			dateToDatabaseTimestamp(endTime),
 		)
+		.where("CalendarEvent.hidden", "=", 0)
 		.orderBy("CalendarEventDate.startTime", "asc");
 
 	for (const tag of tagsToFilterBy) {
@@ -362,6 +363,7 @@ export async function eventsToReport(authorId: number) {
 			fn.max("CalendarEventDate.startTime").as("startTime"),
 		])
 		.where("CalendarEvent.authorId", "=", authorId)
+		.where("CalendarEvent.hidden", "=", 0)
 		.where("startTime", ">=", dateToDatabaseTimestamp(oneMonthAgo))
 		.where("startTime", "<=", dateToDatabaseTimestamp(new Date()))
 		.where("CalendarEvent.participantCount", "is", null)
@@ -382,6 +384,7 @@ export async function findRecentMapPoolsByAuthorId(authorId: number) {
 			withMapPool(eb),
 		])
 		.where("CalendarEvent.authorId", "=", authorId)
+		.where("CalendarEvent.hidden", "=", 0)
 		.orderBy("CalendarEvent.id", "desc")
 		.groupBy("CalendarEvent.id")
 		.limit(5)
@@ -484,6 +487,7 @@ type CreateArgs = Pick<
 	avatarFileName?: string;
 	avatarImgId?: number;
 	autoValidateAvatar?: boolean;
+	parentTournamentId?: number;
 };
 export async function create(args: CreateArgs) {
 	const copiedStaff = args.tournamentToCopyId
@@ -527,6 +531,7 @@ export async function create(args: CreateArgs) {
 					.values({
 						mapPickingStyle: args.mapPickingStyle,
 						settings: JSON.stringify(settings),
+						parentTournamentId: args.parentTournamentId,
 						rules: args.rules,
 					})
 					.returning("id")
@@ -568,6 +573,7 @@ export async function create(args: CreateArgs) {
 				bracketUrl: args.bracketUrl,
 				avatarImgId: args.avatarImgId ?? avatarImgId,
 				organizationId: args.organizationId,
+				hidden: args.parentTournamentId ? 1 : 0,
 				tournamentId,
 			})
 			.returning("id")
@@ -694,6 +700,19 @@ export async function update(args: UpdateArgs) {
 				.where("id", "=", tournamentId)
 				.returning("mapPickingStyle")
 				.executeTakeFirstOrThrow();
+
+			if (
+				Progression.changedBracketProgressionFormat(
+					existingBracketProgression,
+					args.bracketProgression,
+				)
+			) {
+				await trx
+					.updateTable("TournamentTeam")
+					.set({ startingBracketIdx: null })
+					.where("tournamentId", "=", tournamentId)
+					.execute();
+			}
 
 			mapPickingStyle = _mapPickingStyle;
 		}

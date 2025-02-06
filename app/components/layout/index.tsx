@@ -1,9 +1,7 @@
 import { Link, useLocation, useMatches } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
-import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
-import { useIsMounted } from "~/hooks/useIsMounted";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
 import { Button } from "../Button";
@@ -140,16 +138,6 @@ function BreadcrumbLink({ data }: { data: Breadcrumb }) {
 		</Link>
 	);
 }
-const RampUnit = React.lazy(() => import("../ramp/RampUnit"));
-function MyRampUnit() {
-	const isMounted = useIsMounted();
-	if (!isMounted) {
-		return <div className="top-leaderboard" />;
-	}
-
-	return (
-		<ErrorBoundary fallback={null}>
-			<RampUnit type="leaderboard_atf" cssClass="top-leaderboard" />
-		</ErrorBoundary>
-	);
-}
+const MyRampUnit = React.memo(function MyRampUnit() {
+	return <div className="top-leaderboard" id="pw-leaderboard_atf" />;
+});

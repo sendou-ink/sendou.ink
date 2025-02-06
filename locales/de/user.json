@@ -10,7 +10,7 @@
 	"stick": "Stick",
 	"sens": "Empfindlichkeit",
 	"weaponPool": "Waffenpool",
-	"discordExplanation": "Der Username, Profilbild, YouTube-, Twitter- und Twitch-Konten stammen von deinem Discord-Konto. Mehr Infos in den <1>FAQ</1>.",
+	"discordExplanation": "Der Username, Profilbild, YouTube-, Bluesky- und Twitch-Konten stammen von deinem Discord-Konto. Mehr Infos in den <1>FAQ</1>.",
 
 	"results.placing": "Platzierung",
 	"results.team": "Team",
@@ -27,6 +27,5 @@
 	"forms.errors.invalidCustomUrl.duplicate": "Diese Benutzerdefinierte URL wird bereits verwendet",
 	"forms.errors.invalidSens": "Empfindlichkeit der Bewegungssteuerung kann nur festgelegt werden, wenn Empfindlichkeit R-Stick festgelegt ist",
 
-	"search.info": "Suche nach Nutzern anhand des Discord-, Splatoon-3- oder Twitter-Namens",
 	"search.noResults": "Keine Nutzer gefunden, die '{{query}}' entsprechen"
 }

@@ -22,6 +22,8 @@ Any badge to be added has to follow these rules. Badges that do not follow the r
 
 **As tournament prizes** the badge are meant to be given out as tournament prizes (awarded for reaching certain placement). If you have any other idea in mind then you need to check that with Sendou separately.
 
+**One badge per tournament** as described above badges are meant to given out as tournament prizes and on top of that the basic rule is one badge can be earned by playing one tournament. If any other idea you need to check that with Sendou separately.
+
 ## Adding a new badge
 
 1. First badge needs to be made
@@ -34,7 +36,7 @@ Any badge to be added has to follow these rules. Badges that do not follow the r
 - .png file (static). TODO: info on how to ceate
 - .avif file (static). Create via e.g. [Squoosh](https://squoosh.app/) from the .png file
 - All files should be squares. 512x512 is a good size for example
-- For the animation, rotating speed should match those of the borzoic badges. You can control this via left & right arrow keys on picoCAD Web Viewer.
+- For the animation, rotating speed should match those of the borzoic badges (a full rotation should take about 3 seconds, rotating counterclockwise). You can control this via left & right arrow keys on picoCAD Web Viewer.
 3. Make a pull request to the project
 - If you don't know how a pull request is made you can ask someone you know that is familiar with GitHub or refer to the guide pinned in the #badges Discord channel
 - In the PR add the 3 needed files to public/static-assets/badges folder:

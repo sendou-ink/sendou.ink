@@ -1,4 +1,8 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
 import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import * as React from "react";
@@ -8,7 +12,6 @@ import { Button } from "~/components/Button";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { MapPoolSelector, MapPoolStages } from "~/components/MapPoolSelector";
-import { Toggle } from "~/components/Toggle";
 import { EditIcon } from "~/components/icons/Edit";
 import type { CalendarEvent } from "~/db/types";
 import { getUserId } from "~/features/auth/core/user.server";
@@ -24,13 +27,12 @@ import {
 	ipLabsMaps,
 	navIconUrl,
 } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
 import { generateMapList } from "../core/map-list-generator/map-list";
 import { modesOrder } from "../core/map-list-generator/modes";
 import { mapPoolToNonEmptyModes } from "../core/map-list-generator/utils";
 import { MapPool } from "../core/map-pool";
-
 import "~/styles/maps.css";
+import { SendouSwitch } from "~/components/elements/Switch";
 
 const AMOUNT_OF_MAPS_IN_MAP_LIST = stageIds.length * 2;
 
@@ -216,7 +218,11 @@ function MapListCreator({ mapPool }: { mapPool: MapPool }) {
 		<div className="maps__map-list-creator">
 			<div className="maps__toggle-container">
 				<Label>{t("common:maps.halfSz")}</Label>
-				<Toggle checked={szEveryOther} setChecked={setSzEveryOther} tiny />
+				<SendouSwitch
+					isSelected={szEveryOther}
+					onChange={setSzEveryOther}
+					size="small"
+				/>
 			</div>
 			<Button onClick={handleCreateMaplist} disabled={disabled}>
 				{t("common:maps.createMapList")}

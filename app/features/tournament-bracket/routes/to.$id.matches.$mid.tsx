@@ -186,6 +186,12 @@ export const action: ActionFunction = async ({ params, request }) => {
 			validate(teamOneRoster, "Team one has no active roster");
 			validate(teamTwoRoster, "Team two has no active roster");
 
+			validate(
+				new Set([...teamOneRoster, ...teamTwoRoster]).size ===
+					tournament.minMembersPerTeam * 2,
+				"Duplicate user in rosters",
+			);
+
 			sql.transaction(() => {
 				manager.update.match({
 					id: match.id,
@@ -211,10 +217,18 @@ export const action: ActionFunction = async ({ params, request }) => {
 					opponentTwoPoints: data.points?.[1] ?? null,
 				});
 
-				for (const userId of [...teamOneRoster, ...teamTwoRoster]) {
+				for (const userId of teamOneRoster) {
 					insertTournamentMatchGameResultParticipant({
 						matchGameResultId: result.id,
 						userId,
+						tournamentTeamId: match.opponentOne!.id!,
+					});
+				}
+				for (const userId of teamTwoRoster) {
+					insertTournamentMatchGameResultParticipant({
+						matchGameResultId: result.id,
+						userId,
+						tournamentTeamId: match.opponentTwo!.id!,
 					});
 				}
 			})();
@@ -333,7 +347,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 			);
 			validate(result, "Result not found");
 			validate(
-				data.rosters.length === tournament.minMembersPerTeam * 2,
+				data.rosters[0].length === tournament.minMembersPerTeam &&
+					data.rosters[1].length === tournament.minMembersPerTeam,
 				"Invalid roster length",
 			);
 
@@ -377,10 +392,18 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 				deleteParticipantsByMatchGameResultId(result.id);
 
-				for (const userId of data.rosters) {
+				for (const userId of data.rosters[0]) {
 					insertTournamentMatchGameResultParticipant({
 						matchGameResultId: result.id,
 						userId,
+						tournamentTeamId: match.opponentOne!.id!,
+					});
+				}
+				for (const userId of data.rosters[1]) {
+					insertTournamentMatchGameResultParticipant({
+						matchGameResultId: result.id,
+						userId,
+						tournamentTeamId: match.opponentTwo!.id!,
 					});
 				}
 			})();
@@ -793,7 +816,9 @@ function MatchHeader() {
 	return (
 		<div className="line-height-tight" data-testid="match-header">
 			<h2 className="text-lg">{roundName}</h2>
-			<div className="text-lighter text-xs font-bold">{bracketName}</div>
+			{tournament.ctx.settings.bracketProgression.length > 1 ? (
+				<div className="text-lighter text-xs font-bold">{bracketName}</div>
+			) : null}
 		</div>
 	);
 }

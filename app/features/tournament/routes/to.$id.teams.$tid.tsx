@@ -5,8 +5,9 @@ import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { ModeImage, StageImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
-import { Popover } from "~/components/Popover";
 import { Redirect } from "~/components/Redirect";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentTeamPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator";
@@ -209,23 +210,28 @@ function SetInfo({ set, team }: { set: PlayedSet; team: TournamentDataTeam }) {
 					})}
 					className="tournament__team__set__round-name"
 				>
-					{roundNameWithoutMatchIdentifier} - {bracketName}
+					{roundNameWithoutMatchIdentifier}{" "}
+					{tournament.ctx.settings.bracketProgression.length > 1 ? (
+						<>- {bracketName}</>
+					) : null}
 				</Link>
 			</div>
 			<div className="overlap-divider">
 				<div className="stack horizontal sm">
 					{set.maps.map(({ stageId, modeShort, result, source }, i) => {
 						return (
-							<Popover
+							<SendouPopover
 								key={i}
-								buttonChildren={
-									<ModeImage
-										mode={modeShort}
-										size={20}
-										containerClassName={clsx("tournament__team__set__mode", {
-											tournament__team__set__mode__loss: result === "loss",
-										})}
-									/>
+								trigger={
+									<SendouButton variant="minimal">
+										<ModeImage
+											mode={modeShort}
+											size={20}
+											containerClassName={clsx("tournament__team__set__mode", {
+												tournament__team__set__mode__loss: result === "loss",
+											})}
+										/>
+									</SendouButton>
 								}
 								placement="top"
 							>
@@ -237,7 +243,7 @@ function SetInfo({ set, team }: { set: PlayedSet; team: TournamentDataTeam }) {
 									/>
 									{sourceToText(source)}
 								</div>
-							</Popover>
+							</SendouPopover>
 						);
 					})}
 				</div>

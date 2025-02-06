@@ -18,7 +18,7 @@ import { KeyIcon } from "~/components/icons/Key";
 import { LogOutIcon } from "~/components/icons/LogOut";
 import { SearchIcon } from "~/components/icons/Search";
 import { UsersIcon } from "~/components/icons/Users";
-import navItems from "~/components/layout/nav-items.json";
+import { navItems } from "~/components/layout/nav-items";
 import { useUser } from "~/features/auth/core/user";
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
 import {
@@ -34,6 +34,7 @@ import {
 	BLANK_IMAGE_URL,
 	CALENDAR_TOURNAMENTS_PAGE,
 	LOG_OUT_URL,
+	LUTI_PAGE,
 	SENDOUQ_PAGE,
 	leaderboardsPage,
 	navIconUrl,
@@ -55,6 +56,7 @@ export const handle: SendouRouteHandle = {
 export default function FrontPage() {
 	return (
 		<Main className="front-page__container">
+			<LeagueBanner />
 			<DesktopSideNav />
 			<SeasonBanner />
 			<TournamentCards />
@@ -75,7 +77,7 @@ function DesktopSideNav() {
 					<Link
 						to={`/${item.url}`}
 						key={item.name}
-						prefetch={item.prefetch ? "intent" : undefined}
+						prefetch={item.prefetch ? "render" : undefined}
 						className="front-page__side-nav-item"
 					>
 						<Image
@@ -155,6 +157,19 @@ function SeasonBanner() {
 				</div>
 			</Link>
 		</div>
+	);
+}
+
+function LeagueBanner() {
+	const showBannerFor = import.meta.env.VITE_SHOW_BANNER_FOR_SEASON;
+	if (!showBannerFor) return null;
+
+	return (
+		<Link to={LUTI_PAGE} className="front__luti-banner">
+			<Image path={navIconUrl("luti")} size={24} alt="" />
+			Registration now open for Leagues Under The Ink (LUTI) Season{" "}
+			{showBannerFor}!
+		</Link>
 	);
 }
 

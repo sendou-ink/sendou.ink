@@ -26,7 +26,8 @@ export interface GetUserResponse {
 	country: string | null;
 	socials: {
 		twitch: string | null;
-		twitter: string | null;
+		// @deprecated
+		twitter: null;
 		battlefy: string | null;
 		bsky: string | null;
 	};
@@ -34,14 +35,6 @@ export interface GetUserResponse {
 	weaponPool: Array<ProfileWeapon>;
 	badges: Array<Badge>;
 	peakXp: number | null;
-	// TODO: can be added to this endpoint / another one if use case arises
-	// leaderboardEntry: {
-	//   season: number;
-	//   position: number;
-	//   power: number;
-	//   tier: Tier;
-	//   weapon: Weapon | null;
-	// } | null;
 }
 
 /** GET /api/calendar/{year}/{week} */
@@ -122,6 +115,15 @@ export type GetTournamentTeamsResponse = Array<{
 	logoUrl: string | null;
 	seed: number | null;
 	mapPool: Array<StageWithMode> | null;
+	/**
+	 *  Seeding power is a non-resetting MMR value that is used for sendou.ink's autoseeding capabilities.
+	 *  It is calculated as the average of the team's members' seeding power.
+	 *  Ranked and unranked tournaments contribute to different seeding power values.
+	 */
+	seedingPower: {
+		ranked: number | null;
+		unranked: number | null;
+	};
 	members: Array<{
 		userId: number;
 		/**
@@ -149,17 +151,62 @@ export type GetTournamentTeamsResponse = Array<{
 		 */
 		inGameName: string | null;
 		/**
+		 *  Switch friend code used for identification purposes.
+		 *
+		 * @example "1234-5678-9101"
+		 */
+		friendCode: string;
+		/**
 		 * @example "2024-01-12T20:00:00.000Z"
 		 */
 		joinedAt: string;
 	}>;
 }>;
 
+/** GET /api/tournament/{tournamentId}/casted */
+
+export interface GetCastedTournamentMatchesResponse {
+	/*
+	 * Matches that are currently being played and casted. Note: at the moment only one match can be casted at a time but this is an array for future proofing.
+	 */
+	current: Array<{
+		matchId: number;
+		channel: TournamentCastChannel;
+	}>;
+	/*
+	 * Matches that are locked to be casted.
+	 */
+	future: Array<{
+		matchId: number;
+		channel: TournamentCastChannel | null;
+	}>;
+}
+
+type TournamentCastChannel = {
+	type: "TWITCH";
+	/**
+	 * @example "iplsplatoon"
+	 */
+	channelId: string;
+};
+
 /** GET /api/tournament-match/{matchId} */
 
 export interface GetTournamentMatchResponse {
 	teamOne: TournamentMatchTeam | null;
 	teamTwo: TournamentMatchTeam | null;
+	/**
+	 * Name of the bracket this match belongs to.
+	 *
+	 * @example "Alpha Bracket"
+	 */
+	bracketName: string | null;
+	/**
+	 * Name of the round this match belongs to.
+	 *
+	 * @example "Grand Finals"
+	 */
+	roundName: string | null;
 	mapList: Array<MapListMap> | null;
 	/**
 	 * @example "https://sendou.ink/to/9/matches/695"
@@ -171,6 +218,10 @@ export interface GetTournamentMatchResponse {
 
 export interface GetTournamentBracketResponse {
 	data: TournamentBracketData;
+	teams: Array<{
+		id: number;
+		checkedIn: boolean;
+	}>;
 	meta: {
 		/** How many teams per group? (round robin only) */
 		teamsPerGroup?: number;
@@ -260,22 +311,6 @@ type Badge = {
 	 */
 	gifUrl: string;
 };
-
-// type Tier =
-//   | "LEVIATHAN+"
-//   | "DIAMOND+"
-//   | "PLATINUM+"
-//   | "GOLD+"
-//   | "SILVER+"
-//   | "BRONZE+"
-//   | "IRON+"
-//   | "LEVIATHAN"
-//   | "DIAMOND"
-//   | "PLATINUM"
-//   | "GOLD"
-//   | "SILVER"
-//   | "BRONZE"
-//   | "IRON";
 
 type ModeShort = "TW" | "SZ" | "TC" | "RM" | "CB";
 type Stage = {

@@ -4,13 +4,12 @@ import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { makeArtist } from "~/features/art/queries/makeArtist.server";
 import { requireUserId } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
-import { FRIEND_CODE_REGEXP } from "~/features/sendouq/q-constants";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { isAdmin, isMod } from "~/permissions";
 import { logger } from "~/utils/logger";
 import { parseRequestPayload, validate } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { _action, actualNumber } from "~/utils/zod";
+import { _action, actualNumber, friendCode } from "~/utils/zod";
 import { plusTiersFromVotingAndLeaderboard } from "../core/plus-tier.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -186,7 +185,7 @@ export const adminActionSchema = z.union([
 	}),
 	z.object({
 		_action: _action("UPDATE_FRIEND_CODE"),
-		friendCode: z.string().regex(FRIEND_CODE_REGEXP),
+		friendCode,
 		user: z.preprocess(actualNumber, z.number().positive()),
 	}),
 ]);

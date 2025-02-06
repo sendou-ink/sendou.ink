@@ -83,3 +83,10 @@ export function isNotVisible(locator: Locator) {
 export function modalClickConfirmButton(page: Page) {
 	return page.getByTestId("confirm-button").click();
 }
+
+export async function fetchSendouInk<T>(url: string) {
+	const res = await fetch(`http://localhost:5173${url}`);
+	if (!res.ok) throw new Error("Response not successful");
+
+	return res.json() as T;
+}

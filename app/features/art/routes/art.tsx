@@ -1,4 +1,8 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
 import { useLoaderData, useSearchParams } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
@@ -6,11 +10,11 @@ import { Button } from "~/components/Button";
 import { Combobox } from "~/components/Combobox";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { Toggle } from "~/components/Toggle";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { CrossIcon } from "~/components/icons/Cross";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { artPage, navIconUrl } from "~/utils/urls";
-import { type SerializeFrom, openGraph } from "../../../utils/remix";
+import { openGraph } from "../../../utils/remix";
 import { ArtGrid } from "../components/ArtGrid";
 import { allArtTags } from "../queries/allArtTags.server";
 import {
@@ -83,9 +87,9 @@ export default function ArtPage() {
 		<Main className="stack lg">
 			<div className="stack horizontal md justify-between items-center flex-wrap">
 				<div className="stack horizontal sm text-sm font-semi-bold">
-					<Toggle
-						checked={showOpenCommissions}
-						setChecked={() =>
+					<SendouSwitch
+						isSelected={showOpenCommissions}
+						onChange={() =>
 							setSearchParams((prev) => {
 								prev.set(OPEN_COMMISIONS_KEY, String(!showOpenCommissions));
 								return prev;

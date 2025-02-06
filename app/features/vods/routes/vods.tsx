@@ -1,4 +1,8 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
 import { useLoaderData, useSearchParams } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Button } from "~/components/Button";
@@ -10,7 +14,6 @@ import { mainWeaponIds, modesShort, stageIds } from "~/modules/in-game-lists";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { makeTitle } from "~/utils/strings";
 import { VODS_PAGE, navIconUrl } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
 import { VodListing } from "../components/VodListing";
 import { findVods } from "../queries/findVods.server";
 import { VODS_PAGE_BATCH_SIZE, videoMatchTypes } from "../vods-constants";

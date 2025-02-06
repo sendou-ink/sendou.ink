@@ -4,7 +4,7 @@ import type * as Progression from "../Progression";
 import { Tournament } from "../Tournament";
 import type { TournamentData } from "../Tournament.server";
 
-const tournamentCtxTeam = (
+export const tournamentCtxTeam = (
 	teamId: number,
 	partial?: Partial<TournamentData["ctx"]["teams"][0]>,
 ): TournamentData["ctx"]["teams"][0] => {
@@ -14,6 +14,7 @@ const tournamentCtxTeam = (
 		id: teamId,
 		inviteCode: null,
 		avgSeedingSkillOrdinal: null,
+		startingBracketIdx: null,
 		team: null,
 		mapPool: [],
 		members: [],
@@ -62,6 +63,7 @@ export const testTournament = ({
 			tags: null,
 			description: null,
 			organization: null,
+			parentTournamentId: null,
 			rules: null,
 			logoUrl: null,
 			logoSrc: "/test.png",
@@ -71,6 +73,7 @@ export const testTournament = ({
 			isFinalized: 0,
 			name: "test",
 			castTwitchAccounts: [],
+			bracketProgressionOverrides: [],
 			subCounts: [],
 			staff: [],
 			tieBreakerMapPool: [],
@@ -260,6 +263,23 @@ export const progressions = {
 			settings: {
 				groupCount: 1,
 			},
+		},
+	],
+	doubleEliminationWithUnderground: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "double_elimination",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "double_elimination",
+			name: "Underground",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [-1, -2],
+				},
+			],
 		},
 	],
 } satisfies Record<string, Progression.ParsedBracket[]>;

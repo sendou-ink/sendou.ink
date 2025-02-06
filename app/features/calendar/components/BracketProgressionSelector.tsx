@@ -6,7 +6,7 @@ import { DateInput } from "~/components/DateInput";
 import { FormMessage } from "~/components/FormMessage";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
-import { Toggle } from "~/components/Toggle";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { PlusIcon } from "~/components/icons/Plus";
 import { TOURNAMENT } from "~/features/tournament";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
@@ -23,10 +23,12 @@ export function BracketProgressionSelector({
 	initialBrackets,
 	isInvitationalTournament,
 	setErrored,
+	isTournamentInProgress,
 }: {
 	initialBrackets?: Progression.InputBracket[];
 	isInvitationalTournament: boolean;
 	setErrored: (errored: boolean) => void;
+	isTournamentInProgress: boolean;
 }) {
 	const [brackets, setBrackets] = React.useState<Progression.InputBracket[]>(
 		initialBrackets ?? [defaultBracket()],
@@ -106,6 +108,7 @@ export function BracketProgressionSelector({
 						}
 						count={i + 1}
 						isInvitationalTournament={isInvitationalTournament}
+						isTournamentInProgress={isTournamentInProgress}
 					/>
 				))}
 			</div>
@@ -132,6 +135,7 @@ function TournamentFormatBracketSelector({
 	onDelete,
 	count,
 	isInvitationalTournament,
+	isTournamentInProgress,
 }: {
 	bracket: Progression.InputBracket;
 	brackets: Progression.InputBracket[];
@@ -139,6 +143,7 @@ function TournamentFormatBracketSelector({
 	onDelete?: () => void;
 	count: number;
 	isInvitationalTournament: boolean;
+	isTournamentInProgress: boolean;
 }) {
 	const id = React.useId();
 
@@ -181,7 +186,7 @@ function TournamentFormatBracketSelector({
 					/>
 				</div>
 
-				{!isFirstBracket ? (
+				{bracket.sources ? (
 					<div>
 						<Label htmlFor={createId("startTime")}>Start time</Label>
 						<DateInput
@@ -199,15 +204,16 @@ function TournamentFormatBracketSelector({
 					</div>
 				) : null}
 
-				{!isFirstBracket ? (
+				{bracket.sources ? (
 					<div>
 						<Label htmlFor={createId("checkIn")}>Check-in required</Label>
-						<Toggle
-							checked={bracket.requiresCheckIn}
-							setChecked={(checked) =>
-								updateBracket({ requiresCheckIn: checked })
+						<SendouSwitch
+							id={createId("checkIn")}
+							isSelected={bracket.requiresCheckIn}
+							onChange={(isSelected) =>
+								updateBracket({ requiresCheckIn: isSelected })
 							}
-							disabled={bracket.disabled}
+							isDisabled={bracket.disabled}
 						/>
 						<FormMessage type="info">
 							Check-in starts 1 hour before start time or right after the
@@ -242,14 +248,18 @@ function TournamentFormatBracketSelector({
 						<Label htmlFor={createId("thirdPlaceMatch")}>
 							Third place match
 						</Label>
-						<Toggle
-							checked={Boolean(bracket.settings.thirdPlaceMatch)}
-							setChecked={(checked) =>
+						<SendouSwitch
+							id={createId("thirdPlaceMatch")}
+							isSelected={Boolean(bracket.settings.thirdPlaceMatch)}
+							onChange={(isSelected) =>
 								updateBracket({
-									settings: { ...bracket.settings, thirdPlaceMatch: checked },
+									settings: {
+										...bracket.settings,
+										thirdPlaceMatch: isSelected,
+									},
 								})
 							}
-							disabled={bracket.disabled}
+							isDisabled={bracket.disabled}
 						/>
 					</div>
 				) : null}
@@ -340,7 +350,28 @@ function TournamentFormatBracketSelector({
 					<div className="stack horizontal sm">
 						<Label htmlFor={createId("source")}>Source</Label>{" "}
 					</div>
-					{isFirstBracket ? (
+					{!isFirstBracket ? (
+						<div className="stack sm horizontal mt-1 mb-2">
+							<SendouSwitch
+								id={createId("follow-up-bracket")}
+								size="small"
+								isSelected={Boolean(bracket.sources)}
+								onChange={(isSelected) =>
+									updateBracket({
+										sources: isSelected ? [] : undefined,
+										requiresCheckIn: false,
+										startTime: undefined,
+									})
+								}
+								isDisabled={bracket.disabled || isTournamentInProgress}
+								data-testid="follow-up-bracket-switch"
+							/>
+							<Label htmlFor={createId("follow-up-bracket")} spaced={false}>
+								Is follow-up bracket
+							</Label>
+						</div>
+					) : null}
+					{!bracket.sources ? (
 						<FormMessage type="info">
 							{isInvitationalTournament ? (
 								<>Participants added by the organizer</>

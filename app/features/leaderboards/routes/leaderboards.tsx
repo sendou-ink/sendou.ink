@@ -1,5 +1,9 @@
 import { cachified } from "@epic-web/cachified";
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
 import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import React from "react";
 import { useTranslation } from "react-i18next";
@@ -36,7 +40,6 @@ import {
 	userSubmittedImage,
 } from "~/utils/urls";
 import { InfoPopover } from "../../../components/InfoPopover";
-import type { SerializeFrom } from "../../../utils/remix";
 import { TopTenPlayer } from "../components/TopTenPlayer";
 import {
 	cachedFullUserLeaderboard,
@@ -337,7 +340,7 @@ function OwnEntryPeek({
 	entry,
 	nextTier,
 }: {
-	entry: NonNullable<SerializeFrom<typeof loader>["ownEntryPeek"]>["entry"];
+	entry: NonNullable<SerializeFrom<typeof loader>["userLeaderboard"]>[number];
 	nextTier?: SkillTierInterval;
 }) {
 	const data = useLoaderData<typeof loader>();

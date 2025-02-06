@@ -3,6 +3,7 @@
 	flex-direction: column;
 	width: 100%;
 	min-height: 100vh;
+	padding-top: 50px; /** compensate for layout__header */
 }
 
 .layout__breadcrumb-container {
@@ -55,7 +56,7 @@
 	font-weight: bold;
 	padding-block: var(--s-2);
 	padding-inline: var(--s-4);
-	position: sticky;
+	position: fixed;
 	top: 0;
 }
 
@@ -361,10 +362,7 @@
 	}
 
 	.layout__main {
-		padding-block-start: calc(
-			env(safe-area-inset-top) +
-			var(--leaderboard-top-spacing)
-		);
+		padding-block-start: env(safe-area-inset-top);
 	}
 }
 

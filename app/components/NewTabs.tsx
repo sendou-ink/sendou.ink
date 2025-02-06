@@ -62,7 +62,7 @@ export function NewTabs(args: NewTabsProps) {
 						return (
 							<Tab
 								key={tab.label}
-								className="tab__button"
+								className="button tab__button"
 								data-testid={`tab-${tab.label}`}
 								disabled={tab.disabled}
 							>

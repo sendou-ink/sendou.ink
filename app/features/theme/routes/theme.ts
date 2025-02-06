@@ -1,7 +1,7 @@
 import {
 	type ActionFunction,
 	type LoaderFunction,
-	data,
+	json,
 	redirect,
 } from "@remix-run/node";
 import { isTheme } from "../core/provider";
@@ -14,21 +14,21 @@ export const action: ActionFunction = async ({ request }) => {
 	const theme = form.get("theme");
 
 	if (theme === "auto") {
-		return data(
+		return json(
 			{ success: true },
 			{ headers: { "Set-Cookie": await themeSession.destroy() } },
 		);
 	}
 
 	if (!isTheme(theme)) {
-		return data({
+		return json({
 			success: false,
 			message: `theme value of ${theme ?? "null"} is not a valid theme`,
 		});
 	}
 
 	themeSession.setTheme(theme);
-	return data(
+	return json(
 		{ success: true },
 		{ headers: { "Set-Cookie": await themeSession.commit() } },
 	);

@@ -8,6 +8,7 @@ import {
 	safeJSONParse,
 	stageId,
 } from "~/utils/zod";
+import { bracketIdx } from "../tournament-bracket/tournament-bracket-schemas.server";
 import { TOURNAMENT } from "./tournament-constants";
 
 export const teamName = z
@@ -53,9 +54,24 @@ export const registerSchema = z.union([
 	}),
 ]);
 
-export const seedsActionSchema = z.object({
-	seeds: z.preprocess(safeJSONParse, z.array(id)),
-});
+export const seedsActionSchema = z.union([
+	z.object({
+		_action: _action("UPDATE_SEEDS"),
+		seeds: z.preprocess(safeJSONParse, z.array(id)),
+	}),
+	z.object({
+		_action: _action("UPDATE_STARTING_BRACKETS"),
+		startingBrackets: z.preprocess(
+			safeJSONParse,
+			z.array(
+				z.object({
+					tournamentTeamId: id,
+					startingBracketIdx: bracketIdx,
+				}),
+			),
+		),
+	}),
+]);
 
 export const joinSchema = z.object({
 	trust: z.preprocess(checkboxValueToBoolean, z.boolean()),

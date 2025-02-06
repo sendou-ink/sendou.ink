@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
 import { Outlet, useLoaderData, useMatches, useParams } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
@@ -8,7 +8,6 @@ import { Redirect } from "~/components/Redirect";
 import { useUser } from "~/features/auth/core/user";
 import { canEditBadgeOwners, isMod } from "~/permissions";
 import { BADGES_PAGE } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
 import * as BadgeRepository from "../BadgeRepository.server";
 import { badgeExplanationText } from "../badges-utils";
 import type { BadgesLoaderData } from "./badges";

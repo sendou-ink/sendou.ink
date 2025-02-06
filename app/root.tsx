@@ -1,5 +1,9 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { data, redirect } from "@remix-run/node";
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import {
 	Links,
 	Meta,
@@ -15,12 +19,14 @@ import {
 import generalI18next from "i18next";
 import NProgress from "nprogress";
 import * as React from "react";
+import { I18nProvider } from "react-aria-components";
 import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
 import { useChangeLanguage } from "remix-i18next/react";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Catcher } from "./components/Catcher";
 import { Layout } from "./components/layout";
+import { Ramp } from "./components/ramp/Ramp";
 import { CUSTOMIZED_CSS_VARS_NAME } from "./constants";
 import { getUser } from "./features/auth/core/user.server";
 import { userIsBanned } from "./features/ban/core/banned.server";
@@ -37,11 +43,12 @@ import { useVisibilityChange } from "./hooks/useVisibilityChange";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
 import i18next, { i18nCookie } from "./modules/i18n/i18next.server";
 import type { Namespace } from "./modules/i18n/resources.server";
-import { type SerializeFrom, isRevalidation, openGraph } from "./utils/remix";
+import { isRevalidation, openGraph } from "./utils/remix";
 import { SUSPENDED_PAGE } from "./utils/urls";
 
 import "nprogress/nprogress.css";
 import "~/styles/common.css";
+import "~/styles/elements.css";
 import "~/styles/flags.css";
 import "~/styles/layout.css";
 import "~/styles/reset.css";
@@ -83,7 +90,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		return redirect(SUSPENDED_PAGE);
 	}
 
-	return data(
+	return json(
 		{
 			locale,
 			theme: themeSession.getTheme(),
@@ -138,17 +145,6 @@ function Document({
 	return (
 		<html lang={locale} dir={i18n.dir()} className={htmlThemeClass}>
 			<head>
-				<script
-					// biome-ignore lint/security/noDangerouslySetInnerHtml: needed for Ramp.tsx
-					dangerouslySetInnerHTML={{
-						__html: `
-              window.ramp = window.ramp || {};
-              window.ramp.que = window.ramp.que || [];
-              window.ramp.passiveMode = true;
-							window._pwRampComponentLoaded = window._pwRampComponentLoaded || false;
-         `,
-					}}
-				/>
 				<meta charSet="utf-8" />
 				<meta
 					name="viewport"
@@ -171,10 +167,12 @@ function Document({
 			<body style={customizedCSSVars}>
 				{process.env.NODE_ENV === "development" && <HydrationTestIndicator />}
 				<React.StrictMode>
-					<MyRamp data={data} />
-					<Layout data={data} isErrored={isErrored}>
-						{children}
-					</Layout>
+					<I18nProvider locale={i18n.language}>
+						<MyRamp data={data} />
+						<Layout data={data} isErrored={isErrored}>
+							{children}
+						</Layout>
+					</I18nProvider>
 				</React.StrictMode>
 				<ScrollRestoration />
 				<Scripts />
@@ -272,7 +270,7 @@ export default function App() {
 	// useLoaderData can't be used in CatchBoundary and layout is rendered in it as well
 	//
 	// Update 14.10.23: not sure if this still applies as the CatchBoundary is gone
-	const data = useLoaderData<typeof loader>();
+	const data = useLoaderData<RootLoaderData>();
 
 	return (
 		<ThemeProvider
@@ -495,24 +493,14 @@ function PWALinks() {
 	);
 }
 
-const Ramp = React.lazy(() => import("./components/ramp/Ramp"));
 function MyRamp({ data }: { data: RootLoaderData | undefined }) {
-	if (
-		!data ||
-		data.user?.patronTier ||
-		!import.meta.env.VITE_PLAYWIRE_PUBLISHER_ID ||
-		!import.meta.env.VITE_PLAYWIRE_WEBSITE_ID ||
-		typeof window === "undefined"
-	) {
+	if (!data || data.user?.patronTier) {
 		return null;
 	}
 
 	return (
 		<ClientErrorBoundary fallback={null}>
-			<Ramp
-				publisherId={import.meta.env.VITE_PLAYWIRE_PUBLISHER_ID}
-				id={import.meta.env.VITE_PLAYWIRE_WEBSITE_ID}
-			/>
+			<Ramp />
 		</ClientErrorBoundary>
 	);
 }

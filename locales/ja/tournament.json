@@ -5,6 +5,7 @@
 	"tabs.register": "登録",
 	"tabs.brackets": "ブラケット",
 	"tabs.seeds": "シード",
+	"tabs.results": "結果",
 	"tabs.streams": "配信 ({{count}})",
 	"tabs.subs": "サブ ({{count}})",
 
@@ -77,6 +78,7 @@
 	"admin.actions.DROP_TEAM_OUT": "チームを落とす",
 	"admin.actions.UNDO_DROP_TEAM_OUT": "落としたチームを戻す",
 	"admin.actions.UPDATE_IN_GAME_NAME": "プレイヤーのゲーム内の名前をアップデートする",
+	"admin.actions.DELETE_LOGO": "ロゴを削除する",
 
 	"staff.role.ORGANIZER": "主催者",
 	"staff.role.STREAMER": "配信者",
@@ -132,6 +134,7 @@
 	"subs.canPlay": "プレイできる",
 	"subs.canVC": "VCあり",
 	"subs.noVC": "VCなし",
+	"subs.listenOnlyVC": "聞き専門",
 	"subs.editPost": "サブを編集する",
 	"subs.addPost": "サブとして参加する",
 	"subs.vc.header": "通話できますか?",
@@ -140,5 +143,16 @@
 	"subs.weapons.info": "{{min}} から {{max}} のあいだで選択",
 	"subs.message.header": "メッセージ",
 	"subs.visibility.header": "公開範囲",
-	"subs.visibility.everyone": "すべてのユーザー"
+	"subs.visibility.everyone": "すべてのユーザー",
+
+	"progression.error.PLACEMENTS_PARSE_ERROR": "順位のパースに失敗しました",
+	"progression.error.NOT_RESOLVING_WINNER": "現在の進行から勝者は導けません",
+	"progression.error.SAME_PLACEMENT_TO_MULTIPLE_BRACKETS": "同じ順位はブラケットを多数作ります",
+	"progression.error.GAP_IN_PLACEMENTS": "前に進む順位にギャップがあります",
+	"progression.error.TOO_MANY_PLACEMENTS": "順位がありすぎます。(グループに入っているチームより多いです)",
+	"progression.error.DUPLICATE_BRACKET_NAME": "ブラケットの名前が重複しています",
+	"progression.error.NAME_MISSING": "ブラケットの名前がありません",
+	"progression.error.NEGATIVE_PROGRESSION": "逆の進行はダブルエリ三ネーションの時のみ可能です",
+	"progression.error.NO_SE_SOURCE": "シングルエリ三ネーションは妥当なブラケットではないです",
+	"progression.error.NO_DE_POSITIVE": "ダブルエリミネーションは普通の進行(前向き)では妥当ではないです"
 }

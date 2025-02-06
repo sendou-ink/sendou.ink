@@ -6,6 +6,7 @@
 	"tournament_other": "{{tournament}} の勝者 (×{{count}})",
 	"forYourEvent": "イベント専用のバッジ?",
 	"managedBy": "{{users}} によって管理されています",
+	"madeBy": "製作者: {{user}}",
 	"own.divider": "管理しているバッジ",
 	"other.divider": "他のバッジ"
 }

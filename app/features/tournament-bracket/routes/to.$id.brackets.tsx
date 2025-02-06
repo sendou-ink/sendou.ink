@@ -1,7 +1,7 @@
 import type { ActionFunction } from "@remix-run/node";
 import { useRevalidator } from "@remix-run/react";
 import clsx from "clsx";
-import { add } from "date-fns";
+import { sub } from "date-fns";
 import * as React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
@@ -12,7 +12,8 @@ import { Button } from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Menu } from "~/components/Menu";
-import { Popover } from "~/components/Popover";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { EyeIcon } from "~/components/icons/Eye";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
@@ -29,6 +30,7 @@ import {
 import { currentSeason } from "~/features/mmr/season";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import { TOURNAMENT, tournamentIdFromParams } from "~/features/tournament";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { createSwissBracketInTransaction } from "~/features/tournament/queries/createSwissBracketInTransaction.server";
 import { updateRoundMaps } from "~/features/tournament/queries/updateRoundMaps.server";
@@ -44,6 +46,7 @@ import {
 	tournamentBracketsSubscribePage,
 	tournamentJoinPage,
 } from "~/utils/urls";
+import { updateTeamSeeds } from "../../tournament/queries/updateTeamSeeds.server";
 import {
 	useBracketExpanded,
 	useTournament,
@@ -141,6 +144,17 @@ export const action: ActionFunction = async ({ params, request }) => {
 						bracket,
 					}),
 				);
+
+				// ensures autoseeding is disabled
+				const isAllSeedsPersisted = tournament.ctx.teams.every(
+					(team) => typeof team.seed === "number",
+				);
+				if (!isAllSeedsPersisted) {
+					updateTeamSeeds({
+						tournamentId: tournament.ctx.id,
+						teamIds: tournament.ctx.teams.map((team) => team.id),
+					});
+				}
 			})();
 
 			break;
@@ -173,6 +187,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "ADVANCE_BRACKET": {
+			validate(tournament.isOrganizer(user));
+
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			validate(bracket, "Bracket not found");
 			validate(bracket.type === "swiss", "Can't advance non-swiss bracket");
@@ -187,6 +203,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "UNADVANCE_BRACKET": {
+			validate(tournament.isOrganizer(user));
+
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			validate(bracket, "Bracket not found");
 			validate(bracket.type === "swiss", "Can't unadvance non-swiss bracket");
@@ -264,6 +282,33 @@ export const action: ActionFunction = async ({ params, request }) => {
 			await TournamentRepository.checkIn({
 				bracketIdx: data.bracketIdx,
 				tournamentTeamId: ownTeam.id,
+			});
+			break;
+		}
+		case "OVERRIDE_BRACKET_PROGRESSION": {
+			validate(tournament.isOrganizer(user));
+
+			const allDestinationBrackets = Progression.destinationsFromBracketIdx(
+				data.sourceBracketIdx,
+				tournament.ctx.settings.bracketProgression,
+			);
+			validate(
+				data.destinationBracketIdx === -1 ||
+					allDestinationBrackets.includes(data.destinationBracketIdx),
+				"Invalid destination bracket",
+			);
+			validate(
+				allDestinationBrackets.every(
+					(bracketIdx) => tournament.bracketByIdx(bracketIdx)!.preview,
+				),
+				"Can't override progression if follow-up brackets are started",
+			);
+
+			await TournamentRepository.overrideTeamBracketProgression({
+				tournamentTeamId: data.tournamentTeamId,
+				sourceBracketIdx: data.sourceBracketIdx,
+				destinationBracketIdx: data.destinationBracketIdx,
+				tournamentId,
 			});
 			break;
 		}
@@ -381,11 +426,26 @@ export default function TournamentBracketsPage() {
 		return null;
 	};
 
-	const totalTeamsAvailableForTheBracket = () =>
-		bracketIdx === 0
-			? tournament.ctx.teams.length
-			: (bracket.teamsPendingCheckIn ?? []).length +
-				bracket.participantTournamentTeamIds.length;
+	const totalTeamsAvailableForTheBracket = () => {
+		if (bracket.sources) {
+			return (
+				(bracket.teamsPendingCheckIn ?? []).length +
+				bracket.participantTournamentTeamIds.length
+			);
+		}
+
+		if (!tournament.isMultiStartingBracket) {
+			return tournament.ctx.teams.length;
+		}
+
+		return tournament.ctx.teams.filter(
+			(team) => (team.startingBracketIdx ?? 0) === bracketIdx,
+		).length;
+	};
+
+	if (tournament.isLeagueSignup) {
+		return null;
+	}
 
 	return (
 		<div>
@@ -428,6 +488,8 @@ export default function TournamentBracketsPage() {
 								⚠️{" "}
 								{bracketIdx === 0 ? (
 									<>Tournament start time is in the future</>
+								) : bracket.startTime && bracket.startTime > new Date() ? (
+									<>Bracket start time is in the future</>
 								) : (
 									<>Teams pending from the previous bracket</>
 								)}{" "}
@@ -477,19 +539,19 @@ export default function TournamentBracketsPage() {
 							{bracket.startTime ? (
 								<span suppressHydrationWarning>
 									(open{" "}
-									{bracket.startTime.toLocaleString("en-US", {
-										hour: "numeric",
-										minute: "numeric",
-										weekday: "long",
-									})}{" "}
-									-{" "}
-									{add(bracket.startTime, { hours: 1 }).toLocaleTimeString(
+									{sub(bracket.startTime, { hours: 1 }).toLocaleString(
 										"en-US",
 										{
 											hour: "numeric",
 											minute: "numeric",
+											weekday: "long",
 										},
-									)}
+									)}{" "}
+									-{" "}
+									{bracket.startTime.toLocaleTimeString("en-US", {
+										hour: "numeric",
+										minute: "numeric",
+									})}
 									)
 								</span>
 							) : null}
@@ -630,16 +692,7 @@ function AddSubsPopOver() {
 		const teamMemberOf = tournament.teamMemberOfByUser(user);
 		if (!teamMemberOf) return null;
 
-		return (
-			<Popover
-				buttonChildren={t("tournament:actions.addSub")}
-				triggerClassName="tiny outlined ml-auto"
-				triggerTestId="add-sub-button"
-				contentClassName="text-xs"
-			>
-				Only team captain or a TO can add subs
-			</Popover>
-		);
+		return <SubsPopover>Only team captain or a TO can add subs</SubsPopover>;
 	}
 
 	const subsAvailableToAdd =
@@ -651,12 +704,7 @@ function AddSubsPopOver() {
 	})}`;
 
 	return (
-		<Popover
-			buttonChildren={t("tournament:actions.addSub")}
-			triggerClassName="tiny outlined ml-auto"
-			triggerTestId="add-sub-button"
-			contentClassName="text-xs"
-		>
+		<SubsPopover>
 			{t("tournament:actions.sub.prompt", { count: subsAvailableToAdd })}
 			{subsAvailableToAdd > 0 ? (
 				<>
@@ -675,7 +723,29 @@ function AddSubsPopOver() {
 					</div>
 				</>
 			) : null}
-		</Popover>
+		</SubsPopover>
+	);
+}
+
+function SubsPopover({ children }: { children: React.ReactNode }) {
+	const { t } = useTranslation(["tournament"]);
+
+	return (
+		<SendouPopover
+			popoverClassName="text-xs"
+			trigger={
+				<SendouButton
+					className="ml-auto"
+					variant="outlined"
+					size="small"
+					data-testid="add-sub-button"
+				>
+					{t("tournament:actions.addSub")}
+				</SendouButton>
+			}
+		>
+			{children}
+		</SendouPopover>
 	);
 }
 
@@ -688,7 +758,15 @@ function BracketNav({
 }) {
 	const tournament = useTournament();
 
-	if (tournament.ctx.settings.bracketProgression.length < 2) return null;
+	const shouldRender = () => {
+		const brackets = tournament.ctx.isFinalized
+			? tournament.brackets.filter((b) => !b.preview)
+			: tournament.ctx.settings.bracketProgression;
+
+		return brackets.length > 1;
+	};
+
+	if (!shouldRender()) return null;
 
 	const visibleBrackets = tournament.ctx.settings.bracketProgression.filter(
 		// an underground bracket was never played despite being in the format

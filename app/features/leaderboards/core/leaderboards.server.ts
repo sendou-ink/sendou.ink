@@ -39,7 +39,7 @@ export async function cachedFullUserLeaderboard(season: number) {
 	});
 }
 
-function addTiers<T extends { id: number }>(entries: T[], season: number) {
+function addTiers(entries: UserSPLeaderboardItem[], season: number) {
 	const tiers = freshUserSkills(season);
 
 	const encounteredTiers = new Set<string>();
@@ -140,7 +140,7 @@ export function ownEntryPeek({
 	userId,
 	season,
 }: {
-	leaderboard: UserLeaderboardWithAdditionsItem[];
+	leaderboard: UserSPLeaderboardItem[];
 	userId: number;
 	season: number;
 }) {

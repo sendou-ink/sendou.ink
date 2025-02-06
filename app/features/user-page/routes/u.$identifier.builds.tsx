@@ -20,6 +20,7 @@ import { mainWeaponIds } from "~/modules/in-game-lists";
 import { atOrError } from "~/utils/arrays";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { weaponCategoryUrl } from "~/utils/urls";
+import { SendouButton } from "../../../components/elements/Button";
 import { DEFAULT_BUILD_SORT } from "../user-page-constants";
 import type { UserPageLoaderData } from "./u.$identifier";
 
@@ -79,15 +80,15 @@ export default function UserBuildsPage() {
 			) : null}
 			{isOwnPage && (
 				<div className="stack sm horizontal items-center justify-end">
-					<Button
-						onClick={() => setChangingSorting(true)}
-						size="tiny"
+					<SendouButton
+						onPress={() => setChangingSorting(true)}
+						size="small"
 						variant="outlined"
 						icon={<SortIcon />}
-						testId="change-sorting-button"
+						data-testid="change-sorting-button"
 					>
 						{t("user:builds.sorting.changeButton")}
-					</Button>
+					</SendouButton>
 				</div>
 			)}
 			<BuildsFilters
@@ -169,14 +170,14 @@ function BuildsFilters({
 
 	return (
 		<div className="stack horizontal sm flex-wrap">
-			<Button
-				onClick={() => setWeaponFilter("ALL")}
+			<SendouButton
+				onPress={() => setWeaponFilter("ALL")}
 				variant={weaponFilter === "ALL" ? undefined : "outlined"}
-				size="tiny"
+				size="small"
 				className="u__build-filter-button"
 			>
 				{t("builds:stats.all")} ({data.builds.length})
-			</Button>
+			</SendouButton>
 			{showPublicPrivateFilters ? (
 				<>
 					<Button

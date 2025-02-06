@@ -14,7 +14,6 @@ export const USER = {
 	CUSTOM_NAME_MAX_LENGTH: 32,
 	CUSTOM_NAME_REGEXP: notAllEmptyCharactersRegExp,
 	BATTLEFY_MAX_LENGTH: 32,
-	BSKY_MAX_LENGTH: 50,
 	IN_GAME_NAME_TEXT_MAX_LENGTH: 20,
 	IN_GAME_NAME_DISCRIMINATOR_MAX_LENGTH: 5,
 	WEAPON_POOL_MAX_SIZE: 5,
@@ -135,3 +134,15 @@ export const PATCHES = [
 	//   date: "2023-08-30",
 	// },
 ];
+
+export const CUSTOM_CSS_VAR_COLORS = [
+	"bg",
+	"bg-darker",
+	"bg-lighter",
+	"bg-lightest",
+	"text",
+	"text-lighter",
+	"theme",
+	"theme-secondary",
+	"chat",
+] as const;

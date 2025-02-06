@@ -1,16 +1,23 @@
 import type { ZodType } from "zod";
 import { z } from "zod";
+import { CUSTOM_CSS_VAR_COLORS } from "~/constants";
 import type { abilitiesShort } from "~/modules/in-game-lists";
 import { abilities, mainWeaponIds, stageIds } from "~/modules/in-game-lists";
+import { FRIEND_CODE_REGEXP } from "../features/sendouq/q-constants";
 import type { Unpacked } from "./types";
 import { assertType } from "./types";
 
-export const id = z.coerce.number().int().positive();
+export const id = z.coerce.number({ message: "Required" }).int().positive();
 export const optionalId = z.coerce.number().int().positive().optional();
+
+export const nonEmptyString = z.string().trim().min(1, {
+	message: "Required",
+});
 
 export const dbBoolean = z.coerce.number().min(0).max(1).int();
 
-export const hexCode = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+const hexCodeRegex = /^#(?:[0-9a-fA-F]{3}){1,2}[0-9]{0,2}$/; // https://stackoverflow.com/a/1636354
+export const hexCode = z.string().regex(hexCodeRegex);
 
 const abilityNameToType = (val: string) =>
 	abilities.find((ability) => ability.name === val)?.type;
@@ -32,6 +39,22 @@ export const shoesMainSlotAbility = z
 export const stackableAbility = z
 	.string()
 	.refine((val) => abilityNameToType(val) === "STACKABLE");
+
+export const normalizeFriendCode = (value: string) => {
+	const onlyNumbers = value.replace(/\D/g, "");
+
+	const withDashes = onlyNumbers
+		.split(/(\d{4})/)
+		.filter(Boolean)
+		.join("-");
+
+	return withDashes;
+};
+
+export const friendCode = z
+	.string()
+	.regex(FRIEND_CODE_REGEXP)
+	.transform(normalizeFriendCode);
 
 export const ability = z.enum([
 	"ISM",
@@ -232,4 +255,36 @@ export function numericEnum<TValues extends readonly number[]>(
 			});
 		}
 	}) as ZodType<TValues[number]>;
+}
+
+export const dayMonthYear = z.object({
+	day: z.number().int().min(1).max(31),
+	month: z.number().int().min(0).max(11),
+	year: z.number().int().min(2015).max(2100),
+});
+
+export type DayMonthYear = z.infer<typeof dayMonthYear>;
+
+export const customCssVarObject = z.preprocess(
+	falsyToNull,
+	z.string().nullable().refine(validSerializedCustomCssVarObject, {
+		message: "Invalid custom CSS var object",
+	}),
+);
+
+function validSerializedCustomCssVarObject(value: unknown) {
+	if (!value) return true;
+
+	try {
+		const parsedValue = JSON.parse(value as string);
+
+		for (const [key, value] of Object.entries(parsedValue)) {
+			if (!CUSTOM_CSS_VAR_COLORS.includes(key as any)) return false;
+			if (!hexCodeRegex.test(value as string)) return false;
+		}
+
+		return true;
+	} catch {
+		return false;
+	}
 }

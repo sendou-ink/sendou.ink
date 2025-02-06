@@ -22,8 +22,8 @@ import { Combobox } from "~/components/Combobox";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { Toggle } from "~/components/Toggle";
 import { UserSearch } from "~/components/UserSearch";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { CrossIcon } from "~/components/icons/Cross";
 import { useUser } from "~/features/auth/core/user";
 import { requireUser } from "~/features/auth/core/user.server";
@@ -492,11 +492,12 @@ function ShowcaseToggle() {
 	return (
 		<div>
 			<label htmlFor="isShowcase">{t("art:forms.showcase.title")}</label>
-			<Toggle
-				checked={checked}
-				setChecked={setChecked}
+			<SendouSwitch
+				isSelected={checked}
+				onChange={setChecked}
 				name="isShowcase"
-				disabled={isCurrentlyShowcase}
+				id="isShowcase"
+				isDisabled={isCurrentlyShowcase}
 			/>
 			<FormMessage type="info">{t("art:forms.showcase.info")}</FormMessage>
 		</div>

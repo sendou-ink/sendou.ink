@@ -74,6 +74,7 @@ export function artsByUserId(userId: number): ListedArt[] {
 			id: a.id,
 			url: a.url,
 			description: a.description,
+			createdAt: a.createdAt,
 			tags: tags.length > 0 ? tags : undefined,
 			linkedUsers: linkedUsers.length > 0 ? linkedUsers : undefined,
 			author: a.discordId

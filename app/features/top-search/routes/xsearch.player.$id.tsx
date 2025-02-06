@@ -1,4 +1,8 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
@@ -12,7 +16,6 @@ import {
 	topSearchPlayerPage,
 	userPage,
 } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
 import { PlacementsTable } from "../components/Placements";
 import { findPlacementsByPlayerId } from "../queries/findPlacements.server";
 

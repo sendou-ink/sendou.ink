@@ -7,7 +7,7 @@ import { Dialog } from "~/components/Dialog";
 import { ModeImage, StageImage } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
-import { Toggle } from "~/components/Toggle";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { RefreshArrowsIcon } from "~/components/icons/RefreshArrows";
 import type { TournamentRoundMaps } from "~/db/tables";
 import {
@@ -575,9 +575,10 @@ function teamCountAdjustedBracketData({
 		case "round_robin":
 			// ensure a full bracket (no bye round) gets generated even if registration is underway
 			return bracket.generateMatchesData(
-				nullFilledArray(TOURNAMENT.DEFAULT_TEAM_COUNT_PER_RR_GROUP).map(
-					(_, i) => i + 1,
-				),
+				nullFilledArray(
+					bracket.settings?.teamsPerGroup ??
+						TOURNAMENT.DEFAULT_TEAM_COUNT_PER_RR_GROUP,
+				).map((_, i) => i + 1),
 			);
 		case "single_elimination":
 		case "double_elimination":
@@ -682,6 +683,7 @@ function PickBanSelect({
 		<div>
 			<Label htmlFor="pick-ban-style">Pick/ban</Label>
 			<select
+				className="map-list-dialog__pick-ban-select"
 				id="pick-ban-style"
 				value={pickBanStyle ?? "NONE"}
 				onChange={(e) =>
@@ -710,7 +712,7 @@ function SZFirstToggle({
 	return (
 		<div className="stack items-center">
 			<Label htmlFor="sz-first">SZ first</Label>
-			<Toggle id="sz-first" checked={szFirst} setChecked={setSzFirst} />
+			<SendouSwitch id="sz-first" isSelected={szFirst} onChange={setSzFirst} />
 		</div>
 	);
 }
@@ -771,10 +773,10 @@ function RoundMapList({
 					{onPickBanChange ? (
 						<div>
 							<Label htmlFor={`pick-ban-${id}`}>Pick/ban</Label>
-							<Toggle
-								tiny
-								checked={Boolean(maps.pickBan)}
-								setChecked={onPickBanChange}
+							<SendouSwitch
+								size="small"
+								isSelected={Boolean(maps.pickBan)}
+								onChange={onPickBanChange}
 								id={`pick-ban-${id}`}
 							/>
 						</div>

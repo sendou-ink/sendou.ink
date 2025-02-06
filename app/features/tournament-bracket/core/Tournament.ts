@@ -5,6 +5,8 @@ import type {
 } from "~/db/tables";
 import { TOURNAMENT } from "~/features/tournament";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
+import * as Standings from "~/features/tournament/core/Standings";
+import { LEAGUES } from "~/features/tournament/tournament-constants";
 import { tournamentIsRanked } from "~/features/tournament/tournament-utils";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { Match, Stage } from "~/modules/brackets-model";
@@ -13,6 +15,7 @@ import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import { isAdmin } from "~/permissions";
 import { removeDuplicates } from "~/utils/arrays";
 import {
+	databaseTimestampNow,
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
@@ -161,11 +164,8 @@ export class Tournament {
 				);
 			} else if (type === "swiss") {
 				const { teams, relevantMatchesFinished } = sources
-					? this.resolveTeamsFromSources(sources)
-					: {
-							teams: this.ctx.teams.map((team) => team.id),
-							relevantMatchesFinished: true,
-						};
+					? this.resolveTeamsFromSources(sources, bracketIdx)
+					: this.resolveTeamsFromSignups(bracketIdx);
 
 				const { checkedInTeams, notCheckedInTeams } =
 					this.divideTeamsToCheckedInAndNotCheckedIn({
@@ -200,6 +200,7 @@ export class Tournament {
 						sources,
 						createdAt: null,
 						canBeStarted:
+							(!startTime || startTime < databaseTimestampNow()) &&
 							checkedInTeams.length >= TOURNAMENT.ENOUGH_TEAMS_TO_START &&
 							(sources ? relevantMatchesFinished : this.regularCheckInHasEnded),
 						teamsPendingCheckIn:
@@ -208,11 +209,8 @@ export class Tournament {
 				);
 			} else {
 				const { teams, relevantMatchesFinished } = sources
-					? this.resolveTeamsFromSources(sources)
-					: {
-							teams: this.ctx.teams.map((team) => team.id),
-							relevantMatchesFinished: true,
-						};
+					? this.resolveTeamsFromSources(sources, bracketIdx)
+					: this.resolveTeamsFromSignups(bracketIdx);
 
 				const { checkedInTeams, notCheckedInTeams } =
 					this.divideTeamsToCheckedInAndNotCheckedIn({
@@ -247,6 +245,7 @@ export class Tournament {
 						sources,
 						createdAt: null,
 						canBeStarted:
+							(!startTime || startTime < databaseTimestampNow()) &&
 							checkedInTeamsWithReplaysAvoided.length >=
 								TOURNAMENT.ENOUGH_TEAMS_TO_START &&
 							(sources ? relevantMatchesFinished : this.regularCheckInHasEnded),
@@ -260,23 +259,103 @@ export class Tournament {
 
 	private resolveTeamsFromSources(
 		sources: NonNullable<Progression.ParsedBracket["sources"]>,
+		bracketIdx: number,
 	) {
 		const teams: number[] = [];
 
 		let allRelevantMatchesFinished = true;
-		for (const { bracketIdx, placements } of sources) {
-			const sourceBracket = this.bracketByIdx(bracketIdx);
+		for (const source of sources) {
+			const sourceBracket = this.bracketByIdx(source.bracketIdx);
 			invariant(sourceBracket, "Bracket not found");
 
 			const { teams: sourcedTeams, relevantMatchesFinished } =
-				sourceBracket.source(placements);
+				sourceBracket.source(source.placements);
 			if (!relevantMatchesFinished) {
 				allRelevantMatchesFinished = false;
 			}
-			teams.push(...sourcedTeams);
+
+			const excludedOverridenTeams = sourcedTeams.filter(
+				(teamId) =>
+					!this.ctx.bracketProgressionOverrides.some(
+						(override) =>
+							override.sourceBracketIdx === source.bracketIdx &&
+							override.tournamentTeamId === teamId &&
+							// "no progression" override
+							override.destinationBracketIdx !== -1 &&
+							// redundant override
+							override.destinationBracketIdx !== bracketIdx,
+					),
+			);
+
+			teams.push(...excludedOverridenTeams);
 		}
 
-		return { teams, relevantMatchesFinished: allRelevantMatchesFinished };
+		const teamsFromOverride: { id: number; sourceBracketIdx: number }[] = [];
+		for (const source of sources) {
+			for (const override of this.ctx.bracketProgressionOverrides) {
+				if (override.sourceBracketIdx !== source.bracketIdx) continue;
+				if (override.destinationBracketIdx !== bracketIdx) continue;
+
+				teamsFromOverride.push({
+					id: override.tournamentTeamId,
+					sourceBracketIdx: source.bracketIdx,
+				});
+			}
+		}
+
+		const overridesWithoutRepeats = teamsFromOverride
+			.filter(({ id }) => !teams.includes(id))
+			.sort((a, b) => {
+				if (a.sourceBracketIdx !== b.sourceBracketIdx) return 0;
+
+				const bracket = this.bracketByIdx(a.sourceBracketIdx);
+				if (!bracket) return 0;
+
+				const aStanding = bracket.standings.find(
+					(standing) => standing.team.id === a.id,
+				);
+				const bStanding = bracket.standings.find(
+					(standing) => standing.team.id === b.id,
+				);
+
+				if (!aStanding || !bStanding) return 0;
+
+				return aStanding.placement - bStanding.placement;
+			})
+			.map(({ id }) => id);
+
+		return {
+			teams: teams.concat(overridesWithoutRepeats),
+			relevantMatchesFinished: allRelevantMatchesFinished,
+		};
+	}
+
+	private resolveTeamsFromSignups(bracketIdx: number) {
+		const teams = this.isMultiStartingBracket
+			? this.ctx.teams.filter((team) => {
+					// 0 is the default
+					if (typeof team.startingBracketIdx !== "number") {
+						return bracketIdx === 0;
+					}
+
+					const startingBracket = this.ctx.settings.bracketProgression.at(
+						team.startingBracketIdx,
+					);
+					if (!startingBracket || startingBracket.sources) {
+						logger.warn(
+							"resolveTeamsFromSignups: Starting bracket index invalid",
+						);
+						return bracketIdx === 0;
+					}
+
+					return team.startingBracketIdx === bracketIdx;
+				})
+			: this.ctx.teams;
+
+		return {
+			teams: teams.map((team) => team.id),
+			relevantMatchesFinished: true,
+		};
 	}
 
 	private avoidReplaysOfPreviousBracketOpponent(
@@ -510,7 +589,9 @@ export class Tournament {
 
 				return {
 					groupCount: Math.ceil(participantsCount / teamsPerGroup),
-					seedOrdering: ["groups.seed_optimized"],
+					seedOrdering: [
+						this.isLeagueDivision ? "natural" : "groups.seed_optimized",
+					],
 				};
 			}
 			case "swiss": {
@@ -614,16 +695,28 @@ export class Tournament {
 			/[^a-zA-Z ]/g,
 			"",
 		);
-		const prefix = tournamentNameWithoutOnlyLetters
+		let prefix = tournamentNameWithoutOnlyLetters
 			.split(" ")
 			.map((word) => word[0])
 			.join("")
 			.toUpperCase()
 			.slice(0, 3);
 
+		// handle tournament name not having letters by using a default prefix
+		if (!prefix) {
+			prefix = ["AB", "CD", "EF", "GH", "IJ", "KL", "MN", "OP", "QR", "ST"][
+				this.ctx.id % 10
+			];
+		}
+
+		// for small tournaments there should be no risk that the pool gets full
+		// so to make it more convenient just use same suffix every match
+		const globalSuffix = this.ctx.teams.length <= 20 ? this.ctx.id % 10 : null;
+
 		return {
 			prefix,
-			suffix: groupLetter ?? bracketNumber ?? hostingTeamId % 10,
+			suffix:
+				globalSuffix ?? groupLetter ?? bracketNumber ?? hostingTeamId % 10,
 		};
 	}
 
@@ -671,46 +764,7 @@ export class Tournament {
 	}
 
 	get standings() {
-		if (this.brackets.length === 1) {
-			return this.brackets[0].standings;
-		}
-
-		for (const bracket of this.brackets) {
-			if (bracket.isFinals) {
-				const finalsStandings = bracket.standings;
-
-				const firstStageStandings = this.brackets[0].standings;
-
-				const uniqueFinalsPlacements = new Set<number>();
-				const firstStageWithoutFinalsParticipants = firstStageStandings.filter(
-					(firstStageStanding) => {
-						const isFinalsParticipant = finalsStandings.some(
-							(finalsStanding) =>
-								finalsStanding.team.id === firstStageStanding.team.id,
-						);
-
-						if (isFinalsParticipant) {
-							uniqueFinalsPlacements.add(firstStageStanding.placement);
-						}
-
-						return !isFinalsParticipant;
-					},
-				);
-
-				return [
-					...finalsStandings,
-					...firstStageWithoutFinalsParticipants.filter(
-						// handle edge case where teams didn't check in to the final stage despite being qualified
-						// although this would bug out if all teams of certain placement fail to check in
-						// but probably that should not happen too likely
-						(p) => !uniqueFinalsPlacements.has(p.placement),
-					),
-				];
-			}
-		}
-
-		logger.warn("Standings not found");
-		return [];
+		return Standings.tournamentStandings(this);
 	}
 
 	canFinalize(user: OptionalIdObject) {
@@ -816,7 +870,9 @@ export class Tournament {
 		// special format
 		if (this.minMembersPerTeam !== 4) return this.minMembersPerTeam;
 
-		const maxMembersBeforeStart = this.isInvitational ? 5 : 6;
+		if (this.isLeagueSignup || this.isLeagueDivision) return 8;
+
+		const maxMembersBeforeStart = 6;
 
 		if (this.hasStarted) {
 			return maxMembersBeforeStart + 1;
@@ -857,11 +913,23 @@ export class Tournament {
 	}
 
 	get registrationOpen() {
+		if (this.isInvitational) return false;
+
 		return this.registrationClosesAt > new Date();
 	}
 
 	get autonomousSubs() {
 		return this.ctx.settings.autonomousSubs ?? true;
+	}
+
+	get isLeagueSignup() {
+		return Object.values(LEAGUES)
+			.flat()
+			.some((entry) => entry.tournamentId === this.ctx.id);
+	}
+
+	get isLeagueDivision() {
+		return Boolean(this.ctx.parentTournamentId);
 	}
 
 	matchNameById(matchId: number) {
@@ -949,7 +1017,7 @@ export class Tournament {
 			if (!roundName) return;
 
 			if (roundName.includes("Semis")) {
-				return roundName.replace(/\d/g, "");
+				return roundName.replace(/\d/g, "").trim();
 			}
 
 			return roundName.split(".")[0];
@@ -981,6 +1049,15 @@ export class Tournament {
 		return bracket;
 	}
 
+	get isMultiStartingBracket() {
+		let count = 0;
+		for (const bracket of this.ctx.settings.bracketProgression) {
+			if (!bracket.sources) count++;
+		}
+
+		return count > 1;
+	}
+
 	ownedTeamByUser(
 		user: OptionalIdObject,
 	): ((typeof this.ctx.teams)[number] & { inviteCode: string }) | null {
@@ -996,9 +1073,22 @@ export class Tournament {
 	teamMemberOfByUser(user: OptionalIdObject) {
 		if (!user) return null;
 
-		return this.ctx.teams.find((team) =>
+		const teams = this.ctx.teams.filter((team) =>
 			team.members.some((member) => member.userId === user.id),
 		);
+
+		let result: (typeof teams)[number] | null = null;
+		let latestCreatedAt = 0;
+		for (const team of teams) {
+			const member = team.members.find((member) => member.userId === user.id)!;
+
+			if (member.createdAt > latestCreatedAt) {
+				result = team;
+				latestCreatedAt = member.createdAt;
+			}
+		}
+
+		return result;
 	}
 
 	teamMemberOfProgressStatus(user: OptionalIdObject) {

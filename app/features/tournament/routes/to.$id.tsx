@@ -1,4 +1,8 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
 import {
 	Outlet,
 	type ShouldRevalidateFunction,
@@ -20,11 +24,13 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import {
+	tournamentDivisionsPage,
 	tournamentOrganizationPage,
 	tournamentPage,
+	tournamentRegisterPage,
 	userSubmittedImage,
 } from "~/utils/urls";
-import { type SerializeFrom, openGraph } from "../../../utils/remix";
+import { openGraph } from "../../../utils/remix";
 import { streamsByTournamentId } from "../core/streams.server";
 import {
 	HACKY_resolvePicture,
@@ -222,13 +228,43 @@ export function TournamentLayout() {
 	return (
 		<Main bigger>
 			<SubNav>
-				<SubNavLink to="register" data-testid="register-tab" prefetch="intent">
-					{tournament.hasStarted ? "Info" : t("tournament:tabs.register")}
+				<SubNavLink
+					to={tournamentRegisterPage(
+						tournament.isLeagueDivision
+							? tournament.ctx.parentTournamentId!
+							: tournament.ctx.id,
+					)}
+					data-testid="register-tab"
+					prefetch="intent"
+				>
+					{tournament.hasStarted || tournament.isLeagueDivision
+						? "Info"
+						: t("tournament:tabs.register")}
 				</SubNavLink>
-				<SubNavLink to="brackets" data-testid="brackets-tab" prefetch="intent">
-					{t("tournament:tabs.brackets")}
-				</SubNavLink>
-				<SubNavLink to="teams" end={false} prefetch="intent">
+				{!tournament.isLeagueSignup ? (
+					<SubNavLink
+						to="brackets"
+						data-testid="brackets-tab"
+						prefetch="render"
+					>
+						{t("tournament:tabs.brackets")}
+					</SubNavLink>
+				) : null}
+				{tournament.isLeagueSignup || tournament.isLeagueDivision ? (
+					<SubNavLink
+						to={tournamentDivisionsPage(
+							tournament.ctx.parentTournamentId ?? tournament.ctx.id,
+						)}
+					>
+						Divisions
+					</SubNavLink>
+				) : null}
+				<SubNavLink
+					to="teams"
+					end={false}
+					prefetch="render"
+					data-testid="teams-tab"
+				>
 					{t("tournament:tabs.teams", { count: tournament.ctx.teams.length })}
 				</SubNavLink>
 				{!tournament.everyBracketOver && tournament.subsFeatureEnabled && (
@@ -248,9 +284,11 @@ export function TournamentLayout() {
 						{t("tournament:tabs.results")}
 					</SubNavLink>
 				) : null}
-				{tournament.isOrganizer(user) && !tournament.hasStarted && (
-					<SubNavLink to="seeds">{t("tournament:tabs.seeds")}</SubNavLink>
-				)}
+				{tournament.isOrganizer(user) &&
+					!tournament.hasStarted &&
+					!tournament.isLeagueSignup && (
+						<SubNavLink to="seeds">{t("tournament:tabs.seeds")}</SubNavLink>
+					)}
 				{tournament.isOrganizer(user) && !tournament.everyBracketOver && (
 					<SubNavLink to="admin" data-testid="admin-tab">
 						{t("tournament:tabs.admin")}

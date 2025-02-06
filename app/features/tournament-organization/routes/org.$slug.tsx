@@ -1,4 +1,4 @@
-import type { MetaFunction } from "@remix-run/node";
+import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
@@ -24,7 +24,6 @@ import {
 	userPage,
 	userSubmittedImage,
 } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
 import { EventCalendar } from "../components/EventCalendar";
 import { SocialLinksList } from "../components/SocialLinksList";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "../tournament-organization-constants";
@@ -61,14 +60,6 @@ export const meta: MetaFunction = (args) => {
 			content: data.organization.avatarUrl
 				? userSubmittedImage(data.organization.avatarUrl)
 				: undefined,
-		},
-		{
-			name: "twitter:card",
-			content: "summary",
-		},
-		{
-			name: "twitter:title",
-			content: title,
 		},
 	];
 };

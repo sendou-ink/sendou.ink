@@ -1,4 +1,4 @@
-import type { MetaFunction } from "@remix-run/node";
+import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import React from "react";
@@ -13,7 +13,6 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { BskyIcon } from "~/components/icons/Bsky";
 import { EditIcon } from "~/components/icons/Edit";
 import { StarIcon } from "~/components/icons/Star";
-import { TwitterIcon } from "~/components/icons/Twitter";
 import { UsersIcon } from "~/components/icons/Users";
 import { useUser } from "~/features/auth/core/user";
 import { isAdmin } from "~/permissions";
@@ -27,19 +26,15 @@ import {
 	manageTeamRosterPage,
 	navIconUrl,
 	teamPage,
-	twitterUrl,
 	userPage,
 	userSubmittedImage,
 } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
 import type * as TeamRepository from "../TeamRepository.server";
-import { isTeamMember, isTeamOwner } from "../team-utils";
-
 import { action } from "../actions/t.$customUrl.server";
 import { loader } from "../loaders/t.$customUrl.server";
-export { action, loader };
-
+import { isTeamManager, isTeamMember, resolveNewOwner } from "../team-utils";
 import "../team.css";
+export { action, loader };
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
 	if (!data) return [];
@@ -129,7 +124,7 @@ function TeamBanner() {
 					})}
 				</div>
 				<div className="team__banner__name">
-					{team.name} <TwitterLink testId="twitter-link" /> <BskyLink />
+					{team.name} <BskyLink />
 				</div>
 			</div>
 			{team.avatarSrc ? <div className="team__banner__avatar__spacer" /> : null}
@@ -153,28 +148,9 @@ function MobileTeamNameCountry() {
 			</div>
 			<div className="team__mobile-team-name">
 				{team.name}
-				<TwitterLink />
 				<BskyLink />
 			</div>
 		</div>
-	);
-}
-
-function TwitterLink({ testId }: { testId?: string }) {
-	const { team } = useLoaderData<typeof loader>();
-
-	if (!team.twitter) return null;
-
-	return (
-		<a
-			className="team__twitter-link"
-			href={twitterUrl(team.twitter)}
-			target="_blank"
-			rel="noreferrer"
-			data-testid={testId}
-		>
-			<TwitterIcon />
-		</a>
 	);
 }
 
@@ -186,6 +162,7 @@ function BskyLink() {
 	return (
 		<a
 			className="team__bsky-link"
+			data-testid="bsky-link"
 			href={bskyUrl(team.bsky)}
 			target="_blank"
 			rel="noreferrer"
@@ -213,9 +190,12 @@ function ActionButtons() {
 			{isTeamMember({ user, team }) && !isMainTeam ? (
 				<ChangeMainTeamButton />
 			) : null}
-			{!isTeamOwner({ user, team }) && isTeamMember({ user, team }) ? (
+			{isTeamMember({ user, team }) ? (
 				<FormWithConfirm
-					dialogHeading={t("team:leaveTeam.header", { teamName: team.name })}
+					dialogHeading={t("team:leaveTeam.header", {
+						teamName: team.name,
+						newOwner: resolveNewOwner(team.members)?.username,
+					})}
 					deleteButtonText={t("team:actionButtons.leaveTeam.confirm")}
 					fields={[["_action", "LEAVE_TEAM"]]}
 				>
@@ -228,7 +208,7 @@ function ActionButtons() {
 					</Button>
 				</FormWithConfirm>
 			) : null}
-			{isTeamOwner({ user, team }) || isAdmin(user) ? (
+			{isTeamManager({ user, team }) || isAdmin(user) ? (
 				<LinkButton
 					size="tiny"
 					to={manageTeamRosterPage(team.customUrl)}
@@ -240,7 +220,7 @@ function ActionButtons() {
 					{t("team:actionButtons.manageRoster")}
 				</LinkButton>
 			) : null}
-			{isTeamOwner({ user, team }) || isAdmin(user) ? (
+			{isTeamManager({ user, team }) || isAdmin(user) ? (
 				<LinkButton
 					size="tiny"
 					to={editTeamPage(team.customUrl)}
