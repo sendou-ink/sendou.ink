@@ -624,4 +624,10 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "jauntlet",
 		authorDiscordId: "528851510222782474",
 	},
+
+	{
+		displayName: "Barnacle Bash",
+		fileName: "barnacle-bash",
+		authorDiscordID: "181270348262539265",
+	},
 ];
