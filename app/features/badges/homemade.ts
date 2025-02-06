@@ -619,4 +619,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "dreadnoughtus",
 		authorDiscordId: "352207524390240257",
 	},
+	{
+		displayName: "The Jauntlet",
+		fileName: "jauntlet",
+		authorDiscordId: "528851510222782474",
+	},
 ];
