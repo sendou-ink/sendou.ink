@@ -5,6 +5,7 @@ import { db, sql as dbDirect } from "~/db/sql";
 import type { BuildSort, DB, TablesInsertable } from "~/db/tables";
 import type { User } from "~/db/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { safeNumberParse } from "~/utils/number";
@@ -521,17 +522,24 @@ export function searchExact(args: {
 		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.select(searchSelectedFields);
 
-	if (args.id) {
+	let filtered = false;
+
+	if (typeof args.id === "number") {
+		filtered = true;
 		query = query.where("User.id", "=", args.id);
 	}
 
-	if (args.discordId) {
+	if (typeof args.discordId === "string") {
+		filtered = true;
 		query = query.where("User.discordId", "=", args.discordId);
 	}
 
-	if (args.customUrl) {
+	if (typeof args.customUrl === "string") {
+		filtered = true;
 		query = query.where("User.customUrl", "=", args.customUrl);
 	}
+
+	invariant(filtered, "No search criteria provided");
 
 	return query.execute();
 }
