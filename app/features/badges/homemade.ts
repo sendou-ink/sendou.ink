@@ -624,4 +624,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "jauntlet",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "A Splatoon Brazil Tournament",
+		fileName: "brflg",
+		authorDiscordId: "701870845550657677",
+	},
 ];
