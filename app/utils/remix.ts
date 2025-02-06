@@ -38,14 +38,9 @@ export function metaTitle(args: Pick<OpenGraphArgs, "title" | "ogTitle">) {
 			property: "og:title",
 			content: args.ogTitle ?? args.title,
 		},
-		{
-			name: "twitter:title",
-			content: args.title,
-		},
 	];
 }
 
-// xxx: docs including "Twitter special snowflake tags, see https://developer.x.com/en/docs/twitter-for-websites/cards/overview/summary"
 // xxx: better name since it is not just opengraph
 // xxx: go through all meta description and add "on sendou.ink" ? <-- document these in OpenGraphArgs how to write good title & description
 export function openGraph(args: OpenGraphArgs) {
@@ -54,12 +49,6 @@ export function openGraph(args: OpenGraphArgs) {
 		args.description
 			? {
 					name: "description",
-					content: args.description,
-				}
-			: null,
-		args.description
-			? {
-					name: "twitter:description",
 					content: args.description,
 				}
 			: null,
