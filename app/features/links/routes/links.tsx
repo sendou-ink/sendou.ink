@@ -1,8 +1,10 @@
+import type { MetaFunction } from "@remix-run/node";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { YouTubeIcon } from "~/components/icons/YouTube";
 import { useSetTitle } from "~/hooks/useSetTitle";
+import { openGraph } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { LINKS_PAGE, navIconUrl } from "~/utils/urls";
 import links from "../links.json";
@@ -13,6 +15,16 @@ export const handle: SendouRouteHandle = {
 		href: LINKS_PAGE,
 		type: "IMAGE",
 	}),
+};
+
+export const meta: MetaFunction = () => {
+	return openGraph({
+		title: "Links",
+		ogTitle: "Splatoon link collection",
+		description:
+			"Collection of useful Splatoon guides, Discord servers and other resources.",
+		url: LINKS_PAGE,
+	});
 };
 
 export default function LinksPage() {

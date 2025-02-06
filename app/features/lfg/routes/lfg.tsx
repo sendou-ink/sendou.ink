@@ -10,7 +10,6 @@ import { useUser } from "~/features/auth/core/user";
 import { useSearchParamStateEncoder } from "~/hooks/useSearchParamState";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import type { Unpacked } from "~/utils/types";
 import { LFG_PAGE, navIconUrl } from "~/utils/urls";
 import { LFGAddFilterButton } from "../components/LFGAddFilterButton";
@@ -23,6 +22,7 @@ import {
 	filterToSmallStr,
 	smallStrToFilter,
 } from "../lfg-types";
+import { openGraph } from "~/utils/remix";
 
 import { action } from "../actions/lfg.server";
 import { loader } from "../loaders/lfg.server";
@@ -40,7 +40,13 @@ export const handle: SendouRouteHandle = {
 };
 
 export const meta: MetaFunction = () => {
-	return [{ title: makeTitle("Looking for group") }];
+	return openGraph({
+		title: "LFG",
+		ogTitle: "Splatoon LFG (looking for players, teams & coaches)",
+		description:
+			"Find people to play Splatoon with. Create a post or browse existing ones. For looking players, teams, scrim partners and coaches alike.",
+		url: LFG_PAGE,
+	});
 };
 
 export type LFGLoaderData = SerializeFrom<typeof loader>;

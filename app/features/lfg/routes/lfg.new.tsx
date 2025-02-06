@@ -23,6 +23,8 @@ import { action } from "../actions/lfg.new.server";
 import { loader } from "../loaders/lfg.new.server";
 export { loader, action };
 
+// xxx: meta
+
 export const handle: SendouRouteHandle = {
 	i18n: ["lfg"],
 	breadcrumb: () => ({

@@ -38,7 +38,9 @@ import {
 import { useObjectDamage } from "../calculator-hooks";
 import type { DamageReceiver } from "../calculator-types";
 import "../calculator.css";
+import type { MetaFunction } from "@remix-run/node";
 import { SendouSwitch } from "~/components/elements/Switch";
+import { openGraph } from "~/utils/remix";
 
 export const CURRENT_PATCH = "9.2";
 
@@ -51,6 +53,16 @@ export const handle: SendouRouteHandle = {
 		href: OBJECT_DAMAGE_CALCULATOR_URL,
 		type: "IMAGE",
 	}),
+};
+
+export const meta: MetaFunction = () => {
+	return openGraph({
+		title: "Object Damage Calculator",
+		ogTitle: "Splatoon 3 object damage calculator",
+		description:
+			"Calculate how much damage weapons do to objects in Splatoon 3. The list of objects includes Crab Tank, Big Bubbler, Splash Wall, Rainmaker shield and more.",
+		url: OBJECT_DAMAGE_CALCULATOR_URL,
+	});
 };
 
 export default function ObjectDamagePage() {
