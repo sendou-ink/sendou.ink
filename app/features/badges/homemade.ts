@@ -20,6 +20,21 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "338806780446638082",
 	},
 	{
+		displayName: "A41 GG Silver Bracket",
+		fileName: "newa41ggsilver",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "A41 GG Bronze Bracket",
+		fileName: "newa41ggbronze",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "A41 GG Iron Bracket",
+		fileName: "newa41ggiron",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "MIKU MIKU BEAM!!! Rotten Edition",
 		fileName: "rottenmiku",
 		authorDiscordId: "338806780446638082",
