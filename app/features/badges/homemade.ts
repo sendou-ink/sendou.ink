@@ -45,11 +45,6 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "338806780446638082",
 	},
 	{
-		displayName: "A41 GG Iron Bracket",
-		fileName: "newa41ggiron",
-		authorDiscordId: "338806780446638082",
-	},
-	{
 		displayName: "All 4 One: Clam Blitz",
 		fileName: "newa41cb",
 		authorDiscordId: "338806780446638082",
