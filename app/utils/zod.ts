@@ -16,7 +16,7 @@ export const nonEmptyString = z.string().trim().min(1, {
 
 export const dbBoolean = z.coerce.number().min(0).max(1).int();
 
-const hexCodeRegex = /^#(?:[0-9a-fA-F]{3}){1,2}$/; // https://stackoverflow.com/a/1636354
+const hexCodeRegex = /^#(?:[0-9a-fA-F]{3}){1,2}[0-9]{0,2}$/; // https://stackoverflow.com/a/1636354
 export const hexCode = z.string().regex(hexCodeRegex);
 
 const abilityNameToType = (val: string) =>

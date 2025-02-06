@@ -57,6 +57,10 @@ test.describe("User page", () => {
 		await goToEditPage(page);
 
 		await page.getByTestId("color-input-bg").fill("#4a412a");
+
+		// also test filling this because it's a special case as it also changes bg-lightest
+		await page.getByTestId("color-input-bg-lighter").fill("#4a412a");
+
 		await submitEditForm(page);
 
 		// got redirected

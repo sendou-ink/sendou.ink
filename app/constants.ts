@@ -139,6 +139,7 @@ export const CUSTOM_CSS_VAR_COLORS = [
 	"bg",
 	"bg-darker",
 	"bg-lighter",
+	"bg-lightest",
 	"text",
 	"text-lighter",
 	"theme",
