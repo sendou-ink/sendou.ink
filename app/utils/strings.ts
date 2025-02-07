@@ -5,10 +5,6 @@ export function inGameNameWithoutDiscriminator(inGameName: string) {
 	return inGameName.split("#")[0];
 }
 
-export function makeTitle(title: string | string[]) {
-	return `${Array.isArray(title) ? title.join(" | ") : title} | sendou.ink`;
-}
-
 export function semiRandomId() {
 	return String(Math.random());
 }

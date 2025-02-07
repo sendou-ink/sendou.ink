@@ -1,20 +1,19 @@
 import type { MetaFunction } from "@remix-run/node";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
-import { useSetTitle } from "~/hooks/useSetTitle";
+import { openGraph } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 
 import "~/styles/faq.css";
 
 const AMOUNT_OF_QUESTIONS = 9;
 
-// xxx: meta
-export const meta: MetaFunction = () => {
-	return [
-		{ title: makeTitle("FAQ") },
-		{ name: "description", content: "Frequently asked questions" },
-	];
+export const meta: MetaFunction = (args) => {
+	return openGraph({
+		title: "FAQ",
+		description: "Frequently asked questions",
+		location: args.location,
+	});
 };
 
 export const handle: SendouRouteHandle = {
@@ -23,7 +22,6 @@ export const handle: SendouRouteHandle = {
 
 export default function FAQPage() {
 	const { t } = useTranslation(["faq", "common"]);
-	useSetTitle(t("common:pages.faq"));
 
 	return (
 		<Main className="stack md">

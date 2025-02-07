@@ -29,8 +29,6 @@ import type { Unpacked } from "~/utils/types";
 import { calendarEventPage } from "~/utils/urls";
 import { actualNumber, id, safeJSONParse, toArray } from "~/utils/zod";
 
-// xxx: meta
-
 const playersSchema = z
 	.array(
 		z.union([

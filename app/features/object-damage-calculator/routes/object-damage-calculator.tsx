@@ -9,7 +9,6 @@ import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import type { AnyWeapon, DamageType } from "~/features/build-analyzer";
 import { possibleApValues } from "~/features/build-analyzer";
-import { useSetTitle } from "~/hooks/useSetTitle";
 import {
 	BIG_BUBBLER_ID,
 	BOOYAH_BOMB_ID,
@@ -252,7 +251,6 @@ function DamageReceiversGrid({
 	abilityPoints: string;
 }): JSX.Element {
 	const { t } = useTranslation(["weapons", "analyzer", "common"]);
-	useSetTitle(t("common:pages.object-damage-calculator"));
 	return (
 		<div>
 			<div

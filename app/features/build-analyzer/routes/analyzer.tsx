@@ -16,7 +16,6 @@ import { BeakerIcon } from "~/components/icons/Beaker";
 import { MAX_AP } from "~/constants";
 import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import { useSetTitle } from "~/hooks/useSetTitle";
 import type { Ability as AbilityType } from "~/modules/in-game-lists";
 import {
 	ANGLE_SHOOTER_ID,
@@ -118,8 +117,7 @@ export default function BuildAnalyzerShell() {
 
 function BuildAnalyzerPage() {
 	const user = useUser();
-	const { t } = useTranslation(["analyzer", "common", "weapons"]);
-	useSetTitle(t("common:pages.analyzer"));
+	const { t } = useTranslation(["analyzer", "weapons"]);
 	const {
 		build,
 		build2,

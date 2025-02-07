@@ -20,7 +20,6 @@ import { getUserId } from "~/features/auth/core/user.server";
 import { currentSeason } from "~/features/mmr/season";
 import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import { i18next } from "~/modules/i18n/i18next.server";
 import { joinListToNaturalString } from "~/utils/arrays";
 import {
 	databaseTimestampToDate,
@@ -32,7 +31,6 @@ import {
 	weekNumberToDate,
 } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import type { Unpacked } from "~/utils/types";
 import {
 	CALENDAR_PAGE,
@@ -109,7 +107,6 @@ const loaderTournamentsOnlySearchParamsSchema = z.object({
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await getUserId(request);
-	const t = await i18next.getFixedT(request);
 	const url = new URL(request.url);
 
 	// separate from tags parse so they can fail independently
@@ -170,7 +167,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		eventsToReport: user
 			? await CalendarRepository.eventsToReport(user.id)
 			: [],
-		title: makeTitle([`Week ${displayedWeek}`, t("pages.calendar")]),
 	};
 };
 

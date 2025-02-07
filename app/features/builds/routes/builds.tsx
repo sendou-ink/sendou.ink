@@ -3,7 +3,6 @@ import { Link } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
-import { useSetTitle } from "~/hooks/useSetTitle";
 import type { MainWeaponId } from "~/modules/in-game-lists";
 import { weaponCategories, weaponIdIsNotAlt } from "~/modules/in-game-lists";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -40,7 +39,6 @@ export const handle: SendouRouteHandle = {
 
 export default function BuildsPage() {
 	const { t } = useTranslation(["common", "weapons"]);
-	useSetTitle(t("common:pages.builds"));
 
 	const weaponIdToSlug = (weaponId: MainWeaponId) => {
 		return mySlugify(t(`weapons:MAIN_${weaponId}`, { lng: "en" }));

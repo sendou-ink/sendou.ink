@@ -1,9 +1,7 @@
 import type { MetaFunction } from "@remix-run/node";
-import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { YouTubeIcon } from "~/components/icons/YouTube";
-import { useSetTitle } from "~/hooks/useSetTitle";
 import { openGraph } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { LINKS_PAGE, navIconUrl } from "~/utils/urls";
@@ -28,9 +26,6 @@ export const meta: MetaFunction = (args) => {
 };
 
 export default function LinksPage() {
-	const { t } = useTranslation(["common"]);
-	useSetTitle(t("common:pages.links"));
-
 	return (
 		<Main>
 			<div className="stack md">

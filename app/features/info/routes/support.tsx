@@ -5,8 +5,7 @@ import { Badge } from "~/components/Badge";
 import { LinkButton } from "~/components/Button";
 import { Main } from "~/components/Main";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
-import { useSetTitle } from "~/hooks/useSetTitle";
-import { makeTitle } from "~/utils/strings";
+import { openGraph } from "~/utils/remix";
 import {
 	PATREON_HOW_TO_CONNECT_DISCORD_URL,
 	SENDOU_INK_PATREON_URL,
@@ -16,9 +15,12 @@ import { SendouPopover } from "../../../components/elements/Popover";
 
 import "../support.css";
 
-// xxx: meta
-export const meta: MetaFunction = () => {
-	return [{ title: makeTitle("Support") }];
+export const meta: MetaFunction = (args) => {
+	return openGraph({
+		title: "Support",
+		description: "Support Sendou's work on Patreon and get perks on sendou.ink",
+		location: args.location,
+	});
 };
 
 // 1 = support
@@ -109,7 +111,6 @@ const PERKS = [
 
 export default function SupportPage() {
 	const { t } = useTranslation();
-	useSetTitle(t("pages.support"));
 
 	return (
 		<Main className="stack lg">

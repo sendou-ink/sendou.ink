@@ -3,19 +3,20 @@ import * as React from "react";
 import { Trans } from "react-i18next";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
-import { useSetTitle } from "~/hooks/useSetTitle";
 import { languages } from "~/modules/i18n/config";
+import { openGraph } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import {
 	GITHUB_CONTRIBUTORS_URL,
 	RHODESMAS_FREESOUND_PROFILE_URL,
 	SPLATOON_3_INK,
 } from "~/utils/urls";
 
-// xxx: meta
-export const meta: MetaFunction = () => {
-	return [{ title: makeTitle("Contributions") }];
+export const meta: MetaFunction = (args) => {
+	return openGraph({
+		title: "Contributions",
+		location: args.location,
+	});
 };
 
 export const handle: SendouRouteHandle = {
@@ -96,7 +97,6 @@ const TRANSLATORS: Array<{
 
 export default function ContributionsPage() {
 	const { t } = useTranslation(["common", "contributions"]);
-	useSetTitle(t("common:pages.contributors"));
 
 	return (
 		<Main>

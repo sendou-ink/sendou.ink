@@ -93,8 +93,6 @@ export const action: ActionFunction = async ({ request }) => {
 	throw redirect(plusSuggestionPage({ tier: data.tier }));
 };
 
-// xxx: meta
-
 export default function PlusNewSuggestionModalPage() {
 	const user = useUser();
 	const matches = useMatches();

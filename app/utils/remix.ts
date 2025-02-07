@@ -3,7 +3,7 @@ import type {
 	ShouldRevalidateFunctionArgs,
 	useLoaderData,
 } from "@remix-run/react";
-import { makeTitle, truncateBySentence } from "./strings";
+import { truncateBySentence } from "./strings";
 import { COMMON_PREVIEW_IMAGE } from "./urls";
 
 export function isRevalidation(args: ShouldRevalidateFunctionArgs) {
@@ -38,7 +38,10 @@ const ROOT_URL = "https://sendou.ink";
 
 export function metaTitle(args: Pick<OpenGraphArgs, "title" | "ogTitle">) {
 	return [
-		{ title: args.title === "sendou.ink" ? args.title : makeTitle(args.title) },
+		{
+			title:
+				args.title === "sendou.ink" ? args.title : `${args.title} | sendou.ink`,
+		},
 		{
 			property: "og:title",
 			content: args.ogTitle ?? args.title,
