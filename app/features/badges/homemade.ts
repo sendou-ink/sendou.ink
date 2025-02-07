@@ -631,7 +631,7 @@ export const homemadeBadges: BadgeInfo[] = [
 	},
 	{
 		displayName: "A Splatoon Brazil Tournament",
-		fileName: "brflg",
+		fileName: "brflgx",
 		authorDiscordId: "701870845550657677",
 	},
 ];
