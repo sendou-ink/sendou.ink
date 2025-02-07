@@ -18,7 +18,6 @@ import { useUser } from "~/features/auth/core/user";
 import { isAdmin } from "~/permissions";
 import { removeDuplicates } from "~/utils/arrays";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import {
 	TEAM_SEARCH_PAGE,
 	bskyUrl,
@@ -34,15 +33,26 @@ import { action } from "../actions/t.$customUrl.server";
 import { loader } from "../loaders/t.$customUrl.server";
 import { isTeamManager, isTeamMember, resolveNewOwner } from "../team-utils";
 import "../team.css";
+import { metaTags } from "~/utils/remix";
 export { action, loader };
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-	if (!data) return [];
+export const meta: MetaFunction<typeof loader> = (args) => {
+	if (!args.data) return [];
 
-	return [
-		{ title: makeTitle(data.team.name) },
-		{ name: "description", content: data.team.bio },
-	];
+	return metaTags({
+		title: args.data.team.name,
+		description: args.data.team.bio ?? undefined,
+		location: args.location,
+		image: args.data.team.avatarSrc
+			? {
+					url: userSubmittedImage(args.data.team.avatarSrc),
+					dimensions: {
+						width: 124,
+						height: 124,
+					},
+				}
+			: undefined,
+	});
 };
 
 export const handle: SendouRouteHandle = {

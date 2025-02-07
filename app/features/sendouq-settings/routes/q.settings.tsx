@@ -1,5 +1,9 @@
 import { RadioGroup } from "@headlessui/react";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import type {
+	ActionFunctionArgs,
+	LoaderFunctionArgs,
+	MetaFunction,
+} from "@remix-run/node";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
@@ -53,6 +57,7 @@ import {
 import { settingsActionSchema } from "../q-settings-schemas.server";
 import "../q-settings.css";
 import { SendouSwitch } from "~/components/elements/Switch";
+import { metaTags } from "~/utils/remix";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
@@ -68,6 +73,13 @@ export const handle: SendouRouteHandle = {
 			type: "IMAGE",
 		},
 	],
+};
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "SendouQ - Settings",
+		location: args.location,
+	});
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {

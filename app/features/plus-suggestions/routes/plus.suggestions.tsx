@@ -32,24 +32,24 @@ import {
 } from "~/permissions";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
+import { metaTags } from "~/utils/remix";
 import {
 	badRequestIfFalsy,
 	parseRequestPayload,
 	validate,
 } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import { userPage } from "~/utils/urls";
 import { _action, actualNumber } from "~/utils/zod";
 
-export const meta: MetaFunction = () => {
-	return [
-		{ title: makeTitle("Plus Server suggestions") },
-		{
-			name: "description",
-			content: "This month's suggestions for +1, +2 and +3.",
-		},
-	];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Plus Server suggestions",
+		ogTitle: "Plus Server suggestions",
+		description:
+			"This season's suggestions to the Plus Server (+1, +2 and +3).",
+		location: args.location,
+	});
 };
 
 const suggestionActionSchema = z.union([
