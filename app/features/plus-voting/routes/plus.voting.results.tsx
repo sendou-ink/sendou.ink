@@ -15,10 +15,10 @@ import { PLUS_SERVER_DISCORD_URL, userPage } from "~/utils/urls";
 import { isAtLeastFiveDollarTierPatreon } from "~/utils/users";
 
 import "~/styles/plus-history.css";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "Plus Server voting results",
 		ogTitle: "Plus Server voting results",
 		description:

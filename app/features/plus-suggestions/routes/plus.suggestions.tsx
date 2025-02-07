@@ -32,7 +32,7 @@ import {
 } from "~/permissions";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 import {
 	badRequestIfFalsy,
 	parseRequestPayload,
@@ -43,7 +43,7 @@ import { userPage } from "~/utils/urls";
 import { _action, actualNumber } from "~/utils/zod";
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "Plus Server suggestions",
 		ogTitle: "Plus Server suggestions",
 		description:

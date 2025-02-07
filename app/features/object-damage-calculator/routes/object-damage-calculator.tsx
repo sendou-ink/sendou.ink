@@ -39,7 +39,7 @@ import type { DamageReceiver } from "../calculator-types";
 import "../calculator.css";
 import type { MetaFunction } from "@remix-run/node";
 import { SendouSwitch } from "~/components/elements/Switch";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 
 export const CURRENT_PATCH = "9.2";
 
@@ -55,7 +55,7 @@ export const handle: SendouRouteHandle = {
 };
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "Object Damage Calculator",
 		ogTitle: "Splatoon 3 object damage calculator",
 		description:

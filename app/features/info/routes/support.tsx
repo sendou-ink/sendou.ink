@@ -5,7 +5,7 @@ import { Badge } from "~/components/Badge";
 import { LinkButton } from "~/components/Button";
 import { Main } from "~/components/Main";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 import {
 	PATREON_HOW_TO_CONNECT_DISCORD_URL,
 	SENDOU_INK_PATREON_URL,
@@ -16,7 +16,7 @@ import { SendouPopover } from "../../../components/elements/Popover";
 import "../support.css";
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "Support",
 		description: "Support Sendou's work on Patreon and get perks on sendou.ink",
 		location: args.location,

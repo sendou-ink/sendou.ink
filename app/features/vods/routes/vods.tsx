@@ -6,7 +6,7 @@ import { WeaponCombobox } from "~/components/Combobox";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { mainWeaponIds, modesShort, stageIds } from "~/modules/in-game-lists";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { VODS_PAGE, navIconUrl } from "~/utils/urls";
 import { VodListing } from "../components/VodListing";
@@ -25,7 +25,7 @@ export const handle: SendouRouteHandle = {
 };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "VODs",
 		ogTitle: "Splatoon 3 VODs (gameplay footage search)",
 		description:

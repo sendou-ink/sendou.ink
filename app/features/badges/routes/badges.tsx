@@ -10,7 +10,7 @@ import { SearchIcon } from "~/components/icons/Search";
 import { useUser } from "~/features/auth/core/user";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { BADGES_DOC_LINK, BADGES_PAGE, navIconUrl } from "~/utils/urls";
-import { openGraph } from "../../../utils/remix";
+import { metaTags } from "../../../utils/remix";
 import * as BadgeRepository from "../BadgeRepository.server";
 
 import "~/styles/badges.css";
@@ -25,7 +25,7 @@ export const handle: SendouRouteHandle = {
 };
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "Badges",
 		ogTitle: "Splatoon badges (tournament prizes list)",
 		location: args.location,

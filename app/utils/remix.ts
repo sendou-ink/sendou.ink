@@ -49,8 +49,7 @@ export function metaTitle(args: Pick<OpenGraphArgs, "title" | "ogTitle">) {
 	];
 }
 
-// xxx: better name since it is not just opengraph
-export function openGraph(args: OpenGraphArgs) {
+export function metaTags(args: OpenGraphArgs) {
 	const truncatedDescription = args.description
 		? truncateBySentence(args.description, 300)
 		: null;

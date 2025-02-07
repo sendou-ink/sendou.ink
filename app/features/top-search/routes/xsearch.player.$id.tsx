@@ -7,7 +7,7 @@ import { Link, useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
 import { removeDuplicates } from "~/utils/arrays";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 import { type SendouRouteHandle, notFoundIfFalsy } from "~/utils/remix.server";
 import {
 	navIconUrl,
@@ -51,7 +51,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 			? ` (Aliases: ${args.data.names.aliases.join(", ")})`
 			: "";
 
-	return openGraph({
+	return metaTags({
 		title: `${args.data.names.primary} X Battle Top 500 Placements`,
 		description: `Splatoon 3 X Battle results for the player ${args.data.names.primary}${aliasesStr}`,
 		location: args.location,

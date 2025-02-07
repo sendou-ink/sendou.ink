@@ -27,7 +27,7 @@ import { mapPoolToNonEmptyModes } from "../core/map-list-generator/utils";
 import { MapPool } from "../core/map-pool";
 import "~/styles/maps.css";
 import { SendouSwitch } from "~/components/elements/Switch";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 
 const AMOUNT_OF_MAPS_IN_MAP_LIST = stageIds.length * 2;
 
@@ -39,7 +39,7 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({ nextUrl }) => {
 };
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "Map List Generator",
 		ogTitle: "Splatoon 3 map list generator",
 		description:

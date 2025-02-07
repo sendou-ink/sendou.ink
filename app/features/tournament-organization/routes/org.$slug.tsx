@@ -13,7 +13,7 @@ import { useUser } from "~/features/auth/core/user";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BLANK_IMAGE_URL,
@@ -37,7 +37,7 @@ export { loader };
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.data) return [];
 
-	return openGraph({
+	return metaTags({
 		title: args.data.organization.name,
 		location: args.location,
 		description: args.data.organization.description ?? undefined,

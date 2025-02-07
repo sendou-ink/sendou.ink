@@ -14,7 +14,7 @@ import type {
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentTeamPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
 import {
 	teamPage,
@@ -43,7 +43,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 	)!;
 	const teamLogoUrl = team.team?.logoUrl ?? team.pickupAvatarUrl;
 
-	return openGraph({
+	return metaTags({
 		title: `${team.name} @ ${tournamentData.ctx.name}`,
 		description: `${team.name} roster (${team.members.map((m) => m.username).join(", ")}) and sets in ${tournamentData.ctx.name}.`,
 		image: teamLogoUrl

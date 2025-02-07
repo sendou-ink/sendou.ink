@@ -57,7 +57,7 @@ import {
 import { settingsActionSchema } from "../q-settings-schemas.server";
 import "../q-settings.css";
 import { SendouSwitch } from "~/components/elements/Switch";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
@@ -76,7 +76,7 @@ export const handle: SendouRouteHandle = {
 };
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "SendouQ - Settings",
 		location: args.location,
 	});

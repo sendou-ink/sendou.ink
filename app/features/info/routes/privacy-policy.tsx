@@ -1,9 +1,9 @@
 import type { MetaFunction } from "@remix-run/node";
 import { Main } from "~/components/Main";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "Privacy Policy",
 		location: args.location,
 	});

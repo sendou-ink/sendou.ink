@@ -47,7 +47,7 @@ import {
 } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
-import { openGraph } from "../../../utils/remix";
+import { metaTags } from "../../../utils/remix";
 import {
 	MAX_LDE_INTENSITY,
 	damageTypeToWeaponType,
@@ -84,7 +84,7 @@ import { SendouSwitch } from "~/components/elements/Switch";
 export const CURRENT_PATCH = "9.2";
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "Build analyzer",
 		ogTitle: "Splatoon 3 build analyzer/simulator",
 		location: args.location,

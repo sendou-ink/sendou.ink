@@ -14,7 +14,7 @@ import { SendouSwitch } from "~/components/elements/Switch";
 import { CrossIcon } from "~/components/icons/Cross";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { artPage, navIconUrl } from "~/utils/urls";
-import { openGraph } from "../../../utils/remix";
+import { metaTags } from "../../../utils/remix";
 import { ArtGrid } from "../components/ArtGrid";
 import { allArtTags } from "../queries/allArtTags.server";
 import {
@@ -48,7 +48,7 @@ export const meta: MetaFunction = (args) => {
 
 	if (!data) return [];
 
-	return openGraph({
+	return metaTags({
 		title: "Art",
 		ogTitle: "Splatoon art showcase",
 		description:

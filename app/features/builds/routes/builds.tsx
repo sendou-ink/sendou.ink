@@ -14,12 +14,12 @@ import {
 	weaponBuildPage,
 	weaponCategoryUrl,
 } from "~/utils/urls";
-import { openGraph } from "../../../utils/remix";
+import { metaTags } from "../../../utils/remix";
 
 import "~/styles/builds.css";
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "Builds",
 		ogTitle: "Splatoon 3 builds for all weapons",
 		description:

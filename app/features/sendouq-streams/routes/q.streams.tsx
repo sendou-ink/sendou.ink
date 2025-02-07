@@ -9,7 +9,7 @@ import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { twitchThumbnailUrlToSrc } from "~/modules/twitch/utils";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FAQ_PAGE, sendouQMatchPage, twitchUrl, userPage } from "~/utils/urls";
 import { cachedStreams } from "../core/streams.server";
@@ -21,7 +21,7 @@ export const handle: SendouRouteHandle = {
 };
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "SendouQ - Streams",
 		description: "Streams of SendouQ matches in progress.",
 		location: args.location,

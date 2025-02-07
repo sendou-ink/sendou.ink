@@ -24,7 +24,7 @@ import {
 	PATCHES,
 } from "~/constants";
 import { safeJSONParse } from "~/utils/json";
-import { isRevalidation, openGraph } from "~/utils/remix";
+import { isRevalidation, metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
 import {
@@ -128,7 +128,7 @@ export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.data) return [];
 
-	return openGraph({
+	return metaTags({
 		title: `${args.data.weaponName} builds`,
 		ogTitle: `${args.data.weaponName} Splatoon 3 builds`,
 		description: `Collection of ${args.data.weaponName} builds from the top competitive players. Find the best combination of abilities and level up your gameplay.`,

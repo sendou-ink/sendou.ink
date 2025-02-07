@@ -18,7 +18,7 @@ import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 import { type SendouRouteHandle, notFoundIfFalsy } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
 import {
@@ -63,7 +63,7 @@ export const handle: SendouRouteHandle = {
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.data) return [];
 
-	return openGraph({
+	return metaTags({
 		title: args.data.vod.title,
 		description:
 			"Splatoon 3 VoD with timestamps to check out specific weapons as well as map and mode combinations.",

@@ -25,14 +25,14 @@ import type * as TeamRepository from "../TeamRepository.server";
 import { TEAM_MEMBER_ROLES } from "../team-constants";
 import { isTeamFull } from "../team-utils";
 import "../team.css";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 import { action } from "../actions/t.$customUrl.roster.server";
 import { loader } from "../loaders/t.$customUrl.roster.server";
 
 export { loader, action };
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "Managing team roster",
 		location: args.location,
 	});

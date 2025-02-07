@@ -11,11 +11,11 @@ import {
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import { currentOrPreviousSeason } from "~/features/mmr/season";
 import { userSkills } from "~/features/mmr/tiered.server";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "SendouQ - Tiers",
 		description:
 			"Information about the tiers in SendouQ. From Leviathan+ to Iron.",

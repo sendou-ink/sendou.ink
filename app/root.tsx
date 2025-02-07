@@ -43,7 +43,7 @@ import { useVisibilityChange } from "./hooks/useVisibilityChange";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
 import i18next, { i18nCookie } from "./modules/i18n/i18next.server";
 import type { Namespace } from "./modules/i18n/resources.server";
-import { isRevalidation, openGraph } from "./utils/remix";
+import { isRevalidation, metaTags } from "./utils/remix";
 import { SUSPENDED_PAGE } from "./utils/urls";
 
 import "nprogress/nprogress.css";
@@ -65,7 +65,7 @@ export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 };
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "sendou.ink",
 		ogTitle: "sendou.ink - Competitive Splatoon Hub",
 		location: args.location,

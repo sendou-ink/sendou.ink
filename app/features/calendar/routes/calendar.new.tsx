@@ -53,7 +53,7 @@ import { Tags } from "../components/Tags";
 import "~/styles/calendar-new.css";
 import "~/styles/maps.css";
 import { SendouSwitch } from "~/components/elements/Switch";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 import { action } from "../actions/calendar.new.server";
 import { loader } from "../loaders/calendar.new.server";
 export { loader, action };
@@ -63,7 +63,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 
 	const what = args.data.isAddingTournament ? "tournament" : "calendar event";
 
-	return openGraph({
+	return metaTags({
 		title: args.data.eventToEdit ? `Editing ${what}` : `New ${what}`,
 		location: args.location,
 	});

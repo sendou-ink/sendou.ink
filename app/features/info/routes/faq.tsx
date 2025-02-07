@@ -1,7 +1,7 @@
 import type { MetaFunction } from "@remix-run/node";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 
 import "~/styles/faq.css";
@@ -9,7 +9,7 @@ import "~/styles/faq.css";
 const AMOUNT_OF_QUESTIONS = 9;
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "FAQ",
 		description: "Frequently asked questions",
 		location: args.location,

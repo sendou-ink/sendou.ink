@@ -31,7 +31,7 @@ import {
 	tournamentRegisterPage,
 	userSubmittedImage,
 } from "~/utils/urls";
-import { openGraph } from "../../../utils/remix";
+import { metaTags } from "../../../utils/remix";
 import { streamsByTournamentId } from "../core/streams.server";
 import {
 	HACKY_resolvePicture,
@@ -56,7 +56,7 @@ export const meta: MetaFunction = (args) => {
 
 	if (!data) return [];
 
-	return openGraph({
+	return metaTags({
 		title: data.tournament.ctx.name,
 		description: data.tournament.ctx.description
 			? removeMarkdown(data.tournament.ctx.description)

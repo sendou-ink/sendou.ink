@@ -5,7 +5,7 @@ import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { Theme, useTheme } from "~/features/theme/core/provider";
 import { languages } from "~/modules/i18n/config";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { SETTINGS_PAGE, navIconUrl } from "~/utils/urls";
 
@@ -32,7 +32,7 @@ export default function SettingsPage() {
 }
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "Settings",
 		location: args.location,
 	});

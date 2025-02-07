@@ -14,10 +14,10 @@ import { Button } from "~/components/Button";
 import { Image } from "~/components/Image";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN } from "~/features/mmr/mmr-constants";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "SendouQ - Info",
 		description: "SendouQ guide and information.",
 		location: args.location,

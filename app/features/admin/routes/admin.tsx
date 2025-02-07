@@ -17,13 +17,13 @@ import { FRIEND_CODE_REGEXP_PATTERN } from "~/features/sendouq/q-constants";
 import { isAdmin, isMod } from "~/permissions";
 import { SEED_URL, STOP_IMPERSONATING_URL, impersonateUrl } from "~/utils/urls";
 
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 import { action } from "../actions/admin.server";
 import { loader } from "../loaders/admin.server";
 export { action, loader };
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "Admin Panel",
 		location: args.location,
 	});

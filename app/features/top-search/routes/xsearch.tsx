@@ -15,7 +15,7 @@ import { monthYears } from "../queries/monthYears";
 import type { MonthYear } from "../top-search-utils";
 
 import "../top-search.css";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: () => ({
@@ -26,7 +26,7 @@ export const handle: SendouRouteHandle = {
 };
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "X Battle Top 500 Placements",
 		ogTitle: "Splatoon 3 X Battle Top 500 results browser",
 		description:

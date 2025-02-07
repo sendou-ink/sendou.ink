@@ -1,9 +1,9 @@
 import type { MetaFunction } from "@remix-run/react";
 import { Main } from "~/components/Main";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "SendouQ - Rules",
 		description: "Rules everyone participating in SendouQ has to follow.",
 		location: args.location,

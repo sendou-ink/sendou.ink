@@ -1,14 +1,14 @@
 import type { MetaFunction } from "@remix-run/node";
 import { lazy } from "react";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { PLANNER_URL, navIconUrl } from "~/utils/urls";
 
 import "../plans.css";
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "Map Planner",
 		ogTitle: "Splatoon 3 Map planner",
 		description:

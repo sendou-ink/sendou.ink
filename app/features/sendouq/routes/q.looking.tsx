@@ -27,7 +27,7 @@ import { useAutoRefresh } from "~/hooks/useAutoRefresh";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useWindowSize } from "~/hooks/useWindowSize";
 import invariant from "~/utils/invariant";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 import {
 	type SendouRouteHandle,
 	parseRequestPayload,
@@ -96,7 +96,7 @@ export const handle: SendouRouteHandle = {
 };
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "SendouQ - Matchmaking",
 		location: args.location,
 	});

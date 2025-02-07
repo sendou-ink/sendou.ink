@@ -47,7 +47,7 @@ import type {
 	CalendarEventTag,
 	PersistedCalendarEventTag,
 } from "../../../db/types";
-import { openGraph } from "../../../utils/remix";
+import { metaTags } from "../../../utils/remix";
 import * as CalendarRepository from "../CalendarRepository.server";
 import { calendarEventTagSchema } from "../actions/calendar.new.server";
 import { CALENDAR_EVENT } from "../calendar-constants";
@@ -71,7 +71,7 @@ export const meta: MetaFunction = (args) => {
 		return 0;
 	});
 
-	return openGraph({
+	return metaTags({
 		title: "Calendar",
 		ogTitle: "Splatoon competitive event calendar",
 		location: args.location,

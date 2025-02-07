@@ -67,7 +67,7 @@ import { deleteLikesByGroupId } from "../queries/deleteLikesByGroupId.server";
 import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
 import { findGroupByInviteCode } from "../queries/findGroupByInviteCode.server";
 import "../q.css";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
@@ -79,7 +79,7 @@ export const handle: SendouRouteHandle = {
 };
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "SendouQ",
 		description:
 			"Splatoon 3 competitive ladder. Join by yourself or with your team and play ranked matches.",

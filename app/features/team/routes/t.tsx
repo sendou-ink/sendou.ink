@@ -20,7 +20,7 @@ import { SearchIcon } from "~/components/icons/Search";
 import { useUser } from "~/features/auth/core/user";
 import { usePagination } from "~/hooks/usePagination";
 import { joinListToNaturalString } from "~/utils/arrays";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	TEAM_SEARCH_PAGE,
@@ -38,7 +38,7 @@ import { loader } from "../loaders/t.server";
 export { loader, action };
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "Team Search",
 		ogTitle: "Splatoon team search",
 		description:

@@ -4,7 +4,7 @@ import { Trans } from "react-i18next";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
 import { languages } from "~/modules/i18n/config";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	GITHUB_CONTRIBUTORS_URL,
@@ -13,7 +13,7 @@ import {
 } from "~/utils/urls";
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "Contributions",
 		location: args.location,
 	});

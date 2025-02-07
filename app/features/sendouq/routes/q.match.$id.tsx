@@ -113,14 +113,14 @@ import { reportedWeaponsByMatchId } from "../queries/reportedWeaponsByMatchId.se
 import { setGroupAsInactive } from "../queries/setGroupAsInactive.server";
 import "../q.css";
 import { SendouSwitch } from "~/components/elements/Switch";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 
 export const meta: MetaFunction = (args) => {
 	const data = args.data as SerializeFrom<typeof loader> | null;
 
 	if (!data) return [];
 
-	return openGraph({
+	return metaTags({
 		title: `SendouQ - Match #${data.match.id}`,
 		description: `${joinListToNaturalString(
 			data.groupAlpha.members.map((m) => m.username),

@@ -33,13 +33,13 @@ import { action } from "../actions/t.$customUrl.server";
 import { loader } from "../loaders/t.$customUrl.server";
 import { isTeamManager, isTeamMember, resolveNewOwner } from "../team-utils";
 import "../team.css";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 export { action, loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.data) return [];
 
-	return openGraph({
+	return metaTags({
 		title: args.data.team.name,
 		description: args.data.team.bio ?? undefined,
 		location: args.location,

@@ -53,7 +53,7 @@ import {
 	userPage,
 } from "~/utils/urls";
 import { actualNumber, id } from "~/utils/zod";
-import { openGraph } from "../../../utils/remix";
+import { metaTags } from "../../../utils/remix";
 import { Tags } from "../components/Tags";
 
 import "~/styles/calendar-event.css";
@@ -102,7 +102,7 @@ export const meta: MetaFunction = (args) => {
 
 	if (!data) return [];
 
-	return openGraph({
+	return metaTags({
 		title: data.event.name,
 		location: args.location,
 		description:

@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { ARTICLES_MAIN_PAGE, articlePage, navIconUrl } from "~/utils/urls";
-import { openGraph } from "../../../utils/remix";
+import { metaTags } from "../../../utils/remix";
 import { mostRecentArticles } from "../core/list.server";
 
 import "~/styles/front.css";
@@ -21,7 +21,7 @@ export const handle: SendouRouteHandle = {
 };
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "Articles",
 		ogTitle: "Splatoon articles",
 		description:

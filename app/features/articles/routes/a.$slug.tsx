@@ -16,7 +16,7 @@ import {
 	articlePreviewUrl,
 	navIconUrl,
 } from "~/utils/urls";
-import { openGraph } from "../../../utils/remix";
+import { metaTags } from "../../../utils/remix";
 import { articleBySlug } from "../core/bySlug.server";
 
 export const handle: SendouRouteHandle = {
@@ -48,7 +48,7 @@ export const meta: MetaFunction = (args) => {
 
 	const description = data.content.trim().split("\n")[0];
 
-	return openGraph({
+	return metaTags({
 		title: data.title,
 		description,
 		image: {

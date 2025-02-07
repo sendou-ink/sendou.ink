@@ -27,7 +27,7 @@ import {
 } from "~/modules/in-game-lists";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { cache, ttl } from "~/utils/cache.server";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	LEADERBOARDS_PAGE,
@@ -74,7 +74,7 @@ export const meta: MetaFunction = (args) => {
 
 	if (!data) return [];
 
-	return openGraph({
+	return metaTags({
 		title: "Leaderboards",
 		ogTitle: "Splatoon leaderboards",
 		description:

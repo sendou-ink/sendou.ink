@@ -24,12 +24,12 @@ import { loader } from "../loaders/t.$customUrl.edit.server";
 import { TEAM } from "../team-constants";
 import { canAddCustomizedColors, isTeamOwner } from "../team-utils";
 import "../team.css";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 
 export { action, loader };
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "Editing team",
 		location: args.location,
 	});

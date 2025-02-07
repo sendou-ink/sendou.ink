@@ -13,7 +13,7 @@ import { Input } from "~/components/Input";
 import { Main } from "~/components/Main";
 import { SearchIcon } from "~/components/icons/Search";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { openGraph } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
 import {
 	type SendouRouteHandle,
 	parseSearchParams,
@@ -33,7 +33,7 @@ export const handle: SendouRouteHandle = {
 };
 
 export const meta: MetaFunction = (args) => {
-	return openGraph({
+	return metaTags({
 		title: "User Search",
 		description: "Search for sendou.ink users",
 		location: args.location,
