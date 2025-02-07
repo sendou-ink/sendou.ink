@@ -76,7 +76,7 @@ export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "Calendar",
 		ogTitle: "Splatoon competitive event calendar",
-		url: CALENDAR_PAGE,
+		location: args.location,
 		description: `${data.events.length} events on sendou.ink happening during week ${
 			data.displayedWeek
 		} including ${joinListToNaturalString(

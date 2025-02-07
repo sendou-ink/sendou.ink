@@ -31,10 +31,10 @@ export default function SettingsPage() {
 	);
 }
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "Settings",
-		url: SETTINGS_PAGE,
+		location: args.location,
 	});
 };
 

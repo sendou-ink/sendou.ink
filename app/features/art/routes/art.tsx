@@ -53,7 +53,7 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Splatoon art showcase",
 		description:
 			"Splatoon art filterable by various tags. Find artist to commission for your own custom art. Includes various styles such as traditional, digital, 3D and SFM.",
-		url: artPage(),
+		location: args.location,
 	});
 };
 

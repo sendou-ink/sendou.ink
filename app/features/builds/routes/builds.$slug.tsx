@@ -134,7 +134,7 @@ export const meta: MetaFunction = (args) => {
 		title: `${data.weaponName} builds`,
 		ogTitle: `${data.weaponName} Splatoon 3 builds`,
 		description: `Collection of ${data.weaponName} builds from the top competitive players. Find the best combination of abilities and level up your gameplay.`,
-		url: weaponBuildPage(data.slug),
+		location: args.location,
 	});
 };
 

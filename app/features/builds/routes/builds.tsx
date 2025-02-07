@@ -19,13 +19,13 @@ import { openGraph } from "../../../utils/remix";
 
 import "~/styles/builds.css";
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "Builds",
 		ogTitle: "Splatoon 3 builds for all weapons",
 		description:
 			"View Splatoon 3 builds for all weapons by the best players. Includes collection of user submitted builds and an aggregation of ability stats.",
-		url: BUILDS_PAGE,
+		location: args.location,
 	});
 };
 

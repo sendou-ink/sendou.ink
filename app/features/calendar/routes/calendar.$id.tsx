@@ -104,7 +104,7 @@ export const meta: MetaFunction = (args) => {
 
 	return openGraph({
 		title: data.event.name,
-		url: calendarEventPage(data.event.eventId),
+		location: args.location,
 		description:
 			data.event.description ??
 			`Splatoon competitive event hosted on ${resolveBaseUrl(data.event.bracketUrl)}`,

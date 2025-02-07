@@ -54,7 +54,7 @@ export const meta: MetaFunction = (args) => {
 		image: {
 			url: articlePreviewUrl(args.params.slug),
 		},
-		url: articlePage(args.params.slug),
+		location: args.location,
 	});
 };
 

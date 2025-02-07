@@ -11,23 +11,19 @@ import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingReposito
 import { lastCompletedVoting } from "~/features/plus-voting/core";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
-import {
-	PLUS_SERVER_DISCORD_URL,
-	PLUS_VOTING_RESULTS_URL,
-	userPage,
-} from "~/utils/urls";
+import { PLUS_SERVER_DISCORD_URL, userPage } from "~/utils/urls";
 import { isAtLeastFiveDollarTierPatreon } from "~/utils/users";
 
 import "~/styles/plus-history.css";
 import { openGraph } from "~/utils/remix";
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "Plus Server voting results",
 		ogTitle: "Plus Server voting results",
 		description:
 			"Plus Server (+1, +2 and +3) voting results for the latest season.",
-		url: PLUS_VOTING_RESULTS_URL,
+		location: args.location,
 	});
 };
 

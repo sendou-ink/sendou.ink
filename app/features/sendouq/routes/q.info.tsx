@@ -3,7 +3,6 @@ import { Main } from "~/components/Main";
 import {
 	CALENDAR_PAGE,
 	FAQ_PAGE,
-	SENDOUQ_INFO_PAGE,
 	SENDOUQ_RULES_PAGE,
 	SENDOUQ_SETTINGS_PAGE,
 	TIERS_PAGE,
@@ -17,11 +16,11 @@ import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/le
 import { USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN } from "~/features/mmr/mmr-constants";
 import { openGraph } from "~/utils/remix";
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "SendouQ - Info",
 		description: "SendouQ guide and information.",
-		url: SENDOUQ_INFO_PAGE,
+		location: args.location,
 	});
 };
 

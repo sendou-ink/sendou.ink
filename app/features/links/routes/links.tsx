@@ -17,13 +17,13 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "Links",
 		ogTitle: "Splatoon link collection",
 		description:
 			"Collection of useful Splatoon guides, Discord servers and other resources.",
-		url: LINKS_PAGE,
+		location: args.location,
 	});
 };
 

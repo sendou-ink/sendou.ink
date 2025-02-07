@@ -22,6 +22,7 @@ import { useIsMounted } from "~/hooks/useIsMounted";
 import { isAdmin } from "~/permissions";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+import { removeMarkdown } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import {
 	tournamentDivisionsPage,
@@ -55,31 +56,16 @@ export const meta: MetaFunction = (args) => {
 
 	if (!data) return [];
 
-	const ogImage = () => {
-		if (
-			!data.tournament.ctx.logoSrc ||
-			data.tournament.ctx.logoSrc.startsWith("https")
-		) {
-			return data.tournament.ctx.logoSrc;
-		}
-
-		// opengraph does not support relative urls
-		return `${import.meta.env.VITE_SITE_DOMAIN}${data.tournament.ctx.logoSrc}`;
-	};
-
-	const description = () => {
-		const firstParagraph = data.tournament.ctx.description?.split("\n")[0];
-
-		if (!firstParagraph) return;
-
-		return firstParagraph.replace(/#/g, "").replace(/\*/g, "").trim();
-	};
-
 	return openGraph({
 		title: data.tournament.ctx.name,
-		description: description(),
-		image: { url: ogImage(), dimensions: { width: 124, height: 124 } },
-		// xxx: url for each
+		description: data.tournament.ctx.description
+			? removeMarkdown(data.tournament.ctx.description)
+			: undefined,
+		image: {
+			url: data.tournament.ctx.logoSrc,
+			dimensions: { width: 124, height: 124 },
+		},
+		location: args.location,
 		url: tournamentPage(data.tournament.ctx.id),
 	});
 };

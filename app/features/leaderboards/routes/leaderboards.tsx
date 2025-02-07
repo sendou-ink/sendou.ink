@@ -79,7 +79,7 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Splatoon leaderboards",
 		description:
 			"Leaderboards of top Splatoon players ranked by their X Battle placements as well as tournament and SendouQ results. Categories per weapon and mode.",
-		url: LEADERBOARDS_PAGE,
+		location: args.location,
 	});
 };
 

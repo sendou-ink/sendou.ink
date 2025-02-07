@@ -95,10 +95,10 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "SendouQ - Matchmaking",
-		url: SENDOUQ_LOOKING_PAGE,
+		location: args.location,
 	});
 };
 

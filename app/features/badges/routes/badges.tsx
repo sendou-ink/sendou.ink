@@ -24,11 +24,11 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "Badges",
 		ogTitle: "Splatoon badges (tournament prizes list)",
-		url: BADGES_PAGE,
+		location: args.location,
 		description:
 			"Over 400 badge tournament prizes and counting! Check out the full list including the owners.",
 	});

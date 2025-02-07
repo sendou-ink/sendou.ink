@@ -18,7 +18,6 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	TEAM_SEARCH_PAGE,
 	joinTeamPage,
-	manageTeamRosterPage,
 	navIconUrl,
 	teamPage,
 } from "~/utils/urls";
@@ -32,12 +31,10 @@ import { loader } from "../loaders/t.$customUrl.roster.server";
 
 export { loader, action };
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-	if (!data) return [];
-
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "Managing team roster",
-		url: manageTeamRosterPage(data.team.customUrl),
+		location: args.location,
 	});
 };
 

@@ -6,10 +6,9 @@ import type {
 import { Link, useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
-import { i18next } from "~/modules/i18n/i18next.server";
 import { removeDuplicates } from "~/utils/arrays";
+import { openGraph } from "~/utils/remix";
 import { type SendouRouteHandle, notFoundIfFalsy } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import {
 	navIconUrl,
 	topSearchPage,
@@ -44,43 +43,45 @@ export const handle: SendouRouteHandle = {
 	},
 };
 
-export const meta: MetaFunction = (args) => {
-	const data = args.data as SerializeFrom<typeof loader> | null;
+export const meta: MetaFunction<typeof loader> = (args) => {
+	if (!args.data) return [];
 
-	if (!data) return [];
+	const aliasesStr =
+		args.data.names.aliases.length > 0
+			? ` (Aliases: ${args.data.names.aliases.join(", ")})`
+			: "";
 
-	return [
-		{ title: data.title },
-		{
-			name: "description",
-			content: `Splatoon 3 X Battle for the player ${data.placements[0].name}`,
-		},
-	];
+	return openGraph({
+		title: `${args.data.names.primary} X Battle Top 500 Placements`,
+		description: `Splatoon 3 X Battle results for the player ${args.data.names.primary}${aliasesStr}`,
+		location: args.location,
+	});
 };
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const placements = notFoundIfFalsy(
 		findPlacementsByPlayerId(Number(params.id)),
 	);
 
-	const t = await i18next.getFixedT(request);
+	const primaryName = placements[0].name;
+	const aliases = removeDuplicates(
+		placements
+			.map((placement) => placement.name)
+			.filter((name) => name !== primaryName),
+	);
 
 	return {
 		placements,
-		title: makeTitle([placements[0].name, t("pages.xsearch")]),
+		names: {
+			primary: primaryName,
+			aliases,
+		},
 	};
 };
 
 export default function XSearchPlayerPage() {
 	const { t } = useTranslation(["common"]);
 	const data = useLoaderData<typeof loader>();
-
-	const firstName = data.placements[0].name;
-	const aliases = removeDuplicates(
-		data.placements
-			.map((placement) => placement.name)
-			.filter((name) => name !== firstName),
-	);
 
 	const hasUserLinked = Boolean(data.placements[0].discordId);
 
@@ -89,15 +90,15 @@ export default function XSearchPlayerPage() {
 			<div>
 				<h2 className="text-lg">
 					{hasUserLinked ? (
-						<Link to={userPage(data.placements[0])}>{firstName}</Link>
+						<Link to={userPage(data.placements[0])}>{data.names.primary}</Link>
 					) : (
-						<>{firstName}</>
+						<>{data.names.primary}</>
 					)}{" "}
 					{t("common:xsearch.placements")}
 				</h2>
-				{aliases.length > 0 ? (
+				{data.names.aliases.length > 0 ? (
 					<div className="text-lighter text-sm">
-						{t("common:xsearch.aliases")} {aliases.join(", ")}
+						{t("common:xsearch.aliases")} {data.names.aliases.join(", ")}
 					</div>
 				) : null}
 			</div>

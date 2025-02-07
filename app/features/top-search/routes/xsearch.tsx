@@ -1,19 +1,13 @@
-import type {
-	LoaderFunctionArgs,
-	MetaFunction,
-	SerializeFrom,
-} from "@remix-run/node";
+import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { useLoaderData, useSearchParams } from "@remix-run/react";
 import { nanoid } from "nanoid";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
 import type { XRankPlacement } from "~/db/types";
-import { i18next } from "~/modules/i18n/i18next.server";
 import type { RankedModeShort } from "~/modules/in-game-lists";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import { navIconUrl, topSearchPage } from "~/utils/urls";
 import { PlacementsTable } from "../components/Placements";
 import { findPlacementsOfMonth } from "../queries/findPlacements.server";
@@ -21,6 +15,7 @@ import { monthYears } from "../queries/monthYears";
 import type { MonthYear } from "../top-search-utils";
 
 import "../top-search.css";
+import { openGraph } from "~/utils/remix";
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: () => ({
@@ -31,21 +26,19 @@ export const handle: SendouRouteHandle = {
 };
 
 export const meta: MetaFunction = (args) => {
-	const data = args.data as SerializeFrom<typeof loader> | null;
-
-	if (!data) return [];
-
-	return [
-		{ title: data.title },
-		{ name: "description", content: "Splatoon 3 X Battle results" },
-	];
+	return openGraph({
+		title: "X Battle Top 500 Placements",
+		ogTitle: "Splatoon 3 X Battle Top 500 results browser",
+		description:
+			"Splatoon 3 X Battle results for the top 500 players for all the finished seasons in both Tentatek and Takoroka divisions.",
+		location: args.location,
+	});
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const availableMonthYears = monthYears();
 	const { month: latestMonth, year: latestYear } = availableMonthYears[0];
 
-	// #region parse URL params
 	const url = new URL(request.url);
 	const mode = (() => {
 		const mode = url.searchParams.get("mode");
@@ -85,7 +78,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 		return latestYear;
 	})();
-	// #endregion
 
 	const placements = findPlacementsOfMonth({
 		mode,
@@ -94,10 +86,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		year,
 	});
 
-	const t = await i18next.getFixedT(request);
-
 	return {
-		title: makeTitle(t("pages.xsearch")),
 		placements,
 		availableMonthYears,
 	};

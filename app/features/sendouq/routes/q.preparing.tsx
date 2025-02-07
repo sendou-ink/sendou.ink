@@ -47,10 +47,10 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "SendouQ - Preparing Group",
-		url: SENDOUQ_PREPARING_PAGE,
+		location: args.location,
 	});
 };
 

@@ -127,7 +127,7 @@ export const meta: MetaFunction = (args) => {
 		)} vs. ${joinListToNaturalString(
 			data.groupBravo.members.map((m) => m.username),
 		)}`,
-		url: sendouQMatchPage(data.match.id),
+		location: args.location,
 	});
 };
 

@@ -78,12 +78,12 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "SendouQ",
 		description:
 			"Splatoon 3 competitive ladder. Join by yourself or with your team and play ranked matches.",
-		url: SENDOUQ_PAGE,
+		location: args.location,
 	});
 };
 

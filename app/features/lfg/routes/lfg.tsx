@@ -39,13 +39,13 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "LFG",
 		ogTitle: "Splatoon LFG (looking for players, teams & coaches)",
 		description:
 			"Find people to play Splatoon with. Create a post or browse existing ones. For looking players, teams, scrim partners and coaches alike.",
-		url: LFG_PAGE,
+		location: args.location,
 	});
 };
 

@@ -20,13 +20,13 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "Articles",
 		ogTitle: "Splatoon articles",
 		description:
 			"Articles about the competitive side of Splatoon. Written by various community members.",
-		url: ARTICLES_MAIN_PAGE,
+		location: args.location,
 	});
 };
 

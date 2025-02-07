@@ -26,14 +26,13 @@ import invariant from "~/utils/invariant";
 import { openGraph } from "~/utils/remix";
 import { badRequestIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertType, assertUnreachable } from "~/utils/types";
-import { PLUS_VOTING_URL } from "~/utils/urls";
 import { safeJSONParse } from "~/utils/zod";
 import { PlusSuggestionComments } from "../../plus-suggestions/routes/plus.suggestions";
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "Plus Server Voting",
-		url: PLUS_VOTING_URL,
+		location: args.location,
 	});
 };
 

@@ -1,4 +1,5 @@
 import type {
+	Location,
 	ShouldRevalidateFunctionArgs,
 	useLoaderData,
 } from "@remix-run/react";
@@ -21,8 +22,9 @@ interface OpenGraphArgs {
 	ogTitle?: string;
 	/** Brief description of the page's contents used by search engines and social media sharing. If the description is over 300 characters long it is automatically truncated. */
 	description?: string;
-	/** e.g. /builds/splattershot */
-	url: string;
+	location: Location;
+	/** Optionally override location pathname. */
+	url?: string;
 	image?: {
 		url: string;
 		dimensions?: {
@@ -75,7 +77,7 @@ export function openGraph(args: OpenGraphArgs) {
 		},
 		{
 			property: "og:url",
-			content: `${ROOT_URL}${args.url}`,
+			content: `${ROOT_URL}${args.location.pathname}`,
 		},
 		{
 			property: "og:image",

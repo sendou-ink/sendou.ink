@@ -1,13 +1,12 @@
 import type { MetaFunction } from "@remix-run/react";
 import { Main } from "~/components/Main";
 import { openGraph } from "~/utils/remix";
-import { SENDOUQ_RULES_PAGE } from "~/utils/urls";
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "SendouQ - Rules",
 		description: "Rules everyone participating in SendouQ has to follow.",
-		url: SENDOUQ_RULES_PAGE,
+		location: args.location,
 	});
 };
 

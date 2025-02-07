@@ -37,13 +37,13 @@ import { action } from "../actions/t.server";
 import { loader } from "../loaders/t.server";
 export { loader, action };
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "Team Search",
 		ogTitle: "Splatoon team search",
 		description:
 			"List of all teams on sendou.ink and their members. Search for teams by name or member name.",
-		url: TEAM_SEARCH_PAGE,
+		location: args.location,
 	});
 };
 

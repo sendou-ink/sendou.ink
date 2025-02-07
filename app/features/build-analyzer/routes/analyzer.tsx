@@ -84,11 +84,11 @@ import { SendouSwitch } from "~/components/elements/Switch";
 
 export const CURRENT_PATCH = "9.2";
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "Build analyzer",
 		ogTitle: "Splatoon 3 build analyzer/simulator",
-		url: ANALYZER_URL,
+		location: args.location,
 		description:
 			"Analyze and compare Splatoon 3 builds. Find out what exactly each combination of abilities does.",
 	});

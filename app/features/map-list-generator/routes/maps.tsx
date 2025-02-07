@@ -38,13 +38,13 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({ nextUrl }) => {
 	return searchParams.has("readonly");
 };
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "Map List Generator",
 		ogTitle: "Splatoon 3 map list generator",
 		description:
 			"Generate a map list based on maps you choose or a tournament's map pool.",
-		url: MAPS_URL,
+		location: args.location,
 	});
 };
 

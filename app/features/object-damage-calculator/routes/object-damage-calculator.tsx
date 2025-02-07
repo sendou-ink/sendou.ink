@@ -55,13 +55,13 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "Object Damage Calculator",
 		ogTitle: "Splatoon 3 object damage calculator",
 		description:
 			"Calculate how much damage weapons do to objects in Splatoon 3. The list of objects includes Crab Tank, Big Bubbler, Splash Wall, Rainmaker shield and more.",
-		url: OBJECT_DAMAGE_CALCULATOR_URL,
+		location: args.location,
 	});
 };
 

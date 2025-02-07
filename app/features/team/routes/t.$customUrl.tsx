@@ -36,13 +36,22 @@ import "../team.css";
 import { openGraph } from "~/utils/remix";
 export { action, loader };
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-	if (!data) return [];
+export const meta: MetaFunction<typeof loader> = (args) => {
+	if (!args.data) return [];
 
 	return openGraph({
-		title: data.team.name,
-		description: data.team.bio ?? undefined,
-		url: teamPage(data.team.customUrl),
+		title: args.data.team.name,
+		description: args.data.team.bio ?? undefined,
+		location: args.location,
+		image: args.data.team.avatarSrc
+			? {
+					url: userSubmittedImage(args.data.team.avatarSrc),
+					dimensions: {
+						width: 124,
+						height: 124,
+					},
+				}
+			: undefined,
 	});
 };
 

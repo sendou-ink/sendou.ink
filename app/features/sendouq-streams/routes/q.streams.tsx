@@ -11,13 +11,7 @@ import { twitchThumbnailUrlToSrc } from "~/modules/twitch/utils";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { openGraph } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import {
-	FAQ_PAGE,
-	SENDOUQ_STREAMS_PAGE,
-	sendouQMatchPage,
-	twitchUrl,
-	userPage,
-} from "~/utils/urls";
+import { FAQ_PAGE, sendouQMatchPage, twitchUrl, userPage } from "~/utils/urls";
 import { cachedStreams } from "../core/streams.server";
 
 import "~/features/sendouq/q.css";
@@ -26,11 +20,11 @@ export const handle: SendouRouteHandle = {
 	i18n: ["q"],
 };
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "SendouQ - Streams",
 		description: "Streams of SendouQ matches in progress.",
-		url: SENDOUQ_STREAMS_PAGE,
+		location: args.location,
 	});
 };
 

@@ -15,7 +15,6 @@ import { useUser } from "~/features/auth/core/user";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	TEAM_SEARCH_PAGE,
-	editTeamPage,
 	navIconUrl,
 	teamPage,
 	uploadImagePage,
@@ -29,12 +28,10 @@ import { openGraph } from "~/utils/remix";
 
 export { action, loader };
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-	if (!data) return [];
-
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "Editing team",
-		url: editTeamPage(data.team.customUrl),
+		location: args.location,
 	});
 };
 

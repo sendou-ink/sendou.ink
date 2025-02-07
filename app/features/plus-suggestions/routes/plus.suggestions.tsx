@@ -39,16 +39,16 @@ import {
 	validate,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { plusSuggestionPage, userPage } from "~/utils/urls";
+import { userPage } from "~/utils/urls";
 import { _action, actualNumber } from "~/utils/zod";
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "Plus Server suggestions",
 		ogTitle: "Plus Server suggestions",
 		description:
 			"This season's suggestions to the Plus Server (+1, +2 and +3).",
-		url: plusSuggestionPage(),
+		location: args.location,
 	});
 };
 

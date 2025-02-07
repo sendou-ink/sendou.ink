@@ -13,14 +13,13 @@ import { currentOrPreviousSeason } from "~/features/mmr/season";
 import { userSkills } from "~/features/mmr/tiered.server";
 import { openGraph } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { TIERS_PAGE } from "~/utils/urls";
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = (args) => {
 	return openGraph({
 		title: "SendouQ - Tiers",
 		description:
 			"Information about the tiers in SendouQ. From Leviathan+ to Iron.",
-		url: TIERS_PAGE,
+		location: args.location,
 	});
 };
 
