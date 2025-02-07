@@ -125,15 +125,13 @@ export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	return args.defaultShouldRevalidate;
 };
 
-export const meta: MetaFunction = (args) => {
-	const data = args.data as SerializeFrom<typeof loader> | null;
-
-	if (!data) return [];
+export const meta: MetaFunction<typeof loader> = (args) => {
+	if (!args.data) return [];
 
 	return openGraph({
-		title: `${data.weaponName} builds`,
-		ogTitle: `${data.weaponName} Splatoon 3 builds`,
-		description: `Collection of ${data.weaponName} builds from the top competitive players. Find the best combination of abilities and level up your gameplay.`,
+		title: `${args.data.weaponName} builds`,
+		ogTitle: `${args.data.weaponName} Splatoon 3 builds`,
+		description: `Collection of ${args.data.weaponName} builds from the top competitive players. Find the best combination of abilities and level up your gameplay.`,
 		location: args.location,
 	});
 };

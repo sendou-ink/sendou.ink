@@ -47,7 +47,6 @@ export function metaTitle(args: Pick<OpenGraphArgs, "title" | "ogTitle">) {
 }
 
 // xxx: better name since it is not just opengraph
-// xxx: go through all meta description and add "on sendou.ink" ? <-- document these in OpenGraphArgs how to write good title & description
 export function openGraph(args: OpenGraphArgs) {
 	const truncatedDescription = args.description
 		? truncateBySentence(args.description, 300)
