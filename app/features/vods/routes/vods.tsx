@@ -1,18 +1,13 @@
-import type {
-	LoaderFunctionArgs,
-	MetaFunction,
-	SerializeFrom,
-} from "@remix-run/node";
+import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { useLoaderData, useSearchParams } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Button } from "~/components/Button";
 import { WeaponCombobox } from "~/components/Combobox";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { i18next } from "~/modules/i18n/i18next.server";
 import { mainWeaponIds, modesShort, stageIds } from "~/modules/in-game-lists";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import { VODS_PAGE, navIconUrl } from "~/utils/urls";
 import { VodListing } from "../components/VodListing";
 import { findVods } from "../queries/findVods.server";
@@ -29,16 +24,17 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export const meta: MetaFunction = (args) => {
-	const data = args.data as SerializeFrom<typeof loader> | null;
-
-	if (!data) return [];
-
-	return [{ title: data.title }];
+export const meta: MetaFunction<typeof loader> = (args) => {
+	return metaTags({
+		title: "VODs",
+		ogTitle: "Splatoon 3 VODs (gameplay footage search)",
+		description:
+			"Search for Splatoon 3 VODs (gameplay footage) by mode, stage and/or weapon.",
+		location: args.location,
+	});
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const t = await i18next.getFixedT(request);
 	const url = new URL(request.url);
 
 	const limit = Number(url.searchParams.get("limit") ?? VODS_PAGE_BATCH_SIZE);
@@ -58,7 +54,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	return {
 		vods,
-		title: makeTitle(t("pages.vods")),
 		limit,
 		hasMoreVods,
 	};

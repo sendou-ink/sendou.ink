@@ -1,4 +1,8 @@
-import type { ActionFunction, LoaderFunctionArgs } from "@remix-run/node";
+import type {
+	ActionFunction,
+	LoaderFunctionArgs,
+	MetaFunction,
+} from "@remix-run/node";
 import {
 	unstable_composeUploadHandlers as composeUploadHandlers,
 	unstable_createMemoryUploadHandler as createMemoryUploadHandler,
@@ -38,6 +42,7 @@ import {
 	navIconUrl,
 	userArtPage,
 } from "~/utils/urls";
+import { metaTitle } from "../../../utils/remix";
 import { ART, NEW_ART_EXISTING_SEARCH_PARAM_KEY } from "../art-constants";
 import { editArtSchema, newArtSchema } from "../art-schemas.server";
 import { previewUrl } from "../art-utils";
@@ -52,6 +57,12 @@ export const handle: SendouRouteHandle = {
 		href: artPage(),
 		type: "IMAGE",
 	}),
+};
+
+export const meta: MetaFunction = () => {
+	return metaTitle({
+		title: "New art",
+	});
 };
 
 export const action: ActionFunction = async ({ request }) => {

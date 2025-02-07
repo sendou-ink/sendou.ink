@@ -8,8 +8,6 @@ author:
 
 Article ported from the [Splatoon Stronghold](https://www.splatoonstronghold.com/news/a-dying-scene-stronghold-and-splatoon-4) website
 
-## **A dying scene, Stronghold, & Splatoon 4**
-
 All of the recent doomposts and videos about how the competitive Splatoon scene dying have stirred a lot of feelings in the community. For many, including me, these posts have begun igniting a spark to create and do more for the scene and game we all love.
 
 The current problems in the scene are fixable, some more easily than others. I'm fortunate to have the resources and such an awesome team at Stronghold that shares my passion for the community. Next week we will be releasing our project roadmap for 2025, some of those projects are targeted at resolving current issues in the scene.

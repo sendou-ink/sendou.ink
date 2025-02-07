@@ -38,7 +38,6 @@ import {
 	parseRequestPayload,
 	validate,
 } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import {
 	LEADERBOARDS_PAGE,
@@ -67,8 +66,8 @@ import { addMember } from "../queries/addMember.server";
 import { deleteLikesByGroupId } from "../queries/deleteLikesByGroupId.server";
 import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
 import { findGroupByInviteCode } from "../queries/findGroupByInviteCode.server";
-
 import "../q.css";
+import { metaTags } from "~/utils/remix";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
@@ -79,15 +78,13 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export const meta: MetaFunction = () => {
-	return [
-		{ title: makeTitle("SendouQ") },
-		{
-			name: "description",
-			content:
-				"Splatoon 3 competitive ladder. Join by yourself or with your team and play ranked matches.",
-		},
-	];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "SendouQ",
+		description:
+			"Splatoon 3 competitive ladder. Join by yourself or with your team and play ranked matches.",
+		location: args.location,
+	});
 };
 
 const validateCanJoinQ = async (user: { id: number; discordId: string }) => {

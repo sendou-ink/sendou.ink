@@ -2,7 +2,6 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { BUILDS_PAGE_BATCH_SIZE, BUILDS_PAGE_MAX_BUILDS } from "~/constants";
 import { i18next } from "~/modules/i18n/i18next.server";
 import { weaponIdIsNotAlt } from "~/modules/in-game-lists";
-import { makeTitle } from "~/utils/strings";
 import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import { mySlugify } from "~/utils/urls";
 import { FILTER_SEARCH_PARAM_KEY } from "../builds-constants";
@@ -54,7 +53,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	return {
 		weaponId,
 		weaponName,
-		title: makeTitle([weaponName, t("common:pages.builds")]),
 		builds: filteredBuilds,
 		limit,
 		slug,

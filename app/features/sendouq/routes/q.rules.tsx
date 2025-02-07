@@ -1,9 +1,13 @@
 import type { MetaFunction } from "@remix-run/react";
 import { Main } from "~/components/Main";
-import { makeTitle } from "~/utils/strings";
+import { metaTags } from "~/utils/remix";
 
-export const meta: MetaFunction = () => {
-	return [{ title: makeTitle("SendouQ Rules") }];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "SendouQ - Rules",
+		description: "Rules everyone participating in SendouQ has to follow.",
+		location: args.location,
+	});
 };
 
 export default function SendouqRules() {

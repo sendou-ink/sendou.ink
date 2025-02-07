@@ -1,9 +1,11 @@
+import type { MetaFunction } from "@remix-run/node";
 import { useNavigate, useSearchParams } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { Theme, useTheme } from "~/features/theme/core/provider";
 import { languages } from "~/modules/i18n/config";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { SETTINGS_PAGE, navIconUrl } from "~/utils/urls";
 
@@ -28,6 +30,13 @@ export default function SettingsPage() {
 		</Main>
 	);
 }
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Settings",
+		location: args.location,
+	});
+};
 
 function LanguageSelector() {
 	const { t } = useTranslation(["common"]);

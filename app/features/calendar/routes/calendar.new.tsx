@@ -1,4 +1,4 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/node";
 import { Form, useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import Compressor from "compressorjs";
@@ -53,16 +53,20 @@ import { Tags } from "../components/Tags";
 import "~/styles/calendar-new.css";
 import "~/styles/maps.css";
 import { SendouSwitch } from "~/components/elements/Switch";
+import { metaTags } from "~/utils/remix";
 import { action } from "../actions/calendar.new.server";
 import { loader } from "../loaders/calendar.new.server";
 export { loader, action };
 
-export const meta: MetaFunction = (args) => {
-	const data = args.data as SerializeFrom<typeof loader> | null;
+export const meta: MetaFunction<typeof loader> = (args) => {
+	if (!args.data) return [];
 
-	if (!data) return [];
+	const what = args.data.isAddingTournament ? "tournament" : "calendar event";
 
-	return [{ title: data.title }];
+	return metaTags({
+		title: args.data.eventToEdit ? `Editing ${what}` : `New ${what}`,
+		location: args.location,
+	});
 };
 
 export const handle: SendouRouteHandle = {
