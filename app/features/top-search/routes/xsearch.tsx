@@ -7,6 +7,7 @@ import type { XRankPlacement } from "~/db/types";
 import type { RankedModeShort } from "~/modules/in-game-lists";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import invariant from "~/utils/invariant";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, topSearchPage } from "~/utils/urls";
 import { PlacementsTable } from "../components/Placements";
@@ -15,7 +16,6 @@ import { monthYears } from "../queries/monthYears";
 import type { MonthYear } from "../top-search-utils";
 
 import "../top-search.css";
-import { metaTags } from "~/utils/remix";
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: () => ({
