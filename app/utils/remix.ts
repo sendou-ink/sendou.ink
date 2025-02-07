@@ -2,7 +2,7 @@ import type {
 	ShouldRevalidateFunctionArgs,
 	useLoaderData,
 } from "@remix-run/react";
-import { makeTitle } from "./strings";
+import { makeTitle, truncateBySentence } from "./strings";
 import { COMMON_PREVIEW_IMAGE } from "./urls";
 
 export function isRevalidation(args: ShouldRevalidateFunctionArgs) {
@@ -15,8 +15,11 @@ export function isRevalidation(args: ShouldRevalidateFunctionArgs) {
 export type SerializeFrom<T> = ReturnType<typeof useLoaderData<T>>;
 
 interface OpenGraphArgs {
+	/** Title as shown by the browser in the tab etc. Appended with "| sendou.ink"*/
 	title: string;
+	/** Title as shown when shared on Bluesky, Discord etc. Also used in search results. If omitted, "title" is used instead. */
 	ogTitle?: string;
+	/** Brief description of the page's contents used by search engines and social media sharing. If the description is over 300 characters long it is automatically truncated. */
 	description?: string;
 	/** e.g. /builds/splattershot */
 	url: string;
@@ -44,18 +47,24 @@ export function metaTitle(args: Pick<OpenGraphArgs, "title" | "ogTitle">) {
 // xxx: better name since it is not just opengraph
 // xxx: go through all meta description and add "on sendou.ink" ? <-- document these in OpenGraphArgs how to write good title & description
 export function openGraph(args: OpenGraphArgs) {
+	const truncatedDescription = args.description
+		? truncateBySentence(args.description, 300)
+		: null;
+
 	const result = [
 		...metaTitle(args),
 		args.description
 			? {
 					name: "description",
-					content: args.description,
+					content: truncatedDescription,
 				}
 			: null,
-		{
-			property: "og:description",
-			content: args.description,
-		},
+		args.description
+			? {
+					property: "og:description",
+					content: truncatedDescription,
+				}
+			: null,
 		{
 			property: "og:site_name",
 			content: "sendou.ink",
@@ -81,14 +90,6 @@ export function openGraph(args: OpenGraphArgs) {
 
 				return `${ROOT_URL}${COMMON_PREVIEW_IMAGE}`;
 			})(),
-		},
-		{
-			name: "twitter:card",
-			content: "summary",
-		},
-		{
-			name: "twitter:site",
-			content: "@sendouink",
 		},
 	].filter((val) => val !== null);
 

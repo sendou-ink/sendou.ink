@@ -27,6 +27,7 @@ import {
 } from "~/modules/in-game-lists";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { cache, ttl } from "~/utils/cache.server";
+import { openGraph } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	LEADERBOARDS_PAGE,
@@ -56,7 +57,6 @@ import {
 	modeXPLeaderboard,
 	weaponXPLeaderboard,
 } from "../queries/XPLeaderboard.server";
-import { openGraph } from "~/utils/remix";
 
 import "../../top-search/top-search.css";
 

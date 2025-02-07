@@ -11,26 +11,24 @@ import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingReposito
 import { lastCompletedVoting } from "~/features/plus-voting/core";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
-import { makeTitle } from "~/utils/strings";
-import { PLUS_SERVER_DISCORD_URL, userPage } from "~/utils/urls";
+import {
+	PLUS_SERVER_DISCORD_URL,
+	PLUS_VOTING_RESULTS_URL,
+	userPage,
+} from "~/utils/urls";
 import { isAtLeastFiveDollarTierPatreon } from "~/utils/users";
 
 import "~/styles/plus-history.css";
+import { openGraph } from "~/utils/remix";
 
-export const meta: MetaFunction = (args) => {
-	const data = args.data as SerializeFrom<typeof loader>;
-
-	if (!data) return [];
-
-	return [
-		{ title: makeTitle("Plus Server voting history") },
-		{
-			name: "description",
-			content: `Plus Server voting results for ${
-				data.lastCompletedVoting.month + 1
-			}/${data.lastCompletedVoting.year}`,
-		},
-	];
+export const meta: MetaFunction = () => {
+	return openGraph({
+		title: "Plus Server voting results",
+		ogTitle: "Plus Server voting results",
+		description:
+			"Plus Server (+1, +2 and +3) voting results for the latest season.",
+		url: PLUS_VOTING_RESULTS_URL,
+	});
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {

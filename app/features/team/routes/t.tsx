@@ -20,6 +20,7 @@ import { SearchIcon } from "~/components/icons/Search";
 import { useUser } from "~/features/auth/core/user";
 import { usePagination } from "~/hooks/usePagination";
 import { joinListToNaturalString } from "~/utils/arrays";
+import { openGraph } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	TEAM_SEARCH_PAGE,
@@ -36,10 +37,14 @@ import { action } from "../actions/t.server";
 import { loader } from "../loaders/t.server";
 export { loader, action };
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-	if (!data) return [];
-
-	return [{ title: data.title }];
+export const meta: MetaFunction = () => {
+	return openGraph({
+		title: "Team Search",
+		ogTitle: "Splatoon team search",
+		description:
+			"List of all teams on sendou.ink and their members. Search for teams by name or member name.",
+		url: TEAM_SEARCH_PAGE,
+	});
 };
 
 export const handle: SendouRouteHandle = {

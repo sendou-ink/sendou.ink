@@ -27,13 +27,13 @@ import { useAutoRefresh } from "~/hooks/useAutoRefresh";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useWindowSize } from "~/hooks/useWindowSize";
 import invariant from "~/utils/invariant";
+import { openGraph } from "~/utils/remix";
 import {
 	type SendouRouteHandle,
 	parseRequestPayload,
 	validate,
 } from "~/utils/remix.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
-import { makeTitle } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import {
 	SENDOUQ_LOOKING_PAGE,
@@ -96,7 +96,10 @@ export const handle: SendouRouteHandle = {
 };
 
 export const meta: MetaFunction = () => {
-	return [{ title: makeTitle("SendouQ") }];
+	return openGraph({
+		title: "SendouQ - Matchmaking",
+		url: SENDOUQ_LOOKING_PAGE,
+	});
 };
 
 // this function doesn't throw normally because we are assuming

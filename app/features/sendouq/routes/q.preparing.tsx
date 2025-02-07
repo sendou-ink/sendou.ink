@@ -14,9 +14,9 @@ import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.ser
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import { useAutoRefresh } from "~/hooks/useAutoRefresh";
 import invariant from "~/utils/invariant";
+import { openGraph } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { parseRequestPayload, validate } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import {
 	SENDOUQ_LOOKING_PAGE,
@@ -48,7 +48,10 @@ export const handle: SendouRouteHandle = {
 };
 
 export const meta: MetaFunction = () => {
-	return [{ title: makeTitle("SendouQ") }];
+	return openGraph({
+		title: "SendouQ - Preparing Group",
+		url: SENDOUQ_PREPARING_PAGE,
+	});
 };
 
 export type SendouQPreparingAction = typeof action;

@@ -9,6 +9,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useSearchParamStateEncoder } from "~/hooks/useSearchParamState";
 import { databaseTimestampToDate } from "~/utils/dates";
+import { openGraph } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
 import { LFG_PAGE, navIconUrl } from "~/utils/urls";
@@ -22,7 +23,6 @@ import {
 	filterToSmallStr,
 	smallStrToFilter,
 } from "../lfg-types";
-import { openGraph } from "~/utils/remix";
 
 import { action } from "../actions/lfg.server";
 import { loader } from "../loaders/lfg.server";

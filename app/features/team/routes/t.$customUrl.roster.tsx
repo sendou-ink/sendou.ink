@@ -15,10 +15,10 @@ import { SendouSwitch } from "~/components/elements/Switch";
 import { TrashIcon } from "~/components/icons/Trash";
 import { useUser } from "~/features/auth/core/user";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import {
 	TEAM_SEARCH_PAGE,
 	joinTeamPage,
+	manageTeamRosterPage,
 	navIconUrl,
 	teamPage,
 } from "~/utils/urls";
@@ -26,6 +26,7 @@ import type * as TeamRepository from "../TeamRepository.server";
 import { TEAM_MEMBER_ROLES } from "../team-constants";
 import { isTeamFull } from "../team-utils";
 import "../team.css";
+import { openGraph } from "~/utils/remix";
 import { action } from "../actions/t.$customUrl.roster.server";
 import { loader } from "../loaders/t.$customUrl.roster.server";
 
@@ -34,7 +35,10 @@ export { loader, action };
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
 	if (!data) return [];
 
-	return [{ title: makeTitle(data.team.name) }];
+	return openGraph({
+		title: "Managing team roster",
+		url: manageTeamRosterPage(data.team.customUrl),
+	});
 };
 
 export const handle: SendouRouteHandle = {

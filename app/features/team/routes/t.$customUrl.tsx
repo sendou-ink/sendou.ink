@@ -18,7 +18,6 @@ import { useUser } from "~/features/auth/core/user";
 import { isAdmin } from "~/permissions";
 import { removeDuplicates } from "~/utils/arrays";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import {
 	TEAM_SEARCH_PAGE,
 	bskyUrl,
@@ -34,15 +33,17 @@ import { action } from "../actions/t.$customUrl.server";
 import { loader } from "../loaders/t.$customUrl.server";
 import { isTeamManager, isTeamMember, resolveNewOwner } from "../team-utils";
 import "../team.css";
+import { openGraph } from "~/utils/remix";
 export { action, loader };
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
 	if (!data) return [];
 
-	return [
-		{ title: makeTitle(data.team.name) },
-		{ name: "description", content: data.team.bio },
-	];
+	return openGraph({
+		title: data.team.name,
+		description: data.team.bio ?? undefined,
+		url: teamPage(data.team.customUrl),
+	});
 };
 
 export const handle: SendouRouteHandle = {

@@ -1,3 +1,4 @@
+import type { MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { TierImage } from "~/components/Image";
@@ -10,7 +11,18 @@ import {
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import { currentOrPreviousSeason } from "~/features/mmr/season";
 import { userSkills } from "~/features/mmr/tiered.server";
+import { openGraph } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+import { TIERS_PAGE } from "~/utils/urls";
+
+export const meta: MetaFunction = () => {
+	return openGraph({
+		title: "SendouQ - Tiers",
+		description:
+			"Information about the tiers in SendouQ. From Leviathan+ to Iron.",
+		url: TIERS_PAGE,
+	});
+};
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],

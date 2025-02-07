@@ -68,3 +68,21 @@ export function pathnameFromPotentialURL(maybeUrl: string) {
 		return maybeUrl;
 	}
 }
+
+export function truncateBySentence(value: string, max: number) {
+	if (value.length <= max) {
+		return value;
+	}
+
+	const sentences = value.match(/[^.!?\n]+[.!?\n]*/g) || [];
+	let result = "";
+
+	for (const sentence of sentences) {
+		if ((result + sentence).length > max) {
+			break;
+		}
+		result += sentence;
+	}
+
+	return result.length > 0 ? result.trim() : value.slice(0, max).trim();
+}

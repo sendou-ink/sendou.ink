@@ -68,7 +68,7 @@ import {
 	parseRequestPayload,
 	validate,
 } from "~/utils/remix.server";
-import { inGameNameWithoutDiscriminator, makeTitle } from "~/utils/strings";
+import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import type { Unpacked } from "~/utils/types";
 import { assertUnreachable } from "~/utils/types";
 import {
@@ -113,25 +113,22 @@ import { reportedWeaponsByMatchId } from "../queries/reportedWeaponsByMatchId.se
 import { setGroupAsInactive } from "../queries/setGroupAsInactive.server";
 import "../q.css";
 import { SendouSwitch } from "~/components/elements/Switch";
+import { openGraph } from "~/utils/remix";
 
 export const meta: MetaFunction = (args) => {
 	const data = args.data as SerializeFrom<typeof loader> | null;
 
 	if (!data) return [];
 
-	return [
-		{
-			title: makeTitle(`SendouQ Match #${data.match.id}`),
-		},
-		{
-			name: "description",
-			content: `${joinListToNaturalString(
-				data.groupAlpha.members.map((m) => m.username),
-			)} vs. ${joinListToNaturalString(
-				data.groupBravo.members.map((m) => m.username),
-			)}`,
-		},
-	];
+	return openGraph({
+		title: `SendouQ - Match #${data.match.id}`,
+		description: `${joinListToNaturalString(
+			data.groupAlpha.members.map((m) => m.username),
+		)} vs. ${joinListToNaturalString(
+			data.groupBravo.members.map((m) => m.username),
+		)}`,
+		url: sendouQMatchPage(data.match.id),
+	});
 };
 
 export const handle: SendouRouteHandle = {

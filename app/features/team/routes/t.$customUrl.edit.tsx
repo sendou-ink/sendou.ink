@@ -13,9 +13,9 @@ import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import {
 	TEAM_SEARCH_PAGE,
+	editTeamPage,
 	navIconUrl,
 	teamPage,
 	uploadImagePage,
@@ -25,13 +25,17 @@ import { loader } from "../loaders/t.$customUrl.edit.server";
 import { TEAM } from "../team-constants";
 import { canAddCustomizedColors, isTeamOwner } from "../team-utils";
 import "../team.css";
+import { openGraph } from "~/utils/remix";
 
 export { action, loader };
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
 	if (!data) return [];
 
-	return [{ title: makeTitle(data.team.name) }];
+	return openGraph({
+		title: "Editing team",
+		url: editTeamPage(data.team.customUrl),
+	});
 };
 
 export const handle: SendouRouteHandle = {
