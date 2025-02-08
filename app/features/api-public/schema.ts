@@ -195,6 +195,18 @@ type TournamentCastChannel = {
 export interface GetTournamentMatchResponse {
 	teamOne: TournamentMatchTeam | null;
 	teamTwo: TournamentMatchTeam | null;
+	/**
+	 * Name of the bracket this match belongs to.
+	 *
+	 * @example "Alpha Bracket"
+	 */
+	bracketName: string | null;
+	/**
+	 * Name of the round this match belongs to.
+	 *
+	 * @example "Grand Finals"
+	 */
+	roundName: string | null;
 	mapList: Array<MapListMap> | null;
 	/**
 	 * @example "https://sendou.ink/to/9/matches/695"

@@ -695,16 +695,28 @@ export class Tournament {
 			/[^a-zA-Z ]/g,
 			"",
 		);
-		const prefix = tournamentNameWithoutOnlyLetters
+		let prefix = tournamentNameWithoutOnlyLetters
 			.split(" ")
 			.map((word) => word[0])
 			.join("")
 			.toUpperCase()
 			.slice(0, 3);
 
+		// handle tournament name not having letters by using a default prefix
+		if (!prefix) {
+			prefix = ["AB", "CD", "EF", "GH", "IJ", "KL", "MN", "OP", "QR", "ST"][
+				this.ctx.id % 10
+			];
+		}
+
+		// for small tournaments there should be no risk that the pool gets full
+		// so to make it more convenient just use same suffix every match
+		const globalSuffix = this.ctx.teams.length <= 20 ? this.ctx.id % 10 : null;
+
 		return {
 			prefix,
-			suffix: groupLetter ?? bracketNumber ?? hostingTeamId % 10,
+			suffix:
+				globalSuffix ?? groupLetter ?? bracketNumber ?? hostingTeamId % 10,
 		};
 	}
 
@@ -860,7 +872,7 @@ export class Tournament {
 
 		if (this.isLeagueSignup || this.isLeagueDivision) return 8;
 
-		const maxMembersBeforeStart = this.isInvitational ? 5 : 6;
+		const maxMembersBeforeStart = 6;
 
 		if (this.hasStarted) {
 			return maxMembersBeforeStart + 1;
@@ -901,6 +913,8 @@ export class Tournament {
 	}
 
 	get registrationOpen() {
+		if (this.isInvitational) return false;
+
 		return this.registrationClosesAt > new Date();
 	}
 
@@ -1003,7 +1017,7 @@ export class Tournament {
 			if (!roundName) return;
 
 			if (roundName.includes("Semis")) {
-				return roundName.replace(/\d/g, "");
+				return roundName.replace(/\d/g, "").trim();
 			}
 
 			return roundName.split(".")[0];

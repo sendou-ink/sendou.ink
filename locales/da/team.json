@@ -2,7 +2,6 @@
 	"newTeam.header": "Opret nyt hold",
 	"teamSearch.placeholder": "Søg efter hold eller spiller...",
 	"actionButtons.leaveTeam": "Forlad hold",
-	"leaveTeam.header": "Er du sikker på, at du vil forlade {{teamName}}?",
 	"actionButtons.leaveTeam.confirm": "Forlad hold",
 	"actionButtons.editTeam": "Rediger hold",
 	"actionButtons.manageRoster": "Administrer hold",

@@ -18,7 +18,6 @@ import { useUser } from "~/features/auth/core/user";
 import { isAdmin } from "~/permissions";
 import { removeDuplicates } from "~/utils/arrays";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import {
 	TEAM_SEARCH_PAGE,
 	bskyUrl,
@@ -30,21 +29,30 @@ import {
 	userSubmittedImage,
 } from "~/utils/urls";
 import type * as TeamRepository from "../TeamRepository.server";
-import { isTeamMember, isTeamOwner } from "../team-utils";
-
 import { action } from "../actions/t.$customUrl.server";
 import { loader } from "../loaders/t.$customUrl.server";
+import { isTeamManager, isTeamMember, resolveNewOwner } from "../team-utils";
+import "../team.css";
+import { metaTags } from "~/utils/remix";
 export { action, loader };
 
-import "../team.css";
+export const meta: MetaFunction<typeof loader> = (args) => {
+	if (!args.data) return [];
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-	if (!data) return [];
-
-	return [
-		{ title: makeTitle(data.team.name) },
-		{ name: "description", content: data.team.bio },
-	];
+	return metaTags({
+		title: args.data.team.name,
+		description: args.data.team.bio ?? undefined,
+		location: args.location,
+		image: args.data.team.avatarSrc
+			? {
+					url: userSubmittedImage(args.data.team.avatarSrc),
+					dimensions: {
+						width: 124,
+						height: 124,
+					},
+				}
+			: undefined,
+	});
 };
 
 export const handle: SendouRouteHandle = {
@@ -192,9 +200,12 @@ function ActionButtons() {
 			{isTeamMember({ user, team }) && !isMainTeam ? (
 				<ChangeMainTeamButton />
 			) : null}
-			{!isTeamOwner({ user, team }) && isTeamMember({ user, team }) ? (
+			{isTeamMember({ user, team }) ? (
 				<FormWithConfirm
-					dialogHeading={t("team:leaveTeam.header", { teamName: team.name })}
+					dialogHeading={t("team:leaveTeam.header", {
+						teamName: team.name,
+						newOwner: resolveNewOwner(team.members)?.username,
+					})}
 					deleteButtonText={t("team:actionButtons.leaveTeam.confirm")}
 					fields={[["_action", "LEAVE_TEAM"]]}
 				>
@@ -207,7 +218,7 @@ function ActionButtons() {
 					</Button>
 				</FormWithConfirm>
 			) : null}
-			{isTeamOwner({ user, team }) || isAdmin(user) ? (
+			{isTeamManager({ user, team }) || isAdmin(user) ? (
 				<LinkButton
 					size="tiny"
 					to={manageTeamRosterPage(team.customUrl)}
@@ -219,7 +230,7 @@ function ActionButtons() {
 					{t("team:actionButtons.manageRoster")}
 				</LinkButton>
 			) : null}
-			{isTeamOwner({ user, team }) || isAdmin(user) ? (
+			{isTeamManager({ user, team }) || isAdmin(user) ? (
 				<LinkButton
 					size="tiny"
 					to={editTeamPage(team.customUrl)}

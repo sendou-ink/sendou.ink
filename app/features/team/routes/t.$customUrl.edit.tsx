@@ -1,10 +1,4 @@
-import type {
-	ActionFunction,
-	LoaderFunctionArgs,
-	MetaFunction,
-	SerializeFrom,
-} from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import { Form, Link, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -17,34 +11,28 @@ import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
-import { requireUserId } from "~/features/auth/core/user.server";
-import { isAdmin } from "~/permissions";
-import {
-	type SendouRouteHandle,
-	notFoundIfFalsy,
-	parseRequestPayload,
-	validate,
-} from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
-import { assertUnreachable } from "~/utils/types";
+import { useUser } from "~/features/auth/core/user";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	TEAM_SEARCH_PAGE,
-	mySlugify,
 	navIconUrl,
 	teamPage,
 	uploadImagePage,
 } from "~/utils/urls";
-import * as TeamRepository from "../TeamRepository.server";
+import { action } from "../actions/t.$customUrl.edit.server";
+import { loader } from "../loaders/t.$customUrl.edit.server";
 import { TEAM } from "../team-constants";
-import { editTeamSchema, teamParamsSchema } from "../team-schemas.server";
 import { canAddCustomizedColors, isTeamOwner } from "../team-utils";
-
 import "../team.css";
+import { metaTags } from "~/utils/remix";
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-	if (!data) return [];
+export { action, loader };
 
-	return [{ title: makeTitle(data.team.name) }];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Editing team",
+		location: args.location,
+	});
 };
 
 export const handle: SendouRouteHandle = {
@@ -69,89 +57,27 @@ export const handle: SendouRouteHandle = {
 	},
 };
 
-export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUserId(request);
-	const { customUrl } = teamParamsSchema.parse(params);
-
-	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));
-
-	validate(
-		isTeamOwner({ team, user }) || isAdmin(user),
-		"You are not the team owner",
-	);
-
-	const data = await parseRequestPayload({
-		request,
-		schema: editTeamSchema,
-	});
-
-	switch (data._action) {
-		case "DELETE": {
-			await TeamRepository.del(team.id);
-
-			throw redirect(TEAM_SEARCH_PAGE);
-		}
-		case "EDIT": {
-			const newCustomUrl = mySlugify(data.name);
-			const existingTeam = await TeamRepository.findByCustomUrl(newCustomUrl);
-
-			validate(
-				newCustomUrl.length > 0,
-				"Team name can't be only special characters",
-			);
-
-			// can't take someone else's custom url
-			if (existingTeam && existingTeam.id !== team.id) {
-				return {
-					errors: ["forms.errors.duplicateName"],
-				};
-			}
-
-			const editedTeam = await TeamRepository.update({
-				id: team.id,
-				customUrl: newCustomUrl,
-				...data,
-			});
-
-			throw redirect(teamPage(editedTeam.customUrl));
-		}
-		default: {
-			assertUnreachable(data);
-		}
-	}
-};
-
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const user = await requireUserId(request);
-	const { customUrl } = teamParamsSchema.parse(params);
-
-	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));
-
-	if (!isTeamOwner({ team, user }) && !isAdmin(user)) {
-		throw redirect(teamPage(customUrl));
-	}
-
-	return { team, css: team.css };
-};
-
 export default function EditTeamPage() {
 	const { t } = useTranslation(["common", "team"]);
+	const user = useUser();
 	const { team, css } = useLoaderData<typeof loader>();
 
 	return (
 		<Main className="half-width">
-			<FormWithConfirm
-				dialogHeading={t("team:deleteTeam.header", { teamName: team.name })}
-				fields={[["_action", "DELETE"]]}
-			>
-				<Button
-					className="ml-auto"
-					variant="minimal-destructive"
-					data-testid="delete-team-button"
+			{isTeamOwner({ team, user }) ? (
+				<FormWithConfirm
+					dialogHeading={t("team:deleteTeam.header", { teamName: team.name })}
+					fields={[["_action", "DELETE"]]}
 				>
-					{t("team:actionButtons.deleteTeam")}
-				</Button>
-			</FormWithConfirm>
+					<Button
+						className="ml-auto"
+						variant="minimal-destructive"
+						data-testid="delete-team-button"
+					>
+						{t("team:actionButtons.deleteTeam")}
+					</Button>
+				</FormWithConfirm>
+			) : null}
 			<Form method="post" className="stack md items-start">
 				<ImageUploadLinks />
 				{canAddCustomizedColors(team) ? (

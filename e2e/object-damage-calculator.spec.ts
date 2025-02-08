@@ -50,7 +50,7 @@ test.describe("Object Damage Calculator", () => {
 
 		const dmg = page.getByTestId(cellId("dmg"));
 		const dmgBefore = (await dmg.textContent())!;
-		await page.getByTestId("toggle-multi").click();
+		await page.getByTestId("multi-switch").click();
 
 		// Multiplier is on by default
 		await expect(dmg).not.toHaveText(dmgBefore);

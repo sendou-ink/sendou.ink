@@ -4,19 +4,23 @@ import { Trans, useTranslation } from "react-i18next";
 import { Badge } from "~/components/Badge";
 import { LinkButton } from "~/components/Button";
 import { Main } from "~/components/Main";
-import { Popover } from "~/components/Popover";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
-import { useSetTitle } from "~/hooks/useSetTitle";
-import { makeTitle } from "~/utils/strings";
+import { metaTags } from "~/utils/remix";
 import {
 	PATREON_HOW_TO_CONNECT_DISCORD_URL,
 	SENDOU_INK_PATREON_URL,
 } from "~/utils/urls";
+import { SendouButton } from "../../../components/elements/Button";
+import { SendouPopover } from "../../../components/elements/Popover";
 
 import "../support.css";
 
-export const meta: MetaFunction = () => {
-	return [{ title: makeTitle("Support") }];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Support",
+		description: "Support Sendou's work on Patreon and get perks on sendou.ink",
+		location: args.location,
+	});
 };
 
 // 1 = support
@@ -107,7 +111,6 @@ const PERKS = [
 
 export default function SupportPage() {
 	const { t } = useTranslation();
-	useSetTitle(t("pages.support"));
 
 	return (
 		<Main className="stack lg">
@@ -156,13 +159,18 @@ function SupportTable() {
 						<div className="justify-self-start">
 							{t(`support.perk.${perk.name}`)}
 							{perk.extraInfo ? (
-								<Popover
-									containerClassName="support__popover"
-									triggerClassName="support__popover-trigger"
-									buttonChildren={<>?</>}
-								>
-									{t(`support.perk.${perk.name}.extra` as any)}
-								</Popover>
+								<>
+									{" "}
+									<SendouPopover
+										trigger={
+											<SendouButton className="support__popover-trigger">
+												?
+											</SendouButton>
+										}
+									>
+										{t(`support.perk.${perk.name}.extra` as any)}
+									</SendouPopover>
+								</>
 							) : null}
 						</div>
 						<div>

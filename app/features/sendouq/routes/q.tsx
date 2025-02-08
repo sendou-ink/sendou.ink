@@ -17,7 +17,6 @@ import { FormMessage } from "~/components/FormMessage";
 import { FriendCodeInput } from "~/components/FriendCodeInput";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
-import { Popover } from "~/components/Popover";
 import { SubmitButton } from "~/components/SubmitButton";
 import { UserIcon } from "~/components/icons/User";
 import { UsersIcon } from "~/components/icons/Users";
@@ -39,7 +38,6 @@ import {
 	parseRequestPayload,
 	validate,
 } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import {
 	LEADERBOARDS_PAGE,
@@ -56,6 +54,8 @@ import {
 	userSeasonsPage,
 } from "~/utils/urls";
 import { isAtLeastFiveDollarTierPatreon } from "~/utils/users";
+import { SendouButton } from "../../../components/elements/Button";
+import { SendouPopover } from "../../../components/elements/Popover";
 import { FULL_GROUP_SIZE, JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
 import { frontPageSchema } from "../q-schemas.server";
 import {
@@ -66,8 +66,8 @@ import { addMember } from "../queries/addMember.server";
 import { deleteLikesByGroupId } from "../queries/deleteLikesByGroupId.server";
 import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
 import { findGroupByInviteCode } from "../queries/findGroupByInviteCode.server";
-
 import "../q.css";
+import { metaTags } from "~/utils/remix";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
@@ -78,15 +78,13 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export const meta: MetaFunction = () => {
-	return [
-		{ title: makeTitle("SendouQ") },
-		{
-			name: "description",
-			content:
-				"Splatoon 3 competitive ladder. Join by yourself or with your team and play ranked matches.",
-		},
-	];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "SendouQ",
+		description:
+			"Splatoon 3 competitive ladder. Join by yourself or with your team and play ranked matches.",
+		location: args.location,
+	});
 };
 
 const validateCanJoinQ = async (user: { id: number; discordId: string }) => {
@@ -599,12 +597,15 @@ function PreviewQueueButton() {
 
 	if (!isAtLeastFiveDollarTierPatreon(user)) {
 		return (
-			<Popover
-				buttonChildren={t("q:front.preview")}
-				triggerClassName="minimal mx-auto text-xs"
+			<SendouPopover
+				trigger={
+					<SendouButton className="mx-auto text-xs" variant="minimal">
+						{t("q:front.preview")}
+					</SendouButton>
+				}
 			>
 				{t("q:front.preview.explanation")}
-			</Popover>
+			</SendouPopover>
 		);
 	}
 

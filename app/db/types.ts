@@ -3,7 +3,7 @@ import type {
 	tags,
 } from "~/features/calendar/calendar-constants";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
-import type { TEAM_MEMBER_ROLES } from "~/features/team";
+import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
 import type {
 	Ability,
 	MainWeaponId,

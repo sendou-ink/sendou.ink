@@ -27,9 +27,9 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, ModeImage, StageImage, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { NewTabs } from "~/components/NewTabs";
-import { Popover } from "~/components/Popover";
 import { SubmitButton } from "~/components/SubmitButton";
-import { Toggle } from "~/components/Toggle";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { ArchiveBoxIcon } from "~/components/icons/ArchiveBox";
 import { CrossIcon } from "~/components/icons/Cross";
 import { DiscordIcon } from "~/components/icons/Discord";
@@ -68,7 +68,7 @@ import {
 	parseRequestPayload,
 	validate,
 } from "~/utils/remix.server";
-import { inGameNameWithoutDiscriminator, makeTitle } from "~/utils/strings";
+import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import type { Unpacked } from "~/utils/types";
 import { assertUnreachable } from "~/utils/types";
 import {
@@ -111,27 +111,24 @@ import { findMatchById } from "../queries/findMatchById.server";
 import { reportScore } from "../queries/reportScore.server";
 import { reportedWeaponsByMatchId } from "../queries/reportedWeaponsByMatchId.server";
 import { setGroupAsInactive } from "../queries/setGroupAsInactive.server";
-
 import "../q.css";
+import { SendouSwitch } from "~/components/elements/Switch";
+import { metaTags } from "~/utils/remix";
 
 export const meta: MetaFunction = (args) => {
 	const data = args.data as SerializeFrom<typeof loader> | null;
 
 	if (!data) return [];
 
-	return [
-		{
-			title: makeTitle(`SendouQ Match #${data.match.id}`),
-		},
-		{
-			name: "description",
-			content: `${joinListToNaturalString(
-				data.groupAlpha.members.map((m) => m.username),
-			)} vs. ${joinListToNaturalString(
-				data.groupBravo.members.map((m) => m.username),
-			)}`,
-		},
-	];
+	return metaTags({
+		title: `SendouQ - Match #${data.match.id}`,
+		description: `${joinListToNaturalString(
+			data.groupAlpha.members.map((m) => m.username),
+		)} vs. ${joinListToNaturalString(
+			data.groupBravo.members.map((m) => m.username),
+		)}`,
+		location: args.location,
+	});
 };
 
 export const handle: SendouRouteHandle = {
@@ -728,13 +725,21 @@ function DisputePopover() {
 	const { t } = useTranslation(["q"]);
 
 	return (
-		<Popover
-			buttonChildren={t("q:match.dispute.button")}
-			containerClassName="text-main-forced"
+		<SendouPopover
+			popoverClassName="text-main-forced"
+			trigger={
+				<SendouButton
+					size="small"
+					variant="minimal-destructive"
+					className="mt-2"
+				>
+					{t("q:match.dispute.button")}
+				</SendouButton>
+			}
 		>
 			<p>{t("q:match.dispute.p1")}</p>
 			<p className="mt-2">{t("q:match.dispute.p2")}</p>
-		</Popover>
+		</SendouPopover>
 	);
 }
 
@@ -1291,19 +1296,24 @@ function ScreenLegalityInfo({ ban }: { ban: boolean }) {
 
 	return (
 		<div className="q-match__screen-legality">
-			<Popover
-				triggerClassName="minimal tiny q-match__screen-legality__button"
-				buttonChildren={
-					<Alert variation={ban ? "ERROR" : "SUCCESS"}>
-						<div className="stack xs horizontal items-center">
-							<Image
-								path={specialWeaponImageUrl(SPLATTERCOLOR_SCREEN_ID)}
-								width={30}
-								height={30}
-								alt={t(`weapons:SPECIAL_${SPLATTERCOLOR_SCREEN_ID}`)}
-							/>
-						</div>
-					</Alert>
+			<SendouPopover
+				trigger={
+					<SendouButton
+						variant="minimal"
+						size="small"
+						className="q-match__screen-legality__button"
+					>
+						<Alert variation={ban ? "ERROR" : "SUCCESS"}>
+							<div className="stack xs horizontal items-center">
+								<Image
+									path={specialWeaponImageUrl(SPLATTERCOLOR_SCREEN_ID)}
+									width={30}
+									height={30}
+									alt={t(`weapons:SPECIAL_${SPLATTERCOLOR_SCREEN_ID}`)}
+								/>
+							</div>
+						</Alert>
+					</SendouButton>
 				}
 			>
 				{ban
@@ -1313,7 +1323,7 @@ function ScreenLegalityInfo({ ban }: { ban: boolean }) {
 					: t("q:match.screen.allowed", {
 							special: t("weapons:SPECIAL_19"),
 						})}
-			</Popover>
+			</SendouPopover>
 		</div>
 	);
 }
@@ -1423,10 +1433,10 @@ function MapList({
 			</Flipper>
 			{scoreCanBeReported && isMod(user) ? (
 				<div className="stack sm horizontal items-center text-sm font-semi-bold">
-					<Toggle
+					<SendouSwitch
 						name="adminReport"
-						checked={adminToggleChecked}
-						setChecked={setAdminToggleChecked}
+						isSelected={adminToggleChecked}
+						onChange={setAdminToggleChecked}
 					/>
 					Report as admin
 				</div>
@@ -1546,10 +1556,13 @@ function MapListMap({
 						<div className="text-sm stack horizontal xs items-center">
 							{i + 1}){" "}
 							{modePreferences ? (
-								<Popover
-									contentClassName="text-main-forced"
-									buttonChildren={<ModeImage mode={map.mode} size={18} />}
-									triggerClassName="q-match__mode-popover-button"
+								<SendouPopover
+									popoverClassName="text-main-forced"
+									trigger={
+										<SendouButton className="q-match__mode-popover-button">
+											<ModeImage mode={map.mode} size={18} />
+										</SendouButton>
+									}
 								>
 									<div className="text-md text-lighter mb-2 line-height-very-tight">
 										{t(`game-misc:MODE_LONG_${map.mode}`)}
@@ -1570,7 +1583,7 @@ function MapListMap({
 											</div>
 										);
 									})}
-								</Popover>
+								</SendouPopover>
 							) : (
 								<ModeImage mode={map.mode} size={18} />
 							)}{" "}
@@ -1804,10 +1817,13 @@ function MapListMapPickInfo({
 
 	if (showPopover()) {
 		return (
-			<Popover
-				triggerClassName="q-match__stage-popover-button"
-				contentClassName="text-main-forced"
-				buttonChildren={<span>{pickInfo(map.source)}</span>}
+			<SendouPopover
+				popoverClassName="text-main-forced"
+				trigger={
+					<SendouButton className="q-match__stage-popover-button">
+						{pickInfo(map.source)}
+					</SendouButton>
+				}
 			>
 				<div className="text-md text-center text-lighter mb-2 line-height-very-tight">
 					{t(`game-misc:MODE_SHORT_${map.mode}`)}{" "}
@@ -1843,7 +1859,7 @@ function MapListMapPickInfo({
 						);
 					})
 				) : null}
-			</Popover>
+			</SendouPopover>
 		);
 	}
 

@@ -50,6 +50,11 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "338806780446638082",
 	},
 	{
+		displayName: "Inkstrike Invitational",
+		fileName: "inkstrikeinv",
+		authorDiscordId: "789943264370884708",
+	},
+	{
 		displayName: "All 4 One: Clam Blitz",
 		fileName: "newa41cb",
 		authorDiscordId: "338806780446638082",
@@ -653,5 +658,10 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Mesozoic Mayhem: Dreadnoughtus Undefeated",
 		fileName: "dreadnoughtus",
 		authorDiscordId: "352207524390240257",
+	},
+	{
+		displayName: "The Jauntlet",
+		fileName: "jauntlet",
+		authorDiscordId: "528851510222782474",
 	},
 ];

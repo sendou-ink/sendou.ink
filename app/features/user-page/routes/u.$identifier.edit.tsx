@@ -18,7 +18,6 @@ import { WeaponImage } from "~/components/Image";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
-import { Toggle } from "~/components/Toggle";
 import { StarIcon } from "~/components/icons/Star";
 import { StarFilledIcon } from "~/components/icons/StarFilled";
 import { TrashIcon } from "~/components/icons/Trash";
@@ -43,10 +42,10 @@ import { FAQ_PAGE, isCustomUrl, userPage } from "~/utils/urls";
 import {
 	actualNumber,
 	checkboxValueToDbBoolean,
+	customCssVarObject,
 	dbBoolean,
 	falsyToNull,
 	id,
-	jsonParseable,
 	processMany,
 	safeJSONParse,
 	undefinedToNull,
@@ -54,10 +53,10 @@ import {
 } from "~/utils/zod";
 import { userParamsSchema } from "../user-page-schemas.server";
 import type { UserPageLoaderData } from "./u.$identifier";
-
 import "~/styles/u-edit.css";
+import { SendouSwitch } from "~/components/elements/Switch";
 
-const userEditActionSchema = z
+export const userEditActionSchema = z
 	.object({
 		country: z.preprocess(
 			falsyToNull,
@@ -128,7 +127,7 @@ const userEditActionSchema = z
 				.refine((val) => /^[0-9a-z]{4,5}$/.test(val))
 				.nullable(),
 		),
-		css: z.preprocess(falsyToNull, z.string().refine(jsonParseable).nullable()),
+		css: customCssVarObject,
 		weapons: z.preprocess(
 			safeJSONParse,
 			z
@@ -624,9 +623,9 @@ function ShowUniqueDiscordNameToggle() {
 			<label htmlFor="showDiscordUniqueName">
 				{t("user:forms.showDiscordUniqueName")}
 			</label>
-			<Toggle
-				checked={checked}
-				setChecked={setChecked}
+			<SendouSwitch
+				isSelected={checked}
+				onChange={setChecked}
 				name="showDiscordUniqueName"
 			/>
 			<FormMessage type="info">
@@ -651,9 +650,9 @@ function CommissionsOpenToggle({
 	return (
 		<div>
 			<label htmlFor="commissionsOpen">{t("user:forms.commissionsOpen")}</label>
-			<Toggle
-				checked={checked}
-				setChecked={setChecked}
+			<SendouSwitch
+				isSelected={checked}
+				onChange={setChecked}
 				name="commissionsOpen"
 			/>
 		</div>

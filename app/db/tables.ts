@@ -4,9 +4,10 @@ import type {
 	Insertable,
 	Selectable,
 	SqlBool,
+	Updateable,
 } from "kysely";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
-import type { TEAM_MEMBER_ROLES } from "~/features/team";
+import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { ParticipantResult } from "~/modules/brackets-model";
 import type {
@@ -40,6 +41,7 @@ export interface Team {
 export interface TeamMember {
 	createdAt: Generated<number>;
 	isOwner: Generated<number>;
+	isManager: Generated<number>;
 	leftAt: number | null;
 	role: MemberRole | null;
 	teamId: number;
@@ -752,6 +754,10 @@ export const BUILD_SORT_IDENTIFIERS = [
 
 export type BuildSort = (typeof BUILD_SORT_IDENTIFIERS)[number];
 
+export interface UserPreferences {
+	disableBuildAbilitySorting?: boolean;
+}
+
 export interface User {
 	/** 1 = permabanned, timestamp = ban active till then */
 	banned: Generated<number | null>;
@@ -796,6 +802,7 @@ export interface User {
 	plusSkippedForSeasonNth: number | null;
 	noScreen: Generated<number>;
 	buildSorting: ColumnType<BuildSort[] | null, string | null, string | null>;
+	preferences: ColumnType<UserPreferences | null, string | null, string | null>;
 }
 
 export interface UserResultHighlight {
@@ -871,6 +878,7 @@ export interface XRankPlacement {
 
 export type Tables = { [P in keyof DB]: Selectable<DB[P]> };
 export type TablesInsertable = { [P in keyof DB]: Insertable<DB[P]> };
+export type TablesUpdatable = { [P in keyof DB]: Updateable<DB[P]> };
 
 export interface DB {
 	AllTeam: Team;
