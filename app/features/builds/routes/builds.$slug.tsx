@@ -23,6 +23,7 @@ import {
 	BUILDS_PAGE_MAX_BUILDS,
 	PATCHES,
 } from "~/constants";
+import { useUser } from "~/features/auth/core/user";
 import { safeJSONParse } from "~/utils/json";
 import { isRevalidation, metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -163,6 +164,8 @@ const BuildCards = React.memo(function BuildCards({
 }: {
 	data: SerializeFrom<typeof loader>;
 }) {
+	const user = useUser();
+
 	return (
 		<div className="builds-container">
 			{data.builds.map((build) => {
@@ -172,6 +175,7 @@ const BuildCards = React.memo(function BuildCards({
 						build={build}
 						owner={build}
 						canEdit={false}
+						withAbilitySorting={!user?.preferences.disableBuildAbilitySorting}
 					/>
 				);
 			})}

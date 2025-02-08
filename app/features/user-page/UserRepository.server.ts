@@ -2,7 +2,12 @@ import type { ExpressionBuilder, FunctionModule, NotNull } from "kysely";
 import { sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db, sql as dbDirect } from "~/db/sql";
-import type { BuildSort, DB, TablesInsertable } from "~/db/tables";
+import type {
+	BuildSort,
+	DB,
+	TablesInsertable,
+	UserPreferences,
+} from "~/db/tables";
 import type { User } from "~/db/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
@@ -291,6 +296,7 @@ export function findLeanById(id: number) {
 			"User.favoriteBadgeId",
 			"User.languages",
 			"User.inGameName",
+			"User.preferences",
 			"PlusTier.tier as plusTier",
 			eb
 				.selectFrom("UserFriendCode")
@@ -656,6 +662,35 @@ export function updateProfile(args: UpdateProfileArgs) {
 			.where("id", "=", args.userId)
 			.returning(["User.id", "User.customUrl", "User.discordId"])
 			.executeTakeFirstOrThrow();
+	});
+}
+
+export function updatePreferences(
+	userId: number,
+	newPreferences: UserPreferences,
+) {
+	return db.transaction().execute(async (trx) => {
+		const current =
+			(
+				await trx
+					.selectFrom("User")
+					.select("User.preferences")
+					.where("id", "=", userId)
+					.executeTakeFirstOrThrow()
+			).preferences ?? {};
+
+		const mergedPreferences = {
+			...current,
+			...newPreferences,
+		};
+
+		await trx
+			.updateTable("User")
+			.set({
+				preferences: JSON.stringify(mergedPreferences),
+			})
+			.where("id", "=", userId)
+			.execute();
 	});
 }
 

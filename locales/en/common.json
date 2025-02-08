@@ -242,5 +242,8 @@
 	"chat.systemMsg.userLeft": "{{name}} left the group",
 	"chat.newMessages": "New messages",
 
-	"fc.title": "Friend code"
+	"fc.title": "Friend code",
+
+	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.label": "Builds: Disable automatic ability sorting",
+	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText": "Outside of your profile page, build abilities are sorted so that same abilities are next to each other. This setting allows you to see the abilities in the order they were authored everywhere."
 }

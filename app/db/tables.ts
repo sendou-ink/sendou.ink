@@ -754,6 +754,10 @@ export const BUILD_SORT_IDENTIFIERS = [
 
 export type BuildSort = (typeof BUILD_SORT_IDENTIFIERS)[number];
 
+export interface UserPreferences {
+	disableBuildAbilitySorting?: boolean;
+}
+
 export interface User {
 	/** 1 = permabanned, timestamp = ban active till then */
 	banned: Generated<number | null>;
@@ -798,6 +802,7 @@ export interface User {
 	plusSkippedForSeasonNth: number | null;
 	noScreen: Generated<number>;
 	buildSorting: ColumnType<BuildSort[] | null, string | null, string | null>;
+	preferences: ColumnType<UserPreferences | null, string | null, string | null>;
 }
 
 export interface UserResultHighlight {
