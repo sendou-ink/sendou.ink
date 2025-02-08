@@ -632,6 +632,6 @@ export const homemadeBadges: BadgeInfo[] = [
 	{
 		displayName: "Kraken cup",
 		fileName: "uc",
-		authorDiscordId: "241609850209959936"
+		authorDiscordId: "241609850209959936",
 	},
 ];
