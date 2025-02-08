@@ -15,6 +15,41 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Reach",
+		fileName: "reachbadge",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "A41 GG Gold Bracket",
+		fileName: "newa41gggold",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "A41 GG Silver Bracket",
+		fileName: "newa41ggsilver",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "A41 GG Bronze Bracket",
+		fileName: "newa41ggbronze",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "A41 GG Iron Bracket",
+		fileName: "newa41ggiron",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "MIKU MIKU BEAM!!! Rotten Edition",
+		fileName: "rottenmiku",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "MIKU MIKU BEAM!!! Sakura Edition",
+		fileName: "sakuramiku",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "Inkstrike Invitational",
 		fileName: "inkstrikeinv",
 		authorDiscordId: "789943264370884708",
@@ -75,7 +110,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "338806780446638082",
 	},
 	{
-		displayName: "Hatsune Miku",
+		displayName: "MIKU MIKU BEAM!!!",
 		fileName: "hatsunemiku",
 		authorDiscordId: "338806780446638082",
 	},
