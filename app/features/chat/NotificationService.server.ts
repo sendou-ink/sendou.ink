@@ -9,6 +9,7 @@ type PartialChatMessage = Pick<
 	ChatMessage,
 	"type" | "context" | "room" | "revalidateOnly"
 >;
+// xxx: rename
 interface NotificationService {
 	notify: (msg: PartialChatMessage | PartialChatMessage[]) => undefined;
 }

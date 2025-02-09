@@ -28,6 +28,7 @@ import { CrossIcon } from "~/components/icons/Cross";
 import { useUser } from "~/features/auth/core/user";
 import { requireUser } from "~/features/auth/core/user.server";
 import { s3UploadHandler } from "~/features/img-upload";
+import { notify } from "~/features/notifications/core/notify.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import {
@@ -96,6 +97,22 @@ export const action: ActionFunction = async ({ request }) => {
 			linkedUsers: data.linkedUsers,
 			tags: data.tags,
 		});
+
+		const newLinkedUsers = data.linkedUsers.filter(
+			(userId) => !existingArt.linkedUsers.includes(userId),
+		);
+
+		if (newLinkedUsers.length > 0) {
+			notify({
+				userIds: newLinkedUsers,
+				notification: {
+					type: "TAGGED_TO_ART",
+					meta: {
+						adderUsername: user.username,
+					},
+				},
+			});
+		}
 	} else {
 		const uploadHandler = composeUploadHandlers(
 			s3UploadHandler(`art-${nanoid()}-${Date.now()}`),
@@ -122,6 +139,18 @@ export const action: ActionFunction = async ({ request }) => {
 			linkedUsers: data.linkedUsers,
 			tags: data.tags,
 		});
+
+		if (data.linkedUsers.length > 0) {
+			notify({
+				userIds: data.linkedUsers,
+				notification: {
+					type: "TAGGED_TO_ART",
+					meta: {
+						adderUsername: user.username,
+					},
+				},
+			});
+		}
 	}
 
 	throw redirect(userArtPage(user));

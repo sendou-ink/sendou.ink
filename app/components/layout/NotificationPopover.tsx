@@ -3,6 +3,7 @@ import { formatDistance } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useUser } from "~/features/auth/core/user";
+import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
 import {
 	notificationLink,
 	notificationNavIcon,
@@ -61,7 +62,9 @@ export function NotificationPopover() {
 					))}
 				</NotificationsList>
 			)}
-			<NotificationsFooter />
+			{notifications && notifications.length === NOTIFICATIONS.PEEK_COUNT ? (
+				<NotificationsFooter />
+			) : null}
 		</SendouPopover>
 	);
 }

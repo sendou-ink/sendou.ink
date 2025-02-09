@@ -28,21 +28,20 @@ export type Notification =
 				bracketIdx: number;
 				bracketName: string;
 				tournamentName: string;
-				groupId?: number;
 			}
 	  >
 	| NotificationItem<
-			"TO_CHECK_IN_OPENED",
+			"TO_CHECK_IN_OPENED", // xxx: set routine
 			{
 				tournamentId: number;
 				tournamentName: string;
 			}
 	  > // xxx: also TO_BRACKET_CHECKIN_STARTED
 	| NotificationItem<"BADGE_ADDED", { badgeName: string }>
-	| NotificationItem<"PLUS_VOTING_STARTED">
+	| NotificationItem<"PLUS_VOTING_STARTED"> // xxx: set routine
 	| NotificationItem<"PLUS_SUGGESTION_ADDED", { tier: number }>
 	| NotificationItem<"TAGGED_TO_ART", { adderUsername: string }>
-	| NotificationItem<"SEASON_STARTED", { seasonNth: number }>;
+	| NotificationItem<"SEASON_STARTED", { seasonNth: number }>; // xxx: set routine
 
 type NotificationItem<
 	T extends string,

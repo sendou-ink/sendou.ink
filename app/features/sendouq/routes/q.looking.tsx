@@ -21,6 +21,7 @@ import * as NotificationService from "~/features/chat/NotificationService.server
 import { Chat, useChat } from "~/features/chat/components/Chat";
 import { currentOrPreviousSeason } from "~/features/mmr/season";
 import { userSkills } from "~/features/mmr/tiered.server";
+import { notify } from "~/features/notifications/core/notify.server";
 import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import { useAutoRefresh } from "~/hooks/useAutoRefresh";
@@ -323,6 +324,20 @@ export const action: ActionFunction = async ({ request }) => {
 					},
 				]);
 			}
+
+			notify({
+				userIds: [
+					...ourGroup.members.map((m) => m.id),
+					...theirGroup.members.map((m) => m.id),
+				],
+				defaultSeenUserIds: [user.id],
+				notification: {
+					type: "SQ_NEW_MATCH",
+					meta: {
+						matchId: createdMatch.id,
+					},
+				},
+			});
 
 			throw redirect(sendouQMatchPage(createdMatch.id));
 		}

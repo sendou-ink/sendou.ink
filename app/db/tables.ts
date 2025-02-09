@@ -877,6 +877,8 @@ export interface XRankPlacement {
 	year: number;
 }
 
+// xxx: make separate table that holds userId, notificationId & seen
+
 export interface Notification {
 	id: GeneratedAlways<number>;
 	value: ColumnType<NotificationValue, string, string>;

@@ -10,7 +10,10 @@ export function insertMany(args: Array<TablesInsertable["Notification"]>) {
 	});
 }
 
-export function recentByUserId(userId: number) {
+export function findByUserId(
+	userId: number,
+	{ limit }: { limit?: number } = {},
+) {
 	return db
 		.selectFrom("Notification")
 		.select([
@@ -21,6 +24,6 @@ export function recentByUserId(userId: number) {
 		])
 		.where("userId", "=", userId)
 		.orderBy("id", "desc")
-		.limit(6)
+		.limit(limit ?? 100)
 		.execute();
 }

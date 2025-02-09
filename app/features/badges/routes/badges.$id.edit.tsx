@@ -11,9 +11,14 @@ import { TrashIcon } from "~/components/icons/Trash";
 import type { User } from "~/db/types";
 import { useUser } from "~/features/auth/core/user";
 import { requireUserId } from "~/features/auth/core/user.server";
+import { notify } from "~/features/notifications/core/notify.server";
 import { canEditBadgeManagers, canEditBadgeOwners } from "~/permissions";
 import { atOrError } from "~/utils/arrays";
-import { parseRequestPayload, validate } from "~/utils/remix.server";
+import {
+	notFoundIfFalsy,
+	parseRequestPayload,
+	validate,
+} from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { badgePage } from "~/utils/urls";
 import { actualNumber } from "~/utils/zod";
@@ -28,6 +33,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 	});
 	const badgeId = z.preprocess(actualNumber, z.number()).parse(params.id);
 	const user = await requireUserId(request);
+
+	const badge = notFoundIfFalsy(await BadgeRepository.findById(badgeId));
 
 	switch (data._action) {
 		case "MANAGERS": {
@@ -47,7 +54,23 @@ export const action: ActionFunction = async ({ request, params }) => {
 				}),
 			);
 
+			// const oldOwners = await BadgeRepository.findOwnersByBadgeId(badgeId);
+
 			await BadgeRepository.replaceOwners({ badgeId, ownerIds: data.ownerIds });
+
+			// const diff = [];
+
+			// xxx: implement BADGE_ADDED
+			notify({
+				userIds: [],
+				notification: {
+					type: "BADGE_ADDED",
+					meta: {
+						badgeName: badge.displayName,
+					},
+				},
+			});
+
 			break;
 		}
 		default: {

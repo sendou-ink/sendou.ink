@@ -33,10 +33,7 @@ import {
 } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
 import { streamsByTournamentId } from "../core/streams.server";
-import {
-	HACKY_resolvePicture,
-	tournamentIdFromParams,
-} from "../tournament-utils";
+import { tournamentIdFromParams } from "../tournament-utils";
 
 import "../tournament.css";
 import "~/styles/maps.css";
@@ -92,9 +89,7 @@ export const handle: SendouRouteHandle = {
 					}
 				: null,
 			{
-				imgPath: data.tournament.ctx.logoUrl
-					? userSubmittedImage(data.tournament.ctx.logoUrl)
-					: HACKY_resolvePicture(data.tournament.ctx),
+				imgPath: data.tournament.ctx.logoSrc,
 				href: tournamentPage(data.tournament.ctx.id),
 				type: "IMAGE" as const,
 				text: data.tournament.ctx.name,

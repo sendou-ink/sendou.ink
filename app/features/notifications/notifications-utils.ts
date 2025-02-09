@@ -66,7 +66,6 @@ export const notificationLink = ({
 			return tournamentBracketsPage({
 				tournamentId: meta.tournamentId,
 				bracketIdx: meta.bracketIdx,
-				groupId: meta.groupId,
 			});
 		case "TO_CHECK_IN_OPENED":
 			return tournamentRegisterPage(meta.tournamentId);

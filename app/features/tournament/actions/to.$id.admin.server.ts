@@ -1,8 +1,9 @@
 import type { ActionFunction } from "@remix-run/node";
 import { z } from "zod";
-import { requireUserId } from "~/features/auth/core/user.server";
+import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
+import { notify } from "~/features/notifications/core/notify.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
 	clearTournamentDataCache,
@@ -30,7 +31,7 @@ import { tournamentIdFromParams } from "../tournament-utils";
 import { inGameNameIfNeeded } from "../tournament-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUserId(request);
+	const user = await requireUser(request);
 	const data = await parseRequestPayload({
 		request,
 		schema: adminActionSchema,
@@ -228,6 +229,22 @@ export const action: ActionFunction = async ({ request, params }) => {
 				tournamentId,
 				type: "participant",
 				userId: data.userId,
+			});
+
+			notify({
+				userIds: [data.userId],
+				notification: {
+					type: "TO_ADDED_TO_TEAM",
+					pictureUrl:
+						tournament.tournamentTeamLogoSrc(team) ?? tournament.ctx.logoSrc,
+					meta: {
+						adderUsername: user.username,
+						teamName: team.name,
+						tournamentId,
+						tournamentName: tournament.ctx.name,
+						tournamentTeamId: team.id,
+					},
+				},
 			});
 
 			break;
