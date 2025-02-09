@@ -1,45 +1,26 @@
 import { faker } from "@faker-js/faker";
+import { sub } from "date-fns";
 import capitalize from "just-capitalize";
 import shuffle from "just-shuffle";
 import { nanoid } from "nanoid";
 import { ADMIN_DISCORD_ID, ADMIN_ID, INVITE_CODE_LENGTH } from "~/constants";
 import { db, sql } from "~/db/sql";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import {
-	lastCompletedVoting,
-	nextNonCompletedVoting,
-	rangeToMonthYear,
-} from "~/features/plus-voting/core";
-import { createVod } from "~/features/vods/queries/createVod.server";
-import type {
-	AbilityType,
-	MainWeaponId,
-	StageId,
-} from "~/modules/in-game-lists";
-import {
-	abilities,
-	clothesGearIds,
-	headGearIds,
-	mainWeaponIds,
-	modesShort,
-	shoesGearIds,
-	stageIds,
-} from "~/modules/in-game-lists";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
-import invariant from "~/utils/invariant";
-import { mySlugify } from "~/utils/urls";
-import { sub } from "date-fns";
 import type { SeedVariation } from "~/features/api-private/routes/seed";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { persistedTags } from "~/features/calendar/calendar-constants";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import type { Notification } from "~/features/notifications/notifications-types";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
+import {
+	lastCompletedVoting,
+	nextNonCompletedVoting,
+	rangeToMonthYear,
+} from "~/features/plus-voting/core";
 import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
 import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
@@ -63,13 +44,32 @@ import { setGroupAsInactive } from "~/features/sendouq/queries/setGroupAsInactiv
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { createVod } from "~/features/vods/queries/createVod.server";
 import {
 	secondsToHoursMinutesSecondString,
 	youtubeIdToYoutubeUrl,
 } from "~/features/vods/vods-utils";
+import type {
+	AbilityType,
+	MainWeaponId,
+	StageId,
+} from "~/modules/in-game-lists";
+import {
+	abilities,
+	clothesGearIds,
+	headGearIds,
+	mainWeaponIds,
+	modesShort,
+	shoesGearIds,
+	stageIds,
+} from "~/modules/in-game-lists";
+import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
 import { SENDOUQ_DEFAULT_MAPS } from "~/modules/tournament-map-list-generator/constants";
 import { nullFilledArray, pickRandomItem } from "~/utils/arrays";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import invariant from "~/utils/invariant";
+import { mySlugify } from "~/utils/urls";
 import type { Tables, UserMapModePreferences } from "../tables";
 import type { Art, UserSubmittedImage } from "../types";
 import {

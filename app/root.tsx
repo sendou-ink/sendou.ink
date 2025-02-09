@@ -75,7 +75,7 @@ export const meta: MetaFunction = (args) => {
 };
 
 export type RootLoaderData = SerializeFrom<typeof loader>;
-export type LoggedInUser = NonNullable<RootLoaderData["user"]>; // xxx: fix same name as discordstrategy (change there)
+export type LoggedInUser = NonNullable<RootLoaderData["user"]>;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await getUser(request, false);
