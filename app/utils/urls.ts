@@ -127,6 +127,7 @@ export const SUSPENDED_PAGE = "/suspended";
 export const LFG_PAGE = "/lfg";
 export const SETTINGS_PAGE = "/settings";
 export const LUTI_PAGE = "/luti";
+export const PLUS_VOTING_PAGE = "/plus/voting";
 
 export const BLANK_IMAGE_URL = "/static-assets/img/blank.gif";
 export const COMMON_PREVIEW_IMAGE =
@@ -147,6 +148,9 @@ export const soundPath = (fileName: string) =>
 export const GET_ALL_EVENTS_WITH_MAP_POOLS_ROUTE = "/calendar/map-pool-events";
 export const GET_TRUSTERS_ROUTE = "/trusters";
 export const PATRONS_LIST_ROUTE = "/patrons-list";
+
+export const NOTIFICATIONS_URL = "/notifications";
+export const NOTIFICATIONS_PEAK_ROUTE = "/notifications/peek";
 
 interface UserLinkArgs {
 	discordId: User["discordId"];

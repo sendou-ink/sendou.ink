@@ -9,3 +9,18 @@ export function insertMany(args: Array<TablesInsertable["Notification"]>) {
 		}
 	});
 }
+
+export function recentByUserId(userId: number) {
+	return db
+		.selectFrom("Notification")
+		.select([
+			"Notification.id",
+			"Notification.createdAt",
+			"Notification.seen",
+			"Notification.value",
+		])
+		.where("userId", "=", userId)
+		.orderBy("id", "desc")
+		.limit(6)
+		.execute();
+}

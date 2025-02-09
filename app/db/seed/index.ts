@@ -29,13 +29,15 @@ import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { mySlugify } from "~/utils/urls";
-
+import { sub } from "date-fns";
 import type { SeedVariation } from "~/features/api-private/routes/seed";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { persistedTags } from "~/features/calendar/calendar-constants";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
+import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
+import type { Notification } from "~/features/notifications/notifications-types";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
@@ -170,6 +172,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	groups,
 	friendCodes,
 	lfgPosts,
+	adminNotifications,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -2272,4 +2275,68 @@ async function lfgPosts() {
 		type: "TEAM_FOR_PLAYER",
 		teamId: 1,
 	});
+}
+
+async function adminNotifications() {
+	const values: Notification[] = [
+		{
+			type: "BADGE_ADDED",
+			meta: { badgeName: "In The Zone 30-39" },
+		},
+		{
+			type: "TAGGED_TO_ART",
+			meta: { adderUsername: "N-ZAP" },
+		},
+		{
+			type: "SQ_ADDED_TO_GROUP",
+			meta: { adderUsername: "N-ZAP" },
+		},
+		{
+			type: "SQ_NEW_MATCH",
+			meta: { matchId: 100 },
+		},
+		{
+			type: "PLUS_VOTING_STARTED",
+		},
+		{
+			type: "TO_CHECK_IN_OPENED",
+			meta: { tournamentId: 1, tournamentName: "PICNIC #2" },
+			pictureUrl:
+				"http://localhost:5173/static-assets/img/tournament-logos/pn.png",
+		},
+	];
+
+	await NotificationRepository.insertMany(
+		values.map((value, i) => ({
+			userId: ADMIN_ID,
+			value: JSON.stringify(value),
+			seen: i <= 3 ? 1 : 0,
+		})),
+	);
+
+	const createdAts = [
+		sub(new Date(), { days: 5, hours: 2 }),
+		sub(new Date(), { days: 4, minutes: 30 }),
+		sub(new Date(), { days: 3, hours: 2 }),
+		sub(new Date(), { days: 3, hours: 1, minutes: 10 }),
+		sub(new Date(), { minutes: 10 }),
+	];
+
+	invariant(
+		values.length - 1 === createdAts.length,
+		"values and createdAts length mismatch",
+	);
+
+	for (let i = 0; i < values.length - 1; i++) {
+		sql
+			.prepare(/* sql */ `
+			update "Notification"
+			set "createdAt" = @createdAt
+			where "id" = @id
+		`)
+			.run({
+				createdAt: dateToDatabaseTimestamp(createdAts[i]),
+				id: i + 1,
+			});
+	}
 }

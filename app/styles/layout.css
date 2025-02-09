@@ -424,7 +424,7 @@
 
 .layout__notifications__container {
 	min-height: 200px;
-	min-width: 250px;
+	min-width: 300px;
 	padding: 0;
 }
 
@@ -448,4 +448,57 @@
 
 .layout__notifications__divider {
 	border-color: var(--border);
+}
+
+.layout__notifications__item-divider {
+	margin-inline: var(--s-2-5);
+	border-width: 0.5px;
+	border-color: var(--border);
+}
+
+.layout__notifications__item {
+	line-height: 1.4;
+	padding: var(--s-1) var(--s-2-5);
+	display: grid;
+	grid-template-areas: "image header" "image timestamp";
+	grid-template-columns: 30px 1fr;
+	column-gap: var(--s-2);
+	padding-block: var(--s-2-5);
+	color: var(--text);
+}
+
+.layout__notifications__item:hover .layout__notifications__item__image {
+	outline: 3px solid var(--theme-transparent);
+}
+
+.layout__notifications__item:focus-within {
+	background-color: var(--bg-lightest);
+	outline: none;
+}
+
+.layout__notifications__item__image {
+	place-self: center;
+	grid-area: image;
+	border-radius: 100%;
+	width: 30px;
+	height: 30px;
+}
+
+.layout__notifications__item__image-container {
+	background-color: var(--bg-lightest);
+	display: grid;
+	place-items: center;
+}
+
+.layout__notifications__item__header {
+	grid-area: header;
+	font-size: var(--fonts-xsm);
+	font-weight: var(--semi-bold);
+}
+
+.layout__notifications__item__timestamp {
+	grid-area: timestamp;
+	color: var(--text-lighter);
+	font-size: var(--fonts-xxs);
+	font-weight: var(--body);
 }

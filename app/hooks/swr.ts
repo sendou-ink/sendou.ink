@@ -1,12 +1,14 @@
 import useSWRImmutable from "swr/immutable";
 import type { EventsWithMapPoolsLoaderData } from "~/features/calendar/routes/map-pool-events";
 import type { PatronsListLoaderData } from "~/features/front-page/routes/patrons-list";
+import type { NotificationsLoaderData } from "~/features/notifications/routes/notifications.peek";
 import type { TrustersLoaderData } from "~/features/sendouq/routes/trusters";
 import type { WeaponUsageLoaderData } from "~/features/sendouq/routes/weapon-usage";
 import type { ModeShort, StageId } from "~/modules/in-game-lists";
 import {
 	GET_ALL_EVENTS_WITH_MAP_POOLS_ROUTE,
 	GET_TRUSTERS_ROUTE,
+	NOTIFICATIONS_PEAK_ROUTE,
 	PATRONS_LIST_ROUTE,
 	getWeaponUsage,
 } from "~/utils/urls";
@@ -75,6 +77,19 @@ export function usePatrons() {
 
 	return {
 		patrons: data?.patrons,
+		isLoading: !error && !data,
+		isError: error,
+	};
+}
+
+export function useNotifications() {
+	const { data, error } = useSWRImmutable<NotificationsLoaderData>(
+		NOTIFICATIONS_PEAK_ROUTE,
+		fetcher(NOTIFICATIONS_PEAK_ROUTE),
+	);
+
+	return {
+		notifications: data?.notifications,
 		isLoading: !error && !data,
 		isError: error,
 	};
