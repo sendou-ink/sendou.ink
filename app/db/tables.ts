@@ -7,6 +7,7 @@ import type {
 	Updateable,
 } from "kysely";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
+import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
 import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { ParticipantResult } from "~/modules/brackets-model";
@@ -876,6 +877,14 @@ export interface XRankPlacement {
 	year: number;
 }
 
+export interface Notification {
+	id: GeneratedAlways<number>;
+	value: ColumnType<NotificationValue, string, string>;
+	seen: Generated<number>;
+	userId: number;
+	createdAt: GeneratedAlways<number>;
+}
+
 export type Tables = { [P in keyof DB]: Selectable<DB[P]> };
 export type TablesInsertable = { [P in keyof DB]: Insertable<DB[P]> };
 export type TablesUpdatable = { [P in keyof DB]: Updateable<DB[P]> };
@@ -954,4 +963,5 @@ export interface DB {
 	VideoMatch: VideoMatch;
 	VideoMatchPlayer: VideoMatchPlayer;
 	XRankPlacement: XRankPlacement;
+	Notification: Notification;
 }

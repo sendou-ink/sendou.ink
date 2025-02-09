@@ -3,6 +3,8 @@ import { SKALOP_TOKEN_HEADER_NAME } from "~/constants";
 import invariant from "~/utils/invariant";
 import type { ChatMessage } from "./chat-types";
 
+// xxx: rename this to ChatNotification or something? Or system message?
+
 type PartialChatMessage = Pick<
 	ChatMessage,
 	"type" | "context" | "room" | "revalidateOnly"

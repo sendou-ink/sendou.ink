@@ -421,3 +421,31 @@
 		transform: translateX(-0.3rem);
 	}
 }
+
+.layout__notifications__container {
+	min-height: 200px;
+	min-width: 250px;
+	padding: 0;
+}
+
+.layout__notifications__header {
+	display: flex;
+	font-size: var(--fonts-sm);
+	padding: var(--s-1) var(--s-2-5);
+}
+
+.layout__notifications__container svg {
+	width: 16px;
+}
+
+.layout__notifications__no-notifications {
+	display: grid;
+	place-items: center;
+	font-weight: var(--semi-bold);
+	color: var(--text-lighter);
+	margin-block-start: 65px;
+}
+
+.layout__notifications__divider {
+	border-color: var(--border);
+}
