@@ -669,4 +669,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "brflgx",
 		authorDiscordId: "701870845550657677",
 	},
+	{
+		displayName: "Coffee Cup"
+		filename:"coffeecup",
+		authorDiscordId:"1320944066002681876"
+	},
 ];
