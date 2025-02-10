@@ -1,0 +1,52 @@
+.itemDivider {
+	margin-inline: var(--s-2-5);
+	border-width: 0.5px;
+	border-color: var(--border);
+}
+
+.item {
+	line-height: 1.4;
+	padding: var(--s-1) var(--s-2-5);
+	display: grid;
+	grid-template-areas: "image header" "image timestamp";
+	grid-template-columns: 30px 1fr;
+	column-gap: var(--s-2);
+	padding-block: var(--s-2-5);
+	color: var(--text);
+}
+
+.item:hover .itemImage {
+	outline: 3px solid var(--theme-transparent);
+}
+
+.item:focus-within {
+	background-color: var(--bg-lightest);
+	outline: none;
+}
+
+.itemImage {
+	place-self: center;
+	grid-area: image;
+	border-radius: 100%;
+	width: 30px;
+	height: 30px;
+}
+
+.imageContainer {
+	background-color: var(--bg-lightest);
+	display: grid;
+	place-items: center;
+}
+
+.itemHeader {
+	grid-area: header;
+	font-size: var(--fonts-xsm);
+	font-weight: var(--semi-bold);
+}
+
+.timestamp {
+	grid-area: timestamp;
+	color: var(--text-lighter);
+	font-size: var(--fonts-xxs);
+	font-weight: var(--body);
+}

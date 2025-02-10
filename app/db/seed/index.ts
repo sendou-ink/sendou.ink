@@ -2280,6 +2280,33 @@ async function lfgPosts() {
 async function adminNotifications() {
 	const values: Notification[] = [
 		{
+			type: "PLUS_SUGGESTION_ADDED",
+			meta: { tier: 1 },
+		},
+		{
+			type: "SEASON_STARTED",
+			meta: { seasonNth: 1 },
+		},
+		{
+			type: "TO_ADDED_TO_TEAM",
+			meta: {
+				adderUsername: "N-ZAP",
+				teamName: "Chimera",
+				tournamentId: 1,
+				tournamentName: "PICNIC #2",
+				tournamentTeamId: 1,
+			},
+		},
+		{
+			type: "TO_BRACKET_STARTED",
+			meta: {
+				tournamentId: 1,
+				tournamentName: "PICNIC #2",
+				bracketIdx: 0,
+				bracketName: "Groups Stage",
+			},
+		},
+		{
 			type: "BADGE_ADDED",
 			meta: { badgeName: "In The Zone 30-39" },
 		},
@@ -2315,11 +2342,15 @@ async function adminNotifications() {
 	);
 
 	const createdAts = [
+		sub(new Date(), { days: 10 }),
+		sub(new Date(), { days: 8 }),
 		sub(new Date(), { days: 5, hours: 2 }),
 		sub(new Date(), { days: 4, minutes: 30 }),
 		sub(new Date(), { days: 3, hours: 2 }),
 		sub(new Date(), { days: 3, hours: 1, minutes: 10 }),
+		sub(new Date(), { days: 2, hours: 5 }),
 		sub(new Date(), { minutes: 10 }),
+		sub(new Date(), { minutes: 5 }),
 	];
 
 	invariant(

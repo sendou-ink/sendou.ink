@@ -1,0 +1,31 @@
+.container {
+	min-width: 300px;
+	padding: 0;
+}
+
+.noNotificationsContainer {
+	min-height: 200px;
+}
+
+.header {
+	display: flex;
+	font-size: var(--fonts-sm);
+	padding: var(--s-1) var(--s-2-5);
+	gap: var(--s-1);
+}
+
+.container svg {
+	width: 16px;
+}
+
+.noNotifications {
+	display: grid;
+	place-items: center;
+	font-weight: var(--semi-bold);
+	color: var(--text-lighter);
+	margin-block-start: 65px;
+}
+
+.divider {
+	border-color: var(--border);
+}
