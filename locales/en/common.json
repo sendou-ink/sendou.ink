@@ -51,6 +51,7 @@
 	"notifications.text.TO_BRACKET_STARTED": "{{bracketName}} of {{tournamentName}} started",
 	"notifications.text.TO_CHECK_IN_OPENED": "Check-in for {{tournamentName}} open",
 	"notifications.text.BADGE_ADDED": "New badge ({{badgeName}})",
+	"notifications.text.BADGE_MANAGER_ADDED": "You got manager rights for badge {{badgeName}}",
 	"notifications.text.PLUS_VOTING_STARTED": "Plus Server voting started",
 	"notifications.text.PLUS_SUGGESTION_ADDED": "You were suggested to +{{tier}}",
 	"notifications.text.TAGGED_TO_ART": "Tagged in art by {{adderUsername}}",

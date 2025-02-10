@@ -38,6 +38,10 @@ export type Notification =
 			}
 	  > // xxx: also TO_BRACKET_CHECKIN_STARTED
 	| NotificationItem<"BADGE_ADDED", { badgeName: string }>
+	| NotificationItem<
+			"BADGE_MANAGER_ADDED",
+			{ badgeName: string; badgeId: number }
+	  >
 	| NotificationItem<"PLUS_VOTING_STARTED"> // xxx: set routine
 	| NotificationItem<"PLUS_SUGGESTION_ADDED", { tier: number }>
 	| NotificationItem<"TAGGED_TO_ART", { adderUsername: string }>

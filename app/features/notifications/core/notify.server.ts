@@ -18,6 +18,10 @@ export async function notify({
 	/** Notification to send (same for all users) */
 	notification: Notification;
 }) {
+	if (userIds.length === 0) {
+		return;
+	}
+
 	try {
 		await NotificationRepository.insertMany(
 			userIds.map((userId) => ({

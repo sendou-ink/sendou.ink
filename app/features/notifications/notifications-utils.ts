@@ -3,6 +3,7 @@ import { assertUnreachable } from "~/utils/types";
 import {
 	PLUS_VOTING_PAGE,
 	SENDOUQ_PAGE,
+	badgePage,
 	plusSuggestionPage,
 	sendouQMatchPage,
 	tournamentBracketsPage,
@@ -17,6 +18,7 @@ import type { LoaderNotification } from "./routes/notifications.peek";
 export const notificationNavIcon = (type: Notification["type"]) => {
 	switch (type) {
 		case "BADGE_ADDED":
+		case "BADGE_MANAGER_ADDED":
 			return "badges";
 		case "PLUS_SUGGESTION_ADDED":
 		case "PLUS_VOTING_STARTED":
@@ -46,6 +48,8 @@ export const notificationLink = ({
 	switch (type) {
 		case "BADGE_ADDED":
 			return userPage(user);
+		case "BADGE_MANAGER_ADDED":
+			return badgePage(meta.badgeId);
 		case "PLUS_SUGGESTION_ADDED":
 			return plusSuggestionPage({ tier: meta.tier });
 		case "PLUS_VOTING_STARTED":

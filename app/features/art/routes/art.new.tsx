@@ -102,17 +102,15 @@ export const action: ActionFunction = async ({ request }) => {
 			(userId) => !existingArt.linkedUsers.includes(userId),
 		);
 
-		if (newLinkedUsers.length > 0) {
-			notify({
-				userIds: newLinkedUsers,
-				notification: {
-					type: "TAGGED_TO_ART",
-					meta: {
-						adderUsername: user.username,
-					},
+		notify({
+			userIds: newLinkedUsers,
+			notification: {
+				type: "TAGGED_TO_ART",
+				meta: {
+					adderUsername: user.username,
 				},
-			});
-		}
+			},
+		});
 	} else {
 		const uploadHandler = composeUploadHandlers(
 			s3UploadHandler(`art-${nanoid()}-${Date.now()}`),
@@ -140,17 +138,15 @@ export const action: ActionFunction = async ({ request }) => {
 			tags: data.tags,
 		});
 
-		if (data.linkedUsers.length > 0) {
-			notify({
-				userIds: data.linkedUsers,
-				notification: {
-					type: "TAGGED_TO_ART",
-					meta: {
-						adderUsername: user.username,
-					},
+		notify({
+			userIds: data.linkedUsers,
+			notification: {
+				type: "TAGGED_TO_ART",
+				meta: {
+					adderUsername: user.username,
 				},
-			});
-		}
+			},
+		});
 	}
 
 	throw redirect(userArtPage(user));

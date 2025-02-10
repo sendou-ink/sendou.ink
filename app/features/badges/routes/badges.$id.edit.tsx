@@ -40,9 +40,27 @@ export const action: ActionFunction = async ({ request, params }) => {
 		case "MANAGERS": {
 			validate(canEditBadgeManagers(user));
 
+			const oldManagers = await BadgeRepository.findManagersByBadgeId(badgeId);
+
 			await BadgeRepository.replaceManagers({
 				badgeId,
 				managerIds: data.managerIds,
+			});
+
+			const newManagers = data.managerIds.filter(
+				(newManagerId) =>
+					!oldManagers.some((oldManager) => oldManager.id === newManagerId),
+			);
+
+			notify({
+				userIds: newManagers,
+				notification: {
+					type: "BADGE_MANAGER_ADDED",
+					meta: {
+						badgeId,
+						badgeName: badge.displayName,
+					},
+				},
 			});
 			break;
 		}

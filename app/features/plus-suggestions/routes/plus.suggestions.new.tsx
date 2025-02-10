@@ -92,7 +92,7 @@ export const action: ActionFunction = async ({ request }) => {
 	});
 
 	notify({
-		userIds: [],
+		userIds: [suggested.id],
 		notification: {
 			type: "PLUS_SUGGESTION_ADDED",
 			meta: {
