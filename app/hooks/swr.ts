@@ -82,6 +82,7 @@ export function usePatrons() {
 	};
 }
 
+// xxx: skip if no user
 export function useNotifications() {
 	const { data, error } = useSWRImmutable<NotificationsLoaderData>(
 		NOTIFICATIONS_PEAK_ROUTE,

@@ -11,16 +11,24 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { BellIcon } from "~/components/icons/Bell";
 import { useUser } from "~/features/auth/core/user";
+import { useMarkNotificationsAsSeen } from "../notifications-hooks";
 import styles from "./notifications.module.css";
 
 export default function NotificationsPage() {
-	const user = useUser();
+	const user = useUser()!;
 	const { t } = useTranslation(["common"]);
 	const data = useLoaderData<typeof loader>();
 
-	if (!user) {
-		return null;
-	}
+	const unseenIds = React.useMemo(
+		() =>
+			data.notifications
+				.filter((notification) => !notification.seen)
+				.map((notification) => notification.id),
+		[data.notifications],
+	);
+
+	// xxx: this flickers the unseen dot, persist while page is being viewed
+	useMarkNotificationsAsSeen({ unseenIds });
 
 	return (
 		<Main className="stack md">

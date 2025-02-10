@@ -14,6 +14,10 @@ export default [
 		"/notifications/peek",
 		"features/notifications/routes/notifications.peek.ts",
 	),
+	route(
+		"/notifications/seen",
+		"features/notifications/routes/notifications.seen.ts",
+	),
 
 	route("/settings", "features/settings/routes/settings.tsx"),
 

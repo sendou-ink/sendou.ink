@@ -151,6 +151,7 @@ export const PATRONS_LIST_ROUTE = "/patrons-list";
 
 export const NOTIFICATIONS_URL = "/notifications";
 export const NOTIFICATIONS_PEAK_ROUTE = "/notifications/peek";
+export const NOTIFICATIONS_MARK_AS_SEEN_ROUTE = "/notifications/seen";
 
 interface UserLinkArgs {
 	discordId: User["discordId"];

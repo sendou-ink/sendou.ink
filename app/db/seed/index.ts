@@ -2337,7 +2337,7 @@ async function adminNotifications() {
 		values.map((value, i) => ({
 			userId: ADMIN_ID,
 			value: JSON.stringify(value),
-			seen: i <= 3 ? 1 : 0,
+			seen: i <= 7 ? 1 : 0,
 		})),
 	);
 

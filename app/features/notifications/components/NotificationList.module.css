@@ -13,6 +13,7 @@
 	column-gap: var(--s-2);
 	padding-block: var(--s-2-5);
 	color: var(--text);
+	position: relative;
 }
 
 .item:hover .itemImage {
@@ -30,6 +31,17 @@
 	border-radius: 100%;
 	width: 30px;
 	height: 30px;
+}
+
+.unseenDot {
+	background-color: var(--theme);
+	border-radius: 100%;
+	width: 8px;
+	height: 8px;
+	position: absolute;
+	top: 12px;
+	left: 9px;
+	outline: 2px solid var(--theme-transparent);
 }
 
 .imageContainer {
