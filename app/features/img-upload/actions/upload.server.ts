@@ -97,14 +97,9 @@ async function validatedTeam({
 	});
 	const team = await TeamRepository.findByCustomUrl(teamCustomUrl);
 
-	validate(team, "You must be on a team to upload images");
+	validate(team, "Team not found");
 	validate(
-		team.members.some((member) => member.id === user.id && member.isOwner),
-		"You must be on the team to upload images",
-	);
-	const detailedTeam = await TeamRepository.findByCustomUrl(team.customUrl);
-	validate(
-		detailedTeam && isTeamManager({ team: detailedTeam, user }),
+		isTeamManager({ team, user }),
 		"You must be the team manager to upload images",
 	);
 

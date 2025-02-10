@@ -108,6 +108,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 						isTournamentOrganizer: user.isTournamentOrganizer,
 						inGameName: user.inGameName,
 						friendCode: user.friendCode,
+						preferences: user.preferences ?? {},
 						languages: user.languages ? user.languages.split(",") : [],
 					}
 				: undefined,

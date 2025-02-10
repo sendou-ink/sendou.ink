@@ -52,6 +52,7 @@ interface BuildProps {
 		| "private"
 	> & {
 		abilities: BuildAbilitiesTuple;
+		unsortedAbilities: BuildAbilitiesTuple;
 		modes: ModeShort[] | null;
 		weapons: Array<{
 			weaponSplId: BuildWeapon["weaponSplId"];
@@ -61,9 +62,15 @@ interface BuildProps {
 	};
 	owner?: Pick<UserWithPlusTier, "discordId" | "username" | "plusTier">;
 	canEdit?: boolean;
+	withAbilitySorting?: boolean;
 }
 
-export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
+export function BuildCard({
+	build,
+	owner,
+	canEdit = false,
+	withAbilitySorting = true,
+}: BuildProps) {
 	const user = useUser();
 	const { t } = useTranslation(["weapons", "builds", "common", "game-misc"]);
 	const { i18n } = useTranslation();
@@ -77,10 +84,13 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 		headGearSplId,
 		shoesGearSplId,
 		updatedAt,
-		abilities,
 		modes,
 		weapons,
 	} = build;
+
+	const abilities = withAbilitySorting
+		? build.abilities
+		: build.unsortedAbilities;
 
 	const isNoGear = [headGearSplId, clothesGearSplId, shoesGearSplId].some(
 		(id) => id === -1,
