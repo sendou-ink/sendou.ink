@@ -3,7 +3,7 @@ import { redirect } from "@remix-run/node";
 import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { parseRequestPayload, validate } from "~/utils/remix";
+import { parseRequestPayload, validate } from "~/utils/remix.server";
 import { LFG_PAGE } from "~/utils/urls";
 import { falsyToNull, id } from "~/utils/zod";
 import * as LFGRepository from "../LFGRepository.server";

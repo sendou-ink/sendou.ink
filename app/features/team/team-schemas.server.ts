@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { _action, falsyToNull, id, jsonParseable } from "~/utils/zod";
+import { _action, customCssVarObject, falsyToNull, id } from "~/utils/zod";
 import { TEAM, TEAM_MEMBER_ROLES } from "./team-constants";
 
 export const teamParamsSchema = z.object({ customUrl: z.string() });
@@ -7,6 +7,15 @@ export const teamParamsSchema = z.object({ customUrl: z.string() });
 export const createTeamSchema = z.object({
 	name: z.string().min(TEAM.NAME_MIN_LENGTH).max(TEAM.NAME_MAX_LENGTH),
 });
+
+export const teamProfilePageActionSchema = z.union([
+	z.object({
+		_action: _action("LEAVE_TEAM"),
+	}),
+	z.object({
+		_action: _action("MAKE_MAIN_TEAM"),
+	}),
+]);
 
 export const editTeamSchema = z.union([
 	z.object({
@@ -19,11 +28,11 @@ export const editTeamSchema = z.union([
 			falsyToNull,
 			z.string().max(TEAM.BIO_MAX_LENGTH).nullable(),
 		),
-		twitter: z.preprocess(
+		bsky: z.preprocess(
 			falsyToNull,
-			z.string().max(TEAM.TWITTER_MAX_LENGTH).nullable(),
+			z.string().max(TEAM.BSKY_MAX_LENGTH).nullable(),
 		),
-		css: z.preprocess(falsyToNull, z.string().refine(jsonParseable).nullable()),
+		css: customCssVarObject,
 	}),
 ]);
 
@@ -36,8 +45,12 @@ export const manageRosterSchema = z.union([
 		userId: id,
 	}),
 	z.object({
-		_action: _action("TRANSFER_OWNERSHIP"),
-		newOwnerId: id,
+		_action: _action("ADD_MANAGER"),
+		userId: id,
+	}),
+	z.object({
+		_action: _action("REMOVE_MANAGER"),
+		userId: id,
 	}),
 	z.object({
 		_action: _action("UPDATE_MEMBER_ROLE"),

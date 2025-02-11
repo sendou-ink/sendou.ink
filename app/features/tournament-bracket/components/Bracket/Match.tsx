@@ -2,7 +2,8 @@ import { Link, useFetcher } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { Avatar } from "~/components/Avatar";
-import { Popover } from "~/components/Popover";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { useUser } from "~/features/auth/core/user";
 import { TournamentStream } from "~/features/tournament/components/TournamentStream";
 import {
@@ -86,21 +87,27 @@ function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 				{roundNumber}.{match.number}
 			</div>
 			{toBeCasted ? (
-				<Popover
-					buttonChildren={<>🔒 CAST</>}
-					triggerClassName="bracket__match__header__box bracket__match__header__box__button"
+				<SendouPopover
+					trigger={
+						<SendouButton className="bracket__match__header__box bracket__match__header__box__button">
+							🔒 CAST
+						</SendouButton>
+					}
 				>
 					Match is scheduled to be casted
-				</Popover>
+				</SendouPopover>
 			) : hasStreams() ? (
-				<Popover
-					buttonChildren={<>🔴 LIVE</>}
-					triggerClassName="bracket__match__header__box bracket__match__header__box__button"
-					contentClassName="w-max"
+				<SendouPopover
 					placement="top"
+					popoverClassName="w-max"
+					trigger={
+						<SendouButton className="bracket__match__header__box bracket__match__header__box__button">
+							🔴 LIVE
+						</SendouButton>
+					}
 				>
 					<MatchStreams match={match} />
-				</Popover>
+				</SendouPopover>
 			) : null}
 		</div>
 	);
@@ -172,6 +179,8 @@ function MatchRow({
 	const logoSrc =
 		!simulated && team ? tournament.tournamentTeamLogoSrc(team) : null;
 
+	const isBigSeedNumber = team?.seed && team.seed > 99;
+
 	return (
 		<div
 			className={clsx("stack horizontal", { "text-lighter": isLoser })}
@@ -181,6 +190,7 @@ function MatchRow({
 			<div
 				className={clsx("bracket__match__seed", {
 					"text-lighter-important italic opaque": simulated,
+					bracket__match__seed__wide: isBigSeedNumber,
 				})}
 			>
 				{team?.seed}
@@ -191,7 +201,11 @@ function MatchRow({
 					"text-theme-secondary":
 						!simulated && ownTeam && ownTeam?.id === team?.id,
 					"text-lighter italic opaque": simulated,
-					"bracket__match__team-name__narrow": logoSrc,
+					"bracket__match__team-name__narrow":
+						// either but not both
+						(logoSrc || isBigSeedNumber) && !(logoSrc && isBigSeedNumber),
+					// both
+					"bracket__match__team-name__narrowest": logoSrc && isBigSeedNumber,
 					invisible: !team,
 				})}
 			>

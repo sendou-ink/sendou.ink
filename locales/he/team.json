@@ -1,9 +1,7 @@
 {
-	"newTeam.button": "צוות חדש",
 	"newTeam.header": "יצירת צוות חדש",
 	"teamSearch.placeholder": "חיפוש צוות או שחקן...",
 	"actionButtons.leaveTeam": "לעזוב צוות",
-	"leaveTeam.header": "הנכם בטוחים שאתם רוצים לעזוב את {{teamName}}?",
 	"actionButtons.leaveTeam.confirm": "לעזוב",
 	"actionButtons.editTeam": "עריכת צוות",
 	"actionButtons.manageRoster": "ניהול חברי צוות",
@@ -21,7 +19,6 @@
 	"roles.BACKLINE": "קו אחורי",
 	"roles.FLEX": "מעורב",
 	"roles.COACH": "מאמן",
-	"forms.fields.teamTwitter": "Twitter של הצוות",
 	"forms.fields.bio": "ביו",
 	"forms.fields.uploadImages": "העלאת תמונות",
 	"forms.fields.uploadImages.pfp": "תמונת פרופיל",
@@ -34,6 +31,5 @@
 	"validation.SHORT_CODE": "קוד ההזמנה אינו באורך המתאים. העתקתם את כתובת האתר המלאה?",
 	"validation.TEAM_FULL": "הצוות שאתם מנסים להצטרף אליו מלא.",
 	"validation.INVITE_CODE_WRONG": "קוד ההזמנה שגוי.",
-	"validation.ALREADY_IN_DIFFERENT_TEAM": "הנכם בצוות אחר. עזבו אותו קודם לפני הצטרפות לצוות אחר.",
 	"validation.VALID": "הצטרפו ל-{{teamName}}?"
 }

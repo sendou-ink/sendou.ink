@@ -3,7 +3,6 @@ import type {
 	LoaderFunction,
 	MetaFunction,
 } from "@remix-run/node";
-import { json } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import { formatDistance } from "date-fns";
 import * as React from "react";
@@ -24,14 +23,17 @@ import {
 import { isVotingActive } from "~/features/plus-voting/core/voting-time";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
-import { badRequestIfFalsy, parseRequestPayload } from "~/utils/remix";
-import { makeTitle } from "~/utils/strings";
+import { metaTags } from "~/utils/remix";
+import { badRequestIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertType, assertUnreachable } from "~/utils/types";
 import { safeJSONParse } from "~/utils/zod";
 import { PlusSuggestionComments } from "../../plus-suggestions/routes/plus.suggestions";
 
-export const meta: MetaFunction = () => {
-	return [{ title: makeTitle("Plus Server voting") }];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Plus Server Voting",
+		location: args.location,
+	});
 };
 
 const voteSchema = z.object({
@@ -153,11 +155,11 @@ export const loader: LoaderFunction = async ({ request }) => {
 	const nextVotingRange = nextNonCompletedVoting(now);
 
 	if (!nextVotingRange) {
-		return json<PlusVotingLoaderData>({ type: "noTimeDefinedInfo" });
+		return { type: "noTimeDefinedInfo" };
 	}
 
 	if (!isVotingActive()) {
-		return json<PlusVotingLoaderData>({
+		return {
 			type: "timeInfo",
 			timeInfo: {
 				relativeTime: formatDistance(nextVotingRange.startDate, now, {
@@ -166,7 +168,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 				timestamp: nextVotingRange.startDate.getTime(),
 				timing: "starts",
 			},
-		});
+		};
 	}
 
 	const usersForVoting = user?.plusTier
@@ -183,7 +185,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 		: false;
 
 	if (!usersForVoting || hasVoted) {
-		return json<PlusVotingLoaderData>({
+		return {
 			type: "timeInfo",
 			voted: hasVoted,
 			timeInfo: {
@@ -193,10 +195,10 @@ export const loader: LoaderFunction = async ({ request }) => {
 				timestamp: nextVotingRange.endDate.getTime(),
 				timing: "ends",
 			},
-		});
+		};
 	}
 
-	return json<PlusVotingLoaderData>({
+	return {
 		type: "voting",
 		usersForVoting,
 		votingEnds: {
@@ -205,7 +207,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 				addSuffix: true,
 			}),
 		},
-	});
+	};
 };
 
 export default function PlusVotingPage() {

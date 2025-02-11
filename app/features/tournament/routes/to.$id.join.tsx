@@ -10,13 +10,18 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { INVITE_CODE_LENGTH } from "~/constants";
 import { useUser } from "~/features/auth/core/user";
 import { requireUserId } from "~/features/auth/core/user.server";
+import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
-import { notFoundIfFalsy, parseRequestPayload, validate } from "~/utils/remix";
+import {
+	notFoundIfFalsy,
+	parseRequestPayload,
+	validate,
+} from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { tournamentPage, userEditProfilePage } from "~/utils/urls";
 import { findByInviteCode } from "../queries/findTeamByInviteCode.server";
@@ -95,6 +100,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 			userId: user.id,
 		}),
 	});
+
+	ShowcaseTournaments.addToParticipationInfoMap({
+		tournamentId,
+		type: "participant",
+		userId: user.id,
+	});
+
 	if (data.trust) {
 		const inviterUserId = teamToJoin.members.find(
 			(member) => member.isOwner,

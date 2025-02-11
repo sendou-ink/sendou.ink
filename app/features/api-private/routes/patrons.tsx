@@ -3,7 +3,7 @@ import { getUserId } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { updatePatreonData } from "~/modules/patreon";
 import { canAccessLohiEndpoint, canPerformAdminActions } from "~/permissions";
-import { validate } from "~/utils/remix";
+import { validate } from "~/utils/remix.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = await getUserId(request);

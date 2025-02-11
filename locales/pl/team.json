@@ -1,9 +1,7 @@
 {
-	"newTeam.button": "Nowa drużyna",
 	"newTeam.header": "Uwtorzenie nowej drużyny",
 	"teamSearch.placeholder": "Wyszukaj drużynę lub gracza...",
 	"actionButtons.leaveTeam": "Opuść drużynę",
-	"leaveTeam.header": "Napewno chcesz opuścić {{teamName}}?",
 	"actionButtons.leaveTeam.confirm": "Opuść",
 	"actionButtons.editTeam": "Edytuj Drużynę",
 	"actionButtons.manageRoster": "Zarządzaj Członkami",
@@ -19,7 +17,6 @@
 	"roles.SUPPORT": "Support",
 	"roles.BACKLINE": "Backline",
 	"roles.COACH": "Trener",
-	"forms.fields.teamTwitter": "Twitter drużyny",
 	"forms.fields.bio": "Opis",
 	"forms.fields.uploadImages": "Wstaw zdjęcia",
 	"forms.fields.uploadImages.pfp": "Zdjęcie profilowe",
@@ -32,6 +29,5 @@
 	"validation.SHORT_CODE": "Zaproszenie jest złej długości. Czy napewno skopiowałeś/aś pełne URL?",
 	"validation.TEAM_FULL": "Drużyna, do której próbujesz dołączyć, jest pełna.",
 	"validation.INVITE_CODE_WRONG": "Zaproszenie niepoprawne.",
-	"validation.ALREADY_IN_DIFFERENT_TEAM": "Jesteś już na innej drużynie. Opuść ją zanim dołączysz do nowej.",
 	"validation.VALID": "Dołączyć do {{teamName}}?"
 }

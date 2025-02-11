@@ -30,7 +30,7 @@ export function LogInButtonContainer({
 				isMounted &&
 				createPortal(
 					<Dialog isOpen close={closeAuthErrorDialog}>
-						<div className="stack md">
+						<div className="stack md layout__user-item">
 							<AuthenticationErrorHelp errorCode={authError} />
 							<Button onClick={closeAuthErrorDialog}>
 								{t("actions.close")}

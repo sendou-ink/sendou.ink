@@ -1,16 +1,15 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import type { UserWithPlusTier } from "~/db/types";
 import { getUserId } from "~/features/auth/core/user.server";
-import { i18next } from "~/modules/i18n/i18next.server";
 import { sumArray } from "~/utils/number";
-import { makeTitle } from "~/utils/strings";
-import { allTeams } from "../queries/allTeams.server";
+import * as TeamRepository from "../TeamRepository.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await getUserId(request);
-	const t = await i18next.getFixedT(request);
 
-	const teams = allTeams().sort((teamA, teamB) => {
+	const unsortedTeams = await TeamRepository.findAllUndisbanded();
+
+	const teams = unsortedTeams.sort((teamA, teamB) => {
 		// show own team first always
 		if (user && teamA.members.some((m) => m.id === user.id)) {
 			return -1;
@@ -45,11 +44,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	});
 
 	return {
-		title: makeTitle(t("pages.t")),
 		teams,
-		isMemberOfTeam: !user
-			? false
-			: teams.some((t) => t.members.some((m) => m.id === user.id)),
+		teamMemberOfCount: user
+			? teams.filter((team) => team.members.some((m) => m.id === user.id))
+					.length
+			: 0,
 	};
 };
 

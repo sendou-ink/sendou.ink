@@ -7,8 +7,8 @@ import {
 } from "@remix-run/node";
 import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
-import { findByIdentifier, isTeamOwner } from "~/features/team";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
+import { isTeamManager } from "~/features/team/team-utils";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import { canEditTournamentOrganization } from "~/features/tournament-organization/tournament-organization-utils";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -18,7 +18,7 @@ import {
 	parseSearchParams,
 	unauthorizedIfFalsy,
 	validate,
-} from "~/utils/remix";
+} from "~/utils/remix.server";
 import { teamPage, tournamentOrganizationPage } from "~/utils/urls";
 import { addNewImage } from "../queries/addNewImage";
 import { countUnvalidatedImg } from "../queries/countUnvalidatedImg.server";
@@ -34,7 +34,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	const team =
 		validatedType === "team-pfp" || validatedType === "team-banner"
-			? await validatedTeam(user)
+			? await validatedTeam({ user, request })
 			: undefined;
 	const organization =
 		validatedType === "org-pfp"
@@ -87,14 +87,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	return null;
 };
 
-async function validatedTeam(user: { id: number }) {
-	const team = await TeamRepository.findByUserId(user.id);
+async function validatedTeam({
+	user,
+	request,
+}: { user: { id: number }; request: Request }) {
+	const { team: teamCustomUrl } = parseSearchParams({
+		request,
+		schema: z.object({ team: z.string() }),
+	});
+	const team = await TeamRepository.findByCustomUrl(teamCustomUrl);
 
-	validate(team, "You must be on a team to upload images");
-	const detailed = findByIdentifier(team.customUrl);
+	validate(team, "Team not found");
 	validate(
-		detailed && isTeamOwner({ team: detailed.team, user }),
-		"You must be the team owner to upload images",
+		isTeamManager({ team, user }),
+		"You must be the team manager to upload images",
 	);
 
 	return team;

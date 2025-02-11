@@ -18,6 +18,7 @@ const stm = sql.prepare(/* sql */ `
     "TournamentMatch"."bestOf",
     "TournamentMatch"."chatCode",
     "Tournament"."mapPickingStyle",
+    "TournamentRound"."id" as "roundId",
     "TournamentRound"."maps" as "roundMaps",
     json_group_array(
       json_object(
@@ -60,6 +61,7 @@ export const findMatchById = (id: number) => {
 				"id" | "groupId" | "opponentOne" | "opponentTwo" | "bestOf" | "chatCode"
 		  > &
 				Pick<Tournament, "mapPickingStyle"> & { players: string }) & {
+				roundId: number;
 				roundMaps: string | null;
 		  })
 		| undefined;
@@ -73,18 +75,21 @@ export const findMatchById = (id: number) => {
 	return {
 		...row,
 		bestOf: (roundMaps?.count ?? row.bestOf) as 3 | 5 | 7,
+		roundId: row.roundId,
 		roundMaps,
 		opponentOne: JSON.parse(row.opponentOne) as Match["opponent1"],
 		opponentTwo: JSON.parse(row.opponentTwo) as Match["opponent2"],
-		players: parseDBArray(row.players) as Array<{
-			id: User["id"];
-			username: User["username"];
-			tournamentTeamId: TournamentTeamMember["tournamentTeamId"];
-			inGameName: User["inGameName"];
-			discordId: User["discordId"];
-			customUrl: User["customUrl"];
-			discordAvatar: User["discordAvatar"];
-			chatNameColor: string | null;
-		}>,
+		players: (
+			parseDBArray(row.players) as Array<{
+				id: User["id"];
+				username: User["username"];
+				tournamentTeamId: TournamentTeamMember["tournamentTeamId"];
+				inGameName: User["inGameName"];
+				discordId: User["discordId"];
+				customUrl: User["customUrl"];
+				discordAvatar: User["discordAvatar"];
+				chatNameColor: string | null;
+			}>
+		).filter((player) => player.id),
 	};
 };

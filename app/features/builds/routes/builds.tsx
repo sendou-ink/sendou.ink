@@ -3,11 +3,9 @@ import { Link } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
-import { useSetTitle } from "~/hooks/useSetTitle";
 import type { MainWeaponId } from "~/modules/in-game-lists";
 import { weaponCategories, weaponIdIsNotAlt } from "~/modules/in-game-lists";
-import type { SendouRouteHandle } from "~/utils/remix";
-import { makeTitle } from "~/utils/strings";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BUILDS_PAGE,
 	mainWeaponImageUrl,
@@ -16,17 +14,18 @@ import {
 	weaponBuildPage,
 	weaponCategoryUrl,
 } from "~/utils/urls";
+import { metaTags } from "../../../utils/remix";
 
 import "~/styles/builds.css";
 
-export const meta: MetaFunction = () => {
-	return [
-		{ title: makeTitle("Builds") },
-		{
-			name: "description",
-			content: "View Splatoon 3 builds for all weapons by the best players",
-		},
-	];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Builds",
+		ogTitle: "Splatoon 3 builds for all weapons",
+		description:
+			"View Splatoon 3 builds for all weapons by the best players. Includes collection of user submitted builds and an aggregation of ability stats.",
+		location: args.location,
+	});
 };
 
 export const handle: SendouRouteHandle = {
@@ -40,7 +39,6 @@ export const handle: SendouRouteHandle = {
 
 export default function BuildsPage() {
 	const { t } = useTranslation(["common", "weapons"]);
-	useSetTitle(t("common:pages.builds"));
 
 	const weaponIdToSlug = (weaponId: MainWeaponId) => {
 		return mySlugify(t(`weapons:MAIN_${weaponId}`, { lng: "en" }));

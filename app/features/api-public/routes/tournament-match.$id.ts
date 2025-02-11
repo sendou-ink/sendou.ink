@@ -3,10 +3,11 @@ import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { cors } from "remix-utils/cors";
 import { z } from "zod";
 import { db } from "~/db/sql";
+import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { resolveMapList } from "~/features/tournament-bracket/core/mapList.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import i18next from "~/modules/i18n/i18next.server";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix";
+import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import {
 	handleOptionsRequest,
@@ -138,6 +139,13 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		});
 	};
 
+	const { bracketName, roundNameWithoutMatchIdentifier } = (
+		await tournamentFromDBCached({
+			tournamentId: match.tournamentId,
+			user: undefined,
+		})
+	).matchNameById(id);
+
 	const result: GetTournamentMatchResponse = {
 		teamOne: match.opponentOne.id
 			? {
@@ -153,6 +161,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			: null,
 		url: `https://sendou.ink/to/${match.tournamentId}/matches/${id}`,
 		mapList: await mapList(),
+		bracketName: bracketName ?? null,
+		roundName: roundNameWithoutMatchIdentifier ?? null,
 	};
 
 	return await cors(request, json(result));

@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { notFoundIfFalsy } from "~/utils/remix";
+import { notFoundIfFalsy } from "~/utils/remix.server";
 
 export type UserResultsLoaderData = SerializeFrom<typeof loader>;
 

@@ -1,7 +1,7 @@
 import { getWeek } from "date-fns";
 import type { MonthYear } from "~/features/plus-voting/core";
+import type { DayMonthYear } from "./zod";
 
-// TODO: when this lands https://github.com/remix-run/remix/discussions/7768 we can get rid of this (utilizing Kysely plugin to do converting from/to Date for us)
 export function databaseTimestampToDate(timestamp: number) {
 	return new Date(timestamp * 1000);
 }
@@ -12,6 +12,20 @@ export function dateToDatabaseTimestamp(date: Date) {
 
 export function databaseTimestampNow() {
 	return dateToDatabaseTimestamp(new Date());
+}
+
+/**
+ * Converts a date represented by day, month, and year into a JavaScript Date object, noon UTC.
+ */
+export function dayMonthYearToDate({ day, month, year }: DayMonthYear) {
+	return new Date(Date.UTC(year, month, day, 12));
+}
+
+/**
+ * Converts a date represented by day, month, and year into a database timestamp, noon UTC.
+ */
+export function dayMonthYearToDatabaseTimestamp(args: DayMonthYear) {
+	return dateToDatabaseTimestamp(dayMonthYearToDate(args));
 }
 
 export function databaseCreatedAt() {
@@ -27,6 +41,16 @@ export function dateToThisWeeksMonday(date: Date) {
 
 	while (copiedDate.getDay() !== 1) {
 		copiedDate.setDate(copiedDate.getDate() - 1);
+	}
+
+	return copiedDate;
+}
+
+export function dateToThisWeeksSunday(date: Date) {
+	const copiedDate = new Date(date.getTime());
+
+	while (copiedDate.getDay() !== 0) {
+		copiedDate.setDate(copiedDate.getDate() + 1);
 	}
 
 	return copiedDate;

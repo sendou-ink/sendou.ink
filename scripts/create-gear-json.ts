@@ -17,20 +17,12 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const CURRENT_SEASON = 8;
+const CURRENT_SEASON = 9;
 const OUTPUT_DIR_PATH = path.join(__dirname, "output");
 
 const LEAN_HEAD_CODE = "Hed";
 const LEAN_CLOTHES_CODE = "Clt";
 const LEAN_SHOES_CODE = "Shs";
-
-// some items have duplicate ID so redundant to have them here many times
-// but it's just for clarity
-const AVAILABLE_SR_GEAR = [
-	21010, 21011, 21015, 21013, 21012, 21014, 21012, 21000, 21001, 21002, 21001,
-	21002, 21001, 21016, 21017, 21018, 21019, 21004, 21002, 21005, 21003, 21002,
-	21005, 21008, 21020, 21015, 21007, 21021, 21006, 21009,
-];
 
 async function main() {
 	const allGear: Array<{
@@ -43,10 +35,6 @@ async function main() {
 
 	for (const gear of [...head, ...clothes, ...shoes]) {
 		if (gear.Season > CURRENT_SEASON || gear.HowToGet === "Impossible") {
-			continue;
-		}
-
-		if (gear.__RowId.includes("COP") && !AVAILABLE_SR_GEAR.includes(gear.Id)) {
 			continue;
 		}
 

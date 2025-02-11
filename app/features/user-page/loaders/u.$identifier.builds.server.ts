@@ -4,7 +4,7 @@ import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { sortAbilities } from "~/features/builds/core/ability-sorting.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists";
-import { notFoundIfFalsy, privatelyCachedJson } from "~/utils/remix";
+import { notFoundIfFalsy, privatelyCachedJson } from "~/utils/remix.server";
 import { sortBuilds } from "../core/build-sorting.server";
 import { userParamsSchema } from "../user-page-schemas.server";
 
@@ -20,26 +20,19 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		showPrivate: loggedInUser?.id === user.id,
 	});
 
-	const skippedViaSearchParams =
-		new URL(request.url).searchParams.get("exact") === "true";
-	const skipAbilitySorting =
-		loggedInUser?.id === user.id || skippedViaSearchParams;
-	const buildsWithAbilitiesSorted = skipAbilitySorting
-		? builds
-		: builds.map((build) => ({
-				...build,
-				abilities: sortAbilities(build.abilities),
-			}));
-
-	if (buildsWithAbilitiesSorted.length === 0 && loggedInUser?.id !== user.id) {
+	if (builds.length === 0 && loggedInUser?.id !== user.id) {
 		throw new Response(null, { status: 404 });
 	}
 
 	const sortedBuilds = sortBuilds({
-		builds: buildsWithAbilitiesSorted,
+		builds,
 		buildSorting: user.buildSorting,
 		weaponPool: user.weapons,
-	});
+	}).map((build) => ({
+		...build,
+		abilities: sortAbilities(build.abilities),
+		unsortedAbilities: build.abilities,
+	}));
 
 	return privatelyCachedJson({
 		buildSorting: user.buildSorting,

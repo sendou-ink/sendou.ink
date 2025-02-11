@@ -125,11 +125,8 @@
 	"weapon.category.subs": "Secondaires",
 	"weapon.category.specials": "Spéciales",
 
-	"plans.poweredBy": "Réalisé avec {{name}}",
 	"plans.blueprint": "Plans",
 	"plans.bgStyle.OVER": "Vue de dessus",
-	"plans.bgStyle.MINI": "Carte territoriale (vide)",
-	"plans.bgStyle.ITEMS": "Carte territoriale",
 
 	"articles.by": "par {{author}}",
 

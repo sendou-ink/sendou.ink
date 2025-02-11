@@ -1,4 +1,8 @@
-import type { ActionFunction, LoaderFunctionArgs } from "@remix-run/node";
+import type {
+	ActionFunction,
+	LoaderFunctionArgs,
+	MetaFunction,
+} from "@remix-run/node";
 import {
 	unstable_composeUploadHandlers as composeUploadHandlers,
 	unstable_createMemoryUploadHandler as createMemoryUploadHandler,
@@ -12,14 +16,16 @@ import { nanoid } from "nanoid";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router-dom";
+import { Alert } from "~/components/Alert";
 import { Button } from "~/components/Button";
 import { Combobox } from "~/components/Combobox";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { Toggle } from "~/components/Toggle";
 import { UserSearch } from "~/components/UserSearch";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { CrossIcon } from "~/components/icons/Cross";
+import { useUser } from "~/features/auth/core/user";
 import { requireUser } from "~/features/auth/core/user.server";
 import { s3UploadHandler } from "~/features/img-upload";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -29,13 +35,14 @@ import {
 	parseFormData,
 	parseRequestPayload,
 	validate,
-} from "~/utils/remix";
+} from "~/utils/remix.server";
 import {
 	artPage,
 	conditionalUserSubmittedImage,
 	navIconUrl,
 	userArtPage,
 } from "~/utils/urls";
+import { metaTitle } from "../../../utils/remix";
 import { ART, NEW_ART_EXISTING_SEARCH_PARAM_KEY } from "../art-constants";
 import { editArtSchema, newArtSchema } from "../art-schemas.server";
 import { previewUrl } from "../art-utils";
@@ -50,6 +57,12 @@ export const handle: SendouRouteHandle = {
 		href: artPage(),
 		type: "IMAGE",
 	}),
+};
+
+export const meta: MetaFunction = () => {
+	return metaTitle({
+		title: "New art",
+	});
 };
 
 export const action: ActionFunction = async ({ request }) => {
@@ -139,6 +152,7 @@ export default function NewArtPage() {
 	const { t } = useTranslation(["common", "art"]);
 	const ref = React.useRef<HTMLFormElement>(null);
 	const fetcher = useFetcher();
+	const user = useUser();
 
 	const handleSubmit = () => {
 		const formData = new FormData(ref.current!);
@@ -157,6 +171,14 @@ export default function NewArtPage() {
 
 		return !img && !data.art;
 	};
+
+	if (!user || !user.isArtist) {
+		return (
+			<Main className="stack items-center">
+				<Alert variation="WARNING">{t("art:gainPerms")}</Alert>
+			</Main>
+		);
+	}
 
 	return (
 		<Main halfWidth>
@@ -470,11 +492,12 @@ function ShowcaseToggle() {
 	return (
 		<div>
 			<label htmlFor="isShowcase">{t("art:forms.showcase.title")}</label>
-			<Toggle
-				checked={checked}
-				setChecked={setChecked}
+			<SendouSwitch
+				isSelected={checked}
+				onChange={setChecked}
 				name="isShowcase"
-				disabled={isCurrentlyShowcase}
+				id="isShowcase"
+				isDisabled={isCurrentlyShowcase}
 			/>
 			<FormMessage type="info">{t("art:forms.showcase.info")}</FormMessage>
 		</div>

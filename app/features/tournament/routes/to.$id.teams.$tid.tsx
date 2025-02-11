@@ -1,22 +1,28 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { ModeImage, StageImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
-import { Popover } from "~/components/Popover";
 import { Redirect } from "~/components/Redirect";
-import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
+import type {
+	TournamentData,
+	TournamentDataTeam,
+} from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentTeamPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator";
-import { parseParams } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
+import { parseParams } from "~/utils/remix.server";
 import {
 	teamPage,
 	tournamentMatchPage,
 	tournamentPage,
 	tournamentTeamPage,
 	userPage,
+	userSubmittedImage,
 } from "~/utils/urls";
 import { TeamWithRoster } from "../components/TeamWithRoster";
 import {
@@ -26,6 +32,29 @@ import {
 } from "../core/sets.server";
 import { tournamentIdFromParams } from "../tournament-utils";
 import { useTournament } from "./to.$id";
+
+export const meta: MetaFunction<typeof loader> = (args) => {
+	const tournamentData = (args.matches[1].data as any)
+		?.tournament as TournamentData;
+	if (!args.data || !tournamentData) return [];
+
+	const team = tournamentData.ctx.teams.find(
+		(t) => t.id === args.data!.tournamentTeamId,
+	)!;
+	const teamLogoUrl = team.team?.logoUrl ?? team.pickupAvatarUrl;
+
+	return metaTags({
+		title: `${team.name} @ ${tournamentData.ctx.name}`,
+		description: `${team.name} roster (${team.members.map((m) => m.username).join(", ")}) and sets in ${tournamentData.ctx.name}.`,
+		image: teamLogoUrl
+			? {
+					url: userSubmittedImage(teamLogoUrl),
+					dimensions: { width: 124, height: 124 },
+				}
+			: undefined,
+		location: args.location,
+	});
+};
 
 export const loader = ({ params }: LoaderFunctionArgs) => {
 	const tournamentId = tournamentIdFromParams(params);
@@ -209,23 +238,28 @@ function SetInfo({ set, team }: { set: PlayedSet; team: TournamentDataTeam }) {
 					})}
 					className="tournament__team__set__round-name"
 				>
-					{roundNameWithoutMatchIdentifier} - {bracketName}
+					{roundNameWithoutMatchIdentifier}{" "}
+					{tournament.ctx.settings.bracketProgression.length > 1 ? (
+						<>- {bracketName}</>
+					) : null}
 				</Link>
 			</div>
 			<div className="overlap-divider">
 				<div className="stack horizontal sm">
 					{set.maps.map(({ stageId, modeShort, result, source }, i) => {
 						return (
-							<Popover
+							<SendouPopover
 								key={i}
-								buttonChildren={
-									<ModeImage
-										mode={modeShort}
-										size={20}
-										containerClassName={clsx("tournament__team__set__mode", {
-											tournament__team__set__mode__loss: result === "loss",
-										})}
-									/>
+								trigger={
+									<SendouButton variant="minimal">
+										<ModeImage
+											mode={modeShort}
+											size={20}
+											containerClassName={clsx("tournament__team__set__mode", {
+												tournament__team__set__mode__loss: result === "loss",
+											})}
+										/>
+									</SendouButton>
 								}
 								placement="top"
 							>
@@ -237,7 +271,7 @@ function SetInfo({ set, team }: { set: PlayedSet; team: TournamentDataTeam }) {
 									/>
 									{sourceToText(source)}
 								</div>
-							</Popover>
+							</SendouPopover>
 						);
 					})}
 				</div>

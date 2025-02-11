@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ADMIN_ID } from "~/constants";
+import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/constants";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import {
 	impersonate,
@@ -9,7 +9,12 @@ import {
 	seed,
 	submit,
 } from "~/utils/playwright";
-import { TEAM_SEARCH_PAGE, teamPage } from "~/utils/urls";
+import {
+	TEAM_SEARCH_PAGE,
+	editTeamPage,
+	teamPage,
+	userPage,
+} from "~/utils/urls";
 
 test.describe("Team search page", () => {
 	test("filters teams", async ({ page }) => {
@@ -24,7 +29,7 @@ test.describe("Team search page", () => {
 		await expect(firstTeamName).toHaveText("Alliance Rogue");
 		await expect(secondTeamName).toBeVisible();
 
-		await searchInput.type("Alliance Rogue");
+		await searchInput.fill("Alliance Rogue");
 		await expect(secondTeamName).not.toBeVisible();
 
 		await firstTeamName.click();
@@ -34,14 +39,16 @@ test.describe("Team search page", () => {
 	test("creates new team", async ({ page }) => {
 		await seed(page);
 		await impersonate(page, NZAP_TEST_ID);
-		await navigate({ page, url: TEAM_SEARCH_PAGE });
+		await navigate({ page, url: "/" });
 
-		await page.getByTestId("new-team-button").click();
+		await page.getByTestId("anything-adder-menu-button").click();
+		await page.getByTestId("menu-item-team").click();
+
 		await expect(page).toHaveURL(/new=true/);
-		await page.getByTestId("new-team-name-input").type("Team Olive");
+		await page.getByTestId("new-team-name-input").fill("Chimera");
 		await submit(page);
 
-		await expect(page).toHaveURL(/team-olive/);
+		await expect(page).toHaveURL(/chimera/);
 	});
 });
 
@@ -54,28 +61,31 @@ test.describe("Team page", () => {
 		await page.getByTestId("edit-team-button").click();
 
 		await page.getByTestId("name-input").clear();
-		await page.getByTestId("name-input").type("Better Alliance Rogue");
+		await page.getByTestId("name-input").fill("Better Alliance Rogue");
 
-		await page.getByTestId("twitter-input").clear();
-		await page.getByTestId("twitter-input").type("BetterAllianceRogue");
+		await page.getByLabel("Team Bluesky").clear();
+		await page.getByLabel("Team Bluesky").fill("BetterAllianceRogue");
 
 		await page.getByTestId("bio-textarea").clear();
-		await page.getByTestId("bio-textarea").type("shorter bio");
+		await page.getByTestId("bio-textarea").fill("shorter bio");
 
 		await page.getByTestId("edit-team-submit-button").click();
 
 		await expect(page).toHaveURL(/better-alliance-rogue/);
 		await page.getByText("shorter bio").isVisible();
-		await expect(page.getByTestId("twitter-link")).toHaveAttribute(
+		await expect(page.getByTestId("bsky-link").first()).toHaveAttribute(
 			"href",
-			"https://twitter.com/BetterAllianceRogue",
+			"https://bsky.app/profile/BetterAllianceRogue",
 		);
 	});
 
-	test("manages roster", async ({ page }) => {
+	test("kicks a member & changes a role", async ({ page }) => {
 		await seed(page);
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url: teamPage("alliance-rogue") });
+
+		// Owner is Sendou
+		await expect(page.getByTestId(`member-owner-${ADMIN_ID}`)).toBeVisible();
 
 		await page.getByTestId("manage-roster-button").click();
 
@@ -86,13 +96,9 @@ test.describe("Team page", () => {
 		await modalClickConfirmButton(page);
 		await isNotVisible(page.getByTestId("member-row-3"));
 
-		await page.getByTestId("transfer-ownership-button").first().click();
-		await modalClickConfirmButton(page);
+		await navigate({ page, url: teamPage("alliance-rogue") });
 
 		await expect(page.getByTestId("member-row-role-0")).toHaveText("Support");
-
-		await expect(page).not.toHaveURL(/roster/);
-		await isNotVisible(page.getByTestId("manage-roster-button"));
 	});
 
 	test("deletes team", async ({ page }) => {
@@ -137,5 +143,66 @@ test.describe("Team page", () => {
 		await submit(page);
 
 		await page.getByTestId("leave-team-button").isVisible();
+	});
+
+	test("joins a secondary team, makes main team & leaves making the seconary team the main one", async ({
+		page,
+	}) => {
+		await seed(page);
+		await impersonate(page, ADMIN_ID);
+		await navigate({ page, url: teamPage("team-olive") });
+
+		await page.getByTestId("manage-roster-button").click();
+
+		const inviteLink = await page.getByTestId("invite-link").innerText();
+		await navigate({ page, url: inviteLink });
+		await submit(page);
+
+		await submit(page, "make-main-team-button");
+
+		await navigate({ page, url: userPage({ discordId: ADMIN_DISCORD_ID }) });
+
+		await expect(page.getByTestId("secondary-team-trigger")).toBeVisible();
+		await isNotVisible(page.getByText("Alliance Rogue"));
+
+		await page.getByTestId("main-team-link").click();
+
+		await page.getByTestId("leave-team-button").click();
+		await modalClickConfirmButton(page);
+
+		await navigate({ page, url: userPage({ discordId: ADMIN_DISCORD_ID }) });
+
+		await isNotVisible(page.getByTestId("secondary-team-trigger"));
+		await expect(page.getByText("Alliance Rogue")).toBeVisible();
+	});
+
+	test("makes another user editor, who can edit the page & becomes owner after the original leaves", async ({
+		page,
+	}) => {
+		await seed(page, "NZAP_IN_TEAM");
+		await impersonate(page, ADMIN_ID);
+		await navigate({ page, url: teamPage("alliance-rogue") });
+
+		await page.getByTestId("manage-roster-button").click();
+
+		await page.getByTestId("editor-switch").first().click();
+
+		await impersonate(page, NZAP_TEST_ID);
+		await navigate({ page, url: editTeamPage("alliance-rogue") });
+
+		await page.getByTestId("bio-textarea").clear();
+		await page.getByTestId("bio-textarea").fill("from editor");
+		await page.getByTestId("edit-team-submit-button").click();
+
+		await expect(page).toHaveURL(/alliance-rogue/);
+		await page.getByText("from editor").isVisible();
+
+		await impersonate(page, ADMIN_ID);
+		await navigate({ page, url: teamPage("alliance-rogue") });
+		await page.getByTestId("leave-team-button").click();
+		await page.getByText("New owner will be N-ZAP").isVisible();
+		await modalClickConfirmButton(page);
+
+		await isNotVisible(page.getByTestId("leave-team-button"));
 	});
 });

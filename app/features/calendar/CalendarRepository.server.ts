@@ -2,14 +2,10 @@ import type { Expression, ExpressionBuilder, Transaction } from "kysely";
 import { sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type {
-	CalendarEventAvatarMetadata,
-	DB,
-	Tables,
-	TournamentSettings,
-} from "~/db/tables";
-import type { CalendarEventTag } from "~/db/types";
+import type { DB, Tables, TournamentSettings } from "~/db/tables";
+import type { CalendarEventTag, PersistedCalendarEventTag } from "~/db/types";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { sumArray } from "~/utils/number";
@@ -108,7 +104,6 @@ export async function findById({
 			"CalendarEvent.tags",
 			"CalendarEvent.tournamentId",
 			"CalendarEvent.participantCount",
-			"CalendarEvent.avatarMetadata",
 			"CalendarEvent.avatarImgId",
 			"Tournament.mapPickingStyle",
 			"User.id as authorId",
@@ -148,11 +143,15 @@ export type FindAllBetweenTwoTimestampsItem = Unwrapped<
 export async function findAllBetweenTwoTimestamps({
 	startTime,
 	endTime,
+	tagsToFilterBy,
+	onlyTournaments,
 }: {
 	startTime: Date;
 	endTime: Date;
+	tagsToFilterBy: Array<PersistedCalendarEventTag>;
+	onlyTournaments: boolean;
 }) {
-	const rows = await db
+	let query = db
 		.selectFrom("CalendarEvent")
 		.innerJoin(
 			"CalendarEventDate",
@@ -216,8 +215,18 @@ export async function findAllBetweenTwoTimestamps({
 			"<=",
 			dateToDatabaseTimestamp(endTime),
 		)
-		.orderBy("CalendarEventDate.startTime", "asc")
-		.execute();
+		.where("CalendarEvent.hidden", "=", 0)
+		.orderBy("CalendarEventDate.startTime", "asc");
+
+	for (const tag of tagsToFilterBy) {
+		query = query.where("CalendarEvent.tags", "like", `%${tag}%`);
+	}
+
+	if (onlyTournaments) {
+		query = query.where("CalendarEvent.tournamentId", "is not", null);
+	}
+
+	const rows = await query.execute();
 
 	return Promise.all(
 		rows
@@ -310,17 +319,30 @@ async function tournamentParticipantCount({
 export async function startTimesOfRange({
 	startTime,
 	endTime,
+	tagsToFilterBy,
+	onlyTournaments,
 }: {
 	startTime: Date;
 	endTime: Date;
+	tagsToFilterBy: Array<PersistedCalendarEventTag>;
+	onlyTournaments: boolean;
 }) {
-	const rows = await db
+	let query = db
 		.selectFrom("CalendarEventDate")
+		.innerJoin("CalendarEvent", "CalendarEvent.id", "CalendarEventDate.eventId")
 		.select(["startTime"])
 		.where("startTime", ">=", dateToDatabaseTimestamp(startTime))
-		.where("startTime", "<=", dateToDatabaseTimestamp(endTime))
-		.execute();
+		.where("startTime", "<=", dateToDatabaseTimestamp(endTime));
 
+	for (const tag of tagsToFilterBy) {
+		query = query.where("CalendarEvent.tags", "like", `%${tag}%`);
+	}
+
+	if (onlyTournaments) {
+		query = query.where("CalendarEvent.tournamentId", "is not", null);
+	}
+
+	const rows = await query.execute();
 	return rows.map((row) => row.startTime);
 }
 
@@ -341,6 +363,7 @@ export async function eventsToReport(authorId: number) {
 			fn.max("CalendarEventDate.startTime").as("startTime"),
 		])
 		.where("CalendarEvent.authorId", "=", authorId)
+		.where("CalendarEvent.hidden", "=", 0)
 		.where("startTime", ">=", dateToDatabaseTimestamp(oneMonthAgo))
 		.where("startTime", "<=", dateToDatabaseTimestamp(new Date()))
 		.where("CalendarEvent.participantCount", "is", null)
@@ -361,6 +384,7 @@ export async function findRecentMapPoolsByAuthorId(authorId: number) {
 			withMapPool(eb),
 		])
 		.where("CalendarEvent.authorId", "=", authorId)
+		.where("CalendarEvent.hidden", "=", 0)
 		.orderBy("CalendarEvent.id", "desc")
 		.groupBy("CalendarEvent.id")
 		.limit(5)
@@ -448,12 +472,12 @@ type CreateArgs = Pick<
 	minMembersPerTeam?: number;
 	teamsPerGroup?: number;
 	thirdPlaceMatch?: boolean;
-	autoCheckInAll?: boolean;
 	requireInGameNames?: boolean;
 	isRanked?: boolean;
 	isInvitational?: boolean;
 	deadlines: TournamentSettings["deadlines"];
 	enableNoScreenToggle?: boolean;
+	enableSubs?: boolean;
 	autonomousSubs?: boolean;
 	regClosesAt?: number;
 	rules: string | null;
@@ -461,9 +485,9 @@ type CreateArgs = Pick<
 	swissGroupCount?: number;
 	swissRoundCount?: number;
 	avatarFileName?: string;
-	avatarMetadata?: CalendarEventAvatarMetadata;
 	avatarImgId?: number;
 	autoValidateAvatar?: boolean;
+	parentTournamentId?: number;
 };
 export async function create(args: CreateArgs) {
 	const copiedStaff = args.tournamentToCopyId
@@ -487,9 +511,9 @@ export async function create(args: CreateArgs) {
 				deadlines: args.deadlines,
 				isInvitational: args.isInvitational,
 				enableNoScreenToggle: args.enableNoScreenToggle,
+				enableSubs: args.enableSubs,
 				autonomousSubs: args.autonomousSubs,
 				regClosesAt: args.regClosesAt,
-				autoCheckInAll: args.autoCheckInAll,
 				requireInGameNames: args.requireInGameNames,
 				minMembersPerTeam: args.minMembersPerTeam,
 				swiss:
@@ -507,6 +531,7 @@ export async function create(args: CreateArgs) {
 					.values({
 						mapPickingStyle: args.mapPickingStyle,
 						settings: JSON.stringify(settings),
+						parentTournamentId: args.parentTournamentId,
 						rules: args.rules,
 					})
 					.returning("id")
@@ -548,9 +573,7 @@ export async function create(args: CreateArgs) {
 				bracketUrl: args.bracketUrl,
 				avatarImgId: args.avatarImgId ?? avatarImgId,
 				organizationId: args.organizationId,
-				avatarMetadata: args.avatarMetadata
-					? JSON.stringify(args.avatarMetadata)
-					: null,
+				hidden: args.parentTournamentId ? 1 : 0,
 				tournamentId,
 			})
 			.returning("id")
@@ -569,7 +592,7 @@ export async function create(args: CreateArgs) {
 					: "calendarEventId",
 		});
 
-		return eventId;
+		return { eventId, tournamentId };
 	});
 }
 
@@ -622,9 +645,6 @@ export async function update(args: UpdateArgs) {
 				description: args.description,
 				discordInviteCode: args.discordInviteCode,
 				bracketUrl: args.bracketUrl,
-				avatarMetadata: args.avatarMetadata
-					? JSON.stringify(args.avatarMetadata)
-					: null,
 				avatarImgId: args.avatarImgId ?? avatarImgId,
 				organizationId: args.organizationId,
 			})
@@ -643,9 +663,9 @@ export async function update(args: UpdateArgs) {
 				deadlines: args.deadlines,
 				isInvitational: args.isInvitational,
 				enableNoScreenToggle: args.enableNoScreenToggle,
+				enableSubs: args.enableSubs,
 				autonomousSubs: args.autonomousSubs,
 				regClosesAt: args.regClosesAt,
-				autoCheckInAll: args.autoCheckInAll,
 				requireInGameNames: args.requireInGameNames,
 				minMembersPerTeam: args.minMembersPerTeam,
 				swiss:
@@ -657,18 +677,42 @@ export async function update(args: UpdateArgs) {
 						: undefined,
 			};
 
+			const existingBracketProgression = (
+				await trx
+					.selectFrom("Tournament")
+					.select("settings")
+					.where("id", "=", tournamentId)
+					.executeTakeFirstOrThrow()
+			).settings.bracketProgression;
+
 			const { mapPickingStyle: _mapPickingStyle } = await trx
 				.updateTable("Tournament")
 				.set({
 					settings: JSON.stringify(settings),
 					rules: args.rules,
-					// when tournament is updated clear the preparedMaps just in case the format changed
-					// in the future though we might want to be smarter with this i.e. only clear if the format really did change
-					preparedMaps: null,
+					preparedMaps: Progression.changedBracketProgressionFormat(
+						existingBracketProgression,
+						args.bracketProgression,
+					)
+						? null
+						: undefined,
 				})
 				.where("id", "=", tournamentId)
 				.returning("mapPickingStyle")
 				.executeTakeFirstOrThrow();
+
+			if (
+				Progression.changedBracketProgressionFormat(
+					existingBracketProgression,
+					args.bracketProgression,
+				)
+			) {
+				await trx
+					.updateTable("TournamentTeam")
+					.set({ startingBracketIdx: null })
+					.where("tournamentId", "=", tournamentId)
+					.execute();
+			}
 
 			mapPickingStyle = _mapPickingStyle;
 		}

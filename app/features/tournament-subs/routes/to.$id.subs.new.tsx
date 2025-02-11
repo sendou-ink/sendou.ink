@@ -17,13 +17,16 @@ import { TrashIcon } from "~/components/icons/Trash";
 import { useUser } from "~/features/auth/core/user";
 import { requireUser } from "~/features/auth/core/user.server";
 import { tournamentIdFromParams } from "~/features/tournament";
-import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
+import {
+	clearTournamentDataCache,
+	tournamentFromDB,
+} from "~/features/tournament-bracket/core/Tournament.server";
 import type { MainWeaponId } from "~/modules/in-game-lists";
 import {
 	type SendouRouteHandle,
 	parseRequestPayload,
 	validate,
-} from "~/utils/remix";
+} from "~/utils/remix.server";
 import { tournamentSubsPage } from "~/utils/urls";
 import { findSubsByTournamentId } from "../queries/findSubsByTournamentId.server";
 import { upsertSub } from "../queries/upsertSub.server";
@@ -64,6 +67,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 		tournamentId,
 		userId: user.id,
 	});
+
+	clearTournamentDataCache(tournamentId);
 
 	throw redirect(tournamentSubsPage(tournamentId));
 };

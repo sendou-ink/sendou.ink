@@ -3,7 +3,7 @@ import { getUserId } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { isAdmin } from "~/permissions";
-import { notFoundIfFalsy } from "~/utils/remix";
+import { notFoundIfFalsy } from "~/utils/remix.server";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const loggedInUser = await getUserId(request);

@@ -3,7 +3,7 @@ import { cors } from "remix-utils/cors";
 import { z } from "zod";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { databaseTimestampToDate, weekNumberToDate } from "~/utils/dates";
-import { parseParams } from "~/utils/remix";
+import { parseParams } from "~/utils/remix.server";
 import {
 	handleOptionsRequest,
 	requireBearerAuth,
@@ -44,5 +44,10 @@ function fetchEventsOfWeek(args: { week: number; year: number }) {
 	const endTime = new Date(startTime);
 	endTime.setDate(endTime.getDate() + 7);
 
-	return CalendarRepository.findAllBetweenTwoTimestamps({ startTime, endTime });
+	return CalendarRepository.findAllBetweenTwoTimestamps({
+		startTime,
+		endTime,
+		tagsToFilterBy: [],
+		onlyTournaments: false,
+	});
 }

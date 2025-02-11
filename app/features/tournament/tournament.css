@@ -1,3 +1,7 @@
+.tournament__placeholder {
+	min-height: 100vh;
+}
+
 .tournament__action-section {
 	padding: var(--s-0-5) var(--s-6) var(--s-6) var(--s-6);
 	border-radius: var(--rounded);
@@ -263,8 +267,12 @@
 }
 
 .tournament__info__description > :is(h1, h2, h3, h4, h5, h6) {
-	margin-block-end: var(--s-5);
+	margin-block-end: var(--s-6);
 	line-height: 1.4;
+}
+
+.tournament__info__description > :is(h2, h3, h4, h5, h6) {
+	margin-block-start: var(--s-6);
 }
 
 .tournament__info__description > h1 {
@@ -273,6 +281,10 @@
 
 .tournament__info__description > :is(h2, h3, h4, h5, h6) {
 	font-size: var(--fonts-lg);
+}
+
+.tournament__info__description > :is(h3, h4, h5, h6) {
+	font-size: var(--fonts-md);
 }
 
 .tournament__info__description > ul:has(+ p) {
@@ -358,7 +370,7 @@
 	border-radius: var(--rounded);
 	column-gap: var(--s-1);
 	font-size: var(--fonts-xs);
-	grid-template-columns: 3rem 8rem 1fr;
+	grid-template-columns: 1.5rem 2rem 8rem 3rem 1fr;
 	list-style: none;
 	row-gap: var(--s-1-5);
 }
@@ -623,4 +635,55 @@
 
 .tournament__standings__match-result-square--loss {
 	border-color: var(--theme-error);
+}
+
+.tournament__standings__team-name {
+	min-width: 125px;
+	word-break: break-word;
+	display: flex;
+	gap: var(--s-1-5);
+	align-items: center;
+	color: var(--text);
+}
+
+.tournament__standings__divider {
+	width: 5px;
+	background-color: var(--theme-transparent);
+	border-radius: var(--rounded);
+}
+
+.tournament__div__link {
+	background-color: var(--bg-lighter-solid);
+	padding: var(--s-2) var(--s-4);
+	border-radius: var(--rounded);
+	width: max-content;
+	font-size: var(--fonts-lg);
+}
+
+.tournament__div__link:focus-visible {
+	outline: 3px solid var(--theme);
+	outline-offset: 3px;
+}
+
+.tournament__div__link__participant {
+	outline: 3px solid var(--bg-lightest-solid);
+	outline-offset: 3px;
+}
+
+.tournament__div__link__participant svg {
+	fill: var(--theme);
+}
+
+.tournament__div__participant-counts {
+	display: flex;
+	align-items: center;
+	color: var(--text-lighter);
+	font-size: var(--fonts-sm);
+	gap: var(--s-2);
+	margin-block-end: var(--s-1);
+}
+
+.tournament__div__participant-counts > svg {
+	width: 1rem;
+	margin-block-end: 1px;
 }

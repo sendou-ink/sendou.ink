@@ -127,11 +127,8 @@
 	"weapon.category.subs": "Запасное",
 	"weapon.category.specials": "Особое",
 
-	"plans.poweredBy": "При поддержке {{name}}",
 	"plans.blueprint": "план",
 	"plans.bgStyle.OVER": "Вид сверху",
-	"plans.bgStyle.MINI": "Миникарта (пустая)",
-	"plans.bgStyle.ITEMS": "Миникарта",
 
 	"articles.by": "от {{author}}",
 

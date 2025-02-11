@@ -38,6 +38,7 @@ export function Tab({
 			className={clsx("sub-nav__link__container", { active })}
 			onClick={onClick}
 			tabIndex={0}
+			// biome-ignore lint/a11y/useSemanticElements: this component is deprecated
 			role="button"
 			aria-pressed="false"
 			data-testid={testId}

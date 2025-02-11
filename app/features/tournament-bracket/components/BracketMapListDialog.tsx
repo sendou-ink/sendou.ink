@@ -7,13 +7,14 @@ import { Dialog } from "~/components/Dialog";
 import { ModeImage, StageImage } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
-import { Toggle } from "~/components/Toggle";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { RefreshArrowsIcon } from "~/components/icons/RefreshArrows";
 import type { TournamentRoundMaps } from "~/db/tables";
 import {
 	useTournament,
 	useTournamentPreparedMaps,
 } from "~/features/tournament/routes/to.$id";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { ModeShort, StageId } from "~/modules/in-game-lists";
 import { nullFilledArray } from "~/utils/arrays";
@@ -60,11 +61,11 @@ export function BracketMapListDialog({
 				PreparedMaps.trimPreparedEliminationMaps({
 					preparedMaps: untrimmedPreparedMaps,
 					teamCount: bracketTeamsCount,
-					tournament,
-					type: bracket.type,
+					bracket,
 				})
 			: untrimmedPreparedMaps;
 
+	const [szFirst, setSzFirst] = React.useState(false);
 	const [eliminationTeamCount, setEliminationTeamCount] = React.useState(() => {
 		if (preparedMaps?.eliminationTeamCount) {
 			return preparedMaps.eliminationTeamCount;
@@ -80,7 +81,6 @@ export function BracketMapListDialog({
 	const bracketData = isPreparing
 		? teamCountAdjustedBracketData({
 				bracket,
-				tournament,
 				teamCount: eliminationTeamCount,
 			})
 		: bracket.data;
@@ -90,6 +90,8 @@ export function BracketMapListDialog({
 	const [countType, setCountType] = React.useState<TournamentRoundMaps["type"]>(
 		preparedMaps?.maps[0].type ?? "BEST_OF",
 	);
+
+	const flavor = szFirst ? "SZ_FIRST" : null;
 
 	const [maps, setMaps] = React.useState(() => {
 		if (preparedMaps) {
@@ -103,6 +105,7 @@ export function BracketMapListDialog({
 			rounds,
 			type: bracket.type,
 			pickBanStyle: null,
+			flavor,
 		});
 	});
 	const [pickBanStyle, setPickBanStyle] = React.useState(
@@ -271,6 +274,7 @@ export function BracketMapListDialog({
 												type: bracket.type,
 												roundsWithPickBan: newRoundsWithPickBan,
 												pickBanStyle,
+												flavor,
 											}),
 										);
 									}}
@@ -284,7 +288,6 @@ export function BracketMapListDialog({
 										setCount={(newCount) => {
 											const newBracketData = teamCountAdjustedBracketData({
 												bracket,
-												tournament,
 												teamCount: newCount,
 											});
 
@@ -297,6 +300,7 @@ export function BracketMapListDialog({
 													type: bracket.type,
 													roundsWithPickBan,
 													pickBanStyle,
+													flavor,
 												}),
 											);
 											setEliminationTeamCount(newCount);
@@ -307,8 +311,8 @@ export function BracketMapListDialog({
 									<GlobalMapCountInput
 										defaultValue={
 											// beautiful 🥹
-											mapCounts.values().next().value.values().next().value
-												.count
+											mapCounts.values().next().value?.values().next().value
+												?.count
 										}
 										onSetCount={(newCount) => {
 											const newMapCounts = mapCountsWithGlobalCount(newCount);
@@ -319,6 +323,7 @@ export function BracketMapListDialog({
 												type: bracket.type,
 												roundsWithPickBan,
 												pickBanStyle,
+												flavor,
 											});
 											setMaps(newMaps);
 										}}
@@ -328,6 +333,25 @@ export function BracketMapListDialog({
 									<GlobalCountTypeSelect
 										defaultValue={countType}
 										onSetCountType={setCountType}
+									/>
+								) : null}
+								{tournament.ctx.mapPickingStyle === "TO" ? (
+									<SZFirstToggle
+										szFirst={szFirst}
+										setSzFirst={(newSzFirst) => {
+											setSzFirst(newSzFirst);
+											setMaps(
+												generateTournamentRoundMaplist({
+													mapCounts,
+													pool: tournament.ctx.toSetMapPool,
+													rounds,
+													type: bracket.type,
+													roundsWithPickBan,
+													pickBanStyle,
+													flavor: newSzFirst ? "SZ_FIRST" : null,
+												}),
+											);
+										}}
 									/>
 								) : null}
 							</div>
@@ -345,6 +369,7 @@ export function BracketMapListDialog({
 												type: bracket.type,
 												roundsWithPickBan,
 												pickBanStyle,
+												flavor,
 											}),
 										)
 									}
@@ -394,6 +419,7 @@ export function BracketMapListDialog({
 												type: bracket.type,
 												roundsWithPickBan,
 												pickBanStyle,
+												flavor,
 											});
 											setMaps(newMaps);
 										}}
@@ -417,6 +443,7 @@ export function BracketMapListDialog({
 																type: bracket.type,
 																roundsWithPickBan: newRoundsWithPickBan,
 																pickBanStyle,
+																flavor,
 															}),
 														);
 													}
@@ -539,28 +566,24 @@ function authorIdToUsername(tournament: Tournament, authorId: number) {
 
 function teamCountAdjustedBracketData({
 	bracket,
-	tournament,
 	teamCount,
-}: { bracket: Bracket; tournament: Tournament; teamCount: number }) {
+}: { bracket: Bracket; teamCount: number }) {
 	switch (bracket.type) {
 		case "swiss":
 			// always has the same amount of rounds even if 0 participants
 			return bracket.data;
 		case "round_robin":
-			// 10 to ensure a full bracket gets generated even if registration is underway
-			return tournament.generateMatchesData(
-				nullFilledArray(10).map((_, i) => i + 1),
-				bracket.type,
+			// ensure a full bracket (no bye round) gets generated even if registration is underway
+			return bracket.generateMatchesData(
+				nullFilledArray(
+					bracket.settings?.teamsPerGroup ??
+						TOURNAMENT.DEFAULT_TEAM_COUNT_PER_RR_GROUP,
+				).map((_, i) => i + 1),
 			);
 		case "single_elimination":
-			return tournament.generateMatchesData(
-				nullFilledArray(teamCount).map((_, i) => i + 1),
-				"single_elimination",
-			);
 		case "double_elimination":
-			return tournament.generateMatchesData(
+			return bracket.generateMatchesData(
 				nullFilledArray(teamCount).map((_, i) => i + 1),
-				"double_elimination",
 			);
 	}
 }
@@ -660,6 +683,7 @@ function PickBanSelect({
 		<div>
 			<Label htmlFor="pick-ban-style">Pick/ban</Label>
 			<select
+				className="map-list-dialog__pick-ban-select"
 				id="pick-ban-style"
 				value={pickBanStyle ?? "NONE"}
 				onChange={(e) =>
@@ -674,6 +698,21 @@ function PickBanSelect({
 				<option value="COUNTERPICK">Counterpick</option>
 				<option value="BAN_2">Ban 2</option>
 			</select>
+		</div>
+	);
+}
+
+function SZFirstToggle({
+	szFirst,
+	setSzFirst,
+}: {
+	szFirst: boolean;
+	setSzFirst: (szFirst: boolean) => void;
+}) {
+	return (
+		<div className="stack items-center">
+			<Label htmlFor="sz-first">SZ first</Label>
+			<SendouSwitch id="sz-first" isSelected={szFirst} onChange={setSzFirst} />
 		</div>
 	);
 }
@@ -703,6 +742,7 @@ function RoundMapList({
 }) {
 	const id = React.useId();
 	const [editing, setEditing] = React.useState(false);
+	const tournament = useTournament();
 
 	return (
 		<div>
@@ -733,10 +773,10 @@ function RoundMapList({
 					{onPickBanChange ? (
 						<div>
 							<Label htmlFor={`pick-ban-${id}`}>Pick/ban</Label>
-							<Toggle
-								tiny
-								checked={Boolean(maps.pickBan)}
-								setChecked={onPickBanChange}
+							<SendouSwitch
+								size="small"
+								isSelected={Boolean(maps.pickBan)}
+								onChange={onPickBanChange}
 								id={`pick-ban-${id}`}
 							/>
 						</div>
@@ -769,12 +809,16 @@ function RoundMapList({
 					}
 
 					const isTeamsPick = !maps.list && i === 0;
+					const isLast = i === maps.count - 1;
 
 					return (
 						<MysteryRow
 							key={i}
 							number={i + 1}
 							isCounterpicks={!isTeamsPick && maps.pickBan === "COUNTERPICK"}
+							isTiebreaker={
+								tournament.ctx.mapPickingStyle === "AUTO_ALL" && isLast
+							}
 						/>
 					);
 				})}
@@ -851,9 +895,11 @@ function MapListRow({
 function MysteryRow({
 	number,
 	isCounterpicks,
+	isTiebreaker,
 }: {
 	number: number;
 	isCounterpicks: boolean;
+	isTiebreaker: boolean;
 }) {
 	return (
 		<li className="map-list-dialog__map-list-row">
@@ -863,7 +909,13 @@ function MysteryRow({
 				})}
 			>
 				<span className="text-lg">{number}.</span>
-				{isCounterpicks ? <>Counterpick</> : <>Team&apos;s pick</>}
+				{isCounterpicks ? (
+					<>Counterpick</>
+				) : isTiebreaker ? (
+					<>Tiebreaker</>
+				) : (
+					<>Team&apos;s pick</>
+				)}
 			</div>
 		</li>
 	);

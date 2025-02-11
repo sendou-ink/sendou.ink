@@ -12,7 +12,7 @@ export const cache = (global.__lruCache = global.__lruCache
 	: new LRUCache<string, CacheEntry<unknown>>({ max: 5000 }));
 
 export const ttl = (ms: number) =>
-	process.env.NODE_ENV === "production" ? ms : 0;
+	process.env.DISABLE_CACHE === "true" ? 0 : ms;
 
 export function syncCached<T>(key: string, getFreshValue: () => T) {
 	if (cache.has(key)) {

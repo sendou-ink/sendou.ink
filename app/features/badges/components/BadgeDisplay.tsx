@@ -9,7 +9,7 @@ import type { Unpacked } from "~/utils/types";
 import { badgeExplanationText } from "../badges-utils";
 
 interface BadgeDisplayProps {
-	badges: Array<Tables["Badge"] & { count?: number }>;
+	badges: Array<Omit<Tables["Badge"], "authorId"> & { count?: number }>;
 	onBadgeRemove?: (badgeId: number) => void;
 }
 
@@ -27,7 +27,7 @@ export function BadgeDisplay({
 		setBadges(
 			badges.map((b, i) => {
 				if (i === 0) return badge;
-				if (b.code === badge.code) return badges[0];
+				if (b.id === badge.id) return badges[0];
 
 				return b;
 			}),

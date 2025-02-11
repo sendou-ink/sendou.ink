@@ -6,14 +6,16 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
 import { NewTabs } from "~/components/NewTabs";
-import { Popover } from "~/components/Popover";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { CrossIcon } from "~/components/icons/Cross";
 import { PickIcon } from "~/components/icons/Pick";
 import { useUser } from "~/features/auth/core/user";
 import { Chat, useChat } from "~/features/chat/components/Chat";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import { resolveLeagueRoundStartDate } from "~/features/tournament/tournament-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import type { StageId } from "~/modules/in-game-lists";
@@ -311,6 +313,14 @@ function FancyStageBanner({
 		return null;
 	})();
 
+	const waitingForLeagueRoundToStart = (() => {
+		const date = resolveLeagueRoundStartDate(tournament, data.match.roundId);
+
+		if (!date) return false;
+
+		return date > new Date();
+	})();
+
 	return (
 		<>
 			{inBanPhase ? (
@@ -335,6 +345,22 @@ function FancyStageBanner({
 							Match locked to be casted
 						</div>
 						<div>Please wait for staff to unlock</div>
+					</div>
+				</div>
+			) : waitingForLeagueRoundToStart ? (
+				<div className="tournament-bracket__locked-banner">
+					<div className="stack sm items-center">
+						<div className="text-lg text-center font-bold">
+							Waiting for league round to start
+						</div>
+						<div>
+							Round playable from{" "}
+							{resolveLeagueRoundStartDate(
+								tournament,
+								data.match.roundId,
+							)!.toLocaleDateString()}{" "}
+							onwards
+						</div>
 					</div>
 				</div>
 			) : waitingForActiveRosterSelectionFor ? (
@@ -471,17 +497,22 @@ function ModeProgressIndicator({
 					)?.name;
 
 					return (
-						<Popover
+						<SendouPopover
 							key={i}
-							triggerClassName="minimal tiny tournament-bracket__mode-progress__image__banned__popover-trigger"
-							buttonChildren={
-								<Image
-									containerClassName="tournament-bracket__mode-progress__image tournament-bracket__mode-progress__image__banned"
-									path={modeImageUrl(map.mode)}
-									height={20}
-									width={20}
-									alt={t(`game-misc:MODE_LONG_${map.mode}`)}
-								/>
+							trigger={
+								<SendouButton
+									variant="minimal"
+									size="small"
+									className="tournament-bracket__mode-progress__image__banned__popover-trigger"
+								>
+									<Image
+										containerClassName="tournament-bracket__mode-progress__image tournament-bracket__mode-progress__image__banned"
+										path={modeImageUrl(map.mode)}
+										height={20}
+										width={20}
+										alt={t(`game-misc:MODE_LONG_${map.mode}`)}
+									/>
+								</SendouButton>
 							}
 						>
 							<div className="text-center">
@@ -491,7 +522,7 @@ function ModeProgressIndicator({
 							<div className="text-xs text-lighter">
 								Banned by {bannerTeamName}
 							</div>
-						</Popover>
+						</SendouPopover>
 					);
 				}
 
@@ -556,6 +587,10 @@ function StartedMatchTabs({
 		return Object.fromEntries(
 			[
 				...data.match.players.map((p) => ({ ...p, title: undefined })),
+				...(tournament.ctx.organization?.members ?? []).map((m) => ({
+					...m,
+					title: m.role === "STREAMER" ? "Stream" : "TO",
+				})),
 				...tournament.ctx.staff.map((s) => ({
 					...s,
 					title: s.role === "STREAMER" ? "Stream" : "TO",
@@ -626,7 +661,9 @@ function StartedMatchTabs({
 				teams[1],
 				tournament.minMembersPerTeam,
 			),
-			result?.participantIds,
+			result?.participants
+				.map((p) => `${p.userId}-${p.tournamentTeamId}`)
+				.join(","),
 			result?.opponentOnePoints,
 			result?.opponentTwoPoints,
 		].join("-");
@@ -663,7 +700,7 @@ function StartedMatchTabs({
 										chat={chat}
 										onMount={onChatMount}
 										onUnmount={onChatUnmount}
-										missingUserName="TO"
+										missingUserName="???"
 									/>
 								) : null}
 							</>

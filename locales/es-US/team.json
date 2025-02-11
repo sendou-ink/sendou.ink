@@ -1,9 +1,7 @@
 {
-	"newTeam.button": "Nuevo equipo",
 	"newTeam.header": "Creando nuevo equipo",
 	"teamSearch.placeholder": "Buscar un equipo o jugador...",
 	"actionButtons.leaveTeam": "Abandonar equipo",
-	"leaveTeam.header": "¿Estás seguro que quieres abandonar a {{teamName}}?",
 	"actionButtons.leaveTeam.confirm": "Abandonar",
 	"actionButtons.editTeam": "Editar Equipo",
 	"actionButtons.manageRoster": "Manejar Miembros",
@@ -22,7 +20,6 @@
 	"roles.FLEX": "Flex",
 	"roles.SUB": "Suplente",
 	"roles.COACH": "Entrenador",
-	"forms.fields.teamTwitter": "Twitter del equipo",
 	"forms.fields.bio": "Bio",
 	"forms.fields.uploadImages": "Subir imágenes",
 	"forms.fields.uploadImages.pfp": "Imagen de perfil",
@@ -35,6 +32,5 @@
 	"validation.SHORT_CODE": "El código de invitación no tiene la longitud correcta. ¿Copiaste la URL completa?",
 	"validation.TEAM_FULL": "El equipo al que te intentas unir ya esta lleno.",
 	"validation.INVITE_CODE_WRONG": "El código de invitación es incorrecto.",
-	"validation.ALREADY_IN_DIFFERENT_TEAM": "Ya eres parte de otro equipo. Debes salir de este antes de entrar a otro.",
 	"validation.VALID": "¿Entrar a {{teamName}}?"
 }

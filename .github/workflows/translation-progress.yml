@@ -13,16 +13,24 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: oven-sh/setup-bun@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
         with:
-          bun-version: latest
+          node-version-file: ".nvmrc"
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: npm-
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: npm ci --ignore-scripts
 
       - name: Update translation progress issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          bun run check-translation-jsons
+          npm run check-translation-jsons
           gh issue edit 1104 --body-file ./translation-progress.md

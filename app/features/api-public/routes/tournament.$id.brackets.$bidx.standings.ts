@@ -2,7 +2,7 @@ import { type LoaderFunctionArgs, json } from "@remix-run/node";
 import { cors } from "remix-utils/cors";
 import { z } from "zod";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix";
+import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import {
 	handleOptionsRequest,

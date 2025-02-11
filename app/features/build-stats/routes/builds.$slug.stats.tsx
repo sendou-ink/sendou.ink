@@ -1,9 +1,5 @@
 import { cachified } from "@epic-web/cachified";
-import type {
-	LoaderFunctionArgs,
-	MetaFunction,
-	SerializeFrom,
-} from "@remix-run/node";
+import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Ability } from "~/components/Ability";
@@ -12,8 +8,10 @@ import { Main } from "~/components/Main";
 import { MAX_AP, ONE_HOUR_IN_MS } from "~/constants";
 import { i18next } from "~/modules/i18n/i18next.server";
 import { cache, ttl } from "~/utils/cache.server";
-import { type SendouRouteHandle, notFoundIfNullLike } from "~/utils/remix";
-import { makeTitle } from "~/utils/strings";
+import {
+	type SendouRouteHandle,
+	notFoundIfNullLike,
+} from "~/utils/remix.server";
 import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import {
 	BUILDS_PAGE,
@@ -26,13 +24,8 @@ import { averageAbilityPoints } from "../queries/averageAbilityPoints.server";
 
 import "../build-stats.css";
 
-export const meta: MetaFunction = (args) => {
-	const data = args.data as SerializeFrom<typeof loader> | null;
-
-	if (!data) return [];
-
-	return [{ title: data.meta.title }];
-};
+import { meta } from "../../builds/routes/builds.$slug";
+export { meta };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["weapons", "builds", "analyzer"],
@@ -62,10 +55,8 @@ export const handle: SendouRouteHandle = {
 };
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const t = await i18next.getFixedT(request, ["builds", "weapons", "common"]);
+	const t = await i18next.getFixedT(request, ["builds"]);
 	const weaponId = notFoundIfNullLike(weaponNameSlugToId(params.slug));
-
-	const weaponName = t(`weapons:MAIN_${weaponId}`);
 
 	const cachedStats = await cachified({
 		key: `build-stats-${weaponId}`,
@@ -84,11 +75,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		weaponId,
 		meta: {
 			slug: params.slug!,
-			title: makeTitle([
-				t("builds:linkButton.abilityStats"),
-				weaponName,
-				t("common:pages.builds"),
-			]),
 			breadcrumbText: t("builds:linkButton.abilityStats"),
 		},
 	};

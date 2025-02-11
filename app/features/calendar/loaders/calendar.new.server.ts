@@ -1,19 +1,16 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { tournamentData } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
-import { i18next } from "~/modules/i18n/i18next.server";
 import { canEditCalendarEvent } from "~/permissions";
-import { validate } from "~/utils/remix";
-import { makeTitle } from "~/utils/strings";
+import { validate } from "~/utils/remix.server";
 import { tournamentBracketsPage } from "~/utils/urls";
 import { canAddNewEvent } from "../calendar-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const t = await i18next.getFixedT(request);
 	const user = await requireUser(request);
 	const url = new URL(request.url);
 
@@ -71,7 +68,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		);
 	}
 
-	return json({
+	return {
+		isAddingTournament: Boolean(
+			url.searchParams.has("tournament") || url.searchParams.has("copyEventId"),
+		),
 		managedBadges: await BadgeRepository.findManagedByUserId(user.id),
 		recentEventsWithMapPools:
 			await CalendarRepository.findRecentMapPoolsByAuthorId(user.id),
@@ -84,9 +84,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			user.isTournamentOrganizer && !eventToEdit
 				? await CalendarRepository.findRecentTournamentsByAuthorId(user.id)
 				: undefined,
-		title: makeTitle([canEditEvent ? "Edit" : "New", t("pages.calendar")]),
 		organizations: await TournamentOrganizationRepository.findByOrganizerUserId(
 			user.id,
 		),
-	});
+	};
 };

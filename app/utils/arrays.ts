@@ -97,3 +97,14 @@ export function pickRandomItem<T>(array: T[]): T {
 export function filterOutFalsy<T>(arr: (T | null | undefined)[]): T[] {
 	return arr.filter(Boolean) as T[];
 }
+
+/**
+ * Calculates the average of an array of numbers. If the array is empty, returns null.
+ *
+ * @param values - An array of numbers to calculate the average of.
+ * @returns The average of the numbers in the array, or null if the array is empty.
+ */
+export function nullifyingAvg(values: number[]) {
+	if (values.length === 0) return null;
+	return values.reduce((acc, cur) => acc + cur, 0) / values.length;
+}

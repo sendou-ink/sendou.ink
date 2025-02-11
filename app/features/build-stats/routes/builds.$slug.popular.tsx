@@ -1,9 +1,5 @@
 import { cachified } from "@epic-web/cachified";
-import type {
-	LoaderFunctionArgs,
-	MetaFunction,
-	SerializeFrom,
-} from "@remix-run/node";
+import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
@@ -12,8 +8,10 @@ import { Main } from "~/components/Main";
 import { ONE_HOUR_IN_MS } from "~/constants";
 import { i18next } from "~/modules/i18n/i18next.server";
 import { cache, ttl } from "~/utils/cache.server";
-import { type SendouRouteHandle, notFoundIfNullLike } from "~/utils/remix";
-import { makeTitle } from "~/utils/strings";
+import {
+	type SendouRouteHandle,
+	notFoundIfNullLike,
+} from "~/utils/remix.server";
 import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import {
 	BUILDS_PAGE,
@@ -24,13 +22,8 @@ import {
 import { popularBuilds } from "../build-stats-utils";
 import { abilitiesByWeaponId } from "../queries/abilitiesByWeaponId.server";
 
-export const meta: MetaFunction = (args) => {
-	const data = args.data as SerializeFrom<typeof loader> | null;
-
-	if (!data) return [];
-
-	return [{ title: data.meta.title }];
-};
+import { meta } from "../../builds/routes/builds.$slug";
+export { meta };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["analyzer", "builds"],
@@ -60,11 +53,9 @@ export const handle: SendouRouteHandle = {
 };
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const t = await i18next.getFixedT(request, ["builds", "weapons", "common"]);
+	const t = await i18next.getFixedT(request, ["builds"]);
 	const slug = params.slug;
 	const weaponId = notFoundIfNullLike(weaponNameSlugToId(slug));
-
-	const weaponName = t(`weapons:MAIN_${weaponId}`);
 
 	const cachedPopularBuilds = await cachified({
 		key: `popular-builds-${weaponId}`,
@@ -80,11 +71,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		meta: {
 			weaponId,
 			slug: slug!,
-			title: makeTitle([
-				t("builds:linkButton.popularBuilds"),
-				weaponName,
-				t("common:pages.builds"),
-			]),
 			breadcrumbText: t("builds:linkButton.popularBuilds"),
 		},
 	};

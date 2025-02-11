@@ -18,9 +18,8 @@ import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { secondsToMinutes } from "~/utils/number";
-import { type SendouRouteHandle, notFoundIfFalsy } from "~/utils/remix";
-import { makeTitle } from "~/utils/strings";
+import { metaTags } from "~/utils/remix";
+import { type SendouRouteHandle, notFoundIfFalsy } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
 import {
 	VODS_PAGE,
@@ -33,7 +32,7 @@ import {
 import { PovUser } from "../components/VodPov";
 import { findVodById } from "../queries/findVodById.server";
 import type { Vod } from "../vods-types";
-import { canEditVideo } from "../vods-utils";
+import { canEditVideo, secondsToHoursMinutesSecondString } from "../vods-utils";
 
 import "../vods.css";
 
@@ -61,12 +60,15 @@ export const handle: SendouRouteHandle = {
 	},
 };
 
-export const meta: MetaFunction = (args) => {
-	const data = args.data as SerializeFrom<typeof loader> | null;
+export const meta: MetaFunction<typeof loader> = (args) => {
+	if (!args.data) return [];
 
-	if (!data) return [];
-
-	return [{ title: makeTitle(data.vod.title) }];
+	return metaTags({
+		title: args.data.vod.title,
+		description:
+			"Splatoon 3 VoD with timestamps to check out specific weapons as well as map and mode combinations.",
+		location: args.location,
+	});
 };
 
 export const loader = ({ params }: LoaderFunctionArgs) => {
@@ -240,7 +242,7 @@ function Match({
 				onClick={() => setStart(match.startsAt)}
 				variant="outlined"
 			>
-				{secondsToMinutes(match.startsAt)}
+				{secondsToHoursMinutesSecondString(match.startsAt)}
 			</Button>
 		</div>
 	);

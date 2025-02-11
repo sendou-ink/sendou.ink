@@ -65,5 +65,8 @@
 	"tag.desc.S1": "The game played is Splatoon 1.",
 	"tag.desc.S2": "The game played is Splatoon 2.",
 	"tag.desc.SR": "Salmon Run event.",
-	"tag.desc.CARDS": "Tableturf Battle event."
+	"tag.desc.CARDS": "Tableturf Battle event.",
+	"tag.filter.label": "Filter by tags",
+
+	"tournament.filter.label": "Hosted on sendou.ink"
 }

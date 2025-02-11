@@ -34,7 +34,6 @@
 	"auth.errors.aborted": "Login Abortado",
 	"auth.errors.failed": "Login Falhou",
 	"auth.errors.discordPermissions": "Para o seu perfil do sendou.ink, o site precisa de acesso ao nome do perfil do seu Discord, incluindo também o avatar e conexões sociais.",
-	"auth.errors.unknown": "A sua conta do Discord possui um endereço de e-mail verificado? Para obter ajuda por favor entre em contato conosco (em inglês) pelo canal #helpdesk no nosso Discord:",
 
 	"footer.github.subtitle": "Código fonte",
 	"footer.discord.subtitle": "Ajuda e Feedback",
@@ -136,11 +135,8 @@
 	"weapon.category.subs": "Armas secundárias",
 	"weapon.category.specials": "Especiais",
 
-	"plans.poweredBy": "Distribuído por {{name}}",
 	"plans.blueprint": "Planta",
 	"plans.bgStyle.OVER": "Visão aérea",
-	"plans.bgStyle.MINI": "Minimapa (vazio)",
-	"plans.bgStyle.ITEMS": "Minimapa",
 
 	"articles.by": "por/pela {{author}}",
 
@@ -220,9 +216,5 @@
 	"chat.systemMsg.cancelConfirmed": "{{name}} confirmou o cancelamento da partida. A partida foi trancada",
 	"chat.systemMsg.userLeft": "{{name}} deixou o grupo",
 
-	"fc.title": "Código de amigo",
-
-	"showcase.register": "Cadastrar-se",
-	"showcase.bracket": "Bracket",
-	"showcase.liveNow": "Ao vivo agora!"
+	"fc.title": "Código de amigo"
 }

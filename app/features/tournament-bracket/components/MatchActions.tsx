@@ -6,6 +6,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { EditIcon } from "~/components/icons/Edit";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import { resolveLeagueRoundStartDate } from "~/features/tournament/tournament-utils";
 import invariant from "~/utils/invariant";
 import * as PickBan from "../core/PickBan";
 import type { TournamentDataTeam } from "../core/Tournament.server";
@@ -41,12 +42,26 @@ export function MatchActions({
 	>(() => {
 		if (result) {
 			return [
-				result.participantIds.filter((id) =>
-					teams[0].members.some((member) => member.userId === id),
-				),
-				result.participantIds.filter((id) =>
-					teams[1].members.some((member) => member.userId === id),
-				),
+				result.participants
+					.filter((participant) =>
+						teams[0].members.some(
+							(member) =>
+								member.userId === participant.userId &&
+								(!participant.tournamentTeamId ||
+									teams[0].id === participant.tournamentTeamId),
+						),
+					)
+					.map((p) => p.userId),
+				result.participants
+					.filter((participant) =>
+						teams[1].members.some(
+							(member) =>
+								member.userId === participant.userId &&
+								(!participant.tournamentTeamId ||
+									teams[1].id === participant.tournamentTeamId),
+						),
+					)
+					.map((p) => p.userId),
 			];
 		}
 
@@ -136,6 +151,7 @@ export function MatchActions({
 					<input type="hidden" name="position" value={position} />
 					{!revising && (
 						<ReportScoreButtons
+							key={scores.join("-")}
 							winnerIdx={winnerId ? winningTeamIdx() : undefined}
 							points={showPoints ? points : undefined}
 							winnerOfSetName={winnerOfSetName()}
@@ -208,10 +224,25 @@ function ReportScoreButtons({
 	matchLocked: boolean;
 	newScore: [number, number];
 }) {
+	const data = useLoaderData<TournamentMatchLoaderData>();
 	const user = useUser();
 	const tournament = useTournament();
 	const confirmCheckId = React.useId();
+	const pointConfirmCheckId = React.useId();
 	const [endConfirmation, setEndConfirmation] = React.useState(false);
+	const [pointConfirmation, setPointConfirmation] = React.useState(false);
+
+	const leagueRoundStartDate = resolveLeagueRoundStartDate(
+		tournament,
+		data.match.roundId,
+	);
+	if (leagueRoundStartDate && leagueRoundStartDate > new Date()) {
+		return (
+			<p className="tournament-bracket__during-match-actions__amount-warning-paragraph">
+				League round has not started yet
+			</p>
+		);
+	}
 
 	if (matchLocked) {
 		return (
@@ -263,12 +294,21 @@ function ReportScoreButtons({
 		return "text-warning";
 	};
 
+	const lowPoints = points?.every((point) => point < 10);
+	const submitButtonDisabled = () => {
+		if (wouldEndSet && !endConfirmation) return true;
+		if (lowPoints && !pointConfirmation) return true;
+
+		return false;
+	};
+
 	return (
 		<div className="stack md items-center">
 			{wouldEndSet ? (
 				<div className="stack horizontal sm items-center">
 					<input
 						type="checkbox"
+						checked={endConfirmation}
 						onChange={(e) => setEndConfirmation(e.target.checked)}
 						id={confirmCheckId}
 						data-testid="end-confirmation"
@@ -281,11 +321,25 @@ function ReportScoreButtons({
 					</Label>
 				</div>
 			) : null}
+			{lowPoints ? (
+				<div className="stack horizontal sm items-center">
+					<input
+						type="checkbox"
+						checked={pointConfirmation}
+						onChange={(e) => setPointConfirmation(e.target.checked)}
+						id={pointConfirmCheckId}
+					/>
+					<Label spaced={false} htmlFor={pointConfirmCheckId}>
+						Confirm reporting of low score value (
+						{points!.map((p) => `${p}p`).join(" & ")})
+					</Label>
+				</div>
+			) : null}
 			<SubmitButton
 				size="tiny"
 				_action="REPORT_SCORE"
 				testId="report-score-button"
-				disabled={wouldEndSet && !endConfirmation}
+				disabled={submitButtonDisabled()}
 			>
 				{wouldEndSet ? "Report & end set" : "Report"}
 			</SubmitButton>
@@ -314,13 +368,13 @@ function EditScoreForm({
 		return (
 			<fetcher.Form
 				method="post"
-				className="stack horizontal md justify-center"
+				className="stack horizontal md justify-center mt-6"
 			>
 				<input type="hidden" name="resultId" value={resultId} />
 				<input
 					type="hidden"
 					name="rosters"
-					value={JSON.stringify(checkedPlayers.flat())}
+					value={JSON.stringify(checkedPlayers)}
 				/>
 				{points ? (
 					<input type="hidden" name="points" value={JSON.stringify(points)} />

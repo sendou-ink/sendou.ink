@@ -7,6 +7,8 @@
 	"gameCount": "Game {{count}}",
 	"minShort": "min",
 	"secShort": "sec",
+	"forms.title.create": "Adding a new VoD",
+	"forms.title.edit": "Editing a VoD",
 	"forms.title.youtubeUrl": "YouTube URL",
 	"forms.title.videoTitle": "Video title",
 	"forms.title.videoDate": "Video date",
@@ -21,7 +23,6 @@
 	"forms.action.addMatch": "Add match",
 	"forms.action.deleteMatch": "Delete match",
 	"noVods": "No videos found matching this filter. Are we missing something? Message Sendou on Discord to get YouTube video submission permissions.",
-	"addVod": "Add video",
 	"gainPerms": "Please post on the helpdesk of our Discord to gain permissions to upload videos.",
 	"deleteConfirm": "Delete video with the title '{{title}}'?"
 }

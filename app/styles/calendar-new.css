@@ -28,16 +28,3 @@
 	height: 124px;
 	border-radius: 100%;
 }
-
-.calendar-new__avatar-preview__small {
-	width: 32px;
-	height: 32px;
-	border-radius: 100%;
-}
-
-.calendar-new__showcase-preview {
-	border-radius: var(--rounded);
-	padding: var(--s-4);
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
-}

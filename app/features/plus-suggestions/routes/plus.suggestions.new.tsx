@@ -34,7 +34,7 @@ import {
 	badRequestIfFalsy,
 	parseRequestPayload,
 	validate,
-} from "~/utils/remix";
+} from "~/utils/remix.server";
 import { plusSuggestionPage } from "~/utils/urls";
 import { actualNumber, trimmedString } from "~/utils/zod";
 import type { PlusSuggestionsLoaderData } from "./plus.suggestions";
@@ -90,7 +90,7 @@ export const action: ActionFunction = async ({ request }) => {
 		...votingMonthYear,
 	});
 
-	throw redirect(plusSuggestionPage(data.tier));
+	throw redirect(plusSuggestionPage({ tier: data.tier }));
 };
 
 export default function PlusNewSuggestionModalPage() {
@@ -121,7 +121,7 @@ export default function PlusNewSuggestionModalPage() {
 		}) ||
 		!targetPlusTier
 	) {
-		return <Redirect to={plusSuggestionPage()} />;
+		return <Redirect to={plusSuggestionPage({ showAlert: true })} />;
 	}
 
 	const selectedUserErrorMessage = getSelectedUserErrorMessage({

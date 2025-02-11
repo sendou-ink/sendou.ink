@@ -122,11 +122,8 @@
 	"weapon.category.subs": "Sekundære våben",
 	"weapon.category.specials": "Specialvåben",
 
-	"plans.poweredBy": "Tegneprogrammet er leveret af {{name}}",
 	"plans.blueprint": "Blåtryk",
 	"plans.bgStyle.OVER": "Set ovenfra",
-	"plans.bgStyle.MINI": "Kort (blankt)",
-	"plans.bgStyle.ITEMS": "Kort",
 
 	"articles.by": "af {{author}}",
 

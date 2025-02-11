@@ -1,6 +1,6 @@
 import { type ActionFunctionArgs, redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
-import { badRequestIfFalsy, unauthorizedIfFalsy } from "~/utils/remix";
+import { badRequestIfFalsy, unauthorizedIfFalsy } from "~/utils/remix.server";
 import { userVodsPage } from "~/utils/urls";
 import * as VodRepository from "../VodRepository.server";
 import { findVodById } from "../queries/findVodById.server";

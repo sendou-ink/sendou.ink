@@ -54,7 +54,9 @@
 }
 
 .lfg__post-text {
+	word-wrap: break-word;
 	white-space: pre-wrap;
+	word-break: break-word;
 }
 
 .lfg__post-text-cut {

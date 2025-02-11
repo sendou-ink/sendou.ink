@@ -42,6 +42,10 @@
 	color: var(--text-lighter) !important;
 }
 
+.text-theme-transparent {
+	color: var(--theme-transparent);
+}
+
 .text-error {
 	color: var(--theme-error);
 }
@@ -92,6 +96,10 @@
 
 .fill-error {
 	fill: var(--theme-error);
+}
+
+.fill-info {
+	fill: var(--theme-info);
 }
 
 .bg-transparent-important {
@@ -160,6 +168,14 @@
 
 .w-min {
 	width: min-content;
+}
+
+.p-1 {
+	padding: var(--s-1);
+}
+
+.p-1-5 {
+	padding: var(--s-1-5);
 }
 
 .px-4 {
@@ -279,7 +295,11 @@
 }
 
 .mx-auto {
-	margin: 0 auto;
+	margin-inline: auto;
+}
+
+.mx-1 {
+	margin-inline: var(--s-1);
 }
 
 .mx-2 {
@@ -328,6 +348,16 @@
 
 .overflow-x-auto {
 	overflow-x: auto;
+	scrollbar-color: rgb(83 65 91) transparent;
+	scrollbar-width: thin;
+	scrollbar-gutter: stable;
+}
+
+.overflow-x-scroll {
+	overflow-x: scroll;
+	scrollbar-color: rgb(83 65 91) transparent;
+	scrollbar-width: thin;
+	scrollbar-gutter: stable;
 }
 
 .relative {
@@ -404,6 +434,11 @@
 
 .outline-theme:focus {
 	outline: 2px solid var(--theme);
+}
+
+.focus-text-decoration:focus-visible {
+	outline: none !important;
+	text-decoration: underline;
 }
 
 .label-no-spacing {

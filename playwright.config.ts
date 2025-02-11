@@ -37,8 +37,7 @@ const config: PlaywrightTestConfig = {
 		/* Base URL to use in actions like `await page.goto('/')`. */
 		baseURL: "http://localhost:5173",
 
-		// disabled because https://github.com/microsoft/playwright/issues/27048
-		trace: "off",
+		trace: "retain-on-failure",
 
 		permissions: ["clipboard-read"],
 	},

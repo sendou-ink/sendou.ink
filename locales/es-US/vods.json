@@ -21,7 +21,6 @@
 	"forms.action.addMatch": "Agregar partido",
 	"forms.action.deleteMatch": "Borrar partido",
 	"noVods": "No se encuentran vídeos con este filtro. ¿Cometimos un error? Envía mensaje a Sendou en Discord para obtener permiso de subir videos de YouTube.",
-	"addVod": "Añadir video",
 	"gainPerms": "Por favor envia un mensaje en el 'helpdesk' de nuestro Discord para obtener permiso para subir videos.",
 	"deleteConfirm": "¿Borrar video con el título de '{{title}}'?"
 }

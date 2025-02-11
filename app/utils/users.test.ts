@@ -1,11 +1,4 @@
-import {
-	afterEach,
-	beforeEach,
-	describe,
-	expect,
-	setSystemTime,
-	test,
-} from "bun:test";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { queryToUserIdentifier, userDiscordIdIsAged } from "./users";
 
 describe("queryToUserIdentifier()", () => {
@@ -48,11 +41,12 @@ describe("queryToUserIdentifier()", () => {
 
 describe("userDiscordIdIsAged()", () => {
 	beforeEach(() => {
-		setSystemTime(new Date("2023-11-25T00:00:00.000Z"));
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2023-11-25T00:00:00.000Z"));
 	});
 
 	afterEach(() => {
-		setSystemTime();
+		vi.useRealTimers();
 	});
 
 	test("returns false if discord id is not aged", () => {

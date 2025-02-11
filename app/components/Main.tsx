@@ -1,9 +1,4 @@
-import {
-	isRouteErrorResponse,
-	useLocation,
-	useRouteError,
-} from "@remix-run/react";
-import { SideNav } from "app/components/layout/SideNav";
+import { isRouteErrorResponse, useRouteError } from "@remix-run/react";
 import clsx from "clsx";
 import type * as React from "react";
 import { useUser } from "~/features/auth/core/user";
@@ -30,12 +25,8 @@ export const Main = ({
 		!user?.patronTier &&
 		!isRouteErrorResponse(error);
 
-	const location = useLocation();
-	const isFrontPage = location.pathname === "/";
-
 	return (
 		<div className="layout__main-container">
-			{!isFrontPage ? <SideNav /> : null}
 			<main
 				className={
 					classNameOverwrite

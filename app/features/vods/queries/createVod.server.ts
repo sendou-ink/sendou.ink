@@ -1,7 +1,15 @@
 import { sql } from "~/db/sql";
 import type { Video } from "~/db/types";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import {
+	dateToDatabaseTimestamp,
+	dayMonthYearToDatabaseTimestamp,
+} from "~/utils/dates";
+import invariant from "~/utils/invariant";
 import type { VideoBeingAdded } from "../vods-types";
+import {
+	extractYoutubeIdFromVideoUrl,
+	hoursMinutesSecondsStringToSeconds,
+} from "../vods-utils";
 
 const createVideoStm = sql.prepare(/* sql */ `
   insert into "UnvalidatedVideo"
@@ -39,13 +47,16 @@ export const createVod = sql.transaction(
 			id?: number;
 		},
 	) => {
+		const youtubeId = extractYoutubeIdFromVideoUrl(args.youtubeUrl);
+		invariant(youtubeId, "Invalid YouTube URL");
+
 		const video = createVideoStm.get({
 			id: args.id ?? null,
 			title: args.title,
 			type: args.type,
-			youtubeDate: args.youtubeDate,
+			youtubeDate: dayMonthYearToDatabaseTimestamp(args.date),
 			eventId: args.eventId ?? null,
-			youtubeId: args.youtubeId,
+			youtubeId,
 			submitterUserId: args.submitterUserId,
 			validatedAt: args.isValidated
 				? dateToDatabaseTimestamp(new Date())
@@ -55,7 +66,7 @@ export const createVod = sql.transaction(
 		for (const match of args.matches) {
 			const videoMatch = createVideoMatchStm.get({
 				videoId: video.id,
-				startsAt: match.startsAt,
+				startsAt: hoursMinutesSecondsStringToSeconds(match.startsAt),
 				stageId: match.stageId,
 				mode: match.mode,
 			}) as any;
@@ -63,8 +74,8 @@ export const createVod = sql.transaction(
 			for (const [i, weaponSplId] of match.weapons.entries()) {
 				createVideoMatchPlayerStm.run({
 					videoMatchId: videoMatch.id,
-					playerUserId: args.povUserId ?? null,
-					playerName: args.povUserName ?? null,
+					playerUserId: args.pov?.type === "USER" ? args.pov.userId : null,
+					playerName: args.pov?.type === "NAME" ? args.pov.name : null,
 					weaponSplId,
 					player: i + 1,
 				});

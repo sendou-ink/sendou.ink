@@ -124,11 +124,8 @@
 	"weapon.category.subs": "서브",
 	"weapon.category.specials": "스페셜",
 
-	"plans.poweredBy": "Powered by {{name}}",
 	"plans.blueprint": "Blueprint",
 	"plans.bgStyle.OVER": "전체",
-	"plans.bgStyle.MINI": "미니맵 (간단)",
-	"plans.bgStyle.ITEMS": "미니맵",
 
 	"articles.by": "{{author}} 작성",
 

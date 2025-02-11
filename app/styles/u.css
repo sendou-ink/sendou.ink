@@ -18,10 +18,11 @@
 
 .u__team {
 	display: flex;
-	color: var(--text-lighter);
 	font-weight: var(--bold);
+	color: var(--text);
 	gap: var(--s-1-5);
 	grid-area: team;
+	align-items: center;
 }
 
 .u__name {
@@ -69,15 +70,6 @@
 	fill: #f00;
 }
 
-.u__social-link.twitter {
-	border-color: #1da1f2;
-	background-color: #1da0f22f;
-}
-
-.u__social-link.twitter > svg {
-	fill: #1da1f2;
-}
-
 .u__social-link.twitch {
 	border-color: #9146ff;
 	background-color: #9146ff2f;
@@ -94,6 +86,17 @@
 
 .u__social-link.battlefy > svg {
 	fill: #de4c5e;
+}
+
+.u__social-link.bsky {
+	border-color: #1285fe;
+	background-color: #1285fe2f;
+	display: grid;
+	place-items: center;
+}
+
+.u__social-link.bsky path {
+	fill: #1285fe;
 }
 
 .u__extra-infos {
@@ -412,6 +415,8 @@
 	margin-top: -8px;
 	display: flex;
 	gap: var(--s-1);
+	align-items: center;
+	line-height: 1.3;
 }
 
 .u__season__tentative__explanation {

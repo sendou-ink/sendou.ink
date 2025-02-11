@@ -1,3 +1,4 @@
+import { sub } from "date-fns";
 import { sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { nanoid } from "nanoid";
@@ -8,7 +9,7 @@ import type {
 	TablesInsertable,
 	UserMapModePreferences,
 } from "~/db/tables";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { userIsBanned } from "../ban/core/banned.server";
 import type { LookingGroupWithInviteCode } from "./q-types";
@@ -278,33 +279,115 @@ export function deletePrivateUserNote({
 }
 
 export async function usersThatTrusted(userId: number) {
+	const teams = await db
+		.selectFrom("TeamMemberWithSecondary")
+		.innerJoin("Team", "Team.id", "TeamMemberWithSecondary.teamId")
+		.select(["Team.id", "Team.name", "TeamMemberWithSecondary.isMainTeam"])
+		.where("userId", "=", userId)
+		.execute();
+
 	const rows = await db
-		.selectFrom("TeamMember")
-		.innerJoin("User", "User.id", "TeamMember.userId")
+		.selectFrom("TeamMemberWithSecondary")
+		.innerJoin("User", "User.id", "TeamMemberWithSecondary.userId")
 		.innerJoin("UserFriendCode", "UserFriendCode.userId", "User.id")
-		.select([...COMMON_USER_FIELDS, "User.inGameName"])
-		.where((eb) =>
-			eb(
-				"TeamMember.teamId",
-				"=",
-				eb
-					.selectFrom("TeamMember")
-					.select("TeamMember.teamId")
-					.where("TeamMember.userId", "=", userId),
-			),
+		.select([
+			...COMMON_USER_FIELDS,
+			"User.inGameName",
+			"TeamMemberWithSecondary.teamId",
+		])
+		.where(
+			"TeamMemberWithSecondary.teamId",
+			"in",
+			teams.map((t) => t.id),
 		)
 		.union((eb) =>
 			eb
 				.selectFrom("TrustRelationship")
 				.innerJoin("User", "User.id", "TrustRelationship.trustGiverUserId")
 				.innerJoin("UserFriendCode", "UserFriendCode.userId", "User.id")
-				.select([...COMMON_USER_FIELDS, "User.inGameName"])
+				.select([
+					...COMMON_USER_FIELDS,
+					"User.inGameName",
+					sql.raw<any>("null").as("teamId"),
+				])
 				.where("TrustRelationship.trustReceiverUserId", "=", userId),
 		)
-		.orderBy("User.username asc")
 		.execute();
 
 	const rowsWithoutBanned = rows.filter((row) => !userIsBanned(row.id));
 
-	return rowsWithoutBanned;
+	const teamMemberIds = rowsWithoutBanned
+		.filter((row) => row.teamId)
+		.map((row) => row.id);
+
+	// we want user to show twice if member of two different teams
+	// but we don't want a user from the team to show in teamless section
+	const deduplicatedRows = rowsWithoutBanned.filter(
+		(row) => row.teamId || !teamMemberIds.includes(row.id),
+	);
+
+	// done here at not sql just because it was easier to do here ignoring case
+	deduplicatedRows.sort((a, b) => a.username.localeCompare(b.username));
+
+	return {
+		teams: teams.sort((a, b) => b.isMainTeam - a.isMainTeam),
+		trusters: deduplicatedRows,
+	};
+}
+
+/** Update the timestamp of the trust relationship, delaying its automatic deletion */
+export async function refreshTrust({
+	trustGiverUserId,
+	trustReceiverUserId,
+}: {
+	trustGiverUserId: number;
+	trustReceiverUserId: number;
+}) {
+	return db
+		.updateTable("TrustRelationship")
+		.set({ lastUsedAt: databaseTimestampNow() })
+		.where("trustGiverUserId", "=", trustGiverUserId)
+		.where("trustReceiverUserId", "=", trustReceiverUserId)
+		.execute();
+}
+
+export async function deleteOldTrust() {
+	const twoMonthsAgo = sub(new Date(), { months: 2 });
+
+	return db
+		.deleteFrom("TrustRelationship")
+		.where("lastUsedAt", "<", dateToDatabaseTimestamp(twoMonthsAgo))
+		.executeTakeFirst();
+}
+
+export async function setOldGroupsAsInactive() {
+	const oneHourAgo = sub(new Date(), { hours: 1 });
+
+	return db.transaction().execute(async (trx) => {
+		const groupsToSetInactive = await trx
+			.selectFrom("Group")
+			.leftJoin("GroupMatch", (join) =>
+				join.on((eb) =>
+					eb.or([
+						eb("GroupMatch.alphaGroupId", "=", eb.ref("Group.id")),
+						eb("GroupMatch.bravoGroupId", "=", eb.ref("Group.id")),
+					]),
+				),
+			)
+			.select(["Group.id"])
+			.where("status", "!=", "INACTIVE")
+			.where("GroupMatch.id", "is", null)
+			.where("latestActionAt", "<", dateToDatabaseTimestamp(oneHourAgo))
+			.execute();
+
+		return trx
+			.updateTable("Group")
+			.set({ status: "INACTIVE" })
+			.where(
+				"Group.id",
+				"in",
+				groupsToSetInactive.map((g) => g.id),
+			)
+			.executeTakeFirst();
+	});
 }

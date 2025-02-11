@@ -7,6 +7,7 @@ import type {
 	User,
 	UserWithPlusTier,
 } from "./db/types";
+import { currentSeason, nextSeason } from "./features/mmr/season";
 import { isVotingActive } from "./features/plus-voting/core";
 import type { FindMatchById } from "./features/tournament-bracket/queries/findMatchById.server";
 import { allTruthy } from "./utils/arrays";
@@ -178,10 +179,13 @@ export function canSuggestNewUserFE({
 	const votingActive =
 		process.env.NODE_ENV === "test" ? false : isVotingActive();
 
+	const existsSeason = currentSeason(new Date()) || nextSeason(new Date());
+
 	return allTruthy([
 		!votingActive,
 		!hasUserSuggestedThisMonth({ user, suggestions }),
 		isPlusServerMember(user),
+		existsSeason,
 	]);
 }
 

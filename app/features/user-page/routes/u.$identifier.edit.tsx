@@ -18,7 +18,6 @@ import { WeaponImage } from "~/components/Image";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
-import { Toggle } from "~/components/Toggle";
 import { StarIcon } from "~/components/icons/Star";
 import { StarFilledIcon } from "~/components/icons/StarFilled";
 import { TrashIcon } from "~/components/icons/Trash";
@@ -33,17 +32,20 @@ import type { MainWeaponId } from "~/modules/in-game-lists";
 import { canAddCustomizedColorsToUserProfile } from "~/permissions";
 import { translatedCountry } from "~/utils/i18n.server";
 import invariant from "~/utils/invariant";
-import { notFoundIfFalsy, safeParseRequestFormData } from "~/utils/remix";
+import {
+	notFoundIfFalsy,
+	safeParseRequestFormData,
+} from "~/utils/remix.server";
 import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
 import { rawSensToString } from "~/utils/strings";
 import { FAQ_PAGE, isCustomUrl, userPage } from "~/utils/urls";
 import {
 	actualNumber,
 	checkboxValueToDbBoolean,
+	customCssVarObject,
 	dbBoolean,
 	falsyToNull,
 	id,
-	jsonParseable,
 	processMany,
 	safeJSONParse,
 	undefinedToNull,
@@ -51,10 +53,10 @@ import {
 } from "~/utils/zod";
 import { userParamsSchema } from "../user-page-schemas.server";
 import type { UserPageLoaderData } from "./u.$identifier";
-
 import "~/styles/u-edit.css";
+import { SendouSwitch } from "~/components/elements/Switch";
 
-const userEditActionSchema = z
+export const userEditActionSchema = z
 	.object({
 		country: z.preprocess(
 			falsyToNull,
@@ -85,7 +87,12 @@ const userEditActionSchema = z
 		),
 		customName: z.preprocess(
 			falsyToNull,
-			z.string().trim().max(USER.CUSTOM_NAME_MAX_LENGTH).nullable(),
+			z
+				.string()
+				.trim()
+				.regex(USER.CUSTOM_NAME_REGEXP)
+				.max(USER.CUSTOM_NAME_MAX_LENGTH)
+				.nullable(),
 		),
 		battlefy: z.preprocess(
 			falsyToNull,
@@ -120,7 +127,7 @@ const userEditActionSchema = z
 				.refine((val) => /^[0-9a-z]{4,5}$/.test(val))
 				.nullable(),
 		),
-		css: z.preprocess(falsyToNull, z.string().refine(jsonParseable).nullable()),
+		css: customCssVarObject,
 		weapons: z.preprocess(
 			safeJSONParse,
 			z
@@ -279,7 +286,7 @@ export default function UserEditPage() {
 				)}
 				<FormMessage type="info">
 					<Trans i18nKey={"user:discordExplanation"} t={t}>
-						Username, profile picture, YouTube, Twitter and Twitch accounts come
+						Username, profile picture, YouTube, Bluesky and Twitch accounts come
 						from your Discord account. See <Link to={FAQ_PAGE}>FAQ</Link> for
 						more information.
 					</Trans>
@@ -308,6 +315,7 @@ function CustomUrlInput({
 				maxLength={USER.CUSTOM_URL_MAX_LENGTH}
 				defaultValue={parentRouteData.user.customUrl ?? undefined}
 			/>
+			<FormMessage type="info">{t("user:forms.info.customUrl")}</FormMessage>
 		</div>
 	);
 }
@@ -615,9 +623,9 @@ function ShowUniqueDiscordNameToggle() {
 			<label htmlFor="showDiscordUniqueName">
 				{t("user:forms.showDiscordUniqueName")}
 			</label>
-			<Toggle
-				checked={checked}
-				setChecked={setChecked}
+			<SendouSwitch
+				isSelected={checked}
+				onChange={setChecked}
 				name="showDiscordUniqueName"
 			/>
 			<FormMessage type="info">
@@ -642,9 +650,9 @@ function CommissionsOpenToggle({
 	return (
 		<div>
 			<label htmlFor="commissionsOpen">{t("user:forms.commissionsOpen")}</label>
-			<Toggle
-				checked={checked}
-				setChecked={setChecked}
+			<SendouSwitch
+				isSelected={checked}
+				onChange={setChecked}
 				name="commissionsOpen"
 			/>
 		</div>

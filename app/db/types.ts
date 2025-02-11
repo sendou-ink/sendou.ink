@@ -1,6 +1,9 @@
-import type { tags } from "~/features/calendar/calendar-constants";
+import type {
+	persistedTags,
+	tags,
+} from "~/features/calendar/calendar-constants";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
-import type { TEAM_MEMBER_ROLES } from "~/features/team";
+import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
 import type {
 	Ability,
 	MainWeaponId,
@@ -20,7 +23,6 @@ export interface User {
 	discordUniqueName: string | null;
 	showDiscordUniqueName: number;
 	twitch: string | null;
-	twitter: string | null;
 	youtubeId: string | null;
 	bio: string | null;
 	css: string | null;
@@ -135,6 +137,7 @@ export interface CalendarEvent {
 	tournamentId: number | null;
 }
 
+export type PersistedCalendarEventTag = keyof typeof persistedTags;
 export type CalendarEventTag = keyof typeof tags;
 
 export interface CalendarEventDate {
@@ -415,7 +418,6 @@ export interface Team {
 	customUrl: string;
 	inviteCode: string;
 	css: string | null;
-	twitter: string | null;
 	bio: string | null;
 	avatarImgId: number | null;
 	bannerImgId: number | null;

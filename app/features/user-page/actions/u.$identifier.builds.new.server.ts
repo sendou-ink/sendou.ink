@@ -18,7 +18,7 @@ import type {
 import { removeDuplicates } from "~/utils/arrays";
 import { unJsonify } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
-import { parseRequestPayload, validate } from "~/utils/remix";
+import { parseRequestPayload, validate } from "~/utils/remix.server";
 import type { Nullish } from "~/utils/types";
 import { userBuildsPage } from "~/utils/urls";
 import {

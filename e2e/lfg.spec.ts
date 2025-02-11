@@ -11,14 +11,15 @@ test.describe("LFG", () => {
 			url: LFG_PAGE,
 		});
 
-		await page.getByTestId("add-new-button").click();
+		await page.getByTestId("anything-adder-menu-button").click();
+		await page.getByTestId("menu-item-lfgPost").click();
 
 		await page.getByLabel("Text").fill("looking for a cool team");
 
 		await submit(page);
 
 		// got redirected
-		await expect(page.getByTestId("add-new-button")).toBeVisible();
+		await expect(page.getByTestId("add-filter-button")).toBeVisible();
 		await expect(page.getByText("looking for a cool team")).toBeVisible();
 	});
 });

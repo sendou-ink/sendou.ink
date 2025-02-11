@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { z } from "zod";
 import { getUser } from "~/features/auth/core/user.server";
-import { parseSafeSearchParams } from "~/utils/remix";
+import { parseSafeSearchParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import { eventLeaderboards } from "../core/leaderboards.server";

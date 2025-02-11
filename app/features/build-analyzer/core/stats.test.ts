@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { type MainWeaponId, mainWeaponIds } from "~/modules/in-game-lists";
 import { damageTypeToWeaponType } from "../analyzer-constants";
 import { buildStats } from "./stats";

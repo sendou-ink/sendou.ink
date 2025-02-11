@@ -1,6 +1,7 @@
-import { describe, expect, test } from "bun:test";
 import { ordinal, rating } from "openskill";
+import { describe, expect, test } from "vitest";
 import invariant from "~/utils/invariant";
+import type { Tables } from "../../../db/tables";
 import type { AllMatchResult } from "../queries/allMatchResultsByTournamentId.server";
 import type { TournamentDataTeam } from "./Tournament.server";
 import { tournamentSummary } from "./summarizer.server";
@@ -14,6 +15,8 @@ describe("tournamentSummary()", () => {
 		createdAt: 0,
 		id: teamId,
 		inviteCode: null,
+		avgSeedingSkillOrdinal: null,
+		startingBracketIdx: null,
 		mapPool: [],
 		members: userIds.map((userId) => ({
 			country: null,
@@ -38,12 +41,23 @@ describe("tournamentSummary()", () => {
 		pickupAvatarUrl: null,
 	});
 
-	function summarize({ results }: { results?: AllMatchResult[] } = {}) {
+	function summarize({
+		results,
+		seedingSkillCountsFor,
+		withMemberInTwoTeams = false,
+	}: {
+		results?: AllMatchResult[];
+		seedingSkillCountsFor?: Tables["SeedingSkill"]["type"];
+		withMemberInTwoTeams?: boolean;
+	} = {}) {
 		return tournamentSummary({
 			finalStandings: [
 				{
 					placement: 1,
-					team: createTeam(1, [1, 2, 3, 4]),
+					team: createTeam(
+						1,
+						withMemberInTwoTeams ? [1, 2, 3, 4, 5] : [1, 2, 3, 4],
+					),
 				},
 				{
 					placement: 2,
@@ -64,13 +78,31 @@ describe("tournamentSummary()", () => {
 						{
 							mode: "SZ",
 							stageId: 1,
-							userIds: [1, 2, 3, 4, 5, 6, 7, 8],
+							participants: [
+								{ tournamentTeamId: 1, userId: 1 },
+								{ tournamentTeamId: 1, userId: 2 },
+								{ tournamentTeamId: 1, userId: 3 },
+								{ tournamentTeamId: 1, userId: 4 },
+								{ tournamentTeamId: 2, userId: 5 },
+								{ tournamentTeamId: 2, userId: 6 },
+								{ tournamentTeamId: 2, userId: 7 },
+								{ tournamentTeamId: 2, userId: 8 },
+							],
 							winnerTeamId: 1,
 						},
 						{
 							mode: "TC",
 							stageId: 2,
-							userIds: [1, 2, 3, 4, 5, 6, 7, 8],
+							participants: [
+								{ tournamentTeamId: 1, userId: 1 },
+								{ tournamentTeamId: 1, userId: 2 },
+								{ tournamentTeamId: 1, userId: 3 },
+								{ tournamentTeamId: 1, userId: 4 },
+								{ tournamentTeamId: 2, userId: 5 },
+								{ tournamentTeamId: 2, userId: 6 },
+								{ tournamentTeamId: 2, userId: 7 },
+								{ tournamentTeamId: 2, userId: 8 },
+							],
 							winnerTeamId: 1,
 						},
 					],
@@ -123,11 +155,23 @@ describe("tournamentSummary()", () => {
 			queryCurrentTeamRating: () => rating(),
 			queryCurrentUserRating: () => rating(),
 			queryTeamPlayerRatingAverage: () => rating(),
+			queryCurrentSeedingRating: () => rating(),
+			seedingSkillCountsFor: seedingSkillCountsFor ?? null,
 		});
 	}
 
 	test("calculates final standings", () => {
 		const summary = summarize();
+		expect(summary.tournamentResults.length).toBe(4 * 4);
+	});
+
+	test("calculates final standings, handling a player in two teams", () => {
+		const summary = summarize({ withMemberInTwoTeams: true });
+		expect(
+			summary.tournamentResults.some(
+				(result) => result.tournamentTeamId === 1 && result.userId === 5,
+			),
+		).toBeTruthy();
 		expect(summary.tournamentResults.length).toBe(4 * 4);
 	});
 
@@ -141,19 +185,62 @@ describe("tournamentSummary()", () => {
 		expect(ordinal(winnerSkill)).toBeGreaterThan(ordinal(loserSkill));
 	});
 
+	test("seeding skill is calculated the same as normal skill", () => {
+		const summary = summarize({ seedingSkillCountsFor: "RANKED" });
+		const winnerSkill = summary.skills.find((s) => s.userId === 1);
+		const winnerSeedingSkill = summary.skills.find((s) => s.userId === 1);
+
+		invariant(winnerSkill, "winnerSkill should be defined");
+		invariant(winnerSeedingSkill, "winnerSeedingSkill should be defined");
+
+		expect(ordinal(winnerSkill)).toBe(ordinal(winnerSeedingSkill));
+	});
+
+	test("no seeding skill calculated if seedingSkillCountsFor is null", () => {
+		const summary = summarize();
+
+		expect(summary.seedingSkills.length).toBe(0);
+	});
+
+	test("seeding skills type matches the given seedingSkillCountsFor", () => {
+		const summary = summarize({ seedingSkillCountsFor: "RANKED" });
+		expect(summary.seedingSkills[0].type).toBe("RANKED");
+
+		const summary2 = summarize({ seedingSkillCountsFor: "UNRANKED" });
+		expect(summary2.seedingSkills[0].type).toBe("UNRANKED");
+	});
+
 	const resultsWith20: AllMatchResult[] = [
 		{
 			maps: [
 				{
 					mode: "SZ",
 					stageId: 1,
-					userIds: [1, 2, 3, 4, 5, 6, 7, 8],
+					participants: [
+						{ tournamentTeamId: 1, userId: 1 },
+						{ tournamentTeamId: 1, userId: 2 },
+						{ tournamentTeamId: 1, userId: 3 },
+						{ tournamentTeamId: 1, userId: 4 },
+						{ tournamentTeamId: 2, userId: 5 },
+						{ tournamentTeamId: 2, userId: 6 },
+						{ tournamentTeamId: 2, userId: 7 },
+						{ tournamentTeamId: 2, userId: 8 },
+					],
 					winnerTeamId: 1,
 				},
 				{
 					mode: "TC",
 					stageId: 2,
-					userIds: [1, 2, 3, 4, 5, 6, 7, 8],
+					participants: [
+						{ tournamentTeamId: 1, userId: 1 },
+						{ tournamentTeamId: 1, userId: 2 },
+						{ tournamentTeamId: 1, userId: 3 },
+						{ tournamentTeamId: 1, userId: 4 },
+						{ tournamentTeamId: 2, userId: 5 },
+						{ tournamentTeamId: 2, userId: 6 },
+						{ tournamentTeamId: 2, userId: 7 },
+						{ tournamentTeamId: 2, userId: 8 },
+					],
 					winnerTeamId: 1,
 				},
 			],
@@ -173,13 +260,31 @@ describe("tournamentSummary()", () => {
 				{
 					mode: "SZ",
 					stageId: 1,
-					userIds: [1, 20, 3, 4, 5, 6, 7, 8],
+					participants: [
+						{ tournamentTeamId: 1, userId: 1 },
+						{ tournamentTeamId: 1, userId: 20 },
+						{ tournamentTeamId: 1, userId: 3 },
+						{ tournamentTeamId: 1, userId: 4 },
+						{ tournamentTeamId: 2, userId: 5 },
+						{ tournamentTeamId: 2, userId: 6 },
+						{ tournamentTeamId: 2, userId: 7 },
+						{ tournamentTeamId: 2, userId: 8 },
+					],
 					winnerTeamId: 1,
 				},
 				{
 					mode: "TC",
 					stageId: 2,
-					userIds: [1, 20, 3, 4, 5, 6, 7, 8],
+					participants: [
+						{ tournamentTeamId: 1, userId: 1 },
+						{ tournamentTeamId: 1, userId: 20 },
+						{ tournamentTeamId: 1, userId: 3 },
+						{ tournamentTeamId: 1, userId: 4 },
+						{ tournamentTeamId: 2, userId: 5 },
+						{ tournamentTeamId: 2, userId: 6 },
+						{ tournamentTeamId: 2, userId: 7 },
+						{ tournamentTeamId: 2, userId: 8 },
+					],
 					winnerTeamId: 1,
 				},
 			],
@@ -230,19 +335,46 @@ describe("tournamentSummary()", () => {
 				{
 					mode: "SZ",
 					stageId: 1,
-					userIds: [1, 2, 3, 4, 5, 6, 7, 8],
+					participants: [
+						{ tournamentTeamId: 1, userId: 1 },
+						{ tournamentTeamId: 1, userId: 2 },
+						{ tournamentTeamId: 1, userId: 3 },
+						{ tournamentTeamId: 1, userId: 4 },
+						{ tournamentTeamId: 2, userId: 5 },
+						{ tournamentTeamId: 2, userId: 6 },
+						{ tournamentTeamId: 2, userId: 7 },
+						{ tournamentTeamId: 2, userId: 8 },
+					],
 					winnerTeamId: 1,
 				},
 				{
 					mode: "TC",
 					stageId: 2,
-					userIds: [1, 2, 3, 4, 5, 6, 7, 8],
+					participants: [
+						{ tournamentTeamId: 1, userId: 1 },
+						{ tournamentTeamId: 1, userId: 2 },
+						{ tournamentTeamId: 1, userId: 3 },
+						{ tournamentTeamId: 1, userId: 4 },
+						{ tournamentTeamId: 2, userId: 5 },
+						{ tournamentTeamId: 2, userId: 6 },
+						{ tournamentTeamId: 2, userId: 7 },
+						{ tournamentTeamId: 2, userId: 8 },
+					],
 					winnerTeamId: 2,
 				},
 				{
 					mode: "TC",
 					stageId: 2,
-					userIds: [1, 20, 3, 4, 5, 6, 7, 8],
+					participants: [
+						{ tournamentTeamId: 1, userId: 1 },
+						{ tournamentTeamId: 1, userId: 20 },
+						{ tournamentTeamId: 1, userId: 3 },
+						{ tournamentTeamId: 1, userId: 4 },
+						{ tournamentTeamId: 2, userId: 5 },
+						{ tournamentTeamId: 2, userId: 6 },
+						{ tournamentTeamId: 2, userId: 7 },
+						{ tournamentTeamId: 2, userId: 8 },
+					],
 					winnerTeamId: 1,
 				},
 			],

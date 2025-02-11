@@ -20,7 +20,6 @@ import {
 	currentSeason,
 } from "~/features/mmr/season";
 import type { SkillTierInterval } from "~/features/mmr/tiered.server";
-import { i18next } from "~/modules/i18n/i18next.server";
 import {
 	type MainWeaponId,
 	type RankedModeShort,
@@ -28,8 +27,8 @@ import {
 } from "~/modules/in-game-lists";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { cache, ttl } from "~/utils/cache.server";
-import type { SendouRouteHandle } from "~/utils/remix";
-import { makeTitle } from "~/utils/strings";
+import { metaTags } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	LEADERBOARDS_PAGE,
 	navIconUrl,
@@ -39,6 +38,7 @@ import {
 	userSeasonsPage,
 	userSubmittedImage,
 } from "~/utils/urls";
+import { InfoPopover } from "../../../components/InfoPopover";
 import { TopTenPlayer } from "../components/TopTenPlayer";
 import {
 	cachedFullUserLeaderboard,
@@ -74,14 +74,13 @@ export const meta: MetaFunction = (args) => {
 
 	if (!data) return [];
 
-	return [
-		{ title: data.title },
-		{
-			name: "description",
-			content:
-				"Leaderboards of top Splatoon players ranked by their X Power and tournament results",
-		},
-	];
+	return metaTags({
+		title: "Leaderboards",
+		ogTitle: "Splatoon leaderboards",
+		description:
+			"Leaderboards of top Splatoon players ranked by their X Battle placements as well as tournament and SendouQ results. Categories per weapon and mode.",
+		location: args.location,
+	});
 };
 
 const TYPE_SEARCH_PARAM_KEY = "type";
@@ -89,7 +88,6 @@ const SEASON_SEARCH_PARAM_KEY = "season";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await getUser(request);
-	const t = await i18next.getFixedT(request);
 	const unvalidatedType = new URL(request.url).searchParams.get(
 		TYPE_SEARCH_PARAM_KEY,
 	);
@@ -158,7 +156,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 					: type.startsWith("XP-WEAPON")
 						? weaponXPLeaderboard(Number(type.split("-")[2]) as MainWeaponId)
 						: null,
-		title: makeTitle(t("pages.leaderboards")),
 		season,
 	};
 };
@@ -509,6 +506,9 @@ function TeamTable({
 						{i === 11 && showQualificationDividers ? (
 							<div className="placements__table__row placements__table__row__qualification">
 								{t("common:leaderboard.qualification")}
+								<InfoPopover tiny>
+									{t("common:leaderboard.qualification.info")}
+								</InfoPopover>
 							</div>
 						) : null}
 					</React.Fragment>

@@ -24,7 +24,6 @@
 	"front.cities.nyc": "Нью-Йорк",
 	"front.cities.paris": "Париж",
 	"front.cities.tokyo": "Токио",
-	"front.watchVideo": "Посмотретите вступительное видео на YouTube от Chara",
 	"front.inviteCodeWrong": "Код приглашения не соответсвует любой активной команде.",
 	"front.upcomingSeason.header": "Сейчас межсезонье!",
 	"front.upcomingSeason.date": "Присоединяйтесь к Сезону {{nth}}. Дата начала - {{date}}",
@@ -68,7 +67,6 @@
 	"settings.misc.header": "Прочее",
 	"settings.banned": "Запрещённый режим",
 	"settings.avoid.label": "Избегать {{special}}",
-	"settings.avoid.readMore": "Для более подробной информации читайте здесь",
 
 	"looking.joiningGroupError": "Перед тем как присоединиться к новой группе, покиньте текущую",
 	"looking.goToSettingsPrompt": "Чтобы облегчить процесс нахождения группы, настройте ваш пул оружия и статус голосового чата на странице настроек",
@@ -96,7 +94,6 @@
 	"looking.groups.actions.leaveQ": "Покинуть очередь",
 	"looking.groups.actions.goBack": "Вернуться назад",
 	"looking.groups.adder.quickAdd": "Быстро добавить",
-	"looking.groups.adder.selectUser": "Выбрать пользователя",
 	"looking.groups.adder.inviteLink": "Ссылка на приглашение",
 	"looking.groups.editNote": "Изменить заметку",
 	"looking.groups.addNote": "Добавить заметку",

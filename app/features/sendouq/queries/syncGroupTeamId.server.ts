@@ -1,11 +1,9 @@
 import { sql } from "~/db/sql";
-import invariant from "~/utils/invariant";
-import { FULL_GROUP_SIZE } from "../q-constants";
 
 const memberTeamIdsStm = sql.prepare(/* sql */ `
-  select "TeamMember"."teamId"
+  select "TeamMemberWithSecondary"."teamId"
   from "GroupMember"
-  left join "TeamMember" on "TeamMember"."userId" = "GroupMember"."userId"
+  left join "TeamMemberWithSecondary" on "TeamMemberWithSecondary"."userId" = "GroupMember"."userId"
   where "groupId" = @groupId
 `);
 
@@ -19,14 +17,18 @@ export function syncGroupTeamId(groupId: number) {
 	const teamIds = memberTeamIdsStm
 		.all({ groupId })
 		.map((row: any) => row.teamId);
-	invariant(teamIds.length === FULL_GROUP_SIZE, "Group to sync is not full");
 
-	const set = new Set(teamIds);
+	const counts = new Map<number, number>();
 
-	if (set.size === 1) {
-		const teamId = teamIds[0];
-		updateStm.run({ groupId, teamId });
-	} else {
-		updateStm.run({ groupId, teamId: null });
+	// note if there are multiple teams with 4 members we just choose one of them
+	for (const teamId of teamIds) {
+		const newCount = (counts.get(teamId) ?? 0) + 1;
+		if (newCount === 4) {
+			return updateStm.run({ groupId, teamId });
+		}
+
+		counts.set(teamId, newCount);
 	}
+
+	return updateStm.run({ groupId, teamId: null });
 }

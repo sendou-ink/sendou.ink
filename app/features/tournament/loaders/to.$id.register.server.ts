@@ -18,13 +18,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		return {
 			mapPool: null,
 			trusterPlayers: null,
-			team: await TeamRepository.findByUserId(user.id),
+			teams: await TeamRepository.findAllMemberOfByUserId(user.id),
 		};
 
 	return {
 		mapPool: findMapPoolByTeamId(ownTournamentTeam.id),
 		trusterPlayers: await QRepository.usersThatTrusted(user.id),
-		team: await TeamRepository.findByUserId(user.id),
+		teams: await TeamRepository.findAllMemberOfByUserId(user.id),
 	};
 };
 

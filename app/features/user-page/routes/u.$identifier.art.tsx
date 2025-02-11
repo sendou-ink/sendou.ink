@@ -1,8 +1,6 @@
 import type { ActionFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useMatches } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
-import { LinkButton } from "~/components/Button";
-import { Popover } from "~/components/Popover";
 import { deleteArtSchema } from "~/features/art/art-schemas.server";
 import { ART_SOURCES, type ArtSource } from "~/features/art/art-types";
 import { ArtGrid } from "~/features/art/components/ArtGrid";
@@ -20,8 +18,7 @@ import {
 	notFoundIfFalsy,
 	parseRequestPayload,
 	validate,
-} from "~/utils/remix";
-import { newArtPage } from "~/utils/urls";
+} from "~/utils/remix.server";
 import { userParamsSchema } from "../user-page-schemas.server";
 import type { UserPageLoaderData } from "./u.$identifier";
 
@@ -122,9 +119,6 @@ export default function UserArtPage() {
 						? t("art:pendingApproval", { count: data.unvalidatedArtCount })
 						: null}
 				</div>
-				{layoutData.user.id === user?.id ? (
-					<AddArtButton isArtist={Boolean(user.isArtist)} />
-				) : null}
 			</div>
 
 			{hasBothArtMadeByAndMadeOf || data.tagCounts ? (
@@ -210,27 +204,5 @@ export default function UserArtPage() {
 				canEdit={layoutData.user.id === user?.id}
 			/>
 		</div>
-	);
-}
-
-function AddArtButton({ isArtist }: { isArtist?: boolean }) {
-	const { t } = useTranslation(["art"]);
-
-	if (!isArtist) {
-		return (
-			<Popover
-				buttonChildren={t("art:addArt")}
-				triggerClassName="tiny"
-				containerClassName="text-center"
-			>
-				{t("art:gainPerms")}
-			</Popover>
-		);
-	}
-
-	return (
-		<LinkButton to={newArtPage()} size="tiny" className="whitespace-nowrap">
-			{t("art:addArt")}
-		</LinkButton>
 	);
 }

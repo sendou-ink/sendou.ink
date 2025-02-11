@@ -21,7 +21,6 @@
 	"forms.action.addMatch": "Tilføj kamp",
 	"forms.action.deleteMatch": "Slet kamp",
 	"noVods": "Der blev ikke fundet nogle videoer, der matcher disse søgekriterier. Mangler vi noget? Send en besked til Sendou via discord for at få rettigheder til at fremlægge Youtube-videoer.",
-	"addVod": "Tilføj video",
 	"gainPerms": "Skriv venligst en besked til helpdesken på vores Discordserver for at få rettigheder til at uploade videoer.",
 	"deleteConfirm": "Vil du slette videoen: '{{title}}'?"
 }

@@ -118,11 +118,8 @@
 	"weapon.category.subs": "Sekundärwaffen",
 	"weapon.category.specials": "Spezialwaffen",
 
-	"plans.poweredBy": "Ermöglicht durch {{name}}",
 	"plans.blueprint": "Entwurf",
 	"plans.bgStyle.OVER": "Vogelperspektive",
-	"plans.bgStyle.MINI": "Mini-Karte (leer)",
-	"plans.bgStyle.ITEMS": "Mini-Karte",
 
 	"articles.by": "von {{author}}",
 

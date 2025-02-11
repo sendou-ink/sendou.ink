@@ -1,9 +1,7 @@
 {
-	"newTeam.button": "Neues Team",
 	"newTeam.header": "Neues Team erstellen",
 	"teamSearch.placeholder": "Suche nach einem Team oder Spieler...",
 	"actionButtons.leaveTeam": "Team verlassen",
-	"leaveTeam.header": "Möchtest du {{teamName}} wirklich verlassen?",
 	"actionButtons.leaveTeam.confirm": "Verlassen",
 	"actionButtons.editTeam": "Team bearbeiten",
 	"actionButtons.manageRoster": "Aufstellung bearbeiten",
@@ -20,7 +18,6 @@
 	"roles.MIDLINE": "Midline",
 	"roles.BACKLINE": "Backline",
 	"roles.COACH": "Coach",
-	"forms.fields.teamTwitter": "Team-Twitter",
 	"forms.fields.bio": "Bio",
 	"forms.fields.uploadImages": "Bilder hochladen",
 	"forms.fields.uploadImages.pfp": "Profilbild",
@@ -33,6 +30,5 @@
 	"validation.SHORT_CODE": "Einladungscode hat nicht die richtige Länge. Hast du die vollständige URL kopiert?",
 	"validation.TEAM_FULL": "Das Team, dem du beitreten willst, ist bereits voll.",
 	"validation.INVITE_CODE_WRONG": "Einladungscode ist falsch.",
-	"validation.ALREADY_IN_DIFFERENT_TEAM": "Du bist bereits in einem anderen Team. Verlasse es, bevor du einem neuen beitrittst.",
 	"validation.VALID": "{{teamName}} beitreten?"
 }

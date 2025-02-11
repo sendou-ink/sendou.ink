@@ -4,8 +4,11 @@ import type {
 	Insertable,
 	Selectable,
 	SqlBool,
+	Updateable,
 } from "kysely";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
+import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
+import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { ParticipantResult } from "~/modules/brackets-model";
 import type {
 	Ability,
@@ -19,50 +22,31 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 	? ColumnType<S, I | undefined, U>
 	: ColumnType<T, T | undefined, T>;
 
-export interface AllTeam {
-	avatarImgId: number | null;
-	bannerImgId: number | null;
-	bio: string | null;
-	createdAt: Generated<number>;
-	css: ColumnType<Record<string, string> | null, string | null, string | null>;
-	customUrl: string;
-	deletedAt: number | null;
-	id: GeneratedAlways<number>;
-	inviteCode: string;
-	name: string;
-	twitter: string | null;
-}
-
-export interface AllTeamMember {
-	createdAt: Generated<number>;
-	isOwner: Generated<number>;
-	leftAt: number | null;
-	role: string | null;
-	teamId: number;
-	userId: number;
-}
+export type MemberRole = (typeof TEAM_MEMBER_ROLES)[number];
 
 export interface Team {
 	avatarImgId: number | null;
 	bannerImgId: number | null;
 	bio: string | null;
-	createdAt: number | null;
+	createdAt: Generated<number>;
 	css: ColumnType<Record<string, string> | null, string | null, string | null>;
 	customUrl: string;
 	deletedAt: number | null;
 	id: GeneratedAlways<number>;
 	inviteCode: string;
 	name: string;
-	twitter: string | null;
+	bsky: string | null;
 }
 
 export interface TeamMember {
-	createdAt: number | null;
-	isOwner: number | null;
+	createdAt: Generated<number>;
+	isOwner: Generated<number>;
+	isManager: Generated<number>;
 	leftAt: number | null;
-	role: string | null;
+	role: MemberRole | null;
 	teamId: number;
 	userId: number;
+	isMainTeam: number;
 }
 
 export interface Art {
@@ -87,10 +71,12 @@ export interface ArtUserMetadata {
 }
 
 export interface Badge {
+	id: GeneratedAlways<number>;
 	code: string;
 	displayName: string;
 	hue: number | null;
-	id: GeneratedAlways<number>;
+	/** Who made the badge? If null, a legacy badge. */
+	authorId: number | null;
 }
 
 export interface BadgeManager {
@@ -144,9 +130,11 @@ export interface CalendarEvent {
 	name: string;
 	participantCount: number | null;
 	tags: string | null;
+	hidden: Generated<number>;
 	tournamentId: number | null;
 	organizationId: number | null;
 	avatarImgId: number | null;
+	// TODO: remove in migration
 	avatarMetadata: ColumnType<
 		CalendarEventAvatarMetadata | null,
 		string | null,
@@ -380,8 +368,8 @@ export interface Skill {
 	matchesCount: number;
 	mu: number;
 	ordinal: number;
-	season: number;
 	sigma: number;
+	season: number;
 	tournamentId: number | null;
 	userId: number | null;
 }
@@ -389,6 +377,14 @@ export interface Skill {
 export interface SkillTeamUser {
 	skillId: number;
 	userId: number;
+}
+
+export interface SeedingSkill {
+	mu: number;
+	ordinal: number;
+	sigma: number;
+	userId: number;
+	type: "RANKED" | "UNRANKED";
 }
 
 export interface SplatoonPlayer {
@@ -412,25 +408,16 @@ type TournamentMapPickingStyle =
 	| "AUTO_RM"
 	| "AUTO_CB";
 
-export type TournamentBracketProgression = {
-	type: TournamentStage["type"];
-	name: string;
-	/** Where do the teams come from? If missing then it means the source is the full registered teams list. */
-	sources?: {
-		/** Index of the bracket where the teams come from */
-		bracketIdx: number;
-		/** Team placements that join this bracket. E.g. [1, 2] would mean top 1 & 2 teams. [-1] would mean the last placing teams. */
-		placements: number[];
-	}[];
-}[];
-
 export interface TournamentSettings {
-	bracketProgression: TournamentBracketProgression;
+	bracketProgression: Progression.ParsedBracket[];
+	/** @deprecated use bracketProgression instead */
 	teamsPerGroup?: number;
+	/** @deprecated use bracketProgression instead */
 	thirdPlaceMatch?: boolean;
 	isRanked?: boolean;
-	autoCheckInAll?: boolean;
 	enableNoScreenToggle?: boolean;
+	/** Enable the subs tab, default true */
+	enableSubs?: boolean;
 	deadlines?: "STRICT" | "DEFAULT";
 	requireInGameNames?: boolean;
 	isInvitational?: boolean;
@@ -438,6 +425,7 @@ export interface TournamentSettings {
 	autonomousSubs?: boolean;
 	/** Timestamp (SQLite format) when reg closes, if missing then means closes at start time */
 	regClosesAt?: number;
+	/** @deprecated use bracketProgression instead */
 	swiss?: {
 		groupCount: number;
 		roundCount: number;
@@ -469,6 +457,8 @@ export interface Tournament {
 		string | null
 	>;
 	rules: string | null;
+	/** Related "parent tournament", the tournament that contains the original sign-ups (for leagues) */
+	parentTournamentId: number | null;
 }
 
 export interface PreparedMaps {
@@ -544,6 +534,8 @@ export interface TournamentMatchGameResult {
 export interface TournamentMatchGameResultParticipant {
 	matchGameResultId: number;
 	userId: number;
+	// it only started mattering when we added the possibility to join many teams in a tournament, null for legacy events
+	tournamentTeamId: number | null;
 }
 
 export interface TournamentResult {
@@ -577,6 +569,24 @@ export interface TournamentRound {
 	maps: ColumnType<TournamentRoundMaps | null, string | null, string | null>;
 }
 
+export interface TournamentStageSettings {
+	// SE
+	thirdPlaceMatch?: boolean;
+	// RR
+	teamsPerGroup?: number;
+	// SWISS
+	groupCount?: number;
+	// SWISS
+	roundCount?: number;
+}
+
+export const TOURNAMENT_STAGE_TYPES = [
+	"single_elimination",
+	"double_elimination",
+	"round_robin",
+	"swiss",
+] as const;
+
 /** A stage is an intermediate phase in a tournament. In essence a bracket. */
 export interface TournamentStage {
 	id: GeneratedAlways<number>;
@@ -584,7 +594,7 @@ export interface TournamentStage {
 	number: number;
 	settings: string;
 	tournamentId: number;
-	type: "double_elimination" | "single_elimination" | "round_robin" | "swiss";
+	type: (typeof TOURNAMENT_STAGE_TYPES)[number];
 	// not Generated<> because SQLite doesn't allow altering tables to add columns with default values :(
 	createdAt: number | null;
 }
@@ -616,6 +626,8 @@ export interface TournamentTeam {
 	noScreen: Generated<number>;
 	droppedOut: Generated<number>;
 	seed: number | null;
+	/** For formats that have many starting brackets, where should the team start? */
+	startingBracketIdx: number | null;
 	activeRosterUserIds: ColumnType<
 		number[] | null,
 		string | null,
@@ -631,6 +643,8 @@ export interface TournamentTeamCheckIn {
 	/** Which bracket checked in for. If missing is check in for the whole event. */
 	bracketIdx: number | null;
 	tournamentTeamId: number;
+	/** Indicates that this bracket defaults to checked in and this team has been explicitly checked out from it */
+	isCheckOut: Generated<number>;
 }
 
 export interface TournamentTeamMember {
@@ -680,9 +694,17 @@ export interface TournamentOrganizationSeries {
 	showLeaderboard: Generated<number>;
 }
 
+export interface TournamentBracketProgressionOverride {
+	sourceBracketIdx: number;
+	destinationBracketIdx: number;
+	tournamentTeamId: number;
+	tournamentId: number;
+}
+
 export interface TrustRelationship {
 	trustGiverUserId: number;
 	trustReceiverUserId: number;
+	lastUsedAt: number;
 }
 
 export interface UnvalidatedUserSubmittedImage {
@@ -732,6 +754,10 @@ export const BUILD_SORT_IDENTIFIERS = [
 
 export type BuildSort = (typeof BUILD_SORT_IDENTIFIERS)[number];
 
+export interface UserPreferences {
+	disableBuildAbilitySorting?: boolean;
+}
+
 export interface User {
 	/** 1 = permabanned, timestamp = ban active till then */
 	banned: Generated<number | null>;
@@ -763,7 +789,7 @@ export interface User {
 	showDiscordUniqueName: Generated<number>;
 	stickSens: number | null;
 	twitch: string | null;
-	twitter: string | null;
+	bsky: string | null;
 	battlefy: string | null;
 	vc: Generated<"YES" | "NO" | "LISTEN_ONLY">;
 	youtubeId: string | null;
@@ -776,6 +802,7 @@ export interface User {
 	plusSkippedForSeasonNth: number | null;
 	noScreen: Generated<number>;
 	buildSorting: ColumnType<BuildSort[] | null, string | null, string | null>;
+	preferences: ColumnType<UserPreferences | null, string | null, string | null>;
 }
 
 export interface UserResultHighlight {
@@ -851,10 +878,11 @@ export interface XRankPlacement {
 
 export type Tables = { [P in keyof DB]: Selectable<DB[P]> };
 export type TablesInsertable = { [P in keyof DB]: Insertable<DB[P]> };
+export type TablesUpdatable = { [P in keyof DB]: Updateable<DB[P]> };
 
 export interface DB {
-	AllTeam: AllTeam;
-	AllTeamMember: AllTeamMember;
+	AllTeam: Team;
+	AllTeamMember: TeamMember;
 	Art: Art;
 	ArtTag: ArtTag;
 	ArtUserMetadata: ArtUserMetadata;
@@ -880,7 +908,6 @@ export interface DB {
 	LFGPost: LFGPost;
 	MapPoolMap: MapPoolMap;
 	MapResult: MapResult;
-	migrations: Migrations;
 	PlayerResult: PlayerResult;
 	PlusSuggestion: PlusSuggestion;
 	PlusTier: PlusTier;
@@ -889,10 +916,12 @@ export interface DB {
 	ReportedWeapon: ReportedWeapon;
 	Skill: Skill;
 	SkillTeamUser: SkillTeamUser;
+	SeedingSkill: SeedingSkill;
 	SplatoonPlayer: SplatoonPlayer;
 	TaggedArt: TaggedArt;
 	Team: Team;
 	TeamMember: TeamMember;
+	TeamMemberWithSecondary: TeamMember;
 	Tournament: Tournament;
 	TournamentStaff: TournamentStaff;
 	TournamentBadgeOwner: TournamentBadgeOwner;
@@ -912,6 +941,7 @@ export interface DB {
 	TournamentOrganizationMember: TournamentOrganizationMember;
 	TournamentOrganizationBadge: TournamentOrganizationBadge;
 	TournamentOrganizationSeries: TournamentOrganizationSeries;
+	TournamentBracketProgressionOverride: TournamentBracketProgressionOverride;
 	TrustRelationship: TrustRelationship;
 	UnvalidatedUserSubmittedImage: UnvalidatedUserSubmittedImage;
 	UnvalidatedVideo: UnvalidatedVideo;

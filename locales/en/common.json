@@ -23,6 +23,8 @@
 	"pages.art": "Art",
 	"pages.sendouq": "SendouQ",
 	"pages.lfg": "LFG",
+	"pages.settings": "Settings",
+	"pages.luti": "LUTI",
 
 	"header.profile": "Profile",
 	"header.logout": "Log out",
@@ -30,11 +32,19 @@
 	"header.language": "Language",
 	"header.loggedInAs": "Logged in as {{userName}}",
 	"header.theme": "Theme",
+	"header.adder.tournament": "Tournament",
+	"header.adder.calendarEvent": "Calendar event",
+	"header.adder.build": "Build",
+	"header.adder.team": "Team",
+	"header.adder.lfgPost": "LFG post",
+	"header.adder.art": "Art",
+	"header.adder.vod": "VoD",
+	"header.adder.plusSuggestion": "Plus suggestion",
 
 	"auth.errors.aborted": "Login Aborted",
 	"auth.errors.failed": "Login Failed",
 	"auth.errors.discordPermissions": "For your sendou.ink profile, the site needs access to your Discord profile's name, avatar and social connections.",
-	"auth.errors.unknown": "Does your Discord account have a verified email? For help please reach out to us via the #helpdesk channel on our Discord:",
+	"auth.errors.unknown": "Unknown error, try again a bit later. Verify also that your Discord account has a verified email. For help please reach out to us via the #helpdesk channel on our Discord:",
 
 	"footer.github.subtitle": "Source code",
 	"footer.discord.subtitle": "Help & feedback",
@@ -141,11 +151,10 @@
 	"weapon.category.subs": "Subs",
 	"weapon.category.specials": "Specials",
 
-	"plans.poweredBy": "Powered by {{name}}",
 	"plans.blueprint": "Blueprint",
 	"plans.bgStyle.OVER": "Overhead",
-	"plans.bgStyle.MINI": "Minimap (blank)",
-	"plans.bgStyle.ITEMS": "Minimap",
+	"plans.bgStyle.MINI": "Minimap",
+	"plans.adder.objective": "Objective",
 
 	"articles.by": "by {{author}}",
 
@@ -179,6 +188,8 @@
 	"support.perk.seePlusPercentage.extra": "Normally only failed suggests see their voting percentage. With this, you can always see your own percentage.",
 	"support.perk.autoValidatePictures": "Auto validate uploaded pictures",
 	"support.perk.autoValidatePictures.extra": "Any images you upload (e.g. team profile/banner picture) get automatically validated. Normally it needs a moderator's approval first. Note that this doesn't apply to images that were already submitted.",
+	"support.perk.userShortLink": "User page short link",
+	"support.perk.userShortLink.extra": "Instead of e.g. sendou.ink/u/sendou you can also use snd.ink/sendou when linking to your user profile.",
 	"support.perk.customizedColorsUser": "Customize colors (user page)",
 	"support.perk.customizedColorsTeam": "Customize colors (team page)",
 	"support.perk.customizedColorsTeam.extra": "It is enough that one member of the team is a patron to get this perk.",
@@ -187,6 +198,8 @@
 	"support.perk.prioritySupport": "Priority support",
 	"support.perk.prioritySupport.extra": "Access to a separate helpdesk that I prioritize for support requests",
 	"support.perk.previewQ": "Preview groups in SendouQ before joining",
+	"support.perk.joinFive": "Join up to 5 teams",
+	"support.perk.tournamentsBeta": "Access to tournaments beta",
 
 	"custom.colors.title": "Custom colors",
 	"custom.colors.bg": "Background",
@@ -195,6 +208,7 @@
 	"custom.colors.text": "Text",
 	"custom.colors.text-lighter": "Text lighter",
 	"custom.colors.theme": "Theme",
+	"custom.colors.theme-secondary": "Theme (secondary)",
 	"custom.colors.chat": "Chat name",
 
 	"divisions.WEST": "Tentatek",
@@ -215,6 +229,7 @@
 	"leaderboard.noTeams": "No teams on the leaderboard yet",
 	"leaderboard.updateInfo": "Leaderboard is updated once every 30 minutes",
 	"leaderboard.qualification": "Qualification for Season Finale",
+	"leaderboard.qualification.info": "Every player of the roster needs 7 sets of SendouQ played during the season. Every unique roster of 4 have their own points.",
 
 	"chat.connected": "Connected",
 	"chat.disconnected": "Disconnected",
@@ -229,7 +244,6 @@
 
 	"fc.title": "Friend code",
 
-	"showcase.register": "Register",
-	"showcase.bracket": "Bracket",
-	"showcase.liveNow": "Live now!"
+	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.label": "Builds: Disable automatic ability sorting",
+	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText": "Outside of your profile page, build abilities are sorted so that same abilities are next to each other. This setting allows you to see the abilities in the order they were authored everywhere."
 }

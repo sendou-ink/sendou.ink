@@ -38,6 +38,7 @@ export function Button(props: ButtonProps) {
 	return (
 		<button
 			className={clsx(
+				"button",
 				variant,
 				{
 					"disabled-opaque": props.disabled,
@@ -57,6 +58,7 @@ export function Button(props: ButtonProps) {
 			{icon &&
 				React.cloneElement(icon, {
 					className: clsx("button-icon", { lonely: !children }),
+					title: rest.title,
 				})}
 			{loading && loadingText ? loadingText : children}
 		</button>

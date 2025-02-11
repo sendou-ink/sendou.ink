@@ -52,7 +52,7 @@ export function getRounds(args: {
 	const hasThirdPlaceMatch =
 		args.type === "single" &&
 		removeDuplicates(args.bracketData.match.map((m) => m.group_id)).length > 1;
-	return rounds.map((round, i) => {
+	const namedRounds = rounds.map((round, i) => {
 		const name = () => {
 			if (
 				showingBracketReset &&
@@ -76,11 +76,19 @@ export function getRounds(args: {
 			const namePrefix =
 				args.type === "winners" ? "WB " : args.type === "losers" ? "LB " : "";
 
-			const isFinals = i === rounds.length - (args.type === "winners" ? 3 : 1);
+			const finalsOffSet = () => {
+				if (args.type !== "winners") return 1;
+				if (showingBracketReset) return 3;
+				return 2;
+			};
+			const isFinals = i === rounds.length - finalsOffSet();
 
-			const semisOffSet =
-				args.type === "winners" ? 4 : hasThirdPlaceMatch ? 3 : 2;
-			const isSemis = i === rounds.length - semisOffSet;
+			const semisOffSet = () => {
+				if (args.type !== "winners") return hasThirdPlaceMatch ? 3 : 2;
+				if (showingBracketReset) return 4;
+				return 3;
+			};
+			const isSemis = i === rounds.length - semisOffSet();
 
 			return `${namePrefix}${
 				isFinals ? "Finals" : isSemis ? "Semis" : `Round ${i + 1}`
@@ -92,4 +100,15 @@ export function getRounds(args: {
 			name: name(),
 		};
 	});
+
+	return adjustRoundNumbers(namedRounds);
+}
+
+// adjusting losers bracket round numbers to start from 1, can sometimes start with 2 if byes are certain way
+export function adjustRoundNumbers<T extends { number: number }>(rounds: T[]) {
+	if (rounds.at(0)?.number === 1) {
+		return rounds;
+	}
+
+	return rounds.map((round) => ({ ...round, number: round.number - 1 }));
 }

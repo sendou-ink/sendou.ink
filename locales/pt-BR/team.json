@@ -1,9 +1,7 @@
 {
-	"newTeam.button": "Novo time",
 	"newTeam.header": "Criando um novo time",
 	"teamSearch.placeholder": "Pesquisar por um time ou jogador...",
 	"actionButtons.leaveTeam": "Sair do Time",
-	"leaveTeam.header": "Você tem certeza que quer sair do Time {{teamName}}?",
 	"actionButtons.leaveTeam.confirm": "Sair",
 	"actionButtons.editTeam": "Editar Time",
 	"actionButtons.manageRoster": "Gerenciar a lista",
@@ -21,7 +19,6 @@
 	"roles.BACKLINE": "Linha de trás (backline)",
 	"roles.FLEX": "Flex",
 	"roles.COACH": "Treinador",
-	"forms.fields.teamTwitter": "Twitter do Time",
 	"forms.fields.bio": "Bio",
 	"forms.fields.uploadImages": "Fazer upload de imagens",
 	"forms.fields.uploadImages.pfp": "Imagem do perfil",
@@ -34,6 +31,5 @@
 	"validation.SHORT_CODE": "O código de convite não está no comprimento certo. Você copiou o URL completo?",
 	"validation.TEAM_FULL": "O time que você está tentando se juntar está cheio.",
 	"validation.INVITE_CODE_WRONG": "O código de convite está incorreto.",
-	"validation.ALREADY_IN_DIFFERENT_TEAM": "Você já está em um time diferente. Saia dele primeiro antes de entrar em outro.",
 	"validation.VALID": "Entrar no(a) {{teamName}}?"
 }

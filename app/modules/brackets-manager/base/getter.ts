@@ -501,7 +501,13 @@ export class BaseGetter {
 		roundNumber: number,
 		roundCount: number,
 	): Match[] {
-		if (roundNumber === roundCount) return [];
+		if (
+			roundNumber === roundCount ||
+			// avoid putting teams to bracket reset if tournament is over
+			match.opponent1?.result === "win"
+		) {
+			return [];
+		}
 
 		return [this.findMatch(match.group_id, roundNumber + 1, 1)];
 	}

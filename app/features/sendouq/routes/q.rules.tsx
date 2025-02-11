@@ -1,9 +1,13 @@
 import type { MetaFunction } from "@remix-run/react";
 import { Main } from "~/components/Main";
-import { makeTitle } from "~/utils/strings";
+import { metaTags } from "~/utils/remix";
 
-export const meta: MetaFunction = () => {
-	return [{ title: makeTitle("SendouQ Rules") }];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "SendouQ - Rules",
+		description: "Rules everyone participating in SendouQ has to follow.",
+		location: args.location,
+	});
 };
 
 export default function SendouqRules() {
@@ -61,6 +65,13 @@ export default function SendouqRules() {
 				don&apos;t agree then the match should be played out.
 			</div>
 
+			<h2 className="text-lg mt-4">Dodging</h2>
+			<div>
+				Canceling matches is to be used for special cases only. If used
+				excessively for e.g. avoiding to play stronger opponents it can lead to
+				a ban or potential Plus Server admissions being skipped for the season.
+			</div>
+
 			<h2 className="text-lg mt-4">Room hosting</h2>
 			<div>
 				By default the player who says the fastest in the match chat that they
@@ -74,7 +85,7 @@ export default function SendouqRules() {
 			<h2 className="text-lg mt-4">Player eligibility</h2>
 			<div>
 				Players banned by{" "}
-				<a href="https://twitter.com/splatsafety">
+				<a href="https://bsky.app/profile/splatsafety.bsky.social">
 					Splatoon Competitive Community Safety
 				</a>{" "}
 				are not allowed to participate. Playing with banned players is not

@@ -1,4 +1,4 @@
-import { type LoaderFunctionArgs, json } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "@remix-run/node";
 import { z } from "zod";
 import { requireUserId } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
@@ -25,10 +25,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		(b) => params.success && b.id === params.data.buildId,
 	);
 
-	return json({
+	return {
 		buildToEdit,
 		gearIdToAbilities: resolveGearIdToAbilities(),
-	});
+	};
 
 	function resolveGearIdToAbilities() {
 		return usersBuilds.reduce(

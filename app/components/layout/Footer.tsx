@@ -18,10 +18,10 @@ import { DiscordIcon } from "../icons/Discord";
 import { GitHubIcon } from "../icons/GitHub";
 import { PatreonIcon } from "../icons/Patreon";
 
-const currentYear = new Date().getFullYear();
-
 function _Footer() {
 	const { t } = useTranslation();
+
+	const currentYear = new Date().getFullYear();
 
 	return (
 		<footer className="layout__footer">
@@ -64,7 +64,7 @@ function _Footer() {
 			<div className="layout__copyright-note">
 				<p>
 					sendou.ink © Copyright of Sendou and contributors 2019-{currentYear}.
-					Original content & source code is licensed under the GPL-3.0 license.
+					Original content & source code is licensed under the AGPL-3.0 license.
 				</p>
 				<p>
 					Splatoon is trademark & © of Nintendo 2014-{currentYear}. sendou.ink

@@ -15,7 +15,7 @@ const abilityFilterSchema = z.object({
 
 const modeFilterSchema = z.object({
 	type: z.literal("mode"),
-	mode: modeShort,
+	mode: z.string().toUpperCase().pipe(modeShort),
 });
 
 const dateFilterSchema = z.object({

@@ -24,3 +24,5 @@ dump
 /playwright/.cache/
 
 .vscode
+
+notepad.txt

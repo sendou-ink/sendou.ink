@@ -15,7 +15,7 @@ export type LookingGroup = {
 	createdAt: Group["createdAt"];
 	tier?: TieredSkill["tier"];
 	tierRange?: {
-		range: [TieredSkill["tier"], TieredSkill["tier"]];
+		range?: [TieredSkill["tier"], TieredSkill["tier"]];
 		diff: number;
 	};
 	isReplay?: boolean;

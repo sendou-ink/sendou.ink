@@ -5,7 +5,6 @@
 	"tournament_one": "Recibido por ganar {{tournament}}",
 	"tournament_other": "Recibido por ganar {{tournament}} (×{{count}})",
 	"forYourEvent": "¿Insignia para tu evento?",
-	"madeBy": "Insignia por <2>borzoic</2>",
 	"managedBy": "Administrado por {{users}}",
 	"own.divider": "Insignias administradas",
 	"other.divider": "Otras insignias"

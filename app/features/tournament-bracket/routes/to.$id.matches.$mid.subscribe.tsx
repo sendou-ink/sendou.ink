@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { eventStream } from "remix-utils/sse/server";
 
 import { getUserId } from "~/features/auth/core/user.server";
-import { parseParams } from "~/utils/remix";
+import { parseParams } from "~/utils/remix.server";
 import { emitter } from "../core/emitters.server";
 import { matchPageParamsSchema } from "../tournament-bracket-schemas.server";
 import { matchSubscriptionKey } from "../tournament-bracket-utils";

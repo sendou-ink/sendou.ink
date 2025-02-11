@@ -1,4 +1,8 @@
-import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
 import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -9,7 +13,11 @@ import { Input } from "~/components/Input";
 import { Main } from "~/components/Main";
 import { SearchIcon } from "~/components/icons/Search";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { type SendouRouteHandle, parseSearchParams } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
+import {
+	type SendouRouteHandle,
+	parseSearchParams,
+} from "~/utils/remix.server";
 import { USER_SEARCH_PAGE, navIconUrl, userPage } from "~/utils/urls";
 import { queryToUserIdentifier } from "~/utils/users";
 
@@ -22,6 +30,14 @@ export const handle: SendouRouteHandle = {
 		href: USER_SEARCH_PAGE,
 		type: "IMAGE",
 	}),
+};
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "User Search",
+		description: "Search for sendou.ink users",
+		location: args.location,
+	});
 };
 
 export type UserSearchLoaderData = SerializeFrom<typeof loader>;

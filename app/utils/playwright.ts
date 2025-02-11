@@ -27,7 +27,7 @@ export async function selectUser({
 	await expect(combobox).not.toBeDisabled();
 
 	await combobox.clear();
-	await combobox.type(userName);
+	await combobox.fill(userName);
 	await expect(page.getByTestId("combobox-option-0")).toBeVisible();
 	await page.keyboard.press("Enter");
 }
@@ -68,11 +68,11 @@ export function impersonate(page: Page, userId = ADMIN_ID) {
 	return page.request.post(`/auth/impersonate?id=${userId}`);
 }
 
-export async function submit(page: Page) {
+export async function submit(page: Page, testId?: string) {
 	const responsePromise = page.waitForResponse(
 		(res) => res.request().method() === "POST",
 	);
-	await page.getByTestId("submit-button").click();
+	await page.getByTestId(testId ?? "submit-button").click();
 	await responsePromise;
 }
 

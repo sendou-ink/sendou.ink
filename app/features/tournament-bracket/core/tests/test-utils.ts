@@ -1,18 +1,20 @@
-import { BRACKET_NAMES } from "~/features/tournament/tournament-constants";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import { removeDuplicates } from "~/utils/arrays";
+import type * as Progression from "../Progression";
 import { Tournament } from "../Tournament";
 import type { TournamentData } from "../Tournament.server";
 
-const tournamentCtxTeam = (
+export const tournamentCtxTeam = (
 	teamId: number,
 	partial?: Partial<TournamentData["ctx"]["teams"][0]>,
 ): TournamentData["ctx"]["teams"][0] => {
 	return {
-		checkIns: [{ checkedInAt: 1705858841, bracketIdx: null }],
+		checkIns: [{ checkedInAt: 1705858841, bracketIdx: null, isCheckOut: 0 }],
 		createdAt: 0,
 		id: teamId,
 		inviteCode: null,
+		avgSeedingSkillOrdinal: null,
+		startingBracketIdx: null,
 		team: null,
 		mapPool: [],
 		members: [],
@@ -58,8 +60,10 @@ export const testTournament = ({
 		ctx: {
 			eventId: 1,
 			id: 1,
+			tags: null,
 			description: null,
 			organization: null,
+			parentTournamentId: null,
 			rules: null,
 			logoUrl: null,
 			logoSrc: "/test.png",
@@ -69,6 +73,7 @@ export const testTournament = ({
 			isFinalized: 0,
 			name: "test",
 			castTwitchAccounts: [],
+			bracketProgressionOverrides: [],
 			subCounts: [],
 			staff: [],
 			tieBreakerMapPool: [],
@@ -77,7 +82,12 @@ export const testTournament = ({
 			mapPickingStyle: "AUTO_SZ",
 			settings: {
 				bracketProgression: [
-					{ name: BRACKET_NAMES.MAIN, type: "double_elimination" },
+					{
+						name: "Main Bracket",
+						type: "double_elimination",
+						requiresCheckIn: false,
+						settings: {},
+					},
 				],
 			},
 			castedMatchesInfo: null,
@@ -143,3 +153,133 @@ export const adjustResults = (
 		}),
 	};
 };
+
+const DEFAULT_PROGRESSION_ARGS = {
+	requiresCheckIn: false,
+	settings: {},
+	name: "Main Bracket",
+};
+
+export const progressions = {
+	singleElimination: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+		},
+	],
+	roundRobinToSingleElimination: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "round_robin",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "B1",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [1, 2],
+				},
+			],
+		},
+	],
+	lowInk: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "swiss",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			name: "B1",
+			type: "double_elimination",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [3, 4],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			name: "B2",
+			type: "round_robin",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [1, 2],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			name: "B3",
+			type: "double_elimination",
+			sources: [
+				{
+					bracketIdx: 2,
+					placements: [1, 2],
+				},
+			],
+		},
+	],
+	manyStartBrackets: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "round_robin",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "round_robin",
+			name: "B1",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "B2",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [1, 2],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "B3",
+			sources: [
+				{
+					bracketIdx: 1,
+					placements: [1, 2],
+				},
+			],
+		},
+	],
+	swissOneGroup: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "swiss",
+			settings: {
+				groupCount: 1,
+			},
+		},
+	],
+	doubleEliminationWithUnderground: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "double_elimination",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "double_elimination",
+			name: "Underground",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [-1, -2],
+				},
+			],
+		},
+	],
+} satisfies Record<string, Progression.ParsedBracket[]>;

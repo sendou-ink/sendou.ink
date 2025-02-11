@@ -25,7 +25,6 @@
 
 	"emptyAbilitySlot": "Пустой слот",
 
-	"filters.title": "Фильтр {{number}}",
 	"filters.has": "Имеет",
 	"filters.does.not.have": "Не имеет",
 	"filters.atLeast": "Минимум",

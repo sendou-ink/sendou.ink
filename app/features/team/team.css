@@ -84,17 +84,24 @@
 	gap: var(--s-3);
 }
 
-.team__twitter-link {
+.team__bsky-link {
 	padding: var(--s-1);
 	border: 1px solid;
 	border-radius: 50%;
-	border-color: #1da1f2;
-	background-color: #1da0f22f;
+	border-color: #1285fe;
+	background-color: #1285fe2f;
+	height: 24.4px;
+	width: 24.4px;
+	display: grid;
+	place-items: center;
 }
 
-.team__twitter-link > svg {
+.team__bsky-link > svg {
 	width: 0.9rem;
-	fill: #1da1f2;
+}
+
+.team__bsky-link path {
+	fill: #1285fe;
 }
 
 .team__banner__avatar {
@@ -158,6 +165,7 @@
 	display: flex;
 	justify-content: center;
 	gap: var(--s-2);
+	flex-wrap: wrap;
 }
 
 .team__results {

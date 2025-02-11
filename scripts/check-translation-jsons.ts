@@ -75,7 +75,7 @@ for (const file of fileNames) {
 			);
 
 			validateNoExtraKeysInOther({
-				english: otherLanguageContentKeys,
+				english: getKeysWithoutSuffix(englishContent, lang, file),
 				other: otherLanguageContentKeys,
 				lang,
 				file,

@@ -65,5 +65,8 @@
 	"tag.desc.S1": "スプラトゥーン1でプレイされます",
 	"tag.desc.S2": "スプラトゥーン2でプレイされます",
 	"tag.desc.SR": "サーモンランイベント",
-	"tag.desc.CARDS": "ナワバリバトルイベント"
+	"tag.desc.CARDS": "ナワバリバトルイベント",
+	"tag.filter.label": "タグで選択",
+
+	"tournament.filter.label": "sendou.ink にて主催"
 }

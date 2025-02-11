@@ -8,8 +8,9 @@ import { Avatar } from "~/components/Avatar";
 import { Button, LinkButton } from "~/components/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, ModeImage, TierImage, WeaponImage } from "~/components/Image";
-import { Popover } from "~/components/Popover";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { EditIcon } from "~/components/icons/Edit";
 import { MicrophoneIcon } from "~/components/icons/Microphone";
 import { SpeakerIcon } from "~/components/icons/Speaker";
@@ -158,7 +159,7 @@ export function GroupCard({
 						{group.tier.isPlus ? "+" : ""}
 					</div>
 				) : null}
-				{group.tierRange ? (
+				{group.tierRange?.range ? (
 					<div className="stack sm items-center">
 						<div className="q__group__tier-diff-text">
 							±{group.tierRange.diff}
@@ -261,9 +262,9 @@ function GroupMember({
 			<div className="q__group-member">
 				<div className="text-main-forced stack xs horizontal items-center">
 					{showNote && member.privateNote ? (
-						<Popover
-							buttonChildren={
-								<>
+						<SendouPopover
+							trigger={
+								<SendouButton variant="minimal">
 									<Avatar
 										user={member}
 										size="xs"
@@ -272,7 +273,7 @@ function GroupMember({
 											`q__group-member__avatar__${member.privateNote.sentiment}`,
 										)}
 									/>
-								</>
+								</SendouButton>
 							}
 						>
 							{member.privateNote.text}
@@ -298,7 +299,7 @@ function GroupMember({
 									targetId={member.id}
 								/>
 							</div>
-						</Popover>
+						</SendouPopover>
 					) : (
 						<Avatar user={member} size="xs" />
 					)}
@@ -344,12 +345,15 @@ function GroupMember({
 						</div>
 					) : null}
 					{member.friendCode ? (
-						<Popover
-							buttonChildren={<>FC</>}
-							triggerClassName="q__group-member__extra-info-button"
+						<SendouPopover
+							trigger={
+								<SendouButton className="q__group-member__extra-info-button">
+									FC
+								</SendouButton>
+							}
 						>
 							SW-{member.friendCode}
-						</Popover>
+						</SendouPopover>
 					) : null}
 					{showAddNote ? (
 						<LinkButton
@@ -647,12 +651,17 @@ function MemberRoleManager({
 	if (displayOnly && member.role !== "OWNER") return null;
 
 	return (
-		<Popover
-			buttonChildren={
-				<Icon
-					className={clsx("q__group-member__star", {
-						"q__group-member__star__inactive": member.role === "REGULAR",
-					})}
+		<SendouPopover
+			trigger={
+				<SendouButton
+					variant="minimal"
+					icon={
+						<Icon
+							className={clsx("q__group-member__star", {
+								"q__group-member__star__inactive": member.role === "REGULAR",
+							})}
+						/>
+					}
 				/>
 			}
 		>
@@ -698,7 +707,7 @@ function MemberRoleManager({
 					</fetcher.Form>
 				) : null}
 			</div>
-		</Popover>
+		</SendouPopover>
 	);
 }
 
@@ -708,27 +717,35 @@ function TierInfo({ skill }: { skill: TieredSkill | "CALCULATING" }) {
 	if (skill === "CALCULATING") {
 		return (
 			<div className="q__group-member__tier">
-				<Popover
-					buttonChildren={
-						<Image
-							path={tierImageUrl("CALCULATING")}
-							alt=""
-							height={32.965}
-							className="q__group-member__tier__placeholder"
-						/>
+				<SendouPopover
+					trigger={
+						<SendouButton variant="minimal">
+							<Image
+								path={tierImageUrl("CALCULATING")}
+								alt=""
+								height={32.965}
+								className="q__group-member__tier__placeholder"
+							/>
+						</SendouButton>
 					}
 				>
 					{t("q:looking.rankCalculating", {
 						count: MATCHES_COUNT_NEEDED_FOR_LEADERBOARD,
 					})}
-				</Popover>
+				</SendouPopover>
 			</div>
 		);
 	}
 
 	return (
 		<div className="q__group-member__tier">
-			<Popover buttonChildren={<TierImage tier={skill.tier} width={38} />}>
+			<SendouPopover
+				trigger={
+					<SendouButton variant="minimal">
+						<TierImage tier={skill.tier} width={38} />
+					</SendouButton>
+				}
+			>
 				<div className="stack sm items-center">
 					<div className="stack items-center">
 						<TierImage tier={skill.tier} width={80} />
@@ -748,7 +765,7 @@ function TierInfo({ skill }: { skill: TieredSkill | "CALCULATING" }) {
 						</div>
 					) : null}
 				</div>
-			</Popover>
+			</SendouPopover>
 		</div>
 	);
 }
@@ -796,14 +813,16 @@ function VoiceChatInfo({
 			: null;
 
 	return (
-		<Popover
-			buttonChildren={
-				<Icon className={clsx("q__group-member-vc-icon", color())} />
+		<SendouPopover
+			trigger={
+				<SendouButton
+					variant="minimal"
+					size="small"
+					icon={<Icon className={clsx("q__group-member-vc-icon", color())} />}
+				/>
 			}
-			triggerClassName="minimal tiny"
-			containerClassName="ml-auto"
 		>
 			{t(`q:vc.${member.vc}`)} {languagesString}
-		</Popover>
+		</SendouPopover>
 	);
 }

@@ -1,9 +1,9 @@
-import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "@remix-run/node";
 import { Main } from "~/components/Main";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { YouTubeIcon } from "~/components/icons/YouTube";
-import { useSetTitle } from "~/hooks/useSetTitle";
-import type { SendouRouteHandle } from "~/utils/remix";
+import { metaTags } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import { LINKS_PAGE, navIconUrl } from "~/utils/urls";
 import links from "../links.json";
 
@@ -15,10 +15,17 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export default function LinksPage() {
-	const { t } = useTranslation(["common"]);
-	useSetTitle(t("common:pages.links"));
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Links",
+		ogTitle: "Splatoon link collection",
+		description:
+			"Collection of useful Splatoon guides, Discord servers and other resources.",
+		location: args.location,
+	});
+};
 
+export default function LinksPage() {
 	return (
 		<Main>
 			<div className="stack md">

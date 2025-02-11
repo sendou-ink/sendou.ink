@@ -1,5 +1,9 @@
 import { RadioGroup } from "@headlessui/react";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import type {
+	ActionFunctionArgs,
+	LoaderFunctionArgs,
+	MetaFunction,
+} from "@remix-run/node";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
@@ -14,7 +18,6 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { ModeImage, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
-import { Toggle } from "~/components/Toggle";
 import { CrossIcon } from "~/components/icons/Cross";
 import { MapIcon } from "~/components/icons/Map";
 import { MicrophoneFilledIcon } from "~/components/icons/MicrophoneFilled";
@@ -33,7 +36,10 @@ import { useIsMounted } from "~/hooks/useIsMounted";
 import { languagesUnified } from "~/modules/i18n/config";
 import type { MainWeaponId, ModeShort } from "~/modules/in-game-lists";
 import { modesShort } from "~/modules/in-game-lists/modes";
-import { type SendouRouteHandle, parseRequestPayload } from "~/utils/remix";
+import {
+	type SendouRouteHandle,
+	parseRequestPayload,
+} from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import {
 	SENDOUQ_PAGE,
@@ -49,8 +55,9 @@ import {
 	SENDOUQ_WEAPON_POOL_MAX_SIZE,
 } from "../q-settings-constants";
 import { settingsActionSchema } from "../q-settings-schemas.server";
-
 import "../q-settings.css";
+import { SendouSwitch } from "~/components/elements/Switch";
+import { metaTags } from "~/utils/remix";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
@@ -66,6 +73,13 @@ export const handle: SendouRouteHandle = {
 			type: "IMAGE",
 		},
 	],
+};
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "SendouQ - Settings",
+		location: args.location,
+	});
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -796,9 +810,9 @@ function Misc() {
 			</summary>
 			<fetcher.Form method="post" className="mb-4 ml-2-5 stack sm">
 				<div className="stack horizontal xs items-center">
-					<Toggle
-						checked={checked}
-						setChecked={setChecked}
+					<SendouSwitch
+						isSelected={checked}
+						onChange={setChecked}
 						id="noScreen"
 						name="noScreen"
 					/>

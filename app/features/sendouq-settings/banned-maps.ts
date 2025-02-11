@@ -14,6 +14,8 @@ export const BANNED_MAPS: Record<ModeShort, StageId[]> = {
 		s.HUMPBACK_PUMP_TRACK,
 		s.BLUEFIN_DEPOT,
 		s.CRABLEG_CAPITAL,
+		s.MARLIN_AIRPORT,
+		s.LEMURIA_HUB,
 	],
 	RM: [
 		s.EELTAIL_ALLEY,
@@ -25,6 +27,8 @@ export const BANNED_MAPS: Record<ModeShort, StageId[]> = {
 		s.SHIPSHAPE_CARGO_CO,
 		s.MAHI_MAHI_RESORT,
 		s.MARLIN_AIRPORT,
+		s.HAMMERHEAD_BRIDGE,
+		s.LEMURIA_HUB,
 	],
 	CB: [
 		s.HAMMERHEAD_BRIDGE,
@@ -32,8 +36,11 @@ export const BANNED_MAPS: Record<ModeShort, StageId[]> = {
 		s.WAHOO_WORLD,
 		s.FLOUNDER_HEIGHTS,
 		s.MINCEMEAT_METALWORKS,
-		s.SHIPSHAPE_CARGO_CO,
 		s.EELTAIL_ALLEY,
 		s.UNDERTOW_SPILLWAY,
+		s.MAHI_MAHI_RESORT,
+		s.BLUEFIN_DEPOT,
+		s.MARLIN_AIRPORT,
+		s.LEMURIA_HUB,
 	],
 };

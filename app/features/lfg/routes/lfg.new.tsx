@@ -10,7 +10,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
-import type { SendouRouteHandle } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	LFG_PAGE,
 	SENDOUQ_SETTINGS_PAGE,

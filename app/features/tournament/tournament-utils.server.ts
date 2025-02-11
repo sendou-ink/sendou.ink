@@ -1,5 +1,5 @@
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { validate } from "~/utils/remix";
+import { validate } from "~/utils/remix.server";
 import type { Tournament } from "../tournament-bracket/core/Tournament";
 
 export const inGameNameIfNeeded = async ({

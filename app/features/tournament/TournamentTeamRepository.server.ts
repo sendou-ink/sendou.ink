@@ -7,6 +7,7 @@ import { INVITE_CODE_LENGTH } from "~/constants";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { databaseTimestampNow } from "~/utils/dates";
+import invariant from "~/utils/invariant";
 
 export function setActiveRoster({
 	teamId,
@@ -141,6 +142,89 @@ export function create({
 	});
 }
 
+export function copyFromAnotherTournament({
+	tournamentTeamId,
+	destinationTournamentId,
+}: { tournamentTeamId: number; destinationTournamentId: number }) {
+	return db.transaction().execute(async (trx) => {
+		const oldTeam = await trx
+			.selectFrom("TournamentTeam")
+			.select([
+				"TournamentTeam.avatarImgId",
+				"TournamentTeam.createdAt",
+				"TournamentTeam.name",
+				"TournamentTeam.noScreen",
+				"TournamentTeam.prefersNotToHost",
+				"TournamentTeam.teamId",
+
+				// -- exclude these
+				// "TournamentTeam.id"
+				// "TournamentTeam.droppedOut"
+				// "TournamentTeam.activeRosterUserIds"
+				// "TournamentTeam.seed"
+				// "TournamentTeam.startingBracketIdx"
+				// "TournamentTeam.inviteCode"
+				// "TournamentTeam.tournamentId"
+				// "TournamentTeam.activeRosterUserIds",
+			])
+			.where("id", "=", tournamentTeamId)
+			.executeTakeFirstOrThrow();
+
+		const oldMembers = await trx
+			.selectFrom("TournamentTeamMember")
+			.select([
+				"TournamentTeamMember.createdAt",
+				"TournamentTeamMember.inGameName",
+				"TournamentTeamMember.isOwner",
+				"TournamentTeamMember.userId",
+
+				// -- exclude these
+				// "TournamentTeamMember.tournamentTeamId"
+			])
+			.where("tournamentTeamId", "=", tournamentTeamId)
+			.execute();
+		invariant(oldMembers.length > 0, "Team has no members");
+
+		const oldMapPool = await trx
+			.selectFrom("MapPoolMap")
+			.select(["MapPoolMap.mode", "MapPoolMap.stageId"])
+			.where("tournamentTeamId", "=", tournamentTeamId)
+			.execute();
+
+		const newTeam = await trx
+			.insertInto("TournamentTeam")
+			.values({
+				...oldTeam,
+				tournamentId: destinationTournamentId,
+				inviteCode: nanoid(INVITE_CODE_LENGTH),
+			})
+			.returning("id")
+			.executeTakeFirstOrThrow();
+
+		await trx
+			.insertInto("TournamentTeamMember")
+			.values(
+				oldMembers.map((member) => ({
+					...member,
+					tournamentTeamId: newTeam.id,
+				})),
+			)
+			.execute();
+
+		if (oldMapPool.length > 0) {
+			await trx
+				.insertInto("MapPoolMap")
+				.values(
+					oldMapPool.map((mapPoolMap) => ({
+						...mapPoolMap,
+						tournamentTeamId: newTeam.id,
+					})),
+				)
+				.execute();
+		}
+	});
+}
+
 export function update({
 	team,
 	avatarFileName,
@@ -208,4 +292,32 @@ export function deleteLogo(tournamentTeamId: number) {
 		.set({ avatarImgId: null })
 		.where("TournamentTeam.id", "=", tournamentTeamId)
 		.execute();
+}
+
+export function updateStartingBrackets(
+	startingBrackets: {
+		tournamentTeamId: number;
+		startingBracketIdx: number;
+	}[],
+) {
+	const grouped = Object.groupBy(
+		startingBrackets,
+		(sb) => sb.startingBracketIdx,
+	);
+
+	return db.transaction().execute(async (trx) => {
+		for (const [startingBracketIdx, tournamentTeamIds = []] of Object.entries(
+			grouped,
+		)) {
+			await trx
+				.updateTable("TournamentTeam")
+				.set({ startingBracketIdx: Number(startingBracketIdx) })
+				.where(
+					"TournamentTeam.id",
+					"in",
+					tournamentTeamIds.map((t) => t.tournamentTeamId),
+				)
+				.execute();
+		}
+	});
 }

@@ -8,18 +8,21 @@ import { logger } from "~/utils/logger";
 import type { Bracket } from "../../core/Bracket";
 
 const MINUTES = {
+	BO1: 20,
 	BO3: 30,
 	BO5: 40,
 	BO7: 50,
 };
 
 const STRICT_MINUTES = {
+	BO1: 15,
 	BO3: 25,
 	BO5: 35,
 	BO7: 45,
 };
 
 const minutesToPlay = (count: number, strict: boolean) => {
+	if (count === 1) return strict ? STRICT_MINUTES.BO1 : MINUTES.BO1;
 	if (count === 3) return strict ? STRICT_MINUTES.BO3 : MINUTES.BO3;
 	if (count === 5) return strict ? STRICT_MINUTES.BO5 : MINUTES.BO5;
 	if (count === 7) return strict ? STRICT_MINUTES.BO7 : MINUTES.BO7;

@@ -1,4 +1,4 @@
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
+import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
@@ -17,6 +17,12 @@ export async function all() {
 					.whereRef("BadgeManager.badgeId", "=", "Badge.id")
 					.select(["userId"]),
 			).as("managers"),
+			jsonObjectFrom(
+				eb
+					.selectFrom("User")
+					.select(COMMON_USER_FIELDS)
+					.whereRef("User.id", "=", "Badge.authorId"),
+			).as("author"),
 		])
 		.execute();
 

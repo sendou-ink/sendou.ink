@@ -3,6 +3,7 @@
 	flex-direction: column;
 	width: 100%;
 	min-height: 100vh;
+	padding-top: 50px; /** compensate for layout__header */
 }
 
 .layout__breadcrumb-container {
@@ -55,7 +56,7 @@
 	font-weight: bold;
 	padding-block: var(--s-2);
 	padding-inline: var(--s-4);
-	position: sticky;
+	position: fixed;
 	top: 0;
 }
 
@@ -72,6 +73,24 @@
 	font-weight: var(--bold);
 	gap: var(--s-2-5);
 	letter-spacing: 0.02rem;
+}
+
+.layout__hamburger-fab {
+	display: grid;
+	position: fixed;
+	right: 27.5px;
+	bottom: 105px;
+	border-radius: 100%;
+	width: 3.75rem;
+	height: 3.75rem;
+	backdrop-filter: var(--backdrop-filter);
+	background-color: transparent;
+	border-color: var(--theme-transparent);
+}
+
+.layout__hamburger-fab svg {
+	width: 2.25rem;
+	stroke-width: 2px;
 }
 
 .layout__header__right-container {
@@ -101,6 +120,7 @@
 	max-width: 48rem;
 	margin: 0 auto;
 	padding-inline: var(--s-3);
+	min-height: 75vh;
 }
 
 .half-width {
@@ -148,19 +168,6 @@
 
 .layout__log-in-button:active {
 	transform: translateY(1px);
-}
-
-.layout__user-popover {
-	display: flex;
-	flex-direction: column;
-	padding: var(--s-2);
-	border-radius: var(--rounded);
-	background-color: var(--bg-darker);
-	gap: var(--s-2);
-}
-
-.layout__user-popover > button:focus {
-	outline: 2px solid var(--theme);
 }
 
 .layout__footer {
@@ -255,74 +262,97 @@
 	text-align: center;
 }
 
-.layout__side-nav {
-	background: black;
+.layout__overlay-nav__nav-items-container {
+	display: flex;
+	margin: 0 auto;
+	gap: var(--s-4) var(--s-4);
+	font-size: 13px;
+	flex-wrap: wrap;
+	justify-content: center;
+	animation: smooth-appear 0.75s ease-out forwards;
+	margin-top: 27.5px;
+	opacity: 0.25;
+	max-width: 48rem;
+}
+
+@keyframes smooth-appear {
+	to {
+		margin-top: 0px;
+		opacity: 1;
+	}
+}
+
+.layout__overlay-nav__nav-item {
 	display: flex;
 	flex-direction: column;
-	gap: var(--s-6);
-	padding-block: var(--s-3);
-	padding-inline: var(--s-4);
-	min-width: fit-content;
-	-webkit-backdrop-filter: var(--backdrop-filter);
-	backdrop-filter: var(--backdrop-filter);
-	background-color: transparent;
-	overflow: hidden auto;
-	direction: rtl;
-	position: sticky;
-
-	/*
-  Top pixel count needs to be the same as nav height
-  Max height is calculated using the viewport height minus the nav height
-  This is unfortunately needed to avoid the sidebar from overflowing the viewport or navbar
-  Without this, the sidebar would be cut off at the bottom or top or clip into it
-  Will return if a better solution is found that doesnt require a hard coded value
-  */
-	top: 47px;
-	max-height: calc(100vh - 47px);
-	scrollbar-color: rgb(83 65 91) transparent;
-	scrollbar-width: thin;
-	scrollbar-gutter: stable;
+	align-items: center;
+	color: var(--text);
+	font-weight: bold;
+	gap: var(--s-1);
+	text-align: center;
+	width: 100px;
 }
 
-/*
-Works on literally every browser except Firefox 
-Firefox scrollbar styling is above in .layout__side-nav
-*/
-.layout__side-nav::-webkit-scrollbar {
-	width: 4px;
-}
-
-.layout__side-nav::-webkit-scrollbar-track {
-	background: black;
-	background-color: transparent;
-}
-
-.layout__side-nav::-webkit-scrollbar-corner {
-	background: black;
-	background-color: transparent;
-}
-
-.layout__side-nav::-webkit-scrollbar-thumb {
-	background-color: rgb(83 65 91);
-	border-radius: 4px;
-}
-
-.layout__side-nav::-webkit-scrollbar-thumb:hover {
-	background-color: rgb(62 49 68);
-}
-
-.layout__side-nav-image-container {
+.layout__overlay-nav__log-in-button {
 	display: grid;
-	width: 40px;
-	height: 40px;
-	border-radius: var(--rounded);
+	width: 50px;
+	height: 50px;
+	border: none;
+	border-radius: 100%;
 	background-color: var(--bg-lighter);
+	color: var(--text);
 	place-items: center;
 	transition: all 0.2s ease-out;
 }
 
-.layout__side-nav-image-container:hover {
+.layout__overlay-nav__nav-image-container {
+	display: grid;
+	width: 75px;
+	height: 75px;
+	border-radius: var(--rounded);
+	background-color: var(--bg-lighter);
+	color: var(--text);
+	place-items: center;
+	transition: all 0.2s ease-out;
+}
+
+.layout__overlay-nav__nav-image-container.round {
+	width: 50px;
+	height: 50px;
+	border-radius: 100%;
+}
+
+.layout__overlay-nav__avatar {
+	width: 50px;
+	height: 50px;
+}
+
+.layout__overlay-nav__nav-image-container:hover {
 	background-color: var(--theme-transparent);
+}
+
+.layout__overlay-nav__log-out-container {
+	display: flex;
+	justify-content: center;
+}
+
+.layout__overlay-nav__dialog {
+	min-width: 100vw;
+	min-height: 100vh;
+}
+
+.layout__overlay-nav__dialog[open],
+.layout__overlay-nav__dialog::backdrop {
+	animation: none;
+}
+
+.layout__overlay-nav__close-button {
+	margin-inline-start: auto;
+	margin-block-end: var(--s-4);
+}
+
+.layout__overlay-nav__close-button > svg {
+	width: 32px;
 }
 
 @media screen and (display-mode: standalone) {
@@ -332,22 +362,31 @@ Firefox scrollbar styling is above in .layout__side-nav
 	}
 
 	.layout__main {
-		padding-block-start: calc(
-			env(safe-area-inset-top) +
-			var(--leaderboard-top-spacing)
-		);
+		padding-block-start: env(safe-area-inset-top);
 	}
 }
 
-@media screen and (max-width: 950px) {
-	.layout__side-nav {
+@media screen and (min-width: 600px) {
+	.layout__hamburger-fab {
 		display: none;
 	}
 }
 
 @media screen and (max-width: 640px) {
-	.layout__header__right-container {
+	.layout__hamburger-button {
+		display: initial;
+	}
+
+	.layout__header__right-container .layout__user-item {
 		display: none;
+	}
+
+	.layout__breadcrumb__text-mobile-hidden {
+		display: none;
+	}
+
+	.layout__overlay-nav__dialog {
+		padding-block: var(--s-12);
 	}
 
 	.layout__breadcrumb-container > a {
@@ -380,11 +419,5 @@ Firefox scrollbar styling is above in .layout__side-nav
 
 	.layout__footer__social-link:hover > .layout__footer__social-icon {
 		transform: translateX(-0.3rem);
-	}
-}
-
-@media screen and (max-width: 480px) {
-	.layout__breadcrumb-container {
-		width: 100%;
 	}
 }

@@ -1966,11 +1966,11 @@
 			},
 			{
 				"target": "GreatBarrier_Barrier",
-				"rate": 1.5
+				"rate": 2
 			},
 			{
 				"target": "GreatBarrier_WeakPoint",
-				"rate": 1.5
+				"rate": 2
 			},
 			{
 				"target": "NiceBall_Armor",

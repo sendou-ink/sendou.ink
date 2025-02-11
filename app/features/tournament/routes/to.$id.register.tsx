@@ -17,10 +17,10 @@ import { Label } from "~/components/Label";
 import { containerClassName } from "~/components/Main";
 import { MapPoolStages } from "~/components/MapPoolSelector";
 import { NewTabs } from "~/components/NewTabs";
-import { Popover } from "~/components/Popover";
 import { Section } from "~/components/Section";
 import { SubmitButton } from "~/components/SubmitButton";
-import { Toggle } from "~/components/Toggle";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { ClockIcon } from "~/components/icons/Clock";
 import { CrossIcon } from "~/components/icons/Cross";
@@ -41,6 +41,7 @@ import invariant from "~/utils/invariant";
 import {
 	LOG_IN_URL,
 	SENDOU_INK_BASE_URL,
+	SENDOU_INK_DISCORD_URL,
 	navIconUrl,
 	readonlyMapsPage,
 	tournamentJoinPage,
@@ -50,6 +51,7 @@ import {
 	userPage,
 	userSubmittedImage,
 } from "~/utils/urls";
+import { AlertIcon } from "../../../components/icons/Alert";
 import type { TournamentRegisterPageLoader } from "../loaders/to.$id.register.server";
 import { TOURNAMENT } from "../tournament-constants";
 import {
@@ -119,20 +121,22 @@ export default function TournamentRegisterPage() {
 							</Link>
 						)}
 					</div>
-					<div className="tournament__by mt-2">
-						<div className="stack horizontal xs items-center">
-							<ClockIcon className="tournament__info__icon" />{" "}
-							{isMounted
-								? tournament.ctx.startTime.toLocaleString(i18n.language, {
-										timeZoneName: "short",
-										minute: startsAtEvenHour ? undefined : "numeric",
-										hour: "numeric",
-										day: "numeric",
-										month: "long",
-									})
-								: null}
+					{!tournament.isLeagueSignup ? (
+						<div className="tournament__by mt-2">
+							<div className="stack horizontal xs items-center">
+								<ClockIcon className="tournament__info__icon" />{" "}
+								{isMounted
+									? tournament.ctx.startTime.toLocaleString(i18n.language, {
+											timeZoneName: "short",
+											minute: startsAtEvenHour ? undefined : "numeric",
+											hour: "numeric",
+											day: "numeric",
+											month: "long",
+										})
+									: null}
+							</div>
 						</div>
-					</div>
+					) : null}
 					<div className="stack horizontal sm mt-1">
 						{tournament.ranked ? (
 							<div className="tournament__badge tournament__badge__ranked">
@@ -371,6 +375,7 @@ function RegistrationForms() {
 					) : null}
 				</>
 			) : null}
+			{tournament.isLeagueSignup ? <GoogleFormsLink /> : null}
 			{ownTeam ? (
 				<>
 					<FillRoster ownTeam={ownTeam} ownTeamCheckedIn={ownTeamCheckedIn} />
@@ -396,25 +401,41 @@ function RegistrationProgress({
 	const tournament = useTournament();
 	const isMounted = useIsMounted();
 
-	const steps = filterOutFalsy([
+	const completedIfTruthy = (condition: unknown) =>
+		condition ? "completed" : "incomplete";
+
+	const steps: Array<{
+		name: string;
+		status: "completed" | "incomplete" | "notice";
+	}> = filterOutFalsy([
 		{
 			name: t("tournament:pre.steps.name"),
-			completed: Boolean(name),
+			status: completedIfTruthy(name),
 		},
 		{
 			name: t("tournament:pre.steps.roster"),
-			completed: members && members.length >= tournament.minMembersPerTeam,
+			status: completedIfTruthy(
+				members && members.length >= tournament.minMembersPerTeam,
+			),
 		},
 		tournament.teamsPrePickMaps
 			? {
 					name: t("tournament:pre.steps.pool"),
-					completed: mapPool && mapPool.length > 0,
+					status: completedIfTruthy(mapPool && mapPool.length > 0),
 				}
 			: null,
-		{
-			name: t("tournament:pre.steps.check-in"),
-			completed: checkedIn,
-		},
+		!tournament.isLeagueSignup
+			? {
+					name: t("tournament:pre.steps.check-in"),
+					status: completedIfTruthy(checkedIn),
+				}
+			: null,
+		tournament.isLeagueSignup
+			? {
+					name: "Google Sheet",
+					status: "notice",
+				}
+			: null,
 	]);
 
 	const regClosesBeforeStart =
@@ -422,7 +443,10 @@ function RegistrationProgress({
 		tournament.ctx.startTime.getTime();
 
 	const registrationClosesAtString = isMounted
-		? tournament.registrationClosesAt.toLocaleTimeString(i18n.language, {
+		? (tournament.isLeagueSignup
+				? tournament.ctx.startTime
+				: tournament.registrationClosesAt
+			).toLocaleTimeString(i18n.language, {
 				minute: "numeric",
 				hour: "numeric",
 				day: "2-digit",
@@ -444,11 +468,13 @@ function RegistrationProgress({
 								className="stack sm items-center text-center"
 							>
 								{step.name}
-								{step.completed ? (
+								{step.status === "completed" ? (
 									<CheckmarkIcon
 										className="tournament__section__icon fill-success"
 										testId={`checkmark-icon-num-${i + 1}`}
 									/>
+								) : step.status === "notice" ? (
+									<AlertIcon className="tournament__section__icon fill-info p-1" />
 								) : (
 									<CrossIcon className="tournament__section__icon fill-error" />
 								)}
@@ -456,22 +482,26 @@ function RegistrationProgress({
 						);
 					})}
 				</div>
-				<CheckIn
-					canCheckIn={steps.filter((step) => !step.completed).length === 1}
-					status={
-						tournament.regularCheckInIsOpen
-							? "OPEN"
-							: tournament.regularCheckInHasEnded
-								? "OVER"
-								: "UPCOMING"
-					}
-					startDate={tournament.regularCheckInStartsAt}
-					endDate={tournament.regularCheckInEndsAt}
-					checkedIn={checkedIn}
-				/>
+				{!tournament.isLeagueSignup ? (
+					<CheckIn
+						canCheckIn={
+							steps.filter((step) => step.status === "incomplete").length === 1
+						}
+						status={
+							tournament.regularCheckInIsOpen
+								? "OPEN"
+								: tournament.regularCheckInHasEnded
+									? "OVER"
+									: "UPCOMING"
+						}
+						startDate={tournament.regularCheckInStartsAt}
+						endDate={tournament.regularCheckInEndsAt}
+						checkedIn={checkedIn}
+					/>
+				) : null}
 			</section>
 			<div className="tournament__section__warning">
-				{regClosesBeforeStart ? (
+				{regClosesBeforeStart || tournament.isLeagueSignup ? (
 					<span className="text-warning">
 						Registration closes at {registrationClosesAtString}
 					</span>
@@ -550,12 +580,15 @@ function CheckIn({
 	if (!canCheckIn) {
 		return (
 			<div className="stack items-center">
-				<Popover
-					buttonChildren={t("tournament:pre.checkIn.button")}
-					triggerClassName="tiny"
+				<SendouPopover
+					trigger={
+						<SendouButton size="small">
+							{t("tournament:pre.checkIn.button")}
+						</SendouButton>
+					}
 				>
 					{t("tournament:pre.checkIn.cant")}
-				</Popover>
+				</SendouPopover>
 			</div>
 		);
 	}
@@ -588,17 +621,20 @@ function TeamInfo({
 	const [teamName, setTeamName] = React.useState(ownTeam?.name ?? "");
 	const user = useUser();
 	const ref = React.useRef<HTMLFormElement>(null);
-	const [signUpWithTeam, setSignUpWithTeam] = React.useState(() =>
-		Boolean(tournament.ownedTeamByUser(user)?.team),
+	const [signUpWithTeamId, setSignUpWithTeamId] = React.useState(
+		() => tournament.ownedTeamByUser(user)?.team?.id ?? null,
 	);
 	const [uploadedAvatar, setUploadedAvatar] = React.useState<File | null>(null);
 
-	const handleSignUpWithTeamChange = (checked: boolean) => {
-		if (!checked) {
-			setSignUpWithTeam(false);
-		} else if (data?.team) {
-			setSignUpWithTeam(true);
-			setTeamName(data.team.name);
+	const handleSignUpWithTeamChange = (teamId: number | null) => {
+		if (!teamId) {
+			setSignUpWithTeamId(null);
+		} else {
+			setSignUpWithTeamId(teamId);
+			const teamName = data?.teams.find((team) => team.id === teamId)?.name;
+			invariant(teamName, "team name should exist");
+
+			setTeamName(teamName);
 		}
 	};
 
@@ -624,11 +660,13 @@ function TeamInfo({
 	};
 
 	const avatarUrl = (() => {
-		if (signUpWithTeam) {
-			if (ownTeam?.team?.logoUrl) {
-				return userSubmittedImage(ownTeam.team.logoUrl);
-			}
-			return data?.team?.logoUrl ? userSubmittedImage(data.team.logoUrl) : null;
+		if (signUpWithTeamId) {
+			const teamToSignUpWith = data?.teams.find(
+				(team) => team.id === signUpWithTeamId,
+			);
+			return teamToSignUpWith?.logoUrl
+				? userSubmittedImage(teamToSignUpWith.logoUrl)
+				: null;
 		}
 		if (uploadedAvatar) return URL.createObjectURL(uploadedAvatar);
 		if (ownTeam?.pickupAvatarUrl) {
@@ -640,7 +678,7 @@ function TeamInfo({
 
 	const canEditAvatar =
 		tournament.registrationOpen &&
-		!signUpWithTeam &&
+		!signUpWithTeamId &&
 		uploadedAvatar &&
 		!ownTeam?.pickupAvatarUrl;
 
@@ -652,7 +690,24 @@ function TeamInfo({
 				<h3 className="tournament__section-header">
 					2. {t("tournament:pre.info.header")}
 				</h3>
-				{canUnregister ? (
+				{canUnregister &&
+				tournament.isLeagueSignup &&
+				!tournament.registrationOpen ? (
+					<SendouPopover
+						trigger={
+							<SendouButton
+								size="small"
+								variant="minimal-destructive"
+								className="build__small-text"
+							>
+								{t("tournament:pre.info.unregister")}
+							</SendouButton>
+						}
+					>
+						Unregistration from a league after the registration has ended is
+						handled by the organizers
+					</SendouPopover>
+				) : canUnregister ? (
 					<FormWithConfirm
 						dialogHeading={t("tournament:pre.info.unregister.confirm")}
 						deleteButtonText={t("tournament:pre.info.unregister")}
@@ -671,35 +726,57 @@ function TeamInfo({
 			<section className="tournament__section">
 				<Form method="post" className="stack md items-center" ref={ref}>
 					<input type="hidden" name="_action" value="UPSERT_TEAM" />
-					{signUpWithTeam && data?.team ? (
-						<input type="hidden" name="teamId" value={data.team.id} />
+					{signUpWithTeamId ? (
+						<input type="hidden" name="teamId" value={signUpWithTeamId} />
 					) : null}
-					<div className="stack sm items-center">
-						{data?.team && tournament.registrationOpen ? (
+					<div className="stack sm-plus items-center">
+						{data && data.teams.length > 0 && tournament.registrationOpen ? (
 							<div className="tournament__section__input-container">
-								<Label htmlFor="signUpAsTeam">
-									Sign up as {data.team.name}
-								</Label>
-								<Toggle
-									id="signUpAsTeam"
-									checked={signUpWithTeam}
-									setChecked={handleSignUpWithTeamChange}
-								/>
+								<Label htmlFor="signingUpAs">Team signing up as</Label>
+								<select
+									id="signingUpAs"
+									onChange={(e) => {
+										if (e.target.value === "") {
+											handleSignUpWithTeamChange(null);
+										} else {
+											handleSignUpWithTeamChange(Number(e.target.value));
+										}
+									}}
+								>
+									<option value="">Sign up with pick-up</option>
+									{data.teams.map((team) => {
+										return (
+											<option key={team.id} value={team.id}>
+												{team.name}
+											</option>
+										);
+									})}
+								</select>
 							</div>
 						) : null}
 
-						<div className="tournament__section__input-container">
-							<Label htmlFor="teamName">{t("tournament:pre.steps.name")}</Label>
-							<Input
-								name="teamName"
-								id="teamName"
-								required
-								maxLength={TOURNAMENT.TEAM_NAME_MAX_LENGTH}
-								value={teamName}
-								onChange={(e) => setTeamName(e.target.value)}
-								readOnly={!tournament.registrationOpen || signUpWithTeam}
-							/>
-						</div>
+						{!signUpWithTeamId ? (
+							<div className="tournament__section__input-container">
+								<Label htmlFor="teamName">
+									{data && data.teams.length > 0
+										? "Pick-up name"
+										: t("tournament:pre.steps.name")}
+								</Label>
+								<Input
+									name="teamName"
+									id="teamName"
+									required
+									maxLength={TOURNAMENT.TEAM_NAME_MAX_LENGTH}
+									value={teamName}
+									onChange={(e) => setTeamName(e.target.value)}
+									readOnly={
+										!tournament.registrationOpen || Boolean(signUpWithTeamId)
+									}
+								/>
+							</div>
+						) : (
+							<input type="hidden" name="teamName" value={teamName} />
+						)}
 						{tournament.registrationOpen || avatarUrl ? (
 							<div className="tournament__section__input-container">
 								<Label htmlFor="logo">Logo</Label>
@@ -833,10 +910,41 @@ function FriendCode() {
 			</section>
 			{user?.friendCode ? (
 				<div className="tournament__section__warning">
-					Is the friend code above wrong? Post a message on our Discord helpdesk
+					Is the friend code above wrong? Post a message on the{" "}
+					<a
+						href={SENDOU_INK_DISCORD_URL}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						sendou.ink Discord helpdesk
+					</a>{" "}
 					to change it.
 				</div>
 			) : null}
+		</div>
+	);
+}
+
+function GoogleFormsLink() {
+	return (
+		<div>
+			<h3 className="tournament__section-header">
+				Additional Requirement: Google Form
+			</h3>
+			<section className="tournament__section stack lg items-center">
+				<a
+					href={import.meta.env.VITE_LEAGUE_GOOGLE_FORM_URL}
+					className="py-4 font-bold"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					Answer survey hosted on Google Forms
+				</a>
+			</section>
+			<div className="tournament__section__warning">
+				Answer to additional question about your team's preferred match time and
+				info to help with seeding
+			</div>
 		</div>
 	);
 }
@@ -877,7 +985,7 @@ function FillRoster({
 		(ownTeamCheckedIn && ownTeamMembers.length > tournament.minMembersPerTeam);
 
 	const playersAvailableToDirectlyAdd = (() => {
-		return (data!.trusterPlayers ?? []).filter((user) => {
+		return (data!.trusterPlayers?.trusters ?? []).filter((user) => {
 			const isNotInTeam = tournament.ctx.teams.every((team) =>
 				team.members.every((member) => member.userId !== user.id),
 			);
@@ -900,7 +1008,10 @@ function FillRoster({
 			<section className="tournament__section stack lg items-center">
 				{playersAvailableToDirectlyAdd.length > 0 && canAddMembers ? (
 					<>
-						<DirectlyAddPlayerSelect players={playersAvailableToDirectlyAdd} />
+						<DirectlyAddPlayerSelect
+							players={playersAvailableToDirectlyAdd}
+							teams={data!.trusterPlayers?.teams ?? []}
+						/>
 						<Divider className="text-uppercase">{t("common:or")}</Divider>
 					</>
 				) : null}
@@ -989,12 +1100,24 @@ function FillRoster({
 
 function DirectlyAddPlayerSelect({
 	players,
+	teams,
 }: {
-	players: { id: number; username: string }[];
+	players: { id: number; username: string; teamId?: number }[];
+	teams: { id: number; name: string }[];
 }) {
 	const { t } = useTranslation(["tournament", "common"]);
 	const fetcher = useFetcher();
 	const id = React.useId();
+
+	const othersOptions = players
+		.filter((player) => !player.teamId)
+		.map((player) => {
+			return (
+				<option key={player.id} value={player.id}>
+					{player.username}
+				</option>
+			);
+		});
 
 	return (
 		<fetcher.Form method="post" className="stack horizontal sm items-end">
@@ -1003,13 +1126,26 @@ function DirectlyAddPlayerSelect({
 					{t("tournament:pre.roster.addTrusted.header")}
 				</Label>
 				<select id={id} name="userId">
-					{players.map((player) => {
+					{teams.map((team) => {
 						return (
-							<option key={player.id} value={player.id}>
-								{player.username}
-							</option>
+							<optgroup label={team.name} key={team.id}>
+								{players
+									.filter((player) => player.teamId === team.id)
+									.map((player) => {
+										return (
+											<option key={player.id} value={player.id}>
+												{player.username}
+											</option>
+										);
+									})}
+							</optgroup>
 						);
 					})}
+					{teams && teams.length > 0 ? (
+						<optgroup label="Others">{othersOptions}</optgroup>
+					) : (
+						othersOptions
+					)}
 				</select>
 			</div>
 			<SubmitButton

@@ -4,16 +4,15 @@ import { add, sub } from "date-fns";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "~/components/Alert";
-import { LinkButton } from "~/components/Button";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useSearchParamStateEncoder } from "~/hooks/useSearchParamState";
 import { databaseTimestampToDate } from "~/utils/dates";
-import type { SendouRouteHandle } from "~/utils/remix";
-import { makeTitle } from "~/utils/strings";
+import { metaTags } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
-import { LFG_PAGE, lfgNewPostPage, navIconUrl } from "~/utils/urls";
+import { LFG_PAGE, navIconUrl } from "~/utils/urls";
 import { LFGAddFilterButton } from "../components/LFGAddFilterButton";
 import { LFGFilters } from "../components/LFGFilters";
 import { LFGPost } from "../components/LFGPost";
@@ -40,8 +39,14 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export const meta: MetaFunction = () => {
-	return [{ title: makeTitle("Looking for group") }];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "LFG",
+		ogTitle: "Splatoon LFG (looking for players, teams & coaches)",
+		description:
+			"Find people to play Splatoon with. Create a post or browse existing ones. For looking players, teams, scrim partners and coaches alike.",
+		location: args.location,
+	});
 };
 
 export type LFGLoaderData = SerializeFrom<typeof loader>;
@@ -100,22 +105,11 @@ export default function LFGPage() {
 
 	return (
 		<Main className="stack xl">
-			<div className="stack horizontal justify-between">
+			<div className="stack horizontal justify-end">
 				<LFGAddFilterButton
 					addFilter={(newFilter) => setFilters([...filters, newFilter])}
 					filters={filters}
 				/>
-				{user && (
-					<div className="stack sm horizontal items-center justify-end">
-						<LinkButton
-							to={lfgNewPostPage()}
-							size="tiny"
-							testId="add-new-button"
-						>
-							{t("common:actions.addNew")}
-						</LinkButton>
-					</div>
-				)}
 			</div>
 			<LFGFilters
 				filters={filters}

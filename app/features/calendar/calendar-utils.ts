@@ -1,29 +1,10 @@
-import type { TournamentSettings } from "~/db/tables";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
 import { userDiscordIdIsAged } from "~/utils/users";
-import type { TournamentFormatShort } from "../tournament/tournament-constants";
 import type { RegClosesAtOption } from "./calendar-constants";
-import type { FollowUpBracket } from "./calendar-types";
 
 export const canAddNewEvent = (user: { discordId: string }) =>
 	userDiscordIdIsAged(user);
-
-export function bracketProgressionToShortTournamentFormat(
-	bp: TournamentSettings["bracketProgression"],
-): TournamentFormatShort {
-	if (bp.length === 1 && bp[0].type === "single_elimination") return "SE";
-	if (bp.some((b) => b.type === "double_elimination")) return "DE";
-	if (bp.length === 1 && bp[0].type === "swiss") return "SWISS";
-	if (
-		bp.some(({ type }) => type === "swiss") &&
-		bp.some(({ type }) => type === "single_elimination")
-	) {
-		return "SWISS_TO_SE";
-	}
-
-	return "RR_TO_SE";
-}
 
 export const calendarEventMinDate = () => new Date(Date.UTC(2015, 4, 28));
 export const calendarEventMaxDate = () => {
@@ -31,55 +12,6 @@ export const calendarEventMaxDate = () => {
 	result.setFullYear(result.getFullYear() + 1);
 	return result;
 };
-
-export function validateFollowUpBrackets(
-	brackets: FollowUpBracket[],
-	format: TournamentFormatShort,
-	teamsPerGroup?: number,
-) {
-	const placementsFound: number[] = [];
-
-	for (const bracket of brackets) {
-		for (const placement of bracket.placements) {
-			if (placementsFound.includes(placement)) {
-				return `Duplicate group placement for two different brackets: ${placement}`;
-			}
-			placementsFound.push(placement);
-		}
-	}
-
-	for (
-		let placement = 1;
-		placement <= Math.max(...placementsFound);
-		placement++
-	) {
-		if (!placementsFound.includes(placement)) {
-			return `No bracket for placement ${placement}`;
-		}
-	}
-
-	if (
-		format === "RR_TO_SE" &&
-		typeof teamsPerGroup === "number" &&
-		placementsFound.some((p) => p > teamsPerGroup)
-	) {
-		return "Placement higher than teams per group";
-	}
-
-	if (brackets.some((b) => !b.name)) {
-		return "Bracket name can't be empty";
-	}
-
-	if (brackets.some((b) => b.placements.length === 0)) {
-		return "Bracket must have at least one placement";
-	}
-
-	if (new Set(brackets.map((b) => b.name)).size !== brackets.length) {
-		return "Duplicate bracket name";
-	}
-
-	return null;
-}
 
 export function regClosesAtDate({
 	startTime,
@@ -182,4 +114,28 @@ export function datesToRegClosesAt({
 
 	logger.warn("datesToRegClosesAt: fallback value");
 	return "0";
+}
+
+export function closeByWeeks(args: { week: number; year: number }) {
+	if (args.week < 1 || args.week > 52) {
+		throw new Error("Invalid week number");
+	}
+
+	return [-4, -3, -2, -1, 0, 1, 2, 3, 4].map((week) => {
+		let number = args.week + week;
+		let year = args.year;
+
+		if (number < 1) {
+			number = 52 + number;
+			year--;
+		} else if (number > 52) {
+			number = number - 52;
+			year++;
+		}
+
+		return {
+			number,
+			year,
+		};
+	});
 }

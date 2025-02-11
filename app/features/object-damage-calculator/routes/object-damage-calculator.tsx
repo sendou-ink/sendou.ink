@@ -7,10 +7,8 @@ import { AllWeaponCombobox } from "~/components/Combobox";
 import { Image, WeaponImage } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { Toggle } from "~/components/Toggle";
 import type { AnyWeapon, DamageType } from "~/features/build-analyzer";
 import { possibleApValues } from "~/features/build-analyzer";
-import { useSetTitle } from "~/hooks/useSetTitle";
 import {
 	BIG_BUBBLER_ID,
 	BOOYAH_BOMB_ID,
@@ -27,7 +25,7 @@ import {
 	TRIPLE_SPLASHDOWN_ID,
 } from "~/modules/in-game-lists/weapon-ids";
 import { damageTypeTranslationString } from "~/utils/i18next";
-import type { SendouRouteHandle } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	OBJECT_DAMAGE_CALCULATOR_URL,
 	mainWeaponImageUrl,
@@ -38,10 +36,12 @@ import {
 } from "~/utils/urls";
 import { useObjectDamage } from "../calculator-hooks";
 import type { DamageReceiver } from "../calculator-types";
-
 import "../calculator.css";
+import type { MetaFunction } from "@remix-run/node";
+import { SendouSwitch } from "~/components/elements/Switch";
+import { metaTags } from "~/utils/remix";
 
-export const CURRENT_PATCH = "9.0";
+export const CURRENT_PATCH = "9.2";
 
 export const shouldRevalidate: ShouldRevalidateFunction = () => false;
 
@@ -52,6 +52,16 @@ export const handle: SendouRouteHandle = {
 		href: OBJECT_DAMAGE_CALCULATOR_URL,
 		type: "IMAGE",
 	}),
+};
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Object Damage Calculator",
+		ogTitle: "Splatoon 3 object damage calculator",
+		description:
+			"Calculate how much damage weapons do to objects in Splatoon 3. The list of objects includes Crab Tank, Big Bubbler, Splash Wall, Rainmaker shield and more.",
+		location: args.location,
+	});
 };
 
 export default function ObjectDamagePage() {
@@ -111,13 +121,13 @@ export default function ObjectDamagePage() {
 						<label className="plain" htmlFor="multi">
 							×{multiShotCount}
 						</label>
-						<Toggle
+						<SendouSwitch
 							id="multi"
-							name="multi"
-							checked={isMultiShot}
-							setChecked={(checked) =>
-								handleChange({ newIsMultiShot: checked })
+							isSelected={isMultiShot}
+							onChange={(isSelected) =>
+								handleChange({ newIsMultiShot: isSelected })
 							}
+							data-testid="multi-switch"
 						/>
 					</div>
 				) : null}
@@ -241,7 +251,6 @@ function DamageReceiversGrid({
 	abilityPoints: string;
 }): JSX.Element {
 	const { t } = useTranslation(["weapons", "analyzer", "common"]);
-	useSetTitle(t("common:pages.object-damage-calculator"));
 	return (
 		<div>
 			<div

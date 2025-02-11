@@ -1,7 +1,6 @@
-import type { SerializeFrom } from "@remix-run/node";
+import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import { NavLink, Outlet, useLoaderData } from "@remix-run/react";
 import * as React from "react";
-import { Trans } from "react-i18next";
 import { useTranslation } from "react-i18next";
 import { Badge } from "~/components/Badge";
 import { Divider } from "~/components/Divider";
@@ -9,8 +8,9 @@ import { Input } from "~/components/Input";
 import { Main } from "~/components/Main";
 import { SearchIcon } from "~/components/icons/Search";
 import { useUser } from "~/features/auth/core/user";
-import type { SendouRouteHandle } from "~/utils/remix";
-import { BADGES_PAGE, BORZOIC_TWITTER, navIconUrl } from "~/utils/urls";
+import type { SendouRouteHandle } from "~/utils/remix.server";
+import { BADGES_DOC_LINK, BADGES_PAGE, navIconUrl } from "~/utils/urls";
+import { metaTags } from "../../../utils/remix";
 import * as BadgeRepository from "../BadgeRepository.server";
 
 import "~/styles/badges.css";
@@ -22,6 +22,16 @@ export const handle: SendouRouteHandle = {
 		href: BADGES_PAGE,
 		type: "IMAGE",
 	}),
+};
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Badges",
+		ogTitle: "Splatoon badges (tournament prizes list)",
+		location: args.location,
+		description:
+			"Over 400 badge tournament prizes and counting! Check out the full list including the owners.",
+	});
 };
 
 export type BadgesLoaderData = SerializeFrom<typeof loader>;
@@ -98,16 +108,10 @@ export default function BadgesPageLayout() {
 			</div>
 			<div className="badges__general-info-texts">
 				<p>
-					<Trans i18nKey="madeBy" t={t}>
-						Badges by{" "}
-						<a href={BORZOIC_TWITTER} target="_blank" rel="noreferrer">
-							borzoic
-						</a>
-					</Trans>
+					<a href={BADGES_DOC_LINK} target="_blank" rel="noopener noreferrer">
+						{t("forYourEvent")}
+					</a>
 				</p>
-				{/* <p>
-					<Link to={FAQ_PAGE}>{t("forYourEvent")}</Link>
-				</p> */}
 			</div>
 		</Main>
 	);

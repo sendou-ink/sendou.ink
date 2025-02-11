@@ -1,7 +1,9 @@
 {
 	"types.PLAYER_FOR_TEAM": "チームを探しています",
+	"types.PLAYER_FOR_COACH": "個人コーチを探しています",
 	"types.TEAM_FOR_PLAYER": "プレイヤーを探しています",
 	"types.TEAM_FOR_COACH": "コーチを探しています",
+	"types.TEAM_FOR_SCRIM": "対戦の仲間を探しています",
 	"types.COACH_FOR_TEAM": "コーチングを提供しています",
 	"post.lastActive": "最後にログインした時",
 	"noPosts": "フィルターに該当するポーストはありません",

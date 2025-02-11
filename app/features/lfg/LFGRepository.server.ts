@@ -1,8 +1,8 @@
 import { sub } from "date-fns";
-import { type NotNull, sql } from "kysely";
+import { type NotNull, type Transaction, sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type { TablesInsertable } from "~/db/tables";
+import type { DB, TablesInsertable } from "~/db/tables";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { LFG } from "./lfg-constants";
@@ -54,8 +54,8 @@ export async function posts(user?: { id: number; plusTier: number | null }) {
 						"UserSubmittedImage.url as avatarUrl",
 						jsonArrayFrom(
 							innerEb
-								.selectFrom(["TeamMember"])
-								.innerJoin("User", "User.id", "TeamMember.userId")
+								.selectFrom("TeamMemberWithSecondary")
+								.innerJoin("User", "User.id", "TeamMemberWithSecondary.userId")
 								.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 								.select(({ eb: innestEb }) => [
 									...COMMON_USER_FIELDS,
@@ -73,7 +73,7 @@ export async function posts(user?: { id: number; plusTier: number | null }) {
 											]),
 									).as("weaponPool"),
 								])
-								.whereRef("TeamMember.teamId", "=", "Team.id"),
+								.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id"),
 						).as("members"),
 					])
 					.whereRef("Team.id", "=", "LFGPost.teamId"),
@@ -143,6 +143,9 @@ export function deletePost(id: number) {
 	return db.deleteFrom("LFGPost").where("id", "=", id).execute();
 }
 
-export function deletePostsByTeamId(teamId: number) {
-	return db.deleteFrom("LFGPost").where("teamId", "=", teamId).execute();
+export function deletePostsByTeamId(teamId: number, trx?: Transaction<DB>) {
+	return (trx ?? db)
+		.deleteFrom("LFGPost")
+		.where("teamId", "=", teamId)
+		.execute();
 }

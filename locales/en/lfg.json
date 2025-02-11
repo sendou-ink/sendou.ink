@@ -5,7 +5,7 @@
 	"types.TEAM_FOR_COACH": "Looking for a team coach",
 	"types.TEAM_FOR_SCRIM": "Looking for scrim partners",
 	"types.COACH_FOR_TEAM": "Offering coaching",
-	"post.lastActive": "last active",
+	"post.lastActive": "updated",
 	"noPosts": "No posts matching the filter",
 	"expiring": "Post is expiring. Still looking?",
 	"addFilter": "Add filter",

@@ -17,9 +17,10 @@ import {
 	WeaponImage,
 } from "~/components/Image";
 import { Pagination } from "~/components/Pagination";
-import { Popover } from "~/components/Popover";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { Tab, Tabs } from "~/components/Tabs";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { AlertIcon } from "~/components/icons/Alert";
 import { TopTenPlayer } from "~/features/leaderboards/components/TopTenPlayer";
 import { playerTopTenPlacement } from "~/features/leaderboards/leaderboards-utils";
@@ -53,7 +54,7 @@ import { atOrError } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { cutToNDecimalPlaces, roundToNDecimalPlaces } from "~/utils/number";
-import { type SendouRouteHandle, notFoundIfFalsy } from "~/utils/remix";
+import { type SendouRouteHandle, notFoundIfFalsy } from "~/utils/remix.server";
 import { TIERS_PAGE, sendouQMatchPage, userSeasonsPage } from "~/utils/urls";
 import {
 	seasonsSearchParamsSchema,
@@ -311,13 +312,17 @@ function Rank({ currentOrdinal }: { currentOrdinal: number }) {
 				</Link>
 				{!data.isAccurateTiers ? (
 					<div className="u__season__tentative">
-						{t("user:seasons.tentative")}
-						<Popover
-							buttonChildren={<>?</>}
-							contentClassName="u__season__tentative__explanation"
+						{t("user:seasons.tentative")}{" "}
+						<SendouPopover
+							popoverClassName="u__season__tentative__explanation"
+							trigger={
+								<SendouButton variant="minimal" className="ml-1">
+									?
+								</SendouButton>
+							}
 						>
 							{t("user:seasons.tentative.explanation")}
-						</Popover>
+						</SendouPopover>
 					</div>
 				) : null}
 				<div className="text-lg font-bold">
@@ -426,7 +431,7 @@ function Stages({
 		<div className="stack horizontal justify-center md flex-wrap">
 			{stageIds.map((id) => {
 				return (
-					<div key={id} className="stack sm">
+					<div key={id} className="stack sm items-start">
 						<StageImage stageId={id} height={48} className="rounded" />
 						{modesShort.map((mode) => {
 							const stats = stages[id]?.[mode];
@@ -440,19 +445,21 @@ function Stages({
 							)} ${winPercentage}${winPercentage ? "%" : ""}`;
 
 							return (
-								<Popover
+								<SendouPopover
 									key={mode}
-									buttonChildren={
-										<div className="stack horizontal items-center xs text-xs font-semi-bold text-main-forced">
-											<ModeImage mode={mode} size={18} title={infoText} />
-											{stats ? (
-												<div>
-													{stats.wins}
-													{t("user:seasons.win.short")} {stats.losses}
-													{t("user:seasons.loss.short")}
-												</div>
-											) : null}
-										</div>
+									trigger={
+										<SendouButton variant="minimal">
+											<div className="stack horizontal items-center xs text-xs font-semi-bold text-main-forced">
+												<ModeImage mode={mode} size={18} title={infoText} />
+												{stats ? (
+													<div>
+														{stats.wins}
+														{t("user:seasons.win.short")} {stats.losses}
+														{t("user:seasons.loss.short")}
+													</div>
+												) : null}
+											</div>
+										</SendouButton>
 									}
 								>
 									<StageWeaponUsageStats
@@ -461,7 +468,7 @@ function Stages({
 										stageId={id}
 										userId={layoutData.user.id}
 									/>
-								</Popover>
+								</SendouPopover>
 							);
 						})}
 					</div>

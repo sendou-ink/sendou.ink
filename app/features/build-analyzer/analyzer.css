@@ -176,10 +176,6 @@
 	align-items: center;
 }
 
-.analyzer__stat-card__popover {
-	display: inline;
-}
-
 .analyzer__stat-card__popover-trigger {
 	display: inline;
 	height: 1rem;

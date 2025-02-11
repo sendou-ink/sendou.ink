@@ -34,7 +34,6 @@
 	"auth.errors.aborted": "登录中止",
 	"auth.errors.failed": "登录失败",
 	"auth.errors.discordPermissions": "为了完善您的sendou.ink个人资料，网站需要获取您的Discord名字、头像和社交链接。",
-	"auth.errors.unknown": "您的Discord账号验证过邮箱吗？请在我们的Discord服务器的#helpdesk频道获取帮助：",
 
 	"footer.github.subtitle": "源代码",
 	"footer.discord.subtitle": "帮助及反馈",
@@ -139,11 +138,8 @@
 	"weapon.category.subs": "副武器",
 	"weapon.category.specials": "特殊武器",
 
-	"plans.poweredBy": "Powered by {{name}}",
 	"plans.blueprint": "蓝图",
 	"plans.bgStyle.OVER": "俯视图",
-	"plans.bgStyle.MINI": "小地图（空白）",
-	"plans.bgStyle.ITEMS": "小地图",
 
 	"articles.by": "作者 {{author}}",
 
@@ -225,9 +221,5 @@
 	"chat.systemMsg.userLeft": "{{name}} 离开了小队",
 	"chat.newMessages": "新消息",
 
-	"fc.title": "好友码",
-
-	"showcase.register": "报名",
-	"showcase.bracket": "对战表",
-	"showcase.liveNow": "直播中！"
+	"fc.title": "好友码"
 }

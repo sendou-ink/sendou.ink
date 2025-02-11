@@ -1,4 +1,10 @@
-import { isRouteErrorResponse, useRouteError } from "@remix-run/react";
+import {
+	isRouteErrorResponse,
+	useRevalidator,
+	useRouteError,
+} from "@remix-run/react";
+import * as React from "react";
+import { useCopyToClipboard, useLocation } from "react-use";
 import { Button } from "~/components/Button";
 import { useUser } from "~/features/auth/core/user";
 import {
@@ -12,8 +18,24 @@ import { Main } from "./Main";
 export function Catcher() {
 	const error = useRouteError();
 	const user = useUser();
+	const { revalidate } = useRevalidator();
+	const location = useLocation();
+	const [, copyToClipboard] = useCopyToClipboard();
 
-	if (!isRouteErrorResponse(error))
+	// refresh user data to make sure it's up to date (e.g. cookie might have been removed, let's show the prompt to log back in)
+	React.useEffect(() => {
+		if (!isRouteErrorResponse(error) || error.status !== 401) return;
+
+		revalidate();
+	}, [revalidate, error]);
+
+	if (!isRouteErrorResponse(error)) {
+		const errorText = (() => {
+			if (!(error instanceof Error)) return;
+
+			return `Time: ${new Date().toISOString()}\nURL: ${location.href}\nUser ID: ${user?.id ?? "Not logged in"}\n${error.stack ?? error.message}`;
+		})();
+
 		return (
 			<Main>
 				<Image
@@ -25,12 +47,24 @@ export function Catcher() {
 				/>
 				<h2 className="text-center">Error happened</h2>
 				<p className="text-center">
-					It seems like you encountered a bug. Sorry about that! Please report
-					details (your browser? what were you doing?) on{" "}
+					It seems like you encountered a bug. Sorry about that! Please share
+					the diagnostics message below as well as other details (your browser?
+					what were you doing?) on{" "}
 					<a href={SENDOU_INK_DISCORD_URL}>our Discord</a> so it can be fixed.
 				</p>
+				{errorText ? (
+					<>
+						<div className="mt-4 stack sm items-center">
+							<textarea readOnly>{errorText}</textarea>
+							<Button onClick={() => copyToClipboard(errorText)}>
+								Copy to clipboard
+							</Button>
+						</div>
+					</>
+				) : null}
 			</Main>
 		);
+	}
 
 	switch (error.status) {
 		case 401:

@@ -1,7 +1,8 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import type { Params } from "@remix-run/react";
 import type { z } from "zod";
 import { ADMIN_ID } from "~/constants";
-import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import { db, sql } from "~/db/sql";
 import { SESSION_KEY } from "~/features/auth/core/authenticator.server";
 import { authSessionStorage } from "~/features/auth/core/session.server";
@@ -14,15 +15,16 @@ export function arrayContainsSameItems<T>(arr1: T[], arr2: T[]) {
 
 export function wrappedAction<T extends z.ZodTypeAny>({
 	action,
-	params = {},
 }: {
 	// TODO: strongly type this
 	action: (args: ActionFunctionArgs) => any;
-	params?: ActionFunctionArgs["params"];
 }) {
 	return async (
 		args: z.infer<T>,
-		{ user }: { user?: "admin" | "regular" } = {},
+		{
+			user,
+			params = {},
+		}: { user?: "admin" | "regular"; params?: Params<string> } = {},
 	) => {
 		const body = new URLSearchParams(args);
 		const request = new Request("http://app.com/path", {
@@ -58,7 +60,10 @@ export function wrappedLoader<T>({
 	// TODO: strongly type this
 	loader: (args: LoaderFunctionArgs) => any;
 }) {
-	return async ({ user }: { user?: "admin" | "regular" } = {}) => {
+	return async ({
+		user,
+		params = {},
+	}: { user?: "admin" | "regular"; params?: Params<string> } = {}) => {
 		const request = new Request("http://app.com/path", {
 			method: "GET",
 			headers: await authHeader(user),
@@ -67,7 +72,7 @@ export function wrappedLoader<T>({
 		try {
 			const data = await loader({
 				request,
-				params: {},
+				params,
 				context: {},
 			});
 
@@ -87,7 +92,7 @@ async function authHeader(user?: "admin" | "regular"): Promise<HeadersInit> {
 
 	const session = await authSessionStorage.getSession();
 
-	session.set(SESSION_KEY, user === "admin" ? ADMIN_ID : NZAP_TEST_ID);
+	session.set(SESSION_KEY, user === "admin" ? ADMIN_ID : REGULAR_USER_TEST_ID);
 
 	return [["Cookie", await authSessionStorage.commitSession(session)]];
 }
@@ -106,11 +111,12 @@ export const dbReset = () => {
 	sql.prepare("PRAGMA foreign_keys = ON").run();
 };
 
-export const dbInsertUsers = (count: number) =>
+export const dbInsertUsers = (count?: number) =>
 	db
 		.insertInto("User")
 		.values(
-			Array.from({ length: count }).map((_, i) => ({
+			// defaults to 2 = admin & regular "NZAP"
+			Array.from({ length: count ?? 2 }).map((_, i) => ({
 				id: i + 1,
 				discordName: `user${i + 1}`,
 				discordId: String(i),

@@ -44,21 +44,13 @@
 	height: 8px;
 }
 
-.object-damage__grid::-webkit-scrollbar-track {
-	background-color: rgb(2, 1, 30);
-}
-
 .object-damage__grid::-webkit-scrollbar-corner {
-	background-color: rgb(2, 1, 30);
+	background-color: var(--bg-lighter);
 }
 
 .object-damage__grid::-webkit-scrollbar-thumb {
-	background-color: rgb(83, 65, 91);
+	background-color: var(--theme-transparent);
 	border-radius: 4px;
-}
-
-.object-damage__grid::-webkit-scrollbar-thumb:hover {
-	background-color: rgb(62, 49, 68);
 }
 
 .object-damage__hp {
@@ -68,7 +60,7 @@
 
 .object-damage__table-header {
 	align-items: center;
-	background-color: rgb(52 43 98);
+	background-color: var(--bg-lightest-solid);
 	border-radius: var(--rounded);
 	display: flex;
 	flex-direction: column;
@@ -77,7 +69,7 @@
 	gap: var(--s-1);
 	height: 100%;
 	left: 0;
-	outline: 5px solid rgb(2, 1, 30);
+	outline: 5px solid var(--bg);
 	padding-block: var(--s-2);
 	padding-inline: var(--s-2);
 	position: sticky;

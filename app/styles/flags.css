@@ -1,13 +1,17 @@
 .twf {
 	display: inline-block;
-	width: 2.5rem;
-	height: 2.5rem;
+	min-width: 2.5rem;
+	max-width: 2.5rem;
+	min-height: 2.5rem;
+	max-height: 2.5rem;
 	vertical-align: -0.25em;
 }
 
 .twf-s {
-	width: 1em;
-	height: 1em;
+	min-width: 1em;
+	max-width: 1em;
+	min-height: 1em;
+	max-height: 1em;
 	vertical-align: -0.1em;
 }
 
@@ -729,6 +733,10 @@
 
 .twf-ro {
 	background-image: url("https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1f7-1f1f4.svg");
+}
+
+.twf-rs {
+	background-image: url("https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1f7-1f1f8.svg");
 }
 
 .twf-ru {

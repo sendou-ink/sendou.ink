@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { parseSafeSearchParams } from "~/utils/remix";
+import { parseSafeSearchParams } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
 import { id } from "~/utils/zod";
 import * as LFGRepository from "../LFGRepository.server";

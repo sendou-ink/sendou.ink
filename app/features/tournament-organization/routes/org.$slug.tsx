@@ -13,8 +13,8 @@ import { useUser } from "~/features/auth/core/user";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
-import type { SendouRouteHandle } from "~/utils/remix";
-import { makeTitle } from "~/utils/strings";
+import { metaTags } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BLANK_IMAGE_URL,
 	calendarEventPage,
@@ -34,42 +34,20 @@ import "../tournament-organization.css";
 import { loader } from "../loaders/org.$slug.server";
 export { loader };
 
-export const meta: MetaFunction = (args) => {
-	const data = args.data as SerializeFrom<typeof loader>;
+export const meta: MetaFunction<typeof loader> = (args) => {
+	if (!args.data) return [];
 
-	if (!data) return [];
-
-	const title = makeTitle(data.organization.name);
-
-	return [
-		{ title },
-		{
-			property: "og:title",
-			content: title,
-		},
-		{
-			property: "og:description",
-			content: data.organization.description,
-		},
-		{
-			property: "og:type",
-			content: "website",
-		},
-		{
-			property: "og:image",
-			content: data.organization.avatarUrl
-				? userSubmittedImage(data.organization.avatarUrl)
-				: undefined,
-		},
-		{
-			name: "twitter:card",
-			content: "summary",
-		},
-		{
-			name: "twitter:title",
-			content: title,
-		},
-	];
+	return metaTags({
+		title: args.data.organization.name,
+		location: args.location,
+		description: args.data.organization.description ?? undefined,
+		image: args.data.organization.avatarUrl
+			? {
+					url: userSubmittedImage(args.data.organization.avatarUrl),
+					dimensions: { width: 124, height: 124 },
+				}
+			: undefined,
+	});
 };
 
 export const handle: SendouRouteHandle = {

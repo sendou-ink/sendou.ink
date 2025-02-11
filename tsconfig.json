@@ -1,7 +1,7 @@
 {
 	"include": ["./types/env.d.ts", "**/*.ts", "**/*.tsx"],
 	"compilerOptions": {
-		"lib": ["DOM", "DOM.Iterable", "ES2019"],
+		"lib": ["DOM", "DOM.Iterable", "es2024"],
 		"module": "ESNext",
 		"isolatedModules": true,
 		"esModuleInterop": true,

@@ -42,7 +42,7 @@ Competitive Splatoon Platform
 - Sqlite3
 - CSS (plain)
 - E2E tests via Playwright
-- Unit/integration tests via bun:test
+- Unit/integration tests via Vitest
 
 ## Screenshots
 
@@ -61,12 +61,11 @@ Prerequisites: [nvm](https://github.com/nvm-sh/nvm)
 There is a sequence of commands you need to run:
 
 1. `nvm use` to switch to the correct Node version. If you don't have the correct Node.js version yet it will prompt you to install it via the `nvm install` command. If you have problems with nvm you can also install the latest LTS version of Node.js from [their website](https://nodejs.org/en/).
-2. Install latest version of [Bun](https://bun.sh/docs/installation)
-3. `bun install` to install the dependencies.
-4. Make a copy of `.env.example` that's called `.env`. Filling additional values is not necessary unless you want to use real Discord authentication or develop the Lohi bot.
-5. `bun migrate up` to set up the database tables.
-6. `bun run dev` to run the project in development mode.
-7. Navigate to `http://localhost:5173/admin`. There press the seed button to fill the DB with test data. You can also impersonate any user (Sendou#0043 = admin).
+1. `npm install` to install the dependencies.
+1. Make a copy of `.env.example` that's called `.env`. Filling additional values is not necessary unless you want to use real Discord authentication or develop the Lohi bot.
+1. `npm run migrate up` to set up the database tables.
+1. `npm run dev` to run the project in development mode.
+1. Navigate to `http://localhost:5173/admin`. There press the seed button to fill the DB with test data. You can also impersonate any user (Sendou#0043 = admin).
 
 ## Contributing
 
@@ -133,7 +132,7 @@ sendou.ink/
 │   ├── components/ -- React components
 │   ├── db/ -- Database layer
 │   ├── hooks/ -- React hooks
-│   ├── modules/ -- "nodu_modules but part of the app" https://twitter.com/ryanflorence/status/1535103735952658432
+│   ├── modules/ -- "node_modules but part of the app"
 │   ├── routes/ -- Routes see: https://remix.run/docs/en/v1/guides/routing
 │   ├── styles/ -- All .css files of the project for styling
 │   ├── utils/ -- Random helper functions used in many places
@@ -216,33 +215,32 @@ Note: This is only useful if you have access to a production running on Render.c
    - weapon = contents of `weapon` folder
    - langs = contents of `language` folder
    - Couple of others at the root: `GearInfoClothes.json`, `GearInfoHead.json`, `GearInfoShoes.json`, `spl__DamageRateInfoConfig.pp__CombinationDataTableData.json`, `SplPlayer.game__GameParameterTable.json`, `WeaponInfoMain.json`, `WeaponInfoSpecial.json` and `WeaponInfoSub.json`
-2. Update `AVAILABLE_SR_GEAR` with new SR gear & new gear bought with scales
-3. Update all `CURRENT_SEASON` constants
-4. Update `CURRENT_PATCH` constants
-5. Update `PATCHES` constant with the late patch + remove the oldest
-6. Update the stage list in `stage-ids.ts` and `create-misc-json.ts`. Add images from Lean's repository and avify them.
-7. `npx tsx scripts/create-misc-json.ts`
-8. `npx tsx scripts/create-gear-json.ts`
-9. `npx tsx scripts/create-analyzer-json.ts`
+1. Update all `CURRENT_SEASON` constants
+1. Update `CURRENT_PATCH` constants
+1. Update `PATCHES` constant with the late patch + remove the oldest
+1. Update the stage list in `stage-ids.ts` and `create-misc-json.ts`. Add images from Lean's repository and avify them.
+1. `npx tsx scripts/create-misc-json.ts`
+1. `npx tsx scripts/create-gear-json.ts`
+1. `npx tsx scripts/create-analyzer-json.ts`
    8a. Double check that no hard-coded special damages changed
-10. `npx tsx scripts/create-object-dmg-json.ts`
-11. Fill new weapon IDs by category to `weapon-ids.ts` (easy to take from the diff of English weapons.json)
-12. Get gear IDs for each slot from /output folder and update `gear-ids.ts`.
-13. Replace `object-dmg.json` with the `object-dmg.json` in /output folder
-14. Replace `weapon-params.ts` with the `params.json` in /output folder
-15. Delete all images inside `main-weapons`, `main-weapons-outlined`, `main-weapons-outlined-2` and `gear` folders.
-16. Replace with images from Lean's repository.
-17. Run the `npx tsx scripts/replace-img-names.ts` command
-18. Run the `npx tsx scripts/replace-weapon-names.ts` command
-19. Run the .avif generating command in each image folder.
-20. Update manually any languages that use English `gear.json` and `weapons.json` files
+1. `npx tsx scripts/create-object-dmg-json.ts`
+1. Fill new weapon IDs by category to `weapon-ids.ts` (easy to take from the diff of English weapons.json)
+1. Get gear IDs for each slot from /output folder and update `gear-ids.ts`.
+1. Replace `object-dmg.json` with the `object-dmg.json` in /output folder
+1. Replace `weapon-params.ts` with the `params.json` in /output folder
+1. Delete all images inside `main-weapons`, `main-weapons-outlined`, `main-weapons-outlined-2` and `gear` folders.
+1. Replace with images from Lean's repository.
+1. Run the `npx tsx scripts/replace-img-names.ts` command
+1. Run the `npx tsx scripts/replace-weapon-names.ts` command
+1. Run the .avif generating command in each image folder.
+2. Update manually any languages that use English `gear.json` and `weapons.json` files
 
 ### Fix errors from the CI Pipeline
 
 If you change any files and the CI pipeline errors out on certain formatting/linting steps (Biome) run this command in the repo's root directory:
 
 ```sh
-bun cf:noe2e
+npm run checks
 ```
 
 Before committing, if for some reason you see an abnormally high amount of files changed, simply run `git add --renormalize .` and it will fix the error.

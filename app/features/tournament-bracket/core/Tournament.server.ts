@@ -2,19 +2,27 @@ import * as TournamentRepository from "~/features/tournament/TournamentRepositor
 import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import { isAdmin } from "~/permissions";
-import { notFoundIfFalsy } from "~/utils/remix";
+import { notFoundIfFalsy } from "~/utils/remix.server";
 import type { Unwrapped } from "~/utils/types";
 import { Tournament } from "./Tournament";
 import { getServerTournamentManager } from "./brackets-manager/manager.server";
 
 const manager = getServerTournamentManager();
 
-const combinedTournamentData = async (tournamentId: number) => ({
-	data: manager.get.tournamentData(tournamentId),
-	ctx: notFoundIfFalsy(await TournamentRepository.findById(tournamentId)),
-});
+export const tournamentManagerData = (tournamentId: number) =>
+	manager.get.tournamentData(tournamentId);
 
-export type TournamentData = Unwrapped<typeof tournamentData>;
+const combinedTournamentData = async (tournamentId: number) => {
+	const ctx = await TournamentRepository.findById(tournamentId);
+	if (!ctx) return null;
+
+	return {
+		data: tournamentManagerData(tournamentId),
+		ctx,
+	};
+};
+
+export type TournamentData = NonNullable<Unwrapped<typeof tournamentData>>;
 export type TournamentDataTeam = TournamentData["ctx"]["teams"][number];
 export async function tournamentData({
 	user,
@@ -23,9 +31,10 @@ export async function tournamentData({
 	user?: { id: number };
 	tournamentId: number;
 }) {
-	const { data, ctx } = await combinedTournamentData(tournamentId);
+	const data = await combinedTournamentData(tournamentId);
+	if (!data) return null;
 
-	return dataMapped({ data, ctx, user });
+	return dataMapped({ user, ...data });
 }
 
 function dataMapped({
@@ -78,7 +87,18 @@ export async function tournamentFromDB(args: {
 	user: { id: number } | undefined;
 	tournamentId: number;
 }) {
-	return new Tournament(await tournamentData(args));
+	const data = notFoundIfFalsy(await tournamentData(args));
+
+	return new Tournament({ ...data, simulateBrackets: false });
+}
+
+export async function tournamentFromDBCached(args: {
+	user: { id: number } | undefined;
+	tournamentId: number;
+}) {
+	const data = notFoundIfFalsy(await tournamentDataCached(args));
+
+	return new Tournament({ ...data, simulateBrackets: false });
 }
 
 // caching promise ensures that if many requests are made for the same tournament
@@ -98,9 +118,9 @@ export async function tournamentDataCached({
 		tournamentDataCache.set(tournamentId, combinedTournamentData(tournamentId));
 	}
 
-	const { data, ctx } = await tournamentDataCache.get(tournamentId)!;
+	const data = notFoundIfFalsy(await tournamentDataCache.get(tournamentId));
 
-	return dataMapped({ data, ctx, user });
+	return dataMapped({ user, ...data });
 }
 
 export function clearTournamentDataCache(tournamentId: number) {

@@ -14,15 +14,19 @@ import {
 	useLoaderData,
 	useMatches,
 	useNavigation,
+	useRevalidator,
 } from "@remix-run/react";
 import generalI18next from "i18next";
 import NProgress from "nprogress";
 import * as React from "react";
+import { I18nProvider } from "react-aria-components";
+import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
 import { useChangeLanguage } from "remix-i18next/react";
-import type { SendouRouteHandle } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Catcher } from "./components/Catcher";
 import { Layout } from "./components/layout";
+import { Ramp } from "./components/ramp/Ramp";
 import { CUSTOMIZED_CSS_VARS_NAME } from "./constants";
 import { getUser } from "./features/auth/core/user.server";
 import { userIsBanned } from "./features/ban/core/banned.server";
@@ -35,39 +39,39 @@ import {
 } from "./features/theme/core/provider";
 import { getThemeSession } from "./features/theme/core/session.server";
 import { useIsMounted } from "./hooks/useIsMounted";
+import { useVisibilityChange } from "./hooks/useVisibilityChange";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
 import i18next, { i18nCookie } from "./modules/i18n/i18next.server";
 import type { Namespace } from "./modules/i18n/resources.server";
-import { COMMON_PREVIEW_IMAGE, SUSPENDED_PAGE } from "./utils/urls";
+import { isRevalidation, metaTags } from "./utils/remix";
+import { SUSPENDED_PAGE } from "./utils/urls";
 
 import "nprogress/nprogress.css";
 import "~/styles/common.css";
+import "~/styles/elements.css";
 import "~/styles/flags.css";
 import "~/styles/layout.css";
 import "~/styles/reset.css";
 import "~/styles/utils.css";
 import "~/styles/vars.css";
 
-export const shouldRevalidate: ShouldRevalidateFunction = ({ nextUrl }) => {
+export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
+	if (isRevalidation(args)) return true;
+
 	// // reload on language change so the selected language gets set into the cookie
-	const lang = nextUrl.searchParams.get("lng");
+	const lang = args.nextUrl.searchParams.get("lng");
 
 	return Boolean(lang);
 };
 
-export const meta: MetaFunction = () => {
-	return [
-		{ title: "sendou.ink" },
-		{
-			name: "description",
-			content:
-				"Competitive Splatoon Hub featuring gear planner, event calendar, builds by top players, and more!",
-		},
-		{
-			property: "og:image",
-			content: COMMON_PREVIEW_IMAGE,
-		},
-	];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "sendou.ink",
+		ogTitle: "sendou.ink - Competitive Splatoon Hub",
+		location: args.location,
+		description:
+			"Sendou.ink is the home of competitive Splatoon featuring daily tournaments and a seasonal ladder. Variety of tools and the largest collection of builds by top players allow you to level up your skill in Splatoon 3.",
+	});
 };
 
 export type RootLoaderData = SerializeFrom<typeof loader>;
@@ -104,6 +108,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 						isTournamentOrganizer: user.isTournamentOrganizer,
 						inGameName: user.inGameName,
 						friendCode: user.friendCode,
+						preferences: user.preferences ?? {},
 						languages: user.languages ? user.languages.split(",") : [],
 					}
 				: undefined,
@@ -131,6 +136,8 @@ function Document({
 	const { i18n } = useTranslation();
 	const locale = data?.locale ?? DEFAULT_LANGUAGE;
 
+	// TODO: re-enable after testing if it causes bug where JS is not loading on revisit
+	// useRevalidateOnRevisit();
 	useChangeLanguage(locale);
 	usePreloadTranslation();
 	useLoadingIndicator();
@@ -161,10 +168,12 @@ function Document({
 			<body style={customizedCSSVars}>
 				{process.env.NODE_ENV === "development" && <HydrationTestIndicator />}
 				<React.StrictMode>
-					<MyRamp data={data} />
-					<Layout data={data} isErrored={isErrored}>
-						{children}
-					</Layout>
+					<I18nProvider locale={i18n.language}>
+						<MyRamp data={data} />
+						<Layout data={data} isErrored={isErrored}>
+							{children}
+						</Layout>
+					</I18nProvider>
 				</React.StrictMode>
 				<ScrollRestoration />
 				<Scripts />
@@ -203,6 +212,7 @@ export const namespaceJsonsToPreloadObj: Record<Namespace, boolean> = {
 	q: true,
 	lfg: true,
 	org: true,
+	front: true,
 };
 const namespaceJsonsToPreload = Object.keys(namespaceJsonsToPreloadObj);
 
@@ -210,6 +220,29 @@ function usePreloadTranslation() {
 	React.useEffect(() => {
 		void generalI18next.loadNamespaces(namespaceJsonsToPreload);
 	}, []);
+}
+
+// @ts-expect-error to be used in the future
+function useRevalidateOnRevisit() {
+	const visibility = useVisibilityChange();
+	const { revalidate } = useRevalidator();
+	const [lastUpdated, setLastUpdated] = React.useState<Date>();
+
+	React.useEffect(() => {
+		setLastUpdated(new Date());
+	}, []);
+
+	React.useEffect(() => {
+		if (visibility !== "visible" || !lastUpdated) return;
+
+		const sinceLastUpdated = new Date().getTime() - lastUpdated.getTime();
+
+		// 15 minutes
+		if (sinceLastUpdated < 1000 * 60 * 15) return;
+
+		setLastUpdated(new Date());
+		revalidate();
+	}, [visibility, revalidate, lastUpdated]);
 }
 
 function useCustomizedCSSVars() {
@@ -461,22 +494,14 @@ function PWALinks() {
 	);
 }
 
-const Ramp = React.lazy(() => import("./components/ramp/Ramp"));
 function MyRamp({ data }: { data: RootLoaderData | undefined }) {
-	if (
-		!data ||
-		data.user?.patronTier ||
-		!import.meta.env.VITE_PLAYWIRE_PUBLISHER_ID ||
-		!import.meta.env.VITE_PLAYWIRE_WEBSITE_ID ||
-		typeof window === "undefined"
-	) {
+	if (!data || data.user?.patronTier) {
 		return null;
 	}
 
 	return (
-		<Ramp
-			publisherId={import.meta.env.VITE_PLAYWIRE_PUBLISHER_ID}
-			id={import.meta.env.VITE_PLAYWIRE_WEBSITE_ID}
-		/>
+		<ClientErrorBoundary fallback={null}>
+			<Ramp />
+		</ClientErrorBoundary>
 	);
 }

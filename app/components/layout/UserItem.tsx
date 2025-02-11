@@ -12,7 +12,7 @@ export function UserItem() {
 
 	if (user) {
 		return (
-			<Link to={userPage(user)} prefetch="intent">
+			<Link to={userPage(user)} prefetch="intent" className="layout__user-item">
 				<Avatar
 					user={user}
 					alt={t("header.loggedInAs", {

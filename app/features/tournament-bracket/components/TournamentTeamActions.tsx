@@ -1,9 +1,11 @@
 import { useFetcher } from "@remix-run/react";
 import clsx from "clsx";
+import { sub } from "date-fns";
 import * as React from "react";
 import { LinkButton } from "~/components/Button";
-import { Popover } from "~/components/Popover";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
@@ -37,9 +39,9 @@ export function TournamentTeamActions() {
 		);
 	}
 	if (status.type === "CHECKIN") {
-		const bracketName = tournament.brackets[status.bracketIdx ?? -1]?.name;
+		const bracket = tournament.brackets[status.bracketIdx ?? -1];
 
-		if (!bracketName) {
+		if (!bracket) {
 			return (
 				<Container spaced="very">
 					Your team needs to check-in
@@ -59,14 +61,17 @@ export function TournamentTeamActions() {
 								Check-in now
 							</SubmitButton>
 						) : (
-							<Popover
-								buttonChildren={<>Check-in now</>}
-								triggerClassName="minimal tiny"
+							<SendouPopover
+								trigger={
+									<SendouButton variant="minimal" size="small">
+										Check-in now
+									</SendouButton>
+								}
 							>
 								{tournament.ctx.mapPickingStyle !== "TO"
 									? "Can't check-in, registration needs to be finished by the captain (full roster & map pool picked)"
 									: "Can't check-in, registration needs to be finished by the captain (full roster)"}
-							</Popover>
+							</SendouPopover>
 						)}
 					</fetcher.Form>
 				</Container>
@@ -75,19 +80,37 @@ export function TournamentTeamActions() {
 
 		return (
 			<Container spaced="very">
-				{bracketName} up next
-				<fetcher.Form method="post">
-					<input type="hidden" name="bracketIdx" value={status.bracketIdx} />
-					<SubmitButton
-						size="tiny"
-						variant="minimal"
-						_action="BRACKET_CHECK_IN"
-						state={fetcher.state}
-						testId="check-in-bracket-button"
-					>
-						Check-in
-					</SubmitButton>
-				</fetcher.Form>
+				{bracket.name} check-in
+				{bracket.canCheckIn(user) ? (
+					<fetcher.Form method="post">
+						<input type="hidden" name="bracketIdx" value={status.bracketIdx} />
+						<SubmitButton
+							size="tiny"
+							variant="minimal"
+							_action="BRACKET_CHECK_IN"
+							state={fetcher.state}
+							testId="check-in-bracket-button"
+						>
+							Check-in
+						</SubmitButton>
+					</fetcher.Form>
+				) : bracket.startTime && bracket.startTime > new Date() ? (
+					<span className="text-lighter text-xxs" suppressHydrationWarning>
+						open{" "}
+						{sub(bracket.startTime, { hours: 1 }).toLocaleTimeString("en-US", {
+							hour: "numeric",
+							minute: "numeric",
+							weekday: "short",
+						})}{" "}
+						-{" "}
+						{bracket.startTime.toLocaleTimeString("en-US", {
+							hour: "numeric",
+							minute: "numeric",
+						})}
+					</span>
+				) : bracket.startTime && bracket.startTime < new Date() ? (
+					<span className="text-warning">over</span>
+				) : null}
 			</Container>
 		);
 	}

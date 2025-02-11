@@ -34,7 +34,6 @@
 	"auth.errors.aborted": "Ingreso cancelado",
 	"auth.errors.failed": "Ingreso fallido",
 	"auth.errors.discordPermissions": "Para tu perfil en sendou.ink, el sitio requiere aceso a tu nombre en Discord, avatar, y redes sociales.",
-	"auth.errors.unknown": "Ingreso fallido debido a un error de servidor. Por favor intenta más tarde o usa /login a travez de Lohi bot. Se puede encontrar en el Discord de sendou.ink:",
 
 	"footer.github.subtitle": "Código fuente",
 	"footer.discord.subtitle": "Ayuda y comentarios",
@@ -139,11 +138,8 @@
 	"weapon.category.subs": "Armas Secundarias",
 	"weapon.category.specials": "Armas Especiales",
 
-	"plans.poweredBy": "Creado usando {{name}}",
 	"plans.blueprint": "Planos",
 	"plans.bgStyle.OVER": "Vista aérea",
-	"plans.bgStyle.MINI": "Mapa (vacio)",
-	"plans.bgStyle.ITEMS": "Mapa",
 
 	"articles.by": "por {{author}}",
 
@@ -225,9 +221,5 @@
 	"chat.systemMsg.userLeft": "{{name}} se salió del grupo",
 	"chat.newMessages": "Nuevo mensajes",
 
-	"fc.title": "Clave de amigo",
-
-	"showcase.register": "Registrar",
-	"showcase.bracket": "Cuadro del torneo",
-	"showcase.liveNow": "¡En vivo!"
+	"fc.title": "Clave de amigo"
 }

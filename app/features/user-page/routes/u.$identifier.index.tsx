@@ -4,19 +4,22 @@ import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { Flag } from "~/components/Flag";
 import { Image, WeaponImage } from "~/components/Image";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { BattlefyIcon } from "~/components/icons/Battlefy";
+import { BskyIcon } from "~/components/icons/Bsky";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { TwitchIcon } from "~/components/icons/Twitch";
-import { TwitterIcon } from "~/components/icons/Twitter";
 import { YouTubeIcon } from "~/components/icons/YouTube";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { modesShort } from "~/modules/in-game-lists";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
-import type { SendouRouteHandle } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import { rawSensToString } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import {
+	bskyUrl,
 	modeImageUrl,
 	navIconUrl,
 	teamPage,
@@ -29,7 +32,7 @@ import { loader } from "../loaders/u.$identifier.index.server";
 export { loader };
 
 export const handle: SendouRouteHandle = {
-	i18n: "badges",
+	i18n: ["badges", "team"],
 };
 
 export default function UserInfoPage() {
@@ -57,14 +60,14 @@ export default function UserInfoPage() {
 					{data.user.twitch ? (
 						<SocialLink type="twitch" identifier={data.user.twitch} />
 					) : null}
-					{data.user.twitter ? (
-						<SocialLink type="twitter" identifier={data.user.twitter} />
-					) : null}
 					{data.user.youtubeId ? (
 						<SocialLink type="youtube" identifier={data.user.youtubeId} />
 					) : null}
 					{data.user.battlefy ? (
 						<SocialLink type="battlefy" identifier={data.user.battlefy} />
+					) : null}
+					{data.user.bsky ? (
+						<SocialLink type="bsky" identifier={data.user.bsky} />
 					) : null}
 				</div>
 			</div>
@@ -79,28 +82,100 @@ export default function UserInfoPage() {
 }
 
 function TeamInfo() {
+	const { t } = useTranslation(["team"]);
 	const data = useLoaderData<typeof loader>();
 
 	if (!data.user.team) return null;
 
 	return (
-		<Link to={teamPage(data.user.team.customUrl)} className="u__team">
-			{data.user.team.avatarUrl ? (
-				<img
-					alt=""
-					src={userSubmittedImage(data.user.team.avatarUrl)}
-					width={24}
-					height={24}
-					className="rounded-full"
-				/>
-			) : null}
-			{data.user.team.name}
-		</Link>
+		<div className="stack horizontal sm">
+			<Link
+				to={teamPage(data.user.team.customUrl)}
+				className="u__team"
+				data-testid="main-team-link"
+			>
+				{data.user.team.avatarUrl ? (
+					<img
+						alt=""
+						src={userSubmittedImage(data.user.team.avatarUrl)}
+						width={32}
+						height={32}
+						className="rounded-full"
+					/>
+				) : null}
+				<div>
+					{data.user.team.name}
+					{data.user.team.userTeamRole ? (
+						<div className="text-xxs text-lighter font-bold">
+							{t(`team:roles.${data.user.team.userTeamRole}`)}
+						</div>
+					) : null}
+				</div>
+			</Link>
+			<SecondaryTeamsPopover />
+		</div>
+	);
+}
+
+function SecondaryTeamsPopover() {
+	const { t } = useTranslation(["team"]);
+
+	const data = useLoaderData<typeof loader>();
+
+	if (data.user.secondaryTeams.length === 0) return null;
+
+	return (
+		<SendouPopover
+			trigger={
+				<SendouButton
+					className="focus-text-decoration self-start"
+					variant="minimal"
+					size="small"
+				>
+					<span
+						className="text-sm font-bold text-main-forced"
+						data-testid="secondary-team-trigger"
+					>
+						+{data.user.secondaryTeams.length}
+					</span>
+				</SendouButton>
+			}
+		>
+			<div className="stack sm">
+				{data.user.secondaryTeams.map((team) => (
+					<div
+						key={team.customUrl}
+						className="stack horizontal md items-center"
+					>
+						<Link
+							to={teamPage(team.customUrl)}
+							className="u__team text-main-forced"
+						>
+							{team.avatarUrl ? (
+								<img
+									alt=""
+									src={userSubmittedImage(team.avatarUrl)}
+									width={24}
+									height={24}
+									className="rounded-full"
+								/>
+							) : null}
+							{team.name}
+						</Link>
+						{team.userTeamRole ? (
+							<div className="text-xxs text-lighter font-bold">
+								{t(`team:roles.${team.userTeamRole}`)}
+							</div>
+						) : null}
+					</div>
+				))}
+			</div>
+		</SendouPopover>
 	);
 }
 
 interface SocialLinkProps {
-	type: "youtube" | "twitter" | "twitch" | "battlefy";
+	type: "youtube" | "twitch" | "battlefy" | "bsky";
 	identifier: string;
 }
 
@@ -108,19 +183,19 @@ export function SocialLink({
 	type,
 	identifier,
 }: {
-	type: "youtube" | "twitter" | "twitch" | "battlefy";
+	type: SocialLinkProps["type"];
 	identifier: string;
 }) {
 	const href = () => {
 		switch (type) {
 			case "twitch":
 				return `https://www.twitch.tv/${identifier}`;
-			case "twitter":
-				return `https://www.twitter.com/${identifier}`;
 			case "youtube":
 				return `https://www.youtube.com/channel/${identifier}`;
 			case "battlefy":
 				return `https://battlefy.com/users/${identifier}`;
+			case "bsky":
+				return bskyUrl(identifier);
 			default:
 				assertUnreachable(type);
 		}
@@ -130,9 +205,9 @@ export function SocialLink({
 		<a
 			className={clsx("u__social-link", {
 				youtube: type === "youtube",
-				twitter: type === "twitter",
 				twitch: type === "twitch",
 				battlefy: type === "battlefy",
+				bsky: type === "bsky",
 			})}
 			href={href()}
 		>
@@ -145,12 +220,12 @@ function SocialLinkIcon({ type }: Pick<SocialLinkProps, "type">) {
 	switch (type) {
 		case "twitch":
 			return <TwitchIcon />;
-		case "twitter":
-			return <TwitterIcon />;
 		case "youtube":
 			return <YouTubeIcon />;
 		case "battlefy":
 			return <BattlefyIcon />;
+		case "bsky":
+			return <BskyIcon />;
 		default:
 			assertUnreachable(type);
 	}

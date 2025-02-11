@@ -21,7 +21,6 @@
 	"forms.action.addMatch": "添加比赛",
 	"forms.action.deleteMatch": "删除比赛",
 	"noVods": "没有符合该删选条件的视频。是我们有所遗漏吗？请在Discord私信Sendou获得YouTube视频的上传资格。",
-	"addVod": "添加视频",
 	"gainPerms": "请在我们的Discord服务器的helpdesk频道申请获取上传视频的资格。",
 	"deleteConfirm": "确认要删除 '{{title}}' 吗？"
 }

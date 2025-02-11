@@ -50,14 +50,15 @@ export default function BadgeDetailsPage() {
 				<div className="badges__explanation">
 					{badgeExplanationText(t, badge)}
 				</div>
-				<div
-					className={clsx("badges__managers", {
-						invisible: data.managers.length === 0,
-					})}
-				>
+				<div className="badges__managers">
 					{t("managedBy", {
-						users: data.managers.map((m) => m.username).join(", "),
+						users: data.managers.map((m) => m.username).join(", ") || "???",
+					})}{" "}
+					(
+					{t("madeBy", {
+						user: badge.author?.username ?? "borzoic",
 					})}
+					)
 				</div>
 			</div>
 			{isMod(user) || canEditBadgeOwners({ user, managers: data.managers }) ? (

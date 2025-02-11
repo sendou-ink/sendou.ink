@@ -1,5 +1,6 @@
 import { Link } from "@remix-run/react";
 import clsx from "clsx";
+import * as React from "react";
 import { Avatar } from "~/components/Avatar";
 import { Flag } from "~/components/Flag";
 import { InfoPopover } from "~/components/InfoPopover";
@@ -92,7 +93,7 @@ export default function TournamentResultsPage() {
 											tournamentId: tournament.ctx.id,
 											tournamentTeamId: standing.team.id,
 										})}
-										className="stack xs horizontal items-center text-main-forced"
+										className="tournament__standings__team-name"
 										data-testid="result-team-name"
 									>
 										{teamLogoSrc ? (
@@ -143,15 +144,19 @@ function MatchHistoryRow({ teamId }: { teamId: number }) {
 
 	return (
 		<div className="stack horizontal xs">
-			{teamMatches.map((match) => {
+			{teamMatches.map((match, i) => {
+				const bracketChanged =
+					i !== 0 && teamMatches[i - 1].bracketIdx !== match.bracketIdx;
+
 				return (
-					<MatchResultSquare
-						key={match.id}
-						result={match.result}
-						matchId={match.id}
-					>
-						{match.vsSeed}
-					</MatchResultSquare>
+					<React.Fragment key={match.id}>
+						{bracketChanged ? (
+							<div className="tournament__standings__divider" />
+						) : null}
+						<MatchResultSquare result={match.result} matchId={match.id}>
+							{match.vsSeed}
+						</MatchResultSquare>
+					</React.Fragment>
 				);
 			})}
 		</div>

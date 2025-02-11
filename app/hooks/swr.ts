@@ -60,7 +60,8 @@ export function useTrusted() {
 	);
 
 	return {
-		trusters: data?.trusters,
+		trusters: data?.trusters.trusters,
+		teams: data?.trusters.teams,
 		isLoading: !error && !data,
 		isError: error,
 	};

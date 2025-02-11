@@ -11,7 +11,7 @@
 	"stick": "Stick",
 	"sens": "Sens",
 	"weaponPool": "Weapon pool",
-	"discordExplanation": "Username, profile picture, YouTube, Twitter and Twitch accounts come from your Discord account. See <1>FAQ</1> for more information.",
+	"discordExplanation": "Username, profile picture, YouTube, Bluesky and Twitch accounts come from your Discord account. See <1>FAQ</1> for more information.",
 	"favoriteBadge": "Favorite Badge",
 	"battlefy": "Battlefy account name",
 
@@ -39,10 +39,11 @@
 	"forms.errors.invalidCustomUrl.strangeCharacter": "Custom URL can't contain special characters",
 	"forms.errors.invalidCustomUrl.duplicate": "Someone is already using this custom URL",
 	"forms.errors.invalidSens": "Motion sens can't be set if R-stick sens isn't",
+	"forms.info.customUrl": "For patrons (Supporter & above) short link is available. E.g. instead of sendou.ink/u/sendou, snd.ink/sendou can be used.",
 	"forms.info.favoriteBadge": "Your favorite badge is shown as big by default on your profile.",
 	"forms.info.battlefy": "Battlefy account name is used for seeding and verification in some tournaments",
 
-	"search.info": "Search for users by Discord, Splatoon 3 or Twitter name",
+	"search.info": "Search for users by Discord or Splatoon 3 name",
 	"search.noResults": "No users found matching '{{query}}'",
 
 	"seasons": "Seasons",

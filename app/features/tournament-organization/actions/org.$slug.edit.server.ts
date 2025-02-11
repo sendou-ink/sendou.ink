@@ -1,12 +1,13 @@
 import { type ActionFunctionArgs, redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import i18next from "~/modules/i18n/i18next.server";
 import { valueArrayToDBFormat } from "~/utils/form";
 import {
 	actionError,
 	parseRequestPayload,
 	unauthorizedIfFalsy,
-} from "~/utils/remix";
+} from "~/utils/remix.server";
 import { tournamentOrganizationPage } from "~/utils/urls";
 import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import { organizationEditSchema } from "../routes/org.$slug.edit";
@@ -45,6 +46,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		series: data.series,
 		badges: data.badges,
 	});
+
+	// in case members changed
+	ShowcaseTournaments.clearParticipationInfoMap();
 
 	return redirect(
 		tournamentOrganizationPage({ organizationSlug: newOrganization.slug }),

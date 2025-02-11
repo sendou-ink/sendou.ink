@@ -1,5 +1,4 @@
 import slugify from "slugify";
-import type navItems from "~/components/layout/nav-items.json";
 import type { Preference } from "~/db/tables";
 import type {
 	Art,
@@ -37,7 +36,26 @@ const staticAssetsUrl = ({
 }) =>
 	`https://raw.githubusercontent.com/Sendouc/sendou-ink-assets/main/${folder}/${fileName}`;
 
+export const discordAvatarUrl = ({
+	discordId,
+	discordAvatar,
+	size,
+}: {
+	discordId: string;
+	discordAvatar: string;
+	size: "lg" | "sm";
+}) =>
+	`https://cdn.discordapp.com/avatars/${discordId}/${
+		discordAvatar
+	}.webp${size === "lg" ? "?size=240" : "?size=80"}`;
+
 export const SENDOU_INK_BASE_URL = "https://sendou.ink";
+
+export const BADGES_DOC_LINK =
+	"https://github.com/Sendouc/sendou.ink/blob/rewrite/docs/badges.md";
+
+export const CREATING_TOURNAMENT_DOC_LINK =
+	"https://github.com/Sendouc/sendou.ink/blob/rewrite/docs/tournament-creation.md";
 
 const USER_SUBMITTED_IMAGE_ROOT =
 	"https://sendou.nyc3.cdn.digitaloceanspaces.com";
@@ -49,7 +67,6 @@ export const conditionalUserSubmittedImage = (fileName: string) =>
 
 export const PLUS_SERVER_DISCORD_URL = "https://discord.gg/FW4dKrY";
 export const SENDOU_INK_DISCORD_URL = "https://discord.gg/sendou";
-export const SENDOU_TWITTER_URL = "https://twitter.com/sendouc";
 export const SENDOU_INK_PATREON_URL = "https://patreon.com/sendou";
 export const NINTENDO_COMMUNITY_TOURNAMENTS_GUIDELINES_URL =
 	"https://en-americas-support.nintendo.com/app/answers/detail/a_id/63454";
@@ -58,12 +75,6 @@ export const PATREON_HOW_TO_CONNECT_DISCORD_URL =
 export const SENDOU_INK_GITHUB_URL = "https://github.com/Sendouc/sendou.ink";
 export const GITHUB_CONTRIBUTORS_URL =
 	"https://github.com/Sendouc/sendou.ink/graphs/contributors";
-export const TLDRAW_URL = "https://www.tldraw.com/";
-export const BORZOIC_TWITTER = "https://twitter.com/borzoic_";
-export const LEAN_TWITTER = "https://twitter.com/LeanYoshi";
-export const UBERU_TWITTER = "https://twitter.com/uberu5";
-export const YAGA_TWITTER = "https://twitter.com/a_bog_hag";
-export const ANTARISKA_TWITTER = "https://twitter.com/antariska_spl";
 export const ipLabsMaps = (pool: string) =>
 	`https://maps.iplabs.ink/?3&pool=${pool}`;
 export const SPLATOON_3_INK = "https://splatoon3.ink/";
@@ -72,8 +83,8 @@ export const RHODESMAS_FREESOUND_PROFILE_URL =
 export const SPR_INFO_URL =
 	"https://www.pgstats.com/articles/introducing-spr-and-uf";
 
-export const twitterUrl = (accountName: string) =>
-	`https://twitter.com/${accountName}`;
+export const bskyUrl = (accountName: string) =>
+	`https://bsky.app/profile/${accountName}`;
 export const twitchUrl = (accountName: string) =>
 	`https://twitch.tv/${accountName}`;
 
@@ -89,7 +100,11 @@ export const BADGES_PAGE = "/badges";
 export const BUILDS_PAGE = "/builds";
 export const USER_SEARCH_PAGE = "/u";
 export const TEAM_SEARCH_PAGE = "/t";
+export const NEW_TEAM_PAGE = "/t?new=true";
 export const CALENDAR_PAGE = "/calendar";
+export const CALENDAR_NEW_PAGE = "/calendar/new";
+export const TOURNAMENT_NEW_PAGE = "/calendar/new?tournament=true";
+export const CALENDAR_TOURNAMENTS_PAGE = "/calendar?tournaments=true";
 export const STOP_IMPERSONATING_URL = "/auth/impersonate/stop";
 export const SEED_URL = "/seed";
 export const PLANNER_URL = "/plans";
@@ -110,6 +125,8 @@ export const SENDOUQ_STREAMS_PAGE = "/q/streams";
 export const TIERS_PAGE = "/tiers";
 export const SUSPENDED_PAGE = "/suspended";
 export const LFG_PAGE = "/lfg";
+export const SETTINGS_PAGE = "/settings";
+export const LUTI_PAGE = "/luti";
 
 export const BLANK_IMAGE_URL = "/static-assets/img/blank.gif";
 export const COMMON_PREVIEW_IMAGE =
@@ -123,10 +140,6 @@ export const SECOND_PLACEMENT_ICON_PATH =
 	"/static-assets/svg/placements/second.svg";
 export const THIRD_PLACEMENT_ICON_PATH =
 	"/static-assets/svg/placements/third.svg";
-export const FRONT_BOY_PATH = "/static-assets/img/layout/front-boy";
-export const FRONT_GIRL_PATH = "/static-assets/img/layout/front-girl";
-export const FRONT_BOY_BG_PATH = "/static-assets/img/layout/front-boy-bg";
-export const FRONT_GIRL_BG_PATH = "/static-assets/img/layout/front-girl-bg";
 
 export const soundPath = (fileName: string) =>
 	`/static-assets/sounds/${fileName}.wav`;
@@ -208,13 +221,41 @@ export const topSearchPage = (args?: {
 export const topSearchPlayerPage = (playerId: number) =>
 	`${topSearchPage()}/player/${playerId}`;
 
+export const leaderboardsPage = (args: {
+	season?: number;
+	type?: "USER" | "TEAM";
+}) => {
+	const params = new URLSearchParams();
+	if (args.season) {
+		params.set("season", String(args.season));
+	}
+	if (args.type) {
+		params.set("type", args.type);
+	}
+
+	return `${LEADERBOARDS_PAGE}${params.size > 0 ? `?${params.toString()}` : ""}`;
+};
+
 export const authErrorUrl = (errorCode: AuthErrorCode) =>
 	`/?authError=${errorCode}`;
 export const impersonateUrl = (idToLogInAs: number) =>
 	`/auth/impersonate?id=${idToLogInAs}`;
 export const badgePage = (badgeId: number) => `${BADGES_PAGE}/${badgeId}`;
-export const plusSuggestionPage = (tier?: string | number) =>
-	`/plus/suggestions${tier ? `?tier=${tier}` : ""}`;
+export const plusSuggestionPage = ({
+	tier,
+	showAlert,
+}: { tier?: string | number; showAlert?: boolean } = {}) => {
+	const params = new URLSearchParams();
+	if (tier) {
+		params.set("tier", String(tier));
+	}
+	if (showAlert) {
+		params.set("alert", "true");
+	}
+	return `/plus/suggestions${params.toString() ? `?${params.toString()}` : ""}`;
+};
+export const plusSuggestionsNewPage = (tier?: string | number) =>
+	`/plus/suggestions/new${tier ? `?tier=${tier}` : ""}`;
 
 export const weaponBuildPage = (weaponSlug: string) =>
 	`${BUILDS_PAGE}/${weaponSlug}`;
@@ -226,6 +267,8 @@ export const weaponBuildPopularPage = (weaponSlug: string) =>
 export const calendarEventPage = (eventId: number) => `/calendar/${eventId}`;
 export const calendarEditPage = (eventId?: number) =>
 	`/calendar/new${eventId ? `?eventId=${eventId}` : ""}`;
+export const tournamentEditPage = (eventId: number) =>
+	`${calendarEditPage(eventId)}&tournament=true`;
 export const calendarReportWinnersPage = (eventId: number) =>
 	`/calendar/${eventId}/report-winners`;
 export const tournamentPage = (tournamentId: number) => `/to/${tournamentId}`;
@@ -263,6 +306,8 @@ export const tournamentBracketsPage = ({
 		query.size > 0 ? `?${query.toString()}` : ""
 	}`;
 };
+export const tournamentDivisionsPage = (tournamentId: number) =>
+	`/to/${tournamentId}/divisions`;
 export const tournamentResultsPage = (tournamentId: number) =>
 	`/to/${tournamentId}/results`;
 export const tournamentBracketsSubscribePage = (tournamentId: number) =>
@@ -347,12 +392,12 @@ export const objectDamageCalculatorPage = (weaponId?: MainWeaponId) =>
 
 export const uploadImagePage = (
 	args:
-		| { type: "team-pfp" | "team-banner" }
+		| { type: "team-pfp" | "team-banner"; teamCustomUrl: string }
 		| { type: "org-pfp"; slug: string },
 ) =>
 	args.type === "org-pfp"
 		? `/upload?type=${args.type}&slug=${args.slug}`
-		: `/upload?type=${args.type}`;
+		: `/upload?type=${args.type}&team=${args.teamCustomUrl}`;
 
 export const vodVideoPage = (videoId: number) => `${VODS_PAGE}/${videoId}`;
 
@@ -369,7 +414,7 @@ export const badgeUrl = ({
 export const articlePreviewUrl = (slug: string) =>
 	`/static-assets/img/article-previews/${slug}.png`;
 
-export const navIconUrl = (navItem: (typeof navItems)[number]["name"]) =>
+export const navIconUrl = (navItem: string) =>
 	`/static-assets/img/layout/${navItem}`;
 export const gearImageUrl = (gearType: GearType, gearSplId: number) =>
 	`/static-assets/img/gear/${gearType.toLowerCase()}/${gearSplId}`;
@@ -418,6 +463,9 @@ export const winnersImageUrl = ({
 	season: number;
 	placement: number;
 }) => `/static-assets/img/winners/${season}/${placement}`;
+
+export const sqHeaderGuyImageUrl = (season: number) =>
+	`/static-assets/img/sq-header/${season}`;
 
 export const stageMinimapImageUrlWithEnding = ({
 	stageId,

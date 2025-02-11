@@ -29,7 +29,7 @@ test.describe("User page", () => {
 		await page.getByLabel("R-stick sens").selectOption("0");
 		await page.getByLabel("Motion sens").selectOption("-50");
 		await page.getByLabel("Country").selectOption("SE");
-		await page.getByLabel("Bio").type("My awesome bio");
+		await page.getByLabel("Bio").fill("My awesome bio");
 		await submitEditForm(page);
 
 		await page.getByTestId("flag-SV").isVisible();
@@ -57,6 +57,10 @@ test.describe("User page", () => {
 		await goToEditPage(page);
 
 		await page.getByTestId("color-input-bg").fill("#4a412a");
+
+		// also test filling this because it's a special case as it also changes bg-lightest
+		await page.getByTestId("color-input-bg-lighter").fill("#4a412a");
+
 		await submitEditForm(page);
 
 		// got redirected

@@ -7,6 +7,7 @@ import type { ShouldRevalidateFunction } from "@remix-run/react";
 import { Link, Outlet, useLoaderData, useSearchParams } from "@remix-run/react";
 import clsx from "clsx";
 import { z } from "zod";
+import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { Button, LinkButton } from "~/components/Button";
 import { Catcher } from "~/components/Catcher";
@@ -31,24 +32,24 @@ import {
 } from "~/permissions";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
+import { metaTags } from "~/utils/remix";
 import {
 	badRequestIfFalsy,
 	parseRequestPayload,
 	validate,
-} from "~/utils/remix";
-import { makeTitle } from "~/utils/strings";
+} from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { userPage } from "~/utils/urls";
 import { _action, actualNumber } from "~/utils/zod";
 
-export const meta: MetaFunction = () => {
-	return [
-		{ title: makeTitle("Plus Server suggestions") },
-		{
-			name: "description",
-			content: "This month's suggestions for +1, +2 and +3.",
-		},
-	];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Plus Server suggestions",
+		ogTitle: "Plus Server suggestions",
+		description:
+			"This season's suggestions to the Plus Server (+1, +2 and +3).",
+		location: args.location,
+	});
 };
 
 const suggestionActionSchema = z.union([
@@ -191,6 +192,12 @@ export default function PlusSuggestionsPage() {
 			<div className="plus__container">
 				<div className="stack md">
 					<SuggestedForInfo />
+					{searchParams.get("alert") === "true" ? (
+						<Alert variation="WARNING">
+							You do not have permissions to suggest or suggesting is not
+							possible right now
+						</Alert>
+					) : null}
 					<div className="stack lg">
 						<div
 							className={clsx("plus__top-container", {
@@ -227,16 +234,6 @@ export default function PlusSuggestionsPage() {
 									);
 								})}
 							</div>
-							{canSuggestNewUserFE({ user, suggestions: data.suggestions }) ? (
-								// TODO: resetScroll={false} https://twitter.com/ryanflorence/status/1527775882797907969
-								<LinkButton
-									to={`new${tierVisible ? `?tier=${tierVisible}` : ""}`}
-									prefetch="render"
-									size="tiny"
-								>
-									Suggest
-								</LinkButton>
-							) : null}
 						</div>
 						<div className="stack lg">
 							{visibleSuggestions.map((suggestion) => {
@@ -338,7 +335,6 @@ function SuggestedUser({
 					suggested: { id: suggestion.suggested.id },
 					targetPlusTier: Number(tier),
 				}) ? (
-					// TODO: resetScroll={false} https://twitter.com/ryanflorence/status/1527775882797907969
 					<LinkButton
 						className="plus__comment-button"
 						size="tiny"

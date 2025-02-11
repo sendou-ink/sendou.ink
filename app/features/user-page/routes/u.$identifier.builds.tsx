@@ -2,27 +2,25 @@ import { useFetcher, useLoaderData, useMatches } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { BuildCard } from "~/components/BuildCard";
-import { Button, LinkButton } from "~/components/Button";
+import { Button } from "~/components/Button";
 import { Dialog } from "~/components/Dialog";
 import { FormMessage } from "~/components/FormMessage";
 import { Image, WeaponImage } from "~/components/Image";
 import { Menu, type MenuProps } from "~/components/Menu";
-import { Popover } from "~/components/Popover";
 import { SubmitButton } from "~/components/SubmitButton";
 import { LockIcon } from "~/components/icons/Lock";
-import { PlusIcon } from "~/components/icons/Plus";
 import { SortIcon } from "~/components/icons/Sort";
 import { TrashIcon } from "~/components/icons/Trash";
 import { UnlockIcon } from "~/components/icons/Unlock";
-import { BUILD } from "~/constants";
 import { BUILD_SORT_IDENTIFIERS, type BuildSort } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import type { MainWeaponId } from "~/modules/in-game-lists";
 import { mainWeaponIds } from "~/modules/in-game-lists";
 import { atOrError } from "~/utils/arrays";
-import type { SendouRouteHandle } from "~/utils/remix";
-import { userNewBuildPage, weaponCategoryUrl } from "~/utils/urls";
+import type { SendouRouteHandle } from "~/utils/remix.server";
+import { weaponCategoryUrl } from "~/utils/urls";
+import { SendouButton } from "../../../components/elements/Button";
 import { DEFAULT_BUILD_SORT } from "../user-page-constants";
 import type { UserPageLoaderData } from "./u.$identifier";
 
@@ -82,36 +80,15 @@ export default function UserBuildsPage() {
 			) : null}
 			{isOwnPage && (
 				<div className="stack sm horizontal items-center justify-end">
-					<Button
-						onClick={() => setChangingSorting(true)}
-						size="tiny"
+					<SendouButton
+						onPress={() => setChangingSorting(true)}
+						size="small"
 						variant="outlined"
 						icon={<SortIcon />}
+						data-testid="change-sorting-button"
 					>
 						{t("user:builds.sorting.changeButton")}
-					</Button>
-					{data.builds.length < BUILD.MAX_COUNT ? (
-						<LinkButton
-							to={userNewBuildPage(layoutData.user)}
-							size="tiny"
-							testId="new-build-button"
-							icon={<PlusIcon />}
-						>
-							{t("addBuild")}
-						</LinkButton>
-					) : (
-						<Popover
-							buttonChildren={
-								<>
-									<PlusIcon className="button-icon" />
-									{t("addBuild")}
-								</>
-							}
-							triggerClassName="tiny"
-						>
-							{t("reachBuildMaxCount")}
-						</Popover>
-					)}
+					</SendouButton>
 				</div>
 			)}
 			<BuildsFilters
@@ -121,7 +98,14 @@ export default function UserBuildsPage() {
 			{builds.length > 0 ? (
 				<div className="builds-container">
 					{builds.map((build) => (
-						<BuildCard key={build.id} build={build} canEdit={isOwnPage} />
+						<BuildCard
+							key={build.id}
+							build={build}
+							canEdit={isOwnPage}
+							withAbilitySorting={
+								!isOwnPage && !user?.preferences.disableBuildAbilitySorting
+							}
+						/>
 					))}
 				</div>
 			) : (
@@ -193,14 +177,14 @@ function BuildsFilters({
 
 	return (
 		<div className="stack horizontal sm flex-wrap">
-			<Button
-				onClick={() => setWeaponFilter("ALL")}
+			<SendouButton
+				onPress={() => setWeaponFilter("ALL")}
 				variant={weaponFilter === "ALL" ? undefined : "outlined"}
-				size="tiny"
+				size="small"
 				className="u__build-filter-button"
 			>
 				{t("builds:stats.all")} ({data.builds.length})
-			</Button>
+			</SendouButton>
 			{showPublicPrivateFilters ? (
 				<>
 					<Button

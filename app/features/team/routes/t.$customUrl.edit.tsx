@@ -1,10 +1,4 @@
-import type {
-	ActionFunction,
-	LoaderFunctionArgs,
-	MetaFunction,
-	SerializeFrom,
-} from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import { Form, Link, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -17,36 +11,28 @@ import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
-import { requireUserId } from "~/features/auth/core/user.server";
-import * as LFGRepository from "~/features/lfg/LFGRepository.server";
-import {
-	type SendouRouteHandle,
-	notFoundIfFalsy,
-	parseRequestPayload,
-	validate,
-} from "~/utils/remix";
-import { makeTitle, pathnameFromPotentialURL } from "~/utils/strings";
-import { assertUnreachable } from "~/utils/types";
+import { useUser } from "~/features/auth/core/user";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	TEAM_SEARCH_PAGE,
-	mySlugify,
 	navIconUrl,
 	teamPage,
 	uploadImagePage,
 } from "~/utils/urls";
-import { deleteTeam } from "../queries/deleteTeam.server";
-import { edit } from "../queries/edit.server";
-import { findByIdentifier } from "../queries/findByIdentifier.server";
+import { action } from "../actions/t.$customUrl.edit.server";
+import { loader } from "../loaders/t.$customUrl.edit.server";
 import { TEAM } from "../team-constants";
-import { editTeamSchema, teamParamsSchema } from "../team-schemas.server";
 import { canAddCustomizedColors, isTeamOwner } from "../team-utils";
-
 import "../team.css";
+import { metaTags } from "~/utils/remix";
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-	if (!data) return [];
+export { action, loader };
 
-	return [{ title: makeTitle(data.team.name) }];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Editing team",
+		location: args.location,
+	});
 };
 
 export const handle: SendouRouteHandle = {
@@ -71,89 +57,34 @@ export const handle: SendouRouteHandle = {
 	},
 };
 
-export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUserId(request);
-	const { customUrl } = teamParamsSchema.parse(params);
-
-	const { team } = notFoundIfFalsy(findByIdentifier(customUrl));
-
-	validate(isTeamOwner({ team, user }), "You are not the team owner");
-
-	const data = await parseRequestPayload({
-		request,
-		schema: editTeamSchema,
-	});
-
-	switch (data._action) {
-		case "DELETE": {
-			await LFGRepository.deletePostsByTeamId(team.id);
-			deleteTeam(team.id);
-
-			throw redirect(TEAM_SEARCH_PAGE);
-		}
-		case "EDIT": {
-			const newCustomUrl = mySlugify(data.name);
-			const existing = findByIdentifier(newCustomUrl);
-
-			// can't take someone else's custom url
-			if (existing && existing.team.id !== team.id) {
-				return {
-					errors: ["forms.errors.duplicateName"],
-				};
-			}
-
-			const editedTeam = edit({
-				id: team.id,
-				customUrl: newCustomUrl,
-				...data,
-			});
-
-			throw redirect(teamPage(editedTeam.customUrl));
-		}
-		default: {
-			assertUnreachable(data);
-		}
-	}
-};
-
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const user = await requireUserId(request);
-	const { customUrl } = teamParamsSchema.parse(params);
-
-	const { team, css } = notFoundIfFalsy(findByIdentifier(customUrl));
-
-	if (!isTeamOwner({ team, user })) {
-		throw redirect(teamPage(customUrl));
-	}
-
-	return { team, css };
-};
-
 export default function EditTeamPage() {
 	const { t } = useTranslation(["common", "team"]);
+	const user = useUser();
 	const { team, css } = useLoaderData<typeof loader>();
 
 	return (
 		<Main className="half-width">
-			<FormWithConfirm
-				dialogHeading={t("team:deleteTeam.header", { teamName: team.name })}
-				fields={[["_action", "DELETE"]]}
-			>
-				<Button
-					className="ml-auto"
-					variant="minimal-destructive"
-					data-testid="delete-team-button"
+			{isTeamOwner({ team, user }) ? (
+				<FormWithConfirm
+					dialogHeading={t("team:deleteTeam.header", { teamName: team.name })}
+					fields={[["_action", "DELETE"]]}
 				>
-					{t("team:actionButtons.deleteTeam")}
-				</Button>
-			</FormWithConfirm>
+					<Button
+						className="ml-auto"
+						variant="minimal-destructive"
+						data-testid="delete-team-button"
+					>
+						{t("team:actionButtons.deleteTeam")}
+					</Button>
+				</FormWithConfirm>
+			) : null}
 			<Form method="post" className="stack md items-start">
 				<ImageUploadLinks />
 				{canAddCustomizedColors(team) ? (
 					<CustomizedColorsInput initialColors={css} />
 				) : null}
 				<NameInput />
-				<TwitterInput />
+				<BlueskyInput />
 				<BioTextarea />
 				<SubmitButton
 					className="mt-4"
@@ -170,17 +101,29 @@ export default function EditTeamPage() {
 
 function ImageUploadLinks() {
 	const { t } = useTranslation(["team"]);
+	const { team } = useLoaderData<typeof loader>();
+
 	return (
 		<div>
 			<Label>{t("team:forms.fields.uploadImages")}</Label>
 			<ol className="team__image-links-list">
 				<li>
-					<Link to={uploadImagePage({ type: "team-pfp" })}>
+					<Link
+						to={uploadImagePage({
+							type: "team-pfp",
+							teamCustomUrl: team.customUrl,
+						})}
+					>
 						{t("team:forms.fields.uploadImages.pfp")}
 					</Link>
 				</li>
 				<li>
-					<Link to={uploadImagePage({ type: "team-banner" })}>
+					<Link
+						to={uploadImagePage({
+							type: "team-banner",
+							teamCustomUrl: team.customUrl,
+						})}
+					>
 						{t("team:forms.fields.uploadImages.banner")}
 					</Link>
 				</li>
@@ -212,22 +155,21 @@ function NameInput() {
 	);
 }
 
-function TwitterInput() {
+function BlueskyInput() {
 	const { t } = useTranslation(["team"]);
 	const { team } = useLoaderData<typeof loader>();
-	const [value, setValue] = React.useState(team.twitter ?? "");
+	const [value, setValue] = React.useState(team.bsky ?? "");
 
 	return (
 		<div>
-			<Label htmlFor="twitter">{t("team:forms.fields.teamTwitter")}</Label>
+			<Label htmlFor="bsky">{t("team:forms.fields.teamBsky")}</Label>
 			<Input
-				leftAddon="https://twitter.com/"
-				id="twitter"
-				name="twitter"
-				maxLength={TEAM.TWITTER_MAX_LENGTH}
+				leftAddon="https://bsky.app/profile/"
+				id="bsky"
+				name="bsky"
+				maxLength={TEAM.BSKY_MAX_LENGTH}
 				value={value}
-				onChange={(e) => setValue(pathnameFromPotentialURL(e.target.value))}
-				testId="twitter-input"
+				onChange={(e) => setValue(e.target.value)}
 			/>
 		</div>
 	);

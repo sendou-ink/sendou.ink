@@ -1,13 +1,20 @@
-import { Form, useLoaderData, useSearchParams } from "@remix-run/react";
+import {
+	Form,
+	useLoaderData,
+	useMatches,
+	useSearchParams,
+} from "@remix-run/react";
 import clone from "just-clone";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { AbilitiesSelector } from "~/components/AbilitiesSelector";
+import { Alert } from "~/components/Alert";
 import { Button } from "~/components/Button";
 import { GearCombobox, WeaponCombobox } from "~/components/Combobox";
 import { FormMessage } from "~/components/FormMessage";
 import { Image } from "~/components/Image";
 import { Label } from "~/components/Label";
+import { Main } from "~/components/Main";
 import { RequiredHiddenInput } from "~/components/RequiredHiddenInput";
 import { SubmitButton } from "~/components/SubmitButton";
 import { CrossIcon } from "~/components/icons/Cross";
@@ -24,8 +31,10 @@ import type {
 	BuildAbilitiesTupleWithUnknown,
 	MainWeaponId,
 } from "~/modules/in-game-lists/types";
-import type { SendouRouteHandle } from "~/utils/remix";
+import invariant from "~/utils/invariant";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import { modeImageUrl } from "~/utils/urls";
+import type { UserPageLoaderData } from "./u.$identifier";
 
 import { action } from "../actions/u.$identifier.builds.new.server";
 import { loader } from "../loaders/u.$identifier.builds.new.server";
@@ -37,12 +46,23 @@ export const handle: SendouRouteHandle = {
 
 export default function NewBuildPage() {
 	const { buildToEdit } = useLoaderData<typeof loader>();
+	const [, parentRoute] = useMatches();
+	invariant(parentRoute);
+	const layoutData = parentRoute.data as UserPageLoaderData;
 	const { t } = useTranslation(["builds", "common"]);
 	const [searchParams] = useSearchParams();
 	const [abilities, setAbilities] =
 		React.useState<BuildAbilitiesTupleWithUnknown>(
 			buildToEdit?.abilities ?? validatedBuildFromSearchParams(searchParams),
 		);
+
+	if (layoutData.user.buildsCount >= BUILD.MAX_COUNT) {
+		return (
+			<Main className="stack items-center">
+				<Alert variation="WARNING">{t("builds:reachBuildMaxCount")}</Alert>
+			</Main>
+		);
+	}
 
 	return (
 		<div className="half-width u__build-form">

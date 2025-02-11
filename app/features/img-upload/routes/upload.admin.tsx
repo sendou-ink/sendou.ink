@@ -10,7 +10,7 @@ import {
 	notFoundIfFalsy,
 	parseRequestPayload,
 	validate,
-} from "~/utils/remix";
+} from "~/utils/remix.server";
 import { userSubmittedImage } from "~/utils/urls";
 import * as ImageRepository from "../ImageRepository.server";
 import { countAllUnvalidatedImg } from "../queries/countAllUnvalidatedImg.server";

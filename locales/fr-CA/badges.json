@@ -5,6 +5,5 @@
 	"tournament_one": "Attribué pour avoir gagné {{tournament}}",
 	"tournament_other": "Attribué pour avoir gagné {{tournament}} (×{{count}})",
 	"forYourEvent": "Un badge pour votre événement ?",
-	"madeBy": "Badges créés par <2>borzoic</2>",
 	"managedBy": "Géré par {{users}}"
 }

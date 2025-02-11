@@ -266,7 +266,7 @@ function PostTime({
 	const createdAtDate = databaseTimestampToDate(createdAt);
 	const updatedAtDate = databaseTimestampToDate(updatedAt);
 	const overDayDifferenceBetween =
-		createdAtDate.getTime() - updatedAtDate.getTime() > 1000 * 60 * 60 * 24;
+		updatedAtDate.getTime() - createdAtDate.getTime() > 1000 * 60 * 60 * 24;
 
 	return (
 		<div className="text-lighter text-xs font-bold">
@@ -275,13 +275,15 @@ function PostTime({
 				day: "numeric",
 			})}{" "}
 			{overDayDifferenceBetween ? (
-				<i>
-					({t("lfg:post.lastActive")}{" "}
-					{formatDistanceToNow(updatedAtDate, {
-						addSuffix: true,
-					})}
-					)
-				</i>
+				<div className="text-xxs">
+					<i>
+						({t("lfg:post.lastActive")}{" "}
+						{formatDistanceToNow(updatedAtDate, {
+							addSuffix: true,
+						})}
+						)
+					</i>
+				</div>
 			) : null}
 		</div>
 	);

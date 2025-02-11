@@ -12,7 +12,7 @@ import {
 	UserResultsTable,
 } from "~/features/user-page/components/UserResultsTable";
 import { normalizeFormFieldArray } from "~/utils/arrays";
-import { parseRequestPayload } from "~/utils/remix";
+import { parseRequestPayload } from "~/utils/remix.server";
 import { userResultsPage } from "~/utils/urls";
 
 import { loader } from "../loaders/u.$identifier.results.server";

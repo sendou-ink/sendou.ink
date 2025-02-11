@@ -6,6 +6,7 @@ interface NewTabsProps {
 	tabs: {
 		label: string;
 		number?: number;
+		icon?: React.ReactNode;
 		hidden?: boolean;
 		disabled?: boolean;
 	}[];
@@ -20,6 +21,10 @@ interface NewTabsProps {
 	setSelectedIndex?: (index: number) => void;
 	/** Don't take space when no tabs to show? */
 	disappearing?: boolean;
+	/** Show padding between tabs and content
+	 * @default true
+	 */
+	padded?: boolean;
 	type?: "divider";
 	sticky?: boolean;
 }
@@ -36,6 +41,7 @@ export function NewTabs(args: NewTabsProps) {
 		selectedIndex,
 		setSelectedIndex,
 		disappearing = false,
+		padded = true,
 	} = args;
 
 	const cantSwitchTabs = tabs.filter((t) => !t.hidden).length <= 1;
@@ -56,10 +62,11 @@ export function NewTabs(args: NewTabsProps) {
 						return (
 							<Tab
 								key={tab.label}
-								className="tab__button"
+								className="button tab__button"
 								data-testid={`tab-${tab.label}`}
 								disabled={tab.disabled}
 							>
+								{tab.icon}
 								{tab.label}
 								{typeof tab.number === "number" && tab.number !== 0 && (
 									<span className="tab__number">{tab.number}</span>
@@ -69,7 +76,9 @@ export function NewTabs(args: NewTabsProps) {
 					})}
 			</Tab.List>
 			<Tab.Panels
-				className={clsx({ "mt-4": !cantSwitchTabs || !disappearing })}
+				className={clsx({
+					"mt-4": padded && (!cantSwitchTabs || !disappearing),
+				})}
 			>
 				{content
 					.filter((c) => !c.hidden)

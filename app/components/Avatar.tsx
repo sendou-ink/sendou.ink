@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import * as React from "react";
 import type { User } from "~/db/types";
-import { BLANK_IMAGE_URL } from "~/utils/urls";
+import { BLANK_IMAGE_URL, discordAvatarUrl } from "~/utils/urls";
 
 const dimensions = {
 	xxxs: 16,
@@ -39,9 +39,11 @@ function _Avatar({
 	const src =
 		url ??
 		(user?.discordAvatar && !isErrored
-			? `https://cdn.discordapp.com/avatars/${user.discordId}/${
-					user.discordAvatar
-				}.webp${size === "lg" ? "?size=240" : "?size=80"}`
+			? discordAvatarUrl({
+					discordAvatar: user.discordAvatar,
+					discordId: user.discordId,
+					size: size === "lg" ? "lg" : "sm",
+				})
 			: BLANK_IMAGE_URL); // avoid broken image placeholder
 
 	return (

@@ -56,7 +56,7 @@ test.describe("Builds", () => {
 
 		await page.getByTestId("submit-button").click();
 
-		await expect(page.getByTestId("new-build-button")).toBeVisible();
+		await expect(page.getByTestId("change-sorting-button")).toBeVisible();
 
 		const firstBuildCard = page.getByTestId("build-card").first();
 

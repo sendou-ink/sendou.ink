@@ -2,13 +2,16 @@ import type { Params } from "@remix-run/react";
 import type { Tournament } from "~/db/types";
 import type { ModeShort, StageId } from "~/modules/in-game-lists";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
+import { weekNumberToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { tournamentLogoUrl } from "~/utils/urls";
 import { MapPool } from "../map-list-generator/core/map-pool";
+import { currentSeason } from "../mmr/season";
 import { BANNED_MAPS } from "../sendouq-settings/banned-maps";
+import type { Tournament as TournamentClass } from "../tournament-bracket/core/Tournament";
 import type { TournamentData } from "../tournament-bracket/core/Tournament.server";
 import type { PlayedSet } from "./core/sets.server";
-import { TOURNAMENT } from "./tournament-constants";
+import { LEAGUES, TOURNAMENT } from "./tournament-constants";
 
 export function tournamentIdFromParams(params: Params<string>) {
 	const result = Number(params.id);
@@ -180,131 +183,6 @@ export function HACKY_resolvePicture(event: { name: string }) {
 	return tournamentLogoUrl("default");
 }
 
-// legacy approach, new tournament should use the avatarMetadata column in CalendarEvent
-const BLACK = "#1e1e1e";
-const WHITE = "#fffcfc";
-export function HACKY_resolveThemeColors(event: { name: string }) {
-	const normalizedEventName = event.name.toLowerCase();
-
-	if (normalizedEventName.includes("sendouq")) {
-		return { backgroundColor: "#1e1e1e", textColor: WHITE };
-	}
-
-	if (normalizedEventName.includes("paddling pool")) {
-		return { backgroundColor: "#fff", textColor: BLACK };
-	}
-
-	if (normalizedEventName.includes("in the zone")) {
-		return { backgroundColor: "#8b0000", textColor: WHITE };
-	}
-
-	if (normalizedEventName.includes("picnic")) {
-		return { backgroundColor: "#e3fefe", textColor: BLACK };
-	}
-
-	if (normalizedEventName.includes("proving grounds")) {
-		return { backgroundColor: "#ffe809", textColor: BLACK };
-	}
-
-	if (normalizedEventName.includes("triton")) {
-		return { backgroundColor: "#aee8ff", textColor: BLACK };
-	}
-
-	if (normalizedEventName.includes("swim or sink")) {
-		return { backgroundColor: "#d7f8ea", textColor: BLACK };
-	}
-
-	if (normalizedEventName.includes("from the ink up")) {
-		return { backgroundColor: "#ffdfc6", textColor: BLACK };
-	}
-
-	if (normalizedEventName.includes("coral clash")) {
-		return { backgroundColor: "#f0f4ff", textColor: BLACK };
-	}
-
-	if (normalizedEventName.includes("level up")) {
-		return { backgroundColor: "#383232", textColor: WHITE };
-	}
-
-	if (normalizedEventName.includes("all 4 one")) {
-		return { backgroundColor: "#2b262a", textColor: WHITE };
-	}
-
-	if (normalizedEventName.includes("fry basket")) {
-		return { backgroundColor: "#fff", textColor: BLACK };
-	}
-
-	if (normalizedEventName.includes("the depths")) {
-		return { backgroundColor: "#183e42", textColor: WHITE };
-	}
-
-	if (normalizedEventName.includes("eclipse")) {
-		return { backgroundColor: "#191919", textColor: WHITE };
-	}
-
-	if (normalizedEventName.includes("homecoming")) {
-		return { backgroundColor: "#1c1c1c", textColor: WHITE };
-	}
-
-	if (normalizedEventName.includes("bad ideas")) {
-		return { backgroundColor: "#000000", textColor: WHITE };
-	}
-
-	if (normalizedEventName.includes("tenoch")) {
-		return { backgroundColor: "#425969", textColor: WHITE };
-	}
-
-	if (normalizedEventName.includes("megalodon monday")) {
-		return { backgroundColor: "#288eb5", textColor: WHITE };
-	}
-
-	if (normalizedEventName.includes("heaven 2 ocean")) {
-		return { backgroundColor: "#8cf1ff", textColor: BLACK };
-	}
-
-	if (normalizedEventName.includes("kraken royale")) {
-		return { backgroundColor: "#32333a", textColor: WHITE };
-	}
-
-	if (normalizedEventName.includes("menu royale")) {
-		return { backgroundColor: "#000", textColor: WHITE };
-	}
-
-	if (normalizedEventName.includes("barracuda co")) {
-		return { backgroundColor: "#47b6fe", textColor: BLACK };
-	}
-
-	if (normalizedEventName.includes("crimson ink")) {
-		return { backgroundColor: "#000000", textColor: WHITE };
-	}
-
-	if (normalizedEventName.includes("mesozoic mayhem")) {
-		return { backgroundColor: "#ccd5da", textColor: BLACK };
-	}
-
-	if (normalizedEventName.includes("rain or shine")) {
-		return { backgroundColor: "#201c3b", textColor: WHITE };
-	}
-
-	if (normalizedEventName.includes("squid junction")) {
-		return { backgroundColor: "#fed09f", textColor: BLACK };
-	}
-
-	if (normalizedEventName.includes("silly sausage")) {
-		return { backgroundColor: "#ffd76f", textColor: BLACK };
-	}
-
-	if (normalizedEventName.includes("united-lan")) {
-		return { backgroundColor: "#fff", textColor: BLACK };
-	}
-
-	if (normalizedEventName.includes("soul cup")) {
-		return { backgroundColor: "#101011", textColor: WHITE };
-	}
-
-	return { backgroundColor: "#3430ad", textColor: WHITE };
-}
-
 export type CounterPickValidationStatus =
 	| "PICKING"
 	| "VALID"
@@ -378,4 +256,54 @@ export function validateCounterPickMapPool(
 	}
 
 	return "VALID";
+}
+
+export function tournamentIsRanked({
+	isSetAsRanked,
+	startTime,
+	minMembersPerTeam,
+}: { isSetAsRanked?: boolean; startTime: Date; minMembersPerTeam: number }) {
+	const seasonIsActive = Boolean(currentSeason(startTime));
+	if (!seasonIsActive) return false;
+
+	// 1v1, 2v2 and 3v3 are always considered "gimmicky"
+	if (minMembersPerTeam !== 4) return false;
+
+	return isSetAsRanked ?? true;
+}
+
+export function resolveLeagueRoundStartDate(
+	tournament: TournamentClass,
+	roundId: number,
+) {
+	if (!tournament.isLeagueDivision) return null;
+
+	const league = Object.values(LEAGUES)
+		.flat()
+		.find(
+			(league) => league.tournamentId === tournament.ctx.parentTournamentId,
+		);
+	if (!league) return null;
+
+	const bracket = tournament.brackets.find((b) =>
+		b.data.round.some((r) => r.id === roundId),
+	);
+
+	const round = bracket?.data.round.find((r) => r.id === roundId);
+	const onlyRelevantRounds = bracket?.data.round.filter(
+		(r) => r.group_id === round?.group_id,
+	);
+
+	const roundIdx = onlyRelevantRounds?.findIndex((r) => r.id === roundId);
+	if (roundIdx === undefined) return null;
+
+	const week = league.weeks[roundIdx];
+	if (!week) return null;
+
+	const date = weekNumberToDate({
+		week: week.weekNumber,
+		year: week.year,
+	});
+
+	return date;
 }

@@ -1,21 +1,27 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import type { PreparedMaps as PreparedMapsType } from "~/db/tables";
 import * as PreparedMaps from "./PreparedMaps";
 import { testTournament } from "./tests/test-utils";
 
-describe("PreparedMaps - resolvePreparedForTheBracket", () => {
-	const tournament = testTournament({
+const getTestTournament = (thirdPlaceMatchesForBoth = true) =>
+	testTournament({
 		ctx: {
 			settings: {
 				bracketProgression: [
 					{
 						type: "round_robin",
 						name: "Round Robin",
+						requiresCheckIn: false,
+						settings: {},
 						sources: [],
 					},
 					{
 						type: "single_elimination",
 						name: "Top Cut",
+						requiresCheckIn: false,
+						settings: {
+							thirdPlaceMatch: true,
+						},
 						sources: [
 							{
 								bracketIdx: 0,
@@ -26,6 +32,10 @@ describe("PreparedMaps - resolvePreparedForTheBracket", () => {
 					{
 						type: "single_elimination",
 						name: "Underground Bracket",
+						requiresCheckIn: false,
+						settings: {
+							thirdPlaceMatch: thirdPlaceMatchesForBoth,
+						},
 						sources: [
 							{
 								bracketIdx: 0,
@@ -37,6 +47,9 @@ describe("PreparedMaps - resolvePreparedForTheBracket", () => {
 			},
 		},
 	});
+
+describe("PreparedMaps - resolvePreparedForTheBracket", () => {
+	const tournament = getTestTournament();
 
 	test("returns null if no prepared maps at all", () => {
 		const prepared = PreparedMaps.resolvePreparedForTheBracket({
@@ -100,6 +113,26 @@ describe("PreparedMaps - resolvePreparedForTheBracket", () => {
 
 		expect(prepared).not.toBeNull();
 	});
+
+	test("returns null if the sibling does not have third place match while this one does", () => {
+		const tournament = getTestTournament(false);
+
+		const prepared = PreparedMaps.resolvePreparedForTheBracket({
+			tournament,
+			bracketIdx: 1,
+			preparedByBracket: [
+				null,
+				null,
+				{
+					authorId: 1,
+					createdAt: 1,
+					maps: [],
+				},
+			],
+		});
+
+		expect(prepared).toBeNull();
+	});
 });
 
 describe("PreparedMaps - eliminationTeamCountOptions", () => {
@@ -108,7 +141,7 @@ describe("PreparedMaps - eliminationTeamCountOptions", () => {
 			PreparedMaps.eliminationTeamCountOptions(3).every(
 				(option) => option.max > 3,
 			),
-		).toBeTrue();
+		).toBe(true);
 	});
 
 	test("returns the option equivalent to the current count", () => {
@@ -120,8 +153,14 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 	const tournament = testTournament({
 		ctx: {
 			settings: {
-				thirdPlaceMatch: true,
-				bracketProgression: [],
+				bracketProgression: [
+					{
+						type: "single_elimination",
+						settings: { thirdPlaceMatch: true },
+						name: "X",
+						requiresCheckIn: false,
+					},
+				],
 			},
 		},
 	});
@@ -130,8 +169,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		const trimmed = PreparedMaps.trimPreparedEliminationMaps({
 			preparedMaps: null,
 			teamCount: 4,
-			tournament,
-			type: "single_elimination",
+			bracket: tournament.bracketByIdx(0)!,
 		});
 
 		expect(trimmed).toBeNull();
@@ -141,8 +179,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		const trimmed = PreparedMaps.trimPreparedEliminationMaps({
 			preparedMaps: FOUR_TEAM_SE_PREPARED,
 			teamCount: 8,
-			tournament,
-			type: "single_elimination",
+			bracket: tournament.bracketByIdx(0)!,
 		});
 
 		expect(trimmed).toBeNull();
@@ -156,8 +193,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		const trimmed = PreparedMaps.trimPreparedEliminationMaps({
 			preparedMaps: copy,
 			teamCount: 4,
-			tournament,
-			type: "single_elimination",
+			bracket: tournament.bracketByIdx(0)!,
 		});
 
 		expect(trimmed).toBeNull();
@@ -167,19 +203,28 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		const trimmed = PreparedMaps.trimPreparedEliminationMaps({
 			preparedMaps: FOUR_TEAM_SE_PREPARED,
 			teamCount: 4,
-			tournament,
-			type: "single_elimination",
+			bracket: tournament.bracketByIdx(0)!,
 		});
 
 		expect(trimmed).toBe(FOUR_TEAM_SE_PREPARED);
+	});
+
+	test("returns trimmed if third place match disappeared", () => {
+		const trimmed = PreparedMaps.trimPreparedEliminationMaps({
+			preparedMaps: FOUR_TEAM_SE_PREPARED,
+			teamCount: 3,
+			bracket: tournament.bracketByIdx(0)!,
+		});
+
+		expect(trimmed?.maps.length).toBe(FOUR_TEAM_SE_PREPARED.maps.length - 1);
+		expect(trimmed?.maps.some((m) => m.groupId === 1)).toBe(false);
 	});
 
 	test("trims the maps (SE - 1 extra round)", () => {
 		const trimmed = PreparedMaps.trimPreparedEliminationMaps({
 			preparedMaps: EIGHT_TEAM_SE_PREPARED,
 			teamCount: 4,
-			tournament,
-			type: "single_elimination",
+			bracket: tournament.bracketByIdx(0)!,
 		});
 
 		expect(trimmed?.maps.length).toBe(EIGHT_TEAM_SE_PREPARED.maps.length - 1);
@@ -189,8 +234,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		const trimmed = PreparedMaps.trimPreparedEliminationMaps({
 			preparedMaps: EIGHT_TEAM_SE_PREPARED,
 			teamCount: 4,
-			tournament,
-			type: "single_elimination",
+			bracket: tournament.bracketByIdx(0)!,
 		});
 
 		expect(trimmed?.maps[0].list?.[0].stageId).toBe(
@@ -202,20 +246,18 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		const trimmed = PreparedMaps.trimPreparedEliminationMaps({
 			preparedMaps: EIGHT_TEAM_SE_PREPARED,
 			teamCount: 4,
-			tournament,
-			type: "single_elimination",
+			bracket: tournament.bracketByIdx(0)!,
 		});
 
-		const actualBracket = tournament.generateMatchesData(
-			[1, 2, 3, 4],
-			"single_elimination",
-		);
+		const actualBracket = tournament
+			.bracketByIdx(0)!
+			.generateMatchesData([1, 2, 3, 4]);
 
 		for (const round of actualBracket.round) {
 			expect(
 				trimmed!.maps.some((map) => map.roundId === round.id),
 				`Round ID ${round.id} not found in the actual bracket`,
-			).toBeTrue();
+			).toBe(true);
 		}
 	});
 
@@ -223,8 +265,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		const trimmed = PreparedMaps.trimPreparedEliminationMaps({
 			preparedMaps: EIGHT_TEAM_SE_PREPARED,
 			teamCount: 4,
-			tournament,
-			type: "single_elimination",
+			bracket: tournament.bracketByIdx(0)!,
 		});
 
 		expect(trimmed?.maps[0].roundId).toBe(0);
@@ -234,8 +275,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		const trimmed = PreparedMaps.trimPreparedEliminationMaps({
 			preparedMaps: EIGHT_TEAM_SE_PREPARED,
 			teamCount: 3,
-			tournament,
-			type: "single_elimination",
+			bracket: tournament.bracketByIdx(0)!,
 		});
 
 		expect(trimmed?.maps.length).toBe(EIGHT_TEAM_SE_PREPARED.maps.length - 2);
@@ -245,12 +285,26 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		expect(uniqueGroupIds.size).toBe(1);
 	});
 
+	const doubleEliminationTournament = testTournament({
+		ctx: {
+			settings: {
+				bracketProgression: [
+					{
+						type: "double_elimination",
+						settings: { thirdPlaceMatch: true },
+						name: "X",
+						requiresCheckIn: false,
+					},
+				],
+			},
+		},
+	});
+
 	test("trims the maps (DE - both winners and losers)", () => {
 		const trimmed = PreparedMaps.trimPreparedEliminationMaps({
 			preparedMaps: EIGHT_TEAM_DE_PREPARED,
 			teamCount: 4,
-			tournament,
-			type: "double_elimination",
+			bracket: doubleEliminationTournament.bracketByIdx(0)!,
 		});
 
 		const expectedWinnersCount = 2;
@@ -275,20 +329,18 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		const trimmed = PreparedMaps.trimPreparedEliminationMaps({
 			preparedMaps: EIGHT_TEAM_DE_PREPARED,
 			teamCount: 4,
-			tournament,
-			type: "double_elimination",
+			bracket: doubleEliminationTournament.bracketByIdx(0)!,
 		});
 
-		const actualBracket = tournament.generateMatchesData(
-			[1, 2, 3, 4],
-			"double_elimination",
-		);
+		const actualBracket = doubleEliminationTournament
+			.bracketByIdx(0)!
+			.generateMatchesData([1, 2, 3, 4]);
 
 		for (const round of actualBracket.round) {
 			expect(
 				trimmed!.maps.some((map) => map.roundId === round.id),
 				`Round ID ${round.id} not found in the actual bracket`,
-			).toBeTrue();
+			).toBe(true);
 		}
 	});
 

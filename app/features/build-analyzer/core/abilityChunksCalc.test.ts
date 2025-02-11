@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import type {
 	AbilityWithUnknown,
 	BuildAbilitiesTupleWithUnknown,
@@ -39,7 +39,7 @@ describe("getAbilityChunksMapAsArray()", () => {
 		expect(
 			abilityChunksArray,
 			"Ability chunks array is not empty.",
-		).toBeEmpty();
+		).toHaveLength(0);
 	});
 
 	describe("getAbilityChunksMapAsArray()", () => {
@@ -54,7 +54,7 @@ describe("getAbilityChunksMapAsArray()", () => {
 			expect(
 				abilityChunksArray,
 				"Ability chunks array is not empty.",
-			).toBeEmpty();
+			).toHaveLength(0);
 		});
 
 		test("Ability Doubler ability does not count towards Ability Chunks", () => {

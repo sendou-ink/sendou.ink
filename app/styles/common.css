@@ -26,7 +26,7 @@ a {
 	text-decoration: none;
 }
 
-:is(button, .button) {
+.button {
 	display: flex;
 	width: auto;
 	align-items: center;
@@ -46,50 +46,50 @@ a {
 	user-select: none;
 }
 
-:is(button, .button):focus-visible {
+.button:focus-visible {
 	outline: 2px solid var(--theme);
 }
 
-:is(button, .button):active {
+.button:active {
 	transform: translateY(1px);
 }
 
-:is(button, .button):disabled {
+.button:disabled {
 	cursor: not-allowed;
 	opacity: 0.5;
 	transform: initial;
 }
 
-:is(button, .button).outlined {
+.button.outlined {
 	background-color: var(--theme-very-transparent);
 	color: var(--theme);
 }
 
-:is(button, .button).outlined-success {
+.button.outlined-success {
 	border-color: var(--theme-success);
 	background-color: transparent;
 	color: var(--theme-success);
 }
 
-:is(button, .button).tiny {
+.button.tiny {
 	font-size: var(--fonts-xs);
 	padding-block: var(--s-1);
 	padding-inline: var(--s-2);
 }
 
-:is(button, .button).miniscule {
+.button.miniscule {
 	font-size: var(--fonts-xxs);
 	padding-block: var(--s-1);
 	padding-inline: var(--s-2);
 }
 
-:is(button, .button).big {
+.button.big {
 	font-size: var(--fonts-md);
 	padding-block: var(--s-2-5);
 	padding-inline: var(--s-6);
 }
 
-:is(button, .button).minimal {
+.button.minimal {
 	padding: 0;
 	border: none;
 	background-color: transparent;
@@ -97,31 +97,31 @@ a {
 	outline: initial;
 }
 
-:is(button, .button).minimal:focus-visible {
+.button.minimal:focus-visible {
 	outline: 2px solid var(--theme);
 }
 
-:is(button, .button).minimal-success {
+.button.minimal-success {
 	padding: 0;
 	border: none;
 	background-color: transparent;
 	color: var(--theme-success);
 }
 
-:is(button, .button).success {
+.button.success {
 	border-color: var(--theme-success);
 	background-color: var(--theme-success);
 	outline-color: var(--theme-success);
 }
 
-:is(button, .button).destructive {
+.button.destructive {
 	border-color: var(--theme-error);
 	background-color: transparent;
 	color: var(--theme-error);
 	outline-color: var(--theme-error);
 }
 
-:is(button, .button).minimal-destructive {
+.button.minimal-destructive {
 	padding: 0;
 	border: none;
 	background-color: transparent;
@@ -129,7 +129,7 @@ a {
 	outline-color: var(--theme-error);
 }
 
-:is(button, .button).loading {
+.button.loading {
 	cursor: not-allowed;
 	opacity: 0.6;
 }
@@ -143,7 +143,7 @@ a {
 	margin-inline-end: 0 !important;
 }
 
-:is(button, .button).tiny > .button-icon {
+.button.tiny > .button-icon {
 	width: 1rem;
 	margin-inline-end: var(--s-1);
 }
@@ -198,6 +198,18 @@ input:user-invalid {
 .input__read-only {
 	cursor: not-allowed;
 	opacity: 0.5;
+}
+
+.input__extra-small {
+	min-width: var(--input-width-extra-small);
+}
+
+.input__small {
+	min-width: var(--input-width-small);
+}
+
+.input__medium {
+	min-width: var(--input-width-medium);
 }
 
 input:not(.plain, .combobox-input):focus-within {
@@ -393,55 +405,6 @@ dialog::backdrop {
 	}
 }
 
-.toggle {
-	all: unset;
-	position: relative;
-	display: inline-flex;
-	width: var(--s-11);
-	height: var(--s-6);
-	align-items: center;
-	border-radius: var(--rounded);
-	background-color: var(--theme-transparent);
-	cursor: pointer;
-}
-
-.toggle.tiny {
-	width: var(--s-6);
-	height: var(--s-3);
-}
-
-.toggle.checked {
-	background-color: var(--theme-vibrant);
-}
-
-.toggle:active {
-	transform: initial;
-}
-
-.toggle-dot {
-	display: inline-block;
-	width: var(--s-4);
-	height: var(--s-4);
-	border-radius: 50%;
-	background-color: white;
-	transform: translateX(var(--s-1));
-	transition: transform 0.2s ease;
-}
-
-.toggle-dot.tiny {
-	width: var(--s-3);
-	height: var(--s-3);
-	transform: translateX(-0.2rem);
-}
-
-.toggle-dot.checked {
-	transform: translateX(var(--s-6));
-}
-
-.toggle-dot.checked.tiny {
-	transform: translateX(var(--s-4));
-}
-
 .button-text-paragraph {
 	display: flex;
 	gap: var(--s-1);
@@ -564,6 +527,13 @@ dialog::backdrop {
 	border-bottom: 2px solid var(--border);
 }
 
+.tab__buttons-container svg {
+	--icon-size: 16px;
+	width: var(--icon-size);
+	height: var(--icon-size);
+	margin-inline-end: var(--s-1-5);
+}
+
 .tab__button {
 	background-color: transparent;
 	border: none;
@@ -645,19 +615,7 @@ dialog::backdrop {
 	color: var(--text);
 }
 
-.popover-content {
-	z-index: 1;
-	max-width: 20rem;
-	padding: var(--s-2);
-	border: 2px solid var(--border);
-	border-radius: var(--rounded);
-	background-color: var(--bg-darker);
-	font-size: var(--fonts-sm);
-	font-weight: var(--semi-bold);
-	white-space: pre-wrap;
-}
-
-.info-popover__trigger {
+.react-aria-Button.info-popover__trigger {
 	border: 2px solid var(--bg-lightest);
 	border-radius: 100%;
 	background-color: transparent;
@@ -668,7 +626,7 @@ dialog::backdrop {
 	height: 28px;
 }
 
-.info-popover__trigger__tiny {
+.react-aria-Button.info-popover__trigger__tiny {
 	width: 20px;
 	height: 20px;
 	font-size: var(--fonts-xs);
@@ -831,10 +789,10 @@ dialog::backdrop {
 	font-size: var(--fonts-sm);
 	font-weight: var(--semi-bold);
 	gap: var(--s-2);
-	line-height: 1.4;
 	margin-inline: auto;
 	padding-block: var(--s-1-5);
 	padding-inline: var(--s-3) var(--s-4);
+	text-align: center;
 }
 
 .alert.tiny {
@@ -956,6 +914,10 @@ dialog::backdrop {
 
 .stack.xl {
 	gap: var(--s-12);
+}
+
+.stack.xxl {
+	gap: var(--s-16);
 }
 
 .stack.horizontal {
@@ -1304,8 +1266,7 @@ dialog::backdrop {
 }
 
 .top-leaderboard {
-	min-height: 110px;
-	margin-block-start: var(--leaderboard-top-spacing);
+	min-height: 140px;
 }
 
 .youtube__container {
@@ -1364,6 +1325,10 @@ dialog::backdrop {
 	align-items: flex-start;
 }
 
+.menu__items-container__opens-left {
+	right: 0;
+}
+
 .menu-container__scrolling {
 	max-height: 300px;
 	overflow-y: auto;
@@ -1410,6 +1375,11 @@ dialog::backdrop {
 
 .menu__item__icon {
 	width: 18px;
+}
+
+.menu__item__img {
+	min-width: 24px;
+	min-height: 24px;
 }
 
 .discord-icon {
@@ -1739,6 +1709,7 @@ html[dir="rtl"] .fix-rtl {
 	border: none;
 	background-color: transparent;
 	transition: filter, opacity 0.2s;
+	border-radius: var(--rounded);
 }
 
 @keyframes wiggle {
@@ -1890,4 +1861,16 @@ html[dir="rtl"] .fix-rtl {
 	color: var(--theme-vibrant);
 	font-size: var(--fonts-xxxs);
 	font-weight: var(--bold);
+}
+
+.format-selector__count {
+	color: var(--theme);
+	font-size: var(--fonts-sm);
+	white-space: nowrap;
+}
+
+.format-selector__divider {
+	background-color: var(--theme-transparent);
+	width: 2px;
+	align-self: stretch;
 }

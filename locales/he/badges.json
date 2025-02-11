@@ -5,6 +5,5 @@
 	"tournament_one": "מוענק עבור ניצחון {{tournament}}",
 	"tournament_other": "מוענק עבור ניצחון {{tournament}} (×{{count}})",
 	"forYourEvent": "תג לאירוע שלכם?",
-	"madeBy": "תגים מאת <2>borzoic</2>",
 	"managedBy": "מנוהל על ידי {{users}}"
 }

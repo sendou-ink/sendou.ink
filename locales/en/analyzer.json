@@ -159,5 +159,7 @@
 	"noDmgData": "No damage data yet for this weapon. Check back later!",
 	"perInkTankGrid.header_one": "{{weapon}} shots after ×{{count}} sub weapon used",
 	"perInkTankGrid.header_other": "{{weapon}} shots after ×{{count}} sub weapons used",
-	"bigBubblerExplanation": "{{weapon}} duration is also increased as the durability increases"
+	"bigBubblerExplanation": "{{weapon}} duration is also increased as the durability increases",
+	"button.showChart": "Show chart",
+	"button.showConsumptionGrid": "Show consumption grid"
 }

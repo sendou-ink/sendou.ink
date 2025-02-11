@@ -23,8 +23,10 @@ import {
 	BUILDS_PAGE_MAX_BUILDS,
 	PATCHES,
 } from "~/constants";
+import { useUser } from "~/features/auth/core/user";
 import { safeJSONParse } from "~/utils/json";
-import type { SendouRouteHandle } from "~/utils/remix";
+import { isRevalidation, metaTags } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
 import {
 	BUILDS_PAGE,
@@ -57,6 +59,8 @@ const filterOutMeaninglessFilters = (
 	);
 };
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
+	if (isRevalidation(args)) return true;
+
 	const oldLimit = args.currentUrl.searchParams.get("limit");
 	const newLimit = args.nextUrl.searchParams.get("limit");
 
@@ -122,12 +126,15 @@ export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	return args.defaultShouldRevalidate;
 };
 
-export const meta: MetaFunction = (args) => {
-	const data = args.data as SerializeFrom<typeof loader> | null;
+export const meta: MetaFunction<typeof loader> = (args) => {
+	if (!args.data) return [];
 
-	if (!data) return [];
-
-	return [{ title: data.title }];
+	return metaTags({
+		title: `${args.data.weaponName} builds`,
+		ogTitle: `${args.data.weaponName} Splatoon 3 builds`,
+		description: `Collection of ${args.data.weaponName} builds from the top competitive players. Find the best combination of abilities and level up your gameplay.`,
+		location: args.location,
+	});
 };
 
 export const handle: SendouRouteHandle = {
@@ -157,6 +164,8 @@ const BuildCards = React.memo(function BuildCards({
 }: {
 	data: SerializeFrom<typeof loader>;
 }) {
+	const user = useUser();
+
 	return (
 		<div className="builds-container">
 			{data.builds.map((build) => {
@@ -166,6 +175,7 @@ const BuildCards = React.memo(function BuildCards({
 						build={build}
 						owner={build}
 						canEdit={false}
+						withAbilitySorting={!user?.preferences.disableBuildAbilitySorting}
 					/>
 				);
 			})}

@@ -3,7 +3,7 @@ import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { cors } from "remix-utils/cors";
 import { z } from "zod";
 import { db } from "~/db/sql";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix";
+import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { userSubmittedImage } from "~/utils/urls";
 import { id } from "~/utils/zod";
 import {

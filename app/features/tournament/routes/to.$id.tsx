@@ -18,16 +18,20 @@ import { getUser } from "~/features/auth/core/user.server";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import { useIsMounted } from "~/hooks/useIsMounted";
 import { isAdmin } from "~/permissions";
 import { databaseTimestampToDate } from "~/utils/dates";
-import type { SendouRouteHandle } from "~/utils/remix";
-import { makeTitle } from "~/utils/strings";
+import type { SendouRouteHandle } from "~/utils/remix.server";
+import { removeMarkdown } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import {
+	tournamentDivisionsPage,
 	tournamentOrganizationPage,
 	tournamentPage,
+	tournamentRegisterPage,
 	userSubmittedImage,
 } from "~/utils/urls";
+import { metaTags } from "../../../utils/remix";
 import { streamsByTournamentId } from "../core/streams.server";
 import {
 	HACKY_resolvePicture,
@@ -52,40 +56,18 @@ export const meta: MetaFunction = (args) => {
 
 	if (!data) return [];
 
-	const title = makeTitle(data.tournament.ctx.name);
-
-	return [
-		{ title },
-		{
-			property: "og:title",
-			content: title,
+	return metaTags({
+		title: data.tournament.ctx.name,
+		description: data.tournament.ctx.description
+			? removeMarkdown(data.tournament.ctx.description)
+			: undefined,
+		image: {
+			url: data.tournament.ctx.logoSrc,
+			dimensions: { width: 124, height: 124 },
 		},
-		{
-			property: "og:description",
-			content: data.tournament.ctx.description,
-		},
-		{
-			property: "og:type",
-			content: "website",
-		},
-		{
-			property: "og:image",
-			content: data.tournament.ctx.logoSrc,
-		},
-		// Twitter special snowflake tags, see https://developer.x.com/en/docs/twitter-for-websites/cards/overview/summary
-		{
-			name: "twitter:card",
-			content: "summary",
-		},
-		{
-			name: "twitter:title",
-			content: title,
-		},
-		{
-			name: "twitter:site",
-			content: "@sendouink",
-		},
-	];
+		location: args.location,
+		url: tournamentPage(data.tournament.ctx.id),
+	});
 };
 
 export const handle: SendouRouteHandle = {
@@ -173,7 +155,23 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 const TournamentContext = React.createContext<Tournament>(null!);
 
-export default function TournamentLayout() {
+export default function TournamentLayoutShell() {
+	const isMounted = useIsMounted();
+
+	// tournaments are something that people like to refresh a lot
+	// which can cause spikes that are hard for the server to handle
+	// this is just making sure the SSR for this page is as fast as possible in prod
+	if (!isMounted)
+		return (
+			<Main bigger>
+				<div className="tournament__placeholder" />
+			</Main>
+		);
+
+	return <TournamentLayout />;
+}
+
+export function TournamentLayout() {
 	const { t } = useTranslation(["tournament"]);
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
@@ -216,13 +214,43 @@ export default function TournamentLayout() {
 	return (
 		<Main bigger>
 			<SubNav>
-				<SubNavLink to="register" data-testid="register-tab" prefetch="intent">
-					{tournament.hasStarted ? "Info" : t("tournament:tabs.register")}
+				<SubNavLink
+					to={tournamentRegisterPage(
+						tournament.isLeagueDivision
+							? tournament.ctx.parentTournamentId!
+							: tournament.ctx.id,
+					)}
+					data-testid="register-tab"
+					prefetch="intent"
+				>
+					{tournament.hasStarted || tournament.isLeagueDivision
+						? "Info"
+						: t("tournament:tabs.register")}
 				</SubNavLink>
-				<SubNavLink to="brackets" data-testid="brackets-tab" prefetch="render">
-					{t("tournament:tabs.brackets")}
-				</SubNavLink>
-				<SubNavLink to="teams" end={false} prefetch="render">
+				{!tournament.isLeagueSignup ? (
+					<SubNavLink
+						to="brackets"
+						data-testid="brackets-tab"
+						prefetch="render"
+					>
+						{t("tournament:tabs.brackets")}
+					</SubNavLink>
+				) : null}
+				{tournament.isLeagueSignup || tournament.isLeagueDivision ? (
+					<SubNavLink
+						to={tournamentDivisionsPage(
+							tournament.ctx.parentTournamentId ?? tournament.ctx.id,
+						)}
+					>
+						Divisions
+					</SubNavLink>
+				) : null}
+				<SubNavLink
+					to="teams"
+					end={false}
+					prefetch="render"
+					data-testid="teams-tab"
+				>
 					{t("tournament:tabs.teams", { count: tournament.ctx.teams.length })}
 				</SubNavLink>
 				{!tournament.everyBracketOver && tournament.subsFeatureEnabled && (
@@ -242,9 +270,11 @@ export default function TournamentLayout() {
 						{t("tournament:tabs.results")}
 					</SubNavLink>
 				) : null}
-				{tournament.isOrganizer(user) && !tournament.hasStarted && (
-					<SubNavLink to="seeds">{t("tournament:tabs.seeds")}</SubNavLink>
-				)}
+				{tournament.isOrganizer(user) &&
+					!tournament.hasStarted &&
+					!tournament.isLeagueSignup && (
+						<SubNavLink to="seeds">{t("tournament:tabs.seeds")}</SubNavLink>
+					)}
 				{tournament.isOrganizer(user) && !tournament.everyBracketOver && (
 					<SubNavLink to="admin" data-testid="admin-tab">
 						{t("tournament:tabs.admin")}

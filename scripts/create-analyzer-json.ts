@@ -30,7 +30,7 @@ import { logger } from "~/utils/logger";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const CURRENT_SEASON = 8;
+const CURRENT_SEASON = 9;
 
 type MainWeapon = (typeof weapons)[number];
 type SubWeapon = (typeof subWeapons)[number];
@@ -262,8 +262,8 @@ function parametersToMainWeaponResult(
 		MoveSpeedVariable: params.VariableShotParam?.MoveSpeed,
 		DamageParam_ValueMax: DamageParam_ValueMax(),
 		DamageParam_ValueMin: !DamageParam_ValueDirect
-			? params.DamageParam?.ValueMin ??
-				params.spl__BulletStringerParam?.DamageParam?.DirectHitDamageMin
+			? (params.DamageParam?.ValueMin ??
+				params.spl__BulletStringerParam?.DamageParam?.DirectHitDamageMin)
 			: undefined,
 		DamageParam_ValueDirect,
 		...slosherDirectDamage(),
@@ -482,6 +482,15 @@ function parametersToSpecialWeaponResult(params: any) {
 		}
 
 		resultUnwrapped.SplashAroundPaintRadius = undefined;
+	}
+
+	// Bubble Patch 7.2.0 change hack
+	if (resultUnwrapped.MaxFieldHP) {
+		resultUnwrapped.MaxFieldHP = {
+			High: 28800,
+			Low: 24000,
+			Mid: 26400,
+		};
 	}
 
 	const isUltraStamp = () => !!params.SwingBigBlastParam;

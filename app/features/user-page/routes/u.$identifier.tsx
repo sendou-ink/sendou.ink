@@ -10,8 +10,8 @@ import { SubNav, SubNavLink } from "~/components/SubNav";
 import { useUser } from "~/features/auth/core/user";
 import { getUserId } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { type SendouRouteHandle, notFoundIfFalsy } from "~/utils/remix";
-import { makeTitle } from "~/utils/strings";
+import { metaTags } from "~/utils/remix";
+import { type SendouRouteHandle, notFoundIfFalsy } from "~/utils/remix.server";
 import {
 	USER_SEARCH_PAGE,
 	navIconUrl,
@@ -26,10 +26,14 @@ import {
 
 import "~/styles/u.css";
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-	if (!data) return [];
+export const meta: MetaFunction<typeof loader> = (args) => {
+	if (!args.data) return [];
 
-	return [{ title: makeTitle(data.user.username) }];
+	return metaTags({
+		title: args.data.user.username,
+		description: `${args.data.user.username}'s profile on sendou.ink including builds, tournament results, art and more.`,
+		location: args.location,
+	});
 };
 
 export const handle: SendouRouteHandle = {
@@ -105,7 +109,7 @@ export default function UserPageLayout() {
 						{t("common:results")} ({allResultsCount})
 					</SubNavLink>
 				)}
-				{(isOwnPage || data.user.buildsCount > 0) && (
+				{data.user.buildsCount > 0 && (
 					<SubNavLink
 						to={userBuildsPage(data.user)}
 						prefetch="intent"
@@ -114,12 +118,12 @@ export default function UserPageLayout() {
 						{t("common:pages.builds")} ({data.user.buildsCount})
 					</SubNavLink>
 				)}
-				{(isOwnPage || data.user.vodsCount > 0) && (
+				{data.user.vodsCount > 0 && (
 					<SubNavLink to={userVodsPage(data.user)}>
 						{t("common:pages.vods")} ({data.user.vodsCount})
 					</SubNavLink>
 				)}
-				{(isOwnPage || data.user.artCount > 0) && (
+				{data.user.artCount > 0 && (
 					<SubNavLink to={userArtPage(data.user)} end={false}>
 						{t("common:pages.art")} ({data.user.artCount})
 					</SubNavLink>

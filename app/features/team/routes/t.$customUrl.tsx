@@ -1,10 +1,5 @@
-import type {
-	ActionFunction,
-	LoaderFunctionArgs,
-	MetaFunction,
-	SerializeFrom,
-} from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import type { MetaFunction, SerializeFrom } from "@remix-run/node";
+import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import React from "react";
 import { useTranslation } from "react-i18next";
@@ -14,63 +9,50 @@ import { Flag } from "~/components/Flag";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
-import { Placement } from "~/components/Placement";
+import { SubmitButton } from "~/components/SubmitButton";
+import { BskyIcon } from "~/components/icons/Bsky";
 import { EditIcon } from "~/components/icons/Edit";
-import { TwitterIcon } from "~/components/icons/Twitter";
+import { StarIcon } from "~/components/icons/Star";
 import { UsersIcon } from "~/components/icons/Users";
 import { useUser } from "~/features/auth/core/user";
-import { requireUserId } from "~/features/auth/core/user.server";
-import {
-	type SendouRouteHandle,
-	notFoundIfFalsy,
-	validate,
-} from "~/utils/remix";
-import { makeTitle } from "~/utils/strings";
+import { isAdmin } from "~/permissions";
+import { removeDuplicates } from "~/utils/arrays";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	TEAM_SEARCH_PAGE,
+	bskyUrl,
 	editTeamPage,
 	manageTeamRosterPage,
 	navIconUrl,
 	teamPage,
-	twitterUrl,
 	userPage,
 	userSubmittedImage,
 } from "~/utils/urls";
-import { findByIdentifier } from "../queries/findByIdentifier.server";
-import { leaveTeam } from "../queries/leaveTeam.server";
-import { teamParamsSchema } from "../team-schemas.server";
-import type { DetailedTeamMember, TeamResultPeek } from "../team-types";
-import {
-	canAddCustomizedColors,
-	isTeamMember,
-	isTeamOwner,
-} from "../team-utils";
-
+import type * as TeamRepository from "../TeamRepository.server";
+import { action } from "../actions/t.$customUrl.server";
+import { loader } from "../loaders/t.$customUrl.server";
+import { isTeamManager, isTeamMember, resolveNewOwner } from "../team-utils";
 import "../team.css";
+import { metaTags } from "~/utils/remix";
+export { action, loader };
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-	if (!data) return [];
+export const meta: MetaFunction<typeof loader> = (args) => {
+	if (!args.data) return [];
 
-	return [
-		{ title: makeTitle(data.team.name) },
-		{ name: "description", content: data.team.bio },
-	];
-};
-
-export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUserId(request);
-
-	const { customUrl } = teamParamsSchema.parse(params);
-	const { team } = notFoundIfFalsy(findByIdentifier(customUrl));
-
-	validate(
-		isTeamMember({ user, team }) && !isTeamOwner({ user, team }),
-		"You are not a regular member of this team",
-	);
-
-	leaveTeam({ userId: user.id, teamId: team.id });
-
-	return null;
+	return metaTags({
+		title: args.data.team.name,
+		description: args.data.team.bio ?? undefined,
+		location: args.location,
+		image: args.data.team.avatarSrc
+			? {
+					url: userSubmittedImage(args.data.team.avatarSrc),
+					dimensions: {
+						width: 124,
+						height: 124,
+					},
+				}
+			: undefined,
+	});
 };
 
 export const handle: SendouRouteHandle = {
@@ -95,14 +77,6 @@ export const handle: SendouRouteHandle = {
 	},
 };
 
-export const loader = ({ params }: LoaderFunctionArgs) => {
-	const { customUrl } = teamParamsSchema.parse(params);
-
-	const { team, css } = notFoundIfFalsy(findByIdentifier(customUrl));
-
-	return { team, css: canAddCustomizedColors(team) ? css : null };
-};
-
 export default function TeamPage() {
 	const { team } = useLoaderData<typeof loader>();
 
@@ -114,7 +88,7 @@ export default function TeamPage() {
 			</div>
 			<MobileTeamNameCountry />
 			<ActionButtons />
-			{team.results ? <ResultsBanner results={team.results} /> : null}
+			{/* {team.results ? <ResultsBanner results={team.results} /> : null} */}
 			{team.bio ? <article data-testid="team-bio">{team.bio}</article> : null}
 			<div className="stack lg">
 				{team.members.map((member, i) => (
@@ -151,12 +125,16 @@ function TeamBanner() {
 					</div>
 				) : null}
 				<div className="team__banner__flags">
-					{team.countries.map((country) => {
+					{removeDuplicates(
+						team.members
+							.map((member) => member.country)
+							.filter((country) => country !== null),
+					).map((country) => {
 						return <Flag key={country} countryCode={country} />;
 					})}
 				</div>
 				<div className="team__banner__name">
-					{team.name} <TwitterLink testId="twitter-link" />
+					{team.name} <BskyLink />
 				</div>
 			</div>
 			{team.avatarSrc ? <div className="team__banner__avatar__spacer" /> : null}
@@ -170,32 +148,36 @@ function MobileTeamNameCountry() {
 	return (
 		<div className="team__mobile-name-country">
 			<div className="stack horizontal sm">
-				{team.countries.map((country) => {
+				{removeDuplicates(
+					team.members
+						.map((member) => member.country)
+						.filter((country) => country !== null),
+				).map((country) => {
 					return <Flag key={country} countryCode={country} tiny />;
 				})}
 			</div>
 			<div className="team__mobile-team-name">
 				{team.name}
-				<TwitterLink />
+				<BskyLink />
 			</div>
 		</div>
 	);
 }
 
-function TwitterLink({ testId }: { testId?: string }) {
+function BskyLink() {
 	const { team } = useLoaderData<typeof loader>();
 
-	if (!team.twitter) return null;
+	if (!team.bsky) return null;
 
 	return (
 		<a
-			className="team__twitter-link"
-			href={twitterUrl(team.twitter)}
+			className="team__bsky-link"
+			data-testid="bsky-link"
+			href={bskyUrl(team.bsky)}
 			target="_blank"
 			rel="noreferrer"
-			data-testid={testId}
 		>
-			<TwitterIcon />
+			<BskyIcon />
 		</a>
 	);
 }
@@ -205,16 +187,27 @@ function ActionButtons() {
 	const user = useUser();
 	const { team } = useLoaderData<typeof loader>();
 
-	if (!isTeamMember({ user, team })) {
+	if (!isTeamMember({ user, team }) && !isAdmin(user)) {
 		return null;
 	}
 
+	const isMainTeam = team.members.find(
+		(member) => user?.id === member.id && member.isMainTeam,
+	);
+
 	return (
 		<div className="team__action-buttons">
-			{!isTeamOwner({ user, team }) ? (
+			{isTeamMember({ user, team }) && !isMainTeam ? (
+				<ChangeMainTeamButton />
+			) : null}
+			{isTeamMember({ user, team }) ? (
 				<FormWithConfirm
-					dialogHeading={t("team:leaveTeam.header", { teamName: team.name })}
+					dialogHeading={t("team:leaveTeam.header", {
+						teamName: team.name,
+						newOwner: resolveNewOwner(team.members)?.username,
+					})}
 					deleteButtonText={t("team:actionButtons.leaveTeam.confirm")}
+					fields={[["_action", "LEAVE_TEAM"]]}
 				>
 					<Button
 						size="tiny"
@@ -225,7 +218,7 @@ function ActionButtons() {
 					</Button>
 				</FormWithConfirm>
 			) : null}
-			{isTeamOwner({ user, team }) ? (
+			{isTeamManager({ user, team }) || isAdmin(user) ? (
 				<LinkButton
 					size="tiny"
 					to={manageTeamRosterPage(team.customUrl)}
@@ -237,7 +230,7 @@ function ActionButtons() {
 					{t("team:actionButtons.manageRoster")}
 				</LinkButton>
 			) : null}
-			{isTeamOwner({ user, team }) ? (
+			{isTeamManager({ user, team }) || isAdmin(user) ? (
 				<LinkButton
 					size="tiny"
 					to={editTeamPage(team.customUrl)}
@@ -253,34 +246,56 @@ function ActionButtons() {
 	);
 }
 
-function ResultsBanner({ results }: { results: TeamResultPeek }) {
+function ChangeMainTeamButton() {
+	const { t } = useTranslation(["team"]);
+	const fetcher = useFetcher();
+
 	return (
-		<Link className="team__results" to="results">
-			<div>View {results.count} results</div>
-			<ul className="team__results__placements">
-				{results.placements.map(({ placement, count }) => {
-					return (
-						<li key={placement}>
-							<Placement placement={placement} />×{count}
-						</li>
-					);
-				})}
-			</ul>
-		</Link>
+		<fetcher.Form method="post">
+			<SubmitButton
+				_action="MAKE_MAIN_TEAM"
+				size="tiny"
+				variant="outlined"
+				icon={<StarIcon />}
+				testId="make-main-team-button"
+			>
+				{t("team:actionButtons.makeMainTeam")}
+			</SubmitButton>
+		</fetcher.Form>
 	);
 }
+
+// function ResultsBanner({ results }: { results: TeamResultPeek }) {
+// 	return (
+// 		<Link className="team__results" to="results">
+// 			<div>View {results.count} results</div>
+// 			<ul className="team__results__placements">
+// 				{results.placements.map(({ placement, count }) => {
+// 					return (
+// 						<li key={placement}>
+// 							<Placement placement={placement} />×{count}
+// 						</li>
+// 					);
+// 				})}
+// 			</ul>
+// 		</Link>
+// 	);
+// }
 
 function MemberRow({
 	member,
 	number,
 }: {
-	member: DetailedTeamMember;
+	member: TeamRepository.findByCustomUrl["members"][number];
 	number: number;
 }) {
 	const { t } = useTranslation(["team"]);
 
 	return (
-		<div className="team__member">
+		<div
+			className="team__member"
+			data-testid={member.isOwner ? `member-owner-${member.id}` : undefined}
+		>
 			{member.role ? (
 				<span
 					className="team__member__role"
@@ -315,7 +330,9 @@ function MemberRow({
 	);
 }
 
-function MobileMemberCard({ member }: { member: DetailedTeamMember }) {
+function MobileMemberCard({
+	member,
+}: { member: TeamRepository.findByCustomUrl["members"][number] }) {
 	const { t } = useTranslation(["team"]);
 
 	return (

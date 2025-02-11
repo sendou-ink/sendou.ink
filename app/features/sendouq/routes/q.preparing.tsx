@@ -14,9 +14,9 @@ import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.ser
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import { useAutoRefresh } from "~/hooks/useAutoRefresh";
 import invariant from "~/utils/invariant";
-import type { SendouRouteHandle } from "~/utils/remix";
-import { parseRequestPayload, validate } from "~/utils/remix";
-import { makeTitle } from "~/utils/strings";
+import { metaTags } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
+import { parseRequestPayload, validate } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import {
 	SENDOUQ_LOOKING_PAGE,
@@ -47,8 +47,11 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export const meta: MetaFunction = () => {
-	return [{ title: makeTitle("SendouQ") }];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "SendouQ - Preparing Group",
+		location: args.location,
+	});
 };
 
 export type SendouQPreparingAction = typeof action;
@@ -88,7 +91,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			}
 
 			validate(
-				(await QRepository.usersThatTrusted(user.id)).some(
+				(await QRepository.usersThatTrusted(user.id)).trusters.some(
 					(trusterUser) => trusterUser.id === data.id,
 				),
 				"Not trusted",
@@ -107,6 +110,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				groupId: currentGroup.id,
 				userId: data.id,
 				role: "MANAGER",
+			});
+			await QRepository.refreshTrust({
+				trustGiverUserId: data.id,
+				trustReceiverUserId: user.id,
 			});
 
 			return null;
