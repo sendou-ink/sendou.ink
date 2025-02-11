@@ -669,4 +669,19 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "brflgx",
 		authorDiscordId: "701870845550657677",
 	},
+	{
+		displayName: "Revo'Cup",
+		fileName: "revocup",
+		authorDiscordId: "309327923129745409",
+	},
+	{
+		displayName: "Soul League (Div 1)",
+		fileName: "soulcupgold",
+		authorDiscordId: "309327923129745409",
+	},
+	{
+		displayName: "Soul League (Other Div)",
+		fileName: "soulcupsilver",
+		authorDiscordId: "309327923129745409",
+	},
 ];
