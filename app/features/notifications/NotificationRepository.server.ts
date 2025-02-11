@@ -1,13 +1,33 @@
 import { db } from "~/db/sql";
 import type { TablesInsertable } from "~/db/tables";
 import { NOTIFICATIONS } from "./notifications-contants";
+import type { Notification } from "./notifications-types";
 
 // xxx: optimize this, we could for example use raw sqlite and insert all at once while reusing same statements?
-export function insertMany(args: Array<TablesInsertable["Notification"]>) {
+export function insert(
+	notification: Notification,
+	users: Array<Omit<TablesInsertable["NotificationUser"], "notificationId">>,
+) {
 	return db.transaction().execute(async (trx) => {
-		for (const arg of args) {
-			await trx.insertInto("Notification").values(arg).execute();
-		}
+		const inserted = await trx
+			.insertInto("Notification")
+			.values({
+				...notification,
+				// @ts-expect-error xxx: maybe fix
+				meta: notification.meta ? JSON.stringify(notification.meta) : null,
+			})
+			.returning("id")
+			.executeTakeFirstOrThrow();
+
+		await trx
+			.insertInto("NotificationUser")
+			.values(
+				users.map((user) => ({
+					...user,
+					notificationId: inserted.id,
+				})),
+			)
+			.execute();
 	});
 }
 
@@ -16,17 +36,26 @@ export function findByUserId(
 	{ limit }: { limit?: number } = {},
 ) {
 	return db
-		.selectFrom("Notification")
+		.selectFrom("NotificationUser")
+		.innerJoin(
+			"Notification",
+			"Notification.id",
+			"NotificationUser.notificationId",
+		)
 		.select([
 			"Notification.id",
 			"Notification.createdAt",
-			"Notification.seen",
-			"Notification.value",
+			"NotificationUser.seen",
+			"Notification.type",
+			"Notification.meta",
+			"Notification.pictureUrl",
 		])
-		.where("userId", "=", userId)
-		.orderBy("id", "desc")
+		.where("NotificationUser.userId", "=", userId)
 		.limit(limit ?? NOTIFICATIONS.MAX_SHOWN)
-		.execute();
+		.orderBy("Notification.id", "desc")
+		.execute() as Promise<
+		Array<Notification & { id: number; createdAt: number; seen: number }>
+	>;
 }
 
 export function markAsSeen({
@@ -37,9 +66,9 @@ export function markAsSeen({
 	userId: number;
 }) {
 	return db
-		.updateTable("Notification")
+		.updateTable("NotificationUser")
 		.set("seen", 1)
-		.where("Notification.id", "in", notificationIds)
-		.where("Notification.userId", "=", userId)
+		.where("NotificationUser.notificationId", "in", notificationIds)
+		.where("NotificationUser.userId", "=", userId)
 		.execute();
 }

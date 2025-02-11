@@ -23,10 +23,10 @@ export async function notify({
 	}
 
 	try {
-		await NotificationRepository.insertMany(
+		await NotificationRepository.insert(
+			notification,
 			userIds.map((userId) => ({
 				userId,
-				value: JSON.stringify(notification),
 				seen: defaultSeenUserIds?.includes(userId) ? 1 : 0,
 			})),
 		);

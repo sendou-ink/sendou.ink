@@ -223,6 +223,8 @@ function wipeDB() {
 		"XRankPlacement",
 		"SplatoonPlayer",
 		"UserFriendCode",
+		"NotificationUser",
+		"Notification",
 		"User",
 		"PlusSuggestion",
 		"PlusVote",
@@ -2333,13 +2335,14 @@ async function adminNotifications() {
 		},
 	];
 
-	await NotificationRepository.insertMany(
-		values.map((value, i) => ({
-			userId: ADMIN_ID,
-			value: JSON.stringify(value),
-			seen: i <= 7 ? 1 : 0,
-		})),
-	);
+	for (const [i, value] of values.entries()) {
+		await NotificationRepository.insert(value, [
+			{
+				userId: ADMIN_ID,
+				seen: i <= 7 ? 1 : 0,
+			},
+		]);
+	}
 
 	const createdAts = [
 		sub(new Date(), { days: 10 }),
@@ -2358,6 +2361,7 @@ async function adminNotifications() {
 		"values and createdAts length mismatch",
 	);
 
+	// xxx: why createdAt's not set?
 	for (let i = 0; i < values.length - 1; i++) {
 		sql
 			.prepare(/* sql */ `

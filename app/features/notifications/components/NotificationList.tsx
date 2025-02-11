@@ -18,6 +18,7 @@ export function NotificationsList({ children }: { children: React.ReactNode }) {
 }
 
 // xxx: formatDistance in browser, is it ok?
+// xxx: unseen dot in wrong place if the notification header is two lines
 export function NotificationItem({
 	notification,
 	user,
@@ -39,9 +40,9 @@ export function NotificationItem({
 			{!notification.seen ? <div className={styles.unseenDot} /> : null}
 			<div className={styles.itemHeader}>
 				{t(
-					`common:notifications.text.${notification.value.type}`,
+					`common:notifications.text.${notification.type}`,
 					// @ts-expect-error xxx: fix maybe
-					notification.value.meta,
+					notification.meta,
 				)}
 			</div>
 			<div className={styles.timestamp}>
@@ -64,10 +65,10 @@ export function NotificationItemDivider() {
 function NotificationImage({
 	notification,
 }: { notification: LoaderNotification }) {
-	if (notification.value.pictureUrl) {
+	if (notification.pictureUrl) {
 		return (
 			<img
-				src={notification.value.pictureUrl}
+				src={notification.pictureUrl}
 				alt="Notification"
 				className={styles.itemImage}
 				width={124}
@@ -79,7 +80,7 @@ function NotificationImage({
 	return (
 		<div className={clsx(styles.itemImage, styles.imageContainer)}>
 			<Image
-				path={navIconUrl(notificationNavIcon(notification.value.type))}
+				path={navIconUrl(notificationNavIcon(notification.type))}
 				width={24}
 				height={24}
 				alt=""

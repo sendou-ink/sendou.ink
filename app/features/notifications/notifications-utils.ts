@@ -42,38 +42,35 @@ export const notificationLink = ({
 	notification,
 	user,
 }: { notification: LoaderNotification; user: LoggedInUser }) => {
-	// @ts-expect-error xxx: fix maybe
-	const { type, meta } = notification.value;
-
-	switch (type) {
+	switch (notification.type) {
 		case "BADGE_ADDED":
 			return userPage(user);
 		case "BADGE_MANAGER_ADDED":
-			return badgePage(meta.badgeId);
+			return badgePage(notification.meta.badgeId);
 		case "PLUS_SUGGESTION_ADDED":
-			return plusSuggestionPage({ tier: meta.tier });
+			return plusSuggestionPage({ tier: notification.meta.tier });
 		case "PLUS_VOTING_STARTED":
 			return PLUS_VOTING_PAGE;
 		case "SEASON_STARTED":
 		case "SQ_ADDED_TO_GROUP":
 			return SENDOUQ_PAGE;
 		case "SQ_NEW_MATCH":
-			return sendouQMatchPage(meta.matchId);
+			return sendouQMatchPage(notification.meta.matchId);
 		case "TAGGED_TO_ART":
 			return userArtPage(user);
 		case "TO_ADDED_TO_TEAM":
 			return tournamentTeamPage({
-				tournamentId: meta.tournamentId,
-				tournamentTeamId: meta.tournamentTeamId,
+				tournamentId: notification.meta.tournamentId,
+				tournamentTeamId: notification.meta.tournamentTeamId,
 			});
 		case "TO_BRACKET_STARTED":
 			return tournamentBracketsPage({
-				tournamentId: meta.tournamentId,
-				bracketIdx: meta.bracketIdx,
+				tournamentId: notification.meta.tournamentId,
+				bracketIdx: notification.meta.bracketIdx,
 			});
 		case "TO_CHECK_IN_OPENED":
-			return tournamentRegisterPage(meta.tournamentId);
+			return tournamentRegisterPage(notification.meta.tournamentId);
 		default:
-			assertUnreachable(type);
+			assertUnreachable(notification);
 	}
 };

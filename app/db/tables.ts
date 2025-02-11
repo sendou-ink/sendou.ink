@@ -877,14 +877,22 @@ export interface XRankPlacement {
 	year: number;
 }
 
-// xxx: make separate table that holds userId, notificationId & seen
-
 export interface Notification {
 	id: GeneratedAlways<number>;
-	value: ColumnType<NotificationValue, string, string>;
-	seen: Generated<number>;
-	userId: number;
+	type: NotificationValue["type"];
+	meta: ColumnType<
+		Record<string, number | string> | null,
+		string | null,
+		string | null
+	>;
+	pictureUrl: string | null;
 	createdAt: GeneratedAlways<number>;
+}
+
+export interface NotificationUser {
+	notificationId: number;
+	userId: number;
+	seen: Generated<number>;
 }
 
 export type Tables = { [P in keyof DB]: Selectable<DB[P]> };
@@ -966,4 +974,5 @@ export interface DB {
 	VideoMatchPlayer: VideoMatchPlayer;
 	XRankPlacement: XRankPlacement;
 	Notification: Notification;
+	NotificationUser: NotificationUser;
 }
