@@ -43,6 +43,8 @@ export function regClosesAtDate({
 			return new Date(startTime.getTime() - 360 * 60 * 1000);
 		case "12h":
 			return new Date(startTime.getTime() - 720 * 60 * 1000);
+		case "18h":
+			return new Date(startTime.getTime() - 1080 * 60 * 1000);
 		case "24h":
 			return new Date(startTime.getTime() - 1440 * 60 * 1000);
 		case "48h":
@@ -78,6 +80,8 @@ export function regClosesAtToDisplayName(closesAt: RegClosesAtOption) {
 			return "6 hours";
 		case "12h":
 			return "12 hours";
+		case "18h":
+			return "18 hours";	
 		case "24h":
 			return "24 hours";
 		case "48h":
@@ -108,6 +112,7 @@ export function datesToRegClosesAt({
 	if (diff === 180 * 60 * 1000) return "3h";
 	if (diff === 360 * 60 * 1000) return "6h";
 	if (diff === 720 * 60 * 1000) return "12h";
+	if (diff === 1080 * 60 * 1000) return "18h";
 	if (diff === 1440 * 60 * 1000) return "24h";
 	if (diff === 2880 * 60 * 1000) return "48h";
 	if (diff === 4320 * 60 * 1000) return "72h";
