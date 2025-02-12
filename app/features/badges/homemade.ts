@@ -674,4 +674,19 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "coffeecup",
 		authorDiscordId: "1320944066002681876",
 	},
+	{
+		displayName:"THE TAYSON GAUNTLET",
+		fileName: "thetaysongauntlet1st",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName:"THE TAYSON GAUNTLET",
+		fileName: "thetaysongauntlet2nd",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName:"THE TAYSON GAUNTLET",
+		fileName: "thetaysongauntlet3rd",
+		authorDiscordId: "1320944066002681876",
+	},
 ];
