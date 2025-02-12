@@ -671,7 +671,7 @@ export const homemadeBadges: BadgeInfo[] = [
 	},
 	{
 		displayName: "Coffee Cup"
-		filename:"coffeecup",
+		fileName:"coffeecup",
 		authorDiscordId:"1320944066002681876",
 	},
 ];
