@@ -81,7 +81,7 @@ export function regClosesAtToDisplayName(closesAt: RegClosesAtOption) {
 		case "12h":
 			return "12 hours";
 		case "18h":
-			return "18 hours";	
+			return "18 hours";
 		case "24h":
 			return "24 hours";
 		case "48h":
