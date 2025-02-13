@@ -20,6 +20,31 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "338806780446638082",
 	},
 	{
+		displayName: "Banning Legends",
+		fileName: "noentrygold",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Banning Legends 2nd",
+		fileName: "noentrysilver",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Banning Legends 3rd",
+		fileName: "noentrybronze",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Weapon Lockdown",
+		fileName: "octoshot",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Tony Tony Challenge",
+		fileName: "tonytonyc",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "A41 GG Gold Bracket",
 		fileName: "newa41gggold",
 		authorDiscordId: "338806780446638082",
@@ -125,7 +150,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "338806780446638082",
 	},
 	{
-		displayName: "BrushMommy's Birthday Bash",
+		displayName: "Golden Brush Award",
 		fileName: "goldenbrush",
 		authorDiscordId: "338806780446638082",
 	},
