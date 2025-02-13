@@ -569,6 +569,7 @@ export interface TournamentRound {
 	maps: ColumnType<TournamentRoundMaps | null, string | null, string | null>;
 }
 
+// when updating this also update `defaultBracketSettings` in tournament-utils.ts
 export interface TournamentStageSettings {
 	// SE
 	thirdPlaceMatch?: boolean;
