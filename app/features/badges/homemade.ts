@@ -675,17 +675,17 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "1320944066002681876",
 	},
 	{
-		displayName:"THE TAYSON GAUNTLET",
+		displayName:"THE TAYSON GAUNTLET 1ST",
 		fileName: "thetaysongauntlet1st",
 		authorDiscordId: "1320944066002681876",
 	},
 	{
-		displayName:"THE TAYSON GAUNTLET",
+		displayName:"THE TAYSON GAUNTLET 2ND",
 		fileName: "thetaysongauntlet2nd",
 		authorDiscordId: "1320944066002681876",
 	},
 	{
-		displayName:"THE TAYSON GAUNTLET",
+		displayName:"THE TAYSON GAUNTLET 3RD",
 		fileName: "thetaysongauntlet3rd",
 		authorDiscordId: "1320944066002681876",
 	},
