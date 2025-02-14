@@ -2361,7 +2361,6 @@ async function adminNotifications() {
 		"values and createdAts length mismatch",
 	);
 
-	// xxx: why createdAt's not set?
 	for (let i = 0; i < values.length - 1; i++) {
 		sql
 			.prepare(/* sql */ `

@@ -226,6 +226,10 @@
 	margin-block-start: var(--s-1);
 }
 
+.mt-1-5 {
+	margin-block-start: var(--s-1-5);
+}
+
 .mt-2 {
 	margin-block-start: var(--s-2);
 }

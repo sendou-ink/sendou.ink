@@ -22,20 +22,14 @@ export function NotificationsList({ children }: { children: React.ReactNode }) {
 export function NotificationItem({
 	notification,
 	user,
-	onClick,
 }: {
 	notification: LoaderNotification;
 	user: LoggedInUser;
-	onClick?: () => void;
 }) {
 	const { t } = useTranslation(["common"]);
 
 	return (
-		<Link
-			to={notificationLink({ notification, user })}
-			className={styles.item}
-			onClick={onClick}
-		>
+		<Link to={notificationLink({ notification, user })} className={styles.item}>
 			<NotificationImage notification={notification} />
 			{!notification.seen ? <div className={styles.unseenDot} /> : null}
 			<div className={styles.itemHeader}>

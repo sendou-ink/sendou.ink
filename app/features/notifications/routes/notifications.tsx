@@ -28,7 +28,7 @@ export default function NotificationsPage() {
 	);
 
 	// xxx: this flickers the unseen dot, persist while page is being viewed
-	useMarkNotificationsAsSeen({ unseenIds });
+	useMarkNotificationsAsSeen(unseenIds);
 
 	return (
 		<Main className="stack md">

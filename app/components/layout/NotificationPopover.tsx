@@ -1,3 +1,4 @@
+import { useLocation } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -8,9 +9,11 @@ import {
 	NotificationsList,
 } from "~/features/notifications/components/NotificationList";
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
-import { useMarkNotificationsAsSeen } from "~/features/notifications/notifications-hooks";
 import { useNotifications } from "~/hooks/swr";
 import { NOTIFICATIONS_URL } from "~/utils/urls";
+import { useMarkNotificationsAsSeen } from "../../features/notifications/notifications-hooks";
+import type { LoaderNotification } from "../../features/notifications/routes/notifications.peek";
+import type { LoggedInUser } from "../../root";
 import { LinkButton } from "../Button";
 import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
@@ -19,13 +22,11 @@ import styles from "./NotificationPopover.module.css";
 
 // xxx: add refresh button
 // xxx: handle loading better?
-// xxx: on open send fetch to mark read
-// xxx: should close on outside click
+// xxx: mark as notifications seen after an open
 export function NotificationPopover() {
-	const { t } = useTranslation(["common"]);
+	const location = useLocation();
 	const user = useUser();
 	const { notifications } = useNotifications();
-	const [isOpen, setIsOpen] = React.useState(false);
 
 	const unseenIds = React.useMemo(
 		() =>
@@ -35,23 +36,18 @@ export function NotificationPopover() {
 		[notifications],
 	);
 
-	useMarkNotificationsAsSeen({ unseenIds, skip: !isOpen });
-
 	if (!user) {
 		return null;
 	}
 
 	return (
-		<div className={styles.container}>
+		<div className={styles.container} key={location.pathname}>
 			{unseenIds.length > 0 ? <div className={styles.unseenDot} /> : null}
 			<SendouPopover
-				isOpen={isOpen}
-				onOpenChange={setIsOpen}
 				trigger={
 					<SendouButton
 						icon={<BellIcon />}
 						className="layout__header__button"
-						onPress={() => setIsOpen(!isOpen)}
 					/>
 				}
 				popoverClassName={clsx(styles.popoverContainer, {
@@ -59,39 +55,61 @@ export function NotificationPopover() {
 						!notifications || notifications.length === 0,
 				})}
 			>
-				<h2 className={styles.header}>
-					<BellIcon /> {t("common:notifications.title")}
-				</h2>
-				<hr className={styles.divider} />
-				{!notifications || notifications.length === 0 ? (
-					<div className={styles.noNotifications}>
-						{t("common:notifications.empty")}
-					</div>
-				) : (
-					<NotificationsList>
-						{notifications.map((notification, i) => (
-							<React.Fragment key={notification.id}>
-								<NotificationItem
-									key={notification.id}
-									notification={notification}
-									user={user}
-									onClick={() => setIsOpen(false)}
-								/>
-								{i !== notifications.length - 1 && <NotificationItemDivider />}
-							</React.Fragment>
-						))}
-					</NotificationsList>
-				)}
-				{notifications && notifications.length === NOTIFICATIONS.PEEK_COUNT ? (
-					<NotificationsFooter onClick={() => setIsOpen(false)} />
-				) : null}
+				<NotificationContent
+					notifications={notifications ?? []}
+					user={user}
+					unseenIds={unseenIds}
+				/>
 			</SendouPopover>
 		</div>
 	);
 }
 
-// xxx: close popover when see all is clicked
-function NotificationsFooter({ onClick }: { onClick: () => void }) {
+function NotificationContent({
+	notifications,
+	user,
+	unseenIds,
+}: {
+	notifications: LoaderNotification[];
+	user: LoggedInUser;
+	unseenIds: number[];
+}) {
+	const { t } = useTranslation(["common"]);
+
+	useMarkNotificationsAsSeen(unseenIds);
+
+	return (
+		<>
+			<h2 className={styles.header}>
+				<BellIcon /> {t("common:notifications.title")}
+			</h2>
+			<hr className={styles.divider} />
+			{notifications.length === 0 ? (
+				<div className={styles.noNotifications}>
+					{t("common:notifications.empty")}
+				</div>
+			) : (
+				<NotificationsList>
+					{notifications.map((notification, i) => (
+						<React.Fragment key={notification.id}>
+							<NotificationItem
+								key={notification.id}
+								notification={notification}
+								user={user}
+							/>
+							{i !== notifications.length - 1 && <NotificationItemDivider />}
+						</React.Fragment>
+					))}
+				</NotificationsList>
+			)}
+			{notifications.length === NOTIFICATIONS.PEEK_COUNT ? (
+				<NotificationsFooter />
+			) : null}
+		</>
+	);
+}
+
+function NotificationsFooter() {
 	const { t } = useTranslation(["common"]);
 
 	return (
@@ -101,9 +119,7 @@ function NotificationsFooter({ onClick }: { onClick: () => void }) {
 				variant="minimal"
 				size="tiny"
 				to={NOTIFICATIONS_URL}
-				className="mt-1"
-				// xxx: not working
-				onClick={onClick}
+				className="mt-1-5"
 			>
 				{t("common:notifications.seeAll")}
 			</LinkButton>
