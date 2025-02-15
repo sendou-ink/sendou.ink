@@ -693,5 +693,5 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Soul League (Other Div)",
 		fileName: "soulcupsilver",
 		authorDiscordId: "309327923129745409",
-    },
+	},
 ];
