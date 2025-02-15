@@ -872,6 +872,11 @@ export class Tournament {
 
 		if (this.isLeagueSignup || this.isLeagueDivision) return 8;
 
+		// TODO: retire this hack by making it user configurable
+		if (this.ctx.organization?.id === 19 && this.ctx.name.includes("FLUTI")) {
+			return 8;
+		}
+
 		const maxMembersBeforeStart = 6;
 
 		if (this.hasStarted) {
