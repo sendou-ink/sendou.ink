@@ -674,4 +674,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "brflgx",
 		authorDiscordId: "701870845550657677",
 	},
+	{
+		displayName: "Turf War Tomatoes",
+		fileName: "saladbowl_tomato",
+		authorDiscordId: "336683473714544641",
+	},
 ];
