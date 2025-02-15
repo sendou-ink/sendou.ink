@@ -674,11 +674,12 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "brflgx",
 		authorDiscordId: "701870845550657677",
 	},
-  {
+	{
 		displayName: "Turf War Tomatoes",
 		fileName: "saladbowl_tomato",
 		authorDiscordId: "336683473714544641",
-    {
+	},
+
 		displayName: "Revo'Cup",
 		fileName: "revocup",
 		authorDiscordId: "309327923129745409",
@@ -692,5 +693,5 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Soul League (Other Div)",
 		fileName: "soulcupsilver",
 		authorDiscordId: "309327923129745409",
-  },
+    },
 ];
