@@ -10,8 +10,8 @@ import { SubNav, SubNavLink } from "~/components/SubNav";
 import { useUser } from "~/features/auth/core/user";
 import { getUserId } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { metaTags } from "~/utils/remix";
 import { type SendouRouteHandle, notFoundIfFalsy } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import {
 	USER_SEARCH_PAGE,
 	navIconUrl,
@@ -26,10 +26,14 @@ import {
 
 import "~/styles/u.css";
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-	if (!data) return [];
+export const meta: MetaFunction<typeof loader> = (args) => {
+	if (!args.data) return [];
 
-	return [{ title: makeTitle(data.user.username) }];
+	return metaTags({
+		title: args.data.user.username,
+		description: `${args.data.user.username}'s profile on sendou.ink including builds, tournament results, art and more.`,
+		location: args.location,
+	});
 };
 
 export const handle: SendouRouteHandle = {

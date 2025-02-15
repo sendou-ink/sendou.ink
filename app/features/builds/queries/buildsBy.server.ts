@@ -175,15 +175,18 @@ function augmentBuild<T>({
 	const weapons = (
 		JSON.parse(rawWeapons) as Array<BuildWeaponWithTop500Info>
 	).sort((a, b) => a.weaponSplId - b.weaponSplId);
-	const abilities = JSON.parse(rawAbilities) as Array<
-		Pick<BuildAbility, "ability" | "gearType" | "slotIndex">
-	>;
+	const abilities = dbAbilitiesToArrayOfArrays(
+		JSON.parse(rawAbilities) as Array<
+			Pick<BuildAbility, "ability" | "gearType" | "slotIndex">
+		>,
+	);
 
 	return {
 		...row,
 		modes,
 		weapons,
-		abilities: sortAbilities(dbAbilitiesToArrayOfArrays(abilities)),
+		abilities: sortAbilities(abilities),
+		unsortedAbilities: abilities,
 	};
 }
 

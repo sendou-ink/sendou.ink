@@ -23,14 +23,17 @@ import {
 import { isVotingActive } from "~/features/plus-voting/core/voting-time";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
+import { metaTags } from "~/utils/remix";
 import { badRequestIfFalsy, parseRequestPayload } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import { assertType, assertUnreachable } from "~/utils/types";
 import { safeJSONParse } from "~/utils/zod";
 import { PlusSuggestionComments } from "../../plus-suggestions/routes/plus.suggestions";
 
-export const meta: MetaFunction = () => {
-	return [{ title: makeTitle("Plus Server voting") }];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Plus Server Voting",
+		location: args.location,
+	});
 };
 
 const voteSchema = z.object({

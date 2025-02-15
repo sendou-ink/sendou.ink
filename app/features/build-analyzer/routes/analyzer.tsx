@@ -16,7 +16,6 @@ import { BeakerIcon } from "~/components/icons/Beaker";
 import { MAX_AP } from "~/constants";
 import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import { useSetTitle } from "~/hooks/useSetTitle";
 import type { Ability as AbilityType } from "~/modules/in-game-lists";
 import {
 	ANGLE_SHOOTER_ID,
@@ -37,7 +36,6 @@ import { atOrError, nullFilledArray, removeDuplicates } from "~/utils/arrays";
 import { damageTypeTranslationString } from "~/utils/i18next";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import {
 	ANALYZER_URL,
 	mainWeaponImageUrl,
@@ -49,6 +47,7 @@ import {
 } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
+import { metaTags } from "../../../utils/remix";
 import {
 	MAX_LDE_INTENSITY,
 	damageTypeToWeaponType,
@@ -84,14 +83,14 @@ import { SendouSwitch } from "~/components/elements/Switch";
 
 export const CURRENT_PATCH = "9.2";
 
-export const meta: MetaFunction = () => {
-	return [
-		{ title: makeTitle("Build Analyzer") },
-		{
-			name: "description",
-			content: "Detailed stats for any weapon and build in Splatoon 3.",
-		},
-	];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Build analyzer",
+		ogTitle: "Splatoon 3 build analyzer/simulator",
+		location: args.location,
+		description:
+			"Analyze and compare Splatoon 3 builds. Find out what exactly each combination of abilities does.",
+	});
 };
 
 export const handle: SendouRouteHandle = {
@@ -118,8 +117,7 @@ export default function BuildAnalyzerShell() {
 
 function BuildAnalyzerPage() {
 	const user = useUser();
-	const { t } = useTranslation(["analyzer", "common", "weapons"]);
-	useSetTitle(t("common:pages.analyzer"));
+	const { t } = useTranslation(["analyzer", "weapons"]);
 	const {
 		build,
 		build2,

@@ -28,16 +28,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	if (validatedType === "team-pfp" || validatedType === "team-banner") {
 		const teamCustomUrl = new URL(request.url).searchParams.get("team") ?? "";
 		const team = await TeamRepository.findByCustomUrl(teamCustomUrl);
-		if (
-			!team ||
-			!team.members.some((member) => member.id === user.id && member.isOwner)
-		) {
-			throw redirect("/");
-		}
 
-		const detailedTeam = await TeamRepository.findByCustomUrl(team.customUrl);
-
-		if (!detailedTeam || !isTeamManager({ team: detailedTeam, user })) {
+		if (!team || !isTeamManager({ team, user })) {
 			throw redirect("/");
 		}
 	}

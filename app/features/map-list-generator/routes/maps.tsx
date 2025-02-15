@@ -1,8 +1,4 @@
-import type {
-	LoaderFunctionArgs,
-	MetaFunction,
-	SerializeFrom,
-} from "@remix-run/node";
+import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
 import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import * as React from "react";
@@ -16,11 +12,9 @@ import { EditIcon } from "~/components/icons/Edit";
 import type { CalendarEvent } from "~/db/types";
 import { getUserId } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
-import { i18next } from "~/modules/i18n/i18next.server";
 import { type ModeWithStage, stageIds } from "~/modules/in-game-lists";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import {
 	MAPS_URL,
 	calendarEventPage,
@@ -33,6 +27,7 @@ import { mapPoolToNonEmptyModes } from "../core/map-list-generator/utils";
 import { MapPool } from "../core/map-pool";
 import "~/styles/maps.css";
 import { SendouSwitch } from "~/components/elements/Switch";
+import { metaTags } from "~/utils/remix";
 
 const AMOUNT_OF_MAPS_IN_MAP_LIST = stageIds.length * 2;
 
@@ -44,11 +39,13 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({ nextUrl }) => {
 };
 
 export const meta: MetaFunction = (args) => {
-	const data = args.data as SerializeFrom<typeof loader> | null;
-
-	if (!data) return [];
-
-	return [{ title: data.title }];
+	return metaTags({
+		title: "Map List Generator",
+		ogTitle: "Splatoon 3 map list generator",
+		description:
+			"Generate a map list based on maps you choose or a tournament's map pool.",
+		location: args.location,
+	});
 };
 
 export const handle: SendouRouteHandle = {
@@ -64,7 +61,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await getUserId(request);
 	const url = new URL(request.url);
 	const calendarEventId = url.searchParams.get("eventId");
-	const t = await i18next.getFixedT(request);
 
 	const event = calendarEventId
 		? await CalendarRepository.findById({
@@ -84,7 +80,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		recentEventsWithMapPools: user
 			? await CalendarRepository.findRecentMapPoolsByAuthorId(user.id)
 			: undefined,
-		title: makeTitle([t("pages.maps")]),
 	};
 };
 

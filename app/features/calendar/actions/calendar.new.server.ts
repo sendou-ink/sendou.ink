@@ -92,8 +92,6 @@ export const action: ActionFunction = async ({ request }) => {
 			rankedModesShort.find((mode) => mode === data.toToolsMode) ?? null,
 		bracketProgression: data.bracketProgression ?? null,
 		minMembersPerTeam: data.minMembersPerTeam ?? undefined,
-		teamsPerGroup: data.teamsPerGroup ?? undefined,
-		thirdPlaceMatch: data.thirdPlaceMatch ?? undefined,
 		isRanked: data.isRanked ?? undefined,
 		isInvitational: data.isInvitational ?? false,
 		deadlines: data.strictDeadline ? ("STRICT" as const) : ("DEFAULT" as const),
@@ -101,8 +99,6 @@ export const action: ActionFunction = async ({ request }) => {
 		enableSubs: data.enableSubs ?? undefined,
 		requireInGameNames: data.requireInGameNames ?? undefined,
 		autonomousSubs: data.autonomousSubs ?? undefined,
-		swissGroupCount: data.swissGroupCount ?? undefined,
-		swissRoundCount: data.swissRoundCount ?? undefined,
 		tournamentToCopyId: data.tournamentToCopyId,
 		regClosesAt: data.regClosesAt
 			? dateToDatabaseTimestamp(
@@ -283,35 +279,8 @@ export const newCalendarEventActionSchema = z
 			checkboxValueToBoolean,
 			z.boolean().nullish(),
 		),
-		//
-		// tournament format related fields
-		//
-		bracketProgression: bracketProgressionSchema.nullish(),
 		minMembersPerTeam: z.coerce.number().int().min(1).max(4).nullish(),
-		withUndergroundBracket: z.preprocess(checkboxValueToBoolean, z.boolean()),
-		thirdPlaceMatch: z.preprocess(
-			checkboxValueToBoolean,
-			z.boolean().nullish(),
-		),
-		teamsPerGroup: z.coerce
-			.number()
-			.min(TOURNAMENT.MIN_GROUP_SIZE)
-			.max(TOURNAMENT.MAX_GROUP_SIZE)
-			.nullish(),
-		swissGroupCount: z.coerce.number().int().positive().nullish(),
-		swissRoundCount: z.coerce.number().int().positive().nullish(),
-		followUpBrackets: z.preprocess(
-			safeJSONParse,
-			z
-				.array(
-					z.object({
-						name: z.string(),
-						placements: z.array(z.number()),
-					}),
-				)
-				.min(1)
-				.nullish(),
-		),
+		bracketProgression: bracketProgressionSchema.nullish(),
 	})
 	.refine(
 		async (schema) => {
