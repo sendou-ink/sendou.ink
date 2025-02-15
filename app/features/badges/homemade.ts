@@ -665,6 +665,11 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "528851510222782474",
 	},
 	{
+		displayName: "Barnacle Bash",
+		fileName: "barnacle-bash",
+		authorDiscordId: "181270348262539265",
+	},
+	{
 		displayName: "A Splatoon Brazil Tournament",
 		fileName: "brflgx",
 		authorDiscordId: "701870845550657677",
