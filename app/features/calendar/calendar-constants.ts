@@ -55,6 +55,9 @@ export const persistedTags = {
 	CARDS: {
 		color: "#E4D00A",
 	},
+	COLLEGIATE: {
+		color: "#FFC107",
+	},
 };
 
 export const tags = {
