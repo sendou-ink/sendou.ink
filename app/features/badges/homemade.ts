@@ -679,7 +679,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "saladbowl_tomato",
 		authorDiscordId: "336683473714544641",
 	},
-
+	{
 		displayName: "Revo'Cup",
 		fileName: "revocup",
 		authorDiscordId: "309327923129745409",
