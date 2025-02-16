@@ -10,6 +10,7 @@ import { SendouSwitch } from "~/components/elements/Switch";
 import { PlusIcon } from "~/components/icons/Plus";
 import { TOURNAMENT } from "~/features/tournament";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { defaultBracketSettings } from "../../tournament/tournament-utils";
 
 const defaultBracket = (): Progression.InputBracket => ({
 	id: nanoid(),
@@ -154,7 +155,15 @@ function TournamentFormatBracketSelector({
 	const isFirstBracket = count === 1;
 
 	const updateBracket = (newProps: Partial<Progression.InputBracket>) => {
-		onChange({ ...bracket, ...newProps });
+		const defaultSettings = newProps.type
+			? defaultBracketSettings(newProps.type)
+			: undefined;
+
+		onChange({
+			...bracket,
+			...newProps,
+			settings: newProps.settings ?? defaultSettings ?? bracket.settings,
+		});
 	};
 
 	return (

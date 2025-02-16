@@ -134,6 +134,7 @@ function TrusterDropdown({
 			}
 			className="q__member-adder__input"
 		>
+			<option value="">{t("q:looking.groups.adder.select")}</option>
 			{teams?.map((team) => {
 				return (
 					<optgroup label={team.name} key={team.id}>
@@ -149,7 +150,7 @@ function TrusterDropdown({
 					</optgroup>
 				);
 			})}
-			{teams && teams.length > 0 ? (
+			{teams && teams.length > 0 && othersOptions.length > 0 ? (
 				<optgroup label={t("q:looking.groups.adder.others")}>
 					{othersOptions}
 				</optgroup>

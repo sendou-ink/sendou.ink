@@ -5,6 +5,8 @@ import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { weekNumberToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { tournamentLogoUrl } from "~/utils/urls";
+import type { Tables, TournamentStageSettings } from "../../db/tables";
+import { assertUnreachable } from "../../utils/types";
 import { MapPool } from "../map-list-generator/core/map-pool";
 import { currentSeason } from "../mmr/season";
 import { BANNED_MAPS } from "../sendouq-settings/banned-maps";
@@ -306,4 +308,33 @@ export function resolveLeagueRoundStartDate(
 	});
 
 	return date;
+}
+
+export function defaultBracketSettings(
+	type: Tables["TournamentStage"]["type"],
+): TournamentStageSettings {
+	switch (type) {
+		case "single_elimination": {
+			return {
+				thirdPlaceMatch: true,
+			};
+		}
+		case "double_elimination": {
+			return {};
+		}
+		case "round_robin": {
+			return {
+				teamsPerGroup: 4,
+			};
+		}
+		case "swiss": {
+			return {
+				roundCount: 5,
+				groupCount: 1,
+			};
+		}
+		default: {
+			assertUnreachable(type);
+		}
+	}
 }
