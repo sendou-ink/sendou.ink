@@ -670,7 +670,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "701870845550657677",
 	},
 	{
-		displayName: "Kraken cup",
+		displayName: "Kraken cup uc",
 		fileName: "uc",
 		authorDiscordId: "241609850209959936",
 	},
