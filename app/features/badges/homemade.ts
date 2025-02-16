@@ -664,6 +664,11 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "jauntlet",
 		authorDiscordId: "528851510222782474",
 	},
+  {
+		displayName: "A Splatoon Brazil Tournament",
+		fileName: "brflgx",
+		authorDiscordId: "701870845550657677",
+	},
 	{
 		displayName: "Kraken cup",
 		fileName: "uc",
