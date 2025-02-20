@@ -20,9 +20,8 @@
 	outline: 3px solid var(--theme-transparent);
 }
 
-.item:focus-within {
-	background-color: var(--bg-lightest);
-	outline: none;
+.item:focus-within .itemImage {
+	outline: 3px solid var(--theme-transparent);
 }
 
 .itemImage {

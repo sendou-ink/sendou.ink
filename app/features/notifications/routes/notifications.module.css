@@ -1,3 +1,5 @@
+/** xxx: remove css modules? */
+
 .header {
 	display: flex;
 	gap: var(--s-2-5);
