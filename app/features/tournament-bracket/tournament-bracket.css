@@ -534,6 +534,10 @@
 	width: 280px;
 }
 
+.map-list-dialog__dialog {
+	width: 64rem;
+}
+
 .map-list-dialog__container {
 	display: flex;
 	flex-direction: column;
