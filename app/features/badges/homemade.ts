@@ -679,4 +679,24 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "saladbowl_tomato",
 		authorDiscordId: "336683473714544641",
 	},
+	{
+		displayName: "THE TAYSON GAUNTLET 1ST",
+		fileName: "thetaysongauntlet1st",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName: "THE TAYSON GAUNTLET 2ND",
+		fileName: "thetaysongauntlet2nd",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName: "THE TAYSON GAUNTLET 3RD",
+		fileName: "thetaysongauntlet3rd",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName: "Coffee Cup",
+		fileName: "coffeecup",
+		authorDiscordId: "1320944066002681876",
+	},
 ];
