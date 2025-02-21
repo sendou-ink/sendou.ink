@@ -3,6 +3,7 @@
 
 Competitive Splatoon Platform
 
+
 ## Selected Features
 
 - Full tournament system
