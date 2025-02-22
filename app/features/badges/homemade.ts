@@ -679,4 +679,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "saladbowl_tomato",
 		authorDiscordId: "336683473714544641",
 	},
+	{
+		displayName: "Eggs and Salad: Birthday Edition",
+		fileName: "birthday_cake",
+		authorDiscordId: "336683473714544641",
+	},
 ];
