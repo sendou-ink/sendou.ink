@@ -684,4 +684,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "birthday_cake",
 		authorDiscordId: "336683473714544641",
 	},
+	{
+		displayName: "Wheel of Names",
+		fileName: "ferris_wheel",
+		authorDiscordId: "336683473714544641",
+	},
 ];
