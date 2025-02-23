@@ -89,22 +89,28 @@ export default function BadgesPageLayout() {
 						</div>
 					</div>
 				) : null}
-				<div className="w-full">
-					<div className="badges__small-badges">
-						{ownBadges.length > 0 ? (
-							<Divider smallText>{t("badges:other.divider")}</Divider>
-						) : null}
-						{otherBadges.map((badge) => (
-							<NavLink
-								className="badges__nav-link"
-								key={badge.id}
-								to={String(badge.id)}
-							>
-								<Badge badge={badge} size={64} isAnimated={false} />
-							</NavLink>
-						))}
+				{ownBadges.length > 0 || otherBadges.length > 0 ? (
+					<div className="w-full">
+						<div className="badges__small-badges">
+							{ownBadges.length > 0 ? (
+								<Divider smallText>{t("badges:other.divider")}</Divider>
+							) : null}
+							{otherBadges.map((badge) => (
+								<NavLink
+									className="badges__nav-link"
+									key={badge.id}
+									to={String(badge.id)}
+								>
+									<Badge badge={badge} size={64} isAnimated={false} />
+								</NavLink>
+							))}
+						</div>
 					</div>
-				</div>
+				) : (
+					<div className="text-lg font-bold my-24">
+						{t("badges:noBadgesFound")}
+					</div>
+				)}
 			</div>
 			<div className="badges__general-info-texts">
 				<p>
