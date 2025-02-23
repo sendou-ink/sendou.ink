@@ -15,6 +15,11 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Gatorlan - Side of Salmon",
+		fileName: "gatorlan_salmon_1st",
+		authorDiscordId: "285504780154044416",
+	},
+	{
 		displayName: "Reach",
 		fileName: "reachbadge",
 		authorDiscordId: "338806780446638082",
