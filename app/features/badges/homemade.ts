@@ -734,4 +734,19 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "shinygyra",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "Twisted Toe",
+		fileName: "twistedtoe",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName: "TOECAR",
+		fileName: "toecar",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName: "CoffeeCup",
+		fileName: "coffeecup",
+		authorDiscordId: "1320944066002681876",
+	},
 ];
