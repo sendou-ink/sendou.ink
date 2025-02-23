@@ -1,5 +1,5 @@
 import { db } from "~/db/sql";
-import type { TablesInsertable } from "~/db/tables";
+import type { NotificationSubscription, TablesInsertable } from "~/db/tables";
 import { NOTIFICATIONS } from "./notifications-contants";
 import type { Notification } from "./notifications-types";
 
@@ -71,4 +71,27 @@ export function markAsSeen({
 		.where("NotificationUser.notificationId", "in", notificationIds)
 		.where("NotificationUser.userId", "=", userId)
 		.execute();
+}
+
+export function addSubscription(args: {
+	userId: number;
+	subscription: NotificationSubscription;
+}) {
+	return db
+		.insertInto("NotificationUserSubscription")
+		.values({
+			userId: args.userId,
+			subscription: JSON.stringify(args.subscription),
+		})
+		.execute();
+}
+
+export async function subscriptionsByUserIds(userIds: number[]) {
+	const rows = await db
+		.selectFrom("NotificationUserSubscription")
+		.select(["subscription"])
+		.where("userId", "in", userIds)
+		.execute();
+
+	return rows.map((row) => row.subscription);
 }

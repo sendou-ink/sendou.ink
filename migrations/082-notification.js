@@ -22,7 +22,7 @@ export function up(db) {
     "notificationId" integer not null,
     "userId" integer not null,
     "seen" integer default 0 not null,
-    primary key ("notificationId", "userId"),
+    unique("notificationId", "userId"),
     foreign key ("notificationId") references "Notification"("id") on delete cascade,
     foreign key ("userId") references "User"("id") on delete cascade
   ) strict
@@ -31,6 +31,20 @@ export function up(db) {
 
 		db.prepare(
 			/*sql*/ `create index notification_user_id on "NotificationUser"("userId")`,
+		).run();
+
+		db.prepare(
+			/*sql*/ `
+      create table "NotificationUserSubscription" (
+      "userId" integer not null,
+      "subscription" text not null,
+      foreign key ("userId") references "User"("id") on delete cascade
+      ) strict
+      `,
+		).run();
+
+		db.prepare(
+			/*sql*/ `create index notification_push_url_user_id on "NotificationUserSubscription"("userId")`,
 		).run();
 	})();
 }

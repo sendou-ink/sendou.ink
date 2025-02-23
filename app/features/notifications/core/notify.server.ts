@@ -1,5 +1,6 @@
 import * as NotificationRepository from "../NotificationRepository.server";
 import type { Notification } from "../notifications-types";
+import webPush from "./webPush.server";
 
 // xxx: deduplicate notifications if someone e.g. spams invites to team (need key)
 
@@ -34,9 +35,14 @@ export async function notify({
 		console.error("Failed to notify users", e);
 	}
 
-	// xxx: await IdkRepository.getPushUrlsForUsers(userIds);
+	for (const subscription of await NotificationRepository.subscriptionsByUserIds(
+		userIds,
+	)) {
+		// xxx: send proper payload with msg text, icon & link (that opens correctly)
+		await webPush.sendNotification(subscription, JSON.stringify(notification));
 
-	// send push notifications to users who have enabled them
+		// xxx: delete if not found or gone
+	}
 
 	// bust cache for affected user ids
 }

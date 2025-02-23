@@ -895,6 +895,19 @@ export interface NotificationUser {
 	seen: Generated<number>;
 }
 
+export interface NotificationSubscription {
+	endpoint: string;
+	keys: {
+		auth: string;
+		p256dh: string;
+	};
+}
+
+export interface NotificationUserSubscription {
+	userId: number;
+	subscription: ColumnType<NotificationSubscription, string, string>;
+}
+
 export type Tables = { [P in keyof DB]: Selectable<DB[P]> };
 export type TablesInsertable = { [P in keyof DB]: Insertable<DB[P]> };
 export type TablesUpdatable = { [P in keyof DB]: Updateable<DB[P]> };
@@ -975,4 +988,5 @@ export interface DB {
 	XRankPlacement: XRankPlacement;
 	Notification: Notification;
 	NotificationUser: NotificationUser;
+	NotificationUserSubscription: NotificationUserSubscription;
 }

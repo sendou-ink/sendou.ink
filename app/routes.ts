@@ -18,6 +18,10 @@ export default [
 		"/notifications/seen",
 		"features/notifications/routes/notifications.seen.ts",
 	),
+	route(
+		"/notifications/subscribe",
+		"features/notifications/routes/notifications.subscribe.ts",
+	),
 
 	route("/settings", "features/settings/routes/settings.tsx"),
 
