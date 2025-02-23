@@ -710,6 +710,21 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "336683473714544641",
 	},
 	{
+		displayName: "Revo'Cup",
+		fileName: "revocup",
+		authorDiscordId: "309327923129745409",
+	},
+	{
+		displayName: "Soul League (Div 1)",
+		fileName: "soulcupgold",
+		authorDiscordId: "309327923129745409",
+	},
+	{
+		displayName: "Soul League (Other Div)",
+		fileName: "soulcupsilver",
+		authorDiscordId: "309327923129745409",
+	},
+	{
 		displayName: "Level Up x2 - Leveled Up!",
 		fileName: "gyra",
 		authorDiscordId: "528851510222782474",
