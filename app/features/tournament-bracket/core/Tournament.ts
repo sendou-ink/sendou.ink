@@ -570,10 +570,7 @@ export class Tournament {
 				}
 
 				return {
-					consolationFinal:
-						selectedSettings?.thirdPlaceMatch ??
-						this.ctx.settings.thirdPlaceMatch ??
-						true,
+					consolationFinal: selectedSettings?.thirdPlaceMatch ?? true,
 				};
 			}
 			case "double_elimination": {
@@ -584,7 +581,6 @@ export class Tournament {
 			case "round_robin": {
 				const teamsPerGroup =
 					selectedSettings?.teamsPerGroup ??
-					this.ctx.settings.teamsPerGroup ??
 					TOURNAMENT.DEFAULT_TEAM_COUNT_PER_RR_GROUP;
 
 				return {
@@ -602,7 +598,7 @@ export class Tournament {
 									groupCount: selectedSettings.groupCount,
 									roundCount: selectedSettings.roundCount,
 								}
-							: this.ctx.settings.swiss,
+							: undefined,
 				};
 			}
 			default: {
