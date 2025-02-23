@@ -34,7 +34,7 @@ import * as PickBan from "../core/PickBan";
 import type { TournamentDataTeam } from "../core/Tournament.server";
 import type { TournamentMatchLoaderData } from "../routes/to.$id.matches.$mid";
 import {
-	groupNumberToLetter,
+	groupNumberToLetters,
 	mapCountPlayedInSetWithCertainty,
 	matchIsLocked,
 	pickInfoText,
@@ -102,9 +102,9 @@ export function StartedMatch({
 			.find((group) => group.id === match?.group_id);
 		return tournament.resolvePoolCode({
 			hostingTeamId,
-			groupLetter:
+			groupLetters:
 				group && bracket?.type === "round_robin"
-					? groupNumberToLetter(group.number)
+					? groupNumberToLetters(group.number)
 					: undefined,
 			bracketNumber:
 				hasRoundRobin && bracket?.type !== "round_robin"

@@ -332,7 +332,7 @@ export interface PlusSuggestion {
 
 export interface PlusTier {
 	tier: number;
-	userId: number | null;
+	userId: number;
 }
 
 export interface PlusVote {

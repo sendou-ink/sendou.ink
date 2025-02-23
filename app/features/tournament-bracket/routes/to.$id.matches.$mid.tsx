@@ -59,7 +59,7 @@ import {
 } from "../tournament-bracket-schemas.server";
 import {
 	bracketSubscriptionKey,
-	groupNumberToLetter,
+	groupNumberToLetters,
 	isSetOverByScore,
 	matchIsLocked,
 	matchSubscriptionKey,
@@ -745,7 +745,7 @@ function MatchHeader() {
 							(round) => round.id === match.round_id,
 						);
 
-						roundName = `Groups ${group?.number ? groupNumberToLetter(group.number) : ""}${round?.number ?? ""}.${match.number}`;
+						roundName = `Groups ${group?.number ? groupNumberToLetters(group.number) : ""}${round?.number ?? ""}.${match.number}`;
 					} else if (bracket.type === "swiss") {
 						const group = bracket.data.group.find(
 							(group) => group.id === match.group_id,
@@ -756,7 +756,7 @@ function MatchHeader() {
 
 						const oneGroupOnly = bracket.data.group.length === 1;
 
-						roundName = `Swiss${oneGroupOnly ? "" : " Group"} ${group?.number && !oneGroupOnly ? groupNumberToLetter(group.number) : ""} ${round?.number ?? ""}.${match.number}`;
+						roundName = `Swiss${oneGroupOnly ? "" : " Group"} ${group?.number && !oneGroupOnly ? groupNumberToLetters(group.number) : ""} ${round?.number ?? ""}.${match.number}`;
 					} else if (
 						bracket.type === "single_elimination" ||
 						bracket.type === "double_elimination"
