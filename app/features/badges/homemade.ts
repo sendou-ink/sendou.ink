@@ -709,4 +709,14 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "saladbowl_tomato",
 		authorDiscordId: "336683473714544641",
 	},
+	{
+		displayName: "Level Up x2 - Leveled Up!",
+		fileName: "gyra",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Level Up: Shiny Hunt x2 - Leveled Up!",
+		fileName: "shinygyra",
+		authorDiscordId: "528851510222782474",
+	},
 ];
