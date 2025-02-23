@@ -25,7 +25,7 @@ import { assertUnreachable } from "~/utils/types";
 import { userSubmittedImage } from "~/utils/urls";
 import {
 	fillWithNullTillPowerOfTwo,
-	groupNumberToLetter,
+	groupNumberToLetters,
 } from "../tournament-bracket-utils";
 import { Bracket } from "./Bracket";
 import * as Swiss from "./Swiss";
@@ -684,11 +684,11 @@ export class Tournament {
 
 	resolvePoolCode({
 		hostingTeamId,
-		groupLetter,
+		groupLetters,
 		bracketNumber,
 	}: {
 		hostingTeamId: number;
-		groupLetter?: string;
+		groupLetters?: string;
 		bracketNumber?: number;
 	}) {
 		const tournamentNameWithoutOnlyLetters = this.ctx.name.replace(
@@ -716,7 +716,7 @@ export class Tournament {
 		return {
 			prefix,
 			suffix:
-				globalSuffix ?? groupLetter ?? bracketNumber ?? hostingTeamId % 10,
+				globalSuffix ?? groupLetters ?? bracketNumber ?? hostingTeamId % 10,
 		};
 	}
 
@@ -956,7 +956,7 @@ export class Tournament {
 							(round) => round.id === match.round_id,
 						);
 
-						roundName = `Groups ${group?.number ? groupNumberToLetter(group.number) : ""}${round?.number ?? ""}.${match.number}`;
+						roundName = `Groups ${group?.number ? groupNumberToLetters(group.number) : ""}${round?.number ?? ""}.${match.number}`;
 					} else if (bracket.type === "swiss") {
 						const group = bracket.data.group.find(
 							(group) => group.id === match.group_id,
@@ -967,7 +967,7 @@ export class Tournament {
 
 						const oneGroupOnly = bracket.data.group.length === 1;
 
-						roundName = `Swiss${oneGroupOnly ? "" : " Group"} ${group?.number && !oneGroupOnly ? groupNumberToLetter(group.number) : ""} ${round?.number ?? ""}.${match.number}`;
+						roundName = `Swiss${oneGroupOnly ? "" : " Group"} ${group?.number && !oneGroupOnly ? groupNumberToLetters(group.number) : ""} ${round?.number ?? ""}.${match.number}`;
 					} else if (
 						bracket.type === "single_elimination" ||
 						bracket.type === "double_elimination"
