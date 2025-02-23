@@ -76,10 +76,12 @@ export function PlacementsTable({
 	const destinationBracket = (placement: number) =>
 		bracket.tournament.brackets.find(
 			(b) =>
-				b.id !== bracket.id &&
-				b.sources?.some(
-					(s) => s.bracketIdx === 0 && s.placements.includes(placement),
-				),
+				b.idx ===
+				Progression.destinationByPlacement({
+					sourceBracketIdx: bracket.idx,
+					placement,
+					progression: bracket.tournament.ctx.settings.bracketProgression,
+				}),
 		);
 
 	const possibleDestinationBrackets = Progression.destinationsFromBracketIdx(
