@@ -3,6 +3,7 @@ import { addPendingPlusTiers } from "~/features/leaderboards/core/leaderboards.s
 import { userSPLeaderboard } from "~/features/leaderboards/queries/userSPLeaderboard.server";
 import { previousSeason } from "~/features/mmr/season";
 import invariant from "~/utils/invariant";
+import { userIsBanned } from "../../ban/core/banned.server";
 
 export async function plusTiersFromVotingAndLeaderboard() {
 	const newMembersFromLeaderboard = fromLeaderboard();
@@ -18,7 +19,7 @@ export async function plusTiersFromVotingAndLeaderboard() {
 					(leaderboardMember) => leaderboardMember.userId === member.userId,
 				),
 		),
-	];
+	].filter(({ userId }) => !userIsBanned(userId));
 }
 
 function fromLeaderboard() {

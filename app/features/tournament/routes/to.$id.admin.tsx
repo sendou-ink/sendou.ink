@@ -27,7 +27,6 @@ import {
 	tournamentEditPage,
 	tournamentPage,
 } from "~/utils/urls";
-import { Alert } from "../../../components/Alert";
 import { Dialog } from "../../../components/Dialog";
 import { BracketProgressionSelector } from "../../calendar/components/BracketProgressionSelector";
 import { useTournament } from "./to.$id";
@@ -209,7 +208,6 @@ function TeamActions() {
 			? actions.find((a) => a.when.length === 0)!
 			: actions[0],
 	);
-	const [selectedUserId, setSelectedUserId] = React.useState<number>();
 
 	const selectedTeam = tournament.teamById(selectedTeamId);
 
@@ -260,18 +258,6 @@ function TeamActions() {
 		return true;
 	});
 
-	const showAlreadyInTeamAlert = () => {
-		if (selectedAction.type !== "ADD_MEMBER") return false;
-		if (
-			!selectedUserId ||
-			!tournament.teamMemberOfByUser({ id: selectedUserId })
-		) {
-			return false;
-		}
-
-		return true;
-	};
-
 	return (
 		<div className="stack md">
 			<fetcher.Form
@@ -288,7 +274,6 @@ function TeamActions() {
 							setSelectedAction(
 								actions.find((a) => a.type === e.target.value)!,
 							);
-							setSelectedUserId(undefined);
 						}}
 					>
 						{actionsToShow.map((action) => (
@@ -339,11 +324,7 @@ function TeamActions() {
 				{selectedAction.inputs.includes("USER") ? (
 					<div>
 						<label htmlFor="user">User</label>
-						<UserSearch
-							inputName="userId"
-							id="user"
-							onChange={(newUser) => setSelectedUserId(newUser.id)}
-						/>
+						<UserSearch inputName="userId" id="user" />
 					</div>
 				) : null}
 				{selectedAction.inputs.includes("BRACKET") ? (
@@ -387,9 +368,6 @@ function TeamActions() {
 					Go
 				</SubmitButton>
 			</fetcher.Form>
-			{showAlreadyInTeamAlert() ? (
-				<Alert variation="INFO">This player is already in a team</Alert>
-			) : null}
 		</div>
 	);
 }

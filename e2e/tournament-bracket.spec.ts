@@ -899,6 +899,8 @@ test.describe("Tournament bracket", () => {
 
 		await page.getByTestId("prepare-maps-button").click();
 
+		await page.getByLabel("Expected teams").selectOption("8");
+
 		await page.getByTestId("confirm-finalize-bracket-button").click();
 
 		await expect(page.getByTestId("prepared-maps-check-icon")).toBeVisible();
