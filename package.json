@@ -24,19 +24,19 @@
 		"checks": "npm run biome:fix && npm run test:unit && npm run check-translation-jsons && npm run typecheck"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.741.0",
-		"@aws-sdk/lib-storage": "^3.741.0",
+		"@aws-sdk/client-s3": "^3.750.0",
+		"@aws-sdk/lib-storage": "^3.750.0",
 		"@dnd-kit/core": "^6.3.1",
 		"@dnd-kit/sortable": "^10.0.0",
 		"@dnd-kit/utilities": "^3.2.2",
-		"@epic-web/cachified": "^5.2.0",
-		"@faker-js/faker": "^9.4.0",
+		"@epic-web/cachified": "^5.5.1",
+		"@faker-js/faker": "^9.5.0",
 		"@headlessui/react": "^1.7.19",
-		"@hookform/resolvers": "^3.10.0",
+		"@hookform/resolvers": "^4.1.1",
 		"@remix-run/node": "^2.15.3",
 		"@remix-run/react": "^2.15.3",
 		"@remix-run/serve": "^2.15.3",
-		"@tldraw/tldraw": "^3.7.2",
+		"@tldraw/tldraw": "^3.8.1",
 		"aws-sdk": "^2.1692.0",
 		"better-sqlite3": "^11.8.1",
 		"clsx": "^2.1.1",
@@ -48,7 +48,7 @@
 		"i18next": "^23.16.8",
 		"i18next-browser-languagedetector": "^8.0.2",
 		"i18next-http-backend": "^3.0.2",
-		"isbot": "^5.1.22",
+		"isbot": "^5.1.23",
 		"just-camel-case": "^6.2.0",
 		"just-capitalize": "^3.2.0",
 		"just-clone": "^6.2.0",
@@ -57,8 +57,8 @@
 		"just-shuffle": "^4.2.0",
 		"kysely": "^0.27.5",
 		"lru-cache": "^11.0.2",
-		"markdown-to-jsx": "^7.7.3",
-		"nanoid": "^5.0.9",
+		"markdown-to-jsx": "^7.7.4",
+		"nanoid": "^5.1.2",
 		"node-cron": "3.0.3",
 		"nprogress": "^0.2.0",
 		"openskill": "^4.1.0",
@@ -79,8 +79,8 @@
 		"remix-i18next": "^6.4.1",
 		"remix-utils": "^8.1.0",
 		"slugify": "^1.6.6",
-		"swr": "^2.3.0",
-		"zod": "^3.24.1"
+		"swr": "^2.3.2",
+		"zod": "^3.24.2"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
@@ -95,11 +95,11 @@
 		"@types/react-responsive-masonry": "^2.1.3",
 		"cross-env": "^7.0.3",
 		"ley": "^0.8.1",
-		"sql-formatter": "^15.4.10",
+		"sql-formatter": "^15.4.11",
 		"tsm": "^2.3.0",
 		"typescript": "^5.7.3",
 		"vite": "^5.4.14",
 		"vite-tsconfig-paths": "^5.1.4",
-		"vitest": "^3.0.5"
+		"vitest": "^3.0.6"
 	}
 }
