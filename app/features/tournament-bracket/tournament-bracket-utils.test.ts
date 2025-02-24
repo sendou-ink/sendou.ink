@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
 	fillWithNullTillPowerOfTwo,
+	groupNumberToLetters,
 	mapCountPlayedInSetWithCertainty,
 } from "./tournament-bracket-utils";
 
@@ -50,6 +51,24 @@ describe("fillWithNullTillPowerOfTwo()", () => {
 					(x) => x === null,
 				).length,
 			).toBe(expectedNullCount);
+		});
+	}
+});
+
+const groupNumberToLettersParamsToResult = [
+	{ groupNumber: 1, expected: "A" },
+	{ groupNumber: 26, expected: "Z" },
+	{ groupNumber: 27, expected: "AA" },
+	{ groupNumber: 52, expected: "AZ" },
+	{ groupNumber: 53, expected: "BA" },
+	{ groupNumber: 702, expected: "ZZ" },
+	{ groupNumber: 703, expected: "AAA" },
+];
+
+describe("groupNumberToLetters()", () => {
+	for (const { groupNumber, expected } of groupNumberToLettersParamsToResult) {
+		test(`groupNumber=${groupNumber} -> ${expected}`, () => {
+			expect(groupNumberToLetters(groupNumber)).toBe(expected);
 		});
 	}
 });

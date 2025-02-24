@@ -613,7 +613,7 @@ function teamCountAdjustedBracketData({
 			return bracket.generateMatchesData(
 				nullFilledArray(
 					bracket.settings?.teamsPerGroup ??
-						TOURNAMENT.DEFAULT_TEAM_COUNT_PER_RR_GROUP,
+						TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP,
 				).map((_, i) => i + 1),
 			);
 		case "single_elimination":
@@ -678,10 +678,11 @@ function GlobalMapCountInput({
 				onChange={(e) => onSetCount(Number(e.target.value))}
 				defaultValue={defaultValue}
 			>
-				<option value="1">1</option>
-				<option value="3">3</option>
-				<option value="5">5</option>
-				<option value="7">7</option>
+				{TOURNAMENT.AVAILABLE_BEST_OF.map((count) => (
+					<option key={count} value={count}>
+						{count}
+					</option>
+				))}
 			</select>
 		</div>
 	);
@@ -797,7 +798,7 @@ function RoundMapList({
 			</h3>
 			{editing && includeRoundSpecificSelections ? (
 				<div className="stack xs horizontal">
-					{[1, 3, 5, 7].map((count) => (
+					{TOURNAMENT.AVAILABLE_BEST_OF.map((count) => (
 						<div key={count}>
 							<Label htmlFor={`bo-${count}-${id}`}>Bo{count}</Label>
 							<input

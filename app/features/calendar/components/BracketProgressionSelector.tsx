@@ -259,7 +259,10 @@ function TournamentFormatBracketSelector({
 						</Label>
 						<SendouSwitch
 							id={createId("thirdPlaceMatch")}
-							isSelected={Boolean(bracket.settings.thirdPlaceMatch)}
+							isSelected={Boolean(
+								bracket.settings.thirdPlaceMatch ??
+									TOURNAMENT.SE_DEFAULT_HAS_THIRD_PLACE_MATCH,
+							)}
 							onChange={(isSelected) =>
 								updateBracket({
 									settings: {
@@ -277,7 +280,10 @@ function TournamentFormatBracketSelector({
 					<div>
 						<Label htmlFor="teamsPerGroup">Teams per group</Label>
 						<select
-							value={bracket.settings.teamsPerGroup ?? 4}
+							value={
+								bracket.settings.teamsPerGroup ??
+								TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP
+							}
 							onChange={(e) =>
 								updateBracket({
 									settings: {
@@ -303,7 +309,10 @@ function TournamentFormatBracketSelector({
 					<div>
 						<Label htmlFor="swissGroupCount">Groups count</Label>
 						<select
-							value={bracket.settings.groupCount ?? 1}
+							value={
+								bracket.settings.groupCount ??
+								TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT
+							}
 							onChange={(e) =>
 								updateBracket({
 									settings: {
@@ -331,7 +340,10 @@ function TournamentFormatBracketSelector({
 					<div>
 						<Label htmlFor="swissRoundCount">Round count</Label>
 						<select
-							value={bracket.settings.roundCount ?? 5}
+							value={
+								bracket.settings.roundCount ??
+								TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT
+							}
 							onChange={(e) =>
 								updateBracket({
 									settings: {

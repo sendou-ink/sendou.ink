@@ -237,7 +237,7 @@ describe("Bracket progression override", () => {
 		).toBeFalsy();
 	});
 
-	it("ignores -1 override (used to indicate no progression)", () => {
+	it("destinationBracketIdx = -1 eliminates the team", () => {
 		const tournament = new Tournament({
 			...SWIM_OR_SINK_167([
 				{
@@ -252,7 +252,7 @@ describe("Bracket progression override", () => {
 			11,
 		);
 		expect(tournament.brackets[2].participantTournamentTeamIds).toHaveLength(
-			11,
+			10,
 		);
 		expect(tournament.brackets[3].participantTournamentTeamIds).toHaveLength(
 			11,
