@@ -23,7 +23,7 @@
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	margin-bottom: var(--s-4);
+	margin-bottom: var(--s-3);
 	background: var(--bg-lighter);
 	border-end-end-radius: var(--rounded);
 	border-end-start-radius: var(--rounded);
@@ -51,6 +51,7 @@
 	display: grid;
 	place-items: center;
 	position: relative;
+	padding-inline: var(--s-2);
 }
 
 .tournament-bracket__stage-banner {
@@ -317,10 +318,17 @@
 }
 
 .tournament-bracket__mode-progress {
-	display: flex;
-	margin-bottom: var(--s-4);
+	display: block;
+	text-align: center;
+	overflow-x: auto;
+	padding: 2px;
+	margin-bottom: var(--s-1-5);
+}
+
+.tournament-bracket__mode-progress__inner {
+	display: inline-flex;
 	gap: var(--s-4);
-	justify-content: center;
+	justify-content: flex-start;
 }
 
 .tournament-bracket__mode-progress__image {
@@ -328,6 +336,7 @@
 	border-radius: 100%;
 	padding: var(--s-2-5);
 	outline: 2px solid var(--bg-lightest);
+	min-width: 40px;
 }
 
 .tournament-bracket__mode-progress__image > svg {
