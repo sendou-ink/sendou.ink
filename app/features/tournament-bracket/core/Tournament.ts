@@ -274,27 +274,31 @@ export class Tournament {
 				allRelevantMatchesFinished = false;
 			}
 
-			const excludedOverridenTeams = sourcedTeams.filter(
+			// exclude teams that would be going to this bracket according
+			// to the bracket progression rules, but have been overridden
+			// by the TO to go somewhere else or get eliminated (in the case of destinationBracketIdx = -1)
+			const withOverriddenTeamsExcluded = sourcedTeams.filter(
 				(teamId) =>
 					!this.ctx.bracketProgressionOverrides.some(
 						(override) =>
 							override.sourceBracketIdx === source.bracketIdx &&
 							override.tournamentTeamId === teamId &&
-							// "no progression" override
-							override.destinationBracketIdx !== -1 &&
-							// redundant override
 							override.destinationBracketIdx !== bracketIdx,
 					),
 			);
 
-			teams.push(...excludedOverridenTeams);
+			teams.push(...withOverriddenTeamsExcluded);
 		}
 
 		const teamsFromOverride: { id: number; sourceBracketIdx: number }[] = [];
 		for (const source of sources) {
 			for (const override of this.ctx.bracketProgressionOverrides) {
-				if (override.sourceBracketIdx !== source.bracketIdx) continue;
-				if (override.destinationBracketIdx !== bracketIdx) continue;
+				if (
+					override.sourceBracketIdx !== source.bracketIdx ||
+					override.destinationBracketIdx !== bracketIdx
+				) {
+					continue;
+				}
 
 				teamsFromOverride.push({
 					id: override.tournamentTeamId,

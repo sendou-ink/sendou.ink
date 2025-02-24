@@ -164,8 +164,16 @@ export function PlacementsTable({
 					const overridenDestinationBracket = overridenDestination
 						? bracket.tournament.bracketByIdx(
 								overridenDestination.destinationBracketIdx,
-							)!
+							)
 						: undefined;
+
+					const key = () => {
+						if (overridenDestinationBracket === null) {
+							return "null";
+						}
+
+						return overridenDestinationBracket?.idx;
+					};
 
 					return (
 						<tr key={s.team.id}>
@@ -221,7 +229,7 @@ export function PlacementsTable({
 							) : null}
 							<td>{team?.seed}</td>
 							<EditableDestination
-								key={overridenDestinationBracket?.idx}
+								key={key()}
 								source={bracket}
 								destination={dest}
 								overridenDestination={overridenDestinationBracket}
@@ -249,7 +257,7 @@ function EditableDestination({
 }: {
 	source: Bracket;
 	destination?: Bracket;
-	overridenDestination?: Bracket;
+	overridenDestination?: Bracket | null;
 	possibleDestinations: Bracket[];
 	allMatchesFinished: boolean;
 	canEditDestination: boolean;
@@ -273,9 +281,10 @@ function EditableDestination({
 		);
 	};
 
-	const possibleDestinations = !destination
-		? (["ELIMINATED", ..._possibleDestinations] as const)
-		: _possibleDestinations;
+	const possibleDestinations = [
+		"ELIMINATED",
+		..._possibleDestinations,
+	] as const;
 
 	if (editingDestination) {
 		return (
@@ -325,7 +334,7 @@ function EditableDestination({
 				<td className="text-theme font-bold">
 					<span>→ {overridenDestination.name}</span>
 				</td>
-			) : destination ? (
+			) : destination && overridenDestination !== null ? (
 				<td
 					className={clsx({
 						"italic text-lighter": !allMatchesFinished,
