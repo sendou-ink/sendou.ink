@@ -744,4 +744,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "shinygyra",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "New Game +",
+		fileName: "new-game-plus",
+		authorDiscordId: "216653023252840449",
+	},
 ];
