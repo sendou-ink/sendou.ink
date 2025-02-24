@@ -570,7 +570,9 @@ export class Tournament {
 				}
 
 				return {
-					consolationFinal: selectedSettings?.thirdPlaceMatch ?? true,
+					consolationFinal:
+						selectedSettings?.thirdPlaceMatch ??
+						TOURNAMENT.SE_DEFAULT_HAS_THIRD_PLACE_MATCH,
 				};
 			}
 			case "double_elimination": {
@@ -581,7 +583,7 @@ export class Tournament {
 			case "round_robin": {
 				const teamsPerGroup =
 					selectedSettings?.teamsPerGroup ??
-					TOURNAMENT.DEFAULT_TEAM_COUNT_PER_RR_GROUP;
+					TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP;
 
 				return {
 					groupCount: Math.ceil(participantsCount / teamsPerGroup),
@@ -598,7 +600,10 @@ export class Tournament {
 									groupCount: selectedSettings.groupCount,
 									roundCount: selectedSettings.roundCount,
 								}
-							: undefined,
+							: {
+									groupCount: TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT,
+									roundCount: TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+								},
 				};
 			}
 			default: {

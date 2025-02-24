@@ -613,7 +613,7 @@ function teamCountAdjustedBracketData({
 			return bracket.generateMatchesData(
 				nullFilledArray(
 					bracket.settings?.teamsPerGroup ??
-						TOURNAMENT.DEFAULT_TEAM_COUNT_PER_RR_GROUP,
+						TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP,
 				).map((_, i) => i + 1),
 			);
 		case "single_elimination":

@@ -10,9 +10,10 @@ export const TOURNAMENT = {
 	MAX_BRACKETS_PER_TOURNAMENT: 10,
 	BRACKET_NAME_MAX_LENGTH: 32,
 	// just a fallback, normally this should be set by user explicitly
-	DEFAULT_TEAM_COUNT_PER_RR_GROUP: 4,
+	RR_DEFAULT_TEAM_COUNT_PER_GROUP: 4,
 	SWISS_DEFAULT_GROUP_COUNT: 1,
 	SWISS_DEFAULT_ROUND_COUNT: 5,
+	SE_DEFAULT_HAS_THIRD_PLACE_MATCH: true,
 } as const;
 
 export const LEAGUES =
