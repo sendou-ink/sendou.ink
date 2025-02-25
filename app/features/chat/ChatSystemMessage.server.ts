@@ -3,15 +3,12 @@ import { SKALOP_TOKEN_HEADER_NAME } from "~/constants";
 import invariant from "~/utils/invariant";
 import type { ChatMessage } from "./chat-types";
 
-// xxx: rename this to ChatNotification or something? Or system message?
-
 type PartialChatMessage = Pick<
 	ChatMessage,
 	"type" | "context" | "room" | "revalidateOnly"
 >;
-// xxx: rename
-interface NotificationService {
-	notify: (msg: PartialChatMessage | PartialChatMessage[]) => undefined;
+interface ChatSystemMessageService {
+	send: (msg: PartialChatMessage | PartialChatMessage[]) => undefined;
 }
 
 invariant(
@@ -20,7 +17,7 @@ invariant(
 );
 invariant(process.env.SKALOP_TOKEN, "Missing env var: SKALOP_TOKEN");
 
-export const notify: NotificationService["notify"] = (partialMsg) => {
+export const send: ChatSystemMessageService["send"] = (partialMsg) => {
 	const msgArr = Array.isArray(partialMsg) ? partialMsg : [partialMsg];
 
 	const fullMessages: ChatMessage[] = msgArr.map((partialMsg) => {

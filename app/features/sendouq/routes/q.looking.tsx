@@ -17,7 +17,7 @@ import { NewTabs } from "~/components/NewTabs";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { getUser, requireUser } from "~/features/auth/core/user.server";
-import * as NotificationService from "~/features/chat/NotificationService.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { Chat, useChat } from "~/features/chat/components/Chat";
 import { currentOrPreviousSeason } from "~/features/mmr/season";
 import { userSkills } from "~/features/mmr/tiered.server";
@@ -141,7 +141,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 			const targetChatCode = chatCodeByGroupId(data.targetGroupId);
 			if (targetChatCode) {
-				NotificationService.notify({
+				ChatSystemMessage.send({
 					room: targetChatCode,
 					type: "LIKE_RECEIVED",
 					revalidateOnly: true,
@@ -160,7 +160,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 			const targetChatCode = chatCodeByGroupId(data.targetGroupId);
 			if (targetChatCode) {
-				NotificationService.notify({
+				ChatSystemMessage.send({
 					room: targetChatCode,
 					type: "LIKE_RECEIVED",
 					revalidateOnly: true,
@@ -225,7 +225,7 @@ export const action: ActionFunction = async ({ request }) => {
 			refreshGroup(survivingGroupId);
 
 			if (ourGroup.chatCode && theirGroup.chatCode) {
-				NotificationService.notify([
+				ChatSystemMessage.send([
 					{
 						room: ourGroup.chatCode,
 						type: "NEW_GROUP",
@@ -311,7 +311,7 @@ export const action: ActionFunction = async ({ request }) => {
 			});
 
 			if (ourGroup.chatCode && theirGroup.chatCode) {
-				NotificationService.notify([
+				ChatSystemMessage.send([
 					{
 						room: ourGroup.chatCode,
 						type: "MATCH_STARTED",
@@ -379,7 +379,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 			const targetChatCode = chatCodeByGroupId(currentGroup.id);
 			if (targetChatCode) {
-				NotificationService.notify({
+				ChatSystemMessage.send({
 					room: targetChatCode,
 					type: "USER_LEFT",
 					context: { name: user.username },
