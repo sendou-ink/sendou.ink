@@ -18,6 +18,5 @@
 	"forms.title.weaponsTeamTwo": "נשקים (צוות 2)",
 	"forms.title.weapon": "נשקים",
 	"forms.action.addMatch": "הוספת קרב",
-	"forms.action.deleteMatch": "מחיקת קרב",
-	"noVods": "לא נמצאו סרטונים התואמים למסנן זה. האם חסר לנו משהו? שלחו הודעה ל-Sendou ב-Discord כדי לקבל הרשאות להגשת סרטוני YouTube."
+	"forms.action.deleteMatch": "מחיקת קרב"
 }
