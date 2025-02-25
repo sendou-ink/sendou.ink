@@ -1,4 +1,3 @@
-import type { LoggedInUser } from "~/root";
 import { assertUnreachable } from "~/utils/types";
 import {
 	PLUS_VOTING_PAGE,
@@ -10,10 +9,8 @@ import {
 	tournamentRegisterPage,
 	tournamentTeamPage,
 	userArtPage,
-	userPage,
 } from "~/utils/urls";
 import type { Notification } from "./notifications-types";
-import type { LoaderNotification } from "./routes/notifications.peek";
 
 export const notificationNavIcon = (type: Notification["type"]) => {
 	switch (type) {
@@ -38,13 +35,10 @@ export const notificationNavIcon = (type: Notification["type"]) => {
 	}
 };
 
-export const notificationLink = ({
-	notification,
-	user,
-}: { notification: LoaderNotification; user: LoggedInUser }) => {
+export const notificationLink = (notification: Notification) => {
 	switch (notification.type) {
 		case "BADGE_ADDED":
-			return userPage(user);
+			return badgePage(notification.meta.badgeId);
 		case "BADGE_MANAGER_ADDED":
 			return badgePage(notification.meta.badgeId);
 		case "PLUS_SUGGESTION_ADDED":
@@ -57,7 +51,11 @@ export const notificationLink = ({
 		case "SQ_NEW_MATCH":
 			return sendouQMatchPage(notification.meta.matchId);
 		case "TAGGED_TO_ART":
-			return userArtPage(user);
+			return userArtPage(
+				{ discordId: notification.meta.adderDiscordId },
+				"MADE-BY",
+				notification.meta.artId,
+			);
 		case "TO_ADDED_TO_TEAM":
 			return tournamentTeamPage({
 				tournamentId: notification.meta.tournamentId,

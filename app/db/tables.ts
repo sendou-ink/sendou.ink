@@ -904,6 +904,7 @@ export interface NotificationSubscription {
 }
 
 export interface NotificationUserSubscription {
+	id: GeneratedAlways<number>;
 	userId: number;
 	subscription: ColumnType<NotificationSubscription, string, string>;
 }

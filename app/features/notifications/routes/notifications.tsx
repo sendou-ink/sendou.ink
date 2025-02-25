@@ -1,4 +1,4 @@
-import { useLoaderData } from "@remix-run/react";
+import { Link, useLoaderData } from "@remix-run/react";
 import { Main } from "~/components/Main";
 import {
 	NotificationItem,
@@ -10,12 +10,11 @@ export { loader };
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { BellIcon } from "~/components/icons/Bell";
-import { useUser } from "~/features/auth/core/user";
+import { SETTINGS_PAGE } from "../../../utils/urls";
 import { useMarkNotificationsAsSeen } from "../notifications-hooks";
 import styles from "./notifications.module.css";
 
 export default function NotificationsPage() {
-	const user = useUser()!;
 	const { t } = useTranslation(["common"]);
 	const data = useLoaderData<typeof loader>();
 
@@ -32,9 +31,15 @@ export default function NotificationsPage() {
 
 	return (
 		<Main className="stack md">
-			<h2 className={styles.header}>
-				<BellIcon /> {t("common:notifications.title")}
-			</h2>
+			<div>
+				<h2 className={styles.header}>
+					<BellIcon /> {t("common:notifications.title")}
+				</h2>
+				<div className="text-xs text-lighter">
+					Manage push notifications on the{" "}
+					<Link to={SETTINGS_PAGE}>settings page</Link>
+				</div>
+			</div>
 			{data.notifications.length === 0 ? (
 				<div className="layout__notifications__no-notifications">
 					{t("common:notifications.empty")}
@@ -46,7 +51,6 @@ export default function NotificationsPage() {
 							<NotificationItem
 								key={notification.id}
 								notification={notification}
-								user={user}
 							/>
 							{i !== data.notifications.length - 1 && (
 								<NotificationItemDivider />

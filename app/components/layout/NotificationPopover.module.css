@@ -15,12 +15,26 @@
 	min-height: 200px;
 }
 
+.topContainer {
+	display: flex;
+	justify-content: space-between;
+}
+
 .header {
 	display: flex;
 	font-size: var(--fonts-sm);
 	padding-inline: var(--s-1);
 	padding-bottom: var(--s-1);
 	gap: var(--s-1);
+}
+
+.refreshButton {
+	margin-block-end: var(--s-1);
+	margin-inline-end: var(--s-1);
+}
+
+.refreshButton svg {
+	stroke-width: 10px;
 }
 
 .noNotifications {

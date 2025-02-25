@@ -13,20 +13,18 @@ import { useNotifications } from "~/hooks/swr";
 import { NOTIFICATIONS_URL } from "~/utils/urls";
 import { useMarkNotificationsAsSeen } from "../../features/notifications/notifications-hooks";
 import type { LoaderNotification } from "../../features/notifications/routes/notifications.peek";
-import type { LoggedInUser } from "../../root";
 import { LinkButton } from "../Button";
 import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
 import { BellIcon } from "../icons/Bell";
+import { RefreshIcon } from "../icons/Refresh";
 import styles from "./NotificationPopover.module.css";
 
-// xxx: add refresh button
-// xxx: handle loading better?
 // xxx: mark as notifications seen after an open
 export function NotificationPopover() {
 	const location = useLocation();
 	const user = useUser();
-	const { notifications } = useNotifications();
+	const { notifications, isLoading, refresh } = useNotifications();
 
 	const unseenIds = React.useMemo(
 		() =>
@@ -57,8 +55,9 @@ export function NotificationPopover() {
 			>
 				<NotificationContent
 					notifications={notifications ?? []}
-					user={user}
 					unseenIds={unseenIds}
+					isLoading={isLoading}
+					refresh={refresh}
 				/>
 			</SendouPopover>
 		</div>
@@ -67,12 +66,14 @@ export function NotificationPopover() {
 
 function NotificationContent({
 	notifications,
-	user,
 	unseenIds,
+	refresh,
+	isLoading,
 }: {
 	notifications: LoaderNotification[];
-	user: LoggedInUser;
 	unseenIds: number[];
+	refresh: () => void;
+	isLoading: boolean;
 }) {
 	const { t } = useTranslation(["common"]);
 
@@ -80,13 +81,24 @@ function NotificationContent({
 
 	return (
 		<>
-			<h2 className={styles.header}>
-				<BellIcon /> {t("common:notifications.title")}
-			</h2>
+			<div className={styles.topContainer}>
+				<h2 className={styles.header}>
+					<BellIcon /> {t("common:notifications.title")}
+				</h2>
+				<SendouButton
+					icon={<RefreshIcon />}
+					variant="minimal"
+					className={styles.refreshButton}
+					onPress={refresh}
+					isDisabled={isLoading}
+				/>
+			</div>
 			<hr className={styles.divider} />
 			{notifications.length === 0 ? (
 				<div className={styles.noNotifications}>
-					{t("common:notifications.empty")}
+					{isLoading
+						? t("common:notifications.loading")
+						: t("common:notifications.empty")}
 				</div>
 			) : (
 				<NotificationsList>
@@ -95,7 +107,6 @@ function NotificationContent({
 							<NotificationItem
 								key={notification.id}
 								notification={notification}
-								user={user}
 							/>
 							{i !== notifications.length - 1 && <NotificationItemDivider />}
 						</React.Fragment>

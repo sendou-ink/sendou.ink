@@ -2310,11 +2310,15 @@ async function adminNotifications() {
 		},
 		{
 			type: "BADGE_ADDED",
-			meta: { badgeName: "In The Zone 30-39" },
+			meta: { badgeName: "In The Zone 20-29", badgeId: 39 },
 		},
 		{
 			type: "TAGGED_TO_ART",
-			meta: { adderUsername: "N-ZAP" },
+			meta: {
+				adderUsername: "N-ZAP",
+				adderDiscordId: NZAP_TEST_DISCORD_ID,
+				artId: 1, // does not exist
+			},
 		},
 		{
 			type: "SQ_ADDED_TO_GROUP",

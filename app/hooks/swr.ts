@@ -12,6 +12,7 @@ import {
 	PATRONS_LIST_ROUTE,
 	getWeaponUsage,
 } from "~/utils/urls";
+import { useUser } from "../features/auth/core/user";
 
 // TODO: replace with useFetcher after proper errr handling is implemented https://github.com/remix-run/react-router/discussions/10013
 
@@ -82,16 +83,18 @@ export function usePatrons() {
 	};
 }
 
-// xxx: skip if no user
 export function useNotifications() {
-	const { data, error } = useSWRImmutable<NotificationsLoaderData>(
-		NOTIFICATIONS_PEAK_ROUTE,
-		fetcher(NOTIFICATIONS_PEAK_ROUTE),
-	);
+	const user = useUser();
+	const { data, error, mutate, isValidating } =
+		useSWRImmutable<NotificationsLoaderData>(
+			user ? NOTIFICATIONS_PEAK_ROUTE : null,
+			fetcher(NOTIFICATIONS_PEAK_ROUTE),
+		);
 
 	return {
 		notifications: data?.notifications,
-		isLoading: !error && !data,
+		isLoading: isValidating || (!error && !data),
 		isError: error,
+		refresh: () => mutate(),
 	};
 }

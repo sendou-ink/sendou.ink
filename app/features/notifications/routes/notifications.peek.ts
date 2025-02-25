@@ -4,8 +4,6 @@ import type { SerializeFrom } from "~/utils/remix";
 import * as NotificationRepository from "../NotificationRepository.server";
 import { NOTIFICATIONS } from "../notifications-contants";
 
-// xxx: caching
-
 export type NotificationsLoaderData = SerializeFrom<typeof loader>;
 export type LoaderNotification =
 	NotificationsLoaderData["notifications"][number];

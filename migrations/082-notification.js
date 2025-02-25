@@ -36,6 +36,7 @@ export function up(db) {
 		db.prepare(
 			/*sql*/ `
       create table "NotificationUserSubscription" (
+      "id" integer primary key,
       "userId" integer not null,
       "subscription" text not null,
       foreign key ("userId") references "User"("id") on delete cascade

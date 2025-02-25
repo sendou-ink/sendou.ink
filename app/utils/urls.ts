@@ -182,8 +182,12 @@ export const newVodPage = (vodToEditId?: number) =>
 export const userResultsEditHighlightsPage = (user: UserLinkArgs) =>
 	`${userResultsPage(user)}/highlights`;
 export const artPage = (tag?: string) => `/art${tag ? `?tag=${tag}` : ""}`;
-export const userArtPage = (user: UserLinkArgs, source?: ArtSource) =>
-	`${userPage(user)}/art${source ? `?source=${source}` : ""}`;
+export const userArtPage = (
+	user: UserLinkArgs,
+	source?: ArtSource,
+	bigArtId?: number,
+) =>
+	`${userPage(user)}/art${source ? `?source=${source}` : ""}${bigArtId ? `?big=${bigArtId}` : ""}`;
 export const newArtPage = (artId?: Art["id"]) =>
 	`${artPage()}/new${artId ? `?art=${artId}` : ""}`;
 export const userNewBuildPage = (

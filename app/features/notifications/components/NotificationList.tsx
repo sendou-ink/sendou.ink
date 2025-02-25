@@ -1,5 +1,4 @@
 import { Link } from "@remix-run/react";
-import clsx from "clsx";
 import { formatDistance } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
@@ -8,7 +7,6 @@ import {
 	notificationNavIcon,
 } from "~/features/notifications/notifications-utils";
 import type { LoaderNotification } from "~/features/notifications/routes/notifications.peek";
-import type { LoggedInUser } from "~/root";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl } from "~/utils/urls";
 import styles from "./NotificationList.module.css";
@@ -17,25 +15,22 @@ export function NotificationsList({ children }: { children: React.ReactNode }) {
 	return <div>{children}</div>;
 }
 
-// xxx: formatDistance in browser, is it ok?
-// xxx: unseen dot in wrong place if the notification header is two lines
 export function NotificationItem({
 	notification,
-	user,
 }: {
 	notification: LoaderNotification;
-	user: LoggedInUser;
 }) {
 	const { t } = useTranslation(["common"]);
 
 	return (
-		<Link to={notificationLink({ notification, user })} className={styles.item}>
-			<NotificationImage notification={notification} />
-			{!notification.seen ? <div className={styles.unseenDot} /> : null}
+		<Link to={notificationLink(notification)} className={styles.item}>
+			<NotificationImage notification={notification}>
+				{!notification.seen ? <div className={styles.unseenDot} /> : null}
+			</NotificationImage>
 			<div className={styles.itemHeader}>
 				{t(
 					`common:notifications.text.${notification.type}`,
-					// @ts-expect-error xxx: fix maybe
+					// @ts-expect-error: not every notification has meta but it is ok
 					notification.meta,
 				)}
 			</div>
@@ -58,21 +53,26 @@ export function NotificationItemDivider() {
 
 function NotificationImage({
 	notification,
-}: { notification: LoaderNotification }) {
+	children,
+}: { notification: LoaderNotification; children: React.ReactNode }) {
 	if (notification.pictureUrl) {
 		return (
-			<img
-				src={notification.pictureUrl}
-				alt="Notification"
-				className={styles.itemImage}
-				width={124}
-				height={124}
-			/>
+			<div className={styles.imageContainer}>
+				{children}
+				<img
+					src={notification.pictureUrl}
+					alt="Notification"
+					className={styles.itemImage}
+					width={124}
+					height={124}
+				/>
+			</div>
 		);
 	}
 
 	return (
-		<div className={clsx(styles.itemImage, styles.imageContainer)}>
+		<div className={styles.imageContainer}>
+			{children}
 			<Image
 				path={navIconUrl(notificationNavIcon(notification.type))}
 				width={24}

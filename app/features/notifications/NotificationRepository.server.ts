@@ -3,7 +3,6 @@ import type { NotificationSubscription, TablesInsertable } from "~/db/tables";
 import { NOTIFICATIONS } from "./notifications-contants";
 import type { Notification } from "./notifications-types";
 
-// xxx: optimize this, we could for example use raw sqlite and insert all at once while reusing same statements?
 export function insert(
 	notification: Notification,
 	users: Array<Omit<TablesInsertable["NotificationUser"], "notificationId">>,
@@ -13,7 +12,7 @@ export function insert(
 			.insertInto("Notification")
 			.values({
 				...notification,
-				// @ts-expect-error xxx: maybe fix
+				// @ts-expect-error: not every notification has meta but it is ok
 				meta: notification.meta ? JSON.stringify(notification.meta) : null,
 			})
 			.returning("id")
@@ -86,12 +85,17 @@ export function addSubscription(args: {
 		.execute();
 }
 
-export async function subscriptionsByUserIds(userIds: number[]) {
-	const rows = await db
+export function subscriptionsByUserIds(userIds: number[]) {
+	return db
 		.selectFrom("NotificationUserSubscription")
-		.select(["subscription"])
+		.select(["id", "subscription"])
 		.where("userId", "in", userIds)
 		.execute();
+}
 
-	return rows.map((row) => row.subscription);
+export function deleteSubscriptionById(id: number) {
+	return db
+		.deleteFrom("NotificationUserSubscription")
+		.where("id", "=", id)
+		.execute();
 }

@@ -13,23 +13,14 @@
 	column-gap: var(--s-2);
 	padding-block: var(--s-2-5);
 	color: var(--text);
-	position: relative;
 }
 
-.item:hover .itemImage {
+.item:hover .imageContainer {
 	outline: 3px solid var(--theme-transparent);
 }
 
-.item:focus-within .itemImage {
+.item:focus-within .imageContainer {
 	outline: 3px solid var(--theme-transparent);
-}
-
-.itemImage {
-	place-self: center;
-	grid-area: image;
-	border-radius: 100%;
-	width: 30px;
-	height: 30px;
 }
 
 .unseenDot {
@@ -38,15 +29,27 @@
 	width: 8px;
 	height: 8px;
 	position: absolute;
-	top: 12px;
-	left: 9px;
+	top: -1px;
+	left: -1px;
 	outline: 2px solid var(--theme-transparent);
 }
 
 .imageContainer {
+	place-self: center;
+	grid-area: image;
+	border-radius: 100%;
+	width: 30px;
+	height: 30px;
 	background-color: var(--bg-lightest);
 	display: grid;
 	place-items: center;
+	position: relative;
+}
+
+.itemImage {
+	width: 30px;
+	height: 30px;
+	border-radius: 100%;
 }
 
 .itemHeader {

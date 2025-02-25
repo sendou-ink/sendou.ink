@@ -254,10 +254,15 @@ export const action: ActionFunction = async ({ request, params }) => {
 			notify({
 				userIds: [data.userId],
 				notification: {
-					type: "SQ_ADDED_TO_GROUP",
+					type: "TO_ADDED_TO_TEAM",
 					meta: {
 						adderUsername: user.username,
+						tournamentId,
+						teamName: ownTeam.name,
+						tournamentName: tournament.ctx.name,
+						tournamentTeamId: ownTeam.id,
 					},
+					pictureUrl: tournament.logoSrc,
 				},
 			});
 

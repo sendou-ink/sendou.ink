@@ -89,7 +89,7 @@ export const action: ActionFunction = async ({ request }) => {
 			schema: editArtSchema,
 		});
 
-		editArt({
+		const editedArtId = editArt({
 			authorId: user.id,
 			artId,
 			description: data.description,
@@ -108,6 +108,8 @@ export const action: ActionFunction = async ({ request }) => {
 				type: "TAGGED_TO_ART",
 				meta: {
 					adderUsername: user.username,
+					adderDiscordId: user.discordId,
+					artId: editedArtId,
 				},
 			},
 		});
@@ -129,7 +131,7 @@ export const action: ActionFunction = async ({ request }) => {
 			schema: newArtSchema,
 		});
 
-		addNewArt({
+		const addedArtId = addNewArt({
 			authorId: user.id,
 			description: data.description,
 			url: fileName,
@@ -144,6 +146,8 @@ export const action: ActionFunction = async ({ request }) => {
 				type: "TAGGED_TO_ART",
 				meta: {
 					adderUsername: user.username,
+					adderDiscordId: user.discordId,
+					artId: addedArtId,
 				},
 			},
 		});

@@ -85,6 +85,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 					type: "BADGE_ADDED",
 					meta: {
 						badgeName: badge.displayName,
+						badgeId,
 					},
 				},
 			});

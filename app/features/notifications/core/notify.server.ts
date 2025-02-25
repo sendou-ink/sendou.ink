@@ -1,5 +1,10 @@
+import type { TFunction } from "i18next";
+import { WebPushError } from "web-push";
+import i18next from "../../../modules/i18n/i18next.server";
+import { logger } from "../../../utils/logger";
 import * as NotificationRepository from "../NotificationRepository.server";
 import type { Notification } from "../notifications-types";
+import { notificationLink } from "../notifications-utils";
 import webPush from "./webPush.server";
 
 // xxx: deduplicate notifications if someone e.g. spams invites to team (need key)
@@ -35,14 +40,45 @@ export async function notify({
 		console.error("Failed to notify users", e);
 	}
 
-	for (const subscription of await NotificationRepository.subscriptionsByUserIds(
-		userIds,
-	)) {
-		// xxx: send proper payload with msg text, icon & link (that opens correctly)
-		await webPush.sendNotification(subscription, JSON.stringify(notification));
+	const subscriptions =
+		await NotificationRepository.subscriptionsByUserIds(userIds);
+	if (subscriptions.length > 0) {
+		const t = await i18next.getFixedT("en-US", ["common"]);
 
-		// xxx: delete if not found or gone
+		for (const { id, subscription } of subscriptions) {
+			try {
+				await webPush.sendNotification(
+					subscription,
+					JSON.stringify(pushNotificationOptions(notification, t)),
+				);
+			} catch (err) {
+				if (!(err instanceof WebPushError)) {
+					logger.error("Failed to send push notification (unknown error)", err);
+					// if we get "Not Found" or "Gone" we should delete the subscription as it is expired or no longer valid
+				} else if (err.statusCode === 404 || err.statusCode === 410) {
+					await NotificationRepository.deleteSubscriptionById(id);
+				} else {
+					logger.error("Failed to send push notification", err);
+				}
+			}
+		}
 	}
+}
 
-	// bust cache for affected user ids
+function pushNotificationOptions(
+	notification: Notification,
+	t: TFunction<["common"], undefined>,
+): Parameters<ServiceWorkerRegistration["showNotification"]>[1] & {
+	title: string;
+} {
+	return {
+		title: t(`common:notifications.title.${notification.type}`),
+		body: t(
+			`common:notifications.text.${notification.type}`,
+			// @ts-expect-error: not every notification has meta but it is ok
+			notification.meta,
+		),
+		icon: notification.pictureUrl ?? "/static-assets/img/app-icon.png",
+		data: { url: notificationLink(notification) },
+	};
 }

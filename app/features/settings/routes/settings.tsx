@@ -24,6 +24,8 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
+// xxx: also explain you might need to enable push notifications on OS level
+
 export default function SettingsPage() {
 	const user = useUser();
 	const { t } = useTranslation(["common"]);
@@ -199,7 +201,7 @@ function PushNotificationsEnabler() {
 					onClick={askPermission}
 				>
 					{notificationsPermsGranted === "default" ||
-					notificationsPermsGranted === "denied"
+					notificationsPermsGranted === "denied" // xxx: if denied, transform to popover -> now just non working button
 						? "Enable"
 						: "Not supported by your browser"}
 				</Button>
