@@ -562,7 +562,7 @@ async function lastMonthSuggestions() {
 }
 
 async function thisMonthsSuggestions() {
-	const usersInPlus = (await UserRepository.findAllPlusMembers()).filter(
+	const usersInPlus = (await UserRepository.findAllPlusServerMembers()).filter(
 		(u) => u.id !== ADMIN_ID,
 	);
 	const range = nextNonCompletedVoting(new Date());
@@ -2330,6 +2330,7 @@ async function adminNotifications() {
 		},
 		{
 			type: "PLUS_VOTING_STARTED",
+			meta: { seasonNth: 1 },
 		},
 		{
 			type: "TO_CHECK_IN_OPENED",

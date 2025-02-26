@@ -61,7 +61,7 @@
 	"notifications.title.BADGE_MANAGER_ADDED": "Manager Rights Granted",
 	"notifications.text.BADGE_MANAGER_ADDED": "You got manager rights for badge {{badgeName}}",
 	"notifications.title.PLUS_VOTING_STARTED": "Plus Voting Started",
-	"notifications.text.PLUS_VOTING_STARTED": "Plus Server voting started",
+	"notifications.text.PLUS_VOTING_STARTED": "Plus Server voting of season {{seasonNth}} started",
 	"notifications.title.PLUS_SUGGESTION_ADDED": "Plus Suggestion Added",
 	"notifications.text.PLUS_SUGGESTION_ADDED": "You were suggested to +{{tier}}",
 	"notifications.title.TAGGED_TO_ART": "Tagged in Art",

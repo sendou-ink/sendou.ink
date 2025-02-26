@@ -42,13 +42,18 @@ export type Notification =
 			"BADGE_MANAGER_ADDED",
 			{ badgeName: string; badgeId: number }
 	  >
-	| NotificationItem<"PLUS_VOTING_STARTED"> // xxx: set routine
+	| NotificationItem<
+			"PLUS_VOTING_STARTED",
+			{
+				seasonNth: number;
+			}
+	  >
 	| NotificationItem<"PLUS_SUGGESTION_ADDED", { tier: number }>
 	| NotificationItem<
 			"TAGGED_TO_ART",
 			{ adderUsername: string; adderDiscordId: string; artId: number }
 	  >
-	| NotificationItem<"SEASON_STARTED", { seasonNth: number }>; // xxx: set routine
+	| NotificationItem<"SEASON_STARTED", { seasonNth: number }>;
 
 type NotificationItem<
 	T extends string,

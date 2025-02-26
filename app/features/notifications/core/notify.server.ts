@@ -75,7 +75,6 @@ function pushNotificationOptions(
 		title: t(`common:notifications.title.${notification.type}`),
 		body: t(
 			`common:notifications.text.${notification.type}`,
-			// @ts-expect-error: not every notification has meta but it is ok
 			notification.meta,
 		),
 		icon: notification.pictureUrl ?? "/static-assets/img/app-icon.png",

@@ -28,11 +28,7 @@ export function NotificationItem({
 				{!notification.seen ? <div className={styles.unseenDot} /> : null}
 			</NotificationImage>
 			<div className={styles.itemHeader}>
-				{t(
-					`common:notifications.text.${notification.type}`,
-					// @ts-expect-error: not every notification has meta but it is ok
-					notification.meta,
-				)}
+				{t(`common:notifications.text.${notification.type}`, notification.meta)}
 			</div>
 			<div className={styles.timestamp}>
 				{formatDistance(

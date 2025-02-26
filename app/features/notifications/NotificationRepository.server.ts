@@ -12,7 +12,6 @@ export function insert(
 			.insertInto("Notification")
 			.values({
 				...notification,
-				// @ts-expect-error: not every notification has meta but it is ok
 				meta: notification.meta ? JSON.stringify(notification.meta) : null,
 			})
 			.returning("id")
@@ -55,6 +54,14 @@ export function findByUserId(
 		.execute() as Promise<
 		Array<Notification & { id: number; createdAt: number; seen: number }>
 	>;
+}
+
+export function findAllByType<T extends Notification["type"]>(type: T) {
+	return db
+		.selectFrom("Notification")
+		.select(["type", "meta", "pictureUrl"])
+		.where("type", "=", type)
+		.execute() as Promise<Array<Extract<Notification, { type: T }>>>;
 }
 
 export function markAsSeen({
