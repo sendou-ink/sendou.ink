@@ -744,4 +744,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "shinygyra",
 		authorDiscordId: "528851510222782474",
 	},
+  {
+    displayName: "[OMD] Bingo Club",
+    fileName: "bingo-club",
+    authorDiscordId: "751912670403362836"
+  }
 ];
