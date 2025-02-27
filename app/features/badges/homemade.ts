@@ -15,8 +15,38 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Gatorlan - Side of Salmon",
+		fileName: "gatorlan_salmon_1st",
+		authorDiscordId: "285504780154044416",
+	},
+	{
 		displayName: "Reach",
 		fileName: "reachbadge",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Banning Legends",
+		fileName: "noentrygold",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Banning Legends 2nd",
+		fileName: "noentrysilver",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Banning Legends 3rd",
+		fileName: "noentrybronze",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Weapon Lockdown",
+		fileName: "octoshot",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Tony Tony Challenge",
+		fileName: "tonytonyc",
 		authorDiscordId: "338806780446638082",
 	},
 	{
@@ -125,7 +155,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "338806780446638082",
 	},
 	{
-		displayName: "BrushMommy's Birthday Bash",
+		displayName: "Golden Brush Award",
 		fileName: "goldenbrush",
 		authorDiscordId: "338806780446638082",
 	},
@@ -665,8 +695,53 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "528851510222782474",
 	},
 	{
+		displayName: "Barnacle Bash",
+		fileName: "barnacle-bash",
+		authorDiscordId: "181270348262539265",
+	},
+	{
 		displayName: "A Splatoon Brazil Tournament",
 		fileName: "brflgx",
 		authorDiscordId: "701870845550657677",
+	},
+	{
+		displayName: "Turf War Tomatoes",
+		fileName: "saladbowl_tomato",
+		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "Eggs and Salad: Birthday Edition",
+		fileName: "birthday_cake",
+		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "Wheel of Names",
+		fileName: "ferris_wheel",
+		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "Revo'Cup",
+		fileName: "revocup",
+		authorDiscordId: "309327923129745409",
+	},
+	{
+		displayName: "Soul League (Div 1)",
+		fileName: "soulcupgold",
+		authorDiscordId: "309327923129745409",
+	},
+	{
+		displayName: "Soul League (Other Div)",
+		fileName: "soulcupsilver",
+		authorDiscordId: "309327923129745409",
+	},
+	{
+		displayName: "Level Up x2 - Leveled Up!",
+		fileName: "gyra",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Level Up: Shiny Hunt x2 - Leveled Up!",
+		fileName: "shinygyra",
+		authorDiscordId: "528851510222782474",
 	},
 ];

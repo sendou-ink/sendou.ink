@@ -18,6 +18,5 @@
 	"forms.title.weaponsTeamTwo": "Оружие (Команда 2)",
 	"forms.title.weapon": "Оружие",
 	"forms.action.addMatch": "Добавить матч",
-	"forms.action.deleteMatch": "Удалить матч",
-	"noVods": "Видео по данному фильтру не найдено. Мы что-то упускаем? Напишите Sendou на Discord, чтобы получить разрешение на загрузку YouTube видео."
+	"forms.action.deleteMatch": "Удалить матч"
 }

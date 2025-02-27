@@ -110,6 +110,7 @@
 	"looking.groups.adder.error": "That user is already in a group",
 	"looking.groups.adder.others": "Others",
 	"looking.groups.adder.inviteLink": "Invite link",
+	"looking.groups.adder.select": "Select user...",
 	"looking.groups.editNote": "Edit note",
 	"looking.groups.addNote": "Add note",
 	"looking.replay": "Replay",

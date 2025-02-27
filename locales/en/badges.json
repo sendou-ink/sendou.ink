@@ -8,5 +8,6 @@
 	"managedBy": "Managed by {{users}}",
 	"madeBy": "made by {{user}}",
 	"own.divider": "Managed badges",
-	"other.divider": "Other badges"
+	"other.divider": "Other badges",
+	"noBadgesFound": "No badges matching your search"
 }

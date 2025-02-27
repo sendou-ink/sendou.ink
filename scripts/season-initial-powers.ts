@@ -1,8 +1,8 @@
 import "dotenv/config";
 import { ordinal } from "openskill";
-import { sql } from "~/db/sql";
+import { db, sql } from "~/db/sql";
 import type { Skill } from "~/db/types";
-import type { TierName } from "~/features/mmr/mmr-constants";
+import { TIERS, type TierName } from "~/features/mmr/mmr-constants";
 import { freshUserSkills } from "~/features/mmr/tiered.server";
 import { addInitialSkill } from "~/features/sendouq/queries/addInitialSkill.server";
 import invariant from "~/utils/invariant";
@@ -67,10 +67,60 @@ const TIER_TO_NEW_TIER: Record<TierName, TierName> = {
 	LEVIATHAN: "DIAMOND",
 };
 
-const allSkills = Object.entries(freshUserSkills(nth - 1).userSkills)
-	.map(([userId, skill]) => ({ userId: Number(userId), ...skill }))
-	.filter((s) => !s.approximate)
-	.sort((a, b) => b.ordinal - a.ordinal);
+// - For +1 & +2 members, consider the last 3 seasons
+// - For +3 members, consider the last 2 seasons
+// - For non-plus members, consider the last season only
+const getAllSkills = async () => {
+	const skills = [
+		freshUserSkills(nth - 1).userSkills,
+		freshUserSkills(nth - 2).userSkills,
+		freshUserSkills(nth - 3).userSkills,
+	];
+
+	const plusServerMembers = await db
+		.selectFrom("PlusTier")
+		.select(["PlusTier.userId", "PlusTier.tier as plusTier"])
+		.execute();
+
+	const result: (typeof skills)[number] = {};
+
+	for (const member of plusServerMembers) {
+		const toConsider =
+			member.plusTier === 1 || member.plusTier === 2
+				? skills
+				: skills.slice(0, 2);
+
+		const bestTier = toConsider.reduce(
+			(acc, cur, idx) => {
+				const seasonsSkill = cur[member.userId!];
+				if (!seasonsSkill) {
+					return acc;
+				}
+
+				const newIdx = TIERS.findIndex(
+					(t) => t.name === seasonsSkill.tier.name,
+				);
+				const oldIdx = TIERS.findIndex((t) => t.name === acc?.name);
+
+				return oldIdx === -1 || newIdx < oldIdx
+					? { name: seasonsSkill.tier.name, idx }
+					: acc;
+			},
+			null as null | { name: TierName; idx: number },
+		);
+
+		if (bestTier) {
+			result[member.userId] = toConsider[bestTier.idx][member.userId!];
+		}
+	}
+
+	return Object.entries({ ...skills[0], ...result })
+		.map(([userId, skill]) => ({ userId: Number(userId), ...skill }))
+		.filter((s) => !s.approximate)
+		.sort((a, b) => b.ordinal - a.ordinal);
+};
+const allSkills = await getAllSkills();
+
 const skillsToConsider = allSkills.filter((s) =>
 	Object.values(TIER_TO_NEW_TIER).includes(s.tier.name),
 );

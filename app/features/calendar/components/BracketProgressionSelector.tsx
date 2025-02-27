@@ -10,6 +10,7 @@ import { SendouSwitch } from "~/components/elements/Switch";
 import { PlusIcon } from "~/components/icons/Plus";
 import { TOURNAMENT } from "~/features/tournament";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { defaultBracketSettings } from "../../tournament/tournament-utils";
 
 const defaultBracket = (): Progression.InputBracket => ({
 	id: nanoid(),
@@ -154,7 +155,15 @@ function TournamentFormatBracketSelector({
 	const isFirstBracket = count === 1;
 
 	const updateBracket = (newProps: Partial<Progression.InputBracket>) => {
-		onChange({ ...bracket, ...newProps });
+		const defaultSettings = newProps.type
+			? defaultBracketSettings(newProps.type)
+			: undefined;
+
+		onChange({
+			...bracket,
+			...newProps,
+			settings: newProps.settings ?? defaultSettings ?? bracket.settings,
+		});
 	};
 
 	return (
@@ -250,7 +259,10 @@ function TournamentFormatBracketSelector({
 						</Label>
 						<SendouSwitch
 							id={createId("thirdPlaceMatch")}
-							isSelected={Boolean(bracket.settings.thirdPlaceMatch)}
+							isSelected={Boolean(
+								bracket.settings.thirdPlaceMatch ??
+									TOURNAMENT.SE_DEFAULT_HAS_THIRD_PLACE_MATCH,
+							)}
 							onChange={(isSelected) =>
 								updateBracket({
 									settings: {
@@ -268,7 +280,10 @@ function TournamentFormatBracketSelector({
 					<div>
 						<Label htmlFor="teamsPerGroup">Teams per group</Label>
 						<select
-							value={bracket.settings.teamsPerGroup ?? 4}
+							value={
+								bracket.settings.teamsPerGroup ??
+								TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP
+							}
 							onChange={(e) =>
 								updateBracket({
 									settings: {
@@ -294,7 +309,10 @@ function TournamentFormatBracketSelector({
 					<div>
 						<Label htmlFor="swissGroupCount">Groups count</Label>
 						<select
-							value={bracket.settings.groupCount ?? 1}
+							value={
+								bracket.settings.groupCount ??
+								TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT
+							}
 							onChange={(e) =>
 								updateBracket({
 									settings: {
@@ -322,7 +340,10 @@ function TournamentFormatBracketSelector({
 					<div>
 						<Label htmlFor="swissRoundCount">Round count</Label>
 						<select
-							value={bracket.settings.roundCount ?? 5}
+							value={
+								bracket.settings.roundCount ??
+								TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT
+							}
 							onChange={(e) =>
 								updateBracket({
 									settings: {

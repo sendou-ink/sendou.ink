@@ -920,15 +920,14 @@ function calendarEventWithToTools(
 							type: "swiss",
 							name: "Swiss",
 							requiresCheckIn: false,
-							settings: {},
+							settings: {
+								groupCount: 2,
+								roundCount: 4,
+							},
 						},
 					],
 					enableNoScreenToggle: true,
 					isRanked: false,
-					swiss: {
-						groupCount: 2,
-						roundCount: 4,
-					},
 				}
 			: event === "SOS"
 				? {

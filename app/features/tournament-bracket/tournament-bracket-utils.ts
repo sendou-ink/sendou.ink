@@ -206,8 +206,23 @@ export function pickInfoText({
 	return "";
 }
 
-export function groupNumberToLetter(groupNumber: number) {
-	return String.fromCharCode(65 + groupNumber - 1).toUpperCase();
+/**
+ * Converts a group number to its corresponding letter representation.
+ *
+ * The function takes a one-based group number and converts it to a string
+ * of uppercase letters, similar to how Excel columns are labeled (e.g., 1 -> 'A', 26 -> 'Z', 27 -> 'AA').
+ *
+ * @param groupNumber - The one-based group number to convert.
+ * @returns The letter representation of the group number.
+ */
+export function groupNumberToLetters(groupNumber: number) {
+	let letters = "";
+	let num = groupNumber - 1; // Adjust for one-based input
+	while (num >= 0) {
+		letters = String.fromCharCode((num % 26) + 65) + letters;
+		num = Math.floor(num / 26) - 1;
+	}
+	return letters;
 }
 
 export function isSetOverByResults({

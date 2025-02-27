@@ -18,6 +18,5 @@
 	"forms.title.weaponsTeamTwo": "Armes (Équipe 2)",
 	"forms.title.weapon": "Arme",
 	"forms.action.addMatch": "Ajouter un match",
-	"forms.action.deleteMatch": "Effacer un match",
-	"noVods": "Aucune vidéos trouvée correspondant à ces critères. Avons nous manqué quelque chose ? Contactez Sendou sur Discord pour obtenir la permission de soumettre des vidéos Youtube."
+	"forms.action.deleteMatch": "Effacer un match"
 }

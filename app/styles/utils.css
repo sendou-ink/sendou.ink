@@ -330,6 +330,10 @@
 	margin-block: var(--s-4);
 }
 
+.my-24 {
+	margin-block: var(--s-24);
+}
+
 .m-0-auto {
 	margin: 0 auto;
 }
