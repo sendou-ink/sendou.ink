@@ -1,5 +1,7 @@
+import { sub } from "date-fns";
 import { db } from "~/db/sql";
 import type { NotificationSubscription, TablesInsertable } from "~/db/tables";
+import { dateToDatabaseTimestamp } from "../../utils/dates";
 import { NOTIFICATIONS } from "./notifications-contants";
 import type { Notification } from "./notifications-types";
 
@@ -77,6 +79,17 @@ export function markAsSeen({
 		.where("NotificationUser.notificationId", "in", notificationIds)
 		.where("NotificationUser.userId", "=", userId)
 		.execute();
+}
+
+export function deleteOld() {
+	return db
+		.deleteFrom("Notification")
+		.where(
+			"createdAt",
+			"<",
+			dateToDatabaseTimestamp(sub(new Date(), { days: 14 })),
+		)
+		.executeTakeFirst();
 }
 
 export function addSubscription(args: {

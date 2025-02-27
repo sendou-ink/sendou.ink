@@ -46,6 +46,7 @@
 	"notifications.loading": "Loading...",
 	"notifications.seeAll": "See all",
 	"notifications.fullList.explanation": "Max of 100 notifications shown. Notifications older than 14 days are automatically deleted.",
+	"notifications.managePush": "Manage push notifications",
 	"notifications.title.SQ_ADDED_TO_GROUP": "Added to SendouQ Group",
 	"notifications.text.SQ_ADDED_TO_GROUP": "Added to a group by {{adderUsername}}",
 	"notifications.title.SQ_NEW_MATCH": "New SendouQ Match",
@@ -107,6 +108,8 @@
 	"actions.upload": "Upload",
 	"actions.clickHere": "Click here",
 	"actions.goBack": "Go back",
+	"actions.enable": "Enable",
+	"actions.disable": "Disable",
 
 	"maps.createMapList": "Create map list",
 	"maps.halfSz": "50% SZ",
@@ -273,5 +276,10 @@
 	"fc.title": "Friend code",
 
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.label": "Builds: Disable automatic ability sorting",
-	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText": "Outside of your profile page, build abilities are sorted so that same abilities are next to each other. This setting allows you to see the abilities in the order they were authored everywhere."
+	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText": "Outside of your profile page, build abilities are sorted so that same abilities are next to each other. This setting allows you to see the abilities in the order they were authored everywhere.",
+	"settings.notifications.title": "Push notifications",
+	"settings.notifications.description": "Receive push notifications to your device even if you don't currently have sendou.ink open.",
+	"settings.notifications.disableInfo": "To disable push notifications check your browser settings",
+	"settings.notifications.browserNotSupported": "Push notifications are not supported on this browser",
+	"settings.notifications.permissionDenied": "Push notifications were denied. Check your browser settings to re-enable"
 }

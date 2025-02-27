@@ -31,12 +31,12 @@ export type Notification =
 			}
 	  >
 	| NotificationItem<
-			"TO_CHECK_IN_OPENED", // xxx: set routine
+			"TO_CHECK_IN_OPENED",
 			{
 				tournamentId: number;
 				tournamentName: string;
 			}
-	  > // xxx: also TO_BRACKET_CHECKIN_STARTED
+	  >
 	| NotificationItem<"BADGE_ADDED", { badgeName: string; badgeId: number }>
 	| NotificationItem<
 			"BADGE_MANAGER_ADDED",

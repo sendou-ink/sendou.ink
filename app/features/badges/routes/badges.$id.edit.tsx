@@ -13,7 +13,7 @@ import { useUser } from "~/features/auth/core/user";
 import { requireUserId } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { canEditBadgeManagers, canEditBadgeOwners } from "~/permissions";
-import { atOrError } from "~/utils/arrays";
+import { atOrError, diff } from "~/utils/arrays";
 import {
 	notFoundIfFalsy,
 	parseRequestPayload,
@@ -72,15 +72,15 @@ export const action: ActionFunction = async ({ request, params }) => {
 				}),
 			);
 
-			// const oldOwners = await BadgeRepository.findOwnersByBadgeId(badgeId);
+			const oldOwners = await BadgeRepository.findOwnersByBadgeId(badgeId);
 
 			await BadgeRepository.replaceOwners({ badgeId, ownerIds: data.ownerIds });
 
-			// const diff = [];
-
-			// xxx: implement BADGE_ADDED
 			notify({
-				userIds: [],
+				userIds: diff(
+					oldOwners.map((o) => o.id),
+					data.ownerIds,
+				),
 				notification: {
 					type: "BADGE_ADDED",
 					meta: {

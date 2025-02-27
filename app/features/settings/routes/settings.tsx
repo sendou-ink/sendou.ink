@@ -13,6 +13,8 @@ import { languages } from "~/modules/i18n/config";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { SETTINGS_PAGE, navIconUrl } from "~/utils/urls";
+import { SendouButton } from "../../../components/elements/Button";
+import { SendouPopover } from "../../../components/elements/Popover";
 import { action } from "../actions/settings.server";
 export { action };
 
@@ -23,8 +25,6 @@ export const handle: SendouRouteHandle = {
 		type: "IMAGE",
 	}),
 };
-
-// xxx: also explain you might need to enable push notifications on OS level
 
 export default function SettingsPage() {
 	const user = useUser();
@@ -135,6 +135,7 @@ function ThemeSelector() {
 
 // adapted from https://pqvst.com/2023/11/21/web-push-notifications/
 function PushNotificationsEnabler() {
+	const { t } = useTranslation(["common"]);
 	const [notificationsPermsGranted, setNotificationsPermsGranted] =
 		React.useState<NotificationPermission | "not-supported">("default");
 
@@ -185,30 +186,39 @@ function PushNotificationsEnabler() {
 		});
 	}
 
-	// xxx: disable, probably enough to do in browser only, serverside cleaning later
 	return (
 		<div>
-			<Label>Receive push notifications</Label>
+			<Label>{t("common:settings.notifications.title")}</Label>
 			{notificationsPermsGranted === "granted" ? (
-				<Button size="tiny" variant="minimal">
-					Disable
-				</Button>
-			) : (
-				<Button
-					size="tiny"
-					variant="minimal"
-					disabled={notificationsPermsGranted === "not-supported"}
-					onClick={askPermission}
+				<SendouPopover
+					trigger={
+						<SendouButton size="small" variant="minimal">
+							{t("common:actions.disable")}
+						</SendouButton>
+					}
 				>
-					{notificationsPermsGranted === "default" ||
-					notificationsPermsGranted === "denied" // xxx: if denied, transform to popover -> now just non working button
-						? "Enable"
-						: "Not supported by your browser"}
+					{t("common:settings.notifications.disableInfo")}
+				</SendouPopover>
+			) : notificationsPermsGranted === "not-supported" ||
+				notificationsPermsGranted === "denied" ? (
+				<SendouPopover
+					trigger={
+						<SendouButton size="small" variant="minimal">
+							{t("common:actions.enable")}
+						</SendouButton>
+					}
+				>
+					{notificationsPermsGranted === "not-supported"
+						? t("common:settings.notifications.browserNotSupported")
+						: t("common:settings.notifications.permissionDenied")}
+				</SendouPopover>
+			) : (
+				<Button size="tiny" variant="minimal" onClick={askPermission}>
+					{t("common:actions.enable")}
 				</Button>
 			)}
-			{/* xxx: write some better text here */}
 			<FormMessage type="info">
-				Receive notifications about new builds and other important updates.
+				{t("common:settings.notifications.description")}
 			</FormMessage>
 		</div>
 	);

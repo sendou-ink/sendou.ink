@@ -1,3 +1,4 @@
+import useSWR from "swr";
 import useSWRImmutable from "swr/immutable";
 import type { EventsWithMapPoolsLoaderData } from "~/features/calendar/routes/map-pool-events";
 import type { PatronsListLoaderData } from "~/features/front-page/routes/patrons-list";
@@ -85,11 +86,10 @@ export function usePatrons() {
 
 export function useNotifications() {
 	const user = useUser();
-	const { data, error, mutate, isValidating } =
-		useSWRImmutable<NotificationsLoaderData>(
-			user ? NOTIFICATIONS_PEAK_ROUTE : null,
-			fetcher(NOTIFICATIONS_PEAK_ROUTE),
-		);
+	const { data, error, mutate, isValidating } = useSWR<NotificationsLoaderData>(
+		user ? NOTIFICATIONS_PEAK_ROUTE : null,
+		fetcher(NOTIFICATIONS_PEAK_ROUTE),
+	);
 
 	return {
 		notifications: data?.notifications,

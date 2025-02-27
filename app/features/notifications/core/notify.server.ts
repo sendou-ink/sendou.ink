@@ -1,13 +1,13 @@
 import type { TFunction } from "i18next";
+import pLimit from "p-limit";
 import { WebPushError } from "web-push";
+import type { NotificationSubscription } from "../../../db/tables";
 import i18next from "../../../modules/i18n/i18next.server";
 import { logger } from "../../../utils/logger";
 import * as NotificationRepository from "../NotificationRepository.server";
 import type { Notification } from "../notifications-types";
 import { notificationLink } from "../notifications-utils";
 import webPush from "./webPush.server";
-
-// xxx: deduplicate notifications if someone e.g. spams invites to team (need key)
 
 /**
  * Create notifications both in the database and send push notifications to users (if enabled).
@@ -28,6 +28,10 @@ export async function notify({
 		return;
 	}
 
+	if (isNotificationAlreadySent(notification)) {
+		return;
+	}
+
 	try {
 		await NotificationRepository.insert(
 			notification,
@@ -45,22 +49,64 @@ export async function notify({
 	if (subscriptions.length > 0) {
 		const t = await i18next.getFixedT("en-US", ["common"]);
 
-		for (const { id, subscription } of subscriptions) {
-			try {
-				await webPush.sendNotification(
-					subscription,
-					JSON.stringify(pushNotificationOptions(notification, t)),
-				);
-			} catch (err) {
-				if (!(err instanceof WebPushError)) {
-					logger.error("Failed to send push notification (unknown error)", err);
-					// if we get "Not Found" or "Gone" we should delete the subscription as it is expired or no longer valid
-				} else if (err.statusCode === 404 || err.statusCode === 410) {
-					await NotificationRepository.deleteSubscriptionById(id);
-				} else {
-					logger.error("Failed to send push notification", err);
-				}
-			}
+		const limit = pLimit(50);
+
+		await Promise.all(
+			subscriptions.map(({ id, subscription }) =>
+				limit(() =>
+					sendPushNotification({
+						subscription,
+						subscriptionId: id,
+						notification,
+						t,
+					}),
+				),
+			),
+		);
+	}
+}
+
+const sentNotifications = new Set<string>();
+
+// deduplicates notifications as a failsafe & anti-abuse mechanism
+function isNotificationAlreadySent(notification: Notification) {
+	const key = `${notification.type}-${JSON.stringify(notification.meta)}`;
+	if (sentNotifications.has(key)) {
+		return true;
+	}
+	sentNotifications.add(key);
+
+	if (sentNotifications.size > 10_000) {
+		sentNotifications.clear();
+	}
+
+	return false;
+}
+
+async function sendPushNotification({
+	subscription,
+	subscriptionId,
+	notification,
+	t,
+}: {
+	subscription: NotificationSubscription;
+	subscriptionId: number;
+	notification: Notification;
+	t: TFunction<["common"], undefined>;
+}) {
+	try {
+		await webPush.sendNotification(
+			subscription,
+			JSON.stringify(pushNotificationOptions(notification, t)),
+		);
+	} catch (err) {
+		if (!(err instanceof WebPushError)) {
+			logger.error("Failed to send push notification (unknown error)", err);
+			// if we get "Not Found" or "Gone" we should delete the subscription as it is expired or no longer valid
+		} else if (err.statusCode === 404 || err.statusCode === 410) {
+			await NotificationRepository.deleteSubscriptionById(subscriptionId);
+		} else {
+			logger.error("Failed to send push notification", err);
 		}
 	}
 }
