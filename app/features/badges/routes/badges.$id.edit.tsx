@@ -155,8 +155,14 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 			<div className="stack sm">
 				<h3 className="badges-edit__small-header">Managers</h3>
 				<div className="text-center my-4">
-					<Label className="stack vertical items-center">Add new manager</Label>
+					<Label
+						className="stack vertical items-center"
+						htmlFor="add-new-manager"
+					>
+						Add new manager
+					</Label>
 					<UserSearch
+						id="add-new-manager"
 						className="mx-auto"
 						inputName="new-manager"
 						onChange={(user) => {
@@ -219,8 +225,11 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 			<div className="stack sm">
 				<h3 className="badges-edit__small-header">Owners</h3>
 				<div className="text-center my-4">
-					<Label className="stack items-center">Add new owner</Label>
+					<Label className="stack items-center" htmlFor="add-new-owner">
+						Add new owner
+					</Label>
 					<UserSearch
+						id="add-new-owner"
 						className="mx-auto"
 						inputName="new-owner"
 						key={userInputKey}

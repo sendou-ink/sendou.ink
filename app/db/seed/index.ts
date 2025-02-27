@@ -172,7 +172,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	groups,
 	friendCodes,
 	lfgPosts,
-	adminNotifications,
+	notifications,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -645,7 +645,12 @@ function badgesToUsers() {
 			});
 			i++
 		) {
-			const userToGetABadge = userIds.shift()!;
+			let userToGetABadge = userIds.shift()!;
+			if (userToGetABadge === NZAP_TEST_ID && id === 1) {
+				// e2e test assumes N-ZAP does not have badge id = 1
+				userToGetABadge = userIds.shift()!;
+			}
+
 			sql
 				.prepare(
 					`insert into "TournamentBadgeOwner" ("badgeId", "userId") values ($id, $userId)`,
@@ -2279,7 +2284,7 @@ async function lfgPosts() {
 	});
 }
 
-async function adminNotifications() {
+async function notifications() {
 	const values: Notification[] = [
 		{
 			type: "PLUS_SUGGESTION_ADDED",
@@ -2344,6 +2349,12 @@ async function adminNotifications() {
 		await NotificationRepository.insert(value, [
 			{
 				userId: ADMIN_ID,
+				seen: i <= 7 ? 1 : 0,
+			},
+		]);
+		await NotificationRepository.insert(value, [
+			{
+				userId: NZAP_TEST_ID,
 				seen: i <= 7 ? 1 : 0,
 			},
 		]);

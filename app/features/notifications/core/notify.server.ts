@@ -70,6 +70,11 @@ const sentNotifications = new Set<string>();
 
 // deduplicates notifications as a failsafe & anti-abuse mechanism
 function isNotificationAlreadySent(notification: Notification) {
+	// e2e tests should not be affected by this
+	if (process.env.NODE_ENV !== "production") {
+		return false;
+	}
+
 	const key = `${notification.type}-${JSON.stringify(notification.meta)}`;
 	if (sentNotifications.has(key)) {
 		return true;

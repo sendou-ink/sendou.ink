@@ -13,7 +13,8 @@ export function insert(
 		const inserted = await trx
 			.insertInto("Notification")
 			.values({
-				...notification,
+				type: notification.type,
+				pictureUrl: notification.pictureUrl,
 				meta: notification.meta ? JSON.stringify(notification.meta) : null,
 			})
 			.returning("id")
@@ -22,8 +23,8 @@ export function insert(
 		await trx
 			.insertInto("NotificationUser")
 			.values(
-				users.map((user) => ({
-					...user,
+				users.map(({ userId }) => ({
+					userId,
 					notificationId: inserted.id,
 				})),
 			)

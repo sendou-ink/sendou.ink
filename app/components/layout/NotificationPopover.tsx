@@ -46,6 +46,7 @@ export function NotificationPopover() {
 					<SendouButton
 						icon={<BellIcon />}
 						className="layout__header__button"
+						data-testid="notifications-button"
 					/>
 				}
 				popoverClassName={clsx(styles.popoverContainer, {
