@@ -20,7 +20,6 @@ import { BellIcon } from "../icons/Bell";
 import { RefreshIcon } from "../icons/Refresh";
 import styles from "./NotificationPopover.module.css";
 
-// xxx: mark as notifications seen after an open
 export function NotificationPopover() {
 	const location = useLocation();
 	const user = useUser();
