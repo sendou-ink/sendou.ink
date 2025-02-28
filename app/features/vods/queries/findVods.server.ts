@@ -3,6 +3,7 @@ import type { Video } from "~/db/types";
 import type { MainWeaponId, ModeShort, StageId } from "~/modules/in-game-lists";
 import { removeDuplicates } from "~/utils/arrays";
 import { parseDBArray, parseDBJsonArray } from "~/utils/sql";
+import { weaponIdToArrayWithAlts } from "../../../modules/in-game-lists/weapon-ids";
 import { VODS_PAGE_BATCH_SIZE } from "../vods-constants";
 import type { ListVod } from "../vods-types";
 
@@ -63,17 +64,22 @@ export function findVods({
 	const stmToUse = userId ? stmByUser : stm;
 
 	const vods = stmToUse.all({
-		weapon: weapon ?? null,
 		mode: mode ?? null,
 		stageId: stageId ?? null,
 		type: type ?? null,
 		userId: userId ?? null,
 	}) as any[];
 
+	const weaponIdsToFilterBy = weapon
+		? weaponIdToArrayWithAlts(Number(weapon) as MainWeaponId) // TODO: fix on caller side
+		: [];
+
 	return vods
 		.filter((vod) => {
-			if (!weapon) return true;
-			return parseDBArray(vod.weapons).includes(Number(weapon));
+			if (weaponIdsToFilterBy.length === 0) return true;
+			return parseDBArray(vod.weapons).some((weaponId: any) =>
+				weaponIdsToFilterBy.includes(weaponId),
+			);
 		})
 		.map(({ playerNames: playerNamesRaw, players: playersRaw, ...vod }) => {
 			const playerNames = parseDBArray(playerNamesRaw);
