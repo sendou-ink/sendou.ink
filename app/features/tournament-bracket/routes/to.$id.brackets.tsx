@@ -29,6 +29,7 @@ import {
 } from "~/features/mmr/mmr-utils.server";
 import { currentSeason } from "~/features/mmr/season";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
+import { notify } from "~/features/notifications/core/notify.server";
 import { TOURNAMENT, tournamentIdFromParams } from "~/features/tournament";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
@@ -156,6 +157,21 @@ export const action: ActionFunction = async ({ params, request }) => {
 					});
 				}
 			})();
+
+			notify({
+				userIds: seeding.flatMap((tournamentTeamId) =>
+					tournament.teamById(tournamentTeamId)!.members.map((m) => m.userId),
+				),
+				notification: {
+					type: "TO_BRACKET_STARTED",
+					meta: {
+						tournamentId,
+						bracketIdx: data.bracketIdx,
+						bracketName: bracket.name,
+						tournamentName: tournament.ctx.name,
+					},
+				},
+			});
 
 			break;
 		}

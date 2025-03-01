@@ -10,6 +10,7 @@ import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { getUser, requireUser } from "~/features/auth/core/user.server";
 import { currentSeason } from "~/features/mmr/season";
+import { notify } from "~/features/notifications/core/notify.server";
 import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import { useAutoRefresh } from "~/hooks/useAutoRefresh";
@@ -111,9 +112,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				userId: data.id,
 				role: "MANAGER",
 			});
+
 			await QRepository.refreshTrust({
 				trustGiverUserId: data.id,
 				trustReceiverUserId: user.id,
+			});
+
+			notify({
+				userIds: [data.id],
+				notification: {
+					type: "SQ_ADDED_TO_GROUP",
+					meta: {
+						adderUsername: user.username,
+					},
+				},
 			});
 
 			return null;

@@ -1,11 +1,8 @@
 import { OAuth2Strategy } from "remix-auth-oauth2";
 import { z } from "zod";
-import type { User } from "~/db/types";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
-
-export type LoggedInUser = User["id"];
 
 const partialDiscordUserSchema = z.object({
 	avatar: z.string().nullish(),

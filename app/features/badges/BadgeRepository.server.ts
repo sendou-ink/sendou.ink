@@ -32,6 +32,14 @@ export async function all() {
 	}));
 }
 
+export async function findById(badgeId: number) {
+	return db
+		.selectFrom("Badge")
+		.select(["Badge.displayName"])
+		.where("id", "=", badgeId)
+		.executeTakeFirst();
+}
+
 export async function findByOwnerId({
 	userId,
 	favoriteBadgeId,

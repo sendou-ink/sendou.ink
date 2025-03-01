@@ -28,6 +28,7 @@ import { CrossIcon } from "~/components/icons/Cross";
 import { useUser } from "~/features/auth/core/user";
 import { requireUser } from "~/features/auth/core/user.server";
 import { s3UploadHandler } from "~/features/img-upload";
+import { notify } from "~/features/notifications/core/notify.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import {
@@ -88,13 +89,29 @@ export const action: ActionFunction = async ({ request }) => {
 			schema: editArtSchema,
 		});
 
-		editArt({
+		const editedArtId = editArt({
 			authorId: user.id,
 			artId,
 			description: data.description,
 			isShowcase: data.isShowcase,
 			linkedUsers: data.linkedUsers,
 			tags: data.tags,
+		});
+
+		const newLinkedUsers = data.linkedUsers.filter(
+			(userId) => !existingArt.linkedUsers.includes(userId),
+		);
+
+		notify({
+			userIds: newLinkedUsers,
+			notification: {
+				type: "TAGGED_TO_ART",
+				meta: {
+					adderUsername: user.username,
+					adderDiscordId: user.discordId,
+					artId: editedArtId,
+				},
+			},
 		});
 	} else {
 		const uploadHandler = composeUploadHandlers(
@@ -114,13 +131,25 @@ export const action: ActionFunction = async ({ request }) => {
 			schema: newArtSchema,
 		});
 
-		addNewArt({
+		const addedArtId = addNewArt({
 			authorId: user.id,
 			description: data.description,
 			url: fileName,
 			validatedAt: user.patronTier ? dateToDatabaseTimestamp(new Date()) : null,
 			linkedUsers: data.linkedUsers,
 			tags: data.tags,
+		});
+
+		notify({
+			userIds: data.linkedUsers,
+			notification: {
+				type: "TAGGED_TO_ART",
+				meta: {
+					adderUsername: user.username,
+					adderDiscordId: user.discordId,
+					artId: addedArtId,
+				},
+			},
 		});
 	}
 
