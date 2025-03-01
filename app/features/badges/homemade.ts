@@ -744,4 +744,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "shinygyra",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "Good Morning Chat",
+		fileName: "gator",
+		authorDiscordId: "528851510222782474",
+	},
 ];
