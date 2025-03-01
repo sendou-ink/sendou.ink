@@ -103,7 +103,6 @@ async function sendPushNotification({
 	t: TFunction<["common"], undefined>;
 }) {
 	try {
-		logger.info("Sending...", subscription);
 		await webPush.sendNotification(
 			subscription,
 			JSON.stringify(pushNotificationOptions(notification, t)),
