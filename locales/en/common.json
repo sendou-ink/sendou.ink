@@ -46,7 +46,7 @@
 	"notifications.loading": "Loading...",
 	"notifications.seeAll": "See all",
 	"notifications.fullList.explanation": "Max of 100 notifications shown. Notifications older than 14 days are automatically deleted.",
-	"notifications.managePush": "Manage push notifications",
+	"notifications.managePush": "Push notifications",
 	"notifications.title.SQ_ADDED_TO_GROUP": "Added to SendouQ Group",
 	"notifications.text.SQ_ADDED_TO_GROUP": "Added to a group by {{adderUsername}}",
 	"notifications.title.SQ_NEW_MATCH": "New SendouQ Match",

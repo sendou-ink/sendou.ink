@@ -32,10 +32,12 @@ export async function notify({
 		return;
 	}
 
+	const dededuplicatedUserIds = Array.from(new Set(userIds));
+
 	try {
 		await NotificationRepository.insert(
 			notification,
-			userIds.map((userId) => ({
+			dededuplicatedUserIds.map((userId) => ({
 				userId,
 				seen: defaultSeenUserIds?.includes(userId) ? 1 : 0,
 			})),
@@ -44,8 +46,9 @@ export async function notify({
 		console.error("Failed to notify users", e);
 	}
 
-	const subscriptions =
-		await NotificationRepository.subscriptionsByUserIds(userIds);
+	const subscriptions = await NotificationRepository.subscriptionsByUserIds(
+		dededuplicatedUserIds,
+	);
 	if (subscriptions.length > 0) {
 		const t = await i18next.getFixedT("en-US", ["common"]);
 
@@ -100,6 +103,7 @@ async function sendPushNotification({
 	t: TFunction<["common"], undefined>;
 }) {
 	try {
+		logger.info("Sending...", subscription);
 		await webPush.sendNotification(
 			subscription,
 			JSON.stringify(pushNotificationOptions(notification, t)),
