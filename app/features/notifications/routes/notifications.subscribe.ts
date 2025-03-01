@@ -6,7 +6,6 @@ import { subscribeSchema } from "../notifications-schemas";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const user = await requireUser(request);
-
 	const data = await parseRequestPayload({
 		request,
 		schema: subscribeSchema,
