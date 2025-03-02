@@ -25,6 +25,16 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "285504780154044416",
 	},
 	{
+		displayName: "Gardevoir",
+		fileName: "krakenmarepoke",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Shiny Gardevoir",
+		fileName: "krakenmarepokeshiny",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "Reach",
 		fileName: "reachbadge",
 		authorDiscordId: "338806780446638082",
