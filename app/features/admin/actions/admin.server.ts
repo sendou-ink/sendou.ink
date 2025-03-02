@@ -21,7 +21,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	switch (data._action) {
 		case "MIGRATE": {
-			validate(isMod(user), "Admin needed", 401);
+			validate(isMod(user), "Admin needed");
 
 			await AdminRepository.migrate({
 				oldUserId: data["old-user"],
@@ -38,7 +38,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "FORCE_PATRON": {
-			validate(isAdmin(user), "Admin needed", 401);
+			validate(isAdmin(user), "Admin needed");
 
 			await AdminRepository.forcePatron({
 				id: data.user,
@@ -49,32 +49,32 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "CLEAN_UP": {
-			validate(isAdmin(user), "Admin needed", 401);
+			validate(isAdmin(user), "Admin needed");
 
 			// on purpose sync
 			AdminRepository.cleanUp();
 			break;
 		}
 		case "ARTIST": {
-			validate(isMod(user), "Mod needed", 401);
+			validate(isMod(user), "Mod needed");
 
 			makeArtist(data.user);
 			break;
 		}
 		case "VIDEO_ADDER": {
-			validate(isMod(user), "Mod needed", 401);
+			validate(isMod(user), "Mod needed");
 
 			await AdminRepository.makeVideoAdderByUserId(data.user);
 			break;
 		}
 		case "TOURNAMENT_ORGANIZER": {
-			validate(isMod(user), "Mod needed", 401);
+			validate(isMod(user), "Mod needed");
 
 			await AdminRepository.makeTournamentOrganizerByUserId(data.user);
 			break;
 		}
 		case "LINK_PLAYER": {
-			validate(isMod(user), "Mod needed", 401);
+			validate(isMod(user), "Mod needed");
 
 			await AdminRepository.linkUserAndPlayer({
 				userId: data.user,
@@ -84,7 +84,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "BAN_USER": {
-			validate(isMod(user), "Mod needed", 401);
+			validate(isMod(user), "Mod needed");
 
 			await AdminRepository.banUser({
 				bannedReason: data.reason ?? null,
@@ -106,7 +106,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "UNBAN_USER": {
-			validate(isMod(user), "Mod needed", 401);
+			validate(isMod(user), "Mod needed");
 
 			await AdminRepository.unbanUser(data.user);
 
@@ -120,7 +120,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "UPDATE_FRIEND_CODE": {
-			validate(isMod(user), "Mod needed", 401);
+			validate(isMod(user), "Mod needed");
 
 			await UserRepository.insertFriendCode({
 				friendCode: data.friendCode,

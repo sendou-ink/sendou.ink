@@ -118,7 +118,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 			startTimes: event.startTimes,
 		}),
 		"Unauthorized",
-		401,
 	);
 
 	await CalendarRepository.upsertReportedScores({

@@ -41,9 +41,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const tournament = await tournamentFromDB({ tournamentId, user });
 
 	const validateIsTournamentAdmin = () =>
-		validate(tournament.isAdmin(user), "Unauthorized", 401);
+		validate(tournament.isAdmin(user), "Unauthorized");
 	const validateIsTournamentOrganizer = () =>
-		validate(tournament.isOrganizer(user), "Unauthorized", 401);
+		validate(tournament.isOrganizer(user), "Unauthorized");
 
 	switch (data._action) {
 		case "ADD_TEAM": {

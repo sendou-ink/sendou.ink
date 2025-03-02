@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { dbInsertUsers, dbReset, wrappedAction } from "~/utils/Test";
+import {
+	assertResponseErrored,
+	dbInsertUsers,
+	dbReset,
+	wrappedAction,
+} from "~/utils/Test";
 import { action as teamIndexPageAction } from "../actions/t.server";
 import { action as _editTeamAction } from "../routes/t.$customUrl.edit";
 import type { createTeamSchema, editTeamSchema } from "../team-schemas.server";
@@ -43,15 +48,15 @@ describe("team creation", () => {
 	it("prevents editing team name to only special characters", async () => {
 		await createTeamAction({ name: "Team 1" }, { user: "regular" });
 
-		await expect(
-			editTeamAction(
-				{
-					_action: "EDIT",
-					name: "𝓢𝓲𝓵",
-					...DEFAULT_FIELDS,
-				},
-				{ user: "regular", params: { customUrl: "team-1" } },
-			),
-		).rejects.toThrow("status code: 400");
+		const response = await editTeamAction(
+			{
+				_action: "EDIT",
+				name: "𝓢𝓲𝓵",
+				...DEFAULT_FIELDS,
+			},
+			{ user: "regular", params: { customUrl: "team-1" } },
+		);
+
+		assertResponseErrored(response);
 	});
 });

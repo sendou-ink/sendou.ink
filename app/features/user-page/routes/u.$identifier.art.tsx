@@ -37,7 +37,7 @@ export const action: ActionFunction = async ({ request }) => {
 	// but the idea is that storage is cheap anyway and if needed later
 	// then we can have a routine that checks all the images still current and nukes the rest
 	const artToDelete = findArtById(data.id);
-	validate(artToDelete?.authorId === user.id, "Insufficient permissions", 401);
+	validate(artToDelete?.authorId === user.id, "Insufficient permissions");
 
 	deleteArt(data.id);
 

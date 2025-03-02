@@ -58,7 +58,7 @@ export const action: ActionFunction = async ({ request }) => {
 		parseAsync: true,
 	});
 
-	validate(canAddNewEvent(user), "Not authorized", 401);
+	validate(canAddNewEvent(user), "Not authorized");
 
 	const startTimes = data.date.map((date) => dateToDatabaseTimestamp(date));
 	const commonArgs = {
@@ -129,15 +129,14 @@ export const action: ActionFunction = async ({ request }) => {
 				tournamentId: eventToEdit.tournamentId,
 				user,
 			});
-			validate(!tournament.hasStarted, "Tournament has already started", 400);
+			validate(!tournament.hasStarted, "Tournament has already started");
 
-			validate(tournament.isAdmin(user), "Not authorized", 401);
+			validate(tournament.isAdmin(user), "Not authorized");
 		} else {
 			// editing regular calendar event
 			validate(
 				canEditCalendarEvent({ user, event: eventToEdit }),
 				"Not authorized",
-				401,
 			);
 		}
 

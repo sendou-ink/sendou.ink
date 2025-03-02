@@ -189,17 +189,11 @@ function formDataToObject(formData: FormData) {
 	return result;
 }
 
-const errorToastRoute = (message: string) => `?__error=${message}`;
-
 /** Asserts condition is truthy. Throws a new `Response` with given status code if falsy.  */
-export function validate(
-	condition: any,
-	message?: string,
-	status = 400,
-): asserts condition {
+export function validate(condition: any, message?: string): asserts condition {
 	if (condition) return;
 
-	throw redirect(errorToastRoute(message ?? "Validation failed"));
+	throw redirect(`?__error=${message ?? "Validation failed"}`);
 }
 
 export type ActionError = { field: string; msg: string; isError: true };

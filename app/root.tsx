@@ -1,3 +1,4 @@
+import type { ToastState } from "@react-stately/toast";
 import type {
 	LoaderFunctionArgs,
 	MetaFunction,
@@ -27,6 +28,7 @@ import { useTranslation } from "react-i18next";
 import { useChangeLanguage } from "remix-i18next/react";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Catcher } from "./components/Catcher";
+import { type SendouToast, ToastProvider } from "./components/elements/Toast";
 import { Layout } from "./components/layout";
 import { Ramp } from "./components/ramp/Ramp";
 import { CUSTOMIZED_CSS_VARS_NAME } from "./constants";
@@ -47,8 +49,6 @@ import i18next, { i18nCookie } from "./modules/i18n/i18next.server";
 import type { Namespace } from "./modules/i18n/resources.server";
 import { isRevalidation, metaTags } from "./utils/remix";
 import { SUSPENDED_PAGE } from "./utils/urls";
-import type { ToastState } from "@react-stately/toast";
-import { type SendouToast, ToastProvider } from "./components/elements/Toast";
 
 import "nprogress/nprogress.css";
 import "~/styles/common.css";

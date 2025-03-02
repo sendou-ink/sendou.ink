@@ -18,7 +18,7 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export const loader = ({ request }: LoaderFunctionArgs) => {
-	validate(canAccessLohiEndpoint(request), "Invalid token", 403);
+	validate(canAccessLohiEndpoint(request), "Invalid token");
 
 	return UserRepository.findAllPatrons();
 };

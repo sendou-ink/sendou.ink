@@ -14,7 +14,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await requireUser(request);
 	const url = new URL(request.url);
 
-	validate(canAddNewEvent(user), "Not authorized", 401);
+	validate(canAddNewEvent(user), "Not authorized");
 
 	const eventWithTournament = async (key: string) => {
 		const eventId = Number(url.searchParams.get(key));

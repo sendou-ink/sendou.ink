@@ -68,7 +68,7 @@ export const meta: MetaFunction = () => {
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = await requireUser(request);
-	validate(user.isArtist, "Lacking artist role", 403);
+	validate(user.isArtist, "Lacking artist role");
 
 	const searchParams = new URL(request.url).searchParams;
 	const artIdRaw = searchParams.get(NEW_ART_EXISTING_SEARCH_PARAM_KEY);
@@ -78,11 +78,7 @@ export const action: ActionFunction = async ({ request }) => {
 		const artId = Number(artIdRaw);
 
 		const existingArt = findArtById(artId);
-		validate(
-			existingArt?.authorId === user.id,
-			"Insufficient permissions",
-			401,
-		);
+		validate(existingArt?.authorId === user.id, "Insufficient permissions");
 
 		const data = await parseRequestPayload({
 			request,
@@ -158,7 +154,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await requireUser(request);
-	validate(user.isArtist, "Lacking artist role", 403);
+	validate(user.isArtist, "Lacking artist role");
 
 	const artIdRaw = new URL(request.url).searchParams.get(
 		NEW_ART_EXISTING_SEARCH_PARAM_KEY,

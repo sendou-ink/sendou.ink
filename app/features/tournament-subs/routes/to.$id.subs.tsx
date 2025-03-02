@@ -48,7 +48,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 	validate(
 		user.id === data.userId || tournament.isOrganizer(user),
 		"You can only delete your own sub post",
-		401,
 	);
 
 	deleteSub({

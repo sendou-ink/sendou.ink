@@ -95,7 +95,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 				isOrganizer: tournament.isOrganizer(user),
 			}),
 			"Unauthorized",
-			401,
 		);
 	};
 
@@ -244,7 +243,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 				tournament.isOrganizer(user) ||
 					tournament.teamMemberOfByUser(user)?.id === data.teamId,
 				"Unauthorized",
-				401,
 			);
 			validate(
 				data.roster.length === tournament.minMembersPerTeam,
@@ -439,7 +437,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 				tournament.isOrganizer(user) ||
 					tournament.ownedTeamByUser(user)?.id === pickerTeamId,
 				"Unauthorized",
-				401,
 			);
 
 			validate(
