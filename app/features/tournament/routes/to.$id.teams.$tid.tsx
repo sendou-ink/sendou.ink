@@ -5,12 +5,12 @@ import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { ModeImage, StageImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
-import { Redirect } from "~/components/Redirect";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
-import type {
-	TournamentData,
-	TournamentDataTeam,
+import {
+	type TournamentData,
+	type TournamentDataTeam,
+	tournamentDataCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentTeamPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator";
@@ -19,7 +19,6 @@ import { parseParams } from "~/utils/remix.server";
 import {
 	teamPage,
 	tournamentMatchPage,
-	tournamentPage,
 	tournamentTeamPage,
 	userPage,
 	userSubmittedImage,
@@ -56,19 +55,27 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 	});
 };
 
-export const loader = ({ params }: LoaderFunctionArgs) => {
+export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const tournamentId = tournamentIdFromParams(params);
 	const tournamentTeamId = parseParams({
 		params,
 		schema: tournamentTeamPageParamsSchema,
 	}).tid;
 
+	const tournament = await tournamentDataCached({ tournamentId });
+	if (
+		!tournament ||
+		!tournament.ctx.teams.some((t) => t.id === tournamentTeamId)
+	) {
+		throw new Response(null, { status: 404 });
+	}
+
+	// TODO: could be inferred from tournament data (winCounts too)
 	const sets = tournamentTeamSets({ tournamentTeamId, tournamentId });
 
 	return {
 		tournamentTeamId,
 		sets,
-		// TODO: could be inferred from tournament data
 		winCounts: winCounts(sets),
 	};
 };
@@ -79,10 +86,7 @@ export default function TournamentTeamPage() {
 	const teamIndex = tournament.ctx.teams.findIndex(
 		(t) => t.id === data.tournamentTeamId,
 	);
-	const team = tournament.teamById(data.tournamentTeamId);
-	if (!team) {
-		return <Redirect to={tournamentPage(tournament.ctx.id)} />;
-	}
+	const team = tournament.teamById(data.tournamentTeamId)!;
 
 	return (
 		<div className="stack lg">
