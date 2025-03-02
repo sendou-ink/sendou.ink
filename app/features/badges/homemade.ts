@@ -726,7 +726,7 @@ export const homemadeBadges: BadgeInfo[] = [
 	},
 	{
 		displayName: "Eggs and Salad: Birthday Edition",
-		fileName: "es_birthday_cake",
+		fileName: "birthday_cake",
 		authorDiscordId: "336683473714544641",
 	},
 	{
