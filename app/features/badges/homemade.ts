@@ -764,4 +764,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "gator",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "Clutch United Squid Storm LAN Tournament",
+		fileName: "clutch_united",
+		authorDiscordId: "336683473714544641",
+	},
 ];
