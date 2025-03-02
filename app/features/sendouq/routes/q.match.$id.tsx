@@ -39,7 +39,7 @@ import { sql } from "~/db/sql";
 import type { GroupMember, ReportedWeapon } from "~/db/types";
 import { useUser } from "~/features/auth/core/user";
 import { getUserId, requireUser } from "~/features/auth/core/user.server";
-import * as NotificationService from "~/features/chat/NotificationService.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import type { ChatMessage } from "~/features/chat/chat-types";
 import { Chat, type ChatProps, useChat } from "~/features/chat/components/Chat";
 import { currentOrPreviousSeason, currentSeason } from "~/features/mmr/season";
@@ -326,7 +326,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					return matchIsBeingCanceled ? "CANCEL_REPORTED" : "SCORE_REPORTED";
 				};
 
-				NotificationService.notify({
+				ChatSystemMessage.send({
 					room: match.chatCode,
 					type: type(),
 					context: {

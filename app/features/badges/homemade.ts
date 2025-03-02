@@ -15,6 +15,11 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Tristrike Tuesday",
+		fileName: "tristriked3",
+		authorDiscordId: "789943264370884708",
+	},
+	{
 		displayName: "Gatorlan - Side of Salmon",
 		fileName: "gatorlan_salmon_1st",
 		authorDiscordId: "285504780154044416",
@@ -230,7 +235,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "528851510222782474",
 	},
 	{
-		displayName: "Tristrike Tuesday",
+		displayName: "Tristrike Tuesday (D5 CAPPED)",
 		fileName: "tristriketuesday",
 		authorDiscordId: "789943264370884708",
 	},
@@ -742,6 +747,11 @@ export const homemadeBadges: BadgeInfo[] = [
 	{
 		displayName: "Level Up: Shiny Hunt x2 - Leveled Up!",
 		fileName: "shinygyra",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Good Morning Chat",
+		fileName: "gator",
 		authorDiscordId: "528851510222782474",
 	},
 ];

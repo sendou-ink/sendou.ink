@@ -319,7 +319,7 @@ export function findAllPatrons() {
 		.execute();
 }
 
-export function findAllPlusMembers() {
+export function findAllPlusServerMembers() {
 	return db
 		.selectFrom("User")
 		.innerJoin("PlusTier", "PlusTier.userId", "User.id")

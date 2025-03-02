@@ -9,12 +9,10 @@ import { isbot } from "isbot";
 import cron from "node-cron";
 import { renderToPipeableStream } from "react-dom/server";
 import { I18nextProvider, initReactI18next } from "react-i18next";
-import * as QRepository from "~/features/sendouq/QRepository.server";
 import { config } from "~/modules/i18n/config"; // your i18n configuration file
 import i18next from "~/modules/i18n/i18next.server";
 import { resources } from "./modules/i18n/resources.server";
-import { updatePatreonData } from "./modules/patreon";
-import { logger } from "./utils/logger";
+import { daily, everyHourAt00, everyHourAt30 } from "./routines/list.server";
 
 const ABORT_DELAY = 5000;
 
@@ -86,18 +84,23 @@ declare global {
 if (!global.appStartSignal && process.env.NODE_ENV === "production") {
 	global.appStartSignal = true;
 
-	// every 2 hours
-	cron.schedule("0 */2 * * *", () =>
-		updatePatreonData().catch((err) => console.error(err)),
-	);
-
-	// every hour
 	cron.schedule("0 */1 * * *", async () => {
-		const { numDeletedRows } = await QRepository.deleteOldTrust();
-		logger.info(`Deleted ${numDeletedRows} old trusts`);
+		for (const routine of everyHourAt00) {
+			await routine.run();
+		}
+	});
 
-		const { numUpdatedRows } = await QRepository.setOldGroupsAsInactive();
-		logger.info(`Set ${numUpdatedRows} as inactive`);
+	cron.schedule("30 */1 * * *", async () => {
+		for (const routine of everyHourAt30) {
+			await routine.run();
+		}
+	});
+
+	// 4:00 AM UTC
+	cron.schedule("0 4 * * *", async () => {
+		for (const routine of daily) {
+			await routine.run();
+		}
 	});
 }
 

@@ -1,0 +1,61 @@
+.container {
+	position: relative;
+}
+
+.popoverContainer {
+	min-width: 300px;
+	padding: 0;
+}
+
+.popoverContainer svg {
+	width: 16px;
+}
+
+.noNotificationsContainer {
+	min-height: 200px;
+}
+
+.topContainer {
+	display: flex;
+	justify-content: space-between;
+}
+
+.header {
+	display: flex;
+	font-size: var(--fonts-sm);
+	padding-inline: var(--s-1);
+	padding-bottom: var(--s-1);
+	gap: var(--s-1);
+}
+
+.refreshButton {
+	margin-block-end: var(--s-1);
+	margin-inline-end: var(--s-1);
+}
+
+.refreshButton svg {
+	stroke-width: 10px;
+}
+
+.noNotifications {
+	display: grid;
+	place-items: center;
+	font-weight: var(--semi-bold);
+	color: var(--text-lighter);
+	margin-block-start: 65px;
+}
+
+.divider {
+	border-color: var(--border);
+}
+
+.unseenDot {
+	background-color: var(--theme);
+	border-radius: 100%;
+	width: 8px;
+	height: 8px;
+	position: absolute;
+	top: 1px;
+	left: 1px;
+	outline: 2px solid var(--theme-transparent);
+}

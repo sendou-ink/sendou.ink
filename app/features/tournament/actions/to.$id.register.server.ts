@@ -2,6 +2,7 @@ import type { ActionFunction } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import { notify } from "~/features/notifications/core/notify.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import {
@@ -248,6 +249,21 @@ export const action: ActionFunction = async ({ request, params }) => {
 				tournamentId,
 				type: "participant",
 				userId: data.userId,
+			});
+
+			notify({
+				userIds: [data.userId],
+				notification: {
+					type: "TO_ADDED_TO_TEAM",
+					meta: {
+						adderUsername: user.username,
+						tournamentId,
+						teamName: ownTeam.name,
+						tournamentName: tournament.ctx.name,
+						tournamentTeamId: ownTeam.id,
+					},
+					pictureUrl: tournament.logoSrc,
+				},
 			});
 
 			break;
