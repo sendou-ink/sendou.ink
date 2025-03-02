@@ -13,8 +13,10 @@ import {
 	type ShouldRevalidateFunction,
 	useLoaderData,
 	useMatches,
+	useNavigate,
 	useNavigation,
 	useRevalidator,
+	useSearchParams,
 } from "@remix-run/react";
 import generalI18next from "i18next";
 import NProgress from "nprogress";
@@ -45,6 +47,8 @@ import i18next, { i18nCookie } from "./modules/i18n/i18next.server";
 import type { Namespace } from "./modules/i18n/resources.server";
 import { isRevalidation, metaTags } from "./utils/remix";
 import { SUSPENDED_PAGE } from "./utils/urls";
+import type { ToastState } from "@react-stately/toast";
+import { type SendouToast, ToastProvider } from "./components/elements/Toast";
 
 import "nprogress/nprogress.css";
 import "~/styles/common.css";
@@ -170,17 +174,52 @@ function Document({
 				{process.env.NODE_ENV === "development" && <HydrationTestIndicator />}
 				<React.StrictMode>
 					<I18nProvider locale={i18n.language}>
-						<MyRamp data={data} />
-						<Layout data={data} isErrored={isErrored}>
-							{children}
-						</Layout>
+						<ToastProvider>
+							{(state) => (
+								<ToastShower state={state}>
+									<MyRamp data={data} />
+									<Layout data={data} isErrored={isErrored}>
+										{children}
+									</Layout>
+								</ToastShower>
+							)}
+						</ToastProvider>
 					</I18nProvider>
 				</React.StrictMode>
-				<ScrollRestoration />
+				<ScrollRestoration
+					getKey={(location) => {
+						return location.pathname;
+					}}
+				/>
 				<Scripts />
 			</body>
 		</html>
 	);
+}
+
+// xxx: abstract this whole thing to toast.tsx?
+function ToastShower({
+	state,
+	children,
+}: { state: ToastState<SendouToast>; children: React.ReactNode }) {
+	const [searchParams] = useSearchParams();
+	const navigate = useNavigate();
+
+	const error = searchParams.get("__error");
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: adding the state.add causes infinite loop
+	React.useEffect(() => {
+		if (!error) return;
+
+		state.add({
+			message: error,
+			variant: "error",
+		});
+
+		navigate({ search: "" }, { replace: true });
+	}, [error, navigate]);
+
+	return children;
 }
 
 function useLoadingIndicator() {

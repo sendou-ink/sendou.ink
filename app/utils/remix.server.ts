@@ -1,4 +1,4 @@
-import { json } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import {
 	unstable_composeUploadHandlers as composeUploadHandlers,
 	unstable_createMemoryUploadHandler as createMemoryUploadHandler,
@@ -189,6 +189,8 @@ function formDataToObject(formData: FormData) {
 	return result;
 }
 
+const errorToastRoute = (message: string) => `?__error=${message}`;
+
 /** Asserts condition is truthy. Throws a new `Response` with given status code if falsy.  */
 export function validate(
 	condition: any,
@@ -197,12 +199,7 @@ export function validate(
 ): asserts condition {
 	if (condition) return;
 
-	throw new Response(
-		message ? JSON.stringify({ validationError: message }) : undefined,
-		{
-			status,
-		},
-	);
+	throw redirect(errorToastRoute(message ?? "Validation failed"));
 }
 
 export type ActionError = { field: string; msg: string; isError: true };
