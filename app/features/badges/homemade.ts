@@ -769,4 +769,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "clutch_united",
 		authorDiscordId: "336683473714544641",
 	},
+	{
+		displayName: "[OMD] Bingo Club",
+		fileName: "bingo-club",
+		authorDiscordId: "751912670403362836",
+	},
 ];
