@@ -769,4 +769,10 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "clutch_united",
 		authorDiscordId: "336683473714544641",
 	},
+	{
+		displayName: "crucified",
+		fileName: "prueba",
+		authorDiscordId: "863787863589650472",
+	},
+
 ];
