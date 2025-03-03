@@ -769,4 +769,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "clutch_united",
 		authorDiscordId: "336683473714544641",
 	},
+	{
+		displayName: "Torneo Crab Cancel Perfect and Shadow",
+		fileName: "crab_tank",
+		authorDiscordId: "336683473714544641",
+	},
 ];
