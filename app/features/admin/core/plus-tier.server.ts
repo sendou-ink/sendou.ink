@@ -1,7 +1,8 @@
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { addPendingPlusTiers } from "~/features/leaderboards/core/leaderboards.server";
 import { userSPLeaderboard } from "~/features/leaderboards/queries/userSPLeaderboard.server";
-import { previousSeason } from "~/features/mmr/season";
+import { currentSeason, previousSeason } from "~/features/mmr/season";
+import { seasonToVotingRange } from "~/features/plus-voting/core/voting-time";
 import invariant from "~/utils/invariant";
 import { userIsBanned } from "../../ban/core/banned.server";
 
@@ -27,8 +28,15 @@ function fromLeaderboard() {
 	const lastCompletedSeason = previousSeason(now);
 	invariant(lastCompletedSeason, "No previous season found");
 
-	// there has been voting after this season ended, the results no longer apply
-	if (now.getMonth() !== lastCompletedSeason.ends.getMonth()) return [];
+	const currSeason = currentSeason(now);
+	if (currSeason) {
+		const range = seasonToVotingRange(currSeason);
+
+		// we are in the period of a season where the season's voting
+		// has ended but we don't yet have the latest leaderboard results
+		// -> last season's results are no longer valid
+		if (range.endDate < now) return [];
+	}
 
 	const leaderboard = addPendingPlusTiers(
 		userSPLeaderboard(lastCompletedSeason.nth),

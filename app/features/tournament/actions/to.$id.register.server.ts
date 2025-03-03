@@ -68,6 +68,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"Team id does not match any of the teams you are in",
 			);
 
+			validate(
+				!tournament.ctx.teams.some(
+					(team) => team.name === data.teamName && team.id !== data.teamId,
+				),
+				"Team name already taken for this tournament",
+			);
+
 			if (ownTeam) {
 				validate(
 					tournament.registrationOpen || data.teamName === ownTeam.name,
