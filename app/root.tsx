@@ -206,18 +206,26 @@ function ToastShower({
 	const navigate = useNavigate();
 
 	const error = searchParams.get("__error");
+	const success = searchParams.get("__success");
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: adding the state.add causes infinite loop
 	React.useEffect(() => {
-		if (!error) return;
+		if (!error && !success) return;
 
-		state.add({
-			message: error,
-			variant: "error",
-		});
+		if (error) {
+			state.add({
+				message: error,
+				variant: "error",
+			});
+		} else if (success) {
+			state.add({
+				message: success,
+				variant: "success",
+			});
+		}
 
 		navigate({ search: "" }, { replace: true });
-	}, [error, navigate]);
+	}, [error, success, navigate]);
 
 	return children;
 }

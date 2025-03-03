@@ -7,7 +7,11 @@ import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { isAdmin, isMod } from "~/permissions";
 import { logger } from "~/utils/logger";
-import { parseRequestPayload, validate } from "~/utils/remix.server";
+import {
+	parseRequestPayload,
+	successToast,
+	validate,
+} from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { _action, actualNumber, friendCode } from "~/utils/zod";
 import { plusTiersFromVotingAndLeaderboard } from "../core/plus-tier.server";
@@ -19,6 +23,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	});
 	const user = await requireUserId(request);
 
+	let message: string;
 	switch (data._action) {
 		case "MIGRATE": {
 			validate(isMod(user), "Admin needed");
@@ -27,6 +32,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				oldUserId: data["old-user"],
 				newUserId: data["new-user"],
 			});
+
+			message = "Account migrated";
 			break;
 		}
 		case "REFRESH": {
@@ -35,6 +42,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			await AdminRepository.replacePlusTiers(
 				await plusTiersFromVotingAndLeaderboard(),
 			);
+
+			message = "Plus tiers refreshed";
 			break;
 		}
 		case "FORCE_PATRON": {
@@ -46,6 +55,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				patronTier: data.patronTier,
 				patronTill: new Date(data.patronTill),
 			});
+
+			message = "Patron status updated";
 			break;
 		}
 		case "CLEAN_UP": {
@@ -53,24 +64,32 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 			// on purpose sync
 			AdminRepository.cleanUp();
+
+			message = "Clean up done";
 			break;
 		}
 		case "ARTIST": {
 			validate(isMod(user), "Mod needed");
 
 			makeArtist(data.user);
+
+			message = "Artist permissions given";
 			break;
 		}
 		case "VIDEO_ADDER": {
 			validate(isMod(user), "Mod needed");
 
 			await AdminRepository.makeVideoAdderByUserId(data.user);
+
+			message = "VoD adder permissions given";
 			break;
 		}
 		case "TOURNAMENT_ORGANIZER": {
 			validate(isMod(user), "Mod needed");
 
 			await AdminRepository.makeTournamentOrganizerByUserId(data.user);
+
+			message = "Tournament permissions given";
 			break;
 		}
 		case "LINK_PLAYER": {
@@ -81,6 +100,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				playerId: data.playerId,
 			});
 
+			message = "Linked user and player";
 			break;
 		}
 		case "BAN_USER": {
@@ -103,6 +123,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					: undefined,
 			});
 
+			message = "User banned";
 			break;
 		}
 		case "UNBAN_USER": {
@@ -117,6 +138,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				byUserId: user.id,
 			});
 
+			message = "User unbanned";
 			break;
 		}
 		case "UPDATE_FRIEND_CODE": {
@@ -128,6 +150,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				userId: data.user,
 			});
 
+			message = "Friend code updated";
 			break;
 		}
 		default: {
@@ -135,7 +158,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		}
 	}
 
-	return { ok: true };
+	return successToast(message);
 };
 
 export const adminActionSchema = z.union([

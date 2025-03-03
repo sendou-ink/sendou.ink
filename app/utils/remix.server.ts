@@ -189,11 +189,18 @@ function formDataToObject(formData: FormData) {
 	return result;
 }
 
+// TODO: investigate better solution to toasts when middlewares land (current one has a problem of clearing search params)
+
+// xxx: rename to better indicate it shows error toast errorToastIfFalsy or something (should not be used in loaders) -> different function for loaders?
 /** Asserts condition is truthy. Throws a new `Response` with given status code if falsy.  */
 export function validate(condition: any, message?: string): asserts condition {
 	if (condition) return;
 
 	throw redirect(`?__error=${message ?? "Validation failed"}`);
+}
+
+export function successToast(message: string) {
+	throw redirect(`?__success=${message ?? "Validation failed"}`);
 }
 
 export type ActionError = { field: string; msg: string; isError: true };
