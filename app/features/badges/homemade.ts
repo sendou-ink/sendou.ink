@@ -774,4 +774,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "crab_tank",
 		authorDiscordId: "336683473714544641",
 	},
+	{
+		displayName: "Anarchy Adventures",
+		fileName: "s50badge",
+		authorDiscordId: "336683473714544641",
+	},
 ];
