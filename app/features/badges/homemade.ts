@@ -15,7 +15,12 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
-		displayName: "Gatorlan - Side of Salmon",
+		displayName: "Florida Collegiate Draft Cup",
+		fileName: "FLcollegiate",
+		authorDiscordId: "285504780154044416",
+	},
+	{
+		displayName: "GatorLAN - Side of Salmon",
 		fileName: "gatorlan_salmon_1st",
 		authorDiscordId: "285504780154044416",
 	},
