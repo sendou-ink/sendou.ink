@@ -591,9 +591,7 @@ export class Tournament {
 
 				return {
 					groupCount: Math.ceil(participantsCount / teamsPerGroup),
-					seedOrdering: [
-						this.isLeagueDivision ? "natural" : "groups.seed_optimized",
-					],
+					seedOrdering: ["groups.seed_optimized"],
 				};
 			}
 			case "swiss": {
