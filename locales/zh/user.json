@@ -11,7 +11,7 @@
 	"stick": "摇杆",
 	"sens": "感度",
 	"weaponPool": "武器池",
-	"discordExplanation": "用户名、头像、Youtube、Twitter和Twitch账号皆来自您的Discord账号。查看 <1>FAQ</1> 以获得更多相关信息。",
+	"discordExplanation": "用户名、头像、Youtube、Bluesky和Twitch账号皆来自您的Discord账号。查看 <1>FAQ</1> 以获得更多相关信息。",
 	"favoriteBadge": "最喜爱的徽章",
 	"battlefy": "Battlefy用户名",
 
@@ -42,7 +42,6 @@
 	"forms.info.favoriteBadge": "您最喜爱的徽章将会默认在资料页展示为大徽章",
 	"forms.info.battlefy": "Battlefy用户名会在部分比赛被用于种子排名和验证",
 
-	"search.info": "通过Discord、斯普拉遁3或Twitter名称查找用户",
 	"search.noResults": "没有符合 '{{query}}' 的用户",
 
 	"seasons": "赛季",

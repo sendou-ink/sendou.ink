@@ -419,21 +419,6 @@ describe("validatedSources - other rules", () => {
 		expect(error.type).toBe("NO_DE_POSITIVE");
 		expect((error as any).bracketIdx).toEqual(1);
 	});
-
-	it("throws an error if many missing sources", () => {
-		expect(() =>
-			getValidatedBrackets([
-				{
-					settings: {},
-					type: "round_robin",
-				},
-				{
-					settings: {},
-					type: "single_elimination",
-				},
-			]),
-		).toThrow();
-	});
 });
 
 describe("isFinals", () => {
@@ -578,5 +563,66 @@ describe("bracketIdxsForStandings", () => {
 				progressions.doubleEliminationWithUnderground,
 			),
 		).toEqual([0]); // missing 1 because it's underground when DE is the source
+	});
+});
+
+describe("destinationsFromBracketIdx", () => {
+	it("returns correct destination (one destination)", () => {
+		expect(
+			Progression.destinationsFromBracketIdx(
+				0,
+				progressions.roundRobinToSingleElimination,
+			),
+		).toEqual([1]);
+	});
+
+	it("returns correct destination (many destinations)", () => {
+		expect(
+			Progression.destinationsFromBracketIdx(0, progressions.lowInk),
+		).toEqual([1, 2]);
+	});
+
+	it("returns an empty array if no destinations", () => {
+		expect(
+			Progression.destinationsFromBracketIdx(0, progressions.singleElimination),
+		).toEqual([]);
+	});
+});
+
+describe("destinationByPlacement", () => {
+	it("returns correct destination for a given placement", () => {
+		const result = Progression.destinationByPlacement({
+			sourceBracketIdx: 0,
+			placement: 1,
+			progression: progressions.roundRobinToSingleElimination,
+		});
+		expect(result).toBe(1);
+	});
+
+	it("returns null if no destination for the given placement", () => {
+		const result = Progression.destinationByPlacement({
+			sourceBracketIdx: 0,
+			placement: 5,
+			progression: progressions.roundRobinToSingleElimination,
+		});
+		expect(result).toBeNull();
+	});
+
+	it("returns correct destination for negative placements", () => {
+		const result = Progression.destinationByPlacement({
+			sourceBracketIdx: 0,
+			placement: -1,
+			progression: progressions.doubleEliminationWithUnderground,
+		});
+		expect(result).toBe(1);
+	});
+
+	it("returns correct destination for many start brackets", () => {
+		const result = Progression.destinationByPlacement({
+			sourceBracketIdx: 1,
+			placement: 1,
+			progression: progressions.manyStartBrackets,
+		});
+		expect(result).toBe(3);
 	});
 });

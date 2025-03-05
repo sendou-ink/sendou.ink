@@ -1,4 +1,8 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
 import { useLoaderData, useSearchParams } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
@@ -6,13 +10,11 @@ import { Button } from "~/components/Button";
 import { Combobox } from "~/components/Combobox";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { Toggle } from "~/components/Toggle";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { CrossIcon } from "~/components/icons/Cross";
-import i18next from "~/modules/i18n/i18next.server";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import { artPage, navIconUrl } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
+import { metaTags } from "../../../utils/remix";
 import { ArtGrid } from "../components/ArtGrid";
 import { allArtTags } from "../queries/allArtTags.server";
 import {
@@ -46,12 +48,16 @@ export const meta: MetaFunction = (args) => {
 
 	if (!data) return [];
 
-	return [{ title: data.title }];
+	return metaTags({
+		title: "Art",
+		ogTitle: "Splatoon art showcase",
+		description:
+			"Splatoon art filterable by various tags. Find artist to commission for your own custom art. Includes various styles such as traditional, digital, 3D and SFM.",
+		location: args.location,
+	});
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const t = await i18next.getFixedT(request);
-
 	const allTags = allArtTags();
 
 	const filteredTagName = new URL(request.url).searchParams.get(
@@ -62,7 +68,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	return {
 		arts: filteredTag ? showcaseArtsByTag(filteredTag.id) : showcaseArts(),
 		allTags,
-		title: makeTitle(t("pages.art")),
 	};
 };
 
@@ -82,9 +87,9 @@ export default function ArtPage() {
 		<Main className="stack lg">
 			<div className="stack horizontal md justify-between items-center flex-wrap">
 				<div className="stack horizontal sm text-sm font-semi-bold">
-					<Toggle
-						checked={showOpenCommissions}
-						setChecked={() =>
+					<SendouSwitch
+						isSelected={showOpenCommissions}
+						onChange={() =>
 							setSearchParams((prev) => {
 								prev.set(OPEN_COMMISIONS_KEY, String(!showOpenCommissions));
 								return prev;

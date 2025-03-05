@@ -2,6 +2,7 @@ import type { ActionFunction } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import { notify } from "~/features/notifications/core/notify.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import {
@@ -65,6 +66,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 						(team) => team.id === data.teamId,
 					),
 				"Team id does not match any of the teams you are in",
+			);
+
+			validate(
+				!tournament.ctx.teams.some(
+					(team) => team.name === data.teamName && team.id !== data.teamId,
+				),
+				"Team name already taken for this tournament",
 			);
 
 			if (ownTeam) {
@@ -250,11 +258,30 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 			});
 
+			notify({
+				userIds: [data.userId],
+				notification: {
+					type: "TO_ADDED_TO_TEAM",
+					meta: {
+						adderUsername: user.username,
+						tournamentId,
+						teamName: ownTeam.name,
+						tournamentName: tournament.ctx.name,
+						tournamentTeamId: ownTeam.id,
+					},
+					pictureUrl: tournament.logoSrc,
+				},
+			});
+
 			break;
 		}
 		case "UNREGISTER": {
 			validate(ownTeam, "You are not registered to this tournament");
 			validate(!ownTeamCheckedIn, "You cannot unregister after checking in");
+			validate(
+				!tournament.isLeagueSignup || tournament.registrationOpen,
+				"Unregistering from leagues is not possible after registration has closed",
+			);
 
 			deleteTeam(ownTeam.id);
 

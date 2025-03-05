@@ -13,14 +13,12 @@
 	"q5": "Findes der en sendou.ink app?",
 	"a5": "Nej, men man kan installere Sendou ink som en ”Progressive Web App”, som fungerer som en traditionel app. Hvor man understøttelse af fuld skærm, skrivebordsikon og kører som en proces separat fra en webbrowser. Google ”How to install pwa on *din browser’ for at sfinde en vejledning til at gøre dette.",
 
-	"q6": "Hvordan tilføjer man en Twitch/Twitter/YouTube-profil til min sendou.ink-profil?",
+	"q6": "Hvordan tilføjer man en Twitch/Bluesky/YouTube-profil til min sendou.ink-profil?",
 	"a6": "Vi bruger Discord til dette formål. Tilknyt profilerne til Discord og verificér dem. Log derefter af og på sendou.ink for at få tilknyttet dine profiler på sendou.ink. ",
 
 	"q7": "Hvordan kan jeg uploade videoer?",
-	"a7": "Send en besked til Sendou via Discord for at få adgang og for at få instruktioner.",
 
 	"q8": "Hvordan kan jeg finde mine X-kampresultater på min profil?",
-	"a8": "Find din spillerprofilside fra ”X-kamp rangliste” siden. Skriv linket i #helpdesk-kanalen på vores Discordserver og anmod om at få den linket. Note: Det er ikke muligt at linke din profil, hvis de ikke har noget en top 500 plads eller været den højest rangerede spiller med et specifikt våben.",
 
 	"q9": "Hvordan kan jeg uploade kunst, som jeg har bestilt",
 	"a9": "Du kan kun uploade kunst, som du selv har lavet. Det skal også være Splatoon-relateret. For bestilte kunstværker, så henvend dig til kunstneren, så De kan uploade det til hjemmesiden. De kan også knytte kunstværket til din profil, så det bliver vist på din profil"

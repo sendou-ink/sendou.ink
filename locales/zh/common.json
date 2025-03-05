@@ -34,7 +34,6 @@
 	"auth.errors.aborted": "登录中止",
 	"auth.errors.failed": "登录失败",
 	"auth.errors.discordPermissions": "为了完善您的sendou.ink个人资料，网站需要获取您的Discord名字、头像和社交链接。",
-	"auth.errors.unknown": "您的Discord账号验证过邮箱吗？请在我们的Discord服务器的#helpdesk频道获取帮助：",
 
 	"footer.github.subtitle": "源代码",
 	"footer.discord.subtitle": "帮助及反馈",

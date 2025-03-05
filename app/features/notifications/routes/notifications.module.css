@@ -1,0 +1,8 @@
+.header {
+	display: flex;
+	gap: var(--s-2-5);
+}
+
+.header svg {
+	width: 24px;
+}

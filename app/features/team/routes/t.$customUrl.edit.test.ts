@@ -12,6 +12,10 @@ const editTeamAction = wrappedAction<typeof editTeamSchema>({
 	action: _editTeamAction,
 });
 
+const DEFAULT_FIELDS = {
+	bio: null,
+} as any;
+
 describe("team creation", () => {
 	beforeEach(async () => {
 		await dbInsertUsers();
@@ -28,10 +32,7 @@ describe("team creation", () => {
 			{
 				_action: "EDIT",
 				name: "Team 2",
-				bio: null,
-				bsky: null,
-				css: null,
-				twitter: null,
+				...DEFAULT_FIELDS,
 			},
 			{ user: "regular", params: { customUrl: "team-1" } },
 		);
@@ -47,10 +48,7 @@ describe("team creation", () => {
 				{
 					_action: "EDIT",
 					name: "𝓢𝓲𝓵",
-					bio: null,
-					bsky: null,
-					css: null,
-					twitter: null,
+					...DEFAULT_FIELDS,
 				},
 				{ user: "regular", params: { customUrl: "team-1" } },
 			),

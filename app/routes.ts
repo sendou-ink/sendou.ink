@@ -9,6 +9,20 @@ export default [
 	index("features/front-page/routes/index.tsx"),
 	route("/patrons-list", "features/front-page/routes/patrons-list.ts"),
 
+	route("/notifications", "features/notifications/routes/notifications.tsx"),
+	route(
+		"/notifications/peek",
+		"features/notifications/routes/notifications.peek.ts",
+	),
+	route(
+		"/notifications/seen",
+		"features/notifications/routes/notifications.seen.ts",
+	),
+	route(
+		"/notifications/subscribe",
+		"features/notifications/routes/notifications.subscribe.ts",
+	),
+
 	route("/settings", "features/settings/routes/settings.tsx"),
 
 	route("/suspended", "features/ban/routes/suspended.tsx"),
@@ -28,7 +42,7 @@ export default [
 		),
 		route("results", "features/user-page/routes/u.$identifier.results.tsx"),
 		route(
-			"highlights",
+			"results/highlights",
 			"features/user-page/routes/u.$identifier.results.highlights.tsx",
 		),
 	]),
@@ -80,6 +94,10 @@ export default [
 
 		route("brackets", "features/tournament-bracket/routes/to.$id.brackets.tsx"),
 		route(
+			"divisions",
+			"features/tournament-bracket/routes/to.$id.divisions.tsx",
+		),
+		route(
 			"brackets/subscribe",
 			"features/tournament-bracket/routes/to.$id.brackets.subscribe.tsx",
 		),
@@ -92,6 +110,7 @@ export default [
 			"features/tournament-bracket/routes/to.$id.matches.$mid.subscribe.tsx",
 		),
 	]),
+	route("luti", "features/tournament/routes/luti.tsx"),
 
 	...prefix("/org/:slug", [
 		index("features/tournament-organization/routes/org.$slug.tsx"),
@@ -213,6 +232,10 @@ export default [
 			"features/api-public/routes/tournament.$id.teams.ts",
 		),
 		route(
+			"/tournament/:id/casted",
+			"features/api-public/routes/tournament.$id.casted.ts",
+		),
+		route(
 			"/tournament/:id/brackets/:bidx",
 			"features/api-public/routes/tournament.$id.brackets.$bidx.ts",
 		),
@@ -226,6 +249,8 @@ export default [
 		),
 		route("/org/:id", "features/api-public/routes/org.$id.ts"),
 	]),
+
+	route("/short/:customUrl", "features/user-page/routes/short.$customUrl.tsx"),
 
 	route("/theme", "features/theme/routes/theme.ts"),
 

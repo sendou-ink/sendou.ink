@@ -18,6 +18,5 @@
 	"forms.title.weaponsTeamTwo": "Waffem (Team 2)",
 	"forms.title.weapon": "Waffe",
 	"forms.action.addMatch": "Match hinzufügen",
-	"forms.action.deleteMatch": "Match löschen",
-	"noVods": "Keine Videos mit diesem Filter gefundenr. Fehlt hier etwas? Schreibe Sendou auf Discord eine Nachricht, um YouTube-Videos einreichen zu können."
+	"forms.action.deleteMatch": "Match löschen"
 }

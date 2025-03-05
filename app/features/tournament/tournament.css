@@ -651,3 +651,46 @@
 	background-color: var(--theme-transparent);
 	border-radius: var(--rounded);
 }
+
+.tournament__div__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
+	gap: var(--s-4);
+}
+
+.tournament__div__link {
+	background-color: var(--bg-lighter-solid);
+	padding: var(--s-2) var(--s-4);
+	border-radius: var(--rounded);
+	font-size: var(--fonts-lg);
+	width: 100%;
+	white-space: nowrap;
+}
+
+.tournament__div__link:focus-visible {
+	outline: 3px solid var(--theme);
+	outline-offset: 3px;
+}
+
+.tournament__div__link__participant {
+	outline: 3px solid var(--bg-lightest-solid);
+	outline-offset: 3px;
+}
+
+.tournament__div__link__participant svg {
+	fill: var(--theme);
+}
+
+.tournament__div__participant-counts {
+	display: flex;
+	align-items: center;
+	color: var(--text-lighter);
+	font-size: var(--fonts-sm);
+	gap: var(--s-2);
+	margin-block-end: var(--s-1);
+}
+
+.tournament__div__participant-counts > svg {
+	width: 1rem;
+	margin-block-end: 1px;
+}

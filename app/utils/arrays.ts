@@ -97,3 +97,46 @@ export function pickRandomItem<T>(array: T[]): T {
 export function filterOutFalsy<T>(arr: (T | null | undefined)[]): T[] {
 	return arr.filter(Boolean) as T[];
 }
+
+/**
+ * Calculates the average of an array of numbers. If the array is empty, returns null.
+ *
+ * @param values - An array of numbers to calculate the average of.
+ * @returns The average of the numbers in the array, or null if the array is empty.
+ */
+export function nullifyingAvg(values: number[]) {
+	if (values.length === 0) return null;
+	return values.reduce((acc, cur) => acc + cur, 0) / values.length;
+}
+
+export function countElements<T>(arr: T[]): Map<T, number> {
+	const counts = new Map<T, number>();
+
+	for (const element of arr) {
+		const count = counts.get(element) ?? 0;
+		counts.set(element, count + 1);
+	}
+
+	return counts;
+}
+
+/** Returns list of elements that are in arr2 but not in arr1. Supports duplicates */
+export function diff<T extends string | number>(arr1: T[], arr2: T[]): T[] {
+	const arr1Counts = countElements(arr1);
+	const arr2Counts = countElements(arr2);
+
+	const diff = new Map<T, number>();
+
+	for (const [element, count] of arr2Counts) {
+		const diffCount = Math.max(count - (arr1Counts.get(element) ?? 0), 0);
+		diff.set(element, diffCount);
+	}
+
+	const result: T[] = [];
+
+	for (const [element, count] of diff) {
+		result.push(...new Array(count).fill(element));
+	}
+
+	return result;
+}

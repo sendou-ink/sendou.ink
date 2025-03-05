@@ -7,11 +7,13 @@ export function Draggable({
 	disabled,
 	liClassName,
 	children,
+	testId,
 }: {
 	id: number;
 	disabled: boolean;
 	liClassName: string;
 	children: React.ReactNode;
+	testId?: string;
 }) {
 	const { attributes, listeners, setNodeRef, transform, transition } =
 		useSortable({ id, disabled });
@@ -26,6 +28,7 @@ export function Draggable({
 			className={liClassName}
 			style={style}
 			ref={setNodeRef}
+			data-testid={testId}
 			{...listeners}
 			{...attributes}
 		>

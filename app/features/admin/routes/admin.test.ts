@@ -222,6 +222,23 @@ describe("Plus voting", () => {
 		expect(await countPlusTierMembers(1)).toBe(1);
 	});
 
+	test("gives membership if failed voting and is on the leaderboard and season ended last month", async () => {
+		vi.setSystemTime(new Date("2023-12-29T00:00:00.000Z"));
+
+		await dbInsertUsers(1);
+		await PlusVotingRepository.upsertMany([
+			voteArgs({
+				score: -1,
+				votedId: 1,
+			}),
+		]);
+		await createLeaderboard([1]);
+
+		await adminAction({ _action: "REFRESH" }, { user: "admin" });
+
+		expect(await countPlusTierMembers(1)).toBe(1);
+	});
+
 	test("members who fails voting drops one tier", async () => {
 		vi.setSystemTime(new Date("2024-02-15T00:00:00.000Z"));
 

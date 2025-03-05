@@ -42,6 +42,7 @@ html {
 	--theme-semi-transparent: #ff99c477;
 	--theme-secondary: rgb(63 58 255);
 	--theme-secondary-transparent: rgb(63 58 255 / 55%);
+	--input-icon: #6a6a6c;
 	--backdrop-filter: blur(10px) brightness(95%);
 	--rounded: 16px;
 	--rounded-full: 200px;
@@ -93,8 +94,10 @@ html {
 	--sparse: 0.4px;
 	--label-margin: var(--s-1);
 	--inactive-image-filter: grayscale(100%) brightness(30%);
-	--leaderboard-top-spacing: var(--s-4);
 	--sticky-top: 60px;
+	--input-width-extra-small: 10rem;
+	--input-width-small: 12rem;
+	--input-width-medium: 18rem;
 }
 
 html.dark {
@@ -140,6 +143,7 @@ html.dark {
 	--theme-transparent: #ffc6de52;
 	--theme-secondary: rgb(239 229 83);
 	--theme-secondary-transparent: rgb(239 229 83 / 55%);
+	--input-icon: #9898a4;
 	--backdrop-filter: blur(10px) brightness(75%);
 	--inactive-image-filter: grayscale(100%) brightness(130%);
 }

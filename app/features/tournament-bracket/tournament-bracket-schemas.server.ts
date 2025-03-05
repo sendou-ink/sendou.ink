@@ -13,7 +13,10 @@ import * as PreparedMaps from "./core/PreparedMaps";
 
 const activeRosterPlayerIds = z.preprocess(safeJSONParse, z.array(id));
 
-const bothTeamPlayerIds = z.preprocess(safeJSONParse, z.array(id));
+const bothTeamPlayerIds = z.preprocess(
+	safeJSONParse,
+	z.tuple([z.array(id), z.array(id)]),
+);
 
 const reportedMatchPosition = z.preprocess(
 	Number,
@@ -105,7 +108,7 @@ const tournamentRoundMaps = z.object({
 			}),
 		)
 		.nullish(),
-	count: numericEnum([1, 3, 5, 7]),
+	count: numericEnum(TOURNAMENT.AVAILABLE_BEST_OF),
 	type: z.enum(["BEST_OF", "PLAY_ALL"]),
 	pickBan: z.enum(["COUNTERPICK", "BAN_2"]).nullish(),
 });
@@ -144,6 +147,12 @@ export const bracketSchema = z.union([
 	z.object({
 		_action: _action("BRACKET_CHECK_IN"),
 		bracketIdx,
+	}),
+	z.object({
+		_action: _action("OVERRIDE_BRACKET_PROGRESSION"),
+		tournamentTeamId: id,
+		sourceBracketIdx: bracketIdx,
+		destinationBracketIdx: z.union([bracketIdx, z.literal(-1)]),
 	}),
 ]);
 

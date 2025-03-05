@@ -17,7 +17,6 @@ import { Main } from "~/components/Main";
 import { MapPoolSelector } from "~/components/MapPoolSelector";
 import { RequiredHiddenInput } from "~/components/RequiredHiddenInput";
 import { SubmitButton } from "~/components/SubmitButton";
-import { Toggle } from "~/components/Toggle";
 import { CrossIcon } from "~/components/icons/Cross";
 import { TrashIcon } from "~/components/icons/Trash";
 import type { Tables } from "~/db/tables";
@@ -37,7 +36,6 @@ import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { pathnameFromPotentialURL } from "~/utils/strings";
 import { CREATING_TOURNAMENT_DOC_LINK, userSubmittedImage } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
 import {
 	CALENDAR_EVENT,
 	REG_CLOSES_AT_OPTIONS,
@@ -52,20 +50,23 @@ import {
 import { canAddNewEvent } from "../calendar-utils";
 import { BracketProgressionSelector } from "../components/BracketProgressionSelector";
 import { Tags } from "../components/Tags";
-
 import "~/styles/calendar-new.css";
 import "~/styles/maps.css";
-
+import { SendouSwitch } from "~/components/elements/Switch";
+import { metaTags } from "~/utils/remix";
 import { action } from "../actions/calendar.new.server";
 import { loader } from "../loaders/calendar.new.server";
 export { loader, action };
 
-export const meta: MetaFunction = (args) => {
-	const data = args.data as SerializeFrom<typeof loader> | null;
+export const meta: MetaFunction<typeof loader> = (args) => {
+	if (!args.data) return [];
 
-	if (!data) return [];
+	const what = args.data.isAddingTournament ? "tournament" : "calendar event";
 
-	return [{ title: data.title }];
+	return metaTags({
+		title: args.data.eventToEdit ? `Editing ${what}` : `New ${what}`,
+		location: args.location,
+	});
 };
 
 export const handle: SendouRouteHandle = {
@@ -97,8 +98,8 @@ export default function CalendarNewEventPage() {
 		return (
 			<Main className="stack items-center">
 				<Alert variation="WARNING">
-					No permissions to add tournaments. Access to tournaments beta can be
-					applied from Discord helpdesk for established TO&apos;s.
+					No permissions to add tournaments. Tournaments are in beta, accessible
+					by Patreon supporters and established TO&apos;s.
 				</Alert>
 			</Main>
 		);
@@ -182,6 +183,12 @@ function EventForm() {
 		React.useState(false);
 
 	const handleSubmit = () => {
+		const isValid = ref.current?.checkValidity();
+		if (!isValid) {
+			ref.current?.reportValidity();
+			return;
+		}
+
 		const formData = new FormData(ref.current!);
 
 		// if "avatarImgId" it means they want to reuse an existing avatar
@@ -268,6 +275,7 @@ function EventForm() {
 						}
 						isInvitationalTournament={isInvitational}
 						setErrored={setBracketProgressionErrored}
+						isTournamentInProgress={false}
 					/>
 				</div>
 			) : null}
@@ -802,12 +810,12 @@ function RankedToggle() {
 			<label htmlFor={id} className="w-max">
 				Ranked
 			</label>
-			<Toggle
+			<SendouSwitch
 				name="isRanked"
 				id={id}
-				tiny
-				checked={isRanked}
-				setChecked={setIsRanked}
+				size="small"
+				isSelected={isRanked}
+				onChange={setIsRanked}
 			/>
 			<FormMessage type="info">
 				Ranked tournaments affect SP. Tournaments that don&apos;t have open
@@ -831,12 +839,12 @@ function EnableNoScreenToggle() {
 			<label htmlFor={id} className="w-max">
 				Splattercolor Screen toggle
 			</label>
-			<Toggle
+			<SendouSwitch
 				name="enableNoScreenToggle"
 				id={id}
-				tiny
-				checked={enableNoScreen}
-				setChecked={setEnableNoScreen}
+				size="small"
+				isSelected={enableNoScreen}
+				onChange={setEnableNoScreen}
 			/>
 			<FormMessage type="info">
 				When registering ask teams if they want to play without Splattercolor
@@ -858,12 +866,12 @@ function EnableSubsToggle() {
 			<label htmlFor={id} className="w-max">
 				Subs tab
 			</label>
-			<Toggle
+			<SendouSwitch
 				name="enableSubs"
 				id={id}
-				tiny
-				checked={enableSubs}
-				setChecked={setEnableSubs}
+				size="small"
+				isSelected={enableSubs}
+				onChange={setEnableSubs}
 			/>
 			<FormMessage type="info">
 				Allow users to sign up as "subs" in addition to the normal event
@@ -885,12 +893,12 @@ function AutonomousSubsToggle() {
 			<label htmlFor={id} className="w-max">
 				Autonomous subs
 			</label>
-			<Toggle
+			<SendouSwitch
 				name="autonomousSubs"
 				id={id}
-				tiny
-				checked={autonomousSubs}
-				setChecked={setAutonomousSubs}
+				size="small"
+				isSelected={autonomousSubs}
+				onChange={setAutonomousSubs}
 			/>
 			<FormMessage type="info">
 				If enabled teams can add subs on their own while the tournament is in
@@ -912,12 +920,12 @@ function RequireIGNToggle() {
 			<label htmlFor={id} className="w-max">
 				Require in-game names
 			</label>
-			<Toggle
+			<SendouSwitch
 				name="requireInGameNames"
 				id={id}
-				tiny
-				checked={requireIGNs}
-				setChecked={setRequireIGNs}
+				size="small"
+				isSelected={requireIGNs}
+				onChange={setRequireIGNs}
 			/>
 			<FormMessage type="info">
 				If enabled players can&apos;t join the tournament without an in-game
@@ -942,12 +950,12 @@ function InvitationalToggle({
 			<label htmlFor={id} className="w-max">
 				Invitational
 			</label>
-			<Toggle
+			<SendouSwitch
 				name="isInvitational"
 				id={id}
-				tiny
-				checked={isInvitational}
-				setChecked={setIsInvitational}
+				size="small"
+				isSelected={isInvitational}
+				onChange={setIsInvitational}
 			/>
 			<FormMessage type="info">
 				No open registration or subs list. All teams must be added by the
@@ -969,12 +977,12 @@ function StrictDeadlinesToggle() {
 			<label htmlFor={id} className="w-max">
 				Strict deadlines
 			</label>
-			<Toggle
+			<SendouSwitch
 				name="strictDeadline"
 				id={id}
-				tiny
-				checked={strictDeadlines}
-				setChecked={setStrictDeadlines}
+				size="small"
+				isSelected={strictDeadlines}
+				onChange={setStrictDeadlines}
 			/>
 			<FormMessage type="info">
 				Strict deadlines has 5 minutes less for the target time of each round

@@ -104,6 +104,26 @@ export const altWeaponIdToId = new Map<MainWeaponId, MainWeaponId>([
 	[8005, 8000],
 ]);
 
+/**
+ * Converts a given weapon ID to an array containing the weapon ID and its alternate IDs. For example if you enter the ID 40 (Splattershot) it will return [40, 45, 47] (Splattershot, Hero Shot Replica, Order Shot Replica)
+ */
+export function weaponIdToArrayWithAlts(weaponId: MainWeaponId) {
+	const altId = weaponIdToAltId.get(weaponId);
+	if (altId !== undefined) {
+		return [weaponId, ...(Array.isArray(altId) ? altId : [altId])];
+	}
+
+	const regularId = altWeaponIdToId.get(weaponId);
+	if (regularId !== undefined) {
+		const altId = weaponIdToAltId.get(regularId);
+		if (altId !== undefined) {
+			return [regularId, ...(Array.isArray(altId) ? altId : [altId])];
+		}
+	}
+
+	return [weaponId];
+}
+
 const altWeaponIds = new Set(altWeaponIdToId.keys());
 export const weaponIdIsNotAlt = (weaponId: MainWeaponId) =>
 	!altWeaponIds.has(weaponId);

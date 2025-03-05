@@ -1,3 +1,4 @@
+import type { SerializeFrom } from "@remix-run/server-runtime";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
 import type { UserMapModePreferences } from "~/db/tables";
@@ -10,7 +11,6 @@ import {
 	wrappedLoader,
 } from "~/utils/Test";
 import invariant from "~/utils/invariant";
-import type { SerializeFrom } from "../../../utils/remix";
 import type { lookingSchema, matchSchema } from "../q-schemas.server";
 import { loader, action as rawLookingAction } from "./q.looking";
 import { action as rawMatchAction } from "./q.match.$id";

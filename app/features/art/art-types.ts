@@ -2,6 +2,7 @@ import type { Art, User, UserSubmittedImage } from "~/db/types";
 
 export interface ListedArt {
 	id: Art["id"];
+	createdAt: Art["createdAt"];
 	url: UserSubmittedImage["url"];
 	description?: Art["description"];
 	tags?: string[];

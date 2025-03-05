@@ -1,4 +1,8 @@
-import type { ActionFunction, MetaFunction } from "@remix-run/node";
+import type {
+	ActionFunction,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
 import { Link, Outlet, useLoaderData, useSearchParams } from "@remix-run/react";
 import clsx from "clsx";
@@ -28,25 +32,24 @@ import {
 } from "~/permissions";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
+import { metaTags } from "~/utils/remix";
 import {
 	badRequestIfFalsy,
 	parseRequestPayload,
 	validate,
 } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import { userPage } from "~/utils/urls";
 import { _action, actualNumber } from "~/utils/zod";
-import type { SerializeFrom } from "../../../utils/remix";
 
-export const meta: MetaFunction = () => {
-	return [
-		{ title: makeTitle("Plus Server suggestions") },
-		{
-			name: "description",
-			content: "This month's suggestions for +1, +2 and +3.",
-		},
-	];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Plus Server suggestions",
+		ogTitle: "Plus Server suggestions",
+		description:
+			"This season's suggestions to the Plus Server (+1, +2 and +3).",
+		location: args.location,
+	});
 };
 
 const suggestionActionSchema = z.union([
@@ -332,13 +335,12 @@ function SuggestedUser({
 					suggested: { id: suggestion.suggested.id },
 					targetPlusTier: Number(tier),
 				}) ? (
-					// TODO: resetScroll={false} https://twitter.com/ryanflorence/status/1527775882797907969
 					<LinkButton
 						className="plus__comment-button"
 						size="tiny"
 						variant="outlined"
 						to={`comment/${tier}/${suggestion.suggested.id}?tier=${tier}`}
-						prefetch="intent"
+						prefetch="render"
 					>
 						Comment
 					</LinkButton>

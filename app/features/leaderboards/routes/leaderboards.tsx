@@ -1,5 +1,9 @@
 import { cachified } from "@epic-web/cachified";
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
 import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import React from "react";
 import { useTranslation } from "react-i18next";
@@ -16,7 +20,6 @@ import {
 	currentSeason,
 } from "~/features/mmr/season";
 import type { SkillTierInterval } from "~/features/mmr/tiered.server";
-import { i18next } from "~/modules/i18n/i18next.server";
 import {
 	type MainWeaponId,
 	type RankedModeShort,
@@ -24,8 +27,8 @@ import {
 } from "~/modules/in-game-lists";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { cache, ttl } from "~/utils/cache.server";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import {
 	LEADERBOARDS_PAGE,
 	navIconUrl,
@@ -36,7 +39,6 @@ import {
 	userSubmittedImage,
 } from "~/utils/urls";
 import { InfoPopover } from "../../../components/InfoPopover";
-import type { SerializeFrom } from "../../../utils/remix";
 import { TopTenPlayer } from "../components/TopTenPlayer";
 import {
 	cachedFullUserLeaderboard,
@@ -72,14 +74,13 @@ export const meta: MetaFunction = (args) => {
 
 	if (!data) return [];
 
-	return [
-		{ title: data.title },
-		{
-			name: "description",
-			content:
-				"Leaderboards of top Splatoon players ranked by their X Power and tournament results",
-		},
-	];
+	return metaTags({
+		title: "Leaderboards",
+		ogTitle: "Splatoon leaderboards",
+		description:
+			"Leaderboards of top Splatoon players ranked by their X Battle placements as well as tournament and SendouQ results. Categories per weapon and mode.",
+		location: args.location,
+	});
 };
 
 const TYPE_SEARCH_PARAM_KEY = "type";
@@ -87,7 +88,6 @@ const SEASON_SEARCH_PARAM_KEY = "season";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await getUser(request);
-	const t = await i18next.getFixedT(request);
 	const unvalidatedType = new URL(request.url).searchParams.get(
 		TYPE_SEARCH_PARAM_KEY,
 	);
@@ -156,7 +156,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 					: type.startsWith("XP-WEAPON")
 						? weaponXPLeaderboard(Number(type.split("-")[2]) as MainWeaponId)
 						: null,
-		title: makeTitle(t("pages.leaderboards")),
 		season,
 	};
 };
@@ -337,7 +336,7 @@ function OwnEntryPeek({
 	entry,
 	nextTier,
 }: {
-	entry: NonNullable<SerializeFrom<typeof loader>["ownEntryPeek"]>["entry"];
+	entry: NonNullable<SerializeFrom<typeof loader>["userLeaderboard"]>[number];
 	nextTier?: SkillTierInterval;
 }) {
 	const data = useLoaderData<typeof loader>();

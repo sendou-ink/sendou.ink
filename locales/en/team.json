@@ -4,6 +4,7 @@
 	"actionButtons.leaveTeam": "Leave Team",
 	"actionButtons.makeMainTeam": "Make main team",
 	"leaveTeam.header": "Are you sure you want to leave {{teamName}}?",
+	"leaveTeam.header.newOwner": "Are you sure you want to leave {{teamName}}? New owner will be {{newOwner}}",
 	"actionButtons.leaveTeam.confirm": "Leave",
 	"actionButtons.editTeam": "Edit Team",
 	"actionButtons.manageRoster": "Manage Roster",
@@ -17,6 +18,7 @@
 	"roles.CAPTAIN": "Captain",
 	"roles.CO_CAPTAIN": "Co-Captain",
 	"roles.FRONTLINE": "Frontline",
+	"roles.SLAYER": "Slayer",
 	"roles.SKIRMISHER": "Skirmisher",
 	"roles.SUPPORT": "Support",
 	"roles.MIDLINE": "Midline",
@@ -25,7 +27,6 @@
 	"roles.SUB": "Sub",
 	"roles.COACH": "Coach",
 	"roles.CHEERLEADER": "Cheerleader",
-	"forms.fields.teamTwitter": "Team Twitter",
 	"forms.fields.teamBsky": "Team Bluesky",
 	"forms.fields.bio": "Bio",
 	"forms.fields.uploadImages": "Upload images",
@@ -40,5 +41,8 @@
 	"validation.TEAM_FULL": "Team you are trying to join is full.",
 	"validation.INVITE_CODE_WRONG": "Invite code is wrong.",
 	"validation.REACHED_TEAM_COUNT_LIMIT": "You have reached the maximum number of teams you can join. (Max 5 for patrons and 2 for others)",
-	"validation.VALID": "Join {{teamName}}?"
+	"validation.VALID": "Join {{teamName}}?",
+	"editor.label": "Editor",
+	"editorsInfo.button": "What can editors do?",
+	"editorsInfo.popover": "Editors can do all the same actions as the owner except for kicking the owner and deleting the team."
 }

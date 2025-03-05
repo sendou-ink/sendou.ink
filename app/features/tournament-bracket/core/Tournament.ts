@@ -6,6 +6,7 @@ import type {
 import { TOURNAMENT } from "~/features/tournament";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as Standings from "~/features/tournament/core/Standings";
+import { LEAGUES } from "~/features/tournament/tournament-constants";
 import { tournamentIsRanked } from "~/features/tournament/tournament-utils";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { Match, Stage } from "~/modules/brackets-model";
@@ -14,6 +15,7 @@ import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import { isAdmin } from "~/permissions";
 import { removeDuplicates } from "~/utils/arrays";
 import {
+	databaseTimestampNow,
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
@@ -23,7 +25,7 @@ import { assertUnreachable } from "~/utils/types";
 import { userSubmittedImage } from "~/utils/urls";
 import {
 	fillWithNullTillPowerOfTwo,
-	groupNumberToLetter,
+	groupNumberToLetters,
 } from "../tournament-bracket-utils";
 import { Bracket } from "./Bracket";
 import * as Swiss from "./Swiss";
@@ -162,11 +164,8 @@ export class Tournament {
 				);
 			} else if (type === "swiss") {
 				const { teams, relevantMatchesFinished } = sources
-					? this.resolveTeamsFromSources(sources)
-					: {
-							teams: this.ctx.teams.map((team) => team.id),
-							relevantMatchesFinished: true,
-						};
+					? this.resolveTeamsFromSources(sources, bracketIdx)
+					: this.resolveTeamsFromSignups(bracketIdx);
 
 				const { checkedInTeams, notCheckedInTeams } =
 					this.divideTeamsToCheckedInAndNotCheckedIn({
@@ -201,6 +200,7 @@ export class Tournament {
 						sources,
 						createdAt: null,
 						canBeStarted:
+							(!startTime || startTime < databaseTimestampNow()) &&
 							checkedInTeams.length >= TOURNAMENT.ENOUGH_TEAMS_TO_START &&
 							(sources ? relevantMatchesFinished : this.regularCheckInHasEnded),
 						teamsPendingCheckIn:
@@ -209,11 +209,8 @@ export class Tournament {
 				);
 			} else {
 				const { teams, relevantMatchesFinished } = sources
-					? this.resolveTeamsFromSources(sources)
-					: {
-							teams: this.ctx.teams.map((team) => team.id),
-							relevantMatchesFinished: true,
-						};
+					? this.resolveTeamsFromSources(sources, bracketIdx)
+					: this.resolveTeamsFromSignups(bracketIdx);
 
 				const { checkedInTeams, notCheckedInTeams } =
 					this.divideTeamsToCheckedInAndNotCheckedIn({
@@ -248,6 +245,7 @@ export class Tournament {
 						sources,
 						createdAt: null,
 						canBeStarted:
+							(!startTime || startTime < databaseTimestampNow()) &&
 							checkedInTeamsWithReplaysAvoided.length >=
 								TOURNAMENT.ENOUGH_TEAMS_TO_START &&
 							(sources ? relevantMatchesFinished : this.regularCheckInHasEnded),
@@ -261,23 +259,107 @@ export class Tournament {
 
 	private resolveTeamsFromSources(
 		sources: NonNullable<Progression.ParsedBracket["sources"]>,
+		bracketIdx: number,
 	) {
 		const teams: number[] = [];
 
 		let allRelevantMatchesFinished = true;
-		for (const { bracketIdx, placements } of sources) {
-			const sourceBracket = this.bracketByIdx(bracketIdx);
+		for (const source of sources) {
+			const sourceBracket = this.bracketByIdx(source.bracketIdx);
 			invariant(sourceBracket, "Bracket not found");
 
 			const { teams: sourcedTeams, relevantMatchesFinished } =
-				sourceBracket.source(placements);
+				sourceBracket.source(source.placements);
 			if (!relevantMatchesFinished) {
 				allRelevantMatchesFinished = false;
 			}
-			teams.push(...sourcedTeams);
+
+			// exclude teams that would be going to this bracket according
+			// to the bracket progression rules, but have been overridden
+			// by the TO to go somewhere else or get eliminated (in the case of destinationBracketIdx = -1)
+			const withOverriddenTeamsExcluded = sourcedTeams.filter(
+				(teamId) =>
+					!this.ctx.bracketProgressionOverrides.some(
+						(override) =>
+							override.sourceBracketIdx === source.bracketIdx &&
+							override.tournamentTeamId === teamId &&
+							override.destinationBracketIdx !== bracketIdx,
+					),
+			);
+
+			teams.push(...withOverriddenTeamsExcluded);
 		}
 
-		return { teams, relevantMatchesFinished: allRelevantMatchesFinished };
+		const teamsFromOverride: { id: number; sourceBracketIdx: number }[] = [];
+		for (const source of sources) {
+			for (const override of this.ctx.bracketProgressionOverrides) {
+				if (
+					override.sourceBracketIdx !== source.bracketIdx ||
+					override.destinationBracketIdx !== bracketIdx
+				) {
+					continue;
+				}
+
+				teamsFromOverride.push({
+					id: override.tournamentTeamId,
+					sourceBracketIdx: source.bracketIdx,
+				});
+			}
+		}
+
+		const overridesWithoutRepeats = teamsFromOverride
+			.filter(({ id }) => !teams.includes(id))
+			.sort((a, b) => {
+				if (a.sourceBracketIdx !== b.sourceBracketIdx) return 0;
+
+				const bracket = this.bracketByIdx(a.sourceBracketIdx);
+				if (!bracket) return 0;
+
+				const aStanding = bracket.standings.find(
+					(standing) => standing.team.id === a.id,
+				);
+				const bStanding = bracket.standings.find(
+					(standing) => standing.team.id === b.id,
+				);
+
+				if (!aStanding || !bStanding) return 0;
+
+				return aStanding.placement - bStanding.placement;
+			})
+			.map(({ id }) => id);
+
+		return {
+			teams: teams.concat(overridesWithoutRepeats),
+			relevantMatchesFinished: allRelevantMatchesFinished,
+		};
+	}
+
+	private resolveTeamsFromSignups(bracketIdx: number) {
+		const teams = this.isMultiStartingBracket
+			? this.ctx.teams.filter((team) => {
+					// 0 is the default
+					if (typeof team.startingBracketIdx !== "number") {
+						return bracketIdx === 0;
+					}
+
+					const startingBracket = this.ctx.settings.bracketProgression.at(
+						team.startingBracketIdx,
+					);
+					if (!startingBracket || startingBracket.sources) {
+						logger.warn(
+							"resolveTeamsFromSignups: Starting bracket index invalid",
+						);
+						return bracketIdx === 0;
+					}
+
+					return team.startingBracketIdx === bracketIdx;
+				})
+			: this.ctx.teams;
+
+		return {
+			teams: teams.map((team) => team.id),
+			relevantMatchesFinished: true,
+		};
 	}
 
 	private avoidReplaysOfPreviousBracketOpponent(
@@ -494,8 +576,7 @@ export class Tournament {
 				return {
 					consolationFinal:
 						selectedSettings?.thirdPlaceMatch ??
-						this.ctx.settings.thirdPlaceMatch ??
-						true,
+						TOURNAMENT.SE_DEFAULT_HAS_THIRD_PLACE_MATCH,
 				};
 			}
 			case "double_elimination": {
@@ -506,8 +587,7 @@ export class Tournament {
 			case "round_robin": {
 				const teamsPerGroup =
 					selectedSettings?.teamsPerGroup ??
-					this.ctx.settings.teamsPerGroup ??
-					TOURNAMENT.DEFAULT_TEAM_COUNT_PER_RR_GROUP;
+					TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP;
 
 				return {
 					groupCount: Math.ceil(participantsCount / teamsPerGroup),
@@ -522,7 +602,10 @@ export class Tournament {
 									groupCount: selectedSettings.groupCount,
 									roundCount: selectedSettings.roundCount,
 								}
-							: this.ctx.settings.swiss,
+							: {
+									groupCount: TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT,
+									roundCount: TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+								},
 				};
 			}
 			default: {
@@ -604,27 +687,39 @@ export class Tournament {
 
 	resolvePoolCode({
 		hostingTeamId,
-		groupLetter,
+		groupLetters,
 		bracketNumber,
 	}: {
 		hostingTeamId: number;
-		groupLetter?: string;
+		groupLetters?: string;
 		bracketNumber?: number;
 	}) {
 		const tournamentNameWithoutOnlyLetters = this.ctx.name.replace(
 			/[^a-zA-Z ]/g,
 			"",
 		);
-		const prefix = tournamentNameWithoutOnlyLetters
+		let prefix = tournamentNameWithoutOnlyLetters
 			.split(" ")
 			.map((word) => word[0])
 			.join("")
 			.toUpperCase()
 			.slice(0, 3);
 
+		// handle tournament name not having letters by using a default prefix
+		if (!prefix) {
+			prefix = ["AB", "CD", "EF", "GH", "IJ", "KL", "MN", "OP", "QR", "ST"][
+				this.ctx.id % 10
+			];
+		}
+
+		// for small tournaments there should be no risk that the pool gets full
+		// so to make it more convenient just use same suffix every match
+		const globalSuffix = this.ctx.teams.length <= 20 ? this.ctx.id % 10 : null;
+
 		return {
 			prefix,
-			suffix: groupLetter ?? bracketNumber ?? hostingTeamId % 10,
+			suffix:
+				globalSuffix ?? groupLetters ?? bracketNumber ?? hostingTeamId % 10,
 		};
 	}
 
@@ -778,7 +873,14 @@ export class Tournament {
 		// special format
 		if (this.minMembersPerTeam !== 4) return this.minMembersPerTeam;
 
-		const maxMembersBeforeStart = this.isInvitational ? 5 : 6;
+		if (this.isLeagueSignup || this.isLeagueDivision) return 8;
+
+		// TODO: retire this hack by making it user configurable
+		if (this.ctx.organization?.id === 19 && this.ctx.name.includes("FLUTI")) {
+			return 8;
+		}
+
+		const maxMembersBeforeStart = 6;
 
 		if (this.hasStarted) {
 			return maxMembersBeforeStart + 1;
@@ -819,11 +921,23 @@ export class Tournament {
 	}
 
 	get registrationOpen() {
+		if (this.isInvitational) return false;
+
 		return this.registrationClosesAt > new Date();
 	}
 
 	get autonomousSubs() {
 		return this.ctx.settings.autonomousSubs ?? true;
+	}
+
+	get isLeagueSignup() {
+		return Object.values(LEAGUES)
+			.flat()
+			.some((entry) => entry.tournamentId === this.ctx.id);
+	}
+
+	get isLeagueDivision() {
+		return Boolean(this.ctx.parentTournamentId);
 	}
 
 	matchNameById(matchId: number) {
@@ -845,7 +959,7 @@ export class Tournament {
 							(round) => round.id === match.round_id,
 						);
 
-						roundName = `Groups ${group?.number ? groupNumberToLetter(group.number) : ""}${round?.number ?? ""}.${match.number}`;
+						roundName = `Groups ${group?.number ? groupNumberToLetters(group.number) : ""}${round?.number ?? ""}.${match.number}`;
 					} else if (bracket.type === "swiss") {
 						const group = bracket.data.group.find(
 							(group) => group.id === match.group_id,
@@ -856,7 +970,7 @@ export class Tournament {
 
 						const oneGroupOnly = bracket.data.group.length === 1;
 
-						roundName = `Swiss${oneGroupOnly ? "" : " Group"} ${group?.number && !oneGroupOnly ? groupNumberToLetter(group.number) : ""} ${round?.number ?? ""}.${match.number}`;
+						roundName = `Swiss${oneGroupOnly ? "" : " Group"} ${group?.number && !oneGroupOnly ? groupNumberToLetters(group.number) : ""} ${round?.number ?? ""}.${match.number}`;
 					} else if (
 						bracket.type === "single_elimination" ||
 						bracket.type === "double_elimination"
@@ -911,7 +1025,7 @@ export class Tournament {
 			if (!roundName) return;
 
 			if (roundName.includes("Semis")) {
-				return roundName.replace(/\d/g, "");
+				return roundName.replace(/\d/g, "").trim();
 			}
 
 			return roundName.split(".")[0];
@@ -943,6 +1057,15 @@ export class Tournament {
 		return bracket;
 	}
 
+	get isMultiStartingBracket() {
+		let count = 0;
+		for (const bracket of this.ctx.settings.bracketProgression) {
+			if (!bracket.sources) count++;
+		}
+
+		return count > 1;
+	}
+
 	ownedTeamByUser(
 		user: OptionalIdObject,
 	): ((typeof this.ctx.teams)[number] & { inviteCode: string }) | null {
@@ -958,9 +1081,22 @@ export class Tournament {
 	teamMemberOfByUser(user: OptionalIdObject) {
 		if (!user) return null;
 
-		return this.ctx.teams.find((team) =>
+		const teams = this.ctx.teams.filter((team) =>
 			team.members.some((member) => member.userId === user.id),
 		);
+
+		let result: (typeof teams)[number] | null = null;
+		let latestCreatedAt = 0;
+		for (const team of teams) {
+			const member = team.members.find((member) => member.userId === user.id)!;
+
+			if (member.createdAt > latestCreatedAt) {
+				result = team;
+				latestCreatedAt = member.createdAt;
+			}
+		}
+
+		return result;
 	}
 
 	teamMemberOfProgressStatus(user: OptionalIdObject) {

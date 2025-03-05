@@ -20,26 +20,19 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		showPrivate: loggedInUser?.id === user.id,
 	});
 
-	const skippedViaSearchParams =
-		new URL(request.url).searchParams.get("exact") === "true";
-	const skipAbilitySorting =
-		loggedInUser?.id === user.id || skippedViaSearchParams;
-	const buildsWithAbilitiesSorted = skipAbilitySorting
-		? builds
-		: builds.map((build) => ({
-				...build,
-				abilities: sortAbilities(build.abilities),
-			}));
-
-	if (buildsWithAbilitiesSorted.length === 0 && loggedInUser?.id !== user.id) {
+	if (builds.length === 0 && loggedInUser?.id !== user.id) {
 		throw new Response(null, { status: 404 });
 	}
 
 	const sortedBuilds = sortBuilds({
-		builds: buildsWithAbilitiesSorted,
+		builds,
 		buildSorting: user.buildSorting,
 		weaponPool: user.weapons,
-	});
+	}).map((build) => ({
+		...build,
+		abilities: sortAbilities(build.abilities),
+		unsortedAbilities: build.abilities,
+	}));
 
 	return privatelyCachedJson({
 		buildSorting: user.buildSorting,

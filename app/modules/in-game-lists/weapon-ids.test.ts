@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { MainWeaponId } from "./types";
-import { weaponIdToBucketId } from "./weapon-ids";
+import { weaponIdToArrayWithAlts, weaponIdToBucketId } from "./weapon-ids";
 
 describe("weaponIdToBucketId()", () => {
 	test("Each weaponId is mapped to its correct bucket", () => {
@@ -1460,5 +1460,31 @@ describe("weaponIdToBucketId()", () => {
 				expect(main[bucket]).toBe(weaponPrefix(kit));
 			}
 		}
+	});
+});
+
+describe("weaponIdToArrayWithAlts", () => {
+	test("handles weapon id without alts", () => {
+		const id = 0;
+		const result = weaponIdToArrayWithAlts(id);
+		expect(result).toEqual([0]);
+	});
+
+	test("handles weapon id with alts", () => {
+		const id = 40;
+		const result = weaponIdToArrayWithAlts(id);
+		expect(result).toEqual([40, 45, 47]);
+	});
+
+	test("handles alt weapon id", () => {
+		const id = 45;
+		const result = weaponIdToArrayWithAlts(id);
+		expect(result).toEqual([40, 45, 47]);
+	});
+
+	test("handles weapon id with only one alt", () => {
+		const id = 41;
+		const result = weaponIdToArrayWithAlts(id);
+		expect(result).toEqual([41, 46]);
 	});
 });

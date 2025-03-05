@@ -1,4 +1,8 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
 import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import clsx from "clsx";
 import { addMonths, subMonths } from "date-fns";
@@ -16,18 +20,17 @@ import { getUserId } from "~/features/auth/core/user.server";
 import { currentSeason } from "~/features/mmr/season";
 import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import { i18next } from "~/modules/i18n/i18next.server";
 import { joinListToNaturalString } from "~/utils/arrays";
 import {
 	databaseTimestampToDate,
 	dateToThisWeeksMonday,
+	dateToThisWeeksSunday,
 	dateToWeekNumber,
 	dayToWeekStartsAtMondayDay,
 	getWeekStartsAtMondayDay,
 	weekNumberToDate,
 } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import type { Unpacked } from "~/utils/types";
 import {
 	CALENDAR_PAGE,
@@ -40,36 +43,44 @@ import {
 } from "~/utils/urls";
 import { actualNumber, safeSplit } from "~/utils/zod";
 import { Label } from "../../../components/Label";
-import { Toggle } from "../../../components/Toggle";
 import type {
 	CalendarEventTag,
 	PersistedCalendarEventTag,
 } from "../../../db/types";
-import type { SerializeFrom } from "../../../utils/remix";
+import { metaTags } from "../../../utils/remix";
 import * as CalendarRepository from "../CalendarRepository.server";
 import { calendarEventTagSchema } from "../actions/calendar.new.server";
 import { CALENDAR_EVENT } from "../calendar-constants";
 import { closeByWeeks } from "../calendar-utils";
 import { Tags } from "../components/Tags";
-
 import "~/styles/calendar.css";
+import { SendouSwitch } from "~/components/elements/Switch";
 
 export const meta: MetaFunction = (args) => {
 	const data = args.data as SerializeFrom<typeof loader> | null;
 
 	if (!data) return [];
 
-	return [
-		{ title: data.title },
-		{
-			name: "description",
-			content: `${data.events.length} events happening during week ${
-				data.displayedWeek
-			} including ${joinListToNaturalString(
-				data.events.slice(0, 3).map((e) => e.name),
-			)}`,
-		},
-	];
+	const events = data.events.slice().sort((a, b) => {
+		const aParticipants = a.participantCounts?.teams ?? 0;
+		const bParticipants = b.participantCounts?.teams ?? 0;
+
+		if (aParticipants > bParticipants) return -1;
+		if (aParticipants < bParticipants) return 1;
+
+		return 0;
+	});
+
+	return metaTags({
+		title: "Calendar",
+		ogTitle: "Splatoon competitive event calendar",
+		location: args.location,
+		description: `${data.events.length} events on sendou.ink happening during week ${
+			data.displayedWeek
+		} including ${joinListToNaturalString(
+			events.slice(0, 3).map((e) => e.name),
+		)}`,
+	});
 };
 
 export const handle: SendouRouteHandle = {
@@ -96,7 +107,6 @@ const loaderTournamentsOnlySearchParamsSchema = z.object({
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await getUserId(request);
-	const t = await i18next.getFixedT(request);
 	const url = new URL(request.url);
 
 	// separate from tags parse so they can fail independently
@@ -113,6 +123,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		});
 
 	const mondayDate = dateToThisWeeksMonday(new Date());
+	const sundayDate = dateToThisWeeksSunday(new Date());
 	const currentWeek = dateToWeekNumber(mondayDate);
 
 	const displayedWeek = parsedWeekParams.success
@@ -120,7 +131,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		: currentWeek;
 	const displayedYear = parsedWeekParams.success
 		? parsedWeekParams.data.year
-		: mondayDate.getFullYear();
+		: currentWeek === 1 // handle first week of the year special case
+			? sundayDate.getFullYear()
+			: mondayDate.getFullYear();
 	const tagsToFilterBy = parsedFilterParams.success
 		? (parsedFilterParams.data.tags as PersistedCalendarEventTag[])
 		: [];
@@ -154,7 +167,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		eventsToReport: user
 			? await CalendarRepository.eventsToReport(user.id)
 			: [],
-		title: makeTitle([`Week ${displayedWeek}`, t("pages.calendar")]),
 	};
 };
 
@@ -456,10 +468,10 @@ function OnSendouInkToggle() {
 				<Label htmlFor="onlyTournaments">
 					{t("calendar:tournament.filter.label")}
 				</Label>
-				<Toggle
+				<SendouSwitch
 					id="onlyTournaments"
-					checked={onlyTournaments}
-					setChecked={setOnlyTournaments}
+					isSelected={onlyTournaments}
+					onChange={setOnlyTournaments}
 				/>
 			</div>
 		</div>

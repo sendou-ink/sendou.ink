@@ -13,14 +13,12 @@
 	"q5": "¿Hay un app de sendou.ink?",
 	"a5": "No, pero sendou.ink se puede instalar como una 'aplicación web progresiva' (PWA) que obtiene muchos de los mismos beneficios, como pantalla completa, un ícono en la pantalla de inicio y un proceso separado. Busque en Google 'cómo instalar PWA en *su navegador*' para encontrar instrucciones.",
 
-	"q6": "¿Cómo puedo agregar Twitch/Twitter/YouTube a mi perfil?",
+	"q6": "¿Cómo puedo agregar Twitch/Bluesky/YouTube a mi perfil?",
 	"a6": "Usamos tu perfil de Discord para eso. Conéctalos y verifícalos a travéz de Discord. Luego, cierra tu sesión y vuelve a iniciar tu sesión en sendou.ink para actualizar.",
 
 	"q7": "¿Cómo puedo agregar videos?",
-	"a7": "Envia un mensaje a Sendou en Discord para obtener acceso e instruccones.",
 
 	"q8": "¿Cómo puedo mostrar mis resultados de Combate X en mi perfil?",
-	"a8": "Encuentra tu página de tu jugador en la página de búsqueda principal. Envia el enlace en el 'helpdesk' en nuestro Discord indicando que deseas enlazarlo. Ten en cuenta que no es posible agregarlo si no has llegado al Top 500 o no has sido un jugador destacado con alguna arma.",
 
 	"q9": "¿Cómo puedo subir arte que he comisionado?",
 	"a9": "Solo puedes agregar arte que tú has creado. También tiene que tener relación con Splatoon. Para piezas comisionadas, por favor pide al artista que suba el arte. El artista puede enlazar tu perfil y así se podrá mostrar en tu perfil."

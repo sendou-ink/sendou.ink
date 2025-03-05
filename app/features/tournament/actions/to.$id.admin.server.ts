@@ -1,8 +1,9 @@
 import type { ActionFunction } from "@remix-run/node";
 import { z } from "zod";
-import { requireUserId } from "~/features/auth/core/user.server";
+import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
+import { notify } from "~/features/notifications/core/notify.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
 	clearTournamentDataCache,
@@ -30,7 +31,7 @@ import { tournamentIdFromParams } from "../tournament-utils";
 import { inGameNameIfNeeded } from "../tournament-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUserId(request);
+	const user = await requireUser(request);
 	const data = await parseRequestPayload({
 		request,
 		schema: adminActionSchema,
@@ -160,7 +161,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 			const team = tournament.teamById(data.teamId);
 			validate(team, "Invalid team id");
 			validate(
-				team.checkIns.length === 0 || team.members.length > 4,
+				team.checkIns.length === 0 ||
+					team.members.length > tournament.minMembersPerTeam,
 				"Can't remove last member from checked in team",
 			);
 			validate(
@@ -195,14 +197,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			const previousTeam = tournament.teamMemberOfByUser({ id: data.userId });
 
-			if (tournament.hasStarted) {
-				validate(
-					!previousTeam || previousTeam.checkIns.length === 0,
-					"User is already on a checked in team",
-				);
-			} else {
-				validate(!previousTeam, "User is already on a team");
-			}
+			validate(
+				tournament.hasStarted || !previousTeam,
+				"User is already in a team",
+			);
 
 			validate(
 				!userIsBanned(data.userId),
@@ -213,8 +211,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 				newTeamId: team.id,
 				previousTeamId: previousTeam?.id,
-				// this team is not checked in so we can simply delete it
-				whatToDoWithPreviousTeam: previousTeam ? "DELETE" : undefined,
+				// this team is not checked in & tournament started, so we can simply delete it
+				whatToDoWithPreviousTeam:
+					previousTeam &&
+					previousTeam.checkIns.length === 0 &&
+					tournament.hasStarted
+						? "DELETE"
+						: undefined,
 				tournamentId,
 				inGameName: await inGameNameIfNeeded({
 					tournament,
@@ -226,6 +229,22 @@ export const action: ActionFunction = async ({ request, params }) => {
 				tournamentId,
 				type: "participant",
 				userId: data.userId,
+			});
+
+			notify({
+				userIds: [data.userId],
+				notification: {
+					type: "TO_ADDED_TO_TEAM",
+					pictureUrl:
+						tournament.tournamentTeamLogoSrc(team) ?? tournament.ctx.logoSrc,
+					meta: {
+						adderUsername: user.username,
+						teamName: team.name,
+						tournamentId,
+						tournamentName: tournament.ctx.name,
+						tournamentTeamId: team.id,
+					},
+				},
 			});
 
 			break;

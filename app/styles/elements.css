@@ -1,0 +1,325 @@
+/* contains styles for react aria components */
+
+.react-aria-Button {
+	display: flex;
+	width: auto;
+	align-items: center;
+	justify-content: center;
+	border: 2px solid var(--theme);
+	border-radius: var(--rounded-sm);
+	appearance: none;
+	background: var(--theme);
+	color: var(--button-text);
+	cursor: pointer;
+	font-size: var(--fonts-sm);
+	font-weight: var(--bold);
+	line-height: 1.2;
+	outline-offset: 2px;
+	padding-block: var(--s-1-5);
+	padding-inline: var(--s-2-5);
+	user-select: none;
+}
+
+.react-aria-Button[data-focus-visible] {
+	outline: 2px solid var(--theme);
+}
+
+.react-aria-Button[data-pressed] {
+	transform: translateY(1px);
+}
+
+.react-aria-Button[data-disabled] {
+	cursor: not-allowed;
+	opacity: 0.5;
+	transform: initial;
+}
+
+.react-aria-Button.outlined {
+	background-color: var(--theme-very-transparent);
+	color: var(--theme);
+}
+
+.react-aria-Button.outlined-success {
+	border-color: var(--theme-success);
+	background-color: transparent;
+	color: var(--theme-success);
+}
+
+.react-aria-Button.small {
+	font-size: var(--fonts-xs);
+	padding-block: var(--s-1);
+	padding-inline: var(--s-2);
+}
+
+.react-aria-Button.miniscule {
+	font-size: var(--fonts-xxs);
+	padding-block: var(--s-1);
+	padding-inline: var(--s-2);
+}
+
+.react-aria-Button.big {
+	font-size: var(--fonts-md);
+	padding-block: var(--s-2-5);
+	padding-inline: var(--s-6);
+}
+
+.react-aria-Button.minimal {
+	padding: 0;
+	border: none;
+	background-color: transparent;
+	color: var(--theme);
+	outline: initial;
+}
+
+.react-aria-Button.minimal[data-focus-visible] {
+	outline: 2px solid var(--theme);
+}
+
+.react-aria-Button.minimal-success {
+	padding: 0;
+	border: none;
+	background-color: transparent;
+	color: var(--theme-success);
+}
+
+.react-aria-Button.success {
+	border-color: var(--theme-success);
+	background-color: var(--theme-success);
+	outline-color: var(--theme-success);
+}
+
+.react-aria-Button.destructive {
+	border-color: var(--theme-error);
+	background-color: transparent;
+	color: var(--theme-error);
+	outline-color: var(--theme-error);
+}
+
+.react-aria-Button.minimal-destructive {
+	padding: 0;
+	border: none;
+	background-color: transparent;
+	color: var(--theme-error);
+	outline-color: var(--theme-error);
+}
+
+.sendou-button-icon {
+	width: 1.25rem;
+	margin-inline-end: var(--s-1-5);
+}
+
+.sendou-button-icon.lonely {
+	margin-inline-end: 0 !important;
+}
+
+.react-aria-Button.small > .button-icon {
+	width: 1rem;
+	margin-inline-end: var(--s-1);
+}
+
+.sendou-popover-content {
+	max-width: 20rem;
+	padding: var(--s-2);
+	border: 2px solid var(--border);
+	border-radius: var(--rounded);
+	background-color: var(--bg-darker);
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
+	white-space: pre-wrap;
+}
+
+.react-aria-Dialog {
+	outline: none;
+}
+
+.react-aria-Label {
+	font-size: var(--fonts-xs);
+	font-weight: var(--bold);
+	margin-block-end: var(--label-margin);
+	display: block;
+}
+
+.react-aria-DatePicker .react-aria-Group {
+	display: flex;
+	border: 2px solid var(--border);
+	border-radius: var(--rounded-sm);
+	accent-color: var(--theme-secondary);
+	background-color: var(--bg-input);
+	color: var(--text);
+	font-size: var(--fonts-sm);
+	outline: none;
+	height: 1rem;
+	padding: var(--s-4) var(--s-3);
+}
+
+.react-aria-DatePicker[data-open] .react-aria-Group {
+	border-color: transparent;
+	outline: 2px solid var(--theme);
+}
+
+.react-aria-DatePicker .react-aria-DateInput {
+	display: flex;
+	margin-block-start: -11px;
+}
+
+.react-aria-DateSegment {
+	outline-color: var(--theme-transparent);
+}
+
+.react-aria-DatePicker .react-aria-Button {
+	margin-inline-start: auto;
+	background-color: transparent;
+	border: none;
+	margin-block-start: -6px;
+	margin-inline-end: -8px;
+	outline: none;
+}
+
+.react-aria-DatePicker .react-aria-Button[data-focused] svg {
+	fill: var(--theme);
+}
+
+.react-aria-DatePicker svg {
+	fill: var(--input-icon);
+	width: 17.5px;
+}
+
+.react-aria-Calendar {
+	background-color: var(--bg-lighter-solid);
+	border-radius: var(--rounded);
+	padding: var(--s-4);
+	border: var(--border-style);
+}
+
+.react-aria-Calendar header {
+	display: flex;
+	gap: var(--s-2);
+	justify-content: space-between;
+	align-items: center;
+	margin-block-end: var(--s-1);
+	min-width: 250px;
+}
+
+.react-aria-Calendar .react-aria-Heading {
+	font-size: var(--fonts-lg);
+}
+
+.react-aria-Calendar .react-aria-Button {
+	background-color: transparent;
+	color: var(--theme);
+	border: none;
+	padding: 0;
+	border-radius: 100%;
+}
+
+.react-aria-Calendar .react-aria-Button svg {
+	fill: var(--theme);
+	width: 27.5px;
+}
+
+.react-aria-CalendarGrid {
+	width: 100%;
+}
+
+.react-aria-CalendarHeaderCell {
+	color: var(--text-lighter);
+}
+
+.react-aria-CalendarCell {
+	display: grid;
+	place-items: center;
+	font-size: var(--fonts-sm);
+	padding: var(--s-1-5);
+	width: 35px;
+	height: 35px;
+	border-radius: var(--rounded-sm);
+	outline-color: var(--theme);
+}
+
+.react-aria-CalendarCell[data-outside-month] {
+	display: none;
+}
+
+.react-aria-CalendarCell[data-disabled] {
+	opacity: 0.5;
+	background-color: transparent !important;
+}
+
+.react-aria-Calendar .react-aria-CalendarCell[data-selected] {
+	background-color: var(--theme-transparent);
+	color: var(--theme);
+}
+
+.react-aria-CalendarCell:hover {
+	background-color: var(--theme-transparent);
+	outline: initial;
+}
+
+.react-aria-Switch {
+	display: flex;
+	align-items: center;
+	gap: 0.571rem;
+	color: var(--text-color);
+	forced-color-adjust: none;
+	font-size: var(--fonts-xs);
+	font-weight: var(--bold);
+	margin-block-end: 0;
+}
+
+.react-aria-Switch .indicator {
+	width: var(--s-11);
+	height: var(--s-6);
+	background: var(--theme-transparent);
+	border-radius: 1.143rem;
+}
+
+.react-aria-Switch.small .indicator {
+	width: 2rem;
+	height: 1.143rem;
+}
+
+.react-aria-Switch .indicator:before {
+	content: "";
+	display: block;
+	margin: 0.26rem;
+	width: var(--s-4);
+	height: var(--s-4);
+	background: white;
+	border-radius: 16px;
+	transition: transform 200ms;
+}
+
+.react-aria-Switch.small .indicator:before {
+	width: 0.857rem;
+	height: 0.857rem;
+	margin: 0.143rem;
+}
+
+.react-aria-Switch[data-pressed] .indicator:before {
+	opacity: 0.8;
+}
+
+.react-aria-Switch[data-selected] .indicator {
+	background: var(--theme-vibrant);
+}
+
+.react-aria-Switch[data-selected] .indicator:before {
+	transform: translateX(125%);
+}
+
+.react-aria-Switch.small[data-selected] .indicator:before {
+	transform: translateX(100%);
+}
+
+.react-aria-Switch[data-focus-visible] .indicator {
+	outline: 2px solid var(--theme-vibrant);
+	outline-offset: 2px;
+}
+
+.react-aria-Switch[data-disabled] .indicator {
+	opacity: 0.65;
+}
+
+.react-aria-Switch[data-disabled] {
+	cursor: not-allowed;
+}

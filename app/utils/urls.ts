@@ -1,5 +1,4 @@
 import slugify from "slugify";
-import type navItems from "~/components/layout/nav-items.json";
 import type { Preference } from "~/db/tables";
 import type {
 	Art,
@@ -68,7 +67,6 @@ export const conditionalUserSubmittedImage = (fileName: string) =>
 
 export const PLUS_SERVER_DISCORD_URL = "https://discord.gg/FW4dKrY";
 export const SENDOU_INK_DISCORD_URL = "https://discord.gg/sendou";
-export const SENDOU_TWITTER_URL = "https://twitter.com/sendouc";
 export const SENDOU_INK_PATREON_URL = "https://patreon.com/sendou";
 export const NINTENDO_COMMUNITY_TOURNAMENTS_GUIDELINES_URL =
 	"https://en-americas-support.nintendo.com/app/answers/detail/a_id/63454";
@@ -77,11 +75,6 @@ export const PATREON_HOW_TO_CONNECT_DISCORD_URL =
 export const SENDOU_INK_GITHUB_URL = "https://github.com/Sendouc/sendou.ink";
 export const GITHUB_CONTRIBUTORS_URL =
 	"https://github.com/Sendouc/sendou.ink/graphs/contributors";
-export const BORZOIC_TWITTER = "https://twitter.com/borzoic_";
-export const LEAN_TWITTER = "https://twitter.com/LeanYoshi";
-export const UBERU_TWITTER = "https://twitter.com/uberu5";
-export const YAGA_TWITTER = "https://twitter.com/a_bog_hag";
-export const ANTARISKA_TWITTER = "https://twitter.com/antariska_spl";
 export const ipLabsMaps = (pool: string) =>
 	`https://maps.iplabs.ink/?3&pool=${pool}`;
 export const SPLATOON_3_INK = "https://splatoon3.ink/";
@@ -90,8 +83,6 @@ export const RHODESMAS_FREESOUND_PROFILE_URL =
 export const SPR_INFO_URL =
 	"https://www.pgstats.com/articles/introducing-spr-and-uf";
 
-export const twitterUrl = (accountName: string) =>
-	`https://twitter.com/${accountName}`;
 export const bskyUrl = (accountName: string) =>
 	`https://bsky.app/profile/${accountName}`;
 export const twitchUrl = (accountName: string) =>
@@ -135,6 +126,8 @@ export const TIERS_PAGE = "/tiers";
 export const SUSPENDED_PAGE = "/suspended";
 export const LFG_PAGE = "/lfg";
 export const SETTINGS_PAGE = "/settings";
+export const LUTI_PAGE = "/luti";
+export const PLUS_VOTING_PAGE = "/plus/voting";
 
 export const BLANK_IMAGE_URL = "/static-assets/img/blank.gif";
 export const COMMON_PREVIEW_IMAGE =
@@ -155,6 +148,10 @@ export const soundPath = (fileName: string) =>
 export const GET_ALL_EVENTS_WITH_MAP_POOLS_ROUTE = "/calendar/map-pool-events";
 export const GET_TRUSTERS_ROUTE = "/trusters";
 export const PATRONS_LIST_ROUTE = "/patrons-list";
+
+export const NOTIFICATIONS_URL = "/notifications";
+export const NOTIFICATIONS_PEAK_ROUTE = "/notifications/peek";
+export const NOTIFICATIONS_MARK_AS_SEEN_ROUTE = "/notifications/seen";
 
 interface UserLinkArgs {
 	discordId: User["discordId"];
@@ -185,8 +182,12 @@ export const newVodPage = (vodToEditId?: number) =>
 export const userResultsEditHighlightsPage = (user: UserLinkArgs) =>
 	`${userResultsPage(user)}/highlights`;
 export const artPage = (tag?: string) => `/art${tag ? `?tag=${tag}` : ""}`;
-export const userArtPage = (user: UserLinkArgs, source?: ArtSource) =>
-	`${userPage(user)}/art${source ? `?source=${source}` : ""}`;
+export const userArtPage = (
+	user: UserLinkArgs,
+	source?: ArtSource,
+	bigArtId?: number,
+) =>
+	`${userPage(user)}/art${source ? `?source=${source}` : ""}${bigArtId ? `?big=${bigArtId}` : ""}`;
 export const newArtPage = (artId?: Art["id"]) =>
 	`${artPage()}/new${artId ? `?art=${artId}` : ""}`;
 export const userNewBuildPage = (
@@ -314,6 +315,8 @@ export const tournamentBracketsPage = ({
 		query.size > 0 ? `?${query.toString()}` : ""
 	}`;
 };
+export const tournamentDivisionsPage = (tournamentId: number) =>
+	`/to/${tournamentId}/divisions`;
 export const tournamentResultsPage = (tournamentId: number) =>
 	`/to/${tournamentId}/results`;
 export const tournamentBracketsSubscribePage = (tournamentId: number) =>
@@ -420,7 +423,7 @@ export const badgeUrl = ({
 export const articlePreviewUrl = (slug: string) =>
 	`/static-assets/img/article-previews/${slug}.png`;
 
-export const navIconUrl = (navItem: (typeof navItems)[number]["name"]) =>
+export const navIconUrl = (navItem: string) =>
 	`/static-assets/img/layout/${navItem}`;
 export const gearImageUrl = (gearType: GearType, gearSplId: number) =>
 	`/static-assets/img/gear/${gearType.toLowerCase()}/${gearSplId}`;

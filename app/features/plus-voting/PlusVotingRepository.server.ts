@@ -30,6 +30,14 @@ type ResultsByMonthYearQueryReturnType = InferResult<
 	ReturnType<typeof resultsByMonthYearQuery>
 >;
 
+export function allPlusTiersFromLatestVoting() {
+	return db
+		.selectFrom("FreshPlusTier")
+		.select(["FreshPlusTier.userId", "FreshPlusTier.tier"])
+		.where("FreshPlusTier.tier", "is not", null)
+		.execute() as Promise<{ userId: number; tier: number }[]>;
+}
+
 export type ResultsByMonthYearItem = Unwrapped<typeof resultsByMonthYear>;
 export async function resultsByMonthYear(args: MonthYear) {
 	const rows = await resultsByMonthYearQuery(args).execute();

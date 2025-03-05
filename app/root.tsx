@@ -1,5 +1,9 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { data, redirect } from "@remix-run/node";
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import {
 	Links,
 	Meta,
@@ -15,6 +19,7 @@ import {
 import generalI18next from "i18next";
 import NProgress from "nprogress";
 import * as React from "react";
+import { I18nProvider } from "react-aria-components";
 import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
 import { useChangeLanguage } from "remix-i18next/react";
@@ -38,11 +43,12 @@ import { useVisibilityChange } from "./hooks/useVisibilityChange";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
 import i18next, { i18nCookie } from "./modules/i18n/i18next.server";
 import type { Namespace } from "./modules/i18n/resources.server";
-import { type SerializeFrom, isRevalidation } from "./utils/remix";
-import { COMMON_PREVIEW_IMAGE, SUSPENDED_PAGE } from "./utils/urls";
+import { isRevalidation, metaTags } from "./utils/remix";
+import { SUSPENDED_PAGE } from "./utils/urls";
 
 import "nprogress/nprogress.css";
 import "~/styles/common.css";
+import "~/styles/elements.css";
 import "~/styles/flags.css";
 import "~/styles/layout.css";
 import "~/styles/reset.css";
@@ -58,22 +64,18 @@ export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	return Boolean(lang);
 };
 
-export const meta: MetaFunction = () => {
-	return [
-		{ title: "sendou.ink" },
-		{
-			name: "description",
-			content:
-				"Competitive Splatoon Hub featuring gear planner, event calendar, builds by top players, and more!",
-		},
-		{
-			property: "og:image",
-			content: COMMON_PREVIEW_IMAGE,
-		},
-	];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "sendou.ink",
+		ogTitle: "sendou.ink - Competitive Splatoon Hub",
+		location: args.location,
+		description:
+			"Sendou.ink is the home of competitive Splatoon featuring daily tournaments and a seasonal ladder. Variety of tools and the largest collection of builds by top players allow you to level up your skill in Splatoon 3.",
+	});
 };
 
 export type RootLoaderData = SerializeFrom<typeof loader>;
+export type LoggedInUser = NonNullable<RootLoaderData["user"]>;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await getUser(request, false);
@@ -89,7 +91,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		return redirect(SUSPENDED_PAGE);
 	}
 
-	return data(
+	return json(
 		{
 			locale,
 			theme: themeSession.getTheme(),
@@ -107,6 +109,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 						isTournamentOrganizer: user.isTournamentOrganizer,
 						inGameName: user.inGameName,
 						friendCode: user.friendCode,
+						preferences: user.preferences ?? {},
 						languages: user.languages ? user.languages.split(",") : [],
 					}
 				: undefined,
@@ -166,10 +169,12 @@ function Document({
 			<body style={customizedCSSVars}>
 				{process.env.NODE_ENV === "development" && <HydrationTestIndicator />}
 				<React.StrictMode>
-					<MyRamp data={data} />
-					<Layout data={data} isErrored={isErrored}>
-						{children}
-					</Layout>
+					<I18nProvider locale={i18n.language}>
+						<MyRamp data={data} />
+						<Layout data={data} isErrored={isErrored}>
+							{children}
+						</Layout>
+					</I18nProvider>
 				</React.StrictMode>
 				<ScrollRestoration />
 				<Scripts />
@@ -267,7 +272,7 @@ export default function App() {
 	// useLoaderData can't be used in CatchBoundary and layout is rendered in it as well
 	//
 	// Update 14.10.23: not sure if this still applies as the CatchBoundary is gone
-	const data = useLoaderData<typeof loader>();
+	const data = useLoaderData<RootLoaderData>();
 
 	return (
 		<ThemeProvider

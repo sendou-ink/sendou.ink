@@ -2,14 +2,18 @@ import type { Params } from "@remix-run/react";
 import type { Tournament } from "~/db/types";
 import type { ModeShort, StageId } from "~/modules/in-game-lists";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
+import { weekNumberToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { tournamentLogoUrl } from "~/utils/urls";
+import type { Tables, TournamentStageSettings } from "../../db/tables";
+import { assertUnreachable } from "../../utils/types";
 import { MapPool } from "../map-list-generator/core/map-pool";
 import { currentSeason } from "../mmr/season";
 import { BANNED_MAPS } from "../sendouq-settings/banned-maps";
+import type { Tournament as TournamentClass } from "../tournament-bracket/core/Tournament";
 import type { TournamentData } from "../tournament-bracket/core/Tournament.server";
 import type { PlayedSet } from "./core/sets.server";
-import { TOURNAMENT } from "./tournament-constants";
+import { LEAGUES, TOURNAMENT } from "./tournament-constants";
 
 export function tournamentIdFromParams(params: Params<string>) {
 	const result = Number(params.id);
@@ -268,4 +272,69 @@ export function tournamentIsRanked({
 	if (minMembersPerTeam !== 4) return false;
 
 	return isSetAsRanked ?? true;
+}
+
+export function resolveLeagueRoundStartDate(
+	tournament: TournamentClass,
+	roundId: number,
+) {
+	if (!tournament.isLeagueDivision) return null;
+
+	const league = Object.values(LEAGUES)
+		.flat()
+		.find(
+			(league) => league.tournamentId === tournament.ctx.parentTournamentId,
+		);
+	if (!league) return null;
+
+	const bracket = tournament.brackets.find((b) =>
+		b.data.round.some((r) => r.id === roundId),
+	);
+
+	const round = bracket?.data.round.find((r) => r.id === roundId);
+	const onlyRelevantRounds = bracket?.data.round.filter(
+		(r) => r.group_id === round?.group_id,
+	);
+
+	const roundIdx = onlyRelevantRounds?.findIndex((r) => r.id === roundId);
+	if (roundIdx === undefined) return null;
+
+	const week = league.weeks[roundIdx];
+	if (!week) return null;
+
+	const date = weekNumberToDate({
+		week: week.weekNumber,
+		year: week.year,
+	});
+
+	return date;
+}
+
+export function defaultBracketSettings(
+	type: Tables["TournamentStage"]["type"],
+): TournamentStageSettings {
+	switch (type) {
+		case "single_elimination": {
+			return {
+				thirdPlaceMatch: true,
+			};
+		}
+		case "double_elimination": {
+			return {};
+		}
+		case "round_robin": {
+			return {
+				teamsPerGroup: 4,
+			};
+		}
+		case "swiss": {
+			return {
+				roundCount: 5,
+				groupCount: 1,
+			};
+		}
+		default: {
+			assertUnreachable(type);
+		}
+	}
 }

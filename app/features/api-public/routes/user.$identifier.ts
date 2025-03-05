@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import { type LoaderFunctionArgs, json } from "@remix-run/node";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { cors } from "remix-utils/cors";
 import { z } from "zod";
@@ -32,7 +32,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 				"User.country",
 				"User.discordName",
 				"User.twitch",
-				"User.twitter",
 				"User.battlefy",
 				"User.bsky",
 				"User.customUrl",
@@ -95,9 +94,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		plusServerTier: user.tier as GetUserResponse["plusServerTier"],
 		socials: {
 			twitch: user.twitch,
-			twitter: user.twitter,
 			battlefy: user.battlefy,
 			bsky: user.bsky,
+			twitter: null, // deprecated field
 		},
 		peakXp:
 			user.xRankPlacements.length > 0
@@ -119,5 +118,5 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		})),
 	};
 
-	return await cors(request, Response.json(result));
+	return await cors(request, json(result));
 };

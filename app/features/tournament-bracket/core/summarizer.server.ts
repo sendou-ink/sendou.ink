@@ -16,6 +16,7 @@ import { removeDuplicates } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import type { Tables } from "../../../db/tables";
 import type { AllMatchResult } from "../queries/allMatchResultsByTournamentId.server";
+import { ensureOneStandingPerUser } from "../tournament-bracket-utils";
 import type { Standing } from "./Bracket";
 
 export interface TournamentSummary {
@@ -57,13 +58,10 @@ export function tournamentSummary({
 	seedingSkillCountsFor: Tables["SeedingSkill"]["type"] | null;
 	calculateSeasonalStats?: boolean;
 }): TournamentSummary {
-	const userIdsToTeamId = userIdsToTeamIdRecord(teams);
-
 	return {
 		skills: calculateSeasonalStats
 			? skills({
 					results,
-					userIdsToTeamId,
 					queryCurrentTeamRating,
 					queryCurrentUserRating,
 					queryTeamPlayerRatingAverage,
@@ -73,22 +71,19 @@ export function tournamentSummary({
 			? calculateIndividualPlayerSkills({
 					queryCurrentUserRating: queryCurrentSeedingRating,
 					results,
-					userIdsToTeamId,
 				}).map((skill) => ({
 					...skill,
 					type: seedingSkillCountsFor,
 					ordinal: ordinal(skill),
 				}))
 			: [],
-		mapResultDeltas: calculateSeasonalStats
-			? mapResultDeltas({ results, userIdsToTeamId })
-			: [],
+		mapResultDeltas: calculateSeasonalStats ? mapResultDeltas(results) : [],
 		playerResultDeltas: calculateSeasonalStats
-			? playerResultDeltas({ results, userIdsToTeamId })
+			? playerResultDeltas(results)
 			: [],
 		tournamentResults: tournamentResults({
 			participantCount: teams.length,
-			finalStandings,
+			finalStandings: ensureOneStandingPerUser(finalStandings),
 		}),
 	};
 }
@@ -107,7 +102,6 @@ export function userIdsToTeamIdRecord(teams: TeamsArg) {
 
 function skills(args: {
 	results: AllMatchResult[];
-	userIdsToTeamId: UserIdToTeamId;
 	queryCurrentTeamRating: (identifier: string) => Rating;
 	queryTeamPlayerRatingAverage: (identifier: string) => Rating;
 	queryCurrentUserRating: (userId: number) => Rating;
@@ -122,11 +116,9 @@ function skills(args: {
 
 export function calculateIndividualPlayerSkills({
 	results,
-	userIdsToTeamId,
 	queryCurrentUserRating,
 }: {
 	results: AllMatchResult[];
-	userIdsToTeamId: UserIdToTeamId;
 	queryCurrentUserRating: (userId: number) => Rating;
 }) {
 	const userRatings = new Map<number, Rating>();
@@ -144,12 +136,16 @@ export function calculateIndividualPlayerSkills({
 				? match.opponentOne.id
 				: match.opponentTwo.id;
 
-		const allUserIds = removeDuplicates(match.maps.flatMap((m) => m.userIds));
-		const loserUserIds = allUserIds.filter(
-			(userId) => userIdsToTeamId[userId] !== winnerTeamId,
+		const participants = match.maps.flatMap((m) => m.participants);
+		const winnerUserIds = removeDuplicates(
+			participants
+				.filter((p) => p.tournamentTeamId === winnerTeamId)
+				.map((p) => p.userId),
 		);
-		const winnerUserIds = allUserIds.filter(
-			(userId) => userIdsToTeamId[userId] === winnerTeamId,
+		const loserUserIds = removeDuplicates(
+			participants
+				.filter((p) => p.tournamentTeamId !== winnerTeamId)
+				.map((p) => p.userId),
 		);
 
 		const [ratedWinners, ratedLosers] = rate([
@@ -190,12 +186,10 @@ export function calculateIndividualPlayerSkills({
 
 function calculateTeamSkills({
 	results,
-	userIdsToTeamId,
 	queryCurrentTeamRating,
 	queryTeamPlayerRatingAverage,
 }: {
 	results: AllMatchResult[];
-	userIdsToTeamId: UserIdToTeamId;
 	queryCurrentTeamRating: (identifier: string) => Rating;
 	queryTeamPlayerRatingAverage: (identifier: string) => Rating;
 }) {
@@ -215,18 +209,18 @@ function calculateTeamSkills({
 				: match.opponentTwo.id;
 
 		const winnerTeamIdentifiers = match.maps.flatMap((m) => {
-			const winnerUserIds = m.userIds.filter(
-				(userId) => userIdsToTeamId[userId] === winnerTeamId,
-			);
+			const winnerUserIds = m.participants
+				.filter((p) => p.tournamentTeamId === winnerTeamId)
+				.map((p) => p.userId);
 
 			return userIdsToIdentifier(winnerUserIds);
 		});
 		const winnerTeamIdentifier = selectMostPopular(winnerTeamIdentifiers);
 
 		const loserTeamIdentifiers = match.maps.flatMap((m) => {
-			const loserUserIds = m.userIds.filter(
-				(userId) => userIdsToTeamId[userId] !== winnerTeamId,
-			);
+			const loserUserIds = m.participants
+				.filter((p) => p.tournamentTeamId !== winnerTeamId)
+				.map((p) => p.userId);
 
 			return userIdsToIdentifier(loserUserIds);
 		});
@@ -294,13 +288,9 @@ function selectMostPopular<T>(items: T[]): T {
 	return shuffle(mostPopularItems)[0][0];
 }
 
-function mapResultDeltas({
-	results,
-	userIdsToTeamId,
-}: {
-	results: AllMatchResult[];
-	userIdsToTeamId: UserIdToTeamId;
-}): TournamentSummary["mapResultDeltas"] {
+function mapResultDeltas(
+	results: AllMatchResult[],
+): TournamentSummary["mapResultDeltas"] {
 	const result: TournamentSummary["mapResultDeltas"] = [];
 
 	const addMapResult = (
@@ -330,18 +320,13 @@ function mapResultDeltas({
 
 	for (const match of results) {
 		for (const map of match.maps) {
-			for (const userId of map.userIds) {
-				const tournamentTeamId = userIdsToTeamId[userId];
-				invariant(
-					tournamentTeamId,
-					`Couldn't resolve tournament team id for user id ${userId}`,
-				);
-
+			for (const participant of map.participants) {
 				addMapResult({
 					mode: map.mode,
 					stageId: map.stageId,
-					type: tournamentTeamId === map.winnerTeamId ? "win" : "loss",
-					userId,
+					type:
+						participant.tournamentTeamId === map.winnerTeamId ? "win" : "loss",
+					userId: participant.userId,
 				});
 			}
 		}
@@ -350,13 +335,9 @@ function mapResultDeltas({
 	return result;
 }
 
-function playerResultDeltas({
-	results,
-	userIdsToTeamId,
-}: {
-	results: AllMatchResult[];
-	userIdsToTeamId: UserIdToTeamId;
-}): TournamentSummary["playerResultDeltas"] {
+function playerResultDeltas(
+	results: AllMatchResult[],
+): TournamentSummary["playerResultDeltas"] {
 	const result: TournamentSummary["playerResultDeltas"] = [];
 
 	const addPlayerResult = (
@@ -381,48 +362,46 @@ function playerResultDeltas({
 
 	for (const match of results) {
 		for (const map of match.maps) {
-			for (const ownerUserId of map.userIds) {
-				for (const otherUserId of map.userIds) {
-					if (ownerUserId === otherUserId) continue;
+			for (const ownerParticipant of map.participants) {
+				for (const otherParticipant of map.participants) {
+					if (ownerParticipant.userId === otherParticipant.userId) continue;
 
-					const ownTournamentTeamId = userIdsToTeamId[ownerUserId];
-					invariant(
-						ownTournamentTeamId,
-						`Couldn't resolve tournament team id for user id ${ownerUserId}`,
-					);
-					const otherTournamentTeamId = userIdsToTeamId[otherUserId];
-					invariant(
-						otherTournamentTeamId,
-						`Couldn't resolve tournament team id for user id ${otherUserId}`,
-					);
-
-					const won = ownTournamentTeamId === map.winnerTeamId;
+					const won = ownerParticipant.tournamentTeamId === map.winnerTeamId;
 
 					addPlayerResult({
-						ownerUserId,
-						otherUserId,
+						ownerUserId: ownerParticipant.userId,
+						otherUserId: otherParticipant.userId,
 						mapLosses: won ? 0 : 1,
 						mapWins: won ? 1 : 0,
 						setLosses: 0,
 						setWins: 0,
 						type:
-							ownTournamentTeamId === otherTournamentTeamId ? "MATE" : "ENEMY",
+							ownerParticipant.tournamentTeamId ===
+							otherParticipant.tournamentTeamId
+								? "MATE"
+								: "ENEMY",
 					});
 				}
 			}
 		}
 
-		const mostPopularUserIds = (() => {
+		const mostPopularParticipants = (() => {
 			const alphaIdentifiers: string[] = [];
 			const bravoIdentifiers: string[] = [];
 
 			for (const map of match.maps) {
-				const alphaUserIds = map.userIds.filter(
-					(userId) => userIdsToTeamId[userId] === match.opponentOne.id,
-				);
-				const bravoUserIds = map.userIds.filter(
-					(userId) => userIdsToTeamId[userId] === match.opponentTwo.id,
-				);
+				const alphaUserIds = map.participants
+					.filter(
+						(participant) =>
+							participant.tournamentTeamId === match.opponentOne.id,
+					)
+					.map((p) => p.userId);
+				const bravoUserIds = map.participants
+					.filter(
+						(participant) =>
+							participant.tournamentTeamId === match.opponentTwo.id,
+					)
+					.map((p) => p.userId);
 
 				alphaIdentifiers.push(userIdsToIdentifier(alphaUserIds));
 				bravoIdentifiers.push(userIdsToIdentifier(bravoUserIds));
@@ -432,41 +411,39 @@ function playerResultDeltas({
 			const bravoIdentifier = selectMostPopular(bravoIdentifiers);
 
 			return [
-				...identifierToUserIds(alphaIdentifier),
-				...identifierToUserIds(bravoIdentifier),
+				...identifierToUserIds(alphaIdentifier).map((id) => ({
+					userId: id,
+					tournamentTeamId: match.opponentOne.id,
+				})),
+				...identifierToUserIds(bravoIdentifier).map((id) => ({
+					userId: id,
+					tournamentTeamId: match.opponentTwo.id,
+				})),
 			];
 		})();
 
-		for (const ownerUserId of mostPopularUserIds) {
-			for (const otherUserId of mostPopularUserIds) {
-				if (ownerUserId === otherUserId) continue;
-
-				const ownTournamentTeamId = userIdsToTeamId[ownerUserId];
-				invariant(
-					ownTournamentTeamId,
-					`Couldn't resolve tournament team id for user id ${ownerUserId}`,
-				);
-				const otherTournamentTeamId = userIdsToTeamId[otherUserId];
-				invariant(
-					otherTournamentTeamId,
-					`Couldn't resolve tournament team id for user id ${otherUserId}`,
-				);
+		for (const ownerParticipant of mostPopularParticipants) {
+			for (const otherParticipant of mostPopularParticipants) {
+				if (ownerParticipant.userId === otherParticipant.userId) continue;
 
 				const result =
-					match.opponentOne.id === ownTournamentTeamId
+					match.opponentOne.id === ownerParticipant.tournamentTeamId
 						? match.opponentOne.result
 						: match.opponentTwo.result;
 				const won = result === "win";
 
 				addPlayerResult({
-					ownerUserId,
-					otherUserId,
+					ownerUserId: ownerParticipant.userId,
+					otherUserId: otherParticipant.userId,
 					mapLosses: 0,
 					mapWins: 0,
 					setLosses: won ? 0 : 1,
 					setWins: won ? 1 : 0,
 					type:
-						ownTournamentTeamId === otherTournamentTeamId ? "MATE" : "ENEMY",
+						ownerParticipant.tournamentTeamId ===
+						otherParticipant.tournamentTeamId
+							? "MATE"
+							: "ENEMY",
 				});
 			}
 		}

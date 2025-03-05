@@ -1,4 +1,4 @@
-import type { MetaFunction } from "@remix-run/node";
+import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import { add, sub } from "date-fns";
 import React from "react";
@@ -9,11 +9,10 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useSearchParamStateEncoder } from "~/hooks/useSearchParamState";
 import { databaseTimestampToDate } from "~/utils/dates";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import type { Unpacked } from "~/utils/types";
 import { LFG_PAGE, navIconUrl } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
 import { LFGAddFilterButton } from "../components/LFGAddFilterButton";
 import { LFGFilters } from "../components/LFGFilters";
 import { LFGPost } from "../components/LFGPost";
@@ -40,8 +39,14 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export const meta: MetaFunction = () => {
-	return [{ title: makeTitle("Looking for group") }];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "LFG",
+		ogTitle: "Splatoon LFG (looking for players, teams & coaches)",
+		description:
+			"Find people to play Splatoon with. Create a post or browse existing ones. For looking players, teams, scrim partners and coaches alike.",
+		location: args.location,
+	});
 };
 
 export type LFGLoaderData = SerializeFrom<typeof loader>;

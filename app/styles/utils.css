@@ -98,6 +98,10 @@
 	fill: var(--theme-error);
 }
 
+.fill-info {
+	fill: var(--theme-info);
+}
+
 .bg-transparent-important {
 	background-color: transparent !important;
 }
@@ -166,6 +170,10 @@
 	width: min-content;
 }
 
+.p-1 {
+	padding: var(--s-1);
+}
+
 .p-1-5 {
 	padding: var(--s-1-5);
 }
@@ -216,6 +224,10 @@
 
 .mt-1 {
 	margin-block-start: var(--s-1);
+}
+
+.mt-1-5 {
+	margin-block-start: var(--s-1-5);
 }
 
 .mt-2 {
@@ -316,6 +328,10 @@
 
 .my-4 {
 	margin-block: var(--s-4);
+}
+
+.my-24 {
+	margin-block: var(--s-24);
 }
 
 .m-0-auto {

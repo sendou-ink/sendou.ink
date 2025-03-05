@@ -1,4 +1,8 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
 import { Outlet, useLoaderData, useLocation } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
@@ -6,8 +10,8 @@ import { SubNav, SubNavLink } from "~/components/SubNav";
 import { useUser } from "~/features/auth/core/user";
 import { getUserId } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { metaTags } from "~/utils/remix";
 import { type SendouRouteHandle, notFoundIfFalsy } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import {
 	USER_SEARCH_PAGE,
 	navIconUrl,
@@ -19,14 +23,17 @@ import {
 	userSeasonsPage,
 	userVodsPage,
 } from "~/utils/urls";
-import type { SerializeFrom } from "../../../utils/remix";
 
 import "~/styles/u.css";
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-	if (!data) return [];
+export const meta: MetaFunction<typeof loader> = (args) => {
+	if (!args.data) return [];
 
-	return [{ title: makeTitle(data.user.username) }];
+	return metaTags({
+		title: args.data.user.username,
+		description: `${args.data.user.username}'s profile on sendou.ink including builds, tournament results, art and more.`,
+		location: args.location,
+	});
 };
 
 export const handle: SendouRouteHandle = {

@@ -10,15 +10,17 @@ export function isAtLeastFiveDollarTierPatreon(
 	return isAdmin(user) || (user.patronTier && user.patronTier >= 2);
 }
 
-const urlRegExp = /(https:\/\/)?sendou.ink\/u\/(.+)/;
+const longUrlRegExp = /(https:\/\/)?sendou.ink\/u\/(.+)/;
+const shortUrlRegExp = /(https:\/\/)?snd.ink\/(.+)/;
 const DISCORD_ID_MIN_LENGTH = 17;
 export function queryToUserIdentifier(
 	query: string,
 ): { id: number } | { discordId: string } | { customUrl: string } | null {
-	const match = query.match(urlRegExp);
+	const longUrlMatch = query.match(longUrlRegExp);
+	const shortUrlMatch = query.match(shortUrlRegExp);
 
-	if (match) {
-		const [, , identifier] = match;
+	if (longUrlMatch || shortUrlMatch) {
+		const [, , identifier] = (longUrlMatch ?? shortUrlMatch)!;
 
 		if (isCustomUrl(identifier)) {
 			return { customUrl: identifier };

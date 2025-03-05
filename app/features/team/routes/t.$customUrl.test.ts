@@ -1,3 +1,4 @@
+import type { SerializeFrom } from "@remix-run/node";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import { db } from "~/db/sql";
@@ -7,7 +8,6 @@ import {
 	wrappedAction,
 	wrappedLoader,
 } from "~/utils/Test";
-import type { SerializeFrom } from "../../../utils/remix";
 import { loader as userProfileLoader } from "../../user-page/loaders/u.$identifier.index.server";
 import * as TeamRepository from "../TeamRepository.server";
 import { action as _teamPageAction } from "../actions/t.$customUrl.server";

@@ -91,9 +91,15 @@ export function tournamentStandings(tournament: Tournament): Standing[] {
 	const result: Standing[] = [];
 	const alreadyIncludedTeamIds = new Set<number>();
 
+	const finalBracketIsOver = tournament.brackets.some(
+		(bracket) => bracket.isFinals && bracket.everyMatchOver,
+	);
+
 	for (const bracketIdx of bracketIdxs) {
 		const bracket = tournament.bracketByIdx(bracketIdx);
 		if (!bracket) continue;
+		// sometimes a bracket might not be played so then we ignore it from the standings
+		if (finalBracketIsOver && bracket.preview) continue;
 
 		const standings = standingsToMergeable({
 			alreadyIncludedTeamIds,

@@ -10,13 +10,14 @@ import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { getUser, requireUser } from "~/features/auth/core/user.server";
 import { currentSeason } from "~/features/mmr/season";
+import { notify } from "~/features/notifications/core/notify.server";
 import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import { useAutoRefresh } from "~/hooks/useAutoRefresh";
 import invariant from "~/utils/invariant";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { parseRequestPayload, validate } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import {
 	SENDOUQ_LOOKING_PAGE,
@@ -47,8 +48,11 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export const meta: MetaFunction = () => {
-	return [{ title: makeTitle("SendouQ") }];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "SendouQ - Preparing Group",
+		location: args.location,
+	});
 };
 
 export type SendouQPreparingAction = typeof action;
@@ -108,9 +112,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				userId: data.id,
 				role: "MANAGER",
 			});
+
 			await QRepository.refreshTrust({
 				trustGiverUserId: data.id,
 				trustReceiverUserId: user.id,
+			});
+
+			notify({
+				userIds: [data.id],
+				notification: {
+					type: "SQ_ADDED_TO_GROUP",
+					meta: {
+						adderUsername: user.username,
+					},
+				},
 			});
 
 			return null;

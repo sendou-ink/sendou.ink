@@ -5,7 +5,13 @@ import { parseRequestPayload } from "~/utils/remix.server";
 
 const seedSchema = z.object({
 	variation: z
-		.enum(["NO_TOURNAMENT_TEAMS", "DEFAULT", "REG_OPEN", "SMALL_SOS"])
+		.enum([
+			"NO_TOURNAMENT_TEAMS",
+			"DEFAULT",
+			"REG_OPEN",
+			"SMALL_SOS",
+			"NZAP_IN_TEAM",
+		])
 		.nullish(),
 });
 
@@ -25,5 +31,5 @@ export const action: ActionFunction = async ({ request }) => {
 
 	await seed(variation);
 
-	return Response.json(null);
+	return null;
 };

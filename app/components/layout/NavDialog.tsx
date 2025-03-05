@@ -1,6 +1,6 @@
 import { Link } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
-import navItems from "~/components/layout/nav-items.json";
+import { navItems } from "~/components/layout/nav-items";
 import { useUser } from "~/features/auth/core/user";
 import { LOG_OUT_URL, navIconUrl, userPage } from "~/utils/urls";
 import { Avatar } from "../Avatar";
@@ -38,7 +38,7 @@ export function NavDialog({
 						to={`/${item.url}`}
 						className="layout__overlay-nav__nav-item"
 						key={item.name}
-						prefetch={item.prefetch ? "intent" : undefined}
+						prefetch={item.prefetch ? "render" : undefined}
 						onClick={close}
 					>
 						<div className="layout__overlay-nav__nav-image-container">

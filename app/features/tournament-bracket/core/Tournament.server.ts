@@ -92,6 +92,15 @@ export async function tournamentFromDB(args: {
 	return new Tournament({ ...data, simulateBrackets: false });
 }
 
+export async function tournamentFromDBCached(args: {
+	user: { id: number } | undefined;
+	tournamentId: number;
+}) {
+	const data = notFoundIfFalsy(await tournamentDataCached(args));
+
+	return new Tournament({ ...data, simulateBrackets: false });
+}
+
 // caching promise ensures that if many requests are made for the same tournament
 // at the same time they reuse the same resolving promise
 const tournamentDataCache = new Map<

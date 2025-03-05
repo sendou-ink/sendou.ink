@@ -35,6 +35,7 @@ export function FriendCodeInput({
 							name="friendCode"
 							pattern={FRIEND_CODE_REGEXP_PATTERN}
 							placeholder="1234-5678-9012"
+							required
 						/>
 					)}
 				</div>

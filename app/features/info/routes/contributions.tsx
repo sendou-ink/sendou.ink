@@ -3,24 +3,20 @@ import * as React from "react";
 import { Trans } from "react-i18next";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
-import { useSetTitle } from "~/hooks/useSetTitle";
 import { languages } from "~/modules/i18n/config";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import {
-	ANTARISKA_TWITTER,
-	BORZOIC_TWITTER,
 	GITHUB_CONTRIBUTORS_URL,
-	LEAN_TWITTER,
 	RHODESMAS_FREESOUND_PROFILE_URL,
-	SENDOU_TWITTER_URL,
 	SPLATOON_3_INK,
-	UBERU_TWITTER,
-	YAGA_TWITTER,
 } from "~/utils/urls";
 
-export const meta: MetaFunction = () => {
-	return [{ title: makeTitle("Contributions") }];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Contributions",
+		location: args.location,
+	});
 };
 
 export const handle: SendouRouteHandle = {
@@ -38,7 +34,7 @@ const PROGRAMMERS = [
 ] as const;
 
 const TRANSLATORS: Array<{
-	translators: Array<string | { name: string; twitter: string }>;
+	translators: Array<string>;
 	language: (typeof languages)[number]["code"];
 }> = [
 	{
@@ -46,11 +42,7 @@ const TRANSLATORS: Array<{
 		language: "da",
 	},
 	{
-		translators: [
-			{ name: "NoAim™bUrn", twitter: "noaim_brn" },
-			{ name: "Alice", twitter: "Aloschus" },
-			"jgiefer",
-		],
+		translators: ["NoAim™bUrn", "Alice", "jgiefer"],
 		language: "de",
 	},
 	{
@@ -74,7 +66,7 @@ const TRANSLATORS: Array<{
 		language: "he",
 	},
 	{
-		translators: [{ name: "funyaaa", twitter: "funyaaa1" }, "taqm", "yutarour"],
+		translators: ["funyaaa", "taqm", "yutarour"],
 		language: "ja",
 	},
 	{
@@ -86,15 +78,15 @@ const TRANSLATORS: Array<{
 		language: "pl",
 	},
 	{
-		translators: [{ name: "Ant", twitter: "Ant__Spl" }],
+		translators: ["Ant"],
 		language: "pt-BR",
 	},
 	{
-		translators: [{ name: "Ferrari", twitter: "Blusling" }],
+		translators: ["Ferrari"],
 		language: "nl",
 	},
 	{
-		translators: [{ name: "DoubleCookies", twitter: "DblCookies" }, "yaga"],
+		translators: ["DoubleCookies", "yaga"],
 		language: "ru",
 	},
 	{
@@ -105,17 +97,12 @@ const TRANSLATORS: Array<{
 
 export default function ContributionsPage() {
 	const { t } = useTranslation(["common", "contributions"]);
-	useSetTitle(t("common:pages.contributors"));
 
 	return (
 		<Main>
 			<p>
 				<Trans i18nKey={"contributions:project"} t={t}>
-					Sendou.ink is a project by{" "}
-					<a href={SENDOU_TWITTER_URL} target="_blank" rel="noreferrer">
-						Sendou
-					</a>{" "}
-					with help from contributors:
+					Sendou.ink is a project by Sendou with help from contributors:
 				</Trans>
 			</p>
 			<ul className="mt-2">
@@ -125,36 +112,11 @@ export default function ContributionsPage() {
 						{t("contributions:code")}
 					</a>
 				</li>
-				<li>
-					<a href={LEAN_TWITTER} target="_blank" rel="noreferrer">
-						Lean
-					</a>{" "}
-					- {t("contributions:lean")}
-				</li>
-				<li>
-					<a href={BORZOIC_TWITTER} target="_blank" rel="noreferrer">
-						borzoic
-					</a>{" "}
-					- {t("contributions:borzoic")}
-				</li>
-				<li>
-					<a href={UBERU_TWITTER} target="_blank" rel="noreferrer">
-						uberu
-					</a>{" "}
-					- {t("contributions:uberu")}
-				</li>
-				<li>
-					<a href={YAGA_TWITTER} target="_blank" rel="noreferrer">
-						yaga
-					</a>{" "}
-					- {t("contributions:yaga")}
-				</li>
-				<li>
-					<a href={ANTARISKA_TWITTER} target="_blank" rel="noreferrer">
-						Antariska, yaga & harryXYZ
-					</a>{" "}
-					- {t("contributions:antariska")}
-				</li>
+				<li>Lean - {t("contributions:lean")}</li>
+				<li>borzoic - {t("contributions:borzoic")}</li>
+				<li>uberu - {t("contributions:uberu")}</li>
+				<li>yaga - {t("contributions:yaga")}</li>
+				<li>Antariska, yaga & harryXYZ - {t("contributions:antariska")}</li>
 				<li>
 					<a href={SPLATOON_3_INK} target="_blank" rel="noreferrer">
 						splatoon3.ink
@@ -163,27 +125,12 @@ export default function ContributionsPage() {
 				</li>
 				{TRANSLATORS.map(({ translators, language }) => (
 					<li key={language}>
-						{translators
-							.map((t) =>
-								typeof t === "string" ? (
-									t
-								) : (
-									<a
-										key={t.name}
-										href={`https://twitter.com/${t.twitter}`}
-										rel="noreferrer"
-										target="_blank"
-									>
-										{t.name}
-									</a>
-								),
-							)
-							.map((element, i, arr) => (
-								<React.Fragment key={i}>
-									{element}
-									{i !== arr.length - 1 ? ", " : null}
-								</React.Fragment>
-							))}{" "}
+						{translators.map((element, i, arr) => (
+							<React.Fragment key={i}>
+								{element}
+								{i !== arr.length - 1 ? ", " : null}
+							</React.Fragment>
+						))}{" "}
 						- {t("contributions:translation")} (
 						{languages.find((lang) => lang.code === language)!.name})
 					</li>
