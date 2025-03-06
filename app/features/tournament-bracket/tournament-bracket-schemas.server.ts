@@ -117,12 +117,14 @@ export const bracketSchema = z.union([
 	z.object({
 		_action: _action("START_BRACKET"),
 		bracketIdx,
+		thirdPlaceMatchLinked: z.coerce.boolean(),
 		maps: z.preprocess(safeJSONParse, z.array(tournamentRoundMaps)),
 	}),
 	z.object({
 		_action: _action("PREPARE_MAPS"),
 		bracketIdx,
 		maps: z.preprocess(safeJSONParse, z.array(tournamentRoundMaps)),
+		thirdPlaceMatchLinked: z.coerce.boolean(),
 		eliminationTeamCount: z.coerce
 			.number()
 			.optional()

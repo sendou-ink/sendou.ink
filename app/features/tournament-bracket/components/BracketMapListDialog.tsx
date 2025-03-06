@@ -22,6 +22,9 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { assertUnreachable } from "~/utils/types";
 import { calendarEditPage } from "~/utils/urls";
+import { SendouButton } from "../../../components/elements/Button";
+import { LinkIcon } from "../../../components/icons/Link";
+import { UnlinkIcon } from "../../../components/icons/Unlink";
 import type { Bracket } from "../core/Bracket";
 import * as PreparedMaps from "../core/PreparedMaps";
 import type { Tournament } from "../core/Tournament";
@@ -66,6 +69,8 @@ export function BracketMapListDialog({
 			: untrimmedPreparedMaps;
 
 	const [szFirst, setSzFirst] = React.useState(false);
+	const [thirdPlaceMatchLinked, setThirdPlaceMatchLinked] =
+		React.useState(true); // xxx: if prepared finals & 3rd place match different, default to false
 	const [eliminationTeamCount, setEliminationTeamCount] = React.useState<
 		number | null
 	>(() => {
@@ -145,11 +150,26 @@ export function BracketMapListDialog({
 		}
 
 		if (bracket.type === "single_elimination") {
-			return getRounds({ type: "single", bracketData });
+			const rounds = getRounds({ type: "single", bracketData });
+
+			const hasThirdPlaceMatch = rounds.some((round) => round.group_id === 1);
+
+			if (!thirdPlaceMatchLinked || !hasThirdPlaceMatch) return rounds;
+
+			return rounds
+				.filter((round) => round.group_id !== 1)
+				.map((round) =>
+					round.name === "Finals"
+						? {
+								...round,
+								name: TOURNAMENT.ROUND_NAMES.FINALS_THIRD_PLACE_MATCH_UNIFIED,
+							}
+						: round,
+				);
 		}
 
 		assertUnreachable(bracket.type);
-	}, [bracketData, maps, bracket.type]);
+	}, [bracketData, maps, bracket.type, thirdPlaceMatchLinked]);
 
 	const mapCountsWithGlobalCount = (newCount: number) => {
 		const newMap = new Map(defaultRoundBestOfs);
@@ -217,6 +237,11 @@ export function BracketMapListDialog({
 		<Dialog isOpen={isOpen} close={close} className="map-list-dialog__dialog">
 			<fetcher.Form method="post" className="map-list-dialog__container">
 				<input type="hidden" name="bracketIdx" value={bracketIdx} />
+				<input
+					type="hidden"
+					name="thirdPlaceMatchLinked"
+					value={String(thirdPlaceMatchLinked)}
+				/>
 				<input
 					type="hidden"
 					name="maps"
@@ -405,12 +430,32 @@ export function BracketMapListDialog({
 										const roundMaps = maps.get(round.id);
 										invariant(roundMaps, "Expected maps to be defined");
 
+										const showUnlinkButton =
+											bracket.type === "single_elimination" &&
+											thirdPlaceMatchLinked === true &&
+											round.name ===
+												TOURNAMENT.ROUND_NAMES.FINALS_THIRD_PLACE_MATCH_UNIFIED;
+										const showLinkButton =
+											bracket.type === "single_elimination" &&
+											thirdPlaceMatchLinked === false &&
+											round.name === TOURNAMENT.ROUND_NAMES.THIRD_PLACE_MATCH;
+
 										return (
 											<RoundMapList
 												key={round.id}
 												name={round.name}
 												maps={roundMaps}
 												onHoverMap={setHoveredMap}
+												unlink={
+													showUnlinkButton
+														? () => setThirdPlaceMatchLinked(false)
+														: undefined
+												}
+												link={
+													showLinkButton
+														? () => setThirdPlaceMatchLinked(true)
+														: undefined
+												}
 												hoveredMap={hoveredMap}
 												includeRoundSpecificSelections={
 													bracket.type !== "round_robin"
@@ -768,6 +813,8 @@ function RoundMapList({
 	onHoverMap,
 	onCountChange,
 	onPickBanChange,
+	unlink,
+	link,
 	hoveredMap,
 	includeRoundSpecificSelections,
 }: {
@@ -777,6 +824,8 @@ function RoundMapList({
 	onHoverMap: (map: string | null) => void;
 	onCountChange: (count: number) => void;
 	onPickBanChange?: (hasPickBan: boolean) => void;
+	unlink?: () => void;
+	link?: () => void;
 	hoveredMap: string | null;
 	includeRoundSpecificSelections: boolean;
 }) {
@@ -796,6 +845,28 @@ function RoundMapList({
 					{editing ? "Save" : "Edit"}
 				</Button>
 			</h3>
+			{unlink ? (
+				<SendouButton
+					size="miniscule"
+					variant="outlined"
+					className="mt-1"
+					icon={<UnlinkIcon />}
+					onPress={unlink}
+				>
+					Unlink
+				</SendouButton>
+			) : null}
+			{link ? (
+				<SendouButton
+					size="miniscule"
+					variant="outlined"
+					className="mt-1"
+					icon={<LinkIcon />}
+					onPress={link}
+				>
+					Link
+				</SendouButton>
+			) : null}
 			{editing && includeRoundSpecificSelections ? (
 				<div className="stack xs horizontal">
 					{TOURNAMENT.AVAILABLE_BEST_OF.map((count) => (

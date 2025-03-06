@@ -112,8 +112,13 @@
 	margin-inline-end: 0 !important;
 }
 
-.react-aria-Button.small > .button-icon {
+.react-aria-Button.small > .sendou-button-icon {
 	width: 1rem;
+	margin-inline-end: var(--s-1);
+}
+
+.react-aria-Button.miniscule > .sendou-button-icon {
+	width: 0.857rem;
 	margin-inline-end: var(--s-1);
 }
 

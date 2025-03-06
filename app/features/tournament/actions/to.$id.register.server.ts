@@ -68,13 +68,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"Team id does not match any of the teams you are in",
 			);
 
-			validate(
-				!tournament.ctx.teams.some(
-					(team) => team.name === data.teamName && team.id !== data.teamId,
-				),
-				"Team name already taken for this tournament",
-			);
-
 			if (ownTeam) {
 				validate(
 					tournament.registrationOpen || data.teamName === ownTeam.name,
@@ -103,6 +96,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 					"You are already in a team that you aren't captain of",
 				);
 				validate(tournament.registrationOpen, "Registration is closed");
+				validate(
+					!tournament.ctx.teams.some((team) => team.name === data.teamName),
+					"Team name already taken for this tournament",
+				);
 
 				await TournamentTeamRepository.create({
 					ownerInGameName: await inGameNameIfNeeded({

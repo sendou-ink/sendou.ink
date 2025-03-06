@@ -4,6 +4,7 @@ import { useTournament } from "~/features/tournament/routes/to.$id";
 import { resolveLeagueRoundStartDate } from "~/features/tournament/tournament-utils";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { TOURNAMENT } from "../../../tournament/tournament-constants";
 import { useDeadline } from "./useDeadline";
 
 export function RoundHeader({
@@ -22,11 +23,11 @@ export function RoundHeader({
 	const leagueRoundStartDate = useLeagueWeekStart(roundId);
 
 	const hasDeadline = ![
-		"WB Finals",
-		"Grand Finals",
-		"Bracket Reset",
-		"Finals",
-	].includes(name);
+		TOURNAMENT.ROUND_NAMES.WB_FINALS,
+		TOURNAMENT.ROUND_NAMES.GRAND_FINALS,
+		TOURNAMENT.ROUND_NAMES.BRACKET_RESET,
+		TOURNAMENT.ROUND_NAMES.FINALS,
+	].includes(name as any);
 
 	const countPrefix = maps?.type === "PLAY_ALL" ? "Play all " : "Bo";
 
