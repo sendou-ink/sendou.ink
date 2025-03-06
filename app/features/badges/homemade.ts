@@ -769,4 +769,14 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "clutch_united",
 		authorDiscordId: "336683473714544641",
 	},
+	{
+		displayName: "Re Al",
+		fileName: "real",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Blue Lock",
+		fileName: "bluelock",
+		authorDiscordId: "528851510222782474",
+	},
 ];
