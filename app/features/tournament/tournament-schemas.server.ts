@@ -15,7 +15,6 @@ export const teamName = z
 	.string()
 	.trim()
 	.min(1)
-	.max(1)
 	.max(TOURNAMENT.TEAM_NAME_MAX_LENGTH);
 
 export const registerSchema = z.union([
