@@ -30,7 +30,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "335179210878353409",
 	},
 	{
-		displayName: "Gatorlan - Side of Salmon",
+		displayName: "GatorLAN - Side of Salmon",
 		fileName: "gatorlan_salmon_1st",
 		authorDiscordId: "285504780154044416",
 	},
@@ -800,8 +800,48 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "336683473714544641",
 	},
 	{
+		displayName: "Re Al",
+		fileName: "real",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Blue Lock",
+		fileName: "bluelock",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "FULLWIPE LAN",
+		fileName: "fullwipe",
+		authorDiscordId: "570323825669963972",
+	},
+	{
+		displayName: "FULLWIPE LAN (2nd)",
+		fileName: "fullwipe_silver",
+		authorDiscordId: "570323825669963972",
+	},
+	{
+		displayName: "FULLWIPE LAN (3rd)",
+		fileName: "fullwipe_bronze",
+		authorDiscordId: "570323825669963972",
+	},
+	{
+		displayName: "Torneo Crab Cancel Perfect and Shadow",
+		fileName: "crab_tank",
+		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "Anarchy Adventures",
+		fileName: "s50badge",
+		authorDiscordId: "336683473714544641",
+	},
+	{
 		displayName: "[OMD] Bingo Club",
 		fileName: "bingo-club",
 		authorDiscordId: "751912670403362836",
+	},
+	{
+		displayName: "Florida Collegiate Draft Cup",
+		fileName: "FLcollegiate",
+		authorDiscordId: "285504780154044416",
 	},
 ];
