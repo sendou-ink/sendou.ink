@@ -6,7 +6,7 @@ import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { refreshBuildsCacheByWeaponSplIds } from "~/features/builds/core/cached-builds.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { logger } from "~/utils/logger";
-import { parseRequestPayload, validate } from "~/utils/remix.server";
+import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { userBuildsPage } from "~/utils/urls";
 import {
@@ -37,7 +37,7 @@ export const action: ActionFunction = async ({ request }) => {
 				(build) => build.id === data.buildToDeleteId,
 			);
 
-			validate(buildToDelete);
+			errorToastIfFalsy(buildToDelete, "Build to delete not found");
 
 			await BuildRepository.deleteById(data.buildToDeleteId);
 

@@ -15,9 +15,9 @@ import { notify } from "~/features/notifications/core/notify.server";
 import { canEditBadgeManagers, canEditBadgeOwners } from "~/permissions";
 import { atOrError, diff } from "~/utils/arrays";
 import {
+	errorToastIfFalsy,
 	notFoundIfFalsy,
 	parseRequestPayload,
-	validate,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { badgePage } from "~/utils/urls";
@@ -38,7 +38,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	switch (data._action) {
 		case "MANAGERS": {
-			validate(canEditBadgeManagers(user));
+			errorToastIfFalsy(
+				canEditBadgeManagers(user),
+				"No permissions to edit managers",
+			);
 
 			const oldManagers = await BadgeRepository.findManagersByBadgeId(badgeId);
 
@@ -65,11 +68,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "OWNERS": {
-			validate(
+			errorToastIfFalsy(
 				canEditBadgeOwners({
 					user,
 					managers: await BadgeRepository.findManagersByBadgeId(badgeId),
 				}),
+				"No permissions to edit owners",
 			);
 
 			const oldOwners = await BadgeRepository.findOwnersByBadgeId(badgeId);
