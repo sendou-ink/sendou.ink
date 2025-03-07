@@ -301,7 +301,7 @@ test.describe("Tournament bracket", () => {
 		await page.getByLabel("Action").selectOption("CHECK_OUT");
 
 		for (let id = 103; id < 117; id++) {
-			await page.getByLabel("Team").selectOption(String(id));
+			await page.getByLabel("Team", { exact: true }).selectOption(String(id));
 			await submit(page);
 		}
 
@@ -354,7 +354,7 @@ test.describe("Tournament bracket", () => {
 		await page.getByLabel("Action").selectOption("CHECK_OUT");
 
 		for (let id = 202; id < 210; id++) {
-			await page.getByLabel("Team").selectOption(String(id));
+			await page.getByLabel("Team", { exact: true }).selectOption(String(id));
 			await submit(page);
 		}
 
@@ -390,7 +390,7 @@ test.describe("Tournament bracket", () => {
 		});
 
 		await page.getByLabel("Action").selectOption("CHECK_IN");
-		await page.getByLabel("Team").selectOption("216");
+		await page.getByLabel("Team", { exact: true }).selectOption("216");
 		await page
 			.getByLabel("Bracket", { exact: true })
 			.selectOption("Underground bracket");
@@ -691,7 +691,7 @@ test.describe("Tournament bracket", () => {
 		await page.getByLabel("Action").selectOption("CHECK_OUT");
 
 		for (let id = 103; id < 115; id++) {
-			await page.getByLabel("Team").selectOption(String(id));
+			await page.getByLabel("Team", { exact: true }).selectOption(String(id));
 			await submit(page);
 		}
 
@@ -767,7 +767,7 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("reset-bracket-button").click();
 
 		await page.getByLabel("Action").selectOption("CHECK_IN");
-		await page.getByLabel("Team").selectOption("1");
+		await page.getByLabel("Team", { exact: true }).selectOption("1");
 		await submit(page);
 
 		await page.getByTestId("brackets-tab").click();
@@ -870,7 +870,7 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("admin-tab").click();
 
 		await page.getByLabel("Action").selectOption("DROP_TEAM_OUT");
-		await page.getByLabel("Team").selectOption("401");
+		await page.getByLabel("Team", { exact: true }).selectOption("401");
 		await submit(page);
 
 		await navigate({
