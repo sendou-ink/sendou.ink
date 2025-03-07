@@ -790,6 +790,16 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "336683473714544641",
 	},
 	{
+		displayName: "Torneo Crab Cancel Perfect and Shadow",
+		fileName: "crab_tank",
+		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "Anarchy Adventures",
+		fileName: "s50badge",
+		authorDiscordId: "336683473714544641",
+	},
+	{
 		displayName: "[OMD] Bingo Club",
 		fileName: "bingo-club",
 		authorDiscordId: "751912670403362836",
