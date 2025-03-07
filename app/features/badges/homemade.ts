@@ -790,6 +790,21 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "336683473714544641",
 	},
 	{
+		displayName: "FULLWIPE LAN",
+		fileName: "fullwipe",
+		authorDiscordId: "570323825669963972",
+	},
+	{
+		displayName: "FULLWIPE LAN (2nd)",
+		fileName: "fullwipe_silver",
+		authorDiscordId: "570323825669963972",
+	},
+	{
+		displayName: "FULLWIPE LAN (3rd)",
+		fileName: "fullwipe_bronze",
+		authorDiscordId: "570323825669963972",
+	},
+	{
 		displayName: "Torneo Crab Cancel Perfect and Shadow",
 		fileName: "crab_tank",
 		authorDiscordId: "336683473714544641",
