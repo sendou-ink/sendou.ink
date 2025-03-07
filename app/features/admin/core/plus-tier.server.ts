@@ -1,16 +1,15 @@
-import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { addPendingPlusTiers } from "~/features/leaderboards/core/leaderboards.server";
 import { userSPLeaderboard } from "~/features/leaderboards/queries/userSPLeaderboard.server";
 import { currentSeason, previousSeason } from "~/features/mmr/season";
+import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import { seasonToVotingRange } from "~/features/plus-voting/core/voting-time";
 import invariant from "~/utils/invariant";
 import { userIsBanned } from "../../ban/core/banned.server";
 
 export async function plusTiersFromVotingAndLeaderboard() {
-	const newMembersFromLeaderboard = fromLeaderboard();
 	const newMembersFromVoting =
-		await AdminRepository.allPlusTiersFromLatestVoting();
-
+		await PlusVotingRepository.allPlusTiersFromLatestVoting();
+	const newMembersFromLeaderboard = fromLeaderboard(newMembersFromVoting);
 	return [
 		...newMembersFromLeaderboard,
 		// filter to ensure that user gets their highest tier
@@ -23,7 +22,9 @@ export async function plusTiersFromVotingAndLeaderboard() {
 	].filter(({ userId }) => !userIsBanned(userId));
 }
 
-function fromLeaderboard() {
+function fromLeaderboard(
+	newMembersFromVoting: Array<{ userId: number; tier: number }>,
+) {
 	const now = new Date();
 	const lastCompletedSeason = previousSeason(now);
 	invariant(lastCompletedSeason, "No previous season found");
@@ -40,6 +41,7 @@ function fromLeaderboard() {
 
 	const leaderboard = addPendingPlusTiers(
 		userSPLeaderboard(lastCompletedSeason.nth),
+		newMembersFromVoting,
 	);
 
 	return leaderboard.flatMap((entry) => {

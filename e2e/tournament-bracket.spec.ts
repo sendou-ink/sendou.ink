@@ -301,7 +301,7 @@ test.describe("Tournament bracket", () => {
 		await page.getByLabel("Action").selectOption("CHECK_OUT");
 
 		for (let id = 103; id < 117; id++) {
-			await page.getByLabel("Team").selectOption(String(id));
+			await page.getByLabel("Team", { exact: true }).selectOption(String(id));
 			await submit(page);
 		}
 
@@ -354,7 +354,7 @@ test.describe("Tournament bracket", () => {
 		await page.getByLabel("Action").selectOption("CHECK_OUT");
 
 		for (let id = 202; id < 210; id++) {
-			await page.getByLabel("Team").selectOption(String(id));
+			await page.getByLabel("Team", { exact: true }).selectOption(String(id));
 			await submit(page);
 		}
 
@@ -390,7 +390,7 @@ test.describe("Tournament bracket", () => {
 		});
 
 		await page.getByLabel("Action").selectOption("CHECK_IN");
-		await page.getByLabel("Team").selectOption("216");
+		await page.getByLabel("Team", { exact: true }).selectOption("216");
 		await page
 			.getByLabel("Bracket", { exact: true })
 			.selectOption("Underground bracket");
@@ -691,7 +691,7 @@ test.describe("Tournament bracket", () => {
 		await page.getByLabel("Action").selectOption("CHECK_OUT");
 
 		for (let id = 103; id < 115; id++) {
-			await page.getByLabel("Team").selectOption(String(id));
+			await page.getByLabel("Team", { exact: true }).selectOption(String(id));
 			await submit(page);
 		}
 
@@ -767,7 +767,7 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("reset-bracket-button").click();
 
 		await page.getByLabel("Action").selectOption("CHECK_IN");
-		await page.getByLabel("Team").selectOption("1");
+		await page.getByLabel("Team", { exact: true }).selectOption("1");
 		await submit(page);
 
 		await page.getByTestId("brackets-tab").click();
@@ -870,7 +870,7 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("admin-tab").click();
 
 		await page.getByLabel("Action").selectOption("DROP_TEAM_OUT");
-		await page.getByLabel("Team").selectOption("401");
+		await page.getByLabel("Team", { exact: true }).selectOption("401");
 		await submit(page);
 
 		await navigate({
@@ -884,7 +884,9 @@ test.describe("Tournament bracket", () => {
 		await expect(page.getByText("BYE")).toBeVisible();
 	});
 
-	test("prepares maps", async ({ page }) => {
+	test("prepares maps (including third place match linking)", async ({
+		page,
+	}) => {
 		const tournamentId = 4;
 
 		await seed(page);
@@ -914,6 +916,30 @@ test.describe("Tournament bracket", () => {
 		await page.getByRole("button", { name: "Hammerhead" }).click();
 
 		await expect(page.getByTestId("prepared-maps-check-icon")).toBeVisible();
+
+		// finally, test third place match linking
+		await page.getByRole("button", { name: "Great White" }).click();
+
+		await page.getByTestId("prepare-maps-button").click();
+
+		await page.getByRole("button", { name: "Unlink" }).click();
+
+		await page.getByRole("button", { name: "Edit" }).last().click();
+		await page.getByLabel("Bo9").click();
+
+		await page.getByTestId("confirm-finalize-bracket-button").click();
+
+		await navigate({
+			page,
+			url: tournamentBracketsPage({ tournamentId }),
+		});
+
+		await page.getByRole("button", { name: "Great White" }).click();
+
+		await page.getByTestId("prepare-maps-button").click();
+
+		// link button should be visible because we unlinked and made finals and third place match maps different earlier
+		expect(page.getByRole("button", { name: "Link" })).toBeVisible();
 	});
 
 	for (const pickBan of ["COUNTERPICK"]) {

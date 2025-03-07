@@ -5,7 +5,7 @@ import { z } from "zod";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { canAccessLohiEndpoint, canPerformAdminActions } from "~/permissions";
 import { logger } from "~/utils/logger";
-import { parseSearchParams, validate } from "~/utils/remix.server";
+import { errorToastIfFalsy, parseSearchParams } from "~/utils/remix.server";
 import { ADMIN_PAGE, authErrorUrl } from "~/utils/urls";
 import { createLogInLink } from "../queries/createLogInLink.server";
 import { deleteLogInLinkByCode } from "../queries/deleteLogInLinkByCode.server";
@@ -61,7 +61,7 @@ export const logOutAction: ActionFunction = async ({ request }) => {
 };
 
 export const logInAction: ActionFunction = async ({ request }) => {
-	validate(
+	errorToastIfFalsy(
 		process.env.LOGIN_DISABLED !== "true",
 		"Login is temporarily disabled",
 	);

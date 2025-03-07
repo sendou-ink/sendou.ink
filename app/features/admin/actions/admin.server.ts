@@ -7,7 +7,11 @@ import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { isAdmin, isMod } from "~/permissions";
 import { logger } from "~/utils/logger";
-import { parseRequestPayload, validate } from "~/utils/remix.server";
+import {
+	errorToastIfFalsy,
+	parseRequestPayload,
+	successToast,
+} from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { _action, actualNumber, friendCode } from "~/utils/zod";
 import { plusTiersFromVotingAndLeaderboard } from "../core/plus-tier.server";
@@ -19,26 +23,31 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	});
 	const user = await requireUserId(request);
 
+	let message: string;
 	switch (data._action) {
 		case "MIGRATE": {
-			validate(isMod(user), "Admin needed", 401);
+			errorToastIfFalsy(isMod(user), "Admin needed");
 
 			await AdminRepository.migrate({
 				oldUserId: data["old-user"],
 				newUserId: data["new-user"],
 			});
+
+			message = "Account migrated";
 			break;
 		}
 		case "REFRESH": {
-			validate(isAdmin(user));
+			errorToastIfFalsy(isAdmin(user), "Admin needed");
 
 			await AdminRepository.replacePlusTiers(
 				await plusTiersFromVotingAndLeaderboard(),
 			);
+
+			message = "Plus tiers refreshed";
 			break;
 		}
 		case "FORCE_PATRON": {
-			validate(isAdmin(user), "Admin needed", 401);
+			errorToastIfFalsy(isAdmin(user), "Admin needed");
 
 			await AdminRepository.forcePatron({
 				id: data.user,
@@ -46,45 +55,56 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				patronTier: data.patronTier,
 				patronTill: new Date(data.patronTill),
 			});
+
+			message = "Patron status updated";
 			break;
 		}
 		case "CLEAN_UP": {
-			validate(isAdmin(user), "Admin needed", 401);
+			errorToastIfFalsy(isAdmin(user), "Admin needed");
 
 			// on purpose sync
 			AdminRepository.cleanUp();
+
+			message = "Clean up done";
 			break;
 		}
 		case "ARTIST": {
-			validate(isMod(user), "Mod needed", 401);
+			errorToastIfFalsy(isMod(user), "Mod needed");
 
 			makeArtist(data.user);
+
+			message = "Artist permissions given";
 			break;
 		}
 		case "VIDEO_ADDER": {
-			validate(isMod(user), "Mod needed", 401);
+			errorToastIfFalsy(isMod(user), "Mod needed");
 
 			await AdminRepository.makeVideoAdderByUserId(data.user);
+
+			message = "VoD adder permissions given";
 			break;
 		}
 		case "TOURNAMENT_ORGANIZER": {
-			validate(isMod(user), "Mod needed", 401);
+			errorToastIfFalsy(isMod(user), "Mod needed");
 
 			await AdminRepository.makeTournamentOrganizerByUserId(data.user);
+
+			message = "Tournament permissions given";
 			break;
 		}
 		case "LINK_PLAYER": {
-			validate(isMod(user), "Mod needed", 401);
+			errorToastIfFalsy(isMod(user), "Mod needed");
 
 			await AdminRepository.linkUserAndPlayer({
 				userId: data.user,
 				playerId: data.playerId,
 			});
 
+			message = "Linked user and player";
 			break;
 		}
 		case "BAN_USER": {
-			validate(isMod(user), "Mod needed", 401);
+			errorToastIfFalsy(isMod(user), "Mod needed");
 
 			await AdminRepository.banUser({
 				bannedReason: data.reason ?? null,
@@ -103,10 +123,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					: undefined,
 			});
 
+			message = "User banned";
 			break;
 		}
 		case "UNBAN_USER": {
-			validate(isMod(user), "Mod needed", 401);
+			errorToastIfFalsy(isMod(user), "Mod needed");
 
 			await AdminRepository.unbanUser(data.user);
 
@@ -117,10 +138,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				byUserId: user.id,
 			});
 
+			message = "User unbanned";
 			break;
 		}
 		case "UPDATE_FRIEND_CODE": {
-			validate(isMod(user), "Mod needed", 401);
+			errorToastIfFalsy(isMod(user), "Mod needed");
 
 			await UserRepository.insertFriendCode({
 				friendCode: data.friendCode,
@@ -128,6 +150,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				userId: data.user,
 			});
 
+			message = "Friend code updated";
 			break;
 		}
 		default: {
@@ -135,7 +158,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		}
 	}
 
-	return { ok: true };
+	return successToast(message);
 };
 
 export const adminActionSchema = z.union([

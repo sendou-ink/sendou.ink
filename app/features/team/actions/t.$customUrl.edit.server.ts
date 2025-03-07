@@ -3,9 +3,9 @@ import { redirect } from "@remix-run/node";
 import { requireUserId } from "~/features/auth/core/user.server";
 import { isAdmin } from "~/permissions";
 import {
+	errorToastIfFalsy,
 	notFoundIfFalsy,
 	parseRequestPayload,
-	validate,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { TEAM_SEARCH_PAGE, mySlugify, teamPage } from "~/utils/urls";
@@ -19,7 +19,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));
 
-	validate(
+	errorToastIfFalsy(
 		isTeamManager({ team, user }) || isAdmin(user),
 		"You are not a team manager",
 	);
@@ -31,7 +31,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	switch (data._action) {
 		case "DELETE": {
-			validate(isTeamOwner({ team, user }), "You are not the team owner");
+			errorToastIfFalsy(
+				isTeamOwner({ team, user }),
+				"You are not the team owner",
+			);
 
 			await TeamRepository.del(team.id);
 
@@ -41,7 +44,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			const newCustomUrl = mySlugify(data.name);
 			const existingTeam = await TeamRepository.findByCustomUrl(newCustomUrl);
 
-			validate(
+			errorToastIfFalsy(
 				newCustomUrl.length > 0,
 				"Team name can't be only special characters",
 			);
