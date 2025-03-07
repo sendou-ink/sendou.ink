@@ -14,6 +14,16 @@ export const TOURNAMENT = {
 	SWISS_DEFAULT_GROUP_COUNT: 1,
 	SWISS_DEFAULT_ROUND_COUNT: 5,
 	SE_DEFAULT_HAS_THIRD_PLACE_MATCH: true,
+	ROUND_NAMES: {
+		WB_FINALS: "WB Finals",
+		GRAND_FINALS: "Grand Finals",
+		BRACKET_RESET: "Bracket Reset",
+		FINALS: "Finals",
+		LB_FINALS: "LB Finals",
+		LB_SEMIS: "LB Semis",
+		THIRD_PLACE_MATCH: "3rd place match",
+		FINALS_THIRD_PLACE_MATCH_UNIFIED: "Finals + 3rd place match",
+	},
 } as const;
 
 export const LEAGUES =

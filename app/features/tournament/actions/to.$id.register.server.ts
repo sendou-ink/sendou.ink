@@ -68,13 +68,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"Team id does not match any of the teams you are in",
 			);
 
-			errorToastIfFalsy(
-				!tournament.ctx.teams.some(
-					(team) => team.name === data.teamName && team.id !== data.teamId,
-				),
-				"Team name already taken for this tournament",
-			);
-
 			if (ownTeam) {
 				errorToastIfFalsy(
 					tournament.registrationOpen || data.teamName === ownTeam.name,
@@ -105,6 +98,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 				errorToastIfFalsy(
 					tournament.registrationOpen,
 					"Registration is closed",
+				);
+				errorToastIfFalsy(
+					!tournament.ctx.teams.some((team) => team.name === data.teamName),
+					"Team name already taken for this tournament",
 				);
 
 				await TournamentTeamRepository.create({

@@ -10,7 +10,7 @@ import { ArrowLongLeftIcon } from "~/components/icons/ArrowLongLeft";
 import { sql } from "~/db/sql";
 import { useUser } from "~/features/auth/core/user";
 import { requireUser } from "~/features/auth/core/user.server";
-import { tournamentIdFromParams } from "~/features/tournament";
+import { TOURNAMENT, tournamentIdFromParams } from "~/features/tournament";
 import * as TournamentMatchRepository from "~/features/tournament-bracket/TournamentMatchRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -787,14 +787,14 @@ function MatchHeader() {
 							const specifier = () => {
 								if (
 									[
-										"WB Finals",
-										"Grand Finals",
-										"Bracket Reset",
-										"Finals",
-										"LB Finals",
-										"LB Semis",
-										"3rd place match",
-									].includes(round.name)
+										TOURNAMENT.ROUND_NAMES.WB_FINALS,
+										TOURNAMENT.ROUND_NAMES.GRAND_FINALS,
+										TOURNAMENT.ROUND_NAMES.BRACKET_RESET,
+										TOURNAMENT.ROUND_NAMES.FINALS,
+										TOURNAMENT.ROUND_NAMES.LB_FINALS,
+										TOURNAMENT.ROUND_NAMES.LB_SEMIS,
+										TOURNAMENT.ROUND_NAMES.THIRD_PLACE_MATCH,
+									].includes(round.name as any)
 								) {
 									return "";
 								}
