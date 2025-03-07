@@ -25,6 +25,7 @@ import { calendarEditPage } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
 import { LinkIcon } from "../../../components/icons/Link";
 import { UnlinkIcon } from "../../../components/icons/Unlink";
+import { logger } from "../../../utils/logger";
 import type { Bracket } from "../core/Bracket";
 import * as PreparedMaps from "../core/PreparedMaps";
 import type { Tournament } from "../core/Tournament";
@@ -69,8 +70,6 @@ export function BracketMapListDialog({
 			: untrimmedPreparedMaps;
 
 	const [szFirst, setSzFirst] = React.useState(false);
-	const [thirdPlaceMatchLinked, setThirdPlaceMatchLinked] =
-		React.useState(true); // xxx: if prepared finals & 3rd place match different, default to false
 	const [eliminationTeamCount, setEliminationTeamCount] = React.useState<
 		number | null
 	>(() => {
@@ -84,6 +83,43 @@ export function BracketMapListDialog({
 
 		return PreparedMaps.eliminationTeamCountOptions(bracketTeamsCount)[0].max;
 	});
+	const [thirdPlaceMatchLinked, setThirdPlaceMatchLinked] = React.useState(
+		() => {
+			if (
+				!tournament.bracketManagerSettings(
+					bracket.settings,
+					bracket.type,
+					eliminationTeamCount ?? 2,
+				).consolationFinal
+			) {
+				return true; // default to true if not applicable or elimination team count not yet set (initial state)
+			}
+
+			if (!preparedMaps?.maps) {
+				return true;
+			}
+
+			// if maps were set before infer default from whether finals and third place match have different maps or not
+
+			const finalsMaps = preparedMaps.maps
+				.filter((map) => map.groupId === 0)
+				.sort((a, b) => b.roundId - a.roundId)[0];
+			const thirdPlaceMaps = preparedMaps.maps.find((map) => map.groupId === 1);
+
+			if (!finalsMaps?.list || !thirdPlaceMaps?.list) {
+				logger.error(
+					"Expected both finals and third place match maps to be defined",
+				);
+				return true;
+			}
+
+			return finalsMaps.list.every(
+				(map, i) =>
+					map.mode === thirdPlaceMaps.list![i].mode &&
+					map.stageId === thirdPlaceMaps.list![i].stageId,
+			);
+		},
+	);
 
 	const bracketData = isPreparing
 		? teamCountAdjustedBracketData({
@@ -240,7 +276,7 @@ export function BracketMapListDialog({
 				<input
 					type="hidden"
 					name="thirdPlaceMatchLinked"
-					value={String(thirdPlaceMatchLinked)}
+					value={thirdPlaceMatchLinked ? "on" : "off"}
 				/>
 				<input
 					type="hidden"

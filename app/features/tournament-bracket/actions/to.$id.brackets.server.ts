@@ -21,7 +21,6 @@ import { parseRequestPayload, validate } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import type { PreparedMaps } from "../../../db/tables";
 import { updateTeamSeeds } from "../../tournament/queries/updateTeamSeeds.server";
-import type { Bracket } from "../core/Bracket";
 import * as Swiss from "../core/Swiss";
 import type { Tournament } from "../core/Tournament";
 import {
@@ -58,11 +57,18 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const groupCount = new Set(bracket.data.round.map((r) => r.group_id))
 				.size;
 
-			const maps = adjustLinkedRounds({
-				maps: data.maps,
-				bracket,
-				thirdPlaceMatchLinked: data.thirdPlaceMatchLinked,
-			});
+			const settings = tournament.bracketManagerSettings(
+				bracket.settings,
+				bracket.type,
+				seeding.length,
+			);
+
+			const maps = settings.consolationFinal
+				? adjustLinkedRounds({
+						maps: data.maps,
+						thirdPlaceMatchLinked: data.thirdPlaceMatchLinked,
+					})
+				: data.maps;
 
 			validate(
 				bracket.type === "round_robin" || bracket.type === "swiss"
@@ -79,26 +85,18 @@ export const action: ActionFunction = async ({ params, request }) => {
 									name: bracket.name,
 									seeding,
 									tournamentId,
-									settings: tournament.bracketManagerSettings(
-										bracket.settings,
-										bracket.type,
-										seeding.length,
-									),
+									settings,
 								}),
 							)
 						: manager.create({
 								tournamentId,
 								name: bracket.name,
-								type: bracket.type as "round_robin",
+								type: bracket.type,
 								seeding:
 									bracket.type === "round_robin"
 										? seeding
 										: fillWithNullTillPowerOfTwo(seeding),
-								settings: tournament.bracketManagerSettings(
-									bracket.settings,
-									bracket.type,
-									seeding.length,
-								),
+								settings,
 							});
 
 				updateRoundMaps(
@@ -154,15 +152,22 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Bracket has started, preparing maps no longer possible",
 			);
 
+			const hasThirdPlaceMatch = tournament.bracketManagerSettings(
+				bracket.settings,
+				bracket.type,
+				data.eliminationTeamCount ?? (bracket.seeding ?? []).length,
+			).consolationFinal;
+
 			await TournamentRepository.upsertPreparedMaps({
 				bracketIdx: data.bracketIdx,
 				tournamentId,
 				maps: {
-					maps: adjustLinkedRounds({
-						maps: data.maps,
-						bracket,
-						thirdPlaceMatchLinked: data.thirdPlaceMatchLinked,
-					}),
+					maps: hasThirdPlaceMatch
+						? adjustLinkedRounds({
+								maps: data.maps,
+								thirdPlaceMatchLinked: data.thirdPlaceMatchLinked,
+							})
+						: data.maps,
 					authorId: user.id,
 					eliminationTeamCount: data.eliminationTeamCount ?? undefined,
 				},
@@ -319,20 +324,11 @@ function validateNoFollowUpBrackets(tournament: Tournament) {
 
 function adjustLinkedRounds({
 	maps,
-	bracket,
 	thirdPlaceMatchLinked,
 }: {
 	maps: Omit<PreparedMaps, "createdAt">["maps"];
-	bracket: Bracket;
 	thirdPlaceMatchLinked: boolean;
 }): Omit<PreparedMaps, "createdAt">["maps"] {
-	if (
-		bracket.type !== "single_elimination" ||
-		!bracket.settings?.thirdPlaceMatch // xxx: not correct
-	) {
-		return maps;
-	}
-
 	if (thirdPlaceMatchLinked) {
 		const finalsMaps = maps
 			.filter((m) => m.groupId === 0)
@@ -340,7 +336,7 @@ function adjustLinkedRounds({
 		invariant(finalsMaps, "Missing finals maps");
 
 		return [
-			...maps.filter((m) => m.groupId !== 1),
+			...maps.filter((m) => m.groupId === 0),
 			{ ...finalsMaps, groupId: 1, roundId: finalsMaps.roundId + 1 },
 		];
 	}
