@@ -13,8 +13,10 @@ import {
 	type ShouldRevalidateFunction,
 	useLoaderData,
 	useMatches,
+	useNavigate,
 	useNavigation,
 	useRevalidator,
+	useSearchParams,
 } from "@remix-run/react";
 import generalI18next from "i18next";
 import NProgress from "nprogress";
@@ -25,6 +27,7 @@ import { useTranslation } from "react-i18next";
 import { useChangeLanguage } from "remix-i18next/react";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Catcher } from "./components/Catcher";
+import { SendouToastRegion, toastQueue } from "./components/elements/Toast";
 import { Layout } from "./components/layout";
 import { Ramp } from "./components/ramp/Ramp";
 import { CUSTOMIZED_CSS_VARS_NAME } from "./constants";
@@ -142,6 +145,7 @@ function Document({
 	useChangeLanguage(locale);
 	usePreloadTranslation();
 	useLoadingIndicator();
+	useTriggerToasts();
 	const customizedCSSVars = useCustomizedCSSVars();
 
 	return (
@@ -170,17 +174,53 @@ function Document({
 				{process.env.NODE_ENV === "development" && <HydrationTestIndicator />}
 				<React.StrictMode>
 					<I18nProvider locale={i18n.language}>
+						<SendouToastRegion />
 						<MyRamp data={data} />
 						<Layout data={data} isErrored={isErrored}>
 							{children}
 						</Layout>
 					</I18nProvider>
 				</React.StrictMode>
-				<ScrollRestoration />
+				<ScrollRestoration
+					getKey={(location) => {
+						return location.pathname;
+					}}
+				/>
 				<Scripts />
 			</body>
 		</html>
 	);
+}
+
+function useTriggerToasts() {
+	const [searchParams] = useSearchParams();
+	const navigate = useNavigate();
+
+	const error = searchParams.get("__error");
+	const success = searchParams.get("__success");
+
+	React.useEffect(() => {
+		if (!error && !success) return;
+
+		if (error) {
+			toastQueue.add({
+				message: error,
+				variant: "error",
+			});
+		} else if (success) {
+			toastQueue.add(
+				{
+					message: success,
+					variant: "success",
+				},
+				{
+					timeout: 5000,
+				},
+			);
+		}
+
+		navigate({ search: "" }, { replace: true });
+	}, [error, success, navigate]);
 }
 
 function useLoadingIndicator() {

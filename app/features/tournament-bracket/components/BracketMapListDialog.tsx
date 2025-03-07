@@ -22,6 +22,10 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { assertUnreachable } from "~/utils/types";
 import { calendarEditPage } from "~/utils/urls";
+import { SendouButton } from "../../../components/elements/Button";
+import { LinkIcon } from "../../../components/icons/Link";
+import { UnlinkIcon } from "../../../components/icons/Unlink";
+import { logger } from "../../../utils/logger";
 import type { Bracket } from "../core/Bracket";
 import * as PreparedMaps from "../core/PreparedMaps";
 import type { Tournament } from "../core/Tournament";
@@ -79,6 +83,43 @@ export function BracketMapListDialog({
 
 		return PreparedMaps.eliminationTeamCountOptions(bracketTeamsCount)[0].max;
 	});
+	const [thirdPlaceMatchLinked, setThirdPlaceMatchLinked] = React.useState(
+		() => {
+			if (
+				!tournament.bracketManagerSettings(
+					bracket.settings,
+					bracket.type,
+					eliminationTeamCount ?? 2,
+				).consolationFinal
+			) {
+				return true; // default to true if not applicable or elimination team count not yet set (initial state)
+			}
+
+			if (!preparedMaps?.maps) {
+				return true;
+			}
+
+			// if maps were set before infer default from whether finals and third place match have different maps or not
+
+			const finalsMaps = preparedMaps.maps
+				.filter((map) => map.groupId === 0)
+				.sort((a, b) => b.roundId - a.roundId)[0];
+			const thirdPlaceMaps = preparedMaps.maps.find((map) => map.groupId === 1);
+
+			if (!finalsMaps?.list || !thirdPlaceMaps?.list) {
+				logger.error(
+					"Expected both finals and third place match maps to be defined",
+				);
+				return true;
+			}
+
+			return finalsMaps.list.every(
+				(map, i) =>
+					map.mode === thirdPlaceMaps.list![i].mode &&
+					map.stageId === thirdPlaceMaps.list![i].stageId,
+			);
+		},
+	);
 
 	const bracketData = isPreparing
 		? teamCountAdjustedBracketData({
@@ -145,11 +186,26 @@ export function BracketMapListDialog({
 		}
 
 		if (bracket.type === "single_elimination") {
-			return getRounds({ type: "single", bracketData });
+			const rounds = getRounds({ type: "single", bracketData });
+
+			const hasThirdPlaceMatch = rounds.some((round) => round.group_id === 1);
+
+			if (!thirdPlaceMatchLinked || !hasThirdPlaceMatch) return rounds;
+
+			return rounds
+				.filter((round) => round.group_id !== 1)
+				.map((round) =>
+					round.name === "Finals"
+						? {
+								...round,
+								name: TOURNAMENT.ROUND_NAMES.FINALS_THIRD_PLACE_MATCH_UNIFIED,
+							}
+						: round,
+				);
 		}
 
 		assertUnreachable(bracket.type);
-	}, [bracketData, maps, bracket.type]);
+	}, [bracketData, maps, bracket.type, thirdPlaceMatchLinked]);
 
 	const mapCountsWithGlobalCount = (newCount: number) => {
 		const newMap = new Map(defaultRoundBestOfs);
@@ -217,6 +273,11 @@ export function BracketMapListDialog({
 		<Dialog isOpen={isOpen} close={close} className="map-list-dialog__dialog">
 			<fetcher.Form method="post" className="map-list-dialog__container">
 				<input type="hidden" name="bracketIdx" value={bracketIdx} />
+				<input
+					type="hidden"
+					name="thirdPlaceMatchLinked"
+					value={thirdPlaceMatchLinked ? "on" : "off"}
+				/>
 				<input
 					type="hidden"
 					name="maps"
@@ -405,12 +466,32 @@ export function BracketMapListDialog({
 										const roundMaps = maps.get(round.id);
 										invariant(roundMaps, "Expected maps to be defined");
 
+										const showUnlinkButton =
+											bracket.type === "single_elimination" &&
+											thirdPlaceMatchLinked === true &&
+											round.name ===
+												TOURNAMENT.ROUND_NAMES.FINALS_THIRD_PLACE_MATCH_UNIFIED;
+										const showLinkButton =
+											bracket.type === "single_elimination" &&
+											thirdPlaceMatchLinked === false &&
+											round.name === TOURNAMENT.ROUND_NAMES.THIRD_PLACE_MATCH;
+
 										return (
 											<RoundMapList
 												key={round.id}
 												name={round.name}
 												maps={roundMaps}
 												onHoverMap={setHoveredMap}
+												unlink={
+													showUnlinkButton
+														? () => setThirdPlaceMatchLinked(false)
+														: undefined
+												}
+												link={
+													showLinkButton
+														? () => setThirdPlaceMatchLinked(true)
+														: undefined
+												}
 												hoveredMap={hoveredMap}
 												includeRoundSpecificSelections={
 													bracket.type !== "round_robin"
@@ -768,6 +849,8 @@ function RoundMapList({
 	onHoverMap,
 	onCountChange,
 	onPickBanChange,
+	unlink,
+	link,
 	hoveredMap,
 	includeRoundSpecificSelections,
 }: {
@@ -777,6 +860,8 @@ function RoundMapList({
 	onHoverMap: (map: string | null) => void;
 	onCountChange: (count: number) => void;
 	onPickBanChange?: (hasPickBan: boolean) => void;
+	unlink?: () => void;
+	link?: () => void;
 	hoveredMap: string | null;
 	includeRoundSpecificSelections: boolean;
 }) {
@@ -796,6 +881,28 @@ function RoundMapList({
 					{editing ? "Save" : "Edit"}
 				</Button>
 			</h3>
+			{unlink ? (
+				<SendouButton
+					size="miniscule"
+					variant="outlined"
+					className="mt-1"
+					icon={<UnlinkIcon />}
+					onPress={unlink}
+				>
+					Unlink
+				</SendouButton>
+			) : null}
+			{link ? (
+				<SendouButton
+					size="miniscule"
+					variant="outlined"
+					className="mt-1"
+					icon={<LinkIcon />}
+					onPress={link}
+				>
+					Link
+				</SendouButton>
+			) : null}
 			{editing && includeRoundSpecificSelections ? (
 				<div className="stack xs horizontal">
 					{TOURNAMENT.AVAILABLE_BEST_OF.map((count) => (

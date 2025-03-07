@@ -33,9 +33,10 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import {
 	type SendouRouteHandle,
+	errorToastIfFalsy,
 	parseFormData,
 	parseRequestPayload,
-	validate,
+	unauthorizedIfFalsy,
 } from "~/utils/remix.server";
 import {
 	artPage,
@@ -68,7 +69,7 @@ export const meta: MetaFunction = () => {
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = await requireUser(request);
-	validate(user.isArtist, "Lacking artist role", 403);
+	errorToastIfFalsy(user.isArtist, "Lacking artist role");
 
 	const searchParams = new URL(request.url).searchParams;
 	const artIdRaw = searchParams.get(NEW_ART_EXISTING_SEARCH_PARAM_KEY);
@@ -78,10 +79,9 @@ export const action: ActionFunction = async ({ request }) => {
 		const artId = Number(artIdRaw);
 
 		const existingArt = findArtById(artId);
-		validate(
+		errorToastIfFalsy(
 			existingArt?.authorId === user.id,
-			"Insufficient permissions",
-			401,
+			"Art author is someone else",
 		);
 
 		const data = await parseRequestPayload({
@@ -158,7 +158,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await requireUser(request);
-	validate(user.isArtist, "Lacking artist role", 403);
+	unauthorizedIfFalsy(user.isArtist);
 
 	const artIdRaw = new URL(request.url).searchParams.get(
 		NEW_ART_EXISTING_SEARCH_PARAM_KEY,

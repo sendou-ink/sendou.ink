@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { dbInsertUsers, dbReset, wrappedAction } from "~/utils/Test";
+import {
+	assertResponseErrored,
+	dbInsertUsers,
+	dbReset,
+	wrappedAction,
+} from "~/utils/Test";
 import { action as teamIndexPageAction } from "../actions/t.server";
 import type { editTeamSchema } from "../team-schemas.server";
 import type { createTeamSchema } from "../team-schemas.server";
@@ -42,30 +47,30 @@ describe("team page editing", () => {
 	});
 
 	it("prevents adding custom css var of unknown property", async () => {
-		await expect(
-			editTeamProfileAction(
-				{
-					css: JSON.stringify({
-						"backdrop-filter": "#fff",
-					}),
-					...DEFAULT_FIELDS,
-				},
-				{ user: "regular", params: { customUrl: "team-1" } },
-			),
-		).rejects.toThrow("status code: 400");
+		const response = await editTeamProfileAction(
+			{
+				css: JSON.stringify({
+					"backdrop-filter": "#fff",
+				}),
+				...DEFAULT_FIELDS,
+			},
+			{ user: "regular", params: { customUrl: "team-1" } },
+		);
+
+		assertResponseErrored(response);
 	});
 
 	it("prevents adding custom css var of unknown value", async () => {
-		await expect(
-			editTeamProfileAction(
-				{
-					css: JSON.stringify({
-						bg: "url(https://sendou.ink/u?q=1&_data=features%2Fuser-search%2Froutes%2Fu)",
-					}),
-					...DEFAULT_FIELDS,
-				},
-				{ user: "regular", params: { customUrl: "team-1" } },
-			),
-		).rejects.toThrow("status code: 400");
+		const response = await editTeamProfileAction(
+			{
+				css: JSON.stringify({
+					bg: "url(https://sendou.ink/u?q=1&_data=features%2Fuser-search%2Froutes%2Fu)",
+				}),
+				...DEFAULT_FIELDS,
+			},
+			{ user: "regular", params: { customUrl: "team-1" } },
+		);
+
+		assertResponseErrored(response);
 	});
 });

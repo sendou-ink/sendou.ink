@@ -35,8 +35,8 @@ import invariant from "~/utils/invariant";
 import { metaTags } from "~/utils/remix";
 import {
 	badRequestIfFalsy,
+	errorToastIfFalsy,
 	parseRequestPayload,
-	validate,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { userPage } from "~/utils/urls";
@@ -96,14 +96,14 @@ export const action: ActionFunction = async ({ request }) => {
 			);
 			invariant(subSuggestion);
 
-			validate(suggestionToDelete);
-			validate(
+			errorToastIfFalsy(
 				canDeleteComment({
 					user,
 					author: subSuggestion.author,
 					suggestionId: data.suggestionId,
 					suggestions,
 				}),
+				"No permissions to delete this comment",
 			);
 
 			const suggestionHasComments = suggestionToDelete.suggestions.length > 1;
