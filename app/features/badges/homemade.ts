@@ -790,6 +790,16 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "336683473714544641",
 	},
 	{
+		displayName: "Re Al",
+		fileName: "real",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Blue Lock",
+		fileName: "bluelock",
+		authorDiscordId: "528851510222782474",
+	},
+	{
 		displayName: "FULLWIPE LAN",
 		fileName: "fullwipe",
 		authorDiscordId: "570323825669963972",
