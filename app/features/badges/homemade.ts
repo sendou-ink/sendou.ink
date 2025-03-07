@@ -20,6 +20,16 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "789943264370884708",
 	},
 	{
+		displayName: "Sylveon",
+		fileName: "slyeion",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Triton-Cup 100",
+		fileName: "tritongold-1",
+		authorDiscordId: "335179210878353409",
+	},
+	{
 		displayName: "GatorLAN - Side of Salmon",
 		fileName: "gatorlan_salmon_1st",
 		authorDiscordId: "285504780154044416",
