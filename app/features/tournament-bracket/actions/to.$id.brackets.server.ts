@@ -17,7 +17,7 @@ import { createSwissBracketInTransaction } from "~/features/tournament/queries/c
 import { updateRoundMaps } from "~/features/tournament/queries/updateRoundMaps.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
-import { parseRequestPayload, validate } from "~/utils/remix.server";
+import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import type { PreparedMaps } from "../../../db/tables";
 import { updateTeamSeeds } from "../../tournament/queries/updateTeamSeeds.server";
@@ -44,7 +44,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 	switch (data._action) {
 		case "START_BRACKET": {
-			validate(tournament.isOrganizer(user));
+			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
 
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			invariant(bracket, "Bracket not found");
@@ -52,7 +52,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const seeding = bracket.seeding;
 			invariant(seeding, "Seeding not found");
 
-			validate(bracket.canBeStarted, "Bracket is not ready to be started");
+			errorToastIfFalsy(
+				bracket.canBeStarted,
+				"Bracket is not ready to be started",
+			);
 
 			const groupCount = new Set(bracket.data.round.map((r) => r.group_id))
 				.size;
@@ -70,7 +73,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 					})
 				: data.maps;
 
-			validate(
+			errorToastIfFalsy(
 				bracket.type === "round_robin" || bracket.type === "swiss"
 					? bracket.data.round.length / groupCount === maps.length
 					: bracket.data.round.length === maps.length,
@@ -138,16 +141,16 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "PREPARE_MAPS": {
-			validate(tournament.isOrganizer(user));
+			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
 
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			invariant(bracket, "Bracket not found");
 
-			validate(
+			errorToastIfFalsy(
 				!bracket.canBeStarted,
 				"Bracket can already be started, preparing maps no longer possible",
 			);
-			validate(
+			errorToastIfFalsy(
 				bracket.preview,
 				"Bracket has started, preparing maps no longer possible",
 			);
@@ -176,11 +179,14 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "ADVANCE_BRACKET": {
-			validate(tournament.isOrganizer(user));
+			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
 
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
-			validate(bracket, "Bracket not found");
-			validate(bracket.type === "swiss", "Can't advance non-swiss bracket");
+			errorToastIfFalsy(bracket, "Bracket not found");
+			errorToastIfFalsy(
+				bracket.type === "swiss",
+				"Can't advance non-swiss bracket",
+			);
 
 			const matches = Swiss.generateMatchUps({
 				bracket,
@@ -192,12 +198,15 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "UNADVANCE_BRACKET": {
-			validate(tournament.isOrganizer(user));
+			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
 
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
-			validate(bracket, "Bracket not found");
-			validate(bracket.type === "swiss", "Can't unadvance non-swiss bracket");
-			validateNoFollowUpBrackets(tournament);
+			errorToastIfFalsy(bracket, "Bracket not found");
+			errorToastIfFalsy(
+				bracket.type === "swiss",
+				"Can't unadvance non-swiss bracket",
+			);
+			errorToastIfFalsyNoFollowUpBrackets(tournament);
 
 			await TournamentRepository.deleteSwissMatches({
 				groupId: data.groupId,
@@ -207,7 +216,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "FINALIZE_TOURNAMENT": {
-			validate(tournament.canFinalize(user), "Can't finalize tournament");
+			errorToastIfFalsy(
+				tournament.canFinalize(user),
+				"Can't finalize tournament",
+			);
 
 			const _finalStandings = tournament.standings;
 
@@ -266,7 +278,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const ownTeam = tournament.ownedTeamByUser(user);
 			invariant(ownTeam, "User doesn't have owned team");
 
-			validate(bracket.canCheckIn(user));
+			errorToastIfFalsy(bracket.canCheckIn(user), "Not an organizer");
 
 			await TournamentRepository.checkIn({
 				bracketIdx: data.bracketIdx,
@@ -275,18 +287,18 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "OVERRIDE_BRACKET_PROGRESSION": {
-			validate(tournament.isOrganizer(user));
+			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
 
 			const allDestinationBrackets = Progression.destinationsFromBracketIdx(
 				data.sourceBracketIdx,
 				tournament.ctx.settings.bracketProgression,
 			);
-			validate(
+			errorToastIfFalsy(
 				data.destinationBracketIdx === -1 ||
 					allDestinationBrackets.includes(data.destinationBracketIdx),
 				"Invalid destination bracket",
 			);
-			validate(
+			errorToastIfFalsy(
 				allDestinationBrackets.every(
 					(bracketIdx) => tournament.bracketByIdx(bracketIdx)!.preview,
 				),
@@ -311,12 +323,12 @@ export const action: ActionFunction = async ({ params, request }) => {
 	return null;
 };
 
-function validateNoFollowUpBrackets(tournament: Tournament) {
+function errorToastIfFalsyNoFollowUpBrackets(tournament: Tournament) {
 	const followUpBrackets = tournament.brackets.filter((b) =>
 		b.sources?.some((source) => source.bracketIdx === 0),
 	);
 
-	validate(
+	errorToastIfFalsy(
 		followUpBrackets.every((b) => b.preview),
 		"Follow-up brackets are already started",
 	);
