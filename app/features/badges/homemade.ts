@@ -760,6 +760,11 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "528851510222782474",
 	},
 	{
+		displayName: "New Game +",
+		fileName: "new-game-plus",
+		authorDiscordId: "216653023252840449",
+	},
+	{
 		displayName: "Twisted Toe",
 		fileName: "twistedtoe",
 		authorDiscordId: "1320944066002681876",
