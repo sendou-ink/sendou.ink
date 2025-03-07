@@ -1,6 +1,6 @@
 import type { ExpressionBuilder, FunctionModule, NotNull } from "kysely";
 import { sql } from "kysely";
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
+import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db, sql as dbDirect } from "~/db/sql";
 import type {
 	BuildSort,
@@ -164,24 +164,6 @@ export async function findProfileByIdentifier(
 					.whereRef("UserWeapon.userId", "=", "User.id")
 					.orderBy("UserWeapon.order", "asc"),
 			).as("weapons"),
-			jsonObjectFrom(
-				eb
-					.selectFrom("TeamMember")
-					.innerJoin("Team", "Team.id", "TeamMember.teamId")
-					.leftJoin(
-						"UserSubmittedImage",
-						"UserSubmittedImage.id",
-						"Team.avatarImgId",
-					)
-					.select([
-						"Team.name",
-						"Team.customUrl",
-						"Team.id",
-						"TeamMember.role as userTeamRole",
-						"UserSubmittedImage.url as avatarUrl",
-					])
-					.whereRef("TeamMember.userId", "=", "User.id"),
-			).as("team"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TeamMemberWithSecondary")
@@ -195,12 +177,12 @@ export async function findProfileByIdentifier(
 						"Team.name",
 						"Team.customUrl",
 						"Team.id",
+						"TeamMemberWithSecondary.isMainTeam",
 						"TeamMemberWithSecondary.role as userTeamRole",
 						"UserSubmittedImage.url as avatarUrl",
 					])
-					.whereRef("TeamMemberWithSecondary.userId", "=", "User.id")
-					.where("TeamMemberWithSecondary.isMainTeam", "=", 0),
-			).as("secondaryTeams"),
+					.whereRef("TeamMemberWithSecondary.userId", "=", "User.id"),
+			).as("teams"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("BadgeOwner")
@@ -241,6 +223,9 @@ export async function findProfileByIdentifier(
 
 	return {
 		...row,
+		team: row.teams.find((t) => t.isMainTeam),
+		secondaryTeams: row.teams.filter((t) => !t.isMainTeam),
+		teams: undefined,
 		// TODO: sort in SQL
 		badges: row.badges.sort((a, b) => {
 			if (a.id === row.favoriteBadgeId) {

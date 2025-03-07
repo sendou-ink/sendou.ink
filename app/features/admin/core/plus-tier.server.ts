@@ -1,15 +1,15 @@
-import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { addPendingPlusTiers } from "~/features/leaderboards/core/leaderboards.server";
 import { userSPLeaderboard } from "~/features/leaderboards/queries/userSPLeaderboard.server";
-import { previousSeason } from "~/features/mmr/season";
+import { currentSeason, previousSeason } from "~/features/mmr/season";
+import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
+import { seasonToVotingRange } from "~/features/plus-voting/core/voting-time";
 import invariant from "~/utils/invariant";
 import { userIsBanned } from "../../ban/core/banned.server";
 
 export async function plusTiersFromVotingAndLeaderboard() {
-	const newMembersFromLeaderboard = fromLeaderboard();
 	const newMembersFromVoting =
-		await AdminRepository.allPlusTiersFromLatestVoting();
-
+		await PlusVotingRepository.allPlusTiersFromLatestVoting();
+	const newMembersFromLeaderboard = fromLeaderboard(newMembersFromVoting);
 	return [
 		...newMembersFromLeaderboard,
 		// filter to ensure that user gets their highest tier
@@ -22,16 +22,26 @@ export async function plusTiersFromVotingAndLeaderboard() {
 	].filter(({ userId }) => !userIsBanned(userId));
 }
 
-function fromLeaderboard() {
+function fromLeaderboard(
+	newMembersFromVoting: Array<{ userId: number; tier: number }>,
+) {
 	const now = new Date();
 	const lastCompletedSeason = previousSeason(now);
 	invariant(lastCompletedSeason, "No previous season found");
 
-	// there has been voting after this season ended, the results no longer apply
-	if (now.getMonth() !== lastCompletedSeason.ends.getMonth()) return [];
+	const currSeason = currentSeason(now);
+	if (currSeason) {
+		const range = seasonToVotingRange(currSeason);
+
+		// we are in the period of a season where the season's voting
+		// has ended but we don't yet have the latest leaderboard results
+		// -> last season's results are no longer valid
+		if (range.endDate < now) return [];
+	}
 
 	const leaderboard = addPendingPlusTiers(
 		userSPLeaderboard(lastCompletedSeason.nth),
+		newMembersFromVoting,
 	);
 
 	return leaderboard.flatMap((entry) => {

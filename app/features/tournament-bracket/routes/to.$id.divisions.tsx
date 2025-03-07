@@ -19,7 +19,7 @@ export default function TournamentDivisionsPage() {
 	}
 
 	return (
-		<div className="stack horizontal md flex-wrap">
+		<div className="tournament__div__grid">
 			{data.divisions.map((div) => (
 				<DivisionLink key={div.tournamentId} div={div} />
 			))}

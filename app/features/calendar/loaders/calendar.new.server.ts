@@ -84,8 +84,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			user.isTournamentOrganizer && !eventToEdit
 				? await CalendarRepository.findRecentTournamentsByAuthorId(user.id)
 				: undefined,
-		organizations: await TournamentOrganizationRepository.findByOrganizerUserId(
-			user.id,
+		organizations: (
+			await TournamentOrganizationRepository.findByOrganizerUserId(user.id)
+		).concat(
+			eventToEdit?.tournament?.ctx.organization
+				? eventToEdit.tournament.ctx.organization
+				: [],
 		),
 	};
 };
