@@ -17,7 +17,7 @@ import { useAutoRefresh } from "~/hooks/useAutoRefresh";
 import invariant from "~/utils/invariant";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { parseRequestPayload, validate } from "~/utils/remix.server";
+import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import {
 	SENDOUQ_LOOKING_PAGE,
@@ -65,14 +65,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	});
 
 	const currentGroup = findCurrentGroupByUserId(user.id);
-	validate(currentGroup, "No group found");
+	errorToastIfFalsy(currentGroup, "No group found");
 
 	if (!hasGroupManagerPerms(currentGroup.role)) {
 		return null;
 	}
 
 	const season = currentSeason(new Date());
-	validate(season, "Season is not active");
+	errorToastIfFalsy(season, "Season is not active");
 
 	switch (data._action) {
 		case "JOIN_QUEUE": {
@@ -91,7 +91,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				return { error: "taken" } as const;
 			}
 
-			validate(
+			errorToastIfFalsy(
 				(await QRepository.usersThatTrusted(user.id)).trusters.some(
 					(trusterUser) => trusterUser.id === data.id,
 				),
@@ -102,7 +102,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				groupId: currentGroup.id,
 			});
 			invariant(ownGroupWithMembers, "No own group found");
-			validate(
+			errorToastIfFalsy(
 				ownGroupWithMembers.members.length < FULL_GROUP_SIZE,
 				"Group is full",
 			);

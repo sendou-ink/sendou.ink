@@ -34,7 +34,7 @@ import {
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { useTimeoutState } from "~/hooks/useTimeoutState";
 import invariant from "~/utils/invariant";
-import { parseRequestPayload, validate } from "~/utils/remix.server";
+import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { tournamentBracketsPage, userResultsPage } from "~/utils/urls";
 import { Avatar } from "../../../components/Avatar";
 import { InfoPopover } from "../../../components/InfoPopover";
@@ -54,8 +54,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const tournamentId = tournamentIdFromParams(params);
 	const tournament = await tournamentFromDB({ tournamentId, user });
 
-	validate(tournament.isOrganizer(user));
-	validate(!tournament.hasStarted, "Tournament has started");
+	errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+	errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
 
 	switch (data._action) {
 		case "UPDATE_SEEDS": {
@@ -68,7 +68,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 					(bracket, bracketIdx) => (!bracket.sources ? [bracketIdx] : []),
 				);
 
-			validate(
+			errorToastIfFalsy(
 				data.startingBrackets.every((t) =>
 					validBracketIdxs.includes(t.startingBracketIdx),
 				),
