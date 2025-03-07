@@ -20,7 +20,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "789943264370884708",
 	},
 	{
-		displayName: "Gatorlan - Side of Salmon",
+		displayName: "GatorLAN - Side of Salmon",
 		fileName: "gatorlan_salmon_1st",
 		authorDiscordId: "285504780154044416",
 	},
@@ -803,5 +803,10 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "[OMD] Bingo Club",
 		fileName: "bingo-club",
 		authorDiscordId: "751912670403362836",
+	},
+	{
+		displayName: "Florida Collegiate Draft Cup",
+		fileName: "FLcollegiate",
+		authorDiscordId: "285504780154044416",
 	},
 ];
