@@ -204,7 +204,10 @@ export function roundMapsFromInput({
 
 	return expandedMaps.map((map) => {
 		const virtualRound = virtualRounds.find((r) => r.id === map.roundId);
-		invariant(virtualRound, "No virtual round found for map");
+		invariant(
+			virtualRound,
+			`No virtual round found for map with round id: ${map.roundId}`,
+		);
 
 		const realRoundId = roundsFromDB.find(
 			(r) =>

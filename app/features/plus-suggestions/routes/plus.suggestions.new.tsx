@@ -33,8 +33,8 @@ import {
 import { atOrError } from "~/utils/arrays";
 import {
 	badRequestIfFalsy,
+	errorToastIfFalsy,
 	parseRequestPayload,
-	validate,
 } from "~/utils/remix.server";
 import { plusSuggestionPage } from "~/utils/urls";
 import { actualNumber, trimmedString } from "~/utils/zod";
@@ -73,14 +73,14 @@ export const action: ActionFunction = async ({ request }) => {
 	const suggestions =
 		await PlusSuggestionRepository.findAllByMonth(votingMonthYear);
 
-	validate(suggestions);
-	validate(
+	errorToastIfFalsy(
 		canSuggestNewUserBE({
 			user,
 			suggested,
 			targetPlusTier: data.tier,
 			suggestions,
 		}),
+		"No permissions to make this suggestion",
 	);
 
 	await PlusSuggestionRepository.create({

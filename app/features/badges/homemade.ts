@@ -770,6 +770,26 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "528851510222782474",
 	},
 	{
+		displayName: "New Game +",
+		fileName: "new-game-plus",
+		authorDiscordId: "216653023252840449",
+	},
+	{
+		displayName: "Twisted Toe",
+		fileName: "twistedtoe",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName: "TOECAR",
+		fileName: "toecar",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName: "CoffeeCup",
+		fileName: "coffeecup",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
 		displayName: "Good Morning Chat",
 		fileName: "gator",
 		authorDiscordId: "528851510222782474",
@@ -778,5 +798,10 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Clutch United Squid Storm LAN Tournament",
 		fileName: "clutch_united",
 		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "[OMD] Bingo Club",
+		fileName: "bingo-club",
+		authorDiscordId: "751912670403362836",
 	},
 ];

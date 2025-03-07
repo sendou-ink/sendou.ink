@@ -1,5 +1,6 @@
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import { removeDuplicates } from "~/utils/arrays";
+import { TOURNAMENT } from "../../tournament/tournament-constants";
 
 export function getRounds(args: {
 	bracketData: TournamentManagerDataSet;
@@ -59,18 +60,20 @@ export function getRounds(args: {
 				args.type === "winners" &&
 				i === rounds.length - 2
 			) {
-				return "Grand Finals";
+				return TOURNAMENT.ROUND_NAMES.GRAND_FINALS;
 			}
 
 			if (hasThirdPlaceMatch && i === rounds.length - 2) {
-				return "Finals";
+				return TOURNAMENT.ROUND_NAMES.FINALS;
 			}
 			if (hasThirdPlaceMatch && i === rounds.length - 1) {
-				return "3rd place match";
+				return TOURNAMENT.ROUND_NAMES.THIRD_PLACE_MATCH;
 			}
 
 			if (args.type === "winners" && i === rounds.length - 1) {
-				return showingBracketReset ? "Bracket Reset" : "Grand Finals";
+				return showingBracketReset
+					? TOURNAMENT.ROUND_NAMES.BRACKET_RESET
+					: TOURNAMENT.ROUND_NAMES.GRAND_FINALS;
 			}
 
 			const namePrefix =

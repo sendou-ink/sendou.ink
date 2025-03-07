@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { dbInsertUsers, dbReset, wrappedAction } from "~/utils/Test";
+import {
+	assertResponseErrored,
+	dbInsertUsers,
+	dbReset,
+	wrappedAction,
+} from "~/utils/Test";
 import { action as teamIndexPageAction } from "../actions/t.server";
 import type { createTeamSchema } from "../team-schemas.server";
 
@@ -23,8 +28,8 @@ describe("team creation", () => {
 	});
 
 	it("prevents creating a team whose name is only special characters", async () => {
-		await expect(action({ name: "𝓢𝓲𝓵" }, { user: "regular" })).rejects.toThrow(
-			"status code: 400",
-		);
+		const response = await action({ name: "𝓢𝓲𝓵" }, { user: "regular" });
+
+		assertResponseErrored(response);
 	});
 });

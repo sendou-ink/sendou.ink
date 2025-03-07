@@ -3,7 +3,7 @@ import { stagesObj as s } from "~/modules/in-game-lists/stage-ids";
 
 export const BANNED_MAPS: Record<ModeShort, StageId[]> = {
 	TW: [],
-	SZ: [],
+	SZ: [s.STURGEON_SHIPYARD, s.EELTAIL_ALLEY],
 	TC: [
 		s.WAHOO_WORLD,
 		s.FLOUNDER_HEIGHTS,

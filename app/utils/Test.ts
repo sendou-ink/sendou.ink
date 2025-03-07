@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { Params } from "@remix-run/react";
+import { expect } from "vitest";
 import type { z } from "zod";
 import { ADMIN_ID } from "~/constants";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
@@ -85,6 +86,13 @@ export function wrappedLoader<T>({
 			throw thrown;
 		}
 	};
+}
+
+/**
+ * Asserts that the given response errored out (with a toast message, via `validate(cond)` call)
+ */
+export function assertResponseErrored(response: Response) {
+	expect(response.headers.get("Location")).toContain("?__error=");
 }
 
 async function authHeader(user?: "admin" | "regular"): Promise<HeadersInit> {

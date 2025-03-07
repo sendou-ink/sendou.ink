@@ -20,8 +20,8 @@ import {
 import { atOrError } from "~/utils/arrays";
 import {
 	badRequestIfFalsy,
+	errorToastIfFalsy,
 	parseRequestPayload,
-	validate,
 } from "~/utils/remix.server";
 import { plusSuggestionPage } from "~/utils/urls";
 import { actualNumber, trimmedString } from "~/utils/zod";
@@ -57,14 +57,14 @@ export const action: ActionFunction = async ({ request }) => {
 	const suggestions =
 		await PlusSuggestionRepository.findAllByMonth(votingMonthYear);
 
-	validate(suggestions);
-	validate(
+	errorToastIfFalsy(
 		canAddCommentToSuggestionBE({
 			suggestions,
 			user,
 			suggested: { id: data.suggestedId },
 			targetPlusTier: data.tier,
 		}),
+		"No permissions to add this comment",
 	);
 
 	await PlusSuggestionRepository.create({
