@@ -22,7 +22,7 @@
 	"forms.title.weapon": "Weapon",
 	"forms.action.addMatch": "Add match",
 	"forms.action.deleteMatch": "Delete match",
-	"noVods": "No videos found matching this filter. Are we missing something? Message Sendou on Discord to get YouTube video submission permissions.",
-	"gainPerms": "Please post on the helpdesk of our Discord to gain permissions to upload videos.",
+	"noVods": "No videos found matching this filter. Are we missing something? See the FAQ page on information about how to gain VoD uploading permissions.",
+	"gainPerms": "Please post on the helpdesk of our Discord to gain permissions to upload videos",
 	"deleteConfirm": "Delete video with the title '{{title}}'?"
 }

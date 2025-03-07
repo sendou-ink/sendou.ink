@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import { db } from "~/db/sql";
 import {
+	assertResponseErrored,
 	dbInsertUsers,
 	dbReset,
 	wrappedAction,
@@ -159,9 +160,12 @@ describe("Secondary teams", () => {
 		await createTeamAction({ name: "Team 1" }, { user: "regular" });
 		await createTeamAction({ name: "Team 2" }, { user: "regular" });
 
-		await expect(
-			createTeamAction({ name: "Team 3" }, { user: "regular" }),
-		).rejects.toThrow("status code: 400");
+		const response = await createTeamAction(
+			{ name: "Team 3" },
+			{ user: "regular" },
+		);
+
+		assertResponseErrored(response);
 	});
 
 	const makeUserPatron = () =>

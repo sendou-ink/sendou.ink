@@ -35,10 +35,12 @@ import {
 } from "~/utils/remix.server";
 import { vodVideoPage } from "~/utils/urls";
 import { actualNumber, id } from "~/utils/zod";
+import { Alert } from "../../../components/Alert";
 import { DateFormField } from "../../../components/form/DateFormField";
 import { MyForm } from "../../../components/form/MyForm";
 import { SelectFormField } from "../../../components/form/SelectFormField";
 import { TextFormField } from "../../../components/form/TextFormField";
+import { useUser } from "../../auth/core/user";
 import { createVod, updateVodByReplacing } from "../queries/createVod.server";
 import { findVodById } from "../queries/findVodById.server";
 import { videoMatchTypes } from "../vods-constants";
@@ -127,8 +129,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export type VodFormFields = z.infer<typeof videoInputSchema>;
 
 export default function NewVodPage() {
+	const user = useUser();
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["vods"]);
+
+	if (!user || !user.isVideoAdder) {
+		return (
+			<Main className="stack items-center">
+				<Alert variation="WARNING">{t("vods:gainPerms")}</Alert>
+			</Main>
+		);
+	}
 
 	return (
 		<Main halfWidth>

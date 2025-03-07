@@ -10,7 +10,7 @@ import { ArrowLongLeftIcon } from "~/components/icons/ArrowLongLeft";
 import { sql } from "~/db/sql";
 import { useUser } from "~/features/auth/core/user";
 import { requireUser } from "~/features/auth/core/user.server";
-import { tournamentIdFromParams } from "~/features/tournament";
+import { TOURNAMENT, tournamentIdFromParams } from "~/features/tournament";
 import * as TournamentMatchRepository from "~/features/tournament-bracket/TournamentMatchRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -21,10 +21,10 @@ import { canReportTournamentScore } from "~/permissions";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
+	errorToastIfFalsy,
 	notFoundIfFalsy,
 	parseParams,
 	parseRequestPayload,
-	validate,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import {
@@ -88,14 +88,13 @@ export const action: ActionFunction = async ({ params, request }) => {
 			(p) => p.id === user?.id,
 		);
 
-		validate(
+		errorToastIfFalsy(
 			canReportTournamentScore({
 				match,
 				isMemberOfATeamInTheMatch,
 				isOrganizer: tournament.isOrganizer(user),
 			}),
 			"Unauthorized",
-			401,
 		);
 	};
 
@@ -134,13 +133,16 @@ export const action: ActionFunction = async ({ params, request }) => {
 			}
 
 			validateCanReportScore();
-			validate(
+			errorToastIfFalsy(
 				match.opponentOne?.id === data.winnerTeamId ||
 					match.opponentTwo?.id === data.winnerTeamId,
 				"Winner team id is invalid",
 			);
-			validate(match.opponentOne && match.opponentTwo, "Teams are missing");
-			validate(
+			errorToastIfFalsy(
+				match.opponentOne && match.opponentTwo,
+				"Teams are missing",
+			);
+			errorToastIfFalsy(
 				!matchIsLocked({ matchId: match.id, tournament, scores }),
 				"Match is locked",
 			);
@@ -154,10 +156,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 				if (data.winnerTeamId === match.opponentOne?.id) return 0;
 				if (data.winnerTeamId === match.opponentTwo?.id) return 1;
 
-				validate(false, "Winner team id is invalid");
+				errorToastIfFalsy(false, "Winner team id is invalid");
 			};
 
-			validate(
+			errorToastIfFalsy(
 				!data.points ||
 					(scoreToIncrement() === 0 && data.points[0] > data.points[1]) ||
 					(scoreToIncrement() === 1 && data.points[1] > data.points[0]),
@@ -183,10 +185,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 				tournament.minMembersPerTeam,
 			);
 
-			validate(teamOneRoster, "Team one has no active roster");
-			validate(teamTwoRoster, "Team two has no active roster");
+			errorToastIfFalsy(teamOneRoster, "Team one has no active roster");
+			errorToastIfFalsy(teamTwoRoster, "Team two has no active roster");
 
-			validate(
+			errorToastIfFalsy(
 				new Set([...teamOneRoster, ...teamTwoRoster]).size ===
 					tournament.minMembersPerTeam * 2,
 				"Duplicate user in rosters",
@@ -239,20 +241,19 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "SET_ACTIVE_ROSTER": {
-			validate(!tournament.everyBracketOver, "Tournament is over");
-			validate(
+			errorToastIfFalsy(!tournament.everyBracketOver, "Tournament is over");
+			errorToastIfFalsy(
 				tournament.isOrganizer(user) ||
 					tournament.teamMemberOfByUser(user)?.id === data.teamId,
 				"Unauthorized",
-				401,
 			);
-			validate(
+			errorToastIfFalsy(
 				data.roster.length === tournament.minMembersPerTeam,
 				"Invalid roster length",
 			);
 
 			const team = tournament.teamById(data.teamId)!;
-			validate(
+			errorToastIfFalsy(
 				data.roster.every((userId) =>
 					team.members.some((m) => m.userId === userId),
 				),
@@ -339,14 +340,14 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "UPDATE_REPORTED_SCORE": {
-			validate(tournament.isOrganizer(user));
-			validate(!tournament.ctx.isFinalized, "Tournament is finalized");
+			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			errorToastIfFalsy(!tournament.ctx.isFinalized, "Tournament is finalized");
 
 			const result = await TournamentMatchRepository.findResultById(
 				data.resultId,
 			);
-			validate(result, "Result not found");
-			validate(
+			errorToastIfFalsy(result, "Result not found");
+			errorToastIfFalsy(
 				data.rosters[0].length === tournament.minMembersPerTeam &&
 					data.rosters[1].length === tournament.minMembersPerTeam,
 				"Invalid roster length",
@@ -354,7 +355,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			const hadPoints = typeof result.opponentOnePoints === "number";
 			const willHavePoints = typeof data.points?.[0] === "number";
-			validate(
+			errorToastIfFalsy(
 				(hadPoints && willHavePoints) || (!hadPoints && !willHavePoints),
 				"Points mismatch",
 			);
@@ -362,19 +363,19 @@ export const action: ActionFunction = async ({ params, request }) => {
 			if (data.points) {
 				if (data.points[0] !== result.opponentOnePoints) {
 					// changing points at this point could retroactively change who advanced from the group
-					validate(
+					errorToastIfFalsy(
 						tournament.matchCanBeReopened(match.id),
 						"Bracket has progressed",
 					);
 				}
 
 				if (result.opponentOnePoints! > result.opponentTwoPoints!) {
-					validate(
+					errorToastIfFalsy(
 						data.points[0] > data.points[1],
 						"Winner must have more points than loser",
 					);
 				} else {
-					validate(
+					errorToastIfFalsy(
 						data.points[0] < data.points[1],
 						"Winner must have more points than loser",
 					);
@@ -434,15 +435,14 @@ export const action: ActionFunction = async ({ params, request }) => {
 				teams: [match.opponentOne.id, match.opponentTwo.id],
 				mapList,
 			});
-			validate(pickerTeamId, "Not time to pick/ban");
-			validate(
+			errorToastIfFalsy(pickerTeamId, "Not time to pick/ban");
+			errorToastIfFalsy(
 				tournament.isOrganizer(user) ||
 					tournament.ownedTeamByUser(user)?.id === pickerTeamId,
 				"Unauthorized",
-				401,
 			);
 
-			validate(
+			errorToastIfFalsy(
 				PickBan.isLegal({
 					results,
 					map: data,
@@ -482,8 +482,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 			invariant(typeof scoreTwo === "number", "Score two is missing");
 			invariant(scoreOne !== scoreTwo, "Scores are equal");
 
-			validate(tournament.isOrganizer(user));
-			validate(
+			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			errorToastIfFalsy(
 				tournament.matchCanBeReopened(match.id),
 				"Match can't be reopened, bracket has progressed",
 			);
@@ -527,7 +527,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "SET_AS_CASTED": {
-			validate(tournament.isOrganizerOrStreamer(user));
+			errorToastIfFalsy(
+				tournament.isOrganizerOrStreamer(user),
+				"Not an organizer or streamer",
+			);
 
 			await TournamentRepository.setMatchAsCasted({
 				matchId: match.id,
@@ -540,7 +543,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "LOCK": {
-			validate(tournament.isOrganizerOrStreamer(user));
+			errorToastIfFalsy(
+				tournament.isOrganizerOrStreamer(user),
+				"Not an organizer or streamer",
+			);
 
 			// can't lock, let's update their view to reflect that
 			if (match.opponentOne?.id && match.opponentTwo?.id) {
@@ -557,7 +563,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "UNLOCK": {
-			validate(tournament.isOrganizerOrStreamer(user));
+			errorToastIfFalsy(
+				tournament.isOrganizerOrStreamer(user),
+				"Not an organizer or streamer",
+			);
 
 			await TournamentRepository.unlockMatch({
 				matchId: match.id,
@@ -778,14 +787,14 @@ function MatchHeader() {
 							const specifier = () => {
 								if (
 									[
-										"WB Finals",
-										"Grand Finals",
-										"Bracket Reset",
-										"Finals",
-										"LB Finals",
-										"LB Semis",
-										"3rd place match",
-									].includes(round.name)
+										TOURNAMENT.ROUND_NAMES.WB_FINALS,
+										TOURNAMENT.ROUND_NAMES.GRAND_FINALS,
+										TOURNAMENT.ROUND_NAMES.BRACKET_RESET,
+										TOURNAMENT.ROUND_NAMES.FINALS,
+										TOURNAMENT.ROUND_NAMES.LB_FINALS,
+										TOURNAMENT.ROUND_NAMES.LB_SEMIS,
+										TOURNAMENT.ROUND_NAMES.THIRD_PLACE_MATCH,
+									].includes(round.name as any)
 								) {
 									return "";
 								}

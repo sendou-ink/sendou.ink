@@ -79,14 +79,6 @@ export function replacePlusTiers(
 	});
 }
 
-export function allPlusTiersFromLatestVoting() {
-	return db
-		.selectFrom("FreshPlusTier")
-		.select(["FreshPlusTier.userId", "FreshPlusTier.tier"])
-		.where("FreshPlusTier.tier", "is not", null)
-		.execute() as Promise<{ userId: number; tier: number }[]>;
-}
-
 export function makeVideoAdderByUserId(userId: number) {
 	return db
 		.updateTable("User")

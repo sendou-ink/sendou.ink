@@ -38,8 +38,8 @@ import {
 import { databaseTimestampToDate } from "~/utils/dates";
 import {
 	type SendouRouteHandle,
+	errorToastIfFalsy,
 	notFoundIfFalsy,
-	validate,
 } from "~/utils/remix.server";
 import {
 	CALENDAR_PAGE,
@@ -69,17 +69,18 @@ export const action: ActionFunction = async ({ params, request }) => {
 	);
 
 	if (event.tournamentId) {
-		validate(
+		errorToastIfFalsy(
 			tournamentManagerData(event.tournamentId).stage.length === 0,
 			"Tournament has already started",
 		);
 	} else {
-		validate(
+		errorToastIfFalsy(
 			canDeleteCalendarEvent({
 				user,
 				event,
 				startTime: databaseTimestampToDate(event.startTimes[0]),
 			}),
+			"Cannot delete event",
 		);
 	}
 

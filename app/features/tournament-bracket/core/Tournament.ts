@@ -274,27 +274,31 @@ export class Tournament {
 				allRelevantMatchesFinished = false;
 			}
 
-			const excludedOverridenTeams = sourcedTeams.filter(
+			// exclude teams that would be going to this bracket according
+			// to the bracket progression rules, but have been overridden
+			// by the TO to go somewhere else or get eliminated (in the case of destinationBracketIdx = -1)
+			const withOverriddenTeamsExcluded = sourcedTeams.filter(
 				(teamId) =>
 					!this.ctx.bracketProgressionOverrides.some(
 						(override) =>
 							override.sourceBracketIdx === source.bracketIdx &&
 							override.tournamentTeamId === teamId &&
-							// "no progression" override
-							override.destinationBracketIdx !== -1 &&
-							// redundant override
 							override.destinationBracketIdx !== bracketIdx,
 					),
 			);
 
-			teams.push(...excludedOverridenTeams);
+			teams.push(...withOverriddenTeamsExcluded);
 		}
 
 		const teamsFromOverride: { id: number; sourceBracketIdx: number }[] = [];
 		for (const source of sources) {
 			for (const override of this.ctx.bracketProgressionOverrides) {
-				if (override.sourceBracketIdx !== source.bracketIdx) continue;
-				if (override.destinationBracketIdx !== bracketIdx) continue;
+				if (
+					override.sourceBracketIdx !== source.bracketIdx ||
+					override.destinationBracketIdx !== bracketIdx
+				) {
+					continue;
+				}
 
 				teamsFromOverride.push({
 					id: override.tournamentTeamId,
@@ -570,7 +574,9 @@ export class Tournament {
 				}
 
 				return {
-					consolationFinal: selectedSettings?.thirdPlaceMatch ?? true,
+					consolationFinal:
+						selectedSettings?.thirdPlaceMatch ??
+						TOURNAMENT.SE_DEFAULT_HAS_THIRD_PLACE_MATCH,
 				};
 			}
 			case "double_elimination": {
@@ -581,13 +587,11 @@ export class Tournament {
 			case "round_robin": {
 				const teamsPerGroup =
 					selectedSettings?.teamsPerGroup ??
-					TOURNAMENT.DEFAULT_TEAM_COUNT_PER_RR_GROUP;
+					TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP;
 
 				return {
 					groupCount: Math.ceil(participantsCount / teamsPerGroup),
-					seedOrdering: [
-						this.isLeagueDivision ? "natural" : "groups.seed_optimized",
-					],
+					seedOrdering: ["groups.seed_optimized"],
 				};
 			}
 			case "swiss": {
@@ -598,7 +602,10 @@ export class Tournament {
 									groupCount: selectedSettings.groupCount,
 									roundCount: selectedSettings.roundCount,
 								}
-							: undefined,
+							: {
+									groupCount: TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT,
+									roundCount: TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+								},
 				};
 			}
 			default: {
@@ -985,14 +992,14 @@ export class Tournament {
 							const specifier = () => {
 								if (
 									[
-										"WB Finals",
-										"Grand Finals",
-										"Bracket Reset",
-										"Finals",
-										"LB Finals",
-										"LB Semis",
-										"3rd place match",
-									].includes(round.name)
+										TOURNAMENT.ROUND_NAMES.WB_FINALS,
+										TOURNAMENT.ROUND_NAMES.GRAND_FINALS,
+										TOURNAMENT.ROUND_NAMES.BRACKET_RESET,
+										TOURNAMENT.ROUND_NAMES.FINALS,
+										TOURNAMENT.ROUND_NAMES.LB_FINALS,
+										TOURNAMENT.ROUND_NAMES.LB_SEMIS,
+										TOURNAMENT.ROUND_NAMES.THIRD_PLACE_MATCH,
+									].includes(round.name as any)
 								) {
 									return "";
 								}

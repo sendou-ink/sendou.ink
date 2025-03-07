@@ -48,6 +48,9 @@
 		},
 		"linter": {
 			"enabled": true
+		},
+		"parser": {
+			"cssModules": true
 		}
 	}
 }

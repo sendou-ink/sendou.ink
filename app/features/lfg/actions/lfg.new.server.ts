@@ -3,7 +3,7 @@ import { redirect } from "@remix-run/node";
 import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { parseRequestPayload, validate } from "~/utils/remix.server";
+import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { LFG_PAGE } from "~/utils/urls";
 import { falsyToNull, id } from "~/utils/zod";
 import * as LFGRepository from "../LFGRepository.server";
@@ -22,7 +22,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	const shouldIncludeTeam = TEAM_POST_TYPES.includes(data.type);
 
-	validate(
+	errorToastIfFalsy(
 		!shouldIncludeTeam || team,
 		"Team needs to be set for this type of post",
 	);
@@ -74,6 +74,9 @@ const validateCanUpdatePost = async ({
 }) => {
 	const posts = await LFGRepository.posts(user);
 	const post = posts.find((post) => post.id === postId);
-	validate(post, "Post to update not found");
-	validate(post.author.id === user.id, "You can only update your own posts");
+	errorToastIfFalsy(post, "Post to update not found");
+	errorToastIfFalsy(
+		post.author.id === user.id,
+		"You can only update your own posts",
+	);
 };

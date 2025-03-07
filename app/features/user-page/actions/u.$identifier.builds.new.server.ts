@@ -18,7 +18,7 @@ import type {
 import { removeDuplicates } from "~/utils/arrays";
 import { unJsonify } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
-import { parseRequestPayload, validate } from "~/utils/remix.server";
+import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import type { Nullish } from "~/utils/types";
 import { userBuildsPage } from "~/utils/urls";
 import {
@@ -54,9 +54,10 @@ export const action: ActionFunction = async ({ request }) => {
 	if (usersBuilds.length >= BUILD.MAX_COUNT) {
 		throw new Response("Max amount of builds reached", { status: 400 });
 	}
-	validate(
+	errorToastIfFalsy(
 		!data.buildToEditId ||
 			usersBuilds.some((build) => build.id === data.buildToEditId),
+		"Build to edit not found",
 	);
 
 	const someGearIsMissing =

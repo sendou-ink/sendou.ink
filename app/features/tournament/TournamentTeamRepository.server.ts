@@ -157,7 +157,14 @@ export function create({
 export function copyFromAnotherTournament({
 	tournamentTeamId,
 	destinationTournamentId,
-}: { tournamentTeamId: number; destinationTournamentId: number }) {
+	seed,
+	defaultCheckedIn = false,
+}: {
+	tournamentTeamId: number;
+	destinationTournamentId: number;
+	seed?: number;
+	defaultCheckedIn?: boolean;
+}) {
 	return db.transaction().execute(async (trx) => {
 		const oldTeam = await trx
 			.selectFrom("TournamentTeam")
@@ -209,9 +216,21 @@ export function copyFromAnotherTournament({
 				...oldTeam,
 				tournamentId: destinationTournamentId,
 				inviteCode: nanoid(INVITE_CODE_LENGTH),
+				seed,
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();
+
+		if (defaultCheckedIn) {
+			await trx
+				.insertInto("TournamentTeamCheckIn")
+				.values({
+					checkedInAt: databaseTimestampNow(),
+					tournamentTeamId: newTeam.id,
+					bracketIdx: null,
+				})
+				.execute();
+		}
 
 		await trx
 			.insertInto("TournamentTeamMember")
