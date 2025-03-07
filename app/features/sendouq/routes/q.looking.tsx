@@ -31,8 +31,8 @@ import invariant from "~/utils/invariant";
 import { metaTags } from "~/utils/remix";
 import {
 	type SendouRouteHandle,
+	errorToastIfFalsy,
 	parseRequestPayload,
-	validate,
 } from "~/utils/remix.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
@@ -117,7 +117,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 	// this throws because there should normally be no way user loses ownership by the action of some other user
 	const validateIsGroupOwner = () =>
-		validate(currentGroup.role === "OWNER", "Not  owner");
+		errorToastIfFalsy(currentGroup.role === "OWNER", "Not  owner");
 	const isGroupManager = () =>
 		currentGroup.role === "MANAGER" || currentGroup.role === "OWNER";
 
@@ -268,17 +268,20 @@ export const action: ActionFunction = async ({ request }) => {
 			);
 			if (!theirGroup) return null;
 
-			validate(
+			errorToastIfFalsy(
 				ourGroup.members.length === FULL_GROUP_SIZE,
-				"'ourGroup' is not full",
+				"Our group is not full",
 			);
-			validate(
+			errorToastIfFalsy(
 				theirGroup.members.length === FULL_GROUP_SIZE,
-				"'theirGroup' is not full",
+				"Their group is not full",
 			);
 
-			validate(!groupHasMatch(ourGroup.id), "Our group already has a match");
-			validate(
+			errorToastIfFalsy(
+				!groupHasMatch(ourGroup.id),
+				"Our group already has a match",
+			);
+			errorToastIfFalsy(
 				!groupHasMatch(theirGroup.id),
 				"Their group already has a match",
 			);
@@ -364,7 +367,10 @@ export const action: ActionFunction = async ({ request }) => {
 			break;
 		}
 		case "LEAVE_GROUP": {
-			validate(!currentGroup.matchId, "Can't leave group while in a match");
+			errorToastIfFalsy(
+				!currentGroup.matchId,
+				"Can't leave group while in a match",
+			);
 			let newOwnerId: number | null = null;
 			if (currentGroup.role === "OWNER") {
 				newOwnerId = groupSuccessorOwner(currentGroup.id);
@@ -390,7 +396,7 @@ export const action: ActionFunction = async ({ request }) => {
 		}
 		case "KICK_FROM_GROUP": {
 			validateIsGroupOwner();
-			validate(data.userId !== user.id, "Can't kick yourself");
+			errorToastIfFalsy(data.userId !== user.id, "Can't kick yourself");
 
 			leaveGroup({
 				groupId: currentGroup.id,

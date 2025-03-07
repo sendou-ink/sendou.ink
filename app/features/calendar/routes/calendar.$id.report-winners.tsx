@@ -21,9 +21,10 @@ import * as CalendarRepository from "~/features/calendar/CalendarRepository.serv
 import { canReportCalendarEventWinners } from "~/permissions";
 import {
 	type SendouRouteHandle,
+	errorToastIfFalsy,
 	notFoundIfFalsy,
 	safeParseRequestFormData,
-	validate,
+	unauthorizedIfFalsy,
 } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
 import { calendarEventPage } from "~/utils/urls";
@@ -111,7 +112,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const event = notFoundIfFalsy(
 		await CalendarRepository.findById({ id: parsedParams.id }),
 	);
-	validate(
+	errorToastIfFalsy(
 		canReportCalendarEventWinners({
 			user,
 			event,
@@ -147,7 +148,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		await CalendarRepository.findById({ id: parsedParams.id }),
 	);
 
-	validate(
+	unauthorizedIfFalsy(
 		canReportCalendarEventWinners({
 			user,
 			event,

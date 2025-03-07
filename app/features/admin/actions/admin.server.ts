@@ -8,9 +8,9 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { isAdmin, isMod } from "~/permissions";
 import { logger } from "~/utils/logger";
 import {
+	errorToastIfFalsy,
 	parseRequestPayload,
 	successToast,
-	validate,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { _action, actualNumber, friendCode } from "~/utils/zod";
@@ -26,7 +26,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	let message: string;
 	switch (data._action) {
 		case "MIGRATE": {
-			validate(isMod(user), "Admin needed");
+			errorToastIfFalsy(isMod(user), "Admin needed");
 
 			await AdminRepository.migrate({
 				oldUserId: data["old-user"],
@@ -37,7 +37,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "REFRESH": {
-			validate(isAdmin(user));
+			errorToastIfFalsy(isAdmin(user), "Admin needed");
 
 			await AdminRepository.replacePlusTiers(
 				await plusTiersFromVotingAndLeaderboard(),
@@ -47,7 +47,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "FORCE_PATRON": {
-			validate(isAdmin(user), "Admin needed");
+			errorToastIfFalsy(isAdmin(user), "Admin needed");
 
 			await AdminRepository.forcePatron({
 				id: data.user,
@@ -60,7 +60,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "CLEAN_UP": {
-			validate(isAdmin(user), "Admin needed");
+			errorToastIfFalsy(isAdmin(user), "Admin needed");
 
 			// on purpose sync
 			AdminRepository.cleanUp();
@@ -69,7 +69,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "ARTIST": {
-			validate(isMod(user), "Mod needed");
+			errorToastIfFalsy(isMod(user), "Mod needed");
 
 			makeArtist(data.user);
 
@@ -77,7 +77,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "VIDEO_ADDER": {
-			validate(isMod(user), "Mod needed");
+			errorToastIfFalsy(isMod(user), "Mod needed");
 
 			await AdminRepository.makeVideoAdderByUserId(data.user);
 
@@ -85,7 +85,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "TOURNAMENT_ORGANIZER": {
-			validate(isMod(user), "Mod needed");
+			errorToastIfFalsy(isMod(user), "Mod needed");
 
 			await AdminRepository.makeTournamentOrganizerByUserId(data.user);
 
@@ -93,7 +93,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "LINK_PLAYER": {
-			validate(isMod(user), "Mod needed");
+			errorToastIfFalsy(isMod(user), "Mod needed");
 
 			await AdminRepository.linkUserAndPlayer({
 				userId: data.user,
@@ -104,7 +104,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "BAN_USER": {
-			validate(isMod(user), "Mod needed");
+			errorToastIfFalsy(isMod(user), "Mod needed");
 
 			await AdminRepository.banUser({
 				bannedReason: data.reason ?? null,
@@ -127,7 +127,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "UNBAN_USER": {
-			validate(isMod(user), "Mod needed");
+			errorToastIfFalsy(isMod(user), "Mod needed");
 
 			await AdminRepository.unbanUser(data.user);
 
@@ -142,7 +142,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "UPDATE_FRIEND_CODE": {
-			validate(isMod(user), "Mod needed");
+			errorToastIfFalsy(isMod(user), "Mod needed");
 
 			await UserRepository.insertFriendCode({
 				friendCode: data.friendCode,

@@ -1,7 +1,7 @@
 import type { ActionFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
-import { parseRequestPayload, validate } from "~/utils/remix.server";
+import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { mySlugify, teamPage } from "~/utils/urls";
 import { isAtLeastFiveDollarTierPatreon } from "~/utils/users";
 import * as TeamRepository from "../TeamRepository.server";
@@ -24,12 +24,18 @@ export const action: ActionFunction = async ({ request }) => {
 		? TEAM.MAX_TEAM_COUNT_PATRON
 		: TEAM.MAX_TEAM_COUNT_NON_PATRON;
 
-	validate(currentTeamCount < maxTeamCount, "Already in max amount of teams");
+	errorToastIfFalsy(
+		currentTeamCount < maxTeamCount,
+		"Already in max amount of teams",
+	);
 
 	// two teams can't have same customUrl
 	const customUrl = mySlugify(data.name);
 
-	validate(customUrl.length > 0, "Team name can't be only special characters");
+	errorToastIfFalsy(
+		customUrl.length > 0,
+		"Team name can't be only special characters",
+	);
 
 	if (teams.some((team) => team.customUrl === customUrl)) {
 		return {

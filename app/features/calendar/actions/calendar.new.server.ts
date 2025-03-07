@@ -21,9 +21,9 @@ import {
 } from "~/utils/dates";
 import {
 	badRequestIfFalsy,
+	errorToastIfFalsy,
 	parseFormData,
 	uploadImageIfSubmitted,
-	validate,
 } from "~/utils/remix.server";
 import { calendarEventPage } from "~/utils/urls";
 import {
@@ -58,7 +58,7 @@ export const action: ActionFunction = async ({ request }) => {
 		parseAsync: true,
 	});
 
-	validate(canAddNewEvent(user), "Not authorized");
+	errorToastIfFalsy(canAddNewEvent(user), "Not authorized");
 
 	const startTimes = data.date.map((date) => dateToDatabaseTimestamp(date));
 	const commonArgs = {
@@ -109,7 +109,7 @@ export const action: ActionFunction = async ({ request }) => {
 				)
 			: undefined,
 	};
-	validate(
+	errorToastIfFalsy(
 		!commonArgs.toToolsEnabled || commonArgs.bracketProgression,
 		"Bracket progression must be set for tournaments",
 	);
@@ -129,12 +129,15 @@ export const action: ActionFunction = async ({ request }) => {
 				tournamentId: eventToEdit.tournamentId,
 				user,
 			});
-			validate(!tournament.hasStarted, "Tournament has already started");
+			errorToastIfFalsy(
+				!tournament.hasStarted,
+				"Tournament has already started",
+			);
 
-			validate(tournament.isAdmin(user), "Not authorized");
+			errorToastIfFalsy(tournament.isAdmin(user), "Not authorized");
 		} else {
 			// editing regular calendar event
-			validate(
+			errorToastIfFalsy(
 				canEditCalendarEvent({ user, event: eventToEdit }),
 				"Not authorized",
 			);

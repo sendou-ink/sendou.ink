@@ -6,7 +6,7 @@ import * as CalendarRepository from "~/features/calendar/CalendarRepository.serv
 import { tournamentData } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import { canEditCalendarEvent } from "~/permissions";
-import { validate } from "~/utils/remix.server";
+import { unauthorizedIfFalsy } from "~/utils/remix.server";
 import { tournamentBracketsPage } from "~/utils/urls";
 import { canAddNewEvent } from "../calendar-utils";
 
@@ -14,7 +14,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await requireUser(request);
 	const url = new URL(request.url);
 
-	validate(canAddNewEvent(user), "Not authorized");
+	unauthorizedIfFalsy(canAddNewEvent(user));
 
 	const eventWithTournament = async (key: string) => {
 		const eventId = Number(url.searchParams.get(key));

@@ -2,7 +2,7 @@ import type { ActionFunctionArgs } from "@remix-run/node";
 import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import { isAdmin } from "~/permissions";
-import { parseRequestPayload, validate } from "~/utils/remix.server";
+import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { _action, id } from "~/utils/zod";
 import * as LFGRepository from "../LFGRepository.server";
 
@@ -15,8 +15,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	const posts = await LFGRepository.posts(user);
 	const post = posts.find((post) => post.id === data.id);
-	validate(post, "Post not found");
-	validate(isAdmin(user) || post.author.id === user.id, "Not your own post");
+	errorToastIfFalsy(post, "Post not found");
+	errorToastIfFalsy(
+		isAdmin(user) || post.author.id === user.id,
+		"Not your own post",
+	);
 
 	switch (data._action) {
 		case "DELETE_POST": {

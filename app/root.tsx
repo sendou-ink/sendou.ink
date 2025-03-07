@@ -1,4 +1,3 @@
-import type { ToastState } from "@react-stately/toast";
 import type {
 	LoaderFunctionArgs,
 	MetaFunction,
@@ -28,7 +27,7 @@ import { useTranslation } from "react-i18next";
 import { useChangeLanguage } from "remix-i18next/react";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Catcher } from "./components/Catcher";
-import { type SendouToast, ToastProvider } from "./components/elements/Toast";
+import { SendouToastRegion, toastQueue } from "./components/elements/Toast";
 import { Layout } from "./components/layout";
 import { Ramp } from "./components/ramp/Ramp";
 import { CUSTOMIZED_CSS_VARS_NAME } from "./constants";
@@ -146,6 +145,7 @@ function Document({
 	useChangeLanguage(locale);
 	usePreloadTranslation();
 	useLoadingIndicator();
+	useTriggerToasts();
 	const customizedCSSVars = useCustomizedCSSVars();
 
 	return (
@@ -174,16 +174,11 @@ function Document({
 				{process.env.NODE_ENV === "development" && <HydrationTestIndicator />}
 				<React.StrictMode>
 					<I18nProvider locale={i18n.language}>
-						<ToastProvider>
-							{(state) => (
-								<ToastShower state={state}>
-									<MyRamp data={data} />
-									<Layout data={data} isErrored={isErrored}>
-										{children}
-									</Layout>
-								</ToastShower>
-							)}
-						</ToastProvider>
+						<SendouToastRegion />
+						<MyRamp data={data} />
+						<Layout data={data} isErrored={isErrored}>
+							{children}
+						</Layout>
 					</I18nProvider>
 				</React.StrictMode>
 				<ScrollRestoration
@@ -197,37 +192,35 @@ function Document({
 	);
 }
 
-// xxx: abstract this whole thing to toast.tsx?
-function ToastShower({
-	state,
-	children,
-}: { state: ToastState<SendouToast>; children: React.ReactNode }) {
+function useTriggerToasts() {
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
 
 	const error = searchParams.get("__error");
 	const success = searchParams.get("__success");
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: adding the state.add causes infinite loop
 	React.useEffect(() => {
 		if (!error && !success) return;
 
 		if (error) {
-			state.add({
+			toastQueue.add({
 				message: error,
 				variant: "error",
 			});
 		} else if (success) {
-			state.add({
-				message: success,
-				variant: "success",
-			});
+			toastQueue.add(
+				{
+					message: success,
+					variant: "success",
+				},
+				{
+					timeout: 5000,
+				},
+			);
 		}
 
 		navigate({ search: "" }, { replace: true });
 	}, [error, success, navigate]);
-
-	return children;
 }
 
 function useLoadingIndicator() {

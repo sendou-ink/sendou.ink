@@ -20,9 +20,31 @@
 	border: 2px solid var(--border);
 	width: 250px;
 	outline: none;
+	/* biome-ignore lint/correctness/noUnknownProperty: it exists */
+	view-transition-class: toast;
 }
 
-.toast[data-toast-variant="error"] {
+::view-transition-new(.toast):only-child {
+	animation: appear 400ms;
+}
+
+::view-transition-old(.toast):only-child {
+	animation: disappear 400ms;
+}
+
+@keyframes disappear {
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes appear {
+	from {
+		opacity: 0;
+	}
+}
+
+.errorToast {
 	border-color: var(--theme-error);
 }
 
@@ -50,14 +72,14 @@
 	width: 1.25rem;
 }
 
-.toast[data-toast-variant="error"] .alertIcon {
+.errorToast .alertIcon {
 	fill: var(--theme-error);
 }
 
-.toast[data-toast-variant="info"] .alertIcon {
+.infoToast .alertIcon {
 	fill: var(--theme-info);
 }
 
-.toast[data-toast-variant="success"] .alertIcon {
+.successToast .alertIcon {
 	fill: var(--theme-success);
 }

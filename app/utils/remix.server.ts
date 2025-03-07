@@ -7,10 +7,11 @@ import {
 import type { Params, UIMatch } from "@remix-run/react";
 import type { Namespace, TFunction } from "i18next";
 import { nanoid } from "nanoid";
-import { z } from "zod";
+import type { z } from "zod";
 import type { navItems } from "~/components/layout/nav-items";
 import { s3UploadHandler } from "~/features/img-upload";
 import invariant from "./invariant";
+import { logger } from "./logger";
 
 export function notFoundIfFalsy<T>(value: T | null | undefined): T {
 	if (!value) throw new Response(null, { status: 404 });
@@ -52,12 +53,9 @@ export function parseSearchParams<T extends z.ZodTypeAny>({
 	try {
 		return schema.parse(searchParams);
 	} catch (e) {
-		if (e instanceof z.ZodError) {
-			console.error(e);
-			throw new Response(JSON.stringify(e), { status: 400 });
-		}
+		logger.error("Error parsing search params", e);
 
-		throw e;
+		throw errorToast("Validation failed");
 	}
 }
 
@@ -93,16 +91,13 @@ export async function parseRequestPayload<T extends z.ZodTypeAny>({
 
 		return parsed;
 	} catch (e) {
-		if (e instanceof z.ZodError) {
-			console.error(e);
-			throw new Response(JSON.stringify(e), { status: 400 });
-		}
+		logger.error("Error parsing request payload", e);
 
-		throw e;
+		throw errorToast("Validation failed");
 	}
 }
 
-/** Parse formData with the given schema. Throws HTTP 400 response if fails. */
+/** Parse formData with the given schema. Throws a request to show an error toast if it fails. */
 export async function parseFormData<T extends z.ZodTypeAny>({
 	formData,
 	schema,
@@ -120,12 +115,9 @@ export async function parseFormData<T extends z.ZodTypeAny>({
 
 		return parsed;
 	} catch (e) {
-		if (e instanceof z.ZodError) {
-			console.error(e);
-			throw new Response(JSON.stringify(e), { status: 400 });
-		}
+		logger.error("Error parsing form data", e);
 
-		throw e;
+		throw errorToast("Validation failed");
 	}
 }
 
@@ -191,16 +183,22 @@ function formDataToObject(formData: FormData) {
 
 // TODO: investigate better solution to toasts when middlewares land (current one has a problem of clearing search params)
 
-// xxx: rename to better indicate it shows error toast errorToastIfFalsy or something (should not be used in loaders) -> different function for loaders?
-/** Asserts condition is truthy. Throws a new `Response` with given status code if falsy.  */
-export function validate(condition: any, message?: string): asserts condition {
+export function errorToast(message: string) {
+	return redirect(`?__error=${message}`);
+}
+
+/** Asserts condition is truthy. Throws a redirect triggering an error toast with given message otherwise.  */
+export function errorToastIfFalsy(
+	condition: any,
+	message: string,
+): asserts condition {
 	if (condition) return;
 
-	throw redirect(`?__error=${message ?? "Validation failed"}`);
+	throw errorToast(message);
 }
 
 export function successToast(message: string) {
-	throw redirect(`?__success=${message ?? "Validation failed"}`);
+	return redirect(`?__success=${message}`);
 }
 
 export type ActionError = { field: string; msg: string; isError: true };
