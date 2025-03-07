@@ -769,4 +769,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "clutch_united",
 		authorDiscordId: "336683473714544641",
 	},
+	{
+		displayName: "Art Supplies Super-Scrim Day!",
+		fileName: "asssbadge",
+		authorDiscordId: "1320944066002681876",
+	},
 ];
