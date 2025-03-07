@@ -15,9 +15,9 @@ import { useSearchParamState } from "~/hooks/useSearchParamState";
 import invariant from "~/utils/invariant";
 import {
 	type SendouRouteHandle,
+	errorToastIfFalsy,
 	notFoundIfFalsy,
 	parseRequestPayload,
-	validate,
 } from "~/utils/remix.server";
 import { userParamsSchema } from "../user-page-schemas.server";
 import type { UserPageLoaderData } from "./u.$identifier";
@@ -37,7 +37,10 @@ export const action: ActionFunction = async ({ request }) => {
 	// but the idea is that storage is cheap anyway and if needed later
 	// then we can have a routine that checks all the images still current and nukes the rest
 	const artToDelete = findArtById(data.id);
-	validate(artToDelete?.authorId === user.id, "Insufficient permissions", 401);
+	errorToastIfFalsy(
+		artToDelete?.authorId === user.id,
+		"Insufficient permissions",
+	);
 
 	deleteArt(data.id);
 

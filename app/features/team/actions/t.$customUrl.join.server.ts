@@ -1,6 +1,6 @@
 import { type ActionFunction, redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
-import { notFoundIfFalsy, validate } from "~/utils/remix.server";
+import { errorToastIfFalsy, notFoundIfFalsy } from "~/utils/remix.server";
 import { teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
 import { validateInviteCode } from "../loaders/t.$customUrl.join.server";
@@ -20,7 +20,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const inviteCode = new URL(request.url).searchParams.get("code") ?? "";
 	const realInviteCode = team.inviteCode!;
 
-	validate(
+	errorToastIfFalsy(
 		validateInviteCode({
 			inviteCode,
 			realInviteCode,
