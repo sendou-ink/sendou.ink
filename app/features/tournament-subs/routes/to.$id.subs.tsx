@@ -24,7 +24,7 @@ import {
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import { parseRequestPayload, validate } from "~/utils/remix.server";
+import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { tournamentRegisterPage, userPage } from "~/utils/urls";
 import { deleteSub } from "../queries/deleteSub.server";
@@ -45,10 +45,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 		schema: deleteSubSchema,
 	});
 
-	validate(
+	errorToastIfFalsy(
 		user.id === data.userId || tournament.isOrganizer(user),
 		"You can only delete your own sub post",
-		401,
 	);
 
 	deleteSub({

@@ -2,6 +2,7 @@ import type { ActionFunction } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import { notify } from "~/features/notifications/core/notify.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import {
@@ -12,10 +13,10 @@ import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamR
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { logger } from "~/utils/logger";
 import {
+	errorToastIfFalsy,
 	notFoundIfFalsy,
 	parseFormData,
 	uploadImageIfSubmitted,
-	validate,
 } from "~/utils/remix.server";
 import { booleanToInt } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
@@ -49,7 +50,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const tournament = await tournamentFromDB({ tournamentId, user });
 	const event = notFoundIfFalsy(findByIdentifier(tournamentId));
 
-	validate(
+	errorToastIfFalsy(
 		!tournament.hasStarted,
 		"Tournament has started, cannot make edits to registration",
 	);
@@ -59,7 +60,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	switch (data._action) {
 		case "UPSERT_TEAM": {
-			validate(
+			errorToastIfFalsy(
 				!data.teamId ||
 					(await TeamRepository.findAllMemberOfByUserId(user.id)).some(
 						(team) => team.id === data.teamId,
@@ -68,7 +69,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			);
 
 			if (ownTeam) {
-				validate(
+				errorToastIfFalsy(
 					tournament.registrationOpen || data.teamName === ownTeam.name,
 					"Can't change team name after registration has closed",
 				);
@@ -85,16 +86,23 @@ export const action: ActionFunction = async ({ request, params }) => {
 					},
 				});
 			} else {
-				validate(!tournament.isInvitational, "Event is invite only");
-				validate(
+				errorToastIfFalsy(!tournament.isInvitational, "Event is invite only");
+				errorToastIfFalsy(
 					(await UserRepository.findLeanById(user.id))?.friendCode,
 					"No friend code",
 				);
-				validate(
+				errorToastIfFalsy(
 					!tournament.teamMemberOfByUser(user),
 					"You are already in a team that you aren't captain of",
 				);
-				validate(tournament.registrationOpen, "Registration is closed");
+				errorToastIfFalsy(
+					tournament.registrationOpen,
+					"Registration is closed",
+				);
+				errorToastIfFalsy(
+					!tournament.ctx.teams.some((team) => team.name === data.teamName),
+					"Team name already taken for this tournament",
+				);
 
 				await TournamentTeamRepository.create({
 					ownerInGameName: await inGameNameIfNeeded({
@@ -121,9 +129,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "DELETE_TEAM_MEMBER": {
-			validate(ownTeam);
-			validate(ownTeam.members.some((member) => member.userId === data.userId));
-			validate(data.userId !== user.id);
+			errorToastIfFalsy(ownTeam, "You are not registered to this tournament");
+			errorToastIfFalsy(
+				ownTeam.members.some((member) => member.userId === data.userId),
+				"User is not in your team",
+			);
+			errorToastIfFalsy(data.userId !== user.id, "Can't kick yourself");
 
 			const detailedOwnTeam = findOwnTournamentTeam({
 				tournamentId,
@@ -131,10 +142,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 			});
 			// making sure they aren't unfilling one checking in condition i.e. having full roster
 			// and then having members kicked without it affecting the checking in status
-			validate(
+			errorToastIfFalsy(
 				detailedOwnTeam &&
 					(!detailedOwnTeam.checkedInAt ||
 						ownTeam.members.length > tournament.minMembersPerTeam),
+				"Can't kick a member after checking in",
 			);
 
 			deleteTeamMember({ tournamentTeamId: ownTeam.id, userId: data.userId });
@@ -147,11 +159,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "LEAVE_TEAM": {
-			validate(!ownTeam, "Can't leave a team as the owner");
+			errorToastIfFalsy(!ownTeam, "Can't leave a team as the owner");
 
 			const teamMemberOf = tournament.teamMemberOfByUser(user);
-			validate(teamMemberOf, "You are not in a team");
-			validate(
+			errorToastIfFalsy(teamMemberOf, "You are not in a team");
+			errorToastIfFalsy(
 				teamMemberOf.checkIns.length === 0,
 				"You cannot leave after checking in",
 			);
@@ -171,13 +183,14 @@ export const action: ActionFunction = async ({ request, params }) => {
 		}
 		case "UPDATE_MAP_POOL": {
 			const mapPool = new MapPool(data.mapPool);
-			validate(ownTeam);
-			validate(
+			errorToastIfFalsy(ownTeam, "You are not registered to this tournament");
+			errorToastIfFalsy(
 				validateCounterPickMapPool(
 					mapPool,
 					isOneModeTournamentOf(event),
 					tournament.ctx.tieBreakerMapPool,
 				) === "VALID",
+				"Invalid map pool",
 			);
 
 			upsertCounterpickMaps({
@@ -192,14 +205,17 @@ export const action: ActionFunction = async ({ request, params }) => {
 			);
 
 			const teamMemberOf = tournament.teamMemberOfByUser(user);
-			validate(teamMemberOf, "You are not in a team");
-			validate(
+			errorToastIfFalsy(teamMemberOf, "You are not in a team");
+			errorToastIfFalsy(
 				teamMemberOf.checkIns.length === 0,
 				"You have already checked in",
 			);
 
-			validate(tournament.regularCheckInIsOpen, "Check in is not open");
-			validate(
+			errorToastIfFalsy(
+				tournament.regularCheckInIsOpen,
+				"Check in is not open",
+			);
+			errorToastIfFalsy(
 				tournament.checkInConditionsFulfilledByTeamId(teamMemberOf.id),
 				"Check in conditions not fulfilled",
 			);
@@ -211,24 +227,24 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "ADD_PLAYER": {
-			validate(
+			errorToastIfFalsy(
 				tournament.ctx.teams.every((team) =>
 					team.members.every((member) => member.userId !== data.userId),
 				),
 				"User is already in a team",
 			);
-			validate(ownTeam);
-			validate(
+			errorToastIfFalsy(ownTeam, "You are not registered to this tournament");
+			errorToastIfFalsy(
 				(await QRepository.usersThatTrusted(user.id)).trusters.some(
 					(trusterPlayer) => trusterPlayer.id === data.userId,
 				),
 				"No trust given from this user",
 			);
-			validate(
+			errorToastIfFalsy(
 				(await UserRepository.findLeanById(user.id))?.friendCode,
 				"No friend code",
 			);
-			validate(tournament.registrationOpen, "Registration is closed");
+			errorToastIfFalsy(tournament.registrationOpen, "Registration is closed");
 
 			joinTeam({
 				userId: data.userId,
@@ -250,12 +266,30 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 			});
 
+			notify({
+				userIds: [data.userId],
+				notification: {
+					type: "TO_ADDED_TO_TEAM",
+					meta: {
+						adderUsername: user.username,
+						tournamentId,
+						teamName: ownTeam.name,
+						tournamentName: tournament.ctx.name,
+						tournamentTeamId: ownTeam.id,
+					},
+					pictureUrl: tournament.logoSrc,
+				},
+			});
+
 			break;
 		}
 		case "UNREGISTER": {
-			validate(ownTeam, "You are not registered to this tournament");
-			validate(!ownTeamCheckedIn, "You cannot unregister after checking in");
-			validate(
+			errorToastIfFalsy(ownTeam, "You are not registered to this tournament");
+			errorToastIfFalsy(
+				!ownTeamCheckedIn,
+				"You cannot unregister after checking in",
+			);
+			errorToastIfFalsy(
 				!tournament.isLeagueSignup || tournament.registrationOpen,
 				"Unregistering from leagues is not possible after registration has closed",
 			);
@@ -267,7 +301,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "DELETE_LOGO": {
-			validate(ownTeam, "You are not registered to this tournament");
+			errorToastIfFalsy(ownTeam, "You are not registered to this tournament");
 
 			await TournamentTeamRepository.deleteLogo(ownTeam.id);
 

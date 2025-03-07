@@ -24,8 +24,8 @@ import {
 import type { MainWeaponId } from "~/modules/in-game-lists";
 import {
 	type SendouRouteHandle,
+	errorToastIfFalsy,
 	parseRequestPayload,
-	validate,
 } from "~/utils/remix.server";
 import { tournamentSubsPage } from "~/utils/urls";
 import { findSubsByTournamentId } from "../queries/findSubsByTournamentId.server";
@@ -48,12 +48,12 @@ export const action: ActionFunction = async ({ params, request }) => {
 	const tournamentId = tournamentIdFromParams(params);
 	const tournament = await tournamentFromDB({ tournamentId, user });
 
-	validate(!tournament.everyBracketOver, "Tournament is over");
-	validate(
+	errorToastIfFalsy(!tournament.everyBracketOver, "Tournament is over");
+	errorToastIfFalsy(
 		tournament.canAddNewSubPost,
 		"Registration is closed or subs feature disabled",
 	);
-	validate(
+	errorToastIfFalsy(
 		!tournament.teamMemberOfByUser(user),
 		"Can't register as a sub and be in a team at the same time",
 	);

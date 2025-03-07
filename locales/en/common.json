@@ -41,10 +41,43 @@
 	"header.adder.vod": "VoD",
 	"header.adder.plusSuggestion": "Plus suggestion",
 
+	"notifications.title": "Notifications",
+	"notifications.empty": "None yet, check back later",
+	"notifications.loading": "Loading...",
+	"notifications.seeAll": "See all",
+	"notifications.fullList.explanation": "Max of 100 notifications shown. Notifications older than 14 days are automatically deleted.",
+	"notifications.managePush": "Push notifications",
+	"notifications.title.SQ_ADDED_TO_GROUP": "Added to SendouQ Group",
+	"notifications.text.SQ_ADDED_TO_GROUP": "Added to a group by {{adderUsername}}",
+	"notifications.title.SQ_NEW_MATCH": "New SendouQ Match",
+	"notifications.text.SQ_NEW_MATCH": "SendouQ match #{{matchId}} started",
+	"notifications.title.TO_ADDED_TO_TEAM": "Added to Team",
+	"notifications.text.TO_ADDED_TO_TEAM": "Added to a team ({{teamName}}) by {{adderUsername}} in {{tournamentName}}",
+	"notifications.title.TO_BRACKET_STARTED": "Bracket Started",
+	"notifications.text.TO_BRACKET_STARTED": "{{bracketName}} of {{tournamentName}} started",
+	"notifications.title.TO_CHECK_IN_OPENED": "Check-in Opened",
+	"notifications.text.TO_CHECK_IN_OPENED": "Check-in for {{tournamentName}} open",
+	"notifications.title.BADGE_ADDED": "New Badge",
+	"notifications.text.BADGE_ADDED": "New badge ({{badgeName}})",
+	"notifications.title.BADGE_MANAGER_ADDED": "Manager Rights Granted",
+	"notifications.text.BADGE_MANAGER_ADDED": "You got manager rights for badge {{badgeName}}",
+	"notifications.title.PLUS_VOTING_STARTED": "Plus Voting Started",
+	"notifications.text.PLUS_VOTING_STARTED": "Plus Server voting of season {{seasonNth}} started",
+	"notifications.title.PLUS_SUGGESTION_ADDED": "Plus Suggestion Added",
+	"notifications.text.PLUS_SUGGESTION_ADDED": "You were suggested to +{{tier}}",
+	"notifications.title.TAGGED_TO_ART": "Tagged in Art",
+	"notifications.text.TAGGED_TO_ART": "Tagged in art by {{adderUsername}}",
+	"notifications.title.SEASON_STARTED": "New Season Started",
+	"notifications.text.SEASON_STARTED": "SendouQ is open again for Season {{seasonNth}}",
+
 	"auth.errors.aborted": "Login Aborted",
 	"auth.errors.failed": "Login Failed",
 	"auth.errors.discordPermissions": "For your sendou.ink profile, the site needs access to your Discord profile's name, avatar and social connections.",
 	"auth.errors.unknown": "Unknown error, try again a bit later. Verify also that your Discord account has a verified email. For help please reach out to us via the #helpdesk channel on our Discord:",
+
+	"toasts.error": "Error",
+	"toasts.success": "Success",
+	"toasts.info": "Info",
 
 	"footer.github.subtitle": "Source code",
 	"footer.discord.subtitle": "Help & feedback",
@@ -79,6 +112,8 @@
 	"actions.upload": "Upload",
 	"actions.clickHere": "Click here",
 	"actions.goBack": "Go back",
+	"actions.enable": "Enable",
+	"actions.disable": "Disable",
 
 	"maps.createMapList": "Create map list",
 	"maps.halfSz": "50% SZ",
@@ -136,6 +171,7 @@
 	"tag.name.S2": "Splatoon 2",
 	"tag.name.SR": "Salmon Run",
 	"tag.name.CARDS": "Tableturf Battle",
+	"tag.name.COLLEGIATE": "Collegiate",
 
 	"weapon.category.SHOOTERS": "Shooters",
 	"weapon.category.BLASTERS": "Blasters",
@@ -245,5 +281,10 @@
 	"fc.title": "Friend code",
 
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.label": "Builds: Disable automatic ability sorting",
-	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText": "Outside of your profile page, build abilities are sorted so that same abilities are next to each other. This setting allows you to see the abilities in the order they were authored everywhere."
+	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText": "Outside of your profile page, build abilities are sorted so that same abilities are next to each other. This setting allows you to see the abilities in the order they were authored everywhere.",
+	"settings.notifications.title": "Push notifications",
+	"settings.notifications.description": "Receive push notifications to your device even if you don't currently have sendou.ink open.",
+	"settings.notifications.disableInfo": "To disable push notifications check your browser settings",
+	"settings.notifications.browserNotSupported": "Push notifications are not supported on this browser",
+	"settings.notifications.permissionDenied": "Push notifications were denied. Check your browser settings to re-enable"
 }

@@ -11,9 +11,14 @@ import { TrashIcon } from "~/components/icons/Trash";
 import type { User } from "~/db/types";
 import { useUser } from "~/features/auth/core/user";
 import { requireUserId } from "~/features/auth/core/user.server";
+import { notify } from "~/features/notifications/core/notify.server";
 import { canEditBadgeManagers, canEditBadgeOwners } from "~/permissions";
-import { atOrError } from "~/utils/arrays";
-import { parseRequestPayload, validate } from "~/utils/remix.server";
+import { atOrError, diff } from "~/utils/arrays";
+import {
+	errorToastIfFalsy,
+	notFoundIfFalsy,
+	parseRequestPayload,
+} from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { badgePage } from "~/utils/urls";
 import { actualNumber } from "~/utils/zod";
@@ -29,25 +34,66 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const badgeId = z.preprocess(actualNumber, z.number()).parse(params.id);
 	const user = await requireUserId(request);
 
+	const badge = notFoundIfFalsy(await BadgeRepository.findById(badgeId));
+
 	switch (data._action) {
 		case "MANAGERS": {
-			validate(canEditBadgeManagers(user));
+			errorToastIfFalsy(
+				canEditBadgeManagers(user),
+				"No permissions to edit managers",
+			);
+
+			const oldManagers = await BadgeRepository.findManagersByBadgeId(badgeId);
 
 			await BadgeRepository.replaceManagers({
 				badgeId,
 				managerIds: data.managerIds,
 			});
+
+			const newManagers = data.managerIds.filter(
+				(newManagerId) =>
+					!oldManagers.some((oldManager) => oldManager.id === newManagerId),
+			);
+
+			notify({
+				userIds: newManagers,
+				notification: {
+					type: "BADGE_MANAGER_ADDED",
+					meta: {
+						badgeId,
+						badgeName: badge.displayName,
+					},
+				},
+			});
 			break;
 		}
 		case "OWNERS": {
-			validate(
+			errorToastIfFalsy(
 				canEditBadgeOwners({
 					user,
 					managers: await BadgeRepository.findManagersByBadgeId(badgeId),
 				}),
+				"No permissions to edit owners",
 			);
 
+			const oldOwners = await BadgeRepository.findOwnersByBadgeId(badgeId);
+
 			await BadgeRepository.replaceOwners({ badgeId, ownerIds: data.ownerIds });
+
+			notify({
+				userIds: diff(
+					oldOwners.map((o) => o.id),
+					data.ownerIds,
+				),
+				notification: {
+					type: "BADGE_ADDED",
+					meta: {
+						badgeName: badge.displayName,
+						badgeId,
+					},
+				},
+			});
+
 			break;
 		}
 		default: {
@@ -113,8 +159,14 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 			<div className="stack sm">
 				<h3 className="badges-edit__small-header">Managers</h3>
 				<div className="text-center my-4">
-					<Label className="stack vertical items-center">Add new manager</Label>
+					<Label
+						className="stack vertical items-center"
+						htmlFor="add-new-manager"
+					>
+						Add new manager
+					</Label>
 					<UserSearch
+						id="add-new-manager"
 						className="mx-auto"
 						inputName="new-manager"
 						onChange={(user) => {
@@ -177,8 +229,11 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 			<div className="stack sm">
 				<h3 className="badges-edit__small-header">Owners</h3>
 				<div className="text-center my-4">
-					<Label className="stack items-center">Add new owner</Label>
+					<Label className="stack items-center" htmlFor="add-new-owner">
+						Add new owner
+					</Label>
 					<UserSearch
+						id="add-new-owner"
 						className="mx-auto"
 						inputName="new-owner"
 						key={userInputKey}

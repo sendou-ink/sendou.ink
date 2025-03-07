@@ -94,11 +94,10 @@ export default function SendouqRules() {
 
 			<h2 className="text-lg mt-4">Time limits</h2>
 			<div>
-				After a team has all their members in the lobby and has shared the
-				password with the other team then that team has <b>15 minutes</b> to
-				join the lobby. Failing to do so, the match can be started with the
-				members currently in the room. If a player has problems connecting to
-				the room it is advised to try switching the host.
+				After a team has all their members in the lobby then the other team has{" "}
+				<b>10 minutes</b> to join the lobby. Failing to do so, the match can be
+				started with the members currently in the room. If a player has problems
+				connecting to the room it is advised to try switching the host.
 			</div>
 
 			<h2 className="text-lg mt-4">Spectators</h2>

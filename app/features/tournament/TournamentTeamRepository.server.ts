@@ -23,7 +23,7 @@ export function setActiveRoster({
 		.execute();
 }
 
-const regOpenTournamentTeamIdsByJoinedUserId = (userId: number) =>
+const regOpenTournamentTeamsByJoinedUserId = (userId: number) =>
 	db
 		.selectFrom("TournamentTeamMember")
 		.innerJoin(
@@ -38,7 +38,10 @@ const regOpenTournamentTeamIdsByJoinedUserId = (userId: number) =>
 			"CalendarEventDate.eventId",
 			"CalendarEvent.id",
 		)
-		.select("TournamentTeamMember.tournamentTeamId")
+		.select([
+			"TournamentTeam.tournamentId",
+			"TournamentTeamMember.tournamentTeamId",
+		])
 		.where("TournamentTeamMember.userId", "=", userId)
 		.where(
 			sql`coalesce(
@@ -48,8 +51,7 @@ const regOpenTournamentTeamIdsByJoinedUserId = (userId: number) =>
 			">",
 			databaseTimestampNow(),
 		)
-		.execute()
-		.then((rows) => rows.map((row) => row.tournamentTeamId));
+		.execute();
 
 export async function updateMemberInGameName({
 	userId,
@@ -68,27 +70,37 @@ export async function updateMemberInGameName({
 		.execute();
 }
 
+/**
+ * Updates the in-game name of a tournament team member for tournaments that have not started yet.
+ *
+ * @returns A promise that resolves to an array of tournament IDs where the user's in-game name was updated.
+ */
 export async function updateMemberInGameNameForNonStarted({
 	userId,
 	inGameName,
 }: {
+	/** The ID of the user whose in-game name is to be updated. */
 	userId: number;
+	/** The new in-game name to be set for the user. */
 	inGameName: string;
-}) {
-	const tournamentTeamIds =
-		await regOpenTournamentTeamIdsByJoinedUserId(userId);
+}): Promise<number[]> {
+	const tournamentTeams = await regOpenTournamentTeamsByJoinedUserId(userId);
 
-	return (
-		db
-			.updateTable("TournamentTeamMember")
-			.set({ inGameName })
-			.where("TournamentTeamMember.userId", "=", userId)
-			// after they have checked in no longer can update their IGN from here
-			.where("TournamentTeamMember.tournamentTeamId", "in", tournamentTeamIds)
-			// if the tournament doesn't have the setting to require IGN, ignore
-			.where("TournamentTeamMember.inGameName", "is not", null)
-			.execute()
-	);
+	await db
+		.updateTable("TournamentTeamMember")
+		.set({ inGameName })
+		.where("TournamentTeamMember.userId", "=", userId)
+		// after they have checked in no longer can update their IGN from here
+		.where(
+			"TournamentTeamMember.tournamentTeamId",
+			"in",
+			tournamentTeams.map((t) => t.tournamentTeamId),
+		)
+		// if the tournament doesn't have the setting to require IGN, ignore
+		.where("TournamentTeamMember.inGameName", "is not", null)
+		.execute();
+
+	return tournamentTeams.map((t) => t.tournamentId);
 }
 
 export function create({
@@ -145,7 +157,14 @@ export function create({
 export function copyFromAnotherTournament({
 	tournamentTeamId,
 	destinationTournamentId,
-}: { tournamentTeamId: number; destinationTournamentId: number }) {
+	seed,
+	defaultCheckedIn = false,
+}: {
+	tournamentTeamId: number;
+	destinationTournamentId: number;
+	seed?: number;
+	defaultCheckedIn?: boolean;
+}) {
 	return db.transaction().execute(async (trx) => {
 		const oldTeam = await trx
 			.selectFrom("TournamentTeam")
@@ -197,9 +216,21 @@ export function copyFromAnotherTournament({
 				...oldTeam,
 				tournamentId: destinationTournamentId,
 				inviteCode: nanoid(INVITE_CODE_LENGTH),
+				seed,
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();
+
+		if (defaultCheckedIn) {
+			await trx
+				.insertInto("TournamentTeamCheckIn")
+				.values({
+					checkedInAt: databaseTimestampNow(),
+					tournamentTeamId: newTeam.id,
+					bracketIdx: null,
+				})
+				.execute();
+		}
 
 		await trx
 			.insertInto("TournamentTeamMember")

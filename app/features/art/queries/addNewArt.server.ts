@@ -66,6 +66,7 @@ const updateArtStm = sql.prepare(/* sql */ `
     "isShowcase" = @isShowcase
   where
     "id" = @artId
+  returning *
 `);
 
 const removeIsShowcaseFromAllStm = sql.prepare(/* sql */ `
@@ -128,6 +129,8 @@ export const addNewArt = sql.transaction((args: AddNewArtArgs) => {
 
 		addTaggedArtStm.run({ artId: art.id, tagId });
 	}
+
+	return art.id;
 });
 
 type EditArtArgs = Pick<Art, "authorId" | "description" | "isShowcase"> & {
@@ -143,7 +146,7 @@ export const editArt = sql.transaction((args: EditArtArgs) => {
 		});
 	}
 
-	updateArtStm.run({
+	const updatedArt = updateArtStm.get({
 		description: args.description,
 		isShowcase: args.isShowcase,
 		artId: args.artId,
@@ -169,4 +172,6 @@ export const editArt = sql.transaction((args: EditArtArgs) => {
 
 		addTaggedArtStm.run({ artId: args.artId, tagId });
 	}
+
+	return (updatedArt as { id: number }).id;
 });

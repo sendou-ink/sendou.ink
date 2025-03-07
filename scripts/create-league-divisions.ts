@@ -107,10 +107,12 @@ async function main() {
 			thirdPlaceMatch: undefined,
 		});
 
-		for (const team of divsTeams!) {
+		for (const [idx, team] of divsTeams!.entries()) {
 			await TournamentTeamRepository.copyFromAnotherTournament({
 				destinationTournamentId: createdEvent.tournamentId!,
 				tournamentTeamId: team.id,
+				seed: idx + 1,
+				defaultCheckedIn: true,
 			});
 		}
 
@@ -135,7 +137,7 @@ const csvSchema = z.array(
 type ParsedTeam = ReturnType<typeof parseCsv>[number];
 
 function parseCsv(csv: string) {
-	const lines = csv.split("\n");
+	const lines = csv.trim().split("\n");
 	const headers = lines[0].split(",");
 	const rows = lines.slice(1).map((line) => {
 		const row = line.split(",");

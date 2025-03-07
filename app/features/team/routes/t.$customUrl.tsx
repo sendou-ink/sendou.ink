@@ -31,7 +31,12 @@ import {
 import type * as TeamRepository from "../TeamRepository.server";
 import { action } from "../actions/t.$customUrl.server";
 import { loader } from "../loaders/t.$customUrl.server";
-import { isTeamManager, isTeamMember, resolveNewOwner } from "../team-utils";
+import {
+	isTeamManager,
+	isTeamMember,
+	isTeamOwner,
+	resolveNewOwner,
+} from "../team-utils";
 import "../team.css";
 import { metaTags } from "~/utils/remix";
 export { action, loader };
@@ -202,10 +207,15 @@ function ActionButtons() {
 			) : null}
 			{isTeamMember({ user, team }) ? (
 				<FormWithConfirm
-					dialogHeading={t("team:leaveTeam.header", {
-						teamName: team.name,
-						newOwner: resolveNewOwner(team.members)?.username,
-					})}
+					dialogHeading={`${t(
+						isTeamOwner({ user, team })
+							? "team:leaveTeam.header.newOwner"
+							: "team:leaveTeam.header",
+						{
+							teamName: team.name,
+							newOwner: resolveNewOwner(team.members)?.username,
+						},
+					)}`}
 					deleteButtonText={t("team:actionButtons.leaveTeam.confirm")}
 					fields={[["_action", "LEAVE_TEAM"]]}
 				>

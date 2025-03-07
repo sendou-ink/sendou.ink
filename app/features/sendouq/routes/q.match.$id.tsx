@@ -39,7 +39,7 @@ import { sql } from "~/db/sql";
 import type { GroupMember, ReportedWeapon } from "~/db/types";
 import { useUser } from "~/features/auth/core/user";
 import { getUserId, requireUser } from "~/features/auth/core/user.server";
-import * as NotificationService from "~/features/chat/NotificationService.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import type { ChatMessage } from "~/features/chat/chat-types";
 import { Chat, type ChatProps, useChat } from "~/features/chat/components/Chat";
 import { currentOrPreviousSeason, currentSeason } from "~/features/mmr/season";
@@ -63,10 +63,10 @@ import { logger } from "~/utils/logger";
 import { safeNumberParse } from "~/utils/number";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
+	errorToastIfFalsy,
 	notFoundIfFalsy,
 	parseParams,
 	parseRequestPayload,
-	validate,
 } from "~/utils/remix.server";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import type { Unpacked } from "~/utils/types";
@@ -177,7 +177,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				return null;
 			}
 
-			validate(
+			errorToastIfFalsy(
 				!data.adminReport || isMod(user),
 				"Only mods can report scores as admin",
 			);
@@ -326,7 +326,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					return matchIsBeingCanceled ? "CANCEL_REPORTED" : "SCORE_REPORTED";
 				};
 
-				NotificationService.notify({
+				ChatSystemMessage.send({
 					room: match.chatCode,
 					type: type(),
 					context: {
@@ -339,18 +339,18 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		}
 		case "LOOK_AGAIN": {
 			const season = currentSeason(new Date());
-			validate(season, "Season is not active");
+			errorToastIfFalsy(season, "Season is not active");
 
 			const previousGroup = await QMatchRepository.findGroupById({
 				groupId: data.previousGroupId,
 			});
-			validate(previousGroup, "Previous group not found");
+			errorToastIfFalsy(previousGroup, "Previous group not found");
 
 			for (const member of previousGroup.members) {
 				const currentGroup = findCurrentGroupByUserId(member.id);
-				validate(!currentGroup, "Member is already in a group");
+				errorToastIfFalsy(!currentGroup, "Member is already in a group");
 				if (member.id === user.id) {
-					validate(
+					errorToastIfFalsy(
 						member.role === "OWNER",
 						"You are not the owner of the group",
 					);
@@ -366,7 +366,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		}
 		case "REPORT_WEAPONS": {
 			const match = notFoundIfFalsy(findMatchById(matchId));
-			validate(match.reportedAt, "Match has not been reported yet");
+			errorToastIfFalsy(match.reportedAt, "Match has not been reported yet");
 
 			const oldReportedWeapons = reportedWeaponsByMatchId(matchId) ?? [];
 

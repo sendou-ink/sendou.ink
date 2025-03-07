@@ -48,6 +48,11 @@ export const SEASONS =
 					starts: new Date("2024-12-02T18:00:00.000Z"),
 					ends: new Date("2025-02-16T21:59:59.999Z"),
 				},
+				{
+					nth: 7,
+					starts: new Date("2025-03-07T18:00:00.000Z"),
+					ends: new Date("2025-05-25T21:59:59.999Z"),
+				},
 			] as const);
 
 export type RankingSeason = (typeof SEASONS)[number];
