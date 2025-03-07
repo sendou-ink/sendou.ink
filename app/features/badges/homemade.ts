@@ -798,7 +798,6 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Anarchy Adventures",
 		fileName: "s50badge",
 		authorDiscordId: "336683473714544641",
-	{
 	},
 	{
 		displayName: "[OMD] Bingo Club",
