@@ -7,9 +7,9 @@ import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tou
 import { isMod } from "~/permissions";
 import {
 	badRequestIfFalsy,
+	errorToastIfFalsy,
 	notFoundIfFalsy,
 	parseRequestPayload,
-	validate,
 } from "~/utils/remix.server";
 import { userSubmittedImage } from "~/utils/urls";
 import * as ImageRepository from "../ImageRepository.server";
@@ -25,7 +25,7 @@ export const action: ActionFunction = async ({ request }) => {
 		request,
 	});
 
-	validate(isMod(user), "Only admins can validate images");
+	errorToastIfFalsy(isMod(user), "Only admins can validate images");
 
 	const image = badRequestIfFalsy(await ImageRepository.findById(data.imageId));
 

@@ -89,6 +89,8 @@ export function filterToSmallStr(filter: LFGFilter): string {
 
 export function smallStrToFilter(s: string): LFGFilter | null {
 	const [tag, val] = s.split(".");
+	if (!tag || !val) return null;
+
 	switch (tag) {
 		case "w": {
 			const weaponIds = val

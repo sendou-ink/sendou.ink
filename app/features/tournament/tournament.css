@@ -652,12 +652,19 @@
 	border-radius: var(--rounded);
 }
 
+.tournament__div__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
+	gap: var(--s-4);
+}
+
 .tournament__div__link {
 	background-color: var(--bg-lighter-solid);
 	padding: var(--s-2) var(--s-4);
 	border-radius: var(--rounded);
-	width: max-content;
 	font-size: var(--fonts-lg);
+	width: 100%;
+	white-space: nowrap;
 }
 
 .tournament__div__link:focus-visible {

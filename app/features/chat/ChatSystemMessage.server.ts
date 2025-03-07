@@ -7,8 +7,8 @@ type PartialChatMessage = Pick<
 	ChatMessage,
 	"type" | "context" | "room" | "revalidateOnly"
 >;
-interface NotificationService {
-	notify: (msg: PartialChatMessage | PartialChatMessage[]) => undefined;
+interface ChatSystemMessageService {
+	send: (msg: PartialChatMessage | PartialChatMessage[]) => undefined;
 }
 
 invariant(
@@ -17,7 +17,7 @@ invariant(
 );
 invariant(process.env.SKALOP_TOKEN, "Missing env var: SKALOP_TOKEN");
 
-export const notify: NotificationService["notify"] = (partialMsg) => {
+export const send: ChatSystemMessageService["send"] = (partialMsg) => {
 	const msgArr = Array.isArray(partialMsg) ? partialMsg : [partialMsg];
 
 	const fullMessages: ChatMessage[] = msgArr.map((partialMsg) => {

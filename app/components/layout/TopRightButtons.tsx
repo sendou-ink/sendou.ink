@@ -5,6 +5,7 @@ import { LinkButton } from "../Button";
 import { HamburgerIcon } from "../icons/Hamburger";
 import { HeartIcon } from "../icons/Heart";
 import { AnythingAdder } from "./AnythingAdder";
+import { NotificationPopover } from "./NotificationPopover";
 import { UserItem } from "./UserItem";
 
 export function _TopRightButtons({
@@ -30,6 +31,7 @@ export function _TopRightButtons({
 					{t("common:pages.support")}
 				</LinkButton>
 			) : null}
+			<NotificationPopover />
 			<AnythingAdder />
 			<button
 				aria-label="Open navigation"

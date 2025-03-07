@@ -15,9 +15,24 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Tristrike Tuesday",
+		fileName: "tristriked3",
+		authorDiscordId: "789943264370884708",
+	},
+	{
 		displayName: "Gatorlan - Side of Salmon",
 		fileName: "gatorlan_salmon_1st",
 		authorDiscordId: "285504780154044416",
+	},
+	{
+		displayName: "Gardevoir",
+		fileName: "krakenmarepoke",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Shiny Gardevoir",
+		fileName: "krakenmarepokeshiny",
+		authorDiscordId: "338806780446638082",
 	},
 	{
 		displayName: "Reach",
@@ -230,7 +245,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "528851510222782474",
 	},
 	{
-		displayName: "Tristrike Tuesday",
+		displayName: "Tristrike Tuesday (D5 CAPPED)",
 		fileName: "tristriketuesday",
 		authorDiscordId: "789943264370884708",
 	},
@@ -748,5 +763,30 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "New Game +",
 		fileName: "new-game-plus",
 		authorDiscordId: "216653023252840449",
+	},
+	{
+		displayName: "Twisted Toe",
+		fileName: "twistedtoe",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName: "TOECAR",
+		fileName: "toecar",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName: "CoffeeCup",
+		fileName: "coffeecup",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName: "Good Morning Chat",
+		fileName: "gator",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Clutch United Squid Storm LAN Tournament",
+		fileName: "clutch_united",
+		authorDiscordId: "336683473714544641",
 	},
 ];

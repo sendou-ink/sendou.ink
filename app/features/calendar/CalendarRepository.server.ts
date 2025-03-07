@@ -143,12 +143,12 @@ export type FindAllBetweenTwoTimestampsItem = Unwrapped<
 export async function findAllBetweenTwoTimestamps({
 	startTime,
 	endTime,
-	tagsToFilterBy,
+	tagsToFilterBy = [],
 	onlyTournaments,
 }: {
 	startTime: Date;
 	endTime: Date;
-	tagsToFilterBy: Array<PersistedCalendarEventTag>;
+	tagsToFilterBy?: Array<PersistedCalendarEventTag>;
 	onlyTournaments: boolean;
 }) {
 	let query = db

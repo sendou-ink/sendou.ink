@@ -14,7 +14,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 	return json<PlusListLoaderData>({
 		users: Object.fromEntries(
-			(await UserRepository.findAllPlusMembers()).map((u) => [
+			(await UserRepository.findAllPlusServerMembers()).map((u) => [
 				u.discordId,
 				u.plusTier,
 			]),

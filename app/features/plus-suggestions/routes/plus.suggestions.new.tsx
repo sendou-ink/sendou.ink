@@ -17,6 +17,7 @@ import {
 import type { UserWithPlusTier } from "~/db/types";
 import { useUser } from "~/features/auth/core/user";
 import { requireUser } from "~/features/auth/core/user.server";
+import { notify } from "~/features/notifications/core/notify.server";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import {
 	nextNonCompletedVoting,
@@ -32,8 +33,8 @@ import {
 import { atOrError } from "~/utils/arrays";
 import {
 	badRequestIfFalsy,
+	errorToastIfFalsy,
 	parseRequestPayload,
-	validate,
 } from "~/utils/remix.server";
 import { plusSuggestionPage } from "~/utils/urls";
 import { actualNumber, trimmedString } from "~/utils/zod";
@@ -72,14 +73,14 @@ export const action: ActionFunction = async ({ request }) => {
 	const suggestions =
 		await PlusSuggestionRepository.findAllByMonth(votingMonthYear);
 
-	validate(suggestions);
-	validate(
+	errorToastIfFalsy(
 		canSuggestNewUserBE({
 			user,
 			suggested,
 			targetPlusTier: data.tier,
 			suggestions,
 		}),
+		"No permissions to make this suggestion",
 	);
 
 	await PlusSuggestionRepository.create({
@@ -88,6 +89,16 @@ export const action: ActionFunction = async ({ request }) => {
 		tier: data.tier,
 		text: data.comment,
 		...votingMonthYear,
+	});
+
+	notify({
+		userIds: [suggested.id],
+		notification: {
+			type: "PLUS_SUGGESTION_ADDED",
+			meta: {
+				tier: data.tier,
+			},
+		},
 	});
 
 	throw redirect(plusSuggestionPage({ tier: data.tier }));
