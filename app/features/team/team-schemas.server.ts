@@ -1,11 +1,20 @@
 import { z } from "zod";
-import { _action, customCssVarObject, falsyToNull, id } from "~/utils/zod";
+import {
+	_action,
+	actuallyNonEmptyStringOrNull,
+	customCssVarObject,
+	falsyToNull,
+	id,
+} from "~/utils/zod";
 import { TEAM, TEAM_MEMBER_ROLES } from "./team-constants";
 
 export const teamParamsSchema = z.object({ customUrl: z.string() });
 
 export const createTeamSchema = z.object({
-	name: z.string().min(TEAM.NAME_MIN_LENGTH).max(TEAM.NAME_MAX_LENGTH),
+	name: z.preprocess(
+		actuallyNonEmptyStringOrNull,
+		z.string().min(TEAM.NAME_MIN_LENGTH).max(TEAM.NAME_MAX_LENGTH),
+	),
 });
 
 export const teamProfilePageActionSchema = z.union([

@@ -120,6 +120,20 @@ export function safeJSONParse(value: unknown): unknown {
 	}
 }
 
+const EMPTY_CHARACTERS = ["\u200B", "\u200C", "\u200D", "\u200E", "\u200F"];
+const EMPTY_CHARACTERS_REGEX = new RegExp(EMPTY_CHARACTERS.join("|"), "g");
+
+/**
+ * Processes the input value and returns a non-empty string with invisible characters cleaned out or null.
+ */
+export function actuallyNonEmptyStringOrNull(value: unknown) {
+	if (typeof value !== "string") return value;
+
+	const trimmed = value.replace(EMPTY_CHARACTERS_REGEX, "").trim();
+
+	return trimmed === "" ? null : trimmed;
+}
+
 /**
  * Safely splits a string by a specified delimiter as Zod preprocess function.
  *
