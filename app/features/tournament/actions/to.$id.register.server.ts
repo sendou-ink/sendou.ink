@@ -73,6 +73,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 					tournament.registrationOpen || data.teamName === ownTeam.name,
 					"Can't change team name after registration has closed",
 				);
+				errorToastIfFalsy(
+					!tournament.ctx.teams.some(
+						(team) => team.name === data.teamName && team.id !== ownTeam.id,
+					),
+					"Team name already taken for this tournament",
+				);
 
 				await TournamentTeamRepository.update({
 					userId: user.id,
