@@ -165,7 +165,7 @@ function PushNotificationsEnabler() {
 	}
 
 	async function initServiceWorker() {
-		const swRegistration = await navigator.serviceWorker.register("sw.js");
+		const swRegistration = await navigator.serviceWorker.register("sw-2.js");
 		const subscription = await swRegistration.pushManager.getSubscription();
 		if (subscription) {
 			sendSubscriptionToServer(subscription);
