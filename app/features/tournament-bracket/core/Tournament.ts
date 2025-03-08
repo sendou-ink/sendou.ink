@@ -836,18 +836,21 @@ export class Tournament {
 		invariant(team, "Team not found");
 
 		if (!this.regularCheckInIsOpen && !this.regularCheckInHasEnded) {
-			return false;
+			return { isFulfilled: false, reason: "Check in has not yet started" };
 		}
 
 		if (team.members.length < this.minMembersPerTeam) {
-			return false;
+			return {
+				isFulfilled: false,
+				reason: `Team needs at least ${this.minMembersPerTeam} members`,
+			};
 		}
 
 		if (this.teamsPrePickMaps && (!team.mapPool || team.mapPool.length === 0)) {
-			return false;
+			return { isFulfilled: false, reason: "Team has no map pool set" };
 		}
 
-		return true;
+		return { isFulfilled: true, reason: null };
 	}
 
 	get isInvitational() {
@@ -1163,9 +1166,11 @@ export class Tournament {
 		}
 
 		if (team.checkIns.length === 0 && this.regularCheckInIsOpen) {
-			const canCheckIn = this.checkInConditionsFulfilledByTeamId(team.id);
-
-			return { type: "CHECKIN", canCheckIn } as const;
+			return {
+				type: "CHECKIN",
+				canCheckIn: this.checkInConditionsFulfilledByTeamId(team.id)
+					.isFulfilled,
+			} as const;
 		}
 
 		for (const [bracketIdx, bracket] of this.brackets.entries()) {

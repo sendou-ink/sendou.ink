@@ -222,8 +222,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"Check in is not open",
 			);
 			errorToastIfFalsy(
-				tournament.checkInConditionsFulfilledByTeamId(teamMemberOf.id),
-				"Check in conditions not fulfilled",
+				tournament.checkInConditionsFulfilledByTeamId(teamMemberOf.id)
+					.isFulfilled,
+				`Can't check-in - ${tournament.checkInConditionsFulfilledByTeamId(teamMemberOf.id).reason}`,
 			);
 
 			checkIn(teamMemberOf.id);
