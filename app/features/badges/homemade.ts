@@ -844,4 +844,8 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "FLcollegiate",
 		authorDiscordId: "285504780154044416",
 	},
+  {
+    displayName: "UK MAFIA DRAFT CUP",
+    fileName: "ukmdraftcup",
+    authorDiscordId: "433708069654888448",
 ];
