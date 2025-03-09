@@ -1,6 +1,6 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
-import { parseRequestPayload, validate } from "~/utils/remix.server";
+import { parseRequestPayload, errorToastIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { scrimsActionSchema } from "../scrims-schemas";
@@ -19,10 +19,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				postId: data.scrimPostId,
 			});
 
-			validate(
+			errorToastIfFalsy(
 				post.users.some((rUser) => rUser.id === user.id && rUser.isOwner),
 				"No permission to manage the post",
-				401,
 			);
 
 			await ScrimPostRepository.del(post.id);
@@ -49,11 +48,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				requestId: data.scrimPostRequestId,
 			});
 
-			validate(!request.isAccepted, "Request is already accepted");
-			validate(
+			errorToastIfFalsy(!request.isAccepted, "Request is already accepted");
+			errorToastIfFalsy(
 				post.users.some((rUser) => rUser.id === user.id && rUser.isOwner),
 				"No permission to accept request",
-				401,
 			);
 
 			await ScrimPostRepository.acceptRequest(data.scrimPostRequestId);
@@ -66,11 +64,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				requestId: data.scrimPostRequestId,
 			});
 
-			validate(!request.isAccepted, "Can't cancel an accepted request");
-			validate(
+			errorToastIfFalsy(
+				!request.isAccepted,
+				"Can't cancel an accepted request",
+			);
+			errorToastIfFalsy(
 				request.users.some((rUser) => rUser.id === user.id && rUser.isOwner),
 				"No permission to cancel request",
-				401,
 			);
 
 			await ScrimPostRepository.deleteRequest(data.scrimPostRequestId);
@@ -92,7 +92,7 @@ async function findPost({
 	const posts = await ScrimPostRepository.findAllRelevant(userId);
 	const post = posts.find((post) => post.id === postId);
 
-	validate(post, "Post not found");
+	errorToastIfFalsy(post, "Post not found");
 
 	return post;
 }
@@ -107,7 +107,7 @@ async function findRequest({
 	);
 	const request = post?.requests.find((request) => request.id === requestId);
 
-	validate(post && request, "Request not found");
+	errorToastIfFalsy(post && request, "Request not found");
 
 	return { post, request };
 }
