@@ -2,7 +2,7 @@ import { type ActionFunctionArgs, redirect } from "@remix-run/node";
 import type { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { parseRequestPayload, errorToastIfFalsy } from "~/utils/remix.server";
+import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { scrimsPage } from "~/utils/urls";
 import * as TeamRepository from "../../team/TeamRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
