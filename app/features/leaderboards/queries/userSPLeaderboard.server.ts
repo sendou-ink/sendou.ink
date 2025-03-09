@@ -13,14 +13,12 @@ const stm = sql.prepare(/* sql */ `
     "User"."discordId",
     "User"."customUrl",
     "User"."plusSkippedForSeasonNth",
-    "PlusTier"."tier" as "plusTier",
     rank () over ( 
       order by "Skill"."Ordinal" desc
     ) "placementRank"
   from 
     "Skill"
     left join "User" on "User"."id" = "Skill"."userId"
-    left join "PlusTier" on "PlusTier"."userId" = "User"."id"
     inner join (
       select "userId", max("id") as "maxId"
       from "Skill"
@@ -43,7 +41,6 @@ export interface UserSPLeaderboardItem {
 	discordAvatar: User["discordAvatar"];
 	discordId: User["discordId"];
 	customUrl: User["customUrl"];
-	plusTier?: PlusTier["tier"];
 	plusSkippedForSeasonNth: number | null;
 	/** Plus tier player is on track to join */
 	pendingPlusTier?: PlusTier["tier"];

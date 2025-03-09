@@ -9,6 +9,20 @@ export default [
 	index("features/front-page/routes/index.tsx"),
 	route("/patrons-list", "features/front-page/routes/patrons-list.ts"),
 
+	route("/notifications", "features/notifications/routes/notifications.tsx"),
+	route(
+		"/notifications/peek",
+		"features/notifications/routes/notifications.peek.ts",
+	),
+	route(
+		"/notifications/seen",
+		"features/notifications/routes/notifications.seen.ts",
+	),
+	route(
+		"/notifications/subscribe",
+		"features/notifications/routes/notifications.subscribe.ts",
+	),
+
 	route("/settings", "features/settings/routes/settings.tsx"),
 
 	route("/suspended", "features/ban/routes/suspended.tsx"),

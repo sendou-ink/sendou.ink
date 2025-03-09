@@ -16,7 +16,7 @@ export const nonEmptyString = z.string().trim().min(1, {
 
 export const dbBoolean = z.coerce.number().min(0).max(1).int();
 
-const hexCodeRegex = /^#(?:[0-9a-fA-F]{3}){1,2}$/; // https://stackoverflow.com/a/1636354
+const hexCodeRegex = /^#(?:[0-9a-fA-F]{3}){1,2}[0-9]{0,2}$/; // https://stackoverflow.com/a/1636354
 export const hexCode = z.string().regex(hexCodeRegex);
 
 const abilityNameToType = (val: string) =>
@@ -118,6 +118,20 @@ export function safeJSONParse(value: unknown): unknown {
 	} catch (e) {
 		return undefined;
 	}
+}
+
+const EMPTY_CHARACTERS = ["\u200B", "\u200C", "\u200D", "\u200E", "\u200F"];
+const EMPTY_CHARACTERS_REGEX = new RegExp(EMPTY_CHARACTERS.join("|"), "g");
+
+/**
+ * Processes the input value and returns a non-empty string with invisible characters cleaned out or null.
+ */
+export function actuallyNonEmptyStringOrNull(value: unknown) {
+	if (typeof value !== "string") return value;
+
+	const trimmed = value.replace(EMPTY_CHARACTERS_REGEX, "").trim();
+
+	return trimmed === "" ? null : trimmed;
 }
 
 /**

@@ -22,7 +22,7 @@ import { useIsMounted } from "~/hooks/useIsMounted";
 import { isAdmin } from "~/permissions";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
+import { removeMarkdown } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import {
 	tournamentDivisionsPage,
@@ -31,11 +31,9 @@ import {
 	tournamentRegisterPage,
 	userSubmittedImage,
 } from "~/utils/urls";
+import { metaTags } from "../../../utils/remix";
 import { streamsByTournamentId } from "../core/streams.server";
-import {
-	HACKY_resolvePicture,
-	tournamentIdFromParams,
-} from "../tournament-utils";
+import { tournamentIdFromParams } from "../tournament-utils";
 
 import "../tournament.css";
 import "~/styles/maps.css";
@@ -55,39 +53,18 @@ export const meta: MetaFunction = (args) => {
 
 	if (!data) return [];
 
-	const title = makeTitle(data.tournament.ctx.name);
-
-	const ogImage = () => {
-		if (
-			!data.tournament.ctx.logoSrc ||
-			data.tournament.ctx.logoSrc.startsWith("https")
-		) {
-			return data.tournament.ctx.logoSrc;
-		}
-
-		// opengraph does not support relative urls
-		return `${import.meta.env.VITE_SITE_DOMAIN}${data.tournament.ctx.logoSrc}`;
-	};
-
-	return [
-		{ title },
-		{
-			property: "og:title",
-			content: title,
+	return metaTags({
+		title: data.tournament.ctx.name,
+		description: data.tournament.ctx.description
+			? removeMarkdown(data.tournament.ctx.description)
+			: undefined,
+		image: {
+			url: data.tournament.ctx.logoSrc,
+			dimensions: { width: 124, height: 124 },
 		},
-		{
-			property: "og:description",
-			content: data.tournament.ctx.description,
-		},
-		{
-			property: "og:type",
-			content: "website",
-		},
-		{
-			property: "og:image",
-			content: ogImage(),
-		},
-	];
+		location: args.location,
+		url: tournamentPage(data.tournament.ctx.id),
+	});
 };
 
 export const handle: SendouRouteHandle = {
@@ -112,9 +89,7 @@ export const handle: SendouRouteHandle = {
 					}
 				: null,
 			{
-				imgPath: data.tournament.ctx.logoUrl
-					? userSubmittedImage(data.tournament.ctx.logoUrl)
-					: HACKY_resolvePicture(data.tournament.ctx),
+				imgPath: data.tournament.ctx.logoSrc,
 				href: tournamentPage(data.tournament.ctx.id),
 				type: "IMAGE" as const,
 				text: data.tournament.ctx.name,

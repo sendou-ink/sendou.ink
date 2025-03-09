@@ -15,9 +15,9 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import {
 	badRequestIfFalsy,
+	errorToastIfFalsy,
 	parseSearchParams,
 	unauthorizedIfFalsy,
-	validate,
 } from "~/utils/remix.server";
 import { teamPage, tournamentOrganizationPage } from "~/utils/urls";
 import { addNewImage } from "../queries/addNewImage";
@@ -30,7 +30,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const user = await requireUser(request);
 
 	const validatedType = requestToImgType(request);
-	validate(validatedType, "Invalid image type");
+	errorToastIfFalsy(validatedType, "Invalid image type");
 
 	const team =
 		validatedType === "team-pfp" || validatedType === "team-banner"
@@ -41,8 +41,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			? await validatedOrg({ user, request })
 			: undefined;
 
-	// TODO: graceful error handling when uploading many images
-	validate(
+	errorToastIfFalsy(
 		countUnvalidatedImg(user.id) < MAX_UNVALIDATED_IMG_COUNT,
 		"Too many unvalidated images",
 	);
@@ -97,14 +96,9 @@ async function validatedTeam({
 	});
 	const team = await TeamRepository.findByCustomUrl(teamCustomUrl);
 
-	validate(team, "You must be on a team to upload images");
-	validate(
-		team.members.some((member) => member.id === user.id && member.isOwner),
-		"You must be on the team to upload images",
-	);
-	const detailedTeam = await TeamRepository.findByCustomUrl(team.customUrl);
-	validate(
-		detailedTeam && isTeamManager({ team: detailedTeam, user }),
+	errorToastIfFalsy(team, "Team not found");
+	errorToastIfFalsy(
+		isTeamManager({ team, user }),
 		"You must be the team manager to upload images",
 	);
 

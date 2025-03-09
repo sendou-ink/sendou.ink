@@ -699,3 +699,26 @@ export function destinationsFromBracketIdx(
 
 	return destinations;
 }
+
+export function destinationByPlacement({
+	sourceBracketIdx,
+	placement,
+	progression,
+}: {
+	sourceBracketIdx: number;
+	placement: number;
+	progression: ParsedBracket[];
+}): number | null {
+	const destinations = destinationsFromBracketIdx(
+		sourceBracketIdx,
+		progression,
+	);
+
+	const destination = destinations.find((destinationBracketIdx) =>
+		progression[destinationBracketIdx].sources?.some((source) =>
+			source.placements.includes(placement),
+		),
+	);
+
+	return destination ?? null;
+}

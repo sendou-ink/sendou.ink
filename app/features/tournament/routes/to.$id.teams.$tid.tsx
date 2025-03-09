@@ -1,23 +1,27 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { ModeImage, StageImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
-import { Redirect } from "~/components/Redirect";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
-import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import {
+	type TournamentData,
+	type TournamentDataTeam,
+	tournamentDataCached,
+} from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentTeamPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator";
+import { metaTags } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
 import {
 	teamPage,
 	tournamentMatchPage,
-	tournamentPage,
 	tournamentTeamPage,
 	userPage,
+	userSubmittedImage,
 } from "~/utils/urls";
 import { TeamWithRoster } from "../components/TeamWithRoster";
 import {
@@ -28,19 +32,50 @@ import {
 import { tournamentIdFromParams } from "../tournament-utils";
 import { useTournament } from "./to.$id";
 
-export const loader = ({ params }: LoaderFunctionArgs) => {
+export const meta: MetaFunction<typeof loader> = (args) => {
+	const tournamentData = (args.matches[1].data as any)
+		?.tournament as TournamentData;
+	if (!args.data || !tournamentData) return [];
+
+	const team = tournamentData.ctx.teams.find(
+		(t) => t.id === args.data!.tournamentTeamId,
+	)!;
+	const teamLogoUrl = team.team?.logoUrl ?? team.pickupAvatarUrl;
+
+	return metaTags({
+		title: `${team.name} @ ${tournamentData.ctx.name}`,
+		description: `${team.name} roster (${team.members.map((m) => m.username).join(", ")}) and sets in ${tournamentData.ctx.name}.`,
+		image: teamLogoUrl
+			? {
+					url: userSubmittedImage(teamLogoUrl),
+					dimensions: { width: 124, height: 124 },
+				}
+			: undefined,
+		location: args.location,
+	});
+};
+
+export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const tournamentId = tournamentIdFromParams(params);
 	const tournamentTeamId = parseParams({
 		params,
 		schema: tournamentTeamPageParamsSchema,
 	}).tid;
 
+	const tournament = await tournamentDataCached({ tournamentId });
+	if (
+		!tournament ||
+		!tournament.ctx.teams.some((t) => t.id === tournamentTeamId)
+	) {
+		throw new Response(null, { status: 404 });
+	}
+
+	// TODO: could be inferred from tournament data (winCounts too)
 	const sets = tournamentTeamSets({ tournamentTeamId, tournamentId });
 
 	return {
 		tournamentTeamId,
 		sets,
-		// TODO: could be inferred from tournament data
 		winCounts: winCounts(sets),
 	};
 };
@@ -51,10 +86,7 @@ export default function TournamentTeamPage() {
 	const teamIndex = tournament.ctx.teams.findIndex(
 		(t) => t.id === data.tournamentTeamId,
 	);
-	const team = tournament.teamById(data.tournamentTeamId);
-	if (!team) {
-		return <Redirect to={tournamentPage(tournament.ctx.id)} />;
-	}
+	const team = tournament.teamById(data.tournamentTeamId)!;
 
 	return (
 		<div className="stack lg">

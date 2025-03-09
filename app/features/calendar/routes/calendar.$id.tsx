@@ -30,7 +30,6 @@ import {
 	tournamentManagerData,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import { i18next } from "~/modules/i18n/i18next.server";
 import {
 	canDeleteCalendarEvent,
 	canEditCalendarEvent,
@@ -39,10 +38,9 @@ import {
 import { databaseTimestampToDate } from "~/utils/dates";
 import {
 	type SendouRouteHandle,
+	errorToastIfFalsy,
 	notFoundIfFalsy,
-	validate,
 } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import {
 	CALENDAR_PAGE,
 	calendarEditPage,
@@ -55,6 +53,7 @@ import {
 	userPage,
 } from "~/utils/urls";
 import { actualNumber, id } from "~/utils/zod";
+import { metaTags } from "../../../utils/remix";
 import { Tags } from "../components/Tags";
 
 import "~/styles/calendar-event.css";
@@ -70,17 +69,18 @@ export const action: ActionFunction = async ({ params, request }) => {
 	);
 
 	if (event.tournamentId) {
-		validate(
+		errorToastIfFalsy(
 			tournamentManagerData(event.tournamentId).stage.length === 0,
 			"Tournament has already started",
 		);
 	} else {
-		validate(
+		errorToastIfFalsy(
 			canDeleteCalendarEvent({
 				user,
 				event,
 				startTime: databaseTimestampToDate(event.startTimes[0]),
 			}),
+			"Cannot delete event",
 		);
 	}
 
@@ -103,10 +103,13 @@ export const meta: MetaFunction = (args) => {
 
 	if (!data) return [];
 
-	return [
-		{ title: data.title },
-		{ name: "description", content: data.event.description },
-	];
+	return metaTags({
+		title: data.event.name,
+		location: args.location,
+		description:
+			data.event.description ??
+			`Splatoon competitive event hosted on ${resolveBaseUrl(data.event.bracketUrl)}`,
+	});
 };
 
 export const handle: SendouRouteHandle = {
@@ -131,8 +134,7 @@ export const handle: SendouRouteHandle = {
 	},
 };
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const t = await i18next.getFixedT(request);
+export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const parsedParams = z
 		.object({ id: z.preprocess(actualNumber, id) })
 		.parse(params);
@@ -150,7 +152,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 	return {
 		event,
-		title: makeTitle([event.name, t("pages.calendar")]),
 		results: await CalendarRepository.findResultsByEventId(parsedParams.id),
 	};
 };

@@ -18,9 +18,9 @@ import {
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
 import {
+	errorToastIfFalsy,
 	notFoundIfFalsy,
 	parseRequestPayload,
-	validate,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { tournamentPage, userEditProfilePage } from "~/utils/urls";
@@ -52,16 +52,16 @@ export const action: ActionFunction = async ({ request, params }) => {
 	);
 
 	if (tournament.hasStarted) {
-		validate(
+		errorToastIfFalsy(
 			!previousTeam || previousTeam.checkIns.length === 0,
 			"Can't leave checked in team mid tournament",
 		);
-		validate(tournament.autonomousSubs, "Subs are not allowed");
+		errorToastIfFalsy(tournament.autonomousSubs, "Subs are not allowed");
 	} else {
-		validate(tournament.registrationOpen, "Registration is closed");
+		errorToastIfFalsy(tournament.registrationOpen, "Registration is closed");
 	}
-	validate(teamToJoin, "Not team of this tournament");
-	validate(
+	errorToastIfFalsy(teamToJoin, "Not team of this tournament");
+	errorToastIfFalsy(
 		validateCanJoin({
 			inviteCode,
 			teamToJoin,
@@ -70,7 +70,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		}) === "VALID",
 		"Cannot join this team or invite code is invalid",
 	);
-	validate(
+	errorToastIfFalsy(
 		(await UserRepository.findLeanById(user.id))?.friendCode,
 		"No friend code",
 	);

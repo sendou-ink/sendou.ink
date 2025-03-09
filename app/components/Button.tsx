@@ -71,8 +71,8 @@ type LinkButtonProps = Pick<
 > &
 	Pick<LinkProps, "to" | "prefetch" | "preventScrollReset"> & {
 		"data-cy"?: string;
-	} & {
 		isExternal?: boolean;
+		onClick?: () => void;
 	};
 
 export function LinkButton({
@@ -86,6 +86,7 @@ export function LinkButton({
 	testId,
 	icon,
 	preventScrollReset,
+	onClick,
 }: LinkButtonProps) {
 	if (isExternal) {
 		return (
@@ -100,6 +101,7 @@ export function LinkButton({
 				data-testid={testId}
 				target="_blank"
 				rel="noreferrer"
+				onClick={onClick}
 			>
 				{icon &&
 					React.cloneElement(icon, {

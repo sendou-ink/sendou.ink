@@ -4,6 +4,7 @@ import { USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN } from "~/features/mmr/mmr-c
 import { spToOrdinal } from "~/features/mmr/mmr-utils";
 import { currentOrPreviousSeason, currentSeason } from "~/features/mmr/season";
 import { freshUserSkills, userSkills } from "~/features/mmr/tiered.server";
+import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists";
 import { weaponCategories } from "~/modules/in-game-lists";
 import { cache, ttl } from "~/utils/cache.server";
@@ -31,7 +32,10 @@ export async function cachedFullUserLeaderboard(season: number) {
 				season === currentSeason(new Date())?.nth &&
 				leaderboard.length >= USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN;
 			const withPendingPlusTiers = shouldAddPendingPlusTier
-				? addPendingPlusTiers(withTiers)
+				? addPendingPlusTiers(
+						withTiers,
+						await PlusVotingRepository.allPlusTiersFromLatestVoting(),
+					)
 				: withTiers;
 
 			return addWeapons(withPendingPlusTiers, seasonPopularUsersWeapon(season));
@@ -70,6 +74,10 @@ const PLUS_TIER_QUOTA = {
 } as const;
 export function addPendingPlusTiers<T extends UserSPLeaderboardItem>(
 	entries: T[],
+	plusTiers: Array<{
+		userId: number;
+		tier: number;
+	}>,
 ) {
 	const quota: { "+1": number; "+2": number; "+3": number } = {
 		...PLUS_TIER_QUOTA,
@@ -87,7 +95,9 @@ export function addPendingPlusTiers<T extends UserSPLeaderboardItem>(
 		const highestPlusTierWithSpace = resolveHighestPlusTierWithSpace();
 		if (!highestPlusTierWithSpace) break;
 
-		if (entry.plusTier && entry.plusTier <= highestPlusTierWithSpace) continue;
+		const plusTier = plusTiers.find((t) => t.userId === entry.id)?.tier;
+
+		if (plusTier && plusTier <= highestPlusTierWithSpace) continue;
 		if (
 			entry.plusSkippedForSeasonNth === currentOrPreviousSeason(new Date())?.nth
 		) {

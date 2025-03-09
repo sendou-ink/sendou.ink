@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
 	_action,
+	checkboxValueToBoolean,
 	id,
 	modeShort,
 	nullLiteraltoNull,
@@ -108,7 +109,7 @@ const tournamentRoundMaps = z.object({
 			}),
 		)
 		.nullish(),
-	count: numericEnum([1, 3, 5, 7]),
+	count: numericEnum(TOURNAMENT.AVAILABLE_BEST_OF),
 	type: z.enum(["BEST_OF", "PLAY_ALL"]),
 	pickBan: z.enum(["COUNTERPICK", "BAN_2"]).nullish(),
 });
@@ -117,12 +118,14 @@ export const bracketSchema = z.union([
 	z.object({
 		_action: _action("START_BRACKET"),
 		bracketIdx,
+		thirdPlaceMatchLinked: z.preprocess(checkboxValueToBoolean, z.boolean()),
 		maps: z.preprocess(safeJSONParse, z.array(tournamentRoundMaps)),
 	}),
 	z.object({
 		_action: _action("PREPARE_MAPS"),
 		bracketIdx,
 		maps: z.preprocess(safeJSONParse, z.array(tournamentRoundMaps)),
+		thirdPlaceMatchLinked: z.preprocess(checkboxValueToBoolean, z.boolean()),
 		eliminationTeamCount: z.coerce
 			.number()
 			.optional()

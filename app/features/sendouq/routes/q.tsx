@@ -35,10 +35,9 @@ import { joinListToNaturalString } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import {
 	type SendouRouteHandle,
+	errorToastIfFalsy,
 	parseRequestPayload,
-	validate,
 } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import {
 	LEADERBOARDS_PAGE,
@@ -67,8 +66,8 @@ import { addMember } from "../queries/addMember.server";
 import { deleteLikesByGroupId } from "../queries/deleteLikesByGroupId.server";
 import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
 import { findGroupByInviteCode } from "../queries/findGroupByInviteCode.server";
-
 import "../q.css";
+import { metaTags } from "~/utils/remix";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
@@ -79,25 +78,23 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export const meta: MetaFunction = () => {
-	return [
-		{ title: makeTitle("SendouQ") },
-		{
-			name: "description",
-			content:
-				"Splatoon 3 competitive ladder. Join by yourself or with your team and play ranked matches.",
-		},
-	];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "SendouQ",
+		description:
+			"Splatoon 3 competitive ladder. Join by yourself or with your team and play ranked matches.",
+		location: args.location,
+	});
 };
 
 const validateCanJoinQ = async (user: { id: number; discordId: string }) => {
 	const friendCode = await UserRepository.currentFriendCodeByUserId(user.id);
-	validate(friendCode, "No friend code");
+	errorToastIfFalsy(friendCode, "No friend code");
 	const canJoinQueue = userCanJoinQueueAt(user, friendCode) === "NOW";
 
-	validate(currentSeason(new Date()), "Season is not active");
-	validate(!findCurrentGroupByUserId(user.id), "Already in a group");
-	validate(canJoinQueue, "Can't join queue right now");
+	errorToastIfFalsy(currentSeason(new Date()), "Season is not active");
+	errorToastIfFalsy(!findCurrentGroupByUserId(user.id), "Already in a group");
+	errorToastIfFalsy(canJoinQueue, "Can't join queue right now");
 };
 
 export const action: ActionFunction = async ({ request }) => {
@@ -130,8 +127,14 @@ export const action: ActionFunction = async ({ request }) => {
 
 			const groupInvitedTo =
 				code && user ? findGroupByInviteCode(code) : undefined;
-			validate(groupInvitedTo, "Invite code doesn't match any active team");
-			validate(groupInvitedTo.members.length < FULL_GROUP_SIZE, "Team is full");
+			errorToastIfFalsy(
+				groupInvitedTo,
+				"Invite code doesn't match any active team",
+			);
+			errorToastIfFalsy(
+				groupInvitedTo.members.length < FULL_GROUP_SIZE,
+				"Team is full",
+			);
 
 			sql.transaction(() => {
 				addMember({
@@ -159,7 +162,7 @@ export const action: ActionFunction = async ({ request }) => {
 			);
 		}
 		case "ADD_FRIEND_CODE": {
-			validate(
+			errorToastIfFalsy(
 				!(await UserRepository.currentFriendCodeByUserId(user.id)),
 				"Friend code already set",
 			);

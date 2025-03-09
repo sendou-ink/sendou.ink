@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { add } from "date-fns";
+import { add, sub } from "date-fns";
 import capitalize from "just-capitalize";
 import shuffle from "just-shuffle";
 import { nanoid } from "nanoid";
@@ -12,6 +12,8 @@ import { persistedTags } from "~/features/calendar/calendar-constants";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
+import type { Notification } from "~/features/notifications/notifications-types";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import {
@@ -172,6 +174,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	friendCodes,
 	lfgPosts,
 	scrimPosts,
+	notifications,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -223,6 +226,8 @@ function wipeDB() {
 		"XRankPlacement",
 		"SplatoonPlayer",
 		"UserFriendCode",
+		"NotificationUser",
+		"Notification",
 		"User",
 		"PlusSuggestion",
 		"PlusVote",
@@ -560,7 +565,7 @@ async function lastMonthSuggestions() {
 }
 
 async function thisMonthsSuggestions() {
-	const usersInPlus = (await UserRepository.findAllPlusMembers()).filter(
+	const usersInPlus = (await UserRepository.findAllPlusServerMembers()).filter(
 		(u) => u.id !== ADMIN_ID,
 	);
 	const range = nextNonCompletedVoting(new Date());
@@ -643,7 +648,12 @@ function badgesToUsers() {
 			});
 			i++
 		) {
-			const userToGetABadge = userIds.shift()!;
+			let userToGetABadge = userIds.shift()!;
+			if (userToGetABadge === NZAP_TEST_ID && id === 1) {
+				// e2e test assumes N-ZAP does not have badge id = 1
+				userToGetABadge = userIds.shift()!;
+			}
+
 			sql
 				.prepare(
 					`insert into "TournamentBadgeOwner" ("badgeId", "userId") values ($id, $userId)`,
@@ -913,15 +923,14 @@ function calendarEventWithToTools(
 							type: "swiss",
 							name: "Swiss",
 							requiresCheckIn: false,
-							settings: {},
+							settings: {
+								groupCount: 2,
+								roundCount: 4,
+							},
 						},
 					],
 					enableNoScreenToggle: true,
 					isRanked: false,
-					swiss: {
-						groupCount: 2,
-						roundCount: 4,
-					},
 				}
 			: event === "SOS"
 				? {
@@ -2277,6 +2286,7 @@ async function lfgPosts() {
 	});
 }
 
+// xxx: for admin one booked and some requests for another
 async function scrimPosts() {
 	const allUsers = userIdsInRandomOrder(true);
 
@@ -2351,7 +2361,112 @@ async function scrimPosts() {
 			visibility: null,
 			users: users(),
 		});
+	}
+}
 
-		// xxx: for admin one booked and some requests for another
+async function notifications() {
+	const values: Notification[] = [
+		{
+			type: "PLUS_SUGGESTION_ADDED",
+			meta: { tier: 1 },
+		},
+		{
+			type: "SEASON_STARTED",
+			meta: { seasonNth: 1 },
+		},
+		{
+			type: "TO_ADDED_TO_TEAM",
+			meta: {
+				adderUsername: "N-ZAP",
+				teamName: "Chimera",
+				tournamentId: 1,
+				tournamentName: "PICNIC #2",
+				tournamentTeamId: 1,
+			},
+		},
+		{
+			type: "TO_BRACKET_STARTED",
+			meta: {
+				tournamentId: 1,
+				tournamentName: "PICNIC #2",
+				bracketIdx: 0,
+				bracketName: "Groups Stage",
+			},
+		},
+		{
+			type: "BADGE_ADDED",
+			meta: { badgeName: "In The Zone 20-29", badgeId: 39 },
+		},
+		{
+			type: "TAGGED_TO_ART",
+			meta: {
+				adderUsername: "N-ZAP",
+				adderDiscordId: NZAP_TEST_DISCORD_ID,
+				artId: 1, // does not exist
+			},
+		},
+		{
+			type: "SQ_ADDED_TO_GROUP",
+			meta: { adderUsername: "N-ZAP" },
+		},
+		{
+			type: "SQ_NEW_MATCH",
+			meta: { matchId: 100 },
+		},
+		{
+			type: "PLUS_VOTING_STARTED",
+			meta: { seasonNth: 1 },
+		},
+		{
+			type: "TO_CHECK_IN_OPENED",
+			meta: { tournamentId: 1, tournamentName: "PICNIC #2" },
+			pictureUrl:
+				"http://localhost:5173/static-assets/img/tournament-logos/pn.png",
+		},
+	];
+
+	for (const [i, value] of values.entries()) {
+		await NotificationRepository.insert(value, [
+			{
+				userId: ADMIN_ID,
+				seen: i <= 7 ? 1 : 0,
+			},
+		]);
+		await NotificationRepository.insert(value, [
+			{
+				userId: NZAP_TEST_ID,
+				seen: i <= 7 ? 1 : 0,
+			},
+		]);
+	}
+
+	const createdAts = [
+		sub(new Date(), { days: 10 }),
+		sub(new Date(), { days: 8 }),
+		sub(new Date(), { days: 5, hours: 2 }),
+		sub(new Date(), { days: 4, minutes: 30 }),
+		sub(new Date(), { days: 3, hours: 2 }),
+		sub(new Date(), { days: 3, hours: 1, minutes: 10 }),
+		sub(new Date(), { days: 2, hours: 5 }),
+		sub(new Date(), { minutes: 10 }),
+		sub(new Date(), { minutes: 5 }),
+	];
+
+	invariant(
+		values.length - 1 === createdAts.length,
+		"values and createdAts length mismatch",
+	);
+
+	for (let i = 0; i < values.length - 1; i++) {
+		sql
+			.prepare(/* sql */ `
+		update "Notification"
+		set "createdAt" = @createdAt
+		where "id" = @id
+	`)
+			.run({
+				createdAt: dateToDatabaseTimestamp(createdAts[i]),
+				id: i + 1,
+			});
 	}
 }

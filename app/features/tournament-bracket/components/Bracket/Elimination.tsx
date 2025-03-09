@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { TOURNAMENT } from "../../../tournament/tournament-constants";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import { getRounds } from "../../core/rounds";
 import { Match } from "./Match";
@@ -72,11 +73,13 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 									match={match}
 									roundNumber={round.number}
 									isPreview={props.bracket.preview}
-									showSimulation={round.name !== "Bracket Reset"}
+									showSimulation={
+										round.name !== TOURNAMENT.ROUND_NAMES.BRACKET_RESET
+									}
 									bracket={props.bracket}
 									type={
-										round.name === "Grand Finals" ||
-										round.name === "Bracket Reset"
+										round.name === TOURNAMENT.ROUND_NAMES.GRAND_FINALS ||
+										round.name === TOURNAMENT.ROUND_NAMES.BRACKET_RESET
 											? "grands"
 											: props.type === "winners"
 												? "winners"

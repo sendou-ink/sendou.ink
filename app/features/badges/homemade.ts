@@ -15,6 +15,101 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Tristrike Tuesday",
+		fileName: "tristriked3",
+		authorDiscordId: "789943264370884708",
+	},
+	{
+		displayName: "Sylveon",
+		fileName: "slyeion",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Triton-Cup 100",
+		fileName: "tritongold-1",
+		authorDiscordId: "335179210878353409",
+	},
+	{
+		displayName: "GatorLAN - Side of Salmon",
+		fileName: "gatorlan_salmon_1st",
+		authorDiscordId: "285504780154044416",
+	},
+	{
+		displayName: "Gardevoir",
+		fileName: "krakenmarepoke",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Shiny Gardevoir",
+		fileName: "krakenmarepokeshiny",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Reach",
+		fileName: "reachbadge",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Banning Legends",
+		fileName: "noentrygold",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Banning Legends 2nd",
+		fileName: "noentrysilver",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Banning Legends 3rd",
+		fileName: "noentrybronze",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Weapon Lockdown",
+		fileName: "octoshot",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Tony Tony Challenge",
+		fileName: "tonytonyc",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "A41 GG Gold Bracket",
+		fileName: "newa41gggold",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "A41 GG Silver Bracket",
+		fileName: "newa41ggsilver",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "A41 GG Bronze Bracket",
+		fileName: "newa41ggbronze",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "A41 GG Iron Bracket",
+		fileName: "newa41ggiron",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "MIKU MIKU BEAM!!! Rotten Edition",
+		fileName: "rottenmiku",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "MIKU MIKU BEAM!!! Sakura Edition",
+		fileName: "sakuramiku",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Inkstrike Invitational",
+		fileName: "inkstrikeinv",
+		authorDiscordId: "789943264370884708",
+	},
+	{
 		displayName: "All 4 One: Clam Blitz",
 		fileName: "newa41cb",
 		authorDiscordId: "338806780446638082",
@@ -70,7 +165,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "338806780446638082",
 	},
 	{
-		displayName: "Hatsune Miku",
+		displayName: "MIKU MIKU BEAM!!!",
 		fileName: "hatsunemiku",
 		authorDiscordId: "338806780446638082",
 	},
@@ -85,7 +180,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "338806780446638082",
 	},
 	{
-		displayName: "BrushMommy's Birthday Bash",
+		displayName: "Golden Brush Award",
 		fileName: "goldenbrush",
 		authorDiscordId: "338806780446638082",
 	},
@@ -160,7 +255,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "528851510222782474",
 	},
 	{
-		displayName: "Tristrike Tuesday",
+		displayName: "Tristrike Tuesday (D5 CAPPED)",
 		fileName: "tristriketuesday",
 		authorDiscordId: "789943264370884708",
 	},
@@ -618,5 +713,135 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Mesozoic Mayhem: Dreadnoughtus Undefeated",
 		fileName: "dreadnoughtus",
 		authorDiscordId: "352207524390240257",
+	},
+	{
+		displayName: "The Jauntlet",
+		fileName: "jauntlet",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Barnacle Bash",
+		fileName: "barnacle-bash",
+		authorDiscordId: "181270348262539265",
+	},
+	{
+		displayName: "A Splatoon Brazil Tournament",
+		fileName: "brflgx",
+		authorDiscordId: "701870845550657677",
+	},
+	{
+		displayName: "Turf War Tomatoes",
+		fileName: "saladbowl_tomato",
+		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "Eggs and Salad: Birthday Edition",
+		fileName: "birthday_cake",
+		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "Wheel of Names",
+		fileName: "ferris_wheel",
+		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "Revo'Cup",
+		fileName: "revocup",
+		authorDiscordId: "309327923129745409",
+	},
+	{
+		displayName: "Soul League (Div 1)",
+		fileName: "soulcupgold",
+		authorDiscordId: "309327923129745409",
+	},
+	{
+		displayName: "Soul League (Other Div)",
+		fileName: "soulcupsilver",
+		authorDiscordId: "309327923129745409",
+	},
+	{
+		displayName: "Level Up x2 - Leveled Up!",
+		fileName: "gyra",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Level Up: Shiny Hunt x2 - Leveled Up!",
+		fileName: "shinygyra",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "New Game +",
+		fileName: "new-game-plus",
+		authorDiscordId: "216653023252840449",
+	},
+	{
+		displayName: "Twisted Toe",
+		fileName: "twistedtoe",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName: "TOECAR",
+		fileName: "toecar",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName: "CoffeeCup",
+		fileName: "coffeecup",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName: "Good Morning Chat",
+		fileName: "gator",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Clutch United Squid Storm LAN Tournament",
+		fileName: "clutch_united",
+		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "Re Al",
+		fileName: "real",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Blue Lock",
+		fileName: "bluelock",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "FULLWIPE LAN",
+		fileName: "fullwipe",
+		authorDiscordId: "570323825669963972",
+	},
+	{
+		displayName: "FULLWIPE LAN (2nd)",
+		fileName: "fullwipe_silver",
+		authorDiscordId: "570323825669963972",
+	},
+	{
+		displayName: "FULLWIPE LAN (3rd)",
+		fileName: "fullwipe_bronze",
+		authorDiscordId: "570323825669963972",
+	},
+	{
+		displayName: "Torneo Crab Cancel Perfect and Shadow",
+		fileName: "crab_tank",
+		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "Anarchy Adventures",
+		fileName: "s50badge",
+		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "[OMD] Bingo Club",
+		fileName: "bingo-club",
+		authorDiscordId: "751912670403362836",
+	},
+	{
+		displayName: "Florida Collegiate Draft Cup",
+		fileName: "FLcollegiate",
+		authorDiscordId: "285504780154044416",
 	},
 ];

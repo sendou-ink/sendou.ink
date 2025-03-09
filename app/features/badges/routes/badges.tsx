@@ -1,4 +1,4 @@
-import type { SerializeFrom } from "@remix-run/node";
+import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import { NavLink, Outlet, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -10,6 +10,7 @@ import { SearchIcon } from "~/components/icons/Search";
 import { useUser } from "~/features/auth/core/user";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { BADGES_DOC_LINK, BADGES_PAGE, navIconUrl } from "~/utils/urls";
+import { metaTags } from "../../../utils/remix";
 import * as BadgeRepository from "../BadgeRepository.server";
 
 import "~/styles/badges.css";
@@ -21,6 +22,16 @@ export const handle: SendouRouteHandle = {
 		href: BADGES_PAGE,
 		type: "IMAGE",
 	}),
+};
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Badges",
+		ogTitle: "Splatoon badges (tournament prizes list)",
+		location: args.location,
+		description:
+			"Over 400 badge tournament prizes and counting! Check out the full list including the owners.",
+	});
 };
 
 export type BadgesLoaderData = SerializeFrom<typeof loader>;
@@ -78,22 +89,28 @@ export default function BadgesPageLayout() {
 						</div>
 					</div>
 				) : null}
-				<div className="w-full">
-					<div className="badges__small-badges">
-						{ownBadges.length > 0 ? (
-							<Divider smallText>{t("badges:other.divider")}</Divider>
-						) : null}
-						{otherBadges.map((badge) => (
-							<NavLink
-								className="badges__nav-link"
-								key={badge.id}
-								to={String(badge.id)}
-							>
-								<Badge badge={badge} size={64} isAnimated={false} />
-							</NavLink>
-						))}
+				{ownBadges.length > 0 || otherBadges.length > 0 ? (
+					<div className="w-full">
+						<div className="badges__small-badges">
+							{ownBadges.length > 0 ? (
+								<Divider smallText>{t("badges:other.divider")}</Divider>
+							) : null}
+							{otherBadges.map((badge) => (
+								<NavLink
+									className="badges__nav-link"
+									key={badge.id}
+									to={String(badge.id)}
+								>
+									<Badge badge={badge} size={64} isAnimated={false} />
+								</NavLink>
+							))}
+						</div>
 					</div>
-				</div>
+				) : (
+					<div className="text-lg font-bold my-24">
+						{t("badges:noBadgesFound")}
+					</div>
+				)}
 			</div>
 			<div className="badges__general-info-texts">
 				<p>

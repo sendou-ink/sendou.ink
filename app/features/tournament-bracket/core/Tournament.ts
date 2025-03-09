@@ -25,7 +25,7 @@ import { assertUnreachable } from "~/utils/types";
 import { userSubmittedImage } from "~/utils/urls";
 import {
 	fillWithNullTillPowerOfTwo,
-	groupNumberToLetter,
+	groupNumberToLetters,
 } from "../tournament-bracket-utils";
 import { Bracket } from "./Bracket";
 import * as Swiss from "./Swiss";
@@ -274,27 +274,31 @@ export class Tournament {
 				allRelevantMatchesFinished = false;
 			}
 
-			const excludedOverridenTeams = sourcedTeams.filter(
+			// exclude teams that would be going to this bracket according
+			// to the bracket progression rules, but have been overridden
+			// by the TO to go somewhere else or get eliminated (in the case of destinationBracketIdx = -1)
+			const withOverriddenTeamsExcluded = sourcedTeams.filter(
 				(teamId) =>
 					!this.ctx.bracketProgressionOverrides.some(
 						(override) =>
 							override.sourceBracketIdx === source.bracketIdx &&
 							override.tournamentTeamId === teamId &&
-							// "no progression" override
-							override.destinationBracketIdx !== -1 &&
-							// redundant override
 							override.destinationBracketIdx !== bracketIdx,
 					),
 			);
 
-			teams.push(...excludedOverridenTeams);
+			teams.push(...withOverriddenTeamsExcluded);
 		}
 
 		const teamsFromOverride: { id: number; sourceBracketIdx: number }[] = [];
 		for (const source of sources) {
 			for (const override of this.ctx.bracketProgressionOverrides) {
-				if (override.sourceBracketIdx !== source.bracketIdx) continue;
-				if (override.destinationBracketIdx !== bracketIdx) continue;
+				if (
+					override.sourceBracketIdx !== source.bracketIdx ||
+					override.destinationBracketIdx !== bracketIdx
+				) {
+					continue;
+				}
 
 				teamsFromOverride.push({
 					id: override.tournamentTeamId,
@@ -572,8 +576,7 @@ export class Tournament {
 				return {
 					consolationFinal:
 						selectedSettings?.thirdPlaceMatch ??
-						this.ctx.settings.thirdPlaceMatch ??
-						true,
+						TOURNAMENT.SE_DEFAULT_HAS_THIRD_PLACE_MATCH,
 				};
 			}
 			case "double_elimination": {
@@ -584,14 +587,11 @@ export class Tournament {
 			case "round_robin": {
 				const teamsPerGroup =
 					selectedSettings?.teamsPerGroup ??
-					this.ctx.settings.teamsPerGroup ??
-					TOURNAMENT.DEFAULT_TEAM_COUNT_PER_RR_GROUP;
+					TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP;
 
 				return {
 					groupCount: Math.ceil(participantsCount / teamsPerGroup),
-					seedOrdering: [
-						this.isLeagueDivision ? "natural" : "groups.seed_optimized",
-					],
+					seedOrdering: ["groups.seed_optimized"],
 				};
 			}
 			case "swiss": {
@@ -602,7 +602,10 @@ export class Tournament {
 									groupCount: selectedSettings.groupCount,
 									roundCount: selectedSettings.roundCount,
 								}
-							: this.ctx.settings.swiss,
+							: {
+									groupCount: TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT,
+									roundCount: TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+								},
 				};
 			}
 			default: {
@@ -684,11 +687,11 @@ export class Tournament {
 
 	resolvePoolCode({
 		hostingTeamId,
-		groupLetter,
+		groupLetters,
 		bracketNumber,
 	}: {
 		hostingTeamId: number;
-		groupLetter?: string;
+		groupLetters?: string;
 		bracketNumber?: number;
 	}) {
 		const tournamentNameWithoutOnlyLetters = this.ctx.name.replace(
@@ -716,7 +719,7 @@ export class Tournament {
 		return {
 			prefix,
 			suffix:
-				globalSuffix ?? groupLetter ?? bracketNumber ?? hostingTeamId % 10,
+				globalSuffix ?? groupLetters ?? bracketNumber ?? hostingTeamId % 10,
 		};
 	}
 
@@ -833,18 +836,21 @@ export class Tournament {
 		invariant(team, "Team not found");
 
 		if (!this.regularCheckInIsOpen && !this.regularCheckInHasEnded) {
-			return false;
+			return { isFulfilled: false, reason: "Check in has not yet started" };
 		}
 
 		if (team.members.length < this.minMembersPerTeam) {
-			return false;
+			return {
+				isFulfilled: false,
+				reason: `Team needs at least ${this.minMembersPerTeam} members`,
+			};
 		}
 
 		if (this.teamsPrePickMaps && (!team.mapPool || team.mapPool.length === 0)) {
-			return false;
+			return { isFulfilled: false, reason: "Team has no map pool set" };
 		}
 
-		return true;
+		return { isFulfilled: true, reason: null };
 	}
 
 	get isInvitational() {
@@ -871,6 +877,11 @@ export class Tournament {
 		if (this.minMembersPerTeam !== 4) return this.minMembersPerTeam;
 
 		if (this.isLeagueSignup || this.isLeagueDivision) return 8;
+
+		// TODO: retire this hack by making it user configurable
+		if (this.ctx.organization?.id === 19 && this.ctx.name.includes("FLUTI")) {
+			return 8;
+		}
 
 		const maxMembersBeforeStart = 6;
 
@@ -951,7 +962,7 @@ export class Tournament {
 							(round) => round.id === match.round_id,
 						);
 
-						roundName = `Groups ${group?.number ? groupNumberToLetter(group.number) : ""}${round?.number ?? ""}.${match.number}`;
+						roundName = `Groups ${group?.number ? groupNumberToLetters(group.number) : ""}${round?.number ?? ""}.${match.number}`;
 					} else if (bracket.type === "swiss") {
 						const group = bracket.data.group.find(
 							(group) => group.id === match.group_id,
@@ -962,7 +973,7 @@ export class Tournament {
 
 						const oneGroupOnly = bracket.data.group.length === 1;
 
-						roundName = `Swiss${oneGroupOnly ? "" : " Group"} ${group?.number && !oneGroupOnly ? groupNumberToLetter(group.number) : ""} ${round?.number ?? ""}.${match.number}`;
+						roundName = `Swiss${oneGroupOnly ? "" : " Group"} ${group?.number && !oneGroupOnly ? groupNumberToLetters(group.number) : ""} ${round?.number ?? ""}.${match.number}`;
 					} else if (
 						bracket.type === "single_elimination" ||
 						bracket.type === "double_elimination"
@@ -984,14 +995,14 @@ export class Tournament {
 							const specifier = () => {
 								if (
 									[
-										"WB Finals",
-										"Grand Finals",
-										"Bracket Reset",
-										"Finals",
-										"LB Finals",
-										"LB Semis",
-										"3rd place match",
-									].includes(round.name)
+										TOURNAMENT.ROUND_NAMES.WB_FINALS,
+										TOURNAMENT.ROUND_NAMES.GRAND_FINALS,
+										TOURNAMENT.ROUND_NAMES.BRACKET_RESET,
+										TOURNAMENT.ROUND_NAMES.FINALS,
+										TOURNAMENT.ROUND_NAMES.LB_FINALS,
+										TOURNAMENT.ROUND_NAMES.LB_SEMIS,
+										TOURNAMENT.ROUND_NAMES.THIRD_PLACE_MATCH,
+									].includes(round.name as any)
 								) {
 									return "";
 								}
@@ -1155,9 +1166,11 @@ export class Tournament {
 		}
 
 		if (team.checkIns.length === 0 && this.regularCheckInIsOpen) {
-			const canCheckIn = this.checkInConditionsFulfilledByTeamId(team.id);
-
-			return { type: "CHECKIN", canCheckIn } as const;
+			return {
+				type: "CHECKIN",
+				canCheckIn: this.checkInConditionsFulfilledByTeamId(team.id)
+					.isFulfilled,
+			} as const;
 		}
 
 		for (const [bracketIdx, bracket] of this.brackets.entries()) {

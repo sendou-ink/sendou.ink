@@ -17,23 +17,24 @@ import { NewTabs } from "~/components/NewTabs";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { getUser, requireUser } from "~/features/auth/core/user.server";
-import * as NotificationService from "~/features/chat/NotificationService.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { Chat, useChat } from "~/features/chat/components/Chat";
 import { currentOrPreviousSeason } from "~/features/mmr/season";
 import { userSkills } from "~/features/mmr/tiered.server";
+import { notify } from "~/features/notifications/core/notify.server";
 import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import { useAutoRefresh } from "~/hooks/useAutoRefresh";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useWindowSize } from "~/hooks/useWindowSize";
 import invariant from "~/utils/invariant";
+import { metaTags } from "~/utils/remix";
 import {
 	type SendouRouteHandle,
+	errorToastIfFalsy,
 	parseRequestPayload,
-	validate,
 } from "~/utils/remix.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
-import { makeTitle } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import {
 	SENDOUQ_LOOKING_PAGE,
@@ -95,8 +96,11 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export const meta: MetaFunction = () => {
-	return [{ title: makeTitle("SendouQ") }];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "SendouQ - Matchmaking",
+		location: args.location,
+	});
 };
 
 // this function doesn't throw normally because we are assuming
@@ -113,7 +117,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 	// this throws because there should normally be no way user loses ownership by the action of some other user
 	const validateIsGroupOwner = () =>
-		validate(currentGroup.role === "OWNER", "Not  owner");
+		errorToastIfFalsy(currentGroup.role === "OWNER", "Not  owner");
 	const isGroupManager = () =>
 		currentGroup.role === "MANAGER" || currentGroup.role === "OWNER";
 
@@ -137,7 +141,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 			const targetChatCode = chatCodeByGroupId(data.targetGroupId);
 			if (targetChatCode) {
-				NotificationService.notify({
+				ChatSystemMessage.send({
 					room: targetChatCode,
 					type: "LIKE_RECEIVED",
 					revalidateOnly: true,
@@ -156,7 +160,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 			const targetChatCode = chatCodeByGroupId(data.targetGroupId);
 			if (targetChatCode) {
-				NotificationService.notify({
+				ChatSystemMessage.send({
 					room: targetChatCode,
 					type: "LIKE_RECEIVED",
 					revalidateOnly: true,
@@ -221,7 +225,7 @@ export const action: ActionFunction = async ({ request }) => {
 			refreshGroup(survivingGroupId);
 
 			if (ourGroup.chatCode && theirGroup.chatCode) {
-				NotificationService.notify([
+				ChatSystemMessage.send([
 					{
 						room: ourGroup.chatCode,
 						type: "NEW_GROUP",
@@ -264,17 +268,20 @@ export const action: ActionFunction = async ({ request }) => {
 			);
 			if (!theirGroup) return null;
 
-			validate(
+			errorToastIfFalsy(
 				ourGroup.members.length === FULL_GROUP_SIZE,
-				"'ourGroup' is not full",
+				"Our group is not full",
 			);
-			validate(
+			errorToastIfFalsy(
 				theirGroup.members.length === FULL_GROUP_SIZE,
-				"'theirGroup' is not full",
+				"Their group is not full",
 			);
 
-			validate(!groupHasMatch(ourGroup.id), "Our group already has a match");
-			validate(
+			errorToastIfFalsy(
+				!groupHasMatch(ourGroup.id),
+				"Our group already has a match",
+			);
+			errorToastIfFalsy(
 				!groupHasMatch(theirGroup.id),
 				"Their group already has a match",
 			);
@@ -307,7 +314,7 @@ export const action: ActionFunction = async ({ request }) => {
 			});
 
 			if (ourGroup.chatCode && theirGroup.chatCode) {
-				NotificationService.notify([
+				ChatSystemMessage.send([
 					{
 						room: ourGroup.chatCode,
 						type: "MATCH_STARTED",
@@ -320,6 +327,20 @@ export const action: ActionFunction = async ({ request }) => {
 					},
 				]);
 			}
+
+			notify({
+				userIds: [
+					...ourGroup.members.map((m) => m.id),
+					...theirGroup.members.map((m) => m.id),
+				],
+				defaultSeenUserIds: [user.id],
+				notification: {
+					type: "SQ_NEW_MATCH",
+					meta: {
+						matchId: createdMatch.id,
+					},
+				},
+			});
 
 			throw redirect(sendouQMatchPage(createdMatch.id));
 		}
@@ -346,7 +367,10 @@ export const action: ActionFunction = async ({ request }) => {
 			break;
 		}
 		case "LEAVE_GROUP": {
-			validate(!currentGroup.matchId, "Can't leave group while in a match");
+			errorToastIfFalsy(
+				!currentGroup.matchId,
+				"Can't leave group while in a match",
+			);
 			let newOwnerId: number | null = null;
 			if (currentGroup.role === "OWNER") {
 				newOwnerId = groupSuccessorOwner(currentGroup.id);
@@ -361,7 +385,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 			const targetChatCode = chatCodeByGroupId(currentGroup.id);
 			if (targetChatCode) {
-				NotificationService.notify({
+				ChatSystemMessage.send({
 					room: targetChatCode,
 					type: "USER_LEFT",
 					context: { name: user.username },
@@ -372,7 +396,7 @@ export const action: ActionFunction = async ({ request }) => {
 		}
 		case "KICK_FROM_GROUP": {
 			validateIsGroupOwner();
-			validate(data.userId !== user.id, "Can't kick yourself");
+			errorToastIfFalsy(data.userId !== user.id, "Can't kick yourself");
 
 			leaveGroup({
 				groupId: currentGroup.id,

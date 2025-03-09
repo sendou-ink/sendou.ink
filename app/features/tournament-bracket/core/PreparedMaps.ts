@@ -56,6 +56,7 @@ const ELIMINATION_BRACKET_TEAM_RANGES = [
 	{ min: 17, max: 32 },
 	{ min: 33, max: 64 },
 	{ min: 65, max: 128 },
+	{ min: 129, max: 256 },
 ] as const;
 
 /** For single elimination and double elimination returns the amount of options that are the "steps" that affect the round count. Takes in currentCount as an argument, filtering out counts below that.  */

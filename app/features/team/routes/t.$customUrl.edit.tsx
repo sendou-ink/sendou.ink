@@ -13,7 +13,6 @@ import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
 import {
 	TEAM_SEARCH_PAGE,
 	navIconUrl,
@@ -25,13 +24,15 @@ import { loader } from "../loaders/t.$customUrl.edit.server";
 import { TEAM } from "../team-constants";
 import { canAddCustomizedColors, isTeamOwner } from "../team-utils";
 import "../team.css";
+import { metaTags } from "~/utils/remix";
 
 export { action, loader };
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-	if (!data) return [];
-
-	return [{ title: makeTitle(data.team.name) }];
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Editing team",
+		location: args.location,
+	});
 };
 
 export const handle: SendouRouteHandle = {

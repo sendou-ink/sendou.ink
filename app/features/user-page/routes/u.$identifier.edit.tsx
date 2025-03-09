@@ -41,6 +41,7 @@ import { rawSensToString } from "~/utils/strings";
 import { FAQ_PAGE, isCustomUrl, userPage } from "~/utils/urls";
 import {
 	actualNumber,
+	actuallyNonEmptyStringOrNull,
 	checkboxValueToDbBoolean,
 	customCssVarObject,
 	dbBoolean,
@@ -55,6 +56,7 @@ import { userParamsSchema } from "../user-page-schemas.server";
 import type { UserPageLoaderData } from "./u.$identifier";
 import "~/styles/u-edit.css";
 import { SendouSwitch } from "~/components/elements/Switch";
+import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 
 export const userEditActionSchema = z
 	.object({
@@ -86,13 +88,8 @@ export const userEditActionSchema = z
 				.nullable(),
 		),
 		customName: z.preprocess(
-			falsyToNull,
-			z
-				.string()
-				.trim()
-				.regex(USER.CUSTOM_NAME_REGEXP)
-				.max(USER.CUSTOM_NAME_MAX_LENGTH)
-				.nullable(),
+			actuallyNonEmptyStringOrNull,
+			z.string().max(USER.CUSTOM_NAME_MAX_LENGTH).nullable(),
 		),
 		battlefy: z.preprocess(
 			falsyToNull,
@@ -192,10 +189,15 @@ export const action: ActionFunction = async ({ request }) => {
 
 		// TODO: to transaction
 		if (inGameName) {
-			await TournamentTeamRepository.updateMemberInGameNameForNonStarted({
-				inGameName,
-				userId: user.id,
-			});
+			const tournamentIdsAffected =
+				await TournamentTeamRepository.updateMemberInGameNameForNonStarted({
+					inGameName,
+					userId: user.id,
+				});
+
+			for (const tournamentId of tournamentIdsAffected) {
+				clearTournamentDataCache(tournamentId);
+			}
 		}
 
 		throw redirect(userPage(editedUser));

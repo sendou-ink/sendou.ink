@@ -5,19 +5,16 @@ import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { tournamentData } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
-import { i18next } from "~/modules/i18n/i18next.server";
 import { canEditCalendarEvent } from "~/permissions";
-import { validate } from "~/utils/remix.server";
-import { makeTitle } from "~/utils/strings";
+import { unauthorizedIfFalsy } from "~/utils/remix.server";
 import { tournamentBracketsPage } from "~/utils/urls";
 import { canAddNewEvent } from "../calendar-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const t = await i18next.getFixedT(request);
 	const user = await requireUser(request);
 	const url = new URL(request.url);
 
-	validate(canAddNewEvent(user), "Not authorized", 401);
+	unauthorizedIfFalsy(canAddNewEvent(user));
 
 	const eventWithTournament = async (key: string) => {
 		const eventId = Number(url.searchParams.get(key));
@@ -87,9 +84,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			user.isTournamentOrganizer && !eventToEdit
 				? await CalendarRepository.findRecentTournamentsByAuthorId(user.id)
 				: undefined,
-		title: makeTitle([canEditEvent ? "Edit" : "New", t("pages.calendar")]),
-		organizations: await TournamentOrganizationRepository.findByOrganizerUserId(
-			user.id,
+		organizations: (
+			await TournamentOrganizationRepository.findByOrganizerUserId(user.id)
+		).concat(
+			eventToEdit?.tournament?.ctx.organization
+				? eventToEdit.tournament.ctx.organization
+				: [],
 		),
 	};
 };
