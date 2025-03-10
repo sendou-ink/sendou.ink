@@ -23,7 +23,7 @@ export async function plusTiersFromVotingAndLeaderboard() {
 }
 
 function fromLeaderboard(
-	newMembersFromVoting: Array<{ userId: number; tier: number }>,
+	newMembersFromVoting: Array<{ userId: number; plusTier: number }>,
 ) {
 	const now = new Date();
 	const lastCompletedSeason = previousSeason(now);
@@ -42,6 +42,7 @@ function fromLeaderboard(
 	const leaderboard = addPendingPlusTiers(
 		userSPLeaderboard(lastCompletedSeason.nth),
 		newMembersFromVoting,
+		lastCompletedSeason.nth,
 	);
 
 	return leaderboard.flatMap((entry) => {
@@ -49,7 +50,7 @@ function fromLeaderboard(
 
 		return {
 			userId: entry.id,
-			tier: entry.pendingPlusTier,
+			plusTier: entry.pendingPlusTier,
 		};
 	});
 }

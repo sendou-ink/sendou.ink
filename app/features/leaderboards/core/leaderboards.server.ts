@@ -2,9 +2,9 @@ import { cachified } from "@epic-web/cachified";
 import { HALF_HOUR_IN_MS } from "~/constants";
 import { USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN } from "~/features/mmr/mmr-constants";
 import { spToOrdinal } from "~/features/mmr/mmr-utils";
-import { currentOrPreviousSeason, currentSeason } from "~/features/mmr/season";
+import { currentSeason } from "~/features/mmr/season";
 import { freshUserSkills, userSkills } from "~/features/mmr/tiered.server";
-import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists";
 import { weaponCategories } from "~/modules/in-game-lists";
 import { cache, ttl } from "~/utils/cache.server";
@@ -34,7 +34,8 @@ export async function cachedFullUserLeaderboard(season: number) {
 			const withPendingPlusTiers = shouldAddPendingPlusTier
 				? addPendingPlusTiers(
 						withTiers,
-						await PlusVotingRepository.allPlusTiersFromLatestVoting(),
+						await UserRepository.findAllPlusServerMembers(),
+						season,
 					)
 				: withTiers;
 
@@ -76,8 +77,9 @@ export function addPendingPlusTiers<T extends UserSPLeaderboardItem>(
 	entries: T[],
 	plusTiers: Array<{
 		userId: number;
-		tier: number;
+		plusTier: number;
 	}>,
+	seasonNth: number,
 ) {
 	const quota: { "+1": number; "+2": number; "+3": number } = {
 		...PLUS_TIER_QUOTA,
@@ -95,12 +97,10 @@ export function addPendingPlusTiers<T extends UserSPLeaderboardItem>(
 		const highestPlusTierWithSpace = resolveHighestPlusTierWithSpace();
 		if (!highestPlusTierWithSpace) break;
 
-		const plusTier = plusTiers.find((t) => t.userId === entry.id)?.tier;
+		const plusTier = plusTiers.find((t) => t.userId === entry.id)?.plusTier;
 
 		if (plusTier && plusTier <= highestPlusTierWithSpace) continue;
-		if (
-			entry.plusSkippedForSeasonNth === currentOrPreviousSeason(new Date())?.nth
-		) {
+		if (entry.plusSkippedForSeasonNth === seasonNth) {
 			entry.plusSkippedForSeasonNth = null;
 			continue;
 		}
