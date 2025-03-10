@@ -39,17 +39,9 @@ export function TeamRosterInputs({
 	result?: Result;
 	revising?: boolean;
 }) {
-	const presentational = !revising && Boolean(result);
-
-	const data = useLoaderData<TournamentMatchLoaderData>();
 	const tournament = useTournament();
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: biome migration
-	React.useEffect(() => {
-		if (result) return;
-		setWinnerId(undefined);
-		setPoints([0, 0]);
-	}, [data, setWinnerId, setPoints, result]);
+	const presentational = !revising && Boolean(result);
 
 	const points =
 		typeof result?.opponentOnePoints === "number" &&
