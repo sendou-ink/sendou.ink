@@ -15,6 +15,11 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Magatama Turnabout",
+		fileName: "magatama",
+		authorDiscordId: "530722502603833346",
+	},
+	{
 		displayName: "Tristrike Tuesday",
 		fileName: "tristriked3",
 		authorDiscordId: "789943264370884708",
