@@ -211,7 +211,8 @@ export default function TournamentBracketsPage() {
 				</div>
 			) : null}
 			<div className="stack horizontal mb-4 sm justify-between items-center">
-				<TournamentTeamActions />
+				{/** TournamentTeamActions more confusing than helpful for leagues, for example might say "Waiting for match..." when previous match was rescheduled  */}
+				{!tournament.isLeagueDivision ? <TournamentTeamActions /> : null}
 				{showAddSubsButton ? (
 					// TODO: could also hide this when team is not in any bracket anymore
 					<AddSubsPopOver />
