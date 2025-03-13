@@ -23,9 +23,9 @@ import {
 	outlinedMainWeaponImageUrl,
 	weaponBuildPage,
 } from "~/utils/urls";
+import { metaTags } from "../../../utils/remix";
 import { popularBuilds } from "../build-stats-utils";
 import { abilitiesByWeaponId } from "../queries/abilitiesByWeaponId.server";
-import { metaTags } from "../../../utils/remix";
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.data) return [];

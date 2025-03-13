@@ -23,9 +23,9 @@ import {
 	outlinedMainWeaponImageUrl,
 	weaponBuildPage,
 } from "~/utils/urls";
+import { metaTags } from "../../../utils/remix";
 import { abilityPointCountsToAverages } from "../build-stats-utils";
 import { averageAbilityPoints } from "../queries/averageAbilityPoints.server";
-import { metaTags } from "../../../utils/remix";
 
 import "../build-stats.css";
 
