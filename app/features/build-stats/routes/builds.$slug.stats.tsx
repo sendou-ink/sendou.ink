@@ -1,5 +1,9 @@
 import { cachified } from "@epic-web/cachified";
-import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
+import type {
+	LoaderFunctionArgs,
+	MetaFunction,
+	SerializeFrom,
+} from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Ability } from "~/components/Ability";
@@ -21,11 +25,20 @@ import {
 } from "~/utils/urls";
 import { abilityPointCountsToAverages } from "../build-stats-utils";
 import { averageAbilityPoints } from "../queries/averageAbilityPoints.server";
+import { metaTags } from "../../../utils/remix";
 
 import "../build-stats.css";
 
-import { meta } from "../../builds/routes/builds.$slug";
-export { meta };
+export const meta: MetaFunction<typeof loader> = (args) => {
+	if (!args.data) return [];
+
+	return metaTags({
+		title: `${args.data.weaponName} popular abilities`,
+		ogTitle: `${args.data.weaponName} Splatoon 3 popular abilities`,
+		description: `List of the most popular abilities for ${args.data.weaponName} in Splatoon 3.`,
+		location: args.location,
+	});
+};
 
 export const handle: SendouRouteHandle = {
 	i18n: ["weapons", "builds", "analyzer"],
@@ -55,8 +68,10 @@ export const handle: SendouRouteHandle = {
 };
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const t = await i18next.getFixedT(request, ["builds"]);
+	const t = await i18next.getFixedT(request, ["builds", "weapons"]);
 	const weaponId = notFoundIfNullLike(weaponNameSlugToId(params.slug));
+
+	const weaponName = t(`weapons:MAIN_${weaponId}`);
 
 	const cachedStats = await cachified({
 		key: `build-stats-${weaponId}`,
@@ -72,6 +87,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 	return {
 		stats: cachedStats,
+		weaponName,
 		weaponId,
 		meta: {
 			slug: params.slug!,
