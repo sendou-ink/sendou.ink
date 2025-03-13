@@ -1,6 +1,5 @@
 import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
-import clone from "just-clone";
 import * as React from "react";
 import { Avatar } from "~/components/Avatar";
 import { Button } from "~/components/Button";
@@ -140,7 +139,7 @@ function _TeamRoster({
 		const didCancel = !editing;
 		if (didCancel) {
 			setCheckedPlayers?.((oldPlayers) => {
-				const newPlayers = clone(oldPlayers);
+				const newPlayers = structuredClone(oldPlayers);
 				newPlayers[idx] = activeRoster ?? [];
 				return newPlayers;
 			});
@@ -157,7 +156,7 @@ function _TeamRoster({
 	const onPointsChange = React.useCallback(
 		(newPoint: number) => {
 			setPoints((points) => {
-				const newPoints = clone(points);
+				const newPoints = structuredClone(points);
 				newPoints[idx] = newPoint;
 				return newPoints;
 			});
@@ -218,7 +217,7 @@ function _TeamRoster({
 					if (!setCheckedPlayers) return;
 
 					setCheckedPlayers((oldPlayers) => {
-						const newPlayers = clone(oldPlayers);
+						const newPlayers = structuredClone(oldPlayers);
 						if (oldPlayers[idx].includes(playerId)) {
 							newPlayers[idx] = newPlayers[idx].filter((id) => id !== playerId);
 						} else {

@@ -17,7 +17,6 @@ import type { ActionFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { Link, useFetcher, useNavigation } from "@remix-run/react";
 import clsx from "clsx";
-import clone from "just-clone";
 import * as React from "react";
 import { Alert } from "~/components/Alert";
 import { Button } from "~/components/Button";
@@ -161,7 +160,7 @@ export default function TournamentSeedsPage() {
 						type="button"
 						onClick={() => {
 							setTeamOrder(
-								clone(tournament.ctx.teams)
+								structuredClone(tournament.ctx.teams)
 									.sort(
 										(a, b) =>
 											(b.avgSeedingSkillOrdinal ?? Number.NEGATIVE_INFINITY) -

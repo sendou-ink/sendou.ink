@@ -1,6 +1,5 @@
 /** Map list generation logic for "TO pick" as in the map list is defined beforehand by TO and teams don't pick */
 
-import clone from "just-clone";
 import shuffle from "just-shuffle";
 import type { Tables, TournamentRoundMaps } from "~/db/tables";
 import type { Round } from "~/modules/brackets-model";
@@ -199,7 +198,7 @@ function modesWithSZBiased({
 	}
 
 	if (flavor === "SZ_FIRST" && modes.includes("SZ")) {
-		const result: ModeShort[] = clone(modes);
+		const result: ModeShort[] = structuredClone(modes);
 		const szIndex = result.indexOf("SZ");
 		result.splice(szIndex, 1);
 		result.unshift("SZ");

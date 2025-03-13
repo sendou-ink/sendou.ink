@@ -4,7 +4,6 @@ import {
 	useMatches,
 	useSearchParams,
 } from "@remix-run/react";
-import clone from "just-clone";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { AbilitiesSelector } from "~/components/AbilitiesSelector";
@@ -319,7 +318,7 @@ function GearSelector({
 						// let's not overwrite current selections
 						if (!currentAbilities.every((a) => a === "UNKNOWN")) return;
 
-						const newAbilities = clone(abilities);
+						const newAbilities = structuredClone(abilities);
 						newAbilities[gearIndex] = abilitiesFromExistingGear;
 
 						setAbilities(newAbilities);
