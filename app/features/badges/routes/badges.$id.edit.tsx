@@ -76,15 +76,14 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"No permissions to edit owners",
 			);
 
-			const oldOwners = await BadgeRepository.findOwnersByBadgeId(badgeId);
+			const oldOwners: number[] = (
+				await BadgeRepository.findOwnersByBadgeId(badgeId)
+			).flatMap((owner) => new Array(owner.count).fill(owner.id));
 
 			await BadgeRepository.replaceOwners({ badgeId, ownerIds: data.ownerIds });
 
 			notify({
-				userIds: diff(
-					oldOwners.map((o) => o.id),
-					data.ownerIds,
-				),
+				userIds: diff(oldOwners, data.ownerIds),
 				notification: {
 					type: "BADGE_ADDED",
 					meta: {
