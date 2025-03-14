@@ -49,24 +49,38 @@ export const scrimsNewActionSchema = z.object({
 	),
 	divs: z
 		.object({
-			min: z.enum(LUTI_DIVS),
-			max: z.enum(LUTI_DIVS),
+			min: z.enum(LUTI_DIVS).nullable(),
+			max: z.enum(LUTI_DIVS).nullable(),
 		})
 		.nullable()
 		.refine(
+			(div) => {
+				if (!div) return true;
+
+				if (div.max && !div.min) return false;
+				if (div.min && !div.max) return false;
+
+				return true;
+			},
+			{
+				message: "Both min and max div must be set or neither",
+			},
+		)
+		.refine(
 			(divs) => {
-				if (!divs) return true;
+				if (!divs?.min || !divs.max) return true;
+
 				const minIndex = LUTI_DIVS.indexOf(divs.min);
 				const maxIndex = LUTI_DIVS.indexOf(divs.max);
 
-				return minIndex <= maxIndex;
+				return minIndex >= maxIndex;
 			},
-			{ message: "min div must be less than or equal to max div" },
+			{ message: "Min div must be less than or equal to max div" },
 		),
 	from: fromSchema,
 	postText: z.preprocess(
 		falsyToNull,
-		z.string().max(MAX_SCRIM_POST_TEXT_LENGTH),
+		z.string().max(MAX_SCRIM_POST_TEXT_LENGTH).nullable(),
 	),
 	// xxx:
 	// visibility:

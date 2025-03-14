@@ -20,8 +20,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	await ScrimPostRepository.insert({
 		at: dateToDatabaseTimestamp(data.at),
-		maxDiv: data.divs ? serializeLutiDiv(data.divs.max) : null,
-		minDiv: data.divs ? serializeLutiDiv(data.divs.min) : null,
+		maxDiv: data.divs ? serializeLutiDiv(data.divs.max!) : null,
+		minDiv: data.divs ? serializeLutiDiv(data.divs.min!) : null,
 		text: data.postText,
 		teamId: data.from.mode === "TEAM" ? data.from.teamId : null,
 		users: (await usersListForPost({ authorId: user.id, from: data.from })).map(

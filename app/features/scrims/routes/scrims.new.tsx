@@ -1,9 +1,11 @@
 import { useLoaderData } from "@remix-run/react";
+import { Controller, useFormContext } from "react-hook-form";
 import type { z } from "zod";
 import { Label } from "~/components/Label";
 import { DateTimeFormField } from "~/components/form/DateTimeFormField";
 import { MyForm } from "~/components/form/MyForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
+import { FormMessage } from "../../../components/FormMessage";
 import { Main } from "../../../components/Main";
 import { action } from "../actions/scrims.new.server";
 import { FromFormField } from "../components/FromFormField";
@@ -43,11 +45,7 @@ export default function NewScrimPage() {
 
 				<DateTimeFormField<FormFields> label="When" name="at" />
 
-				{/** xxx: todo implement luti form field */}
-				<LutiDivsFormField
-					value={null as any}
-					onChange={(newVal) => console.log(newVal)}
-				/>
+				<LutiDivsFormField />
 
 				<TextAreaFormField<FormFields>
 					label="Text"
@@ -59,32 +57,67 @@ export default function NewScrimPage() {
 	);
 }
 
+function LutiDivsFormField() {
+	const methods = useFormContext<FormFields>();
+
+	const error = methods.formState.errors.divs;
+
+	return (
+		<div>
+			<Controller
+				control={methods.control}
+				name="divs"
+				render={({ field: { onChange, onBlur, value } }) => (
+					<LutiDivsSelector value={value} onChange={onChange} onBlur={onBlur} />
+				)}
+			/>
+
+			{error && (
+				<FormMessage type="error">{error.message as string}</FormMessage>
+			)}
+		</div>
+	);
+}
+
 type LutiDivEdit = {
 	max: LutiDiv | null;
 	min: LutiDiv | null;
 };
 
-function LutiDivsFormField({
+function LutiDivsSelector({
 	value,
 	onChange,
-}: { value: LutiDivEdit; onChange: (value: LutiDivEdit) => void }) {
+	onBlur,
+}: {
+	value: LutiDivEdit | null;
+	onChange: (value: LutiDivEdit | null) => void;
+	onBlur: () => void;
+}) {
 	const onChangeMin = (e: React.ChangeEvent<HTMLSelectElement>) => {
 		const newValue = e.target.value === "" ? null : (e.target.value as LutiDiv);
 
-		onChange({ min: newValue, max: value.max });
+		onChange(
+			newValue || value?.max
+				? { min: newValue, max: value?.max ?? null }
+				: null,
+		);
 	};
 
 	const onChangeMax = (e: React.ChangeEvent<HTMLSelectElement>) => {
 		const newValue = e.target.value === "" ? null : (e.target.value as LutiDiv);
 
-		onChange({ max: newValue, min: value.min });
+		onChange(
+			newValue || value?.min
+				? { max: newValue, min: value?.min ?? null }
+				: null,
+		);
 	};
 
 	return (
 		<div className="stack horizontal sm">
 			<div>
-				<Label>Min div</Label>
-				<select onChange={onChangeMin}>
+				<Label htmlFor="min-div">Min div</Label>
+				<select id="min-div" onChange={onChangeMin} onBlur={onBlur}>
 					<option value="">—</option>
 					{LUTI_DIVS.map((div) => (
 						<option key={div} value={div}>
@@ -95,8 +128,8 @@ function LutiDivsFormField({
 			</div>
 
 			<div>
-				<Label>Max div</Label>
-				<select onChange={onChangeMax}>
+				<Label htmlFor="max-div">Max div</Label>
+				<select id="max-div" onChange={onChangeMax} onBlur={onBlur}>
 					<option value="">—</option>
 					{LUTI_DIVS.map((div) => (
 						<option key={div} value={div}>
