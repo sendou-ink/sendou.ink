@@ -32,7 +32,7 @@ export const NotifyPlusServerVotingRoutine = new Routine({
 				},
 			},
 			userIds: (await UserRepository.findAllPlusServerMembers()).map(
-				(member) => member.id,
+				(member) => member.userId,
 			),
 		});
 	},

@@ -2,7 +2,6 @@ import { Link } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
 import { Avatar } from "~/components/Avatar";
 import { Button, LinkButton } from "~/components/Button";
 import { Dialog } from "~/components/Dialog";
@@ -21,6 +20,7 @@ import {
 	userArtPage,
 	userPage,
 } from "~/utils/urls";
+import { ResponsiveMasonry } from "../../../modules/responsive-masonry/components/ResponsiveMasonry";
 import { ART_PER_PAGE } from "../art-constants";
 import type { ListedArt } from "../art-types";
 import { previewUrl } from "../art-utils";
@@ -63,18 +63,16 @@ export function ArtGrid({
 			{bigArt ? (
 				<BigImageDialog close={() => setBigArtId(null)} art={bigArt} />
 			) : null}
-			<ResponsiveMasonry columnsCountBreakPoints={{ 350: 1, 750: 2, 900: 3 }}>
-				<Masonry gutter="1rem">
-					{itemsToDisplay.map((art) => (
-						<ImagePreview
-							key={art.id}
-							art={art}
-							canEdit={canEdit}
-							enablePreview={enablePreview}
-							onClick={enablePreview ? () => setBigArtId(art.id) : undefined}
-						/>
-					))}
-				</Masonry>
+			<ResponsiveMasonry>
+				{itemsToDisplay.map((art) => (
+					<ImagePreview
+						key={art.id}
+						art={art}
+						canEdit={canEdit}
+						enablePreview={enablePreview}
+						onClick={enablePreview ? () => setBigArtId(art.id) : undefined}
+					/>
+				))}
 			</ResponsiveMasonry>
 			{!everythingVisible ? (
 				<Pagination

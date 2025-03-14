@@ -308,7 +308,11 @@ export function findAllPlusServerMembers() {
 	return db
 		.selectFrom("User")
 		.innerJoin("PlusTier", "PlusTier.userId", "User.id")
-		.select(["User.id", "User.discordId", "PlusTier.tier as plusTier"])
+		.select([
+			"User.id as userId",
+			"User.discordId",
+			"PlusTier.tier as plusTier",
+		])
 		.execute();
 }
 

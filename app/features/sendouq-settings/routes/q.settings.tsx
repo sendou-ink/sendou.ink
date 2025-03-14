@@ -1,11 +1,9 @@
-import { RadioGroup } from "@headlessui/react";
 import type {
 	ActionFunctionArgs,
 	LoaderFunctionArgs,
 	MetaFunction,
 } from "@remix-run/node";
 import { useFetcher, useLoaderData } from "@remix-run/react";
-import clsx from "clsx";
 import * as React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -45,7 +43,6 @@ import {
 	SENDOUQ_PAGE,
 	SENDOUQ_SETTINGS_PAGE,
 	navIconUrl,
-	preferenceEmojiUrl,
 	soundPath,
 } from "~/utils/urls";
 import { BANNED_MAPS } from "../banned-maps";
@@ -58,6 +55,7 @@ import { settingsActionSchema } from "../q-settings-schemas.server";
 import "../q-settings.css";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { metaTags } from "~/utils/remix";
+import { PreferenceRadioGroup } from "../components/PreferenceRadioGroup";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
@@ -262,6 +260,7 @@ function MapPicker() {
 												preference,
 											})
 										}
+										aria-label={`Select preference towards ${modeShort}`}
 									/>
 								</div>
 							);
@@ -318,78 +317,6 @@ function MapPicker() {
 				</div>
 			</fetcher.Form>
 		</details>
-	);
-}
-
-function PreferenceRadioGroup({
-	preference,
-	onPreferenceChange,
-}: {
-	preference?: Preference;
-	onPreferenceChange: (preference: Preference & "NEUTRAL") => void;
-}) {
-	const { t } = useTranslation(["q"]);
-
-	return (
-		<RadioGroup
-			value={preference ?? "NEUTRAL"}
-			onChange={(newPreference) =>
-				onPreferenceChange(newPreference as Preference & "NEUTRAL")
-			}
-			className="stack horizontal xs"
-		>
-			<RadioGroup.Option value="AVOID">
-				{({ checked }) => (
-					<span
-						className={clsx("q-settings__radio", {
-							"q-settings__radio__checked": checked,
-						})}
-					>
-						<img
-							src={preferenceEmojiUrl("AVOID")}
-							className="q-settings__radio__emoji"
-							width={18}
-							alt="Avoid emoji"
-						/>
-						{t("q:settings.maps.avoid")}
-					</span>
-				)}
-			</RadioGroup.Option>
-			<RadioGroup.Option value="NEUTRAL">
-				{({ checked }) => (
-					<span
-						className={clsx("q-settings__radio", {
-							"q-settings__radio__checked": checked,
-						})}
-					>
-						<img
-							src={preferenceEmojiUrl()}
-							className="q-settings__radio__emoji"
-							width={18}
-							alt="Neutral emoji"
-						/>
-						{t("q:settings.maps.neutral")}
-					</span>
-				)}
-			</RadioGroup.Option>
-			<RadioGroup.Option value="PREFER">
-				{({ checked }) => (
-					<span
-						className={clsx("q-settings__radio", {
-							"q-settings__radio__checked": checked,
-						})}
-					>
-						<img
-							src={preferenceEmojiUrl("PREFER")}
-							className="q-settings__radio__emoji"
-							width={18}
-							alt="Prefer emoji"
-						/>
-						{t("q:settings.maps.prefer")}
-					</span>
-				)}
-			</RadioGroup.Option>
-		</RadioGroup>
 	);
 }
 

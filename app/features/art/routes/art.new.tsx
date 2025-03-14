@@ -11,7 +11,6 @@ import {
 } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import Compressor from "compressorjs";
-import clone from "just-clone";
 import { nanoid } from "nanoid";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -474,7 +473,7 @@ function LinkedUsers() {
 						<UserSearch
 							inputName="user"
 							onChange={(newUser) => {
-								const newUsers = clone(users);
+								const newUsers = structuredClone(users);
 								newUsers[i] = { ...newUsers[i], userId: newUser.id };
 
 								setUsers(newUsers);

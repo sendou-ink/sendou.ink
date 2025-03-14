@@ -74,7 +74,7 @@ export const ONE_HOUR_IN_MS = 60 * 60 * 1000;
 export const TWO_HOURS_IN_MS = 2 * 60 * 60 * 1000;
 
 export const SPLATOON_3_XP_BADGE_VALUES = [
-	3400, 3300, 3200, 3100, 3000, 2900, 2800, 2700, 2600,
+	5000, 4500, 4000, 3500, 3400, 3300, 3200, 3100, 3000, 2900, 2800, 2700, 2600,
 ] as const;
 export const findSplatoon3XpBadgeValue = (xPower: number) => {
 	for (const value of SPLATOON_3_XP_BADGE_VALUES) {
@@ -88,6 +88,10 @@ export const findSplatoon3XpBadgeValue = (xPower: number) => {
 
 export const PATCHES = [
 	{
+		patch: "9.3.0",
+		date: "2025-03-13",
+	},
+	{
 		patch: "9.2.0",
 		date: "2024-11-20",
 	},
@@ -95,10 +99,10 @@ export const PATCHES = [
 		patch: "9.0.0",
 		date: "2024-08-29",
 	},
-	{
-		patch: "8.1.0",
-		date: "2024-07-17",
-	},
+	// {
+	// 	patch: "8.1.0",
+	// 	date: "2024-07-17",
+	// },
 	// {
 	// 	patch: "8.0.0",
 	// 	date: "2024-05-31",

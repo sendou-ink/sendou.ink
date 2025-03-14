@@ -1,4 +1,3 @@
-import clone from "just-clone";
 import type { Tables } from "~/db/tables";
 import type { Group } from "~/db/types";
 import { TIERS } from "~/features/mmr/mmr-constants";
@@ -524,7 +523,7 @@ export function tierDifferenceToRangeOrExact({
 	tier: TieredSkill["tier"] | [TieredSkill["tier"], TieredSkill["tier"]];
 } {
 	if (ourTier.name === theirTier.name && ourTier.isPlus === theirTier.isPlus) {
-		return { diff: 0, tier: clone(ourTier) };
+		return { diff: 0, tier: structuredClone(ourTier) };
 	}
 
 	const tiers = hasLeviathan
@@ -546,11 +545,14 @@ export function tierDifferenceToRangeOrExact({
 	const upperBound = tier1Idx + idxDiff;
 
 	if (lowerBound < 0 || upperBound >= tiers.length) {
-		return { diff: idxDiff, tier: clone(theirTier) };
+		return { diff: idxDiff, tier: structuredClone(theirTier) };
 	}
 
 	const lowerTier = tiers[lowerBound];
 	const upperTier = tiers[upperBound];
 
-	return { diff: idxDiff, tier: [clone(lowerTier), clone(upperTier)] };
+	return {
+		diff: idxDiff,
+		tier: [structuredClone(lowerTier), structuredClone(upperTier)],
+	};
 }

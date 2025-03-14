@@ -33,9 +33,9 @@ type ResultsByMonthYearQueryReturnType = InferResult<
 export function allPlusTiersFromLatestVoting() {
 	return db
 		.selectFrom("FreshPlusTier")
-		.select(["FreshPlusTier.userId", "FreshPlusTier.tier"])
+		.select(["FreshPlusTier.userId", "FreshPlusTier.tier as plusTier"])
 		.where("FreshPlusTier.tier", "is not", null)
-		.execute() as Promise<{ userId: number; tier: number }[]>;
+		.execute() as Promise<{ userId: number; plusTier: number }[]>;
 }
 
 export type ResultsByMonthYearItem = Unwrapped<typeof resultsByMonthYear>;

@@ -1,6 +1,4 @@
 .layout__container {
-	display: flex;
-	flex-direction: column;
 	width: 100%;
 	min-height: 100vh;
 	padding-top: 50px; /** compensate for layout__header */
@@ -43,8 +41,15 @@
 	--item-size: 1.9rem;
 }
 
-.layout__header {
+/* 
+  For some reason  the notification popover autocloses on mobile
+  if we don't have the z-index on another element (not on layout__header) 
+*/
+.layout__header__container {
 	z-index: 501;
+}
+
+.layout__header {
 	display: flex;
 	width: 100%;
 	align-items: center;

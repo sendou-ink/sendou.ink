@@ -4,7 +4,6 @@ import {
 	useLoaderData,
 	useSearchParams,
 } from "@remix-run/react";
-import clone from "just-clone";
 import { nanoid } from "nanoid";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -240,7 +239,7 @@ export default function WeaponsBuildsPage() {
 	};
 
 	const handleFilterChange = (i: number, newFilter: Partial<BuildFilter>) => {
-		const newFilters = clone(filters);
+		const newFilters = structuredClone(filters);
 
 		newFilters[i] = {
 			...(filters[i] as AbilityBuildFilter),

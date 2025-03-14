@@ -69,13 +69,18 @@ export function migrate(args: { newUserId: number; oldUserId: number }) {
 }
 
 export function replacePlusTiers(
-	plusTiers: Array<{ userId: number; tier: number }>,
+	plusTiers: Array<{ userId: number; plusTier: number }>,
 ) {
 	invariant(plusTiers.length > 0, "plusTiers must not be empty");
 
 	return db.transaction().execute(async (trx) => {
 		await trx.deleteFrom("PlusTier").execute();
-		await trx.insertInto("PlusTier").values(plusTiers).execute();
+		await trx
+			.insertInto("PlusTier")
+			.values(
+				plusTiers.map(({ plusTier, userId }) => ({ userId, tier: plusTier })),
+			)
+			.execute();
 	});
 }
 

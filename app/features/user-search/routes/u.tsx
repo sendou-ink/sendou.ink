@@ -43,8 +43,8 @@ export const meta: MetaFunction = (args) => {
 export type UserSearchLoaderData = SerializeFrom<typeof loader>;
 
 const searchParamsSchema = z.object({
-	q: z.string().max(100).default(""),
-	limit: z.coerce.number().int().min(1).max(25).default(25),
+	q: z.string().max(100).catch(""),
+	limit: z.coerce.number().int().min(1).max(25).catch(25),
 });
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {

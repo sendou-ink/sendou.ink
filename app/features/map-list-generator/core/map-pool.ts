@@ -1,4 +1,3 @@
-import clone from "just-clone";
 import type { MapPoolMap } from "~/db/types";
 import {
 	type ModeShort,
@@ -108,8 +107,8 @@ export class MapPool {
 		return this.stageModePairs.length;
 	}
 
-	getClonedObject(): MapPoolObject {
-		return clone(this.parsed) as MapPoolObject;
+	getClonedObject() {
+		return structuredClone(this.parsed) as MapPoolObject;
 	}
 
 	toString() {

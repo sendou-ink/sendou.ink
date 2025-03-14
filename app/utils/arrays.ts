@@ -1,7 +1,6 @@
 // TODO: when more examples of permissions profile difference between
 // this implementation and one that takes arrays
 
-import clone from "just-clone";
 import shuffle from "just-shuffle";
 import invariant from "~/utils/invariant";
 
@@ -89,7 +88,7 @@ export function nullFilledArray(size: number): null[] {
 export function pickRandomItem<T>(array: T[]): T {
 	invariant(array.length > 0, "Can't pick from empty array");
 
-	const shuffled = shuffle(clone(array));
+	const shuffled = shuffle(structuredClone(array));
 
 	return shuffled[0];
 }
