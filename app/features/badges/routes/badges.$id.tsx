@@ -42,6 +42,22 @@ export default function BadgeDetailsPage() {
 
 	const context: BadgeDetailsContext = { badgeName: badge.displayName };
 
+	const badgeMaker = () => {
+		if (badge.author?.username) return badge.author?.username;
+		if (
+			[
+				"XP3500 (Splatoon 3)",
+				"XP4000 (Splatoon 3)",
+				"XP4500 (Splatoon 3)",
+				"XP5000 (Splatoon 3)",
+			].includes(badge.displayName)
+		) {
+			return "Dreamy";
+		}
+
+		return "borzoic";
+	};
+
 	return (
 		<div className="stack md items-center">
 			<Outlet context={context} />
@@ -56,7 +72,7 @@ export default function BadgeDetailsPage() {
 					})}{" "}
 					(
 					{t("madeBy", {
-						user: badge.author?.username ?? "borzoic",
+						user: badgeMaker(),
 					})}
 					)
 				</div>
