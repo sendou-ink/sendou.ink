@@ -844,4 +844,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "FLcollegiate",
 		authorDiscordId: "285504780154044416",
 	},
+	{
+		displayName: "Chao Garden",
+		fileName: "chao",
+		authorDiscordId: "528851510222782474",
+	},
 ];
