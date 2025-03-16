@@ -15,6 +15,31 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Summer Days",
+		fileName: "aibbeach7",
+		authorDiscordId: "1170249805373657093",
+	},
+	{
+		displayName: "Mark: Octobrush Bracket",
+		fileName: "octobrushmyheart",
+		authorDiscordId: "1170249805373657093",
+	},
+	{
+		displayName: "Mark: S-Blast Bracket",
+		fileName: "slbast",
+		authorDiscordId: "1170249805373657093",
+	},
+	{
+		displayName: "Mark: Bucket Bracket",
+		fileName: "bucketmyheart",
+		authorDiscordId: "1170249805373657093",
+	},
+	{
+		displayName: "DYNAMITE TOKEN",
+		fileName: "tnttoken12",
+		authorDiscordId: "1170249805373657093",
+	},
+	{
 		displayName: "Tristrike Tuesday",
 		fileName: "tristriked3",
 		authorDiscordId: "789943264370884708",
