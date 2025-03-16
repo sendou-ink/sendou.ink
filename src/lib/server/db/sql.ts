@@ -7,8 +7,8 @@ import {
 	SqliteDialect,
 } from "kysely";
 import { format } from "sql-formatter";
-import invariant from "~/utils/invariant";
-import { roundToNDecimalPlaces } from "~/utils/number";
+import invariant from "$lib/utils/invariant";
+import { roundToNDecimalPlaces } from "$lib/utils/number";
 import type { DB } from "./tables";
 
 const LOG_LEVEL = (["trunc", "full", "none"] as const).find(
