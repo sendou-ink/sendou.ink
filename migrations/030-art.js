@@ -1,10 +1,6 @@
 export function up(db) {
-	db.prepare(
-		/* sql */ `alter table "User" add "commissionsOpen" integer default 0`,
-	).run();
-	db.prepare(
-		/* sql */ `alter table "User" add "isArtist" integer default 0`,
-	).run();
+	db.prepare(/* sql */ `alter table "User" add "commissionsOpen" integer default 0`).run();
+	db.prepare(/* sql */ `alter table "User" add "isArtist" integer default 0`).run();
 	db.prepare(/* sql */ `alter table "User" add "commissionText" text`).run();
 
 	db.prepare(
@@ -36,10 +32,6 @@ export function up(db) {
   `,
 	).run();
 
-	db.prepare(
-		`create index art_user_metadata_art_id on "ArtUserMetadata"("artId")`,
-	).run();
-	db.prepare(
-		`create index art_user_metadata_user_id on "ArtUserMetadata"("userId")`,
-	).run();
+	db.prepare(`create index art_user_metadata_art_id on "ArtUserMetadata"("artId")`).run();
+	db.prepare(`create index art_user_metadata_user_id on "ArtUserMetadata"("userId")`).run();
 }

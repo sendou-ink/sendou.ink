@@ -3,22 +3,12 @@ export function up(db) {
 		db.prepare(`delete from "Skill"`).run();
 		db.prepare(`create index skill_identifier on "Skill"("identifier")`).run();
 
-		db.prepare(
-			/* sql */ `alter table "MapPoolMap" add "groupId" integer`,
-		).run();
-		db.prepare(
-			`create index map_pool_map_group_id on "MapPoolMap"("groupId")`,
-		).run();
+		db.prepare(/* sql */ `alter table "MapPoolMap" add "groupId" integer`).run();
+		db.prepare(`create index map_pool_map_group_id on "MapPoolMap"("groupId")`).run();
 
-		db.prepare(
-			/* sql */ `alter table "Skill" add "groupMatchId" integer`,
-		).run();
-		db.prepare(
-			`create index skill_group_match_id on "Skill"("groupMatchId")`,
-		).run();
-		db.prepare(
-			/* sql */ `alter table "Skill" add "season" integer not null`,
-		).run();
+		db.prepare(/* sql */ `alter table "Skill" add "groupMatchId" integer`).run();
+		db.prepare(`create index skill_group_match_id on "Skill"("groupMatchId")`).run();
+		db.prepare(/* sql */ `alter table "Skill" add "season" integer not null`).run();
 
 		db.prepare(/*sql*/ `drop table "MapResult"`).run();
 		db.prepare(/*sql*/ `drop table "PlayerResult"`).run();
@@ -38,9 +28,7 @@ export function up(db) {
   `,
 		).run();
 
-		db.prepare(
-			`create index map_result_user_id on "MapResult"("userId")`,
-		).run();
+		db.prepare(`create index map_result_user_id on "MapResult"("userId")`).run();
 
 		db.prepare(
 			/*sql*/ `
@@ -60,12 +48,8 @@ export function up(db) {
   `,
 		).run();
 
-		db.prepare(
-			`create index player_result_owner_user_id on "PlayerResult"("ownerUserId")`,
-		).run();
-		db.prepare(
-			`create index player_result_other_user_id on "PlayerResult"("otherUserId")`,
-		).run();
+		db.prepare(`create index player_result_owner_user_id on "PlayerResult"("ownerUserId")`).run();
+		db.prepare(`create index player_result_other_user_id on "PlayerResult"("otherUserId")`).run();
 
 		db.prepare(
 			/*sql*/ `
@@ -98,12 +82,8 @@ export function up(db) {
   `,
 		).run();
 
-		db.prepare(
-			`create index group_member_group_id on "GroupMember"("groupId")`,
-		).run();
-		db.prepare(
-			`create index group_member_user_id on "GroupMember"("userId")`,
-		).run();
+		db.prepare(`create index group_member_group_id on "GroupMember"("groupId")`).run();
+		db.prepare(`create index group_member_user_id on "GroupMember"("userId")`).run();
 
 		db.prepare(
 			/*sql*/ `
@@ -118,12 +98,8 @@ export function up(db) {
   `,
 		).run();
 
-		db.prepare(
-			`create index group_like_liker_group_id on "GroupLike"("likerGroupId")`,
-		).run();
-		db.prepare(
-			`create index group_like_target_group_id on "GroupLike"("targetGroupId")`,
-		).run();
+		db.prepare(`create index group_like_liker_group_id on "GroupLike"("likerGroupId")`).run();
+		db.prepare(`create index group_like_target_group_id on "GroupLike"("targetGroupId")`).run();
 
 		db.prepare(
 			/*sql*/ `
@@ -143,12 +119,8 @@ export function up(db) {
   `,
 		).run();
 
-		db.prepare(
-			`create index group_match_alpha_group_id on "GroupMatch"("alphaGroupId")`,
-		).run();
-		db.prepare(
-			`create index group_match_bravo_group_id on "GroupMatch"("bravoGroupId")`,
-		).run();
+		db.prepare(`create index group_match_alpha_group_id on "GroupMatch"("alphaGroupId")`).run();
+		db.prepare(`create index group_match_bravo_group_id on "GroupMatch"("bravoGroupId")`).run();
 		db.prepare(
 			`create index group_match_reported_by_user_id on "GroupMatch"("reportedByUserId")`,
 		).run();
@@ -170,9 +142,7 @@ export function up(db) {
   `,
 		).run();
 
-		db.prepare(
-			`create index group_match_map_match_id on "GroupMatchMap"("matchId")`,
-		).run();
+		db.prepare(`create index group_match_map_match_id on "GroupMatchMap"("matchId")`).run();
 		db.prepare(
 			`create index group_match_map_winner_group_id on "GroupMatchMap"("winnerGroupId")`,
 		).run();
@@ -193,8 +163,6 @@ export function up(db) {
 		db.prepare(
 			`create index reported_weapon_group_match_map_id on "ReportedWeapon"("groupMatchMapId")`,
 		).run();
-		db.prepare(
-			`create index reported_weapon_user_id on "ReportedWeapon"("userId")`,
-		).run();
+		db.prepare(`create index reported_weapon_user_id on "ReportedWeapon"("userId")`).run();
 	})();
 }

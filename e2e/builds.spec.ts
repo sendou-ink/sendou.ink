@@ -1,12 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { ADMIN_DISCORD_ID } from "~/constants";
 import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
-import {
-	impersonate,
-	navigate,
-	seed,
-	selectComboboxValue,
-} from "~/utils/playwright";
+import { impersonate, navigate, seed, selectComboboxValue } from "~/utils/playwright";
 import { BUILDS_PAGE, userBuildsPage, userNewBuildPage } from "~/utils/urls";
 
 test.describe("Builds", () => {
@@ -66,9 +61,7 @@ test.describe("Builds", () => {
 		await expect(firstBuildCard.getByAltText("Tower Control")).toBeVisible();
 		await expect(firstBuildCard.getByAltText("Splat Zones")).not.toBeVisible();
 
-		await expect(firstBuildCard.getByTestId("build-title")).toContainText(
-			"Test Build",
-		);
+		await expect(firstBuildCard.getByTestId("build-title")).toContainText("Test Build");
 	});
 
 	test("makes build private", async ({ page }) => {
@@ -86,9 +79,7 @@ test.describe("Builds", () => {
 		await page.getByTestId("submit-button").click();
 
 		await expect(page.getByTestId("builds-tab")).toContainText("Builds (50)");
-		await expect(page.getByTestId("build-card").first()).toContainText(
-			"Private",
-		);
+		await expect(page.getByTestId("build-card").first()).toContainText("Private");
 
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({
@@ -96,9 +87,7 @@ test.describe("Builds", () => {
 			url: userBuildsPage({ discordId: ADMIN_DISCORD_ID }),
 		});
 		await expect(page.getByTestId("builds-tab")).toContainText("Builds (49)");
-		await expect(page.getByTestId("build-card").first()).not.toContainText(
-			"Private",
-		);
+		await expect(page.getByTestId("build-card").first()).not.toContainText("Private");
 	});
 
 	test("filters builds", async ({ page }) => {

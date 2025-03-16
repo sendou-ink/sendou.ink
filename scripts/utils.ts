@@ -32,9 +32,7 @@ export async function loadLangDicts() {
 	for (const file of files) {
 		if (file === ".gitkeep") continue;
 
-		const translations = JSON.parse(
-			fs.readFileSync(path.join(LANG_DICTS_PATH, file), "utf8"),
-		);
+		const translations = JSON.parse(fs.readFileSync(path.join(LANG_DICTS_PATH, file), "utf8"));
 
 		result.push([file.replace(".json", ""), translations]);
 	}

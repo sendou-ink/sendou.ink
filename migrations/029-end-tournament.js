@@ -1,10 +1,6 @@
 export function up(db) {
-	db.prepare(
-		`create index tournament_sub_user_id on "TournamentSub"("userId")`,
-	).run();
-	db.prepare(
-		`create index tournament_sub_tournament_id on "TournamentSub"("tournamentId")`,
-	).run();
+	db.prepare(`create index tournament_sub_user_id on "TournamentSub"("userId")`).run();
+	db.prepare(`create index tournament_sub_tournament_id on "TournamentSub"("tournamentId")`).run();
 
 	db.prepare(
 		/*sql*/ `
@@ -25,9 +21,7 @@ export function up(db) {
 	).run();
 
 	db.prepare(`create index skill_user_id on "Skill"("userId")`).run();
-	db.prepare(
-		`create index skill_tournament_id on "Skill"("tournamentId")`,
-	).run();
+	db.prepare(`create index skill_tournament_id on "Skill"("tournamentId")`).run();
 
 	db.prepare(
 		/*sql*/ `
@@ -41,12 +35,8 @@ export function up(db) {
   `,
 	).run();
 
-	db.prepare(
-		`create index skill_team_user_user_id on "SkillTeamUser"("userId")`,
-	).run();
-	db.prepare(
-		`create index skill_team_user_skill_id on "SkillTeamUser"("skillId")`,
-	).run();
+	db.prepare(`create index skill_team_user_user_id on "SkillTeamUser"("userId")`).run();
+	db.prepare(`create index skill_team_user_skill_id on "SkillTeamUser"("skillId")`).run();
 
 	db.prepare(
 		/*sql*/ `
@@ -81,12 +71,8 @@ export function up(db) {
   `,
 	).run();
 
-	db.prepare(
-		`create index player_result_owner_user_id on "PlayerResult"("ownerUserId")`,
-	).run();
-	db.prepare(
-		`create index player_result_other_user_id on "PlayerResult"("otherUserId")`,
-	).run();
+	db.prepare(`create index player_result_owner_user_id on "PlayerResult"("ownerUserId")`).run();
+	db.prepare(`create index player_result_other_user_id on "PlayerResult"("otherUserId")`).run();
 
 	db.prepare(
 		/*sql*/ `
@@ -105,9 +91,7 @@ export function up(db) {
   `,
 	).run();
 
-	db.prepare(
-		`create index tournament_result_user_id on "TournamentResult"("userId")`,
-	).run();
+	db.prepare(`create index tournament_result_user_id on "TournamentResult"("userId")`).run();
 	db.prepare(
 		`create index tournament_result_tournament_id on "TournamentResult"("tournamentId")`,
 	).run();

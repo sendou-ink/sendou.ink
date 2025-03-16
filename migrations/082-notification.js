@@ -12,9 +12,7 @@ export function up(db) {
   `,
 		).run();
 
-		db.prepare(
-			/*sql*/ `create index notification_type on "Notification"("type")`,
-		).run();
+		db.prepare(/*sql*/ `create index notification_type on "Notification"("type")`).run();
 
 		db.prepare(
 			/*sql*/ `
@@ -29,9 +27,7 @@ export function up(db) {
   `,
 		).run();
 
-		db.prepare(
-			/*sql*/ `create index notification_user_id on "NotificationUser"("userId")`,
-		).run();
+		db.prepare(/*sql*/ `create index notification_user_id on "NotificationUser"("userId")`).run();
 
 		db.prepare(
 			/*sql*/ `

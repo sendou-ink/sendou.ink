@@ -12,29 +12,21 @@ test.describe("Settings", () => {
 			url: "/builds/luna-blaster",
 		});
 
-		const oldContents = await page
-			.getByTestId("build-card")
-			.first()
-			.innerHTML();
+		const oldContents = await page.getByTestId("build-card").first().innerHTML();
 
 		await navigate({
 			page,
 			url: SETTINGS_PAGE,
 		});
 
-		await page
-			.getByTestId("UPDATE_DISABLE_BUILD_ABILITY_SORTING-switch")
-			.click();
+		await page.getByTestId("UPDATE_DISABLE_BUILD_ABILITY_SORTING-switch").click();
 
 		await navigate({
 			page,
 			url: "/builds/luna-blaster",
 		});
 
-		const newContents = await page
-			.getByTestId("build-card")
-			.first()
-			.innerHTML();
+		const newContents = await page.getByTestId("build-card").first().innerHTML();
 
 		expect(newContents).not.toBe(oldContents);
 	});

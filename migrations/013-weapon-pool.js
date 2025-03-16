@@ -13,9 +13,7 @@ export function up(db) {
   `,
 	).run();
 
-	db.prepare(
-		`create index user_weapon_user_id on "UserWeapon"("userId")`,
-	).run();
+	db.prepare(`create index user_weapon_user_id on "UserWeapon"("userId")`).run();
 }
 
 export function down(db) {

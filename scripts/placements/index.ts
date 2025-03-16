@@ -11,14 +11,9 @@ import { xRankSchema } from "./schemas";
 const rawJsonNumber = process.argv[2]?.trim();
 invariant(rawJsonNumber, "jsonNumber is required (argument 1)");
 const jsonNumber = Number(rawJsonNumber);
-invariant(
-	Number.isInteger(jsonNumber),
-	"jsonNumber must be an integer (argument 1)",
-);
+invariant(Number.isInteger(jsonNumber), "jsonNumber must be an integer (argument 1)");
 
-type Placements = Array<
-	Omit<XRankPlacement, "playerId" | "id"> & { playerSplId: string }
->;
+type Placements = Array<Omit<XRankPlacement, "playerId" | "id"> & { playerSplId: string }>;
 
 const modes = ["splatzones", "towercontrol", "rainmaker", "clamblitz"] as const;
 const modeToShort = {
@@ -93,10 +88,7 @@ async function processJson(args: {
 				.map((badge) => (badge ? atob(badge.id).replace("Badge-", "") : "null"))
 				.join(","),
 			bannerSplId: Number(
-				atob(placement.nameplate.background.id).replace(
-					"NameplateBackground-",
-					"",
-				),
+				atob(placement.nameplate.background.id).replace("NameplateBackground-", ""),
 			),
 			nameDiscriminator: placement.nameId,
 			power: placement.xPower,
@@ -184,13 +176,7 @@ function addPlacements(placements: Placements) {
 	})();
 }
 
-function wipeMonthYearPlacements({
-	month,
-	year,
-}: {
-	month: number;
-	year: number;
-}) {
+function wipeMonthYearPlacements({ month, year }: { month: number; year: number }) {
 	const wipeMonthYearPlacementsStm = sql.prepare(/* sql */ `
   delete from "XRankPlacement"
     where "month" = @month

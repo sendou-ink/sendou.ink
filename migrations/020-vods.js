@@ -1,7 +1,5 @@
 export function up(db) {
-	db.prepare(
-		`alter table "User" add column "isVideoAdder" integer default 0`,
-	).run();
+	db.prepare(`alter table "User" add column "isVideoAdder" integer default 0`).run();
 
 	db.prepare(
 		/*sql*/ `
@@ -20,9 +18,7 @@ export function up(db) {
   `,
 	).run();
 
-	db.prepare(
-		`create index video_event_id on "UnvalidatedVideo"("eventId")`,
-	).run();
+	db.prepare(`create index video_event_id on "UnvalidatedVideo"("eventId")`).run();
 
 	db.prepare(
 		/*sql*/ `
@@ -44,9 +40,7 @@ export function up(db) {
     ) strict
     `,
 	).run();
-	db.prepare(
-		`create index video_match_video_id on "VideoMatch"("videoId")`,
-	).run();
+	db.prepare(`create index video_match_video_id on "VideoMatch"("videoId")`).run();
 
 	db.prepare(
 		/*sql*/ `

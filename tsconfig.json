@@ -1,31 +1,20 @@
 {
-	"include": ["./types/env.d.ts", "**/*.ts", "**/*.tsx"],
+	"extends": "./.svelte-kit/tsconfig.json",
 	"compilerOptions": {
-		"lib": ["DOM", "DOM.Iterable", "es2024"],
-		"module": "ESNext",
-		"isolatedModules": true,
+		"allowJs": true,
+		"checkJs": true,
 		"esModuleInterop": true,
-		"jsx": "react-jsx",
-		"moduleResolution": "Bundler",
-		"resolveJsonModule": true,
-		"target": "ES2022",
-		"strict": true,
-		"baseUrl": ".",
-		"paths": {
-			"~/*": ["./app/*"]
-		},
-		"noEmit": true,
 		"forceConsistentCasingInFileNames": true,
-		"allowJs": false,
-		"noUncheckedIndexedAccess": false,
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
-		"noImplicitReturns": true,
-		"noFallthroughCasesInSwitch": true,
-		"useUnknownInCatchVariables": true,
-		"skipLibCheck": true
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"sourceMap": true,
+		"strict": true,
+		"moduleResolution": "bundler"
 	},
-	"ts-node": {
-		"transpileOnly": true
-	}
+	"exclude": ["app-old"]
+	// Path aliases are handled by https://svelte.dev/docs/kit/configuration#alias
+	// except $lib which is handled by https://svelte.dev/docs/kit/configuration#files
+	//
+	// If you want to overwrite includes/excludes, make sure to copy over the relevant includes/excludes
+	// from the referenced tsconfig.json - TypeScript does not merge them in
 }

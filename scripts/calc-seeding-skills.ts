@@ -75,10 +75,7 @@ async function* tournaments(type: "RANKED" | "UNRANKED") {
 
 			if (tournament.skillCountsFor === "RANKED" && type === "RANKED") {
 				yield tournament;
-			} else if (
-				tournament.skillCountsFor === "UNRANKED" &&
-				type === "UNRANKED"
-			) {
+			} else if (tournament.skillCountsFor === "UNRANKED" && type === "UNRANKED") {
 				yield tournament;
 			}
 		} catch (err) {

@@ -19,11 +19,7 @@ export function up(db) {
     `,
 		).run();
 
-		db.prepare(
-			/*sql*/ `create index lfg_post_author_id on "LFGPost"("authorId")`,
-		).run();
-		db.prepare(
-			/*sql*/ `create index lfg_post_team_id on "LFGPost"("teamId")`,
-		).run();
+		db.prepare(/*sql*/ `create index lfg_post_author_id on "LFGPost"("authorId")`).run();
+		db.prepare(/*sql*/ `create index lfg_post_team_id on "LFGPost"("teamId")`).run();
 	})();
 }

@@ -38,17 +38,14 @@ async function main() {
 
 	let date = "";
 	for (const [i, friendCodeAdder] of friendCodeAdders.entries()) {
-		const utc = databaseTimestampToDate(
-			friendCodeAdder.createdAt,
-		).toUTCString();
+		const utc = databaseTimestampToDate(friendCodeAdder.createdAt).toUTCString();
 		const newDate = utc.split(",")[0];
 		if (date !== newDate) {
 			date = newDate;
 			result += "\n";
 		}
 
-		const isDuplicate =
-			(fcMap.get(friendCodeAdder.friendCode) ?? [])?.length > 1;
+		const isDuplicate = (fcMap.get(friendCodeAdder.friendCode) ?? [])?.length > 1;
 
 		result += `${i < 9 ? "0" : ""}${i + 1}) ${utc} - ${friendCodeAdder.friendCode}${isDuplicate ? " >>DUPLICATE<<" : ""} - ${friendCodeAdder.discordUniqueName} - ${friendCodeAdder.discordId}\n`;
 	}

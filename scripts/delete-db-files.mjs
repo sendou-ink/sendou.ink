@@ -7,11 +7,7 @@ const __dirname = path.dirname(__filename);
 
 const pathToDbFile = (file) => path.resolve(__dirname, "..", file);
 
-const filesToDeleteIfExists = [
-	"db.sqlite3",
-	"db.sqlite3-shm",
-	"db.sqlite3-wal",
-];
+const filesToDeleteIfExists = ["db.sqlite3", "db.sqlite3-shm", "db.sqlite3-wal"];
 for (const file of filesToDeleteIfExists) {
 	try {
 		fs.unlinkSync(pathToDbFile(file));

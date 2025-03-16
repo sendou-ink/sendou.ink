@@ -15,9 +15,7 @@ test.describe("Top search", () => {
 		await expect(page.getByText("Brasario")).toBeVisible();
 	});
 
-	test("navigates from user page to x search player page to x search", async ({
-		page,
-	}) => {
+	test("navigates from user page to x search player page to x search", async ({ page }) => {
 		await seed(page);
 
 		await navigate({

@@ -8,22 +8,12 @@ export function up(db) {
 	db.prepare(/*sql*/ `drop table "TournamentTeamMember"`).run();
 	db.prepare(/*sql*/ `drop table "TournamentMatchGameResult"`).run();
 
-	db.prepare(
-		/* sql */ `alter table "CalendarEvent" drop column "customUrl"`,
-	).run();
-	db.prepare(
-		/* sql */ `alter table "CalendarEvent" drop column "toToolsEnabled"`,
-	).run();
-	db.prepare(
-		/* sql */ `alter table "CalendarEvent" drop column "toToolsMode"`,
-	).run();
-	db.prepare(
-		/* sql */ `alter table "CalendarEvent" drop column "isBeforeStart"`,
-	).run();
+	db.prepare(/* sql */ `alter table "CalendarEvent" drop column "customUrl"`).run();
+	db.prepare(/* sql */ `alter table "CalendarEvent" drop column "toToolsEnabled"`).run();
+	db.prepare(/* sql */ `alter table "CalendarEvent" drop column "toToolsMode"`).run();
+	db.prepare(/* sql */ `alter table "CalendarEvent" drop column "isBeforeStart"`).run();
 
-	db.prepare(
-		/* sql */ `alter table "CalendarEvent" add "tournamentId" integer`,
-	).run();
+	db.prepare(/* sql */ `alter table "CalendarEvent" add "tournamentId" integer`).run();
 	db.prepare(
 		/*sql*/ `create index calendar_event_tournament_id on "CalendarEvent"("tournamentId")`,
 	).run();
@@ -116,9 +106,7 @@ export function up(db) {
   ) strict
   `,
 	).run();
-	db.prepare(
-		`create index tournament_group_stage_id on "TournamentGroup"("stageId")`,
-	).run();
+	db.prepare(`create index tournament_group_stage_id on "TournamentGroup"("stageId")`).run();
 
 	db.prepare(
 		/*sql*/ `
@@ -133,12 +121,8 @@ export function up(db) {
   ) strict
   `,
 	).run();
-	db.prepare(
-		`create index tournament_round_stage_id on "TournamentRound"("stageId")`,
-	).run();
-	db.prepare(
-		`create index tournament_round_group_id on "TournamentRound"("groupId")`,
-	).run();
+	db.prepare(`create index tournament_round_stage_id on "TournamentRound"("stageId")`).run();
+	db.prepare(`create index tournament_round_group_id on "TournamentRound"("groupId")`).run();
 
 	db.prepare(
 		/*sql*/ `
@@ -160,15 +144,9 @@ export function up(db) {
   ) strict
   `,
 	).run();
-	db.prepare(
-		`create index tournament_match_round_id on "TournamentMatch"("roundId")`,
-	).run();
-	db.prepare(
-		`create index tournament_match_stage_id on "TournamentMatch"("stageId")`,
-	).run();
-	db.prepare(
-		`create index tournament_match_group_id on "TournamentMatch"("groupId")`,
-	).run();
+	db.prepare(`create index tournament_match_round_id on "TournamentMatch"("roundId")`).run();
+	db.prepare(`create index tournament_match_stage_id on "TournamentMatch"("stageId")`).run();
+	db.prepare(`create index tournament_match_group_id on "TournamentMatch"("groupId")`).run();
 
 	db.prepare(
 		/*sql*/ `

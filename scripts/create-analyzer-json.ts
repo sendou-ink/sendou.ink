@@ -18,11 +18,7 @@ import playersParams from "./dicts/SplPlayer.game__GameParameterTable.json";
 import weapons from "./dicts/WeaponInfoMain.json";
 import specialWeapons from "./dicts/WeaponInfoSpecial.json";
 import subWeapons from "./dicts/WeaponInfoSub.json";
-import {
-	LANG_JSONS_TO_CREATE,
-	loadLangDicts,
-	translationJsonFolderName,
-} from "./utils";
+import { LANG_JSONS_TO_CREATE, loadLangDicts, translationJsonFolderName } from "./utils";
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -49,9 +45,7 @@ async function main() {
 		if (mainWeaponShouldBeSkipped(weapon)) continue;
 
 		const rawParams = loadWeaponParamsObject(weapon);
-		const params = combineSwingsIfSame(
-			parametersToMainWeaponResult(weapon, rawParams),
-		);
+		const params = combineSwingsIfSame(parametersToMainWeaponResult(weapon, rawParams));
 
 		translationsToArray({
 			arr: translations,
@@ -113,27 +107,18 @@ async function main() {
 	logWeaponIds(mainWeaponsResult);
 }
 
-function parametersToMainWeaponResult(
-	weapon: MainWeapon,
-	params: any,
-): MainWeaponParams {
+function parametersToMainWeaponResult(weapon: MainWeapon, params: any): MainWeaponParams {
 	const isSplatling = params.WeaponParam?.$type === "spl__WeaponSpinnerParam";
 	const isSlosher = params.WeaponParam?.$type === "spl__WeaponSlosherParam";
 
-	const InkConsume =
-		!isSplatling && !isSlosher ? params.WeaponParam?.InkConsume : undefined;
-	const InkConsumeFullChargeSplatling = isSplatling
-		? params.WeaponParam?.InkConsume
-		: undefined;
+	const InkConsume = !isSplatling && !isSlosher ? params.WeaponParam?.InkConsume : undefined;
+	const InkConsumeFullChargeSplatling = isSplatling ? params.WeaponParam?.InkConsume : undefined;
 
-	const InkConsumeSlosher = isSlosher
-		? params.WeaponParam?.InkConsume
-		: undefined;
+	const InkConsumeSlosher = isSlosher ? params.WeaponParam?.InkConsume : undefined;
 
 	// for blasters these values are the same and represent damage caused by direct
 	const DamageParam_ValueDirect =
-		params.DamageParam?.ValueMax &&
-		params.DamageParam?.ValueMax === params.DamageParam?.ValueMin
+		params.DamageParam?.ValueMax && params.DamageParam?.ValueMax === params.DamageParam?.ValueMin
 			? params.DamageParam?.ValueMax
 			: undefined;
 
@@ -165,21 +150,15 @@ function parametersToMainWeaponResult(
 		return (
 			params.BlastParam?.DistanceDamage ??
 			params.BlastParam?.BlastParam?.DistanceDamage ??
-			params.spl__BulletStringerParam?.DetonationParam?.BlastParam
-				?.DistanceDamage
+			params.spl__BulletStringerParam?.DetonationParam?.BlastParam?.DistanceDamage
 		);
 	};
 
 	const slosherDirectDamage = () => {
-		const DamageParam_ValueDirectMax =
-			params.UnitGroupParam?.Unit?.[0]?.DamageParam?.ValueMax;
-		const DamageParam_ValueDirectMin =
-			params.UnitGroupParam?.Unit?.[0]?.DamageParam?.ValueMin;
+		const DamageParam_ValueDirectMax = params.UnitGroupParam?.Unit?.[0]?.DamageParam?.ValueMax;
+		const DamageParam_ValueDirectMin = params.UnitGroupParam?.Unit?.[0]?.DamageParam?.ValueMin;
 
-		if (
-			DamageParam_ValueDirectMax &&
-			DamageParam_ValueDirectMax === DamageParam_ValueDirectMin
-		) {
+		if (DamageParam_ValueDirectMax && DamageParam_ValueDirectMax === DamageParam_ValueDirectMin) {
 			return {
 				DamageParam_ValueDirect: DamageParam_ValueDirectMax,
 			};
@@ -216,12 +195,8 @@ function parametersToMainWeaponResult(
 		params.BulletSaberHorizontalParam?.DamageParam?.HitDamage +
 		params.BulletSaberSlashHorizontalParam?.DamageParam?.DamageValue;
 
-	const resolveMin = (
-		valueOne: number | null | undefined,
-		valueTwo: number | null | undefined,
-	) => {
-		if (typeof valueOne !== "number" && typeof valueTwo !== "number")
-			return undefined;
+	const resolveMin = (valueOne: number | null | undefined, valueTwo: number | null | undefined) => {
+		if (typeof valueOne !== "number" && typeof valueTwo !== "number") return undefined;
 
 		if (typeof valueOne !== "number") return valueTwo;
 		if (typeof valueTwo !== "number") return valueOne;
@@ -229,12 +204,8 @@ function parametersToMainWeaponResult(
 		return Math.min(valueOne, valueTwo);
 	};
 
-	const resolveMax = (
-		valueOne: number | null | undefined,
-		valueTwo: number | null | undefined,
-	) => {
-		if (typeof valueOne !== "number" && typeof valueTwo !== "number")
-			return undefined;
+	const resolveMax = (valueOne: number | null | undefined, valueTwo: number | null | undefined) => {
+		if (typeof valueOne !== "number" && typeof valueTwo !== "number") return undefined;
 
 		if (typeof valueOne !== "number") return valueTwo;
 		if (typeof valueTwo !== "number") return valueOne;
@@ -252,9 +223,7 @@ function parametersToMainWeaponResult(
 			params.MainWeaponSetting?.WeaponSpeedType === "Mid"
 				? undefined
 				: params.MainWeaponSetting?.WeaponSpeedType,
-		MoveSpeed:
-			params.WeaponParam?.MoveSpeed ??
-			params.spl__WeaponShelterShotgunParam?.MoveSpeed,
+		MoveSpeed: params.WeaponParam?.MoveSpeed ?? params.spl__WeaponShelterShotgunParam?.MoveSpeed,
 		MoveSpeed_Charge: MoveSpeed_Charge(),
 		MoveSpeedFullCharge:
 			params.WeaponParam?.MoveSpeedFullCharge ??
@@ -284,15 +253,11 @@ function parametersToMainWeaponResult(
 		DamageParam_ValueMinCharge: params.DamageParam?.ValueMinCharge,
 		DamageParam_SplatanaVerticalDirect:
 			params.BulletSaberSlashVerticalParam?.DamageParam?.DamageValue,
-		DamageParam_SplatanaVertical:
-			params.BulletSaberVerticalParam?.DamageParam?.HitDamage,
-		DamageParam_SplatanaHorizontalDirect: Number.isNaN(
-			DamageParam_SplatanaHorizontalDirect,
-		)
+		DamageParam_SplatanaVertical: params.BulletSaberVerticalParam?.DamageParam?.HitDamage,
+		DamageParam_SplatanaHorizontalDirect: Number.isNaN(DamageParam_SplatanaHorizontalDirect)
 			? undefined
 			: DamageParam_SplatanaHorizontalDirect,
-		DamageParam_SplatanaHorizontal:
-			params.BulletSaberHorizontalParam?.DamageParam?.HitDamage,
+		DamageParam_SplatanaHorizontal: params.BulletSaberHorizontalParam?.DamageParam?.HitDamage,
 		BodyParam_Damage: params.BodyParam?.Damage,
 		Variable_Damage_ValueMax: params.VariableDamageParam?.ValueMax,
 		Variable_Damage_ValueMin: params.VariableDamageParam?.ValueMin,
@@ -325,16 +290,13 @@ function parametersToMainWeaponResult(
 		ChargeFrameFullCharge:
 			params.WeaponParam?.ChargeFrameFullCharge ??
 			params.spl__WeaponStringerParam?.ChargeParam?.ChargeFrameFullCharge,
-		KeepChargeFullFrame:
-			KeepChargeFullFrame !== 1 ? KeepChargeFullFrame : undefined,
+		KeepChargeFullFrame: KeepChargeFullFrame !== 1 ? KeepChargeFullFrame : undefined,
 		Jump_DegSwerve: params.WeaponParam?.Jump_DegSwerve,
 		Stand_DegSwerve: params.WeaponParam?.Stand_DegSwerve,
 		Variable_Jump_DegSwerve:
-			params.VariableWeaponParam?.Jump_DegSwerve ??
-			params.VariableShotParam?.Jump_DegSwerve,
+			params.VariableWeaponParam?.Jump_DegSwerve ?? params.VariableShotParam?.Jump_DegSwerve,
 		Variable_Stand_DegSwerve:
-			params.VariableWeaponParam?.Stand_DegSwerve ??
-			params.VariableShotParam?.Stand_DegSwerve,
+			params.VariableWeaponParam?.Stand_DegSwerve ?? params.VariableShotParam?.Stand_DegSwerve,
 		InkRecoverStop: params.WeaponParam?.InkRecoverStop,
 		InkConsume,
 		InkConsumeSlosher,
@@ -342,15 +304,13 @@ function parametersToMainWeaponResult(
 		InkConsumeMinCharge: params.WeaponParam?.InkConsumeMinCharge,
 		InkConsumeFullChargeSplatling,
 		InkConsume_WeaponSwingParam: params.WeaponSwingParam?.InkConsume,
-		InkConsume_WeaponVerticalSwingParam:
-			params.WeaponVerticalSwingParam?.InkConsume,
+		InkConsume_WeaponVerticalSwingParam: params.WeaponVerticalSwingParam?.InkConsume,
 		InkConsume_WeaponWideSwingParam: params.WeaponWideSwingParam?.InkConsume,
 		InkConsumeUmbrella_WeaponShelterCanopyParam:
 			params.spl__WeaponShelterCanopyParam?.InkConsumeUmbrella !== 0
 				? params.spl__WeaponShelterCanopyParam?.InkConsumeUmbrella
 				: undefined,
-		InkConsume_WeaponShelterShotgunParam:
-			InkConsume_WeaponShelterShotgunParam(),
+		InkConsume_WeaponShelterShotgunParam: InkConsume_WeaponShelterShotgunParam(),
 		InkConsume_SideStepParam: params.SideStepParam?.InkConsume,
 		InkConsume_SwingParam: params.spl__WeaponSaberParam?.SwingParam?.InkConsume,
 		InkConsumeFullCharge_ChargeParam:
@@ -362,8 +322,7 @@ function parametersToMainWeaponResult(
 function combineSwingsIfSame(params: MainWeaponParams): MainWeaponParams {
 	if (
 		!params.InkConsume_WeaponVerticalSwingParam ||
-		params.InkConsume_WeaponVerticalSwingParam !==
-			params.InkConsume_WeaponWideSwingParam
+		params.InkConsume_WeaponVerticalSwingParam !== params.InkConsume_WeaponWideSwingParam
 	) {
 		return params;
 	}
@@ -376,10 +335,7 @@ function combineSwingsIfSame(params: MainWeaponParams): MainWeaponParams {
 	};
 }
 
-function parametersToSubWeaponResult(
-	subWeapon: SubWeapon,
-	params: any,
-): SubWeaponParams {
+function parametersToSubWeaponResult(subWeapon: SubWeapon, params: any): SubWeaponParams {
 	const SubInkSaveLv = params.SubWeaponSetting?.SubInkSaveLv ?? 2;
 
 	return {
@@ -389,19 +345,14 @@ function parametersToSubWeaponResult(
 		InkRecoverStop: params.WeaponParam.InkRecoverStop,
 		DistanceDamage: params.BlastParamMaxCharge?.DistanceDamage
 			? // curling bomb difference charge to same key
-				[
-					params.BlastParamMaxCharge.DistanceDamage,
-					params.BlastParamMinCharge?.DistanceDamage,
-				]
+				[params.BlastParamMaxCharge.DistanceDamage, params.BlastParamMinCharge?.DistanceDamage]
 			: params.BlastParam?.DistanceDamage,
-		DirectDamage:
-			params.MoveParam?.DirectDamage ?? params.MoveParam?.DamageDirectHit,
+		DirectDamage: params.MoveParam?.DirectDamage ?? params.MoveParam?.DamageDirectHit,
 		DistanceDamage_BlastParamArray: params.MoveParam?.BlastParamArray?.map(
 			(b: any) => b.DistanceDamage,
 		),
 		DistanceDamage_BlastParamChase: params.BlastParamChase?.DistanceDamage,
-		DistanceDamage_SplashBlastParam:
-			params.BlastParamChase?.SplashBlastParam?.DistanceDamage,
+		DistanceDamage_SplashBlastParam: params.BlastParamChase?.SplashBlastParam?.DistanceDamage,
 	};
 }
 
@@ -413,11 +364,7 @@ function parametersToSpecialWeaponResult(params: any) {
 	for (const parentValue of Object.values(params)) {
 		for (const entries of Object.entries(parentValue as any)) {
 			const [key, value]: any = entries;
-			if (
-				key === "SubSpecialSpecUpList" ||
-				value.High !== value.Mid ||
-				value.Mid !== value.Low
-			) {
+			if (key === "SubSpecialSpecUpList" || value.High !== value.Mid || value.Mid !== value.Low) {
 				result[key] = value;
 			}
 
@@ -437,17 +384,12 @@ function parametersToSpecialWeaponResult(params: any) {
 
 	// for Ultra Splashdown
 	if (params.BlastParamDokanWarp) {
-		result.SubSpecialSpecUpList =
-			params.BlastParamDokanWarp.SubSpecialSpecUpList;
+		result.SubSpecialSpecUpList = params.BlastParamDokanWarp.SubSpecialSpecUpList;
 	}
 
 	const resultUnwrapped = unwrapSubSpecialSpecUpList(result);
 
-	const specialDurationFrameKeyAlises = [
-		"LaserFrame",
-		"RainyFrame",
-		"SpecialTotalFrame",
-	];
+	const specialDurationFrameKeyAlises = ["LaserFrame", "RainyFrame", "SpecialTotalFrame"];
 
 	for (const key of specialDurationFrameKeyAlises) {
 		if (!resultUnwrapped[key]) continue;
@@ -469,15 +411,9 @@ function parametersToSpecialWeaponResult(params: any) {
 			// Reefslider
 		} else {
 			resultUnwrapped.PaintRadius = {
-				High:
-					resultUnwrapped.SplashAroundPaintRadius.High +
-					resultUnwrapped.PaintRadius.High,
-				Mid:
-					resultUnwrapped.SplashAroundPaintRadius.Mid +
-					resultUnwrapped.PaintRadius.Mid,
-				Low:
-					resultUnwrapped.SplashAroundPaintRadius.Low +
-					resultUnwrapped.PaintRadius.Low,
+				High: resultUnwrapped.SplashAroundPaintRadius.High + resultUnwrapped.PaintRadius.High,
+				Mid: resultUnwrapped.SplashAroundPaintRadius.Mid + resultUnwrapped.PaintRadius.Mid,
+				Low: resultUnwrapped.SplashAroundPaintRadius.Low + resultUnwrapped.PaintRadius.Low,
 			};
 		}
 
@@ -498,16 +434,12 @@ function parametersToSpecialWeaponResult(params: any) {
 	const isKraken = () => !!params.BodyParam?.DamageJumpValue;
 	const isInkjet = () => !!params.JetParam;
 	const isInkStorm = () => !!params.CloudParam;
-	const isBooyahBomb = () =>
-		params.BlastParam?.$type === "spl__BulletSpNiceBallBlastParam";
+	const isBooyahBomb = () => params.BlastParam?.$type === "spl__BulletSpNiceBallBlastParam";
 
 	const SwingDamage = () => {
 		if (!isUltraStamp()) return;
 
-		return [
-			{ Damage: 1000, Distance: 0 },
-			...params.SwingBigBlastParam.DistanceDamage,
-		];
+		return [{ Damage: 1000, Distance: 0 }, ...params.SwingBigBlastParam.DistanceDamage];
 	};
 
 	const ThrowDamage = () => {
@@ -573,10 +505,8 @@ function parametersToSpecialWeaponResult(params: any) {
 			KrakenDirectDamage() ??
 			InkjetDirectDamage(),
 		WaveDamage: params.spl__BulletSpShockSonarParam?.WaveParam?.Damage,
-		ExhaleBlastParamMinChargeDistanceDamage:
-			params.ExhaleBlastParamMinCharge?.DistanceDamage,
-		ExhaleBlastParamMaxChargeDistanceDamage:
-			params.ExhaleBlastParamMaxCharge?.DistanceDamage,
+		ExhaleBlastParamMinChargeDistanceDamage: params.ExhaleBlastParamMinCharge?.DistanceDamage,
+		ExhaleBlastParamMaxChargeDistanceDamage: params.ExhaleBlastParamMaxCharge?.DistanceDamage,
 		SwingDamage: SwingDamage(),
 		ThrowDamage: ThrowDamage(),
 		ThrowDirectDamage: params.ThrowMoveParam?.DirectDamageValue,
@@ -598,10 +528,7 @@ function unwrapSubSpecialSpecUpList(result: any) {
 			const [key, value]: any = entries;
 			if (Array.isArray(value)) {
 				return value.map((v: any) => {
-					if (
-						!v.SpecUpType ||
-						(v.Value.Low === v.Value.Mid && v.Value.Mid === v.Value.High)
-					) {
+					if (!v.SpecUpType || (v.Value.Low === v.Value.Mid && v.Value.Mid === v.Value.High)) {
 						return [];
 					}
 
@@ -622,10 +549,7 @@ function resolveSubWeaponId(weapon: MainWeapon) {
 
 	const subWeaponObj = subWeapons.find((wpn) => codeName === wpn.__RowId);
 	invariant(subWeaponObj, `Could not find sub weapon for '${weapon.__RowId}'`);
-	invariant(
-		subWeaponIds.includes(subWeaponObj.Id as any),
-		"Invalid sub weapon id",
-	);
+	invariant(subWeaponIds.includes(subWeaponObj.Id as any), "Invalid sub weapon id");
 
 	return subWeaponObj.Id as SubWeaponId;
 }
@@ -636,13 +560,8 @@ function resolveSpecialWeaponId(weapon: MainWeapon) {
 		"",
 	);
 
-	const specialWeaponObj = specialWeapons.find(
-		(wpn) => codeName === wpn.__RowId,
-	);
-	invariant(
-		specialWeaponObj,
-		`Could not find special weapon for '${codeName}'`,
-	);
+	const specialWeaponObj = specialWeapons.find((wpn) => codeName === wpn.__RowId);
+	invariant(specialWeaponObj, `Could not find special weapon for '${codeName}'`);
 
 	return specialWeaponObj.Id as SpecialWeaponId;
 }
@@ -662,11 +581,7 @@ function resolveOverwrites(params: any) {
 		resolveOverwritesWithArbitraryKeys(result, value);
 
 		// each object has a $type property which we ignore
-		if (
-			key.includes("PlayerGearSkillParam") &&
-			parsed.success &&
-			Object.keys(parsed).length > 1
-		) {
+		if (key.includes("PlayerGearSkillParam") && parsed.success && Object.keys(parsed).length > 1) {
 			const abilityKey = key.split("_").at(-1);
 			invariant(abilityKey, `Could not find ability key for '${key}'`);
 
@@ -691,9 +606,7 @@ function resolveOverwritesWithArbitraryKeys(
 	result: NonNullable<MainWeaponParams["overwrites"]>,
 	paramsObj: unknown,
 ) {
-	for (const [key, value] of Object.entries(
-		paramsObj as Record<string, number>,
-	)) {
+	for (const [key, value] of Object.entries(paramsObj as Record<string, number>)) {
 		if (!key.startsWith("Overwrite_")) continue;
 		if (value === -1) continue;
 
@@ -727,28 +640,19 @@ function resolveSubWeaponOverwrites(subWeapon: SubWeapon, params: any) {
 		SubSpecUpParam: (subWeapon.Id === SQUID_BEAKON_ID
 			? {
 					Low: 0.0,
-					...playersParams.GameParameters.spl__PlayerBeaconSubSpecUpParam
-						.SubSpecUpParam,
+					...playersParams.GameParameters.spl__PlayerBeaconSubSpecUpParam.SubSpecUpParam,
 				}
 			: undefined) as any,
 	};
 
 	return Object.fromEntries(
 		Object.entries(result).filter(
-			([_key, value]) =>
-				value && (value.High !== value.Mid || value.Low !== value.High),
+			([_key, value]) => value && (value.High !== value.Mid || value.Low !== value.High),
 		),
 	);
 }
 
-const WEAPON_TYPES_TO_IGNORE = [
-	"Mission",
-	"Coop",
-	"Hero",
-	"Rival",
-	"SalmonBuddy",
-	"Sdodr",
-];
+const WEAPON_TYPES_TO_IGNORE = ["Mission", "Coop", "Hero", "Rival", "SalmonBuddy", "Sdodr"];
 
 const INTERNAL_WEAPON_NAMES_TO_IGNORE: readonly string[] = ["Free"] as const;
 function mainWeaponShouldBeSkipped(mainWeapon: MainWeapon) {
@@ -785,14 +689,9 @@ function specialWeaponShouldBeSkipped(specialWeapon: SpecialWeapon) {
 	return false;
 }
 
-function loadWeaponParamsObject(
-	weapon: MainWeapon | SubWeapon | SpecialWeapon,
-) {
+function loadWeaponParamsObject(weapon: MainWeapon | SubWeapon | SpecialWeapon) {
 	return JSON.parse(
-		fs.readFileSync(
-			path.join(__dirname, "dicts", "weapon", weaponRowIdToFileName(weapon)),
-			"utf8",
-		),
+		fs.readFileSync(path.join(__dirname, "dicts", "weapon", weaponRowIdToFileName(weapon)), "utf8"),
 	).GameParameters;
 }
 
@@ -814,22 +713,13 @@ function translationsToArray({
 	internalName: string;
 	weaponId: number;
 	type: "Main" | "Sub" | "Special";
-	translations: [
-		langCode: string,
-		translations: Record<string, Record<string, string>>,
-	][];
+	translations: [langCode: string, translations: Record<string, Record<string, string>>][];
 }) {
 	for (const langCode of LANG_JSONS_TO_CREATE) {
 		const translationOfLanguage = translations.find((t) => t[0] === langCode);
-		invariant(
-			translationOfLanguage,
-			`Could not find translation for '${langCode}'`,
-		);
+		invariant(translationOfLanguage, `Could not find translation for '${langCode}'`);
 
-		const value =
-			translationOfLanguage[1][`CommonMsg/Weapon/WeaponName_${type}`]?.[
-				internalName
-			];
+		const value = translationOfLanguage[1][`CommonMsg/Weapon/WeaponName_${type}`]?.[internalName];
 		invariant(value, `Could not find translation for '${internalName}'`);
 
 		arr.push({
@@ -843,18 +733,10 @@ function translationsToArray({
 function writeTranslationsJsons(arr: TranslationArray) {
 	for (const langCode of LANG_JSONS_TO_CREATE) {
 		fs.writeFileSync(
-			path.join(
-				__dirname,
-				"..",
-				"locales",
-				translationJsonFolderName(langCode),
-				"weapons.json",
-			),
+			path.join(__dirname, "..", "locales", translationJsonFolderName(langCode), "weapons.json"),
 			`${JSON.stringify(
 				Object.fromEntries(
-					arr
-						.filter((val) => val.language === langCode)
-						.map(({ key, value }) => [key, value]),
+					arr.filter((val) => val.language === langCode).map(({ key, value }) => [key, value]),
 				),
 				null,
 				2,

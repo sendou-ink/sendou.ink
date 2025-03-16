@@ -28,9 +28,7 @@ test.describe("VoDs page", () => {
 			url: newVodPage(),
 		});
 
-		await page
-			.getByLabel("YouTube URL")
-			.fill("https://www.youtube.com/watch?v=o7kWlMZP3lM");
+		await page.getByLabel("YouTube URL").fill("https://www.youtube.com/watch?v=o7kWlMZP3lM");
 
 		await page
 			.getByLabel("Video title")
@@ -83,9 +81,7 @@ test.describe("VoDs page", () => {
 			url: newVodPage(),
 		});
 
-		await page
-			.getByLabel("YouTube URL")
-			.fill("https://www.youtube.com/watch?v=QFk1Gf91SwI");
+		await page.getByLabel("YouTube URL").fill("https://www.youtube.com/watch?v=QFk1Gf91SwI");
 
 		await page
 			.getByLabel("Video title")
@@ -112,9 +108,7 @@ test.describe("VoDs page", () => {
 		await submit(page);
 
 		for (let i = 0; i < 8; i++) {
-			await page
-				.getByTestId(`weapon-img-${i < 4 ? 200 : 6010}-${i}`)
-				.isVisible();
+			await page.getByTestId(`weapon-img-${i < 4 ? 200 : 6010}-${i}`).isVisible();
 		}
 	});
 

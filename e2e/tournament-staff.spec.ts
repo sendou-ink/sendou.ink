@@ -10,11 +10,7 @@ import {
 	selectUser,
 	submit,
 } from "~/utils/playwright";
-import {
-	tournamentAdminPage,
-	tournamentBracketsPage,
-	tournamentMatchPage,
-} from "~/utils/urls";
+import { tournamentAdminPage, tournamentBracketsPage, tournamentMatchPage } from "~/utils/urls";
 import { startBracket } from "./shared";
 
 const TOURNAMENT_ID = 2;
@@ -43,9 +39,7 @@ test.describe("Tournament staff", () => {
 		await isNotVisible(page.getByTestId(`staff-id-${NZAP_TEST_ID}`));
 	});
 
-	test("gives organizer role which allows another user to TO", async ({
-		page,
-	}) => {
+	test("gives organizer role which allows another user to TO", async ({ page }) => {
 		await seed(page);
 		await impersonate(page, NZAP_TEST_ID);
 
@@ -93,9 +87,7 @@ test.describe("Tournament staff", () => {
 		await expect(page.getByText("Chimera")).toBeVisible();
 	});
 
-	test("gives staff role which allows another user to see limited info", async ({
-		page,
-	}) => {
+	test("gives staff role which allows another user to see limited info", async ({ page }) => {
 		await startBracket(page);
 
 		await impersonate(page, NZAP_TEST_ID);
@@ -124,9 +116,7 @@ test.describe("Tournament staff", () => {
 		await page.getByLabel("Role").selectOption("STREAMER");
 		await page.getByTestId("add-staff-button").click();
 
-		await expect(page.getByTestId(`staff-id-${NZAP_TEST_ID}`)).toContainText(
-			"streamer",
-		);
+		await expect(page.getByTestId(`staff-id-${NZAP_TEST_ID}`)).toContainText("streamer");
 
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({

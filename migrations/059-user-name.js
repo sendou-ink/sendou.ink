@@ -7,7 +7,5 @@ export function up(db) {
 		/* sql */ `alter table "User" add "username" text generated always as (coalesce("customName", "discordName")) virtual`,
 	).run();
 
-	db.prepare(
-		/* sql */ `alter table "User" drop column "discordDiscriminator"`,
-	).run();
+	db.prepare(/* sql */ `alter table "User" drop column "discordDiscriminator"`).run();
 }

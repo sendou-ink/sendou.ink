@@ -3,10 +3,8 @@ import { ADMIN_DISCORD_ID } from "~/constants";
 import { impersonate, navigate, seed, selectWeapon } from "~/utils/playwright";
 import { userPage } from "~/utils/urls";
 
-const goToEditPage = (page: Page) =>
-	page.getByText("Edit", { exact: true }).click();
-const submitEditForm = (page: Page) =>
-	page.getByText("Save", { exact: true }).click();
+const goToEditPage = (page: Page) => page.getByText("Edit", { exact: true }).click();
+const submitEditForm = (page: Page) => page.getByText("Save", { exact: true }).click();
 
 test.describe("User page", () => {
 	test("edits user profile", async ({ page }) => {
@@ -20,12 +18,8 @@ test.describe("User page", () => {
 		await page.getByTestId("flag-FI").isVisible();
 		await goToEditPage(page);
 
-		await page
-			.getByRole("textbox", { name: "In game name", exact: true })
-			.fill("Lean");
-		await page
-			.getByRole("textbox", { name: "In game name discriminator" })
-			.fill("1234");
+		await page.getByRole("textbox", { name: "In game name", exact: true }).fill("Lean");
+		await page.getByRole("textbox", { name: "In game name discriminator" }).fill("1234");
 		await page.getByLabel("R-stick sens").selectOption("0");
 		await page.getByLabel("Motion sens").selectOption("-50");
 		await page.getByLabel("Country").selectOption("SE");
@@ -48,9 +42,7 @@ test.describe("User page", () => {
 
 		const body = page.locator("body");
 		const bodyColor = () =>
-			body.evaluate((element) =>
-				window.getComputedStyle(element).getPropertyValue("--bg").trim(),
-			);
+			body.evaluate((element) => window.getComputedStyle(element).getPropertyValue("--bg").trim());
 
 		await expect(bodyColor()).resolves.toMatch(/#ebebf0/);
 

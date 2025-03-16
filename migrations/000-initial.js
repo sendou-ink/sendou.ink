@@ -39,12 +39,8 @@ export function up(db) {
   ) strict
   `,
 	).run();
-	db.prepare(
-		`create index plus_suggestion_author_id on "PlusSuggestion"("authorId")`,
-	).run();
-	db.prepare(
-		`create index plus_suggestion_suggested_id on "PlusSuggestion"("suggestedId")`,
-	).run();
+	db.prepare(`create index plus_suggestion_author_id on "PlusSuggestion"("authorId")`).run();
+	db.prepare(`create index plus_suggestion_suggested_id on "PlusSuggestion"("suggestedId")`).run();
 
 	db.prepare(
 		`
@@ -62,9 +58,7 @@ export function up(db) {
   ) strict
   `,
 	).run();
-	db.prepare(
-		`create index plus_vote_author_id on "PlusVote"("authorId");`,
-	).run();
+	db.prepare(`create index plus_vote_author_id on "PlusVote"("authorId");`).run();
 	db.prepare(`create index plus_vote_voted_id on "PlusVote"("votedId");`).run();
 
 	db.prepare(

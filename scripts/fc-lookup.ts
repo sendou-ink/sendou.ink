@@ -29,9 +29,7 @@ async function main() {
 	}
 
 	for (const match of matches) {
-		logger.info(
-			`${match.friendCode} - ${match.discordUniqueName} - ${match.discordId}`,
-		);
+		logger.info(`${match.friendCode} - ${match.discordUniqueName} - ${match.discordId}`);
 	}
 }
 

@@ -16,15 +16,12 @@ invariant(
 	"displayName of badge must have at least one uppercase letter",
 );
 invariant(
-	!parsedHue ||
-		(parsedHue >= -360 && parsedHue <= 360 && Number.isInteger(parsedHue)),
+	!parsedHue || (parsedHue >= -360 && parsedHue <= 360 && Number.isInteger(parsedHue)),
 	"hue must be between -360 and 360",
 );
 
 sql
-	.prepare(
-		"insert into badge (code, displayName, hue) values ($code, $displayName, $hue)",
-	)
+	.prepare("insert into badge (code, displayName, hue) values ($code, $displayName, $hue)")
 	.run({ code, displayName, hue: parsedHue ?? null });
 
 logger.info(`Added new badge: ${displayName}`);

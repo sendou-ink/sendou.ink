@@ -1,8 +1,6 @@
 export function up(db) {
 	db.transaction(() => {
-		db.prepare(
-			/* sql */ `alter table "User" add "mapModePreferences" text`,
-		).run();
+		db.prepare(/* sql */ `alter table "User" add "mapModePreferences" text`).run();
 		db.prepare(/* sql */ `alter table "User" add "qWeaponPool" text`).run();
 
 		db.prepare(`alter table "Group" drop column "mapListPreference"`).run();

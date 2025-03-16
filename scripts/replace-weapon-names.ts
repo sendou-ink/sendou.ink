@@ -10,14 +10,7 @@ import { logger } from "~/utils/logger";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DIR_PATH_1 = path.join(
-	__dirname,
-	"..",
-	"public",
-	"static-assets",
-	"img",
-	"main-weapons",
-);
+const DIR_PATH_1 = path.join(__dirname, "..", "public", "static-assets", "img", "main-weapons");
 
 const DIR_PATH_2 = path.join(
 	__dirname,
@@ -58,9 +51,7 @@ async function main() {
 			}
 
 			const weapon: any = weapons.find(
-				(weapon: any) =>
-					file.includes(`${weapon.__RowId}.`) ||
-					file.includes(`${weapon.__RowId}_`),
+				(weapon: any) => file.includes(`${weapon.__RowId}.`) || file.includes(`${weapon.__RowId}_`),
 			);
 
 			if (!weapon) {

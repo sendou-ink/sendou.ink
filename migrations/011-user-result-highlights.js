@@ -11,13 +11,9 @@ export function up(db) {
     `,
 	).run();
 
-	db.prepare(
-		`create index user_result_highlight_user_id on "UserResultHighlight"("userId")`,
-	).run();
+	db.prepare(`create index user_result_highlight_user_id on "UserResultHighlight"("userId")`).run();
 
-	db.prepare(
-		`create index user_result_highlight_team_id on "UserResultHighlight"("teamId")`,
-	).run();
+	db.prepare(`create index user_result_highlight_team_id on "UserResultHighlight"("teamId")`).run();
 }
 
 export function down(db) {

@@ -51,14 +51,10 @@ export function down(db) {
     ) strict
     `,
 	).run();
-	db.prepare(
-		`create index map_pool_map_map_pool_id on "MapPoolMap"("mapPoolId")`,
-	).run();
+	db.prepare(`create index map_pool_map_map_pool_id on "MapPoolMap"("mapPoolId")`).run();
 
 	db.prepare(
 		`alter table "CalendarEvent" add "mapPoolId" integer references "MapPool"("id") on delete set null`,
 	).run();
-	db.prepare(
-		`create index calendar_event_map_pool_id on "CalendarEvent"("mapPoolId")`,
-	).run();
+	db.prepare(`create index calendar_event_map_pool_id on "CalendarEvent"("mapPoolId")`).run();
 }

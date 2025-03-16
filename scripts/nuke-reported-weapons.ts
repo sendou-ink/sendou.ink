@@ -35,16 +35,8 @@ async function main() {
 		)
 		.innerJoin("GroupMatchMap", "GroupMatchMap.matchId", "GroupMatch.id")
 		.select("GroupMatchMap.id")
-		.where(
-			"GroupMatch.createdAt",
-			">",
-			dateToDatabaseTimestamp(currentSeason.starts),
-		)
-		.where(
-			"GroupMatch.createdAt",
-			"<",
-			dateToDatabaseTimestamp(currentSeason.ends),
-		)
+		.where("GroupMatch.createdAt", ">", dateToDatabaseTimestamp(currentSeason.starts))
+		.where("GroupMatch.createdAt", "<", dateToDatabaseTimestamp(currentSeason.ends))
 		.where("GroupMember.userId", "=", user.id)
 		.where("GroupMatchMap.winnerGroupId", "is not", null)
 		.execute();
@@ -57,9 +49,7 @@ async function main() {
 		.where("ReportedWeapon.groupMatchMapId", "in", groupMatchMapIds)
 		.execute();
 
-	logger.info(
-		`Deleted ${groupMatchMapIds.length} reported weapons for user ${discordId}`,
-	);
+	logger.info(`Deleted ${groupMatchMapIds.length} reported weapons for user ${discordId}`);
 }
 
 void main();

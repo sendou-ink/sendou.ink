@@ -25,8 +25,6 @@ export function up(db) {
 		).run();
 
 		db.prepare(/* sql */ `alter table "Tournament" add "rules" text`).run();
-		db.prepare(
-			/* sql */ `alter table "TournamentTeam" add "teamId" integer`,
-		).run();
+		db.prepare(/* sql */ `alter table "TournamentTeam" add "teamId" integer`).run();
 	})();
 }

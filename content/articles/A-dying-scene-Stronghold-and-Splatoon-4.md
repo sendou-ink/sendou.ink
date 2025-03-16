@@ -20,9 +20,9 @@ We as a community need to start focusing now on building up our community and \*
 
 What we as a community CAN do:
 
-* **UPLOAD** content on YouTube  
-* **WATCH** videos \+ streams  
-* **SHARE** services \+ websites  
-* **VOLUNTEER** w/ orgs
+- **UPLOAD** content on YouTube
+- **WATCH** videos \+ streams
+- **SHARE** services \+ websites
+- **VOLUNTEER** w/ orgs
 
 Let's focus on growing with what we have now. Make it so that the scene can be EASILY found and understood from a simple google search of "competitive splatoon". Together, we as a community can fix this. It all starts with you.

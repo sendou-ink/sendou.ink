@@ -1,14 +1,7 @@
 import { type Page, expect, test } from "@playwright/test";
 import { ADMIN_DISCORD_ID } from "~/constants";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
-import {
-	impersonate,
-	isNotVisible,
-	navigate,
-	seed,
-	selectUser,
-	submit,
-} from "~/utils/playwright";
+import { impersonate, isNotVisible, navigate, seed, selectUser, submit } from "~/utils/playwright";
 import {
 	tournamentAdminPage,
 	tournamentBracketsPage,
@@ -168,9 +161,7 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("save-active-roster-button").last().click();
 
 		await expect(page.getByTestId("edit-active-roster-button")).toBeVisible();
-		await expect(
-			page.getByTestId("player-checkbox-3").last(),
-		).not.toBeChecked();
+		await expect(page.getByTestId("player-checkbox-3").last()).not.toBeChecked();
 	});
 
 	// 1) Report winner of N-ZAP's first match
@@ -246,14 +237,10 @@ test.describe("Tournament bracket", () => {
 			winner: 2,
 		});
 		await backToBracket(page);
-		await expect(
-			page.locator("[data-round-id='5'] [data-participant-id='102']"),
-		).toBeVisible();
+		await expect(page.locator("[data-round-id='5'] [data-participant-id='102']")).toBeVisible();
 	});
 
-	test("adds a sub mid tournament (from non checked in team)", async ({
-		page,
-	}) => {
+	test("adds a sub mid tournament (from non checked in team)", async ({ page }) => {
 		const tournamentId = 1;
 		await startBracket(page, tournamentId);
 
@@ -267,13 +254,8 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("add-sub-button").click();
 		await page.getByTestId("copy-invite-link-button").click();
 
-		const inviteLinkProd: string = await page.evaluate(
-			"navigator.clipboard.readText()",
-		);
-		const inviteLink = inviteLinkProd.replace(
-			"https://sendou.ink",
-			"http://localhost:5173",
-		);
+		const inviteLinkProd: string = await page.evaluate("navigator.clipboard.readText()");
+		const inviteLink = inviteLinkProd.replace("https://sendou.ink", "http://localhost:5173");
 
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({
@@ -391,9 +373,7 @@ test.describe("Tournament bracket", () => {
 
 		await page.getByLabel("Action").selectOption("CHECK_IN");
 		await page.getByLabel("Team", { exact: true }).selectOption("216");
-		await page
-			.getByLabel("Bracket", { exact: true })
-			.selectOption("Underground bracket");
+		await page.getByLabel("Bracket", { exact: true }).selectOption("Underground bracket");
 		await submit(page);
 
 		await navigate({
@@ -440,12 +420,10 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("team-member-name").first().click();
 
 		await page.getByText("Results").click();
-		await expect(
-			page.getByTestId("tournament-name-cell").first(),
-		).toContainText("Paddling Pool 253");
-		await expect(
-			page.locator('[data-testid="mates-cell-placement-0"] li'),
-		).toHaveCount(3);
+		await expect(page.getByTestId("tournament-name-cell").first()).toContainText(
+			"Paddling Pool 253",
+		);
+		await expect(page.locator('[data-testid="mates-cell-placement-0"] li')).toHaveCount(3);
 	});
 
 	test("changes SOS format and progresses with it & adds a member to another team", async ({
@@ -506,14 +484,10 @@ test.describe("Tournament bracket", () => {
 
 		await page.getByTestId("teams-tab").click();
 
-		await expect(
-			page.getByTestId("team-member-name").getByText("Sendou"),
-		).toHaveCount(2);
+		await expect(page.getByTestId("team-member-name").getByText("Sendou")).toHaveCount(2);
 	});
 
-	test("conducts a tournament with many starting brackets", async ({
-		page,
-	}) => {
+	test("conducts a tournament with many starting brackets", async ({ page }) => {
 		const tournamentId = 4;
 
 		await seed(page, "SMALL_SOS");
@@ -537,14 +511,8 @@ test.describe("Tournament bracket", () => {
 		await page.getByText("Seeds").click();
 		await page.getByTestId("set-starting-brackets").click();
 
-		await page
-			.getByTestId("starting-bracket-select")
-			.first()
-			.selectOption("Great White");
-		await page
-			.getByTestId("starting-bracket-select")
-			.nth(1)
-			.selectOption("Great White");
+		await page.getByTestId("starting-bracket-select").first().selectOption("Great White");
+		await page.getByTestId("starting-bracket-select").nth(1).selectOption("Great White");
 
 		await submit(page, "set-starting-brackets-submit-button");
 		await page.getByTestId("brackets-tab").click();
@@ -587,9 +555,7 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("save-revise-button").click();
 
 		await expect(page.getByTestId("revise-button")).toBeVisible();
-		await expect(
-			page.getByTestId("player-checkbox-3").first(),
-		).not.toBeChecked();
+		await expect(page.getByTestId("player-checkbox-3").first()).not.toBeChecked();
 		await expect(page.getByText("99p")).toBeVisible();
 	});
 
@@ -761,9 +727,7 @@ test.describe("Tournament bracket", () => {
 		});
 
 		await page.getByTestId("admin-tab").click();
-		await page
-			.getByLabel('Type bracket name ("Main bracket") to confirm')
-			.fill("Main bracket");
+		await page.getByLabel('Type bracket name ("Main bracket") to confirm').fill("Main bracket");
 		await page.getByTestId("reset-bracket-button").click();
 
 		await page.getByLabel("Action").selectOption("CHECK_IN");
@@ -815,9 +779,7 @@ test.describe("Tournament bracket", () => {
 		});
 
 		await page.getByTestId("finalize-bracket-button").click();
-		await page
-			.getByLabel("Count type", { exact: true })
-			.selectOption("PLAY_ALL");
+		await page.getByLabel("Count type", { exact: true }).selectOption("PLAY_ALL");
 		await page.getByTestId("confirm-finalize-bracket-button").click();
 
 		await navigateToMatch(page, 1);
@@ -884,9 +846,7 @@ test.describe("Tournament bracket", () => {
 		await expect(page.getByText("BYE")).toBeVisible();
 	});
 
-	test("prepares maps (including third place match linking)", async ({
-		page,
-	}) => {
+	test("prepares maps (including third place match linking)", async ({ page }) => {
 		const tournamentId = 4;
 
 		await seed(page);
@@ -1032,9 +992,7 @@ test.describe("Tournament bracket", () => {
 					await page.getByTestId("report-score-button").click();
 					await page.getByTestId("pick-ban-button").last().click();
 					await page.getByTestId("submit-button").click();
-					await expect(
-						page.getByText("Counterpick", { exact: true }),
-					).toBeVisible();
+					await expect(page.getByText("Counterpick", { exact: true })).toBeVisible();
 					await expect(page.getByText("1-1")).toBeVisible();
 				}
 			});

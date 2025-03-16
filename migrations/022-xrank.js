@@ -22,9 +22,7 @@ export function up(db) {
   `,
 	).run();
 
-	db.prepare(
-		`create index splatoon_placement_player_id on "XRankPlacement"("playerId")`,
-	).run();
+	db.prepare(`create index splatoon_placement_player_id on "XRankPlacement"("playerId")`).run();
 
 	db.prepare(
 		/*sql*/ `
@@ -37,7 +35,5 @@ export function up(db) {
   `,
 	).run();
 
-	db.prepare(
-		`create index splatoon_player_user_id on "SplatoonPlayer"("userId")`,
-	).run();
+	db.prepare(`create index splatoon_player_user_id on "SplatoonPlayer"("userId")`).run();
 }

@@ -12,7 +12,5 @@ export function up(db) {
   `,
 	).run();
 
-	db.prepare(
-		/* sql */ `alter table "Tournament" add "castTwitchAccounts" text`,
-	).run();
+	db.prepare(/* sql */ `alter table "Tournament" add "castTwitchAccounts" text`).run();
 }

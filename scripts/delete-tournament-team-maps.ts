@@ -9,10 +9,7 @@ invariant(rawTournamentTeamId, "tournament team is required (argument 1)");
 
 const tournamentTeamId = Number(rawTournamentTeamId);
 
-invariant(
-	!Number.isNaN(tournamentTeamId),
-	"tournament team id must be a number",
-);
+invariant(!Number.isNaN(tournamentTeamId), "tournament team id must be a number");
 
 const deleteMapPoolStm = sql.prepare(/*sql*/ `
   delete from "MapPoolMap"

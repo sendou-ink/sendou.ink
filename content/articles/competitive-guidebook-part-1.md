@@ -20,32 +20,32 @@ Figure out what role you want to learn and play. There are four main roles; slay
 
 ### **Roles Explained**
 
-* **Slayer:** Push key points and exploit openings, the aggressive power of a team’s weapon composition (a.k.a. “comp”)  
-* **Support:** Maintain paint control of the map and provide support to teammates.  
-* **Skirmish:** Forces fights and enables slayers and supports to win fights through assistance.  
-* **Anchor:** Superjump anchor for the team, holds game-winning specials while providing long-range support.  
-* **Utility:** Less-common, but is a niche pick for satisfying game winning conditions (ex. holding rainmaker, setting up beacons).
+- **Slayer:** Push key points and exploit openings, the aggressive power of a team’s weapon composition (a.k.a. “comp”)
+- **Support:** Maintain paint control of the map and provide support to teammates.
+- **Skirmish:** Forces fights and enables slayers and supports to win fights through assistance.
+- **Anchor:** Superjump anchor for the team, holds game-winning specials while providing long-range support.
+- **Utility:** Less-common, but is a niche pick for satisfying game winning conditions (ex. holding rainmaker, setting up beacons).
 
 ### **Positions Explained**
 
-* **Frontline:** Weapons with close up range potential, usually going after kills.  
-* **Midline:** Weapons with mid range potential, usually for general skirmishing.  
-* **Backline:** Weapons with long range potential, usually for holding team positions.
+- **Frontline:** Weapons with close up range potential, usually going after kills.
+- **Midline:** Weapons with mid range potential, usually for general skirmishing.
+- **Backline:** Weapons with long range potential, usually for holding team positions.
 
 ## **Foundational guides**
 
 Having good game awareness, mentality, and knowledge of various in game tricks are super important. It is highly recommended to read through and watch the guides and information listed below as these will help to give you a firm foundation to jump off of.
 
-* [Fluid Priorities and Roles](https://docs.google.com/document/d/1t97IZrN0pI_ceUtJrB-8clapCp1P3oddyFzSQ2lGICg/edit) \- A highly recommended primer that gives you an understanding of how the game works in terms of in game priorities and roles.  
-* [How To Find Your Weapon And Role In Splatoon 3](https://youtu.be/QYUUxQl2X9I?si=KE67ENnON_-mLEZT) \- A video explaining the roles of weapons in Splatoon 3 and how to find your preferred role/weapon.  
-* [Communication Tutorial](https://docs.google.com/document/d/1Ip5fuQstlvYSTmc8h4ErgGW0LaoYmtgGibMNxAwkqgM/edit) \- A guide explaining how to properly use callouts.  
-* [Directory of Splatoon 3 Map Callouts \- A Drive](https://drive.google.com/drive/folders/1qJ2j1VtQnHWvJEqf0Qv0L0WiLHADV0Bv) folder containing the callouts for all of the ranked Splatoon 3 maps.  
-* [The Best Player in the World Will Teach You How to Improve](https://youtu.be/zuRmSeUczBo?si=ERX1NWYQU3EKcZAY) \- Collection of various tips at improving at the game.  
-* [How To Be Aware Of Player Advantage](https://youtu.be/nuDlXOa-MXM?si=5Hy5xfPnqcT-251K) \- Details how to improve awareness of the current game state and act appropriately.  
-* [How to Out Play and Be Better Than Your Opponents](https://www.youtube.com/watch?v=eQprj-G3iKA) \- Guide walking through two examples of how to out-play opponents.  
-* [25+ Splatoon 3 Techs You Should Know](https://youtu.be/gk6wv8nKMcI?si=Ox_kdsokA11QJ5tQ) \- Video detailing small tips and tricks that will give you deeper knowledge of the game's more niche mechanics.  
-* [How to Improve Your Splatoon 3 Movement (Advanced Guide)](https://youtu.be/xUsDxAPfQGk?si=ljl0hP-W4Oru9Uzt) \- Guide walking you through several tricks for improving movement and how to perform them.  
-* [How to Play at Your Full Potential](https://www.youtube.com/watch?v=wc2NmbBSgw8) \- Mentality is incredibly important in Splatoon as it is in any other game and life in general.
+- [Fluid Priorities and Roles](https://docs.google.com/document/d/1t97IZrN0pI_ceUtJrB-8clapCp1P3oddyFzSQ2lGICg/edit) \- A highly recommended primer that gives you an understanding of how the game works in terms of in game priorities and roles.
+- [How To Find Your Weapon And Role In Splatoon 3](https://youtu.be/QYUUxQl2X9I?si=KE67ENnON_-mLEZT) \- A video explaining the roles of weapons in Splatoon 3 and how to find your preferred role/weapon.
+- [Communication Tutorial](https://docs.google.com/document/d/1Ip5fuQstlvYSTmc8h4ErgGW0LaoYmtgGibMNxAwkqgM/edit) \- A guide explaining how to properly use callouts.
+- [Directory of Splatoon 3 Map Callouts \- A Drive](https://drive.google.com/drive/folders/1qJ2j1VtQnHWvJEqf0Qv0L0WiLHADV0Bv) folder containing the callouts for all of the ranked Splatoon 3 maps.
+- [The Best Player in the World Will Teach You How to Improve](https://youtu.be/zuRmSeUczBo?si=ERX1NWYQU3EKcZAY) \- Collection of various tips at improving at the game.
+- [How To Be Aware Of Player Advantage](https://youtu.be/nuDlXOa-MXM?si=5Hy5xfPnqcT-251K) \- Details how to improve awareness of the current game state and act appropriately.
+- [How to Out Play and Be Better Than Your Opponents](https://www.youtube.com/watch?v=eQprj-G3iKA) \- Guide walking through two examples of how to out-play opponents.
+- [25+ Splatoon 3 Techs You Should Know](https://youtu.be/gk6wv8nKMcI?si=Ox_kdsokA11QJ5tQ) \- Video detailing small tips and tricks that will give you deeper knowledge of the game's more niche mechanics.
+- [How to Improve Your Splatoon 3 Movement (Advanced Guide)](https://youtu.be/xUsDxAPfQGk?si=ljl0hP-W4Oru9Uzt) \- Guide walking you through several tricks for improving movement and how to perform them.
+- [How to Play at Your Full Potential](https://www.youtube.com/watch?v=wc2NmbBSgw8) \- Mentality is incredibly important in Splatoon as it is in any other game and life in general.
 
 After going through all of those guides, you have now set yourself miles ahead of any other new player that hasn’t gone through them. With that foundation, you are now equipped with the fundamentals and knowledge to get your hands dirty in the scene.
 
@@ -67,26 +67,26 @@ There’s a lot of terms you’ll see get thrown around by players in the scene,
 
 Terms:
 
-* **Rotation / Rot** \= An in-game rotation (or selection) of maps & modes, usually changing every few hours.  
-* **Solo Queue / Solo Q** \= Refers to anarchy battles where you play with other random players online and randomly assigned to teams in a 4v4 match.  
-* **Open** \= A version of anarchy battles where you can play with 1-3 teammates to take on other players.  
-* **Series** \= A version of anarchy battles where you play a set of battles to earn points which boosts your rank.   
-* **X Battles** \= X Battles are unlocked once you reach rank S+0. It uses a points based system, where you gain and lose points for wins and losses.  
-* **Private Battles (a.k.a “PB”)** \= A private battle where a group of players meet up to either play in a scrimmage, team practice, mini-games, or events (such as tournaments). The host can assign teams and up to two people can spectate the matches. Private battles can also be closed off with passwords to prevent randoms from joining.  
-* **Host** \= This is the person who hosts a private battle by creating one. They can choose to set up a password for it.  
-* **Meta** \= Meta, short for metagame, is what is commonly considered the most favored forms of competitive play whether that be weapon choices, gear, team compositions, etc. The meta of a game shifts throughout its lifespan as patches are released and players discover new things.  
-* **Playstyle** \= A playstyle is the “style” of how a person usually plays and what roles they use. If they like to be aggressive, short-ranged weapons with high kill potential may be most suitable. For more information on roles and playstyles, see the Foundational Guides segment under How to start in competitive.  
-* **Compositions (a.k.a “comp”)** \= An arrangement or composition of a team’s selection of four weapons.   
-* **Spectating (a.k.a. “spec”)** \= For players in a private battle, a spec is a player who can spectate the games being played via an overhead or switch between player POVs (point-of-view). This mode is frequently used by coaches, commentators, and tournament organizers. It is considered proper to ask the opposing team if spectating is allowed and for spectators to mute themselves to not give callouts to their teams during a match.  
-* **Scrimmage (a.k.a. “scrim”)** \= A scrimmage is a private battle between two teams or pickups for practice, usually in a 4v4 format. Ranked modes are often played in preparation for tournaments.  
-* **Free agent (a.k.a. “FA”)** \= A free agent is a player with no team that is actively looking for a team to join.  
-* **Pickups** \= A group of players not on the same team playing for practice or in a tournament.  
-* **Callouts** \= When in voice chat with your team, it is common to give callouts during the game to improve your coordination and other various aspects of how your team plays. Naming a specific region of the stage, telling where an enemy player is or what they’re doing, or giving directions to your team are the three main types of callouts.  
-* **X Power (a.k.a. “XP”)** \= This term refers to the power number a player receives in X battles that helps to define their ranking.  
-* **Feeding** \= Used to describe when a player is running in right after respawning and dying without accomplishing anything.  
-* **Squidbag** \= This is a common in-game taunt that involves pressing the ZL button rapidly. A player usually does this after getting a weird kill or having a good streak (such as wiping, a.k.a splatting all four players). Since it also changes your hitbox, some players will do it to get out of tricky situations. Outside of that however, it’s usually considered poor sportsmanship.  
-* **LUTI** \= [Leagues Under The Ink](https://discord.com/invite/0dZpaQB1mwcd2MCs), the largest Splatoon league where teams that sign up are sorted into divisions and play throughout a season (lasts around 2 months) where they’ll have a match every week.  
-* **Division (a.ka. “div”)** \= A division is a ranking number assigned by a league tournament (LUTI being the most universal league) based on a team’s past tournament results, history, and a player’s competitive background. For LUTI, the divisions start at X (the highest) then decrease numerically 1, 2, 3, so on.
+- **Rotation / Rot** \= An in-game rotation (or selection) of maps & modes, usually changing every few hours.
+- **Solo Queue / Solo Q** \= Refers to anarchy battles where you play with other random players online and randomly assigned to teams in a 4v4 match.
+- **Open** \= A version of anarchy battles where you can play with 1-3 teammates to take on other players.
+- **Series** \= A version of anarchy battles where you play a set of battles to earn points which boosts your rank.
+- **X Battles** \= X Battles are unlocked once you reach rank S+0. It uses a points based system, where you gain and lose points for wins and losses.
+- **Private Battles (a.k.a “PB”)** \= A private battle where a group of players meet up to either play in a scrimmage, team practice, mini-games, or events (such as tournaments). The host can assign teams and up to two people can spectate the matches. Private battles can also be closed off with passwords to prevent randoms from joining.
+- **Host** \= This is the person who hosts a private battle by creating one. They can choose to set up a password for it.
+- **Meta** \= Meta, short for metagame, is what is commonly considered the most favored forms of competitive play whether that be weapon choices, gear, team compositions, etc. The meta of a game shifts throughout its lifespan as patches are released and players discover new things.
+- **Playstyle** \= A playstyle is the “style” of how a person usually plays and what roles they use. If they like to be aggressive, short-ranged weapons with high kill potential may be most suitable. For more information on roles and playstyles, see the Foundational Guides segment under How to start in competitive.
+- **Compositions (a.k.a “comp”)** \= An arrangement or composition of a team’s selection of four weapons.
+- **Spectating (a.k.a. “spec”)** \= For players in a private battle, a spec is a player who can spectate the games being played via an overhead or switch between player POVs (point-of-view). This mode is frequently used by coaches, commentators, and tournament organizers. It is considered proper to ask the opposing team if spectating is allowed and for spectators to mute themselves to not give callouts to their teams during a match.
+- **Scrimmage (a.k.a. “scrim”)** \= A scrimmage is a private battle between two teams or pickups for practice, usually in a 4v4 format. Ranked modes are often played in preparation for tournaments.
+- **Free agent (a.k.a. “FA”)** \= A free agent is a player with no team that is actively looking for a team to join.
+- **Pickups** \= A group of players not on the same team playing for practice or in a tournament.
+- **Callouts** \= When in voice chat with your team, it is common to give callouts during the game to improve your coordination and other various aspects of how your team plays. Naming a specific region of the stage, telling where an enemy player is or what they’re doing, or giving directions to your team are the three main types of callouts.
+- **X Power (a.k.a. “XP”)** \= This term refers to the power number a player receives in X battles that helps to define their ranking.
+- **Feeding** \= Used to describe when a player is running in right after respawning and dying without accomplishing anything.
+- **Squidbag** \= This is a common in-game taunt that involves pressing the ZL button rapidly. A player usually does this after getting a weird kill or having a good streak (such as wiping, a.k.a splatting all four players). Since it also changes your hitbox, some players will do it to get out of tricky situations. Outside of that however, it’s usually considered poor sportsmanship.
+- **LUTI** \= [Leagues Under The Ink](https://discord.com/invite/0dZpaQB1mwcd2MCs), the largest Splatoon league where teams that sign up are sorted into divisions and play throughout a season (lasts around 2 months) where they’ll have a match every week.
+- **Division (a.ka. “div”)** \= A division is a ranking number assigned by a league tournament (LUTI being the most universal league) based on a team’s past tournament results, history, and a player’s competitive background. For LUTI, the divisions start at X (the highest) then decrease numerically 1, 2, 3, so on.
 
 ## **Joining a team**
 
@@ -94,37 +94,37 @@ When looking for a team to join, you’ll find most teams will have a set list o
 
 ## **Creating a team**
 
-When creating a team, you'll need to be prepared for the large time commitment required to not just start one, but to also keep it going. You'll need to figure out how many players you'll want on a team, how active the team will be, what roles/weapons you'll be looking for, and what requirements you'll have among other things. You can theoretically form a team with only four players in total, but usually having somewhere between 5-6 players is considered the sweet spot since you'll be prepared if a player or two cannot make it to certain events.   
+When creating a team, you'll need to be prepared for the large time commitment required to not just start one, but to also keep it going. You'll need to figure out how many players you'll want on a team, how active the team will be, what roles/weapons you'll be looking for, and what requirements you'll have among other things. You can theoretically form a team with only four players in total, but usually having somewhere between 5-6 players is considered the sweet spot since you'll be prepared if a player or two cannot make it to certain events.  
 The general role structure for a team is to have at least one slayer, one support, one skirmish, and usually an anchor as well. You can find a template for creating a team recruitment post in \#team-posts (go to “Channels and Roles” and grab the @Recruitment Access role if you can’t see the channel). Potential recruits will direct message you asking to tryout and they'll typically send a copy of their free agent post (if they didn't, make sure to ask since this is how you get an idea of who this person is and what they have to offer). You can also look through the posts free agents send in \#fa-posts to see if there's anyone suitable there that is looking for a team to join.  
 When conducting tryouts where you’ll play with the potential recruit to see how they perform and get to know them better, there are some things you’ll want to keep in mind and pay attention to. This document, [Tryout Advice](https://docs.google.com/document/d/1-NOk74sBEqE5r0Ecg_AVLJUvUqZyidKE8Gxwu5fniyM/edit?usp=sharing), will help you to conduct a tryout with confidence.
 
 ## **Playing in scrimmages**
 
-As mentioned above in the Competitive Lingo section, a scrimmage is a private battle between two teams or pickups for practice, usually in a 4v4 format. This is commonly considered one of the best ways to practice since you can play the maps & modes you struggle on to get better at them. 
+As mentioned above in the Competitive Lingo section, a scrimmage is a private battle between two teams or pickups for practice, usually in a 4v4 format. This is commonly considered one of the best ways to practice since you can play the maps & modes you struggle on to get better at them.
 
 The general format for typing out a looking for scrim message is as follows
 
-* **@Scrim** \- The role or “ping” you do to notify people you’re looking for a scrim.  
-* **Div 4 / XP2600** \- The division (often abbreviated to simply “d”) or power level you want to play against.  
-* **8:00 PM EST** \- The time you want to scrim at, make sure to specify your timezone. If you’re wanting a scrim right away, replace the time with “now” or “rn”.  
-* **DM** \- This tells potential scrim partners to direct message you if they are interested in playing against you.
+- **@Scrim** \- The role or “ping” you do to notify people you’re looking for a scrim.
+- **Div 4 / XP2600** \- The division (often abbreviated to simply “d”) or power level you want to play against.
+- **8:00 PM EST** \- The time you want to scrim at, make sure to specify your timezone. If you’re wanting a scrim right away, replace the time with “now” or “rn”.
+- **DM** \- This tells potential scrim partners to direct message you if they are interested in playing against you.
 
 Below are some examples of messages people may send when looking for a scrim.
 
-* @Scrim div 6-7 now dm  
-* @here 2600XP 9:00 PM ET dm  
-* @Scrim d3 dm
+- @Scrim div 6-7 now dm
+- @here 2600XP 9:00 PM ET dm
+- @Scrim d3 dm
 
 To find a scrimmage, there are a number of ways to go about this. In our Discord server, you can ping the @Scrim role in \#look-for-scrim to find one or look at others who are currently looking. If you can’t find any there, then check out \#scrim-posts where a bot posts messages from other people that are looking for scrimmages as well. Below are some of the recommended Discord servers to join to find more scrimmages.
 
-* **LUTI:** [*https://discord.com/invite/0dZpaQB1mwcd2MCs*](https://discord.com/invite/0dZpaQB1mwcd2MCs)  
-* **Inkling Performance Labs:** [*https://discord.gg/F7RaNUR*](https://discord.gg/F7RaNUR)  
-* **Dapple Productions:** [*https://discord.gg/TPpyVTDXDv*](https://discord.gg/TPpyVTDXDv)  
-* **Under Pressure:** *[https://discord.gg/underpressure](https://discord.gg/underpressure)*
+- **LUTI:** [_https://discord.com/invite/0dZpaQB1mwcd2MCs_](https://discord.com/invite/0dZpaQB1mwcd2MCs)
+- **Inkling Performance Labs:** [_https://discord.gg/F7RaNUR_](https://discord.gg/F7RaNUR)
+- **Dapple Productions:** [_https://discord.gg/TPpyVTDXDv_](https://discord.gg/TPpyVTDXDv)
+- **Under Pressure:** _[https://discord.gg/underpressure](https://discord.gg/underpressure)_
 
 ## **SendouQ**
 
-As mentioned previously, [Sendou.ink](https://sendou.ink/) is a website made for competitive splatoon that has many useful features. One of Sendou.ink's most popular features is [SendouQ](https://sendou.ink/q). SendouQ is a fan-run alternative matchmaking system. Players can create a group of 4 players and battle other groups of players in competitive best of 7 sets. Wins and losses are reflected in a player's Sendou Power or “SP”. For in depth details on how to play, consult the [information page](https://sendou.ink/q/info) on Sendou.ink. Sendou Q is a great way to practice competitive formats, improve in a team environment, and meet new players. 
+As mentioned previously, [Sendou.ink](https://sendou.ink/) is a website made for competitive splatoon that has many useful features. One of Sendou.ink's most popular features is [SendouQ](https://sendou.ink/q). SendouQ is a fan-run alternative matchmaking system. Players can create a group of 4 players and battle other groups of players in competitive best of 7 sets. Wins and losses are reflected in a player's Sendou Power or “SP”. For in depth details on how to play, consult the [information page](https://sendou.ink/q/info) on Sendou.ink. Sendou Q is a great way to practice competitive formats, improve in a team environment, and meet new players.
 
 ## **Improving as a player**
 

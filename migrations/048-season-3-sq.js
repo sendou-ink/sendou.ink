@@ -3,9 +3,7 @@ export function up(db) {
 		db.prepare(/* sql */ `update "User" set "mapModePreferences" = null`).run();
 		db.prepare(/* sql */ `update "User" set "noScreen" = 0`).run();
 
-		db.prepare(
-			/* sql */ `alter table "GroupLike" add "isRechallenge" integer`,
-		).run();
+		db.prepare(/* sql */ `alter table "GroupLike" add "isRechallenge" integer`).run();
 
 		db.prepare(
 			/*sql*/ `

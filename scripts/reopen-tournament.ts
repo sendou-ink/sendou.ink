@@ -10,9 +10,7 @@ const id = process.argv[2]?.trim();
 invariant(id, "id of tournament is required (argument 1)");
 
 sql
-	.prepare(
-		`delete from "TournamentResult" where "TournamentResult"."tournamentId" = @id`,
-	)
+	.prepare(`delete from "TournamentResult" where "TournamentResult"."tournamentId" = @id`)
 	.run({ id });
 
 logger.info(`Reopened tournament with id ${id}`);

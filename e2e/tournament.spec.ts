@@ -37,13 +37,7 @@ const getIsOwnerOfUser = ({
 	return team.members.find((m) => m.userId === userId)?.isOwner;
 };
 
-const getTeamCheckedInAt = ({
-	data,
-	teamId,
-}: {
-	data: TournamentLoaderData;
-	teamId: number;
-}) => {
+const getTeamCheckedInAt = ({ data, teamId }: { data: TournamentLoaderData; teamId: number }) => {
 	const team = data.tournament.ctx.teams.find((t) => t.id === teamId);
 	invariant(team, "Team not found");
 	return team.checkIns.length > 0;
@@ -166,9 +160,7 @@ test.describe("Tournament", () => {
 		// Remove member...
 		const firstTeam = data.tournament.ctx.teams.find((t) => t.id === 1);
 		invariant(firstTeam, "First team not found");
-		const firstNonOwnerMember = firstTeam.members.find(
-			(m) => m.userId !== 1 && !m.isOwner,
-		);
+		const firstNonOwnerMember = firstTeam.members.find((m) => m.userId !== 1 && !m.isOwner);
 		invariant(firstNonOwnerMember, "First non owner member not found");
 
 		await actionSelect.selectOption("REMOVE_MEMBER");
@@ -196,14 +188,10 @@ test.describe("Tournament", () => {
 		await submit(page);
 
 		data = await fetchTournamentLoaderData();
-		const teamWithSpaceAgain = data.tournament.ctx.teams.find(
-			(t) => t.id === teamWithSpace.id,
-		);
+		const teamWithSpaceAgain = data.tournament.ctx.teams.find((t) => t.id === teamWithSpace.id);
 		invariant(teamWithSpaceAgain, "Team with space again not found");
 
-		expect(teamWithSpaceAgain.members.length).toBe(
-			teamWithSpace.members.length + 1,
-		);
+		expect(teamWithSpaceAgain.members.length).toBe(teamWithSpace.members.length + 1);
 
 		// Remove team
 		await actionSelect.selectOption("DELETE_TEAM");
@@ -233,8 +221,6 @@ test.describe("Tournament", () => {
 		await submit(page);
 
 		await page.getByTestId("teams-tab").click();
-		await expect(page.getByTestId("team-name").first()).not.toHaveText(
-			"Chimera",
-		);
+		await expect(page.getByTestId("team-name").first()).not.toHaveText("Chimera");
 	});
 });

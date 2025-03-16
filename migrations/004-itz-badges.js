@@ -1,15 +1,13 @@
 export function up(db) {
 	for (const badge of itzBadges) {
-		db.prepare(
-			`insert into "Badge" ("code", "displayName") values ($code, $displayName)`,
-		).run(badge);
+		db.prepare(`insert into "Badge" ("code", "displayName") values ($code, $displayName)`).run(
+			badge,
+		);
 	}
 }
 
 export function down(db) {
-	db.prepare(
-		`delete from "Badge" where "code" in ('itz_red', 'itz_orange', 'itz_blue')`,
-	).run();
+	db.prepare(`delete from "Badge" where "code" in ('itz_red', 'itz_orange', 'itz_blue')`).run();
 }
 
 const itzBadges = [

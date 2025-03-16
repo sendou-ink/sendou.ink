@@ -10,9 +10,9 @@ export function up(db) {
 	).run();
 
 	for (const badge of initialBadgesForDb()) {
-		db.prepare(
-			`insert into "Badge" ("code", "displayName") values ($code, $displayName)`,
-		).run(badge);
+		db.prepare(`insert into "Badge" ("code", "displayName") values ($code, $displayName)`).run(
+			badge,
+		);
 	}
 
 	db.prepare(

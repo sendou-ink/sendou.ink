@@ -36,8 +36,6 @@ test.describe("Badges", () => {
 		await page.getByTestId("notifications-button").click();
 		await page.getByText("See all").click();
 
-		await expect(
-			page.getByRole("heading", { name: "Notifications" }),
-		).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Notifications" })).toBeVisible();
 	});
 });

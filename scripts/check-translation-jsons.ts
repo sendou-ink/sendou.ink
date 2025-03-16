@@ -10,8 +10,7 @@ const dontWrite = process.argv.includes(NO_WRITE_KEY);
 
 const KNOWN_SUFFIXES = ["_zero", "_one", "_two", "_few", "_many", "_other"];
 
-const REPO_TRANSLATIONS_INFO_URL =
-	"https://github.com/Sendouc/sendou.ink#translations";
+const REPO_TRANSLATIONS_INFO_URL = "https://github.com/Sendouc/sendou.ink#translations";
 
 const MD = {
 	inlineCode: (s: string) => `\`${s}\``,
@@ -23,20 +22,15 @@ const MD = {
 };
 
 const otherLanguageTranslationPath = (code?: string, fileName?: string) =>
-	path.join(
-		...[__dirname, "..", "locales", code, fileName].filter(
-			(val): val is string => !!val,
-		),
-	);
+	path.join(...[__dirname, "..", "locales", code, fileName].filter((val): val is string => !!val));
 
 const allOtherLanguages = fs
 	.readdirSync(otherLanguageTranslationPath())
 	.filter((lang) => lang !== "en");
 
-const missingTranslations: Record<
-	string,
-	Record<string, Array<string>>
-> = Object.fromEntries(allOtherLanguages.map((lang) => [lang, {}]));
+const missingTranslations: Record<string, Record<string, Array<string>>> = Object.fromEntries(
+	allOtherLanguages.map((lang) => [lang, {}]),
+);
 
 const totalTranslationCounts: Record<string, number> = {};
 
@@ -68,11 +62,7 @@ for (const file of fileNames) {
 				throw new Error(`failed to parse ${lang}/${file}`);
 			}
 
-			const otherLanguageContentKeys = getKeysWithoutSuffix(
-				otherLanguageContent,
-				lang,
-				file,
-			);
+			const otherLanguageContentKeys = getKeysWithoutSuffix(otherLanguageContent, lang, file);
 
 			validateNoExtraKeysInOther({
 				english: getKeysWithoutSuffix(englishContent, lang, file),
@@ -122,11 +112,7 @@ const markdown = createTranslationProgessMarkdown({
 	totalTranslationCounts,
 });
 
-const translationProgressPath = path.join(
-	__dirname,
-	"..",
-	"translation-progress.md",
-);
+const translationProgressPath = path.join(__dirname, "..", "translation-progress.md");
 
 fs.writeFileSync(translationProgressPath, markdown);
 
@@ -202,11 +188,7 @@ function validateNoDuplicateKeys({
 	}
 
 	if (duplicateKeys.size > 0) {
-		throw new Error(
-			`duplicate key(s) in ${lang}/${file}: ${Array.from(duplicateKeys).join(
-				", ",
-			)}`,
-		);
+		throw new Error(`duplicate key(s) in ${lang}/${file}: ${Array.from(duplicateKeys).join(", ")}`);
 	}
 }
 
@@ -223,9 +205,7 @@ function getKeysWithoutSuffix(
 		const suffix = KNOWN_SUFFIXES.find((sfx) => key.endsWith(sfx));
 		if (!suffix) {
 			if (foundSuffixKeys.has(key)) {
-				throw new Error(
-					`Found same key with and without suffixes in ${lang}/${file}: ${key}`,
-				);
+				throw new Error(`Found same key with and without suffixes in ${lang}/${file}: ${key}`);
 			}
 			keys.push(key);
 			continue;
@@ -239,9 +219,7 @@ function getKeysWithoutSuffix(
 		}
 
 		if (keys.includes(baseKey)) {
-			throw new Error(
-				`Found same key with and without suffixes in ${lang}/${file}: ${baseKey}`,
-			);
+			throw new Error(`Found same key with and without suffixes in ${lang}/${file}: ${baseKey}`);
 		}
 
 		keys.push(baseKey);
@@ -256,13 +234,8 @@ type StatusProps = {
 	missingCount: number;
 	percentage?: boolean;
 };
-function MDCompletionStatus({
-	totalCount,
-	missingCount,
-	percentage,
-}: StatusProps) {
-	const circle =
-		missingCount === 0 ? "🟢" : missingCount === totalCount ? "🔴" : "🟡";
+function MDCompletionStatus({ totalCount, missingCount, percentage }: StatusProps) {
+	const circle = missingCount === 0 ? "🟢" : missingCount === totalCount ? "🔴" : "🟡";
 
 	const nonMissingCount = totalCount - missingCount;
 
@@ -270,8 +243,7 @@ function MDCompletionStatus({
 		return `${circle} ${nonMissingCount}/${totalCount}`;
 	}
 
-	const percent =
-		totalCount === 0 ? 100 : Math.floor((nonMissingCount / totalCount) * 100);
+	const percent = totalCount === 0 ? 100 : Math.floor((nonMissingCount / totalCount) * 100);
 
 	return `${circle} ${percent}%`;
 }
@@ -281,19 +253,12 @@ function MDOverviewTable({
 }: {
 	totalTranslationCounts: Record<string, number>;
 }) {
-	const totalKeysCount = Object.values(totalTranslationCounts).reduce(
-		(a, b) => a + b,
-		0,
-	);
-	const relevantFiles = fileNames.filter(
-		(name) => name !== "weapons.json" && name !== "gear.json",
-	);
+	const totalKeysCount = Object.values(totalTranslationCounts).reduce((a, b) => a + b, 0);
+	const relevantFiles = fileNames.filter((name) => name !== "weapons.json" && name !== "gear.json");
 
 	const rows = [];
 
-	rows.push(
-		`| Language | Total | ${relevantFiles.map(MD.inlineCode).join(" | ")} |`,
-	);
+	rows.push(`| Language | Total | ${relevantFiles.map(MD.inlineCode).join(" | ")} |`);
 
 	rows.push(`| :-- | :-: | ${relevantFiles.map(() => ":-:").join(" | ")} |`);
 
@@ -338,13 +303,7 @@ function MDOverviewTable({
 	return rows.join("\n");
 }
 
-function MDDetailsList({
-	summary,
-	content,
-}: {
-	summary: string;
-	content: string[];
-}) {
+function MDDetailsList({ summary, content }: { summary: string; content: string[] }) {
 	return `<details><summary>${summary}</summary><ul>${content
 		.map((c) => `<li>${c}</li>`)
 		.join("")}</ul></details>`;
@@ -380,11 +339,7 @@ function MDMissingKeysList({
 				: MDDetailsList({
 						summary: `${keysLabel} missing`,
 						content: allMissing
-							? [
-									`Create a fresh copy of ${MD.inlineCode(
-										`en/${fileKey}.json`,
-									)} to get started.`,
-								]
+							? [`Create a fresh copy of ${MD.inlineCode(`en/${fileKey}.json`)} to get started.`]
 							: missingKeys,
 					});
 

@@ -7,14 +7,7 @@ import { logger } from "~/utils/logger";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const GEAR_IMAGES_DIR_PATH = path.join(
-	__dirname,
-	"..",
-	"public",
-	"static-assets",
-	"img",
-	"gear",
-);
+const GEAR_IMAGES_DIR_PATH = path.join(__dirname, "..", "public", "static-assets", "img", "gear");
 const GEAR_JSON_PATH = path.join(__dirname, "output", "gear.json");
 
 async function main() {
@@ -23,16 +16,11 @@ async function main() {
 		const gearSlotDirPath = path.join(GEAR_IMAGES_DIR_PATH, gearSlot);
 		const files = await fs.promises.readdir(gearSlotDirPath);
 
-		const type =
-			gearSlot === "head" ? "Hed" : gearSlot === "shoes" ? "Shs" : "Clt";
+		const type = gearSlot === "head" ? "Hed" : gearSlot === "shoes" ? "Shs" : "Clt";
 
 		for (const file of files) {
 			// did we already replace the name
-			if (
-				!file.startsWith("Shs") &&
-				!file.startsWith("Clt") &&
-				!file.startsWith("Hed")
-			) {
+			if (!file.startsWith("Shs") && !file.startsWith("Clt") && !file.startsWith("Hed")) {
 				continue;
 			}
 
@@ -44,19 +32,14 @@ async function main() {
 			const internalName = file.replace(".png", "").split("_")[1];
 			invariant(internalName);
 
-			const gearId = gear.find(
-				(g: any) => g.internalName === internalName && g.type === type,
-			)?.id;
+			const gearId = gear.find((g: any) => g.internalName === internalName && g.type === type)?.id;
 
 			if (typeof gearId !== "number") {
 				fs.unlinkSync(path.join(gearSlotDirPath, file));
 				continue;
 			}
 
-			fs.renameSync(
-				path.join(gearSlotDirPath, file),
-				path.join(gearSlotDirPath, `${gearId}.png`),
-			);
+			fs.renameSync(path.join(gearSlotDirPath, file), path.join(gearSlotDirPath, `${gearId}.png`));
 		}
 	}
 

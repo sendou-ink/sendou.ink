@@ -9,12 +9,7 @@ import {
 	seed,
 	submit,
 } from "~/utils/playwright";
-import {
-	TEAM_SEARCH_PAGE,
-	editTeamPage,
-	teamPage,
-	userPage,
-} from "~/utils/urls";
+import { TEAM_SEARCH_PAGE, editTeamPage, teamPage, userPage } from "~/utils/urls";
 
 test.describe("Team search page", () => {
 	test("filters teams", async ({ page }) => {

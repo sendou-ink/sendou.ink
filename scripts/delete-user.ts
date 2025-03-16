@@ -7,8 +7,6 @@ const discordId = process.argv[2]?.trim();
 
 invariant(discordId, "discord id is required (argument 1)");
 
-sql
-	.prepare('delete from "User" where discordId = @discordId')
-	.run({ discordId });
+sql.prepare('delete from "User" where discordId = @discordId').run({ discordId });
 
 logger.info(`Deleted user with discord id: ${discordId}`);

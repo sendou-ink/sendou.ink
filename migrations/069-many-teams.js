@@ -1,8 +1,6 @@
 export function up(db) {
 	db.transaction(() => {
-		db.prepare(
-			/* sql */ `alter table "AllTeamMember" add "isMainTeam" integer default 1`,
-		).run();
+		db.prepare(/* sql */ `alter table "AllTeamMember" add "isMainTeam" integer default 1`).run();
 
 		db.prepare(/*sql */ `drop view "TeamMember"`).run();
 		db.prepare(

@@ -27,9 +27,7 @@ async function main() {
 		.where("CalendarEvent.id", "=", eventId)
 		.execute();
 
-	logger.info(
-		`Event name updated from "${oldName}" to "${newName}" for event ID: ${eventId}`,
-	);
+	logger.info(`Event name updated from "${oldName}" to "${newName}" for event ID: ${eventId}`);
 }
 
 main();

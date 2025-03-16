@@ -65,7 +65,7 @@ If you are not sure whether your event qualifies to be ran as ranked, ask before
 Allow teams to add subs while the tournament is in progress on their own. If off then all the subs have to be added by the tournament organizers.
 
 ![alt text](./img/tournament-auto-subs.png)
-*Tournament team member adding a sub in the middle of a tournament*
+_Tournament team member adding a sub in the middle of a tournament_
 
 ### Require in-game names
 
@@ -92,7 +92,7 @@ For SZ/TC/RM/CB only no maps are picked by the tournament organizer.
 For all modes the tournament organizer picks one tiebreaker map per mode.
 
 ![alt text](./img/tournament-team-map-pick.png)
-*Team picking maps as part of their registration process*
+_Team picking maps as part of their registration process_
 
 Then when the tournament in in progress an algorithm decides the map list for each match:
 
@@ -105,7 +105,7 @@ Then when the tournament in in progress an algorithm decides the map list for ea
 Note that here you select just the map pool. The actual map lists are picked when the bracket starts (or prepared) in advance:
 
 ![alt text](./img/tournament-bracket-start.png)
-*View when starting bracket*
+_View when starting bracket_
 
 ## Tournament format
 
@@ -128,7 +128,7 @@ Placements is a comma separated list of placements. So e.g. the following are va
 Placements are relative in the sense that the amount of teams that sign up don't affect them. `1` is always the 1st placement but `2` is the "2nd best possible placement to achieve" and so on. So for example with round robin the amount of teams advancing from that bracket depends entirely on the amount of groups (which is decided via sign ups.)
 
 ![alt text](./img/tournament-placement-mapping.png)
-*A screenshot from one Swim or Sink and how the placements map*
+_A screenshot from one Swim or Sink and how the placements map_
 
 ### Start time
 
@@ -145,4 +145,3 @@ Current limitations. Feel free to leave feedback if it's blocking you from runni
 - Single-elimination can not be a source bracket
 - Double-elimination can only be a source bracket when it comes to people who drop in the losers round (negative placements)
 - Only one source bracket per target bracket.
-

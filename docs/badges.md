@@ -27,17 +27,22 @@ Any badge to be added has to follow these rules. Badges that do not follow the r
 ## Adding a new badge
 
 1. First badge needs to be made
+
 - 3D artists can use [picoCAD](https://johanpeitz.itch.io/picocad)
 - Some quick guide to picoCAD can be found pinned in the #badges Discord channel
 - Others can use the "[badges" Discord channel](https://discord.gg/sendou) to inquire about a commission
 - Read rules from above carefully at this point and ask if you do not understand something
+
 2. Create needed files
+
 - .gif file (animated), black solid background. Create via [picoCAD Web Viewer](https://lucatronica.github.io/picocad-web-viewer/)
 - .png file (static). TODO: info on how to ceate
 - .avif file (static). Create via e.g. [Squoosh](https://squoosh.app/) from the .png file
 - All files should be squares. 512x512 is a good size for example
 - For the animation, rotating speed should match those of the borzoic badges (a full rotation should take about 3 seconds, rotating counterclockwise). You can control this via left & right arrow keys on picoCAD Web Viewer.
+
 3. Make a pull request to the project
+
 - If you don't know how a pull request is made you can ask someone you know that is familiar with GitHub or refer to the guide pinned in the #badges Discord channel
 - In the PR add the 3 needed files to public/static-assets/badges folder:
 
@@ -53,17 +58,21 @@ Any badge to be added has to follow these rules. Badges that do not follow the r
 ![alt text](img/badges-2.png)
 
 4. Wait for Sendou to look into the pull request
+
 - Sometimes this can take a while if Sendou is busy
 - Changes might be requested
 
 5. Wait for the site to be updated
+
 - After the pull request is merged it does not automatically go to the site yet
 - Normally the site updates a couple times a week, but this can vary
 
 6. Request permissions
+
 - After you see your badge on the /badges page you can request manager permissions to it on from the staff on the helpdesk channel
 
 7. Give out the badges to tournament winners
+
 - Badge can be given out via the /badges page
 
 ## Updating a badge

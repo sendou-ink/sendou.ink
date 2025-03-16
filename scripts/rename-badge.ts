@@ -13,8 +13,6 @@ invariant(
 	"displayName of badge must have at least one uppercase letter",
 );
 
-sql
-	.prepare("update badge set displayName = @newName where id = @id")
-	.run({ id, newName });
+sql.prepare("update badge set displayName = @newName where id = @id").run({ id, newName });
 
 logger.info(`Added updated name. New name: ${newName}`);

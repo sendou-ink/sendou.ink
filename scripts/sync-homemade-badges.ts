@@ -11,17 +11,13 @@ async function main() {
 	const isGood = validateHomemadeBadges();
 
 	if (!isGood) {
-		logger.error(
-			"Homemade badges are not valid, skipping badge update process",
-		);
+		logger.error("Homemade badges are not valid, skipping badge update process");
 		return;
 	}
 
 	// update existing
 	for (const existingBadge of await homemadeBadgesInDb()) {
-		const badge = homemadeBadges.find(
-			(badge) => badge.fileName === existingBadge.code,
-		);
+		const badge = homemadeBadges.find((badge) => badge.fileName === existingBadge.code);
 
 		if (!badge) {
 			await deleteBadge(existingBadge.id);
@@ -32,9 +28,7 @@ async function main() {
 		const author = await findUserByDiscordId(badge.authorDiscordId);
 
 		if (!author) {
-			logger.warn(
-				`Author not found for badge with id: ${existingBadge.id}, skipping`,
-			);
+			logger.warn(`Author not found for badge with id: ${existingBadge.id}, skipping`);
 			continue;
 		}
 
@@ -66,9 +60,7 @@ async function main() {
 
 		const author = await findUserByDiscordId(badge.authorDiscordId);
 		if (!author) {
-			logger.warn(
-				`Author not found for badge with fileName: ${badge.fileName}, skipping`,
-			);
+			logger.warn(`Author not found for badge with fileName: ${badge.fileName}, skipping`);
 			continue;
 		}
 
@@ -81,9 +73,7 @@ async function main() {
 		added++;
 	}
 
-	logger.info(
-		`Deleted ${deleted}, updated ${updated}, added ${added} homemade badges`,
-	);
+	logger.info(`Deleted ${deleted}, updated ${updated}, added ${added} homemade badges`);
 }
 
 function validateHomemadeBadges() {
@@ -109,18 +99,11 @@ async function homemadeBadgesInDb() {
 }
 
 async function findUserByDiscordId(discordId: string) {
-	return db
-		.selectFrom("User")
-		.select("id")
-		.where("discordId", "=", discordId)
-		.executeTakeFirst();
+	return db.selectFrom("User").select("id").where("discordId", "=", discordId).executeTakeFirst();
 }
 
 async function deleteBadge(badgeId: number) {
-	const owners = await db
-		.selectFrom("BadgeOwner")
-		.where("badgeId", "=", badgeId)
-		.execute();
+	const owners = await db.selectFrom("BadgeOwner").where("badgeId", "=", badgeId).execute();
 
 	if (owners.length > 0) {
 		logger.warn(`Refusing to delete badge ${badgeId} because it has owners`);
@@ -128,18 +111,12 @@ async function deleteBadge(badgeId: number) {
 	}
 
 	await db.transaction().execute(async (trx) => {
-		await trx
-			.deleteFrom("BadgeManager")
-			.where("badgeId", "=", badgeId)
-			.execute();
+		await trx.deleteFrom("BadgeManager").where("badgeId", "=", badgeId).execute();
 		await trx.deleteFrom("Badge").where("id", "=", badgeId).execute();
 	});
 }
 
-async function updateBadge(
-	badgeId: number,
-	badge: { displayName: string; authorId: number },
-) {
+async function updateBadge(badgeId: number, badge: { displayName: string; authorId: number }) {
 	return db
 		.updateTable("Badge")
 		.set({
@@ -150,11 +127,7 @@ async function updateBadge(
 		.execute();
 }
 
-async function addBadge(badge: {
-	code: string;
-	displayName: string;
-	authorId: number;
-}) {
+async function addBadge(badge: { code: string; displayName: string; authorId: number }) {
 	return db
 		.insertInto("Badge")
 		.values({

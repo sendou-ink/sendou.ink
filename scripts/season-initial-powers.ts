@@ -24,14 +24,8 @@ const skillsExistStm = sql.prepare(/* sql */ `
   limit 1
 `);
 
-invariant(
-	skillsExistStm.get({ season: nth - 1 }),
-	`No skills for season ${nth - 1}`,
-);
-invariant(
-	!skillsExistStm.get({ season: nth }),
-	`Skills for season ${nth} already exist`,
-);
+invariant(skillsExistStm.get({ season: nth - 1 }), `No skills for season ${nth - 1}`);
+invariant(!skillsExistStm.get({ season: nth }), `Skills for season ${nth} already exist`);
 
 const activeMatchExistsStm = sql.prepare(/* sql */ `
   select
@@ -41,9 +35,7 @@ const activeMatchExistsStm = sql.prepare(/* sql */ `
   where
     "Skill"."id" is null
 `);
-const idsOfActiveMatches = activeMatchExistsStm
-	.all()
-	.map((row) => (row as any).id) as number[];
+const idsOfActiveMatches = activeMatchExistsStm.all().map((row) => (row as any).id) as number[];
 
 invariant(
 	!activeMatchExistsStm.get(),
@@ -85,10 +77,7 @@ const getAllSkills = async () => {
 	const result: (typeof skills)[number] = {};
 
 	for (const member of plusServerMembers) {
-		const toConsider =
-			member.plusTier === 1 || member.plusTier === 2
-				? skills
-				: skills.slice(0, 2);
+		const toConsider = member.plusTier === 1 || member.plusTier === 2 ? skills : skills.slice(0, 2);
 
 		const bestTier = toConsider.reduce(
 			(acc, cur, idx) => {
@@ -97,14 +86,10 @@ const getAllSkills = async () => {
 					return acc;
 				}
 
-				const newIdx = TIERS.findIndex(
-					(t) => t.name === seasonsSkill.tier.name,
-				);
+				const newIdx = TIERS.findIndex((t) => t.name === seasonsSkill.tier.name);
 				const oldIdx = TIERS.findIndex((t) => t.name === acc?.name);
 
-				return oldIdx === -1 || newIdx < oldIdx
-					? { name: seasonsSkill.tier.name, idx }
-					: acc;
+				return oldIdx === -1 || newIdx < oldIdx ? { name: seasonsSkill.tier.name, idx } : acc;
 			},
 			null as null | { name: TierName; idx: number },
 		);
@@ -187,6 +172,4 @@ sql.transaction(() => {
 	allGroupsInactiveStm.run();
 })();
 
-logger.info(
-	`Done adding new skills for season ${nth} (${newSkills.length} added)`,
-);
+logger.info(`Done adding new skills for season ${nth} (${newSkills.length} added)`);

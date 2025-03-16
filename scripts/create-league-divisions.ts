@@ -14,10 +14,7 @@ import { logger } from "~/utils/logger";
 
 const tournamentId = Number(process.argv[2]?.trim());
 
-invariant(
-	tournamentId && !Number.isNaN(tournamentId),
-	"tournament id is required (argument 1)",
-);
+invariant(tournamentId && !Number.isNaN(tournamentId), "tournament id is required (argument 1)");
 
 const csvUrl = process.argv[3]?.trim();
 
@@ -40,14 +37,12 @@ async function main() {
 	}
 	validateDivs(teams);
 
-	const grouped = Object.entries(Object.groupBy(teams, (t) => t.division)).sort(
-		(a, b) => {
-			const divAIndex = teams.findIndex((t) => t.division === a[0]);
-			const divBIndex = teams.findIndex((t) => t.division === b[0]);
+	const grouped = Object.entries(Object.groupBy(teams, (t) => t.division)).sort((a, b) => {
+		const divAIndex = teams.findIndex((t) => t.division === a[0]);
+		const divBIndex = teams.findIndex((t) => t.division === b[0]);
 
-			return divAIndex - divBIndex;
-		},
-	);
+		return divAIndex - divBIndex;
+	});
 
 	for (const [, divsTeams] of grouped) {
 		divsTeams!.sort((a, b) => {
@@ -73,8 +68,7 @@ async function main() {
 			bracketProgression: tournament.ctx.settings.bracketProgression,
 			description: tournament.ctx.description,
 			deadlines: tournament.ctx.settings.deadlines,
-			discordInviteCode:
-				tournament.ctx.discordUrl?.replace("https://discord.gg/", "") ?? null,
+			discordInviteCode: tournament.ctx.discordUrl?.replace("https://discord.gg/", "") ?? null,
 			mapPickingStyle: tournament.ctx.mapPickingStyle,
 			name: `${tournament.ctx.name} - Division ${div}`,
 			organizationId: tournament.ctx.organization?.id ?? null,

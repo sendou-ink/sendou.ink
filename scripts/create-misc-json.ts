@@ -3,11 +3,7 @@
 import fs from "node:fs";
 import { abilitiesShort } from "~/modules/in-game-lists";
 import invariant from "~/utils/invariant";
-import {
-	LANG_JSONS_TO_CREATE,
-	loadLangDicts,
-	translationJsonFolderName,
-} from "./utils";
+import { LANG_JSONS_TO_CREATE, loadLangDicts, translationJsonFolderName } from "./utils";
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -74,15 +70,13 @@ const abilityShortToInternalName = new Map([
 async function main() {
 	const langDicts = await loadLangDicts();
 
-	const englishLangDict = langDicts.find(
-		([langCode]) => langCode === "EUen",
-	)?.[1];
+	const englishLangDict = langDicts.find(([langCode]) => langCode === "EUen")?.[1];
 	invariant(englishLangDict);
 
 	const codeNames = stages.map((stage) => {
-		const codeName = Object.entries(
-			englishLangDict["CommonMsg/VS/VSStageName"],
-		).find(([_key, value]) => value === stage)?.[0];
+		const codeName = Object.entries(englishLangDict["CommonMsg/VS/VSStageName"]).find(
+			([_key, value]) => value === stage,
+		)?.[0];
 
 		invariant(codeName, `Could not find code name for stage ${stage}`);
 
@@ -95,9 +89,7 @@ async function main() {
 
 		const translationsMap = Object.fromEntries(
 			stages.map((_, i) => {
-				const codeName = codeNames[
-					i
-				] as keyof (typeof langDict)["CommonMsg/VS/VSStageName"];
+				const codeName = codeNames[i] as keyof (typeof langDict)["CommonMsg/VS/VSStageName"];
 				invariant(codeName);
 
 				return [`STAGE_${i}`, langDict["CommonMsg/VS/VSStageName"][codeName]];
@@ -116,13 +108,7 @@ async function main() {
 		}
 
 		fs.writeFileSync(
-			path.join(
-				__dirname,
-				"..",
-				"locales",
-				translationJsonFolderName(langCode),
-				"game-misc.json",
-			),
+			path.join(__dirname, "..", "locales", translationJsonFolderName(langCode), "game-misc.json"),
 			`${JSON.stringify(translationsMap, null, 2)}\n`,
 		);
 	}

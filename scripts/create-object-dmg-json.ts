@@ -2,11 +2,7 @@
 
 import fs from "node:fs";
 import { DAMAGE_RECEIVERS } from "~/features/object-damage-calculator/calculator-constants";
-import {
-	mainWeaponIds,
-	specialWeaponIds,
-	subWeaponIds,
-} from "~/modules/in-game-lists";
+import { mainWeaponIds, specialWeaponIds, subWeaponIds } from "~/modules/in-game-lists";
 import weapons from "./dicts/WeaponInfoMain.json";
 import specialWeapons from "./dicts/WeaponInfoSpecial.json";
 import subWeapons from "./dicts/WeaponInfoSub.json";
@@ -31,9 +27,7 @@ const weaponParamsToWeaponIds = (
 		.filter((param) => {
 			return (
 				param.DefaultDamageRateInfoRow === key ||
-				param.ExtraDamageRateInfoRowSet?.some(
-					(row) => row.DamageRateInfoRow === key,
-				)
+				param.ExtraDamageRateInfoRowSet?.some((row) => row.DamageRateInfoRow === key)
 			);
 		})
 		.map((weapon) => weapon.Id);
@@ -46,16 +40,15 @@ for (const cell of Object.values(params.CellList)) {
 
 	if (!result[cell.RowKey]) {
 		result[cell.RowKey] = {
-			mainWeaponIds: weaponParamsToWeaponIds(weapons, cell.RowKey).filter(
-				(id) => mainWeaponIds.includes(id),
+			mainWeaponIds: weaponParamsToWeaponIds(weapons, cell.RowKey).filter((id) =>
+				mainWeaponIds.includes(id),
 			),
-			subWeaponIds: weaponParamsToWeaponIds(subWeapons, cell.RowKey).filter(
-				(id) => subWeaponIds.includes(id),
+			subWeaponIds: weaponParamsToWeaponIds(subWeapons, cell.RowKey).filter((id) =>
+				subWeaponIds.includes(id),
 			),
-			specialWeaponIds: weaponParamsToWeaponIds(
-				specialWeapons,
-				cell.RowKey,
-			).filter((id) => specialWeaponIds.includes(id)),
+			specialWeaponIds: weaponParamsToWeaponIds(specialWeapons, cell.RowKey).filter((id) =>
+				specialWeaponIds.includes(id),
+			),
 			rates: [],
 		};
 	}
@@ -85,7 +78,4 @@ for (const cell of Object.values(params.CellList)) {
 	}
 }
 
-fs.writeFileSync(
-	path.join(OUTPUT_DIR_PATH, "object-dmg.json"),
-	JSON.stringify(result, null, 2),
-);
+fs.writeFileSync(path.join(OUTPUT_DIR_PATH, "object-dmg.json"), JSON.stringify(result, null, 2));

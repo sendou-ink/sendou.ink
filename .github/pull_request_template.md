@@ -1,4 +1,4 @@
-*If you are not adding a badge just clear this template*
+_If you are not adding a badge just clear this template_
 
 ## Badge adding checklist
 

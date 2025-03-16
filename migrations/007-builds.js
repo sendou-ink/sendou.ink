@@ -27,9 +27,7 @@ export function up(db) {
     ) strict
     `,
 	).run();
-	db.prepare(
-		`create index build_weapon_build_id on "BuildWeapon"("buildId")`,
-	).run();
+	db.prepare(`create index build_weapon_build_id on "BuildWeapon"("buildId")`).run();
 
 	db.prepare(
 		`
@@ -43,9 +41,7 @@ export function up(db) {
     ) strict
     `,
 	).run();
-	db.prepare(
-		`create index build_ability_build_id on "BuildAbility"("buildId")`,
-	).run();
+	db.prepare(`create index build_ability_build_id on "BuildAbility"("buildId")`).run();
 }
 
 export function down(db) {

@@ -2,18 +2,14 @@ export function up(db) {
 	db.prepare(`alter table "User" add column "patronTier" integer`).run();
 	db.prepare(`alter table "User" add column "patronSince" integer`).run();
 
-	db.prepare(
-		`insert into "Badge" ("code", "displayName") values ('patreon', 'Supporter')`,
-	).run();
+	db.prepare(`insert into "Badge" ("code", "displayName") values ('patreon', 'Supporter')`).run();
 	db.prepare(
 		`insert into "Badge" ("code", "displayName") values ('patreon_plus', 'Supporter+')`,
 	).run();
 
 	db.prepare(`alter table "BadgeOwner" rename to "TournamentBadgeOwner"`).run();
 
-	const patreonBadgeId = db
-		.prepare(`select "id" from "Badge" where "code" = 'patreon'`)
-		.get().id;
+	const patreonBadgeId = db.prepare(`select "id" from "Badge" where "code" = 'patreon'`).get().id;
 	const patreonPlusBadgeId = db
 		.prepare(`select "id" from "Badge" where "code" = 'patreon_plus'`)
 		.get().id;
@@ -40,9 +36,7 @@ export function down(db) {
 	db.prepare(`alter table "User" drop column "patronTier"`).run();
 	db.prepare(`alter table "User" drop column "patronSince"`).run();
 
-	db.prepare(
-		`delete from "Badge" where "code" in ('patreon_plus', 'patreon')`,
-	).run();
+	db.prepare(`delete from "Badge" where "code" in ('patreon_plus', 'patreon')`).run();
 
 	db.prepare(`alter table "TournamentBadgeOwner" rename to "BadgeOwner"`).run();
 }

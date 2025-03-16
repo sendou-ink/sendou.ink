@@ -20,10 +20,7 @@ async function main() {
 		.groupBy(["MapPoolMap.stageId", "MapPoolMap.mode"])
 		.execute();
 
-	const usage: Record<
-		ModeShort,
-		{ stageId: StageId; count: number; relativeCount: number }[]
-	> = {
+	const usage: Record<ModeShort, { stageId: StageId; count: number; relativeCount: number }[]> = {
 		TW: [],
 		SZ: [],
 		TC: [],
@@ -41,29 +38,16 @@ async function main() {
 	for (const mode of modesShort) {
 		for (const stageId of stageIds) {
 			const count =
-				appearance.find((row) => row.stageId === stageId && row.mode === mode)
-					?.count ?? 0;
+				appearance.find((row) => row.stageId === stageId && row.mode === mode)?.count ?? 0;
 
 			const firstAppear = await db
 				.selectFrom("MapPoolMap")
-				.innerJoin(
-					"CalendarEvent",
-					"MapPoolMap.calendarEventId",
-					"CalendarEvent.id",
-				)
-				.innerJoin(
-					"CalendarEventDate",
-					"CalendarEvent.id",
-					"CalendarEventDate.eventId",
-				)
-				.select((eb) =>
-					eb.fn.min("CalendarEventDate.startTime").as("firstAppear"),
-				)
+				.innerJoin("CalendarEvent", "MapPoolMap.calendarEventId", "CalendarEvent.id")
+				.innerJoin("CalendarEventDate", "CalendarEvent.id", "CalendarEventDate.eventId")
+				.select((eb) => eb.fn.min("CalendarEventDate.startTime").as("firstAppear"))
 				.executeTakeFirst();
 
-			const firstAppearDate = firstAppear
-				? databaseTimestampToDate(firstAppear.firstAppear)
-				: null;
+			const firstAppearDate = firstAppear ? databaseTimestampToDate(firstAppear.firstAppear) : null;
 
 			const datesSinceFirstAppear = firstAppearDate
 				? Math.floor((dbAgeDate.getTime() - firstAppearDate.getTime()) / 864e5)
@@ -85,9 +69,7 @@ async function main() {
 	for (const mode of modesShort) {
 		logger.info(mode);
 		let banCount = 0;
-		for (const [i, { stageId, count, relativeCount }] of usage[
-			mode
-		].entries()) {
+		for (const [i, { stageId, count, relativeCount }] of usage[mode].entries()) {
 			const name = names[`STAGE_${stageId}`];
 
 			const isBanned = BANNED_MAPS[mode].includes(stageId);

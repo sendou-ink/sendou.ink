@@ -5,11 +5,7 @@ import { logger } from "~/utils/logger";
 async function main() {
 	const weaponPools = await db
 		.selectFrom("UserWeapon")
-		.select([
-			"UserWeapon.userId",
-			"UserWeapon.weaponSplId",
-			"UserWeapon.userId",
-		])
+		.select(["UserWeapon.userId", "UserWeapon.weaponSplId", "UserWeapon.userId"])
 		.where("UserWeapon.order", "!=", 5)
 		.orderBy("UserWeapon.order asc")
 		.execute();
@@ -29,9 +25,7 @@ async function main() {
 	);
 
 	for (const [userId, weaponPools] of Object.entries(weaponPoolsByUserId)) {
-		const weaponPoolIds = weaponPools.map(
-			(weaponPool) => weaponPool.weaponSplId,
-		);
+		const weaponPoolIds = weaponPools.map((weaponPool) => weaponPool.weaponSplId);
 
 		await db
 			.updateTable("User")

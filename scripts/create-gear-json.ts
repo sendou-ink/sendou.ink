@@ -6,11 +6,7 @@ import shoes from "./dicts/GearInfoShoes.json";
 
 import fs from "node:fs";
 import invariant from "~/utils/invariant";
-import {
-	LANG_JSONS_TO_CREATE,
-	loadLangDicts,
-	translationJsonFolderName,
-} from "./utils";
+import { LANG_JSONS_TO_CREATE, loadLangDicts, translationJsonFolderName } from "./utils";
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -43,11 +39,7 @@ async function main() {
 		invariant(internalName);
 
 		const categoryKey = `CommonMsg/Gear/GearName_${
-			type === LEAN_CLOTHES_CODE
-				? "Clothes"
-				: type === LEAN_SHOES_CODE
-					? "Shoes"
-					: "Head"
+			type === LEAN_CLOTHES_CODE ? "Clothes" : type === LEAN_SHOES_CODE ? "Shoes" : "Head"
 		}`;
 
 		allGear.push({
@@ -68,10 +60,7 @@ async function main() {
 
 	allGear.sort((a, b) => a.id - b.id);
 
-	fs.writeFileSync(
-		path.join(OUTPUT_DIR_PATH, "gear.json"),
-		JSON.stringify(allGear, null, 2),
-	);
+	fs.writeFileSync(path.join(OUTPUT_DIR_PATH, "gear.json"), JSON.stringify(allGear, null, 2));
 
 	const headGear = allGear.filter((g) => g.type === LEAN_HEAD_CODE);
 	const clothesGear = allGear.filter((g) => g.type === LEAN_CLOTHES_CODE);
@@ -84,42 +73,25 @@ async function main() {
 	const clothesIds = clothesGear.map((w) => w.id);
 	const shoesIds = shoesGear.map((w) => w.id);
 
-	fs.writeFileSync(
-		path.join(OUTPUT_DIR_PATH, "head-ids.json"),
-		JSON.stringify(headIds, null, 2),
-	);
+	fs.writeFileSync(path.join(OUTPUT_DIR_PATH, "head-ids.json"), JSON.stringify(headIds, null, 2));
 	fs.writeFileSync(
 		path.join(OUTPUT_DIR_PATH, "clothes-ids.json"),
 		JSON.stringify(clothesIds, null, 2),
 	);
-	fs.writeFileSync(
-		path.join(OUTPUT_DIR_PATH, "shoes-ids.json"),
-		JSON.stringify(shoesIds, null, 2),
-	);
+	fs.writeFileSync(path.join(OUTPUT_DIR_PATH, "shoes-ids.json"), JSON.stringify(shoesIds, null, 2));
 
 	for (const langCode of LANG_JSONS_TO_CREATE) {
 		const translationsMap = Object.fromEntries(
 			allGear.map((gear) => {
-				const translation = gear.translations.find(
-					(t) => t.language === langCode,
-				)?.name;
-				invariant(
-					translation,
-					`No translation for ${gear.internalName} in ${langCode}`,
-				);
+				const translation = gear.translations.find((t) => t.language === langCode)?.name;
+				invariant(translation, `No translation for ${gear.internalName} in ${langCode}`);
 
 				return [`${gear.type.charAt(0).toUpperCase()}_${gear.id}`, translation];
 			}),
 		);
 
 		fs.writeFileSync(
-			path.join(
-				__dirname,
-				"..",
-				"locales",
-				translationJsonFolderName(langCode),
-				"gear.json",
-			),
+			path.join(__dirname, "..", "locales", translationJsonFolderName(langCode), "gear.json"),
 			`${JSON.stringify(translationsMap, null, 2)}\n`,
 		);
 	}

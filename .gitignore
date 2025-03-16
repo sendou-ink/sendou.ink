@@ -1,7 +1,13 @@
 node_modules
+test-results
 
 /.cache*
 /build
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
 /public/build
 .env
 translation-progress.md
@@ -13,6 +19,7 @@ db*.sqlite3*
 dump
 
 .DS_Store
+Thumbs.db
 .excalidraw
 
 /scripts/output/*
@@ -26,3 +33,6 @@ dump
 .vscode
 
 notepad.txt
+
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*

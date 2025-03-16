@@ -6,18 +6,18 @@ Competitive Splatoon Platform
 ## Selected Features
 
 - Full tournament system
-   - Automatic bracket progression
-   - Single Elimination, Double Elimination, Round Robin, Swiss
-   - Splatoon specific maplists (picked by the organizer or teams)
-   - Counterpicking of different styles
-   - Automatic seeding tool
-   - Ranked tournaments allowing users to climb the leaderboard
-   - View streams of tournament (both participants and the cast)
+  - Automatic bracket progression
+  - Single Elimination, Double Elimination, Round Robin, Swiss
+  - Splatoon specific maplists (picked by the organizer or teams)
+  - Counterpicking of different styles
+  - Automatic seeding tool
+  - Ranked tournaments allowing users to climb the leaderboard
+  - View streams of tournament (both participants and the cast)
 - Seasonal ladder system
-   - Join by yourself or with 1-3 of your mates, get a full group and challenge other teams
-   - View streams of ongoing matches
-   - Maplist generation based on given preferences
-   - Private notes
+  - Join by yourself or with 1-3 of your mates, get a full group and challenge other teams
+  - View streams of ongoing matches
+  - Maplist generation based on given preferences
+  - Private notes
 - Map planner that lets you draw on maps and insert weapons
 - Map list generation tool
 - Win badges from tournaments, management tools for TOs
@@ -233,7 +233,7 @@ Note: This is only useful if you have access to a production running on Render.c
 1. Run the `npx tsx scripts/replace-img-names.ts` command
 1. Run the `npx tsx scripts/replace-weapon-names.ts` command
 1. Run the .avif generating command in each image folder.
-2. Update manually any languages that use English `gear.json` and `weapons.json` files
+1. Update manually any languages that use English `gear.json` and `weapons.json` files
 
 ### Fix errors from the CI Pipeline
 

@@ -7,12 +7,9 @@ test.describe("Object Damage Calculator", () => {
 		await navigate({ page, url: OBJECT_DAMAGE_CALCULATOR_URL });
 	});
 
-	const cellId = (id: string, damageReceiver = "Chariot") =>
-		`${id}-${damageReceiver}`;
+	const cellId = (id: string, damageReceiver = "Chariot") => `${id}-${damageReceiver}`;
 
-	test("operates damage type select, max damage > min damage", async ({
-		page,
-	}) => {
+	test("operates damage type select, max damage > min damage", async ({ page }) => {
 		const hp = page.getByTestId(cellId("hp"));
 		const dmg = page.getByTestId(cellId("dmg"));
 		const htd = page.getByTestId(cellId("htd"));
@@ -22,9 +19,7 @@ test.describe("Object Damage Calculator", () => {
 		const htdBefore = (await htd.textContent())!;
 
 		// test hits to destroy calculation
-		expect(Number(htdBefore)).toBe(
-			Math.ceil(Number(hpBefore) / Number(dmgBefore)),
-		);
+		expect(Number(htdBefore)).toBe(Math.ceil(Number(hpBefore) / Number(dmgBefore)));
 
 		await page.locator("text=Damage type").selectOption("NORMAL_MIN");
 

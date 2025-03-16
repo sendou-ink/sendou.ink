@@ -1,7 +1,5 @@
 export function up(db) {
-	db.prepare(
-		/*sql*/ `alter table "CalendarEvent" drop column "isBeforeStart"`,
-	).run();
+	db.prepare(/*sql*/ `alter table "CalendarEvent" drop column "isBeforeStart"`).run();
 
 	db.prepare(/*sql*/ `drop table "TournamentTeam"`).run();
 	db.prepare(
