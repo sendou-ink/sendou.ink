@@ -16,6 +16,8 @@
   - Foreign keys + indexes missing sometimes
   - Consistent field naming e.g. always use "userId"
   - AUTOINCREMENT to make sure primary keys are not reused
+- Better i18n workflow via e.g. https://weblate.org/en-gb/
+- More structured feedback via e.g. https://fider.io/
 
 ## Libs we could utilize?
 
