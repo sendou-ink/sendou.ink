@@ -849,4 +849,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "chao",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "Big Swig",
+		fileName: "swig",
+		authorDiscordId: "534502084134043648",
+	},
 ];
