@@ -18,7 +18,8 @@
 		"lint": "prettier --check . && eslint .",
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
-		"test:e2e": "playwright test"
+		"test:e2e": "playwright test",
+		"migrate": "ley"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",
@@ -36,6 +37,7 @@
 		"eslint-plugin-svelte": "^3.0.0",
 		"globals": "^16.0.0",
 		"jsdom": "^26.0.0",
+		"ley": "^0.8.1",
 		"prettier": "^3.4.2",
 		"prettier-plugin-svelte": "^3.3.3",
 		"prettier-plugin-tailwindcss": "^0.6.11",
@@ -49,6 +51,7 @@
 	},
 	"dependencies": {
 		"better-sqlite3": "^11.9.0",
+		"dotenv": "^16.4.7",
 		"kysely": "^0.27.6",
 		"sql-formatter": "^15.4.11"
 	}
