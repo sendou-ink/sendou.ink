@@ -11,4 +11,7 @@ const findAllAvailableSeasonsStm = sql.prepare(
 		.compile().sql,
 );
 
-export const findAllAvailableSeasons = cached("asd", () => findAllAvailableSeasonsStm.all());
+export const findAllAvailableSeasons = cached(
+	"x-rank-placement-seasons",
+	() => findAllAvailableSeasonsStm.all() as Array<{ month: number; year: number }>, // TODO: typing
+);

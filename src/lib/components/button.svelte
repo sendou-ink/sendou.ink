@@ -4,9 +4,11 @@
 	interface ButtonProps {
 		children: Snippet;
 		variant?: "primary" | "outline";
+		onClick?: () => void;
+		type?: "button" | "submit";
 	}
 
-	let { children, variant = "primary" }: ButtonProps = $props();
+	let { children, variant = "primary", onClick, type = "button" }: ButtonProps = $props();
 </script>
 
 <button
@@ -17,6 +19,8 @@
 			"btn-outline": variant === "outline",
 		},
 	]}
+	onclick={onClick}
+	{type}
 >
 	{@render children()}
 </button>
