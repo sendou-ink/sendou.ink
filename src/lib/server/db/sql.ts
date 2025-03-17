@@ -10,6 +10,8 @@ import { format } from "sql-formatter";
 import invariant from "$lib/utils/invariant";
 import { roundToNDecimalPlaces } from "$lib/utils/number";
 import type { DB } from "./tables";
+import { DB_PATH } from '$env/static/private';
+
 
 const LOG_LEVEL = (["trunc", "full", "none"] as const).find(
 	(val) => val === process.env.SQL_LOG,
@@ -17,10 +19,10 @@ const LOG_LEVEL = (["trunc", "full", "none"] as const).find(
 
 const migratedEmptyDb = new Database("db-test.sqlite3").serialize();
 
-invariant(process.env.DB_PATH, "DB_PATH env variable must be set");
+invariant(DB_PATH, "DB_PATH env variable must be set");
 
 export const sql = new Database(
-	process.env.NODE_ENV === "test" ? migratedEmptyDb : process.env.DB_PATH,
+	process.env.NODE_ENV === "test" ? migratedEmptyDb : DB_PATH,
 );
 
 sql.pragma("journal_mode = WAL");

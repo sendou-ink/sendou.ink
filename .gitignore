@@ -30,8 +30,6 @@ Thumbs.db
 /playwright-report/
 /playwright/.cache/
 
-.vscode
-
 notepad.txt
 
 vite.config.js.timestamp-*
