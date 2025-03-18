@@ -10,6 +10,7 @@
 	<footer>Footer</footer>
 </div>
 
+<!-- TODO: make tailwind -->
 <style>
 	.container {
 		min-width: 100%;

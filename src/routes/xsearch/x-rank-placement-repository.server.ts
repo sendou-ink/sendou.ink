@@ -1,5 +1,4 @@
 import { db, sql } from "$lib/server/db/sql";
-import { cached } from "$lib/server/utils/cache";
 
 const findAllAvailableSeasonsStm = sql.prepare(
 	db
@@ -11,7 +10,5 @@ const findAllAvailableSeasonsStm = sql.prepare(
 		.compile().sql,
 );
 
-export const findAllAvailableSeasons = cached(
-	"x-rank-placement-seasons",
-	() => findAllAvailableSeasonsStm.all() as Array<{ month: number; year: number }>, // TODO: typing
-);
+export const findAllAvailableSeasons = () =>
+	findAllAvailableSeasonsStm.all() as Array<{ month: number; year: number }>; // TODO: typing
