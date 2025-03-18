@@ -20,6 +20,16 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "789943264370884708",
 	},
 	{
+		displayName: "Zippy's Birthday Bash!",
+		fileName: "decavzippy",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Zippy's Birthday Bash! Lower Bracket",
+		fileName: "decavzippyc",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "Sylveon",
 		fileName: "slyeion",
 		authorDiscordId: "338806780446638082",
