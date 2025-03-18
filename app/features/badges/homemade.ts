@@ -857,6 +857,6 @@ export const homemadeBadges: BadgeInfo[] = [
 	{
 		displayName: "Calm Before the Storm",
 		fileName: "calmbefore",
-		authorDiscordId: "631246535560265749"
+		authorDiscordId: "631246535560265749",
 	}
 ];
