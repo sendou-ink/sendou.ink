@@ -48,11 +48,11 @@
 				<th>Power</th>
 			{/snippet}
 
-			{#snippet row(player)}
+			{#snippet row(entry)}
 				<td>{1}</td>
-				<td>{player.name}</td>
-				<td>{player.weaponSplId}</td>
-				<td>{player.power}</td>
+				<td><a href={`/xsearch/player/${entry.playerId}`}>{entry.name}</a></td>
+				<td>{entry.weaponSplId}</td>
+				<td>{entry.power}</td>
 			{/snippet}
 		</Table>
 	{/if}
