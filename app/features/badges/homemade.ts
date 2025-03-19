@@ -15,6 +15,21 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "HACKER Cup (1st Place)",
+		fileName: "hacker-cup-gold",
+		authorDiscordId: "530722502603833346",
+	},
+	{
+		displayName: "HACKER Cup (2nd Place)",
+		fileName: "hacker-cup-silver",
+		authorDiscordId: "530722502603833346",
+	},
+	{
+		displayName: "HACKER Cup (3rd Place)",
+		fileName: "hacker-cup-bronze",
+		authorDiscordId: "530722502603833346",
+	},
+	{
 		displayName: "Wi Wi Wi Cat",
 		fileName: "wi-wi-wi",
 		authorDiscordId: "530722502603833346",
