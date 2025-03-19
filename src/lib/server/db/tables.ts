@@ -6,6 +6,7 @@ import type {
 	SqlBool,
 	Updateable,
 } from "kysely";
+import type { Spl3Mode, Spl3RankedMode } from "$lib/schemas/spl3";
 // import type { TieredSkill } from "~/features/mmr/tiered.server";
 // import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
 // import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
@@ -19,15 +20,15 @@ import type {
 // } from "~/modules/in-game-lists";
 // import type { GroupSkillDifference, UserSkillDifference } from "./types";
 
-export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
-	? ColumnType<S, I | undefined, U>
-	: ColumnType<T, T | undefined, T>;
+export type Generated<T> =
+	T extends ColumnType<infer S, infer I, infer U>
+		? ColumnType<S, I | undefined, U>
+		: ColumnType<T, T | undefined, T>;
 
 // export type MemberRole = (typeof TEAM_MEMBER_ROLES)[number];
 
 // TODO: actual types
 export type MemberRole = unknown;
-export type ModeShort = any;
 export type Ability = unknown;
 export type MainWeaponId = unknown;
 export type StageId = unknown;
@@ -108,7 +109,7 @@ export interface Build {
 	description: string | null;
 	headGearSplId: number;
 	id: GeneratedAlways<number>;
-	modes: ColumnType<ModeShort[] | null, string | null, string | null>;
+	modes: ColumnType<Spl3Mode[] | null, string | null, string | null>;
 	ownerId: number;
 	private: number | null;
 	shoesGearSplId: number;
@@ -149,11 +150,7 @@ export interface CalendarEvent {
 	organizationId: number | null;
 	avatarImgId: number | null;
 	// TODO: remove in migration
-	avatarMetadata: ColumnType<
-		CalendarEventAvatarMetadata | null,
-		string | null,
-		string | null
-	>;
+	avatarMetadata: ColumnType<CalendarEventAvatarMetadata | null, string | null, string | null>;
 }
 
 export interface CalendarEventBadge {
@@ -218,9 +215,7 @@ export type ParsedMemento = {
 			skillDifference?: GroupSkillDifference;
 		}
 	>;
-	modePreferences?: Partial<
-		Record<ModeShort, Array<{ userId: number; preference?: Preference }>>
-	>;
+	modePreferences?: Partial<Record<Spl3Mode, Array<{ userId: number; preference?: Preference }>>>;
 	/** mapPreferences of season 2 */
 	mapPreferences?: Array<{ userId: number; preference?: Preference }[]>;
 	pools: Array<{ userId: number; pool: UserMapModePreferences["pool"] }>;
@@ -241,7 +236,7 @@ export interface GroupMatchMap {
 	id: GeneratedAlways<number>;
 	index: number;
 	matchId: number;
-	mode: ModeShort;
+	mode: Spl3Mode;
 	source: string;
 	stageId: StageId;
 	winnerGroupId: number | null;
@@ -301,7 +296,7 @@ export interface LFGPost {
 
 export interface MapPoolMap {
 	calendarEventId: number | null;
-	mode: ModeShort;
+	mode: Spl3Mode;
 	stageId: StageId;
 	tieBreakerCalendarEventId: number | null;
 	tournamentTeamId: number | null;
@@ -309,7 +304,7 @@ export interface MapPoolMap {
 
 export interface MapResult {
 	losses: number;
-	mode: ModeShort;
+	mode: Spl3Mode;
 	season: number;
 	stageId: StageId;
 	userId: number;
@@ -414,13 +409,7 @@ export interface TaggedArt {
 
 // AUTO = style where teams pick their map pool ahead of time and the map lists are automatically made for each round
 // could also have the traditional style where TO picks the maps later
-type TournamentMapPickingStyle =
-	| "TO"
-	| "AUTO_ALL"
-	| "AUTO_SZ"
-	| "AUTO_TC"
-	| "AUTO_RM"
-	| "AUTO_CB";
+type TournamentMapPickingStyle = "TO" | "AUTO_ALL" | "AUTO_SZ" | "AUTO_TC" | "AUTO_RM" | "AUTO_CB";
 
 export interface TournamentSettings {
 	bracketProgression: any; // TODO: actual type = Progression.ParsedBracket[];
@@ -459,17 +448,9 @@ export interface Tournament {
 	id: GeneratedAlways<number>;
 	mapPickingStyle: TournamentMapPickingStyle;
 	/** Maps prepared ahead of time for rounds. Follows settings.bracketProgression order. Null in the spot if not defined yet for that bracket. */
-	preparedMaps: ColumnType<
-		(PreparedMaps | null)[] | null,
-		string | null,
-		string | null
-	>;
+	preparedMaps: ColumnType<(PreparedMaps | null)[] | null, string | null, string | null>;
 	castTwitchAccounts: ColumnType<string[] | null, string | null, string | null>;
-	castedMatchesInfo: ColumnType<
-		CastedMatchesInfo | null,
-		string | null,
-		string | null
-	>;
+	castedMatchesInfo: ColumnType<CastedMatchesInfo | null, string | null, string | null>;
 	rules: string | null;
 	/** Related "parent tournament", the tournament that contains the original sign-ups (for leagues) */
 	parentTournamentId: number | null;
@@ -524,7 +505,7 @@ export interface TournamentMatch {
 export interface TournamentMatchPickBanEvent {
 	type: "PICK" | "BAN";
 	stageId: StageId;
-	mode: ModeShort;
+	mode: Spl3Mode;
 	matchId: number;
 	authorId: number;
 	number: number;
@@ -535,7 +516,7 @@ export interface TournamentMatchGameResult {
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
 	matchId: number;
-	mode: ModeShort;
+	mode: Spl3Mode;
 	number: number;
 	reporterId: number;
 	source: string;
@@ -562,7 +543,7 @@ export interface TournamentResult {
 }
 
 export interface TournamentRoundMaps {
-	list?: Array<{ mode: ModeShort; stageId: StageId }> | null;
+	list?: Array<{ mode: Spl3Mode; stageId: StageId }> | null;
 	count: number;
 	type: "BEST_OF" | "PLAY_ALL";
 	pickBan?: "COUNTERPICK" | "BAN_2" | null;
@@ -643,11 +624,7 @@ export interface TournamentTeam {
 	seed: number | null;
 	/** For formats that have many starting brackets, where should the team start? */
 	startingBracketIdx: number | null;
-	activeRosterUserIds: ColumnType<
-		number[] | null,
-		string | null,
-		string | null
-	>;
+	activeRosterUserIds: ColumnType<number[] | null, string | null, string | null>;
 	tournamentId: number;
 	teamId: number | null;
 	avatarImgId: number | null;
@@ -679,14 +656,8 @@ export interface TournamentOrganization {
 	avatarImgId: number | null;
 }
 
-export const TOURNAMENT_ORGANIZATION_ROLES = [
-	"ADMIN",
-	"MEMBER",
-	"ORGANIZER",
-	"STREAMER",
-] as const;
-type TournamentOrganizationRole =
-	(typeof TOURNAMENT_ORGANIZATION_ROLES)[number];
+export const TOURNAMENT_ORGANIZATION_ROLES = ["ADMIN", "MEMBER", "ORGANIZER", "STREAMER"] as const;
+type TournamentOrganizationRole = (typeof TOURNAMENT_ORGANIZATION_ROLES)[number];
 
 export interface TournamentOrganizationMember {
 	organizationId: number;
@@ -744,11 +715,11 @@ export interface UnvalidatedVideo {
 export type Preference = "AVOID" | "PREFER";
 export interface UserMapModePreferences {
 	modes: Array<{
-		mode: ModeShort;
+		mode: Spl3Mode;
 		preference?: Preference;
 	}>;
 	pool: Array<{
-		mode: ModeShort;
+		mode: Spl3Mode;
 		stages: StageId[];
 	}>;
 }
@@ -808,11 +779,7 @@ export interface User {
 	battlefy: string | null;
 	vc: Generated<"YES" | "NO" | "LISTEN_ONLY">;
 	youtubeId: string | null;
-	mapModePreferences: ColumnType<
-		UserMapModePreferences | null,
-		string | null,
-		string | null
-	>;
+	mapModePreferences: ColumnType<UserMapModePreferences | null, string | null, string | null>;
 	qWeaponPool: ColumnType<MainWeaponId[] | null, string | null, string | null>;
 	plusSkippedForSeasonNth: number | null;
 	noScreen: Generated<number>;
@@ -860,7 +827,7 @@ export interface Video {
 
 export interface VideoMatch {
 	id: GeneratedAlways<number>;
-	mode: ModeShort;
+	mode: Spl3Mode;
 	stageId: StageId;
 	startsAt: number;
 	videoId: number;
@@ -878,7 +845,7 @@ export interface XRankPlacement {
 	badges: string;
 	bannerSplId: number;
 	id: GeneratedAlways<number>;
-	mode: ModeShort;
+	mode: Spl3RankedMode;
 	month: number;
 	name: string;
 	nameDiscriminator: string;
@@ -894,11 +861,7 @@ export interface XRankPlacement {
 export interface Notification {
 	id: GeneratedAlways<number>;
 	type: NotificationValue["type"];
-	meta: ColumnType<
-		Record<string, number | string> | null,
-		string | null,
-		string | null
-	>;
+	meta: ColumnType<Record<string, number | string> | null, string | null, string | null>;
 	pictureUrl: string | null;
 	createdAt: GeneratedAlways<number>;
 }

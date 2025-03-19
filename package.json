@@ -53,6 +53,7 @@
 		"better-sqlite3": "^11.9.0",
 		"dotenv": "^16.4.7",
 		"kysely": "^0.27.6",
-		"sql-formatter": "^15.4.11"
+		"sql-formatter": "^15.4.11",
+		"valibot": "^1.0.0"
 	}
 }

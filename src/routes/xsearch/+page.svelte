@@ -2,6 +2,7 @@
 	import RadioGroup from "$lib/components/radio-group.svelte";
 	import Select from "$lib/components/select.svelte";
 	import Table from "$lib/components/table/table.svelte";
+	import { SPL3_RANKED_MODES } from "$lib/schemas/spl3";
 
 	let { data } = $props();
 
@@ -14,52 +15,45 @@
 	$inspect(data);
 </script>
 
-<div class="flex flex-col gap-4">
+<!-- TODO: meta -->
+
+<div class="flex flex-col gap-12">
 	<div>
 		<form class="flex flex-wrap gap-2" bind:this={form}>
 			<RadioGroup
 				name="mode"
 				size="sm"
-				items={[
-					{ id: "SZ", label: "Splat Zones" },
-					{ id: "TC", label: "Tower Control" },
-					{ id: "RM", label: "Rainmaker" },
-					{ id: "CB", label: "Clam Blitz" },
-				]}
+				items={SPL3_RANKED_MODES.map((mode) => ({ id: mode, label: mode }))}
 				onChange={submitForm}
 			/>
 			<RadioGroup
-				name="division"
+				name="region"
 				size="sm"
 				items={[
-					{ id: "TAKOROKA", label: "Takoroka" },
-					{ id: "TENTATEK", label: "Tentatek" },
+					{ id: "JPN", label: "Takoroka" },
+					{ id: "WEST", label: "Tentatek" },
 				]}
 				onChange={submitForm}
 			/>
-			<Select size="sm" options={data.seasonOptions} onChange={submitForm} />
+			<Select size="sm" options={data.seasonOptions} onChange={submitForm} name="season" />
 		</form>
 	</div>
 
-	<Table
-		data={[
-			{ name: "apples", qty: 5, price: 2 },
-			{ name: "bananas", qty: 10, price: 1 },
-			{ name: "cherries", qty: 20, price: 0.5 },
-		]}
-	>
-		{#snippet header()}
-			<th></th>
-			<th>Player</th>
-			<th>Weapon</th>
-			<th>Power</th>
-		{/snippet}
+	{#if data.entries}
+		<Table data={data.entries}>
+			{#snippet header()}
+				<th></th>
+				<th>Player</th>
+				<th>Weapon</th>
+				<th>Power</th>
+			{/snippet}
 
-		{#snippet row(d)}
-			<td>{d.name}</td>
-			<td>{d.qty}</td>
-			<td>{d.price}</td>
-			<td>{d.qty * d.price}</td>
-		{/snippet}
-	</Table>
+			{#snippet row(player)}
+				<td>{1}</td>
+				<td>{player.name}</td>
+				<td>{player.weaponSplId}</td>
+				<td>{player.power}</td>
+			{/snippet}
+		</Table>
+	{/if}
 </div>

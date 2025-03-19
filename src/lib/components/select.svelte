@@ -10,12 +10,14 @@
 			label: string;
 		}>;
 		onChange?: (value: string) => void;
+		name?: string;
 	}
 
-	let { size, placeholder, options, onChange }: SelectProps = $props();
+	let { size, placeholder, options, onChange, name }: SelectProps = $props();
 </script>
 
 <select
+	{name}
 	class={[
 		"select",
 		{
