@@ -668,6 +668,7 @@ function StartedMatchTabs({
 				.join(","),
 			result?.opponentOnePoints,
 			result?.opponentTwoPoints,
+			data.results.length,
 		].join("-");
 
 	return (
@@ -720,8 +721,7 @@ function StartedMatchTabs({
 								// Without the key prop when switching to another match the winnerId is remembered
 								// which causes "No winning team matching the id" error.
 								// In addition we want the active roster changing either by the user or by another user
-								// to reset the state inside.
-								// Switching the key props forces the component to remount.
+								// to reset the state inside. We also want to clear the inputs when a result is submitted
 								key={matchActionsKey()}
 								scores={scores}
 								teams={teams}

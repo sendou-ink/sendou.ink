@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
 	_action,
+	actuallyNonEmptyStringOrNull,
 	checkboxValueToBoolean,
 	id,
 	modeShort,
@@ -11,11 +12,10 @@ import {
 import { bracketIdx } from "../tournament-bracket/tournament-bracket-schemas.server";
 import { TOURNAMENT } from "./tournament-constants";
 
-export const teamName = z
-	.string()
-	.trim()
-	.min(1)
-	.max(TOURNAMENT.TEAM_NAME_MAX_LENGTH);
+export const teamName = z.preprocess(
+	actuallyNonEmptyStringOrNull,
+	z.string().max(TOURNAMENT.TEAM_NAME_MAX_LENGTH),
+);
 
 export const registerSchema = z.union([
 	z.object({

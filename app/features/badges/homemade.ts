@@ -20,6 +20,16 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "789943264370884708",
 	},
 	{
+		displayName: "Sylveon",
+		fileName: "slyeion",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Triton-Cup 100",
+		fileName: "tritongold-1",
+		authorDiscordId: "335179210878353409",
+	},
+	{
 		displayName: "GatorLAN - Side of Salmon",
 		fileName: "gatorlan_salmon_1st",
 		authorDiscordId: "285504780154044416",
@@ -790,6 +800,31 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "336683473714544641",
 	},
 	{
+		displayName: "Re Al",
+		fileName: "real",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Blue Lock",
+		fileName: "bluelock",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "FULLWIPE LAN",
+		fileName: "fullwipe",
+		authorDiscordId: "570323825669963972",
+	},
+	{
+		displayName: "FULLWIPE LAN (2nd)",
+		fileName: "fullwipe_silver",
+		authorDiscordId: "570323825669963972",
+	},
+	{
+		displayName: "FULLWIPE LAN (3rd)",
+		fileName: "fullwipe_bronze",
+		authorDiscordId: "570323825669963972",
+	},
+	{
 		displayName: "Torneo Crab Cancel Perfect and Shadow",
 		fileName: "crab_tank",
 		authorDiscordId: "336683473714544641",
@@ -808,5 +843,10 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Florida Collegiate Draft Cup",
 		fileName: "FLcollegiate",
 		authorDiscordId: "285504780154044416",
+	},
+	{
+		displayName: "Chao Garden",
+		fileName: "chao",
+		authorDiscordId: "528851510222782474",
 	},
 ];

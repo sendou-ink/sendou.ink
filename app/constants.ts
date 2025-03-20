@@ -3,16 +3,10 @@ import type { BuildAbilitiesTupleWithUnknown } from "./modules/in-game-lists";
 export const TWEET_LENGTH_MAX_LENGTH = 280;
 export const DISCORD_MESSAGE_MAX_LENGTH = 2000;
 
-const EMPTY_CHARACTERS = ["\u200B", "\u200C", "\u200D", "\u200E", "\u200F"];
-export const notAllEmptyCharactersRegExp = new RegExp(
-	`^(?!(${EMPTY_CHARACTERS.join("|")})+$).*$`,
-);
-
 export const USER = {
 	BIO_MAX_LENGTH: DISCORD_MESSAGE_MAX_LENGTH,
 	CUSTOM_URL_MAX_LENGTH: 32,
 	CUSTOM_NAME_MAX_LENGTH: 32,
-	CUSTOM_NAME_REGEXP: notAllEmptyCharactersRegExp,
 	BATTLEFY_MAX_LENGTH: 32,
 	IN_GAME_NAME_TEXT_MAX_LENGTH: 20,
 	IN_GAME_NAME_DISCRIMINATOR_MAX_LENGTH: 5,
@@ -80,7 +74,7 @@ export const ONE_HOUR_IN_MS = 60 * 60 * 1000;
 export const TWO_HOURS_IN_MS = 2 * 60 * 60 * 1000;
 
 export const SPLATOON_3_XP_BADGE_VALUES = [
-	3400, 3300, 3200, 3100, 3000, 2900, 2800, 2700, 2600,
+	5000, 4500, 4000, 3500, 3400, 3300, 3200, 3100, 3000, 2900, 2800, 2700, 2600,
 ] as const;
 export const findSplatoon3XpBadgeValue = (xPower: number) => {
 	for (const value of SPLATOON_3_XP_BADGE_VALUES) {
@@ -94,6 +88,10 @@ export const findSplatoon3XpBadgeValue = (xPower: number) => {
 
 export const PATCHES = [
 	{
+		patch: "9.3.0",
+		date: "2025-03-13",
+	},
+	{
 		patch: "9.2.0",
 		date: "2024-11-20",
 	},
@@ -101,10 +99,10 @@ export const PATCHES = [
 		patch: "9.0.0",
 		date: "2024-08-29",
 	},
-	{
-		patch: "8.1.0",
-		date: "2024-07-17",
-	},
+	// {
+	// 	patch: "8.1.0",
+	// 	date: "2024-07-17",
+	// },
 	// {
 	// 	patch: "8.0.0",
 	// 	date: "2024-05-31",

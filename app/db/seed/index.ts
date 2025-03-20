@@ -563,7 +563,7 @@ async function lastMonthSuggestions() {
 
 async function thisMonthsSuggestions() {
 	const usersInPlus = (await UserRepository.findAllPlusServerMembers()).filter(
-		(u) => u.id !== ADMIN_ID,
+		(u) => u.userId !== ADMIN_ID,
 	);
 	const range = nextNonCompletedVoting(new Date());
 	invariant(range, "No next voting found");
@@ -578,7 +578,7 @@ async function thisMonthsSuggestions() {
 			invariant(suggester.plusTier);
 
 			await PlusSuggestionRepository.create({
-				authorId: suggester.id,
+				authorId: suggester.userId,
 				month,
 				year,
 				suggestedId: userId,

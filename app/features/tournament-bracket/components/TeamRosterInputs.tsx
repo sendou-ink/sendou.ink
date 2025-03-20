@@ -1,6 +1,5 @@
 import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
-import clone from "just-clone";
 import * as React from "react";
 import { Avatar } from "~/components/Avatar";
 import { Button } from "~/components/Button";
@@ -39,17 +38,9 @@ export function TeamRosterInputs({
 	result?: Result;
 	revising?: boolean;
 }) {
-	const presentational = !revising && Boolean(result);
-
-	const data = useLoaderData<TournamentMatchLoaderData>();
 	const tournament = useTournament();
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: biome migration
-	React.useEffect(() => {
-		if (result) return;
-		setWinnerId(undefined);
-		setPoints([0, 0]);
-	}, [data, setWinnerId, setPoints, result]);
+	const presentational = !revising && Boolean(result);
 
 	const points =
 		typeof result?.opponentOnePoints === "number" &&
@@ -148,7 +139,7 @@ function _TeamRoster({
 		const didCancel = !editing;
 		if (didCancel) {
 			setCheckedPlayers?.((oldPlayers) => {
-				const newPlayers = clone(oldPlayers);
+				const newPlayers = structuredClone(oldPlayers);
 				newPlayers[idx] = activeRoster ?? [];
 				return newPlayers;
 			});
@@ -165,7 +156,7 @@ function _TeamRoster({
 	const onPointsChange = React.useCallback(
 		(newPoint: number) => {
 			setPoints((points) => {
-				const newPoints = clone(points);
+				const newPoints = structuredClone(points);
 				newPoints[idx] = newPoint;
 				return newPoints;
 			});
@@ -226,7 +217,7 @@ function _TeamRoster({
 					if (!setCheckedPlayers) return;
 
 					setCheckedPlayers((oldPlayers) => {
-						const newPlayers = clone(oldPlayers);
+						const newPlayers = structuredClone(oldPlayers);
 						if (oldPlayers[idx].includes(playerId)) {
 							newPlayers[idx] = newPlayers[idx].filter((id) => id !== playerId);
 						} else {

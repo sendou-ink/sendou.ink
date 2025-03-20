@@ -1,9 +1,6 @@
 .layout__container {
-	display: flex;
-	flex-direction: column;
 	width: 100%;
 	min-height: 100vh;
-	padding-top: 50px; /** compensate for layout__header */
 }
 
 .layout__breadcrumb-container {
@@ -44,7 +41,6 @@
 }
 
 .layout__header {
-	z-index: 501;
 	display: flex;
 	width: 100%;
 	align-items: center;
@@ -56,8 +52,6 @@
 	font-weight: bold;
 	padding-block: var(--s-2);
 	padding-inline: var(--s-4);
-	position: fixed;
-	top: 0;
 }
 
 .layout__avatar {

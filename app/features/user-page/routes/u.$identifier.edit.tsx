@@ -41,6 +41,7 @@ import { rawSensToString } from "~/utils/strings";
 import { FAQ_PAGE, isCustomUrl, userPage } from "~/utils/urls";
 import {
 	actualNumber,
+	actuallyNonEmptyStringOrNull,
 	checkboxValueToDbBoolean,
 	customCssVarObject,
 	dbBoolean,
@@ -87,13 +88,8 @@ export const userEditActionSchema = z
 				.nullable(),
 		),
 		customName: z.preprocess(
-			falsyToNull,
-			z
-				.string()
-				.trim()
-				.regex(USER.CUSTOM_NAME_REGEXP)
-				.max(USER.CUSTOM_NAME_MAX_LENGTH)
-				.nullable(),
+			actuallyNonEmptyStringOrNull,
+			z.string().max(USER.CUSTOM_NAME_MAX_LENGTH).nullable(),
 		),
 		battlefy: z.preprocess(
 			falsyToNull,

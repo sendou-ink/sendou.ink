@@ -73,6 +73,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 					tournament.registrationOpen || data.teamName === ownTeam.name,
 					"Can't change team name after registration has closed",
 				);
+				errorToastIfFalsy(
+					!tournament.ctx.teams.some(
+						(team) => team.name === data.teamName && team.id !== ownTeam.id,
+					),
+					"Team name already taken for this tournament",
+				);
 
 				await TournamentTeamRepository.update({
 					userId: user.id,
@@ -216,8 +222,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"Check in is not open",
 			);
 			errorToastIfFalsy(
-				tournament.checkInConditionsFulfilledByTeamId(teamMemberOf.id),
-				"Check in conditions not fulfilled",
+				tournament.checkInConditionsFulfilledByTeamId(teamMemberOf.id)
+					.isFulfilled,
+				`Can't check-in - ${tournament.checkInConditionsFulfilledByTeamId(teamMemberOf.id).reason}`,
 			);
 
 			checkIn(teamMemberOf.id);

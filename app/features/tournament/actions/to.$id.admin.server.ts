@@ -120,8 +120,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 			errorToastIfFalsy(team, "Invalid team id");
 			errorToastIfFalsy(
 				data.bracketIdx !== 0 ||
-					tournament.checkInConditionsFulfilledByTeamId(team.id),
-				"Can't check-in",
+					tournament.checkInConditionsFulfilledByTeamId(team.id).isFulfilled,
+				`Can't check-in - ${tournament.checkInConditionsFulfilledByTeamId(team.id).reason}`,
 			);
 			errorToastIfFalsy(
 				team.checkIns.length > 0 || data.bracketIdx === 0,
