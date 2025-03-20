@@ -78,7 +78,7 @@
 	"settings.trusted.confirm": "Retirer {{name}} de vos utilisateur de confiance?",
 	"settings.trusted.trustedExplanation": "Les utilisateurs de confiance peuvent vous ajouter directement à des groupes et à des équipes de tournoi. S'il est supprimé de cette liste, vous devrez à l'avenir vous inscrire via un lien qu'il aura partager.",
 	"settings.trusted.noTrustedExplanation": "Vous ne faites actuellement confiance à aucun utilisateur. Vous pouvez ajouter des utilisateurs de confiance lorsque vous rejoignez leur groupe SendouQ ou leur équipe de tournoi via un lien. Les utilisateurs de confiance peuvent vous ajouter directement à des groupes et à des équipes de tournoi.",
-	"settings.trusted.teamExplanation": "En plus des utilisateurs ci-dessus, un membre de votre équipe <2>{{name}></2> peut vous ajouter directement.",
+	"settings.trusted.teamExplanation": "En plus des utilisateurs ci-dessus, un membre de votre équipe <2>{{name}}</2> peut vous ajouter directement.",
 
 	"looking.joiningGroupError": "Avant de rejoindre un nouveau groupe, quitté celui actuel",
 	"looking.goToSettingsPrompt": "Pour aider votre recherche de groupe, selectionner vos armes et votre statu vocal dans les paramètres",
