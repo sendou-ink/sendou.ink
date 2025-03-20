@@ -849,4 +849,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "chao",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "Habibi 1v1",
+		fileName: "habibi",
+		authorDiscordId: "960213930586824766",
+	},
 ];
