@@ -1,4 +1,4 @@
-<script lang="ts" generics="T">
+<script lang="ts" generics="T extends {id: string | number}">
 	import type { Snippet } from "svelte";
 
 	let {
@@ -20,7 +20,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each data as item}
+			{#each data as item (item.id)}
 				<tr>
 					{@render row(item)}
 				</tr>

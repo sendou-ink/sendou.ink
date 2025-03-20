@@ -3,6 +3,7 @@ import { cached } from "$lib/server/utils/cache";
 import * as v from "valibot";
 import { Spl3RankedModeSchema, Spl3XRankRegionSchema } from "$lib/schemas/spl3";
 import { MonthYearSchema } from "$lib/schemas/misc";
+import { monthYearToSeasonSpan } from "./utils";
 
 export const load = async ({ url }) => {
 	const params = v.safeParse(SearchParamsSchema, {
@@ -39,12 +40,10 @@ const seasonOptions = cached("x-search-season-options", async () => {
 	const seasons = await XRankPlacementRepository.allAvailableSeasons();
 
 	return seasons.map(({ month, year }) => {
-		const date = new Date(year, month - 1);
-		const lastMonth = new Date(date.getFullYear(), date.getMonth(), 0);
-		const threeMonthsAgo = new Date(date.getFullYear(), date.getMonth() - 3, 1);
+		const { from, to } = monthYearToSeasonSpan({ month, year });
 
 		return {
-			label: `${threeMonthsAgo.getMonth() + 1}/${threeMonthsAgo.getFullYear()} - ${lastMonth.getMonth() + 1}/${lastMonth.getFullYear()}`,
+			label: `${from.month}/${from.year} - ${to.month}/${to.year}`,
 			value: `${month}-${year}`,
 		};
 	});

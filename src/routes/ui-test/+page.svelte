@@ -115,7 +115,7 @@ hello
 		</div>
 		<div class="flex flex-col gap-2">
 			<label class="flex cursor-pointer items-center gap-2"
-				><input type="checkbox" class="toggle toggle-sm toggle-primary" checked="" />
+				><input type="checkbox" class="toggle toggle-sm toggle-primary" checked />
 				<span class="text-xs">Show all day events</span></label
 			>
 		</div>

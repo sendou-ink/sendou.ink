@@ -1,4 +1,6 @@
 import prettier from "eslint-config-prettier";
+import { globalIgnores } from "eslint/config";
+
 import js from "@eslint/js";
 import { includeIgnoreFile } from "@eslint/compat";
 import svelte from "eslint-plugin-svelte";
@@ -10,6 +12,7 @@ const gitignorePath = fileURLToPath(new URL("./.gitignore", import.meta.url));
 
 export default ts.config(
 	includeIgnoreFile(gitignorePath),
+	globalIgnores(["app-old/", "scripts/"]),
 	js.configs.recommended,
 	...ts.configs.recommended,
 	...svelte.configs.recommended,
@@ -24,7 +27,7 @@ export default ts.config(
 		},
 	},
 	{
-		files: ["**/*.svelte", "**/*.svelte.ts", "**/*.svelte.js"],
+		files: ["**/*.svelte", "**/*.svelte.ts"],
 		ignores: ["eslint.config.js", "svelte.config.js"],
 
 		languageOptions: {
