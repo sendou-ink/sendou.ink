@@ -70,7 +70,7 @@
 	"settings.sounds.likeReceived": "Invitation accepté",
 	"settings.sounds.groupNewMember": "Nouveau membre dans le groupe",
 	"settings.sounds.matchStarted": "Le match a commencé",
-	"settings.mapPool.notOk": "Sélectionné {{count}} stages par mode que vous n'avez pas évité pour enregistrer vos préférences",
+	"settings.mapPool.notOk": "Sélectionner {{count}} stages par mode que vous n'avez pas évité pour enregistrer vos préférences",
 	"settings.misc.header": "Divers",
 	"settings.banned": "Bannis",
 	"settings.avoid.label": "Sans {{special}}",
