@@ -11,8 +11,6 @@
 	let submitForm = () => {
 		form.submit();
 	};
-
-	$inspect(data);
 </script>
 
 <!-- TODO: meta -->
