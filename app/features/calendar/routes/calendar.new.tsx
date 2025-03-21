@@ -19,8 +19,7 @@ import { RequiredHiddenInput } from "~/components/RequiredHiddenInput";
 import { SubmitButton } from "~/components/SubmitButton";
 import { CrossIcon } from "~/components/icons/Cross";
 import { TrashIcon } from "~/components/icons/Trash";
-import type { Tables } from "~/db/tables";
-import type { Badge as BadgeType, CalendarEventTag } from "~/db/types";
+import type { CalendarEventTag, Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
@@ -641,7 +640,7 @@ function BadgesAdder() {
 
 	if (managedBadges.length === 0) return input;
 
-	const handleBadgeDelete = (badgeId: BadgeType["id"]) => {
+	const handleBadgeDelete = (badgeId: Tables["Badge"]["id"]) => {
 		setBadges(badges.filter((badge) => badge.id !== badgeId));
 	};
 

@@ -22,7 +22,6 @@ import { StarIcon } from "~/components/icons/Star";
 import { StarFilledIcon } from "~/components/icons/StarFilled";
 import { TrashIcon } from "~/components/icons/Trash";
 import { USER } from "~/constants";
-import type { User } from "~/db/types";
 import { useUser } from "~/features/auth/core/user";
 import { requireUser, requireUserId } from "~/features/auth/core/user.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -56,6 +55,7 @@ import { userParamsSchema } from "../user-page-schemas.server";
 import type { UserPageLoaderData } from "./u.$identifier";
 import "~/styles/u-edit.css";
 import { SendouSwitch } from "~/components/elements/Switch";
+import type { Tables } from "~/db/tables";
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 
 export const userEditActionSchema = z
@@ -555,7 +555,9 @@ function WeaponPoolSelect() {
 	);
 }
 
-function BioTextarea({ initialValue }: { initialValue: User["bio"] }) {
+function BioTextarea({
+	initialValue,
+}: { initialValue: Tables["User"]["bio"] }) {
 	const { t } = useTranslation("user");
 	const [value, setValue] = React.useState(initialValue ?? "");
 
@@ -664,7 +666,7 @@ function CommissionsOpenToggle({
 function CommissionTextArea({
 	initialValue,
 }: {
-	initialValue: User["commissionText"];
+	initialValue: Tables["User"]["commissionText"];
 }) {
 	const { t } = useTranslation(["user"]);
 	const [value, setValue] = React.useState(initialValue ?? "");

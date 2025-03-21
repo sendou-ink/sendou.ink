@@ -1,11 +1,5 @@
 import { sql } from "~/db/sql";
 import type { Tables } from "~/db/tables";
-import type {
-	CalendarEvent,
-	CalendarEventDate,
-	Tournament,
-	User,
-} from "~/db/types";
 
 const stm = sql.prepare(/*sql*/ `
 select
@@ -29,13 +23,13 @@ select
 `);
 
 type FindByIdentifierRow = (Pick<
-	CalendarEvent,
+	Tables["CalendarEvent"],
 	"bracketUrl" | "name" | "description" | "authorId"
 > &
-	Pick<Tournament, "id" | "mapPickingStyle"> &
-	Pick<User, "discordId" | "username"> &
-	Pick<CalendarEventDate, "startTime">) & {
-	eventId: CalendarEvent["id"];
+	Pick<Tables["Tournament"], "id" | "mapPickingStyle"> &
+	Pick<Tables["User"], "discordId" | "username"> &
+	Pick<Tables["CalendarEventDate"], "startTime">) & {
+	eventId: Tables["CalendarEvent"]["id"];
 } & { settings: string };
 
 export function findByIdentifier(identifier: string | number) {
@@ -59,7 +53,7 @@ export function findByIdentifier(identifier: string | number) {
 }
 
 function resolveEarliestStartTime(
-	rows: Pick<CalendarEventDate, "startTime">[],
+	rows: Pick<Tables["CalendarEventDate"], "startTime">[],
 ) {
 	return Math.min(...rows.map((row) => row.startTime));
 }

@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { PlayerResult } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const addPlayerResultDeltaStm = sql.prepare(/* sql */ `
   insert into "PlayerResult" (
@@ -29,7 +29,7 @@ const addPlayerResultDeltaStm = sql.prepare(/* sql */ `
     "setLosses" = "setLosses" + @setLosses
 `);
 
-export function addPlayerResults(results: Array<PlayerResult>) {
+export function addPlayerResults(results: Array<Tables["PlayerResult"]>) {
 	for (const result of results) {
 		addPlayerResultDeltaStm.run({
 			ownerUserId: result.ownerUserId,

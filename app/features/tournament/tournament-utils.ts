@@ -1,5 +1,4 @@
 import type { Params } from "@remix-run/react";
-import type { Tournament } from "~/db/types";
 import type { ModeShort, StageId } from "~/modules/in-game-lists";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { weekNumberToDate } from "~/utils/dates";
@@ -23,7 +22,7 @@ export function tournamentIdFromParams(params: Params<string>) {
 }
 
 export function modesIncluded(
-	tournament: Pick<Tournament, "mapPickingStyle">,
+	tournament: Pick<Tables["Tournament"], "mapPickingStyle">,
 ): ModeShort[] {
 	switch (tournament.mapPickingStyle) {
 		case "AUTO_SZ": {
@@ -45,7 +44,7 @@ export function modesIncluded(
 }
 
 export function isOneModeTournamentOf(
-	tournament: Pick<Tournament, "mapPickingStyle">,
+	tournament: Pick<Tables["Tournament"], "mapPickingStyle">,
 ) {
 	return modesIncluded(tournament).length === 1
 		? modesIncluded(tournament)[0]

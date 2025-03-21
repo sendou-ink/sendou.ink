@@ -1,13 +1,10 @@
 import type { Rating } from "node_modules/openskill/dist/types";
 import { ordinal } from "openskill";
 import type {
-	Group,
-	GroupMatch,
 	GroupSkillDifference,
-	Skill,
-	User,
+	Tables,
 	UserSkillDifference,
-} from "~/db/types";
+} from "~/db/tables";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import {
 	ordinalToSp,
@@ -25,13 +22,13 @@ import { roundToNDecimalPlaces } from "~/utils/number";
 
 export type MementoSkillDifferences = {
 	users: Record<
-		User["id"],
+		Tables["User"]["id"],
 		{
 			skillDifference?: UserSkillDifference;
 		}
 	>;
 	groups: Record<
-		Group["id"],
+		Tables["Group"]["id"],
 		{
 			skillDifference?: GroupSkillDifference;
 		}
@@ -45,15 +42,15 @@ export function calculateMatchSkills({
 	winnerGroupId,
 	loserGroupId,
 }: {
-	groupMatchId: GroupMatch["id"];
-	winner: User["id"][];
-	loser: User["id"][];
-	winnerGroupId: Group["id"];
-	loserGroupId: Group["id"];
+	groupMatchId: Tables["GroupMatch"]["id"];
+	winner: Tables["User"]["id"][];
+	loser: Tables["User"]["id"][];
+	winnerGroupId: Tables["Group"]["id"];
+	loserGroupId: Tables["Group"]["id"];
 }) {
 	const newSkills: Array<
 		Pick<
-			Skill,
+			Tables["Skill"],
 			"groupMatchId" | "identifier" | "mu" | "season" | "sigma" | "userId"
 		>
 	> = [];

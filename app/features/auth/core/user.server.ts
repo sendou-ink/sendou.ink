@@ -1,5 +1,5 @@
 import { redirect } from "@remix-run/node";
-import type { User } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { SUSPENDED_PAGE } from "~/utils/urls";
@@ -9,7 +9,7 @@ import { authSessionStorage } from "./session.server";
 export async function getUserId(
 	request: Request,
 	redirectIfBanned = true,
-): Promise<Pick<User, "id"> | undefined> {
+): Promise<Pick<Tables["User"], "id"> | undefined> {
 	const session = await authSessionStorage.getSession(
 		request.headers.get("Cookie"),
 	);

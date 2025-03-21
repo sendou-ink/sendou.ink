@@ -14,7 +14,7 @@ import {
 	PLUS_TIERS,
 	PlUS_SUGGESTION_FIRST_COMMENT_MAX_LENGTH,
 } from "~/constants";
-import type { UserWithPlusTier } from "~/db/types";
+import type { UserWithPlusTier } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";

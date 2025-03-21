@@ -2,13 +2,7 @@
 
 import { nanoid } from "nanoid";
 import { sql } from "~/db/sql";
-import type { TournamentRoundMaps } from "~/db/tables";
-import type {
-	TournamentGroup,
-	TournamentMatch,
-	TournamentRound,
-	TournamentStage,
-} from "~/db/types";
+import type { Tables, TournamentRoundMaps } from "~/db/tables";
 import type {
 	Group as GroupType,
 	Match as MatchType,
@@ -54,20 +48,20 @@ const stage_updateSettingsStm = sql.prepare(/*sql*/ `
 `);
 
 export class Stage {
-	id?: TournamentStage["id"];
-	tournamentId: TournamentStage["tournamentId"];
-	number: TournamentStage["number"];
-	name: TournamentStage["name"];
+	id?: Tables["TournamentStage"]["id"];
+	tournamentId: Tables["TournamentStage"]["tournamentId"];
+	number: Tables["TournamentStage"]["number"];
+	name: Tables["TournamentStage"]["name"];
 	type: StageType["type"];
-	settings: TournamentStage["settings"];
+	settings: Tables["TournamentStage"]["settings"];
 
 	constructor(
-		id: TournamentStage["id"] | undefined,
-		tournamentId: TournamentStage["tournamentId"],
-		number: TournamentStage["number"],
-		name: TournamentStage["name"],
+		id: Tables["TournamentStage"]["id"] | undefined,
+		tournamentId: Tables["TournamentStage"]["tournamentId"],
+		number: Tables["TournamentStage"]["number"],
+		name: Tables["TournamentStage"]["name"],
 		type: StageType["type"],
-		settings: TournamentStage["settings"],
+		settings: Tables["TournamentStage"]["settings"],
 	) {
 		this.id = id;
 		this.tournamentId = tournamentId;
@@ -92,7 +86,7 @@ export class Stage {
 		return true;
 	}
 
-	static #convertStage(rawStage: TournamentStage): StageType {
+	static #convertStage(rawStage: Tables["TournamentStage"]): StageType {
 		return {
 			id: rawStage.id,
 			name: rawStage.name,
@@ -104,7 +98,7 @@ export class Stage {
 		};
 	}
 
-	static getById(id: TournamentStage["id"]): StageType {
+	static getById(id: Tables["TournamentStage"]["id"]): StageType {
 		const stage = stage_getByIdStm.get({ id }) as any;
 		if (!stage) return stage;
 		return Stage.#convertStage(stage);
@@ -117,8 +111,8 @@ export class Stage {
 	}
 
 	static updateSettings(
-		id: TournamentStage["id"],
-		settings: TournamentStage["settings"],
+		id: Tables["TournamentStage"]["id"],
+		settings: Tables["TournamentStage"]["settings"],
 	) {
 		stage_updateSettingsStm.run({ id, settings });
 
@@ -155,21 +149,21 @@ const group_insertStm = sql.prepare(/*sql*/ `
 `);
 
 export class Group {
-	id?: TournamentGroup["id"];
-	stageId: TournamentGroup["stageId"];
-	number: TournamentGroup["number"];
+	id?: Tables["TournamentGroup"]["id"];
+	stageId: Tables["TournamentGroup"]["stageId"];
+	number: Tables["TournamentGroup"]["number"];
 
 	constructor(
-		id: TournamentGroup["id"] | undefined,
-		stageId: TournamentGroup["stageId"],
-		number: TournamentGroup["number"],
+		id: Tables["TournamentGroup"]["id"] | undefined,
+		stageId: Tables["TournamentGroup"]["stageId"],
+		number: Tables["TournamentGroup"]["number"],
 	) {
 		this.id = id;
 		this.stageId = stageId;
 		this.number = number;
 	}
 
-	static #convertGroup(rawGroup: TournamentGroup): GroupType {
+	static #convertGroup(rawGroup: Tables["TournamentGroup"]): GroupType {
 		return {
 			id: rawGroup.id,
 			number: rawGroup.number,
@@ -177,21 +171,21 @@ export class Group {
 		};
 	}
 
-	static getById(id: TournamentGroup["id"]): GroupType {
+	static getById(id: Tables["TournamentGroup"]["id"]): GroupType {
 		const group = group_getByIdStm.get({ id }) as any;
 		if (!group) return group;
 		return Group.#convertGroup(group);
 	}
 
-	static getByStageId(stageId: TournamentStage["id"]): GroupType[] {
+	static getByStageId(stageId: Tables["TournamentStage"]["id"]): GroupType[] {
 		return (group_getByStageIdStm.all({ stageId }) as any[]).map(
 			Group.#convertGroup,
 		);
 	}
 
 	static getByStageAndNumber(
-		stageId: TournamentStage["id"],
-		number: TournamentGroup["number"],
+		stageId: Tables["TournamentStage"]["id"],
+		number: Tables["TournamentGroup"]["number"],
 	): GroupType {
 		const group = group_getByStageAndNumberStm.get({ stageId, number }) as any;
 		if (!group) return group;
@@ -245,17 +239,17 @@ const round_insertStm = sql.prepare(/*sql*/ `
 `);
 
 export class Round {
-	id?: TournamentRound["id"];
-	stageId: TournamentRound["stageId"];
-	groupId: TournamentRound["groupId"];
-	number: TournamentRound["number"];
+	id?: Tables["TournamentRound"]["id"];
+	stageId: Tables["TournamentRound"]["stageId"];
+	groupId: Tables["TournamentRound"]["groupId"];
+	number: Tables["TournamentRound"]["number"];
 	maps: Pick<TournamentRoundMaps, "count" | "type">;
 
 	constructor(
-		id: TournamentRound["id"] | undefined,
-		stageId: TournamentRound["stageId"],
-		groupId: TournamentRound["groupId"],
-		number: TournamentRound["number"],
+		id: Tables["TournamentRound"]["id"] | undefined,
+		stageId: Tables["TournamentRound"]["stageId"],
+		groupId: Tables["TournamentRound"]["groupId"],
+		number: Tables["TournamentRound"]["number"],
 		maps: Pick<TournamentRoundMaps, "count" | "type">,
 	) {
 		this.id = id;
@@ -278,7 +272,7 @@ export class Round {
 	}
 
 	static #convertRound(
-		rawRound: TournamentRound & { maps?: string | null },
+		rawRound: Tables["TournamentRound"] & { maps?: string | null },
 	): RoundType {
 		const parsedMaps = rawRound.maps ? JSON.parse(rawRound.maps) : null;
 
@@ -297,28 +291,28 @@ export class Round {
 		};
 	}
 
-	static getByStageId(stageId: TournamentStage["id"]): RoundType[] {
+	static getByStageId(stageId: Tables["TournamentStage"]["id"]): RoundType[] {
 		return (round_getByStageIdStm.all({ stageId }) as any[]).map(
 			Round.#convertRound,
 		);
 	}
 
-	static getByGroupId(groupId: TournamentGroup["id"]): RoundType[] {
+	static getByGroupId(groupId: Tables["TournamentGroup"]["id"]): RoundType[] {
 		return (round_getByGroupIdStm.all({ groupId }) as any[]).map(
 			Round.#convertRound,
 		);
 	}
 
 	static getByGroupAndNumber(
-		groupId: TournamentGroup["id"],
-		number: TournamentRound["number"],
+		groupId: Tables["TournamentGroup"]["id"],
+		number: Tables["TournamentRound"]["number"],
 	): RoundType {
 		const round = round_getByGroupAndNumberStm.get({ groupId, number }) as any;
 		if (!round) return round;
 		return Round.#convertRound(round);
 	}
 
-	static getById(id: TournamentRound["id"]): RoundType {
+	static getById(id: Tables["TournamentRound"]["id"]): RoundType {
 		const round = round_getByIdStm.get({ id }) as any;
 		if (!round) return round;
 		return Round.#convertRound(round);
@@ -380,27 +374,27 @@ const match_updateStm = sql.prepare(/*sql*/ `
 `);
 
 export class Match {
-	id?: TournamentMatch["id"];
-	roundId: TournamentMatch["roundId"];
-	stageId: TournamentMatch["stageId"];
-	groupId: TournamentMatch["groupId"];
-	number: TournamentMatch["number"];
-	opponentOne: TournamentMatch["opponentOne"];
-	opponentTwo: TournamentMatch["opponentTwo"];
-	status: TournamentMatch["status"];
+	id?: Tables["TournamentMatch"]["id"];
+	roundId: Tables["TournamentMatch"]["roundId"];
+	stageId: Tables["TournamentMatch"]["stageId"];
+	groupId: Tables["TournamentMatch"]["groupId"];
+	number: Tables["TournamentMatch"]["number"];
+	opponentOne: string;
+	opponentTwo: string;
+	status: Tables["TournamentMatch"]["status"];
 
 	constructor(
-		id: TournamentMatch["id"] | undefined,
-		status: TournamentMatch["status"],
-		stageId: TournamentMatch["stageId"],
-		groupId: TournamentMatch["groupId"],
-		roundId: TournamentMatch["roundId"],
-		number: TournamentMatch["number"],
+		id: Tables["TournamentMatch"]["id"] | undefined,
+		status: Tables["TournamentMatch"]["status"],
+		stageId: Tables["TournamentMatch"]["stageId"],
+		groupId: Tables["TournamentMatch"]["groupId"],
+		roundId: Tables["TournamentMatch"]["roundId"],
+		number: Tables["TournamentMatch"]["number"],
 		_unknown1: null,
 		_unknown2: null,
 		_unknown3: null,
-		opponentOne: TournamentMatch["opponentOne"],
-		opponentTwo: TournamentMatch["opponentTwo"],
+		opponentOne: string,
+		opponentTwo: string,
 	) {
 		this.id = id;
 		this.roundId = roundId;
@@ -413,7 +407,9 @@ export class Match {
 	}
 
 	static #convertMatch(
-		rawMatch: TournamentMatch & {
+		rawMatch: Tables["TournamentMatch"] & {
+			opponentOne: string;
+			opponentTwo: string;
 			opponentOnePointsTotal: number | null;
 			opponentTwoPointsTotal: number | null;
 			lastGameFinishedAt: number | null;
@@ -446,27 +442,27 @@ export class Match {
 		};
 	}
 
-	static getById(id: TournamentMatch["id"]): MatchType {
+	static getById(id: Tables["TournamentMatch"]["id"]): MatchType {
 		const match = match_getByIdStm.get({ id }) as any;
 		if (!match) return match;
 		return Match.#convertMatch(match);
 	}
 
-	static getByRoundId(roundId: TournamentRound["id"]): MatchType[] {
+	static getByRoundId(roundId: Tables["TournamentRound"]["id"]): MatchType[] {
 		return (match_getByRoundIdStm.all({ roundId }) as any[]).map(
 			Match.#convertMatch,
 		);
 	}
 
-	static getByStageId(stageId: TournamentStage["id"]): MatchType[] {
+	static getByStageId(stageId: Tables["TournamentStage"]["id"]): MatchType[] {
 		return (match_getByStageIdStm.all({ stageId }) as any[]).map(
 			Match.#convertMatch,
 		);
 	}
 
 	static getByRoundAndNumber(
-		roundId: TournamentRound["id"],
-		number: TournamentMatch["number"],
+		roundId: Tables["TournamentRound"]["id"],
+		number: Tables["TournamentMatch"]["number"],
 	): MatchType {
 		const match = match_getByRoundAndNumberStm.get({ roundId, number }) as any;
 		if (!match) return match;

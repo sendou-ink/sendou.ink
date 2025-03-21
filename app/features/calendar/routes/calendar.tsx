@@ -43,10 +43,6 @@ import {
 } from "~/utils/urls";
 import { actualNumber, safeSplit } from "~/utils/zod";
 import { Label } from "../../../components/Label";
-import type {
-	CalendarEventTag,
-	PersistedCalendarEventTag,
-} from "../../../db/types";
 import { metaTags } from "../../../utils/remix";
 import * as CalendarRepository from "../CalendarRepository.server";
 import { calendarEventTagSchema } from "../actions/calendar.new.server";
@@ -55,6 +51,7 @@ import { closeByWeeks } from "../calendar-utils";
 import { Tags } from "../components/Tags";
 import "~/styles/calendar.css";
 import { SendouSwitch } from "~/components/elements/Switch";
+import type { CalendarEventTag, PersistedCalendarEventTag } from "~/db/tables";
 
 export const meta: MetaFunction = (args) => {
 	const data = args.data as SerializeFrom<typeof loader> | null;

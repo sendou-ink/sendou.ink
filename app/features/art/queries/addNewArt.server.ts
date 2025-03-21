@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { Art, ArtTag, UserSubmittedImage } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import invariant from "~/utils/invariant";
 
 const addImgStm = sql.prepare(/* sql */ `
@@ -92,9 +92,9 @@ const removeUserMetadataStm = sql.prepare(/* sql */ `
     "artId" = @artId
 `);
 
-type TagsToAdd = Array<Partial<Pick<ArtTag, "name" | "id">>>;
-type AddNewArtArgs = Pick<Art, "authorId" | "description"> &
-	Pick<UserSubmittedImage, "url" | "validatedAt"> & {
+type TagsToAdd = Array<Partial<Pick<Tables["ArtTag"], "name" | "id">>>;
+type AddNewArtArgs = Pick<Tables["Art"], "authorId" | "description"> &
+	Pick<Tables["UserSubmittedImage"], "url" | "validatedAt"> & {
 		linkedUsers: number[];
 		tags: TagsToAdd;
 	};
@@ -104,12 +104,12 @@ export const addNewArt = sql.transaction((args: AddNewArtArgs) => {
 		authorId: args.authorId,
 		url: args.url,
 		validatedAt: args.validatedAt,
-	}) as UserSubmittedImage;
+	}) as Tables["UserSubmittedImage"];
 	const art = addArtStm.get({
 		authorId: args.authorId,
 		description: args.description,
 		imgId: img.id,
-	}) as Art;
+	}) as Tables["Art"];
 
 	for (const userId of args.linkedUsers) {
 		addArtUserMetadataStm.run({ artId: art.id, userId });
@@ -123,7 +123,7 @@ export const addNewArt = sql.transaction((args: AddNewArtArgs) => {
 			const newTag = addArtTagStm.get({
 				name: tag.name,
 				authorId: args.authorId,
-			}) as ArtTag;
+			}) as Tables["ArtTag"];
 			tagId = newTag.id;
 		}
 
@@ -133,7 +133,10 @@ export const addNewArt = sql.transaction((args: AddNewArtArgs) => {
 	return art.id;
 });
 
-type EditArtArgs = Pick<Art, "authorId" | "description" | "isShowcase"> & {
+type EditArtArgs = Pick<
+	Tables["Art"],
+	"authorId" | "description" | "isShowcase"
+> & {
 	linkedUsers: number[];
 	artId: number;
 	tags: TagsToAdd;
@@ -166,7 +169,7 @@ export const editArt = sql.transaction((args: EditArtArgs) => {
 			const newTag = addArtTagStm.get({
 				name: tag.name,
 				authorId: args.authorId,
-			}) as ArtTag;
+			}) as Tables["ArtTag"];
 			tagId = newTag.id;
 		}
 

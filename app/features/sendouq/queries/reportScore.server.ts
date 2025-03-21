@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { GroupMatch } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 
 const updateMatchStm = sql.prepare(/* sql */ `
@@ -35,7 +35,7 @@ export const reportScore = ({
 		reportedAt: dateToDatabaseTimestamp(new Date()),
 		reportedByUserId,
 		matchId,
-	}) as GroupMatch;
+	}) as Tables["GroupMatch"];
 
 	clearMatchMapWinnersStm.run({ matchId });
 

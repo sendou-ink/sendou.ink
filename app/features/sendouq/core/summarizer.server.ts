@@ -1,4 +1,4 @@
-import type { MapResult, PlayerResult } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { currentOrPreviousSeason } from "~/features/mmr/season";
 import invariant from "~/utils/invariant";
 import { winnersArrayToWinner } from "../q-utils";
@@ -16,7 +16,7 @@ export function summarizeMaps({
 	const season = currentOrPreviousSeason(new Date())?.nth;
 	invariant(typeof season === "number", "No ranked season for skills");
 
-	const result: Array<MapResult> = [];
+	const result: Array<Tables["MapResult"]> = [];
 
 	const playedMaps = match.mapList.slice(0, winners.length);
 
@@ -66,7 +66,7 @@ export function summarizePlayerResults({
 	const season = currentOrPreviousSeason(new Date())?.nth;
 	invariant(typeof season === "number", "No ranked season for skills");
 
-	const result: Array<PlayerResult> = [];
+	const result: Array<Tables["PlayerResult"]> = [];
 
 	const addMapResult = ({
 		outcome,

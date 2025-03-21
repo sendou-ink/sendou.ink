@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { MapResult } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const addMapResultDeltaStm = sql.prepare(/* sql */ `
   insert into "MapResult" (
@@ -25,7 +25,7 @@ const addMapResultDeltaStm = sql.prepare(/* sql */ `
 
 export function addMapResults(
 	results: Array<
-		Pick<MapResult, "losses" | "wins" | "userId" | "mode" | "stageId">
+		Pick<Tables["MapResult"], "losses" | "wins" | "userId" | "mode" | "stageId">
 	>,
 ) {
 	for (const result of results) {

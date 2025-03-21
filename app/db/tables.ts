@@ -6,6 +6,10 @@ import type {
 	SqlBool,
 	Updateable,
 } from "kysely";
+import type {
+	persistedTags,
+	tags,
+} from "~/features/calendar/calendar-constants";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
 import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
@@ -17,7 +21,6 @@ import type {
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists";
-import type { GroupSkillDifference, UserSkillDifference } from "./types";
 
 export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 	? ColumnType<S, I | undefined, U>
@@ -103,10 +106,12 @@ export interface Build {
 	updatedAt: Generated<number>;
 }
 
+export type GearType = "HEAD" | "CLOTHES" | "SHOES";
+
 export interface BuildAbility {
 	ability: Ability;
 	buildId: number;
-	gearType: string;
+	gearType: GearType;
 	slotIndex: number;
 }
 
@@ -120,6 +125,9 @@ export type CalendarEventAvatarMetadata = {
 	backgroundColor: string;
 	textColor: string;
 };
+
+export type PersistedCalendarEventTag = keyof typeof persistedTags;
+export type CalendarEventTag = keyof typeof tags;
 
 export interface CalendarEvent {
 	authorId: number;
@@ -188,6 +196,27 @@ export interface GroupLike {
 	targetGroupId: number;
 	isRechallenge: number | null;
 }
+
+type CalculatingSkill = {
+	calculated: false;
+	matchesCount: number;
+	matchesCountNeeded: number;
+	/** Freshly calculated skill */
+	newSp?: number;
+};
+export type UserSkillDifference =
+	| {
+			calculated: true;
+			spDiff: number;
+	  }
+	| CalculatingSkill;
+export type GroupSkillDifference =
+	| {
+			calculated: true;
+			oldSp: number;
+			newSp: number;
+	  }
+	| CalculatingSkill;
 
 export type ParsedMemento = {
 	users: Record<
@@ -359,7 +388,7 @@ export interface PlusVotingResult {
 export interface ReportedWeapon {
 	groupMatchMapId: number | null;
 	userId: number;
-	weaponSplId: number;
+	weaponSplId: MainWeaponId;
 }
 
 export interface Skill {
@@ -492,6 +521,23 @@ export interface TournamentGroup {
 	stageId: number;
 }
 
+export const TournamentMatchStatus = {
+	/** The two matches leading to this one are not completed yet. */
+	Locked: 0,
+
+	/** One participant is ready and waiting for the other one. */
+	Waiting: 1,
+
+	/** Both participants are ready to start. */
+	Ready: 2,
+
+	/** The match is running. */
+	Running: 3,
+
+	/** The match is completed. */
+	Completed: 4,
+};
+
 export interface TournamentMatch {
 	// TODO: remove
 	bestOf: Generated<3 | 5 | 7>;
@@ -503,7 +549,7 @@ export interface TournamentMatch {
 	opponentTwo: ColumnType<ParticipantResult, string, string>;
 	roundId: number;
 	stageId: number;
-	status: number;
+	status: (typeof TournamentMatchStatus)[keyof typeof TournamentMatchStatus];
 	// used only for swiss because it's the only stage type where matches are not created in advance
 	createdAt: Generated<number>;
 }
@@ -807,6 +853,11 @@ export interface User {
 	preferences: ColumnType<UserPreferences | null, string | null, string | null>;
 }
 
+/** Represents User joined with PlusTier table */
+export type UserWithPlusTier = Tables["User"] & {
+	plusTier: PlusTier["tier"] | null;
+};
+
 export interface UserResultHighlight {
 	teamId: number;
 	userId: number;
@@ -815,7 +866,7 @@ export interface UserResultHighlight {
 export interface UserSubmittedImage {
 	id: GeneratedAlways<number>;
 	submitterUserId: number | null;
-	url: string | null;
+	url: string;
 	validatedAt: number | null;
 }
 
@@ -837,12 +888,12 @@ export interface UserFriendCode {
 export interface Video {
 	eventId: number | null;
 	id: GeneratedAlways<number>;
-	submitterUserId: number | null;
-	title: string | null;
-	type: string | null;
+	submitterUserId: number;
+	title: string;
+	type: "SCRIM" | "TOURNAMENT" | "MATCHMAKING" | "CAST" | "SENDOUQ";
 	validatedAt: number | null;
-	youtubeDate: number | null;
-	youtubeId: string | null;
+	youtubeDate: number;
+	youtubeId: string;
 }
 
 export interface VideoMatch {
@@ -872,7 +923,7 @@ export interface XRankPlacement {
 	playerId: number;
 	power: number;
 	rank: number;
-	region: string;
+	region: "WEST" | "JPN";
 	title: string;
 	weaponSplId: MainWeaponId;
 	year: number;

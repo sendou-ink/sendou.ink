@@ -9,7 +9,6 @@ import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { MapPoolSelector, MapPoolStages } from "~/components/MapPoolSelector";
 import { EditIcon } from "~/components/icons/Edit";
-import type { CalendarEvent } from "~/db/types";
 import { getUserId } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { type ModeWithStage, stageIds } from "~/modules/in-game-lists";
@@ -27,6 +26,7 @@ import { mapPoolToNonEmptyModes } from "../core/map-list-generator/utils";
 import { MapPool } from "../core/map-pool";
 import "~/styles/maps.css";
 import { SendouSwitch } from "~/components/elements/Switch";
+import type { Tables } from "~/db/tables";
 import { metaTags } from "~/utils/remix";
 
 const AMOUNT_OF_MAPS_IN_MAP_LIST = stageIds.length * 2;
@@ -155,7 +155,7 @@ function useSearchParamPersistedMapPool() {
 
 	const handleMapPoolChange = (
 		newMapPool: MapPool,
-		event?: Pick<CalendarEvent, "id" | "name">,
+		event?: Pick<Tables["CalendarEvent"], "id" | "name">,
 	) => {
 		setMapPool(newMapPool);
 		setSearchParams(

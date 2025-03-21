@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { GroupMatch, GroupMatchMap, ParsedMemento } from "~/db/types";
+import type { ParsedMemento, Tables } from "~/db/tables";
 import { parseDBJsonArray } from "~/utils/sql";
 
 const stm = sql.prepare(/* sql */ `
@@ -30,17 +30,20 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export interface MatchById {
-	id: GroupMatch["id"];
-	alphaGroupId: GroupMatch["alphaGroupId"];
-	bravoGroupId: GroupMatch["bravoGroupId"];
-	createdAt: GroupMatch["createdAt"];
-	reportedAt: GroupMatch["reportedAt"];
-	reportedByUserId: GroupMatch["reportedByUserId"];
-	chatCode: GroupMatch["chatCode"];
+	id: Tables["GroupMatch"]["id"];
+	alphaGroupId: Tables["GroupMatch"]["alphaGroupId"];
+	bravoGroupId: Tables["GroupMatch"]["bravoGroupId"];
+	createdAt: Tables["GroupMatch"]["createdAt"];
+	reportedAt: Tables["GroupMatch"]["reportedAt"];
+	reportedByUserId: Tables["GroupMatch"]["reportedByUserId"];
+	chatCode: Tables["GroupMatch"]["chatCode"];
 	isLocked: boolean;
 	memento: ParsedMemento;
 	mapList: Array<
-		Pick<GroupMatchMap, "id" | "mode" | "stageId" | "source" | "winnerGroupId">
+		Pick<
+			Tables["GroupMatchMap"],
+			"id" | "mode" | "stageId" | "source" | "winnerGroupId"
+		>
 	>;
 }
 

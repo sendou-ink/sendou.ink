@@ -1,6 +1,6 @@
 import { ordinal } from "openskill";
 import { sql } from "~/db/sql";
-import type { ParsedMemento, Skill } from "~/db/types";
+import type { ParsedMemento, Tables } from "~/db/tables";
 import { identifierToUserIds } from "~/features/mmr/mmr-utils";
 import type { MementoSkillDifferences } from "../core/skills.server";
 
@@ -55,7 +55,7 @@ export function addSkills({
 }: {
 	groupMatchId: number;
 	skills: Pick<
-		Skill,
+		Tables["Skill"],
 		"groupMatchId" | "identifier" | "mu" | "season" | "sigma" | "userId"
 	>[];
 	oldMatchMemento: ParsedMemento;
@@ -66,7 +66,7 @@ export function addSkills({
 		const insertedSkill = stm.get({
 			...skill,
 			ordinal: ordinal(skill),
-		}) as Skill;
+		}) as Tables["Skill"];
 
 		if (insertedSkill.identifier) {
 			for (const userId of identifierToUserIds(insertedSkill.identifier)) {

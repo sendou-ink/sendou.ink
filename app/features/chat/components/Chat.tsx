@@ -4,7 +4,7 @@ import { nanoid } from "nanoid";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import ReconnectingWebSocket from "reconnecting-websocket";
-import type { User } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -17,7 +17,10 @@ import { useChatAutoScroll } from "../chat-hooks";
 import type { ChatMessage } from "../chat-types";
 import { messageTypeToSound, soundEnabled, soundVolume } from "../chat-utils";
 
-type ChatUser = Pick<User, "username" | "discordId" | "discordAvatar"> & {
+type ChatUser = Pick<
+	Tables["User"],
+	"username" | "discordId" | "discordAvatar"
+> & {
 	chatNameColor: string | null;
 	title?: string;
 };

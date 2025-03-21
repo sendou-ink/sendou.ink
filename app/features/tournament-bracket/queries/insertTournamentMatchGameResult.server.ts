@@ -1,6 +1,5 @@
 import { sql } from "~/db/sql";
 import type { Tables } from "~/db/tables";
-import type { TournamentMatchGameResult } from "~/db/types";
 
 const stm = sql.prepare(/* sql */ `
   insert into "TournamentMatchGameResult"
@@ -13,5 +12,5 @@ const stm = sql.prepare(/* sql */ `
 export function insertTournamentMatchGameResult(
 	args: Omit<Tables["TournamentMatchGameResult"], "id" | "createdAt">,
 ) {
-	return stm.get(args) as TournamentMatchGameResult;
+	return stm.get(args) as Tables["TournamentMatchGameResult"];
 }

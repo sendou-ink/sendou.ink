@@ -5,10 +5,10 @@ import { db, sql as dbDirect } from "~/db/sql";
 import type {
 	BuildSort,
 	DB,
+	Tables,
 	TablesInsertable,
 	UserPreferences,
 } from "~/db/tables";
-import type { User } from "~/db/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
@@ -744,7 +744,7 @@ export function updateBuildSorting({
 }
 
 export type UpdatePatronDataArgs = Array<
-	Pick<User, "discordId" | "patronTier" | "patronSince">
+	Pick<Tables["User"], "discordId" | "patronTier" | "patronSince">
 >;
 export function updatePatronData(users: UpdatePatronDataArgs) {
 	return db.transaction().execute(async (trx) => {
@@ -792,7 +792,7 @@ export const updateMany = dbDirect.transaction(
 	(
 		argsArr: Array<
 			Pick<
-				User,
+				Tables["User"],
 				"discordAvatar" | "discordName" | "discordUniqueName" | "discordId"
 			>
 		>,

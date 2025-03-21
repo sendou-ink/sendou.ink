@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { GroupMatchMap, ReportedWeapon } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/* sql */ `
   select
@@ -15,8 +15,8 @@ const stm = sql.prepare(/* sql */ `
 
 export function reportedWeaponsByMatchId(matchId: number) {
 	const rows = stm.all({ matchId }) as Array<
-		ReportedWeapon & {
-			mapIndex: GroupMatchMap["index"];
+		Tables["ReportedWeapon"] & {
+			mapIndex: Tables["GroupMatchMap"]["index"];
 			groupMatchMapId: number;
 		}
 	>;

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { PLUS_DOWNVOTE, PLUS_UPVOTE } from "~/constants";
-import type { User } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import type * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import invariant from "~/utils/invariant";
 import type { PlusVoteFromFE } from "./types";
@@ -13,7 +13,7 @@ interface VotingLocalStorageData {
 	year: number;
 	votes: PlusVoteFromFE[];
 	/** User id -> order for sorting */
-	usersForVotingOrder: Record<User["id"], number>;
+	usersForVotingOrder: Record<Tables["User"]["id"], number>;
 }
 
 export function usePlusVoting(

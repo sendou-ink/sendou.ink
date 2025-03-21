@@ -5,7 +5,6 @@ import type {
 } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
-import type { UserWithPlusTier } from "~/db/types";
 import { getUser } from "~/features/auth/core/user.server";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import { lastCompletedVoting } from "~/features/plus-voting/core";
@@ -15,6 +14,7 @@ import { PLUS_SERVER_DISCORD_URL, userPage } from "~/utils/urls";
 import { isAtLeastFiveDollarTierPatreon } from "~/utils/users";
 
 import "~/styles/plus-history.css";
+import type { UserWithPlusTier } from "~/db/tables";
 import { metaTags } from "~/utils/remix";
 
 export const meta: MetaFunction = (args) => {

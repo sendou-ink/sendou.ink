@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { ArtTag } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import type { ListedArt } from "../art-types";
 
 const showcaseArtsStm = sql.prepare(/* sql */ `
@@ -55,7 +55,7 @@ const showcaseArtsByTagStm = sql.prepare(/* sql */ `
 
 `);
 
-export function showcaseArtsByTag(tagId: ArtTag["id"]): ListedArt[] {
+export function showcaseArtsByTag(tagId: Tables["ArtTag"]["id"]): ListedArt[] {
 	const encounteredUserIds = new Set<number>();
 
 	return showcaseArtsByTagStm

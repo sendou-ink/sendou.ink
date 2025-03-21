@@ -36,7 +36,6 @@ import { DiscordIcon } from "~/components/icons/Discord";
 import { RefreshArrowsIcon } from "~/components/icons/RefreshArrows";
 import { ScaleIcon } from "~/components/icons/Scale";
 import { sql } from "~/db/sql";
-import type { GroupMember, ReportedWeapon } from "~/db/types";
 import { useUser } from "~/features/auth/core/user";
 import { getUserId, requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
@@ -113,6 +112,7 @@ import { reportedWeaponsByMatchId } from "../queries/reportedWeaponsByMatchId.se
 import { setGroupAsInactive } from "../queries/setGroupAsInactive.server";
 import "../q.css";
 import { SendouSwitch } from "~/components/elements/Switch";
+import type { ReportedWeapon, Tables } from "~/db/tables";
 import { metaTags } from "~/utils/remix";
 
 export const meta: MetaFunction = (args) => {
@@ -751,7 +751,7 @@ function AfterMatchActions({
 	setShowWeaponsForm,
 }: {
 	ownGroupId: number;
-	role: GroupMember["role"];
+	role: Tables["GroupMember"]["role"];
 	reportedAt: number;
 	showWeaponsForm: boolean;
 	setShowWeaponsForm: (show: boolean) => void;

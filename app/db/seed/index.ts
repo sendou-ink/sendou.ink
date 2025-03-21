@@ -71,7 +71,6 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { mySlugify } from "~/utils/urls";
 import type { Tables, UserMapModePreferences } from "../tables";
-import type { Art, UserSubmittedImage } from "../types";
 import {
 	ADMIN_TEST_AVATAR,
 	AMOUNT_OF_CALENDAR_EVENTS,
@@ -1950,12 +1949,12 @@ function arts() {
 						validatedAt: dateToDatabaseTimestamp(new Date()),
 						url: getUrl(),
 						submitterUserId: userId,
-					}) as UserSubmittedImage
+					}) as Tables["UserSubmittedImage"]
 				).id,
 				authorId: userId,
 				isShowcase: i === 0 ? 1 : 0,
 				description: Math.random() > 0.5 ? faker.lorem.paragraph() : null,
-			}) as Art;
+			}) as Tables["Art"];
 
 			if (i === 1) {
 				for (
@@ -2204,7 +2203,7 @@ async function playedMatches() {
 				skills: newSkills,
 				differences,
 				groupMatchId: match.id,
-				oldMatchMemento: { users: {}, groups: {} },
+				oldMatchMemento: { users: {}, groups: {}, pools: [] },
 			});
 			setGroupAsInactive(groupAlpha);
 			setGroupAsInactive(groupBravo);

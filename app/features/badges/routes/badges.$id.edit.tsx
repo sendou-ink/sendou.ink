@@ -8,7 +8,7 @@ import { Dialog } from "~/components/Dialog";
 import { Label } from "~/components/Label";
 import { UserSearch } from "~/components/UserSearch";
 import { TrashIcon } from "~/components/icons/Trash";
-import type { User } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { requireUserId } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
@@ -321,7 +321,7 @@ function getOwnerDifferences(
 	oldOwners: BadgeRepository.FindOwnersByBadgeIdItem[],
 ) {
 	const result: Array<{
-		id: User["id"];
+		id: Tables["User"]["id"];
 		type: "added" | "removed";
 		difference: number;
 		username: string;
@@ -353,7 +353,7 @@ function getOwnerDifferences(
 }
 
 function countArrayToDuplicatedIdsArray(
-	owners: Array<{ id: User["id"]; count: number }>,
+	owners: Array<{ id: Tables["User"]["id"]; count: number }>,
 ) {
 	return owners.flatMap((o) => new Array(o.count).fill(null).map(() => o.id));
 }

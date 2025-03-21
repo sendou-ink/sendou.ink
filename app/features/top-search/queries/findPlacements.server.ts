@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { User, XRankPlacement } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const query = (byPlayer?: boolean) => /* sql */ `
   select
@@ -48,7 +48,7 @@ const ofMonthStm = sql.prepare(query());
 const byPlayerStm = sql.prepare(query(true));
 
 export type FindPlacement = Pick<
-	XRankPlacement,
+	Tables["XRankPlacement"],
 	| "id"
 	| "weaponSplId"
 	| "name"
@@ -60,15 +60,17 @@ export type FindPlacement = Pick<
 	| "playerId"
 	| "mode"
 > &
-	Pick<User, "customUrl" | "discordId">;
+	Pick<Tables["User"], "customUrl" | "discordId">;
 
 export function findPlacementsOfMonth(
-	args: Pick<XRankPlacement, "mode" | "region" | "month" | "year">,
+	args: Pick<Tables["XRankPlacement"], "mode" | "region" | "month" | "year">,
 ) {
 	return ofMonthStm.all(args) as Array<FindPlacement>;
 }
 
-export function findPlacementsByPlayerId(playerId: XRankPlacement["playerId"]) {
+export function findPlacementsByPlayerId(
+	playerId: Tables["XRankPlacement"]["playerId"],
+) {
 	const results = byPlayerStm.all({ playerId }) as Array<FindPlacement>;
 	if (!results) return null;
 

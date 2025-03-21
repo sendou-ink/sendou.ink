@@ -15,7 +15,7 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { RelativeTime } from "~/components/RelativeTime";
 import { TrashIcon } from "~/components/icons/Trash";
 import { PLUS_TIERS } from "~/constants";
-import type { PlusSuggestion, User } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
@@ -366,7 +366,7 @@ export function PlusSuggestionComments({
 }: {
 	suggestion: PlusSuggestionRepository.FindAllByMonthItem;
 	deleteButtonArgs?: {
-		user?: Pick<User, "id" | "discordId">;
+		user?: Pick<Tables["User"], "id" | "discordId">;
 		suggestions: PlusSuggestionRepository.FindAllByMonthItem[];
 		tier: string;
 		suggested: PlusSuggestionRepository.FindAllByMonthItem["suggested"];
@@ -425,7 +425,7 @@ function CommentDeleteButton({
 	suggestedUsername,
 	isFirstSuggestion = false,
 }: {
-	suggestionId: PlusSuggestion["id"];
+	suggestionId: Tables["PlusSuggestion"]["id"];
 	tier: string;
 	suggestedUsername: string;
 	isFirstSuggestion?: boolean;

@@ -21,7 +21,6 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { UserIcon } from "~/components/icons/User";
 import { UsersIcon } from "~/components/icons/Users";
 import { sql } from "~/db/sql";
-import type { GroupMember } from "~/db/types";
 import { useUser } from "~/features/auth/core/user";
 import { getUserId, requireUser } from "~/features/auth/core/user.server";
 import type { RankingSeason } from "~/features/mmr/season";
@@ -67,6 +66,7 @@ import { deleteLikesByGroupId } from "../queries/deleteLikesByGroupId.server";
 import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
 import { findGroupByInviteCode } from "../queries/findGroupByInviteCode.server";
 import "../q.css";
+import type { Tables } from "~/db/tables";
 import { metaTags } from "~/utils/remix";
 
 export const handle: SendouRouteHandle = {
@@ -402,7 +402,7 @@ function JoinTeamDialog({
 	close: () => void;
 	members: {
 		username: string;
-		role: GroupMember["role"];
+		role: Tables["GroupMember"]["role"];
 	}[];
 }) {
 	const { t } = useTranslation(["q"]);

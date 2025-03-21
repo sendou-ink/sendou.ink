@@ -1,5 +1,4 @@
 import type { Tables } from "~/db/tables";
-import type { Group } from "~/db/types";
 import { TIERS } from "~/features/mmr/mmr-constants";
 import { defaultOrdinal } from "~/features/mmr/mmr-utils";
 import type {
@@ -467,7 +466,7 @@ function resolveGroupSkill({
 }
 
 export function groupExpiryStatus(
-	group?: Pick<Group, "latestActionAt">,
+	group?: Pick<Tables["Group"], "latestActionAt">,
 ): null | GroupExpiryStatus {
 	if (!group) return null;
 

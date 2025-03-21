@@ -21,7 +21,7 @@ import { Main } from "~/components/Main";
 import { UserSearch } from "~/components/UserSearch";
 import { AddFieldButton } from "~/components/form/AddFieldButton";
 import { RemoveFieldButton } from "~/components/form/RemoveFieldButton";
-import type { Video } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import {
 	type MainWeaponId,
@@ -62,7 +62,7 @@ export const action: ActionFunction = async ({ request }) => {
 		throw new Response(null, { status: 401 });
 	}
 
-	let video: Video;
+	let video: Tables["Video"];
 	if (data.vodToEditId) {
 		const vod = notFoundIfFalsy(findVodById(data.vodToEditId));
 
@@ -301,7 +301,9 @@ function PovFormField() {
 	);
 }
 
-function MatchesFormfield({ videoType }: { videoType: Video["type"] }) {
+function MatchesFormfield({
+	videoType,
+}: { videoType: Tables["Video"]["type"] }) {
 	const {
 		formState: { errors },
 	} = useFormContext<VodFormFields>();
@@ -347,7 +349,7 @@ function MatchesFieldset({
 	idx: number;
 	remove: (idx: number) => void;
 	canRemove: boolean;
-	videoType: Video["type"];
+	videoType: Tables["Video"]["type"];
 }) {
 	const id = React.useId();
 	const { t } = useTranslation(["vods", "game-misc"]);

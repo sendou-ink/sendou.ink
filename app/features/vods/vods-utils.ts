@@ -1,4 +1,4 @@
-import type { User } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { isAdmin } from "~/permissions";
 import { databaseTimestampToDate } from "../../utils/dates";
 import { HOURS_MINUTES_SECONDS_REGEX } from "./vods-schemas";
@@ -41,9 +41,9 @@ export function canEditVideo({
 	submitterUserId,
 	povUserId,
 }: {
-	userId?: User["id"];
-	submitterUserId: User["id"];
-	povUserId?: User["id"];
+	userId?: Tables["User"]["id"];
+	submitterUserId: Tables["User"]["id"];
+	povUserId?: Tables["User"]["id"];
 }) {
 	if (!userId) return false;
 

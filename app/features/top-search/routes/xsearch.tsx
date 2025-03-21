@@ -3,7 +3,6 @@ import { useLoaderData, useSearchParams } from "@remix-run/react";
 import { nanoid } from "nanoid";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
-import type { XRankPlacement } from "~/db/types";
 import type { RankedModeShort } from "~/modules/in-game-lists";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import invariant from "~/utils/invariant";
@@ -16,6 +15,7 @@ import { monthYears } from "../queries/monthYears";
 import type { MonthYear } from "../top-search-utils";
 
 import "../top-search.css";
+import type { Tables } from "~/db/tables";
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: () => ({
@@ -152,7 +152,7 @@ export default function XSearchPage() {
 
 interface SelectOption {
 	id: string;
-	region: XRankPlacement["region"];
+	region: Tables["XRankPlacement"]["region"];
 	mode: RankedModeShort;
 	span: {
 		from: MonthYear;

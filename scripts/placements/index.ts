@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 import { sql } from "~/db/sql";
-import type { XRankPlacement } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { syncXPBadges } from "~/features/badges/queries/syncXPBadges.server";
 import { type MainWeaponId, mainWeaponIds } from "~/modules/in-game-lists";
 import invariant from "~/utils/invariant";
@@ -17,7 +17,7 @@ invariant(
 );
 
 type Placements = Array<
-	Omit<XRankPlacement, "playerId" | "id"> & { playerSplId: string }
+	Omit<Tables["XRankPlacement"], "playerId" | "id"> & { playerSplId: string }
 >;
 
 const modes = ["splatzones", "towercontrol", "rainmaker", "clamblitz"] as const;

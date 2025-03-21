@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { UserSubmittedImage } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/* sql */ `
   select
@@ -20,7 +20,7 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 type UnvalidatedImage = Pick<
-	UserSubmittedImage,
+	Tables["UserSubmittedImage"],
 	"id" | "url" | "submitterUserId"
 >;
 

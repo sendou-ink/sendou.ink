@@ -1,21 +1,21 @@
-import type { Art, User, UserSubmittedImage } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 export interface ListedArt {
-	id: Art["id"];
-	createdAt: Art["createdAt"];
-	url: UserSubmittedImage["url"];
-	description?: Art["description"];
+	id: Tables["Art"]["id"];
+	createdAt: Tables["Art"]["createdAt"];
+	url: Tables["UserSubmittedImage"]["url"];
+	description?: Tables["Art"]["description"];
 	tags?: string[];
 	linkedUsers?: Array<{
-		discordId: User["discordId"];
-		username: User["username"];
-		customUrl: User["customUrl"];
+		discordId: Tables["User"]["discordId"];
+		username: Tables["User"]["username"];
+		customUrl: Tables["User"]["customUrl"];
 	}>;
 	author?: {
-		discordId: User["discordId"];
-		username: User["username"];
-		discordAvatar: User["discordAvatar"];
-		commissionsOpen?: User["commissionsOpen"];
+		discordId: Tables["User"]["discordId"];
+		username: Tables["User"]["username"];
+		discordAvatar: Tables["User"]["discordAvatar"];
+		commissionsOpen?: Tables["User"]["commissionsOpen"];
 	};
 }
 

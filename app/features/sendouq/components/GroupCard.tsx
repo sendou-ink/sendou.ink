@@ -18,7 +18,7 @@ import { SpeakerXIcon } from "~/components/icons/SpeakerX";
 import { StarIcon } from "~/components/icons/Star";
 import { StarFilledIcon } from "~/components/icons/StarFilled";
 import { TrashIcon } from "~/components/icons/Trash";
-import type { GroupMember as GroupMemberType, ParsedMemento } from "~/db/types";
+import type { ParsedMemento, Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { ordinalToRoundedSp } from "~/features/mmr/mmr-utils";
@@ -55,7 +55,7 @@ export function GroupCard({
 }: {
 	group: Omit<LookingGroup, "createdAt" | "chatCode">;
 	action?: "LIKE" | "UNLIKE" | "GROUP_UP" | "MATCH_UP" | "MATCH_UP_RECHALLENGE";
-	ownRole?: GroupMemberType["role"] | "PREVIEWER";
+	ownRole?: Tables["GroupMember"]["role"] | "PREVIEWER";
 	ownGroup?: boolean;
 	isExpired?: boolean;
 	displayOnly?: boolean;
