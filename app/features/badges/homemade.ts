@@ -20,6 +20,16 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "789943264370884708",
 	},
 	{
+		displayName: "Shifting Tides",
+		fileName: "shiftingtides",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Gamers Outreach Charity Tournament",
+		fileName: "alicehand3",
+		authorDiscordId: "528851510222782474",
+	},
+	{
 		displayName: "Zippy's Birthday Bash!",
 		fileName: "decavzippy",
 		authorDiscordId: "338806780446638082",
