@@ -1,7 +1,9 @@
 import type { ActionFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { sql } from "~/db/sql";
+import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
+import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import { currentSeason } from "~/features/mmr/season";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import { giveTrust } from "~/features/tournament/queries/giveTrust.server";
@@ -9,7 +11,11 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { SENDOUQ_LOOKING_PAGE, SENDOUQ_PREPARING_PAGE } from "~/utils/urls";
+import {
+	SENDOUQ_LOOKING_PAGE,
+	SENDOUQ_PREPARING_PAGE,
+	SUSPENDED_PAGE,
+} from "~/utils/urls";
 import { FULL_GROUP_SIZE, JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
 import { frontPageSchema } from "../q-schemas.server";
 import { userCanJoinQueueAt } from "../q-utils";
@@ -88,11 +94,28 @@ export const action: ActionFunction = async ({ request }) => {
 				"Friend code already set",
 			);
 
+			const isTakenFriendCode = (
+				await UserRepository.allCurrentFriendCodes()
+			).has(data.friendCode);
+
 			await UserRepository.insertFriendCode({
 				userId: user.id,
 				friendCode: data.friendCode,
 				submitterUserId: user.id,
 			});
+
+			if (isTakenFriendCode) {
+				await AdminRepository.banUser({
+					userId: user.id,
+					banned: 1,
+					bannedReason:
+						"[automatic ban] This friend code is already in use by some other account. Please contact staff on our Discord helpdesk for resolution including merging accounts.",
+				});
+
+				refreshBannedCache();
+
+				throw redirect(SUSPENDED_PAGE);
+			}
 
 			return null;
 		}
