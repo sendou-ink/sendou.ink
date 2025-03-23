@@ -66,6 +66,10 @@ const TRANSLATORS: Array<{
 		language: "he",
 	},
 	{
+		translators: ["Mar.io"],
+		language: "it",
+	},
+	{
 		translators: ["funyaaa", "taqm", "yutarour"],
 		language: "ja",
 	},
