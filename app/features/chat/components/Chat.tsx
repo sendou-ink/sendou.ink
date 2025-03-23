@@ -1,5 +1,6 @@
 import { useRevalidator } from "@remix-run/react";
 import clsx from "clsx";
+import { sub } from "date-fns";
 import { nanoid } from "nanoid";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -256,9 +257,7 @@ function Message({
 						</div>
 					) : null}
 					{!message.pending ? (
-						<time className="chat__message__time">
-							{new Date(message.timestamp).toLocaleTimeString()}
-						</time>
+						<MessageTimestamp timestamp={message.timestamp} />
 					) : null}
 				</div>
 				<div
@@ -284,15 +283,31 @@ function SystemMessage({
 		<li className="chat__message">
 			<div>
 				<div className="stack horizontal sm">
-					<time className="chat__message__time">
-						{new Date(message.timestamp).toLocaleTimeString()}
-					</time>
+					<MessageTimestamp timestamp={message.timestamp} />
 				</div>
 				<div className="chat__message__contents text-xs text-lighter font-semi-bold">
 					{text}
 				</div>
 			</div>
 		</li>
+	);
+}
+
+function MessageTimestamp({ timestamp }: { timestamp: number }) {
+	const { i18n } = useTranslation();
+	const moreThanDayAgo = sub(new Date(), { days: 1 }) > new Date(timestamp);
+
+	return (
+		<time className="chat__message__time">
+			{moreThanDayAgo
+				? new Date(timestamp).toLocaleString(i18n.language, {
+						day: "numeric",
+						month: "numeric",
+						hour: "numeric",
+						minute: "numeric",
+					})
+				: new Date(timestamp).toLocaleTimeString(i18n.language)}
+		</time>
 	);
 }
 
