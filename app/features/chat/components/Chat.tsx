@@ -68,7 +68,7 @@ export function Chat({
 		messages,
 		currentRoom,
 		setCurrentRoom,
-		connected,
+		readyState,
 		unseenMessages,
 	} = chat;
 
@@ -98,7 +98,7 @@ export function Chat({
 		};
 	}, [onMount, onUnmount]);
 
-	const sendingMessagesDisabled = disabled || !connected;
+	const sendingMessagesDisabled = disabled || readyState !== "CONNECTED";
 
 	const systemMessageText = (msg: ChatMessage) => {
 		const name = () => {
@@ -202,11 +202,13 @@ export function Chat({
 						maxLength={MESSAGE_MAX_LENGTH}
 					/>{" "}
 					<div className="chat__bottom-row">
-						{typeof connected !== "boolean" ? (
-							<div />
-						) : connected ? (
+						{readyState === "CONNECTED" || readyState === "CONNECTING" ? (
 							<div className="text-xxs font-semi-bold text-lighter">
-								{t("common:chat.connected")}
+								{t(
+									readyState === "CONNECTED"
+										? "common:chat.connected"
+										: "common:chat.connecting",
+								)}
 							</div>
 						) : (
 							<div className="text-xxs font-semi-bold text-warning">
@@ -326,7 +328,9 @@ export function useChat({
 	const user = useUser();
 
 	const [messages, setMessages] = React.useState<ChatMessage[]>([]);
-	const [connected, setConnected] = React.useState<null | boolean>(null);
+	const [readyState, setReadyState] = React.useState<
+		"CONNECTING" | "CONNECTED" | "CLOSED"
+	>("CONNECTING");
 	const [sentMessage, setSentMessage] = React.useState<ChatMessage>();
 	const [currentRoom, setCurrentRoom] = React.useState<string | undefined>(
 		rooms[0]?.code,
@@ -356,9 +360,10 @@ export function useChat({
 		});
 		ws.current.onopen = () => {
 			setCurrentRoom(rooms[0].code);
-			setConnected(true);
+			setReadyState("CONNECTED");
 		};
-		ws.current.onclose = () => setConnected(false);
+		ws.current.onclose = () => setReadyState("CLOSED");
+		ws.current.onerror = () => setReadyState("CLOSED");
 
 		ws.current.onmessage = (e) => {
 			const message = JSON.parse(e.data);
@@ -463,7 +468,7 @@ export function useChat({
 		send,
 		currentRoom,
 		setCurrentRoom,
-		connected,
+		readyState,
 		unseenMessages,
 	};
 }
