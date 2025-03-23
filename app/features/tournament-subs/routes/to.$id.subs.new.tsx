@@ -1,8 +1,3 @@
-import {
-	type ActionFunction,
-	type LoaderFunctionArgs,
-	redirect,
-} from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import React from "react";
 import { useTranslation } from "react-i18next";
@@ -15,80 +10,18 @@ import { RequiredHiddenInput } from "~/components/RequiredHiddenInput";
 import { SubmitButton } from "~/components/SubmitButton";
 import { TrashIcon } from "~/components/icons/Trash";
 import { useUser } from "~/features/auth/core/user";
-import { requireUser } from "~/features/auth/core/user.server";
-import { tournamentIdFromParams } from "~/features/tournament";
-import {
-	clearTournamentDataCache,
-	tournamentFromDB,
-} from "~/features/tournament-bracket/core/Tournament.server";
 import type { MainWeaponId } from "~/modules/in-game-lists";
-import {
-	type SendouRouteHandle,
-	errorToastIfFalsy,
-	parseRequestPayload,
-} from "~/utils/remix.server";
-import { tournamentSubsPage } from "~/utils/urls";
-import { findSubsByTournamentId } from "../queries/findSubsByTournamentId.server";
-import { upsertSub } from "../queries/upsertSub.server";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import { TOURNAMENT_SUB } from "../tournament-subs-constants";
-import { subSchema } from "../tournament-subs-schemas.server";
+
+import { action } from "../actions/to.$id.subs.new.server";
+import { loader } from "../loaders/to.$id.subs.new.server";
+export { action, loader };
 
 import "../tournament-subs.css";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["user"],
-};
-
-export const action: ActionFunction = async ({ params, request }) => {
-	const user = await requireUser(request);
-	const data = await parseRequestPayload({
-		request,
-		schema: subSchema,
-	});
-	const tournamentId = tournamentIdFromParams(params);
-	const tournament = await tournamentFromDB({ tournamentId, user });
-
-	errorToastIfFalsy(!tournament.everyBracketOver, "Tournament is over");
-	errorToastIfFalsy(
-		tournament.canAddNewSubPost,
-		"Registration is closed or subs feature disabled",
-	);
-	errorToastIfFalsy(
-		!tournament.teamMemberOfByUser(user),
-		"Can't register as a sub and be in a team at the same time",
-	);
-
-	upsertSub({
-		bestWeapons: data.bestWeapons.join(","),
-		okWeapons: data.okWeapons.join(","),
-		canVc: data.canVc,
-		visibility: data.visibility,
-		message: data.message ?? null,
-		tournamentId,
-		userId: user.id,
-	});
-
-	clearTournamentDataCache(tournamentId);
-
-	throw redirect(tournamentSubsPage(tournamentId));
-};
-
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const user = await requireUser(request);
-	const tournamentId = tournamentIdFromParams(params);
-	const tournament = await tournamentFromDB({ tournamentId, user });
-
-	if (!tournament.canAddNewSubPost) {
-		throw redirect(tournamentSubsPage(tournamentId));
-	}
-
-	const sub = findSubsByTournamentId({ tournamentId }).find(
-		(sub) => sub.userId === user.id,
-	);
-
-	return {
-		sub,
-	};
 };
 
 export default function NewTournamentSubPage() {

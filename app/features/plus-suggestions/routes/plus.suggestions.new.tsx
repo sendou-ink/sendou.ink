@@ -1,8 +1,5 @@
-import type { ActionFunction } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
 import { Form, useMatches } from "@remix-run/react";
 import * as React from "react";
-import { z } from "zod";
 import { LinkButton } from "~/components/Button";
 import { Dialog } from "~/components/Dialog";
 import { FormMessage } from "~/components/FormMessage";
@@ -16,93 +13,17 @@ import {
 } from "~/constants";
 import type { UserWithPlusTier } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
-import { requireUser } from "~/features/auth/core/user.server";
-import { notify } from "~/features/notifications/core/notify.server";
-import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import {
-	nextNonCompletedVoting,
-	rangeToMonthYear,
-} from "~/features/plus-voting/core";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
-import {
-	canSuggestNewUserBE,
 	canSuggestNewUserFE,
 	playerAlreadyMember,
 	playerAlreadySuggested,
 } from "~/permissions";
 import { atOrError } from "~/utils/arrays";
-import {
-	badRequestIfFalsy,
-	errorToastIfFalsy,
-	parseRequestPayload,
-} from "~/utils/remix.server";
 import { plusSuggestionPage } from "~/utils/urls";
-import { actualNumber, trimmedString } from "~/utils/zod";
 import type { PlusSuggestionsLoaderData } from "./plus.suggestions";
 
-const commentActionSchema = z.object({
-	tier: z.preprocess(
-		actualNumber,
-		z
-			.number()
-			.min(Math.min(...PLUS_TIERS))
-			.max(Math.max(...PLUS_TIERS)),
-	),
-	comment: z.preprocess(
-		trimmedString,
-		z.string().min(1).max(PlUS_SUGGESTION_FIRST_COMMENT_MAX_LENGTH),
-	),
-	userId: z.preprocess(actualNumber, z.number().positive()),
-});
-
-export const action: ActionFunction = async ({ request }) => {
-	const data = await parseRequestPayload({
-		request,
-		schema: commentActionSchema,
-	});
-
-	const suggested = badRequestIfFalsy(
-		await UserRepository.findLeanById(data.userId),
-	);
-
-	const user = await requireUser(request);
-
-	const votingMonthYear = rangeToMonthYear(
-		badRequestIfFalsy(nextNonCompletedVoting(new Date())),
-	);
-	const suggestions =
-		await PlusSuggestionRepository.findAllByMonth(votingMonthYear);
-
-	errorToastIfFalsy(
-		canSuggestNewUserBE({
-			user,
-			suggested,
-			targetPlusTier: data.tier,
-			suggestions,
-		}),
-		"No permissions to make this suggestion",
-	);
-
-	await PlusSuggestionRepository.create({
-		authorId: user.id,
-		suggestedId: suggested.id,
-		tier: data.tier,
-		text: data.comment,
-		...votingMonthYear,
-	});
-
-	notify({
-		userIds: [suggested.id],
-		notification: {
-			type: "PLUS_SUGGESTION_ADDED",
-			meta: {
-				tier: data.tier,
-			},
-		},
-	});
-
-	throw redirect(plusSuggestionPage({ tier: data.tier }));
-};
+import { action } from "../actions/plus.suggestions.new.server";
+export { action };
 
 export default function PlusNewSuggestionModalPage() {
 	const user = useUser();

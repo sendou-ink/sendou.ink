@@ -1,8 +1,3 @@
-import {
-	type ActionFunction,
-	type LoaderFunctionArgs,
-	redirect,
-} from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import {
@@ -12,7 +7,7 @@ import {
 	useFormContext,
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
+import type { z } from "zod";
 import { Button } from "~/components/Button";
 import { WeaponCombobox } from "~/components/Combobox";
 import { FormMessage } from "~/components/FormMessage";
@@ -22,108 +17,27 @@ import { UserSearch } from "~/components/UserSearch";
 import { AddFieldButton } from "~/components/form/AddFieldButton";
 import { RemoveFieldButton } from "~/components/form/RemoveFieldButton";
 import type { Tables } from "~/db/tables";
-import { requireUser } from "~/features/auth/core/user.server";
 import {
 	type MainWeaponId,
 	modesShort,
 	stageIds,
 } from "~/modules/in-game-lists";
-import {
-	type SendouRouteHandle,
-	notFoundIfFalsy,
-	parseRequestPayload,
-} from "~/utils/remix.server";
-import { vodVideoPage } from "~/utils/urls";
-import { actualNumber, id } from "~/utils/zod";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Alert } from "../../../components/Alert";
 import { DateFormField } from "../../../components/form/DateFormField";
 import { MyForm } from "../../../components/form/MyForm";
 import { SelectFormField } from "../../../components/form/SelectFormField";
 import { TextFormField } from "../../../components/form/TextFormField";
 import { useUser } from "../../auth/core/user";
-import { createVod, updateVodByReplacing } from "../queries/createVod.server";
-import { findVodById } from "../queries/findVodById.server";
 import { videoMatchTypes } from "../vods-constants";
 import { videoInputSchema } from "../vods-schemas";
-import { canAddVideo, canEditVideo, vodToVideoBeingAdded } from "../vods-utils";
+
+import { action } from "../actions/vods.new.server";
+import { loader } from "../loaders/vods.new.server";
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["vods", "calendar"],
-};
-
-export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser(request);
-	const data = await parseRequestPayload({
-		request,
-		schema: videoInputSchema,
-	});
-
-	if (!canAddVideo(user)) {
-		throw new Response(null, { status: 401 });
-	}
-
-	let video: Tables["Video"];
-	if (data.vodToEditId) {
-		const vod = notFoundIfFalsy(findVodById(data.vodToEditId));
-
-		if (
-			!canEditVideo({
-				userId: user.id,
-				submitterUserId: vod.submitterUserId,
-				povUserId: typeof vod.pov === "string" ? undefined : vod.pov?.id,
-			})
-		) {
-			throw new Response("no permissions to edit this vod", { status: 401 });
-		}
-
-		video = updateVodByReplacing({
-			...data.video,
-			submitterUserId: user.id,
-			isValidated: true,
-			id: data.vodToEditId,
-		});
-	} else {
-		video = createVod({
-			...data.video,
-			submitterUserId: user.id,
-			isValidated: true,
-		});
-	}
-
-	throw redirect(vodVideoPage(video.id));
-};
-
-const newVodLoaderParamsSchema = z.object({
-	vod: z.preprocess(actualNumber, id),
-});
-
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await requireUser(request);
-
-	const url = new URL(request.url);
-	const params = newVodLoaderParamsSchema.safeParse(
-		Object.fromEntries(url.searchParams),
-	);
-
-	if (!params.success) {
-		return { vodToEdit: null };
-	}
-
-	const vod = notFoundIfFalsy(findVodById(params.data.vod));
-	const vodToEdit = vodToVideoBeingAdded(vod);
-
-	if (
-		!canEditVideo({
-			submitterUserId: vod.submitterUserId,
-			userId: user.id,
-			povUserId:
-				vodToEdit.pov?.type === "USER" ? vodToEdit.pov.userId : undefined,
-		})
-	) {
-		return { vodToEdit: null };
-	}
-
-	return { vodToEdit: { ...vodToEdit, id: vod.id } };
 };
 
 export type VodFormFields = z.infer<typeof videoInputSchema>;

@@ -1,14 +1,8 @@
-import { redirect } from "@remix-run/node";
-import type {
-	ActionFunction,
-	LoaderFunctionArgs,
-	SerializeFrom,
-} from "@remix-run/node";
+import type { SerializeFrom } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
 import { Button } from "~/components/Button";
 import { FormErrors } from "~/components/FormErrors";
 import { FormMessage } from "~/components/FormMessage";
@@ -16,151 +10,15 @@ import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { UserSearch } from "~/components/UserSearch";
 import { CALENDAR_EVENT_RESULT } from "~/constants";
-import { requireUserId } from "~/features/auth/core/user.server";
-import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
-import { canReportCalendarEventWinners } from "~/permissions";
-import {
-	type SendouRouteHandle,
-	errorToastIfFalsy,
-	notFoundIfFalsy,
-	safeParseRequestFormData,
-	unauthorizedIfFalsy,
-} from "~/utils/remix.server";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
-import { calendarEventPage } from "~/utils/urls";
-import { actualNumber, id, safeJSONParse, toArray } from "~/utils/zod";
 
-const playersSchema = z
-	.array(
-		z.union([
-			z.string().min(1).max(CALENDAR_EVENT_RESULT.MAX_PLAYER_NAME_LENGTH),
-			z.object({ id }),
-		]),
-	)
-	.nonempty({ message: "forms.errors.emptyTeam" })
-	.max(CALENDAR_EVENT_RESULT.MAX_PLAYERS_LENGTH)
-	.refine(
-		(val) => {
-			const userIds = val.flatMap((user) =>
-				typeof user === "string" ? [] : user.id,
-			);
-
-			return userIds.length === new Set(userIds).size;
-		},
-		{
-			message: "forms.errors.duplicatePlayer",
-		},
-	);
-
-const reportWinnersActionSchema = z.object({
-	participantCount: z.preprocess(
-		actualNumber,
-		z
-			.number()
-			.int()
-			.positive()
-			.max(CALENDAR_EVENT_RESULT.MAX_PARTICIPANTS_COUNT),
-	),
-	team: z.preprocess(
-		toArray,
-		z
-			.array(
-				z.preprocess(
-					safeJSONParse,
-					z.object({
-						teamName: z
-							.string()
-							.min(1)
-							.max(CALENDAR_EVENT_RESULT.MAX_TEAM_NAME_LENGTH),
-						placement: z.preprocess(
-							actualNumber,
-							z
-								.number()
-								.int()
-								.positive()
-								.max(CALENDAR_EVENT_RESULT.MAX_TEAM_PLACEMENT),
-						),
-						players: playersSchema,
-					}),
-				),
-			)
-			.refine(
-				(val) => val.length === new Set(val.map((team) => team.teamName)).size,
-				{ message: "forms.errors.uniqueTeamName" },
-			),
-	),
-});
-
-const reportWinnersParamsSchema = z.object({
-	id: z.preprocess(actualNumber, id),
-});
-
-export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUserId(request);
-	const parsedParams = reportWinnersParamsSchema.parse(params);
-	const parsedInput = await safeParseRequestFormData({
-		request,
-		schema: reportWinnersActionSchema,
-	});
-
-	if (!parsedInput.success) {
-		return {
-			errors: parsedInput.errors,
-		};
-	}
-
-	const event = notFoundIfFalsy(
-		await CalendarRepository.findById({ id: parsedParams.id }),
-	);
-	errorToastIfFalsy(
-		canReportCalendarEventWinners({
-			user,
-			event,
-			startTimes: event.startTimes,
-		}),
-		"Unauthorized",
-	);
-
-	await CalendarRepository.upsertReportedScores({
-		eventId: parsedParams.id,
-		participantCount: parsedInput.data.participantCount,
-		results: parsedInput.data.team.map((t) => ({
-			teamName: t.teamName,
-			placement: t.placement,
-			players: t.players.map((p) => ({
-				userId: typeof p === "string" ? null : p.id,
-				name: typeof p === "string" ? p : null,
-			})),
-		})),
-	});
-
-	throw redirect(calendarEventPage(parsedParams.id));
-};
+import { action } from "../actions/calendar.$id.report-winners.server";
+import { loader } from "../loaders/calendar.$id.report-winners.server";
+export { loader, action };
 
 export const handle: SendouRouteHandle = {
 	i18n: "calendar",
-};
-
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const parsedParams = reportWinnersParamsSchema.parse(params);
-	const user = await requireUserId(request);
-	const event = notFoundIfFalsy(
-		await CalendarRepository.findById({ id: parsedParams.id }),
-	);
-
-	unauthorizedIfFalsy(
-		canReportCalendarEventWinners({
-			user,
-			event,
-			startTimes: event.startTimes,
-		}),
-	);
-
-	return {
-		name: event.name,
-		participantCount: event.participantCount,
-		winners: await CalendarRepository.findResultsByEventId(parsedParams.id),
-	};
 };
 
 export default function ReportWinnersPage() {

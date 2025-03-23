@@ -12,7 +12,9 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FAQ_PAGE, sendouQMatchPage, twitchUrl, userPage } from "~/utils/urls";
-import { cachedStreams } from "../core/streams.server";
+
+import { loader } from "../loaders/q.streams.server";
+export { loader };
 
 import "~/features/sendouq/q.css";
 
@@ -26,12 +28,6 @@ export const meta: MetaFunction = (args) => {
 		description: "Streams of SendouQ matches in progress.",
 		location: args.location,
 	});
-};
-
-export const loader = async () => {
-	return {
-		streams: await cachedStreams(),
-	};
 };
 
 export default function SendouQStreamsPage() {

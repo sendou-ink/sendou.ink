@@ -62,7 +62,6 @@ import { useTournament } from "./to.$id";
 
 import { action } from "../actions/to.$id.register.server";
 import { loader } from "../loaders/to.$id.register.server";
-
 export { loader, action };
 
 export default function TournamentRegisterPage() {

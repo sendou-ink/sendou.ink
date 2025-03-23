@@ -29,10 +29,10 @@ import { SocialLinksList } from "../components/SocialLinksList";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "../tournament-organization-constants";
 import { canEditTournamentOrganization } from "../tournament-organization-utils";
 
-import "../tournament-organization.css";
-
 import { loader } from "../loaders/org.$slug.server";
 export { loader };
+
+import "../tournament-organization.css";
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.data) return [];

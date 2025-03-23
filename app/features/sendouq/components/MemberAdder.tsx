@@ -13,7 +13,7 @@ import {
 	SENDOU_INK_BASE_URL,
 	sendouQInviteLink,
 } from "~/utils/urls";
-import type { SendouQPreparingAction } from "../routes/q.preparing";
+import type { SendouQPreparingAction } from "../actions/q.preparing.server";
 
 export function MemberAdder({
 	inviteCode,

@@ -26,7 +26,7 @@ import {
 	topSearchPlayerPage,
 	userSubmittedImage,
 } from "~/utils/urls";
-import type { UserPageLoaderData } from "./u.$identifier";
+import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 
 import { loader } from "../loaders/u.$identifier.index.server";
 export { loader };

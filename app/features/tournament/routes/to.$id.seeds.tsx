@@ -13,8 +13,6 @@ import {
 	sortableKeyboardCoordinates,
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import type { ActionFunction, LoaderFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
 import { Link, useFetcher, useNavigation } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
@@ -25,78 +23,18 @@ import { Dialog } from "~/components/Dialog";
 import { Draggable } from "~/components/Draggable";
 import { SubmitButton } from "~/components/SubmitButton";
 import { Table } from "~/components/Table";
-import { requireUser } from "~/features/auth/core/user.server";
-import {
-	type TournamentDataTeam,
-	clearTournamentDataCache,
-	tournamentFromDB,
-} from "~/features/tournament-bracket/core/Tournament.server";
+import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import { useTimeoutState } from "~/hooks/useTimeoutState";
 import invariant from "~/utils/invariant";
-import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
-import { tournamentBracketsPage, userResultsPage } from "~/utils/urls";
+import { userResultsPage } from "~/utils/urls";
 import { Avatar } from "../../../components/Avatar";
 import { InfoPopover } from "../../../components/InfoPopover";
 import { ordinalToRoundedSp } from "../../mmr/mmr-utils";
-import * as TournamentTeamRepository from "../TournamentTeamRepository.server";
-import { updateTeamSeeds } from "../queries/updateTeamSeeds.server";
-import { seedsActionSchema } from "../tournament-schemas.server";
-import { tournamentIdFromParams } from "../tournament-utils";
 import { useTournament } from "./to.$id";
 
-export const action: ActionFunction = async ({ request, params }) => {
-	const data = await parseRequestPayload({
-		request,
-		schema: seedsActionSchema,
-	});
-	const user = await requireUser(request);
-	const tournamentId = tournamentIdFromParams(params);
-	const tournament = await tournamentFromDB({ tournamentId, user });
-
-	errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
-	errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
-
-	switch (data._action) {
-		case "UPDATE_SEEDS": {
-			updateTeamSeeds({ tournamentId, teamIds: data.seeds });
-			break;
-		}
-		case "UPDATE_STARTING_BRACKETS": {
-			const validBracketIdxs =
-				tournament.ctx.settings.bracketProgression.flatMap(
-					(bracket, bracketIdx) => (!bracket.sources ? [bracketIdx] : []),
-				);
-
-			errorToastIfFalsy(
-				data.startingBrackets.every((t) =>
-					validBracketIdxs.includes(t.startingBracketIdx),
-				),
-				"Invalid starting bracket idx",
-			);
-
-			await TournamentTeamRepository.updateStartingBrackets(
-				data.startingBrackets,
-			);
-			break;
-		}
-	}
-
-	clearTournamentDataCache(tournamentId);
-
-	return null;
-};
-
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const user = await requireUser(request);
-	const tournamentId = tournamentIdFromParams(params);
-	const tournament = await tournamentFromDB({ tournamentId, user });
-
-	if (!tournament.isOrganizer(user) || tournament.hasStarted) {
-		throw redirect(tournamentBracketsPage({ tournamentId }));
-	}
-
-	return null;
-};
+import { action } from "../actions/to.$id.seeds.server";
+import { loader } from "../loaders/to.$id.seeds.server";
+export { loader, action };
 
 export default function TournamentSeedsPage() {
 	const tournament = useTournament();

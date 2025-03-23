@@ -4,7 +4,7 @@ import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useDebounce } from "react-use";
-import type { UserSearchLoaderData } from "~/features/user-search/routes/u";
+import type { UserSearchLoaderData } from "~/features/user-search/loaders/u.server";
 import { Avatar } from "./Avatar";
 
 type UserSearchUserItem = NonNullable<UserSearchLoaderData>["users"][number];

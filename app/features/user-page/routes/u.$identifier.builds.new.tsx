@@ -19,6 +19,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { CrossIcon } from "~/components/icons/Cross";
 import { PlusIcon } from "~/components/icons/Plus";
 import { BUILD } from "~/constants";
+import type { GearType } from "~/db/tables";
 import {
 	validatedBuildFromSearchParams,
 	validatedWeaponIdFromSearchParams,
@@ -32,9 +33,8 @@ import type {
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { modeImageUrl } from "~/utils/urls";
-import type { UserPageLoaderData } from "./u.$identifier";
+import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 
-import type { GearType } from "~/db/tables";
 import { action } from "../actions/u.$identifier.builds.new.server";
 import { loader } from "../loaders/u.$identifier.builds.new.server";
 export { loader, action };

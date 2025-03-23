@@ -26,9 +26,9 @@ import { TEAM_MEMBER_ROLES } from "../team-constants";
 import { isTeamFull } from "../team-utils";
 import "../team.css";
 import { metaTags } from "~/utils/remix";
+
 import { action } from "../actions/t.$customUrl.roster.server";
 import { loader } from "../loaders/t.$customUrl.roster.server";
-
 export { loader, action };
 
 export const meta: MetaFunction = (args) => {

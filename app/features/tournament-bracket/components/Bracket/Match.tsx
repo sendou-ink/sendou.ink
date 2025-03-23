@@ -6,11 +6,11 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { useUser } from "~/features/auth/core/user";
 import { TournamentStream } from "~/features/tournament/components/TournamentStream";
+import type { TournamentStreamsLoader } from "~/features/tournament/loaders/to.$id.streams.server";
 import {
 	useStreamingParticipants,
 	useTournament,
 } from "~/features/tournament/routes/to.$id";
-import type { TournamentStreamsLoader } from "~/features/tournament/routes/to.$id.streams";
 import type { Unpacked } from "~/utils/types";
 import { tournamentMatchPage, tournamentStreamsPage } from "~/utils/urls";
 import type { Bracket } from "../../core/Bracket";

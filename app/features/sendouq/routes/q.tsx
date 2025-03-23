@@ -1,10 +1,4 @@
-import type {
-	ActionFunction,
-	LoaderFunctionArgs,
-	MetaFunction,
-	SerializeFrom,
-} from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
@@ -20,32 +14,21 @@ import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { UserIcon } from "~/components/icons/User";
 import { UsersIcon } from "~/components/icons/Users";
-import { sql } from "~/db/sql";
+import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
-import { getUserId, requireUser } from "~/features/auth/core/user.server";
 import type { RankingSeason } from "~/features/mmr/season";
-import { currentSeason, nextSeason } from "~/features/mmr/season";
-import * as QRepository from "~/features/sendouq/QRepository.server";
-import { giveTrust } from "~/features/tournament/queries/giveTrust.server";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { joinListToNaturalString } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
-import {
-	type SendouRouteHandle,
-	errorToastIfFalsy,
-	parseRequestPayload,
-} from "~/utils/remix.server";
-import { assertUnreachable } from "~/utils/types";
+import { metaTags } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	LEADERBOARDS_PAGE,
 	LOG_IN_URL,
 	SENDOUQ_INFO_PAGE,
-	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_LOOKING_PREVIEW_PAGE,
 	SENDOUQ_PAGE,
-	SENDOUQ_PREPARING_PAGE,
 	SENDOUQ_RULES_PAGE,
 	SENDOUQ_SETTINGS_PAGE,
 	SENDOUQ_STREAMS_PAGE,
@@ -55,19 +38,14 @@ import {
 import { isAtLeastFiveDollarTierPatreon } from "~/utils/users";
 import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
-import { FULL_GROUP_SIZE, JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
-import { frontPageSchema } from "../q-schemas.server";
-import {
-	groupRedirectLocationByCurrentLocation,
-	userCanJoinQueueAt,
-} from "../q-utils";
-import { addMember } from "../queries/addMember.server";
-import { deleteLikesByGroupId } from "../queries/deleteLikesByGroupId.server";
-import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
-import { findGroupByInviteCode } from "../queries/findGroupByInviteCode.server";
+import { FULL_GROUP_SIZE } from "../q-constants";
+import { userCanJoinQueueAt } from "../q-utils";
+
+import { action } from "../actions/q.server";
+import { loader } from "../loaders/q.server";
+export { loader, action };
+
 import "../q.css";
-import type { Tables } from "~/db/tables";
-import { metaTags } from "~/utils/remix";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
@@ -85,132 +63,6 @@ export const meta: MetaFunction = (args) => {
 			"Splatoon 3 competitive ladder. Join by yourself or with your team and play ranked matches.",
 		location: args.location,
 	});
-};
-
-const validateCanJoinQ = async (user: { id: number; discordId: string }) => {
-	const friendCode = await UserRepository.currentFriendCodeByUserId(user.id);
-	errorToastIfFalsy(friendCode, "No friend code");
-	const canJoinQueue = userCanJoinQueueAt(user, friendCode) === "NOW";
-
-	errorToastIfFalsy(currentSeason(new Date()), "Season is not active");
-	errorToastIfFalsy(!findCurrentGroupByUserId(user.id), "Already in a group");
-	errorToastIfFalsy(canJoinQueue, "Can't join queue right now");
-};
-
-export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser(request);
-	const data = await parseRequestPayload({
-		request,
-		schema: frontPageSchema,
-	});
-
-	switch (data._action) {
-		case "JOIN_QUEUE": {
-			await validateCanJoinQ(user);
-
-			await QRepository.createGroup({
-				status: data.direct === "true" ? "ACTIVE" : "PREPARING",
-				userId: user.id,
-			});
-
-			return redirect(
-				data.direct === "true" ? SENDOUQ_LOOKING_PAGE : SENDOUQ_PREPARING_PAGE,
-			);
-		}
-		case "JOIN_TEAM_WITH_TRUST":
-		case "JOIN_TEAM": {
-			await validateCanJoinQ(user);
-
-			const code = new URL(request.url).searchParams.get(
-				JOIN_CODE_SEARCH_PARAM_KEY,
-			);
-
-			const groupInvitedTo =
-				code && user ? findGroupByInviteCode(code) : undefined;
-			errorToastIfFalsy(
-				groupInvitedTo,
-				"Invite code doesn't match any active team",
-			);
-			errorToastIfFalsy(
-				groupInvitedTo.members.length < FULL_GROUP_SIZE,
-				"Team is full",
-			);
-
-			sql.transaction(() => {
-				addMember({
-					groupId: groupInvitedTo.id,
-					userId: user.id,
-					role: "MANAGER",
-				});
-				deleteLikesByGroupId(groupInvitedTo.id);
-
-				if (data._action === "JOIN_TEAM_WITH_TRUST") {
-					const owner = groupInvitedTo.members.find((m) => m.role === "OWNER");
-					invariant(owner, "Owner not found");
-
-					giveTrust({
-						trustGiverUserId: user.id,
-						trustReceiverUserId: owner.id,
-					});
-				}
-			})();
-
-			return redirect(
-				groupInvitedTo.status === "PREPARING"
-					? SENDOUQ_PREPARING_PAGE
-					: SENDOUQ_LOOKING_PAGE,
-			);
-		}
-		case "ADD_FRIEND_CODE": {
-			errorToastIfFalsy(
-				!(await UserRepository.currentFriendCodeByUserId(user.id)),
-				"Friend code already set",
-			);
-
-			await UserRepository.insertFriendCode({
-				userId: user.id,
-				friendCode: data.friendCode,
-				submitterUserId: user.id,
-			});
-
-			return null;
-		}
-		default: {
-			assertUnreachable(data);
-		}
-	}
-};
-
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUserId(request);
-
-	const code = new URL(request.url).searchParams.get(
-		JOIN_CODE_SEARCH_PARAM_KEY,
-	);
-
-	const redirectLocation = groupRedirectLocationByCurrentLocation({
-		group: user ? findCurrentGroupByUserId(user.id) : undefined,
-		currentLocation: "default",
-	});
-
-	if (redirectLocation) {
-		throw redirect(`${redirectLocation}${code ? "?joining=true" : ""}`);
-	}
-
-	const groupInvitedTo = code && user ? findGroupByInviteCode(code) : undefined;
-
-	const now = new Date();
-	const season = currentSeason(now);
-	const upcomingSeason = !season ? nextSeason(now) : undefined;
-
-	return {
-		season,
-		upcomingSeason,
-		groupInvitedTo,
-		friendCode: user
-			? await UserRepository.currentFriendCodeByUserId(user.id)
-			: undefined,
-	};
 };
 
 export default function QPage() {

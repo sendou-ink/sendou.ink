@@ -10,7 +10,7 @@ import {
 import { removeDuplicates } from "~/utils/arrays";
 import { sumArray } from "~/utils/number";
 import type { FindMatchById } from "../tournament-bracket/queries/findMatchById.server";
-import type { TournamentLoaderData } from "../tournament/routes/to.$id";
+import type { TournamentLoaderData } from "../tournament/loaders/to.$id.server";
 import type { Standing } from "./core/Bracket";
 import type { Tournament } from "./core/Tournament";
 import type { TournamentDataTeam } from "./core/Tournament.server";

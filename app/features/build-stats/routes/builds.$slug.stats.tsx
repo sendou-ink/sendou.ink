@@ -1,22 +1,11 @@
-import { cachified } from "@epic-web/cachified";
-import type {
-	LoaderFunctionArgs,
-	MetaFunction,
-	SerializeFrom,
-} from "@remix-run/node";
+import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Ability } from "~/components/Ability";
 import { WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
-import { MAX_AP, ONE_HOUR_IN_MS } from "~/constants";
-import { i18next } from "~/modules/i18n/i18next.server";
-import { cache, ttl } from "~/utils/cache.server";
-import {
-	type SendouRouteHandle,
-	notFoundIfNullLike,
-} from "~/utils/remix.server";
-import { weaponNameSlugToId } from "~/utils/unslugify.server";
+import { MAX_AP } from "~/constants";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BUILDS_PAGE,
 	navIconUrl,
@@ -24,8 +13,9 @@ import {
 	weaponBuildPage,
 } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
-import { abilityPointCountsToAverages } from "../build-stats-utils";
-import { averageAbilityPoints } from "../queries/averageAbilityPoints.server";
+
+import { loader } from "../loaders/builds.$slug.stats.server";
+export { loader };
 
 import "../build-stats.css";
 
@@ -65,35 +55,6 @@ export const handle: SendouRouteHandle = {
 			},
 		];
 	},
-};
-
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const t = await i18next.getFixedT(request, ["builds", "weapons"]);
-	const weaponId = notFoundIfNullLike(weaponNameSlugToId(params.slug));
-
-	const weaponName = t(`weapons:MAIN_${weaponId}`);
-
-	const cachedStats = await cachified({
-		key: `build-stats-${weaponId}`,
-		cache,
-		ttl: ttl(ONE_HOUR_IN_MS),
-		async getFreshValue() {
-			return abilityPointCountsToAverages({
-				allAbilities: averageAbilityPoints(),
-				weaponAbilities: averageAbilityPoints(weaponId),
-			});
-		},
-	});
-
-	return {
-		stats: cachedStats,
-		weaponName,
-		weaponId,
-		meta: {
-			slug: params.slug!,
-			breadcrumbText: t("builds:linkButton.abilityStats"),
-		},
-	};
 };
 
 export default function BuildStatsPage() {
