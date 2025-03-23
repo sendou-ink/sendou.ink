@@ -12,6 +12,7 @@
 	"forms.gear.CLOTHES": "Vêtements",
 	"forms.gear.SHOES": "Chaussures",
 	"forms.private.info": "Les sets privées ne sont visible que par vous.",
+	"forms.noGear.info": "L'équipement est facultatif mais vous devez remplir tous les emplacements si vous en remplissez.",
 
 	"deleteConfirm": "Supprimer le set '{{title}}' ?",
 
@@ -19,6 +20,8 @@
 	"stats.ap.title": "Moyenne des Points de Compétences",
 	"stats.percentage.title": "Taux de présence des bonus exclusifs",
 	"stats.all": "Tous",
+	"stats.public": "Publique",
+	"stats.private": "Privé",
 
 	"addFilter": "Ajouter un filtre",
 	"linkButton.abilityStats": "Statistiques",
@@ -27,8 +30,17 @@
 
 	"emptyAbilitySlot": "Emplacement de bonus vide",
 
+	"filters.type.ability": "Par abilité",
+	"filters.type.mode": "Par mode",
+	"filters.type.date": "Par date",
+	"filters.ability.title": "Filtre par abilité",
+	"filters.mode.title": "Filtre par mode",
+	"filters.date.title": "Filtre par date",
 	"filters.has": "Avec",
 	"filters.does.not.have": "Sans",
 	"filters.atLeast": "Au moins",
-	"filters.atMost": "Au plus"
+	"filters.atMost": "Au plus",
+	"filters.date.since": "Depuis",
+	"filters.date.custom": "Personalisé",
+	"filters.filterByWeapon": "Filtre par arme"
 }

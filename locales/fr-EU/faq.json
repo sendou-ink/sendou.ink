@@ -1,7 +1,9 @@
 {
 	"q1": "Qu'est-ce que le Plus Server ?",
+	"a1": "Le Plus Serveur est un serveur Discord permettant aux joueurs de haut niveau de rechercher des personnes avec/contre qui jouer. Il a été fondé en septembre 2017. Divisé en trois niveaux dont le +1 est le plus élevé. Vous obtenez l'accès lorsqu'un membre du serveur vous suggère et que vous réussissez le vote mensuel ou que vous vous placez assez bien dans le classement de la SendouQ.\n\nLors du vote, vous obtenez un pourcentage basé sur votre résultat. 0% signifierait que tous ceux qui ont participé au vote ont voté contre vous, tandis que 100% serait le contraire. 60% sont requis pour réussir le vote. Si un membre obtient un score inférieur à 60 %, il est rétrogradé d'un niveau. Dans le cas du +3, le joueur est expulsé.\n\nConsultez le leaderboard pour savoir qui est sur la bonne voie pour obtenir l'accès au Plus via cette méthode. 60 personnes au total y ont accès chaque saison: 10 au +1, 20 au +2 et 30 au +3.",
 
 	"q2": "Comment obtenir un badge pour mon événement ?",
+	"a2": "Depuis septembre 2024, toute personne ayant les compétences nécessaires peut réaliser un badge. Consultez le lien en bas de la page des badges pour plus d'informations.",
 
 	"q3": "Comment mettre à jour mon pseudo ou mon avatar ?",
 	"a3": "Mettre à jour son pseudo ou avatar sur Discord ne se reflète pas immédiatement sur sendou.ink. Pour voir ce changement, vous avez deux options :\n\n1) Si vous êtes un membre du Discord de sendou.ink ou du Plus Server, il vous suffit d'attendre. Le site se mettra à jour automatiquement dans les 24 heures.\n\n2) Alternativement, si vous voulez les mettre à jour immédiatement, vous pouvez utiliser la commande /update-profile du bot Lohi sur discord.",
@@ -16,6 +18,11 @@
 	"a6": "Nous utilisons le profil Discord pour ça. Connectez vos comptes sur Discord puis déconnectez et reconnectez vous sur sendou.ink pour les mettre à jour.",
 
 	"q7": "Comment puis-je ajouter des vidéos ?",
+	"a7": "Envoyez un message sur le channel helpdesk du discord sendou.ink pour demander l'accès. Ajouter également un lien d'un exemple de vidéo que vous publierez.",
 
-	"q8": "Comment puis-je montrer mes résultats de Match X sur mon profil ?"
+	"q8": "Comment puis-je montrer mes résultats de Match X sur mon profil ?",
+	"a8": "Trouvez votre page de joueur depuis la page Top 500. Postez le lien vers le channel helpdesk sur notre Discord en indiquant que vous souhaitez qu'il soit lié. Note: Le lien n'est pas possible si vous n'avez pas terminé une saison dans le Top 500.",
+
+	"q9": "Comment puis-je publier une œuvre que j'ai commandé ?",
+	"a9": "Vous pouvez seulement publier une œuvre que vous avez réalisé. Il doit également y avoir un rapport avec Splatoon. Veuillez demander à l’artiste de la télécharger lui-même sur le site pour une œuvre commandée. Ils sont capables de lier votre profil d'utilisateur à leur œuvre et cela la fera apparaître sur votre profil."
 }
