@@ -165,7 +165,7 @@ export default [
 		route("info", "features/sendouq/routes/q.info.tsx"),
 		route("looking", "features/sendouq/routes/q.looking.tsx"),
 		route("preparing", "features/sendouq/routes/q.preparing.tsx"),
-		route("match/:id", "features/sendouq/routes/q.match.$id.tsx"),
+		route("match/:id", "features/sendouq-match/routes/q.match.$id.tsx"),
 		route("settings", "features/sendouq-settings/routes/q.settings.tsx"),
 		route("streams", "features/sendouq-streams/routes/q.streams.tsx"),
 	]),

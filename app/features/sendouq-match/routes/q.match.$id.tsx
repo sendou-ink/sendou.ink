@@ -34,6 +34,10 @@ import { useUser } from "~/features/auth/core/user";
 import { Chat, type ChatProps, useChat } from "~/features/chat/components/Chat";
 import { currentSeason } from "~/features/mmr/season";
 import { AddPrivateNoteDialog } from "~/features/sendouq-match/components/AddPrivateNoteDialog";
+import type { ReportedWeaponForMerging } from "~/features/sendouq-match/core/reported-weapons.server";
+import { GroupCard } from "~/features/sendouq/components/GroupCard";
+import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
+import { useRecentlyReportedWeapons } from "~/features/sendouq/q-hooks";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useWindowSize } from "~/hooks/useWindowSize";
@@ -61,17 +65,13 @@ import {
 	teamPage,
 	userSubmittedImage,
 } from "~/utils/urls";
-import { GroupCard } from "../components/GroupCard";
 import { matchEndedAtIndex } from "../core/match";
-import type { ReportedWeaponForMerging } from "../core/reported-weapons.server";
-import { FULL_GROUP_SIZE } from "../q-constants";
-import { useRecentlyReportedWeapons } from "../q-hooks";
 
 import { action } from "../actions/q.match.$id.server";
 import { loader } from "../loaders/q.match.$id.server";
 export { loader, action };
 
-import "../q.css";
+import "~/features/sendouq/q.css";
 
 export const meta: MetaFunction = (args) => {
 	const data = args.data as SerializeFrom<typeof loader> | null;

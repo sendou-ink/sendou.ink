@@ -3,6 +3,10 @@ import { redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
+import {
+	createMatchMemento,
+	matchMapList,
+} from "~/features/sendouq-match/core/match.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import invariant from "~/utils/invariant";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
@@ -11,7 +15,6 @@ import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
 import { groupAfterMorph } from "../core/groups";
 import { membersNeededForFull } from "../core/groups.server";
-import { createMatchMemento, matchMapList } from "../core/match.server";
 import { FULL_GROUP_SIZE } from "../q-constants";
 import { lookingSchema } from "../q-schemas.server";
 import { addLike } from "../queries/addLike.server";

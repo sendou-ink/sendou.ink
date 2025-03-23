@@ -5,6 +5,7 @@ import type {
 	SkillTierInterval,
 	TieredSkill,
 } from "~/features/mmr/tiered.server";
+import { mapModePreferencesToModeList } from "~/features/sendouq-match/core/match.server";
 import { modesShort } from "~/modules/in-game-lists";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
@@ -17,7 +18,6 @@ import type {
 	LookingGroupWithInviteCode,
 } from "../q-types";
 import type { RecentMatchPlayer } from "../queries/findRecentMatchPlayersByUserId.server";
-import { mapModePreferencesToModeList } from "./match.server";
 
 export function divideGroups({
 	groups,

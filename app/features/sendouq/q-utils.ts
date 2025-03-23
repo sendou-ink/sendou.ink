@@ -71,16 +71,6 @@ export function mapPoolOk(mapPool: MapPool) {
 	return true;
 }
 
-export function winnersArrayToWinner(winners: ("ALPHA" | "BRAVO")[]) {
-	const alphaCount = winners.filter((winner) => winner === "ALPHA").length;
-	const bravoCount = winners.filter((winner) => winner === "BRAVO").length;
-
-	if (alphaCount > bravoCount) return "ALPHA";
-	if (bravoCount > alphaCount) return "BRAVO";
-
-	return null;
-}
-
 export function userCanJoinQueueAt(
 	user: { id: number; discordId: string },
 	friendCode: { createdAt: number; submitterUserId: number },

@@ -2,14 +2,14 @@ import cachified from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { getUserId } from "~/features/auth/core/user.server";
 import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
+import { reportedWeaponsToArrayOfArrays } from "~/features/sendouq-match/core/reported-weapons.server";
+import { reportedWeaponsByMatchId } from "~/features/sendouq-match/queries/reportedWeaponsByMatchId.server";
 import { isMod } from "~/permissions";
 import { cache } from "~/utils/cache.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
-import { reportedWeaponsToArrayOfArrays } from "../core/reported-weapons.server";
-import { qMatchPageParamsSchema } from "../q-schemas.server";
-import { reportedWeaponsByMatchId } from "../queries/reportedWeaponsByMatchId.server";
+import { qMatchPageParamsSchema } from "../q-match-schemas";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const user = await getUserId(request);

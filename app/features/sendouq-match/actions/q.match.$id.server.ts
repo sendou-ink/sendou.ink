@@ -10,6 +10,7 @@ import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
 import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
+import { findCurrentGroupByUserId } from "~/features/sendouq/queries/findCurrentGroupByUserId.server";
 import { isMod } from "~/permissions";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -28,15 +29,14 @@ import {
 	summarizeMaps,
 	summarizePlayerResults,
 } from "../core/summarizer.server";
-import { matchSchema, qMatchPageParamsSchema } from "../q-schemas.server";
-import { winnersArrayToWinner } from "../q-utils";
+import { matchSchema, qMatchPageParamsSchema } from "../q-match-schemas";
+import { winnersArrayToWinner } from "../q-match-utils";
 import { addDummySkill } from "../queries/addDummySkill.server";
 import { addMapResults } from "../queries/addMapResults.server";
 import { addPlayerResults } from "../queries/addPlayerResults.server";
 import { addReportedWeapons } from "../queries/addReportedWeapons.server";
 import { addSkills } from "../queries/addSkills.server";
 import { deleteReporterWeaponsByMatchId } from "../queries/deleteReportedWeaponsByMatchId.server";
-import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
 import { findMatchById } from "../queries/findMatchById.server";
 import { reportScore } from "../queries/reportScore.server";
 import { reportedWeaponsByMatchId } from "../queries/reportedWeaponsByMatchId.server";

@@ -1,4 +1,4 @@
-import { SENDOUQ_BEST_OF } from "../q-constants";
+import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 
 export function matchEndedAtIndex(scores: ("ALPHA" | "BRAVO")[]) {
 	let alphaCount = 0;
