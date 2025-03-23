@@ -2,9 +2,9 @@ import { useRevalidator } from "@remix-run/react";
 import clsx from "clsx";
 import { sub } from "date-fns";
 import { nanoid } from "nanoid";
+import { WebSocket } from "partysocket";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import ReconnectingWebSocket from "reconnecting-websocket";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import invariant from "~/utils/invariant";
@@ -332,7 +332,7 @@ export function useChat({
 		rooms[0]?.code,
 	);
 
-	const ws = React.useRef<ReconnectingWebSocket>();
+	const ws = React.useRef<WebSocket>();
 	const lastSeenMessagesByRoomId = React.useRef<Map<string, string>>(new Map());
 
 	// same principal as here behind separating it into a ref: https://overreacted.io/making-setinterval-declarative-with-react-hooks/
@@ -350,7 +350,7 @@ export function useChat({
 		const url = `${import.meta.env.VITE_SKALOP_WS_URL}?${rooms
 			.map((room) => `room=${room.code}`)
 			.join("&")}`;
-		ws.current = new ReconnectingWebSocket(url, [], {
+		ws.current = new WebSocket(url, [], {
 			maxReconnectionDelay: 10000 * 2,
 			reconnectionDelayGrowFactor: 1.5,
 		});
