@@ -1,11 +1,11 @@
 import type { Tables } from "~/db/tables";
-import type { Group } from "~/db/types";
 import { TIERS } from "~/features/mmr/mmr-constants";
 import { defaultOrdinal } from "~/features/mmr/mmr-utils";
 import type {
 	SkillTierInterval,
 	TieredSkill,
 } from "~/features/mmr/tiered.server";
+import { mapModePreferencesToModeList } from "~/features/sendouq-match/core/match.server";
 import { modesShort } from "~/modules/in-game-lists";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
@@ -18,7 +18,6 @@ import type {
 	LookingGroupWithInviteCode,
 } from "../q-types";
 import type { RecentMatchPlayer } from "../queries/findRecentMatchPlayersByUserId.server";
-import { mapModePreferencesToModeList } from "./match.server";
 
 export function divideGroups({
 	groups,
@@ -467,7 +466,7 @@ function resolveGroupSkill({
 }
 
 export function groupExpiryStatus(
-	group?: Pick<Group, "latestActionAt">,
+	group?: Pick<Tables["Group"], "latestActionAt">,
 ): null | GroupExpiryStatus {
 	if (!group) return null;
 

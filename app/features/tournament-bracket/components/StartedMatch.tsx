@@ -32,7 +32,7 @@ import {
 import type { Bracket } from "../core/Bracket";
 import * as PickBan from "../core/PickBan";
 import type { TournamentDataTeam } from "../core/Tournament.server";
-import type { TournamentMatchLoaderData } from "../routes/to.$id.matches.$mid";
+import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import {
 	groupNumberToLetters,
 	mapCountPlayedInSetWithCertainty,

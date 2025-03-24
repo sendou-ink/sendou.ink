@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import { sql } from "~/db/sql";
-import type { GroupMember, User } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { deleteLikesByGroupId } from "./deleteLikesByGroupId.server";
 
 const findToBeDeletedGroupNonRegularsStm = sql.prepare(/* sql */ `
@@ -41,7 +41,7 @@ export const morphGroups = sql.transaction(
 	}) => {
 		const toBeDeletedGroupNonRegulars = findToBeDeletedGroupNonRegularsStm
 			.all({ groupId: otherGroupId })
-			.map((row: any) => row.userId) as Array<User["id"]>;
+			.map((row: any) => row.userId) as Array<Tables["User"]["id"]>;
 
 		deleteLikesByGroupId(survivingGroupId);
 
@@ -52,11 +52,8 @@ export const morphGroups = sql.transaction(
 		});
 
 		for (const userId of newMembers) {
-			const role: GroupMember["role"] = toBeDeletedGroupNonRegulars.includes(
-				userId,
-			)
-				? "MANAGER"
-				: "REGULAR";
+			const role: Tables["GroupMember"]["role"] =
+				toBeDeletedGroupNonRegulars.includes(userId) ? "MANAGER" : "REGULAR";
 			updateGroupMemberStm.run({
 				newGroupId: survivingGroupId,
 				oldGroupId: otherGroupId,

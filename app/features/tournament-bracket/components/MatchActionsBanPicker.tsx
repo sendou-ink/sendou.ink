@@ -19,7 +19,7 @@ import invariant from "~/utils/invariant";
 import { stageImageUrl } from "~/utils/urls";
 import * as PickBan from "../core/PickBan";
 import type { TournamentDataTeam } from "../core/Tournament.server";
-import type { TournamentMatchLoaderData } from "../routes/to.$id.matches.$mid";
+import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 
 export function MatchActionsBanPicker({
 	teams,

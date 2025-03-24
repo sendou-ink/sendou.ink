@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { TournamentSub, UserWithPlusTier } from "~/db/types";
+import type { Tables, UserWithPlusTier } from "~/db/tables";
 import type { MainWeaponId } from "~/modules/in-game-lists";
 
 const stm = sql.prepare(/* sql */ `
@@ -31,13 +31,13 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export interface SubByTournamentId {
-	canVc: TournamentSub["canVc"];
+	canVc: Tables["TournamentSub"]["canVc"];
 	bestWeapons: MainWeaponId[];
 	okWeapons: MainWeaponId[] | null;
-	message: TournamentSub["message"];
-	visibility: TournamentSub["visibility"];
-	createdAt: TournamentSub["createdAt"];
-	userId: TournamentSub["userId"];
+	message: Tables["TournamentSub"]["message"];
+	visibility: Tables["TournamentSub"]["visibility"];
+	createdAt: Tables["TournamentSub"]["createdAt"];
+	userId: Tables["TournamentSub"]["userId"];
 	username: UserWithPlusTier["username"];
 	discordAvatar: UserWithPlusTier["discordAvatar"];
 	discordId: UserWithPlusTier["discordId"];

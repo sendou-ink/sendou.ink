@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { PlayerResult, User } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/* sql */ `
   select
@@ -30,7 +30,7 @@ export function seasonsMatesEnemiesByUserId({
 }: {
 	userId: number;
 	season: number;
-	type: PlayerResult["type"];
+	type: Tables["PlayerResult"]["type"];
 }) {
 	const rows = stm.all({ userId, season, type }) as any[];
 
@@ -43,7 +43,7 @@ export function seasonsMatesEnemiesByUserId({
 		setWins: number;
 		setLosses: number;
 		user: Pick<
-			User,
+			Tables["User"],
 			"id" | "username" | "discordAvatar" | "discordId" | "customUrl"
 		>;
 	}>;

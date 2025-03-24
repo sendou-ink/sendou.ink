@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import { sql } from "~/db/sql";
-import type { LogInLink } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 
 const stm = sql.prepare(/* sql */ `
@@ -26,5 +26,5 @@ export function createLogInLink(userId: number) {
 			new Date(Date.now() + LOG_IN_LINK_VALID_FOR),
 		),
 		code: nanoid(LOG_IN_LINK_LENGTH),
-	}) as LogInLink;
+	}) as Tables["LogInLink"];
 }

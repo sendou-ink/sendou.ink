@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Badge } from "~/components/Badge";
 import { Button } from "~/components/Button";
 import { CrossIcon } from "~/components/icons/Cross";
-import type { CalendarEventTag } from "~/db/types";
+import type { CalendarEventTag } from "~/db/tables";
 import type * as CalendarRepository from "../CalendarRepository.server";
 import { tags as allTags } from "../calendar-constants";
 

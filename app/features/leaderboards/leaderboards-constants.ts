@@ -27,3 +27,6 @@ export const LEADERBOARD_TYPES = [
 export const IGNORED_TEAMS: Map<number, number[][]> = new Map().set(5, [
 	[9403, 13562, 15916, 38062], // Snooze
 ]);
+
+export const TYPE_SEARCH_PARAM_KEY = "type";
+export const SEASON_SEARCH_PARAM_KEY = "season";

@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { Group, GroupMember } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { parseDBJsonArray } from "~/utils/sql";
 
 const stm = sql.prepare(/* sql */ `
@@ -25,8 +25,12 @@ const stm = sql.prepare(/* sql */ `
 
 export function findGroupByInviteCode(inviteCode: string): {
 	id: number;
-	status: Group["status"];
-	members: { id: number; username: string; role: GroupMember["role"] }[];
+	status: Tables["Group"]["status"];
+	members: {
+		id: number;
+		username: string;
+		role: Tables["GroupMember"]["role"];
+	}[];
 } | null {
 	const row = stm.get({ inviteCode }) as any;
 	if (!row) return null;

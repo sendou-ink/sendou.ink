@@ -1,18 +1,11 @@
-import type { Tables } from "~/db/tables";
-import type {
-	Group,
-	GroupMember,
-	ParsedMemento,
-	PlusTier,
-	User,
-} from "~/db/types";
+import type { ParsedMemento, Tables } from "~/db/tables";
 import type { MainWeaponId, ModeShort } from "~/modules/in-game-lists";
 import type { TieredSkill } from "../mmr/tiered.server";
 import type { GroupForMatch } from "../sendouq-match/QMatchRepository.server";
 
 export type LookingGroup = {
 	id: number;
-	createdAt: Group["createdAt"];
+	createdAt: Tables["Group"]["createdAt"];
 	tier?: TieredSkill["tier"];
 	tierRange?: {
 		range?: [TieredSkill["tier"], TieredSkill["tier"]];
@@ -23,7 +16,7 @@ export type LookingGroup = {
 	isLiked?: boolean;
 	isRechallenge?: boolean;
 	team?: GroupForMatch["team"];
-	chatCode?: Group["chatCode"];
+	chatCode?: Tables["Group"]["chatCode"];
 	mapModePreferences?: Array<NonNullable<Tables["User"]["mapModePreferences"]>>;
 	futureMatchModes?: Array<ModeShort>;
 	rechallengeMatchModes?: Array<ModeShort>;
@@ -34,14 +27,14 @@ export type LookingGroup = {
 		username: string;
 		discordAvatar: string | null;
 		noScreen?: number;
-		customUrl?: User["customUrl"];
-		plusTier?: PlusTier["tier"];
-		role: GroupMember["role"];
-		note?: GroupMember["note"];
+		customUrl?: Tables["User"]["customUrl"];
+		plusTier?: Tables["PlusTier"]["tier"];
+		role: Tables["GroupMember"]["role"];
+		note?: Tables["GroupMember"]["note"];
 		weapons?: MainWeaponId[];
 		skill?: TieredSkill | "CALCULATING";
-		vc?: User["vc"];
-		inGameName?: User["inGameName"];
+		vc?: Tables["User"]["vc"];
+		inGameName?: Tables["User"]["inGameName"];
 		languages: string[];
 		chatNameColor: string | null;
 		skillDifference?: ParsedMemento["users"][number]["skillDifference"];
@@ -54,7 +47,7 @@ export type LookingGroup = {
 };
 
 export type LookingGroupWithInviteCode = LookingGroup & {
-	inviteCode: Group["inviteCode"];
+	inviteCode: Tables["Group"]["inviteCode"];
 	members: NonNullable<LookingGroup["members"]>;
 };
 

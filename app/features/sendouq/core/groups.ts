@@ -1,4 +1,4 @@
-import type { GroupMember } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import type { LookingGroup } from "../q-types";
 
 // logic is that team who is bigger decides the settings
@@ -31,6 +31,6 @@ export function groupAfterMorph({
 	return ourGroup;
 }
 
-export function hasGroupManagerPerms(role: GroupMember["role"]) {
+export function hasGroupManagerPerms(role: Tables["GroupMember"]["role"]) {
 	return role === "OWNER" || role === "MANAGER";
 }

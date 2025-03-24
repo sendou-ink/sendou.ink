@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
+import type { SerializeFrom } from "@remix-run/node";
 import {
 	Link,
 	useLoaderData,
@@ -25,23 +25,7 @@ import { AlertIcon } from "~/components/icons/Alert";
 import { TopTenPlayer } from "~/features/leaderboards/components/TopTenPlayer";
 import { playerTopTenPlacement } from "~/features/leaderboards/leaderboards-utils";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
-import { seasonAllMMRByUserId } from "~/features/mmr/queries/seasonAllMMRByUserId.server";
-import {
-	allSeasons,
-	currentOrPreviousSeason,
-	seasonObject,
-} from "~/features/mmr/season";
-import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
-import { seasonMapWinrateByUserId } from "~/features/sendouq/queries/seasonMapWinrateByUserId.server";
-import {
-	seasonMatchesByUserId,
-	seasonMatchesByUserIdPagesCount,
-} from "~/features/sendouq/queries/seasonMatchesByUserId.server";
-import { seasonReportedWeaponsByUserId } from "~/features/sendouq/queries/seasonReportedWeaponsByUserId.server";
-import { seasonSetWinrateByUserId } from "~/features/sendouq/queries/seasonSetWinrateByUserId.server";
-import { seasonStagesByUserId } from "~/features/sendouq/queries/seasonStagesByUserId.server";
-import { seasonsMatesEnemiesByUserId } from "~/features/sendouq/queries/seasonsMatesEnemiesByUserId.server";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { allSeasons, seasonObject } from "~/features/mmr/season";
 import { useWeaponUsage } from "~/hooks/swr";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import {
@@ -54,75 +38,15 @@ import { atOrError } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { cutToNDecimalPlaces, roundToNDecimalPlaces } from "~/utils/number";
-import { type SendouRouteHandle, notFoundIfFalsy } from "~/utils/remix.server";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import { TIERS_PAGE, sendouQMatchPage, userSeasonsPage } from "~/utils/urls";
-import {
-	seasonsSearchParamsSchema,
-	userParamsSchema,
-} from "../user-page-schemas.server";
-import type { UserPageLoaderData } from "./u.$identifier";
+
+import { loader } from "../loaders/u.$identifier.seasons.server";
+import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+export { loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["user"],
-};
-
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const { identifier } = userParamsSchema.parse(params);
-	const parsedSearchParams = seasonsSearchParamsSchema.safeParse(
-		Object.fromEntries(new URL(request.url).searchParams),
-	);
-	const {
-		info = "weapons",
-		page = 1,
-		season = currentOrPreviousSeason(new Date())!.nth,
-	} = parsedSearchParams.success ? parsedSearchParams.data : {};
-
-	const user = notFoundIfFalsy(
-		await UserRepository.identifierToUserId(identifier),
-	);
-
-	const { isAccurateTiers, userSkills } = _userSkills(season);
-	const { tier, ordinal, approximate } = userSkills[user.id] ?? {
-		approximate: false,
-		ordinal: 0,
-		tier: { isPlus: false, name: "IRON" },
-	};
-
-	return {
-		currentOrdinal: !approximate ? ordinal : undefined,
-		winrates: {
-			maps: seasonMapWinrateByUserId({ season, userId: user.id }),
-			sets: seasonSetWinrateByUserId({ season, userId: user.id }),
-		},
-		skills: seasonAllMMRByUserId({ season, userId: user.id }),
-		tier,
-		isAccurateTiers,
-		matches: {
-			value: seasonMatchesByUserId({ season, userId: user.id, page }),
-			currentPage: page,
-			pages: seasonMatchesByUserIdPagesCount({ season, userId: user.id }),
-		},
-		season,
-		info: {
-			currentTab: info,
-			stages:
-				info === "stages"
-					? seasonStagesByUserId({ season, userId: user.id })
-					: null,
-			weapons:
-				info === "weapons"
-					? seasonReportedWeaponsByUserId({ season, userId: user.id })
-					: null,
-			players:
-				info === "enemies" || info === "mates"
-					? seasonsMatesEnemiesByUserId({
-							season,
-							userId: user.id,
-							type: info === "enemies" ? "ENEMY" : "MATE",
-						})
-					: null,
-		},
-	};
 };
 
 const DAYS_WITH_SKILL_NEEDED_TO_SHOW_POWER_CHART = 2;

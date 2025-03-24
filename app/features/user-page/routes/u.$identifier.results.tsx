@@ -6,7 +6,7 @@ import { UserResultsTable } from "~/features/user-page/components/UserResultsTab
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import invariant from "~/utils/invariant";
 import { userResultsEditHighlightsPage } from "~/utils/urls";
-import type { UserPageLoaderData } from "../../../features/user-page/routes/u.$identifier";
+import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 
 import { loader } from "../loaders/u.$identifier.results.server";
 export { loader };

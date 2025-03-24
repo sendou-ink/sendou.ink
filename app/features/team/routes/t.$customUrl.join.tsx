@@ -3,10 +3,10 @@ import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { action } from "../actions/t.$customUrl.join.server";
-import { loader } from "../loaders/t.$customUrl.join.server";
 import "../team.css";
 
+import { action } from "../actions/t.$customUrl.join.server";
+import { loader } from "../loaders/t.$customUrl.join.server";
 export { loader, action };
 
 export const handle: SendouRouteHandle = {

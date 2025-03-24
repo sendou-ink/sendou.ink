@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { GroupMember } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/* sql */ `
   select 
@@ -13,7 +13,7 @@ const stm = sql.prepare(/* sql */ `
 
 export const groupSuccessorOwner = (groupId: number) => {
 	const rows = stm.all({ groupId }) as Array<
-		Pick<GroupMember, "role" | "userId">
+		Pick<Tables["GroupMember"], "role" | "userId">
 	>;
 
 	if (rows.length === 0) {

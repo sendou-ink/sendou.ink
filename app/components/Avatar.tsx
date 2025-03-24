@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import * as React from "react";
-import type { User } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { BLANK_IMAGE_URL, discordAvatarUrl } from "~/utils/urls";
 
 const dimensions = {
@@ -21,7 +21,7 @@ function _Avatar({
 	alt = "",
 	...rest
 }: {
-	user?: Pick<User, "discordId" | "discordAvatar">;
+	user?: Pick<Tables["User"], "discordId" | "discordAvatar">;
 	url?: string;
 	className?: string;
 	alt?: string;

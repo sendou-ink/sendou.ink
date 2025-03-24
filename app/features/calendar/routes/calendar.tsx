@@ -1,30 +1,23 @@
-import type {
-	LoaderFunctionArgs,
-	MetaFunction,
-	SerializeFrom,
-} from "@remix-run/node";
+import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import clsx from "clsx";
-import { addMonths, subMonths } from "date-fns";
 import React from "react";
 import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton } from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { Main } from "~/components/Main";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { UsersIcon } from "~/components/icons/Users";
-import { getUserId } from "~/features/auth/core/user.server";
+import type { CalendarEventTag } from "~/db/tables";
 import { currentSeason } from "~/features/mmr/season";
 import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { joinListToNaturalString } from "~/utils/arrays";
 import {
 	databaseTimestampToDate,
-	dateToThisWeeksMonday,
-	dateToThisWeeksSunday,
 	dateToWeekNumber,
 	dayToWeekStartsAtMondayDay,
 	getWeekStartsAtMondayDay,
@@ -41,20 +34,15 @@ import {
 	tournamentPage,
 	userSubmittedImage,
 } from "~/utils/urls";
-import { actualNumber, safeSplit } from "~/utils/zod";
 import { Label } from "../../../components/Label";
-import type {
-	CalendarEventTag,
-	PersistedCalendarEventTag,
-} from "../../../db/types";
 import { metaTags } from "../../../utils/remix";
-import * as CalendarRepository from "../CalendarRepository.server";
-import { calendarEventTagSchema } from "../actions/calendar.new.server";
 import { CALENDAR_EVENT } from "../calendar-constants";
-import { closeByWeeks } from "../calendar-utils";
 import { Tags } from "../components/Tags";
+
+import { loader } from "../loaders/calendar.server";
+export { loader };
+
 import "~/styles/calendar.css";
-import { SendouSwitch } from "~/components/elements/Switch";
 
 export const meta: MetaFunction = (args) => {
 	const data = args.data as SerializeFrom<typeof loader> | null;
@@ -91,107 +79,6 @@ export const handle: SendouRouteHandle = {
 		type: "IMAGE",
 	}),
 };
-
-const loaderWeekSearchParamsSchema = z.object({
-	week: z.preprocess(actualNumber, z.number().int().min(1).max(53)),
-	year: z.preprocess(actualNumber, z.number().int()),
-});
-
-const loaderFilterSearchParamsSchema = z.object({
-	tags: z.preprocess(safeSplit(), z.array(calendarEventTagSchema)),
-});
-
-const loaderTournamentsOnlySearchParamsSchema = z.object({
-	tournaments: z.literal("true").nullish(),
-});
-
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUserId(request);
-	const url = new URL(request.url);
-
-	// separate from tags parse so they can fail independently
-	const parsedWeekParams = loaderWeekSearchParamsSchema.safeParse({
-		year: url.searchParams.get("year"),
-		week: url.searchParams.get("week"),
-	});
-	const parsedFilterParams = loaderFilterSearchParamsSchema.safeParse({
-		tags: url.searchParams.get("tags"),
-	});
-	const parsedTournamentsOnlyParams =
-		loaderTournamentsOnlySearchParamsSchema.safeParse({
-			tournaments: url.searchParams.get("tournaments"),
-		});
-
-	const mondayDate = dateToThisWeeksMonday(new Date());
-	const sundayDate = dateToThisWeeksSunday(new Date());
-	const currentWeek = dateToWeekNumber(mondayDate);
-
-	const displayedWeek = parsedWeekParams.success
-		? parsedWeekParams.data.week
-		: currentWeek;
-	const displayedYear = parsedWeekParams.success
-		? parsedWeekParams.data.year
-		: currentWeek === 1 // handle first week of the year special case
-			? sundayDate.getFullYear()
-			: mondayDate.getFullYear();
-	const tagsToFilterBy = parsedFilterParams.success
-		? (parsedFilterParams.data.tags as PersistedCalendarEventTag[])
-		: [];
-	const onlyTournaments = parsedTournamentsOnlyParams.success
-		? Boolean(parsedTournamentsOnlyParams.data.tournaments)
-		: false;
-
-	return {
-		currentWeek,
-		displayedWeek,
-		currentDay: new Date().getDay(),
-		nearbyStartTimes: await CalendarRepository.startTimesOfRange({
-			startTime: subMonths(
-				weekNumberToDate({ week: displayedWeek, year: displayedYear }),
-				1,
-			),
-			endTime: addMonths(
-				weekNumberToDate({ week: displayedWeek, year: displayedYear }),
-				1,
-			),
-			tagsToFilterBy,
-			onlyTournaments,
-		}),
-		weeks: closeByWeeks({ week: displayedWeek, year: displayedYear }),
-		events: await fetchEventsOfWeek({
-			week: displayedWeek,
-			year: displayedYear,
-			tagsToFilterBy,
-			onlyTournaments,
-		}),
-		eventsToReport: user
-			? await CalendarRepository.eventsToReport(user.id)
-			: [],
-	};
-};
-
-function fetchEventsOfWeek(args: {
-	week: number;
-	year: number;
-	tagsToFilterBy: PersistedCalendarEventTag[];
-	onlyTournaments: boolean;
-}) {
-	const startTime = weekNumberToDate(args);
-
-	const endTime = new Date(startTime);
-	endTime.setDate(endTime.getDate() + 7);
-
-	// handle timezone mismatch between server and client
-	startTime.setHours(startTime.getHours() - 12);
-	endTime.setHours(endTime.getHours() + 12);
-
-	return CalendarRepository.findAllBetweenTwoTimestamps({
-		startTime,
-		endTime,
-		tagsToFilterBy: args.tagsToFilterBy,
-		onlyTournaments: args.onlyTournaments,
-	});
-}
 
 export default function CalendarPage() {
 	const { t } = useTranslation("calendar");

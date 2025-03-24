@@ -1,107 +1,20 @@
-import type { ActionFunction } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
 import { Form, useMatches, useOutletContext } from "@remix-run/react";
 import * as React from "react";
-import { z } from "zod";
 import { Button, LinkButton } from "~/components/Button";
 import { Dialog } from "~/components/Dialog";
 import { Label } from "~/components/Label";
 import { UserSearch } from "~/components/UserSearch";
 import { TrashIcon } from "~/components/icons/Trash";
-import type { User } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
-import { requireUserId } from "~/features/auth/core/user.server";
-import { notify } from "~/features/notifications/core/notify.server";
 import { canEditBadgeManagers, canEditBadgeOwners } from "~/permissions";
-import { atOrError, diff } from "~/utils/arrays";
-import {
-	errorToastIfFalsy,
-	notFoundIfFalsy,
-	parseRequestPayload,
-} from "~/utils/remix.server";
-import { assertUnreachable } from "~/utils/types";
-import { badgePage } from "~/utils/urls";
-import { actualNumber } from "~/utils/zod";
-import * as BadgeRepository from "../BadgeRepository.server";
-import { editBadgeActionSchema } from "../badges-schemas.server";
-import type { BadgeDetailsContext, BadgeDetailsLoaderData } from "./badges.$id";
+import { atOrError } from "~/utils/arrays";
+import type * as BadgeRepository from "../BadgeRepository.server";
+import type { BadgeDetailsLoaderData } from "../loaders/badges.$id.server";
+import type { BadgeDetailsContext } from "./badges.$id";
 
-export const action: ActionFunction = async ({ request, params }) => {
-	const data = await parseRequestPayload({
-		request,
-		schema: editBadgeActionSchema,
-	});
-	const badgeId = z.preprocess(actualNumber, z.number()).parse(params.id);
-	const user = await requireUserId(request);
-
-	const badge = notFoundIfFalsy(await BadgeRepository.findById(badgeId));
-
-	switch (data._action) {
-		case "MANAGERS": {
-			errorToastIfFalsy(
-				canEditBadgeManagers(user),
-				"No permissions to edit managers",
-			);
-
-			const oldManagers = await BadgeRepository.findManagersByBadgeId(badgeId);
-
-			await BadgeRepository.replaceManagers({
-				badgeId,
-				managerIds: data.managerIds,
-			});
-
-			const newManagers = data.managerIds.filter(
-				(newManagerId) =>
-					!oldManagers.some((oldManager) => oldManager.id === newManagerId),
-			);
-
-			notify({
-				userIds: newManagers,
-				notification: {
-					type: "BADGE_MANAGER_ADDED",
-					meta: {
-						badgeId,
-						badgeName: badge.displayName,
-					},
-				},
-			});
-			break;
-		}
-		case "OWNERS": {
-			errorToastIfFalsy(
-				canEditBadgeOwners({
-					user,
-					managers: await BadgeRepository.findManagersByBadgeId(badgeId),
-				}),
-				"No permissions to edit owners",
-			);
-
-			const oldOwners: number[] = (
-				await BadgeRepository.findOwnersByBadgeId(badgeId)
-			).flatMap((owner) => new Array(owner.count).fill(owner.id));
-
-			await BadgeRepository.replaceOwners({ badgeId, ownerIds: data.ownerIds });
-
-			notify({
-				userIds: diff(oldOwners, data.ownerIds),
-				notification: {
-					type: "BADGE_ADDED",
-					meta: {
-						badgeName: badge.displayName,
-						badgeId,
-					},
-				},
-			});
-
-			break;
-		}
-		default: {
-			assertUnreachable(data);
-		}
-	}
-
-	throw redirect(badgePage(badgeId));
-};
+import { action } from "../actions/badges.$id.edit.server";
+export { action };
 
 export default function EditBadgePage() {
 	const user = useUser();
@@ -321,7 +234,7 @@ function getOwnerDifferences(
 	oldOwners: BadgeRepository.FindOwnersByBadgeIdItem[],
 ) {
 	const result: Array<{
-		id: User["id"];
+		id: Tables["User"]["id"];
 		type: "added" | "removed";
 		difference: number;
 		username: string;
@@ -353,7 +266,7 @@ function getOwnerDifferences(
 }
 
 function countArrayToDuplicatedIdsArray(
-	owners: Array<{ id: User["id"]; count: number }>,
+	owners: Array<{ id: Tables["User"]["id"]; count: number }>,
 ) {
 	return owners.flatMap((o) => new Array(o.count).fill(null).map(() => o.id));
 }

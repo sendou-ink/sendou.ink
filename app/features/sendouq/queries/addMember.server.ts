@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { GroupMember } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/* sql */ `
   insert into "GroupMember" (
@@ -20,7 +20,7 @@ export function addMember({
 }: {
 	groupId: number;
 	userId: number;
-	role?: GroupMember["role"];
+	role?: Tables["GroupMember"]["role"];
 }) {
 	stm.run({ groupId, userId, role });
 }

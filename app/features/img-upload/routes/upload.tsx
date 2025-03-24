@@ -1,44 +1,16 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import Compressor from "compressorjs";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "~/components/Button";
 import { Main } from "~/components/Main";
-import { requireUser } from "~/features/auth/core/user.server";
-import * as TeamRepository from "~/features/team/TeamRepository.server";
-import { isTeamManager } from "~/features/team/team-utils";
 import invariant from "~/utils/invariant";
-import { action } from "../actions/upload.server";
-import { countUnvalidatedImg } from "../queries/countUnvalidatedImg.server";
 import { imgTypeToDimensions, imgTypeToStyle } from "../upload-constants";
 import type { ImageUploadType } from "../upload-types";
-import { requestToImgType } from "../upload-utils";
-export { action };
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await requireUser(request);
-	const validatedType = requestToImgType(request);
-
-	if (!validatedType) {
-		throw redirect("/");
-	}
-
-	if (validatedType === "team-pfp" || validatedType === "team-banner") {
-		const teamCustomUrl = new URL(request.url).searchParams.get("team") ?? "";
-		const team = await TeamRepository.findByCustomUrl(teamCustomUrl);
-
-		if (!team || !isTeamManager({ team, user })) {
-			throw redirect("/");
-		}
-	}
-
-	return {
-		type: validatedType,
-		unvalidatedImages: countUnvalidatedImg(user.id),
-	};
-};
+import { action } from "../actions/upload.server";
+import { loader } from "../loaders/upload.server";
+export { action, loader };
 
 export default function FileUploadPage() {
 	const { t } = useTranslation(["common"]);

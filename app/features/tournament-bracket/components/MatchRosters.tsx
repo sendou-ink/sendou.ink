@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { Avatar } from "~/components/Avatar";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { tournamentTeamPage, userPage } from "~/utils/urls";
-import type { TournamentMatchLoaderData } from "../routes/to.$id.matches.$mid";
+import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 
 const INACTIVE_PLAYER_CSS =
 	"tournament__team-with-roster__member__inactive text-lighter-important";

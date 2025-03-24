@@ -1,6 +1,5 @@
 import { sql } from "~/db/sql";
 import type { Tables } from "~/db/tables";
-import type { TournamentMatchGameResult } from "~/db/types";
 import { parseDBArray } from "~/utils/sql";
 
 const stm = sql.prepare(/* sql */ `
@@ -27,17 +26,17 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 interface FindResultsByMatchIdResult {
-	id: TournamentMatchGameResult["id"];
-	winnerTeamId: TournamentMatchGameResult["winnerTeamId"];
-	stageId: TournamentMatchGameResult["stageId"];
-	mode: TournamentMatchGameResult["mode"];
+	id: Tables["TournamentMatchGameResult"]["id"];
+	winnerTeamId: Tables["TournamentMatchGameResult"]["winnerTeamId"];
+	stageId: Tables["TournamentMatchGameResult"]["stageId"];
+	mode: Tables["TournamentMatchGameResult"]["mode"];
 	participants: Array<
 		Pick<
 			Tables["TournamentMatchGameResultParticipant"],
 			"tournamentTeamId" | "userId"
 		>
 	>;
-	createdAt: TournamentMatchGameResult["createdAt"];
+	createdAt: Tables["TournamentMatchGameResult"]["createdAt"];
 	opponentOnePoints: Tables["TournamentMatchGameResult"]["opponentOnePoints"];
 	opponentTwoPoints: Tables["TournamentMatchGameResult"]["opponentTwoPoints"];
 }

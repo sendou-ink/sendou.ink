@@ -1,9 +1,9 @@
-import type { User } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { isAdmin } from "~/permissions";
 import { isCustomUrl } from "./urls";
 
 export function isAtLeastFiveDollarTierPatreon(
-	user?: Pick<User, "patronTier" | "id">,
+	user?: Pick<Tables["User"], "patronTier" | "id">,
 ) {
 	if (!user) return false;
 

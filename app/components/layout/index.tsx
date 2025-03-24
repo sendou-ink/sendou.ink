@@ -61,33 +61,31 @@ export const Layout = React.memo(function Layout({
 					onClick={() => setNavDialogOpen(true)}
 				/>
 			) : null}
-			<div className="layout__header__container">
-				<header className="layout__header layout__item_size">
-					<div className="layout__breadcrumb-container">
-						<Link to="/" className="layout__breadcrumb logo">
-							sendou.ink
-						</Link>
-						{breadcrumbs.flatMap((breadcrumb) => {
-							return [
-								<span
-									key={`${breadcrumb.href}-sep`}
-									className="layout__breadcrumb-separator"
-								>
-									»
-								</span>,
-								<BreadcrumbLink key={breadcrumb.href} data={breadcrumb} />,
-							];
-						})}
-					</div>
-					<TopRightButtons
-						isErrored={isErrored}
-						showSupport={Boolean(
-							data && typeof data?.user?.patronTier !== "number" && isFrontPage,
-						)}
-						openNavDialog={() => setNavDialogOpen(true)}
-					/>
-				</header>
-			</div>
+			<header className="layout__header layout__item_size">
+				<div className="layout__breadcrumb-container">
+					<Link to="/" className="layout__breadcrumb logo">
+						sendou.ink
+					</Link>
+					{breadcrumbs.flatMap((breadcrumb) => {
+						return [
+							<span
+								key={`${breadcrumb.href}-sep`}
+								className="layout__breadcrumb-separator"
+							>
+								»
+							</span>,
+							<BreadcrumbLink key={breadcrumb.href} data={breadcrumb} />,
+						];
+					})}
+				</div>
+				<TopRightButtons
+					isErrored={isErrored}
+					showSupport={Boolean(
+						data && typeof data?.user?.patronTier !== "number" && isFrontPage,
+					)}
+					openNavDialog={() => setNavDialogOpen(true)}
+				/>
+			</header>
 			{showLeaderboard ? <MyRampUnit /> : null}
 			{children}
 			<Footer />

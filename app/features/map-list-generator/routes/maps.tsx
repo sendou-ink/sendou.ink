@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/node";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
 import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import * as React from "react";
@@ -8,12 +8,13 @@ import { Button } from "~/components/Button";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { MapPoolSelector, MapPoolStages } from "~/components/MapPoolSelector";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { EditIcon } from "~/components/icons/Edit";
-import type { CalendarEvent } from "~/db/types";
-import { getUserId } from "~/features/auth/core/user.server";
-import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
+import type { Tables } from "~/db/tables";
 import { type ModeWithStage, stageIds } from "~/modules/in-game-lists";
+import "~/styles/maps.css";
 import invariant from "~/utils/invariant";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	MAPS_URL,
@@ -25,9 +26,9 @@ import { generateMapList } from "../core/map-list-generator/map-list";
 import { modesOrder } from "../core/map-list-generator/modes";
 import { mapPoolToNonEmptyModes } from "../core/map-list-generator/utils";
 import { MapPool } from "../core/map-pool";
-import "~/styles/maps.css";
-import { SendouSwitch } from "~/components/elements/Switch";
-import { metaTags } from "~/utils/remix";
+
+import { loader } from "../loaders/maps.server";
+export { loader };
 
 const AMOUNT_OF_MAPS_IN_MAP_LIST = stageIds.length * 2;
 
@@ -55,32 +56,6 @@ export const handle: SendouRouteHandle = {
 		href: MAPS_URL,
 		type: "IMAGE",
 	}),
-};
-
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUserId(request);
-	const url = new URL(request.url);
-	const calendarEventId = url.searchParams.get("eventId");
-
-	const event = calendarEventId
-		? await CalendarRepository.findById({
-				id: Number(calendarEventId),
-				includeMapPool: true,
-			})
-		: undefined;
-
-	return {
-		calendarEvent: event
-			? {
-					id: event.eventId,
-					name: event.name,
-					mapPool: event.mapPool,
-				}
-			: undefined,
-		recentEventsWithMapPools: user
-			? await CalendarRepository.findRecentMapPoolsByAuthorId(user.id)
-			: undefined,
-	};
 };
 
 export default function MapListPage() {
@@ -155,7 +130,7 @@ function useSearchParamPersistedMapPool() {
 
 	const handleMapPoolChange = (
 		newMapPool: MapPool,
-		event?: Pick<CalendarEvent, "id" | "name">,
+		event?: Pick<Tables["CalendarEvent"], "id" | "name">,
 	) => {
 		setMapPool(newMapPool);
 		setSearchParams(

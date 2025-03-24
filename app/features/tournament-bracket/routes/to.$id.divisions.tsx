@@ -4,7 +4,8 @@ import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { UsersIcon } from "../../../components/icons/Users";
 import { tournamentBracketsPage } from "../../../utils/urls";
-import { loader } from "../loader/to.$id.divisions.server";
+
+import { loader } from "../loaders/to.$id.divisions.server";
 export { loader };
 
 export default function TournamentDivisionsPage() {

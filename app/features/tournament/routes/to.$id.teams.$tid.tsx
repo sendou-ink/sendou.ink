@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
@@ -7,15 +7,12 @@ import { ModeImage, StageImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
-import {
-	type TournamentData,
-	type TournamentDataTeam,
-	tournamentDataCached,
+import type {
+	TournamentData,
+	TournamentDataTeam,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import { tournamentTeamPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator";
 import { metaTags } from "~/utils/remix";
-import { parseParams } from "~/utils/remix.server";
 import {
 	teamPage,
 	tournamentMatchPage,
@@ -24,13 +21,11 @@ import {
 	userSubmittedImage,
 } from "~/utils/urls";
 import { TeamWithRoster } from "../components/TeamWithRoster";
-import {
-	type PlayedSet,
-	tournamentTeamSets,
-	winCounts,
-} from "../core/sets.server";
-import { tournamentIdFromParams } from "../tournament-utils";
+import type { PlayedSet } from "../core/sets.server";
 import { useTournament } from "./to.$id";
+
+import { loader } from "../loaders/to.$id.teams.$tid.server";
+export { loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	const tournamentData = (args.matches[1].data as any)
@@ -53,31 +48,6 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 			: undefined,
 		location: args.location,
 	});
-};
-
-export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const tournamentId = tournamentIdFromParams(params);
-	const tournamentTeamId = parseParams({
-		params,
-		schema: tournamentTeamPageParamsSchema,
-	}).tid;
-
-	const tournament = await tournamentDataCached({ tournamentId });
-	if (
-		!tournament ||
-		!tournament.ctx.teams.some((t) => t.id === tournamentTeamId)
-	) {
-		throw new Response(null, { status: 404 });
-	}
-
-	// TODO: could be inferred from tournament data (winCounts too)
-	const sets = tournamentTeamSets({ tournamentTeamId, tournamentId });
-
-	return {
-		tournamentTeamId,
-		sets,
-		winCounts: winCounts(sets),
-	};
 };
 
 export default function TournamentTeamPage() {

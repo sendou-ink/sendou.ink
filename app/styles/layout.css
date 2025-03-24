@@ -1,7 +1,6 @@
 .layout__container {
 	width: 100%;
 	min-height: 100vh;
-	padding-top: 50px; /** compensate for layout__header */
 }
 
 .layout__breadcrumb-container {
@@ -41,14 +40,6 @@
 	--item-size: 1.9rem;
 }
 
-/* 
-  For some reason  the notification popover autocloses on mobile
-  if we don't have the z-index on another element (not on layout__header) 
-*/
-.layout__header__container {
-	z-index: 501;
-}
-
 .layout__header {
 	display: flex;
 	width: 100%;
@@ -61,8 +52,6 @@
 	font-weight: bold;
 	padding-block: var(--s-2);
 	padding-inline: var(--s-4);
-	position: fixed;
-	top: 0;
 }
 
 .layout__avatar {

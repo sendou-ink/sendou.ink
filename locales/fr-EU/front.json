@@ -1,1 +1,21 @@
-{}
+{
+	"sq.season": "Saison {{nth}}",
+	"sq.prepare": "Preparez-vous maintenant!",
+	"sq.participate": "Participez maintenant!",
+
+	"showcase.tabs.signedUp": "Inscrit",
+	"showcase.tabs.organizer": "Organisater",
+	"showcase.tabs.discover": "Découvrir",
+	"showcase.viewAll": "Regarder tous les tournois",
+	"showcase.card.ranked": "Classé",
+	"showcase.card.unranked": "Non classé",
+	"showcase.card.winner": "Gagnant",
+	"showcase.results": "Résultats récents",
+
+	"leaderboards.topPlayers": "Top Joueurs",
+	"leaderboards.topTeams": "Top Teams",
+	"leaderboards.viewFull": "Voir tout le Leaderboard",
+
+	"updates.header": "Mise à jour",
+	"updates.viewPast": "Ancienne mise à jour"
+}

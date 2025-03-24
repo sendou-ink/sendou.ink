@@ -9,10 +9,11 @@ import {
 	USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN,
 } from "~/features/mmr/mmr-constants";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
-import { currentOrPreviousSeason } from "~/features/mmr/season";
-import { userSkills } from "~/features/mmr/tiered.server";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+
+import { loader } from "../loaders/tiers.server";
+export { loader };
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -25,15 +26,6 @@ export const meta: MetaFunction = (args) => {
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
-};
-
-export const loader = () => {
-	const season = currentOrPreviousSeason(new Date());
-	const { intervals } = userSkills(season!.nth);
-
-	return {
-		intervals,
-	};
 };
 
 export default function TiersPage() {

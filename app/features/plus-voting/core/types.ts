@@ -1,8 +1,8 @@
-import type { PlusVote } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 export interface MonthYear {
 	month: number;
 	year: number;
 }
 
-export type PlusVoteFromFE = Pick<PlusVote, "votedId" | "score">;
+export type PlusVoteFromFE = Pick<Tables["PlusVote"], "votedId" | "score">;

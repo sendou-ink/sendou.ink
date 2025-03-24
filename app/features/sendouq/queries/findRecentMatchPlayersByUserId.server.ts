@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { GroupMember } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/* sql*/ `
   with "MostRecentGroupMatch" as (
@@ -25,7 +25,10 @@ const stm = sql.prepare(/* sql*/ `
     "MostRecentGroupMatch"."createdAt" > unixepoch() - 60 * 60 * 2
 `);
 
-export type RecentMatchPlayer = Pick<GroupMember, "groupId" | "userId">;
+export type RecentMatchPlayer = Pick<
+	Tables["GroupMember"],
+	"groupId" | "userId"
+>;
 
 export function findRecentMatchPlayersByUserId(userId: number) {
 	return stm.all({ userId }) as Array<RecentMatchPlayer>;

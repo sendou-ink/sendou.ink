@@ -1,15 +1,5 @@
 import slugify from "slugify";
-import type { Preference } from "~/db/tables";
-import type {
-	Art,
-	Badge,
-	CalendarEvent,
-	GearType,
-	GroupMatch,
-	MapPoolMap,
-	User,
-	XRankPlacement,
-} from "~/db/types";
+import type { GearType, Preference, Tables } from "~/db/tables";
 import type { ArtSource } from "~/features/art/art-types";
 import type { AuthErrorCode } from "~/features/auth/core/errors";
 import { serializeBuild } from "~/features/build-analyzer";
@@ -154,8 +144,8 @@ export const NOTIFICATIONS_PEAK_ROUTE = "/notifications/peek";
 export const NOTIFICATIONS_MARK_AS_SEEN_ROUTE = "/notifications/seen";
 
 interface UserLinkArgs {
-	discordId: User["discordId"];
-	customUrl?: User["customUrl"];
+	discordId: Tables["User"]["discordId"];
+	customUrl?: Tables["User"]["customUrl"];
 }
 
 export const userPage = (user: UserLinkArgs) =>
@@ -188,7 +178,7 @@ export const userArtPage = (
 	bigArtId?: number,
 ) =>
 	`${userPage(user)}/art${source ? `?source=${source}` : ""}${bigArtId ? `?big=${bigArtId}` : ""}`;
-export const newArtPage = (artId?: Art["id"]) =>
+export const newArtPage = (artId?: Tables["Art"]["id"]) =>
 	`${artPage()}/new${artId ? `?art=${artId}` : ""}`;
 export const userNewBuildPage = (
 	user: UserLinkArgs,
@@ -222,7 +212,7 @@ export const topSearchPage = (args?: {
 	month: number;
 	year: number;
 	mode: ModeShort;
-	region: XRankPlacement["region"];
+	region: Tables["XRankPlacement"]["region"];
 }) =>
 	args
 		? `/xsearch?month=${args.month}&year=${args.year}&mode=${args.mode}&region=${args.region}`
@@ -360,7 +350,7 @@ export const tournamentOrganizationEditPage = (organizationSlug: string) =>
 export const sendouQInviteLink = (inviteCode: string) =>
 	`${SENDOUQ_PAGE}?${JOIN_CODE_SEARCH_PARAM_KEY}=${inviteCode}`;
 
-export const sendouQMatchPage = (id: GroupMatch["id"]) => {
+export const sendouQMatchPage = (id: Tables["GroupMatch"]["id"]) => {
 	return `${SENDOUQ_PAGE}/match/${id}`;
 };
 
@@ -386,9 +376,9 @@ export const getWeaponUsage = ({
 	return `/weapon-usage?userId=${userId}&season=${season}&modeShort=${modeShort}&stageId=${stageId}`;
 };
 
-export const mapsPage = (eventId?: MapPoolMap["calendarEventId"]) =>
+export const mapsPage = (eventId?: Tables["MapPoolMap"]["calendarEventId"]) =>
 	`/maps${eventId ? `?eventId=${eventId}` : ""}`;
-export const readonlyMapsPage = (eventId: CalendarEvent["id"]) =>
+export const readonlyMapsPage = (eventId: Tables["CalendarEvent"]["id"]) =>
 	`/maps?readonly&eventId=${eventId}`;
 export const articlePage = (slug: string) => `${ARTICLES_MAIN_PAGE}/${slug}`;
 export const analyzerPage = (args?: {
@@ -425,7 +415,7 @@ export const badgeUrl = ({
 	code,
 	extension,
 }: {
-	code: Badge["code"];
+	code: Tables["Badge"]["code"];
 	extension?: "gif";
 }) => `/static-assets/badges/${code}${extension ? `.${extension}` : ""}`;
 export const articlePreviewUrl = (slug: string) =>

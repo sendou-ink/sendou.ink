@@ -1,25 +1,18 @@
-import type {
-	LoaderFunctionArgs,
-	MetaFunction,
-	SerializeFrom,
-} from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/node";
 import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useDebounce } from "react-use";
-import { z } from "zod";
 import { Avatar } from "~/components/Avatar";
 import { Input } from "~/components/Input";
 import { Main } from "~/components/Main";
 import { SearchIcon } from "~/components/icons/Search";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { metaTags } from "~/utils/remix";
-import {
-	type SendouRouteHandle,
-	parseSearchParams,
-} from "~/utils/remix.server";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import { USER_SEARCH_PAGE, navIconUrl, userPage } from "~/utils/urls";
-import { queryToUserIdentifier } from "~/utils/users";
+
+import { loader } from "../loaders/u.server";
+export { loader };
 
 import "~/styles/u.css";
 
@@ -38,31 +31,6 @@ export const meta: MetaFunction = (args) => {
 		description: "Search for sendou.ink users",
 		location: args.location,
 	});
-};
-
-export type UserSearchLoaderData = SerializeFrom<typeof loader>;
-
-const searchParamsSchema = z.object({
-	q: z.string().max(100).catch(""),
-	limit: z.coerce.number().int().min(1).max(25).catch(25),
-});
-
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const { q: query, limit } = parseSearchParams({
-		request,
-		schema: searchParamsSchema,
-	});
-
-	if (!query) return null;
-
-	const identifier = queryToUserIdentifier(query);
-
-	return {
-		users: identifier
-			? await UserRepository.searchExact(identifier)
-			: await UserRepository.search({ query, limit }),
-		query,
-	};
 };
 
 export default function UserSearchPage() {

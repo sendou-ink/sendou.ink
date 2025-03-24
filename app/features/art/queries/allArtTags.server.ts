@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { ArtTag } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/* sql */ `
   select
@@ -9,6 +9,6 @@ const stm = sql.prepare(/* sql */ `
     "ArtTag"
 `);
 
-export function allArtTags(): Array<Pick<ArtTag, "id" | "name">> {
+export function allArtTags(): Array<Pick<Tables["ArtTag"], "id" | "name">> {
 	return stm.all() as any;
 }

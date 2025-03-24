@@ -4,13 +4,13 @@ import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { ARTICLES_MAIN_PAGE, articlePage, navIconUrl } from "~/utils/urls";
+import { joinListToNaturalString } from "../../../utils/arrays";
 import { metaTags } from "../../../utils/remix";
-import { mostRecentArticles } from "../core/list.server";
+
+import { loader } from "../loaders/a.server";
+export { loader };
 
 import "~/styles/front.css";
-import { joinListToNaturalString } from "../../../utils/arrays";
-
-const MAX_ARTICLES_COUNT = 100;
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: () => ({
@@ -28,12 +28,6 @@ export const meta: MetaFunction = (args) => {
 			"Articles about the competitive side of Splatoon. Written by various community members.",
 		location: args.location,
 	});
-};
-
-export const loader = async () => {
-	return {
-		articles: await mostRecentArticles(MAX_ARTICLES_COUNT),
-	};
 };
 
 export default function ArticlesMainPage() {

@@ -3,9 +3,12 @@
 	"type.TOURNAMENT": "Tournoi (PoV)",
 	"type.MATCHMAKING": "Anarchie/Match X/Guerre de Territoire",
 	"type.CAST": "Tournoi (Cast)",
+	"type.SENDOUQ": "SendouQ",
 	"gameCount": "Match {{count}}",
 	"minShort": "min",
 	"secShort": "sec",
+	"forms.title.create": "Ajouter une nouvelle VoD",
+	"forms.title.edit": "Modifier une VoD",
 	"forms.title.youtubeUrl": "URL YouTube",
 	"forms.title.videoTitle": "Titre de la vidéo",
 	"forms.title.videoDate": "Date de la vidéo",
@@ -18,5 +21,8 @@
 	"forms.title.weaponsTeamTwo": "Armes (Équipe 2)",
 	"forms.title.weapon": "Arme",
 	"forms.action.addMatch": "Ajouter un match",
-	"forms.action.deleteMatch": "Effacer un match"
+	"forms.action.deleteMatch": "Effacer un match",
+	"noVods": "Aucune vidéo a été trouvé. Est-ce qu'il nous manque quelque chose ? Consultez la page FAQ pour savoir comment obtenir les autorisations de téléchargement VoD.",
+	"gainPerms": "Demandez sur le channel helpdesk de notre discord pour avoir les permissions de publier vos VoD",
+	"deleteConfirm": "Supprimer la vidéo '{{title}}'?"
 }

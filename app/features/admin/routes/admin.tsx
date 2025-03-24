@@ -1,26 +1,36 @@
 import type { MetaFunction } from "@remix-run/node";
 import {
 	Form,
+	Link,
 	useFetcher,
 	useLoaderData,
 	useNavigation,
+	useSearchParams,
 } from "@remix-run/react";
 import * as React from "react";
+import { Avatar } from "~/components/Avatar";
 import { Button } from "~/components/Button";
 import { Catcher } from "~/components/Catcher";
 import { Input } from "~/components/Input";
 import { Main } from "~/components/Main";
+import { NewTabs } from "~/components/NewTabs";
 import { SubmitButton } from "~/components/SubmitButton";
 import { UserSearch } from "~/components/UserSearch";
+import { SearchIcon } from "~/components/icons/Search";
 import { useUser } from "~/features/auth/core/user";
 import { FRIEND_CODE_REGEXP_PATTERN } from "~/features/sendouq/q-constants";
 import { isAdmin, isMod } from "~/permissions";
-import { SEED_URL, STOP_IMPERSONATING_URL, impersonateUrl } from "~/utils/urls";
-
 import { metaTags } from "~/utils/remix";
+import {
+	SEED_URL,
+	STOP_IMPERSONATING_URL,
+	impersonateUrl,
+	userPage,
+} from "~/utils/urls";
+
 import { action } from "../actions/admin.server";
 import { loader } from "../loaders/admin.server";
-export { action, loader };
+export { loader, action };
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -30,10 +40,78 @@ export const meta: MetaFunction = (args) => {
 };
 
 export default function AdminPage() {
+	return (
+		<Main>
+			<NewTabs
+				tabs={[
+					{
+						label: "Actions",
+					},
+					{
+						label: "Friend code look-up",
+					},
+				]}
+				content={[
+					{
+						key: "actions",
+						element: <AdminActions />,
+					},
+					{
+						key: "friend-code-look-up",
+						element: <FriendCodeLookUp />,
+					},
+				]}
+			/>
+		</Main>
+	);
+}
+
+function FriendCodeLookUp() {
+	const data = useLoaderData<typeof loader>();
+	const [searchParams, setSearchParams] = useSearchParams();
+	const [friendCode, setFriendCode] = React.useState(
+		searchParams.get("friendCode") ?? "",
+	);
+	const fetcher = useFetcher();
+
+	return (
+		<div>
+			<div className="stack md horizontal justify-center">
+				<Input
+					placeholder="1234-5678-9101"
+					name="friendCode"
+					value={friendCode}
+					onChange={(e) => setFriendCode(e.target.value)}
+				/>
+				<SubmitButton
+					state={fetcher.state}
+					icon={<SearchIcon />}
+					onClick={() => setSearchParams({ friendCode })}
+				>
+					Search
+				</SubmitButton>
+			</div>
+			<div className="stack lg">
+				{data.friendCodeSearchUsers?.map((user) => (
+					<Link
+						key={user.id}
+						to={userPage(user)}
+						className="stack horizontal sm text-main-forced items-center"
+					>
+						<Avatar user={user} size="sm" />
+						{user.username}
+					</Link>
+				))}
+			</div>
+		</div>
+	);
+}
+
+function AdminActions() {
 	const user = useUser();
 
 	return (
-		<Main className="stack lg">
+		<div className="stack lg">
 			{process.env.NODE_ENV !== "production" && <Seed />}
 
 			{isMod(user) ? <LinkPlayer /> : null}
@@ -51,7 +129,7 @@ export default function AdminPage() {
 			{isMod(user) ? <UnbanUser /> : null}
 			{isAdmin(user) ? <RefreshPlusTiers /> : null}
 			{isAdmin(user) ? <CleanUp /> : null}
-		</Main>
+		</div>
 	);
 }
 

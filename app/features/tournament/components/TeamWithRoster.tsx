@@ -2,7 +2,7 @@ import { Link } from "@remix-run/react";
 import clsx from "clsx";
 import { Avatar } from "~/components/Avatar";
 import { ModeImage, StageImage } from "~/components/Image";
-import type { MapPoolMap, User } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -18,10 +18,10 @@ export function TeamWithRoster({
 	activePlayers,
 }: {
 	team: TournamentDataTeam;
-	mapPool?: Array<Pick<MapPoolMap, "stageId" | "mode">> | null;
+	mapPool?: Array<Pick<Tables["MapPoolMap"], "stageId" | "mode">> | null;
 	seed?: number;
 	teamPageUrl?: string;
-	activePlayers?: User["id"][];
+	activePlayers?: Tables["User"]["id"][];
 }) {
 	const user = useUser();
 	const tournament = useTournament();
@@ -136,7 +136,7 @@ function FreshAccountEmoji({ discordId }: { discordId: string }) {
 function TeamMapPool({
 	mapPool,
 }: {
-	mapPool: Array<Pick<MapPoolMap, "stageId" | "mode">>;
+	mapPool: Array<Pick<Tables["MapPoolMap"], "stageId" | "mode">>;
 }) {
 	return (
 		<div
