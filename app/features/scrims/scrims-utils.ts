@@ -1,6 +1,6 @@
+import groupBy from "just-group-by";
 import type { LutiDiv, ScrimPost } from "./scrims-types";
 
-// xxx: rename?
 export const getPostRequestCensor =
 	(userId: number) =>
 	(post: ScrimPost): ScrimPost => {
@@ -12,7 +12,6 @@ export const getPostRequestCensor =
 					return true;
 				}
 
-				// xxx: should be able to delete request if just the member of it? not author
 				const isOwnRequest = request.users.some((user) => user.id === userId);
 				return isOwnRequest;
 			}),
@@ -20,7 +19,7 @@ export const getPostRequestCensor =
 	};
 
 export function dividePosts(posts: Array<ScrimPost>, userId?: number) {
-	const grouped = Object.groupBy(posts, (post) => {
+	const grouped = groupBy(posts, (post) => {
 		if (post.users.some((user) => user.id === userId)) {
 			return "OWNED";
 		}

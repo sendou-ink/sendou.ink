@@ -14,7 +14,7 @@ import type { ScrimPost as ScrimPostType } from "../scrims-types";
 import { loader } from "../loaders/scrims.$id.server";
 export { loader };
 
-import "../scrims.css";
+import styles from "./scrims.$id.module.css";
 
 export default function ScrimPage() {
 	const data = useLoaderData<typeof loader>();
@@ -22,7 +22,7 @@ export default function ScrimPage() {
 	return (
 		<Main className="stack lg">
 			<ScrimHeader />
-			<div className="scrims__groups-container">
+			<div className={styles.groupsContainer}>
 				<GroupCard group={data.post} side="ALPHA" />
 				<GroupCard group={data.post.requests[0]} side="BRAVO" />
 			</div>
@@ -38,14 +38,13 @@ export default function ScrimPage() {
 	);
 }
 
-// xxx: hydration
 function ScrimHeader() {
 	const data = useLoaderData<typeof loader>();
 	const { i18n } = useTranslation();
 
 	return (
 		<div className="line-height-tight" data-testid="match-header">
-			<h2 className="text-lg">
+			<h2 className="text-lg" suppressHydrationWarning>
 				{databaseTimestampToDate(data.post.at).toLocaleString(i18n.language, {
 					weekday: "long",
 					year: "numeric",
@@ -60,7 +59,6 @@ function ScrimHeader() {
 	);
 }
 
-// xxx: validate team can show up
 function GroupCard({
 	group,
 	side,
@@ -89,9 +87,9 @@ function GroupCard({
 					</Link>
 				) : null}
 			</div>
-			<div className="scrims__group-card">
+			<div className={styles.groupCard}>
 				{group.users.map((user) => (
-					<div key={user.id} className="scrims__group-card__member-row">
+					<div key={user.id} className={styles.memberRow}>
 						<Avatar user={user} size="xs" />
 						{user.username}
 					</div>
@@ -104,14 +102,13 @@ function GroupCard({
 function InfoWithHeader({ header, value }: { header: string; value: string }) {
 	return (
 		<div>
-			<div className="scrims__info__header">{header}</div>
-			<div className="scrims__info__value">{value}</div>
+			<div className={styles.infoHeader}>{header}</div>
+			<div className={styles.infoValue}>{value}</div>
 		</div>
 	);
 }
 
-// xxx: users from loader
-const users = {};
+// xxx: test chat works ok
 function ScrimChat() {
 	const data = useLoaderData<typeof loader>();
 
@@ -127,8 +124,8 @@ function ScrimChat() {
 	);
 
 	return (
-		<div className="scrims__chat-container">
-			<ConnectedChat users={users} rooms={rooms} />
+		<div className={styles.chatContainer}>
+			<ConnectedChat users={data.chatUsers} rooms={rooms} />
 		</div>
 	);
 }

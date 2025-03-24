@@ -51,6 +51,7 @@
 		"isbot": "^5.1.23",
 		"just-capitalize": "^3.2.0",
 		"just-compare": "^2.3.0",
+		"just-group-by": "^2.2.0",
 		"just-random-integer": "^4.2.0",
 		"just-shuffle": "^4.2.0",
 		"kysely": "^0.27.5",

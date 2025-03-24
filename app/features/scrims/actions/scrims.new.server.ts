@@ -1,5 +1,6 @@
 import { type ActionFunctionArgs, redirect } from "@remix-run/node";
 import type { z } from "zod";
+import type { Tables } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
@@ -35,6 +36,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	return redirect(scrimsPage());
 };
 
+const ROLES_TO_EXCLUDE: Tables["TeamMember"]["role"][] = [
+	"CHEERLEADER",
+	"COACH",
+	"SUB",
+];
+
 export const usersListForPost = async ({
 	from,
 	authorId,
@@ -49,6 +56,7 @@ export const usersListForPost = async ({
 	);
 	errorToastIfFalsy(team, "User is not a member of this team");
 
-	// xxx: account for role
-	return team.members.map((member) => member.id);
+	return team.members
+		.filter((member) => !ROLES_TO_EXCLUDE.includes(member.role))
+		.map((member) => member.id);
 };

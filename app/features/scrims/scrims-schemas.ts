@@ -43,9 +43,26 @@ export const scrimsNewActionSchema = z.object({
 		date,
 		z
 			.date()
-			// xxx: is this correct? if so then comment
-			.min(sub(new Date(), { days: 1 }))
-			.max(add(new Date(), { days: 8 })),
+			.refine(
+				(date) => {
+					if (date < sub(new Date(), { days: 1 })) return false;
+
+					return true;
+				},
+				{
+					message: "Date can not be in the past",
+				},
+			)
+			.refine(
+				(date) => {
+					if (date > add(new Date(), { days: 15 })) return false;
+
+					return true;
+				},
+				{
+					message: "Date can not be more than 2 weeks in the future",
+				},
+			),
 	),
 	divs: z
 		.object({

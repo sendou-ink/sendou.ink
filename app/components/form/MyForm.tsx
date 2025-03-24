@@ -59,14 +59,13 @@ export function MyForm<T extends z.ZodTypeAny>({
 					<SubmitButton state={fetcher.state}>
 						{t("common:actions.submit")}
 					</SubmitButton>
-					{/** xxx: i18n */}
 					{handleCancel ? (
 						<Button
 							variant="minimal-destructive"
 							onClick={handleCancel}
 							size="tiny"
 						>
-							Cancel
+							{t("common:actions.cancel")}
 						</Button>
 					) : null}
 				</div>

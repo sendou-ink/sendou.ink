@@ -119,7 +119,7 @@ export async function teamsByMemberUserId(
 				eb
 					.selectFrom("TeamMemberWithSecondary as m2")
 					.innerJoin("User", "User.id", "m2.userId")
-					.select(COMMON_USER_FIELDS)
+					.select([...COMMON_USER_FIELDS, "m2.role"])
 					.whereRef("TeamMemberWithSecondary.teamId", "=", "m2.teamId"),
 			).as("members"),
 		])

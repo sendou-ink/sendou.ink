@@ -1,5 +1,6 @@
 import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
+import groupBy from "just-group-by";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod";
@@ -10,6 +11,8 @@ import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { SubmitButton } from "~/components/SubmitButton";
 import { Table } from "~/components/Table";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { MyForm } from "~/components/form/MyForm";
 import { SpeechBubbleIcon } from "~/components/icons/SpeechBubble";
 import { UsersIcon } from "~/components/icons/Users";
@@ -29,15 +32,15 @@ import { ClockIcon } from "../../../components/icons/Clock";
 import { CrossIcon } from "../../../components/icons/Cross";
 import { MegaphoneIcon } from "../../../components/icons/MegaphoneIcon";
 import { SpeechBubbleFilledIcon } from "../../../components/icons/SpeechBubbleFilled";
-import { action } from "../actions/scrims.server";
 import { FromFormField } from "../components/FromFormField";
-import { loader } from "../loaders/scrims.server";
 import { newRequestSchema } from "../scrims-schemas";
 import type { ScrimPost, ScrimPostRequest } from "../scrims-types";
+
+import { action } from "../actions/scrims.server";
+import { loader } from "../loaders/scrims.server";
 export { loader, action };
-import "../scrims.css";
-import { SendouButton } from "~/components/elements/Button";
-import { SendouPopover } from "~/components/elements/Popover";
+
+import styles from "./scrims.module.css";
 
 export type NewRequestFormFields = z.infer<typeof newRequestSchema>;
 
@@ -45,8 +48,8 @@ export const handle: SendouRouteHandle = {
 	i18n: "calendar",
 };
 
-// xxx: default should not be empty "Own posts" tab
 // xxx: mobile better (button visible always)
+// xxx: notifications
 
 export default function ScrimsPage() {
 	const { t } = useTranslation(["calendar"]);
@@ -62,7 +65,7 @@ export default function ScrimsPage() {
 	if (!isMounted)
 		return (
 			<Main>
-				<div className="scrims__placeholder" />
+				<div className={styles.placeholder} />
 			</Main>
 		);
 
@@ -77,6 +80,7 @@ export default function ScrimsPage() {
 			<NewTabs
 				sticky
 				disappearing
+				defaultIndex={data.posts.owned.length > 0 ? 0 : 2}
 				tabs={[
 					{
 						label: "Own posts",
@@ -201,8 +205,7 @@ function ScrimsDaySeparatedTables({
 }) {
 	const { i18n } = useTranslation();
 
-	// xxx: make sure it compiles to other browsers
-	const postsByDay = Object.groupBy(posts, (post) =>
+	const postsByDay = groupBy(posts, (post) =>
 		databaseTimestampToDate(post.at).getDate(),
 	);
 
@@ -311,7 +314,7 @@ function ScrimsTable({
 						<React.Fragment key={post.id}>
 							<tr>
 								<td>
-									<div className="scrims__post__time">
+									<div className={styles.postTime}>
 										{inThePast
 											? "Now"
 											: databaseTimestampToDate(post.at).toLocaleTimeString(
@@ -330,7 +333,7 @@ function ScrimsTable({
 												trigger={
 													<SendouButton
 														variant="minimal"
-														icon={<UsersIcon className="scrims__post__icon" />}
+														icon={<UsersIcon className={styles.postIcon} />}
 													/>
 												}
 											>
@@ -367,7 +370,7 @@ function ScrimsTable({
 													<SendouButton
 														variant="minimal"
 														icon={
-															<SpeechBubbleIcon className="scrims__post__icon" />
+															<SpeechBubbleIcon className={styles.postIcon} />
 														}
 													/>
 												}
@@ -387,9 +390,9 @@ function ScrimsTable({
 								{showStatus ? (
 									<td>
 										<div
-											className={clsx("scrims__post__status", {
-												scrims__post__status__confirmed: status === "CONFIRMED",
-												scrims__post__status__pending: status === "PENDING",
+											className={clsx(styles.postStatus, {
+												[styles.postStatusConfirmed]: status === "CONFIRMED",
+												[styles.postStatusPending]: status === "PENDING",
 											})}
 										>
 											{status === "CONFIRMED" ? (
@@ -517,7 +520,7 @@ function RequestRow({
 					<SendouPopover
 						trigger={
 							<SendouButton
-								icon={<UsersIcon className="scrims__post__icon" />}
+								icon={<UsersIcon className={styles.postIcon} />}
 								variant="minimal"
 							/>
 						}

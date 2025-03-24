@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { isMod } from "../../../permissions";
 import { notFoundIfFalsy } from "../../../utils/remix.server";
 import { requireUser } from "../../auth/core/user.server";
@@ -20,5 +21,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		throw new Response(null, { status: 403 });
 	}
 
-	return { post };
+	return {
+		post,
+		chatUsers: await UserRepository.findChatUsersByUserIds(
+			post.users.map((u) => u.id),
+		),
+	};
 };

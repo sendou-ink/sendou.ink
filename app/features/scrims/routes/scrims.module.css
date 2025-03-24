@@ -1,0 +1,46 @@
+.placeholder {
+	min-height: 100vh;
+}
+
+.postTime {
+	border-radius: var(--rounded-sm);
+	background-color: var(--border);
+	text-transform: uppercase;
+	padding: var(--s-0-5) var(--s-2);
+	font-weight: var(--bold);
+	width: max-content;
+}
+
+.postIcon {
+	min-width: 24px;
+}
+
+.postStatus {
+	display: flex;
+	gap: var(--s-1);
+	font-weight: var(--semi-bold);
+	padding-block: var(--s-1);
+	padding-inline: var(--s-2);
+	width: max-content;
+	border-radius: var(--rounded-sm);
+}
+
+.postStatusConfirmed {
+	background-color: var(--theme-success-transparent);
+}
+
+.postStatus svg {
+	width: 18px;
+}
+
+.postStatusConfirmed svg {
+	fill: var(--theme-success);
+}
+
+.postStatusPending {
+	background-color: var(--theme-info-transparent);
+}
+
+.postStatusPending svg {
+	fill: var(--theme-info);
+}

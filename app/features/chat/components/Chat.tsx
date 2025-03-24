@@ -17,7 +17,10 @@ import { useChatAutoScroll } from "../chat-hooks";
 import type { ChatMessage } from "../chat-types";
 import { messageTypeToSound, soundEnabled, soundVolume } from "../chat-utils";
 
-type ChatUser = Pick<User, "username" | "discordId" | "discordAvatar"> & {
+export type ChatUser = Pick<
+	User,
+	"username" | "discordId" | "discordAvatar"
+> & {
 	chatNameColor: string | null;
 	title?: string;
 };

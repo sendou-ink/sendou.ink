@@ -174,6 +174,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	friendCodes,
 	lfgPosts,
 	scrimPosts,
+	scrimPostRequests,
 	notifications,
 ];
 
@@ -2286,7 +2287,6 @@ async function lfgPosts() {
 	});
 }
 
-// xxx: for admin one booked and some requests for another
 async function scrimPosts() {
 	const allUsers = userIdsInRandomOrder(true);
 
@@ -2316,7 +2316,7 @@ async function scrimPosts() {
 			return null;
 		}
 
-		return faker.helpers.rangeToNumber({ min: 5, max: 50 });
+		return faker.helpers.rangeToNumber({ min: 5, max: 49 });
 	};
 
 	const divRange = () => {
@@ -2362,6 +2362,37 @@ async function scrimPosts() {
 			users: users(),
 		});
 	}
+
+	await ScrimPostRepository.insert({
+		at: date(),
+		text:
+			Math.random() > 0.5 ? faker.lorem.sentences({ min: 1, max: 5 }) : null,
+		visibility: null,
+		users: users()
+			.map((u) => ({ ...u, isOwner: 0 }))
+			.concat({ userId: ADMIN_ID, isOwner: 1 }),
+	});
+}
+
+async function scrimPostRequests() {
+	const allianceRogueMembers = await db
+		.selectFrom(["TeamMember"])
+		.select(["TeamMember.userId"])
+		.where("TeamMember.teamId", "=", 1)
+		.execute();
+
+	for (const id of [1, 5, 12, 14, 19]) {
+		await ScrimPostRepository.insertRequest({
+			scrimPostId: id,
+			users: allianceRogueMembers.map((member) => ({
+				userId: member.userId,
+				isOwner: member.userId === ADMIN_ID ? 1 : 0,
+			})),
+			teamId: 1,
+		});
+	}
+
+	await ScrimPostRepository.acceptRequest(1);
 }
 
 async function notifications() {
