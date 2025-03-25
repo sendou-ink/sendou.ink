@@ -874,4 +874,19 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "chao",
 		authorDiscordId: "528851510222782474",
 	},
+	{
+		displayName: "Art Supplies Pencil Award",
+		fileName: "artsupplies",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName: "Art Supplies Pencil Award (Silver)",
+		fileName: "artsuppliessilver",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName: "Art Supplies Pencil Award (Bronze)",
+		fileName: "artsuppliesbronze",
+		authorDiscordId: "1320944066002681876",
+	},
 ];
