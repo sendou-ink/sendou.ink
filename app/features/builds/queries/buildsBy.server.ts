@@ -1,10 +1,5 @@
 import { sql } from "~/db/sql";
-import type {
-	Build,
-	BuildAbility,
-	BuildWeapon,
-	UserWithPlusTier,
-} from "~/db/types";
+import type { Tables, UserWithPlusTier } from "~/db/tables";
 import { type ModeShort, weaponIdToAltId } from "~/modules/in-game-lists";
 import type {
 	BuildAbilitiesTuple,
@@ -120,7 +115,7 @@ export function buildsByWeaponId({
 	weaponId,
 	limit,
 }: {
-	weaponId: BuildWeapon["weaponSplId"];
+	weaponId: Tables["BuildWeapon"]["weaponSplId"];
 	limit: number;
 }) {
 	const [altWeaponId, altWeaponIdTwo] = (() => {
@@ -144,17 +139,17 @@ export function buildsByWeaponId({
 }
 
 type BuildsByUserRow = Pick<
-	Build,
+	Tables["Build"],
 	| "id"
 	| "title"
 	| "description"
-	| "modes"
 	| "headGearSplId"
 	| "clothesGearSplId"
 	| "shoesGearSplId"
 	| "updatedAt"
 	| "private"
 > & {
+	modes: string;
 	weapons: string;
 	abilities: string;
 };
@@ -170,14 +165,14 @@ function augmentBuild<T>({
 	modes: rawModes,
 	abilities: rawAbilities,
 	...row
-}: T & { modes: Build["modes"]; weapons: string; abilities: string }) {
+}: T & { modes: string; weapons: string; abilities: string }) {
 	const modes = rawModes ? (JSON.parse(rawModes) as ModeShort[]) : null;
 	const weapons = (
 		JSON.parse(rawWeapons) as Array<BuildWeaponWithTop500Info>
 	).sort((a, b) => a.weaponSplId - b.weaponSplId);
 	const abilities = dbAbilitiesToArrayOfArrays(
 		JSON.parse(rawAbilities) as Array<
-			Pick<BuildAbility, "ability" | "gearType" | "slotIndex">
+			Pick<Tables["BuildAbility"], "ability" | "gearType" | "slotIndex">
 		>,
 	);
 
@@ -190,9 +185,15 @@ function augmentBuild<T>({
 	};
 }
 
-const gearOrder: Array<BuildAbility["gearType"]> = ["HEAD", "CLOTHES", "SHOES"];
+const gearOrder: Array<Tables["BuildAbility"]["gearType"]> = [
+	"HEAD",
+	"CLOTHES",
+	"SHOES",
+];
 function dbAbilitiesToArrayOfArrays(
-	abilities: Array<Pick<BuildAbility, "ability" | "gearType" | "slotIndex">>,
+	abilities: Array<
+		Pick<Tables["BuildAbility"], "ability" | "gearType" | "slotIndex">
+	>,
 ): BuildAbilitiesTuple {
 	const sorted = abilities
 		.slice()

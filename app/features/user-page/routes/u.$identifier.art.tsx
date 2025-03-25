@@ -1,84 +1,19 @@
-import type { ActionFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useMatches } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
-import { deleteArtSchema } from "~/features/art/art-schemas.server";
 import { ART_SOURCES, type ArtSource } from "~/features/art/art-types";
 import { ArtGrid } from "~/features/art/components/ArtGrid";
-import { artsByUserId } from "~/features/art/queries/artsByUserId.server";
-import { deleteArt } from "~/features/art/queries/deleteArt.server";
-import { findArtById } from "~/features/art/queries/findArtById.server";
 import { useUser } from "~/features/auth/core/user";
-import { getUserId, requireUserId } from "~/features/auth/core/user.server";
-import { countUnvalidatedArt } from "~/features/img-upload";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import invariant from "~/utils/invariant";
-import {
-	type SendouRouteHandle,
-	errorToastIfFalsy,
-	notFoundIfFalsy,
-	parseRequestPayload,
-} from "~/utils/remix.server";
-import { userParamsSchema } from "../user-page-schemas.server";
-import type { UserPageLoaderData } from "./u.$identifier";
+import type { SendouRouteHandle } from "~/utils/remix.server";
+import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+
+import { action } from "../actions/u.$identifier.art.server";
+import { loader } from "../loaders/u.$identifier.art.server";
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["art"],
-};
-
-export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUserId(request);
-	const data = await parseRequestPayload({
-		request,
-		schema: deleteArtSchema,
-	});
-
-	// this actually doesn't delete the image itself from the static hosting
-	// but the idea is that storage is cheap anyway and if needed later
-	// then we can have a routine that checks all the images still current and nukes the rest
-	const artToDelete = findArtById(data.id);
-	errorToastIfFalsy(
-		artToDelete?.authorId === user.id,
-		"Insufficient permissions",
-	);
-
-	deleteArt(data.id);
-
-	return null;
-};
-
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const loggedInUser = await getUserId(request);
-
-	const { identifier } = userParamsSchema.parse(params);
-	const user = notFoundIfFalsy(
-		await UserRepository.identifierToUserId(identifier),
-	);
-
-	const arts = artsByUserId(user.id);
-
-	const tagCounts = arts.reduce(
-		(acc, art) => {
-			if (!art.tags) return acc;
-
-			for (const tag of art.tags) {
-				acc[tag] = (acc[tag] ?? 0) + 1;
-			}
-			return acc;
-		},
-		{} as Record<string, number>,
-	);
-
-	const tagCountsSortedArr = Object.entries(tagCounts).sort(
-		(a, b) => b[1] - a[1],
-	);
-
-	return {
-		arts,
-		tagCounts: tagCountsSortedArr.length > 0 ? tagCountsSortedArr : null,
-		unvalidatedArtCount:
-			user.id === loggedInUser?.id ? countUnvalidatedArt(user.id) : 0,
-	};
 };
 
 const ALL_TAGS_KEY = "ALL";

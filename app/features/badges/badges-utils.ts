@@ -1,10 +1,10 @@
 import type { TFunction } from "i18next";
 import { SPLATOON_3_XP_BADGE_VALUES } from "~/constants";
-import type { Badge as BadgeDBType } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 export function badgeExplanationText(
 	t: TFunction<"badges", undefined>,
-	badge: Pick<BadgeDBType, "displayName" | "code"> & { count?: number },
+	badge: Pick<Tables["Badge"], "displayName" | "code"> & { count?: number },
 ) {
 	if (badge.code === "patreon") return t("patreon");
 	if (badge.code === "patreon_plus") {

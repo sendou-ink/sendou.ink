@@ -1,3 +1,4 @@
+import { add } from "date-fns";
 import { currentSeason } from "../features/mmr/season";
 import { userSkills } from "../features/mmr/tiered.server";
 import * as NotificationRepository from "../features/notifications/NotificationRepository.server";
@@ -9,7 +10,10 @@ export const NotifySeasonStartRoutine = new Routine({
 	func: async () => {
 		const season = currentSeason(new Date());
 
-		if (!season) return;
+		// old notifications get deleted after 14 days, make sure we don't send the same notification twice
+		if (!season || add(season.starts, { days: 7 }) < new Date()) {
+			return;
+		}
 
 		const seasonNotifications =
 			await NotificationRepository.findAllByType("SEASON_STARTED");

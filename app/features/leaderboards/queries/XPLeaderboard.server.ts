@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { User, XRankPlacement } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import type { MainWeaponId } from "~/modules/in-game-lists";
 import { DEFAULT_LEADERBOARD_MAX_SIZE } from "../leaderboards-constants";
 
@@ -41,13 +41,13 @@ const weaponStm = getStm(/* sql */ `
 export interface XPLeaderboardItem {
 	entryId: number;
 	power: number;
-	id: User["id"];
-	name: XRankPlacement["name"];
-	playerId: XRankPlacement["playerId"];
-	username: User["username"] | null;
-	discordAvatar: User["discordAvatar"] | null;
-	discordId: User["discordId"] | null;
-	customUrl: User["customUrl"] | null;
+	id: Tables["User"]["id"];
+	name: Tables["XRankPlacement"]["name"];
+	playerId: Tables["XRankPlacement"]["playerId"];
+	username: Tables["User"]["username"] | null;
+	discordAvatar: Tables["User"]["discordAvatar"] | null;
+	discordId: Tables["User"]["discordId"] | null;
+	customUrl: Tables["User"]["customUrl"] | null;
 	placementRank: number;
 	weaponSplId: MainWeaponId;
 }
@@ -57,7 +57,7 @@ export function allXPLeaderboard(): XPLeaderboardItem[] {
 }
 
 export function modeXPLeaderboard(
-	mode: XRankPlacement["mode"],
+	mode: Tables["XRankPlacement"]["mode"],
 ): XPLeaderboardItem[] {
 	return modeStm.all({ mode }) as any[];
 }

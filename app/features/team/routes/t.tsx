@@ -31,11 +31,11 @@ import {
 import { isAtLeastFiveDollarTierPatreon } from "~/utils/users";
 import { TEAM, TEAMS_PER_PAGE } from "../team-constants";
 
-import "../team.css";
-
 import { action } from "../actions/t.server";
 import { loader } from "../loaders/t.server";
 export { loader, action };
+
+import "../team.css";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({

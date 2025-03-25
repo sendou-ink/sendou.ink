@@ -1,9 +1,9 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/node";
 import { useLoaderData, useSearchParams } from "@remix-run/react";
 import { nanoid } from "nanoid";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
-import type { XRankPlacement } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import type { RankedModeShort } from "~/modules/in-game-lists";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import invariant from "~/utils/invariant";
@@ -11,9 +11,10 @@ import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, topSearchPage } from "~/utils/urls";
 import { PlacementsTable } from "../components/Placements";
-import { findPlacementsOfMonth } from "../queries/findPlacements.server";
-import { monthYears } from "../queries/monthYears";
 import type { MonthYear } from "../top-search-utils";
+
+import { loader } from "../loaders/xsearch.server";
+export { loader };
 
 import "../top-search.css";
 
@@ -33,63 +34,6 @@ export const meta: MetaFunction = (args) => {
 			"Splatoon 3 X Battle results for the top 500 players for all the finished seasons in both Tentatek and Takoroka divisions.",
 		location: args.location,
 	});
-};
-
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const availableMonthYears = monthYears();
-	const { month: latestMonth, year: latestYear } = availableMonthYears[0];
-
-	const url = new URL(request.url);
-	const mode = (() => {
-		const mode = url.searchParams.get("mode");
-		if (rankedModesShort.includes(mode as any)) {
-			return mode as RankedModeShort;
-		}
-
-		return "SZ";
-	})();
-	const region = (() => {
-		const region = url.searchParams.get("region");
-		if (region === "WEST" || region === "JPN") {
-			return region;
-		}
-
-		return "WEST";
-	})();
-	const month = (() => {
-		const month = url.searchParams.get("month");
-		if (month) {
-			const monthNumber = Number(month);
-			if (monthNumber >= 1 && monthNumber <= 12) {
-				return monthNumber;
-			}
-		}
-
-		return latestMonth;
-	})();
-	const year = (() => {
-		const year = url.searchParams.get("year");
-		if (year) {
-			const yearNumber = Number(year);
-			if (yearNumber >= 2023) {
-				return yearNumber;
-			}
-		}
-
-		return latestYear;
-	})();
-
-	const placements = findPlacementsOfMonth({
-		mode,
-		region,
-		month,
-		year,
-	});
-
-	return {
-		placements,
-		availableMonthYears,
-	};
 };
 
 export default function XSearchPage() {
@@ -152,7 +96,7 @@ export default function XSearchPage() {
 
 interface SelectOption {
 	id: string;
-	region: XRankPlacement["region"];
+	region: Tables["XRankPlacement"]["region"];
 	mode: RankedModeShort;
 	span: {
 		from: MonthYear;

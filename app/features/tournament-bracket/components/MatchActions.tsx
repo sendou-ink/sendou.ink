@@ -10,7 +10,7 @@ import { resolveLeagueRoundStartDate } from "~/features/tournament/tournament-ut
 import invariant from "~/utils/invariant";
 import * as PickBan from "../core/PickBan";
 import type { TournamentDataTeam } from "../core/Tournament.server";
-import type { TournamentMatchLoaderData } from "../routes/to.$id.matches.$mid";
+import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import {
 	isSetOverByScore,
 	matchIsLocked,

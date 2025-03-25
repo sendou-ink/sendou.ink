@@ -1,4 +1,4 @@
-import type { Video } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { assertType } from "~/utils/types";
 
 export const videoMatchTypes = [
@@ -8,6 +8,9 @@ export const videoMatchTypes = [
 	"MATCHMAKING",
 	"SENDOUQ",
 ] as const;
-assertType<(typeof videoMatchTypes)[number], Array<Video["type"]>[number]>();
+assertType<
+	(typeof videoMatchTypes)[number],
+	Array<Tables["Video"]["type"]>[number]
+>();
 
 export const VODS_PAGE_BATCH_SIZE = 24;

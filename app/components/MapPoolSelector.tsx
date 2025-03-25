@@ -3,7 +3,7 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "~/components/Button";
 import { Image } from "~/components/Image";
-import type { CalendarEvent } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import type { SerializedMapPoolEvent } from "~/features/calendar/routes/map-pool-events";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
@@ -26,11 +26,11 @@ export type MapPoolSelectorProps = {
 	handleRemoval?: () => void;
 	handleMapPoolChange: (
 		mapPool: MapPool,
-		event?: Pick<CalendarEvent, "id" | "name">,
+		event?: Pick<Tables["CalendarEvent"], "id" | "name">,
 	) => void;
 	className?: string;
 	recentEvents?: SerializedMapPoolEvent[];
-	initialEvent?: Pick<CalendarEvent, "id" | "name">;
+	initialEvent?: Pick<Tables["CalendarEvent"], "id" | "name">;
 	title?: string;
 	modesToInclude?: ModeShort[];
 	info?: React.ReactNode;
@@ -376,7 +376,7 @@ function detectTemplate(mapPool: MapPool): MapPoolTemplateValue {
 type MapPoolTemplateSelectProps = {
 	value: MapPoolTemplateValue;
 	handleChange: (newValue: MapPoolTemplateValue) => void;
-	recentEvents?: Pick<CalendarEvent, "id" | "name">[];
+	recentEvents?: Pick<Tables["CalendarEvent"], "id" | "name">[];
 };
 
 function MapPoolTemplateSelect({
@@ -428,7 +428,7 @@ function MapPoolTemplateSelect({
 type TemplateEventSelectionProps = {
 	handleEventChange: (
 		mapPool: MapPool,
-		event?: Pick<CalendarEvent, "id" | "name">,
+		event?: Pick<Tables["CalendarEvent"], "id" | "name">,
 	) => void;
 	initialEvent?: SerializedMapPoolEvent;
 };

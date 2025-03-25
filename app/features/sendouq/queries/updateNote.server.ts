@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { GroupMember } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/* sql */ `
   update "GroupMember"
@@ -8,9 +8,9 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export function updateNote(args: {
-	note: GroupMember["note"];
-	groupId: GroupMember["groupId"];
-	userId: GroupMember["userId"];
+	note: Tables["GroupMember"]["note"];
+	groupId: Tables["GroupMember"]["groupId"];
+	userId: Tables["GroupMember"]["userId"];
 }) {
 	stm.run(args);
 }

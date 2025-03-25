@@ -1,15 +1,10 @@
-import type {
-	LoaderFunctionArgs,
-	MetaFunction,
-	SerializeFrom,
-} from "@remix-run/node";
+import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import Markdown from "markdown-to-jsx";
 import * as React from "react";
 import { Main } from "~/components/Main";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { notFoundIfFalsy } from "~/utils/remix.server";
 import {
 	ARTICLES_MAIN_PAGE,
 	articlePage,
@@ -17,7 +12,9 @@ import {
 	navIconUrl,
 } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
-import { articleBySlug } from "../core/bySlug.server";
+
+import { loader } from "../loaders/a.$slug.server";
+export { loader };
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: ({ match }) => {
@@ -56,14 +53,6 @@ export const meta: MetaFunction = (args) => {
 		},
 		location: args.location,
 	});
-};
-
-export const loader = ({ params }: LoaderFunctionArgs) => {
-	invariant(params.slug);
-
-	const article = notFoundIfFalsy(articleBySlug(params.slug));
-
-	return { ...article, slug: params.slug };
 };
 
 export default function ArticlePage() {

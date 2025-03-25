@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { Status } from "~/db/types";
+import { TournamentMatchStatus } from "~/db/tables";
 import { InMemoryDatabase } from "~/modules/brackets-memory-db";
 import { BracketsManager } from "../manager";
 
@@ -22,7 +22,7 @@ describe("Update matches", () => {
 
 	test("should start a match", () => {
 		const before = storage.select<any>("match", 0);
-		expect(before.status).toBe(Status.Ready);
+		expect(before.status).toBe(TournamentMatchStatus.Ready);
 
 		manager.update.match({
 			id: 0,
@@ -31,7 +31,7 @@ describe("Update matches", () => {
 		});
 
 		const after = storage.select<any>("match", 0);
-		expect(after.status).toBe(Status.Running);
+		expect(after.status).toBe(TournamentMatchStatus.Running);
 	});
 
 	test("should update the scores for a match and set it to running", () => {
@@ -42,7 +42,7 @@ describe("Update matches", () => {
 		});
 
 		const after = storage.select<any>("match", 0);
-		expect(after.status).toBe(Status.Running);
+		expect(after.status).toBe(TournamentMatchStatus.Running);
 		expect(after.opponent1.score).toBe(2);
 
 		// Name should stay. It shouldn't be overwritten.
@@ -59,7 +59,7 @@ describe("Update matches", () => {
 		});
 
 		const after = storage.select<any>("match", 0);
-		expect(after.status).toBe(Status.Completed);
+		expect(after.status).toBe(TournamentMatchStatus.Completed);
 		expect(after.opponent1.result).toBe("win");
 		expect(after.opponent2.result).toBe("loss");
 	});
@@ -78,12 +78,12 @@ describe("Update matches", () => {
 		});
 
 		const after = storage.select<any>("match", 0);
-		expect(after.status).toBe(Status.Completed);
+		expect(after.status).toBe(TournamentMatchStatus.Completed);
 		expect(after.opponent1.result).toBe("loss");
 		expect(after.opponent2.result).toBe("win");
 
 		const nextMatch = storage.select<any>("match", 8);
-		expect(nextMatch.status).toBe(Status.Waiting);
+		expect(nextMatch.status).toBe(TournamentMatchStatus.Waiting);
 		expect(nextMatch.opponent1.id).toBe(2);
 	});
 
@@ -93,20 +93,24 @@ describe("Update matches", () => {
 			opponent1: { result: "win" },
 		});
 
-		expect(storage.select<any>("match", 8).status).toBe(Status.Waiting);
+		expect(storage.select<any>("match", 8).status).toBe(
+			TournamentMatchStatus.Waiting,
+		);
 
 		manager.update.match({
 			id: 1,
 			opponent1: { result: "win" },
 		});
 
-		expect(storage.select<any>("match", 8).status).toBe(Status.Ready);
+		expect(storage.select<any>("match", 8).status).toBe(
+			TournamentMatchStatus.Ready,
+		);
 	});
 
 	test("should end the match by setting winner and loser", () => {
 		manager.update.match({
 			id: 0,
-			status: Status.Running,
+			status: TournamentMatchStatus.Running,
 		});
 
 		manager.update.match({
@@ -116,7 +120,7 @@ describe("Update matches", () => {
 		});
 
 		const after = storage.select<any>("match", 0);
-		expect(after.status).toBe(Status.Completed);
+		expect(after.status).toBe(TournamentMatchStatus.Completed);
 		expect(after.opponent1.result).toBe("win");
 		expect(after.opponent2.result).toBe("loss");
 	});
@@ -131,7 +135,7 @@ describe("Update matches", () => {
 		manager.reset.matchResults(0);
 
 		const after = storage.select<any>("match", 0);
-		expect(after.status).toBe(Status.Ready);
+		expect(after.status).toBe(TournamentMatchStatus.Ready);
 		expect(after.opponent1.result).toBeFalsy();
 		expect(after.opponent2.result).toBeFalsy();
 	});
@@ -146,7 +150,7 @@ describe("Update matches", () => {
 		manager.reset.matchResults(0);
 
 		const after = storage.select<any>("match", 0);
-		expect(after.status).toBe(Status.Running);
+		expect(after.status).toBe(TournamentMatchStatus.Running);
 		expect(after.opponent1.result).toBeFalsy();
 		expect(after.opponent2.result).toBeFalsy();
 	});
@@ -160,7 +164,7 @@ describe("Update matches", () => {
 		});
 
 		const after = storage.select<any>("match", 1);
-		expect(after.status).toBe(Status.Running);
+		expect(after.status).toBe(TournamentMatchStatus.Running);
 		expect(after.opponent1.score).toBe(1);
 		expect(after.opponent2.score).toBeFalsy();
 	});
@@ -173,7 +177,7 @@ describe("Update matches", () => {
 		});
 
 		const after = storage.select<any>("match", 1);
-		expect(after.status).toBe(Status.Completed);
+		expect(after.status).toBe(TournamentMatchStatus.Completed);
 
 		expect(after.opponent1.result).toBe("loss");
 		expect(after.opponent1.score).toBe(6);

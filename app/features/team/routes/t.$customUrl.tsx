@@ -29,8 +29,6 @@ import {
 	userSubmittedImage,
 } from "~/utils/urls";
 import type * as TeamRepository from "../TeamRepository.server";
-import { action } from "../actions/t.$customUrl.server";
-import { loader } from "../loaders/t.$customUrl.server";
 import {
 	isTeamManager,
 	isTeamMember,
@@ -39,6 +37,9 @@ import {
 } from "../team-utils";
 import "../team.css";
 import { metaTags } from "~/utils/remix";
+
+import { action } from "../actions/t.$customUrl.server";
+import { loader } from "../loaders/t.$customUrl.server";
 export { action, loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {

@@ -5,10 +5,10 @@ import { db, sql as dbDirect } from "~/db/sql";
 import type {
 	BuildSort,
 	DB,
+	Tables,
 	TablesInsertable,
 	UserPreferences,
 } from "~/db/tables";
-import type { User } from "~/db/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
@@ -251,6 +251,15 @@ export function findByCustomUrl(customUrl: string) {
 		.select(["User.id", "User.discordId", "User.customUrl", "User.patronTier"])
 		.where("customUrl", "=", customUrl)
 		.executeTakeFirst();
+}
+
+export function findByFriendCode(friendCode: string) {
+	return db
+		.selectFrom("UserFriendCode")
+		.innerJoin("User", "User.id", "UserFriendCode.userId")
+		.select([...COMMON_USER_FIELDS])
+		.where("UserFriendCode.friendCode", "=", friendCode)
+		.execute();
 }
 
 export function findBannedStatusByUserId(userId: number) {
@@ -553,6 +562,36 @@ export async function currentFriendCodeByUserId(userId: number) {
 		.executeTakeFirst();
 }
 
+let cachedFriendCodes: Set<string> | null = null;
+
+export async function allCurrentFriendCodes() {
+	if (cachedFriendCodes) {
+		return cachedFriendCodes;
+	}
+
+	const allFriendCodes = await db
+		.selectFrom("UserFriendCode")
+		.select(["UserFriendCode.friendCode", "UserFriendCode.userId"])
+		.orderBy("UserFriendCode.createdAt desc")
+		.execute();
+
+	const seenUserIds = new Set<number>();
+	const friendCodes = new Set<string>();
+
+	for (const row of allFriendCodes) {
+		if (seenUserIds.has(row.userId)) {
+			continue;
+		}
+
+		seenUserIds.add(row.userId);
+		friendCodes.add(row.friendCode);
+	}
+
+	cachedFriendCodes = friendCodes;
+
+	return friendCodes;
+}
+
 export async function inGameNameByUserId(userId: number) {
 	return (
 		await db
@@ -564,6 +603,8 @@ export async function inGameNameByUserId(userId: number) {
 }
 
 export function insertFriendCode(args: TablesInsertable["UserFriendCode"]) {
+	cachedFriendCodes?.add(args.friendCode);
+
 	return db.insertInto("UserFriendCode").values(args).execute();
 }
 
@@ -744,7 +785,7 @@ export function updateBuildSorting({
 }
 
 export type UpdatePatronDataArgs = Array<
-	Pick<User, "discordId" | "patronTier" | "patronSince">
+	Pick<Tables["User"], "discordId" | "patronTier" | "patronSince">
 >;
 export function updatePatronData(users: UpdatePatronDataArgs) {
 	return db.transaction().execute(async (trx) => {
@@ -792,7 +833,7 @@ export const updateMany = dbDirect.transaction(
 	(
 		argsArr: Array<
 			Pick<
-				User,
+				Tables["User"],
 				"discordAvatar" | "discordName" | "discordUniqueName" | "discordId"
 			>
 		>,

@@ -1,12 +1,7 @@
+import type { Tables, UserWithPlusTier } from "~/db/tables";
 import type * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import invariant from "~/utils/invariant";
 import { ADMIN_ID, LOHI_TOKEN_HEADER_NAME, MOD_IDS } from "./constants";
-import type {
-	CalendarEvent,
-	PlusSuggestion,
-	User,
-	UserWithPlusTier,
-} from "./db/types";
 import { currentSeason, nextSeason } from "./features/mmr/season";
 import { isVotingActive } from "./features/plus-voting/core";
 import type { FindMatchById } from "./features/tournament-bracket/queries/findMatchById.server";
@@ -15,7 +10,7 @@ import { databaseTimestampToDate } from "./utils/dates";
 
 // TODO: 1) move "root checkers" to one file and utils to one file 2) make utils const for more terseness
 
-type IsAdminUser = Pick<User, "id">;
+type IsAdminUser = Pick<Tables["User"], "id">;
 export function isAdmin(user?: IsAdminUser) {
 	return user?.id === ADMIN_ID;
 }
@@ -44,7 +39,7 @@ function adminOverride(user?: IsAdminUser) {
 interface CanAddCommentToSuggestionArgs {
 	user?: Pick<UserWithPlusTier, "id" | "plusTier">;
 	suggestions: PlusSuggestionRepository.FindAllByMonthItem[];
-	suggested: Pick<User, "id">;
+	suggested: Pick<Tables["User"], "id">;
 	targetPlusTier: NonNullable<UserWithPlusTier["plusTier"]>;
 }
 export function canAddCommentToSuggestionFE(
@@ -76,9 +71,9 @@ export function canAddCommentToSuggestionBE({
 }
 
 interface CanDeleteCommentArgs {
-	suggestionId: PlusSuggestion["id"];
-	author: Pick<User, "id">;
-	user?: Pick<User, "id" | "discordId">;
+	suggestionId: Tables["PlusSuggestion"]["id"];
+	author: Pick<Tables["User"], "id">;
+	user?: Pick<Tables["User"], "id" | "discordId">;
 	suggestions: PlusSuggestionRepository.FindAllByMonthItem[];
 }
 export function canDeleteComment(args: CanDeleteCommentArgs) {
@@ -234,7 +229,7 @@ export function canAccessLohiEndpoint(request: Request) {
 }
 
 interface CanEditBadgeOwnersArgs {
-	user?: Pick<User, "id">;
+	user?: Pick<Tables["User"], "id">;
 	managers: { id: number }[];
 }
 
@@ -255,8 +250,8 @@ export function canEditBadgeManagers(user?: IsAdminUser) {
 }
 
 interface CanEditCalendarEventArgs {
-	user?: Pick<User, "id">;
-	event: Pick<CalendarEvent, "authorId">;
+	user?: Pick<Tables["User"], "id">;
+	event: Pick<Tables["CalendarEvent"], "authorId">;
 }
 export function canEditCalendarEvent({
 	user,
@@ -276,8 +271,8 @@ export function canDeleteCalendarEvent({
 }
 
 interface CanReportCalendarEventWinnersArgs {
-	user?: Pick<User, "id">;
-	event: Pick<CalendarEvent, "authorId">;
+	user?: Pick<Tables["User"], "id">;
+	event: Pick<Tables["CalendarEvent"], "authorId">;
 	startTimes: number[];
 }
 export function canReportCalendarEventWinners({
@@ -316,7 +311,7 @@ export function canReportTournamentScore({
 }
 
 export function canAddCustomizedColorsToUserProfile(
-	user?: Pick<User, "id" | "patronTier">,
+	user?: Pick<Tables["User"], "id" | "patronTier">,
 ) {
 	if (!user) return false;
 

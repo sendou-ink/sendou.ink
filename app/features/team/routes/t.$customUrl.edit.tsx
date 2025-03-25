@@ -19,13 +19,13 @@ import {
 	teamPage,
 	uploadImagePage,
 } from "~/utils/urls";
-import { action } from "../actions/t.$customUrl.edit.server";
-import { loader } from "../loaders/t.$customUrl.edit.server";
 import { TEAM } from "../team-constants";
 import { canAddCustomizedColors, isTeamOwner } from "../team-utils";
 import "../team.css";
 import { metaTags } from "~/utils/remix";
 
+import { action } from "../actions/t.$customUrl.edit.server";
+import { loader } from "../loaders/t.$customUrl.edit.server";
 export { action, loader };
 
 export const meta: MetaFunction = (args) => {

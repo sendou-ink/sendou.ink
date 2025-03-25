@@ -1,17 +1,11 @@
-import type {
-	LoaderFunctionArgs,
-	MetaFunction,
-	SerializeFrom,
-} from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/node";
 import { Outlet, useLoaderData, useLocation } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { useUser } from "~/features/auth/core/user";
-import { getUserId } from "~/features/auth/core/user.server";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { metaTags } from "~/utils/remix";
-import { type SendouRouteHandle, notFoundIfFalsy } from "~/utils/remix.server";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	USER_SEARCH_PAGE,
 	navIconUrl,
@@ -23,6 +17,12 @@ import {
 	userSeasonsPage,
 	userVodsPage,
 } from "~/utils/urls";
+
+import {
+	type UserPageLoaderData,
+	loader,
+} from "../loaders/u.$identifier.server";
+export { loader };
 
 import "~/styles/u.css";
 
@@ -56,27 +56,6 @@ export const handle: SendouRouteHandle = {
 			},
 		];
 	},
-};
-
-export type UserPageLoaderData = SerializeFrom<typeof loader>;
-
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const loggedInUser = await getUserId(request);
-
-	const user = notFoundIfFalsy(
-		await UserRepository.findLayoutDataByIdentifier(
-			params.identifier!,
-			loggedInUser?.id,
-		),
-	);
-
-	return {
-		user: {
-			...user,
-			css: undefined,
-		},
-		css: user.css,
-	};
 };
 
 export default function UserPageLayout() {

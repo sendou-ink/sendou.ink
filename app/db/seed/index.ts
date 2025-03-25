@@ -22,25 +22,25 @@ import {
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
 import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
+import { calculateMatchSkills } from "~/features/sendouq-match/core/skills.server";
+import {
+	summarizeMaps,
+	summarizePlayerResults,
+} from "~/features/sendouq-match/core/summarizer.server";
+import { winnersArrayToWinner } from "~/features/sendouq-match/q-match-utils";
+import { addMapResults } from "~/features/sendouq-match/queries/addMapResults.server";
+import { addPlayerResults } from "~/features/sendouq-match/queries/addPlayerResults.server";
+import { addReportedWeapons } from "~/features/sendouq-match/queries/addReportedWeapons.server";
+import { addSkills } from "~/features/sendouq-match/queries/addSkills.server";
+import { findMatchById } from "~/features/sendouq-match/queries/findMatchById.server";
+import { reportScore } from "~/features/sendouq-match/queries/reportScore.server";
+import { setGroupAsInactive } from "~/features/sendouq-match/queries/setGroupAsInactive.server";
 import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "~/features/sendouq-settings/q-settings-constants";
 import * as QRepository from "~/features/sendouq/QRepository.server";
-import { calculateMatchSkills } from "~/features/sendouq/core/skills.server";
-import {
-	summarizeMaps,
-	summarizePlayerResults,
-} from "~/features/sendouq/core/summarizer.server";
-import { winnersArrayToWinner } from "~/features/sendouq/q-utils";
-import { addMapResults } from "~/features/sendouq/queries/addMapResults.server";
 import { addMember } from "~/features/sendouq/queries/addMember.server";
-import { addPlayerResults } from "~/features/sendouq/queries/addPlayerResults.server";
-import { addReportedWeapons } from "~/features/sendouq/queries/addReportedWeapons.server";
-import { addSkills } from "~/features/sendouq/queries/addSkills.server";
 import { createMatch } from "~/features/sendouq/queries/createMatch.server";
-import { findMatchById } from "~/features/sendouq/queries/findMatchById.server";
-import { reportScore } from "~/features/sendouq/queries/reportScore.server";
-import { setGroupAsInactive } from "~/features/sendouq/queries/setGroupAsInactive.server";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -71,7 +71,6 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { mySlugify } from "~/utils/urls";
 import type { Tables, UserMapModePreferences } from "../tables";
-import type { Art, UserSubmittedImage } from "../types";
 import {
 	ADMIN_TEST_AVATAR,
 	AMOUNT_OF_CALENDAR_EVENTS,
@@ -1950,12 +1949,12 @@ function arts() {
 						validatedAt: dateToDatabaseTimestamp(new Date()),
 						url: getUrl(),
 						submitterUserId: userId,
-					}) as UserSubmittedImage
+					}) as Tables["UserSubmittedImage"]
 				).id,
 				authorId: userId,
 				isShowcase: i === 0 ? 1 : 0,
 				description: Math.random() > 0.5 ? faker.lorem.paragraph() : null,
-			}) as Art;
+			}) as Tables["Art"];
 
 			if (i === 1) {
 				for (
@@ -2204,7 +2203,7 @@ async function playedMatches() {
 				skills: newSkills,
 				differences,
 				groupMatchId: match.id,
-				oldMatchMemento: { users: {}, groups: {} },
+				oldMatchMemento: { users: {}, groups: {}, pools: [] },
 			});
 			setGroupAsInactive(groupAlpha);
 			setGroupAsInactive(groupBravo);
@@ -2378,11 +2377,13 @@ async function notifications() {
 
 	for (let i = 0; i < values.length - 1; i++) {
 		sql
-			.prepare(/* sql */ `
+			.prepare(
+				/* sql */ `
 			update "Notification"
 			set "createdAt" = @createdAt
 			where "id" = @id
-		`)
+		`,
+			)
 			.run({
 				createdAt: dateToDatabaseTimestamp(createdAts[i]),
 				id: i + 1,

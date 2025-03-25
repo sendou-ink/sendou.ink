@@ -2,8 +2,13 @@ import type { Expression, ExpressionBuilder, Transaction } from "kysely";
 import { sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type { DB, Tables, TournamentSettings } from "~/db/tables";
-import type { CalendarEventTag, PersistedCalendarEventTag } from "~/db/types";
+import type {
+	CalendarEventTag,
+	DB,
+	PersistedCalendarEventTag,
+	Tables,
+	TournamentSettings,
+} from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";

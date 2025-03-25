@@ -1,7 +1,6 @@
 import { add } from "date-fns";
 import { sql } from "~/db/sql";
-import type { ParsedMemento } from "~/db/tables";
-import type { GroupMatch, GroupMatchMap, User } from "~/db/types";
+import type { ParsedMemento, Tables } from "~/db/tables";
 import { seasonObject } from "~/features/mmr/season";
 import { MATCHES_PER_SEASONS_PAGE } from "~/features/user-page/user-page-constants";
 import type { MainWeaponId } from "~/modules/in-game-lists";
@@ -98,25 +97,25 @@ const weaponsStm = sql.prepare(/* sql */ `
 `);
 
 interface SeasonMatchByUserId {
-	id: GroupMatch["id"];
-	alphaGroupId: GroupMatch["alphaGroupId"];
-	bravoGroupId: GroupMatch["bravoGroupId"];
-	winnerGroupIds: Array<GroupMatchMap["winnerGroupId"]>;
-	createdAt: GroupMatch["createdAt"];
+	id: Tables["GroupMatch"]["id"];
+	alphaGroupId: Tables["GroupMatch"]["alphaGroupId"];
+	bravoGroupId: Tables["GroupMatch"]["bravoGroupId"];
+	winnerGroupIds: Array<Tables["GroupMatchMap"]["winnerGroupId"]>;
+	createdAt: Tables["GroupMatch"]["createdAt"];
 	isLocked: number;
 	spDiff: number | null;
 	groupAlphaMembers: Array<{
-		id: User["id"];
-		username: User["username"];
-		discordId: User["discordId"];
-		discordAvatar: User["discordAvatar"];
+		id: Tables["User"]["id"];
+		username: Tables["User"]["username"];
+		discordId: Tables["User"]["discordId"];
+		discordAvatar: Tables["User"]["discordAvatar"];
 		weaponSplId?: MainWeaponId;
 	}>;
 	groupBravoMembers: Array<{
-		id: User["id"];
-		username: User["username"];
-		discordId: User["discordId"];
-		discordAvatar: User["discordAvatar"];
+		id: Tables["User"]["id"];
+		username: Tables["User"]["username"];
+		discordId: Tables["User"]["discordId"];
+		discordAvatar: Tables["User"]["discordAvatar"];
 		weaponSplId?: MainWeaponId;
 	}>;
 }

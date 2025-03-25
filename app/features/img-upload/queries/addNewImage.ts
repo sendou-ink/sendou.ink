@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { UserSubmittedImage } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import type { ImageUploadType } from "../upload-types";
 
 const addImgStm = sql.prepare(/* sql */ `
@@ -48,7 +48,7 @@ export const addNewImage = sql.transaction(
 			submitterUserId,
 			url,
 			validatedAt,
-		}) as UserSubmittedImage;
+		}) as Tables["UserSubmittedImage"];
 
 		if (type === "team-pfp") {
 			updateTeamAvatarStm.run({ avatarImgId: img.id, teamId: teamId ?? null });

@@ -1,4 +1,4 @@
-import type { CalendarEventTag, PersistedCalendarEventTag } from "~/db/types";
+import type { CalendarEventTag, PersistedCalendarEventTag } from "~/db/tables";
 
 export const persistedTags = {
 	SPECIAL: {

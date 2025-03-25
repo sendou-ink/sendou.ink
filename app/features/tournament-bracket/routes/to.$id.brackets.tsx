@@ -32,13 +32,14 @@ import {
 	useTournament,
 	useTournamentPreparedMaps,
 } from "../../tournament/routes/to.$id";
-import { action } from "../actions/to.$id.brackets.server";
 import { Bracket } from "../components/Bracket";
 import { BracketMapListDialog } from "../components/BracketMapListDialog";
 import { TournamentTeamActions } from "../components/TournamentTeamActions";
 import type { Bracket as BracketType } from "../core/Bracket";
 import * as PreparedMaps from "../core/PreparedMaps";
 import { bracketSubscriptionKey } from "../tournament-bracket-utils";
+
+import { action } from "../actions/to.$id.brackets.server";
 export { action };
 
 import "../components/Bracket/bracket.css";

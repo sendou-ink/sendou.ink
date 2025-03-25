@@ -7,7 +7,7 @@ import { Dialog } from "~/components/Dialog";
 import { MapIcon } from "~/components/icons/Map";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { nullFilledArray } from "~/utils/arrays";
-import type { TournamentMatchLoaderData } from "../routes/to.$id.matches.$mid";
+import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { pickInfoText } from "../tournament-bracket-utils";
 
 export function OrganizerMatchMapListDialog({

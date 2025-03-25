@@ -1,4 +1,4 @@
-import type { Skill } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { cache, syncCached } from "~/utils/cache.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "../leaderboards/leaderboards-constants";
 import { USER_SKILLS_CACHE_KEY } from "../sendouq/q-constants";
@@ -71,7 +71,7 @@ export type SkillTierInterval = ReturnType<
 >["intervals"][number];
 
 function skillTierIntervals(
-	orderedPoints: Array<Pick<Skill, "ordinal" | "matchesCount">>,
+	orderedPoints: Array<Pick<Tables["Skill"], "ordinal" | "matchesCount">>,
 	type: "user" | "team",
 ) {
 	const LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN =

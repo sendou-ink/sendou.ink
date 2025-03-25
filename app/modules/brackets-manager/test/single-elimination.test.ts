@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { Status } from "~/db/types";
+import { TournamentMatchStatus } from "~/db/tables";
 import { InMemoryDatabase } from "~/modules/brackets-memory-db";
 import { BracketsManager } from "../manager";
 
@@ -219,8 +219,12 @@ describe("Previous and next match update", () => {
 		expect(storage.select<any>("match", 3).opponent2.id).toBe(
 			storage.select<any>("match", 1).opponent1.id,
 		);
-		expect(storage.select<any>("match", 2).status).toBe(Status.Ready);
-		expect(storage.select<any>("match", 3).status).toBe(Status.Ready);
+		expect(storage.select<any>("match", 2).status).toBe(
+			TournamentMatchStatus.Ready,
+		);
+		expect(storage.select<any>("match", 3).status).toBe(
+			TournamentMatchStatus.Ready,
+		);
 	});
 
 	test("should play both the final and consolation final in parallel", () => {
@@ -250,8 +254,12 @@ describe("Previous and next match update", () => {
 			opponent2: { score: 9 },
 		});
 
-		expect(storage.select<any>("match", 2).status).toBe(Status.Running);
-		expect(storage.select<any>("match", 3).status).toBe(Status.Ready);
+		expect(storage.select<any>("match", 2).status).toBe(
+			TournamentMatchStatus.Running,
+		);
+		expect(storage.select<any>("match", 3).status).toBe(
+			TournamentMatchStatus.Ready,
+		);
 
 		manager.update.match({
 			id: 3, // Consolation final
@@ -259,8 +267,12 @@ describe("Previous and next match update", () => {
 			opponent2: { score: 9 },
 		});
 
-		expect(storage.select<any>("match", 2).status).toBe(Status.Running);
-		expect(storage.select<any>("match", 3).status).toBe(Status.Running);
+		expect(storage.select<any>("match", 2).status).toBe(
+			TournamentMatchStatus.Running,
+		);
+		expect(storage.select<any>("match", 3).status).toBe(
+			TournamentMatchStatus.Running,
+		);
 
 		manager.update.match({
 			id: 3, // Consolation final
@@ -268,7 +280,9 @@ describe("Previous and next match update", () => {
 			opponent2: { score: 9 },
 		});
 
-		expect(storage.select<any>("match", 2).status).toBe(Status.Running);
+		expect(storage.select<any>("match", 2).status).toBe(
+			TournamentMatchStatus.Running,
+		);
 
 		manager.update.match({
 			id: 2, // Final

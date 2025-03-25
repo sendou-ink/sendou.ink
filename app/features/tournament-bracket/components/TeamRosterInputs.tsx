@@ -10,7 +10,7 @@ import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import { tournamentTeamPage, userPage } from "~/utils/urls";
 import { useTournament } from "../../tournament/routes/to.$id";
 import type { TournamentDataTeam } from "../core/Tournament.server";
-import type { TournamentMatchLoaderData } from "../routes/to.$id.matches.$mid";
+import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { tournamentTeamToActiveRosterUserIds } from "../tournament-bracket-utils";
 import type { Result } from "./StartedMatch";
 

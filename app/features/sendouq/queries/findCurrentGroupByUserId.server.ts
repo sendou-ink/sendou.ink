@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { Group, GroupMember } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import invariant from "~/utils/invariant";
 
 const stm = sql.prepare(/* sql */ `
@@ -21,11 +21,11 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 type ActiveGroup = Pick<
-	Group,
+	Tables["Group"],
 	"id" | "status" | "latestActionAt" | "chatCode"
 > & {
 	matchId?: number;
-	role: GroupMember["role"];
+	role: Tables["GroupMember"]["role"];
 };
 
 export function findCurrentGroupByUserId(

@@ -1,6 +1,6 @@
 import { ordinal } from "openskill";
 import { sql } from "~/db/sql";
-import type { Skill } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { identifierToUserIds } from "~/features/mmr/mmr-utils";
 import type { TournamentSummary } from "../core/summarizer.server";
 
@@ -140,7 +140,7 @@ export const addSummary = sql.transaction(
 				identifier: skill.identifier ?? null,
 				matchesCount: skill.matchesCount,
 				season: season ?? null,
-			}) as Skill;
+			}) as Tables["Skill"];
 
 			if (insertedSkill.identifier) {
 				for (const userId of identifierToUserIds(insertedSkill.identifier)) {

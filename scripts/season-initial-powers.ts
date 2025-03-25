@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { ordinal } from "openskill";
 import { db, sql } from "~/db/sql";
-import type { Skill } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { TIERS, type TierName } from "~/features/mmr/mmr-constants";
 import { freshUserSkills } from "~/features/mmr/tiered.server";
 import { addInitialSkill } from "~/features/sendouq/queries/addInitialSkill.server";
@@ -151,13 +151,13 @@ const midPoints = Object.entries(groupedSkills).reduce(
 		const midPointSkill = skillStm.get({
 			userId: midPoint.userId,
 			ordinal: midPoint.ordinal,
-		}) as Skill;
+		}) as Tables["Skill"];
 		invariant(midPointSkill, "midPointSkill not found");
 
 		acc[tier as TierName] = midPointSkill;
 		return acc;
 	},
-	{} as Record<TierName, Skill>,
+	{} as Record<TierName, Tables["Skill"]>,
 );
 
 const newSkills = allSkills.map((s) => {

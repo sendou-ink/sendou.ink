@@ -1,4 +1,3 @@
-import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
 import { Outlet, useLoaderData, useMatches, useParams } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
@@ -8,26 +7,15 @@ import { Redirect } from "~/components/Redirect";
 import { useUser } from "~/features/auth/core/user";
 import { canEditBadgeOwners, isMod } from "~/permissions";
 import { BADGES_PAGE } from "~/utils/urls";
-import * as BadgeRepository from "../BadgeRepository.server";
 import { badgeExplanationText } from "../badges-utils";
-import type { BadgesLoaderData } from "./badges";
+import type { BadgesLoaderData } from "../loaders/badges.server";
+
+import { loader } from "../loaders/badges.$id.server";
+export { loader };
 
 export interface BadgeDetailsContext {
 	badgeName: string;
 }
-
-export type BadgeDetailsLoaderData = SerializeFrom<typeof loader>;
-export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const badgeId = Number(params.id);
-	if (Number.isNaN(badgeId)) {
-		throw new Response(null, { status: 404 });
-	}
-
-	return {
-		owners: await BadgeRepository.findOwnersByBadgeId(badgeId),
-		managers: await BadgeRepository.findManagersByBadgeId(badgeId),
-	};
-};
 
 export default function BadgeDetailsPage() {
 	const user = useUser();

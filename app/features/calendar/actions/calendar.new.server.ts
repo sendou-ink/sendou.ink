@@ -1,8 +1,11 @@
 import type { ActionFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { z } from "zod";
-import { TOURNAMENT_STAGE_TYPES } from "~/db/tables";
-import type { CalendarEventTag, PersistedCalendarEventTag } from "~/db/types";
+import {
+	type CalendarEventTag,
+	type PersistedCalendarEventTag,
+	TOURNAMENT_STAGE_TYPES,
+} from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";

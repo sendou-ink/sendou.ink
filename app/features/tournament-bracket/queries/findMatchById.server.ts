@@ -1,11 +1,5 @@
 import { sql } from "~/db/sql";
-import type { TournamentRoundMaps } from "~/db/tables";
-import type {
-	Tournament,
-	TournamentMatch,
-	TournamentTeamMember,
-	User,
-} from "~/db/types";
+import type { Tables, TournamentRoundMaps } from "~/db/tables";
 import type { Match } from "~/modules/brackets-model";
 import { parseDBArray } from "~/utils/sql";
 
@@ -57,10 +51,12 @@ export type FindMatchById = ReturnType<typeof findMatchById>;
 export const findMatchById = (id: number) => {
 	const row = stm.get({ id }) as
 		| ((Pick<
-				TournamentMatch,
-				"id" | "groupId" | "opponentOne" | "opponentTwo" | "bestOf" | "chatCode"
+				Tables["TournamentMatch"],
+				"id" | "groupId" | "bestOf" | "chatCode"
 		  > &
-				Pick<Tournament, "mapPickingStyle"> & { players: string }) & {
+				Pick<Tables["Tournament"], "mapPickingStyle"> & { players: string }) & {
+				opponentOne: string;
+				opponentTwo: string;
 				roundId: number;
 				roundMaps: string | null;
 		  })
@@ -81,13 +77,13 @@ export const findMatchById = (id: number) => {
 		opponentTwo: JSON.parse(row.opponentTwo) as Match["opponent2"],
 		players: (
 			parseDBArray(row.players) as Array<{
-				id: User["id"];
-				username: User["username"];
-				tournamentTeamId: TournamentTeamMember["tournamentTeamId"];
-				inGameName: User["inGameName"];
-				discordId: User["discordId"];
-				customUrl: User["customUrl"];
-				discordAvatar: User["discordAvatar"];
+				id: Tables["User"]["id"];
+				username: Tables["User"]["username"];
+				tournamentTeamId: Tables["TournamentTeamMember"]["tournamentTeamId"];
+				inGameName: Tables["User"]["inGameName"];
+				discordId: Tables["User"]["discordId"];
+				customUrl: Tables["User"]["customUrl"];
+				discordAvatar: Tables["User"]["discordAvatar"];
 				chatNameColor: string | null;
 			}>
 		).filter((player) => player.id),

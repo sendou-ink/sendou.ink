@@ -1,10 +1,11 @@
 import { useRevalidator } from "@remix-run/react";
 import clsx from "clsx";
+import { sub } from "date-fns";
 import { nanoid } from "nanoid";
+import { WebSocket } from "partysocket";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import ReconnectingWebSocket from "reconnecting-websocket";
-import type { User } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -17,7 +18,10 @@ import { useChatAutoScroll } from "../chat-hooks";
 import type { ChatMessage } from "../chat-types";
 import { messageTypeToSound, soundEnabled, soundVolume } from "../chat-utils";
 
-type ChatUser = Pick<User, "username" | "discordId" | "discordAvatar"> & {
+type ChatUser = Pick<
+	Tables["User"],
+	"username" | "discordId" | "discordAvatar"
+> & {
 	chatNameColor: string | null;
 	title?: string;
 };
@@ -64,7 +68,7 @@ export function Chat({
 		messages,
 		currentRoom,
 		setCurrentRoom,
-		connected,
+		readyState,
 		unseenMessages,
 	} = chat;
 
@@ -94,7 +98,7 @@ export function Chat({
 		};
 	}, [onMount, onUnmount]);
 
-	const sendingMessagesDisabled = disabled || !connected;
+	const sendingMessagesDisabled = disabled || readyState !== "CONNECTED";
 
 	const systemMessageText = (msg: ChatMessage) => {
 		const name = () => {
@@ -198,11 +202,13 @@ export function Chat({
 						maxLength={MESSAGE_MAX_LENGTH}
 					/>{" "}
 					<div className="chat__bottom-row">
-						{typeof connected !== "boolean" ? (
-							<div />
-						) : connected ? (
+						{readyState === "CONNECTED" || readyState === "CONNECTING" ? (
 							<div className="text-xxs font-semi-bold text-lighter">
-								{t("common:chat.connected")}
+								{t(
+									readyState === "CONNECTED"
+										? "common:chat.connected"
+										: "common:chat.connecting",
+								)}
 							</div>
 						) : (
 							<div className="text-xxs font-semi-bold text-warning">
@@ -253,9 +259,7 @@ function Message({
 						</div>
 					) : null}
 					{!message.pending ? (
-						<time className="chat__message__time">
-							{new Date(message.timestamp).toLocaleTimeString()}
-						</time>
+						<MessageTimestamp timestamp={message.timestamp} />
 					) : null}
 				</div>
 				<div
@@ -281,15 +285,31 @@ function SystemMessage({
 		<li className="chat__message">
 			<div>
 				<div className="stack horizontal sm">
-					<time className="chat__message__time">
-						{new Date(message.timestamp).toLocaleTimeString()}
-					</time>
+					<MessageTimestamp timestamp={message.timestamp} />
 				</div>
 				<div className="chat__message__contents text-xs text-lighter font-semi-bold">
 					{text}
 				</div>
 			</div>
 		</li>
+	);
+}
+
+function MessageTimestamp({ timestamp }: { timestamp: number }) {
+	const { i18n } = useTranslation();
+	const moreThanDayAgo = sub(new Date(), { days: 1 }) > new Date(timestamp);
+
+	return (
+		<time className="chat__message__time">
+			{moreThanDayAgo
+				? new Date(timestamp).toLocaleString(i18n.language, {
+						day: "numeric",
+						month: "numeric",
+						hour: "numeric",
+						minute: "numeric",
+					})
+				: new Date(timestamp).toLocaleTimeString(i18n.language)}
+		</time>
 	);
 }
 
@@ -308,13 +328,15 @@ export function useChat({
 	const user = useUser();
 
 	const [messages, setMessages] = React.useState<ChatMessage[]>([]);
-	const [connected, setConnected] = React.useState<null | boolean>(null);
+	const [readyState, setReadyState] = React.useState<
+		"CONNECTING" | "CONNECTED" | "CLOSED"
+	>("CONNECTING");
 	const [sentMessage, setSentMessage] = React.useState<ChatMessage>();
 	const [currentRoom, setCurrentRoom] = React.useState<string | undefined>(
 		rooms[0]?.code,
 	);
 
-	const ws = React.useRef<ReconnectingWebSocket>();
+	const ws = React.useRef<WebSocket>();
 	const lastSeenMessagesByRoomId = React.useRef<Map<string, string>>(new Map());
 
 	// same principal as here behind separating it into a ref: https://overreacted.io/making-setinterval-declarative-with-react-hooks/
@@ -332,15 +354,16 @@ export function useChat({
 		const url = `${import.meta.env.VITE_SKALOP_WS_URL}?${rooms
 			.map((room) => `room=${room.code}`)
 			.join("&")}`;
-		ws.current = new ReconnectingWebSocket(url, [], {
+		ws.current = new WebSocket(url, [], {
 			maxReconnectionDelay: 10000 * 2,
 			reconnectionDelayGrowFactor: 1.5,
 		});
 		ws.current.onopen = () => {
 			setCurrentRoom(rooms[0].code);
-			setConnected(true);
+			setReadyState("CONNECTED");
 		};
-		ws.current.onclose = () => setConnected(false);
+		ws.current.onclose = () => setReadyState("CLOSED");
+		ws.current.onerror = () => setReadyState("CLOSED");
 
 		ws.current.onmessage = (e) => {
 			const message = JSON.parse(e.data);
@@ -445,7 +468,7 @@ export function useChat({
 		send,
 		currentRoom,
 		setCurrentRoom,
-		connected,
+		readyState,
 		unseenMessages,
 	};
 }

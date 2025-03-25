@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/node";
 import { useLoaderData, useSearchParams } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Button } from "~/components/Button";
@@ -10,8 +10,10 @@ import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { VODS_PAGE, navIconUrl } from "~/utils/urls";
 import { VodListing } from "../components/VodListing";
-import { findVods } from "../queries/findVods.server";
 import { VODS_PAGE_BATCH_SIZE, videoMatchTypes } from "../vods-constants";
+
+import { loader } from "../loaders/vods.server";
+export { loader };
 
 import "../vods.css";
 
@@ -32,31 +34,6 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 			"Search for Splatoon 3 VODs (gameplay footage) by mode, stage and/or weapon.",
 		location: args.location,
 	});
-};
-
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const url = new URL(request.url);
-
-	const limit = Number(url.searchParams.get("limit") ?? VODS_PAGE_BATCH_SIZE);
-
-	const vods = findVods({
-		...Object.fromEntries(
-			Array.from(url.searchParams.entries()).filter(([, value]) => value),
-		),
-		limit: limit + 1,
-	});
-
-	let hasMoreVods = false;
-	if (vods.length > limit) {
-		vods.pop();
-		hasMoreVods = true;
-	}
-
-	return {
-		vods,
-		limit,
-		hasMoreVods,
-	};
 };
 
 export default function VodsSearchPage() {

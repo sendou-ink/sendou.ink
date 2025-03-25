@@ -1,4 +1,4 @@
-import type { GearType } from "~/db/types";
+import type { GearType } from "~/db/tables";
 import { assertUnreachable } from "./types";
 
 export function inGameNameWithoutDiscriminator(inGameName: string) {

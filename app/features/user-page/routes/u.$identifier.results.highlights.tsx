@@ -1,54 +1,12 @@
-import { type ActionFunction, redirect } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
 import { FormErrors } from "~/components/FormErrors";
 import { SubmitButton } from "~/components/SubmitButton";
-import { requireUser } from "~/features/auth/core/user.server";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
-import {
-	HIGHLIGHT_CHECKBOX_NAME,
-	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
-	UserResultsTable,
-} from "~/features/user-page/components/UserResultsTable";
-import { normalizeFormFieldArray } from "~/utils/arrays";
-import { parseRequestPayload } from "~/utils/remix.server";
-import { userResultsPage } from "~/utils/urls";
+import { UserResultsTable } from "~/features/user-page/components/UserResultsTable";
 
+import { action } from "../actions/u.$identifier.results.highlights.server";
 import { loader } from "../loaders/u.$identifier.results.server";
-export { loader };
-
-const editHighlightsActionSchema = z.object({
-	[HIGHLIGHT_CHECKBOX_NAME]: z.optional(
-		z.union([z.array(z.string()), z.string()]),
-	),
-	[HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME]: z.optional(
-		z.union([z.array(z.string()), z.string()]),
-	),
-});
-
-export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser(request);
-	const data = await parseRequestPayload({
-		request,
-		schema: editHighlightsActionSchema,
-	});
-
-	const resultTeamIds = normalizeFormFieldArray(
-		data[HIGHLIGHT_CHECKBOX_NAME],
-	).map((id) => Number.parseInt(id, 10));
-	const resultTournamentTeamIds = normalizeFormFieldArray(
-		data[HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME],
-	).map((id) => Number.parseInt(id, 10));
-
-	await UserRepository.updateResultHighlights({
-		userId: user.id,
-		resultTeamIds,
-		resultTournamentTeamIds,
-	});
-
-	throw redirect(userResultsPage(user));
-};
+export { loader, action };
 
 export default function ResultHighlightsEditPage() {
 	const { t } = useTranslation(["common", "user"]);
