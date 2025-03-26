@@ -12,3 +12,7 @@ export const LUTI_DIVS = [
 	"10",
 	"11",
 ] as const;
+
+export const SCRIM = {
+	MAX_PICKUP_SIZE_EXCLUDING_OWNER: 5,
+};

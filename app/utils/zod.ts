@@ -206,6 +206,12 @@ export function noDuplicates(arr: (number | string)[]) {
 	return new Set(arr).size === arr.length;
 }
 
+export function filterOutNullishMembers(value: unknown) {
+	if (!Array.isArray(value)) return value;
+
+	return value.filter((member) => member !== null && member !== undefined);
+}
+
 export function removeDuplicates(value: unknown) {
 	if (!Array.isArray(value)) return value;
 

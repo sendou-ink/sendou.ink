@@ -3,11 +3,19 @@ import type { z } from "zod";
 import type { Tables } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
+import {
+	actionError,
+	errorToastIfFalsy,
+	parseRequestPayload,
+} from "~/utils/remix.server";
 import { scrimsPage } from "~/utils/urls";
 import * as TeamRepository from "../../team/TeamRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
-import { type fromSchema, scrimsNewActionSchema } from "../scrims-schemas";
+import {
+	type fromSchema,
+	type newRequestSchema,
+	scrimsNewActionSchema,
+} from "../scrims-schemas";
 import { serializeLutiDiv } from "../scrims-utils";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -16,6 +24,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		request,
 		schema: scrimsNewActionSchema,
 	});
+
+	if (data.from.mode === "PICKUP") {
+		if (data.from.users.includes(user.id)) {
+			return actionError<typeof newRequestSchema>({
+				msg: "Don't add yourself to the pickup member list",
+				field: "from.root",
+			});
+		}
+
+		const pickupUserError = await validatePickupUsers(data.from.users);
+		errorToastIfFalsy(!pickupUserError, pickupUserError!.error);
+	}
 
 	// xxx: some checks? like do they have a post with same at
 
@@ -60,3 +80,9 @@ export const usersListForPost = async ({
 		.filter((member) => !ROLES_TO_EXCLUDE.includes(member.role))
 		.map((member) => member.id);
 };
+
+async function validatePickupUsers(
+	_userIds: number[],
+): Promise<{ error: string } | null> {
+	return null; // xxx: implement
+}

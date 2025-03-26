@@ -283,6 +283,8 @@
 
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.label": "Builds: Disable automatic ability sorting",
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText": "Outside of your profile page, build abilities are sorted so that same abilities are next to each other. This setting allows you to see the abilities in the order they were authored everywhere.",
+	"settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.label": "Scrims: No adding to pickups by untrusted",
+	"settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.bottomText": "By default anyone can add you. If you prefer to only allow users you explicitly set as trusted to add you to pickups, enable this setting.",
 	"settings.notifications.title": "Push notifications",
 	"settings.notifications.description": "Receive push notifications to your device even if you don't currently have sendou.ink open.",
 	"settings.notifications.disableInfo": "To disable push notifications check your browser settings",

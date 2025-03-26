@@ -53,6 +53,18 @@ export default function SettingsPage() {
 									"common:settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText",
 								)}
 							/>
+							<PreferenceSelectorSwitch
+								_action="DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED"
+								defaultSelected={
+									user?.preferences.disallowScrimPickupsFromUntrusted ?? false
+								}
+								label={t(
+									"common:settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.label",
+								)}
+								bottomText={t(
+									"common:settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.bottomText",
+								)}
+							/>
 						</div>
 					</>
 				) : null}
@@ -245,6 +257,7 @@ function PreferenceSelectorSwitch({
 		);
 	};
 
+	// xxx: for some reason if label is long here the animation is off (dot too much right), make into issue?
 	return (
 		<div>
 			<SendouSwitch

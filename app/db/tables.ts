@@ -804,6 +804,7 @@ export type BuildSort = (typeof BUILD_SORT_IDENTIFIERS)[number];
 
 export interface UserPreferences {
 	disableBuildAbilitySorting?: boolean;
+	disallowScrimPickupsFromUntrusted?: boolean;
 }
 
 export interface User {

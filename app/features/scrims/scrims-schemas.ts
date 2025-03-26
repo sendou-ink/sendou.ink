@@ -1,15 +1,35 @@
 import { add, sub } from "date-fns";
 import { z } from "zod";
-import { _action, date, falsyToNull, id } from "~/utils/zod";
-import { LUTI_DIVS } from "./scrims-constants";
+import {
+	_action,
+	date,
+	falsyToNull,
+	filterOutNullishMembers,
+	id,
+	noDuplicates,
+} from "~/utils/zod";
+import { LUTI_DIVS, SCRIM } from "./scrims-constants";
 
 export const deletePostSchema = z.object({
 	_action: _action("DELETE_POST"),
 	scrimPostId: id,
 });
 
+const fromUsers = z.preprocess(
+	filterOutNullishMembers,
+	z
+		.array(id)
+		.min(3, {
+			message: "Must have at least 3 users excluding yourself",
+		})
+		.max(SCRIM.MAX_PICKUP_SIZE_EXCLUDING_OWNER)
+		.refine(noDuplicates, {
+			message: "Users must be unique",
+		}),
+);
+
 export const fromSchema = z.union([
-	z.object({ mode: z.literal("PICKUP"), users: z.array(id).min(3).max(6) }),
+	z.object({ mode: z.literal("PICKUP"), users: fromUsers }),
 	z.object({ mode: z.literal("TEAM"), teamId: id }),
 ]);
 

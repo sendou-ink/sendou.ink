@@ -51,6 +51,8 @@ export { loader, action };
 
 import "../q-settings.css";
 
+// xxx: add trusted users
+
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
 	breadcrumb: () => [

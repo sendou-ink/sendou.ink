@@ -50,6 +50,7 @@ export const handle: SendouRouteHandle = {
 
 // xxx: mobile better (button visible always)
 // xxx: notifications
+// xxx: cross link from scrims to sendouq and vice versa
 
 export default function ScrimsPage() {
 	const { t } = useTranslation(["calendar"]);
@@ -211,30 +212,32 @@ function ScrimsDaySeparatedTables({
 
 	return (
 		<div className="stack lg">
-			{Object.entries(postsByDay).map(([day, posts]) => {
-				return (
-					<div key={day} className="stack md">
-						<h2 className="text-sm">
-							{databaseTimestampToDate(posts![0].at).toLocaleDateString(
-								i18n.language,
-								{
-									day: "numeric",
-									month: "long",
-									weekday: "long",
-								},
-							)}
-						</h2>
-						<ScrimsTable
-							posts={posts!}
-							requestScrim={requestScrim}
-							showDeletePost={showDeletePost}
-							showRequestRows={showRequestRows}
-							showPopovers={showPopovers}
-							showStatus={showStatus}
-						/>
-					</div>
-				);
-			})}
+			{Object.entries(postsByDay)
+				.sort((a, b) => a[1][0].at - b[1][0].at)
+				.map(([day, posts]) => {
+					return (
+						<div key={day} className="stack md">
+							<h2 className="text-sm">
+								{databaseTimestampToDate(posts![0].at).toLocaleDateString(
+									i18n.language,
+									{
+										day: "numeric",
+										month: "long",
+										weekday: "long",
+									},
+								)}
+							</h2>
+							<ScrimsTable
+								posts={posts!}
+								requestScrim={requestScrim}
+								showDeletePost={showDeletePost}
+								showRequestRows={showRequestRows}
+								showPopovers={showPopovers}
+								showStatus={showStatus}
+							/>
+						</div>
+					);
+				})}
 		</div>
 	);
 }
