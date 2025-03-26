@@ -895,6 +895,11 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "528851510222782474",
 	},
 	{
+		displayName: "Big Swig",
+		fileName: "swig",
+		authorDiscordId: "534502084134043648",
+	},
+	{
 		displayName: "Art Supplies Pencil Award",
 		fileName: "artsupplies",
 		authorDiscordId: "1320944066002681876",
