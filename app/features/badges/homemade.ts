@@ -15,6 +15,11 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Turnabout Suspect",
+		fileName: "turnabout-suspect",
+		authorDiscordId: "418176537561661441",
+	},
+	{
 		displayName: "HACKER Cup (1st Place)",
 		fileName: "hacker-cup-gold",
 		authorDiscordId: "530722502603833346",
