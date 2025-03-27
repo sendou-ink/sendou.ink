@@ -2332,7 +2332,7 @@ async function scrimPosts() {
 	};
 
 	const users = () => {
-		const count = faker.helpers.arrayElement([4, 4, 4, 4, 4, 4, 5, 5, 5, 6, 7]);
+		const count = faker.helpers.arrayElement([4, 4, 4, 4, 4, 4, 5, 5, 5, 6]);
 
 		const result: Array<{ userId: number; isOwner: number }> = [];
 		for (let i = 0; i < count; i++) {
@@ -2362,7 +2362,7 @@ async function scrimPosts() {
 		});
 	}
 
-	await ScrimPostRepository.insert({
+	const adminPostId = await ScrimPostRepository.insert({
 		at: date(),
 		text:
 			Math.random() > 0.5 ? faker.lorem.sentences({ min: 1, max: 5 }) : null,
@@ -2370,6 +2370,14 @@ async function scrimPosts() {
 		users: users()
 			.map((u) => ({ ...u, isOwner: 0 }))
 			.concat({ userId: ADMIN_ID, isOwner: 1 }),
+	});
+	await ScrimPostRepository.insertRequest({
+		scrimPostId: adminPostId,
+		users: users(),
+	});
+	await ScrimPostRepository.insertRequest({
+		scrimPostId: adminPostId,
+		users: users(),
 	});
 }
 
@@ -2391,7 +2399,7 @@ async function scrimPostRequests() {
 		});
 	}
 
-	await ScrimPostRepository.acceptRequest(1);
+	await ScrimPostRepository.acceptRequest(3);
 }
 
 async function notifications() {

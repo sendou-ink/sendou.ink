@@ -18,7 +18,7 @@ export function GroupLeaver({
 			<FormWithConfirm
 				dialogHeading="Leave this group?"
 				fields={[["_action", "LEAVE_GROUP"]]}
-				deleteButtonText="Leave"
+				submitButtonText="Leave"
 				action={SENDOUQ_LOOKING_PAGE}
 			>
 				<Button variant="minimal-destructive" size="tiny">

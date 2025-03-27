@@ -51,8 +51,6 @@ export { loader, action };
 
 import "../q-settings.css";
 
-// xxx: add trusted users
-
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
 	breadcrumb: () => [
@@ -582,6 +580,7 @@ function SoundSlider() {
 	);
 }
 
+// xxx: how to handle giving out trust? via "trust link"?
 function TrustedUsers() {
 	const { t } = useTranslation(["q"]);
 	const data = useLoaderData<typeof loader>();
@@ -613,7 +612,7 @@ function TrustedUsers() {
 												["_action", "REMOVE_TRUST"],
 												["userToRemoveTrustFromId", trustedUser.id],
 											]}
-											deleteButtonText="Remove"
+											submitButtonText="Remove"
 										>
 											<Button
 												className="build__small-text"

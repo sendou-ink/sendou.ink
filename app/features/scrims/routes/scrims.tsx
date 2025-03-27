@@ -1,4 +1,5 @@
-import { Link, useFetcher, useLoaderData } from "@remix-run/react";
+import type { MetaFunction } from "@remix-run/node";
+import { Link, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import groupBy from "just-group-by";
 import * as React from "react";
@@ -9,7 +10,6 @@ import { Button, LinkButton } from "~/components/Button";
 import { Dialog } from "~/components/Dialog";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { SubmitButton } from "~/components/SubmitButton";
 import { Table } from "~/components/Table";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -21,6 +21,7 @@ import { useIsMounted } from "~/hooks/useIsMounted";
 import { joinListToNaturalString } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { scrimPage, userPage, userSubmittedImage } from "~/utils/urls";
 import { Main } from "../../../components/Main";
@@ -48,8 +49,17 @@ export const handle: SendouRouteHandle = {
 	i18n: "calendar",
 };
 
+export const meta: MetaFunction<typeof loader> = (args) => {
+	return metaTags({
+		title: "Scrims",
+		ogTitle: "Splatoon scrim finder",
+		description:
+			"Schedule scrims against competitive teams. Make your own post or browse available scrims.",
+		location: args.location,
+	});
+};
+
 // xxx: mobile better (button visible always)
-// xxx: notifications
 // xxx: cross link from scrims to sendouq and vice versa
 
 export default function ScrimsPage() {
@@ -417,6 +427,7 @@ function ScrimsTable({
 											size="tiny"
 											onClick={() => requestScrim(post.id)}
 											icon={<ArrowUpOnSquareIcon />}
+											className="ml-auto"
 										>
 											Request
 										</Button>
@@ -427,7 +438,7 @@ function ScrimsTable({
 										{owner.id === user?.id ? (
 											<FormWithConfirm
 												dialogHeading="Delete scrim post"
-												deleteButtonText="Delete"
+												submitButtonText="Delete"
 												cancelButtonText="Nevermind"
 												fields={[
 													["scrimPostId", post.id],
@@ -457,7 +468,7 @@ function ScrimsTable({
 									<td>
 										<FormWithConfirm
 											dialogHeading="Cancel request"
-											deleteButtonText="Cancel"
+											submitButtonText="Cancel"
 											cancelButtonText="Nevermind"
 											fields={[
 												["scrimPostRequestId", post.requests[0].id],
@@ -468,6 +479,7 @@ function ScrimsTable({
 												size="tiny"
 												variant="destructive"
 												icon={<CrossIcon />}
+												className="ml-auto"
 											>
 												Cancel
 											</Button>
@@ -497,7 +509,7 @@ function ContactButton({ postId }: { postId: number }) {
 		<LinkButton
 			to={scrimPage(postId)}
 			size="tiny"
-			className="w-max"
+			className="w-max ml-auto"
 			icon={<SpeechBubbleFilledIcon />}
 		>
 			Contact
@@ -510,10 +522,10 @@ function RequestRow({
 	request,
 	postId,
 }: { canAccept: boolean; request: ScrimPostRequest; postId: number }) {
-	const fetcher = useFetcher();
-
 	const requestOwner =
 		request.users.find((user) => user.isOwner) ?? request.users[0];
+
+	const groupName = request.team?.name ?? `${requestOwner.username}'s pickup`;
 
 	return (
 		<tr className="bg-theme-transparent-important">
@@ -549,24 +561,25 @@ function RequestRow({
 					) : (
 						<Avatar size="xxs" user={requestOwner} />
 					)}
-					{request.team?.name ?? `${requestOwner.username}'s pickup`}
+					{groupName}
 				</div>
 			</td>
 			<td />
 			<td />
 			<td>
-				{/** xxx: some kind of confirm? */}
 				{!request.isAccepted && canAccept ? (
-					<fetcher.Form method="post">
-						<input type="hidden" name="scrimPostRequestId" value={request.id} />
-						<SubmitButton
-							_action="ACCEPT_REQUEST"
-							state={fetcher.state}
-							size="tiny"
-						>
-							Accept
-						</SubmitButton>
-					</fetcher.Form>
+					<FormWithConfirm
+						dialogHeading={`Accept the request to scrim by ${groupName} & reject others (if any)?`}
+						fields={[
+							["scrimPostRequestId", request.id],
+							["_action", "ACCEPT_REQUEST"],
+						]}
+						submitButtonVariant="primary"
+						submitButtonText="Accept"
+						cancelButtonVariant="destructive"
+					>
+						<Button size="tiny">Accept</Button>
+					</FormWithConfirm>
 				) : !request.isAccepted && !canAccept ? (
 					<SendouPopover
 						trigger={<SendouButton size="small">Accept</SendouButton>}

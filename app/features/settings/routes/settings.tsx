@@ -257,7 +257,6 @@ function PreferenceSelectorSwitch({
 		);
 	};
 
-	// xxx: for some reason if label is long here the animation is off (dot too much right), make into issue?
 	return (
 		<div>
 			<SendouSwitch

@@ -362,6 +362,10 @@ export const scrimPage = (id: number) => {
 	return `${scrimsPage()}/${id}`;
 };
 
+export const newScrimPostPage = () => {
+	return "/scrims/new";
+};
+
 export const getWeaponUsage = ({
 	userId,
 	season,

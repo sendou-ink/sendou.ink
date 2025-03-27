@@ -1,5 +1,7 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
+import { notify } from "~/features/notifications/core/notify.server";
+import { databaseTimestampToDate } from "~/utils/dates";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
@@ -29,6 +31,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "NEW_REQUEST": {
+			const post = await findPost({
+				userId: user.id,
+				postId: data.scrimPostId,
+			});
+
 			await ScrimPostRepository.insertRequest({
 				scrimPostId: data.scrimPostId,
 				teamId: data.from.mode === "TEAM" ? data.from.teamId : null,
@@ -38,6 +45,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					userId,
 					isOwner: Number(user.id === userId),
 				})),
+			});
+
+			notify({
+				userIds: post.users
+					.filter((user) => user.isOwner)
+					.map((user) => user.id),
+				notification: {
+					type: "SCRIM_NEW_REQUEST",
+					meta: {
+						fromUsername: user.username,
+					},
+				},
 			});
 
 			break;
@@ -55,6 +74,29 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			);
 
 			await ScrimPostRepository.acceptRequest(data.scrimPostRequestId);
+
+			notify({
+				userIds: [
+					...post.users.map((m) => m.id),
+					...request.users.map((m) => m.id),
+				],
+				defaultSeenUserIds: [user.id],
+				notification: {
+					type: "SCRIM_SCHEDULED",
+					meta: {
+						id: post.id,
+						timeString: databaseTimestampToDate(post.at).toLocaleString(
+							"en-US",
+							{
+								day: "numeric",
+								month: "numeric",
+								hour: "numeric",
+								minute: "numeric",
+							},
+						),
+					},
+				},
+			});
 
 			break;
 		}

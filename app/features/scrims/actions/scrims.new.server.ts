@@ -2,13 +2,17 @@ import { type ActionFunctionArgs, redirect } from "@remix-run/node";
 import type { z } from "zod";
 import type { Tables } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
+import { userIsBanned } from "~/features/ban/core/banned.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import invariant from "~/utils/invariant";
 import {
 	actionError,
 	errorToastIfFalsy,
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { scrimsPage } from "~/utils/urls";
+import * as QRepository from "../../sendouq/QRepository.server";
 import * as TeamRepository from "../../team/TeamRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import {
@@ -33,11 +37,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			});
 		}
 
-		const pickupUserError = await validatePickupUsers(data.from.users);
-		errorToastIfFalsy(!pickupUserError, pickupUserError!.error);
+		const pickupUserError = await validatePickup(data.from.users, user.id);
+		if (pickupUserError) {
+			return actionError<typeof newRequestSchema>({
+				msg: pickupUserError.error,
+				field: "from.root",
+			});
+		}
 	}
-
-	// xxx: some checks? like do they have a post with same at
 
 	await ScrimPostRepository.insert({
 		at: dateToDatabaseTimestamp(data.at),
@@ -81,8 +88,50 @@ export const usersListForPost = async ({
 		.map((member) => member.id);
 };
 
-async function validatePickupUsers(
-	_userIds: number[],
-): Promise<{ error: string } | null> {
-	return null; // xxx: implement
+async function validatePickup(userIds: number[], authorId: number) {
+	const trustError = await validatePickupTrust(userIds, authorId);
+	if (trustError) {
+		return trustError;
+	}
+
+	const unbannedError = await validatePickupAllUnbanned(userIds);
+	if (unbannedError) {
+		return unbannedError;
+	}
+
+	return null;
+}
+
+async function validatePickupTrust(userIds: number[], authorId: number) {
+	const unconsentingUsers: string[] = [];
+
+	const trustedBy = await QRepository.usersThatTrusted(authorId);
+
+	for (const userId of userIds) {
+		const user = await UserRepository.findLeanById(userId);
+		invariant(user, "User not found");
+
+		if (
+			user.preferences?.disallowScrimPickupsFromUntrusted &&
+			!trustedBy.trusters.some((truster) => truster.id === userId)
+		) {
+			unconsentingUsers.push(user.username);
+		}
+	}
+
+	return unconsentingUsers.length === 0
+		? null
+		: {
+				error: `Following users don't allow untrusted to add: ${unconsentingUsers.join(", ")}. Ask them to add you to their trusted list.`,
+			};
+}
+
+async function validatePickupAllUnbanned(userIds: number[]) {
+	const bannedUsers = userIds.filter(userIsBanned);
+
+	return bannedUsers.length === 0
+		? null
+		: {
+				error: "Pickup includes banned users.",
+			};
 }

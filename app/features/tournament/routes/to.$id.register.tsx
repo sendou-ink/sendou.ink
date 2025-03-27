@@ -264,7 +264,7 @@ function TournamentRegisterInfoTabs() {
 											<FormWithConfirm
 												dialogHeading={`Leave "${tournament.teamMemberOfByUser(user)?.name}"?`}
 												fields={[["_action", "LEAVE_TEAM"]]}
-												deleteButtonText="Leave"
+												submitButtonText="Leave"
 											>
 												<Button
 													className="build__small-text"
@@ -709,7 +709,7 @@ function TeamInfo({
 				) : canUnregister ? (
 					<FormWithConfirm
 						dialogHeading={t("tournament:pre.info.unregister.confirm")}
-						deleteButtonText={t("tournament:pre.info.unregister")}
+						submitButtonText={t("tournament:pre.info.unregister")}
 						fields={[["_action", "UNREGISTER"]]}
 					>
 						<Button

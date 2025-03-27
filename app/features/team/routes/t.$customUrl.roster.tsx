@@ -237,7 +237,7 @@ function MemberRow({
 						teamName: team.name,
 						user: member.username,
 					})}
-					deleteButtonText={t("team:actionButtons.kick")}
+					submitButtonText={t("team:actionButtons.kick")}
 					fields={[
 						["_action", "DELETE_MEMBER"],
 						["userId", member.id],

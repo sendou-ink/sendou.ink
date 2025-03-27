@@ -37,6 +37,11 @@ export const navItems = [
 		prefetch: false,
 	},
 	{
+		name: "scrims",
+		url: "scrims",
+		prefetch: false,
+	},
+	{
 		name: "lfg",
 		url: "lfg",
 		prefetch: false,

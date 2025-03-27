@@ -53,7 +53,9 @@ export type Notification =
 			"TAGGED_TO_ART",
 			{ adderUsername: string; adderDiscordId: string; artId: number }
 	  >
-	| NotificationItem<"SEASON_STARTED", { seasonNth: number }>;
+	| NotificationItem<"SEASON_STARTED", { seasonNth: number }>
+	| NotificationItem<"SCRIM_NEW_REQUEST", { fromUsername: string }>
+	| NotificationItem<"SCRIM_SCHEDULED", { id: number; timeString: string }>;
 
 type NotificationItem<
 	T extends string,

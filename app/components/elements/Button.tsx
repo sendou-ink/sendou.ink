@@ -7,6 +7,7 @@ import {
 
 interface MyDatePickerProps extends ReactAriaButtonProps {
 	variant?:
+		| "primary"
 		| "success"
 		| "outlined"
 		| "outlined-success"

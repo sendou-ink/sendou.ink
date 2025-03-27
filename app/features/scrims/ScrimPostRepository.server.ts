@@ -45,6 +45,8 @@ export function insert(args: InsertArgs) {
 			.insertInto("ScrimPostUser")
 			.values(args.users.map((user) => ({ ...user, scrimPostId: newPost.id })))
 			.execute();
+
+		return newPost.id;
 	});
 }
 

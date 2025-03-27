@@ -530,8 +530,10 @@ dialog::backdrop {
 
 .tab__buttons-container svg {
 	--icon-size: 16px;
-	width: var(--icon-size);
-	height: var(--icon-size);
+	min-width: var(--icon-size);
+	min-height: var(--icon-size);
+	max-width: var(--icon-size);
+	max-height: var(--icon-size);
 	margin-inline-end: var(--s-1-5);
 }
 
