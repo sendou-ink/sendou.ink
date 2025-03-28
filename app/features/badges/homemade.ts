@@ -919,4 +919,19 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "artsuppliesbronze",
 		authorDiscordId: "1320944066002681876",
 	},
+	{
+		displayName: "Stellaris Phantasm: Oblivion Bracket",
+		fileName: "oblivion",
+		authorDiscordId: "617399529532293150",
+	},
+	{
+		displayName: "Stellaris Phantasm: Lumière Bracket",
+		fileName: "lumiere",
+		authorDiscordId: "617399529532293150",
+	},
+	{
+		displayName: "Stellaris Phantasm: Serenade Bracket",
+		fileName: "serenade",
+		authorDiscordId: "617399529532293150",
+	},
 ];
