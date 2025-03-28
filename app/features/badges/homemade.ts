@@ -928,6 +928,5 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Art Supplies Pencil Award (Bronze)",
 		fileName: "artsuppliesbronze",
 		authorDiscordId: "1320944066002681876",
-
 	},
 ];
