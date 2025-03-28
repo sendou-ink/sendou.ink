@@ -908,8 +908,8 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Calm Before the Storm",
 		fileName: "calmbefore",
 		authorDiscordId: "631246535560265749",
-  },
-  {,
+  	},
+  	{
 		displayName: "Big Swig",
 		fileName: "swig",
 		authorDiscordId: "534502084134043648",
