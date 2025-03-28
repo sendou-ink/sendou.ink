@@ -1,7 +1,6 @@
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type { ParsedMemento, Tables } from "~/db/tables";
-import type { UserSkillDifference } from "~/db/types";
+import type { ParsedMemento, Tables, UserSkillDifference } from "~/db/tables";
 import type { MainWeaponId } from "~/modules/in-game-lists";
 import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
 

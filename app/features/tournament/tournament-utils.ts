@@ -1,5 +1,5 @@
 import type { Params } from "@remix-run/react";
-import type { Tournament } from "~/db/types";
+import { INVITE_CODE_LENGTH } from "~/constants";
 import type { ModeShort, StageId } from "~/modules/in-game-lists";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { weekNumberToDate } from "~/utils/dates";
@@ -23,7 +23,7 @@ export function tournamentIdFromParams(params: Params<string>) {
 }
 
 export function modesIncluded(
-	tournament: Pick<Tournament, "mapPickingStyle">,
+	tournament: Pick<Tables["Tournament"], "mapPickingStyle">,
 ): ModeShort[] {
 	switch (tournament.mapPickingStyle) {
 		case "AUTO_SZ": {
@@ -45,7 +45,7 @@ export function modesIncluded(
 }
 
 export function isOneModeTournamentOf(
-	tournament: Pick<Tournament, "mapPickingStyle">,
+	tournament: Pick<Tables["Tournament"], "mapPickingStyle">,
 ) {
 	return modesIncluded(tournament).length === 1
 		? modesIncluded(tournament)[0]
@@ -264,7 +264,11 @@ export function tournamentIsRanked({
 	isSetAsRanked,
 	startTime,
 	minMembersPerTeam,
-}: { isSetAsRanked?: boolean; startTime: Date; minMembersPerTeam: number }) {
+}: {
+	isSetAsRanked?: boolean;
+	startTime: Date;
+	minMembersPerTeam: number;
+}) {
 	const seasonIsActive = Boolean(currentSeason(startTime));
 	if (!seasonIsActive) return false;
 
@@ -337,4 +341,37 @@ export function defaultBracketSettings(
 			assertUnreachable(type);
 		}
 	}
+}
+
+export function validateCanJoinTeam({
+	inviteCode,
+	teamToJoin,
+	userId,
+	maxTeamSize,
+}: {
+	inviteCode?: string | null;
+	teamToJoin?: { members: { userId: number }[] };
+	userId?: number;
+	maxTeamSize: number;
+}) {
+	if (typeof inviteCode !== "string") {
+		return "MISSING_CODE";
+	}
+	if (typeof userId !== "number") {
+		return "NOT_LOGGED_IN";
+	}
+	if (!teamToJoin && inviteCode.length !== INVITE_CODE_LENGTH) {
+		return "SHORT_CODE";
+	}
+	if (!teamToJoin) {
+		return "NO_TEAM_MATCHING_CODE";
+	}
+	if (teamToJoin.members.length >= maxTeamSize) {
+		return "TEAM_FULL";
+	}
+	if (teamToJoin.members.some((member) => member.userId === userId)) {
+		return "ALREADY_JOINED";
+	}
+
+	return "VALID";
 }

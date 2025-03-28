@@ -1,14 +1,9 @@
-import type {
-	LoaderFunctionArgs,
-	MetaFunction,
-	SerializeFrom,
-} from "@remix-run/node";
+import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
-import { removeDuplicates } from "~/utils/arrays";
 import { metaTags } from "~/utils/remix";
-import { type SendouRouteHandle, notFoundIfFalsy } from "~/utils/remix.server";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	navIconUrl,
 	topSearchPage,
@@ -16,7 +11,9 @@ import {
 	userPage,
 } from "~/utils/urls";
 import { PlacementsTable } from "../components/Placements";
-import { findPlacementsByPlayerId } from "../queries/findPlacements.server";
+
+import { loader } from "../loaders/xsearch.player.$id.server";
+export { loader };
 
 import "../top-search.css";
 
@@ -56,27 +53,6 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 		description: `Splatoon 3 X Battle results for the player ${args.data.names.primary}${aliasesStr}`,
 		location: args.location,
 	});
-};
-
-export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const placements = notFoundIfFalsy(
-		findPlacementsByPlayerId(Number(params.id)),
-	);
-
-	const primaryName = placements[0].name;
-	const aliases = removeDuplicates(
-		placements
-			.map((placement) => placement.name)
-			.filter((name) => name !== primaryName),
-	);
-
-	return {
-		placements,
-		names: {
-			primary: primaryName,
-			aliases,
-		},
-	};
 };
 
 export default function XSearchPlayerPage() {

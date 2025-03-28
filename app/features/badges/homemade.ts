@@ -15,9 +15,59 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "Turnabout Suspect",
+		fileName: "turnabout-suspect",
+		authorDiscordId: "418176537561661441",
+	},
+	{
+		displayName: "HACKER Cup (1st Place)",
+		fileName: "hacker-cup-gold",
+		authorDiscordId: "530722502603833346",
+	},
+	{
+		displayName: "HACKER Cup (2nd Place)",
+		fileName: "hacker-cup-silver",
+		authorDiscordId: "530722502603833346",
+	},
+	{
+		displayName: "HACKER Cup (3rd Place)",
+		fileName: "hacker-cup-bronze",
+		authorDiscordId: "530722502603833346",
+	},
+	{
+		displayName: "Wi Wi Wi Cat",
+		fileName: "wi-wi-wi",
+		authorDiscordId: "530722502603833346",
+	},
+	{
+		displayName: "Magatama Turnabout",
+		fileName: "magatama",
+		authorDiscordId: "530722502603833346",
+	},
+	{
 		displayName: "Tristrike Tuesday",
 		fileName: "tristriked3",
 		authorDiscordId: "789943264370884708",
+	},
+	{
+		displayName: "Shifting Tides",
+		fileName: "shiftingtides",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Gamers Outreach Charity Tournament",
+		fileName: "alicehand3",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Zippy's Birthday Bash!",
+		fileName: "decavzippy",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Zippy's Birthday Bash! Lower Bracket",
+		fileName: "decavzippyc",
+		authorDiscordId: "338806780446638082",
 	},
 	{
 		displayName: "Sylveon",
@@ -858,5 +908,26 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Calm Before the Storm",
 		fileName: "calmbefore",
 		authorDiscordId: "631246535560265749",
+  },
+  {,
+		displayName: "Big Swig",
+		fileName: "swig",
+		authorDiscordId: "534502084134043648",
+	},
+	{
+		displayName: "Art Supplies Pencil Award",
+		fileName: "artsupplies",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName: "Art Supplies Pencil Award (Silver)",
+		fileName: "artsuppliessilver",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName: "Art Supplies Pencil Award (Bronze)",
+		fileName: "artsuppliesbronze",
+		authorDiscordId: "1320944066002681876",
+
 	},
 ];

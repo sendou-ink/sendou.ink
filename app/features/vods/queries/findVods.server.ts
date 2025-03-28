@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { Video } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import type { MainWeaponId, ModeShort, StageId } from "~/modules/in-game-lists";
 import { removeDuplicates } from "~/utils/arrays";
 import { parseDBArray, parseDBJsonArray } from "~/utils/sql";
@@ -57,7 +57,7 @@ export function findVods({
 	weapon?: MainWeaponId;
 	mode?: ModeShort;
 	stageId?: StageId;
-	type?: Video["type"];
+	type?: Tables["Video"]["type"];
 	userId?: number;
 	limit?: number;
 }): Array<ListVod> {

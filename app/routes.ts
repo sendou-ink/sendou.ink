@@ -79,7 +79,7 @@ export default [
 	),
 
 	route("/to/:id", "features/tournament/routes/to.$id.tsx", [
-		index("features/tournament/routes/to.$id.index.tsx"),
+		index("features/tournament/routes/to.$id.index.ts"),
 		route("register", "features/tournament/routes/to.$id.register.tsx"),
 		route("teams", "features/tournament/routes/to.$id.teams.tsx"),
 		route("teams/:tid", "features/tournament/routes/to.$id.teams.$tid.tsx"),
@@ -99,7 +99,7 @@ export default [
 		),
 		route(
 			"brackets/subscribe",
-			"features/tournament-bracket/routes/to.$id.brackets.subscribe.tsx",
+			"features/tournament-bracket/routes/to.$id.brackets.subscribe.ts",
 		),
 		route(
 			"matches/:mid",
@@ -107,10 +107,10 @@ export default [
 		),
 		route(
 			"matches/:mid/subscribe",
-			"features/tournament-bracket/routes/to.$id.matches.$mid.subscribe.tsx",
+			"features/tournament-bracket/routes/to.$id.matches.$mid.subscribe.ts",
 		),
 	]),
-	route("luti", "features/tournament/routes/luti.tsx"),
+	route("luti", "features/tournament/routes/luti.ts"),
 
 	...prefix("/org/:slug", [
 		index("features/tournament-organization/routes/org.$slug.tsx"),
@@ -165,15 +165,15 @@ export default [
 		route("info", "features/sendouq/routes/q.info.tsx"),
 		route("looking", "features/sendouq/routes/q.looking.tsx"),
 		route("preparing", "features/sendouq/routes/q.preparing.tsx"),
-		route("match/:id", "features/sendouq/routes/q.match.$id.tsx"),
+		route("match/:id", "features/sendouq-match/routes/q.match.$id.tsx"),
 		route("settings", "features/sendouq-settings/routes/q.settings.tsx"),
 		route("streams", "features/sendouq-streams/routes/q.streams.tsx"),
 	]),
-	route("/play", "features/sendouq/routes/play.tsx"),
+	route("/play", "features/sendouq/routes/play.ts"),
 
 	route("/trusters", "features/sendouq/routes/trusters.ts"),
 
-	route("/weapon-usage", "features/sendouq/routes/weapon-usage.tsx"),
+	route("/weapon-usage", "features/sendouq/routes/weapon-usage.ts"),
 
 	route("/tiers", "features/sendouq/routes/tiers.tsx"),
 
@@ -190,7 +190,7 @@ export default [
 	]),
 
 	route("/plus", "features/plus-suggestions/routes/plus.tsx", [
-		index("features/plus-suggestions/routes/plus.index.tsx"),
+		index("features/plus-suggestions/routes/plus.index.ts"),
 		route(
 			"suggestions",
 			"features/plus-suggestions/routes/plus.suggestions.tsx",
@@ -213,9 +213,9 @@ export default [
 		),
 	]),
 
-	route("/patrons", "features/api-private/routes/patrons.tsx"),
-	route("/seed", "features/api-private/routes/seed.tsx"),
-	route("/users", "features/api-private/routes/users.tsx"),
+	route("/patrons", "features/api-private/routes/patrons.ts"),
+	route("/seed", "features/api-private/routes/seed.ts"),
+	route("/users", "features/api-private/routes/users.ts"),
 
 	...prefix("/api", [
 		route(
@@ -250,17 +250,17 @@ export default [
 		route("/org/:id", "features/api-public/routes/org.$id.ts"),
 	]),
 
-	route("/short/:customUrl", "features/user-page/routes/short.$customUrl.tsx"),
+	route("/short/:customUrl", "features/user-page/routes/short.$customUrl.ts"),
 
 	route("/theme", "features/theme/routes/theme.ts"),
 
 	...prefix("/auth", [
-		index("features/auth/routes/auth.tsx"),
-		route("callback", "features/auth/routes/auth.callback.tsx"),
-		route("create-link", "features/auth/routes/auth.create-link.tsx"),
-		route("login", "features/auth/routes/auth.login.tsx"),
-		route("logout", "features/auth/routes/auth.logout.tsx"),
-		route("impersonate", "features/auth/routes/auth.impersonate.tsx"),
-		route("impersonate/stop", "features/auth/routes/auth.impersonate.stop.tsx"),
+		index("features/auth/routes/auth.ts"),
+		route("callback", "features/auth/routes/auth.callback.ts"),
+		route("create-link", "features/auth/routes/auth.create-link.ts"),
+		route("login", "features/auth/routes/auth.login.ts"),
+		route("logout", "features/auth/routes/auth.logout.ts"),
+		route("impersonate", "features/auth/routes/auth.impersonate.ts"),
+		route("impersonate/stop", "features/auth/routes/auth.impersonate.stop.ts"),
 	]),
 ] satisfies RouteConfig;

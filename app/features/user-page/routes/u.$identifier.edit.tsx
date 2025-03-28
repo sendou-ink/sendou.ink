@@ -1,14 +1,6 @@
-import {
-	type ActionFunction,
-	type LoaderFunctionArgs,
-	redirect,
-} from "@remix-run/node";
 import { Form, Link, useLoaderData, useMatches } from "@remix-run/react";
-import type { TCountryCode } from "countries-list";
-import { countries, getEmojiFlag } from "countries-list";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { z } from "zod";
 import { Button } from "~/components/Button";
 import { WeaponCombobox } from "~/components/Combobox";
 import { CustomizedColorsInput } from "~/components/CustomizedColorsInput";
@@ -18,234 +10,25 @@ import { WeaponImage } from "~/components/Image";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { StarIcon } from "~/components/icons/Star";
 import { StarFilledIcon } from "~/components/icons/StarFilled";
 import { TrashIcon } from "~/components/icons/Trash";
 import { USER } from "~/constants";
-import type { User } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
-import { requireUser, requireUserId } from "~/features/auth/core/user.server";
-import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { i18next } from "~/modules/i18n/i18next.server";
 import type { MainWeaponId } from "~/modules/in-game-lists";
 import { canAddCustomizedColorsToUserProfile } from "~/permissions";
-import { translatedCountry } from "~/utils/i18n.server";
 import invariant from "~/utils/invariant";
-import {
-	notFoundIfFalsy,
-	safeParseRequestFormData,
-} from "~/utils/remix.server";
-import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
 import { rawSensToString } from "~/utils/strings";
-import { FAQ_PAGE, isCustomUrl, userPage } from "~/utils/urls";
-import {
-	actualNumber,
-	actuallyNonEmptyStringOrNull,
-	checkboxValueToDbBoolean,
-	customCssVarObject,
-	dbBoolean,
-	falsyToNull,
-	id,
-	processMany,
-	safeJSONParse,
-	undefinedToNull,
-	weaponSplId,
-} from "~/utils/zod";
-import { userParamsSchema } from "../user-page-schemas.server";
-import type { UserPageLoaderData } from "./u.$identifier";
+import { FAQ_PAGE } from "~/utils/urls";
+import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+
+import { action } from "../actions/u.$identifier.edit.server";
+import { loader } from "../loaders/u.$identifier.edit.server";
+export { loader, action };
+
 import "~/styles/u-edit.css";
-import { SendouSwitch } from "~/components/elements/Switch";
-import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
-
-export const userEditActionSchema = z
-	.object({
-		country: z.preprocess(
-			falsyToNull,
-			z
-				.string()
-				.refine(
-					(val) => !val || Object.keys(countries).some((code) => val === code),
-				)
-				.nullable(),
-		),
-		bio: z.preprocess(
-			falsyToNull,
-			z.string().max(USER.BIO_MAX_LENGTH).nullable(),
-		),
-		customUrl: z.preprocess(
-			falsyToNull,
-			z
-				.string()
-				.max(USER.CUSTOM_URL_MAX_LENGTH)
-				.refine((val) => val === null || isCustomUrl(val), {
-					message: "forms.errors.invalidCustomUrl.numbers",
-				})
-				.refine((val) => val === null || /^[a-zA-Z0-9-_]+$/.test(val), {
-					message: "forms.errors.invalidCustomUrl.strangeCharacter",
-				})
-				.transform((val) => val?.toLowerCase())
-				.nullable(),
-		),
-		customName: z.preprocess(
-			actuallyNonEmptyStringOrNull,
-			z.string().max(USER.CUSTOM_NAME_MAX_LENGTH).nullable(),
-		),
-		battlefy: z.preprocess(
-			falsyToNull,
-			z.string().max(USER.BATTLEFY_MAX_LENGTH).nullable(),
-		),
-		stickSens: z.preprocess(
-			processMany(actualNumber, undefinedToNull),
-			z
-				.number()
-				.min(-50)
-				.max(50)
-				.refine((val) => val % 5 === 0)
-				.nullable(),
-		),
-		motionSens: z.preprocess(
-			processMany(actualNumber, undefinedToNull),
-			z
-				.number()
-				.min(-50)
-				.max(50)
-				.refine((val) => val % 5 === 0)
-				.nullable(),
-		),
-		inGameNameText: z.preprocess(
-			falsyToNull,
-			z.string().max(USER.IN_GAME_NAME_TEXT_MAX_LENGTH).nullable(),
-		),
-		inGameNameDiscriminator: z.preprocess(
-			falsyToNull,
-			z
-				.string()
-				.refine((val) => /^[0-9a-z]{4,5}$/.test(val))
-				.nullable(),
-		),
-		css: customCssVarObject,
-		weapons: z.preprocess(
-			safeJSONParse,
-			z
-				.array(
-					z.object({
-						weaponSplId,
-						isFavorite: dbBoolean,
-					}),
-				)
-				.max(USER.WEAPON_POOL_MAX_SIZE),
-		),
-		favoriteBadgeId: z.preprocess(
-			processMany(actualNumber, undefinedToNull),
-			id.nullable(),
-		),
-		showDiscordUniqueName: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
-		commissionsOpen: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
-		commissionText: z.preprocess(
-			falsyToNull,
-			z.string().max(USER.COMMISSION_TEXT_MAX_LENGTH).nullable(),
-		),
-	})
-	.refine(
-		(val) => {
-			if (val.motionSens !== null && val.stickSens === null) {
-				return false;
-			}
-
-			return true;
-		},
-		{
-			message: "forms.errors.invalidSens",
-		},
-	);
-
-export const action: ActionFunction = async ({ request }) => {
-	const parsedInput = await safeParseRequestFormData({
-		request,
-		schema: userEditActionSchema,
-	});
-
-	if (!parsedInput.success) {
-		return {
-			errors: parsedInput.errors,
-		};
-	}
-
-	const { inGameNameText, inGameNameDiscriminator, ...data } = parsedInput.data;
-
-	const user = await requireUserId(request);
-	const inGameName =
-		inGameNameText && inGameNameDiscriminator
-			? `${inGameNameText}#${inGameNameDiscriminator}`
-			: null;
-
-	try {
-		const editedUser = await UserRepository.updateProfile({
-			...data,
-			inGameName,
-			userId: user.id,
-		});
-
-		// TODO: to transaction
-		if (inGameName) {
-			const tournamentIdsAffected =
-				await TournamentTeamRepository.updateMemberInGameNameForNonStarted({
-					inGameName,
-					userId: user.id,
-				});
-
-			for (const tournamentId of tournamentIdsAffected) {
-				clearTournamentDataCache(tournamentId);
-			}
-		}
-
-		throw redirect(userPage(editedUser));
-	} catch (e) {
-		if (!errorIsSqliteUniqueConstraintFailure(e)) {
-			throw e;
-		}
-
-		return {
-			errors: ["forms.errors.invalidCustomUrl.duplicate"],
-		};
-	}
-};
-
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const locale = await i18next.getLocale(request);
-
-	const user = await requireUser(request);
-	const { identifier } = userParamsSchema.parse(params);
-	const userToBeEdited = notFoundIfFalsy(
-		await UserRepository.findLayoutDataByIdentifier(identifier),
-	);
-	if (user.id !== userToBeEdited.id) {
-		throw redirect(userPage(userToBeEdited));
-	}
-
-	const userProfile = (await UserRepository.findProfileByIdentifier(
-		identifier,
-		true,
-	))!;
-
-	return {
-		user: userProfile,
-		favoriteBadgeId: user.favoriteBadgeId,
-		discordUniqueName: userProfile.discordUniqueName,
-		countries: Object.entries(countries)
-			.map(([code, country]) => ({
-				code,
-				emoji: getEmojiFlag(code as TCountryCode),
-				name:
-					translatedCountry({
-						countryCode: code,
-						language: locale,
-					}) ?? country.name,
-			}))
-			.sort((a, b) => a.name.localeCompare(b.name)),
-	};
-};
 
 export default function UserEditPage() {
 	const user = useUser();
@@ -555,7 +338,9 @@ function WeaponPoolSelect() {
 	);
 }
 
-function BioTextarea({ initialValue }: { initialValue: User["bio"] }) {
+function BioTextarea({
+	initialValue,
+}: { initialValue: Tables["User"]["bio"] }) {
 	const { t } = useTranslation("user");
 	const [value, setValue] = React.useState(initialValue ?? "");
 
@@ -664,7 +449,7 @@ function CommissionsOpenToggle({
 function CommissionTextArea({
 	initialValue,
 }: {
-	initialValue: User["commissionText"];
+	initialValue: Tables["User"]["commissionText"];
 }) {
 	const { t } = useTranslation(["user"]);
 	const [value, setValue] = React.useState(initialValue ?? "");

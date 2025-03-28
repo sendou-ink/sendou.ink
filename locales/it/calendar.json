@@ -8,9 +8,17 @@
 	"actions.delete": "Cancella evento",
 	"actions.delete.confirm": "Vuoi cancellare tutti i dati legati a {{name}}?",
 	"participatedCount": "{{count}} squadre hanno partecipato",
+	"participatedPlayerCount": "{{count}} giocatori hanno partecipato",
 	"members": "Membri",
 	"results": "Risultati",
 	"createMapList": "Crea lista scenari",
+	"from": "Da {{author}}",
+	"pastEvents.dividerText": "Eventi passati",
+	"count.teams_one": "{{count}} team",
+	"count.players_one": "{{count}} giocatore",
+	"count.teams_other": "{{count}} team",
+	"count.players_other": "{{count}} giocatori",
+
 	"forms.dates": "Date",
 	"forms.bracketUrl": "Bracket URL",
 	"forms.discordInvite": "URL invito server Discord",
@@ -20,24 +28,29 @@
 	"forms.badges": "Medaglie in palio",
 	"forms.badges.placeholder": "Scegli una medaglia come premio",
 	"forms.mapPool": "Pool di scenari",
+
 	"forms.participantCount": "Numero partecipante",
 	"forms.reportResultsHeader": "Reporting results for {{eventName}}",
 	"forms.reportResultsInfo": "Puoi scegliere quanti risultati vuoi riportare, se fare solo la squadra vincitrice, la top 3 o un'altra combinazione.",
-	"forms.team.add": "Aggiungi squadra",
-	"forms.team.remove": "Togli squadra",
-	"forms.team.name": "Nome squadra",
+	"forms.team.add": "Aggiungi team",
+	"forms.team.remove": "Togli team",
+	"forms.team.name": "Nome team",
 	"forms.team.placing": "Risultato",
+
 	"forms.team.player.header": "Giocatore {{number}}",
 	"forms.team.player.add": "Aggiungi giocatore",
 	"forms.team.player.remove": "Rimuovi giocatore",
 	"forms.team.player.addAsUser": "Aggiungi come utente (raccomandato)",
 	"forms.team.player.addAsText": "Aggiungi come testo",
+
 	"forms.errors.uniqueTeamName": "Tutte le squadre devono avere un nome unico.",
 	"forms.errors.duplicatePlayer": "Non puoi avere lo stesso giocatore due volte nella stessa squadra.",
 	"forms.errors.emptyTeam": "Tutte le squadre devono avere almeno un giocatore.",
+
 	"week.this": "Questa Settimana",
 	"week.next": "Prossima Settimana",
 	"week.last": "Settimana Scorsa",
+
 	"tag.desc.BADGE": "Il vincitore di questo evento riceverà una medaglia su sendou.ink.",
 	"tag.desc.SPECIAL": "Regole non standard, per esempio un limite su le armi che si possono utilizzare.",
 	"tag.desc.ART": "Puoi vincere dell'arte giocando in questo torneo.",
@@ -46,5 +59,14 @@
 	"tag.desc.LOW": "Limite a chi puo giocare in questo evento basato sulla competenza.",
 	"tag.desc.COUNT": "Solo un numero limitato di squadre si possono registrare.",
 	"tag.desc.LAN": "Questo evento si svolgerà tramite LAN.",
-	"tag.desc.QUALIFIER": "Questo torneo fa da qualifica per un altro evento."
+	"tag.desc.QUALIFIER": "Questo torneo fa da qualifica per un altro evento.",
+	"tag.desc.SZ": "Zona Splat è l'unica modalità giocata.",
+	"tag.desc.TW": "Viene giocata Mischia Mollusca.",
+	"tag.desc.S1": "Viene giocato su Splatoon 1.",
+	"tag.desc.S2": "Viene giocato su Splatoon 2.",
+	"tag.desc.SR": "Evento Salmon Run.",
+	"tag.desc.CARDS": "Evento Splattanza",
+	"tag.filter.label": "Filtra tramite tags",
+
+	"tournament.filter.label": "Gestito su sendou.ink"
 }

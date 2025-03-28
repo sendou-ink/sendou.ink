@@ -1,12 +1,6 @@
 import shuffle from "just-shuffle";
 import type { Rating } from "node_modules/openskill/dist/types";
 import { ordinal } from "openskill";
-import type {
-	MapResult,
-	PlayerResult,
-	Skill,
-	TournamentResult,
-} from "~/db/types";
 import {
 	identifierToUserIds,
 	rate,
@@ -21,13 +15,16 @@ import type { Standing } from "./Bracket";
 
 export interface TournamentSummary {
 	skills: Omit<
-		Skill,
+		Tables["Skill"],
 		"tournamentId" | "id" | "ordinal" | "season" | "groupMatchId"
 	>[];
 	seedingSkills: Tables["SeedingSkill"][];
-	mapResultDeltas: Omit<MapResult, "season">[];
-	playerResultDeltas: Omit<PlayerResult, "season">[];
-	tournamentResults: Omit<TournamentResult, "tournamentId" | "isHighlight">[];
+	mapResultDeltas: Omit<Tables["MapResult"], "season">[];
+	playerResultDeltas: Omit<Tables["PlayerResult"], "season">[];
+	tournamentResults: Omit<
+		Tables["TournamentResult"],
+		"tournamentId" | "isHighlight"
+	>[];
 }
 
 type UserIdToTeamId = Record<number, number>;
@@ -294,7 +291,7 @@ function mapResultDeltas(
 	const result: TournamentSummary["mapResultDeltas"] = [];
 
 	const addMapResult = (
-		mapResult: Pick<MapResult, "stageId" | "mode" | "userId"> & {
+		mapResult: Pick<Tables["MapResult"], "stageId" | "mode" | "userId"> & {
 			type: "win" | "loss";
 		},
 	) => {

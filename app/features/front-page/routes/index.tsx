@@ -43,8 +43,8 @@ import {
 	userSubmittedImage,
 } from "~/utils/urls";
 import type * as ShowcaseTournaments from "../core/ShowcaseTournaments.server";
-import { type LeaderboardEntry, loader } from "../loaders/index.server";
 
+import { type LeaderboardEntry, loader } from "../loaders/index.server";
 export { loader };
 
 import "~/styles/front.css";

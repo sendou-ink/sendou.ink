@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { User } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { seasonObject } from "~/features/mmr/season";
 import type { MainWeaponId } from "~/modules/in-game-lists";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -26,7 +26,10 @@ const stm = sql.prepare(/* sql */ `
   group by "q1"."userId"
 `);
 
-export type SeasonPopularUsersWeapon = Record<User["id"], MainWeaponId>;
+export type SeasonPopularUsersWeapon = Record<
+	Tables["User"]["id"],
+	MainWeaponId
+>;
 
 export function seasonPopularUsersWeapon(
 	season: number,
@@ -39,7 +42,7 @@ export function seasonPopularUsersWeapon(
 		ends: dateToDatabaseTimestamp(ends),
 	}) as Array<{
 		count: number;
-		userId: User["id"];
+		userId: Tables["User"]["id"];
 		weaponSplId: MainWeaponId;
 	}>;
 

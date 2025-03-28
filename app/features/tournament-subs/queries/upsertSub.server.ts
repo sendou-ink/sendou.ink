@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { TournamentSub } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/* sql */ `
   insert into "TournamentSub" (
@@ -30,6 +30,6 @@ const stm = sql.prepare(/* sql */ `
     "visibility" = @visibility
 `);
 
-export function upsertSub(args: Omit<TournamentSub, "createdAt">) {
+export function upsertSub(args: Omit<Tables["TournamentSub"], "createdAt">) {
 	stm.run(args);
 }

@@ -21,8 +21,8 @@ import { atOrError } from "~/utils/arrays";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { weaponCategoryUrl } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
+import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import { DEFAULT_BUILD_SORT } from "../user-page-constants";
-import type { UserPageLoaderData } from "./u.$identifier";
 
 import { action } from "../actions/u.$identifier.builds.server";
 import { loader } from "../loaders/u.$identifier.builds.server";

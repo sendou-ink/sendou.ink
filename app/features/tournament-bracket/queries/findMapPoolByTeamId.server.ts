@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { MapPoolMap } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/*sql*/ `
   select
@@ -12,5 +12,7 @@ const stm = sql.prepare(/*sql*/ `
 `);
 
 export function findMapPoolByTeamId(teamId: number) {
-	return stm.all({ teamId }) as Array<Pick<MapPoolMap, "stageId" | "mode">>;
+	return stm.all({ teamId }) as Array<
+		Pick<Tables["MapPoolMap"], "stageId" | "mode">
+	>;
 }

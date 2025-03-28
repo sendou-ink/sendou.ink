@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { TournamentTeam, TournamentTeamCheckIn } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/*sql*/ `
   select
@@ -20,8 +20,8 @@ const stm = sql.prepare(/*sql*/ `
 `);
 
 type FindOwnTeam =
-	| (Pick<TournamentTeam, "id" | "name" | "inviteCode"> &
-			Pick<TournamentTeamCheckIn, "checkedInAt">)
+	| (Pick<Tables["TournamentTeam"], "id" | "name" | "inviteCode"> &
+			Pick<Tables["TournamentTeamCheckIn"], "checkedInAt">)
 	| null;
 
 export function findOwnTournamentTeam({

@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { TournamentSub } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/* sql */ `
   delete from "TournamentSub"
@@ -9,7 +9,7 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export function deleteSub(
-	args: Pick<TournamentSub, "userId" | "tournamentId">,
+	args: Pick<Tables["TournamentSub"], "userId" | "tournamentId">,
 ) {
 	stm.run(args);
 }

@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { Video } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import {
 	dateToDatabaseTimestamp,
 	dayMonthYearToDatabaseTimestamp,
@@ -61,7 +61,7 @@ export const createVod = sql.transaction(
 			validatedAt: args.isValidated
 				? dateToDatabaseTimestamp(new Date())
 				: null,
-		}) as Video;
+		}) as Tables["Video"];
 
 		for (const match of args.matches) {
 			const videoMatch = createVideoMatchStm.get({

@@ -11,3 +11,4 @@ export const ART = {
 };
 
 export const NEW_ART_EXISTING_SEARCH_PARAM_KEY = "art";
+export const FILTERED_TAG_KEY_SEARCH_PARAM_KEY = "tag";

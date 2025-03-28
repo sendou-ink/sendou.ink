@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { Skill } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const userStm = sql.prepare(/* sql */ `
   select
@@ -51,6 +51,6 @@ export function orderedMMRBySeason({
 	const stm = type === "team" ? teamStm : userStm;
 
 	return stm.all({ season }) as Array<
-		Pick<Skill, "ordinal" | "matchesCount" | "userId" | "identifier">
+		Pick<Tables["Skill"], "ordinal" | "matchesCount" | "userId" | "identifier">
 	>;
 }

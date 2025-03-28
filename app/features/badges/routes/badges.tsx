@@ -1,4 +1,4 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/node";
 import { NavLink, Outlet, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -11,7 +11,9 @@ import { useUser } from "~/features/auth/core/user";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { BADGES_DOC_LINK, BADGES_PAGE, navIconUrl } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
-import * as BadgeRepository from "../BadgeRepository.server";
+
+import { type BadgesLoaderData, loader } from "../loaders/badges.server";
+export { loader };
 
 import "~/styles/badges.css";
 
@@ -32,12 +34,6 @@ export const meta: MetaFunction = (args) => {
 		description:
 			"Over 400 badge tournament prizes and counting! Check out the full list including the owners.",
 	});
-};
-
-export type BadgesLoaderData = SerializeFrom<typeof loader>;
-
-export const loader = async () => {
-	return { badges: await BadgeRepository.all() };
 };
 
 export default function BadgesPageLayout() {

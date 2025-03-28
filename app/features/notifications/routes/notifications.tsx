@@ -1,18 +1,20 @@
 import { Link, type MetaFunction, useLoaderData } from "@remix-run/react";
+import * as React from "react";
+import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
+import { BellIcon } from "~/components/icons/Bell";
+import { metaTags } from "../../../utils/remix";
+import { SETTINGS_PAGE } from "../../../utils/urls";
 import {
 	NotificationItem,
 	NotificationItemDivider,
 	NotificationsList,
 } from "../components/NotificationList";
+import { useMarkNotificationsAsSeen } from "../notifications-hooks";
+
 import { loader } from "../loaders/notifications.server";
 export { loader };
-import * as React from "react";
-import { useTranslation } from "react-i18next";
-import { BellIcon } from "~/components/icons/Bell";
-import { metaTags } from "../../../utils/remix";
-import { SETTINGS_PAGE } from "../../../utils/urls";
-import { useMarkNotificationsAsSeen } from "../notifications-hooks";
+
 import styles from "./notifications.module.css";
 
 export const meta: MetaFunction = (args) => {

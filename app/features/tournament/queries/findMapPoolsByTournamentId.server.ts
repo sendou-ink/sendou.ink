@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { MapPoolMap } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { parseDBArray } from "~/utils/sql";
 
 const stm = sql.prepare(/*sql*/ `
@@ -20,7 +20,7 @@ const stm = sql.prepare(/*sql*/ `
 
 interface FindMapPoolsByTournamentIdItem {
 	tournamentTeamId: number;
-	mapPool: Array<Pick<MapPoolMap, "mode" | "stageId">>;
+	mapPool: Array<Pick<Tables["MapPoolMap"], "mode" | "stageId">>;
 }
 
 export function findMapPoolsByTournamentId(

@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import type { UserWithPlusTier } from "~/db/types";
+import type { UserWithPlusTier } from "~/db/tables";
 import { getUserId } from "~/features/auth/core/user.server";
 import { sumArray } from "~/utils/number";
 import * as TeamRepository from "../TeamRepository.server";

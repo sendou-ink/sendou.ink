@@ -3,7 +3,7 @@ import clsx from "clsx";
 import Fuse, { type IFuseOptions } from "fuse.js";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import type { GearType } from "~/db/types";
+import type { GearType } from "~/db/tables";
 import type { SerializedMapPoolEvent } from "~/features/calendar/routes/map-pool-events";
 import { useAllEventsWithMapPools } from "~/hooks/swr";
 import type { MainWeaponId } from "~/modules/in-game-lists";

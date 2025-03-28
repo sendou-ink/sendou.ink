@@ -1,6 +1,5 @@
 import type { TFunction } from "i18next";
-import type { TournamentRoundMaps } from "~/db/tables";
-import type { TournamentMatch } from "~/db/types";
+import type { Tables, TournamentRoundMaps } from "~/db/tables";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { ModeShort, StageId } from "~/modules/in-game-lists";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator";
@@ -11,7 +10,7 @@ import {
 import { removeDuplicates } from "~/utils/arrays";
 import { sumArray } from "~/utils/number";
 import type { FindMatchById } from "../tournament-bracket/queries/findMatchById.server";
-import type { TournamentLoaderData } from "../tournament/routes/to.$id";
+import type { TournamentLoaderData } from "../tournament/loaders/to.$id.server";
 import type { Standing } from "./core/Bracket";
 import type { Tournament } from "./core/Tournament";
 import type { TournamentDataTeam } from "./core/Tournament.server";
@@ -28,7 +27,7 @@ const NUM_MAP = {
 	"9": ["9", "6", "8"],
 	"0": ["0", "8"],
 };
-export function resolveRoomPass(matchId: TournamentMatch["id"]) {
+export function resolveRoomPass(matchId: Tables["TournamentMatch"]["id"]) {
 	let pass = "5";
 	for (let i = 0; i < 3; i++) {
 		const { shuffle } = seededRandom(`${matchId}-${i}`);

@@ -1,4 +1,4 @@
-import type { MapPoolMap } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import type { ModeShort } from "../../../../modules/in-game-lists";
 import type { MapPool } from "../map-pool";
 import type { MapPoolObject } from "../map-pool-serializer/types";
@@ -16,7 +16,7 @@ export function mapPoolToNonEmptyModes(mapPool: MapPool) {
 }
 
 export function mapPoolListToMapPoolObject(
-	mapPoolList: Array<Pick<MapPoolMap, "stageId" | "mode">>,
+	mapPoolList: Array<Pick<Tables["MapPoolMap"], "stageId" | "mode">>,
 ) {
 	const result: MapPoolObject = {
 		TW: [],
