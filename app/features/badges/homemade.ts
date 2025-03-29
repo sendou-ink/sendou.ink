@@ -919,4 +919,14 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "artsuppliesbronze",
 		authorDiscordId: "1320944066002681876",
 	},
+	{
+		displayName: "5 TSO Tournaments",
+		fileName: "mew",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "10 TSO Tournaments",
+		fileName: "shinymew",
+		authorDiscordId: "528851510222782474",
+	},
 ];
