@@ -13,6 +13,8 @@ import { capitalize } from "~/utils/strings";
 import { LFG } from "../lfg-constants";
 import type { LFGFilter } from "../lfg-types";
 
+import styles from "./LFGFilters.module.css";
+
 export function LFGFilters({
 	filters,
 	changeFilter,
@@ -65,7 +67,7 @@ function Filter({
 					aria-label="Delete filter"
 				/>
 			</div>
-			<div className="lfg__filter">
+			<div className={styles.filter}>
 				{filter._tag === "Weapon" && (
 					<WeaponFilterFields
 						value={filter.weaponSplIds}
