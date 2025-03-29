@@ -973,6 +973,19 @@ export interface ScrimPostRequestUser {
 	isOwner: number;
 }
 
+export interface Association {
+	id: GeneratedAlways<number>;
+	name: string;
+	inviteCode: string;
+	createdAt: GeneratedAlways<number>;
+}
+
+export interface AssociationMember {
+	userId: number;
+	associationId: number;
+	role: "MEMBER" | "ADMIN";
+}
+
 export interface Notification {
 	id: GeneratedAlways<number>;
 	type: NotificationValue["type"];
@@ -1087,6 +1100,8 @@ export interface DB {
 	ScrimPostUser: ScrimPostUser;
 	ScrimPostRequest: ScrimPostRequest;
 	ScrimPostRequestUser: ScrimPostRequestUser;
+	Association: Association;
+	AssociationMember: AssociationMember;
 	Notification: Notification;
 	NotificationUser: NotificationUser;
 	NotificationUserSubscription: NotificationUserSubscription;

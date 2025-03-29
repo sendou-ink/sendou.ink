@@ -17,6 +17,10 @@ export interface ScrimPost {
 	users: Array<ScrimPostUser>;
 	chatCode: string | null;
 	requests: Array<ScrimPostRequest>;
+	permissions: {
+		MANAGE_REQUESTS: number[];
+		DELETE_POST: number[];
+	};
 }
 
 export interface ScrimPostRequest {

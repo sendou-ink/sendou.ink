@@ -8,7 +8,7 @@ import type { FindMatchById } from "./features/tournament-bracket/queries/findMa
 import { allTruthy } from "./utils/arrays";
 import { databaseTimestampToDate } from "./utils/dates";
 
-// TODO: 1) move "root checkers" to one file and utils to one file 2) make utils const for more terseness
+// TODO: move to permissions module and generalize a lot of the logic
 
 type IsAdminUser = Pick<Tables["User"], "id">;
 export function isAdmin(user?: IsAdminUser) {

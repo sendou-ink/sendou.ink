@@ -6,6 +6,7 @@ import { nanoid } from "nanoid";
 import { ADMIN_DISCORD_ID, ADMIN_ID, INVITE_CODE_LENGTH } from "~/constants";
 import { db, sql } from "~/db/sql";
 import type { SeedVariation } from "~/features/api-private/routes/seed";
+import * as AssociationRepository from "~/features/associations/AssociationRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { persistedTags } from "~/features/calendar/calendar-constants";
@@ -174,6 +175,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	lfgPosts,
 	scrimPosts,
 	scrimPostRequests,
+	associations,
 	notifications,
 ];
 
@@ -195,6 +197,7 @@ export async function seed(variation?: SeedVariation | null) {
 function wipeDB() {
 	const tablesToDelete = [
 		"ScrimPost",
+		"Association",
 		"LFGPost",
 		"Skill",
 		"ReportedWeapon",
@@ -2400,6 +2403,28 @@ async function scrimPostRequests() {
 	}
 
 	await ScrimPostRepository.acceptRequest(3);
+}
+
+async function associations() {
+	const allUsers = userIdsInRandomOrder(true);
+
+	for (let i = 0; i < 3; i++) {
+		await AssociationRepository.insert({
+			name: faker.company.name(),
+			userId: i === 2 ? allUsers.shift()! : ADMIN_ID,
+		});
+
+		for (
+			let j = 0;
+			j < faker.helpers.arrayElement([4, 6, 8, 10, 12, 24, 32]);
+			j++
+		) {
+			await AssociationRepository.addMember({
+				associationId: i + 1,
+				userId: i === 2 && j === 0 ? ADMIN_ID : allUsers.shift()!,
+			});
+		}
+	}
 }
 
 async function notifications() {

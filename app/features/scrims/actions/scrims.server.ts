@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
+import { requirePermission } from "~/modules/permissions/requirePermission.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
@@ -20,11 +21,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				userId: user.id,
 				postId: data.scrimPostId,
 			});
-
-			errorToastIfFalsy(
-				post.users.some((rUser) => rUser.id === user.id && rUser.isOwner),
-				"No permission to manage the post",
-			);
+			requirePermission(post, "DELETE_POST", user);
 
 			await ScrimPostRepository.del(post.id);
 
@@ -66,12 +63,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				userId: user.id,
 				requestId: data.scrimPostRequestId,
 			});
+			requirePermission(post, "MANAGE_REQUESTS", user);
 
 			errorToastIfFalsy(!request.isAccepted, "Request is already accepted");
-			errorToastIfFalsy(
-				post.users.some((rUser) => rUser.id === user.id && rUser.isOwner),
-				"No permission to accept request",
-			);
 
 			await ScrimPostRepository.acceptRequest(data.scrimPostRequestId);
 
@@ -101,18 +95,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "CANCEL_REQUEST": {
-			const { request } = await findRequest({
+			const { post, request } = await findRequest({
 				userId: user.id,
 				requestId: data.scrimPostRequestId,
 			});
+			requirePermission(post, "MANAGE_REQUESTS", user);
 
 			errorToastIfFalsy(
 				!request.isAccepted,
 				"Can't cancel an accepted request",
-			);
-			errorToastIfFalsy(
-				request.users.some((rUser) => rUser.id === user.id && rUser.isOwner),
-				"No permission to cancel request",
 			);
 
 			await ScrimPostRepository.deleteRequest(data.scrimPostRequestId);

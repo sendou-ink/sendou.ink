@@ -310,7 +310,9 @@ function ScrimsTable({
 						? post.requests.map((request) => (
 								<RequestRow
 									key={request.id}
-									canAccept={owner.id === user?.id}
+									canAccept={Boolean(
+										user && post.permissions.MANAGE_REQUESTS.includes(user.id),
+									)}
 									request={request}
 									postId={post.id}
 								/>
@@ -435,7 +437,7 @@ function ScrimsTable({
 								) : null}
 								{showDeletePost && !isAccepted ? (
 									<td>
-										{owner.id === user?.id ? (
+										{user && post.permissions.DELETE_POST.includes(user.id) ? (
 											<FormWithConfirm
 												dialogHeading="Delete scrim post"
 												submitButtonText="Delete"

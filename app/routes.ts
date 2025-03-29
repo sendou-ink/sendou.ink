@@ -188,6 +188,8 @@ export default [
 		route(":id", "features/scrims/routes/scrims.$id.tsx"),
 	]),
 
+	route("/associations", "features/associations/routes/associations.tsx"),
+
 	route("/admin", "features/admin/routes/admin.tsx"),
 
 	...prefix("/a", [

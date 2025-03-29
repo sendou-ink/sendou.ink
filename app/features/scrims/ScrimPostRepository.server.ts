@@ -2,7 +2,7 @@ import { sub } from "date-fns";
 import type { Insertable } from "kysely";
 import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
 import { nanoid } from "nanoid";
-import type { Tables } from "~/db/tables";
+import type { Tables, TablesInsertable } from "~/db/tables";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { INVITE_CODE_LENGTH } from "../../constants";
@@ -14,7 +14,7 @@ import type { ScrimPost as ScrimPostType } from "./scrims-types";
 import { getPostRequestCensor, parseLutiDiv } from "./scrims-utils";
 
 type InsertArgs = Pick<
-	Insertable<Tables["ScrimPost"]>,
+	TablesInsertable["ScrimPost"],
 	"at" | "maxDiv" | "minDiv" | "teamId" | "text" | "visibility"
 > & {
 	/** users related to the post other than the author */
@@ -210,6 +210,14 @@ const mapDBRowToScrimPost = (
 				isOwner: Boolean(user.isOwner),
 			};
 		}),
+		permissions: {
+			MANAGE_REQUESTS: row.users
+				.filter((user) => user.isOwner)
+				.map((user) => user.id),
+			DELETE_POST: row.users
+				.filter((user) => user.isOwner)
+				.map((user) => user.id),
+		},
 	};
 };
 

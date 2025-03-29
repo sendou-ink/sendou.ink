@@ -77,5 +77,36 @@ export function up(db) {
 		db.prepare(
 			/*sql*/ `create index scrim_post_request_user_user_id on "ScrimPostRequestUser"("userId")`,
 		).run();
+
+		db.prepare(
+			/*sql*/ `
+    create table "Association" (
+    "id" integer primary key,
+    "name" text not null,
+    "inviteCode" text not null unique,
+    "createdAt" integer default (strftime('%s', 'now')) not null
+    ) strict
+`,
+		).run();
+
+		db.prepare(
+			/*sql*/ `
+    create table "AssociationMember" (
+    "userId" integer not null,
+    "associationId" integer not null,
+    "role" text not null,
+    unique("userId", "associationId") on conflict rollback,
+    foreign key ("userId") references "User"("id") on delete cascade,
+    foreign key ("associationId") references "Association"("id") on delete cascade
+    ) strict
+`,
+		).run();
+
+		db.prepare(
+			/*sql*/ `create index association_member_user_id on "AssociationMember"("userId")`,
+		).run();
+		db.prepare(
+			/*sql*/ `create index association_member_association_id on "AssociationMember"("associationId")`,
+		).run();
 	})();
 }
