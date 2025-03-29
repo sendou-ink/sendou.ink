@@ -51,6 +51,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		maxDiv: data.divs ? serializeLutiDiv(data.divs.max!) : null,
 		minDiv: data.divs ? serializeLutiDiv(data.divs.min!) : null,
 		text: data.postText,
+		visibility: data.baseVisibility // xxx: add notFoundInstructions
+			? {
+					forAssociation: data.baseVisibility,
+				}
+			: null,
 		teamId: data.from.mode === "TEAM" ? data.from.teamId : null,
 		users: (await usersListForPost({ authorId: user.id, from: data.from })).map(
 			(userId) => ({

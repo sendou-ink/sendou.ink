@@ -6,6 +6,7 @@ import type {
 	SqlBool,
 	Updateable,
 } from "kysely";
+import type { AssociationVisibility } from "~/features/associations/associations-types";
 import type {
 	persistedTags,
 	tags,
@@ -930,7 +931,6 @@ export interface XRankPlacement {
 	year: number;
 }
 
-// xxx: first look for X then if still 1 hour before like that then for everyone?
 export interface ScrimPost {
 	id: GeneratedAlways<number>;
 	/** When is the scrim scheduled to happen */
@@ -939,8 +939,12 @@ export interface ScrimPost {
 	maxDiv: number | null;
 	/** Lowest LUTI div accepted */
 	minDiv: number | null;
-	/** Plus Tier visibility, e.g. 2 would mean only +1 & +2 members can see the post */
-	visibility: number | null;
+	/** Who sees the post */
+	visibility: ColumnType<
+		AssociationVisibility | null,
+		string | null,
+		string | null
+	>;
 	/** Any additional info */
 	text: string | null;
 	/** The key to access the scrim chat, used after scrim is scheduled with another team */

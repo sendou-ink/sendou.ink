@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { _action, actuallyNonEmptyStringOrNull, id } from "~/utils/zod";
+import { ASSOCIATION } from "./associations-constants";
 
 const createNewAssociationSchema = z.object({
 	_action: _action("CREATE_ASSOCIATION"),
@@ -22,3 +23,7 @@ export const associationsPageActionSchema = z.union([
 	removeMemberSchema,
 	deleteAssociationSchema,
 ]);
+
+export const virtualAssociationIdentifierSchema = z.enum(
+	ASSOCIATION.VIRTUAL_IDENTIFIERS,
+);

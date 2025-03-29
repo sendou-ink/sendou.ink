@@ -9,16 +9,18 @@ import { INVITE_CODE_LENGTH } from "../../constants";
 import { db } from "../../db/sql";
 import invariant from "../../utils/invariant";
 import type { Unwrapped } from "../../utils/types";
+import type { AssociationVisibility } from "../associations/associations-types";
 import * as ScrimPost from "./core/ScrimPost";
 import type { ScrimPost as ScrimPostType } from "./scrims-types";
 import { getPostRequestCensor, parseLutiDiv } from "./scrims-utils";
 
 type InsertArgs = Pick<
 	TablesInsertable["ScrimPost"],
-	"at" | "maxDiv" | "minDiv" | "teamId" | "text" | "visibility"
+	"at" | "maxDiv" | "minDiv" | "teamId" | "text"
 > & {
 	/** users related to the post other than the author */
 	users: Array<Pick<Insertable<Tables["ScrimPostUser"]>, "userId" | "isOwner">>;
+	visibility: AssociationVisibility | null;
 };
 
 export function insert(args: InsertArgs) {
@@ -35,7 +37,7 @@ export function insert(args: InsertArgs) {
 				minDiv: args.minDiv,
 				teamId: args.teamId,
 				text: args.text,
-				visibility: args.visibility,
+				visibility: args.visibility ? JSON.stringify(args.visibility) : null,
 				chatCode: nanoid(INVITE_CODE_LENGTH),
 			})
 			.returning("id")
@@ -96,6 +98,7 @@ const baseFindQuery = db
 	.select((eb) => [
 		"ScrimPost.id",
 		"ScrimPost.at",
+		"ScrimPost.visibility",
 		"ScrimPost.maxDiv",
 		"ScrimPost.minDiv",
 		"ScrimPost.text",
@@ -169,6 +172,7 @@ const mapDBRowToScrimPost = (
 	return {
 		id: row.id,
 		at: row.at,
+		visibility: row.visibility,
 		text: row.text,
 		divs:
 			typeof row.maxDiv === "number" && typeof row.minDiv === "number"

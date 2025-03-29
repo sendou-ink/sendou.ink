@@ -7,7 +7,7 @@ export function up(db) {
       "at" integer not null,
       "maxDiv" integer,
       "minDiv" integer,
-      "visibility" integer,
+      "visibility" text,
       "text" text,
       "chatCode" text not null,
       "teamId" integer,

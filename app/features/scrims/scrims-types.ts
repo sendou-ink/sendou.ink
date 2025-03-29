@@ -1,4 +1,5 @@
 import type { CommonUser } from "../../utils/kysely.server";
+import type { AssociationVisibility } from "../associations/associations-types";
 import type { LUTI_DIVS } from "./scrims-constants";
 
 export type LutiDiv = (typeof LUTI_DIVS)[number];
@@ -6,6 +7,7 @@ export type LutiDiv = (typeof LUTI_DIVS)[number];
 export interface ScrimPost {
 	id: number;
 	at: number;
+	visibility: AssociationVisibility | null;
 	text: string | null;
 	divs: {
 		/** Max div in the whole system is "X" */

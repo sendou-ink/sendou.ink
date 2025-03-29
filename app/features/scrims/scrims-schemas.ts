@@ -8,6 +8,7 @@ import {
 	id,
 	noDuplicates,
 } from "~/utils/zod";
+import { virtualAssociationIdentifierSchema } from "../associations/associations-schemas";
 import { LUTI_DIVS, SCRIM } from "./scrims-constants";
 
 export const deletePostSchema = z.object({
@@ -84,6 +85,7 @@ export const scrimsNewActionSchema = z.object({
 				},
 			),
 	),
+	baseVisibility: z.union([virtualAssociationIdentifierSchema, id]).nullable(),
 	divs: z
 		.object({
 			min: z.enum(LUTI_DIVS).nullable(),

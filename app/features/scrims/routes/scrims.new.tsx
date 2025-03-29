@@ -16,7 +16,7 @@ import {
 import type { LutiDiv } from "../scrims-types";
 
 import { action } from "../actions/scrims.new.server";
-import { loader } from "../loaders/scrims.new.server";
+import { type ScrimsNewLoaderData, loader } from "../loaders/scrims.new.server";
 export { loader, action };
 
 type FormFields = z.infer<typeof scrimsNewActionSchema>;
@@ -46,6 +46,8 @@ export default function NewScrimPage() {
 
 				<DateTimeFormField<FormFields> label="When" name="at" />
 
+				<BaseVisibilityFormField associations={data.associations} />
+
 				<LutiDivsFormField />
 
 				<TextAreaFormField<FormFields>
@@ -55,6 +57,48 @@ export default function NewScrimPage() {
 				/>
 			</MyForm>
 		</Main>
+	);
+}
+
+// xxx: add notFoundVisibility
+function BaseVisibilityFormField({
+	associations,
+}: { associations: ScrimsNewLoaderData["associations"] }) {
+	const methods = useFormContext<FormFields>();
+
+	const error = methods.formState.errors.baseVisibility;
+
+	const noAssociations =
+		associations.virtual.length === 0 && associations.actual.length === 0;
+
+	return (
+		<div>
+			<Label htmlFor="visibility">Visibility</Label>
+			{noAssociations ? (
+				<FormMessage type="info">
+					No associations available. Create one to look for a scrim in a smaller
+					group.
+				</FormMessage>
+			) : (
+				<select id="visibility" {...methods.register("baseVisibility")}>
+					<option value="PUBLIC">Public</option>
+					{associations.virtual.map((association) => (
+						<option key={association} value={association}>
+							{association}
+						</option>
+					))}
+					{associations.actual.map((association) => (
+						<option key={association.id} value={association.id}>
+							{association.name}
+						</option>
+					))}
+				</select>
+			)}
+
+			{error && (
+				<FormMessage type="error">{error.message as string}</FormMessage>
+			)}
+		</div>
 	);
 }
 
