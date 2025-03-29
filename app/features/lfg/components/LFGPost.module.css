@@ -1,5 +1,5 @@
 .wideLayout {
-    display: grid;
+	display: grid;
 	grid-template-columns: 1fr;
 	align-items: flex-start;
 	column-gap: var(--s-6);
