@@ -10,9 +10,9 @@ import {
 } from "~/utils/remix.server";
 import { tournamentOrganizationPage } from "~/utils/urls";
 import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
-import { organizationEditSchema } from "../routes/org.$slug.edit";
 import { canEditTournamentOrganization } from "../tournament-organization-utils";
 import { organizationFromParams } from "../tournament-organization-utils.server";
+import { organizationEditSchema } from "../tournament-organization-schemas";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const user = await requireUser(request);

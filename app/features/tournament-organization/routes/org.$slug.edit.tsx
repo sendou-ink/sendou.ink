@@ -1,7 +1,7 @@
 import { Link, useLoaderData } from "@remix-run/react";
 import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
+import type { z } from "zod";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
@@ -18,84 +18,14 @@ import { TOURNAMENT_ORGANIZATION_ROLES } from "~/db/tables";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { wrapToValueStringArrayWithDefault } from "~/utils/form";
 import type { Unpacked } from "~/utils/types";
-import { mySlugify, uploadImagePage } from "~/utils/urls";
-import { falsyToNull, id } from "~/utils/zod";
+import { uploadImagePage } from "~/utils/urls";
+import { organizationEditSchema } from "../tournament-organization-schemas";
 
 import { action } from "../actions/org.$slug.edit.server";
 import { loader } from "../loaders/org.$slug.edit.server";
 import { handle, meta } from "../routes/org.$slug";
-export { loader, action, handle, meta };
-
-const DESCRIPTION_MAX_LENGTH = 1_000;
-export const organizationEditSchema = z.object({
-	name: z
-		.string()
-		.trim()
-		.min(2)
-		.max(32)
-		.refine((val) => mySlugify(val).length >= 2, {
-			message: "Not enough non-special characters",
-		}),
-	description: z.preprocess(
-		falsyToNull,
-		z.string().trim().max(DESCRIPTION_MAX_LENGTH).nullable(),
-	),
-	members: z
-		.array(
-			z.object({
-				userId: z.number().int().positive(),
-				role: z.enum(TOURNAMENT_ORGANIZATION_ROLES),
-				roleDisplayName: z.preprocess(
-					falsyToNull,
-					z.string().trim().max(32).nullable(),
-				),
-			}),
-		)
-		.max(32)
-		.refine(
-			(arr) =>
-				arr.map((x) => x.userId).length ===
-				new Set(arr.map((x) => x.userId)).size,
-			{
-				message: "Same member listed twice",
-			},
-		),
-	socials: z
-		.array(
-			z.object({
-				value: z.string().trim().url().max(100).optional().or(z.literal("")),
-			}),
-		)
-		.max(10)
-		.refine(
-			(arr) =>
-				arr.map((x) => x.value).length ===
-				new Set(arr.map((x) => x.value)).size,
-			{
-				message: "Duplicate social links",
-			},
-		),
-	series: z
-		.array(
-			z.object({
-				name: z.string().trim().min(1).max(32),
-				description: z.preprocess(
-					falsyToNull,
-					z.string().trim().max(DESCRIPTION_MAX_LENGTH).nullable(),
-				),
-				showLeaderboard: z.boolean(),
-			}),
-		)
-		.max(10)
-		.refine(
-			(arr) =>
-				arr.map((x) => x.name).length === new Set(arr.map((x) => x.name)).size,
-			{
-				message: "Duplicate series",
-			},
-		),
-	badges: z.array(id).max(50),
-});
+import { TOURNAMENT_ORGANIZATION } from "../tournament-organization-constants";
+export { action, handle, loader, meta };
 
 type FormFields = z.infer<typeof organizationEditSchema> & {
 	members: Array<
@@ -149,7 +79,7 @@ export default function TournamentOrganizationEditPage() {
 				<TextAreaFormField<typeof organizationEditSchema>
 					label={t("common:forms.description")}
 					name="description"
-					maxLength={DESCRIPTION_MAX_LENGTH}
+					maxLength={TOURNAMENT_ORGANIZATION.DESCRIPTION_MAX_LENGTH}
 				/>
 
 				<MembersFormField />
@@ -291,7 +221,7 @@ function SeriesFieldset({
 			<TextAreaFormField<FormFields>
 				label={t("common:forms.description")}
 				name={`series.${idx}.description` as const}
-				maxLength={DESCRIPTION_MAX_LENGTH}
+				maxLength={TOURNAMENT_ORGANIZATION.DESCRIPTION_MAX_LENGTH}
 			/>
 
 			<ToggleFormField<FormFields>

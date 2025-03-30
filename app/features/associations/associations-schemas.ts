@@ -24,6 +24,12 @@ export const associationsPageActionSchema = z.union([
 	deleteAssociationSchema,
 ]);
 
-export const virtualAssociationIdentifierSchema = z.enum(
+const virtualAssociationIdentifierSchema = z.enum(
 	ASSOCIATION.VIRTUAL_IDENTIFIERS,
 );
+
+export const associationIdentifierSchema = z.union([
+	virtualAssociationIdentifierSchema,
+	id,
+	z.literal("PUBLIC"), // null in DB
+]);

@@ -8,7 +8,7 @@ import {
 	id,
 	noDuplicates,
 } from "~/utils/zod";
-import { virtualAssociationIdentifierSchema } from "../associations/associations-schemas";
+import { associationIdentifierSchema } from "../associations/associations-schemas";
 import { LUTI_DIVS, SCRIM } from "./scrims-constants";
 
 export const deletePostSchema = z.object({
@@ -85,7 +85,25 @@ export const scrimsNewActionSchema = z.object({
 				},
 			),
 	),
-	baseVisibility: z.union([virtualAssociationIdentifierSchema, id]).nullable(),
+	baseVisibility: associationIdentifierSchema,
+	notFoundVisibility: z.object({
+		at: z
+			.preprocess(date, z.date())
+			.nullish()
+			.refine(
+				(date) => {
+					if (!date) return true;
+
+					if (date < sub(new Date(), { days: 1 })) return false;
+
+					return true;
+				},
+				{
+					message: "Date can not be in the past",
+				},
+			),
+		forAssociation: associationIdentifierSchema,
+	}),
 	divs: z
 		.object({
 			min: z.enum(LUTI_DIVS).nullable(),

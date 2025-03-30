@@ -14,6 +14,7 @@ import { Table } from "~/components/Table";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { MyForm } from "~/components/form/MyForm";
+import { EyeSlashIcon } from "~/components/icons/EyeSlash";
 import { SpeechBubbleIcon } from "~/components/icons/SpeechBubble";
 import { UsersIcon } from "~/components/icons/Users";
 import { useUser } from "~/features/auth/core/user";
@@ -329,16 +330,31 @@ function ScrimsTable({
 						<React.Fragment key={post.id}>
 							<tr>
 								<td>
-									<div className={styles.postTime}>
-										{inThePast
-											? "Now"
-											: databaseTimestampToDate(post.at).toLocaleTimeString(
-													i18n.language,
-													{
-														hour: "numeric",
-														minute: "numeric",
-													},
-												)}
+									<div className="stack horizontal sm">
+										<div className={styles.postTime}>
+											{inThePast
+												? "Now"
+												: databaseTimestampToDate(post.at).toLocaleTimeString(
+														i18n.language,
+														{
+															hour: "numeric",
+															minute: "numeric",
+														},
+													)}
+										</div>
+										{post.isPrivate ? (
+											<SendouPopover
+												trigger={
+													<SendouButton
+														variant="minimal"
+														icon={<EyeSlashIcon className={styles.postIcon} />}
+													/>
+												}
+											>
+												This post currently has limited visibility based on
+												associations.
+											</SendouPopover>
+										) : null}
 									</div>
 								</td>
 								<td>
@@ -447,14 +463,22 @@ function ScrimsTable({
 													["_action", "DELETE_POST"],
 												]}
 											>
-												<Button size="tiny" variant="destructive">
+												<Button
+													size="tiny"
+													variant="destructive"
+													className="ml-auto"
+												>
 													Delete
 												</Button>
 											</FormWithConfirm>
 										) : (
 											<SendouPopover
 												trigger={
-													<SendouButton variant="destructive" size="small">
+													<SendouButton
+														variant="destructive"
+														size="small"
+														className="ml-auto"
+													>
 														Delete
 													</SendouButton>
 												}
@@ -580,7 +604,9 @@ function RequestRow({
 						submitButtonText="Accept"
 						cancelButtonVariant="destructive"
 					>
-						<Button size="tiny">Accept</Button>
+						<Button size="tiny" className="ml-auto">
+							Accept
+						</Button>
 					</FormWithConfirm>
 				) : !request.isAccepted && !canAccept ? (
 					<SendouPopover

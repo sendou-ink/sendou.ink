@@ -51,11 +51,23 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		maxDiv: data.divs ? serializeLutiDiv(data.divs.max!) : null,
 		minDiv: data.divs ? serializeLutiDiv(data.divs.min!) : null,
 		text: data.postText,
-		visibility: data.baseVisibility // xxx: add notFoundInstructions
-			? {
-					forAssociation: data.baseVisibility,
-				}
-			: null,
+		visibility:
+			data.baseVisibility !== "PUBLIC"
+				? {
+						forAssociation: data.baseVisibility,
+						notFoundInstructions: data.notFoundVisibility.at
+							? [
+									{
+										at: dateToDatabaseTimestamp(data.notFoundVisibility.at),
+										forAssociation:
+											data.notFoundVisibility.forAssociation !== "PUBLIC"
+												? data.notFoundVisibility.forAssociation
+												: null,
+									},
+								]
+							: undefined,
+					}
+				: null,
 		teamId: data.from.mode === "TEAM" ? data.from.teamId : null,
 		users: (await usersListForPost({ authorId: user.id, from: data.from })).map(
 			(userId) => ({

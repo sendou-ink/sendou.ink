@@ -1,5 +1,6 @@
 import { useLoaderData } from "@remix-run/react";
-import { Controller, useFormContext } from "react-hook-form";
+import * as React from "react";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 import type { z } from "zod";
 import { Label } from "~/components/Label";
 import { DateTimeFormField } from "~/components/form/DateTimeFormField";
@@ -21,6 +22,8 @@ export { loader, action };
 
 type FormFields = z.infer<typeof scrimsNewActionSchema>;
 
+// xxx: editing scrimPost
+
 export default function NewScrimPage() {
 	const data = useLoaderData<typeof loader>();
 
@@ -33,6 +36,11 @@ export default function NewScrimPage() {
 					postText: "",
 					at: new Date(),
 					divs: null,
+					baseVisibility: "PUBLIC",
+					notFoundVisibility: {
+						at: null,
+						forAssociation: "PUBLIC",
+					},
 					from:
 						data.teams.length > 0
 							? { mode: "TEAM", teamId: data.teams[0].id }
@@ -48,6 +56,8 @@ export default function NewScrimPage() {
 
 				<BaseVisibilityFormField associations={data.associations} />
 
+				<NotFoundVisibilityFormField associations={data.associations} />
+
 				<LutiDivsFormField />
 
 				<TextAreaFormField<FormFields>
@@ -60,7 +70,6 @@ export default function NewScrimPage() {
 	);
 }
 
-// xxx: add notFoundVisibility
 function BaseVisibilityFormField({
 	associations,
 }: { associations: ScrimsNewLoaderData["associations"] }) {
@@ -80,19 +89,11 @@ function BaseVisibilityFormField({
 					group.
 				</FormMessage>
 			) : (
-				<select id="visibility" {...methods.register("baseVisibility")}>
-					<option value="PUBLIC">Public</option>
-					{associations.virtual.map((association) => (
-						<option key={association} value={association}>
-							{association}
-						</option>
-					))}
-					{associations.actual.map((association) => (
-						<option key={association.id} value={association.id}>
-							{association.name}
-						</option>
-					))}
-				</select>
+				<AssociationSelect
+					associations={associations}
+					id="visibility"
+					{...methods.register("baseVisibility")}
+				/>
 			)}
 
 			{error && (
@@ -101,6 +102,67 @@ function BaseVisibilityFormField({
 		</div>
 	);
 }
+
+function NotFoundVisibilityFormField({
+	associations,
+}: { associations: ScrimsNewLoaderData["associations"] }) {
+	const date = useWatch<FormFields>({ name: "notFoundVisibility.at" }) ?? "";
+	const methods = useFormContext<FormFields>();
+
+	// xxx: fix this + show error if smaller than at
+	const error = methods.formState.errors.baseVisibility;
+
+	const noAssociations =
+		associations.virtual.length === 0 && associations.actual.length === 0;
+
+	if (noAssociations) return null;
+
+	return (
+		<div className="stack horizontal sm">
+			<DateTimeFormField<FormFields>
+				label="If not found by"
+				name="notFoundVisibility.at"
+			/>
+			{date ? (
+				<div>
+					<Label htmlFor="not-found-visibility">Visibility</Label>
+					<AssociationSelect
+						associations={associations}
+						id="not-found-visibility"
+						{...methods.register("notFoundVisibility.forAssociation")}
+					/>
+				</div>
+			) : null}
+
+			{error && (
+				<FormMessage type="error">{error.message as string}</FormMessage>
+			)}
+		</div>
+	);
+}
+
+const AssociationSelect = React.forwardRef<
+	HTMLSelectElement,
+	{
+		associations: ScrimsNewLoaderData["associations"];
+	} & React.SelectHTMLAttributes<HTMLSelectElement>
+>(({ associations, ...rest }, ref) => {
+	return (
+		<select ref={ref} {...rest}>
+			<option value="PUBLIC">Public</option>
+			{associations.virtual.map((association) => (
+				<option key={association} value={association}>
+					{association}
+				</option>
+			))}
+			{associations.actual.map((association) => (
+				<option key={association.id} value={association.id}>
+					{association.name}
+				</option>
+			))}
+		</select>
+	);
+});
 
 function LutiDivsFormField() {
 	const methods = useFormContext<FormFields>();

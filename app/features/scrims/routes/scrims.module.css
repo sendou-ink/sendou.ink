@@ -11,6 +11,14 @@
 	width: max-content;
 }
 
+.postPrivateCell {
+	min-width: 24px;
+}
+
+.postPrivateCell svg {
+	width: 18px;
+}
+
 .postIcon {
 	min-width: 24px;
 }

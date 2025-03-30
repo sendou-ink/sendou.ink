@@ -15,6 +15,10 @@ import {
 } from "~/features/associations/loaders/associations.server";
 export { loader, action };
 
+// xxx: add new association
+// xxx: invite via link
+// xxx: regenerate link
+
 export default function AssociationsPage() {
 	const data = useLoaderData<typeof loader>();
 

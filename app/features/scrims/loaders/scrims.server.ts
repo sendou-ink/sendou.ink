@@ -4,6 +4,7 @@ import * as Association from "~/features/associations/core/Association";
 import { getUser } from "~/features/auth/core/user.server";
 import * as TeamRepository from "../../team/TeamRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
+import * as ScrimPost from "../core/ScrimPost";
 import { dividePosts } from "../scrims-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -15,17 +16,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		: null;
 
 	const posts = (await ScrimPostRepository.findAllRelevant(user?.id))
-		.filter((post) =>
-			Association.isVisible({
-				associations,
-				time: now,
-				visibility: post.visibility,
-			}),
+		.filter(
+			(post) =>
+				(user && ScrimPost.isParticipating(post, user.id)) ||
+				Association.isVisible({
+					associations,
+					time: now,
+					visibility: post.visibility,
+				}),
 		)
 		.map((post) => ({
 			...post,
 			visibility: null,
-			/** Is the post visible to the user because of their association membership? */
 			isPrivate: !Association.isPublic({
 				time: now,
 				visibility: post.visibility,

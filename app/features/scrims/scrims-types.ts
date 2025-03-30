@@ -19,6 +19,8 @@ export interface ScrimPost {
 	users: Array<ScrimPostUser>;
 	chatCode: string | null;
 	requests: Array<ScrimPostRequest>;
+	/** Is the post visible to the user because of their association membership? */
+	isPrivate?: boolean;
 	permissions: {
 		MANAGE_REQUESTS: number[];
 		DELETE_POST: number[];
