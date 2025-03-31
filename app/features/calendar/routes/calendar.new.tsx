@@ -50,7 +50,6 @@ import { canAddNewEvent } from "../calendar-utils";
 import { BracketProgressionSelector } from "../components/BracketProgressionSelector";
 import { Tags } from "../components/Tags";
 import "~/styles/calendar-new.css";
-import "~/styles/maps.css";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { metaTags } from "~/utils/remix";
 

@@ -28,7 +28,6 @@ import { type TournamentLoaderData, loader } from "../loaders/to.$id.server";
 export { loader };
 
 import "~/styles/calendar-event.css";
-import "~/styles/maps.css";
 import "../tournament.css";
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
