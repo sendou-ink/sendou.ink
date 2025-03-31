@@ -1,7 +1,5 @@
 import type { InputStage, Stage } from "~/modules/brackets-model";
 import { create } from "./create";
-import { Delete } from "./delete";
-import { Find } from "./find";
 import { Get } from "./get";
 import * as helpers from "./helpers";
 import { Reset } from "./reset";
@@ -22,8 +20,6 @@ export class BracketsManager {
 
 	public get: Get;
 	public update: Update;
-	public delete: Delete;
-	public find: Find;
 	public reset: Reset;
 
 	/**
@@ -55,8 +51,6 @@ export class BracketsManager {
 		this.storage = storage;
 		this.get = new Get(this.storage);
 		this.update = new Update(this.storage);
-		this.delete = new Delete(this.storage);
-		this.find = new Find(this.storage);
 		this.reset = new Reset(this.storage);
 	}
 

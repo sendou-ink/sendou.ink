@@ -91,65 +91,6 @@ describe("Create single elimination stage", () => {
 		expect(storage.select<any>("match")!.length).toBe(7);
 	});
 
-	test("should determine the number property of created stages", () => {
-		manager.create({
-			name: "Stage 1",
-			tournamentId: 0,
-			type: "single_elimination",
-			settings: { size: 2 },
-		});
-
-		expect(storage.select<any>("stage", 0).number).toBe(1);
-
-		manager.create({
-			name: "Stage 2",
-			tournamentId: 0,
-			type: "single_elimination",
-			settings: { size: 2 },
-		});
-
-		expect(storage.select<any>("stage", 1).number).toBe(2);
-
-		manager.delete.stage(0);
-
-		manager.create({
-			name: "Stage 3",
-			tournamentId: 0,
-			type: "single_elimination",
-			settings: { size: 2 },
-		});
-
-		expect(storage.select<any>("stage", 2).number).toBe(3);
-	});
-
-	test("should create a stage with the given number property", () => {
-		manager.create({
-			name: "Stage 1",
-			tournamentId: 0,
-			type: "single_elimination",
-			settings: { size: 2 },
-		});
-
-		manager.create({
-			name: "Stage 2",
-			tournamentId: 0,
-			type: "single_elimination",
-			settings: { size: 2 },
-		});
-
-		manager.delete.stage(0);
-
-		manager.create({
-			name: "Stage 1 (new)",
-			tournamentId: 0,
-			type: "single_elimination",
-			number: 1,
-			settings: { size: 2 },
-		});
-
-		expect(storage.select<any>("stage", 2).number).toBe(1);
-	});
-
 	test("should throw if the given number property already exists", () => {
 		manager.create({
 			name: "Stage 1",
