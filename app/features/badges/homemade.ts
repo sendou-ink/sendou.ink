@@ -15,6 +15,16 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "DYNAMITE TOKEN",
+		fileName: "tnttoken12",
+		authorDiscordId: "1170249805373657093",
+	},
+	{
+		displayName: "Summer Days",
+		fileName: "beach223",
+		authorDiscordId: "1170249805373657093",
+	},
+	{
 		displayName: "Turnabout Suspect",
 		fileName: "turnabout-suspect",
 		authorDiscordId: "418176537561661441",
