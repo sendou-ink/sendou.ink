@@ -893,7 +893,7 @@ export class Create {
 			return;
 
 		const stage = this.storage.select("stage", stageId);
-		if (!stage) throw Error("Stage not found.");
+		if (!stage) throw Error(`Stage not found. (stageId: ${stageId})`);
 
 		stage.settings = {
 			...stage.settings,
