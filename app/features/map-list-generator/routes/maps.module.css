@@ -1,0 +1,56 @@
+.container {
+	max-width: 38rem;
+}
+
+.poolSelector {
+	padding-block: var(--s-3);
+}
+
+.poolMeta {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.poolInfo {
+	font-size: var(--fonts-xs);
+	font-weight: var(--bold);
+}
+
+.poolInfo a {
+	font-weight: var(--semi-bold);
+}
+
+.tournamentMapListLink {
+	font-size: var(--fonts-xxs);
+	text-align: center;
+}
+
+.mapListCreator {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-4);
+}
+
+.toggleContainer {
+	--label-margin: 0;
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-2);
+}
+
+.mapList {
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	margin-block-start: var(--s-4);
+}
+
+.modeAbbr {
+	color: var(--text-lighter);
+	font-weight: var(--bold);
+	text-decoration: none;
+}

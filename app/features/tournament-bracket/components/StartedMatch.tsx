@@ -612,7 +612,10 @@ function StartedMatchTabs({
 		}
 		const oneMonthAgo = new Date();
 		oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-		if (tournament.ctx.startTime < oneMonthAgo) {
+		if (
+			tournament.ctx.startTime < oneMonthAgo &&
+			!tournament.isLeagueDivision
+		) {
 			return false;
 		}
 
