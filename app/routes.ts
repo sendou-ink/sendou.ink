@@ -188,7 +188,12 @@ export default [
 		route(":id", "features/scrims/routes/scrims.$id.tsx"),
 	]),
 
-	route("/associations", "features/associations/routes/associations.tsx"),
+	route("/associations", "features/associations/routes/associations.tsx", [
+		route(
+			"/associations/new",
+			"features/associations/routes/associations.new.tsx",
+		),
+	]),
 
 	route("/admin", "features/admin/routes/admin.tsx"),
 

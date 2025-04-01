@@ -9,6 +9,7 @@ import {
 	lfgNewPostPage,
 	navIconUrl,
 	newArtPage,
+	newAssociationsPage,
 	newScrimPostPage,
 	newVodPage,
 	plusSuggestionsNewPage,
@@ -72,6 +73,12 @@ export function AnythingAdder() {
 			text: t("header.adder.scrimPost"),
 			imagePath: navIconUrl("scrims"),
 			onClick: () => navigate(newScrimPostPage()),
+		},
+		{
+			id: "association",
+			text: t("header.adder.association"),
+			imagePath: navIconUrl("associations"),
+			onClick: () => navigate(newAssociationsPage()),
 		},
 		{
 			id: "lfgPost",

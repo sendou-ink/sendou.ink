@@ -52,7 +52,11 @@ export default function NewScrimPage() {
 			>
 				<FromFormField usersTeams={data.teams} />
 
-				<DateTimeFormField<FormFields> label="When" name="at" />
+				<DateTimeFormField<FormFields>
+					label="When"
+					name="at"
+					bottomText="Leave blank if you want to look for a scrim now"
+				/>
 
 				<BaseVisibilityFormField associations={data.associations} />
 
@@ -109,8 +113,7 @@ function NotFoundVisibilityFormField({
 	const date = useWatch<FormFields>({ name: "notFoundVisibility.at" }) ?? "";
 	const methods = useFormContext<FormFields>();
 
-	// xxx: fix this + show error if smaller than at
-	const error = methods.formState.errors.baseVisibility;
+	const error = methods.formState.errors.notFoundVisibility;
 
 	const noAssociations =
 		associations.virtual.length === 0 && associations.actual.length === 0;
@@ -118,24 +121,30 @@ function NotFoundVisibilityFormField({
 	if (noAssociations) return null;
 
 	return (
-		<div className="stack horizontal sm">
-			<DateTimeFormField<FormFields>
-				label="If not found by"
-				name="notFoundVisibility.at"
-			/>
-			{date ? (
-				<div>
-					<Label htmlFor="not-found-visibility">Visibility</Label>
-					<AssociationSelect
-						associations={associations}
-						id="not-found-visibility"
-						{...methods.register("notFoundVisibility.forAssociation")}
-					/>
-				</div>
-			) : null}
-
-			{error && (
+		<div>
+			<div className="stack horizontal sm">
+				<DateTimeFormField<FormFields>
+					label="If not found by"
+					name="notFoundVisibility.at"
+				/>
+				{date ? (
+					<div>
+						<Label htmlFor="not-found-visibility">Visibility</Label>
+						<AssociationSelect
+							associations={associations}
+							id="not-found-visibility"
+							{...methods.register("notFoundVisibility.forAssociation")}
+						/>
+					</div>
+				) : null}
+			</div>
+			{error ? (
 				<FormMessage type="error">{error.message as string}</FormMessage>
+			) : (
+				<FormMessage type="info">
+					Leave blank if you don't want the visibility of your post to change
+					over time
+				</FormMessage>
 			)}
 		</div>
 	);

@@ -366,6 +366,14 @@ export const newScrimPostPage = () => {
 	return "/scrims/new";
 };
 
+export const associationsPage = () => {
+	return "/associations";
+};
+
+export const newAssociationsPage = () => {
+	return "/associations/new";
+};
+
 export const getWeaponUsage = ({
 	userId,
 	season,

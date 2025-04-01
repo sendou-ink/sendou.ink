@@ -7,52 +7,69 @@ import type { AssociationVirtualIdentifier } from "~/features/associations/assoc
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 
-export async function findById(associationId: number) {
-	const result = await findBy({ type: "association", associationId });
+interface FindOptions {
+	withMembers: boolean;
+}
+
+export async function findById(
+	associationId: number,
+	options: FindOptions = { withMembers: false },
+) {
+	const result = await findBy({ type: "association", associationId }, options);
 
 	return result.at(0) ?? null;
 }
 
-export async function findByMemberUserId(userId: number) {
+export async function findByMemberUserId(
+	userId: number,
+	options: FindOptions = { withMembers: false },
+) {
 	return {
-		actual: await findBy({ type: "user", userId }),
+		actual: await findBy({ type: "user", userId }, options),
 		virtual: await virtualAssociationsByUserId(userId),
 	};
 }
 
-const baseFindQuery = db
-	.selectFrom("AssociationMember")
-	.innerJoin("Association", "Association.id", "AssociationMember.associationId")
-	.select((eb) => [
-		"Association.id",
-		"Association.name",
-		jsonArrayFrom(
-			eb
-				.selectFrom("AssociationMember")
-				.innerJoin("User", "User.id", "AssociationMember.userId")
-				.whereRef("AssociationMember.associationId", "=", "Association.id")
-				.select([...COMMON_USER_FIELDS, "AssociationMember.role"]),
-		).as("members"),
-	]);
+const baseFindQuery = (options: FindOptions) =>
+	db
+		.selectFrom("AssociationMember")
+		.innerJoin(
+			"Association",
+			"Association.id",
+			"AssociationMember.associationId",
+		)
+		.select(["Association.id", "Association.name"])
+		.$if(options.withMembers, (qb) =>
+			qb.select((eb) =>
+				jsonArrayFrom(
+					eb
+						.selectFrom("AssociationMember")
+						.innerJoin("User", "User.id", "AssociationMember.userId")
+						.whereRef("AssociationMember.associationId", "=", "Association.id")
+						.select([...COMMON_USER_FIELDS, "AssociationMember.role"]),
+				).as("members"),
+			),
+		);
 
 async function findBy(
 	args:
 		| { type: "user"; userId: number }
 		| { type: "association"; associationId: number },
+	options: FindOptions,
 ) {
 	const associations =
 		args.type === "user"
-			? await baseFindQuery
+			? await baseFindQuery(options)
 					.where("AssociationMember.userId", "=", args.userId)
 					.execute()
-			: await baseFindQuery
+			: await baseFindQuery(options)
 					.where("Association.id", "=", args.associationId)
 					.execute();
 
 	return associations.map((a) => ({
 		...a,
 		permissions: {
-			MANAGE: a.members
+			MANAGE: (a.members ?? [])
 				.filter((member) => member.role === "ADMIN")
 				.map((user) => user.id),
 		},

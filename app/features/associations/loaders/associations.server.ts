@@ -9,7 +9,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await requireUserId(request);
 
 	return {
-		associations: (await AssociationRepository.findByMemberUserId(user.id))
-			.actual,
+		associations: (
+			await AssociationRepository.findByMemberUserId(user.id, {
+				withMembers: true,
+			})
+		).actual,
 	};
 };

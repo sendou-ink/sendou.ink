@@ -10,8 +10,6 @@ import {
 import { assertUnreachable } from "~/utils/types";
 import * as AssociationRepository from "../AssociationRepository.server";
 
-// xxx: notifications
-
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const user = await requireUserId(request);
 	const data = await parseRequestPayload({
@@ -20,9 +18,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	});
 
 	switch (data._action) {
-		case "CREATE_ASSOCIATION": {
-			break;
-		}
 		case "REMOVE_MEMBER": {
 			await validateHasManagePermissions({
 				user,

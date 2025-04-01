@@ -11,6 +11,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	return {
 		teams: await TeamRepository.teamsByMemberUserId(user.id),
-		associations: await AssociationRepository.findByMemberUserId(user.id), // xxx: avoid loading all members?
+		associations: await AssociationRepository.findByMemberUserId(user.id),
 	};
 };

@@ -2,9 +2,11 @@ import { z } from "zod";
 import { _action, actuallyNonEmptyStringOrNull, id } from "~/utils/zod";
 import { ASSOCIATION } from "./associations-constants";
 
-const createNewAssociationSchema = z.object({
-	_action: _action("CREATE_ASSOCIATION"),
-	name: z.preprocess(actuallyNonEmptyStringOrNull, z.string().max(100)),
+export const createNewAssociationSchema = z.object({
+	name: z.preprocess(
+		actuallyNonEmptyStringOrNull,
+		z.string({ message: "Enter a name for the association" }).max(100),
+	),
 });
 
 const removeMemberSchema = z.object({
@@ -19,7 +21,6 @@ const deleteAssociationSchema = z.object({
 });
 
 export const associationsPageActionSchema = z.union([
-	createNewAssociationSchema,
 	removeMemberSchema,
 	deleteAssociationSchema,
 ]);

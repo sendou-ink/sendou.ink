@@ -54,7 +54,22 @@ const PERKS = [
 	},
 	{
 		tier: 2,
+		name: "tournamentsBeta",
+		extraInfo: false,
+	},
+	{
+		tier: 2,
+		name: "previewQ",
+		extraInfo: false,
+	},
+	{
+		tier: 2,
 		name: "userShortLink",
+		extraInfo: true,
+	},
+	{
+		tier: 2,
+		name: "autoValidatePictures",
 		extraInfo: true,
 	},
 	{
@@ -89,23 +104,18 @@ const PERKS = [
 	},
 	{
 		tier: 2,
-		name: "autoValidatePictures",
-		extraInfo: true,
-	},
-	{
-		tier: 2,
-		name: "previewQ",
-		extraInfo: false,
-	},
-	{
-		tier: 2,
 		name: "joinFive",
 		extraInfo: false,
 	},
 	{
 		tier: 2,
-		name: "tournamentsBeta",
+		name: "joinMoreAssociations",
 		extraInfo: false,
+	},
+	{
+		tier: 2,
+		name: "useBotToLogIn",
+		extraInfo: true,
 	},
 ] as const;
 

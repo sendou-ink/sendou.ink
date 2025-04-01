@@ -59,86 +59,122 @@ export const scrimsActionSchema = z.union([
 
 export const MAX_SCRIM_POST_TEXT_LENGTH = 500;
 
-export const scrimsNewActionSchema = z.object({
-	at: z.preprocess(
-		date,
-		z
-			.date()
+export const scrimsNewActionSchema = z
+	.object({
+		at: z.preprocess(
+			date,
+			z
+				.date()
+				.refine(
+					(date) => {
+						if (date < sub(new Date(), { days: 1 })) return false;
+
+						return true;
+					},
+					{
+						message: "Date can not be in the past",
+					},
+				)
+				.refine(
+					(date) => {
+						if (date > add(new Date(), { days: 15 })) return false;
+
+						return true;
+					},
+					{
+						message: "Date can not be more than 2 weeks in the future",
+					},
+				),
+		),
+		baseVisibility: associationIdentifierSchema,
+		notFoundVisibility: z.object({
+			at: z
+				.preprocess(date, z.date())
+				.nullish()
+				.refine(
+					(date) => {
+						if (!date) return true;
+
+						if (date < sub(new Date(), { days: 1 })) return false;
+
+						return true;
+					},
+					{
+						message: "Date can not be in the past",
+					},
+				),
+			forAssociation: associationIdentifierSchema,
+		}),
+		divs: z
+			.object({
+				min: z.enum(LUTI_DIVS).nullable(),
+				max: z.enum(LUTI_DIVS).nullable(),
+			})
+			.nullable()
 			.refine(
-				(date) => {
-					if (date < sub(new Date(), { days: 1 })) return false;
+				(div) => {
+					if (!div) return true;
+
+					if (div.max && !div.min) return false;
+					if (div.min && !div.max) return false;
 
 					return true;
 				},
 				{
-					message: "Date can not be in the past",
+					message: "Both min and max div must be set or neither",
 				},
 			)
 			.refine(
-				(date) => {
-					if (date > add(new Date(), { days: 15 })) return false;
+				(divs) => {
+					if (!divs?.min || !divs.max) return true;
 
-					return true;
+					const minIndex = LUTI_DIVS.indexOf(divs.min);
+					const maxIndex = LUTI_DIVS.indexOf(divs.max);
+
+					return minIndex >= maxIndex;
 				},
-				{
-					message: "Date can not be more than 2 weeks in the future",
-				},
+				{ message: "Min div must be less than or equal to max div" },
 			),
-	),
-	baseVisibility: associationIdentifierSchema,
-	notFoundVisibility: z.object({
-		at: z
-			.preprocess(date, z.date())
-			.nullish()
-			.refine(
-				(date) => {
-					if (!date) return true;
-
-					if (date < sub(new Date(), { days: 1 })) return false;
-
-					return true;
-				},
-				{
-					message: "Date can not be in the past",
-				},
-			),
-		forAssociation: associationIdentifierSchema,
-	}),
-	divs: z
-		.object({
-			min: z.enum(LUTI_DIVS).nullable(),
-			max: z.enum(LUTI_DIVS).nullable(),
-		})
-		.nullable()
-		.refine(
-			(div) => {
-				if (!div) return true;
-
-				if (div.max && !div.min) return false;
-				if (div.min && !div.max) return false;
-
-				return true;
-			},
-			{
-				message: "Both min and max div must be set or neither",
-			},
-		)
-		.refine(
-			(divs) => {
-				if (!divs?.min || !divs.max) return true;
-
-				const minIndex = LUTI_DIVS.indexOf(divs.min);
-				const maxIndex = LUTI_DIVS.indexOf(divs.max);
-
-				return minIndex >= maxIndex;
-			},
-			{ message: "Min div must be less than or equal to max div" },
+		from: fromSchema,
+		postText: z.preprocess(
+			falsyToNull,
+			z.string().max(MAX_SCRIM_POST_TEXT_LENGTH).nullable(),
 		),
-	from: fromSchema,
-	postText: z.preprocess(
-		falsyToNull,
-		z.string().max(MAX_SCRIM_POST_TEXT_LENGTH).nullable(),
-	),
-	// xxx:
-	// visibility:
-});
+	})
+	.superRefine((post, ctx) => {
+		if (
+			post.notFoundVisibility.at &&
+			post.notFoundVisibility.forAssociation === post.baseVisibility
+		) {
+			ctx.addIssue({
+				path: ["notFoundVisibility"],
+				message: "Not found visibility must be different from base visibility",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+
+		if (post.baseVisibility === "PUBLIC" && post.notFoundVisibility.at) {
+			ctx.addIssue({
+				path: ["notFoundVisibility"],
+				message:
+					"Not found visibility can not be set if base visibility is public",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+
+		if (post.notFoundVisibility.at && post.notFoundVisibility.at < post.at) {
+			ctx.addIssue({
+				path: ["notFoundVisibility", "at"],
+				message: "Date can not be before the scrim date",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+
+		if (post.notFoundVisibility.at && post.at < new Date()) {
+			ctx.addIssue({
+				path: ["notFoundVisibility"],
+				message: "Can not be set if looking for scrim now",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+	});

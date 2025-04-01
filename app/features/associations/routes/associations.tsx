@@ -1,4 +1,4 @@
-import { Link, useLoaderData } from "@remix-run/react";
+import { Link, Outlet, useLoaderData } from "@remix-run/react";
 import { Avatar } from "~/components/Avatar";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Main } from "~/components/Main";
@@ -15,7 +15,6 @@ import {
 } from "~/features/associations/loaders/associations.server";
 export { loader, action };
 
-// xxx: add new association
 // xxx: invite via link
 // xxx: regenerate link
 
@@ -24,6 +23,7 @@ export default function AssociationsPage() {
 
 	return (
 		<Main className="stack lg">
+			<Outlet />
 			<Header />
 			{data.associations.map((association) => (
 				<Association key={association.id} association={association} />
@@ -72,10 +72,10 @@ function Association({
 				) : null}
 			</div>
 			<div className="text-sm text-lighter">
-				Admin: {association.members.find((m) => m.role === "ADMIN")?.username}
+				Admin: {association.members?.find((m) => m.role === "ADMIN")?.username}
 			</div>
 			<div className="stack sm mt-4">
-				{association.members.map((member) => (
+				{association.members?.map((member) => (
 					<AssociationMember
 						key={member.id}
 						member={member}
@@ -93,7 +93,9 @@ function AssociationMember({
 	associationId,
 	showControls,
 }: {
-	member: AssociationsLoaderData["associations"][number]["members"][number];
+	member: NonNullable<
+		AssociationsLoaderData["associations"][number]["members"]
+	>[number];
 	associationId: number;
 	showControls?: boolean;
 }) {
