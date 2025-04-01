@@ -919,4 +919,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "artsuppliesbronze",
 		authorDiscordId: "1320944066002681876",
 	},
+	{
+		displayName: "Dynamo Roller",
+		fileName: "dynamo",
+		authorDiscordId: "534502084134043648",
+	},
 ];
