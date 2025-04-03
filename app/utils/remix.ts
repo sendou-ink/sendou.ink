@@ -8,7 +8,9 @@ import { COMMON_PREVIEW_IMAGE } from "./urls";
 
 export function isRevalidation(args: ShouldRevalidateFunctionArgs) {
 	return (
-		args.defaultShouldRevalidate && args.nextUrl.href === args.currentUrl.href
+		args.defaultShouldRevalidate &&
+		args.nextUrl.href === args.currentUrl.href &&
+		!args.formMethod
 	);
 }
 
