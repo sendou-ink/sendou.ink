@@ -919,4 +919,14 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "artsuppliesbronze",
 		authorDiscordId: "1320944066002681876",
 	},
+	{
+		displayName: "Splatoon 1 Tournament (Callie)",
+		fileName: "calliesit",
+		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "Splatoon 1 Tournament (Marie)",
+		fileName: "mariesit",
+		authorDiscordId: "336683473714544641",
+	},
 ];
