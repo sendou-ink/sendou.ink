@@ -12,7 +12,6 @@ import { SendouSwitch } from "~/components/elements/Switch";
 import { EditIcon } from "~/components/icons/Edit";
 import type { Tables } from "~/db/tables";
 import { type ModeWithStage, stageIds } from "~/modules/in-game-lists";
-import "~/styles/maps.css";
 import invariant from "~/utils/invariant";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -26,6 +25,8 @@ import { generateMapList } from "../core/map-list-generator/map-list";
 import { modesOrder } from "../core/map-list-generator/modes";
 import { mapPoolToNonEmptyModes } from "../core/map-list-generator/utils";
 import { MapPool } from "../core/map-pool";
+
+import styles from "./maps.module.css";
 
 import { loader } from "../loaders/maps.server";
 export { loader };
@@ -66,16 +67,14 @@ export default function MapListPage() {
 		useSearchParamPersistedMapPool();
 
 	return (
-		<Main className="maps__container stack lg">
+		<Main className={`${styles.container} stack lg`}>
 			{searchParams.has("readonly") && data.calendarEvent && (
-				<div className="maps__pool-meta">
-					<div className="maps__pool-info">
+				<div className={styles.poolMeta}>
+					<div className={styles.poolInfo}>
 						{t("common:maps.mapPool")}:{" "}
-						{
-							<Link to={calendarEventPage(data.calendarEvent.id)}>
-								{data.calendarEvent.name}
-							</Link>
-						}
+						<Link to={calendarEventPage(data.calendarEvent.id)}>
+							{data.calendarEvent.name}
+						</Link>
 					</div>
 					<Button
 						variant="outlined"
@@ -96,14 +95,14 @@ export default function MapListPage() {
 					recentEvents={data.recentEventsWithMapPools}
 					initialEvent={data.calendarEvent}
 					allowBulkEdit
-					className="maps__pool-selector"
+					className={styles.poolSelector}
 				/>
 			)}
 			<a
 				href={ipLabsMaps(mapPool.serialized)}
 				target="_blank"
 				rel="noreferrer"
-				className="maps__tournament-map-list-link"
+				className={styles.tournamentMapListLink}
 			>
 				{t("common:maps.tournamentMaplist")}
 			</a>
@@ -112,7 +111,7 @@ export default function MapListPage() {
 	);
 }
 
-function useSearchParamPersistedMapPool() {
+export function useSearchParamPersistedMapPool() {
 	const data = useLoaderData<typeof loader>();
 	const [searchParams, setSearchParams] = useSearchParams();
 
@@ -185,8 +184,8 @@ function MapListCreator({ mapPool }: { mapPool: MapPool }) {
 		mapPool.isEmpty() || (szEveryOther && !mapPool.hasMode("SZ"));
 
 	return (
-		<div className="maps__map-list-creator">
-			<div className="maps__toggle-container">
+		<div className={styles.mapListCreator}>
+			<div className={styles.toggleContainer}>
 				<Label>{t("common:maps.halfSz")}</Label>
 				<SendouSwitch
 					isSelected={szEveryOther}
@@ -199,11 +198,11 @@ function MapListCreator({ mapPool }: { mapPool: MapPool }) {
 			</Button>
 			{mapList && (
 				<>
-					<ol className="maps__map-list">
+					<ol className={styles.mapList}>
 						{mapList.map(({ mode, stageId }, i) => (
 							<li key={i}>
 								<abbr
-									className="maps__mode-abbr"
+									className={styles.modeAbbr}
 									title={t(`game-misc:MODE_LONG_${mode}`)}
 								>
 									{t(`game-misc:MODE_SHORT_${mode}`)}

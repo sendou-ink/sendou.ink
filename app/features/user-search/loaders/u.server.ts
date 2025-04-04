@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
 import { z } from "zod";
+import { getUserId } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseSearchParams } from "~/utils/remix.server";
 import { queryToUserIdentifier } from "~/utils/users";
@@ -12,6 +13,13 @@ const searchParamsSchema = z.object({
 });
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+	if (process.env.NODE_ENV === "production") {
+		const user = await getUserId(request);
+		if (!user) {
+			return null;
+		}
+	}
+
 	const { q: query, limit } = parseSearchParams({
 		request,
 		schema: searchParamsSchema,
