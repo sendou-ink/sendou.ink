@@ -11,10 +11,6 @@ export default [
 
 	route("/notifications", "features/notifications/routes/notifications.tsx"),
 	route(
-		"/notifications/peek",
-		"features/notifications/routes/notifications.peek.ts",
-	),
-	route(
 		"/notifications/seen",
 		"features/notifications/routes/notifications.seen.ts",
 	),

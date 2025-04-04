@@ -43,7 +43,6 @@
 
 	"notifications.title": "Notification",
 	"notifications.empty": "Rien ici encore, revenez plus tard",
-	"notifications.loading": "Chargement...",
 	"notifications.seeAll": "Voir tout",
 	"notifications.fullList.explanation": "100 notifications au maximum peuvent être afficher. Les notifications sont effacer automatiquement au bout de 14 jours.",
 	"notifications.managePush": "Notifications push",
