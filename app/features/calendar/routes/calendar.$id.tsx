@@ -41,7 +41,6 @@ import { loader } from "../loaders/calendar.$id.server";
 export { loader, action };
 
 import "~/styles/calendar-event.css";
-import "~/styles/maps.css";
 
 export const meta: MetaFunction = (args) => {
 	const data = args.data as SerializeFrom<typeof loader>;

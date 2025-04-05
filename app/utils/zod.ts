@@ -123,10 +123,50 @@ export function safeJSONParse(value: unknown): unknown {
 const EMPTY_CHARACTERS = ["\u200B", "\u200C", "\u200D", "\u200E", "\u200F"];
 const EMPTY_CHARACTERS_REGEX = new RegExp(EMPTY_CHARACTERS.join("|"), "g");
 
+const zalgoRe = /%CC%/g;
+export const hasZalgo = (txt: string) => zalgoRe.test(encodeURIComponent(txt));
+
+/** Non-empty string that has the given length (max and optionally min). Prevents z͎͗ͣḁ̵̑l̉̃ͦg̐̓̒o͓̔ͥ text as well as filters out characters that have no width. */
+export const safeStringSchema = ({ min, max }: { min?: number; max: number }) =>
+	z.preprocess(
+		actuallyNonEmptyStringOrNull, // if this returns null, none of the checks below will run because it's not a string
+		z
+			.string()
+			.min(min ?? 0)
+			.max(max)
+			.refine((text) => !hasZalgo(text), {
+				message: "Includes not allowed characters.",
+			}),
+	);
+
+/** Nullable string that has the given length (max and optionally min). Prevents z͎͗ͣḁ̵̑l̉̃ͦg̐̓̒o͓̔ͥ text as well as filters out characters that have no width. */
+export const safeNullableStringSchema = ({
+	min,
+	max,
+}: { min?: number; max: number }) =>
+	z.preprocess(
+		actuallyNonEmptyStringOrNull,
+		z
+			.string()
+			.min(min ?? 0)
+			.max(max)
+			.nullable()
+			.refine(
+				(text) => {
+					if (typeof text !== "string") return true;
+
+					return !hasZalgo(text);
+				},
+				{
+					message: "Includes not allowed characters.",
+				},
+			),
+	);
+
 /**
  * Processes the input value and returns a non-empty string with invisible characters cleaned out or null.
  */
-export function actuallyNonEmptyStringOrNull(value: unknown) {
+function actuallyNonEmptyStringOrNull(value: unknown) {
 	if (typeof value !== "string") return value;
 
 	const trimmed = value.replace(EMPTY_CHARACTERS_REGEX, "").trim();
