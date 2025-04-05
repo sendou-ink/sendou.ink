@@ -920,6 +920,16 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "1320944066002681876",
 	},
 	{
+		displayName: "5 TSO Tournaments",
+		fileName: "mew",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "10 TSO Tournaments",
+		fileName: "shinymew",
+		authorDiscordId: "528851510222782474",
+	},
+	{
 		displayName: "Splatoon 1 Tournament (Callie)",
 		fileName: "calliesit",
 		authorDiscordId: "336683473714544641",
