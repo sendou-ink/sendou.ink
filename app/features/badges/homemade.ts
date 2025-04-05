@@ -929,4 +929,19 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "mariesit",
 		authorDiscordId: "336683473714544641",
 	},
+	{
+		displayName: "Pikmin Bloom (Bronze)",
+		fileName: "rockleaf",
+		authorDiscordId: "534502084134043648",
+	},
+	{
+		displayName: "Pikmin Bloom (Silver)",
+		fileName: "rockbud",
+		authorDiscordId: "534502084134043648",
+	},
+	{
+		displayName: "Pikmin Bloom (Gold)",
+		fileName: "rockflower",
+		authorDiscordId: "534502084134043648",
+	},
 ];
