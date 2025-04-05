@@ -5,7 +5,6 @@ import "~/styles/u-edit.css";
 import { isCustomUrl } from "~/utils/urls";
 import {
 	actualNumber,
-	actuallyNonEmptyStringOrNull,
 	checkboxValueToDbBoolean,
 	customCssVarObject,
 	dbBoolean,
@@ -13,6 +12,7 @@ import {
 	id,
 	processMany,
 	safeJSONParse,
+	safeNullableStringSchema,
 	undefinedToNull,
 	weaponSplId,
 } from "~/utils/zod";
@@ -62,10 +62,7 @@ export const userEditActionSchema = z
 				.transform((val) => val?.toLowerCase())
 				.nullable(),
 		),
-		customName: z.preprocess(
-			actuallyNonEmptyStringOrNull,
-			z.string().max(USER.CUSTOM_NAME_MAX_LENGTH).nullable(),
-		),
+		customName: safeNullableStringSchema({ max: USER.CUSTOM_NAME_MAX_LENGTH }),
 		battlefy: z.preprocess(
 			falsyToNull,
 			z.string().max(USER.BATTLEFY_MAX_LENGTH).nullable(),
