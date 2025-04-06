@@ -340,7 +340,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "342369454719631361",
 	},
 	{
-		displayName: "Original Message Deleted",
+		displayName: "[Original Message Deleted]",
 		fileName: "original-message-deleted",
 		authorDiscordId: "751912670403362836",
 	},
