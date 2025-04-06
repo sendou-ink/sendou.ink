@@ -935,6 +935,21 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "1320944066002681876",
 	},
 	{
+		displayName: "Ranked Refreshments: Lemon",
+		fileName: "ranked_refreshments_x_3",
+		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "Ranked Refreshments: Lime",
+		fileName: "ranked_refreshments_4_7",
+		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "Ranked Refreshments: Dragonfruit",
+		fileName: "ranked_refreshments_8_11",
+		authorDiscordId: "336683473714544641",
+	},
+	{
 		displayName: "5 TSO Tournaments",
 		fileName: "mew",
 		authorDiscordId: "528851510222782474",
