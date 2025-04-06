@@ -72,7 +72,7 @@ export function findPlacementsByPlayerId(
 	playerId: Tables["XRankPlacement"]["playerId"],
 ) {
 	const results = byPlayerStm.all({ playerId }) as Array<FindPlacement>;
-	if (!results) return null;
+	if (results.length === 0) return null;
 
 	return results;
 }

@@ -2,11 +2,11 @@ import { Link } from "@remix-run/react";
 import { formatDistance } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
+import type { LoaderNotification } from "~/components/layout/NotificationPopover";
 import {
 	notificationLink,
 	notificationNavIcon,
 } from "~/features/notifications/notifications-utils";
-import type { LoaderNotification } from "~/features/notifications/routes/notifications.peek";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl } from "~/utils/urls";
 import styles from "./NotificationList.module.css";

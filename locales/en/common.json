@@ -46,7 +46,6 @@
 
 	"notifications.title": "Notifications",
 	"notifications.empty": "None yet, check back later",
-	"notifications.loading": "Loading...",
 	"notifications.seeAll": "See all",
 	"notifications.fullList.explanation": "Max of 100 notifications shown. Notifications older than 14 days are automatically deleted.",
 	"notifications.managePush": "Push notifications",

@@ -4,12 +4,20 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useDebounce } from "react-use";
 import { Avatar } from "~/components/Avatar";
+import { Button } from "~/components/Button";
 import { Input } from "~/components/Input";
 import { Main } from "~/components/Main";
+import { DiscordIcon } from "~/components/icons/Discord";
 import { SearchIcon } from "~/components/icons/Search";
+import { useUser } from "~/features/auth/core/user";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { USER_SEARCH_PAGE, navIconUrl, userPage } from "~/utils/urls";
+import {
+	LOG_IN_URL,
+	USER_SEARCH_PAGE,
+	navIconUrl,
+	userPage,
+} from "~/utils/urls";
 
 import { loader } from "../loaders/u.server";
 export { loader };
@@ -34,10 +42,13 @@ export const meta: MetaFunction = (args) => {
 };
 
 export default function UserSearchPage() {
+	const { t } = useTranslation(["user"]);
 	const [searchParams, setSearchParams] = useSearchParams();
 	const [inputValue, setInputValue] = React.useState(
 		searchParams.get("q") ?? "",
 	);
+	const user = useUser();
+
 	useDebounce(
 		() => {
 			if (!inputValue) return;
@@ -47,6 +58,23 @@ export default function UserSearchPage() {
 		1500,
 		[inputValue],
 	);
+
+	if (!user) {
+		return (
+			<Main className="text-lg font-semi-bold text-center">
+				<p>{t("user:search.pleaseLogIn.header")}</p>
+				<form
+					className="stack items-center mt-6"
+					action={LOG_IN_URL}
+					method="post"
+				>
+					<Button size="big" type="submit" icon={<DiscordIcon />}>
+						{t("user:search.pleaseLogIn.button")}
+					</Button>
+				</form>
+			</Main>
+		);
+	}
 
 	return (
 		<Main className="u-search__container">

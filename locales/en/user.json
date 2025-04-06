@@ -45,6 +45,8 @@
 
 	"search.info": "Search for users by Discord or Splatoon 3 name",
 	"search.noResults": "No users found matching '{{query}}'",
+	"search.pleaseLogIn.header": "Please log in to search for users",
+	"search.pleaseLogIn.button": "Log in via Discord",
 
 	"seasons": "Seasons",
 	"seasons.noQ": "This user has not played SendouQ this season",

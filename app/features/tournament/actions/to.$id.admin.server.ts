@@ -209,6 +209,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 			const previousTeam = tournament.teamMemberOfByUser({ id: data.userId });
 
 			errorToastIfFalsy(
+				!previousTeam?.id || previousTeam.id !== team.id,
+				"User is already in this team",
+			);
+
+			errorToastIfFalsy(
 				tournament.hasStarted || !previousTeam,
 				"User is already in a team",
 			);

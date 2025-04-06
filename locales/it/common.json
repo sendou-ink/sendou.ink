@@ -43,7 +43,6 @@
 
 	"notifications.title": "Notifiche",
 	"notifications.empty": "Nessuna notifica, controlla più tardi",
-	"notifications.loading": "Caricamento...",
 	"notifications.seeAll": "Vedi tutte",
 	"notifications.fullList.explanation": "Un massimo di 100 notifiche sono state mostrate. Le notifiche più vecchie di 14 giorni vengono eliminate automaticamente.",
 	"notifications.managePush": "Notifiche push",

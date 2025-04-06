@@ -4,7 +4,7 @@
 
 Please check each and mark with "x" to indicate you have verified that requirement. This allows for more seamless badge reviews, thank you!
 
-- [ ] The `.avif` while is static, not animated (generate it from the .png)
+- [ ] The `.avif` file is static, not animated (generate it from the .png)
 - [ ] Rotation of animation is counterclockwise
 - [ ] Rotation is of correct speed (around 3 seconds for full round)
 - [ ] Badge is centered both vertically and horizontally
