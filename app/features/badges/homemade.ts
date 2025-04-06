@@ -60,6 +60,11 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "789943264370884708",
 	},
 	{
+		displayName: "Hardcore Mode",
+		fileName: "hardcore1v1",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "Shifting Tides",
 		fileName: "shiftingtides",
 		authorDiscordId: "338806780446638082",
