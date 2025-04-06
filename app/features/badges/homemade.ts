@@ -915,6 +915,16 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "528851510222782474",
 	},
 	{
+		displayName: "Meet Your Match Counterpick Gauntlet",
+		fileName: "matchmeetex",
+		authorDiscordId: "631246535560265749",
+	},
+	{
+		displayName: "Calm Before the Storm",
+		fileName: "calmbefore",
+		authorDiscordId: "631246535560265749",
+	},
+	{
 		displayName: "Big Swig",
 		fileName: "swig",
 		authorDiscordId: "534502084134043648",
