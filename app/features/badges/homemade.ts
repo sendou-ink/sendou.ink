@@ -994,4 +994,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "rockflower",
 		authorDiscordId: "534502084134043648",
 	},
+	{
+		displayName: "Dynamo Roller",
+		fileName: "dynamo",
+		authorDiscordId: "534502084134043648",
+	},
 ];
