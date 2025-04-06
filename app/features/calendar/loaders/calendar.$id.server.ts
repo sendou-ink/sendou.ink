@@ -1,18 +1,18 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
-import { z } from "zod";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
-import { notFoundIfFalsy } from "~/utils/remix.server";
+import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { tournamentPage } from "~/utils/urls";
-import { actualNumber, id } from "~/utils/zod";
+import { idObject } from "~/utils/zod";
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const parsedParams = z
-		.object({ id: z.preprocess(actualNumber, id) })
-		.parse(params);
+export const loader = async (args: LoaderFunctionArgs) => {
+	const params = parseParams({
+		params: args.params,
+		schema: idObject,
+	});
 	const event = notFoundIfFalsy(
 		await CalendarRepository.findById({
-			id: parsedParams.id,
+			id: params.id,
 			includeBadgePrizes: true,
 			includeMapPool: true,
 		}),
@@ -24,6 +24,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	return {
 		event,
-		results: await CalendarRepository.findResultsByEventId(parsedParams.id),
+		results: await CalendarRepository.findResultsByEventId(params.id),
 	};
 };

@@ -8,6 +8,9 @@ import type { Unpacked } from "./types";
 import { assertType } from "./types";
 
 export const id = z.coerce.number({ message: "Required" }).int().positive();
+export const idObject = z.object({
+	id,
+});
 export const optionalId = z.coerce.number().int().positive().optional();
 
 export const nonEmptyString = z.string().trim().min(1, {
