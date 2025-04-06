@@ -15,7 +15,6 @@ import {
 	useMatches,
 	useNavigate,
 	useNavigation,
-	useRevalidator,
 	useSearchParams,
 } from "@remix-run/react";
 import generalI18next from "i18next";
@@ -25,6 +24,8 @@ import { I18nProvider } from "react-aria-components";
 import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
 import { useChangeLanguage } from "remix-i18next/react";
+import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
+import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Catcher } from "./components/Catcher";
 import { SendouToastRegion, toastQueue } from "./components/elements/Toast";
@@ -42,7 +43,6 @@ import {
 } from "./features/theme/core/provider";
 import { getThemeSession } from "./features/theme/core/session.server";
 import { useIsMounted } from "./hooks/useIsMounted";
-import { useVisibilityChange } from "./hooks/useVisibilityChange";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
 import i18next, { i18nCookie } from "./modules/i18n/i18next.server";
 import type { Namespace } from "./modules/i18n/resources.server";
@@ -115,6 +115,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 						preferences: user.preferences ?? {},
 						languages: user.languages ? user.languages.split(",") : [],
 					}
+				: undefined,
+			notifications: user
+				? await NotificationRepository.findByUserId(user.id, {
+						limit: NOTIFICATIONS.PEEK_COUNT,
+					})
 				: undefined,
 		},
 		{
@@ -261,29 +266,6 @@ function usePreloadTranslation() {
 	React.useEffect(() => {
 		void generalI18next.loadNamespaces(namespaceJsonsToPreload);
 	}, []);
-}
-
-// @ts-expect-error to be used in the future
-function useRevalidateOnRevisit() {
-	const visibility = useVisibilityChange();
-	const { revalidate } = useRevalidator();
-	const [lastUpdated, setLastUpdated] = React.useState<Date>();
-
-	React.useEffect(() => {
-		setLastUpdated(new Date());
-	}, []);
-
-	React.useEffect(() => {
-		if (visibility !== "visible" || !lastUpdated) return;
-
-		const sinceLastUpdated = new Date().getTime() - lastUpdated.getTime();
-
-		// 15 minutes
-		if (sinceLastUpdated < 1000 * 60 * 15) return;
-
-		setLastUpdated(new Date());
-		revalidate();
-	}, [visibility, revalidate, lastUpdated]);
 }
 
 function useCustomizedCSSVars() {

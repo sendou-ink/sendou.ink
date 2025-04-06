@@ -1,29 +1,34 @@
-import { useLocation } from "@remix-run/react";
+import { useLocation, useMatches, useRevalidator } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useUser } from "~/features/auth/core/user";
 import {
 	NotificationItem,
 	NotificationItemDivider,
 	NotificationsList,
 } from "~/features/notifications/components/NotificationList";
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
-import { useNotifications } from "~/hooks/swr";
+import type { RootLoaderData } from "~/root";
 import { NOTIFICATIONS_URL } from "~/utils/urls";
 import { useMarkNotificationsAsSeen } from "../../features/notifications/notifications-hooks";
-import type { LoaderNotification } from "../../features/notifications/routes/notifications.peek";
 import { LinkButton } from "../Button";
 import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
 import { BellIcon } from "../icons/Bell";
 import { RefreshIcon } from "../icons/Refresh";
+
 import styles from "./NotificationPopover.module.css";
+
+export type LoaderNotification = NonNullable<
+	RootLoaderData["notifications"]
+>[number];
 
 export function NotificationPopover() {
 	const location = useLocation();
-	const user = useUser();
-	const { notifications, isLoading, refresh } = useNotifications();
+	const [root] = useMatches();
+
+	const notifications = (root.data as RootLoaderData | undefined)
+		?.notifications;
 
 	const unseenIds = React.useMemo(
 		() =>
@@ -33,7 +38,7 @@ export function NotificationPopover() {
 		[notifications],
 	);
 
-	if (!user) {
+	if (!notifications) {
 		return null;
 	}
 
@@ -56,8 +61,6 @@ export function NotificationPopover() {
 				<NotificationContent
 					notifications={notifications ?? []}
 					unseenIds={unseenIds}
-					isLoading={isLoading}
-					refresh={refresh}
 				/>
 			</SendouPopover>
 		</div>
@@ -67,15 +70,12 @@ export function NotificationPopover() {
 function NotificationContent({
 	notifications,
 	unseenIds,
-	refresh,
-	isLoading,
 }: {
 	notifications: LoaderNotification[];
 	unseenIds: number[];
-	refresh: () => void;
-	isLoading: boolean;
 }) {
 	const { t } = useTranslation(["common"]);
+	const { revalidate, state } = useRevalidator();
 
 	useMarkNotificationsAsSeen(unseenIds);
 
@@ -89,16 +89,14 @@ function NotificationContent({
 					icon={<RefreshIcon />}
 					variant="minimal"
 					className={styles.refreshButton}
-					onPress={refresh}
-					isDisabled={isLoading}
+					onPress={revalidate}
+					isDisabled={state !== "idle"}
 				/>
 			</div>
 			<hr className={styles.divider} />
 			{notifications.length === 0 ? (
 				<div className={styles.noNotifications}>
-					{isLoading
-						? t("common:notifications.loading")
-						: t("common:notifications.empty")}
+					{t("common:notifications.empty")}
 				</div>
 			) : (
 				<NotificationsList>
