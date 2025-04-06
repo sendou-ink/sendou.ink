@@ -50,7 +50,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			invariant(bracket, "Bracket not found");
 
 			const seeding = bracket.seeding;
-			invariant(seeding, "Seeding not found");
+			errorToastIfFalsy(seeding, "Bracket already started");
 
 			errorToastIfFalsy(
 				bracket.canBeStarted,

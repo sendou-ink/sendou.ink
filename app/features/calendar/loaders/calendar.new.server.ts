@@ -70,7 +70,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	return {
 		isAddingTournament: Boolean(
-			url.searchParams.has("tournament") || url.searchParams.has("copyEventId"),
+			url.searchParams.has("tournament") ||
+				url.searchParams.has("copyEventId") ||
+				eventToEdit?.tournament,
 		),
 		managedBadges: await BadgeRepository.findManagedByUserId(user.id),
 		recentEventsWithMapPools:

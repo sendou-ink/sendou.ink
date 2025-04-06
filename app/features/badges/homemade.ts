@@ -15,6 +15,16 @@ export const homemadeBadges: BadgeInfo[] = [
 	// 	authorDiscordId: "123456789012345678",
 	// },
 	{
+		displayName: "DYNAMITE TOKEN",
+		fileName: "tnttoken12",
+		authorDiscordId: "1170249805373657093",
+	},
+	{
+		displayName: "Summer Days",
+		fileName: "beach223",
+		authorDiscordId: "1170249805373657093",
+	},
+	{
 		displayName: "Turnabout Suspect",
 		fileName: "turnabout-suspect",
 		authorDiscordId: "418176537561661441",
@@ -48,6 +58,11 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Tristrike Tuesday",
 		fileName: "tristriked3",
 		authorDiscordId: "789943264370884708",
+	},
+	{
+		displayName: "Hardcore Mode",
+		fileName: "hardcore1v1",
+		authorDiscordId: "338806780446638082",
 	},
 	{
 		displayName: "Shifting Tides",
@@ -325,7 +340,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "342369454719631361",
 	},
 	{
-		displayName: "Original Message Deleted",
+		displayName: "[Original Message Deleted]",
 		fileName: "original-message-deleted",
 		authorDiscordId: "751912670403362836",
 	},
@@ -900,6 +915,16 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "528851510222782474",
 	},
 	{
+		displayName: "Meet Your Match Counterpick Gauntlet",
+		fileName: "matchmeetex",
+		authorDiscordId: "631246535560265749",
+	},
+	{
+		displayName: "Calm Before the Storm",
+		fileName: "calmbefore",
+		authorDiscordId: "631246535560265749",
+	},
+	{
 		displayName: "Big Swig",
 		fileName: "swig",
 		authorDiscordId: "534502084134043648",
@@ -922,6 +947,55 @@ export const homemadeBadges: BadgeInfo[] = [
 	{
 		displayName: "Dynamo Roller",
 		fileName: "dynamo",
+	},
+	{
+		displayName: "Ranked Refreshments: Lemon",
+		fileName: "ranked_refreshments_x_3",
+		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "Ranked Refreshments: Lime",
+		fileName: "ranked_refreshments_4_7",
+		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "Ranked Refreshments: Dragonfruit",
+		fileName: "ranked_refreshments_8_11",
+		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "5 TSO Tournaments",
+		fileName: "mew",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "10 TSO Tournaments",
+		fileName: "shinymew",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Splatoon 1 Tournament (Callie)",
+		fileName: "calliesit",
+		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "Splatoon 1 Tournament (Marie)",
+		fileName: "mariesit",
+		authorDiscordId: "336683473714544641",
+	},
+	{
+		displayName: "Pikmin Bloom (Bronze)",
+		fileName: "rockleaf",
+		authorDiscordId: "534502084134043648",
+	},
+	{
+		displayName: "Pikmin Bloom (Silver)",
+		fileName: "rockbud",
+		authorDiscordId: "534502084134043648",
+	},
+	{
+		displayName: "Pikmin Bloom (Gold)",
+		fileName: "rockflower",
 		authorDiscordId: "534502084134043648",
 	},
 ];
