@@ -365,8 +365,8 @@ export const newScrimPostPage = () => {
 	return "/scrims/new";
 };
 
-export const associationsPage = () => {
-	return "/associations";
+export const associationsPage = (inviteCode?: string) => {
+	return `/associations${inviteCode ? `?inviteCode=${inviteCode}` : ""}`;
 };
 
 export const newAssociationsPage = () => {

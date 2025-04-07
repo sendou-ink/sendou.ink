@@ -1,12 +1,9 @@
 import { z } from "zod";
-import { _action, actuallyNonEmptyStringOrNull, id } from "~/utils/zod";
+import { _action, id, inviteCode, safeStringSchema } from "~/utils/zod";
 import { ASSOCIATION } from "./associations-constants";
 
 export const createNewAssociationSchema = z.object({
-	name: z.preprocess(
-		actuallyNonEmptyStringOrNull,
-		z.string({ message: "Enter a name for the association" }).max(100),
-	),
+	name: safeStringSchema({ max: 100 }),
 });
 
 const removeMemberSchema = z.object({
@@ -20,9 +17,27 @@ const deleteAssociationSchema = z.object({
 	associationId: id,
 });
 
+const refreshInviteCodeSchema = z.object({
+	_action: _action("REFRESH_INVITE_CODE"),
+	associationId: id,
+});
+
+const joinAssociationSchema = z.object({
+	_action: _action("JOIN_ASSOCIATION"),
+	inviteCode,
+});
+
+const leaveAssociationSchema = z.object({
+	_action: _action("LEAVE_ASSOCIATION"),
+	associationId: id,
+});
+
 export const associationsPageActionSchema = z.union([
 	removeMemberSchema,
 	deleteAssociationSchema,
+	refreshInviteCodeSchema,
+	joinAssociationSchema,
+	leaveAssociationSchema,
 ]);
 
 const virtualAssociationIdentifierSchema = z.enum(

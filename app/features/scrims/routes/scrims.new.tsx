@@ -22,8 +22,6 @@ export { loader, action };
 
 type FormFields = z.infer<typeof scrimsNewActionSchema>;
 
-// xxx: editing scrimPost
-
 export default function NewScrimPage() {
 	const data = useLoaderData<typeof loader>();
 

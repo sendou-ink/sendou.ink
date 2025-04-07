@@ -30,6 +30,18 @@ export async function findByMemberUserId(
 	};
 }
 
+export async function findByInviteCode(
+	inviteCode: string,
+	options: FindOptions = { withMembers: false },
+) {
+	const associations = await findBy(
+		{ type: "inviteCode", inviteCode },
+		options,
+	);
+
+	return associations.at(0);
+}
+
 const baseFindQuery = (options: FindOptions) =>
 	db
 		.selectFrom("AssociationMember")
@@ -54,7 +66,8 @@ const baseFindQuery = (options: FindOptions) =>
 async function findBy(
 	args:
 		| { type: "user"; userId: number }
-		| { type: "association"; associationId: number },
+		| { type: "association"; associationId: number }
+		| { type: "inviteCode"; inviteCode: string },
 	options: FindOptions,
 ) {
 	const associations =
@@ -62,9 +75,13 @@ async function findBy(
 			? await baseFindQuery(options)
 					.where("AssociationMember.userId", "=", args.userId)
 					.execute()
-			: await baseFindQuery(options)
-					.where("Association.id", "=", args.associationId)
-					.execute();
+			: args.type === "inviteCode"
+				? await baseFindQuery(options)
+						.where("Association.inviteCode", "=", args.inviteCode)
+						.execute()
+				: await baseFindQuery(options)
+						.where("Association.id", "=", args.associationId)
+						.execute();
 
 	return associations.map((a) => ({
 		...a,
@@ -99,6 +116,16 @@ type InsertArgs = Omit<TablesInsertable["Association"], "inviteCode"> & {
 	userId: number;
 };
 
+export async function findInviteCodeById(associationId: number) {
+	const row = await db
+		.selectFrom("Association")
+		.select(["Association.inviteCode"])
+		.where("id", "=", associationId)
+		.executeTakeFirstOrThrow();
+
+	return row.inviteCode;
+}
+
 export function insert({ userId, ...associationArgs }: InsertArgs) {
 	return db.transaction().execute(async (trx) => {
 		const association = await trx
@@ -121,6 +148,14 @@ export function update(
 	return db
 		.updateTable("Association")
 		.set(args)
+		.where("id", "=", associationId)
+		.execute();
+}
+
+export function refreshInviteCode(associationId: number) {
+	return db
+		.updateTable("Association")
+		.set({ inviteCode: nanoid(INVITE_CODE_LENGTH) })
 		.where("id", "=", associationId)
 		.execute();
 }
