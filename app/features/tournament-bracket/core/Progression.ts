@@ -313,7 +313,7 @@ function parsePlacements(placements: string) {
 			continue;
 		}
 
-		const isValid = part.match(/^\d+(-\d+)?$/);
+		const isValid = part.match(/^\d+(-\d+)?$/) && part !== "0";
 		if (!isValid) return null;
 
 		if (part.includes("-")) {
