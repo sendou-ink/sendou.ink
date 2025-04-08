@@ -20,6 +20,11 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "1170249805373657093",
 	},
 	{
+		displayName: "5 Unique Curse of Excalibur Events",
+		fileName: "curseofexcalibur",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "Summer Days",
 		fileName: "beach223",
 		authorDiscordId: "1170249805373657093",
