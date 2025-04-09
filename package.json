@@ -94,7 +94,7 @@
 		"sql-formatter": "^15.5.2",
 		"tsm": "^2.3.0",
 		"typescript": "^5.8.2",
-		"vite": "^5.4.16",
+		"vite": "^5.4.17",
 		"vite-tsconfig-paths": "^5.1.4",
 		"vitest": "^3.1.1"
 	}
