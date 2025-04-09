@@ -11,9 +11,14 @@ import {
 	userPage,
 } from "~/utils/urls";
 import { PlacementsTable } from "../components/Placements";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
+import { SendouButton } from "~/components/elements/Button";
+import { UnlinkIcon } from "~/components/icons/Unlink";
+import { useUser } from "~/features/auth/core/user";
 
+import { action } from "../actions/xsearch.player.$id.server";
 import { loader } from "../loaders/xsearch.player.$id.server";
-export { loader };
+export { loader, action };
 
 import "../top-search.css";
 
@@ -58,8 +63,12 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 export default function XSearchPlayerPage() {
 	const { t } = useTranslation(["common"]);
 	const data = useLoaderData<typeof loader>();
+	const user = useUser();
 
 	const hasUserLinked = Boolean(data.placements[0].discordId);
+
+	const isLinkedToCurrentUser =
+		user && user?.discordId === data.placements[0].discordId;
 
 	return (
 		<Main halfWidth className="stack lg">
@@ -79,6 +88,27 @@ export default function XSearchPlayerPage() {
 				) : null}
 			</div>
 			<PlacementsTable placements={data.placements} type="MODE_INFO" />
+			{isLinkedToCurrentUser ? <UnlinkFormWithButton /> : null}
 		</Main>
+	);
+}
+
+function UnlinkFormWithButton() {
+	const { t } = useTranslation(["common"]);
+
+	return (
+		<FormWithConfirm
+			dialogHeading={t("common:xsearch.unlink.title")}
+			deleteButtonText={t("common:xsearch.unlink.action.short")}
+		>
+			<SendouButton
+				icon={<UnlinkIcon />}
+				variant="destructive"
+				size="miniscule"
+				className="mt-2 self-start"
+			>
+				{t("common:xsearch.unlink.action.long")}
+			</SendouButton>
+		</FormWithConfirm>
 	);
 }
