@@ -1,4 +1,5 @@
 import { type ActionFunction, redirect } from "@remix-run/node";
+import * as R from "remeda";
 import { z } from "zod";
 import { BUILD } from "~/constants";
 import { requireUser } from "~/features/auth/core/user.server";
@@ -15,7 +16,6 @@ import type {
 	BuildAbilitiesTuple,
 	MainWeaponId,
 } from "~/modules/in-game-lists/types";
-import { removeDuplicates } from "~/utils/arrays";
 import { unJsonify } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
@@ -194,7 +194,7 @@ function refreshCache({
 		...oldBuildWeapons.map(({ weaponSplId }) => weaponSplId),
 	];
 
-	const dedupedWeaponSplIds = removeDuplicates(allWeaponSplIds);
+	const dedupedWeaponSplIds = R.unique(allWeaponSplIds);
 
 	refreshBuildsCacheByWeaponSplIds(dedupedWeaponSplIds);
 }

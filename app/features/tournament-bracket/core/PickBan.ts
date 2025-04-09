@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import type { TournamentRoundMaps } from "~/db/tables";
 import type {
 	ModeShort,
@@ -5,7 +6,6 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
-import { removeDuplicates } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
@@ -132,7 +132,7 @@ export function mapsListWithLegality(args: MapListWithStatusesArgs) {
 		}
 	})();
 
-	const modesIncluded = removeDuplicates(mapPool.map((m) => m.mode));
+	const modesIncluded = R.unique(mapPool.map((m) => m.mode));
 
 	const unavailableStagesSet = unavailableStages(args);
 	const unavailableModesSetAll = unavailableModes(args);

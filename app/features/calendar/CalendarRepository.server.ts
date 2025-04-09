@@ -1,6 +1,7 @@
 import type { Expression, ExpressionBuilder, Transaction } from "kysely";
 import { sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import type {
 	CalendarEventTag,
@@ -13,7 +14,6 @@ import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
-import { sumArray } from "~/utils/number";
 import type { Unwrapped } from "~/utils/types";
 
 // TODO: convert from raw to using the "exists" function
@@ -317,7 +317,7 @@ async function tournamentParticipantCount({
 
 	return {
 		teams: rows.length,
-		players: sumArray(rows.map((row) => row.memberCount)),
+		players: R.sum(rows.map((row) => row.memberCount)),
 	};
 }
 

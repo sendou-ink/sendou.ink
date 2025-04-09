@@ -32,7 +32,7 @@ import {
 	abilitiesShort,
 	isAbility,
 } from "~/modules/in-game-lists";
-import { atOrError, nullFilledArray, removeDuplicates } from "~/utils/arrays";
+import { atOrError, nullFilledArray } from "~/utils/arrays";
 import { damageTypeTranslationString } from "~/utils/i18next";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -79,6 +79,7 @@ import {
 	isStackableAbility,
 } from "../core/utils";
 import "../analyzer.css";
+import * as R from "remeda";
 import { SendouSwitch } from "~/components/elements/Switch";
 
 export const CURRENT_PATCH = "9.3";
@@ -1117,7 +1118,7 @@ function subDefenseGraphOptions({
 		}),
 	);
 
-	const distanceKeys = removeDuplicates(
+	const distanceKeys = R.unique(
 		analyzedBuilds[0].stats.subWeaponDefenseDamages
 			.filter((d) => (d as SubWeaponDamage).subWeaponId === subWeaponId)
 			.filter((d) => d.value < 100)

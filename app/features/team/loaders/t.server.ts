@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
+import * as R from "remeda";
 import type { UserWithPlusTier } from "~/db/tables";
 import { getUserId } from "~/features/auth/core/user.server";
-import { sumArray } from "~/utils/number";
 import * as TeamRepository from "../TeamRepository.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -55,7 +55,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 const membersToCommonPlusTierRating = (
 	members: Pick<UserWithPlusTier, "plusTier">[],
 ) => {
-	return sumArray(
+	return R.sum(
 		members
 			.map((m) => m.plusTier ?? 100)
 			.sort((a, b) => a - b)

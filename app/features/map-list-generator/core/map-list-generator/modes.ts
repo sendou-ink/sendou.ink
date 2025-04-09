@@ -1,4 +1,4 @@
-import shuffle from "just-shuffle";
+import * as R from "remeda";
 import type { ModeShort } from "../../../../modules/in-game-lists";
 
 export function modesOrder(
@@ -6,10 +6,10 @@ export function modesOrder(
 	modes: ModeShort[],
 ): ModeShort[] {
 	if (type === "EQUAL") {
-		return shuffle(modes);
+		return R.shuffle(modes);
 	}
 
-	const withoutSZ = shuffle(modes.filter((mode) => mode !== "SZ"));
+	const withoutSZ = R.shuffle(modes.filter((mode) => mode !== "SZ"));
 
 	return withoutSZ.flatMap((mode) => [mode, "SZ"]);
 }

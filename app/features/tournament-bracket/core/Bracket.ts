@@ -1,9 +1,9 @@
 import { sub } from "date-fns";
+import * as R from "remeda";
 import type { Tables, TournamentStageSettings } from "~/db/tables";
 import { TOURNAMENT } from "~/features/tournament";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { Round } from "~/modules/brackets-model";
-import { removeDuplicates } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
@@ -259,7 +259,7 @@ export abstract class Bracket {
 	}
 
 	get participantTournamentTeamIds() {
-		return removeDuplicates(
+		return R.unique(
 			this.data.match
 				.flatMap((match) => [match.opponent1?.id, match.opponent2?.id])
 				.filter(Boolean),
@@ -472,7 +472,7 @@ class SingleEliminationBracket extends Bracket {
 	}
 
 	private hasThirdPlaceMatch() {
-		return removeDuplicates(this.data.match.map((m) => m.group_id)).length > 1;
+		return R.unique(this.data.match.map((m) => m.group_id)).length > 1;
 	}
 
 	get standings(): Standing[] {
@@ -511,7 +511,7 @@ class SingleEliminationBracket extends Bracket {
 			this.participantTournamentTeamIds.length - teams.length;
 
 		const result: Standing[] = [];
-		for (const roundId of removeDuplicates(teams.map((team) => team.lostAt))) {
+		for (const roundId of R.unique(teams.map((team) => team.lostAt))) {
 			const teamsLostThisRound: { id: number }[] = [];
 			while (teams.length && teams[0].lostAt === roundId) {
 				teamsLostThisRound.push(teams.shift()!);
@@ -669,7 +669,7 @@ class DoubleEliminationBracket extends Bracket {
 			this.participantTournamentTeamIds.length - teams.length;
 
 		const result: Standing[] = [];
-		for (const roundId of removeDuplicates(teams.map((team) => team.lostAt))) {
+		for (const roundId of R.unique(teams.map((team) => team.lostAt))) {
 			const teamsLostThisRound: { id: number }[] = [];
 			while (teams.length && teams[0].lostAt === roundId) {
 				teamsLostThisRound.push(teams.shift()!);
@@ -892,9 +892,7 @@ class RoundRobinBracket extends Bracket {
 		const relevantMatchesFinished =
 			standings.length === this.participantTournamentTeamIds.length;
 
-		const uniquePlacements = removeDuplicates(
-			standings.map((s) => s.placement),
-		);
+		const uniquePlacements = R.unique(standings.map((s) => s.placement));
 
 		// 1,3,5 -> 1,2,3 e.g.
 		const placementNormalized = (p: number) => {
@@ -1182,9 +1180,7 @@ class SwissBracket extends Bracket {
 			});
 		});
 
-		const uniquePlacements = removeDuplicates(
-			standings.map((s) => s.placement),
-		);
+		const uniquePlacements = R.unique(standings.map((s) => s.placement));
 
 		// 1,3,5 -> 1,2,3 e.g.
 		const placementNormalized = (p: number) => {

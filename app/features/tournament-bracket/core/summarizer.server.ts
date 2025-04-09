@@ -1,12 +1,11 @@
-import shuffle from "just-shuffle";
 import type { Rating } from "node_modules/openskill/dist/types";
 import { ordinal } from "openskill";
+import * as R from "remeda";
 import {
 	identifierToUserIds,
 	rate,
 	userIdsToIdentifier,
 } from "~/features/mmr/mmr-utils";
-import { removeDuplicates } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import type { Tables } from "../../../db/tables";
 import type { AllMatchResult } from "../queries/allMatchResultsByTournamentId.server";
@@ -134,12 +133,12 @@ export function calculateIndividualPlayerSkills({
 				: match.opponentTwo.id;
 
 		const participants = match.maps.flatMap((m) => m.participants);
-		const winnerUserIds = removeDuplicates(
+		const winnerUserIds = R.unique(
 			participants
 				.filter((p) => p.tournamentTeamId === winnerTeamId)
 				.map((p) => p.userId),
 		);
-		const loserUserIds = removeDuplicates(
+		const loserUserIds = R.unique(
 			participants
 				.filter((p) => p.tournamentTeamId !== winnerTeamId)
 				.map((p) => p.userId),
@@ -282,7 +281,7 @@ function selectMostPopular<T>(items: T[]): T {
 		return mostPopularItems[0][0];
 	}
 
-	return shuffle(mostPopularItems)[0][0];
+	return R.shuffle(mostPopularItems)[0][0];
 }
 
 function mapResultDeltas(

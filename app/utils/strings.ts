@@ -5,10 +5,6 @@ export function inGameNameWithoutDiscriminator(inGameName: string) {
 	return inGameName.split("#")[0];
 }
 
-export function semiRandomId() {
-	return String(Math.random());
-}
-
 export const rawSensToString = (sens: number) =>
 	`${sens > 0 ? "+" : ""}${sens / 10}`;
 
@@ -51,10 +47,6 @@ export function gearTypeToInitial(gearType: GearType) {
 		default:
 			assertUnreachable(gearType);
 	}
-}
-
-export function capitalize(str: string) {
-	return str[0].toUpperCase() + str.slice(1);
 }
 
 export function pathnameFromPotentialURL(maybeUrl: string) {

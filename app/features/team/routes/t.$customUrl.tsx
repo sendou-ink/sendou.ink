@@ -3,6 +3,7 @@ import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import * as R from "remeda";
 import { Avatar } from "~/components/Avatar";
 import { Button, LinkButton } from "~/components/Button";
 import { Flag } from "~/components/Flag";
@@ -16,7 +17,6 @@ import { StarIcon } from "~/components/icons/Star";
 import { UsersIcon } from "~/components/icons/Users";
 import { useUser } from "~/features/auth/core/user";
 import { isAdmin } from "~/permissions";
-import { removeDuplicates } from "~/utils/arrays";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	TEAM_SEARCH_PAGE,
@@ -131,7 +131,7 @@ function TeamBanner() {
 					</div>
 				) : null}
 				<div className="team__banner__flags">
-					{removeDuplicates(
+					{R.unique(
 						team.members
 							.map((member) => member.country)
 							.filter((country) => country !== null),
@@ -154,7 +154,7 @@ function MobileTeamNameCountry() {
 	return (
 		<div className="team__mobile-name-country">
 			<div className="stack horizontal sm">
-				{removeDuplicates(
+				{R.unique(
 					team.members
 						.map((member) => member.country)
 						.filter((country) => country !== null),

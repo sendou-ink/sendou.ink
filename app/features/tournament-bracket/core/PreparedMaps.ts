@@ -1,6 +1,6 @@
-import compare from "just-compare";
+import * as R from "remeda";
 import type { PreparedMaps } from "~/db/tables";
-import { nullFilledArray, removeDuplicates } from "~/utils/arrays";
+import { nullFilledArray } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import type { Bracket } from "./Bracket";
 import type { Tournament } from "./Tournament";
@@ -32,11 +32,11 @@ export function resolvePreparedForTheBracket({
 	] of tournament.ctx.settings.bracketProgression.entries()) {
 		if (
 			bracket.type === bracketPreparingFor.type &&
-			compare(
+			R.isDeepEqual(
 				bracket.sources?.map((s) => s.bracketIdx),
 				bracketPreparingFor.sources?.map((s) => s.bracketIdx),
 			) &&
-			compare(bracket.settings, bracketPreparingFor.settings)
+			R.isDeepEqual(bracket.settings, bracketPreparingFor.settings)
 		) {
 			const bracketMaps = preparedByBracket?.[anotherBracketIdx];
 
@@ -121,7 +121,7 @@ function trimMapsByTeamCount({
 		nullFilledArray(teamCount).map((_, i) => i + 1),
 	).round;
 
-	const groupIds = removeDuplicates(preparedMaps.maps.map((r) => r.groupId));
+	const groupIds = R.unique(preparedMaps.maps.map((r) => r.groupId));
 
 	const result = { ...preparedMaps };
 	for (const groupId of groupIds) {
@@ -179,7 +179,7 @@ function thirdPlaceMatchDisappeared({
 	}
 
 	const preparedHasThirdPlace =
-		removeDuplicates(preparedMaps.maps.map((r) => r.groupId)).length > 1;
+		R.unique(preparedMaps.maps.map((r) => r.groupId)).length > 1;
 
 	return preparedHasThirdPlace && teamCount < 4;
 }

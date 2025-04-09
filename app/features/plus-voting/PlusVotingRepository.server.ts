@@ -1,5 +1,5 @@
-import shuffle from "just-shuffle";
 import { type InferResult, sql } from "kysely";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { Tables, TablesInsertable } from "~/db/tables";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
@@ -126,7 +126,7 @@ export async function usersForVoting(loggedInUser: {
 		});
 	}
 
-	return shuffle(result.filter(({ user }) => user.id !== loggedInUser.id));
+	return R.shuffle(result.filter(({ user }) => user.id !== loggedInUser.id));
 }
 
 export async function hasVoted(args: {

@@ -1,6 +1,4 @@
-// todo
-
-import compare from "just-compare";
+import * as R from "remeda";
 import type { Tables, TournamentStageSettings } from "~/db/tables";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import {
@@ -582,7 +580,7 @@ export function changedBracketProgression(
 		const oldBracket = oldProgression[i];
 		const newBracket = newProgression.at(i);
 
-		if (!newBracket || !compare(oldBracket, newBracket)) {
+		if (!newBracket || !R.isDeepEqual(oldBracket, newBracket)) {
 			changed.push(i);
 		}
 	}
@@ -604,7 +602,7 @@ export function changedBracketProgressionFormat(
 			!newBracket ||
 			newBracket.name !== oldBracket.name ||
 			newBracket.type !== oldBracket.type ||
-			!compare(newBracket.settings, oldBracket.settings)
+			!R.isDeepEqual(newBracket.settings, oldBracket.settings)
 		) {
 			return true;
 		}

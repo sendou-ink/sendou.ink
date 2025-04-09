@@ -36,7 +36,6 @@ import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
-import { filterOutFalsy } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import {
 	LOG_IN_URL,
@@ -403,10 +402,7 @@ function RegistrationProgress({
 	const completedIfTruthy = (condition: unknown) =>
 		condition ? "completed" : "incomplete";
 
-	const steps: Array<{
-		name: string;
-		status: "completed" | "incomplete" | "notice";
-	}> = filterOutFalsy([
+	const steps = [
 		{
 			name: t("tournament:pre.steps.name"),
 			status: completedIfTruthy(name),
@@ -432,10 +428,10 @@ function RegistrationProgress({
 		tournament.isLeagueSignup
 			? {
 					name: "Google Sheet",
-					status: "notice",
+					status: "notice" as const,
 				}
 			: null,
-	]);
+	].filter((step) => step !== null);
 
 	const regClosesBeforeStart =
 		tournament.registrationClosesAt.getTime() !==
