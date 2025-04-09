@@ -1,7 +1,11 @@
 import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Main } from "~/components/Main";
+import { SendouButton } from "~/components/elements/Button";
+import { UnlinkIcon } from "~/components/icons/Unlink";
+import { useUser } from "~/features/auth/core/user";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -11,10 +15,6 @@ import {
 	userPage,
 } from "~/utils/urls";
 import { PlacementsTable } from "../components/Placements";
-import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { SendouButton } from "~/components/elements/Button";
-import { UnlinkIcon } from "~/components/icons/Unlink";
-import { useUser } from "~/features/auth/core/user";
 
 import { action } from "../actions/xsearch.player.$id.server";
 import { loader } from "../loaders/xsearch.player.$id.server";
