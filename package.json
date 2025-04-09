@@ -8,7 +8,7 @@
 		"deploy": "npm ci && npm run build",
 		"build": "remix vite:build",
 		"dev": "remix vite:dev --host",
-		"dev:prod": "DB_PATH=db-prod.sqlite3 npm run dev",
+		"dev:prod": "DB_PATH=db-prod.sqlite3 VITE_PROD_MODE=true npm run dev",
 		"dev:ci": "cp .env.example .env && npm run migrate up && npm run dev",
 		"start": "npm run migrate up && remix-serve ./build/server/index.js",
 		"migrate": "ley",

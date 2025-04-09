@@ -27,7 +27,8 @@ export const TOURNAMENT = {
 } as const;
 
 export const LEAGUES =
-	process.env.NODE_ENV === "development"
+	process.env.NODE_ENV === "development" &&
+	import.meta.env.VITE_PROD_MODE !== "true"
 		? {
 				LUTI: [
 					{
