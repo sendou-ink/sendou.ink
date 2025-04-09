@@ -9,6 +9,7 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Pagination } from "~/components/Pagination";
 import { EditIcon } from "~/components/icons/Edit";
 import { TrashIcon } from "~/components/icons/Trash";
+import { UnlinkIcon } from "~/components/icons/Unlink";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { usePagination } from "~/hooks/usePagination";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
@@ -191,8 +192,11 @@ function ImagePreview({
 						{t("common:actions.edit")}
 					</LinkButton>
 					<FormWithConfirm
-						dialogHeading="Are you sure you want to delete the art?"
-						fields={[["id", art.id]]}
+						dialogHeading={t("art:delete.title")}
+						fields={[
+							["id", art.id],
+							["_action", "DELETE_ART"],
+						]}
 					>
 						<Button icon={<TrashIcon />} variant="destructive" size="tiny" />
 					</FormWithConfirm>
@@ -207,15 +211,35 @@ function ImagePreview({
 		return (
 			<div>
 				{img}
-				<Link
-					to={userArtPage(art.author, "MADE-BY")}
-					className={clsx("stack sm horizontal text-xs items-center mt-1", {
-						invisible: !imageLoaded,
+				<div
+					className={clsx("stack horizontal justify-between", {
+						"mt-2": canEdit,
 					})}
 				>
-					<Avatar user={art.author} size="xxs" />
-					{t("art:madeBy")} {art.author.username}
-				</Link>
+					<Link
+						to={userArtPage(art.author, "MADE-BY")}
+						className={clsx("stack sm horizontal text-xs items-center mt-1", {
+							invisible: !imageLoaded,
+						})}
+					>
+						<Avatar user={art.author} size="xxs" />
+						{t("art:madeBy")} {art.author.username}
+					</Link>
+					{canEdit ? (
+						<FormWithConfirm
+							dialogHeading={t("art:unlink.title", {
+								username: art.author.username,
+							})}
+							fields={[
+								["id", art.id],
+								["_action", "UNLINK_ART"],
+							]}
+							deleteButtonText={t("common:actions.remove")}
+						>
+							<Button icon={<UnlinkIcon />} variant="destructive" size="tiny" />
+						</FormWithConfirm>
+					) : null}
+				</div>
 			</div>
 		);
 	}
