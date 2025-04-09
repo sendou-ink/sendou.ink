@@ -999,4 +999,8 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "dynamo",
 		authorDiscordId: "534502084134043648",
 	},
-];
+];  {
+		displayName: "Heavy Splatling",
+		fileName: "heavy-splatling",
+		authorDiscordId: "370476435489554432",
+	},
