@@ -1,7 +1,5 @@
 import type { ScrimPost } from "../scrims-types";
 
-// xxx: maybe rename to Scrim to get rid of the ScrimPostType thing
-
 /** Returns true if the original poster has accepted any of the requests. */
 export function isAccepted(post: ScrimPost) {
 	return post.requests.some((request) => request.isAccepted);

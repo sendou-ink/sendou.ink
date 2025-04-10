@@ -60,7 +60,6 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 	});
 };
 
-// xxx: mobile better (button visible always)
 // xxx: cross link from scrims to sendouq and vice versa
 
 export default function ScrimsPage() {
@@ -95,7 +94,7 @@ export default function ScrimsPage() {
 				defaultIndex={data.posts.owned.length > 0 ? 0 : 2}
 				tabs={[
 					{
-						label: "Own posts",
+						label: "Owned",
 						number: data.posts.owned.length,
 						icon: <ArrowDownOnSquareIcon />,
 					},
@@ -358,7 +357,7 @@ function ScrimsTable({
 									</div>
 								</td>
 								<td>
-									<div className="stack horizontal md items-center">
+									<div className="stack horizontal sm items-center min-w-max">
 										{showPopovers ? (
 											<SendouPopover
 												trigger={
@@ -411,7 +410,7 @@ function ScrimsTable({
 										) : null}
 									</td>
 								) : null}
-								<td>
+								<td className="whitespace-nowrap">
 									{post.divs ? (
 										<>
 											{post.divs.max} - {post.divs.min}
@@ -419,7 +418,7 @@ function ScrimsTable({
 									) : null}
 								</td>
 								{showStatus ? (
-									<td>
+									<td className={clsx(styles.postFloatingActionCell, "bg")}>
 										<div
 											className={clsx(styles.postStatus, {
 												[styles.postStatusConfirmed]: status === "CONFIRMED",
@@ -440,7 +439,7 @@ function ScrimsTable({
 									</td>
 								) : null}
 								{requestScrim && post.requests.length === 0 ? (
-									<td>
+									<td className={clsx(styles.postFloatingActionCell, "bg")}>
 										<Button
 											size="tiny"
 											onClick={() => requestScrim(post.id)}
@@ -557,7 +556,7 @@ function RequestRow({
 		<tr className="bg-theme-transparent-important">
 			<td />
 			<td>
-				<div className="stack horizontal md items-center">
+				<div className="stack horizontal sm items-center">
 					<SendouPopover
 						trigger={
 							<SendouButton
@@ -592,7 +591,7 @@ function RequestRow({
 			</td>
 			<td />
 			<td />
-			<td>
+			<td className={styles.postFloatingActionCell}>
 				{!request.isAccepted && canAccept ? (
 					<FormWithConfirm
 						dialogHeading={`Accept the request to scrim by ${groupName} & reject others (if any)?`}

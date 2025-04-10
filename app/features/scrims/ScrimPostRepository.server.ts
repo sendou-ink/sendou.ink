@@ -10,8 +10,8 @@ import { db } from "../../db/sql";
 import invariant from "../../utils/invariant";
 import type { Unwrapped } from "../../utils/types";
 import type { AssociationVisibility } from "../associations/associations-types";
-import * as ScrimPost from "./core/ScrimPost";
-import type { ScrimPost as ScrimPostType } from "./scrims-types";
+import * as Scrim from "./core/Scrim";
+import type { ScrimPost } from "./scrims-types";
 import { getPostRequestCensor, parseLutiDiv } from "./scrims-utils";
 
 type InsertArgs = Pick<
@@ -159,7 +159,7 @@ function findMany() {
 
 const mapDBRowToScrimPost = (
 	row: Unwrapped<typeof findMany> & { chatCode?: string },
-): ScrimPostType => {
+): ScrimPost => {
 	const someRequestIsAccepted = row.requests.some(
 		(request) => request.isAccepted,
 	);
@@ -168,6 +168,10 @@ const mapDBRowToScrimPost = (
 	const requests = someRequestIsAccepted
 		? row.requests.filter((request) => request.isAccepted)
 		: row.requests;
+
+	const ownerIds = row.users
+		.filter((user) => user.isOwner)
+		.map((user) => user.id);
 
 	return {
 		id: row.id,
@@ -215,19 +219,13 @@ const mapDBRowToScrimPost = (
 			};
 		}),
 		permissions: {
-			MANAGE_REQUESTS: row.users
-				.filter((user) => user.isOwner)
-				.map((user) => user.id),
-			DELETE_POST: row.users
-				.filter((user) => user.isOwner)
-				.map((user) => user.id),
+			MANAGE_REQUESTS: ownerIds,
+			DELETE_POST: ownerIds,
 		},
 	};
 };
 
-export async function findById(
-	scrimPostId: number,
-): Promise<ScrimPostType | null> {
+export async function findById(scrimPostId: number): Promise<ScrimPost | null> {
 	const row = await baseFindQuery
 		.select(["ScrimPost.chatCode"])
 		.where("ScrimPost.id", "=", scrimPostId)
@@ -238,17 +236,15 @@ export async function findById(
 	return mapDBRowToScrimPost(row);
 }
 
-export async function findAllRelevant(
-	userId?: number,
-): Promise<ScrimPostType[]> {
+export async function findAllRelevant(userId?: number): Promise<ScrimPost[]> {
 	const rows = await findMany();
 
 	const mapped = rows
 		.map(mapDBRowToScrimPost)
 		.filter(
 			(post) =>
-				!ScrimPost.isAccepted(post) ||
-				(userId && ScrimPost.isParticipating(post, userId)),
+				!Scrim.isAccepted(post) ||
+				(userId && Scrim.isParticipating(post, userId)),
 		);
 
 	if (!userId) return mapped.map((post) => ({ ...post, requests: [] }));

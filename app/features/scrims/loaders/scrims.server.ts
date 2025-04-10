@@ -4,7 +4,7 @@ import * as Association from "~/features/associations/core/Association";
 import { getUser } from "~/features/auth/core/user.server";
 import * as TeamRepository from "../../team/TeamRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
-import * as ScrimPost from "../core/ScrimPost";
+import * as Scrim from "../core/Scrim";
 import { dividePosts } from "../scrims-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -18,7 +18,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const posts = (await ScrimPostRepository.findAllRelevant(user?.id))
 		.filter(
 			(post) =>
-				(user && ScrimPost.isParticipating(post, user.id)) ||
+				(user && Scrim.isParticipating(post, user.id)) ||
 				Association.isVisible({
 					associations,
 					time: now,

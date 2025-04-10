@@ -8,7 +8,7 @@ import { databaseTimestampToDate } from "../../../utils/dates";
 import { logger } from "../../../utils/logger";
 import { teamPage, userSubmittedImage } from "../../../utils/urls";
 import { ConnectedChat } from "../../chat/components/Chat";
-import * as ScrimPost from "../core/ScrimPost";
+import * as Scrim from "../core/Scrim";
 import type { ScrimPost as ScrimPostType } from "../scrims-types";
 
 import { loader } from "../loaders/scrims.$id.server";
@@ -30,7 +30,7 @@ export default function ScrimPage() {
 				<InfoWithHeader header="Pass" value={resolveRoomPass(data.post.id)} />
 				<InfoWithHeader
 					header="Pool"
-					value={ScrimPost.resolvePoolCode(data.post.id)}
+					value={Scrim.resolvePoolCode(data.post.id)}
 				/>
 			</div>
 			<ScrimChat />

@@ -556,7 +556,9 @@ dialog::backdrop {
 
 .tab__buttons-container__sticky {
 	position: sticky;
-	top: 47px;
+	/* TODO: uncomment when top nav is sticky again */
+	/* top: 47px; */
+	top: 0;
 	z-index: 1;
 	background-color: var(--bg);
 }
