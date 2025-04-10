@@ -1001,7 +1001,7 @@ export const homemadeBadges: BadgeInfo[] = [
 	},
 	{
 		displayName: "Testing",
-		fileName: "testing",
+		fileName: "testing3",
 		authorDiscordId: "313762200286396416",
 	},
 	{
