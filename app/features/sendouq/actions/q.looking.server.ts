@@ -8,8 +8,14 @@ import {
 	matchMapList,
 } from "~/features/sendouq-match/core/match.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
+import type { LookingGroupWithInviteCode } from "~/features/sendouq/q-types";
 import invariant from "~/utils/invariant";
-import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
+import { logger } from "~/utils/logger";
+import {
+	errorToast,
+	errorToastIfFalsy,
+	parseRequestPayload,
+} from "~/utils/remix.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
@@ -232,6 +238,21 @@ export const action: ActionFunction = async ({ request }) => {
 					ignoreModePreferences: data._action === "MATCH_UP_RECHALLENGE",
 				},
 			);
+
+			const memberInManyGroups = verifyNoMemberInTwoGroups(
+				[...ourGroup.members, ...theirGroup.members],
+				lookingGroups,
+			);
+			if (memberInManyGroups) {
+				logger.error("User in two groups preventing match creation", {
+					userId: memberInManyGroups.id,
+				});
+
+				errorToast(
+					`${memberInManyGroups.username} is in two groups so match can't be started`,
+				);
+			}
+
 			const createdMatch = createMatch({
 				alphaGroupId: ourGroup.id,
 				bravoGroupId: theirGroup.id,
@@ -367,3 +388,23 @@ export const action: ActionFunction = async ({ request }) => {
 
 	return null;
 };
+
+/** Sanity check that no member is in two groups due to a bug or race condition.
+ *
+ * @returns null if no member is in two groups, otherwise return the problematic member
+ */
+function verifyNoMemberInTwoGroups(
+	members: LookingGroupWithInviteCode["members"],
+	allGroups: LookingGroupWithInviteCode[],
+) {
+	for (const member of members) {
+		if (
+			allGroups.filter((group) => group.members.some((m) => m.id === member.id))
+				.length > 1
+		) {
+			return member;
+		}
+	}
+
+	return null;
+}
