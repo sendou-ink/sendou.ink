@@ -1004,4 +1004,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "testing",
 		authorDiscordId: "313762200286396416",
 	},
+	{
+		displayName: "Testing",
+		fileName: "testing2",
+		authorDiscordId: "313762200286396416",
+	},
 ];
