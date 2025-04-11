@@ -37,7 +37,7 @@ Any badge to be added has to follow these rules. Badges that do not follow the r
 
 3. Wait for Sendou to look into the pull request
 - Sometimes this can take a while if Sendou is busy
-- Changes might be requested (you can make a new pull request with the tool to address them, close the old one)
+- Changes might be requested (you can update the pull request made with the tool also)
 
 4. Wait for the site to be updated
 - After the pull request is merged it does not automatically go to the site yet
