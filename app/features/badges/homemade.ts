@@ -170,6 +170,11 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "338806780446638082",
 	},
 	{
+		displayName: "MIKU MIKU BEAM!!! Teto Takeover!",
+		fileName: "hatsunemikuteto",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "MIKU MIKU BEAM!!! Sakura Edition",
 		fileName: "hatsunemikusakura",
 		authorDiscordId: "338806780446638082",
