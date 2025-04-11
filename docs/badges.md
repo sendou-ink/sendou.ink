@@ -51,4 +51,4 @@ Any badge to be added has to follow these rules. Badges that do not follow the r
 
 ## Updating a badge
 
-Make a new pull request (on GitHub, not with the tool used for uploading new badges) making the changes you need. The `fileName` should always remain the same.
+Make a new pull request (also using the tool) making the changes you need. The `fileName` should always remain the same.
