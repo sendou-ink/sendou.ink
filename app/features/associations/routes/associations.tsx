@@ -21,6 +21,8 @@ import {
 } from "~/features/associations/loaders/associations.server";
 export { loader, action };
 
+// xxx: i18n for associations
+
 export default function AssociationsPage() {
 	const data = useLoaderData<typeof loader>();
 

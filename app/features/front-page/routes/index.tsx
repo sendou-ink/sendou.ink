@@ -9,6 +9,7 @@ import { Flag } from "~/components/Flag";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { NewTabs } from "~/components/NewTabs";
+import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import { BSKYLikeIcon } from "~/components/icons/BSKYLike";
 import { BSKYReplyIcon } from "~/components/icons/BSKYReply";
@@ -53,9 +54,18 @@ export const handle: SendouRouteHandle = {
 	i18n: ["front"],
 };
 
+// xxx: remove select test
 export default function FrontPage() {
 	return (
 		<Main className="front-page__container">
+			<div>
+				<SendouSelect label="Ice cream flavor">
+					<SendouSelectItem>Chocolate</SendouSelectItem>
+					<SendouSelectItem>Mint</SendouSelectItem>
+					<SendouSelectItem>Strawberry</SendouSelectItem>
+					<SendouSelectItem>Vanilla</SendouSelectItem>
+				</SendouSelect>
+			</div>
 			<LeagueBanner />
 			<DesktopSideNav />
 			<SeasonBanner />

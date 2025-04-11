@@ -1,3 +1,5 @@
+// xxx: icon for scrim post and associations
+
 export const navItems = [
 	{
 		name: "settings",

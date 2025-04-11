@@ -61,6 +61,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 };
 
 // xxx: cross link from scrims to sendouq and vice versa
+// xxx: i18n for scrims
 
 export default function ScrimsPage() {
 	const { t } = useTranslation(["calendar"]);
