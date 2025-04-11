@@ -31,41 +31,24 @@ Any badge to be added has to follow these rules. Badges that do not follow the r
 - Some quick guide to picoCAD can be found pinned in the #badges Discord channel
 - Others can use the "[badges" Discord channel](https://discord.gg/sendou) to inquire about a commission
 - Read rules from above carefully at this point and ask if you do not understand something
-2. Create needed files
-- .gif file (animated), black solid background. Create via [picoCAD Web Viewer](https://lucatronica.github.io/picocad-web-viewer/)
-- .png file (static). TODO: info on how to ceate
-- .avif file (static). Create via e.g. [Squoosh](https://squoosh.app/) from the .png file
-- All files should be squares. 512x512 is a good size for example
-- For the animation, rotating speed should match those of the borzoic badges (a full rotation should take about 3 seconds, rotating counterclockwise). You can control this via left & right arrow keys on picoCAD Web Viewer.
-3. Make a pull request to the project
-- If you don't know how a pull request is made you can ask someone you know that is familiar with GitHub or refer to the guide pinned in the #badges Discord channel
-- In the PR add the 3 needed files to public/static-assets/badges folder:
 
-![alt text](img/badges-1.png)
+2. Use [the tool](https://sendou-badge-uploader.pages.dev/) to upload the badge you made (credits for making the tool go to hfcRed)
+- It will handle creating the assets for you and opening the pull request with the changes needed
 
-- Also update app/features/badges/homemade.ts file (read the comments to understand each value)
-- Note the file name should not contain spaces or big letters:
-
-❌ paddling pool.gif  
-❌ PaddlingPool.gif  
-✅ paddling-pool.gif
-
-![alt text](img/badges-2.png)
-
-4. Wait for Sendou to look into the pull request
+3. Wait for Sendou to look into the pull request
 - Sometimes this can take a while if Sendou is busy
-- Changes might be requested
+- Changes might be requested (you can make a new pull request with the tool to address them, close the old one)
 
-5. Wait for the site to be updated
+4. Wait for the site to be updated
 - After the pull request is merged it does not automatically go to the site yet
 - Normally the site updates a couple times a week, but this can vary
 
-6. Request permissions
+5. Request permissions
 - After you see your badge on the /badges page you can request manager permissions to it on from the staff on the helpdesk channel
 
-7. Give out the badges to tournament winners
+6. Give out the badges to tournament winners
 - Badge can be given out via the /badges page
 
 ## Updating a badge
 
-Make a new pull request making the changes you need. The `fileName` should always remain the same.
+Make a new pull request (on GitHub, not with the tool used for uploading new badges) making the changes you need. The `fileName` should always remain the same.
