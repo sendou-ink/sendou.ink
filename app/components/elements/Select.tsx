@@ -5,17 +5,23 @@ import type {
 	ValidationResult,
 } from "react-aria-components";
 import {
+	Autocomplete,
 	Button,
 	FieldError,
+	Input,
 	ListBox,
 	ListBoxItem,
 	Popover,
+	SearchField,
 	Select,
 	SelectValue,
 	Text,
+	useFilter,
 } from "react-aria-components";
 import { Label } from "~/components/Label";
 import { ChevronUpDownIcon } from "~/components/icons/ChevronUpDown";
+import { CrossIcon } from "../icons/Cross";
+import { SearchIcon } from "../icons/Search";
 import styles from "./Select.module.css";
 
 interface SendouSelectProps<T extends object>
@@ -25,6 +31,9 @@ interface SendouSelectProps<T extends object>
 	errorMessage?: string | ((validation: ValidationResult) => string);
 	items?: Iterable<T>;
 	children: React.ReactNode | ((item: T) => React.ReactNode);
+	search?: {
+		placeholder?: string;
+	};
 }
 
 export function SendouSelect<T extends object>({
@@ -33,21 +42,44 @@ export function SendouSelect<T extends object>({
 	errorMessage,
 	children,
 	items,
+	search,
 	...props
 }: SendouSelectProps<T>) {
+	const { contains } = useFilter({ sensitivity: "base" });
+
 	return (
 		<Select {...props}>
 			{label ? <Label>{label}</Label> : null}
 			<Button className={styles.button}>
 				<SelectValue className={styles.selectValue} />
 				<span aria-hidden="true">
-					<ChevronUpDownIcon className={styles.buttonIcon} />
+					<ChevronUpDownIcon className={styles.icon} />
 				</span>
 			</Button>
 			{description && <Text slot="description">{description}</Text>}
 			<FieldError>{errorMessage}</FieldError>
 			<Popover className={styles.popover}>
-				<ListBox items={items}>{children}</ListBox>
+				<Autocomplete filter={contains}>
+					{search ? (
+						<SearchField
+							aria-label="Search"
+							autoFocus
+							className={styles.searchField}
+						>
+							<SearchIcon aria-hidden className={styles.smallIcon} />
+							<Input
+								placeholder={search.placeholder}
+								className={clsx("plain", styles.searchInput)}
+							/>
+							<Button className={styles.searchClearButton}>
+								<CrossIcon className={styles.smallIcon} />
+							</Button>
+						</SearchField>
+					) : null}
+					<ListBox items={items} className={styles.listBox}>
+						{children}
+					</ListBox>
+				</Autocomplete>
 			</Popover>
 		</Select>
 	);

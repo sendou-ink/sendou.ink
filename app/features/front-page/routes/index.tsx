@@ -59,11 +59,29 @@ export default function FrontPage() {
 	return (
 		<Main className="front-page__container">
 			<div>
-				<SendouSelect label="Ice cream flavor">
-					<SendouSelectItem>Chocolate</SendouSelectItem>
-					<SendouSelectItem>Mint</SendouSelectItem>
-					<SendouSelectItem>Strawberry</SendouSelectItem>
-					<SendouSelectItem>Vanilla</SendouSelectItem>
+				<SendouSelect
+					label="Ice cream flavor"
+					search={{
+						placeholder: "Search flavors",
+					}}
+					items={[
+						{ name: "Chocolate", key: "chocolate" },
+						{ name: "Vanilla", key: "vanilla" },
+						{ name: "Strawberry", key: "strawberry" },
+						{ name: "Mint", key: "mint" },
+						{ name: "Cookie Dough", key: "cookie-dough" },
+						{ name: "Pistachio", key: "pistachio" },
+						{ name: "Rocky Road", key: "rocky-road" },
+						{ name: "Mango", key: "mango" },
+						{ name: "Raspberry", key: "raspberry" },
+						{ name: "Coffee", key: "coffee" },
+						{ name: "Green Tea", key: "green-tea" },
+						{ name: "Butter Pecan", key: "butter-pecan" },
+						{ name: "Black Cherry", key: "black-cherry" },
+						{ name: "Lemon Sorbet", key: "lemon-sorbet" },
+					]}
+				>
+					{(item) => <SendouSelectItem {...item}>{item.name}</SendouSelectItem>}
 				</SendouSelect>
 			</div>
 			<LeagueBanner />

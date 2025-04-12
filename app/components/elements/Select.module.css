@@ -1,4 +1,6 @@
 .button {
+	--select-width: 200px;
+
 	height: 1rem;
 	padding: var(--s-4) var(--s-3);
 	border: 2px solid var(--border);
@@ -12,7 +14,7 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: var(--s-1-5);
-	min-width: 200px;
+	min-width: var(--select-width);
 
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
@@ -23,19 +25,30 @@
 	color: var(--text-lighter);
 }
 
-.buttonIcon {
+.icon {
 	min-width: 18px;
 	max-width: 18px;
 	stroke-width: 2.5px;
 	color: var(--text-lighter);
 }
 
+.smallIcon {
+	min-width: 16px;
+	max-width: 16px;
+	stroke-width: 2px;
+	color: var(--text-lighter);
+}
+
 .popover {
 	padding: var(--s-1);
-	min-width: 200px;
+	min-width: var(--select-width);
 	border: 2px solid var(--border);
 	border-radius: var(--rounded);
 	background-color: var(--bg-darker);
+}
+
+.listBox {
+	overflow-y: auto;
 }
 
 .item {
@@ -54,4 +67,39 @@
 .itemSelected {
 	color: var(--theme);
 	font-weight: var(--bold);
+}
+
+.searchField {
+	display: flex;
+	gap: var(--s-2);
+
+	border: 2px solid var(--border);
+	border-radius: var(--rounded-sm);
+	accent-color: var(--theme-secondary);
+	background-color: var(--bg-input);
+	color: var(--text);
+	outline: none;
+	padding: var(--s-1-5) var(--s-2);
+	margin-block-end: var(--s-1-5);
+}
+
+.searchInput {
+	all: unset;
+	font-size: var(--fonts-xxs);
+	font-weight: var(--semi-bold);
+	letter-spacing: 0.5px;
+	width: 105px;
+}
+
+.searchInput::-webkit-search-cancel-button {
+	display: none;
+}
+
+.searchInput::placeholder {
+	color: var(--text-lighter);
+}
+
+.searchClearButton {
+	background-color: transparent;
+	border: none;
 }
