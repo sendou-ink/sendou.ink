@@ -1,6 +1,5 @@
 import { type LoaderFunctionArgs, redirect } from "@remix-run/node";
-import type { TCountryCode } from "countries-list";
-import { countries, getEmojiFlag } from "countries-list";
+import { countries } from "countries-list";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { i18next } from "~/modules/i18n/i18next.server";
@@ -33,7 +32,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		countries: Object.entries(countries)
 			.map(([code, country]) => ({
 				code,
-				emoji: getEmojiFlag(code as TCountryCode),
 				name:
 					translatedCountry({
 						countryCode: code,

@@ -23,6 +23,7 @@ import invariant from "~/utils/invariant";
 import { rawSensToString } from "~/utils/strings";
 import { FAQ_PAGE } from "~/utils/urls";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 
 import { action } from "../actions/u.$identifier.edit.server";
 import { loader } from "../loaders/u.$identifier.edit.server";
@@ -210,22 +211,21 @@ function CountrySelect() {
 	const data = useLoaderData<typeof loader>();
 
 	return (
-		<div>
-			<label htmlFor="country">{t("user:country")}</label>
-			<select
-				className="u-edit__country-select"
-				name="country"
-				id="country"
-				defaultValue={data.user.country ?? ""}
-			>
-				<option value="" />
-				{data.countries.map((country) => (
-					<option key={country.code} value={country.code}>
-						{`${country.name} ${country.emoji}`}
-					</option>
-				))}
-			</select>
-		</div>
+		<SendouSelect
+			items={data.countries.map((country) => ({
+				...country,
+				id: country.code,
+				key: country.code,
+			}))}
+			label={t("user:country")}
+			search={{
+				placeholder: "Search countries",
+			}}
+			name="country"
+			defaultSelectedKey={data.user.country ?? undefined}
+		>
+			{(item) => <SendouSelectItem {...item}>{item.name}</SendouSelectItem>}
+		</SendouSelect>
 	);
 }
 
