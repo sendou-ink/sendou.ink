@@ -1,4 +1,4 @@
-import groupBy from "just-group-by";
+import * as R from "remeda";
 import type { LutiDiv, ScrimPost } from "./scrims-types";
 
 export const getPostRequestCensor =
@@ -19,7 +19,7 @@ export const getPostRequestCensor =
 	};
 
 export function dividePosts(posts: Array<ScrimPost>, userId?: number) {
-	const grouped = groupBy(posts, (post) => {
+	const grouped = R.groupBy(posts, (post) => {
 		if (post.users.some((user) => user.id === userId)) {
 			return "OWNED";
 		}

@@ -1,9 +1,9 @@
 import type { MetaFunction } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
-import groupBy from "just-group-by";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import * as R from "remeda";
 import type { z } from "zod";
 import { Avatar } from "~/components/Avatar";
 import { Button, LinkButton } from "~/components/Button";
@@ -217,7 +217,7 @@ function ScrimsDaySeparatedTables({
 }) {
 	const { i18n } = useTranslation();
 
-	const postsByDay = groupBy(posts, (post) =>
+	const postsByDay = R.groupBy(posts, (post) =>
 		databaseTimestampToDate(post.at).getDate(),
 	);
 
