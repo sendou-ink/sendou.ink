@@ -1,5 +1,6 @@
 export const SEASONS =
-	process.env.NODE_ENV === "development"
+	process.env.NODE_ENV === "development" &&
+	import.meta.env.VITE_PROD_MODE !== "true"
 		? ([
 				{
 					nth: 0,

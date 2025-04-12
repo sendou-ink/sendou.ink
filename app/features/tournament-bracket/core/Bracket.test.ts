@@ -1,5 +1,5 @@
+import * as R from "remeda";
 import { describe, expect, it } from "vitest";
-import { removeDuplicates } from "../../../utils/arrays";
 import invariant from "../../../utils/invariant";
 import { Tournament } from "./Tournament";
 import { PADDLING_POOL_255 } from "./tests/mocks";
@@ -47,9 +47,7 @@ describe("round robin standings", () => {
 
 		const standings = tournamentPP255.bracketByIdx(0)!.standings;
 
-		const groupIds = removeDuplicates(
-			standings.map((standing) => standing.groupId),
-		);
+		const groupIds = R.unique(standings.map((standing) => standing.groupId));
 		expect(
 			groupIds.length,
 			"Paddling Pool 255 should have groups from Group A to Group I",
@@ -81,7 +79,7 @@ describe("round robin standings", () => {
 
 		const standings = tournamentPP255.bracketByIdx(0)!.standings;
 
-		const placements = removeDuplicates(
+		const placements = R.unique(
 			standings.map((standing) => standing.placement),
 		).sort((a, b) => a - b);
 

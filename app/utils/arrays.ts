@@ -1,9 +1,6 @@
 // TODO: when more examples of permissions profile difference between
 // this implementation and one that takes arrays
 
-import shuffle from "just-shuffle";
-import invariant from "~/utils/invariant";
-
 // (not all arrays need to necessarily run but they need to be defined)
 export function allTruthy(arr: unknown[]) {
 	return arr.every(Boolean);
@@ -55,46 +52,8 @@ export function isDefined<T>(value: T | undefined | null): value is T {
 	return value !== null && value !== undefined;
 }
 
-export function removeDuplicates<T>(arr: T[]): T[] {
-	const seen = new Set<T>();
-
-	return arr.filter((item) => {
-		if (seen.has(item)) return false;
-		seen.add(item);
-
-		return true;
-	});
-}
-
-export function removeDuplicatesByProperty<T>(
-	arr: T[],
-	getter: (arg0: T) => number | string,
-): T[] {
-	const seen = new Set();
-	return arr.filter((item) => {
-		const id = getter(item);
-
-		if (seen.has(id)) return false;
-		seen.add(id);
-
-		return true;
-	});
-}
-
 export function nullFilledArray(size: number): null[] {
 	return new Array(size).fill(null);
-}
-
-export function pickRandomItem<T>(array: T[]): T {
-	invariant(array.length > 0, "Can't pick from empty array");
-
-	const shuffled = shuffle(structuredClone(array));
-
-	return shuffled[0];
-}
-
-export function filterOutFalsy<T>(arr: (T | null | undefined)[]): T[] {
-	return arr.filter(Boolean) as T[];
 }
 
 /**

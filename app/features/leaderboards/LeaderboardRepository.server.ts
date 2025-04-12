@@ -1,6 +1,7 @@
 import { add } from "date-fns";
 import type { InferResult } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { dateToDatabaseTimestamp } from "../../utils/dates";
@@ -60,8 +61,12 @@ const teamLeaderboardBySeasonQuery = (season: number) =>
 				eb
 					.selectFrom("SkillTeamUser")
 					.innerJoin("User", "SkillTeamUser.userId", "User.id")
-					.innerJoin("TeamMember", "TeamMember.userId", "User.id")
-					.innerJoin("Team", "Team.id", "TeamMember.teamId")
+					.innerJoin(
+						"TeamMemberWithSecondary",
+						"TeamMemberWithSecondary.userId",
+						"User.id",
+					)
+					.innerJoin("Team", "Team.id", "TeamMemberWithSecondary.teamId")
 					.leftJoin(
 						"UserSubmittedImage",
 						"UserSubmittedImage.id",
@@ -72,6 +77,8 @@ const teamLeaderboardBySeasonQuery = (season: number) =>
 						"Team.name",
 						"UserSubmittedImage.url as avatarUrl",
 						"Team.customUrl",
+						"TeamMemberWithSecondary.isMainTeam",
+						"TeamMemberWithSecondary.userId",
 					])
 					.whereRef("SkillTeamUser.skillId", "=", "Skill.id"),
 			).as("teams"),
@@ -181,12 +188,22 @@ function filterOneEntryPerUser(
 
 function resolveSharedTeam(entries: ReturnType<typeof filterOneEntryPerUser>) {
 	return entries.map(({ teams, ...entry }) => {
-		const sharedSameTeam =
-			teams.length === 4 && teams.every((team) => team.id === teams[0].id);
+		const uniqueTeamIds = R.unique(teams.map((team) => team.id));
+
+		for (const teamId of uniqueTeamIds) {
+			const count = teams.filter((team) => team.id === teamId).length;
+
+			if (count === 4) {
+				return {
+					...entry,
+					team: teams.find((team) => team.id === teamId),
+				};
+			}
+		}
 
 		return {
 			...entry,
-			team: sharedSameTeam ? teams[0] : undefined,
+			team: undefined,
 		};
 	});
 }

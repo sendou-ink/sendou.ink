@@ -15,9 +15,9 @@ import type {
 	TLUiStylePanelProps,
 } from "@tldraw/tldraw";
 import clsx from "clsx";
-import randomInt from "just-random-integer";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import * as R from "remeda";
 import { usePlannerBg } from "~/hooks/usePlannerBg";
 import type { LanguageCode } from "~/modules/i18n/config";
 import type { ModeShort, StageId } from "~/modules/in-game-lists";
@@ -156,8 +156,8 @@ export default function Planner() {
 				size: [imageSizePx, imageSizePx],
 				isLocked: false,
 				point: [
-					randomInt(imageSpawnBoxLeft, imageSpawnBoxRight),
-					randomInt(imageSpawnBoxTop, imageSpawnBoxBottom),
+					R.randomInteger(imageSpawnBoxLeft, imageSpawnBoxRight),
+					R.randomInteger(imageSpawnBoxTop, imageSpawnBoxBottom),
 				],
 				cb: () => editor?.setCurrentTool("select"),
 			});

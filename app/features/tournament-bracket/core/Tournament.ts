@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import type {
 	Tables,
 	TournamentStage,
@@ -13,7 +14,6 @@ import type { Match, Stage } from "~/modules/brackets-model";
 import type { ModeShort } from "~/modules/in-game-lists";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import { isAdmin } from "~/permissions";
-import { removeDuplicates } from "~/utils/arrays";
 import {
 	databaseTimestampNow,
 	databaseTimestampToDate,
@@ -663,7 +663,7 @@ export class Tournament {
 				return ["CB"];
 			}
 			default: {
-				const pickedModes = removeDuplicates(
+				const pickedModes = R.unique(
 					this.ctx.toSetMapPool.map((map) => map.mode),
 				);
 				if (pickedModes.length === 0) {

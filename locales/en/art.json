@@ -24,5 +24,8 @@
 	"forms.tags.addNew": "Create a new one.",
 	"forms.tags.addNew.placeholder": "Create a new tag",
 	"forms.tags.searchExisting.placeholder": "Search existing tags",
-	"forms.tags.maxReached": "Max tags reached"
+	"forms.tags.maxReached": "Max tags reached",
+
+	"delete.title": "Are you sure you want to delete the art?",
+	"unlink.title": "Are you sure you want to remove this art from your profile (only {{username}} can add it back)?"
 }

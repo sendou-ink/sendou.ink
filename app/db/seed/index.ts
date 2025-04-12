@@ -1,8 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { add, sub } from "date-fns";
-import capitalize from "just-capitalize";
-import shuffle from "just-shuffle";
 import { nanoid } from "nanoid";
+import * as R from "remeda";
 import { ADMIN_DISCORD_ID, ADMIN_ID, INVITE_CODE_LENGTH } from "~/constants";
 import { db, sql } from "~/db/sql";
 import type { SeedVariation } from "~/features/api-private/routes/seed";
@@ -68,7 +67,7 @@ import {
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
 import { SENDOUQ_DEFAULT_MAPS } from "~/modules/tournament-map-list-generator/constants";
-import { nullFilledArray, pickRandomItem } from "~/utils/arrays";
+import { nullFilledArray } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { mySlugify } from "~/utils/urls";
@@ -372,7 +371,7 @@ async function userProfiles() {
 		if (id === ADMIN_ID || id === NZAP_TEST_ID) continue;
 		if (Math.random() < 0.15) continue; // 85% have weapons
 
-		const weapons = shuffle([...mainWeaponIds]);
+		const weapons = R.shuffle(mainWeaponIds);
 
 		for (let j = 0; j < faker.helpers.arrayElement([1, 2, 3, 4, 5]); j++) {
 			sql
@@ -437,7 +436,7 @@ const randomPreferences = (): UserMapModePreferences => {
 
 			return {
 				mode,
-				stages: shuffle([...stageIds])
+				stages: R.shuffle(stageIds)
 					.filter((stageId) => !BANNED_MAPS[mode].includes(stageId))
 					.slice(0, AMOUNT_OF_MAPS_IN_POOL_PER_MODE),
 			};
@@ -464,7 +463,7 @@ async function userQWeaponPool() {
 		if (id === 2) continue; // no weapons for N-ZAP
 		if (Math.random() < 0.2) continue; // 80% have weapons
 
-		const weapons = shuffle([...mainWeaponIds]).slice(
+		const weapons = R.shuffle(mainWeaponIds).slice(
 			0,
 			faker.helpers.arrayElement([1, 2, 3, 4]),
 		);
@@ -606,7 +605,7 @@ function syncPlusTiers() {
 }
 
 function badgesToAdmin() {
-	const availableBadgeIds = shuffle(
+	const availableBadgeIds = R.shuffle(
 		(sql.prepare(`select "id" from "Badge"`).all() as any[]).map((b) => b.id),
 	).slice(0, 8) as number[];
 
@@ -626,7 +625,7 @@ function badgesToAdmin() {
 }
 
 function getAvailableBadgeIds() {
-	return shuffle(
+	return R.shuffle(
 		(sql.prepare(`select "id" from "Badge"`).all() as any[]).map((b) => b.id),
 	);
 }
@@ -641,7 +640,7 @@ function badgesToUsers() {
 	).map((u) => u.id) as number[];
 
 	for (const id of availableBadgeIds) {
-		userIds = shuffle(userIds);
+		userIds = R.shuffle(userIds);
 		for (
 			let i = 0;
 			i <
@@ -727,7 +726,7 @@ function calendarEvents() {
 	const userIds = userIdsInRandomOrder();
 
 	for (let id = 1; id <= AMOUNT_OF_CALENDAR_EVENTS; id++) {
-		const shuffledTags = shuffle(Object.keys(persistedTags));
+		const shuffledTags = R.shuffle(Object.keys(persistedTags));
 
 		sql
 			.prepare(
@@ -753,7 +752,7 @@ function calendarEvents() {
 			)
 			.run({
 				id,
-				name: `${capitalize(faker.word.adjective())} ${capitalize(
+				name: `${R.capitalize(faker.word.adjective())} ${R.capitalize(
 					faker.word.noun(),
 				)}`,
 				description: faker.lorem.paragraph(),
@@ -868,7 +867,7 @@ async function calendarEventResults() {
 				.fill(null)
 				.map((_, i) => ({
 					placement: i + 1,
-					teamName: capitalize(faker.word.noun()),
+					teamName: R.capitalize(faker.word.noun()),
 					players: new Array(
 						faker.helpers.arrayElement([1, 2, 3, 4, 4, 4, 4, 4, 5, 6]),
 					)
@@ -1328,7 +1327,7 @@ function calendarEventWithToToolsTeams(
 			event !== "LUTI" &&
 			(Math.random() < 0.8 || id === 1)
 		) {
-			const shuffledPairs = shuffle(availablePairs.slice());
+			const shuffledPairs = R.shuffle(availablePairs.slice());
 
 			let SZ = 0;
 			let TC = 0;
@@ -1417,7 +1416,7 @@ function tournamentSubs() {
 				)
 					.map(() => {
 						while (true) {
-							const weaponId = pickRandomItem(mainWeaponIds);
+							const weaponId = R.sample(mainWeaponIds, 1)[0]!;
 							if (!includedWeaponIds.includes(weaponId)) {
 								includedWeaponIds.push(weaponId);
 								return weaponId;
@@ -1433,7 +1432,7 @@ function tournamentSubs() {
 							)
 								.map(() => {
 									while (true) {
-										const weaponId = pickRandomItem(mainWeaponIds);
+										const weaponId = R.sample(mainWeaponIds, 1)[0]!;
 										if (!includedWeaponIds.includes(weaponId)) {
 											includedWeaponIds.push(weaponId);
 											return weaponId;
@@ -1450,7 +1449,7 @@ function tournamentSubs() {
 }
 
 const randomAbility = (legalTypes: AbilityType[]) => {
-	const randomOrderAbilities = shuffle([...abilities]);
+	const randomOrderAbilities = R.shuffle([...abilities]);
 
 	return randomOrderAbilities.find((a) => legalTypes.includes(a.type))!.name;
 };
@@ -1458,16 +1457,16 @@ const randomAbility = (legalTypes: AbilityType[]) => {
 const adminWeaponPool = mainWeaponIds.filter(() => Math.random() > 0.8);
 async function adminBuilds() {
 	for (let i = 0; i < 50; i++) {
-		const randomOrderHeadGear = shuffle(headGearIds.slice());
-		const randomOrderClothesGear = shuffle(clothesGearIds.slice());
-		const randomOrderShoesGear = shuffle(shoesGearIds.slice());
+		const randomOrderHeadGear = R.shuffle(headGearIds.slice());
+		const randomOrderClothesGear = R.shuffle(clothesGearIds.slice());
+		const randomOrderShoesGear = R.shuffle(shoesGearIds.slice());
 		// filter out sshot to prevent test flaking
-		const randomOrderWeaponIds = shuffle(
+		const randomOrderWeaponIds = R.shuffle(
 			adminWeaponPool.filter((id) => id !== 40).slice(),
 		);
 
 		await BuildRepository.create({
-			title: `${capitalize(faker.word.adjective())} ${capitalize(
+			title: `${R.capitalize(faker.word.adjective())} ${R.capitalize(
 				faker.word.noun(),
 			)}`,
 			ownerId: ADMIN_ID,
@@ -1521,10 +1520,10 @@ async function manySplattershotBuilds() {
 	for (let i = 0; i < 499; i++) {
 		const SPLATTERSHOT_ID = 40;
 
-		const randomOrderHeadGear = shuffle(headGearIds.slice());
-		const randomOrderClothesGear = shuffle(clothesGearIds.slice());
-		const randomOrderShoesGear = shuffle(shoesGearIds.slice());
-		const randomOrderWeaponIds = shuffle(mainWeaponIds.slice()).filter(
+		const randomOrderHeadGear = R.shuffle(headGearIds.slice());
+		const randomOrderClothesGear = R.shuffle(clothesGearIds.slice());
+		const randomOrderShoesGear = R.shuffle(shoesGearIds.slice());
+		const randomOrderWeaponIds = R.shuffle(mainWeaponIds.slice()).filter(
 			(id) => id !== SPLATTERSHOT_ID,
 		);
 
@@ -1532,7 +1531,7 @@ async function manySplattershotBuilds() {
 
 		await BuildRepository.create({
 			private: 0,
-			title: `${capitalize(faker.word.adjective())} ${capitalize(
+			title: `${R.capitalize(faker.word.adjective())} ${R.capitalize(
 				faker.word.noun(),
 			)}`,
 			ownerId,
@@ -1649,7 +1648,7 @@ function otherTeams() {
 		const teamName =
 			i === 3
 				? "Team Olive"
-				: `${capitalize(faker.word.adjective())} ${capitalize(
+				: `${R.capitalize(faker.word.adjective())} ${R.capitalize(
 						faker.word.noun(),
 					)}`;
 		const teamCustomUrl = mySlugify(teamName);
@@ -1852,7 +1851,7 @@ function xRankPlacements() {
 
 function userFavBadges() {
 	// randomly choose Sendou's favorite badge
-	const badgeList = shuffle(
+	const badgeList = R.shuffle(
 		(
 			sql
 				.prepare(
@@ -2049,13 +2048,15 @@ const randomMapList = (
 ): TournamentMapListMap[] => {
 	const szOnly = faker.helpers.arrayElement([true, false]);
 
-	let modePattern = shuffle([...modesShort]).filter(() => Math.random() > 0.15);
+	let modePattern = R.shuffle([...modesShort]).filter(
+		() => Math.random() > 0.15,
+	);
 	if (modePattern.length === 0) {
-		modePattern = shuffle([...rankedModesShort]);
+		modePattern = R.shuffle([...rankedModesShort]);
 	}
 
 	const mapList: TournamentMapListMap[] = [];
-	const stageIdsShuffled = shuffle([...stageIds]);
+	const stageIdsShuffled = R.shuffle([...stageIds]);
 
 	for (let i = 0; i < 7; i++) {
 		const mode = modePattern.pop()!;
@@ -2078,7 +2079,7 @@ const AMOUNT_OF_USERS_WITH_SKILLS = 100;
 async function playedMatches() {
 	const _groupMembers = (() => {
 		return new Array(AMOUNT_OF_USERS_WITH_SKILLS).fill(null).map(() => {
-			const users = shuffle(
+			const users = R.shuffle(
 				userIdsInAscendingOrderById().slice(0, AMOUNT_OF_USERS_WITH_SKILLS),
 			);
 
@@ -2089,14 +2090,14 @@ async function playedMatches() {
 		userIdsInAscendingOrderById()
 			.slice(0, AMOUNT_OF_USERS_WITH_SKILLS)
 			.map((id) => {
-				const weapons = shuffle([...mainWeaponIds]);
+				const weapons = R.shuffle([...mainWeaponIds]);
 				return [id, weapons[0]];
 			}),
 	);
 
 	let matchDate = new Date(Date.UTC(2023, 9, 15, 0, 0, 0, 0));
 	for (let i = 0; i < MATCHES_COUNT; i++) {
-		const groupMembers = shuffle([..._groupMembers]);
+		const groupMembers = R.shuffle([..._groupMembers]);
 		const groupAlphaMembers = groupMembers.pop()!;
 		invariant(groupAlphaMembers, "groupAlphaMembers not found");
 
@@ -2236,7 +2237,7 @@ async function playedMatches() {
 							mainWeaponIds.find((id) => id > defaultWeapons[mu.user]) ?? 0
 						);
 
-					const shuffled = shuffle([...mainWeaponIds]);
+					const shuffled = R.shuffle([...mainWeaponIds]);
 
 					return shuffled[0];
 				};

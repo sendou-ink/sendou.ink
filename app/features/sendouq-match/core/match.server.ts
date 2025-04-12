@@ -1,4 +1,4 @@
-import shuffle from "just-shuffle";
+import * as R from "remeda";
 import type { ParsedMemento, UserMapModePreferences } from "~/db/tables";
 import {
 	type DbMapPoolList,
@@ -100,7 +100,7 @@ export function mapLottery(
 	const mapPoolList: DbMapPoolList = [];
 
 	for (const mode of modes) {
-		const stageIdsFromPools = shuffle(
+		const stageIdsFromPools = R.shuffle(
 			preferences.flatMap((preference) => {
 				// if they disliked the mode don't include their maps
 				// they are just saved in the DB so they can be restored later
@@ -178,7 +178,7 @@ export function mapModePreferencesToModeList(
 		combinedMap.set(mode, combinedScore);
 	}
 
-	const result = shuffle(modesShort).filter((mode) => {
+	const result = R.shuffle(modesShort).filter((mode) => {
 		const score = combinedMap.get(mode)!;
 
 		// if opinion is split, don't include
@@ -196,7 +196,7 @@ export function mapModePreferencesToModeList(
 	if (result.length === 0) {
 		const bestScore = Math.max(...combinedMap.values());
 
-		const leastWorstModesResult = shuffle(modesShort).filter((mode) => {
+		const leastWorstModesResult = R.shuffle(modesShort).filter((mode) => {
 			// turf war never included if not positive
 			if (mode === "TW") return false;
 

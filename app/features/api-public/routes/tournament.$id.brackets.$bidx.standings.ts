@@ -27,6 +27,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	});
 
 	const bracket = notFoundIfFalsy(tournament.bracketByIdx(bidx));
+	notFoundIfFalsy(!bracket.preview);
 
 	const result: GetTournamentBracketStandingsResponse = {
 		standings: bracket.standings.map((standing) => ({

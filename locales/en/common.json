@@ -260,6 +260,9 @@
 	"divisions.JPN": "Takoroka",
 	"xsearch.placements": "placements",
 	"xsearch.aliases": "Aliases:",
+	"xsearch.unlink.title": "Are you sure you want to unlink? This will remove placements from your profile as well as the associated badge (can only be relinked by sendou.ink staff)?",
+	"xsearch.unlink.action.long": "Unlink your user",
+	"xsearch.unlink.action.short": "Unlink",
 
 	"build.private": "Private",
 

@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import * as R from "remeda";
 import { Button } from "~/components/Button";
 import { WeaponCombobox } from "~/components/Combobox";
 import { WeaponImage } from "~/components/Image";
@@ -9,7 +10,6 @@ import type { TierName } from "~/features/mmr/mmr-constants";
 import { TIERS } from "~/features/mmr/mmr-constants";
 import { languagesUnified } from "~/modules/i18n/config";
 import type { MainWeaponId } from "~/modules/in-game-lists";
-import { capitalize } from "~/utils/strings";
 import { LFG } from "../lfg-constants";
 import type { LFGFilter } from "../lfg-types";
 
@@ -287,7 +287,7 @@ function TierFilterFields({
 			>
 				{TIERS.map((tier) => (
 					<option key={tier.name} value={tier.name}>
-						{capitalize(tier.name.toLowerCase())}
+						{R.capitalize(tier.name.toLowerCase())}
 					</option>
 				))}
 			</select>

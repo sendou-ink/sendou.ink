@@ -1,5 +1,5 @@
+import * as R from "remeda";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
-import { removeDuplicates } from "~/utils/arrays";
 import { TOURNAMENT } from "../../tournament/tournament-constants";
 
 export function getRounds(args: {
@@ -52,7 +52,7 @@ export function getRounds(args: {
 
 	const hasThirdPlaceMatch =
 		args.type === "single" &&
-		removeDuplicates(args.bracketData.match.map((m) => m.group_id)).length > 1;
+		R.unique(args.bracketData.match.map((m) => m.group_id)).length > 1;
 	const namedRounds = rounds.map((round, i) => {
 		const name = () => {
 			if (

@@ -1,4 +1,5 @@
 import type { TFunction } from "i18next";
+import * as R from "remeda";
 import type { Tables, TournamentRoundMaps } from "~/db/tables";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { ModeShort, StageId } from "~/modules/in-game-lists";
@@ -7,8 +8,6 @@ import {
 	seededRandom,
 	sourceTypes,
 } from "~/modules/tournament-map-list-generator";
-import { removeDuplicates } from "~/utils/arrays";
-import { sumArray } from "~/utils/number";
 import type { FindMatchById } from "../tournament-bracket/queries/findMatchById.server";
 import type { TournamentLoaderData } from "../tournament/loaders/to.$id.server";
 import type { Standing } from "./core/Bracket";
@@ -110,7 +109,7 @@ export function everyMatchIsOver(
 ) {
 	// winners, losers & grand finals+bracket reset are all different stages
 	const isDoubleElimination =
-		removeDuplicates(bracket.match.map((match) => match.group_id)).length === 3;
+		R.unique(bracket.match.map((match) => match.group_id)).length === 3;
 
 	// tournament didn't start yet
 	if (bracket.match.length === 0) return false;
@@ -241,7 +240,7 @@ export function isSetOverByResults({
 	}
 
 	if (countType === "PLAY_ALL") {
-		return sumArray(Array.from(winCounts.values())) === count;
+		return R.sum(Array.from(winCounts.values())) === count;
 	}
 
 	const maxWins = Math.max(...Array.from(winCounts.values()));
@@ -260,7 +259,7 @@ export function isSetOverByScore({
 	countType: TournamentRoundMaps["type"];
 }) {
 	if (countType === "PLAY_ALL") {
-		return sumArray(scores) === count;
+		return R.sum(scores) === count;
 	}
 
 	const matchOverAtXWins = Math.ceil(count / 2);

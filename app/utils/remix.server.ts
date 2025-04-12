@@ -55,7 +55,7 @@ export function parseSearchParams<T extends z.ZodTypeAny>({
 	} catch (e) {
 		logger.error("Error parsing search params", e);
 
-		throw errorToast("Validation failed");
+		throw errorToastRedirect("Validation failed");
 	}
 }
 
@@ -93,7 +93,7 @@ export async function parseRequestPayload<T extends z.ZodTypeAny>({
 	} catch (e) {
 		logger.error("Error parsing request payload", e);
 
-		throw errorToast("Validation failed");
+		throw errorToastRedirect("Validation failed");
 	}
 }
 
@@ -117,7 +117,7 @@ export async function parseFormData<T extends z.ZodTypeAny>({
 	} catch (e) {
 		logger.error("Error parsing form data", e);
 
-		throw errorToast("Validation failed");
+		throw errorToastRedirect("Validation failed");
 	}
 }
 
@@ -183,7 +183,7 @@ function formDataToObject(formData: FormData) {
 
 // TODO: investigate better solution to toasts when middlewares land (current one has a problem of clearing search params)
 
-export function errorToast(message: string) {
+export function errorToastRedirect(message: string) {
 	return redirect(`?__error=${message}`);
 }
 
@@ -194,7 +194,12 @@ export function errorToastIfFalsy(
 ): asserts condition {
 	if (condition) return;
 
-	throw errorToast(message);
+	throw errorToastRedirect(message);
+}
+
+/** Throws a redirect triggering an error toast with given message.  */
+export function errorToast(message: string) {
+	throw errorToastRedirect(message);
 }
 
 export function successToast(message: string) {

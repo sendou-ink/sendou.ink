@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import type {
 	AbilityPoints,
 	AnalyzedBuild,
@@ -10,7 +11,6 @@ import type {
 	SpecialWeaponId,
 	SubWeaponId,
 } from "~/modules/in-game-lists";
-import { removeDuplicates } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import {
@@ -135,9 +135,7 @@ export function resolveAllUniqueDamageTypes({
 				? analyzed.stats.specialWeaponDamages.map((d) => d.type)
 				: analyzed.stats.damages.map((d) => d.type);
 
-	return removeDuplicates(damageTypes).filter(
-		(dmg) => !dmg.includes("SECONDARY"),
-	);
+	return R.unique(damageTypes).filter((dmg) => !dmg.includes("SECONDARY"));
 }
 
 function resolveFilteredDamages({

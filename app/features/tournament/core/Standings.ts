@@ -1,7 +1,7 @@
+import * as R from "remeda";
 import type { Standing } from "~/features/tournament-bracket/core/Bracket";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import { removeDuplicates } from "~/utils/arrays";
 
 /** Calculates SPR (Seed Performance Rating) - see https://www.pgstats.com/articles/introducing-spr-and-uf */
 export function calculateSPR({
@@ -11,7 +11,7 @@ export function calculateSPR({
 	standings: Standing[];
 	teamId: number;
 }) {
-	const uniquePlacements = removeDuplicates(
+	const uniquePlacements = R.unique(
 		standings.map((standing) => standing.placement),
 	).sort((a, b) => a - b);
 
