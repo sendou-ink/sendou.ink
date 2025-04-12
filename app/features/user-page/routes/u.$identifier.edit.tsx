@@ -10,6 +10,7 @@ import { WeaponImage } from "~/components/Image";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { StarIcon } from "~/components/icons/Star";
 import { StarFilledIcon } from "~/components/icons/StarFilled";
@@ -23,7 +24,6 @@ import invariant from "~/utils/invariant";
 import { rawSensToString } from "~/utils/strings";
 import { FAQ_PAGE } from "~/utils/urls";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
-import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 
 import { action } from "../actions/u.$identifier.edit.server";
 import { loader } from "../loaders/u.$identifier.edit.server";

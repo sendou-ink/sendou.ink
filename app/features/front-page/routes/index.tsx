@@ -9,7 +9,6 @@ import { Flag } from "~/components/Flag";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { NewTabs } from "~/components/NewTabs";
-import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import { BSKYLikeIcon } from "~/components/icons/BSKYLike";
 import { BSKYReplyIcon } from "~/components/icons/BSKYReply";
@@ -54,36 +53,9 @@ export const handle: SendouRouteHandle = {
 	i18n: ["front"],
 };
 
-// xxx: remove select test
 export default function FrontPage() {
 	return (
 		<Main className="front-page__container">
-			<div>
-				<SendouSelect
-					label="Ice cream flavor"
-					search={{
-						placeholder: "Search flavors",
-					}}
-					items={[
-						{ name: "Chocolate", key: "chocolate" },
-						{ name: "Vanilla", key: "vanilla" },
-						{ name: "Strawberry", key: "strawberry" },
-						{ name: "Mint", key: "mint" },
-						{ name: "Cookie Dough", key: "cookie-dough" },
-						{ name: "Pistachio", key: "pistachio" },
-						{ name: "Rocky Road", key: "rocky-road" },
-						{ name: "Mango", key: "mango" },
-						{ name: "Raspberry", key: "raspberry" },
-						{ name: "Coffee", key: "coffee" },
-						{ name: "Green Tea", key: "green-tea" },
-						{ name: "Butter Pecan", key: "butter-pecan" },
-						{ name: "Black Cherry", key: "black-cherry" },
-						{ name: "Lemon Sorbet", key: "lemon-sorbet" },
-					]}
-				>
-					{(item) => <SendouSelectItem {...item}>{item.name}</SendouSelectItem>}
-				</SendouSelect>
-			</div>
 			<LeagueBanner />
 			<DesktopSideNav />
 			<SeasonBanner />

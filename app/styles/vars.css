@@ -98,6 +98,7 @@ html {
 	--input-width-extra-small: 10rem;
 	--input-width-small: 12rem;
 	--input-width-medium: 18rem;
+	--select-width: 225px;
 }
 
 html.dark {

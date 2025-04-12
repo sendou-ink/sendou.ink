@@ -11,11 +11,13 @@ import {
 	Input,
 	ListBox,
 	ListBoxItem,
+	ListLayout,
 	Popover,
 	SearchField,
 	Select,
 	SelectValue,
 	Text,
+	Virtualizer,
 	useFilter,
 } from "react-aria-components";
 import { Label } from "~/components/Label";
@@ -76,9 +78,11 @@ export function SendouSelect<T extends object>({
 							</Button>
 						</SearchField>
 					) : null}
-					<ListBox items={items} className={styles.listBox}>
-						{children}
-					</ListBox>
+					<Virtualizer layout={ListLayout} layoutOptions={{ rowHeight: 33 }}>
+						<ListBox items={items} className={styles.listBox}>
+							{children}
+						</ListBox>
+					</Virtualizer>
 				</Autocomplete>
 			</Popover>
 		</Select>
