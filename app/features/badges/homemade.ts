@@ -1002,11 +1002,11 @@ export const homemadeBadges: BadgeInfo[] = [
 	{
 		displayName: "Ink Torrent",
 		fileName: "ink-torrent",
-		authorDiscordId: "370476435489554432",
+		authorDiscordId: "534502084134043648",
 	},
 	{
 		displayName: "Full Auto",
 		fileName: "full-auto",
-		authorDiscordId: "370476435489554432",
+		authorDiscordId: "534502084134043648",
 	},
 ];
