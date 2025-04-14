@@ -1009,4 +1009,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "tso2pineapple",
 		authorDiscordId: "338806780446638082",
 	},
+	{
+		displayName: "Division 3 (Peach)",
+		fileName: "tso3peach",
+		authorDiscordId: "338806780446638082",
+	},
 ];
