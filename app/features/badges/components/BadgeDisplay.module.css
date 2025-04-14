@@ -56,19 +56,18 @@
 	margin-block-start: var(--s-2);
 }
 
-/** TODO: migrate SendouButton to use CSS Modules and get rid of !importants here */
 .paginationButton {
-	background-color: var(--bg-darker) !important;
+	background-color: var(--bg-darker);
 	border-radius: 100%;
-	padding: var(--s-1) !important;
+	padding: var(--s-1);
 	height: 24px;
 	width: 24px;
-	border: 2px solid var(--border) !important;
+	border: 2px solid var(--border);
 	font-size: var(--fonts-xs);
-	color: var(--text-lighter) !important;
+	color: var(--text-lighter);
 }
 
 .paginationButtonActive {
-	color: var(--theme) !important;
-	background-color: var(--bg-lightest) !important;
+	color: var(--theme);
+	background-color: var(--bg-lightest);
 }
