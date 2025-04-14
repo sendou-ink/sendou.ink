@@ -1823,51 +1823,6 @@ html[dir="rtl"] .fix-rtl {
 	display: none !important;
 }
 
-.badge-display__badges {
-	display: flex;
-	min-width: 20rem;
-	max-width: 24rem;
-	align-items: center;
-	padding: var(--s-2);
-	border-radius: var(--rounded);
-	background-color: var(--bg-badge);
-	margin-inline: auto;
-}
-
-.badge-display__small-badges {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	justify-content: center;
-	cursor: pointer;
-	gap: var(--s-3);
-}
-
-.badge-display__badge-explanation {
-	color: var(--text-lighter);
-	font-size: var(--fonts-xs);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: var(--s-2);
-}
-
-.badge-display__small-badge-container {
-	position: relative;
-}
-
-.badge-display__small-badge-count {
-	position: absolute;
-	top: 0;
-	right: 0;
-	margin-top: -8px;
-	margin-right: auto;
-	margin-left: auto;
-	color: var(--theme-vibrant);
-	font-size: var(--fonts-xxxs);
-	font-weight: var(--bold);
-}
-
 .format-selector__count {
 	color: var(--theme);
 	font-size: var(--fonts-sm);

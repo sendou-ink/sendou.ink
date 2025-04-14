@@ -3,10 +3,13 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Badge } from "~/components/Badge";
 import { Button } from "~/components/Button";
+import { SendouButton } from "~/components/elements/Button";
 import { TrashIcon } from "~/components/icons/Trash";
 import type { Tables } from "~/db/tables";
+import { usePagination } from "~/hooks/usePagination";
 import type { Unpacked } from "~/utils/types";
 import { badgeExplanationText } from "../badges-utils";
+import styles from "./BadgeDisplay.module.css";
 
 interface BadgeDisplayProps {
 	badges: Array<Omit<Tables["Badge"], "authorId"> & { count?: number }>;
@@ -21,6 +24,19 @@ export function BadgeDisplay({
 	const [badges, setBadges] = React.useState(_badges);
 
 	const [bigBadge, ...smallBadges] = badges;
+
+	const {
+		itemsToDisplay,
+		everythingVisible,
+		currentPage,
+		pagesCount,
+		setPage,
+	} = usePagination({
+		items: smallBadges,
+		pageSize: 9,
+		scrollToTop: false,
+	});
+
 	if (!bigBadge) return null;
 
 	const setBadgeFirst = (badge: Unpacked<BadgeDisplayProps["badges"]>) => {
@@ -36,36 +52,7 @@ export function BadgeDisplay({
 
 	return (
 		<div>
-			<div
-				className={clsx("badge-display__badges", {
-					"justify-center": smallBadges.length === 0,
-				})}
-			>
-				<Badge badge={bigBadge} size={125} isAnimated />
-				{smallBadges.length > 0 ? (
-					<div className="badge-display__small-badges">
-						{smallBadges.map((badge) => (
-							<div
-								key={badge.id}
-								className="badge-display__small-badge-container"
-							>
-								<Badge
-									badge={badge}
-									onClick={() => setBadgeFirst(badge)}
-									size={48}
-									isAnimated
-								/>
-								{badge.count && badge.count > 1 ? (
-									<div className="badge-display__small-badge-count">
-										×{badge.count}
-									</div>
-								) : null}
-							</div>
-						))}
-					</div>
-				) : null}
-			</div>
-			<div className="badge-display__badge-explanation">
+			<div className={styles.badgeExplanation}>
 				{badgeExplanationText(t, bigBadge)}
 				{onBadgeRemove ? (
 					<Button
@@ -75,6 +62,67 @@ export function BadgeDisplay({
 					/>
 				) : null}
 			</div>
+			<div
+				className={clsx(styles.badges, {
+					"justify-center": smallBadges.length === 0,
+				})}
+			>
+				<Badge badge={bigBadge} size={125} isAnimated />
+				{smallBadges.length > 0 ? (
+					<div className={styles.smallBadges}>
+						{itemsToDisplay.map((badge) => (
+							<div key={badge.id} className={styles.smallBadgeContainer}>
+								<Badge
+									badge={badge}
+									onClick={() => setBadgeFirst(badge)}
+									size={48}
+									isAnimated
+								/>
+								{badge.count && badge.count > 1 ? (
+									<div className={styles.smallBadgeCount}>×{badge.count}</div>
+								) : null}
+							</div>
+						))}
+					</div>
+				) : null}
+			</div>
+			{!everythingVisible ? (
+				<BadgePagination
+					pagesCount={pagesCount}
+					currentPage={currentPage}
+					setPage={setPage}
+				/>
+			) : null}
+		</div>
+	);
+}
+
+interface BadgePaginationProps {
+	pagesCount: number;
+	currentPage: number;
+	setPage: (page: number) => void;
+}
+
+function BadgePagination({
+	pagesCount,
+	currentPage,
+	setPage,
+}: BadgePaginationProps) {
+	return (
+		<div className={styles.pagination}>
+			{Array.from({ length: pagesCount }, (_, i) => (
+				<SendouButton
+					key={i}
+					variant="minimal"
+					aria-label={`Badges page ${i + 1}`}
+					onPress={() => setPage(i + 1)}
+					className={clsx(styles.paginationButton, {
+						[styles.paginationButtonActive]: currentPage === i + 1,
+					})}
+				>
+					{i + 1}
+				</SendouButton>
+			))}
 		</div>
 	);
 }
