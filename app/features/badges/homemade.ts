@@ -999,4 +999,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "dynamo",
 		authorDiscordId: "534502084134043648",
 	},
+	{
+		displayName: "Division 1 (Watermelon)",
+		fileName: "tso1watermelon",
+		authorDiscordId: "338806780446638082",
+	},
 ];
