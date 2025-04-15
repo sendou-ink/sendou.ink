@@ -23,6 +23,13 @@
 	outline: 2px solid var(--theme);
 }
 
+.selectValue {
+	max-width: calc(var(--select-width) - 55px);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
 .selectValue[data-placeholder] {
 	color: var(--text-lighter);
 }

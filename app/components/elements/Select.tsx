@@ -20,12 +20,12 @@ import {
 	Virtualizer,
 	useFilter,
 } from "react-aria-components";
+import { useTranslation } from "react-i18next";
 import { Label } from "~/components/Label";
 import { ChevronUpDownIcon } from "~/components/icons/ChevronUpDown";
 import { CrossIcon } from "../icons/Cross";
 import { SearchIcon } from "../icons/Search";
 import styles from "./Select.module.css";
-import { useTranslation } from "react-i18next";
 
 interface SendouSelectProps<T extends object>
 	extends Omit<SelectProps<T>, "children"> {
