@@ -25,6 +25,7 @@ import { ChevronUpDownIcon } from "~/components/icons/ChevronUpDown";
 import { CrossIcon } from "../icons/Cross";
 import { SearchIcon } from "../icons/Search";
 import styles from "./Select.module.css";
+import { useTranslation } from "react-i18next";
 
 interface SendouSelectProps<T extends object>
 	extends Omit<SelectProps<T>, "children"> {
@@ -47,6 +48,7 @@ export function SendouSelect<T extends object>({
 	search,
 	...props
 }: SendouSelectProps<T>) {
+	const { t } = useTranslation(["common"]);
 	const { contains } = useFilter({ sensitivity: "base" });
 
 	return (
@@ -79,7 +81,13 @@ export function SendouSelect<T extends object>({
 						</SearchField>
 					) : null}
 					<Virtualizer layout={ListLayout} layoutOptions={{ rowHeight: 33 }}>
-						<ListBox items={items} className={styles.listBox}>
+						<ListBox
+							items={items}
+							className={styles.listBox}
+							renderEmptyState={() => (
+								<div className={styles.noResults}>{t("common:noResults")}</div>
+							)}
+						>
 							{children}
 						</ListBox>
 					</Virtualizer>

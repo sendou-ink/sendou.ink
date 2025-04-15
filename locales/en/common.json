@@ -121,6 +121,8 @@
 	"actions.enable": "Enable",
 	"actions.disable": "Disable",
 
+	"noResults": "No results",
+
 	"maps.createMapList": "Create map list",
 	"maps.halfSz": "50% SZ",
 	"maps.mapPool": "Map pool",

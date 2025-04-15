@@ -115,3 +115,11 @@
 	background-color: transparent;
 	border: none;
 }
+
+.noResults {
+	font-size: var(--fonts-md);
+	font-weight: var(--bold);
+	text-align: center;
+	padding-block: var(--s-8);
+	color: var(--text-lighter);
+}
