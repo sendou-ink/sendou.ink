@@ -220,7 +220,7 @@ export class Tournament {
 						requiresCheckIn,
 					});
 
-				const checkedInTeamsWithReplaysAvoided =
+				const { teams: checkedInTeamsWithReplaysAvoided, preseeded } =
 					this.avoidReplaysOfPreviousBracketOpponent(
 						checkedInTeams,
 						{
@@ -240,7 +240,14 @@ export class Tournament {
 						name,
 						requiresCheckIn,
 						startTime: startTime ? databaseTimestampToDate(startTime) : null,
-						settings: settings ?? null,
+						settings: settings
+							? preseeded
+								? {
+										...settings,
+										seedOrdering: ["natural"],
+									}
+								: settings
+							: null,
 						type,
 						sources,
 						createdAt: null,
@@ -369,27 +376,42 @@ export class Tournament {
 			type: Tables["TournamentStage"]["type"];
 		},
 		settings: TournamentStageSettings,
-	) {
-		// rather arbitrary limit, but with smaller brackets avoiding replays is not possible
-		// and then later while loop hits iteration limit
-		if (teams.length < 8) return teams;
-
+	): { teams: (number | null)[]; preseeded: boolean } {
 		// can't have replays from previous brackets in the first bracket
 		// & no support yet for avoiding replays if many sources
-		if (bracket.sources?.length !== 1) return teams;
+		if (bracket.sources?.length !== 1) return { teams, preseeded: false };
 
 		const sourceBracket = this.bracketByIdx(bracket.sources[0].bracketIdx);
 		if (!sourceBracket) {
 			logger.warn(
 				"avoidReplaysOfPreviousBracketOpponent: Source bracket not found",
 			);
-			return teams;
+			return { teams, preseeded: false };
 		}
 
 		// should not happen but just in case
 		if (bracket.type === "round_robin" || bracket.type === "swiss") {
-			return teams;
+			return { teams, preseeded: false };
 		}
+
+		// this could also support other placement lengths in the future, handled as a special case for now
+		if (
+			sourceBracket.type === "round_robin" &&
+			["single_elimination", "double_elimination"].includes(bracket.type) &&
+			bracket.sources[0].placements.length === 2
+		) {
+			// if the source bracket is round robin and the team is seeded in the same group
+			// as the other team, we can't avoid replays
+			// TODO:
+			// return {
+			// 	teams: this.optimizeTeamOrderFromRoundRobin(teams),
+			// 	preseeded: true,
+			// };
+		}
+
+		// rather arbitrary limit, but with smaller brackets avoiding replays is not possible
+		// and then later while loop hits iteration limit
+		if (teams.length < 8) return { teams, preseeded: false };
 
 		const sourceBracketEncounters = sourceBracket.data.match.reduce(
 			(acc, cur) => {
@@ -458,7 +480,7 @@ export class Tournament {
 					"avoidReplaysOfPreviousBracketOpponent: Avoiding replays failed, too many iterations",
 				);
 
-				return teams;
+				return { teams, preseeded: false };
 			}
 
 			const [oneId, twoId] = replays[0];
@@ -474,7 +496,7 @@ export class Tournament {
 					`Avoiding replays failed, no potential switch candidates found in match: ${oneId} vs. ${twoId}`,
 				);
 
-				return teams;
+				return { teams, preseeded: false };
 			}
 
 			for (const candidate of potentialSwitchCandidates) {
@@ -504,7 +526,101 @@ export class Tournament {
 			}
 		}
 
-		return newOrder;
+		return { teams: newOrder, preseeded: false };
+	}
+
+	// /** Set teams in optimal order when they come from RR avoiding replays as late as possible
+	//  *
+	//  * Teams come in order of their group placement e.g. Group A 1st, Group B 1st, Group C 1st, Group A 2nd, Group B 2nd, Group C 2nd
+	//  * and the order is optimized so that every winner plays 2nd placer in first round and replays happen as lately as possible i.e.
+	//  * every groups 1st and 2nd placer are in the different halves of the bracket.
+	//  * If _teams is not a power of two, nulls are added to represent byes, ensuring no bye is against another bye in the first round.
+	//  */
+	// private optimizeTeamOrderFromRoundRobin(_teams: number[]): (number | null)[] {
+	// 	const teams = fillWithNullTillPowerOfTwo(_teams);
+
+	// 	const groups = Math.ceil(teams.length / 2);
+	// 	const groupWinners = teams.slice(0, groups);
+	// 	const groupRunnersUp = teams.slice(groups);
+
+	// 	const optimizedOrder: (number | null)[] = [];
+	// 	for (let i = 0; i < groups; i++) {
+	// 		optimizedOrder.push(groupWinners[i]);
+	// 		optimizedOrder.push(groupRunnersUp[groups - i - 1]);
+	// 	}
+
+	// 	// Ensure no bye is against another bye in the first round
+	// 	for (let i = 0; i < optimizedOrder.length; i += 2) {
+	// 		if (optimizedOrder[i] === null && optimizedOrder[i + 1] === null) {
+	// 			// Find the next non-null team to swap
+	// 			for (let j = i + 2; j < optimizedOrder.length; j++) {
+	// 				if (optimizedOrder[j] !== null) {
+	// 					[optimizedOrder[i + 1], optimizedOrder[j]] = [
+	// 						optimizedOrder[j],
+	// 						optimizedOrder[i + 1],
+	// 					];
+	// 					break;
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+
+	// 	return optimizedOrder;
+	// }
+
+	// private optimizeTeamOrderFromRoundRobin(_teams: number[]): (number | null)[] {
+	// 	const teams = fillWithNullTillPowerOfTwo(_teams);
+
+	// 	const groups = Math.ceil(teams.length / 2);
+	// 	const groupWinners = teams.slice(0, groups);
+	// 	const groupRunnersUp = teams.slice(groups);
+
+	// 	invariant(
+	// 		groupWinners.length === groupRunnersUp.length,
+	// 		"1st and 2nd placer count not even",
+	// 	);
+
+	// 	const optimizedOrder: (number | null)[] = [];
+	// 	for (let i = 0; i < groups; i++) {
+	// 		optimizedOrder.push(groupWinners[i]);
+	// 		optimizedOrder.push(groupRunnersUp[groups - i - 1]);
+	// 	}
+
+	// 	return optimizedOrder;
+	// }
+
+	/** Set teams in optimal order when they come from RR avoiding replays as late as possible
+	 *
+	 * Teams come in order of their group placement e.g. Group A 1st, Group B 1st, Group C 1st, Group A 2nd, Group B 2nd, Group C 2nd
+	 * and the order is optimized so that every winner plays 2nd placer in first round and replays happen as lately as possible i.e.
+	 * every groups 1st and 2nd placer are in the different halves of the bracket.
+	 * If teams is not a power of two, nulls are added to represent byes, ensuring no bye is against another bye in the first round.
+	 */
+	// @ts-expect-error
+	private optimizeTeamOrderFromRoundRobin(_teams: number[]): (number | null)[] {
+		// adds BYEs represented with null at the end of the array if needed
+		const teams = fillWithNullTillPowerOfTwo(_teams);
+
+		// some try but it is not quite getting the correct order as for example 1st and 2nd seed could be in the same half
+		//
+		// 	const groups = Math.ceil(teams.length / 2);
+		// 	const groupWinners = teams.slice(0, groups);
+		// 	const groupRunnersUp = teams.slice(groups);
+
+		// 	invariant(
+		// 		groupWinners.length === groupRunnersUp.length,
+		// 		"1st and 2nd placer count not even",
+		// 	);
+
+		// 	const optimizedOrder: (number | null)[] = [];
+		// 	for (let i = 0; i < groups; i++) {
+		// 		optimizedOrder.push(groupWinners[i]);
+		// 		optimizedOrder.push(groupRunnersUp[groups - i - 1]);
+		// 	}
+
+		// 	return optimizedOrder;
+
+		return teams;
 	}
 
 	private divideTeamsToCheckedInAndNotCheckedIn({
@@ -570,18 +686,23 @@ export class Tournament {
 		switch (type) {
 			case "single_elimination": {
 				if (participantsCount < 4) {
-					return { consolationFinal: false };
+					return {
+						consolationFinal: false,
+						seedOrdering: selectedSettings?.seedOrdering,
+					};
 				}
 
 				return {
 					consolationFinal:
 						selectedSettings?.thirdPlaceMatch ??
 						TOURNAMENT.SE_DEFAULT_HAS_THIRD_PLACE_MATCH,
+					seedOrdering: selectedSettings?.seedOrdering,
 				};
 			}
 			case "double_elimination": {
 				return {
 					grandFinal: "double",
+					seedOrdering: selectedSettings?.seedOrdering,
 				};
 			}
 			case "round_robin": {
@@ -591,7 +712,9 @@ export class Tournament {
 
 				return {
 					groupCount: Math.ceil(participantsCount / teamsPerGroup),
-					seedOrdering: ["groups.seed_optimized"],
+					seedOrdering: selectedSettings?.seedOrdering ?? [
+						"groups.seed_optimized",
+					],
 				};
 			}
 			case "swiss": {
