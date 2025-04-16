@@ -394,19 +394,23 @@ export class Tournament {
 			return { teams, preseeded: false };
 		}
 
-		// this could also support other placement lengths in the future, handled as a special case for now
+		// special case for LUTI, not optimal for other brackets as it puts all the top seeds in one side of the bracket
+		// in LUTI this is okay because teams are more grouped by region
+		// eventually a robust solution should be developed possibly by arranging teams in groups in a specific way https://github.com/Drarig29/brackets-manager.js/issues/8
 		if (
 			sourceBracket.type === "round_robin" &&
 			["single_elimination", "double_elimination"].includes(bracket.type) &&
-			bracket.sources[0].placements.length === 2
+			bracket.sources[0].placements.length === 2 &&
+			teams.length > 4 &&
+			this.isLeagueDivision
 		) {
 			// if the source bracket is round robin and the team is seeded in the same group
 			// as the other team, we can't avoid replays
-			// TODO:
-			// return {
-			// 	teams: this.optimizeTeamOrderFromRoundRobin(teams),
-			// 	preseeded: true,
-			// };
+
+			return {
+				teams: this.optimizeTeamOrderFromRoundRobin(teams),
+				preseeded: true,
+			};
 		}
 
 		// rather arbitrary limit, but with smaller brackets avoiding replays is not possible
@@ -529,66 +533,6 @@ export class Tournament {
 		return { teams: newOrder, preseeded: false };
 	}
 
-	// /** Set teams in optimal order when they come from RR avoiding replays as late as possible
-	//  *
-	//  * Teams come in order of their group placement e.g. Group A 1st, Group B 1st, Group C 1st, Group A 2nd, Group B 2nd, Group C 2nd
-	//  * and the order is optimized so that every winner plays 2nd placer in first round and replays happen as lately as possible i.e.
-	//  * every groups 1st and 2nd placer are in the different halves of the bracket.
-	//  * If _teams is not a power of two, nulls are added to represent byes, ensuring no bye is against another bye in the first round.
-	//  */
-	// private optimizeTeamOrderFromRoundRobin(_teams: number[]): (number | null)[] {
-	// 	const teams = fillWithNullTillPowerOfTwo(_teams);
-
-	// 	const groups = Math.ceil(teams.length / 2);
-	// 	const groupWinners = teams.slice(0, groups);
-	// 	const groupRunnersUp = teams.slice(groups);
-
-	// 	const optimizedOrder: (number | null)[] = [];
-	// 	for (let i = 0; i < groups; i++) {
-	// 		optimizedOrder.push(groupWinners[i]);
-	// 		optimizedOrder.push(groupRunnersUp[groups - i - 1]);
-	// 	}
-
-	// 	// Ensure no bye is against another bye in the first round
-	// 	for (let i = 0; i < optimizedOrder.length; i += 2) {
-	// 		if (optimizedOrder[i] === null && optimizedOrder[i + 1] === null) {
-	// 			// Find the next non-null team to swap
-	// 			for (let j = i + 2; j < optimizedOrder.length; j++) {
-	// 				if (optimizedOrder[j] !== null) {
-	// 					[optimizedOrder[i + 1], optimizedOrder[j]] = [
-	// 						optimizedOrder[j],
-	// 						optimizedOrder[i + 1],
-	// 					];
-	// 					break;
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-
-	// 	return optimizedOrder;
-	// }
-
-	// private optimizeTeamOrderFromRoundRobin(_teams: number[]): (number | null)[] {
-	// 	const teams = fillWithNullTillPowerOfTwo(_teams);
-
-	// 	const groups = Math.ceil(teams.length / 2);
-	// 	const groupWinners = teams.slice(0, groups);
-	// 	const groupRunnersUp = teams.slice(groups);
-
-	// 	invariant(
-	// 		groupWinners.length === groupRunnersUp.length,
-	// 		"1st and 2nd placer count not even",
-	// 	);
-
-	// 	const optimizedOrder: (number | null)[] = [];
-	// 	for (let i = 0; i < groups; i++) {
-	// 		optimizedOrder.push(groupWinners[i]);
-	// 		optimizedOrder.push(groupRunnersUp[groups - i - 1]);
-	// 	}
-
-	// 	return optimizedOrder;
-	// }
-
 	/** Set teams in optimal order when they come from RR avoiding replays as late as possible
 	 *
 	 * Teams come in order of their group placement e.g. Group A 1st, Group B 1st, Group C 1st, Group A 2nd, Group B 2nd, Group C 2nd
@@ -596,31 +540,37 @@ export class Tournament {
 	 * every groups 1st and 2nd placer are in the different halves of the bracket.
 	 * If teams is not a power of two, nulls are added to represent byes, ensuring no bye is against another bye in the first round.
 	 */
-	// @ts-expect-error
 	private optimizeTeamOrderFromRoundRobin(_teams: number[]): (number | null)[] {
+		invariant(_teams.length > 4, "Not enough teams to optimize");
+
 		// adds BYEs represented with null at the end of the array if needed
 		const teams = fillWithNullTillPowerOfTwo(_teams);
 
-		// some try but it is not quite getting the correct order as for example 1st and 2nd seed could be in the same half
-		//
-		// 	const groups = Math.ceil(teams.length / 2);
-		// 	const groupWinners = teams.slice(0, groups);
-		// 	const groupRunnersUp = teams.slice(groups);
+		const teamsPerHalf = Math.ceil(teams.length / 2);
+		const groupWinners = teams.slice(0, teamsPerHalf);
+		const groupRunnersUp = teams.slice(teamsPerHalf);
 
-		// 	invariant(
-		// 		groupWinners.length === groupRunnersUp.length,
-		// 		"1st and 2nd placer count not even",
-		// 	);
+		invariant(
+			groupWinners.length === groupRunnersUp.length,
+			"1st and 2nd placer count not even",
+		);
 
-		// 	const optimizedOrder: (number | null)[] = [];
-		// 	for (let i = 0; i < groups; i++) {
-		// 		optimizedOrder.push(groupWinners[i]);
-		// 		optimizedOrder.push(groupRunnersUp[groups - i - 1]);
-		// 	}
+		/*
+		E.g. here 'A' is the winner of group A and 'a' is the second place finisher of group A
+		A B C D d c b a
 
-		// 	return optimizedOrder;
+		turns into pairings:
 
-		return teams;
+		A B C D
+		d c b a
+		*/
+		const optimizedOrder: (number | null)[] = [];
+		for (let i = 0; i < teamsPerHalf; i++) {
+			optimizedOrder.push(groupWinners[i]);
+			optimizedOrder.push(groupRunnersUp[teamsPerHalf - i - 1]);
+		}
+
+		return optimizedOrder;
 	}
 
 	private divideTeamsToCheckedInAndNotCheckedIn({

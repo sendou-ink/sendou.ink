@@ -186,58 +186,54 @@ describe("Follow-up bracket progression", () => {
 		expect(different, "Amount of different matches is incorrect").toBe(2);
 	});
 
-	test(
-		"avoids rematches in RR -> SE (LUTI S16 Div 1) - avoid as long as possible",
-		{ todo: true },
-		() => {
-			const groupsMatches = tournamentLUTIS16Div1.brackets[0].data.match;
-			const newTopCutMatches = tournamentLUTIS16Div1.brackets[1].data.match;
+	test("avoids rematches in RR -> SE (LUTI S16 Div 1) - avoid as long as possible", () => {
+		const groupsMatches = tournamentLUTIS16Div1.brackets[0].data.match;
+		const newTopCutMatches = tournamentLUTIS16Div1.brackets[1].data.match;
 
-			const topHalfTeams = newTopCutMatches
-				.slice(0, 2)
-				.flatMap((match) => [match.opponent1, match.opponent2]);
-			const bottomHalfTeams = newTopCutMatches
-				.slice(2, 4)
-				.flatMap((match) => [match.opponent1, match.opponent2]);
+		const topHalfTeams = newTopCutMatches
+			.slice(0, 2)
+			.flatMap((match) => [match.opponent1, match.opponent2]);
+		const bottomHalfTeams = newTopCutMatches
+			.slice(2, 4)
+			.flatMap((match) => [match.opponent1, match.opponent2]);
 
-			for (const half of [topHalfTeams, bottomHalfTeams]) {
-				for (const team of half) {
-					if (!team?.id) {
-						throw new Error("Unexpected no team in the test data");
+		for (const half of [topHalfTeams, bottomHalfTeams]) {
+			for (const team of half) {
+				if (!team?.id) {
+					throw new Error("Unexpected no team in the test data");
+				}
+
+				for (const otherTeam of half) {
+					if (!otherTeam || otherTeam.id === team.id) {
+						continue;
 					}
 
-					for (const otherTeam of half) {
-						if (!otherTeam || otherTeam.id === team.id) {
-							continue;
-						}
-
-						if (
-							groupsMatches.some(
-								(match) =>
-									match.opponent1?.id === team.id &&
-									match.opponent2?.id === otherTeam.id,
-							)
-						) {
-							throw new Error(
-								`Teams would meet each other earlier than necessary: ${team.id} vs ${otherTeam.id}`,
-							);
-						}
-						if (
-							groupsMatches.some(
-								(match) =>
-									match.opponent1?.id === otherTeam.id &&
-									match.opponent2?.id === team.id,
-							)
-						) {
-							throw new Error(
-								`Teams would meet each other earlier than necessary: ${otherTeam.id} vs ${team.id}`,
-							);
-						}
+					if (
+						groupsMatches.some(
+							(match) =>
+								match.opponent1?.id === team.id &&
+								match.opponent2?.id === otherTeam.id,
+						)
+					) {
+						throw new Error(
+							`Teams would meet each other earlier than necessary: ${team.id} vs ${otherTeam.id}`,
+						);
+					}
+					if (
+						groupsMatches.some(
+							(match) =>
+								match.opponent1?.id === otherTeam.id &&
+								match.opponent2?.id === team.id,
+						)
+					) {
+						throw new Error(
+							`Teams would meet each other earlier than necessary: ${otherTeam.id} vs ${team.id}`,
+						);
 					}
 				}
 			}
-		},
-	);
+		}
+	});
 });
 
 describe("Bracket progression override", () => {

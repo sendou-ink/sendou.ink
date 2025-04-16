@@ -104,7 +104,7 @@ export abstract class Bracket {
 		this.seeding = seeding?.filter((teamId) => typeof teamId === "number");
 		this.tournament = tournament;
 		this.settings = settings;
-		this.data = data ?? this.generateMatchesData(this.seeding!);
+		this.data = data ?? this.generateMatchesData(seeding!);
 		this.canBeStarted = canBeStarted;
 		this.name = name;
 		this.teamsPendingCheckIn = teamsPendingCheckIn;
