@@ -999,4 +999,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "dynamo",
 		authorDiscordId: "534502084134043648",
 	},
+	{
+		displayName: "Zekko Cup",
+		fileName: "zekkocup",
+		authorDiscordId: "1320944066002681876",
+	},
 ];
