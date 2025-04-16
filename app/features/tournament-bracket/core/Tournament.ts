@@ -241,12 +241,10 @@ export class Tournament {
 						requiresCheckIn,
 						startTime: startTime ? databaseTimestampToDate(startTime) : null,
 						settings: settings
-							? preseeded
-								? {
-										...settings,
-										seedOrdering: ["natural"],
-									}
-								: settings
+							? {
+									...settings,
+									seedOrdering: preseeded ? ["natural"] : undefined,
+								}
 							: null,
 						type,
 						sources,
