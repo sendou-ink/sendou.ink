@@ -55,7 +55,7 @@ export function BracketMapListDialog({
 
 	useCloseModalOnSubmit(fetcher, close);
 
-	const bracketTeamsCount = bracket.participantTournamentTeamIds.length;
+	const bracketTeamsCount = bracket.tournamentTeamIds.length;
 
 	const preparedMaps =
 		!isPreparing &&

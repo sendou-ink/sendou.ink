@@ -1255,7 +1255,7 @@ export class Tournament {
 		for (const bracket of this.brackets) {
 			if (!bracket.preview) continue;
 
-			const isParticipant = bracket.seeding?.includes(team.id);
+			const isParticipant = bracket.tournamentTeamIds.includes(team.id);
 
 			if (isParticipant) {
 				return { type: "WAITING_FOR_BRACKET" } as const;
@@ -1265,10 +1265,7 @@ export class Tournament {
 		for (const bracket of this.brackets) {
 			if (bracket.preview || bracket.type !== "swiss") continue;
 
-			// TODO: both seeding and participantTournamentTeamIds are used for the same thing
-			const isParticipant = bracket.participantTournamentTeamIds.includes(
-				team.id,
-			);
+			const isParticipant = bracket.tournamentTeamIds.includes(team.id);
 
 			const setsGeneratedCount = bracket.data.match.filter(
 				(match) =>
@@ -1358,7 +1355,7 @@ export class Tournament {
 		}
 
 		const participantInAnotherBracket = ongoingFollowUpBrackets
-			.flatMap((b) => b.participantTournamentTeamIds)
+			.flatMap((b) => b.tournamentTeamIds)
 			.some(
 				(tournamentTeamId) =>
 					tournamentTeamId === match.opponent1?.id ||

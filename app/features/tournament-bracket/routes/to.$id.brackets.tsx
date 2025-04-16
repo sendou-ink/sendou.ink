@@ -142,7 +142,7 @@ export default function TournamentBracketsPage() {
 		if (bracket.sources) {
 			return (
 				(bracket.teamsPendingCheckIn ?? []).length +
-				bracket.participantTournamentTeamIds.length
+				bracket.tournamentTeamIds.length
 			);
 		}
 
@@ -189,7 +189,7 @@ export default function TournamentBracketsPage() {
 							alertClassName="tournament-bracket__start-bracket-alert"
 							textClassName="stack horizontal md items-center"
 						>
-							{bracket.participantTournamentTeamIds.length}/
+							{bracket.tournamentTeamIds.length}/
 							{totalTeamsAvailableForTheBracket()} teams checked in
 							{bracket.canBeStarted ? (
 								<BracketStarter bracket={bracket} bracketIdx={bracketIdx} />
