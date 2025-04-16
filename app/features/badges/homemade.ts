@@ -999,4 +999,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "dynamo",
 		authorDiscordId: "534502084134043648",
 	},
+	{
+		displayName: "LAN Champs Showdown",
+		fileName: "lcsone",
+		authorDiscordId: "248232091005747201",
+	},
 ];
