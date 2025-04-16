@@ -999,4 +999,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "dynamo",
 		authorDiscordId: "534502084134043648",
 	},
+	{
+		displayName: "SquidForce Cup",
+		fileName: "squidforce",
+		authorDiscordId: "1320944066002681876",
+	},
 ];
