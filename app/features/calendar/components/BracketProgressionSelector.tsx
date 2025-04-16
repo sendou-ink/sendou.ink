@@ -8,8 +8,8 @@ import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { PlusIcon } from "~/components/icons/Plus";
-import { TOURNAMENT } from "~/features/tournament";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { defaultBracketSettings } from "../../tournament/tournament-utils";
 
 const defaultBracket = (): Progression.InputBracket => ({

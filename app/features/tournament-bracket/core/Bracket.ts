@@ -1,7 +1,7 @@
 import { sub } from "date-fns";
 import * as R from "remeda";
 import type { Tables, TournamentStageSettings } from "~/db/tables";
-import { TOURNAMENT } from "~/features/tournament";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { Round } from "~/modules/brackets-model";
 import invariant from "~/utils/invariant";
@@ -31,7 +31,7 @@ interface CreateBracketArgs {
 		bracketIdx: number;
 		placements: number[];
 	}[];
-	seeding?: number[];
+	seeding?: (number | null)[];
 	settings: TournamentStageSettings | null;
 	requiresCheckIn: boolean;
 	startTime: Date | null;
@@ -101,10 +101,10 @@ export abstract class Bracket {
 		this.id = id;
 		this.idx = idx;
 		this.preview = preview;
-		this.seeding = seeding;
+		this.seeding = seeding?.filter((teamId) => typeof teamId === "number");
 		this.tournament = tournament;
 		this.settings = settings;
-		this.data = data ?? this.generateMatchesData(this.seeding!);
+		this.data = data ?? this.generateMatchesData(seeding!);
 		this.canBeStarted = canBeStarted;
 		this.name = name;
 		this.teamsPendingCheckIn = teamsPendingCheckIn;
@@ -288,7 +288,7 @@ export abstract class Bracket {
 		});
 	}
 
-	generateMatchesData(teams: number[]) {
+	generateMatchesData(teams: (number | null)[]) {
 		const manager = getTournamentManager();
 
 		// we need some number but does not matter what it is as the manager only contains one tournament
@@ -300,7 +300,7 @@ export abstract class Bracket {
 				name: "Virtual",
 				type: this.type,
 				seeding:
-					this.type === "round_robin"
+					this.type === "round_robin" || teams.includes(null)
 						? teams
 						: fillWithNullTillPowerOfTwo(teams),
 				settings: this.tournament.bracketManagerSettings(

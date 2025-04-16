@@ -4,11 +4,15 @@ import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
+import {
+	errorToastIfFalsy,
+	parseParams,
+	parseRequestPayload,
+} from "~/utils/remix.server";
+import { idObject } from "~/utils/zod";
 import * as TournamentTeamRepository from "../TournamentTeamRepository.server";
 import { updateTeamSeeds } from "../queries/updateTeamSeeds.server";
 import { seedsActionSchema } from "../tournament-schemas.server";
-import { tournamentIdFromParams } from "../tournament-utils";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const data = await parseRequestPayload({
@@ -16,7 +20,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 		schema: seedsActionSchema,
 	});
 	const user = await requireUser(request);
-	const tournamentId = tournamentIdFromParams(params);
+	const { id: tournamentId } = parseParams({
+		params,
+		schema: idObject,
+	});
 	const tournament = await tournamentFromDB({ tournamentId, user });
 
 	errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");

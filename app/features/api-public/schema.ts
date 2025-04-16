@@ -337,6 +337,8 @@ type MapListMap = {
 	source: number | "DEFAULT" | "TIEBREAKER" | "BOTH" | "TO" | "COUNTERPICK";
 	winnerTeamId: number | null;
 	participatedUserIds: Array<number> | null;
+	/** (round robin only) points of the match used for tiebreaker purposes. e.g. [100, 0] indicates a knockout. */
+	points: [number, number] | null;
 };
 
 type TournamentMatchTeam = {

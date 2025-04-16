@@ -11,21 +11,23 @@ import invariant from "~/utils/invariant";
 import {
 	errorToastIfFalsy,
 	notFoundIfFalsy,
+	parseParams,
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { tournamentPage } from "~/utils/urls";
+import { idObject } from "~/utils/zod";
 import { findByInviteCode } from "../queries/findTeamByInviteCode.server";
 import { giveTrust } from "../queries/giveTrust.server";
 import { joinTeam } from "../queries/joinLeaveTeam.server";
 import { joinSchema } from "../tournament-schemas.server";
-import {
-	tournamentIdFromParams,
-	validateCanJoinTeam,
-} from "../tournament-utils";
+import { validateCanJoinTeam } from "../tournament-utils";
 import { inGameNameIfNeeded } from "../tournament-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const tournamentId = tournamentIdFromParams(params);
+	const { id: tournamentId } = parseParams({
+		params,
+		schema: idObject,
+	});
 	const user = await requireUserId(request);
 	const url = new URL(request.url);
 	const inviteCode = url.searchParams.get("code");
