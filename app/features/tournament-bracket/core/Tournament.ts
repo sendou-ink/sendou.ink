@@ -4,10 +4,12 @@ import type {
 	TournamentStage,
 	TournamentStageSettings,
 } from "~/db/tables";
-import { TOURNAMENT } from "~/features/tournament";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as Standings from "~/features/tournament/core/Standings";
-import { LEAGUES } from "~/features/tournament/tournament-constants";
+import {
+	LEAGUES,
+	TOURNAMENT,
+} from "~/features/tournament/tournament-constants";
 import { tournamentIsRanked } from "~/features/tournament/tournament-utils";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { Match, Stage } from "~/modules/brackets-model";

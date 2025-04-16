@@ -15,12 +15,13 @@ import { logger } from "~/utils/logger";
 import {
 	badRequestIfFalsy,
 	errorToastIfFalsy,
+	parseParams,
 	parseRequestPayload,
 	successToast,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { USER } from "../../../constants";
-import { _action, id } from "../../../utils/zod";
+import { _action, id, idObject } from "../../../utils/zod";
 import { bracketProgressionSchema } from "../../calendar/actions/calendar.new.server";
 import { bracketIdx } from "../../tournament-bracket/tournament-bracket-schemas.server";
 import * as TournamentRepository from "../TournamentRepository.server";
@@ -28,7 +29,6 @@ import { changeTeamOwner } from "../queries/changeTeamOwner.server";
 import { deleteTeam } from "../queries/deleteTeam.server";
 import { joinTeam, leaveTeam } from "../queries/joinLeaveTeam.server";
 import { teamName } from "../tournament-schemas.server";
-import { tournamentIdFromParams } from "../tournament-utils";
 import { inGameNameIfNeeded } from "../tournament-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
@@ -38,7 +38,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 		schema: adminActionSchema,
 	});
 
-	const tournamentId = tournamentIdFromParams(params);
+	const { id: tournamentId } = parseParams({
+		params,
+		schema: idObject,
+	});
 	const tournament = await tournamentFromDB({ tournamentId, user });
 
 	const validateIsTournamentAdmin = () =>

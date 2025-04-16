@@ -1,7 +1,7 @@
 import { sub } from "date-fns";
 import * as R from "remeda";
 import type { Tables, TournamentStageSettings } from "~/db/tables";
-import { TOURNAMENT } from "~/features/tournament";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { Round } from "~/modules/brackets-model";
 import invariant from "~/utils/invariant";

@@ -1,5 +1,4 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { tournamentIdFromParams } from "~/features/tournament";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { resolveMapList } from "../core/mapList.server";
@@ -10,11 +9,10 @@ import { matchPageParamsSchema } from "../tournament-bracket-schemas.server";
 export type TournamentMatchLoaderData = typeof loader;
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const tournamentId = tournamentIdFromParams(params);
-	const matchId = parseParams({
+	const { mid: matchId, id: tournamentId } = parseParams({
 		params,
 		schema: matchPageParamsSchema,
-	}).mid;
+	});
 
 	const match = notFoundIfFalsy(findMatchById(matchId));
 
