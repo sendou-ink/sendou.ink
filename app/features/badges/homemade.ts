@@ -1069,4 +1069,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "frcup",
 		authorDiscordId: "960213930586824766",
 	},
+	{
+		displayName: "Path Testing",
+		fileName: "pathtesting",
+		authorDiscordId: "313762200286396416",
+	},
 ];
