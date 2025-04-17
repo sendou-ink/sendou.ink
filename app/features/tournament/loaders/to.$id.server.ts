@@ -4,14 +4,18 @@ import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournam
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { isAdmin } from "~/permissions";
 import { databaseTimestampToDate } from "~/utils/dates";
+import { parseParams } from "~/utils/remix.server";
+import { idObject } from "~/utils/zod";
 import { streamsByTournamentId } from "../core/streams.server";
-import { tournamentIdFromParams } from "../tournament-utils";
 
 export type TournamentLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const user = await getUser(request);
-	const tournamentId = tournamentIdFromParams(params);
+	const { id: tournamentId } = parseParams({
+		params,
+		schema: idObject,
+	});
 
 	const tournament = await tournamentDataCached({ tournamentId, user });
 

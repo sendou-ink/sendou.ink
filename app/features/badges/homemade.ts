@@ -20,6 +20,11 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "1170249805373657093",
 	},
 	{
+		displayName: "5 Unique Curse of Excalibur Events",
+		fileName: "curseofexcalibur",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "Summer Days",
 		fileName: "beach223",
 		authorDiscordId: "1170249805373657093",
@@ -160,13 +165,18 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "338806780446638082",
 	},
 	{
-		displayName: "MIKU MIKU BEAM!!! Rotten Edition",
-		fileName: "rottenmiku",
+		displayName: "MIKU MIKU BEAM!!! Lower Brackets",
+		fileName: "hatsunemikurotten",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "MIKU MIKU BEAM!!! Teto Takeover!",
+		fileName: "hatsunemikuteto",
 		authorDiscordId: "338806780446638082",
 	},
 	{
 		displayName: "MIKU MIKU BEAM!!! Sakura Edition",
-		fileName: "sakuramiku",
+		fileName: "hatsunemikusakura",
 		authorDiscordId: "338806780446638082",
 	},
 	{
@@ -1003,5 +1013,20 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Ride the Wave",
 		fileName: "wave-breaker",
 		authorDiscordId: "534502084134043648",
+	},
+	{
+		displayName: "Ink Torrent",
+		fileName: "ink-torrent",
+		authorDiscordId: "534502084134043648",
+	},
+	{
+		displayName: "Full Auto",
+		fileName: "full-auto",
+		authorDiscordId: "534502084134043648",
+	},
+	{
+		displayName: "fractured cup",
+		fileName: "frcup",
+		authorDiscordId: "960213930586824766",
 	},
 ];

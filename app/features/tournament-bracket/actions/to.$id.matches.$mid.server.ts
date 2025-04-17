@@ -2,7 +2,6 @@ import type { ActionFunction } from "@remix-run/node";
 import { nanoid } from "nanoid";
 import { sql } from "~/db/sql";
 import { requireUser } from "~/features/auth/core/user.server";
-import { tournamentIdFromParams } from "~/features/tournament";
 import * as TournamentMatchRepository from "~/features/tournament-bracket/TournamentMatchRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -47,17 +46,16 @@ import {
 
 export const action: ActionFunction = async ({ params, request }) => {
 	const user = await requireUser(request);
-	const matchId = parseParams({
+	const { mid: matchId, id: tournamentId } = parseParams({
 		params,
 		schema: matchPageParamsSchema,
-	}).mid;
+	});
 	const match = notFoundIfFalsy(findMatchById(matchId));
 	const data = await parseRequestPayload({
 		request,
 		schema: matchSchema,
 	});
 
-	const tournamentId = tournamentIdFromParams(params);
 	const tournament = await tournamentFromDB({ tournamentId, user });
 
 	const validateCanReportScore = () => {

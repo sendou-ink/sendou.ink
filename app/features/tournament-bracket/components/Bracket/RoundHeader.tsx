@@ -94,5 +94,10 @@ function Deadline({ roundId, bestOf }: { roundId: number; bestOf: number }) {
 function useLeagueWeekStart(roundId: number) {
 	const tournament = useTournament();
 
+	const bracketIdx = tournament.brackets.findIndex((b) =>
+		b.data.round.some((r) => r.id === roundId),
+	);
+	if (bracketIdx !== 0) return null;
+
 	return resolveLeagueRoundStartDate(tournament, roundId);
 }

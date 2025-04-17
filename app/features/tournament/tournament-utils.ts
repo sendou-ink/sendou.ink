@@ -1,9 +1,7 @@
-import type { Params } from "@remix-run/react";
 import { INVITE_CODE_LENGTH } from "~/constants";
 import type { ModeShort, StageId } from "~/modules/in-game-lists";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { weekNumberToDate } from "~/utils/dates";
-import invariant from "~/utils/invariant";
 import { tournamentLogoUrl } from "~/utils/urls";
 import type { Tables, TournamentStageSettings } from "../../db/tables";
 import { assertUnreachable } from "../../utils/types";
@@ -14,13 +12,6 @@ import type { Tournament as TournamentClass } from "../tournament-bracket/core/T
 import type { TournamentData } from "../tournament-bracket/core/Tournament.server";
 import type { PlayedSet } from "./core/sets.server";
 import { LEAGUES, TOURNAMENT } from "./tournament-constants";
-
-export function tournamentIdFromParams(params: Params<string>) {
-	const result = Number(params.id);
-	invariant(!Number.isNaN(result), "id is not a number");
-
-	return result;
-}
 
 export function modesIncluded(
 	tournament: Pick<Tables["Tournament"], "mapPickingStyle">,

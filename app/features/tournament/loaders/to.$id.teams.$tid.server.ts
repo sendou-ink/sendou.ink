@@ -3,14 +3,12 @@ import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournam
 import { tournamentTeamPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import { parseParams } from "~/utils/remix.server";
 import { tournamentTeamSets, winCounts } from "../core/sets.server";
-import { tournamentIdFromParams } from "../tournament-utils";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const tournamentId = tournamentIdFromParams(params);
-	const tournamentTeamId = parseParams({
+	const { id: tournamentId, tid: tournamentTeamId } = parseParams({
 		params,
 		schema: tournamentTeamPageParamsSchema,
-	}).tid;
+	});
 
 	const tournament = await tournamentDataCached({ tournamentId });
 	if (
