@@ -1010,6 +1010,11 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "534502084134043648",
 	},
 	{
+		displayName: "Ride the Wave",
+		fileName: "wave-breaker",
+		authorDiscordId: "534502084134043648",
+	},
+	{
 		displayName: "Ink Torrent",
 		fileName: "ink-torrent",
 		authorDiscordId: "534502084134043648",
