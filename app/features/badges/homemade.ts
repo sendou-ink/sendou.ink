@@ -1010,6 +1010,11 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "534502084134043648",
 	},
 	{
+		displayName: "Takoroka Cup",
+		fileName: "takorokacup",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
 		displayName: "Zekko Cup",
 		fileName: "zekkocup",
 		authorDiscordId: "1320944066002681876",
