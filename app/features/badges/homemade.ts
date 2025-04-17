@@ -1033,7 +1033,7 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Division 5 (Blueberry)",
 		fileName: "tso5blueberry",
 		authorDiscordId: "338806780446638082",
- 	},
+	},
 	{
 		displayName: "Ride the Wave",
 		fileName: "wave-breaker",
