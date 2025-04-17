@@ -1069,4 +1069,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "frcup",
 		authorDiscordId: "960213930586824766",
 	},
+	{
+		displayName: "ENA (Dream BBQ)",
+		fileName: "enabbq",
+		authorDiscordId: "528851510222782474",
+	},
 ];
