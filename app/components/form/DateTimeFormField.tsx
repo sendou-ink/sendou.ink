@@ -18,7 +18,6 @@ export function DateTimeFormField<T extends FieldValues>({
 
 	const error = get(methods.formState.errors, name);
 
-	// xxx: or use the custom component?
 	return (
 		<div>
 			<Label htmlFor={id}>{label}</Label>
