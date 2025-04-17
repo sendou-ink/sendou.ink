@@ -1009,4 +1009,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "dynamo",
 		authorDiscordId: "534502084134043648",
 	},
+	{
+		displayName: "fractured cup",
+		fileName: "frcup",
+		authorDiscordId: "960213930586824766",
+	},
 ];
