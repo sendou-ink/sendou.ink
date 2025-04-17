@@ -166,7 +166,7 @@ export const homemadeBadges: BadgeInfo[] = [
 	},
 	{
 		displayName: "MIKU MIKU BEAM!!! Lower Brackets",
-		fileName: "hatsunemikurotten",
+		fileName: "rottenmiku",
 		authorDiscordId: "338806780446638082",
 	},
 	{
@@ -176,7 +176,7 @@ export const homemadeBadges: BadgeInfo[] = [
 	},
 	{
 		displayName: "MIKU MIKU BEAM!!! Sakura Edition",
-		fileName: "hatsunemikusakura",
+		fileName: "sakuramiku",
 		authorDiscordId: "338806780446638082",
 	},
 	{

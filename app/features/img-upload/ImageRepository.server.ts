@@ -12,3 +12,13 @@ export function findById(id: number) {
 		.where("UnvalidatedUserSubmittedImage.id", "=", id)
 		.executeTakeFirst();
 }
+
+export function deleteImageById(id: number) {
+	return db.transaction().execute(async (trx) => {
+		await trx.deleteFrom("Art").where("Art.imgId", "=", id).execute();
+		await trx
+			.deleteFrom("UnvalidatedUserSubmittedImage")
+			.where("id", "=", id)
+			.execute();
+	});
+}

@@ -6,7 +6,9 @@ import {
 	badRequestIfFalsy,
 	errorToastIfFalsy,
 	parseRequestPayload,
+	successToast,
 } from "~/utils/remix.server";
+import { assertUnreachable } from "~/utils/types";
 import * as ImageRepository from "../ImageRepository.server";
 import { validateImage } from "../queries/validateImage";
 import { validateImageSchema } from "../upload-schemas.server";
@@ -20,12 +22,29 @@ export const action: ActionFunction = async ({ request }) => {
 
 	errorToastIfFalsy(isMod(user), "Only admins can validate images");
 
-	const image = badRequestIfFalsy(await ImageRepository.findById(data.imageId));
+	switch (data._action) {
+		case "VALIDATE": {
+			for (const imageId of data.imageIds) {
+				const image = badRequestIfFalsy(
+					await ImageRepository.findById(imageId),
+				);
 
-	validateImage(data.imageId);
+				validateImage(imageId);
 
-	if (image.tournamentId) {
-		clearTournamentDataCache(image.tournamentId);
+				if (image.tournamentId) {
+					clearTournamentDataCache(imageId);
+				}
+			}
+			break;
+		}
+		case "REJECT": {
+			await ImageRepository.deleteImageById(data.imageId);
+
+			return successToast("The image was deleted");
+		}
+		default: {
+			assertUnreachable(data);
+		}
 	}
 
 	return null;

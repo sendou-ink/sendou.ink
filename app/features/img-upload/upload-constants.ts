@@ -2,6 +2,8 @@ import type { ImageUploadType } from "./upload-types";
 
 export const MAX_UNVALIDATED_IMG_COUNT = 5;
 
+export const IMAGES_TO_VALIDATE_AT_ONCE = 5;
+
 export const IMAGE_TYPES = ["team-pfp", "org-pfp", "team-banner"] as const;
 
 export const imgTypeToDimensions: Record<
