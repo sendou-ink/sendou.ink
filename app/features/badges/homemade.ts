@@ -1010,6 +1010,31 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "534502084134043648",
 	},
 	{
+		displayName: "Division 1 (Watermelon)",
+		fileName: "tso1watermelon",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Division 2 (Pineapple)",
+		fileName: "tso2pineapple",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Division 3 (Peach)",
+		fileName: "tso3peach",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Division 4 (Cherry)",
+		fileName: "tso4cherry",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Division 5 (Blueberry)",
+		fileName: "tso5blueberry",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "Ride the Wave",
 		fileName: "wave-breaker",
 		authorDiscordId: "534502084134043648",
