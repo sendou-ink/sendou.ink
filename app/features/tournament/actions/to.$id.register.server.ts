@@ -16,10 +16,12 @@ import {
 	errorToastIfFalsy,
 	notFoundIfFalsy,
 	parseFormData,
+	parseParams,
 	uploadImageIfSubmitted,
 } from "~/utils/remix.server";
 import { booleanToInt } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
+import { idObject } from "~/utils/zod";
 import { checkIn } from "../queries/checkIn.server";
 import { deleteTeam } from "../queries/deleteTeam.server";
 import deleteTeamMember from "../queries/deleteTeamMember.server";
@@ -30,7 +32,6 @@ import { upsertCounterpickMaps } from "../queries/upsertCounterpickMaps.server";
 import { registerSchema } from "../tournament-schemas.server";
 import {
 	isOneModeTournamentOf,
-	tournamentIdFromParams,
 	validateCounterPickMapPool,
 } from "../tournament-utils";
 import { inGameNameIfNeeded } from "../tournament-utils.server";
@@ -46,7 +47,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 		schema: registerSchema,
 	});
 
-	const tournamentId = tournamentIdFromParams(params);
+	const { id: tournamentId } = parseParams({
+		params,
+		schema: idObject,
+	});
 	const tournament = await tournamentFromDB({ tournamentId, user });
 	const event = notFoundIfFalsy(findByIdentifier(tournamentId));
 

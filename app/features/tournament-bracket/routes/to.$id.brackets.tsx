@@ -18,7 +18,7 @@ import { EyeIcon } from "~/components/icons/Eye";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
 import { MapIcon } from "~/components/icons/Map";
 import { useUser } from "~/features/auth/core/user";
-import { TOURNAMENT } from "~/features/tournament";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { useVisibilityChange } from "~/hooks/useVisibilityChange";
@@ -142,7 +142,7 @@ export default function TournamentBracketsPage() {
 		if (bracket.sources) {
 			return (
 				(bracket.teamsPendingCheckIn ?? []).length +
-				bracket.participantTournamentTeamIds.length
+				bracket.tournamentTeamIds.length
 			);
 		}
 
@@ -189,7 +189,7 @@ export default function TournamentBracketsPage() {
 							alertClassName="tournament-bracket__start-bracket-alert"
 							textClassName="stack horizontal md items-center"
 						>
-							{bracket.participantTournamentTeamIds.length}/
+							{bracket.tournamentTeamIds.length}/
 							{totalTeamsAvailableForTheBracket()} teams checked in
 							{bracket.canBeStarted ? (
 								<BracketStarter bracket={bracket} bracketIdx={bracketIdx} />

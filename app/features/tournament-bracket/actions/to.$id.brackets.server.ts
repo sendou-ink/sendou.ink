@@ -10,15 +10,19 @@ import {
 import { currentSeason } from "~/features/mmr/season";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import { notify } from "~/features/notifications/core/notify.server";
-import { tournamentIdFromParams } from "~/features/tournament";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { createSwissBracketInTransaction } from "~/features/tournament/queries/createSwissBracketInTransaction.server";
 import { updateRoundMaps } from "~/features/tournament/queries/updateRoundMaps.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
-import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
+import {
+	errorToastIfFalsy,
+	parseParams,
+	parseRequestPayload,
+} from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
+import { idObject } from "~/utils/zod";
 import type { PreparedMaps } from "../../../db/tables";
 import { updateTeamSeeds } from "../../tournament/queries/updateTeamSeeds.server";
 import * as Swiss from "../core/Swiss";
@@ -37,7 +41,10 @@ import { fillWithNullTillPowerOfTwo } from "../tournament-bracket-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
 	const user = await requireUser(request);
-	const tournamentId = tournamentIdFromParams(params);
+	const { id: tournamentId } = parseParams({
+		params,
+		schema: idObject,
+	});
 	const tournament = await tournamentFromDB({ tournamentId, user });
 	const data = await parseRequestPayload({ request, schema: bracketSchema });
 	const manager = getServerTournamentManager();
@@ -49,7 +56,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			invariant(bracket, "Bracket not found");
 
-			const seeding = bracket.seeding;
+			const seeding = bracket.seedingForBracketCreation;
 			errorToastIfFalsy(seeding, "Bracket already started");
 
 			errorToastIfFalsy(
@@ -124,9 +131,11 @@ export const action: ActionFunction = async ({ params, request }) => {
 			})();
 
 			notify({
-				userIds: seeding.flatMap((tournamentTeamId) =>
-					tournament.teamById(tournamentTeamId)!.members.map((m) => m.userId),
-				),
+				userIds: seeding
+					.filter((teamId) => typeof teamId === "number")
+					.flatMap((tournamentTeamId) =>
+						tournament.teamById(tournamentTeamId)!.members.map((m) => m.userId),
+					),
 				notification: {
 					type: "TO_BRACKET_STARTED",
 					meta: {
@@ -158,7 +167,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const hasThirdPlaceMatch = tournament.bracketManagerSettings(
 				bracket.settings,
 				bracket.type,
-				data.eliminationTeamCount ?? (bracket.seeding ?? []).length,
+				data.eliminationTeamCount ?? bracket.tournamentTeamIds.length,
 			).consolationFinal;
 
 			await TournamentRepository.upsertPreparedMaps({

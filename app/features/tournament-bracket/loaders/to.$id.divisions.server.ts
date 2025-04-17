@@ -1,14 +1,17 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { getUser } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import { tournamentIdFromParams } from "~/features/tournament/tournament-utils";
-import { notFoundIfFalsy } from "~/utils/remix.server";
+import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { idObject } from "~/utils/zod";
 import type { Unwrapped } from "../../../utils/types";
 import { tournamentFromDB } from "../core/Tournament.server";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const user = await getUser(request);
-	const tournamentId = tournamentIdFromParams(params);
+	const { id: tournamentId } = parseParams({
+		params,
+		schema: idObject,
+	});
 
 	const divisions = notFoundIfFalsy(await divisionsCached(tournamentId));
 

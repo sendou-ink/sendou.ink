@@ -7,7 +7,7 @@ import { logger } from "../../../utils/logger";
 import * as NotificationRepository from "../NotificationRepository.server";
 import type { Notification } from "../notifications-types";
 import { notificationLink } from "../notifications-utils";
-import webPush from "./webPush.server";
+import webPush, { webPushEnabled } from "./webPush.server";
 
 /**
  * Create notifications both in the database and send push notifications to users (if enabled).
@@ -102,6 +102,8 @@ async function sendPushNotification({
 	notification: Notification;
 	t: TFunction<["common"], undefined>;
 }) {
+	if (!webPushEnabled) return;
+
 	try {
 		await webPush.sendNotification(
 			subscription,
