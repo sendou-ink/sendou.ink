@@ -3,7 +3,7 @@ import { requireUserId } from "~/features/auth/core/user.server";
 import { isMod } from "~/permissions";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 import { countAllUnvalidatedImg } from "../queries/countAllUnvalidatedImg.server";
-import { oneUnvalidatedImage } from "../queries/oneUnvalidatedImage";
+import { unvalidatedImages } from "../queries/unvalidatedImages";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await requireUserId(request);
@@ -11,7 +11,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	notFoundIfFalsy(isMod(user));
 
 	return {
-		image: oneUnvalidatedImage(),
+		images: unvalidatedImages(),
 		unvalidatedImgCount: countAllUnvalidatedImg(),
 	};
 };

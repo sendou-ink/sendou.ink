@@ -246,6 +246,10 @@
 	margin-block-start: var(--s-6);
 }
 
+.mt-12 {
+	margin-block-start: var(--s-12);
+}
+
 .mb-0 {
 	margin-block-end: 0;
 }
