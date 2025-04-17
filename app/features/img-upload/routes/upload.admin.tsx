@@ -42,7 +42,7 @@ function ImageValidator() {
 								{i + 1}){" "}
 								<FormWithConfirm
 									dialogHeading={`Reject image submitted by ${image.username}?`}
-									deleteButtonText="Reject"
+									submitButtonText="Reject"
 									fields={[
 										["imageId", image.id],
 										["_action", "REJECT"],
