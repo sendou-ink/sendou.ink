@@ -56,7 +56,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			invariant(bracket, "Bracket not found");
 
-			const seeding = bracket.seeding;
+			const seeding = bracket.seedingForBracketCreation;
 			errorToastIfFalsy(seeding, "Bracket already started");
 
 			errorToastIfFalsy(
@@ -131,9 +131,11 @@ export const action: ActionFunction = async ({ params, request }) => {
 			})();
 
 			notify({
-				userIds: seeding.flatMap((tournamentTeamId) =>
-					tournament.teamById(tournamentTeamId)!.members.map((m) => m.userId),
-				),
+				userIds: seeding
+					.filter((teamId) => typeof teamId === "number")
+					.flatMap((tournamentTeamId) =>
+						tournament.teamById(tournamentTeamId)!.members.map((m) => m.userId),
+					),
 				notification: {
 					type: "TO_BRACKET_STARTED",
 					meta: {
@@ -165,7 +167,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const hasThirdPlaceMatch = tournament.bracketManagerSettings(
 				bracket.settings,
 				bracket.type,
-				data.eliminationTeamCount ?? (bracket.seeding ?? []).length,
+				data.eliminationTeamCount ?? bracket.tournamentTeamIds.length,
 			).consolationFinal;
 
 			await TournamentRepository.upsertPreparedMaps({

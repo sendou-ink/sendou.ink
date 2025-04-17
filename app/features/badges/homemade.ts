@@ -20,6 +20,11 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "1170249805373657093",
 	},
 	{
+		displayName: "5 Unique Curse of Excalibur Events",
+		fileName: "curseofexcalibur",
+		authorDiscordId: "338806780446638082",
+	},
+	{
 		displayName: "Summer Days",
 		fileName: "beach223",
 		authorDiscordId: "1170249805373657093",
@@ -160,13 +165,18 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "338806780446638082",
 	},
 	{
-		displayName: "MIKU MIKU BEAM!!! Rotten Edition",
-		fileName: "rottenmiku",
+		displayName: "MIKU MIKU BEAM!!! Lower Brackets",
+		fileName: "hatsunemikurotten",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "MIKU MIKU BEAM!!! Teto Takeover!",
+		fileName: "hatsunemikuteto",
 		authorDiscordId: "338806780446638082",
 	},
 	{
 		displayName: "MIKU MIKU BEAM!!! Sakura Edition",
-		fileName: "sakuramiku",
+		fileName: "hatsunemikusakura",
 		authorDiscordId: "338806780446638082",
 	},
 	{
@@ -998,5 +1008,65 @@ export const homemadeBadges: BadgeInfo[] = [
 		displayName: "Dynamo Roller",
 		fileName: "dynamo",
 		authorDiscordId: "534502084134043648",
+	},
+	{
+		displayName: "Squidforce Cup",
+		fileName: "squidtheforce",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName: "Takoroka Cup",
+		fileName: "takorokacup",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName: "Zekko Cup",
+		fileName: "zekkocup",
+		authorDiscordId: "1320944066002681876",
+	},
+	{
+		displayName: "Division 1 (Watermelon)",
+		fileName: "tso1watermelon",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Division 2 (Pineapple)",
+		fileName: "tso2pineapple",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Division 3 (Peach)",
+		fileName: "tso3peach",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Division 4 (Cherry)",
+		fileName: "tso4cherry",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Division 5 (Blueberry)",
+		fileName: "tso5blueberry",
+		authorDiscordId: "338806780446638082",
+	},
+	{
+		displayName: "Ride the Wave",
+		fileName: "wave-breaker",
+		authorDiscordId: "534502084134043648",
+	},
+	{
+		displayName: "Ink Torrent",
+		fileName: "ink-torrent",
+		authorDiscordId: "534502084134043648",
+	},
+	{
+		displayName: "Full Auto",
+		fileName: "full-auto",
+		authorDiscordId: "534502084134043648",
+	},
+	{
+		displayName: "fractured cup",
+		fileName: "frcup",
+		authorDiscordId: "960213930586824766",
 	},
 ];
