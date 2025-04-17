@@ -59,6 +59,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 							"TournamentMatchGameResult.mode",
 							"TournamentMatchGameResult.winnerTeamId",
 							"TournamentMatchGameResult.source",
+							"TournamentMatchGameResult.opponentOnePoints",
+							"TournamentMatchGameResult.opponentTwoPoints",
 							jsonArrayFrom(
 								innerEb
 									.selectFrom("TournamentMatchGameResultParticipant")
@@ -97,17 +99,21 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			match.opponentOne.result === "win" ||
 			match.opponentTwo.result === "win"
 		) {
-			return match.playedMapList.map((map) => ({
+			return match.playedMapList.map((playedMap) => ({
 				map: {
-					mode: map.mode,
+					mode: playedMap.mode,
 					stage: {
-						id: map.stageId,
-						name: t(`game-misc:STAGE_${map.stageId}`),
+						id: playedMap.stageId,
+						name: t(`game-misc:STAGE_${playedMap.stageId}`),
 					},
 				},
-				participatedUserIds: map.participants.map((p) => p.userId),
-				winnerTeamId: map.winnerTeamId,
-				source: parseSource(map.source),
+				participatedUserIds: playedMap.participants.map((p) => p.userId),
+				winnerTeamId: playedMap.winnerTeamId,
+				source: parseSource(playedMap.source),
+				points:
+					playedMap.opponentOnePoints && playedMap.opponentTwoPoints
+						? [playedMap.opponentOnePoints, playedMap.opponentTwoPoints]
+						: null,
 			}));
 		}
 
@@ -123,18 +129,19 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			mapPickingStyle: match.mapPickingStyle,
 			maps: match.maps,
 			pickBanEvents,
-		}).map((map) => {
+		}).map((mapListMap) => {
 			return {
 				map: {
-					mode: map.mode,
+					mode: mapListMap.mode,
 					stage: {
-						id: map.stageId,
-						name: t(`game-misc:STAGE_${map.stageId}`),
+						id: mapListMap.stageId,
+						name: t(`game-misc:STAGE_${mapListMap.stageId}`),
 					},
 				},
 				participatedUserIds: null,
 				winnerTeamId: null,
-				source: map.source,
+				source: mapListMap.source,
+				points: null,
 			};
 		});
 	};

@@ -12,6 +12,7 @@ const MINUTES = {
 	BO3: 30,
 	BO5: 40,
 	BO7: 50,
+	BO9: 60,
 };
 
 const STRICT_MINUTES = {
@@ -19,6 +20,7 @@ const STRICT_MINUTES = {
 	BO3: 25,
 	BO5: 35,
 	BO7: 45,
+	BO9: 55,
 };
 
 const minutesToPlay = (count: number, strict: boolean) => {
@@ -26,6 +28,7 @@ const minutesToPlay = (count: number, strict: boolean) => {
 	if (count === 3) return strict ? STRICT_MINUTES.BO3 : MINUTES.BO3;
 	if (count === 5) return strict ? STRICT_MINUTES.BO5 : MINUTES.BO5;
 	if (count === 7) return strict ? STRICT_MINUTES.BO7 : MINUTES.BO7;
+	if (count === 9) return strict ? STRICT_MINUTES.BO9 : MINUTES.BO9;
 
 	logger.warn("Unknown best of count", { count });
 	return MINUTES.BO5;

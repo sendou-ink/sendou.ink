@@ -108,7 +108,7 @@ export function tournamentStandings(tournament: Tournament): Standing[] {
 		});
 		result.push(...standings);
 
-		for (const teamId of bracket.participantTournamentTeamIds) {
+		for (const teamId of bracket.tournamentTeamIds) {
 			alreadyIncludedTeamIds.add(teamId);
 		}
 		for (const teamId of bracket.teamsPendingCheckIn ?? []) {
