@@ -1069,4 +1069,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "frcup",
 		authorDiscordId: "960213930586824766",
 	},
+	{
+		displayName: "shockwave",
+		fileName: "shckwv",
+		authorDiscordId: "960213930586824766",
+	},
 ];
