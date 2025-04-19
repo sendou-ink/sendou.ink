@@ -1072,7 +1072,7 @@ export const homemadeBadges: BadgeInfo[] = [
 	{
 		displayName: "FREEDOM DiVE ↓",
 		fileName: "freedomdive",
-		authorDiscordId:"631246535560265749",
+		authorDiscordId: "631246535560265749",
 	},
 	{
 		displayName: "Whitecat Achievement",
