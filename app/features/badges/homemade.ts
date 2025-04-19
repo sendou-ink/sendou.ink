@@ -1069,4 +1069,14 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "frcup",
 		authorDiscordId: "960213930586824766",
 	},
+	{
+		displayName: "FREEDOM DiVE ↓",
+		fileName: "freedomdive",
+		authorDiscordId:"631246535560265749",
+	},
+	{
+		displayName: "Whitecat Achievement",
+		fileName: "whitecat",
+		authorDiscordId: "631246535560265749",
+	},
 ];
