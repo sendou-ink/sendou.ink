@@ -1069,4 +1069,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "frcup",
 		authorDiscordId: "960213930586824766",
 	},
+	{
+		displayName: "fractured cup gold",
+		fileName: "frcpgd",
+		authorDiscordId: "960213930586824766",
+	},
 ];
