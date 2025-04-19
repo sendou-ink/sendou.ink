@@ -2,6 +2,7 @@ import { useNavigate } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useUser } from "~/features/auth/core/user";
+import { FF_SCRIMS_ENABLED } from "~/features/scrims/scrims-constants";
 import {
 	CALENDAR_NEW_PAGE,
 	NEW_TEAM_PAGE,
@@ -68,18 +69,22 @@ export function AnythingAdder() {
 			imagePath: navIconUrl("t"),
 			onClick: () => navigate(NEW_TEAM_PAGE),
 		},
-		{
-			id: "scrimPost",
-			text: t("header.adder.scrimPost"),
-			imagePath: navIconUrl("scrims"),
-			onClick: () => navigate(newScrimPostPage()),
-		},
-		{
-			id: "association",
-			text: t("header.adder.association"),
-			imagePath: navIconUrl("associations"),
-			onClick: () => navigate(newAssociationsPage()),
-		},
+		FF_SCRIMS_ENABLED
+			? {
+					id: "scrimPost",
+					text: t("header.adder.scrimPost"),
+					imagePath: navIconUrl("scrims"),
+					onClick: () => navigate(newScrimPostPage()),
+				}
+			: null,
+		FF_SCRIMS_ENABLED
+			? {
+					id: "association",
+					text: t("header.adder.association"),
+					imagePath: navIconUrl("associations"),
+					onClick: () => navigate(newAssociationsPage()),
+				}
+			: null,
 		{
 			id: "lfgPost",
 			text: t("header.adder.lfgPost"),
@@ -104,7 +109,7 @@ export function AnythingAdder() {
 			imagePath: navIconUrl("plus"),
 			onClick: () => navigate(plusSuggestionsNewPage()),
 		},
-	];
+	].filter((item) => item !== null);
 
 	return <Menu items={items} button={FilterMenuButton} opensLeft />;
 }

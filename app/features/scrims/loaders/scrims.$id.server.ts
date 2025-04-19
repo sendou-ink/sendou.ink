@@ -5,8 +5,11 @@ import { notFoundIfFalsy } from "../../../utils/remix.server";
 import { requireUser } from "../../auth/core/user.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import * as Scrim from "../core/Scrim";
+import { FF_SCRIMS_ENABLED } from "../scrims-constants";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+	notFoundIfFalsy(FF_SCRIMS_ENABLED);
+
 	const user = await requireUser(request);
 
 	const post = notFoundIfFalsy(

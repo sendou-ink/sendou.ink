@@ -2,12 +2,16 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import * as AssociationsRepository from "~/features/associations/AssociationRepository.server";
 import * as Association from "~/features/associations/core/Association";
 import { getUser } from "~/features/auth/core/user.server";
+import { notFoundIfFalsy } from "~/utils/remix.server";
 import * as TeamRepository from "../../team/TeamRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import * as Scrim from "../core/Scrim";
+import { FF_SCRIMS_ENABLED } from "../scrims-constants";
 import { dividePosts } from "../scrims-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+	notFoundIfFalsy(FF_SCRIMS_ENABLED);
+
 	const user = await getUser(request);
 
 	const now = new Date();

@@ -1,4 +1,4 @@
-// xxx: icon for scrim post and associations
+import { FF_SCRIMS_ENABLED } from "~/features/scrims/scrims-constants";
 
 export const navItems = [
 	{
@@ -38,11 +38,13 @@ export const navItems = [
 		url: "leaderboards",
 		prefetch: false,
 	},
-	{
-		name: "scrims",
-		url: "scrims",
-		prefetch: false,
-	},
+	FF_SCRIMS_ENABLED
+		? {
+				name: "scrims",
+				url: "scrims",
+				prefetch: false,
+			}
+		: null,
 	{
 		name: "lfg",
 		url: "lfg",
