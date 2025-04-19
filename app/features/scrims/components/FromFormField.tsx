@@ -26,7 +26,6 @@ export function FromFormField({ usersTeams }: FromFormFieldProps) {
 			<Controller
 				control={methods.control}
 				name="from"
-				// xxx: on change is un typed
 				render={({ field: { onChange, onBlur, value }, fieldState }) => {
 					const setTeam = (teamId: number) => {
 						onChange({ teamId, mode: "TEAM" });
@@ -71,7 +70,7 @@ export function FromFormField({ usersTeams }: FromFormFieldProps) {
 										<div key={i}>
 											<Label required={i < 3}>User {i + 2}</Label>
 											<UserSearch
-												// xxx: changing it like this triggers useEffect -> dropdown stays open, need to use "value" not "defaultValue"
+												// TODO: changing it like this triggers useEffect -> dropdown stays open, need to use "value" not "defaultValue"
 												initialUserId={userId ?? undefined}
 												onChange={(user) =>
 													onChange({

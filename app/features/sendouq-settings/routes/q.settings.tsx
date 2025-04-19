@@ -580,7 +580,6 @@ function SoundSlider() {
 	);
 }
 
-// xxx: how to handle giving out trust? via "trust link"?
 function TrustedUsers() {
 	const { t } = useTranslation(["q"]);
 	const data = useLoaderData<typeof loader>();
