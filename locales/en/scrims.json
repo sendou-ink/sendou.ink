@@ -23,5 +23,6 @@
 	"forms.with.title": "With",
 	"forms.with.explanation": "You can search for users with username, Discord ID or sendou.ink profile URL.",
 	"forms.with.user": "User {{nth}}",
-	"forms.with.pick-up": "Pick-up"
+	"forms.with.pick-up": "Pick-up",
+	"page.scheduledScrim": "Scheduled scrim"
 }

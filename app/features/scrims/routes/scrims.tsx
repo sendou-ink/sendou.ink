@@ -324,6 +324,10 @@ function ScrimsTable({
 						(request) => request.isAccepted,
 					);
 
+					const showContactButton =
+						isAccepted &&
+						post.requests.at(0)?.users.some((rUser) => rUser.id === user?.id);
+
 					const status = getStatus(post);
 
 					return (
@@ -516,13 +520,17 @@ function ScrimsTable({
 										</FormWithConfirm>
 									</td>
 								) : null}
-								{isAccepted &&
-								post.requests
-									.at(0)
-									?.users.some((rUser) => rUser.id === user?.id) ? (
+								{showContactButton ? (
 									<td className={styles.postFloatingActionCell}>
 										<ContactButton postId={post.id} />
 									</td>
+								) : null}
+								{isAccepted &&
+								post.requests.some(
+									(r) =>
+										r.isAccepted && !r.users.some((u) => u.id === user?.id),
+								) ? (
+									<td />
 								) : null}
 							</tr>
 							{requests}

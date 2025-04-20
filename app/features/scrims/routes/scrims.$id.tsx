@@ -2,6 +2,7 @@ import { Link, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Avatar } from "../../../components/Avatar";
 import { Main } from "../../../components/Main";
 import { databaseTimestampToDate } from "../../../utils/dates";
@@ -16,7 +17,12 @@ export { loader };
 
 import styles from "./scrims.$id.module.css";
 
+export const handle: SendouRouteHandle = {
+	i18n: ["scrims", "q"],
+};
+
 export default function ScrimPage() {
+	const { t } = useTranslation(["q"]);
 	const data = useLoaderData<typeof loader>();
 
 	return (
@@ -27,9 +33,12 @@ export default function ScrimPage() {
 				<GroupCard group={data.post.requests[0]} side="BRAVO" />
 			</div>
 			<div className="stack horizontal lg justify-center">
-				<InfoWithHeader header="Pass" value={resolveRoomPass(data.post.id)} />
 				<InfoWithHeader
-					header="Pool"
+					header={t("q:match.password.short")}
+					value={resolveRoomPass(data.post.id)}
+				/>
+				<InfoWithHeader
+					header={t("q:match.pool")}
 					value={Scrim.resolvePoolCode(data.post.id)}
 				/>
 			</div>
@@ -39,6 +48,7 @@ export default function ScrimPage() {
 }
 
 function ScrimHeader() {
+	const { t } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof loader>();
 	const { i18n } = useTranslation();
 
@@ -54,7 +64,9 @@ function ScrimHeader() {
 					minute: "numeric",
 				})}
 			</h2>
-			<div className="text-lighter text-xs font-bold">Scheduled scrim</div>
+			<div className="text-lighter text-xs font-bold">
+				{t("scrims:page.scheduledScrim")}
+			</div>
 		</div>
 	);
 }
@@ -66,11 +78,15 @@ function GroupCard({
 	group: { users: ScrimPostType["users"]; team: ScrimPostType["team"] };
 	side: "ALPHA" | "BRAVO";
 }) {
+	const { t } = useTranslation(["q"]);
+
 	return (
 		<div className="stack sm">
 			<div className="stack horizontal justify-between">
 				<div className="text-lighter text-xs">
-					{side === "ALPHA" ? "Alpha" : "Bravo"}
+					{side === "ALPHA"
+						? t("q:match.sides.alpha")
+						: t("q:match.sides.bravo")}
 				</div>
 				{group.team ? (
 					<Link
@@ -108,7 +124,6 @@ function InfoWithHeader({ header, value }: { header: string; value: string }) {
 	);
 }
 
-// xxx: test chat works ok
 function ScrimChat() {
 	const data = useLoaderData<typeof loader>();
 
