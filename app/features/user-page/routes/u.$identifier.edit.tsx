@@ -224,7 +224,11 @@ function CountrySelect() {
 			name="country"
 			defaultSelectedKey={data.user.country ?? undefined}
 		>
-			{(item) => <SendouSelectItem {...item}>{item.name}</SendouSelectItem>}
+			{({ key, ...item }) => (
+				<SendouSelectItem key={key} {...item}>
+					{item.name}
+				</SendouSelectItem>
+			)}
 		</SendouSelect>
 	);
 }

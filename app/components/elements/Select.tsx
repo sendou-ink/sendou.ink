@@ -9,6 +9,7 @@ import {
 	Button,
 	FieldError,
 	Input,
+	Label,
 	ListBox,
 	ListBoxItem,
 	ListLayout,
@@ -21,7 +22,6 @@ import {
 	useFilter,
 } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { Label } from "~/components/Label";
 import { ChevronUpDownIcon } from "~/components/icons/ChevronUpDown";
 import { CrossIcon } from "../icons/Cross";
 import { SearchIcon } from "../icons/Search";
