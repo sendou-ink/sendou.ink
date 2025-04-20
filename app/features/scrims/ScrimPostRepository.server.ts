@@ -209,6 +209,9 @@ const mapDBRowToScrimPost = (
 						isOwner: Boolean(user.isOwner),
 					};
 				}),
+				permissions: {
+					CANCEL: request.users.map((u) => u.id),
+				},
 			};
 		}),
 		users: row.users.map((user) => {

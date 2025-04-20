@@ -19,7 +19,7 @@ import { SpeechBubbleIcon } from "~/components/icons/SpeechBubble";
 import { UsersIcon } from "~/components/icons/Users";
 import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import { joinListToNaturalString } from "~/utils/arrays";
+import { joinListToNaturalString, nullFilledArray } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { metaTags } from "~/utils/remix";
@@ -39,7 +39,8 @@ import { ClockIcon } from "../../../components/icons/Clock";
 import { CrossIcon } from "../../../components/icons/Cross";
 import { MegaphoneIcon } from "../../../components/icons/MegaphoneIcon";
 import { SpeechBubbleFilledIcon } from "../../../components/icons/SpeechBubbleFilled";
-import { FromFormField } from "../components/FromFormField";
+import { WithFormField } from "../components/WithFormField";
+import { SCRIM } from "../scrims-constants";
 import { newRequestSchema } from "../scrims-schemas";
 import type { ScrimPost, ScrimPostRequest } from "../scrims-types";
 
@@ -194,7 +195,9 @@ function RequestScrimModal({
 							? { mode: "TEAM", teamId: data.teams[0].id }
 							: {
 									mode: "PICKUP",
-									users: [],
+									users: nullFilledArray(
+										SCRIM.MAX_PICKUP_SIZE_EXCLUDING_OWNER,
+									) as unknown as number[],
 								},
 				}}
 				handleCancel={close}
@@ -207,7 +210,7 @@ function RequestScrimModal({
 					<div className="text-sm text-lighter italic">{post.text}</div>
 				) : null}
 				<Divider />
-				<FromFormField usersTeams={data.teams} />
+				<WithFormField usersTeams={data.teams} />
 			</MyForm>
 		</Dialog>
 	);
@@ -366,6 +369,7 @@ function ScrimsTable({
 													<SendouButton
 														variant="minimal"
 														icon={<EyeSlashIcon className={styles.postIcon} />}
+														data-testid="limited-visibility-popover"
 													/>
 												}
 											>
@@ -421,6 +425,7 @@ function ScrimsTable({
 														icon={
 															<SpeechBubbleIcon className={styles.postIcon} />
 														}
+														data-testid="scrim-text-popover"
 													/>
 												}
 											>
@@ -510,9 +515,11 @@ function ScrimsTable({
 										)}
 									</td>
 								) : null}
-								{requestScrim &&
+								{user &&
+								requestScrim &&
 								post.requests.length !== 0 &&
-								!post.requests.at(0)?.isAccepted ? (
+								!post.requests.at(0)?.isAccepted &&
+								post.requests.at(0)?.permissions.CANCEL.includes(user.id) ? (
 									<td>
 										<FormWithConfirm
 											dialogHeading={t("scrims:cancelModal.title")}

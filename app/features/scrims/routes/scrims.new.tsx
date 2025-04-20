@@ -7,11 +7,12 @@ import { Label } from "~/components/Label";
 import { DateTimeFormField } from "~/components/form/DateTimeFormField";
 import { MyForm } from "~/components/form/MyForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
+import { nullFilledArray } from "~/utils/arrays";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FormMessage } from "../../../components/FormMessage";
 import { Main } from "../../../components/Main";
-import { FromFormField } from "../components/FromFormField";
-import { LUTI_DIVS } from "../scrims-constants";
+import { WithFormField } from "../components/WithFormField";
+import { LUTI_DIVS, SCRIM } from "../scrims-constants";
 import {
 	MAX_SCRIM_POST_TEXT_LENGTH,
 	scrimsNewActionSchema,
@@ -51,11 +52,13 @@ export default function NewScrimPage() {
 							? { mode: "TEAM", teamId: data.teams[0].id }
 							: {
 									mode: "PICKUP",
-									users: [],
+									users: nullFilledArray(
+										SCRIM.MAX_PICKUP_SIZE_EXCLUDING_OWNER,
+									) as unknown as number[],
 								},
 				}}
 			>
-				<FromFormField usersTeams={data.teams} />
+				<WithFormField usersTeams={data.teams} />
 
 				<DateTimeFormField<FormFields>
 					label={t("scrims:forms.when.title")}

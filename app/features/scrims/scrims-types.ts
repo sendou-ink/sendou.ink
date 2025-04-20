@@ -32,6 +32,9 @@ export interface ScrimPostRequest {
 	isAccepted: boolean;
 	users: Array<ScrimPostUser>;
 	team: ScrimPostTeam | null;
+	permissions: {
+		CANCEL: number[];
+	};
 	createdAt: number;
 }
 

@@ -17,7 +17,7 @@ interface FromFormFieldProps {
 	}>;
 }
 
-export function FromFormField({ usersTeams }: FromFormFieldProps) {
+export function WithFormField({ usersTeams }: FromFormFieldProps) {
 	const { t } = useTranslation(["scrims"]);
 
 	const user = useUser();
@@ -25,7 +25,7 @@ export function FromFormField({ usersTeams }: FromFormFieldProps) {
 
 	return (
 		<div>
-			<Label>{t("scrims:forms.with.title")}</Label>
+			<Label htmlFor="with">{t("scrims:forms.with.title")}</Label>
 			<Controller
 				control={methods.control}
 				name="from"
@@ -39,6 +39,7 @@ export function FromFormField({ usersTeams }: FromFormFieldProps) {
 					return (
 						<div>
 							<select
+								id="with"
 								className="w-max"
 								value={value.mode === "TEAM" ? value.teamId : "PICKUP"}
 								onChange={(e) => {
@@ -73,10 +74,11 @@ export function FromFormField({ usersTeams }: FromFormFieldProps) {
 									</div>
 									{value.users.map((userId, i) => (
 										<div key={i}>
-											<Label required={i < 3}>
+											<Label required={i < 3} htmlFor={`user-${i}`}>
 												{t("scrims:forms.with.user", { nth: i + 2 })}
 											</Label>
 											<UserSearch
+												id={`user-${i}`}
 												// TODO: changing it like this triggers useEffect -> dropdown stays open, need to use "value" not "defaultValue"
 												initialUserId={userId ?? undefined}
 												onChange={(user) =>

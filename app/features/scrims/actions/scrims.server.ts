@@ -95,11 +95,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "CANCEL_REQUEST": {
-			const { post, request } = await findRequest({
+			const { request } = await findRequest({
 				userId: user.id,
 				requestId: data.scrimPostRequestId,
 			});
-			requirePermission(post, "MANAGE_REQUESTS", user);
+			requirePermission(request, "CANCEL", user);
 
 			errorToastIfFalsy(
 				!request.isAccepted,

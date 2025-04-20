@@ -8,7 +8,7 @@ import {
 	seed,
 	submit,
 } from "~/utils/playwright";
-import { LFG_PAGE, associationsPage } from "~/utils/urls";
+import { associationsPage, scrimsPage } from "~/utils/urls";
 
 test.describe("Associations", () => {
 	test("creates a new association", async ({ page }) => {
@@ -16,7 +16,7 @@ test.describe("Associations", () => {
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({
 			page,
-			url: LFG_PAGE,
+			url: "/",
 		});
 
 		await page.getByTestId("anything-adder-menu-button").click();
@@ -35,8 +35,9 @@ test.describe("Associations", () => {
 		await impersonate(page, ADMIN_ID);
 		await navigate({
 			page,
-			url: associationsPage(),
+			url: scrimsPage(),
 		});
+		await page.getByRole("link", { name: "Associations" }).click();
 
 		await expect(page.getByTestId("delete-association")).toHaveCount(2);
 
