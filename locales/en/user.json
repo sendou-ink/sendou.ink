@@ -21,6 +21,7 @@
 	"forms.commissionText": "Commission info",
 	"forms.commissionText.info": "Price, slots open or other info related to commissioning you",
 	"forms.customName.info": "If missing, your Discord display name is used: \"{{discordName}}\"",
+	"forms.country.search.placeholder": "Search countries",
 
 	"results.title": "All results",
 	"results.placing": "Placing",

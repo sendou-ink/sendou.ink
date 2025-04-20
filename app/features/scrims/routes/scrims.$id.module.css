@@ -1,0 +1,50 @@
+.groupsContainer {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: var(--s-8);
+}
+
+@media screen and (min-width: 640px) {
+	.groupsContainer {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+.groupCard {
+	border-radius: var(--rounded);
+	background-color: var(--bg-lighter-solid);
+	padding: var(--s-2-5);
+	display: flex;
+	gap: var(--s-4);
+	flex-direction: column;
+}
+
+.memberRow {
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+	background-color: var(--bg-darker);
+	border-radius: var(--rounded);
+	font-size: var(--fonts-xsm);
+	font-weight: var(--semi-bold);
+	padding-inline-end: var(--s-2-5);
+}
+
+.infoHeader {
+	text-transform: uppercase;
+	color: var(--text-lighter);
+	font-size: var(--fonts-xs);
+	line-height: 1.1;
+}
+
+.infoValue {
+	font-size: var(--fonts-xl);
+	font-weight: var(--semi-bold);
+	letter-spacing: 1px;
+}
+
+.chatContainer {
+	border-radius: var(--rounded);
+	background-color: var(--bg-lighter-solid);
+	padding: var(--s-2-5);
+}

@@ -4,6 +4,8 @@ import {
 	SENDOUQ_PAGE,
 	badgePage,
 	plusSuggestionPage,
+	scrimPage,
+	scrimsPage,
 	sendouQMatchPage,
 	tournamentBracketsPage,
 	tournamentRegisterPage,
@@ -30,6 +32,9 @@ export const notificationNavIcon = (type: Notification["type"]) => {
 		case "TO_BRACKET_STARTED":
 		case "TO_CHECK_IN_OPENED":
 			return "medal";
+		case "SCRIM_NEW_REQUEST":
+		case "SCRIM_SCHEDULED":
+			return "scrims";
 		default:
 			assertUnreachable(type);
 	}
@@ -68,6 +73,12 @@ export const notificationLink = (notification: Notification) => {
 			});
 		case "TO_CHECK_IN_OPENED":
 			return tournamentRegisterPage(notification.meta.tournamentId);
+		case "SCRIM_NEW_REQUEST": {
+			return scrimsPage();
+		}
+		case "SCRIM_SCHEDULED": {
+			return scrimPage(notification.meta.id);
+		}
 		default:
 			assertUnreachable(notification);
 	}

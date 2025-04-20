@@ -217,7 +217,7 @@ function ActionButtons() {
 							newOwner: resolveNewOwner(team.members)?.username,
 						},
 					)}`}
-					deleteButtonText={t("team:actionButtons.leaveTeam.confirm")}
+					submitButtonText={t("team:actionButtons.leaveTeam.confirm")}
 					fields={[["_action", "LEAVE_TEAM"]]}
 				>
 					<Button

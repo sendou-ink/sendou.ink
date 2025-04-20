@@ -7,6 +7,7 @@ import {
 	navigate,
 	seed,
 	selectUser,
+	startBracket,
 	submit,
 } from "~/utils/playwright";
 import {
@@ -17,7 +18,6 @@ import {
 	tournamentRegisterPage,
 	userResultsPage,
 } from "~/utils/urls";
-import { startBracket } from "./shared";
 
 const navigateToMatch = async (page: Page, matchId: number) => {
 	await expect(async () => {

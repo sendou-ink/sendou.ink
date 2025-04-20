@@ -77,7 +77,7 @@
 	"settings.trusted.header": "Trusted users",
 	"settings.trusted.confirm": "Remove {{name}} from trusted users?",
 	"settings.trusted.trustedExplanation": "Trusted users can add you to groups and tournament teams directly. If removed from this list, in the future you need to join via a link they share.",
-	"settings.trusted.noTrustedExplanation": "You don't currently trust any users. Users can be trusted when you join their SendouQ group or tournament team via a link. Trusted users can add you to groups and tournament teams directly.",
+	"settings.trusted.noTrustedExplanation": "You don't currently trust any users. Trusted users can add you to groups, scrim pickups and tournament teams directly.",
 	"settings.trusted.teamExplanation": "In addition to the users above, a member of your team <2>{{name}}</2> can add you directly.",
 
 	"looking.joiningGroupError": "Before joining another group, leave the current one",

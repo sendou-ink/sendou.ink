@@ -28,7 +28,11 @@ test.describe("User page", () => {
 			.fill("1234");
 		await page.getByLabel("R-stick sens").selectOption("0");
 		await page.getByLabel("Motion sens").selectOption("-50");
-		await page.getByLabel("Country").selectOption("SE");
+
+		await page.getByLabel("Country").click();
+		await page.getByPlaceholder("Search countries").fill("Sweden");
+		await page.getByRole("option", { name: "Sweden" }).click();
+
 		await page.getByLabel("Bio").fill("My awesome bio");
 		await submitEditForm(page);
 

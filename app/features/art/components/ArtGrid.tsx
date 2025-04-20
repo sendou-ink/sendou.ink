@@ -234,7 +234,7 @@ function ImagePreview({
 								["id", art.id],
 								["_action", "UNLINK_ART"],
 							]}
-							deleteButtonText={t("common:actions.remove")}
+							submitButtonText={t("common:actions.remove")}
 						>
 							<Button icon={<UnlinkIcon />} variant="destructive" size="tiny" />
 						</FormWithConfirm>

@@ -278,6 +278,10 @@ export function deletePrivateUserNote({
 		.execute();
 }
 
+/**
+ * Retrieves information about users who have trusted the specified user,
+ * including their associated teams and explicit trust relationships. Banned users are excluded.
+ */
 export async function usersThatTrusted(userId: number) {
 	const teams = await db
 		.selectFrom("TeamMemberWithSecondary")

@@ -9,10 +9,11 @@ import type {
 	TablesInsertable,
 	UserPreferences,
 } from "~/db/tables";
+import type { ChatUser } from "~/features/chat/components/Chat";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
 import { safeNumberParse } from "~/utils/number";
 
 const identifierToUserIdQuery = (identifier: string) =>
@@ -323,6 +324,28 @@ export function findAllPlusServerMembers() {
 			"PlusTier.tier as plusTier",
 		])
 		.execute();
+}
+
+export async function findChatUsersByUserIds(userIds: number[]) {
+	const users = await db
+		.selectFrom("User")
+		.select([
+			"User.id",
+			"User.discordId",
+			"User.discordAvatar",
+			"User.username",
+			userChatNameColor,
+		])
+		.where("User.id", "in", userIds)
+		.execute();
+
+	const result: Record<number, ChatUser> = {};
+
+	for (const user of users) {
+		result[user.id] = user;
+	}
+
+	return result;
 }
 
 const withMaxEventStartTime = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {

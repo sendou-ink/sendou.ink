@@ -10,6 +10,7 @@ import { WeaponImage } from "~/components/Image";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { StarIcon } from "~/components/icons/Star";
 import { StarFilledIcon } from "~/components/icons/StarFilled";
@@ -210,22 +211,25 @@ function CountrySelect() {
 	const data = useLoaderData<typeof loader>();
 
 	return (
-		<div>
-			<label htmlFor="country">{t("user:country")}</label>
-			<select
-				className="u-edit__country-select"
-				name="country"
-				id="country"
-				defaultValue={data.user.country ?? ""}
-			>
-				<option value="" />
-				{data.countries.map((country) => (
-					<option key={country.code} value={country.code}>
-						{`${country.name} ${country.emoji}`}
-					</option>
-				))}
-			</select>
-		</div>
+		<SendouSelect
+			items={data.countries.map((country) => ({
+				...country,
+				id: country.code,
+				key: country.code,
+			}))}
+			label={t("user:country")}
+			search={{
+				placeholder: t("user:forms.country.search.placeholder"),
+			}}
+			name="country"
+			defaultSelectedKey={data.user.country ?? undefined}
+		>
+			{({ key, ...item }) => (
+				<SendouSelectItem key={key} {...item}>
+					{item.name}
+				</SendouSelectItem>
+			)}
+		</SendouSelect>
 	);
 }
 

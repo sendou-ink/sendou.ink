@@ -18,7 +18,7 @@ import { useChatAutoScroll } from "../chat-hooks";
 import type { ChatMessage } from "../chat-types";
 import { messageTypeToSound, soundEnabled, soundVolume } from "../chat-utils";
 
-type ChatUser = Pick<
+export type ChatUser = Pick<
 	Tables["User"],
 	"username" | "discordId" | "discordAvatar"
 > & {

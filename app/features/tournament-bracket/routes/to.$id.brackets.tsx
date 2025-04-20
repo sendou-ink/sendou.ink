@@ -169,7 +169,7 @@ export default function TournamentBracketsPage() {
 					<FormWithConfirm
 						dialogHeading={t("tournament:actions.finalize.confirm")}
 						fields={[["_action", "FINALIZE_TOURNAMENT"]]}
-						deleteButtonText={t("tournament:actions.finalize.action")}
+						submitButtonText={t("tournament:actions.finalize.action")}
 						submitButtonVariant="outlined"
 					>
 						<Button variant="minimal" testId="finalize-tournament-button">

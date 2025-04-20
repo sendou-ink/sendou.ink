@@ -3,9 +3,11 @@ import * as React from "react";
 export function usePagination<T>({
 	items,
 	pageSize,
+	scrollToTop = true,
 }: {
 	items: T[];
 	pageSize: number;
+	scrollToTop?: boolean;
 }) {
 	const [currentPage, setCurrentPage] = React.useState(1);
 	const pagesCount = Math.ceil(items.length / pageSize);
@@ -18,25 +20,25 @@ export function usePagination<T>({
 	const nextPage = React.useCallback(() => {
 		if (currentPage < pagesCount) {
 			setCurrentPage((prev) => prev + 1);
-			window.scrollTo(0, 0);
+			if (scrollToTop) window.scrollTo(0, 0);
 		}
-	}, [currentPage, pagesCount]);
+	}, [currentPage, pagesCount, scrollToTop]);
 
 	const previousPage = React.useCallback(() => {
 		if (currentPage > 1) {
 			setCurrentPage((prev) => prev - 1);
-			window.scrollTo(0, 0);
+			if (scrollToTop) window.scrollTo(0, 0);
 		}
-	}, [currentPage]);
+	}, [currentPage, scrollToTop]);
 
 	const setPage = React.useCallback(
 		(page: number) => {
 			if (page > 0 && page <= pagesCount) {
 				setCurrentPage(page);
-				window.scrollTo(0, 0);
+				if (scrollToTop) window.scrollTo(0, 0);
 			}
 		},
-		[pagesCount],
+		[pagesCount, scrollToTop],
 	);
 
 	const thereIsNextPage = currentPage < pagesCount;
