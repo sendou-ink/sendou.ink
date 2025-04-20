@@ -219,7 +219,7 @@ function CountrySelect() {
 			}))}
 			label={t("user:country")}
 			search={{
-				placeholder: "Search countries",
+				placeholder: t("user:forms.country.search.placeholder"),
 			}}
 			name="country"
 			defaultSelectedKey={data.user.country ?? undefined}
