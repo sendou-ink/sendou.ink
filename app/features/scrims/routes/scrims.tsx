@@ -24,7 +24,12 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { scrimPage, userPage, userSubmittedImage } from "~/utils/urls";
+import {
+	associationsPage,
+	scrimPage,
+	userPage,
+	userSubmittedImage,
+} from "~/utils/urls";
 import { Main } from "../../../components/Main";
 import { NewTabs } from "../../../components/NewTabs";
 import { ArrowDownOnSquareIcon } from "../../../components/icons/ArrowDownOnSquare";
@@ -60,9 +65,8 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 	});
 };
 
-// xxx: i18n for scrims
-
 export default function ScrimsPage() {
+	const user = useUser();
 	const { t } = useTranslation(["calendar", "scrims"]);
 	const data = useLoaderData<typeof loader>();
 	const isMounted = useIsMounted();
@@ -81,7 +85,17 @@ export default function ScrimsPage() {
 		);
 
 	return (
-		<Main>
+		<Main className="stack lg">
+			{user ? (
+				<LinkButton
+					size="tiny"
+					to={associationsPage()}
+					className="mr-auto"
+					variant="outlined"
+				>
+					{t("scrims:associations.title")}
+				</LinkButton>
+			) : null}
 			{typeof scrimToRequestId === "number" ? (
 				<RequestScrimModal
 					postId={scrimToRequestId}

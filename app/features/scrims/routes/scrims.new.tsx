@@ -1,11 +1,13 @@
 import { useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import type { z } from "zod";
 import { Label } from "~/components/Label";
 import { DateTimeFormField } from "~/components/form/DateTimeFormField";
 import { MyForm } from "~/components/form/MyForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FormMessage } from "../../../components/FormMessage";
 import { Main } from "../../../components/Main";
 import { FromFormField } from "../components/FromFormField";
@@ -20,16 +22,21 @@ import { action } from "../actions/scrims.new.server";
 import { type ScrimsNewLoaderData, loader } from "../loaders/scrims.new.server";
 export { loader, action };
 
+export const handle: SendouRouteHandle = {
+	i18n: "scrims",
+};
+
 type FormFields = z.infer<typeof scrimsNewActionSchema>;
 
 export default function NewScrimPage() {
+	const { t } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof loader>();
 
 	return (
 		<Main>
 			<MyForm
 				schema={scrimsNewActionSchema}
-				title="Creating a new scrim post"
+				title={t("scrims:forms.title")}
 				defaultValues={{
 					postText: "",
 					at: new Date(),
@@ -51,9 +58,9 @@ export default function NewScrimPage() {
 				<FromFormField usersTeams={data.teams} />
 
 				<DateTimeFormField<FormFields>
-					label="When"
+					label={t("scrims:forms.when.title")}
 					name="at"
-					bottomText="Leave blank if you want to look for a scrim now"
+					bottomText={t("scrims:forms.when.explanation")}
 				/>
 
 				<BaseVisibilityFormField associations={data.associations} />
@@ -63,7 +70,7 @@ export default function NewScrimPage() {
 				<LutiDivsFormField />
 
 				<TextAreaFormField<FormFields>
-					label="Text"
+					label={t("scrims:forms.text.title")}
 					name="postText"
 					maxLength={MAX_SCRIM_POST_TEXT_LENGTH}
 				/>
@@ -75,6 +82,7 @@ export default function NewScrimPage() {
 function BaseVisibilityFormField({
 	associations,
 }: { associations: ScrimsNewLoaderData["associations"] }) {
+	const { t } = useTranslation(["scrims"]);
 	const methods = useFormContext<FormFields>();
 
 	const error = methods.formState.errors.baseVisibility;
@@ -84,11 +92,10 @@ function BaseVisibilityFormField({
 
 	return (
 		<div>
-			<Label htmlFor="visibility">Visibility</Label>
+			<Label htmlFor="visibility">{t("scrims:forms.visibility.title")}</Label>
 			{noAssociations ? (
 				<FormMessage type="info">
-					No associations available. Create one to look for a scrim in a smaller
-					group.
+					{t("scrims:forms.visibility.noneAvailable")}
 				</FormMessage>
 			) : (
 				<AssociationSelect
@@ -108,6 +115,7 @@ function BaseVisibilityFormField({
 function NotFoundVisibilityFormField({
 	associations,
 }: { associations: ScrimsNewLoaderData["associations"] }) {
+	const { t } = useTranslation(["scrims"]);
 	const date = useWatch<FormFields>({ name: "notFoundVisibility.at" }) ?? "";
 	const methods = useFormContext<FormFields>();
 
@@ -122,12 +130,14 @@ function NotFoundVisibilityFormField({
 		<div>
 			<div className="stack horizontal sm">
 				<DateTimeFormField<FormFields>
-					label="If not found by"
+					label={t("scrims:forms.notFoundVisibility.title")}
 					name="notFoundVisibility.at"
 				/>
 				{date ? (
 					<div>
-						<Label htmlFor="not-found-visibility">Visibility</Label>
+						<Label htmlFor="not-found-visibility">
+							{t("scrims:forms.visibility.title")}
+						</Label>
 						<AssociationSelect
 							associations={associations}
 							id="not-found-visibility"
@@ -140,8 +150,7 @@ function NotFoundVisibilityFormField({
 				<FormMessage type="error">{error.message as string}</FormMessage>
 			) : (
 				<FormMessage type="info">
-					Leave blank if you don't want the visibility of your post to change
-					over time
+					{t("scrims:forms.notFoundVisibility.explanation")}
 				</FormMessage>
 			)}
 		</div>
@@ -154,9 +163,11 @@ const AssociationSelect = React.forwardRef<
 		associations: ScrimsNewLoaderData["associations"];
 	} & React.SelectHTMLAttributes<HTMLSelectElement>
 >(({ associations, ...rest }, ref) => {
+	const { t } = useTranslation(["scrims"]);
+
 	return (
 		<select ref={ref} {...rest}>
-			<option value="PUBLIC">Public</option>
+			<option value="PUBLIC">{t("scrims:forms.visibility.public")}</option>
 			{associations.virtual.map((association) => (
 				<option key={association} value={association}>
 					{association}
@@ -207,6 +218,8 @@ function LutiDivsSelector({
 	onChange: (value: LutiDivEdit | null) => void;
 	onBlur: () => void;
 }) {
+	const { t } = useTranslation(["scrims"]);
+
 	const onChangeMin = (e: React.ChangeEvent<HTMLSelectElement>) => {
 		const newValue = e.target.value === "" ? null : (e.target.value as LutiDiv);
 
@@ -230,7 +243,7 @@ function LutiDivsSelector({
 	return (
 		<div className="stack horizontal sm">
 			<div>
-				<Label htmlFor="min-div">Min div</Label>
+				<Label htmlFor="min-div">{t("scrims:forms.divs.minDiv.title")}</Label>
 				<select id="min-div" onChange={onChangeMin} onBlur={onBlur}>
 					<option value="">—</option>
 					{LUTI_DIVS.map((div) => (
@@ -242,7 +255,7 @@ function LutiDivsSelector({
 			</div>
 
 			<div>
-				<Label htmlFor="max-div">Max div</Label>
+				<Label htmlFor="max-div">{t("scrims:forms.divs.maxDiv.title")}</Label>
 				<select id="max-div" onChange={onChangeMax} onBlur={onBlur}>
 					<option value="">—</option>
 					{LUTI_DIVS.map((div) => (

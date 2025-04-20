@@ -1,5 +1,6 @@
 import { Link, Outlet, useFetcher, useLoaderData } from "@remix-run/react";
 import * as React from "react";
+import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
 import { Avatar } from "~/components/Avatar";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
@@ -12,6 +13,7 @@ import { ClipboardIcon } from "~/components/icons/Clipboard";
 import { TrashIcon } from "~/components/icons/Trash";
 import { useUser } from "~/features/auth/core/user";
 import { useHasPermission } from "~/modules/permissions/useHasPermission";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import { associationsPage, userPage } from "~/utils/urls";
 
 import { action } from "~/features/associations/actions/associations.server";
@@ -21,7 +23,9 @@ import {
 } from "~/features/associations/loaders/associations.server";
 export { loader, action };
 
-// xxx: i18n for associations
+export const handle: SendouRouteHandle = {
+	i18n: "scrims",
+};
 
 export default function AssociationsPage() {
 	const data = useLoaderData<typeof loader>();
@@ -39,12 +43,13 @@ export default function AssociationsPage() {
 }
 
 function Header() {
+	const { t } = useTranslation(["scrims"]);
+
 	return (
 		<div>
-			<h1 className="text-xl">Associations</h1>
+			<h1 className="text-xl">{t("scrims:associations.title")}</h1>
 			<div className="text-sm text-lighter">
-				Create an association to look in a smaller group (for example make one
-				with your team's regular practice opponents or LUTI division).
+				{t("scrims:associations.explanation")}
 			</div>
 		</div>
 	);
@@ -53,19 +58,24 @@ function Header() {
 function JoinForm() {
 	const data = useLoaderData<typeof loader>();
 	const fetcher = useFetcher();
+	const { t } = useTranslation(["common", "scrims"]);
 
 	if (!data.toJoin) return null;
 
 	return (
 		<fetcher.Form method="post" className="stack horizontal md items-center">
 			<input type="hidden" name="inviteCode" value={data.toJoin.inviteCode} />
-			<Label spaced={false}>Join {data.toJoin.association.name}?</Label>
+			<Label spaced={false}>
+				{t("scrims:associations.join.title", {
+					name: data.toJoin.association.name,
+				})}
+			</Label>
 			<SubmitButton
 				size="tiny"
 				_action="JOIN_ASSOCIATION"
 				state={fetcher.state}
 			>
-				Join
+				{t("common:actions.join")}
 			</SubmitButton>
 		</fetcher.Form>
 	);
@@ -74,6 +84,7 @@ function JoinForm() {
 function Association({
 	association,
 }: { association: AssociationsLoaderData["associations"][number] }) {
+	const { t } = useTranslation(["common", "scrims"]);
 	const user = useUser();
 	const canManage = useHasPermission(association, "MANAGE");
 
@@ -83,7 +94,9 @@ function Association({
 				<h2 className="text-lg"> {association.name}</h2>
 				{canManage ? (
 					<FormWithConfirm
-						dialogHeading={`Delete ${association.name} association?`}
+						dialogHeading={t("scrims:associations.delete.title", {
+							name: association.name,
+						})}
 						fields={[
 							["associationId", association.id],
 							["_action", "DELETE_ASSOCIATION"],
@@ -99,16 +112,21 @@ function Association({
 				) : null}
 			</div>
 			<div className="text-sm text-lighter">
-				Admin: {association.members?.find((m) => m.role === "ADMIN")?.username}
+				{t("scrims:associations.admin", {
+					username: association.members?.find((m) => m.role === "ADMIN")
+						?.username,
+				})}
 			</div>
 			{!canManage ? (
 				<FormWithConfirm
-					dialogHeading={`Leave ${association.name} association?`}
+					dialogHeading={t("scrims:associations.leave.title", {
+						name: association.name,
+					})}
 					fields={[
 						["_action", "LEAVE_ASSOCIATION"],
 						["associationId", association.id],
 					]}
-					submitButtonText="Leave"
+					submitButtonText={t("scrims:associations.leave.action")}
 				>
 					<SendouButton
 						variant="minimal-destructive"
@@ -116,7 +134,7 @@ function Association({
 						size="small"
 						className="my-2"
 					>
-						Leave
+						{t("scrims:associations.leave.action")}
 					</SendouButton>
 				</FormWithConfirm>
 			) : null}
@@ -144,6 +162,7 @@ function AssociationInviteCodeActions({
 	associationId,
 	inviteCode,
 }: { associationId: number; inviteCode: string }) {
+	const { t } = useTranslation(["common", "scrims"]);
 	const [state, copyToClipboard] = useCopyToClipboard();
 	const [copySuccess, setCopySuccess] = React.useState(false);
 	const fetcher = useFetcher();
@@ -161,7 +180,7 @@ function AssociationInviteCodeActions({
 
 	return (
 		<div className="mt-6">
-			<label htmlFor="invite">Share link to add members</label>
+			<label htmlFor="invite">{t("scrims:associations.shareLink.title")}</label>
 			<div className="stack horizontal sm items-center">
 				<input type="text" value={inviteLink} readOnly id="invite" />
 				<SendouButton
@@ -180,7 +199,7 @@ function AssociationInviteCodeActions({
 					_action="REFRESH_INVITE_CODE"
 					state={fetcher.state}
 				>
-					Reset link
+					{t("scrims:associations.shareLink.reset")}
 				</SubmitButton>
 			</fetcher.Form>
 		</div>
@@ -198,6 +217,8 @@ function AssociationMember({
 	associationId: number;
 	showControls?: boolean;
 }) {
+	const { t } = useTranslation(["common", "scrims"]);
+
 	return (
 		<div className="stack horizontal sm">
 			<Link
@@ -209,8 +230,10 @@ function AssociationMember({
 			</Link>
 			{showControls ? (
 				<FormWithConfirm
-					dialogHeading={`Remove ${member.username} from the association?`}
-					submitButtonText="Remove"
+					dialogHeading={t("scrims:associations.removeMember.title", {
+						username: member.username,
+					})}
+					submitButtonText={t("common:actions.remove")}
 					fields={[
 						["userId", member.id],
 						["associationId", associationId],
