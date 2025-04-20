@@ -1,4 +1,5 @@
 import { Controller, useFormContext } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { UserSearch } from "~/components/UserSearch";
@@ -17,12 +18,14 @@ interface FromFormFieldProps {
 }
 
 export function FromFormField({ usersTeams }: FromFormFieldProps) {
+	const { t } = useTranslation(["scrims"]);
+
 	const user = useUser();
 	const methods = useFormContext<NewRequestFormFields>();
 
 	return (
 		<div>
-			<Label>With</Label>
+			<Label>{t("scrims:forms.with.title")}</Label>
 			<Controller
 				control={methods.control}
 				name="from"
@@ -58,17 +61,21 @@ export function FromFormField({ usersTeams }: FromFormFieldProps) {
 										{team.name}
 									</option>
 								))}
-								<option value="PICKUP">Pick-up</option>
+								<option value="PICKUP">{t("scrims:forms.with.pick-up")}</option>
 							</select>
 							{value.mode === "PICKUP" ? (
 								<div className="stack md mt-4">
 									<div>
-										<Label required>User 1</Label>
+										<Label required>
+											{t("scrims:forms.with.user", { nth: 1 })}
+										</Label>
 										<UserSearch initialUserId={user!.id} disabled />
 									</div>
 									{value.users.map((userId, i) => (
 										<div key={i}>
-											<Label required={i < 3}>User {i + 2}</Label>
+											<Label required={i < 3}>
+												{t("scrims:forms.with.user", { nth: i + 2 })}
+											</Label>
 											<UserSearch
 												// TODO: changing it like this triggers useEffect -> dropdown stays open, need to use "value" not "defaultValue"
 												initialUserId={userId ?? undefined}
@@ -89,8 +96,7 @@ export function FromFormField({ usersTeams }: FromFormFieldProps) {
 										</FormMessage>
 									) : (
 										<FormMessage type="info">
-											You can search for users with username, Discord ID or
-											sendou.ink profile URL.
+											{t("scrims:forms.with.explanation")}
 										</FormMessage>
 									)}
 								</div>

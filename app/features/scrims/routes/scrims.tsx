@@ -47,7 +47,7 @@ import styles from "./scrims.module.css";
 export type NewRequestFormFields = z.infer<typeof newRequestSchema>;
 
 export const handle: SendouRouteHandle = {
-	i18n: "calendar",
+	i18n: ["calendar", "scrims"],
 };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
@@ -63,7 +63,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 // xxx: i18n for scrims
 
 export default function ScrimsPage() {
-	const { t } = useTranslation(["calendar"]);
+	const { t } = useTranslation(["calendar", "scrims"]);
 	const data = useLoaderData<typeof loader>();
 	const isMounted = useIsMounted();
 	const [scrimToRequestId, setScrimToRequestId] = React.useState<number>();
@@ -94,17 +94,17 @@ export default function ScrimsPage() {
 				defaultIndex={data.posts.owned.length > 0 ? 0 : 2}
 				tabs={[
 					{
-						label: "Owned",
+						label: t("scrims:tabs.owned"),
 						number: data.posts.owned.length,
 						icon: <ArrowDownOnSquareIcon />,
 					},
 					{
-						label: "Requests",
+						label: t("scrims:tabs.requests"),
 						number: data.posts.requested.length,
 						icon: <ArrowUpOnSquareIcon />,
 					},
 					{
-						label: "Available",
+						label: t("scrims:tabs.available"),
 						number: data.posts.neutral.length,
 						icon: <MegaphoneIcon />,
 					},
@@ -140,8 +140,7 @@ export default function ScrimsPage() {
 								/>
 							) : (
 								<div className="text-lighter text-lg font-semi-bold text-center mt-6">
-									No scrims available right now. Check back later or add your
-									own!
+									{t("scrims:noneAvailable")}
 								</div>
 							),
 					},
@@ -159,6 +158,7 @@ function RequestScrimModal({
 	postId,
 	close,
 }: { postId: number; close: () => void }) {
+	const { t } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof loader>();
 
 	// both to avoid crash when requesting
@@ -171,7 +171,7 @@ function RequestScrimModal({
 		<Dialog isOpen>
 			<MyForm
 				schema={newRequestSchema}
-				title="Sending a scrim request"
+				title={t("scrims:requestModal.title")}
 				defaultValues={{
 					_action: "NEW_REQUEST",
 					scrimPostId: postId,
@@ -267,6 +267,7 @@ function ScrimsTable({
 	showStatus: boolean;
 	requestScrim?: (postId: number) => void;
 }) {
+	const { t } = useTranslation(["common", "scrims"]);
 	const user = useUser();
 	const { i18n } = useTranslation();
 
@@ -290,11 +291,11 @@ function ScrimsTable({
 		<Table>
 			<thead>
 				<tr>
-					<th>Time</th>
-					<th>Team</th>
+					<th>{t("scrims:table.headers.time")}</th>
+					<th>{t("scrims:table.headers.team")}</th>
 					{showPopovers ? <th /> : null}
-					<th>Divs</th>
-					{showStatus ? <th>Status</th> : null}
+					<th>{t("scrims:table.headers.divs")}</th>
+					{showStatus ? <th>{t("scrims:table.headers.status")}</th> : null}
 					{requestScrim || showDeletePost ? <th /> : null}
 				</tr>
 			</thead>
@@ -332,7 +333,7 @@ function ScrimsTable({
 									<div className="stack horizontal sm">
 										<div className={styles.postTime}>
 											{inThePast
-												? "Now"
+												? t("scrims:now")
 												: databaseTimestampToDate(post.at).toLocaleTimeString(
 														i18n.language,
 														{
@@ -350,8 +351,7 @@ function ScrimsTable({
 													/>
 												}
 											>
-												This post currently has limited visibility based on
-												associations.
+												{t("scrims:limitedVisibility")}
 											</SendouPopover>
 										) : null}
 									</div>
@@ -389,7 +389,8 @@ function ScrimsTable({
 										) : (
 											<Avatar size="xxs" user={owner} />
 										)}
-										{post.team?.name ?? `${owner.username}'s pickup`}
+										{post.team?.name ??
+											t("scrims:pickup", { username: owner.username })}
 									</div>
 								</td>
 								{showPopovers ? (
@@ -418,7 +419,11 @@ function ScrimsTable({
 									) : null}
 								</td>
 								{showStatus ? (
-									<td className={clsx(styles.postFloatingActionCell, "bg")}>
+									<td
+										className={clsx({
+											[styles.postFloatingActionCell]: status !== "CONFIRMED",
+										})}
+									>
 										<div
 											className={clsx(styles.postStatus, {
 												[styles.postStatusConfirmed]: status === "CONFIRMED",
@@ -427,26 +432,26 @@ function ScrimsTable({
 										>
 											{status === "CONFIRMED" ? (
 												<>
-													<CheckmarkIcon /> Booked
+													<CheckmarkIcon /> {t("scrims:status.booked")}
 												</>
 											) : null}
 											{status === "PENDING" ? (
 												<>
-													<ClockIcon /> Pending
+													<ClockIcon /> {t("scrims:status.pending")}
 												</>
 											) : null}
 										</div>
 									</td>
 								) : null}
 								{requestScrim && post.requests.length === 0 ? (
-									<td className={clsx(styles.postFloatingActionCell, "bg")}>
+									<td className={styles.postFloatingActionCell}>
 										<Button
 											size="tiny"
 											onClick={() => requestScrim(post.id)}
 											icon={<ArrowUpOnSquareIcon />}
 											className="ml-auto"
 										>
-											Request
+											{t("scrims:actions.request")}
 										</Button>
 									</td>
 								) : null}
@@ -454,9 +459,9 @@ function ScrimsTable({
 									<td>
 										{user && post.permissions.DELETE_POST.includes(user.id) ? (
 											<FormWithConfirm
-												dialogHeading="Delete scrim post"
-												submitButtonText="Delete"
-												cancelButtonText="Nevermind"
+												dialogHeading={t("scrims:deleteModal.title")}
+												submitButtonText={t("common:actions.delete")}
+												cancelButtonText={t("common:actions.nevermind")}
 												fields={[
 													["scrimPostId", post.id],
 													["_action", "DELETE_POST"],
@@ -467,7 +472,7 @@ function ScrimsTable({
 													variant="destructive"
 													className="ml-auto"
 												>
-													Delete
+													{t("common:actions.delete")}
 												</Button>
 											</FormWithConfirm>
 										) : (
@@ -478,11 +483,11 @@ function ScrimsTable({
 														size="small"
 														className="ml-auto"
 													>
-														Delete
+														{t("common:actions.delete")}
 													</SendouButton>
 												}
 											>
-												The post must be deleted by the owner ({owner.username})
+												{t("scrims:deleteModal.prevented")}
 											</SendouPopover>
 										)}
 									</td>
@@ -492,9 +497,9 @@ function ScrimsTable({
 								!post.requests.at(0)?.isAccepted ? (
 									<td>
 										<FormWithConfirm
-											dialogHeading="Cancel request"
-											submitButtonText="Cancel"
-											cancelButtonText="Nevermind"
+											dialogHeading={t("scrims:cancelModal.title")}
+											submitButtonText={t("common:actions.cancel")}
+											cancelButtonText={t("common:actions.nevermind")}
 											fields={[
 												["scrimPostRequestId", post.requests[0].id],
 												["_action", "CANCEL_REQUEST"],
@@ -506,7 +511,7 @@ function ScrimsTable({
 												icon={<CrossIcon />}
 												className="ml-auto"
 											>
-												Cancel
+												{t("common:actions.cancel")}
 											</Button>
 										</FormWithConfirm>
 									</td>
@@ -515,7 +520,7 @@ function ScrimsTable({
 								post.requests
 									.at(0)
 									?.users.some((rUser) => rUser.id === user?.id) ? (
-									<td>
+									<td className={styles.postFloatingActionCell}>
 										<ContactButton postId={post.id} />
 									</td>
 								) : null}
@@ -530,6 +535,8 @@ function ScrimsTable({
 }
 
 function ContactButton({ postId }: { postId: number }) {
+	const { t } = useTranslation(["scrims"]);
+
 	return (
 		<LinkButton
 			to={scrimPage(postId)}
@@ -537,7 +544,7 @@ function ContactButton({ postId }: { postId: number }) {
 			className="w-max ml-auto"
 			icon={<SpeechBubbleFilledIcon />}
 		>
-			Contact
+			{t("scrims:actions.contact")}
 		</LinkButton>
 	);
 }
@@ -547,10 +554,16 @@ function RequestRow({
 	request,
 	postId,
 }: { canAccept: boolean; request: ScrimPostRequest; postId: number }) {
+	const { t } = useTranslation(["common", "scrims"]);
+
 	const requestOwner =
 		request.users.find((user) => user.isOwner) ?? request.users[0];
 
-	const groupName = request.team?.name ?? `${requestOwner.username}'s pickup`;
+	const groupName =
+		request.team?.name ??
+		t("scrims:pickup", {
+			username: requestOwner.username,
+		});
 
 	return (
 		<tr className="bg-theme-transparent-important">
@@ -594,24 +607,28 @@ function RequestRow({
 			<td className={styles.postFloatingActionCell}>
 				{!request.isAccepted && canAccept ? (
 					<FormWithConfirm
-						dialogHeading={`Accept the request to scrim by ${groupName} & reject others (if any)?`}
+						dialogHeading={t("scrims:acceptModal.title", { groupName })}
 						fields={[
 							["scrimPostRequestId", request.id],
 							["_action", "ACCEPT_REQUEST"],
 						]}
 						submitButtonVariant="primary"
-						submitButtonText="Accept"
+						submitButtonText={t("common:actions.accept")}
 						cancelButtonVariant="destructive"
 					>
 						<Button size="tiny" className="ml-auto">
-							Accept
+							{t("common:actions.accept")}
 						</Button>
 					</FormWithConfirm>
 				) : !request.isAccepted && !canAccept ? (
 					<SendouPopover
-						trigger={<SendouButton size="small">Accept</SendouButton>}
+						trigger={
+							<SendouButton size="small">
+								{t("common:actions.accept")}
+							</SendouButton>
+						}
 					>
-						Ask the person who posted the scrim to accept this request
+						{t("scrims:acceptModal.prevented")}
 					</SendouPopover>
 				) : (
 					<ContactButton postId={postId} />

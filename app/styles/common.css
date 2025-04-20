@@ -322,8 +322,8 @@ select:focus {
 
 .my-table {
 	width: 100%;
-	border-collapse: collapse;
-	border-spacing: 0 var(--s-1-5);
+	border-collapse: separate;
+	border-spacing: 0;
 	font-size: var(--fonts-xs);
 	text-align: left;
 	border-color: var(--border);
@@ -339,13 +339,6 @@ select:focus {
 	font-size: var(--fonts-xxs);
 }
 
-.my-table tr {
-	border-style: solid;
-	border-width: 0px;
-	border-bottom-width: 1px;
-	border-color: var(--border);
-}
-
 .my-table tbody tr:hover {
 	background-color: var(--bg-lighter);
 }
@@ -356,6 +349,14 @@ select:focus {
 
 .my-table > tbody > tr > td {
 	padding: var(--s-2) var(--s-2-5);
+}
+
+table tr:first-child td {
+	border-top: 1px solid var(--border);
+}
+
+table td {
+	border-bottom: 1px solid var(--border);
 }
 
 td > input[type="checkbox"] {
