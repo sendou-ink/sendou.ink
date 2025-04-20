@@ -107,6 +107,7 @@ function Association({
 							className="build__small-text"
 							variant="minimal-destructive"
 							type="submit"
+							data-testid="delete-association"
 						/>
 					</FormWithConfirm>
 				) : null}
@@ -133,6 +134,7 @@ function Association({
 						type="submit"
 						size="small"
 						className="my-2"
+						data-testid="leave-team-button"
 					>
 						{t("scrims:associations.leave.action")}
 					</SendouButton>
