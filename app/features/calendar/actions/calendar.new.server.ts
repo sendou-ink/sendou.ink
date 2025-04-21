@@ -18,7 +18,6 @@ import {
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { requireRole } from "~/modules/permissions/guards.server";
-import { canEditCalendarEvent } from "~/permissions";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
@@ -42,6 +41,7 @@ import {
 	toArray,
 } from "~/utils/zod";
 import { CALENDAR_EVENT, REG_CLOSES_AT_OPTIONS } from "../calendar-constants";
+import { canEditCalendarEvent } from "../calendar-utils";
 import {
 	calendarEventMaxDate,
 	calendarEventMinDate,

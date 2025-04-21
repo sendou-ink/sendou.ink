@@ -8,11 +8,11 @@ import {
 	clearTournamentDataCache,
 	tournamentManagerData,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import { canDeleteCalendarEvent } from "~/permissions";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { errorToastIfFalsy, notFoundIfFalsy } from "~/utils/remix.server";
 import { CALENDAR_PAGE } from "~/utils/urls";
 import { actualNumber, id } from "~/utils/zod";
+import { canDeleteCalendarEvent } from "../calendar-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
 	const user = await requireUserId(request);

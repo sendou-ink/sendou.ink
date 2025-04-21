@@ -16,11 +16,6 @@ import { Table } from "~/components/Table";
 import { useUser } from "~/features/auth/core/user";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import {
-	canDeleteCalendarEvent,
-	canEditCalendarEvent,
-	canReportCalendarEventWinners,
-} from "~/permissions";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -34,6 +29,11 @@ import {
 	userPage,
 } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
+import {
+	canDeleteCalendarEvent,
+	canEditCalendarEvent,
+	canReportCalendarEventWinners,
+} from "../calendar-utils";
 import { Tags } from "../components/Tags";
 
 import { action } from "../actions/calendar.$id.server";

@@ -6,8 +6,8 @@ import * as CalendarRepository from "~/features/calendar/CalendarRepository.serv
 import { tournamentData } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import { requireRole } from "~/modules/permissions/guards.server";
-import { canEditCalendarEvent } from "~/permissions";
 import { tournamentBracketsPage } from "~/utils/urls";
+import { canEditCalendarEvent } from "../calendar-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await requireUser(request);
