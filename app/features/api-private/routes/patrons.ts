@@ -1,8 +1,10 @@
 import type { ActionFunction, LoaderFunctionArgs } from "@remix-run/node";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { updatePatreonData } from "~/modules/patreon";
-import { canAccessLohiEndpoint } from "~/permissions";
-import { unauthorizedIfFalsy } from "~/utils/remix.server";
+import {
+	canAccessLohiEndpoint,
+	unauthorizedIfFalsy,
+} from "~/utils/remix.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	if (!canAccessLohiEndpoint(request)) {

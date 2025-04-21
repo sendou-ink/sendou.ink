@@ -1,7 +1,5 @@
 import type { Tables, UserWithPlusTier } from "~/db/tables";
 import type * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
-import invariant from "~/utils/invariant";
-import { LOHI_TOKEN_HEADER_NAME } from "./constants";
 import { currentSeason, nextSeason } from "./features/mmr/season";
 import { isVotingActive } from "./features/plus-voting/core";
 import type { FindMatchById } from "./features/tournament-bracket/queries/findMatchById.server";
@@ -194,12 +192,6 @@ function hasUserSuggestedThisMonth({
 	return suggestions.some(
 		(suggestion) => suggestion.suggestions[0].author.id === user?.id,
 	);
-}
-
-/** Some endpoints can only be accessed with an auth token. Used by Lohi bot and cron jobs. */
-export function canAccessLohiEndpoint(request: Request) {
-	invariant(process.env.LOHI_TOKEN, "LOHI_TOKEN is required");
-	return request.headers.get(LOHI_TOKEN_HEADER_NAME) === process.env.LOHI_TOKEN;
 }
 
 interface CanEditBadgeOwnersArgs {

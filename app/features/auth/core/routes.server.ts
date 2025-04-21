@@ -4,9 +4,12 @@ import { isbot } from "isbot";
 import { z } from "zod";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { requireRole } from "~/modules/permissions/guards.server";
-import { canAccessLohiEndpoint } from "~/permissions";
 import { logger } from "~/utils/logger";
-import { errorToastIfFalsy, parseSearchParams } from "~/utils/remix.server";
+import {
+	canAccessLohiEndpoint,
+	errorToastIfFalsy,
+	parseSearchParams,
+} from "~/utils/remix.server";
 import { ADMIN_PAGE, authErrorUrl } from "~/utils/urls";
 import { createLogInLink } from "../queries/createLogInLink.server";
 import { deleteLogInLinkByCode } from "../queries/deleteLogInLinkByCode.server";
