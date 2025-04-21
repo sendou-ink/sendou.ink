@@ -5,16 +5,15 @@ import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { tournamentData } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import { requireRole } from "~/modules/permissions/guards.server";
 import { canEditCalendarEvent } from "~/permissions";
-import { unauthorizedIfFalsy } from "~/utils/remix.server";
 import { tournamentBracketsPage } from "~/utils/urls";
-import { canAddNewEvent } from "../calendar-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await requireUser(request);
-	const url = new URL(request.url);
+	requireRole(user, "CALENDAR_EVENT_ADDER");
 
-	unauthorizedIfFalsy(canAddNewEvent(user));
+	const url = new URL(request.url);
 
 	const eventWithTournament = async (key: string) => {
 		const eventId = Number(url.searchParams.get(key));

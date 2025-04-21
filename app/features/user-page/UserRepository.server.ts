@@ -10,6 +10,7 @@ import type {
 	UserPreferences,
 } from "~/db/tables";
 import type { ChatUser } from "~/features/chat/components/Chat";
+import { userRoles } from "~/modules/permissions/mapper.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
@@ -271,14 +272,8 @@ export function findBannedStatusByUserId(userId: number) {
 		.executeTakeFirst();
 }
 
-const userIsTournamentOrganizer = sql<
-	string | null
->`IIF(COALESCE("User"."patronTier", 0) >= 2, 1, "User"."isTournamentOrganizer")`.as(
-	"isTournamentOrganizer",
-);
-
-export function findLeanById(id: number) {
-	return db
+export async function findLeanById(id: number) {
+	const user = await db
 		.selectFrom("User")
 		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.where("User.id", "=", id)
@@ -286,7 +281,7 @@ export function findLeanById(id: number) {
 			...COMMON_USER_FIELDS,
 			"User.isArtist",
 			"User.isVideoAdder",
-			userIsTournamentOrganizer,
+			"User.isTournamentOrganizer",
 			"User.patronTier",
 			"User.favoriteBadgeId",
 			"User.languages",
@@ -302,6 +297,13 @@ export function findLeanById(id: number) {
 				.as("friendCode"),
 		])
 		.executeTakeFirst();
+
+	if (!user) return;
+
+	return {
+		...user,
+		roles: userRoles(user),
+	};
 }
 
 export function findAllPatrons() {

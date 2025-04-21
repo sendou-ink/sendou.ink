@@ -17,9 +17,8 @@ import { StarFilledIcon } from "~/components/icons/StarFilled";
 import { TrashIcon } from "~/components/icons/Trash";
 import { USER } from "~/constants";
 import type { Tables } from "~/db/tables";
-import { useUser } from "~/features/auth/core/user";
 import type { MainWeaponId } from "~/modules/in-game-lists";
-import { canAddCustomizedColorsToUserProfile } from "~/permissions";
+import { useHasRole } from "~/modules/permissions/hooks";
 import invariant from "~/utils/invariant";
 import { rawSensToString } from "~/utils/strings";
 import { FAQ_PAGE } from "~/utils/urls";
@@ -32,17 +31,19 @@ export { loader, action };
 import "~/styles/u-edit.css";
 
 export default function UserEditPage() {
-	const user = useUser();
 	const { t } = useTranslation(["common", "user"]);
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
 	const layoutData = parentRoute.data as UserPageLoaderData;
 	const data = useLoaderData<typeof loader>();
 
+	const isSupporter = useHasRole("SUPPORTER");
+	const isArtist = useHasRole("ARTIST");
+
 	return (
 		<div className="half-width">
 			<Form className="u-edit__container" method="post">
-				{canAddCustomizedColorsToUserProfile(user) ? (
+				{isSupporter ? (
 					<CustomizedColorsInput initialColors={layoutData.css} />
 				) : null}
 				<CustomNameInput />
@@ -59,7 +60,7 @@ export default function UserEditPage() {
 				) : (
 					<input type="hidden" name="showDiscordUniqueName" value="on" />
 				)}
-				{user?.isArtist ? (
+				{isArtist ? (
 					<>
 						<CommissionsOpenToggle parentRouteData={layoutData} />
 						<CommissionTextArea initialValue={layoutData.user.commissionText} />

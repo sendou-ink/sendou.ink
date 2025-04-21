@@ -104,16 +104,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 						discordAvatar: user.discordAvatar,
 						discordId: user.discordId,
 						id: user.id,
-						plusTier: user.plusTier,
 						customUrl: user.customUrl,
-						patronTier: user.patronTier,
-						isArtist: user.isArtist,
-						isVideoAdder: user.isVideoAdder,
-						isTournamentOrganizer: user.isTournamentOrganizer,
 						inGameName: user.inGameName,
 						friendCode: user.friendCode,
 						preferences: user.preferences ?? {},
 						languages: user.languages ? user.languages.split(",") : [],
+						plusTier: user.plusTier,
+						roles: user.roles,
 					}
 				: undefined,
 			notifications: user
@@ -519,7 +516,7 @@ function PWALinks() {
 }
 
 function MyRamp({ data }: { data: RootLoaderData | undefined }) {
-	if (!data || data.user?.patronTier) {
+	if (!data || !data.user?.roles.includes("MINOR_SUPPORT")) {
 		return null;
 	}
 

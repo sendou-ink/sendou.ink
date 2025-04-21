@@ -1,10 +1,6 @@
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
-import { userDiscordIdIsAged } from "~/utils/users";
 import type { RegClosesAtOption } from "./calendar-constants";
-
-export const canAddNewEvent = (user: { discordId: string }) =>
-	userDiscordIdIsAged(user);
 
 export const calendarEventMinDate = () => new Date(Date.UTC(2015, 4, 28));
 export const calendarEventMaxDate = () => {
