@@ -1,7 +1,7 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
-import { requirePermission } from "~/modules/permissions/requirePermission.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";

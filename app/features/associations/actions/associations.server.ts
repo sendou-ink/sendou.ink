@@ -2,7 +2,7 @@ import type { ActionFunctionArgs } from "@remix-run/node";
 import { ASSOCIATION } from "~/features/associations/associations-constants";
 import { associationsPageActionSchema } from "~/features/associations/associations-schemas";
 import { requireUser } from "~/features/auth/core/user.server";
-import { requirePermission } from "~/modules/permissions/requirePermission.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
 import {
 	badRequestIfFalsy,
 	errorToastIfFalsy,

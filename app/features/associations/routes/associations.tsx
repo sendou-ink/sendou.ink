@@ -12,7 +12,7 @@ import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { ClipboardIcon } from "~/components/icons/Clipboard";
 import { TrashIcon } from "~/components/icons/Trash";
 import { useUser } from "~/features/auth/core/user";
-import { useHasPermission } from "~/modules/permissions/useHasPermission";
+import { useHasPermission } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { associationsPage, userPage } from "~/utils/urls";
 
