@@ -26,7 +26,7 @@ export function MyForm<T extends z.ZodTypeAny>({
 }) {
 	const { t } = useTranslation(["common"]);
 	const fetcher = useFetcher<any>();
-	const methods = useForm<z.infer<T>>({
+	const methods = useForm({
 		resolver: zodResolver(schema),
 		defaultValues,
 	});
