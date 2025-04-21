@@ -1,6 +1,5 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { isMod } from "../../../permissions";
 import { notFoundIfFalsy } from "../../../utils/remix.server";
 import { requireUser } from "../../auth/core/user.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
@@ -20,7 +19,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		throw new Response(null, { status: 404 });
 	}
 
-	if (!Scrim.isParticipating(post, user.id) && !isMod(user)) {
+	if (!Scrim.isParticipating(post, user.id) && !user.roles.includes("STAFF")) {
 		throw new Response(null, { status: 403 });
 	}
 

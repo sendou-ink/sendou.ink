@@ -1,40 +1,9 @@
 import type { Tables, UserWithPlusTier } from "~/db/tables";
 import type * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
-import invariant from "~/utils/invariant";
-import { ADMIN_ID, LOHI_TOKEN_HEADER_NAME, MOD_IDS } from "./constants";
-import { currentSeason, nextSeason } from "./features/mmr/season";
-import { isVotingActive } from "./features/plus-voting/core";
-import type { FindMatchById } from "./features/tournament-bracket/queries/findMatchById.server";
-import { allTruthy } from "./utils/arrays";
-import { databaseTimestampToDate } from "./utils/dates";
-
-// TODO: move to permissions module and generalize a lot of the logic
-
-type IsAdminUser = Pick<Tables["User"], "id">;
-export function isAdmin(user?: IsAdminUser) {
-	return user?.id === ADMIN_ID;
-}
-
-export function isMod(user?: IsAdminUser) {
-	if (!user) return false;
-
-	return isAdmin(user) || MOD_IDS.includes(user.id);
-}
-
-export function canPerformAdminActions(user?: IsAdminUser) {
-	if (["development", "test"].includes(process.env.NODE_ENV)) return true;
-
-	return isAdmin(user);
-}
-
-function adminOverride(user?: IsAdminUser) {
-	if (isAdmin(user)) {
-		return () => true;
-	}
-
-	return (canPerformActionAsNormalUser: boolean) =>
-		canPerformActionAsNormalUser;
-}
+import { isAdmin } from "~/modules/permissions/utils";
+import { allTruthy } from "~/utils/arrays";
+import { currentSeason, nextSeason } from "../mmr/season";
+import { isVotingActive } from "../plus-voting/core";
 
 interface CanAddCommentToSuggestionArgs {
 	user?: Pick<UserWithPlusTier, "id" | "plusTier">;
@@ -82,10 +51,9 @@ export function canDeleteComment(args: CanDeleteCommentArgs) {
 
 	if (isFirstSuggestion(args)) {
 		if (votingActive) return false;
+		if (isAdmin(args.user)) return true;
 
-		return adminOverride(args.user)(
-			allTruthy([isOwnComment(args), suggestionHasNoOtherComments(args)]),
-		);
+		return allTruthy([isOwnComment(args), suggestionHasNoOtherComments(args)]);
 	}
 
 	return isOwnComment(args);
@@ -219,103 +187,5 @@ function hasUserSuggestedThisMonth({
 }: Pick<CanSuggestNewUserFEArgs, "user" | "suggestions">) {
 	return suggestions.some(
 		(suggestion) => suggestion.suggestions[0].author.id === user?.id,
-	);
-}
-
-/** Some endpoints can only be accessed with an auth token. Used by Lohi bot and cron jobs. */
-export function canAccessLohiEndpoint(request: Request) {
-	invariant(process.env.LOHI_TOKEN, "LOHI_TOKEN is required");
-	return request.headers.get(LOHI_TOKEN_HEADER_NAME) === process.env.LOHI_TOKEN;
-}
-
-interface CanEditBadgeOwnersArgs {
-	user?: Pick<Tables["User"], "id">;
-	managers: { id: number }[];
-}
-
-export function canEditBadgeOwners({ user, managers }: CanEditBadgeOwnersArgs) {
-	return adminOverride(user)(isBadgeManager({ user, managers }));
-}
-
-function isBadgeManager({
-	user,
-	managers,
-}: Pick<CanEditBadgeOwnersArgs, "user" | "managers">) {
-	if (!user) return false;
-	return managers.some((manager) => manager.id === user.id);
-}
-
-export function canEditBadgeManagers(user?: IsAdminUser) {
-	return isMod(user);
-}
-
-interface CanEditCalendarEventArgs {
-	user?: Pick<Tables["User"], "id">;
-	event: Pick<Tables["CalendarEvent"], "authorId">;
-}
-export function canEditCalendarEvent({
-	user,
-	event,
-}: CanEditCalendarEventArgs) {
-	return adminOverride(user)(user?.id === event.authorId);
-}
-
-export function canDeleteCalendarEvent({
-	user,
-	event,
-	startTime,
-}: CanEditCalendarEventArgs & { startTime: Date }) {
-	return adminOverride(user)(
-		user?.id === event.authorId && startTime.getTime() > new Date().getTime(),
-	);
-}
-
-interface CanReportCalendarEventWinnersArgs {
-	user?: Pick<Tables["User"], "id">;
-	event: Pick<Tables["CalendarEvent"], "authorId">;
-	startTimes: number[];
-}
-export function canReportCalendarEventWinners({
-	user,
-	event,
-	startTimes,
-}: CanReportCalendarEventWinnersArgs) {
-	return allTruthy([
-		canEditCalendarEvent({ user, event }),
-		eventStartedInThePast(startTimes),
-	]);
-}
-
-function eventStartedInThePast(
-	startTimes: CanReportCalendarEventWinnersArgs["startTimes"],
-) {
-	return startTimes.every(
-		(startTime) =>
-			databaseTimestampToDate(startTime).getTime() < new Date().getTime(),
-	);
-}
-
-export function canReportTournamentScore({
-	match,
-	isMemberOfATeamInTheMatch,
-	isOrganizer,
-}: {
-	match: NonNullable<FindMatchById>;
-	isMemberOfATeamInTheMatch: boolean;
-	isOrganizer: boolean;
-}) {
-	const matchIsOver =
-		match.opponentOne?.result === "win" || match.opponentTwo?.result === "win";
-
-	return !matchIsOver && (isMemberOfATeamInTheMatch || isOrganizer);
-}
-
-export function canAddCustomizedColorsToUserProfile(
-	user?: Pick<Tables["User"], "id" | "patronTier">,
-) {
-	if (!user) return false;
-
-	return adminOverride(user)(
-		Boolean(user?.patronTier) && user.patronTier! >= 2,
 	);
 }

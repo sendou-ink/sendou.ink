@@ -6,7 +6,6 @@ import {
 	nextNonCompletedVoting,
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
-import { canDeleteComment, isFirstSuggestion } from "~/permissions";
 import invariant from "~/utils/invariant";
 import {
 	badRequestIfFalsy,
@@ -15,6 +14,7 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { suggestionActionSchema } from "../plus-suggestions-schemas";
+import { canDeleteComment, isFirstSuggestion } from "../plus-suggestions-utils";
 
 export const action: ActionFunction = async ({ request }) => {
 	const data = await parseRequestPayload({

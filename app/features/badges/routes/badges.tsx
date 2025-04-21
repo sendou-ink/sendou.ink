@@ -127,7 +127,7 @@ function splitBadges(
 	const otherBadges: BadgesLoaderData["badges"] = [];
 
 	for (const badge of badges) {
-		if (user && badge.managers.includes(user?.id)) {
+		if (user && badge.permissions.MANAGE.includes(user.id)) {
 			ownBadges.push(badge);
 		} else {
 			otherBadges.push(badge);
