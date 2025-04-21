@@ -10,7 +10,6 @@ import {
 	successToast,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { isAtLeastFiveDollarTierPatreon } from "~/utils/users";
 import * as AssociationRepository from "../AssociationRepository.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -75,7 +74,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				"Association is full",
 			);
 
-			const maxAssociationCount = isAtLeastFiveDollarTierPatreon(user)
+			const maxAssociationCount = user.roles.includes("SUPPORTER")
 				? ASSOCIATION.MAX_COUNT_SUPPORTER
 				: ASSOCIATION.MAX_COUNT_REGULAR_USER;
 

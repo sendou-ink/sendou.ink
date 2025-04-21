@@ -1,15 +1,5 @@
-import type { Tables } from "~/db/tables";
-import { isAdmin } from "~/permissions";
 import { logger } from "./logger";
 import { isCustomUrl } from "./urls";
-
-export function isAtLeastFiveDollarTierPatreon(
-	user?: Pick<Tables["User"], "patronTier" | "id">,
-) {
-	if (!user) return false;
-
-	return isAdmin(user) || (user.patronTier && user.patronTier >= 2);
-}
 
 const longUrlRegExp = /(https:\/\/)?sendou.ink\/u\/(.+)/;
 const shortUrlRegExp = /(https:\/\/)?snd.ink\/(.+)/;

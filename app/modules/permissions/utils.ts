@@ -9,3 +9,7 @@ export function isStaff(user?: { id: number }) {
 
 	return STAFF_IDS.includes(user.id);
 }
+
+export function isSupporter(user?: { patronTier: number | null }) {
+	return typeof user?.patronTier === "number" && user.patronTier >= 2;
+}

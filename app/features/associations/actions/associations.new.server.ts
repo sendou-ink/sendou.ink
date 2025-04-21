@@ -4,7 +4,6 @@ import { createNewAssociationSchema } from "~/features/associations/associations
 import { requireUser } from "~/features/auth/core/user.server";
 import { actionError, parseRequestPayload } from "~/utils/remix.server";
 import { associationsPage } from "~/utils/urls";
-import { isAtLeastFiveDollarTierPatreon } from "~/utils/users";
 import * as AssociationRepository from "../AssociationRepository.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -17,7 +16,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const associationCount = (
 		await AssociationRepository.findByMemberUserId(user.id)
 	).actual;
-	const maxAssociationCount = isAtLeastFiveDollarTierPatreon(user)
+	const maxAssociationCount = user.roles.includes("SUPPORTER")
 		? ASSOCIATION.MAX_COUNT_SUPPORTER
 		: ASSOCIATION.MAX_COUNT_REGULAR_USER;
 
