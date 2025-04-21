@@ -114,7 +114,7 @@ export function findByOrganizerUserId(userId: number) {
 				"ORGANIZER",
 			),
 		)
-		.orderBy("TournamentOrganization.id asc")
+		.orderBy("TournamentOrganization.id", "asc")
 		.execute();
 }
 
@@ -170,7 +170,7 @@ const findEventsBaseQuery = (organizationId: number) =>
 									"=",
 									"TournamentTeam.id",
 								)
-								.orderBy("User.id asc"),
+								.orderBy("User.id", "asc"),
 						).as("members"),
 					])
 					.whereRef(
@@ -200,7 +200,7 @@ const findEventsBaseQuery = (organizationId: number) =>
 									"=",
 									"CalendarEventResultTeam.id",
 								)
-								.orderBy("User.id asc"),
+								.orderBy("User.id", "asc"),
 						).as("members"),
 					])
 					.whereRef("CalendarEventResultTeam.eventId", "=", "CalendarEvent.id")
@@ -252,7 +252,7 @@ export async function findEventsByMonth({
 			"<=",
 			dateToDatabaseTimestamp(lastDayOfTheMonth),
 		)
-		.orderBy("CalendarEventDate.startTime asc")
+		.orderBy("CalendarEventDate.startTime", "asc")
 		.execute();
 
 	return events.map(mapEvent);
@@ -273,7 +273,7 @@ const findSeriesEventsBaseQuery = ({
 				),
 			),
 		)
-		.orderBy("CalendarEventDate.startTime desc");
+		.orderBy("CalendarEventDate.startTime", "desc");
 
 export async function findPaginatedEventsBySeries({
 	organizationId,

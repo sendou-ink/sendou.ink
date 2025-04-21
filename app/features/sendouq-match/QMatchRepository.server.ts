@@ -32,7 +32,7 @@ export function findById(id: number) {
 						"GroupMatchMap.winnerGroupId",
 					])
 					.where("GroupMatchMap.matchId", "=", id)
-					.orderBy("GroupMatchMap.index asc"),
+					.orderBy("GroupMatchMap.index", "asc"),
 			).as("mapList"),
 		])
 		.where("GroupMatch.id", "=", id)
@@ -121,7 +121,7 @@ export async function findGroupById({
 							.selectFrom("UserFriendCode")
 							.select("UserFriendCode.friendCode")
 							.whereRef("UserFriendCode.userId", "=", "User.id")
-							.orderBy("UserFriendCode.createdAt desc")
+							.orderBy("UserFriendCode.createdAt", "desc")
 							.limit(1)
 							.as("friendCode"),
 						jsonObjectFrom(
@@ -138,7 +138,7 @@ export async function findGroupById({
 						userChatNameColor,
 					])
 					.where("GroupMember.groupId", "=", groupId)
-					.orderBy("GroupMember.userId asc"),
+					.orderBy("GroupMember.userId", "asc"),
 			).as("members"),
 		])
 		.where("Group.id", "=", groupId)

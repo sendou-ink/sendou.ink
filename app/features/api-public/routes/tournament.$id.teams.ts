@@ -96,7 +96,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 						"=",
 						"TournamentTeam.id",
 					)
-					.orderBy("TournamentTeamMember.createdAt asc"),
+					.orderBy("TournamentTeamMember.createdAt", "asc"),
 			).as("members"),
 			jsonArrayFrom(
 				eb
@@ -106,7 +106,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			).as("mapPool"),
 		])
 		.where("TournamentTeam.tournamentId", "=", id)
-		.orderBy("TournamentTeam.createdAt asc")
+		.orderBy("TournamentTeam.createdAt", "asc")
 		.execute();
 
 	const friendCodes = await TournamentRepository.friendCodesByTournamentId(id);

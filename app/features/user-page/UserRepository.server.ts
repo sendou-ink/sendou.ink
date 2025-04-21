@@ -580,7 +580,7 @@ export async function currentFriendCodeByUserId(userId: number) {
 			"UserFriendCode.submitterUserId",
 		])
 		.where("userId", "=", userId)
-		.orderBy("UserFriendCode.createdAt desc")
+		.orderBy("UserFriendCode.createdAt", "desc")
 		.limit(1)
 		.executeTakeFirst();
 }
@@ -595,7 +595,7 @@ export async function allCurrentFriendCodes() {
 	const allFriendCodes = await db
 		.selectFrom("UserFriendCode")
 		.select(["UserFriendCode.friendCode", "UserFriendCode.userId"])
-		.orderBy("UserFriendCode.createdAt desc")
+		.orderBy("UserFriendCode.createdAt", "desc")
 		.execute();
 
 	const seenUserIds = new Set<number>();
