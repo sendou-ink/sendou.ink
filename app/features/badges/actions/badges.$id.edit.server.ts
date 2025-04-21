@@ -3,14 +3,12 @@ import { redirect } from "@remix-run/node";
 import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
-import { requireRole } from "~/modules/permissions/guards.server";
-import { canEditBadgeOwners } from "~/permissions";
-import { diff } from "~/utils/arrays";
 import {
-	errorToastIfFalsy,
-	notFoundIfFalsy,
-	parseRequestPayload,
-} from "~/utils/remix.server";
+	requirePermission,
+	requireRole,
+} from "~/modules/permissions/guards.server";
+import { diff } from "~/utils/arrays";
+import { notFoundIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { badgePage } from "~/utils/urls";
 import { actualNumber } from "~/utils/zod";
@@ -56,13 +54,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "OWNERS": {
-			errorToastIfFalsy(
-				canEditBadgeOwners({
-					user,
-					managers: await BadgeRepository.findManagersByBadgeId(badgeId),
-				}),
-				"No permissions to edit owners",
-			);
+			requirePermission(badge, "MANAGE", user);
 
 			const oldOwners: number[] = (
 				await BadgeRepository.findOwnersByBadgeId(badgeId)

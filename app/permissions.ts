@@ -2,7 +2,6 @@ import type { Tables, UserWithPlusTier } from "~/db/tables";
 import type * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import { currentSeason, nextSeason } from "./features/mmr/season";
 import { isVotingActive } from "./features/plus-voting/core";
-import type { FindMatchById } from "./features/tournament-bracket/queries/findMatchById.server";
 import { isAdmin } from "./modules/permissions/utils";
 import { allTruthy } from "./utils/arrays";
 import { databaseTimestampToDate } from "./utils/dates";
@@ -194,22 +193,6 @@ function hasUserSuggestedThisMonth({
 	);
 }
 
-interface CanEditBadgeOwnersArgs {
-	user?: Pick<Tables["User"], "id">;
-	managers: { id: number }[];
-}
-
-export function canEditBadgeOwners({
-	user,
-	managers,
-}: Pick<CanEditBadgeOwnersArgs, "user" | "managers">) {
-	if (!user) return false;
-
-	if (isAdmin(user)) return true;
-
-	return managers.some((manager) => manager.id === user.id) || isAdmin(user);
-}
-
 interface CanEditCalendarEventArgs {
 	user?: Pick<Tables["User"], "id">;
 	event: Pick<Tables["CalendarEvent"], "authorId">;
@@ -256,19 +239,4 @@ function eventStartedInThePast(
 		(startTime) =>
 			databaseTimestampToDate(startTime).getTime() < new Date().getTime(),
 	);
-}
-
-export function canReportTournamentScore({
-	match,
-	isMemberOfATeamInTheMatch,
-	isOrganizer,
-}: {
-	match: NonNullable<FindMatchById>;
-	isMemberOfATeamInTheMatch: boolean;
-	isOrganizer: boolean;
-}) {
-	const matchIsOver =
-		match.opponentOne?.result === "win" || match.opponentTwo?.result === "win";
-
-	return !matchIsOver && (isMemberOfATeamInTheMatch || isOrganizer);
 }

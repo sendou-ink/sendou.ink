@@ -1,46 +1,37 @@
-import { Outlet, useLoaderData, useMatches, useParams } from "@remix-run/react";
+import { Outlet, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Badge } from "~/components/Badge";
 import { LinkButton } from "~/components/Button";
-import { Redirect } from "~/components/Redirect";
-import { useUser } from "~/features/auth/core/user";
-import { useHasRole } from "~/modules/permissions/hooks";
-import { canEditBadgeOwners } from "~/permissions";
-import { BADGES_PAGE } from "~/utils/urls";
+import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
+import type { SerializeFrom } from "~/utils/remix";
 import { badgeExplanationText } from "../badges-utils";
-import type { BadgesLoaderData } from "../loaders/badges.server";
 
 import { loader } from "../loaders/badges.$id.server";
 export { loader };
 
 export interface BadgeDetailsContext {
-	badgeName: string;
+	badge: SerializeFrom<typeof loader>["badge"];
 }
 
 export default function BadgeDetailsPage() {
-	const user = useUser();
 	const isStaff = useHasRole("STAFF");
-	const [, parentRoute] = useMatches();
-	const { badges } = parentRoute.data as BadgesLoaderData;
-	const params = useParams();
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation("badges");
 
-	const badge = badges.find((b) => b.id === Number(params.id));
-	if (!badge) return <Redirect to={BADGES_PAGE} />;
+	const canManageBadge = useHasPermission(data.badge, "MANAGE");
 
-	const context: BadgeDetailsContext = { badgeName: badge.displayName };
+	const context: BadgeDetailsContext = { badge: data.badge };
 
 	const badgeMaker = () => {
-		if (badge.author?.username) return badge.author?.username;
+		if (data.badge.author?.username) return data.badge.author?.username;
 		if (
 			[
 				"XP3500 (Splatoon 3)",
 				"XP4000 (Splatoon 3)",
 				"XP4500 (Splatoon 3)",
 				"XP5000 (Splatoon 3)",
-			].includes(badge.displayName)
+			].includes(data.badge.displayName)
 		) {
 			return "Dreamy";
 		}
@@ -51,14 +42,15 @@ export default function BadgeDetailsPage() {
 	return (
 		<div className="stack md items-center">
 			<Outlet context={context} />
-			<Badge badge={badge} isAnimated size={200} />
+			<Badge badge={data.badge} isAnimated size={200} />
 			<div>
 				<div className="badges__explanation">
-					{badgeExplanationText(t, badge)}
+					{badgeExplanationText(t, data.badge)}
 				</div>
 				<div className="badges__managers">
 					{t("managedBy", {
-						users: data.managers.map((m) => m.username).join(", ") || "???",
+						users:
+							data.badge.managers.map((m) => m.username).join(", ") || "???",
 					})}{" "}
 					(
 					{t("madeBy", {
@@ -67,7 +59,7 @@ export default function BadgeDetailsPage() {
 					)
 				</div>
 			</div>
-			{isStaff || canEditBadgeOwners({ user, managers: data.managers }) ? (
+			{isStaff || canManageBadge ? (
 				<LinkButton to="edit" variant="outlined" size="tiny">
 					Edit
 				</LinkButton>
