@@ -66,7 +66,7 @@ export default function BadgeDetailsPage() {
 			) : null}
 			<div className="badges__owners-container">
 				<ul className="badges__owners">
-					{data.owners.map((owner) => (
+					{data.badge.owners.map((owner) => (
 						<li key={owner.id}>
 							<span
 								className={clsx("badges__count", {

@@ -29,7 +29,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		case "MANAGERS": {
 			requireRole(user, "STAFF");
 
-			const oldManagers = await BadgeRepository.findManagersByBadgeId(badgeId);
+			const oldManagers = badge.managers;
 
 			await BadgeRepository.replaceManagers({
 				badgeId,
@@ -38,7 +38,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			const newManagers = data.managerIds.filter(
 				(newManagerId) =>
-					!oldManagers.some((oldManager) => oldManager.id === newManagerId),
+					!oldManagers.some((oldManager) => oldManager.userId === newManagerId),
 			);
 
 			notify({
@@ -56,9 +56,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 		case "OWNERS": {
 			requirePermission(badge, "MANAGE", user);
 
-			const oldOwners: number[] = (
-				await BadgeRepository.findOwnersByBadgeId(badgeId)
-			).flatMap((owner) => new Array(owner.count).fill(owner.id));
+			const oldOwners: number[] = badge.owners.flatMap((owner) =>
+				new Array(owner.count).fill(owner.id),
+			);
 
 			await BadgeRepository.replaceOwners({ badgeId, ownerIds: data.ownerIds });
 

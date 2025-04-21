@@ -8,7 +8,6 @@ import { TrashIcon } from "~/components/icons/Trash";
 import type { Tables } from "~/db/tables";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { atOrError } from "~/utils/arrays";
-import type * as BadgeRepository from "../BadgeRepository.server";
 import type { BadgeDetailsLoaderData } from "../loaders/badges.$id.server";
 import type { BadgeDetailsContext } from "./badges.$id";
 
@@ -130,9 +129,9 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 }
 
 function Owners({ data }: { data: BadgeDetailsLoaderData }) {
-	const [owners, setOwners] = React.useState(data.owners);
+	const [owners, setOwners] = React.useState(data.badge.owners);
 
-	const ownerDifferences = getOwnerDifferences(owners, data.owners);
+	const ownerDifferences = getOwnerDifferences(owners, data.badge.owners);
 
 	const userInputKey = owners.map((o) => `${o.id}-${o.count}`).join("-");
 
@@ -230,8 +229,8 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 }
 
 function getOwnerDifferences(
-	newOwners: BadgeRepository.FindOwnersByBadgeIdItem[],
-	oldOwners: BadgeRepository.FindOwnersByBadgeIdItem[],
+	newOwners: BadgeDetailsLoaderData["badge"]["owners"],
+	oldOwners: BadgeDetailsLoaderData["badge"]["owners"],
 ) {
 	const result: Array<{
 		id: Tables["User"]["id"];
