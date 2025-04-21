@@ -1,7 +1,7 @@
 import type { UserWithPlusTier } from "~/db/tables";
 import { userDiscordIdIsAged } from "~/utils/users";
 import type { Role } from "./types";
-import { isAdmin, isStaff } from "./utils";
+import { isAdmin, isStaff, isSupporter } from "./utils";
 
 export function userRoles(
 	user: Pick<
@@ -17,9 +17,6 @@ export function userRoles(
 ) {
 	const result: Array<Role> = [];
 
-	const isSupporter =
-		typeof user.patronTier === "number" && user.patronTier >= 2;
-
 	if (isAdmin(user)) {
 		result.push("ADMIN");
 	}
@@ -32,7 +29,7 @@ export function userRoles(
 		result.push("MINOR_SUPPORT");
 	}
 
-	if (isSupporter) {
+	if (isSupporter(user)) {
 		result.push("SUPPORTER");
 	}
 
@@ -48,7 +45,7 @@ export function userRoles(
 		result.push("VIDEO_ADDER");
 	}
 
-	if (user.isTournamentOrganizer || isSupporter) {
+	if (user.isTournamentOrganizer || isSupporter(user)) {
 		result.push("TOURNAMENT_ADDER");
 	}
 
