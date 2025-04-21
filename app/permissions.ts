@@ -15,12 +15,6 @@ export function isAdmin(user?: IsAdminUser) {
 	return user?.id === ADMIN_ID;
 }
 
-export function canPerformAdminActions(user?: IsAdminUser) {
-	if (["development", "test"].includes(process.env.NODE_ENV)) return true;
-
-	return isAdmin(user);
-}
-
 function adminOverride(user?: IsAdminUser) {
 	if (isAdmin(user)) {
 		return () => true;
