@@ -1,28 +1,15 @@
 import type { Tables, UserWithPlusTier } from "~/db/tables";
 import type * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import invariant from "~/utils/invariant";
-import { ADMIN_ID, LOHI_TOKEN_HEADER_NAME } from "./constants";
+import { LOHI_TOKEN_HEADER_NAME } from "./constants";
 import { currentSeason, nextSeason } from "./features/mmr/season";
 import { isVotingActive } from "./features/plus-voting/core";
 import type { FindMatchById } from "./features/tournament-bracket/queries/findMatchById.server";
+import { isAdmin } from "./modules/permissions/utils";
 import { allTruthy } from "./utils/arrays";
 import { databaseTimestampToDate } from "./utils/dates";
 
 // TODO: move to permissions module and generalize a lot of the logic
-
-type IsAdminUser = Pick<Tables["User"], "id">;
-export function isAdmin(user?: IsAdminUser) {
-	return user?.id === ADMIN_ID;
-}
-
-function adminOverride(user?: IsAdminUser) {
-	if (isAdmin(user)) {
-		return () => true;
-	}
-
-	return (canPerformActionAsNormalUser: boolean) =>
-		canPerformActionAsNormalUser;
-}
 
 interface CanAddCommentToSuggestionArgs {
 	user?: Pick<UserWithPlusTier, "id" | "plusTier">;
@@ -70,10 +57,9 @@ export function canDeleteComment(args: CanDeleteCommentArgs) {
 
 	if (isFirstSuggestion(args)) {
 		if (votingActive) return false;
+		if (isAdmin(args.user)) return true;
 
-		return adminOverride(args.user)(
-			allTruthy([isOwnComment(args), suggestionHasNoOtherComments(args)]),
-		);
+		return allTruthy([isOwnComment(args), suggestionHasNoOtherComments(args)]);
 	}
 
 	return isOwnComment(args);
@@ -221,16 +207,15 @@ interface CanEditBadgeOwnersArgs {
 	managers: { id: number }[];
 }
 
-export function canEditBadgeOwners({ user, managers }: CanEditBadgeOwnersArgs) {
-	return adminOverride(user)(isBadgeManager({ user, managers }));
-}
-
-function isBadgeManager({
+export function canEditBadgeOwners({
 	user,
 	managers,
 }: Pick<CanEditBadgeOwnersArgs, "user" | "managers">) {
 	if (!user) return false;
-	return managers.some((manager) => manager.id === user.id);
+
+	if (isAdmin(user)) return true;
+
+	return managers.some((manager) => manager.id === user.id) || isAdmin(user);
 }
 
 interface CanEditCalendarEventArgs {
@@ -241,7 +226,9 @@ export function canEditCalendarEvent({
 	user,
 	event,
 }: CanEditCalendarEventArgs) {
-	return adminOverride(user)(user?.id === event.authorId);
+	if (isAdmin(user)) return true;
+
+	return user?.id === event.authorId;
 }
 
 export function canDeleteCalendarEvent({
@@ -249,9 +236,9 @@ export function canDeleteCalendarEvent({
 	event,
 	startTime,
 }: CanEditCalendarEventArgs & { startTime: Date }) {
-	return adminOverride(user)(
-		user?.id === event.authorId && startTime.getTime() > new Date().getTime(),
-	);
+	if (isAdmin(user)) return true;
+
+	return user?.id === event.authorId && startTime > new Date();
 }
 
 interface CanReportCalendarEventWinnersArgs {
@@ -292,14 +279,4 @@ export function canReportTournamentScore({
 		match.opponentOne?.result === "win" || match.opponentTwo?.result === "win";
 
 	return !matchIsOver && (isMemberOfATeamInTheMatch || isOrganizer);
-}
-
-export function canAddCustomizedColorsToUserProfile(
-	user?: Pick<Tables["User"], "id" | "patronTier">,
-) {
-	if (!user) return false;
-
-	return adminOverride(user)(
-		Boolean(user?.patronTier) && user.patronTier! >= 2,
-	);
 }
