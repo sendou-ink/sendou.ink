@@ -5,7 +5,8 @@ import { Badge } from "~/components/Badge";
 import { LinkButton } from "~/components/Button";
 import { Redirect } from "~/components/Redirect";
 import { useUser } from "~/features/auth/core/user";
-import { canEditBadgeOwners, isMod } from "~/permissions";
+import { useHasRole } from "~/modules/permissions/hooks";
+import { canEditBadgeOwners } from "~/permissions";
 import { BADGES_PAGE } from "~/utils/urls";
 import { badgeExplanationText } from "../badges-utils";
 import type { BadgesLoaderData } from "../loaders/badges.server";
@@ -19,6 +20,7 @@ export interface BadgeDetailsContext {
 
 export default function BadgeDetailsPage() {
 	const user = useUser();
+	const isStaff = useHasRole("STAFF");
 	const [, parentRoute] = useMatches();
 	const { badges } = parentRoute.data as BadgesLoaderData;
 	const params = useParams();
@@ -65,7 +67,7 @@ export default function BadgeDetailsPage() {
 					)
 				</div>
 			</div>
-			{isMod(user) || canEditBadgeOwners({ user, managers: data.managers }) ? (
+			{isStaff || canEditBadgeOwners({ user, managers: data.managers }) ? (
 				<LinkButton to="edit" variant="outlined" size="tiny">
 					Edit
 				</LinkButton>

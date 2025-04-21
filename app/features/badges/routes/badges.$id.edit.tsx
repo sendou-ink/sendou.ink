@@ -7,7 +7,8 @@ import { UserSearch } from "~/components/UserSearch";
 import { TrashIcon } from "~/components/icons/Trash";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
-import { canEditBadgeManagers, canEditBadgeOwners } from "~/permissions";
+import { useHasRole } from "~/modules/permissions/hooks";
+import { canEditBadgeOwners } from "~/permissions";
 import { atOrError } from "~/utils/arrays";
 import type * as BadgeRepository from "../BadgeRepository.server";
 import type { BadgeDetailsLoaderData } from "../loaders/badges.$id.server";
@@ -18,6 +19,7 @@ export { action };
 
 export default function EditBadgePage() {
 	const user = useUser();
+	const isStaff = useHasRole("STAFF");
 	const matches = useMatches();
 	const data = atOrError(matches, -2).data as BadgeDetailsLoaderData;
 	const { badgeName } = useOutletContext<BadgeDetailsContext>();
@@ -39,7 +41,7 @@ export default function EditBadgePage() {
 					</LinkButton>
 				</div>
 
-				{canEditBadgeManagers(user) ? <Managers data={data} /> : null}
+				{isStaff ? <Managers data={data} /> : null}
 				{canEditBadgeOwners({ user, managers: data.managers }) ? (
 					<Owners data={data} />
 				) : null}

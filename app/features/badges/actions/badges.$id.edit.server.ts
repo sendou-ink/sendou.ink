@@ -1,9 +1,10 @@
 import type { ActionFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { z } from "zod";
-import { requireUserId } from "~/features/auth/core/user.server";
+import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
-import { canEditBadgeManagers, canEditBadgeOwners } from "~/permissions";
+import { requireRole } from "~/modules/permissions/guards.server";
+import { canEditBadgeOwners } from "~/permissions";
 import { diff } from "~/utils/arrays";
 import {
 	errorToastIfFalsy,
@@ -22,16 +23,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 		schema: editBadgeActionSchema,
 	});
 	const badgeId = z.preprocess(actualNumber, z.number()).parse(params.id);
-	const user = await requireUserId(request);
+	const user = await requireUser(request);
 
 	const badge = notFoundIfFalsy(await BadgeRepository.findById(badgeId));
 
 	switch (data._action) {
 		case "MANAGERS": {
-			errorToastIfFalsy(
-				canEditBadgeManagers(user),
-				"No permissions to edit managers",
-			);
+			requireRole(user, "STAFF");
 
 			const oldManagers = await BadgeRepository.findManagersByBadgeId(badgeId);
 

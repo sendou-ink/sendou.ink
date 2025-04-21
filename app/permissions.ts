@@ -1,7 +1,7 @@
 import type { Tables, UserWithPlusTier } from "~/db/tables";
 import type * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import invariant from "~/utils/invariant";
-import { ADMIN_ID, LOHI_TOKEN_HEADER_NAME, STAFF_IDS } from "./constants";
+import { ADMIN_ID, LOHI_TOKEN_HEADER_NAME } from "./constants";
 import { currentSeason, nextSeason } from "./features/mmr/season";
 import { isVotingActive } from "./features/plus-voting/core";
 import type { FindMatchById } from "./features/tournament-bracket/queries/findMatchById.server";
@@ -13,12 +13,6 @@ import { databaseTimestampToDate } from "./utils/dates";
 type IsAdminUser = Pick<Tables["User"], "id">;
 export function isAdmin(user?: IsAdminUser) {
 	return user?.id === ADMIN_ID;
-}
-
-export function isMod(user?: IsAdminUser) {
-	if (!user) return false;
-
-	return isAdmin(user) || STAFF_IDS.includes(user.id);
 }
 
 export function canPerformAdminActions(user?: IsAdminUser) {
@@ -243,10 +237,6 @@ function isBadgeManager({
 }: Pick<CanEditBadgeOwnersArgs, "user" | "managers">) {
 	if (!user) return false;
 	return managers.some((manager) => manager.id === user.id);
-}
-
-export function canEditBadgeManagers(user?: IsAdminUser) {
-	return isMod(user);
 }
 
 interface CanEditCalendarEventArgs {
