@@ -15,7 +15,7 @@ import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types"
 import type { Match, Stage } from "~/modules/brackets-model";
 import type { ModeShort } from "~/modules/in-game-lists";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
-import { isAdmin } from "~/permissions";
+import { isAdmin } from "~/modules/permissions/utils";
 import {
 	databaseTimestampNow,
 	databaseTimestampToDate,

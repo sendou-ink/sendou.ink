@@ -1,5 +1,5 @@
 import type { EntityWithPermissions, Role } from "~/modules/permissions/types";
-import { isAdmin } from "~/permissions";
+import { isAdmin } from "./utils";
 
 // TODO: could avoid passing user in after remix middlewares land with async context
 

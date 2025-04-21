@@ -15,7 +15,7 @@ import { useUser } from "~/features/auth/core/user";
 import { currentOrPreviousSeason } from "~/features/mmr/season";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import { isAdmin } from "~/permissions";
+import { useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import {
 	lfgNewPostPage,
@@ -49,6 +49,7 @@ export function LFGPost({
 const USER_POST_EXPANDABLE_CRITERIA = 300;
 function UserLFGPost({ post, tiersMap }: { post: Post; tiersMap: TiersMap }) {
 	const user = useUser();
+	const isAdmin = useHasRole("ADMIN");
 	const [isExpanded, setIsExpanded] = React.useState(false);
 
 	return (
@@ -75,7 +76,7 @@ function UserLFGPost({ post, tiersMap }: { post: Post; tiersMap: TiersMap }) {
 			<div>
 				<div className="stack horizontal justify-between">
 					<PostTextTypeHeader type={post.type} />
-					{isAdmin(user) || post.author.id === user?.id ? (
+					{post.author.id === user?.id || isAdmin ? (
 						<PostDeleteButton id={post.id} type={post.type} />
 					) : null}
 				</div>
@@ -99,6 +100,7 @@ function TeamLFGPost({
 }) {
 	const isMounted = useIsMounted();
 	const user = useUser();
+	const isAdmin = useHasRole("ADMIN");
 	const [isExpanded, setIsExpanded] = React.useState(false);
 
 	return (
@@ -130,7 +132,7 @@ function TeamLFGPost({
 			<div>
 				<div className="stack horizontal justify-between">
 					<PostTextTypeHeader type={post.type} />
-					{isAdmin(user) || post.author.id === user?.id ? (
+					{post.author.id === user?.id || isAdmin ? (
 						<PostDeleteButton id={post.id} type={post.type} />
 					) : null}
 				</div>

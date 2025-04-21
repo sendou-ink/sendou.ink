@@ -1,6 +1,6 @@
 import { useUser } from "~/features/auth/core/user";
 import type { EntityWithPermissions, Role } from "~/modules/permissions/types";
-import { isAdmin } from "~/permissions";
+import { isAdmin } from "./utils";
 
 /**
  * Determines whether a user has a specific global role.
