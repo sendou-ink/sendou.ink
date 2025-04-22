@@ -1069,4 +1069,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "frcup",
 		authorDiscordId: "960213930586824766",
 	},
+	{
+		displayName: "Beta Bracket",
+		fileName: "silverstars",
+		authorDiscordId: "338806780446638082",
+	},
 ];
