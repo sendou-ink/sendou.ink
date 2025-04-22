@@ -1069,4 +1069,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "frcup",
 		authorDiscordId: "960213930586824766",
 	},
+	{
+		displayName: "LAN Championship Showdown",
+		fileName: "lanchampionshipshowdownthird",
+		authorDiscordId: "201922904781357057",
+	},
 ];
