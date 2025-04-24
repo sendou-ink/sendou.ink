@@ -221,5 +221,8 @@
 	"chat.systemMsg.userLeft": "{{name}} se salió del grupo",
 	"chat.newMessages": "Nuevo mensajes",
 
-	"fc.title": "Clave de amigo"
+	"fc.title": "Clave de amigo",
+
+	"badges.selector.none": "Ninguna insignia seleccionada",
+	"badges.selector.select": "Seleccionar insignia añadir"
 }

@@ -221,5 +221,8 @@
 	"chat.systemMsg.userLeft": "{{name}} 离开了小队",
 	"chat.newMessages": "新消息",
 
-	"fc.title": "好友码"
+	"fc.title": "好友码",
+
+	"badges.selector.none": "没有选择任何徽章",
+	"badges.selector.select": "选择徽章并添加"
 }

@@ -1862,9 +1862,9 @@ function userFavBadges() {
 	);
 	sql
 		.prepare(
-			`update "User" set "favoriteBadgeId" = $id where "id" = ${ADMIN_ID}`,
+			`update "User" set "favoriteBadgeIds" = $id where "id" = ${ADMIN_ID}`,
 		)
-		.run({ id: badgeList[0] });
+		.run({ id: JSON.stringify([badgeList[0]]) });
 }
 
 const addArtStm = sql.prepare(/* sql */ `

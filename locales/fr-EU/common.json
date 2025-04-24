@@ -285,5 +285,8 @@
 	"settings.notifications.description": "Recevoir une Receive notification push sur votre appareil quand vous n'êtes pas dessus.",
 	"settings.notifications.disableInfo": "Regarder les paramètre de votre navigateur pour désactiver les notification push.",
 	"settings.notifications.browserNotSupported": "Les notifications push ne sont pas supporter par cet navigateur",
-	"settings.notifications.permissionDenied": "Les notifications push ont été refusées. Vérifiez les paramètres de votre navigateur pour les réactiver"
+	"settings.notifications.permissionDenied": "Les notifications push ont été refusées. Vérifiez les paramètres de votre navigateur pour les réactiver",
+
+	"badges.selector.none": "Aucun badges est sélectionné",
+	"badges.selector.select": "Selectionner un badge pour l'ajouter"
 }

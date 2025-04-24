@@ -304,5 +304,8 @@
 	"settings.notifications.description": "Receive push notifications to your device even if you don't currently have sendou.ink open.",
 	"settings.notifications.disableInfo": "To disable push notifications check your browser settings",
 	"settings.notifications.browserNotSupported": "Push notifications are not supported on this browser",
-	"settings.notifications.permissionDenied": "Push notifications were denied. Check your browser settings to re-enable"
+	"settings.notifications.permissionDenied": "Push notifications were denied. Check your browser settings to re-enable",
+
+	"badges.selector.none": "No badges selected",
+	"badges.selector.select": "Select badge to add"
 }

@@ -368,39 +368,44 @@ function BioTextarea({
 	);
 }
 
+// xxx:
+// function FavBadgeSelect() {
+// 	const data = useLoaderData<typeof loader>();
+// 	const { t } = useTranslation(["user"]);
+
+// 	// doesn't make sense to select favorite badge
+// 	// if user has no badges or only has 1 badge
+// 	if (data.user.badges.length < 2) return null;
+
+// 	// user's current favorite badge is the initial value
+// 	const initialBadge = data.user.badges.find(
+// 		(badge) => badge.id === data.favoriteBadgeId,
+// 	);
+
+// 	return (
+// 		<div>
+// 			<label htmlFor="favoriteBadgeId">{t("user:favoriteBadge")}</label>
+// 			<select
+// 				className=""
+// 				name="favoriteBadgeId"
+// 				id="favoriteBadgeId"
+// 				defaultValue={initialBadge?.id}
+// 			>
+// 				{data.user.badges.map((badge) => (
+// 					<option key={badge.id} value={badge.id}>
+// 						{`${badge.displayName}`}
+// 					</option>
+// 				))}
+// 			</select>
+// 			<FormMessage type="info">
+// 				{t("user:forms.info.favoriteBadge")}
+// 			</FormMessage>
+// 		</div>
+// 	);
+// }
+
 function FavBadgeSelect() {
-	const data = useLoaderData<typeof loader>();
-	const { t } = useTranslation(["user"]);
-
-	// doesn't make sense to select favorite badge
-	// if user has no badges or only has 1 badge
-	if (data.user.badges.length < 2) return null;
-
-	// user's current favorite badge is the initial value
-	const initialBadge = data.user.badges.find(
-		(badge) => badge.id === data.favoriteBadgeId,
-	);
-
-	return (
-		<div>
-			<label htmlFor="favoriteBadgeId">{t("user:favoriteBadge")}</label>
-			<select
-				className=""
-				name="favoriteBadgeId"
-				id="favoriteBadgeId"
-				defaultValue={initialBadge?.id}
-			>
-				{data.user.badges.map((badge) => (
-					<option key={badge.id} value={badge.id}>
-						{`${badge.displayName}`}
-					</option>
-				))}
-			</select>
-			<FormMessage type="info">
-				{t("user:forms.info.favoriteBadge")}
-			</FormMessage>
-		</div>
-	);
+	return <div>todo</div>;
 }
 
 function ShowUniqueDiscordNameToggle() {

@@ -6,12 +6,13 @@ import { Button } from "~/components/Button";
 import { SendouButton } from "~/components/elements/Button";
 import { TrashIcon } from "~/components/icons/Trash";
 import type { Tables } from "~/db/tables";
+import { BADGE } from "~/features/badges/badges-contants";
 import { usePagination } from "~/hooks/usePagination";
 import type { Unpacked } from "~/utils/types";
 import { badgeExplanationText } from "../badges-utils";
 import styles from "./BadgeDisplay.module.css";
 
-interface BadgeDisplayProps {
+export interface BadgeDisplayProps {
 	badges: Array<Omit<Tables["Badge"], "authorId"> & { count?: number }>;
 	onBadgeRemove?: (badgeId: number) => void;
 }
@@ -25,6 +26,8 @@ export function BadgeDisplay({
 
 	const [bigBadge, ...smallBadges] = badges;
 
+	const isPaginated = !onBadgeRemove;
+
 	const {
 		itemsToDisplay,
 		everythingVisible,
@@ -33,7 +36,7 @@ export function BadgeDisplay({
 		setPage,
 	} = usePagination({
 		items: smallBadges,
-		pageSize: 9,
+		pageSize: isPaginated ? BADGE.SMALL_BADGES_PER_DISPLAY_PAGE : 1000,
 		scrollToTop: false,
 	});
 
@@ -52,16 +55,11 @@ export function BadgeDisplay({
 
 	return (
 		<div>
-			<div className={styles.badgeExplanation}>
-				{badgeExplanationText(t, bigBadge)}
-				{onBadgeRemove ? (
-					<Button
-						icon={<TrashIcon />}
-						variant="minimal-destructive"
-						onClick={() => onBadgeRemove(bigBadge.id)}
-					/>
-				) : null}
-			</div>
+			{isPaginated ? (
+				<div className={styles.badgeExplanation}>
+					{badgeExplanationText(t, bigBadge)}
+				</div>
+			) : null}
 			<div
 				className={clsx(styles.badges, {
 					"justify-center": smallBadges.length === 0,
@@ -86,6 +84,18 @@ export function BadgeDisplay({
 					</div>
 				) : null}
 			</div>
+			{!isPaginated ? (
+				<div className={styles.badgeExplanation}>
+					{badgeExplanationText(t, bigBadge)}
+					{onBadgeRemove ? (
+						<Button
+							icon={<TrashIcon />}
+							variant="minimal-destructive"
+							onClick={() => onBadgeRemove(bigBadge.id)}
+						/>
+					) : null}
+				</div>
+			) : null}
 			{!everythingVisible ? (
 				<BadgePagination
 					pagesCount={pagesCount}

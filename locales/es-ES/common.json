@@ -210,5 +210,8 @@
 	"chat.systemMsg.cancelConfirmed": "{{name}} confirmó cancelar el partido. El partido está cerrado",
 	"chat.systemMsg.userLeft": "{{name}} se salió del grupo",
 
-	"fc.title": "Clave de amigo"
+	"fc.title": "Clave de amigo",
+
+	"badges.selector.none": "Ninguna insignia seleccionada",
+	"badges.selector.select": "Seleccionar insignia añadir"
 }

@@ -87,43 +87,6 @@ export async function findById(badgeId: number) {
 	return addPermissions(row);
 }
 
-export async function findByOwnerId({
-	userId,
-	favoriteBadgeId,
-}: {
-	userId: number;
-	favoriteBadgeId: number | null;
-}) {
-	const badges = await db
-		.selectFrom("BadgeOwner")
-		.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
-		.select(({ fn }) => [
-			fn.count<number>("BadgeOwner.badgeId").as("count"),
-			"Badge.id",
-			"Badge.displayName",
-			"Badge.code",
-			"Badge.hue",
-		])
-		.where("BadgeOwner.userId", "=", userId)
-		.groupBy(["BadgeOwner.badgeId", "BadgeOwner.userId"])
-		.orderBy("Badge.id", "asc")
-		.execute();
-
-	if (!favoriteBadgeId) {
-		return badges;
-	}
-
-	return badges.sort((a, b) => {
-		if (a.id === favoriteBadgeId) {
-			return -1;
-		}
-		if (b.id === favoriteBadgeId) {
-			return 1;
-		}
-		return 0;
-	});
-}
-
 export function findByManagersList(userIds: number[]) {
 	return db
 		.selectFrom("Badge")

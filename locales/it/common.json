@@ -284,5 +284,8 @@
 	"settings.notifications.browserNotSupported": "Le notifiche push non sono supportate su questo browser",
 	"settings.notifications.permissionDenied": "Le notifiche push sono state negate. Controlla le impostazioni del browser per riattivarle",
 
-	"articles.by": "da {{author}}"
+	"articles.by": "da {{author}}",
+
+	"badges.selector.none": "Nessuna medaglia selezionata",
+	"badges.selector.select": "Seleziona medaglia da aggiungere"
 }
