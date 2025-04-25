@@ -1069,4 +1069,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "frcup",
 		authorDiscordId: "960213930586824766",
 	},
+	{
+		displayName: "Habibi 1v1",
+		fileName: "habibi1v1",
+		authorDiscordId: "754368445910614046",
+	},
 ];
