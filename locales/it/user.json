@@ -12,7 +12,6 @@
 	"sens": "Sens.",
 	"weaponPool": "Pool armi",
 	"discordExplanation": "Username, foto profilo, account YouTube, Bluesky e Twitch vengono dal tuo account Discord. Visita <1>FAQ</1> per ulteriori informazioni.",
-	"favoriteBadge": "Medaglia preferita",
 	"battlefy": "Nome account Battlefy",
 
 	"forms.showDiscordUniqueName": "Mostra username Discord",
@@ -40,7 +39,6 @@
 	"forms.errors.invalidCustomUrl.duplicate": "L'URL personalizzato è già in uso da un altro utente",
 	"forms.errors.invalidSens": "La sensibilità del giroscopio non può essere impostata se non hai impostato la sensibilità del joystick destro",
 	"forms.info.customUrl": "Per gli iscritti al Patreon (Supporter compreso in su) è disponibile il link corto. Es. invece di sendou.ink/u/sendou, può essere usato snd.ink/sendou.",
-	"forms.info.favoriteBadge": "La tua medaglia preferita è mostrata più grande di default sul tuo profilo.",
 	"forms.info.battlefy": "Il nome dell'account Battlefy è usato per il seeding e verifica in alcuni tornei",
 
 	"search.info": "Cerca utenti tramite nome Discord o Splatoon 3",

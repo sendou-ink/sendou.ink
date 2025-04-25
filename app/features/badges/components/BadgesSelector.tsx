@@ -9,11 +9,15 @@ export function BadgesSelector({
 	selectedBadges,
 	onChange,
 	onBlur,
+	children,
+	maxCount,
 }: {
 	options: BadgeDisplayProps["badges"];
 	selectedBadges: number[];
 	onChange: (newBadges: number[]) => void;
-	onBlur: () => void;
+	onBlur?: () => void;
+	children?: React.ReactNode;
+	maxCount?: number;
 }) {
 	const { t } = useTranslation(["common"]);
 
@@ -21,12 +25,19 @@ export function BadgesSelector({
 		<div className="stack md">
 			{selectedBadges.length > 0 ? (
 				<BadgeDisplay
-					badges={options.filter((badge) => selectedBadges.includes(badge.id))}
-					onBadgeRemove={(badgeId) =>
-						onChange(selectedBadges.filter((id) => id !== badgeId))
-					}
+					badges={options
+						.filter((badge) => selectedBadges.includes(badge.id))
+						.sort((a, b) => {
+							const aIdx = selectedBadges.indexOf(a.id);
+							const bIdx = selectedBadges.indexOf(b.id);
+
+							return aIdx - bIdx;
+						})}
+					onChange={onChange}
 					key={selectedBadges.join(",")}
-				/>
+				>
+					{children}
+				</BadgeDisplay>
 			) : (
 				<div className="text-lighter text-md font-bold">
 					{t("common:badges.selector.none")}
@@ -34,7 +45,8 @@ export function BadgesSelector({
 			)}
 			<select
 				onBlur={onBlur}
-				onChange={(e) => onChange([Number(e.target.value), ...selectedBadges])}
+				onChange={(e) => onChange([...selectedBadges, Number(e.target.value)])}
+				disabled={Boolean(maxCount && selectedBadges.length >= maxCount)}
 			>
 				<option>{t("common:badges.selector.select")}</option>
 				{options

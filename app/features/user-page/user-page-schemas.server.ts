@@ -112,7 +112,11 @@ export const userEditActionSchema = z
 		),
 		favoriteBadgeIds: z.preprocess(
 			processMany(safeJSONParse, emptyArrayToNull),
-			z.array(id).min(1).max(BADGE.SMALL_BADGES_PER_DISPLAY_PAGE).nullable(),
+			z
+				.array(id)
+				.min(1)
+				.max(BADGE.SMALL_BADGES_PER_DISPLAY_PAGE + 1)
+				.nullable(),
 		),
 		showDiscordUniqueName: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
 		commissionsOpen: z.preprocess(checkboxValueToDbBoolean, dbBoolean),

@@ -11,7 +11,6 @@
 	"sens": "Чувствительность",
 	"weaponPool": "Используемое оружие",
 	"discordExplanation": "Имя пользователя, аватар, ссылка на аккаунты YouTube, Bluesky и Twitch берутся из вашего аккаунта в Discord. Посмотрите <1>FAQ</1> для дополнительной информации.",
-	"favoriteBadge": "Любимый значок",
 
 	"forms.showDiscordUniqueName": "Показать пользовательское имя Discord",
 	"forms.showDiscordUniqueName.info": "Показывать ваше уникальное Discord имя ({{discordUniqueName}})?",
@@ -33,7 +32,6 @@
 	"forms.errors.invalidCustomUrl.strangeCharacter": "Пользовательский URL не может содержать особые символы",
 	"forms.errors.invalidCustomUrl.duplicate": "Кто-то уже использует этот пользовательский URL",
 	"forms.errors.invalidSens": "Чувствительность наклона не может быть указана, если не указана чувствительность стика",
-	"forms.info.favoriteBadge": "По умолчанию ваш любимый значок отображён большим в вашем профиле.",
 
 	"search.noResults": "Не найден пользователь по запросу '{{query}}'",
 

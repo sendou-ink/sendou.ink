@@ -12,7 +12,7 @@
 	"sens": "Sens",
 	"weaponPool": "Weapon pool",
 	"discordExplanation": "Username, profile picture, YouTube, Bluesky and Twitch accounts come from your Discord account. See <1>FAQ</1> for more information.",
-	"favoriteBadge": "Favorite Badge",
+	"favoriteBadges": "Favorite badges",
 	"battlefy": "Battlefy account name",
 
 	"forms.showDiscordUniqueName": "Show Discord username",
@@ -22,6 +22,7 @@
 	"forms.commissionText.info": "Price, slots open or other info related to commissioning you",
 	"forms.customName.info": "If missing, your Discord display name is used: \"{{discordName}}\"",
 	"forms.country.search.placeholder": "Search countries",
+	"forms.favoriteBadges.nonSupporter": "Become supporter to set which badges appear on the first page and the order",
 
 	"results.title": "All results",
 	"results.placing": "Placing",
@@ -41,7 +42,6 @@
 	"forms.errors.invalidCustomUrl.duplicate": "Someone is already using this custom URL",
 	"forms.errors.invalidSens": "Motion sens can't be set if R-stick sens isn't",
 	"forms.info.customUrl": "For patrons (Supporter & above) short link is available. E.g. instead of sendou.ink/u/sendou, snd.ink/sendou can be used.",
-	"forms.info.favoriteBadge": "Your favorite badge is shown as big by default on your profile.",
 	"forms.info.battlefy": "Battlefy account name is used for seeding and verification in some tournaments",
 
 	"search.info": "Search for users by Discord or Splatoon 3 name",

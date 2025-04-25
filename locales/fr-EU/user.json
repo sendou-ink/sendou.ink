@@ -12,7 +12,6 @@
 	"sens": "Sens",
 	"weaponPool": "Armes jouées",
 	"discordExplanation": "Votre pseudo, votre photo de profil et vos comptes Youtube, Bluesky et Twitch viennent de votre compte Discord. Voir la <1>FAQ</1> pour plus d'informations.",
-	"favoriteBadge": "Badge favori",
 	"battlefy": "Nom du compte Battlefy",
 
 	"forms.showDiscordUniqueName": "Montrer le pseudo Discord",
@@ -40,7 +39,6 @@
 	"forms.errors.invalidCustomUrl.duplicate": "Cette URL a déjà été choisie par quelqu'un",
 	"forms.errors.invalidSens": "La sensibilité du gyroscope ne peut pas être choisie si la sensibilité du stick droit ne l'est pas",
 	"forms.info.customUrl": "Pour les Supporter patrons (& plus), les liens courts sont disponibles. Exemple: Au mieux de sendou.ink/u/sendou, snd.ink/sendou peut être utilisé.",
-	"forms.info.favoriteBadge": "Votre badge favoris est affiché en grand par défaut sur votre profil.",
 	"forms.info.battlefy": "Votre nom Battlefy est utiliser pour le seeding et la verification de certains tournois",
 
 	"search.info": "Recherchez avec le pseudo Discord ou Splatoon 3 du compte",

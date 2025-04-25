@@ -11,6 +11,7 @@ import type {
 } from "~/db/tables";
 import type { ChatUser } from "~/features/chat/components/Chat";
 import { userRoles } from "~/modules/permissions/mapper.server";
+import { isSupporter } from "~/modules/permissions/utils";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
@@ -158,6 +159,7 @@ export async function findProfileByIdentifier(
 			"User.showDiscordUniqueName",
 			"User.discordUniqueName",
 			"User.favoriteBadgeIds",
+			"User.patronTier",
 			"PlusTier.tier as plusTier",
 			jsonArrayFrom(
 				eb
@@ -223,14 +225,21 @@ export async function findProfileByIdentifier(
 		return null;
 	}
 
+	const favoriteBadgeIds = isSupporter(row)
+		? row.favoriteBadgeIds
+		: row.favoriteBadgeIds
+			? [row.favoriteBadgeIds[0]]
+			: null;
+
 	return {
 		...row,
 		team: row.teams.find((t) => t.isMainTeam),
 		secondaryTeams: row.teams.filter((t) => !t.isMainTeam),
 		teams: undefined,
+		favoriteBadgeIds,
 		badges: row.badges.sort((a, b) => {
-			const aIdx = row.favoriteBadgeIds?.indexOf(a.id) ?? -1;
-			const bIdx = row.favoriteBadgeIds?.indexOf(b.id) ?? -1;
+			const aIdx = favoriteBadgeIds?.indexOf(a.id) ?? -1;
+			const bIdx = favoriteBadgeIds?.indexOf(b.id) ?? -1;
 
 			if (aIdx !== bIdx) {
 				if (aIdx === -1) return 1;
@@ -710,7 +719,9 @@ export function updateProfile(args: UpdateProfileArgs) {
 				inGameName: args.inGameName,
 				css: args.css,
 				battlefy: args.battlefy,
-				favoriteBadgeIds: JSON.stringify(args.favoriteBadgeIds),
+				favoriteBadgeIds: args.favoriteBadgeIds
+					? JSON.stringify(args.favoriteBadgeIds)
+					: null,
 				showDiscordUniqueName: args.showDiscordUniqueName,
 				commissionText: args.commissionText,
 				commissionsOpen: args.commissionsOpen,

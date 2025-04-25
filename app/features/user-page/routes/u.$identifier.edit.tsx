@@ -17,6 +17,8 @@ import { StarFilledIcon } from "~/components/icons/StarFilled";
 import { TrashIcon } from "~/components/icons/Trash";
 import { USER } from "~/constants";
 import type { Tables } from "~/db/tables";
+import { BADGE } from "~/features/badges/badges-contants";
+import { BadgesSelector } from "~/features/badges/components/BadgesSelector";
 import type { MainWeaponId } from "~/modules/in-game-lists";
 import { useHasRole } from "~/modules/permissions/hooks";
 import invariant from "~/utils/invariant";
@@ -368,44 +370,47 @@ function BioTextarea({
 	);
 }
 
-// xxx:
-// function FavBadgeSelect() {
-// 	const data = useLoaderData<typeof loader>();
-// 	const { t } = useTranslation(["user"]);
-
-// 	// doesn't make sense to select favorite badge
-// 	// if user has no badges or only has 1 badge
-// 	if (data.user.badges.length < 2) return null;
-
-// 	// user's current favorite badge is the initial value
-// 	const initialBadge = data.user.badges.find(
-// 		(badge) => badge.id === data.favoriteBadgeId,
-// 	);
-
-// 	return (
-// 		<div>
-// 			<label htmlFor="favoriteBadgeId">{t("user:favoriteBadge")}</label>
-// 			<select
-// 				className=""
-// 				name="favoriteBadgeId"
-// 				id="favoriteBadgeId"
-// 				defaultValue={initialBadge?.id}
-// 			>
-// 				{data.user.badges.map((badge) => (
-// 					<option key={badge.id} value={badge.id}>
-// 						{`${badge.displayName}`}
-// 					</option>
-// 				))}
-// 			</select>
-// 			<FormMessage type="info">
-// 				{t("user:forms.info.favoriteBadge")}
-// 			</FormMessage>
-// 		</div>
-// 	);
-// }
-
 function FavBadgeSelect() {
-	return <div>todo</div>;
+	const data = useLoaderData<typeof loader>();
+	const { t } = useTranslation(["user"]);
+	const [value, setValue] = React.useState(data.favoriteBadgeIds ?? []);
+	const isSupporter = useHasRole("SUPPORTER");
+
+	// doesn't make sense to select favorite badge
+	// if user has no badges or only has 1 badge
+	if (data.user.badges.length < 2) return null;
+
+	const onChange = (newBadges: number[]) => {
+		if (isSupporter) {
+			setValue(newBadges);
+		} else {
+			// non-supporters can only set which badge is the big one
+			setValue(newBadges.length > 0 ? [newBadges[0]] : []);
+		}
+	};
+
+	return (
+		<div>
+			<input
+				type="hidden"
+				name="favoriteBadgeIds"
+				value={JSON.stringify(value)}
+			/>
+			<label htmlFor="favoriteBadgeIds">{t("user:favoriteBadges")}</label>
+			<BadgesSelector
+				options={data.user.badges}
+				selectedBadges={value}
+				onChange={onChange}
+				maxCount={BADGE.SMALL_BADGES_PER_DISPLAY_PAGE + 1}
+			>
+				{!isSupporter ? (
+					<div className="text-sm text-lighter font-semi-bold text-center">
+						{t("user:forms.favoriteBadges.nonSupporter")}
+					</div>
+				) : null}
+			</BadgesSelector>
+		</div>
+	);
 }
 
 function ShowUniqueDiscordNameToggle() {

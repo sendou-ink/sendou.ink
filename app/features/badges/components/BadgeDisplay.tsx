@@ -14,19 +14,21 @@ import styles from "./BadgeDisplay.module.css";
 
 export interface BadgeDisplayProps {
 	badges: Array<Omit<Tables["Badge"], "authorId"> & { count?: number }>;
-	onBadgeRemove?: (badgeId: number) => void;
+	onChange?: (badgeIds: number[]) => void;
+	children?: React.ReactNode;
 }
 
 export function BadgeDisplay({
 	badges: _badges,
-	onBadgeRemove,
+	onChange,
+	children,
 }: BadgeDisplayProps) {
 	const { t } = useTranslation("badges");
 	const [badges, setBadges] = React.useState(_badges);
 
 	const [bigBadge, ...smallBadges] = badges;
 
-	const isPaginated = !onBadgeRemove;
+	const isPaginated = !onChange;
 
 	const {
 		itemsToDisplay,
@@ -43,14 +45,15 @@ export function BadgeDisplay({
 	if (!bigBadge) return null;
 
 	const setBadgeFirst = (badge: Unpacked<BadgeDisplayProps["badges"]>) => {
-		setBadges(
-			badges.map((b, i) => {
-				if (i === 0) return badge;
-				if (b.id === badge.id) return badges[0];
+		const newBadges = badges.map((b, i) => {
+			if (i === 0) return badge;
+			if (b.id === badge.id) return badges[0];
 
-				return b;
-			}),
-		);
+			return b;
+		});
+
+		setBadges(newBadges);
+		onChange?.(newBadges.map((b) => b.id));
 	};
 
 	return (
@@ -66,7 +69,7 @@ export function BadgeDisplay({
 				})}
 			>
 				<Badge badge={bigBadge} size={125} isAnimated />
-				{smallBadges.length > 0 ? (
+				{!children && smallBadges.length > 0 ? (
 					<div className={styles.smallBadges}>
 						{itemsToDisplay.map((badge) => (
 							<div key={badge.id} className={styles.smallBadgeContainer}>
@@ -83,15 +86,20 @@ export function BadgeDisplay({
 						))}
 					</div>
 				) : null}
+				{children}
 			</div>
 			{!isPaginated ? (
 				<div className={styles.badgeExplanation}>
 					{badgeExplanationText(t, bigBadge)}
-					{onBadgeRemove ? (
+					{onChange ? (
 						<Button
 							icon={<TrashIcon />}
 							variant="minimal-destructive"
-							onClick={() => onBadgeRemove(bigBadge.id)}
+							onClick={() =>
+								onChange(
+									badges.filter((b) => b.id !== bigBadge.id).map((b) => b.id),
+								)
+							}
 						/>
 					) : null}
 				</div>
