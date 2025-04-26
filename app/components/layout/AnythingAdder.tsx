@@ -1,5 +1,5 @@
 import { useNavigate } from "@remix-run/react";
-import * as React from "react";
+import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useUser } from "~/features/auth/core/user";
 import { FF_SCRIMS_ENABLED } from "~/features/scrims/scrims-constants";
@@ -16,24 +16,12 @@ import {
 	plusSuggestionsNewPage,
 	userNewBuildPage,
 } from "~/utils/urls";
-import { Menu, type MenuProps } from "../Menu";
+import {
+	SendouMenu,
+	SendouMenuItem,
+	type SendouMenuItemProps,
+} from "../elements/Menu";
 import { PlusIcon } from "../icons/Plus";
-
-const FilterMenuButton = React.forwardRef<
-	HTMLButtonElement,
-	React.ButtonHTMLAttributes<HTMLButtonElement>
->((props, ref) => {
-	return (
-		<button
-			className="layout__header__button"
-			{...props}
-			ref={ref}
-			data-testid="anything-adder-menu-button"
-		>
-			<PlusIcon className="layout__header__button__icon" />
-		</button>
-	);
-});
 
 export function AnythingAdder() {
 	const { t } = useTranslation(["common"]);
@@ -44,35 +32,35 @@ export function AnythingAdder() {
 		return null;
 	}
 
-	const items: MenuProps["items"] = [
+	const items: Array<SendouMenuItemProps> = [
 		{
 			id: "tournament",
-			text: t("header.adder.tournament"),
+			children: t("header.adder.tournament"),
 			imagePath: navIconUrl("medal"),
 			onClick: () => navigate(TOURNAMENT_NEW_PAGE),
 		},
 		{
 			id: "calendarEvent",
-			text: t("header.adder.calendarEvent"),
+			children: t("header.adder.calendarEvent"),
 			imagePath: navIconUrl("calendar"),
 			onClick: () => navigate(CALENDAR_NEW_PAGE),
 		},
 		{
 			id: "builds",
-			text: t("header.adder.build"),
+			children: t("header.adder.build"),
 			imagePath: navIconUrl("builds"),
 			onClick: () => navigate(userNewBuildPage(user)),
 		},
 		{
 			id: "team",
-			text: t("header.adder.team"),
+			children: t("header.adder.team"),
 			imagePath: navIconUrl("t"),
 			onClick: () => navigate(NEW_TEAM_PAGE),
 		},
 		FF_SCRIMS_ENABLED
 			? {
 					id: "scrimPost",
-					text: t("header.adder.scrimPost"),
+					children: t("header.adder.scrimPost"),
 					imagePath: navIconUrl("scrims"),
 					onClick: () => navigate(newScrimPostPage()),
 				}
@@ -80,36 +68,51 @@ export function AnythingAdder() {
 		FF_SCRIMS_ENABLED
 			? {
 					id: "association",
-					text: t("header.adder.association"),
+					children: t("header.adder.association"),
 					imagePath: navIconUrl("associations"),
 					onClick: () => navigate(newAssociationsPage()),
 				}
 			: null,
 		{
 			id: "lfgPost",
-			text: t("header.adder.lfgPost"),
+			children: t("header.adder.lfgPost"),
 			imagePath: navIconUrl("lfg"),
 			onClick: () => navigate(lfgNewPostPage()),
 		},
 		{
 			id: "art",
-			text: t("header.adder.art"),
+			children: t("header.adder.art"),
 			imagePath: navIconUrl("art"),
 			onClick: () => navigate(newArtPage()),
 		},
 		{
 			id: "vods",
-			text: t("header.adder.vod"),
+			children: t("header.adder.vod"),
 			imagePath: navIconUrl("vods"),
 			onClick: () => navigate(newVodPage()),
 		},
 		{
 			id: "plus",
-			text: t("header.adder.plusSuggestion"),
+			children: t("header.adder.plusSuggestion"),
 			imagePath: navIconUrl("plus"),
 			onClick: () => navigate(plusSuggestionsNewPage()),
 		},
 	].filter((item) => item !== null);
 
-	return <Menu items={items} button={FilterMenuButton} opensLeft />;
+	return (
+		<SendouMenu
+			trigger={
+				<Button
+					className="layout__header__button"
+					data-testid="anything-adder-menu-button"
+				>
+					<PlusIcon className="layout__header__button__icon" />
+				</Button>
+			}
+		>
+			{items.map((item) => (
+				<SendouMenuItem key={item.id} {...item} />
+			))}
+		</SendouMenu>
+	);
 }
