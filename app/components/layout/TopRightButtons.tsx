@@ -1,4 +1,3 @@
-import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { SUPPORT_PAGE } from "~/utils/urls";
 import { LinkButton } from "../Button";
@@ -8,7 +7,7 @@ import { AnythingAdder } from "./AnythingAdder";
 import { NotificationPopover } from "./NotificationPopover";
 import { UserItem } from "./UserItem";
 
-export function _TopRightButtons({
+export function TopRightButtons({
 	showSupport,
 	isErrored,
 	openNavDialog,
@@ -45,5 +44,3 @@ export function _TopRightButtons({
 		</div>
 	);
 }
-
-export const TopRightButtons = React.memo(_TopRightButtons);

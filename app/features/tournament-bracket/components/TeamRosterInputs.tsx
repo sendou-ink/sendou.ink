@@ -86,8 +86,7 @@ export function TeamRosterInputs({
 	);
 }
 
-const TeamRoster = React.memo(_TeamRoster);
-function _TeamRoster({
+export function TeamRoster({
 	team,
 	bothTeamsHaveActiveRosters,
 	presentational,
@@ -242,8 +241,7 @@ function _TeamRoster({
 	);
 }
 
-const TeamRosterHeader = React.memo(_TeamRosterHeader);
-function _TeamRosterHeader({
+export function TeamRosterHeader({
 	idx,
 	team,
 	tournamentId,
@@ -339,8 +337,7 @@ function WinnerRadio({
 	);
 }
 
-const PointInput = React.memo(_PointInput);
-function _PointInput({
+export function PointInput({
 	value,
 	onChange,
 	presentational,

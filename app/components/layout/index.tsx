@@ -31,7 +31,7 @@ function useBreadcrumbs() {
 	}, [matches, t]);
 }
 
-export const Layout = React.memo(function Layout({
+export function Layout({
 	children,
 	data,
 	isErrored = false,
@@ -91,7 +91,7 @@ export const Layout = React.memo(function Layout({
 			<Footer />
 		</div>
 	);
-});
+}
 
 function BreadcrumbLink({ data }: { data: Breadcrumb }) {
 	if (data.type === "IMAGE") {
@@ -138,6 +138,7 @@ function BreadcrumbLink({ data }: { data: Breadcrumb }) {
 		</Link>
 	);
 }
-const MyRampUnit = React.memo(function MyRampUnit() {
+
+function MyRampUnit() {
 	return <div className="top-leaderboard" id="pw-leaderboard_atf" />;
-});
+}

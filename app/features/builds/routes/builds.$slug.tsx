@@ -158,7 +158,7 @@ export const handle: SendouRouteHandle = {
 	},
 };
 
-const BuildCards = React.memo(function BuildCards({
+export function BuildCards({
 	data,
 }: {
 	data: SerializeFrom<typeof loader>;
@@ -180,7 +180,7 @@ const BuildCards = React.memo(function BuildCards({
 			})}
 		</div>
 	);
-});
+}
 
 export default function WeaponsBuildsPage() {
 	const data = useLoaderData<typeof loader>();

@@ -13,7 +13,7 @@ const dimensions = {
 	lg: 125,
 } as const;
 
-function _Avatar({
+export function Avatar({
 	user,
 	url,
 	size = "sm",
@@ -60,5 +60,3 @@ function _Avatar({
 		/>
 	);
 }
-
-export const Avatar = React.memo(_Avatar);
