@@ -1099,4 +1099,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "serenade",
 		authorDiscordId: "617399529532293150",
 	},
+	{
+		displayName: "Moo Moo Cup",
+		fileName: "meadowscow",
+		authorDiscordId: "528851510222782474",
+	},
 ];
