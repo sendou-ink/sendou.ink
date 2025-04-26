@@ -1,7 +1,6 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
-import { isAdmin } from "~/permissions";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { _action, id } from "~/utils/zod";
 import * as LFGRepository from "../LFGRepository.server";
@@ -17,7 +16,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const post = posts.find((post) => post.id === data.id);
 	errorToastIfFalsy(post, "Post not found");
 	errorToastIfFalsy(
-		isAdmin(user) || post.author.id === user.id,
+		post.author.id === user.id || user.roles.includes("ADMIN"),
 		"Not your own post",
 	);
 

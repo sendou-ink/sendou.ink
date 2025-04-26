@@ -11,7 +11,7 @@ async function main() {
 			"UserWeapon.userId",
 		])
 		.where("UserWeapon.order", "!=", 5)
-		.orderBy("UserWeapon.order asc")
+		.orderBy("UserWeapon.order", "asc")
 		.execute();
 
 	// group by userId

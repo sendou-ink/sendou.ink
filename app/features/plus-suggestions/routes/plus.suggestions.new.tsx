@@ -13,13 +13,13 @@ import {
 } from "~/constants";
 import type { UserWithPlusTier } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
+import { atOrError } from "~/utils/arrays";
+import { plusSuggestionPage } from "~/utils/urls";
 import {
 	canSuggestNewUserFE,
 	playerAlreadyMember,
 	playerAlreadySuggested,
-} from "~/permissions";
-import { atOrError } from "~/utils/arrays";
-import { plusSuggestionPage } from "~/utils/urls";
+} from "../plus-suggestions-utils";
 import type { PlusSuggestionsLoaderData } from "./plus.suggestions";
 
 import { action } from "../actions/plus.suggestions.new.server";

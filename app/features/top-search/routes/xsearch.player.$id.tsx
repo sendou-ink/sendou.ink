@@ -99,7 +99,7 @@ function UnlinkFormWithButton() {
 	return (
 		<FormWithConfirm
 			dialogHeading={t("common:xsearch.unlink.title")}
-			deleteButtonText={t("common:xsearch.unlink.action.short")}
+			submitButtonText={t("common:xsearch.unlink.action.short")}
 		>
 			<SendouButton
 				icon={<UnlinkIcon />}

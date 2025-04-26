@@ -21,7 +21,5 @@
 	"edit.form.series.seriesName.title": "Nom de la série ",
 	"edit.form.series.showLeaderboard.title": "Montrer le leaderboard",
 	"edit.form.badges.title": "Badges",
-	"edit.form.badges.none": "Aucun badges est sélectionné",
-	"edit.form.badges.select": "Selectionner un badge pour l'ajouter",
 	"edit.form.errors.noUnadmin": "Vous ne pouvez pas vous supprimer en tant qu'administrateur"
 }

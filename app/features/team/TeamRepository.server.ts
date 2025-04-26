@@ -109,10 +109,19 @@ export async function teamsByMemberUserId(
 ) {
 	return (trx ?? db)
 		.selectFrom("TeamMemberWithSecondary")
-		.select([
+		.innerJoin("Team", "Team.id", "TeamMemberWithSecondary.teamId")
+		.select((eb) => [
 			"TeamMemberWithSecondary.teamId as id",
+			"Team.name",
 			"TeamMemberWithSecondary.isOwner",
 			"TeamMemberWithSecondary.isMainTeam",
+			jsonArrayFrom(
+				eb
+					.selectFrom("TeamMemberWithSecondary as m2")
+					.innerJoin("User", "User.id", "m2.userId")
+					.select([...COMMON_USER_FIELDS, "m2.role"])
+					.whereRef("TeamMemberWithSecondary.teamId", "=", "m2.teamId"),
+			).as("members"),
 		])
 		.where("userId", "=", userId)
 		.execute();

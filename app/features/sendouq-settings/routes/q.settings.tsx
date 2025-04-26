@@ -611,7 +611,7 @@ function TrustedUsers() {
 												["_action", "REMOVE_TRUST"],
 												["userToRemoveTrustFromId", trustedUser.id],
 											]}
-											deleteButtonText="Remove"
+											submitButtonText="Remove"
 										>
 											<Button
 												className="build__small-text"

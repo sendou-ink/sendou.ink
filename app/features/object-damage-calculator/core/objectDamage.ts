@@ -11,6 +11,7 @@ import type {
 	SpecialWeaponId,
 	SubWeaponId,
 } from "~/modules/in-game-lists";
+import { altWeaponIdToId } from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import {
@@ -23,6 +24,10 @@ import objectDamages from "./object-dmg.json";
 import { objectHitPoints } from "./objectHitPoints";
 
 const getNormalizedMainWeapondId = (id: MainWeaponId) => {
+	if (altWeaponIdToId.has(id)) {
+		return altWeaponIdToId.get(id)!;
+	}
+
 	return id % 10 !== 0 ? ((id - 1) as MainWeaponId) : id;
 };
 

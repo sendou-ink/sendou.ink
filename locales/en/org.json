@@ -21,7 +21,5 @@
 	"edit.form.series.seriesName.title": "Series name",
 	"edit.form.series.showLeaderboard.title": "Show leaderboard",
 	"edit.form.badges.title": "Badges",
-	"edit.form.badges.none": "No badges selected",
-	"edit.form.badges.select": "Select badge to add",
 	"edit.form.errors.noUnadmin": "Can't remove yourself as an admin"
 }

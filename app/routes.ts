@@ -178,6 +178,19 @@ export default [
 		route("new", "features/lfg/routes/lfg.new.tsx"),
 	]),
 
+	...prefix("/scrims", [
+		index("features/scrims/routes/scrims.tsx"),
+		route("new", "features/scrims/routes/scrims.new.tsx"),
+		route(":id", "features/scrims/routes/scrims.$id.tsx"),
+	]),
+
+	route("/associations", "features/associations/routes/associations.tsx", [
+		route(
+			"/associations/new",
+			"features/associations/routes/associations.new.tsx",
+		),
+	]),
+
 	route("/admin", "features/admin/routes/admin.tsx"),
 
 	...prefix("/a", [

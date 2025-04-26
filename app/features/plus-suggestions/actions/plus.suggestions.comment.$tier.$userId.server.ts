@@ -6,7 +6,6 @@ import {
 	nextNonCompletedVoting,
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
-import { canAddCommentToSuggestionBE } from "~/permissions";
 import {
 	badRequestIfFalsy,
 	errorToastIfFalsy,
@@ -14,6 +13,7 @@ import {
 } from "~/utils/remix.server";
 import { plusSuggestionPage } from "~/utils/urls";
 import { followUpCommentActionSchema } from "../plus-suggestions-schemas";
+import { canAddCommentToSuggestionBE } from "../plus-suggestions-utils";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const data = await parseRequestPayload({

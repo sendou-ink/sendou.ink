@@ -37,6 +37,8 @@ const minutesToPlay = (count: number, strict: boolean) => {
 export function useDeadline(roundId: number, bestOf: number) {
 	const tournament = useTournament();
 
+	if (tournament.isLeagueDivision) return null;
+
 	try {
 		const bracket = tournament.brackets.find((b) =>
 			b.data.round.some((r) => r.id === roundId),

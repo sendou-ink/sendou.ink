@@ -16,7 +16,6 @@ import { EditIcon } from "~/components/icons/Edit";
 import { StarIcon } from "~/components/icons/Star";
 import { UsersIcon } from "~/components/icons/Users";
 import { useUser } from "~/features/auth/core/user";
-import { isAdmin } from "~/permissions";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	TEAM_SEARCH_PAGE,
@@ -36,6 +35,7 @@ import {
 	resolveNewOwner,
 } from "../team-utils";
 import "../team.css";
+import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
 
 import { action } from "../actions/t.$customUrl.server";
@@ -191,9 +191,10 @@ function BskyLink() {
 function ActionButtons() {
 	const { t } = useTranslation(["team"]);
 	const user = useUser();
+	const isAdmin = useHasRole("ADMIN");
 	const { team } = useLoaderData<typeof loader>();
 
-	if (!isTeamMember({ user, team }) && !isAdmin(user)) {
+	if (!isTeamMember({ user, team }) && !isAdmin) {
 		return null;
 	}
 
@@ -217,7 +218,7 @@ function ActionButtons() {
 							newOwner: resolveNewOwner(team.members)?.username,
 						},
 					)}`}
-					deleteButtonText={t("team:actionButtons.leaveTeam.confirm")}
+					submitButtonText={t("team:actionButtons.leaveTeam.confirm")}
 					fields={[["_action", "LEAVE_TEAM"]]}
 				>
 					<Button
@@ -229,7 +230,7 @@ function ActionButtons() {
 					</Button>
 				</FormWithConfirm>
 			) : null}
-			{isTeamManager({ user, team }) || isAdmin(user) ? (
+			{isTeamManager({ user, team }) || isAdmin ? (
 				<LinkButton
 					size="tiny"
 					to={manageTeamRosterPage(team.customUrl)}
@@ -241,7 +242,7 @@ function ActionButtons() {
 					{t("team:actionButtons.manageRoster")}
 				</LinkButton>
 			) : null}
-			{isTeamManager({ user, team }) || isAdmin(user) ? (
+			{isTeamManager({ user, team }) || isAdmin ? (
 				<LinkButton
 					size="tiny"
 					to={editTeamPage(team.customUrl)}

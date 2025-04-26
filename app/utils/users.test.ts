@@ -59,11 +59,11 @@ describe("userDiscordIdIsAged()", () => {
 		expect(userDiscordIdIsAged({ discordId: "79237403620945920" })).toBe(true);
 	});
 
-	test("throws error if discord id missing", () => {
-		expect(() => userDiscordIdIsAged({ discordId: "" })).toThrow();
+	test("return false if discord id missing", () => {
+		expect(userDiscordIdIsAged({ discordId: "" })).toBe(false);
 	});
 
-	test("throws error if discord id too short", () => {
-		expect(() => userDiscordIdIsAged({ discordId: "1234" })).toThrow();
+	test("return false if discord id too short", () => {
+		expect(userDiscordIdIsAged({ discordId: "1234" })).toBe(false);
 	});
 });

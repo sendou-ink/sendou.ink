@@ -322,8 +322,8 @@ select:focus {
 
 .my-table {
 	width: 100%;
-	border-collapse: collapse;
-	border-spacing: 0 var(--s-1-5);
+	border-collapse: separate;
+	border-spacing: 0;
 	font-size: var(--fonts-xs);
 	text-align: left;
 	border-color: var(--border);
@@ -339,12 +339,6 @@ select:focus {
 	font-size: var(--fonts-xxs);
 }
 
-.my-table tr {
-	border-style: solid;
-	border-width: 0px;
-	border-bottom-width: 1px;
-}
-
 .my-table tbody tr:hover {
 	background-color: var(--bg-lighter);
 }
@@ -355,6 +349,14 @@ select:focus {
 
 .my-table > tbody > tr > td {
 	padding: var(--s-2) var(--s-2-5);
+}
+
+table tr:first-child td {
+	border-top: 1px solid var(--border);
+}
+
+table td {
+	border-bottom: 1px solid var(--border);
 }
 
 td > input[type="checkbox"] {
@@ -529,8 +531,10 @@ dialog::backdrop {
 
 .tab__buttons-container svg {
 	--icon-size: 16px;
-	width: var(--icon-size);
-	height: var(--icon-size);
+	min-width: var(--icon-size);
+	min-height: var(--icon-size);
+	max-width: var(--icon-size);
+	max-height: var(--icon-size);
 	margin-inline-end: var(--s-1-5);
 }
 
@@ -553,7 +557,9 @@ dialog::backdrop {
 
 .tab__buttons-container__sticky {
 	position: sticky;
-	top: 47px;
+	/* TODO: uncomment when top nav is sticky again */
+	/* top: 47px; */
+	top: 0;
 	z-index: 1;
 	background-color: var(--bg);
 }
@@ -1816,51 +1822,6 @@ html[dir="rtl"] .fix-rtl {
 
 #nprogress .peg {
 	display: none !important;
-}
-
-.badge-display__badges {
-	display: flex;
-	min-width: 20rem;
-	max-width: 24rem;
-	align-items: center;
-	padding: var(--s-2);
-	border-radius: var(--rounded);
-	background-color: var(--bg-badge);
-	margin-inline: auto;
-}
-
-.badge-display__small-badges {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	justify-content: center;
-	cursor: pointer;
-	gap: var(--s-3);
-}
-
-.badge-display__badge-explanation {
-	color: var(--text-lighter);
-	font-size: var(--fonts-xs);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: var(--s-2);
-}
-
-.badge-display__small-badge-container {
-	position: relative;
-}
-
-.badge-display__small-badge-count {
-	position: absolute;
-	top: 0;
-	right: 0;
-	margin-top: -8px;
-	margin-right: auto;
-	margin-left: auto;
-	color: var(--theme-vibrant);
-	font-size: var(--fonts-xxxs);
-	font-weight: var(--bold);
 }
 
 .format-selector__count {

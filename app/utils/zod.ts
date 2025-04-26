@@ -1,6 +1,6 @@
 import type { ZodType } from "zod";
 import { z } from "zod";
-import { CUSTOM_CSS_VAR_COLORS } from "~/constants";
+import { CUSTOM_CSS_VAR_COLORS, INVITE_CODE_LENGTH } from "~/constants";
 import type { abilitiesShort } from "~/modules/in-game-lists";
 import { abilities, mainWeaponIds, stageIds } from "~/modules/in-game-lists";
 import { FRIEND_CODE_REGEXP } from "../features/sendouq/q-constants";
@@ -12,6 +12,11 @@ export const idObject = z.object({
 	id,
 });
 export const optionalId = z.coerce.number().int().positive().optional();
+
+export const inviteCode = z.string().length(INVITE_CODE_LENGTH);
+export const inviteCodeObject = z.object({
+	inviteCode,
+});
 
 export const nonEmptyString = z.string().trim().min(1, {
 	message: "Required",
@@ -247,6 +252,12 @@ export function date(value: unknown) {
 
 export function noDuplicates(arr: (number | string)[]) {
 	return new Set(arr).size === arr.length;
+}
+
+export function filterOutNullishMembers(value: unknown) {
+	if (!Array.isArray(value)) return value;
+
+	return value.filter((member) => member !== null && member !== undefined);
 }
 
 export function removeDuplicates(value: unknown) {

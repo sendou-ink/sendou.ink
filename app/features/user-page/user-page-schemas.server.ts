@@ -2,12 +2,14 @@ import { countries } from "countries-list";
 import { z } from "zod";
 import { USER } from "~/constants";
 import "~/styles/u-edit.css";
+import { BADGE } from "~/features/badges/badges-contants";
 import { isCustomUrl } from "~/utils/urls";
 import {
 	actualNumber,
 	checkboxValueToDbBoolean,
 	customCssVarObject,
 	dbBoolean,
+	emptyArrayToNull,
 	falsyToNull,
 	id,
 	processMany,
@@ -108,9 +110,13 @@ export const userEditActionSchema = z
 				)
 				.max(USER.WEAPON_POOL_MAX_SIZE),
 		),
-		favoriteBadgeId: z.preprocess(
-			processMany(actualNumber, undefinedToNull),
-			id.nullable(),
+		favoriteBadgeIds: z.preprocess(
+			processMany(safeJSONParse, emptyArrayToNull),
+			z
+				.array(id)
+				.min(1)
+				.max(BADGE.SMALL_BADGES_PER_DISPLAY_PAGE + 1)
+				.nullable(),
 		),
 		showDiscordUniqueName: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
 		commissionsOpen: z.preprocess(checkboxValueToDbBoolean, dbBoolean),

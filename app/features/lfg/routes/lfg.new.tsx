@@ -10,6 +10,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
+import { useHasRole } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	LFG_PAGE,
@@ -33,7 +34,7 @@ export const handle: SendouRouteHandle = {
 };
 
 export default function LFGNewPostPage() {
-	const user = useUser();
+	const isPlusServerMember = useHasRole("PLUS_SERVER_MEMBER");
 	const data = useLoaderData<typeof loader>();
 	const fetcher = useFetcher();
 	const { t } = useTranslation(["common", "lfg"]);
@@ -67,7 +68,7 @@ export default function LFGNewPostPage() {
 				/>
 				<TimezoneSelect />
 				<Textarea />
-				{user?.plusTier && type !== "COACH_FOR_TEAM" ? (
+				{isPlusServerMember && type !== "COACH_FOR_TEAM" ? (
 					<PlusVisibilitySelect />
 				) : null}
 				<Languages />

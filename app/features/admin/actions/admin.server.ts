@@ -2,16 +2,12 @@ import type { ActionFunctionArgs } from "@remix-run/node";
 import { z } from "zod";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { makeArtist } from "~/features/art/queries/makeArtist.server";
-import { requireUserId } from "~/features/auth/core/user.server";
+import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { isAdmin, isMod } from "~/permissions";
+import { requireRole } from "~/modules/permissions/guards.server";
 import { logger } from "~/utils/logger";
-import {
-	errorToastIfFalsy,
-	parseRequestPayload,
-	successToast,
-} from "~/utils/remix.server";
+import { parseRequestPayload, successToast } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { _action, actualNumber, friendCode } from "~/utils/zod";
 import { plusTiersFromVotingAndLeaderboard } from "../core/plus-tier.server";
@@ -21,12 +17,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		request,
 		schema: adminActionSchema,
 	});
-	const user = await requireUserId(request);
+	const user = await requireUser(request);
 
 	let message: string;
 	switch (data._action) {
 		case "MIGRATE": {
-			errorToastIfFalsy(isMod(user), "Admin needed");
+			requireRole(user, "STAFF");
 
 			await AdminRepository.migrate({
 				oldUserId: data["old-user"],
@@ -37,7 +33,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "REFRESH": {
-			errorToastIfFalsy(isAdmin(user), "Admin needed");
+			requireRole(user, "ADMIN");
 
 			await AdminRepository.replacePlusTiers(
 				await plusTiersFromVotingAndLeaderboard(),
@@ -47,7 +43,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "FORCE_PATRON": {
-			errorToastIfFalsy(isAdmin(user), "Admin needed");
+			requireRole(user, "ADMIN");
 
 			await AdminRepository.forcePatron({
 				id: data.user,
@@ -60,7 +56,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "CLEAN_UP": {
-			errorToastIfFalsy(isAdmin(user), "Admin needed");
+			requireRole(user, "ADMIN");
 
 			// on purpose sync
 			AdminRepository.cleanUp();
@@ -69,7 +65,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "ARTIST": {
-			errorToastIfFalsy(isMod(user), "Mod needed");
+			requireRole(user, "STAFF");
 
 			makeArtist(data.user);
 
@@ -77,7 +73,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "VIDEO_ADDER": {
-			errorToastIfFalsy(isMod(user), "Mod needed");
+			requireRole(user, "STAFF");
 
 			await AdminRepository.makeVideoAdderByUserId(data.user);
 
@@ -85,7 +81,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "TOURNAMENT_ORGANIZER": {
-			errorToastIfFalsy(isMod(user), "Mod needed");
+			requireRole(user, "STAFF");
 
 			await AdminRepository.makeTournamentOrganizerByUserId(data.user);
 
@@ -93,7 +89,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "LINK_PLAYER": {
-			errorToastIfFalsy(isMod(user), "Mod needed");
+			requireRole(user, "STAFF");
 
 			await AdminRepository.linkUserAndPlayer({
 				userId: data.user,
@@ -104,7 +100,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "BAN_USER": {
-			errorToastIfFalsy(isMod(user), "Mod needed");
+			requireRole(user, "STAFF");
 
 			await AdminRepository.banUser({
 				bannedReason: data.reason ?? null,
@@ -127,7 +123,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "UNBAN_USER": {
-			errorToastIfFalsy(isMod(user), "Mod needed");
+			requireRole(user, "STAFF");
 
 			await AdminRepository.unbanUser(data.user);
 
@@ -142,7 +138,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "UPDATE_FRIEND_CODE": {
-			errorToastIfFalsy(isMod(user), "Mod needed");
+			requireRole(user, "STAFF");
 
 			await UserRepository.insertFriendCode({
 				friendCode: data.friendCode,

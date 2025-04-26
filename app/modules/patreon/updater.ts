@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { MOD_DISCORD_IDS } from "~/constants";
+import { STAFF_DISCORD_IDS } from "~/constants";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { fetchWithTimeout } from "~/utils/fetch";
@@ -35,7 +35,7 @@ export async function updatePatreonData(): Promise<void> {
 
 	const patronsWithMods: UserRepository.UpdatePatronDataArgs = [
 		...patrons,
-		...MOD_DISCORD_IDS.filter((discordId) =>
+		...STAFF_DISCORD_IDS.filter((discordId) =>
 			patrons.every((p) => p.discordId !== discordId),
 		).map((discordId) => ({
 			discordId,

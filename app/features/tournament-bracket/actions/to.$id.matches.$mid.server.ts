@@ -5,7 +5,6 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as TournamentMatchRepository from "~/features/tournament-bracket/TournamentMatchRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
-import { canReportTournamentScore } from "~/permissions";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
@@ -27,7 +26,10 @@ import { deleteMatchPickBanEvents } from "../queries/deleteMatchPickBanEvents.se
 import { deleteParticipantsByMatchGameResultId } from "../queries/deleteParticipantsByMatchGameResultId.server";
 import { deletePickBanEvent } from "../queries/deletePickBanEvent.server";
 import { deleteTournamentMatchGameResultById } from "../queries/deleteTournamentMatchGameResultById.server";
-import { findMatchById } from "../queries/findMatchById.server";
+import {
+	type FindMatchById,
+	findMatchById,
+} from "../queries/findMatchById.server";
 import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
 import { insertTournamentMatchGameResult } from "../queries/insertTournamentMatchGameResult.server";
 import { insertTournamentMatchGameResultParticipant } from "../queries/insertTournamentMatchGameResultParticipant.server";
@@ -577,3 +579,18 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 	return null;
 };
+
+function canReportTournamentScore({
+	match,
+	isMemberOfATeamInTheMatch,
+	isOrganizer,
+}: {
+	match: NonNullable<FindMatchById>;
+	isMemberOfATeamInTheMatch: boolean;
+	isOrganizer: boolean;
+}) {
+	const matchIsOver =
+		match.opponentOne?.result === "win" || match.opponentTwo?.result === "win";
+
+	return !matchIsOver && (isMemberOfATeamInTheMatch || isOrganizer);
+}

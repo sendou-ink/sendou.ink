@@ -1,15 +1,18 @@
-import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { SerializeFrom } from "~/utils/remix";
+import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { idObject } from "~/utils/zod";
 import * as BadgeRepository from "../BadgeRepository.server";
 
 export type BadgeDetailsLoaderData = SerializeFrom<typeof loader>;
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const badgeId = Number(params.id);
-	if (Number.isNaN(badgeId)) {
-		throw new Response(null, { status: 404 });
-	}
+	const { id } = parseParams({
+		params,
+		schema: idObject,
+	});
+	const badge = notFoundIfFalsy(await BadgeRepository.findById(id));
 
 	return {
-		owners: await BadgeRepository.findOwnersByBadgeId(badgeId),
-		managers: await BadgeRepository.findManagersByBadgeId(badgeId),
+		badge,
 	};
 };

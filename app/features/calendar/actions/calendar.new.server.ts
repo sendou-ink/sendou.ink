@@ -17,7 +17,7 @@ import {
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import { canEditCalendarEvent } from "~/permissions";
+import { requireRole } from "~/modules/permissions/guards.server";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
@@ -41,10 +41,10 @@ import {
 	toArray,
 } from "~/utils/zod";
 import { CALENDAR_EVENT, REG_CLOSES_AT_OPTIONS } from "../calendar-constants";
+import { canEditCalendarEvent } from "../calendar-utils";
 import {
 	calendarEventMaxDate,
 	calendarEventMinDate,
-	canAddNewEvent,
 	regClosesAtDate,
 } from "../calendar-utils";
 
@@ -61,7 +61,7 @@ export const action: ActionFunction = async ({ request }) => {
 		parseAsync: true,
 	});
 
-	errorToastIfFalsy(canAddNewEvent(user), "Not authorized");
+	requireRole(user, "CALENDAR_EVENT_ADDER");
 
 	const startTimes = data.date.map((date) => dateToDatabaseTimestamp(date));
 	const commonArgs = {

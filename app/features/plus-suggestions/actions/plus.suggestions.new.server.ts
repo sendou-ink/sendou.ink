@@ -8,7 +8,6 @@ import {
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { canSuggestNewUserBE } from "~/permissions";
 import {
 	badRequestIfFalsy,
 	errorToastIfFalsy,
@@ -16,6 +15,7 @@ import {
 } from "~/utils/remix.server";
 import { plusSuggestionPage } from "~/utils/urls";
 import { firstCommentActionSchema } from "../plus-suggestions-schemas";
+import { canSuggestNewUserBE } from "../plus-suggestions-utils";
 
 export const action: ActionFunction = async ({ request }) => {
 	const data = await parseRequestPayload({

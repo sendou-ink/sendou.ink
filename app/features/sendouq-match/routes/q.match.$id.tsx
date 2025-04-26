@@ -43,7 +43,7 @@ import { useIsMounted } from "~/hooks/useIsMounted";
 import { useWindowSize } from "~/hooks/useWindowSize";
 import type { MainWeaponId } from "~/modules/in-game-lists";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
-import { isMod } from "~/permissions";
+import { useHasRole } from "~/modules/permissions/hooks";
 import { joinListToNaturalString } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { animate } from "~/utils/flip";
@@ -100,6 +100,7 @@ export const handle: SendouRouteHandle = {
 
 export default function QMatchPage() {
 	const user = useUser();
+	const isStaff = useHasRole("STAFF");
 	const isMounted = useIsMounted();
 	const { t, i18n } = useTranslation(["q"]);
 	const data = useLoaderData<typeof loader>();
@@ -116,7 +117,7 @@ export default function QMatchPage() {
 		data.groupAlpha.members.find((m) => m.id === user?.id) ??
 		data.groupBravo.members.find((m) => m.id === user?.id);
 	const canReportScore = Boolean(
-		!data.match.isLocked && (ownMember || isMod(user)),
+		!data.match.isLocked && (ownMember || isStaff),
 	);
 
 	const ownGroup = data.groupAlpha.members.some((m) => m.id === user?.id)
@@ -648,6 +649,7 @@ function BottomSection({
 	const [isReportingWeapons, setIsReportingWeapons] = React.useState(false);
 
 	const user = useUser();
+	const isStaff = useHasRole("STAFF");
 	const data = useLoaderData<typeof loader>();
 	const submitScoreFetcher = useFetcher<typeof action>();
 	const cancelFetcher = useFetcher<typeof action>();
@@ -698,8 +700,7 @@ function BottomSection({
 
 	const unseenMessages = chatVisible ? 0 : _unseenMessages;
 
-	const showMid =
-		!data.match.isLocked && (participatingInTheMatch || isMod(user));
+	const showMid = !data.match.isLocked && (participatingInTheMatch || isStaff);
 
 	const poolCode = () => {
 		const stringId = String(data.match.id);
@@ -775,7 +776,7 @@ function BottomSection({
 					["winners", "[]"],
 					...(!data.groupMemberOf ? [["adminReport", "on"] as const] : []),
 				]}
-				deleteButtonText={t("common:actions.cancel")}
+				submitButtonText={t("common:actions.cancel")}
 				cancelButtonText={t("common:actions.nevermind")}
 				fetcher={cancelFetcher}
 			>
@@ -941,6 +942,7 @@ function MapList({
 }) {
 	const { t } = useTranslation(["q"]);
 	const user = useUser();
+	const isStaff = useHasRole("STAFF");
 	const data = useLoaderData<typeof loader>();
 	const [adminToggleChecked, setAdminToggleChecked] = React.useState(false);
 	const [ownWeaponsUsage, setOwnWeaponsUsage] = React.useState<
@@ -1022,7 +1024,7 @@ function MapList({
 					})}
 				</div>
 			</Flipper>
-			{scoreCanBeReported && isMod(user) ? (
+			{scoreCanBeReported && isStaff ? (
 				<div className="stack sm horizontal items-center text-sm font-semi-bold">
 					<SendouSwitch
 						name="adminReport"

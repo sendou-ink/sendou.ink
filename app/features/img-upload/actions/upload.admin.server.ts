@@ -1,10 +1,9 @@
 import type { ActionFunction } from "@remix-run/node";
-import { requireUserId } from "~/features/auth/core/user.server";
+import { requireUser } from "~/features/auth/core/user.server";
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
-import { isMod } from "~/permissions";
+import { requireRole } from "~/modules/permissions/guards.server";
 import {
 	badRequestIfFalsy,
-	errorToastIfFalsy,
 	parseRequestPayload,
 	successToast,
 } from "~/utils/remix.server";
@@ -14,13 +13,13 @@ import { validateImage } from "../queries/validateImage";
 import { validateImageSchema } from "../upload-schemas.server";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUserId(request);
+	const user = await requireUser(request);
+	requireRole(user, "STAFF");
+
 	const data = await parseRequestPayload({
 		schema: validateImageSchema,
 		request,
 	});
-
-	errorToastIfFalsy(isMod(user), "Only admins can validate images");
 
 	switch (data._action) {
 		case "VALIDATE": {

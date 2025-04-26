@@ -353,6 +353,26 @@ export const sendouQMatchPage = (id: Tables["GroupMatch"]["id"]) => {
 	return `${SENDOUQ_PAGE}/match/${id}`;
 };
 
+export const scrimsPage = () => {
+	return "/scrims";
+};
+
+export const scrimPage = (id: number) => {
+	return `${scrimsPage()}/${id}`;
+};
+
+export const newScrimPostPage = () => {
+	return "/scrims/new";
+};
+
+export const associationsPage = (inviteCode?: string) => {
+	return `/associations${inviteCode ? `?inviteCode=${inviteCode}` : ""}`;
+};
+
+export const newAssociationsPage = () => {
+	return "/associations/new";
+};
+
 export const getWeaponUsage = ({
 	userId,
 	season,

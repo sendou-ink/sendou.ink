@@ -14,7 +14,7 @@ import { Main } from "~/components/Main";
 import { UserSearch } from "~/components/UserSearch";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { CrossIcon } from "~/components/icons/Cross";
-import { useUser } from "~/features/auth/core/user";
+import { useHasRole } from "~/modules/permissions/hooks";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -52,7 +52,7 @@ export default function NewArtPage() {
 	const { t } = useTranslation(["common", "art"]);
 	const ref = React.useRef<HTMLFormElement>(null);
 	const fetcher = useFetcher();
-	const user = useUser();
+	const isArtist = useHasRole("ARTIST");
 
 	const handleSubmit = () => {
 		const formData = new FormData(ref.current!);
@@ -72,7 +72,7 @@ export default function NewArtPage() {
 		return !img && !data.art;
 	};
 
-	if (!user || !user.isArtist) {
+	if (!isArtist) {
 		return (
 			<Main className="stack items-center">
 				<Alert variation="WARNING">{t("art:gainPerms")}</Alert>

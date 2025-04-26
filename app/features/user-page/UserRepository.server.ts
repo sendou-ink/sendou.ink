@@ -9,10 +9,13 @@ import type {
 	TablesInsertable,
 	UserPreferences,
 } from "~/db/tables";
+import type { ChatUser } from "~/features/chat/components/Chat";
+import { userRoles } from "~/modules/permissions/mapper.server";
+import { isSupporter } from "~/modules/permissions/utils";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
 import { safeNumberParse } from "~/utils/number";
 
 const identifierToUserIdQuery = (identifier: string) =>
@@ -155,7 +158,8 @@ export async function findProfileByIdentifier(
 			"User.discordName",
 			"User.showDiscordUniqueName",
 			"User.discordUniqueName",
-			"User.favoriteBadgeId",
+			"User.favoriteBadgeIds",
+			"User.patronTier",
 			"PlusTier.tier as plusTier",
 			jsonArrayFrom(
 				eb
@@ -221,22 +225,30 @@ export async function findProfileByIdentifier(
 		return null;
 	}
 
+	const favoriteBadgeIds = isSupporter(row)
+		? row.favoriteBadgeIds
+		: row.favoriteBadgeIds
+			? [row.favoriteBadgeIds[0]]
+			: null;
+
 	return {
 		...row,
 		team: row.teams.find((t) => t.isMainTeam),
 		secondaryTeams: row.teams.filter((t) => !t.isMainTeam),
 		teams: undefined,
-		// TODO: sort in SQL
+		favoriteBadgeIds,
 		badges: row.badges.sort((a, b) => {
-			if (a.id === row.favoriteBadgeId) {
-				return -1;
+			const aIdx = favoriteBadgeIds?.indexOf(a.id) ?? -1;
+			const bIdx = favoriteBadgeIds?.indexOf(b.id) ?? -1;
+
+			if (aIdx !== bIdx) {
+				if (aIdx === -1) return 1;
+				if (bIdx === -1) return -1;
+
+				return aIdx - bIdx;
 			}
 
-			if (b.id === row.favoriteBadgeId) {
-				return 1;
-			}
-
-			return a.id - b.id;
+			return b.id - a.id;
 		}),
 		discordUniqueName:
 			forceShowDiscordUniqueName || row.showDiscordUniqueName
@@ -270,14 +282,8 @@ export function findBannedStatusByUserId(userId: number) {
 		.executeTakeFirst();
 }
 
-const userIsTournamentOrganizer = sql<
-	string | null
->`IIF(COALESCE("User"."patronTier", 0) >= 2, 1, "User"."isTournamentOrganizer")`.as(
-	"isTournamentOrganizer",
-);
-
-export function findLeanById(id: number) {
-	return db
+export async function findLeanById(id: number) {
+	const user = await db
 		.selectFrom("User")
 		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.where("User.id", "=", id)
@@ -285,9 +291,9 @@ export function findLeanById(id: number) {
 			...COMMON_USER_FIELDS,
 			"User.isArtist",
 			"User.isVideoAdder",
-			userIsTournamentOrganizer,
+			"User.isTournamentOrganizer",
 			"User.patronTier",
-			"User.favoriteBadgeId",
+			"User.favoriteBadgeIds",
 			"User.languages",
 			"User.inGameName",
 			"User.preferences",
@@ -301,6 +307,13 @@ export function findLeanById(id: number) {
 				.as("friendCode"),
 		])
 		.executeTakeFirst();
+
+	if (!user) return;
+
+	return {
+		...user,
+		roles: userRoles(user),
+	};
 }
 
 export function findAllPatrons() {
@@ -323,6 +336,28 @@ export function findAllPlusServerMembers() {
 			"PlusTier.tier as plusTier",
 		])
 		.execute();
+}
+
+export async function findChatUsersByUserIds(userIds: number[]) {
+	const users = await db
+		.selectFrom("User")
+		.select([
+			"User.id",
+			"User.discordId",
+			"User.discordAvatar",
+			"User.username",
+			userChatNameColor,
+		])
+		.where("User.id", "in", userIds)
+		.execute();
+
+	const result: Record<number, ChatUser> = {};
+
+	for (const user of users) {
+		result[user.id] = user;
+	}
+
+	return result;
 }
 
 const withMaxEventStartTime = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
@@ -557,7 +592,7 @@ export async function currentFriendCodeByUserId(userId: number) {
 			"UserFriendCode.submitterUserId",
 		])
 		.where("userId", "=", userId)
-		.orderBy("UserFriendCode.createdAt desc")
+		.orderBy("UserFriendCode.createdAt", "desc")
 		.limit(1)
 		.executeTakeFirst();
 }
@@ -572,7 +607,7 @@ export async function allCurrentFriendCodes() {
 	const allFriendCodes = await db
 		.selectFrom("UserFriendCode")
 		.select(["UserFriendCode.friendCode", "UserFriendCode.userId"])
-		.orderBy("UserFriendCode.createdAt desc")
+		.orderBy("UserFriendCode.createdAt", "desc")
 		.execute();
 
 	const seenUserIds = new Set<number>();
@@ -643,13 +678,13 @@ type UpdateProfileArgs = Pick<
 	| "inGameName"
 	| "battlefy"
 	| "css"
-	| "favoriteBadgeId"
 	| "showDiscordUniqueName"
 	| "commissionText"
 	| "commissionsOpen"
 > & {
 	userId: number;
 	weapons: Pick<TablesInsertable["UserWeapon"], "weaponSplId" | "isFavorite">[];
+	favoriteBadgeIds: number[] | null;
 };
 export function updateProfile(args: UpdateProfileArgs) {
 	return db.transaction().execute(async (trx) => {
@@ -684,7 +719,9 @@ export function updateProfile(args: UpdateProfileArgs) {
 				inGameName: args.inGameName,
 				css: args.css,
 				battlefy: args.battlefy,
-				favoriteBadgeId: args.favoriteBadgeId,
+				favoriteBadgeIds: args.favoriteBadgeIds
+					? JSON.stringify(args.favoriteBadgeIds)
+					: null,
 				showDiscordUniqueName: args.showDiscordUniqueName,
 				commissionText: args.commissionText,
 				commissionsOpen: args.commissionsOpen,

@@ -11,7 +11,6 @@ import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.ser
 import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import { findCurrentGroupByUserId } from "~/features/sendouq/queries/findCurrentGroupByUserId.server";
-import { isMod } from "~/permissions";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
@@ -80,7 +79,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			}
 
 			errorToastIfFalsy(
-				!data.adminReport || isMod(user),
+				!data.adminReport || user.roles.includes("STAFF"),
 				"Only mods can report scores as admin",
 			);
 			const members = [

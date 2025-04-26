@@ -23,9 +23,10 @@ export function insert(
 		await trx
 			.insertInto("NotificationUser")
 			.values(
-				users.map(({ userId }) => ({
+				users.map(({ userId, seen }) => ({
 					userId,
 					notificationId: inserted.id,
+					seen,
 				})),
 			)
 			.execute();

@@ -1,16 +1,16 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
-import { requireUserId } from "~/features/auth/core/user.server";
-import { isAdmin } from "~/permissions";
+import { requireUser } from "~/features/auth/core/user.server";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 import { teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
 import { teamParamsSchema } from "../team-schemas.server";
 import { isTeamManager } from "../team-utils";
+
 import "../team.css";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const user = await requireUserId(request);
+	const user = await requireUser(request);
 	const { customUrl } = teamParamsSchema.parse(params);
 
 	const team = notFoundIfFalsy(
@@ -19,7 +19,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		}),
 	);
 
-	if (!isTeamManager({ team, user }) && !isAdmin(user)) {
+	if (!isTeamManager({ team, user }) && !user.roles.includes("ADMIN")) {
 		throw redirect(teamPage(customUrl));
 	}
 

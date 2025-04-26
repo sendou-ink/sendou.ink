@@ -73,7 +73,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 							).as("participants"),
 						])
 						.where("TournamentMatchGameResult.matchId", "=", id)
-						.orderBy("TournamentMatchGameResult.number asc"),
+						.orderBy("TournamentMatchGameResult.number", "asc"),
 				).as("playedMapList"),
 			])
 			.where("TournamentMatch.id", "=", id)

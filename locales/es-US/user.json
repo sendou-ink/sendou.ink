@@ -12,7 +12,6 @@
 	"sens": "Sens",
 	"weaponPool": "Grupo de armas",
 	"discordExplanation": "Tu nombre, foto, y cuentas de YouTube, Bluesky y Twitch se obtienen por tu cuenta en Discord. Ver <1>FAQ</1> para más información.",
-	"favoriteBadge": "Insignia favorita",
 	"battlefy": "Nombre de cuenta de Battlefy",
 
 	"forms.showDiscordUniqueName": "Mostrar usuario de Discord",
@@ -40,7 +39,6 @@
 	"forms.errors.invalidCustomUrl.duplicate": "Alguien ya tiene ese enlace personalizado",
 	"forms.errors.invalidSens": "Sens de giroscopio no se poner sin la sens de palanca",
 
-	"forms.info.favoriteBadge": "Tu insignia favorita se muestra en forma grande en tu perfil.",
 	"forms.info.battlefy": "El nombre de tu cuenta de Battlefy se utiliza para la clasificación y verificación en algunos torneos.",
 
 	"search.noResults": "No se encontraron usuarios que coincidan con '{{query}}'",

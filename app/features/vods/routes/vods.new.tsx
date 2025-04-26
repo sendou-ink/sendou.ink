@@ -22,13 +22,13 @@ import {
 	modesShort,
 	stageIds,
 } from "~/modules/in-game-lists";
+import { useHasRole } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Alert } from "../../../components/Alert";
 import { DateFormField } from "../../../components/form/DateFormField";
 import { MyForm } from "../../../components/form/MyForm";
 import { SelectFormField } from "../../../components/form/SelectFormField";
 import { TextFormField } from "../../../components/form/TextFormField";
-import { useUser } from "../../auth/core/user";
 import { videoMatchTypes } from "../vods-constants";
 import { videoInputSchema } from "../vods-schemas";
 
@@ -43,11 +43,11 @@ export const handle: SendouRouteHandle = {
 export type VodFormFields = z.infer<typeof videoInputSchema>;
 
 export default function NewVodPage() {
-	const user = useUser();
+	const isVideoAdder = useHasRole("VIDEO_ADDER");
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["vods"]);
 
-	if (!user || !user.isVideoAdder) {
+	if (!isVideoAdder) {
 		return (
 			<Main className="stack items-center">
 				<Alert variation="WARNING">{t("vods:gainPerms")}</Alert>

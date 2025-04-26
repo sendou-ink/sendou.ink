@@ -1,7 +1,7 @@
 import { isRouteErrorResponse, useRouteError } from "@remix-run/react";
 import clsx from "clsx";
 import type * as React from "react";
-import { useUser } from "~/features/auth/core/user";
+import { useHasRole } from "~/modules/permissions/hooks";
 
 export const Main = ({
 	children,
@@ -19,10 +19,10 @@ export const Main = ({
 	style?: React.CSSProperties;
 }) => {
 	const error = useRouteError();
-	const user = useUser();
+	const isMinorSupporter = useHasRole("MINOR_SUPPORT");
 	const showLeaderboard =
 		import.meta.env.VITE_PLAYWIRE_PUBLISHER_ID &&
-		!user?.patronTier &&
+		!isMinorSupporter &&
 		!isRouteErrorResponse(error);
 
 	return (
