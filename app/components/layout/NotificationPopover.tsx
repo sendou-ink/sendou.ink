@@ -1,6 +1,7 @@
 import { useLocation, useMatches, useRevalidator } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
+import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import {
 	NotificationItem,
@@ -47,11 +48,12 @@ export function NotificationPopover() {
 			{unseenIds.length > 0 ? <div className={styles.unseenDot} /> : null}
 			<SendouPopover
 				trigger={
-					<SendouButton
-						icon={<BellIcon />}
+					<Button
 						className="layout__header__button"
 						data-testid="notifications-button"
-					/>
+					>
+						<BellIcon />
+					</Button>
 				}
 				popoverClassName={clsx(styles.popoverContainer, {
 					[styles.noNotificationsContainer]:
