@@ -116,7 +116,7 @@ export const userEditActionSchema = z
 				.array(id)
 				.min(1)
 				.max(BADGE.SMALL_BADGES_PER_DISPLAY_PAGE + 1)
-				.nullable(),
+				.nullish(),
 		),
 		showDiscordUniqueName: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
 		commissionsOpen: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
