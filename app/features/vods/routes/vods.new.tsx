@@ -5,6 +5,7 @@ import {
 	get,
 	useFieldArray,
 	useFormContext,
+	useWatch,
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod";
@@ -89,8 +90,9 @@ export default function NewVodPage() {
 
 function FormFields() {
 	const { t } = useTranslation(["vods"]);
-	const { watch } = useFormContext<VodFormFields>();
-	const videoType = watch("video.type");
+	const videoType = useWatch({
+		name: "video.type",
+	}) as VodFormFields["video"]["type"];
 
 	return (
 		<>
