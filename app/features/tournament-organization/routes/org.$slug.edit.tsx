@@ -19,12 +19,12 @@ import { wrapToValueStringArrayWithDefault } from "~/utils/form";
 import type { Unpacked } from "~/utils/types";
 import { uploadImagePage } from "~/utils/urls";
 import { organizationEditSchema } from "../tournament-organization-schemas";
-
+import { TOURNAMENT_ORGANIZATION } from "../tournament-organization-constants";
 import { BadgesSelector } from "~/features/badges/components/BadgesSelector";
+
 import { action } from "../actions/org.$slug.edit.server";
 import { loader } from "../loaders/org.$slug.edit.server";
 import { handle, meta } from "../routes/org.$slug";
-import { TOURNAMENT_ORGANIZATION } from "../tournament-organization-constants";
 export { action, handle, loader, meta };
 
 type FormFields = z.infer<typeof organizationEditSchema> & {
