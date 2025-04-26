@@ -16,7 +16,7 @@ const DEFAULT_FIELDS = {
 	country: "FI",
 	customName: null,
 	customUrl: null,
-	favoriteBadgeId: null,
+	favoriteBadgeIds: null,
 	inGameNameDiscriminator: null,
 	inGameNameText: null,
 	motionSens: null,

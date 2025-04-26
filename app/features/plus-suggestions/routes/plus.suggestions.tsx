@@ -16,15 +16,15 @@ import {
 	isVotingActive,
 	nextNonCompletedVoting,
 } from "~/features/plus-voting/core";
-import {
-	canAddCommentToSuggestionFE,
-	canDeleteComment,
-	canSuggestNewUserFE,
-} from "~/permissions";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { metaTags } from "~/utils/remix";
 import { userPage } from "~/utils/urls";
+import {
+	canAddCommentToSuggestionFE,
+	canDeleteComment,
+	canSuggestNewUserFE,
+} from "../plus-suggestions-utils";
 
 import { action } from "../actions/plus.suggestions.server";
 import { loader } from "../loaders/plus.suggestions.server";

@@ -17,9 +17,8 @@ import { NewTabs } from "~/components/NewTabs";
 import { SubmitButton } from "~/components/SubmitButton";
 import { UserSearch } from "~/components/UserSearch";
 import { SearchIcon } from "~/components/icons/Search";
-import { useUser } from "~/features/auth/core/user";
 import { FRIEND_CODE_REGEXP_PATTERN } from "~/features/sendouq/q-constants";
-import { isAdmin, isMod } from "~/permissions";
+import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
 import {
 	SEED_URL,
@@ -108,27 +107,28 @@ function FriendCodeLookUp() {
 }
 
 function AdminActions() {
-	const user = useUser();
+	const isStaff = useHasRole("STAFF");
+	const isAdmin = useHasRole("ADMIN");
 
 	return (
 		<div className="stack lg">
 			{process.env.NODE_ENV !== "production" && <Seed />}
 
-			{isMod(user) ? <LinkPlayer /> : null}
-			{isMod(user) ? <GiveArtist /> : null}
-			{isMod(user) ? <GiveVideoAdder /> : null}
-			{isMod(user) ? <GiveTournamentOrganizer /> : null}
-			{isMod(user) ? <UpdateFriendCode /> : null}
+			{isStaff ? <LinkPlayer /> : null}
+			{isStaff ? <GiveArtist /> : null}
+			{isStaff ? <GiveVideoAdder /> : null}
+			{isStaff ? <GiveTournamentOrganizer /> : null}
+			{isStaff ? <UpdateFriendCode /> : null}
 
-			{process.env.NODE_ENV !== "production" || isAdmin(user) ? (
+			{process.env.NODE_ENV !== "production" || isAdmin ? (
 				<Impersonate />
 			) : null}
-			{isMod(user) ? <MigrateUser /> : null}
-			{isAdmin(user) ? <ForcePatron /> : null}
-			{isMod(user) ? <BanUser /> : null}
-			{isMod(user) ? <UnbanUser /> : null}
-			{isAdmin(user) ? <RefreshPlusTiers /> : null}
-			{isAdmin(user) ? <CleanUp /> : null}
+			{isStaff ? <MigrateUser /> : null}
+			{isAdmin ? <ForcePatron /> : null}
+			{isStaff ? <BanUser /> : null}
+			{isStaff ? <UnbanUser /> : null}
+			{isAdmin ? <RefreshPlusTiers /> : null}
+			{isAdmin ? <CleanUp /> : null}
 		</div>
 	);
 }

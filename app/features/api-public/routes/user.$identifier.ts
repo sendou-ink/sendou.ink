@@ -43,7 +43,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 						.selectFrom("UserWeapon")
 						.select(["UserWeapon.isFavorite", "UserWeapon.weaponSplId"])
 						.whereRef("UserWeapon.userId", "=", "User.id")
-						.orderBy("UserWeapon.order asc"),
+						.orderBy("UserWeapon.order", "asc"),
 				).as("weapons"),
 				jsonArrayFrom(
 					eb

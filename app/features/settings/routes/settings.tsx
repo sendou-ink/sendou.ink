@@ -8,6 +8,7 @@ import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { useUser } from "~/features/auth/core/user";
+import { FF_SCRIMS_ENABLED } from "~/features/scrims/scrims-constants";
 import { Theme, useTheme } from "~/features/theme/core/provider";
 import { languages } from "~/modules/i18n/config";
 import { metaTags } from "~/utils/remix";
@@ -53,6 +54,20 @@ export default function SettingsPage() {
 									"common:settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText",
 								)}
 							/>
+							{FF_SCRIMS_ENABLED ? (
+								<PreferenceSelectorSwitch
+									_action="DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED"
+									defaultSelected={
+										user?.preferences.disallowScrimPickupsFromUntrusted ?? false
+									}
+									label={t(
+										"common:settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.label",
+									)}
+									bottomText={t(
+										"common:settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.bottomText",
+									)}
+								/>
+							) : null}
 						</div>
 					</>
 				) : null}

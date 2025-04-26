@@ -12,7 +12,6 @@
 	"sens": "感度",
 	"weaponPool": "使用ブキ",
 	"discordExplanation": "ユーザー名、プロファイル画像、YouTube、Bluesky と Twitch アカウントは Discord のアカウントに設定されているものが使用されます。詳しくは <1>FAQ</1> をご覧ください。",
-	"favoriteBadge": "お気に入りバッジ",
 	"battlefy": "Battlefyアカウント名",
 
 	"forms.showDiscordUniqueName": "Discord のユーザー名を表示する",
@@ -39,7 +38,6 @@
 	"forms.errors.invalidCustomUrl.strangeCharacter": "カスタム URL は特殊文字を含めることはできません",
 	"forms.errors.invalidCustomUrl.duplicate": "このカスタム URL はすでに使用されています",
 	"forms.errors.invalidSens": "右スティックの感度が設定されていない場合、感度を設定することはできません",
-	"forms.info.favoriteBadge": "お気に入りバッジはデフォルトでプロファイルに大きく表示されます",
 	"forms.info.battlefy": "Battlefyのアカウント名は特定のトーナメンでシーディング及びにプレイヤー情報の確認に使用されます。",
 
 	"search.noResults": "該当ユーザーが見つかりません '{{query}}'",

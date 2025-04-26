@@ -211,7 +211,6 @@
 	"support.intro.first": "Salut! Je suis Sendou et sendou.ink est mon projet pour fournir des outils et ressources pour la communauté Splatoon. L'objectif est d'aider tout le monde à s'améliorer et à profiter de Splatoon, que vous soyez tout nouveau dans le jeu ou un vétéran chevronné.",
 	"support.intro.second": "Si vous aimez ce que je fais, cette page détaille comment vous pouvez soutenir mon travail et gagner des avantages. Votre soutien m'aide à payer l'hébergement ainsi qu'à sponsoriser mon temps passé à améliorer continuellement le projet.",
 	"support.action": "Soutenir sur Patreon",
-	"support.footer": "Après être devenu un nouveau supporter vous devez lié <2>votre Discord sur Patreon.com</2>. Après ça, les avantages devraient prendre effet dans les 2 heures qui suivent. Si vous avez des questions ou des problèmes, contactez Sendou pour obtenir de l'aide.",
 	"support.perk.supportMyWork": "Soutenez mon travail",
 	"support.perk.adFree": "Navigation sans pub",
 	"support.perk.nameInFooter": "Nom dans le pied de page",
@@ -285,5 +284,8 @@
 	"settings.notifications.description": "Recevoir une Receive notification push sur votre appareil quand vous n'êtes pas dessus.",
 	"settings.notifications.disableInfo": "Regarder les paramètre de votre navigateur pour désactiver les notification push.",
 	"settings.notifications.browserNotSupported": "Les notifications push ne sont pas supporter par cet navigateur",
-	"settings.notifications.permissionDenied": "Les notifications push ont été refusées. Vérifiez les paramètres de votre navigateur pour les réactiver"
+	"settings.notifications.permissionDenied": "Les notifications push ont été refusées. Vérifiez les paramètres de votre navigateur pour les réactiver",
+
+	"badges.selector.none": "Aucun badges est sélectionné",
+	"badges.selector.select": "Selectionner un badge pour l'ajouter"
 }

@@ -1,6 +1,6 @@
 import type { ActionFunction } from "@remix-run/node";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { canAccessLohiEndpoint } from "~/permissions";
+import { canAccessLohiEndpoint } from "~/utils/remix.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	if (!canAccessLohiEndpoint(request)) {

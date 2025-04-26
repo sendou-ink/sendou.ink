@@ -4,9 +4,9 @@ import { badgePage } from "~/utils/urls";
 import { NZAP_TEST_ID } from "../app/db/seed/constants";
 
 test.describe("Badges", () => {
-	test("adds a badge sending a notification", async ({ page }) => {
+	test("adds a badge owner sending a notification", async ({ page }) => {
 		await seed(page);
-		await impersonate(page);
+		await impersonate(page, NZAP_TEST_ID);
 		await navigate({
 			page,
 			url: badgePage(1),
@@ -16,13 +16,13 @@ test.describe("Badges", () => {
 
 		await selectUser({
 			page,
-			userName: "N-ZAP",
+			userName: "Sendou",
 			labelName: "Add new owner",
 		});
 
 		await page.getByRole("button", { name: "Save", exact: true }).click();
 
-		await impersonate(page, NZAP_TEST_ID);
+		await impersonate(page);
 		await navigate({
 			page,
 			url: "/",

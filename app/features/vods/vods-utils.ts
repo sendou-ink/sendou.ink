@@ -1,5 +1,5 @@
 import type { Tables } from "~/db/tables";
-import { isAdmin } from "~/permissions";
+import { isAdmin } from "~/modules/permissions/utils";
 import { databaseTimestampToDate } from "../../utils/dates";
 import { HOURS_MINUTES_SECONDS_REGEX } from "./vods-schemas";
 import type { VideoBeingAdded, Vod } from "./vods-types";

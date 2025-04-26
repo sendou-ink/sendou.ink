@@ -2,7 +2,6 @@ import type { ActionFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { requireUserId } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
-import { canReportCalendarEventWinners } from "~/permissions";
 import {
 	errorToastIfFalsy,
 	notFoundIfFalsy,
@@ -13,6 +12,7 @@ import {
 	reportWinnersActionSchema,
 	reportWinnersParamsSchema,
 } from "../calendar-schemas";
+import { canReportCalendarEventWinners } from "../calendar-utils";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = await requireUserId(request);

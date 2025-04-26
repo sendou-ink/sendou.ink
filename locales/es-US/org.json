@@ -21,7 +21,5 @@
 	"edit.form.series.seriesName.title": "Nombre de la serie",
 	"edit.form.series.showLeaderboard.title": "Mostrar tablas de posición",
 	"edit.form.badges.title": "Insignias",
-	"edit.form.badges.none": "Ninguna insignia seleccionada",
-	"edit.form.badges.select": "Seleccionar insignia añadir",
 	"edit.form.errors.noUnadmin": "No se puede eliminar como admin"
 }

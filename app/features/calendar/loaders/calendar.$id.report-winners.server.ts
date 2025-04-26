@@ -1,9 +1,9 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { requireUserId } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
-import { canReportCalendarEventWinners } from "~/permissions";
 import { notFoundIfFalsy, unauthorizedIfFalsy } from "~/utils/remix.server";
 import { reportWinnersParamsSchema } from "../calendar-schemas";
+import { canReportCalendarEventWinners } from "../calendar-utils";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const parsedParams = reportWinnersParamsSchema.parse(params);

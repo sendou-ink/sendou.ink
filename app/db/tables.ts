@@ -6,6 +6,7 @@ import type {
 	SqlBool,
 	Updateable,
 } from "kysely";
+import type { AssociationVisibility } from "~/features/associations/associations-types";
 import type {
 	persistedTags,
 	tags,
@@ -807,6 +808,7 @@ export type BuildSort = (typeof BUILD_SORT_IDENTIFIERS)[number];
 
 export interface UserPreferences {
 	disableBuildAbilitySorting?: boolean;
+	disallowScrimPickupsFromUntrusted?: boolean;
 }
 
 export interface User {
@@ -826,7 +828,8 @@ export interface User {
 	/** coalesce(customName, discordName) */
 	username: ColumnType<string, never, never>;
 	discordUniqueName: string | null;
-	favoriteBadgeId: number | null;
+	/** User's favorite badges they want to show on the front page of the badge display. Index = 0 big badge. */
+	favoriteBadgeIds: ColumnType<number[] | null, string | null, string | null>;
 	id: GeneratedAlways<number>;
 	inGameName: string | null;
 	isArtist: Generated<number | null>;
@@ -930,6 +933,65 @@ export interface XRankPlacement {
 	title: string;
 	weaponSplId: MainWeaponId;
 	year: number;
+}
+
+export interface ScrimPost {
+	id: GeneratedAlways<number>;
+	/** When is the scrim scheduled to happen */
+	at: number;
+	/** Highest LUTI div accepted */
+	maxDiv: number | null;
+	/** Lowest LUTI div accepted */
+	minDiv: number | null;
+	/** Who sees the post */
+	visibility: ColumnType<
+		AssociationVisibility | null,
+		string | null,
+		string | null
+	>;
+	/** Any additional info */
+	text: string | null;
+	/** The key to access the scrim chat, used after scrim is scheduled with another team */
+	chatCode: string;
+	/** Refers to the team looking for the team (can also be a pick-up) */
+	teamId: number | null;
+	createdAt: GeneratedAlways<number>;
+	updatedAt: Generated<number>;
+}
+
+export interface ScrimPostUser {
+	scrimPostId: number;
+	userId: number;
+	/** User is the author of the post */
+	isOwner: number;
+}
+
+export interface ScrimPostRequest {
+	id: GeneratedAlways<number>;
+	scrimPostId: number;
+	teamId: number | null;
+	isAccepted: Generated<number>;
+	createdAt: GeneratedAlways<number>;
+}
+
+export interface ScrimPostRequestUser {
+	scrimPostRequestId: number;
+	userId: number;
+	/** User made the request */
+	isOwner: number;
+}
+
+export interface Association {
+	id: GeneratedAlways<number>;
+	name: string;
+	inviteCode: string;
+	createdAt: GeneratedAlways<number>;
+}
+
+export interface AssociationMember {
+	userId: number;
+	associationId: number;
+	role: "MEMBER" | "ADMIN";
 }
 
 export interface Notification {
@@ -1042,6 +1104,12 @@ export interface DB {
 	VideoMatch: VideoMatch;
 	VideoMatchPlayer: VideoMatchPlayer;
 	XRankPlacement: XRankPlacement;
+	ScrimPost: ScrimPost;
+	ScrimPostUser: ScrimPostUser;
+	ScrimPostRequest: ScrimPostRequest;
+	ScrimPostRequestUser: ScrimPostRequestUser;
+	Association: Association;
+	AssociationMember: AssociationMember;
 	Notification: Notification;
 	NotificationUser: NotificationUser;
 	NotificationUserSubscription: NotificationUserSubscription;

@@ -11,7 +11,6 @@
 	"sens": "Sens",
 	"weaponPool": "Seleção de armas",
 	"discordExplanation": "Nome de usuário, foto de perfil, conta do YouTube, Bluesky e Twitch vêm da sua conta do Discord. Veja o <1>Perguntas Frequentes</1> para mais informações.",
-	"favoriteBadge": "Insígnia Favorita",
 
 	"forms.showDiscordUniqueName": "Mostrar nome de usuário Discord",
 	"forms.showDiscordUniqueName.info": "Deixe ativado para mostrar seu nome de usuário único do Discord ({{discordUniqueName}}) publicamente.",
@@ -33,7 +32,6 @@
 	"forms.errors.invalidCustomUrl.strangeCharacter": "URL personalizado não pode conter caracteres especiais",
 	"forms.errors.invalidCustomUrl.duplicate": "Alguém já está usando esse URL personalizado",
 	"forms.errors.invalidSens": "A sensibilidade de Movimento não pode ser definida se a sensibilidade do Analógico Direito não está",
-	"forms.info.favoriteBadge": "Por padrão, sua insígnia favorita é mostrada em tamanho maior no seu perfil.",
 
 	"search.noResults": "Nenhum usuário encontrado com o termo '{{query}}'",
 

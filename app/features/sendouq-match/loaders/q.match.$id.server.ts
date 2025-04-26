@@ -1,10 +1,9 @@
 import cachified from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { getUserId } from "~/features/auth/core/user.server";
+import { getUser } from "~/features/auth/core/user.server";
 import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
 import { reportedWeaponsToArrayOfArrays } from "~/features/sendouq-match/core/reported-weapons.server";
 import { reportedWeaponsByMatchId } from "~/features/sendouq-match/queries/reportedWeaponsByMatchId.server";
-import { isMod } from "~/permissions";
 import { cache } from "~/utils/cache.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
@@ -12,7 +11,7 @@ import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { qMatchPageParamsSchema } from "../q-match-schemas";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const user = await getUserId(request);
+	const user = await getUser(request);
 	const matchId = parseParams({
 		params,
 		schema: qMatchPageParamsSchema,
@@ -34,7 +33,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 	const isTeamAlphaMember = groupAlpha.members.some((m) => m.id === user?.id);
 	const isTeamBravoMember = groupBravo.members.some((m) => m.id === user?.id);
-	const isMatchInsider = isTeamAlphaMember || isTeamBravoMember || isMod(user);
+	const isMatchInsider =
+		isTeamAlphaMember || isTeamBravoMember || user?.roles.includes("STAFF");
 	const matchHappenedInTheLastMonth =
 		databaseTimestampToDate(match.createdAt).getTime() >
 		Date.now() - 30 * 24 * 3600 * 1000;

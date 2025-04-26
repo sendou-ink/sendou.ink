@@ -6,10 +6,8 @@ import { Label } from "~/components/Label";
 import { UserSearch } from "~/components/UserSearch";
 import { TrashIcon } from "~/components/icons/Trash";
 import type { Tables } from "~/db/tables";
-import { useUser } from "~/features/auth/core/user";
-import { canEditBadgeManagers, canEditBadgeOwners } from "~/permissions";
+import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { atOrError } from "~/utils/arrays";
-import type * as BadgeRepository from "../BadgeRepository.server";
 import type { BadgeDetailsLoaderData } from "../loaders/badges.$id.server";
 import type { BadgeDetailsContext } from "./badges.$id";
 
@@ -17,17 +15,18 @@ import { action } from "../actions/badges.$id.edit.server";
 export { action };
 
 export default function EditBadgePage() {
-	const user = useUser();
+	const isStaff = useHasRole("STAFF");
 	const matches = useMatches();
 	const data = atOrError(matches, -2).data as BadgeDetailsLoaderData;
-	const { badgeName } = useOutletContext<BadgeDetailsContext>();
+	const { badge } = useOutletContext<BadgeDetailsContext>();
+	const canManageBadge = useHasPermission(badge, "MANAGE");
 
 	return (
 		<Dialog isOpen>
 			<Form method="post" className="stack md">
 				<div>
 					<h2 className="badges-edit__big-header">
-						Editing winners of {badgeName}
+						Editing winners of {badge.displayName}
 					</h2>
 					<LinkButton
 						to={atOrError(matches, -2).pathname}
@@ -39,31 +38,31 @@ export default function EditBadgePage() {
 					</LinkButton>
 				</div>
 
-				{canEditBadgeManagers(user) ? <Managers data={data} /> : null}
-				{canEditBadgeOwners({ user, managers: data.managers }) ? (
-					<Owners data={data} />
-				) : null}
+				{isStaff ? <Managers data={data} /> : null}
+				{canManageBadge ? <Owners data={data} /> : null}
 			</Form>
 		</Dialog>
 	);
 }
 
 function Managers({ data }: { data: BadgeDetailsLoaderData }) {
-	const [managers, setManagers] = React.useState(data.managers);
+	const [managers, setManagers] = React.useState<
+		Array<{ id: number; username: string }>
+	>(data.badge.managers);
 
 	const amountOfChanges = managers
-		.filter((m) => !data.managers.some((om) => om.id === m.id))
+		.filter((m) => !data.badge.managers.some((om) => om.id === m.id))
 		// maps to id to keep typescript happy
 		.map((m) => m.id)
 		// needed so we can also list amount of removed managers
 		.concat(
-			data.managers
+			data.badge.managers
 				.filter((om) => !managers.some((m) => m.id === om.id))
 				.map((m) => m.id),
 		).length;
 
 	const userIdsToOmitFromCombobox = React.useMemo(() => {
-		return new Set(data.managers.map((m) => m.id));
+		return new Set(data.badge.managers.map((m) => m.id));
 	}, [data]);
 
 	return (
@@ -130,9 +129,9 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 }
 
 function Owners({ data }: { data: BadgeDetailsLoaderData }) {
-	const [owners, setOwners] = React.useState(data.owners);
+	const [owners, setOwners] = React.useState(data.badge.owners);
 
-	const ownerDifferences = getOwnerDifferences(owners, data.owners);
+	const ownerDifferences = getOwnerDifferences(owners, data.badge.owners);
 
 	const userInputKey = owners.map((o) => `${o.id}-${o.count}`).join("-");
 
@@ -230,8 +229,8 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 }
 
 function getOwnerDifferences(
-	newOwners: BadgeRepository.FindOwnersByBadgeIdItem[],
-	oldOwners: BadgeRepository.FindOwnersByBadgeIdItem[],
+	newOwners: BadgeDetailsLoaderData["badge"]["owners"],
+	oldOwners: BadgeDetailsLoaderData["badge"]["owners"],
 ) {
 	const result: Array<{
 		id: Tables["User"]["id"];

@@ -34,7 +34,7 @@ export async function posts(user?: { id: number; plusTier: number | null }) {
 							innerEb
 								.selectFrom("UserWeapon")
 								.whereRef("UserWeapon.userId", "=", "User.id")
-								.orderBy("UserWeapon.order asc")
+								.orderBy("UserWeapon.order", "asc")
 								.select(["UserWeapon.weaponSplId", "UserWeapon.isFavorite"]),
 						).as("weaponPool"),
 					])
@@ -66,7 +66,7 @@ export async function posts(user?: { id: number; plusTier: number | null }) {
 										innestEb
 											.selectFrom("UserWeapon")
 											.whereRef("UserWeapon.userId", "=", "User.id")
-											.orderBy("UserWeapon.order asc")
+											.orderBy("UserWeapon.order", "asc")
 											.select([
 												"UserWeapon.weaponSplId",
 												"UserWeapon.isFavorite",
@@ -80,7 +80,7 @@ export async function posts(user?: { id: number; plusTier: number | null }) {
 			).as("team"),
 		])
 		.orderBy(sql`LFGPost.authorId = ${sql`${userId}`} desc`)
-		.orderBy("LFGPost.updatedAt desc")
+		.orderBy("LFGPost.updatedAt", "desc")
 		.where((eb) =>
 			eb.or([
 				eb(

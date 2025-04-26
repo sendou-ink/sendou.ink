@@ -19,6 +19,7 @@ import { useUser } from "~/features/auth/core/user";
 import type { RankingSeason } from "~/features/mmr/season";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHasRole } from "~/modules/permissions/hooks";
 import { joinListToNaturalString } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import { metaTags } from "~/utils/remix";
@@ -35,7 +36,6 @@ import {
 	navIconUrl,
 	userSeasonsPage,
 } from "~/utils/urls";
-import { isAtLeastFiveDollarTierPatreon } from "~/utils/users";
 import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
 import { FULL_GROUP_SIZE } from "../q-constants";
@@ -450,10 +450,10 @@ function NoUpcomingSeasonInfo() {
 }
 
 function PreviewQueueButton() {
-	const user = useUser();
+	const isSupporter = useHasRole("SUPPORTER");
 	const { t } = useTranslation(["q"]);
 
-	if (!isAtLeastFiveDollarTierPatreon(user)) {
+	if (!isSupporter) {
 		return (
 			<SendouPopover
 				trigger={

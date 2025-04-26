@@ -11,7 +11,6 @@
 	"sens": "רגישות",
 	"weaponPool": "מאגר נשקים",
 	"discordExplanation": "שם משתמש, תמונת פרופיל, חשבונות YouTube, Bluesky ו-Twitch מגיעים מחשבון Discord שלך. ראו <1>שאלות נפוצות</1> למידע נוסף.",
-	"favoriteBadge": "תג אהוב",
 
 	"forms.showDiscordUniqueName": "הראה שם משתמש Discord",
 	"forms.showDiscordUniqueName.info": "להראות את שם ה-Discord היחודי שלכם ({{discordUniqueName}}) בפומבי?",
@@ -33,7 +32,6 @@
 	"forms.errors.invalidCustomUrl.strangeCharacter": "כתובת URL מותאמת אישית לא יכולה להכיל תווים מיוחדים",
 	"forms.errors.invalidCustomUrl.duplicate": "מישהו כבר משתמש בכתובת URL המותאמת אישית הזו",
 	"forms.errors.invalidSens": "לא ניתן להגדיר את רגישות התנועה אם רגישות הסטיק לא מוגדרת",
-	"forms.info.favoriteBadge": "התג האהוב עליכם מוצג בגדול כברירת מחדל בפרופיל שלכם.",
 
 	"search.noResults": "לא נמצאו משתמשים התואמים '{{query}}'"
 }

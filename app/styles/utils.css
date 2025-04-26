@@ -102,6 +102,10 @@
 	fill: var(--theme-info);
 }
 
+.bg {
+	background-color: var(--bg);
+}
+
 .bg-transparent-important {
 	background-color: transparent !important;
 }
@@ -160,6 +164,10 @@
 
 .w-24 {
 	width: var(--s-24);
+}
+
+.min-w-max {
+	min-width: max-content;
 }
 
 .w-max {

@@ -1,7 +1,53 @@
+import type { ExpressionBuilder } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
+import type { DB } from "~/db/tables";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
-import type { Unwrapped } from "~/utils/types";
+
+const addPermissions = <T extends { managers: { userId: number }[] }>(
+	row: T,
+) => ({
+	...row,
+	permissions: {
+		MANAGE: row.managers.map((m) => m.userId),
+	},
+});
+
+const withAuthor = (eb: ExpressionBuilder<DB, "Badge">) => {
+	return jsonObjectFrom(
+		eb
+			.selectFrom("User")
+			.select(COMMON_USER_FIELDS)
+			.whereRef("User.id", "=", "Badge.authorId"),
+	).as("author");
+};
+
+const withManagers = (eb: ExpressionBuilder<DB, "Badge">) => {
+	return jsonArrayFrom(
+		eb
+			.selectFrom("BadgeManager")
+			.innerJoin("User", "BadgeManager.userId", "User.id")
+			.select(["userId", ...COMMON_USER_FIELDS])
+			.whereRef("BadgeManager.badgeId", "=", "Badge.id"),
+	).as("managers");
+};
+
+const withOwners = (eb: ExpressionBuilder<DB, "Badge">) => {
+	return jsonArrayFrom(
+		eb
+			.selectFrom("BadgeOwner")
+			.innerJoin("User", "BadgeOwner.userId", "User.id")
+			.select(({ fn }) => [
+				fn.count<number>("BadgeOwner.badgeId").as("count"),
+				"User.id",
+				"User.discordId",
+				"User.username",
+			])
+			.whereRef("BadgeOwner.badgeId", "=", "Badge.id")
+			.groupBy("User.id")
+			.orderBy("count", "desc"),
+	).as("owners");
+};
 
 export async function all() {
 	const rows = await db
@@ -11,70 +57,34 @@ export async function all() {
 			"displayName",
 			"code",
 			"hue",
-			jsonArrayFrom(
-				eb
-					.selectFrom("BadgeManager")
-					.whereRef("BadgeManager.badgeId", "=", "Badge.id")
-					.select(["userId"]),
-			).as("managers"),
-			jsonObjectFrom(
-				eb
-					.selectFrom("User")
-					.select(COMMON_USER_FIELDS)
-					.whereRef("User.id", "=", "Badge.authorId"),
-			).as("author"),
+			withManagers(eb),
+			withAuthor(eb),
 		])
 		.execute();
 
-	return rows.map((row) => ({
-		...row,
-		managers: row.managers.map((m) => m.userId),
-	}));
+	return rows.map(addPermissions);
 }
 
 export async function findById(badgeId: number) {
-	return db
+	const row = await db
 		.selectFrom("Badge")
-		.select(["Badge.displayName"])
-		.where("id", "=", badgeId)
-		.executeTakeFirst();
-}
-
-export async function findByOwnerId({
-	userId,
-	favoriteBadgeId,
-}: {
-	userId: number;
-	favoriteBadgeId: number | null;
-}) {
-	const badges = await db
-		.selectFrom("BadgeOwner")
-		.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
-		.select(({ fn }) => [
-			fn.count<number>("BadgeOwner.badgeId").as("count"),
+		.select((eb) => [
 			"Badge.id",
 			"Badge.displayName",
 			"Badge.code",
 			"Badge.hue",
+			withAuthor(eb),
+			withManagers(eb),
+			withOwners(eb),
 		])
-		.where("BadgeOwner.userId", "=", userId)
-		.groupBy(["BadgeOwner.badgeId", "BadgeOwner.userId"])
-		.orderBy("Badge.id", "asc")
-		.execute();
+		.where("id", "=", badgeId)
+		.executeTakeFirst();
 
-	if (!favoriteBadgeId) {
-		return badges;
+	if (!row) {
+		return null;
 	}
 
-	return badges.sort((a, b) => {
-		if (a.id === favoriteBadgeId) {
-			return -1;
-		}
-		if (b.id === favoriteBadgeId) {
-			return 1;
-		}
-		return 0;
-	});
+	return addPermissions(row);
 }
 
 export function findByManagersList(userIds: number[]) {
@@ -83,7 +93,7 @@ export function findByManagersList(userIds: number[]) {
 		.select(["Badge.id", "Badge.code", "Badge.displayName", "Badge.hue"])
 		.innerJoin("BadgeManager", "Badge.id", "BadgeManager.badgeId")
 		.where("BadgeManager.userId", "in", userIds)
-		.orderBy("Badge.id asc")
+		.orderBy("Badge.id", "asc")
 		.groupBy("Badge.id")
 		.execute();
 }
@@ -94,32 +104,6 @@ export function findManagedByUserId(userId: number) {
 		.innerJoin("Badge", "Badge.id", "BadgeManager.badgeId")
 		.select(["Badge.id", "Badge.code", "Badge.displayName", "Badge.hue"])
 		.where("BadgeManager.userId", "=", userId)
-		.execute();
-}
-
-export function findManagersByBadgeId(badgeId: number) {
-	return db
-		.selectFrom("BadgeManager")
-		.innerJoin("User", "BadgeManager.userId", "User.id")
-		.select(COMMON_USER_FIELDS)
-		.where("BadgeManager.badgeId", "=", badgeId)
-		.execute();
-}
-
-export type FindOwnersByBadgeIdItem = Unwrapped<typeof findOwnersByBadgeId>;
-export function findOwnersByBadgeId(badgeId: number) {
-	return db
-		.selectFrom("BadgeOwner")
-		.innerJoin("User", "BadgeOwner.userId", "User.id")
-		.select(({ fn }) => [
-			fn.count<number>("BadgeOwner.badgeId").as("count"),
-			"User.id",
-			"User.discordId",
-			"User.username",
-		])
-		.where("BadgeOwner.badgeId", "=", badgeId)
-		.groupBy("User.id")
-		.orderBy("count", "desc")
 		.execute();
 }
 

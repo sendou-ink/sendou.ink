@@ -10,15 +10,17 @@ import { WeaponImage } from "~/components/Image";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { StarIcon } from "~/components/icons/Star";
 import { StarFilledIcon } from "~/components/icons/StarFilled";
 import { TrashIcon } from "~/components/icons/Trash";
 import { USER } from "~/constants";
 import type { Tables } from "~/db/tables";
-import { useUser } from "~/features/auth/core/user";
+import { BADGE } from "~/features/badges/badges-contants";
+import { BadgesSelector } from "~/features/badges/components/BadgesSelector";
 import type { MainWeaponId } from "~/modules/in-game-lists";
-import { canAddCustomizedColorsToUserProfile } from "~/permissions";
+import { useHasRole } from "~/modules/permissions/hooks";
 import invariant from "~/utils/invariant";
 import { rawSensToString } from "~/utils/strings";
 import { FAQ_PAGE } from "~/utils/urls";
@@ -31,17 +33,19 @@ export { loader, action };
 import "~/styles/u-edit.css";
 
 export default function UserEditPage() {
-	const user = useUser();
 	const { t } = useTranslation(["common", "user"]);
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
 	const layoutData = parentRoute.data as UserPageLoaderData;
 	const data = useLoaderData<typeof loader>();
 
+	const isSupporter = useHasRole("SUPPORTER");
+	const isArtist = useHasRole("ARTIST");
+
 	return (
 		<div className="half-width">
 			<Form className="u-edit__container" method="post">
-				{canAddCustomizedColorsToUserProfile(user) ? (
+				{isSupporter ? (
 					<CustomizedColorsInput initialColors={layoutData.css} />
 				) : null}
 				<CustomNameInput />
@@ -58,7 +62,7 @@ export default function UserEditPage() {
 				) : (
 					<input type="hidden" name="showDiscordUniqueName" value="on" />
 				)}
-				{user?.isArtist ? (
+				{isArtist ? (
 					<>
 						<CommissionsOpenToggle parentRouteData={layoutData} />
 						<CommissionTextArea initialValue={layoutData.user.commissionText} />
@@ -210,22 +214,25 @@ function CountrySelect() {
 	const data = useLoaderData<typeof loader>();
 
 	return (
-		<div>
-			<label htmlFor="country">{t("user:country")}</label>
-			<select
-				className="u-edit__country-select"
-				name="country"
-				id="country"
-				defaultValue={data.user.country ?? ""}
-			>
-				<option value="" />
-				{data.countries.map((country) => (
-					<option key={country.code} value={country.code}>
-						{`${country.name} ${country.emoji}`}
-					</option>
-				))}
-			</select>
-		</div>
+		<SendouSelect
+			items={data.countries.map((country) => ({
+				...country,
+				id: country.code,
+				key: country.code,
+			}))}
+			label={t("user:country")}
+			search={{
+				placeholder: t("user:forms.country.search.placeholder"),
+			}}
+			name="country"
+			defaultSelectedKey={data.user.country ?? undefined}
+		>
+			{({ key, ...item }) => (
+				<SendouSelectItem key={key} {...item}>
+					{item.name}
+				</SendouSelectItem>
+			)}
+		</SendouSelect>
 	);
 }
 
@@ -366,34 +373,42 @@ function BioTextarea({
 function FavBadgeSelect() {
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["user"]);
+	const [value, setValue] = React.useState(data.favoriteBadgeIds ?? []);
+	const isSupporter = useHasRole("SUPPORTER");
 
 	// doesn't make sense to select favorite badge
 	// if user has no badges or only has 1 badge
 	if (data.user.badges.length < 2) return null;
 
-	// user's current favorite badge is the initial value
-	const initialBadge = data.user.badges.find(
-		(badge) => badge.id === data.favoriteBadgeId,
-	);
+	const onChange = (newBadges: number[]) => {
+		if (isSupporter) {
+			setValue(newBadges);
+		} else {
+			// non-supporters can only set which badge is the big one
+			setValue(newBadges.length > 0 ? [newBadges[0]] : []);
+		}
+	};
 
 	return (
 		<div>
-			<label htmlFor="favoriteBadgeId">{t("user:favoriteBadge")}</label>
-			<select
-				className=""
-				name="favoriteBadgeId"
-				id="favoriteBadgeId"
-				defaultValue={initialBadge?.id}
+			<input
+				type="hidden"
+				name="favoriteBadgeIds"
+				value={JSON.stringify(value)}
+			/>
+			<label htmlFor="favoriteBadgeIds">{t("user:favoriteBadges")}</label>
+			<BadgesSelector
+				options={data.user.badges}
+				selectedBadges={value}
+				onChange={onChange}
+				maxCount={BADGE.SMALL_BADGES_PER_DISPLAY_PAGE + 1}
 			>
-				{data.user.badges.map((badge) => (
-					<option key={badge.id} value={badge.id}>
-						{`${badge.displayName}`}
-					</option>
-				))}
-			</select>
-			<FormMessage type="info">
-				{t("user:forms.info.favoriteBadge")}
-			</FormMessage>
+				{!isSupporter ? (
+					<div className="text-sm text-lighter font-semi-bold text-center">
+						{t("user:forms.favoriteBadges.nonSupporter")}
+					</div>
+				) : null}
+			</BadgesSelector>
 		</div>
 	);
 }

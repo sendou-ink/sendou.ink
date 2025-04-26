@@ -4,9 +4,9 @@ import { Dialog } from "~/components/Dialog";
 import { Redirect } from "~/components/Redirect";
 import { PlUS_SUGGESTION_COMMENT_MAX_LENGTH } from "~/constants";
 import { useUser } from "~/features/auth/core/user";
-import { canAddCommentToSuggestionFE } from "~/permissions";
 import { atOrError } from "~/utils/arrays";
 import { plusSuggestionPage } from "~/utils/urls";
+import { canAddCommentToSuggestionFE } from "../plus-suggestions-utils";
 import type { PlusSuggestionsLoaderData } from "./plus.suggestions";
 import { CommentTextarea } from "./plus.suggestions.new";
 

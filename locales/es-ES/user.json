@@ -11,7 +11,6 @@
 	"sens": "Sens",
 	"weaponPool": "Grupo de armas",
 	"discordExplanation": "Tu nombre, foto, y cuentas de YouTube, Bluesky y Twitch se obtienen por tu cuenta en Discord. Ver <1>FAQ</1> para más información.",
-	"favoriteBadge": "Insignia favorita",
 
 	"forms.showDiscordUniqueName": "Mostrar usuario de Discord",
 	"forms.showDiscordUniqueName.info": "¿Mostrar tu nombre de Discord ({{discordUniqueName}}) publicamente?",
@@ -33,7 +32,6 @@
 	"forms.errors.invalidCustomUrl.strangeCharacter": "Enlace personalizado no puede contener caracteres especiales",
 	"forms.errors.invalidCustomUrl.duplicate": "Alguien ya tiene ese enlace personalizado",
 	"forms.errors.invalidSens": "Motion sens can't be set if R-stick sens isn't",
-	"forms.info.favoriteBadge": "Tu insignia favorita se muestra en forma grande en tu perfil.",
 
 	"search.noResults": "No se encontraron usuarios que coincidan con '{{query}}'",
 

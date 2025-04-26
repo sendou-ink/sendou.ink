@@ -21,7 +21,5 @@
 	"edit.form.series.seriesName.title": "系列名称",
 	"edit.form.series.showLeaderboard.title": "显示排行榜",
 	"edit.form.badges.title": "徽章",
-	"edit.form.badges.none": "没有选择任何徽章",
-	"edit.form.badges.select": "选择徽章并添加",
 	"edit.form.errors.noUnadmin": "您不能移除自己的管理者身份"
 }

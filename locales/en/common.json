@@ -23,6 +23,7 @@
 	"pages.art": "Art",
 	"pages.sendouq": "SendouQ",
 	"pages.lfg": "LFG",
+	"pages.scrims": "Scrims",
 	"pages.settings": "Settings",
 	"pages.luti": "LUTI",
 
@@ -36,6 +37,8 @@
 	"header.adder.calendarEvent": "Calendar event",
 	"header.adder.build": "Build",
 	"header.adder.team": "Team",
+	"header.adder.scrimPost": "Scrim post",
+	"header.adder.association": "Association",
 	"header.adder.lfgPost": "LFG post",
 	"header.adder.art": "Art",
 	"header.adder.vod": "VoD",
@@ -68,6 +71,10 @@
 	"notifications.text.TAGGED_TO_ART": "Tagged in art by {{adderUsername}}",
 	"notifications.title.SEASON_STARTED": "New Season Started",
 	"notifications.text.SEASON_STARTED": "SendouQ is open again for Season {{seasonNth}}",
+	"notifications.title.SCRIM_NEW_REQUEST": "New Scrim Request",
+	"notifications.text.SCRIM_NEW_REQUEST": "{{fromUsername}} requested a scrim",
+	"notifications.title.SCRIM_SCHEDULED": "Scrim Scheduled",
+	"notifications.text.SCRIM_SCHEDULED": "New scrim scheduled at {{timeString}}",
 
 	"auth.errors.aborted": "Login Aborted",
 	"auth.errors.failed": "Login Failed",
@@ -113,6 +120,9 @@
 	"actions.goBack": "Go back",
 	"actions.enable": "Enable",
 	"actions.disable": "Disable",
+	"actions.accept": "Accept",
+
+	"noResults": "No results",
 
 	"maps.createMapList": "Create map list",
 	"maps.halfSz": "50% SZ",
@@ -211,7 +221,7 @@
 	"support.intro.first": "Hello! I'm Sendou and sendou.ink is my project to provide tools and resources for the Splatoon community. The goal is to help everyone to improve and enjoy Splatoon whether you are brand new to the game or a seasoned veteran.",
 	"support.intro.second": "If you like what I'm doing this page details how you can support my work and gain perks. Your support helps me pay for the hosting as well as sponsor my time spent on continuously improving the project.",
 	"support.action": "Support on Patreon",
-	"support.footer": "After becoming a new patron you should connect <2>your Discord on Patreon.com</2>. Afterward, the perks will take effect within 2 hours. If any questions or problems contact Sendou for support.",
+	"support.footer": "After becoming a new patron you should connect <2>your Discord on Patreon.com</2>. Afterward, the perks will take effect within an hour. If any questions or problems contact Sendou for support.",
 	"support.perk.supportMyWork": "Support my work",
 	"support.perk.adFree": "Ad-free browsing",
 	"support.perk.nameInFooter": "Name in the footer",
@@ -226,6 +236,8 @@
 	"support.perk.userShortLink": "User page short link",
 	"support.perk.userShortLink.extra": "Instead of e.g. sendou.ink/u/sendou you can also use snd.ink/sendou when linking to your user profile.",
 	"support.perk.customizedColorsUser": "Customize colors (user page)",
+	"support.perk.favoriteBadges": "Set profile first page badges",
+	"support.perk.favoriteBadges.extra": "You can set which badges appear on the first page and the order. Normally it's only possible to choose the first badge.",
 	"support.perk.customizedColorsTeam": "Customize colors (team page)",
 	"support.perk.customizedColorsTeam.extra": "It is enough that one member of the team is a patron to get this perk.",
 	"support.perk.privateDiscord": "Access to an exclusive Discord channel",
@@ -235,6 +247,9 @@
 	"support.perk.previewQ": "Preview groups in SendouQ before joining",
 	"support.perk.joinFive": "Join up to 5 teams",
 	"support.perk.tournamentsBeta": "Access to tournaments beta",
+	"support.perk.joinMoreAssociations": "Join up to 6 associations",
+	"support.perk.useBotToLogIn": "Log-in via Discord bot",
+	"support.perk.useBotToLogIn.extra": "Request a log-in link from the Lohi bot as an alternative to the normal website log-in",
 
 	"custom.colors.title": "Custom colors",
 	"custom.colors.bg": "Background",
@@ -285,9 +300,14 @@
 
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.label": "Builds: Disable automatic ability sorting",
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText": "Outside of your profile page, build abilities are sorted so that same abilities are next to each other. This setting allows you to see the abilities in the order they were authored everywhere.",
+	"settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.label": "Scrims: No adding to pickups by untrusted",
+	"settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.bottomText": "By default anyone can add you. If you prefer to only allow users you explicitly set as trusted to add you to pickups, enable this setting.",
 	"settings.notifications.title": "Push notifications",
 	"settings.notifications.description": "Receive push notifications to your device even if you don't currently have sendou.ink open.",
 	"settings.notifications.disableInfo": "To disable push notifications check your browser settings",
 	"settings.notifications.browserNotSupported": "Push notifications are not supported on this browser",
-	"settings.notifications.permissionDenied": "Push notifications were denied. Check your browser settings to re-enable"
+	"settings.notifications.permissionDenied": "Push notifications were denied. Check your browser settings to re-enable",
+
+	"badges.selector.none": "No badges selected",
+	"badges.selector.select": "Select badge to add"
 }

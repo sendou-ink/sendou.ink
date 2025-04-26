@@ -20,6 +20,7 @@ export const UserSearch = React.forwardRef<
 		userIdsToOmit?: Set<number>;
 		required?: boolean;
 		onBlur?: React.FocusEventHandler<HTMLInputElement>;
+		disabled?: boolean;
 	}
 >(
 	(
@@ -32,6 +33,7 @@ export const UserSearch = React.forwardRef<
 			userIdsToOmit,
 			required,
 			onBlur,
+			disabled,
 		},
 		ref,
 	) => {
@@ -85,7 +87,7 @@ export const UserSearch = React.forwardRef<
 						setSelectedUser(newUser);
 						onChange?.(newUser!);
 					}}
-					disabled={initialSelectionIsLoading}
+					disabled={disabled || initialSelectionIsLoading}
 				>
 					<Combobox.Input
 						ref={ref}

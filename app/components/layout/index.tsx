@@ -48,7 +48,7 @@ export const Layout = React.memo(function Layout({
 
 	const showLeaderboard =
 		import.meta.env.VITE_PLAYWIRE_PUBLISHER_ID &&
-		!data?.user?.patronTier &&
+		!data?.user?.roles.includes("MINOR_SUPPORT") &&
 		!location.pathname.includes("plans");
 	return (
 		<div className="layout__container">
@@ -81,7 +81,7 @@ export const Layout = React.memo(function Layout({
 				<TopRightButtons
 					isErrored={isErrored}
 					showSupport={Boolean(
-						data && typeof data?.user?.patronTier !== "number" && isFrontPage,
+						data && !data?.user?.roles.includes("MINOR_SUPPORT") && isFrontPage,
 					)}
 					openNavDialog={() => setNavDialogOpen(true)}
 				/>

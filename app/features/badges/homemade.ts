@@ -1074,4 +1074,29 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "frcpgd",
 		authorDiscordId: "960213930586824766",
 	},
+	{
+		displayName: "ENA (Dream BBQ)",
+		fileName: "enabbq",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "ENA",
+		fileName: "happyena",
+		authorDiscordId: "528851510222782474",
+	},
+	{
+		displayName: "Stellaris Phantasm: Crimson Bracket",
+		fileName: "crimson",
+		authorDiscordId: "617399529532293150",
+	},
+	{
+		displayName: "Stellaris Phantasm: Lumière Bracket",
+		fileName: "lumiere",
+		authorDiscordId: "617399529532293150",
+	},
+	{
+		displayName: "Stellaris Phantasm: Serenade Bracket",
+		fileName: "serenade",
+		authorDiscordId: "617399529532293150",
+	},
 ];

@@ -21,7 +21,5 @@
 	"edit.form.series.seriesName.title": "Nome serie",
 	"edit.form.series.showLeaderboard.title": "Mostra classifica",
 	"edit.form.badges.title": "Medaglia",
-	"edit.form.badges.none": "Nessuna medaglia selezionata",
-	"edit.form.badges.select": "Seleziona medaglia da aggiungere",
 	"edit.form.errors.noUnadmin": "Non puoi rimuoverti dal ruolo di admin"
 }
