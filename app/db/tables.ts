@@ -828,7 +828,8 @@ export interface User {
 	/** coalesce(customName, discordName) */
 	username: ColumnType<string, never, never>;
 	discordUniqueName: string | null;
-	favoriteBadgeId: number | null;
+	/** User's favorite badges they want to show on the front page of the badge display. Index = 0 big badge. */
+	favoriteBadgeIds: ColumnType<number[] | null, string | null, string | null>;
 	id: GeneratedAlways<number>;
 	inGameName: string | null;
 	isArtist: Generated<number | null>;

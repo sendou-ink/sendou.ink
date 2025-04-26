@@ -208,7 +208,6 @@
 	"support.intro.first": "Ciao! Sono Sendou e sendou.ink è il mio progetto per fornire tools e risorse alla community di Splatoon. L'obiettivo è quello di aiutare tutti a migliorare e divertirsi con Splatoon sia se sei un giocatore nuovo che un veterano.",
 	"support.intro.second": "Se ti piace quel che sto facendo, questa pagina indica come tu possa supportare il mio lavoro e ottenere vantaggi. Il tuo supporto mi aiuta a coprire le spese di hosting così come supportare il tempo che ho speso sul migliorare continuamente il progetto.",
 	"support.action": "Supporta su Patreon",
-	"support.footer": "Dopo esserti iscritto/a al Patreon, devi connettere <2>il tuo Discord su Patreon.com</2>. Dopodiché, i vantaggi diverranno effettivi entro 2 ore. Per ulteriori informazioni o problemi contattare Sendou per ottenere supporto",
 	"support.perk.supportMyWork": "Supporta il mio lavoro",
 	"support.perk.adFree": "Navigazione ad-free",
 	"support.perk.nameInFooter": "Nome a piè di pagina",
@@ -284,5 +283,8 @@
 	"settings.notifications.browserNotSupported": "Le notifiche push non sono supportate su questo browser",
 	"settings.notifications.permissionDenied": "Le notifiche push sono state negate. Controlla le impostazioni del browser per riattivarle",
 
-	"articles.by": "da {{author}}"
+	"articles.by": "da {{author}}",
+
+	"badges.selector.none": "Nessuna medaglia selezionata",
+	"badges.selector.select": "Seleziona medaglia da aggiungere"
 }

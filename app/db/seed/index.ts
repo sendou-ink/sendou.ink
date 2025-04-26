@@ -124,7 +124,6 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	syncPlusTiers,
 	lastMonthSuggestions,
 	thisMonthsSuggestions,
-	badgesToAdmin,
 	badgesToUsers,
 	badgeManagers,
 	patrons,
@@ -165,7 +164,6 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	realVideo,
 	realVideoCast,
 	xRankPlacements,
-	userFavBadges,
 	arts,
 	commissionsOpen,
 	playedMatches,
@@ -604,26 +602,6 @@ function syncPlusTiers() {
 		.run();
 }
 
-function badgesToAdmin() {
-	const availableBadgeIds = R.shuffle(
-		(sql.prepare(`select "id" from "Badge"`).all() as any[]).map((b) => b.id),
-	).slice(0, 8) as number[];
-
-	const badgesWithDuplicates = availableBadgeIds.flatMap((id) =>
-		new Array(faker.helpers.arrayElement([1, 1, 1, 2, 3, 4]))
-			.fill(null)
-			.map(() => id),
-	);
-
-	for (const id of badgesWithDuplicates) {
-		sql
-			.prepare(
-				`insert into "TournamentBadgeOwner" ("badgeId", "userId") values ($id, $userId)`,
-			)
-			.run({ id, userId: ADMIN_ID });
-	}
-}
-
 function getAvailableBadgeIds() {
 	return R.shuffle(
 		(sql.prepare(`select "id" from "Badge"`).all() as any[]).map((b) => b.id),
@@ -635,9 +613,15 @@ function badgesToUsers() {
 
 	let userIds = (
 		sql
-			.prepare(`select "id" from "User" where id != 2`) // no badges for N-ZAP
+			.prepare(
+				`select "id" from "User" where id != ${NZAP_TEST_ID} and id != ${ADMIN_ID}`,
+			)
 			.all() as any[]
 	).map((u) => u.id) as number[];
+
+	const insertTournamentBadgeOwnerStm = sql.prepare(
+		`insert into "TournamentBadgeOwner" ("badgeId", "userId") values ($id, $userId)`,
+	);
 
 	for (const id of availableBadgeIds) {
 		userIds = R.shuffle(userIds);
@@ -650,20 +634,20 @@ function badgesToUsers() {
 			});
 			i++
 		) {
-			let userToGetABadge = userIds.shift()!;
-			if (userToGetABadge === NZAP_TEST_ID && id === 1) {
-				// e2e test assumes N-ZAP does not have badge id = 1
-				userToGetABadge = userIds.shift()!;
-			}
+			const userToGetABadge = userIds.shift()!;
 
-			sql
-				.prepare(
-					`insert into "TournamentBadgeOwner" ("badgeId", "userId") values ($id, $userId)`,
-				)
-				.run({ id, userId: userToGetABadge });
+			insertTournamentBadgeOwnerStm.run({ id, userId: userToGetABadge });
 
 			userIds.push(userToGetABadge);
 		}
+	}
+
+	for (const badgeId of nullFilledArray(20).map((_, i) => i + 1)) {
+		insertTournamentBadgeOwnerStm.run({ id: badgeId, userId: ADMIN_ID });
+	}
+
+	for (const badgeId of [5, 6, 7]) {
+		insertTournamentBadgeOwnerStm.run({ id: badgeId, userId: NZAP_TEST_ID });
 	}
 }
 
@@ -685,19 +669,24 @@ function patrons() {
 			.all() as any[]
 	)
 		.map((u) => u.id)
-		.filter((id) => id !== NZAP_TEST_ID);
+		.filter((id) => id !== NZAP_TEST_ID && id !== ADMIN_ID) as number[];
 
+	const givePatronStm = sql.prepare(
+		`update user set "patronTier" = $patronTier, "patronSince" = $patronSince where id = $id`,
+	);
 	for (const id of userIds) {
-		sql
-			.prepare(
-				`update user set "patronTier" = $patronTier, "patronSince" = $patronSince where id = $id`,
-			)
-			.run({
-				id,
-				patronSince: dateToDatabaseTimestamp(faker.date.past()),
-				patronTier: faker.helpers.arrayElement([1, 1, 2, 2, 2, 3, 3, 4]),
-			});
+		givePatronStm.run({
+			id,
+			patronSince: dateToDatabaseTimestamp(faker.date.past()),
+			patronTier: faker.helpers.arrayElement([1, 1, 2, 2, 2, 3, 3, 4]),
+		});
 	}
+
+	givePatronStm.run({
+		id: ADMIN_ID,
+		patronSince: dateToDatabaseTimestamp(faker.date.past()),
+		patronTier: 2,
+	});
 }
 
 function userIdsInRandomOrder(specialLast = false) {
@@ -1847,24 +1836,6 @@ function xRankPlacements() {
 			addPlacementStm.run(placement);
 		}
 	})();
-}
-
-function userFavBadges() {
-	// randomly choose Sendou's favorite badge
-	const badgeList = R.shuffle(
-		(
-			sql
-				.prepare(
-					`select "badgeId" from "BadgeOwner" where "userId" = ${ADMIN_ID}`,
-				)
-				.all() as any[]
-		).map((row) => row.badgeId),
-	);
-	sql
-		.prepare(
-			`update "User" set "favoriteBadgeId" = $id where "id" = ${ADMIN_ID}`,
-		)
-		.run({ id: badgeList[0] });
 }
 
 const addArtStm = sql.prepare(/* sql */ `

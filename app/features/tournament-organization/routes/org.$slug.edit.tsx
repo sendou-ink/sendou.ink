@@ -15,16 +15,16 @@ import { TextFormField } from "~/components/form/TextFormField";
 import { ToggleFormField } from "~/components/form/ToggleFormField";
 import { UserSearchFormField } from "~/components/form/UserSearchFormField";
 import { TOURNAMENT_ORGANIZATION_ROLES } from "~/db/tables";
-import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
+import { BadgesSelector } from "~/features/badges/components/BadgesSelector";
 import { wrapToValueStringArrayWithDefault } from "~/utils/form";
 import type { Unpacked } from "~/utils/types";
 import { uploadImagePage } from "~/utils/urls";
+import { TOURNAMENT_ORGANIZATION } from "../tournament-organization-constants";
 import { organizationEditSchema } from "../tournament-organization-schemas";
 
 import { action } from "../actions/org.$slug.edit.server";
 import { loader } from "../loaders/org.$slug.edit.server";
 import { handle, meta } from "../routes/org.$slug";
-import { TOURNAMENT_ORGANIZATION } from "../tournament-organization-constants";
 export { action, handle, loader, meta };
 
 type FormFields = z.infer<typeof organizationEditSchema> & {
@@ -235,6 +235,7 @@ function SeriesFieldset({
 function BadgesFormField() {
 	const { t } = useTranslation(["org"]);
 	const methods = useFormContext<FormFields>();
+	const data = useLoaderData<typeof loader>();
 
 	return (
 		<div>
@@ -244,58 +245,13 @@ function BadgesFormField() {
 				name="badges"
 				render={({ field: { onChange, onBlur, value } }) => (
 					<BadgesSelector
+						options={data.badgeOptions}
 						selectedBadges={value}
 						onBlur={onBlur}
 						onChange={onChange}
 					/>
 				)}
 			/>
-		</div>
-	);
-}
-
-function BadgesSelector({
-	selectedBadges,
-	onChange,
-	onBlur,
-}: {
-	selectedBadges: number[];
-	onChange: (newBadges: number[]) => void;
-	onBlur: () => void;
-}) {
-	const { t } = useTranslation(["org"]);
-	const data = useLoaderData<typeof loader>();
-
-	return (
-		<div className="stack md">
-			{selectedBadges.length > 0 ? (
-				<BadgeDisplay
-					badges={data.badgeOptions.filter((badge) =>
-						selectedBadges.includes(badge.id),
-					)}
-					onBadgeRemove={(badgeId) =>
-						onChange(selectedBadges.filter((id) => id !== badgeId))
-					}
-					key={selectedBadges.join(",")}
-				/>
-			) : (
-				<div className="text-lighter text-md font-bold">
-					{t("org:edit.form.badges.none")}
-				</div>
-			)}
-			<select
-				onBlur={onBlur}
-				onChange={(e) => onChange([Number(e.target.value), ...selectedBadges])}
-			>
-				<option>{t("org:edit.form.badges.select")}</option>
-				{data.badgeOptions
-					.filter((badge) => !selectedBadges.includes(badge.id))
-					.map((badge) => (
-						<option key={badge.id} value={badge.id}>
-							{badge.displayName}
-						</option>
-					))}
-			</select>
 		</div>
 	);
 }

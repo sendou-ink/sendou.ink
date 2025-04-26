@@ -79,6 +79,11 @@ const PERKS = [
 	},
 	{
 		tier: 2,
+		name: "favoriteBadges",
+		extraInfo: true,
+	},
+	{
+		tier: 2,
 		name: "customizedColorsTeam",
 		extraInfo: true,
 	},
@@ -147,7 +152,7 @@ export default function SupportPage() {
 					>
 						your Discord on Patreon.com
 					</a>
-					. Afterwards the perks will take effect within 2 hours. If any
+					. Afterwards the perks will take effect within an hour. If any
 					questions or problems contact Sendou for support.
 				</Trans>
 			</p>

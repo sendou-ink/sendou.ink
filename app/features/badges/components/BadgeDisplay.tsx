@@ -6,24 +6,29 @@ import { Button } from "~/components/Button";
 import { SendouButton } from "~/components/elements/Button";
 import { TrashIcon } from "~/components/icons/Trash";
 import type { Tables } from "~/db/tables";
+import { BADGE } from "~/features/badges/badges-contants";
 import { usePagination } from "~/hooks/usePagination";
 import type { Unpacked } from "~/utils/types";
 import { badgeExplanationText } from "../badges-utils";
 import styles from "./BadgeDisplay.module.css";
 
-interface BadgeDisplayProps {
+export interface BadgeDisplayProps {
 	badges: Array<Omit<Tables["Badge"], "authorId"> & { count?: number }>;
-	onBadgeRemove?: (badgeId: number) => void;
+	onChange?: (badgeIds: number[]) => void;
+	children?: React.ReactNode;
 }
 
 export function BadgeDisplay({
 	badges: _badges,
-	onBadgeRemove,
+	onChange,
+	children,
 }: BadgeDisplayProps) {
 	const { t } = useTranslation("badges");
 	const [badges, setBadges] = React.useState(_badges);
 
 	const [bigBadge, ...smallBadges] = badges;
+
+	const isPaginated = !onChange;
 
 	const {
 		itemsToDisplay,
@@ -33,42 +38,38 @@ export function BadgeDisplay({
 		setPage,
 	} = usePagination({
 		items: smallBadges,
-		pageSize: 9,
+		pageSize: isPaginated ? BADGE.SMALL_BADGES_PER_DISPLAY_PAGE : 1000,
 		scrollToTop: false,
 	});
 
 	if (!bigBadge) return null;
 
 	const setBadgeFirst = (badge: Unpacked<BadgeDisplayProps["badges"]>) => {
-		setBadges(
-			badges.map((b, i) => {
-				if (i === 0) return badge;
-				if (b.id === badge.id) return badges[0];
+		const newBadges = badges.map((b, i) => {
+			if (i === 0) return badge;
+			if (b.id === badge.id) return badges[0];
 
-				return b;
-			}),
-		);
+			return b;
+		});
+
+		setBadges(newBadges);
+		onChange?.(newBadges.map((b) => b.id));
 	};
 
 	return (
-		<div>
-			<div className={styles.badgeExplanation}>
-				{badgeExplanationText(t, bigBadge)}
-				{onBadgeRemove ? (
-					<Button
-						icon={<TrashIcon />}
-						variant="minimal-destructive"
-						onClick={() => onBadgeRemove(bigBadge.id)}
-					/>
-				) : null}
-			</div>
+		<div data-testid="badge-display">
+			{isPaginated ? (
+				<div className={styles.badgeExplanation}>
+					{badgeExplanationText(t, bigBadge)}
+				</div>
+			) : null}
 			<div
 				className={clsx(styles.badges, {
 					"justify-center": smallBadges.length === 0,
 				})}
 			>
 				<Badge badge={bigBadge} size={125} isAnimated />
-				{smallBadges.length > 0 ? (
+				{!children && smallBadges.length > 0 ? (
 					<div className={styles.smallBadges}>
 						{itemsToDisplay.map((badge) => (
 							<div key={badge.id} className={styles.smallBadgeContainer}>
@@ -85,7 +86,24 @@ export function BadgeDisplay({
 						))}
 					</div>
 				) : null}
+				{children}
 			</div>
+			{!isPaginated ? (
+				<div className={styles.badgeExplanation}>
+					{badgeExplanationText(t, bigBadge)}
+					{onChange ? (
+						<Button
+							icon={<TrashIcon />}
+							variant="minimal-destructive"
+							onClick={() =>
+								onChange(
+									badges.filter((b) => b.id !== bigBadge.id).map((b) => b.id),
+								)
+							}
+						/>
+					) : null}
+				</div>
+			) : null}
 			{!everythingVisible ? (
 				<BadgePagination
 					pagesCount={pagesCount}
@@ -119,6 +137,7 @@ function BadgePagination({
 					className={clsx(styles.paginationButton, {
 						[styles.paginationButtonActive]: currentPage === i + 1,
 					})}
+					data-testid="badge-pagination-button"
 				>
 					{i + 1}
 				</SendouButton>

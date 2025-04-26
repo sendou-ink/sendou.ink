@@ -1,7 +1,15 @@
 import { type Page, expect, test } from "@playwright/test";
 import { ADMIN_DISCORD_ID } from "~/constants";
-import { impersonate, navigate, seed, selectWeapon } from "~/utils/playwright";
-import { userPage } from "~/utils/urls";
+import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
+import {
+	impersonate,
+	isNotVisible,
+	navigate,
+	seed,
+	selectWeapon,
+	submit,
+} from "~/utils/playwright";
+import { userEditProfilePage, userPage } from "~/utils/urls";
 
 const goToEditPage = (page: Page) =>
 	page.getByText("Edit", { exact: true }).click();
@@ -9,6 +17,71 @@ const submitEditForm = (page: Page) =>
 	page.getByText("Save", { exact: true }).click();
 
 test.describe("User page", () => {
+	test("uses badge pagination", async ({ page }) => {
+		await seed(page);
+		await navigate({
+			page,
+			url: userPage({ discordId: NZAP_TEST_DISCORD_ID }),
+		});
+
+		await expect(page.getByTestId("badge-display")).toBeVisible();
+		await isNotVisible(page.getByTestId("badge-pagination-button"));
+
+		await navigate({
+			page,
+			url: userPage({ discordId: ADMIN_DISCORD_ID, customUrl: "sendou" }),
+		});
+
+		await expect(page.getByAltText("Paddling Pool Weekly")).toBeVisible();
+		await page.getByTestId("badge-pagination-button").nth(1).click();
+
+		// test changing the big badge
+		await page.getByAltText("Lobster Crossfire").click();
+		expect(page.getByAltText("Lobster Crossfire")).toHaveAttribute(
+			"width",
+			"125",
+		);
+	});
+
+	test("customize which badge is shown as big by default as normal user", async ({
+		page,
+	}) => {
+		await seed(page);
+		await impersonate(page, NZAP_TEST_ID);
+		await navigate({
+			page,
+			url: userEditProfilePage({ discordId: NZAP_TEST_DISCORD_ID }),
+		});
+
+		const badgeSelect = page.getByTestId("badges-selector");
+		await badgeSelect.selectOption("5");
+		await submit(page);
+
+		await expect(
+			page.getByAltText("It's Dangerous to go Alone"),
+		).toHaveAttribute("width", "125");
+	});
+
+	test("customize big badge + small badge first page order as supporter", async ({
+		page,
+	}) => {
+		await seed(page);
+		await impersonate(page);
+		await navigate({
+			page,
+			url: userEditProfilePage({ discordId: ADMIN_DISCORD_ID }),
+		});
+
+		const badgeSelect = page.getByTestId("badges-selector");
+		await badgeSelect.selectOption("1");
+		await expect(page.getByTestId("badge-display")).toBeVisible();
+		await badgeSelect.selectOption("11");
+		await submit(page);
+
+		await expect(page.getByAltText("4v4 Sundaes")).toBeVisible();
+		await expect(page.getByAltText("Lobster Crossfire")).toBeVisible();
+	});
+
 	test("edits user profile", async ({ page }) => {
 		await seed(page);
 		await impersonate(page);

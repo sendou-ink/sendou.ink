@@ -11,6 +11,7 @@ import type {
 } from "~/db/tables";
 import type { ChatUser } from "~/features/chat/components/Chat";
 import { userRoles } from "~/modules/permissions/mapper.server";
+import { isSupporter } from "~/modules/permissions/utils";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
@@ -157,7 +158,8 @@ export async function findProfileByIdentifier(
 			"User.discordName",
 			"User.showDiscordUniqueName",
 			"User.discordUniqueName",
-			"User.favoriteBadgeId",
+			"User.favoriteBadgeIds",
+			"User.patronTier",
 			"PlusTier.tier as plusTier",
 			jsonArrayFrom(
 				eb
@@ -223,22 +225,30 @@ export async function findProfileByIdentifier(
 		return null;
 	}
 
+	const favoriteBadgeIds = isSupporter(row)
+		? row.favoriteBadgeIds
+		: row.favoriteBadgeIds
+			? [row.favoriteBadgeIds[0]]
+			: null;
+
 	return {
 		...row,
 		team: row.teams.find((t) => t.isMainTeam),
 		secondaryTeams: row.teams.filter((t) => !t.isMainTeam),
 		teams: undefined,
-		// TODO: sort in SQL
+		favoriteBadgeIds,
 		badges: row.badges.sort((a, b) => {
-			if (a.id === row.favoriteBadgeId) {
-				return -1;
+			const aIdx = favoriteBadgeIds?.indexOf(a.id) ?? -1;
+			const bIdx = favoriteBadgeIds?.indexOf(b.id) ?? -1;
+
+			if (aIdx !== bIdx) {
+				if (aIdx === -1) return 1;
+				if (bIdx === -1) return -1;
+
+				return aIdx - bIdx;
 			}
 
-			if (b.id === row.favoriteBadgeId) {
-				return 1;
-			}
-
-			return a.id - b.id;
+			return b.id - a.id;
 		}),
 		discordUniqueName:
 			forceShowDiscordUniqueName || row.showDiscordUniqueName
@@ -283,7 +293,7 @@ export async function findLeanById(id: number) {
 			"User.isVideoAdder",
 			"User.isTournamentOrganizer",
 			"User.patronTier",
-			"User.favoriteBadgeId",
+			"User.favoriteBadgeIds",
 			"User.languages",
 			"User.inGameName",
 			"User.preferences",
@@ -668,13 +678,13 @@ type UpdateProfileArgs = Pick<
 	| "inGameName"
 	| "battlefy"
 	| "css"
-	| "favoriteBadgeId"
 	| "showDiscordUniqueName"
 	| "commissionText"
 	| "commissionsOpen"
 > & {
 	userId: number;
 	weapons: Pick<TablesInsertable["UserWeapon"], "weaponSplId" | "isFavorite">[];
+	favoriteBadgeIds: number[] | null;
 };
 export function updateProfile(args: UpdateProfileArgs) {
 	return db.transaction().execute(async (trx) => {
@@ -709,7 +719,9 @@ export function updateProfile(args: UpdateProfileArgs) {
 				inGameName: args.inGameName,
 				css: args.css,
 				battlefy: args.battlefy,
-				favoriteBadgeId: args.favoriteBadgeId,
+				favoriteBadgeIds: args.favoriteBadgeIds
+					? JSON.stringify(args.favoriteBadgeIds)
+					: null,
 				showDiscordUniqueName: args.showDiscordUniqueName,
 				commissionText: args.commissionText,
 				commissionsOpen: args.commissionsOpen,
