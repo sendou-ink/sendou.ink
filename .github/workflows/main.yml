@@ -35,3 +35,5 @@ jobs:
         run: npm run test:unit
       - name: Check translations jsons
         run: npm run check-translation-jsons:no-write
+      - name: Check homemade badges
+        run: npm run check-homemade-badges

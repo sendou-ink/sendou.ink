@@ -1,5 +1,7 @@
+import fs from "node:fs";
+import path from "node:path";
 import { z } from "zod";
-import badgesJson from "~/features/badges/homemade.json";
+import badgesJson from "../app/features/badges/homemade.json";
 
 const schema = z.record(
 	z.string(),
@@ -31,4 +33,18 @@ for (const key of Object.keys(badges)) {
 }
 
 // check each key has the 3 matching files in the right location
-// etc.
+const badgesLocation = path.join("public", "static-assets", "badges");
+
+for (const fileName of Object.keys(badges)) {
+	for (const ext of ["png", "avif", "gif"]) {
+		const filePath = path.join(badgesLocation, `${fileName}.${ext}`);
+		if (!fs.existsSync(filePath)) {
+			console.error(
+				`Missing file for badge ${fileName}: ${filePath} does not exist`,
+			);
+			process.exit(1);
+		}
+	}
+}
+
+console.info("Homemade badges check passed");

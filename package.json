@@ -14,6 +14,7 @@
 		"migrate": "ley",
 		"check-translation-jsons": "tsm scripts/check-translation-jsons.ts",
 		"check-translation-jsons:no-write": "tsm scripts/check-translation-jsons.ts --no-write",
+		"check-homemade-badges": "tsm scripts/check-homemade-badges.ts",
 		"refresh-prod-db": "tsm scripts/refresh-prod-db.ts && cross-env DB_PATH=db-prod.sqlite3 npm run migrate up",
 		"biome:check": "npx @biomejs/biome check .",
 		"biome:fix": "npx @biomejs/biome check --write .",
