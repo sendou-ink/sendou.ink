@@ -15,12 +15,12 @@ import { TextFormField } from "~/components/form/TextFormField";
 import { ToggleFormField } from "~/components/form/ToggleFormField";
 import { UserSearchFormField } from "~/components/form/UserSearchFormField";
 import { TOURNAMENT_ORGANIZATION_ROLES } from "~/db/tables";
+import { BadgesSelector } from "~/features/badges/components/BadgesSelector";
 import { wrapToValueStringArrayWithDefault } from "~/utils/form";
 import type { Unpacked } from "~/utils/types";
 import { uploadImagePage } from "~/utils/urls";
-import { organizationEditSchema } from "../tournament-organization-schemas";
 import { TOURNAMENT_ORGANIZATION } from "../tournament-organization-constants";
-import { BadgesSelector } from "~/features/badges/components/BadgesSelector";
+import { organizationEditSchema } from "../tournament-organization-schemas";
 
 import { action } from "../actions/org.$slug.edit.server";
 import { loader } from "../loaders/org.$slug.edit.server";
