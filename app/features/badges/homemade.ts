@@ -1070,6 +1070,11 @@ export const homemadeBadges: BadgeInfo[] = [
 		authorDiscordId: "960213930586824766",
 	},
 	{
+		displayName: "fractured cup gold",
+		fileName: "frcpgd",
+		authorDiscordId: "960213930586824766",
+	},
+	{
 		displayName: "ENA (Dream BBQ)",
 		fileName: "enabbq",
 		authorDiscordId: "528851510222782474",
