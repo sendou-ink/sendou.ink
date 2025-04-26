@@ -1099,4 +1099,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "serenade",
 		authorDiscordId: "617399529532293150",
 	},
+	{
+		displayName: "Nether Portal Achievement",
+		fileName: "netherportal",
+		authorDiscordId: "1320944066002681876",
+	},
 ];
