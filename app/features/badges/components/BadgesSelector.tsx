@@ -47,6 +47,7 @@ export function BadgesSelector({
 				onBlur={onBlur}
 				onChange={(e) => onChange([...selectedBadges, Number(e.target.value)])}
 				disabled={Boolean(maxCount && selectedBadges.length >= maxCount)}
+				data-testid="badges-selector"
 			>
 				<option>{t("common:badges.selector.select")}</option>
 				{options

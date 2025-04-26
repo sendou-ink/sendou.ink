@@ -4,7 +4,7 @@ import { badgePage } from "~/utils/urls";
 import { NZAP_TEST_ID } from "../app/db/seed/constants";
 
 test.describe("Badges", () => {
-	test("adds a badge sending a notification", async ({ page }) => {
+	test("adds a badge owner sending a notification", async ({ page }) => {
 		await seed(page);
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({

@@ -57,7 +57,7 @@ export function BadgeDisplay({
 	};
 
 	return (
-		<div>
+		<div data-testid="badge-display">
 			{isPaginated ? (
 				<div className={styles.badgeExplanation}>
 					{badgeExplanationText(t, bigBadge)}
@@ -137,6 +137,7 @@ function BadgePagination({
 					className={clsx(styles.paginationButton, {
 						[styles.paginationButtonActive]: currentPage === i + 1,
 					})}
+					data-testid="badge-pagination-button"
 				>
 					{i + 1}
 				</SendouButton>
