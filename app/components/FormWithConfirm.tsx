@@ -12,11 +12,12 @@ export function FormWithConfirm({
 	fields,
 	children,
 	dialogHeading,
-	deleteButtonText,
+	submitButtonText,
 	cancelButtonText,
 	action,
 	submitButtonTestId = "submit-button",
 	submitButtonVariant = "destructive",
+	cancelButtonVariant,
 	fetcher: _fetcher,
 }: {
 	fields?: (
@@ -25,11 +26,12 @@ export function FormWithConfirm({
 	)[];
 	children: React.ReactNode;
 	dialogHeading: string;
-	deleteButtonText?: string;
+	submitButtonText?: string;
 	cancelButtonText?: string;
 	action?: string;
 	submitButtonTestId?: string;
 	submitButtonVariant?: ButtonProps["variant"];
+	cancelButtonVariant?: ButtonProps["variant"];
 	fetcher?: FetcherWithComponents<any>;
 }) {
 	const componentsFetcher = useFetcher();
@@ -80,9 +82,9 @@ export function FormWithConfirm({
 							variant={submitButtonVariant}
 							testId={dialogOpen ? "confirm-button" : submitButtonTestId}
 						>
-							{deleteButtonText ?? t("common:actions.delete")}
+							{submitButtonText ?? t("common:actions.delete")}
 						</SubmitButton>
-						<Button onClick={closeDialog}>
+						<Button onClick={closeDialog} variant={cancelButtonVariant}>
 							{cancelButtonText ?? t("common:actions.cancel")}
 						</Button>
 					</div>

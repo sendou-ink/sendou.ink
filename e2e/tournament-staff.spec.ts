@@ -8,6 +8,7 @@ import {
 	navigate,
 	seed,
 	selectUser,
+	startBracket,
 	submit,
 } from "~/utils/playwright";
 import {
@@ -15,7 +16,6 @@ import {
 	tournamentBracketsPage,
 	tournamentMatchPage,
 } from "~/utils/urls";
-import { startBracket } from "./shared";
 
 const TOURNAMENT_ID = 2;
 

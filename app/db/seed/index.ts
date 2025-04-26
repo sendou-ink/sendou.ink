@@ -1,10 +1,11 @@
 import { faker } from "@faker-js/faker";
-import { sub } from "date-fns";
+import { add, sub } from "date-fns";
 import { nanoid } from "nanoid";
 import * as R from "remeda";
 import { ADMIN_DISCORD_ID, ADMIN_ID, INVITE_CODE_LENGTH } from "~/constants";
 import { db, sql } from "~/db/sql";
 import type { SeedVariation } from "~/features/api-private/routes/seed";
+import * as AssociationRepository from "~/features/associations/AssociationRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { persistedTags } from "~/features/calendar/calendar-constants";
@@ -20,6 +21,7 @@ import {
 	nextNonCompletedVoting,
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
+import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
 import { calculateMatchSkills } from "~/features/sendouq-match/core/skills.server";
 import {
@@ -66,7 +68,7 @@ import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
 import { SENDOUQ_DEFAULT_MAPS } from "~/modules/tournament-map-list-generator/constants";
 import { nullFilledArray } from "~/utils/arrays";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { mySlugify } from "~/utils/urls";
 import type { Tables, UserMapModePreferences } from "../tables";
@@ -122,7 +124,6 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	syncPlusTiers,
 	lastMonthSuggestions,
 	thisMonthsSuggestions,
-	badgesToAdmin,
 	badgesToUsers,
 	badgeManagers,
 	patrons,
@@ -163,13 +164,15 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	realVideo,
 	realVideoCast,
 	xRankPlacements,
-	userFavBadges,
 	arts,
 	commissionsOpen,
 	playedMatches,
 	groups,
 	friendCodes,
 	lfgPosts,
+	scrimPosts,
+	scrimPostRequests,
+	associations,
 	notifications,
 ];
 
@@ -190,6 +193,8 @@ export async function seed(variation?: SeedVariation | null) {
 
 function wipeDB() {
 	const tablesToDelete = [
+		"ScrimPost",
+		"Association",
 		"LFGPost",
 		"Skill",
 		"ReportedWeapon",
@@ -597,26 +602,6 @@ function syncPlusTiers() {
 		.run();
 }
 
-function badgesToAdmin() {
-	const availableBadgeIds = R.shuffle(
-		(sql.prepare(`select "id" from "Badge"`).all() as any[]).map((b) => b.id),
-	).slice(0, 8) as number[];
-
-	const badgesWithDuplicates = availableBadgeIds.flatMap((id) =>
-		new Array(faker.helpers.arrayElement([1, 1, 1, 2, 3, 4]))
-			.fill(null)
-			.map(() => id),
-	);
-
-	for (const id of badgesWithDuplicates) {
-		sql
-			.prepare(
-				`insert into "TournamentBadgeOwner" ("badgeId", "userId") values ($id, $userId)`,
-			)
-			.run({ id, userId: ADMIN_ID });
-	}
-}
-
 function getAvailableBadgeIds() {
 	return R.shuffle(
 		(sql.prepare(`select "id" from "Badge"`).all() as any[]).map((b) => b.id),
@@ -628,9 +613,15 @@ function badgesToUsers() {
 
 	let userIds = (
 		sql
-			.prepare(`select "id" from "User" where id != 2`) // no badges for N-ZAP
+			.prepare(
+				`select "id" from "User" where id != ${NZAP_TEST_ID} and id != ${ADMIN_ID}`,
+			)
 			.all() as any[]
 	).map((u) => u.id) as number[];
+
+	const insertTournamentBadgeOwnerStm = sql.prepare(
+		`insert into "TournamentBadgeOwner" ("badgeId", "userId") values ($id, $userId)`,
+	);
 
 	for (const id of availableBadgeIds) {
 		userIds = R.shuffle(userIds);
@@ -643,20 +634,20 @@ function badgesToUsers() {
 			});
 			i++
 		) {
-			let userToGetABadge = userIds.shift()!;
-			if (userToGetABadge === NZAP_TEST_ID && id === 1) {
-				// e2e test assumes N-ZAP does not have badge id = 1
-				userToGetABadge = userIds.shift()!;
-			}
+			const userToGetABadge = userIds.shift()!;
 
-			sql
-				.prepare(
-					`insert into "TournamentBadgeOwner" ("badgeId", "userId") values ($id, $userId)`,
-				)
-				.run({ id, userId: userToGetABadge });
+			insertTournamentBadgeOwnerStm.run({ id, userId: userToGetABadge });
 
 			userIds.push(userToGetABadge);
 		}
+	}
+
+	for (const badgeId of nullFilledArray(20).map((_, i) => i + 1)) {
+		insertTournamentBadgeOwnerStm.run({ id: badgeId, userId: ADMIN_ID });
+	}
+
+	for (const badgeId of [5, 6, 7]) {
+		insertTournamentBadgeOwnerStm.run({ id: badgeId, userId: NZAP_TEST_ID });
 	}
 }
 
@@ -678,19 +669,24 @@ function patrons() {
 			.all() as any[]
 	)
 		.map((u) => u.id)
-		.filter((id) => id !== NZAP_TEST_ID);
+		.filter((id) => id !== NZAP_TEST_ID && id !== ADMIN_ID) as number[];
 
+	const givePatronStm = sql.prepare(
+		`update user set "patronTier" = $patronTier, "patronSince" = $patronSince where id = $id`,
+	);
 	for (const id of userIds) {
-		sql
-			.prepare(
-				`update user set "patronTier" = $patronTier, "patronSince" = $patronSince where id = $id`,
-			)
-			.run({
-				id,
-				patronSince: dateToDatabaseTimestamp(faker.date.past()),
-				patronTier: faker.helpers.arrayElement([1, 1, 2, 2, 2, 3, 3, 4]),
-			});
+		givePatronStm.run({
+			id,
+			patronSince: dateToDatabaseTimestamp(faker.date.past()),
+			patronTier: faker.helpers.arrayElement([1, 1, 2, 2, 2, 3, 3, 4]),
+		});
 	}
+
+	givePatronStm.run({
+		id: ADMIN_ID,
+		patronSince: dateToDatabaseTimestamp(faker.date.past()),
+		patronTier: 2,
+	});
 }
 
 function userIdsInRandomOrder(specialLast = false) {
@@ -1842,24 +1838,6 @@ function xRankPlacements() {
 	})();
 }
 
-function userFavBadges() {
-	// randomly choose Sendou's favorite badge
-	const badgeList = R.shuffle(
-		(
-			sql
-				.prepare(
-					`select "badgeId" from "BadgeOwner" where "userId" = ${ADMIN_ID}`,
-				)
-				.all() as any[]
-		).map((row) => row.badgeId),
-	);
-	sql
-		.prepare(
-			`update "User" set "favoriteBadgeId" = $id where "id" = ${ADMIN_ID}`,
-		)
-		.run({ id: badgeList[0] });
-}
-
 const addArtStm = sql.prepare(/* sql */ `
   insert into "Art" (
     "imgId",
@@ -2281,6 +2259,144 @@ async function lfgPosts() {
 		type: "TEAM_FOR_PLAYER",
 		teamId: 1,
 	});
+}
+
+async function scrimPosts() {
+	const allUsers = userIdsInRandomOrder(true);
+
+	const date = () => {
+		const isNow = Math.random() > 0.5;
+
+		if (isNow) {
+			return databaseTimestampNow();
+		}
+
+		const randomFuture = faker.date.between({
+			from: new Date(),
+			to: add(new Date(), { days: 7 }),
+		});
+
+		randomFuture.setMinutes(0);
+		randomFuture.setSeconds(0);
+		randomFuture.setMilliseconds(0);
+
+		return dateToDatabaseTimestamp(randomFuture);
+	};
+
+	const team = () => {
+		const hasTeam = Math.random() > 0.5;
+
+		if (!hasTeam) {
+			return null;
+		}
+
+		return faker.helpers.rangeToNumber({ min: 5, max: 49 });
+	};
+
+	const divRange = () => {
+		const hasDivRange = Math.random() > 0.2;
+
+		if (!hasDivRange) {
+			return null;
+		}
+
+		const maxDiv = faker.helpers.arrayElement([0, 1, 2, 3, 4, 5]);
+		const minDiv = faker.helpers.arrayElement([6, 7, 8, 9, 10, 11]);
+
+		return { maxDiv, minDiv };
+	};
+
+	const users = () => {
+		const count = faker.helpers.arrayElement([4, 4, 4, 4, 4, 4, 5, 5, 5, 6]);
+
+		const result: Array<{ userId: number; isOwner: number }> = [];
+		for (let i = 0; i < count; i++) {
+			const user = allUsers.shift()!;
+
+			result.push({
+				userId: user,
+				isOwner: Number(i === 0),
+			});
+		}
+
+		return result;
+	};
+
+	for (let i = 0; i < 20; i++) {
+		const divs = divRange();
+
+		await ScrimPostRepository.insert({
+			at: date(),
+			maxDiv: divs?.maxDiv,
+			minDiv: divs?.minDiv,
+			teamId: team(),
+			text:
+				Math.random() > 0.5 ? faker.lorem.sentences({ min: 1, max: 5 }) : null,
+			visibility: null,
+			users: users(),
+		});
+	}
+
+	const adminPostId = await ScrimPostRepository.insert({
+		at: date(),
+		text:
+			Math.random() > 0.5 ? faker.lorem.sentences({ min: 1, max: 5 }) : null,
+		visibility: null,
+		users: users()
+			.map((u) => ({ ...u, isOwner: 0 }))
+			.concat({ userId: ADMIN_ID, isOwner: 1 }),
+	});
+	await ScrimPostRepository.insertRequest({
+		scrimPostId: adminPostId,
+		users: users(),
+	});
+	await ScrimPostRepository.insertRequest({
+		scrimPostId: adminPostId,
+		users: users(),
+	});
+}
+
+async function scrimPostRequests() {
+	const allianceRogueMembers = await db
+		.selectFrom(["TeamMember"])
+		.select(["TeamMember.userId"])
+		.where("TeamMember.teamId", "=", 1)
+		.execute();
+
+	for (const id of [1, 5, 12, 14, 19]) {
+		await ScrimPostRepository.insertRequest({
+			scrimPostId: id,
+			users: allianceRogueMembers.map((member) => ({
+				userId: member.userId,
+				isOwner: member.userId === ADMIN_ID ? 1 : 0,
+			})),
+			teamId: 1,
+		});
+	}
+
+	await ScrimPostRepository.acceptRequest(3);
+}
+
+async function associations() {
+	const allUsers = userIdsInRandomOrder(true);
+
+	for (let i = 0; i < 3; i++) {
+		await AssociationRepository.insert({
+			name: faker.company.name(),
+			userId: i === 2 ? allUsers.shift()! : ADMIN_ID,
+		});
+
+		for (
+			let j = 0;
+			j < faker.helpers.arrayElement([4, 6, 8, 10, 12, 24, 32]);
+			j++
+		) {
+			await AssociationRepository.addMember({
+				associationId: i + 1,
+				userId: i === 2 && j === 0 ? ADMIN_ID : allUsers.shift()!,
+			});
+		}
+	}
 }
 
 async function notifications() {

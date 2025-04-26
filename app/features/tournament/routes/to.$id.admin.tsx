@@ -506,7 +506,7 @@ function RemoveStaffButton({
 				["userId", staff.id],
 				["_action", "REMOVE_STAFF"],
 			]}
-			deleteButtonText="Remove"
+			submitButtonText="Remove"
 		>
 			<Button
 				variant="minimal-destructive"

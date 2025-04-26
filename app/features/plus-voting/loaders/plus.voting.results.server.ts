@@ -3,9 +3,9 @@ import type { UserWithPlusTier } from "~/db/tables";
 import { getUser } from "~/features/auth/core/user.server";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import { lastCompletedVoting } from "~/features/plus-voting/core";
+import { isSupporter } from "~/modules/permissions/utils";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
-import { isAtLeastFiveDollarTierPatreon } from "~/utils/users";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await getUser(request);
@@ -48,8 +48,7 @@ function ownScores({
 		})
 		.map((result) => {
 			const showScore =
-				(result.wasSuggested && !result.passedVoting) ||
-				isAtLeastFiveDollarTierPatreon(user);
+				(result.wasSuggested && !result.passedVoting) || isSupporter(user);
 
 			const resultsOfOwnTierExcludingOwn = () => {
 				const ownTierResults = results.find(
@@ -81,7 +80,7 @@ function ownScores({
 			};
 
 			if (!showScore) mappedResult.score = undefined;
-			if (!isAtLeastFiveDollarTierPatreon(user) || !result.passedVoting) {
+			if (!isSupporter(user) || !result.passedVoting) {
 				mappedResult.betterThan = undefined;
 			}
 

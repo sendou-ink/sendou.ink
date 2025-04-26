@@ -12,6 +12,7 @@ import gearDa from "../../../locales/da/gear.json";
 import lfgDa from "../../../locales/da/lfg.json";
 import orgDa from "../../../locales/da/org.json";
 import qDa from "../../../locales/da/q.json";
+import scrimsDa from "../../../locales/da/scrims.json";
 import teamDa from "../../../locales/da/team.json";
 import tournamentDa from "../../../locales/da/tournament.json";
 import userDa from "../../../locales/da/user.json";
@@ -31,6 +32,7 @@ import gearDe from "../../../locales/de/gear.json";
 import lfgDe from "../../../locales/de/lfg.json";
 import orgDe from "../../../locales/de/org.json";
 import qDe from "../../../locales/de/q.json";
+import scrimsDe from "../../../locales/de/scrims.json";
 import teamDe from "../../../locales/de/team.json";
 import tournamentDe from "../../../locales/de/tournament.json";
 import userDe from "../../../locales/de/user.json";
@@ -50,6 +52,7 @@ import gear from "../../../locales/en/gear.json";
 import lfg from "../../../locales/en/lfg.json";
 import org from "../../../locales/en/org.json";
 import q from "../../../locales/en/q.json";
+import scrimsEn from "../../../locales/en/scrims.json";
 import team from "../../../locales/en/team.json";
 import tournament from "../../../locales/en/tournament.json";
 import user from "../../../locales/en/user.json";
@@ -69,6 +72,7 @@ import gearEsEs from "../../../locales/es-ES/gear.json";
 import lfgEsEs from "../../../locales/es-ES/lfg.json";
 import orgEsEs from "../../../locales/es-ES/org.json";
 import qEsEs from "../../../locales/es-ES/q.json";
+import scrimsEsEs from "../../../locales/es-ES/scrims.json";
 import teamEsEs from "../../../locales/es-ES/team.json";
 import tournamentEsEs from "../../../locales/es-ES/tournament.json";
 import userEsEs from "../../../locales/es-ES/user.json";
@@ -88,6 +92,7 @@ import gearEsUs from "../../../locales/es-US/gear.json";
 import lfgEsUs from "../../../locales/es-US/lfg.json";
 import orgEsUs from "../../../locales/es-US/org.json";
 import qEsUs from "../../../locales/es-US/q.json";
+import scrimsEsUs from "../../../locales/es-US/scrims.json";
 import teamEsUs from "../../../locales/es-US/team.json";
 import tournamentEsUs from "../../../locales/es-US/tournament.json";
 import userEsUs from "../../../locales/es-US/user.json";
@@ -107,6 +112,7 @@ import gearFrCa from "../../../locales/fr-CA/gear.json";
 import lfgFrCa from "../../../locales/fr-CA/lfg.json";
 import orgFrCa from "../../../locales/fr-CA/org.json";
 import qFrCa from "../../../locales/fr-CA/q.json";
+import scrimsFrCa from "../../../locales/fr-CA/scrims.json";
 import teamFrCa from "../../../locales/fr-CA/team.json";
 import tournamentFrCa from "../../../locales/fr-CA/tournament.json";
 import userFrCa from "../../../locales/fr-CA/user.json";
@@ -126,6 +132,7 @@ import gearFrEu from "../../../locales/fr-EU/gear.json";
 import lfgFrEu from "../../../locales/fr-EU/lfg.json";
 import orgFrEu from "../../../locales/fr-EU/org.json";
 import qFrEu from "../../../locales/fr-EU/q.json";
+import scrimsFrEu from "../../../locales/fr-EU/scrims.json";
 import teamFrEu from "../../../locales/fr-EU/team.json";
 import tournamentFrEu from "../../../locales/fr-EU/tournament.json";
 import userFrEu from "../../../locales/fr-EU/user.json";
@@ -145,6 +152,7 @@ import gearHe from "../../../locales/he/gear.json";
 import lfgHe from "../../../locales/he/lfg.json";
 import orgHe from "../../../locales/he/org.json";
 import qHe from "../../../locales/he/q.json";
+import scrimsHe from "../../../locales/he/scrims.json";
 import teamHe from "../../../locales/he/team.json";
 import tournamentHe from "../../../locales/he/tournament.json";
 import userHe from "../../../locales/he/user.json";
@@ -164,6 +172,7 @@ import gearIt from "../../../locales/it/gear.json";
 import lfgIt from "../../../locales/it/lfg.json";
 import orgIt from "../../../locales/it/org.json";
 import qIt from "../../../locales/it/q.json";
+import scrimsIt from "../../../locales/it/scrims.json";
 import teamIt from "../../../locales/it/team.json";
 import tournamentIt from "../../../locales/it/tournament.json";
 import userIt from "../../../locales/it/user.json";
@@ -183,6 +192,7 @@ import gearJa from "../../../locales/ja/gear.json";
 import lfgJa from "../../../locales/ja/lfg.json";
 import orgJa from "../../../locales/ja/org.json";
 import qJa from "../../../locales/ja/q.json";
+import scrimsJa from "../../../locales/ja/scrims.json";
 import teamJa from "../../../locales/ja/team.json";
 import tournamentJa from "../../../locales/ja/tournament.json";
 import userJa from "../../../locales/ja/user.json";
@@ -202,6 +212,7 @@ import gearKo from "../../../locales/ko/gear.json";
 import lfgKo from "../../../locales/ko/lfg.json";
 import orgKo from "../../../locales/ko/org.json";
 import qKo from "../../../locales/ko/q.json";
+import scrimsKo from "../../../locales/ko/scrims.json";
 import teamKo from "../../../locales/ko/team.json";
 import tournamentKo from "../../../locales/ko/tournament.json";
 import userKo from "../../../locales/ko/user.json";
@@ -221,6 +232,7 @@ import gearNl from "../../../locales/nl/gear.json";
 import lfgNl from "../../../locales/nl/lfg.json";
 import orgNl from "../../../locales/nl/org.json";
 import qNl from "../../../locales/nl/q.json";
+import scrimsNl from "../../../locales/nl/scrims.json";
 import teamNl from "../../../locales/nl/team.json";
 import tournamentNl from "../../../locales/nl/tournament.json";
 import userNl from "../../../locales/nl/user.json";
@@ -240,6 +252,7 @@ import gearPl from "../../../locales/pl/gear.json";
 import lfgPl from "../../../locales/pl/lfg.json";
 import orgPl from "../../../locales/pl/org.json";
 import qPl from "../../../locales/pl/q.json";
+import scrimsPl from "../../../locales/pl/scrims.json";
 import teamPl from "../../../locales/pl/team.json";
 import tournamentPl from "../../../locales/pl/tournament.json";
 import userPl from "../../../locales/pl/user.json";
@@ -259,6 +272,7 @@ import gearPtBr from "../../../locales/pt-BR/gear.json";
 import lfgPtBr from "../../../locales/pt-BR/lfg.json";
 import orgPtBr from "../../../locales/pt-BR/org.json";
 import qPtBr from "../../../locales/pt-BR/q.json";
+import scrimsPtBr from "../../../locales/pt-BR/scrims.json";
 import teamPtBr from "../../../locales/pt-BR/team.json";
 import tournamentPtBr from "../../../locales/pt-BR/tournament.json";
 import userPtBr from "../../../locales/pt-BR/user.json";
@@ -278,6 +292,7 @@ import gearRu from "../../../locales/ru/gear.json";
 import lfgRu from "../../../locales/ru/lfg.json";
 import orgRu from "../../../locales/ru/org.json";
 import qRu from "../../../locales/ru/q.json";
+import scrimsRu from "../../../locales/ru/scrims.json";
 import teamRu from "../../../locales/ru/team.json";
 import tournamentRu from "../../../locales/ru/tournament.json";
 import userRu from "../../../locales/ru/user.json";
@@ -297,6 +312,7 @@ import gearZh from "../../../locales/zh/gear.json";
 import lfgZh from "../../../locales/zh/lfg.json";
 import orgZh from "../../../locales/zh/org.json";
 import qZh from "../../../locales/zh/q.json";
+import scrimsZh from "../../../locales/zh/scrims.json";
 import teamZh from "../../../locales/zh/team.json";
 import tournamentZh from "../../../locales/zh/tournament.json";
 import userZh from "../../../locales/zh/user.json";
@@ -308,6 +324,7 @@ export const resources = {
 		gear: gearEsUs,
 		faq: faqEsUs,
 		weapons: weaponsEsUs,
+		scrims: scrimsEsUs,
 		common: commonEsUs,
 		"game-misc": gameMiscEsUs,
 		tournament: tournamentEsUs,
@@ -329,6 +346,7 @@ export const resources = {
 		gear: gear,
 		faq: faq,
 		weapons: weapons,
+		scrims: scrimsEn,
 		common: common,
 		"game-misc": gameMisc,
 		tournament: tournament,
@@ -350,6 +368,7 @@ export const resources = {
 		gear: gearKo,
 		faq: faqKo,
 		weapons: weaponsKo,
+		scrims: scrimsKo,
 		common: commonKo,
 		"game-misc": gameMiscKo,
 		tournament: tournamentKo,
@@ -371,6 +390,7 @@ export const resources = {
 		gear: gearDe,
 		faq: faqDe,
 		weapons: weaponsDe,
+		scrims: scrimsDe,
 		common: commonDe,
 		"game-misc": gameMiscDe,
 		tournament: tournamentDe,
@@ -392,6 +412,7 @@ export const resources = {
 		gear: gearNl,
 		faq: faqNl,
 		weapons: weaponsNl,
+		scrims: scrimsNl,
 		common: commonNl,
 		"game-misc": gameMiscNl,
 		tournament: tournamentNl,
@@ -413,6 +434,7 @@ export const resources = {
 		gear: gearPtBr,
 		faq: faqPtBr,
 		weapons: weaponsPtBr,
+		scrims: scrimsPtBr,
 		common: commonPtBr,
 		"game-misc": gameMiscPtBr,
 		tournament: tournamentPtBr,
@@ -434,6 +456,7 @@ export const resources = {
 		gear: gearZh,
 		faq: faqZh,
 		weapons: weaponsZh,
+		scrims: scrimsZh,
 		common: commonZh,
 		"game-misc": gameMiscZh,
 		tournament: tournamentZh,
@@ -455,6 +478,7 @@ export const resources = {
 		gear: gearFrCa,
 		faq: faqFrCa,
 		weapons: weaponsFrCa,
+		scrims: scrimsFrCa,
 		common: commonFrCa,
 		"game-misc": gameMiscFrCa,
 		tournament: tournamentFrCa,
@@ -476,6 +500,7 @@ export const resources = {
 		gear: gearRu,
 		faq: faqRu,
 		weapons: weaponsRu,
+		scrims: scrimsRu,
 		common: commonRu,
 		"game-misc": gameMiscRu,
 		tournament: tournamentRu,
@@ -497,6 +522,7 @@ export const resources = {
 		gear: gearIt,
 		faq: faqIt,
 		weapons: weaponsIt,
+		scrims: scrimsIt,
 		common: commonIt,
 		"game-misc": gameMiscIt,
 		tournament: tournamentIt,
@@ -518,6 +544,7 @@ export const resources = {
 		gear: gearJa,
 		faq: faqJa,
 		weapons: weaponsJa,
+		scrims: scrimsJa,
 		common: commonJa,
 		"game-misc": gameMiscJa,
 		tournament: tournamentJa,
@@ -539,6 +566,7 @@ export const resources = {
 		gear: gearDa,
 		faq: faqDa,
 		weapons: weaponsDa,
+		scrims: scrimsDa,
 		common: commonDa,
 		"game-misc": gameMiscDa,
 		tournament: tournamentDa,
@@ -560,6 +588,7 @@ export const resources = {
 		gear: gearEsEs,
 		faq: faqEsEs,
 		weapons: weaponsEsEs,
+		scrims: scrimsEsEs,
 		common: commonEsEs,
 		"game-misc": gameMiscEsEs,
 		tournament: tournamentEsEs,
@@ -581,6 +610,7 @@ export const resources = {
 		gear: gearHe,
 		faq: faqHe,
 		weapons: weaponsHe,
+		scrims: scrimsHe,
 		common: commonHe,
 		"game-misc": gameMiscHe,
 		tournament: tournamentHe,
@@ -602,6 +632,7 @@ export const resources = {
 		gear: gearFrEu,
 		faq: faqFrEu,
 		weapons: weaponsFrEu,
+		scrims: scrimsFrEu,
 		common: commonFrEu,
 		"game-misc": gameMiscFrEu,
 		tournament: tournamentFrEu,
@@ -623,6 +654,7 @@ export const resources = {
 		gear: gearPl,
 		faq: faqPl,
 		weapons: weaponsPl,
+		scrims: scrimsPl,
 		common: commonPl,
 		"game-misc": gameMiscPl,
 		tournament: tournamentPl,

@@ -89,7 +89,7 @@ export function wrappedLoader<T>({
 }
 
 /**
- * Asserts that the given response errored out (with a toast message, via `validate(cond)` call)
+ * Asserts that the given response errored out (with a toast message, via `errorToastIfFalsy(cond)` call)
  */
 export function assertResponseErrored(response: Response) {
 	expect(response.headers.get("Location")).toContain("?__error=");

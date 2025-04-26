@@ -1,0 +1,3 @@
+export const BADGE = {
+	SMALL_BADGES_PER_DISPLAY_PAGE: 9,
+};

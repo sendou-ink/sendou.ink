@@ -10,7 +10,7 @@ import {
 } from "~/utils/remix.server";
 import { tournamentOrganizationPage } from "~/utils/urls";
 import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
-import { organizationEditSchema } from "../routes/org.$slug.edit";
+import { organizationEditSchema } from "../tournament-organization-schemas";
 import { canEditTournamentOrganization } from "../tournament-organization-utils";
 import { organizationFromParams } from "../tournament-organization-utils.server";
 

@@ -6,7 +6,6 @@ import { userSkills } from "~/features/mmr/tiered.server";
 import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import invariant from "~/utils/invariant";
-import { isAtLeastFiveDollarTierPatreon } from "~/utils/users";
 import { hasGroupManagerPerms } from "../core/groups";
 import {
 	addFutureMatchModes,
@@ -33,8 +32,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	const isPreview = Boolean(
 		new URL(request.url).searchParams.get("preview") === "true" &&
-			user &&
-			isAtLeastFiveDollarTierPatreon(user),
+			user?.roles.includes("SUPPORTER"),
 	);
 
 	const currentGroup =

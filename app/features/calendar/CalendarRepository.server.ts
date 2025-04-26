@@ -266,7 +266,7 @@ export async function findRecentTournamentsByAuthorId(authorId: number) {
 			"CalendarEventDate.startTime",
 		])
 		.where("CalendarEvent.authorId", "=", authorId)
-		.orderBy("CalendarEvent.id desc")
+		.orderBy("CalendarEvent.id", "desc")
 		.limit(10)
 		.execute();
 }

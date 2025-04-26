@@ -12,7 +12,6 @@
 	"sens": "感度",
 	"weaponPool": "武器池",
 	"discordExplanation": "用户名、头像、Youtube、Bluesky和Twitch账号皆来自您的Discord账号。查看 <1>FAQ</1> 以获得更多相关信息。",
-	"favoriteBadge": "最喜爱的徽章",
 	"battlefy": "Battlefy用户名",
 
 	"forms.showDiscordUniqueName": "显示Discord用户名",
@@ -39,7 +38,6 @@
 	"forms.errors.invalidCustomUrl.strangeCharacter": "自定义URL不能包含特殊符号",
 	"forms.errors.invalidCustomUrl.duplicate": "这个自定义URL已被使用",
 	"forms.errors.invalidSens": "设置体感感度前请先设置摇杆感度",
-	"forms.info.favoriteBadge": "您最喜爱的徽章将会默认在资料页展示为大徽章",
 	"forms.info.battlefy": "Battlefy用户名会在部分比赛被用于种子排名和验证",
 
 	"search.noResults": "没有符合 '{{query}}' 的用户",

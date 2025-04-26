@@ -20,7 +20,6 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { CrossIcon } from "~/components/icons/Cross";
 import { TrashIcon } from "~/components/icons/Trash";
 import type { CalendarEventTag, Tables } from "~/db/tables";
-import { useUser } from "~/features/auth/core/user";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -46,11 +45,11 @@ import {
 	datesToRegClosesAt,
 	regClosesAtToDisplayName,
 } from "../calendar-utils";
-import { canAddNewEvent } from "../calendar-utils";
 import { BracketProgressionSelector } from "../components/BracketProgressionSelector";
 import { Tags } from "../components/Tags";
 import "~/styles/calendar-new.css";
 import { SendouSwitch } from "~/components/elements/Switch";
+import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
 
 import { action } from "../actions/calendar.new.server";
@@ -80,10 +79,11 @@ const useBaseEvent = () => {
 
 export default function CalendarNewEventPage() {
 	const baseEvent = useBaseEvent();
-	const user = useUser();
+	const isCalendarEventAdder = useHasRole("CALENDAR_EVENT_ADDER");
+	const isTournamentAdder = useHasRole("TOURNAMENT_ADDER");
 	const data = useLoaderData<typeof loader>();
 
-	if (!user || !canAddNewEvent(user)) {
+	if (!isCalendarEventAdder) {
 		return (
 			<Main className="stack items-center">
 				<Alert variation="WARNING">
@@ -93,7 +93,7 @@ export default function CalendarNewEventPage() {
 		);
 	}
 
-	if (data.isAddingTournament && !user.isTournamentOrganizer) {
+	if (data.isAddingTournament && !isTournamentAdder) {
 		return (
 			<Main className="stack items-center">
 				<Alert variation="WARNING">

@@ -1,7 +1,6 @@
 import type { ActionFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
-import { requireUserId } from "~/features/auth/core/user.server";
-import { isAdmin } from "~/permissions";
+import { requireUser } from "~/features/auth/core/user.server";
 import {
 	errorToastIfFalsy,
 	notFoundIfFalsy,
@@ -14,13 +13,13 @@ import { editTeamSchema, teamParamsSchema } from "../team-schemas.server";
 import { isTeamManager, isTeamOwner } from "../team-utils";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUserId(request);
+	const user = await requireUser(request);
 	const { customUrl } = teamParamsSchema.parse(params);
 
 	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));
 
 	errorToastIfFalsy(
-		isTeamManager({ team, user }) || isAdmin(user),
+		isTeamManager({ team, user }) || user.roles.includes("ADMIN"),
 		"You are not a team manager",
 	);
 

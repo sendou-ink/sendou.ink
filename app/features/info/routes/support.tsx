@@ -5,6 +5,7 @@ import { Badge } from "~/components/Badge";
 import { LinkButton } from "~/components/Button";
 import { Main } from "~/components/Main";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
+import { FF_SCRIMS_ENABLED } from "~/features/scrims/scrims-constants";
 import { metaTags } from "~/utils/remix";
 import {
 	PATREON_HOW_TO_CONNECT_DISCORD_URL,
@@ -54,13 +55,33 @@ const PERKS = [
 	},
 	{
 		tier: 2,
+		name: "tournamentsBeta",
+		extraInfo: false,
+	},
+	{
+		tier: 2,
+		name: "previewQ",
+		extraInfo: false,
+	},
+	{
+		tier: 2,
 		name: "userShortLink",
+		extraInfo: true,
+	},
+	{
+		tier: 2,
+		name: "autoValidatePictures",
 		extraInfo: true,
 	},
 	{
 		tier: 2,
 		name: "customizedColorsUser",
 		extraInfo: false,
+	},
+	{
+		tier: 2,
+		name: "favoriteBadges",
+		extraInfo: true,
 	},
 	{
 		tier: 2,
@@ -89,23 +110,18 @@ const PERKS = [
 	},
 	{
 		tier: 2,
-		name: "autoValidatePictures",
-		extraInfo: true,
-	},
-	{
-		tier: 2,
-		name: "previewQ",
-		extraInfo: false,
-	},
-	{
-		tier: 2,
 		name: "joinFive",
 		extraInfo: false,
 	},
 	{
 		tier: 2,
-		name: "tournamentsBeta",
+		name: "joinMoreAssociations",
 		extraInfo: false,
+	},
+	{
+		tier: 2,
+		name: "useBotToLogIn",
+		extraInfo: true,
 	},
 ] as const;
 
@@ -137,7 +153,7 @@ export default function SupportPage() {
 					>
 						your Discord on Patreon.com
 					</a>
-					. Afterwards the perks will take effect within 2 hours. If any
+					. Afterwards the perks will take effect within an hour. If any
 					questions or problems contact Sendou for support.
 				</Trans>
 			</p>
@@ -153,7 +169,9 @@ function SupportTable() {
 			<div>Support</div>
 			<div>Supporter</div>
 			<div>Supporter+</div>
-			{PERKS.map((perk) => {
+			{PERKS.filter(
+				(perk) => FF_SCRIMS_ENABLED || perk.name !== "joinMoreAssociations",
+			).map((perk) => {
 				return (
 					<React.Fragment key={perk.name}>
 						<div className="justify-self-start">

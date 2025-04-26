@@ -1,4 +1,4 @@
-import { isAdmin } from "~/permissions";
+import { isAdmin } from "~/modules/permissions/utils";
 import type { UnwrappedNonNullable } from "~/utils/types";
 import type * as TournamentOrganizationRepository from "./TournamentOrganizationRepository.server";
 

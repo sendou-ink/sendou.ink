@@ -7,6 +7,10 @@ export const settingsEditSchema = z.union([
 		newValue: z.boolean(),
 	}),
 	z.object({
+		_action: _action("DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED"),
+		newValue: z.boolean(),
+	}),
+	z.object({
 		_action: _action("PLACEHOLDER"),
 	}),
 ]);

@@ -2,7 +2,6 @@ import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
 import { getUser } from "~/features/auth/core/user.server";
 import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import { isAdmin } from "~/permissions";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
@@ -32,7 +31,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		tournament.ctx.staff.some(
 			(s) => s.role === "ORGANIZER" && s.id === user?.id,
 		) ||
-		isAdmin(user) ||
+		user?.roles.includes("ADMIN") ||
 		tournament.ctx.organization?.members.some(
 			(m) => m.userId === user?.id && m.role === "ADMIN",
 		);

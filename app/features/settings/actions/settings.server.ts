@@ -19,6 +19,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			});
 			break;
 		}
+		case "DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED": {
+			await UserRepository.updatePreferences(user.id, {
+				disallowScrimPickupsFromUntrusted: data.newValue,
+			});
+			break;
+		}
 		case "PLACEHOLDER": {
 			break;
 		}

@@ -208,7 +208,7 @@ export async function findById(id: number) {
 									"=",
 									"TournamentTeam.id",
 								)
-								.orderBy("TournamentTeamMember.createdAt asc"),
+								.orderBy("TournamentTeamMember.createdAt", "asc"),
 						).as("members"),
 						jsonArrayFrom(
 							innerEb
@@ -252,7 +252,8 @@ export async function findById(id: number) {
 						).as("team"),
 					])
 					.where("TournamentTeam.tournamentId", "=", id)
-					.orderBy(["TournamentTeam.seed asc", "TournamentTeam.createdAt asc"]),
+					.orderBy("TournamentTeam.seed", "asc")
+					.orderBy("TournamentTeam.createdAt", "asc"),
 			).as("teams"),
 			jsonArrayFrom(
 				eb
@@ -523,7 +524,7 @@ export function forShowcase() {
 			).as("firstPlacers"),
 		])
 		.where("CalendarEventDate.startTime", ">", databaseTimestampWeekAgo())
-		.orderBy("CalendarEventDate.startTime asc")
+		.orderBy("CalendarEventDate.startTime", "asc")
 		.$narrowType<{ teamsCount: NotNull }>()
 		.execute();
 }
@@ -603,7 +604,7 @@ export async function friendCodesByTournamentId(tournamentId: number) {
 			"UserFriendCode.userId",
 		)
 		.select(["TournamentTeamMember.userId", "UserFriendCode.friendCode"])
-		.orderBy("UserFriendCode.createdAt asc")
+		.orderBy("UserFriendCode.createdAt", "asc")
 		.where("TournamentTeam.tournamentId", "=", tournamentId)
 		.execute();
 
@@ -1030,7 +1031,7 @@ export function pickBanEventsByMatchId(matchId: number) {
 			"TournamentMatchPickBanEvent.number",
 		])
 		.where("matchId", "=", matchId)
-		.orderBy("TournamentMatchPickBanEvent.number asc")
+		.orderBy("TournamentMatchPickBanEvent.number", "asc")
 		.execute();
 }
 

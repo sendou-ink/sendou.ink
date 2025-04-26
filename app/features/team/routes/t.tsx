@@ -19,6 +19,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { SearchIcon } from "~/components/icons/Search";
 import { useUser } from "~/features/auth/core/user";
 import { usePagination } from "~/hooks/usePagination";
+import { useHasRole } from "~/modules/permissions/hooks";
 import { joinListToNaturalString } from "~/utils/arrays";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -28,7 +29,6 @@ import {
 	teamPage,
 	userSubmittedImage,
 } from "~/utils/urls";
-import { isAtLeastFiveDollarTierPatreon } from "~/utils/users";
 import { TEAM, TEAMS_PER_PAGE } from "../team-constants";
 
 import { action } from "../actions/t.server";
@@ -160,6 +160,7 @@ function NewTeamDialog() {
 	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();
 	const user = useUser();
+	const isSupporter = useHasRole("SUPPORTER");
 	const data = useLoaderData<typeof loader>();
 
 	const isOpen = searchParams.get("new") === "true";
@@ -168,8 +169,7 @@ function NewTeamDialog() {
 
 	const canAddNewTeam = () => {
 		if (!user) return false;
-
-		if (isAtLeastFiveDollarTierPatreon(user)) {
+		if (isSupporter) {
 			return data.teamMemberOfCount < TEAM.MAX_TEAM_COUNT_PATRON;
 		}
 

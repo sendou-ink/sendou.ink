@@ -85,6 +85,17 @@ export function Catcher() {
 					)}
 				</Main>
 			);
+		case 403:
+			return (
+				<Main>
+					<h2>Error 403 Forbidden</h2>
+					<p className="text-sm text-lighter font-semi-bold">
+						Your account doesn't have the required permissions to perform this
+						action.
+					</p>
+					<GetHelp />
+				</Main>
+			);
 		case 404:
 			return (
 				<Main>
