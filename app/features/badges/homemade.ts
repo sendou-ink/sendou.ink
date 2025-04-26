@@ -1099,4 +1099,9 @@ export const homemadeBadges: BadgeInfo[] = [
 		fileName: "serenade",
 		authorDiscordId: "617399529532293150",
 	},
+	{
+		displayName: "Tentatek Showdown",
+		fileName: "tentatekbadge",
+		authorDiscordId: "754368445910614046",
+	},
 ];
