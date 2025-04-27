@@ -11,6 +11,7 @@ import {
 	Scripts,
 	ScrollRestoration,
 	type ShouldRevalidateFunction,
+	useHref,
 	useLoaderData,
 	useMatches,
 	useNavigate,
@@ -21,8 +22,10 @@ import generalI18next from "i18next";
 import NProgress from "nprogress";
 import * as React from "react";
 import { I18nProvider } from "react-aria-components";
+import { RouterProvider } from "react-aria-components";
 import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
+import type { NavigateOptions } from "react-router-dom";
 import { useChangeLanguage } from "remix-i18next/react";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
@@ -271,8 +274,6 @@ function useCustomizedCSSVars() {
 
 	for (const match of matches) {
 		if ((match.data as any)?.[CUSTOMIZED_CSS_VARS_NAME]) {
-			// cheating TypeScript here but no real way to keep up
-			// even an illusion of type safety here
 			return Object.fromEntries(
 				Object.entries(
 					(match.data as any)[CUSTOMIZED_CSS_VARS_NAME] as Record<
@@ -287,6 +288,12 @@ function useCustomizedCSSVars() {
 	return;
 }
 
+declare module "react-aria-components" {
+	interface RouterConfig {
+		routerOptions: NavigateOptions;
+	}
+}
+
 export default function App() {
 	// prop drilling data instead of using useLoaderData in the child components directly because
 	// useLoaderData can't be used in CatchBoundary and layout is rendered in it as well
@@ -294,13 +301,17 @@ export default function App() {
 	// Update 14.10.23: not sure if this still applies as the CatchBoundary is gone
 	const data = useLoaderData<RootLoaderData>();
 
+	const navigate = useNavigate();
+
 	return (
 		<ThemeProvider
 			specifiedTheme={isTheme(data.theme) ? data.theme : null}
 			themeSource="user-preference"
 		>
 			<Document data={data}>
-				<Outlet />
+				<RouterProvider navigate={navigate} useHref={useHref}>
+					<Outlet />
+				</RouterProvider>
 			</Document>
 		</ThemeProvider>
 	);

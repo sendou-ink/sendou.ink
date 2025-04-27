@@ -55,6 +55,7 @@ export const meta: MetaFunction = (args) => {
 	});
 };
 
+// xxx: 401 page should show same as vod
 export default function ArtPage() {
 	const { t } = useTranslation(["art", "common"]);
 	const data = useLoaderData<typeof loader>();
