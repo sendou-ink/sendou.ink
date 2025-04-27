@@ -1,6 +1,7 @@
 import type { ExpressionBuilder, FunctionModule, NotNull } from "kysely";
 import { sql } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
+import * as R from "remeda";
 import { db, sql as dbDirect } from "~/db/sql";
 import type {
 	BuildSort,
@@ -293,7 +294,6 @@ export async function findLeanById(id: number) {
 			"User.isVideoAdder",
 			"User.isTournamentOrganizer",
 			"User.patronTier",
-			"User.favoriteBadgeIds",
 			"User.languages",
 			"User.inGameName",
 			"User.preferences",
@@ -311,7 +311,7 @@ export async function findLeanById(id: number) {
 	if (!user) return;
 
 	return {
-		...user,
+		...R.omit(user, ["isArtist", "isVideoAdder", "isTournamentOrganizer"]),
 		roles: userRoles(user),
 	};
 }

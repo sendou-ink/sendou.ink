@@ -6,18 +6,17 @@ import { vodVideoPage } from "~/utils/urls";
 import { createVod, updateVodByReplacing } from "../queries/createVod.server";
 import { findVodById } from "../queries/findVodById.server";
 import { videoInputSchema } from "../vods-schemas";
-import { canAddVideo, canEditVideo } from "../vods-utils";
+import { canEditVideo } from "../vods-utils";
+import { requireRole } from "~/modules/permissions/guards.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = await requireUser(request);
+	requireRole(user, "VIDEO_ADDER");
+
 	const data = await parseRequestPayload({
 		request,
 		schema: videoInputSchema,
 	});
-
-	if (!canAddVideo(user)) {
-		throw new Response(null, { status: 401 });
-	}
 
 	let video: Tables["Video"];
 	if (data.vodToEditId) {

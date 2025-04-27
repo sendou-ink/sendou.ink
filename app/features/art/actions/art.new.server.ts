@@ -21,10 +21,11 @@ import { NEW_ART_EXISTING_SEARCH_PARAM_KEY } from "../art-constants";
 import { editArtSchema, newArtSchema } from "../art-schemas.server";
 import { addNewArt, editArt } from "../queries/addNewArt.server";
 import { findArtById } from "../queries/findArtById.server";
+import { requireRole } from "~/modules/permissions/guards.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = await requireUser(request);
-	errorToastIfFalsy(user.isArtist, "Lacking artist role");
+	requireRole(user, "ARTIST");
 
 	const searchParams = new URL(request.url).searchParams;
 	const artIdRaw = searchParams.get(NEW_ART_EXISTING_SEARCH_PARAM_KEY);

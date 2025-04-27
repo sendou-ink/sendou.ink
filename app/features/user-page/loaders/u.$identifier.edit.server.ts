@@ -27,7 +27,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 	return {
 		user: userProfile,
-		favoriteBadgeIds: user.favoriteBadgeIds,
+		favoriteBadgeIds: userProfile.favoriteBadgeIds,
 		discordUniqueName: userProfile.discordUniqueName,
 		countries: Object.entries(countries)
 			.map(([code, country]) => ({

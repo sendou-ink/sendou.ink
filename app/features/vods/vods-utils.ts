@@ -4,10 +4,6 @@ import { databaseTimestampToDate } from "../../utils/dates";
 import { HOURS_MINUTES_SECONDS_REGEX } from "./vods-schemas";
 import type { VideoBeingAdded, Vod } from "./vods-types";
 
-export function canAddVideo(args: { isVideoAdder: number | null }) {
-	return args.isVideoAdder;
-}
-
 export function vodToVideoBeingAdded(vod: Vod): VideoBeingAdded {
 	const dateObj = databaseTimestampToDate(vod.youtubeDate);
 
