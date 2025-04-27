@@ -40,6 +40,7 @@ export function SendouMenu({
 export interface SendouMenuItemProps extends MenuItemProps {
 	icon?: React.ReactNode;
 	imagePath?: string;
+	isActive?: boolean;
 }
 
 export function SendouMenuItem(props: SendouMenuItemProps) {
@@ -54,6 +55,7 @@ export function SendouMenuItem(props: SendouMenuItemProps) {
 				clsx(styles.item, {
 					[styles.itemSelected]: isSelected,
 					[styles.itemDisabled]: isDisabled,
+					[styles.itemActive]: props.isActive,
 				})
 			}
 		>

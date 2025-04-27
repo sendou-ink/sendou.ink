@@ -10,8 +10,8 @@ import { Alert } from "~/components/Alert";
 import { Button } from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { Menu } from "~/components/Menu";
 import { SendouButton } from "~/components/elements/Button";
+import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { SendouPopover } from "~/components/elements/Popover";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { EyeIcon } from "~/components/icons/Eye";
@@ -490,31 +490,34 @@ function BracketNav({
 
 	const bracketNameForButton = (name: string) => name.replace("bracket", "");
 
-	const button = React.forwardRef((props, ref) => (
-		<Button
-			className="tournament-bracket__bracket-nav__link"
-			_ref={ref}
-			{...props}
-		>
-			{bracketNameForButton(tournament.bracketByIdxOrDefault(bracketIdx).name)}
-			<span className="tournament-bracket__bracket-nav__chevron">▼</span>
-		</Button>
-	));
-
 	return (
 		<>
 			{/** MOBILE */}
-			<Menu
-				items={visibleBrackets.map((bracket, i) => {
-					return {
-						id: bracket.name,
-						onClick: () => setBracketIdx(i),
-						text: bracketNameForButton(bracket.name),
-					};
-				})}
-				button={button}
-				className="tournament-bracket__menu"
-			/>
+			<SendouMenu
+				trigger={
+					<SendouButton
+						className={clsx(
+							"tournament-bracket__bracket-nav__link",
+							"tournament-bracket__menu",
+						)}
+					>
+						{bracketNameForButton(
+							tournament.bracketByIdxOrDefault(bracketIdx).name,
+						)}
+						<span className="tournament-bracket__bracket-nav__chevron">▼</span>
+					</SendouButton>
+				}
+			>
+				{visibleBrackets.map((bracket, i) => (
+					<SendouMenuItem
+						key={bracket.name}
+						onAction={() => setBracketIdx(i)}
+						isActive={i === bracketIdx}
+					>
+						{bracketNameForButton(bracket.name)}
+					</SendouMenuItem>
+				))}
+			</SendouMenu>
 			{/** DESKTOP */}
 			<div className="tournament-bracket__bracket-nav tournament-bracket__button-row">
 				{visibleBrackets.map((bracket, i) => {

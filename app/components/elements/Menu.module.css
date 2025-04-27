@@ -67,6 +67,10 @@
 	font-weight: var(--extra-bold);
 }
 
+.itemActive {
+	color: var(--theme);
+}
+
 .itemIcon {
 	width: 18px;
 }
