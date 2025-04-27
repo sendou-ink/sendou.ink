@@ -6,8 +6,8 @@ import { Button } from "~/components/Button";
 import { Dialog } from "~/components/Dialog";
 import { FormMessage } from "~/components/FormMessage";
 import { Image, WeaponImage } from "~/components/Image";
-import { Menu, type MenuProps } from "~/components/Menu";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { LockIcon } from "~/components/icons/Lock";
 import { SortIcon } from "~/components/icons/Sort";
 import { TrashIcon } from "~/components/icons/Trash";
@@ -25,7 +25,10 @@ import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import { DEFAULT_BUILD_SORT } from "../user-page-constants";
 
 import { action } from "../actions/u.$identifier.builds.server";
-import { loader } from "../loaders/u.$identifier.builds.server";
+import {
+	type UserBuildsPageData,
+	loader,
+} from "../loaders/u.$identifier.builds.server";
 export { loader, action };
 
 export const handle: SendouRouteHandle = {
@@ -139,42 +142,6 @@ function BuildsFilters({
 	const showPublicPrivateFilters =
 		user?.id === layoutData.user.id && privateBuildsCount > 0;
 
-	const WeaponFilterMenuButton = React.forwardRef((props, ref) => (
-		<Button
-			variant={typeof weaponFilter === "number" ? undefined : "outlined"}
-			size="tiny"
-			className="u__build-filter-button"
-			{...props}
-			_ref={ref}
-		>
-			<Image
-				path={weaponCategoryUrl("SHOOTERS")}
-				width={24}
-				height={24}
-				alt=""
-			/>
-			{t("builds:filters.filterByWeapon")}
-		</Button>
-	));
-
-	const weaponFilterMenuItems = mainWeaponIds
-		.map((weaponId) => {
-			const count = data.weaponCounts[weaponId];
-
-			if (!count) return null;
-
-			const item: MenuProps["items"][number] = {
-				id: weaponId,
-				text: `${t(`weapons:MAIN_${weaponId}`)} (${count})`,
-				icon: <WeaponImage weaponSplId={weaponId} variant="build" size={18} />,
-				onClick: () => setWeaponFilter(weaponId),
-				selected: weaponFilter === weaponId,
-			};
-
-			return item;
-		})
-		.filter((item) => item !== null);
-
 	return (
 		<div className="stack horizontal sm flex-wrap">
 			<SendouButton
@@ -208,10 +175,11 @@ function BuildsFilters({
 				</>
 			) : null}
 
-			<Menu
-				items={weaponFilterMenuItems}
-				button={WeaponFilterMenuButton}
-				scrolling
+			<WeaponFilterMenu
+				mainWeaponIds={mainWeaponIds}
+				counts={data.weaponCounts}
+				weaponFilter={weaponFilter}
+				setWeaponFilter={setWeaponFilter}
 			/>
 		</div>
 	);
@@ -357,5 +325,59 @@ function ChangeSortingDialogSelect({
 				);
 			})}
 		</select>
+	);
+}
+
+function WeaponFilterMenu({
+	mainWeaponIds,
+	counts,
+	weaponFilter,
+	setWeaponFilter,
+}: {
+	mainWeaponIds: MainWeaponId[];
+	counts: UserBuildsPageData["weaponCounts"];
+	weaponFilter: BuildFilter;
+	setWeaponFilter: (weaponFilter: MainWeaponId) => void;
+}) {
+	const { t } = useTranslation(["weapons", "builds"]);
+
+	return (
+		<SendouMenu
+			scrolling
+			trigger={
+				<SendouButton
+					variant={typeof weaponFilter === "number" ? undefined : "outlined"}
+					size="small"
+					className="u__build-filter-button"
+				>
+					<Image
+						path={weaponCategoryUrl("SHOOTERS")}
+						width={24}
+						height={24}
+						alt=""
+					/>
+					{t("builds:filters.filterByWeapon")}
+				</SendouButton>
+			}
+		>
+			{mainWeaponIds.map((weaponId) => {
+				const count = counts[weaponId];
+
+				if (!count) return null;
+
+				return (
+					<SendouMenuItem
+						key={weaponId}
+						icon={
+							<WeaponImage weaponSplId={weaponId} variant="build" size={18} />
+						}
+						onAction={() => setWeaponFilter(weaponId)}
+						isActive={weaponFilter === weaponId}
+					>
+						{`${t(`weapons:MAIN_${weaponId}`)} (${count})`}
+					</SendouMenuItem>
+				);
+			})}
+		</SendouMenu>
 	);
 }

@@ -21,7 +21,7 @@
 }
 
 .scrolling {
-	max-height: 300px;
+	max-height: 300px !important;
 	overflow-y: auto;
 	scrollbar-color: rgb(83 65 91) transparent;
 	scrollbar-width: thin;
