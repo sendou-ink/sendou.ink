@@ -41,6 +41,7 @@
 	background-color: var(--bg-darker);
 	width: 100%;
 	border: 0;
+	outline: none;
 	justify-content: flex-start;
 }
 

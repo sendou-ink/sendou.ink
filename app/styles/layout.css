@@ -30,6 +30,12 @@
 	overflow: initial;
 }
 
+.logo:focus-visible {
+	outline: 2px solid var(--theme);
+	outline-offset: 2px;
+	border-radius: var(--rounded);
+}
+
 .layout__breadcrumb-separator {
 	font-size: 20px;
 	opacity: 0.4;
@@ -96,6 +102,7 @@
 .layout__header__button {
 	width: var(--item-size);
 	height: var(--item-size);
+	outline-offset: 2px;
 	padding: 0.25rem;
 	border: 2px solid;
 	border-color: var(--theme-transparent);
@@ -103,6 +110,19 @@
 	background-color: transparent;
 	color: inherit;
 	cursor: pointer;
+}
+
+.layout__header__button:focus-visible {
+	outline: 2px solid var(--theme);
+}
+
+.layout__user-item {
+	outline-offset: 2px;
+	border-radius: 100%;
+}
+
+.layout__user-item:focus-visible {
+	outline: 2px solid var(--theme);
 }
 
 .layout__header__button__icon {

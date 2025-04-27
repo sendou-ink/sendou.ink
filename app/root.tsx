@@ -143,6 +143,7 @@ function Document({
 }) {
 	const { htmlThemeClass } = useTheme();
 	const { i18n } = useTranslation();
+	const navigate = useNavigate();
 	const locale = data?.locale ?? DEFAULT_LANGUAGE;
 
 	// TODO: re-enable after testing if it causes bug where JS is not loading on revisit
@@ -178,13 +179,15 @@ function Document({
 			<body style={customizedCSSVars}>
 				{process.env.NODE_ENV === "development" && <HydrationTestIndicator />}
 				<React.StrictMode>
-					<I18nProvider locale={i18n.language}>
-						<SendouToastRegion />
-						<MyRamp data={data} />
-						<Layout data={data} isErrored={isErrored}>
-							{children}
-						</Layout>
-					</I18nProvider>
+					<RouterProvider navigate={navigate} useHref={useHref}>
+						<I18nProvider locale={i18n.language}>
+							<SendouToastRegion />
+							<MyRamp data={data} />
+							<Layout data={data} isErrored={isErrored}>
+								{children}
+							</Layout>
+						</I18nProvider>
+					</RouterProvider>
 				</React.StrictMode>
 				<ScrollRestoration
 					getKey={(location) => {
@@ -301,17 +304,13 @@ export default function App() {
 	// Update 14.10.23: not sure if this still applies as the CatchBoundary is gone
 	const data = useLoaderData<RootLoaderData>();
 
-	const navigate = useNavigate();
-
 	return (
 		<ThemeProvider
 			specifiedTheme={isTheme(data.theme) ? data.theme : null}
 			themeSource="user-preference"
 		>
 			<Document data={data}>
-				<RouterProvider navigate={navigate} useHref={useHref}>
-					<Outlet />
-				</RouterProvider>
+				<Outlet />
 			</Document>
 		</ThemeProvider>
 	);
