@@ -297,12 +297,14 @@ export default function WeaponsBuildsPage() {
 						icon={<BeakerFilledIcon />}
 						isDisabled={filters.length >= MAX_BUILD_FILTERS}
 						onAction={() => handleFilterAdd("ability")}
+						data-testid="menu-item-ability"
 					>
 						{t("builds:filters.type.ability")}
 					</SendouMenuItem>
 					<SendouMenuItem
 						icon={<MapIcon />}
 						onAction={() => handleFilterAdd("mode")}
+						data-testid="menu-item-mode"
 					>
 						{t("builds:filters.type.mode")}
 					</SendouMenuItem>
@@ -310,6 +312,7 @@ export default function WeaponsBuildsPage() {
 						icon={<CalendarIcon />}
 						isDisabled={filters.some((filter) => filter.type === "date")}
 						onAction={() => handleFilterAdd("date")}
+						data-testid="menu-item-date"
 					>
 						{t("builds:filters.type.date")}
 					</SendouMenuItem>

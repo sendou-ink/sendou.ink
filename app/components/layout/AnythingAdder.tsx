@@ -109,7 +109,11 @@ export function AnythingAdder() {
 			}
 		>
 			{items.map((item) => (
-				<SendouMenuItem key={item.id} {...item} />
+				<SendouMenuItem
+					key={item.id}
+					data-testid={`menu-item-${item.id}`}
+					{...item}
+				/>
 			))}
 		</SendouMenu>
 	);
