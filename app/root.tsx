@@ -516,7 +516,7 @@ function PWALinks() {
 }
 
 function MyRamp({ data }: { data: RootLoaderData | undefined }) {
-	if (!data || !data.user?.roles.includes("MINOR_SUPPORT")) {
+	if (!data || data.user?.roles.includes("MINOR_SUPPORT")) {
 		return null;
 	}
 

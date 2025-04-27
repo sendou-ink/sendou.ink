@@ -113,16 +113,15 @@ function AdminActions() {
 	return (
 		<div className="stack lg">
 			{process.env.NODE_ENV !== "production" && <Seed />}
+			{process.env.NODE_ENV !== "production" || isAdmin ? (
+				<Impersonate />
+			) : null}
 
 			{isStaff ? <LinkPlayer /> : null}
 			{isStaff ? <GiveArtist /> : null}
 			{isStaff ? <GiveVideoAdder /> : null}
 			{isStaff ? <GiveTournamentOrganizer /> : null}
 			{isStaff ? <UpdateFriendCode /> : null}
-
-			{process.env.NODE_ENV !== "production" || isAdmin ? (
-				<Impersonate />
-			) : null}
 			{isStaff ? <MigrateUser /> : null}
 			{isAdmin ? <ForcePatron /> : null}
 			{isStaff ? <BanUser /> : null}

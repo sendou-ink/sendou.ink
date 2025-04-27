@@ -7,22 +7,23 @@ import type { Result } from "./unions";
 /**
  * The possible status for a match.
  */
-export enum Status {
+export const Status = {
 	/** The two matches leading to this one are not completed yet. */
-	Locked = 0,
+	Locked: 0,
 
 	/** One participant is ready and waiting for the other one. */
-	Waiting = 1,
+	Waiting: 1,
 
 	/** Both participants are ready to start. */
-	Ready = 2,
+	Ready: 2,
 
 	/** The match is running. */
-	Running = 3,
+	Running: 3,
 
 	/** The match is completed. */
-	Completed = 4,
-}
+	Completed: 4,
+};
+export type Status = (typeof Status)[keyof typeof Status];
 
 /**
  * The results of a participant in a match.

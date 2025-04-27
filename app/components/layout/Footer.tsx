@@ -1,5 +1,4 @@
 import { Link } from "@remix-run/react";
-import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { usePatrons } from "~/hooks/swr";
 import {
@@ -18,7 +17,7 @@ import { DiscordIcon } from "../icons/Discord";
 import { GitHubIcon } from "../icons/GitHub";
 import { PatreonIcon } from "../icons/Patreon";
 
-function _Footer() {
+export function Footer() {
 	const { t } = useTranslation();
 
 	const currentYear = new Date().getFullYear();
@@ -112,5 +111,3 @@ function PatronsList() {
 		</div>
 	);
 }
-
-export const Footer = React.memo(_Footer);

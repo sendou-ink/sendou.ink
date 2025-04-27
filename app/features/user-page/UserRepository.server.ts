@@ -684,7 +684,7 @@ type UpdateProfileArgs = Pick<
 > & {
 	userId: number;
 	weapons: Pick<TablesInsertable["UserWeapon"], "weaponSplId" | "isFavorite">[];
-	favoriteBadgeIds: number[] | null;
+	favoriteBadgeIds?: number[] | null;
 };
 export function updateProfile(args: UpdateProfileArgs) {
 	return db.transaction().execute(async (trx) => {

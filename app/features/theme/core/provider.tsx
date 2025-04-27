@@ -2,11 +2,12 @@ import { useFetcher } from "@remix-run/react";
 import { type ReactNode, useCallback } from "react";
 import { createContext, useContext, useEffect, useState } from "react";
 
-enum Theme {
-	DARK = "dark",
-	LIGHT = "light",
-}
-const themes: Array<Theme> = Object.values(Theme);
+const Theme = {
+	DARK: "dark",
+	LIGHT: "light",
+} as const;
+type Theme = (typeof Theme)[keyof typeof Theme];
+const themes = Object.values(Theme);
 
 type ThemeContextType = {
 	/** The CSS class to attach to the `html` tag */
