@@ -11,6 +11,7 @@ import {
 	Scripts,
 	ScrollRestoration,
 	type ShouldRevalidateFunction,
+	useHref,
 	useLoaderData,
 	useMatches,
 	useNavigate,
@@ -21,8 +22,10 @@ import generalI18next from "i18next";
 import NProgress from "nprogress";
 import * as React from "react";
 import { I18nProvider } from "react-aria-components";
+import { RouterProvider } from "react-aria-components";
 import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
+import type { NavigateOptions } from "react-router-dom";
 import { useChangeLanguage } from "remix-i18next/react";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
@@ -140,6 +143,7 @@ function Document({
 }) {
 	const { htmlThemeClass } = useTheme();
 	const { i18n } = useTranslation();
+	const navigate = useNavigate();
 	const locale = data?.locale ?? DEFAULT_LANGUAGE;
 
 	// TODO: re-enable after testing if it causes bug where JS is not loading on revisit
@@ -175,13 +179,15 @@ function Document({
 			<body style={customizedCSSVars}>
 				{process.env.NODE_ENV === "development" && <HydrationTestIndicator />}
 				<React.StrictMode>
-					<I18nProvider locale={i18n.language}>
-						<SendouToastRegion />
-						<MyRamp data={data} />
-						<Layout data={data} isErrored={isErrored}>
-							{children}
-						</Layout>
-					</I18nProvider>
+					<RouterProvider navigate={navigate} useHref={useHref}>
+						<I18nProvider locale={i18n.language}>
+							<SendouToastRegion />
+							<MyRamp data={data} />
+							<Layout data={data} isErrored={isErrored}>
+								{children}
+							</Layout>
+						</I18nProvider>
+					</RouterProvider>
 				</React.StrictMode>
 				<ScrollRestoration
 					getKey={(location) => {
@@ -271,8 +277,6 @@ function useCustomizedCSSVars() {
 
 	for (const match of matches) {
 		if ((match.data as any)?.[CUSTOMIZED_CSS_VARS_NAME]) {
-			// cheating TypeScript here but no real way to keep up
-			// even an illusion of type safety here
 			return Object.fromEntries(
 				Object.entries(
 					(match.data as any)[CUSTOMIZED_CSS_VARS_NAME] as Record<
@@ -285,6 +289,12 @@ function useCustomizedCSSVars() {
 	}
 
 	return;
+}
+
+declare module "react-aria-components" {
+	interface RouterConfig {
+		routerOptions: NavigateOptions;
+	}
 }
 
 export default function App() {

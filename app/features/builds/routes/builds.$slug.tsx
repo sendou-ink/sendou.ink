@@ -8,9 +8,10 @@ import { nanoid } from "nanoid";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { BuildCard } from "~/components/BuildCard";
-import { Button, LinkButton } from "~/components/Button";
+import { LinkButton } from "~/components/Button";
 import { Main } from "~/components/Main";
-import { Menu } from "~/components/Menu";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { BeakerFilledIcon } from "~/components/icons/BeakerFilled";
 import { CalendarIcon } from "~/components/icons/Calendar";
 import { ChartBarIcon } from "~/components/icons/ChartBar";
@@ -270,20 +271,6 @@ export default function WeaponsBuildsPage() {
 		return `?${params.toString()}`;
 	};
 
-	const FilterMenuButton = React.forwardRef((props, ref) => (
-		<Button
-			variant="outlined"
-			size="tiny"
-			icon={<FilterIcon />}
-			disabled={filters.length >= MAX_BUILD_FILTERS}
-			testId="add-filter-button"
-			{...props}
-			_ref={ref}
-		>
-			{t("builds:addFilter")}
-		</Button>
-	));
-
 	const nthOfSameFilter = (index: number) => {
 		const type = filters[index].type;
 
@@ -293,30 +280,43 @@ export default function WeaponsBuildsPage() {
 	return (
 		<Main className="stack lg">
 			<div className="builds-buttons">
-				<Menu
-					items={[
-						{
-							id: "ability",
-							text: t("builds:filters.type.ability"),
-							icon: <BeakerFilledIcon />,
-							onClick: () => handleFilterAdd("ability"),
-						},
-						{
-							id: "mode",
-							text: t("builds:filters.type.mode"),
-							icon: <MapIcon />,
-							onClick: () => handleFilterAdd("mode"),
-						},
-						{
-							id: "date",
-							text: t("builds:filters.type.date"),
-							icon: <CalendarIcon />,
-							onClick: () => handleFilterAdd("date"),
-							disabled: filters.some((filter) => filter.type === "date"),
-						},
-					]}
-					button={FilterMenuButton}
-				/>
+				<SendouMenu
+					trigger={
+						<SendouButton
+							variant="outlined"
+							size="small"
+							icon={<FilterIcon />}
+							isDisabled={filters.length >= MAX_BUILD_FILTERS}
+							data-testid="add-filter-button"
+						>
+							{t("builds:addFilter")}
+						</SendouButton>
+					}
+				>
+					<SendouMenuItem
+						icon={<BeakerFilledIcon />}
+						isDisabled={filters.length >= MAX_BUILD_FILTERS}
+						onAction={() => handleFilterAdd("ability")}
+						data-testid="menu-item-ability"
+					>
+						{t("builds:filters.type.ability")}
+					</SendouMenuItem>
+					<SendouMenuItem
+						icon={<MapIcon />}
+						onAction={() => handleFilterAdd("mode")}
+						data-testid="menu-item-mode"
+					>
+						{t("builds:filters.type.mode")}
+					</SendouMenuItem>
+					<SendouMenuItem
+						icon={<CalendarIcon />}
+						isDisabled={filters.some((filter) => filter.type === "date")}
+						onAction={() => handleFilterAdd("date")}
+						data-testid="menu-item-date"
+					>
+						{t("builds:filters.type.date")}
+					</SendouMenuItem>
+				</SendouMenu>
 				<div className="builds-buttons__link">
 					<LinkButton
 						to={weaponBuildStatsPage(data.slug)}
