@@ -1,10 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { z } from "zod";
-import badgesJson from "../app/features/badges/homemade.json";
+import badgesJson from "../app/features/badges/homemade.json" with {
+	type: "json",
+};
 
 const schema = z.record(
-	z.string(),
+	z.string().regex(/^[a-z0-9-_]+$/),
 	z.object({
 		displayName: z.string().min(1).max(50),
 		authorDiscordId: z.string().regex(/^\d{17,19}$/),
