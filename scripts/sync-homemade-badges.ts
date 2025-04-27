@@ -1,27 +1,17 @@
 import "dotenv/config";
 
 import { db } from "~/db/sql";
-import { homemadeBadges } from "~/features/badges/homemade";
+import homemadeBadges from "~/features/badges/homemade.json";
 import { logger } from "~/utils/logger";
 
 async function main() {
 	let deleted = 0;
 	let updated = 0;
 
-	const isGood = validateHomemadeBadges();
-
-	if (!isGood) {
-		logger.error(
-			"Homemade badges are not valid, skipping badge update process",
-		);
-		return;
-	}
-
 	// update existing
 	for (const existingBadge of await homemadeBadgesInDb()) {
-		const badge = homemadeBadges.find(
-			(badge) => badge.fileName === existingBadge.code,
-		);
+		const badge =
+			homemadeBadges[existingBadge.code as keyof typeof homemadeBadges];
 
 		if (!badge) {
 			await deleteBadge(existingBadge.id);
@@ -55,9 +45,9 @@ async function main() {
 	let added = 0;
 
 	// add new
-	for (const badge of homemadeBadges) {
+	for (const [fileName, badge] of Object.entries(homemadeBadges)) {
 		const existing = homemadeAfterUpdates.find(
-			(existingBadge) => badge.fileName === existingBadge.code,
+			(existingBadge) => fileName === existingBadge.code,
 		);
 
 		if (existing) {
@@ -67,13 +57,13 @@ async function main() {
 		const author = await findUserByDiscordId(badge.authorDiscordId);
 		if (!author) {
 			logger.warn(
-				`Author not found for badge with fileName: ${badge.fileName}, skipping`,
+				`Author not found for badge with fileName: ${fileName}, skipping`,
 			);
 			continue;
 		}
 
 		await addBadge({
-			code: badge.fileName,
+			code: fileName,
 			displayName: badge.displayName,
 			authorId: author.id,
 		});
@@ -84,20 +74,6 @@ async function main() {
 	logger.info(
 		`Deleted ${deleted}, updated ${updated}, added ${added} homemade badges`,
 	);
-}
-
-function validateHomemadeBadges() {
-	const names = new Set<string>();
-
-	for (const badge of homemadeBadges) {
-		if (names.has(badge.fileName)) {
-			return false;
-		}
-
-		names.add(badge.fileName);
-	}
-
-	return true;
 }
 
 async function homemadeBadgesInDb() {
