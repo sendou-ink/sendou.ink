@@ -1,26 +1,8 @@
-import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "~/components/Button";
-import { Menu } from "~/components/Menu";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { FilterIcon } from "~/components/icons/Filter";
 import type { LFGFilter } from "../lfg-types";
-
-const FilterMenuButton = React.forwardRef((props, ref) => {
-	const { t } = useTranslation(["lfg"]);
-
-	return (
-		<Button
-			variant="outlined"
-			size="tiny"
-			icon={<FilterIcon />}
-			testId="add-filter-button"
-			{...props}
-			_ref={ref}
-		>
-			{t("lfg:addFilter")}
-		</Button>
-	);
-});
 
 const defaultFilters: Record<LFGFilter["_tag"], LFGFilter> = {
 	Weapon: { _tag: "Weapon", weaponSplIds: [] },
@@ -42,14 +24,27 @@ export function LFGAddFilterButton({
 	const { t } = useTranslation(["lfg"]);
 
 	return (
-		<Menu
-			items={Object.entries(defaultFilters).map(([tag, defaultFilter]) => ({
-				id: tag,
-				text: t(`lfg:filters.${tag as LFGFilter["_tag"]}`),
-				disabled: filters.some((filter) => filter._tag === tag),
-				onClick: () => addFilter(defaultFilter),
-			}))}
-			button={FilterMenuButton}
-		/>
+		<SendouMenu
+			trigger={
+				<SendouButton
+					variant="outlined"
+					size="small"
+					icon={<FilterIcon />}
+					data-testid="add-filter-button"
+				>
+					{t("lfg:addFilter")}
+				</SendouButton>
+			}
+		>
+			{Object.entries(defaultFilters).map(([tag, defaultFilter]) => (
+				<SendouMenuItem
+					key={tag}
+					isDisabled={filters.some((filter) => filter._tag === tag)}
+					onAction={() => addFilter(defaultFilter)}
+				>
+					{t(`lfg:filters.${tag as LFGFilter["_tag"]}`)}
+				</SendouMenuItem>
+			))}
+		</SendouMenu>
 	);
 }
