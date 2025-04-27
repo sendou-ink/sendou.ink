@@ -9,6 +9,7 @@ import { nanoid } from "nanoid";
 import { requireUser } from "~/features/auth/core/user.server";
 import { s3UploadHandler } from "~/features/img-upload";
 import { notify } from "~/features/notifications/core/notify.server";
+import { requireRole } from "~/modules/permissions/guards.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import {
@@ -24,7 +25,7 @@ import { findArtById } from "../queries/findArtById.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = await requireUser(request);
-	errorToastIfFalsy(user.isArtist, "Lacking artist role");
+	requireRole(user, "ARTIST");
 
 	const searchParams = new URL(request.url).searchParams;
 	const artIdRaw = searchParams.get(NEW_ART_EXISTING_SEARCH_PARAM_KEY);

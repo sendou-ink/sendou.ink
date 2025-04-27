@@ -78,11 +78,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			await CalendarRepository.findRecentMapPoolsByAuthorId(user.id),
 		eventToEdit: canEditEvent ? eventToEdit : undefined,
 		eventToCopy:
-			user.isTournamentOrganizer && !eventToEdit
+			user.roles.includes("TOURNAMENT_ADDER") && !eventToEdit
 				? await eventWithTournament("copyEventId")
 				: undefined,
 		recentTournaments:
-			user.isTournamentOrganizer && !eventToEdit
+			user.roles.includes("TOURNAMENT_ADDER") && !eventToEdit
 				? await CalendarRepository.findRecentTournamentsByAuthorId(user.id)
 				: undefined,
 		organizations: (

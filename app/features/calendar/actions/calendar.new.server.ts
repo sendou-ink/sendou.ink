@@ -87,8 +87,8 @@ export const action: ActionFunction = async ({ request }) => {
 		avatarFileName,
 		// reused avatar either via edit or template
 		avatarImgId: data.avatarImgId ?? undefined,
-		autoValidateAvatar: Boolean(user.patronTier),
-		toToolsEnabled: user.isTournamentOrganizer
+		autoValidateAvatar: user.roles.includes("SUPPORTER"),
+		toToolsEnabled: user.roles.includes("TOURNAMENT_ADDER")
 			? Number(data.toToolsEnabled)
 			: 0,
 		toToolsMode:

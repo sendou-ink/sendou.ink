@@ -59,7 +59,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	invariant(fileName);
 
 	const shouldAutoValidate =
-		Boolean(user.patronTier) || validatedType === "org-pfp";
+		user.roles.includes("SUPPORTER") || validatedType === "org-pfp";
 
 	addNewImage({
 		submitterUserId: user.id,
