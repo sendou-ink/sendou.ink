@@ -9,6 +9,7 @@ import { nanoid } from "nanoid";
 import { requireUser } from "~/features/auth/core/user.server";
 import { s3UploadHandler } from "~/features/img-upload";
 import { notify } from "~/features/notifications/core/notify.server";
+import { requireRole } from "~/modules/permissions/guards.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import {
@@ -21,7 +22,6 @@ import { NEW_ART_EXISTING_SEARCH_PARAM_KEY } from "../art-constants";
 import { editArtSchema, newArtSchema } from "../art-schemas.server";
 import { addNewArt, editArt } from "../queries/addNewArt.server";
 import { findArtById } from "../queries/findArtById.server";
-import { requireRole } from "~/modules/permissions/guards.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = await requireUser(request);

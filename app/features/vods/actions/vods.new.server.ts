@@ -1,13 +1,13 @@
 import { type ActionFunction, redirect } from "@remix-run/node";
 import type { Tables } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
+import { requireRole } from "~/modules/permissions/guards.server";
 import { notFoundIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { vodVideoPage } from "~/utils/urls";
 import { createVod, updateVodByReplacing } from "../queries/createVod.server";
 import { findVodById } from "../queries/findVodById.server";
 import { videoInputSchema } from "../vods-schemas";
 import { canEditVideo } from "../vods-utils";
-import { requireRole } from "~/modules/permissions/guards.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = await requireUser(request);
