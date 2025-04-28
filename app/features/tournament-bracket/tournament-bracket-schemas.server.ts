@@ -10,6 +10,7 @@ import {
 	stageId,
 } from "~/utils/zod";
 import { TOURNAMENT } from "../tournament/tournament-constants";
+import * as PickBan from "./core/PickBan";
 import * as PreparedMaps from "./core/PreparedMaps";
 
 const activeRosterPlayerIds = z.preprocess(safeJSONParse, z.array(id));
@@ -111,7 +112,7 @@ const tournamentRoundMaps = z.object({
 		.nullish(),
 	count: numericEnum(TOURNAMENT.AVAILABLE_BEST_OF),
 	type: z.enum(["BEST_OF", "PLAY_ALL"]),
-	pickBan: z.enum(["COUNTERPICK", "BAN_2"]).nullish(),
+	pickBan: z.enum(PickBan.types).nullish(),
 });
 
 export const bracketSchema = z.union([

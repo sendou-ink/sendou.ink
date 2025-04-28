@@ -942,8 +942,9 @@ test.describe("Tournament bracket", () => {
 		expect(page.getByRole("button", { name: "Link" })).toBeVisible();
 	});
 
-	for (const pickBan of ["COUNTERPICK"]) {
-		for (const mapPickingStyle of ["TO"]) {
+	// xxx: fix test and add the new pickBan style
+	for (const pickBan of ["COUNTERPICK", "BAN_2"]) {
+		for (const mapPickingStyle of ["AUTO_SZ", "TO"]) {
 			test(`ban/pick ${pickBan} (${mapPickingStyle})`, async ({ page }) => {
 				const tournamentId = mapPickingStyle === "AUTO_SZ" ? 2 : 4;
 				const matchId = 2;
