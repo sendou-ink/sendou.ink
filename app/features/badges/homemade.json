@@ -379,8 +379,8 @@
 		"displayName": "LCS Championship Showdown (Second)",
 		"authorDiscordId": "201922904781357057"
 	},
-	"lcsthird": {
-		"displayName": "LAN Championship Showdown (Third)",
+	"lcsthirdplace": {
+		"displayName": "LAN Championship Showdown",
 		"authorDiscordId": "201922904781357057"
 	},
 	"liftoff": {
