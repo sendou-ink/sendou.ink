@@ -203,6 +203,10 @@
 		"displayName": "Wheel of Names",
 		"authorDiscordId": "336683473714544641"
 	},
+	"first": {
+		"displayName": "LAN Championship Showdown (First)",
+		"authorDiscordId": "201922904781357057"
+	},
 	"fl-collegiate": {
 		"displayName": "Florida Collegiate Draft Cup",
 		"authorDiscordId": "285504780154044416"
@@ -370,10 +374,6 @@
 	"ktmed": {
 		"displayName": "Reef Reunion (500 KT Power)",
 		"authorDiscordId": "1170249805373657093"
-	},
-	"lcsfirst": {
-		"displayName": "LAN Championship Showdown (First)",
-		"authorDiscordId": "201922904781357057"
 	},
 	"lcssecond": {
 		"displayName": "LCS Championship Showdown (Second)",
