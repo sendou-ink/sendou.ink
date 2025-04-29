@@ -463,6 +463,7 @@ export interface TournamentSettings {
 		roundCount: number;
 	};
 	minMembersPerTeam?: number;
+	isTest?: boolean;
 }
 
 export interface CastedMatchesInfo {

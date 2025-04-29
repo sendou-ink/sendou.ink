@@ -278,6 +278,7 @@ function mapTournamentFromDB(
 			isSetAsRanked: tournament.settings.isRanked,
 			startTime: databaseTimestampToDate(tournament.startTime),
 			minMembersPerTeam: tournament.settings.minMembersPerTeam ?? 4,
+			isTest: tournament.settings.isTest ?? false,
 		}),
 		firstPlacer:
 			tournament.firstPlacers.length > 0

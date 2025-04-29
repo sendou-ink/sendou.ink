@@ -254,6 +254,7 @@ function EventForm() {
 						setIsInvitational={setIsInvitational}
 					/>
 					<StrictDeadlinesToggle />
+					{!eventToEdit ? <TestToggle /> : null}
 				</>
 			) : null}
 			{data.isAddingTournament ? (
@@ -986,6 +987,33 @@ function StrictDeadlinesToggle() {
 			<FormMessage type="info">
 				Strict deadlines has 5 minutes less for the target time of each round
 				(25min Bo3, 35min Bo5 compared to 30min Bo3, 40min Bo5 normal).
+			</FormMessage>
+		</div>
+	);
+}
+
+function TestToggle() {
+	const baseEvent = useBaseEvent();
+	const [isTest, setIsTest] = React.useState(
+		baseEvent?.tournament?.ctx.settings.isTest ?? false,
+	);
+	const id = React.useId();
+
+	return (
+		<div>
+			<label htmlFor={id} className="w-max">
+				Test
+			</label>
+			<SendouSwitch
+				name="isTest"
+				id={id}
+				size="small"
+				isSelected={isTest}
+				onChange={setIsTest}
+			/>
+			<FormMessage type="info">
+				Test tournaments don't appear on the calendar, don't send notifications
+				to players, and won't show up in players' profiles or results
 			</FormMessage>
 		</div>
 	);

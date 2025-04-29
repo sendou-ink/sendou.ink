@@ -21,6 +21,10 @@ export const NotifyCheckInStartRoutine = new Routine({
 				user: undefined,
 			});
 
+			if (tournament.ctx.settings.isTest) {
+				continue;
+			}
+
 			logger.info(
 				`Notifying check-in start for tournament ${tournament.ctx.id}`,
 			);

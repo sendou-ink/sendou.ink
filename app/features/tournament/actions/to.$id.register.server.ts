@@ -277,20 +277,22 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 			});
 
-			notify({
-				userIds: [data.userId],
-				notification: {
-					type: "TO_ADDED_TO_TEAM",
-					meta: {
-						adderUsername: user.username,
-						tournamentId,
-						teamName: ownTeam.name,
-						tournamentName: tournament.ctx.name,
-						tournamentTeamId: ownTeam.id,
+			if (!tournament.isTest) {
+				notify({
+					userIds: [data.userId],
+					notification: {
+						type: "TO_ADDED_TO_TEAM",
+						meta: {
+							adderUsername: user.username,
+							tournamentId,
+							teamName: ownTeam.name,
+							tournamentName: tournament.ctx.name,
+							tournamentTeamId: ownTeam.id,
+						},
+						pictureUrl: tournament.logoSrc,
 					},
-					pictureUrl: tournament.logoSrc,
-				},
-			});
+				});
+			}
 
 			break;
 		}

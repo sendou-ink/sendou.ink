@@ -31,6 +31,7 @@ export const notificationNavIcon = (type: Notification["type"]) => {
 		case "TO_ADDED_TO_TEAM":
 		case "TO_BRACKET_STARTED":
 		case "TO_CHECK_IN_OPENED":
+		case "TO_TEST_CREATED":
 			return "medal";
 		case "SCRIM_NEW_REQUEST":
 		case "SCRIM_SCHEDULED":
@@ -71,6 +72,7 @@ export const notificationLink = (notification: Notification) => {
 				tournamentId: notification.meta.tournamentId,
 				bracketIdx: notification.meta.bracketIdx,
 			});
+		case "TO_TEST_CREATED":
 		case "TO_CHECK_IN_OPENED":
 			return tournamentRegisterPage(notification.meta.tournamentId);
 		case "SCRIM_NEW_REQUEST": {

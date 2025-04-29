@@ -479,6 +479,7 @@ type CreateArgs = Pick<
 	thirdPlaceMatch?: boolean;
 	requireInGameNames?: boolean;
 	isRanked?: boolean;
+	isTest?: boolean;
 	isInvitational?: boolean;
 	deadlines: TournamentSettings["deadlines"];
 	enableNoScreenToggle?: boolean;
@@ -513,6 +514,7 @@ export async function create(args: CreateArgs) {
 				teamsPerGroup: args.teamsPerGroup,
 				thirdPlaceMatch: args.thirdPlaceMatch,
 				isRanked: args.isRanked,
+				isTest: args.isTest,
 				deadlines: args.deadlines,
 				isInvitational: args.isInvitational,
 				enableNoScreenToggle: args.enableNoScreenToggle,
@@ -578,7 +580,7 @@ export async function create(args: CreateArgs) {
 				bracketUrl: args.bracketUrl,
 				avatarImgId: args.avatarImgId ?? avatarImgId,
 				organizationId: args.organizationId,
-				hidden: args.parentTournamentId ? 1 : 0,
+				hidden: args.parentTournamentId || args.isTest ? 1 : 0,
 				tournamentId,
 			})
 			.returning("id")
@@ -665,6 +667,7 @@ export async function update(args: UpdateArgs) {
 				teamsPerGroup: args.teamsPerGroup,
 				thirdPlaceMatch: args.thirdPlaceMatch,
 				isRanked: args.isRanked,
+				isTest: args.isTest,
 				deadlines: args.deadlines,
 				isInvitational: args.isInvitational,
 				enableNoScreenToggle: args.enableNoScreenToggle,
