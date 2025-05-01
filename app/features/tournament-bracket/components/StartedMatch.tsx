@@ -585,6 +585,7 @@ function StartedMatchTabs({
 		revive: (value) => [0, 1, 2].find((idx) => idx === Number(value)),
 	});
 
+	// TODO: resolve this on server (notice it is copy-pasted now)
 	const chatUsers = React.useMemo(() => {
 		return Object.fromEntries(
 			[
@@ -701,8 +702,8 @@ function StartedMatchTabs({
 									<Chat
 										rooms={rooms}
 										users={chatUsers}
-										className="w-full q__chat-container"
-										messagesContainerClassName="q__chat-messages-container"
+										className="tournament__chat-container"
+										messagesContainerClassName="tournament__chat-messages-container pt-0"
 										chat={chat}
 										onMount={onChatMount}
 										onUnmount={onChatUnmount}

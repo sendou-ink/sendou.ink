@@ -210,6 +210,10 @@
 	padding-block-end: var(--s-4);
 }
 
+.pt-0 {
+	padding-block-start: 0;
+}
+
 .pt-8-forced {
 	padding-block-start: var(--s-8) !important;
 }
