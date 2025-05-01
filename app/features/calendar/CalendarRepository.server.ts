@@ -321,64 +321,6 @@ async function tournamentParticipantCount({
 	};
 }
 
-export async function startTimesOfRange({
-	startTime,
-	endTime,
-	tagsToFilterBy,
-	onlyTournaments,
-}: {
-	startTime: Date;
-	endTime: Date;
-	tagsToFilterBy: Array<PersistedCalendarEventTag>;
-	onlyTournaments: boolean;
-}) {
-	let query = db
-		.selectFrom("CalendarEventDate")
-		.innerJoin("CalendarEvent", "CalendarEvent.id", "CalendarEventDate.eventId")
-		.select(["startTime"])
-		.where("startTime", ">=", dateToDatabaseTimestamp(startTime))
-		.where("startTime", "<=", dateToDatabaseTimestamp(endTime));
-
-	for (const tag of tagsToFilterBy) {
-		query = query.where("CalendarEvent.tags", "like", `%${tag}%`);
-	}
-
-	if (onlyTournaments) {
-		query = query.where("CalendarEvent.tournamentId", "is not", null);
-	}
-
-	const rows = await query.execute();
-	return rows.map((row) => row.startTime);
-}
-
-export async function eventsToReport(authorId: number) {
-	const oneMonthAgo = new Date();
-	oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-
-	const rows = await db
-		.selectFrom("CalendarEvent")
-		.innerJoin(
-			"CalendarEventDate",
-			"CalendarEvent.id",
-			"CalendarEventDate.eventId",
-		)
-		.select(({ fn }) => [
-			"CalendarEvent.id",
-			"CalendarEvent.name",
-			fn.max("CalendarEventDate.startTime").as("startTime"),
-		])
-		.where("CalendarEvent.authorId", "=", authorId)
-		.where("CalendarEvent.hidden", "=", 0)
-		.where("startTime", ">=", dateToDatabaseTimestamp(oneMonthAgo))
-		.where("startTime", "<=", dateToDatabaseTimestamp(new Date()))
-		.where("CalendarEvent.participantCount", "is", null)
-		.where("CalendarEvent.tournamentId", "is", null)
-		.groupBy("CalendarEvent.id")
-		.execute();
-
-	return rows.map((row) => ({ id: row.id, name: row.name }));
-}
-
 export async function findRecentMapPoolsByAuthorId(authorId: number) {
 	const rows = await db
 		.selectFrom("CalendarEvent")
