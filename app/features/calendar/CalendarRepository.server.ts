@@ -6,7 +6,6 @@ import { db } from "~/db/sql";
 import type {
 	CalendarEventTag,
 	DB,
-	PersistedCalendarEventTag,
 	Tables,
 	TournamentSettings,
 } from "~/db/tables";
@@ -148,13 +147,11 @@ export type FindAllBetweenTwoTimestampsItem = Unwrapped<
 export async function findAllBetweenTwoTimestamps({
 	startTime,
 	endTime,
-	tagsToFilterBy = [],
-	onlyTournaments,
+	onlyTournaments = false,
 }: {
 	startTime: Date;
 	endTime: Date;
-	tagsToFilterBy?: Array<PersistedCalendarEventTag>;
-	onlyTournaments: boolean;
+	onlyTournaments?: boolean;
 }) {
 	let query = db
 		.selectFrom("CalendarEvent")
@@ -222,10 +219,6 @@ export async function findAllBetweenTwoTimestamps({
 		)
 		.where("CalendarEvent.hidden", "=", 0)
 		.orderBy("CalendarEventDate.startTime", "asc");
-
-	for (const tag of tagsToFilterBy) {
-		query = query.where("CalendarEvent.tags", "like", `%${tag}%`);
-	}
 
 	if (onlyTournaments) {
 		query = query.where("CalendarEvent.tournamentId", "is not", null);

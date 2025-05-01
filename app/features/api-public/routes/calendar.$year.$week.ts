@@ -47,7 +47,5 @@ function fetchEventsOfWeek(args: { week: number; year: number }) {
 	return CalendarRepository.findAllBetweenTwoTimestamps({
 		startTime,
 		endTime,
-		tagsToFilterBy: [],
-		onlyTournaments: false,
 	});
 }
