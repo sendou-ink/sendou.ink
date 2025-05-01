@@ -130,10 +130,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 					avatarFileName,
 				});
 
-				ShowcaseTournaments.addToParticipationInfoMap({
+				ShowcaseTournaments.addToCached({
 					tournamentId,
 					type: "participant",
 					userId: user.id,
+					newTeamCount: tournament.ctx.teams.length + 1,
 				});
 			}
 			break;
@@ -161,7 +162,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			deleteTeamMember({ tournamentTeamId: ownTeam.id, userId: data.userId });
 
-			ShowcaseTournaments.removeFromParticipationInfoMap({
+			ShowcaseTournaments.removeFromCached({
 				tournamentId,
 				type: "participant",
 				userId: data.userId,
@@ -183,7 +184,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: user.id,
 			});
 
-			ShowcaseTournaments.removeFromParticipationInfoMap({
+			ShowcaseTournaments.removeFromCached({
 				tournamentId,
 				type: "participant",
 				userId: user.id,
@@ -271,7 +272,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				trustReceiverUserId: user.id,
 			});
 
-			ShowcaseTournaments.addToParticipationInfoMap({
+			ShowcaseTournaments.addToCached({
 				tournamentId,
 				type: "participant",
 				userId: data.userId,
@@ -309,7 +310,18 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			deleteTeam(ownTeam.id);
 
-			ShowcaseTournaments.clearParticipationInfoMap();
+			for (const member of ownTeam.members) {
+				ShowcaseTournaments.removeFromCached({
+					tournamentId,
+					type: "participant",
+					userId: member.userId,
+				});
+
+				ShowcaseTournaments.updateCachedTournamentTeamCount({
+					tournamentId,
+					newTeamCount: tournament.ctx.teams.length - 1,
+				});
+			}
 
 			break;
 		}

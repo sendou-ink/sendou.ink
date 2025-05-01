@@ -1,5 +1,5 @@
 import cachified from "@epic-web/cachified";
-import { ONE_HOUR_IN_MS, TWO_HOURS_IN_MS } from "~/constants";
+import { TWO_HOURS_IN_MS } from "~/constants";
 import type { Tables } from "~/db/tables";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { tournamentIsRanked } from "~/features/tournament/tournament-utils";
@@ -80,14 +80,17 @@ export function clearParticipationInfoMap() {
 	participationInfoMap = null;
 }
 
-export function addToParticipationInfoMap({
+export function addToCached({
 	userId,
 	tournamentId,
 	type,
+	newTeamCount,
 }: {
 	userId: number;
 	tournamentId: number;
 	type: "participant" | "organizer";
+	/** If a new team joined, the new total team count for the tournament including the new one */
+	newTeamCount?: number;
 }) {
 	if (!participationInfoMap) return;
 
@@ -101,9 +104,16 @@ export function addToParticipationInfoMap({
 	}
 
 	participationInfoMap.set(userId, participation);
+
+	if (typeof newTeamCount === "number") {
+		updateCachedTournamentTeamCount({
+			tournamentId,
+			newTeamCount,
+		});
+	}
 }
 
-export function removeFromParticipationInfoMap({
+export function removeFromCached({
 	userId,
 	tournamentId,
 	type,
@@ -124,6 +134,20 @@ export function removeFromParticipationInfoMap({
 	}
 
 	participationInfoMap.set(userId, participation);
+}
+
+export function updateCachedTournamentTeamCount({
+	tournamentId,
+	newTeamCount,
+}: { tournamentId: number; newTeamCount: number }) {
+	cachedTournaments().then((tournaments) => {
+		const tournament = tournaments.upcoming.find(
+			(tournament) => tournament.id === tournamentId,
+		);
+		if (tournament) {
+			tournament.teamsCount = newTeamCount;
+		}
+	});
 }
 
 async function cachedParticipationInfo(
@@ -153,8 +177,7 @@ async function cachedTournaments() {
 	return cachified({
 		key: SHOWCASE_TOURNAMENTS_CACHE_KEY,
 		cache,
-		ttl: ttl(ONE_HOUR_IN_MS),
-		staleWhileRevalidate: ttl(TWO_HOURS_IN_MS),
+		ttl: ttl(TWO_HOURS_IN_MS),
 		async getFreshValue() {
 			const tournaments = await TournamentRepository.forShowcase();
 

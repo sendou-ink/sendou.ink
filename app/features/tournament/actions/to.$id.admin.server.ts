@@ -77,10 +77,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 				tournamentId,
 			});
 
-			ShowcaseTournaments.addToParticipationInfoMap({
+			ShowcaseTournaments.addToCached({
 				tournamentId,
 				type: "participant",
 				userId: data.userId,
+				newTeamCount: tournament.ctx.teams.length + 1,
 			});
 
 			message = "Team added";
@@ -195,7 +196,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				teamId: team.id,
 			});
 
-			ShowcaseTournaments.removeFromParticipationInfoMap({
+			ShowcaseTournaments.removeFromCached({
 				tournamentId,
 				type: "participant",
 				userId: data.memberId,
@@ -244,7 +245,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				}),
 			});
 
-			ShowcaseTournaments.addToParticipationInfoMap({
+			ShowcaseTournaments.addToCached({
 				tournamentId,
 				type: "participant",
 				userId: data.userId,
@@ -279,9 +280,21 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			deleteTeam(team.id);
 
-			ShowcaseTournaments.clearParticipationInfoMap();
+			for (const member of team.members) {
+				ShowcaseTournaments.removeFromCached({
+					tournamentId,
+					type: "participant",
+					userId: member.userId,
+				});
+
+				ShowcaseTournaments.updateCachedTournamentTeamCount({
+					tournamentId,
+					newTeamCount: tournament.ctx.teams.length - 1,
+				});
+			}
 
 			message = "Team deleted from tournament";
+
 			break;
 		}
 		case "ADD_STAFF": {
@@ -294,7 +307,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			});
 
 			if (data.role === "ORGANIZER") {
-				ShowcaseTournaments.addToParticipationInfoMap({
+				ShowcaseTournaments.addToCached({
 					tournamentId,
 					type: "organizer",
 					userId: data.userId,
@@ -312,7 +325,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 			});
 
-			ShowcaseTournaments.removeFromParticipationInfoMap({
+			ShowcaseTournaments.removeFromCached({
 				tournamentId,
 				type: "organizer",
 				userId: data.userId,

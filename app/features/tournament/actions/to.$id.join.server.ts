@@ -95,7 +95,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		}),
 	});
 
-	ShowcaseTournaments.addToParticipationInfoMap({
+	ShowcaseTournaments.addToCached({
 		tournamentId,
 		type: "participant",
 		userId: user.id,
