@@ -37,6 +37,13 @@ export type Notification =
 				tournamentName: string;
 			}
 	  >
+	| NotificationItem<
+			"TO_TEST_CREATED",
+			{
+				tournamentId: number;
+				tournamentName: string;
+			}
+	  >
 	| NotificationItem<"BADGE_ADDED", { badgeName: string; badgeId: number }>
 	| NotificationItem<
 			"BADGE_MANAGER_ADDED",

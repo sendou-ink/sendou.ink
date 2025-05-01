@@ -255,11 +255,15 @@ export function tournamentIsRanked({
 	isSetAsRanked,
 	startTime,
 	minMembersPerTeam,
+	isTest,
 }: {
 	isSetAsRanked?: boolean;
 	startTime: Date;
 	minMembersPerTeam: number;
+	isTest: boolean;
 }) {
+	if (isTest) return false;
+
 	const seasonIsActive = Boolean(currentSeason(startTime));
 	if (!seasonIsActive) return false;
 

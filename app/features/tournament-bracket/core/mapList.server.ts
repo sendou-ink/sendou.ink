@@ -1,5 +1,6 @@
 import type { Tables, TournamentRoundMaps } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { modesIncluded } from "~/features/tournament/tournament-utils";
 import type { Round } from "~/modules/brackets-model";
 import type { ModeShort, StageId } from "~/modules/in-game-lists";
@@ -12,6 +13,7 @@ import { starterMap } from "~/modules/tournament-map-list-generator/starter-map"
 import { syncCached } from "~/utils/cache.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
+import { assertUnreachable } from "~/utils/types";
 import { findMapPoolByTeamId } from "../queries/findMapPoolByTeamId.server";
 import { findTieBreakerMapPoolByTournamentId } from "../queries/findTieBreakerMapPoolByTournamentId.server";
 import type { Bracket } from "./Bracket";
@@ -105,15 +107,23 @@ export function resolveFreshTeamPickedMapList(
 			? findTieBreakerMapPoolByTournamentId(args.tournamentId)
 			: [];
 
+	const pickBanCount = (pickBan: PickBan.Type, count: number) => {
+		switch (pickBan) {
+			case "BAN_2":
+				return count + 2;
+			case "COUNTERPICK":
+			case "COUNTERPICK_MODE_REPEAT_OK":
+				return 1;
+			default:
+				assertUnreachable(pickBan);
+		}
+	};
+
 	const count = () => {
 		if (!args.maps?.count) return args.bestOf;
 
-		if (args.maps.pickBan === "BAN_2") {
-			return args.maps.count + 2;
-		}
-
-		if (args.maps.pickBan === "COUNTERPICK") {
-			return 1;
+		if (args.maps.pickBan) {
+			return pickBanCount(args.maps.pickBan, args.maps.count);
 		}
 
 		return args.maps.count;

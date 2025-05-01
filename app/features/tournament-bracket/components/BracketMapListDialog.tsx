@@ -10,6 +10,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { RefreshArrowsIcon } from "~/components/icons/RefreshArrows";
 import type { TournamentRoundMaps } from "~/db/tables";
+import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import {
 	useTournament,
 	useTournamentPreparedMaps,
@@ -326,6 +327,7 @@ export function BracketMapListDialog({
 							<div className="stack horizontal lg flex-wrap">
 								<PickBanSelect
 									pickBanStyle={pickBanStyle}
+									isOneModeOnly={tournament.modesIncluded.length === 1}
 									onPickBanStyleChange={(pickBanStyle) => {
 										let newRoundsWithPickBan = roundsWithPickBan;
 										if (globalSelections) {
@@ -795,11 +797,19 @@ function GlobalCountTypeSelect({
 
 function PickBanSelect({
 	pickBanStyle,
+	isOneModeOnly,
 	onPickBanStyleChange,
 }: {
 	pickBanStyle: TournamentRoundMaps["pickBan"];
+	isOneModeOnly: boolean;
 	onPickBanStyleChange: (pickBanStyle: TournamentRoundMaps["pickBan"]) => void;
 }) {
+	const pickBanSelectText: Record<PickBan.Type, string> = {
+		COUNTERPICK: "Counterpick",
+		COUNTERPICK_MODE_REPEAT_OK: "Counterpick (mode repeat allowed)",
+		BAN_2: "Ban 2",
+	};
+
 	return (
 		<div>
 			<Label htmlFor="pick-ban-style">Pick/ban</Label>
@@ -816,8 +826,15 @@ function PickBanSelect({
 				}
 			>
 				<option value="NONE">None</option>
-				<option value="COUNTERPICK">Counterpick</option>
-				<option value="BAN_2">Ban 2</option>
+				{PickBan.types
+					.filter(
+						(type) => !isOneModeOnly || type !== "COUNTERPICK_MODE_REPEAT_OK",
+					)
+					.map((type) => (
+						<option key={type} value={type}>
+							{pickBanSelectText[type]}
+						</option>
+					))}
 			</select>
 		</div>
 	);

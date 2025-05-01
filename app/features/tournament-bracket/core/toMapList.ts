@@ -55,7 +55,12 @@ export function generateTournamentRoundMaplist(
 			if (!args.roundsWithPickBan.has(round.id) || !args.pickBanStyle) {
 				return count;
 			}
-			if (args.pickBanStyle === "COUNTERPICK") return 1;
+			if (
+				args.pickBanStyle === "COUNTERPICK" ||
+				args.pickBanStyle === "COUNTERPICK_MODE_REPEAT_OK"
+			) {
+				return 1;
+			}
 			if (args.pickBanStyle === "BAN_2") return count + 2;
 
 			assertUnreachable(args.pickBanStyle);

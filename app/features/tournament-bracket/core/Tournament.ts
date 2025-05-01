@@ -692,7 +692,13 @@ export class Tournament {
 			isSetAsRanked: this.ctx.settings.isRanked,
 			startTime: this.ctx.startTime,
 			minMembersPerTeam: this.minMembersPerTeam,
+			isTest: this.isTest,
 		});
+	}
+
+	/** Run as test tournament which don't show on calendar, give out results etc., default false */
+	get isTest() {
+		return this.ctx.settings.isTest ?? false;
 	}
 
 	/** What seeding skill rating this tournament counts for */

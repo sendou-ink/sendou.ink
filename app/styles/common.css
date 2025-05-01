@@ -1812,7 +1812,6 @@ html[dir="rtl"] .fix-rtl {
 }
 
 #nprogress .bar {
-	margin-top: 3rem !important;
 	background: var(--theme) !important;
 }
 

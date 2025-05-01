@@ -55,6 +55,8 @@
 	"notifications.text.SQ_NEW_MATCH": "SendouQ match #{{matchId}} started",
 	"notifications.title.TO_ADDED_TO_TEAM": "Added to Team",
 	"notifications.text.TO_ADDED_TO_TEAM": "Added to a team ({{teamName}}) by {{adderUsername}} in {{tournamentName}}",
+	"notifications.title.TO_TEST_CREATED": "Test tournament created",
+	"notifications.text.TO_TEST_CREATED": "You created a test tournament {{tournamentName}}",
 	"notifications.title.TO_BRACKET_STARTED": "Bracket Started",
 	"notifications.text.TO_BRACKET_STARTED": "{{bracketName}} of {{tournamentName}} started",
 	"notifications.title.TO_CHECK_IN_OPENED": "Check-in Opened",

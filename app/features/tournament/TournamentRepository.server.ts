@@ -523,6 +523,7 @@ export function forShowcase() {
 					]),
 			).as("firstPlacers"),
 		])
+		.where("CalendarEvent.hidden", "=", 0)
 		.where("CalendarEventDate.startTime", ">", databaseTimestampWeekAgo())
 		.orderBy("CalendarEventDate.startTime", "asc")
 		.$narrowType<{ teamsCount: NotNull }>()

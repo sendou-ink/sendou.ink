@@ -14,6 +14,7 @@ import type {
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
 import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
+import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { ParticipantResult, SeedOrdering } from "~/modules/brackets-model";
 import type {
@@ -462,6 +463,7 @@ export interface TournamentSettings {
 		roundCount: number;
 	};
 	minMembersPerTeam?: number;
+	isTest?: boolean;
 }
 
 export interface CastedMatchesInfo {
@@ -599,7 +601,7 @@ export interface TournamentRoundMaps {
 	list?: Array<{ mode: ModeShort; stageId: StageId }> | null;
 	count: number;
 	type: "BEST_OF" | "PLAY_ALL";
-	pickBan?: "COUNTERPICK" | "BAN_2" | null;
+	pickBan?: PickBan.Type | null;
 }
 
 /**

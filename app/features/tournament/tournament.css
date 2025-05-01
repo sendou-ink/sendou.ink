@@ -23,6 +23,16 @@
 	font-weight: var(--semi-bold);
 }
 
+.tournament__chat-container {
+	top: var(--sticky-top);
+	position: sticky;
+	width: 100%;
+}
+
+.tournament__chat-messages-container {
+	height: 350px;
+}
+
 .tournament__map-pool-counts {
 	display: grid;
 	width: 250px;

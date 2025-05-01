@@ -130,22 +130,26 @@ export const action: ActionFunction = async ({ params, request }) => {
 				}
 			})();
 
-			notify({
-				userIds: seeding
-					.filter((teamId) => typeof teamId === "number")
-					.flatMap((tournamentTeamId) =>
-						tournament.teamById(tournamentTeamId)!.members.map((m) => m.userId),
-					),
-				notification: {
-					type: "TO_BRACKET_STARTED",
-					meta: {
-						tournamentId,
-						bracketIdx: data.bracketIdx,
-						bracketName: bracket.name,
-						tournamentName: tournament.ctx.name,
+			if (!tournament.isTest) {
+				notify({
+					userIds: seeding
+						.filter((teamId) => typeof teamId === "number")
+						.flatMap((tournamentTeamId) =>
+							tournament
+								.teamById(tournamentTeamId)!
+								.members.map((m) => m.userId),
+						),
+					notification: {
+						type: "TO_BRACKET_STARTED",
+						meta: {
+							tournamentId,
+							bracketIdx: data.bracketIdx,
+							bracketName: bracket.name,
+							tournamentName: tournament.ctx.name,
+						},
 					},
-				},
-			});
+				});
+			}
 
 			break;
 		}
@@ -264,11 +268,13 @@ export const action: ActionFunction = async ({ params, request }) => {
 				`Inserting tournament summary. Tournament id: ${tournamentId}, mapResultDeltas.lenght: ${summary.mapResultDeltas.length}, playerResultDeltas.length ${summary.playerResultDeltas.length}, tournamentResults.length ${summary.tournamentResults.length}, skills.length ${summary.skills.length}, seedingSkills.length ${summary.seedingSkills.length}`,
 			);
 
-			addSummary({
-				tournamentId,
-				summary,
-				season,
-			});
+			if (!tournament.isTest) {
+				addSummary({
+					tournamentId,
+					summary,
+					season,
+				});
+			}
 
 			if (tournament.ranked) {
 				try {

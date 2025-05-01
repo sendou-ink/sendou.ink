@@ -6,6 +6,7 @@ import { LinkButton } from "~/components/Button";
 import { containerClassName } from "~/components/Main";
 import { ArrowLongLeftIcon } from "~/components/icons/ArrowLongLeft";
 import { useUser } from "~/features/auth/core/user";
+import { ConnectedChat } from "~/features/chat/components/Chat";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
@@ -57,6 +58,20 @@ export default function TournamentMatchPage() {
 		if (!data.match.opponentOne?.id || !data.match.opponentTwo?.id) return true;
 
 		return type !== "EDIT";
+	};
+
+	const showChatPeek = () => {
+		if (!showRosterPeek()) return false;
+
+		if (tournament.isOrganizerOrStreamer(user)) return true;
+
+		const teamId = tournament.teamMemberOfByUser(user)?.id;
+		if (!teamId) return false;
+
+		if (data.match.opponentOne?.id === teamId) return true;
+		if (data.match.opponentTwo?.id === teamId) return true;
+
+		return false;
 	};
 
 	return (
@@ -112,7 +127,57 @@ export default function TournamentMatchPage() {
 						teams={[data.match.opponentOne?.id, data.match.opponentTwo?.id]}
 					/>
 				) : null}
+				{showChatPeek() ? <BeforeMatchChat /> : null}
 			</div>
+		</div>
+	);
+}
+
+function BeforeMatchChat() {
+	const tournament = useTournament();
+	const data = useLoaderData<typeof loader>();
+
+	// TODO: resolve this on server (notice it is copy-pasted now)
+	const chatUsers = React.useMemo(() => {
+		return Object.fromEntries(
+			[
+				...data.match.players.map((p) => ({ ...p, title: undefined })),
+				...(tournament.ctx.organization?.members ?? []).map((m) => ({
+					...m,
+					title: m.role === "STREAMER" ? "Stream" : "TO",
+				})),
+				...tournament.ctx.staff.map((s) => ({
+					...s,
+					title: s.role === "STREAMER" ? "Stream" : "TO",
+				})),
+				{
+					...tournament.ctx.author,
+					title: "TO",
+				},
+			].map((p) => [p.id, p]),
+		);
+	}, [data, tournament]);
+
+	const rooms = React.useMemo(() => {
+		return data.match.chatCode
+			? [
+					{
+						code: data.match.chatCode,
+						label: "Match",
+					},
+				]
+			: [];
+	}, [data.match.chatCode]);
+
+	return (
+		<div className="tournament__action-section mt-6">
+			<ConnectedChat
+				rooms={rooms}
+				users={chatUsers}
+				className="tournament__chat-container"
+				messagesContainerClassName="tournament__chat-messages-container"
+				missingUserName="???"
+			/>
 		</div>
 	);
 }

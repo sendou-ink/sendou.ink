@@ -2,6 +2,7 @@ import type { ActionFunction } from "@remix-run/node";
 import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
+import { bracketProgressionSchema } from "~/features/calendar/calendar-schemas";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
@@ -22,7 +23,6 @@ import {
 import { assertUnreachable } from "~/utils/types";
 import { USER } from "../../../constants";
 import { _action, id, idObject } from "../../../utils/zod";
-import { bracketProgressionSchema } from "../../calendar/actions/calendar.new.server";
 import { bracketIdx } from "../../tournament-bracket/tournament-bracket-schemas.server";
 import * as TournamentRepository from "../TournamentRepository.server";
 import { changeTeamOwner } from "../queries/changeTeamOwner.server";
@@ -250,21 +250,23 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 			});
 
-			notify({
-				userIds: [data.userId],
-				notification: {
-					type: "TO_ADDED_TO_TEAM",
-					pictureUrl:
-						tournament.tournamentTeamLogoSrc(team) ?? tournament.ctx.logoSrc,
-					meta: {
-						adderUsername: user.username,
-						teamName: team.name,
-						tournamentId,
-						tournamentName: tournament.ctx.name,
-						tournamentTeamId: team.id,
+			if (!tournament.isTest) {
+				notify({
+					userIds: [data.userId],
+					notification: {
+						type: "TO_ADDED_TO_TEAM",
+						pictureUrl:
+							tournament.tournamentTeamLogoSrc(team) ?? tournament.ctx.logoSrc,
+						meta: {
+							adderUsername: user.username,
+							teamName: team.name,
+							tournamentId,
+							tournamentName: tournament.ctx.name,
+							tournamentTeamId: team.id,
+						},
 					},
-				},
-			});
+				});
+			}
 
 			message = "Member added";
 			break;
