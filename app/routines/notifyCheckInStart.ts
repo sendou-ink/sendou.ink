@@ -1,6 +1,6 @@
-import * as CalendarRepository from "../features/calendar/CalendarRepository.server";
 import { notify } from "../features/notifications/core/notify.server";
 import { tournamentDataCached } from "../features/tournament-bracket/core/Tournament.server";
+import * as TournamentRepository from "../features/tournament/TournamentRepository.server";
 import { logger } from "../utils/logger";
 import { Routine } from "./routine.server";
 
@@ -9,10 +9,9 @@ export const NotifyCheckInStartRoutine = new Routine({
 	func: async () => {
 		const now = new Date();
 		const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
-		const tournaments = await CalendarRepository.findAllBetweenTwoTimestamps({
+		const tournaments = await TournamentRepository.findAllBetweenTwoTimestamps({
 			startTime: now,
 			endTime: oneHourFromNow,
-			onlyTournaments: true,
 		});
 
 		for (const { tournamentId } of tournaments) {

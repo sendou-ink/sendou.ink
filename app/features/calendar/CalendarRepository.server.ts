@@ -1,7 +1,6 @@
 import type { Expression, ExpressionBuilder, Transaction } from "kysely";
 import { sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
-import * as R from "remeda";
 import { db } from "~/db/sql";
 import type {
 	CalendarEventTag,
@@ -11,9 +10,8 @@ import type {
 } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
-import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow } from "~/utils/dates";
 import invariant from "~/utils/invariant";
-import type { Unwrapped } from "~/utils/types";
 
 // TODO: convert from raw to using the "exists" function
 const hasBadge = sql<number> /* sql */`exists (
@@ -135,115 +133,6 @@ export async function findById({
 	};
 }
 
-const nthAppearance = sql<number> /* sql */`
-  rank() over (
-    partition by "eventId"
-    order by
-      "startTime" asc
-)`.as("nthAppearance");
-export type FindAllBetweenTwoTimestampsItem = Unwrapped<
-	typeof findAllBetweenTwoTimestamps
->;
-export async function findAllBetweenTwoTimestamps({
-	startTime,
-	endTime,
-	onlyTournaments = false,
-}: {
-	startTime: Date;
-	endTime: Date;
-	onlyTournaments?: boolean;
-}) {
-	let query = db
-		.selectFrom("CalendarEvent")
-		.innerJoin(
-			"CalendarEventDate",
-			"CalendarEvent.id",
-			"CalendarEventDate.eventId",
-		)
-		.innerJoin("User", "CalendarEvent.authorId", "User.id")
-		.innerJoin(
-			(eb) =>
-				eb
-					.selectFrom("CalendarEventDate")
-					.select(["id", "eventId", "startTime", nthAppearance])
-					.as("CalendarEventRanks"),
-			(join) =>
-				join.onRef("CalendarEventRanks.id", "=", "CalendarEventDate.id"),
-		)
-		.select(({ eb, ref }) => [
-			"CalendarEvent.name",
-			"CalendarEvent.discordUrl",
-			"CalendarEvent.bracketUrl",
-			"CalendarEvent.tags",
-			"CalendarEvent.tournamentId",
-			"CalendarEventDate.id as eventDateId",
-			"CalendarEventDate.eventId",
-			"CalendarEventDate.startTime",
-			"User.username",
-			"CalendarEventRanks.nthAppearance",
-			tournamentOrganization(ref("CalendarEvent.organizationId")).as(
-				"organization",
-			),
-			eb
-				.selectFrom("UserSubmittedImage")
-				.select(["UserSubmittedImage.url"])
-				.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id")
-				.as("logoUrl"),
-			eb
-				.selectFrom("Tournament")
-				.select("Tournament.settings")
-				.whereRef("Tournament.id", "=", "CalendarEvent.tournamentId")
-				.as("tournamentSettings"),
-			hasBadge,
-			jsonArrayFrom(
-				eb
-					.selectFrom("CalendarEventBadge")
-					.innerJoin("Badge", "CalendarEventBadge.badgeId", "Badge.id")
-					.select(["Badge.id", "Badge.code", "Badge.hue", "Badge.displayName"])
-					.whereRef(
-						"CalendarEventBadge.eventId",
-						"=",
-						"CalendarEventDate.eventId",
-					),
-			).as("badgePrizes"),
-		])
-		.where(
-			"CalendarEventDate.startTime",
-			">=",
-			dateToDatabaseTimestamp(startTime),
-		)
-		.where(
-			"CalendarEventDate.startTime",
-			"<=",
-			dateToDatabaseTimestamp(endTime),
-		)
-		.where("CalendarEvent.hidden", "=", 0)
-		.orderBy("CalendarEventDate.startTime", "asc");
-
-	if (onlyTournaments) {
-		query = query.where("CalendarEvent.tournamentId", "is not", null);
-	}
-
-	const rows = await query.execute();
-
-	return Promise.all(
-		rows
-			.map((row) => ({ ...row, tags: tagsArray(row) }))
-			.map(async (row) => {
-				return {
-					...row,
-					participantCounts: row.tournamentId
-						? await tournamentParticipantCount({
-								tournamentId: row.tournamentId,
-								checkedInOnly:
-									row.startTime < dateToDatabaseTimestamp(new Date()),
-							})
-						: undefined,
-				};
-			}),
-	);
-}
-
 export async function findRecentTournamentsByAuthorId(authorId: number) {
 	return db
 		.selectFrom("CalendarEvent")
@@ -276,42 +165,6 @@ function tagsArray(args: {
 	if (args.hasBadge) tags.unshift("BADGE");
 
 	return tags;
-}
-
-async function tournamentParticipantCount({
-	tournamentId,
-	checkedInOnly,
-}: {
-	tournamentId: number;
-	checkedInOnly: boolean;
-}) {
-	const rows = await db
-		.selectFrom("TournamentTeam")
-		.leftJoin(
-			"TournamentTeamMember",
-			"TournamentTeam.id",
-			"TournamentTeamMember.tournamentTeamId",
-		)
-		.$if(checkedInOnly, (qb) =>
-			qb.innerJoin("TournamentTeamCheckIn", (join) =>
-				join
-					.onRef(
-						"TournamentTeamCheckIn.tournamentTeamId",
-						"=",
-						"TournamentTeam.id",
-					)
-					.on("TournamentTeamCheckIn.bracketIdx", "is", null),
-			),
-		)
-		.select(({ fn }) => fn.countAll<number>().as("memberCount"))
-		.where("TournamentTeam.tournamentId", "=", tournamentId)
-		.groupBy("TournamentTeam.id")
-		.execute();
-
-	return {
-		teams: rows.length,
-		players: R.sum(rows.map((row) => row.memberCount)),
-	};
 }
 
 export async function findRecentMapPoolsByAuthorId(authorId: number) {

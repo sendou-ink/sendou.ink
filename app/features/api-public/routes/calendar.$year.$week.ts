@@ -1,8 +1,12 @@
 import { type LoaderFunctionArgs, json } from "@remix-run/node";
 import { cors } from "remix-utils/cors";
 import { z } from "zod";
-import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
-import { databaseTimestampToDate, weekNumberToDate } from "~/utils/dates";
+import { db } from "~/db/sql";
+import {
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+	weekNumberToDate,
+} from "~/utils/dates";
 import { parseParams } from "~/utils/remix.server";
 import {
 	handleOptionsRequest,
@@ -44,8 +48,30 @@ function fetchEventsOfWeek(args: { week: number; year: number }) {
 	const endTime = new Date(startTime);
 	endTime.setDate(endTime.getDate() + 7);
 
-	return CalendarRepository.findAllBetweenTwoTimestamps({
-		startTime,
-		endTime,
-	});
+	return db
+		.selectFrom("CalendarEvent")
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEvent.id",
+			"CalendarEventDate.eventId",
+		)
+		.leftJoin("Tournament", "CalendarEvent.tournamentId", "Tournament.id")
+		.select([
+			"Tournament.id as tournamentId",
+			"CalendarEvent.name",
+			"CalendarEventDate.startTime",
+		])
+		.where(
+			"CalendarEventDate.startTime",
+			">=",
+			dateToDatabaseTimestamp(startTime),
+		)
+		.where(
+			"CalendarEventDate.startTime",
+			"<=",
+			dateToDatabaseTimestamp(endTime),
+		)
+		.where("CalendarEvent.hidden", "=", 0)
+		.orderBy("CalendarEventDate.startTime", "asc")
+		.execute();
 }

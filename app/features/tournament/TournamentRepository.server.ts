@@ -538,6 +538,36 @@ function databaseTimestampWeekAgo() {
 	return dateToDatabaseTimestamp(now);
 }
 
+export function findAllBetweenTwoTimestamps({
+	startTime,
+	endTime,
+}: {
+	startTime: Date;
+	endTime: Date;
+}) {
+	return db
+		.selectFrom("CalendarEvent")
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEvent.id",
+			"CalendarEventDate.eventId",
+		)
+		.innerJoin("Tournament", "CalendarEvent.tournamentId", "Tournament.id")
+		.select(["Tournament.id as tournamentId"])
+		.where(
+			"CalendarEventDate.startTime",
+			">=",
+			dateToDatabaseTimestamp(startTime),
+		)
+		.where(
+			"CalendarEventDate.startTime",
+			"<=",
+			dateToDatabaseTimestamp(endTime),
+		)
+		.where("CalendarEvent.hidden", "=", 0)
+		.execute();
+}
+
 export function topThreeResultsByTournamentId(tournamentId: number) {
 	return db
 		.selectFrom("TournamentResult")

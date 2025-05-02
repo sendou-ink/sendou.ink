@@ -1,11 +1,10 @@
 import clsx from "clsx";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Badge } from "~/components/Badge";
+import { Badge, type BadgeProps } from "~/components/Badge";
 import { Button } from "~/components/Button";
 import { CrossIcon } from "~/components/icons/Cross";
 import type { CalendarEventTag } from "~/db/tables";
-import type * as CalendarRepository from "../CalendarRepository.server";
 import { tags as allTags } from "../calendar-constants";
 
 export function Tags({
@@ -15,7 +14,7 @@ export function Tags({
 	tournamentRankedStatus,
 }: {
 	tags: Array<CalendarEventTag>;
-	badges?: CalendarRepository.FindAllBetweenTwoTimestampsItem["badgePrizes"];
+	badges?: Array<BadgeProps["badge"]>;
 	tournamentRankedStatus?: "RANKED" | "UNRANKED";
 
 	/** Called when tag delete button clicked. If undefined delete buttons won't be shown. */
@@ -55,7 +54,7 @@ export function Tags({
 						{tag === "BADGE" && badges && (
 							<div className="calendar__event__tag-badges">
 								{badges.map((badge) => (
-									<Badge key={badge.id} badge={badge} size={20} isAnimated />
+									<Badge key={badge.code} badge={badge} size={20} isAnimated />
 								))}
 							</div>
 						)}
