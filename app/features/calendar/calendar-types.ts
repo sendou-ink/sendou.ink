@@ -10,6 +10,8 @@ export interface CalendarEvent
 	url: string;
 	/** Is the tournament ranked? If null, tournament is not hosted on sendou.ink */
 	isRanked: boolean | null;
+	/** For multi-day tournaments, which day of the event is this */
+	day?: number;
 	badges: Array<Pick<Tables["Badge"], "code" | "displayName" | "hue">>;
 }
 
