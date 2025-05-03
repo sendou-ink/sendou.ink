@@ -76,6 +76,13 @@
 	width: 12px;
 }
 
+.pillsContainer {
+	display: flex;
+	gap: var(--s-1);
+	justify-content: end;
+	padding-inline: 12px;
+}
+
 .pill {
 	font-size: var(--fonts-xxs);
 	font-weight: var(--bold);

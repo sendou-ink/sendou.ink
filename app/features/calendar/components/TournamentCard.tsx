@@ -81,7 +81,7 @@ export function TournamentCard({
 					<TournamentFirstPlacers firstPlacer={tournament.firstPlacer} />
 				) : null}
 			</Link>
-			<div className="stack horizontal xxs justify-end">
+			<div className={styles.pillsContainer}>
 				<div className={styles.teamCount}>
 					<UsersIcon /> {tournament.teamsCount}
 				</div>
