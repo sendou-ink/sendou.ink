@@ -1,5 +1,6 @@
 {
 	"addBuild": "Добавить сборку",
+	"reachBuildMaxCount": "Достигнуто максимальное кол-во сборок.",
 	"noBuilds": "Сборок пока нет. Будьте первым!",
 	"buildCard.info": "Инфо",
 	"buildCard.edit": "Изменить",
@@ -10,6 +11,8 @@
 	"forms.gear.HEAD": "Снаряжение (аксессуары)",
 	"forms.gear.CLOTHES": "Снаряжение (одежда)",
 	"forms.gear.SHOES": "Снаряжение (обувь)",
+	"forms.private.info": "Приватные сборки видны только вам",
+	"forms.noGear.info": "Снаряжение не является обязательным, но вы должны заполнить все слоты для свойств.",
 
 	"deleteConfirm": "Удалить сборку '{{title}}'?",
 
@@ -17,6 +20,8 @@
 	"stats.ap.title": "Среднее по количеству свойств",
 	"stats.percentage.title": "Свойства только на главный слот",
 	"stats.all": "Все",
+	"stats.public": "Публичные",
+	"stats.private": "Приватные",
 
 	"addFilter": "Фильтры",
 	"linkButton.abilityStats": "Статистика свойств",
@@ -25,8 +30,17 @@
 
 	"emptyAbilitySlot": "Пустой слот",
 
+	"filters.type.ability": "По свойствам",
+	"filters.type.mode": "По режимам",
+	"filters.type.date": "По дате создания",
+	"filters.ability.title": "Фильтр свойств",
+	"filters.mode.title": "Фильтр режимов",
+	"filters.date.title": "Фильтр даты",
 	"filters.has": "Имеет",
 	"filters.does.not.have": "Не имеет",
 	"filters.atLeast": "Минимум",
-	"filters.atMost": "Максимум"
+	"filters.atMost": "Максимум",
+  "filters.date.since": "От",
+	"filters.date.custom": "Пользовательская",
+	"filters.filterByWeapon": "Фильтровать по оружию"
 }
