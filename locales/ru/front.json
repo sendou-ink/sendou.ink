@@ -1,1 +1,21 @@
-{}
+{
+  "sq.season": "Сезон {{nth}}",
+	"sq.prepare": "Будьте готовы!",
+	"sq.participate": "Участвуйте!",
+
+	"showcase.tabs.signedUp": "Записаны",
+	"showcase.tabs.organizer": "Организуете",
+	"showcase.tabs.discover": "Найти",
+	"showcase.viewAll": "Посмотреть все турниры",
+	"showcase.card.ranked": "Ranked",
+	"showcase.card.unranked": "Unranked",
+	"showcase.card.winner": "Победитель",
+	"showcase.results": "Недавние результаты",
+
+	"leaderboards.topPlayers": "Топ игроков",
+	"leaderboards.topTeams": "Топ команд",
+	"leaderboards.viewFull": "Посмотреть таблицы лидеров",
+
+	"updates.header": "Новости",
+	"updates.viewPast": "Посмотреть прошлые новости"
+}
