@@ -8,6 +8,7 @@ import { useIsMounted } from "~/hooks/useIsMounted";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { userSubmittedImage } from "~/utils/urls";
 import type { CalendarEvent, ShowcaseCalendarEvent } from "../calendar-types";
+import styles from "./TournamentCard.module.css";
 
 export function TournamentCard({
 	tournament,
@@ -38,14 +39,13 @@ export function TournamentCard({
 
 	return (
 		<div
-			className={clsx(className, "front__tournament-card__container", {
-				"front__tournament-card__container__tall":
-					isShowcase && tournament.firstPlacer,
+			className={clsx(className, styles.container, {
+				[styles.containerTall]: isShowcase && tournament.firstPlacer,
 			})}
 		>
-			<Link to={tournament.url} className="front__tournament-card">
+			<Link to={tournament.url} className={styles.card}>
 				<div className="stack horizontal justify-between">
-					<div className="front__tournament-card__img-container">
+					<div className={styles.imgContainer}>
 						<img
 							src={
 								tournament.logoUrl
@@ -54,21 +54,19 @@ export function TournamentCard({
 							}
 							width={32}
 							height={32}
-							className="front__tournament-card__tournament-avatar-img"
+							className={styles.avatarImg}
 							alt=""
 						/>
 					</div>
 					{tournament.organization ? (
-						<div className="front__tournament-card__org">
-							{tournament.organization.name}
-						</div>
+						<div className={styles.org}>{tournament.organization.name}</div>
 					) : null}
 				</div>
-				<div className="front__tournament-card__name">
+				<div className={styles.name}>
 					{tournament.name}{" "}
 					{isShowcase ? (
 						<time
-							className={clsx("front__tournament-card__time", {
+							className={clsx(styles.time, {
 								invisible: !isMounted,
 							})}
 							dateTime={databaseTimestampToDate(
@@ -84,15 +82,15 @@ export function TournamentCard({
 				) : null}
 			</Link>
 			<div className="stack horizontal xxs justify-end">
-				<div className="front__tournament-card__team-count">
+				<div className={styles.teamCount}>
 					<UsersIcon /> {tournament.teamsCount}
 				</div>
 				{tournament.isRanked ? (
-					<div className="front__tournament-card__tag front__tournament-card__ranked">
+					<div className={clsx(styles.pill, styles.pillRanked)}>
 						{t("front:showcase.card.ranked")}
 					</div>
 				) : tournament.isRanked === false ? (
-					<div className="front__tournament-card__tag front__tournament-card__unranked">
+					<div className={clsx(styles.pill, styles.pillUnranked)}>
 						{t("front:showcase.card.unranked")}
 					</div>
 				) : null}
@@ -109,7 +107,7 @@ function TournamentFirstPlacers({
 	const { t } = useTranslation(["front"]);
 
 	return (
-		<div className="front__tournament-card__first-placers">
+		<div className={styles.firstPlacers}>
 			<div className="stack xs horizontal items-center text-xs">
 				{firstPlacer.logoUrl ? (
 					<img
@@ -120,7 +118,7 @@ function TournamentFirstPlacers({
 					/>
 				) : null}{" "}
 				<div className="stack items-start">
-					<span className="front__tournament-card__first-placers__team-name">
+					<span className={styles.firstPlacersTeamName}>
 						{firstPlacer.teamName}
 					</span>
 					<div className="text-xxxs text-lighter font-bold text-uppercase">

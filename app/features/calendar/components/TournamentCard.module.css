@@ -1,0 +1,107 @@
+.container {
+	min-width: var(--card-width);
+	max-width: var(--card-width);
+	height: calc(var(--card-height) + 22px);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.containerTall {
+	height: 100%;
+}
+
+.card {
+	background-color: var(--bg-lightest);
+	border-radius: var(--rounded);
+	color: var(--text);
+	padding: var(--s-1) var(--s-2) var(--s-2) var(--s-2);
+	height: 100%;
+	min-width: var(--card-width);
+	max-width: var(--card-width);
+}
+
+.card:hover .avatarImg {
+	outline: 6px solid var(--theme-transparent);
+}
+
+.imgContainer {
+	background-color: var(--bg);
+	padding: var(--s-1-5);
+	border-radius: 100%;
+	margin-left: -10px;
+	margin-top: -10px;
+}
+
+.avatarImg {
+	border-radius: 100%;
+}
+
+.org {
+	display: flex;
+	gap: var(--s-1);
+	font-size: var(--fonts-xxs);
+	color: var(--text-lighter);
+}
+
+.time {
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	color: var(--text-lighter);
+	display: block;
+}
+
+.name {
+	text-align: center;
+	font-weight: var(--semi-bold);
+	font-size: var(--fonts-sm);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	max-width: 225px;
+	overflow: hidden;
+}
+
+.teamCount {
+	font-size: var(--fonts-xxs);
+	font-weight: var(--bold);
+	background-color: var(--bg-lightest);
+	border-radius: var(--rounded-sm);
+	width: max-content;
+	padding: var(--s-0-5) var(--s-1-5);
+	display: flex;
+	gap: var(--s-1);
+}
+
+.teamCount svg {
+	width: 12px;
+}
+
+.pill {
+	font-size: var(--fonts-xxs);
+	font-weight: var(--bold);
+	border-radius: var(--rounded-sm);
+	padding: var(--s-0-5) var(--s-1-5);
+}
+
+.pillRanked {
+	background-color: var(--theme-info-transparent);
+	color: var(--theme-info);
+}
+
+.pillUnranked {
+	background-color: var(--theme-success-transparent);
+	color: var(--theme-success);
+}
+
+.firstPlacers {
+	margin-inline: auto;
+	margin-top: var(--s-5);
+	width: max-content;
+}
+
+.firstPlacersTeamName {
+	max-width: 150px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
