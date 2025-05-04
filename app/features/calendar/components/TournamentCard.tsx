@@ -23,6 +23,7 @@ export function TournamentCard({
 
 	const isShowcase = tournament.type === "showcase";
 	const isCalendar = tournament.type === "calendar";
+	const isHostedOnSendouInk = typeof tournament.isRanked === "boolean";
 
 	const time = () => {
 		if (!isShowcase) return null;
@@ -46,24 +47,30 @@ export function TournamentCard({
 		>
 			<Link to={tournament.url} className={styles.card}>
 				<div className="stack horizontal justify-between">
-					<div className={styles.imgContainer}>
-						<img
-							src={
-								tournament.logoUrl
-									? userSubmittedImage(tournament.logoUrl)
-									: HACKY_resolvePicture(tournament)
-							}
-							width={32}
-							height={32}
-							className={styles.avatarImg}
-							alt=""
-						/>
-					</div>
+					{isHostedOnSendouInk ? (
+						<div className={styles.imgContainer}>
+							<img
+								src={
+									tournament.logoUrl
+										? userSubmittedImage(tournament.logoUrl)
+										: HACKY_resolvePicture(tournament)
+								}
+								width={32}
+								height={32}
+								className={styles.avatarImg}
+								alt=""
+							/>
+						</div>
+					) : null}
 					{tournament.organization ? (
 						<div className={styles.org}>{tournament.organization.name}</div>
 					) : null}
 				</div>
-				<div className={styles.name}>
+				<div
+					className={clsx(styles.name, {
+						"mt-3": !isHostedOnSendouInk,
+					})}
+				>
 					{tournament.name}{" "}
 					{isShowcase ? (
 						<time

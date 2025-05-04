@@ -1,4 +1,5 @@
 import { useLoaderData } from "@remix-run/react";
+import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
 import { SendouButton } from "~/components/elements/Button";
@@ -8,7 +9,6 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { CALENDAR_PAGE, navIconUrl } from "~/utils/urls";
 import { TournamentCard } from "../components/TournamentCard";
-import clsx from "clsx";
 
 import { type CalendarLoaderData, loader } from "../loaders/calendar.server";
 export { loader };
