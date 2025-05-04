@@ -878,5 +878,13 @@
 	"zekkocup": {
 		"displayName": "Zekko Cup",
 		"authorDiscordId": "1320944066002681876"
+	},
+	"freedomdive":{
+		"displayName": "Freedom Dive ↓",
+		"authorDiscordId":"631246535560265749"
+	},
+	"whitecat":{
+		"displayName":"White Cat Achievement",
+		"authorDiscordId":"631246535560265749"
 	}
 }
