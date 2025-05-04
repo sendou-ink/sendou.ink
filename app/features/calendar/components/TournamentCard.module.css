@@ -1,7 +1,7 @@
 .container {
 	min-width: var(--card-width);
 	max-width: var(--card-width);
-	height: calc(var(--card-height) + 22px);
+	height: calc(var(--card-height) + 26px);
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-1);
