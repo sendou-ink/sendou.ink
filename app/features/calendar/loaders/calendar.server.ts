@@ -3,6 +3,7 @@ import * as CalendarRepository from "../CalendarRepository.server";
 
 export type CalendarLoaderData = SerializeFrom<typeof loader>;
 
+// xxx: is 4 events enough instead of 5 because max screen width
 export const loader = async () => {
 	const now = Date.now();
 

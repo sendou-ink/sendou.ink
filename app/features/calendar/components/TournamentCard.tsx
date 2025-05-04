@@ -1,6 +1,7 @@
 import { Link } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
+import { Badge } from "~/components/Badge";
 import { Flag } from "~/components/Flag";
 import { UsersIcon } from "~/components/icons/Users";
 import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
@@ -69,6 +70,7 @@ export function TournamentCard({
 				<div
 					className={clsx(styles.name, {
 						"mt-3": !isHostedOnSendouInk,
+						"mt-1": isHostedOnSendouInk,
 					})}
 				>
 					{tournament.name}{" "}
@@ -86,8 +88,11 @@ export function TournamentCard({
 					) : null}
 				</div>
 				{isCalendar ? (
-					<div className="stack items-center my-2">
+					<div className="stack sm items-center my-2">
 						<Tags tags={tournament.tags} small />
+						{tournament.badges.length > 0 ? (
+							<TournamentCardBadges badges={tournament.badges} />
+						) : null}
 					</div>
 				) : null}
 				{isShowcase && tournament.firstPlacer ? (
@@ -154,6 +159,17 @@ function TournamentFirstPlacers({
 					</div>
 				) : null}
 			</div>
+		</div>
+	);
+}
+
+// xxx: show badge prizes animated on the tournament page?
+function TournamentCardBadges({ badges }: { badges: CalendarEvent["badges"] }) {
+	return (
+		<div className={styles.badgesContainer}>
+			{badges.map((badge) => (
+				<Badge key={badge.code} badge={badge} isAnimated={false} size={24} />
+			))}
 		</div>
 	);
 }
