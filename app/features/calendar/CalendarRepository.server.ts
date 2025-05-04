@@ -28,6 +28,7 @@ import {
 	tournamentIsRanked,
 } from "../tournament/tournament-utils";
 import type { CalendarEvent } from "./calendar-types";
+import { calendarEventSorter } from "./calendar-utils";
 
 // TODO: convert from raw to using the "exists" function
 const hasBadge = sql<number> /* sql */`exists (
@@ -193,42 +194,40 @@ function findAllBetweenTwoTimestampsMapped(
 	at: number;
 	events: Array<CalendarEvent>;
 }> {
-	const mapped: Array<
-		CalendarEvent & { startTime: number; normalizedTeamCount: number }
-	> = rows.map((row) => ({
-		type: "calendar",
-		id: row.eventId,
-		url: row.tournamentId
-			? tournamentPage(row.tournamentId)
-			: calendarEventPage(row.eventId),
-		name: row.name,
-		organization: row.organization,
-		tags: row.tags ? (row.tags.split(",") as CalendarEvent["tags"]) : [],
-		badges: row.badges,
-		teamsCount: row.teamsCount,
-		normalizedTeamCount: normalizedTeamCount({
+	const mapped: Array<CalendarEvent & { startTime: number }> = rows.map(
+		(row) => ({
+			type: "calendar",
+			id: row.eventId,
+			url: row.tournamentId
+				? tournamentPage(row.tournamentId)
+				: calendarEventPage(row.eventId),
+			name: row.name,
+			organization: row.organization,
+			tags: row.tags ? (row.tags.split(",") as CalendarEvent["tags"]) : [],
+			badges: row.badges,
 			teamsCount: row.teamsCount,
-			minMembersPerTeam: row.tournamentSettings?.minMembersPerTeam ?? 4,
+			normalizedTeamCount: normalizedTeamCount({
+				teamsCount: row.teamsCount,
+				minMembersPerTeam: row.tournamentSettings?.minMembersPerTeam ?? 4,
+			}),
+			logoUrl: row.logoUrl,
+			startTime: row.startTime,
+			isRanked: row.tournamentSettings
+				? tournamentIsRanked({
+						isSetAsRanked: row.tournamentSettings.isRanked,
+						startTime: databaseTimestampToDate(row.startTime),
+						minMembersPerTeam: row.tournamentSettings.minMembersPerTeam ?? 4,
+						isTest: row.tournamentSettings.isTest ?? false,
+					})
+				: null,
 		}),
-		logoUrl: row.logoUrl,
-		startTime: row.startTime,
-		isRanked: row.tournamentSettings
-			? tournamentIsRanked({
-					isSetAsRanked: row.tournamentSettings.isRanked,
-					startTime: databaseTimestampToDate(row.startTime),
-					minMembersPerTeam: row.tournamentSettings.minMembersPerTeam ?? 4,
-					isTest: row.tournamentSettings.isTest ?? false,
-				})
-			: null,
-	}));
+	);
 
 	const grouped = R.groupBy(mapped, (row) => row.startTime);
 	const dates = Object.keys(grouped)
 		.map((dbTimestamp) => ({
 			at: databaseTimestampToDate(Number(dbTimestamp)).getTime(),
-			events: grouped[Number(dbTimestamp)].sort(
-				(a, b) => b.normalizedTeamCount - a.normalizedTeamCount,
-			),
+			events: grouped[Number(dbTimestamp)].sort(calendarEventSorter),
 		}))
 		.sort((a, b) => a.at - b.at);
 

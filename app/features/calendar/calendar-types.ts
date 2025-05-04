@@ -18,6 +18,8 @@ interface CommonEvent {
 export interface CalendarEvent extends CommonEvent {
 	type: "calendar";
 	tags: Array<CalendarEventTag>;
+	/** Used for comparison, teams count where it is taken in account whether the tournament is 4v4, 3v3, 2v2 or 1v1 */
+	normalizedTeamCount: number;
 	/** For multi-day tournaments, which day of the event is this */
 	day?: number;
 	badges: Array<Pick<Tables["Badge"], "code" | "displayName" | "hue">>;
@@ -35,7 +37,7 @@ export interface ShowcaseCalendarEvent extends CommonEvent {
 }
 
 export interface GroupedCalendarEvents {
-	date: Date;
+	at: number;
 	events: {
 		shown: CalendarEvent[];
 		hidden: CalendarEvent[];

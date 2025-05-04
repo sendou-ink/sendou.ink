@@ -1,5 +1,6 @@
 import { useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
 import {
@@ -10,9 +11,10 @@ import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
 import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import { EyeIcon } from "~/components/icons/Eye";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
+import { FilterIcon } from "~/components/icons/Filter";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { CALENDAR_PAGE, navIconUrl } from "~/utils/urls";
-import { daysForCalendar } from "../calendar-utils";
+import { calendarEventSorter, daysForCalendar } from "../calendar-utils";
 import { TournamentCard } from "../components/TournamentCard";
 
 import { type CalendarLoaderData, loader } from "../loaders/calendar.server";
@@ -64,7 +66,7 @@ export default function CalendarPage() {
 
 	return (
 		<Main bigger className="stack lg">
-			<div>
+			<div className="stack horizontal items-start justify-between">
 				<div className="stack md horizontal">
 					<NavigateButton icon={<ArrowLeftIcon />} daysInterval={previous}>
 						Previous
@@ -73,6 +75,9 @@ export default function CalendarPage() {
 						Next
 					</NavigateButton>
 				</div>
+				<SendouButton variant="outlined" size="small" icon={<FilterIcon />}>
+					Filter
+				</SendouButton>
 			</div>
 			<div className={styles.columnsContainer}>
 				{shown.map((day) => (
@@ -80,7 +85,7 @@ export default function CalendarPage() {
 						key={`${day.month}-${day.date}`}
 						date={day.date}
 						month={day.month}
-						events={data.events.filter((event) => {
+						eventTimes={data.eventTimes.filter((event) => {
 							const eventDate = new Date(event.at);
 
 							return (
@@ -135,38 +140,52 @@ function NavigateButton({
 	);
 }
 
-function DayEventsColumn(props: {
+function DayEventsColumn({
+	date,
+	month,
+	eventTimes,
+}: {
 	date: number;
 	month: number;
-	events: CalendarLoaderData["events"];
+	eventTimes: CalendarLoaderData["eventTimes"];
 }) {
-	const date = new Date(new Date().getFullYear(), props.month, props.date);
+	const [hiddenShown, setHiddenShown] = React.useState(false);
 
 	return (
 		<div>
-			<DayHeader date={date} />
+			<DayHeader date={date} month={month} />
 			<div className={styles.dayEvents}>
-				{props.events.map((event, i) => (
-					<div key={event.at} className="stack md">
-						<ClockHeader
-							date={new Date(event.at)}
-							hiddenEventsCount={2}
-							hiddenShown={false}
-							className={i !== 0 ? "mt-4" : undefined}
-						/>
-						{event.events.map((event) => (
-							<TournamentCard key={event.id} tournament={event} />
-						))}
-					</div>
-				))}
+				{eventTimes.map((eventTime, i) => {
+					const eventsShown = hiddenShown
+						? [...eventTime.events.shown, ...eventTime.events.hidden].sort(
+								calendarEventSorter,
+							)
+						: eventTime.events.shown;
+
+					return (
+						<div key={eventTime.at} className="stack md">
+							<ClockHeader
+								date={new Date(eventTime.at)}
+								hiddenEventsCount={eventTime.events.hidden.length}
+								hiddenShown={hiddenShown}
+								onToggleHidden={() => setHiddenShown((prev) => !prev)}
+								className={i !== 0 ? "mt-4" : undefined}
+							/>
+							{eventsShown.map((event) => (
+								<TournamentCard key={event.id} tournament={event} />
+							))}
+						</div>
+					);
+				})}
 			</div>
 		</div>
 	);
 }
 
-function DayHeader(props: { date: Date }) {
+function DayHeader(props: { date: number; month: number }) {
 	const { i18n } = useTranslation();
-	const date = props.date;
+
+	const date = new Date(new Date().getFullYear(), props.month, props.date);
 
 	return (
 		<div className={styles.dayHeader}>
@@ -193,7 +212,7 @@ function ClockHeader({
 }: {
 	date: Date;
 	hiddenEventsCount?: number;
-	onToggleHidden?: () => void;
+	onToggleHidden: () => void;
 	hiddenShown: boolean;
 	className?: string;
 }) {

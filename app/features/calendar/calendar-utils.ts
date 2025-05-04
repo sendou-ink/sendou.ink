@@ -8,6 +8,7 @@ import {
 	DAYS_SHOWN_AT_A_TIME,
 	type RegClosesAtOption,
 } from "./calendar-constants";
+import type { CalendarEvent } from "./calendar-types";
 
 export const calendarEventMinDate = () => new Date(Date.UTC(2015, 4, 28));
 export const calendarEventMaxDate = () => {
@@ -243,4 +244,8 @@ export function daysForCalendar() {
 		shown,
 		next,
 	};
+}
+
+export function calendarEventSorter(a: CalendarEvent, b: CalendarEvent) {
+	return b.normalizedTeamCount - a.normalizedTeamCount;
 }
