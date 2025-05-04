@@ -1,6 +1,12 @@
-import type { Expression, ExpressionBuilder, Transaction } from "kysely";
+import type {
+	Expression,
+	ExpressionBuilder,
+	NotNull,
+	Transaction,
+} from "kysely";
 import { sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import type {
 	CalendarEventTag,
@@ -10,8 +16,15 @@ import type {
 } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
-import { databaseTimestampNow } from "~/utils/dates";
+import {
+	databaseTimestampNow,
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
 import invariant from "~/utils/invariant";
+import { calendarEventPage, tournamentPage } from "~/utils/urls";
+import { tournamentIsRanked } from "../tournament/tournament-utils";
+import type { CalendarEvent } from "./calendar-types";
 
 // TODO: convert from raw to using the "exists" function
 const hasBadge = sql<number> /* sql */`exists (
@@ -72,6 +85,147 @@ function tournamentOrganization(organizationId: Expression<number | null>) {
 			])
 			.whereRef("TournamentOrganization.id", "=", organizationId),
 	);
+}
+
+interface FindAllBetweenTwoTimestampsArgs {
+	startTime: Date;
+	endTime: Date;
+}
+
+export async function findAllBetweenTwoTimestamps(
+	args: FindAllBetweenTwoTimestampsArgs,
+) {
+	const rows = await findAllBetweenTwoTimestampsQuery(args);
+	return findAllBetweenTwoTimestampsMapped(rows);
+}
+
+// xxx: move for showcase here and dedupe
+function findAllBetweenTwoTimestampsQuery({
+	startTime,
+	endTime,
+}: FindAllBetweenTwoTimestampsArgs) {
+	return db
+		.selectFrom("CalendarEvent")
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEvent.id",
+			"CalendarEventDate.eventId",
+		)
+		.leftJoin("Tournament", "CalendarEvent.tournamentId", "Tournament.id")
+		.select((eb) => [
+			"CalendarEvent.id as eventId",
+			"Tournament.id as tournamentId",
+			"Tournament.settings as tournamentSettings",
+			"CalendarEvent.name",
+			"CalendarEvent.tags",
+			"CalendarEventDate.startTime",
+			jsonObjectFrom(
+				eb
+					.selectFrom("TournamentOrganization")
+					.select([
+						"TournamentOrganization.name",
+						"TournamentOrganization.slug",
+					])
+					.whereRef(
+						"TournamentOrganization.id",
+						"=",
+						"CalendarEvent.organizationId",
+					),
+			).as("organization"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("CalendarEventBadge")
+					.innerJoin("Badge", "CalendarEventBadge.badgeId", "Badge.id")
+					.select(["Badge.id", "Badge.code", "Badge.hue", "Badge.displayName"])
+					.whereRef(
+						"CalendarEventBadge.eventId",
+						"=",
+						"CalendarEventDate.eventId",
+					),
+			).as("badges"),
+			eb
+				.selectFrom("TournamentTeam")
+				.leftJoin("TournamentTeamCheckIn", (join) =>
+					join
+						.on("TournamentTeamCheckIn.bracketIdx", "is", null)
+						.onRef(
+							"TournamentTeamCheckIn.tournamentTeamId",
+							"=",
+							"TournamentTeam.id",
+						),
+				)
+				.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+				.where((eb) =>
+					eb.or([
+						eb("TournamentTeamCheckIn.checkedInAt", "is not", null),
+						eb("CalendarEventDate.startTime", ">", databaseTimestampNow()),
+					]),
+				)
+				.select(({ fn }) => [fn.countAll<number>().as("teamsCount")])
+				.as("teamsCount"),
+			eb
+				.selectFrom("UserSubmittedImage")
+				.select(["UserSubmittedImage.url"])
+				.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id")
+				.as("logoUrl"),
+		])
+		.where("CalendarEvent.hidden", "=", 0)
+		.where(
+			"CalendarEventDate.startTime",
+			">=",
+			dateToDatabaseTimestamp(startTime),
+		)
+		.where(
+			"CalendarEventDate.startTime",
+			"<=",
+			dateToDatabaseTimestamp(endTime),
+		)
+		.$narrowType<{ teamsCount: NotNull }>()
+		.execute();
+}
+
+function findAllBetweenTwoTimestampsMapped(
+	rows: Awaited<ReturnType<typeof findAllBetweenTwoTimestampsQuery>>,
+): Array<{
+	at: number;
+	events: Array<CalendarEvent>;
+}> {
+	const mapped: Array<CalendarEvent & { startTime: number }> = rows.map(
+		(row) => ({
+			type: "calendar",
+			id: row.eventId,
+			url: row.tournamentId
+				? tournamentPage(row.tournamentId)
+				: calendarEventPage(row.eventId),
+			name: row.name,
+			organization: row.organization,
+			tags: row.tags ? (row.tags.split(",") as CalendarEvent["tags"]) : [],
+			badges: row.badges,
+			teamsCount: row.teamsCount,
+			logoUrl: row.logoUrl,
+			startTime: row.startTime,
+			isRanked: row.tournamentSettings
+				? tournamentIsRanked({
+						isSetAsRanked: row.tournamentSettings.isRanked,
+						startTime: databaseTimestampToDate(row.startTime),
+						minMembersPerTeam: row.tournamentSettings.minMembersPerTeam ?? 4,
+						isTest: row.tournamentSettings.isTest ?? false,
+					})
+				: null,
+		}),
+	);
+
+	const grouped = R.groupBy(mapped, (row) => row.startTime);
+	const dates = Object.keys(grouped)
+		.map((dbTimestamp) => ({
+			at: databaseTimestampToDate(Number(dbTimestamp)).getTime(),
+			events: grouped[Number(dbTimestamp)].sort(
+				(a, b) => b.teamsCount - a.teamsCount,
+			),
+		}))
+		.sort((a, b) => a.at - b.at);
+
+	return dates;
 }
 
 export async function findById({
