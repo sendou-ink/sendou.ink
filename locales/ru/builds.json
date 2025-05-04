@@ -40,7 +40,7 @@
 	"filters.does.not.have": "Не имеет",
 	"filters.atLeast": "Минимум",
 	"filters.atMost": "Максимум",
-  "filters.date.since": "От",
+	"filters.date.since": "От",
 	"filters.date.custom": "Пользовательская",
 	"filters.filterByWeapon": "Фильтровать по оружию"
 }
