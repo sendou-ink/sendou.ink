@@ -1,9 +1,27 @@
+.navigateButton {
+	all: unset;
+	background-color: var(--bg-lightest);
+	border: 2px solid var(--border);
+	display: flex;
+	align-items: center;
+	font-weight: var(--bold);
+	border-radius: var(--rounded-sm);
+	padding: var(--s-1) var(--s-2);
+	font-size: var(--fonts-xs);
+}
+
+.navigateButton svg {
+	width: 1.75rem;
+	height: 1.75rem;
+	stroke-width: 2px;
+	margin-inline-start: -5px;
+}
+
 .columnsContainer {
 	display: grid;
 	grid-template-columns: repeat(5, 225px);
 	gap: var(--s-14);
 	overflow-x: hidden;
-	padding-inline: var(--s-2);
 }
 
 .dayHeader {
@@ -31,6 +49,7 @@
 
 .clockHeader {
 	font-weight: var(--semi-bold);
+	font-size: var(--fonts-sm);
 }
 
 .clockHeaderDivider {

@@ -2,11 +2,17 @@ import { useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
-import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouButton,
+	type SendouButtonProps,
+} from "~/components/elements/Button";
+import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
+import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import { EyeIcon } from "~/components/icons/Eye";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { CALENDAR_PAGE, navIconUrl } from "~/utils/urls";
+import { daysForCalendar } from "../calendar-utils";
 import { TournamentCard } from "../components/TournamentCard";
 
 import { type CalendarLoaderData, loader } from "../loaders/calendar.server";
@@ -54,10 +60,22 @@ export const handle: SendouRouteHandle = {
 export default function CalendarPage() {
 	const data = useLoaderData<typeof loader>();
 
+	const { previous, shown, next } = daysForCalendar();
+
 	return (
-		<Main bigger>
+		<Main bigger className="stack lg">
+			<div>
+				<div className="stack md horizontal">
+					<NavigateButton icon={<ArrowLeftIcon />} daysInterval={previous}>
+						Previous
+					</NavigateButton>
+					<NavigateButton icon={<ArrowRightIcon />} daysInterval={next}>
+						Next
+					</NavigateButton>
+				</div>
+			</div>
 			<div className={styles.columnsContainer}>
-				{daysShown().map((day) => (
+				{shown.map((day) => (
 					<DayEventsColumn
 						key={`${day.month}-${day.date}`}
 						date={day.date}
@@ -77,24 +95,44 @@ export default function CalendarPage() {
 	);
 }
 
-function daysShown() {
-	const result: Array<{
-		date: number;
-		month: number;
-	}> = [];
+function NavigateButton({
+	icon,
+	children,
+	daysInterval,
+}: {
+	icon: SendouButtonProps["icon"];
+	children: React.ReactNode;
+	daysInterval: ReturnType<typeof daysForCalendar>["shown"];
+}) {
+	const { i18n } = useTranslation();
+	const lowestDate = daysInterval[0];
+	const highestDate = daysInterval[daysInterval.length - 1];
 
-	const now = new Date();
+	const dateToString = (
+		day: ReturnType<typeof daysForCalendar>["shown"][number],
+	) =>
+		new Date(new Date().getFullYear(), day.month, day.date).toLocaleDateString(
+			i18n.language,
+			{
+				day: "numeric",
+				month: "short",
+			},
+		);
 
-	for (let i = 0; i < 5; i++) {
-		result.push({
-			date: now.getDate(),
-			month: now.getMonth(),
-		});
-
-		now.setDate(now.getDate() + 1);
-	}
-
-	return result;
+	return (
+		<SendouButton
+			icon={icon}
+			variant="minimal"
+			className={styles.navigateButton}
+		>
+			<div>
+				<div>{children}</div>
+				<div className="text-xxs text-lighter">
+					{dateToString(lowestDate)} - {dateToString(highestDate)}
+				</div>
+			</div>
+		</SendouButton>
+	);
 }
 
 function DayEventsColumn(props: {
@@ -165,7 +203,7 @@ function ClockHeader({
 		<div className={clsx(className, styles.clockHeader)}>
 			<div className="stack horizontal justify-between">
 				{date.toLocaleTimeString(i18n.language, {
-					hour: "2-digit",
+					hour: "numeric",
 					minute: "2-digit",
 				})}
 				{hiddenEventsCount > 0 ? (

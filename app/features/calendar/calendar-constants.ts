@@ -103,3 +103,5 @@ export const REG_CLOSES_AT_OPTIONS = [
 ] as const;
 
 export type RegClosesAtOption = (typeof REG_CLOSES_AT_OPTIONS)[number];
+
+export const DAYS_SHOWN_AT_A_TIME = 5;

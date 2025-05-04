@@ -4,7 +4,10 @@ import { allTruthy } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
-import type { RegClosesAtOption } from "./calendar-constants";
+import {
+	DAYS_SHOWN_AT_A_TIME,
+	type RegClosesAtOption,
+} from "./calendar-constants";
 
 export const calendarEventMinDate = () => new Date(Date.UTC(2015, 4, 28));
 export const calendarEventMaxDate = () => {
@@ -191,4 +194,53 @@ function eventStartedInThePast(
 		(startTime) =>
 			databaseTimestampToDate(startTime).getTime() < new Date().getTime(),
 	);
+}
+
+export function daysForCalendar() {
+	type DaysArray = Array<{
+		date: number;
+		month: number;
+	}>;
+
+	const previous: DaysArray = [];
+	const shown: DaysArray = [];
+	const next: DaysArray = [];
+
+	let now = new Date();
+
+	for (let i = 0; i < DAYS_SHOWN_AT_A_TIME; i++) {
+		shown.push({
+			date: now.getDate(),
+			month: now.getMonth(),
+		});
+
+		now.setDate(now.getDate() + 1);
+	}
+
+	for (let i = 0; i < DAYS_SHOWN_AT_A_TIME; i++) {
+		next.push({
+			date: now.getDate(),
+			month: now.getMonth(),
+		});
+
+		now.setDate(now.getDate() + 1);
+	}
+
+	now = new Date();
+
+	for (let i = 0; i < DAYS_SHOWN_AT_A_TIME; i++) {
+		now.setDate(now.getDate() - 1);
+
+		previous.push({
+			date: now.getDate(),
+			month: now.getMonth(),
+		});
+	}
+	previous.reverse();
+
+	return {
+		previous,
+		shown,
+		next,
+	};
 }
