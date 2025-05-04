@@ -370,3 +370,10 @@ export function validateCanJoinTeam({
 
 	return "VALID";
 }
+
+export function normalizedTeamCount({
+	teamsCount,
+	minMembersPerTeam,
+}: { teamsCount: number; minMembersPerTeam: number }) {
+	return teamsCount * minMembersPerTeam;
+}

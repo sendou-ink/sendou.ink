@@ -8,6 +8,7 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { CALENDAR_PAGE, navIconUrl } from "~/utils/urls";
 import { TournamentCard } from "../components/TournamentCard";
+import clsx from "clsx";
 
 import { type CalendarLoaderData, loader } from "../loaders/calendar.server";
 export { loader };
@@ -55,7 +56,7 @@ export default function CalendarPage() {
 	const data = useLoaderData<typeof loader>();
 
 	return (
-		<Main>
+		<Main bigger>
 			<div className={styles.columnsContainer}>
 				{daysShown().map((day) => (
 					<DayEventsColumn
@@ -108,12 +109,13 @@ function DayEventsColumn(props: {
 		<div>
 			<DayHeader date={date} />
 			<div className={styles.dayEvents}>
-				{props.events.map((event) => (
-					<div key={event.at}>
+				{props.events.map((event, i) => (
+					<div key={event.at} className="stack md">
 						<ClockHeader
 							date={databaseTimestampToDate(event.at)}
 							hiddenEventsCount={2}
 							hiddenShown={false}
+							className={i !== 0 ? "mt-4" : undefined}
 						/>
 						{event.events.map((event) => (
 							<TournamentCard key={event.id} tournament={event} />
@@ -150,16 +152,18 @@ function ClockHeader({
 	hiddenEventsCount = 0,
 	onToggleHidden,
 	hiddenShown,
+	className,
 }: {
 	date: Date;
 	hiddenEventsCount?: number;
 	onToggleHidden?: () => void;
 	hiddenShown: boolean;
+	className?: string;
 }) {
 	const { i18n } = useTranslation();
 
 	return (
-		<div className={styles.clockHeader}>
+		<div className={clsx(className, styles.clockHeader)}>
 			<div className="stack horizontal justify-between">
 				{date.toLocaleTimeString(i18n.language, {
 					hour: "2-digit",

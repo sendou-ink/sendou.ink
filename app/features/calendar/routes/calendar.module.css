@@ -1,7 +1,7 @@
 .columnsContainer {
 	display: grid;
 	grid-template-columns: repeat(5, 225px);
-	gap: var(--s-6);
+	gap: var(--s-14);
 	overflow-x: hidden;
 	padding-inline: var(--s-2);
 }
@@ -30,7 +30,6 @@
 }
 
 .clockHeader {
-	padding-block-end: var(--s-4);
 	font-weight: var(--semi-bold);
 }
 

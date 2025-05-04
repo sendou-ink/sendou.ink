@@ -23,7 +23,10 @@ import {
 } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { calendarEventPage, tournamentPage } from "~/utils/urls";
-import { tournamentIsRanked } from "../tournament/tournament-utils";
+import {
+	normalizedTeamCount,
+	tournamentIsRanked,
+} from "../tournament/tournament-utils";
 import type { CalendarEvent } from "./calendar-types";
 
 // TODO: convert from raw to using the "exists" function
@@ -190,37 +193,41 @@ function findAllBetweenTwoTimestampsMapped(
 	at: number;
 	events: Array<CalendarEvent>;
 }> {
-	const mapped: Array<CalendarEvent & { startTime: number }> = rows.map(
-		(row) => ({
-			type: "calendar",
-			id: row.eventId,
-			url: row.tournamentId
-				? tournamentPage(row.tournamentId)
-				: calendarEventPage(row.eventId),
-			name: row.name,
-			organization: row.organization,
-			tags: row.tags ? (row.tags.split(",") as CalendarEvent["tags"]) : [],
-			badges: row.badges,
+	const mapped: Array<
+		CalendarEvent & { startTime: number; normalizedTeamCount: number }
+	> = rows.map((row) => ({
+		type: "calendar",
+		id: row.eventId,
+		url: row.tournamentId
+			? tournamentPage(row.tournamentId)
+			: calendarEventPage(row.eventId),
+		name: row.name,
+		organization: row.organization,
+		tags: row.tags ? (row.tags.split(",") as CalendarEvent["tags"]) : [],
+		badges: row.badges,
+		teamsCount: row.teamsCount,
+		normalizedTeamCount: normalizedTeamCount({
 			teamsCount: row.teamsCount,
-			logoUrl: row.logoUrl,
-			startTime: row.startTime,
-			isRanked: row.tournamentSettings
-				? tournamentIsRanked({
-						isSetAsRanked: row.tournamentSettings.isRanked,
-						startTime: databaseTimestampToDate(row.startTime),
-						minMembersPerTeam: row.tournamentSettings.minMembersPerTeam ?? 4,
-						isTest: row.tournamentSettings.isTest ?? false,
-					})
-				: null,
+			minMembersPerTeam: row.tournamentSettings?.minMembersPerTeam ?? 4,
 		}),
-	);
+		logoUrl: row.logoUrl,
+		startTime: row.startTime,
+		isRanked: row.tournamentSettings
+			? tournamentIsRanked({
+					isSetAsRanked: row.tournamentSettings.isRanked,
+					startTime: databaseTimestampToDate(row.startTime),
+					minMembersPerTeam: row.tournamentSettings.minMembersPerTeam ?? 4,
+					isTest: row.tournamentSettings.isTest ?? false,
+				})
+			: null,
+	}));
 
 	const grouped = R.groupBy(mapped, (row) => row.startTime);
 	const dates = Object.keys(grouped)
 		.map((dbTimestamp) => ({
 			at: databaseTimestampToDate(Number(dbTimestamp)).getTime(),
 			events: grouped[Number(dbTimestamp)].sort(
-				(a, b) => b.teamsCount - a.teamsCount,
+				(a, b) => b.normalizedTeamCount - a.normalizedTeamCount,
 			),
 		}))
 		.sort((a, b) => a.at - b.at);

@@ -12,10 +12,12 @@ export function Tags({
 	badges,
 	onDelete,
 	tournamentRankedStatus,
+	small = false,
 }: {
 	tags: Array<CalendarEventTag>;
 	badges?: Array<BadgeProps["badge"]>;
 	tournamentRankedStatus?: "RANKED" | "UNRANKED";
+	small?: boolean;
 
 	/** Called when tag delete button clicked. If undefined delete buttons won't be shown. */
 	onDelete?: (tag: CalendarEventTag) => void;
@@ -25,7 +27,7 @@ export function Tags({
 	if (tags.length === 0 && !tournamentRankedStatus) return null;
 
 	return (
-		<ul className="calendar__event__tags">
+		<ul className={clsx("calendar__event__tags", { small })}>
 			{tournamentRankedStatus === "RANKED" ? (
 				<li className="calendar__event__ranked-tag">Ranked</li>
 			) : null}

@@ -743,6 +743,14 @@ dialog::backdrop {
 	list-style: none;
 }
 
+.calendar__event__tags.small {
+	font-size: var(--fonts-xxxs);
+}
+
+.calendar__event__tags.small > li {
+	padding: 0 var(--s-1);
+}
+
 .calendar__event__tags > li {
 	display: flex;
 	align-items: center;

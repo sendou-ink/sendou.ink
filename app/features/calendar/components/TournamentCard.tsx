@@ -8,6 +8,7 @@ import { useIsMounted } from "~/hooks/useIsMounted";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { userSubmittedImage } from "~/utils/urls";
 import type { CalendarEvent, ShowcaseCalendarEvent } from "../calendar-types";
+import { Tags } from "./Tags";
 import styles from "./TournamentCard.module.css";
 
 export function TournamentCard({
@@ -21,7 +22,7 @@ export function TournamentCard({
 	const { t, i18n } = useTranslation(["front", "common"]);
 
 	const isShowcase = tournament.type === "showcase";
-	// const isCalendar = tournament.type === "calendar";
+	const isCalendar = tournament.type === "calendar";
 
 	const time = () => {
 		if (!isShowcase) return null;
@@ -77,6 +78,11 @@ export function TournamentCard({
 						</time>
 					) : null}
 				</div>
+				{isCalendar ? (
+					<div className="stack items-center my-2">
+						<Tags tags={tournament.tags} small />
+					</div>
+				) : null}
 				{isShowcase && tournament.firstPlacer ? (
 					<TournamentFirstPlacers firstPlacer={tournament.firstPlacer} />
 				) : null}
