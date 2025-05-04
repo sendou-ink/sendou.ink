@@ -5,7 +5,6 @@ import { Main } from "~/components/Main";
 import { SendouButton } from "~/components/elements/Button";
 import { EyeIcon } from "~/components/icons/Eye";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
-import { databaseTimestampToDate } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { CALENDAR_PAGE, navIconUrl } from "~/utils/urls";
 import { TournamentCard } from "../components/TournamentCard";
@@ -112,7 +111,7 @@ function DayEventsColumn(props: {
 				{props.events.map((event, i) => (
 					<div key={event.at} className="stack md">
 						<ClockHeader
-							date={databaseTimestampToDate(event.at)}
+							date={new Date(event.at)}
 							hiddenEventsCount={2}
 							hiddenShown={false}
 							className={i !== 0 ? "mt-4" : undefined}

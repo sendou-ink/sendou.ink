@@ -94,20 +94,22 @@ export function TournamentCard({
 					<TournamentFirstPlacers firstPlacer={tournament.firstPlacer} />
 				) : null}
 			</Link>
-			<div className={styles.pillsContainer}>
-				<div className={styles.teamCount}>
-					<UsersIcon /> {tournament.teamsCount}
+			{isHostedOnSendouInk ? (
+				<div className={styles.pillsContainer}>
+					{tournament.isRanked ? (
+						<div className={clsx(styles.pill, styles.pillRanked)}>
+							{t("front:showcase.card.ranked")}
+						</div>
+					) : (
+						<div className={clsx(styles.pill, styles.pillUnranked)}>
+							{t("front:showcase.card.unranked")}
+						</div>
+					)}
+					<div className={styles.teamCount}>
+						<UsersIcon /> {tournament.teamsCount}
+					</div>
 				</div>
-				{tournament.isRanked ? (
-					<div className={clsx(styles.pill, styles.pillRanked)}>
-						{t("front:showcase.card.ranked")}
-					</div>
-				) : tournament.isRanked === false ? (
-					<div className={clsx(styles.pill, styles.pillUnranked)}>
-						{t("front:showcase.card.unranked")}
-					</div>
-				) : null}
-			</div>
+			) : null}
 		</div>
 	);
 }
