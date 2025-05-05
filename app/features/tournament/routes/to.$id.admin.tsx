@@ -12,7 +12,7 @@ import { Label } from "~/components/Label";
 import { containerClassName } from "~/components/Main";
 import { Redirect } from "~/components/Redirect";
 import { SubmitButton } from "~/components/SubmitButton";
-import { UserSearch } from "~/components/UserSearch";
+import { UserSearch as UserSearchOld } from "~/components/UserSearch";
 import { TrashIcon } from "~/components/icons/Trash";
 import { USER } from "~/constants";
 import { useUser } from "~/features/auth/core/user";
@@ -31,6 +31,7 @@ import { Dialog } from "../../../components/Dialog";
 import { BracketProgressionSelector } from "../../calendar/components/BracketProgressionSelector";
 import { useTournament } from "./to.$id";
 
+import { UserSearch } from "~/components/elements/UserSearch";
 import { action } from "../actions/to.$id.admin.server";
 export { action };
 
@@ -323,8 +324,7 @@ function TeamActions() {
 				) : null}
 				{selectedAction.inputs.includes("USER") ? (
 					<div>
-						<label htmlFor="user">User</label>
-						<UserSearch inputName="userId" id="user" />
+						<UserSearch name="userId" label="User" />
 					</div>
 				) : null}
 				{selectedAction.inputs.includes("BRACKET") ? (
@@ -428,7 +428,7 @@ function StaffAdder() {
 			<div className="stack horizontal sm flex-wrap items-end">
 				<div>
 					<Label htmlFor="staff-user">New staffer</Label>
-					<UserSearch
+					<UserSearchOld
 						inputName="userId"
 						id="staff-user"
 						required
