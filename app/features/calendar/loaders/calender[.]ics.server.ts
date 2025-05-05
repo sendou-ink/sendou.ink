@@ -76,17 +76,16 @@ function eventInfoAsICalEvent(
   const eventLink = `https://sendou.ink/calendar/${event.eventId}`;
   const tags = event.tags.reduce((acc, tag) => `${acc},${tag}`, "").slice(1);
 
-  return (
+  return wrapLines(
     "BEGIN:VEVENT\r\n" +
-    `UID:${crypto.randomUUID()}\r\n` +
-    `DTSTAMP:${dateAsICalDate(date)}\r\n` +
-    `DTSTART:${dateAsICalDate(eventDate)}\r\n` +
-    `DTEND:${dateAsICalDate(eventEndDate)}\r\n` +
-    `SUMMARY:${event.name}\r\n` +
-    `LOCATION:${eventLink}\r\n` +
-    `ORGANISER:${event.username}\r\n` +
-    `CATEGORIES:${tags}\r\n` +
-    `END:VEVENT\r\n`
+      `UID:${crypto.randomUUID()}\r\n` +
+      `DTSTAMP:${dateAsICalDate(date)}\r\n` +
+      `DTSTART:${dateAsICalDate(eventDate)}\r\n` +
+      `DTEND:${dateAsICalDate(eventEndDate)}\r\n` +
+      `SUMMARY:${event.name}\r\n` +
+      `LOCATION:${eventLink}\r\n` +
+      `CATEGORIES:${tags}\r\n` +
+      `END:VEVENT\r\n`
   );
 }
 
@@ -100,4 +99,15 @@ function dateAsICalDate(date: Date): string {
     .getUTCSeconds()
     .toString()
     .padStart(2, "0")}Z`;
+}
+
+function wrapLines(s: string): string {
+  const lines = s.split("\r\n");
+  return lines.reduce((acc, line) => {
+    if (line.length > 75) {
+      const [a, b] = [line.substring(0, 75), line.substring(75)];
+      return acc + `${a}\r\n\x09` + wrapLines(b); // no need for \r\n, short lines will pass through check and have \r\n appended
+    }
+    return acc + line + "\r\n";
+  }, "");
 }
