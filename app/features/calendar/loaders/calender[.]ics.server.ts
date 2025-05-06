@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import type { PersistedCalendarEventTag } from "~/db/tables";
 import * as CalendarRepository from "../CalendarRepository.server";
 import { databaseTimestampToDate } from "~/utils/dates";
+import { CALENDAR_PAGE, SENDOU_INK_BASE_URL } from "~/utils/urls";
 import {
   loaderFilterSearchParamsSchema,
   loaderTournamentsOnlySearchParamsSchema,
@@ -10,6 +11,7 @@ import {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
 
+  // allows limiting calendar events to specific tags
   const parsedFilterParams = loaderFilterSearchParamsSchema.safeParse({
     tags: url.searchParams.get("tags"),
   });
@@ -34,16 +36,22 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   startTime.setHours(startTime.getHours() - 12);
   endTime.setHours(endTime.getHours() + 12);
 
-  const events = CalendarRepository.findAllBetweenTwoTimestamps({
+  const events = await CalendarRepository.findAllBetweenTwoTimestamps({
     startTime,
     endTime,
     tagsToFilterBy: tagsToFilterBy,
     onlyTournaments: onlyTournaments,
   });
 
-  // TODO: convert event list to ical
-  const iCalFeed = eventsAsICal(await events);
-  return new Response(iCalFeed, {
+  // iCal doesnt allow calendars with no components
+  // https://www.rfc-editor.org/rfc/rfc5545.txt     3.6.
+  if (events.length == 0) {
+    return new Response(null, { status: 204 });
+  }
+
+  const iCalData = eventsAsICal(events);
+
+  return new Response(iCalData, {
     status: 200,
     headers: {
       "Content-Type": "text/calendar",
@@ -63,6 +71,8 @@ function eventsAsICal(
       properties
     ) + "END:VCALENDAR\r\n";
 
+  // iCal requires utf-8
+  // https://www.rfc-editor.org/rfc/rfc5545.txt     3.1.4
   return Buffer.from(data, "utf8");
 }
 
@@ -72,8 +82,8 @@ function eventInfoAsICalEvent(
   const date = new Date();
   const eventDate = databaseTimestampToDate(event.startTime);
   const eventEndDate = new Date(databaseTimestampToDate(event.startTime));
-  eventEndDate.setHours(eventEndDate.getHours() + 3); // arbitrary length of 3 hours, maybe change
-  const eventLink = `https://sendou.ink/calendar/${event.eventId}`;
+  eventEndDate.setHours(eventEndDate.getHours() + 3); // arbitrary length of 3 hours
+  const eventLink = `${SENDOU_INK_BASE_URL}${CALENDAR_PAGE}/${event.eventId}`;
   const tags = event.tags.reduce((acc, tag) => `${acc},${tag}`, "").slice(1);
 
   return wrapLines(
@@ -89,6 +99,8 @@ function eventInfoAsICalEvent(
   );
 }
 
+// converts date to iCal utc format yyyymmddThhmmssZ
+// https://www.rfc-editor.org/rfc/rfc5545.txt       3.3.5.
 function dateAsICalDate(date: Date): string {
   return `${date.getUTCFullYear()}${(date.getUTCMonth() + 1)
     .toString()
@@ -101,9 +113,14 @@ function dateAsICalDate(date: Date): string {
     .padStart(2, "0")}Z`;
 }
 
+// iCal limits lines to 75 octets, lines longer get split with the next beginning with whitespace
+// https://www.rfc-editor.org/rfc/rfc5545.txt       3.1.
 function wrapLines(s: string): string {
   const lines = s.split("\r\n");
   return lines.reduce((acc, line) => {
+    if (line.length == 0) {
+      return acc;
+    }
     if (line.length > 75) {
       const [a, b] = [line.substring(0, 75), line.substring(75)];
       return acc + `${a}\r\n\x09` + wrapLines(b); // no need for \r\n, short lines will pass through check and have \r\n appended
