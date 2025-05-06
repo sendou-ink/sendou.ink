@@ -65,7 +65,7 @@
 
 	"teams.mapsPickedStatus": "Статус выбранных карт",
 
-	"admin.download": "Скачать участников"
+	"admin.download": "Скачать участников",
 	"admin.actions.CHANGE_TEAM_OWNER": "Изменить капитана",
 	"admin.actions.CHANGE_TEAM_NAME": "Изменить имя команды",
 	"admin.actions.CHECK_IN": "Зарегистрировать",
