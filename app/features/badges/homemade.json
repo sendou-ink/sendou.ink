@@ -156,7 +156,7 @@
 		"authorDiscordId": "617399529532293150"
 	},
 	"crobattle": {
-		"displayName": "Crobattle Royale: First Edition",
+		"displayName": "Crobattle Royale",
 		"authorDiscordId": "178733052762128385"
 	},
 	"curseofexcalibur": {
@@ -659,6 +659,10 @@
 		"displayName": "Abandon Ship",
 		"authorDiscordId": "528851510222782474"
 	},
+	"silverstars": {
+		"displayName": "Beta Bracket",
+		"authorDiscordId": "338806780446638082"
+	},
 	"slyeion": {
 		"displayName": "Sylveon",
 		"authorDiscordId": "338806780446638082"
@@ -710,6 +714,10 @@
 	"squidtheforce": {
 		"displayName": "Squidforce Cup",
 		"authorDiscordId": "1320944066002681876"
+	},
+	"stellatedzone": {
+		"displayName": "Stellated Zone",
+		"authorDiscordId": "309327923129745409"
 	},
 	"sunday-run": {
 		"displayName": "Sunday Run",
