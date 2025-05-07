@@ -1,2 +1,2 @@
-import { loader } from "../loaders/calender[.]ics.server";
+import { loader } from "../loaders/calendar[.]ics.server";
 export { loader };
