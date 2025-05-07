@@ -2,15 +2,20 @@ import { useFetcher } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import {
-	ComboBox,
-	Group,
+	Button,
 	Input,
 	Label,
 	ListBox,
 	ListBoxItem,
 	Popover,
+	SearchField,
+	Select,
+	SelectValue,
 } from "react-aria-components";
+import { Autocomplete } from "react-aria-components";
 import { useDebounce } from "react-use";
+import { ChevronUpDownIcon } from "~/components/icons/ChevronUpDown";
+import { CrossIcon } from "~/components/icons/Cross";
 import type { UserSearchLoaderData } from "~/features/user-search/loaders/u.server";
 import { Avatar } from "../Avatar";
 import { SearchIcon } from "../icons/Search";
@@ -26,52 +31,127 @@ interface UserSearchProps {
 	onChange?: (user: UserSearchUserItem) => void;
 	initialUserId?: number;
 	className?: string;
-	required?: boolean;
+	isRequired?: boolean;
 	onBlur?: React.FocusEventHandler<HTMLInputElement>;
 	disabled?: boolean;
 }
 
-// xxx: fix dropdown only working on bottom click
-export function UserSearch(_props: UserSearchProps) {
+// xxx: clear selection when changing the filter text? now user disappears then comes back
+// xxx: why is clear button shown always? (also on select) -> check https://react-spectrum.adobe.com/react-aria/examples/searchable-select.html
+// xxx: set https://react-spectrum.adobe.com/react-aria/internationalization.html
+export function UserSearch({ name, label, isRequired }: UserSearchProps) {
 	const list = useUserSearch();
 
 	return (
-		<ComboBox
-			items={list.items}
-			inputValue={list.filterText}
-			onInputChange={list.setFilterText}
-		>
-			<Label>Assignee</Label>
-			<Group className={selectStyles.button}>
-				<Input className={clsx("plain", selectStyles.searchInput)} />
-				<SearchIcon className={selectStyles.icon} />
-			</Group>
+		<Select name={name} placeholder="" isRequired={isRequired}>
+			{label ? <Label>{label}</Label> : null}
+			<Button className={selectStyles.button}>
+				<SelectValue className={userSearchStyles.selectValue} />
+				<span aria-hidden="true">
+					<ChevronUpDownIcon className={selectStyles.icon} />
+				</span>
+			</Button>
+			{/* {description && <Text slot="description">{description}</Text>}
+			<FieldError>{errorMessage}</FieldError> */}
 			<Popover className={clsx(selectStyles.popover, userSearchStyles.popover)}>
-				<ListBox
-					className={selectStyles.listBox}
-					renderEmptyState={() => <div>test</div>}
+				<Autocomplete
+					inputValue={list.filterText}
+					onInputChange={list.setFilterText}
 				>
-					{(item) => <UserItem user={item as UserSearchUserItem} />}
-				</ListBox>
+					<SearchField
+						aria-label="Search"
+						autoFocus
+						className={selectStyles.searchField}
+					>
+						<SearchIcon aria-hidden className={selectStyles.smallIcon} />
+						<Input className={clsx("plain", selectStyles.searchInput)} />
+						<Button className={selectStyles.searchClearButton}>
+							<CrossIcon className={selectStyles.smallIcon} />
+						</Button>
+					</SearchField>
+					{/** @ts-expect-error xxx: fix types */}
+					<ListBox items={list.items} className={selectStyles.listBox}>
+						{(item) => <UserItem item={item as UserSearchUserItem} />}
+					</ListBox>
+				</Autocomplete>
 			</Popover>
-		</ComboBox>
+		</Select>
 	);
 }
 
-function UserItem({ user }: { user: UserSearchUserItem }) {
+function UserItem({
+	item,
+}: {
+	item:
+		| UserSearchUserItem
+		| {
+				id: "NO_RESULTS";
+		  }
+		| {
+				id: "PLACEHOLDER";
+		  }
+		| {
+				id: "LOADING";
+		  };
+}) {
+	// for some reason the `renderEmptyState` on ListBox is not working
+	// so doing this as a workaround
+	if (typeof item.id === "string") {
+		return (
+			<ListBoxItem
+				id="PLACEHOLDER"
+				textValue="PLACEHOLDER"
+				isDisabled
+				className={userSearchStyles.placeholder}
+			>
+				{item.id === "PLACEHOLDER"
+					? "Search users by username, profile URL or Discord ID..."
+					: item.id === "LOADING"
+						? "Loading..." // xxx: spinner? or same text as PLACEHOLDER?
+						: "No users matching your search found"}
+			</ListBoxItem>
+		);
+	}
+
+	const additionalText = () => {
+		const plusServer = item.plusTier ? `+${item.plusTier}` : "";
+		const profileUrl = item.customUrl ? `/u/${item.customUrl}` : "";
+
+		if (plusServer && profileUrl) {
+			return `${plusServer} • ${profileUrl}`;
+		}
+
+		if (plusServer) {
+			return plusServer;
+		}
+
+		if (profileUrl) {
+			return profileUrl;
+		}
+
+		return "";
+	};
+
 	return (
 		<ListBoxItem
-			id={user.id}
-			textValue={user.username}
+			id={item.id}
+			textValue={item.username}
 			className={({ isFocused, isSelected }) =>
-				clsx(selectStyles.item, {
+				clsx(userSearchStyles.item, {
 					[selectStyles.itemFocused]: isFocused,
 					[selectStyles.itemSelected]: isSelected,
 				})
 			}
 		>
-			<Avatar user={user} size="xxs" />
-			{user.username}
+			<Avatar user={item} size="xxs" />
+			<div className={userSearchStyles.itemTextsContainer}>
+				{item.username}
+				{additionalText() ? (
+					<div className={userSearchStyles.itemAdditionalText}>
+						{additionalText()}
+					</div>
+				) : null}
+			</div>
 		</ListBoxItem>
 	);
 }
@@ -89,12 +169,25 @@ function useUserSearch() {
 		[filterText],
 	);
 
+	const items = () => {
+		if (queryFetcher.state !== "idle") {
+			return [{ id: "LOADING" }];
+		}
+
+		// data fetched for the query user has currently typed
+		if (queryFetcher.data && queryFetcher.data.query === filterText) {
+			if (queryFetcher.data.users.length === 0) {
+				return [{ id: "NO_RESULTS" }];
+			}
+			return queryFetcher.data.users;
+		}
+
+		return [{ id: "PLACEHOLDER" }];
+	};
+
 	return {
 		filterText,
 		setFilterText,
-		items:
-			queryFetcher.data && queryFetcher.data.query === filterText
-				? queryFetcher.data.users
-				: [],
+		items: items(),
 	};
 }

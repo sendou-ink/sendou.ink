@@ -1,4 +1,53 @@
+.item {
+	font-size: var(--fonts-xsm);
+	font-weight: var(--semi-bold);
+	white-space: pre-wrap;
+	padding: var(--s-1-5);
+	border-radius: var(--rounded-sm);
+	height: 33px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
 .popover {
-	margin-inline-start: -14px;
-	margin-block-start: var(--s-2-5);
+	min-height: 250px;
+	margin-inline-start: 0px; /** xxx: why needed? */
+}
+
+.itemTextsContainer {
+	line-height: 1.1;
+}
+
+.selectValue {
+	max-width: calc(var(--select-width) - 55px);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.placeholder {
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	color: var(--text-lighter);
+	text-align: center;
+	display: grid;
+	place-items: center;
+	height: 162px;
+	margin-block: var(--s-4);
+}
+
+.itemAdditionalText {
+	font-size: var(--fonts-xxsm);
+	color: var(--text-lighter);
+}
+
+button .itemAdditionalText {
+	display: none;
 }

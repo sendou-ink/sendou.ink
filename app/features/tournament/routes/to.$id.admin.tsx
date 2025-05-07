@@ -12,7 +12,6 @@ import { Label } from "~/components/Label";
 import { containerClassName } from "~/components/Main";
 import { Redirect } from "~/components/Redirect";
 import { SubmitButton } from "~/components/SubmitButton";
-import { UserSearch as UserSearchOld } from "~/components/UserSearch";
 import { TrashIcon } from "~/components/icons/Trash";
 import { USER } from "~/constants";
 import { useUser } from "~/features/auth/core/user";
@@ -421,24 +420,14 @@ function CastTwitchAccounts() {
 
 function StaffAdder() {
 	const fetcher = useFetcher();
-	const tournament = useTournament();
 
+	// xxx: should show error msg if trying to add new staffer with blank input
+	// xxx: show error toast if already staffer
 	return (
 		<fetcher.Form method="post" className="stack sm">
 			<div className="stack horizontal sm flex-wrap items-end">
 				<div>
-					<Label htmlFor="staff-user">New staffer</Label>
-					<UserSearchOld
-						inputName="userId"
-						id="staff-user"
-						required
-						userIdsToOmit={
-							new Set([
-								tournament.ctx.author.id,
-								...tournament.ctx.staff.map((s) => s.id),
-							])
-						}
-					/>
+					<UserSearch name="userId" label="New staffer" isRequired />
 				</div>
 				<div>
 					<Label htmlFor="staff-role">Role</Label>
