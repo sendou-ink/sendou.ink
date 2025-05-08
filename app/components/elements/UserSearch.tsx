@@ -4,16 +4,18 @@ import * as React from "react";
 import {
 	Button,
 	Input,
-	Label,
 	ListBox,
 	ListBoxItem,
 	Popover,
 	SearchField,
 	Select,
+	type SelectProps,
 	SelectValue,
 } from "react-aria-components";
 import { Autocomplete } from "react-aria-components";
 import { useDebounce } from "react-use";
+import { SendouBottomTexts } from "~/components/elements/BottomTexts";
+import { SendouLabel } from "~/components/elements/Label";
 import { ChevronUpDownIcon } from "~/components/icons/ChevronUpDown";
 import { CrossIcon } from "~/components/icons/Cross";
 import type { UserSearchLoaderData } from "~/features/user-search/loaders/u.server";
@@ -25,34 +27,56 @@ import userSearchStyles from "./UserSearch.module.css";
 
 type UserSearchUserItem = NonNullable<UserSearchLoaderData>["users"][number];
 
-interface UserSearchProps {
-	label?: string;
+interface UserSearchProps<T extends object>
+	extends Omit<SelectProps<T>, "children"> {
 	name?: string;
-	onChange?: (user: UserSearchUserItem) => void;
+	label?: string;
+	bottomText?: string;
+	errorText?: string;
 	initialUserId?: number;
-	className?: string;
-	isRequired?: boolean;
-	onBlur?: React.FocusEventHandler<HTMLInputElement>;
-	disabled?: boolean;
+	onChange?: (user: UserSearchUserItem) => void;
 }
 
 // xxx: clear selection when changing the filter text? now user disappears then comes back
-// xxx: why is clear button shown always? (also on select) -> check https://react-spectrum.adobe.com/react-aria/examples/searchable-select.html
-// xxx: set https://react-spectrum.adobe.com/react-aria/internationalization.html
-export function UserSearch({ name, label, isRequired }: UserSearchProps) {
-	const list = useUserSearch();
+export function UserSearch<T extends object>({
+	name,
+	label,
+	bottomText,
+	errorText,
+	initialUserId,
+	onChange,
+	...rest
+}: UserSearchProps<T>) {
+	const { initialUser, ...list } = useUserSearch(initialUserId);
 
 	return (
-		<Select name={name} placeholder="" isRequired={isRequired}>
-			{label ? <Label>{label}</Label> : null}
+		<Select
+			name={name}
+			placeholder=""
+			defaultSelectedKey={initialUserId}
+			onSelectionChange={
+				onChange
+					? (userId) => {
+							onChange(
+								list.items.find(
+									(user) => user.id === userId,
+								) as UserSearchUserItem,
+							);
+						}
+					: undefined
+			}
+			{...rest}
+		>
+			{label ? (
+				<SendouLabel required={rest.isRequired}>{label}</SendouLabel>
+			) : null}
 			<Button className={selectStyles.button}>
 				<SelectValue className={userSearchStyles.selectValue} />
 				<span aria-hidden="true">
 					<ChevronUpDownIcon className={selectStyles.icon} />
 				</span>
 			</Button>
-			{/* {description && <Text slot="description">{description}</Text>}
-			<FieldError>{errorMessage}</FieldError> */}
+			<SendouBottomTexts bottomText={bottomText} errorText={errorText} />
 			<Popover className={clsx(selectStyles.popover, userSearchStyles.popover)}>
 				<Autocomplete
 					inputValue={list.filterText}
@@ -69,8 +93,12 @@ export function UserSearch({ name, label, isRequired }: UserSearchProps) {
 							<CrossIcon className={selectStyles.smallIcon} />
 						</Button>
 					</SearchField>
-					{/** @ts-expect-error xxx: fix types */}
-					<ListBox items={list.items} className={selectStyles.listBox}>
+					<ListBox
+						items={[initialUser, ...list.items].filter(
+							(user) => user !== undefined,
+						)}
+						className={selectStyles.listBox}
+					>
 						{(item) => <UserItem item={item as UserSearchUserItem} />}
 					</ListBox>
 				</Autocomplete>
@@ -89,9 +117,6 @@ function UserItem({
 		  }
 		| {
 				id: "PLACEHOLDER";
-		  }
-		| {
-				id: "LOADING";
 		  };
 }) {
 	// for some reason the `renderEmptyState` on ListBox is not working
@@ -106,9 +131,7 @@ function UserItem({
 			>
 				{item.id === "PLACEHOLDER"
 					? "Search users by username, profile URL or Discord ID..."
-					: item.id === "LOADING"
-						? "Loading..." // xxx: spinner? or same text as PLACEHOLDER?
-						: "No users matching your search found"}
+					: "No users matching your search found"}
 			</ListBoxItem>
 		);
 	}
@@ -156,24 +179,33 @@ function UserItem({
 	);
 }
 
-function useUserSearch() {
+function useUserSearch(initialUserId?: number) {
 	const [filterText, setFilterText] = React.useState("");
+
 	const queryFetcher = useFetcher<UserSearchLoaderData>();
+	const initialUserFetcher = useFetcher<UserSearchLoaderData>();
+
+	React.useEffect(() => {
+		if (
+			!initialUserId ||
+			initialUserFetcher.state !== "idle" ||
+			initialUserFetcher.data
+		) {
+			return;
+		}
+		initialUserFetcher.load(`/u?q=${initialUserId}`);
+	}, [initialUserId, initialUserFetcher]);
 
 	useDebounce(
 		() => {
 			if (!filterText) return;
 			queryFetcher.load(`/u?q=${filterText}&limit=6`);
 		},
-		1000,
+		500,
 		[filterText],
 	);
 
 	const items = () => {
-		if (queryFetcher.state !== "idle") {
-			return [{ id: "LOADING" }];
-		}
-
 		// data fetched for the query user has currently typed
 		if (queryFetcher.data && queryFetcher.data.query === filterText) {
 			if (queryFetcher.data.users.length === 0) {
@@ -185,9 +217,12 @@ function useUserSearch() {
 		return [{ id: "PLACEHOLDER" }];
 	};
 
+	const initialUser = initialUserFetcher.data?.users[0];
+
 	return {
 		filterText,
 		setFilterText,
 		items: items(),
+		initialUser,
 	};
 }

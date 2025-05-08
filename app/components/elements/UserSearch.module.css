@@ -32,6 +32,11 @@
 	gap: var(--s-2);
 }
 
+button:disabled .selectValue {
+	color: var(--text-lighter);
+	font-style: italic;
+}
+
 .placeholder {
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);

@@ -3,8 +3,8 @@
 	gap: 8px;
 	display: flex;
 	position: fixed;
-	top: 55px;
-	right: 8px;
+	top: 10px;
+	right: 10px;
 	z-index: 1;
 }
 

@@ -14,7 +14,7 @@ import { WeaponCombobox } from "~/components/Combobox";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { UserSearch } from "~/components/UserSearch";
+import { UserSearch } from "~/components/elements/UserSearch";
 import { AddFieldButton } from "~/components/form/AddFieldButton";
 import { RemoveFieldButton } from "~/components/form/RemoveFieldButton";
 import type { Tables } from "~/db/tables";
@@ -191,7 +191,7 @@ function PovFormField() {
 						) : (
 							<UserSearch
 								id="pov"
-								inputName="team-player"
+								name="team-player"
 								initialUserId={value.userId}
 								onChange={(newUser) =>
 									onChange({

@@ -2,7 +2,7 @@ import { Controller, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
-import { UserSearch } from "~/components/UserSearch";
+import { UserSearch } from "~/components/elements/UserSearch";
 import { useUser } from "~/features/auth/core/user";
 import { SCRIM } from "~/features/scrims/scrims-constants";
 import { nullFilledArray } from "~/utils/arrays";
@@ -66,31 +66,26 @@ export function WithFormField({ usersTeams }: FromFormFieldProps) {
 							</select>
 							{value.mode === "PICKUP" ? (
 								<div className="stack md mt-4">
-									<div>
-										<Label required>
-											{t("scrims:forms.with.user", { nth: 1 })}
-										</Label>
-										<UserSearch initialUserId={user!.id} disabled />
-									</div>
+									<UserSearch
+										initialUserId={user!.id}
+										isDisabled
+										label={t("scrims:forms.with.user", { nth: 1 })}
+									/>
 									{value.users.map((userId, i) => (
-										<div key={i}>
-											<Label required={i < 3} htmlFor={`user-${i}`}>
-												{t("scrims:forms.with.user", { nth: i + 2 })}
-											</Label>
-											<UserSearch
-												id={`user-${i}`}
-												// TODO: changing it like this triggers useEffect -> dropdown stays open, need to use "value" not "defaultValue"
-												initialUserId={userId ?? undefined}
-												onChange={(user) =>
-													onChange({
-														mode: "PICKUP",
-														users: value.users.map((u, j) =>
-															j === i ? user.id : u,
-														),
-													})
-												}
-											/>
-										</div>
+										<UserSearch
+											key={i}
+											initialUserId={userId}
+											onChange={(user) =>
+												onChange({
+													mode: "PICKUP",
+													users: value.users.map((u, j) =>
+														j === i ? user.id : u,
+													),
+												})
+											}
+											isRequired={i < 3}
+											label={t("scrims:forms.with.user", { nth: i + 2 })}
+										/>
 									))}
 									{error ? (
 										<FormMessage type="error">

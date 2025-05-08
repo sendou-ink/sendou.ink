@@ -421,28 +421,28 @@ function CastTwitchAccounts() {
 function StaffAdder() {
 	const fetcher = useFetcher();
 
-	// xxx: should show error msg if trying to add new staffer with blank input
-	// xxx: show error toast if already staffer
 	return (
 		<fetcher.Form method="post" className="stack sm">
-			<div className="stack horizontal sm flex-wrap items-end">
+			<div className="stack horizontal sm flex-wrap items-start">
 				<div>
 					<UserSearch name="userId" label="New staffer" isRequired />
 				</div>
-				<div>
-					<Label htmlFor="staff-role">Role</Label>
-					<select name="role" id="staff-role" className="w-max">
-						<option value="ORGANIZER">Organizer</option>
-						<option value="STREAMER">Streamer</option>
-					</select>
+				<div className="stack horizontal sm items-end">
+					<div>
+						<Label htmlFor="staff-role">Role</Label>
+						<select name="role" id="staff-role" className="w-max">
+							<option value="ORGANIZER">Organizer</option>
+							<option value="STREAMER">Streamer</option>
+						</select>
+					</div>
+					<SubmitButton
+						state={fetcher.state}
+						_action="ADD_STAFF"
+						testId="add-staff-button"
+					>
+						Add
+					</SubmitButton>
 				</div>
-				<SubmitButton
-					state={fetcher.state}
-					_action="ADD_STAFF"
-					testId="add-staff-button"
-				>
-					Add
-				</SubmitButton>
 			</div>
 			<FormMessage type="info">
 				Organizer has same permissions as you expect adding/removing staff,
