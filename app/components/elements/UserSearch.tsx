@@ -38,15 +38,20 @@ interface UserSearchProps<T extends object>
 }
 
 // xxx: clear selection when changing the filter text? now user disappears then comes back
-export function UserSearch<T extends object>({
-	name,
-	label,
-	bottomText,
-	errorText,
-	initialUserId,
-	onChange,
-	...rest
-}: UserSearchProps<T>) {
+export const UserSearch = React.forwardRef(function UserSearch<
+	T extends object,
+>(
+	{
+		name,
+		label,
+		bottomText,
+		errorText,
+		initialUserId,
+		onChange,
+		...rest
+	}: UserSearchProps<T>,
+	ref?: React.Ref<HTMLButtonElement>,
+) {
 	const { initialUser, ...list } = useUserSearch(initialUserId);
 
 	return (
@@ -70,7 +75,7 @@ export function UserSearch<T extends object>({
 			{label ? (
 				<SendouLabel required={rest.isRequired}>{label}</SendouLabel>
 			) : null}
-			<Button className={selectStyles.button}>
+			<Button className={selectStyles.button} ref={ref}>
 				<SelectValue className={userSearchStyles.selectValue} />
 				<span aria-hidden="true">
 					<ChevronUpDownIcon className={selectStyles.icon} />
@@ -105,7 +110,7 @@ export function UserSearch<T extends object>({
 			</Popover>
 		</Select>
 	);
-}
+});
 
 function UserItem({
 	item,
