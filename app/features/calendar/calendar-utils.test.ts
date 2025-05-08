@@ -3,9 +3,11 @@ import {
 	calendarEventMaxDate,
 	calendarEventMinDate,
 	closeByWeeks,
+	dateAsICalDate,
 	datesToRegClosesAt,
 	regClosesAtDate,
 	regClosesAtToDisplayName,
+	wrapICalLines,
 } from "./calendar-utils";
 
 describe("calendar-utils", () => {
@@ -98,5 +100,27 @@ describe("calendar-utils", () => {
 
 	it("closeByWeeks should throw if week is out of range", () => {
 		expect(() => closeByWeeks({ week: 53, year: 2024 })).toThrow();
+	});
+
+	it("wrapICalLines should wrap line after 75 characters", () => {
+		const result = wrapICalLines(`${"a".repeat(100)}\r\n`);
+		expect(result).toEqual(`${"a".repeat(75)}\r\n\x09${"a".repeat(25)}\r\n`);
+	});
+
+	it("wrapICalLines should wrap multiple times on lines over 150 characters", () => {
+		const result = wrapICalLines(`${"a".repeat(230)}\r\n`);
+		expect(result).toEqual(
+			`${"a".repeat(75)}\r\n\x09${"a".repeat(74)}\r\n\x09${"a".repeat(74)}\r\n\x09${"a".repeat(7)}\r\n`,
+		);
+	});
+
+	it("wrapICalLines should not change lines under 75 characters", () => {
+		const result = wrapICalLines(`${"a".repeat(20)}\r\n`);
+		expect(result).toEqual(`${"a".repeat(20)}\r\n`);
+	});
+
+	it("dateAsICalDate should return date in the correct format", () => {
+		const result = dateAsICalDate(new Date(Date.UTC(2025, 0, 1, 12, 10, 30)));
+		expect(result).toEqual("20250101T121030Z");
 	});
 });
