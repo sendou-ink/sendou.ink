@@ -411,6 +411,10 @@
 		"displayName": "Splatoon 1 Tournament (Marie)",
 		"authorDiscordId": "336683473714544641"
 	},
+	"masterhand": {
+		"displayName": "Master Hand",
+		"authorDiscordId": "752582395076673577"
+	},
 	"matchmeet": {
 		"displayName": "Meet Your Match",
 		"authorDiscordId": "631246535560265749"
