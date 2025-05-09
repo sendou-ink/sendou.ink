@@ -1,25 +1,18 @@
-import { Form, useMatches } from "@remix-run/react";
+import { Form, useMatches, useNavigate } from "@remix-run/react";
 import * as React from "react";
-import { LinkButton } from "~/components/Button";
-import { Dialog } from "~/components/Dialog";
-import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Redirect } from "~/components/Redirect";
 import { SubmitButton } from "~/components/SubmitButton";
-import { UserSearch } from "~/components/UserSearch";
+import { SendouDialog } from "~/components/elements/Dialog";
+import { UserSearch } from "~/components/elements/UserSearch";
 import {
 	PLUS_TIERS,
 	PlUS_SUGGESTION_FIRST_COMMENT_MAX_LENGTH,
 } from "~/constants";
-import type { UserWithPlusTier } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { atOrError } from "~/utils/arrays";
 import { plusSuggestionPage } from "~/utils/urls";
-import {
-	canSuggestNewUserFE,
-	playerAlreadyMember,
-	playerAlreadySuggested,
-} from "../plus-suggestions-utils";
+import { canSuggestNewUser } from "../plus-suggestions-utils";
 import type { PlusSuggestionsLoaderData } from "./plus.suggestions";
 
 import { action } from "../actions/plus.suggestions.new.server";
@@ -29,11 +22,7 @@ export default function PlusNewSuggestionModalPage() {
 	const user = useUser();
 	const matches = useMatches();
 	const data = atOrError(matches, -2).data as PlusSuggestionsLoaderData;
-	const [selectedUser, setSelectedUser] = React.useState<{
-		/** User id */
-		value: string;
-		plusTier: number | null;
-	} | null>(null);
+	const navigate = useNavigate();
 
 	const tierOptions = PLUS_TIERS.filter((tier) => {
 		// user will be redirected anyway
@@ -47,7 +36,7 @@ export default function PlusNewSuggestionModalPage() {
 
 	if (
 		!data.suggestions ||
-		!canSuggestNewUserFE({
+		!canSuggestNewUser({
 			user,
 			suggestions: data.suggestions,
 		}) ||
@@ -56,18 +45,13 @@ export default function PlusNewSuggestionModalPage() {
 		return <Redirect to={plusSuggestionPage({ showAlert: true })} />;
 	}
 
-	const selectedUserErrorMessage = getSelectedUserErrorMessage({
-		suggested: selectedUser
-			? { id: Number(selectedUser.value), plusTier: selectedUser.plusTier }
-			: undefined,
-		suggestions: data.suggestions,
-		targetPlusTier,
-	});
-
 	return (
-		<Dialog isOpen>
+		<SendouDialog
+			isOpen
+			heading="Adding a new suggestion"
+			onClose={() => navigate(plusSuggestionPage())}
+		>
 			<Form method="post" className="stack md">
-				<h2 className="plus__modal-title">Adding a new suggestion</h2>
 				<div>
 					<label htmlFor="tier">Tier</label>
 					<select
@@ -84,64 +68,14 @@ export default function PlusNewSuggestionModalPage() {
 						))}
 					</select>
 				</div>
-				<div>
-					<label htmlFor="user">Suggested user</label>
-					<UserSearch
-						inputName="userId"
-						onChange={(user) =>
-							setSelectedUser({
-								plusTier: user.plusTier,
-								value: String(user.id),
-							})
-						}
-						required
-					/>
-					{selectedUserErrorMessage ? (
-						<FormMessage type="error">{selectedUserErrorMessage}</FormMessage>
-					) : null}
-				</div>
+				<UserSearch name="userId" label="Suggested user" isRequired />
 				<CommentTextarea maxLength={PlUS_SUGGESTION_FIRST_COMMENT_MAX_LENGTH} />
-				<div className="plus__modal-buttons">
-					<SubmitButton disabled={Boolean(selectedUserErrorMessage)}>
-						Submit
-					</SubmitButton>
-					<LinkButton
-						to={plusSuggestionPage()}
-						variant="minimal-destructive"
-						size="tiny"
-					>
-						Cancel
-					</LinkButton>
+				<div>
+					<SubmitButton>Submit</SubmitButton>
 				</div>
 			</Form>
-		</Dialog>
+		</SendouDialog>
 	);
-}
-
-function getSelectedUserErrorMessage({
-	suggestions,
-	targetPlusTier,
-	suggested,
-}: {
-	suggestions: NonNullable<PlusSuggestionsLoaderData["suggestions"]>;
-	targetPlusTier: number;
-	suggested?: Pick<UserWithPlusTier, "id" | "plusTier">;
-}) {
-	if (!suggested) return;
-
-	if (
-		playerAlreadyMember({
-			suggested,
-			targetPlusTier,
-		})
-	) {
-		return `This user already has access to +${targetPlusTier}`;
-	}
-	if (playerAlreadySuggested({ targetPlusTier, suggestions, suggested })) {
-		return `This user was already suggested to +${targetPlusTier}`;
-	}
-
-	return;
 }
 
 export function CommentTextarea({ maxLength }: { maxLength: number }) {

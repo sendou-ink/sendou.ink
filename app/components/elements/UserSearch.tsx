@@ -13,6 +13,7 @@ import {
 	SelectValue,
 } from "react-aria-components";
 import { Autocomplete } from "react-aria-components";
+import { useTranslation } from "react-i18next";
 import { useDebounce } from "react-use";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouLabel } from "~/components/elements/Label";
@@ -124,6 +125,8 @@ function UserItem({
 				id: "PLACEHOLDER";
 		  };
 }) {
+	const { t } = useTranslation(["common"]);
+
 	// for some reason the `renderEmptyState` on ListBox is not working
 	// so doing this as a workaround
 	if (typeof item.id === "string") {
@@ -135,8 +138,8 @@ function UserItem({
 				className={userSearchStyles.placeholder}
 			>
 				{item.id === "PLACEHOLDER"
-					? "Search users by username, profile URL or Discord ID..."
-					: "No users matching your search found"}
+					? t("common:forms.userSearch.placeholder")
+					: t("common:forms.userSearch.noResults")}
 			</ListBoxItem>
 		);
 	}

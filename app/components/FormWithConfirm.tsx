@@ -2,10 +2,10 @@ import { type FetcherWithComponents, useFetcher } from "@remix-run/react";
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { SendouDialog } from "~/components/elements/Dialog";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import invariant from "~/utils/invariant";
 import { Button, type ButtonProps } from "./Button";
-import { Dialog } from "./Dialog";
 import { SubmitButton } from "./SubmitButton";
 
 export function FormWithConfirm({
@@ -54,6 +54,7 @@ export function FormWithConfirm({
 		}
 	}, [fetcher.state, closeDialog]);
 
+	// xxx: onclick outside dismiss not working (e.g. accept scrim page)
 	return (
 		<>
 			{isMounted
@@ -73,10 +74,10 @@ export function FormWithConfirm({
 						document.body,
 					)
 				: null}
-			<Dialog isOpen={dialogOpen} close={closeDialog} className="text-center">
+			<SendouDialog isOpen={dialogOpen} onClose={closeDialog}>
 				<div className="stack md">
-					<h2 className="text-sm">{dialogHeading}</h2>
-					<div className="stack horizontal md justify-center">
+					<h2 className="text-md text-center">{dialogHeading}</h2>
+					<div className="stack horizontal md justify-center mt-2">
 						<SubmitButton
 							form={id}
 							variant={submitButtonVariant}
@@ -89,7 +90,7 @@ export function FormWithConfirm({
 						</Button>
 					</div>
 				</div>
-			</Dialog>
+			</SendouDialog>
 			{React.cloneElement(children, {
 				// @ts-expect-error broke with @types/react upgrade. TODO: figure out narrower type than React.ReactNode
 				onClick: openDialog, // TODO: when SendouButton has overtaken Button, this line can be removed

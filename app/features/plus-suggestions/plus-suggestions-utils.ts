@@ -131,14 +131,14 @@ function suggestionHasNoOtherComments({
 	throw new Error(`Invalid suggestion id: ${suggestionId}`);
 }
 
-interface CanSuggestNewUserFEArgs {
+interface CanSuggestNewUserArgs {
 	user?: Pick<UserWithPlusTier, "id" | "plusTier">;
 	suggestions: PlusSuggestionRepository.FindAllByMonthItem[];
 }
-export function canSuggestNewUserFE({
+export function canSuggestNewUser({
 	user,
 	suggestions,
-}: CanSuggestNewUserFEArgs) {
+}: CanSuggestNewUserArgs) {
 	const votingActive =
 		process.env.NODE_ENV === "test" ? false : isVotingActive();
 
@@ -152,24 +152,6 @@ export function canSuggestNewUserFE({
 	]);
 }
 
-interface CanSuggestNewUserBEArgs extends CanSuggestNewUserFEArgs {
-	suggested: Pick<UserWithPlusTier, "id" | "plusTier">;
-	targetPlusTier: NonNullable<UserWithPlusTier["plusTier"]>;
-}
-export function canSuggestNewUserBE({
-	user,
-	suggestions,
-	suggested,
-	targetPlusTier,
-}: CanSuggestNewUserBEArgs) {
-	return allTruthy([
-		canSuggestNewUserFE({ user, suggestions }),
-		!playerAlreadySuggested({ suggestions, suggested, targetPlusTier }),
-		targetPlusTierIsSmallerOrEqual({ user, targetPlusTier }),
-		!playerAlreadyMember({ suggested, targetPlusTier }),
-	]);
-}
-
 function isPlusServerMember(user?: Pick<UserWithPlusTier, "plusTier">) {
 	return Boolean(user?.plusTier);
 }
@@ -177,14 +159,17 @@ function isPlusServerMember(user?: Pick<UserWithPlusTier, "plusTier">) {
 export function playerAlreadyMember({
 	suggested,
 	targetPlusTier,
-}: Pick<CanSuggestNewUserBEArgs, "suggested" | "targetPlusTier">) {
+}: {
+	suggested: Pick<UserWithPlusTier, "id" | "plusTier">;
+	targetPlusTier: NonNullable<UserWithPlusTier["plusTier"]>;
+}) {
 	return suggested.plusTier && suggested.plusTier <= targetPlusTier;
 }
 
 function hasUserSuggestedThisMonth({
 	user,
 	suggestions,
-}: Pick<CanSuggestNewUserFEArgs, "user" | "suggestions">) {
+}: Pick<CanSuggestNewUserArgs, "user" | "suggestions">) {
 	return suggestions.some(
 		(suggestion) => suggestion.suggestions[0].author.id === user?.id,
 	);

@@ -1,0 +1,102 @@
+.overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 10;
+	overflow-y: auto;
+	background-color: rgba(0, 0, 0, 0.25);
+	display: flex;
+	min-height: 100%;
+	align-items: center;
+	justify-content: center;
+	padding: 1rem;
+	text-align: center;
+	backdrop-filter: blur(10px); /* Adjust blur value as needed */
+}
+
+.overlay[data-entering] {
+	animation: fade-in 300ms ease-out;
+}
+
+.overlay[data-exiting] {
+	animation: fade-out 200ms ease-in;
+}
+
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes fade-out {
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+	}
+}
+
+.modal {
+	width: 100%;
+	max-width: 28rem;
+	overflow: hidden;
+	border-radius: 1rem;
+	background-color: var(--bg-lighter-solid);
+	border: 2.5px solid var(--border);
+	padding: var(--s-6);
+	text-align: left;
+	vertical-align: middle;
+	box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px
+		rgba(0, 0, 0, 0.05);
+}
+
+.modal[data-entering] {
+	animation: zoom-in-95 300ms ease-out;
+}
+
+.modal[data-exiting] {
+	animation: zoom-out-95 200ms ease-in;
+}
+
+@keyframes zoom-in-95 {
+	from {
+		opacity: 0;
+		transform: scale(0.95);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+@keyframes zoom-out-95 {
+	from {
+		opacity: 1;
+		transform: scale(1);
+	}
+	to {
+		opacity: 0;
+		transform: scale(0.95);
+	}
+}
+
+.dialog {
+	outline: none;
+	position: relative;
+}
+
+.headingContainer {
+	border-bottom: 2px solid var(--border);
+	padding-block-end: var(--s-2);
+	margin-block-end: var(--s-4);
+	display: flex;
+	justify-content: space-between;
+	align-items: start;
+}
+
+.heading {
+	font-size: var(--fonts-lg);
+}
