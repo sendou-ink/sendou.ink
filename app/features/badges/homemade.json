@@ -223,6 +223,10 @@
 		"displayName": "fractured cup",
 		"authorDiscordId": "960213930586824766"
 	},
+		"freedomdive": {
+		"displayName": "Freedom Dive ↓",
+		"authorDiscordId": "631246535560265749"
+	},
 	"frostbitebase2x": {
 		"displayName": "Frostbite Ascent (Top 8)",
 		"authorDiscordId": "354880982890971136"
@@ -867,6 +871,10 @@
 		"displayName": "Tough Tides",
 		"authorDiscordId": "1170249805373657093"
 	},
+		"whitecat": {
+		"displayName": "White Cat Achievement",
+		"authorDiscordId": "631246535560265749"
+	},
 	"wi-wi-wi": {
 		"displayName": "Wi Wi Wi Cat",
 		"authorDiscordId": "530722502603833346"
@@ -878,13 +886,5 @@
 	"zekkocup": {
 		"displayName": "Zekko Cup",
 		"authorDiscordId": "1320944066002681876"
-	},
-	"freedomdive": {
-		"displayName": "Freedom Dive ↓",
-		"authorDiscordId": "631246535560265749"
-	},
-	"whitecat": {
-		"displayName": "White Cat Achievement",
-		"authorDiscordId": "631246535560265749"
 	}
 }
