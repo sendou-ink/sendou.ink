@@ -183,7 +183,7 @@ function RequestScrimModal({
 	invariant(post, "Post not found");
 
 	return (
-		<SendouDialog onClose={close} heading={t("scrims:requestModal.title")}>
+		<SendouDialog heading={t("scrims:requestModal.title")} onClose={close}>
 			<MyForm
 				schema={newRequestSchema}
 				defaultValues={{
@@ -482,7 +482,6 @@ function ScrimsTable({
 											<FormWithConfirm
 												dialogHeading={t("scrims:deleteModal.title")}
 												submitButtonText={t("common:actions.delete")}
-												cancelButtonText={t("common:actions.nevermind")}
 												fields={[
 													["scrimPostId", post.id],
 													["_action", "DELETE_POST"],
@@ -522,7 +521,6 @@ function ScrimsTable({
 										<FormWithConfirm
 											dialogHeading={t("scrims:cancelModal.title")}
 											submitButtonText={t("common:actions.cancel")}
-											cancelButtonText={t("common:actions.nevermind")}
 											fields={[
 												["scrimPostRequestId", post.requests[0].id],
 												["_action", "CANCEL_REQUEST"],
@@ -641,7 +639,6 @@ function RequestRow({
 						]}
 						submitButtonVariant="primary"
 						submitButtonText={t("common:actions.accept")}
-						cancelButtonVariant="destructive"
 					>
 						<Button size="tiny" className="ml-auto">
 							{t("common:actions.accept")}

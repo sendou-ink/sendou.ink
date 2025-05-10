@@ -1,4 +1,4 @@
-import { Form, useMatches, useNavigate } from "@remix-run/react";
+import { Form, useMatches } from "@remix-run/react";
 import * as React from "react";
 import { Label } from "~/components/Label";
 import { Redirect } from "~/components/Redirect";
@@ -22,7 +22,6 @@ export default function PlusNewSuggestionModalPage() {
 	const user = useUser();
 	const matches = useMatches();
 	const data = atOrError(matches, -2).data as PlusSuggestionsLoaderData;
-	const navigate = useNavigate();
 
 	const tierOptions = PLUS_TIERS.filter((tier) => {
 		// user will be redirected anyway
@@ -48,7 +47,7 @@ export default function PlusNewSuggestionModalPage() {
 	return (
 		<SendouDialog
 			heading="Adding a new suggestion"
-			onClose={() => navigate(plusSuggestionPage())}
+			onCloseTo={plusSuggestionPage()}
 		>
 			<Form method="post" className="stack md">
 				<div>

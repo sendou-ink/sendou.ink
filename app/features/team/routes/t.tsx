@@ -177,9 +177,9 @@ function NewTeamDialog() {
 
 	return (
 		<SendouDialog
+			heading={t("team:newTeam.header")}
 			isOpen={isOpen}
 			onCloseTo={TEAM_SEARCH_PAGE}
-			heading={t("team:newTeam.header")}
 		>
 			<Form method="post" className="stack md">
 				<div className="">

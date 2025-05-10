@@ -777,7 +777,6 @@ function BottomSection({
 					...(!data.groupMemberOf ? [["adminReport", "on"] as const] : []),
 				]}
 				submitButtonText={t("common:actions.cancel")}
-				cancelButtonText={t("common:actions.nevermind")}
 				fetcher={cancelFetcher}
 			>
 				<Button

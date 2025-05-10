@@ -66,10 +66,11 @@
 	margin-block-end: var(--s-4);
 	display: flex;
 	justify-content: space-between;
-	align-items: start;
+	align-items: center;
+	margin-block-start: -2px;
 }
 
-.headingContainer:has(:not(.heading)) {
+.noHeading {
 	margin-block-start: -14px;
 }
 

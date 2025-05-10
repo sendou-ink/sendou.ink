@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import invariant from "~/utils/invariant";
-import { Button, type ButtonProps } from "./Button";
+import type { ButtonProps } from "./Button";
 import { SubmitButton } from "./SubmitButton";
 
 export function FormWithConfirm({
@@ -13,11 +13,9 @@ export function FormWithConfirm({
 	children,
 	dialogHeading,
 	submitButtonText,
-	cancelButtonText,
 	action,
 	submitButtonTestId = "submit-button",
 	submitButtonVariant = "destructive",
-	cancelButtonVariant,
 	fetcher: _fetcher,
 }: {
 	fields?: (
@@ -27,11 +25,9 @@ export function FormWithConfirm({
 	children: React.ReactNode;
 	dialogHeading: string;
 	submitButtonText?: string;
-	cancelButtonText?: string;
 	action?: string;
 	submitButtonTestId?: string;
 	submitButtonVariant?: ButtonProps["variant"];
-	cancelButtonVariant?: ButtonProps["variant"];
 	fetcher?: FetcherWithComponents<any>;
 }) {
 	const componentsFetcher = useFetcher();
@@ -54,7 +50,6 @@ export function FormWithConfirm({
 		}
 	}, [fetcher.state, closeDialog]);
 
-	// xxx: onclick outside dismiss not working (e.g. accept scrim page)
 	return (
 		<>
 			{isMounted
@@ -74,7 +69,12 @@ export function FormWithConfirm({
 						document.body,
 					)
 				: null}
-			<SendouDialog isOpen={dialogOpen} onClose={closeDialog}>
+			<SendouDialog
+				isOpen={dialogOpen}
+				onClose={closeDialog}
+				onOpenChange={closeDialog}
+				isDismissable
+			>
 				<div className="stack md">
 					<h2 className="text-md text-center">{dialogHeading}</h2>
 					<div className="stack horizontal md justify-center mt-2">
@@ -85,9 +85,6 @@ export function FormWithConfirm({
 						>
 							{submitButtonText ?? t("common:actions.delete")}
 						</SubmitButton>
-						<Button onClick={closeDialog} variant={cancelButtonVariant}>
-							{cancelButtonText ?? t("common:actions.cancel")}
-						</Button>
 					</div>
 				</div>
 			</SendouDialog>

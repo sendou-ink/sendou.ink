@@ -31,15 +31,19 @@ interface SendouDialogProps extends ModalOverlayProps {
  * @example
  * // Example usage with implicit isOpen
  * return (
- *   <SendouDialog onCloseTo={previousPageUrl()}>
+ *   <SendouDialog
+ *     heading="Dialog Title"
+ *     onCloseTo={previousPageUrl()}
+ *   >
  *     This is the dialog content.
- *    </SendouDialog>
+ *   </SendouDialog>
  * );
  *
  * @example
  * // Example usage with a SendouButton as the trigger
  * return (
  *   <SendouDialog
+ *     heading="Dialog Title"
  *     trigger={<SendouButton>Open Dialog</SendouButton>}
  *   >
  *     This is the dialog content.
@@ -51,16 +55,14 @@ export function SendouDialog({
 	children,
 	...rest
 }: SendouDialogProps) {
-	const isOpen = () => {
-		if (trigger) return rest.isOpen;
-		if (typeof rest.isOpen === "boolean") return rest.isOpen;
-
-		return true;
-	};
+	if (!trigger) {
+		const props =
+			typeof rest.isOpen === "boolean" ? rest : { isOpen: true, ...rest };
+		return <DialogModal {...props}>{children}</DialogModal>;
+	}
 
 	return (
-		// TODO: doing controlled open like this causes a warning, figure out why isOpen on Modal is not working like the docs indicate
-		<DialogTrigger isOpen={isOpen()}>
+		<DialogTrigger>
 			{trigger}
 			<DialogModal {...rest}>{children}</DialogModal>
 		</DialogTrigger>
@@ -71,6 +73,7 @@ function DialogModal({
 	children,
 	heading,
 	showHeading = true,
+	className,
 	...rest
 }: Omit<SendouDialogProps, "trigger">) {
 	const navigate = useNavigate();
@@ -85,11 +88,15 @@ function DialogModal({
 	};
 
 	return (
-		<ModalOverlay className={styles.overlay}>
-			<Modal className={clsx(rest.className, styles.modal)} {...rest}>
+		<ModalOverlay className={styles.overlay} {...rest}>
+			<Modal className={clsx(className, styles.modal)}>
 				<Dialog className={styles.dialog}>
 					{showHeading ? (
-						<div className={styles.headingContainer}>
+						<div
+							className={clsx(styles.headingContainer, {
+								[styles.noHeading]: !heading,
+							})}
+						>
 							{heading ? (
 								<Heading slot="title" className={styles.heading}>
 									{heading}
