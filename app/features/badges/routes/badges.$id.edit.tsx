@@ -23,7 +23,6 @@ export default function EditBadgePage() {
 
 	return (
 		<SendouDialog
-			isOpen
 			heading={`Editing winners of ${badge.displayName}`}
 			onCloseTo={atOrError(matches, -2).pathname}
 		>

@@ -47,7 +47,6 @@ export default function PlusNewSuggestionModalPage() {
 
 	return (
 		<SendouDialog
-			isOpen
 			heading="Adding a new suggestion"
 			onClose={() => navigate(plusSuggestionPage())}
 		>

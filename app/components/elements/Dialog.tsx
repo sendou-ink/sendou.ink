@@ -29,15 +29,11 @@ interface SendouDialogProps extends ModalOverlayProps {
  * It supports both controlled and uncontrolled modes for managing the dialog's open state.
  *
  * @example
- * // Example usage with controlled `isOpen` prop
- * const [isOpen, setIsOpen] = useState(false);
+ * // Example usage with implicit isOpen
  * return (
- *   <>
- *     <button onClick={() => setIsOpen(true)}>Open Dialog</button>
- *     <SendouDialog isOpen={isOpen}>
- *       <p>This is the dialog content.</p>
- *     </SendouDialog>
- *   </>
+ *   <SendouDialog onCloseTo={previousPageUrl()}>
+ *     This is the dialog content.
+ *    </SendouDialog>
  * );
  *
  * @example
@@ -53,12 +49,18 @@ interface SendouDialogProps extends ModalOverlayProps {
 export function SendouDialog({
 	trigger,
 	children,
-	isOpen,
 	...rest
 }: SendouDialogProps) {
+	const isOpen = () => {
+		if (trigger) return rest.isOpen;
+		if (typeof rest.isOpen === "boolean") return rest.isOpen;
+
+		return true;
+	};
+
 	return (
 		// TODO: doing controlled open like this causes a warning, figure out why isOpen on Modal is not working like the docs indicate
-		<DialogTrigger isOpen={isOpen}>
+		<DialogTrigger isOpen={isOpen()}>
 			{trigger}
 			<DialogModal {...rest}>{children}</DialogModal>
 		</DialogTrigger>

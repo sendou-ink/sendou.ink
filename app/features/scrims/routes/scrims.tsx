@@ -7,11 +7,11 @@ import * as R from "remeda";
 import type { z } from "zod";
 import { Avatar } from "~/components/Avatar";
 import { Button, LinkButton } from "~/components/Button";
-import { Dialog } from "~/components/Dialog";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Table } from "~/components/Table";
 import { SendouButton } from "~/components/elements/Button";
+import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
 import { MyForm } from "~/components/form/MyForm";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
@@ -183,10 +183,9 @@ function RequestScrimModal({
 	invariant(post, "Post not found");
 
 	return (
-		<Dialog isOpen>
+		<SendouDialog onClose={close} heading={t("scrims:requestModal.title")}>
 			<MyForm
 				schema={newRequestSchema}
-				title={t("scrims:requestModal.title")}
 				defaultValues={{
 					_action: "NEW_REQUEST",
 					scrimPostId: postId,
@@ -200,7 +199,6 @@ function RequestScrimModal({
 									) as unknown as number[],
 								},
 				}}
-				handleCancel={close}
 			>
 				<ScrimsDaySeparatedTables posts={[post]} showPopovers={false} />
 				<div className="font-semi-bold text-lighter italic">
@@ -212,7 +210,7 @@ function RequestScrimModal({
 				<Divider />
 				<WithFormField usersTeams={data.teams} />
 			</MyForm>
-		</Dialog>
+		</SendouDialog>
 	);
 }
 
