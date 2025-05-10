@@ -116,7 +116,7 @@ export function CustomizedColorsInput({
 					},
 				)}
 			</div>
-			<Label>Contrast Table</Label>
+			<Label>Color contrast table</Label>
 			<div className="colors__grid colors__grid-extended">
 				<div>First Color</div>
 				<div>Second Color</div>
@@ -153,8 +153,8 @@ export function CustomizedColorsInput({
 				should meet a contrast ratio of at least 4.5 (AA) for all listed color
 				combinations.
 				<br />
-				Though not required, a contrast ratio of at least 7 (AAA) is recommended
-				for all listed color combinations.
+				Though not required, a contrast ratio of at least 7 (AAA) is
+				recommended.
 				<br />
 				Thank you for making the web a more accessible place!
 			</pre>
@@ -167,7 +167,8 @@ function handleContrast(
 	colors: CustomColorsRecord,
 ) {
 	/* 
-	Excluded because bg-lightest is not visible to the user:
+	Excluded because bg-lightest is not visible to the user, 
+	tho these should be checked as well:
 	["bg-lightest", "text"],
 	["bg-lightest", "theme-secondary"],
 	*/
