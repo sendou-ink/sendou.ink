@@ -67,7 +67,7 @@ export function CustomizedColorsInput({
 				document.body.style.setProperty(`--${color}`, value);
 			}
 		};
-	}, []);
+	});
 
 	return (
 		<div className="w-full">
@@ -230,9 +230,9 @@ function parseCSSVar(cssVar: string) {
 
 	if (match[4]) {
 		return `#${toHex(r)}${toHex(g)}${toHex(b)}${toHex(alpha)}`;
-	} else {
-		return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 	}
+
+	return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
 function checkContrast(colorA: string, colorB: string) {
@@ -259,14 +259,14 @@ function checkContrast(colorA: string, colorB: string) {
 }
 
 function hexToRgb(hex: string) {
-	hex = hex.replace(/^#/, "");
+	const noHash = hex.replace(/^#/, "");
 
-	const r = Number.parseInt(hex.substring(0, 2), 16);
-	const g = Number.parseInt(hex.substring(2, 4), 16);
-	const b = Number.parseInt(hex.substring(4, 6), 16);
+	const r = Number.parseInt(noHash.substring(0, 2), 16);
+	const g = Number.parseInt(noHash.substring(2, 4), 16);
+	const b = Number.parseInt(noHash.substring(4, 6), 16);
 
-	if (hex.length === 8) {
-		const alpha = Number.parseInt(hex.substring(6, 8), 16) / 255;
+	if (noHash.length === 8) {
+		const alpha = Number.parseInt(noHash.substring(6, 8), 16) / 255;
 		return [
 			Math.round(r * alpha),
 			Math.round(g * alpha),
@@ -279,10 +279,11 @@ function hexToRgb(hex: string) {
 
 function calculateLuminance(rgb: number[]) {
 	const [r, g, b] = rgb.map((value) => {
-		value = value / 255;
-		return value <= 0.03928
-			? value / 12.92
-			: Math.pow((value + 0.055) / 1.055, 2.4);
+		const normalized = value / 255;
+
+		return normalized <= 0.03928
+			? normalized / 12.92
+			: ((value + 0.055) / 1.055) ** 2.4;
 	});
 
 	return 0.2126 * r + 0.7152 * g + 0.0722 * b;

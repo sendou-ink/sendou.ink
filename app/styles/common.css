@@ -1256,7 +1256,6 @@ dialog::backdrop {
 	font-size: var(--fonts-sm);
 	font-weight: var(--bold);
 	grid-template-columns: repeat(3, max-content);
-	row-gap: var(--s-3);
 	padding: var(--s-3);
 	border: 2px solid var(--border);
 	border-radius: var(--rounded-sm);
