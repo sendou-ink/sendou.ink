@@ -18,6 +18,23 @@ export function CustomizedColorsInput({
 		initialColors ?? {},
 	);
 
+	useDebounce(() => {
+		for (const color in colors) {
+			const value = colors[color as (typeof CUSTOM_CSS_VAR_COLORS)[number]] ?? "";
+			document.body.style.setProperty(`--${color}`, value);
+		}
+	}, 100, [colors]);
+
+	React.useEffect(() => {
+        return () => {
+			document.body.removeAttribute("style");
+			for (const color in initialColors) {
+				const value = initialColors[color as (typeof CUSTOM_CSS_VAR_COLORS)[number]] ?? "";
+				document.body.style.setProperty(`--${color}`, value);
+			}
+        };
+    }, []);
+
 	return (
 		<div className="w-full">
 			<Label>{t("custom.colors.title")}</Label>
