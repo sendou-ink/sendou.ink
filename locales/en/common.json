@@ -262,6 +262,10 @@
 	"custom.colors.theme": "Theme",
 	"custom.colors.theme-secondary": "Theme (secondary)",
 	"custom.colors.chat": "Chat name",
+	"custom.colors.contrast.title": "Color contrast table",
+	"custom.colors.contrast.first-color": "First color",
+	"custom.colors.contrast.second-color": "Second color",
+	"custom.colors.contrast.description": "The above table shows the contrast ratio between two colors listed in the first two columns. \nTo make your custom colors accessible to as many people as possible, you should meet a contrast ratio of at least 4.5 (AA) for all listed color combinations. \nThough not required, a contrast ratio of at least 7 (AAA) is recommended. \nThank you for making the web a more accessible place!",
 
 	"divisions.WEST": "Tentatek",
 	"divisions.JPN": "Takoroka",

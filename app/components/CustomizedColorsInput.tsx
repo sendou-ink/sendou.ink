@@ -116,10 +116,10 @@ export function CustomizedColorsInput({
 					},
 				)}
 			</div>
-			<Label>Color contrast table</Label>
+			<Label>{t("custom.colors.contrast.title")}</Label>
 			<div className="colors__grid colors__grid-extended">
-				<div>First Color</div>
-				<div>Second Color</div>
+				<div>{t("custom.colors.contrast.first-color")}</div>
+				<div>{t("custom.colors.contrast.second-color")}</div>
 				<div>AA</div>
 				<div>AAA</div>
 				{contrasts.map((contrast) => {
@@ -146,17 +146,7 @@ export function CustomizedColorsInput({
 				})}
 			</div>
 			<pre className="colors__description">
-				The contrast table shows the contrast ratio between two colors listed in
-				the first two columns.
-				<br />
-				To make your custom colors accessible to as many people as possible, you
-				should meet a contrast ratio of at least 4.5 (AA) for all listed color
-				combinations.
-				<br />
-				Though not required, a contrast ratio of at least 7 (AAA) is
-				recommended.
-				<br />
-				Thank you for making the web a more accessible place!
+				{t("custom.colors.contrast.description")}
 			</pre>
 		</div>
 	);
