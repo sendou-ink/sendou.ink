@@ -1,6 +1,6 @@
 import * as React from "react";
-import { useDebounce } from "react-use";
 import { useTranslation } from "react-i18next";
+import { useDebounce } from "react-use";
 import { CUSTOM_CSS_VAR_COLORS } from "~/constants";
 import { Button } from "./Button";
 import { Label } from "./Label";
@@ -10,8 +10,8 @@ type CustomColorsRecord = Partial<
 >;
 
 type ContrastCombination = [
-	Exclude<(typeof CUSTOM_CSS_VAR_COLORS)[number], "bg-lightest">, 
-	Exclude<(typeof CUSTOM_CSS_VAR_COLORS)[number], "bg-lightest">
+	Exclude<(typeof CUSTOM_CSS_VAR_COLORS)[number], "bg-lightest">,
+	Exclude<(typeof CUSTOM_CSS_VAR_COLORS)[number], "bg-lightest">,
 ];
 
 type ContrastArray = {
@@ -20,7 +20,7 @@ type ContrastArray = {
 		AA: { failed: boolean; ratio: string };
 		AAA: { failed: boolean; ratio: string };
 	};
-}[]
+}[];
 
 export function CustomizedColorsInput({
 	initialColors,
@@ -32,17 +32,24 @@ export function CustomizedColorsInput({
 		initialColors ?? {},
 	);
 
-	const [defaultColors, setDefaultColors] = React.useState<Record<string, string>[]>([]);
+	const [defaultColors, setDefaultColors] = React.useState<
+		Record<string, string>[]
+	>([]);
 	const [contrasts, setContrast] = React.useState<ContrastArray>([]);
-	
-	useDebounce(() => {
-		for (const color in colors) {
-			const value = colors[color as (typeof CUSTOM_CSS_VAR_COLORS)[number]] ?? "";
-			document.body.style.setProperty(`--${color}`, value);
 
-			setContrast(handleContrast(defaultColors, colors));
-		}
-	}, 100, [colors]);
+	useDebounce(
+		() => {
+			for (const color in colors) {
+				const value =
+					colors[color as (typeof CUSTOM_CSS_VAR_COLORS)[number]] ?? "";
+				document.body.style.setProperty(`--${color}`, value);
+
+				setContrast(handleContrast(defaultColors, colors));
+			}
+		},
+		100,
+		[colors],
+	);
 
 	React.useEffect(() => {
 		const colors = CUSTOM_CSS_VAR_COLORS.map((color) => {
@@ -52,14 +59,15 @@ export function CustomizedColorsInput({
 		});
 		setDefaultColors(colors);
 
-        return () => {
+		return () => {
 			document.body.removeAttribute("style");
 			for (const color in initialColors) {
-				const value = initialColors[color as (typeof CUSTOM_CSS_VAR_COLORS)[number]] ?? "";
+				const value =
+					initialColors[color as (typeof CUSTOM_CSS_VAR_COLORS)[number]] ?? "";
 				document.body.style.setProperty(`--${color}`, value);
 			}
-        };
-    }, []);
+		};
+	}, []);
 
 	return (
 		<div className="w-full">
@@ -138,11 +146,15 @@ export function CustomizedColorsInput({
 				})}
 			</div>
 			<pre className="colors__description">
-				The contrast table shows the contrast ratio between two colors listed in the first two columns.
+				The contrast table shows the contrast ratio between two colors listed in
+				the first two columns.
 				<br />
-				To make your custom colors accessible to as many people as possible, you should meet a contrast ratio of at least 4.5 (AA) for all listed color combinations.
+				To make your custom colors accessible to as many people as possible, you
+				should meet a contrast ratio of at least 4.5 (AA) for all listed color
+				combinations.
 				<br />
-				Though not required, a contrast ratio of at least 7 (AAA) is recommended for all listed color combinations.
+				Though not required, a contrast ratio of at least 7 (AAA) is recommended
+				for all listed color combinations.
 				<br />
 				Thank you for making the web a more accessible place!
 			</pre>
@@ -150,7 +162,10 @@ export function CustomizedColorsInput({
 	);
 }
 
-function handleContrast(defaultColors: Record<string, string>[], colors: CustomColorsRecord) {
+function handleContrast(
+	defaultColors: Record<string, string>[],
+	colors: CustomColorsRecord,
+) {
 	/* 
 	Excluded because bg-lightest is not visible to the user:
 	["bg-lightest", "text"],
@@ -163,13 +178,15 @@ function handleContrast(defaultColors: Record<string, string>[], colors: CustomC
 		["text-lighter", "bg"],
 		["bg-lighter", "theme"],
 		["bg-darker", "theme"],
-	]
+	];
 
-	let results: ContrastArray = [];
+	const results: ContrastArray = [];
 
 	for (const [A, B] of combinations) {
-		const valueA = colors[A as (typeof CUSTOM_CSS_VAR_COLORS)[number]] ?? undefined;
-		const valueB = colors[B as (typeof CUSTOM_CSS_VAR_COLORS)[number]] ?? undefined;
+		const valueA =
+			colors[A as (typeof CUSTOM_CSS_VAR_COLORS)[number]] ?? undefined;
+		const valueB =
+			colors[B as (typeof CUSTOM_CSS_VAR_COLORS)[number]] ?? undefined;
 
 		const colorA = valueA ?? defaultColors.find((color) => color[A])?.[A];
 		const colorB = valueB ?? defaultColors.find((color) => color[B])?.[B];
@@ -196,19 +213,19 @@ function parseCSSVar(cssVar: string) {
 		return "#000000";
 	}
 
-	const r = parseInt(match[1], 10);
-	const g = parseInt(match[2], 10);
-	const b = parseInt(match[3], 10);
+	const r = Number.parseInt(match[1], 10);
+	const g = Number.parseInt(match[2], 10);
+	const b = Number.parseInt(match[3], 10);
 
 	let alpha = 255;
 	if (match[4]) {
-		const percentage = parseInt(match[4], 10);
+		const percentage = Number.parseInt(match[4], 10);
 		alpha = Math.round((percentage / 100) * 255);
 	}
 
 	const toHex = (value: number) => {
 		const hex = value.toString(16);
-		return hex.length === 1 ? '0' + hex : hex;
+		return hex.length === 1 ? `0${hex}` : hex;
 	};
 
 	if (match[4]) {
@@ -221,7 +238,7 @@ function parseCSSVar(cssVar: string) {
 function checkContrast(colorA: string, colorB: string) {
 	const rgb1 = hexToRgb(colorA);
 	const rgb2 = hexToRgb(colorB);
-	
+
 	const luminanceA = calculateLuminance(rgb1);
 	const luminanceB = calculateLuminance(rgb2);
 
@@ -240,33 +257,33 @@ function checkContrast(colorA: string, colorB: string) {
 		},
 	};
 }
-  
+
 function hexToRgb(hex: string) {
-    hex = hex.replace(/^#/, '');
-    
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    
-    if (hex.length === 8) {
-        const alpha = parseInt(hex.substring(6, 8), 16) / 255;
+	hex = hex.replace(/^#/, "");
+
+	const r = Number.parseInt(hex.substring(0, 2), 16);
+	const g = Number.parseInt(hex.substring(2, 4), 16);
+	const b = Number.parseInt(hex.substring(4, 6), 16);
+
+	if (hex.length === 8) {
+		const alpha = Number.parseInt(hex.substring(6, 8), 16) / 255;
 		return [
 			Math.round(r * alpha),
 			Math.round(g * alpha),
-			Math.round(b * alpha)
+			Math.round(b * alpha),
 		];
-    }
-    
-    return [r, g, b];
+	}
+
+	return [r, g, b];
 }
-  
+
 function calculateLuminance(rgb: number[]) {
-	const [r, g, b] = rgb.map(value => {
-	  value = value / 255;
-	  return value <= 0.03928
-		? value / 12.92
-		: Math.pow((value + 0.055) / 1.055, 2.4);
+	const [r, g, b] = rgb.map((value) => {
+		value = value / 255;
+		return value <= 0.03928
+			? value / 12.92
+			: Math.pow((value + 0.055) / 1.055, 2.4);
 	});
-	
+
 	return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
