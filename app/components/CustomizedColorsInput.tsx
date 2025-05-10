@@ -174,11 +174,11 @@ function handleContrast(
 	*/
 	const combinations: ContrastCombination[] = [
 		["bg", "text"],
+		["bg", "text-lighter"],
 		["bg-darker", "text"],
-		["bg-lighter", "text-lighter"],
-		["text-lighter", "bg"],
-		["bg-lighter", "theme"],
 		["bg-darker", "theme"],
+		["bg-lighter", "text-lighter"],
+		["bg-lighter", "theme"],
 	];
 
 	const results: ContrastArray = [];
