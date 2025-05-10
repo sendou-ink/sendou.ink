@@ -86,17 +86,21 @@ function DialogModal({
 
 	return (
 		<ModalOverlay className={styles.overlay}>
-			<Modal isOpen className={clsx(rest.className, styles.modal)}>
+			<Modal className={clsx(rest.className, styles.modal)} {...rest}>
 				<Dialog className={styles.dialog}>
 					{showHeading ? (
 						<div className={styles.headingContainer}>
-							<Heading slot="title" className={styles.heading}>
-								{heading}
-							</Heading>
+							{heading ? (
+								<Heading slot="title" className={styles.heading}>
+									{heading}
+								</Heading>
+							) : null}
 							{showCloseButton ? (
 								<SendouButton
 									icon={<CrossIcon />}
 									variant="minimal-destructive"
+									className="ml-auto"
+									slot="close"
 									onPress={onClose}
 								/>
 							) : null}

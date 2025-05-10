@@ -17,25 +17,12 @@
 	animation: fade-in 300ms ease-out;
 }
 
-.overlay[data-exiting] {
-	animation: fade-out 200ms ease-in;
-}
-
 @keyframes fade-in {
 	from {
 		opacity: 0;
 	}
 	to {
 		opacity: 1;
-	}
-}
-
-@keyframes fade-out {
-	from {
-		opacity: 1;
-	}
-	to {
-		opacity: 0;
 	}
 }
 
@@ -57,10 +44,6 @@
 	animation: zoom-in-95 300ms ease-out;
 }
 
-.modal[data-exiting] {
-	animation: zoom-out-95 200ms ease-in;
-}
-
 @keyframes zoom-in-95 {
 	from {
 		opacity: 0;
@@ -69,17 +52,6 @@
 	to {
 		opacity: 1;
 		transform: scale(1);
-	}
-}
-
-@keyframes zoom-out-95 {
-	from {
-		opacity: 1;
-		transform: scale(1);
-	}
-	to {
-		opacity: 0;
-		transform: scale(0.95);
 	}
 }
 
@@ -95,6 +67,10 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: start;
+}
+
+.headingContainer:has(:not(.heading)) {
+	margin-block-start: -14px;
 }
 
 .heading {
