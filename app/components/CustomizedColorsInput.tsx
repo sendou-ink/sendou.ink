@@ -31,7 +31,7 @@ export function CustomizedColorsInput({
 								<input
 									type="color"
 									className="plain"
-									value={colors[cssVar]}
+									value={colors[cssVar] ?? "#000000"}
 									onChange={(e) => {
 										const extras: Record<string, string> = {};
 										if (cssVar === "bg-lighter") {
