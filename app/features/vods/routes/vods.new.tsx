@@ -59,7 +59,7 @@ export default function NewVodPage() {
 	return (
 		<Main halfWidth>
 			<MyForm
-				title={
+				heading={
 					data.vodToEdit
 						? t("vods:forms.title.edit")
 						: t("vods:forms.title.create")
