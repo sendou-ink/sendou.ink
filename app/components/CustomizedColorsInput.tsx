@@ -43,9 +43,9 @@ export function CustomizedColorsInput({
 				const value =
 					colors[color as (typeof CUSTOM_CSS_VAR_COLORS)[number]] ?? "";
 				document.body.style.setProperty(`--${color}`, value);
-
-				setContrast(handleContrast(defaultColors, colors));
 			}
+
+			setContrast(handleContrast(defaultColors, colors));
 		},
 		100,
 		[colors],
@@ -67,7 +67,7 @@ export function CustomizedColorsInput({
 				document.body.style.setProperty(`--${color}`, value);
 			}
 		};
-	});
+	}, [initialColors]);
 
 	return (
 		<div className="w-full">
@@ -283,7 +283,7 @@ function calculateLuminance(rgb: number[]) {
 
 		return normalized <= 0.03928
 			? normalized / 12.92
-			: ((value + 0.055) / 1.055) ** 2.4;
+			: ((normalized + 0.055) / 1.055) ** 2.4;
 	});
 
 	return 0.2126 * r + 0.7152 * g + 0.0722 * b;
