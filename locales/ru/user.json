@@ -41,7 +41,7 @@
 	"forms.errors.invalidCustomUrl.strangeCharacter": "Пользовательский URL не может содержать особые символы",
 	"forms.errors.invalidCustomUrl.duplicate": "Кто-то уже использует этот пользовательский URL",
 	"forms.errors.invalidSens": "Чувствительность наклона не может быть указана, если не указана чувствительность стика",
-	"forms.info.customUrl": "Для меценатов (Supporter & above) доступна короткая ссылка. Например, вместо sendou.ink/u/sendou может быть использована сссылка snd.ink/sendou.",
+	"forms.info.customUrl": "Для меценатов (Supporter и выше) доступна короткая ссылка. Например, вместо sendou.ink/u/sendou может быть использована сссылка snd.ink/sendou.",
 	"forms.info.battlefy": "Имя на Battlefy может быть использовано для посева и верификации в некоторых турнирах",
 
 	"search.info": "Поиск пользователей по имени Discord или Splatoon 3",
