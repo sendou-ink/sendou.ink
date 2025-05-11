@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useDebounce } from "react-use";
@@ -128,16 +129,18 @@ export function CustomizedColorsInput({
 							<div>{t(`custom.colors.${contrast.colors[0]}`)}</div>
 							<div>{t(`custom.colors.${contrast.colors[1]}`)}</div>
 							<div
-								className={`colors__contrast ${
-									contrast.contrast.AA.failed ? "fail" : "success"
-								}`}
+								className={clsx(
+									"colors__contrast",
+									contrast.contrast.AA.failed ? "fail" : "success",
+								)}
 							>
 								{contrast.contrast.AA.ratio}
 							</div>
 							<div
-								className={`colors__contrast ${
-									contrast.contrast.AAA.failed ? "fail" : "success"
-								}`}
+								className={clsx(
+									"colors__contrast",
+									contrast.contrast.AAA.failed ? "fail" : "success",
+								)}
 							>
 								{contrast.contrast.AAA.ratio}
 							</div>
