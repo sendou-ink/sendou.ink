@@ -192,33 +192,3 @@ function eventStartedInThePast(
 			databaseTimestampToDate(startTime).getTime() < new Date().getTime(),
 	);
 }
-
-// iCal limits lines to 75 octets, lines longer get split with the next beginning with whitespace
-// https://www.rfc-editor.org/rfc/rfc5545.txt       3.1.
-export function wrapICalLines(s: string): string {
-	const lines = s.split("\r\n");
-	return lines.reduce((acc, line) => {
-		if (line.length === 0) {
-			return acc;
-		}
-		if (line.length > 75) {
-			const [a, b] = [line.substring(0, 75), line.substring(75)];
-			return `${acc}${a}\r\n${wrapICalLines(`\x09${b}`)}`; // no need for \r\n, short lines will pass through check and have \r\n appended
-		}
-		return `${acc + line}\r\n`;
-	}, "");
-}
-
-// converts date to iCal utc format yyyymmddThhmmssZ
-// https://www.rfc-editor.org/rfc/rfc5545.txt       3.3.5.
-export function dateAsICalDate(date: Date): string {
-	return `${date.getUTCFullYear()}${(date.getUTCMonth() + 1)
-		.toString()
-		.padStart(2, "0")}${date.getUTCDate().toString().padStart(2, "0")}T${date
-		.getUTCHours()
-		.toString()
-		.padStart(2, "0")}${date.getUTCMinutes().toString().padStart(2, "0")}${date
-		.getUTCSeconds()
-		.toString()
-		.padStart(2, "0")}Z`;
-}
