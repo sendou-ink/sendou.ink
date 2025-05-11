@@ -1,6 +1,7 @@
 import * as ics from "ics";
 import type { PersistedCalendarEventTag } from "~/db/tables";
 import { databaseTimestampToDate } from "~/utils/dates";
+import { logger } from "~/utils/logger";
 import { CALENDAR_PAGE, SENDOU_INK_BASE_URL } from "~/utils/urls";
 import {
 	type FindAllBetweenTwoTimestampsItem,
@@ -18,8 +19,9 @@ export async function getICalendar(
 ): Promise<string | null> {
 	const startTime = new Date();
 	const endTime = new Date(startTime);
-	// get all events over the next 3 weeks
-	endTime.setDate(startTime.getDate() + 21);
+
+	// get all events over the next month, might be good to make this an parameter in the future
+	endTime.setDate(startTime.getDate() + 30);
 
 	// handle timezone mismatch between server and client
 	startTime.setHours(startTime.getHours() - 12);
@@ -31,11 +33,19 @@ export async function getICalendar(
 		tagsToFilterBy: tagsFilter,
 		onlyTournaments: tournamentsFilter,
 	});
-	if (events.length === 0) return null;
+
+	// ical doesnt allow calendars with no events
+	if (events.length === 0) {
+		logger.warn("Could not construct ical feed, no events within time period");
+		return null;
+	}
 
 	const { error, value } = eventsAsICal(events);
 
-	if (error) return null;
+	if (error) {
+		logger.error(`Error constructing ical feed: ${error}`);
+		return null;
+	}
 
 	return value as string;
 }
