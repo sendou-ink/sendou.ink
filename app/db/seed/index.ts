@@ -922,6 +922,20 @@ function calendarEventWithToTools(
 								roundCount: 4,
 							},
 						},
+						{
+							type: "single_elimination",
+							name: "Top Cut",
+							requiresCheckIn: false,
+							settings: {
+								thirdPlaceMatch: false,
+							},
+							sources: [
+								{
+									bracketIdx: 0,
+									placements: [1, 2, 3, 4],
+								},
+							],
+						},
 					],
 					enableNoScreenToggle: true,
 					isRanked: false,
