@@ -659,71 +659,9 @@ export async function update(args: UpdateArgs) {
 			.returning("tournamentId")
 			.executeTakeFirstOrThrow();
 
-		let mapPickingStyle: Tables["Tournament"]["mapPickingStyle"] | undefined;
-		if (tournamentId) {
-			invariant(args.bracketProgression, "Expected bracketProgression");
-			const settings: Tables["Tournament"]["settings"] = {
-				bracketProgression: args.bracketProgression,
-				teamsPerGroup: args.teamsPerGroup,
-				thirdPlaceMatch: args.thirdPlaceMatch,
-				isRanked: args.isRanked,
-				isTest: args.isTest,
-				deadlines: args.deadlines,
-				isInvitational: args.isInvitational,
-				enableNoScreenToggle: args.enableNoScreenToggle,
-				enableSubs: args.enableSubs,
-				autonomousSubs: args.autonomousSubs,
-				regClosesAt: args.regClosesAt,
-				requireInGameNames: args.requireInGameNames,
-				minMembersPerTeam: args.minMembersPerTeam,
-				swiss:
-					args.swissGroupCount && args.swissRoundCount
-						? {
-								groupCount: args.swissGroupCount,
-								roundCount: args.swissRoundCount,
-							}
-						: undefined,
-			};
-
-			const existingBracketProgression = (
-				await trx
-					.selectFrom("Tournament")
-					.select("settings")
-					.where("id", "=", tournamentId)
-					.executeTakeFirstOrThrow()
-			).settings.bracketProgression;
-
-			const { mapPickingStyle: _mapPickingStyle } = await trx
-				.updateTable("Tournament")
-				.set({
-					settings: JSON.stringify(settings),
-					rules: args.rules,
-					preparedMaps: Progression.changedBracketProgressionFormat(
-						existingBracketProgression,
-						args.bracketProgression,
-					)
-						? null
-						: undefined,
-				})
-				.where("id", "=", tournamentId)
-				.returning("mapPickingStyle")
-				.executeTakeFirstOrThrow();
-
-			if (
-				Progression.changedBracketProgressionFormat(
-					existingBracketProgression,
-					args.bracketProgression,
-				)
-			) {
-				await trx
-					.updateTable("TournamentTeam")
-					.set({ startingBracketIdx: null })
-					.where("tournamentId", "=", tournamentId)
-					.execute();
-			}
-
-			mapPickingStyle = _mapPickingStyle;
-		}
+		const mapPickingStyle = tournamentId
+			? await updateTournamentTables(args, trx, tournamentId)
+			: null;
 
 		await trx
 			.deleteFrom("CalendarEventDate")
@@ -754,6 +692,76 @@ export async function update(args: UpdateArgs) {
 			});
 		}
 	});
+}
+
+async function updateTournamentTables(
+	args: UpdateArgs,
+	trx: Transaction<DB>,
+	tournamentId: number,
+) {
+	invariant(args.bracketProgression, "Expected bracketProgression");
+
+	const existingSettings = (
+		await trx
+			.selectFrom("Tournament")
+			.select("settings")
+			.where("id", "=", tournamentId)
+			.executeTakeFirstOrThrow()
+	).settings;
+
+	const settings: Tables["Tournament"]["settings"] = {
+		bracketProgression: args.bracketProgression,
+		teamsPerGroup: args.teamsPerGroup,
+		thirdPlaceMatch: args.thirdPlaceMatch,
+		isRanked: args.isRanked,
+		isTest: existingSettings.isTest, // this one is not editable after creation
+		deadlines: args.deadlines,
+		isInvitational: args.isInvitational,
+		enableNoScreenToggle: args.enableNoScreenToggle,
+		enableSubs: args.enableSubs,
+		autonomousSubs: args.autonomousSubs,
+		regClosesAt: args.regClosesAt,
+		requireInGameNames: args.requireInGameNames,
+		minMembersPerTeam: args.minMembersPerTeam,
+		swiss:
+			args.swissGroupCount && args.swissRoundCount
+				? {
+						groupCount: args.swissGroupCount,
+						roundCount: args.swissRoundCount,
+					}
+				: undefined,
+	};
+
+	const { mapPickingStyle } = await trx
+		.updateTable("Tournament")
+		.set({
+			settings: JSON.stringify(settings),
+			rules: args.rules,
+			preparedMaps: Progression.changedBracketProgressionFormat(
+				existingSettings.bracketProgression,
+				args.bracketProgression,
+			)
+				? null
+				: undefined,
+		})
+		.where("id", "=", tournamentId)
+		.returning("mapPickingStyle")
+		.executeTakeFirstOrThrow();
+
+	if (
+		Progression.changedBracketProgressionFormat(
+			existingSettings.bracketProgression,
+			args.bracketProgression,
+		)
+	) {
+		await trx
+			.updateTable("TournamentTeam")
+			.set({ startingBracketIdx: null })
+			.where("tournamentId", "=", tournamentId)
+			.execute();
+	}
+
+	return mapPickingStyle;
 }
 
 function createDatesInTrx({
