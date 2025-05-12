@@ -14,6 +14,7 @@ import {
 	Popover,
 	DatePicker as ReactAriaDatePicker,
 } from "react-aria-components";
+import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import {
 	type FormFieldSize,
 	formFieldSizeToClassName,
@@ -21,8 +22,6 @@ import {
 import { ArrowLeftIcon } from "../icons/ArrowLeft";
 import { ArrowRightIcon } from "../icons/ArrowRight";
 import { CalendarIcon } from "../icons/Calendar";
-import { SendouFieldError } from "./FieldError";
-import { SendouFieldMessage } from "./FieldMessage";
 import { SendouLabel } from "./Label";
 
 interface SendouDatePickerProps<T extends DateValue>
@@ -52,10 +51,7 @@ export function SendouDatePicker<T extends DateValue>({
 					<CalendarIcon />
 				</Button>
 			</Group>
-			{errorText && <SendouFieldError>{errorText}</SendouFieldError>}
-			{bottomText && !errorText ? (
-				<SendouFieldMessage>{bottomText}</SendouFieldMessage>
-			) : null}
+			<SendouBottomTexts bottomText={bottomText} errorText={errorText} />
 			<Popover>
 				<Dialog>
 					<Calendar>

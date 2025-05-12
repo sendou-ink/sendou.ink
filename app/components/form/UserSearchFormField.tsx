@@ -8,7 +8,7 @@ import {
 } from "react-hook-form";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
-import { UserSearch } from "../UserSearch";
+import { UserSearch } from "../elements/UserSearch";
 
 export function UserSearchFormField<T extends FieldValues>({
 	label,

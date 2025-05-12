@@ -14,7 +14,7 @@ import { WeaponCombobox } from "~/components/Combobox";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { UserSearch } from "~/components/UserSearch";
+import { UserSearch } from "~/components/elements/UserSearch";
 import { AddFieldButton } from "~/components/form/AddFieldButton";
 import { RemoveFieldButton } from "~/components/form/RemoveFieldButton";
 import type { Tables } from "~/db/tables";
@@ -59,7 +59,7 @@ export default function NewVodPage() {
 	return (
 		<Main halfWidth>
 			<MyForm
-				title={
+				heading={
 					data.vodToEdit
 						? t("vods:forms.title.edit")
 						: t("vods:forms.title.create")
@@ -164,34 +164,25 @@ function PovFormField() {
 
 				return (
 					<div>
-						<div className="stack horizontal md items-center mb-1">
-							<Label required htmlFor="pov" className="mb-0">
-								{t("vods:forms.title.pov")}
-							</Label>
-							<Button
-								size="tiny"
-								variant="minimal"
-								onClick={toggleInputType}
-								className="outline-theme"
-							>
-								{asPlainInput
-									? t("calendar:forms.team.player.addAsUser")
-									: t("calendar:forms.team.player.addAsText")}
-							</Button>
-						</div>
 						{asPlainInput ? (
-							<input
-								id="pov"
-								value={value.name ?? ""}
-								onChange={(e) => {
-									onChange({ type: "NAME", name: e.target.value });
-								}}
-								onBlur={onBlur}
-							/>
+							<>
+								<Label required htmlFor="pov">
+									{t("vods:forms.title.pov")}
+								</Label>
+								<input
+									id="pov"
+									value={value.name ?? ""}
+									onChange={(e) => {
+										onChange({ type: "NAME", name: e.target.value });
+									}}
+									onBlur={onBlur}
+								/>
+							</>
 						) : (
 							<UserSearch
-								id="pov"
-								inputName="team-player"
+								label={t("vods:forms.title.pov")}
+								isRequired
+								name="team-player"
 								initialUserId={value.userId}
 								onChange={(newUser) =>
 									onChange({
@@ -202,6 +193,16 @@ function PovFormField() {
 								onBlur={onBlur}
 							/>
 						)}
+						<Button
+							size="tiny"
+							variant="minimal"
+							onClick={toggleInputType}
+							className="outline-theme mt-2"
+						>
+							{asPlainInput
+								? t("calendar:forms.team.player.addAsUser")
+								: t("calendar:forms.team.player.addAsText")}
+						</Button>
 						{error && (
 							<FormMessage type="error">{error.message as string}</FormMessage>
 						)}

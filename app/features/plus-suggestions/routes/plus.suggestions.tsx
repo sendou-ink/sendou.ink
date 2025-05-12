@@ -23,7 +23,7 @@ import { userPage } from "~/utils/urls";
 import {
 	canAddCommentToSuggestionFE,
 	canDeleteComment,
-	canSuggestNewUserFE,
+	canSuggestNewUser,
 } from "../plus-suggestions-utils";
 
 import { action } from "../actions/plus.suggestions.server";
@@ -84,7 +84,7 @@ export default function PlusSuggestionsPage() {
 					<div className="stack lg">
 						<div
 							className={clsx("plus__top-container", {
-								"content-centered": !canSuggestNewUserFE({
+								"content-centered": !canSuggestNewUser({
 									user,
 									suggestions: data.suggestions,
 								}),

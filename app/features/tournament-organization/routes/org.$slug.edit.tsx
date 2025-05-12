@@ -45,7 +45,7 @@ export default function TournamentOrganizationEditPage() {
 	return (
 		<Main>
 			<MyForm
-				title={t("org:edit.form.title")}
+				heading={t("org:edit.form.title")}
 				schema={organizationEditSchema}
 				defaultValues={{
 					name: data.organization.name,

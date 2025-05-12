@@ -228,7 +228,10 @@ export function SwissBracket({
 									})}
 								</div>
 								{teamWithBye ? (
-									<div className="text-xs text-lighter font-semi-bold">
+									<div
+										className="text-xs text-lighter font-semi-bold"
+										data-testid="bye-team"
+									>
 										BYE: {teamWithBye.name}
 									</div>
 								) : null}

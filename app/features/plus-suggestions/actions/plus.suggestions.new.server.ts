@@ -12,22 +12,29 @@ import {
 	badRequestIfFalsy,
 	errorToastIfFalsy,
 	parseRequestPayload,
+	unauthorizedIfFalsy,
 } from "~/utils/remix.server";
 import { plusSuggestionPage } from "~/utils/urls";
 import { firstCommentActionSchema } from "../plus-suggestions-schemas";
-import { canSuggestNewUserBE } from "../plus-suggestions-utils";
+import {
+	canSuggestNewUser,
+	playerAlreadyMember,
+	playerAlreadySuggested,
+} from "../plus-suggestions-utils";
 
 export const action: ActionFunction = async ({ request }) => {
+	const user = await requireUser(request);
+
 	const data = await parseRequestPayload({
 		request,
 		schema: firstCommentActionSchema,
 	});
 
+	unauthorizedIfFalsy(user.plusTier && user.plusTier <= data.tier);
+
 	const suggested = badRequestIfFalsy(
 		await UserRepository.findLeanById(data.userId),
 	);
-
-	const user = await requireUser(request);
 
 	const votingMonthYear = rangeToMonthYear(
 		badRequestIfFalsy(nextNonCompletedVoting(new Date())),
@@ -36,13 +43,25 @@ export const action: ActionFunction = async ({ request }) => {
 		await PlusSuggestionRepository.findAllByMonth(votingMonthYear);
 
 	errorToastIfFalsy(
-		canSuggestNewUserBE({
-			user,
+		!playerAlreadySuggested({
+			suggestions,
 			suggested,
 			targetPlusTier: data.tier,
+		}),
+		"This user has already been suggested",
+	);
+
+	errorToastIfFalsy(
+		!playerAlreadyMember({ suggested, targetPlusTier: data.tier }),
+		"This user is already a member of this tier",
+	);
+
+	errorToastIfFalsy(
+		canSuggestNewUser({
+			user,
 			suggestions,
 		}),
-		"No permissions to make this suggestion",
+		"Can't make a suggestion right now",
 	);
 
 	await PlusSuggestionRepository.create({

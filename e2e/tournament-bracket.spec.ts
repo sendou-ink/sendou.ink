@@ -881,7 +881,7 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("reset-round-button").click();
 		await page.getByTestId("confirm-button").click();
 		await page.getByTestId("start-round-button").click();
-		await expect(page.getByText("BYE")).toBeVisible();
+		await expect(page.getByTestId("bye-team")).toBeVisible();
 	});
 
 	test("prepares maps (including third place match linking)", async ({

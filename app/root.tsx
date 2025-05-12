@@ -26,6 +26,7 @@ import { RouterProvider } from "react-aria-components";
 import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
 import type { NavigateOptions } from "react-router-dom";
+import { useDebounce } from "react-use";
 import { useChangeLanguage } from "remix-i18next/react";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
@@ -234,10 +235,17 @@ function useTriggerToasts() {
 function useLoadingIndicator() {
 	const transition = useNavigation();
 
-	React.useEffect(() => {
-		if (transition.state === "loading") NProgress.start();
-		if (transition.state === "idle") NProgress.done();
-	}, [transition.state]);
+	useDebounce(
+		() => {
+			if (transition.state === "loading") {
+				NProgress.start();
+			} else if (transition.state === "idle") {
+				NProgress.done();
+			}
+		},
+		250,
+		[transition.state],
+	);
 }
 
 // TODO: this should be an array if we can figure out how to make Typescript

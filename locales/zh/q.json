@@ -48,7 +48,6 @@
 	"front.join.joinAction": "加入",
 	"front.join.joinWithTrustAction": "加入并信任 {{inviterName}}",
 	"front.join.joinWithTrustAction.explanation": "信任一名用户能允许对方不通过邀请链接就能直接将您加入小队",
-	"front.join.refuseAction": "不用了",
 	"front.seasonOpen": "赛季 {{nth}} 进行中",
 	"front.preview": "预览当前匹配中的队伍",
 	"front.preview.explanation": "该功能仅对sendou.ink的patron支持者开放",
