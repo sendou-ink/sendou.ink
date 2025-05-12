@@ -49,7 +49,6 @@
 	"front.join.joinAction": "Únete",
 	"front.join.joinWithTrustAction": "Unirte y confiar de {{inviterName}}",
 	"front.join.joinWithTrustAction.explanation": "Confiar de un usuario le permite agregarte a un grupo sin enviar invitación en el futuro",
-	"front.join.refuseAction": "No, gracias",
 	"front.seasonOpen": "Temporada {{nth}} está abierta",
 	"front.preview": "Ver avance de grupos en fila sin unirte",
 	"front.preview.explanation": "Esta función solo es disponible para Patrons a nivel Supporter (o más alto) de sendou.ink",

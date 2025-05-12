@@ -48,7 +48,6 @@
 	"front.join.joinAction": "Unisciti",
 	"front.join.joinWithTrustAction": "Unisciti e aggiungere {{inviterName}} agli utenti fidati",
 	"front.join.joinWithTrustAction.explanation": "Fidarsi di un utente permette a loro di aggiungerti ad un gruppo senza link d'invito nel futuro",
-	"front.join.refuseAction": "No grazie",
 	"front.seasonOpen": "Stagione {{nth}} aperta",
 	"front.preview": "Visualizza gruppi nella coda prima di unirti",
 	"front.preview.explanation": "Questa funzione è disponibile solo per iscritti al Patreon di sendou.ink di tier Supporter o più",

@@ -48,7 +48,6 @@
 	"front.join.joinAction": "Join",
 	"front.join.joinWithTrustAction": "Join & trust {{inviterName}}",
 	"front.join.joinWithTrustAction.explanation": "Trusting a user allows them to add you to groups without an invite link in the future",
-	"front.join.refuseAction": "No thanks",
 	"front.seasonOpen": "Season {{nth}} open",
 	"front.preview": "Preview groups in the queue without joining",
 	"front.preview.explanation": "This feature is only available to Supporter tier (or above) patrons of sendou.ink",

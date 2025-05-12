@@ -25,6 +25,7 @@ export default function EditBadgePage() {
 		<SendouDialog
 			heading={`Editing winners of ${badge.displayName}`}
 			onCloseTo={atOrError(matches, -2).pathname}
+			isFullScreen
 		>
 			<Form method="post" className="stack md">
 				{isStaff ? <Managers data={data} /> : null}

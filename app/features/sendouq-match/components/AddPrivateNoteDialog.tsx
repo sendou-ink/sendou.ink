@@ -1,12 +1,10 @@
 import { useFetcher } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "~/components/Button";
-import { Dialog } from "~/components/Dialog";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
-import { CrossIcon } from "~/components/icons/Cross";
+import { SendouDialog } from "~/components/elements/Dialog";
 import type { Tables } from "~/db/tables";
 import { SENDOUQ } from "~/features/sendouq/q-constants";
 import { preferenceEmojiUrl } from "~/utils/urls";
@@ -28,19 +26,13 @@ export function AddPrivateNoteDialog({
 	if (!aboutUser) return null;
 
 	return (
-		<Dialog isOpen>
+		<SendouDialog
+			isOpen
+			heading={t("q:privateNote.header", { name: aboutUser.username })}
+			onClose={close}
+		>
 			<fetcher.Form method="post" className="stack md">
 				<input type="hidden" name="targetId" value={aboutUser.id} />
-				<div className="stack horizontal items-center justify-between">
-					<h2 className="text-md">
-						{t("q:privateNote.header", { name: aboutUser.username })}
-					</h2>
-					<Button
-						variant="minimal-destructive"
-						icon={<CrossIcon />}
-						onClick={close}
-					/>
-				</div>
 				<Textarea initialValue={aboutUser.privateNote?.text} />
 				<Sentiment initialValue={aboutUser.privateNote?.sentiment} />
 				<div className="stack items-center mt-2">
@@ -49,7 +41,7 @@ export function AddPrivateNoteDialog({
 					</SubmitButton>
 				</div>
 			</fetcher.Form>
-		</Dialog>
+		</SendouDialog>
 	);
 }
 

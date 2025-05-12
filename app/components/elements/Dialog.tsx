@@ -21,9 +21,12 @@ interface SendouDialogProps extends ModalOverlayProps {
 	onClose?: () => void;
 	/** When closing the modal which URL to navigate to */
 	onCloseTo?: string;
+	overlayClassName?: string;
+	"aria-label"?: string;
+	/** If true, the modal takes over the full screen with the content below hidden */
+	isFullScreen?: boolean;
 }
 
-// xxx: correct example
 /**
  * This component allows you to create a dialog with a customizable trigger and content.
  * It supports both controlled and uncontrolled modes for managing the dialog's open state.
@@ -87,10 +90,30 @@ function DialogModal({
 		}
 	};
 
+	const onOpenChange = (isOpen: boolean) => {
+		if (!isOpen) {
+			if (rest.onCloseTo) {
+				navigate(rest.onCloseTo);
+			} else if (rest.onClose) {
+				rest.onClose();
+			}
+		}
+	};
+
 	return (
-		<ModalOverlay className={styles.overlay} {...rest}>
-			<Modal className={clsx(className, styles.modal)}>
-				<Dialog className={styles.dialog}>
+		<ModalOverlay
+			className={clsx(rest.overlayClassName, styles.overlay, {
+				[styles.fullScreenOverlay]: rest.isFullScreen,
+			})}
+			onOpenChange={rest.onOpenChange ?? onOpenChange}
+			{...rest}
+		>
+			<Modal
+				className={clsx(className, styles.modal, {
+					[styles.fullScreenModal]: rest.isFullScreen,
+				})}
+			>
+				<Dialog className={styles.dialog} aria-label={rest["aria-label"]}>
 					{showHeading ? (
 						<div
 							className={clsx(styles.headingContainer, {

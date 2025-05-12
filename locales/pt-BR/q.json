@@ -47,7 +47,6 @@
 	"front.join.joinAction": "Entrar",
 	"front.join.joinWithTrustAction": "Entrar e confiar no(a) {{inviterName}}",
 	"front.join.joinWithTrustAction.explanation": "Confiar em usuário permite que ele(a) adicione você aos grupos sem um link de convite no futuro",
-	"front.join.refuseAction": "Não, obrigado(a)",
 	"front.seasonOpen": "Temporada {{nth}} aberta",
 	"front.preview": "Pré-visualizar grupos na fila sem entrar",
 	"front.preview.explanation": "Essa função está disponível apenas para patronos (ou patronesses) da tier Supporter (ou acima) do sendou.ink",

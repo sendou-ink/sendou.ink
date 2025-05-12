@@ -4,6 +4,7 @@ import * as React from "react";
 import {
 	Button,
 	Input,
+	type Key,
 	ListBox,
 	ListBoxItem,
 	Popover,
@@ -38,7 +39,6 @@ interface UserSearchProps<T extends object>
 	onChange?: (user: UserSearchUserItem) => void;
 }
 
-// xxx: clear selection when changing the filter text? now user disappears then comes back
 export const UserSearch = React.forwardRef(function UserSearch<
 	T extends object,
 >(
@@ -53,24 +53,22 @@ export const UserSearch = React.forwardRef(function UserSearch<
 	}: UserSearchProps<T>,
 	ref?: React.Ref<HTMLButtonElement>,
 ) {
-	const { initialUser, ...list } = useUserSearch(initialUserId);
+	const [selectedKey, setSelectedKey] = React.useState(initialUserId ?? null);
+	const { initialUser, ...list } = useUserSearch(setSelectedKey, initialUserId);
+
+	const onSelectionChange = (userId: number) => {
+		setSelectedKey(userId);
+		onChange?.(
+			list.items.find((user) => user.id === userId) as UserSearchUserItem,
+		);
+	};
 
 	return (
 		<Select
 			name={name}
 			placeholder=""
-			defaultSelectedKey={initialUserId}
-			onSelectionChange={
-				onChange
-					? (userId) => {
-							onChange(
-								list.items.find(
-									(user) => user.id === userId,
-								) as UserSearchUserItem,
-							);
-						}
-					: undefined
-			}
+			selectedKey={selectedKey}
+			onSelectionChange={onSelectionChange as (key: Key) => void}
 			{...rest}
 		>
 			{label ? (
@@ -94,7 +92,10 @@ export const UserSearch = React.forwardRef(function UserSearch<
 						className={selectStyles.searchField}
 					>
 						<SearchIcon aria-hidden className={selectStyles.smallIcon} />
-						<Input className={clsx("plain", selectStyles.searchInput)} />
+						<Input
+							className={clsx("plain", selectStyles.searchInput)}
+							data-testid="user-search-input"
+						/>
 						<Button className={selectStyles.searchClearButton}>
 							<CrossIcon className={selectStyles.smallIcon} />
 						</Button>
@@ -173,6 +174,7 @@ function UserItem({
 					[selectStyles.itemSelected]: isSelected,
 				})
 			}
+			data-testid="user-search-item"
 		>
 			<Avatar user={item} size="xxs" />
 			<div className={userSearchStyles.itemTextsContainer}>
@@ -187,7 +189,10 @@ function UserItem({
 	);
 }
 
-function useUserSearch(initialUserId?: number) {
+function useUserSearch(
+	setSelectedKey: (userId: number | null) => void,
+	initialUserId?: number,
+) {
 	const [filterText, setFilterText] = React.useState("");
 
 	const queryFetcher = useFetcher<UserSearchLoaderData>();
@@ -204,10 +209,17 @@ function useUserSearch(initialUserId?: number) {
 		initialUserFetcher.load(`/u?q=${initialUserId}`);
 	}, [initialUserId, initialUserFetcher]);
 
+	React.useEffect(() => {
+		if (initialUserId !== undefined) {
+			setSelectedKey(initialUserId);
+		}
+	}, [initialUserId, setSelectedKey]);
+
 	useDebounce(
 		() => {
 			if (!filterText) return;
 			queryFetcher.load(`/u?q=${filterText}&limit=6`);
+			setSelectedKey(null);
 		},
 		500,
 		[filterText],

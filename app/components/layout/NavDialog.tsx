@@ -1,11 +1,11 @@
 import { Link } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import { SendouDialog } from "~/components/elements/Dialog";
 import { navItems } from "~/components/layout/nav-items";
 import { useUser } from "~/features/auth/core/user";
 import { LOG_OUT_URL, navIconUrl, userPage } from "~/utils/urls";
 import { Avatar } from "../Avatar";
 import { Button } from "../Button";
-import { Dialog } from "../Dialog";
 import { Image } from "../Image";
 import { CrossIcon } from "../icons/Cross";
 import { LogOutIcon } from "../icons/LogOut";
@@ -23,7 +23,12 @@ export function NavDialog({
 	}
 
 	return (
-		<Dialog isOpen className="layout__overlay-nav__dialog">
+		<SendouDialog
+			className="layout__overlay-nav__dialog"
+			showHeading={false}
+			aria-label="Site navigation"
+			isFullScreen
+		>
 			<Button
 				icon={<CrossIcon />}
 				variant="minimal-destructive"
@@ -54,7 +59,7 @@ export function NavDialog({
 				))}
 			</div>
 			{user ? (
-				<div className="mt-6 w-max mx-auto">
+				<div className="mt-6 stack items-center">
 					<form method="post" action={LOG_OUT_URL}>
 						<Button
 							size="tiny"
@@ -67,7 +72,7 @@ export function NavDialog({
 					</form>
 				</div>
 			) : null}
-		</Dialog>
+		</SendouDialog>
 	);
 }
 

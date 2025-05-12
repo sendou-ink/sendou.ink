@@ -164,33 +164,24 @@ function PovFormField() {
 
 				return (
 					<div>
-						<div className="stack horizontal md items-center mb-1">
-							<Label required htmlFor="pov" className="mb-0">
-								{t("vods:forms.title.pov")}
-							</Label>
-							<Button
-								size="tiny"
-								variant="minimal"
-								onClick={toggleInputType}
-								className="outline-theme"
-							>
-								{asPlainInput
-									? t("calendar:forms.team.player.addAsUser")
-									: t("calendar:forms.team.player.addAsText")}
-							</Button>
-						</div>
 						{asPlainInput ? (
-							<input
-								id="pov"
-								value={value.name ?? ""}
-								onChange={(e) => {
-									onChange({ type: "NAME", name: e.target.value });
-								}}
-								onBlur={onBlur}
-							/>
+							<>
+								<Label required htmlFor="pov">
+									{t("vods:forms.title.pov")}
+								</Label>
+								<input
+									id="pov"
+									value={value.name ?? ""}
+									onChange={(e) => {
+										onChange({ type: "NAME", name: e.target.value });
+									}}
+									onBlur={onBlur}
+								/>
+							</>
 						) : (
 							<UserSearch
-								id="pov"
+								label={t("vods:forms.title.pov")}
+								isRequired
 								name="team-player"
 								initialUserId={value.userId}
 								onChange={(newUser) =>
@@ -202,6 +193,16 @@ function PovFormField() {
 								onBlur={onBlur}
 							/>
 						)}
+						<Button
+							size="tiny"
+							variant="minimal"
+							onClick={toggleInputType}
+							className="outline-theme mt-2"
+						>
+							{asPlainInput
+								? t("calendar:forms.team.player.addAsUser")
+								: t("calendar:forms.team.player.addAsText")}
+						</Button>
 						{error && (
 							<FormMessage type="error">{error.message as string}</FormMessage>
 						)}

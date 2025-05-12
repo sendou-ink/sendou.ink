@@ -2,6 +2,7 @@ import type {
 	ColumnType,
 	GeneratedAlways,
 	Insertable,
+	JSONColumnType,
 	Selectable,
 	SqlBool,
 	Updateable,
@@ -23,8 +24,9 @@ import type {
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists";
+import type { JSONColumnTypeNullable } from "~/utils/kysely.server";
 
-export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
+type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 	? ColumnType<S, I | undefined, U>
 	: ColumnType<T, T | undefined, T>;
 
@@ -35,7 +37,7 @@ export interface Team {
 	bannerImgId: number | null;
 	bio: string | null;
 	createdAt: Generated<number>;
-	css: ColumnType<Record<string, string> | null, string | null, string | null>;
+	css: JSONColumnTypeNullable<Record<string, string>>;
 	customUrl: string;
 	deletedAt: number | null;
 	id: GeneratedAlways<number>;
@@ -100,7 +102,7 @@ export interface Build {
 	description: string | null;
 	headGearSplId: number;
 	id: GeneratedAlways<number>;
-	modes: ColumnType<ModeShort[] | null, string | null, string | null>;
+	modes: JSONColumnTypeNullable<ModeShort[]>;
 	ownerId: number;
 	private: number | null;
 	shoesGearSplId: number;
@@ -146,11 +148,7 @@ export interface CalendarEvent {
 	organizationId: number | null;
 	avatarImgId: number | null;
 	// TODO: remove in migration
-	avatarMetadata: ColumnType<
-		CalendarEventAvatarMetadata | null,
-		string | null,
-		string | null
-	>;
+	avatarMetadata: JSONColumnTypeNullable<CalendarEventAvatarMetadata>;
 }
 
 export interface CalendarEventBadge {
@@ -250,7 +248,7 @@ export interface GroupMatch {
 	chatCode: string | null;
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
-	memento: ColumnType<ParsedMemento | null, string | null, string | null>;
+	memento: JSONColumnTypeNullable<ParsedMemento>;
 	reportedAt: number | null;
 	reportedByUserId: number | null;
 }
@@ -474,21 +472,13 @@ export interface CastedMatchesInfo {
 }
 
 export interface Tournament {
-	settings: ColumnType<TournamentSettings, string, string>;
+	settings: JSONColumnType<TournamentSettings>;
 	id: GeneratedAlways<number>;
 	mapPickingStyle: TournamentMapPickingStyle;
 	/** Maps prepared ahead of time for rounds. Follows settings.bracketProgression order. Null in the spot if not defined yet for that bracket. */
-	preparedMaps: ColumnType<
-		(PreparedMaps | null)[] | null,
-		string | null,
-		string | null
-	>;
-	castTwitchAccounts: ColumnType<string[] | null, string | null, string | null>;
-	castedMatchesInfo: ColumnType<
-		CastedMatchesInfo | null,
-		string | null,
-		string | null
-	>;
+	preparedMaps: JSONColumnTypeNullable<(PreparedMaps | null)[]>;
+	castTwitchAccounts: JSONColumnTypeNullable<string[]>;
+	castedMatchesInfo: JSONColumnTypeNullable<CastedMatchesInfo>;
 	rules: string | null;
 	/** Related "parent tournament", the tournament that contains the original sign-ups (for leagues) */
 	parentTournamentId: number | null;
@@ -548,8 +538,8 @@ export interface TournamentMatch {
 	groupId: number;
 	id: GeneratedAlways<number>;
 	number: number;
-	opponentOne: ColumnType<ParticipantResult, string, string>;
-	opponentTwo: ColumnType<ParticipantResult, string, string>;
+	opponentOne: JSONColumnType<ParticipantResult>;
+	opponentTwo: JSONColumnType<ParticipantResult>;
 	roundId: number;
 	stageId: number;
 	status: (typeof TournamentMatchStatus)[keyof typeof TournamentMatchStatus];
@@ -616,7 +606,7 @@ export interface TournamentRound {
 	id: GeneratedAlways<number>;
 	number: number;
 	stageId: number;
-	maps: ColumnType<TournamentRoundMaps | null, string | null, string | null>;
+	maps: JSONColumnTypeNullable<TournamentRoundMaps>;
 }
 
 // when updating this also update `defaultBracketSettings` in tournament-utils.ts
@@ -682,11 +672,7 @@ export interface TournamentTeam {
 	seed: number | null;
 	/** For formats that have many starting brackets, where should the team start? */
 	startingBracketIdx: number | null;
-	activeRosterUserIds: ColumnType<
-		number[] | null,
-		string | null,
-		string | null
-	>;
+	activeRosterUserIds: JSONColumnTypeNullable<number[]>;
 	tournamentId: number;
 	teamId: number | null;
 	avatarImgId: number | null;
@@ -714,7 +700,7 @@ export interface TournamentOrganization {
 	name: string;
 	slug: string;
 	description: string | null;
-	socials: ColumnType<string[] | null, string | null, string | null>;
+	socials: JSONColumnTypeNullable<string[]>;
 	avatarImgId: number | null;
 }
 
@@ -744,7 +730,7 @@ export interface TournamentOrganizationSeries {
 	organizationId: number;
 	name: string;
 	description: string | null;
-	substringMatches: ColumnType<string[], string, string>;
+	substringMatches: JSONColumnType<string[]>;
 	showLeaderboard: Generated<number>;
 }
 
@@ -821,7 +807,7 @@ export interface User {
 	commissionsOpen: Generated<number | null>;
 	commissionText: string | null;
 	country: string | null;
-	css: ColumnType<Record<string, string> | null, string | null, string | null>;
+	css: JSONColumnTypeNullable<Record<string, string>>;
 	customUrl: string | null;
 	discordAvatar: string | null;
 	discordId: string;
@@ -849,16 +835,12 @@ export interface User {
 	battlefy: string | null;
 	vc: Generated<"YES" | "NO" | "LISTEN_ONLY">;
 	youtubeId: string | null;
-	mapModePreferences: ColumnType<
-		UserMapModePreferences | null,
-		string | null,
-		string | null
-	>;
+	mapModePreferences: JSONColumnTypeNullable<UserMapModePreferences>;
 	qWeaponPool: ColumnType<MainWeaponId[] | null, string | null, string | null>;
 	plusSkippedForSeasonNth: number | null;
 	noScreen: Generated<number>;
-	buildSorting: ColumnType<BuildSort[] | null, string | null, string | null>;
-	preferences: ColumnType<UserPreferences | null, string | null, string | null>;
+	buildSorting: JSONColumnTypeNullable<BuildSort[]>;
+	preferences: JSONColumnTypeNullable<UserPreferences>;
 }
 
 /** Represents User joined with PlusTier table */
@@ -946,11 +928,7 @@ export interface ScrimPost {
 	/** Lowest LUTI div accepted */
 	minDiv: number | null;
 	/** Who sees the post */
-	visibility: ColumnType<
-		AssociationVisibility | null,
-		string | null,
-		string | null
-	>;
+	visibility: JSONColumnTypeNullable<AssociationVisibility>;
 	/** Any additional info */
 	text: string | null;
 	/** The key to access the scrim chat, used after scrim is scheduled with another team */
@@ -999,11 +977,7 @@ export interface AssociationMember {
 export interface Notification {
 	id: GeneratedAlways<number>;
 	type: NotificationValue["type"];
-	meta: ColumnType<
-		Record<string, number | string> | null,
-		string | null,
-		string | null
-	>;
+	meta: JSONColumnTypeNullable<Record<string, number | string>>;
 	pictureUrl: string | null;
 	createdAt: GeneratedAlways<number>;
 }
@@ -1025,7 +999,7 @@ export interface NotificationSubscription {
 export interface NotificationUserSubscription {
 	id: GeneratedAlways<number>;
 	userId: number;
-	subscription: ColumnType<NotificationSubscription, string, string>;
+	subscription: JSONColumnType<NotificationSubscription>;
 }
 
 export type Tables = { [P in keyof DB]: Selectable<DB[P]> };

@@ -12,6 +12,7 @@ import { Label } from "~/components/Label";
 import { containerClassName } from "~/components/Main";
 import { Redirect } from "~/components/Redirect";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouDialog } from "~/components/elements/Dialog";
 import { TrashIcon } from "~/components/icons/Trash";
 import { USER } from "~/constants";
 import { useUser } from "~/features/auth/core/user";
@@ -26,7 +27,6 @@ import {
 	tournamentEditPage,
 	tournamentPage,
 } from "~/utils/urls";
-import { Dialog } from "../../../components/Dialog";
 import { BracketProgressionSelector } from "../../calendar/components/BracketProgressionSelector";
 import { useTournament } from "./to.$id";
 
@@ -771,7 +771,11 @@ function BracketProgressionEditDialog({ close }: { close: () => void }) {
 		.map((bracket) => bracket.idx);
 
 	return (
-		<Dialog isOpen className="w-max">
+		<SendouDialog
+			isFullScreen
+			onClose={close}
+			heading="Editing bracket progression"
+		>
 			<fetcher.Form method="post">
 				<BracketProgressionSelector
 					initialBrackets={Progression.validatedBracketsToInputFormat(
@@ -791,11 +795,8 @@ function BracketProgressionEditDialog({ close }: { close: () => void }) {
 					>
 						Save changes
 					</SubmitButton>
-					<Button variant="destructive" onClick={close}>
-						Cancel
-					</Button>
 				</div>
 			</fetcher.Form>
-		</Dialog>
+		</SendouDialog>
 	);
 }

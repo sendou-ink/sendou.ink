@@ -24,12 +24,15 @@ export async function selectUser({
 	userName: string;
 	labelName: string;
 }) {
-	const combobox = page.getByLabel(labelName);
-	await expect(combobox).not.toBeDisabled();
+	const comboboxButton = page.getByLabel(labelName);
+	const searchInput = page.getByTestId("user-search-input");
+	const option = page.getByTestId("user-search-item").first();
 
-	await combobox.clear();
-	await combobox.fill(userName);
-	await expect(page.getByTestId("combobox-option-0")).toBeVisible();
+	await expect(comboboxButton).not.toBeDisabled();
+
+	await comboboxButton.click();
+	await searchInput.fill(userName);
+	await expect(option).toBeVisible();
 	await page.keyboard.press("Enter");
 }
 

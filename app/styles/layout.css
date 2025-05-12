@@ -353,16 +353,13 @@
 .layout__overlay-nav__dialog {
 	min-width: 100vw;
 	min-height: 100vh;
-}
-
-.layout__overlay-nav__dialog[open],
-.layout__overlay-nav__dialog::backdrop {
-	animation: none;
+	border-radius: 0 !important;
 }
 
 .layout__overlay-nav__close-button {
 	margin-inline-start: auto;
 	margin-block-end: var(--s-4);
+	margin-inline-end: var(--s-4);
 }
 
 .layout__overlay-nav__close-button > svg {
@@ -400,7 +397,8 @@
 	}
 
 	.layout__overlay-nav__dialog {
-		padding-block: var(--s-12);
+		padding-block: var(--s-12) !important;
+		padding-inline: 0 !important;
 	}
 
 	.layout__breadcrumb-container > a {
