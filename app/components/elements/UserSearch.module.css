@@ -15,7 +15,6 @@
 
 .popover {
 	min-height: 250px;
-	margin-inline-start: 0px; /** xxx: why needed? */
 }
 
 .itemTextsContainer {
