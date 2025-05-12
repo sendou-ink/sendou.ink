@@ -185,6 +185,8 @@ export async function seed(variation?: SeedVariation | null) {
 
 		count++;
 
+		faker.seed(5800);
+
 		await seedFunc();
 	}
 
@@ -349,7 +351,7 @@ async function userProfiles() {
 
 	for (let id = 2; id < 500; id++) {
 		if (id === ADMIN_ID || id === NZAP_TEST_ID) continue;
-		if (Math.random() < 0.25) continue; // 75% have bio
+		if (faker.number.float(1) < 0.25) continue; // 75% have bio
 
 		sql
 			.prepare(
@@ -361,15 +363,16 @@ async function userProfiles() {
 					faker.helpers.arrayElement([1, 1, 1, 2, 3, 4]),
 					"\n\n",
 				),
-				country: Math.random() > 0.5 ? faker.location.countryCode() : null,
+				country:
+					faker.number.float(1) > 0.5 ? faker.location.countryCode() : null,
 			});
 	}
 
 	for (let id = 2; id < 500; id++) {
 		if (id === ADMIN_ID || id === NZAP_TEST_ID) continue;
-		if (Math.random() < 0.15) continue; // 85% have weapons
+		if (faker.number.float(1) < 0.15) continue; // 85% have weapons
 
-		const weapons = R.shuffle(mainWeaponIds);
+		const weapons = faker.helpers.shuffle(mainWeaponIds);
 
 		for (let j = 0; j < faker.helpers.arrayElement([1, 2, 3, 4, 5]); j++) {
 			sql
@@ -390,24 +393,24 @@ async function userProfiles() {
 					userId: id,
 					weaponSplId: weapons.pop()!,
 					order: j + 1,
-					isFavorite: Math.random() > 0.8 ? 1 : 0,
+					isFavorite: faker.number.float(1) > 0.8 ? 1 : 0,
 				});
 		}
 	}
 
 	for (let id = 1; id < 500; id++) {
-		const defaultLanguages = Math.random() > 0.1 ? ["en"] : [];
-		if (Math.random() > 0.9) defaultLanguages.push("es");
-		if (Math.random() > 0.9) defaultLanguages.push("fr");
-		if (Math.random() > 0.9) defaultLanguages.push("de");
-		if (Math.random() > 0.9) defaultLanguages.push("it");
-		if (Math.random() > 0.9) defaultLanguages.push("ja");
+		const defaultLanguages = faker.number.float(1) > 0.1 ? ["en"] : [];
+		if (faker.number.float(1) > 0.9) defaultLanguages.push("es");
+		if (faker.number.float(1) > 0.9) defaultLanguages.push("fr");
+		if (faker.number.float(1) > 0.9) defaultLanguages.push("de");
+		if (faker.number.float(1) > 0.9) defaultLanguages.push("it");
+		if (faker.number.float(1) > 0.9) defaultLanguages.push("ja");
 
 		await QSettingsRepository.updateVoiceChat({
 			languages: defaultLanguages,
 			userId: id,
 			vc:
-				Math.random() > 0.2
+				faker.number.float(1) > 0.2
 					? "YES"
 					: faker.helpers.arrayElement(["YES", "NO", "LISTEN_ONLY"]),
 		});
@@ -416,13 +419,13 @@ async function userProfiles() {
 
 const randomPreferences = (): UserMapModePreferences => {
 	const modes: UserMapModePreferences["modes"] = modesShort.flatMap((mode) => {
-		if (Math.random() > 0.5 && mode !== "SZ") return [];
+		if (faker.number.float(1) > 0.5 && mode !== "SZ") return [];
 
 		const criteria = mode === "SZ" ? 0.2 : 0.5;
 
 		return {
 			mode,
-			preference: Math.random() > criteria ? "PREFER" : "AVOID",
+			preference: faker.number.float(1) > criteria ? "PREFER" : "AVOID",
 		};
 	});
 
@@ -434,7 +437,8 @@ const randomPreferences = (): UserMapModePreferences => {
 
 			return {
 				mode,
-				stages: R.shuffle(stageIds)
+				stages: faker.helpers
+					.shuffle(stageIds)
 					.filter((stageId) => !BANNED_MAPS[mode].includes(stageId))
 					.slice(0, AMOUNT_OF_MAPS_IN_POOL_PER_MODE),
 			};
@@ -444,7 +448,7 @@ const randomPreferences = (): UserMapModePreferences => {
 
 async function userMapModePreferences() {
 	for (let id = 1; id < 500; id++) {
-		if (id !== ADMIN_ID && Math.random() < 0.2) continue; // 80% have maps && admin always
+		if (id !== ADMIN_ID && faker.number.float(1) < 0.2) continue; // 80% have maps && admin always
 
 		await db
 			.updateTable("User")
@@ -459,12 +463,11 @@ async function userMapModePreferences() {
 async function userQWeaponPool() {
 	for (let id = 1; id < 500; id++) {
 		if (id === 2) continue; // no weapons for N-ZAP
-		if (Math.random() < 0.2) continue; // 80% have weapons
+		if (faker.number.float(1) < 0.2) continue; // 80% have weapons
 
-		const weapons = R.shuffle(mainWeaponIds).slice(
-			0,
-			faker.helpers.arrayElement([1, 2, 3, 4]),
-		);
+		const weapons = faker.helpers
+			.shuffle(mainWeaponIds)
+			.slice(0, faker.helpers.arrayElement([1, 2, 3, 4]));
 
 		await db
 			.updateTable("User")
@@ -603,7 +606,7 @@ function syncPlusTiers() {
 }
 
 function getAvailableBadgeIds() {
-	return R.shuffle(
+	return faker.helpers.shuffle(
 		(sql.prepare(`select "id" from "Badge"`).all() as any[]).map((b) => b.id),
 	);
 }
@@ -624,7 +627,7 @@ function badgesToUsers() {
 	);
 
 	for (const id of availableBadgeIds) {
-		userIds = R.shuffle(userIds);
+		userIds = faker.helpers.shuffle(userIds);
 		for (
 			let i = 0;
 			i <
@@ -715,7 +718,7 @@ function calendarEvents() {
 	const userIds = userIdsInRandomOrder();
 
 	for (let id = 1; id <= AMOUNT_OF_CALENDAR_EVENTS; id++) {
-		const shuffledTags = R.shuffle(Object.keys(persistedTags));
+		const shuffledTags = faker.helpers.shuffle(Object.keys(persistedTags));
 
 		sql
 			.prepare(
@@ -749,7 +752,7 @@ function calendarEvents() {
 				bracketUrl: faker.internet.url(),
 				authorId: id === 1 ? NZAP_TEST_ID : (userIds.pop() ?? null),
 				tags:
-					Math.random() > 0.2
+					faker.number.float(1) > 0.2
 						? shuffledTags
 								.slice(
 									0,
@@ -761,7 +764,7 @@ function calendarEvents() {
 						: null,
 			});
 
-		const twoDayEvent = Math.random() > 0.9;
+		const twoDayEvent = faker.number.float(1) > 0.9;
 		const startTime =
 			id % 2 === 0
 				? faker.date.soon({ days: 42 })
@@ -810,7 +813,7 @@ function calendarEvents() {
 
 function calendarEventBadges() {
 	for (let eventId = 1; eventId <= AMOUNT_OF_CALENDAR_EVENTS; eventId++) {
-		if (Math.random() > 0.25) continue;
+		if (faker.number.float(1) > 0.25) continue;
 
 		const availableBadgeIds = getAvailableBadgeIds();
 
@@ -847,7 +850,7 @@ async function calendarEventResults() {
 
 	for (const eventId of eventIdsOfPast) {
 		// event id = 1 needs to be without results for e2e tests
-		if (Math.random() < 0.3 || eventId === 1) continue;
+		if (faker.number.float(1) < 0.3 || eventId === 1) continue;
 
 		await CalendarRepository.upsertReportedScores({
 			eventId,
@@ -862,7 +865,7 @@ async function calendarEventResults() {
 					)
 						.fill(null)
 						.map(() => {
-							const withStringName = Math.random() < 0.2;
+							const withStringName = faker.number.float(1) < 0.2;
 
 							return {
 								name: withStringName ? faker.person.firstName() : null,
@@ -918,6 +921,20 @@ function calendarEventWithToTools(
 								groupCount: 2,
 								roundCount: 4,
 							},
+						},
+						{
+							type: "single_elimination",
+							name: "Top Cut",
+							requiresCheckIn: false,
+							settings: {
+								thirdPlaceMatch: false,
+							},
+							sources: [
+								{
+									bracketIdx: 0,
+									placements: [1, 2, 3, 4],
+								},
+							],
 						},
 					],
 					enableNoScreenToggle: true,
@@ -1314,9 +1331,9 @@ function calendarEventWithToToolsTeams(
 		if (
 			event !== "SOS" &&
 			event !== "LUTI" &&
-			(Math.random() < 0.8 || id === 1)
+			(faker.number.float(1) < 0.8 || id === 1)
 		) {
-			const shuffledPairs = R.shuffle(availablePairs.slice());
+			const shuffledPairs = faker.helpers.shuffle(availablePairs.slice());
 
 			let SZ = 0;
 			let TC = 0;
@@ -1399,7 +1416,7 @@ function tournamentSubs() {
 			.run({
 				userId: id,
 				tournamentId: 1,
-				canVc: Number(Math.random() > 0.5),
+				canVc: Number(faker.number.float(1) > 0.5),
 				bestWeapons: nullFilledArray(
 					faker.helpers.arrayElement([1, 1, 1, 2, 2, 3, 4, 5]),
 				)
@@ -1414,7 +1431,7 @@ function tournamentSubs() {
 					})
 					.join(","),
 				okWeapons:
-					Math.random() > 0.5
+					faker.number.float(1) > 0.5
 						? null
 						: nullFilledArray(
 								faker.helpers.arrayElement([1, 1, 1, 2, 2, 3, 4, 5]),
@@ -1429,7 +1446,7 @@ function tournamentSubs() {
 									}
 								})
 								.join(","),
-				message: Math.random() > 0.5 ? null : faker.lorem.paragraph(),
+				message: faker.number.float(1) > 0.5 ? null : faker.lorem.paragraph(),
 				visibility: id < 105 ? "+1" : id < 110 ? "+2" : id < 115 ? "+2" : "ALL",
 			});
 	}
@@ -1438,19 +1455,21 @@ function tournamentSubs() {
 }
 
 const randomAbility = (legalTypes: AbilityType[]) => {
-	const randomOrderAbilities = R.shuffle([...abilities]);
+	const randomOrderAbilities = faker.helpers.shuffle([...abilities]);
 
 	return randomOrderAbilities.find((a) => legalTypes.includes(a.type))!.name;
 };
 
-const adminWeaponPool = mainWeaponIds.filter(() => Math.random() > 0.8);
+const adminWeaponPool = mainWeaponIds.filter(() => faker.number.float(1) > 0.8);
 async function adminBuilds() {
 	for (let i = 0; i < 50; i++) {
-		const randomOrderHeadGear = R.shuffle(headGearIds.slice());
-		const randomOrderClothesGear = R.shuffle(clothesGearIds.slice());
-		const randomOrderShoesGear = R.shuffle(shoesGearIds.slice());
+		const randomOrderHeadGear = faker.helpers.shuffle(headGearIds.slice());
+		const randomOrderClothesGear = faker.helpers.shuffle(
+			clothesGearIds.slice(),
+		);
+		const randomOrderShoesGear = faker.helpers.shuffle(shoesGearIds.slice());
 		// filter out sshot to prevent test flaking
-		const randomOrderWeaponIds = R.shuffle(
+		const randomOrderWeaponIds = faker.helpers.shuffle(
 			adminWeaponPool.filter((id) => id !== 40).slice(),
 		);
 
@@ -1460,7 +1479,8 @@ async function adminBuilds() {
 			)}`,
 			ownerId: ADMIN_ID,
 			private: 0,
-			description: Math.random() < 0.75 ? faker.lorem.paragraph() : null,
+			description:
+				faker.number.float(1) < 0.75 ? faker.lorem.paragraph() : null,
 			headGearSplId: randomOrderHeadGear[0],
 			clothesGearSplId: randomOrderClothesGear[0],
 			shoesGearSplId: randomOrderShoesGear[0],
@@ -1470,8 +1490,8 @@ async function adminBuilds() {
 				.fill(null)
 				.map(() => randomOrderWeaponIds.pop()!),
 			modes:
-				Math.random() < 0.75
-					? modesShort.filter(() => Math.random() < 0.5)
+				faker.number.float(1) < 0.75
+					? modesShort.filter(() => faker.number.float(1) < 0.5)
 					: null,
 			abilities: [
 				[
@@ -1509,12 +1529,14 @@ async function manySplattershotBuilds() {
 	for (let i = 0; i < 499; i++) {
 		const SPLATTERSHOT_ID = 40;
 
-		const randomOrderHeadGear = R.shuffle(headGearIds.slice());
-		const randomOrderClothesGear = R.shuffle(clothesGearIds.slice());
-		const randomOrderShoesGear = R.shuffle(shoesGearIds.slice());
-		const randomOrderWeaponIds = R.shuffle(mainWeaponIds.slice()).filter(
-			(id) => id !== SPLATTERSHOT_ID,
+		const randomOrderHeadGear = faker.helpers.shuffle(headGearIds.slice());
+		const randomOrderClothesGear = faker.helpers.shuffle(
+			clothesGearIds.slice(),
 		);
+		const randomOrderShoesGear = faker.helpers.shuffle(shoesGearIds.slice());
+		const randomOrderWeaponIds = faker.helpers
+			.shuffle(mainWeaponIds.slice())
+			.filter((id) => id !== SPLATTERSHOT_ID);
 
 		const ownerId = users.pop()!;
 
@@ -1524,7 +1546,8 @@ async function manySplattershotBuilds() {
 				faker.word.noun(),
 			)}`,
 			ownerId,
-			description: Math.random() < 0.75 ? faker.lorem.paragraph() : null,
+			description:
+				faker.number.float(1) < 0.75 ? faker.lorem.paragraph() : null,
 			headGearSplId: randomOrderHeadGear[0],
 			clothesGearSplId: randomOrderClothesGear[0],
 			shoesGearSplId: randomOrderShoesGear[0],
@@ -1536,8 +1559,8 @@ async function manySplattershotBuilds() {
 					i === 0 ? SPLATTERSHOT_ID : randomOrderWeaponIds.pop()!,
 				),
 			modes:
-				Math.random() < 0.75
-					? modesShort.filter(() => Math.random() < 0.5)
+				faker.number.float(1) < 0.75
+					? modesShort.filter(() => faker.number.float(1) < 0.5)
 					: null,
 			abilities: [
 				[
@@ -1930,7 +1953,8 @@ function arts() {
 				).id,
 				authorId: userId,
 				isShowcase: i === 0 ? 1 : 0,
-				description: Math.random() > 0.5 ? faker.lorem.paragraph() : null,
+				description:
+					faker.number.float(1) > 0.5 ? faker.lorem.paragraph() : null,
 			}) as Tables["Art"];
 
 			if (i === 1) {
@@ -1960,7 +1984,7 @@ function commissionsOpen() {
 	const allUsers = userIdsInRandomOrder();
 
 	for (const userId of allUsers) {
-		if (Math.random() > 0.5) {
+		if (faker.number.float(1) > 0.5) {
 			updateCommissionStm.run({
 				commissionsOpen: 1,
 				commissionText: faker.lorem.paragraph(),
@@ -2019,15 +2043,15 @@ const randomMapList = (
 ): TournamentMapListMap[] => {
 	const szOnly = faker.helpers.arrayElement([true, false]);
 
-	let modePattern = R.shuffle([...modesShort]).filter(
-		() => Math.random() > 0.15,
-	);
+	let modePattern = faker.helpers
+		.shuffle([...modesShort])
+		.filter(() => faker.number.float(1) > 0.15);
 	if (modePattern.length === 0) {
-		modePattern = R.shuffle([...rankedModesShort]);
+		modePattern = faker.helpers.shuffle([...rankedModesShort]);
 	}
 
 	const mapList: TournamentMapListMap[] = [];
-	const stageIdsShuffled = R.shuffle([...stageIds]);
+	const stageIdsShuffled = faker.helpers.shuffle([...stageIds]);
 
 	for (let i = 0; i < 7; i++) {
 		const mode = modePattern.pop()!;
@@ -2050,7 +2074,7 @@ const AMOUNT_OF_USERS_WITH_SKILLS = 100;
 async function playedMatches() {
 	const _groupMembers = (() => {
 		return new Array(AMOUNT_OF_USERS_WITH_SKILLS).fill(null).map(() => {
-			const users = R.shuffle(
+			const users = faker.helpers.shuffle(
 				userIdsInAscendingOrderById().slice(0, AMOUNT_OF_USERS_WITH_SKILLS),
 			);
 
@@ -2061,14 +2085,14 @@ async function playedMatches() {
 		userIdsInAscendingOrderById()
 			.slice(0, AMOUNT_OF_USERS_WITH_SKILLS)
 			.map((id) => {
-				const weapons = R.shuffle([...mainWeaponIds]);
+				const weapons = faker.helpers.shuffle([...mainWeaponIds]);
 				return [id, weapons[0]];
 			}),
 	);
 
 	let matchDate = new Date(Date.UTC(2023, 9, 15, 0, 0, 0, 0));
 	for (let i = 0; i < MATCHES_COUNT; i++) {
-		const groupMembers = R.shuffle([..._groupMembers]);
+		const groupMembers = faker.helpers.shuffle([..._groupMembers]);
 		const groupAlphaMembers = groupMembers.pop()!;
 		invariant(groupAlphaMembers, "groupAlphaMembers not found");
 
@@ -2131,7 +2155,7 @@ async function playedMatches() {
 				id: match.id,
 			});
 
-		if (Math.random() > 0.95) {
+		if (faker.number.float(1) > 0.95) {
 			// increment date by 1 day
 			matchDate = new Date(matchDate.getTime() + 1000 * 60 * 60 * 24);
 		}
@@ -2175,7 +2199,9 @@ async function playedMatches() {
 			reportScore({
 				matchId: match.id,
 				reportedByUserId:
-					Math.random() > 0.5 ? groupAlphaMembers[0] : groupBravoMembers[0],
+					faker.number.float(1) > 0.5
+						? groupAlphaMembers[0]
+						: groupBravoMembers[0],
 				winners,
 			});
 			addSkills({
@@ -2193,7 +2219,7 @@ async function playedMatches() {
 		})();
 
 		// -> add weapons for 90% of matches
-		if (Math.random() > 0.9) continue;
+		if (faker.number.float(1) > 0.9) continue;
 		const users = [...groupAlphaMembers, ...groupBravoMembers];
 		const mapsWithUsers = users.flatMap((u) =>
 			finishedMatch.mapList.map((m) => ({ map: m, user: u })),
@@ -2202,13 +2228,13 @@ async function playedMatches() {
 		addReportedWeapons(
 			mapsWithUsers.map((mu) => {
 				const weapon = () => {
-					if (Math.random() < 0.9) return defaultWeapons[mu.user];
-					if (Math.random() > 0.5)
+					if (faker.number.float(1) < 0.9) return defaultWeapons[mu.user];
+					if (faker.number.float(1) > 0.5)
 						return (
 							mainWeaponIds.find((id) => id > defaultWeapons[mu.user]) ?? 0
 						);
 
-					const shuffled = R.shuffle([...mainWeaponIds]);
+					const shuffled = faker.helpers.shuffle([...mainWeaponIds]);
 
 					return shuffled[0];
 				};
@@ -2265,7 +2291,7 @@ async function scrimPosts() {
 	const allUsers = userIdsInRandomOrder(true);
 
 	const date = () => {
-		const isNow = Math.random() > 0.5;
+		const isNow = faker.number.float(1) > 0.5;
 
 		if (isNow) {
 			return databaseTimestampNow();
@@ -2284,7 +2310,7 @@ async function scrimPosts() {
 	};
 
 	const team = () => {
-		const hasTeam = Math.random() > 0.5;
+		const hasTeam = faker.number.float(1) > 0.5;
 
 		if (!hasTeam) {
 			return null;
@@ -2294,7 +2320,7 @@ async function scrimPosts() {
 	};
 
 	const divRange = () => {
-		const hasDivRange = Math.random() > 0.2;
+		const hasDivRange = faker.number.float(1) > 0.2;
 
 		if (!hasDivRange) {
 			return null;
@@ -2331,7 +2357,9 @@ async function scrimPosts() {
 			minDiv: divs?.minDiv,
 			teamId: team(),
 			text:
-				Math.random() > 0.5 ? faker.lorem.sentences({ min: 1, max: 5 }) : null,
+				faker.number.float(1) > 0.5
+					? faker.lorem.sentences({ min: 1, max: 5 })
+					: null,
 			visibility: null,
 			users: users(),
 		});
@@ -2340,7 +2368,9 @@ async function scrimPosts() {
 	const adminPostId = await ScrimPostRepository.insert({
 		at: date(),
 		text:
-			Math.random() > 0.5 ? faker.lorem.sentences({ min: 1, max: 5 }) : null,
+			faker.number.float(1) > 0.5
+				? faker.lorem.sentences({ min: 1, max: 5 })
+				: null,
 		visibility: null,
 		users: users()
 			.map((u) => ({ ...u, isOwner: 0 }))

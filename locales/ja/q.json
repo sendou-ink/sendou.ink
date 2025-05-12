@@ -49,7 +49,6 @@
 	"front.join.joinAction": "ジョイン",
 	"front.join.joinWithTrustAction": "{{inviterName}}をジョイン、信用する",
 	"front.join.joinWithTrustAction.explanation": "ユーザーを信用するとこれからインバイトリンク無しでグループにあなたを追加できます。",
-	"front.join.refuseAction": "結構です",
 	"front.seasonOpen": "シーズン{{nth}}開幕",
 	"front.preview": "ジョインせず列にいるグループを見る",
 	"front.preview.explanation": "この機能はサポーター(あるいはそれ以上)の支援者のみ使えます。",

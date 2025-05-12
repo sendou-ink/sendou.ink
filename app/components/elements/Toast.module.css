@@ -3,9 +3,9 @@
 	gap: 8px;
 	display: flex;
 	position: fixed;
-	top: 55px;
-	right: 8px;
-	z-index: 1;
+	top: 10px;
+	right: 10px;
+	z-index: 10;
 }
 
 .toast {

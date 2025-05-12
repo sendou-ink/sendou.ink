@@ -4,9 +4,11 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { Button, LinkButton } from "~/components/Button";
-import { Dialog } from "~/components/Dialog";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Pagination } from "~/components/Pagination";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouDialog } from "~/components/elements/Dialog";
+import { CrossIcon } from "~/components/icons/Cross";
 import { EditIcon } from "~/components/icons/Edit";
 import { TrashIcon } from "~/components/icons/Trash";
 import { UnlinkIcon } from "~/components/icons/Unlink";
@@ -93,11 +95,17 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 	const [imageLoaded, setImageLoaded] = React.useState(false);
 
 	return (
-		<Dialog
-			isOpen
-			close={close}
-			className="art__dialog__image-container"
-			closeOnAnyClick
+		<SendouDialog
+			heading={databaseTimestampToDate(art.createdAt).toLocaleDateString(
+				i18n.language,
+				{
+					year: "numeric",
+					month: "long",
+					day: "numeric",
+				},
+			)}
+			onClose={close}
+			isFullScreen
 		>
 			<img
 				alt=""
@@ -135,17 +143,15 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 					{art.description}
 				</div>
 			) : null}
-			<div className="text-xxs text-lighter">
-				{databaseTimestampToDate(art.createdAt).toLocaleDateString(
-					i18n.language,
-					{
-						year: "numeric",
-						month: "long",
-						day: "numeric",
-					},
-				)}
-			</div>
-		</Dialog>
+			<SendouButton
+				variant="destructive"
+				className="mx-auto mt-6"
+				onPress={close}
+				icon={<CrossIcon />}
+			>
+				Close
+			</SendouButton>
+		</SendouDialog>
 	);
 }
 

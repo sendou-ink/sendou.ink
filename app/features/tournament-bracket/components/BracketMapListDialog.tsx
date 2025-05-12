@@ -3,10 +3,10 @@ import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "~/components/Button";
-import { Dialog } from "~/components/Dialog";
 import { ModeImage, StageImage } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { RefreshArrowsIcon } from "~/components/icons/RefreshArrows";
 import type { TournamentRoundMaps } from "~/db/tables";
@@ -271,7 +271,12 @@ export function BracketMapListDialog({
 		!eliminationTeamCount;
 
 	return (
-		<Dialog isOpen={isOpen} close={close} className="map-list-dialog__dialog">
+		<SendouDialog
+			heading={`Maplist selection (${bracket.name})`}
+			isOpen={isOpen}
+			onClose={close}
+			isFullScreen
+		>
 			<fetcher.Form method="post" className="map-list-dialog__container">
 				<input type="hidden" name="bracketIdx" value={bracketIdx} />
 				<input
@@ -301,7 +306,6 @@ export function BracketMapListDialog({
 					/>
 				) : null}
 				<div>
-					<h2 className="text-lg text-center">{bracket.name}</h2>
 					{preparedMaps ? (
 						<div
 							className="text-xs text-center text-lighter"
@@ -601,7 +605,7 @@ export function BracketMapListDialog({
 					</>
 				)}
 			</fetcher.Form>
-		</Dialog>
+		</SendouDialog>
 	);
 }
 

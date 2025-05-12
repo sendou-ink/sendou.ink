@@ -1,13 +1,8 @@
 import clsx from "clsx";
-import type {
-	ListBoxItemProps,
-	SelectProps,
-	ValidationResult,
-} from "react-aria-components";
+import type { ListBoxItemProps, SelectProps } from "react-aria-components";
 import {
 	Autocomplete,
 	Button,
-	FieldError,
 	Input,
 	Label,
 	ListBox,
@@ -17,11 +12,11 @@ import {
 	SearchField,
 	Select,
 	SelectValue,
-	Text,
 	Virtualizer,
 	useFilter,
 } from "react-aria-components";
 import { useTranslation } from "react-i18next";
+import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { ChevronUpDownIcon } from "~/components/icons/ChevronUpDown";
 import { CrossIcon } from "../icons/Cross";
 import { SearchIcon } from "../icons/Search";
@@ -31,7 +26,8 @@ interface SendouSelectProps<T extends object>
 	extends Omit<SelectProps<T>, "children"> {
 	label?: string;
 	description?: string;
-	errorMessage?: string | ((validation: ValidationResult) => string);
+	errorText?: string;
+	bottomText?: string;
 	items?: Iterable<T>;
 	children: React.ReactNode | ((item: T) => React.ReactNode);
 	search?: {
@@ -42,7 +38,8 @@ interface SendouSelectProps<T extends object>
 export function SendouSelect<T extends object>({
 	label,
 	description,
-	errorMessage,
+	errorText,
+	bottomText,
 	children,
 	items,
 	search,
@@ -60,8 +57,7 @@ export function SendouSelect<T extends object>({
 					<ChevronUpDownIcon className={styles.icon} />
 				</span>
 			</Button>
-			{description && <Text slot="description">{description}</Text>}
-			<FieldError>{errorMessage}</FieldError>
+			<SendouBottomTexts bottomText={bottomText} errorText={errorText} />
 			<Popover className={styles.popover}>
 				<Autocomplete filter={contains}>
 					{search ? (

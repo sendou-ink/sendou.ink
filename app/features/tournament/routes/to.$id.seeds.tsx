@@ -19,10 +19,10 @@ import * as React from "react";
 import { Alert } from "~/components/Alert";
 import { Button } from "~/components/Button";
 import { Catcher } from "~/components/Catcher";
-import { Dialog } from "~/components/Dialog";
 import { Draggable } from "~/components/Draggable";
 import { SubmitButton } from "~/components/SubmitButton";
 import { Table } from "~/components/Table";
+import { SendouDialog } from "~/components/elements/Dialog";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import { useTimeoutState } from "~/hooks/useTimeoutState";
 import invariant from "~/utils/invariant";
@@ -241,9 +241,13 @@ function StartingBracketDialog() {
 			>
 				Set starting brackets
 			</Button>
-			<Dialog isOpen={isOpen} close={() => setIsOpen(false)} className="w-max">
+			<SendouDialog
+				heading="Setting starting brackets"
+				isOpen={isOpen}
+				onClose={() => setIsOpen(false)}
+				isFullScreen
+			>
 				<fetcher.Form className="stack lg items-center" method="post">
-					<h2 className="text-lg self-start">Setting starting brackets</h2>
 					<div>
 						{startingBrackets.map((bracket) => {
 							const teamCount = teamStartingBrackets.filter(
@@ -323,7 +327,7 @@ function StartingBracketDialog() {
 						Save
 					</SubmitButton>
 				</fetcher.Form>
-			</Dialog>
+			</SendouDialog>
 		</div>
 	);
 }

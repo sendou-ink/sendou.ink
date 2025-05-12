@@ -37,7 +37,7 @@ export default function NewScrimPage() {
 		<Main>
 			<MyForm
 				schema={scrimsNewActionSchema}
-				title={t("scrims:forms.title")}
+				heading={t("scrims:forms.title")}
 				defaultValues={{
 					postText: "",
 					at: new Date(),

@@ -12,7 +12,8 @@ import { Label } from "~/components/Label";
 import { containerClassName } from "~/components/Main";
 import { Redirect } from "~/components/Redirect";
 import { SubmitButton } from "~/components/SubmitButton";
-import { UserSearch } from "~/components/UserSearch";
+import { SendouDialog } from "~/components/elements/Dialog";
+import { UserSearch } from "~/components/elements/UserSearch";
 import { TrashIcon } from "~/components/icons/Trash";
 import { USER } from "~/constants";
 import { useUser } from "~/features/auth/core/user";
@@ -27,7 +28,6 @@ import {
 	tournamentEditPage,
 	tournamentPage,
 } from "~/utils/urls";
-import { Dialog } from "../../../components/Dialog";
 import { BracketProgressionSelector } from "../../calendar/components/BracketProgressionSelector";
 import { useTournament } from "./to.$id";
 
@@ -323,8 +323,7 @@ function TeamActions() {
 				) : null}
 				{selectedAction.inputs.includes("USER") ? (
 					<div>
-						<label htmlFor="user">User</label>
-						<UserSearch inputName="userId" id="user" />
+						<UserSearch name="userId" label="User" />
 					</div>
 				) : null}
 				{selectedAction.inputs.includes("BRACKET") ? (
@@ -421,39 +420,29 @@ function CastTwitchAccounts() {
 
 function StaffAdder() {
 	const fetcher = useFetcher();
-	const tournament = useTournament();
 
 	return (
 		<fetcher.Form method="post" className="stack sm">
-			<div className="stack horizontal sm flex-wrap items-end">
+			<div className="stack horizontal sm flex-wrap items-start">
 				<div>
-					<Label htmlFor="staff-user">New staffer</Label>
-					<UserSearch
-						inputName="userId"
-						id="staff-user"
-						required
-						userIdsToOmit={
-							new Set([
-								tournament.ctx.author.id,
-								...tournament.ctx.staff.map((s) => s.id),
-							])
-						}
-					/>
+					<UserSearch name="userId" label="New staffer" isRequired />
 				</div>
-				<div>
-					<Label htmlFor="staff-role">Role</Label>
-					<select name="role" id="staff-role" className="w-max">
-						<option value="ORGANIZER">Organizer</option>
-						<option value="STREAMER">Streamer</option>
-					</select>
+				<div className="stack horizontal sm items-end">
+					<div>
+						<Label htmlFor="staff-role">Role</Label>
+						<select name="role" id="staff-role" className="w-max">
+							<option value="ORGANIZER">Organizer</option>
+							<option value="STREAMER">Streamer</option>
+						</select>
+					</div>
+					<SubmitButton
+						state={fetcher.state}
+						_action="ADD_STAFF"
+						testId="add-staff-button"
+					>
+						Add
+					</SubmitButton>
 				</div>
-				<SubmitButton
-					state={fetcher.state}
-					_action="ADD_STAFF"
-					testId="add-staff-button"
-				>
-					Add
-				</SubmitButton>
 			</div>
 			<FormMessage type="info">
 				Organizer has same permissions as you expect adding/removing staff,
@@ -782,7 +771,11 @@ function BracketProgressionEditDialog({ close }: { close: () => void }) {
 		.map((bracket) => bracket.idx);
 
 	return (
-		<Dialog isOpen className="w-max">
+		<SendouDialog
+			isFullScreen
+			onClose={close}
+			heading="Editing bracket progression"
+		>
 			<fetcher.Form method="post">
 				<BracketProgressionSelector
 					initialBrackets={Progression.validatedBracketsToInputFormat(
@@ -802,11 +795,8 @@ function BracketProgressionEditDialog({ close }: { close: () => void }) {
 					>
 						Save changes
 					</SubmitButton>
-					<Button variant="destructive" onClick={close}>
-						Cancel
-					</Button>
 				</div>
 			</fetcher.Form>
-		</Dialog>
+		</SendouDialog>
 	);
 }

@@ -3,7 +3,7 @@ import type { TFunction } from "i18next";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "~/components/Button";
-import { Dialog } from "~/components/Dialog";
+import { SendouDialog } from "~/components/elements/Dialog";
 import { MapIcon } from "~/components/icons/Map";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { nullFilledArray } from "~/utils/arrays";
@@ -35,10 +35,12 @@ export function OrganizerMatchMapListDialog({
 	let number = 0;
 	return (
 		<>
-			<Dialog isOpen={isOpen} close={() => setIsOpen(false)} className="w-max">
-				<h2 className="text-md">
-					{teamOne.name} vs. {teamTwo.name}
-				</h2>
+			<SendouDialog
+				heading={`${teamOne.name} vs. ${teamTwo.name}`}
+				isOpen={isOpen}
+				onClose={() => setIsOpen(false)}
+				className="w-max"
+			>
 				<div className="mt-2">
 					{nullFilledArray(
 						Math.max(
@@ -99,7 +101,7 @@ export function OrganizerMatchMapListDialog({
 						</div>
 					</div>
 				) : null}
-			</Dialog>
+			</SendouDialog>
 			<Button
 				variant="outlined"
 				size="tiny"

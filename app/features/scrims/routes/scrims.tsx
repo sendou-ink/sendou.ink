@@ -7,11 +7,11 @@ import * as R from "remeda";
 import type { z } from "zod";
 import { Avatar } from "~/components/Avatar";
 import { Button, LinkButton } from "~/components/Button";
-import { Dialog } from "~/components/Dialog";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Table } from "~/components/Table";
 import { SendouButton } from "~/components/elements/Button";
+import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
 import { MyForm } from "~/components/form/MyForm";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
@@ -183,10 +183,9 @@ function RequestScrimModal({
 	invariant(post, "Post not found");
 
 	return (
-		<Dialog isOpen>
+		<SendouDialog heading={t("scrims:requestModal.title")} onClose={close}>
 			<MyForm
 				schema={newRequestSchema}
-				title={t("scrims:requestModal.title")}
 				defaultValues={{
 					_action: "NEW_REQUEST",
 					scrimPostId: postId,
@@ -200,7 +199,6 @@ function RequestScrimModal({
 									) as unknown as number[],
 								},
 				}}
-				handleCancel={close}
 			>
 				<ScrimsDaySeparatedTables posts={[post]} showPopovers={false} />
 				<div className="font-semi-bold text-lighter italic">
@@ -212,7 +210,7 @@ function RequestScrimModal({
 				<Divider />
 				<WithFormField usersTeams={data.teams} />
 			</MyForm>
-		</Dialog>
+		</SendouDialog>
 	);
 }
 
@@ -484,7 +482,6 @@ function ScrimsTable({
 											<FormWithConfirm
 												dialogHeading={t("scrims:deleteModal.title")}
 												submitButtonText={t("common:actions.delete")}
-												cancelButtonText={t("common:actions.nevermind")}
 												fields={[
 													["scrimPostId", post.id],
 													["_action", "DELETE_POST"],
@@ -524,7 +521,6 @@ function ScrimsTable({
 										<FormWithConfirm
 											dialogHeading={t("scrims:cancelModal.title")}
 											submitButtonText={t("common:actions.cancel")}
-											cancelButtonText={t("common:actions.nevermind")}
 											fields={[
 												["scrimPostRequestId", post.requests[0].id],
 												["_action", "CANCEL_REQUEST"],
@@ -643,7 +639,6 @@ function RequestRow({
 						]}
 						submitButtonVariant="primary"
 						submitButtonText={t("common:actions.accept")}
-						cancelButtonVariant="destructive"
 					>
 						<Button size="tiny" className="ml-auto">
 							{t("common:actions.accept")}

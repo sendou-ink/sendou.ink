@@ -17,7 +17,7 @@ type ButtonVariant =
 	| "minimal-success"
 	| "minimal-destructive";
 
-interface MyDatePickerProps extends ReactAriaButtonProps {
+interface SendouButtonProps extends ReactAriaButtonProps {
 	variant?: ButtonVariant;
 	size?: "miniscule" | "small" | "medium" | "big";
 	icon?: JSX.Element;
@@ -31,7 +31,7 @@ export function SendouButton({
 	className,
 	icon,
 	...rest
-}: MyDatePickerProps) {
+}: SendouButtonProps) {
 	const variantClassname = variant ? variantToClassname(variant) : null;
 
 	return (
