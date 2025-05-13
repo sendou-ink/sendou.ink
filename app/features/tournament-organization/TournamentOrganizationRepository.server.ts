@@ -208,6 +208,7 @@ const findEventsBaseQuery = (organizationId: number) =>
 			).as("eventWinners"),
 		])
 		.where("CalendarEvent.organizationId", "=", organizationId)
+		.where("CalendarEvent.hidden", "=", 0)
 		.groupBy("CalendarEvent.id");
 
 const mapEvent = <
