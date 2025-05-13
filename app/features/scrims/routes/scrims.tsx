@@ -111,11 +111,13 @@ export default function ScrimsPage() {
 					{
 						label: t("scrims:tabs.owned"),
 						number: data.posts.owned.length,
+						disabled: !user,
 						icon: <ArrowDownOnSquareIcon />,
 					},
 					{
 						label: t("scrims:tabs.requests"),
 						number: data.posts.requested.length,
+						disabled: !user,
 						icon: <ArrowUpOnSquareIcon />,
 					},
 					{
@@ -464,7 +466,7 @@ function ScrimsTable({
 										</div>
 									</td>
 								) : null}
-								{requestScrim && post.requests.length === 0 ? (
+								{user && requestScrim && post.requests.length === 0 ? (
 									<td className={styles.postFloatingActionCell}>
 										<Button
 											size="tiny"
