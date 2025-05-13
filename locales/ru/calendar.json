@@ -65,5 +65,8 @@
 	"tag.desc.S1": "Игра — Splatoon 1.",
 	"tag.desc.S2": "Игра — Splatoon 2.",
 	"tag.desc.SR": "Событие по Salmon Run.",
-	"tag.desc.CARDS": "Событие по \"Карты и район\"."
+	"tag.desc.CARDS": "Событие по \"Карты и район\".",
+	"tag.filter.label": "Фильтровать пол тегам",
+
+	"tournament.filter.label": "Проводится на sendou.ink"
 }
