@@ -24,8 +24,8 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { AlertIcon } from "~/components/icons/Alert";
 import { TopTenPlayer } from "~/features/leaderboards/components/TopTenPlayer";
 import { playerTopTenPlacement } from "~/features/leaderboards/leaderboards-utils";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
-import { allSeasons, seasonObject } from "~/features/mmr/season";
 import { useWeaponUsage } from "~/hooks/swr";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import {
@@ -132,7 +132,7 @@ function SeasonHeader() {
 	const { t, i18n } = useTranslation(["user"]);
 	const data = useLoaderData<typeof loader>();
 	const isMounted = useIsMounted();
-	const { starts, ends } = seasonObject(data.season);
+	const { starts, ends } = Seasons.nthToDateRange(data.season);
 
 	const isDifferentYears =
 		new Date(starts).getFullYear() !== new Date(ends).getFullYear();
@@ -140,7 +140,7 @@ function SeasonHeader() {
 	return (
 		<div>
 			<div className="stack horizontal xs">
-				{allSeasons(new Date()).map((s) => {
+				{Seasons.allStarted().map((s) => {
 					const isActive = s === data.season;
 
 					return (

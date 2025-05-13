@@ -16,7 +16,7 @@ import { UserIcon } from "~/components/icons/User";
 import { UsersIcon } from "~/components/icons/Users";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
-import type { RankingSeason } from "~/features/mmr/season";
+import type * as Seasons from "~/features/mmr/core/Seasons";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useHasRole } from "~/modules/permissions/hooks";
@@ -300,7 +300,7 @@ function JoinTeamDialog({
 function ActiveSeasonInfo({
 	season,
 }: {
-	season: SerializeFrom<RankingSeason>;
+	season: SerializeFrom<Seasons.ListItem>;
 }) {
 	const { t, i18n } = useTranslation(["q"]);
 	const isMounted = useIsMounted();
@@ -407,7 +407,7 @@ function QLink({
 function UpcomingSeasonInfo({
 	season,
 }: {
-	season: SerializeFrom<RankingSeason>;
+	season: SerializeFrom<Seasons.ListItem>;
 }) {
 	const { t } = useTranslation(["q"]);
 	const isMounted = useIsMounted();

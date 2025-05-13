@@ -4,7 +4,7 @@ import {
 	type DbMapPoolList,
 	MapPool,
 } from "~/features/map-list-generator/core/map-pool";
-import { currentOrPreviousSeason } from "~/features/mmr/season";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import { userSkills } from "~/features/mmr/tiered.server";
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import { addSkillsToGroups } from "~/features/sendouq/core/groups.server";
@@ -275,7 +275,7 @@ type CreateMatchMementoArgs = {
 export function createMatchMemento(
 	args: CreateMatchMementoArgs,
 ): Omit<ParsedMemento, "mapPreferences"> {
-	const skills = userSkills(currentOrPreviousSeason(new Date())!.nth);
+	const skills = userSkills(Seasons.currentOrPrevious()!.nth);
 	const withTiers = addSkillsToGroups({
 		groups: {
 			neutral: [],

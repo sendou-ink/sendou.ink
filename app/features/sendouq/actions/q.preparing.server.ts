@@ -1,7 +1,7 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
-import { currentSeason } from "~/features/mmr/season";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
@@ -33,7 +33,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		return null;
 	}
 
-	const season = currentSeason(new Date());
+	const season = Seasons.current();
 	errorToastIfFalsy(season, "Season is not active");
 
 	switch (data._action) {

@@ -4,8 +4,8 @@ import {
 	type UserLeaderboardWithAdditionsItem,
 	cachedFullUserLeaderboard,
 } from "~/features/leaderboards/core/leaderboards.server";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import { TIERS } from "~/features/mmr/mmr-constants";
-import { currentOrPreviousSeason } from "~/features/mmr/season";
 import * as QStreamsRepository from "~/features/sendouq-streams/QStreamsRepository.server";
 import { getStreams } from "~/modules/twitch";
 import type { MappedStream } from "~/modules/twitch/streams";
@@ -13,7 +13,7 @@ import { cache, ttl } from "~/utils/cache.server";
 import { SENDOUQ_STREAMS_KEY } from "../q-streams-constants";
 
 export function cachedStreams() {
-	const season = currentOrPreviousSeason(new Date())!;
+	const season = Seasons.currentOrPrevious()!;
 
 	return cachified({
 		key: SENDOUQ_STREAMS_KEY,

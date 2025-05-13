@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { db } from "~/db/sql";
-import { currentSeason as _currentSeason } from "~/features/mmr/season";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -10,7 +10,7 @@ const discordId = process.argv[2]?.trim();
 invariant(discordId, "discord id is required (argument 1)");
 
 async function main() {
-	const currentSeason = _currentSeason(new Date());
+	const currentSeason = Seasons.current();
 	if (!currentSeason) {
 		logger.info("No current season found");
 		return;

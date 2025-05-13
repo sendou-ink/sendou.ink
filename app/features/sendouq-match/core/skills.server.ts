@@ -6,6 +6,7 @@ import type {
 	UserSkillDifference,
 } from "~/db/tables";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import {
 	ordinalToSp,
 	rate,
@@ -16,7 +17,6 @@ import {
 	queryCurrentUserRating,
 	queryTeamPlayerRatingAverage,
 } from "~/features/mmr/mmr-utils.server";
-import { currentOrPreviousSeason } from "~/features/mmr/season";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
 
@@ -56,7 +56,7 @@ export function calculateMatchSkills({
 	> = [];
 	const differences: MementoSkillDifferences = { users: {}, groups: {} };
 
-	const season = currentOrPreviousSeason(new Date())?.nth;
+	const season = Seasons.currentOrPrevious()?.nth;
 	invariant(typeof season === "number", "No ranked season for skills");
 
 	{

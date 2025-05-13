@@ -2,7 +2,7 @@ import type { Tables, UserWithPlusTier } from "~/db/tables";
 import type * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import { isAdmin } from "~/modules/permissions/utils";
 import { allTruthy } from "~/utils/arrays";
-import { currentSeason, nextSeason } from "../mmr/season";
+import * as Seasons from "../mmr/core/Seasons";
 import { isVotingActive } from "../plus-voting/core";
 
 interface CanAddCommentToSuggestionArgs {
@@ -142,7 +142,7 @@ export function canSuggestNewUser({
 	const votingActive =
 		process.env.NODE_ENV === "test" ? false : isVotingActive();
 
-	const existsSeason = currentSeason(new Date()) || nextSeason(new Date());
+	const existsSeason = Seasons.current() || Seasons.next();
 
 	return allTruthy([
 		!votingActive,

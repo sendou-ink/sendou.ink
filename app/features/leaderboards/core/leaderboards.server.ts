@@ -1,8 +1,8 @@
 import { cachified } from "@epic-web/cachified";
 import { HALF_HOUR_IN_MS } from "~/constants";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import { USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN } from "~/features/mmr/mmr-constants";
 import { spToOrdinal } from "~/features/mmr/mmr-utils";
-import { currentSeason } from "~/features/mmr/season";
 import { freshUserSkills, userSkills } from "~/features/mmr/tiered.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists";
@@ -29,7 +29,7 @@ export async function cachedFullUserLeaderboard(season: number) {
 			const withTiers = addTiers(leaderboard, season);
 
 			const shouldAddPendingPlusTier =
-				season === currentSeason(new Date())?.nth &&
+				season === Seasons.current()?.nth &&
 				leaderboard.length >= USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN;
 			const withPendingPlusTiers = shouldAddPendingPlusTier
 				? addPendingPlusTiers(

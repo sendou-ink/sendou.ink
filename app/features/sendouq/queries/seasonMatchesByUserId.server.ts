@@ -1,7 +1,7 @@
 import { add } from "date-fns";
 import { sql } from "~/db/sql";
 import type { ParsedMemento, Tables } from "~/db/tables";
-import { seasonObject } from "~/features/mmr/season";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import { MATCHES_PER_SEASONS_PAGE } from "~/features/user-page/user-page-constants";
 import type { MainWeaponId } from "~/modules/in-game-lists";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -129,7 +129,7 @@ export function seasonMatchesByUserId({
 	season: number;
 	page: number;
 }): SeasonMatchByUserId[] {
-	const { starts, ends } = seasonObject(season);
+	const { starts, ends } = Seasons.nthToDateRange(season);
 
 	const rows = stm.all({
 		userId,
@@ -193,7 +193,7 @@ export function seasonMatchesByUserIdPagesCount({
 	userId: number;
 	season: number;
 }): number {
-	const { starts, ends } = seasonObject(season);
+	const { starts, ends } = Seasons.nthToDateRange(season);
 
 	const row = pagesStm.get({
 		userId,

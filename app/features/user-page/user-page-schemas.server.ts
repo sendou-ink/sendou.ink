@@ -18,7 +18,7 @@ import {
 	undefinedToNull,
 	weaponSplId,
 } from "~/utils/zod";
-import { allSeasons } from "../mmr/season";
+import * as Seasons from "../mmr/core/Seasons";
 import {
 	HIGHLIGHT_CHECKBOX_NAME,
 	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
@@ -32,7 +32,7 @@ export const seasonsSearchParamsSchema = z.object({
 	season: z.coerce
 		.number()
 		.optional()
-		.refine((nth) => !nth || allSeasons(new Date()).includes(nth)),
+		.refine((nth) => !nth || Seasons.allStarted(new Date()).includes(nth)),
 });
 
 export const userEditActionSchema = z

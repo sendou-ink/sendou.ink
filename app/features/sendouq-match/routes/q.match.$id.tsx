@@ -32,7 +32,7 @@ import { ScaleIcon } from "~/components/icons/Scale";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { Chat, type ChatProps, useChat } from "~/features/chat/components/Chat";
-import { currentSeason } from "~/features/mmr/season";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import { AddPrivateNoteDialog } from "~/features/sendouq-match/components/AddPrivateNoteDialog";
 import type { ReportedWeaponForMerging } from "~/features/sendouq-match/core/reported-weapons.server";
 import { GroupCard } from "~/features/sendouq/components/GroupCard";
@@ -355,7 +355,7 @@ function AfterMatchActions({
 	const wasReportedInTheLastHour =
 		databaseTimestampToDate(reportedAt).getTime() > Date.now() - 3600 * 1000;
 
-	const season = currentSeason(new Date());
+	const season = Seasons.current();
 	const showLookAgain = role === "OWNER" && wasReportedInTheLastHour && season;
 
 	const wasReportedInTheLastWeek =

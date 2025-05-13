@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import { seasonObject } from "~/features/mmr/season";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import type { MainWeaponId, ModeShort, StageId } from "~/modules/in-game-lists";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { assertUnreachable } from "~/utils/types";
@@ -51,7 +51,7 @@ export function weaponUsageStats({
 	stageId: StageId;
 	season: number;
 }) {
-	const { starts, ends } = seasonObject(season);
+	const { starts, ends } = Seasons.nthToDateRange(season);
 
 	const rows = stm.all({
 		starts: dateToDatabaseTimestamp(starts),

@@ -1,13 +1,13 @@
 import type { ActionFunction } from "@remix-run/node";
 import { sql } from "~/db/sql";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import {
 	queryCurrentTeamRating,
 	queryCurrentUserRating,
 	queryCurrentUserSeedingRating,
 	queryTeamPlayerRatingAverage,
 } from "~/features/mmr/mmr-utils.server";
-import { currentSeason } from "~/features/mmr/season";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
@@ -239,7 +239,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const results = allMatchResultsByTournamentId(tournamentId);
 			invariant(results.length > 0, "No results found");
 
-			const season = currentSeason(tournament.ctx.startTime)?.nth;
+			const season = Seasons.current(tournament.ctx.startTime)?.nth;
 
 			const seedingSkillCountsFor = tournament.skillCountsFor;
 			const summary = tournamentSummary({

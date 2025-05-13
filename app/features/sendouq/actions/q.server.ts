@@ -4,7 +4,7 @@ import { sql } from "~/db/sql";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
-import { currentSeason } from "~/features/mmr/season";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import { giveTrust } from "~/features/tournament/queries/giveTrust.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -130,7 +130,7 @@ async function validateCanJoinQ(user: { id: number; discordId: string }) {
 	errorToastIfFalsy(friendCode, "No friend code");
 	const canJoinQueue = userCanJoinQueueAt(user, friendCode) === "NOW";
 
-	errorToastIfFalsy(currentSeason(new Date()), "Season is not active");
+	errorToastIfFalsy(Seasons.current(), "Season is not active");
 	errorToastIfFalsy(!findCurrentGroupByUserId(user.id), "Already in a group");
 	errorToastIfFalsy(canJoinQueue, "Can't join queue right now");
 }

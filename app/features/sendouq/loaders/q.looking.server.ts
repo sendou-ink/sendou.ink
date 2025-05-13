@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { getUser } from "~/features/auth/core/user.server";
-import { currentOrPreviousSeason } from "~/features/mmr/season";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import { userSkills } from "~/features/mmr/tiered.server";
 import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
@@ -68,7 +68,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		likes: currentGroup ? findLikes(currentGroup.id) : [],
 	});
 
-	const season = currentOrPreviousSeason(new Date());
+	const season = Seasons.currentOrPrevious();
 
 	const {
 		intervals,

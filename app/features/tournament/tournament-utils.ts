@@ -6,7 +6,7 @@ import { tournamentLogoUrl } from "~/utils/urls";
 import type { Tables, TournamentStageSettings } from "../../db/tables";
 import { assertUnreachable } from "../../utils/types";
 import { MapPool } from "../map-list-generator/core/map-pool";
-import { currentSeason } from "../mmr/season";
+import * as Seasons from "../mmr/core/Seasons";
 import { BANNED_MAPS } from "../sendouq-settings/banned-maps";
 import type { Tournament as TournamentClass } from "../tournament-bracket/core/Tournament";
 import type { TournamentData } from "../tournament-bracket/core/Tournament.server";
@@ -264,7 +264,7 @@ export function tournamentIsRanked({
 }) {
 	if (isTest) return false;
 
-	const seasonIsActive = Boolean(currentSeason(startTime));
+	const seasonIsActive = Boolean(Seasons.current(startTime));
 	if (!seasonIsActive) return false;
 
 	// 1v1, 2v2 and 3v3 are always considered "gimmicky"

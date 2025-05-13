@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { sql } from "~/db/sql";
-import { currentOrPreviousSeason } from "~/features/mmr/season";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 
@@ -8,7 +8,7 @@ const discordId = process.argv[2]?.trim();
 
 invariant(discordId, "discord id is required (argument 1)");
 
-const currentSeasonNth = currentOrPreviousSeason(new Date())?.nth;
+const currentSeasonNth = Seasons.currentOrPrevious()?.nth;
 
 invariant(currentSeasonNth, "current season nth is required");
 

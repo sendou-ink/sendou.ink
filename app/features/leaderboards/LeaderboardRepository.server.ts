@@ -6,8 +6,8 @@ import { db } from "~/db/sql";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { dateToDatabaseTimestamp } from "../../utils/dates";
 import invariant from "../../utils/invariant";
+import * as Seasons from "../mmr/core/Seasons";
 import { ordinalToSp } from "../mmr/mmr-utils";
-import { seasonObject } from "../mmr/season";
 import {
 	DEFAULT_LEADERBOARD_MAX_SIZE,
 	IGNORED_TEAMS,
@@ -129,7 +129,7 @@ async function filterOutNonSqPlayers(args: {
 }
 
 async function userIdsWithEnoughSqMatchesForTeamLeaderboard(seasonNth: number) {
-	const season = seasonObject(seasonNth);
+	const season = Seasons.nthToDateRange(seasonNth);
 	invariant(season, "Season not found in sqMatchCountByUserId");
 
 	const userIds = await db

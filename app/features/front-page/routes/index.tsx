@@ -21,11 +21,7 @@ import { UsersIcon } from "~/components/icons/Users";
 import { navItems } from "~/components/layout/nav-items";
 import { useUser } from "~/features/auth/core/user";
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
-import {
-	currentOrPreviousSeason,
-	nextSeason,
-	previousSeason,
-} from "~/features/mmr/season";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -109,8 +105,8 @@ function DesktopSideNav() {
 
 function SeasonBanner() {
 	const { t, i18n } = useTranslation(["front"]);
-	const season = nextSeason(new Date()) ?? currentOrPreviousSeason(new Date())!;
-	const _previousSeason = previousSeason(new Date());
+	const season = Seasons.next(new Date()) ?? Seasons.currentOrPrevious()!;
+	const _previousSeason = Seasons.previous();
 	const isMounted = useIsMounted();
 
 	const isInFuture = new Date() < season.starts;
@@ -422,7 +418,7 @@ function ResultHighlights() {
 		return null;
 	}
 
-	const season = currentOrPreviousSeason(new Date())!;
+	const season = Seasons.currentOrPrevious()!;
 
 	const recentResults = (
 		<>

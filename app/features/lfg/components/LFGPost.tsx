@@ -12,7 +12,7 @@ import { Image, TierImage, WeaponImage } from "~/components/Image";
 import { EditIcon } from "~/components/icons/Edit";
 import { TrashIcon } from "~/components/icons/Trash";
 import { useUser } from "~/features/auth/core/user";
-import { currentOrPreviousSeason } from "~/features/mmr/season";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useHasRole } from "~/modules/permissions/hooks";
@@ -336,7 +336,7 @@ function PostTimezonePillPlaceholder() {
 	return <div className={clsx(styles.pill, styles.pillPlaceholder)} />;
 }
 
-const currentSeasonNth = currentOrPreviousSeason(new Date())!.nth;
+const currentSeasonNth = Seasons.currentOrPrevious()!.nth;
 
 function PostSkillPills({
 	tiers,

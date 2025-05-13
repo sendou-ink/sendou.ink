@@ -12,7 +12,7 @@ import { Main } from "~/components/Main";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { UsersIcon } from "~/components/icons/Users";
 import type { CalendarEventTag } from "~/db/tables";
-import { currentSeason } from "~/features/mmr/season";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { joinListToNaturalString } from "~/utils/arrays";
@@ -431,7 +431,7 @@ function EventsList({
 								);
 								const tournamentRankedStatus = () => {
 									if (!calendarEvent.tournamentSettings) return undefined;
-									if (!currentSeason(startTimeDate)) return undefined;
+									if (!Seasons.current(startTimeDate)) return undefined;
 
 									return calendarEvent.tournamentSettings.isRanked &&
 										(!calendarEvent.tournamentSettings.minMembersPerTeam ||

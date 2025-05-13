@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import { seasonObject } from "~/features/mmr/season";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import type { MainWeaponId } from "~/modules/in-game-lists";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 
@@ -25,7 +25,7 @@ export function seasonReportedWeaponsByUserId({
 	userId: number;
 	season: number;
 }) {
-	const { starts, ends } = seasonObject(season);
+	const { starts, ends } = Seasons.nthToDateRange(season);
 
 	return stm.all({
 		userId,

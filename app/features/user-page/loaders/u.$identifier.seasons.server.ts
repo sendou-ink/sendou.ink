@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import { seasonAllMMRByUserId } from "~/features/mmr/queries/seasonAllMMRByUserId.server";
-import { currentOrPreviousSeason } from "~/features/mmr/season";
 import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
 import { seasonMapWinrateByUserId } from "~/features/sendouq/queries/seasonMapWinrateByUserId.server";
 import {
@@ -26,7 +26,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const {
 		info = "weapons",
 		page = 1,
-		season = currentOrPreviousSeason(new Date())!.nth,
+		season = Seasons.currentOrPrevious()!.nth,
 	} = parsedSearchParams.success ? parsedSearchParams.data : {};
 
 	const user = notFoundIfFalsy(
