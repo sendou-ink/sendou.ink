@@ -3,10 +3,10 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { BuildCard } from "~/components/BuildCard";
 import { Button } from "~/components/Button";
-import { Dialog } from "~/components/Dialog";
 import { FormMessage } from "~/components/FormMessage";
 import { Image, WeaponImage } from "~/components/Image";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { LockIcon } from "~/components/icons/Lock";
 import { SortIcon } from "~/components/icons/Sort";
@@ -225,14 +225,13 @@ function ChangeSortingDialog({ close }: { close: () => void }) {
 	};
 
 	return (
-		<Dialog isOpen close={close}>
+		<SendouDialog heading={t("user:builds.sorting.header")} onClose={close}>
 			<fetcher.Form method="post">
 				<input
 					type="hidden"
 					name="buildSorting"
 					value={JSON.stringify(buildSorting.filter(Boolean))}
 				/>
-				<h2 className="text-lg">{t("user:builds.sorting.header")}</h2>
 				<div className="stack lg">
 					<div className="stack md">
 						<FormMessage type="info">
@@ -282,17 +281,14 @@ function ChangeSortingDialog({ close }: { close: () => void }) {
 						})}
 					</div>
 
-					<div className="stack sm horizontal justify-center">
+					<div>
 						<SubmitButton _action="UPDATE_SORTING">
 							{t("common:actions.save")}
 						</SubmitButton>
-						<Button variant="destructive" onClick={close}>
-							{t("common:actions.cancel")}
-						</Button>
 					</div>
 				</div>
 			</fetcher.Form>
-		</Dialog>
+		</SendouDialog>
 	);
 }
 

@@ -1,0 +1,57 @@
+.item {
+	font-size: var(--fonts-xsm);
+	font-weight: var(--semi-bold);
+	white-space: pre-wrap;
+	padding: var(--s-1-5);
+	border-radius: var(--rounded-sm);
+	height: 33px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.popover {
+	min-height: 250px;
+}
+
+.itemTextsContainer {
+	line-height: 1.1;
+}
+
+.selectValue {
+	max-width: calc(var(--select-width) - 55px);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+button:disabled .selectValue {
+	color: var(--text-lighter);
+	font-style: italic;
+}
+
+.placeholder {
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	color: var(--text-lighter);
+	text-align: center;
+	display: grid;
+	place-items: center;
+	height: 162px;
+	margin-block: var(--s-4);
+}
+
+.itemAdditionalText {
+	font-size: var(--fonts-xxsm);
+	color: var(--text-lighter);
+}
+
+button .itemAdditionalText {
+	display: none;
+}

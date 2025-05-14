@@ -2,7 +2,7 @@ import type { Tables, UserWithPlusTier } from "~/db/tables";
 import type * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import { isAdmin } from "~/modules/permissions/utils";
 import { allTruthy } from "~/utils/arrays";
-import { currentSeason, nextSeason } from "../mmr/season";
+import * as Seasons from "../mmr/core/Seasons";
 import { isVotingActive } from "../plus-voting/core";
 
 interface CanAddCommentToSuggestionArgs {
@@ -131,42 +131,24 @@ function suggestionHasNoOtherComments({
 	throw new Error(`Invalid suggestion id: ${suggestionId}`);
 }
 
-interface CanSuggestNewUserFEArgs {
+interface CanSuggestNewUserArgs {
 	user?: Pick<UserWithPlusTier, "id" | "plusTier">;
 	suggestions: PlusSuggestionRepository.FindAllByMonthItem[];
 }
-export function canSuggestNewUserFE({
+export function canSuggestNewUser({
 	user,
 	suggestions,
-}: CanSuggestNewUserFEArgs) {
+}: CanSuggestNewUserArgs) {
 	const votingActive =
 		process.env.NODE_ENV === "test" ? false : isVotingActive();
 
-	const existsSeason = currentSeason(new Date()) || nextSeason(new Date());
+	const existsSeason = Seasons.current() || Seasons.next();
 
 	return allTruthy([
 		!votingActive,
 		!hasUserSuggestedThisMonth({ user, suggestions }),
 		isPlusServerMember(user),
 		existsSeason,
-	]);
-}
-
-interface CanSuggestNewUserBEArgs extends CanSuggestNewUserFEArgs {
-	suggested: Pick<UserWithPlusTier, "id" | "plusTier">;
-	targetPlusTier: NonNullable<UserWithPlusTier["plusTier"]>;
-}
-export function canSuggestNewUserBE({
-	user,
-	suggestions,
-	suggested,
-	targetPlusTier,
-}: CanSuggestNewUserBEArgs) {
-	return allTruthy([
-		canSuggestNewUserFE({ user, suggestions }),
-		!playerAlreadySuggested({ suggestions, suggested, targetPlusTier }),
-		targetPlusTierIsSmallerOrEqual({ user, targetPlusTier }),
-		!playerAlreadyMember({ suggested, targetPlusTier }),
 	]);
 }
 
@@ -177,14 +159,17 @@ function isPlusServerMember(user?: Pick<UserWithPlusTier, "plusTier">) {
 export function playerAlreadyMember({
 	suggested,
 	targetPlusTier,
-}: Pick<CanSuggestNewUserBEArgs, "suggested" | "targetPlusTier">) {
+}: {
+	suggested: Pick<UserWithPlusTier, "id" | "plusTier">;
+	targetPlusTier: NonNullable<UserWithPlusTier["plusTier"]>;
+}) {
 	return suggested.plusTier && suggested.plusTier <= targetPlusTier;
 }
 
 function hasUserSuggestedThisMonth({
 	user,
 	suggestions,
-}: Pick<CanSuggestNewUserFEArgs, "user" | "suggestions">) {
+}: Pick<CanSuggestNewUserArgs, "user" | "suggestions">) {
 	return suggestions.some(
 		(suggestion) => suggestion.suggestions[0].author.id === user?.id,
 	);

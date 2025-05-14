@@ -1,4 +1,4 @@
-import { currentSeason } from "../features/mmr/season";
+import * as Seasons from "../features/mmr/core/Seasons";
 import * as NotificationRepository from "../features/notifications/NotificationRepository.server";
 import { notify } from "../features/notifications/core/notify.server";
 import { isVotingActive } from "../features/plus-voting/core";
@@ -10,7 +10,7 @@ export const NotifyPlusServerVotingRoutine = new Routine({
 	func: async () => {
 		if (!isVotingActive()) return;
 
-		const season = currentSeason(new Date())!;
+		const season = Seasons.current()!;
 
 		const plusVotingNotifications = await NotificationRepository.findAllByType(
 			"PLUS_VOTING_STARTED",

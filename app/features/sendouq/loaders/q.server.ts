@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { getUserId } from "~/features/auth/core/user.server";
-import { currentSeason, nextSeason } from "~/features/mmr/season";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
 import { groupRedirectLocationByCurrentLocation } from "../q-utils";
@@ -26,9 +26,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	const groupInvitedTo = code && user ? findGroupByInviteCode(code) : undefined;
 
-	const now = new Date();
-	const season = currentSeason(now);
-	const upcomingSeason = !season ? nextSeason(now) : undefined;
+	const season = Seasons.current();
+	const upcomingSeason = !season ? Seasons.next() : undefined;
 
 	return {
 		season,

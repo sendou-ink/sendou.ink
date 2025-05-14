@@ -5,8 +5,8 @@ import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { TierImage, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
-import { allSeasons, currentSeason } from "~/features/mmr/season";
 import type { SkillTierInterval } from "~/features/mmr/tiered.server";
 import { weaponCategories } from "~/modules/in-game-lists";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
@@ -115,7 +115,7 @@ export default function LeaderboardsPage() {
 					});
 				}}
 			>
-				{allSeasons(new Date()).map((season) => {
+				{Seasons.allStarted().map((season) => {
 					return (
 						<optgroup label={`SP - Season ${season}`} key={season}>
 							{LEADERBOARD_TYPES.filter((type) => !type.includes("XP")).map(
@@ -222,7 +222,7 @@ export default function LeaderboardsPage() {
 				</div>
 			) : null}
 
-			{!data.xpLeaderboard && data.season === currentSeason(new Date())?.nth ? (
+			{!data.xpLeaderboard && data.season === Seasons.current()?.nth ? (
 				<div className="text-xs text-lighter text-center">
 					{t("common:leaderboard.updateInfo")}
 				</div>
@@ -359,7 +359,7 @@ function TeamTable({
 }) {
 	const { t } = useTranslation(["common"]);
 	const data = useLoaderData<typeof loader>();
-	const isCurrentSeason = data.season === currentSeason(new Date())?.nth;
+	const isCurrentSeason = data.season === Seasons.current()?.nth;
 	const showQualificationDividers =
 		_showQualificationDividers && isCurrentSeason && entries.length > 20;
 

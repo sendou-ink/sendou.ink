@@ -6,22 +6,20 @@ import { useTranslation } from "react-i18next";
 import type { z } from "zod";
 import { logger } from "~/utils/logger";
 import type { ActionError } from "~/utils/remix.server";
-import { Button, LinkButton } from "../Button";
+import { LinkButton } from "../Button";
 import { SubmitButton } from "../SubmitButton";
 
 export function MyForm<T extends z.ZodTypeAny>({
 	schema,
 	defaultValues,
-	title,
+	heading,
 	children,
-	handleCancel,
 	cancelLink,
 }: {
 	schema: T;
 	defaultValues?: DefaultValues<z.infer<T>>;
-	title?: string;
+	heading?: string;
 	children: React.ReactNode;
-	handleCancel?: () => void;
 	cancelLink?: string;
 }) {
 	const { t } = useTranslation(["common"]);
@@ -55,21 +53,12 @@ export function MyForm<T extends z.ZodTypeAny>({
 	return (
 		<FormProvider {...methods}>
 			<fetcher.Form className="stack md-plus items-start" onSubmit={onSubmit}>
-				{title ? <h1 className="text-lg">{title}</h1> : null}
+				{heading ? <h1 className="text-lg">{heading}</h1> : null}
 				{children}
 				<div className="stack horizontal lg justify-between mt-6 w-full">
 					<SubmitButton state={fetcher.state}>
 						{t("common:actions.submit")}
 					</SubmitButton>
-					{handleCancel ? (
-						<Button
-							variant="minimal-destructive"
-							onClick={handleCancel}
-							size="tiny"
-						>
-							{t("common:actions.cancel")}
-						</Button>
-					) : null}
 					{cancelLink ? (
 						<LinkButton
 							variant="minimal-destructive"

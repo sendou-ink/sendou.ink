@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { getUser } from "~/features/auth/core/user.server";
-import { currentOrPreviousSeason } from "~/features/mmr/season";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import { userSkills } from "~/features/mmr/tiered.server";
 import type { Unpacked } from "~/utils/types";
@@ -19,7 +19,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 function postsUsersTiersMap(
 	posts: Unpacked<ReturnType<typeof LFGRepository.posts>>,
 ) {
-	const latestSeason = currentOrPreviousSeason(new Date())!.nth;
+	const latestSeason = Seasons.currentOrPrevious()!.nth;
 	const previousSeason = latestSeason - 1;
 
 	const latestSeasonSkills = userSkills(latestSeason).userSkills;

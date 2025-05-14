@@ -15,7 +15,7 @@ import { Input } from "~/components/Input";
 import { Main } from "~/components/Main";
 import { NewTabs } from "~/components/NewTabs";
 import { SubmitButton } from "~/components/SubmitButton";
-import { UserSearch } from "~/components/UserSearch";
+import { UserSearch } from "~/components/elements/UserSearch";
 import { SearchIcon } from "~/components/icons/Search";
 import { FRIEND_CODE_REGEXP_PATTERN } from "~/features/sendouq/q-constants";
 import { useHasRole } from "~/modules/permissions/hooks";
@@ -144,13 +144,10 @@ function Impersonate() {
 			reloadDocument
 		>
 			<h2>Impersonate user</h2>
-			<div>
-				<label>User to log in as</label>
-				<UserSearch
-					inputName="user"
-					onChange={(newUser) => setUserId(newUser.id)}
-				/>
-			</div>
+			<UserSearch
+				label="User to log in as"
+				onChange={(newUser) => setUserId(newUser.id)}
+			/>
 			<div className="stack horizontal md">
 				<Button type="submit" disabled={!userId}>
 					Go
@@ -182,20 +179,16 @@ function MigrateUser() {
 		<fetcher.Form className="stack md" method="post">
 			<h2>Migrate user data</h2>
 			<div className="stack horizontal md">
-				<div>
-					<label>Old user</label>
-					<UserSearch
-						inputName="old-user"
-						onChange={(newUser) => setOldUserId(newUser.id)}
-					/>
-				</div>
-				<div>
-					<label>New user</label>
-					<UserSearch
-						inputName="new-user"
-						onChange={(newUser) => setNewUserId(newUser.id)}
-					/>
-				</div>
+				<UserSearch
+					label="Old user"
+					name="old-user"
+					onChange={(newUser) => setOldUserId(newUser.id)}
+				/>
+				<UserSearch
+					label="New user"
+					name="new-user"
+					onChange={(newUser) => setNewUserId(newUser.id)}
+				/>
 			</div>
 			<div className="stack horizontal md">
 				<SubmitButton
@@ -218,10 +211,7 @@ function LinkPlayer() {
 		<fetcher.Form className="stack md" method="post">
 			<h2>Link player</h2>
 			<div className="stack horizontal md">
-				<div>
-					<label>User</label>
-					<UserSearch inputName="user" />
-				</div>
+				<UserSearch label="User" name="user" />
 				<div>
 					<label>Player ID</label>
 					<input type="number" name="playerId" />
@@ -243,10 +233,7 @@ function GiveArtist() {
 		<fetcher.Form className="stack md" method="post">
 			<h2>Add as artist</h2>
 			<div className="stack horizontal md">
-				<div>
-					<label>User</label>
-					<UserSearch inputName="user" />
-				</div>
+				<UserSearch label="User" name="user" />
 			</div>
 			<div className="stack horizontal md">
 				<SubmitButton type="submit" _action="ARTIST" state={fetcher.state}>
@@ -264,10 +251,7 @@ function GiveVideoAdder() {
 		<fetcher.Form className="stack md" method="post">
 			<h2>Give video adder</h2>
 			<div className="stack horizontal md">
-				<div>
-					<label>User</label>
-					<UserSearch inputName="user" />
-				</div>
+				<UserSearch label="User" name="user" />
 			</div>
 			<div className="stack horizontal md">
 				<SubmitButton type="submit" _action="VIDEO_ADDER" state={fetcher.state}>
@@ -284,12 +268,7 @@ function GiveTournamentOrganizer() {
 	return (
 		<fetcher.Form className="stack md" method="post">
 			<h2>Give tournament organizer</h2>
-			<div className="stack horizontal md">
-				<div>
-					<label>User</label>
-					<UserSearch inputName="user" />
-				</div>
-			</div>
+			<UserSearch label="User" name="user" />
 			<div className="stack horizontal md">
 				<SubmitButton
 					type="submit"
@@ -310,10 +289,7 @@ function UpdateFriendCode() {
 		<fetcher.Form className="stack md" method="post">
 			<h2>Update friend code</h2>
 			<div className="stack horizontal md">
-				<div>
-					<label>User</label>
-					<UserSearch inputName="user" />
-				</div>
+				<UserSearch label="User" name="user" />
 				<div>
 					<label>Friend code</label>
 					<Input
@@ -345,10 +321,7 @@ function ForcePatron() {
 		<fetcher.Form className="stack md" method="post">
 			<h2>Force patron</h2>
 			<div className="stack horizontal md">
-				<div>
-					<label>User</label>
-					<UserSearch inputName="user" />
-				</div>
+				<UserSearch label="User" name="user" />
 
 				<div>
 					<label>Tier</label>
@@ -384,10 +357,7 @@ function BanUser() {
 		<fetcher.Form className="stack md" method="post">
 			<h2 className="text-warning">Ban user</h2>
 			<div className="stack horizontal md">
-				<div>
-					<label>User</label>
-					<UserSearch inputName="user" />
-				</div>
+				<UserSearch label="User" name="user" />
 
 				<div>
 					<label>Banned till</label>
@@ -414,10 +384,7 @@ function UnbanUser() {
 	return (
 		<fetcher.Form className="stack md" method="post">
 			<h2 className="text-warning">Unban user</h2>
-			<div>
-				<label>User</label>
-				<UserSearch inputName="user" />
-			</div>
+			<UserSearch label="User" name="user" />
 			<div className="stack horizontal md">
 				<SubmitButton type="submit" _action="UNBAN_USER" state={fetcher.state}>
 					Save

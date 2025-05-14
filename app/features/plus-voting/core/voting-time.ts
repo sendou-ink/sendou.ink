@@ -1,9 +1,9 @@
-import { type RankingSeason, SEASONS } from "~/features/mmr/season";
+import * as Seasons from "../../mmr/core/Seasons";
 import type { MonthYear } from "./types";
 
 export function lastCompletedVoting(now: Date): MonthYear {
 	let match: { startDate: Date; endDate: Date } | null = null;
-	for (const season of SEASONS) {
+	for (const season of Seasons.list) {
 		const range = seasonToVotingRange(season);
 
 		if (now.getTime() > range.endDate.getTime()) {
@@ -21,7 +21,7 @@ export function lastCompletedVoting(now: Date): MonthYear {
 }
 
 export function nextNonCompletedVoting(now: Date) {
-	for (const season of SEASONS) {
+	for (const season of Seasons.list) {
 		const range = seasonToVotingRange(season);
 
 		if (now.getTime() < range.endDate.getTime()) {
@@ -39,7 +39,7 @@ export function rangeToMonthYear(range: { startDate: Date; endDate: Date }) {
 	};
 }
 
-export function seasonToVotingRange(season: RankingSeason) {
+export function seasonToVotingRange(season: Seasons.ListItem) {
 	const { ends: date } = season;
 
 	if (date.getUTCDay() !== 0) {
@@ -59,7 +59,7 @@ export function seasonToVotingRange(season: RankingSeason) {
 export function isVotingActive() {
 	const now = new Date();
 
-	for (const season of SEASONS) {
+	for (const season of Seasons.list) {
 		const { startDate, endDate } = seasonToVotingRange(season);
 
 		if (

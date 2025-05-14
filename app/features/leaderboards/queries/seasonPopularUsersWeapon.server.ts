@@ -1,6 +1,6 @@
 import { sql } from "~/db/sql";
 import type { Tables } from "~/db/tables";
-import { seasonObject } from "~/features/mmr/season";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import type { MainWeaponId } from "~/modules/in-game-lists";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "../leaderboards-constants";
@@ -34,7 +34,7 @@ export type SeasonPopularUsersWeapon = Record<
 export function seasonPopularUsersWeapon(
 	season: number,
 ): SeasonPopularUsersWeapon {
-	const { starts, ends } = seasonObject(season);
+	const { starts, ends } = Seasons.nthToDateRange(season);
 
 	const rows = stm.all({
 		season,

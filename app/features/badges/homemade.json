@@ -191,6 +191,10 @@
 		"displayName": "Dynamo Roller",
 		"authorDiscordId": "534502084134043648"
 	},
+	"emparrydualies": {
+		"displayName": "Dilly Dally Dualies",
+		"authorDiscordId": "338806780446638082"
+	},
 	"enabbq": {
 		"displayName": "ENA (Dream BBQ)",
 		"authorDiscordId": "528851510222782474"
@@ -222,6 +226,10 @@
 	"frcup": {
 		"displayName": "fractured cup",
 		"authorDiscordId": "960213930586824766"
+	},
+	"freedomdive": {
+		"displayName": "Freedom Dive ↓",
+		"authorDiscordId": "631246535560265749"
 	},
 	"frostbitebase2x": {
 		"displayName": "Frostbite Ascent (Top 8)",
@@ -371,6 +379,10 @@
 		"displayName": "Reef Reunion (500 KT Power)",
 		"authorDiscordId": "1170249805373657093"
 	},
+	"lemoncider": {
+		"displayName": "Lemon Cider: One Trick!",
+		"authorDiscordId": "1320944066002681876"
+	},
 	"liftoff": {
 		"displayName": "Liftoff",
 		"authorDiscordId": "789943264370884708"
@@ -497,6 +509,10 @@
 	},
 	"noentrysilver": {
 		"displayName": "Banning Legends 2nd",
+		"authorDiscordId": "338806780446638082"
+	},
+	"octobrush": {
+		"displayName": "Brush Brawls",
 		"authorDiscordId": "338806780446638082"
 	},
 	"octoshot": {
@@ -655,6 +671,10 @@
 		"displayName": "Abandon Ship",
 		"authorDiscordId": "528851510222782474"
 	},
+	"silverstars": {
+		"displayName": "Beta Bracket",
+		"authorDiscordId": "338806780446638082"
+	},
 	"slyeion": {
 		"displayName": "Sylveon",
 		"authorDiscordId": "338806780446638082"
@@ -707,6 +727,10 @@
 		"displayName": "Squidforce Cup",
 		"authorDiscordId": "1320944066002681876"
 	},
+	"stellatedzone": {
+		"displayName": "Stellated Zone",
+		"authorDiscordId": "309327923129745409"
+	},
 	"sunday-run": {
 		"displayName": "Sunday Run",
 		"authorDiscordId": "570323825669963972"
@@ -739,6 +763,10 @@
 		"displayName": "TeaCup",
 		"authorDiscordId": "338806780446638082"
 	},
+	"tentatek": {
+		"displayName": "Tentatek Takeover",
+		"authorDiscordId": "1170249805373657093"
+	},
 	"texaslan": {
 		"displayName": "H-Town Splashdown",
 		"authorDiscordId": "528851510222782474"
@@ -750,6 +778,10 @@
 	"three_course_pal": {
 		"displayName": "Squids For Palestinian Kids",
 		"authorDiscordId": "338806780446638082"
+	},
+	"threeofa": {
+		"displayName": "Three of a Kind (1st Place)",
+		"authorDiscordId": "1320944066002681876"
 	},
 	"tnttoken12": {
 		"displayName": "DYNAMITE TOKEN",
@@ -858,6 +890,10 @@
 	"wave1234567_4": {
 		"displayName": "Tough Tides",
 		"authorDiscordId": "1170249805373657093"
+	},
+	"whitecat": {
+		"displayName": "White Cat Achievement",
+		"authorDiscordId": "631246535560265749"
 	},
 	"wi-wi-wi": {
 		"displayName": "Wi Wi Wi Cat",

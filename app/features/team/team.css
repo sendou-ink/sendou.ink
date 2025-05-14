@@ -38,11 +38,6 @@
 	background-color: var(--theme-transparent);
 }
 
-.team-search__form-input-container {
-	text-align: left;
-	margin: 0 auto;
-}
-
 .team__banner {
 	background-image: linear-gradient(
 			to bottom,

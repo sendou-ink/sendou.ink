@@ -8,7 +8,7 @@ import { FormErrors } from "~/components/FormErrors";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { UserSearch } from "~/components/UserSearch";
+import { UserSearch } from "~/components/elements/UserSearch";
 import { CALENDAR_EVENT_RESULT } from "~/constants";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
@@ -277,7 +277,7 @@ function Players({
 						) : (
 							<UserSearch
 								id={formId}
-								inputName="team-player"
+								name="team-player"
 								initialUserId={player.id}
 								onChange={(newUser) => handleInputChange(i, newUser.id)}
 							/>

@@ -20,7 +20,7 @@ test.describe("Badges", () => {
 			labelName: "Add new owner",
 		});
 
-		await page.getByRole("button", { name: "Save", exact: true }).click();
+		await page.getByRole("button", { name: "Submit", exact: true }).click();
 
 		await impersonate(page);
 		await navigate({

@@ -300,6 +300,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 		case "ADD_STAFF": {
 			validateIsTournamentAdmin();
 
+			errorToastIfFalsy(
+				tournament.ctx.staff.every((staff) => staff.id !== data.userId),
+				"User is already a staff member",
+			);
+
 			await TournamentRepository.addStaff({
 				role: data.role,
 				tournamentId: tournament.ctx.id,

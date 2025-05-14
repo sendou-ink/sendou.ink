@@ -72,10 +72,6 @@
 	display: inline;
 }
 
-.plus__modal-title {
-	font-size: var(--fonts-sm);
-}
-
 .plus__modal-select {
 	max-width: 6rem;
 }
@@ -83,12 +79,6 @@
 .plus__modal-textarea {
 	width: 100% !important;
 	resize: none;
-}
-
-.plus__modal-buttons {
-	display: flex;
-	justify-content: flex-end;
-	gap: var(--s-4);
 }
 
 .plus-voting__container {

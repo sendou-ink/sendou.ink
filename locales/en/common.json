@@ -160,6 +160,8 @@
 	"forms.description": "Description",
 	"forms.errors.title": "Following errors need to be fixed",
 	"forms.errors.noSearchMatches": "No matches found",
+	"forms.userSearch.placeholder": "Search users by username, profile URL or Discord ID...",
+	"forms.userSearch.noResults": "No users matching your search found",
 
 	"errors.genericReload": "Something went wrong. Try reloading the page.",
 

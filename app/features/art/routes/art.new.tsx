@@ -11,8 +11,8 @@ import { Combobox } from "~/components/Combobox";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { UserSearch } from "~/components/UserSearch";
 import { SendouSwitch } from "~/components/elements/Switch";
+import { UserSearch } from "~/components/elements/UserSearch";
 import { CrossIcon } from "~/components/icons/Cross";
 import { useHasRole } from "~/modules/permissions/hooks";
 import invariant from "~/utils/invariant";
@@ -343,7 +343,7 @@ function LinkedUsers() {
 				return (
 					<div key={inputId} className="stack horizontal sm mb-2 items-center">
 						<UserSearch
-							inputName="user"
+							name="user"
 							onChange={(newUser) => {
 								const newUsers = structuredClone(users);
 								newUsers[i] = { ...newUsers[i], userId: newUser.id };

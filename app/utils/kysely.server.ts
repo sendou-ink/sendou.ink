@@ -1,4 +1,4 @@
-import { sql } from "kysely";
+import { type ColumnType, sql } from "kysely";
 import type { Tables } from "~/db/tables";
 
 export const COMMON_USER_FIELDS = [
@@ -32,3 +32,6 @@ export function unJsonify<T>(value: T) {
 
 	return `\\${value}`;
 }
+
+export type JSONColumnTypeNullable<SelectType extends object | null> =
+	ColumnType<SelectType | null, string | null, string | null>;

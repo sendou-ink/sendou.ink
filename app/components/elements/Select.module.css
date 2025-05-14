@@ -123,6 +123,10 @@
 	border: none;
 }
 
+[data-empty] .searchClearButton {
+	visibility: hidden;
+}
+
 .noResults {
 	font-size: var(--fonts-md);
 	font-weight: var(--bold);

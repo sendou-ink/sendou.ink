@@ -5,7 +5,7 @@ import type { ReportedWeapon } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import type { ChatMessage } from "~/features/chat/chat-types";
-import { currentOrPreviousSeason, currentSeason } from "~/features/mmr/season";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
 import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.server";
@@ -197,7 +197,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				// this is kind of useless to do when admin reports since skills don't change
 				// but it's not the most common case so it's ok
 				try {
-					refreshUserSkills(currentOrPreviousSeason(new Date())!.nth);
+					refreshUserSkills(Seasons.currentOrPrevious()!.nth);
 				} catch (error) {
 					logger.warn("Error refreshing user skills", error);
 				}
@@ -239,7 +239,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			break;
 		}
 		case "LOOK_AGAIN": {
-			const season = currentSeason(new Date());
+			const season = Seasons.current();
 			errorToastIfFalsy(season, "Season is not active");
 
 			const previousGroup = await QMatchRepository.findGroupById({

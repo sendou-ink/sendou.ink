@@ -1,5 +1,5 @@
 import type { Tables } from "~/db/tables";
-import { currentOrPreviousSeason } from "~/features/mmr/season";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import invariant from "~/utils/invariant";
 import { winnersArrayToWinner } from "../q-match-utils";
 import type { MatchById } from "../queries/findMatchById.server";
@@ -13,7 +13,7 @@ export function summarizeMaps({
 	winners: ("ALPHA" | "BRAVO")[];
 	members: { id: number; groupId: number }[];
 }) {
-	const season = currentOrPreviousSeason(new Date())?.nth;
+	const season = Seasons.currentOrPrevious()?.nth;
 	invariant(typeof season === "number", "No ranked season for skills");
 
 	const result: Array<Tables["MapResult"]> = [];
@@ -63,7 +63,7 @@ export function summarizePlayerResults({
 	winners: ("ALPHA" | "BRAVO")[];
 	members: { id: number; groupId: number }[];
 }) {
-	const season = currentOrPreviousSeason(new Date())?.nth;
+	const season = Seasons.currentOrPrevious()?.nth;
 	invariant(typeof season === "number", "No ranked season for skills");
 
 	const result: Array<Tables["PlayerResult"]> = [];

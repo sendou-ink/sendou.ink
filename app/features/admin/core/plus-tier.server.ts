@@ -1,6 +1,6 @@
 import { addPendingPlusTiers } from "~/features/leaderboards/core/leaderboards.server";
 import { userSPLeaderboard } from "~/features/leaderboards/queries/userSPLeaderboard.server";
-import { currentSeason, previousSeason } from "~/features/mmr/season";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import { seasonToVotingRange } from "~/features/plus-voting/core/voting-time";
 import invariant from "~/utils/invariant";
@@ -26,10 +26,10 @@ function fromLeaderboard(
 	newMembersFromVoting: Array<{ userId: number; plusTier: number }>,
 ) {
 	const now = new Date();
-	const lastCompletedSeason = previousSeason(now);
+	const lastCompletedSeason = Seasons.previous();
 	invariant(lastCompletedSeason, "No previous season found");
 
-	const currSeason = currentSeason(now);
+	const currSeason = Seasons.current();
 	if (currSeason) {
 		const range = seasonToVotingRange(currSeason);
 

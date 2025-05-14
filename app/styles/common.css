@@ -16,7 +16,7 @@ body {
 	-webkit-tap-highlight-color: transparent;
 }
 
-*:focus:not(:focus-visible) {
+*:focus:not(:focus-visible):not([data-focus-visible]) {
 	outline: none !important;
 }
 
@@ -373,38 +373,6 @@ abbr:not([title]) {
 
 abbr[title] {
 	cursor: help;
-}
-
-dialog {
-	width: min(90%, 24rem);
-	border: 0;
-	border-radius: var(--rounded);
-	margin: auto;
-	background-color: var(--bg);
-	color: var(--text);
-}
-
-dialog::backdrop {
-	background: hsla(237deg 98% 1% / 70%);
-}
-
-@supports ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
-	dialog::backdrop {
-		-webkit-backdrop-filter: blur(7px) brightness(70%);
-		backdrop-filter: blur(7px) brightness(70%);
-		background-color: transparent;
-	}
-}
-
-dialog[open],
-dialog::backdrop {
-	animation: show 500ms ease;
-}
-
-@keyframes show {
-	0% {
-		opacity: 0;
-	}
 }
 
 .button-text-paragraph {

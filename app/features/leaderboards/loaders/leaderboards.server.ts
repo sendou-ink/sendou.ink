@@ -3,7 +3,7 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { HALF_HOUR_IN_MS } from "~/constants";
 import { getUser } from "~/features/auth/core/user.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
-import { allSeasons, currentOrPreviousSeason } from "~/features/mmr/season";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import type {
 	MainWeaponId,
 	RankedModeShort,
@@ -41,9 +41,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		LEADERBOARD_TYPES.find((type) => type === unvalidatedType) ??
 		LEADERBOARD_TYPES[0];
 	const season =
-		allSeasons(new Date()).find(
+		Seasons.allStarted().find(
 			(s) => unvalidatedSeason && s === Number(unvalidatedSeason),
-		) ?? currentOrPreviousSeason(new Date())!.nth;
+		) ?? Seasons.currentOrPrevious()!.nth;
 
 	const fullUserLeaderboard = type.includes("USER")
 		? await cachedFullUserLeaderboard(season)

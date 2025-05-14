@@ -5,18 +5,18 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "~/components/Alert";
 import { Button, LinkButton } from "~/components/Button";
-import { Dialog } from "~/components/Dialog";
 import { Flag } from "~/components/Flag";
 import { FormMessage } from "~/components/FormMessage";
 import { FriendCodeInput } from "~/components/FriendCodeInput";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouDialog } from "~/components/elements/Dialog";
 import { UserIcon } from "~/components/icons/User";
 import { UsersIcon } from "~/components/icons/Users";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
-import type { RankingSeason } from "~/features/mmr/season";
+import type * as Seasons from "~/features/mmr/core/Seasons";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useHasRole } from "~/modules/permissions/hooks";
@@ -264,17 +264,17 @@ function JoinTeamDialog({
 	invariant(owner, "Owner not found");
 
 	return (
-		<Dialog
+		<SendouDialog
 			isOpen={open}
-			close={close}
-			closeOnAnyClick={false}
+			onClose={close}
+			isDismissable
 			className="text-center"
-		>
-			{t("q:front.join.header", {
+			heading={t("q:front.join.header", {
 				members: joinListToNaturalString(members.map((m) => m.username)),
 			})}
+		>
 			<fetcher.Form
-				className="stack horizontal justify-center sm mt-4 flex-wrap"
+				className="stack horizontal justify-center md mt-6 flex-wrap"
 				method="post"
 			>
 				<SubmitButton _action="JOIN_TEAM" state={fetcher.state}>
@@ -289,21 +289,18 @@ function JoinTeamDialog({
 						inviterName: owner.username,
 					})}
 				</SubmitButton>
-				<Button onClick={close} variant="destructive">
-					{t("q:front.join.refuseAction")}
-				</Button>
 				<FormMessage type="info">
 					{t("q:front.join.joinWithTrustAction.explanation")}
 				</FormMessage>
 			</fetcher.Form>
-		</Dialog>
+		</SendouDialog>
 	);
 }
 
 function ActiveSeasonInfo({
 	season,
 }: {
-	season: SerializeFrom<RankingSeason>;
+	season: SerializeFrom<Seasons.ListItem>;
 }) {
 	const { t, i18n } = useTranslation(["q"]);
 	const isMounted = useIsMounted();
@@ -410,7 +407,7 @@ function QLink({
 function UpcomingSeasonInfo({
 	season,
 }: {
-	season: SerializeFrom<RankingSeason>;
+	season: SerializeFrom<Seasons.ListItem>;
 }) {
 	const { t } = useTranslation(["q"]);
 	const isMounted = useIsMounted();
