@@ -5,6 +5,8 @@ import { useDebounce } from "react-use";
 import { CUSTOM_CSS_VAR_COLORS } from "~/constants";
 import { Button } from "./Button";
 import { Label } from "./Label";
+import { AlertIcon } from "./icons/Alert";
+import { CheckmarkIcon } from "./icons/Checkmark";
 
 type CustomColorsRecord = Partial<
 	Record<(typeof CUSTOM_CSS_VAR_COLORS)[number], string>
@@ -74,7 +76,7 @@ export function CustomizedColorsInput({
 		<div className="w-full">
 			<Label>{t("custom.colors.title")}</Label>
 			<input type="hidden" name="css" value={JSON.stringify(colors)} />
-			<div className="colors__grid">
+			<div className="colors__container colors__grid">
 				{CUSTOM_CSS_VAR_COLORS.filter((cssVar) => cssVar !== "bg-lightest").map(
 					(cssVar) => {
 						return (
@@ -118,35 +120,53 @@ export function CustomizedColorsInput({
 				)}
 			</div>
 			<Label>{t("custom.colors.contrast.title")}</Label>
-			<div className="colors__grid colors__grid-extended">
-				<div>{t("custom.colors.contrast.first-color")}</div>
-				<div>{t("custom.colors.contrast.second-color")}</div>
-				<div>AA</div>
-				<div>AAA</div>
-				{contrasts.map((contrast) => {
-					return (
-						<React.Fragment key={contrast.colors.join("-")}>
-							<div>{t(`custom.colors.${contrast.colors[0]}`)}</div>
-							<div>{t(`custom.colors.${contrast.colors[1]}`)}</div>
-							<div
-								className={clsx(
-									"colors__contrast",
-									contrast.contrast.AA.failed ? "fail" : "success",
-								)}
-							>
-								{contrast.contrast.AA.ratio}
-							</div>
-							<div
-								className={clsx(
-									"colors__contrast",
-									contrast.contrast.AAA.failed ? "fail" : "success",
-								)}
-							>
-								{contrast.contrast.AAA.ratio}
-							</div>
-						</React.Fragment>
-					);
-				})}
+			<div className="colors__test">
+				<table className="colors__container colors__table">
+					<thead>
+						<tr>
+							<th>{t("custom.colors.contrast.first-color")}</th>
+							<th>{t("custom.colors.contrast.second-color")}</th>
+							<th>AA</th>
+							<th>AAA</th>
+						</tr>
+					</thead>
+					<tbody>
+						{contrasts.map((contrast) => {
+							return (
+								<tr key={contrast.colors.join("-")}>
+									<td>{t(`custom.colors.${contrast.colors[0]}`)}</td>
+									<td>{t(`custom.colors.${contrast.colors[1]}`)}</td>
+									<td
+										className={clsx(
+											"colors__contrast",
+											contrast.contrast.AA.failed ? "fail" : "success",
+										)}
+									>
+										{contrast.contrast.AA.failed ? (
+											<AlertIcon />
+										) : (
+											<CheckmarkIcon />
+										)}
+										{contrast.contrast.AA.ratio}
+									</td>
+									<td
+										className={clsx(
+											"colors__contrast",
+											contrast.contrast.AAA.failed ? "fail" : "success",
+										)}
+									>
+										{contrast.contrast.AAA.failed ? (
+											<AlertIcon />
+										) : (
+											<CheckmarkIcon />
+										)}
+										{contrast.contrast.AAA.ratio}
+									</td>
+								</tr>
+							);
+						})}
+					</tbody>
+				</table>
 			</div>
 			<pre className="colors__description">
 				{t("custom.colors.contrast.description")}

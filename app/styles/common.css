@@ -1249,32 +1249,60 @@ dialog::backdrop {
 	box-shadow: 0 0 100px inset rgb(255 255 255 / 25%);
 }
 
-.colors__grid {
-	display: grid;
+.colors__container {
 	width: 100%;
-	justify-content: space-between;
 	font-size: var(--fonts-sm);
 	font-weight: var(--bold);
-	grid-template-columns: repeat(3, max-content);
 	padding: var(--s-3);
 	border: 2px solid var(--border);
 	border-radius: var(--rounded-sm);
 	background-color: var(--bg-input);
 	margin-bottom: var(--s-3);
 	overflow-x: auto;
+}
+
+.colors__grid {
+	display: grid;
+	justify-content: space-between;
+	grid-template-columns: repeat(3, max-content);
 	gap: var(--s-3);
 }
 
-.colors__grid-extended {
-	grid-template-columns: repeat(4, max-content);
+.colors__table {
+	width: 100%;
+	border-spacing: 0;
+	text-indent: 0;
+	text-align: left;
+	font-size: var(--fonts-xs);
+
+	& svg {
+		width: 1rem;
+		height: 1rem;
+		display: inline;
+		vertical-align: sub;
+		margin-right: 2px;
+	}
+
+	& td {
+		padding-block: var(--s-2);
+	}
+
+	& tr:last-child td {
+		border-bottom: none;
+		padding-bottom: 0;
+	}
 }
 
-.colors__contrast.fail {
-	color: var(--theme-error);
-}
+.colors__contrast {
+	text-wrap-mode: nowrap;
 
-.colors__contrast.success {
-	color: var(--theme-success);
+	&.fail {
+		color: var(--theme-error);
+	}
+
+	&.success {
+		color: var(--theme-success);
+	}
 }
 
 .colors__description {
