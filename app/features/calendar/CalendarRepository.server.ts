@@ -136,17 +136,6 @@ function findAllBetweenTwoTimestampsQuery({
 						"CalendarEvent.organizationId",
 					),
 			).as("organization"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("CalendarEventBadge")
-					.innerJoin("Badge", "CalendarEventBadge.badgeId", "Badge.id")
-					.select(["Badge.id", "Badge.code", "Badge.hue", "Badge.displayName"])
-					.whereRef(
-						"CalendarEventBadge.eventId",
-						"=",
-						"CalendarEventDate.eventId",
-					),
-			).as("badges"),
 			eb
 				.selectFrom("TournamentTeam")
 				.leftJoin("TournamentTeamCheckIn", (join) =>
@@ -204,14 +193,13 @@ function findAllBetweenTwoTimestampsMapped(
 			name: row.name,
 			organization: row.organization,
 			tags: row.tags ? (row.tags.split(",") as CalendarEvent["tags"]) : [],
-			badges: row.badges,
 			teamsCount: row.teamsCount,
 			normalizedTeamCount: normalizedTeamCount({
 				teamsCount: row.teamsCount,
 				minMembersPerTeam: row.tournamentSettings?.minMembersPerTeam ?? 4,
 			}),
 			logoUrl: row.logoUrl,
-			startTime: row.startTime,
+			startTime: row.startTime, // xxx: normalize startTime so that events get grouped to their closest :00 or :30
 			isRanked: row.tournamentSettings
 				? tournamentIsRanked({
 						isSetAsRanked: row.tournamentSettings.isRanked,

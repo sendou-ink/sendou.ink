@@ -5,6 +5,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-1);
+	--tournament-card-icon-size: 13px;
 }
 
 .containerTall {
@@ -73,7 +74,7 @@
 }
 
 .teamCount svg {
-	width: 12px;
+	width: var(--tournament-card-icon-size);
 }
 
 .pillsContainer {
@@ -88,6 +89,8 @@
 	font-weight: var(--bold);
 	border-radius: var(--rounded-sm);
 	padding: var(--s-0-5) var(--s-1-5);
+	display: grid;
+	place-items: center;
 }
 
 .pillRanked {
@@ -95,9 +98,8 @@
 	color: var(--theme-info);
 }
 
-.pillUnranked {
-	background-color: var(--theme-success-transparent);
-	color: var(--theme-success);
+.pillRanked svg {
+	width: var(--tournament-card-icon-size);
 }
 
 .firstPlacers {

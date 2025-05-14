@@ -1,4 +1,4 @@
-import { useLoaderData } from "@remix-run/react";
+import { Link, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -74,6 +74,7 @@ export default function CalendarPage() {
 					<NavigateButton icon={<ArrowRightIcon />} daysInterval={next}>
 						Next
 					</NavigateButton>
+					{/* <MajorTournamentLink /> */}
 				</div>
 				<SendouButton variant="outlined" size="small" icon={<FilterIcon />}>
 					Filter
@@ -139,6 +140,22 @@ function NavigateButton({
 		</SendouButton>
 	);
 }
+
+// xxx: get this from somewhere...
+// xxx: finish this or scrap
+// function _MajorTournamentLink() {
+// 	return (
+// 		<Link to="/" className={styles.majorLink}>
+// 			<div>Superjump</div>
+// 			<div className="text-xxs">
+// 				{new Date().toLocaleString("en-US", {
+// 					month: "long",
+// 					day: "2-digit",
+// 				})}
+// 			</div>
+// 		</Link>
+// 	);
+// }
 
 function DayEventsColumn({
 	date,

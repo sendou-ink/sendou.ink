@@ -16,6 +16,17 @@
 	stroke-width: 2px;
 	margin-inline-start: -5px;
 }
+.majorLink {
+	all: unset;
+	background-color: orange;
+	border: 2px solid darkorange;
+	color: rgb(49, 49, 49);
+	font-weight: var(--bold);
+	border-radius: var(--rounded-sm);
+	padding: var(--s-1) var(--s-2);
+	font-size: var(--fonts-xs);
+	position: relative;
+}
 
 .columnsContainer {
 	display: grid;

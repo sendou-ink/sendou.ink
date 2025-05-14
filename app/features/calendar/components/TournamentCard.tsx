@@ -1,8 +1,8 @@
 import { Link } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
-import { Badge } from "~/components/Badge";
 import { Flag } from "~/components/Flag";
+import { TrophyIcon } from "~/components/icons/Trophy";
 import { UsersIcon } from "~/components/icons/Users";
 import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -20,7 +20,7 @@ export function TournamentCard({
 	className?: string;
 }) {
 	const isMounted = useIsMounted();
-	const { t, i18n } = useTranslation(["front", "common"]);
+	const { i18n } = useTranslation(["front", "common"]);
 
 	const isShowcase = tournament.type === "showcase";
 	const isCalendar = tournament.type === "calendar";
@@ -90,9 +90,6 @@ export function TournamentCard({
 				{isCalendar ? (
 					<div className="stack sm items-center my-2">
 						<Tags tags={tournament.tags} small />
-						{tournament.badges.length > 0 ? (
-							<TournamentCardBadges badges={tournament.badges} />
-						) : null}
 					</div>
 				) : null}
 				{isShowcase && tournament.firstPlacer ? (
@@ -103,13 +100,9 @@ export function TournamentCard({
 				<div className={styles.pillsContainer}>
 					{tournament.isRanked ? (
 						<div className={clsx(styles.pill, styles.pillRanked)}>
-							{t("front:showcase.card.ranked")}
+							<TrophyIcon title="Ranked (impacts this seasons SP)" />
 						</div>
-					) : (
-						<div className={clsx(styles.pill, styles.pillUnranked)}>
-							{t("front:showcase.card.unranked")}
-						</div>
-					)}
+					) : null}
 					<div className={styles.teamCount}>
 						<UsersIcon /> {tournament.teamsCount}
 					</div>
@@ -159,17 +152,6 @@ function TournamentFirstPlacers({
 					</div>
 				) : null}
 			</div>
-		</div>
-	);
-}
-
-// xxx: show badge prizes animated on the tournament page?
-function TournamentCardBadges({ badges }: { badges: CalendarEvent["badges"] }) {
-	return (
-		<div className={styles.badgesContainer}>
-			{badges.map((badge) => (
-				<Badge key={badge.code} badge={badge} isAnimated={false} size={24} />
-			))}
 		</div>
 	);
 }

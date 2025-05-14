@@ -22,7 +22,6 @@ export interface CalendarEvent extends CommonEvent {
 	normalizedTeamCount: number;
 	/** For multi-day tournaments, which day of the event is this */
 	day?: number;
-	badges: Array<Pick<Tables["Badge"], "code" | "displayName" | "hue">>;
 }
 
 export interface ShowcaseCalendarEvent extends CommonEvent {

@@ -77,6 +77,8 @@ const useBaseEvent = () => {
 	return eventToCopy ?? eventToEdit;
 };
 
+// xxx: add scheduler helper, events happening close to the time of the event in same "tier"
+// xxx: tier selector, low, mid, high, open, sr, tw, 1v1/2v2/3v3
 export default function CalendarNewEventPage() {
 	const baseEvent = useBaseEvent();
 	const isCalendarEventAdder = useHasRole("CALENDAR_EVENT_ADDER");
