@@ -120,54 +120,52 @@ export function CustomizedColorsInput({
 				)}
 			</div>
 			<Label>{t("custom.colors.contrast.title")}</Label>
-			<div className="colors__test">
-				<table className="colors__container colors__table">
-					<thead>
-						<tr>
-							<th>{t("custom.colors.contrast.first-color")}</th>
-							<th>{t("custom.colors.contrast.second-color")}</th>
-							<th>AA</th>
-							<th>AAA</th>
-						</tr>
-					</thead>
-					<tbody>
-						{contrasts.map((contrast) => {
-							return (
-								<tr key={contrast.colors.join("-")}>
-									<td>{t(`custom.colors.${contrast.colors[0]}`)}</td>
-									<td>{t(`custom.colors.${contrast.colors[1]}`)}</td>
-									<td
-										className={clsx(
-											"colors__contrast",
-											contrast.contrast.AA.failed ? "fail" : "success",
-										)}
-									>
-										{contrast.contrast.AA.failed ? (
-											<AlertIcon />
-										) : (
-											<CheckmarkIcon />
-										)}
-										{contrast.contrast.AA.ratio}
-									</td>
-									<td
-										className={clsx(
-											"colors__contrast",
-											contrast.contrast.AAA.failed ? "fail" : "success",
-										)}
-									>
-										{contrast.contrast.AAA.failed ? (
-											<AlertIcon />
-										) : (
-											<CheckmarkIcon />
-										)}
-										{contrast.contrast.AAA.ratio}
-									</td>
-								</tr>
-							);
-						})}
-					</tbody>
-				</table>
-			</div>
+			<table className="colors__container colors__table">
+				<thead>
+					<tr>
+						<th>{t("custom.colors.contrast.first-color")}</th>
+						<th>{t("custom.colors.contrast.second-color")}</th>
+						<th>AA</th>
+						<th>AAA</th>
+					</tr>
+				</thead>
+				<tbody>
+					{contrasts.map((contrast) => {
+						return (
+							<tr key={contrast.colors.join("-")}>
+								<td>{t(`custom.colors.${contrast.colors[0]}`)}</td>
+								<td>{t(`custom.colors.${contrast.colors[1]}`)}</td>
+								<td
+									className={clsx(
+										"colors__contrast",
+										contrast.contrast.AA.failed ? "fail" : "success",
+									)}
+								>
+									{contrast.contrast.AA.failed ? (
+										<AlertIcon />
+									) : (
+										<CheckmarkIcon />
+									)}
+									{contrast.contrast.AA.ratio}
+								</td>
+								<td
+									className={clsx(
+										"colors__contrast",
+										contrast.contrast.AAA.failed ? "fail" : "success",
+									)}
+								>
+									{contrast.contrast.AAA.failed ? (
+										<AlertIcon />
+									) : (
+										<CheckmarkIcon />
+									)}
+									{contrast.contrast.AAA.ratio}
+								</td>
+							</tr>
+						);
+					})}
+				</tbody>
+			</table>
 			<pre className="colors__description">
 				{t("custom.colors.contrast.description")}
 			</pre>
