@@ -261,11 +261,11 @@ function checkContrast(colorA: string, colorB: string) {
 	return {
 		AA: {
 			failed: ratio < 4.5,
-			ratio: ratio.toFixed(2),
+			ratio: ratio.toFixed(1),
 		},
 		AAA: {
 			failed: ratio < 7,
-			ratio: ratio.toFixed(2),
+			ratio: ratio.toFixed(1),
 		},
 	};
 }
