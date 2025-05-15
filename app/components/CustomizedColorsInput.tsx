@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useDebounce } from "react-use";
 import { CUSTOM_CSS_VAR_COLORS } from "~/constants";
 import { Button } from "./Button";
+import { InfoPopover } from "./InfoPopover";
 import { Label } from "./Label";
 import { AlertIcon } from "./icons/Alert";
 import { CheckmarkIcon } from "./icons/Checkmark";
@@ -119,7 +120,14 @@ export function CustomizedColorsInput({
 					},
 				)}
 			</div>
-			<Label>{t("custom.colors.contrast.title")}</Label>
+			<Label labelClassName="stack horizontal sm items-center">
+				{t("custom.colors.contrast.title")}
+				<InfoPopover tiny>
+					<pre className="colors__description">
+						{t("custom.colors.contrast.description")}
+					</pre>
+				</InfoPopover>
+			</Label>
 			<table className="colors__container colors__table">
 				<thead>
 					<tr>
@@ -166,9 +174,6 @@ export function CustomizedColorsInput({
 					})}
 				</tbody>
 			</table>
-			<pre className="colors__description">
-				{t("custom.colors.contrast.description")}
-			</pre>
 		</div>
 	);
 }
