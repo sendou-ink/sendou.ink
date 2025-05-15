@@ -351,11 +351,11 @@ select:focus {
 	padding: var(--s-2) var(--s-2-5);
 }
 
-table tr:first-child td {
+.my-table tr:first-child td {
 	border-top: 1px solid var(--border);
 }
 
-table td {
+.my-table td {
 	border-bottom: 1px solid var(--border);
 }
 
