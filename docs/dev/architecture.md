@@ -4,6 +4,39 @@ Note: some code in the project is older and some newer. Not everything follows t
 
 ## Diagram
 
+Here is how the application architecture looks like in production.
+
+```mermaid
+graph TD
+    subgraph Render
+        A[sendou.ink Server] -->|Reads/Writes| B[SQLite3 Database]
+        A -->|HTTP Requests| E[Skalop WebSocket Server]
+        D[Lohi Discord Bot] -->|HTTP Requests| A
+    end
+
+    subgraph DigitalOcean
+        C[S3-Compatible Image Hosting]
+    end
+
+    F[User] -->|HTTP & WS| G[Cloudflare]
+    G -->|HTTP| A
+    G -->|WebSocket| E
+
+    A -->|S3 Upload| C
+    F -->|Views images| C
+
+```
+
+List of the dependencies in production:
+
+- [Skalop](https://github.com/Sendouc/skalop) - WebSocket server
+- [Lohi](https://github.com/Sendouc/lohi) - Discord bot for profile updates, log-in links etc.
+- [Leanny/splat3](https://github.com/Leanny/splat3) - In-game data (manual update) 
+- [splatoon3.ink](https://github.com/misenhower/splatoon3.ink) - X Rank placement data (manual update)
+- Discord - Auth  
+- Twitch - Streams  
+- Bluesky - Front page changelog
+
 ## Folder structure
 
 ```
@@ -87,7 +120,15 @@ Module.doTheThing()
 
 ### Testing
 
-[Playwright best practices](https://playwright.dev/docs/best-practices)
+Testing is important part of every feature work. The approach the project takes is pragmatic not super focused on writing test for every single thing but especially more mission critical features should have a better test coverage. E.g. if a tournament is canceled due to a bug that can mean a lot of lost confidence from users and waste of time but if some "edge of the system" type of feature has small graphical bugs we can just fix that on user feedback.
+
+Unit testing "core logic" (i.e. no React, no DB calls) with Vitest is highly encouraged whenever feasible. Most tests are like this.
+
+Vitest can also be used to write "integration tests" that call mocked actions/loaders (see `admin.test.ts` for example). This uses in-memory SQLite3. In practice this is best sparingly as they are typically slower than pure unit tests with more dependencies but also don't test the true end to end flow.
+
+Which brings us to E2E tests. For new features at least testing the happy path is encouraged. For more critical features (mainly tournament related stuff) it makes sense to test a bit more rigorously.
+
+See: [Playwright best practices](https://playwright.dev/docs/best-practices)
 
 ### Authentication
 
