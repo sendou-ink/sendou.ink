@@ -957,7 +957,7 @@ export interface ScrimPostRequest {
 export interface ScrimPostRequestUser {
 	scrimPostRequestId: number;
 	userId: number;
-	/** User made the request */
+	/** User that made the request */
 	isOwner: number;
 }
 
