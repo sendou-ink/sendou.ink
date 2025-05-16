@@ -19,7 +19,6 @@ import {
 	processMany,
 	removeDuplicates,
 	safeJSONParse,
-	safeSplit,
 	toArray,
 } from "~/utils/zod";
 import { CALENDAR_EVENT, REG_CLOSES_AT_OPTIONS } from "./calendar-constants";
@@ -86,28 +85,11 @@ export const reportWinnersActionSchema = z.object({
 	),
 });
 
-export const reportWinnersParamsSchema = z.object({
-	id: z.preprocess(actualNumber, id),
-});
-
-export const loaderWeekSearchParamsSchema = z.object({
-	week: z.preprocess(actualNumber, z.number().int().min(1).max(53)),
-	year: z.preprocess(actualNumber, z.number().int()),
-});
-
-export const calendarEventTagSchema = z
+const calendarEventTagSchema = z
 	.string()
 	.refine((val) =>
 		CALENDAR_EVENT.PERSISTED_TAGS.includes(val as PersistedCalendarEventTag),
 	);
-
-export const loaderFilterSearchParamsSchema = z.object({
-	tags: z.preprocess(safeSplit(), z.array(calendarEventTagSchema)),
-});
-
-export const loaderTournamentsOnlySearchParamsSchema = z.object({
-	tournaments: z.literal("true").nullish(),
-});
 
 export const bracketProgressionSchema = z.preprocess(
 	safeJSONParse,

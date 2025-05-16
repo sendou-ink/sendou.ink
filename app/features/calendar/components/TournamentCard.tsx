@@ -89,7 +89,7 @@ export function TournamentCard({
 				</div>
 				{isCalendar ? (
 					<div className="stack sm items-center my-2">
-						<Tags tags={tournament.tags} small />
+						<Tags tags={tournament.tags} small centered />
 					</div>
 				) : null}
 				{isShowcase && tournament.firstPlacer ? (

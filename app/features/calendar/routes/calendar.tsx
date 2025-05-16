@@ -1,6 +1,7 @@
+import type { MetaFunction } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
-import * as React from "react";
+import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
 import {
@@ -12,9 +13,12 @@ import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import { EyeIcon } from "~/components/icons/Eye";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
 import { FilterIcon } from "~/components/icons/Filter";
+import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
+import { useCollapsableEvents } from "~/features/calendar/calendar-hooks";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { CALENDAR_PAGE, navIconUrl } from "~/utils/urls";
-import { calendarEventSorter, daysForCalendar } from "../calendar-utils";
+import { daysForCalendar } from "../calendar-utils";
 import { TournamentCard } from "../components/TournamentCard";
 
 import { type CalendarLoaderData, loader } from "../loaders/calendar.server";
@@ -22,33 +26,15 @@ export { loader };
 
 import styles from "./calendar.module.css";
 
-// xxx: restore
-// export const meta: MetaFunction = (args) => {
-// 	const data = args.data as SerializeFrom<typeof loader> | null;
-
-// 	if (!data) return [];
-
-// 	const events = data.events.slice().sort((a, b) => {
-// 		const aParticipants = a.participantCounts?.teams ?? 0;
-// 		const bParticipants = b.participantCounts?.teams ?? 0;
-
-// 		if (aParticipants > bParticipants) return -1;
-// 		if (aParticipants < bParticipants) return 1;
-
-// 		return 0;
-// 	});
-
-// 	return metaTags({
-// 		title: "Calendar",
-// 		ogTitle: "Splatoon competitive event calendar",
-// 		location: args.location,
-// 		description: `${data.events.length} events on sendou.ink happening during week ${
-// 			data.displayedWeek
-// 		} including ${joinListToNaturalString(
-// 			events.slice(0, 3).map((e) => e.name),
-// 		)}`,
-// 	});
-// };
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Calendar",
+		ogTitle: "Splatoon competitive event calendar",
+		location: args.location,
+		description:
+			"Browser Splatoon competitive tournaments and events both local and online. Events for players of all skill levels from newcomer to pro.",
+	});
+};
 
 export const handle: SendouRouteHandle = {
 	i18n: ["calendar", "front"],
@@ -62,7 +48,7 @@ export const handle: SendouRouteHandle = {
 export default function CalendarPage() {
 	const data = useLoaderData<typeof loader>();
 
-	const { previous, shown, next } = daysForCalendar();
+	const { previous, shown, next } = daysForCalendar(data.dateViewed);
 
 	return (
 		<Main bigger className="stack lg">
@@ -80,18 +66,21 @@ export default function CalendarPage() {
 					Filter
 				</SendouButton>
 			</div>
-			<div className={styles.columnsContainer}>
-				{shown.map((day) => (
+			<div
+				className={styles.columnsContainer}
+				style={{ "--columns-count": DAYS_SHOWN_AT_A_TIME }}
+			>
+				{shown.map((date) => (
 					<DayEventsColumn
-						key={`${day.month}-${day.date}`}
-						date={day.date}
-						month={day.month}
+						key={`${date.month}-${date.day}`}
+						date={date.day}
+						month={date.month}
 						eventTimes={data.eventTimes.filter((event) => {
 							const eventDate = new Date(event.at);
 
 							return (
-								eventDate.getDate() === day.date &&
-								eventDate.getMonth() === day.month
+								eventDate.getDate() === date.day &&
+								eventDate.getMonth() === date.month
 							);
 						})}
 					/>
@@ -117,7 +106,7 @@ function NavigateButton({
 	const dateToString = (
 		day: ReturnType<typeof daysForCalendar>["shown"][number],
 	) =>
-		new Date(new Date().getFullYear(), day.month, day.date).toLocaleDateString(
+		new Date(new Date().getFullYear(), day.month, day.day).toLocaleDateString(
 			i18n.language,
 			{
 				day: "numeric",
@@ -125,19 +114,26 @@ function NavigateButton({
 			},
 		);
 
+	const searchParamsString = () => {
+		const searchParams = new URLSearchParams();
+
+		searchParams.set("day", String(lowestDate.day));
+		searchParams.set("month", String(lowestDate.month));
+		searchParams.set("year", String(lowestDate.year));
+
+		return `?${searchParams.toString()}`;
+	};
+
 	return (
-		<SendouButton
-			icon={icon}
-			variant="minimal"
-			className={styles.navigateButton}
-		>
+		<Link to={searchParamsString()} className={styles.navigateButton}>
+			{icon}
 			<div>
 				<div>{children}</div>
 				<div className="text-xxs text-lighter">
 					{dateToString(lowestDate)} - {dateToString(highestDate)}
 				</div>
 			</div>
-		</SendouButton>
+		</Link>
 	);
 }
 
@@ -166,29 +162,24 @@ function DayEventsColumn({
 	month: number;
 	eventTimes: CalendarLoaderData["eventTimes"];
 }) {
-	const [hiddenShown, setHiddenShown] = React.useState(false);
+	const eventTimesCollapesed = useCollapsableEvents(eventTimes);
 
 	return (
 		<div>
 			<DayHeader date={date} month={month} />
 			<div className={styles.dayEvents}>
-				{eventTimes.map((eventTime, i) => {
-					const eventsShown = hiddenShown
-						? [...eventTime.events.shown, ...eventTime.events.hidden].sort(
-								calendarEventSorter,
-							)
-						: eventTime.events.shown;
-
+				{eventTimesCollapesed.map((eventTime, i) => {
 					return (
-						<div key={eventTime.at} className="stack md">
+						<div key={eventTime.date.from.getTime()} className="stack md">
 							<ClockHeader
-								date={new Date(eventTime.at)}
-								hiddenEventsCount={eventTime.events.hidden.length}
-								hiddenShown={hiddenShown}
-								onToggleHidden={() => setHiddenShown((prev) => !prev)}
+								date={eventTime.date.from}
+								toDate={eventTime.date.to}
+								hiddenEventsCount={eventTime.hiddenCount}
+								hiddenShown={eventTime.eventsShown.length > 0}
+								onToggleHidden={eventTime.onToggleHidden}
 								className={i !== 0 ? "mt-4" : undefined}
 							/>
-							{eventsShown.map((event) => (
+							{eventTime.eventsShown.map((event) => (
 								<TournamentCard key={event.id} tournament={event} />
 							))}
 						</div>
@@ -219,15 +210,16 @@ function DayHeader(props: { date: number; month: number }) {
 	);
 }
 
-// xxx: if many in row have none visible, collapse
 function ClockHeader({
 	date,
+	toDate,
 	hiddenEventsCount = 0,
 	onToggleHidden,
 	hiddenShown,
 	className,
 }: {
 	date: Date;
+	toDate?: Date;
 	hiddenEventsCount?: number;
 	onToggleHidden: () => void;
 	hiddenShown: boolean;
@@ -238,10 +230,18 @@ function ClockHeader({
 	return (
 		<div className={clsx(className, styles.clockHeader)}>
 			<div className="stack horizontal justify-between">
-				{date.toLocaleTimeString(i18n.language, {
-					hour: "numeric",
-					minute: "2-digit",
-				})}
+				<span>
+					{date.toLocaleTimeString(i18n.language, {
+						hour: "numeric",
+						minute: "2-digit",
+					})}
+					{toDate
+						? ` - ${toDate.toLocaleTimeString(i18n.language, {
+								hour: "numeric",
+								minute: "2-digit",
+							})}`
+						: ""}
+				</span>
 				{hiddenEventsCount > 0 ? (
 					<SendouButton
 						icon={hiddenShown ? <EyeIcon /> : <EyeSlashIcon />}

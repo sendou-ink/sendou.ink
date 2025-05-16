@@ -1,25 +1,37 @@
+import type { LoaderFunctionArgs } from "@remix-run/node";
+import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
 import type { SerializeFrom } from "~/utils/remix";
+import { parseSafeSearchParams } from "~/utils/remix.server";
+import { dayMonthYear } from "~/utils/zod";
 import * as CalendarRepository from "../CalendarRepository.server";
 import * as CalendarEvent from "../core/CalendarEvent.server";
 
 export type CalendarLoaderData = SerializeFrom<typeof loader>;
 
-// xxx: is 4 events enough instead of 5 because max screen width
-export const loader = async () => {
-	const now = Date.now();
+export const loader = async (args: LoaderFunctionArgs) => {
+	const parsed = parseSafeSearchParams({
+		request: args.request,
+		schema: dayMonthYear,
+	});
 
-	// xxx: we could probably load less
-	const twentyFourHoursAgo = now - 24 * 60 * 60 * 1000;
-	const sixDaysFromNow = now + 5 * 24 * 60 * 60 * 1000;
+	const date = parsed.success
+		? new Date(
+				Date.UTC(parsed.data.year, parsed.data.month, parsed.data.day),
+			).getTime()
+		: Date.now();
+
+	const twentyFourHoursAgo = date - 24 * 60 * 60 * 1000;
+	const fiveDaysFromNow = date + DAYS_SHOWN_AT_A_TIME * 24 * 60 * 60 * 1000;
 
 	const events = await CalendarRepository.findAllBetweenTwoTimestamps({
 		startTime: new Date(twentyFourHoursAgo),
-		endTime: new Date(sixDaysFromNow),
+		endTime: new Date(fiveDaysFromNow),
 	});
 
 	const filtered = CalendarEvent.applyFilters(events, null);
 
 	return {
 		eventTimes: filtered,
+		dateViewed: parsed.success ? parsed.data : undefined,
 	};
 };

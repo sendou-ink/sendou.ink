@@ -718,6 +718,10 @@ abbr[title] {
 	font-size: var(--fonts-xxxs);
 }
 
+.calendar__event__tags.centered {
+	justify-content: center;
+}
+
 .calendar__event__tags.small > li {
 	padding: 0 var(--s-1);
 }

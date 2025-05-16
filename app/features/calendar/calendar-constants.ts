@@ -104,4 +104,5 @@ export const REG_CLOSES_AT_OPTIONS = [
 
 export type RegClosesAtOption = (typeof REG_CLOSES_AT_OPTIONS)[number];
 
-export const DAYS_SHOWN_AT_A_TIME = 5;
+/** How many days are shown at the /calendar page at a time */
+export const DAYS_SHOWN_AT_A_TIME = 4;

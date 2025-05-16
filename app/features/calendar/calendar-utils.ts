@@ -4,6 +4,7 @@ import { allTruthy } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
+import type { DayMonthYear } from "~/utils/zod";
 import {
 	DAYS_SHOWN_AT_A_TIME,
 	type RegClosesAtOption,
@@ -197,22 +198,25 @@ function eventStartedInThePast(
 	);
 }
 
-export function daysForCalendar() {
-	type DaysArray = Array<{
-		date: number;
-		month: number;
-	}>;
+export function daysForCalendar(currentDate?: DayMonthYear) {
+	type DaysArray = Array<DayMonthYear>;
 
 	const previous: DaysArray = [];
 	const shown: DaysArray = [];
 	const next: DaysArray = [];
 
-	let now = new Date();
+	const startDate = () =>
+		currentDate
+			? new Date(currentDate.year, currentDate.month, currentDate.day)
+			: new Date();
+
+	let now = startDate();
 
 	for (let i = 0; i < DAYS_SHOWN_AT_A_TIME; i++) {
 		shown.push({
-			date: now.getDate(),
+			day: now.getDate(),
 			month: now.getMonth(),
+			year: now.getFullYear(),
 		});
 
 		now.setDate(now.getDate() + 1);
@@ -220,21 +224,23 @@ export function daysForCalendar() {
 
 	for (let i = 0; i < DAYS_SHOWN_AT_A_TIME; i++) {
 		next.push({
-			date: now.getDate(),
+			day: now.getDate(),
 			month: now.getMonth(),
+			year: now.getFullYear(),
 		});
 
 		now.setDate(now.getDate() + 1);
 	}
 
-	now = new Date();
+	now = startDate();
 
 	for (let i = 0; i < DAYS_SHOWN_AT_A_TIME; i++) {
 		now.setDate(now.getDate() - 1);
 
 		previous.push({
-			date: now.getDate(),
+			day: now.getDate(),
 			month: now.getMonth(),
+			year: now.getFullYear(),
 		});
 	}
 	previous.reverse();

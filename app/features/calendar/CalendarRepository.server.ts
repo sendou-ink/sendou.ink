@@ -123,6 +123,10 @@ function findAllBetweenTwoTimestampsQuery({
 			"CalendarEvent.name",
 			"CalendarEvent.tags",
 			"CalendarEventDate.startTime",
+			// events get grouped to their closest :00 or :30 so for example users can't make their event start at :59 to make it show at the top
+			sql<number>`(("CalendarEventDate"."startTime" + 900) / 1800) * 1800`.as(
+				"normalizedStartTime",
+			),
 			jsonObjectFrom(
 				eb
 					.selectFrom("TournamentOrganization")
@@ -199,7 +203,7 @@ function findAllBetweenTwoTimestampsMapped(
 				minMembersPerTeam: row.tournamentSettings?.minMembersPerTeam ?? 4,
 			}),
 			logoUrl: row.logoUrl,
-			startTime: row.startTime, // xxx: normalize startTime so that events get grouped to their closest :00 or :30
+			startTime: row.normalizedStartTime,
 			isRanked: row.tournamentSettings
 				? tournamentIsRanked({
 						isSetAsRanked: row.tournamentSettings.isRanked,

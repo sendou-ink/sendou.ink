@@ -30,9 +30,9 @@
 
 .columnsContainer {
 	display: grid;
-	grid-template-columns: repeat(5, 225px);
+	grid-template-columns: repeat(var(--columns-count), 225px);
 	gap: var(--s-14);
-	overflow-x: hidden;
+	overflow-x: auto;
 }
 
 .dayHeader {
