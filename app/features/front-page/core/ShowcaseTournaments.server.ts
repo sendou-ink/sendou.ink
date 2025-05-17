@@ -287,6 +287,7 @@ function mapTournamentFromDB(
 			minMembersPerTeam: tournament.settings.minMembersPerTeam ?? 4,
 			isTest: tournament.settings.isTest ?? false,
 		}),
+		modes: null, // xxx: resolve modes
 		firstPlacer:
 			tournament.firstPlacers.length > 0
 				? {

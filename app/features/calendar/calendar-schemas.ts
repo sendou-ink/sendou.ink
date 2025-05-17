@@ -24,6 +24,20 @@ import {
 import { CALENDAR_EVENT, REG_CLOSES_AT_OPTIONS } from "./calendar-constants";
 import { calendarEventMaxDate, calendarEventMinDate } from "./calendar-utils";
 
+const calendarEventTagSchema = z
+	.string()
+	.refine((val) =>
+		CALENDAR_EVENT.PERSISTED_TAGS.includes(val as PersistedCalendarEventTag),
+	);
+
+export const calendarFiltersSchema = z.object({
+	// startTime
+	tagsIncluded: z.array(calendarEventTagSchema).nullish(),
+	tagsExcluded: z.array(calendarEventTagSchema).nullish(),
+	onlySendouHosted: z.boolean().nullish(),
+	// orgsExcluded
+});
+
 const playersSchema = z
 	.array(
 		z.union([
@@ -84,12 +98,6 @@ export const reportWinnersActionSchema = z.object({
 			),
 	),
 });
-
-const calendarEventTagSchema = z
-	.string()
-	.refine((val) =>
-		CALENDAR_EVENT.PERSISTED_TAGS.includes(val as PersistedCalendarEventTag),
-	);
 
 export const bracketProgressionSchema = z.preprocess(
 	safeJSONParse,

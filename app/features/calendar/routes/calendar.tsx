@@ -12,7 +12,6 @@ import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
 import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import { EyeIcon } from "~/components/icons/Eye";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
-import { FilterIcon } from "~/components/icons/Filter";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
 import { useCollapsableEvents } from "~/features/calendar/calendar-hooks";
 import { metaTags } from "~/utils/remix";
@@ -20,6 +19,7 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { CALENDAR_PAGE, navIconUrl } from "~/utils/urls";
 import { daysForCalendar } from "../calendar-utils";
 import { TournamentCard } from "../components/TournamentCard";
+import { FiltersDialog } from "../components/FiltersDialog";
 
 import { type CalendarLoaderData, loader } from "../loaders/calendar.server";
 export { loader };
@@ -62,9 +62,7 @@ export default function CalendarPage() {
 					</NavigateButton>
 					{/* <MajorTournamentLink /> */}
 				</div>
-				<SendouButton variant="outlined" size="small" icon={<FilterIcon />}>
-					Filter
-				</SendouButton>
+				<FiltersDialog />
 			</div>
 			<div
 				className={styles.columnsContainer}
@@ -227,10 +225,16 @@ function ClockHeader({
 }) {
 	const { i18n } = useTranslation();
 
+	const isInThePast = (toDate ?? date).getTime() < Date.now();
+
 	return (
 		<div className={clsx(className, styles.clockHeader)}>
 			<div className="stack horizontal justify-between">
-				<span>
+				<span
+					className={clsx({
+						"text-lighter italic": isInThePast,
+					})}
+				>
 					{date.toLocaleTimeString(i18n.language, {
 						hour: "numeric",
 						minute: "2-digit",

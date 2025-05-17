@@ -202,6 +202,7 @@ function findAllBetweenTwoTimestampsMapped(
 				teamsCount: row.teamsCount,
 				minMembersPerTeam: row.tournamentSettings?.minMembersPerTeam ?? 4,
 			}),
+			modes: null, // xxx: resolve modes
 			logoUrl: row.logoUrl,
 			startTime: row.normalizedStartTime,
 			isRanked: row.tournamentSettings
