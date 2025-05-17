@@ -58,6 +58,9 @@
 	font-weight: bold;
 	padding-block: var(--s-2);
 	padding-inline: var(--s-4);
+	position: fixed;
+	top: 0;
+	z-index: 10;
 }
 
 .layout__avatar {
@@ -152,6 +155,7 @@
 .layout__main-container {
 	display: flex;
 	flex-direction: row;
+	padding-top: 80px;
 }
 
 .layout__main {
