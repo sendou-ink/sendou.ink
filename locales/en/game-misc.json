@@ -58,5 +58,7 @@
 	"MODE_LONG_SZ": "Splat Zones",
 	"MODE_LONG_TC": "Tower Control",
 	"MODE_LONG_RM": "Rainmaker",
-	"MODE_LONG_CB": "Clam Blitz"
+	"MODE_LONG_CB": "Clam Blitz",
+	"MODE_LONG_SALMON_RUN": "Salmon Run",
+	"MODE_LONG_TABLETURF": "Tableturf Battle"
 }

@@ -8,7 +8,11 @@ import type {
 } from "./weapon-ids";
 
 export type ModeShort = (typeof modes)[number]["short"];
-export type RankedModeShort = "SZ" | "TC" | "RM" | "CB";
+export type ModeShortWithSpecial =
+	| (typeof modes)[number]["short"]
+	| "TABLETURF"
+	| "SALMON_RUN";
+export type RankedModeShort = Exclude<ModeShort, "TW">;
 
 export type StageId = (typeof stageIds)[number];
 

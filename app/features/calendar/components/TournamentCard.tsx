@@ -2,6 +2,7 @@ import { Link } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Flag } from "~/components/Flag";
+import { ModeImage } from "~/components/Image";
 import { TrophyIcon } from "~/components/icons/Trophy";
 import { UsersIcon } from "~/components/icons/Users";
 import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
@@ -96,18 +97,21 @@ export function TournamentCard({
 					<TournamentFirstPlacers firstPlacer={tournament.firstPlacer} />
 				) : null}
 			</Link>
-			{isHostedOnSendouInk ? (
-				<div className={styles.pillsContainer}>
-					{tournament.isRanked ? (
-						<div className={clsx(styles.pill, styles.pillRanked)}>
-							<TrophyIcon title="Ranked (impacts this seasons SP)" />
+			<div className="stack horizontal justify-between items-center">
+				{tournament.modes ? <ModesPill modes={tournament.modes} /> : null}
+				{isHostedOnSendouInk ? (
+					<div className={styles.pillsContainer}>
+						{tournament.isRanked ? (
+							<div className={clsx(styles.pill, styles.pillRanked)}>
+								<TrophyIcon title="Ranked (impacts this seasons SP)" />
+							</div>
+						) : null}
+						<div className={styles.teamCount}>
+							<UsersIcon /> {tournament.teamsCount}
 						</div>
-					) : null}
-					<div className={styles.teamCount}>
-						<UsersIcon /> {tournament.teamsCount}
 					</div>
-				</div>
-			) : null}
+				) : null}
+			</div>
 		</div>
 	);
 }
@@ -151,6 +155,20 @@ function TournamentFirstPlacers({
 						+{firstPlacer.notShownMembersCount}
 					</div>
 				) : null}
+			</div>
+		</div>
+	);
+}
+
+function ModesPill({ modes }: { modes: NonNullable<CalendarEvent["modes"]> }) {
+	const size = 16;
+
+	return (
+		<div className={styles.modesPillContainer}>
+			<div className={styles.modesPill}>
+				{modes.map((mode) => (
+					<ModeImage key={mode} mode={mode} size={size} />
+				))}
 			</div>
 		</div>
 	);

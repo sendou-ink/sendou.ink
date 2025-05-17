@@ -36,6 +36,7 @@ export const calendarFiltersSchema = z.object({
 	tagsExcluded: z.array(calendarEventTagSchema).nullish(),
 	onlySendouHosted: z.boolean().nullish(),
 	// orgsExcluded
+	// games... S1/S2/S3
 });
 
 const playersSchema = z

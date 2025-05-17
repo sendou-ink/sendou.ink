@@ -77,6 +77,19 @@
 	width: var(--tournament-card-icon-size);
 }
 
+.modesPillContainer {
+	padding-inline: 12px;
+}
+
+.modesPill {
+	background-color: var(--bg-lightest);
+	border-radius: var(--rounded-sm);
+	width: max-content;
+	padding: var(--s-0-5) var(--s-1-5);
+	display: flex;
+	gap: var(--s-1);
+}
+
 .pillsContainer {
 	display: flex;
 	gap: var(--s-1);

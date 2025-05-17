@@ -1,5 +1,5 @@
 import type { CalendarEventTag, Tables } from "~/db/tables";
-import type { RankedModeShort } from "~/modules/in-game-lists";
+import type { ModeShortWithSpecial } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 
 interface CommonEvent {
@@ -10,7 +10,7 @@ interface CommonEvent {
 	url: string;
 	/** Is the tournament ranked? If null, tournament is not hosted on sendou.ink */
 	isRanked: boolean | null;
-	modes: RankedModeShort[] | "TABLETURF" | "SALMON_RUN" | null;
+	modes: Array<ModeShortWithSpecial> | null;
 	organization: {
 		name: string;
 		slug: string;

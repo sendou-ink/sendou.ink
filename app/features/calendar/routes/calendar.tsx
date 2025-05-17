@@ -18,8 +18,8 @@ import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { CALENDAR_PAGE, navIconUrl } from "~/utils/urls";
 import { daysForCalendar } from "../calendar-utils";
-import { TournamentCard } from "../components/TournamentCard";
 import { FiltersDialog } from "../components/FiltersDialog";
+import { TournamentCard } from "../components/TournamentCard";
 
 import { type CalendarLoaderData, loader } from "../loaders/calendar.server";
 export { loader };

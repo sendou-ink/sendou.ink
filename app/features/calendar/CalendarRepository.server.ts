@@ -14,6 +14,7 @@ import type {
 	Tables,
 	TournamentSettings,
 } from "~/db/tables";
+import { EXCLUDED_TAGS } from "~/features/calendar/calendar-constants";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
@@ -24,6 +25,7 @@ import {
 import invariant from "~/utils/invariant";
 import { calendarEventPage, tournamentPage } from "~/utils/urls";
 import {
+	modesIncluded,
 	normalizedTeamCount,
 	tournamentIsRanked,
 } from "../tournament/tournament-utils";
@@ -120,6 +122,7 @@ function findAllBetweenTwoTimestampsQuery({
 			"CalendarEvent.id as eventId",
 			"Tournament.id as tournamentId",
 			"Tournament.settings as tournamentSettings",
+			"Tournament.mapPickingStyle",
 			"CalendarEvent.name",
 			"CalendarEvent.tags",
 			"CalendarEventDate.startTime",
@@ -160,6 +163,12 @@ function findAllBetweenTwoTimestampsQuery({
 				)
 				.select(({ fn }) => [fn.countAll<number>().as("teamsCount")])
 				.as("teamsCount"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("MapPoolMap")
+					.select(["MapPoolMap.mode"])
+					.whereRef("MapPoolMap.calendarEventId", "=", "CalendarEvent.id"),
+			).as("toSetMapPool"),
 			eb
 				.selectFrom("UserSubmittedImage")
 				.select(["UserSubmittedImage.url"])
@@ -188,32 +197,44 @@ function findAllBetweenTwoTimestampsMapped(
 	events: Array<CalendarEvent>;
 }> {
 	const mapped: Array<CalendarEvent & { startTime: number }> = rows.map(
-		(row) => ({
-			type: "calendar",
-			id: row.eventId,
-			url: row.tournamentId
-				? tournamentPage(row.tournamentId)
-				: calendarEventPage(row.eventId),
-			name: row.name,
-			organization: row.organization,
-			tags: row.tags ? (row.tags.split(",") as CalendarEvent["tags"]) : [],
-			teamsCount: row.teamsCount,
-			normalizedTeamCount: normalizedTeamCount({
+		(row) => {
+			const tags = row.tags
+				? (row.tags.split(",") as CalendarEvent["tags"])
+				: [];
+
+			return {
+				type: "calendar",
+				id: row.eventId,
+				url: row.tournamentId
+					? tournamentPage(row.tournamentId)
+					: calendarEventPage(row.eventId),
+				name: row.name,
+				organization: row.organization,
+				tags: tags.filter((tag) => !EXCLUDED_TAGS.includes(tag)),
 				teamsCount: row.teamsCount,
-				minMembersPerTeam: row.tournamentSettings?.minMembersPerTeam ?? 4,
-			}),
-			modes: null, // xxx: resolve modes
-			logoUrl: row.logoUrl,
-			startTime: row.normalizedStartTime,
-			isRanked: row.tournamentSettings
-				? tournamentIsRanked({
-						isSetAsRanked: row.tournamentSettings.isRanked,
-						startTime: databaseTimestampToDate(row.startTime),
-						minMembersPerTeam: row.tournamentSettings.minMembersPerTeam ?? 4,
-						isTest: row.tournamentSettings.isTest ?? false,
-					})
-				: null,
-		}),
+				normalizedTeamCount: normalizedTeamCount({
+					teamsCount: row.teamsCount,
+					minMembersPerTeam: row.tournamentSettings?.minMembersPerTeam ?? 4,
+				}),
+				modes: tags.includes("CARDS")
+					? ["TABLETURF"]
+					: tags.includes("SR")
+						? ["SALMON_RUN"]
+						: row.mapPickingStyle
+							? modesIncluded(row.mapPickingStyle, row.toSetMapPool)
+							: null,
+				logoUrl: row.logoUrl,
+				startTime: row.normalizedStartTime,
+				isRanked: row.tournamentSettings
+					? tournamentIsRanked({
+							isSetAsRanked: row.tournamentSettings.isRanked,
+							startTime: databaseTimestampToDate(row.startTime),
+							minMembersPerTeam: row.tournamentSettings.minMembersPerTeam ?? 4,
+							isTest: row.tournamentSettings.isTest ?? false,
+						})
+					: null,
+			};
+		},
 	);
 
 	const grouped = R.groupBy(mapped, (row) => row.startTime);

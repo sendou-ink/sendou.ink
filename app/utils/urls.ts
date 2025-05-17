@@ -12,6 +12,7 @@ import type {
 	AbilityWithUnknown,
 	BuildAbilitiesTupleWithUnknown,
 	MainWeaponId,
+	ModeShortWithSpecial,
 	SpecialWeaponId,
 	StageId,
 	SubWeaponId,
@@ -452,7 +453,7 @@ export const specialWeaponImageUrl = (specialWeaponSplId: SpecialWeaponId) =>
 	`/static-assets/img/special-weapons/${specialWeaponSplId}`;
 export const abilityImageUrl = (ability: AbilityWithUnknown) =>
 	`/static-assets/img/abilities/${ability}`;
-export const modeImageUrl = (mode: ModeShort) =>
+export const modeImageUrl = (mode: ModeShortWithSpecial) =>
 	`/static-assets/img/modes/${mode}`;
 export const stageImageUrl = (stageId: StageId) =>
 	`/static-assets/img/stages/${stageId}`;
