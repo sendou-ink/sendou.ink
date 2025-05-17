@@ -435,7 +435,7 @@ function WeaponPool() {
 								<div>
 									<WeaponImage
 										weaponSplId={weapon.weaponSplId}
-										variant="badge"
+										variant={weapon.isFavorite ? "badge-5-star" : "badge"}
 										width={38}
 										height={38}
 									/>
