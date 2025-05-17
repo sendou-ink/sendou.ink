@@ -778,6 +778,11 @@ export interface UserMapModePreferences {
 	}>;
 }
 
+export interface QWeaponPool {
+	weaponSplId: MainWeaponId;
+	isFavorite: number;
+}
+
 export const BUILD_SORT_IDENTIFIERS = [
 	"UPDATED_AT",
 	"TOP_500",
@@ -836,7 +841,7 @@ export interface User {
 	vc: Generated<"YES" | "NO" | "LISTEN_ONLY">;
 	youtubeId: string | null;
 	mapModePreferences: JSONColumnTypeNullable<UserMapModePreferences>;
-	qWeaponPool: ColumnType<MainWeaponId[] | null, string | null, string | null>;
+	qWeaponPool: JSONColumnTypeNullable<QWeaponPool[]>;
 	plusSkippedForSeasonNth: number | null;
 	noScreen: Generated<number>;
 	buildSorting: JSONColumnTypeNullable<BuildSort[]>;

@@ -374,8 +374,8 @@ function GroupMember({
 						{member.weapons?.map((weapon) => {
 							return (
 								<WeaponImage
-									key={weapon}
-									weaponSplId={weapon}
+									key={weapon.weaponSplId}
+									weaponSplId={weapon.weaponSplId}
 									variant="badge"
 									size={26}
 								/>

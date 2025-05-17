@@ -18,6 +18,8 @@ import { MicrophoneFilledIcon } from "~/components/icons/MicrophoneFilled";
 import { PuzzleIcon } from "~/components/icons/Puzzle";
 import { SpeakerFilledIcon } from "~/components/icons/SpeakerFilled";
 import { TrashIcon } from "~/components/icons/Trash";
+import { StarIcon } from "~/components/icons/Star";
+import { StarFilledIcon } from "~/components/icons/StarFilled";
 import { UsersIcon } from "~/components/icons/Users";
 import type { Preference, Tables, UserMapModePreferences } from "~/db/tables";
 import {
@@ -383,7 +385,7 @@ function WeaponPool() {
 	const [weapons, setWeapons] = React.useState(data.settings.qWeaponPool ?? []);
 	const fetcher = useFetcher();
 
-	const latestWeapon = weapons[weapons.length - 1];
+	const latestWeapon = weapons[weapons.length - 1].weaponSplId;
 
 	return (
 		<details>
@@ -408,12 +410,15 @@ function WeaponPool() {
 									if (!weapon) return;
 									setWeapons([
 										...weapons,
-										Number(weapon.value) as MainWeaponId,
+										{
+											weaponSplId: Number(weapon.value) as MainWeaponId,
+											isFavorite: 0,
+										},
 									]);
 								}}
 								// empty on selection
 								key={latestWeapon ?? "empty"}
-								weaponIdsToOmit={new Set(weapons)}
+								weaponIdsToOmit={new Set(weapons.map((w) => w.weaponSplId))}
 								fullWidth
 							/>
 						</div>
@@ -426,10 +431,10 @@ function WeaponPool() {
 				<div className="stack horizontal sm justify-center">
 					{weapons.map((weapon) => {
 						return (
-							<div key={weapon} className="stack xs">
+							<div key={weapon.weaponSplId} className="stack xs">
 								<div>
 									<WeaponImage
-										weaponSplId={weapon}
+										weaponSplId={weapon.weaponSplId}
 										variant="badge"
 										width={38}
 										height={38}
@@ -437,12 +442,34 @@ function WeaponPool() {
 								</div>
 								<div className="stack sm horizontal items-center justify-center">
 									<Button
+										icon={weapon.isFavorite ? <StarFilledIcon /> : <StarIcon />}
+										variant="minimal"
+										aria-label="Favorite weapon"
+										onClick={() =>
+											setWeapons(
+												weapons.map((w) =>
+													w.weaponSplId === weapon.weaponSplId
+														? {
+																...weapon,
+																isFavorite: weapon.isFavorite === 1 ? 0 : 1,
+															}
+														: w,
+												),
+											)
+										}
+									/>
+									<Button
 										icon={<TrashIcon />}
 										variant="minimal-destructive"
 										aria-label="Delete weapon"
 										onClick={() =>
-											setWeapons(weapons.filter((w) => w !== weapon))
+											setWeapons(
+												weapons.filter(
+													(w) => w.weaponSplId !== weapon.weaponSplId,
+												),
+											)
 										}
+										testId={`delete-weapon-${weapon.weaponSplId}`}
 										size="tiny"
 									/>
 								</div>

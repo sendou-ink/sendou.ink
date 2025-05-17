@@ -9,7 +9,7 @@ import {
 	noDuplicates,
 	safeJSONParse,
 	stageId,
-	weaponSplId,
+	qWeapon,
 } from "~/utils/zod";
 import {
 	AMOUNT_OF_MAPS_IN_POOL_PER_MODE,
@@ -29,14 +29,14 @@ export const settingsActionSchema = z.union([
 						z.object({
 							stages: z.array(stageId).length(AMOUNT_OF_MAPS_IN_POOL_PER_MODE),
 							mode: modeShort,
-						}),
+						})
 					),
 				})
 				.refine((val) =>
 					val.pool.every((pool) => {
 						const mp = val.modes.find((m) => m.mode === pool.mode);
 						return mp?.preference !== "AVOID";
-					}, "Can't have map pool for a mode that was avoided"),
+					}, "Can't have map pool for a mode that was avoided")
 				)
 				.refine((val) => {
 					for (const mode of modesShort) {
@@ -47,7 +47,7 @@ export const settingsActionSchema = z.union([
 					}
 
 					return true;
-				}, "Pool has to be picked for each mode that wasn't avoided"),
+				}, "Pool has to be picked for each mode that wasn't avoided")
 		),
 	}),
 	z.object({
@@ -59,15 +59,15 @@ export const settingsActionSchema = z.union([
 				.array(z.string())
 				.refine(noDuplicates)
 				.refine((val) =>
-					val.every((lang) => languagesUnified.some((l) => l.code === lang)),
-				),
+					val.every((lang) => languagesUnified.some((l) => l.code === lang))
+				)
 		),
 	}),
 	z.object({
 		_action: _action("UPDATE_SENDOUQ_WEAPON_POOL"),
 		weaponPool: z.preprocess(
 			safeJSONParse,
-			z.array(weaponSplId).max(SENDOUQ_WEAPON_POOL_MAX_SIZE),
+			z.array(qWeapon).max(SENDOUQ_WEAPON_POOL_MAX_SIZE)
 		),
 	}),
 	z.object({
