@@ -27,8 +27,8 @@ import { useHasRole } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Alert } from "../../../components/Alert";
 import { DateFormField } from "../../../components/form/DateFormField";
-import { MyForm } from "../../../components/form/MyForm";
 import { SelectFormField } from "../../../components/form/SelectFormField";
+import { SendouForm } from "../../../components/form/SendouForm";
 import { TextFormField } from "../../../components/form/TextFormField";
 import { videoMatchTypes } from "../vods-constants";
 import { videoInputSchema } from "../vods-schemas";
@@ -58,7 +58,7 @@ export default function NewVodPage() {
 
 	return (
 		<Main halfWidth>
-			<MyForm
+			<SendouForm
 				heading={
 					data.vodToEdit
 						? t("vods:forms.title.edit")
@@ -83,7 +83,7 @@ export default function NewVodPage() {
 				}
 			>
 				<FormFields />
-			</MyForm>
+			</SendouForm>
 		</Main>
 	);
 }

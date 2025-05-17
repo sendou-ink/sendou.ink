@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import type { z } from "zod";
 import { SendouDialog } from "~/components/elements/Dialog";
-import { MyForm } from "~/components/form/MyForm";
+import { SendouForm } from "~/components/form/SendouForm";
 import { TextFormField } from "~/components/form/TextFormField";
 import { createNewAssociationSchema } from "~/features/associations/associations-schemas";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -24,7 +24,7 @@ export default function AssociationsNewPage() {
 			heading={t("scrims:associations.forms.title")}
 			onCloseTo={associationsPage()}
 		>
-			<MyForm
+			<SendouForm
 				schema={createNewAssociationSchema}
 				defaultValues={{
 					name: "",
@@ -34,7 +34,7 @@ export default function AssociationsNewPage() {
 					label={t("scrims:associations.forms.name.title")}
 					name="name"
 				/>
-			</MyForm>
+			</SendouForm>
 		</SendouDialog>
 	);
 }

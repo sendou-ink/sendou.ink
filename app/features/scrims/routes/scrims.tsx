@@ -13,7 +13,7 @@ import { Table } from "~/components/Table";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
-import { MyForm } from "~/components/form/MyForm";
+import { SendouForm } from "~/components/form/SendouForm";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
 import { SpeechBubbleIcon } from "~/components/icons/SpeechBubble";
 import { UsersIcon } from "~/components/icons/Users";
@@ -186,7 +186,7 @@ function RequestScrimModal({
 
 	return (
 		<SendouDialog heading={t("scrims:requestModal.title")} onClose={close}>
-			<MyForm
+			<SendouForm
 				schema={newRequestSchema}
 				defaultValues={{
 					_action: "NEW_REQUEST",
@@ -211,7 +211,7 @@ function RequestScrimModal({
 				) : null}
 				<Divider />
 				<WithFormField usersTeams={data.teams} />
-			</MyForm>
+			</SendouForm>
 		</SendouDialog>
 	);
 }

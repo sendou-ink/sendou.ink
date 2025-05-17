@@ -7,8 +7,8 @@ import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { AddFieldButton } from "~/components/form/AddFieldButton";
 import { FormFieldset } from "~/components/form/FormFieldset";
-import { MyForm } from "~/components/form/MyForm";
 import { SelectFormField } from "~/components/form/SelectFormField";
+import { SendouForm } from "~/components/form/SendouForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import { TextArrayFormField } from "~/components/form/TextArrayFormField";
 import { TextFormField } from "~/components/form/TextFormField";
@@ -44,7 +44,7 @@ export default function TournamentOrganizationEditPage() {
 
 	return (
 		<Main>
-			<MyForm
+			<SendouForm
 				heading={t("org:edit.form.title")}
 				schema={organizationEditSchema}
 				defaultValues={{
@@ -93,7 +93,7 @@ export default function TournamentOrganizationEditPage() {
 				<SeriesFormField />
 
 				<BadgesFormField />
-			</MyForm>
+			</SendouForm>
 		</Main>
 	);
 }
