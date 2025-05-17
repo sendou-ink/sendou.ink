@@ -1,5 +1,5 @@
 import { db } from "~/db/sql";
-import type { Tables, UserMapModePreferences, QWeaponPool } from "~/db/tables";
+import type { QWeaponPool, Tables, UserMapModePreferences } from "~/db/tables";
 import { modesShort } from "~/modules/in-game-lists";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 
@@ -30,7 +30,7 @@ export async function updateUserMapModePreferences({
 	mapModePreferences: UserMapModePreferences;
 }) {
 	const modesExcluded = modesShort.filter(
-		(mode) => !mapModePreferences.pool.some((mp) => mp.mode === mode)
+		(mode) => !mapModePreferences.pool.some((mp) => mp.mode === mode),
 	);
 
 	const currentPreferences = (
@@ -43,7 +43,7 @@ export async function updateUserMapModePreferences({
 
 	for (const mode of modesExcluded) {
 		const previousModePreference = currentPreferences?.pool.filter(
-			(mp) => mp.mode === mode
+			(mp) => mp.mode === mode,
 		);
 		if (previousModePreference && previousModePreference.length > 0) {
 			mapModePreferences.pool.push(...previousModePreference);

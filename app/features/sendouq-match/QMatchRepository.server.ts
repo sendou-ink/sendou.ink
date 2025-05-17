@@ -2,9 +2,9 @@ import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type {
 	ParsedMemento,
+	QWeaponPool,
 	Tables,
 	UserSkillDifference,
-	QWeaponPool,
 } from "~/db/tables";
 import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
 
@@ -23,7 +23,7 @@ export function findById(id: number) {
 			exists(
 				selectFrom("Skill")
 					.select("Skill.id")
-					.where("Skill.groupMatchId", "=", id)
+					.where("Skill.groupMatchId", "=", id),
 			).as("isLocked"),
 			jsonArrayFrom(
 				eb
@@ -36,7 +36,7 @@ export function findById(id: number) {
 						"GroupMatchMap.winnerGroupId",
 					])
 					.where("GroupMatchMap.matchId", "=", id)
-					.orderBy("GroupMatchMap.index", "asc")
+					.orderBy("GroupMatchMap.index", "asc"),
 			).as("mapList"),
 		])
 		.where("GroupMatch.id", "=", id)
@@ -88,8 +88,8 @@ export async function findGroupById({
 				eb.or([
 					eb("GroupMatch.alphaGroupId", "=", eb.ref("Group.id")),
 					eb("GroupMatch.bravoGroupId", "=", eb.ref("Group.id")),
-				])
-			)
+				]),
+			),
 		)
 		.select(({ eb }) => [
 			"Group.id",
@@ -101,14 +101,14 @@ export async function findGroupById({
 					.leftJoin(
 						"UserSubmittedImage",
 						"AllTeam.avatarImgId",
-						"UserSubmittedImage.id"
+						"UserSubmittedImage.id",
 					)
 					.select([
 						"AllTeam.name",
 						"AllTeam.customUrl",
 						"UserSubmittedImage.url as avatarUrl",
 					])
-					.where("AllTeam.id", "=", eb.ref("Group.teamId"))
+					.where("AllTeam.id", "=", eb.ref("Group.teamId")),
 			).as("team"),
 			jsonArrayFrom(
 				eb
@@ -137,12 +137,12 @@ export async function findGroupById({
 									"PrivateUserNote.updatedAt",
 								])
 								.where("authorId", "=", loggedInUserId ?? -1)
-								.where("targetId", "=", arrayEb.ref("User.id"))
+								.where("targetId", "=", arrayEb.ref("User.id")),
 						).as("privateNote"),
 						userChatNameColor,
 					])
 					.where("GroupMember.groupId", "=", groupId)
-					.orderBy("GroupMember.userId", "asc")
+					.orderBy("GroupMember.userId", "asc"),
 			).as("members"),
 		])
 		.where("Group.id", "=", groupId)
@@ -173,7 +173,7 @@ export function groupMembersNoScreenSettings(groups: GroupForMatch[]) {
 		.where(
 			"User.id",
 			"in",
-			groups.flatMap((group) => group.members.map((member) => member.id))
+			groups.flatMap((group) => group.members.map((member) => member.id)),
 		)
 		.execute();
 }

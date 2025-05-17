@@ -32,17 +32,17 @@ const abilityNameToType = (val: string) =>
 export const headMainSlotAbility = z
 	.string()
 	.refine((val) =>
-		["STACKABLE", "HEAD_MAIN_ONLY"].includes(abilityNameToType(val) as any)
+		["STACKABLE", "HEAD_MAIN_ONLY"].includes(abilityNameToType(val) as any),
 	);
 export const clothesMainSlotAbility = z
 	.string()
 	.refine((val) =>
-		["STACKABLE", "CLOTHES_MAIN_ONLY"].includes(abilityNameToType(val) as any)
+		["STACKABLE", "CLOTHES_MAIN_ONLY"].includes(abilityNameToType(val) as any),
 	);
 export const shoesMainSlotAbility = z
 	.string()
 	.refine((val) =>
-		["STACKABLE", "SHOES_MAIN_ONLY"].includes(abilityNameToType(val) as any)
+		["STACKABLE", "SHOES_MAIN_ONLY"].includes(abilityNameToType(val) as any),
 	);
 export const stackableAbility = z
 	.string()
@@ -97,7 +97,7 @@ assertType<z.infer<typeof ability>, Unpacked<typeof abilitiesShort>>();
 
 export const weaponSplId = z.preprocess(
 	actualNumber,
-	numericEnum(mainWeaponIds)
+	numericEnum(mainWeaponIds),
 );
 
 export const qWeapon = z.object({
@@ -149,7 +149,7 @@ export const safeStringSchema = ({ min, max }: { min?: number; max: number }) =>
 			.max(max)
 			.refine((text) => !hasZalgo(text), {
 				message: "Includes not allowed characters.",
-			})
+			}),
 	);
 
 /** Nullable string that has the given length (max and optionally min). Prevents z͎͗ͣḁ̵̑l̉̃ͦg̐̓̒o͓̔ͥ text as well as filters out characters that have no width. */
@@ -175,8 +175,8 @@ export const safeNullableStringSchema = ({
 				},
 				{
 					message: "Includes not allowed characters.",
-				}
-			)
+				},
+			),
 	);
 
 /**
@@ -320,7 +320,7 @@ export function deduplicate(value: unknown) {
 
 // https://github.com/colinhacks/zod/issues/1118#issuecomment-1235065111
 export function numericEnum<TValues extends readonly number[]>(
-	values: TValues
+	values: TValues,
 ) {
 	return z.number().superRefine((val, ctx) => {
 		if (!values.includes(val)) {
@@ -345,7 +345,7 @@ export const customCssVarObject = z.preprocess(
 	falsyToNull,
 	z.string().nullable().refine(validSerializedCustomCssVarObject, {
 		message: "Invalid custom CSS var object",
-	})
+	}),
 );
 
 function validSerializedCustomCssVarObject(value: unknown) {

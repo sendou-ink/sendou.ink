@@ -17,9 +17,9 @@ import { MapIcon } from "~/components/icons/Map";
 import { MicrophoneFilledIcon } from "~/components/icons/MicrophoneFilled";
 import { PuzzleIcon } from "~/components/icons/Puzzle";
 import { SpeakerFilledIcon } from "~/components/icons/SpeakerFilled";
-import { TrashIcon } from "~/components/icons/Trash";
 import { StarIcon } from "~/components/icons/Star";
 import { StarFilledIcon } from "~/components/icons/StarFilled";
+import { TrashIcon } from "~/components/icons/Trash";
 import { UsersIcon } from "~/components/icons/Users";
 import type { Preference, Tables, UserMapModePreferences } from "~/db/tables";
 import {

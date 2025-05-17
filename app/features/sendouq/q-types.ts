@@ -1,4 +1,4 @@
-import type { ParsedMemento, Tables, QWeaponPool } from "~/db/tables";
+import type { ParsedMemento, QWeaponPool, Tables } from "~/db/tables";
 import type { ModeShort } from "~/modules/in-game-lists";
 import type { TieredSkill } from "../mmr/tiered.server";
 import type { GroupForMatch } from "../sendouq-match/QMatchRepository.server";
