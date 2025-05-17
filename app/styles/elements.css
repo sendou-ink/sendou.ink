@@ -137,7 +137,8 @@
 }
 
 .react-aria-Switch {
-	display: flex;
+	display: grid;
+	grid-template-columns: auto 1fr;
 	align-items: center;
 	gap: 0.571rem;
 	color: var(--text-color);
