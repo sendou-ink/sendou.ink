@@ -385,7 +385,7 @@ function WeaponPool() {
 	const [weapons, setWeapons] = React.useState(data.settings.qWeaponPool ?? []);
 	const fetcher = useFetcher();
 
-	const latestWeapon = weapons[weapons.length - 1].weaponSplId;
+	const latestWeapon = weapons[weapons.length - 1]?.weaponSplId ?? null;
 
 	return (
 		<details>
