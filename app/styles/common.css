@@ -525,9 +525,7 @@ abbr[title] {
 
 .tab__buttons-container__sticky {
 	position: sticky;
-	/* TODO: uncomment when top nav is sticky again */
-	/* top: 47px; */
-	top: 0;
+	top: 47px;
 	z-index: 1;
 	background-color: var(--bg);
 }

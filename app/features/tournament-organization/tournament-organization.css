@@ -106,9 +106,7 @@
 
 	.org__calendar__container {
 		position: sticky;
-		/* TODO: uncomment when top nav is sticky again */
-		/* top: 47px; */
-		top: 0;
+		top: 47px;
 	}
 }
 
