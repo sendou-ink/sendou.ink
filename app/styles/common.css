@@ -1445,13 +1445,29 @@ html[dir="rtl"] .fix-rtl {
 	transform: rotate(180deg);
 }
 
+.pagination__container {
+	display: grid;
+	grid-template-columns: auto auto auto;
+	gap: var(--s-2);
+	align-items: center;
+	justify-items: center;
+	justify-content: center;
+}
+
+.pagination__dots {
+	display: none;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-1);
+	flex-wrap: wrap;
+}
+
 .pagination__dot {
 	width: 0.6rem;
 	height: 0.6rem;
 	border-radius: 50%;
 	background-color: var(--theme-transparent);
 	transition: all 0.2s ease;
-	display: none;
 }
 
 .pagination__dot__active {
@@ -1465,8 +1481,12 @@ html[dir="rtl"] .fix-rtl {
 }
 
 @media screen and (min-width: 640px) {
-	.pagination__dot {
-		display: initial;
+	.pagination__container {
+		grid-template-columns: auto 1fr auto;
+	}
+
+	.pagination__dots {
+		display: flex;
 	}
 
 	.pagination__page-count {

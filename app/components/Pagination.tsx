@@ -18,7 +18,7 @@ export function Pagination({
 	setPage: (page: number) => void;
 }) {
 	return (
-		<div className="stack sm horizontal items-center justify-center flex-wrap">
+		<div className="pagination__container">
 			<Button
 				icon={<ArrowLeftIcon />}
 				variant="outlined"
@@ -27,15 +27,17 @@ export function Pagination({
 				onClick={previousPage}
 				aria-label="Previous page"
 			/>
-			{nullFilledArray(pagesCount).map((_, i) => (
-				<div
-					key={i}
-					className={clsx("pagination__dot", {
-						pagination__dot__active: i === currentPage - 1,
-					})}
-					onClick={() => setPage(i + 1)}
-				/>
-			))}
+			<div className="pagination__dots">
+				{nullFilledArray(pagesCount).map((_, i) => (
+					<div
+						key={i}
+						className={clsx("pagination__dot", {
+							pagination__dot__active: i === currentPage - 1,
+						})}
+						onClick={() => setPage(i + 1)}
+					/>
+				))}
+			</div>
 			<div className="pagination__page-count">
 				{currentPage}/{pagesCount}
 			</div>
