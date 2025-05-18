@@ -2759,6 +2759,7 @@ export const weaponParams = {
 					Mid: 2.3,
 				},
 			},
+			TickDamage: 75,
 		},
 		"15": {
 			overwrites: {
@@ -2846,6 +2847,7 @@ export const weaponParams = {
 					Mid: 0.053,
 				},
 			},
+			DirectDamage: 400,
 		},
 	},
 };
