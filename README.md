@@ -54,6 +54,13 @@ There is a sequence of commands you need to run:
 5. `npm run dev` to run the project in development mode.
 6. Navigate to `http://localhost:5800/admin`. There press the seed button to fill the DB with test data. You can also impersonate any user (Sendou#0043 = admin).
 
+### Using the dev container
+
+If you use VS Code you can skip the manual setup by opening the repository in a
+Dev Container (requires the Dev Containers extension). The container already has
+Node 18, SQLite tools and Playwright browsers installed. After the container has
+started run `npm run dev` inside the terminal.
+
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for more information.
