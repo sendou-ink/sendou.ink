@@ -906,5 +906,9 @@
 	"zekkocup": {
 		"displayName": "Zekko Cup",
 		"authorDiscordId": "1320944066002681876"
+	},
+	"glooga": {
+		"displayName": "Glooga Cult Glooga Day Gimmick Tourney",
+		"authorDiscordId": "528851510222782474"
 	}
 }
