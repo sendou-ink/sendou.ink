@@ -44,8 +44,29 @@ Competitive Splatoon Hub with over 20k registered users.
 ### sendou.ink
 
 Prerequisites: [nvm](https://github.com/nvm-sh/nvm)
+If you don't have it installed run:
 
-There is a sequence of commands you need to run:
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+```
+
+You can spin up the project quickly with the `Makefile`:
+
+```bash
+make setup
+make dev
+```
+
+`make setup` will install Node.js 18 with nvm if needed.
+
+Other helpful targets include:
+
+```bash
+make test   # run unit and e2e tests
+make lint   # run TypeScript and CSS linters
+```
+
+If you prefer to run the steps manually:
 
 1. `nvm use` to switch to the correct Node version. If you don't have the correct Node.js version yet it will prompt you to install it via the `nvm install` command. If you have problems with nvm you can also install the latest LTS version of Node.js from [their website](https://nodejs.org/en/).
 2. `npm i` to install the dependencies.
