@@ -499,7 +499,7 @@ function parametersToSpecialWeaponResult(params: any) {
 	const isInkjet = () => !!params.JetParam;
 	const isScreen = () => !!params.WallParam;
 	const isInkStorm = () => !!params.CloudParam;
-	const isTripleInkstrike = () => !!params.MotherParam;
+	const isInkstrike = () => !!params.MotherParam;
 	const isBooyahBomb = () =>
 		params.BlastParam?.$type === "spl__BulletSpNiceBallBlastParam";
 
@@ -565,8 +565,8 @@ function parametersToSpecialWeaponResult(params: any) {
 		return 4;
 	};
 
-	const TripleInkstrikeDamage = () => {
-		if (!isTripleInkstrike()) return;
+	const InkstrikeTickDamage = () => {
+		if (!isInkstrike()) return;
 
 		return 75;
 	};
@@ -603,7 +603,7 @@ function parametersToSpecialWeaponResult(params: any) {
 		TickDamage:
 			BooyahBombTickDamage() ??
 			InkStormTickDamage() ??
-			TripleInkstrikeDamage() ??
+			InkstrikeTickDamage() ??
 			params.spl__BulletSpMicroLaserBitParam?.LaserParam?.LaserDamage,
 	};
 }
