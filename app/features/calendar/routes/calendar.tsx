@@ -62,7 +62,7 @@ export default function CalendarPage() {
 					</NavigateButton>
 					{/* <MajorTournamentLink /> */}
 				</div>
-				<FiltersDialog />
+				<FiltersDialog filters={data.filters} />
 			</div>
 			<div
 				className={styles.columnsContainer}

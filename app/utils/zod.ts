@@ -294,6 +294,14 @@ export function checkboxValueToDbBoolean(value: unknown) {
 	return 0;
 }
 
+export function stringifiedBoolean(value: unknown) {
+	if (typeof value !== "string") {
+		return value;
+	}
+
+	return value === "true";
+}
+
 export const _action = <T extends z.Primitive>(value: T) =>
 	z.preprocess(deduplicate, z.literal(value));
 

@@ -1,11 +1,17 @@
-import type { CalendarEvent, GroupedCalendarEvents } from "../calendar-types";
+import type {
+	CalendarEvent,
+	CalendarFilters,
+	GroupedCalendarEvents,
+} from "../calendar-types";
+
+// xxx: add jsdocs to these
 
 export function applyFilters(
 	events: {
 		at: number;
 		events: Array<CalendarEvent>;
 	}[],
-	_filters: unknown,
+	_filters: CalendarFilters,
 ): Array<GroupedCalendarEvents> {
 	return events.map((event) => {
 		const shown: CalendarEvent[] = [];
@@ -27,4 +33,12 @@ export function applyFilters(
 			},
 		};
 	});
+}
+
+export function defaultFilters(): CalendarFilters {
+	return {
+		tagsIncluded: null,
+		tagsExcluded: null,
+		onlySendouHosted: null,
+	};
 }

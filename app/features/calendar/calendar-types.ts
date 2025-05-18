@@ -1,4 +1,6 @@
+import type { z } from "zod";
 import type { CalendarEventTag, Tables } from "~/db/tables";
+import type { calendarFiltersSchema } from "~/features/calendar/calendar-schemas";
 import type { ModeShortWithSpecial } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 
@@ -44,3 +46,5 @@ export interface GroupedCalendarEvents {
 		hidden: CalendarEvent[];
 	};
 }
+
+export type CalendarFilters = z.infer<typeof calendarFiltersSchema>;

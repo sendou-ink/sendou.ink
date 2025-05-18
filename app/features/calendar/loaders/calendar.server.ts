@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
+import { calendarFiltersSchema } from "~/features/calendar/calendar-schemas";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseSafeSearchParams } from "~/utils/remix.server";
 import { dayMonthYear } from "~/utils/zod";
@@ -28,10 +29,25 @@ export const loader = async (args: LoaderFunctionArgs) => {
 		endTime: new Date(fiveDaysFromNow),
 	});
 
-	const filtered = CalendarEvent.applyFilters(events, null);
+	const filters = resolveFilters(args.request);
+	const filtered = CalendarEvent.applyFilters(events, filters);
 
 	return {
 		eventTimes: filtered,
 		dateViewed: parsed.success ? parsed.data : undefined,
+		filters,
 	};
 };
+
+function resolveFilters(request: Request) {
+	const parsed = parseSafeSearchParams({
+		request,
+		schema: calendarFiltersSchema,
+	});
+
+	if (parsed.success) {
+		return parsed.data;
+	}
+
+	return CalendarEvent.defaultFilters();
+}

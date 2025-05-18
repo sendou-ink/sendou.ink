@@ -3,7 +3,7 @@ import { redirect } from "@remix-run/node";
 import type { CalendarEventTag } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
-import { newCalendarEventActionSchema } from "~/features/calendar/calendar-schemas";
+import { newCalendarEventActionSchema } from "~/features/calendar/calendar-schemas.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
