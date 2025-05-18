@@ -1,7 +1,11 @@
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type { ParsedMemento, Tables, UserSkillDifference } from "~/db/tables";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type {
+	ParsedMemento,
+	QWeaponPool,
+	Tables,
+	UserSkillDifference,
+} from "~/db/tables";
 import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
 
 export function findById(id: number) {
@@ -57,7 +61,7 @@ export interface GroupForMatch {
 		role: Tables["GroupMember"]["role"];
 		customUrl: Tables["User"]["customUrl"];
 		inGameName: Tables["User"]["inGameName"];
-		weapons: Array<MainWeaponId>;
+		weapons: Array<QWeaponPool>;
 		chatNameColor: string | null;
 		vc: Tables["User"]["vc"];
 		languages: string[];
