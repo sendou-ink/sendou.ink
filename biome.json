@@ -42,6 +42,9 @@
 			}
 		}
 	},
+	"formatter": {
+		"useEditorconfig": true
+	},
 	"css": {
 		"formatter": {
 			"enabled": true
