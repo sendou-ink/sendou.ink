@@ -1,8 +1,8 @@
-import { sql } from "~/db/sql";
-import type { TournamentSummary } from "../core/summarizer.server";
 import { ordinal } from "openskill";
-import type { Skill } from "~/db/types";
+import { sql } from "~/db/sql";
+import type { Tables } from "~/db/tables";
 import { identifierToUserIds } from "~/features/mmr/mmr-utils";
+import type { TournamentSummary } from "../core/summarizer.server";
 
 const addSkillStm = sql.prepare(/* sql */ `
   insert into "Skill" (
@@ -25,6 +25,23 @@ const addSkillStm = sql.prepare(/* sql */ `
     @matchesCount + coalesce((select max("matchesCount") from "Skill" where "userId" = @userId or "identifier" = @identifier group by "userId", "identifier"), 0),
     @season
   ) returning *
+`);
+
+// on conflict it replaces (set in migration)
+const addSeedingSkillStm = sql.prepare(/* sql */ `
+  insert into "SeedingSkill" (
+    "type",
+    "mu",
+    "sigma",
+    "ordinal",
+    "userId"
+  ) values (
+    @type,
+    @mu,
+    @sigma,
+    @ordinal,
+    @userId
+  )
 `);
 
 const addSkillTeamUserStm = sql.prepare(/* sql */ `
@@ -104,69 +121,79 @@ const addTournamentResultStm = sql.prepare(/* sql */ `
 `);
 
 export const addSummary = sql.transaction(
-  ({
-    tournamentId,
-    summary,
-    season,
-  }: {
-    tournamentId: number;
-    summary: TournamentSummary;
-    season: number;
-  }) => {
-    for (const skill of summary.skills) {
-      const insertedSkill = addSkillStm.get({
-        tournamentId,
-        mu: skill.mu,
-        sigma: skill.sigma,
-        ordinal: ordinal(skill),
-        userId: skill.userId,
-        identifier: skill.identifier,
-        matchesCount: skill.matchesCount,
-        season,
-      }) as Skill;
+	({
+		tournamentId,
+		summary,
+		season,
+	}: {
+		tournamentId: number;
+		summary: TournamentSummary;
+		season?: number;
+	}) => {
+		for (const skill of summary.skills) {
+			const insertedSkill = addSkillStm.get({
+				tournamentId,
+				mu: skill.mu,
+				sigma: skill.sigma,
+				ordinal: ordinal(skill),
+				userId: skill.userId ?? null,
+				identifier: skill.identifier ?? null,
+				matchesCount: skill.matchesCount,
+				season: season ?? null,
+			}) as Tables["Skill"];
 
-      if (insertedSkill.identifier) {
-        for (const userId of identifierToUserIds(insertedSkill.identifier)) {
-          addSkillTeamUserStm.run({
-            skillId: insertedSkill.id,
-            userId,
-          });
-        }
-      }
-    }
+			if (insertedSkill.identifier) {
+				for (const userId of identifierToUserIds(insertedSkill.identifier)) {
+					addSkillTeamUserStm.run({
+						skillId: insertedSkill.id,
+						userId,
+					});
+				}
+			}
+		}
 
-    for (const mapResultDelta of summary.mapResultDeltas) {
-      addMapResultDeltaStm.run({
-        mode: mapResultDelta.mode,
-        stageId: mapResultDelta.stageId,
-        userId: mapResultDelta.userId,
-        wins: mapResultDelta.wins,
-        losses: mapResultDelta.losses,
-        season,
-      });
-    }
+		for (const seedingSkill of summary.seedingSkills) {
+			addSeedingSkillStm.run({
+				type: seedingSkill.type,
+				mu: seedingSkill.mu,
+				sigma: seedingSkill.sigma,
+				ordinal: seedingSkill.ordinal,
+				userId: seedingSkill.userId,
+			});
+		}
 
-    for (const playerResultDelta of summary.playerResultDeltas) {
-      addPlayerResultDeltaStm.run({
-        ownerUserId: playerResultDelta.ownerUserId,
-        otherUserId: playerResultDelta.otherUserId,
-        mapWins: playerResultDelta.mapWins,
-        mapLosses: playerResultDelta.mapLosses,
-        setWins: playerResultDelta.setWins,
-        setLosses: playerResultDelta.setLosses,
-        type: playerResultDelta.type,
-        season,
-      });
-    }
+		for (const mapResultDelta of summary.mapResultDeltas) {
+			addMapResultDeltaStm.run({
+				mode: mapResultDelta.mode,
+				stageId: mapResultDelta.stageId,
+				userId: mapResultDelta.userId,
+				wins: mapResultDelta.wins,
+				losses: mapResultDelta.losses,
+				season: season ?? null,
+			});
+		}
 
-    for (const tournamentResult of summary.tournamentResults) {
-      addTournamentResultStm.run({
-        tournamentId,
-        userId: tournamentResult.userId,
-        placement: tournamentResult.placement,
-        participantCount: tournamentResult.participantCount,
-        tournamentTeamId: tournamentResult.tournamentTeamId,
-      });
-    }
-  },
+		for (const playerResultDelta of summary.playerResultDeltas) {
+			addPlayerResultDeltaStm.run({
+				ownerUserId: playerResultDelta.ownerUserId,
+				otherUserId: playerResultDelta.otherUserId,
+				mapWins: playerResultDelta.mapWins,
+				mapLosses: playerResultDelta.mapLosses,
+				setWins: playerResultDelta.setWins,
+				setLosses: playerResultDelta.setLosses,
+				type: playerResultDelta.type,
+				season: season ?? null,
+			});
+		}
+
+		for (const tournamentResult of summary.tournamentResults) {
+			addTournamentResultStm.run({
+				tournamentId,
+				userId: tournamentResult.userId,
+				placement: tournamentResult.placement,
+				participantCount: tournamentResult.participantCount,
+				tournamentTeamId: tournamentResult.tournamentTeamId,
+			});
+		}
+	},
 );

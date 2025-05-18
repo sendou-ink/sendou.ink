@@ -9,8 +9,8 @@ const stm = sql.prepare(/*sql */ `
 `);
 
 export function findByInviteCode(inviteCode: string) {
-  return stm.get({ inviteCode }) as {
-    id: number;
-    tournamentId: number;
-  } | null;
+	return stm.get({ inviteCode }) as {
+		id: number;
+		tournamentId: number;
+	} | null;
 }

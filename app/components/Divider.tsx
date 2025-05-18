@@ -1,11 +1,17 @@
 import clsx from "clsx";
 
 export function Divider({
-  children,
-  className,
+	children,
+	className,
+	smallText,
 }: {
-  children?: React.ReactNode;
-  className?: string;
+	children?: React.ReactNode;
+	className?: string;
+	smallText?: boolean;
 }) {
-  return <div className={clsx("divider", className)}>{children}</div>;
+	return (
+		<div className={clsx("divider", className, { "text-sm": smallText })}>
+			{children}
+		</div>
+	);
 }

@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { XRankPlacement, User } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const query = (byPlayer?: boolean) => /* sql */ `
   select
@@ -24,8 +24,8 @@ const query = (byPlayer?: boolean) => /* sql */ `
   left join "User" on
     "User"."id" = "SplatoonPlayer"."userId"
   ${
-    byPlayer
-      ? /* sql */ `
+		byPlayer
+			? /* sql */ `
   where
     "XRankPlacement"."playerId" = @playerId
   order by
@@ -33,7 +33,7 @@ const query = (byPlayer?: boolean) => /* sql */ `
     "XRankPlacement"."month" desc,
     "XRankPlacement"."rank" asc
         `
-      : /* sql */ `
+			: /* sql */ `
   where
     "XRankPlacement"."mode" = @mode and
     "XRankPlacement"."region" = @region and
@@ -41,36 +41,38 @@ const query = (byPlayer?: boolean) => /* sql */ `
     "XRankPlacement"."year" = @year
   order by
     "XRankPlacement"."rank" asc`
-  }
+	}
 `;
 
 const ofMonthStm = sql.prepare(query());
 const byPlayerStm = sql.prepare(query(true));
 
 export type FindPlacement = Pick<
-  XRankPlacement,
-  | "id"
-  | "weaponSplId"
-  | "name"
-  | "power"
-  | "rank"
-  | "month"
-  | "year"
-  | "region"
-  | "playerId"
-  | "mode"
+	Tables["XRankPlacement"],
+	| "id"
+	| "weaponSplId"
+	| "name"
+	| "power"
+	| "rank"
+	| "month"
+	| "year"
+	| "region"
+	| "playerId"
+	| "mode"
 > &
-  Pick<User, "customUrl" | "discordId">;
+	Pick<Tables["User"], "customUrl" | "discordId">;
 
 export function findPlacementsOfMonth(
-  args: Pick<XRankPlacement, "mode" | "region" | "month" | "year">,
+	args: Pick<Tables["XRankPlacement"], "mode" | "region" | "month" | "year">,
 ) {
-  return ofMonthStm.all(args) as Array<FindPlacement>;
+	return ofMonthStm.all(args) as Array<FindPlacement>;
 }
 
-export function findPlacementsByPlayerId(playerId: XRankPlacement["playerId"]) {
-  const results = byPlayerStm.all({ playerId }) as Array<FindPlacement>;
-  if (!results) return null;
+export function findPlacementsByPlayerId(
+	playerId: Tables["XRankPlacement"]["playerId"],
+) {
+	const results = byPlayerStm.all({ playerId }) as Array<FindPlacement>;
+	if (results.length === 0) return null;
 
-  return results;
+	return results;
 }

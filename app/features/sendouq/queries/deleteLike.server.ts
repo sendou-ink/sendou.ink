@@ -7,11 +7,11 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export function deleteLike({
-  likerGroupId,
-  targetGroupId,
+	likerGroupId,
+	targetGroupId,
 }: {
-  likerGroupId: number;
-  targetGroupId: number;
+	likerGroupId: number;
+	targetGroupId: number;
 }) {
-  stm.run({ likerGroupId, targetGroupId });
+	stm.run({ likerGroupId, targetGroupId });
 }

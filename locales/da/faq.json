@@ -1,0 +1,25 @@
+{
+	"q1": "Hvad er Plus Serveren?",
+	"a1": "Plus-serveren er en Discord server for spillere på højt niveau, der søger efter andre spillere at spille med og mod. Serveren blev grundlagt i september 2017. Serveren er delt op i 3 niveauer, hvor +1 er den højeste. Du kan få adgang til serveren ved at et servermedlem anbefaler dig og du kommer igennem den månedlige afstemnin. Alternativt kan du få adgang ved at få en høj nok placering på SendoyQ pointtavlen\n\n Afstemningen er en procentdel af hvor mange der stemte ja til at du kan få adgang til serveren. Du skal have mindst 60% ja stemmer for at blive medlem af serveren. Hvis du får en mindre en 60% ved afstemningen, bliver du derangeret til et niveau lavere (hvis din rang var +3 bliver du smidt ud af serveren).\n\n Se pointtavle-siden for at få en indikation på, hvem der er ved at få adgang til serveren ved hjælp af pointtavle-metoden. For hver sæson for 60 spillere adgang. 10 til +1, 20 til +2 og 30 til 03.",
+
+	"q2": "Hvordan får jeg et præmiemærke til min begivenhed?",
+
+	"q3": "Hvordan opdaterer jeg min avatar eller brugernavn?",
+	"a3": "Når du opdaterer dit profilbillede eller brugernavn på Discord, så synkroniseres ændringerne ikke med det samme på sendou.ink. For at få ændringerne til at træde i kraft, har du 2 valgmuligheder:\n\n1) Hvis du er medlem af er hjemmesidens Discord-server eller Plus-serveren, så kan du blot vente. Der er en rutine, der køre en gang om dagen, der opdaterer ændringerne. \n\n2) For at få ændringerne opdateret med det samme, så brug kommandoen /update-profile fra Lohi Discord-botten.",
+
+	"q4": "Jeg tegnede et abonnement til sendou.ink via Patreon, men jeg kan ikke se nogle forandringer på hjemmesiden. ",
+	"a4": "Sørg for at forbinde din Discord-bruger til Patreaon.com. Derefter vil der gå op til 2 timer, før sendou.ink registrerer det og opdaterer hjemmesiden. Hvis du oplever nogle problemer. Send en direkte besked til Sendou for at få hjælp. (Korrespondancen skal foregå på engelsk) ",
+
+	"q5": "Findes der en sendou.ink app?",
+	"a5": "Nej, men man kan installere Sendou ink som en ”Progressive Web App”, som fungerer som en traditionel app. Hvor man understøttelse af fuld skærm, skrivebordsikon og kører som en proces separat fra en webbrowser. Google ”How to install pwa on *din browser’ for at sfinde en vejledning til at gøre dette.",
+
+	"q6": "Hvordan tilføjer man en Twitch/Bluesky/YouTube-profil til min sendou.ink-profil?",
+	"a6": "Vi bruger Discord til dette formål. Tilknyt profilerne til Discord og verificér dem. Log derefter af og på sendou.ink for at få tilknyttet dine profiler på sendou.ink. ",
+
+	"q7": "Hvordan kan jeg uploade videoer?",
+
+	"q8": "Hvordan kan jeg finde mine X-kampresultater på min profil?",
+
+	"q9": "Hvordan kan jeg uploade kunst, som jeg har bestilt",
+	"a9": "Du kan kun uploade kunst, som du selv har lavet. Det skal også være Splatoon-relateret. For bestilte kunstværker, så henvend dig til kunstneren, så De kan uploade det til hjemmesiden. De kan også knytte kunstværket til din profil, så det bliver vist på din profil"
+}

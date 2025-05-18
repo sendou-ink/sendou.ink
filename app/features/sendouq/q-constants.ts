@@ -1,27 +1,16 @@
-import type { Group } from "~/db/types";
-import { assertType } from "~/utils/types";
-
-export const MAP_LIST_PREFERENCE_OPTIONS = [
-  "NO_PREFERENCE",
-  "PREFER_ALL_MODES",
-  "PREFER_SZ",
-  "ALL_MODES_ONLY",
-  "SZ_ONLY",
-] as const;
-assertType<
-  Group["mapListPreference"],
-  (typeof MAP_LIST_PREFERENCE_OPTIONS)[number]
->();
-assertType<
-  (typeof MAP_LIST_PREFERENCE_OPTIONS)[number],
-  Group["mapListPreference"]
->();
+import { TWEET_LENGTH_MAX_LENGTH } from "~/constants";
 
 export const SENDOUQ = {
-  SZ_MAP_COUNT: 6,
-  OTHER_MODE_MAP_COUNT: 3,
-  MAX_STAGE_REPEAT_COUNT: 2,
+	SZ_MAP_COUNT: 6,
+	OTHER_MODE_MAP_COUNT: 3,
+	MAX_STAGE_REPEAT_COUNT: 2,
+	OWN_PUBLIC_NOTE_MAX_LENGTH: TWEET_LENGTH_MAX_LENGTH / 2,
+	PRIVATE_USER_NOTE_MAX_LENGTH: TWEET_LENGTH_MAX_LENGTH,
 } as const;
+
+export const FRIEND_CODE_REGEXP_PATTERN =
+	"^(SW-)?[0-9]{4}-?[0-9]{4}-?[0-9]{4}$";
+export const FRIEND_CODE_REGEXP = new RegExp(FRIEND_CODE_REGEXP_PATTERN);
 
 export const FULL_GROUP_SIZE = 4;
 

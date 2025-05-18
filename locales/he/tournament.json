@@ -1,0 +1,129 @@
+{
+	"tabs.info": "מידע",
+	"tabs.teams": "צוותים ({{count}})",
+	"tabs.admin": "מנהל",
+	"tabs.register": "הרשמה",
+	"tabs.brackets": "מערכים",
+	"tabs.seeds": "דירוג",
+	"tabs.streams": "שידורים חיים ({{count}})",
+	"tabs.subs": "מחליפים ({{count}})",
+
+	"pre.steps.header": "השלימו את השלבים הבאים כדי לשחק",
+	"pre.steps.name": "שם קבוצה",
+	"pre.steps.roster": "צוות מלא",
+	"pre.steps.pool": "מאגר מפות",
+	"pre.steps.check-in": "צ'ק-אין",
+	"pre.footer": "הרשמה ניתנת לשינוי עד שהטורניר מתחיל",
+	"pre.logIn": "התחבר כדי להירשם",
+	"pre.inATeam": "הנך בצוות לאירוע",
+
+	"pre.checkIn.range": "צ'ק-אין פתוח בין {{start}} ל-{{finish}}",
+	"pre.checkIn.over": "צ'ק-אין נגמר",
+	"pre.checkIn.cant": "השלימו את השלבים הקודמים לפני צ'ק-אין",
+	"pre.checkIn.button": "צ'ק-אין",
+	"pre.checkIn.checkedIn": "הקבוצה שלך עשתה צ'ק-אין",
+
+	"pre.info.header": "מידע על הצוות",
+	"pre.info.unregister": "ביטול הרשמה",
+	"pre.info.unregister.confirm": "לבטל את הרישום לטורניר ולמחוק את פרטי הצוות?",
+	"pre.info.noHost": "הצוות שלי מעדיף לא לארח חדרים",
+
+	"pre.roster.header": "מלא צוות",
+	"pre.roster.footer": "לפחות {{atLeastCount}} חברי צוות נדרשים כדי להשתתף. גודל הצוות המרבי הוא {{maxCount}}",
+	"pre.roster.addTrusted.header": "הוסיפו אנשים ששיחקתם איתם",
+	"pre.roster.delete.button": "מחקו חבר צוות",
+	"pre.roster.delete.header": "חבר צוות למחיקה",
+
+	"pre.pool.header": "בחרו מאגר מפות",
+
+	"pre.sub.prompt": "אין לכם קבוצה מראש לאירוע? אתם יכולים להצטרף לרשימת הממלאי מקום.",
+
+	"bracket.type.DE_WINNERS": "סיבוב מנצחים",
+	"bracket.type.DE_LOSERS": "סיבוב מפסידים",
+	"bracket.type.SE": "סיבוב",
+	"bracket.type.SWISS": "סיבוב לפי השיטה השוויצרית",
+	"bracket.type.GROUPS": "סיבוב קבוצות",
+
+	"round.label": "סיבוב",
+
+	"team.label": "צוות",
+	"team.unlisted": "צוות לא רשום",
+
+	"bestOf.label.short": "הטוב מ-",
+
+	"pickInfo.team": "צוות {{number}} בחרו",
+	"pickInfo.team.specific": "{{team}} נבחר",
+	"pickInfo.tiebreaker": "שובר שיוויון",
+	"pickInfo.both": "שניהם בחרו",
+	"pickInfo.default": "מפת ברירת מחדל",
+
+	"generator.error": "שינויים שביצעת לא נשמרו מאז תחילת הטורניר",
+
+	"teams.mapsPickedStatus": "סטטוס בחירת המפות",
+
+	"admin.download": "הורדת משתתפים",
+	"admin.actions.CHANGE_TEAM_OWNER": "שינוי קפטן",
+	"admin.actions.CHECK_IN": "קבלה",
+	"admin.actions.CHECK_OUT": "יציאה",
+	"admin.actions.ADD_MEMBER": "הוספת חבר צוות",
+	"admin.actions.REMOVE_MEMBER": "הורדת חבר צוות",
+	"admin.actions.DELETE_TEAM": "מחיקת צוות",
+
+	"actions.addSub": "הוסיפו ממלא מקום",
+	"actions.shareLink": "שתפו קישור הזמנה להוספת חברי צוות: {{inviteLink}}",
+	"actions.sub.prompt_other": "אתם עדיין יכולים להוסיף {{count}} ממלאי מקום לצוות שלכם",
+	"actions.sub.prompt_one": "אתם עדיין יכולים להוסיף {{count}} ממלא מקום לצוות שלכם",
+	"actions.sub.prompt_zero": "הצוות שלכם מלא ולא ניתן להוסיף עוד ממלאי מקום",
+	"actions.finalize.question": "לאחר שבדקתם שהתוצאות נכונות, לחצו כאן כדי לסיים את הטורניר ולנתח את התוצאות",
+	"actions.finalize.action": "סיימו",
+	"actions.finalize.confirm": "האם אתם בטוחים שאתם רוצים לסיים את הטורניר? (לא ניתן לביטול)?",
+
+	"streams.none": "אין שידורים חיים לטורניר זה כרגע",
+
+	"team.setWins": "נצחונות סטים",
+	"team.mapWins": "נצחונות במפות",
+	"team.seed": "דירוג",
+	"team.seed.footer": "מתוך {{count}}",
+	"team.placement": "מיקום",
+
+	"bracket.waiting": "מערכים יופיעו כאן כאשר לפחות {{count}} צוותים נרשמו",
+	"bracket.wip": "מערך זה הוא תצוגה מקדימה ונתון לשינויים",
+
+	"bracket.progress.thanksForPlaying": "תודה ששיחקתם ב-{{eventName}}!",
+	"bracket.progress.match": "יריב נוכחי: {{opponent}}",
+	"bracket.progress.match.action": "צפה",
+	"bracket.progress.waiting": "ממתין לקרב",
+
+	"bracket.standings.showLess": "הראו פחות",
+	"bracket.standings.showMore": "הראו יותר",
+
+	"match.hosts": "{{teamName}} מארחים",
+	"match.pass": "סיסמה",
+	"match.pool": "פול",
+	"match.score": "{{scoreOne}}-{{scoreTwo}} (הטוב מ-{{bestOf}})",
+	"match.action.undoLastScore": "בטלו את התוצאה האחרונה",
+	"match.action.reopenMatch": "פתיחה מחדש של הקרב",
+
+	"join.error.MISSING_CODE": "חסר קוד הזמנה. האם כתובת האתר המלאה הועתקה?",
+	"join.error.SHORT_CODE": "קוד ההזמנה אינו באורך המתאים. האם כתובת האתר המלאה הועתקה?",
+	"join.error.NO_TEAM_MATCHING_CODE": "אין צוות שתואם את קוד ההזמנה.",
+	"join.error.TEAM_FULL": "הצוות שאליו אתם מנסים להצטרף מלא.",
+	"join.error.ALREADY_JOINED": "אתם כבר חברי קבוצה בצוות זה.",
+	"join.error.NOT_LOGGED_IN": "עליכם להיות מחוברים כדי להצטרף לצוות.",
+	"join.VALID": "להצטרף {{teamName}} עבור {{eventName}}?",
+	"join.giveTrust": "בטחו ב-{{name}} להוסיף אותכם בכוחות עצמם לאירועים עתידיים?",
+
+	"subs.prefersToPlay": "עדיפות לשחק",
+	"subs.canPlay": "יכול.ה לשחק",
+	"subs.canVC": "יכול.ה VC",
+	"subs.noVC": "בלי VC",
+	"subs.editPost": "עריכת מודעת ממלא מקום",
+	"subs.addPost": "הוסיפו את עצמכם בתור ממלא מקום",
+	"subs.vc.header": "האם אתם יכולים לשוחח בצ'אט קולי?",
+	"subs.weapons.prefer.header": "נשקים שאתם מעדיפים לשחק",
+	"subs.weapons.ok.header": "נשקים שאתם בסדר לשחק עם",
+	"subs.weapons.info": "בחרו בין {{min}} ל-{{max}}",
+	"subs.message.header": "הודעה",
+	"subs.visibility.header": "ראות",
+	"subs.visibility.everyone": "כולם"
+}

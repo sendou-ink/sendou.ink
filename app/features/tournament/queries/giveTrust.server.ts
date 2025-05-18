@@ -3,19 +3,21 @@ import { sql } from "~/db/sql";
 const stm = sql.prepare(/*sql */ `
   insert into "TrustRelationship" (
     "trustGiverUserId",
-    "trustReceiverUserId"
+    "trustReceiverUserId",
+    "lastUsedAt"
   ) values (
     @trustGiverUserId,
-    @trustReceiverUserId
+    @trustReceiverUserId,
+    strftime('%s', 'now')
   ) on conflict do nothing
 `);
 
 export function giveTrust({
-  trustGiverUserId,
-  trustReceiverUserId,
+	trustGiverUserId,
+	trustReceiverUserId,
 }: {
-  trustGiverUserId: number;
-  trustReceiverUserId: number;
+	trustGiverUserId: number;
+	trustReceiverUserId: number;
 }) {
-  stm.run({ trustGiverUserId, trustReceiverUserId });
+	stm.run({ trustGiverUserId, trustReceiverUserId });
 }

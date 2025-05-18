@@ -7,5 +7,5 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export function deleteLikesByGroupId(groupId: number) {
-  stm.run({ groupId });
+	stm.run({ groupId });
 }

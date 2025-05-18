@@ -1,172 +1,76 @@
-import type {
-  ActionFunction,
-  LinksFunction,
-  LoaderArgs,
-  V2_MetaFunction,
-} from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/node";
 import { useFetcher, useLoaderData } from "@remix-run/react";
-import invariant from "tiny-invariant";
+import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
-import { getUser, requireUser } from "~/modules/auth/user.server";
-import type { SendouRouteHandle } from "~/utils/remix";
-import { parseRequestFormData, validate } from "~/utils/remix";
-import { makeTitle } from "~/utils/strings";
-import { assertUnreachable } from "~/utils/types";
-import {
-  SENDOUQ_LOOKING_PAGE,
-  SENDOUQ_PREPARING_PAGE,
-  navIconUrl,
-} from "~/utils/urls";
+import { useAutoRefresh } from "~/hooks/useAutoRefresh";
+import { metaTags } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
+import { SENDOUQ_PREPARING_PAGE, navIconUrl } from "~/utils/urls";
 import { GroupCard } from "../components/GroupCard";
+import { GroupLeaver } from "../components/GroupLeaver";
 import { MemberAdder } from "../components/MemberAdder";
 import { hasGroupManagerPerms } from "../core/groups";
 import { FULL_GROUP_SIZE } from "../q-constants";
-import { preparingSchema } from "../q-schemas.server";
-import { groupRedirectLocationByCurrentLocation } from "../q-utils";
-import styles from "../q.css";
-import { addMember } from "../queries/addMember.server";
-import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
-import { findPreparingGroup } from "../queries/findPreparingGroup.server";
-import { groupForMatch } from "../queries/groupForMatch.server";
-import { refreshGroup } from "../queries/refreshGroup.server";
-import { setGroupAsActive } from "../queries/setGroupAsActive.server";
-import { trustedPlayersAvailableToPlay } from "../queries/usersInActiveGroup.server";
-import { useAutoRefresh } from "~/hooks/useAutoRefresh";
-import { userHasSkill } from "../queries/userHasSkill.server";
-import { currentSeason } from "~/features/mmr";
+
+import { action } from "../actions/q.preparing.server";
+import { loader } from "../loaders/q.preparing.server";
+export { loader, action };
+
+import "../q.css";
 
 export const handle: SendouRouteHandle = {
-  i18n: ["q"],
-  breadcrumb: () => ({
-    imgPath: navIconUrl("sendouq"),
-    href: SENDOUQ_PREPARING_PAGE,
-    type: "IMAGE",
-  }),
+	i18n: ["q", "user"],
+	breadcrumb: () => ({
+		imgPath: navIconUrl("sendouq"),
+		href: SENDOUQ_PREPARING_PAGE,
+		type: "IMAGE",
+	}),
 };
 
-export const links: LinksFunction = () => {
-  return [{ rel: "stylesheet", href: styles }];
-};
-
-export const meta: V2_MetaFunction = () => {
-  return [{ title: makeTitle("SendouQ") }];
-};
-
-export const action: ActionFunction = async ({ request }) => {
-  const user = await requireUser(request);
-  const data = await parseRequestFormData({
-    request,
-    schema: preparingSchema,
-  });
-
-  const currentGroup = findCurrentGroupByUserId(user.id);
-  validate(currentGroup, "No group found");
-
-  if (!hasGroupManagerPerms(currentGroup.role)) {
-    return null;
-  }
-
-  const season = currentSeason(new Date());
-  validate(season, "Season is not active");
-
-  switch (data._action) {
-    case "JOIN_QUEUE": {
-      validate(currentGroup.status === "PREPARING", "No group preparing");
-
-      setGroupAsActive(currentGroup.id);
-      refreshGroup(currentGroup.id);
-
-      return redirect(SENDOUQ_LOOKING_PAGE);
-    }
-    case "ADD_TRUSTED": {
-      validate(
-        userHasSkill({ userId: data.id, season: season.nth }),
-        "User needs to select their initial SP first",
-      );
-      const available = trustedPlayersAvailableToPlay(user);
-      validate(
-        available.some((u) => u.id === data.id),
-        "Player not available to play",
-      );
-
-      const ownGroupWithMembers = groupForMatch(currentGroup.id);
-      invariant(ownGroupWithMembers, "No own group found");
-      validate(
-        ownGroupWithMembers.members.length < FULL_GROUP_SIZE,
-        "Group is full",
-      );
-
-      addMember({
-        groupId: currentGroup.id,
-        userId: data.id,
-      });
-
-      return null;
-    }
-    default: {
-      assertUnreachable(data);
-    }
-  }
-};
-
-export const loader = async ({ request }: LoaderArgs) => {
-  const user = await getUser(request);
-
-  const currentGroup = user ? findCurrentGroupByUserId(user.id) : undefined;
-  const redirectLocation = groupRedirectLocationByCurrentLocation({
-    group: currentGroup,
-    currentLocation: "preparing",
-  });
-
-  if (redirectLocation) {
-    throw redirect(redirectLocation);
-  }
-
-  const ownGroup = findPreparingGroup(currentGroup!.id);
-  invariant(ownGroup, "No own group found");
-
-  return {
-    group: ownGroup,
-    role: currentGroup!.role,
-    trustedPlayers: hasGroupManagerPerms(currentGroup!.role)
-      ? trustedPlayersAvailableToPlay(user!)
-      : [],
-  };
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "SendouQ - Preparing Group",
+		location: args.location,
+	});
 };
 
 export default function QPreparingPage() {
-  const data = useLoaderData<typeof loader>();
-  const joinQFetcher = useFetcher();
-  useAutoRefresh();
+	const { t } = useTranslation(["q"]);
+	const data = useLoaderData<typeof loader>();
+	const joinQFetcher = useFetcher();
+	useAutoRefresh(data.lastUpdated);
 
-  return (
-    <Main className="stack lg items-center">
-      <div className="q-preparing__card-container">
-        <GroupCard
-          group={data.group}
-          mapListPreference={data.group.mapListPreference}
-          ownRole={data.role}
-          ownGroup
-        />
-      </div>
-      {data.group.members.length < FULL_GROUP_SIZE &&
-      hasGroupManagerPerms(data.role) ? (
-        <MemberAdder
-          inviteCode={data.group.inviteCode}
-          trustedPlayers={data.trustedPlayers}
-        />
-      ) : null}
-      <joinQFetcher.Form method="post">
-        <SubmitButton
-          size="big"
-          state={joinQFetcher.state}
-          _action="JOIN_QUEUE"
-        >
-          Join the queue
-        </SubmitButton>
-      </joinQFetcher.Form>
-    </Main>
-  );
+	return (
+		<Main className="stack lg items-center">
+			<div className="q-preparing__card-container">
+				<GroupCard
+					group={data.group}
+					ownRole={data.role}
+					ownGroup
+					hideNote
+					enableKicking={data.role === "OWNER"}
+				/>
+			</div>
+			{data.group.members.length < FULL_GROUP_SIZE &&
+			hasGroupManagerPerms(data.role) ? (
+				<MemberAdder
+					inviteCode={data.group.inviteCode}
+					groupMemberIds={data.group.members.map((m) => m.id)}
+				/>
+			) : null}
+			<joinQFetcher.Form method="post">
+				<SubmitButton
+					size="big"
+					state={joinQFetcher.state}
+					_action="JOIN_QUEUE"
+				>
+					{t("q:preparing.joinQ")}
+				</SubmitButton>
+			</joinQFetcher.Form>
+			<GroupLeaver
+				type={data.group.members.length === 1 ? "GO_BACK" : "LEAVE_GROUP"}
+			/>
+		</Main>
+	);
 }

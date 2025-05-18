@@ -8,5 +8,5 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export function checkIn(tournamentTeamId: number) {
-  stm.run({ tournamentTeamId });
+	stm.run({ tournamentTeamId });
 }

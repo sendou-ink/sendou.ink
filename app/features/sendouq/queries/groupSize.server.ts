@@ -10,5 +10,5 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export function groupSize(groupId: number) {
-  return stm.pluck().get({ groupId }) as number;
+	return (stm.get({ groupId }) as any).count as number;
 }

@@ -1,11 +1,11 @@
-module.exports.up = function (db) {
-  db.prepare(
-    /*sql*/ `alter table "CalendarEvent" drop column "isBeforeStart"`,
-  ).run();
+export function up(db) {
+	db.prepare(
+		/*sql*/ `alter table "CalendarEvent" drop column "isBeforeStart"`,
+	).run();
 
-  db.prepare(/*sql*/ `drop table "TournamentTeam"`).run();
-  db.prepare(
-    /*sql*/ `
+	db.prepare(/*sql*/ `drop table "TournamentTeam"`).run();
+	db.prepare(
+		/*sql*/ `
     create table "TournamentTeam" (
       "id" integer primary key,
       "name" text,
@@ -19,14 +19,14 @@ module.exports.up = function (db) {
       unique("calendarEventId", "name") on conflict rollback
     ) strict
     `,
-  ).run();
-  db.prepare(
-    `create index tournament_team_calendar_event_id on "TournamentTeam"("calendarEventId")`,
-  ).run();
+	).run();
+	db.prepare(
+		`create index tournament_team_calendar_event_id on "TournamentTeam"("calendarEventId")`,
+	).run();
 
-  db.prepare(/*sql*/ `drop table "TournamentTeamMember"`).run();
-  db.prepare(
-    /*sql*/ `
+	db.prepare(/*sql*/ `drop table "TournamentTeamMember"`).run();
+	db.prepare(
+		/*sql*/ `
     create table "TournamentTeamMember" (
       "tournamentTeamId" integer not null,
       "userId" integer not null,
@@ -36,13 +36,13 @@ module.exports.up = function (db) {
       unique("tournamentTeamId", "userId") on conflict rollback
     ) strict
     `,
-  ).run();
-  db.prepare(
-    /*sql*/ `create index tournament_team_member_tournament_team_id on "TournamentTeamMember"("tournamentTeamId")`,
-  ).run();
+	).run();
+	db.prepare(
+		/*sql*/ `create index tournament_team_member_tournament_team_id on "TournamentTeamMember"("tournamentTeamId")`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "TournamentBracket" (
       "id" integer primary key,
       "calendarEventId" integer not null,
@@ -50,13 +50,13 @@ module.exports.up = function (db) {
       foreign key ("calendarEventId") references "CalendarEvent"("id") on delete restrict
     ) strict
     `,
-  ).run();
-  db.prepare(
-    /*sql*/ `create index tournament_bracket_calendar_event_id on "TournamentBracket"("calendarEventId")`,
-  ).run();
+	).run();
+	db.prepare(
+		/*sql*/ `create index tournament_bracket_calendar_event_id on "TournamentBracket"("calendarEventId")`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "TournamentRound" (
       "id" integer primary key,
       "position" integer not null,
@@ -66,10 +66,10 @@ module.exports.up = function (db) {
       unique("bracketId", "position") on conflict rollback
     ) strict
     `,
-  ).run();
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "TournamentMatch" (
       "id" integer primary key,
       "roundId" integer not null,
@@ -82,13 +82,13 @@ module.exports.up = function (db) {
       foreign key ("loserDestinationMatchId") references "TournamentMatch"("id") on delete restrict
     ) strict
     `,
-  ).run();
-  db.prepare(
-    /*sql*/ `create index tournament_match_round_id on "TournamentMatch"("roundId")`,
-  ).run();
+	).run();
+	db.prepare(
+		/*sql*/ `create index tournament_match_round_id on "TournamentMatch"("roundId")`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "TournamentMatchParticipant" (
       "order" text not null,
       "teamId" integer not null,
@@ -98,16 +98,16 @@ module.exports.up = function (db) {
       unique("teamId", "matchId") on conflict rollback
     ) strict
     `,
-  ).run();
-  db.prepare(
-    /*sql*/ `create index tournament_match_participant_team_id on "TournamentMatchParticipant"("teamId")`,
-  ).run();
-  db.prepare(
-    /*sql*/ `create index tournament_match_participant_match_id on "TournamentMatchParticipant"("matchId")`,
-  ).run();
+	).run();
+	db.prepare(
+		/*sql*/ `create index tournament_match_participant_team_id on "TournamentMatchParticipant"("teamId")`,
+	).run();
+	db.prepare(
+		/*sql*/ `create index tournament_match_participant_match_id on "TournamentMatchParticipant"("matchId")`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "TournamentMatchGameResult" (
       "id" integer primary key,
       "matchId" integer unique not null,
@@ -121,11 +121,11 @@ module.exports.up = function (db) {
       foreign key ("reporterId") references "User"("id") on delete restrict
     ) strict
     `,
-  ).run();
-  db.prepare(
-    /*sql*/ `create index tournament_match_game_result_match_id on "TournamentMatchGameResult"("matchId")`,
-  ).run();
-  db.prepare(
-    /*sql*/ `create index tournament_match_game_result_winner_team_id on "TournamentMatchGameResult"("winnerTeamId")`,
-  ).run();
-};
+	).run();
+	db.prepare(
+		/*sql*/ `create index tournament_match_game_result_match_id on "TournamentMatchGameResult"("matchId")`,
+	).run();
+	db.prepare(
+		/*sql*/ `create index tournament_match_game_result_winner_team_id on "TournamentMatchGameResult"("winnerTeamId")`,
+	).run();
+}

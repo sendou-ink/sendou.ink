@@ -1,87 +1,102 @@
 [
-  {
-    "title": "Salmon Run.ink",
-    "url": "https://www.salmonrun.ink",
-    "description": "website that aims to educate players to optimise their Salmon Run gameplay for best results"
-  },
-  {
-    "title": "Inkipedia",
-    "url": "https://splatoonwiki.org",
-    "description": "Splatoon wiki. Useful for looking up random information about the game"
-  },
-  {
-    "title": "Lean's Home",
-    "url": "https://leanny.github.io",
-    "description": "Lean's datamines provide the most comprehensive collection of collectables and parameters. Also includes the gear seed checker"
-  },
-  {
-    "title": "Splatoon Stronghold",
-    "url": "https://www.splatoonstronghold.com",
-    "description": "provides competitive Splatoon resouces to longtimers and newcomers a like"
-  },
-  {
-    "title": "stat.ink",
-    "url": "https://stat.ink",
-    "description": "upload matches you play to stat.ink to track your stats"
-  },
-  {
-    "title": "Community Callouts List",
-    "url": "https://drive.google.com/drive/folders/1qJ2j1VtQnHWvJEqf0Qv0L0WiLHADV0Bv",
-    "description": "if you want to learn precise callouts this list contains some for all maps"
-  },
-  {
-    "title": "Splashtag Creator",
-    "url": "https://seymourschlong.github.io/splashtags/",
-    "description": "create your own splashtags featuring in-game as well as custom assets"
-  },
-  {
-    "title": "Yaga's Weapon Kit Generator",
-    "url": "https://yagaa.itch.io/yagas-weapon-kit-generator",
-    "description": "create your own dream weapon kit images"
-  },
-  {
-    "title": "Splatoon3.ink",
-    "url": "https://splatoon3.ink/",
-    "description": "view rotations and Splatnet gear rotation without needing the phone app"
-  },
-  {
-    "title": "Tableturf Battle Server",
-    "url": "https://discord.gg/fRT8ydhhxT",
-    "description": "a server dedicated to Tableturf Battle with a lot of helpful resources and events! Also a good place to find opponents to play"
-  },
-  {
-    "title": "Inkopolis Crosswalk",
-    "url": "https://discord.gg/45DsKetYNM",
-    "description": "a server dedicated to making it easier for players to find the resources they need in order to improve, find teams, find events, and meet new people"
-  },
-  {
-    "title": "splat_zone jp",
-    "url": "https://www.youtube.com/channel/UCLN8s9Ogn71QcCYIPtb9mtw",
-    "description": "subscribe to watch Area Cup which is considered one of the highest level tournaments in Japan and the world"
-  },
-  {
-    "title": "Fluid Priorities and Roles",
-    "url": "https://docs.google.com/document/d/1t97IZrN0pI_ceUtJrB-8clapCp1P3oddyFzSQ2lGICg",
-    "description": "outlines how FLC thinks about the game regarding team compositions and player roles"
-  },
-  {
-    "title": "Salmon Run Overfishing",
-    "url": "https://discord.gg/pXHRffE",
-    "description": "a server dedicated to Salmon Run"
-  },
-  {
-    "title": "Salmon Run Next Wave Overfishing Fundamentals",
-    "url": "https://docs.google.com/document/d/1iK_dcrno5-cpR0ol4CBKLTDz46HMeM6AFPE0mw_sRBk",
-    "description": "a guide that aims to provide players with the knowledge to get as high a golden egg score as possible"
-  },
-  {
-    "title": "How to improve your aim",
-    "url": "https://www.youtube.com/watch?v=XloXds3GldU",
-    "description": "a video that goes over how to improve your aim and some drills you can use by weapon type (Splatoon 2 but applies to Splatoon 3 as well)"
-  },
-  {
-    "title": "Salmon Run Next Wave maps",
-    "url": "https://salmon-learn-nw.gungee.jp/map",
-    "description": "(in Japanese) view Salmon Run maps and points of interest such as spawns"
-  }
+	{
+		"title": "Salmon Run.ink",
+		"url": "https://www.salmonrun.ink",
+		"description": "website that aims to educate players to optimise their Salmon Run gameplay for best results"
+	},
+	{
+		"title": "Inkipedia",
+		"url": "https://splatoonwiki.org",
+		"description": "Splatoon wiki. Useful for looking up random information about the game"
+	},
+	{
+		"title": "Lean's Home",
+		"url": "https://leanny.github.io",
+		"description": "Lean's datamines provide the most comprehensive collection of collectables and parameters. Also includes the gear seed checker"
+	},
+	{
+		"title": "Splatoon Stronghold",
+		"url": "https://www.splatoonstronghold.com",
+		"description": "provides competitive Splatoon resouces to longtimers and newcomers a like"
+	},
+	{
+		"title": "stat.ink",
+		"url": "https://stat.ink",
+		"description": "upload matches you play to stat.ink to track your stats"
+	},
+	{
+		"title": "Community Callouts List",
+		"url": "https://drive.google.com/drive/folders/1qJ2j1VtQnHWvJEqf0Qv0L0WiLHADV0Bv",
+		"description": "if you want to learn precise callouts this list contains some for all maps"
+	},
+	{
+		"title": "Splashtag Creator",
+		"url": "https://seymourschlong.github.io/splashtags/",
+		"description": "create your own splashtags featuring in-game as well as custom assets"
+	},
+	{
+		"title": "Yaga's Weapon Kit Generator",
+		"url": "https://yagaa.itch.io/yagas-weapon-kit-generator",
+		"description": "create your own dream weapon kit images"
+	},
+	{
+		"title": "Splatoon3.ink",
+		"url": "https://splatoon3.ink/",
+		"description": "view rotations and Splatnet gear rotation without needing the phone app"
+	},
+	{
+		"title": "Tableturf Battle Server",
+		"url": "https://discord.gg/fRT8ydhhxT",
+		"description": "a server dedicated to Tableturf Battle with a lot of helpful resources and events! Also a good place to find opponents to play"
+	},
+	{
+		"title": "Inkopolis Crosswalk",
+		"url": "https://discord.gg/45DsKetYNM",
+		"description": "a server dedicated to making it easier for players to find the resources they need in order to improve, find teams, find events, and meet new people"
+	},
+	{
+		"title": "splat_zone jp",
+		"url": "https://www.youtube.com/channel/UCLN8s9Ogn71QcCYIPtb9mtw",
+		"description": "subscribe to watch Area Cup which is considered one of the highest level tournaments in Japan and the world"
+	},
+	{
+		"title": "Fluid Priorities and Roles",
+		"url": "https://docs.google.com/document/d/1t97IZrN0pI_ceUtJrB-8clapCp1P3oddyFzSQ2lGICg",
+		"description": "outlines how FLC thinks about the game regarding team compositions and player roles"
+	},
+	{
+		"title": "Salmon Run Overfishing",
+		"url": "https://discord.gg/pXHRffE",
+		"description": "a server dedicated to Salmon Run"
+	},
+	{
+		"title": "Salmon Run Next Wave Overfishing Fundamentals",
+		"url": "https://docs.google.com/document/d/1iK_dcrno5-cpR0ol4CBKLTDz46HMeM6AFPE0mw_sRBk",
+		"description": "a guide that aims to provide players with the knowledge to get as high a golden egg score as possible"
+	},
+	{
+		"title": "How to improve your aim",
+		"url": "https://www.youtube.com/watch?v=XloXds3GldU",
+		"description": "a video that goes over how to improve your aim and some drills you can use by weapon type (Splatoon 2 but applies to Splatoon 3 as well)"
+	},
+	{
+		"title": "Salmon Run Next Wave maps",
+		"url": "https://salmon-learn-nw.gungee.jp/map",
+		"description": "(in Japanese) view Salmon Run maps and points of interest such as spawns"
+	},
+	{
+		"title": "Squidboards",
+		"url": "https://squidboards.com/",
+		"description": "the largest forum dedicated to Splatoon"
+	},
+	{
+		"title": "Playing smarter: a guide to improving tactical thinking",
+		"url": "https://zy-f.notion.site/zy-f/playing-smarter-a-guide-to-improving-tactical-thinking-625e307d08f142b6bb97895117365425",
+		"description": "a guide to improving at Splatoon, beyond raw mechanical ability"
+	},
+	{
+		"title": "Splatoon Guides",
+		"url": "https://github.com/tessssaract/guides",
+		"description": "A curated list of resources for captaining teams, weapons, specials, and more"
+	}
 ]

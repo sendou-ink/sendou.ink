@@ -4,22 +4,12 @@
 *,
 *::before,
 *::after {
-  box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 * {
-  margin: 0;
-  overflow-wrap: break-word;
-}
-
-html,
-body {
-  height: 100%;
-}
-
-body {
-  -webkit-font-smoothing: antialiased;
-  line-height: 1.5;
+	margin: 0;
+	overflow-wrap: break-word;
 }
 
 img,
@@ -27,13 +17,13 @@ picture,
 video,
 canvas,
 svg {
-  display: block;
-  max-width: 100%;
+	display: block;
+	max-width: 100%;
 }
 
 input,
 button,
 textarea,
 select {
-  font: inherit;
+	font: inherit;
 }

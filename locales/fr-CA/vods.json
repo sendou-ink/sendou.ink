@@ -1,0 +1,22 @@
+{
+	"type.SCRIM": "Scrim",
+	"type.TOURNAMENT": "Tournoi (PoV)",
+	"type.MATCHMAKING": "Anarchie/Match X/Guerre de Territoire",
+	"type.CAST": "Tournoi (Cast)",
+	"gameCount": "Match {{count}}",
+	"minShort": "min",
+	"secShort": "sec",
+	"forms.title.youtubeUrl": "URL YouTube",
+	"forms.title.videoTitle": "Titre de la vidéo",
+	"forms.title.videoDate": "Date de la vidéo",
+	"forms.title.type": "Type",
+	"forms.title.pov": "Joueur (PoV)",
+	"forms.title.startTimestamp": "Horodatage de début",
+	"forms.title.mode": "Mode",
+	"forms.title.stage": "Stage",
+	"forms.title.weaponsTeamOne": "Armes (Équipe 1)",
+	"forms.title.weaponsTeamTwo": "Armes (Équipe 2)",
+	"forms.title.weapon": "Arme",
+	"forms.action.addMatch": "Ajouter un match",
+	"forms.action.deleteMatch": "Effacer un match"
+}

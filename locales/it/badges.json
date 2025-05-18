@@ -1,0 +1,13 @@
+{
+	"patreon": "Sostenitore sendou.ink su Patreon",
+	"patreon+": "Sostenitore+ sendou.ink su Patreon",
+	"xp": "Premio per aver raggiunto {{xpText}}",
+	"tournament_one": "Premio per aver vinto {{tournament}}",
+	"tournament_other": "Premio per aver vinto {{tournament}} (×{{count}})",
+	"forYourEvent": "Vuoi creare una medaglia per il tuo evento?",
+	"managedBy": "Gestito da {{users}}",
+	"madeBy": "creato da {{user}}",
+	"own.divider": "Medaglie amministrate",
+	"other.divider": "Altre medaglie",
+	"noBadgesFound": "Nessuna medaglia per la tua ricerca"
+}

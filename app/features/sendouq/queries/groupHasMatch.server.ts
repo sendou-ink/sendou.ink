@@ -9,5 +9,5 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export function groupHasMatch(groupId: number) {
-  return Boolean(stm.get({ groupId }));
+	return Boolean(stm.get({ groupId }));
 }

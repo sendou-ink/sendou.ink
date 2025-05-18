@@ -21,4 +21,4 @@ Taking the bronze medal was Comp, whose unorthodox playstyle became a highlight 
 
 Rounding out the top four is the Woomierss. [Scar](https://sendou.ink/u/129931199383601153) is a long time member of the Splatoon community and it was a joy to watch them participate in this tournment. Will Splatoon 3 bring back more veterans to competitive play?
 
-What better way for Sendou.ink to send off Splatoon 2 than with a day full of intense competition. Thank you to all of the players who have participated in Sendou tournaments over the years. We can't wait to see what Splatoon 3 brings!
+What better way for sendou.ink to send off Splatoon 2 than with a day full of intense competition. Thank you to all of the players who have participated in Sendou tournaments over the years. We can't wait to see what Splatoon 3 brings!

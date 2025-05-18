@@ -8,11 +8,11 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export function removeManagerRole({
-  userId,
-  groupId,
+	userId,
+	groupId,
 }: {
-  userId: number;
-  groupId: number;
+	userId: number;
+	groupId: number;
 }) {
-  stm.run({ userId, groupId });
+	stm.run({ userId, groupId });
 }

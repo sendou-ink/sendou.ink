@@ -1,0 +1,23 @@
+﻿{
+	"customUrl": "Eigen URL",
+	"ign": "In-game naam",
+	"ign.short": "IGN",
+	"country": "Land",
+	"bio": "Bio",
+	"stickSens": "R-stick gevoeligheid",
+	"motionSens": "Bewegingsgevoeligheid",
+	"motion": "Beweging",
+	"stick": "Stick",
+	"sens": "Gevoeligheid",
+
+	"results.placing": "Plaatsing",
+	"results.team": "Team",
+	"results.tournament": "Toernooi",
+	"results.date": "Datum",
+	"results.mates": "Teamleden",
+
+	"forms.errors.invalidCustomUrl.numbers": "Een eigen URL kan niet alleen uit nummers bestaan",
+	"forms.errors.invalidCustomUrl.strangeCharacter": "Een eigen URL mag geen speciale karakters bevatten",
+	"forms.errors.invalidCustomUrl.duplicate": "Deze URL is al in gebruik",
+	"forms.errors.invalidSens": "Bewegingsgevoeligheid kan niet worden ingesteld als er niets voor de R-stick ingevoerd is"
+}

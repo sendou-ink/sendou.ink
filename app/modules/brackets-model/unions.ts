@@ -6,9 +6,10 @@
  * The only supported types of stage.
  */
 export type StageType =
-  | "round_robin"
-  | "single_elimination"
-  | "double_elimination";
+	| "round_robin"
+	| "single_elimination"
+	| "double_elimination"
+	| "swiss";
 
 /**
  * All the possible types of group in an elimination stage.
@@ -18,10 +19,10 @@ export type StageType =
  * - `final_group` for both single and double elimination.
  */
 export type GroupType =
-  | "single_bracket"
-  | "winner_bracket"
-  | "loser_bracket"
-  | "final_group";
+	| "single_bracket"
+	| "winner_bracket"
+	| "loser_bracket"
+	| "final_group";
 
 /**
  * The possible types for a double elimination stage's grand final.
@@ -42,18 +43,18 @@ export type RoundRobinMode = "simple" | "double";
  * Used to order seeds.
  */
 export type SeedOrdering =
-  | "natural"
-  | "reverse"
-  | "half_shift"
-  | "reverse_half_shift"
-  | "pair_flip"
-  | "inner_outer"
-  | "space_between"
-  | "groups.effort_balanced"
-  | "groups.seed_optimized"
-  | "groups.bracket_optimized";
+	| "natural"
+	| "reverse"
+	| "half_shift"
+	| "reverse_half_shift"
+	| "pair_flip"
+	| "inner_outer"
+	| "space_between"
+	| "groups.effort_balanced"
+	| "groups.seed_optimized"
+	| "groups.bracket_optimized";
 
 /**
  * The possible results of a duel for a participant.
  */
-export type Result = "win" | "draw" | "loss";
+export type Result = "win" | "loss";

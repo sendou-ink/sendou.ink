@@ -1,0 +1,25 @@
+{
+	"q1": "¿Qué es el Plus Server?",
+	"a1": "Plus Server es un servidor de Discord para jugadores occidentales de alto nivel que sirve para buscar personas con quien jugar o combatir. Fue fundado en septiembre de 2017. Es dividido en tres niveles, de los cuales +1 es el más alto. Obtienes acceso cuando un miembro del servidor te sugiere y pasas la votación mensual.\n\nDurante la votación, obtienes un porcentage basado en tu resultado. Un 0% significa que todos los participantes votaron en contra, mientras que 100% sería lo opuesto. Se requiere 50% para pasar el voto. Si un miembro recibe menos de 50%, baja un nivel o, en el caso de miembros en +3, serán expulsados.",
+
+	"q2": "¿Cómo puedo obtener un premio de insignia para mi evento?",
+
+	"q3": "¿Cómo puedo actualizar mi avatar o nombre de usuario?",
+	"a3": "Si actualizas tu nombre de usuario o avatar en Discord, no cambian de inmediato en sendou.ink. Para que eso suceda tienes dos opciones:\n\n1) Si eres miembro del Discord de este sitio o del Plus Server, simplemente puedes esperar. Hay una rutina diaria que se encarga de la actualización.\n\n2) Alternativamente, si deseas actualizarlos de inmediato, puede cerrar la sesión y reiniciarla en sendou.ink.",
+
+	"q4": "Estoy suscrito en Patreon pero no he visto cambio en el sitio.",
+	"a4": "Asegura que tu Discord esté conectado en Patreon.com. Después de hacerlo, puede tardar 2 horas para que el sitio se actualize. Si aún hay un problema, envia un mensaje a Sendou directamente por Discord para obtener ayuda.",
+
+	"q5": "¿Hay un app de sendou.ink?",
+	"a5": "No, pero sendou.ink se puede instalar como una 'aplicación web progresiva' (PWA) que obtiene muchos de los mismos beneficios, como pantalla completa, un ícono en la pantalla de inicio y un proceso separado. Busque en Google 'cómo instalar PWA en *su navegador*' para encontrar instrucciones.",
+
+	"q6": "¿Cómo puedo agregar Twitch/Bluesky/YouTube a mi perfil?",
+	"a6": "Usamos tu perfil de Discord para eso. Conéctalos y verifícalos a travéz de Discord. Luego, cierra tu sesión y vuelve a iniciar tu sesión en sendou.ink para actualizar.",
+
+	"q7": "¿Cómo puedo agregar videos?",
+
+	"q8": "¿Cómo puedo mostrar mis resultados de Combate X en mi perfil?",
+
+	"q9": "¿Cómo puedo subir arte que he comisionado?",
+	"a9": "Solo puedes agregar arte que tú has creado. También tiene que tener relación con Splatoon. Para piezas comisionadas, por favor pide al artista que suba el arte. El artista puede enlazar tu perfil y así se podrá mostrar en tu perfil."
+}

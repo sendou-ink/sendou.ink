@@ -1,32 +1,32 @@
 {
-  "include": ["./types/remix.env.d.ts", "**/*.ts", "**/*.tsx"],
-  "compilerOptions": {
-    "lib": ["DOM", "DOM.Iterable", "ES2019"],
-    "module": "commonjs",
-    "isolatedModules": true,
-    "esModuleInterop": true,
-    "jsx": "react-jsx",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "target": "ES2019",
-    "strict": true,
-    "baseUrl": ".",
-    "paths": {
-      "~/*": ["./app/*"]
-    },
-    "noEmit": true,
-    "forceConsistentCasingInFileNames": true,
-    "allowJs": false,
-    "noUncheckedIndexedAccess": false,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "useUnknownInCatchVariables": true,
-    "skipLibCheck": true
-  },
-  "ts-node": {
-    "transpileOnly": true
-  }
+	"include": ["./types/env.d.ts", "**/*.ts", "**/*.tsx"],
+	"compilerOptions": {
+		"lib": ["DOM", "DOM.Iterable", "es2024"],
+		"module": "ESNext",
+		"isolatedModules": true,
+		"erasableSyntaxOnly": true,
+		"esModuleInterop": true,
+		"jsx": "react-jsx",
+		"moduleResolution": "Bundler",
+		"resolveJsonModule": true,
+		"target": "ES2022",
+		"strict": true,
+		"baseUrl": ".",
+		"paths": {
+			"~/*": ["./app/*"]
+		},
+		"noEmit": true,
+		"forceConsistentCasingInFileNames": true,
+		"allowJs": false,
+		"noUncheckedIndexedAccess": false,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"useUnknownInCatchVariables": true,
+		"skipLibCheck": true
+	},
+	"ts-node": {
+		"transpileOnly": true
+	}
 }

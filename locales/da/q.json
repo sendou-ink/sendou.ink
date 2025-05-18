@@ -1,0 +1,14 @@
+{
+	"mapListPreference.NO_PREFERENCE": "Ingen præference",
+	"mapListPreference.PREFER_ALL_MODES": "Foretrækker alle spiltilstande",
+	"mapListPreference.PREFER_SZ": "Foretrækker kun SZ",
+	"mapListPreference.ALL_MODES_ONLY": "Kun alle spiltilstande",
+	"mapListPreference.SZ_ONLY": "Udelukkende SZ",
+	"mapListPreference.note": "Bemærk: Du vil ikke kunne blive sat mod hold, er vælger \"{{optionOne}}\". Overvej at vælge \"{{optionTwo}}\".",
+	"roles.OWNER": "Ejer",
+	"roles.MANAGER": "Leder",
+	"roles.REGULAR": "Almindeligt holdmedlem",
+	"vc.YES": "Kan snakke",
+	"vc.NO": "Kan hverken snakke eller lytte",
+	"vc.LISTEN_ONLY": "Kan kun lytte"
+}

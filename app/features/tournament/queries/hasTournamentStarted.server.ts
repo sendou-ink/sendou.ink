@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { Tournament } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/*sql*/ `
   select 1
@@ -7,6 +7,8 @@ const stm = sql.prepare(/*sql*/ `
     where "TournamentStage"."tournamentId" = @tournamentId
 `);
 
-export default function hasTournamentStarted(tournamentId: Tournament["id"]) {
-  return Boolean(stm.get({ tournamentId }));
+export default function hasTournamentStarted(
+	tournamentId: Tables["Tournament"]["id"],
+) {
+	return Boolean(stm.get({ tournamentId }));
 }

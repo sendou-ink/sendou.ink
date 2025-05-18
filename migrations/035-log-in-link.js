@@ -1,6 +1,6 @@
-module.exports.up = function (db) {
-  db.prepare(
-    /*sql*/ `
+export function up(db) {
+	db.prepare(
+		/*sql*/ `
     create table "LogInLink" (
       "code" text unique not null,
       "expiresAt" integer not null,
@@ -8,5 +8,5 @@ module.exports.up = function (db) {
       foreign key ("userId") references "User"("id") on delete cascade
     ) strict
   `,
-  ).run();
-};
+	).run();
+}

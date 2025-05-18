@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { TournamentSub, UserWithPlusTier } from "~/db/types";
+import type { Tables, UserWithPlusTier } from "~/db/tables";
 import type { MainWeaponId } from "~/modules/in-game-lists";
 
 const stm = sql.prepare(/* sql */ `
@@ -11,8 +11,7 @@ const stm = sql.prepare(/* sql */ `
   "TournamentSub"."visibility",
   "TournamentSub"."createdAt",
   "TournamentSub"."userId",
-  "User"."discordName",
-  "User"."discordDiscriminator",
+  "User"."username",
   "User"."discordAvatar",
   "User"."country",
   "User"."discordId",
@@ -32,39 +31,38 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export interface SubByTournamentId {
-  canVc: TournamentSub["canVc"];
-  bestWeapons: MainWeaponId[];
-  okWeapons: MainWeaponId[] | null;
-  message: TournamentSub["message"];
-  visibility: TournamentSub["visibility"];
-  createdAt: TournamentSub["createdAt"];
-  userId: TournamentSub["userId"];
-  discordName: UserWithPlusTier["discordName"];
-  discordDiscriminator: UserWithPlusTier["discordDiscriminator"];
-  discordAvatar: UserWithPlusTier["discordAvatar"];
-  discordId: UserWithPlusTier["discordId"];
-  customUrl: UserWithPlusTier["customUrl"];
-  country: UserWithPlusTier["country"];
-  plusTier: UserWithPlusTier["plusTier"];
+	canVc: Tables["TournamentSub"]["canVc"];
+	bestWeapons: MainWeaponId[];
+	okWeapons: MainWeaponId[] | null;
+	message: Tables["TournamentSub"]["message"];
+	visibility: Tables["TournamentSub"]["visibility"];
+	createdAt: Tables["TournamentSub"]["createdAt"];
+	userId: Tables["TournamentSub"]["userId"];
+	username: UserWithPlusTier["username"];
+	discordAvatar: UserWithPlusTier["discordAvatar"];
+	discordId: UserWithPlusTier["discordId"];
+	customUrl: UserWithPlusTier["customUrl"];
+	country: UserWithPlusTier["country"];
+	plusTier: UserWithPlusTier["plusTier"];
 }
 
 const parseWeaponsArray = (value: string | null) => {
-  if (!value) return null;
+	if (!value) return null;
 
-  return value.split(",").map(Number);
+	return value.split(",").map(Number);
 };
 export function findSubsByTournamentId({
-  tournamentId,
-  userId,
+	tournamentId,
+	userId,
 }: {
-  tournamentId: number;
-  userId?: number;
+	tournamentId: number;
+	userId?: number;
 }): SubByTournamentId[] {
-  const rows = stm.all({ tournamentId, userId }) as any[];
+	const rows = stm.all({ tournamentId, userId: userId ?? null }) as any[];
 
-  return rows.map((row) => ({
-    ...row,
-    bestWeapons: parseWeaponsArray(row.bestWeapons),
-    okWeapons: parseWeaponsArray(row.okWeapons),
-  }));
+	return rows.map((row) => ({
+		...row,
+		bestWeapons: parseWeaponsArray(row.bestWeapons),
+		okWeapons: parseWeaponsArray(row.okWeapons),
+	}));
 }

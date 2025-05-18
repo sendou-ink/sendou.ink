@@ -1,10 +1,10 @@
 import { useMatches } from "@remix-run/react";
-import invariant from "tiny-invariant";
 import type { RootLoaderData } from "~/root";
+import invariant from "~/utils/invariant";
 
 export function useRootLoaderData() {
-  const [root] = useMatches();
-  invariant(root);
+	const [root] = useMatches();
+	invariant(root);
 
-  return root.data as RootLoaderData;
+	return root.data as RootLoaderData;
 }

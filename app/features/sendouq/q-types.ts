@@ -1,42 +1,66 @@
-import type { Group, GroupMember, PlusTier, User } from "~/db/types";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { ParsedMemento, QWeaponPool, Tables } from "~/db/tables";
+import type { ModeShort } from "~/modules/in-game-lists";
 import type { TieredSkill } from "../mmr/tiered.server";
+import type { GroupForMatch } from "../sendouq-match/QMatchRepository.server";
 
 export type LookingGroup = {
-  id: number;
-  mapListPreference?: Group["mapListPreference"];
-  tier?: TieredSkill["tier"];
-  isReplay?: boolean;
-  isLiked?: boolean;
-  members?: {
-    id: number;
-    discordId: string;
-    discordName: string;
-    discordAvatar: string;
-    customUrl?: User["customUrl"];
-    plusTier?: PlusTier["tier"];
-    role: GroupMember["role"];
-    weapons?: MainWeaponId[];
-    skill?: TieredSkill;
-    vc?: User["vc"];
-    languages?: string[];
-    chatNameColor: string | null;
-  }[];
+	id: number;
+	createdAt: Tables["Group"]["createdAt"];
+	tier?: TieredSkill["tier"];
+	tierRange?: {
+		range?: [TieredSkill["tier"], TieredSkill["tier"]];
+		diff: number;
+	};
+	isReplay?: boolean;
+	isNoScreen?: boolean;
+	isLiked?: boolean;
+	isRechallenge?: boolean;
+	team?: GroupForMatch["team"];
+	chatCode?: Tables["Group"]["chatCode"];
+	mapModePreferences?: Array<NonNullable<Tables["User"]["mapModePreferences"]>>;
+	futureMatchModes?: Array<ModeShort>;
+	rechallengeMatchModes?: Array<ModeShort>;
+	skillDifference?: ParsedMemento["groups"][number]["skillDifference"];
+	members?: {
+		id: number;
+		discordId: string;
+		username: string;
+		discordAvatar: string | null;
+		noScreen?: number;
+		customUrl?: Tables["User"]["customUrl"];
+		plusTier?: Tables["PlusTier"]["tier"];
+		role: Tables["GroupMember"]["role"];
+		note?: Tables["GroupMember"]["note"];
+		weapons?: QWeaponPool[];
+		skill?: TieredSkill | "CALCULATING";
+		vc?: Tables["User"]["vc"];
+		inGameName?: Tables["User"]["inGameName"];
+		languages: string[];
+		chatNameColor: string | null;
+		skillDifference?: ParsedMemento["users"][number]["skillDifference"];
+		friendCode?: string;
+		privateNote: Pick<
+			Tables["PrivateUserNote"],
+			"sentiment" | "text" | "updatedAt"
+		> | null;
+	}[];
 };
 
 export type LookingGroupWithInviteCode = LookingGroup & {
-  inviteCode: Group["inviteCode"];
-  members: NonNullable<LookingGroup["members"]>;
+	inviteCode: Tables["Group"]["inviteCode"];
+	members: NonNullable<LookingGroup["members"]>;
 };
 
 export interface DividedGroups {
-  own: LookingGroup | LookingGroupWithInviteCode;
-  neutral: LookingGroup[];
-  likesReceived: LookingGroup[];
+	own?: LookingGroup | LookingGroupWithInviteCode;
+	neutral: LookingGroup[];
+	likesReceived: LookingGroup[];
 }
 
 export interface DividedGroupsUncensored {
-  own: LookingGroupWithInviteCode;
-  neutral: LookingGroupWithInviteCode[];
-  likesReceived: LookingGroupWithInviteCode[];
+	own?: LookingGroupWithInviteCode;
+	neutral: LookingGroupWithInviteCode[];
+	likesReceived: LookingGroupWithInviteCode[];
 }
+
+export type GroupExpiryStatus = "EXPIRING_SOON" | "EXPIRED";

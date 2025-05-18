@@ -10,30 +10,30 @@ jobs:
   run-checks-and-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
 
       - name: Cache dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.npm
           key: npm-${{ hashFiles('package-lock.json') }}
           restore-keys: npm-
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        run: npm ci
 
-      - name: Prettier
-        run: npm run prettier:check
-      - name: Lint TS
-        run: npm run lint:ts
-      - name: Stylelint
-        run: npm run lint:css
+      - name: Formatter/Linter
+        run: npm run biome:check
       - name: Typecheck
         run: npm run typecheck
+      - name: Unit tests
+        run: npm run test:unit
       - name: Check translations jsons
         run: npm run check-translation-jsons:no-write
+      - name: Check homemade badges
+        run: npm run check-homemade-badges

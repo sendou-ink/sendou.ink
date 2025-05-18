@@ -1,10 +1,11 @@
 import { sql } from "~/db/sql";
-import type { Skill } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/* sql */ `
   select
     "mu",
-    "sigma"
+    "sigma",
+    "matchesCount"
   from
     "Skill"
   where
@@ -18,11 +19,14 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export function findCurrentSkillByUserId({
-  userId,
-  season,
+	userId,
+	season,
 }: {
-  userId: number;
-  season: number;
+	userId: number;
+	season: number;
 }) {
-  return stm.get({ userId, season }) as Pick<Skill, "mu" | "sigma"> | null;
+	return stm.get({ userId, season }) as Pick<
+		Tables["Skill"],
+		"mu" | "sigma" | "matchesCount"
+	> | null;
 }

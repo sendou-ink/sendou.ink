@@ -1,0 +1,46 @@
+{
+	"addBuild": "Aggiungi build",
+	"reachBuildMaxCount": "Hai raggiunto il numero massimo di build.",
+	"noBuilds": "Non hai ancora build. Aggiungine uno!",
+	"buildCard.info": "Info",
+	"buildCard.edit": "Modifica",
+
+	"forms.title": "Nome",
+	"forms.modes": "Modalità",
+	"forms.weapons": "Armi",
+	"forms.gear.HEAD": "Accessorio",
+	"forms.gear.CLOTHES": "Vestiti",
+	"forms.gear.SHOES": "Scarpe",
+	"forms.private.info": "Le build private sono visibili soltanto a te",
+	"forms.noGear.info": "La scelta dei vestiti è opzionale, ma devi riempire ogni slot se decidi di riempirne uno.",
+
+	"deleteConfirm": "Vuoi cancellare la build '{{title}}'?",
+
+	"stats.count.title": "Statistiche da {{count}} build di {{weapon}}",
+	"stats.ap.title": "Media dei punti abilità",
+	"stats.percentage.title": "Presenza delle abilità esclusive alle main",
+	"stats.all": "Tutte",
+	"stats.public": "Pubbliche",
+	"stats.private": "Private",
+
+	"addFilter": "Aggiungi filtro",
+	"linkButton.abilityStats": "Statistiche abilità",
+	"linkButton.popularBuilds": "Build popolari",
+	"noPopularBuilds": "Sembra che non ci siano build popolari per quest'arma in questo momento",
+
+	"emptyAbilitySlot": "Slot abilità vuoto",
+
+	"filters.type.ability": "Per abilità",
+	"filters.type.mode": "Per modalità",
+	"filters.type.date": "Per data",
+	"filters.ability.title": "Filtro abilità",
+	"filters.mode.title": "Filtro modalità",
+	"filters.date.title": "Filtro data",
+	"filters.has": "Ha",
+	"filters.does.not.have": "Non ha",
+	"filters.atLeast": "Almeno",
+	"filters.atMost": "Al più",
+	"filters.date.since": "Da",
+	"filters.date.custom": "Personalizzato",
+	"filters.filterByWeapon": "Filtra per armi"
+}

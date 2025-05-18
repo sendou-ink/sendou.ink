@@ -14,21 +14,21 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export function addInitialSkill({
-  mu,
-  sigma,
-  season,
-  userId,
+	mu,
+	sigma,
+	season,
+	userId,
 }: {
-  mu: number;
-  sigma: number;
-  season: number;
-  userId: number;
+	mu: number;
+	sigma: number;
+	season: number;
+	userId: number;
 }) {
-  stm.run({
-    mu,
-    sigma,
-    season,
-    ordinal: ordinal({ mu, sigma }),
-    userId,
-  });
+	stm.run({
+		mu,
+		sigma,
+		season,
+		ordinal: ordinal({ mu, sigma }),
+		userId,
+	});
 }

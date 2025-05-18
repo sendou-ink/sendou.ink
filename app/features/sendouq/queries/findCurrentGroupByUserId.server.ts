@@ -1,6 +1,6 @@
-import invariant from "tiny-invariant";
 import { sql } from "~/db/sql";
-import type { Group, GroupMember } from "~/db/types";
+import type { Tables } from "~/db/tables";
+import invariant from "~/utils/invariant";
 
 const stm = sql.prepare(/* sql */ `
   select
@@ -21,19 +21,19 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 type ActiveGroup = Pick<
-  Group,
-  "id" | "status" | "latestActionAt" | "chatCode"
+	Tables["Group"],
+	"id" | "status" | "latestActionAt" | "chatCode"
 > & {
-  matchId?: number;
-  role: GroupMember["role"];
+	matchId?: number;
+	role: Tables["GroupMember"]["role"];
 };
 
 export function findCurrentGroupByUserId(
-  userId: number,
+	userId: number,
 ): ActiveGroup | undefined {
-  const groups = stm.all({ userId }) as any;
+	const groups = stm.all({ userId }) as any;
 
-  invariant(groups.length <= 1, "User can't be in more than one group");
+	invariant(groups.length <= 1, "User can't be in more than one group");
 
-  return groups[0];
+	return groups[0];
 }

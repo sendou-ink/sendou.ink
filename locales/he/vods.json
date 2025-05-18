@@ -1,0 +1,22 @@
+{
+	"type.SCRIM": "משחק ידידות",
+	"type.TOURNAMENT": "טורניר (נקודת מבט)",
+	"type.MATCHMAKING": "Anarchy/X Battle/Turf War",
+	"type.CAST": "טורניר (קאסט)",
+	"gameCount": "משחק {{count}}",
+	"minShort": "דקה",
+	"secShort": "שנייה",
+	"forms.title.youtubeUrl": "YouTube URL",
+	"forms.title.videoTitle": "כותרת סרטון",
+	"forms.title.videoDate": "תאריך סרטון",
+	"forms.title.type": "סוג",
+	"forms.title.pov": "שחקן (נקודת מבט)",
+	"forms.title.startTimestamp": "תחילת חותמת זמן",
+	"forms.title.mode": "מוד",
+	"forms.title.stage": "מפה",
+	"forms.title.weaponsTeamOne": "נשקים (צוות 1)",
+	"forms.title.weaponsTeamTwo": "נשקים (צוות 2)",
+	"forms.title.weapon": "נשקים",
+	"forms.action.addMatch": "הוספת קרב",
+	"forms.action.deleteMatch": "מחיקת קרב"
+}

@@ -7,5 +7,5 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export function makeArtist(userId: number) {
-  stm.run({ userId });
+	stm.run({ userId });
 }

@@ -1,9 +1,9 @@
-import invariant from "tiny-invariant";
 import {
-  SPLATOON_3_XP_BADGE_VALUES,
-  findSplatoon3XpBadgeValue,
+	SPLATOON_3_XP_BADGE_VALUES,
+	findSplatoon3XpBadgeValue,
 } from "~/constants";
 import { sql } from "~/db/sql";
+import invariant from "~/utils/invariant";
 
 const badgeCodeToIdStm = sql.prepare(/* sql */ `
   select "id"
@@ -36,25 +36,24 @@ const addXPBadgeStm = sql.prepare(/* sql */ `
 `);
 
 export const syncXPBadges = sql.transaction(() => {
-  for (const value of SPLATOON_3_XP_BADGE_VALUES) {
-    const badgeId = badgeCodeToIdStm
-      .pluck()
-      .get({ code: String(value) }) as number;
+	for (const value of SPLATOON_3_XP_BADGE_VALUES) {
+		const badgeId = (badgeCodeToIdStm.get({ code: String(value) }) as any)
+			.id as number;
 
-    invariant(badgeId, `Badge ${value} not found`);
+		invariant(badgeId, `Badge ${value} not found`);
 
-    deleteBadgeOwnerStm.run({ badgeId });
-  }
+		deleteBadgeOwnerStm.run({ badgeId });
+	}
 
-  const userTopXPowers = userTopXPowersStm.all() as Array<{
-    userId: number;
-    xPower: number;
-  }>;
+	const userTopXPowers = userTopXPowersStm.all() as Array<{
+		userId: number;
+		xPower: number;
+	}>;
 
-  for (const { userId, xPower } of userTopXPowers) {
-    const badgeValue = findSplatoon3XpBadgeValue(xPower);
-    if (!badgeValue) continue;
+	for (const { userId, xPower } of userTopXPowers) {
+		const badgeValue = findSplatoon3XpBadgeValue(xPower);
+		if (!badgeValue) continue;
 
-    addXPBadgeStm.run({ code: String(badgeValue), userId });
-  }
+		addXPBadgeStm.run({ code: String(badgeValue), userId });
+	}
 });

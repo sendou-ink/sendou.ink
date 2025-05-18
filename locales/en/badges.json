@@ -1,0 +1,13 @@
+{
+	"patreon": "Supporter of sendou.ink on Patreon",
+	"patreon+": "Supporter+ of sendou.ink on Patreon",
+	"xp": "Awarded for reaching {{xpText}}",
+	"tournament_one": "Awarded for winning {{tournament}}",
+	"tournament_other": "Awarded for winning {{tournament}} (×{{count}})",
+	"forYourEvent": "Badge for your event?",
+	"managedBy": "Managed by {{users}}",
+	"madeBy": "made by {{user}}",
+	"own.divider": "Managed badges",
+	"other.divider": "Other badges",
+	"noBadgesFound": "No badges matching your search"
+}

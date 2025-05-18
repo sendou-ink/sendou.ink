@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import { sql } from "~/db/sql";
-import type { GroupMatch } from "~/db/types";
+import type { ParsedMemento, Tables } from "~/db/tables";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
 import { syncGroupTeamId } from "./syncGroupTeamId.server";
 
@@ -8,11 +8,13 @@ const createMatchStm = sql.prepare(/* sql */ `
   insert into "GroupMatch" (
     "alphaGroupId",
     "bravoGroupId",
-    "chatCode"
+    "chatCode",
+    "memento"
   ) values (
     @alphaGroupId,
     @bravoGroupId,
-    @chatCode
+    @chatCode,
+    @memento
   )
   returning *
 `);
@@ -34,36 +36,37 @@ const createMatchMapStm = sql.prepare(/* sql */ `
 `);
 
 export const createMatch = sql.transaction(
-  ({
-    alphaGroupId,
-    bravoGroupId,
-    mapList,
-    addChatCode,
-  }: {
-    alphaGroupId: number;
-    bravoGroupId: number;
-    addChatCode: boolean;
-    mapList: TournamentMapListMap[];
-  }) => {
-    const match = createMatchStm.get({
-      alphaGroupId,
-      bravoGroupId,
-      chatCode: addChatCode ? nanoid(10) : null,
-    }) as GroupMatch;
+	({
+		alphaGroupId,
+		bravoGroupId,
+		mapList,
+		memento,
+	}: {
+		alphaGroupId: number;
+		bravoGroupId: number;
+		mapList: TournamentMapListMap[];
+		memento: ParsedMemento;
+	}) => {
+		const match = createMatchStm.get({
+			alphaGroupId,
+			bravoGroupId,
+			chatCode: nanoid(10),
+			memento: JSON.stringify(memento),
+		}) as Tables["GroupMatch"];
 
-    for (const [i, { mode, source, stageId }] of mapList.entries()) {
-      createMatchMapStm.run({
-        matchId: match.id,
-        index: i,
-        mode,
-        stageId,
-        source: String(source),
-      });
-    }
+		for (const [i, { mode, source, stageId }] of mapList.entries()) {
+			createMatchMapStm.run({
+				matchId: match.id,
+				index: i,
+				mode,
+				stageId,
+				source: String(source),
+			});
+		}
 
-    syncGroupTeamId(alphaGroupId);
-    syncGroupTeamId(bravoGroupId);
+		syncGroupTeamId(alphaGroupId);
+		syncGroupTeamId(bravoGroupId);
 
-    return match;
-  },
+		return match;
+	},
 );

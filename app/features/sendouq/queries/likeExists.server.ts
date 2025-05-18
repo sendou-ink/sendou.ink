@@ -8,11 +8,11 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export function likeExists({
-  likerGroupId,
-  targetGroupId,
+	likerGroupId,
+	targetGroupId,
 }: {
-  likerGroupId: number;
-  targetGroupId: number;
+	likerGroupId: number;
+	targetGroupId: number;
 }) {
-  return Boolean(stm.get({ likerGroupId, targetGroupId }));
+	return Boolean(stm.get({ likerGroupId, targetGroupId }));
 }

@@ -1,0 +1,28 @@
+{
+	"q1": "Cos'è il Server Plus?",
+	"a1": "Il Server Plus è un server Discord per giocatori di alto livello costruito per cercare persone con cui giocare in squadra o contro. È stato fondato a settembre 2017. È diviso in tre tier, del quale il +1 è il più alto. Puoi accedervici quando un membro del server ti suggerisce e passi la votazione stagionale, oppure posizionandoti bene nella classifica di SendouQ.\n\nNella votazione ottieni una percentuale basata sul tuo risultato. 0% significherebbe che tutti coloro che hanno partecipato alla votazione ti abbiano votato contro mentre 100% significherebbe l'opposto. 60% è la sufficienza per passare la votazione. Se un membro ottiene una votazione sotto il 60%, esso viene degradato di un tier, o nel caso del +3, cacciato.\n\nVisita la pagina delle classifiche per un indicatore su chi è sulla strada di entrare tramite quel metodo. 60 persone vi ottengono l'accesso per stagione - 10 nel +1, 20 nel +2 e 30 nel +3.",
+
+	"q2": "Come faccio ad avere una medaglia come premio per il mio evento?",
+	"a2": "Da settembre 2024, le medaglie possono essere create da chiunque abbia le competenze necessarie. Visita il link in fondo alla pagina delle medaglie per ulteriori informazioni.",
+
+	"q3": "Come faccio ad aggiornare il mio nome utente o avatar?",
+	"a3": "Aggiornare username o foto profilo su Discord non le aggiorna immediatamente su sendou.ink. Per fare in modo che accada hai due opzioni:\n\n1) Se sei un membro del server Discord di sendou.ink o del Server Plus puoi semplicemente aspettare. Vi è un processo giornaliero che gestisce l'aggiornamento.\n\n2) Per fare in modo che si aggiornino immediatamente è possibile utilizzare il comando /update-profile col bot Lohi.",
+
+	"q4": "Sono diventato un sostenitore su Patreon, come mai non vedo nessun cambiamento sul sito?",
+	"a4": "Assicurati di aver connesso il tuo account Discord con quello Patreon. Dopo averli sincronizzati, l'aggiornamento dei dati sul sito potrebbe impiegare fino a 2 ore. Se stai avendo problemi, scrivi direttamente a Sendou.",
+
+	"q5": "Esiste un app per sendou.ink?",
+	"a5": "No, ma il sito può essere installato come una 'Progressive Web App', che porta un sacco degli stessi benefici come l'uso a schermo pieno, l'icona sulla schermata home e un processo separato dal browser. Cerca 'Come installare progressive web app su *il tuo browser*' per imparare come si fa.",
+
+	"q6": "Come faccio ad aggiungere un link per Twitch/Bluesky/Youtube al mio profilo?",
+	"a6": "Il sito sincronizza i profili con le tue connessioni al profilo Discord. Per connettere un account a sendou.ink, connettilo e verificalo su Discord, quindi esci e riaccedi qui per aggiornare il profilo.",
+
+	"q7": "Come faccio ad aggiungere video?",
+	"a7": "Manda un messaggio sul canale helpdesk del Discord di sendou.ink chiedendo l'accesso ai permessi per farlo. Includi un link ad un esempio di video che posteresti.",
+
+	"q8": "Come faccio a mostrare i risultati delle Partite X sul mio profilo?",
+	"a8": "Cerca la tua pagina profilo sulla pagina Ricerca Top. Posta il link sull'helpdesk nel nostro Discord dicendo di volerla associata. L'associazione non è possibile se non hai concluso una stagione in Top 500.",
+
+	"q9": "Come faccio a caricare un'opera che ho commissionato?",
+	"a9": "Puoi caricare solo art che hai creato tu stesso/a. Deve anche essere relativa a Splatoon. Per opere commissionate, si prega di chiedere all'artista originale di caricarle. Possono collegare il tuo profilo e fare in modo che esse vengano mostrate lì."
+}

@@ -1,472 +1,802 @@
-import type { ActionFunction } from "@remix-run/node";
-import { useFetcher, useOutletContext, useSubmit } from "@remix-run/react";
+import { useFetcher } from "@remix-run/react";
+import clsx from "clsx";
 import * as React from "react";
+import { useTranslation } from "react-i18next";
+import { Avatar } from "~/components/Avatar";
 import { Button, LinkButton } from "~/components/Button";
-import { Toggle } from "~/components/Toggle";
-import { useTranslation } from "~/hooks/useTranslation";
-import { canAdminTournament, isAdmin } from "~/permissions";
-import { notFoundIfFalsy, parseRequestFormData, validate } from "~/utils/remix";
-import { discordFullName } from "~/utils/strings";
-import { findByIdentifier } from "../queries/findByIdentifier.server";
-import { findTeamsByTournamentId } from "../queries/findTeamsByTournamentId.server";
-import { updateShowMapListGenerator } from "../queries/updateShowMapListGenerator.server";
-import { requireUserId } from "~/modules/auth/user.server";
-import {
-  HACKY_resolveCheckInTime,
-  tournamentIdFromParams,
-  validateCanCheckIn,
-} from "../tournament-utils";
-import { SubmitButton } from "~/components/SubmitButton";
-import { adminActionSchema } from "../tournament-schemas.server";
-import { changeTeamOwner } from "../queries/changeTeamOwner.server";
-import invariant from "tiny-invariant";
-import { assertUnreachable } from "~/utils/types";
-import { checkIn } from "../queries/checkIn.server";
-import { checkOut } from "../queries/checkOut.server";
-import hasTournamentStarted from "../queries/hasTournamentStarted.server";
-import type { TournamentLoaderData } from "./to.$id";
-import { joinTeam, leaveTeam } from "../queries/joinLeaveTeam.server";
-import { deleteTeam } from "../queries/deleteTeam.server";
-import { useUser } from "~/modules/auth";
-import {
-  calendarEditPage,
-  calendarEventPage,
-  tournamentPage,
-} from "~/utils/urls";
-import { Redirect } from "~/components/Redirect";
+import { Divider } from "~/components/Divider";
+import { FormMessage } from "~/components/FormMessage";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { findMapPoolByTeamId } from "~/features/tournament-bracket";
-import { UserSearch } from "~/components/UserSearch";
+import { Input } from "~/components/Input";
+import { Label } from "~/components/Label";
+import { containerClassName } from "~/components/Main";
+import { Redirect } from "~/components/Redirect";
+import { SubmitButton } from "~/components/SubmitButton";
+import { SendouDialog } from "~/components/elements/Dialog";
+import { UserSearch } from "~/components/elements/UserSearch";
+import { TrashIcon } from "~/components/icons/Trash";
+import { USER } from "~/constants";
+import { useUser } from "~/features/auth/core/user";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
+import type { TournamentData } from "~/features/tournament-bracket/core/Tournament.server";
+import { databaseTimestampToDate } from "~/utils/dates";
+import invariant from "~/utils/invariant";
+import { assertUnreachable } from "~/utils/types";
+import {
+	calendarEventPage,
+	teamPage,
+	tournamentEditPage,
+	tournamentPage,
+} from "~/utils/urls";
+import { BracketProgressionSelector } from "../../calendar/components/BracketProgressionSelector";
+import { useTournament } from "./to.$id";
 
-export const action: ActionFunction = async ({ request, params }) => {
-  const user = await requireUserId(request);
-  const data = await parseRequestFormData({
-    request,
-    schema: adminActionSchema,
-  });
+import { action } from "../actions/to.$id.admin.server";
+export { action };
 
-  const tournamentId = tournamentIdFromParams(params);
-  const event = notFoundIfFalsy(findByIdentifier(tournamentId));
-  const teams = findTeamsByTournamentId(event.id);
-
-  validate(canAdminTournament({ user, event }), "Unauthorized", 401);
-
-  switch (data._action) {
-    case "UPDATE_SHOW_MAP_LIST_GENERATOR": {
-      updateShowMapListGenerator({
-        tournamentId: event.id,
-        showMapListGenerator: Number(data.show),
-      });
-      break;
-    }
-    case "CHANGE_TEAM_OWNER": {
-      const team = teams.find((t) => t.id === data.teamId);
-      validate(team, "Invalid team id");
-      const oldCaptain = team.members.find((m) => m.isOwner);
-      invariant(oldCaptain, "Team has no captain");
-      const newCaptain = team.members.find((m) => m.userId === data.memberId);
-      validate(newCaptain, "Invalid member id");
-
-      changeTeamOwner({
-        newCaptainId: data.memberId,
-        oldCaptainId: oldCaptain.userId,
-        tournamentTeamId: data.teamId,
-      });
-
-      break;
-    }
-    case "CHECK_IN": {
-      const team = teams.find((t) => t.id === data.teamId);
-      validate(team, "Invalid team id");
-      validateCanCheckIn({
-        event,
-        team,
-        mapPool: findMapPoolByTeamId(team.id),
-      });
-
-      checkIn(team.id);
-      break;
-    }
-    case "CHECK_OUT": {
-      const team = teams.find((t) => t.id === data.teamId);
-      validate(team, "Invalid team id");
-      validate(!hasTournamentStarted(event.id), "Tournament has started");
-
-      checkOut(team.id);
-      break;
-    }
-    case "REMOVE_MEMBER": {
-      const team = teams.find((t) => t.id === data.teamId);
-      validate(team, "Invalid team id");
-      validate(!team.checkedInAt, "Team is checked in");
-      validate(
-        !team.members.find((m) => m.userId === data.memberId)?.isOwner,
-
-        "Cannot remove team owner",
-      );
-
-      leaveTeam({
-        userId: data.memberId,
-        teamId: team.id,
-      });
-      break;
-    }
-    // TODO: could also handle the case of admin trying
-    // to add members from a checked in team
-    case "ADD_MEMBER": {
-      const team = teams.find((t) => t.id === data.teamId);
-      validate(team, "Invalid team id");
-
-      const previousTeam = teams.find((t) =>
-        t.members.some((m) => m.userId === data.userId),
-      );
-
-      if (hasTournamentStarted(event.id)) {
-        validate(
-          !previousTeam || !previousTeam.checkedInAt,
-          "User is already on a checked in team",
-        );
-      } else {
-        validate(!previousTeam, "User is already on a team");
-      }
-
-      joinTeam({
-        userId: data.userId,
-        newTeamId: team.id,
-        previousTeamId: previousTeam?.id,
-        // this team is not checked in so we can simply delete it
-        whatToDoWithPreviousTeam: previousTeam ? "DELETE" : undefined,
-        tournamentId,
-      });
-      break;
-    }
-    case "DELETE_TEAM": {
-      const team = teams.find((t) => t.id === data.teamId);
-      validate(team, "Invalid team id");
-      validate(!hasTournamentStarted(event.id), "Tournament has started");
-
-      deleteTeam(team.id);
-      break;
-    }
-    default: {
-      assertUnreachable(data);
-    }
-  }
-
-  return null;
-};
-
-// TODO: translations
 export default function TournamentAdminPage() {
-  const { t } = useTranslation(["calendar"]);
-  const data = useOutletContext<TournamentLoaderData>();
+	const { t } = useTranslation(["calendar"]);
+	const tournament = useTournament();
+	const [editingProgression, setEditingProgression] = React.useState(false);
 
-  const user = useUser();
+	const user = useUser();
 
-  if (!canAdminTournament({ user, event: data.event }) || data.hasFinalized) {
-    return <Redirect to={tournamentPage(data.event.id)} />;
-  }
+	// biome-ignore lint/correctness/useExhaustiveDependencies: we want to close the dialog after the progression was updated
+	React.useEffect(() => {
+		setEditingProgression(false);
+	}, [tournament]);
 
-  return (
-    <div className="stack md">
-      <AdminActions />
-      {isAdmin(user) ? <EnableMapList /> : null}
-      <DownloadParticipants />
-      <div className="stack horizontal items-end mt-4">
-        <LinkButton
-          to={calendarEditPage(data.event.eventId)}
-          size="tiny"
-          variant="outlined"
-        >
-          Edit event info
-        </LinkButton>
-        {!data.hasStarted ? (
-          <FormWithConfirm
-            dialogHeading={t("calendar:actions.delete.confirm", {
-              name: data.event.name,
-            })}
-            action={calendarEventPage(data.event.eventId)}
-            submitButtonTestId="delete-submit-button"
-          >
-            <Button
-              className="ml-auto"
-              size="tiny"
-              variant="minimal-destructive"
-              type="submit"
-            >
-              {t("calendar:actions.delete")}
-            </Button>
-          </FormWithConfirm>
-        ) : null}
-      </div>
-    </div>
-  );
+	if (!tournament.isOrganizer(user) || tournament.everyBracketOver) {
+		return <Redirect to={tournamentPage(tournament.ctx.id)} />;
+	}
+
+	return (
+		<div className={clsx("stack lg", containerClassName("normal"))}>
+			{tournament.isAdmin(user) && !tournament.hasStarted ? (
+				<div className="stack horizontal items-end">
+					<LinkButton
+						to={tournamentEditPage(tournament.ctx.eventId)}
+						size="tiny"
+						variant="outlined"
+						testId="edit-event-info-button"
+					>
+						Edit event info
+					</LinkButton>
+					{!tournament.isLeagueSignup ? (
+						<FormWithConfirm
+							dialogHeading={t("calendar:actions.delete.confirm", {
+								name: tournament.ctx.name,
+							})}
+							action={calendarEventPage(tournament.ctx.eventId)}
+							submitButtonTestId="delete-submit-button"
+						>
+							<Button
+								className="ml-auto"
+								size="tiny"
+								variant="minimal-destructive"
+								type="submit"
+							>
+								{t("calendar:actions.delete")}
+							</Button>
+						</FormWithConfirm>
+					) : null}
+				</div>
+			) : null}
+			{tournament.isAdmin(user) &&
+			tournament.hasStarted &&
+			!tournament.ctx.isFinalized ? (
+				<div className="stack horizontal justify-end">
+					<Button
+						onClick={() => setEditingProgression(true)}
+						size="tiny"
+						variant="outlined"
+						testId="edit-event-info-button"
+					>
+						Edit brackets
+					</Button>
+					{editingProgression ? (
+						<BracketProgressionEditDialog
+							close={() => setEditingProgression(false)}
+						/>
+					) : null}
+				</div>
+			) : null}
+			<Divider smallText>Team actions</Divider>
+			<TeamActions />
+			{tournament.isAdmin(user) ? (
+				<>
+					<Divider smallText>Staff</Divider>
+					<Staff />
+				</>
+			) : null}
+			<Divider smallText>Cast Twitch Accounts</Divider>
+			<CastTwitchAccounts />
+			<Divider smallText>Participant list download</Divider>
+			<DownloadParticipants />
+			{!tournament.isLeagueSignup ? (
+				<>
+					<Divider smallText>Bracket reset</Divider>
+					<BracketReset />
+				</>
+			) : null}
+		</div>
+	);
 }
 
-type Input = "USER" | "ROSTER_MEMBER";
+type InputType =
+	| "TEAM_NAME"
+	| "REGISTERED_TEAM"
+	| "USER"
+	| "ROSTER_MEMBER"
+	| "BRACKET"
+	| "IN_GAME_NAME";
 const actions = [
-  {
-    type: "CHANGE_TEAM_OWNER",
-    inputs: ["ROSTER_MEMBER"] as Input[],
-    when: [],
-  },
-  {
-    type: "CHECK_IN",
-    inputs: [] as Input[],
-    when: ["CHECK_IN_STARTED", "TOURNAMENT_BEFORE_START"],
-  },
-  {
-    type: "CHECK_OUT",
-    inputs: [] as Input[],
-    when: ["CHECK_IN_STARTED", "TOURNAMENT_BEFORE_START"],
-  },
-  {
-    type: "ADD_MEMBER",
-    inputs: ["USER"] as Input[],
-    when: [],
-  },
-  {
-    type: "REMOVE_MEMBER",
-    inputs: ["ROSTER_MEMBER"] as Input[],
-    when: ["TOURNAMENT_BEFORE_START"],
-  },
-  {
-    type: "DELETE_TEAM",
-    inputs: [] as Input[],
-    when: ["TOURNAMENT_BEFORE_START"],
-  },
+	{
+		type: "ADD_TEAM",
+		inputs: ["USER", "TEAM_NAME"] as InputType[],
+		when: ["TOURNAMENT_BEFORE_START"],
+	},
+	{
+		type: "CHANGE_TEAM_NAME",
+		inputs: ["REGISTERED_TEAM", "TEAM_NAME"] as InputType[],
+		when: [],
+	},
+	{
+		type: "CHANGE_TEAM_OWNER",
+		inputs: ["ROSTER_MEMBER", "REGISTERED_TEAM"] as InputType[],
+		when: [],
+	},
+	{
+		type: "CHECK_IN",
+		inputs: ["REGISTERED_TEAM", "BRACKET"] as InputType[],
+		when: ["CHECK_IN_STARTED"],
+	},
+	{
+		type: "CHECK_OUT",
+		inputs: ["REGISTERED_TEAM", "BRACKET"] as InputType[],
+		when: ["CHECK_IN_STARTED"],
+	},
+	{
+		type: "ADD_MEMBER",
+		inputs: ["USER", "REGISTERED_TEAM"] as InputType[],
+		when: [],
+	},
+	{
+		type: "REMOVE_MEMBER",
+		inputs: ["ROSTER_MEMBER", "REGISTERED_TEAM"] as InputType[],
+		when: [],
+	},
+	{
+		type: "DELETE_TEAM",
+		inputs: ["REGISTERED_TEAM"] as InputType[],
+		when: ["TOURNAMENT_BEFORE_START"],
+	},
+	{
+		type: "DROP_TEAM_OUT",
+		inputs: ["REGISTERED_TEAM"] as InputType[],
+		when: ["TOURNAMENT_AFTER_START", "IS_SWISS"],
+	},
+	{
+		type: "UNDO_DROP_TEAM_OUT",
+		inputs: ["REGISTERED_TEAM"] as InputType[],
+		when: ["TOURNAMENT_AFTER_START", "IS_SWISS"],
+	},
+	{
+		type: "UPDATE_IN_GAME_NAME",
+		inputs: ["ROSTER_MEMBER", "REGISTERED_TEAM", "IN_GAME_NAME"] as InputType[],
+		when: ["IN_GAME_NAME_REQUIRED"],
+	},
+	{
+		type: "DELETE_LOGO",
+		inputs: ["REGISTERED_TEAM"] as InputType[],
+		when: [],
+	},
 ] as const;
 
-function AdminActions() {
-  const fetcher = useFetcher();
-  const { t } = useTranslation(["tournament"]);
-  const data = useOutletContext<TournamentLoaderData>();
-  const parentRouteData = useOutletContext<TournamentLoaderData>();
-  const [selectedTeamId, setSelectedTeamId] = React.useState(data.teams[0]?.id);
-  const [selectedAction, setSelectedAction] = React.useState<
-    (typeof actions)[number]
-  >(actions[0]);
+function TeamActions() {
+	const fetcher = useFetcher();
+	const { t } = useTranslation(["tournament"]);
+	const tournament = useTournament();
+	const [selectedTeamId, setSelectedTeamId] = React.useState(
+		tournament.ctx.teams[0]?.id,
+	);
+	const [selectedAction, setSelectedAction] = React.useState<
+		(typeof actions)[number]
+	>(
+		// if started, default to action with no restrictions
+		tournament.hasStarted
+			? actions.find((a) => a.when.length === 0)!
+			: actions[0],
+	);
 
-  const selectedTeam = data.teams.find((team) => team.id === selectedTeamId);
+	const selectedTeam = tournament.teamById(selectedTeamId);
 
-  const actionsToShow = actions.filter((action) => {
-    for (const when of action.when) {
-      switch (when) {
-        case "CHECK_IN_STARTED": {
-          if (HACKY_resolveCheckInTime(data.event).getTime() > Date.now()) {
-            return false;
-          }
+	const actionsToShow = actions.filter((action) => {
+		for (const when of action.when) {
+			switch (when) {
+				case "CHECK_IN_STARTED": {
+					if (!tournament.regularCheckInStartInThePast) {
+						return false;
+					}
 
-          break;
-        }
-        case "TOURNAMENT_BEFORE_START": {
-          if (parentRouteData.hasStarted) {
-            return false;
-          }
-          break;
-        }
-        default: {
-          assertUnreachable(when);
-        }
-      }
-    }
+					break;
+				}
+				case "TOURNAMENT_BEFORE_START": {
+					if (tournament.hasStarted) {
+						return false;
+					}
 
-    return true;
-  });
+					break;
+				}
+				case "TOURNAMENT_AFTER_START": {
+					if (!tournament.hasStarted) {
+						return false;
+					}
 
-  return (
-    <fetcher.Form
-      method="post"
-      className="stack horizontal sm items-end flex-wrap"
-    >
-      <div>
-        <label htmlFor="action">Action</label>
-        <select
-          id="action"
-          name="action"
-          value={selectedAction.type}
-          onChange={(e) =>
-            setSelectedAction(actions.find((a) => a.type === e.target.value)!)
-          }
-        >
-          {actionsToShow.map((action) => (
-            <option key={action.type} value={action.type}>
-              {t(`tournament:admin.actions.${action.type}`)}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label htmlFor="teamId">Team</label>
-        <select
-          id="teamId"
-          name="teamId"
-          value={selectedTeamId}
-          onChange={(e) => setSelectedTeamId(Number(e.target.value))}
-        >
-          {data.teams
-            .slice()
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((team) => (
-              <option key={team.id} value={team.id}>
-                {team.name}
-              </option>
-            ))}
-        </select>
-      </div>
-      {selectedTeam && selectedAction.inputs.includes("ROSTER_MEMBER") ? (
-        <div>
-          <label htmlFor="memberId">Member</label>
-          <select id="memberId" name="memberId">
-            {selectedTeam.members.map((member) => (
-              <option key={member.userId} value={member.userId}>
-                {discordFullName(member)}
-              </option>
-            ))}
-          </select>
-        </div>
-      ) : null}
-      {selectedAction.inputs.includes("USER") ? (
-        <div>
-          <label htmlFor="user">User</label>
-          <UserSearch inputName="userId" id="user" />
-        </div>
-      ) : null}
-      <SubmitButton
-        _action={selectedAction.type}
-        state={fetcher.state}
-        variant={
-          selectedAction.type === "DELETE_TEAM" ? "destructive" : undefined
-        }
-      >
-        Go
-      </SubmitButton>
-    </fetcher.Form>
-  );
+					break;
+				}
+				case "IS_SWISS": {
+					if (!tournament.brackets.some((b) => b.type === "swiss")) {
+						return false;
+					}
+
+					break;
+				}
+				case "IN_GAME_NAME_REQUIRED": {
+					if (!tournament.ctx.settings.requireInGameNames) {
+						return false;
+					}
+
+					break;
+				}
+				default: {
+					assertUnreachable(when);
+				}
+			}
+		}
+
+		return true;
+	});
+
+	return (
+		<div className="stack md">
+			<fetcher.Form
+				method="post"
+				className="stack horizontal sm items-end flex-wrap"
+			>
+				<div>
+					<label htmlFor="action">Action</label>
+					<select
+						id="action"
+						name="action"
+						value={selectedAction.type}
+						onChange={(e) => {
+							setSelectedAction(
+								actions.find((a) => a.type === e.target.value)!,
+							);
+						}}
+					>
+						{actionsToShow.map((action) => (
+							<option key={action.type} value={action.type}>
+								{t(`tournament:admin.actions.${action.type}`)}
+							</option>
+						))}
+					</select>
+				</div>
+				{selectedAction.inputs.includes("REGISTERED_TEAM") ? (
+					<div>
+						<label htmlFor="teamId">Team</label>
+						<select
+							id="teamId"
+							name="teamId"
+							value={selectedTeamId}
+							onChange={(e) => setSelectedTeamId(Number(e.target.value))}
+						>
+							{tournament.ctx.teams
+								.slice()
+								.sort((a, b) => a.name.localeCompare(b.name))
+								.map((team) => (
+									<option key={team.id} value={team.id}>
+										{team.name}
+									</option>
+								))}
+						</select>
+					</div>
+				) : null}
+				{selectedAction.inputs.includes("TEAM_NAME") ? (
+					<div>
+						<label htmlFor="teamName">Team name</label>
+						<input id="teamName" name="teamName" />
+					</div>
+				) : null}
+				{selectedTeam && selectedAction.inputs.includes("ROSTER_MEMBER") ? (
+					<div>
+						<label htmlFor="memberId">Member</label>
+						<select id="memberId" name="memberId">
+							{selectedTeam.members.map((member) => (
+								<option key={member.userId} value={member.userId}>
+									{member.username}
+								</option>
+							))}
+						</select>
+					</div>
+				) : null}
+				{selectedAction.inputs.includes("USER") ? (
+					<div>
+						<UserSearch name="userId" label="User" />
+					</div>
+				) : null}
+				{selectedAction.inputs.includes("BRACKET") ? (
+					<div>
+						<label htmlFor="bracket">Bracket</label>
+						<select id="bracket" name="bracketIdx">
+							{tournament.brackets.map((bracket, bracketIdx) => (
+								<option key={bracket.name} value={bracketIdx}>
+									{bracket.name}
+								</option>
+							))}
+						</select>
+					</div>
+				) : null}
+				{selectedTeam && selectedAction.inputs.includes("IN_GAME_NAME") ? (
+					<div className="stack items-start">
+						<Label>New IGN</Label>
+						<div className="stack horizontal sm items-center">
+							<Input
+								name="inGameNameText"
+								aria-label="In game name"
+								maxLength={USER.IN_GAME_NAME_TEXT_MAX_LENGTH}
+							/>
+							<div className="u-edit__in-game-name-hashtag">#</div>
+							<Input
+								name="inGameNameDiscriminator"
+								aria-label="In game name discriminator"
+								maxLength={USER.IN_GAME_NAME_DISCRIMINATOR_MAX_LENGTH}
+								pattern="[0-9a-z]{4,5}"
+							/>
+						</div>
+					</div>
+				) : null}
+				<SubmitButton
+					_action={selectedAction.type}
+					state={fetcher.state}
+					variant={
+						selectedAction.type === "DELETE_TEAM" ? "destructive" : undefined
+					}
+				>
+					Go
+				</SubmitButton>
+			</fetcher.Form>
+		</div>
+	);
 }
 
-function EnableMapList() {
-  const data = useOutletContext<TournamentLoaderData>();
-  const submit = useSubmit();
-  const [eventStarted, setEventStarted] = React.useState(
-    Boolean(data.event.showMapListGenerator),
-  );
-  function handleToggle(toggled: boolean) {
-    setEventStarted(toggled);
+function Staff() {
+	const tournament = useTournament();
 
-    const data = new FormData();
-    data.append("_action", "UPDATE_SHOW_MAP_LIST_GENERATOR");
-    data.append("show", toggled ? "on" : "off");
+	return (
+		<div className="stack lg">
+			{/* Key so inputs are cleared after staff is added */}
+			<StaffAdder key={tournament.ctx.staff.length} />
+			<StaffList />
+		</div>
+	);
+}
 
-    submit(data, { method: "post" });
-  }
+function CastTwitchAccounts() {
+	const id = React.useId();
+	const fetcher = useFetcher();
+	const tournament = useTournament();
 
-  return (
-    <div>
-      <label>Public map list generator tool</label>
-      <Toggle checked={eventStarted} setChecked={handleToggle} name="show" />
-    </div>
-  );
+	return (
+		<fetcher.Form method="post" className="stack sm">
+			<div className="stack horizontal sm items-end">
+				<div>
+					<Label htmlFor={id}>Twitch accounts</Label>
+					<input
+						id={id}
+						placeholder="dappleproductions"
+						name="castTwitchAccounts"
+						defaultValue={tournament.ctx.castTwitchAccounts?.join(",")}
+					/>
+				</div>
+				<SubmitButton
+					testId="save-cast-twitch-accounts-button"
+					state={fetcher.state}
+					_action="UPDATE_CAST_TWITCH_ACCOUNTS"
+				>
+					Save
+				</SubmitButton>
+			</div>
+			<FormMessage type="info">
+				Twitch account where the tournament is casted. Player streams are added
+				automatically based on their profile data. You can also enter multiple
+				accounts, just separate them with a comma e.g.
+				&quot;sendouc,leanny&quot;
+			</FormMessage>
+		</fetcher.Form>
+	);
+}
+
+function StaffAdder() {
+	const fetcher = useFetcher();
+
+	return (
+		<fetcher.Form method="post" className="stack sm">
+			<div className="stack horizontal sm flex-wrap items-start">
+				<div>
+					<UserSearch name="userId" label="New staffer" isRequired />
+				</div>
+				<div className="stack horizontal sm items-end">
+					<div>
+						<Label htmlFor="staff-role">Role</Label>
+						<select name="role" id="staff-role" className="w-max">
+							<option value="ORGANIZER">Organizer</option>
+							<option value="STREAMER">Streamer</option>
+						</select>
+					</div>
+					<SubmitButton
+						state={fetcher.state}
+						_action="ADD_STAFF"
+						testId="add-staff-button"
+					>
+						Add
+					</SubmitButton>
+				</div>
+			</div>
+			<FormMessage type="info">
+				Organizer has same permissions as you expect adding/removing staff,
+				editing calendar event info and deleting the tournament. Streamer can
+				only talk in chats and see room password/pool.
+			</FormMessage>
+		</fetcher.Form>
+	);
+}
+
+function StaffList() {
+	const { t } = useTranslation(["tournament"]);
+	const tournament = useTournament();
+
+	return (
+		<div className="stack md">
+			{tournament.ctx.staff.map((staff) => (
+				<div
+					key={staff.id}
+					className="stack horizontal sm items-center"
+					data-testid={`staff-id-${staff.id}`}
+				>
+					<Avatar size="xs" user={staff} />{" "}
+					<div className="mr-4">
+						<div>{staff.username}</div>
+						<div className="text-lighter text-xs text-capitalize">
+							{t(`tournament:staff.role.${staff.role}`)}
+						</div>
+					</div>
+					<RemoveStaffButton staff={staff} />
+				</div>
+			))}
+		</div>
+	);
+}
+
+function RemoveStaffButton({
+	staff,
+}: {
+	staff: TournamentData["ctx"]["staff"][number];
+}) {
+	const { t } = useTranslation(["tournament"]);
+
+	return (
+		<FormWithConfirm
+			dialogHeading={`Remove ${staff.username} as ${t(
+				`tournament:staff.role.${staff.role}`,
+			)}?`}
+			fields={[
+				["userId", staff.id],
+				["_action", "REMOVE_STAFF"],
+			]}
+			submitButtonText="Remove"
+		>
+			<Button
+				variant="minimal-destructive"
+				size="tiny"
+				data-testid="remove-staff-button"
+			>
+				<TrashIcon className="build__icon" />
+			</Button>
+		</FormWithConfirm>
+	);
 }
 
 function DownloadParticipants() {
-  const { t } = useTranslation(["tournament"]);
-  const data = useOutletContext<TournamentLoaderData>();
+	const tournament = useTournament();
 
-  function allParticipantsContent() {
-    return data.teams
-      .slice()
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .map((team) => {
-        const owner = team.members.find((user) => user.isOwner);
-        invariant(owner);
+	function allParticipantsContent() {
+		return tournament.ctx.teams
+			.slice()
+			.sort((a, b) => a.name.localeCompare(b.name))
+			.map((team) => {
+				const owner = team.members.find((user) => user.isOwner);
+				invariant(owner);
 
-        return `${team.name} - ${discordFullName(owner)} - <@${
-          owner.discordId
-        }>`;
-      })
-      .join("\n");
-  }
+				const nonOwners = team.members.filter((user) => !user.isOwner);
 
-  function notCheckedInParticipantsContent() {
-    return data.teams
-      .slice()
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .filter((team) => !team.checkedInAt)
-      .map((team) => {
-        return `${team.name} - ${team.members
-          .map(
-            (member) => `${discordFullName(member)} - <@${member.discordId}>`,
-          )
-          .join(" / ")}`;
-      })
-      .join("\n");
-  }
+				let result = `-- ${team.name} --\n(C) ${owner.username} (IGN: ${owner.inGameName ?? ""}) - <@${owner.discordId}>`;
 
-  function simpleListInSeededOrder() {
-    return data.teams
-      .slice()
-      .sort((a, b) => (a.seed ?? Infinity) - (b.seed ?? Infinity))
-      .filter((team) => team.checkedInAt)
-      .map((team) => team.name)
-      .join("\n");
-  }
+				result += nonOwners
+					.map(
+						(user) =>
+							`\n${user.username} (IGN: ${user.inGameName ?? ""}) - <@${user.discordId}>`,
+					)
+					.join("");
 
-  return (
-    <div>
-      <label>{t("tournament:admin.download")} (Discord format)</label>
-      <div className="stack horizontal sm">
-        <Button
-          size="tiny"
-          onClick={() =>
-            handleDownload({
-              filename: "all-participants.txt",
-              content: allParticipantsContent(),
-            })
-          }
-        >
-          All participants
-        </Button>
-        <Button
-          size="tiny"
-          onClick={() =>
-            handleDownload({
-              filename: "not-checked-in-participants.txt",
-              content: notCheckedInParticipantsContent(),
-            })
-          }
-        >
-          Not checked in participants
-        </Button>
-        <Button
-          size="tiny"
-          onClick={() =>
-            handleDownload({
-              filename: "teams-in-seeded-order.txt",
-              content: simpleListInSeededOrder(),
-            })
-          }
-        >
-          Simple list in seeded order
-        </Button>
-      </div>
-    </div>
-  );
+				result += "\n";
+
+				return result;
+			})
+			.join("\n");
+	}
+
+	function checkedInParticipantsContent() {
+		const header = "Teams ordered by registration time\n---\n";
+
+		return (
+			header +
+			tournament.ctx.teams
+				.slice()
+				.sort((a, b) => a.createdAt - b.createdAt)
+				.filter((team) => team.checkIns.length > 0)
+				.map((team, i) => {
+					return `${i + 1}) ${team.name} - ${databaseTimestampToDate(
+						team.createdAt,
+					).toISOString()} - ${team.members
+						.map((member) => `${member.username} - <@${member.discordId}>`)
+						.join(" / ")}`;
+				})
+				.join("\n")
+		);
+	}
+
+	function notCheckedInParticipantsContent() {
+		return tournament.ctx.teams
+			.slice()
+			.sort((a, b) => a.name.localeCompare(b.name))
+			.filter((team) => team.checkIns.length === 0)
+			.map((team) => {
+				return `${team.name} - ${team.members
+					.map((member) => `${member.username} - <@${member.discordId}>`)
+					.join(" / ")}`;
+			})
+			.join("\n");
+	}
+
+	function simpleListInSeededOrder() {
+		return tournament.ctx.teams
+			.slice()
+			.sort(
+				(a, b) =>
+					(a.seed ?? Number.POSITIVE_INFINITY) -
+					(b.seed ?? Number.POSITIVE_INFINITY),
+			)
+			.filter((team) => team.checkIns.length > 0)
+			.map((team) => team.name)
+			.join("\n");
+	}
+
+	function leagueFormat() {
+		const memberColumnsCount = tournament.ctx.teams.reduce(
+			(max, team) => Math.max(max, team.members.length),
+			0,
+		);
+		const header = `Team id,Team name,Team page URL,Div${Array.from({
+			length: memberColumnsCount,
+		})
+			.map((_, i) => `,Member ${i + 1} name,Member${i + 1} URL`)
+			.join("")}`;
+
+		return `${header}\n${tournament.ctx.teams
+			.map((team) => {
+				return `${team.id},${team.name},${team.team ? teamPage(team.team.customUrl) : ""},,${team.members
+					.map(
+						(member) =>
+							`${member.username},https://sendou.ink/u/${member.discordId}`,
+					)
+					.join(",")}${Array(
+					memberColumnsCount - team.members.length === 0
+						? 0
+						: memberColumnsCount - team.members.length + 1,
+				)
+					.fill(",")
+					.join("")}`;
+			})
+			.join("\n")}`;
+	}
+
+	return (
+		<div>
+			<div className="stack horizontal sm flex-wrap">
+				<Button
+					size="tiny"
+					onClick={() =>
+						handleDownload({
+							filename: "all-participants.txt",
+							content: allParticipantsContent(),
+						})
+					}
+				>
+					All participants
+				</Button>
+				<Button
+					size="tiny"
+					onClick={() =>
+						handleDownload({
+							filename: "checked-in-participants.txt",
+							content: checkedInParticipantsContent(),
+						})
+					}
+				>
+					Checked in participants
+				</Button>
+				<Button
+					size="tiny"
+					onClick={() =>
+						handleDownload({
+							filename: "not-checked-in-participants.txt",
+							content: notCheckedInParticipantsContent(),
+						})
+					}
+				>
+					Not checked in participants
+				</Button>
+				<Button
+					size="tiny"
+					onClick={() =>
+						handleDownload({
+							filename: "teams-in-seeded-order.txt",
+							content: simpleListInSeededOrder(),
+						})
+					}
+				>
+					Simple list in seeded order
+				</Button>
+				{tournament.isLeagueSignup ? (
+					<Button
+						size="tiny"
+						onClick={() =>
+							handleDownload({
+								filename: "league-format.csv",
+								content: leagueFormat(),
+							})
+						}
+					>
+						League format
+					</Button>
+				) : null}
+			</div>
+		</div>
+	);
 }
 
 function handleDownload({
-  content,
-  filename,
+	content,
+	filename,
 }: {
-  content: string;
-  filename: string;
+	content: string;
+	filename: string;
 }) {
-  const element = document.createElement("a");
-  const file = new Blob([content], {
-    type: "text/plain",
-  });
-  element.href = URL.createObjectURL(file);
-  element.download = filename;
-  document.body.appendChild(element);
-  element.click();
+	const element = document.createElement("a");
+	const file = new Blob([content], {
+		type: "text/plain",
+	});
+	element.href = URL.createObjectURL(file);
+	element.download = filename;
+	document.body.appendChild(element);
+	element.click();
+}
+
+function BracketReset() {
+	const tournament = useTournament();
+	const fetcher = useFetcher();
+	const inProgressBrackets = tournament.brackets.filter((b) => !b.preview);
+	const [_bracketToDelete, setBracketToDelete] = React.useState(
+		inProgressBrackets[0]?.id,
+	);
+	const [confirmText, setConfirmText] = React.useState("");
+
+	if (inProgressBrackets.length === 0) {
+		return <div className="text-lighter text-sm">No brackets in progress</div>;
+	}
+
+	const bracketToDelete = _bracketToDelete ?? inProgressBrackets[0].id;
+
+	const bracketToDeleteName = inProgressBrackets.find(
+		(bracket) => bracket.id === bracketToDelete,
+	)?.name;
+
+	return (
+		<div>
+			<fetcher.Form method="post" className="stack horizontal sm items-end">
+				<div>
+					<label htmlFor="bracket">Bracket</label>
+					<select
+						id="bracket"
+						name="stageId"
+						value={bracketToDelete}
+						onChange={(e) => setBracketToDelete(Number(e.target.value))}
+					>
+						{inProgressBrackets.map((bracket) => (
+							<option key={bracket.name} value={bracket.id}>
+								{bracket.name}
+							</option>
+						))}
+					</select>
+				</div>
+				<div>
+					<label htmlFor="bracket-confirmation">
+						Type bracket name (&quot;{bracketToDeleteName}&quot;) to confirm
+					</label>
+					<Input
+						value={confirmText}
+						onChange={(e) => setConfirmText(e.target.value)}
+						id="bracket-confirmation"
+						disableAutoComplete
+					/>
+				</div>
+				<SubmitButton
+					_action="RESET_BRACKET"
+					state={fetcher.state}
+					disabled={confirmText !== bracketToDeleteName}
+					testId="reset-bracket-button"
+				>
+					Reset
+				</SubmitButton>
+			</fetcher.Form>
+			<FormMessage type="error" className="mt-2">
+				Resetting a bracket will delete all the match results in it (but not
+				other brackets) and reset the bracket to its initial state allowing you
+				to change participating teams.
+			</FormMessage>
+		</div>
+	);
+}
+
+function BracketProgressionEditDialog({ close }: { close: () => void }) {
+	const tournament = useTournament();
+	const fetcher = useFetcher();
+	const [bracketProgressionErrored, setBracketProgressionErrored] =
+		React.useState(false);
+
+	const disabledBracketIdxs = tournament.brackets
+		.filter((bracket) => !bracket.preview)
+		.map((bracket) => bracket.idx);
+
+	return (
+		<SendouDialog
+			isFullScreen
+			onClose={close}
+			heading="Editing bracket progression"
+		>
+			<fetcher.Form method="post">
+				<BracketProgressionSelector
+					initialBrackets={Progression.validatedBracketsToInputFormat(
+						tournament.ctx.settings.bracketProgression,
+					).map((bracket, idx) => ({
+						...bracket,
+						disabled: disabledBracketIdxs.includes(idx),
+					}))}
+					isInvitationalTournament={tournament.isInvitational}
+					setErrored={setBracketProgressionErrored}
+					isTournamentInProgress
+				/>
+				<div className="stack md horizontal justify-center mt-6">
+					<SubmitButton
+						_action="UPDATE_TOURNAMENT_PROGRESSION"
+						disabled={bracketProgressionErrored}
+					>
+						Save changes
+					</SubmitButton>
+				</div>
+			</fetcher.Form>
+		</SendouDialog>
+	);
 }

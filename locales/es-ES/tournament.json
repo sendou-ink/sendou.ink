@@ -1,0 +1,143 @@
+{
+	"tabs.info": "Info",
+	"tabs.teams": "Equipos ({{count}})",
+	"tabs.admin": "Admin",
+	"tabs.register": "Registrar",
+	"tabs.brackets": "Cuadros de Torneo",
+	"tabs.seeds": "Listas de Equipos",
+	"tabs.streams": "Streams ({{count}})",
+	"tabs.subs": "Subs ({{count}})",
+
+	"pre.steps.header": "Completa estos pasos para jugar",
+	"pre.steps.name": "Nombre de equipo",
+	"pre.steps.roster": "Equipo lleno",
+	"pre.steps.pool": "Grupo de mapas",
+	"pre.steps.check-in": "Check-in",
+	"pre.footer": "Registro puede ser ajustado antes de que empieze el torneo",
+	"pre.logIn": "Ingresa al sitio para registrar",
+	"pre.inATeam": "Estás en un equipo para este evento",
+
+	"pre.checkIn.range": "El check-in está abierto entre {{start}} y {{finish}}",
+	"pre.checkIn.over": "Se acabó check-in",
+	"pre.checkIn.cant": "Completa los previos pasos antes de check-in",
+	"pre.checkIn.button": "Check-in",
+	"pre.checkIn.checkedIn": "Tu equipo completo check-in",
+
+	"pre.info.header": "Info de equipo",
+	"pre.info.unregister": "Cancelar registro",
+	"pre.info.unregister.confirm": "¿Cancelar registro del torneo y borrar info del equipo?",
+	"pre.info.noHost": "Mi equipo prefiere no ser a cargo de salas",
+	"pre.info.noScreen": "Mi equipo prefiere evitar Muro marmoleado",
+
+	"pre.roster.header": "Llenar equipo",
+	"pre.roster.footer": "Se requieren al menos {{atLeastCount}} miembros para participar. Cantidad máxima son {{maxCount}}",
+	"pre.roster.addTrusted.header": "Agregar personas con quienes has jugado",
+	"pre.roster.delete.button": "Borrar miembro",
+	"pre.roster.delete.header": "Miembro que quieres borrar",
+
+	"pre.pool.header": "Escojer grupo de mapas",
+	"pre.pool.banned": "Prohibidos",
+	"pre.pool.tiebreaker.short": "Desempate",
+
+	"pre.sub.prompt": "¿No tienes equipo en mente para este evento? También puedes unirte a la lista de substitutos.",
+
+	"bracket.type.DE_WINNERS": "Cuadro de ganadores",
+	"bracket.type.DE_LOSERS": "Cuadro de perdedores",
+	"bracket.type.SE": "Cuadro",
+	"bracket.type.SWISS": "Cuadro Suizo",
+	"bracket.type.GROUPS": "Cuadro de grupos",
+
+	"round.label": "Ronda",
+
+	"team.label": "Equipo",
+	"team.unlisted": "Equipo no listado",
+
+	"bestOf.label.short": "Mejor de",
+
+	"pickInfo.team": "Equipo {{number}} elige",
+	"pickInfo.team.specific": "{{team}} eligió",
+	"pickInfo.tiebreaker": "Desempate",
+	"pickInfo.both": "Ambos eligieron",
+	"pickInfo.default": "Mapa por defacto",
+	"pickInfo.counterpick": "Contraselección",
+
+	"generator.error": "Cambios no fueron guardados ya que el torneo comenzó",
+
+	"teams.mapsPickedStatus": "Estado de mapas elegidos",
+
+	"admin.download": "Descarga participantes",
+	"admin.actions.CHANGE_TEAM_OWNER": "Cambiar capitán",
+	"admin.actions.CHANGE_TEAM_NAME": "Cambiar nombre de equipo",
+	"admin.actions.CHECK_IN": "Check in",
+	"admin.actions.CHECK_OUT": "Check out",
+	"admin.actions.ADD_MEMBER": "Añadir miembro",
+	"admin.actions.REMOVE_MEMBER": "Remover miembro",
+	"admin.actions.DELETE_TEAM": "Borrar equipo",
+	"admin.actions.ADD_TEAM": "Registrar equipo",
+	"admin.actions.DROP_TEAM_OUT": "Retirar equipo",
+	"admin.actions.UNDO_DROP_TEAM_OUT": "Anular retiro",
+
+	"staff.role.ORGANIZER": "organizador",
+	"staff.role.STREAMER": "streamer",
+
+	"actions.addSub": "Añadir sub",
+	"actions.shareLink": "Comparte enlace de invitación para añadir miembros: {{inviteLink}}",
+	"actions.sub.prompt_other": "Aún puedes añadir {{count}} subs a tu equipo",
+	"actions.sub.prompt_one": "Aún puedes añadir {{count}} sub a tu equipo",
+	"actions.sub.prompt_zero": "Tu equipo está lleno y no puedes añadir más subs",
+	"actions.finalize.question": "Al verificar que los resultados presentados son correctos, haz click aquí para finalizar el torneo y procesar los resultados",
+	"actions.finalize.action": "Finalizar",
+	"actions.finalize.confirm": "¿Seguro que quieres finalizar el torneo? (No se puede anular)",
+
+	"streams.none": "No hay streams disponibles para este torneo al momento",
+
+	"team.setWins": "Victorias de sets",
+	"team.mapWins": "Victorias de mapas",
+	"team.seed": "Colocado",
+	"team.seed.footer": "de {{count}}",
+	"team.placement": "Colocación",
+	"team.placement.footer": "Main/UG",
+
+	"bracket.waiting": "Cuadro se muestra aquí cuando al menos {{count}} equipos sean registrados",
+	"bracket.waiting.checkin": "Cuadro se muestra aquí cuando al menos {{count}} equipos se hagan check-in",
+	"bracket.wip": "Este cuadro es temporal y puede cambiar",
+
+	"bracket.progress.thanksForPlaying": "¡Gracias por participar en {{eventName}}!",
+	"bracket.progress.match": "Oponente actual: {{opponent}}",
+	"bracket.progress.match.action": "Ver",
+	"bracket.progress.waiting": "Esperando partido",
+
+	"bracket.standings.showLess": "Mostrar menos",
+	"bracket.standings.showMore": "Mostrar más",
+
+	"match.hosts": "{{teamName}} crea la sala",
+	"match.pass": "Pasar",
+	"match.pool": "Grupo",
+	"match.score": "{{scoreOne}}-{{scoreTwo}} (Mejor de {{bestOf}})",
+	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (Jugar todos los {{bestOf}})",
+	"match.action.undoLastScore": "Anular resultado previo",
+	"match.action.reopenMatch": "Reabrir partido",
+
+	"join.error.MISSING_CODE": "Falta código de invitación. ¿Copiaste el enlace completo?",
+	"join.error.SHORT_CODE": "Código de invitación es de cantidad incorrecata. ¿Copiaste el enlace completo?",
+	"join.error.NO_TEAM_MATCHING_CODE": "Ningún equipo coincide con el código de invitación.",
+	"join.error.TEAM_FULL": "El equipo al que quieres unirte está lleno.",
+	"join.error.ALREADY_JOINED": "Yá eres miembro de este equipo.",
+	"join.error.NOT_LOGGED_IN": "Debes de ingresarte al sitio para unirte a un equipo.",
+	"join.VALID": "¿Unirte a {{teamName}} para {{eventName}}?",
+	"join.giveTrust": "¿Confiar a {{name}} para añadirte a torneos futuros?",
+
+	"subs.prefersToPlay": "Prefiere jugar",
+	"subs.canPlay": "Puede jugar",
+	"subs.canVC": "Puede usar chat de voz",
+	"subs.noVC": "No chat de voz",
+	"subs.editPost": "Editar anuncio de sub",
+	"subs.addPost": "Agrégate como un sub",
+	"subs.vc.header": "¿Puedes usar chat de voz?",
+	"subs.weapons.prefer.header": "Armas que prefieres jugar",
+	"subs.weapons.ok.header": "Armas que podrías",
+	"subs.weapons.info": "Elige entre {{min}} y {{max}}",
+	"subs.message.header": "Mensaje",
+	"subs.visibility.header": "Visibilidad",
+	"subs.visibility.everyone": "Todos"
+}

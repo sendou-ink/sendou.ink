@@ -1,14 +1,14 @@
-module.exports.up = function (db) {
-  db.prepare(
-    /* sql */ `alter table "User" add "commissionsOpen" integer default 0`,
-  ).run();
-  db.prepare(
-    /* sql */ `alter table "User" add "isArtist" integer default 0`,
-  ).run();
-  db.prepare(/* sql */ `alter table "User" add "commissionText" text`).run();
+export function up(db) {
+	db.prepare(
+		/* sql */ `alter table "User" add "commissionsOpen" integer default 0`,
+	).run();
+	db.prepare(
+		/* sql */ `alter table "User" add "isArtist" integer default 0`,
+	).run();
+	db.prepare(/* sql */ `alter table "User" add "commissionText" text`).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "Art" (
       "id" integer primary key,
       "imgId" integer not null,
@@ -20,13 +20,13 @@ module.exports.up = function (db) {
       foreign key ("imgId") references "UnvalidatedUserSubmittedImage"("id") on delete restrict
     ) strict
   `,
-  ).run();
+	).run();
 
-  db.prepare(`create index art_author_id on "Art"("authorId")`).run();
-  db.prepare(`create index art_img_id on "Art"("imgId")`).run();
+	db.prepare(`create index art_author_id on "Art"("authorId")`).run();
+	db.prepare(`create index art_img_id on "Art"("imgId")`).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "ArtUserMetadata" (
       "artId" integer not null,
       "userId" integer not null,
@@ -34,12 +34,12 @@ module.exports.up = function (db) {
       foreign key ("userId") references "User"("id") on delete cascade
     ) strict
   `,
-  ).run();
+	).run();
 
-  db.prepare(
-    `create index art_user_metadata_art_id on "ArtUserMetadata"("artId")`,
-  ).run();
-  db.prepare(
-    `create index art_user_metadata_user_id on "ArtUserMetadata"("userId")`,
-  ).run();
-};
+	db.prepare(
+		`create index art_user_metadata_art_id on "ArtUserMetadata"("artId")`,
+	).run();
+	db.prepare(
+		`create index art_user_metadata_user_id on "ArtUserMetadata"("userId")`,
+	).run();
+}

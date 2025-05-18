@@ -6,5 +6,5 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export function deleteArt(id: number) {
-  stm.run({ id });
+	stm.run({ id });
 }

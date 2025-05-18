@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { Art, ArtTag, User, UserSubmittedImage } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { parseDBArray } from "~/utils/sql";
 
 const findArtStm = sql.prepare(/* sql */ `
@@ -26,21 +26,21 @@ const findTagsStm = sql.prepare(/* sql */ `
 `);
 
 interface FindArtById {
-  isShowcase: Art["isShowcase"];
-  description: Art["description"];
-  url: UserSubmittedImage["url"];
-  authorId: Art["authorId"];
-  linkedUsers: User["id"][];
-  tags: Array<Pick<ArtTag, "id" | "name">>;
+	isShowcase: Tables["Art"]["isShowcase"];
+	description: Tables["Art"]["description"];
+	url: Tables["UserSubmittedImage"]["url"];
+	authorId: Tables["Art"]["authorId"];
+	linkedUsers: Tables["User"]["id"][];
+	tags: Array<Pick<Tables["ArtTag"], "id" | "name">>;
 }
 
 export function findArtById(artId: number): FindArtById | null {
-  const art = findArtStm.get({ artId }) as any;
-  if (!art) return null;
+	const art = findArtStm.get({ artId }) as any;
+	if (!art) return null;
 
-  return {
-    ...art,
-    linkedUsers: parseDBArray(art.linkedUsers),
-    tags: findTagsStm.all({ artId }),
-  };
+	return {
+		...art,
+		linkedUsers: parseDBArray(art.linkedUsers),
+		tags: findTagsStm.all({ artId }),
+	};
 }

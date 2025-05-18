@@ -1,0 +1,73 @@
+.q-settings__radio {
+	background-color: var(--bg-lighter);
+	font-size: var(--fonts-xs);
+	text-transform: uppercase;
+	font-weight: var(--semi-bold);
+	color: var(--text-lighter);
+	padding: var(--s-1) var(--s-2);
+	border-radius: var(--rounded);
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	cursor: pointer;
+}
+
+.q-settings__radio:hover .q-settings__radio__emoji {
+	scale: 1.1;
+}
+
+.q-settings__radio__emoji {
+	filter: grayscale(100%);
+	transition: all 0.2s;
+}
+
+.q-settings__radio__checked {
+	color: var(--text);
+	outline: 2px solid var(--bg-lightest);
+}
+
+.q-settings__radio__checked .q-settings__radio__emoji {
+	filter: grayscale(0%);
+}
+
+.q-settings__summary {
+	padding: var(--s-3);
+	border-radius: var(--rounded);
+	background-color: var(--bg-lighter);
+	font-size: var(--fonts-lg);
+	font-weight: var(--bold);
+	margin-block-end: var(--s-4);
+	position: relative;
+}
+
+.q-settings__summary > div {
+	display: inline-flex;
+}
+
+.q-settings__summary svg {
+	width: 24px;
+	color: var(--theme);
+	position: absolute;
+	right: 20px;
+	top: 14px;
+}
+
+.q-settings__weapon-pool-select-container {
+	width: 250px;
+	height: 50px;
+}
+
+.q-settings__volume-slider-icon {
+	width: 16px;
+	height: 16px;
+}
+
+/* 
+Necessary because default style adds padding, making the slider not go from 0 to 1 visually
+Changing the default style would affect all other input elements, so we need to override it
+*/
+.q-settings__volume-slider-input {
+	padding-left: 0 !important;
+	padding-right: 0 !important;
+	border: 0 !important;
+}

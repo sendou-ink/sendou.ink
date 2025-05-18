@@ -1,146 +1,135 @@
 .plus__container {
-  max-width: 24rem;
-  margin-inline: auto;
+	max-width: 24rem;
+	margin-inline: auto;
 }
 
 .plus__suggested-info-text {
-  color: var(--text-lighter);
-  font-size: var(--fonts-lg);
+	color: var(--text-lighter);
+	font-size: var(--fonts-lg);
 }
 
 .plus__top-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 }
 
 .plus__top-container.content-centered {
-  justify-content: center;
+	justify-content: center;
 }
 
 .plus__radios {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--s-5);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-5);
 }
 
 .plus__radio-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--s-1);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
 }
 
 .plus__radio-label {
-  font-size: var(--fonts-sm);
-  margin-block-end: 0;
+	font-size: var(--fonts-sm);
+	margin-block-end: 0;
 }
 
 .plus__users-count {
-  color: var(--text-lighter);
-  font-size: var(--fonts-xxs);
+	color: var(--text-lighter);
+	font-size: var(--fonts-xxs);
 }
 
 .plus__suggested-user-info {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
 }
 
 .plus__comment {
-  white-space: pre-wrap;
+	white-space: pre-wrap;
 }
 
 .plus__comment-button {
-  max-width: 12rem;
-  margin-inline-start: auto;
+	max-width: 12rem;
+	margin-inline-start: auto;
 }
 
 .plus__view-comments-action {
-  color: var(--text-lighter);
-  font-size: var(--fonts-xs);
-  font-weight: var(--semi-bold);
+	color: var(--text-lighter);
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
 }
 
 .plus__comment-time {
-  color: var(--text-lighter);
-  font-size: var(--fonts-xxs);
+	color: var(--text-lighter);
+	font-size: var(--fonts-xxs);
 }
 
 .plus__delete-button {
-  display: inline;
-}
-
-.plus__modal-title {
-  font-size: var(--fonts-sm);
+	display: inline;
 }
 
 .plus__modal-select {
-  max-width: 6rem;
+	max-width: 6rem;
 }
 
 .plus__modal-textarea {
-  width: 100% !important;
-  resize: none;
-}
-
-.plus__modal-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--s-4);
+	width: 100% !important;
+	resize: none;
 }
 
 .plus-voting__container {
-  max-width: 32rem;
-  margin-inline: auto;
+	max-width: 32rem;
+	margin-inline: auto;
 }
 
 .plus-voting__vote-button {
-  width: 4rem;
+	width: 4rem;
 }
 
 .plus-voting__vote-button.downvote {
-  border-color: var(--theme-error-transparent);
-  color: var(--theme-error);
-  outline-color: var(--theme-error);
+	border-color: var(--theme-error-transparent);
+	color: var(--theme-error);
+	outline-color: var(--theme-error);
 }
 
 .plus-voting__submit-button {
-  display: flex;
-  width: 12rem;
-  height: 2.5rem;
-  margin-block-start: var(--s-6);
-  margin-inline: auto;
+	display: flex;
+	width: 12rem;
+	height: 2.5rem;
+	margin-block-start: var(--s-6);
+	margin-inline: auto;
 }
 
 .plus-voting__progress {
-  width: 100%;
+	width: 100%;
 }
 
 .plus-voting__alert {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--rounded);
-  background-color: var(--theme-success-transparent);
-  color: var(--text);
-  font-size: var(--fonts-sm);
-  font-weight: var(--semi-bold);
-  gap: var(--s-2);
-  line-height: 0.75;
-  margin-inline: auto;
-  padding-block: var(--s-1);
-  padding-inline-end: var(--s-4);
-  padding-inline-start: var(--s-3);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: var(--rounded);
+	background-color: var(--theme-success-transparent);
+	color: var(--text);
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
+	gap: var(--s-2);
+	line-height: 0.75;
+	margin-inline: auto;
+	padding-block: var(--s-1);
+	padding-inline: var(--s-3) var(--s-4);
 }
 
 .plus-voting__alert > svg {
-  height: 1.75rem;
-  fill: var(--theme-success);
+	height: 1.75rem;
+	fill: var(--theme-success);
 }
 
 .plus-voting__bio-header {
-  font-size: var(--fonts-lg);
-  padding-block-end: var(--s-2);
+	font-size: var(--fonts-lg);
+	padding-block-end: var(--s-2);
 }

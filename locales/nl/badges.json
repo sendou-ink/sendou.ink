@@ -1,0 +1,8 @@
+﻿{
+	"patreon": "Supporter van sendou.ink op Patreon",
+	"patreon+": "Supporter+ van sendou.ink op Patreon",
+	"tournament_one": "Uitgereikt voor het winnen van {{tournament}}",
+	"tournament_other": "Uitgereikt voor het winnen van {{tournament}} (×{{count}})",
+	"forYourEvent": "Ook een badge voor jouw evenement?",
+	"managedBy": "Beheerd door {{users}}"
+}

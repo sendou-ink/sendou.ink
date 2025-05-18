@@ -13,14 +13,14 @@ const updateSeedStm = sql.prepare(/*sql*/ `
 `);
 
 export const updateTeamSeeds = sql.transaction(
-  ({ tournamentId, teamIds }: { tournamentId: number; teamIds: number[] }) => {
-    resetSeeds.run({ tournamentId });
+	({ tournamentId, teamIds }: { tournamentId: number; teamIds: number[] }) => {
+		resetSeeds.run({ tournamentId });
 
-    for (const [i, teamId] of teamIds.entries()) {
-      updateSeedStm.run({
-        teamId,
-        seed: i + 1,
-      });
-    }
-  },
+		for (const [i, teamId] of teamIds.entries()) {
+			updateSeedStm.run({
+				teamId,
+				seed: i + 1,
+			});
+		}
+	},
 );

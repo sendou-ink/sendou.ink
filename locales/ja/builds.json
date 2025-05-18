@@ -1,0 +1,46 @@
+{
+	"addBuild": "ギア構成を追加",
+	"reachBuildMaxCount": "作成可能なギア構成の上限に到達しました。",
+	"noBuilds": "ギア構成はまだ作成されていません。最初のギア構成を作成しましょう!",
+	"buildCard.info": "詳細",
+	"buildCard.edit": "編集",
+
+	"forms.title": "タイトル",
+	"forms.modes": "モード",
+	"forms.weapons": "ブキ",
+	"forms.gear.HEAD": "ギア (アタマ)",
+	"forms.gear.CLOTHES": "ギア (フク)",
+	"forms.gear.SHOES": "ギア (クツ)",
+	"forms.private.info": "非公開ギア構成は作成者しか見ることができません",
+	"forms.noGear.info": "ギアの指定は任意ですが、一つでも埋めた場合全て埋めなくてはいけません。",
+
+	"deleteConfirm": "'{{title}}'を削除しますか?",
+
+	"stats.count.title": "{{count}} による統計 {{weapon}} のギア構成",
+	"stats.ap.title": "ギアポイント平均",
+	"stats.percentage.title": "基本ギアのみの見た目",
+	"stats.all": "すべて",
+	"stats.public": "公開",
+	"stats.private": "非公開",
+
+	"addFilter": "絞り込みを追加",
+	"linkButton.abilityStats": "ギア統計",
+	"linkButton.popularBuilds": "人気のあるギア構成",
+	"noPopularBuilds": "現在、このブキに対する人気のギア構成はないようです。",
+
+	"emptyAbilitySlot": "ギア設定をリセット",
+
+	"filters.type.ability": "能力で",
+	"filters.type.mode": "モードで",
+	"filters.type.date": "日付で",
+	"filters.ability.title": "能力フィルター",
+	"filters.mode.title": "モードフィルター",
+	"filters.date.title": "日付フィルター",
+	"filters.has": "含む",
+	"filters.does.not.have": "含まない",
+	"filters.atLeast": "最小",
+	"filters.atMost": "最大",
+	"filters.date.since": "から",
+	"filters.date.custom": "カスタム",
+	"filters.filterByWeapon": "武器で"
+}

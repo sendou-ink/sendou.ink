@@ -1,0 +1,9 @@
+{
+	"patreon": "Supporter sur le patreon de sendou.ink",
+	"patreon+": "Supporter+ sur le patreon de sendou.ink",
+	"xp": "Attribué pour avoir atteint {{xpText}}",
+	"tournament_one": "Attribué pour avoir gagné {{tournament}}",
+	"tournament_other": "Attribué pour avoir gagné {{tournament}} (×{{count}})",
+	"forYourEvent": "Un badge pour votre événement ?",
+	"managedBy": "Géré par {{users}}"
+}

@@ -1,8 +1,0 @@
-{
-  "mapListPreference.NO_PREFERENCE": "優先ルールなし",
-  "mapListPreference.PREFER_ALL_MODES": "すべてのルールを優先",
-  "mapListPreference.PREFER_SZ": "ガチエリアを優先",
-  "mapListPreference.ALL_MODES_ONLY": "すべてのルールのみ",
-  "mapListPreference.SZ_ONLY": "ガチエリアのみ",
-  "mapListPreference.note": "注意: \"{{optionOne}}\" を選択したチームと対戦することはできません。\"{{optionTwo}}\" を選択することを検討してみてください。"
-}

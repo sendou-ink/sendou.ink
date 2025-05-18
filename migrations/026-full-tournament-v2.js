@@ -1,35 +1,35 @@
-module.exports.up = function (db) {
-  db.prepare(/* sql */ `drop index "calendar_event_custom_url_unique"`).run();
-  db.prepare(/*sql*/ `drop table "TournamentBracket"`).run();
-  db.prepare(/*sql*/ `drop table "TournamentMatchParticipant"`).run();
-  db.prepare(/*sql*/ `drop table "TournamentRound"`).run();
-  db.prepare(/*sql*/ `drop table "TournamentMatch"`).run();
-  db.prepare(/*sql*/ `drop table "TournamentTeam"`).run();
-  db.prepare(/*sql*/ `drop table "TournamentTeamMember"`).run();
-  db.prepare(/*sql*/ `drop table "TournamentMatchGameResult"`).run();
+export function up(db) {
+	db.prepare(/* sql */ `drop index "calendar_event_custom_url_unique"`).run();
+	db.prepare(/*sql*/ `drop table "TournamentBracket"`).run();
+	db.prepare(/*sql*/ `drop table "TournamentMatchParticipant"`).run();
+	db.prepare(/*sql*/ `drop table "TournamentRound"`).run();
+	db.prepare(/*sql*/ `drop table "TournamentMatch"`).run();
+	db.prepare(/*sql*/ `drop table "TournamentTeam"`).run();
+	db.prepare(/*sql*/ `drop table "TournamentTeamMember"`).run();
+	db.prepare(/*sql*/ `drop table "TournamentMatchGameResult"`).run();
 
-  db.prepare(
-    /* sql */ `alter table "CalendarEvent" drop column "customUrl"`,
-  ).run();
-  db.prepare(
-    /* sql */ `alter table "CalendarEvent" drop column "toToolsEnabled"`,
-  ).run();
-  db.prepare(
-    /* sql */ `alter table "CalendarEvent" drop column "toToolsMode"`,
-  ).run();
-  db.prepare(
-    /* sql */ `alter table "CalendarEvent" drop column "isBeforeStart"`,
-  ).run();
+	db.prepare(
+		/* sql */ `alter table "CalendarEvent" drop column "customUrl"`,
+	).run();
+	db.prepare(
+		/* sql */ `alter table "CalendarEvent" drop column "toToolsEnabled"`,
+	).run();
+	db.prepare(
+		/* sql */ `alter table "CalendarEvent" drop column "toToolsMode"`,
+	).run();
+	db.prepare(
+		/* sql */ `alter table "CalendarEvent" drop column "isBeforeStart"`,
+	).run();
 
-  db.prepare(
-    /* sql */ `alter table "CalendarEvent" add "tournamentId" integer`,
-  ).run();
-  db.prepare(
-    /*sql*/ `create index calendar_event_tournament_id on "CalendarEvent"("tournamentId")`,
-  ).run();
+	db.prepare(
+		/* sql */ `alter table "CalendarEvent" add "tournamentId" integer`,
+	).run();
+	db.prepare(
+		/*sql*/ `create index calendar_event_tournament_id on "CalendarEvent"("tournamentId")`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
   create table "Tournament" (
     "id" integer primary key,
     "mapPickingStyle" text not null,
@@ -37,10 +37,10 @@ module.exports.up = function (db) {
     "showMapListGenerator" integer default 0
   ) strict
   `,
-  ).run();
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "TournamentTeam" (
       "id" integer primary key,
       "name" text not null,
@@ -53,26 +53,26 @@ module.exports.up = function (db) {
       unique("tournamentId", "name") on conflict rollback
     ) strict
     `,
-  ).run();
-  db.prepare(
-    /*sql*/ `create index tournament_team_tournament_id on "TournamentTeam"("tournamentId")`,
-  ).run();
+	).run();
+	db.prepare(
+		/*sql*/ `create index tournament_team_tournament_id on "TournamentTeam"("tournamentId")`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "TournamentTeamCheckIn" (
       "tournamentTeamId" integer not null,
       "checkedInAt" integer not null,
       foreign key ("tournamentTeamId") references "TournamentTeam"("id") on delete cascade
     ) strict
     `,
-  ).run();
-  db.prepare(
-    /*sql*/ `create index tournament_team_check_in_tournament_team_id on "TournamentTeamCheckIn"("tournamentTeamId")`,
-  ).run();
+	).run();
+	db.prepare(
+		/*sql*/ `create index tournament_team_check_in_tournament_team_id on "TournamentTeamCheckIn"("tournamentTeamId")`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "TournamentTeamMember" (
       "tournamentTeamId" integer not null,
       "userId" integer not null,
@@ -82,13 +82,13 @@ module.exports.up = function (db) {
       unique("tournamentTeamId", "userId") on conflict rollback
     ) strict
     `,
-  ).run();
-  db.prepare(
-    /*sql*/ `create index tournament_team_member_tournament_team_id on "TournamentTeamMember"("tournamentTeamId")`,
-  ).run();
+	).run();
+	db.prepare(
+		/*sql*/ `create index tournament_team_member_tournament_team_id on "TournamentTeamMember"("tournamentTeamId")`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
   create table "TournamentStage" (
     "id" integer primary key,
     "tournamentId" integer not null,
@@ -100,13 +100,13 @@ module.exports.up = function (db) {
     unique("number", "tournamentId") on conflict rollback
   ) strict
   `,
-  ).run();
-  db.prepare(
-    `create index tournament_stage_tournament_id on "TournamentStage"("tournamentId")`,
-  ).run();
+	).run();
+	db.prepare(
+		`create index tournament_stage_tournament_id on "TournamentStage"("tournamentId")`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
   create table "TournamentGroup" (
     "id" integer primary key,
     "stageId" integer not null,
@@ -115,13 +115,13 @@ module.exports.up = function (db) {
     unique("number", "stageId") on conflict rollback
   ) strict
   `,
-  ).run();
-  db.prepare(
-    `create index tournament_group_stage_id on "TournamentGroup"("stageId")`,
-  ).run();
+	).run();
+	db.prepare(
+		`create index tournament_group_stage_id on "TournamentGroup"("stageId")`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
   create table "TournamentRound" (
     "id" integer primary key,
     "stageId" integer not null,
@@ -132,16 +132,16 @@ module.exports.up = function (db) {
     unique("number", "groupId") on conflict rollback
   ) strict
   `,
-  ).run();
-  db.prepare(
-    `create index tournament_round_stage_id on "TournamentRound"("stageId")`,
-  ).run();
-  db.prepare(
-    `create index tournament_round_group_id on "TournamentRound"("groupId")`,
-  ).run();
+	).run();
+	db.prepare(
+		`create index tournament_round_stage_id on "TournamentRound"("stageId")`,
+	).run();
+	db.prepare(
+		`create index tournament_round_group_id on "TournamentRound"("groupId")`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
   create table "TournamentMatch" (
     "id" integer primary key,
     "childCount" integer not null,
@@ -159,19 +159,19 @@ module.exports.up = function (db) {
     unique("number", "roundId") on conflict rollback
   ) strict
   `,
-  ).run();
-  db.prepare(
-    `create index tournament_match_round_id on "TournamentMatch"("roundId")`,
-  ).run();
-  db.prepare(
-    `create index tournament_match_stage_id on "TournamentMatch"("stageId")`,
-  ).run();
-  db.prepare(
-    `create index tournament_match_group_id on "TournamentMatch"("groupId")`,
-  ).run();
+	).run();
+	db.prepare(
+		`create index tournament_match_round_id on "TournamentMatch"("roundId")`,
+	).run();
+	db.prepare(
+		`create index tournament_match_stage_id on "TournamentMatch"("stageId")`,
+	).run();
+	db.prepare(
+		`create index tournament_match_group_id on "TournamentMatch"("groupId")`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "TournamentMatchGameResult" (
       "id" integer primary key,
       "matchId" integer not null,
@@ -188,16 +188,16 @@ module.exports.up = function (db) {
       unique("matchId", "number") on conflict rollback
     ) strict
     `,
-  ).run();
-  db.prepare(
-    /*sql*/ `create index tournament_match_game_result_match_id on "TournamentMatchGameResult"("matchId")`,
-  ).run();
-  db.prepare(
-    /*sql*/ `create index tournament_match_game_result_winner_team_id on "TournamentMatchGameResult"("winnerTeamId")`,
-  ).run();
+	).run();
+	db.prepare(
+		/*sql*/ `create index tournament_match_game_result_match_id on "TournamentMatchGameResult"("matchId")`,
+	).run();
+	db.prepare(
+		/*sql*/ `create index tournament_match_game_result_winner_team_id on "TournamentMatchGameResult"("winnerTeamId")`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
   create table "TournamentMatchGameResultParticipant" (
     "matchGameResultId" integer not null,
     "userId" integer not null,
@@ -206,16 +206,16 @@ module.exports.up = function (db) {
     unique("matchGameResultId", "userId") on conflict rollback
   ) strict
   `,
-  ).run();
-  db.prepare(
-    `create index tournament_match_game_result_participant_match_game_result_id on "TournamentMatchGameResultParticipant"("matchGameResultId")`,
-  ).run();
-  db.prepare(
-    `create index tournament_match_game_result_participant_user_id on "TournamentMatchGameResultParticipant"("userId")`,
-  ).run();
+	).run();
+	db.prepare(
+		`create index tournament_match_game_result_participant_match_game_result_id on "TournamentMatchGameResultParticipant"("matchGameResultId")`,
+	).run();
+	db.prepare(
+		`create index tournament_match_game_result_participant_user_id on "TournamentMatchGameResultParticipant"("userId")`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
   create table "TrustRelationship" (
     "trustGiverUserId" integer not null,
     "trustReceiverUserId" integer not null,
@@ -224,11 +224,11 @@ module.exports.up = function (db) {
     unique("trustGiverUserId", "trustReceiverUserId") on conflict ignore
   ) strict
   `,
-  ).run();
-  db.prepare(
-    `create index trust_relationship_trust_giver_user_id on "TrustRelationship"("trustGiverUserId")`,
-  ).run();
-  db.prepare(
-    `create index trust_relationship_trust_receiver_user_id on "TrustRelationship"("trustReceiverUserId")`,
-  ).run();
-};
+	).run();
+	db.prepare(
+		`create index trust_relationship_trust_giver_user_id on "TrustRelationship"("trustGiverUserId")`,
+	).run();
+	db.prepare(
+		`create index trust_relationship_trust_receiver_user_id on "TrustRelationship"("trustReceiverUserId")`,
+	).run();
+}

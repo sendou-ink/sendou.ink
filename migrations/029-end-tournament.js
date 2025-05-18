@@ -1,13 +1,13 @@
-module.exports.up = function (db) {
-  db.prepare(
-    `create index tournament_sub_user_id on "TournamentSub"("userId")`,
-  ).run();
-  db.prepare(
-    `create index tournament_sub_tournament_id on "TournamentSub"("tournamentId")`,
-  ).run();
+export function up(db) {
+	db.prepare(
+		`create index tournament_sub_user_id on "TournamentSub"("userId")`,
+	).run();
+	db.prepare(
+		`create index tournament_sub_tournament_id on "TournamentSub"("tournamentId")`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "Skill" (
       "id" integer primary key,
       "mu" real not null,
@@ -22,15 +22,15 @@ module.exports.up = function (db) {
       unique("userId", "tournamentId") on conflict rollback 
     ) strict
   `,
-  ).run();
+	).run();
 
-  db.prepare(`create index skill_user_id on "Skill"("userId")`).run();
-  db.prepare(
-    `create index skill_tournament_id on "Skill"("tournamentId")`,
-  ).run();
+	db.prepare(`create index skill_user_id on "Skill"("userId")`).run();
+	db.prepare(
+		`create index skill_tournament_id on "Skill"("tournamentId")`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "SkillTeamUser" (
       "userId" integer not null,
       "skillId" integer not null,
@@ -39,17 +39,17 @@ module.exports.up = function (db) {
       unique("userId", "skillId") on conflict rollback 
     ) strict
   `,
-  ).run();
+	).run();
 
-  db.prepare(
-    `create index skill_team_user_user_id on "SkillTeamUser"("userId")`,
-  ).run();
-  db.prepare(
-    `create index skill_team_user_skill_id on "SkillTeamUser"("skillId")`,
-  ).run();
+	db.prepare(
+		`create index skill_team_user_user_id on "SkillTeamUser"("userId")`,
+	).run();
+	db.prepare(
+		`create index skill_team_user_skill_id on "SkillTeamUser"("skillId")`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "MapResult" (
       "mode" text not null,
       "stageId" integer not null,
@@ -60,12 +60,12 @@ module.exports.up = function (db) {
       unique("userId", "stageId", "mode") on conflict rollback 
     ) strict
   `,
-  ).run();
+	).run();
 
-  db.prepare(`create index map_result_user_id on "MapResult"("userId")`).run();
+	db.prepare(`create index map_result_user_id on "MapResult"("userId")`).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "PlayerResult" (
       "ownerUserId" integer not null,
       "otherUserId" integer not null,
@@ -79,17 +79,17 @@ module.exports.up = function (db) {
       unique("ownerUserId", "otherUserId", "type") on conflict rollback 
     ) strict
   `,
-  ).run();
+	).run();
 
-  db.prepare(
-    `create index player_result_owner_user_id on "PlayerResult"("ownerUserId")`,
-  ).run();
-  db.prepare(
-    `create index player_result_other_user_id on "PlayerResult"("otherUserId")`,
-  ).run();
+	db.prepare(
+		`create index player_result_owner_user_id on "PlayerResult"("ownerUserId")`,
+	).run();
+	db.prepare(
+		`create index player_result_other_user_id on "PlayerResult"("otherUserId")`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "TournamentResult" (
       "tournamentId" integer not null,
       "userId" integer not null,
@@ -103,12 +103,12 @@ module.exports.up = function (db) {
       unique("userId", "tournamentId") on conflict rollback 
     ) strict
   `,
-  ).run();
+	).run();
 
-  db.prepare(
-    `create index tournament_result_user_id on "TournamentResult"("userId")`,
-  ).run();
-  db.prepare(
-    `create index tournament_result_tournament_id on "TournamentResult"("tournamentId")`,
-  ).run();
-};
+	db.prepare(
+		`create index tournament_result_user_id on "TournamentResult"("userId")`,
+	).run();
+	db.prepare(
+		`create index tournament_result_tournament_id on "TournamentResult"("tournamentId")`,
+	).run();
+}

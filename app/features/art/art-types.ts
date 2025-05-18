@@ -1,24 +1,23 @@
-import type { Art, User, UserSubmittedImage } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 export interface ListedArt {
-  id: Art["id"];
-  url: UserSubmittedImage["url"];
-  description?: Art["description"];
-  tags?: string[];
-  linkedUsers?: Array<{
-    discordId: User["discordId"];
-    discordName: User["discordName"];
-    discordDiscriminator: User["discordDiscriminator"];
-    customUrl: User["customUrl"];
-  }>;
-  author?: {
-    discordId: User["discordId"];
-    discordName: User["discordName"];
-    discordDiscriminator: User["discordDiscriminator"];
-    discordAvatar: User["discordAvatar"];
-    commissionsOpen?: User["commissionsOpen"];
-  };
+	id: Tables["Art"]["id"];
+	createdAt: Tables["Art"]["createdAt"];
+	url: Tables["UserSubmittedImage"]["url"];
+	description?: Tables["Art"]["description"];
+	tags?: string[];
+	linkedUsers?: Array<{
+		discordId: Tables["User"]["discordId"];
+		username: Tables["User"]["username"];
+		customUrl: Tables["User"]["customUrl"];
+	}>;
+	author?: {
+		discordId: Tables["User"]["discordId"];
+		username: Tables["User"]["username"];
+		discordAvatar: Tables["User"]["discordAvatar"];
+		commissionsOpen?: Tables["User"]["commissionsOpen"];
+	};
 }
 
 export const ART_SOURCES = ["ALL", "MADE-BY", "MADE-OF"] as const;
-export type ArtSouce = (typeof ART_SOURCES)[number];
+export type ArtSource = (typeof ART_SOURCES)[number];

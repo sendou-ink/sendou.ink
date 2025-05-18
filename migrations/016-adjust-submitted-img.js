@@ -1,12 +1,12 @@
-module.exports.up = function (db) {
-  db.prepare(
-    /* sql */ `
+export function up(db) {
+	db.prepare(
+		/* sql */ `
     drop table "UnvalidatedUserSubmittedImage"
   `,
-  ).run();
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "UnvalidatedUserSubmittedImage" (
       "id" integer primary key,
       "validatedAt" integer,
@@ -15,9 +15,9 @@ module.exports.up = function (db) {
       foreign key ("submitterUserId") references "User"("id") on delete set null
     ) strict
     `,
-  ).run();
+	).run();
 
-  db.prepare(
-    `create index submitter_user_id on "UnvalidatedUserSubmittedImage"("submitterUserId")`,
-  ).run();
-};
+	db.prepare(
+		`create index submitter_user_id on "UnvalidatedUserSubmittedImage"("submitterUserId")`,
+	).run();
+}

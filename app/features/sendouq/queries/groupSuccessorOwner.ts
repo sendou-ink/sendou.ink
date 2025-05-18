@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { GroupMember } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/* sql */ `
   select 
@@ -12,16 +12,16 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export const groupSuccessorOwner = (groupId: number) => {
-  const rows = stm.all({ groupId }) as Array<
-    Pick<GroupMember, "role" | "userId">
-  >;
+	const rows = stm.all({ groupId }) as Array<
+		Pick<Tables["GroupMember"], "role" | "userId">
+	>;
 
-  if (rows.length === 0) {
-    return null;
-  }
+	if (rows.length === 0) {
+		return null;
+	}
 
-  const manager = rows.find((r) => r.role === "MANAGER");
-  if (manager) return manager.userId;
+	const manager = rows.find((r) => r.role === "MANAGER");
+	if (manager) return manager.userId;
 
-  return rows[0].userId;
+	return rows[0].userId;
 };

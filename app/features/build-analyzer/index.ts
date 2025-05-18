@@ -1,25 +1,24 @@
 export {
-  possibleApValues,
-  validatedWeaponIdFromSearchParams,
-  validatedBuildFromSearchParams,
-  serializeBuild,
-  hpDivided,
-  validatedAnyWeaponFromSearchParams,
-  buildToAbilityPoints,
+	possibleApValues,
+	validatedWeaponIdFromSearchParams,
+	validatedBuildFromSearchParams,
+	serializeBuild,
+	hpDivided,
+	validatedAnyWeaponFromSearchParams,
+	buildToAbilityPoints,
 } from "./core/utils";
 export type {
-  DamageType,
-  AbilityPoints,
-  AnalyzedBuild,
-  SpecialWeaponParams,
-  SubWeaponParams,
-  AnyWeapon,
+	DamageType,
+	AbilityPoints,
+	AnalyzedBuild,
+	SpecialWeaponParams,
+	SubWeaponParams,
+	AnyWeapon,
 } from "./analyzer-types";
 export {
-  buildStats,
-  specialDeviceHp,
-  specialFieldHp,
-  subStats,
+	buildStats,
+	specialDeviceHp,
+	specialFieldHp,
+	subStats,
 } from "./core/stats";
 export { DAMAGE_TYPE, damageTypeToWeaponType } from "./analyzer-constants";
-export { default as weaponParams } from "./core/weapon-params.json";

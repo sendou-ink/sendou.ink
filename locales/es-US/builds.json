@@ -1,0 +1,45 @@
+{
+	"addBuild": "Añadir build",
+	"reachBuildMaxCount": "Tienes la cantidad máxima de builds.",
+	"noBuilds": "Aún no hay builds. ¡Agrega tu primer build!",
+	"buildCard.info": "Info",
+	"buildCard.edit": "Editar",
+
+	"forms.title": "Título",
+	"forms.modes": "Estilos",
+	"forms.weapons": "Armas",
+	"forms.gear.HEAD": "Accesorios",
+	"forms.gear.CLOTHES": "Ropa",
+	"forms.gear.SHOES": "Calzado",
+	"forms.private.info": "Builds privados son visibles solo para tí.",
+	"forms.noGear.info": "El equipamiento es opcional, pero si llenas una casilla, debes llenar todas las casillas.",
+
+	"deleteConfirm": "¿Borrar build '{{title}}'?",
+
+	"stats.count.title": "Estadísticas de {{count}} builds para {{weapon}}",
+	"stats.ap.title": "Promedios de puntos de potenciadores",
+	"stats.percentage.title": "Frecuencia de potenciadores exclusivas",
+	"stats.all": "Todas",
+	"stats.public": "Público",
+	"stats.private": "Privado",
+
+	"addFilter": "Añadir filtro",
+	"linkButton.abilityStats": "Estadísticas de potenciadores",
+	"linkButton.popularBuilds": "Builds populares",
+	"noPopularBuilds": "Parece que no hay builds populares para esta arma al momento.",
+	"emptyAbilitySlot": "Espacio de potenciador vacío",
+
+	"filters.type.ability": "Por potenciador",
+	"filters.type.mode": "Por estilo",
+	"filters.type.date": "Por fecha",
+	"filters.ability.title": "Filtro por potenciador",
+	"filters.mode.title": "Filtro por estilo",
+	"filters.date.title": "Filtro por fecha",
+	"filters.has": "Tiene",
+	"filters.does.not.have": "No tiene",
+	"filters.atLeast": "Al menos",
+	"filters.atMost": "Máximo",
+	"filters.date.since": "Desde",
+	"filters.date.custom": "Elegir fecha",
+	"filters.filterByWeapon": "Filtro por arma"
+}

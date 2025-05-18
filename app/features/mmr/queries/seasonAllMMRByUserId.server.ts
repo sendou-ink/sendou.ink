@@ -23,45 +23,15 @@ const groupedSkillsStm = sql.prepare(/* sql */ `
   order by "date" asc
 `);
 
-const mostRecentStm = sql.prepare(/* sql */ `
-  select
-    "Skill"."ordinal"
-  from
-    "Skill"
-  where
-    "Skill"."id" = (
-      select max("id")
-        from "Skill"
-      where "userId" = @userId
-        and "season" = @season
-        and "matchesCount" >= ${MATCHES_COUNT_NEEDED_FOR_LEADERBOARD}
-      group by "userId"
-    )
-`);
-
 export function seasonAllMMRByUserId({
-  userId,
-  season,
+	userId,
+	season,
 }: {
-  userId: number;
-  season: number;
+	userId: number;
+	season: number;
 }) {
-  return groupedSkillsStm.all({ userId, season }) as Array<{
-    ordinal: number;
-    date: string;
-  }>;
-}
-
-export function currentMMRByUserId({
-  userId,
-  season,
-}: {
-  userId: number;
-  season: number;
-}) {
-  return (
-    mostRecentStm.get({ userId, season }) as {
-      ordinal: number;
-    } | null
-  )?.ordinal;
+	return groupedSkillsStm.all({ userId, season }) as Array<{
+		ordinal: number;
+		date: string;
+	}>;
 }

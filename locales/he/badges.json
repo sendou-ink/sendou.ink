@@ -1,0 +1,9 @@
+{
+	"patreon": "תומך של sendou.ink ב-Patreon",
+	"patreon+": "תומך+ של sendou.ink ב-Patreon",
+	"xp": "מוענק עבור הגעה ל-{{xpText}}",
+	"tournament_one": "מוענק עבור ניצחון {{tournament}}",
+	"tournament_other": "מוענק עבור ניצחון {{tournament}} (×{{count}})",
+	"forYourEvent": "תג לאירוע שלכם?",
+	"managedBy": "מנוהל על ידי {{users}}"
+}

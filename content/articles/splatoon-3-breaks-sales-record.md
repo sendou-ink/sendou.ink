@@ -12,4 +12,4 @@ The Splatoon franchise has been a fan-favorite in Japan for years. The first gam
 
 Splatoon has a thriving competitive scene that is welcoming new players into its ranks. Top players in the United States and Europe such as ProChara and ThatSrb2DUDE create content with the hope that players in their respective regions will enter the Splatlands with the same amount of hype being generated in Japan.
 
-If you're interested in watching or even participating in a Splatoon tournament, check out the Sendou.ink calendar. It contains all of the upcoming events for Splatoon 3 with information on where to sign up and how to follow along live.
+If you're interested in watching or even participating in a Splatoon tournament, check out the sendou.ink calendar. It contains all of the upcoming events for Splatoon 3 with information on where to sign up and how to follow along live.

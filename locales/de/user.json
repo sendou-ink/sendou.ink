@@ -1,0 +1,31 @@
+{
+	"customUrl": "Benutzerdefinierte URL",
+	"ign": "Name im Spiel",
+	"ign.short": "IGN",
+	"country": "Land",
+	"bio": "Über mich",
+	"stickSens": "Empfindlichkeit R-Stick",
+	"motionSens": "Empfindlichkeit Bewegungssteuerung",
+	"motion": "Bewegungssteuerung",
+	"stick": "Stick",
+	"sens": "Empfindlichkeit",
+	"weaponPool": "Waffenpool",
+	"discordExplanation": "Der Username, Profilbild, YouTube-, Bluesky- und Twitch-Konten stammen von deinem Discord-Konto. Mehr Infos in den <1>FAQ</1>.",
+
+	"results.placing": "Platzierung",
+	"results.team": "Team",
+	"results.tournament": "Turnier",
+	"results.date": "Datum",
+	"results.mates": "Mitspieler",
+	"results.highlights": "Highlights",
+	"results.highlights.choose": "Highlights wählen",
+	"results.highlights.explanation": "Wähle Ergebnisse, die du hervorheben möchtest",
+
+	"forms.errors.maxWeapons": "Maximale Zahl an Waffen erreicht",
+	"forms.errors.invalidCustomUrl.numbers": "Benutzerdefinierte URL kann nicht nur aus Zahlen bestehen",
+	"forms.errors.invalidCustomUrl.strangeCharacter": "Benutzerdefinierte URL kann nicht aus speziellen Zeichen bestehen",
+	"forms.errors.invalidCustomUrl.duplicate": "Diese Benutzerdefinierte URL wird bereits verwendet",
+	"forms.errors.invalidSens": "Empfindlichkeit der Bewegungssteuerung kann nur festgelegt werden, wenn Empfindlichkeit R-Stick festgelegt ist",
+
+	"search.noResults": "Keine Nutzer gefunden, die '{{query}}' entsprechen"
+}

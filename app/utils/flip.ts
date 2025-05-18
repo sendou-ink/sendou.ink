@@ -7,13 +7,13 @@
  * @returns A promise that will resolve after the animation completes or is cancelled
  */
 export function animate(
-  el: HTMLElement,
-  keyframes: Keyframe[] | PropertyIndexedKeyframes,
-  options?: number | KeyframeAnimationOptions,
+	el: HTMLElement,
+	keyframes: Keyframe[] | PropertyIndexedKeyframes,
+	options?: number | KeyframeAnimationOptions,
 ): Promise<void> {
-  return new Promise((resolve) => {
-    const anim = el.animate(keyframes, options);
-    anim.addEventListener("finish", () => resolve());
-    anim.addEventListener("cancel", () => resolve());
-  });
+	return new Promise((resolve) => {
+		const anim = el.animate(keyframes, options);
+		anim.addEventListener("finish", () => resolve());
+		anim.addEventListener("cancel", () => resolve());
+	});
 }

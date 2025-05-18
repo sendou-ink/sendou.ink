@@ -3,42 +3,68 @@ import * as React from "react";
 
 /** State backed search params. Used when you want to update search params without triggering navigation (runs loaders, rerenders the whole page extra time) */
 export function useSearchParamState<T>({
-  defaultValue,
-  name,
-  revive,
+	defaultValue,
+	name,
+	revive,
 }: {
-  defaultValue: T;
-  name: string;
-  /** Function to revive string from search params to value. If returns a null or undefined value then defaultValue gets used. */
-  revive: (value: string) => T | null | undefined;
+	defaultValue: T;
+	name: string;
+	/** Function to revive string from search params to value. If returns a null or undefined value then defaultValue gets used. */
+	revive: (value: string) => T | null | undefined;
 }) {
-  const [initialSearchParams] = useSearchParams();
-  const [state, setState] = React.useState<T>(resolveInitialState());
+	return useSearchParamStateEncoder({
+		defaultValue: defaultValue,
+		name: name,
+		revive: revive,
+		encode: (val) => String(val),
+	});
+}
 
-  const handleChange = React.useCallback(
-    (newValue: T) => {
-      setState(newValue);
+/** State backed search params. Used when you want to update search params without triggering navigation
+ ** (runs loaders, rerenders the whole page extra time)
+ ** You can supply an `encode` function to reverse create the string representation of your value.
+ */
+export function useSearchParamStateEncoder<T>({
+	defaultValue,
+	name,
+	revive,
+	encode,
+}: {
+	defaultValue: T;
+	name: string;
+	/** Function to revive string from search params to value. If returns a null or undefined value then defaultValue gets used. */
+	revive: (value: string) => T | null | undefined;
+	/** Function to create the string for search params. */
+	encode: (value: T) => string;
+}) {
+	const [initialSearchParams] = useSearchParams();
+	const [state, setState] = React.useState<T>(resolveInitialState());
 
-      const searchParams = new URLSearchParams(window.location.search);
-      searchParams.set(name, String(newValue));
+	const handleChange = React.useCallback(
+		(newValue: T) => {
+			setState(newValue);
 
-      window.history.replaceState(
-        {},
-        "",
-        `${window.location.pathname}?${String(searchParams)}`,
-      );
-    },
-    [name],
-  );
+			const searchParams = new URLSearchParams(window.location.search);
+			const encoded = encode(newValue);
+			searchParams.set(name, encoded);
 
-  return [state, handleChange] as const;
+			window.history.replaceState(
+				{},
+				"",
+				`${window.location.pathname}?${String(searchParams)}`,
+			);
+		},
+		[name, encode],
+	);
 
-  function resolveInitialState() {
-    const value = initialSearchParams.get(name);
-    if (value === null || value === undefined) {
-      return defaultValue;
-    }
+	return [state, handleChange] as const;
 
-    return revive(value) ?? defaultValue;
-  }
+	function resolveInitialState() {
+		const value = initialSearchParams.get(name);
+		if (value === null || value === undefined) {
+			return defaultValue;
+		}
+
+		return revive(value) ?? defaultValue;
+	}
 }

@@ -14,11 +14,11 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export function seasonMapWinrateByUserId({
-  userId,
-  season,
+	userId,
+	season,
 }: {
-  userId: number;
-  season: number;
+	userId: number;
+	season: number;
 }): { wins: number; losses: number } {
-  return stm.get({ userId, season }) as any;
+	return stm.get({ userId, season }) as any;
 }

@@ -1,75 +1,75 @@
 .plus-history__own-scores {
-  padding: var(--s-2);
-  border-radius: var(--rounded);
-  margin: 0 auto;
-  background-color: var(--bg-lighter);
-  font-size: var(--fonts-sm);
-  font-weight: var(--semi-bold);
-  list-style-type: none;
-  padding-inline: var(--s-4);
-  text-align: center;
+	padding: var(--s-2);
+	border-radius: var(--rounded);
+	margin: 0 auto;
+	background-color: var(--bg-lighter);
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
+	list-style-type: none;
+	padding-inline: var(--s-4);
+	text-align: center;
 }
 
 .plus-history__success {
-  color: var(--theme-success);
+	color: var(--theme-success);
 }
 
 .plus-history__fail {
-  color: var(--theme-error);
+	color: var(--theme-error);
 }
 
 .plus-history__tier-header {
-  display: flex;
-  flex-direction: row;
-  color: var(--theme);
+	display: flex;
+	flex-direction: row;
+	color: var(--theme);
 }
 
 .plus-history__tier-header::before,
 .plus-history__tier-header::after {
-  flex: 1 1;
-  border-bottom: 3px solid var(--theme-transparent);
-  margin: auto;
-  content: "";
+	flex: 1 1;
+	border-bottom: 3px solid var(--theme-transparent);
+	margin: auto;
+	content: "";
 }
 
 .plus-history__tier-header::before {
-  margin-right: 10px;
+	margin-right: 10px;
 }
 
 .plus-history__tier-header::after {
-  margin-left: 10px;
+	margin-left: 10px;
 }
 
 .plus-history__passed-info-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2);
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-2);
 }
 
 .plus-history__passed-header {
-  color: var(--text-lighter);
-  font-size: var(--fonts-xs);
+	color: var(--text-lighter);
+	font-size: var(--fonts-xs);
 }
 
 .plus-history__user-status {
-  border-radius: var(--rounded);
-  background-color: var(--theme);
-  color: var(--button-text);
-  font-size: var(--fonts-xs);
-  font-weight: var(--semi-bold);
-  padding-inline: var(--s-1-5);
+	border-radius: var(--rounded);
+	background-color: var(--theme);
+	color: var(--button-text);
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	padding-inline: var(--s-1-5);
 }
 
 .plus-history__user-status.failed {
-  background-color: var(--theme-error-transparent);
-  color: var(--text);
+	background-color: var(--theme-error-transparent);
+	color: var(--text);
 }
 
 .plus-history__suggestion-s {
-  border-radius: 50%;
-  background-color: var(--bg);
-  color: var(--text);
-  font-weight: var(--bold);
-  margin-inline-end: var(--s-1);
-  padding-inline: var(--s-1);
+	border-radius: 50%;
+	background-color: var(--bg);
+	color: var(--text);
+	font-weight: var(--bold);
+	margin-inline-end: var(--s-1);
+	padding-inline: var(--s-1);
 }

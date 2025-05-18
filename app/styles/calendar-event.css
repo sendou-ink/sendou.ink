@@ -1,64 +1,64 @@
 .event__title {
-  line-height: 1.35;
+	line-height: 1.35;
 }
 
 .event__day {
-  color: var(--text-lighter);
+	color: var(--text-lighter);
 }
 
 .event__times {
-  display: grid;
-  column-gap: var(--s-1-5);
-  font-weight: var(--semi-bold);
-  grid-template-columns: max-content 1fr;
+	display: grid;
+	column-gap: var(--s-1-5);
+	font-weight: var(--semi-bold);
+	grid-template-columns: max-content 1fr;
 }
 
 .event__times > time {
-  height: 1.25rem;
+	height: 1.25rem;
 }
 
 .event__map-pool-section {
-  display: flex;
-  max-width: 32rem;
-  flex-direction: column;
-  padding: var(--s-2);
-  margin: 0 auto;
-  gap: var(--s-4);
+	display: flex;
+	max-width: 32rem;
+	flex-direction: column;
+	padding: var(--s-2);
+	margin: 0 auto;
+	gap: var(--s-4);
 }
 
 .event__create-map-list-link {
-  display: flex;
-  width: max-content;
-  align-items: center;
-  margin: 0 auto;
-  font-size: var(--fonts-xs);
-  gap: var(--s-1-5);
+	display: flex;
+	width: max-content;
+	align-items: center;
+	margin: 0 auto;
+	font-size: var(--fonts-xs);
+	gap: var(--s-1-5);
 }
 
 .event__author {
-  display: flex;
-  align-items: center;
-  color: var(--text-lighter);
-  font-weight: var(--semi-bold);
-  gap: var(--s-1);
+	display: flex;
+	align-items: center;
+	color: var(--text-lighter);
+	font-weight: var(--semi-bold);
+	gap: var(--s-1);
 }
 
 .event__results-players {
-  display: flex;
-  flex-wrap: wrap;
-  padding: 0;
-  gap: var(--s-3);
-  list-style: none;
+	display: flex;
+	flex-wrap: wrap;
+	padding: 0;
+	gap: var(--s-3);
+	list-style: none;
 }
 
 .event__results-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
-  overflow-x: auto;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	overflow-x: auto;
 }
 
 .event__results-participant-count {
-  color: var(--text-lighter);
-  font-size: var(--fonts-xs);
+	color: var(--text-lighter);
+	font-size: var(--fonts-xs);
 }

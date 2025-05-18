@@ -1,595 +1,397 @@
-import type {
-  ActionFunction,
-  LinksFunction,
-  LoaderArgs,
-} from "@remix-run/node";
-import {
-  Link,
-  useLoaderData,
-  useOutletContext,
-  useRevalidator,
-} from "@remix-run/react";
-import { nanoid } from "nanoid";
+import { useLoaderData, useRevalidator } from "@remix-run/react";
+import clsx from "clsx";
 import * as React from "react";
-import { useEventSource } from "remix-utils";
-import invariant from "tiny-invariant";
+import { useEventSource } from "remix-utils/sse/react";
 import { LinkButton } from "~/components/Button";
+import { containerClassName } from "~/components/Main";
 import { ArrowLongLeftIcon } from "~/components/icons/ArrowLongLeft";
-import { sql } from "~/db/sql";
-import {
-  tournamentIdFromParams,
-  type TournamentLoaderData,
-} from "~/features/tournament";
+import { useUser } from "~/features/auth/core/user";
+import { ConnectedChat } from "~/features/chat/components/Chat";
+import { useTournament } from "~/features/tournament/routes/to.$id";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { useVisibilityChange } from "~/hooks/useVisibilityChange";
-import { requireUser, useUser } from "~/modules/auth";
-import { canAdminTournament, canReportTournamentScore } from "~/permissions";
-import { notFoundIfFalsy, parseRequestFormData, validate } from "~/utils/remix";
+import invariant from "~/utils/invariant";
 import { assertUnreachable } from "~/utils/types";
 import {
-  tournamentBracketsPage,
-  tournamentMatchSubscribePage,
-  tournamentTeamPage,
-  userPage,
+	tournamentBracketsPage,
+	tournamentMatchSubscribePage,
 } from "~/utils/urls";
-import { findByIdentifier } from "../../tournament/queries/findByIdentifier.server";
-import { findTeamsByTournamentId } from "../../tournament/queries/findTeamsByTournamentId.server";
-import { ScoreReporter } from "../components/ScoreReporter";
-import { getTournamentManager } from "../core/brackets-manager";
-import { emitter } from "../core/emitters.server";
-import { resolveMapList } from "../core/mapList.server";
-import { deleteTournamentMatchGameResultById } from "../queries/deleteTournamentMatchGameResultById.server";
-import { findMatchById } from "../queries/findMatchById.server";
-import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
-import { insertTournamentMatchGameResult } from "../queries/insertTournamentMatchGameResult.server";
-import { insertTournamentMatchGameResultParticipant } from "../queries/insertTournamentMatchGameResultParticipant.server";
-import { matchSchema } from "../tournament-bracket-schemas.server";
+import { CastInfo } from "../components/CastInfo";
+import { MatchRosters } from "../components/MatchRosters";
+import { OrganizerMatchMapListDialog } from "../components/OrganizerMatchMapListDialog";
+import { StartedMatch } from "../components/StartedMatch";
+import { getRounds } from "../core/rounds";
 import {
-  bracketSubscriptionKey,
-  matchIdFromParams,
-  matchSubscriptionKey,
+	groupNumberToLetters,
+	matchSubscriptionKey,
 } from "../tournament-bracket-utils";
-import bracketStyles from "../tournament-bracket.css";
-import clsx from "clsx";
-import { Avatar } from "~/components/Avatar";
 
-export const links: LinksFunction = () => [
-  {
-    rel: "stylesheet",
-    href: bracketStyles,
-  },
-];
+import { action } from "../actions/to.$id.matches.$mid.server";
+import { loader } from "../loaders/to.$id.matches.$mid.server";
+export { action, loader };
 
-export const action: ActionFunction = async ({ params, request }) => {
-  const user = await requireUser(request);
-  const matchId = matchIdFromParams(params);
-  const match = notFoundIfFalsy(findMatchById(matchId));
-  const data = await parseRequestFormData({
-    request,
-    schema: matchSchema,
-  });
-
-  const tournamentId = tournamentIdFromParams(params);
-  const event = notFoundIfFalsy(findByIdentifier(tournamentId));
-
-  const validateCanReportScore = () => {
-    const teams = findTeamsByTournamentId(tournamentId);
-    const ownedTeamId = teams.find((team) =>
-      team.members.some(
-        (member) => member.userId === user?.id && member.isOwner,
-      ),
-    )?.id;
-
-    validate(
-      canReportTournamentScore({
-        event,
-        match,
-        ownedTeamId,
-        user,
-      }),
-      "Unauthorized",
-      401,
-    );
-  };
-
-  const manager = getTournamentManager("SQL");
-
-  const scores: [number, number] = [
-    match.opponentOne?.score ?? 0,
-    match.opponentTwo?.score ?? 0,
-  ];
-
-  switch (data._action) {
-    case "REPORT_SCORE": {
-      // they are trying to report score that was already reported
-      // assume that it was already reported and make their page refresh
-      if (data.position !== scores[0] + scores[1]) {
-        return null;
-      }
-
-      validateCanReportScore();
-      validate(
-        match.opponentOne?.id === data.winnerTeamId ||
-          match.opponentTwo?.id === data.winnerTeamId,
-        "Winner team id is invalid",
-      );
-
-      const mapList =
-        match.opponentOne?.id && match.opponentTwo?.id
-          ? resolveMapList({
-              bestOf: match.bestOf,
-              tournamentId,
-              matchId,
-              teams: [match.opponentOne.id, match.opponentTwo.id],
-              mapPickingStyle: match.mapPickingStyle,
-            })
-          : null;
-      const currentMap = mapList?.[data.position];
-      invariant(currentMap, "Can't resolve current map");
-
-      const scoreToIncrement = () => {
-        if (data.winnerTeamId === match.opponentOne?.id) return 0;
-        if (data.winnerTeamId === match.opponentTwo?.id) return 1;
-
-        validate(false, "Winner team id is invalid");
-      };
-
-      scores[scoreToIncrement()]++;
-
-      sql.transaction(() => {
-        manager.update.match({
-          id: match.id,
-          opponent1: {
-            score: scores[0],
-            result:
-              scores[0] === Math.ceil(match.bestOf / 2) ? "win" : undefined,
-          },
-          opponent2: {
-            score: scores[1],
-            result:
-              scores[1] === Math.ceil(match.bestOf / 2) ? "win" : undefined,
-          },
-        });
-
-        const result = insertTournamentMatchGameResult({
-          matchId: match.id,
-          mode: currentMap.mode,
-          stageId: currentMap.stageId,
-          reporterId: user.id,
-          winnerTeamId: data.winnerTeamId,
-          number: data.position + 1,
-          source: String(currentMap.source),
-        });
-
-        for (const userId of data.playerIds) {
-          insertTournamentMatchGameResultParticipant({
-            matchGameResultId: result.id,
-            userId,
-          });
-        }
-      })();
-
-      break;
-    }
-    case "UNDO_REPORT_SCORE": {
-      validateCanReportScore();
-      // they are trying to remove score from the past
-      if (data.position !== scores[0] + scores[1] - 1) {
-        return null;
-      }
-
-      const results = findResultsByMatchId(matchId);
-      const lastResult = results[results.length - 1];
-      invariant(lastResult, "Last result is missing");
-
-      const shouldReset = results.length === 1;
-
-      if (lastResult.winnerTeamId === match.opponentOne?.id) {
-        scores[0]--;
-      } else {
-        scores[1]--;
-      }
-
-      sql.transaction(() => {
-        deleteTournamentMatchGameResultById(lastResult.id);
-
-        manager.update.match({
-          id: match.id,
-          opponent1: {
-            score: shouldReset ? undefined : scores[0],
-          },
-          opponent2: {
-            score: shouldReset ? undefined : scores[1],
-          },
-        });
-
-        if (shouldReset) {
-          manager.reset.matchResults(match.id);
-        }
-      })();
-
-      break;
-    }
-    // TODO: bug where you can reopen losers finals after winners finals
-    case "REOPEN_MATCH": {
-      const scoreOne = match.opponentOne?.score ?? 0;
-      const scoreTwo = match.opponentTwo?.score ?? 0;
-      invariant(typeof scoreOne === "number", "Score one is missing");
-      invariant(typeof scoreTwo === "number", "Score two is missing");
-      invariant(scoreOne !== scoreTwo, "Scores are equal");
-
-      validate(canAdminTournament({ event, user }));
-
-      const results = findResultsByMatchId(matchId);
-      const lastResult = results[results.length - 1];
-      invariant(lastResult, "Last result is missing");
-
-      if (scoreOne > scoreTwo) {
-        scores[0]--;
-      } else {
-        scores[1]--;
-      }
-
-      try {
-        sql.transaction(() => {
-          deleteTournamentMatchGameResultById(lastResult.id);
-          manager.update.match({
-            id: match.id,
-            opponent1: {
-              score: scores[0],
-              result: undefined,
-            },
-            opponent2: {
-              score: scores[1],
-              result: undefined,
-            },
-          });
-        })();
-      } catch (err) {
-        if (!(err instanceof Error)) throw err;
-
-        if (err.message.includes("locked")) {
-          return { error: "locked" };
-        }
-
-        throw err;
-      }
-
-      break;
-    }
-    default: {
-      assertUnreachable(data);
-    }
-  }
-
-  emitter.emit(matchSubscriptionKey(match.id), {
-    eventId: nanoid(),
-    userId: user.id,
-  });
-  emitter.emit(bracketSubscriptionKey(event.id), {
-    matchId: match.id,
-    scores,
-    isOver:
-      scores[0] === Math.ceil(match.bestOf / 2) ||
-      scores[1] === Math.ceil(match.bestOf / 2),
-  });
-
-  return null;
-};
-
-export type TournamentMatchLoaderData = typeof loader;
-
-export const loader = ({ params }: LoaderArgs) => {
-  const tournamentId = tournamentIdFromParams(params);
-  const matchId = matchIdFromParams(params);
-
-  const match = notFoundIfFalsy(findMatchById(matchId));
-
-  const mapList =
-    match.opponentOne?.id && match.opponentTwo?.id
-      ? resolveMapList({
-          bestOf: match.bestOf,
-          tournamentId,
-          matchId,
-          teams: [match.opponentOne.id, match.opponentTwo.id],
-          mapPickingStyle: match.mapPickingStyle,
-        })
-      : null;
-
-  const scoreSum =
-    (match.opponentOne?.score ?? 0) + (match.opponentTwo?.score ?? 0);
-
-  const currentMap = mapList?.[scoreSum];
-
-  return {
-    match,
-    results: findResultsByMatchId(matchId),
-    seeds: resolveSeeds(),
-    currentMap,
-    modes: mapList?.map((map) => map.mode),
-  };
-
-  function resolveSeeds() {
-    const tournamentId = tournamentIdFromParams(params);
-    const teams = findTeamsByTournamentId(tournamentId);
-
-    const teamOneIndex = teams.findIndex(
-      (team) => team.id === match.opponentOne?.id,
-    );
-    const teamTwoIndex = teams.findIndex(
-      (team) => team.id === match.opponentTwo?.id,
-    );
-
-    return [
-      teamOneIndex !== -1 ? teamOneIndex + 1 : null,
-      teamTwoIndex !== -1 ? teamTwoIndex + 1 : null,
-    ];
-  }
-};
+import "../tournament-bracket.css";
 
 export default function TournamentMatchPage() {
-  const user = useUser();
-  const visibility = useVisibilityChange();
-  const { revalidate } = useRevalidator();
-  const parentRouteData = useOutletContext<TournamentLoaderData>();
-  const data = useLoaderData<typeof loader>();
+	const user = useUser();
+	const visibility = useVisibilityChange();
+	const { revalidate } = useRevalidator();
+	const tournament = useTournament();
+	const data = useLoaderData<typeof loader>();
 
-  const matchIsOver =
-    data.match.opponentOne?.result === "win" ||
-    data.match.opponentTwo?.result === "win";
+	React.useEffect(() => {
+		if (visibility !== "visible" || data.matchIsOver) return;
 
-  React.useEffect(() => {
-    if (visibility !== "visible" || matchIsOver) return;
+		revalidate();
+	}, [visibility, revalidate, data.matchIsOver]);
 
-    revalidate();
-  }, [visibility, revalidate, matchIsOver]);
+	const type =
+		tournament.canReportScore({ matchId: data.match.id, user }) ||
+		tournament.isOrganizerOrStreamer(user)
+			? "EDIT"
+			: "OTHER";
 
-  const isMemberOfATeam = data.match.players.some((p) => p.id === user?.id);
+	const showRosterPeek = () => {
+		if (data.matchIsOver) return false;
 
-  const type = canReportTournamentScore({
-    event: parentRouteData.event,
-    match: data.match,
-    ownedTeamId: parentRouteData.ownTeam?.id,
-    user,
-  })
-    ? "EDIT"
-    : isMemberOfATeam
-    ? "MEMBER"
-    : "OTHER";
+		if (!data.match.opponentOne?.id || !data.match.opponentTwo?.id) return true;
 
-  const showRosterPeek = () => {
-    if (matchIsOver) return false;
+		return type !== "EDIT";
+	};
 
-    if (!data.match.opponentOne?.id || !data.match.opponentTwo?.id) return true;
+	const showChatPeek = () => {
+		if (!showRosterPeek()) return false;
 
-    return type !== "EDIT";
-  };
+		if (tournament.isOrganizerOrStreamer(user)) return true;
 
-  return (
-    <div className="stack lg">
-      {!matchIsOver && visibility !== "hidden" ? <AutoRefresher /> : null}
-      <div className="flex horizontal justify-between items-center">
-        {/* TODO: better title */}
-        <h2 className="text-lighter text-lg">Match #{data.match.id}</h2>
-        <LinkButton
-          to={tournamentBracketsPage(parentRouteData.event.id)}
-          variant="outlined"
-          size="tiny"
-          className="w-max"
-          icon={<ArrowLongLeftIcon />}
-          testId="back-to-bracket-button"
-        >
-          Back to bracket
-        </LinkButton>
-      </div>
-      {matchIsOver ? <ResultsSection /> : null}
-      {!matchIsOver &&
-      typeof data.match.opponentOne?.id === "number" &&
-      typeof data.match.opponentTwo?.id === "number" ? (
-        <MapListSection
-          teams={[data.match.opponentOne.id, data.match.opponentTwo.id]}
-          type={type}
-        />
-      ) : null}
-      {showRosterPeek() ? (
-        <Rosters
-          teams={[data.match.opponentOne?.id, data.match.opponentTwo?.id]}
-        />
-      ) : null}
-    </div>
-  );
+		const teamId = tournament.teamMemberOfByUser(user)?.id;
+		if (!teamId) return false;
+
+		if (data.match.opponentOne?.id === teamId) return true;
+		if (data.match.opponentTwo?.id === teamId) return true;
+
+		return false;
+	};
+
+	return (
+		<div className={clsx("stack lg", containerClassName("normal"))}>
+			{!data.matchIsOver && visibility !== "hidden" ? <AutoRefresher /> : null}
+			<div className="flex horizontal justify-between items-center">
+				<MatchHeader />
+				<div className="stack md horizontal flex-wrap-reverse justify-end">
+					{tournament.isOrganizerOrStreamer(user) ? (
+						<OrganizerMatchMapListDialog data={data} />
+					) : null}
+					<LinkButton
+						to={tournamentBracketsPage({
+							tournamentId: tournament.ctx.id,
+							bracketIdx: tournament.matchIdToBracketIdx(data.match.id),
+							groupId: data.match.groupId,
+						})}
+						variant="outlined"
+						size="tiny"
+						className="w-max"
+						icon={<ArrowLongLeftIcon />}
+						testId="back-to-bracket-button"
+					>
+						Back to bracket
+					</LinkButton>
+				</div>
+			</div>
+			<div className="stack md">
+				<CastInfo
+					matchIsOngoing={Boolean(
+						(data.match.opponentOne?.score &&
+							data.match.opponentOne.score > 0) ||
+							(data.match.opponentTwo?.score &&
+								data.match.opponentTwo.score > 0),
+					)}
+					matchIsOver={data.matchIsOver}
+					matchId={data.match.id}
+					hasBothParticipants={Boolean(
+						data.match.opponentOne?.id && data.match.opponentTwo?.id,
+					)}
+				/>
+				{data.matchIsOver ? <ResultsSection /> : null}
+				{!data.matchIsOver &&
+				typeof data.match.opponentOne?.id === "number" &&
+				typeof data.match.opponentTwo?.id === "number" ? (
+					<MapListSection
+						teams={[data.match.opponentOne.id, data.match.opponentTwo.id]}
+						type={type}
+					/>
+				) : null}
+				{showRosterPeek() ? (
+					<MatchRosters
+						teams={[data.match.opponentOne?.id, data.match.opponentTwo?.id]}
+					/>
+				) : null}
+				{showChatPeek() ? <BeforeMatchChat /> : null}
+			</div>
+		</div>
+	);
+}
+
+function BeforeMatchChat() {
+	const tournament = useTournament();
+	const data = useLoaderData<typeof loader>();
+
+	// TODO: resolve this on server (notice it is copy-pasted now)
+	const chatUsers = React.useMemo(() => {
+		return Object.fromEntries(
+			[
+				...data.match.players.map((p) => ({ ...p, title: undefined })),
+				...(tournament.ctx.organization?.members ?? []).map((m) => ({
+					...m,
+					title: m.role === "STREAMER" ? "Stream" : "TO",
+				})),
+				...tournament.ctx.staff.map((s) => ({
+					...s,
+					title: s.role === "STREAMER" ? "Stream" : "TO",
+				})),
+				{
+					...tournament.ctx.author,
+					title: "TO",
+				},
+			].map((p) => [p.id, p]),
+		);
+	}, [data, tournament]);
+
+	const rooms = React.useMemo(() => {
+		return data.match.chatCode
+			? [
+					{
+						code: data.match.chatCode,
+						label: "Match",
+					},
+				]
+			: [];
+	}, [data.match.chatCode]);
+
+	return (
+		<div className="tournament__action-section mt-6">
+			<ConnectedChat
+				rooms={rooms}
+				users={chatUsers}
+				className="tournament__chat-container"
+				messagesContainerClassName="tournament__chat-messages-container"
+				missingUserName="???"
+			/>
+		</div>
+	);
+}
+
+function MatchHeader() {
+	const tournament = useTournament();
+	const data = useLoaderData<typeof loader>();
+
+	const { bracketName, roundName } = React.useMemo(() => {
+		let bracketName: string | undefined;
+		let roundName: string | undefined;
+
+		for (const bracket of tournament.brackets) {
+			if (bracket.preview) continue;
+
+			for (const match of bracket.data.match) {
+				if (match.id === data.match.id) {
+					bracketName = bracket.name;
+
+					if (bracket.type === "round_robin") {
+						const group = bracket.data.group.find(
+							(group) => group.id === match.group_id,
+						);
+						const round = bracket.data.round.find(
+							(round) => round.id === match.round_id,
+						);
+
+						roundName = `Groups ${group?.number ? groupNumberToLetters(group.number) : ""}${round?.number ?? ""}.${match.number}`;
+					} else if (bracket.type === "swiss") {
+						const group = bracket.data.group.find(
+							(group) => group.id === match.group_id,
+						);
+						const round = bracket.data.round.find(
+							(round) => round.id === match.round_id,
+						);
+
+						const oneGroupOnly = bracket.data.group.length === 1;
+
+						roundName = `Swiss${oneGroupOnly ? "" : " Group"} ${group?.number && !oneGroupOnly ? groupNumberToLetters(group.number) : ""} ${round?.number ?? ""}.${match.number}`;
+					} else if (
+						bracket.type === "single_elimination" ||
+						bracket.type === "double_elimination"
+					) {
+						const rounds =
+							bracket.type === "single_elimination"
+								? getRounds({ type: "single", bracketData: bracket.data })
+								: [
+										...getRounds({
+											type: "winners",
+											bracketData: bracket.data,
+										}),
+										...getRounds({ type: "losers", bracketData: bracket.data }),
+									];
+
+						const round = rounds.find((round) => round.id === match.round_id);
+
+						if (round) {
+							const specifier = () => {
+								if (
+									[
+										TOURNAMENT.ROUND_NAMES.WB_FINALS,
+										TOURNAMENT.ROUND_NAMES.GRAND_FINALS,
+										TOURNAMENT.ROUND_NAMES.BRACKET_RESET,
+										TOURNAMENT.ROUND_NAMES.FINALS,
+										TOURNAMENT.ROUND_NAMES.LB_FINALS,
+										TOURNAMENT.ROUND_NAMES.LB_SEMIS,
+										TOURNAMENT.ROUND_NAMES.THIRD_PLACE_MATCH,
+									].includes(round.name as any)
+								) {
+									return "";
+								}
+
+								const roundNameEndsInDigit = /\d$/.test(round.name);
+
+								if (!roundNameEndsInDigit) {
+									return ` ${match.number}`;
+								}
+
+								return `.${match.number}`;
+							};
+							roundName = `${round.name}${specifier()}`;
+						}
+					} else {
+						assertUnreachable(bracket.type);
+					}
+				}
+			}
+		}
+
+		return {
+			bracketName,
+			roundName,
+		};
+	}, [tournament, data.match.id]);
+
+	return (
+		<div className="line-height-tight" data-testid="match-header">
+			<h2 className="text-lg">{roundName}</h2>
+			{tournament.ctx.settings.bracketProgression.length > 1 ? (
+				<div className="text-lighter text-xs font-bold">{bracketName}</div>
+			) : null}
+		</div>
+	);
 }
 
 function AutoRefresher() {
-  useAutoRefresh();
+	useAutoRefresh();
 
-  return null;
+	return null;
 }
 
 function useAutoRefresh() {
-  const { revalidate } = useRevalidator();
-  const parentRouteData = useOutletContext<TournamentLoaderData>();
-  const data = useLoaderData<typeof loader>();
-  const lastEventId = useEventSource(
-    tournamentMatchSubscribePage({
-      eventId: parentRouteData.event.id,
-      matchId: data.match.id,
-    }),
-    {
-      event: matchSubscriptionKey(data.match.id),
-    },
-  );
+	const { revalidate } = useRevalidator();
+	const tournament = useTournament();
+	const data = useLoaderData<typeof loader>();
+	const lastEventId = useEventSource(
+		tournamentMatchSubscribePage({
+			tournamentId: tournament.ctx.id,
+			matchId: data.match.id,
+		}),
+		{
+			event: matchSubscriptionKey(data.match.id),
+		},
+	);
 
-  React.useEffect(() => {
-    if (lastEventId) {
-      revalidate();
-    }
-  }, [lastEventId, revalidate]);
+	React.useEffect(() => {
+		if (lastEventId) {
+			revalidate();
+		}
+	}, [lastEventId, revalidate]);
 }
 
 function MapListSection({
-  teams,
-  type,
+	teams,
+	type,
 }: {
-  teams: [id: number, id: number];
-  type: "EDIT" | "MEMBER" | "OTHER";
+	teams: [id: number, id: number];
+	type: "EDIT" | "OTHER";
 }) {
-  const data = useLoaderData<typeof loader>();
-  const parentRouteData = useOutletContext<TournamentLoaderData>();
+	const data = useLoaderData<typeof loader>();
+	const tournament = useTournament();
 
-  const teamOne = parentRouteData.teams.find((team) => team.id === teams[0]);
-  const teamTwo = parentRouteData.teams.find((team) => team.id === teams[1]);
+	const teamOneId = teams[0];
+	const teamOne = React.useMemo(
+		() => tournament.teamById(teamOneId),
+		[teamOneId, tournament],
+	);
+	const teamTwoId = teams[1];
+	const teamTwo = React.useMemo(
+		() => tournament.teamById(teamTwoId),
+		[teamTwoId, tournament],
+	);
 
-  if (!teamOne || !teamTwo) return null;
+	if (!teamOne || !teamTwo) return null;
 
-  invariant(data.currentMap, "No map found for this score");
-  invariant(data.modes, "No modes found for this map list");
+	invariant(data.mapList, "No mapList found for this map list");
 
-  return (
-    <ScoreReporter
-      currentStageWithMode={data.currentMap}
-      teams={[teamOne, teamTwo]}
-      modes={data.modes}
-      type={type}
-    />
-  );
+	const scoreSum =
+		(data.match.opponentOne?.score ?? 0) + (data.match.opponentTwo?.score ?? 0);
+
+	const currentMap = data.mapList?.filter((m) => !m.bannedByTournamentTeamId)[
+		scoreSum
+	];
+
+	return (
+		<StartedMatch
+			currentStageWithMode={currentMap}
+			teams={[teamOne, teamTwo]}
+			type={type}
+		/>
+	);
 }
 
 function ResultsSection() {
-  const data = useLoaderData<typeof loader>();
-  const parentRouteData = useOutletContext<TournamentLoaderData>();
-  const [selectedResultIndex, setSelectedResultIndex] = useSearchParamState({
-    defaultValue: data.results.length - 1,
-    name: "result",
-    revive: (value) => {
-      const maybeIndex = Number(value);
-      if (!Number.isInteger(maybeIndex)) return;
-      if (maybeIndex < 0 || maybeIndex >= data.results.length) return;
+	const data = useLoaderData<typeof loader>();
+	const tournament = useTournament();
+	const [selectedResultIndex, setSelectedResultIndex] = useSearchParamState({
+		defaultValue: data.results.length - 1,
+		name: "result",
+		revive: (value) => {
+			const maybeIndex = Number(value);
+			if (!Number.isInteger(maybeIndex)) return;
+			if (maybeIndex < 0 || maybeIndex >= data.results.length) return;
 
-      return maybeIndex;
-    },
-  });
+			return maybeIndex;
+		},
+	});
 
-  const result = data.results[selectedResultIndex];
-  invariant(result, "Result is missing");
+	const result = data.results[selectedResultIndex];
+	invariant(result, "Result is missing");
 
-  const teamOne = parentRouteData.teams.find(
-    (team) => team.id === data.match.opponentOne?.id,
-  );
-  const teamTwo = parentRouteData.teams.find(
-    (team) => team.id === data.match.opponentTwo?.id,
-  );
+	const teamOne = data.match.opponentOne?.id
+		? tournament.teamById(data.match.opponentOne.id)
+		: undefined;
+	const teamTwo = data.match.opponentTwo?.id
+		? tournament.teamById(data.match.opponentTwo.id)
+		: undefined;
 
-  if (!teamOne || !teamTwo) {
-    throw new Error("Team is missing");
-  }
+	if (!teamOne || !teamTwo) {
+		throw new Error("Team is missing");
+	}
 
-  return (
-    <ScoreReporter
-      currentStageWithMode={result}
-      teams={[teamOne, teamTwo]}
-      modes={data.results.map((result) => result.mode)}
-      selectedResultIndex={selectedResultIndex}
-      setSelectedResultIndex={setSelectedResultIndex}
-      result={result}
-      type="OTHER"
-    />
-  );
-}
+	const resultSource = data.mapList?.find(
+		(m) => m.stageId === result.stageId && m.mode === result.mode,
+	)?.source;
 
-function Rosters({
-  teams,
-}: {
-  teams: [id: number | null | undefined, id: number | null | undefined];
-}) {
-  const data = useLoaderData<typeof loader>();
-  const parentRouteData = useOutletContext<TournamentLoaderData>();
-
-  const teamOne = parentRouteData.teams.find((team) => team.id === teams[0]);
-  const teamTwo = parentRouteData.teams.find((team) => team.id === teams[1]);
-  const teamOnePlayers = data.match.players.filter(
-    (p) => p.tournamentTeamId === teamOne?.id,
-  );
-  const teamTwoPlayers = data.match.players.filter(
-    (p) => p.tournamentTeamId === teamTwo?.id,
-  );
-
-  return (
-    <div className="tournament-bracket__rosters">
-      <div>
-        <div className="stack xs horizontal items-center text-lighter">
-          <div className="tournament-bracket__team-one-dot" />
-          Team 1
-        </div>
-        <h2
-          className={clsx("text-sm", {
-            "text-lighter": !teamOne,
-          })}
-        >
-          {teamOne ? (
-            <Link
-              to={tournamentTeamPage({
-                eventId: parentRouteData.event.id,
-                tournamentTeamId: teamOne.id,
-              })}
-              className="text-main-forced font-bold"
-            >
-              {teamOne.name}
-            </Link>
-          ) : (
-            "Waiting on team"
-          )}
-        </h2>
-        {teamOnePlayers.length > 0 ? (
-          <ul className="stack xs mt-2">
-            {teamOnePlayers.map((p) => {
-              return (
-                <li key={p.id}>
-                  <Link to={userPage(p)} className="stack horizontal sm">
-                    <Avatar user={p} size="xxs" />
-                    {p.discordName}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        ) : null}
-      </div>
-      <div>
-        <div className="stack xs horizontal items-center text-lighter">
-          <div className="tournament-bracket__team-two-dot" />
-          Team 2
-        </div>
-        <h2 className={clsx("text-sm", { "text-lighter": !teamTwo })}>
-          {teamTwo ? (
-            <Link
-              to={tournamentTeamPage({
-                eventId: parentRouteData.event.id,
-                tournamentTeamId: teamTwo.id,
-              })}
-              className="text-main-forced font-bold"
-            >
-              {teamTwo.name}
-            </Link>
-          ) : (
-            "Waiting on team"
-          )}
-        </h2>
-        {teamTwoPlayers.length > 0 ? (
-          <ul className="stack xs mt-2">
-            {teamTwoPlayers.map((p) => {
-              return (
-                <li key={p.id}>
-                  <Link to={userPage(p)} className="stack horizontal sm">
-                    <Avatar user={p} size="xxs" />
-                    {p.discordName}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        ) : null}
-      </div>
-    </div>
-  );
+	return (
+		<StartedMatch
+			currentStageWithMode={{ ...result, source: resultSource ?? "TO" }}
+			teams={[teamOne, teamTwo]}
+			selectedResultIndex={selectedResultIndex}
+			setSelectedResultIndex={setSelectedResultIndex}
+			result={result}
+			type="OTHER"
+		/>
+	);
 }

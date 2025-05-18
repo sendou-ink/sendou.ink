@@ -1,10 +1,16 @@
 import { sql } from "~/db/sql";
 
-const stm = sql.prepare(/*sql*/ `
+const deleteTeamStm = sql.prepare(/*sql*/ `
   delete from "TournamentTeam"
     where "id" = @tournamentTeamId
 `);
 
-export function deleteTeam(tournamentTeamId: number) {
-  stm.run({ tournamentTeamId });
-}
+const deleteMapPoolStm = sql.prepare(/*sql*/ `
+  delete from "MapPoolMap"
+    where "tournamentTeamId" = @tournamentTeamId
+`);
+
+export const deleteTeam = sql.transaction((tournamentTeamId: number) => {
+	deleteMapPoolStm.run({ tournamentTeamId });
+	deleteTeamStm.run({ tournamentTeamId });
+});

@@ -1,7 +1,7 @@
+import * as R from "remeda";
 import { sql } from "~/db/sql";
-import type { TournamentMatchGameResult, User } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import type { ModeShort, StageId } from "~/modules/in-game-lists";
-import { removeDuplicatesByProperty } from "~/utils/arrays";
 import { parseDBArray } from "~/utils/sql";
 
 const stm = sql.prepare(/* sql */ `
@@ -13,6 +13,7 @@ const stm = sql.prepare(/* sql */ `
       "otherTeam"."name" as "otherTeamName",
       "otherTeam"."id" as "otherTeamId",
       "round"."number" as "roundNumber",
+      "round"."stageId" as "stageId",
       "group"."number" as "groupNumber",
       json_group_array(
         json_object(
@@ -57,8 +58,8 @@ const stm = sql.prepare(/* sql */ `
       json_object(
         'id',
         "u"."id",
-        'discordName',
-        "u"."discordName",
+        'username',
+        "u"."username",
         'discordAvatar',
         "u"."discordAvatar",
         'discordId',
@@ -78,41 +79,39 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export interface SetHistoryByTeamIdItem {
-  tournamentMatchId: number;
-  opponentOneScore: number | null;
-  opponentTwoScore: number | null;
-  otherTeamName: string;
-  otherTeamId: number;
-  roundNumber: number;
-  groupNumber: number;
-  matches: {
-    stageId: StageId;
-    source: TournamentMatchGameResult["source"];
-    mode: ModeShort;
-    wasWinner: number;
-  }[];
-  players: Array<
-    Pick<
-      User,
-      "id" | "discordName" | "discordAvatar" | "discordId" | "customUrl"
-    >
-  >;
+	tournamentMatchId: number;
+	opponentOneScore: number | null;
+	opponentTwoScore: number | null;
+	otherTeamName: string;
+	otherTeamId: number;
+	roundNumber: number;
+	stageId: number;
+	groupNumber: number;
+	matches: {
+		stageId: StageId;
+		source: Tables["TournamentMatchGameResult"]["source"];
+		mode: ModeShort;
+		wasWinner: number;
+	}[];
+	players: Array<
+		Pick<
+			Tables["User"],
+			"id" | "username" | "discordAvatar" | "discordId" | "customUrl"
+		>
+	>;
 }
 
 export function setHistoryByTeamId(
-  tournamentTeamId: number,
+	tournamentTeamId: number,
 ): Array<SetHistoryByTeamIdItem> {
-  const rows = stm.all({ tournamentTeamId }) as any[];
+	const rows = stm.all({ tournamentTeamId }) as any[];
 
-  return rows.map((row) => {
-    return {
-      ...row,
-      matches: parseDBArray(row.matches),
-      // TODO: there is probably a way to do this in SQL
-      players: removeDuplicatesByProperty(
-        parseDBArray(row.players),
-        (u: Pick<User, "id">) => u.id,
-      ),
-    };
-  });
+	return rows.map((row) => {
+		return {
+			...row,
+			matches: parseDBArray(row.matches),
+			// TODO: there is probably a way to do this in SQL
+			players: R.uniqueBy(parseDBArray(row.players), (u) => u.id),
+		};
+	});
 }

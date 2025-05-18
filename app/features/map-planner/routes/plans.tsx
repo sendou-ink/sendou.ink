@@ -1,45 +1,37 @@
+import type { MetaFunction } from "@remix-run/node";
 import { lazy } from "react";
-import type { LinksFunction, V2_MetaFunction } from "@remix-run/node";
-import styles from "../plans.css";
-import type { SendouRouteHandle } from "~/utils/remix";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import { navIconUrl, PLANNER_URL } from "~/utils/urls";
-import { makeTitle } from "~/utils/strings";
-import { useTranslation } from "~/hooks/useTranslation";
-import { useSetTitle } from "~/hooks/useSetTitle";
+import { metaTags } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
+import { PLANNER_URL, navIconUrl } from "~/utils/urls";
 
-export const meta: V2_MetaFunction = () => {
-  return [
-    { title: makeTitle("Planner") },
-    {
-      name: "description",
-      content:
-        "Make the perfect Splatoon 3 battle plans by drawing on maps and adding weapon images",
-    },
-  ];
+import "../plans.css";
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Map Planner",
+		ogTitle: "Splatoon 3 Map planner",
+		description:
+			"Make perfect Splatoon 3 battle plans by drawing on maps and adding weapon images",
+		location: args.location,
+	});
 };
 
 export const handle: SendouRouteHandle = {
-  i18n: ["weapons"],
-  breadcrumb: () => ({
-    imgPath: navIconUrl("plans"),
-    href: PLANNER_URL,
-    type: "IMAGE",
-  }),
-};
-
-export const links: LinksFunction = () => {
-  return [{ rel: "stylesheet", href: styles }];
+	i18n: ["weapons"],
+	breadcrumb: () => ({
+		imgPath: navIconUrl("plans"),
+		href: PLANNER_URL,
+		type: "IMAGE",
+	}),
 };
 
 const Planner = lazy(() => import("~/features/map-planner/components/Planner"));
 
 export default function MapPlannerPage() {
-  const { t } = useTranslation(["common"]);
-  const isMounted = useIsMounted();
-  useSetTitle(t("common:pages.plans"));
+	const isMounted = useIsMounted();
 
-  if (!isMounted) return <div className="plans__placeholder" />;
+	if (!isMounted) return <div className="plans__placeholder" />;
 
-  return <Planner />;
+	return <Planner />;
 }

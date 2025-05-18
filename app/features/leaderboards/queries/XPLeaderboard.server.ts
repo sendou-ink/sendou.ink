@@ -1,19 +1,18 @@
 import { sql } from "~/db/sql";
-import { LEADERBOARD_MAX_SIZE } from "../leaderboards-constants";
-import type { User, XRankPlacement } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import type { MainWeaponId } from "~/modules/in-game-lists";
+import { DEFAULT_LEADERBOARD_MAX_SIZE } from "../leaderboards-constants";
 
 const getStm = (where = "") =>
-  sql.prepare(/* sql */ `
+	sql.prepare(/* sql */ `
   select
     "XRankPlacement"."id" as "entryId",
     "XRankPlacement"."playerId",
     "XRankPlacement"."weaponSplId",
     "XRankPlacement"."name",
     "User"."id",
-    "User"."discordName",
+    "User"."username",
     "User"."discordAvatar",
-    "User"."discordDiscriminator",
     "User"."discordId",
     "User"."customUrl",
     max("XRankPlacement"."power") as "power",
@@ -26,7 +25,7 @@ const getStm = (where = "") =>
   ${where}
   group by "XRankPlacement"."playerId"
   order by "power" desc
-  limit ${LEADERBOARD_MAX_SIZE}
+  limit ${DEFAULT_LEADERBOARD_MAX_SIZE}
 `);
 
 const allStm = getStm();
@@ -40,32 +39,31 @@ const weaponStm = getStm(/* sql */ `
 `);
 
 export interface XPLeaderboardItem {
-  entryId: number;
-  power: number;
-  id: User["id"];
-  name: XRankPlacement["name"];
-  playerId: XRankPlacement["playerId"];
-  discordName: User["discordName"] | null;
-  discordAvatar: User["discordAvatar"] | null;
-  discordDiscriminator: User["discordDiscriminator"] | null;
-  discordId: User["discordId"] | null;
-  customUrl: User["customUrl"] | null;
-  placementRank: number;
-  weaponSplId: MainWeaponId;
+	entryId: number;
+	power: number;
+	id: Tables["User"]["id"];
+	name: Tables["XRankPlacement"]["name"];
+	playerId: Tables["XRankPlacement"]["playerId"];
+	username: Tables["User"]["username"] | null;
+	discordAvatar: Tables["User"]["discordAvatar"] | null;
+	discordId: Tables["User"]["discordId"] | null;
+	customUrl: Tables["User"]["customUrl"] | null;
+	placementRank: number;
+	weaponSplId: MainWeaponId;
 }
 
 export function allXPLeaderboard(): XPLeaderboardItem[] {
-  return allStm.all() as any[];
+	return allStm.all() as any[];
 }
 
 export function modeXPLeaderboard(
-  mode: XRankPlacement["mode"],
+	mode: Tables["XRankPlacement"]["mode"],
 ): XPLeaderboardItem[] {
-  return modeStm.all({ mode }) as any[];
+	return modeStm.all({ mode }) as any[];
 }
 
 export function weaponXPLeaderboard(
-  weaponSplId: MainWeaponId,
+	weaponSplId: MainWeaponId,
 ): XPLeaderboardItem[] {
-  return weaponStm.all({ weaponSplId }) as any[];
+	return weaponStm.all({ weaponSplId }) as any[];
 }

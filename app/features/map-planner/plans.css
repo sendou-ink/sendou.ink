@@ -1,101 +1,184 @@
+/* Currently ignored by Biome, can be unignored when https://github.com/biomejs/biome/pull/3251 lands */
+
+/* https://github.com/tldraw/tldraw/blob/2352985e949d14270fc89dc60144239c37c8ff91/packages/tldraw/src/hooks/useStylesheet.ts */
+@import url("https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Source+Code+Pro&family=Source+Sans+Pro&family=Crimson+Pro&display=block");
+@import url("tldraw/tldraw.css");
+
+@font-face {
+	font-family: "Recursive";
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url(https://fonts.gstatic.com/s/recursive/v23/8vI-7wMr0mhh-RQChyHEH06TlXhq_gukbYrFMk1QuAIcyEwG_X-dpEfaE5YaERmK-CImKsvxvU-MXGX2fSqasNfUlTGZnI14ZeY.woff2)
+		format("woff2");
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+		U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+		U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: "Recursive";
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url(https://fonts.gstatic.com/s/recursive/v23/8vI-7wMr0mhh-RQChyHEH06TlXhq_gukbYrFMk1QuAIcyEwG_X-dpEfaE5YaERmK-CImKsvxvU-MXGX2fSqasNfUlTGZnI14ZeY.woff2)
+		format("woff2");
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+		U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+		U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: "Recursive Mono";
+	font-style: normal;
+	font-weight: 420;
+	font-display: swap;
+	src: url(https://fonts.gstatic.com/s/recursive/v23/8vI-7wMr0mhh-RQChyHEH06TlXhq_gukbYrFMk1QuAIcyEwG_X-dpEfaE5YaERmK-CImqvTxvU-MXGX2fSqasNfUlTGZnI14ZeY.woff2)
+		format("woff2");
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+		U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+		U+FEFF, U+FFFD;
+}
+
 div {
-  box-shadow: none !important;
+	box-shadow: none !important;
 }
 
 /** Hacky selector to remove the question mark popup on bottom left */
 button[data-state="closed"][aria-haspopup="dialog"] {
-  display: none;
+	display: none;
 }
 
-/* stylelint-disable selector-id-pattern */
 #TD-MenuPanel {
-  display: none;
+	display: none;
 }
 
 #pw-oop-bottom_rail {
-  display: none;
+	display: none;
 }
-/* stylelint-enable selector-id-pattern */
 
 .layout__header {
-  z-index: 2;
-  border: none;
-  backdrop-filter: none;
-  background-color: transparent;
+	z-index: 2;
+	border: none;
+	backdrop-filter: none;
+	background-color: transparent;
 }
 
 .layout__header__right-container {
-  display: none;
+	display: none;
 }
 
 .tl-canvas {
-  background-color: var(--bg);
+	background-color: var(--bg);
 }
 
 .plans__placeholder {
-  min-height: 100%;
+	min-height: 100%;
 }
 
 .plans__top-section {
-  position: fixed;
-  z-index: 10;
-  top: 3%;
-  left: 50%;
-  display: flex;
-  align-items: center;
-  padding: var(--s-3);
-  border: 1px solid var(--theme-very-transparent);
-  border-radius: 0 0 var(--rounded) var(--rounded);
-  background-color: var(--bg-darker);
-  gap: var(--s-4);
-  transform: translate(-50%, -42%);
+	position: fixed;
+	z-index: 10;
+	top: 25px;
+	left: 50%;
+	display: flex;
+	align-items: center;
+	padding: var(--s-3);
+	border: 1px solid var(--theme-very-transparent);
+	border-radius: 0 0 var(--rounded) var(--rounded);
+	background-color: var(--bg-darker);
+	gap: var(--s-4);
+	transform: translate(-50%, -42%);
+}
+
+.plans__outline-toggle {
+	position: fixed;
+	z-index: 10;
+	top: 10%;
+	left: 5px;
+}
+
+.plans__outline-toggle > .plans__outline-toggle__button {
+	background-color: grey;
+	font-size: var(--fonts-xs);
+	padding: var(--s-2);
+	color: var(--button-text);
+	width: 140px;
+}
+
+.plans__outline-toggle > .plans__outline-toggle__button__outlined {
+	background-color: var(--theme);
 }
 
 .plans__weapons-section {
-  position: fixed;
-  z-index: 10;
-  top: 10%;
-  width: 150px;
-  max-height: 85vh;
-  border: 1px solid var(--theme-very-transparent);
-  border-radius: 0 var(--rounded) var(--rounded) 0;
-  background: var(--bg-darker);
-  gap: 2px;
-  overflow-y: auto;
+	position: fixed;
+	z-index: 10;
+	top: 15%;
+	width: 150px;
+	max-height: 85vh;
+	border: 1px solid var(--theme-very-transparent);
+	border-radius: 0 var(--rounded) var(--rounded) 0;
+	background: var(--bg-darker);
+	gap: 2px;
+	overflow-y: auto;
 }
 
 .plans__weapons-section__wide {
-  width: 175px;
+	width: 175px;
 }
 
 .plans__weapons-summary {
-  background-color: var(--bg-lighter);
-  font-size: var(--fonts-sm);
-  font-weight: var(--bold);
-  padding: var(--s-2-5);
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
+	background-color: var(--bg-lighter);
+	font-size: var(--fonts-sm);
+	font-weight: var(--bold);
+	padding: var(--s-2-5);
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
 }
 
 .plans__weapons-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  padding: var(--s-1-5);
-  gap: var(--s-1-5);
-}
-
-.plans__powered-by {
-  position: fixed;
-  z-index: 10;
-  right: 0.5%;
-  bottom: 0.5%;
-  color: var(--text-lighter);
-  font-size: var(--fonts-xxxs);
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	padding: var(--s-1-5);
+	gap: var(--s-1-5);
 }
 
 .plans__no-img-text {
-  color: var(--theme-error);
-  font-size: var(--fonts-xs);
+	color: var(--theme-error);
+	font-size: var(--fonts-xs);
+}
+
+.plans__style-panel {
+	position: fixed;
+	z-index: 10;
+	margin-top: 50px;
+}
+
+.plans__zoom-quick-actions {
+	position: absolute;
+	z-index: 10;
+	display: block;
+}
+
+.plans__zoom-menu {
+	position: absolute;
+	right: 0;
+}
+
+.plans__quick-actions {
+	display: flex;
+	right: 0;
+}
+
+img[src$="?outline=red"] {
+	--outline-width: 0.1rem;
+	--outline-color: crimson;
+	filter: drop-shadow(0 0 var(--outline-width) var(--outline-color))
+		drop-shadow(0 0 var(--outline-width) var(--outline-color))
+		drop-shadow(0 0 var(--outline-width) var(--outline-color));
 }

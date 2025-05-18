@@ -1,18 +1,18 @@
 // https://stackoverflow.com/a/50101022
 export async function fetchWithTimeout(
-  input: RequestInfo | URL,
-  init?: RequestInit | undefined,
-  timeout = 5000,
+	input: RequestInfo | URL,
+	init?: RequestInit | undefined,
+	timeout = 5000,
 ) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => {
-    controller.abort();
-    console.error("Fetch timed out");
-  }, timeout);
+	const controller = new AbortController();
+	const timeoutId = setTimeout(() => {
+		controller.abort();
+		console.error("Fetch timed out");
+	}, timeout);
 
-  const response = await fetch(input, { signal: controller.signal, ...init });
+	const response = await fetch(input, { signal: controller.signal, ...init });
 
-  clearTimeout(timeoutId);
+	clearTimeout(timeoutId);
 
-  return response;
+	return response;
 }

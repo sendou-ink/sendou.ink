@@ -1,6 +1,6 @@
 import { sql } from "~/db/sql";
-import type { TournamentTeam } from "~/db/types";
-import type { MapPool } from "~/modules/map-pool-serializer";
+import type { Tables } from "~/db/tables";
+import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 
 const deleteCounterpickMapsByTeamIdStm = sql.prepare(/* sql */ `
   delete from
@@ -17,21 +17,21 @@ const addCounterpickMapStm = sql.prepare(/* sql */ `
 `);
 
 export const upsertCounterpickMaps = sql.transaction(
-  ({
-    tournamentTeamId,
-    mapPool,
-  }: {
-    tournamentTeamId: TournamentTeam["id"];
-    mapPool: MapPool;
-  }) => {
-    deleteCounterpickMapsByTeamIdStm.run({ tournamentTeamId });
+	({
+		tournamentTeamId,
+		mapPool,
+	}: {
+		tournamentTeamId: Tables["TournamentTeam"]["id"];
+		mapPool: MapPool;
+	}) => {
+		deleteCounterpickMapsByTeamIdStm.run({ tournamentTeamId });
 
-    for (const { stageId, mode } of mapPool.stageModePairs) {
-      addCounterpickMapStm.run({
-        tournamentTeamId,
-        stageId,
-        mode,
-      });
-    }
-  },
+		for (const { stageId, mode } of mapPool.stageModePairs) {
+			addCounterpickMapStm.run({
+				tournamentTeamId,
+				stageId,
+				mode,
+			});
+		}
+	},
 );

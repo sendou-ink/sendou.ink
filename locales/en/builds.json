@@ -1,0 +1,46 @@
+{
+	"addBuild": "Add build",
+	"reachBuildMaxCount": "You've reached the max amount of builds.",
+	"noBuilds": "No builds yet. Add your first one!",
+	"buildCard.info": "Info",
+	"buildCard.edit": "Edit",
+
+	"forms.title": "Title",
+	"forms.modes": "Modes",
+	"forms.weapons": "Weapons",
+	"forms.gear.HEAD": "Gear (head)",
+	"forms.gear.CLOTHES": "Gear (clothes)",
+	"forms.gear.SHOES": "Gear (shoes)",
+	"forms.private.info": "Private builds are only visible to you",
+	"forms.noGear.info": "Gear is optional but you must fill all slots if you fill any.",
+
+	"deleteConfirm": "Delete build '{{title}}'?",
+
+	"stats.count.title": "Stats from {{count}} {{weapon}} builds",
+	"stats.ap.title": "Ability point averages",
+	"stats.percentage.title": "Primary-only ability appearance",
+	"stats.all": "All",
+	"stats.public": "Public",
+	"stats.private": "Private",
+
+	"addFilter": "Add filter",
+	"linkButton.abilityStats": "Ability stats",
+	"linkButton.popularBuilds": "Popular builds",
+	"noPopularBuilds": "It seems there are no popular builds for this weapon at this moment.",
+
+	"emptyAbilitySlot": "Empty ability slot",
+
+	"filters.type.ability": "By ability",
+	"filters.type.mode": "By mode",
+	"filters.type.date": "By date",
+	"filters.ability.title": "Ability filter",
+	"filters.mode.title": "Mode filter",
+	"filters.date.title": "Date filter",
+	"filters.has": "Has",
+	"filters.does.not.have": "Doesn't have",
+	"filters.atLeast": "At least",
+	"filters.atMost": "At most",
+	"filters.date.since": "Since",
+	"filters.date.custom": "Custom",
+	"filters.filterByWeapon": "Filter by weapon"
+}

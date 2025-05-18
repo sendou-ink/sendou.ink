@@ -1,0 +1,143 @@
+{
+	"tabs.info": "Info",
+	"tabs.teams": "Times ({{count}})",
+	"tabs.admin": "Administrador",
+	"tabs.register": "Registrar",
+	"tabs.brackets": "Brackets",
+	"tabs.seeds": "Sementes",
+	"tabs.streams": "Transmissões ({{count}})",
+	"tabs.subs": "Inscritos ({{count}})",
+
+	"pre.steps.header": "Complete esses passos para jogar",
+	"pre.steps.name": "Nome do time",
+	"pre.steps.roster": "Lista de membros completa",
+	"pre.steps.pool": "Seleção de mapas",
+	"pre.steps.check-in": "Check-in",
+	"pre.footer": "O registro pode ser livremente alterado antes do torneio começar",
+	"pre.logIn": "Faça o login para registrar",
+	"pre.inATeam": "Você está em um time para este evento",
+
+	"pre.checkIn.range": "O check-in está aberto entre {{start}} e {{finish}}",
+	"pre.checkIn.over": "O check-in acabou",
+	"pre.checkIn.cant": "Complete os passos anteriores antes de fazer o check-in",
+	"pre.checkIn.button": "Check-in",
+	"pre.checkIn.checkedIn": "Seu time fez o check-in com sucesso",
+
+	"pre.info.header": "Info do time",
+	"pre.info.unregister": "Descadastrar",
+	"pre.info.unregister.confirm": "Descadastrar do torneio e excluir info do time?",
+	"pre.info.noHost": "Meu time prefere não hospedar salas",
+	"pre.info.noScreen": "Meu time prefere evitar a Splattercolor Screen",
+
+	"pre.roster.header": "Preencher lista",
+	"pre.roster.footer": "Pelo menos {{atLeastCount}} membros são necessários para participar. O número máximo da lista de participantes é de {{maxCount}}",
+	"pre.roster.addTrusted.header": "Adicionar pessoas com que você jogou",
+	"pre.roster.delete.button": "Excluir membro",
+	"pre.roster.delete.header": "Membro a ser excluído",
+
+	"pre.pool.header": "Escolher seleção de mapas",
+	"pre.pool.banned": "Banido",
+	"pre.pool.tiebreaker.short": "Desempate",
+
+	"pre.sub.prompt": "Não tem um time em mente para esse evento? Você também pode se juntar à lista de substitutos.",
+
+	"bracket.type.DE_WINNERS": "Round dos Vencedores",
+	"bracket.type.DE_LOSERS": "Round dos Perdedores",
+	"bracket.type.SE": "Round",
+	"bracket.type.SWISS": "Round Suíço",
+	"bracket.type.GROUPS": "Round de Grupos",
+
+	"round.label": "Round",
+
+	"team.label": "Time",
+	"team.unlisted": "Time não-listado",
+
+	"bestOf.label.short": "Md",
+
+	"pickInfo.team": "Escolha do time {{number}}",
+	"pickInfo.team.specific": "{{team}} escolheu",
+	"pickInfo.tiebreaker": "Desempate",
+	"pickInfo.both": "Ambos escolheram",
+	"pickInfo.default": "Mapa padrão",
+	"pickInfo.counterpick": "Counterpick",
+
+	"generator.error": "Mudanças que você fez não foram salvas uma vez que o torneio já começou",
+
+	"teams.mapsPickedStatus": "Status dos mapas escolhidos",
+
+	"admin.download": "Download dos participantes",
+	"admin.actions.CHANGE_TEAM_OWNER": "Mudar capitão",
+	"admin.actions.CHANGE_TEAM_NAME": "Mudar nome do time",
+	"admin.actions.CHECK_IN": "Check-in",
+	"admin.actions.CHECK_OUT": "Check-out",
+	"admin.actions.ADD_MEMBER": "Adicionar membro",
+	"admin.actions.REMOVE_MEMBER": "Remover membro",
+	"admin.actions.DELETE_TEAM": "Excluir time",
+	"admin.actions.ADD_TEAM": "Cadastrar time",
+	"admin.actions.DROP_TEAM_OUT": "Marcar como desistência",
+	"admin.actions.UNDO_DROP_TEAM_OUT": "Desfazer desistência",
+
+	"staff.role.ORGANIZER": "organizador(a)",
+	"staff.role.STREAMER": "streamer",
+
+	"actions.addSub": "Adicionar substituto(a)",
+	"actions.shareLink": "Compartilhe seu link de convite para adicionar membros: {{inviteLink}}",
+	"actions.sub.prompt_other": "Você ainda pode adicionar {{count}} substitutos(as) à sua lista",
+	"actions.sub.prompt_one": "Você ainda pode adicionar {{count}} substituto(a) à sua lista",
+	"actions.sub.prompt_zero": "Sua lista está cheia e mais nenhum(a) substituto(a) pode ser adicionado(a)",
+	"actions.finalize.question": "Quando você verificar que as pontuações e resultados declarados estão corretos, clique aqui para finalizar o torneio e processar os resultados",
+	"actions.finalize.action": "Finalizar Torneio",
+	"actions.finalize.confirm": "Você tem certeza que quer finalizar o torneio? (Essa ação não pode ser desfeita)",
+
+	"streams.none": "Nenhuma transmissão desse evento está disponível no momento",
+
+	"team.setWins": "Vitórias de set",
+	"team.mapWins": "Vitórias em mapa",
+	"team.seed": "Semente",
+	"team.seed.footer": "dentre {{count}}",
+	"team.placement": "Placar",
+	"team.placement.footer": "Principal/UB",
+
+	"bracket.waiting": "O bracket será mostrado aqui quando ao menos {{count}} times estiverem registrados",
+	"bracket.waiting.checkin": "O bracket será mostrado aqui quando pelo menos {{count}} times tiverem feito o check-in",
+	"bracket.wip": "Esse bracket é uma prévia e poderá mudar",
+
+	"bracket.progress.thanksForPlaying": "Obrigado por participar do(a) {{eventName}}!",
+	"bracket.progress.match": "Oponente atual: {{opponent}}",
+	"bracket.progress.match.action": "Ver",
+	"bracket.progress.waiting": "Aguardando partida",
+
+	"bracket.standings.showLess": "Mostrar menos",
+	"bracket.standings.showMore": "Mostrar mais",
+
+	"match.hosts": "Host(s) do(a) {{teamName}}",
+	"match.pass": "Senha",
+	"match.pool": "Pool",
+	"match.score": "{{scoreOne}}-{{scoreTwo}} (Melhor de {{bestOf}})",
+	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (Jogar todas {{bestOf}})",
+	"match.action.undoLastScore": "Desfazer última pontuação",
+	"match.action.reopenMatch": "Reabrir partida",
+
+	"join.error.MISSING_CODE": "O código de convite está faltando. O URL foi copiado completamente?",
+	"join.error.SHORT_CODE": "O código de convite está com o comprimento incorreto. O URL foi copiado completamente?",
+	"join.error.NO_TEAM_MATCHING_CODE": "Nenhum time corresponde ao código de convite.",
+	"join.error.TEAM_FULL": "O time que você está tentando se juntar está cheio.",
+	"join.error.ALREADY_JOINED": "Você já faz parte desse time.",
+	"join.error.NOT_LOGGED_IN": "Você deve estar logado para se juntar a um time.",
+	"join.VALID": "Entrar no {{teamName}} para o {{eventName}}?",
+	"join.giveTrust": "Confiar em {{name}} para adicionar você sem sua confirmação em torneios futuros?",
+
+	"subs.prefersToPlay": "Prefere jogar",
+	"subs.canPlay": "Pode jogar",
+	"subs.canVC": "Pode usar chat de voz",
+	"subs.noVC": "Não pode usar chat de voz",
+	"subs.editPost": "Editar postagem de substituto(a)",
+	"subs.addPost": "Adicionar a si mesmo(a) como substituto(a)",
+	"subs.vc.header": "Você pode usar chat de voz?",
+	"subs.weapons.prefer.header": "Armas que você prefere usar",
+	"subs.weapons.ok.header": "Armas que você se sente OK em usar",
+	"subs.weapons.info": "Escolha entre {{min}} e {{max}}",
+	"subs.message.header": "Mensagem",
+	"subs.visibility.header": "Visibilidade",
+	"subs.visibility.everyone": "Todos"
+}

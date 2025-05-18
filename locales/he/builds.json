@@ -1,0 +1,34 @@
+{
+	"addBuild": "הוספת ערכה",
+	"reachBuildMaxCount": "הגעת לכמות ערכות מקסימלית.",
+	"noBuilds": "אין ערכות עדיין. יש להוסיף את הערכה הראשונה.",
+	"buildCard.info": "מידע",
+	"buildCard.edit": "עריכה",
+
+	"forms.title": "כותרת",
+	"forms.modes": "סוגי קרב",
+	"forms.weapons": "נשקים",
+	"forms.gear.HEAD": "ציוד (ראש)",
+	"forms.gear.CLOTHES": "ציוד (לבוש)",
+	"forms.gear.SHOES": "ציוד (נעליים)",
+	"forms.private.info": "ערכות פרטיות חשופות רק לך",
+
+	"deleteConfirm": "למחיקת ערכה '{{title}}'?",
+
+	"stats.count.title": "נתונים סטטיסטיים מ-{{count}} ערכות של {{weapon}}",
+	"stats.ap.title": "ממוצעי נקודות יכולת",
+	"stats.percentage.title": "הופעת יכולת ראשית בלבד",
+	"stats.all": "הכל",
+
+	"addFilter": "הוספת מסנן",
+	"linkButton.abilityStats": "נתונים סטטיסטיים על היכולות",
+	"linkButton.popularBuilds": "ערכות פופולריות",
+	"noPopularBuilds": "נראה שאין ערכות פופולריות לנשק זה כרגע.",
+
+	"emptyAbilitySlot": "תא עם יכולת ריקה",
+
+	"filters.has": "יש",
+	"filters.does.not.have": "אין",
+	"filters.atLeast": "לפחות",
+	"filters.atMost": "לכל היותר"
+}

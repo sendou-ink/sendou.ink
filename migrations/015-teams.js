@@ -1,24 +1,24 @@
-module.exports.up = function (db) {
-  db.prepare(
-    /*sql*/ `
+export function up(db) {
+	db.prepare(
+		/*sql*/ `
     create table "UnvalidatedUserSubmittedImage" (
       "id" integer primary key,
       "validatedAt" integer,
       "url" text not null unique
     ) strict
     `,
-  ).run();
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
       create view "UserSubmittedImage"
       as
       select * from "UnvalidatedUserSubmittedImage" where "validatedAt" is not null
   `,
-  ).run();
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "AllTeam" (
       "id" integer primary key,
       "name" text not null,
@@ -34,19 +34,19 @@ module.exports.up = function (db) {
       foreign key ("bannerImgId") references "UnvalidatedUserSubmittedImage"("id") on delete set null
     ) strict
     `,
-  ).run();
-  db.prepare(`create index team_custom_url on "AllTeam"("customUrl")`).run();
+	).run();
+	db.prepare(`create index team_custom_url on "AllTeam"("customUrl")`).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
       create view "Team"
       as
       select * from "AllTeam" where "deletedAt" is null
   `,
-  ).run();
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "AllTeamMember" (
       "teamId" integer not null,
       "userId" integer not null,
@@ -59,10 +59,10 @@ module.exports.up = function (db) {
       unique("teamId", "userId") on conflict rollback
     ) strict
     `,
-  ).run();
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
       create view "TeamMember"
       as
       select "AllTeamMember".* 
@@ -73,5 +73,5 @@ module.exports.up = function (db) {
       -- if team id is null the team is deleted
       "Team"."id" is not null
   `,
-  ).run();
-};
+	).run();
+}

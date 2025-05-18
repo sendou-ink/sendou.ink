@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { Group } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/* sql */ `
   update "Group"
@@ -7,6 +7,6 @@ const stm = sql.prepare(/* sql */ `
   where "id" = @groupId
 `);
 
-export function setGroupAsActive(groupId: Group["id"]) {
-  stm.run({ groupId });
+export function setGroupAsActive(groupId: Tables["Group"]["id"]) {
+	stm.run({ groupId });
 }

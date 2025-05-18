@@ -8,5 +8,5 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export function validateImage(id: number) {
-  stm.run({ validatedAt: dateToDatabaseTimestamp(new Date()), id });
+	stm.run({ validatedAt: dateToDatabaseTimestamp(new Date()), id });
 }

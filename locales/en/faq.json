@@ -1,0 +1,28 @@
+{
+	"q1": "What is the Plus Server?",
+	"a1": "Plus Server is a Discord server for high-level players to look for people to play with and against. It was founded in September 2017. Divided into three tiers of which +1 is the highest. You get access when a member of the server suggests you and you pass the monthly voting or you place well enough on the SendouQ leaderboard.\n\nIn the voting you get a percentage based on your result. 0% would mean everyone who participated in the voting downvoted you while 100% would be the opposite. 60% is required to pass the voting. If a member gets a score below 60% they get demoted a tier, or in the case of +3, kicked.\n\nSee the leaderboards page for indicators about who is on track to get access via that method. 60 people in total get access each season - 10 to +1, 20 to +2 and 30 to +3.",
+
+	"q2": "How to get a badge prize for my event?",
+	"a2": "Since September 2024 badges can be made by anyone with the skills necessary. Check the link at the bottom of the badges page for more information.",
+
+	"q3": "How to update my avatar or username?",
+	"a3": "Updating username or avatar on Discord doesn't right away update them on sendou.ink. To make that happen you have two options:\n\n1) If you are a member of this website's Discord or the Plus Server you can simply wait. There is a routine that runs once a day that handles the updating.\n\n2) To get them to update right away you can use the /update-profile command of the Lohi Discord bot.",
+
+	"q4": "I subscribed on Patreon but I don't see any changes on the website?",
+	"a4": "Make sure to connect your Discord on Patreon.com. After doing so it will take up to 2 hours for the status to update on the site. If you are having problems DM Sendou directly for help.",
+
+	"q5": "Is there a sendou.ink app?",
+	"a5": "No, but sendou.ink can be installed as a 'Progressive Web App' that gets many of the same benefits such as full-screen, an icon on the home screen and a separate process from the browser. Google 'how to install PWA on *your browser*' to see how.",
+
+	"q6": "How to add Twitch/Bluesky/YouTube to my profile?",
+	"a6": "We use your Discord profile for that. Connect and verify them on Discord then log out and back in on sendou.ink to have them update.",
+
+	"q7": "How can I add videos?",
+	"a7": "Send a message on the sendou.ink Discord helpdesk channel requesting access. Also include a link to a sample video you will post.",
+
+	"q8": "How can I show X Battle results on my profile?",
+	"a8": "Find your player page from the Top Search page. Post the link to the helpdesk on our Discord saying you want it linked. Note that the linking is not possible if you have not finished a season in the Top 500.",
+
+	"q9": "How can I upload art that I commissioned?",
+	"a9": "You can only upload art that you made yourself. It also has to be Splatoon related. For commissioned work please ask the artist to upload it themselves to the site. They are able to link your user profile and that will make it show on your profile."
+}

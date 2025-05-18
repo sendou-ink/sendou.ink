@@ -1,0 +1,128 @@
+{
+	"tabs.info": "Informations",
+	"tabs.teams": "Équipes ({{count}})",
+	"tabs.admin": "Admin",
+	"tabs.register": "Registration",
+	"tabs.brackets": "Brackets",
+	"tabs.seeds": "Seeds",
+	"tabs.streams": "Diffusions ({{count}})",
+	"tabs.subs": "Remplaçants ({{count}})",
+
+	"pre.steps.header": "Complétez ces étapes pour jouer",
+	"pre.steps.name": "Nom de l'équipe",
+	"pre.steps.roster": "Participants",
+	"pre.steps.pool": "Liste des stages",
+	"pre.footer": "L'inscription peut être librement modifiée avant le début du tournoi",
+	"pre.logIn": "Connectez-vous pour vous inscrire",
+	"pre.inATeam": "Vous faites partie d'une équipe pour cet événement",
+
+	"pre.checkIn.range": "L'enregistrement est ouvert entre {{start}} et {{finish}}",
+	"pre.checkIn.over": "L'enregistrement est fini",
+	"pre.checkIn.cant": "Complétez les étapes précédentes avant de vous enregistrer",
+	"pre.checkIn.button": "S'enregistrer",
+	"pre.checkIn.checkedIn": "Votre équipe est enregistrée",
+
+	"pre.info.header": "Info équipe",
+	"pre.info.unregister": "Se désinscrire",
+	"pre.info.unregister.confirm": "Se désinscrire du tournoi et effacer les info de l'équipe ?",
+	"pre.info.noHost": "Mon équipe préfère ne par héberger",
+
+	"pre.roster.header": "Remplir la liste",
+	"pre.roster.footer": "Au moins {{atLeastCount}} membres sont requis pour participer. La taille maximum est de {{maxCount}}",
+	"pre.roster.addTrusted.header": "Ajoutez des personnes avec lesquelles vous avez joué",
+	"pre.roster.delete.button": "Effacer membre",
+	"pre.roster.delete.header": "Membre à effacer",
+
+	"pre.pool.header": "Sélection de stage",
+
+	"pre.sub.prompt": "Pas d'équipe en tête pour cet évenement ? Vous pouvez aussi rejoindre la liste des remplaçants.",
+
+	"bracket.type.DE_WINNERS": "Manche des gagnants",
+	"bracket.type.DE_LOSERS": "Manche des perdants",
+	"bracket.type.SE": "Manche",
+	"bracket.type.SWISS": "À la Suisse",
+	"bracket.type.GROUPS": "Manche en groupes",
+
+	"round.label": "Manche",
+
+	"team.label": "Équipe",
+	"team.unlisted": "Équipe non listée",
+
+	"bestOf.label.short": "Md",
+
+	"pickInfo.team": "L'équipe {{number}} fait son choix.",
+	"pickInfo.team.specific": "{{team}} a fait son choix.",
+	"pickInfo.tiebreaker": "Tiebreaker",
+	"pickInfo.both": "Les deux ont choisi",
+	"pickInfo.default": "Stages par défaut",
+
+	"generator.error": "Les modifications apportées n'ont pas été enregistrées depuis le début du tournoi",
+
+	"teams.mapsPickedStatus": "Statut des stages sélectionnés",
+
+	"admin.download": "Télécharger les participants",
+	"admin.actions.CHANGE_TEAM_OWNER": "Changer le capitaine",
+	"admin.actions.CHECK_IN": "S'enregister",
+	"admin.actions.CHECK_OUT": "Se désinscrire",
+	"admin.actions.ADD_MEMBER": "Ajouter membre",
+	"admin.actions.REMOVE_MEMBER": "Retirer membre",
+	"admin.actions.DELETE_TEAM": "Effacer l'équipe",
+
+	"actions.addSub": "Ajouter remplaçant",
+	"actions.shareLink": "Partagez votre lien d'invitation pour ajouter des membres: {{inviteLink}}",
+	"actions.sub.prompt_other": "Vous pouvez encore ajouter {{count}} remplaçants à votre liste",
+	"actions.sub.prompt_one": "Vous pouvez encore ajouter {{count}} remplaçant à votre liste",
+	"actions.sub.prompt_zero": "Votre liste est pleine, des remplaçant supplémentaires ne peuvent être ajoutés",
+	"actions.finalize.question": "Lorsque vous avez vérifié que les scores indiqués sont corrects, cliquez ici pour finaliser le tournoi et traiter les résultats",
+	"actions.finalize.action": "Finaliser",
+	"actions.finalize.confirm": "Êtes-vous sûr de vouloir finaliser le tournoi (irréversible) ?",
+
+	"streams.none": "Aucune diffusion en direct de ce tournoi n'est disponible actuellement",
+
+	"team.setWins": "Set wins",
+	"team.mapWins": "Map wins",
+	"team.seed": "Seed",
+	"team.seed.footer": "sur {{count}}",
+	"team.placement": "Placement",
+
+	"bracket.waiting": "Le bracket sera affiché ici quand au moins {{count}} équipes seront inscrites",
+	"bracket.wip": "Ce bracket est un aperçu et sujet à changement",
+
+	"bracket.progress.thanksForPlaying": "Merci d'avoir participé à {{eventName}} !",
+	"bracket.progress.match": "Adversaire actuel: {{opponent}}",
+	"bracket.progress.match.action": "Voir",
+	"bracket.progress.waiting": "En attente de match",
+
+	"bracket.standings.showLess": "Montrer moins",
+	"bracket.standings.showMore": "Montrer plus",
+
+	"match.hosts": "{{teamName}} héberge",
+	"match.pass": "MdP",
+	"match.pool": "Canal}",
+	"match.score": "{{scoreOne}}-{{scoreTwo}} (Meilleur de {{bestOf}})",
+	"match.action.undoLastScore": "Annuler le dernier score",
+	"match.action.reopenMatch": "Rouvrir le match",
+
+	"join.error.MISSING_CODE": "Le code d'invitation est manquant. L'URL complète a-t-elle été copiée ?",
+	"join.error.SHORT_CODE": "Le code d'invitation n'a pas la bonne longueur. L'URL complète a-t-elle été copiée ?",
+	"join.error.NO_TEAM_MATCHING_CODE": "Aucune équipe ne correspond au code d'invitation.",
+	"join.error.TEAM_FULL": "L'équipe que vous essayez de rejoindre est complète.",
+	"join.error.ALREADY_JOINED": "Vous êtes déjà membre de cette équipe.",
+	"join.error.NOT_LOGGED_IN": "Vous devez être connecté pour rejoindre une équipe.",
+	"join.VALID": "Rejoindre {{teamName}} pour {{eventName}} ?",
+	"join.giveTrust": "Faire confiance à {{name}} pour vous ajouter de son propre chef à de futurs tournois ?",
+
+	"subs.prefersToPlay": "Préfère jouer",
+	"subs.canPlay": "Peut jouer",
+	"subs.canVC": "Peut Vocal",
+	"subs.noVC": "Pas de Vocal",
+	"subs.editPost": "Edit sub post",
+	"subs.addPost": "S'ajouter en remplaçant",
+	"subs.vc.header": "Chat vocal disponible ?",
+	"subs.weapons.prefer.header": "Armes que vous préférez jouer",
+	"subs.weapons.ok.header": "Armes que vous êtes d'accord pour jouer",
+	"subs.weapons.info": "Choisissez entre {{min}} et {{max}}",
+	"subs.message.header": "Message",
+	"subs.visibility.header": "Visibilité",
+	"subs.visibility.everyone": "Tout le monde"
+}

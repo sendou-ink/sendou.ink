@@ -1,0 +1,13 @@
+{
+	"patreon": "Supporter для sendou.ink на Patreon",
+	"patreon+": "Supporter+ для sendou.ink на Patreon",
+	"xp": "Награждается за достижение {{xpText}}",
+	"tournament_one": "Награда за победу в {{tournament}}",
+	"tournament_other": "Награда за победу в {{tournament}} (×{{count}})",
+	"forYourEvent": "Значок для вашего события?",
+	"managedBy": "Выдаётся {{users}}",
+	"madeBy": "Создан {{user}}",
+	"own.divider": "Выдаваемые награды",
+	"other.divider": "Другие награды",
+	"noBadgesFound": "Награды, соответствующие запросу, не найдены"
+}

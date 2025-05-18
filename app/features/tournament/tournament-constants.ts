@@ -1,10 +1,81 @@
 export const TOURNAMENT = {
-  TEAM_NAME_MAX_LENGTH: 32,
-  COUNTERPICK_MAPS_PER_MODE: 2,
-  COUNTERPICK_MAX_STAGE_REPEAT: 2,
-  COUNTERPICK_ONE_MODE_TOURNAMENT_MAPS_PER_MODE: 6,
-  TEAM_MIN_MEMBERS_FOR_FULL: 4,
-  TEAM_MAX_MEMBERS_BEFORE_START: 6,
-  AVAILABLE_BEST_OF: [3, 5, 7] as const,
-  ENOUGH_TEAMS_TO_START: 2,
+	TEAM_NAME_MAX_LENGTH: 32,
+	COUNTERPICK_MAPS_PER_MODE: 2,
+	COUNTERPICK_MAX_STAGE_REPEAT: 2,
+	COUNTERPICK_ONE_MODE_TOURNAMENT_MAPS_PER_MODE: 6,
+	AVAILABLE_BEST_OF: [1, 3, 5, 7, 9] as const,
+	ENOUGH_TEAMS_TO_START: 2,
+	MIN_GROUP_SIZE: 3,
+	MAX_GROUP_SIZE: 6,
+	MAX_BRACKETS_PER_TOURNAMENT: 10,
+	BRACKET_NAME_MAX_LENGTH: 32,
+	// just a fallback, normally this should be set by user explicitly
+	RR_DEFAULT_TEAM_COUNT_PER_GROUP: 4,
+	SWISS_DEFAULT_GROUP_COUNT: 1,
+	SWISS_DEFAULT_ROUND_COUNT: 5,
+	SE_DEFAULT_HAS_THIRD_PLACE_MATCH: true,
+	ROUND_NAMES: {
+		WB_FINALS: "WB Finals",
+		GRAND_FINALS: "Grand Finals",
+		BRACKET_RESET: "Bracket Reset",
+		FINALS: "Finals",
+		LB_FINALS: "LB Finals",
+		LB_SEMIS: "LB Semis",
+		THIRD_PLACE_MATCH: "3rd place match",
+		FINALS_THIRD_PLACE_MATCH_UNIFIED: "Finals + 3rd place match",
+	},
 } as const;
+
+export const LEAGUES =
+	process.env.NODE_ENV === "development" &&
+	import.meta.env.VITE_PROD_MODE !== "true"
+		? {
+				LUTI: [
+					{
+						tournamentId: 6,
+						weeks: [
+							{
+								weekNumber: 2,
+								year: 2025,
+							},
+							{
+								weekNumber: 3,
+								year: 2025,
+							},
+							{
+								weekNumber: 4,
+								year: 2025,
+							},
+						],
+					},
+				],
+			}
+		: {
+				LUTI: [
+					{
+						tournamentId: 1066,
+						weeks: [
+							{
+								weekNumber: 10,
+								year: 2025,
+							},
+							{
+								weekNumber: 11,
+								year: 2025,
+							},
+							{
+								weekNumber: 12,
+								year: 2025,
+							},
+							{
+								weekNumber: 13,
+								year: 2025,
+							},
+							{
+								weekNumber: 14,
+								year: 2025,
+							},
+						],
+					},
+				],
+			};

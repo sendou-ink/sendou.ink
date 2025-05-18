@@ -1,147 +1,372 @@
-import type { Params } from "@remix-run/react";
-import invariant from "tiny-invariant";
-import type { Tournament, User } from "~/db/types";
-import type { ModeShort } from "~/modules/in-game-lists";
+import { INVITE_CODE_LENGTH } from "~/constants";
+import type { ModeShort, StageId } from "~/modules/in-game-lists";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import { databaseTimestampToDate } from "~/utils/dates";
-import type { FindTeamsByTournamentId } from "./queries/findTeamsByTournamentId.server";
-import type {
-  TournamentLoaderData,
-  TournamentLoaderTeam,
-} from "./routes/to.$id";
-import { TOURNAMENT } from "./tournament-constants";
-import { validate } from "~/utils/remix";
+import { weekNumberToDate } from "~/utils/dates";
+import { tournamentLogoUrl } from "~/utils/urls";
+import type { Tables, TournamentStageSettings } from "../../db/tables";
+import { assertUnreachable } from "../../utils/types";
+import { MapPool } from "../map-list-generator/core/map-pool";
+import * as Seasons from "../mmr/core/Seasons";
+import { BANNED_MAPS } from "../sendouq-settings/banned-maps";
+import type { Tournament as TournamentClass } from "../tournament-bracket/core/Tournament";
+import type { TournamentData } from "../tournament-bracket/core/Tournament.server";
 import type { PlayedSet } from "./core/sets.server";
-
-export function resolveOwnedTeam({
-  teams,
-  userId,
-}: {
-  teams: Array<TournamentLoaderTeam>;
-  userId?: User["id"];
-}) {
-  if (typeof userId !== "number") return;
-
-  return teams.find((team) =>
-    team.members.some((member) => member.isOwner && member.userId === userId),
-  );
-}
-
-export function teamHasCheckedIn(
-  team: Pick<TournamentLoaderTeam, "checkedInAt">,
-) {
-  return Boolean(team.checkedInAt);
-}
-
-export function tournamentIdFromParams(params: Params<string>) {
-  const result = Number(params["id"]);
-  invariant(!Number.isNaN(result), "id is not a number");
-
-  return result;
-}
-
-export function tournamentTeamIdFromParams(params: Params<string>) {
-  const result = Number(params["tid"]);
-  invariant(!Number.isNaN(result), "tid is not a number");
-
-  return result;
-}
+import { LEAGUES, TOURNAMENT } from "./tournament-constants";
 
 export function modesIncluded(
-  tournament: Pick<Tournament, "mapPickingStyle">,
+	tournament: Pick<Tables["Tournament"], "mapPickingStyle">,
 ): ModeShort[] {
-  switch (tournament.mapPickingStyle) {
-    case "AUTO_SZ": {
-      return ["SZ"];
-    }
-    case "AUTO_TC": {
-      return ["TC"];
-    }
-    case "AUTO_RM": {
-      return ["RM"];
-    }
-    case "AUTO_CB": {
-      return ["CB"];
-    }
-    default: {
-      return [...rankedModesShort];
-    }
-  }
+	switch (tournament.mapPickingStyle) {
+		case "AUTO_SZ": {
+			return ["SZ"];
+		}
+		case "AUTO_TC": {
+			return ["TC"];
+		}
+		case "AUTO_RM": {
+			return ["RM"];
+		}
+		case "AUTO_CB": {
+			return ["CB"];
+		}
+		default: {
+			return [...rankedModesShort];
+		}
+	}
 }
 
 export function isOneModeTournamentOf(
-  tournament: Pick<Tournament, "mapPickingStyle">,
+	tournament: Pick<Tables["Tournament"], "mapPickingStyle">,
 ) {
-  return modesIncluded(tournament).length === 1
-    ? modesIncluded(tournament)[0]!
-    : null;
-}
-
-export function HACKY_resolvePicture(event: TournamentLoaderData["event"]) {
-  if (event.name.includes("In The Zone"))
-    return "https://abload.de/img/screenshot2023-04-19a2bfv0.png";
-
-  return "https://abload.de/img/screenshot2022-12-15ap0ca1.png";
-}
-
-// hacky because db query not taking in account possibility of many start times
-// AND always assumed check-in starts 1h before
-export function HACKY_resolveCheckInTime(
-  event: Pick<TournamentLoaderData["event"], "startTime">,
-) {
-  return databaseTimestampToDate(event.startTime - 60 * 60);
-}
-
-export function mapPickCountPerMode(event: TournamentLoaderData["event"]) {
-  return isOneModeTournamentOf(event)
-    ? TOURNAMENT.COUNTERPICK_ONE_MODE_TOURNAMENT_MAPS_PER_MODE
-    : TOURNAMENT.COUNTERPICK_MAPS_PER_MODE;
-}
-
-export function checkInHasStarted(
-  event: Pick<TournamentLoaderData["event"], "startTime">,
-) {
-  return HACKY_resolveCheckInTime(event).getTime() < Date.now();
-}
-
-export function checkInHasEnded(
-  event: Pick<TournamentLoaderData["event"], "startTime">,
-) {
-  return databaseTimestampToDate(event.startTime).getTime() < Date.now();
-}
-
-export function validateCanCheckIn({
-  event,
-  team,
-  mapPool,
-}: {
-  event: Pick<TournamentLoaderData["event"], "startTime">;
-  team: FindTeamsByTournamentId[number];
-  mapPool: unknown[] | null;
-}) {
-  validate(checkInHasStarted(event), "Check-in has not started yet");
-  validate(
-    team.members.length >= TOURNAMENT.TEAM_MIN_MEMBERS_FOR_FULL,
-    "Team does not have enough members",
-  );
-  validate(mapPool && mapPool.length > 0, "Team does not have a map pool");
-
-  return true;
+	return modesIncluded(tournament).length === 1
+		? modesIncluded(tournament)[0]
+		: null;
 }
 
 export function tournamentRoundI18nKey(round: PlayedSet["round"]) {
-  if (round.round === "grand_finals") return `bracket.grand_finals` as const;
-  if (round.round === "bracket_reset") {
-    return `bracket.grand_finals.bracket_reset` as const;
-  }
-  if (round.round === "finals") return `bracket.${round.type}.finals` as const;
+	if (round.round === "grand_finals") return "bracket.grand_finals";
+	if (round.round === "bracket_reset") {
+		return "bracket.grand_finals.bracket_reset";
+	}
+	if (round.round === "finals") return `bracket.${round.type}.finals` as const;
 
-  return `bracket.${round.type}` as const;
+	return `bracket.${round.type}` as const;
 }
 
-export function tournamentTeamMaxSize(tournamentHasStarted: boolean) {
-  // ensuring every team can add at least one sub while the tournament is ongoing
-  return (
-    TOURNAMENT.TEAM_MAX_MEMBERS_BEFORE_START + Number(tournamentHasStarted)
-  );
+// legacy approach, new tournament should use the avatarImgId column in CalendarEvent
+export function HACKY_resolvePicture(event: { name: string }) {
+	const normalizedEventName = event.name.toLowerCase();
+
+	if (normalizedEventName.includes("sendouq")) {
+		return tournamentLogoUrl("sf");
+	}
+
+	if (normalizedEventName.includes("paddling pool")) {
+		return tournamentLogoUrl("pp");
+	}
+
+	if (normalizedEventName.includes("in the zone")) {
+		return tournamentLogoUrl("itz");
+	}
+
+	if (normalizedEventName.includes("picnic")) {
+		return tournamentLogoUrl("pn");
+	}
+
+	if (normalizedEventName.includes("proving grounds")) {
+		return tournamentLogoUrl("pg");
+	}
+
+	if (normalizedEventName.includes("triton")) {
+		return tournamentLogoUrl("tc");
+	}
+
+	if (normalizedEventName.includes("swim or sink")) {
+		return tournamentLogoUrl("sos");
+	}
+
+	if (normalizedEventName.includes("from the ink up")) {
+		return tournamentLogoUrl("ftiu");
+	}
+
+	if (normalizedEventName.includes("coral clash")) {
+		return tournamentLogoUrl("cc");
+	}
+
+	if (normalizedEventName.includes("level up")) {
+		return tournamentLogoUrl("lu");
+	}
+
+	if (normalizedEventName.includes("all 4 one")) {
+		return tournamentLogoUrl("a41");
+	}
+
+	if (normalizedEventName.includes("fry basket")) {
+		return tournamentLogoUrl("fb");
+	}
+
+	if (normalizedEventName.includes("the depths")) {
+		return tournamentLogoUrl("d");
+	}
+
+	if (normalizedEventName.includes("eclipse")) {
+		return tournamentLogoUrl("e");
+	}
+
+	if (normalizedEventName.includes("homecoming")) {
+		return tournamentLogoUrl("hc");
+	}
+
+	if (normalizedEventName.includes("bad ideas")) {
+		return tournamentLogoUrl("bio");
+	}
+
+	if (normalizedEventName.includes("tenoch")) {
+		return tournamentLogoUrl("ai");
+	}
+
+	if (normalizedEventName.includes("megalodon monday")) {
+		return tournamentLogoUrl("mm");
+	}
+
+	if (normalizedEventName.includes("heaven 2 ocean")) {
+		return tournamentLogoUrl("ho");
+	}
+
+	if (normalizedEventName.includes("kraken royale")) {
+		return tournamentLogoUrl("kr");
+	}
+
+	if (normalizedEventName.includes("menu royale")) {
+		return tournamentLogoUrl("mr");
+	}
+
+	if (normalizedEventName.includes("barracuda co")) {
+		return tournamentLogoUrl("bc");
+	}
+
+	if (normalizedEventName.includes("crimson ink")) {
+		return tournamentLogoUrl("ci");
+	}
+
+	if (normalizedEventName.includes("mesozoic mayhem")) {
+		return tournamentLogoUrl("me");
+	}
+
+	if (normalizedEventName.includes("rain or shine")) {
+		return tournamentLogoUrl("ros");
+	}
+
+	if (normalizedEventName.includes("squid junction")) {
+		return tournamentLogoUrl("sj");
+	}
+
+	if (normalizedEventName.includes("silly sausage")) {
+		return tournamentLogoUrl("ss");
+	}
+
+	if (normalizedEventName.includes("united-lan")) {
+		return tournamentLogoUrl("ul");
+	}
+
+	if (normalizedEventName.includes("soul cup")) {
+		return tournamentLogoUrl("sc");
+	}
+
+	return tournamentLogoUrl("default");
+}
+
+export type CounterPickValidationStatus =
+	| "PICKING"
+	| "VALID"
+	| "TOO_MUCH_STAGE_REPEAT"
+	| "STAGE_REPEAT_IN_SAME_MODE"
+	| "INCLUDES_BANNED"
+	| "INCLUDES_TIEBREAKER";
+
+export function validateCounterPickMapPool(
+	mapPool: MapPool,
+	isOneModeOnlyTournamentFor: ModeShort | null,
+	tieBreakerMapPool: TournamentData["ctx"]["tieBreakerMapPool"],
+): CounterPickValidationStatus {
+	const stageCounts = new Map<StageId, number>();
+	for (const stageId of mapPool.stages) {
+		if (!stageCounts.has(stageId)) {
+			stageCounts.set(stageId, 0);
+		}
+
+		if (
+			stageCounts.get(stageId)! >= TOURNAMENT.COUNTERPICK_MAX_STAGE_REPEAT ||
+			(isOneModeOnlyTournamentFor && stageCounts.get(stageId)! >= 1)
+		) {
+			return "TOO_MUCH_STAGE_REPEAT";
+		}
+
+		stageCounts.set(stageId, stageCounts.get(stageId)! + 1);
+	}
+
+	if (
+		new MapPool(mapPool.serialized).stageModePairs.length !==
+		mapPool.stageModePairs.length
+	) {
+		return "STAGE_REPEAT_IN_SAME_MODE";
+	}
+
+	if (
+		mapPool.stageModePairs.some((pair) =>
+			BANNED_MAPS[pair.mode].includes(pair.stageId),
+		)
+	) {
+		return "INCLUDES_BANNED";
+	}
+
+	if (
+		mapPool.stageModePairs.some((pair) =>
+			tieBreakerMapPool.some(
+				(stage) => stage.mode === pair.mode && stage.stageId === pair.stageId,
+			),
+		)
+	) {
+		return "INCLUDES_TIEBREAKER";
+	}
+
+	if (
+		!isOneModeOnlyTournamentFor &&
+		(mapPool.parsed.SZ.length !== TOURNAMENT.COUNTERPICK_MAPS_PER_MODE ||
+			mapPool.parsed.TC.length !== TOURNAMENT.COUNTERPICK_MAPS_PER_MODE ||
+			mapPool.parsed.RM.length !== TOURNAMENT.COUNTERPICK_MAPS_PER_MODE ||
+			mapPool.parsed.CB.length !== TOURNAMENT.COUNTERPICK_MAPS_PER_MODE)
+	) {
+		return "PICKING";
+	}
+
+	if (
+		isOneModeOnlyTournamentFor &&
+		mapPool.parsed[isOneModeOnlyTournamentFor].length !==
+			TOURNAMENT.COUNTERPICK_ONE_MODE_TOURNAMENT_MAPS_PER_MODE
+	) {
+		return "PICKING";
+	}
+
+	return "VALID";
+}
+
+export function tournamentIsRanked({
+	isSetAsRanked,
+	startTime,
+	minMembersPerTeam,
+	isTest,
+}: {
+	isSetAsRanked?: boolean;
+	startTime: Date;
+	minMembersPerTeam: number;
+	isTest: boolean;
+}) {
+	if (isTest) return false;
+
+	const seasonIsActive = Boolean(Seasons.current(startTime));
+	if (!seasonIsActive) return false;
+
+	// 1v1, 2v2 and 3v3 are always considered "gimmicky"
+	if (minMembersPerTeam !== 4) return false;
+
+	return isSetAsRanked ?? true;
+}
+
+export function resolveLeagueRoundStartDate(
+	tournament: TournamentClass,
+	roundId: number,
+) {
+	if (!tournament.isLeagueDivision) return null;
+
+	const league = Object.values(LEAGUES)
+		.flat()
+		.find(
+			(league) => league.tournamentId === tournament.ctx.parentTournamentId,
+		);
+	if (!league) return null;
+
+	const bracket = tournament.brackets.find((b) =>
+		b.data.round.some((r) => r.id === roundId),
+	);
+
+	const round = bracket?.data.round.find((r) => r.id === roundId);
+	const onlyRelevantRounds = bracket?.data.round.filter(
+		(r) => r.group_id === round?.group_id,
+	);
+
+	const roundIdx = onlyRelevantRounds?.findIndex((r) => r.id === roundId);
+	if (roundIdx === undefined) return null;
+
+	const week = league.weeks[roundIdx];
+	if (!week) return null;
+
+	const date = weekNumberToDate({
+		week: week.weekNumber,
+		year: week.year,
+	});
+
+	return date;
+}
+
+export function defaultBracketSettings(
+	type: Tables["TournamentStage"]["type"],
+): TournamentStageSettings {
+	switch (type) {
+		case "single_elimination": {
+			return {
+				thirdPlaceMatch: true,
+			};
+		}
+		case "double_elimination": {
+			return {};
+		}
+		case "round_robin": {
+			return {
+				teamsPerGroup: 4,
+			};
+		}
+		case "swiss": {
+			return {
+				roundCount: 5,
+				groupCount: 1,
+			};
+		}
+		default: {
+			assertUnreachable(type);
+		}
+	}
+}
+
+export function validateCanJoinTeam({
+	inviteCode,
+	teamToJoin,
+	userId,
+	maxTeamSize,
+}: {
+	inviteCode?: string | null;
+	teamToJoin?: { members: { userId: number }[] };
+	userId?: number;
+	maxTeamSize: number;
+}) {
+	if (typeof inviteCode !== "string") {
+		return "MISSING_CODE";
+	}
+	if (typeof userId !== "number") {
+		return "NOT_LOGGED_IN";
+	}
+	if (!teamToJoin && inviteCode.length !== INVITE_CODE_LENGTH) {
+		return "SHORT_CODE";
+	}
+	if (!teamToJoin) {
+		return "NO_TEAM_MATCHING_CODE";
+	}
+	if (teamToJoin.members.length >= maxTeamSize) {
+		return "TEAM_FULL";
+	}
+	if (teamToJoin.members.some((member) => member.userId === userId)) {
+		return "ALREADY_JOINED";
+	}
+
+	return "VALID";
 }

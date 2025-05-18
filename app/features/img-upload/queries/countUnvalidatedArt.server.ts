@@ -11,5 +11,5 @@ const stm = sql.prepare(/*sql*/ `
 `);
 
 export function countUnvalidatedArt(authorId: number) {
-  return (stm.get({ authorId }) as any).count as number;
+	return (stm.get({ authorId }) as any).count as number;
 }

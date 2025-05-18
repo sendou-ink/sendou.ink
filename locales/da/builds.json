@@ -1,0 +1,42 @@
+{
+	"addBuild": "Lav et udrustningssæt",
+	"reachBuildMaxCount": "Du har nået grænsen for, hvor mange sæt du kan lave.",
+	"noBuilds": "Her er ingen sæt. Lav dit første sæt!",
+	"buildCard.info": "Info",
+	"buildCard.edit": "Rediger",
+
+	"forms.title": "Titel",
+	"forms.modes": "spiltilstand",
+	"forms.weapons": "Våben",
+	"forms.gear.HEAD": "Udstyr (hovedbeklædning)",
+	"forms.gear.CLOTHES": "Udstyr (tøj)",
+	"forms.gear.SHOES": "Udstyr (sko)",
+	"forms.private.info": "Private udrustningssæt er kun synlige for dig",
+
+	"deleteConfirm": "Vil du slette sættet '{{title}}'?",
+
+	"stats.count.title": "Gennemsnit fra {{count}} {{weapon}}-sæt",
+	"stats.ap.title": "Egenskabspointssnit",
+	"stats.percentage.title": "Kun primære egenskaber",
+	"stats.all": "Alle",
+
+	"addFilter": "Tilføj filter",
+	"linkButton.abilityStats": "Egenskabsstatistikker",
+	"linkButton.popularBuilds": "Populære sæt",
+	"noPopularBuilds": "Der er på nuværende tidspunkt ingen populære sæt for det valgte våben.",
+
+	"emptyAbilitySlot": "Tomt egenskabsfelt",
+
+	"filters.type.ability": "Efter egenskab",
+	"filters.type.mode": "Efter  spiltilstand",
+	"filters.type.date": "Efter dato",
+	"filters.ability.title": "Egenskabsfilter",
+	"filters.mode.title": "Spiltilstandsfilter",
+	"filters.date.title": "Datofilter",
+	"filters.has": "Indeholder",
+	"filters.does.not.have": "Indeholder ikke",
+	"filters.atLeast": "Mindst",
+	"filters.atMost": "Maks",
+	"filters.date.since": "Siden",
+	"filters.date.custom": "Tilpasset"
+}

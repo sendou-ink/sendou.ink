@@ -6,5 +6,5 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export function checkOut(tournamentTeamId: number) {
-  stm.run({ tournamentTeamId });
+	stm.run({ tournamentTeamId });
 }

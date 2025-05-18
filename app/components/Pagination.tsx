@@ -5,46 +5,50 @@ import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import { nullFilledArray } from "~/utils/arrays";
 
 export function Pagination({
-  currentPage,
-  pagesCount,
-  nextPage,
-  previousPage,
-  setPage,
+	currentPage,
+	pagesCount,
+	nextPage,
+	previousPage,
+	setPage,
 }: {
-  currentPage: number;
-  pagesCount: number;
-  nextPage: () => void;
-  previousPage: () => void;
-  setPage: (page: number) => void;
+	currentPage: number;
+	pagesCount: number;
+	nextPage: () => void;
+	previousPage: () => void;
+	setPage: (page: number) => void;
 }) {
-  return (
-    <div className="stack sm horizontal items-center justify-center flex-wrap">
-      <Button
-        icon={<ArrowLeftIcon />}
-        variant="outlined"
-        disabled={currentPage === 1}
-        onClick={previousPage}
-        aria-label="Previous page"
-      />
-      {nullFilledArray(pagesCount).map((_, i) => (
-        <div
-          key={i}
-          className={clsx("pagination__dot", {
-            pagination__dot__active: i === currentPage - 1,
-          })}
-          onClick={() => setPage(i + 1)}
-        />
-      ))}
-      <div className="pagination__page-count">
-        {currentPage}/{pagesCount}
-      </div>
-      <Button
-        icon={<ArrowRightIcon />}
-        variant="outlined"
-        disabled={currentPage === pagesCount}
-        onClick={nextPage}
-        aria-label="Next page"
-      />
-    </div>
-  );
+	return (
+		<div className="pagination__container">
+			<Button
+				icon={<ArrowLeftIcon />}
+				variant="outlined"
+				className="fix-rtl"
+				disabled={currentPage === 1}
+				onClick={previousPage}
+				aria-label="Previous page"
+			/>
+			<div className="pagination__dots">
+				{nullFilledArray(pagesCount).map((_, i) => (
+					<div
+						key={i}
+						className={clsx("pagination__dot", {
+							pagination__dot__active: i === currentPage - 1,
+						})}
+						onClick={() => setPage(i + 1)}
+					/>
+				))}
+			</div>
+			<div className="pagination__page-count">
+				{currentPage}/{pagesCount}
+			</div>
+			<Button
+				icon={<ArrowRightIcon />}
+				variant="outlined"
+				className="fix-rtl"
+				disabled={currentPage === pagesCount}
+				onClick={nextPage}
+				aria-label="Next page"
+			/>
+		</div>
+	);
 }

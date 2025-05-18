@@ -1,44 +1,69 @@
-import { suite } from "uvu";
-import * as assert from "uvu/assert";
-import { queryToUserIdentifier } from "./users";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { queryToUserIdentifier, userDiscordIdIsAged } from "./users";
 
-const QueryToUserIdentifier = suite("queryToUserIdentifier()");
+describe("queryToUserIdentifier()", () => {
+	test("returns null if no match", () => {
+		expect(queryToUserIdentifier("foo")).toBe(null);
+	});
 
-QueryToUserIdentifier("returns null if no match", () => {
-  assert.equal(queryToUserIdentifier("foo"), null);
+	test("gets custom url from url", () => {
+		expect(queryToUserIdentifier("https://sendou.ink/u/sendou")).toEqual({
+			customUrl: "sendou",
+		});
+	});
+
+	test("gets discord id from url", () => {
+		expect(
+			queryToUserIdentifier("https://sendou.ink/u/79237403620945920"),
+		).toEqual({
+			discordId: "79237403620945920",
+		});
+	});
+
+	test("gets custom url from url (without https://)", () => {
+		expect(queryToUserIdentifier("sendou.ink/u/sendou")).toEqual({
+			customUrl: "sendou",
+		});
+	});
+
+	test("gets discord id", () => {
+		expect(queryToUserIdentifier("79237403620945920")).toEqual({
+			discordId: "79237403620945920",
+		});
+	});
+
+	test("gets id", () => {
+		expect(queryToUserIdentifier("1")).toEqual({
+			id: 1,
+		});
+	});
 });
 
-QueryToUserIdentifier("gets custom url from url", () => {
-  assert.equal(queryToUserIdentifier("https://sendou.ink/u/sendou"), {
-    customUrl: "sendou",
-  });
-});
+describe("userDiscordIdIsAged()", () => {
+	beforeEach(() => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2023-11-25T00:00:00.000Z"));
+	});
 
-QueryToUserIdentifier("gets discord id from url", () => {
-  assert.equal(
-    queryToUserIdentifier("https://sendou.ink/u/79237403620945920"),
-    {
-      discordId: "79237403620945920",
-    },
-  );
-});
+	afterEach(() => {
+		vi.useRealTimers();
+	});
 
-QueryToUserIdentifier("gets custom url from url (without https://)", () => {
-  assert.equal(queryToUserIdentifier("sendou.ink/u/sendou"), {
-    customUrl: "sendou",
-  });
-});
+	test("returns false if discord id is not aged", () => {
+		expect(userDiscordIdIsAged({ discordId: "1177730652641181871" })).toBe(
+			false,
+		);
+	});
 
-QueryToUserIdentifier("gets discord id", () => {
-  assert.equal(queryToUserIdentifier("79237403620945920"), {
-    discordId: "79237403620945920",
-  });
-});
+	test("returns true if discord id is aged", () => {
+		expect(userDiscordIdIsAged({ discordId: "79237403620945920" })).toBe(true);
+	});
 
-QueryToUserIdentifier("gets id", () => {
-  assert.equal(queryToUserIdentifier("1"), {
-    id: 1,
-  });
-});
+	test("return false if discord id missing", () => {
+		expect(userDiscordIdIsAged({ discordId: "" })).toBe(false);
+	});
 
-QueryToUserIdentifier.run();
+	test("return false if discord id too short", () => {
+		expect(userDiscordIdIsAged({ discordId: "1234" })).toBe(false);
+	});
+});

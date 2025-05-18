@@ -7,11 +7,11 @@ const stm = sql.prepare(/*sql*/ `
 `);
 
 export default function deleteTeamMember({
-  userId,
-  tournamentTeamId,
+	userId,
+	tournamentTeamId,
 }: {
-  userId: number;
-  tournamentTeamId: number;
+	userId: number;
+	tournamentTeamId: number;
 }) {
-  stm.run({ userId, tournamentTeamId });
+	stm.run({ userId, tournamentTeamId });
 }

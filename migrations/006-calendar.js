@@ -1,6 +1,6 @@
-module.exports.up = function (db) {
-  db.prepare(
-    `
+export function up(db) {
+	db.prepare(
+		`
     create table "CalendarEvent" (
       "id" integer primary key,
       "name" text not null,
@@ -14,10 +14,10 @@ module.exports.up = function (db) {
       foreign key ("authorId") references "User"("id") on delete restrict
     ) strict
     `,
-  ).run();
+	).run();
 
-  db.prepare(
-    ` 
+	db.prepare(
+		` 
     create table "CalendarEventDate" (
       "id" integer primary key,
       "eventId" integer not null,
@@ -25,10 +25,10 @@ module.exports.up = function (db) {
       foreign key ("eventId") references "CalendarEvent"("id") on delete cascade
     ) strict
     `,
-  ).run();
+	).run();
 
-  db.prepare(
-    `
+	db.prepare(
+		`
     create table "CalendarEventResultTeam" (
       "id" integer primary key,
       "eventId" integer not null,
@@ -37,10 +37,10 @@ module.exports.up = function (db) {
       foreign key ("eventId") references "CalendarEvent"("id") on delete cascade
     ) strict
     `,
-  ).run();
+	).run();
 
-  db.prepare(
-    `
+	db.prepare(
+		`
     create table "CalendarEventResultPlayer" (
       "teamId" integer not null,
       "userId" integer,
@@ -49,10 +49,10 @@ module.exports.up = function (db) {
       foreign key ("userId") references "User"("id") on delete restrict
     ) strict
     `,
-  ).run();
+	).run();
 
-  db.prepare(
-    `
+	db.prepare(
+		`
     create table "CalendarEventBadge" (
       "eventId" integer not null,
       "badgeId" integer not null,
@@ -61,17 +61,17 @@ module.exports.up = function (db) {
       unique("eventId", "badgeId") on conflict rollback
     ) strict
     `,
-  ).run();
-};
+	).run();
+}
 
-module.exports.down = function (db) {
-  for (const table of [
-    "CalendarEventDate",
-    "CalendarEventResultPlayer",
-    "CalendarEventResultTeam",
-    "CalendarEventBadge",
-    "CalendarEvent",
-  ]) {
-    db.prepare(`drop table "${table}"`).run();
-  }
-};
+export function down(db) {
+	for (const table of [
+		"CalendarEventDate",
+		"CalendarEventResultPlayer",
+		"CalendarEventResultTeam",
+		"CalendarEventBadge",
+		"CalendarEvent",
+	]) {
+		db.prepare(`drop table "${table}"`).run();
+	}
+}

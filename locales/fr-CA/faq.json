@@ -1,0 +1,21 @@
+{
+	"q1": "Qu'est-ce que le Plus Server ?",
+
+	"q2": "Comment obtenir un badge pour mon événement ?",
+
+	"q3": "Comment mettre à jour mon pseudo ou mon avatar ?",
+	"a3": "Mettre à jour son pseudo ou avatar sur Discord ne se reflète pas immédiatement sur sendou.ink. Pour voir ce changement, vous avez deux options :\n\n1) Si vous êtes un membre du Discord de sendou.ink ou du Plus Server, il vous suffit d'attendre. Le site se mettra à jour automatiquement dans les 24 heures.\n\n2) Alternativement, si vous voulez les mettre à jour immédiatement, vous pouvez utiliser la commande /update-profile du bot Lohi sur discord.",
+
+	"q4": "Je me suis abonné au Patreon mais je ne vois pas de changement, c'est normal ?",
+	"a4": "Assurez-vous d'avoir lié votre compte Discord sur Patreon.com. Après avoir fait ça, votre statut peut mettre jusqu'à 2 heures à se mettre à jour sur le site. Si vous avez encore des soucis, n'hésitez pas à envoyer un MP à Sendou directement.",
+
+	"q5": "Est-ce qu'il y a une application sendou.ink ?",
+	"a5": "Non, mais sendou.ink peut être installé en tant 'qu'Application Web Progressive' : vous pourrez bénéficier d'un mode plein écran, d'une icone et d'un processus séparé de votre navigateur. Pour pouvoir l'installer, n'hésitez pas à rechercher 'Comment installer une awp sur *votre natigateur*' sur Google.",
+
+	"q6": "Comment puis-je ajouter mes liens Twitch/Bluesky/Youtube à mon profil ?",
+	"a6": "Nous utilisons le profil Discord pour ça. Connectez vos comptes sur Discord puis déconnectez et reconnectez vous sur sendou.ink pour les mettre à jour.",
+
+	"q7": "Comment puis-je ajouter des vidéos ?",
+
+	"q8": "Comment puis-je montrer mes résultats de Match X sur mon profil ?"
+}

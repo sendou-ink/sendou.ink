@@ -2,11 +2,11 @@
 // (Node.js and browser can display different language depending on implementation)
 
 export function translatedCountry({
-  language,
-  countryCode,
+	language,
+	countryCode,
 }: {
-  language: string;
-  countryCode: string;
+	language: string;
+	countryCode: string;
 }) {
-  return new Intl.DisplayNames([language], { type: "region" }).of(countryCode);
+	return new Intl.DisplayNames([language], { type: "region" }).of(countryCode);
 }

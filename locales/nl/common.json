@@ -1,0 +1,65 @@
+﻿{
+	"pages.admin": "Admin",
+	"pages.badges": "Badges",
+	"pages.plus": "Plus Server",
+	"pages.contributors": "Bijdragers",
+	"pages.calendar": "Kalender",
+	"pages.faq": "FAQ",
+	"pages.builds": "Uitrusting",
+	"pages.analyzer": "Uitrusting Bestuderen",
+	"pages.maps": "Levellijsten",
+
+	"header.profile": "Profiel",
+	"header.logout": "Log uit",
+	"header.login": "Log in",
+
+	"footer.github.subtitle": "Broncode",
+	"footer.discord.subtitle": "Help & Feedback",
+	"footer.patreon.subtitle": "Steun sendou.ink",
+	"footer.thanks": "Met dank aan alle patrons voor de steun",
+
+	"actions.save": "Opslaan",
+	"actions.submit": "Verzenden",
+	"actions.edit": "Bewerken",
+	"actions.add": "Toevoegen",
+	"actions.remove": "Verwijderen",
+	"actions.delete": "Verwijderen",
+	"actions.loadMore": "Laad meer",
+	"actions.copyToClipboard": "Kopiëren naar klembord",
+
+	"maps.createMapList": "Maak levellijst",
+	"maps.halfSz": "50% SZ",
+	"maps.mapPool": "Beschikbare levels",
+	"maps.tournamentMaplist": "Maak een toernooi levellijst (maps.iplabs.ink)",
+
+	"results": "Uitslagen",
+	"results.placeSuffix": "e",
+
+	"forms.name": "Naam",
+	"forms.description": "Beschrijving",
+	"forms.errors.title": "De volgende errors moeten nog worden opgelost",
+
+	"tag.name.BADGE": "Badge prijzen",
+	"tag.name.SPECIAL": "Speciale spelregels",
+	"tag.name.ART": "Kunst prijzen",
+	"tag.name.MONEY": "Geld prijzen",
+	"tag.name.REGION": "Beperkte regio",
+	"tag.name.LOW": "Begrensde vaardigheid",
+	"tag.name.COUNT": "Beperkte deelname",
+	"tag.name.LAN": "LAN",
+	"tag.name.QUALIFIER": "Qualificatie",
+
+	"weapon.category.SHOOTERS": "Spetters",
+	"weapon.category.BLASTERS": "Blasters",
+	"weapon.category.ROLLERS": "Rollers",
+	"weapon.category.BRUSHES": "Kwasten",
+	"weapon.category.CHARGERS": "Laders",
+	"weapon.category.SLOSHERS": "Morsers",
+	"weapon.category.SPLATLINGS": "Spetlings",
+	"weapon.category.DUALIES": "Dubbelknallers",
+	"weapon.category.BRELLAS": "Plenzers",
+	"weapon.category.STRINGERS": "Spanners",
+	"weapon.category.SPLATANAS": "Zwiepers",
+
+	"websiteSubtitle": "Competitief Splatoon Hub"
+}

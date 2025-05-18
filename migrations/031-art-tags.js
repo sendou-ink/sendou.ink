@@ -1,6 +1,6 @@
-module.exports.up = function (db) {
-  db.prepare(
-    /*sql*/ `
+export function up(db) {
+	db.prepare(
+		/*sql*/ `
     create table "ArtTag" (
       "id" integer primary key,
       "name" text unique not null,
@@ -9,10 +9,10 @@ module.exports.up = function (db) {
       foreign key ("authorId") references "User"("id") on delete restrict
     ) strict
   `,
-  ).run();
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "TaggedArt" (
       "artId" integer not null,
       "tagId" integer not null,
@@ -20,8 +20,8 @@ module.exports.up = function (db) {
       foreign key ("tagId") references "ArtTag"("id") on delete cascade
     ) strict
   `,
-  ).run();
+	).run();
 
-  db.prepare(`create index tagged_art_art_id on "TaggedArt"("artId")`).run();
-  db.prepare(`create index tagged_art_tag_id on "TaggedArt"("tagId")`).run();
-};
+	db.prepare(`create index tagged_art_art_id on "TaggedArt"("artId")`).run();
+	db.prepare(`create index tagged_art_tag_id on "TaggedArt"("tagId")`).run();
+}

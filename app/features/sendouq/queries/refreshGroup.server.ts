@@ -8,5 +8,5 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export function refreshGroup(groupId: number) {
-  stm.run({ latestActionAt: dateToDatabaseTimestamp(new Date()), groupId });
+	stm.run({ latestActionAt: dateToDatabaseTimestamp(new Date()), groupId });
 }

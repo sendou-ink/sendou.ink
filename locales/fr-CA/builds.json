@@ -1,0 +1,34 @@
+{
+	"addBuild": "Ajouter un set",
+	"reachBuildMaxCount": "Vous avez atteint la limite de set.",
+	"noBuilds": "Pas de sets disponibles. N'hésitez pas à en créer un !",
+	"buildCard.info": "Info",
+	"buildCard.edit": "Éditer",
+
+	"forms.title": "Titre",
+	"forms.modes": "Modes",
+	"forms.weapons": "Armes",
+	"forms.gear.HEAD": "Accessoires",
+	"forms.gear.CLOTHES": "Vêtements",
+	"forms.gear.SHOES": "Chaussures",
+	"forms.private.info": "Les sets privées ne sont visible que par vous.",
+
+	"deleteConfirm": "Supprimer le set '{{title}}' ?",
+
+	"stats.count.title": "Statistiques de {{count}} sets pour {{weapon}}",
+	"stats.ap.title": "Moyenne des Points de Compétences",
+	"stats.percentage.title": "Taux de présence des bonus exclusifs",
+	"stats.all": "Tous",
+
+	"addFilter": "Ajouter un filtre",
+	"linkButton.abilityStats": "Statistiques",
+	"linkButton.popularBuilds": "Sets populaires",
+	"noPopularBuilds": "Il semble qu'il n'y ait pas de sets populaires pour cette arme en ce moment.",
+
+	"emptyAbilitySlot": "Emplacement de bonus vide",
+
+	"filters.has": "Avec",
+	"filters.does.not.have": "Sans",
+	"filters.atLeast": "Au moins",
+	"filters.atMost": "Au plus"
+}

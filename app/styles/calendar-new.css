@@ -1,20 +1,30 @@
 .calendar-new__container {
-  max-width: 38rem;
+	max-width: 38rem;
 }
 
 .calendar-new__select {
-  max-width: 16rem;
+	max-width: 16rem;
 }
 
 .calendar-new__badges {
-  width: max-content;
-  padding: var(--s-2);
-  border-radius: var(--rounded);
-  background-color: var(--bg-badge);
-  font-size: var(--fonts-sm);
-  font-weight: var(--semi-bold);
+	width: max-content;
+	padding: var(--s-2);
+	border-radius: var(--rounded);
+	background-color: var(--bg-badge);
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
 }
 
 .calendar-new__day-label {
-  margin: 0;
+	margin: 0;
+}
+
+.calendar-new__range-input {
+	width: 4.25rem;
+}
+
+.calendar-new__avatar-preview {
+	width: 124px;
+	height: 124px;
+	border-radius: 100%;
 }

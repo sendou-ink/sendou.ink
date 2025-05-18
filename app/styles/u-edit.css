@@ -1,39 +1,39 @@
 .u-edit__container {
-  display: flex;
-  width: 100%;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s-6);
+	display: flex;
+	width: 100%;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--s-6);
 }
 
 .u-edit__country-select {
-  max-width: 10rem;
+	max-width: 10rem;
 }
 
 .u-edit__in-game-name-text {
-  max-width: 8rem;
+	max-width: 8rem;
 }
 
 .u-edit__in-game-name-hashtag {
-  font-size: var(--fonts-lg);
+	font-size: var(--fonts-lg);
 }
 
 .u-edit__in-game-name-discriminator {
-  width: 5rem;
+	width: 5rem;
 }
 
 .u-edit__sens-select {
-  width: 6rem;
+	width: 6rem;
 }
 
 .u-edit__weapon-pool {
-  width: 20rem;
+	width: 20rem;
 }
 
 .u-edit__bio-container {
-  width: 100%;
+	width: 100%;
 }
 
 .u-edit__bio-container > textarea {
-  width: 100%;
+	width: 100%;
 }

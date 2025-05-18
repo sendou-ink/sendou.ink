@@ -1,6 +1,6 @@
-module.exports.up = function (db) {
-  db.prepare(
-    /*sql*/ `
+export function up(db) {
+	db.prepare(
+		/*sql*/ `
     create table "TournamentSub" (
       "userId" integer not null,
       "tournamentId" integer not null,
@@ -15,5 +15,5 @@ module.exports.up = function (db) {
       unique("userId", "tournamentId") on conflict rollback
     ) strict
   `,
-  ).run();
-};
+	).run();
+}

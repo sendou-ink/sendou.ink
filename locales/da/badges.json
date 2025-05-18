@@ -1,0 +1,11 @@
+{
+	"patreon": "Støtter af sendou.ink på Patreon",
+	"patreon+": "+Støtter af sendou.ink på Patreon",
+	"xp": "Tildelt for at opnå {{xpText}}",
+	"tournament_one": "Tildeldt for at vinde {{tournament}}",
+	"tournament_other": "Tildeldt for at vinde {{tournament}} (×{{count}})",
+	"forYourEvent": "Mærke til dit arrangement?",
+	"managedBy": "Administreres af {{users}}",
+	"own.divider": "Administrerede mærker",
+	"other.divider": "Andre mærker"
+}

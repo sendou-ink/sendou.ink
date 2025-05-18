@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { MapResult } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import type { ModeShort, StageId } from "~/modules/in-game-lists";
 
 const stm = sql.prepare(/* sql */ `
@@ -13,38 +13,38 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export function seasonStagesByUserId({
-  userId,
-  season,
+	userId,
+	season,
 }: {
-  userId: number;
-  season: number;
+	userId: number;
+	season: number;
 }) {
-  const rows = stm.all({ userId, season }) as Array<MapResult>;
+	const rows = stm.all({ userId, season }) as Array<Tables["MapResult"]>;
 
-  return rows.reduce(
-    (acc, cur) => {
-      if (!acc[cur.stageId]) acc[cur.stageId] = {};
+	return rows.reduce(
+		(acc, cur) => {
+			if (!acc[cur.stageId]) acc[cur.stageId] = {};
 
-      acc[cur.stageId]![cur.mode] = {
-        wins: cur.wins,
-        losses: cur.losses,
-      };
+			acc[cur.stageId]![cur.mode] = {
+				wins: cur.wins,
+				losses: cur.losses,
+			};
 
-      return acc;
-    },
-    {} as Partial<
-      Record<
-        StageId,
-        Partial<
-          Record<
-            ModeShort,
-            {
-              wins: number;
-              losses: number;
-            }
-          >
-        >
-      >
-    >,
-  );
+			return acc;
+		},
+		{} as Partial<
+			Record<
+				StageId,
+				Partial<
+					Record<
+						ModeShort,
+						{
+							wins: number;
+							losses: number;
+						}
+					>
+				>
+			>
+		>,
+	);
 }

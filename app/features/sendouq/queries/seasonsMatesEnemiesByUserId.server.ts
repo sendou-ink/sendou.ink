@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { PlayerResult, User } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/* sql */ `
   select
@@ -9,7 +9,7 @@ const stm = sql.prepare(/* sql */ `
     "setLosses",
     json_object(
       'id', "User"."id",
-      'discordName', "User"."discordName",
+      'username', "User"."username",
       'discordAvatar', "User"."discordAvatar",
       'discordId', "User"."discordId",
       'customUrl', "User"."customUrl"
@@ -24,27 +24,27 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export function seasonsMatesEnemiesByUserId({
-  userId,
-  season,
-  type,
+	userId,
+	season,
+	type,
 }: {
-  userId: number;
-  season: number;
-  type: PlayerResult["type"];
+	userId: number;
+	season: number;
+	type: Tables["PlayerResult"]["type"];
 }) {
-  const rows = stm.all({ userId, season, type }) as any[];
+	const rows = stm.all({ userId, season, type }) as any[];
 
-  return rows.map((row) => ({
-    ...row,
-    user: JSON.parse(row.user),
-  })) as Array<{
-    mapWins: number;
-    mapLosses: number;
-    setWins: number;
-    setLosses: number;
-    user: Pick<
-      User,
-      "id" | "discordName" | "discordAvatar" | "discordId" | "customUrl"
-    >;
-  }>;
+	return rows.map((row) => ({
+		...row,
+		user: JSON.parse(row.user),
+	})) as Array<{
+		mapWins: number;
+		mapLosses: number;
+		setWins: number;
+		setLosses: number;
+		user: Pick<
+			Tables["User"],
+			"id" | "username" | "discordAvatar" | "discordId" | "customUrl"
+		>;
+	}>;
 }

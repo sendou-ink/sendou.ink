@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { MapPoolMap } from "~/db/types";
+import type { Tables } from "~/db/tables";
 import { parseDBArray } from "~/utils/sql";
 
 const stm = sql.prepare(/*sql*/ `
@@ -19,19 +19,19 @@ const stm = sql.prepare(/*sql*/ `
 `);
 
 interface FindMapPoolsByTournamentIdItem {
-  tournamentTeamId: number;
-  mapPool: Array<Pick<MapPoolMap, "mode" | "stageId">>;
+	tournamentTeamId: number;
+	mapPool: Array<Pick<Tables["MapPoolMap"], "mode" | "stageId">>;
 }
 
 export function findMapPoolsByTournamentId(
-  tournamentId: number,
+	tournamentId: number,
 ): FindMapPoolsByTournamentIdItem[] {
-  const rows = stm.all({ tournamentId }) as any[];
+	const rows = stm.all({ tournamentId }) as any[];
 
-  return rows.map((row) => {
-    return {
-      tournamentTeamId: row.tournamentTeamId,
-      mapPool: parseDBArray(row.mapPool),
-    };
-  });
+	return rows.map((row) => {
+		return {
+			tournamentTeamId: row.tournamentTeamId,
+			mapPool: parseDBArray(row.mapPool),
+		};
+	});
 }

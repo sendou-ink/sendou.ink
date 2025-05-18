@@ -1,419 +1,424 @@
 .u__container {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-6);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
 }
 
 .u__avatar-container {
-  display: grid;
-  justify-content: center;
-  column-gap: var(--s-2-5);
-  grid-template-areas: "avatar name" "avatar team" "avatar ." "avatar ." "socials .";
+	display: grid;
+	justify-content: center;
+	column-gap: var(--s-2-5);
+	grid-template-areas: "avatar name" "avatar team" "avatar ." "avatar ." "socials .";
 }
 
 .u__avatar {
-  min-width: 125px;
-  grid-area: avatar;
+	min-width: 125px;
+	grid-area: avatar;
 }
 
 .u__team {
-  display: flex;
-  color: var(--text-lighter);
-  font-weight: var(--bold);
-  gap: var(--s-1-5);
-  grid-area: team;
+	display: flex;
+	font-weight: var(--bold);
+	color: var(--text);
+	gap: var(--s-1-5);
+	grid-area: team;
+	align-items: center;
 }
 
 .u__name {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  grid-area: name;
-  overflow-wrap: anywhere;
-}
-
-.u__discriminator {
-  color: var(--text-lighter);
-  margin-inline-end: var(--s-2);
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	grid-area: name;
+	overflow-wrap: anywhere;
+	gap: var(--s-2-5);
 }
 
 .u__country-name {
-  color: var(--text-lighter);
-  font-weight: var(--bold);
+	color: var(--text-lighter);
+	font-weight: var(--bold);
 }
 
 .u__socials {
-  display: flex;
-  justify-content: center;
-  gap: var(--s-1-5);
-  grid-area: socials;
-  padding-block-start: var(--s-2-5);
+	display: flex;
+	justify-content: center;
+	gap: var(--s-1-5);
+	grid-area: socials;
+	padding-block-start: var(--s-2-5);
 }
 
 .u__social-link {
-  padding: var(--s-1);
-  border: 1px solid;
-  border-radius: 50%;
+	padding: var(--s-1);
+	border: 1px solid;
+	border-radius: 50%;
 }
 
 .u__extra-info__heading > svg {
-  width: 0.8rem;
+	width: 0.8rem;
 }
 
 .u__social-link > svg {
-  width: 0.9rem;
+	width: 0.9rem;
 }
 
 .u__social-link.youtube {
-  border-color: #f00;
-  background-color: #ff00002f;
+	border-color: #f00;
+	background-color: #ff00002f;
 }
 
 .u__social-link.youtube > svg {
-  fill: #f00;
-}
-
-.u__social-link.twitter {
-  border-color: #1da1f2;
-  background-color: #1da0f22f;
-}
-
-.u__social-link.twitter > svg {
-  fill: #1da1f2;
+	fill: #f00;
 }
 
 .u__social-link.twitch {
-  border-color: #9146ff;
-  background-color: #9146ff2f;
+	border-color: #9146ff;
+	background-color: #9146ff2f;
 }
 
 .u__social-link.twitch > svg {
-  fill: #9146ff;
+	fill: #9146ff;
+}
+
+.u__social-link.battlefy {
+	border-color: #de4c5e;
+	background-color: #de4c5e2f;
+}
+
+.u__social-link.battlefy > svg {
+	fill: #de4c5e;
+}
+
+.u__social-link.bsky {
+	border-color: #1285fe;
+	background-color: #1285fe2f;
+	display: grid;
+	place-items: center;
+}
+
+.u__social-link.bsky path {
+	fill: #1285fe;
 }
 
 .u__extra-infos {
-  display: flex;
-  max-width: 24rem;
-  flex-wrap: wrap;
-  gap: var(--s-2-5);
-  margin-inline: auto;
+	display: flex;
+	max-width: 24rem;
+	flex-wrap: wrap;
+	gap: var(--s-2-5);
+	margin-inline: auto;
 }
 
 .u__extra-info {
-  padding: var(--s-1) var(--s-1-5);
-  border-radius: var(--rounded);
-  background-color: var(--bg-darker);
-  font-size: var(--fonts-xxs);
-  display: flex;
-  align-items: center;
-  gap: var(--s-1);
+	padding: var(--s-1) var(--s-1-5);
+	border-radius: var(--rounded);
+	background-color: var(--bg-darker);
+	font-size: var(--fonts-xxs);
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
 }
 
 .u__extra-info__heading {
-  color: var(--theme);
-  font-weight: var(--bold);
-}
-
-.u__badges {
-  display: flex;
-  max-width: 24rem;
-  align-items: center;
-  padding: var(--s-2);
-  border-radius: var(--rounded);
-  background-color: var(--bg-badge);
-  margin-inline: auto;
-}
-
-.u__small-badges {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  gap: var(--s-3);
-}
-
-.u__badge-explanation {
-  color: var(--text-lighter);
-  font-size: var(--fonts-xs);
-  text-align: center;
-}
-
-.u__small-badge-container {
-  position: relative;
-}
-
-.u__small-badge-count {
-  position: absolute;
-  top: 0;
-  right: 0;
-  margin-top: -8px;
-  margin-right: auto;
-  margin-left: auto;
-  color: var(--theme-vibrant);
-  font-size: var(--fonts-xxxs);
-  font-weight: var(--bold);
+	color: var(--theme);
+	font-weight: var(--bold);
 }
 
 .u__results-table-wrapper {
-  width: 100%;
-  overflow-x: auto;
+	width: 100%;
+	overflow-x: auto;
 }
 
 .u__results-table-highlights {
-  border: var(--s-2) solid var(--bg-lighter);
-  padding-inline: 0 !important;
+	border: var(--s-2) solid var(--bg-lighter);
+	padding-inline: 0 !important;
 }
 
 .u__results-table-highlights > legend {
-  margin-inline-start: var(--s-2);
-  padding-inline: var(--s-1);
+	margin-inline-start: var(--s-2);
+	padding-inline: var(--s-1);
 }
 
 .u__results-players {
-  display: flex;
-  flex-wrap: wrap;
-  padding: 0;
-  gap: var(--s-3);
-  list-style: none;
+	display: flex;
+	flex-direction: column;
+	padding: 0;
+	gap: var(--s-3);
+	list-style: none;
 }
 
 .u-search__container {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-12);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-12);
 }
 
 .u-search__users {
-  display: flex;
-  width: 325px;
-  flex-direction: column;
-  padding: 0;
-  margin: 0 auto;
-  gap: var(--s-6);
+	display: flex;
+	width: 325px;
+	flex-direction: column;
+	padding: 0;
+	margin: 0 auto;
+	gap: var(--s-6);
 }
 
 .u-search__user {
-  display: flex;
-  align-items: center;
-  color: var(--text);
-  font-weight: var(--body);
-  gap: var(--s-4);
-  line-height: 1.2rem;
+	display: flex;
+	align-items: center;
+	color: var(--text);
+	font-weight: var(--body);
+	gap: var(--s-4);
+	line-height: 1.2rem;
 }
 
 .u-search__ign {
-  color: var(--text-lighter);
-  font-size: var(--fonts-sm);
-  font-weight: var(--body);
+	color: var(--text-lighter);
+	font-size: var(--fonts-sm);
+	font-weight: var(--body);
 }
 
 .u-search__users > li {
-  list-style: none;
+	list-style: none;
 }
 
 .u-search__input {
-  height: 40px !important;
-  margin: 0 auto;
-  font-size: var(--fonts-lg);
+	height: 40px !important;
+	margin: 0 auto;
+	font-size: var(--fonts-lg);
 }
 
 .u-search__icon {
-  height: 25px;
-  margin: auto;
-  margin-right: 15px;
+	height: 25px;
+	margin: auto;
+	margin-right: 15px;
 }
 
 .u-search__info {
-  color: var(--text-lighter);
-  font-size: var(--fonts-sm);
-  text-align: center;
+	color: var(--text-lighter);
+	font-size: var(--fonts-sm);
+	text-align: center;
 }
 
 .u__weapon {
-  padding: var(--s-2);
-  border-radius: 100%;
-  background-color: var(--bg-lighter);
+	padding: var(--s-2);
+	border-radius: 100%;
+	background-color: var(--bg-lighter);
 }
 
 .u__build-form {
-  --input-width: min(18rem, 75vw);
+	--input-width: min(18rem, 75vw);
 }
 
 .u__build-form__weapon {
-  --input-width: 16rem;
+	--input-width: 16rem;
 }
 
 .u__build-filter-button {
-  padding: 0 var(--s-1-5) !important;
-  gap: var(--s-1);
+	padding: 0 var(--s-1-5) !important;
+	gap: var(--s-1);
+	min-height: 32px;
 }
 
 .u__placements {
-  display: flex;
-  flex-wrap: wrap;
-  padding: var(--s-4);
-  border-radius: var(--rounded);
-  margin: 0 auto;
-  background-color: var(--bg-lighter);
-  color: var(--text);
-  gap: var(--s-6);
-  transition: 0.1s ease-in-out background-color;
+	display: flex;
+	flex-wrap: wrap;
+	padding: var(--s-4);
+	border-radius: var(--rounded);
+	margin: 0 auto;
+	background-color: var(--bg-lighter);
+	color: var(--text);
+	gap: var(--s-6);
+	transition: 0.1s ease-in-out background-color;
 }
 
 .u__placements:hover {
-  background-color: var(--theme-transparent);
+	background-color: var(--theme-transparent);
 }
 
 .u__placements__mode {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-size: var(--fonts-xs);
-  font-weight: var(--semi-bold);
-  gap: var(--s-1-5);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	gap: var(--s-1-5);
 }
 
 @media screen and (min-width: 480px) {
-  .u__placements {
-    gap: var(--s-10);
-  }
+	.u__placements {
+		gap: var(--s-10);
+	}
 
-  .u__placements__mode {
-    font-size: var(--fonts-sm);
-  }
+	.u__placements__mode {
+		font-size: var(--fonts-sm);
+	}
 }
 
 .u__season__weapon-container {
-  display: flex;
-  align-items: center;
-  font-size: var(--fonts-sm);
-  flex-direction: column;
-  font-weight: var(--bold);
-  position: relative;
-  width: 60px;
+	display: flex;
+	align-items: center;
+	font-size: var(--fonts-sm);
+	flex-direction: column;
+	font-weight: var(--bold);
+	position: relative;
+	width: 60px;
 }
 
 .u__season__weapon-border__outer {
-  --degree: 80deg;
-  --smoothing: 0.5deg;
-  --color: var(--theme);
+	--degree: 80deg;
+	--smoothing: 0.5deg;
+	--color: var(--theme);
 
-  display: block;
-  content: "";
-  height: 60px;
-  width: 60px;
-  border-radius: 50%;
-  background: conic-gradient(
-    var(--color) var(--degree),
-    transparent calc(var(--degree) + var(--smoothing)) 100%
-  );
-  position: absolute;
+	display: block;
+	content: "";
+	height: 60px;
+	width: 60px;
+	border-radius: 50%;
+	background: conic-gradient(
+		var(--color) var(--degree),
+		transparent calc(var(--degree) + var(--smoothing)) 100%
+	);
+	position: absolute;
 }
 
 .u__season__weapon-border__outer-static {
-  height: 60px;
-  width: 60px;
-  background-color: var(--bg-lighter);
-  position: absolute;
-  border-radius: 50%;
+	height: 60px;
+	width: 60px;
+	background-color: var(--bg-lighter);
+	position: absolute;
+	border-radius: 50%;
 }
 
 .u__season__weapon-border__inner {
-  height: 84%;
-  width: 84%;
-  top: 8%;
-  left: 8%;
-  position: relative;
-  border-radius: 50%;
-  background: var(--bg);
-  display: grid;
-  place-items: center;
+	height: 84%;
+	width: 84%;
+	top: 8%;
+	left: 8%;
+	position: relative;
+	border-radius: 50%;
+	background: var(--bg);
+	display: grid;
+	place-items: center;
 }
 
 .u__season__weapon-count {
-  margin-top: 62px;
+	margin-top: 62px;
 }
 
 .u__season__player-name {
-  width: 64px;
-  font-size: var(--fonts-xs);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: center;
-  font-weight: var(--semi-bold);
+	width: 64px;
+	font-size: var(--fonts-xs);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-align: center;
+	font-weight: var(--semi-bold);
 }
 
 .u__season__match {
-  background-color: var(--bg-lighter);
-  border-radius: var(--rounded);
-  padding: var(--s-2) var(--s-2-5);
-  color: var(--text);
-  transition: ease-in 0.2s background-color;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-4);
+	background-color: var(--bg-lighter);
+	border-radius: var(--rounded);
+	padding: var(--s-2) var(--s-2-5);
+	color: var(--text);
+	transition: ease-in 0.2s background-color;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.u__season__match__with-sub-section {
+	border-radius: var(--rounded) var(--rounded) 0 0;
+}
+
+.u__season__match__sub-section {
+	border-radius: 0 0 var(--rounded) var(--rounded);
+	background-color: var(--bg-light-variation);
+	font-size: var(--fonts-xs);
+	text-align: center;
+	font-weight: var(--bold);
+	display: flex;
+	gap: var(--s-1);
+	justify-content: center;
+	padding-block: var(--s-0-5);
+}
+
+.u__season__match__sub-section__icon {
+	width: 18px;
+	color: var(--theme-warning);
 }
 
 .u__season__match:hover {
-  background-color: var(--theme-transparent);
+	background-color: var(--theme-transparent);
 }
 
 .u__season__match__user {
-  display: flex;
-  flex-direction: column;
-  font-size: var(--fonts-xs);
-  width: 65px;
-  align-items: center;
+	display: flex;
+	flex-direction: column;
+	font-size: var(--fonts-xs);
+	width: 65px;
+	align-items: center;
 }
 
 .u__season__match__user__name {
-  max-width: 60px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+	max-width: 60px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .u__season__match__score {
-  font-size: var(--fonts-xl);
-  font-weight: var(--bold);
-  margin-inline: auto;
+	font-size: var(--fonts-xl);
+	font-weight: var(--bold);
+	margin-inline: auto;
 }
 
 .u__season__info-container {
-  background-color: var(--bg-lighter);
-  padding: var(--s-2-5) var(--s-2);
-  border-radius: var(--rounded);
+	background-color: var(--bg-lighter);
+	padding: var(--s-2-5) var(--s-2);
+	border-radius: var(--rounded);
 }
 
 .u__season__winrate {
-  background-color: var(--bg-lighter);
-  padding: var(--s-0-5) var(--s-2);
-  border-radius: var(--rounded);
-  font-size: var(--fonts-xs);
-  font-weight: var(--semi-bold);
+	background-color: var(--bg-lighter);
+	padding: var(--s-0-5) var(--s-2);
+	border-radius: var(--rounded);
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
 }
 
 .u__season__weapon-usage__container {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  width: 300px;
-  min-height: 175px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	width: 300px;
+	min-height: 175px;
 }
 
 .u__season__weapon-usage__weapons-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2-5);
-  justify-content: center;
-  max-height: 300px;
-  overflow-y: auto;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-2-5);
+	justify-content: center;
+	max-height: 300px;
+	overflow-y: auto;
 }
 
 .u__season__weapon-usage__weapon {
-  border-radius: 100%;
-  background-color: var(--bg-lighter);
-  padding: var(--s-1-5);
+	border-radius: 100%;
+	background-color: var(--bg-lighter);
+	padding: var(--s-1-5);
+}
+
+.u__season__tentative {
+	text-transform: uppercase;
+	font-weight: var(--semi-bold);
+	color: var(--text-lighter);
+	font-size: var(--fonts-xxs);
+	margin-top: -8px;
+	display: flex;
+	gap: var(--s-1);
+	align-items: center;
+	line-height: 1.3;
+}
+
+.u__season__tentative__explanation {
+	text-transform: initial;
 }

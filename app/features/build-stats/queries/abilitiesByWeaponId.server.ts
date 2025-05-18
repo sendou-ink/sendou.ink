@@ -27,16 +27,16 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export interface AbilitiesByWeapon {
-  abilities: Array<{
-    ability: Ability;
-    abilityPoints: number;
-  }>;
+	abilities: Array<{
+		ability: Ability;
+		abilityPoints: number;
+	}>;
 }
 
 export function abilitiesByWeaponId(
-  weaponSplId: MainWeaponId,
+	weaponSplId: MainWeaponId,
 ): Array<AbilitiesByWeapon> {
-  return (stm.all({ weaponSplId }) as any[]).map((row) => ({
-    abilities: JSON.parse(row.abilities),
-  }));
+	return (stm.all({ weaponSplId }) as any[]).map((row) => ({
+		abilities: JSON.parse(row.abilities),
+	}));
 }

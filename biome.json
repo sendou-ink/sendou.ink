@@ -1,0 +1,59 @@
+{
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+	"files": {
+		"ignore": [
+			"./scripts/dicts/**/*",
+			"./scripts/output/**/*",
+			"./app/db/seed/placements.json",
+			"./build/**/*"
+		]
+	},
+	"linter": {
+		"rules": {
+			"suspicious": {
+				"noExplicitAny": "off",
+				"noArrayIndexKey": "off",
+				"noConsoleLog": "error"
+			},
+			"style": {
+				"noNonNullAssertion": "off",
+				"noUnusedTemplateLiteral": {
+					"fix": "safe",
+					"level": "error"
+				},
+				"useNodejsImportProtocol": {
+					"fix": "safe",
+					"level": "error"
+				},
+				"useTemplate": {
+					"fix": "safe",
+					"level": "error"
+				}
+			},
+			"a11y": {
+				"useKeyWithClickEvents": "off",
+				"noLabelWithoutControl": "off"
+			},
+			"complexity": {
+				"useLiteralKeys": {
+					"fix": "safe",
+					"level": "error"
+				}
+			}
+		}
+	},
+	"formatter": {
+		"useEditorconfig": true
+	},
+	"css": {
+		"formatter": {
+			"enabled": true
+		},
+		"linter": {
+			"enabled": true
+		},
+		"parser": {
+			"cssModules": true
+		}
+	}
+}

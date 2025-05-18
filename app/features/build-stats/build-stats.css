@@ -1,24 +1,24 @@
 .build-stats__ability-row {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
 }
 
 .build-stats__bars {
-  font-size: var(--fonts-sm);
-  font-weight: var(--semi-bold);
-  display: grid;
-  align-items: center;
-  grid-template-columns: max-content 65px 1fr;
-  column-gap: var(--s-2);
-  row-gap: var(--s-1);
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
+	display: grid;
+	align-items: center;
+	grid-template-columns: max-content 65px 1fr;
+	column-gap: var(--s-2);
+	row-gap: var(--s-1);
 }
 
 .build-stats__bar {
-  background-color: var(--theme);
-  height: 100%;
+	background-color: var(--theme);
+	height: 100%;
 }
 
 .build-stats__value-text {
-  width: 100px;
+	width: 100px;
 }

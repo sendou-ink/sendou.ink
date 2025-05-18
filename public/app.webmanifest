@@ -1,51 +1,51 @@
 {
-  "name": "sendou.ink",
-  "start_url": "/",
-  "display": "standalone",
-  "id": "sendou.ink",
-  "description": "Competitive Splatoon Hub",
-  "theme_color": "#010115",
-  "background_color": "#02011e",
-  "icons": [
-    {
-      "src": "/static-assets/img/app-icon.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Builds",
-      "url": "/builds",
-      "icons": [
-        {
-          "src": "/static-assets/img/pwa-icons/builds.png",
-          "type": "image/png",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
-      "name": "Build Analyzer",
-      "url": "/analyzer",
-      "icons": [
-        {
-          "src": "/static-assets/img/pwa-icons/analyzer.png",
-          "type": "image/png",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
-      "name": "Calendar",
-      "url": "/calendar",
-      "icons": [
-        {
-          "src": "/static-assets/img/pwa-icons/calendar.png",
-          "type": "image/png",
-          "sizes": "96x96"
-        }
-      ]
-    }
-  ]
+	"name": "sendou.ink",
+	"start_url": "/",
+	"display": "standalone",
+	"id": "sendou.ink",
+	"description": "Competitive Splatoon Hub",
+	"theme_color": "#010115",
+	"background_color": "#02011e",
+	"icons": [
+		{
+			"src": "/static-assets/img/app-icon.png",
+			"type": "image/png",
+			"sizes": "512x512"
+		}
+	],
+	"shortcuts": [
+		{
+			"name": "Builds",
+			"url": "/builds",
+			"icons": [
+				{
+					"src": "/static-assets/img/pwa-icons/builds.png",
+					"type": "image/png",
+					"sizes": "96x96"
+				}
+			]
+		},
+		{
+			"name": "Build Analyzer",
+			"url": "/analyzer",
+			"icons": [
+				{
+					"src": "/static-assets/img/pwa-icons/analyzer.png",
+					"type": "image/png",
+					"sizes": "96x96"
+				}
+			]
+		},
+		{
+			"name": "Calendar",
+			"url": "/calendar",
+			"icons": [
+				{
+					"src": "/static-assets/img/pwa-icons/calendar.png",
+					"type": "image/png",
+					"sizes": "96x96"
+				}
+			]
+		}
+	]
 }

@@ -1,25 +1,18 @@
 import { sql } from "~/db/sql";
-import type {
-  CalendarEvent,
-  CalendarEventDate,
-  Tournament,
-  User,
-} from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/*sql*/ `
 select
   "Tournament"."id",
   "Tournament"."mapPickingStyle",
-  "Tournament"."format",
-  "Tournament"."showMapListGenerator",
+  "Tournament"."settings",
   "CalendarEvent"."id" as "eventId",
   "CalendarEvent"."name",
   "CalendarEvent"."description",
   "CalendarEvent"."bracketUrl",
   "CalendarEvent"."authorId",
   "CalendarEventDate"."startTime",
-  "User"."discordName",
-  "User"."discordDiscriminator",
+  "User"."username",
   "User"."discordId"
   from "Tournament"
     left join "CalendarEvent" on "Tournament"."id" = "CalendarEvent"."tournamentId"
@@ -30,36 +23,37 @@ select
 `);
 
 type FindByIdentifierRow = (Pick<
-  CalendarEvent,
-  "bracketUrl" | "name" | "description" | "authorId"
+	Tables["CalendarEvent"],
+	"bracketUrl" | "name" | "description" | "authorId"
 > &
-  Pick<
-    Tournament,
-    "id" | "format" | "mapPickingStyle" | "showMapListGenerator"
-  > &
-  Pick<User, "discordId" | "discordName" | "discordDiscriminator"> &
-  Pick<CalendarEventDate, "startTime">) & { eventId: CalendarEvent["id"] };
+	Pick<Tables["Tournament"], "id" | "mapPickingStyle"> &
+	Pick<Tables["User"], "discordId" | "username"> &
+	Pick<Tables["CalendarEventDate"], "startTime">) & {
+	eventId: Tables["CalendarEvent"]["id"];
+} & { settings: string };
 
 export function findByIdentifier(identifier: string | number) {
-  const rows = stm.all({ identifier }) as FindByIdentifierRow[];
-  if (rows.length === 0) return null;
+	const rows = stm.all({ identifier }) as FindByIdentifierRow[];
+	if (rows.length === 0) return null;
 
-  const tournament = { ...rows[0], startTime: resolveEarliestStartTime(rows) };
+	const tournament = { ...rows[0], startTime: resolveEarliestStartTime(rows) };
 
-  const { discordId, discordName, discordDiscriminator, ...rest } = tournament;
+	const { discordId, username, ...rest } = tournament;
 
-  return {
-    ...rest,
-    author: {
-      discordId,
-      discordName,
-      discordDiscriminator,
-    },
-  };
+	return {
+		...rest,
+		settings: JSON.parse(
+			tournament.settings,
+		) as Tables["Tournament"]["settings"],
+		author: {
+			discordId,
+			username,
+		},
+	};
 }
 
 function resolveEarliestStartTime(
-  rows: Pick<CalendarEventDate, "startTime">[],
+	rows: Pick<Tables["CalendarEventDate"], "startTime">[],
 ) {
-  return Math.min(...rows.map((row) => row.startTime));
+	return Math.min(...rows.map((row) => row.startTime));
 }

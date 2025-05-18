@@ -7,10 +7,10 @@ const query = (includeWeaponId: boolean) => /* sql */ `
     from "BuildAbility"
     left join "BuildWeapon" on "BuildAbility"."buildId" = "BuildWeapon"."buildId"
   ${
-    includeWeaponId
-      ? /* sql */ `where "BuildWeapon"."weaponSplId" = @weaponSplId`
-      : ""
-  }
+		includeWeaponId
+			? /* sql */ `where "BuildWeapon"."weaponSplId" = @weaponSplId`
+			: ""
+	}
   group by "BuildAbility"."ability"
 `;
 
@@ -18,12 +18,14 @@ const findByWeaponIdStm = sql.prepare(query(true));
 const findAllStm = sql.prepare(query(false));
 
 export interface AverageAbilityPointsResult {
-  ability: Ability;
-  abilityPointsSum: number;
+	ability: Ability;
+	abilityPointsSum: number;
 }
 
 export function averageAbilityPoints(weaponSplId?: MainWeaponId | null) {
-  const stm = typeof weaponSplId === "number" ? findByWeaponIdStm : findAllStm;
+	const stm = typeof weaponSplId === "number" ? findByWeaponIdStm : findAllStm;
 
-  return stm.all({ weaponSplId }) as Array<AverageAbilityPointsResult>;
+	return stm.all({
+		weaponSplId: weaponSplId ?? null,
+	}) as Array<AverageAbilityPointsResult>;
 }

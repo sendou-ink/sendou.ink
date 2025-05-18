@@ -1,42 +1,42 @@
 .builds__top-container {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
 }
 
 .builds__category {
-  display: flex;
-  flex-direction: column;
-  padding: var(--s-3);
-  border-radius: var(--rounded);
-  background-color: var(--bg-lighter);
-  font-size: var(--fonts-sm);
-  font-weight: 600;
-  gap: var(--s-4);
+	display: flex;
+	flex-direction: column;
+	padding: var(--s-3);
+	border-radius: var(--rounded);
+	background-color: var(--bg-lighter);
+	font-size: var(--fonts-sm);
+	font-weight: 600;
+	gap: var(--s-4);
 }
 
 .builds__category__header {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2-5);
+	display: flex;
+	align-items: center;
+	gap: var(--s-2-5);
 }
 
 .builds__category__weapons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-3);
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-3);
 }
 
 .builds__category__weapon {
-  display: flex;
-  align-items: center;
-  color: var(--text);
-  font-size: var(--fonts-xs);
-  font-weight: var(--body);
-  gap: var(--s-1);
+	display: flex;
+	align-items: center;
+	color: var(--text);
+	font-size: var(--fonts-xs);
+	font-weight: var(--body);
+	gap: var(--s-1);
 }
 
 .builds__category__weapon__img {
-  border-radius: var(--rounded);
-  background-color: var(--bg-darker);
+	border-radius: var(--rounded);
+	background-color: var(--bg-darker);
 }

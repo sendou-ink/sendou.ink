@@ -1,144 +1,156 @@
-import test, { expect } from "@playwright/test";
+import test, { expect, type Page } from "@playwright/test";
 import {
-  impersonate,
-  isNotVisible,
-  navigate,
-  seed,
-  selectWeapon,
-  submit,
+	impersonate,
+	isNotVisible,
+	navigate,
+	seed,
+	selectUser,
+	selectWeapon,
+	submit,
 } from "~/utils/playwright";
-import { newVodPage, VODS_PAGE, vodVideoPage } from "~/utils/urls";
+import { VODS_PAGE, newVodPage, vodVideoPage } from "~/utils/urls";
+
+const chooseVideoDate = async (page: Page) => {
+	await page.getByTestId("open-calendar-button").click();
+	await page
+		.getByTestId("choose-date-button")
+		.filter({ has: page.locator(`text="1"`) })
+		.first()
+		.click();
+};
 
 test.describe("VoDs page", () => {
-  test("adds video (pov)", async ({ page }) => {
-    await seed(page);
-    await impersonate(page);
-    await navigate({
-      page,
-      url: newVodPage(),
-    });
+	test("adds video (pov)", async ({ page }) => {
+		await seed(page);
+		await impersonate(page);
+		await navigate({
+			page,
+			url: newVodPage(),
+		});
 
-    await page
-      .getByLabel("YouTube URL")
-      .type("https://www.youtube.com/watch?v=o7kWlMZP3lM");
+		await page
+			.getByLabel("YouTube URL")
+			.fill("https://www.youtube.com/watch?v=o7kWlMZP3lM");
 
-    await page
-      .getByLabel("Video title")
-      .type("ITZXI Finals - Team Olive vs. Astral [CAMO TENTA PoV]");
+		await page
+			.getByLabel("Video title")
+			.fill("ITZXI Finals - Team Olive vs. Astral [CAMO TENTA PoV]");
 
-    await page.getByLabel("Video date").fill("2021-06-20");
+		await chooseVideoDate(page);
 
-    await page.getByLabel("Type").selectOption("SCRIM");
+		await page.getByLabel("Type").selectOption("SCRIM");
 
-    await page.getByLabel("Player (Pov)").type("Sendou");
-    await page.keyboard.press("Enter");
+		await selectUser({
+			labelName: "Player (Pov)",
+			page,
+			userName: "Sendou",
+		});
 
-    await page.getByTestId("match-1-seconds").clear();
-    await page.getByTestId("match-1-seconds").fill("20");
-    await page.getByTestId("match-1-mode").selectOption("TC");
-    await page.getByTestId("match-1-stage").selectOption("5");
-    await selectWeapon({
-      name: "Zink Mini Splatling",
-      page,
-      inputName: "match-1-weapon",
-    });
+		await page.getByLabel("Start timestamp").fill("0:20");
+		await page.getByLabel("Mode").selectOption("TC");
+		await page.getByLabel("Stage").selectOption("5");
+		await selectWeapon({
+			name: "Zink Mini Splatling",
+			page,
+			inputName: "match-0-weapon",
+		});
 
-    await page.getByTestId("add-match").click();
+		await page.getByTestId("add-field-button").click();
 
-    await page.getByTestId("match-2-seconds").type("55");
-    await page.getByTestId("match-2-minutes").type("5");
-    await page.getByTestId("match-2-mode").selectOption("RM");
-    await page.getByTestId("match-2-stage").selectOption("6");
-    await selectWeapon({
-      name: "Tenta Brella",
-      page,
-      inputName: "match-2-weapon",
-    });
+		await page.getByLabel("Start timestamp").last().fill("5:55");
+		await page.getByLabel("Mode").last().selectOption("RM");
+		await page.getByLabel("Stage").last().selectOption("6");
+		await selectWeapon({
+			name: "Tenta Brella",
+			page,
+			inputName: "match-1-weapon",
+		});
 
-    await submit(page);
+		await submit(page);
 
-    await page.getByText("6/20/2021").isVisible();
-    await page.getByTestId("weapon-img-4001").isVisible();
-    await page.getByTestId("weapon-img-6010").isVisible();
-  });
+		const now = new Date();
+		const formattedDate = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
+		await page.getByText(formattedDate).isVisible();
+		await page.getByTestId("weapon-img-4001").isVisible();
+		await page.getByTestId("weapon-img-6010").isVisible();
+	});
 
-  test("adds video (cast)", async ({ page }) => {
-    await seed(page);
-    await impersonate(page);
-    await navigate({
-      page,
-      url: newVodPage(),
-    });
+	test("adds video (cast)", async ({ page }) => {
+		await seed(page);
+		await impersonate(page);
+		await navigate({
+			page,
+			url: newVodPage(),
+		});
 
-    await page
-      .getByLabel("YouTube URL")
-      .type("https://www.youtube.com/watch?v=QFk1Gf91SwI");
+		await page
+			.getByLabel("YouTube URL")
+			.fill("https://www.youtube.com/watch?v=QFk1Gf91SwI");
 
-    await page
-      .getByLabel("Video title")
-      .type("BIG ! vs Starburst - Splatoon 3 Grand Finals - The Big House 10");
+		await page
+			.getByLabel("Video title")
+			.fill("BIG ! vs Starburst - Splatoon 3 Grand Finals - The Big House 10");
 
-    await page.getByLabel("Video date").fill("2022-07-21");
+		await chooseVideoDate(page);
 
-    await page.getByLabel("Type").selectOption("CAST");
+		await page.getByLabel("Type").selectOption("CAST");
 
-    await page.keyboard.press("Enter");
+		await page.keyboard.press("Enter");
 
-    await page.getByTestId("match-1-seconds").clear();
-    await page.getByTestId("match-1-seconds").fill("25");
-    await page.getByTestId("match-1-mode").selectOption("CB");
-    await page.getByTestId("match-1-stage").selectOption("10");
+		await page.getByLabel("Start timestamp").fill("0:25");
+		await page.getByLabel("Mode").selectOption("CB");
+		await page.getByLabel("Stage").selectOption("10");
 
-    for (let i = 0; i < 8; i++) {
-      await selectWeapon({
-        name: i < 4 ? "Luna Blaster" : "Tenta Brella",
-        page,
-        inputName: `player-${i}-weapon`,
-      });
-    }
+		for (let i = 0; i < 8; i++) {
+			await selectWeapon({
+				name: i < 4 ? "Luna Blaster" : "Tenta Brella",
+				page,
+				inputName: `player-${i}-weapon`,
+			});
+		}
 
-    await submit(page);
+		await submit(page);
 
-    for (let i = 0; i < 8; i++) {
-      await page
-        .getByTestId(`weapon-img-${i < 4 ? 200 : 6010}-${i}`)
-        .isVisible();
-    }
-  });
+		for (let i = 0; i < 8; i++) {
+			await page
+				.getByTestId(`weapon-img-${i < 4 ? 200 : 6010}-${i}`)
+				.isVisible();
+		}
+	});
 
-  test("edits vod", async ({ page }) => {
-    await seed(page);
-    await impersonate(page);
-    await navigate({
-      page,
-      url: vodVideoPage(1),
-    });
+	test("edits vod", async ({ page }) => {
+		await seed(page);
+		await impersonate(page);
+		await navigate({
+			page,
+			url: vodVideoPage(1),
+		});
 
-    await page.getByTestId("edit-vod-button").click();
+		await page.getByTestId("edit-vod-button").click();
 
-    await selectWeapon({
-      name: "Luna Blaster",
-      page,
-      inputName: "match-4-weapon",
-    });
+		await selectWeapon({
+			name: "Luna Blaster",
+			page,
+			inputName: "match-3-weapon",
+		});
 
-    await submit(page);
+		await submit(page);
 
-    await expect(page).toHaveURL(vodVideoPage(1));
+		await expect(page).toHaveURL(vodVideoPage(1));
 
-    await page.getByTestId(`weapon-img-200-4`).isVisible();
-  });
+		await page.getByTestId("weapon-img-200-4").isVisible();
+	});
 
-  test("operates vod filters", async ({ page }) => {
-    await seed(page);
-    await impersonate(page);
-    await navigate({
-      page,
-      url: VODS_PAGE,
-    });
+	test("operates vod filters", async ({ page }) => {
+		await seed(page);
+		await impersonate(page);
+		await navigate({
+			page,
+			url: VODS_PAGE,
+		});
 
-    await page.getByText("N-ZAP").isVisible();
-    await selectWeapon({ page, name: "Carbon Roller" });
-    await isNotVisible(page.getByText("N-ZAP"));
-  });
+		await page.getByText("N-ZAP").isVisible();
+		await selectWeapon({ page, name: "Carbon Roller" });
+		await isNotVisible(page.getByText("N-ZAP"));
+	});
 });

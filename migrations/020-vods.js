@@ -1,10 +1,10 @@
-module.exports.up = function (db) {
-  db.prepare(
-    `alter table "User" add column "isVideoAdder" integer default 0`,
-  ).run();
+export function up(db) {
+	db.prepare(
+		`alter table "User" add column "isVideoAdder" integer default 0`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
   create table "UnvalidatedVideo" (
     "id" integer primary key,
     "title" text not null,
@@ -18,22 +18,22 @@ module.exports.up = function (db) {
     foreign key ("eventId") references "CalendarEvent"("id") on delete restrict
   ) strict
   `,
-  ).run();
+	).run();
 
-  db.prepare(
-    `create index video_event_id on "UnvalidatedVideo"("eventId")`,
-  ).run();
+	db.prepare(
+		`create index video_event_id on "UnvalidatedVideo"("eventId")`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
       create view "Video"
       as
       select * from "UnvalidatedVideo" where "validatedAt" is not null
   `,
-  ).run();
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "VideoMatch" (
       "id" integer primary key,
       "videoId" integer not null,
@@ -43,13 +43,13 @@ module.exports.up = function (db) {
       foreign key ("videoId") references "UnvalidatedVideo"("id") on delete cascade
     ) strict
     `,
-  ).run();
-  db.prepare(
-    `create index video_match_video_id on "VideoMatch"("videoId")`,
-  ).run();
+	).run();
+	db.prepare(
+		`create index video_match_video_id on "VideoMatch"("videoId")`,
+	).run();
 
-  db.prepare(
-    /*sql*/ `
+	db.prepare(
+		/*sql*/ `
     create table "VideoMatchPlayer" (
       "videoMatchId" integer not null,
       "playerUserId" integer,
@@ -60,11 +60,11 @@ module.exports.up = function (db) {
       foreign key ("playerUserId") references "User"("id") on delete restrict
     ) strict
     `,
-  ).run();
-  db.prepare(
-    `create index video_match_player_video_match_id on "VideoMatchPlayer"("videoMatchId")`,
-  ).run();
-  db.prepare(
-    `create index video_match_player_player_user_id on "VideoMatchPlayer"("playerUserId")`,
-  ).run();
-};
+	).run();
+	db.prepare(
+		`create index video_match_player_video_match_id on "VideoMatchPlayer"("videoMatchId")`,
+	).run();
+	db.prepare(
+		`create index video_match_player_player_user_id on "VideoMatchPlayer"("playerUserId")`,
+	).run();
+}

@@ -1,0 +1,85 @@
+.toastRegion {
+	flex-direction: column;
+	gap: 8px;
+	display: flex;
+	position: fixed;
+	top: 10px;
+	right: 10px;
+	z-index: 10;
+}
+
+.toast {
+	background: var(--bg-lighter-solid);
+	border-radius: var(--rounded);
+	padding: var(--s-1-5) var(--s-3);
+	align-items: center;
+	justify-content: center;
+	font-size: var(--fonts-xsm);
+	font-weight: var(--semi-bold);
+	gap: var(--s-1);
+	border: 2px solid var(--border);
+	width: 250px;
+	outline: none;
+	/* biome-ignore lint/correctness/noUnknownProperty: it exists */
+	view-transition-class: toast;
+}
+
+::view-transition-new(.toast):only-child {
+	animation: appear 400ms;
+}
+
+::view-transition-old(.toast):only-child {
+	animation: disappear 400ms;
+}
+
+@keyframes disappear {
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes appear {
+	from {
+		opacity: 0;
+	}
+}
+
+.errorToast {
+	border-color: var(--theme-error);
+}
+
+.topRow {
+	display: flex;
+	text-transform: uppercase;
+	color: var(--text-lighter);
+	font-size: var(--fonts-xxsm);
+	gap: var(--s-2);
+	align-items: center;
+	margin-block-end: var(--s-1-5);
+}
+
+.closeButton {
+	margin-inline-start: auto;
+	outline-color: var(--text-lighter) !important;
+}
+
+.closeButton svg {
+	width: 1rem;
+	fill: var(--text-lighter);
+}
+
+.alertIcon {
+	width: 1.25rem;
+}
+
+.errorToast .alertIcon {
+	fill: var(--theme-error);
+}
+
+.infoToast .alertIcon {
+	fill: var(--theme-info);
+}
+
+.successToast .alertIcon {
+	fill: var(--theme-success);
+}

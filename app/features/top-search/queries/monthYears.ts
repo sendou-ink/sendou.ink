@@ -11,7 +11,7 @@ const smt = sql.prepare(/* sql */ `
 `);
 
 export function monthYears() {
-  const rows = smt.all() as MonthYear[];
+	const rows = smt.all() as MonthYear[];
 
-  return rows;
+	return rows;
 }

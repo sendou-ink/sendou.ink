@@ -1,11 +1,23 @@
 <center><img src="public/static-assets/img/app-icon.png" style="border-radius:100%" width="200" height="200"></center>
 <center><a href="https://sendou.ink" target="_blank" rel="noreferrer">sendou.ink</a></center>
-<center><img src="https://dcbadge.vercel.app/api/server/sendou" style="margin:0 auto;display:block;"></center>
 
-Competitive Splatoon Hub with over 20k registered users.
+Competitive Splatoon Platform
 
 ## Selected Features
 
+- Full tournament system
+   - Automatic bracket progression
+   - Single Elimination, Double Elimination, Round Robin, Swiss
+   - Splatoon specific maplists (picked by the organizer or teams)
+   - Counterpicking of different styles
+   - Automatic seeding tool
+   - Ranked tournaments allowing users to climb the leaderboard
+   - View streams of tournament (both participants and the cast)
+- Seasonal ladder system
+   - Join by yourself or with 1-3 of your mates, get a full group and challenge other teams
+   - View streams of ongoing matches
+   - Maplist generation based on given preferences
+   - Private notes
 - Map planner that lets you draw on maps and insert weapons
 - Map list generation tool
 - Win badges from tournaments, management tools for TOs
@@ -14,6 +26,7 @@ Competitive Splatoon Hub with over 20k registered users.
 - Plus Server for top players "looking for group purposes" voting and suggestion tools.
 - User pages
 - User search
+- "LFG", find make a post to find people to play with
 - Form teams (featuring uploading profile and banner pictures)
 - Object Damage Calculator (how much does each weapon deal vs. different objects)
 - Build Analyzer (exact stats of your builds)
@@ -29,7 +42,7 @@ Competitive Splatoon Hub with over 20k registered users.
 - Sqlite3
 - CSS (plain)
 - E2E tests via Playwright
-- Unit tests via uvu
+- Unit/integration tests via Vitest
 
 ## Screenshots
 
@@ -69,11 +82,11 @@ make lint   # run TypeScript and CSS linters
 If you prefer to run the steps manually:
 
 1. `nvm use` to switch to the correct Node version. If you don't have the correct Node.js version yet it will prompt you to install it via the `nvm install` command. If you have problems with nvm you can also install the latest LTS version of Node.js from [their website](https://nodejs.org/en/).
-2. `npm i` to install the dependencies.
-3. Make a copy of `.env.example` that's called `.env`. Filling additional values is not necessary unless you want to use real Discord authentication or develop the Lohi bot.
-4. `npm run migrate up` to set up the database tables.
-5. `npm run dev` to run the project in development mode.
-6. Navigate to `http://localhost:5800/admin`. There press the seed button to fill the DB with test data. You can also impersonate any user (Sendou#0043 = admin).
+1. `npm install` to install the dependencies.
+1. Make a copy of `.env.example` that's called `.env`. Filling additional values is not necessary unless you want to use real Discord authentication or develop the Lohi bot.
+1. `npm run migrate up` to set up the database tables.
+1. `npm run dev` to run the project in development mode.
+1. Navigate to `http://localhost:5173/admin`. There press the seed button to fill the DB with test data. You can also impersonate any user (Sendou#0043 = admin).
 
 ### Using the dev container
 
@@ -86,11 +99,17 @@ started run `npm run dev` inside the terminal.
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for more information.
 
+## Tests
+
+### `db-test.sqlite3`
+
+Empty DB with the latest migration run. When creating new migrations they should also be applied+committed to this file (add it in `.env` and then run the migration command as normal).
+
 ### Translations
 
 [Translation Progress](https://github.com/Sendouc/sendou.ink/issues/1104)
 
-sendou.ink can be translated into any language. All the translations can be found in the [locales folder](./public/locales). Here is how you can contribute:
+sendou.ink can be translated into any language. All the translations can be found in the [locales folder](./locales). Here is how you can contribute:
 
 1. Copy a `.json` file from `/en` folder.
 2. Translate lines one by one. For example `"country": "Country",` could become `"country": "Maa",`. Keep the "key" on the left side of : unchanged.
@@ -123,6 +142,12 @@ Any questions please ask Sendou!
 7. Send the file to Sendou (or open a pull request if you know how)
 8. Optional: also send an image as .png if you want to show a link preview. The preferred dimensions are 1200 × 630.
 
+## SQL Logging
+
+By default SQL is logged in truncated format. You can adjust this by changing the `SQL_LOG` env var. Possible values are "trunc", "full" and "none".
+
+Note it only logs queries made via Kysely.
+
 ## API
 
 If you want to use the API then please leave an issue explaining your use case. By default, I want to allow open use of the data on the site. It's just not recommended to use the same APIs the web pages use as they are not stable at all and can change at any time without warning.
@@ -135,7 +160,7 @@ sendou.ink/
 │   ├── components/ -- React components
 │   ├── db/ -- Database layer
 │   ├── hooks/ -- React hooks
-│   ├── modules/ -- "nodu_modules but part of the app" https://twitter.com/ryanflorence/status/1535103735952658432
+│   ├── modules/ -- "node_modules but part of the app"
 │   ├── routes/ -- Routes see: https://remix.run/docs/en/v1/guides/routing
 │   ├── styles/ -- All .css files of the project for styling
 │   ├── utils/ -- Random helper functions used in many places
@@ -164,32 +189,30 @@ Some common files:
 - feature-constants.ts
 - feature-schemas.server.ts
 
-Note: Currently the project is in progress to migrating this style so that's why not everything is using it yet.
-
 ## Commands
-
-### Converting gifs (badges) to thumbnail (.png)
-
-```bash
-sips -s format png ./sundae.gif --out .
-```
 
 ### Add new badge to the database
 
 ```bash
-npm run add-badge -- sundae "4v4 Sundaes"
+npx tsx scripts/add-badge.ts fire_green "Octofin Eliteboard"
 ```
 
 ### Rename display name of a badge
 
 ```bash
-npm run rename-badge -- 10 "New 4v4 Sundaes"
+npx tsx scripts/rename-badge.ts 10 "New 4v4 Sundaes"
 ```
 
 ### Add many badge owners
 
 ```bash
-npm run add-badge-winners -- 10 "750705955909664791,79237403620945920"
+npx tsx scripts/add-badge-winners.ts 10 "750705955909664791,79237403620945920"
+```
+
+### Converting gifs (badges) to thumbnail (.png)
+
+```bash
+sips -s format png ./sundae.gif --out .
 ```
 
 ### Convert many .png files to .avif
@@ -220,32 +243,32 @@ Note: This is only useful if you have access to a production running on Render.c
    - weapon = contents of `weapon` folder
    - langs = contents of `language` folder
    - Couple of others at the root: `GearInfoClothes.json`, `GearInfoHead.json`, `GearInfoShoes.json`, `spl__DamageRateInfoConfig.pp__CombinationDataTableData.json`, `SplPlayer.game__GameParameterTable.json`, `WeaponInfoMain.json`, `WeaponInfoSpecial.json` and `WeaponInfoSub.json`
-2. Update `AVAILABLE_SR_GEAR` with new SR gear
-3. Update all `CURRENT_SEASON` constants
-4. Update `CURRENT_PATCH` constants
-5. Update the stage list in `stage-ids.ts` and `create-misc-json.ts`. Add images from Lean's repository and avify them.
-6. `npm run create-misc-json`
-7. `npm run create-gear-json`
-8. `npm run create-analyzer-json`
+1. Update all `CURRENT_SEASON` constants
+1. Update `CURRENT_PATCH` constants
+1. Update `PATCHES` constant with the late patch + remove the oldest
+1. Update the stage list in `stage-ids.ts` and `create-misc-json.ts`. Add images from Lean's repository and avify them.
+1. `npx tsx scripts/create-misc-json.ts`
+1. `npx tsx scripts/create-gear-json.ts`
+1. `npx tsx scripts/create-analyzer-json.ts`
    8a. Double check that no hard-coded special damages changed
-9. `npm run create-object-dmg-json`
-10. Fill new weapon IDs by category to `weapon-ids.ts` (easy to take from the diff of English weapons.json)
-11. Get gear IDs for each slot from /output folder and update `gear-ids.ts`.
-12. Replace `object-dmg.json` with the `object-dmg.json` in /output folder
-13. Replace `weapon-params.json` with the `params.json` in /output folder
-14. Delete all images inside `main-weapons`, `main-weapons-outlined`, `main-weapons-outlined-2` and `gear` folders.
-15. Replace with images from Lean's repository.
-16. Run the `npm run replace-img-names` command
-17. Run the `npm run replace-weapon-names` command
-18. Run the .avif generating command in each image folder.
-19. Update manually any languages that use English `gear.json` and `weapons.json` files
+1. `npx tsx scripts/create-object-dmg-json.ts`
+1. Fill new weapon IDs by category to `weapon-ids.ts` (easy to take from the diff of English weapons.json)
+1. Get gear IDs for each slot from /output folder and update `gear-ids.ts`.
+1. Replace `object-dmg.json` with the `object-dmg.json` in /output folder
+1. Replace `weapon-params.ts` with the `params.json` in /output folder
+1. Delete all images inside `main-weapons`, `main-weapons-outlined`, `main-weapons-outlined-2` and `gear` folders.
+1. Replace with images from Lean's repository.
+1. Run the `npx tsx scripts/replace-img-names.ts` command
+1. Run the `npx tsx scripts/replace-weapon-names.ts` command
+1. Run the .avif generating command in each image folder.
+2. Update manually any languages that use English `gear.json` and `weapons.json` files
 
 ### Fix errors from the CI Pipeline
 
-If you change any files and the CI pipeline errors out on certain formatting/linting steps (e.g. the `Prettier` or `Stylelint` step), run this command in the repo's root directory:
+If you change any files and the CI pipeline errors out on certain formatting/linting steps (Biome) run this command in the repo's root directory:
 
 ```sh
-npm run cf
+npm run checks
 ```
 
 Before committing, if for some reason you see an abnormally high amount of files changed, simply run `git add --renormalize .` and it will fix the error.

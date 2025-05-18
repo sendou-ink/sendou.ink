@@ -1,6 +1,6 @@
 import { sql } from "~/db/sql";
-import type { ListedArt } from "../art-types";
 import { parseDBArray, parseDBJsonArray } from "~/utils/sql";
+import type { ListedArt } from "../art-types";
 
 const stm = sql.prepare(/* sql */ `
   with "q1" as (
@@ -9,8 +9,7 @@ const stm = sql.prepare(/* sql */ `
       "Art"."description",
       "Art"."createdAt",
       "User"."discordId",
-      "User"."discordName",
-      "User"."discordDiscriminator",
+      "User"."username",
       "User"."discordAvatar",
       "UserSubmittedImage"."url"
     from
@@ -28,8 +27,7 @@ const stm = sql.prepare(/* sql */ `
       "Art"."description",
       "Art"."createdAt",
       null, -- discordId
-      null, -- discordName
-      null, -- discordDiscriminator
+      null, -- username
       null, -- discordAvatar
       "UserSubmittedImage"."url"
     from
@@ -55,8 +53,7 @@ const stm = sql.prepare(/* sql */ `
     json_group_array(
       json_object(
         'discordId', "LinkedUser"."discordId",
-        'discordName', "LinkedUser"."discordName",
-        'discordDiscriminator', "LinkedUser"."discordDiscriminator",
+        'username', "LinkedUser"."username",
         'customUrl', "LinkedUser"."customUrl"
       )
     ) as "linkedUsers"
@@ -69,25 +66,25 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 export function artsByUserId(userId: number): ListedArt[] {
-  return stm.all({ userId }).map((a: any) => {
-    const tags = parseDBArray(a.tags) as any[];
-    const linkedUsers = parseDBJsonArray(a.linkedUsers) as any[];
+	return stm.all({ userId }).map((a: any) => {
+		const tags = parseDBArray(a.tags) as any[];
+		const linkedUsers = parseDBJsonArray(a.linkedUsers) as any[];
 
-    return {
-      id: a.id,
-      url: a.url,
-      description: a.description,
-      tags: tags.length > 0 ? tags : undefined,
-      linkedUsers: linkedUsers.length > 0 ? linkedUsers : undefined,
-      author: a.discordId
-        ? {
-            commissionsOpen: a.commissionsOpen,
-            discordAvatar: a.discordAvatar,
-            discordDiscriminator: a.discordDiscriminator,
-            discordId: a.discordId,
-            discordName: a.discordName,
-          }
-        : undefined,
-    };
-  });
+		return {
+			id: a.id,
+			url: a.url,
+			description: a.description,
+			createdAt: a.createdAt,
+			tags: tags.length > 0 ? tags : undefined,
+			linkedUsers: linkedUsers.length > 0 ? linkedUsers : undefined,
+			author: a.discordId
+				? {
+						commissionsOpen: a.commissionsOpen,
+						discordAvatar: a.discordAvatar,
+						discordId: a.discordId,
+						username: a.username,
+					}
+				: undefined,
+		};
+	});
 }

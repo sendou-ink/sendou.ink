@@ -1,0 +1,133 @@
+.wideLayout {
+	display: grid;
+	grid-template-columns: 1fr;
+	align-items: flex-start;
+	column-gap: var(--s-6);
+	row-gap: var(--s-2);
+}
+
+.wideLayout .leftRow {
+	display: flex;
+	gap: var(--s-2);
+	flex-direction: column;
+}
+
+@media screen and (min-width: 640px) {
+	.wideLayout {
+		grid-template-columns: 1fr 2fr;
+		row-gap: 0;
+	}
+
+	.wideLayout .leftRow {
+		position: sticky;
+		top: 55px;
+	}
+}
+
+.userName {
+	max-width: 125px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	color: var(--text);
+}
+
+.teamMemberName {
+	max-width: 75px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	color: var(--text);
+}
+
+.textContainer {
+	position: relative;
+	max-height: 150px;
+	overflow: hidden;
+}
+
+.textContainerExpanded {
+	position: relative;
+	margin-bottom: var(--s-6);
+}
+
+.text {
+	word-wrap: break-word;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.textCut {
+	background-image: linear-gradient(to bottom, transparent, var(--bg));
+	width: 100%;
+	position: absolute;
+	top: 0;
+	height: 100%;
+}
+
+.showAllButton {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	width: max-content;
+	margin-left: auto;
+	margin-right: auto;
+	z-index: 99;
+}
+
+.showAllButtonExpanded {
+	bottom: -35px;
+}
+
+.pill {
+	font-size: var(--fonts-xxs);
+	font-weight: var(--semi-bold);
+	border-radius: var(--rounded);
+	background-color: var(--bg-lightest);
+	padding: var(--s-0-5) var(--s-2);
+	display: flex;
+	align-items: center;
+	gap: var(--s-0-5);
+	position: relative;
+}
+
+.pillPlaceholder {
+	visibility: hidden;
+	width: 37px;
+}
+
+.editButton {
+	font-size: var(--fonts-xxs);
+	font-weight: var(--semi-bold);
+	border-radius: var(--rounded);
+	background-color: var(--bg-lightest);
+	padding: var(--s-0-5) var(--s-2);
+	color: var(--text);
+	display: flex;
+	gap: var(--s-1);
+}
+
+.editButton > svg {
+	width: 12px;
+}
+
+.tier {
+	position: absolute;
+	top: -3px;
+	right: 4px;
+}
+
+.tierPill {
+	width: 60px;
+}
+
+.tierPillStart {
+	border-radius: 0 var(--rounded) var(--rounded) 0;
+}
+
+.tierPillEnd {
+	border-radius: var(--rounded) 0 0 var(--rounded);
+}

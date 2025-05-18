@@ -1,0 +1,46 @@
+{
+	"addBuild": "添加配装",
+	"noBuilds": "您还没有添加配装，现在开始吧！",
+	"reachBuildMaxCount": "您的配装数量已到达上限",
+	"buildCard.info": "详情",
+	"buildCard.edit": "编辑",
+
+	"forms.title": "标题",
+	"forms.modes": "模式",
+	"forms.weapons": "武器",
+	"forms.gear.HEAD": "头部装备",
+	"forms.gear.CLOTHES": "服装",
+	"forms.gear.SHOES": "鞋子",
+	"forms.private.info": "私人配装仅对您可见",
+	"forms.noGear.info": "您必须填满所有能力槽。",
+
+	"deleteConfirm": "删除配装'{{title}}'？",
+
+	"stats.count.title": "{{count}} 件 {{weapon}} 配装的数据",
+	"stats.ap.title": "平均技能点数",
+	"stats.percentage.title": "主技能出现率",
+	"stats.all": "全部",
+	"stats.public": "公开",
+	"stats.private": "私人",
+
+	"addFilter": "增加筛选项目",
+	"linkButton.abilityStats": "技能数据",
+	"linkButton.popularBuilds": "热门配装",
+	"noPopularBuilds": "目前尚无该武器的热门配装。",
+
+	"emptyAbilitySlot": "空能力槽",
+
+	"filters.type.ability": "能力",
+	"filters.type.mode": "模式",
+	"filters.type.date": "日期",
+	"filters.ability.title": "能力筛选器",
+	"filters.mode.title": "模式筛选器",
+	"filters.date.title": "日期筛选器",
+	"filters.has": "包含",
+	"filters.does.not.have": "不包含",
+	"filters.atLeast": "至少",
+	"filters.atMost": "最多",
+	"filters.date.since": "自",
+	"filters.date.custom": "自定义",
+	"filters.filterByWeapon": "按武器筛选"
+}

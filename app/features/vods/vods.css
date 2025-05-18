@@ -1,84 +1,84 @@
 .vods__matches {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  flex-wrap: wrap;
-  column-gap: var(--s-4);
-  row-gap: var(--s-8);
-  justify-content: space-between;
-  margin-block-start: var(--s-2);
-  place-items: center;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	flex-wrap: wrap;
+	column-gap: var(--s-4);
+	row-gap: var(--s-8);
+	justify-content: space-between;
+	margin-block-start: var(--s-2);
+	place-items: center;
 }
 
 .vods__match {
-  position: relative;
-  display: flex;
-  align-items: center;
-  text-align: center;
-  flex-direction: column;
-  font-size: var(--fonts-xs);
-  line-height: 1.3;
-  font-weight: var(--semi-bold);
-  flex-grow: 1;
-  width: max-content;
-  gap: var(--s-1);
+	position: relative;
+	display: flex;
+	align-items: center;
+	text-align: center;
+	flex-direction: column;
+	font-size: var(--fonts-xs);
+	line-height: 1.3;
+	font-weight: var(--semi-bold);
+	flex-grow: 1;
+	width: max-content;
+	gap: var(--s-1);
 }
 
 .vods__match__weapon {
-  position: absolute;
-  top: -15px;
-  left: -20px;
+	position: absolute;
+	top: -15px;
+	left: -20px;
 }
 
 .vods__match__weapons {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  margin-block-end: var(--s-2);
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	margin-block-end: var(--s-2);
 }
 
 .vods__match__mode {
-  position: absolute;
-  top: -15px;
-  right: -15px;
+	position: absolute;
+	top: -15px;
+	right: -15px;
 }
 
 .vods__match__mode.cast {
-  right: -8px;
+	right: -8px;
 }
 
 .vods__listing__list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-6);
-  justify-content: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-6);
+	justify-content: center;
 }
 
 .vods__listing {
-  max-width: 355px;
+	max-width: 355px;
 }
 
 .vods__listing__info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 }
 
 .vods__listing__cast-text {
-  font-size: var(--fonts-sm);
-  font-weight: var(--semi-bold);
-  color: var(--text-lighter);
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
+	color: var(--text-lighter);
 }
 
 .vods__listing__weapons-not-shown {
-  background-color: var(--bg-lighter);
-  border-radius: 100%;
-  display: grid;
-  place-items: center;
-  font-weight: var(--semi-bold);
-  width: 38px;
-  height: 38px;
-  font-size: var(--fonts-sm);
+	background-color: var(--bg-lighter);
+	border-radius: 100%;
+	display: grid;
+	place-items: center;
+	font-weight: var(--semi-bold);
+	width: 38px;
+	height: 38px;
+	font-size: var(--fonts-sm);
 }
 
 .vods__type-select {
-  width: 220px;
+	width: 220px;
 }

@@ -9,6 +9,7 @@ translation-progress.md
 notes.md
 
 db*.sqlite3*
+!db-test.sqlite3
 dump
 
 .DS_Store
@@ -21,3 +22,7 @@ dump
 /test-results/
 /playwright-report/
 /playwright/.cache/
+
+.vscode
+
+notepad.txt

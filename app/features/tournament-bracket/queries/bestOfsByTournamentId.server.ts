@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { TournamentMatch, TournamentRound } from "~/db/types";
+import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/* sql */ `
   select 
@@ -13,10 +13,10 @@ const stm = sql.prepare(/* sql */ `
 `);
 
 interface BestOfByTournamentId {
-  roundId: TournamentRound["id"];
-  bestOf: TournamentMatch["bestOf"];
+	roundId: Tables["TournamentRound"]["id"];
+	bestOf: Tables["TournamentMatch"]["bestOf"];
 }
 
 export function bestOfsByTournamentId(tournamentId: number) {
-  return stm.all({ tournamentId }) as BestOfByTournamentId[];
+	return stm.all({ tournamentId }) as BestOfByTournamentId[];
 }

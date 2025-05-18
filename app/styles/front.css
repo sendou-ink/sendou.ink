@@ -1,118 +1,360 @@
-.front__nav-items-container {
-  display: flex;
-  margin: 0 auto;
-  column-gap: var(--s-4);
-  font-size: 13px;
-  flex-wrap: wrap;
-  row-gap: var(--s-4);
-  justify-content: center;
+.front-page__side-nav {
+	display: none;
+	position: fixed;
+	left: 15px;
+	top: 60px;
+	flex-direction: column;
+	gap: var(--s-3);
+	overflow-y: auto;
+	height: 100vh;
+	padding-block-end: var(--s-24);
+	padding-inline-end: var(--s-4);
 }
 
-.front__nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: var(--text);
-  font-weight: bold;
-  gap: var(--s-1);
-  text-align: center;
-  width: 100px;
+.front-page__side-nav picture {
+	background-color: var(--bg-lightest);
+	border-radius: var(--rounded);
+	padding: 0.225rem;
 }
 
-.front__log-in-button {
-  display: grid;
-  width: 50px;
-  height: 50px;
-  border: none;
-  border-radius: 100%;
-  background-color: var(--bg-lighter);
-  color: var(--text);
-  place-items: center;
-  transition: all 0.2s ease-out;
+.front-page__side-nav-item {
+	display: flex;
+	color: var(--text);
+	font-size: var(--fonts-xs);
+	font-weight: var(--bold);
+	gap: var(--s-1-5);
+	align-items: center;
 }
 
-.front__nav-image-container {
-  display: grid;
-  width: 75px;
-  height: 75px;
-  border-radius: var(--rounded);
-  background-color: var(--bg-lighter);
-  color: var(--text);
-  place-items: center;
-  transition: all 0.2s ease-out;
+.front-page__side-nav__log-out {
+	display: flex;
+	color: var(--text);
+	font-size: var(--fonts-xs);
+	font-weight: var(--bold);
+	gap: var(--s-1-5);
+	align-items: center;
+	color: var(--text-lighter) !important;
 }
 
-.front__nav-image-container.round {
-  width: 50px;
-  height: 50px;
-  border-radius: 100%;
+.front-page__side-nav__log-out svg {
+	background-color: var(--bg-lightest);
+	border-radius: var(--rounded);
+	padding: var(--s-1);
+	min-width: 28px;
+	margin-inline-end: 0 !important;
+	padding: var(--s-1-5);
 }
 
-.front__avatar {
-  width: 50px;
-  height: 50px;
+.front-page__side-nav__log-out path {
+	margin-inline-end: -1px;
 }
 
-.front__nav-image-container:hover {
-  background-color: var(--theme-transparent);
+.front-page__side-nav-item:hover picture {
+	background-color: var(--theme-transparent);
 }
 
-.front__log-out-container {
-  display: flex;
-  justify-content: center;
+/** Reference to .layout__hamburger-fab **/
+@media screen and (min-width: 1130px) {
+	.front-page__side-nav {
+		display: flex;
+	}
 }
 
-.front__drawings {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  margin-block-start: var(--s-8);
+.front-page__container {
+	--card-width: 225px;
+	--card-height: 90px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-8);
 }
 
-.front__drawing-img {
-  max-height: 175px;
+.front__change-log__img {
+	max-height: 300px;
+	border-radius: var(--rounded-sm);
 }
 
-@media screen and (min-width: 400px) {
-  .front__drawing-img {
-    max-height: 200px;
-  }
+.front__change-log__icon-button {
+	display: flex;
+	flex-direction: row;
+	gap: var(--s-1-5);
+	justify-content: center;
+	align-items: center;
+	font-weight: var(--bold);
+	font-size: var(--fonts-xs);
+	border-radius: 100%;
+	color: var(--text-lighter);
 }
 
-@media screen and (min-width: 600px) {
-  .front__drawing-img {
-    max-height: 300px;
-  }
+.front__change-log__icon-button:hover {
+	color: var(--theme);
 }
 
-@media screen and (min-width: 800px) {
-  .front__drawing-img {
-    max-height: 400px;
-  }
+.front__external-link-icon {
+	width: 18px;
+	stroke-width: 2px;
 }
 
-.front__drawings__boy {
-  z-index: 10;
-  grid-column: 1 / 2;
-  grid-row: 1;
+@property --l {
+	syntax: "<percentage>";
+	inherits: false;
+	initial-value: 50%;
 }
 
-.front__drawings__girl {
-  z-index: 10;
-  grid-column: 2 / 3;
-  grid-row: 1;
-  justify-self: flex-end;
+.front__season-banner {
+	/*  needed for firefox to have a valid output */
+	--l: 50%;
+
+	background: linear-gradient(
+		to right,
+		var(--bg-lightest),
+		var(--l),
+		var(--bg-darker)
+	);
+	border-radius: var(--rounded);
+	padding: var(--s-2) var(--s-3);
+	line-height: 1.35;
+	position: relative;
+	color: var(--text);
+	border: 2.5px solid var(--bg-lightest-solid);
+	transition: --l 0.2s ease-out;
 }
 
-.front__drawings__girl.bg {
-  z-index: 1;
+.front__season-banner:hover {
+	--l: 75%;
 }
 
-.front__drawings__boy.bg {
-  z-index: 1;
+.front__season-banner__header {
+	font-size: var(--fonts-xl);
+	font-weight: var(--bold);
 }
 
-@media screen and (min-width: 640px) {
-  .front__nav-item.round {
-    display: none;
-  }
+.front__season-banner__dates {
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+}
+
+.front__season-banner__img {
+	position: absolute;
+	width: 125px;
+	right: 2px;
+	top: -31px;
+}
+
+.front__season-banner__link {
+	background-color: var(--bg-lightest);
+	border-radius: var(--rounded);
+	width: max-content;
+	padding: var(--s-0-5) var(--s-1-5);
+	font-size: var(--fonts-xs);
+	color: var(--text);
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+}
+
+.front__season-banner__link svg {
+	width: 24px;
+	transition: all 0.2s ease-out;
+}
+
+.front__season-banner__link:hover svg {
+	translate: 2px;
+}
+
+.front__tournament-cards {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--s-2);
+}
+
+.front__tournament-cards__spacer {
+	display: flex;
+	gap: var(--s-2);
+	height: 100%;
+}
+
+.front__tournament-cards__view-all-card {
+	background-color: var(--bg-lighter);
+	height: var(--card-height);
+	border-radius: var(--rounded);
+	display: grid;
+	place-items: center;
+	padding: var(--s-2);
+	font-size: var(--fonts-xxs);
+	font-weight: var(--bold);
+	text-align: center;
+	color: var(--text);
+	transition: 0.2s ease-out;
+	min-width: 90px;
+	max-width: 90px;
+	border: 2.5px solid var(--bg-lightest-solid);
+}
+
+.front__tournament-cards__view-all-card:hover {
+	background-color: var(--bg-lightest);
+}
+
+.front__tournament-card__container {
+	min-width: var(--card-width);
+	max-width: var(--card-width);
+	height: calc(var(--card-height) + 22px);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.front__tournament-card__container__tall {
+	height: 100%;
+}
+
+.front__tournament-card {
+	background-color: var(--bg-lightest);
+	border-radius: var(--rounded);
+	color: var(--text);
+	padding: var(--s-1) var(--s-2) var(--s-2) var(--s-2);
+	height: 100%;
+	min-width: var(--card-width);
+	max-width: var(--card-width);
+}
+
+.front__tournament-card:hover .front__tournament-card__tournament-avatar-img {
+	outline: 6px solid var(--theme-transparent);
+}
+
+.front__tournament-card__img-container {
+	background-color: var(--bg);
+	padding: var(--s-1-5);
+	border-radius: 100%;
+	margin-left: -10px;
+	margin-top: -10px;
+}
+
+.front__tournament-card__tournament-avatar-img {
+	border-radius: 100%;
+}
+
+.front__tournament-card__org {
+	display: flex;
+	gap: var(--s-1);
+	font-size: var(--fonts-xxs);
+	color: var(--text-lighter);
+}
+
+.front__tournament-card__time {
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	color: var(--text-lighter);
+	display: block;
+}
+
+.front__tournament-card__name {
+	text-align: center;
+	font-weight: var(--semi-bold);
+	font-size: var(--fonts-sm);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	max-width: 225px;
+	overflow: hidden;
+}
+
+.front__tournament-card__team-count {
+	font-size: var(--fonts-xxs);
+	font-weight: var(--bold);
+	background-color: var(--bg-lightest);
+	border-radius: var(--rounded-sm);
+	width: max-content;
+	padding: var(--s-0-5) var(--s-1-5);
+	display: flex;
+	gap: var(--s-1);
+}
+
+.front__tournament-card__team-count svg {
+	width: 12px;
+}
+
+.front__tournament-card__tag {
+	font-size: var(--fonts-xxs);
+	font-weight: var(--bold);
+	border-radius: var(--rounded-sm);
+	padding: var(--s-0-5) var(--s-1-5);
+}
+
+.front__tournament-card__ranked {
+	background-color: var(--theme-info-transparent);
+	color: var(--theme-info);
+}
+
+.front__tournament-card__unranked {
+	background-color: var(--theme-success-transparent);
+	color: var(--theme-success);
+}
+
+.front__tournament-card__first-placers {
+	margin-inline: auto;
+	margin-top: var(--s-5);
+	width: max-content;
+}
+
+.front__tournament-card__first-placers__team-name {
+	max-width: 150px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.front__result-highlights {
+	display: flex;
+	gap: var(--s-2);
+}
+
+.front__result-highlights__title {
+	font-size: var(--fonts-xs);
+}
+
+.front__result-highlights__title__tournaments {
+	align-self: flex-start;
+	margin-inline-start: 65px;
+}
+
+.front__leaderboard {
+	min-width: var(--card-width);
+	max-width: var(--card-width);
+	background-color: var(--bg-lightest);
+	border-radius: var(--rounded);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	padding: var(--s-2);
+}
+
+.front__leaderboard__name {
+	font-size: var(--fonts-sm);
+	font-weight: var(--bold);
+	white-space: nowrap;
+	max-width: 140px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.front__leaderboard__view-all {
+	font-size: var(--fonts-xxs);
+	color: var(--text);
+	background-color: var(--bg-lightest);
+	border-radius: var(--rounded);
+	width: max-content;
+	padding-inline: var(--s-2);
+	display: flex;
+	gap: var(--s-1);
+	padding: var(--s-0-5) var(--s-1-5);
+}
+
+.front__luti-banner {
+	background-color: #4874a0;
+	color: #fff;
+	border-radius: var(--rounded);
+	padding: var(--s-2);
+	justify-content: center;
+	display: flex;
+	gap: var(--s-2);
+	flex-wrap: wrap;
 }

@@ -1,14 +1,13 @@
 import { sql } from "~/db/sql";
+import type { Tables } from "~/db/tables";
 import type { ListedArt } from "../art-types";
-import type { ArtTag } from "~/db/types";
 
 const showcaseArtsStm = sql.prepare(/* sql */ `
   select
     "Art"."id",
     "User"."id" as "userId",
     "User"."discordId",
-    "User"."discordName",
-    "User"."discordDiscriminator",
+    "User"."username",
     "User"."discordAvatar",
     "User"."commissionsOpen",
     "UserSubmittedImage"."url"
@@ -22,17 +21,17 @@ const showcaseArtsStm = sql.prepare(/* sql */ `
 `);
 
 export function showcaseArts(): ListedArt[] {
-  return showcaseArtsStm.all().map((a: any) => ({
-    id: a.id,
-    url: a.url,
-    author: {
-      commissionsOpen: a.commissionsOpen,
-      discordAvatar: a.discordAvatar,
-      discordDiscriminator: a.discordDiscriminator,
-      discordId: a.discordId,
-      discordName: a.discordName,
-    },
-  }));
+	return showcaseArtsStm.all().map((a: any) => ({
+		id: a.id,
+		createdAt: a.createdAt,
+		url: a.url,
+		author: {
+			commissionsOpen: a.commissionsOpen,
+			discordAvatar: a.discordAvatar,
+			discordId: a.discordId,
+			username: a.username,
+		},
+	}));
 }
 
 const showcaseArtsByTagStm = sql.prepare(/* sql */ `
@@ -40,8 +39,7 @@ const showcaseArtsByTagStm = sql.prepare(/* sql */ `
     "Art"."id",
     "User"."id" as "userId",
     "User"."discordId",
-    "User"."discordName",
-    "User"."discordDiscriminator",
+    "User"."username",
     "User"."discordAvatar",
     "User"."commissionsOpen",
     "UserSubmittedImage"."url"
@@ -57,28 +55,28 @@ const showcaseArtsByTagStm = sql.prepare(/* sql */ `
 
 `);
 
-export function showcaseArtsByTag(tagId: ArtTag["id"]): ListedArt[] {
-  const encounteredUserIds = new Set<number>();
+export function showcaseArtsByTag(tagId: Tables["ArtTag"]["id"]): ListedArt[] {
+	const encounteredUserIds = new Set<number>();
 
-  return showcaseArtsByTagStm
-    .all({ tagId })
-    .filter((row: any) => {
-      if (encounteredUserIds.has(row.userId)) {
-        return false;
-      }
+	return showcaseArtsByTagStm
+		.all({ tagId })
+		.filter((row: any) => {
+			if (encounteredUserIds.has(row.userId)) {
+				return false;
+			}
 
-      encounteredUserIds.add(row.userId);
-      return true;
-    })
-    .map((a: any) => ({
-      id: a.id,
-      url: a.url,
-      author: {
-        commissionsOpen: a.commissionsOpen,
-        discordAvatar: a.discordAvatar,
-        discordDiscriminator: a.discordDiscriminator,
-        discordId: a.discordId,
-        discordName: a.discordName,
-      },
-    }));
+			encounteredUserIds.add(row.userId);
+			return true;
+		})
+		.map((a: any) => ({
+			id: a.id,
+			createdAt: a.createdAt,
+			url: a.url,
+			author: {
+				commissionsOpen: a.commissionsOpen,
+				discordAvatar: a.discordAvatar,
+				discordId: a.discordId,
+				username: a.username,
+			},
+		}));
 }

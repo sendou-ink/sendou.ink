@@ -1,7 +1,15 @@
 import { sql } from "~/db/sql";
-import type { Video } from "~/db/types";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import type { Tables } from "~/db/tables";
+import {
+	dateToDatabaseTimestamp,
+	dayMonthYearToDatabaseTimestamp,
+} from "~/utils/dates";
+import invariant from "~/utils/invariant";
 import type { VideoBeingAdded } from "../vods-types";
+import {
+	extractYoutubeIdFromVideoUrl,
+	hoursMinutesSecondsStringToSeconds,
+} from "../vods-utils";
 
 const createVideoStm = sql.prepare(/* sql */ `
   insert into "UnvalidatedVideo"
@@ -32,60 +40,63 @@ const createVideoMatchPlayerStm = sql.prepare(/* sql */ `
 `);
 
 export const createVod = sql.transaction(
-  (
-    args: VideoBeingAdded & {
-      submitterUserId: number;
-      isValidated: boolean;
-      id?: number;
-    },
-  ) => {
-    const video = createVideoStm.get({
-      id: args.id,
-      title: args.title,
-      type: args.type,
-      youtubeDate: args.youtubeDate,
-      eventId: args.eventId,
-      youtubeId: args.youtubeId,
-      submitterUserId: args.submitterUserId,
-      validatedAt: args.isValidated
-        ? dateToDatabaseTimestamp(new Date())
-        : null,
-    }) as Video;
+	(
+		args: VideoBeingAdded & {
+			submitterUserId: number;
+			isValidated: boolean;
+			id?: number;
+		},
+	) => {
+		const youtubeId = extractYoutubeIdFromVideoUrl(args.youtubeUrl);
+		invariant(youtubeId, "Invalid YouTube URL");
 
-    for (const match of args.matches) {
-      const videoMatch = createVideoMatchStm.get({
-        videoId: video.id,
-        startsAt: match.startsAt,
-        stageId: match.stageId,
-        mode: match.mode,
-      }) as any;
+		const video = createVideoStm.get({
+			id: args.id ?? null,
+			title: args.title,
+			type: args.type,
+			youtubeDate: dayMonthYearToDatabaseTimestamp(args.date),
+			eventId: args.eventId ?? null,
+			youtubeId,
+			submitterUserId: args.submitterUserId,
+			validatedAt: args.isValidated
+				? dateToDatabaseTimestamp(new Date())
+				: null,
+		}) as Tables["Video"];
 
-      for (const [i, weaponSplId] of match.weapons.entries()) {
-        createVideoMatchPlayerStm.run({
-          videoMatchId: videoMatch.id,
-          playerUserId: args.povUserId,
-          playerName: args.povUserName,
-          weaponSplId,
-          player: i + 1,
-        });
-      }
-    }
+		for (const match of args.matches) {
+			const videoMatch = createVideoMatchStm.get({
+				videoId: video.id,
+				startsAt: hoursMinutesSecondsStringToSeconds(match.startsAt),
+				stageId: match.stageId,
+				mode: match.mode,
+			}) as any;
 
-    return video;
-  },
+			for (const [i, weaponSplId] of match.weapons.entries()) {
+				createVideoMatchPlayerStm.run({
+					videoMatchId: videoMatch.id,
+					playerUserId: args.pov?.type === "USER" ? args.pov.userId : null,
+					playerName: args.pov?.type === "NAME" ? args.pov.name : null,
+					weaponSplId,
+					player: i + 1,
+				});
+			}
+		}
+
+		return video;
+	},
 );
 
 export const updateVodByReplacing = sql.transaction(
-  (
-    args: VideoBeingAdded & {
-      submitterUserId: number;
-      isValidated: boolean;
-      id: number;
-    },
-  ) => {
-    deleteVideoStm.run({ id: args.id });
-    const video = createVod(args);
+	(
+		args: VideoBeingAdded & {
+			submitterUserId: number;
+			isValidated: boolean;
+			id: number;
+		},
+	) => {
+		deleteVideoStm.run({ id: args.id });
+		const video = createVod(args);
 
-    return video;
-  },
+		return video;
+	},
 );
