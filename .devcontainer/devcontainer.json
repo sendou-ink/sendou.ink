@@ -9,5 +9,5 @@
 		}
 	},
 	"forwardPorts": [5173],
-	"postCreateCommand": "npx playwright install --with-deps"
+	"postCreateCommand": "sudo chown -R vscode:vscode /workspaces/sendou.ink && npx playwright install --with-deps && npm install"
 }
