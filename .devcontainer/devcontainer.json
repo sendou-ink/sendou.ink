@@ -8,5 +8,5 @@
       "version": "lts/jod"
     }
   },
-  "forwardPorts": [5800]
+  "forwardPorts": [5173]
 }
