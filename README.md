@@ -54,7 +54,33 @@ Competitive Splatoon Platform
 
 ## Running locally
 
-### sendou.ink
+### Using the dev container (Recommended)
+
+The project includes a development container configuration that provides a consistent development environment. This is the recommended way to run the project locally.
+
+Prerequisites:
+- [Docker](https://www.docker.com/products/docker-desktop)
+- [VS Code](https://code.visualstudio.com/) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+
+Steps:
+1. Open the project in VS Code
+2. When prompted, click "Reopen in Container" or use the command palette (F1) and select "Dev Containers: Reopen in Container"
+3. Wait for the container to build and start
+4. Once inside the container, run:
+   ```bash
+   make setup
+   make dev
+   ```
+5. Navigate to `http://localhost:5173/admin`. There press the seed button to fill the DB with test data.
+
+The dev container includes:
+- Node.js LTS
+- SQLite3
+- All necessary development tools
+
+### Manual setup
+
+If you prefer to run the project without the dev container:
 
 Prerequisites: [nvm](https://github.com/nvm-sh/nvm)
 If you don't have it installed run:
@@ -69,8 +95,6 @@ You can spin up the project quickly with the `Makefile`:
 make setup
 make dev
 ```
-
-`make setup` will install Node.js 18 with nvm if needed.
 
 Other helpful targets include:
 
@@ -87,13 +111,6 @@ If you prefer to run the steps manually:
 1. `npm run migrate up` to set up the database tables.
 1. `npm run dev` to run the project in development mode.
 1. Navigate to `http://localhost:5173/admin`. There press the seed button to fill the DB with test data. You can also impersonate any user (Sendou#0043 = admin).
-
-### Using the dev container
-
-If you use VS Code you can skip the manual setup by opening the repository in a
-Dev Container (requires the Dev Containers extension). The container already has
-Node 18, SQLite tools and Playwright browsers installed. After the container has
-started run `npm run dev` inside the terminal.
 
 ## Contributing
 
