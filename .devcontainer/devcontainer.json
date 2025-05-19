@@ -1,12 +1,12 @@
 {
-  "name": "sendou.ink",
-  "build": {
-    "dockerfile": "Dockerfile"
-  },
-  "features": {
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "lts/jod"
-    }
-  },
-  "forwardPorts": [5173]
+	"name": "sendou.ink",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+	"features": {
+		"ghcr.io/devcontainers/features/node:1": {
+			"version": "lts/jod"
+		}
+	},
+	"forwardPorts": [5173]
 }
