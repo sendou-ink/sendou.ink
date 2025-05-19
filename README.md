@@ -90,6 +90,20 @@ You should then be able to access the application by visiting http://localhost:5
 
 Use the admin panel at http://localhost:5173/admin to log in (impersonate) as the admin user "Sendou" or as a regular user "N-ZAP" as well as re-seed the database if needed.
 
+### Development Container (Recommended)
+
+This project includes a development container configuration that provides a consistent development environment. Using the development container is recommended, especially for new contributors, as it ensures everyone has the same development setup and eliminates common environment-related issues.
+
+To use it:
+
+1. Install [Docker](https://www.docker.com/products/docker-desktop)
+2. Install [VS Code](https://code.visualstudio.com/)
+3. Install the [Remote - Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension
+4. Open the project in VS Code
+5. When prompted, click "Reopen in Container" or use the command palette (F1) and select "Remote-Containers: Reopen in Container"
+
+The container will automatically set up all required dependencies and configurations, including Node.js, SQLite, and Playwright for testing.
+
 ## Contributing
 
 - **Developers**: Read [CONTRIBUTING.md](./CONTRIBUTING.md)
