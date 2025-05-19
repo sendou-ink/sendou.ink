@@ -46,7 +46,7 @@ export function CustomizedColorsInput({
 			for (const color in colors) {
 				const value =
 					colors[color as (typeof CUSTOM_CSS_VAR_COLORS)[number]] ?? "";
-				document.body.style.setProperty(`--${color}`, value);
+				document.documentElement.style.setProperty(`--preview-${color}`, value);
 			}
 
 			setContrast(handleContrast(defaultColors, colors));
@@ -58,20 +58,17 @@ export function CustomizedColorsInput({
 	React.useEffect(() => {
 		const colors = CUSTOM_CSS_VAR_COLORS.map((color) => {
 			return {
-				[color]: getComputedStyle(document.body).getPropertyValue(`--${color}`),
+				[color]: getComputedStyle(document.documentElement).getPropertyValue(
+					`--${color}`,
+				),
 			};
 		});
 		setDefaultColors(colors);
 
 		return () => {
-			document.body.removeAttribute("style");
-			for (const color in initialColors) {
-				const value =
-					initialColors[color as (typeof CUSTOM_CSS_VAR_COLORS)[number]] ?? "";
-				document.body.style.setProperty(`--${color}`, value);
-			}
+			document.documentElement.removeAttribute("style");
 		};
-	}, [initialColors]);
+	}, []);
 
 	return (
 		<div className="w-full">
@@ -110,7 +107,12 @@ export function CustomizedColorsInput({
 										if (cssVar === "bg-lighter") {
 											newColors["bg-lightest"] = undefined;
 										}
-										setColors({ ...newColors, [cssVar]: undefined });
+										setColors({
+											...newColors,
+											[cssVar]: defaultColors.find((color) => color[cssVar])?.[
+												cssVar
+											],
+										});
 									}}
 								>
 									{t("actions.reset")}
@@ -195,6 +197,7 @@ function handleContrast(
 		["bg-darker", "theme"],
 		["bg-lighter", "text-lighter"],
 		["bg-lighter", "theme"],
+		["bg-lighter", "theme-secondary"],
 	];
 
 	const results: ContrastArray = [];
