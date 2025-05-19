@@ -5,9 +5,9 @@
   },
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
-      "version": "18"
-    },
-    "ghcr.io/devcontainers/features/sqlite:1": {}
+      "version": "lts/jod"
+    }
   },
-  "forwardPorts": [5800]
+  "forwardPorts": [5800],
+  "postCreateCommand": "sudo chown -R vscode:vscode /workspaces/sendou.ink"
 }
