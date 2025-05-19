@@ -22,7 +22,10 @@
 		"typecheck": "tsc --noEmit",
 		"test:unit": "cross-env VITE_SITE_DOMAIN=http://localhost:5173 vitest --silent=passed-only run",
 		"test:e2e": "npx playwright test",
-		"checks": "npm run biome:fix && npm run test:unit && npm run check-translation-jsons && npm run typecheck"
+		"checks": "npm run biome:fix && npm run test:unit && npm run check-translation-jsons && npm run typecheck",
+		"setup": "npm install && npm install -g playwright && playwright install --with-deps && cp .env.example .env && npm run migrate up",
+		"test": "npm run test:unit && npm run test:e2e",
+		"lint": "npm run biome:check && npm run typecheck"
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.797.0",

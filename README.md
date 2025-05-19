@@ -68,8 +68,8 @@ Steps:
 3. Wait for the container to build and start
 4. Once inside the container, run:
    ```bash
-   make setup
-   make dev
+   npm run setup
+   npm run dev
    ```
 5. Navigate to `http://localhost:5173/admin`. There press the seed button to fill the DB with test data.
 
@@ -89,18 +89,18 @@ If you don't have it installed run:
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 ```
 
-You can spin up the project quickly with the `Makefile`:
+You can spin up the project quickly with npm:
 
 ```bash
-make setup
-make dev
+npm run setup
+npm run dev
 ```
 
-Other helpful targets include:
+Other helpful commands include:
 
 ```bash
-make test   # run unit and e2e tests
-make lint   # run TypeScript and CSS linters
+npm run test   # run unit and e2e tests
+npm run lint   # run TypeScript and CSS linters
 ```
 
 If you prefer to run the steps manually:
