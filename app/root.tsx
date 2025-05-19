@@ -283,7 +283,10 @@ function useCustomizedCSSVars() {
 						string,
 						string
 					>,
-				).map(([key, value]) => [`--${key}`, value]),
+				).map(([key, value]) => [
+					`--${key}`,
+					`var(--preview-${key}, ${value})`,
+				]),
 			) as React.CSSProperties;
 		}
 	}
