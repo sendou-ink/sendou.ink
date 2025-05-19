@@ -2,6 +2,8 @@ SHELL := bash
 
 setup:
 	npm install
+	npm install -g playwright
+	playwright install --with-deps
 	cp .env.example .env
 	npm run migrate up
 

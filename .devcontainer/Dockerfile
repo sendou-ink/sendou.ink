@@ -1,12 +1,8 @@
 FROM mcr.microsoft.com/devcontainers/base:debian
 
-# Install Playwright browsers and dependencies
+# Install SQLite
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
-    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs sqlite3 \
-    && npm install -g playwright \
-    && playwright install --with-deps \
+    && apt-get install -y --no-install-recommends sqlite3 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

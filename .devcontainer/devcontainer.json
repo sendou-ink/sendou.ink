@@ -8,6 +8,5 @@
       "version": "lts/jod"
     }
   },
-  "forwardPorts": [5800],
-  "postCreateCommand": "sudo chown -R vscode:vscode /workspaces/sendou.ink"
+  "forwardPorts": [5800]
 }
