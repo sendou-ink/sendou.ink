@@ -44,7 +44,7 @@ export default function UserEditPage() {
 
 	return (
 		<div className="half-width">
-			<Form className="u-edit__container" method="post" reloadDocument>
+			<Form className="u-edit__container" method="post">
 				{isSupporter ? (
 					<CustomizedColorsInput initialColors={layoutData.css} />
 				) : null}

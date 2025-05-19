@@ -78,7 +78,7 @@ export default function EditTeamPage() {
 					</Button>
 				</FormWithConfirm>
 			) : null}
-			<Form method="post" className="stack md items-start" reloadDocument>
+			<Form method="post" className="stack md items-start">
 				<ImageUploadLinks />
 				{canAddCustomizedColors(team) ? (
 					<CustomizedColorsInput initialColors={css} />
