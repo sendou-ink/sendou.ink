@@ -46,9 +46,10 @@
 }
 
 .fullScreenModal {
-	min-width: 100vw;
-	min-height: 100vh;
+	min-width: 100%;
+	min-height: 100%;
 	border-radius: 0;
+	padding-block-end: var(--s-32);
 }
 
 .modal[data-entering] {

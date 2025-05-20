@@ -402,6 +402,7 @@
 
 	.layout__overlay-nav__dialog {
 		padding-block: var(--s-12) !important;
+		padding-block-end: var(--s-32) !important;
 		padding-inline: 0 !important;
 	}
 
