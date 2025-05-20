@@ -1,7 +1,9 @@
 import { Form, useMatches, useOutletContext } from "@remix-run/react";
 import * as React from "react";
 import { Button } from "~/components/Button";
+import { Divider } from "~/components/Divider";
 import { SendouDialog } from "~/components/elements/Dialog";
+import { UserSearch } from "~/components/elements/UserSearch";
 import { TrashIcon } from "~/components/icons/Trash";
 import type { Tables } from "~/db/tables";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
@@ -9,8 +11,6 @@ import { atOrError } from "~/utils/arrays";
 import type { BadgeDetailsLoaderData } from "../loaders/badges.$id.server";
 import type { BadgeDetailsContext } from "./badges.$id";
 
-import { Divider } from "~/components/Divider";
-import { UserSearch } from "~/components/elements/UserSearch";
 import { action } from "../actions/badges.$id.edit.server";
 export { action };
 
@@ -53,7 +53,7 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 		).length;
 
 	return (
-		<div className="stack md">
+		<div className="stack md mx-auto">
 			<div className="stack sm">
 				<h3 className="badges-edit__small-header">Managers</h3>
 				<UserSearch
@@ -119,7 +119,7 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 	const userInputKey = owners.map((o) => `${o.id}-${o.count}`).join("-");
 
 	return (
-		<div className="stack md">
+		<div className="stack md mx-auto">
 			<div className="stack sm">
 				<h3 className="badges-edit__small-header">Owners</h3>
 				<UserSearch

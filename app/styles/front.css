@@ -117,6 +117,7 @@
 	color: var(--text);
 	border: 2.5px solid var(--bg-lightest-solid);
 	transition: --l 0.2s ease-out;
+	margin-block-start: var(--s-4);
 }
 
 .front__season-banner:hover {

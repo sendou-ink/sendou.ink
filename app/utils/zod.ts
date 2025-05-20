@@ -100,6 +100,11 @@ export const weaponSplId = z.preprocess(
 	numericEnum(mainWeaponIds),
 );
 
+export const qWeapon = z.object({
+	weaponSplId,
+	isFavorite: z.union([z.literal(0), z.literal(1)]),
+});
+
 export const modeShort = z.enum(["TW", "SZ", "TC", "RM", "CB"]);
 
 export const stageId = z.preprocess(actualNumber, numericEnum(stageIds));
@@ -151,7 +156,10 @@ export const safeStringSchema = ({ min, max }: { min?: number; max: number }) =>
 export const safeNullableStringSchema = ({
 	min,
 	max,
-}: { min?: number; max: number }) =>
+}: {
+	min?: number;
+	max: number;
+}) =>
 	z.preprocess(
 		actuallyNonEmptyStringOrNull,
 		z

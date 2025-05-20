@@ -7,9 +7,9 @@ import {
 	id,
 	modeShort,
 	noDuplicates,
+	qWeapon,
 	safeJSONParse,
 	stageId,
-	weaponSplId,
 } from "~/utils/zod";
 import {
 	AMOUNT_OF_MAPS_IN_POOL_PER_MODE,
@@ -67,7 +67,7 @@ export const settingsActionSchema = z.union([
 		_action: _action("UPDATE_SENDOUQ_WEAPON_POOL"),
 		weaponPool: z.preprocess(
 			safeJSONParse,
-			z.array(weaponSplId).max(SENDOUQ_WEAPON_POOL_MAX_SIZE),
+			z.array(qWeapon).max(SENDOUQ_WEAPON_POOL_MAX_SIZE),
 		),
 	}),
 	z.object({

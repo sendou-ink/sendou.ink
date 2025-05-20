@@ -1,6 +1,6 @@
 import { db } from "~/db/sql";
-import type { Tables, UserMapModePreferences } from "~/db/tables";
-import { type MainWeaponId, modesShort } from "~/modules/in-game-lists";
+import type { QWeaponPool, Tables, UserMapModePreferences } from "~/db/tables";
+import { modesShort } from "~/modules/in-game-lists";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 
 export async function settingsByUserId(userId: number) {
@@ -74,7 +74,7 @@ export function updateVoiceChat(args: {
 
 export function updateSendouQWeaponPool(args: {
 	userId: number;
-	weaponPool: MainWeaponId[];
+	weaponPool: QWeaponPool[];
 }) {
 	return db
 		.updateTable("User")

@@ -90,9 +90,15 @@ export function wrappedLoader<T>({
 
 /**
  * Asserts that the given response errored out (with a toast message, via `errorToastIfFalsy(cond)` call)
+ *
+ * @param response - The HTTP response object to check.
+ * @param message - Optional. The expected error toast message shown to the user.
  */
-export function assertResponseErrored(response: Response) {
+export function assertResponseErrored(response: Response, message?: string) {
 	expect(response.headers.get("Location")).toContain("?__error=");
+	if (message) {
+		expect(response.headers.get("Location")).toContain(message);
+	}
 }
 
 async function authHeader(user?: "admin" | "regular"): Promise<HeadersInit> {
@@ -105,6 +111,23 @@ async function authHeader(user?: "admin" | "regular"): Promise<HeadersInit> {
 	return [["Cookie", await authSessionStorage.commitSession(session)]];
 }
 
+/**
+ * Resets all data in the database by deleting all rows from every table,
+ * except for SQLite system tables and the 'migrations' table.
+ *
+ * @example
+ * describe("My integration test", () => {
+ *   beforeEach(async () => {
+ *     await dbInsertUsers(2);
+ *   });
+ *
+ *   afterEach(() => {
+ *     dbReset();
+ *   });
+ *
+ *   // tests go here
+ * });
+ */
 export const dbReset = () => {
 	const tables = sql
 		.prepare(
@@ -119,12 +142,26 @@ export const dbReset = () => {
 	sql.prepare("PRAGMA foreign_keys = ON").run();
 };
 
-export const dbInsertUsers = (count?: number) =>
+/**
+ * Inserts a specified number of user records into the "User" table in the database for integration testing.
+ * 1) id: 1, discordName: "user1", discordId: "0"
+ * 2) id: 2, discordName: "user2", discordId: "1"
+ * 3) etc.
+ *
+ * @param count - The number of users to insert. Defaults to 2 if not provided.
+ *
+ * @example
+ * // Inserts 5 users into the database
+ * await dbInsertUsers(5);
+ *
+ * // Inserts 2 users (default)
+ * await dbInsertUsers();
+ */
+export const dbInsertUsers = (count = 2) =>
 	db
 		.insertInto("User")
 		.values(
-			// defaults to 2 = admin & regular "NZAP"
-			Array.from({ length: count ?? 2 }).map((_, i) => ({
+			Array.from({ length: count }).map((_, i) => ({
 				id: i + 1,
 				discordName: `user${i + 1}`,
 				discordId: String(i),

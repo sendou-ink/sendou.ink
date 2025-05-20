@@ -1,7 +1,14 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, test, vi } from "vitest";
 import { db } from "~/db/sql";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
-import { dbInsertUsers, dbReset, wrappedAction } from "~/utils/Test";
+import * as TeamRepository from "~/features/team/TeamRepository.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
+import {
+	assertResponseErrored,
+	dbInsertUsers,
+	dbReset,
+	wrappedAction,
+} from "~/utils/Test";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import type { adminActionSchema } from "../actions/admin.server";
 import { action } from "./admin";
@@ -264,5 +271,81 @@ describe("Plus voting", () => {
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
 
 		expect(await countPlusTierMembers(2)).toBe(1);
+	});
+});
+
+const migrateUserAction = () =>
+	adminAction(
+		{
+			_action: "MIGRATE",
+			"old-user": 1,
+			"new-user": 2,
+		},
+		{ user: "admin" },
+	);
+
+describe("Account migration", () => {
+	beforeEach(async () => {
+		await dbInsertUsers(2);
+	});
+
+	afterEach(() => {
+		dbReset();
+	});
+
+	it("migrates a blank account", async () => {
+		expect(await UserRepository.findProfileByIdentifier("0")).toBeDefined();
+		expect(await UserRepository.findProfileByIdentifier("1")).toBeDefined();
+
+		await migrateUserAction();
+
+		const oldUser = await UserRepository.findProfileByIdentifier("0"); // these are discord ids
+		const newUser = await UserRepository.findProfileByIdentifier("1");
+
+		expect(oldUser).toBeNull();
+		expect(newUser?.id).toBe(1); // took the old user's id
+	});
+
+	it("two accounts with teams results in an error", async () => {
+		await TeamRepository.create({
+			customUrl: "team-1",
+			name: "Team 1",
+			ownerUserId: 1,
+			isMainTeam: true,
+		});
+		await TeamRepository.create({
+			customUrl: "team-2",
+			name: "Team 2",
+			ownerUserId: 2,
+			isMainTeam: true,
+		});
+
+		const response = await migrateUserAction();
+
+		assertResponseErrored(response, "both old and new user are in teams");
+	});
+
+	it("deletes past team membership status of the new user", async () => {
+		await TeamRepository.create({
+			customUrl: "team-1",
+			name: "Team 1",
+			ownerUserId: 2,
+			isMainTeam: true,
+		});
+		await TeamRepository.del(1);
+
+		const membershipQuery = db
+			.selectFrom("AllTeamMember")
+			.select(["userId"])
+			.where("userId", "=", 2);
+
+		const membershipBeforeMigration = await membershipQuery.executeTakeFirst();
+		expect(membershipBeforeMigration).toBeDefined();
+
+		await migrateUserAction();
+
+		const membershipAfterMigration = await membershipQuery.executeTakeFirst();
+
+		expect(membershipAfterMigration).toBeUndefined();
 	});
 });

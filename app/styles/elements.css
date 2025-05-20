@@ -51,7 +51,7 @@
 	margin-inline-start: auto;
 	background-color: transparent;
 	border: none;
-	margin-block-start: -6px;
+	margin-block-start: -9px;
 	margin-inline-end: -8px;
 	outline: none;
 }
@@ -137,7 +137,8 @@
 }
 
 .react-aria-Switch {
-	display: flex;
+	display: grid;
+	grid-template-columns: auto 1fr;
 	align-items: center;
 	gap: 0.571rem;
 	color: var(--text-color);

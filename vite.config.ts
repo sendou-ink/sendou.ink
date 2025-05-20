@@ -25,6 +25,7 @@ export default defineConfig(() => {
 					v3_relativeSplatPath: true,
 					v3_throwAbortReason: true,
 					v3_routeConfig: true,
+					v3_lazyRouteDiscovery: true,
 				},
 			}),
 			babel({
@@ -38,10 +39,6 @@ export default defineConfig(() => {
 		],
 		test: {
 			exclude: [...configDefaults.exclude, "e2e/**"],
-			fakeTimers: {
-				// todo: why is the any needed here, can it be removed after Vite 6?
-				toFake: ["Date", "setTimeout", "clearTimeout"] as any,
-			},
 		},
 		build: {
 			// this is mostly done so that i18n jsons as defined in ./app/modules/i18n/loader.ts
