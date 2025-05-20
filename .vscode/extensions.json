@@ -1,5 +1,3 @@
 {
-  "recommendations": [
-    "bierner.markdown-mermaid"
-  ]
+	"recommendations": ["bierner.markdown-mermaid"]
 }

@@ -78,6 +78,11 @@ export interface ArtUserMetadata {
 	userId: number;
 }
 
+export interface TaggedArt {
+	artId: number;
+	tagId: number;
+}
+
 export interface Badge {
 	id: GeneratedAlways<number>;
 	code: string;
@@ -330,12 +335,6 @@ export interface MapResult {
 	stageId: StageId;
 	userId: number;
 	wins: number;
-}
-
-export interface Migrations {
-	created_at: string;
-	id: GeneratedAlways<number>;
-	name: string;
 }
 
 export interface PlayerResult {
@@ -1007,36 +1006,38 @@ export type TablesInsertable = { [P in keyof DB]: Insertable<DB[P]> };
 export type TablesUpdatable = { [P in keyof DB]: Updateable<DB[P]> };
 
 export interface DB {
-	AllTeam: Team;
-	AllTeamMember: TeamMember;
-	Art: Art;
-	ArtTag: ArtTag;
-	ArtUserMetadata: ArtUserMetadata;
-	Badge: Badge;
-	BadgeManager: BadgeManager;
-	BadgeOwner: BadgeOwner;
-	Build: Build;
-	BuildAbility: BuildAbility;
-	BuildWeapon: BuildWeapon;
-	CalendarEvent: CalendarEvent;
-	CalendarEventBadge: CalendarEventBadge;
-	CalendarEventDate: CalendarEventDate;
-	CalendarEventResultPlayer: CalendarEventResultPlayer;
-	CalendarEventResultTeam: CalendarEventResultTeam;
-	FreshPlusTier: FreshPlusTier;
-	Group: Group;
-	GroupLike: GroupLike;
-	GroupMatch: GroupMatch;
-	GroupMatchMap: GroupMatchMap;
-	GroupMember: GroupMember;
-	PrivateUserNote: PrivateUserNote;
-	LogInLink: LogInLink;
-	LFGPost: LFGPost;
-	MapPoolMap: MapPoolMap;
-	MapResult: MapResult;
-	PlayerResult: PlayerResult;
-	PlusSuggestion: PlusSuggestion;
-	PlusTier: PlusTier;
+	AllTeam: Team; // x
+	AllTeamMember: TeamMember; // x
+	Art: Art; // x
+	ArtTag: ArtTag; // x
+	ArtUserMetadata: ArtUserMetadata; // x
+	TaggedArt: TaggedArt; // x
+	Badge: Badge; // x
+	BadgeManager: BadgeManager; // x
+	BadgeOwner: BadgeOwner; // x
+	TournamentBadgeOwner: TournamentBadgeOwner; // x
+	Build: Build; // x
+	BuildAbility: BuildAbility; // x
+	BuildWeapon: BuildWeapon; // x
+	CalendarEvent: CalendarEvent; // x
+	CalendarEventBadge: CalendarEventBadge; // x
+	CalendarEventDate: CalendarEventDate; // x
+	CalendarEventResultPlayer: CalendarEventResultPlayer; // x
+	CalendarEventResultTeam: CalendarEventResultTeam; // x
+	FreshPlusTier: FreshPlusTier; // x
+	Group: Group; // x
+	GroupLike: GroupLike; // x
+	GroupMatch: GroupMatch; // x
+	GroupMatchMap: GroupMatchMap; // x
+	GroupMember: GroupMember; // x
+	PrivateUserNote: PrivateUserNote; // x
+	LogInLink: LogInLink; // x
+	LFGPost: LFGPost; // x
+	MapPoolMap: MapPoolMap; // x
+	MapResult: MapResult; // x
+	PlayerResult: PlayerResult; // x
+	PlusSuggestion: PlusSuggestion; // x
+	PlusTier: PlusTier; // x
 	PlusVote: PlusVote;
 	PlusVotingResult: PlusVotingResult;
 	ReportedWeapon: ReportedWeapon;
@@ -1044,13 +1045,11 @@ export interface DB {
 	SkillTeamUser: SkillTeamUser;
 	SeedingSkill: SeedingSkill;
 	SplatoonPlayer: SplatoonPlayer;
-	TaggedArt: TaggedArt;
-	Team: Team;
-	TeamMember: TeamMember;
-	TeamMemberWithSecondary: TeamMember;
+	Team: Team; // x
+	TeamMember: TeamMember; // x
+	TeamMemberWithSecondary: TeamMember; // x
 	Tournament: Tournament;
 	TournamentStaff: TournamentStaff;
-	TournamentBadgeOwner: TournamentBadgeOwner;
 	TournamentGroup: TournamentGroup;
 	TournamentMatch: TournamentMatch;
 	TournamentMatchPickBanEvent: TournamentMatchPickBanEvent;
@@ -1080,10 +1079,10 @@ export interface DB {
 	VideoMatch: VideoMatch;
 	VideoMatchPlayer: VideoMatchPlayer;
 	XRankPlacement: XRankPlacement;
-	ScrimPost: ScrimPost;
-	ScrimPostUser: ScrimPostUser;
-	ScrimPostRequest: ScrimPostRequest;
-	ScrimPostRequestUser: ScrimPostRequestUser;
+	ScrimPost: ScrimPost; // x
+	ScrimPostUser: ScrimPostUser; // x
+	ScrimPostRequest: ScrimPostRequest; // x
+	ScrimPostRequestUser: ScrimPostRequestUser; // x
 	Association: Association;
 	AssociationMember: AssociationMember;
 	Notification: Notification;
