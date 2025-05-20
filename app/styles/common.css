@@ -598,6 +598,9 @@ abbr[title] {
 	padding: var(--s-0-5);
 	width: 28px;
 	height: 28px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .react-aria-Button.info-popover__trigger__tiny {
