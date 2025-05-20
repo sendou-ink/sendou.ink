@@ -1,6 +1,7 @@
 .layout__container {
 	width: 100%;
 	min-height: 100vh;
+	padding-top: 50px; /** compensate for layout__header */
 }
 
 .layout__breadcrumb-container {
@@ -155,7 +156,6 @@
 .layout__main-container {
 	display: flex;
 	flex-direction: row;
-	padding-top: 80px;
 }
 
 .layout__main {
