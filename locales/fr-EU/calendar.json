@@ -66,6 +66,7 @@
 	"tag.desc.S2": "Le jeu joué est Splatoon 2.",
 	"tag.desc.SR": "Événement Salmon Run.",
 	"tag.desc.CARDS": "Événement Cartes & Territoire.",
+	"tag.filter.label": "Filtre par:",
 
 	"tournament.filter.label": "Hébergé par sendou.ink"
 }
