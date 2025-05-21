@@ -7,13 +7,7 @@ import {
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import "~/styles/calendar-new.css";
-import {
-	actualNumber,
-	id,
-	safeJSONParse,
-	stringifiedBoolean,
-	toArray,
-} from "~/utils/zod";
+import { actualNumber, id, safeJSONParse, toArray } from "~/utils/zod";
 import { CALENDAR_EVENT } from "./calendar-constants";
 
 export const calendarEventTagSchema = z
@@ -23,15 +17,18 @@ export const calendarEventTagSchema = z
 	);
 
 export const calendarFiltersSchema = z.object({
-	// startTime
-	tagsIncluded: z.array(calendarEventTagSchema).nullish(),
-	tagsExcluded: z.array(calendarEventTagSchema).nullish(),
-	onlySendouHosted: z.preprocess(stringifiedBoolean, z.boolean()).nullish(),
-	// orgsExcluded
-	// authorDiscordIdsExcluded
-	// games... S1/S2/S3
-	// modes... TW/SZ/TC/RM/CB/SR/TB
-});
+	// xxx:  startTime
+	tagsIncluded: z.array(calendarEventTagSchema).catch([]),
+	tagsExcluded: z.array(calendarEventTagSchema).catch([]),
+	isSendou: z.boolean().catch(false),
+	isRanked: z.boolean().catch(false),
+	orgsIncluded: z.array(z.string().max(100)).max(10).catch([]),
+	orgsExcluded: z.array(z.string().max(100)).max(10).catch([]),
+	// xxx: authorDiscordIdsExcluded
+	// xxx:  games... S1/S2/S3
+	// xxx:  modes... TW/SZ/TC/RM/CB/SR/TB
+	// xxx:  modesExact
+}); // xxx: refine, no overlapping tags
 
 const playersSchema = z
 	.array(

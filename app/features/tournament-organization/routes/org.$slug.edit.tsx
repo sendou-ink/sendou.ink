@@ -76,7 +76,7 @@ export default function TournamentOrganizationEditPage() {
 
 				<TextFormField<FormFields> label={t("common:forms.name")} name="name" />
 
-				<TextAreaFormField<typeof organizationEditSchema>
+				<TextAreaFormField<FormFields>
 					label={t("common:forms.description")}
 					name="description"
 					maxLength={TOURNAMENT_ORGANIZATION.DESCRIPTION_MAX_LENGTH}
@@ -84,10 +84,10 @@ export default function TournamentOrganizationEditPage() {
 
 				<MembersFormField />
 
-				<TextArrayFormField<typeof organizationEditSchema>
+				<TextArrayFormField<FormFields>
 					label={t("org:edit.form.socialLinks.title")}
 					name="socials"
-					defaultFieldValue=""
+					format="object"
 				/>
 
 				<SeriesFormField />

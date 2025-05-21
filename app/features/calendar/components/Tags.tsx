@@ -7,19 +7,17 @@ import { CrossIcon } from "~/components/icons/Cross";
 import type { CalendarEventTag } from "~/db/tables";
 import { tags as allTags } from "../calendar-constants";
 
-// xxx: retire sz only, tw only tags and only infer + show maps on the calendar? show on the left side of the card. also salmon run and table turf
+// xxx: retire sz only, tw only tags and only infer + show maps on the calendar?
 
 export function Tags({
 	tags,
 	badges,
 	onDelete,
-	tournamentRankedStatus,
 	small = false,
 	centered = false,
 }: {
 	tags: Array<CalendarEventTag>;
 	badges?: Array<BadgeProps["badge"]>;
-	tournamentRankedStatus?: "RANKED" | "UNRANKED";
 	small?: boolean;
 	centered?: boolean;
 
@@ -28,16 +26,10 @@ export function Tags({
 }) {
 	const { t } = useTranslation();
 
-	if (tags.length === 0 && !tournamentRankedStatus) return null;
+	if (tags.length === 0) return null;
 
 	return (
 		<ul className={clsx("calendar__event__tags", { small, centered })}>
-			{tournamentRankedStatus === "RANKED" ? (
-				<li className="calendar__event__ranked-tag">Ranked</li>
-			) : null}
-			{tournamentRankedStatus === "UNRANKED" ? (
-				<li className="calendar__event__unranked-tag">Unranked</li>
-			) : null}
 			{tags.map((tag) => (
 				<React.Fragment key={tag}>
 					<li

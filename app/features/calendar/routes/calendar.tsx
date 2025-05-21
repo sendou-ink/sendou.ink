@@ -16,13 +16,15 @@ import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
 import { useCollapsableEvents } from "~/features/calendar/calendar-hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { CALENDAR_PAGE, navIconUrl } from "~/utils/urls";
+import { CALENDAR_PAGE, calendarPage, navIconUrl } from "~/utils/urls";
 import { daysForCalendar } from "../calendar-utils";
 import { FiltersDialog } from "../components/FiltersDialog";
 import { TournamentCard } from "../components/TournamentCard";
+import * as CalendarEvent from "../core/CalendarEvent";
 
+import { action } from "../actions/calendar";
 import { type CalendarLoaderData, loader } from "../loaders/calendar.server";
-export { loader };
+export { action, loader };
 
 import styles from "./calendar.module.css";
 
@@ -54,15 +56,25 @@ export default function CalendarPage() {
 		<Main bigger className="stack lg">
 			<div className="stack horizontal items-start justify-between">
 				<div className="stack md horizontal">
-					<NavigateButton icon={<ArrowLeftIcon />} daysInterval={previous}>
+					<NavigateButton
+						icon={<ArrowLeftIcon />}
+						daysInterval={previous}
+						filters={data.filters}
+					>
 						Previous
 					</NavigateButton>
-					<NavigateButton icon={<ArrowRightIcon />} daysInterval={next}>
+					<NavigateButton
+						icon={<ArrowRightIcon />}
+						daysInterval={next}
+						filters={data.filters}
+					>
 						Next
 					</NavigateButton>
-					{/* <MajorTournamentLink /> */}
 				</div>
-				<FiltersDialog filters={data.filters} />
+				<FiltersDialog
+					key={CalendarEvent.filtersToString(data.filters)}
+					filters={data.filters}
+				/>
 			</div>
 			<div
 				className={styles.columnsContainer}
@@ -92,10 +104,12 @@ function NavigateButton({
 	icon,
 	children,
 	daysInterval,
+	filters,
 }: {
 	icon: SendouButtonProps["icon"];
 	children: React.ReactNode;
 	daysInterval: ReturnType<typeof daysForCalendar>["shown"];
+	filters?: CalendarLoaderData["filters"];
 }) {
 	const { i18n } = useTranslation();
 	const lowestDate = daysInterval[0];
@@ -112,18 +126,11 @@ function NavigateButton({
 			},
 		);
 
-	const searchParamsString = () => {
-		const searchParams = new URLSearchParams();
-
-		searchParams.set("day", String(lowestDate.day));
-		searchParams.set("month", String(lowestDate.month));
-		searchParams.set("year", String(lowestDate.year));
-
-		return `?${searchParams.toString()}`;
-	};
-
 	return (
-		<Link to={searchParamsString()} className={styles.navigateButton}>
+		<Link
+			to={calendarPage({ filters, dayMonthYear: lowestDate })}
+			className={styles.navigateButton}
+		>
 			{icon}
 			<div>
 				<div>{children}</div>
@@ -135,22 +142,6 @@ function NavigateButton({
 	);
 }
 
-// xxx: get this from somewhere...
-// xxx: finish this or scrap
-// function _MajorTournamentLink() {
-// 	return (
-// 		<Link to="/" className={styles.majorLink}>
-// 			<div>Superjump</div>
-// 			<div className="text-xxs">
-// 				{new Date().toLocaleString("en-US", {
-// 					month: "long",
-// 					day: "2-digit",
-// 				})}
-// 			</div>
-// 		</Link>
-// 	);
-// }
-
 function DayEventsColumn({
 	date,
 	month,
@@ -160,20 +151,20 @@ function DayEventsColumn({
 	month: number;
 	eventTimes: CalendarLoaderData["eventTimes"];
 }) {
-	const eventTimesCollapesed = useCollapsableEvents(eventTimes);
+	const eventTimesCollapsed = useCollapsableEvents(eventTimes);
 
 	return (
 		<div>
 			<DayHeader date={date} month={month} />
 			<div className={styles.dayEvents}>
-				{eventTimesCollapesed.map((eventTime, i) => {
+				{eventTimesCollapsed.map((eventTime, i) => {
 					return (
 						<div key={eventTime.date.from.getTime()} className="stack md">
 							<ClockHeader
 								date={eventTime.date.from}
 								toDate={eventTime.date.to}
 								hiddenEventsCount={eventTime.hiddenCount}
-								hiddenShown={eventTime.eventsShown.length > 0}
+								hiddenShown={eventTime.hiddenShown}
 								onToggleHidden={eventTime.onToggleHidden}
 								className={i !== 0 ? "mt-4" : undefined}
 							/>
@@ -194,7 +185,12 @@ function DayHeader(props: { date: number; month: number }) {
 	const date = new Date(new Date().getFullYear(), props.month, props.date);
 
 	return (
-		<div className={styles.dayHeader}>
+		<div
+			className={clsx(styles.dayHeader, {
+				[styles.dayHeaderToday]:
+					date.toDateString() === new Date().toDateString(),
+			})}
+		>
 			{date.toLocaleDateString(i18n.language, {
 				day: "numeric",
 				month: "long",

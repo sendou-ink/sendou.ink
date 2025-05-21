@@ -41,7 +41,7 @@ export const persistedTags = {
 		color: "#1ADB1E",
 	},
 	TRIOS: {
-		color: "#571ADB",
+		color: "#B694FF",
 	},
 	S1: {
 		color: "#E5E4E2",

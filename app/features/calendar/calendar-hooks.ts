@@ -8,6 +8,7 @@ interface CollapsedEvents {
 		from: Date;
 		to?: Date;
 	};
+	hiddenShown: boolean;
 	hiddenCount: number;
 	onToggleHidden: () => void;
 }
@@ -48,15 +49,21 @@ export function useCollapsableEvents(
 			hiddenTimes.add(time);
 		}
 
+		const hiddenShown = shownEventTimes.has(eventTime.at);
+
 		eventsResult.push({
-			eventsShown: shownEventTimes.has(eventTime.at)
+			eventsShown: hiddenShown
 				? [...eventTime.events.shown, ...eventTime.events.hidden].sort(
 						calendarEventSorter,
 					)
 				: eventTime.events.shown,
 			date,
+			hiddenShown,
 			onToggleHidden: () => {
-				setCollapsingDisabled(true);
+				// if we clicked a range section, uncollapse it
+				if (containedTimes.size > 1) {
+					setCollapsingDisabled(true);
+				}
 				setShownEventTimes((prev) => {
 					const newSet = new Set(prev);
 					if (newSet.has(eventTime.at)) {

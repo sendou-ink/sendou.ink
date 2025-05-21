@@ -3,6 +3,7 @@ import type { GearType, Preference, Tables } from "~/db/tables";
 import type { ArtSource } from "~/features/art/art-types";
 import type { AuthErrorCode } from "~/features/auth/core/errors";
 import { serializeBuild } from "~/features/build-analyzer";
+import type { CalendarFilters } from "~/features/calendar/calendar-types";
 import type { StageBackgroundStyle } from "~/features/map-planner";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import { JOIN_CODE_SEARCH_PARAM_KEY } from "~/features/sendouq/q-constants";
@@ -17,6 +18,7 @@ import type {
 	StageId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
+import type { DayMonthYear } from "~/utils/zod";
 
 const staticAssetsUrl = ({
 	folder,
@@ -263,6 +265,22 @@ export const weaponBuildStatsPage = (weaponSlug: string) =>
 export const weaponBuildPopularPage = (weaponSlug: string) =>
 	`${weaponBuildPage(weaponSlug)}/popular`;
 
+export const calendarPage = ({
+	filters,
+	dayMonthYear,
+}: { filters?: CalendarFilters; dayMonthYear?: DayMonthYear }) => {
+	const params = new URLSearchParams();
+	if (filters) {
+		params.set("filters", JSON.stringify(filters));
+	}
+	if (dayMonthYear) {
+		params.set("day", String(dayMonthYear.day));
+		params.set("month", String(dayMonthYear.month));
+		params.set("year", String(dayMonthYear.year));
+	}
+
+	return `${CALENDAR_PAGE}${params.toString() ? `?${params.toString()}` : ""}`;
+};
 export const calendarEventPage = (eventId: number) => `/calendar/${eventId}`;
 export const calendarEditPage = (eventId?: number) =>
 	`/calendar/new${eventId ? `?eventId=${eventId}` : ""}`;

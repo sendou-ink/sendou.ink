@@ -45,6 +45,11 @@
 	font-weight: var(--bold);
 }
 
+.dayHeaderToday {
+	background-color: var(--bg-lightest);
+	border: 2px solid var(--theme-transparent);
+}
+
 .dayHeaderWeekday {
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);

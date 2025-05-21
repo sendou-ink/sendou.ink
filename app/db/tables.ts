@@ -12,6 +12,7 @@ import type {
 	persistedTags,
 	tags,
 } from "~/features/calendar/calendar-constants";
+import type { CalendarFilters } from "~/features/calendar/calendar-types";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
 import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
@@ -802,6 +803,7 @@ export type BuildSort = (typeof BUILD_SORT_IDENTIFIERS)[number];
 export interface UserPreferences {
 	disableBuildAbilitySorting?: boolean;
 	disallowScrimPickupsFromUntrusted?: boolean;
+	defaultCalendarFilters?: CalendarFilters;
 }
 
 export interface User {

@@ -1,15 +1,19 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
+import { z } from "zod";
+import type { UserPreferences } from "~/db/tables";
+import { getUser } from "~/features/auth/core/user.server";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
 import { calendarFiltersSchema } from "~/features/calendar/calendar-schemas";
 import type { SerializeFrom } from "~/utils/remix";
-import { parseSafeSearchParams } from "~/utils/remix.server";
-import { dayMonthYear } from "~/utils/zod";
+import { parseSafeSearchParams, parseSearchParams } from "~/utils/remix.server";
+import { dayMonthYear, safeJSONParse } from "~/utils/zod";
 import * as CalendarRepository from "../CalendarRepository.server";
-import * as CalendarEvent from "../core/CalendarEvent.server";
+import * as CalendarEvent from "../core/CalendarEvent";
 
 export type CalendarLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async (args: LoaderFunctionArgs) => {
+	const user = await getUser(args.request);
 	const parsed = parseSafeSearchParams({
 		request: args.request,
 		schema: dayMonthYear,
@@ -29,7 +33,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 		endTime: new Date(fiveDaysFromNow),
 	});
 
-	const filters = resolveFilters(args.request);
+	const filters = resolveFilters(args.request, user?.preferences);
 	const filtered = CalendarEvent.applyFilters(events, filters);
 
 	return {
@@ -39,14 +43,32 @@ export const loader = async (args: LoaderFunctionArgs) => {
 	};
 };
 
-function resolveFilters(request: Request) {
-	const parsed = parseSafeSearchParams({
-		request,
-		schema: calendarFiltersSchema,
-	});
+const filterSearchParams = z.object({
+	filters: z
+		.preprocess(safeJSONParse, calendarFiltersSchema)
+		.catch(CalendarEvent.defaultFilters()),
+});
 
-	if (parsed.success) {
-		return parsed.data;
+function resolveFilters(
+	request: Request,
+	preferences?: UserPreferences | null,
+) {
+	const parsed = parseSearchParams({
+		request,
+		schema: filterSearchParams,
+	}).filters;
+
+	if (!CalendarEvent.isDefaultFilters(parsed)) {
+		return parsed;
+	}
+
+	if (preferences?.defaultCalendarFilters) {
+		// make sure the saved values still match current reality
+		const parsedDefault = calendarFiltersSchema.parse(
+			preferences.defaultCalendarFilters,
+		);
+
+		return parsedDefault;
 	}
 
 	return CalendarEvent.defaultFilters();
