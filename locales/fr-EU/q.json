@@ -48,7 +48,6 @@
 	"front.join.joinAction": "Rejoindre",
 	"front.join.joinWithTrustAction": "Rejoindre et faire confiance à {{inviterName}}",
 	"front.join.joinWithTrustAction.explanation": "Faire confiance à cette utilisateur pour vous ajouter à des groupes sans liens d'invitations",
-	"front.join.refuseAction": "Non merci",
 	"front.seasonOpen": "La saison {{nth}} est ouverte",
 	"front.preview": "Regarder qui est dans la queue sans la rejoindre",
 	"front.preview.explanation": "Cette fonctionnalité n'est disponible que pour les utilisateurs de niveau Supporter (ou supérieur) sur le patreon de sendou.ink.",
