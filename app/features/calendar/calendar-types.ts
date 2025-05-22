@@ -1,6 +1,6 @@
 import type { z } from "zod";
 import type { CalendarEventTag, Tables } from "~/db/tables";
-import type { calendarFiltersSchema } from "~/features/calendar/calendar-schemas";
+import type { calendarFiltersSearchParamsSchema } from "~/features/calendar/calendar-schemas";
 import type { ModeShortWithSpecial } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 
@@ -17,6 +17,8 @@ interface CommonEvent {
 		name: string;
 		slug: string;
 	} | null;
+	/** User id of the author of the event */
+	authorId: number;
 }
 
 export interface CalendarEvent extends CommonEvent {
@@ -26,6 +28,9 @@ export interface CalendarEvent extends CommonEvent {
 	normalizedTeamCount: number;
 	/** For multi-day tournaments, which day of the event is this */
 	day?: number;
+	badges: Array<
+		Pick<Tables["Badge"], "id" | "code" | "displayName" | "hue">
+	> | null;
 }
 
 export interface ShowcaseCalendarEvent extends CommonEvent {
@@ -40,6 +45,7 @@ export interface ShowcaseCalendarEvent extends CommonEvent {
 }
 
 export interface GroupedCalendarEvents {
+	/** The date of the event in UNIX timestamp (JS format) */
 	at: number;
 	events: {
 		shown: CalendarEvent[];
@@ -47,4 +53,4 @@ export interface GroupedCalendarEvents {
 	};
 }
 
-export type CalendarFilters = z.infer<typeof calendarFiltersSchema>;
+export type CalendarFilters = z.infer<typeof calendarFiltersSearchParamsSchema>;

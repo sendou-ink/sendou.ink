@@ -106,6 +106,17 @@ export const qWeapon = z.object({
 });
 
 export const modeShort = z.enum(["TW", "SZ", "TC", "RM", "CB"]);
+export const modeShortWithSpecial = z.enum([
+	"TW",
+	"SZ",
+	"TC",
+	"RM",
+	"CB",
+	"SR",
+	"TB",
+]);
+
+export const gamesShortSchema = z.enum(["S1", "S2", "S3"]);
 
 export const stageId = z.preprocess(actualNumber, numericEnum(stageIds));
 

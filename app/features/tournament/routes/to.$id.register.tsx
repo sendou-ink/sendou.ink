@@ -63,8 +63,6 @@ import { action } from "../actions/to.$id.register.server";
 import { loader } from "../loaders/to.$id.register.server";
 export { loader, action };
 
-// xxx: show badge prizes animated on the tournament page?
-
 export default function TournamentRegisterPage() {
 	const user = useUser();
 	const isMounted = useIsMounted();

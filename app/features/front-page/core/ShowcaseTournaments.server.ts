@@ -271,6 +271,7 @@ function mapTournamentFromDB(
 		type: "showcase",
 		url: tournamentPage(tournament.id),
 		id: tournament.id,
+		authorId: tournament.authorId,
 		name: tournament.name,
 		startTime: tournament.startTime,
 		teamsCount: tournament.teamsCount,

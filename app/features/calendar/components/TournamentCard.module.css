@@ -78,7 +78,7 @@
 }
 
 .modesPillContainer {
-	padding-inline: 12px;
+	padding-inline-start: 12px;
 }
 
 .modesPill {
@@ -94,7 +94,7 @@
 	display: flex;
 	gap: var(--s-1);
 	justify-content: end;
-	padding-inline: 12px;
+	padding-inline-end: 12px;
 }
 
 .pill {
@@ -135,4 +135,19 @@
 	background-color: black;
 	border-radius: var(--rounded-sm);
 	padding: var(--s-1);
+}
+
+.badgeNavIcon {
+	min-width: 16px;
+}
+
+.badgeDisplay {
+	min-width: initial;
+	min-height: initial;
+}
+
+.badgePill {
+	background-color: var(--bg-lightest);
+	border-radius: var(--rounded-sm);
+	padding: var(--s-0-5) var(--s-1-5);
 }

@@ -120,7 +120,7 @@ export default function CalendarEventPage() {
 				<div className="stack md">
 					<div className="stack xs">
 						<h2>{data.event.name}</h2>
-						<Tags tags={data.event.tags} badges={data.event.badgePrizes} />
+						<Tags tags={data.event.tags} />
 					</div>
 					<div className="stack horizontal sm flex-wrap">
 						{data.event.discordUrl ? (

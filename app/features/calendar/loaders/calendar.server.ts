@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { UserPreferences } from "~/db/tables";
 import { getUser } from "~/features/auth/core/user.server";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
-import { calendarFiltersSchema } from "~/features/calendar/calendar-schemas";
+import { calendarFiltersSearchParamsSchema } from "~/features/calendar/calendar-schemas";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseSafeSearchParams, parseSearchParams } from "~/utils/remix.server";
 import { dayMonthYear, safeJSONParse } from "~/utils/zod";
@@ -45,7 +45,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
 const filterSearchParams = z.object({
 	filters: z
-		.preprocess(safeJSONParse, calendarFiltersSchema)
+		.preprocess(safeJSONParse, calendarFiltersSearchParamsSchema)
 		.catch(CalendarEvent.defaultFilters()),
 });
 
@@ -64,7 +64,7 @@ function resolveFilters(
 
 	if (preferences?.defaultCalendarFilters) {
 		// make sure the saved values still match current reality
-		const parsedDefault = calendarFiltersSchema.parse(
+		const parsedDefault = calendarFiltersSearchParamsSchema.parse(
 			preferences.defaultCalendarFilters,
 		);
 

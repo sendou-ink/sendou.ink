@@ -17,7 +17,6 @@
 	"forms.discordInvite": "URL do servera Discord",
 	"forms.tags": "Tagi",
 	"forms.tags.placeholder": "Wybierz tag",
-	"forms.tags.info": "Tag \"Odznaki\" dodawany automatycznie jeśli możliwe",
 	"forms.badges": "Odznaki",
 	"forms.badges.placeholder": "Wybierz odznakę",
 	"forms.mapPool": "Pula map",

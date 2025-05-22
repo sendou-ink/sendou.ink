@@ -17,7 +17,6 @@
 	"forms.discordInvite": "Discord server uitnodiging URL",
 	"forms.tags": "Tags",
 	"forms.tags.placeholder": "Kies een tag",
-	"forms.tags.info": "De \"Badge prizes\" tag wordt indien mogelijk automatisch toegevoegd",
 	"forms.badges": "Badge prijzen",
 	"forms.badges.placeholder": "Kies een badge prijs",
 	"forms.mapPool": "Beschikbare levels",

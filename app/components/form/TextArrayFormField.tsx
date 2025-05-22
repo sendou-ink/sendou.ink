@@ -50,14 +50,12 @@ export function TextArrayFormField<T extends FieldValues>({
 											: `${name}.${index}.value`,
 									)}
 								/>
-								{fields.length > 1 ? (
-									<RemoveFieldButton
-										onClick={() => {
-											remove(index);
-											clearErrors(`${name}.root`);
-										}}
-									/>
-								) : null}
+								<RemoveFieldButton
+									onClick={() => {
+										remove(index);
+										clearErrors(`${name}.root`);
+									}}
+								/>
 							</div>
 							{error && (
 								<FormMessage type="error">

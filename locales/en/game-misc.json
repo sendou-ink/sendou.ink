@@ -59,6 +59,9 @@
 	"MODE_LONG_TC": "Tower Control",
 	"MODE_LONG_RM": "Rainmaker",
 	"MODE_LONG_CB": "Clam Blitz",
-	"MODE_LONG_SALMON_RUN": "Salmon Run",
-	"MODE_LONG_TABLETURF": "Tableturf Battle"
+	"MODE_LONG_SR": "Salmon Run",
+	"MODE_LONG_TB": "Tableturf Battle",
+	"GAME_S1": "Splatoon 1",
+	"GAME_S2": "Splatoon 2",
+	"GAME_S3": "Splatoon 3"
 }

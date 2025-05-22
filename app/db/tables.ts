@@ -8,10 +8,7 @@ import type {
 	Updateable,
 } from "kysely";
 import type { AssociationVisibility } from "~/features/associations/associations-types";
-import type {
-	persistedTags,
-	tags,
-} from "~/features/calendar/calendar-constants";
+import type { persistedTags } from "~/features/calendar/calendar-constants";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
@@ -132,7 +129,7 @@ export type CalendarEventAvatarMetadata = {
 };
 
 export type PersistedCalendarEventTag = keyof typeof persistedTags;
-export type CalendarEventTag = keyof typeof tags;
+export type CalendarEventTag = keyof typeof persistedTags; // xxx: retire
 
 export interface CalendarEvent {
 	authorId: number;

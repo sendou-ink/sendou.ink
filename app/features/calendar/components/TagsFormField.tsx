@@ -12,7 +12,7 @@ import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import type { CalendarEventTag } from "~/db/tables";
 import { CALENDAR_EVENT } from "~/features/calendar/calendar-constants";
-import { tags as allTags } from "../calendar-constants";
+import { persistedTags as allTags } from "../calendar-constants";
 
 import styles from "./TagsFormField.module.css";
 

@@ -24,7 +24,6 @@
 	"forms.discordInvite": "Discord server invite URL",
 	"forms.tags": "Tags",
 	"forms.tags.placeholder": "Choose a tag",
-	"forms.tags.info": "\"Badge prizes\" tag is added automatically if applicable",
 	"forms.badges": "Badge prizes",
 	"forms.badges.placeholder": "Choose a badge prize",
 	"forms.mapPool": "Map pool",

@@ -2,13 +2,16 @@ import { Link } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Flag } from "~/components/Flag";
-import { ModeImage } from "~/components/Image";
+import { Image, ModeImage } from "~/components/Image";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { TrophyIcon } from "~/components/icons/Trophy";
 import { UsersIcon } from "~/components/icons/Users";
+import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { userSubmittedImage } from "~/utils/urls";
+import { navIconUrl, userSubmittedImage } from "~/utils/urls";
 import type { CalendarEvent, ShowcaseCalendarEvent } from "../calendar-types";
 import { Tags } from "./Tags";
 import styles from "./TournamentCard.module.css";
@@ -106,6 +109,9 @@ export function TournamentCard({
 								<TrophyIcon title="Ranked (impacts this seasons SP)" />
 							</div>
 						) : null}
+						{isCalendar && tournament.badges && tournament.badges.length > 0 ? (
+							<BadgePrizesPill badges={tournament.badges} />
+						) : null}
 						<div className={styles.teamCount}>
 							<UsersIcon /> {tournament.teamsCount}
 						</div>
@@ -171,5 +177,30 @@ function ModesPill({ modes }: { modes: NonNullable<CalendarEvent["modes"]> }) {
 				))}
 			</div>
 		</div>
+	);
+}
+
+function BadgePrizesPill({
+	badges,
+}: { badges: NonNullable<CalendarEvent["badges"]> }) {
+	return (
+		<SendouPopover
+			trigger={
+				<SendouButton variant="minimal" className={styles.badgePill}>
+					<Image
+						size={16}
+						path={navIconUrl("badges")}
+						alt="Badge prizes"
+						className={styles.badgeNavIcon}
+					/>
+				</SendouButton>
+			}
+		>
+			<BadgeDisplay
+				badges={badges}
+				showText={false}
+				className={styles.badgeDisplay}
+			/>
+		</SendouPopover>
 	);
 }

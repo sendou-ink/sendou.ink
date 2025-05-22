@@ -1,23 +1,18 @@
 import clsx from "clsx";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Badge, type BadgeProps } from "~/components/Badge";
 import { Button } from "~/components/Button";
 import { CrossIcon } from "~/components/icons/Cross";
 import type { CalendarEventTag } from "~/db/tables";
-import { tags as allTags } from "../calendar-constants";
-
-// xxx: retire sz only, tw only tags and only infer + show maps on the calendar?
+import { persistedTags as allTags } from "../calendar-constants";
 
 export function Tags({
 	tags,
-	badges,
 	onDelete,
 	small = false,
 	centered = false,
 }: {
 	tags: Array<CalendarEventTag>;
-	badges?: Array<BadgeProps["badge"]>;
 	small?: boolean;
 	centered?: boolean;
 
@@ -34,9 +29,7 @@ export function Tags({
 				<React.Fragment key={tag}>
 					<li
 						style={{ backgroundColor: allTags[tag].color }}
-						className={clsx("calendar__event__tag", {
-							"calendar__event__badge-tag": tag === "BADGE",
-						})}
+						className="calendar__event__tag"
 					>
 						{t(`tag.name.${tag}`)}
 						{onDelete && (
@@ -48,13 +41,6 @@ export function Tags({
 								aria-label="Remove date"
 								size="tiny"
 							/>
-						)}
-						{tag === "BADGE" && badges && (
-							<div className="calendar__event__tag-badges">
-								{badges.map((badge) => (
-									<Badge key={badge.code} badge={badge} size={20} isAnimated />
-								))}
-							</div>
 						)}
 					</li>
 				</React.Fragment>

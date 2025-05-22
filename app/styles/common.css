@@ -736,10 +736,6 @@ abbr[title] {
 	color: var(--black-text);
 }
 
-.calendar__event__badge-tag {
-	color: var(--badge-text);
-}
-
 .calendar__event__tag-delete-button {
 	margin-left: auto;
 }

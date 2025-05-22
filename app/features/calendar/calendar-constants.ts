@@ -1,5 +1,6 @@
 import type { CalendarEventTag, PersistedCalendarEventTag } from "~/db/tables";
 
+// xxx: rename to just tags
 export const persistedTags = {
 	SPECIAL: {
 		color: "#CE93D8",
@@ -60,13 +61,6 @@ export const persistedTags = {
 	},
 };
 
-export const tags = {
-	...persistedTags,
-	BADGE: {
-		color: "#000",
-	},
-};
-
 export const CALENDAR_EVENT = {
 	NAME_MIN_LENGTH: 2,
 	NAME_MAX_LENGTH: 100,
@@ -77,10 +71,9 @@ export const CALENDAR_EVENT = {
 	MAX_AMOUNT_OF_DATES: 5,
 	/** Calendar event tag that is persisted in the database */
 	PERSISTED_TAGS: Object.keys(
+		// xxx: rename to just tags
 		persistedTags,
 	) as Array<PersistedCalendarEventTag>,
-	/** Calendar event tag, both those persisted in the database and those that are computed */
-	TAGS: Object.keys(tags) as Array<CalendarEventTag>,
 	AVATAR_SIZE: 512,
 };
 
@@ -111,6 +104,6 @@ export const DAYS_SHOWN_AT_A_TIME = 4;
 export const EXCLUDED_TAGS: Array<CalendarEventTag> = [
 	"CARDS",
 	"SR",
-	"SZ", // xxx: also prevent adding "SZ" && "TW"
+	"SZ",
 	"TW",
 ];

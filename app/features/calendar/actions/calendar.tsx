@@ -1,6 +1,6 @@
 import { type ActionFunctionArgs, redirect } from "@remix-run/node";
 import { requireUserId } from "~/features/auth/core/user.server";
-import { calendarFiltersSchema } from "~/features/calendar/calendar-schemas";
+import { calendarFiltersSearchParamsSchema } from "~/features/calendar/calendar-schemas";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import {
 	parseRequestPayload,
@@ -13,7 +13,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const user = await requireUserId(request);
 	const data = await parseRequestPayload({
 		request,
-		schema: calendarFiltersSchema,
+		schema: calendarFiltersSearchParamsSchema,
 	});
 
 	await UserRepository.updatePreferences(user.id, {

@@ -120,6 +120,7 @@ function findAllBetweenTwoTimestampsQuery({
 		.leftJoin("Tournament", "CalendarEvent.tournamentId", "Tournament.id")
 		.select((eb) => [
 			"CalendarEvent.id as eventId",
+			"CalendarEvent.authorId",
 			"Tournament.id as tournamentId",
 			"Tournament.settings as tournamentSettings",
 			"Tournament.mapPickingStyle",
@@ -169,6 +170,18 @@ function findAllBetweenTwoTimestampsQuery({
 					.select(["MapPoolMap.mode"])
 					.whereRef("MapPoolMap.calendarEventId", "=", "CalendarEvent.id"),
 			).as("toSetMapPool"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("CalendarEventBadge")
+					.innerJoin("Badge", "CalendarEventBadge.badgeId", "Badge.id")
+					.select(["Badge.id", "Badge.code", "Badge.hue", "Badge.displayName"])
+					.whereRef(
+						"CalendarEventBadge.eventId",
+						"=",
+						"CalendarEventDate.eventId",
+					)
+					.orderBy("Badge.id", "asc"),
+			).as("badges"),
 			eb
 				.selectFrom("UserSubmittedImage")
 				.select(["UserSubmittedImage.url"])
@@ -210,6 +223,7 @@ function findAllBetweenTwoTimestampsMapped(
 					: calendarEventPage(row.eventId),
 				name: row.name,
 				organization: row.organization,
+				authorId: row.authorId,
 				tags: tags.filter((tag) => !EXCLUDED_TAGS.includes(tag)),
 				teamsCount: row.teamsCount,
 				normalizedTeamCount: normalizedTeamCount({
@@ -217,12 +231,13 @@ function findAllBetweenTwoTimestampsMapped(
 					minMembersPerTeam: row.tournamentSettings?.minMembersPerTeam ?? 4,
 				}),
 				modes: tags.includes("CARDS")
-					? ["TABLETURF"]
+					? ["TB"]
 					: tags.includes("SR")
-						? ["SALMON_RUN"]
+						? ["SR"]
 						: row.mapPickingStyle
 							? modesIncluded(row.mapPickingStyle, row.toSetMapPool)
 							: null,
+				badges: row.badges,
 				logoUrl: row.logoUrl,
 				startTime: row.normalizedStartTime,
 				isRanked: row.tournamentSettings
@@ -335,8 +350,6 @@ function tagsArray(args: {
 	const tags = (
 		args.tags ? args.tags.split(",") : []
 	) as Array<CalendarEventTag>;
-
-	if (args.hasBadge) tags.unshift("BADGE");
 
 	return tags;
 }

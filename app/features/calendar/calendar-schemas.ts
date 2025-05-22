@@ -7,7 +7,16 @@ import {
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import "~/styles/calendar-new.css";
-import { actualNumber, id, safeJSONParse, toArray } from "~/utils/zod";
+import { gamesShort, versusShort } from "~/modules/in-game-lists/games";
+import { modesShortWithSpecial } from "~/modules/in-game-lists/modes";
+import {
+	actualNumber,
+	gamesShortSchema,
+	id,
+	modeShortWithSpecial,
+	safeJSONParse,
+	toArray,
+} from "~/utils/zod";
 import { CALENDAR_EVENT } from "./calendar-constants";
 
 export const calendarEventTagSchema = z
@@ -16,19 +25,70 @@ export const calendarEventTagSchema = z
 		CALENDAR_EVENT.PERSISTED_TAGS.includes(val as PersistedCalendarEventTag),
 	);
 
-export const calendarFiltersSchema = z.object({
-	// xxx:  startTime
+const calendarFiltersPlainStringArr = z.array(z.string().max(100)).max(10);
+const calendarFiltersIdsArr = z.array(id).max(10);
+const calendarFilterGamesArr = z.array(gamesShortSchema).min(1).max(3);
+const preferredStartTime = z.enum(["ANY", "EU", "NA", "AU"]);
+const preferredVersus = z
+	.array(z.enum(versusShort))
+	.min(1)
+	.max(versusShort.length);
+const modeArr = z
+	.array(modeShortWithSpecial)
+	.min(1)
+	.max(modesShortWithSpecial.length);
+
+export const calendarFiltersSearchParamsSchema = z.object({
+	preferredStartTime: preferredStartTime.catch("ANY"),
 	tagsIncluded: z.array(calendarEventTagSchema).catch([]),
 	tagsExcluded: z.array(calendarEventTagSchema).catch([]),
 	isSendou: z.boolean().catch(false),
 	isRanked: z.boolean().catch(false),
-	orgsIncluded: z.array(z.string().max(100)).max(10).catch([]),
-	orgsExcluded: z.array(z.string().max(100)).max(10).catch([]),
-	// xxx: authorDiscordIdsExcluded
-	// xxx:  games... S1/S2/S3
-	// xxx:  modes... TW/SZ/TC/RM/CB/SR/TB
-	// xxx:  modesExact
-}); // xxx: refine, no overlapping tags
+	orgsIncluded: calendarFiltersPlainStringArr.catch([]),
+	orgsExcluded: calendarFiltersPlainStringArr.catch([]),
+	authorIdsExcluded: calendarFiltersIdsArr.catch([]),
+	games: calendarFilterGamesArr.catch([...gamesShort]),
+	preferredVersus: preferredVersus.catch([...versusShort]),
+	modes: modeArr.catch([...modesShortWithSpecial]),
+	modesExact: z.boolean().catch(false),
+	minTeamCount: z.coerce.number().int().nonnegative().catch(0),
+});
+
+export const calendarFiltersFormSchema = z
+	.object({
+		preferredStartTime: preferredStartTime,
+		tagsIncluded: z.array(calendarEventTagSchema),
+		tagsExcluded: z.array(calendarEventTagSchema),
+		isSendou: z.boolean(),
+		isRanked: z.boolean(),
+		orgsIncluded: calendarFiltersPlainStringArr,
+		orgsExcluded: calendarFiltersPlainStringArr,
+		authorIdsExcluded: calendarFiltersIdsArr,
+		games: calendarFilterGamesArr,
+		preferredVersus: preferredVersus,
+		modes: modeArr,
+		modesExact: z.boolean(),
+		minTeamCount: z.coerce.number().int().nonnegative(),
+	})
+	.superRefine((filters, ctx) => {
+		if (
+			filters.tagsIncluded.some((tag) => filters.tagsExcluded.includes(tag))
+		) {
+			ctx.addIssue({
+				path: ["tagsExcluded"],
+				message: "Can't include and exclude the same tag",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+
+		if (filters.orgsIncluded.length > 0 && filters.orgsExcluded.length > 0) {
+			ctx.addIssue({
+				path: ["orgsExcluded"],
+				message: "Can't both include and exclude organizations",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+	});
 
 const playersSchema = z
 	.array(
