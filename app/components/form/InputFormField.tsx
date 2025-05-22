@@ -9,8 +9,7 @@ import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { type FormFieldSize, formFieldSizeToClassName } from "./form-utils";
 
-// xxx: rename inputformfield
-export function TextFormField<T extends FieldValues>({
+export function InputFormField<T extends FieldValues>({
 	label,
 	name,
 	bottomText,

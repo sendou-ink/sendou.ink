@@ -1,9 +1,6 @@
 import { z } from "zod";
 import { CALENDAR_EVENT_RESULT } from "~/constants";
-import {
-	type PersistedCalendarEventTag,
-	TOURNAMENT_STAGE_TYPES,
-} from "~/db/tables";
+import { type CalendarEventTag, TOURNAMENT_STAGE_TYPES } from "~/db/tables";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import "~/styles/calendar-new.css";
@@ -21,9 +18,7 @@ import { CALENDAR_EVENT } from "./calendar-constants";
 
 export const calendarEventTagSchema = z
 	.string()
-	.refine((val) =>
-		CALENDAR_EVENT.PERSISTED_TAGS.includes(val as PersistedCalendarEventTag),
-	);
+	.refine((val) => CALENDAR_EVENT.TAGS.includes(val as CalendarEventTag));
 
 const calendarFiltersPlainStringArr = z.array(z.string().max(100)).max(10);
 const calendarFiltersIdsArr = z.array(id).max(10);

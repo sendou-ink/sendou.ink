@@ -12,7 +12,7 @@ import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import type { CalendarEventTag } from "~/db/tables";
 import { CALENDAR_EVENT } from "~/features/calendar/calendar-constants";
-import { persistedTags as allTags } from "../calendar-constants";
+import { tags as allTags } from "../calendar-constants";
 
 import styles from "./TagsFormField.module.css";
 
@@ -68,8 +68,8 @@ export const SelectableTags = React.forwardRef<
 	const { t } = useTranslation();
 
 	const availableTags = tagsToOmit
-		? CALENDAR_EVENT.PERSISTED_TAGS.filter((tag) => !tagsToOmit?.includes(tag))
-		: CALENDAR_EVENT.PERSISTED_TAGS;
+		? CALENDAR_EVENT.TAGS.filter((tag) => !tagsToOmit?.includes(tag))
+		: CALENDAR_EVENT.TAGS;
 
 	return (
 		<TagGroup

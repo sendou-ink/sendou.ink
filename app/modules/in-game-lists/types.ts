@@ -1,5 +1,5 @@
 import type { abilities } from "./abilities";
-import type { modes, modesShortWithSpecial } from "./modes";
+import type { modesShort, modesShortWithSpecial } from "./modes";
 import type { stageIds } from "./stage-ids";
 import type {
 	mainWeaponIds,
@@ -7,7 +7,7 @@ import type {
 	subWeaponIds,
 } from "./weapon-ids";
 
-export type ModeShort = (typeof modes)[number]["short"];
+export type ModeShort = (typeof modesShort)[number];
 export type ModeShortWithSpecial = (typeof modesShortWithSpecial)[number];
 export type RankedModeShort = Exclude<ModeShort, "TW">;
 

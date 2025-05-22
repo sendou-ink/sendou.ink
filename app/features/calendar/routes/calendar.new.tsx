@@ -585,7 +585,7 @@ function TagsAdder() {
 	const [tags, setTags] = React.useState(baseEvent?.tags ?? []);
 	const id = React.useId();
 
-	const tagsForSelect = CALENDAR_EVENT.PERSISTED_TAGS.filter(
+	const tagsForSelect = CALENDAR_EVENT.TAGS.filter(
 		(tag) => !tags.includes(tag),
 	).filter((tag) => tag !== "SZ" && tag !== "TW"); // TODO: these are now added automatically, remove in migration?
 

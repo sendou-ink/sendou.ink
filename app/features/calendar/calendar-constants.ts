@@ -1,7 +1,6 @@
-import type { CalendarEventTag, PersistedCalendarEventTag } from "~/db/tables";
+import type { CalendarEventTag } from "~/db/tables";
 
-// xxx: rename to just tags
-export const persistedTags = {
+export const tags = {
 	SPECIAL: {
 		color: "#CE93D8",
 	},
@@ -70,10 +69,7 @@ export const CALENDAR_EVENT = {
 	BRACKET_URL_MAX_LENGTH: 200,
 	MAX_AMOUNT_OF_DATES: 5,
 	/** Calendar event tag that is persisted in the database */
-	PERSISTED_TAGS: Object.keys(
-		// xxx: rename to just tags
-		persistedTags,
-	) as Array<PersistedCalendarEventTag>,
+	TAGS: Object.keys(tags) as Array<CalendarEventTag>,
 	AVATAR_SIZE: 512,
 };
 

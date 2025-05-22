@@ -6,9 +6,9 @@ import { useTranslation } from "react-i18next";
 import { SubmitButton } from "~/components/SubmitButton";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
+import { InputFormField } from "~/components/form/InputFormField";
 import { InputGroupFormField } from "~/components/form/InputGroupFormField";
 import { TextArrayFormField } from "~/components/form/TextArrayFormField";
-import { TextFormField } from "~/components/form/TextFormField";
 import { ToggleFormField } from "~/components/form/ToggleFormField";
 import { FilterIcon } from "~/components/icons/Filter";
 import type { CalendarEventTag } from "~/db/tables";
@@ -175,7 +175,7 @@ function FiltersForm({
 					name={"isRanked" as const}
 				/>
 
-				<TextFormField<CalendarFilters>
+				<InputFormField<CalendarFilters>
 					label="Minimum team count"
 					type="number"
 					name={"minTeamCount" as const}

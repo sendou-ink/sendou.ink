@@ -288,7 +288,7 @@ function mapTournamentFromDB(
 			minMembersPerTeam: tournament.settings.minMembersPerTeam ?? 4,
 			isTest: tournament.settings.isTest ?? false,
 		}),
-		modes: null, // xxx: resolve modes
+		modes: null, // no need to show modes for front page, maybe could in the future?
 		firstPlacer:
 			tournament.firstPlacers.length > 0
 				? {

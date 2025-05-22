@@ -1,8 +1,8 @@
 import { useTranslation } from "react-i18next";
 import type { z } from "zod";
 import { SendouDialog } from "~/components/elements/Dialog";
+import { InputFormField } from "~/components/form/InputFormField";
 import { SendouForm } from "~/components/form/SendouForm";
-import { TextFormField } from "~/components/form/TextFormField";
 import { createNewAssociationSchema } from "~/features/associations/associations-schemas";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { associationsPage } from "~/utils/urls";
@@ -30,7 +30,7 @@ export default function AssociationsNewPage() {
 					name: "",
 				}}
 			>
-				<TextFormField<FormFields>
+				<InputFormField<FormFields>
 					label={t("scrims:associations.forms.name.title")}
 					name="name"
 				/>

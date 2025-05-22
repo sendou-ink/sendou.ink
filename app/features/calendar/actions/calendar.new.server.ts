@@ -57,8 +57,8 @@ export const action: ActionFunction = async ({ request }) => {
 			? data.tags
 					.sort(
 						(a, b) =>
-							CALENDAR_EVENT.PERSISTED_TAGS.indexOf(a as CalendarEventTag) -
-							CALENDAR_EVENT.PERSISTED_TAGS.indexOf(b as CalendarEventTag),
+							CALENDAR_EVENT.TAGS.indexOf(a as CalendarEventTag) -
+							CALENDAR_EVENT.TAGS.indexOf(b as CalendarEventTag),
 					)
 					.join(",")
 			: data.tags,

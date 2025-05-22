@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "~/components/Button";
 import { CrossIcon } from "~/components/icons/Cross";
 import type { CalendarEventTag } from "~/db/tables";
-import { persistedTags as allTags } from "../calendar-constants";
+import { tags as allTags } from "../calendar-constants";
 
 export function Tags({
 	tags,

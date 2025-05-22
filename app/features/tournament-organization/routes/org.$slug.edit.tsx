@@ -7,11 +7,11 @@ import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { AddFieldButton } from "~/components/form/AddFieldButton";
 import { FormFieldset } from "~/components/form/FormFieldset";
+import { InputFormField } from "~/components/form/InputFormField";
 import { SelectFormField } from "~/components/form/SelectFormField";
 import { SendouForm } from "~/components/form/SendouForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import { TextArrayFormField } from "~/components/form/TextArrayFormField";
-import { TextFormField } from "~/components/form/TextFormField";
 import { ToggleFormField } from "~/components/form/ToggleFormField";
 import { UserSearchFormField } from "~/components/form/UserSearchFormField";
 import { TOURNAMENT_ORGANIZATION_ROLES } from "~/db/tables";
@@ -74,7 +74,10 @@ export default function TournamentOrganizationEditPage() {
 					{t("org:edit.form.uploadLogo")}
 				</Link>
 
-				<TextFormField<FormFields> label={t("common:forms.name")} name="name" />
+				<InputFormField<FormFields>
+					label={t("common:forms.name")}
+					name="name"
+				/>
 
 				<TextAreaFormField<FormFields>
 					label={t("common:forms.description")}
@@ -159,7 +162,7 @@ function MemberFieldset({
 				}))}
 			/>
 
-			<TextFormField<FormFields>
+			<InputFormField<FormFields>
 				label={t("org:edit.form.members.roleDisplayName.title")}
 				name={`members.${idx}.roleDisplayName` as const}
 			/>
@@ -213,7 +216,7 @@ function SeriesFieldset({
 				clearErrors("series");
 			}}
 		>
-			<TextFormField<FormFields>
+			<InputFormField<FormFields>
 				label={t("org:edit.form.series.seriesName.title")}
 				name={`series.${idx}.name` as const}
 			/>
