@@ -43,6 +43,10 @@
 		"displayName": "Badge Palooza",
 		"authorDiscordId": "528851510222782474"
 	},
+	"bajablast": {
+		"displayName": "Baja's Blast",
+		"authorDiscordId": "336683473714544641"
+	},
 	"barcha": {
 		"displayName": "FC Barcha",
 		"authorDiscordId": "528851510222782474"
@@ -155,9 +159,17 @@
 		"displayName": "Torneo Crab Cancel Perfect and Shadow",
 		"authorDiscordId": "336683473714544641"
 	},
+	"crazyhand": {
+		"displayName": "Lucky Dice Crazy",
+		"authorDiscordId": "752582395076673577"
+	},
 	"crimson": {
 		"displayName": "Stellaris Phantasm: Crimson Bracket",
 		"authorDiscordId": "617399529532293150"
+	},
+	"crobattle": {
+		"displayName": "Crobattle Royale",
+		"authorDiscordId": "178733052762128385"
 	},
 	"curseofexcalibur": {
 		"displayName": "5 Unique Curse of Excalibur Events",
@@ -194,6 +206,10 @@
 	"dynamo": {
 		"displayName": "Dynamo Roller",
 		"authorDiscordId": "534502084134043648"
+	},
+	"emparrydualies": {
+		"displayName": "Dilly Dally Dualies",
+		"authorDiscordId": "338806780446638082"
 	},
 	"enabbq": {
 		"displayName": "ENA (Dream BBQ)",
@@ -283,6 +299,10 @@
 		"displayName": "THE GLAZE GAUNTLET",
 		"authorDiscordId": "528851510222782474"
 	},
+	"glooga": {
+		"displayName": "Glooga Cult Glooga Day Gimmick Tourney",
+		"authorDiscordId": "528851510222782474"
+	},
 	"goldenbrush": {
 		"displayName": "Golden Brush Award",
 		"authorDiscordId": "338806780446638082"
@@ -290,6 +310,14 @@
 	"gyra": {
 		"displayName": "Level Up x2 - Leveled Up!",
 		"authorDiscordId": "528851510222782474"
+	},
+	"habibi": {
+		"displayName": "Habibi 1v1",
+		"authorDiscordId": "752582395076673577"
+	},
+	"habibigold": {
+		"displayName": "Habibi 1v1 Gold Edition",
+		"authorDiscordId": "752582395076673577"
 	},
 	"hacker-cup-bronze": {
 		"displayName": "HACKER Cup (3rd Place)",
@@ -379,6 +407,10 @@
 		"displayName": "Reef Reunion (500 KT Power)",
 		"authorDiscordId": "1170249805373657093"
 	},
+	"lemoncider": {
+		"displayName": "Lemon Cider: One Trick!",
+		"authorDiscordId": "1320944066002681876"
+	},
 	"liftoff": {
 		"displayName": "Liftoff",
 		"authorDiscordId": "789943264370884708"
@@ -419,6 +451,10 @@
 		"displayName": "Splatoon 1 Tournament (Marie)",
 		"authorDiscordId": "336683473714544641"
 	},
+	"masterhand": {
+		"displayName": "Lucky Dice Master",
+		"authorDiscordId": "752582395076673577"
+	},
 	"matchmeet": {
 		"displayName": "Meet Your Match",
 		"authorDiscordId": "631246535560265749"
@@ -450,6 +486,10 @@
 	"minus-one-open": {
 		"displayName": "Minus One Open",
 		"authorDiscordId": "569271521776762896"
+	},
+	"moxiaward": {
+		"displayName": "Moxi Achievement",
+		"authorDiscordId": "1131109226551459881"
 	},
 	"muchen": {
 		"displayName": "Bastard München",
@@ -505,6 +545,10 @@
 	},
 	"noentrysilver": {
 		"displayName": "Banning Legends 2nd",
+		"authorDiscordId": "338806780446638082"
+	},
+	"octobrush": {
+		"displayName": "Brush Brawls",
 		"authorDiscordId": "338806780446638082"
 	},
 	"octoshot": {
@@ -582,6 +626,10 @@
 	"real": {
 		"displayName": "Re Al",
 		"authorDiscordId": "528851510222782474"
+	},
+	"reccent": {
+		"displayName": "The REC Center",
+		"authorDiscordId": "1320944066002681876"
 	},
 	"revocup": {
 		"displayName": "Revo'Cup",
@@ -664,7 +712,7 @@
 		"authorDiscordId": "528851510222782474"
 	},
 	"silverstars": {
-		"displayName": "Beta Bracket",
+		"displayName": "Leblanc Hideout Beta Bracket",
 		"authorDiscordId": "338806780446638082"
 	},
 	"slyeion": {
@@ -770,6 +818,10 @@
 	"three_course_pal": {
 		"displayName": "Squids For Palestinian Kids",
 		"authorDiscordId": "338806780446638082"
+	},
+	"threeofa": {
+		"displayName": "Three of a Kind (1st Place)",
+		"authorDiscordId": "1320944066002681876"
 	},
 	"tnttoken12": {
 		"displayName": "DYNAMITE TOKEN",
