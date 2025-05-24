@@ -10,8 +10,9 @@ import { InputFormField } from "~/components/form/InputFormField";
 import { InputGroupFormField } from "~/components/form/InputGroupFormField";
 import { TextArrayFormField } from "~/components/form/TextArrayFormField";
 import { ToggleFormField } from "~/components/form/ToggleFormField";
-import { FilterIcon } from "~/components/icons/Filter";
+import { FilterFilledIcon } from "~/components/icons/FilterFilled";
 import type { CalendarEventTag } from "~/db/tables";
+import { useUser } from "~/features/auth/core/user";
 import { calendarFiltersFormSchema } from "~/features/calendar/calendar-schemas";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
 import { TagsFormField } from "~/features/calendar/components/TagsFormField";
@@ -22,10 +23,10 @@ export function FiltersDialog({ filters }: { filters: CalendarFilters }) {
 	return (
 		<>
 			<SendouButton
-				variant="outlined"
 				size="small"
-				icon={<FilterIcon />}
+				icon={<FilterFilledIcon />}
 				onClick={() => setIsOpen(true)}
+				data-testid="filter-events-button"
 			>
 				Filter
 			</SendouButton>
@@ -61,6 +62,7 @@ function FiltersForm({
 	filters,
 	closeDialog,
 }: { filters: CalendarFilters; closeDialog: () => void }) {
+	const user = useUser();
 	const { t } = useTranslation(["game-misc"]);
 	const methods = useForm({
 		resolver: zodResolver(calendarFiltersFormSchema),
@@ -199,9 +201,11 @@ function FiltersForm({
 
 				<div className="stack horizontal md justify-center mt-6 w-full">
 					<SendouButton onPress={() => onApply()}>Apply</SendouButton>
-					<SubmitButton variant="outlined" state={fetcher.state}>
-						Apply & make default
-					</SubmitButton>
+					{user ? (
+						<SubmitButton variant="outlined" state={fetcher.state}>
+							Apply & make default
+						</SubmitButton>
+					) : null}
 				</div>
 			</fetcher.Form>
 		</FormProvider>

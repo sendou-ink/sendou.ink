@@ -59,6 +59,11 @@ export async function selectComboboxValue({
 /** page.goto that waits for the page to be hydrated before proceeding */
 export async function navigate({ page, url }: { page: Page; url: string }) {
 	await page.goto(url);
+	await expectIsHydrated(page);
+}
+
+/** Waits and expects the page to be hydrated (click handlers etc. ready for testing) */
+export async function expectIsHydrated(page: Page) {
 	await expect(page.getByTestId("hydrated")).toHaveCount(1);
 }
 

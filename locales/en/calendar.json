@@ -1,8 +1,5 @@
 {
 	"inYourTimeZone": "Times in your local time zone:",
-	"addNew": "Add new",
-	"noEvents": "No events for the selected week",
-	"reportResults": "You can report results:",
 	"day": "Day {{number}}",
 	"actions.reportWinners": "Report winners",
 	"actions.delete": "Delete event",
@@ -12,8 +9,6 @@
 	"members": "Members",
 	"results": "Results",
 	"createMapList": "Create map list",
-	"from": "From {{author}}",
-	"pastEvents.dividerText": "Past events",
 	"count.teams_one": "{{count}} team",
 	"count.players_one": "{{count}} player",
 	"count.teams_other": "{{count}} teams",
@@ -46,11 +41,6 @@
 	"forms.errors.duplicatePlayer": "Can't have the same player twice in the same team.",
 	"forms.errors.emptyTeam": "Each team must have at least one player.",
 
-	"week.this": "This Week",
-	"week.next": "Next Week",
-	"week.last": "Last Week",
-
-	"tag.desc.BADGE": "Winner of this event gets a sendou.ink badge.",
 	"tag.desc.SPECIAL": "Ruleset that differs from the standard e.g. limited what weapons can be used.",
 	"tag.desc.ART": "You can win art by playing in this tournament.",
 	"tag.desc.MONEY": "You can win money by playing in this tournament.",
@@ -64,8 +54,5 @@
 	"tag.desc.S1": "The game played is Splatoon 1.",
 	"tag.desc.S2": "The game played is Splatoon 2.",
 	"tag.desc.SR": "Salmon Run event.",
-	"tag.desc.CARDS": "Tableturf Battle event.",
-	"tag.filter.label": "Filter by tags",
-
-	"tournament.filter.label": "Hosted on sendou.ink"
+	"tag.desc.CARDS": "Tableturf Battle event."
 }

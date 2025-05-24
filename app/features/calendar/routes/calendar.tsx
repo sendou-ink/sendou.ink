@@ -3,6 +3,7 @@ import { Link, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import type * as React from "react";
 import { useTranslation } from "react-i18next";
+import { CopyToClipboardPopover } from "~/components/CopyToClipboardPopover";
 import { Main } from "~/components/Main";
 import {
 	SendouButton,
@@ -10,8 +11,10 @@ import {
 } from "~/components/elements/Button";
 import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
 import { ArrowRightIcon } from "~/components/icons/ArrowRight";
+import { CalendarIcon } from "~/components/icons/Calendar";
 import { EyeIcon } from "~/components/icons/Eye";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
+import { LinkIcon } from "~/components/icons/Link";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
 import { useCollapsableEvents } from "~/features/calendar/calendar-hooks";
 import { metaTags } from "~/utils/remix";
@@ -54,8 +57,8 @@ export default function CalendarPage() {
 
 	return (
 		<Main bigger className="stack lg">
-			<div className="stack horizontal items-start justify-between">
-				<div className="stack md horizontal">
+			<div className={styles.buttonsContainer}>
+				<div className={styles.navigateButtonsContainer}>
 					<NavigateButton
 						icon={<ArrowLeftIcon />}
 						daysInterval={previous}
@@ -70,11 +73,22 @@ export default function CalendarPage() {
 					>
 						Next
 					</NavigateButton>
+					<CalendarDatePicker />
 				</div>
-				<FiltersDialog
-					key={CalendarEvent.filtersToString(data.filters)}
-					filters={data.filters}
-				/>
+				<div className="stack sm horizontal ml-auto">
+					<CopyToClipboardPopover
+						trigger={
+							<SendouButton icon={<LinkIcon />} size="small" variant="outlined">
+								iCal feed
+							</SendouButton>
+						}
+						url="https://sendou.ink/calendar.ics"
+					/>
+					<FiltersDialog
+						key={CalendarEvent.filtersToString(data.filters)}
+						filters={data.filters}
+					/>
+				</div>
 			</div>
 			<div
 				className={styles.columnsContainer}
@@ -130,6 +144,7 @@ function NavigateButton({
 		<Link
 			to={calendarPage({ filters, dayMonthYear: lowestDate })}
 			className={styles.navigateButton}
+			data-testid="calendar-navigate-button"
 		>
 			{icon}
 			<div>
@@ -139,6 +154,12 @@ function NavigateButton({
 				</div>
 			</div>
 		</Link>
+	);
+}
+
+function CalendarDatePicker() {
+	return (
+		<SendouButton className={styles.navigateButton} icon={<CalendarIcon />} />
 	);
 }
 
@@ -183,13 +204,14 @@ function DayHeader(props: { date: number; month: number }) {
 	const { i18n } = useTranslation();
 
 	const date = new Date(new Date().getFullYear(), props.month, props.date);
+	const isToday = date.toDateString() === new Date().toDateString();
 
 	return (
 		<div
 			className={clsx(styles.dayHeader, {
-				[styles.dayHeaderToday]:
-					date.toDateString() === new Date().toDateString(),
+				[styles.dayHeaderToday]: isToday,
 			})}
+			data-testid={isToday ? "today-header" : undefined}
 		>
 			{date.toLocaleDateString(i18n.language, {
 				day: "numeric",
@@ -248,6 +270,7 @@ function ClockHeader({
 						onClick={onToggleHidden}
 						variant="minimal"
 						className={styles.hiddenEventsButton}
+						data-testid="hidden-events-button"
 					>
 						{hiddenEventsCount}
 					</SendouButton>

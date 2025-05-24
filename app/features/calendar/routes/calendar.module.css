@@ -1,3 +1,17 @@
+.buttonsContainer {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--s-6);
+	align-items: start;
+	flex-wrap: wrap-reverse;
+}
+
+.navigateButtonsContainer {
+	display: flex;
+	gap: var(--s-4);
+	width: 100%;
+}
+
 .navigateButton {
 	all: unset;
 	background-color: var(--bg-lightest);
@@ -8,6 +22,17 @@
 	border-radius: var(--rounded-sm);
 	padding: var(--s-1) var(--s-2);
 	font-size: var(--fonts-xs);
+	flex: 1 1 0;
+}
+
+@media screen and (min-width: 550px) {
+	.navigateButton {
+		flex: initial;
+	}
+
+	.navigateButtonsContainer {
+		width: initial;
+	}
 }
 
 .navigateButton svg {

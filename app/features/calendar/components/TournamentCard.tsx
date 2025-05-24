@@ -49,6 +49,7 @@ export function TournamentCard({
 			className={clsx(className, styles.container, {
 				[styles.containerTall]: isShowcase && tournament.firstPlacer,
 			})}
+			data-testid="tournament-card"
 		>
 			<Link to={tournament.url} className={styles.card}>
 				<div className="stack horizontal justify-between">

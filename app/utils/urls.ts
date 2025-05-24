@@ -265,18 +265,18 @@ export const weaponBuildStatsPage = (weaponSlug: string) =>
 export const weaponBuildPopularPage = (weaponSlug: string) =>
 	`${weaponBuildPage(weaponSlug)}/popular`;
 
-export const calendarPage = ({
-	filters,
-	dayMonthYear,
-}: { filters?: CalendarFilters; dayMonthYear?: DayMonthYear }) => {
+export const calendarPage = (args?: {
+	filters?: CalendarFilters;
+	dayMonthYear?: DayMonthYear;
+}) => {
 	const params = new URLSearchParams();
-	if (filters) {
-		params.set("filters", JSON.stringify(filters));
+	if (args?.filters) {
+		params.set("filters", JSON.stringify(args.filters));
 	}
-	if (dayMonthYear) {
-		params.set("day", String(dayMonthYear.day));
-		params.set("month", String(dayMonthYear.month));
-		params.set("year", String(dayMonthYear.year));
+	if (args?.dayMonthYear) {
+		params.set("day", String(args.dayMonthYear.day));
+		params.set("month", String(args.dayMonthYear.month));
+		params.set("year", String(args.dayMonthYear.year));
 	}
 
 	return `${CALENDAR_PAGE}${params.toString() ? `?${params.toString()}` : ""}`;
