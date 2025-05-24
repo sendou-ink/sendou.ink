@@ -23,6 +23,8 @@ import {
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
 import invariant from "~/utils/invariant";
+import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import type { Unwrapped } from "~/utils/types";
 import { calendarEventPage, tournamentPage } from "~/utils/urls";
 import {
 	modesIncluded,
@@ -105,7 +107,47 @@ export async function findAllBetweenTwoTimestamps(
 	return findAllBetweenTwoTimestampsMapped(rows);
 }
 
-// xxx: move for showcase here and dedupe
+const withOrganization = (eb: ExpressionBuilder<DB, "CalendarEvent">) =>
+	jsonObjectFrom(
+		eb
+			.selectFrom("TournamentOrganization")
+			.select(["TournamentOrganization.name", "TournamentOrganization.slug"])
+			.whereRef(
+				"TournamentOrganization.id",
+				"=",
+				"CalendarEvent.organizationId",
+			),
+	);
+
+const withTeamsCount = (
+	eb: ExpressionBuilder<DB, "CalendarEventDate" | "Tournament">,
+) =>
+	eb
+		.selectFrom("TournamentTeam")
+		.leftJoin("TournamentTeamCheckIn", (join) =>
+			join
+				.on("TournamentTeamCheckIn.bracketIdx", "is", null)
+				.onRef(
+					"TournamentTeamCheckIn.tournamentTeamId",
+					"=",
+					"TournamentTeam.id",
+				),
+		)
+		.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+		.where((eb) =>
+			eb.or([
+				eb("TournamentTeamCheckIn.checkedInAt", "is not", null),
+				eb("CalendarEventDate.startTime", ">", databaseTimestampNow()),
+			]),
+		)
+		.select(({ fn }) => [fn.countAll<number>().as("teamsCount")]);
+
+const withLogoUrl = (eb: ExpressionBuilder<DB, "CalendarEvent">) =>
+	eb
+		.selectFrom("UserSubmittedImage")
+		.select(["UserSubmittedImage.url"])
+		.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id");
+
 function findAllBetweenTwoTimestampsQuery({
 	startTime,
 	endTime,
@@ -131,39 +173,9 @@ function findAllBetweenTwoTimestampsQuery({
 			sql<number>`(("CalendarEventDate"."startTime" + 900) / 1800) * 1800`.as(
 				"normalizedStartTime",
 			),
-			jsonObjectFrom(
-				eb
-					.selectFrom("TournamentOrganization")
-					.select([
-						"TournamentOrganization.name",
-						"TournamentOrganization.slug",
-					])
-					.whereRef(
-						"TournamentOrganization.id",
-						"=",
-						"CalendarEvent.organizationId",
-					),
-			).as("organization"),
-			eb
-				.selectFrom("TournamentTeam")
-				.leftJoin("TournamentTeamCheckIn", (join) =>
-					join
-						.on("TournamentTeamCheckIn.bracketIdx", "is", null)
-						.onRef(
-							"TournamentTeamCheckIn.tournamentTeamId",
-							"=",
-							"TournamentTeam.id",
-						),
-				)
-				.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
-				.where((eb) =>
-					eb.or([
-						eb("TournamentTeamCheckIn.checkedInAt", "is not", null),
-						eb("CalendarEventDate.startTime", ">", databaseTimestampNow()),
-					]),
-				)
-				.select(({ fn }) => [fn.countAll<number>().as("teamsCount")])
-				.as("teamsCount"),
+			withOrganization(eb).as("organization"),
+			withTeamsCount(eb).as("teamsCount"),
+			withLogoUrl(eb).as("logoUrl"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("MapPoolMap")
@@ -182,11 +194,6 @@ function findAllBetweenTwoTimestampsQuery({
 					)
 					.orderBy("Badge.id", "asc"),
 			).as("badges"),
-			eb
-				.selectFrom("UserSubmittedImage")
-				.select(["UserSubmittedImage.url"])
-				.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id")
-				.as("logoUrl"),
 		])
 		.where("CalendarEvent.hidden", "=", 0)
 		.where(
@@ -261,6 +268,72 @@ function findAllBetweenTwoTimestampsMapped(
 		.sort((a, b) => a.at - b.at);
 
 	return dates;
+}
+
+export type ForShowcase = Unwrapped<typeof forShowcase>;
+
+export function forShowcase() {
+	return db
+		.selectFrom("Tournament")
+		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEvent.id",
+			"CalendarEventDate.eventId",
+		)
+		.select((eb) => [
+			"Tournament.id",
+			"Tournament.settings",
+			"CalendarEvent.authorId",
+			"CalendarEvent.name",
+			"CalendarEventDate.startTime",
+			withTeamsCount(eb).as("teamsCount"),
+			withLogoUrl(eb).as("logoUrl"),
+			withOrganization(eb).as("organization"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentResult")
+					.innerJoin("User", "TournamentResult.userId", "User.id")
+					.innerJoin(
+						"TournamentTeam",
+						"TournamentResult.tournamentTeamId",
+						"TournamentTeam.id",
+					)
+					.leftJoin("AllTeam", "TournamentTeam.teamId", "AllTeam.id")
+					.leftJoin(
+						"UserSubmittedImage as TeamAvatar",
+						"AllTeam.avatarImgId",
+						"TeamAvatar.id",
+					)
+					.leftJoin(
+						"UserSubmittedImage as TournamentTeamAvatar",
+						"TournamentTeam.avatarImgId",
+						"TournamentTeamAvatar.id",
+					)
+					.whereRef("TournamentResult.tournamentId", "=", "Tournament.id")
+					.where("TournamentResult.placement", "=", 1)
+					.select([
+						...COMMON_USER_FIELDS,
+						"User.country",
+						"TournamentTeam.name as teamName",
+						"TeamAvatar.url as teamLogoUrl",
+						"TournamentTeamAvatar.url as pickupAvatarUrl",
+					]),
+			).as("firstPlacers"),
+		])
+		.where("CalendarEvent.hidden", "=", 0)
+		.where("CalendarEventDate.startTime", ">", databaseTimestampWeekAgo())
+		.orderBy("CalendarEventDate.startTime", "asc")
+		.$narrowType<{ teamsCount: NotNull }>()
+		.execute();
+}
+
+function databaseTimestampWeekAgo() {
+	const now = new Date();
+
+	now.setDate(now.getDate() - 7);
+
+	return dateToDatabaseTimestamp(now);
 }
 
 export async function findById({
