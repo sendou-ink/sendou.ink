@@ -1,8 +1,12 @@
 import type { ZodType } from "zod";
 import { z } from "zod";
 import { CUSTOM_CSS_VAR_COLORS, INVITE_CODE_LENGTH } from "~/constants";
-import type { abilitiesShort } from "~/modules/in-game-lists";
-import { abilities, mainWeaponIds, stageIds } from "~/modules/in-game-lists";
+import {
+	abilities,
+	type abilitiesShort,
+} from "~/modules/in-game-lists/abilities";
+import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { FRIEND_CODE_REGEXP } from "../features/sendouq/q-constants";
 import type { Unpacked } from "./types";
 import { assertType } from "./types";

@@ -1,5 +1,5 @@
 import { BUILDS_PAGE_MAX_BUILDS } from "~/constants";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { cache, syncCached } from "~/utils/cache.server";
 import { buildsByWeaponId } from "../queries/buildsBy.server";
 

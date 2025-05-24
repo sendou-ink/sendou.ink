@@ -1,6 +1,7 @@
 import type { BuildSort } from "~/db/tables";
 import type * as BuildRepository from "~/features/builds/BuildRepository.server";
-import { type MainWeaponId, modesShort } from "~/modules/in-game-lists";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { weaponIdToBucketId } from "~/modules/in-game-lists/weapon-ids";
 import { DEFAULT_BUILD_SORT } from "../user-page-constants";
 

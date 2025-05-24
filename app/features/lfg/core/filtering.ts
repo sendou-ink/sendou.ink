@@ -1,5 +1,5 @@
 import { compareTwoTiers } from "~/features/mmr/mmr-utils";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	altWeaponIdToId,
 	mainWeaponIds,

@@ -21,7 +21,7 @@ import type {
 	MainWeaponId,
 	ModeShort,
 	StageId,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/types";
 import type { JSONColumnTypeNullable } from "~/utils/kysely.server";
 
 type Generated<T> = T extends ColumnType<infer S, infer I, infer U>

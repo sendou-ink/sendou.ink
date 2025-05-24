@@ -9,9 +9,9 @@ import type { BuildWeaponWithTop500Info } from "~/features/builds/queries/builds
 import {
 	clothesGearIds,
 	headGearIds,
-	modesShort,
 	shoesGearIds,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/gear-ids";
+import { modesShort } from "~/modules/in-game-lists/modes";
 import type {
 	BuildAbilitiesTuple,
 	MainWeaponId,

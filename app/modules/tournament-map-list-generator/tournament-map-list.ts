@@ -1,5 +1,6 @@
+import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import invariant from "~/utils/invariant";
-import { type ModeShort, type StageId, stageIds } from "../in-game-lists";
+import type { ModeShort, StageId } from "../in-game-lists/types";
 import { DEFAULT_MAP_POOL } from "./constants";
 import type {
 	TournamentMapListMap,

@@ -6,7 +6,7 @@ import {
 	mainWeaponIds,
 	specialWeaponIds,
 	subWeaponIds,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/types";
 import weapons from "./dicts/WeaponInfoMain.json";
 import specialWeapons from "./dicts/WeaponInfoSpecial.json";
 import subWeapons from "./dicts/WeaponInfoSub.json";

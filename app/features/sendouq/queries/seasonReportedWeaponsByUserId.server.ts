@@ -1,6 +1,6 @@
 import { sql } from "~/db/sql";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 
 const stm = sql.prepare(/* sql */ `

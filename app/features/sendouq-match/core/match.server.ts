@@ -10,8 +10,8 @@ import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import { addSkillsToGroups } from "~/features/sendouq/core/groups.server";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import type { LookingGroupWithInviteCode } from "~/features/sendouq/q-types";
-import type { ModeShort, StageId } from "~/modules/in-game-lists";
-import { modesShort } from "~/modules/in-game-lists";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
 	type TournamentMapListMap,
 	createTournamentMapList,

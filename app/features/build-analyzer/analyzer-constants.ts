@@ -1,4 +1,4 @@
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { DamageType } from "./analyzer-types";
 
 export const MAX_LDE_INTENSITY = 21;

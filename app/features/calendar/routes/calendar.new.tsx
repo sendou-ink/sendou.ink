@@ -23,7 +23,7 @@ import type { CalendarEventTag, Tables } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import type { RankedModeShort } from "~/modules/in-game-lists";
+import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import { isDefined } from "~/utils/arrays";
 import {
 	databaseTimestampToDate,

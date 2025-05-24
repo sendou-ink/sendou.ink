@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { createTournamentMapList } from ".";
-import type { RankedModeShort } from "../in-game-lists";
 import { rankedModesShort } from "../in-game-lists/modes";
+import type { RankedModeShort } from "../in-game-lists/types";
 import { DEFAULT_MAP_POOL } from "./constants";
 import type { TournamentMaplistInput } from "./types";
 

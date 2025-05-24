@@ -50,21 +50,21 @@ import {
 	secondsToHoursMinutesSecondString,
 	youtubeIdToYoutubeUrl,
 } from "~/features/vods/vods-utils";
+import { abilities } from "~/modules/in-game-lists/abilities";
+import {
+	clothesGearIds,
+	headGearIds,
+	shoesGearIds,
+} from "~/modules/in-game-lists/gear-ids";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import { rankedModesShort } from "~/modules/in-game-lists/modes";
+import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type {
 	AbilityType,
 	MainWeaponId,
 	StageId,
-} from "~/modules/in-game-lists";
-import {
-	abilities,
-	clothesGearIds,
-	headGearIds,
-	mainWeaponIds,
-	modesShort,
-	shoesGearIds,
-	stageIds,
-} from "~/modules/in-game-lists";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
+} from "~/modules/in-game-lists/types";
+import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
 import { SENDOUQ_DEFAULT_MAPS } from "~/modules/tournament-map-list-generator/constants";
 import { nullFilledArray } from "~/utils/arrays";

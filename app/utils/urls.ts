@@ -7,7 +7,7 @@ import type { CalendarFilters } from "~/features/calendar/calendar-types";
 import type { StageBackgroundStyle } from "~/features/map-planner";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import { JOIN_CODE_SEARCH_PARAM_KEY } from "~/features/sendouq/q-constants";
-import type { ModeShort, weaponCategories } from "~/modules/in-game-lists";
+import type { ModeShort } from "~/modules/in-game-lists/types";
 import type {
 	Ability,
 	AbilityWithUnknown,
@@ -18,6 +18,7 @@ import type {
 	StageId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
+import type { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
 import type { DayMonthYear } from "~/utils/zod";
 
 const staticAssetsUrl = ({

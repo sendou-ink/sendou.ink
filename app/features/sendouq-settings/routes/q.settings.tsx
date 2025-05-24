@@ -28,8 +28,8 @@ import {
 } from "~/features/chat/chat-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { languagesUnified } from "~/modules/i18n/config";
-import type { MainWeaponId, ModeShort } from "~/modules/in-game-lists";
 import { modesShort } from "~/modules/in-game-lists/modes";
+import type { MainWeaponId, ModeShort } from "~/modules/in-game-lists/types";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";

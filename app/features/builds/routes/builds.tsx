@@ -3,8 +3,11 @@ import { Link } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
-import type { MainWeaponId } from "~/modules/in-game-lists";
-import { weaponCategories, weaponIdIsNotAlt } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import {
+	weaponCategories,
+	weaponIdIsNotAlt,
+} from "~/modules/in-game-lists/weapon-ids";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BUILDS_PAGE,

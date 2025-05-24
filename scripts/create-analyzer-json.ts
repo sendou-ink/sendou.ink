@@ -11,8 +11,11 @@ import fs from "node:fs";
 import { z } from "zod";
 import type { MainWeaponParams, SubWeaponParams } from "~/modules/analyzer";
 import type { ParamsJson } from "~/modules/analyzer/types";
-import { SQUID_BEAKON_ID, type SpecialWeaponId } from "~/modules/in-game-lists";
-import { type SubWeaponId, subWeaponIds } from "~/modules/in-game-lists";
+import {
+	SQUID_BEAKON_ID,
+	type SpecialWeaponId,
+} from "~/modules/in-game-lists/types";
+import { type SubWeaponId, subWeaponIds } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import playersParams from "./dicts/SplPlayer.game__GameParameterTable.json";
 import weapons from "./dicts/WeaponInfoMain.json";

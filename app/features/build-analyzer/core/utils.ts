@@ -1,4 +1,5 @@
 import { EMPTY_BUILD } from "~/constants";
+import { abilities } from "~/modules/in-game-lists/abilities";
 import type {
 	Ability,
 	AbilityType,
@@ -7,16 +8,15 @@ import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/types";
 import {
-	abilities,
 	mainWeaponIds,
 	nonBombSubWeaponIds,
 	nonDamagingSpecialWeaponIds,
 	specialWeaponIds,
 	subWeaponIds,
 	weaponCategories,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import type { Unpacked } from "~/utils/types";
 import { UNKNOWN_SHORT } from "../analyzer-constants";

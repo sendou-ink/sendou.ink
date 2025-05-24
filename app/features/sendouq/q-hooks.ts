@@ -1,5 +1,5 @@
 import * as React from "react";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 
 const LOCAL_STORAGE_KEY = "sq__reported-weapons";
 const MAX_REPORTED_WEAPONS = 6;

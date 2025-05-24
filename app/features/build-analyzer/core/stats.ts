@@ -1,27 +1,27 @@
 import { nanoid } from "nanoid";
 import * as R from "remeda";
+import type {
+	Ability,
+	MainWeaponId,
+	SubWeaponId,
+} from "~/modules/in-game-lists/types";
 import {
+	ANGLE_SHOOTER_ID,
 	AUTO_BOMB_ID,
-	type Ability,
 	BURST_BOMB_ID,
 	CRAB_TANK_ID,
 	CURLING_BOMB_ID,
 	FIZZY_BOMB_ID,
-	type MainWeaponId,
+	INK_MINE_ID,
+	POINT_SENSOR_ID,
 	SPLASH_WALL_ID,
 	SPLAT_BOMB_ID,
 	SPRINKLER_ID,
 	SUCTION_BOMB_ID,
-	type SubWeaponId,
 	TORPEDO_ID,
 	ZIPCASTER_ID,
 	subWeaponIds,
-} from "~/modules/in-game-lists";
-import {
-	ANGLE_SHOOTER_ID,
-	INK_MINE_ID,
-	POINT_SENSOR_ID,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import { cutToNDecimalPlaces, roundToNDecimalPlaces } from "~/utils/number";
 import { assertUnreachable } from "~/utils/types";

@@ -3,7 +3,7 @@ import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { mapPickingStyleToModes } from "~/features/tournament/tournament-utils";
 import type { Round } from "~/modules/brackets-model";
-import type { ModeShort, StageId } from "~/modules/in-game-lists";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
 import {
 	type TournamentMaplistSource,

@@ -4,7 +4,7 @@ import type {
 	ModeShort,
 	ModeWithStage,
 	StageId,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/types";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";

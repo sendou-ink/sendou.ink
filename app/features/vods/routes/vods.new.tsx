@@ -18,11 +18,9 @@ import { UserSearch } from "~/components/elements/UserSearch";
 import { AddFieldButton } from "~/components/form/AddFieldButton";
 import { RemoveFieldButton } from "~/components/form/RemoveFieldButton";
 import type { Tables } from "~/db/tables";
-import {
-	type MainWeaponId,
-	modesShort,
-	stageIds,
-} from "~/modules/in-game-lists";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Alert } from "../../../components/Alert";

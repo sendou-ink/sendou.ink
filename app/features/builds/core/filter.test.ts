@@ -4,7 +4,7 @@ import type {
 	Ability,
 	BuildAbilitiesTuple,
 	ModeShort,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { filterBuilds } from "./filter.server";
 

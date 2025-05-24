@@ -1,5 +1,6 @@
 import { MAX_AP } from "~/constants";
-import { type Ability, abilities } from "~/modules/in-game-lists";
+import { abilities } from "~/modules/in-game-lists/abilities";
+import type { Ability } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import { isStackableAbility } from "../build-analyzer/core/utils";

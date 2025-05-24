@@ -24,7 +24,7 @@ import {
 	validatedBuildFromSearchParams,
 	validatedWeaponIdFromSearchParams,
 } from "~/features/build-analyzer";
-import { modesShort } from "~/modules/in-game-lists";
+import { modesShort } from "~/modules/in-game-lists/modes";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type {
 	BuildAbilitiesTupleWithUnknown,

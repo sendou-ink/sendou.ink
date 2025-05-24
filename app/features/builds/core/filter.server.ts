@@ -1,6 +1,9 @@
 import type { Tables } from "~/db/tables";
 import { buildToAbilityPoints } from "~/features/build-analyzer";
-import type { BuildAbilitiesTuple, ModeShort } from "~/modules/in-game-lists";
+import type {
+	BuildAbilitiesTuple,
+	ModeShort,
+} from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { assertUnreachable } from "~/utils/types";
 import type { BuildFiltersFromSearchParams } from "../builds-schemas.server";

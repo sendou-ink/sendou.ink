@@ -6,7 +6,7 @@ import type {
 	TieredSkill,
 } from "~/features/mmr/tiered.server";
 import { mapModePreferencesToModeList } from "~/features/sendouq-match/core/match.server";
-import { modesShort } from "~/modules/in-game-lists";
+import { modesShort } from "~/modules/in-game-lists/modes";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { FULL_GROUP_SIZE } from "../q-constants";

@@ -1,4 +1,4 @@
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import weaponTranslations from "../../locales/en/weapons.json";
 import { mySlugify } from "./urls";
 

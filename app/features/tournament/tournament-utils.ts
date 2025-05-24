@@ -1,7 +1,7 @@
 import * as R from "remeda";
 import { INVITE_CODE_LENGTH } from "~/constants";
-import type { ModeShort, StageId } from "~/modules/in-game-lists";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { weekNumberToDate } from "~/utils/dates";
 import { tournamentLogoUrl } from "~/utils/urls";
 import type { Tables, TournamentStageSettings } from "../../db/tables";

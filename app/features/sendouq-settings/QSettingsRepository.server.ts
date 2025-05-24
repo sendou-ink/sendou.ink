@@ -1,6 +1,6 @@
 import { db } from "~/db/sql";
 import type { QWeaponPool, Tables, UserMapModePreferences } from "~/db/tables";
-import { modesShort } from "~/modules/in-game-lists";
+import { modesShort } from "~/modules/in-game-lists/modes";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 
 export async function settingsByUserId(userId: number) {

@@ -5,12 +5,10 @@ import { ModeImage } from "~/components/Image";
 import { CrossIcon } from "~/components/icons/Cross";
 import { PATCHES } from "~/constants";
 import { possibleApValues } from "~/features/build-analyzer";
-import type { ModeShort } from "~/modules/in-game-lists";
-import {
-	type Ability as AbilityType,
-	abilities,
-	modesShort,
-} from "~/modules/in-game-lists";
+import { abilities } from "~/modules/in-game-lists/abilities";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import type { ModeShort } from "~/modules/in-game-lists/types";
+import type { Ability as AbilityType } from "~/modules/in-game-lists/types";
 import { dateToYYYYMMDD } from "~/utils/dates";
 import type {
 	AbilityBuildFilter,
