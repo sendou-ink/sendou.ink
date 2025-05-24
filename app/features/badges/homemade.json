@@ -39,6 +39,10 @@
 		"displayName": "Badge Palooza",
 		"authorDiscordId": "528851510222782474"
 	},
+	"bajablast": {
+		"displayName": "Baja's Blast",
+		"authorDiscordId": "336683473714544641"
+	},
 	"barcha": {
 		"displayName": "FC Barcha",
 		"authorDiscordId": "528851510222782474"
@@ -158,6 +162,10 @@
 	"crimson": {
 		"displayName": "Stellaris Phantasm: Crimson Bracket",
 		"authorDiscordId": "617399529532293150"
+	},
+	"crobattle": {
+		"displayName": "Crobattle Royale",
+		"authorDiscordId": "178733052762128385"
 	},
 	"curseofexcalibur": {
 		"displayName": "5 Unique Curse of Excalibur Events",
@@ -287,6 +295,10 @@
 		"displayName": "THE GLAZE GAUNTLET",
 		"authorDiscordId": "528851510222782474"
 	},
+	"glooga": {
+		"displayName": "Glooga Cult Glooga Day Gimmick Tourney",
+		"authorDiscordId": "528851510222782474"
+	},
 	"goldenbrush": {
 		"displayName": "Golden Brush Award",
 		"authorDiscordId": "338806780446638082"
@@ -294,6 +306,14 @@
 	"gyra": {
 		"displayName": "Level Up x2 - Leveled Up!",
 		"authorDiscordId": "528851510222782474"
+	},
+	"habibi": {
+		"displayName": "Habibi 1v1",
+		"authorDiscordId": "752582395076673577"
+	},
+	"habibigold": {
+		"displayName": "Habibi 1v1 Gold Edition",
+		"authorDiscordId": "752582395076673577"
 	},
 	"hacker-cup-bronze": {
 		"displayName": "HACKER Cup (3rd Place)",
@@ -463,6 +483,10 @@
 		"displayName": "Minus One Open",
 		"authorDiscordId": "569271521776762896"
 	},
+	"moxiaward": {
+		"displayName": "Moxi Achievement",
+		"authorDiscordId": "1131109226551459881"
+	},
 	"muchen": {
 		"displayName": "Bastard München",
 		"authorDiscordId": "528851510222782474"
@@ -599,6 +623,10 @@
 		"displayName": "Re Al",
 		"authorDiscordId": "528851510222782474"
 	},
+	"reccent": {
+		"displayName": "The REC Center",
+		"authorDiscordId": "1320944066002681876"
+	},
 	"revocup": {
 		"displayName": "Revo'Cup",
 		"authorDiscordId": "309327923129745409"
@@ -680,7 +708,7 @@
 		"authorDiscordId": "528851510222782474"
 	},
 	"silverstars": {
-		"displayName": "Beta Bracket",
+		"displayName": "Leblanc Hideout Beta Bracket",
 		"authorDiscordId": "338806780446638082"
 	},
 	"slyeion": {

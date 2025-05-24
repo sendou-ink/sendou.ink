@@ -59,6 +59,7 @@ export default [
 		),
 		route("map-pool-events", "features/calendar/routes/map-pool-events.ts"),
 	]),
+	route("/calendar.ics", "features/calendar/routes/calendar.ics.tsx"),
 
 	route("/maps", "features/map-list-generator/routes/maps.tsx"),
 

@@ -12,6 +12,7 @@
 	"sens": "Sens",
 	"weaponPool": "Armes jouées",
 	"discordExplanation": "Votre pseudo, votre photo de profil et vos comptes Youtube, Bluesky et Twitch viennent de votre compte Discord. Voir la <1>FAQ</1> pour plus d'informations.",
+	"favoriteBadges": "Badge favori",
 	"battlefy": "Nom du compte Battlefy",
 
 	"forms.showDiscordUniqueName": "Montrer le pseudo Discord",
@@ -20,6 +21,8 @@
 	"forms.commissionText": "Info pour les commissions",
 	"forms.commissionText.info": "Prix, disponibilités et tout autres info nécéssaires",
 	"forms.customName.info": "Si il n'est pas présent, votre pseudo discord est utilisé: \"{{discordName}}\"",
+	"forms.country.search.placeholder": "Rechercher de pays",
+	"forms.favoriteBadges.nonSupporter": "Devenez supporter pour définir l'ordre des badges qui apparaissent sur la première page",
 
 	"results.title": "Tout les résultats",
 	"results.placing": "Placement",
@@ -43,6 +46,8 @@
 
 	"search.info": "Recherchez avec le pseudo Discord ou Splatoon 3 du compte",
 	"search.noResults": "Aucun utilisateur correspondant à '{{query}}' n'a été trouvé",
+	"search.pleaseLogIn.header": "Veuillez vous connecter pour rechercher des utilisateurs",
+	"search.pleaseLogIn.button": "Connectez-vous via Discord",
 
 	"seasons": "Saison",
 	"seasons.noQ": "Ce joueur ne joue pas en SendouQ cette saison",
