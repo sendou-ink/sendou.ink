@@ -49,10 +49,12 @@ test.describe("Calendar", () => {
 			.poll(() => tournamentCardLocator.count())
 			.toBeGreaterThan(SENDOU_INK_TOURNAMENTS_COUNT);
 
+		const countAfterToggle = await tournamentCardLocator.count();
+
 		await hiddenEventsToggleButtonLocator.first().click();
-		await expect(tournamentCardLocator).toHaveCount(
-			SENDOU_INK_TOURNAMENTS_COUNT,
-		);
+		await expect
+			.poll(() => tournamentCardLocator.count())
+			.toBeLessThan(countAfterToggle); // not SENDOU_INK_TOURNAMENTS_COUNT as it's possible we untoggle more than one tournament
 	});
 
 	test("sets default filters", async ({ page }) => {
