@@ -36,12 +36,14 @@ export async function frontPageTournamentsByUserId(
 		organizingFor: tournaments.upcoming.filter((tournament) =>
 			participation.organizers.has(tournament.id),
 		),
-		participatingFor: tournaments.upcoming.filter((tournament) =>
-			participation.participants.has(tournament.id),
+		participatingFor: tournaments.upcoming.filter(
+			(tournament) =>
+				!tournament.hidden && participation.participants.has(tournament.id),
 		),
 		showcase: resolveShowcaseTournaments(
 			tournaments.upcoming.filter(
 				(tournament) =>
+					!tournament.hidden &&
 					!participation.organizers.has(tournament.id) &&
 					!participation.participants.has(tournament.id),
 			),
@@ -288,6 +290,7 @@ function mapTournamentFromDB(
 			minMembersPerTeam: tournament.settings.minMembersPerTeam ?? 4,
 			isTest: tournament.settings.isTest ?? false,
 		}),
+		hidden: Boolean(tournament.hidden),
 		modes: null, // no need to show modes for front page, maybe could in the future?
 		firstPlacer:
 			tournament.firstPlacers.length > 0

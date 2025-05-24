@@ -455,6 +455,7 @@ export function forShowcase() {
 			"CalendarEvent.authorId",
 			"CalendarEvent.name",
 			"CalendarEventDate.startTime",
+			"CalendarEvent.hidden",
 			eb
 				.selectFrom("TournamentTeam")
 				.leftJoin("TournamentTeamCheckIn", (join) =>
@@ -524,7 +525,6 @@ export function forShowcase() {
 					]),
 			).as("firstPlacers"),
 		])
-		.where("CalendarEvent.hidden", "=", 0)
 		.where("CalendarEventDate.startTime", ">", databaseTimestampWeekAgo())
 		.orderBy("CalendarEventDate.startTime", "asc")
 		.$narrowType<{ teamsCount: NotNull }>()

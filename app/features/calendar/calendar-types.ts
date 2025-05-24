@@ -38,6 +38,8 @@ export interface CalendarEvent extends CommonEvent {
 export interface ShowcaseCalendarEvent extends CommonEvent {
 	type: "showcase";
 	startTime: number;
+	/** Tournament is hidden from the public (test tournament) */
+	hidden: boolean;
 	firstPlacer: {
 		teamName: string;
 		logoUrl: string | null;
