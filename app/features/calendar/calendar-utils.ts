@@ -210,6 +210,16 @@ export function daysForCalendar(currentDate?: DayMonthYear) {
 			? new Date(currentDate.year, currentDate.month, currentDate.day)
 			: new Date();
 
+	const currentDayMonthYear = () => {
+		const now = startDate();
+
+		return {
+			day: now.getDate(),
+			month: now.getMonth(),
+			year: now.getFullYear(),
+		};
+	};
+
 	let now = startDate();
 
 	for (let i = 0; i < DAYS_SHOWN_AT_A_TIME; i++) {
@@ -249,6 +259,7 @@ export function daysForCalendar(currentDate?: DayMonthYear) {
 		previous,
 		shown,
 		next,
+		current: currentDayMonthYear(),
 	};
 }
 

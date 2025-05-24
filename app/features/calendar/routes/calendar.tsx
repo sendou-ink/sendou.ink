@@ -1,7 +1,8 @@
 import type { MetaFunction } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import { Link, useLoaderData, useNavigate } from "@remix-run/react";
 import clsx from "clsx";
 import type * as React from "react";
+import type { DateValue } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { CopyToClipboardPopover } from "~/components/CopyToClipboardPopover";
 import { Main } from "~/components/Main";
@@ -9,6 +10,8 @@ import {
 	SendouButton,
 	type SendouButtonProps,
 } from "~/components/elements/Button";
+import { SendouCalendar } from "~/components/elements/Calendar";
+import { SendouPopover } from "~/components/elements/Popover";
 import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
 import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import { CalendarIcon } from "~/components/icons/Calendar";
@@ -17,9 +20,11 @@ import { EyeSlashIcon } from "~/components/icons/EyeSlash";
 import { LinkIcon } from "~/components/icons/Link";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
 import { useCollapsableEvents } from "~/features/calendar/calendar-hooks";
+import { dayMonthYearToDateValue } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { CALENDAR_PAGE, calendarPage, navIconUrl } from "~/utils/urls";
+import type { DayMonthYear } from "~/utils/zod";
 import { daysForCalendar } from "../calendar-utils";
 import { FiltersDialog } from "../components/FiltersDialog";
 import { TournamentCard } from "../components/TournamentCard";
@@ -53,7 +58,7 @@ export const handle: SendouRouteHandle = {
 export default function CalendarPage() {
 	const data = useLoaderData<typeof loader>();
 
-	const { previous, shown, next } = daysForCalendar(data.dateViewed);
+	const { previous, shown, next, current } = daysForCalendar(data.dateViewed);
 
 	return (
 		<Main bigger className="stack lg">
@@ -73,7 +78,11 @@ export default function CalendarPage() {
 					>
 						Next
 					</NavigateButton>
-					<CalendarDatePicker />
+					<CalendarDatePicker
+						dayMonthYear={current}
+						filters={data.filters}
+						key={JSON.stringify(current)}
+					/>
 				</div>
 				<div className="stack sm horizontal ml-auto">
 					<CopyToClipboardPopover
@@ -143,7 +152,7 @@ function NavigateButton({
 	return (
 		<Link
 			to={calendarPage({ filters, dayMonthYear: lowestDate })}
-			className={styles.navigateButton}
+			className={clsx(styles.navigateButton, styles.navigateArrowButton)}
 			data-testid="calendar-navigate-button"
 		>
 			{icon}
@@ -157,9 +166,40 @@ function NavigateButton({
 	);
 }
 
-function CalendarDatePicker() {
+function CalendarDatePicker({
+	dayMonthYear,
+	filters,
+}: { dayMonthYear: DayMonthYear; filters?: CalendarLoaderData["filters"] }) {
+	const navigate = useNavigate();
+
+	const onChange = (date: DateValue) => {
+		navigate(
+			calendarPage({
+				filters,
+				dayMonthYear: {
+					day: date.day,
+					month: date.month - 1,
+					year: date.year,
+				},
+			}),
+		);
+	};
+
 	return (
-		<SendouButton className={styles.navigateButton} icon={<CalendarIcon />} />
+		<SendouPopover
+			trigger={
+				<SendouButton
+					className={styles.navigateButton}
+					icon={<CalendarIcon />}
+				/>
+			}
+		>
+			<SendouCalendar
+				className={styles.calendar}
+				value={dayMonthYearToDateValue(dayMonthYear)}
+				onChange={onChange}
+			/>
+		</SendouPopover>
 	);
 }
 

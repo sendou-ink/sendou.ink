@@ -25,6 +25,10 @@
 	flex: 1 1 0;
 }
 
+.navigateButton:focus-visible {
+	outline: 2px solid var(--theme);
+}
+
 @media screen and (min-width: 550px) {
 	.navigateButton {
 		flex: initial;
@@ -39,8 +43,12 @@
 	width: 1.75rem;
 	height: 1.75rem;
 	stroke-width: 2px;
+}
+
+.navigateArrowButton svg {
 	margin-inline-start: -5px;
 }
+
 .majorLink {
 	all: unset;
 	background-color: orange;
@@ -104,4 +112,10 @@
 	width: 1rem;
 	height: 1rem;
 	stroke-width: 2px;
+}
+
+.calendar {
+	background-color: initial;
+	padding: var(--s-2);
+	border: none;
 }

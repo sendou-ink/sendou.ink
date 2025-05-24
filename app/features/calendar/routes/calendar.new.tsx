@@ -77,7 +77,6 @@ const useBaseEvent = () => {
 	return eventToCopy ?? eventToEdit;
 };
 
-// xxx: add scheduler helper, events happening close to the time of the event in same "tier"
 export default function CalendarNewEventPage() {
 	const baseEvent = useBaseEvent();
 	const isCalendarEventAdder = useHasRole("CALENDAR_EVENT_ADDER");
