@@ -1,45 +1,35 @@
 import clsx from "clsx";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Badge } from "~/components/Badge";
 import { Button } from "~/components/Button";
 import { CrossIcon } from "~/components/icons/Cross";
 import type { CalendarEventTag } from "~/db/tables";
-import type * as CalendarRepository from "../CalendarRepository.server";
 import { tags as allTags } from "../calendar-constants";
 
 export function Tags({
 	tags,
-	badges,
 	onDelete,
-	tournamentRankedStatus,
+	small = false,
+	centered = false,
 }: {
 	tags: Array<CalendarEventTag>;
-	badges?: CalendarRepository.FindAllBetweenTwoTimestampsItem["badgePrizes"];
-	tournamentRankedStatus?: "RANKED" | "UNRANKED";
+	small?: boolean;
+	centered?: boolean;
 
 	/** Called when tag delete button clicked. If undefined delete buttons won't be shown. */
 	onDelete?: (tag: CalendarEventTag) => void;
 }) {
 	const { t } = useTranslation();
 
-	if (tags.length === 0 && !tournamentRankedStatus) return null;
+	if (tags.length === 0) return null;
 
 	return (
-		<ul className="calendar__event__tags">
-			{tournamentRankedStatus === "RANKED" ? (
-				<li className="calendar__event__ranked-tag">Ranked</li>
-			) : null}
-			{tournamentRankedStatus === "UNRANKED" ? (
-				<li className="calendar__event__unranked-tag">Unranked</li>
-			) : null}
+		<ul className={clsx("calendar__event__tags", { small, centered })}>
 			{tags.map((tag) => (
 				<React.Fragment key={tag}>
 					<li
 						style={{ backgroundColor: allTags[tag].color }}
-						className={clsx("calendar__event__tag", {
-							"calendar__event__badge-tag": tag === "BADGE",
-						})}
+						className="calendar__event__tag"
 					>
 						{t(`tag.name.${tag}`)}
 						{onDelete && (
@@ -51,13 +41,6 @@ export function Tags({
 								aria-label="Remove date"
 								size="tiny"
 							/>
-						)}
-						{tag === "BADGE" && badges && (
-							<div className="calendar__event__tag-badges">
-								{badges.map((badge) => (
-									<Badge key={badge.id} badge={badge} size={20} isAnimated />
-								))}
-							</div>
 						)}
 					</li>
 				</React.Fragment>

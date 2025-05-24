@@ -1,7 +1,7 @@
 import type { Tables, TournamentRoundMaps } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
-import { modesIncluded } from "~/features/tournament/tournament-utils";
+import { mapPickingStyleToModes } from "~/features/tournament/tournament-utils";
 import type { Round } from "~/modules/brackets-model";
 import type { ModeShort, StageId } from "~/modules/in-game-lists";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
@@ -132,7 +132,7 @@ export function resolveFreshTeamPickedMapList(
 	if (count() === 1) {
 		return starterMap({
 			seed: String(args.matchId),
-			modesIncluded: modesIncluded({ mapPickingStyle: args.mapPickingStyle }),
+			modesIncluded: mapPickingStyleToModes(args.mapPickingStyle),
 			tiebreakerMaps: new MapPool(tieBreakerMapPool),
 			teams: [
 				{
@@ -151,7 +151,7 @@ export function resolveFreshTeamPickedMapList(
 		return createTournamentMapList({
 			count: count(),
 			seed: String(args.matchId),
-			modesIncluded: modesIncluded({ mapPickingStyle: args.mapPickingStyle }),
+			modesIncluded: mapPickingStyleToModes(args.mapPickingStyle),
 			tiebreakerMaps: new MapPool(tieBreakerMapPool),
 			teams: [
 				{
@@ -173,7 +173,7 @@ export function resolveFreshTeamPickedMapList(
 		return createTournamentMapList({
 			count: count(),
 			seed: String(args.matchId),
-			modesIncluded: modesIncluded({ mapPickingStyle: args.mapPickingStyle }),
+			modesIncluded: mapPickingStyleToModes(args.mapPickingStyle),
 			tiebreakerMaps: new MapPool(tieBreakerMapPool),
 			teams: [
 				{

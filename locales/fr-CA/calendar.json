@@ -24,7 +24,6 @@
 	"forms.discordInvite": "Lien d'invitation du Discord",
 	"forms.tags": "Tags",
 	"forms.tags.placeholder": "Choisir un tag",
-	"forms.tags.info": "Le tag \"Badge à gagner\" est ajouté automatiquement si le tournoi est éligible",
 	"forms.badges": "Badge à gagner",
 	"forms.badges.placeholder": "Choisissez le badge à faire gagner",
 	"forms.mapPool": "Stages disponibles",

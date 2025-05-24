@@ -6,6 +6,19 @@ import {
 	type PopoverProps,
 } from "react-aria-components";
 
+/**
+ * A reusable popover component that wraps around a trigger element (SendouButton or Button from React Aria Components library).
+ * Supports controlled and uncontrolled open states.
+ *
+ * @example
+ * ```tsx
+ * <SendouPopover
+ *   trigger={<SendouButton>Click me</SendouButton>}
+ * >
+ *   Popover content goes here!
+ * </SendouPopover>
+ * ```
+ */
 export function SendouPopover({
 	children,
 	trigger,

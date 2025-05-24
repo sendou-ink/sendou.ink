@@ -106,6 +106,17 @@ export const qWeapon = z.object({
 });
 
 export const modeShort = z.enum(["TW", "SZ", "TC", "RM", "CB"]);
+export const modeShortWithSpecial = z.enum([
+	"TW",
+	"SZ",
+	"TC",
+	"RM",
+	"CB",
+	"SR",
+	"TB",
+]);
+
+export const gamesShortSchema = z.enum(["S1", "S2", "S3"]);
 
 export const stageId = z.preprocess(actualNumber, numericEnum(stageIds));
 
@@ -334,9 +345,9 @@ export function numericEnum<TValues extends readonly number[]>(
 }
 
 export const dayMonthYear = z.object({
-	day: z.number().int().min(1).max(31),
-	month: z.number().int().min(0).max(11),
-	year: z.number().int().min(2015).max(2100),
+	day: z.coerce.number().int().min(1).max(31),
+	month: z.coerce.number().int().min(0).max(11),
+	year: z.coerce.number().int().min(2015).max(2100),
 });
 
 export type DayMonthYear = z.infer<typeof dayMonthYear>;

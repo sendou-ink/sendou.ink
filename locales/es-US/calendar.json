@@ -24,7 +24,6 @@
 	"forms.discordInvite": "Enlace de invitación a Discord",
 	"forms.tags": "Etiquetas",
 	"forms.tags.placeholder": "Elegir etiquetas",
-	"forms.tags.info": "Etiqueta \"Premios de insignia\" se agrega automáticamente si corresponde.",
 	"forms.badges": "Premios de insignia",
 	"forms.badges.placeholder": "Elige un premio de insignia",
 	"forms.mapPool": "Grupo de mapas",

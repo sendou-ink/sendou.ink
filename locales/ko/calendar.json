@@ -13,7 +13,6 @@
 	"forms.discordInvite": "디스코드 서버 초대 주소",
 	"forms.tags": "태그",
 	"forms.tags.placeholder": "태그를 선택하세요",
-	"forms.tags.info": "\"배지 상품\" 태그는 적용 가능하면 자동으로 추가됩니다",
 	"forms.badges": "배지 상품",
 	"forms.badges.placeholder": "배지 상품을 선택하세요",
 	"forms.participantCount": "참여자 수",

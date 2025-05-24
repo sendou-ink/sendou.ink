@@ -584,9 +584,9 @@ function TagsAdder() {
 	const [tags, setTags] = React.useState(baseEvent?.tags ?? []);
 	const id = React.useId();
 
-	const tagsForSelect = CALENDAR_EVENT.PERSISTED_TAGS.filter(
+	const tagsForSelect = CALENDAR_EVENT.TAGS.filter(
 		(tag) => !tags.includes(tag),
-	);
+	).filter((tag) => tag !== "SZ" && tag !== "TW"); // TODO: these are now added automatically, remove in migration?
 
 	return (
 		<div className="stack sm">
@@ -601,7 +601,6 @@ function TagsAdder() {
 					id={id}
 					className="calendar-new__select"
 					onChange={(e) =>
-						// @ts-expect-error TODO: fix this (5.5 version)
 						setTags([...tags, e.target.value as CalendarEventTag])
 					}
 				>
@@ -612,7 +611,6 @@ function TagsAdder() {
 						</option>
 					))}
 				</select>
-				<FormMessage type="info">{t("calendar:forms.tags.info")}</FormMessage>
 			</div>
 			<Tags
 				tags={tags}

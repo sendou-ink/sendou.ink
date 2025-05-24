@@ -256,6 +256,7 @@ function ExtraInfos() {
 
 	return (
 		<div className="u__extra-infos">
+			<div className="u__extra-info">#{data.user.id}</div>
 			{data.user.discordUniqueName && (
 				<div className="u__extra-info">
 					<span className="u__extra-info__heading">

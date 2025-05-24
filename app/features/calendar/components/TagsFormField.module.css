@@ -1,0 +1,34 @@
+.tagGroup {
+	width: 100%;
+}
+
+.tagList {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+	gap: var(--s-2);
+}
+
+.tag {
+	border: 2px solid var(--tag-color);
+	border-radius: var(--rounded-sm);
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
+	display: grid;
+	place-items: center;
+	min-width: max-content;
+}
+
+.tag[data-selected] {
+	background-color: var(--tag-color) !important;
+	color: var(--black-text);
+}
+
+.tag[data-focus-visible] {
+	outline: 2px solid var(--tag-color);
+	outline-offset: 1px;
+	background-color: var(--bg-lighter);
+}
+
+.tag[data-hovered] {
+	background-color: var(--bg-lighter);
+}

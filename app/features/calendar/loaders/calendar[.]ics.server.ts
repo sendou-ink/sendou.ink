@@ -1,34 +1,36 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import type { PersistedCalendarEventTag } from "~/db/tables";
-import {
-	loaderFilterSearchParamsSchema,
-	loaderTournamentsOnlySearchParamsSchema,
-} from "../calendar-schemas";
-import * as ical from "../core/ical";
+import { parseSearchParams } from "~/utils/remix.server";
+import * as CalendarRepository from "../CalendarRepository.server";
+import { calendarFiltersSearchParamsObject } from "../calendar-schemas";
+import * as CalendarEvent from "../core/CalendarEvent";
+import * as ICal from "../core/ICal.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const url = new URL(request.url);
+	const filters = parseSearchParams({
+		request,
+		schema: calendarFiltersSearchParamsObject,
+	}).filters;
 
-	// allows limiting calendar events to specific tags
-	const parsedFilterParams = loaderFilterSearchParamsSchema.safeParse({
-		tags: url.searchParams.get("tags"),
+	const startTime = new Date();
+	const endTime = new Date(startTime);
+
+	// get all events over the two weeks, might be good to make this an parameter in the future
+	endTime.setDate(startTime.getDate() + 14);
+
+	// handle timezone mismatch between server and client
+	startTime.setHours(startTime.getHours() - 12);
+	endTime.setHours(endTime.getHours() + 12);
+
+	const events = await CalendarRepository.findAllBetweenTwoTimestamps({
+		startTime,
+		endTime,
 	});
-	const parsedTournamentsOnlyParams =
-		loaderTournamentsOnlySearchParamsSchema.safeParse({
-			tournaments: url.searchParams.get("tournaments"),
-		});
 
-	const tagsToFilterBy = parsedFilterParams.success
-		? (parsedFilterParams.data.tags as PersistedCalendarEventTag[])
-		: [];
-	const onlyTournaments = parsedTournamentsOnlyParams.success
-		? Boolean(parsedTournamentsOnlyParams.data.tournaments)
-		: false;
+	const filtered = CalendarEvent.applyFilters(events, filters);
 
-	const iCalData = await ical.getICalendar({
-		tagsFilter: tagsToFilterBy,
-		tournamentsFilter: onlyTournaments,
-	});
+	const iCalData = await ICal.getICalendar(
+		filtered.flatMap((eventTime) => eventTime.events.shown),
+	);
 
 	if (iCalData === null) {
 		return new Response(null, { status: 204 });

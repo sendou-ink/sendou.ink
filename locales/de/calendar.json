@@ -17,7 +17,6 @@
 	"forms.discordInvite": "Discord-Server Einladungs-URL",
 	"forms.tags": "Tags",
 	"forms.tags.placeholder": "Wähle einen Tag",
-	"forms.tags.info": "\"Abzeichen-Preis\"-Tag wird automatisch hinzugefügt (falls anwendbar)",
 	"forms.badges": "Abzeichen-Preis",
 	"forms.badges.placeholder": "Wähle ein Abzeichen für das Event",
 	"forms.mapPool": "Arenen-Pool",

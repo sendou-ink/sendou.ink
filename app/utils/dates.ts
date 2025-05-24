@@ -1,9 +1,14 @@
+import { parseDate } from "@internationalized/date";
 import { getWeek } from "date-fns";
 import type { MonthYear } from "~/features/plus-voting/core";
 import type { DayMonthYear } from "./zod";
 
 export function databaseTimestampToDate(timestamp: number) {
-	return new Date(timestamp * 1000);
+	return new Date(databaseTimestampToJavascriptTimestamp(timestamp));
+}
+
+export function databaseTimestampToJavascriptTimestamp(timestamp: number) {
+	return timestamp * 1000;
 }
 
 export function dateToDatabaseTimestamp(date: Date) {
@@ -19,6 +24,15 @@ export function databaseTimestampNow() {
  */
 export function dayMonthYearToDate({ day, month, year }: DayMonthYear) {
 	return new Date(Date.UTC(year, month, day, 12));
+}
+
+/**
+ * Converts a date represented by day, month, and year into a DateValue object (used by react-aria-components), noon UTC.
+ */
+export function dayMonthYearToDateValue({ day, month, year }: DayMonthYear) {
+	const isoString = dateToYYYYMMDD(new Date(Date.UTC(year, month, day, 12)));
+
+	return parseDate(isoString);
 }
 
 /**

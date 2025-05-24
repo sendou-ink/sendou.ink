@@ -24,7 +24,6 @@
 	"forms.discordInvite": "URL invito server Discord",
 	"forms.tags": "Tag",
 	"forms.tags.placeholder": "Scegli un tag",
-	"forms.tags.info": "Il tag \"Badge prizes\" è aggiunto automaticamente se necessario",
 	"forms.badges": "Medaglie in palio",
 	"forms.badges.placeholder": "Scegli una medaglia come premio",
 	"forms.mapPool": "Pool di scenari",

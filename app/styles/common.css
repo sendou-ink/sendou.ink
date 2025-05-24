@@ -712,6 +712,18 @@ abbr[title] {
 	list-style: none;
 }
 
+.calendar__event__tags.small {
+	font-size: var(--fonts-xxxs);
+}
+
+.calendar__event__tags.centered {
+	justify-content: center;
+}
+
+.calendar__event__tags.small > li {
+	padding: 0 var(--s-1);
+}
+
 .calendar__event__tags > li {
 	display: flex;
 	align-items: center;
@@ -722,20 +734,6 @@ abbr[title] {
 
 .calendar__event__tag {
 	color: var(--black-text);
-}
-
-.calendar__event__badge-tag {
-	color: var(--badge-text);
-}
-
-.calendar__event__ranked-tag {
-	background-color: var(--theme-info-transparent);
-	color: var(--theme-info);
-}
-
-.calendar__event__unranked-tag {
-	background-color: var(--theme-success-transparent);
-	color: var(--theme-success);
 }
 
 .calendar__event__tag-delete-button {

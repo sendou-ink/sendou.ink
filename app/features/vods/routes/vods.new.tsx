@@ -27,9 +27,9 @@ import { useHasRole } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Alert } from "../../../components/Alert";
 import { DateFormField } from "../../../components/form/DateFormField";
-import { MyForm } from "../../../components/form/MyForm";
+import { InputFormField } from "../../../components/form/InputFormField";
 import { SelectFormField } from "../../../components/form/SelectFormField";
-import { TextFormField } from "../../../components/form/TextFormField";
+import { SendouForm } from "../../../components/form/SendouForm";
 import { videoMatchTypes } from "../vods-constants";
 import { videoInputSchema } from "../vods-schemas";
 
@@ -58,7 +58,7 @@ export default function NewVodPage() {
 
 	return (
 		<Main halfWidth>
-			<MyForm
+			<SendouForm
 				heading={
 					data.vodToEdit
 						? t("vods:forms.title.edit")
@@ -83,7 +83,7 @@ export default function NewVodPage() {
 				}
 			>
 				<FormFields />
-			</MyForm>
+			</SendouForm>
 		</Main>
 	);
 }
@@ -96,7 +96,7 @@ function FormFields() {
 
 	return (
 		<>
-			<TextFormField<VodFormFields>
+			<InputFormField<VodFormFields>
 				label={t("vods:forms.title.youtubeUrl")}
 				name="video.youtubeUrl"
 				placeholder="https://www.youtube.com/watch?v=-dQ6JsVIKdY"
@@ -104,7 +104,7 @@ function FormFields() {
 				size="medium"
 			/>
 
-			<TextFormField<VodFormFields>
+			<InputFormField<VodFormFields>
 				label={t("vods:forms.title.videoTitle")}
 				name="video.title"
 				placeholder="[SCL 47] (Grand Finals) Team Olive vs. Kraken Paradise"
@@ -278,7 +278,7 @@ function MatchesFieldset({
 				{canRemove ? <RemoveFieldButton onClick={() => remove(idx)} /> : null}
 			</div>
 
-			<TextFormField<VodFormFields>
+			<InputFormField<VodFormFields>
 				required
 				label={t("vods:forms.title.startTimestamp")}
 				name={`video.matches.${idx}.startsAt`}

@@ -1,4 +1,4 @@
-export { modes, modesShort } from "./modes";
+export { modesShort } from "./modes";
 export {
 	weaponCategories,
 	mainWeaponIds,

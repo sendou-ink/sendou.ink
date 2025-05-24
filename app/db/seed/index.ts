@@ -8,7 +8,7 @@ import type { SeedVariation } from "~/features/api-private/routes/seed";
 import * as AssociationRepository from "~/features/associations/AssociationRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
-import { persistedTags } from "~/features/calendar/calendar-constants";
+import { tags } from "~/features/calendar/calendar-constants";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
@@ -718,7 +718,7 @@ function calendarEvents() {
 	const userIds = userIdsInRandomOrder();
 
 	for (let id = 1; id <= AMOUNT_OF_CALENDAR_EVENTS; id++) {
-		const shuffledTags = faker.helpers.shuffle(Object.keys(persistedTags));
+		const shuffledTags = faker.helpers.shuffle(Object.keys(tags));
 
 		sql
 			.prepare(

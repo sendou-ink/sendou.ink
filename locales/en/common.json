@@ -123,6 +123,8 @@
 	"actions.enable": "Enable",
 	"actions.disable": "Disable",
 	"actions.accept": "Accept",
+	"actions.next": "Next",
+	"actions.previous": "Previous",
 
 	"noResults": "No results",
 
@@ -165,7 +167,6 @@
 
 	"errors.genericReload": "Something went wrong. Try reloading the page.",
 
-	"tag.name.BADGE": "Badge prizes",
 	"tag.name.SPECIAL": "Special rules",
 	"tag.name.ART": "Art prizes",
 	"tag.name.MONEY": "Money prizes",

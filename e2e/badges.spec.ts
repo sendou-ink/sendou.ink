@@ -34,7 +34,7 @@ test.describe("Badges", () => {
 		await expect(page).toHaveURL(badgePage(1));
 
 		await page.getByTestId("notifications-button").click();
-		await page.getByText("See all").click();
+		await page.getByTestId("notifications-see-all-button").click();
 
 		await expect(
 			page.getByRole("heading", { name: "Notifications" }),

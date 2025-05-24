@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { Button } from "~/components/Button";
 import { Divider } from "~/components/Divider";
-import { Flag } from "~/components/Flag";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { NewTabs } from "~/components/NewTabs";
@@ -20,11 +19,11 @@ import { SearchIcon } from "~/components/icons/Search";
 import { UsersIcon } from "~/components/icons/Users";
 import { navItems } from "~/components/layout/nav-items";
 import { useUser } from "~/features/auth/core/user";
+import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
+import { TournamentCard } from "~/features/calendar/components/TournamentCard";
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import { databaseTimestampToDate } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BLANK_IMAGE_URL,
@@ -35,10 +34,7 @@ import {
 	leaderboardsPage,
 	navIconUrl,
 	sqHeaderGuyImageUrl,
-	tournamentPage,
-	userSubmittedImage,
 } from "~/utils/urls";
-import type * as ShowcaseTournaments from "../core/ShowcaseTournaments.server";
 
 import { type LeaderboardEntry, loader } from "../loaders/index.server";
 export { loader };
@@ -239,7 +235,7 @@ function TournamentCards() {
 
 function ShowcaseTournamentScroller({
 	tournaments,
-}: { tournaments: ShowcaseTournaments.ShowcaseTournament[] }) {
+}: { tournaments: ShowcaseCalendarEvent[] }) {
 	return (
 		<div className="front__tournament-cards">
 			<div className="front__tournament-cards__spacer overflow-x-scroll">
@@ -247,7 +243,7 @@ function ShowcaseTournamentScroller({
 					<TournamentCard
 						key={tournament.id}
 						tournament={tournament}
-						topSpaced
+						className="mt-4"
 					/>
 				))}
 			</div>
@@ -267,141 +263,6 @@ function AllTournamentsLinkCard() {
 			<Image path={navIconUrl("medal")} size={36} alt="" />
 			{t("front:showcase.viewAll")}
 		</Link>
-	);
-}
-
-function TournamentCard({
-	tournament,
-	topSpaced,
-}: {
-	tournament: ShowcaseTournaments.ShowcaseTournament;
-	topSpaced?: boolean;
-}) {
-	const isMounted = useIsMounted();
-	const { t, i18n } = useTranslation(["front", "common"]);
-
-	const time = () => {
-		if (!isMounted) return "Placeholder";
-
-		const date = databaseTimestampToDate(tournament.startTime);
-		return date.toLocaleString(i18n.language, {
-			month: "short",
-			day: "numeric",
-			hour: "numeric",
-			weekday: "short",
-			minute: date.getMinutes() !== 0 ? "numeric" : undefined,
-		});
-	};
-
-	return (
-		<div
-			className={clsx("front__tournament-card__container", {
-				"front__tournament-card__container__tall": tournament.firstPlacer,
-				"mt-4": topSpaced,
-			})}
-		>
-			<Link
-				to={tournamentPage(tournament.id)}
-				className="front__tournament-card"
-			>
-				<div className="stack horizontal justify-between">
-					<div className="front__tournament-card__img-container">
-						<img
-							src={
-								tournament.logoUrl
-									? userSubmittedImage(tournament.logoUrl)
-									: HACKY_resolvePicture(tournament)
-							}
-							width={32}
-							height={32}
-							className="front__tournament-card__tournament-avatar-img"
-							alt=""
-						/>
-					</div>
-					{tournament.organization ? (
-						<div className="front__tournament-card__org">
-							{tournament.organization.name}
-						</div>
-					) : null}
-				</div>
-				<div className="front__tournament-card__name">
-					{tournament.name}{" "}
-					<time
-						className={clsx("front__tournament-card__time", {
-							invisible: !isMounted,
-						})}
-						dateTime={databaseTimestampToDate(
-							tournament.startTime,
-						).toISOString()}
-					>
-						{time()}
-					</time>
-				</div>
-				{tournament.firstPlacer ? (
-					<TournamentFirstPlacers firstPlacer={tournament.firstPlacer} />
-				) : null}
-			</Link>
-			<div className="stack horizontal xxs justify-end">
-				<div className="front__tournament-card__team-count">
-					<UsersIcon /> {tournament.teamsCount}
-				</div>
-				{tournament.isRanked ? (
-					<div className="front__tournament-card__tag front__tournament-card__ranked">
-						{t("front:showcase.card.ranked")}
-					</div>
-				) : (
-					<div className="front__tournament-card__tag front__tournament-card__unranked">
-						{t("front:showcase.card.unranked")}
-					</div>
-				)}
-			</div>
-		</div>
-	);
-}
-
-function TournamentFirstPlacers({
-	firstPlacer,
-}: {
-	firstPlacer: NonNullable<
-		ShowcaseTournaments.ShowcaseTournament["firstPlacer"]
-	>;
-}) {
-	const { t } = useTranslation(["front"]);
-
-	return (
-		<div className="front__tournament-card__first-placers">
-			<div className="stack xs horizontal items-center text-xs">
-				{firstPlacer.logoUrl ? (
-					<img
-						src={userSubmittedImage(firstPlacer.logoUrl)}
-						alt=""
-						width={24}
-						className="rounded-full"
-					/>
-				) : null}{" "}
-				<div className="stack items-start">
-					<span className="front__tournament-card__first-placers__team-name">
-						{firstPlacer.teamName}
-					</span>
-					<div className="text-xxxs text-lighter font-bold text-uppercase">
-						{t("front:showcase.card.winner")}
-					</div>
-				</div>
-			</div>
-			<div className="text-xxs stack items-start mt-1">
-				{firstPlacer.members.map((member) => (
-					<div key={member.id} className="stack horizontal xs items-center">
-						{member.country ? <Flag tiny countryCode={member.country} /> : null}
-						{member.username}{" "}
-					</div>
-				))}
-				{firstPlacer.notShownMembersCount > 0 ? (
-					<div className="font-bold text-lighter">
-						+{firstPlacer.notShownMembersCount}
-					</div>
-				) : null}
-			</div>
-		</div>
 	);
 }
 
