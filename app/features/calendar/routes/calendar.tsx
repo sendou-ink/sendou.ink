@@ -1,15 +1,24 @@
 import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
+import {
+	Link,
+	createSearchParams,
+	useLoaderData,
+	useSearchParams,
+} from "@remix-run/react";
 import clsx from "clsx";
 import React from "react";
 import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
+import { useCopyToClipboard } from "react-use";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton } from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { Main } from "~/components/Main";
+import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
+import { CheckmarkIcon } from "~/components/icons/Checkmark";
+import { ClipboardIcon } from "~/components/icons/Clipboard";
 import { UsersIcon } from "~/components/icons/Users";
 import type { CalendarEventTag } from "~/db/tables";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -102,7 +111,10 @@ export default function CalendarPage() {
 			<EventsToReport />
 			<div>
 				<div className="stack horizontal justify-between">
-					<TagsFilter />
+					<div className="stack sm">
+						<TagsFilter />
+						<ICalLink />
+					</div>
 					<OnSendouInkToggle />
 				</div>
 				{isMounted ? (
@@ -327,6 +339,53 @@ function TagsFilter() {
 					setTagsToFilterBy(tagsToFilterBy.filter((tag) => tag !== tagToDelete))
 				}
 			/>
+		</div>
+	);
+}
+
+function ICalLink() {
+	const [searchParams, _] = useSearchParams();
+	const [state, copyToClipboard] = useCopyToClipboard();
+	const [copySuccess, setCopySuccess] = React.useState(false);
+
+	React.useEffect(() => {
+		if (!state.value) return;
+
+		setCopySuccess(true);
+		const timeout = setTimeout(() => setCopySuccess(false), 2000);
+
+		return () => clearTimeout(timeout);
+	}, [state]);
+
+	const filteredTags = (
+		searchParams
+			.get("tags")
+			?.split(",")
+			.filter((tag) => CALENDAR_EVENT.TAGS.includes(tag as CalendarEventTag)) ??
+		[]
+	).join();
+
+	const onlyTournaments = searchParams.get("tournaments") === "true";
+
+	const params = createSearchParams();
+
+	if (filteredTags.length > 0) params.append("tags", filteredTags);
+	if (onlyTournaments) params.append("tournaments", "true");
+
+	const icalURL = `https://sendou.ink/calendar.ics${params.size > 0 ? `?${params.toString()}` : ""}`;
+
+	return (
+		<div>
+			<label htmlFor="icalAddress">iCalendar</label>
+			<div className="stack horizontal sm items-center">
+				<input type="text" readOnly value={icalURL} id="icalAddress" />
+				<SendouButton
+					variant={copySuccess ? "outlined-success" : "outlined"}
+					onPress={() => copyToClipboard(icalURL)}
+					icon={copySuccess ? <CheckmarkIcon /> : <ClipboardIcon />}
+					aria-label="Copy to clipboard"
+				/>
+			</div>
 		</div>
 	);
 }

@@ -50,6 +50,7 @@
 		"i18next-browser-languagedetector": "^8.0.5",
 		"i18next-http-backend": "^2.6.2",
 		"isbot": "^5.1.27",
+		"ics": "^3.8.1",
 		"kysely": "^0.28.2",
 		"lru-cache": "^11.1.0",
 		"markdown-to-jsx": "^7.7.6",
