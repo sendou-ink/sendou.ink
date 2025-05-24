@@ -3,7 +3,7 @@ import { parseSearchParams } from "~/utils/remix.server";
 import * as CalendarRepository from "../CalendarRepository.server";
 import { calendarFiltersSearchParamsObject } from "../calendar-schemas";
 import * as CalendarEvent from "../core/CalendarEvent";
-import * as ical from "../core/ical";
+import * as ICal from "../core/ICal.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const filters = parseSearchParams({
@@ -28,7 +28,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	const filtered = CalendarEvent.applyFilters(events, filters);
 
-	const iCalData = await ical.getICalendar(
+	const iCalData = await ICal.getICalendar(
 		filtered.flatMap((eventTime) => eventTime.events.shown),
 	);
 
