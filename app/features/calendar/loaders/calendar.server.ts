@@ -1,12 +1,14 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { z } from "zod";
 import type { UserPreferences } from "~/db/tables";
 import { getUser } from "~/features/auth/core/user.server";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
-import { calendarFiltersSearchParamsSchema } from "~/features/calendar/calendar-schemas";
+import {
+	calendarFiltersSearchParamsObject,
+	calendarFiltersSearchParamsSchema,
+} from "~/features/calendar/calendar-schemas";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseSafeSearchParams, parseSearchParams } from "~/utils/remix.server";
-import { dayMonthYear, safeJSONParse } from "~/utils/zod";
+import { dayMonthYear } from "~/utils/zod";
 import * as CalendarRepository from "../CalendarRepository.server";
 import * as CalendarEvent from "../core/CalendarEvent";
 
@@ -43,19 +45,13 @@ export const loader = async (args: LoaderFunctionArgs) => {
 	};
 };
 
-const filterSearchParams = z.object({
-	filters: z
-		.preprocess(safeJSONParse, calendarFiltersSearchParamsSchema)
-		.catch(CalendarEvent.defaultFilters()),
-});
-
 function resolveFilters(
 	request: Request,
 	preferences?: UserPreferences | null,
 ) {
 	const parsed = parseSearchParams({
 		request,
-		schema: filterSearchParams,
+		schema: calendarFiltersSearchParamsObject,
 	}).filters;
 
 	if (!CalendarEvent.isDefaultFilters(parsed)) {

@@ -29,7 +29,7 @@
 	outline: 2px solid var(--theme);
 }
 
-@media screen and (min-width: 550px) {
+@media screen and (min-width: 600px) {
 	.navigateButton {
 		flex: initial;
 	}
@@ -39,9 +39,15 @@
 	}
 }
 
+.navigateButton:not(.navigateArrowButton) {
+	justify-content: center;
+}
+
 .navigateButton svg {
-	width: 1.75rem;
-	height: 1.75rem;
+	min-width: 1.75rem;
+	max-width: 1.75rem;
+	min-width: 1.75rem;
+	max-height: 1.75rem;
 	stroke-width: 2px;
 }
 

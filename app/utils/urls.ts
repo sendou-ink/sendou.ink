@@ -281,6 +281,15 @@ export const calendarPage = (args?: {
 
 	return `${CALENDAR_PAGE}${params.toString() ? `?${params.toString()}` : ""}`;
 };
+
+export const calendarIcalFeed = (filters?: CalendarFilters) => {
+	const params = new URLSearchParams();
+	if (filters) {
+		params.set("filters", JSON.stringify(filters));
+	}
+	return `${SENDOU_INK_BASE_URL}/calendar.ics${params.toString() ? `?${params.toString()}` : ""}`;
+};
+
 export const calendarEventPage = (eventId: number) => `/calendar/${eventId}`;
 export const calendarEditPage = (eventId?: number) =>
 	`/calendar/new${eventId ? `?eventId=${eventId}` : ""}`;

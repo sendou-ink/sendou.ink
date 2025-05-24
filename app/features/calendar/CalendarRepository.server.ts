@@ -20,6 +20,7 @@ import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
 	databaseTimestampNow,
 	databaseTimestampToDate,
+	databaseTimestampToJavascriptTimestamp,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
 import invariant from "~/utils/invariant";
@@ -223,6 +224,7 @@ function findAllBetweenTwoTimestampsMapped(
 				: [];
 
 			return {
+				at: databaseTimestampToJavascriptTimestamp(row.startTime),
 				type: "calendar",
 				id: row.eventId,
 				url: row.tournamentId

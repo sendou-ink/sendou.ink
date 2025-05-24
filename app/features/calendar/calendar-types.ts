@@ -22,6 +22,8 @@ interface CommonEvent {
 }
 
 export interface CalendarEvent extends CommonEvent {
+	/** The date of the event in UNIX timestamp (JS format) */
+	at: number;
 	type: "calendar";
 	tags: Array<CalendarEventTag>;
 	/** Used for comparison, teams count where it is taken in account whether the tournament is 4v4, 3v3, 2v2 or 1v1 */

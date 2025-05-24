@@ -9,6 +9,7 @@ function makeEvent(
 	overrides: Partial<CalendarEventType> = {},
 ): CalendarEventType {
 	return {
+		at: new Date().getTime(),
 		id: 1,
 		isRanked: null,
 		tags: [],

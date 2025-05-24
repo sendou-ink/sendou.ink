@@ -23,7 +23,12 @@ import { useCollapsableEvents } from "~/features/calendar/calendar-hooks";
 import { dayMonthYearToDateValue } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { CALENDAR_PAGE, calendarPage, navIconUrl } from "~/utils/urls";
+import {
+	CALENDAR_PAGE,
+	calendarIcalFeed,
+	calendarPage,
+	navIconUrl,
+} from "~/utils/urls";
 import type { DayMonthYear } from "~/utils/zod";
 import { daysForCalendar } from "../calendar-utils";
 import { FiltersDialog } from "../components/FiltersDialog";
@@ -92,7 +97,7 @@ export default function CalendarPage() {
 								{t("calendar:icalFeed")}
 							</SendouButton>
 						}
-						url="https://sendou.ink/calendar.ics"
+						url={calendarIcalFeed(data.filters)}
 					/>
 					<FiltersDialog
 						key={CalendarEvent.filtersToString(data.filters)}

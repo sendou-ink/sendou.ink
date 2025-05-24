@@ -15,6 +15,7 @@ import {
 	toArray,
 } from "~/utils/zod";
 import { CALENDAR_EVENT } from "./calendar-constants";
+import * as CalendarEvent from "./core/CalendarEvent";
 
 export const calendarEventTagSchema = z
 	.string()
@@ -84,6 +85,11 @@ export const calendarFiltersFormSchema = z
 			});
 		}
 	});
+export const calendarFiltersSearchParamsObject = z.object({
+	filters: z
+		.preprocess(safeJSONParse, calendarFiltersSearchParamsSchema)
+		.catch(CalendarEvent.defaultFilters()),
+});
 
 const playersSchema = z
 	.array(

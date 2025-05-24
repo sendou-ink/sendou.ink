@@ -4,7 +4,11 @@ import type { MonthYear } from "~/features/plus-voting/core";
 import type { DayMonthYear } from "./zod";
 
 export function databaseTimestampToDate(timestamp: number) {
-	return new Date(timestamp * 1000);
+	return new Date(databaseTimestampToJavascriptTimestamp(timestamp));
+}
+
+export function databaseTimestampToJavascriptTimestamp(timestamp: number) {
+	return timestamp * 1000;
 }
 
 export function dateToDatabaseTimestamp(date: Date) {
