@@ -56,6 +56,7 @@ export const handle: SendouRouteHandle = {
 };
 
 export default function CalendarPage() {
+	const { t } = useTranslation(["calendar", "common"]);
 	const data = useLoaderData<typeof loader>();
 
 	const { previous, shown, next, current } = daysForCalendar(data.dateViewed);
@@ -69,14 +70,14 @@ export default function CalendarPage() {
 						daysInterval={previous}
 						filters={data.filters}
 					>
-						Previous
+						{t("common:actions.previous")}
 					</NavigateButton>
 					<NavigateButton
 						icon={<ArrowRightIcon />}
 						daysInterval={next}
 						filters={data.filters}
 					>
-						Next
+						{t("common:actions.next")}
 					</NavigateButton>
 					<CalendarDatePicker
 						dayMonthYear={current}
@@ -88,7 +89,7 @@ export default function CalendarPage() {
 					<CopyToClipboardPopover
 						trigger={
 							<SendouButton icon={<LinkIcon />} size="small" variant="outlined">
-								iCal feed
+								{t("calendar:icalFeed")}
 							</SendouButton>
 						}
 						url="https://sendou.ink/calendar.ics"

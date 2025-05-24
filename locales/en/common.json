@@ -123,6 +123,8 @@
 	"actions.enable": "Enable",
 	"actions.disable": "Disable",
 	"actions.accept": "Accept",
+	"actions.next": "Next",
+	"actions.previous": "Previous",
 
 	"noResults": "No results",
 

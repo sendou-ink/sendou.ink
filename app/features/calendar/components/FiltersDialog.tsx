@@ -18,6 +18,7 @@ import type { CalendarFilters } from "~/features/calendar/calendar-types";
 import { TagsFormField } from "~/features/calendar/components/TagsFormField";
 
 export function FiltersDialog({ filters }: { filters: CalendarFilters }) {
+	const { t } = useTranslation(["calendar"]);
 	const [isOpen, setIsOpen] = React.useState(false);
 
 	return (
@@ -28,10 +29,10 @@ export function FiltersDialog({ filters }: { filters: CalendarFilters }) {
 				onClick={() => setIsOpen(true)}
 				data-testid="filter-events-button"
 			>
-				Filter
+				{t("calendar:filter.button")}
 			</SendouButton>
 			<SendouDialog
-				heading="Filter calendar events"
+				heading={t("calendar:filter.heading")}
 				isOpen={isOpen}
 				onClose={() => setIsOpen(false)}
 			>
@@ -63,7 +64,7 @@ function FiltersForm({
 	closeDialog,
 }: { filters: CalendarFilters; closeDialog: () => void }) {
 	const user = useUser();
-	const { t } = useTranslation(["game-misc"]);
+	const { t } = useTranslation(["game-misc", "calendar"]);
 	const methods = useForm({
 		resolver: zodResolver(calendarFiltersFormSchema),
 		defaultValues: filters,
@@ -101,7 +102,7 @@ function FiltersForm({
 			>
 				<InputGroupFormField<CalendarFilters>
 					type="checkbox"
-					label="Modes"
+					label={t("calendar:filter.modes")}
 					name={"modes" as const}
 					values={[
 						{ label: t("game-misc:MODE_LONG_TW"), value: "TW" },
@@ -115,14 +116,14 @@ function FiltersForm({
 				/>
 
 				<ToggleFormField<CalendarFilters>
-					label="Exact modes"
+					label={t("calendar:filter.exactModes")}
 					name={"modesExact" as const}
-					bottomText="For example if you chose only SZ above and toggle this, SZ only events are the only ones that will show up"
+					bottomText={t("calendar:filter.exactModesBottom")}
 				/>
 
 				<InputGroupFormField<CalendarFilters>
 					type="checkbox"
-					label="Games"
+					label={t("calendar:filter.games")}
 					name={"games" as const}
 					values={[
 						{ label: t("game-misc:GAME_S1"), value: "S1" },
@@ -133,7 +134,7 @@ function FiltersForm({
 
 				<InputGroupFormField<CalendarFilters>
 					type="checkbox"
-					label="Vs."
+					label={t("calendar:filter.vs")}
 					name={"preferredVersus" as const}
 					values={[
 						{ label: "4v4", value: "4v4" },
@@ -145,65 +146,67 @@ function FiltersForm({
 
 				<InputGroupFormField<CalendarFilters>
 					type="radio"
-					label="Start time"
+					label={t("calendar:filter.startTime")}
 					name={"preferredStartTime" as const}
 					values={[
-						{ label: "Any", value: "ANY" },
-						{ label: "Europe friendly", value: "EU" },
-						{ label: "Americas friendly", value: "NA" },
-						{ label: "AU/NZ friendly", value: "AU" },
+						{ label: t("calendar:filter.startTime.any"), value: "ANY" },
+						{ label: t("calendar:filter.startTime.eu"), value: "EU" },
+						{ label: t("calendar:filter.startTime.na"), value: "NA" },
+						{ label: t("calendar:filter.startTime.au"), value: "AU" },
 					]}
 				/>
 
 				<TagsFormField<CalendarFilters>
-					label="Tags included"
+					label={t("calendar:filter.tagsIncluded")}
 					name={"tagsIncluded" as const}
 					tagsToOmit={TAGS_TO_OMIT}
 				/>
 
 				<TagsFormField<CalendarFilters>
-					label="Tags excluded"
+					label={t("calendar:filter.tagsExcluded")}
 					name={"tagsExcluded" as const}
 					tagsToOmit={TAGS_TO_OMIT}
 				/>
 
 				<ToggleFormField<CalendarFilters>
-					label="Only events hosted on sendou.ink"
+					label={t("calendar:filter.isSendou")}
 					name={"isSendou" as const}
 				/>
 
 				<ToggleFormField<CalendarFilters>
-					label="Only ranked events"
+					label={t("calendar:filter.isRanked")}
 					name={"isRanked" as const}
 				/>
 
 				<InputFormField<CalendarFilters>
-					label="Minimum team count"
+					label={t("calendar:filter.minTeamCount")}
 					type="number"
 					name={"minTeamCount" as const}
 				/>
 
 				<TextArrayFormField<CalendarFilters>
-					label="Visible organizations"
+					label={t("calendar:filter.orgsIncluded")}
 					name={"orgsIncluded" as const}
 				/>
 
 				<TextArrayFormField<CalendarFilters>
-					label="Hidden organizations"
+					label={t("calendar:filter.orgsExcluded")}
 					name={"orgsExcluded" as const}
 				/>
 
 				<TextArrayFormField<CalendarFilters>
-					label="Authors excluded"
+					label={t("calendar:filter.authorIdsExcluded")}
 					name={"authorIdsExcluded" as const}
-					bottomText="You can find a user's id on their profile page"
+					bottomText={t("calendar:filter.authorIdsExcludedBottom")}
 				/>
 
 				<div className="stack horizontal md justify-center mt-6 w-full">
-					<SendouButton onPress={() => onApply()}>Apply</SendouButton>
+					<SendouButton onPress={() => onApply()}>
+						{t("calendar:filter.apply")}
+					</SendouButton>
 					{user ? (
 						<SubmitButton variant="outlined" state={fetcher.state}>
-							Apply & make default
+							{t("calendar:filter.applyAndDefault")}
 						</SubmitButton>
 					) : null}
 				</div>
