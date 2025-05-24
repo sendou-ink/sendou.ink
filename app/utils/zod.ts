@@ -148,7 +148,7 @@ export function safeJSONParse(value: unknown): unknown {
 	}
 }
 
-const EMPTY_CHARACTERS = ["\u200B", "\u200C", "\u200D", "\u200E", "\u200F"];
+const EMPTY_CHARACTERS = ["\u200B", "\u200C", "\u200D", "\u200E", "\u200F", "󠀠"];
 const EMPTY_CHARACTERS_REGEX = new RegExp(EMPTY_CHARACTERS.join("|"), "g");
 
 const zalgoRe = /%CC%/g;
@@ -197,7 +197,7 @@ export const safeNullableStringSchema = ({
 /**
  * Processes the input value and returns a non-empty string with invisible characters cleaned out or null.
  */
-function actuallyNonEmptyStringOrNull(value: unknown) {
+export function actuallyNonEmptyStringOrNull(value: unknown) {
 	if (typeof value !== "string") return value;
 
 	const trimmed = value.replace(EMPTY_CHARACTERS_REGEX, "").trim();
