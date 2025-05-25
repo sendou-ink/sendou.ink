@@ -160,22 +160,26 @@ export function GroupCard({
 					</div>
 				) : null}
 				{group.tierRange?.range ? (
-					<div className="stack sm items-center">
-						<div className="q__group__tier-diff-text">
-							±{group.tierRange.diff}
+					<div className="stack items-center xs">
+						<div className="q__group__display-group-range font-bold">
+							<TierImage tier={group.tierRange.range[0]} width={80} />
+							{t("q:looking.range.or")}
+							<TierImage tier={group.tierRange.range[1]} width={80} />
+							<span className="text-lighter text-xs">
+								{group.tierRange.range[0].name}
+								{group.tierRange.range[0].isPlus ? "+" : ""}
+							</span>
+							<span />
+							<span className="text-lighter text-xs">
+								{group.tierRange.range[1].name}
+								{group.tierRange.range[1].isPlus ? "+" : ""}
+							</span>
 						</div>
-						<div className="stack items-center">
-							<div className="stack sm horizontal items-center text-sm font-bold">
-								<TierImage tier={group.tierRange.range[0]} width={38} />
-								{t("q:looking.range.or")}
-								<TierImage tier={group.tierRange.range[1]} width={38} />
+						{!group.isReplay ? (
+							<div className="text-theme-secondary text-uppercase text-xs font-bold">
+								{t("q:looking.replay")}
 							</div>
-							{group.isReplay ? (
-								<div className="text-theme-secondary text-uppercase text-xs font-bold">
-									{t("q:looking.replay")}
-								</div>
-							) : null}
-						</div>
+						) : null}
 					</div>
 				) : null}
 				{group.skillDifference ? (
