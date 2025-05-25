@@ -1249,6 +1249,31 @@ dialog::backdrop {
 	box-shadow: 0 0 100px inset rgb(255 255 255 / 25%);
 }
 
+.colors__summary {
+	padding: var(--s-2) var(--s-3);
+	border: 2px solid var(--border);
+	border-radius: var(--rounded-sm);
+	background-color: var(--bg-input);
+	font-weight: var(--bold);
+	font-size: var(--fonts-xs);
+
+	& div {
+		display: inline-flex;
+	}
+
+	& svg {
+		width: 24px;
+		color: var(--theme);
+		position: absolute;
+		right: 20px;
+		top: 14px;
+	}
+
+	& + div {
+		margin-block-start: var(--s-4);
+	}
+}
+
 .colors__container {
 	width: 100%;
 	font-size: var(--fonts-sm);
@@ -1303,10 +1328,6 @@ dialog::backdrop {
 	&.success {
 		color: var(--theme-success);
 	}
-}
-
-.colors__description {
-	white-space: pre-wrap;
 }
 
 .playwire__img {

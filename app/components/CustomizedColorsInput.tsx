@@ -71,12 +71,19 @@ export function CustomizedColorsInput({
 	}, []);
 
 	return (
-		<div className="w-full">
-			<Label>{t("custom.colors.title")}</Label>
-			<input type="hidden" name="css" value={JSON.stringify(colors)} />
-			<div className="colors__container colors__grid">
-				{CUSTOM_CSS_VAR_COLORS.filter((cssVar) => cssVar !== "bg-lightest").map(
-					(cssVar) => {
+		<details className="w-full">
+			<summary className="colors__summary">
+				<div>
+					<span>{t("custom.colors.title")}</span>
+				</div>
+			</summary>
+			<div>
+				<Label>{t("custom.colors.title")}</Label>
+				<input type="hidden" name="css" value={JSON.stringify(colors)} />
+				<div className="colors__container colors__grid">
+					{CUSTOM_CSS_VAR_COLORS.filter(
+						(cssVar) => cssVar !== "bg-lightest",
+					).map((cssVar) => {
 						return (
 							<React.Fragment key={cssVar}>
 								<div>{t(`custom.colors.${cssVar}`)}</div>
@@ -119,64 +126,64 @@ export function CustomizedColorsInput({
 								</Button>
 							</React.Fragment>
 						);
-					},
-				)}
-			</div>
-			<Label labelClassName="stack horizontal sm items-center">
-				{t("custom.colors.contrast.title")}
-				<InfoPopover tiny>
-					<pre className="colors__description">
-						{t("custom.colors.contrast.description")}
-					</pre>
-				</InfoPopover>
-			</Label>
-			<table className="colors__container colors__table">
-				<thead>
-					<tr>
-						<th>{t("custom.colors.contrast.first-color")}</th>
-						<th>{t("custom.colors.contrast.second-color")}</th>
-						<th>AA</th>
-						<th>AAA</th>
-					</tr>
-				</thead>
-				<tbody>
-					{contrasts.map((contrast) => {
-						return (
-							<tr key={contrast.colors.join("-")}>
-								<td>{t(`custom.colors.${contrast.colors[0]}`)}</td>
-								<td>{t(`custom.colors.${contrast.colors[1]}`)}</td>
-								<td
-									className={clsx(
-										"colors__contrast",
-										contrast.contrast.AA.failed ? "fail" : "success",
-									)}
-								>
-									{contrast.contrast.AA.failed ? (
-										<AlertIcon />
-									) : (
-										<CheckmarkIcon />
-									)}
-									{contrast.contrast.AA.ratio}
-								</td>
-								<td
-									className={clsx(
-										"colors__contrast",
-										contrast.contrast.AAA.failed ? "fail" : "success",
-									)}
-								>
-									{contrast.contrast.AAA.failed ? (
-										<AlertIcon />
-									) : (
-										<CheckmarkIcon />
-									)}
-									{contrast.contrast.AAA.ratio}
-								</td>
-							</tr>
-						);
 					})}
-				</tbody>
-			</table>
-		</div>
+				</div>
+				<Label labelClassName="stack horizontal sm items-center">
+					{t("custom.colors.contrast.title")}
+					<InfoPopover tiny>
+						<div className="colors__description">
+							{t("custom.colors.contrast.description")}
+						</div>
+					</InfoPopover>
+				</Label>
+				<table className="colors__container colors__table">
+					<thead>
+						<tr>
+							<th>{t("custom.colors.contrast.first-color")}</th>
+							<th>{t("custom.colors.contrast.second-color")}</th>
+							<th>AA</th>
+							<th>AAA</th>
+						</tr>
+					</thead>
+					<tbody>
+						{contrasts.map((contrast) => {
+							return (
+								<tr key={contrast.colors.join("-")}>
+									<td>{t(`custom.colors.${contrast.colors[0]}`)}</td>
+									<td>{t(`custom.colors.${contrast.colors[1]}`)}</td>
+									<td
+										className={clsx(
+											"colors__contrast",
+											contrast.contrast.AA.failed ? "fail" : "success",
+										)}
+									>
+										{contrast.contrast.AA.failed ? (
+											<AlertIcon />
+										) : (
+											<CheckmarkIcon />
+										)}
+										{contrast.contrast.AA.ratio}
+									</td>
+									<td
+										className={clsx(
+											"colors__contrast",
+											contrast.contrast.AAA.failed ? "fail" : "success",
+										)}
+									>
+										{contrast.contrast.AAA.failed ? (
+											<AlertIcon />
+										) : (
+											<CheckmarkIcon />
+										)}
+										{contrast.contrast.AAA.ratio}
+									</td>
+								</tr>
+							);
+						})}
+					</tbody>
+				</table>
+			</div>
+		</details>
 	);
 }
 
