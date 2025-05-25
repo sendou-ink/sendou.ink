@@ -67,7 +67,7 @@ export default function EditTeamPage() {
 			{isTeamOwner({ team, user }) ? (
 				<FormWithConfirm
 					dialogHeading={t("team:deleteTeam.header", { teamName: team.name })}
-					fields={[["_action", "DELETE"]]}
+					fields={[["_action", "DELETE_TEAM"]]}
 				>
 					<Button
 						className="ml-auto"
@@ -80,6 +80,7 @@ export default function EditTeamPage() {
 			) : null}
 			<Form method="post" className="stack md items-start">
 				<ImageUploadLinks />
+				<ImageRemoveButtons />
 				{canAddCustomizedColors(team) ? (
 					<CustomizedColorsInput initialColors={css} />
 				) : null}
@@ -130,6 +131,57 @@ function ImageUploadLinks() {
 			</ol>
 		</div>
 	);
+}
+
+function ImageRemoveButtons() {
+	const { t } = useTranslation(["common", "team"]);
+	const { team } = useLoaderData<typeof loader>();
+
+	return team.avatarSrc || team.bannerSrc ? (
+		<div>
+			<Label>{t("team:forms.fields.removeImages")}</Label>
+			<ol className="team__image-links-list">
+				{team.avatarSrc ? (
+					<li>
+						<FormWithConfirm
+							dialogHeading={t("team:deleteTeam.profilePicture.header", {
+								teamName: team.name,
+							})}
+							fields={[["_action", "DELETE_AVATAR"]]}
+							submitButtonText={t("common:actions.remove")}
+						>
+							<Button
+								className="ml-auto"
+								variant="minimal-destructive"
+								data-testid="delete-team-button"
+							>
+								{t("team:actionButtons.deleteTeam.profilePicture")}
+							</Button>
+						</FormWithConfirm>
+					</li>
+				) : null}
+				{team.bannerSrc ? (
+					<li>
+						<FormWithConfirm
+							dialogHeading={t("team:deleteTeam.banner.header", {
+								teamName: team.name,
+							})}
+							fields={[["_action", "DELETE_BANNER"]]}
+							submitButtonText={t("common:actions.remove")}
+						>
+							<Button
+								className="ml-auto"
+								variant="minimal-destructive"
+								data-testid="delete-team-button"
+							>
+								{t("team:actionButtons.deleteTeam.banner")}
+							</Button>
+						</FormWithConfirm>
+					</li>
+				) : null}
+			</ol>
+		</div>
+	) : null;
 }
 
 function NameInput() {
