@@ -319,8 +319,13 @@
 	transform: translate(-50%, -50%);
 }
 
-.q__group__tier-diff-text {
-	font-size: 3rem;
+.q__group__display-group-range {
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	grid-template-rows: 1fr auto;
+	align-items: center;
+	justify-items: center;
+	column-gap: var(--s-2);
 }
 
 .q__member-adder__input {
