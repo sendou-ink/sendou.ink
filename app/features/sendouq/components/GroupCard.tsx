@@ -175,7 +175,7 @@ export function GroupCard({
 								{group.tierRange.range[1].isPlus ? "+" : ""}
 							</span>
 						</div>
-						{!group.isReplay ? (
+						{group.isReplay ? (
 							<div className="text-theme-secondary text-uppercase text-xs font-bold">
 								{t("q:looking.replay")}
 							</div>
