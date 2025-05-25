@@ -104,7 +104,7 @@ describe("Secondary teams", () => {
 
 		await editTeamAction(
 			{
-				_action: "DELETE",
+				_action: "DELETE_TEAM",
 			},
 			{
 				user: "regular",
