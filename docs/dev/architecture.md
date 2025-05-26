@@ -147,9 +147,15 @@ const user = await getUser(request); // get user (undefined if not logged in)
 
 ### Permissions
 
+TODO
+
 ### Anatomy of an action
 
+TODO
+
 ### Performance
+
+TODO
 
 ### Database
 
@@ -180,6 +186,12 @@ Cron jobs to perform actions on the server at certain intervals. To add a new on
 
 ### Real time
 
+TODO
+
 ### Notifications
 
+TODO
+
 ### Design
+
+TODO
