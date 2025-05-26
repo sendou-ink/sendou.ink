@@ -1,4 +1,6 @@
-Schemas here
+Note: some simple features omitted with only a few relations and no special notes
+
+See `tables.ts` for some more documentation on column-level.
 
 ## Art
 
@@ -88,13 +90,6 @@ erDiagram
     LFGPost }o--o| Team : team
 ```
 
-## Log-in Links
-
-```mermaid
-erDiagram
-    LogInLink }o--|| User : belongs_to
-```
-
 ## Map Pools
 
 ```mermaid
@@ -176,10 +171,30 @@ erDiagram
 - **TeamMember** - `AllTeamMember` excluding members who already left their team & secondary teams
 - **TeamMemberWithSecondary** - `AllTeamMember` excluding members who already left their team but including secondary teams
 
-## User notes
+## Tournaments
+
+The database structure is mimicking the `brackets-manager.js` library. See this issue for a schema: [https://github.com/Drarig29/brackets-manager.js/issues/111#issuecomment-997417423](https://github.com/Drarig29/brackets-manager.js/issues/111#issuecomment-997417423)
+
+## Tournament organizations
 
 ```mermaid
 erDiagram
-    User ||--o{ PrivateUserNote : writes
-    User ||--o{ PrivateUserNote : receives
+    TournamentOrganization ||--|{ TournamentOrganizationMember : has_member
+    User ||--o{ TournamentOrganizationMember : member_of
+
+    TournamentOrganization ||--o{ TournamentOrganizationBadge : has_badge
+    Badge ||--o{ TournamentOrganizationBadge : badge_of
+
+    TournamentOrganization ||--o{ TournamentOrganizationSeries : has_series
 ```
+
+## Videos
+```mermaid
+erDiagram
+    UnvalidatedVideo ||--|{ VideoMatch : has
+    VideoMatch ||--o{ VideoMatchPlayer : has
+```
+
+### Notes
+
+- `Video` - Same as `UnvalidatedVideo` (redundant)
