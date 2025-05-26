@@ -10,7 +10,7 @@ import { RequiredHiddenInput } from "~/components/RequiredHiddenInput";
 import { SubmitButton } from "~/components/SubmitButton";
 import { TrashIcon } from "~/components/icons/Trash";
 import { useUser } from "~/features/auth/core/user";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { TOURNAMENT_SUB } from "../tournament-subs-constants";
 

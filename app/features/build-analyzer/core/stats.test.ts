@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { type MainWeaponId, mainWeaponIds } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { damageTypeToWeaponType } from "../analyzer-constants";
 import { buildStats } from "./stats";
 

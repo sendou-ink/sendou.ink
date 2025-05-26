@@ -7,7 +7,12 @@ import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { logger } from "~/utils/logger";
-import { parseRequestPayload, successToast } from "~/utils/remix.server";
+import {
+	errorToast,
+	parseRequestPayload,
+	successToast,
+} from "~/utils/remix.server";
+import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { _action, actualNumber, friendCode } from "~/utils/zod";
 import { plusTiersFromVotingAndLeaderboard } from "../core/plus-tier.server";
@@ -24,13 +29,27 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		case "MIGRATE": {
 			requireRole(user, "STAFF");
 
-			await AdminRepository.migrate({
-				oldUserId: data["old-user"],
-				newUserId: data["new-user"],
-			});
+			try {
+				const errorMessage = await AdminRepository.migrate({
+					oldUserId: data["old-user"],
+					newUserId: data["new-user"],
+				});
 
-			message = "Account migrated";
-			break;
+				if (errorMessage) {
+					errorToast(`Migration failed. Reason: ${errorMessage}`);
+				}
+
+				message = "Account migrated";
+				break;
+			} catch (err) {
+				if (errorIsSqliteForeignKeyConstraintFailure(err)) {
+					errorToast(
+						"New user has data preventing the migration (e.g. member of tournament teams or SendouQ played)",
+					);
+				}
+
+				throw err;
+			}
 		}
 		case "REFRESH": {
 			requireRole(user, "ADMIN");

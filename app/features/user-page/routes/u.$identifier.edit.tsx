@@ -19,7 +19,7 @@ import { USER } from "~/constants";
 import type { Tables } from "~/db/tables";
 import { BADGE } from "~/features/badges/badges-contants";
 import { BadgesSelector } from "~/features/badges/components/BadgesSelector";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
 import invariant from "~/utils/invariant";
 import { rawSensToString } from "~/utils/strings";

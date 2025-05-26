@@ -1,6 +1,6 @@
 import { sql } from "~/db/sql";
 import type { Tables } from "~/db/tables";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { DEFAULT_LEADERBOARD_MAX_SIZE } from "../leaderboards-constants";
 
 const getStm = (where = "") =>

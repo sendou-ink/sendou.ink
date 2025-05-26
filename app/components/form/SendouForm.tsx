@@ -9,7 +9,7 @@ import type { ActionError } from "~/utils/remix.server";
 import { LinkButton } from "../Button";
 import { SubmitButton } from "../SubmitButton";
 
-export function MyForm<T extends z.ZodTypeAny>({
+export function SendouForm<T extends z.ZodTypeAny>({
 	schema,
 	defaultValues,
 	heading,

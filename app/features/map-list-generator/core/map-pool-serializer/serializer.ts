@@ -1,9 +1,7 @@
 import invariant from "~/utils/invariant";
-import {
-	type StageId,
-	modesShort,
-	stageIds,
-} from "../../../../modules/in-game-lists";
+import { modesShort } from "../../../../modules/in-game-lists/modes";
+import { stageIds } from "../../../../modules/in-game-lists/stage-ids";
+import type { StageId } from "../../../../modules/in-game-lists/types";
 import type { MapPoolObject, ReadonlyMapPoolObject } from "./types";
 
 export function mapPoolToSerializedString(

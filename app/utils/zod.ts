@@ -1,8 +1,12 @@
 import type { ZodType } from "zod";
 import { z } from "zod";
 import { CUSTOM_CSS_VAR_COLORS, INVITE_CODE_LENGTH } from "~/constants";
-import type { abilitiesShort } from "~/modules/in-game-lists";
-import { abilities, mainWeaponIds, stageIds } from "~/modules/in-game-lists";
+import {
+	abilities,
+	type abilitiesShort,
+} from "~/modules/in-game-lists/abilities";
+import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { FRIEND_CODE_REGEXP } from "../features/sendouq/q-constants";
 import type { Unpacked } from "./types";
 import { assertType } from "./types";
@@ -100,7 +104,23 @@ export const weaponSplId = z.preprocess(
 	numericEnum(mainWeaponIds),
 );
 
+export const qWeapon = z.object({
+	weaponSplId,
+	isFavorite: z.union([z.literal(0), z.literal(1)]),
+});
+
 export const modeShort = z.enum(["TW", "SZ", "TC", "RM", "CB"]);
+export const modeShortWithSpecial = z.enum([
+	"TW",
+	"SZ",
+	"TC",
+	"RM",
+	"CB",
+	"SR",
+	"TB",
+]);
+
+export const gamesShortSchema = z.enum(["S1", "S2", "S3"]);
 
 export const stageId = z.preprocess(actualNumber, numericEnum(stageIds));
 
@@ -128,7 +148,7 @@ export function safeJSONParse(value: unknown): unknown {
 	}
 }
 
-const EMPTY_CHARACTERS = ["\u200B", "\u200C", "\u200D", "\u200E", "\u200F"];
+const EMPTY_CHARACTERS = ["\u200B", "\u200C", "\u200D", "\u200E", "\u200F", "󠀠"];
 const EMPTY_CHARACTERS_REGEX = new RegExp(EMPTY_CHARACTERS.join("|"), "g");
 
 const zalgoRe = /%CC%/g;
@@ -151,7 +171,10 @@ export const safeStringSchema = ({ min, max }: { min?: number; max: number }) =>
 export const safeNullableStringSchema = ({
 	min,
 	max,
-}: { min?: number; max: number }) =>
+}: {
+	min?: number;
+	max: number;
+}) =>
 	z.preprocess(
 		actuallyNonEmptyStringOrNull,
 		z
@@ -174,7 +197,7 @@ export const safeNullableStringSchema = ({
 /**
  * Processes the input value and returns a non-empty string with invisible characters cleaned out or null.
  */
-function actuallyNonEmptyStringOrNull(value: unknown) {
+export function actuallyNonEmptyStringOrNull(value: unknown) {
 	if (typeof value !== "string") return value;
 
 	const trimmed = value.replace(EMPTY_CHARACTERS_REGEX, "").trim();
@@ -326,9 +349,9 @@ export function numericEnum<TValues extends readonly number[]>(
 }
 
 export const dayMonthYear = z.object({
-	day: z.number().int().min(1).max(31),
-	month: z.number().int().min(0).max(11),
-	year: z.number().int().min(2015).max(2100),
+	day: z.coerce.number().int().min(1).max(31),
+	month: z.coerce.number().int().min(0).max(11),
+	year: z.coerce.number().int().min(2015).max(2100),
 });
 
 export type DayMonthYear = z.infer<typeof dayMonthYear>;

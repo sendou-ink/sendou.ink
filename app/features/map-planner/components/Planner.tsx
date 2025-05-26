@@ -20,14 +20,14 @@ import { useTranslation } from "react-i18next";
 import * as R from "remeda";
 import { usePlannerBg } from "~/hooks/usePlannerBg";
 import type { LanguageCode } from "~/modules/i18n/config";
-import type { ModeShort, StageId } from "~/modules/in-game-lists";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
 	specialWeaponIds,
-	stageIds,
 	subWeaponIds,
 	weaponCategories,
-} from "~/modules/in-game-lists";
-import { modesShort } from "~/modules/in-game-lists/modes";
+} from "~/modules/in-game-lists/weapon-ids";
 import {
 	mainWeaponImageUrl,
 	modeImageUrl,

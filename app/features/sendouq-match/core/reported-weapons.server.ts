@@ -1,5 +1,5 @@
 import type { GroupForMatch } from "~/features/sendouq-match/QMatchRepository.server";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { MatchById } from "../queries/findMatchById.server";
 import type { reportedWeaponsByMatchId } from "../queries/reportedWeaponsByMatchId.server";
 

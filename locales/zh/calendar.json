@@ -24,7 +24,6 @@
 	"forms.discordInvite": "Discord服务器的邀请链接",
 	"forms.tags": "标签",
 	"forms.tags.placeholder": "选择标签",
-	"forms.tags.info": "标签\"徽章奖励\"将根据情况自动添加",
 	"forms.badges": "徽章奖励",
 	"forms.badges.placeholder": "选择一项徽章奖励",
 	"forms.mapPool": "地图池",

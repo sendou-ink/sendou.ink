@@ -7,12 +7,9 @@ import type { Tables } from "~/db/tables";
 import type { SerializedMapPoolEvent } from "~/features/calendar/routes/map-pool-events";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
-import {
-	type ModeShort,
-	type StageId,
-	modesShort,
-} from "~/modules/in-game-lists";
-import { modes, stageIds } from "~/modules/in-game-lists";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { split, startsWith } from "~/utils/strings";
 import { assertType } from "~/utils/types";
 import { modeImageUrl, stageImageUrl } from "~/utils/urls";
@@ -263,25 +260,24 @@ export function MapPoolStages({
 							{t(`game-misc:STAGE_${stageId}`)}
 						</div>
 						<div className={styles.modeButtonsContainer}>
-							{modes
+							{modesShort
 								.filter(
-									(mode) =>
-										!modesToInclude || modesToInclude.includes(mode.short),
+									(mode) => !modesToInclude || modesToInclude.includes(mode),
 								)
 								.map((mode) => {
-									const selected = mapPool.has({ stageId, mode: mode.short });
+									const selected = mapPool.has({ stageId, mode });
 
 									if (isPresentational && !selected) return null;
 									if (isPresentational && selected) {
 										return (
 											<Image
-												key={mode.short}
+												key={mode}
 												className={clsx(styles.mode, {
 													[styles.selected]: selected,
 												})}
-												title={t(`game-misc:MODE_LONG_${mode.short}`)}
-												alt={t(`game-misc:MODE_LONG_${mode.short}`)}
-												path={modeImageUrl(mode.short)}
+												title={t(`game-misc:MODE_LONG_${mode}`)}
+												alt={t(`game-misc:MODE_LONG_${mode}`)}
+												path={modeImageUrl(mode)}
 												width={33}
 												height={33}
 											/>
@@ -290,24 +286,21 @@ export function MapPoolStages({
 
 									const preselected = preselectedMapPool?.has({
 										stageId,
-										mode: mode.short,
+										mode,
 									});
 
 									return (
 										<button
-											key={mode.short}
+											key={mode}
 											className={clsx(styles.modeButton, "outline-theme", {
 												[styles.selected]: selected,
 												[styles.preselected]: preselected,
 												invisible:
-													hideBanned &&
-													BANNED_MAPS[mode.short].includes(stageId),
+													hideBanned && BANNED_MAPS[mode].includes(stageId),
 											})}
-											onClick={() =>
-												handleModeChange?.({ mode: mode.short, stageId })
-											}
+											onClick={() => handleModeChange?.({ mode, stageId })}
 											type="button"
-											title={t(`game-misc:MODE_LONG_${mode.short}`)}
+											title={t(`game-misc:MODE_LONG_${mode}`)}
 											aria-describedby={`${id}-stage-name-${stageId}`}
 											aria-pressed={selected}
 											disabled={preselected}
@@ -317,8 +310,8 @@ export function MapPoolStages({
 													[styles.selected]: selected,
 													[styles.preselected]: preselected,
 												})}
-												alt={t(`game-misc:MODE_LONG_${mode.short}`)}
-												path={modeImageUrl(mode.short)}
+												alt={t(`game-misc:MODE_LONG_${mode}`)}
+												path={modeImageUrl(mode)}
 												width={20}
 												height={20}
 											/>
@@ -405,10 +398,10 @@ function MapPoolTemplateSelect({
 							{t(`common:maps.template.preset.${presetId}`)}
 						</option>
 					))}
-					{modes.map((mode) => (
-						<option key={mode.short} value={`preset:${mode.short}`}>
+					{modesShort.map((mode) => (
+						<option key={mode} value={`preset:${mode}`}>
 							{t("common:maps.template.preset.onlyMode", {
-								modeName: t(`game-misc:MODE_LONG_${mode.short}`),
+								modeName: t(`game-misc:MODE_LONG_${mode}`),
 							})}
 						</option>
 					))}

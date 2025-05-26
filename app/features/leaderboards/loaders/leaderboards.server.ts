@@ -7,8 +7,8 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import type {
 	MainWeaponId,
 	RankedModeShort,
-	weaponCategories,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/types";
+import type { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
 import { cache, ttl } from "~/utils/cache.server";
 import {
 	cachedFullUserLeaderboard,

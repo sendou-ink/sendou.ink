@@ -16,12 +16,16 @@ export interface BadgeDisplayProps {
 	badges: Array<Omit<Tables["Badge"], "authorId"> & { count?: number }>;
 	onChange?: (badgeIds: number[]) => void;
 	children?: React.ReactNode;
+	showText?: boolean;
+	className?: string;
 }
 
 export function BadgeDisplay({
 	badges: _badges,
 	onChange,
 	children,
+	showText = true,
+	className,
 }: BadgeDisplayProps) {
 	const { t } = useTranslation("badges");
 	const [badges, setBadges] = React.useState(_badges);
@@ -58,13 +62,13 @@ export function BadgeDisplay({
 
 	return (
 		<div data-testid="badge-display">
-			{isPaginated ? (
+			{isPaginated && showText ? (
 				<div className={styles.badgeExplanation}>
 					{badgeExplanationText(t, bigBadge)}
 				</div>
 			) : null}
 			<div
-				className={clsx(styles.badges, {
+				className={clsx(className, styles.badges, {
 					"justify-center": smallBadges.length === 0,
 				})}
 			>

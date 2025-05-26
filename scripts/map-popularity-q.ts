@@ -1,8 +1,9 @@
 import "dotenv/config";
 import { db } from "~/db/sql";
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
-import type { ModeShort, StageId } from "~/modules/in-game-lists";
-import { modesShort, stageIds } from "~/modules/in-game-lists";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,

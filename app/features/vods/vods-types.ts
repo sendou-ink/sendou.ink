@@ -1,6 +1,6 @@
 import type { z } from "zod";
 import type { Tables } from "~/db/tables";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { videoMatchSchema, videoSchema } from "./vods-schemas";
 
 export type VideoBeingAddedPartial = Partial<VideoBeingAdded>;

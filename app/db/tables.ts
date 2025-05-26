@@ -8,10 +8,8 @@ import type {
 	Updateable,
 } from "kysely";
 import type { AssociationVisibility } from "~/features/associations/associations-types";
-import type {
-	persistedTags,
-	tags,
-} from "~/features/calendar/calendar-constants";
+import type { tags } from "~/features/calendar/calendar-constants";
+import type { CalendarFilters } from "~/features/calendar/calendar-types";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
 import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
@@ -23,7 +21,7 @@ import type {
 	MainWeaponId,
 	ModeShort,
 	StageId,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/types";
 import type { JSONColumnTypeNullable } from "~/utils/kysely.server";
 
 type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
@@ -138,7 +136,6 @@ export type CalendarEventAvatarMetadata = {
 	textColor: string;
 };
 
-export type PersistedCalendarEventTag = keyof typeof persistedTags;
 export type CalendarEventTag = keyof typeof tags;
 
 export interface CalendarEvent {
@@ -787,6 +784,11 @@ export interface UserMapModePreferences {
 	}>;
 }
 
+export interface QWeaponPool {
+	weaponSplId: MainWeaponId;
+	isFavorite: number;
+}
+
 export const BUILD_SORT_IDENTIFIERS = [
 	"UPDATED_AT",
 	"TOP_500",
@@ -806,6 +808,7 @@ export type BuildSort = (typeof BUILD_SORT_IDENTIFIERS)[number];
 export interface UserPreferences {
 	disableBuildAbilitySorting?: boolean;
 	disallowScrimPickupsFromUntrusted?: boolean;
+	defaultCalendarFilters?: CalendarFilters;
 }
 
 export interface User {
@@ -845,7 +848,7 @@ export interface User {
 	vc: Generated<"YES" | "NO" | "LISTEN_ONLY">;
 	youtubeId: string | null;
 	mapModePreferences: JSONColumnTypeNullable<UserMapModePreferences>;
-	qWeaponPool: ColumnType<MainWeaponId[] | null, string | null, string | null>;
+	qWeaponPool: JSONColumnTypeNullable<QWeaponPool[]>;
 	plusSkippedForSeasonNth: number | null;
 	noScreen: Generated<DBBoolean>;
 	buildSorting: JSONColumnTypeNullable<BuildSort[]>;

@@ -3,19 +3,23 @@ import type { GearType, Preference, Tables } from "~/db/tables";
 import type { ArtSource } from "~/features/art/art-types";
 import type { AuthErrorCode } from "~/features/auth/core/errors";
 import { serializeBuild } from "~/features/build-analyzer";
+import type { CalendarFilters } from "~/features/calendar/calendar-types";
 import type { StageBackgroundStyle } from "~/features/map-planner";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import { JOIN_CODE_SEARCH_PARAM_KEY } from "~/features/sendouq/q-constants";
-import type { ModeShort, weaponCategories } from "~/modules/in-game-lists";
+import type { ModeShort } from "~/modules/in-game-lists/types";
 import type {
 	Ability,
 	AbilityWithUnknown,
 	BuildAbilitiesTupleWithUnknown,
 	MainWeaponId,
+	ModeShortWithSpecial,
 	SpecialWeaponId,
 	StageId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
+import type { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
+import type { DayMonthYear } from "~/utils/zod";
 
 const staticAssetsUrl = ({
 	folder,
@@ -262,6 +266,31 @@ export const weaponBuildStatsPage = (weaponSlug: string) =>
 export const weaponBuildPopularPage = (weaponSlug: string) =>
 	`${weaponBuildPage(weaponSlug)}/popular`;
 
+export const calendarPage = (args?: {
+	filters?: CalendarFilters;
+	dayMonthYear?: DayMonthYear;
+}) => {
+	const params = new URLSearchParams();
+	if (args?.filters) {
+		params.set("filters", JSON.stringify(args.filters));
+	}
+	if (args?.dayMonthYear) {
+		params.set("day", String(args.dayMonthYear.day));
+		params.set("month", String(args.dayMonthYear.month));
+		params.set("year", String(args.dayMonthYear.year));
+	}
+
+	return `${CALENDAR_PAGE}${params.toString() ? `?${params.toString()}` : ""}`;
+};
+
+export const calendarIcalFeed = (filters?: CalendarFilters) => {
+	const params = new URLSearchParams();
+	if (filters) {
+		params.set("filters", JSON.stringify(filters));
+	}
+	return `${SENDOU_INK_BASE_URL}/calendar.ics${params.toString() ? `?${params.toString()}` : ""}`;
+};
+
 export const calendarEventPage = (eventId: number) => `/calendar/${eventId}`;
 export const calendarEditPage = (eventId?: number) =>
 	`/calendar/new${eventId ? `?eventId=${eventId}` : ""}`;
@@ -452,7 +481,7 @@ export const specialWeaponImageUrl = (specialWeaponSplId: SpecialWeaponId) =>
 	`/static-assets/img/special-weapons/${specialWeaponSplId}`;
 export const abilityImageUrl = (ability: AbilityWithUnknown) =>
 	`/static-assets/img/abilities/${ability}`;
-export const modeImageUrl = (mode: ModeShort) =>
+export const modeImageUrl = (mode: ModeShortWithSpecial) =>
 	`/static-assets/img/modes/${mode}`;
 export const stageImageUrl = (stageId: StageId) =>
 	`/static-assets/img/stages/${stageId}`;

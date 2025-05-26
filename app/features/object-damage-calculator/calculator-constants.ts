@@ -1,4 +1,5 @@
-import { type MainWeaponId, mainWeaponIds } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import type { AnyWeapon, DamageType } from "../build-analyzer";
 import type { CombineWith } from "./calculator-types";

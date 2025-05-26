@@ -11,7 +11,7 @@ import type {
 } from "~/db/tables";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { Status } from "~/modules/brackets-model";
-import { modesShort } from "~/modules/in-game-lists";
+import { modesShort } from "~/modules/in-game-lists/modes";
 import { nullFilledArray, nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
@@ -452,8 +452,10 @@ export function forShowcase() {
 		.select((eb) => [
 			"Tournament.id",
 			"Tournament.settings",
+			"CalendarEvent.authorId",
 			"CalendarEvent.name",
 			"CalendarEventDate.startTime",
+			"CalendarEvent.hidden",
 			eb
 				.selectFrom("TournamentTeam")
 				.leftJoin("TournamentTeamCheckIn", (join) =>
@@ -523,7 +525,6 @@ export function forShowcase() {
 					]),
 			).as("firstPlacers"),
 		])
-		.where("CalendarEvent.hidden", "=", 0)
 		.where("CalendarEventDate.startTime", ">", databaseTimestampWeekAgo())
 		.orderBy("CalendarEventDate.startTime", "asc")
 		.$narrowType<{ teamsCount: NotNull }>()
@@ -536,6 +537,36 @@ function databaseTimestampWeekAgo() {
 	now.setDate(now.getDate() - 7);
 
 	return dateToDatabaseTimestamp(now);
+}
+
+export function findAllBetweenTwoTimestamps({
+	startTime,
+	endTime,
+}: {
+	startTime: Date;
+	endTime: Date;
+}) {
+	return db
+		.selectFrom("CalendarEvent")
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEvent.id",
+			"CalendarEventDate.eventId",
+		)
+		.innerJoin("Tournament", "CalendarEvent.tournamentId", "Tournament.id")
+		.select(["Tournament.id as tournamentId"])
+		.where(
+			"CalendarEventDate.startTime",
+			">=",
+			dateToDatabaseTimestamp(startTime),
+		)
+		.where(
+			"CalendarEventDate.startTime",
+			"<=",
+			dateToDatabaseTimestamp(endTime),
+		)
+		.where("CalendarEvent.hidden", "=", 0)
+		.execute();
 }
 
 export function topThreeResultsByTournamentId(tournamentId: number) {

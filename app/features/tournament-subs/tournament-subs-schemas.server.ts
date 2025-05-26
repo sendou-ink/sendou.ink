@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { mainWeaponIds } from "~/modules/in-game-lists";
+import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { id, processMany, removeDuplicates, safeJSONParse } from "~/utils/zod";
 import { TOURNAMENT_SUB } from "./tournament-subs-constants";
 

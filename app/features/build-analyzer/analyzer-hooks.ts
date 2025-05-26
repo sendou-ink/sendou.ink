@@ -1,12 +1,12 @@
 import { useSearchParams } from "@remix-run/react";
-import {
-	type Ability,
-	type AbilityWithUnknown,
-	type BuildAbilitiesTupleWithUnknown,
-	type MainWeaponId,
-	abilities,
-	isAbility,
-} from "~/modules/in-game-lists";
+import { abilities } from "~/modules/in-game-lists/abilities";
+import type {
+	Ability,
+	AbilityWithUnknown,
+	BuildAbilitiesTupleWithUnknown,
+	MainWeaponId,
+} from "~/modules/in-game-lists/types";
+import { isAbility } from "~/modules/in-game-lists/utils";
 import invariant from "~/utils/invariant";
 import { MAX_LDE_INTENSITY } from "./analyzer-constants";
 import type { SpecialEffectType } from "./analyzer-types";

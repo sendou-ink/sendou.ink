@@ -9,13 +9,14 @@ import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { type FormFieldSize, formFieldSizeToClassName } from "./form-utils";
 
-export function TextFormField<T extends FieldValues>({
+export function InputFormField<T extends FieldValues>({
 	label,
 	name,
 	bottomText,
 	placeholder,
 	required,
 	size = "small",
+	type,
 }: {
 	label: string;
 	name: FieldPath<T>;
@@ -23,6 +24,7 @@ export function TextFormField<T extends FieldValues>({
 	placeholder?: string;
 	required?: boolean;
 	size?: FormFieldSize;
+	type?: React.HTMLInputTypeAttribute;
 }) {
 	const methods = useFormContext();
 	const id = React.useId();
@@ -37,6 +39,7 @@ export function TextFormField<T extends FieldValues>({
 			<input
 				id={id}
 				placeholder={placeholder}
+				type={type}
 				{...methods.register(name)}
 				className={formFieldSizeToClassName(size)}
 			/>

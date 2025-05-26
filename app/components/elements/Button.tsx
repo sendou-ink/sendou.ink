@@ -17,7 +17,7 @@ type ButtonVariant =
 	| "minimal-success"
 	| "minimal-destructive";
 
-interface SendouButtonProps extends ReactAriaButtonProps {
+export interface SendouButtonProps extends ReactAriaButtonProps {
 	variant?: ButtonVariant;
 	size?: "miniscule" | "small" | "medium" | "big";
 	icon?: JSX.Element;

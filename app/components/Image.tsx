@@ -1,7 +1,8 @@
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import type { TierName } from "~/features/mmr/mmr-constants";
-import type { MainWeaponId, ModeShort, StageId } from "~/modules/in-game-lists";
+import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
+import type { ModeShortWithSpecial } from "~/modules/in-game-lists/types";
 import {
 	TIER_PLUS_URL,
 	mainWeaponImageUrl,
@@ -104,7 +105,7 @@ export function WeaponImage({
 }
 
 type ModeImageProps = {
-	mode: ModeShort;
+	mode: ModeShortWithSpecial;
 } & Omit<ImageProps, "path" | "alt">;
 
 export function ModeImage({ mode, testId, title, ...rest }: ModeImageProps) {

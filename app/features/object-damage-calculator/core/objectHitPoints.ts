@@ -12,7 +12,7 @@ import {
 	BIG_BUBBLER_ID,
 	CRAB_TANK_ID,
 	SPLASH_WALL_ID,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import type { HitPoints } from "../calculator-types";
 

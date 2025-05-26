@@ -15,8 +15,7 @@ import { UnlockIcon } from "~/components/icons/Unlock";
 import { BUILD_SORT_IDENTIFIERS, type BuildSort } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
-import type { MainWeaponId } from "~/modules/in-game-lists";
-import { mainWeaponIds } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { atOrError } from "~/utils/arrays";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { weaponCategoryUrl } from "~/utils/urls";
@@ -24,6 +23,7 @@ import { SendouButton } from "../../../components/elements/Button";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import { DEFAULT_BUILD_SORT } from "../user-page-constants";
 
+import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { action } from "../actions/u.$identifier.builds.server";
 import {
 	type UserBuildsPageData,

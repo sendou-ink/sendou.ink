@@ -21,12 +21,14 @@
 		"typecheck": "tsc --noEmit",
 		"test:unit": "cross-env VITE_SITE_DOMAIN=http://localhost:5173 vitest --silent=passed-only run",
 		"test:e2e": "npx playwright test",
+		"test:e2e:flaky-detect": "npx playwright test --repeat-each=10 --max-failures=1",
 		"checks": "npm run biome:fix && npm run test:unit && npm run check-translation-jsons && npm run typecheck",
 		"setup": "cross-env DB_PATH=db.sqlite3 tsx ./scripts/setup.ts"
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.797.0",
 		"@aws-sdk/lib-storage": "^3.797.0",
+		"@date-fns/tz": "^1.2.0",
 		"@dnd-kit/core": "^6.3.1",
 		"@dnd-kit/sortable": "^10.0.0",
 		"@dnd-kit/utilities": "^3.2.2",
@@ -50,6 +52,7 @@
 		"i18next-browser-languagedetector": "^8.0.5",
 		"i18next-http-backend": "^2.6.2",
 		"isbot": "^5.1.27",
+		"ics": "^3.8.1",
 		"kysely": "^0.28.2",
 		"lru-cache": "^11.1.0",
 		"markdown-to-jsx": "^7.7.6",

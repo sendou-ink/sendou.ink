@@ -1,4 +1,4 @@
-import type { BuildAbilitiesTupleWithUnknown } from "./modules/in-game-lists";
+import type { BuildAbilitiesTupleWithUnknown } from "./modules/in-game-lists/types";
 
 // xxx: get rid of this
 

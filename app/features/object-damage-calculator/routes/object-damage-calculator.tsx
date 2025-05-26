@@ -19,7 +19,7 @@ import {
 	SQUID_BEAKON_ID,
 	TORPEDO_ID,
 	WAVE_BREAKER_ID,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/weapon-ids";
 import {
 	SUPER_CHUMP_ID,
 	TRIPLE_SPLASHDOWN_ID,

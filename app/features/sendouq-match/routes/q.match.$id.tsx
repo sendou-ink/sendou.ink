@@ -41,7 +41,7 @@ import { useRecentlyReportedWeapons } from "~/features/sendouq/q-hooks";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useWindowSize } from "~/hooks/useWindowSize";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { joinListToNaturalString } from "~/utils/arrays";

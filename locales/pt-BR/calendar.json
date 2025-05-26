@@ -24,7 +24,6 @@
 	"forms.discordInvite": "URL de convite do servidor do Discord",
 	"forms.tags": "Marcações",
 	"forms.tags.placeholder": "Escolha uma marcação",
-	"forms.tags.info": "\"Prêmio(s) de insígnia\" é adicionado automaticamente como marcação se aplicável",
 	"forms.badges": "Prêmio(s) de insígnia",
 	"forms.badges.placeholder": "Escolha um prêmio de insígnia",
 	"forms.mapPool": "Conjunto de mapas",

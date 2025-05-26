@@ -1,6 +1,7 @@
 .layout__container {
 	width: 100%;
 	min-height: 100vh;
+	padding-top: 50px; /** compensate for layout__header */
 }
 
 .layout__breadcrumb-container {
@@ -58,6 +59,9 @@
 	font-weight: bold;
 	padding-block: var(--s-2);
 	padding-inline: var(--s-4);
+	position: fixed;
+	top: 0;
+	z-index: 10;
 }
 
 .layout__avatar {

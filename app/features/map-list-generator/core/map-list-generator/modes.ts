@@ -1,5 +1,5 @@
 import * as R from "remeda";
-import type { ModeShort } from "../../../../modules/in-game-lists";
+import type { ModeShort } from "../../../../modules/in-game-lists/types";
 
 export function modesOrder(
 	type: "EQUAL" | "SZ_EVERY_OTHER",

@@ -24,7 +24,6 @@
 	"forms.discordInvite": "Discord サーバー招待 URL",
 	"forms.tags": "タグ",
 	"forms.tags.placeholder": "タグを選択",
-	"forms.tags.info": "\"バッジプライズ\" タグは可能な場合に自動的に適用されます",
 	"forms.badges": "バッジプライズ",
 	"forms.badges.placeholder": "バッジプライズを選択する",
 	"forms.mapPool": "ステージプール",

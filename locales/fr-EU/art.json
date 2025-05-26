@@ -24,5 +24,8 @@
 	"forms.tags.addNew": "En créer un nouveau.",
 	"forms.tags.addNew.placeholder": "Créer un nouveau tag",
 	"forms.tags.searchExisting.placeholder": "Chercher des tags existants",
-	"forms.tags.maxReached": "Limite de tags atteinte"
+	"forms.tags.maxReached": "Limite de tags atteinte",
+
+	"delete.title": "Êtes vous sûre de vouloir supprimer cette œuvre?",
+	"unlink.title": "Êtes vous sûre de vouloir supprimer cette œuvre de votre profil? (Seulement {{username}} pourra le remettre)"
 }

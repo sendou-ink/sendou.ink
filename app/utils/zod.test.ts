@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { hasZalgo, normalizeFriendCode } from "./zod";
+import {
+	actuallyNonEmptyStringOrNull,
+	hasZalgo,
+	normalizeFriendCode,
+} from "./zod";
 
 describe("normalizeFriendCode", () => {
 	it("returns well formatted friend code as is", () => {
@@ -38,5 +42,38 @@ describe("hasZalgo", () => {
 
 	it("accepts japanese characters", () => {
 		expect(hasZalgo("こんにちは")).toBe(false);
+	});
+});
+
+describe("actuallyNonEmptyStringOrNull", () => {
+	it("returns null for an empty string", () => {
+		expect(actuallyNonEmptyStringOrNull("")).toBeNull();
+	});
+
+	it("returns null for a string with only spaces", () => {
+		expect(actuallyNonEmptyStringOrNull("    ")).toBeNull();
+	});
+
+	it("returns trimmed string for a string with visible characters and spaces", () => {
+		expect(actuallyNonEmptyStringOrNull("  hello world  ")).toBe("hello world");
+	});
+
+	it("removes invisible characters and trims", () => {
+		expect(actuallyNonEmptyStringOrNull("​​​​test​​​​")).toBe("test");
+	});
+
+	it("returns original value if not a string", () => {
+		expect(actuallyNonEmptyStringOrNull(123)).toBe(123);
+		expect(actuallyNonEmptyStringOrNull(null)).toBe(null);
+		expect(actuallyNonEmptyStringOrNull(undefined)).toBe(undefined);
+		expect(actuallyNonEmptyStringOrNull({})).toEqual({});
+	});
+
+	it("returns null for a string with only zero width spaces", () => {
+		expect(actuallyNonEmptyStringOrNull("​​​​​​​​​​")).toBeNull();
+	});
+
+	it("returns null for a string with only tag space emoji", () => {
+		expect(actuallyNonEmptyStringOrNull("󠀠󠀠󠀠󠀠󠀠")).toBeNull();
 	});
 });

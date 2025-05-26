@@ -8,7 +8,7 @@ import type { SeedVariation } from "~/features/api-private/routes/seed";
 import * as AssociationRepository from "~/features/associations/AssociationRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
-import { persistedTags } from "~/features/calendar/calendar-constants";
+import { tags } from "~/features/calendar/calendar-constants";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
@@ -50,21 +50,21 @@ import {
 	secondsToHoursMinutesSecondString,
 	youtubeIdToYoutubeUrl,
 } from "~/features/vods/vods-utils";
+import { abilities } from "~/modules/in-game-lists/abilities";
+import {
+	clothesGearIds,
+	headGearIds,
+	shoesGearIds,
+} from "~/modules/in-game-lists/gear-ids";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import { rankedModesShort } from "~/modules/in-game-lists/modes";
+import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type {
 	AbilityType,
 	MainWeaponId,
 	StageId,
-} from "~/modules/in-game-lists";
-import {
-	abilities,
-	clothesGearIds,
-	headGearIds,
-	mainWeaponIds,
-	modesShort,
-	shoesGearIds,
-	stageIds,
-} from "~/modules/in-game-lists";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
+} from "~/modules/in-game-lists/types";
+import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
 import { SENDOUQ_DEFAULT_MAPS } from "~/modules/tournament-map-list-generator/constants";
 import { nullFilledArray } from "~/utils/arrays";
@@ -718,7 +718,7 @@ function calendarEvents() {
 	const userIds = userIdsInRandomOrder();
 
 	for (let id = 1; id <= AMOUNT_OF_CALENDAR_EVENTS; id++) {
-		const shuffledTags = faker.helpers.shuffle(Object.keys(persistedTags));
+		const shuffledTags = faker.helpers.shuffle(Object.keys(tags));
 
 		sql
 			.prepare(

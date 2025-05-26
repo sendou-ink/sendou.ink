@@ -1,6 +1,6 @@
-import type { CalendarEventTag, PersistedCalendarEventTag } from "~/db/tables";
+import type { CalendarEventTag } from "~/db/tables";
 
-export const persistedTags = {
+export const tags = {
 	SPECIAL: {
 		color: "#CE93D8",
 	},
@@ -41,7 +41,7 @@ export const persistedTags = {
 		color: "#1ADB1E",
 	},
 	TRIOS: {
-		color: "#571ADB",
+		color: "#B694FF",
 	},
 	S1: {
 		color: "#E5E4E2",
@@ -60,13 +60,6 @@ export const persistedTags = {
 	},
 };
 
-export const tags = {
-	...persistedTags,
-	BADGE: {
-		color: "#000",
-	},
-};
-
 export const CALENDAR_EVENT = {
 	NAME_MIN_LENGTH: 2,
 	NAME_MAX_LENGTH: 100,
@@ -76,10 +69,6 @@ export const CALENDAR_EVENT = {
 	BRACKET_URL_MAX_LENGTH: 200,
 	MAX_AMOUNT_OF_DATES: 5,
 	/** Calendar event tag that is persisted in the database */
-	PERSISTED_TAGS: Object.keys(
-		persistedTags,
-	) as Array<PersistedCalendarEventTag>,
-	/** Calendar event tag, both those persisted in the database and those that are computed */
 	TAGS: Object.keys(tags) as Array<CalendarEventTag>,
 	AVATAR_SIZE: 512,
 };
@@ -103,3 +92,14 @@ export const REG_CLOSES_AT_OPTIONS = [
 ] as const;
 
 export type RegClosesAtOption = (typeof REG_CLOSES_AT_OPTIONS)[number];
+
+/** How many days are shown at the /calendar page at a time */
+export const DAYS_SHOWN_AT_A_TIME = 4;
+
+/** Tags not shown on the tournament cards */
+export const EXCLUDED_TAGS: Array<CalendarEventTag> = [
+	"CARDS",
+	"SR",
+	"SZ",
+	"TW",
+];

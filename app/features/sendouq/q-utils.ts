@@ -1,6 +1,6 @@
 import type { Tables } from "~/db/tables";
-import { stageIds } from "~/modules/in-game-lists";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
+import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { databaseTimestampToDate } from "~/utils/dates";
 import {
 	SENDOUQ_LOOKING_PAGE,

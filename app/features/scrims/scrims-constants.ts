@@ -17,4 +17,4 @@ export const SCRIM = {
 	MAX_PICKUP_SIZE_EXCLUDING_OWNER: 5,
 };
 
-export const FF_SCRIMS_ENABLED = process.env.NODE_ENV === "development";
+export const FF_SCRIMS_ENABLED = true;

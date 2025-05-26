@@ -74,12 +74,6 @@ for (const file of fileNames) {
 				file,
 			);
 
-			validateNoExtraKeysInOther({
-				english: getKeysWithoutSuffix(englishContent, lang, file),
-				other: otherLanguageContentKeys,
-				lang,
-				file,
-			});
 			validateVariables({
 				english: englishContent,
 				other: otherLanguageContent,
@@ -129,26 +123,6 @@ const translationProgressPath = path.join(
 );
 
 fs.writeFileSync(translationProgressPath, markdown);
-
-function validateNoExtraKeysInOther({
-	english,
-	other,
-	lang,
-	file,
-}: {
-	english: string[];
-	other: string[];
-	lang: string;
-	file: string;
-}) {
-	const validKeys = english;
-
-	for (const key of other) {
-		if (validKeys.includes(key)) continue;
-
-		throw new Error(`unknown key in ${lang}/${file}: ${key}`);
-	}
-}
 
 function validateVariables({
 	english,

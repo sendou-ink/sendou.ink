@@ -6,7 +6,7 @@
 	background-color: rgba(0, 0, 0, 0.25);
 	display: flex;
 	min-height: 100%;
-	align-items: center;
+	align-items: flex-start;
 	justify-content: center;
 	padding: 1rem;
 	text-align: center;
@@ -43,12 +43,14 @@
 	vertical-align: middle;
 	box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px
 		rgba(0, 0, 0, 0.05);
+	margin: auto;
 }
 
 .fullScreenModal {
-	min-width: 100vw;
-	min-height: 100vh;
+	min-width: 100%;
+	min-height: 100%;
 	border-radius: 0;
+	padding-block-end: var(--s-32);
 }
 
 .modal[data-entering] {

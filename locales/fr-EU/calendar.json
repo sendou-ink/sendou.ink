@@ -24,7 +24,6 @@
 	"forms.discordInvite": "Lien d'invitation du Discord",
 	"forms.tags": "Tags",
 	"forms.tags.placeholder": "Choisir un tag",
-	"forms.tags.info": "Le tag \"Badge à gagner\" est ajouté automatiquement si le tournoi est éligible",
 	"forms.badges": "Badge à gagner",
 	"forms.badges.placeholder": "Choisissez le badge à faire gagner",
 	"forms.mapPool": "Stages disponibles",
@@ -66,6 +65,7 @@
 	"tag.desc.S2": "Le jeu joué est Splatoon 2.",
 	"tag.desc.SR": "Événement Salmon Run.",
 	"tag.desc.CARDS": "Événement Cartes & Territoire.",
+	"tag.filter.label": "Filtre par:",
 
 	"tournament.filter.label": "Hébergé par sendou.ink"
 }

@@ -1,5 +1,5 @@
 import type { MapPool } from "~/features/map-list-generator/core/map-pool";
-import type { ModeShort, ModeWithStage } from "../in-game-lists";
+import type { ModeShort, ModeWithStage } from "../in-game-lists/types";
 import type { sourceTypes } from "./constants";
 
 export type BracketType =

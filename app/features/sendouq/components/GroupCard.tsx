@@ -24,7 +24,7 @@ import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/le
 import { ordinalToRoundedSp } from "~/features/mmr/mmr-utils";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import { languagesUnified } from "~/modules/i18n/config";
-import type { ModeShort } from "~/modules/in-game-lists";
+import type { ModeShort } from "~/modules/in-game-lists/types";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
@@ -374,9 +374,9 @@ function GroupMember({
 						{member.weapons?.map((weapon) => {
 							return (
 								<WeaponImage
-									key={weapon}
-									weaponSplId={weapon}
-									variant="badge"
+									key={weapon.weaponSplId}
+									weaponSplId={weapon.weaponSplId}
+									variant={weapon.isFavorite ? "badge-5-star" : "badge"}
 									size={26}
 								/>
 							);

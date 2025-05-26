@@ -67,7 +67,6 @@ export const action: ActionFunction = async ({ request }) => {
 					targetGroupId: data.targetGroupId,
 				});
 			} catch (e) {
-				if (!(e instanceof Error)) throw e;
 				// the group disbanded before we could like it
 				if (errorIsSqliteForeignKeyConstraintFailure(e)) return null;
 

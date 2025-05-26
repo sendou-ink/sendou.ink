@@ -1,10 +1,11 @@
 import { sql } from "~/db/sql";
 import type { Tables, UserWithPlusTier } from "~/db/tables";
-import { type ModeShort, weaponIdToAltId } from "~/modules/in-game-lists";
+import type { ModeShort } from "~/modules/in-game-lists/types";
 import type {
 	BuildAbilitiesTuple,
 	MainWeaponId,
 } from "~/modules/in-game-lists/types";
+import { weaponIdToAltId } from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import { sortAbilities } from "../core/ability-sorting.server";
 

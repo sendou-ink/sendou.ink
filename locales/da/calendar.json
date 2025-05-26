@@ -24,7 +24,6 @@
 	"forms.discordInvite": "Discordserver-invitations-URL",
 	"forms.tags": "Tags",
 	"forms.tags.placeholder": "Vælg et tag",
-	"forms.tags.info": "\"Præmiemærker\" tag tilføjes automatisk, hvis den er anvendelig",
 	"forms.badges": "Præmiemærker",
 	"forms.badges.placeholder": "Vælg et premiemærke",
 	"forms.mapPool": "Banepulje",

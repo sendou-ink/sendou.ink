@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { databaseTimestampNow } from "~/utils/dates";
 import { sortBuilds } from "./build-sorting.server";
 

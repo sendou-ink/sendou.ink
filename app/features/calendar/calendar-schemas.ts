@@ -1,29 +1,95 @@
 import { z } from "zod";
 import { CALENDAR_EVENT_RESULT } from "~/constants";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import { type CalendarEventTag, TOURNAMENT_STAGE_TYPES } from "~/db/tables";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
-import "~/styles/calendar-new.css";
-import {
-	type PersistedCalendarEventTag,
-	TOURNAMENT_STAGE_TYPES,
-} from "~/db/tables";
-import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
+import "~/styles/calendar-new.css";
+import { gamesShort, versusShort } from "~/modules/in-game-lists/games";
+import { modesShortWithSpecial } from "~/modules/in-game-lists/modes";
 import {
 	actualNumber,
-	checkboxValueToBoolean,
-	date,
-	falsyToNull,
+	gamesShortSchema,
 	id,
-	processMany,
-	removeDuplicates,
+	modeShortWithSpecial,
 	safeJSONParse,
-	safeSplit,
 	toArray,
 } from "~/utils/zod";
-import { CALENDAR_EVENT, REG_CLOSES_AT_OPTIONS } from "./calendar-constants";
-import { calendarEventMaxDate, calendarEventMinDate } from "./calendar-utils";
+import { CALENDAR_EVENT } from "./calendar-constants";
+import * as CalendarEvent from "./core/CalendarEvent";
+
+export const calendarEventTagSchema = z
+	.string()
+	.refine((val) => CALENDAR_EVENT.TAGS.includes(val as CalendarEventTag));
+
+const calendarFiltersPlainStringArr = z.array(z.string().max(100)).max(10);
+const calendarFiltersIdsArr = z.array(id).max(10);
+const calendarFilterGamesArr = z.array(gamesShortSchema).min(1).max(3);
+const preferredStartTime = z.enum(["ANY", "EU", "NA", "AU"]);
+const preferredVersus = z
+	.array(z.enum(versusShort))
+	.min(1)
+	.max(versusShort.length);
+const modeArr = z
+	.array(modeShortWithSpecial)
+	.min(1)
+	.max(modesShortWithSpecial.length);
+
+export const calendarFiltersSearchParamsSchema = z.object({
+	preferredStartTime: preferredStartTime.catch("ANY"),
+	tagsIncluded: z.array(calendarEventTagSchema).catch([]),
+	tagsExcluded: z.array(calendarEventTagSchema).catch([]),
+	isSendou: z.boolean().catch(false),
+	isRanked: z.boolean().catch(false),
+	orgsIncluded: calendarFiltersPlainStringArr.catch([]),
+	orgsExcluded: calendarFiltersPlainStringArr.catch([]),
+	authorIdsExcluded: calendarFiltersIdsArr.catch([]),
+	games: calendarFilterGamesArr.catch([...gamesShort]),
+	preferredVersus: preferredVersus.catch([...versusShort]),
+	modes: modeArr.catch([...modesShortWithSpecial]),
+	modesExact: z.boolean().catch(false),
+	minTeamCount: z.coerce.number().int().nonnegative().catch(0),
+});
+
+export const calendarFiltersFormSchema = z
+	.object({
+		preferredStartTime: preferredStartTime,
+		tagsIncluded: z.array(calendarEventTagSchema),
+		tagsExcluded: z.array(calendarEventTagSchema),
+		isSendou: z.boolean(),
+		isRanked: z.boolean(),
+		orgsIncluded: calendarFiltersPlainStringArr,
+		orgsExcluded: calendarFiltersPlainStringArr,
+		authorIdsExcluded: calendarFiltersIdsArr,
+		games: calendarFilterGamesArr,
+		preferredVersus: preferredVersus,
+		modes: modeArr,
+		modesExact: z.boolean(),
+		minTeamCount: z.coerce.number().int().nonnegative(),
+	})
+	.superRefine((filters, ctx) => {
+		if (
+			filters.tagsIncluded.some((tag) => filters.tagsExcluded.includes(tag))
+		) {
+			ctx.addIssue({
+				path: ["tagsExcluded"],
+				message: "Can't include and exclude the same tag",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+
+		if (filters.orgsIncluded.length > 0 && filters.orgsExcluded.length > 0) {
+			ctx.addIssue({
+				path: ["orgsExcluded"],
+				message: "Can't both include and exclude organizations",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+	});
+export const calendarFiltersSearchParamsObject = z.object({
+	filters: z
+		.preprocess(safeJSONParse, calendarFiltersSearchParamsSchema)
+		.catch(CalendarEvent.defaultFilters()),
+});
 
 const playersSchema = z
 	.array(
@@ -86,29 +152,6 @@ export const reportWinnersActionSchema = z.object({
 	),
 });
 
-export const reportWinnersParamsSchema = z.object({
-	id: z.preprocess(actualNumber, id),
-});
-
-export const loaderWeekSearchParamsSchema = z.object({
-	week: z.preprocess(actualNumber, z.number().int().min(1).max(53)),
-	year: z.preprocess(actualNumber, z.number().int()),
-});
-
-export const calendarEventTagSchema = z
-	.string()
-	.refine((val) =>
-		CALENDAR_EVENT.PERSISTED_TAGS.includes(val as PersistedCalendarEventTag),
-	);
-
-export const loaderFilterSearchParamsSchema = z.object({
-	tags: z.preprocess(safeSplit(), z.array(calendarEventTagSchema)),
-});
-
-export const loaderTournamentsOnlySearchParamsSchema = z.object({
-	tournaments: z.literal("true").nullish(),
-});
-
 export const bracketProgressionSchema = z.preprocess(
 	safeJSONParse,
 	z
@@ -140,104 +183,3 @@ export const bracketProgressionSchema = z.preprocess(
 			"Invalid bracket progression",
 		),
 );
-
-export const newCalendarEventActionSchema = z
-	.object({
-		eventToEditId: z.preprocess(actualNumber, id.nullish()),
-		tournamentToCopyId: z.preprocess(actualNumber, id.nullish()),
-		organizationId: z.preprocess(actualNumber, id.nullish()),
-		name: z
-			.string()
-			.min(CALENDAR_EVENT.NAME_MIN_LENGTH)
-			.max(CALENDAR_EVENT.NAME_MAX_LENGTH),
-		description: z.preprocess(
-			falsyToNull,
-			z.string().max(CALENDAR_EVENT.DESCRIPTION_MAX_LENGTH).nullable(),
-		),
-		rules: z.preprocess(
-			falsyToNull,
-			z.string().max(CALENDAR_EVENT.RULES_MAX_LENGTH).nullable(),
-		),
-		date: z.preprocess(
-			toArray,
-			z
-				.array(
-					z.preprocess(
-						date,
-						z.date().min(calendarEventMinDate()).max(calendarEventMaxDate()),
-					),
-				)
-				.min(1)
-				.max(CALENDAR_EVENT.MAX_AMOUNT_OF_DATES),
-		),
-		bracketUrl: z
-			.string()
-			.url()
-			.max(CALENDAR_EVENT.BRACKET_URL_MAX_LENGTH)
-			.default("https://sendou.ink"),
-		discordInviteCode: z.preprocess(
-			falsyToNull,
-			z.string().max(CALENDAR_EVENT.DISCORD_INVITE_CODE_MAX_LENGTH).nullable(),
-		),
-		tags: z.preprocess(
-			processMany(safeJSONParse, removeDuplicates),
-			z.array(calendarEventTagSchema).nullable(),
-		),
-		badges: z.preprocess(
-			processMany(safeJSONParse, removeDuplicates),
-			z.array(id).nullable(),
-		),
-		avatarImgId: id.nullish(),
-		pool: z.string().optional(),
-		toToolsEnabled: z.preprocess(checkboxValueToBoolean, z.boolean()),
-		toToolsMode: z.enum(["ALL", "TO", "SZ", "TC", "RM", "CB"]).optional(),
-		isRanked: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
-		isTest: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
-		regClosesAt: z.enum(REG_CLOSES_AT_OPTIONS).nullish(),
-		enableNoScreenToggle: z.preprocess(
-			checkboxValueToBoolean,
-			z.boolean().nullish(),
-		),
-		enableSubs: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
-		autonomousSubs: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
-		strictDeadline: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
-		isInvitational: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
-		requireInGameNames: z.preprocess(
-			checkboxValueToBoolean,
-			z.boolean().nullish(),
-		),
-		minMembersPerTeam: z.coerce.number().int().min(1).max(4).nullish(),
-		bracketProgression: bracketProgressionSchema.nullish(),
-	})
-	.refine(
-		async (schema) => {
-			if (schema.eventToEditId) {
-				const eventToEdit = await CalendarRepository.findById({
-					id: schema.eventToEditId,
-				});
-				return schema.date.length === 1 || !eventToEdit?.tournamentId;
-			}
-			return schema.date.length === 1 || !schema.toToolsEnabled;
-		},
-		{
-			message: "Tournament must have exactly one date",
-		},
-	)
-	.refine(
-		(schema) => {
-			if (schema.toToolsMode !== "ALL") {
-				return true;
-			}
-
-			const maps = schema.pool ? MapPool.toDbList(schema.pool) : [];
-
-			return (
-				maps.length === 4 &&
-				rankedModesShort.every((mode) => maps.some((map) => map.mode === mode))
-			);
-		},
-		{
-			message:
-				'Map pool must contain a map for each ranked mode if using "Prepicked by teams - All modes"',
-		},
-	);

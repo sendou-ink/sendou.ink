@@ -1,20 +1,25 @@
-import { useFieldArray, useFormContext } from "react-hook-form";
-import type { z } from "zod";
+import {
+	type FieldPath,
+	type FieldValues,
+	useFieldArray,
+	useFormContext,
+} from "react-hook-form";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { AddFieldButton } from "./AddFieldButton";
 import { RemoveFieldButton } from "./RemoveFieldButton";
 
-export function TextArrayFormField<T extends z.ZodTypeAny>({
+export function TextArrayFormField<T extends FieldValues>({
 	label,
 	name,
-	defaultFieldValue,
 	bottomText,
+	/** If "plain", value in the text array is a plain string. If "object" then an object containing the text under "value" key */
+	format = "plain",
 }: {
 	label: string;
-	name: keyof z.infer<T> & string;
-	defaultFieldValue: string;
+	name: FieldPath<T>;
 	bottomText?: string;
+	format?: "plain" | "object";
 }) {
 	const {
 		register,
@@ -38,15 +43,19 @@ export function TextArrayFormField<T extends z.ZodTypeAny>({
 					return (
 						<div key={field.id}>
 							<div className="stack horizontal md">
-								<input {...register(`${name}.${index}.value`)} />
-								{fields.length > 1 ? (
-									<RemoveFieldButton
-										onClick={() => {
-											remove(index);
-											clearErrors(`${name}.root`);
-										}}
-									/>
-								) : null}
+								<input
+									{...register(
+										format === "plain"
+											? `${name}.${index}`
+											: `${name}.${index}.value`,
+									)}
+								/>
+								<RemoveFieldButton
+									onClick={() => {
+										remove(index);
+										clearErrors(`${name}.root`);
+									}}
+								/>
 							</div>
 							{error && (
 								<FormMessage type="error">
@@ -58,7 +67,7 @@ export function TextArrayFormField<T extends z.ZodTypeAny>({
 				})}
 				<AddFieldButton
 					// @ts-expect-error
-					onClick={() => append({ value: defaultFieldValue })}
+					onClick={() => append(format === "plain" ? "" : { value: "" })}
 				/>
 				{rootError && (
 					<FormMessage type="error">{rootError.message as string}</FormMessage>

@@ -5,20 +5,22 @@ import * as CalendarRepository from "~/features/calendar/CalendarRepository.serv
 import {
 	errorToastIfFalsy,
 	notFoundIfFalsy,
+	parseParams,
 	safeParseRequestFormData,
 } from "~/utils/remix.server";
 import { calendarEventPage } from "~/utils/urls";
-import {
-	reportWinnersActionSchema,
-	reportWinnersParamsSchema,
-} from "../calendar-schemas";
+import { idObject } from "~/utils/zod";
+import { reportWinnersActionSchema } from "../calendar-schemas";
 import { canReportCalendarEventWinners } from "../calendar-utils";
 
-export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUserId(request);
-	const parsedParams = reportWinnersParamsSchema.parse(params);
+export const action: ActionFunction = async (args) => {
+	const user = await requireUserId(args.request);
+	const params = parseParams({
+		params: args.params,
+		schema: idObject,
+	});
 	const parsedInput = await safeParseRequestFormData({
-		request,
+		request: args.request,
 		schema: reportWinnersActionSchema,
 	});
 
@@ -29,7 +31,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 	}
 
 	const event = notFoundIfFalsy(
-		await CalendarRepository.findById({ id: parsedParams.id }),
+		await CalendarRepository.findById({ id: params.id }),
 	);
 	errorToastIfFalsy(
 		canReportCalendarEventWinners({
@@ -41,7 +43,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 	);
 
 	await CalendarRepository.upsertReportedScores({
-		eventId: parsedParams.id,
+		eventId: params.id,
 		participantCount: parsedInput.data.participantCount,
 		results: parsedInput.data.team.map((t) => ({
 			teamName: t.teamName,
@@ -53,5 +55,5 @@ export const action: ActionFunction = async ({ request, params }) => {
 		})),
 	});
 
-	throw redirect(calendarEventPage(parsedParams.id));
+	throw redirect(calendarEventPage(params.id));
 };

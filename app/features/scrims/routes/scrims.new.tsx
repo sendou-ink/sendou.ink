@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import type { z } from "zod";
 import { Label } from "~/components/Label";
 import { DateTimeFormField } from "~/components/form/DateTimeFormField";
-import { MyForm } from "~/components/form/MyForm";
+import { SendouForm } from "~/components/form/SendouForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import { nullFilledArray } from "~/utils/arrays";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -35,7 +35,7 @@ export default function NewScrimPage() {
 
 	return (
 		<Main>
-			<MyForm
+			<SendouForm
 				schema={scrimsNewActionSchema}
 				heading={t("scrims:forms.title")}
 				defaultValues={{
@@ -77,7 +77,7 @@ export default function NewScrimPage() {
 					name="postText"
 					maxLength={MAX_SCRIM_POST_TEXT_LENGTH}
 				/>
-			</MyForm>
+			</SendouForm>
 		</Main>
 	);
 }

@@ -24,7 +24,6 @@
 	"forms.discordInvite": "כתובת URL הזמנה לשרת Discord",
 	"forms.tags": "תגים",
 	"forms.tags.placeholder": "בחירת תג",
-	"forms.tags.info": "\"Badge prizes\" תג נוסף אוטומטית אם רלוונטי",
 	"forms.badges": "פרסי תגים",
 	"forms.badges.placeholder": "בחירת פרס תג",
 	"forms.mapPool": "מאגר מפות",

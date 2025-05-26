@@ -9,7 +9,7 @@ import type { Tables } from "~/db/tables";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import { TIERS } from "~/features/mmr/mmr-constants";
 import { languagesUnified } from "~/modules/i18n/config";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { LFG } from "../lfg-constants";
 import type { LFGFilter } from "../lfg-types";
 

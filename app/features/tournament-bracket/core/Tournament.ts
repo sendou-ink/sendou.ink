@@ -1,4 +1,3 @@
-import * as R from "remeda";
 import type {
 	Tables,
 	TournamentStage,
@@ -10,11 +9,13 @@ import {
 	LEAGUES,
 	TOURNAMENT,
 } from "~/features/tournament/tournament-constants";
-import { tournamentIsRanked } from "~/features/tournament/tournament-utils";
+import {
+	modesIncluded,
+	tournamentIsRanked,
+} from "~/features/tournament/tournament-utils";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { Match, Stage } from "~/modules/brackets-model";
-import type { ModeShort } from "~/modules/in-game-lists";
-import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
+import type { ModeShort } from "~/modules/in-game-lists/types";
 import { isAdmin } from "~/modules/permissions/utils";
 import {
 	databaseTimestampNow,
@@ -728,32 +729,7 @@ export class Tournament {
 	}
 
 	get modesIncluded(): ModeShort[] {
-		switch (this.ctx.mapPickingStyle) {
-			case "AUTO_SZ": {
-				return ["SZ"];
-			}
-			case "AUTO_TC": {
-				return ["TC"];
-			}
-			case "AUTO_RM": {
-				return ["RM"];
-			}
-			case "AUTO_CB": {
-				return ["CB"];
-			}
-			default: {
-				const pickedModes = R.unique(
-					this.ctx.toSetMapPool.map((map) => map.mode),
-				);
-				if (pickedModes.length === 0) {
-					return [...rankedModesShort];
-				}
-
-				return pickedModes.sort(
-					(a, b) => modesShort.indexOf(a) - modesShort.indexOf(b),
-				);
-			}
-		}
+		return modesIncluded(this.ctx.mapPickingStyle, this.ctx.toSetMapPool);
 	}
 
 	tournamentTeamLogoSrc(team: TournamentDataTeam) {

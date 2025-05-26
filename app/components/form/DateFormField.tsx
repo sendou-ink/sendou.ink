@@ -1,11 +1,10 @@
-import { parseDate } from "@internationalized/date";
 import {
 	Controller,
 	type FieldPath,
 	type FieldValues,
 	useFormContext,
 } from "react-hook-form";
-import { dateToYYYYMMDD } from "../../utils/dates";
+import { dayMonthYearToDateValue } from "../../utils/dates";
 import type { DayMonthYear } from "../../utils/zod";
 import { SendouDatePicker } from "../elements/DatePicker";
 import type { FormFieldSize } from "./form-utils";
@@ -38,18 +37,7 @@ export function DateFormField<T extends FieldValues>({
 
 					if (!originalValue) return null;
 
-					const isoString = dateToYYYYMMDD(
-						new Date(
-							Date.UTC(
-								originalValue.year,
-								originalValue.month,
-								originalValue.day,
-								12,
-							),
-						),
-					);
-
-					return parseDate(isoString);
+					return dayMonthYearToDateValue(originalValue);
 				};
 
 				return (
