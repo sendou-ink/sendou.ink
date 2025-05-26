@@ -147,15 +147,21 @@ const user = await getUser(request); // get user (undefined if not logged in)
 
 ### Permissions
 
-TODO
+1) Add a permission object in a `Repository` code.
+2) Read in React code via the `useHasPermission` hook.
+3) Read in server code via the `requirePermission` guard.
+
+User can also have global roles such as "staff" or "tournament adder". Set in the root loader and `getUser`/`requireUser` code.
 
 ### Anatomy of an action
 
-TODO
+TODO (after React server actions in use)
 
 ### Performance
 
-TODO
+Keeping server performance in mind is always necessary. Due to the monolithic nature of the server one badly optimized endpoint impacts all other routes.
+
+Use a load testing tool like `autocannon` to ensure new features scale.
 
 ### Database
 
@@ -186,12 +192,10 @@ Cron jobs to perform actions on the server at certain intervals. To add a new on
 
 ### Real time
 
-TODO
+Webhooks via Skalop service (see logic in the Chat module).
+
+Old way: server-sent events still in use for tournament bracket & match pages.
 
 ### Notifications
 
-TODO
-
-### Design
-
-TODO
+Both in-app and browser notifications. See `/app/features/notifications`. Good for notifying user about actions that they are interested in that might have happened when they are offline.
