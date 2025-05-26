@@ -1,7 +1,5 @@
 import type { BuildAbilitiesTupleWithUnknown } from "./modules/in-game-lists/types";
 
-// xxx: get rid of this
-
 export const TWEET_LENGTH_MAX_LENGTH = 280;
 export const DISCORD_MESSAGE_MAX_LENGTH = 2000;
 
