@@ -259,6 +259,37 @@ export function del(teamId: number) {
 	});
 }
 
+export function removeTeamImage(
+	teamId: number,
+	imageType: "avatar" | "banner",
+) {
+	const imageIdField = imageType === "avatar" ? "avatarImgId" : "bannerImgId";
+
+	return db.transaction().execute(async (trx) => {
+		const team = await trx
+			.selectFrom("Team")
+			.select(imageIdField)
+			.where("id", "=", teamId)
+			.executeTakeFirst();
+
+		const imageId = team?.[imageIdField];
+		if (imageId) {
+			await trx
+				.deleteFrom("UnvalidatedUserSubmittedImage")
+				.where("id", "=", imageId)
+				.execute();
+		}
+
+		await trx
+			.updateTable("AllTeam")
+			.set({
+				[imageIdField]: null,
+			})
+			.where("id", "=", teamId)
+			.execute();
+	});
+}
+
 export function resetInviteCode(teamId: number) {
 	return db
 		.updateTable("AllTeam")
