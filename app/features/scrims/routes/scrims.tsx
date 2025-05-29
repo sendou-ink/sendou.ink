@@ -649,7 +649,7 @@ function RequestRow({
 				) : !request.isAccepted && !canAccept ? (
 					<SendouPopover
 						trigger={
-							<SendouButton size="small">
+							<SendouButton size="small" className="ml-auto">
 								{t("common:actions.accept")}
 							</SendouButton>
 						}
