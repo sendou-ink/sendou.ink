@@ -29,6 +29,11 @@ export const handle: SendouRouteHandle = {
 
 type FormFields = z.infer<typeof scrimsNewActionSchema>;
 
+const DEFAULT_NOT_FOUND_VISIBILITY = {
+	at: null,
+	forAssociation: "PUBLIC",
+} as const;
+
 export default function NewScrimPage() {
 	const { t } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof loader>();
@@ -43,10 +48,7 @@ export default function NewScrimPage() {
 					at: new Date(),
 					divs: null,
 					baseVisibility: "PUBLIC",
-					notFoundVisibility: {
-						at: null,
-						forAssociation: "PUBLIC",
-					},
+					notFoundVisibility: DEFAULT_NOT_FOUND_VISIBILITY,
 					from:
 						data.teams.length > 0
 							? { mode: "TEAM", teamId: data.teams[0].id }
@@ -119,15 +121,24 @@ function NotFoundVisibilityFormField({
 	associations,
 }: { associations: ScrimsNewLoaderData["associations"] }) {
 	const { t } = useTranslation(["scrims"]);
+	const baseVisibility = useWatch<FormFields>({
+		name: "baseVisibility",
+	});
 	const date = useWatch<FormFields>({ name: "notFoundVisibility.at" }) ?? "";
 	const methods = useFormContext<FormFields>();
+
+	React.useEffect(() => {
+		if (baseVisibility === "PUBLIC") {
+			methods.setValue("notFoundVisibility", DEFAULT_NOT_FOUND_VISIBILITY);
+		}
+	}, [baseVisibility, methods.setValue]);
 
 	const error = methods.formState.errors.notFoundVisibility;
 
 	const noAssociations =
 		associations.virtual.length === 0 && associations.actual.length === 0;
 
-	if (noAssociations) return null;
+	if (noAssociations || baseVisibility === "PUBLIC") return null;
 
 	return (
 		<div>
