@@ -13,6 +13,7 @@ export function Flag({
 				"twf-s": tiny,
 			})}
 			data-testid={`flag-${countryCode}`}
+			title={new Intl.DisplayNames(["en"], { type: "region" }).of(countryCode)}
 		/>
 	);
 }
