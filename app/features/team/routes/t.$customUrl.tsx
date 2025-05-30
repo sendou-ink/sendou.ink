@@ -40,6 +40,7 @@ import { metaTags } from "~/utils/remix";
 
 import { action } from "../actions/t.$customUrl.server";
 import { loader } from "../loaders/t.$customUrl.server";
+import { TEAM_MEMBER_ROLES } from "../team-constants";
 export { action, loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
@@ -85,6 +86,17 @@ export const handle: SendouRouteHandle = {
 
 export default function TeamPage() {
 	const { team } = useLoaderData<typeof loader>();
+
+	// Sort member by their role, in the order of TEAM_MEMBER_ROLES
+	team.members.sort((a, b) => {
+		const aIndex = TEAM_MEMBER_ROLES.indexOf(
+			a.role as (typeof TEAM_MEMBER_ROLES)[number],
+		);
+		const bIndex = TEAM_MEMBER_ROLES.indexOf(
+			b.role as (typeof TEAM_MEMBER_ROLES)[number],
+		);
+		return aIndex - bIndex;
+	});
 
 	return (
 		<Main className="stack lg">
