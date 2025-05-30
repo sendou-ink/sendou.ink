@@ -23,9 +23,9 @@
 	"pages.art": "Art",
 	"pages.sendouq": "SendouQ",
 	"pages.lfg": "LFG",
+	"pages.scrims": "",
 	"pages.settings": "Impostazioni",
 	"pages.luti": "LUTI",
-
 	"header.profile": "Profilo",
 	"header.logout": "Esci",
 	"header.login": "Accedi",
@@ -36,11 +36,12 @@
 	"header.adder.calendarEvent": "Evento calendario",
 	"header.adder.build": "Build",
 	"header.adder.team": "Team",
+	"header.adder.scrimPost": "",
+	"header.adder.association": "",
 	"header.adder.lfgPost": "Post LFG",
 	"header.adder.art": "Art",
 	"header.adder.vod": "VoD",
 	"header.adder.plusSuggestion": "Suggerimento Plus",
-
 	"notifications.title": "Notifiche",
 	"notifications.empty": "Nessuna notifica, controlla più tardi",
 	"notifications.seeAll": "Vedi tutte",
@@ -52,6 +53,8 @@
 	"notifications.text.SQ_NEW_MATCH": "Match SendouQ #{{matchId}} iniziato",
 	"notifications.title.TO_ADDED_TO_TEAM": "Aggiunto a un Team",
 	"notifications.text.TO_ADDED_TO_TEAM": "Aggiunto al team ({{teamName}}) da {{adderUsername}} in {{tournamentName}}",
+	"notifications.title.TO_TEST_CREATED": "",
+	"notifications.text.TO_TEST_CREATED": "",
 	"notifications.title.TO_BRACKET_STARTED": "Bracket iniziato",
 	"notifications.text.TO_BRACKET_STARTED": "{{bracketName}} di {{tournamentName}} iniziato",
 	"notifications.title.TO_CHECK_IN_OPENED": "Check-in aperto",
@@ -68,21 +71,21 @@
 	"notifications.text.TAGGED_TO_ART": "Taggato/a in un art di {{adderUsername}}",
 	"notifications.title.SEASON_STARTED": "Nuova stagione iniziata",
 	"notifications.text.SEASON_STARTED": "SendouQ è di nuovo aperto per la stagione {{seasonNth}}",
-
+	"notifications.title.SCRIM_NEW_REQUEST": "",
+	"notifications.text.SCRIM_NEW_REQUEST": "",
+	"notifications.title.SCRIM_SCHEDULED": "",
+	"notifications.text.SCRIM_SCHEDULED": "",
 	"auth.errors.aborted": "Accesso cancellato",
 	"auth.errors.failed": "Accesso fallito",
 	"auth.errors.discordPermissions": "Per il tuo profilo di sendou.ink, il sito ha bisogno di accesso al nome utente, avatar e connessioni social del tuo profilo Discord.",
 	"auth.errors.unknown": "Errore sconosciuto, riprova più tardi. Verifica anche che il tuo account Discord abbia una email verificata. Per ulteriore aiuto, contattaci tramite il canale #helpdesk nel nostro Discord:",
-
 	"toasts.error": "Errore",
 	"toasts.success": "Successo",
 	"toasts.info": "Info",
-
 	"footer.github.subtitle": "Codice sorgente",
 	"footer.discord.subtitle": "Aiuto & feedback",
 	"footer.patreon.subtitle": "Supporto",
 	"footer.thanks": "Mille grazie ai supporter su Patreon!",
-
 	"actions.save": "Salva",
 	"actions.saveChanges": "Salva cambiamenti",
 	"actions.submit": "Invia",
@@ -113,7 +116,10 @@
 	"actions.goBack": "Indietro",
 	"actions.enable": "Attiva",
 	"actions.disable": "Disattiva",
-
+	"actions.accept": "",
+	"actions.next": "",
+	"actions.previous": "",
+	"noResults": "",
 	"maps.createMapList": "Crea lista scenari",
 	"maps.halfSz": "50% ZS",
 	"maps.mapPool": "Pool di scenari",
@@ -136,26 +142,25 @@
 	"maps.validation.INCLUDES_BANNED": "Non si possono scegliere mappe bannate",
 	"maps.validation.INCLUDES_TIEBREAKER": "Non può venir scelta la mappa per lo spareggio",
 	"maps.validation.VALID": "Pool scenari OK!",
-
 	"results": "Risultati",
-
 	"results.placeSuffix_one": "^o",
+	"results.placeSuffix_many": "",
+	"results.placeSuffix_other": "^o",
 	"results.placeSuffix_two": "^o",
 	"results.placeSuffix_few": "^o",
-	"results.placeSuffix_other": "^o",
-
 	"forms.name": "Nome",
 	"forms.description": "Descrizione",
 	"forms.errors.title": "I seguenti errori devono essere corretti",
 	"forms.errors.noSearchMatches": "Nessun risultato trovato.",
-
+	"forms.userSearch.placeholder": "",
+	"forms.userSearch.noResults": "",
 	"errors.genericReload": "Qualcosa è andato storto. Prova a ricaricare la pagina.",
-
 	"tag.name.SPECIAL": "Regole speciali",
 	"tag.name.ART": "Premi artistici",
 	"tag.name.MONEY": "Premi monetari",
 	"tag.name.REGION": "Restrizione regionale",
 	"tag.name.LOW": "Restrizione competenza",
+	"tag.name.HIGH": "",
 	"tag.name.COUNT": "Limite d'ingresso",
 	"tag.name.LAN": "LAN",
 	"tag.name.QUALIFIER": "Qualifica",
@@ -169,7 +174,6 @@
 	"tag.name.SR": "Salmon Run",
 	"tag.name.CARDS": "Splattanza",
 	"tag.name.COLLEGIATE": "Universitario",
-
 	"weapon.category.SHOOTERS": "Armi a ripetizione",
 	"weapon.category.BLASTERS": "Blaster",
 	"weapon.category.ROLLERS": "Rulli",
@@ -183,18 +187,15 @@
 	"weapon.category.SPLATANAS": "Lame",
 	"weapon.category.subs": "Secondarie",
 	"weapon.category.specials": "Speciali",
-
 	"plans.blueprint": "Piano",
 	"plans.bgStyle.OVER": "Pianta",
 	"plans.bgStyle.MINI": "Minimappa",
 	"plans.adder.objective": "Obiettivo",
-
+	"articles.by": "da {{author}}",
 	"theme.light": "Light",
 	"theme.dark": "Dark",
 	"theme.auto": "Automatico",
-
 	"websiteSubtitle": "Hub per Splatoon Competitivo",
-
 	"upload.imageToUpload": "Immagine da caricare",
 	"upload.title": "Caricando {{type}}. La dimensione raccomandata è {{width}}×{{height}}.",
 	"upload.type.team-pfp": "Foto profilo del team",
@@ -202,11 +203,12 @@
 	"upload.type.org-pfp": "Foto profilo dell'organizzazione",
 	"upload.commonExplanation": "Prima che l'immagine diventi visualizzabile pubblicamente, un moderatore dovrà approvarla. Le immagini caricate da iscritti al Patreon non passano attraverso questo processo di convalida.",
 	"upload.afterExplanation_one": "Hai {{count}} immagine in coda. L'immagine verrà mostrata automaticamente dopo la convalida.",
+	"upload.afterExplanation_many": "",
 	"upload.afterExplanation_other": "Hai {{count}} immagini in coda. Le immagini verranno mostrate automaticamente dopo la convalida.",
-
 	"support.intro.first": "Ciao! Sono Sendou e sendou.ink è il mio progetto per fornire tools e risorse alla community di Splatoon. L'obiettivo è quello di aiutare tutti a migliorare e divertirsi con Splatoon sia se sei un giocatore nuovo che un veterano.",
 	"support.intro.second": "Se ti piace quel che sto facendo, questa pagina indica come tu possa supportare il mio lavoro e ottenere vantaggi. Il tuo supporto mi aiuta a coprire le spese di hosting così come supportare il tempo che ho speso sul migliorare continuamente il progetto.",
 	"support.action": "Supporta su Patreon",
+	"support.footer": "",
 	"support.perk.supportMyWork": "Supporta il mio lavoro",
 	"support.perk.adFree": "Navigazione ad-free",
 	"support.perk.nameInFooter": "Nome a piè di pagina",
@@ -221,6 +223,8 @@
 	"support.perk.userShortLink": "Short link per la pagina utente",
 	"support.perk.userShortLink.extra": "Invece di es. sendou.ink/u/sendou puoi anche usare snd.ink/sendou quando linki la tua pagina utente.",
 	"support.perk.customizedColorsUser": "Personalizza colori (pagina utente)",
+	"support.perk.favoriteBadges": "",
+	"support.perk.favoriteBadges.extra": "",
 	"support.perk.customizedColorsTeam": "Personalizza colori (Pagina team)",
 	"support.perk.customizedColorsTeam.extra": "E' sufficiente che uno dei membri del team sia iscritto al Patreon per ottenere questo vantaggio",
 	"support.perk.privateDiscord": "Accedi a un canale Discord esclusivo",
@@ -230,7 +234,9 @@
 	"support.perk.previewQ": "Visualizza gruppi su SendouQ prima di unirsi",
 	"support.perk.joinFive": "Unisciti a fino a 5 team",
 	"support.perk.tournamentsBeta": "Accedi alla beta dei tornei",
-
+	"support.perk.joinMoreAssociations": "",
+	"support.perk.useBotToLogIn": "",
+	"support.perk.useBotToLogIn.extra": "",
 	"custom.colors.title": "Colori personalizzati",
 	"custom.colors.bg": "Sfondo",
 	"custom.colors.bg-darker": "Sfondo più scuro",
@@ -240,18 +246,21 @@
 	"custom.colors.theme": "Tema",
 	"custom.colors.theme-secondary": "Tema (secondario)",
 	"custom.colors.chat": "Nome chat",
-
+	"custom.colors.contrast.title": "",
+	"custom.colors.contrast.first-color": "",
+	"custom.colors.contrast.second-color": "",
+	"custom.colors.contrast.description": "",
 	"divisions.WEST": "Arome",
 	"divisions.JPN": "Sepia",
 	"xsearch.placements": "posizioni",
 	"xsearch.aliases": "Alias:",
-
+	"xsearch.unlink.title": "",
+	"xsearch.unlink.action.long": "",
+	"xsearch.unlink.action.short": "",
 	"build.private": "Privato",
-
 	"or": "O",
 	"yes": "Sì",
 	"no": "No",
-
 	"leaderboard.type.USER": "Utente",
 	"leaderboard.type.TEAM": "Team",
 	"leaderboard.type.XP-ALL": "Tutti",
@@ -260,8 +269,8 @@
 	"leaderboard.updateInfo": "La classifica viene aggiornata ogni 30 minuti",
 	"leaderboard.qualification": "Qualifica per Season Finale",
 	"leaderboard.qualification.info": "Ogni giocatore del roster deve avere 7 sets di SendouQ giocati durante la stagione. Ogni unico roster di 4 giocatori ha i propri punti.",
-
 	"chat.connected": "Connesso",
+	"chat.connecting": "",
 	"chat.disconnected": "Disconnesso",
 	"chat.send": "Invia",
 	"chat.input.placeholder": "Premi Invio per inviare",
@@ -271,19 +280,16 @@
 	"chat.systemMsg.cancelConfirmed": "{{name}} ha confermato la cancellazione del match. Il match è ora bloccato",
 	"chat.systemMsg.userLeft": "{{name}} ha lasciato il gruppo",
 	"chat.newMessages": "Nuovi messaggi",
-
 	"fc.title": "Codice amico",
-
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.label": "Build: Disattiva ordinamento automatico delle abilità",
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText": "Aldilà della tua pagina profilo, le build delle abilità sono ordinate in modo tale da rendere vicine le abilità uguali. Quest'impostazione ti permette di vedere le abilità come intese dall'autore ovunque.",
+	"settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.label": "",
+	"settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.bottomText": "",
 	"settings.notifications.title": "Notifiche push",
 	"settings.notifications.description": "Ricevi notifiche push sul tuo dispositivo anche se non hai attualmente sendou.ink aperto.",
 	"settings.notifications.disableInfo": "Per disattivare le notifiche push, controllare le impostazioni del browser",
 	"settings.notifications.browserNotSupported": "Le notifiche push non sono supportate su questo browser",
 	"settings.notifications.permissionDenied": "Le notifiche push sono state negate. Controlla le impostazioni del browser per riattivarle",
-
-	"articles.by": "da {{author}}",
-
 	"badges.selector.none": "Nessuna medaglia selezionata",
 	"badges.selector.select": "Seleziona medaglia da aggiungere"
 }

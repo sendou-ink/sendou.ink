@@ -92,6 +92,7 @@
 	"damage.header.baseDamage.short": "Base",
 	"damage.header.distance": "Distancia",
 	"damage.toSplat_one": "{{count}} golpe para reventar",
+	"damage.toSplat_many": "",
 	"damage.toSplat_other": "{{count}} golpes para reventar",
 	"damage.NORMAL_MIN": "Mínimo",
 	"damage.NORMAL_MAX": "Máximo",
@@ -158,6 +159,9 @@
 	"dmgHtdExplanation": "DPD = Disparos para destruir",
 	"noDmgData": "No hay información sobre esta arma. Revisa más tarde.",
 	"perInkTankGrid.header_one": "{{weapon}} disparos despues de ×{{count}} arma secundaria usada",
+	"perInkTankGrid.header_many": "",
 	"perInkTankGrid.header_other": "{{weapon}} disparos despues de ×{{count}} armas secundarias usadas",
-	"bigBubblerExplanation": "Duración de {{weapon}} también es aumentada en conjunto con durabilidad. "
+	"bigBubblerExplanation": "Duración de {{weapon}} también es aumentada en conjunto con durabilidad. ",
+	"button.showChart": "",
+	"button.showConsumptionGrid": ""
 }

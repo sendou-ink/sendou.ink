@@ -58,5 +58,10 @@
 	"MODE_LONG_SZ": "Herrschaft",
 	"MODE_LONG_TC": "Turmkommando",
 	"MODE_LONG_RM": "Operation Goldfisch",
-	"MODE_LONG_CB": "Muschelchaos"
+	"MODE_LONG_CB": "Muschelchaos",
+	"MODE_LONG_SR": "",
+	"MODE_LONG_TB": "",
+	"GAME_S1": "",
+	"GAME_S2": "",
+	"GAME_S3": ""
 }

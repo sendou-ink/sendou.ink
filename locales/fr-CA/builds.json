@@ -4,7 +4,6 @@
 	"noBuilds": "Pas de sets disponibles. N'hésitez pas à en créer un !",
 	"buildCard.info": "Info",
 	"buildCard.edit": "Éditer",
-
 	"forms.title": "Titre",
 	"forms.modes": "Modes",
 	"forms.weapons": "Armes",
@@ -12,23 +11,30 @@
 	"forms.gear.CLOTHES": "Vêtements",
 	"forms.gear.SHOES": "Chaussures",
 	"forms.private.info": "Les sets privées ne sont visible que par vous.",
-
+	"forms.noGear.info": "",
 	"deleteConfirm": "Supprimer le set '{{title}}' ?",
-
 	"stats.count.title": "Statistiques de {{count}} sets pour {{weapon}}",
 	"stats.ap.title": "Moyenne des Points de Compétences",
 	"stats.percentage.title": "Taux de présence des bonus exclusifs",
 	"stats.all": "Tous",
-
+	"stats.public": "",
+	"stats.private": "",
 	"addFilter": "Ajouter un filtre",
 	"linkButton.abilityStats": "Statistiques",
 	"linkButton.popularBuilds": "Sets populaires",
 	"noPopularBuilds": "Il semble qu'il n'y ait pas de sets populaires pour cette arme en ce moment.",
-
 	"emptyAbilitySlot": "Emplacement de bonus vide",
-
+	"filters.type.ability": "",
+	"filters.type.mode": "",
+	"filters.type.date": "",
+	"filters.ability.title": "",
+	"filters.mode.title": "",
+	"filters.date.title": "",
 	"filters.has": "Avec",
 	"filters.does.not.have": "Sans",
 	"filters.atLeast": "Au moins",
-	"filters.atMost": "Au plus"
+	"filters.atMost": "Au plus",
+	"filters.date.since": "",
+	"filters.date.custom": "",
+	"filters.filterByWeapon": ""
 }

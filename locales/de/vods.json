@@ -3,9 +3,12 @@
 	"type.TOURNAMENT": "Turnier (PoV)",
 	"type.MATCHMAKING": "Anarchie/X Kampf/Revierkampf",
 	"type.CAST": "Turnier (Ausrichter)",
+	"type.SENDOUQ": "",
 	"gameCount": "Spiel {{count}}",
 	"minShort": "min",
 	"secShort": "s",
+	"forms.title.create": "",
+	"forms.title.edit": "",
 	"forms.title.youtubeUrl": "YouTube-URL",
 	"forms.title.videoTitle": "Videotitel",
 	"forms.title.videoDate": "Videodatum",
@@ -18,5 +21,8 @@
 	"forms.title.weaponsTeamTwo": "Waffem (Team 2)",
 	"forms.title.weapon": "Waffe",
 	"forms.action.addMatch": "Match hinzufügen",
-	"forms.action.deleteMatch": "Match löschen"
+	"forms.action.deleteMatch": "Match löschen",
+	"noVods": "",
+	"gainPerms": "",
+	"deleteConfirm": ""
 }

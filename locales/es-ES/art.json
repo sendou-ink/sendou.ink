@@ -1,5 +1,6 @@
 {
 	"pendingApproval_one": "Tienes {{count}} imagen esperando aprobación.",
+	"pendingApproval_many": "",
 	"pendingApproval_other": "Tienes {{count}} imagenes esperando aprobación.",
 	"madeBy": "Creada por",
 	"radios.all": "Todos",
@@ -24,5 +25,7 @@
 	"forms.tags.addNew": "Crear nueva.",
 	"forms.tags.addNew.placeholder": "Crear una nueva etiqueta",
 	"forms.tags.searchExisting.placeholder": "Buscar etiquetas existentes",
-	"forms.tags.maxReached": "Limite máximo de etiquetas"
+	"forms.tags.maxReached": "Limite máximo de etiquetas",
+	"delete.title": "",
+	"unlink.title": ""
 }

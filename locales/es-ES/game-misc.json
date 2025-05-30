@@ -48,5 +48,20 @@
 	"ABILITY_AD": "Duplicador",
 	"ABILITY_SJ": "Supersalto invisible",
 	"ABILITY_OS": "Demolición",
-	"ABILITY_DR": "Amortiguador"
+	"ABILITY_DR": "Amortiguador",
+	"MODE_SHORT_TW": "",
+	"MODE_SHORT_SZ": "",
+	"MODE_SHORT_TC": "",
+	"MODE_SHORT_RM": "",
+	"MODE_SHORT_CB": "",
+	"MODE_LONG_TW": "",
+	"MODE_LONG_SZ": "",
+	"MODE_LONG_TC": "",
+	"MODE_LONG_RM": "",
+	"MODE_LONG_CB": "",
+	"MODE_LONG_SR": "",
+	"MODE_LONG_TB": "",
+	"GAME_S1": "",
+	"GAME_S2": "",
+	"GAME_S3": ""
 }

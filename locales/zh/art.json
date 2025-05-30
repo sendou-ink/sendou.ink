@@ -1,6 +1,4 @@
 {
-	"pendingApproval_one": "您有 {{count}} 张图片正等待管理员审核",
-	"pendingApproval_other": "您有 {{count}} 张图片正等待管理员审核",
 	"madeBy": "创作者为",
 	"radios.all": "全部",
 	"radios.madeBy": "该用户为创作者",
@@ -24,5 +22,7 @@
 	"forms.tags.addNew": "创建新标签。",
 	"forms.tags.addNew.placeholder": "创建新标签",
 	"forms.tags.searchExisting.placeholder": "搜索已有标签",
-	"forms.tags.maxReached": "已达到最大标签数"
+	"forms.tags.maxReached": "已达到最大标签数",
+	"delete.title": "",
+	"unlink.title": ""
 }

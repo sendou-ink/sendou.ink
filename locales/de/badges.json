@@ -1,8 +1,13 @@
 {
 	"patreon": "Supporter von sendou.ink auf Patreon",
 	"patreon+": "Supporter+ von sendou.ink auf Patreon",
+	"xp": "",
 	"tournament_one": "Verliehen für den Sieg von {{tournament}}",
 	"tournament_other": "Verliehen für den Sieg von {{tournament}} (×{{count}})",
 	"forYourEvent": "Abzeichen für dein Event?",
-	"managedBy": "Verwaltet durch {{users}}"
+	"managedBy": "Verwaltet durch {{users}}",
+	"madeBy": "",
+	"own.divider": "",
+	"other.divider": "",
+	"noBadgesFound": ""
 }

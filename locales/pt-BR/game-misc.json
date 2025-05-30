@@ -22,6 +22,7 @@
 	"STAGE_20": "Bluefin Depot",
 	"STAGE_21": "Robo ROM-en",
 	"STAGE_22": "Marlin Airport",
+	"STAGE_23": "",
 	"ABILITY_ISM": "Ink Saver (Main)",
 	"ABILITY_ISS": "Ink Saver (Sub)",
 	"ABILITY_IRU": "Ink Recovery Up",
@@ -57,5 +58,10 @@
 	"MODE_LONG_SZ": "Splat Zones",
 	"MODE_LONG_TC": "Tower Control",
 	"MODE_LONG_RM": "Rainmaker",
-	"MODE_LONG_CB": "Clam Blitz"
+	"MODE_LONG_CB": "Clam Blitz",
+	"MODE_LONG_SR": "",
+	"MODE_LONG_TB": "",
+	"GAME_S1": "",
+	"GAME_S2": "",
+	"GAME_S3": ""
 }

@@ -1,7 +1,9 @@
 {
 	"types.PLAYER_FOR_TEAM": "Procurando um time",
+	"types.PLAYER_FOR_COACH": "",
 	"types.TEAM_FOR_PLAYER": "Procurando jogador(es)",
 	"types.TEAM_FOR_COACH": "Procurando coach (treinador/a)",
+	"types.TEAM_FOR_SCRIM": "",
 	"types.COACH_FOR_TEAM": "Oferecendo coaching (treinamento)",
 	"post.lastActive": "última atividade",
 	"noPosts": "Não há postagens combinando com o filtro.",

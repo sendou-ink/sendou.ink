@@ -58,5 +58,10 @@
 	"MODE_LONG_SZ": "Zona Splat",
 	"MODE_LONG_TC": "Torre Mobile",
 	"MODE_LONG_RM": "Bazookarp",
-	"MODE_LONG_CB": "Vongol gol"
+	"MODE_LONG_CB": "Vongol gol",
+	"MODE_LONG_SR": "",
+	"MODE_LONG_TB": "",
+	"GAME_S1": "",
+	"GAME_S2": "",
+	"GAME_S3": ""
 }

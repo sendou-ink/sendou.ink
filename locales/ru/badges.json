@@ -3,6 +3,8 @@
 	"patreon+": "Supporter+ для sendou.ink на Patreon",
 	"xp": "Награждается за достижение {{xpText}}",
 	"tournament_one": "Награда за победу в {{tournament}}",
+	"tournament_few": "",
+	"tournament_many": "",
 	"tournament_other": "Награда за победу в {{tournament}} (×{{count}})",
 	"forYourEvent": "Значок для вашего события?",
 	"managedBy": "Выдаётся {{users}}",

@@ -1,15 +1,20 @@
 {
 	"q1": "Czym jest Plus Server?",
-
+	"a1": "",
 	"q2": "Jak mieć odznake dla mojego wydarzenia?",
-
+	"a2": "",
 	"q3": "Jak zaktualizować nazwę/avatar na stronie?",
-
+	"a3": "",
 	"q4": "Zostałem Patronem ale nie widzę żadnych zmian na stronie?",
 	"a4": "Upewnij się, że twoje konto Patreon jest połączone z twoim kontem Discord. Po zrobieniu tego zajmie do 2 godzin by się strona zaktualizowała. Jeśli masz problemy napisz prywatnie do Sendou.",
-
 	"q5": "Czy jest aplikacja sendou.ink?",
 	"a5": "Nie, ale sendou.ink może być zainstalowane jako 'Progressive Web App', który ma wiele tych samych korzyści co normalna aplikacja. Wyszukaj 'jak się instaluje PWA na *twojej wyszukiwarce*' by wiedzieć jak.",
-
-	"a6": "Używamy do tego twojego profilu Discord. Połącz te konta na Discordzie i odśwież sendou.ink i powinny się pojawić."
+	"q6": "",
+	"a6": "Używamy do tego twojego profilu Discord. Połącz te konta na Discordzie i odśwież sendou.ink i powinny się pojawić.",
+	"q7": "",
+	"a7": "",
+	"q8": "",
+	"a8": "",
+	"q9": "",
+	"a9": ""
 }
