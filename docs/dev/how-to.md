@@ -52,3 +52,7 @@ export function CoolComponent() {
 ```
 
 When utilizing feature specific translations ensure the json is loaded. This is handled via the `handle` Remix function.
+
+### Sync
+
+Use the `npm run i18n:sync` command to sync translation jsons with English (removing and adding keys for each language as needed). There is not currently a check in the pipeline that this was done but it should always be ran when a new translation string has been added or removed.
