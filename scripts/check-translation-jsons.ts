@@ -193,7 +193,11 @@ function getKeysWithoutSuffix(
 	const foundSuffixKeys = new Set<string>();
 	const keys = [];
 
-	for (const key of Object.keys(translations)) {
+	for (const [key, value] of Object.entries(translations)) {
+		if (value === "") {
+			continue; // Consider key missing if untranslated
+		}
+
 		const suffix = KNOWN_SUFFIXES.find((sfx) => key.endsWith(sfx));
 		if (!suffix) {
 			if (foundSuffixKeys.has(key)) {
