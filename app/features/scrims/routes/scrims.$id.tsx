@@ -7,7 +7,7 @@ import { Avatar } from "../../../components/Avatar";
 import { Main } from "../../../components/Main";
 import { databaseTimestampToDate } from "../../../utils/dates";
 import { logger } from "../../../utils/logger";
-import { teamPage, userSubmittedImage } from "../../../utils/urls";
+import { teamPage, userPage, userSubmittedImage } from "../../../utils/urls";
 import { ConnectedChat } from "../../chat/components/Chat";
 import * as Scrim from "../core/Scrim";
 import type { ScrimPost as ScrimPostType } from "../scrims-types";
@@ -105,10 +105,10 @@ function GroupCard({
 			</div>
 			<div className={styles.groupCard}>
 				{group.users.map((user) => (
-					<div key={user.id} className={styles.memberRow}>
+					<Link to={userPage(user)} key={user.id} className={styles.memberRow}>
 						<Avatar user={user} size="xs" />
 						{user.username}
-					</div>
+					</Link>
 				))}
 			</div>
 		</div>

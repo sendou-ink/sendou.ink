@@ -32,7 +32,7 @@ export const tournamentCtxTeam = (
 const nTeams = (n: number, startingId: number) => {
 	const teams = [];
 	for (let i = 0; i < n; i++) {
-		teams.push(tournamentCtxTeam(i, tournamentCtxTeam(i + startingId)));
+		teams.push(tournamentCtxTeam(i + 1, tournamentCtxTeam(i + startingId)));
 	}
 	return teams;
 };

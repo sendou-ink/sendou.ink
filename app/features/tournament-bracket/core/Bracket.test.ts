@@ -1,14 +1,16 @@
 import * as R from "remeda";
 import { describe, expect, it } from "vitest";
 import invariant from "../../../utils/invariant";
+import * as Swiss from "../core/Swiss";
 import { Tournament } from "./Tournament";
 import { PADDLING_POOL_255 } from "./tests/mocks";
 import { LOW_INK_DECEMBER_2024 } from "./tests/mocks-li";
+import { testTournament } from "./tests/test-utils";
 
 const TEAM_ERROR_404_ID = 17354;
 const TEAM_THIS_IS_FINE_ID = 17513;
 
-describe("swiss standings", () => {
+describe("swiss standings - losses against tied", () => {
 	it("should calculate losses against tied", () => {
 		const tournament = new Tournament({
 			...LOW_INK_DECEMBER_2024(),
@@ -38,6 +40,68 @@ describe("swiss standings", () => {
 		invariant(standing, "Standing not found");
 
 		expect(standing.stats?.lossesAgainstTied).toBe(0); // they lost against "Tidy Tidings" but that team dropped out before final round
+	});
+
+	const inProgressSwissTestTournament = () => {
+		const data = Swiss.create({
+			tournamentId: 1,
+			name: "Swiss",
+			seeding: [1, 2, 3],
+			settings: {
+				swiss: {
+					groupCount: 1,
+					roundCount: 5,
+				},
+			},
+		});
+
+		// needed to make it "not preview"
+		data.round = data.round.map((r) => ({
+			...r,
+			maps: { count: 3, type: "BEST_OF" },
+		}));
+
+		return testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "swiss",
+							name: "Swiss",
+							requiresCheckIn: false,
+							settings: {},
+							sources: [],
+						},
+					],
+				},
+			},
+			data,
+		});
+	};
+
+	it("should handle a team with only one bye", () => {
+		const tournament = inProgressSwissTestTournament();
+
+		const standings = tournament.bracketByIdx(0)!.currentStandings(true);
+
+		const teamWithBye = standings.find((standing) => standing.team.id === 3);
+
+		expect(teamWithBye?.stats?.opponentMapWinPercentage).toBe(0);
+		expect(teamWithBye?.stats?.opponentSetWinPercentage).toBe(0);
+		expect(teamWithBye?.stats?.setWins).toBe(1);
+		expect(teamWithBye?.stats?.setLosses).toBe(0);
+		expect(teamWithBye?.stats?.mapWins).toBe(2);
+		expect(teamWithBye?.stats?.setLosses).toBe(0);
+	});
+
+	it("team with only unfinished matches should not be in the current standings", () => {
+		const tournament = inProgressSwissTestTournament();
+
+		const standings = tournament.bracketByIdx(0)!.currentStandings(true);
+
+		const playingTeam = standings.find((standing) => standing.team.id === 1);
+
+		expect(playingTeam).toBe(undefined);
 	});
 });
 

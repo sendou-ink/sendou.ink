@@ -1565,6 +1565,11 @@ class SwissBracket extends Bracket {
 	}
 
 	private trackRecordToWinPercentage(trackRecord: TeamTrackRecord) {
+		const onlyByes = trackRecord.wins === 0 && trackRecord.losses === 0;
+		if (onlyByes) {
+			return 0;
+		}
+
 		return cutToNDecimalPlaces(
 			(trackRecord.wins / (trackRecord.wins + trackRecord.losses)) * 100,
 			2,
