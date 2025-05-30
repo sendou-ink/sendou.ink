@@ -75,7 +75,7 @@ export const SPLATOON_3_INK = "https://splatoon3.ink/";
 export const RHODESMAS_FREESOUND_PROFILE_URL =
 	"https://freesound.org/people/rhodesmas/";
 export const SPR_INFO_URL =
-	"https://www.pgstats.com/articles/introducing-spr-and-uf";
+	"https://web.archive.org/web/20250513034545/https://www.pgstats.com/articles/introducing-spr-and-uf";
 
 export const bskyUrl = (accountName: string) =>
 	`https://bsky.app/profile/${accountName}`;
