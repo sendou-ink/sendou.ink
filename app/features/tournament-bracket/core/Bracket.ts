@@ -31,7 +31,7 @@ interface CreateBracketArgs {
 		bracketIdx: number;
 		placements: number[];
 	}[];
-	seeding?: (number | null)[];
+	seeding?: number[];
 	settings: TournamentStageSettings | null;
 	requiresCheckIn: boolean;
 	startTime: Date | null;
@@ -69,15 +69,11 @@ export abstract class Bracket {
 	simulatedData: TournamentManagerDataSet | undefined;
 	canBeStarted;
 	name;
-	/** Array of tournament team ids that could participate in this bracket but still need to check-in. */
 	teamsPendingCheckIn;
 	tournament;
 	sources;
 	createdAt;
-	/** Seeding potentially including null values to include BYEs. To get a list of tournament teams use `tournamentTeamIds` or `teamsPendingCheckIn` instead.  */
-	seedingForBracketCreation;
-	/** Array of tournament team ids participating in this bracket. Excluding teams who still need to check-in. */
-	tournamentTeamIds;
+	seeding;
 	settings;
 	requiresCheckIn;
 	startTime;
@@ -105,10 +101,10 @@ export abstract class Bracket {
 		this.id = id;
 		this.idx = idx;
 		this.preview = preview;
-		this.seedingForBracketCreation = seeding;
+		this.seeding = seeding;
 		this.tournament = tournament;
 		this.settings = settings;
-		this.data = data ?? this.generateMatchesData(seeding!);
+		this.data = data ?? this.generateMatchesData(this.seeding!);
 		this.canBeStarted = canBeStarted;
 		this.name = name;
 		this.teamsPendingCheckIn = teamsPendingCheckIn;
@@ -116,7 +112,6 @@ export abstract class Bracket {
 		this.createdAt = createdAt;
 		this.requiresCheckIn = requiresCheckIn;
 		this.startTime = startTime;
-		this.tournamentTeamIds = this.resolveTournamentTeamIds();
 
 		if (this.tournament.simulateBrackets) {
 			this.createdSimulation();
@@ -263,18 +258,12 @@ export abstract class Bracket {
 		throw new Error("not implemented");
 	}
 
-	private resolveTournamentTeamIds() {
-		if (this.seedingForBracketCreation) {
-			return this.seedingForBracketCreation.filter(
-				(teamId) => typeof teamId === "number",
-			);
-		}
-
+	get participantTournamentTeamIds() {
 		return R.unique(
 			this.data.match
 				.flatMap((match) => [match.opponent1?.id, match.opponent2?.id])
-				.filter((teamId) => typeof teamId === "number"),
-		);
+				.filter(Boolean),
+		) as number[];
 	}
 
 	currentStandings(_includeUnfinishedGroups: boolean) {
@@ -299,7 +288,7 @@ export abstract class Bracket {
 		});
 	}
 
-	generateMatchesData(teams: (number | null)[]) {
+	generateMatchesData(teams: number[]) {
 		const manager = getTournamentManager();
 
 		// we need some number but does not matter what it is as the manager only contains one tournament
@@ -359,7 +348,10 @@ export abstract class Bracket {
 	}
 
 	get enoughTeams() {
-		return this.tournamentTeamIds.length >= TOURNAMENT.ENOUGH_TEAMS_TO_START;
+		return (
+			this.participantTournamentTeamIds.length >=
+			TOURNAMENT.ENOUGH_TEAMS_TO_START
+		);
 	}
 
 	canCheckIn(user: OptionalIdObject) {
@@ -516,7 +508,7 @@ class SingleEliminationBracket extends Bracket {
 		}
 
 		const teamCountWhoDidntLoseYet =
-			this.tournamentTeamIds.length - teams.length;
+			this.participantTournamentTeamIds.length - teams.length;
 
 		const result: Standing[] = [];
 		for (const roundId of R.unique(teams.map((team) => team.lostAt))) {
@@ -539,7 +531,7 @@ class SingleEliminationBracket extends Bracket {
 		}
 
 		if (teamCountWhoDidntLoseYet === 1) {
-			const winnerId = this.tournamentTeamIds.find((participantId) =>
+			const winnerId = this.participantTournamentTeamIds.find((participantId) =>
 				result.every(({ team }) => team.id !== participantId),
 			);
 			invariant(winnerId, "No winner identified");
@@ -674,7 +666,7 @@ class DoubleEliminationBracket extends Bracket {
 		}
 
 		const teamCountWhoDidntLoseInLosersYet =
-			this.tournamentTeamIds.length - teams.length;
+			this.participantTournamentTeamIds.length - teams.length;
 
 		const result: Standing[] = [];
 		for (const roundId of R.unique(teams.map((team) => team.lostAt))) {
@@ -898,7 +890,7 @@ class RoundRobinBracket extends Bracket {
 		}
 		const standings = this.standings;
 		const relevantMatchesFinished =
-			standings.length === this.tournamentTeamIds.length;
+			standings.length === this.participantTournamentTeamIds.length;
 
 		const uniquePlacements = R.unique(standings.map((s) => s.placement));
 

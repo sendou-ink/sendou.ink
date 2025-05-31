@@ -7,7 +7,6 @@ import {
 	PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES,
 	PADDLING_POOL_257,
 } from "./tests/mocks";
-import { LUTI_S16_DIV_1 } from "./tests/mocks-luti";
 import { SWIM_OR_SINK_167 } from "./tests/mocks-sos";
 import {
 	progressions,
@@ -28,16 +27,15 @@ describe("Follow-up bracket progression", () => {
 			hasCheckedOutTeam: true,
 		}),
 	);
-	const tournamentLUTIS16Div1 = new Tournament(LUTI_S16_DIV_1);
 
 	test("correct amount of teams in the top cut", () => {
-		expect(tournamentPP257.brackets[1].tournamentTeamIds.length).toBe(18);
+		expect(tournamentPP257.brackets[1].seeding?.length).toBe(18);
 	});
 
 	test("includes correct teams in the top cut", () => {
 		for (const tournamentTeamId of [892, 882, 881]) {
 			expect(
-				tournamentPP257.brackets[1].tournamentTeamIds.some(
+				tournamentPP257.brackets[1].seeding?.some(
 					(team) => team === tournamentTeamId,
 				),
 			).toBe(true);
@@ -46,35 +44,30 @@ describe("Follow-up bracket progression", () => {
 
 	test("underground bracket includes a checked in team", () => {
 		expect(
-			tournamentPP257.brackets[2].tournamentTeamIds.some(
-				(team) => team === 902,
-			),
+			tournamentPP257.brackets[2].seeding?.some((team) => team === 902),
 		).toBe(true);
 	});
 
 	test("underground bracket doesn't include a non checked in team", () => {
 		expect(
-			tournamentPP257.brackets[2].tournamentTeamIds.some(
-				(team) => team === 902,
-			),
+			tournamentPP257.brackets[2].seeding?.some((team) => team === 902),
 		).toBe(true);
 	});
 
 	test("underground bracket includes checked in teams (DE->SE)", () => {
-		expect(tournamentITZ32.brackets[1].tournamentTeamIds.length).toBe(4);
+		expect(tournamentITZ32.brackets[1].seeding?.length).toBe(4);
 	});
 
 	test("underground bracket includes all teams if does not require check in (DE->SE)", () => {
 		expect(
-			tournamentITZ32UndergroundWithoutCheckIn.brackets[1].tournamentTeamIds
-				.length,
+			tournamentITZ32UndergroundWithoutCheckIn.brackets[1].seeding?.length,
 		).toBe(16);
 	});
 
 	test("underground bracket excludes checked out teams", () => {
 		expect(
-			tournamentITZ32UndergroundWithoutCheckInWithCheckedOut.brackets[1]
-				.tournamentTeamIds.length,
+			tournamentITZ32UndergroundWithoutCheckInWithCheckedOut.brackets[1].seeding
+				?.length,
 		).toBe(15);
 	});
 
@@ -191,54 +184,10 @@ describe("Follow-up bracket progression", () => {
 		expect(different, "Amount of different matches is incorrect").toBe(2);
 	});
 
-	test("avoids rematches in RR -> SE (LUTI S16 Div 1) - avoid as long as possible", () => {
-		const groupsMatches = tournamentLUTIS16Div1.brackets[0].data.match;
-		const newTopCutMatches = tournamentLUTIS16Div1.brackets[1].data.match;
-
-		const topHalfTeams = newTopCutMatches
-			.slice(0, 2)
-			.flatMap((match) => [match.opponent1, match.opponent2]);
-		const bottomHalfTeams = newTopCutMatches
-			.slice(2, 4)
-			.flatMap((match) => [match.opponent1, match.opponent2]);
-
-		for (const half of [topHalfTeams, bottomHalfTeams]) {
-			for (const team of half) {
-				if (!team?.id) {
-					throw new Error("Unexpected no team in the test data");
-				}
-
-				for (const otherTeam of half) {
-					if (!otherTeam || otherTeam.id === team.id) {
-						continue;
-					}
-
-					if (
-						groupsMatches.some(
-							(match) =>
-								match.opponent1?.id === team.id &&
-								match.opponent2?.id === otherTeam.id,
-						)
-					) {
-						throw new Error(
-							`Teams would meet each other earlier than necessary: ${team.id} vs ${otherTeam.id}`,
-						);
-					}
-					if (
-						groupsMatches.some(
-							(match) =>
-								match.opponent1?.id === otherTeam.id &&
-								match.opponent2?.id === team.id,
-						)
-					) {
-						throw new Error(
-							`Teams would meet each other earlier than necessary: ${otherTeam.id} vs ${team.id}`,
-						);
-					}
-				}
-			}
-		}
-	});
+	// TODO: handle LUTI bracket progression
+	// test("avoids rematches in RR -> SE (LUTI S16 Div 1) - avoid as long as possible", () => {
+	// 	https://github.com/Sendouc/sendou.ink/pull/2192
+	// });
 });
 
 describe("Bracket progression override", () => {
@@ -247,10 +196,18 @@ describe("Bracket progression override", () => {
 			...SWIM_OR_SINK_167(),
 		});
 
-		expect(tournament.brackets[1].tournamentTeamIds).toHaveLength(11);
-		expect(tournament.brackets[2].tournamentTeamIds).toHaveLength(11);
-		expect(tournament.brackets[3].tournamentTeamIds).toHaveLength(11);
-		expect(tournament.brackets[4].tournamentTeamIds).toHaveLength(11);
+		expect(tournament.brackets[1].participantTournamentTeamIds).toHaveLength(
+			11,
+		);
+		expect(tournament.brackets[2].participantTournamentTeamIds).toHaveLength(
+			11,
+		);
+		expect(tournament.brackets[3].participantTournamentTeamIds).toHaveLength(
+			11,
+		);
+		expect(tournament.brackets[4].participantTournamentTeamIds).toHaveLength(
+			11,
+		);
 	});
 
 	it("overrides causing the team to go to another bracket", () => {
@@ -265,7 +222,7 @@ describe("Bracket progression override", () => {
 		});
 
 		expect(
-			tournament.brackets[1].tournamentTeamIds.includes(14809),
+			tournament.brackets[1].participantTournamentTeamIds.includes(14809),
 		).toBeTruthy();
 	});
 
@@ -281,7 +238,7 @@ describe("Bracket progression override", () => {
 		});
 
 		expect(
-			tournament.brackets[2].tournamentTeamIds.includes(14809),
+			tournament.brackets[2].participantTournamentTeamIds.includes(14809),
 		).toBeFalsy();
 	});
 
@@ -296,10 +253,18 @@ describe("Bracket progression override", () => {
 			]),
 		});
 
-		expect(tournament.brackets[1].tournamentTeamIds).toHaveLength(11);
-		expect(tournament.brackets[2].tournamentTeamIds).toHaveLength(10);
-		expect(tournament.brackets[3].tournamentTeamIds).toHaveLength(11);
-		expect(tournament.brackets[4].tournamentTeamIds).toHaveLength(11);
+		expect(tournament.brackets[1].participantTournamentTeamIds).toHaveLength(
+			11,
+		);
+		expect(tournament.brackets[2].participantTournamentTeamIds).toHaveLength(
+			10,
+		);
+		expect(tournament.brackets[3].participantTournamentTeamIds).toHaveLength(
+			11,
+		);
+		expect(tournament.brackets[4].participantTournamentTeamIds).toHaveLength(
+			11,
+		);
 	});
 
 	it("override teams seeded at the end", () => {
@@ -313,7 +278,7 @@ describe("Bracket progression override", () => {
 			]),
 		});
 
-		expect(tournament.brackets[1].tournamentTeamIds.at(-1)).toBe(14809);
+		expect(tournament.brackets[1].seeding?.at(-1)).toBe(14809);
 	});
 
 	it("if redundant override, still in the right bracket", () => {
@@ -328,7 +293,7 @@ describe("Bracket progression override", () => {
 		});
 
 		expect(
-			tournament.brackets[2].tournamentTeamIds.includes(14809),
+			tournament.brackets[2].participantTournamentTeamIds.includes(14809),
 		).toBeTruthy();
 	});
 
@@ -348,11 +313,9 @@ describe("Bracket progression override", () => {
 		});
 
 		const seedingIdx =
-			tournament.brackets[2].tournamentTeamIds.indexOf(tournamentTeamId);
+			tournament.brackets[2].seeding?.indexOf(tournamentTeamId);
 		const seedingIdxWOverride =
-			tournamentWOverride.brackets[2].tournamentTeamIds.indexOf(
-				tournamentTeamId,
-			);
+			tournamentWOverride.brackets[2].seeding?.indexOf(tournamentTeamId);
 
 		expect(typeof seedingIdx === "number").toBeTruthy();
 		expect(seedingIdx).toBe(seedingIdxWOverride);
@@ -397,9 +360,9 @@ describe("Bracket progression override", () => {
 			]),
 		});
 
-		expect(tournament.brackets[1].tournamentTeamIds.at(-3)).toBe(14809);
-		expect(tournament.brackets[1].tournamentTeamIds.at(-2)).toBe(14796);
-		expect(tournament.brackets[1].tournamentTeamIds.at(-1)).toBe(14737);
+		expect(tournament.brackets[1].seeding?.at(-3)).toBe(14809);
+		expect(tournament.brackets[1].seeding?.at(-2)).toBe(14796);
+		expect(tournament.brackets[1].seeding?.at(-1)).toBe(14737);
 	});
 });
 
@@ -420,26 +383,26 @@ describe("Adjusting team starting bracket", () => {
 	it("defaults to bracket idx = 0", () => {
 		const tournament = createTournament([null, null, null, null]);
 
-		expect(tournament.brackets[0].tournamentTeamIds).toHaveLength(4);
+		expect(tournament.brackets[0].participantTournamentTeamIds).toHaveLength(4);
 	});
 
 	it("setting starting bracket idx has an effect", () => {
 		const tournament = createTournament([0, 0, 1, 1]);
 
-		expect(tournament.brackets[0].tournamentTeamIds).toHaveLength(2);
-		expect(tournament.brackets[1].tournamentTeamIds).toHaveLength(2);
+		expect(tournament.brackets[0].participantTournamentTeamIds).toHaveLength(2);
+		expect(tournament.brackets[1].participantTournamentTeamIds).toHaveLength(2);
 	});
 
 	it("handles too high bracket idx gracefully", () => {
 		const tournament = createTournament([0, 0, 0, 10]);
 
-		expect(tournament.brackets[0].tournamentTeamIds).toHaveLength(4);
+		expect(tournament.brackets[0].participantTournamentTeamIds).toHaveLength(4);
 	});
 
 	it("handles bracket idx is not a valid starting bracket idx gracefully", () => {
 		// 2 is not valid because it is a follow-up bracket
 		const tournament = createTournament([0, 0, 0, 2]);
 
-		expect(tournament.brackets[0].tournamentTeamIds).toHaveLength(4);
+		expect(tournament.brackets[0].participantTournamentTeamIds).toHaveLength(4);
 	});
 });
