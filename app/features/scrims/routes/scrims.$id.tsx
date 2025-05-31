@@ -16,6 +16,7 @@ import { loader } from "../loaders/scrims.$id.server";
 export { loader };
 
 import styles from "./scrims.$id.module.css";
+import Time from "~/components/Time";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["scrims", "q"],
@@ -50,19 +51,18 @@ export default function ScrimPage() {
 function ScrimHeader() {
 	const { t } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof loader>();
-	const { i18n } = useTranslation();
 
 	return (
 		<div className="line-height-tight" data-testid="match-header">
 			<h2 className="text-lg" suppressHydrationWarning>
-				{databaseTimestampToDate(data.post.at).toLocaleString(i18n.language, {
+				<Time time={databaseTimestampToDate(data.post.at)} options={{
 					weekday: "long",
 					year: "numeric",
 					month: "long",
 					day: "numeric",
 					hour: "numeric",
 					minute: "numeric",
-				})}
+				}}/>
 			</h2>
 			<div className="text-lighter text-xs font-bold">
 				{t("scrims:page.scheduledScrim")}
