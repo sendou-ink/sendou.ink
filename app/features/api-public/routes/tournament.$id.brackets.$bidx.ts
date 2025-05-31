@@ -55,13 +55,16 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 };
 
 function teams(bracket: Bracket) {
-	return bracket.tournamentTeamIds
+	const checkedIn = bracket.seeding ?? bracket.participantTournamentTeamIds;
+	const pending = bracket.teamsPendingCheckIn ?? [];
+
+	return checkedIn
 		.map((teamId) => ({
 			id: teamId,
 			checkedIn: true,
 		}))
 		.concat(
-			(bracket.teamsPendingCheckIn ?? []).map((teamId) => ({
+			pending.map((teamId) => ({
 				id: teamId,
 				checkedIn: false,
 			})),
