@@ -150,11 +150,7 @@ function ImageRemoveButtons() {
 							fields={[["_action", "DELETE_AVATAR"]]}
 							submitButtonText={t("common:actions.remove")}
 						>
-							<Button
-								className="ml-auto"
-								variant="minimal-destructive"
-								data-testid="delete-team-button"
-							>
+							<Button className="ml-auto" variant="minimal-destructive">
 								{t("team:actionButtons.deleteTeam.profilePicture")}
 							</Button>
 						</FormWithConfirm>
@@ -169,11 +165,7 @@ function ImageRemoveButtons() {
 							fields={[["_action", "DELETE_BANNER"]]}
 							submitButtonText={t("common:actions.remove")}
 						>
-							<Button
-								className="ml-auto"
-								variant="minimal-destructive"
-								data-testid="delete-team-button"
-							>
+							<Button className="ml-auto" variant="minimal-destructive">
 								{t("team:actionButtons.deleteTeam.banner")}
 							</Button>
 						</FormWithConfirm>
