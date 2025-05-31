@@ -45,7 +45,6 @@
 		"better-sqlite3": "^11.9.1",
 		"clsx": "^2.1.1",
 		"compressorjs": "^1.2.1",
-		"countries-list": "^3.1.1",
 		"date-fns": "^4.1.0",
 		"fuse.js": "^7.1.0",
 		"gray-matter": "^4.0.3",

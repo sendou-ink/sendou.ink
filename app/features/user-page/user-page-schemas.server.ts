@@ -1,4 +1,3 @@
-import { countries } from "countries-list";
 import { z } from "zod";
 import { USER } from "~/constants";
 import "~/styles/u-edit.css";
@@ -23,6 +22,7 @@ import {
 	HIGHLIGHT_CHECKBOX_NAME,
 	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
 } from "./components/UserResultsTable";
+import { COUNTRY_CODES } from "./user-page-constants";
 
 export const userParamsSchema = z.object({ identifier: z.string() });
 
@@ -41,9 +41,7 @@ export const userEditActionSchema = z
 			falsyToNull,
 			z
 				.string()
-				.refine(
-					(val) => !val || Object.keys(countries).some((code) => val === code),
-				)
+				.refine((val) => !val || COUNTRY_CODES.includes(val as any))
 				.nullable(),
 		),
 		bio: z.preprocess(

@@ -19,12 +19,14 @@ import { USER } from "~/constants";
 import type { Tables } from "~/db/tables";
 import { BADGE } from "~/features/badges/badges-contants";
 import { BadgesSelector } from "~/features/badges/components/BadgesSelector";
+import { useIsMounted } from "~/hooks/useIsMounted";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
 import invariant from "~/utils/invariant";
 import { rawSensToString } from "~/utils/strings";
 import { FAQ_PAGE } from "~/utils/urls";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+import { COUNTRY_CODES } from "../user-page-constants";
 
 import { action } from "../actions/u.$identifier.edit.server";
 import { loader } from "../loaders/u.$identifier.edit.server";
@@ -210,16 +212,26 @@ function SensSelects() {
 }
 
 function CountrySelect() {
-	const { t } = useTranslation(["user"]);
+	const { t, i18n } = useTranslation(["user"]);
 	const data = useLoaderData<typeof loader>();
+	const isMounted = useIsMounted();
+
+	const displayName = new Intl.DisplayNames(i18n.language, { type: "region" });
+
+	// TODO: if react-aria-components start supporting "suppressHydrationWarning" it would likely be a better solution here
+	const items = COUNTRY_CODES.map((countryCode) => ({
+		name: isMounted
+			? (displayName.of(countryCode) ?? countryCode)
+			: countryCode,
+		id: countryCode,
+		key: countryCode,
+	})).sort((a, b) =>
+		a.name.localeCompare(b.name, i18n.language, { sensitivity: "base" }),
+	);
 
 	return (
 		<SendouSelect
-			items={data.countries.map((country) => ({
-				...country,
-				id: country.code,
-				key: country.code,
-			}))}
+			items={items}
 			label={t("user:country")}
 			search={{
 				placeholder: t("user:forms.country.search.placeholder"),
