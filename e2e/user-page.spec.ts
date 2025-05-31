@@ -133,6 +133,8 @@ test.describe("User page", () => {
 
 		await goToEditPage(page);
 
+		await page.locator("span").filter({ hasText: "Custom colors" }).click();
+
 		await page.getByTestId("color-input-bg").fill("#4a412a");
 
 		// also test filling this because it's a special case as it also changes bg-lightest
