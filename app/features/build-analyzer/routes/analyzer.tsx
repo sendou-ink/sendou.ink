@@ -35,7 +35,6 @@ import {
 	TOXIC_MIST_ID,
 } from "~/modules/in-game-lists/weapon-ids";
 import { atOrError, nullFilledArray } from "~/utils/arrays";
-import { damageTypeTranslationString } from "~/utils/i18next";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -1606,10 +1605,8 @@ function DamageTable({
 								: val.value;
 
 						const typeRowName = damageIsSubWeaponDamage(val)
-							? (`weapons:SUB_${val.subWeaponId}` as const)
-							: damageTypeTranslationString({
-									damageType: val.type,
-								});
+							? `weapons:SUB_${val.subWeaponId}`
+							: `analyzer:damage.${val.type}`;
 
 						const comparisonVal = comparisonValues?.[i];
 

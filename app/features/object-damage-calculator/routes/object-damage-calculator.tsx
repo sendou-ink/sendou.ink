@@ -24,7 +24,6 @@ import {
 	SUPER_CHUMP_ID,
 	TRIPLE_SPLASHDOWN_ID,
 } from "~/modules/in-game-lists/weapon-ids";
-import { damageTypeTranslationString } from "~/utils/i18next";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	OBJECT_DAMAGE_CALCULATOR_URL,
@@ -193,11 +192,7 @@ function DamageTypesSelect({
 			{allDamageTypes.map((damageType) => {
 				return (
 					<option key={damageType} value={damageType}>
-						{t(
-							damageTypeTranslationString({
-								damageType,
-							}) as any,
-						)}
+						{t(`analyzer:damage.${damageType}` as any)}
 					</option>
 				);
 			})}
@@ -318,11 +313,7 @@ function DamageReceiversGrid({
 							})}
 						</div>
 						<div className="stack horizontal sm justify-center items-center">
-							{t(
-								damageTypeTranslationString({
-									damageType: damage.type,
-								}) as any,
-							)}
+							{t(`analyzer:damage.${damage.type}` as any)}
 							{damage.objectShredder && <Ability ability="OS" size="TINY" />}
 						</div>
 					</div>
