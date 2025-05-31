@@ -183,6 +183,11 @@ describe("Follow-up bracket progression", () => {
 		// 1 team should get swapped meaning two matches are now different
 		expect(different, "Amount of different matches is incorrect").toBe(2);
 	});
+
+	// TODO: handle LUTI bracket progression
+	// test("avoids rematches in RR -> SE (LUTI S16 Div 1) - avoid as long as possible", () => {
+	// 	https://github.com/Sendouc/sendou.ink/pull/2192
+	// });
 });
 
 describe("Bracket progression override", () => {
