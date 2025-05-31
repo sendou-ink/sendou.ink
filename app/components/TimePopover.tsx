@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import * as React from "react";
-import { Dialog, DialogTrigger } from "react-aria-components";
+import { Dialog } from "react-aria-components";
 import { Popover } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
