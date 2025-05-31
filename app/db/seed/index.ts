@@ -71,7 +71,7 @@ import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import { mySlugify } from "~/utils/urls";
-import type { Tables, UserMapModePreferences } from "../tables";
+import type { QWeaponPool, Tables, UserMapModePreferences } from "../tables";
 import {
 	ADMIN_TEST_AVATAR,
 	AMOUNT_OF_CALENDAR_EVENTS,
@@ -469,9 +469,14 @@ async function userQWeaponPool() {
 			.shuffle(mainWeaponIds)
 			.slice(0, faker.helpers.arrayElement([1, 2, 3, 4]));
 
+		const weaponPool: Array<QWeaponPool> = weapons.map((weaponSplId) => ({
+			weaponSplId,
+			isFavorite: faker.number.float(1) > 0.7 ? 1 : 0,
+		}));
+
 		await db
 			.updateTable("User")
-			.set({ qWeaponPool: JSON.stringify(weapons) })
+			.set({ qWeaponPool: JSON.stringify(weaponPool) })
 			.where("User.id", "=", id)
 			.execute();
 	}
