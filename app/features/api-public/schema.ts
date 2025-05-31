@@ -1,3 +1,4 @@
+import type { TierName } from "~/features/mmr/mmr-constants";
 import type { DataTypes, ValueToArray } from "~/modules/brackets-manager/types";
 
 /** GET /api/user/{userId|discordId} */
@@ -54,6 +55,34 @@ export type GetCalendarWeekResponse = Array<{
 	 */
 	startTime: string;
 }>;
+
+/** GET /api/sendouq/active-match/{userId} */
+
+export interface GetUsersActiveSendouqMatchResponse {
+	/** The user's current match ID or null if none */
+	matchId: number | null;
+}
+
+/** GET /api/sendouq/match/{matchId} */
+
+export interface GetSendouqMatchResponse {
+	teamAlpha: SendouqMatchTeam | null;
+	teamBravo: SendouqMatchTeam | null;
+	mapList: Array<MapListMap>;
+}
+
+type SendouqMatchTeam = {
+	score: number;
+	players: Array<SendouqMatchPlayer>;
+};
+
+type SendouqMatchPlayer = {
+	userId: number;
+	/** User's at the start time of the match */
+	rank: SendouQRank | null;
+};
+
+type SendouQRank = { name: TierName; isPlus: boolean };
 
 /** GET /api/tournament/{tournamentId} */
 
@@ -323,7 +352,7 @@ type StageWithMode = {
 	stage: Stage;
 };
 
-type MapListMap = {
+export type MapListMap = {
 	map: StageWithMode;
 	/**
 	 * One of the following:
