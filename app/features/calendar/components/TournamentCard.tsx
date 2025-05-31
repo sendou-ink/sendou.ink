@@ -104,7 +104,11 @@ export function TournamentCard({
 			<div className="stack horizontal justify-between items-center">
 				{tournament.modes ? <ModesPill modes={tournament.modes} /> : null}
 				{isHostedOnSendouInk ? (
-					<div className={styles.pillsContainer}>
+					<div
+						className={clsx(styles.pillsContainer, {
+							[styles.lonely]: !tournament.modes,
+						})}
+					>
 						{tournament.isRanked ? (
 							<div className={clsx(styles.pill, styles.pillRanked)}>
 								<TrophyIcon title="Ranked (impacts this seasons SP)" />

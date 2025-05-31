@@ -97,6 +97,11 @@
 	padding-inline-end: 12px;
 }
 
+.pillsContainer.lonely {
+	padding-inline-end: 0px;
+	padding-inline-start: 12px;
+}
+
 .pill {
 	font-size: var(--fonts-xxs);
 	font-weight: var(--bold);
