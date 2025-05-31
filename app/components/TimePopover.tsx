@@ -8,7 +8,7 @@ import { SendouButton } from "./elements/Button";
 import { CheckmarkIcon } from "./icons/Checkmark";
 import { ClipboardIcon } from "./icons/Clipboard";
 
-export default function Time({
+export default function TimePopover({
 	time,
 	options = {
 		minute: "numeric",

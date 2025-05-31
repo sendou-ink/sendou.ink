@@ -59,7 +59,7 @@ import {
 } from "../tournament-utils";
 import { useTournament } from "./to.$id";
 
-import Time from "~/components/Time";
+import TimePopover from "~/components/TimePopover";
 import { action } from "../actions/to.$id.register.server";
 import { loader } from "../loaders/to.$id.register.server";
 export { loader, action };
@@ -124,7 +124,7 @@ export default function TournamentRegisterPage() {
 							<div className="stack horizontal xs items-center">
 								<ClockIcon className="tournament__info__icon" />{" "}
 								{isMounted ? (
-									<Time
+									<TimePopover
 										time={tournament.ctx.startTime}
 										options={{
 											minute: startsAtEvenHour ? undefined : "numeric",

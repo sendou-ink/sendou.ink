@@ -15,7 +15,7 @@ import type { ScrimPost as ScrimPostType } from "../scrims-types";
 import { loader } from "../loaders/scrims.$id.server";
 export { loader };
 
-import Time from "~/components/Time";
+import TimePopover from "~/components/TimePopover";
 import styles from "./scrims.$id.module.css";
 
 export const handle: SendouRouteHandle = {
@@ -55,7 +55,7 @@ function ScrimHeader() {
 	return (
 		<div className="line-height-tight" data-testid="match-header">
 			<h2 className="text-lg" suppressHydrationWarning>
-				<Time
+				<TimePopover
 					time={databaseTimestampToDate(data.post.at)}
 					options={{
 						weekday: "long",
