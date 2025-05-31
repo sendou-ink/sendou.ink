@@ -5,6 +5,12 @@ import babel from "vite-plugin-babel";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { configDefaults } from "vitest/config";
 
+declare module "@remix-run/node" {
+	interface Future {
+		v3_singleFetch: true;
+	}
+}
+
 installGlobals();
 
 const ReactCompilerConfig = {
@@ -26,6 +32,7 @@ export default defineConfig(() => {
 					v3_throwAbortReason: true,
 					v3_routeConfig: true,
 					v3_lazyRouteDiscovery: true,
+					v3_singleFetch: true,
 				},
 			}),
 			babel({
