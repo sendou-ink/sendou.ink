@@ -40,7 +40,6 @@ import { metaTags } from "~/utils/remix";
 
 import { action } from "../actions/t.$customUrl.server";
 import { loader } from "../loaders/t.$customUrl.server";
-import { TEAM_MEMBER_ROLES } from "../team-constants";
 export { action, loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
