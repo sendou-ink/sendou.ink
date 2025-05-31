@@ -66,8 +66,8 @@ export interface GetUsersActiveSendouqMatchResponse {
 /** GET /api/sendouq/match/{matchId} */
 
 export interface GetSendouqMatchResponse {
-	teamOne: SendouqMatchTeam | null;
-	teamTwo: SendouqMatchTeam | null;
+	teamAlpha: SendouqMatchTeam | null;
+	teamBravo: SendouqMatchTeam | null;
 	mapList: Array<MapListMap>;
 }
 
@@ -352,7 +352,7 @@ type StageWithMode = {
 	stage: Stage;
 };
 
-type MapListMap = {
+export type MapListMap = {
 	map: StageWithMode;
 	/**
 	 * One of the following:
