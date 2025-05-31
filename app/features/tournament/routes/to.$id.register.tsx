@@ -59,9 +59,9 @@ import {
 } from "../tournament-utils";
 import { useTournament } from "./to.$id";
 
+import Time from "~/components/Time";
 import { action } from "../actions/to.$id.register.server";
 import { loader } from "../loaders/to.$id.register.server";
-import Time from "~/components/Time";
 export { loader, action };
 
 export default function TournamentRegisterPage() {

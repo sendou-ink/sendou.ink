@@ -1,12 +1,12 @@
-import { useTranslation } from "react-i18next";
+import { useRef, useState } from "react";
+import * as React from "react";
 import { Dialog } from "react-aria-components";
 import { Popover } from "react-aria-components";
-import { useRef, useState } from "react";
-import { ClipboardIcon } from "./icons/Clipboard";
-import * as React from "react";
+import { useTranslation } from "react-i18next";
+import { useCopyToClipboard } from "react-use";
 import { SendouButton } from "./elements/Button";
 import { CheckmarkIcon } from "./icons/Checkmark";
-import { useCopyToClipboard } from "react-use";
+import { ClipboardIcon } from "./icons/Clipboard";
 
 export default function Time({
 	time,

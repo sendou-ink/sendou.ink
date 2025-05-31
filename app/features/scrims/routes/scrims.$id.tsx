@@ -15,8 +15,8 @@ import type { ScrimPost as ScrimPostType } from "../scrims-types";
 import { loader } from "../loaders/scrims.$id.server";
 export { loader };
 
-import styles from "./scrims.$id.module.css";
 import Time from "~/components/Time";
+import styles from "./scrims.$id.module.css";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["scrims", "q"],
@@ -55,14 +55,17 @@ function ScrimHeader() {
 	return (
 		<div className="line-height-tight" data-testid="match-header">
 			<h2 className="text-lg" suppressHydrationWarning>
-				<Time time={databaseTimestampToDate(data.post.at)} options={{
-					weekday: "long",
-					year: "numeric",
-					month: "long",
-					day: "numeric",
-					hour: "numeric",
-					minute: "numeric",
-				}}/>
+				<Time
+					time={databaseTimestampToDate(data.post.at)}
+					options={{
+						weekday: "long",
+						year: "numeric",
+						month: "long",
+						day: "numeric",
+						hour: "numeric",
+						minute: "numeric",
+					}}
+				/>
 			</h2>
 			<div className="text-lighter text-xs font-bold">
 				{t("scrims:page.scheduledScrim")}
