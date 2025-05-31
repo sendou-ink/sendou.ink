@@ -91,8 +91,6 @@
 	"damage.header.baseDamage": "基础伤害",
 	"damage.header.baseDamage.short": "基础",
 	"damage.header.distance": "距离",
-	"damage.toSplat_one": "{{count}} 次命中击倒",
-	"damage.toSplat_other": "{{count}} 次命中击倒",
 	"damage.NORMAL_MIN": "最小值",
 	"damage.NORMAL_MAX": "最大值",
 	"damage.SECONDARY_MODE_MIN": "第二射击模式 (最小值)",
@@ -157,7 +155,7 @@
 	"labels.weapon": "武器",
 	"dmgHtdExplanation": "DMG = 伤害 | HTD = 破坏所需伤害",
 	"noDmgData": "目前没有该武器的伤害数据。请期待后续更新！",
-	"perInkTankGrid.header_one": "{{weapon}} 在 ×{{count}} 副武器使用后的射击数",
-	"perInkTankGrid.header_other": "{{weapon}} 在 ×{{count}} 副武器使用后的射击数",
-	"bigBubblerExplanation": "{{weapon}} 的持续时间也会一起增加。"
+	"bigBubblerExplanation": "{{weapon}} 的持续时间也会一起增加。",
+	"button.showChart": "",
+	"button.showConsumptionGrid": ""
 }

@@ -26,7 +26,6 @@
 	"pages.scrims": "Скримы",
 	"pages.settings": "Настройки",
 	"pages.luti": "LUTI",
-
 	"header.profile": "Профиль",
 	"header.logout": "Выйти",
 	"header.login": "Войти",
@@ -43,7 +42,6 @@
 	"header.adder.art": "Арт",
 	"header.adder.vod": "VoD",
 	"header.adder.plusSuggestion": "Рекомендация Плюс",
-
 	"notifications.title": "Уведомления",
 	"notifications.empty": "Пока нет, проверьте позже",
 	"notifications.seeAll": "Смотреть все",
@@ -77,21 +75,17 @@
 	"notifications.text.SCRIM_NEW_REQUEST": "{{fromUsername}} запросил скрим",
 	"notifications.title.SCRIM_SCHEDULED": "Скрим Запланирован",
 	"notifications.text.SCRIM_SCHEDULED": "Новый скрим запланирован на {{timeString}}",
-
 	"auth.errors.aborted": "Вход отменён",
 	"auth.errors.failed": "Ошибка входа",
 	"auth.errors.discordPermissions": "Для вашего профиля на sendou.ink странице нужен доступ к вашему имени, аватару и привязанным аккаунтам соц. сетей в Discord.",
 	"auth.errors.unknown": "Неизвестная ошибка, повторите позже. Убедитесь, что к вашему аккаунту Discord привязана проверенная почта. За помощью обращайтесь в канал #helpdesk на нашем сервере Discord:",
-
 	"toasts.error": "Ошибка",
 	"toasts.success": "Успешно",
 	"toasts.info": "Информация",
-
 	"footer.github.subtitle": "Исходный код",
 	"footer.discord.subtitle": "Помощь и обратная связь",
 	"footer.patreon.subtitle": "Поддержать",
 	"footer.thanks": "Спасибо меценатам за поддержку",
-
 	"actions.save": "Сохранить",
 	"actions.saveChanges": "Сохранить изменения",
 	"actions.submit": "Опубликовать",
@@ -123,9 +117,9 @@
 	"actions.enable": "Включить",
 	"actions.disable": "Выключить",
 	"actions.accept": "Подтвердить",
-
+	"actions.next": "",
+	"actions.previous": "",
 	"noResults": "Нет результатов",
-
 	"maps.createMapList": "Создать список карт",
 	"maps.halfSz": "50% Зон",
 	"maps.mapPool": "Пул карт",
@@ -148,21 +142,19 @@
 	"maps.validation.INCLUDES_BANNED": "Нельзя выбрать запрещённую арену",
 	"maps.validation.INCLUDES_TIEBREAKER": "Нельзя выбрать арену-тайбрейкер",
 	"maps.validation.VALID": "Список карт в порядке!",
-
 	"results": "Результаты",
-
 	"results.placeSuffix_one": "^ое",
-	"results.placeSuffix_two": "^ое",
 	"results.placeSuffix_few": "^ье",
+	"results.placeSuffix_many": "",
 	"results.placeSuffix_other": "^ое",
-
+	"results.placeSuffix_two": "^ое",
 	"forms.name": "Название",
 	"forms.description": "Описание",
 	"forms.errors.title": "Указанные ошибки должны быть исправлены",
 	"forms.errors.noSearchMatches": "Совпадения не найдены",
-
+	"forms.userSearch.placeholder": "",
+	"forms.userSearch.noResults": "",
 	"errors.genericReload": "Что-то пошло не так. Попробуйте обновить страницу.",
-
 	"tag.name.SPECIAL": "Особые правила",
 	"tag.name.ART": "Арт-призы",
 	"tag.name.MONEY": "Днежные призы",
@@ -182,7 +174,6 @@
 	"tag.name.SR": "Salmon Run",
 	"tag.name.CARDS": "Карты и район",
 	"tag.name.COLLEGIATE": "Коллегиальный",
-
 	"weapon.category.SHOOTERS": "Каплестрелы",
 	"weapon.category.BLASTERS": "Бластеры",
 	"weapon.category.ROLLERS": "Валики",
@@ -196,20 +187,15 @@
 	"weapon.category.SPLATANAS": "Сплат-катаны",
 	"weapon.category.subs": "Запасное",
 	"weapon.category.specials": "Особое",
-
 	"plans.blueprint": "План",
 	"plans.bgStyle.OVER": "Вид сверху",
 	"plans.bgStyle.MINI": "Миникарта",
 	"plans.adder.objective": "Цель",
-
 	"articles.by": "от {{author}}",
-
 	"theme.light": "Светлая",
 	"theme.dark": "Тёмная",
 	"theme.auto": "Системная",
-
 	"websiteSubtitle": "Соревновательный Splatoon-хаб",
-
 	"upload.imageToUpload": "Изображение для загрузки",
 	"upload.title": "Загрузка {{type}}. Рекомендованный размер: {{width}}×{{height}}.",
 	"upload.type.team-pfp": "Аватар комманды",
@@ -217,8 +203,9 @@
 	"upload.type.org-pfp": "Аватар организации",
 	"upload.commonExplanation": "Перед отображением изображения для всех модератор проверит их. Изображения, загруженные подписчиками на Patreon, отображаются сразу, без проверки.",
 	"upload.afterExplanation_one": "В ожидании {{count}} изображение. Оно автоматически появится после проверки.",
+	"upload.afterExplanation_few": "",
+	"upload.afterExplanation_many": "",
 	"upload.afterExplanation_other": "В ожидании {{count}} изображения. Они автоматически появятся после проверки.",
-
 	"support.intro.first": "Привет! Я Sendou и sendou.ink — мой проект, дающий инструменты и ресурсы для сообщества Splatoon. Цель состоит в том, чтобы помочь каждому стать лучше и наслаждаться Splatoon, независимо от того, являетесь ли вы новичком в игре или опытным ветераном.",
 	"support.intro.second": "Если вам нравится то, что я делаю, на этой странице подробно расписано, как вы можете поддержать мой труд и получить привилегии. Ваша поддержка помогает мне оплачивать хостинг, а также спонсирует моё время, которое идёт на постоянное улучшение проекта.",
 	"support.action": "Поддержать на Patreon",
@@ -251,7 +238,6 @@
 	"support.perk.joinMoreAssociations": "Возможность присоединиться к до 6 ассоциаций",
 	"support.perk.useBotToLogIn": "Лог-ин через Discord бот",
 	"support.perk.useBotToLogIn.extra": "Возможность запрость лог-ин ссылку от бота Lohi как альтернатива обычному лог-ину",
-
 	"custom.colors.title": "Пользовательские цвета",
 	"custom.colors.bg": "Фон",
 	"custom.colors.bg-darker": "Фон темнее",
@@ -261,7 +247,10 @@
 	"custom.colors.theme": "Тема",
 	"custom.colors.theme-secondary": "Тема (вторичная)",
 	"custom.colors.chat": "Имя в чате",
-
+	"custom.colors.contrast.title": "",
+	"custom.colors.contrast.first-color": "",
+	"custom.colors.contrast.second-color": "",
+	"custom.colors.contrast.description": "",
 	"divisions.WEST": "Щуччи",
 	"divisions.JPN": "Рыбок",
 	"xsearch.placements": "топ",
@@ -269,13 +258,10 @@
 	"xsearch.unlink.title": "Вы уверены, что хотите отвязать профиль? Данное действие удалит все ваши результаты и значки, связанные с Х боями (только персонал sendou.ink может привязать профиль повторно).",
 	"xsearch.unlink.action.long": "Отвязать профиль",
 	"xsearch.unlink.action.short": "Отвязать",
-
 	"build.private": "Приватный",
-
 	"or": "Или",
 	"yes": "Да",
 	"no": "Нет",
-
 	"leaderboard.type.USER": "Пользователь",
 	"leaderboard.type.TEAM": "Команда",
 	"leaderboard.type.XP-ALL": "Все",
@@ -284,7 +270,6 @@
 	"leaderboard.updateInfo": "Таблица лидеров обновляется каждые 30 минут",
 	"leaderboard.qualification": "Квалификации для Финала Сезона",
 	"leaderboard.qualification.info": "Каждый игрок в команде должен завершить как минимум 7 игр SendouQ в текущем сезоне. Каждая уникальная команда из 4 игроков имеет свой собственный счёт.",
-
 	"chat.connected": "В сети",
 	"chat.connecting": "Подключение...",
 	"chat.disconnected": "Не в сети",
@@ -296,9 +281,7 @@
 	"chat.systemMsg.cancelConfirmed": "{{name}} подтвердил отмену матча. Матч теперь закрыт",
 	"chat.systemMsg.userLeft": "{{name}} покинул группу",
 	"chat.newMessages": "Новые сообщения",
-
 	"fc.title": "Код друга",
-
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.label": "Сборки: Отключить автоматическую сортировку свойств",
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText": "За исключением вашего профиля, свойства в сборках отсортированы так, что одинаковые свойства находятся друг за другом. Эта настройка позволит вам видеть свойства в сборках в порядке, который задал автор.",
 	"settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.label": "Скримы: Не добавляться в пик-апы недоверенными лицами",
@@ -308,7 +291,6 @@
 	"settings.notifications.disableInfo": "Чтобы отключить push-уведомления проверьте настройки вашего браузера",
 	"settings.notifications.browserNotSupported": "Push-уведомления в вашем браузере не поддерживаются",
 	"settings.notifications.permissionDenied": "Push-уведомления были запрещены. Проверьте настройки вашего бразуера, чтобы включить их обратно",
-
 	"badges.selector.none": "Награды не выбраны",
 	"badges.selector.select": "Выберите награды для добавления"
 }

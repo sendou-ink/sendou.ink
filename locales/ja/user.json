@@ -12,15 +12,16 @@
 	"sens": "感度",
 	"weaponPool": "使用ブキ",
 	"discordExplanation": "ユーザー名、プロファイル画像、YouTube、Bluesky と Twitch アカウントは Discord のアカウントに設定されているものが使用されます。詳しくは <1>FAQ</1> をご覧ください。",
+	"favoriteBadges": "",
 	"battlefy": "Battlefyアカウント名",
-
 	"forms.showDiscordUniqueName": "Discord のユーザー名を表示する",
 	"forms.showDiscordUniqueName.info": "Discord のユニーク名 ({{discordUniqueName}}) 公表しますか?",
 	"forms.commissionsOpen": "依頼を受付中",
 	"forms.commissionText": "依頼に関する情報",
 	"forms.commissionText.info": "価格、受付数、その他依頼に関する情報",
 	"forms.customName.info": "記入されてない場合ディスコードの表示名 \"{{discordName}}\"を使います",
-
+	"forms.country.search.placeholder": "",
+	"forms.favoriteBadges.nonSupporter": "",
 	"results.title": "全ての結果",
 	"results.placing": "順位",
 	"results.team": "チーム",
@@ -32,16 +33,17 @@
 	"results.highlights.explanation": "戦績として選択したい結果を選ぶ",
 	"results.button.showHighlights": "ハイライトを表示",
 	"results.button.showAll": "全て表示",
-
 	"forms.errors.maxWeapons": "最大ブキ数を超えました",
 	"forms.errors.invalidCustomUrl.numbers": "カスタム URL は数字のみで作成することはできません",
 	"forms.errors.invalidCustomUrl.strangeCharacter": "カスタム URL は特殊文字を含めることはできません",
 	"forms.errors.invalidCustomUrl.duplicate": "このカスタム URL はすでに使用されています",
 	"forms.errors.invalidSens": "右スティックの感度が設定されていない場合、感度を設定することはできません",
+	"forms.info.customUrl": "",
 	"forms.info.battlefy": "Battlefyのアカウント名は特定のトーナメンでシーディング及びにプレイヤー情報の確認に使用されます。",
-
+	"search.info": "",
 	"search.noResults": "該当ユーザーが見つかりません '{{query}}'",
-
+	"search.pleaseLogIn.header": "",
+	"search.pleaseLogIn.button": "",
 	"seasons": "シーズン",
 	"seasons.noQ": "このプレイヤーは今シーズンSendouQをプレイしていません",
 	"seasons.tabs.weapons": "武器",
@@ -60,7 +62,6 @@
 	"seasons.clickARow": "武器の使用統計を見るには行を選択してください",
 	"seasons.loading": "読み込み中...",
 	"seasons.matchBeingProcessed": "このマッチはまだ処理されていません。",
-
 	"builds.sorting.changeButton": "並べ替え変更",
 	"builds.sorting.header": "ギアの並べ替えを変更",
 	"builds.sorting.backToDefaults": "デフォルトに戻す",

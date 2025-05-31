@@ -3,9 +3,12 @@
 	"type.TOURNAMENT": "טורניר (נקודת מבט)",
 	"type.MATCHMAKING": "Anarchy/X Battle/Turf War",
 	"type.CAST": "טורניר (קאסט)",
+	"type.SENDOUQ": "",
 	"gameCount": "משחק {{count}}",
 	"minShort": "דקה",
 	"secShort": "שנייה",
+	"forms.title.create": "",
+	"forms.title.edit": "",
 	"forms.title.youtubeUrl": "YouTube URL",
 	"forms.title.videoTitle": "כותרת סרטון",
 	"forms.title.videoDate": "תאריך סרטון",
@@ -18,5 +21,8 @@
 	"forms.title.weaponsTeamTwo": "נשקים (צוות 2)",
 	"forms.title.weapon": "נשקים",
 	"forms.action.addMatch": "הוספת קרב",
-	"forms.action.deleteMatch": "מחיקת קרב"
+	"forms.action.deleteMatch": "מחיקת קרב",
+	"noVods": "",
+	"gainPerms": "",
+	"deleteConfirm": ""
 }

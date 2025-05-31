@@ -13,7 +13,6 @@
 	"count.players_one": "{{count}} player",
 	"count.teams_other": "{{count}} teams",
 	"count.players_other": "{{count}} players",
-
 	"forms.dates": "Dates",
 	"forms.bracketUrl": "Bracket URL",
 	"forms.discordInvite": "Discord server invite URL",
@@ -22,7 +21,6 @@
 	"forms.badges": "Badge prizes",
 	"forms.badges.placeholder": "Choose a badge prize",
 	"forms.mapPool": "Map pool",
-
 	"forms.participantCount": "Participant count",
 	"forms.reportResultsHeader": "Reporting results for {{eventName}}",
 	"forms.reportResultsInfo": "You choose how many results to report. It can be just the winning team, top 3 or whatever you decide.",
@@ -30,17 +28,14 @@
 	"forms.team.remove": "Remove team",
 	"forms.team.name": "Team name",
 	"forms.team.placing": "Placing",
-
 	"forms.team.player.header": "Player {{number}}",
 	"forms.team.player.add": "Add player",
 	"forms.team.player.remove": "Remove player",
 	"forms.team.player.addAsUser": "Add as a user (recommended)",
 	"forms.team.player.addAsText": "Add as text",
-
 	"forms.errors.uniqueTeamName": "Each team needs a unique name.",
 	"forms.errors.duplicatePlayer": "Can't have the same player twice in the same team.",
 	"forms.errors.emptyTeam": "Each team must have at least one player.",
-
 	"tag.desc.SPECIAL": "Ruleset that differs from the standard e.g. limited what weapons can be used.",
 	"tag.desc.ART": "You can win art by playing in this tournament.",
 	"tag.desc.MONEY": "You can win money by playing in this tournament.",
@@ -55,9 +50,7 @@
 	"tag.desc.S2": "The game played is Splatoon 2.",
 	"tag.desc.SR": "Salmon Run event.",
 	"tag.desc.CARDS": "Tableturf Battle event.",
-
 	"icalFeed": "iCal feed",
-
 	"filter.button": "Filter",
 	"filter.heading": "Filter calendar events",
 	"filter.modes": "Modes",

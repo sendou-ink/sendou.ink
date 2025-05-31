@@ -26,7 +26,6 @@
 	"pages.scrims": "Scrims",
 	"pages.settings": "Settings",
 	"pages.luti": "LUTI",
-
 	"header.profile": "Profile",
 	"header.logout": "Log out",
 	"header.login": "Log in",
@@ -43,7 +42,6 @@
 	"header.adder.art": "Art",
 	"header.adder.vod": "VoD",
 	"header.adder.plusSuggestion": "Plus suggestion",
-
 	"notifications.title": "Notifications",
 	"notifications.empty": "None yet, check back later",
 	"notifications.seeAll": "See all",
@@ -77,21 +75,17 @@
 	"notifications.text.SCRIM_NEW_REQUEST": "{{fromUsername}} requested a scrim",
 	"notifications.title.SCRIM_SCHEDULED": "Scrim Scheduled",
 	"notifications.text.SCRIM_SCHEDULED": "New scrim scheduled at {{timeString}}",
-
 	"auth.errors.aborted": "Login Aborted",
 	"auth.errors.failed": "Login Failed",
 	"auth.errors.discordPermissions": "For your sendou.ink profile, the site needs access to your Discord profile's name, avatar and social connections.",
 	"auth.errors.unknown": "Unknown error, try again a bit later. Verify also that your Discord account has a verified email. For help please reach out to us via the #helpdesk channel on our Discord:",
-
 	"toasts.error": "Error",
 	"toasts.success": "Success",
 	"toasts.info": "Info",
-
 	"footer.github.subtitle": "Source code",
 	"footer.discord.subtitle": "Help & feedback",
 	"footer.patreon.subtitle": "Support",
 	"footer.thanks": "Thanks to the patrons for the support",
-
 	"actions.save": "Save",
 	"actions.saveChanges": "Save changes",
 	"actions.submit": "Submit",
@@ -125,9 +119,7 @@
 	"actions.accept": "Accept",
 	"actions.next": "Next",
 	"actions.previous": "Previous",
-
 	"noResults": "No results",
-
 	"maps.createMapList": "Create map list",
 	"maps.halfSz": "50% SZ",
 	"maps.mapPool": "Map pool",
@@ -150,23 +142,18 @@
 	"maps.validation.INCLUDES_BANNED": "Can't pick banned stages",
 	"maps.validation.INCLUDES_TIEBREAKER": "Can't pick the tiebreaker stage",
 	"maps.validation.VALID": "Map pool ok!",
-
 	"results": "Results",
-
 	"results.placeSuffix_one": "^st",
 	"results.placeSuffix_two": "^nd",
 	"results.placeSuffix_few": "^rd",
 	"results.placeSuffix_other": "^th",
-
 	"forms.name": "Name",
 	"forms.description": "Description",
 	"forms.errors.title": "Following errors need to be fixed",
 	"forms.errors.noSearchMatches": "No matches found",
 	"forms.userSearch.placeholder": "Search users by username, profile URL or Discord ID...",
 	"forms.userSearch.noResults": "No users matching your search found",
-
 	"errors.genericReload": "Something went wrong. Try reloading the page.",
-
 	"tag.name.SPECIAL": "Special rules",
 	"tag.name.ART": "Art prizes",
 	"tag.name.MONEY": "Money prizes",
@@ -186,7 +173,6 @@
 	"tag.name.SR": "Salmon Run",
 	"tag.name.CARDS": "Tableturf Battle",
 	"tag.name.COLLEGIATE": "Collegiate",
-
 	"weapon.category.SHOOTERS": "Shooters",
 	"weapon.category.BLASTERS": "Blasters",
 	"weapon.category.ROLLERS": "Rollers",
@@ -200,20 +186,15 @@
 	"weapon.category.SPLATANAS": "Splatanas",
 	"weapon.category.subs": "Subs",
 	"weapon.category.specials": "Specials",
-
 	"plans.blueprint": "Blueprint",
 	"plans.bgStyle.OVER": "Overhead",
 	"plans.bgStyle.MINI": "Minimap",
 	"plans.adder.objective": "Objective",
-
 	"articles.by": "by {{author}}",
-
 	"theme.light": "Light",
 	"theme.dark": "Dark",
 	"theme.auto": "Auto",
-
 	"websiteSubtitle": "Competitive Splatoon Hub",
-
 	"upload.imageToUpload": "Image to upload",
 	"upload.title": "Uploading {{type}}. Recommended size is {{width}}×{{height}}.",
 	"upload.type.team-pfp": "team profile picture",
@@ -222,7 +203,6 @@
 	"upload.commonExplanation": "Before the image is publicly displayed a moderator will validate it. Images uploaded by patrons are shown without validation.",
 	"upload.afterExplanation_one": "You have {{count}} image pending. The image will show up automatically after validation.",
 	"upload.afterExplanation_other": "You have {{count}} images pending. The images will show up automatically after validation.",
-
 	"support.intro.first": "Hello! I'm Sendou and sendou.ink is my project to provide tools and resources for the Splatoon community. The goal is to help everyone to improve and enjoy Splatoon whether you are brand new to the game or a seasoned veteran.",
 	"support.intro.second": "If you like what I'm doing this page details how you can support my work and gain perks. Your support helps me pay for the hosting as well as sponsor my time spent on continuously improving the project.",
 	"support.action": "Support on Patreon",
@@ -255,7 +235,6 @@
 	"support.perk.joinMoreAssociations": "Join up to 6 associations",
 	"support.perk.useBotToLogIn": "Log-in via Discord bot",
 	"support.perk.useBotToLogIn.extra": "Request a log-in link from the Lohi bot as an alternative to the normal website log-in",
-
 	"custom.colors.title": "Custom colors",
 	"custom.colors.bg": "Background",
 	"custom.colors.bg-darker": "Background darker",
@@ -269,7 +248,6 @@
 	"custom.colors.contrast.first-color": "First color",
 	"custom.colors.contrast.second-color": "Second color",
 	"custom.colors.contrast.description": "This table shows the contrast ratio between two colors listed in the first two columns. \n\nTo make your custom colors accessible to as many people as possible, you should meet a contrast ratio of at least 4.5 (AA) for all listed color combinations. \n\nThough not required, a contrast ratio of at least 7 (AAA) is recommended. \nThank you for making the web a more accessible place!",
-
 	"divisions.WEST": "Tentatek",
 	"divisions.JPN": "Takoroka",
 	"xsearch.placements": "placements",
@@ -277,13 +255,10 @@
 	"xsearch.unlink.title": "Are you sure you want to unlink? This will remove placements from your profile as well as the associated badge (can only be relinked by sendou.ink staff)?",
 	"xsearch.unlink.action.long": "Unlink your user",
 	"xsearch.unlink.action.short": "Unlink",
-
 	"build.private": "Private",
-
 	"or": "Or",
 	"yes": "Yes",
 	"no": "No",
-
 	"leaderboard.type.USER": "User",
 	"leaderboard.type.TEAM": "Team",
 	"leaderboard.type.XP-ALL": "All",
@@ -292,7 +267,6 @@
 	"leaderboard.updateInfo": "Leaderboard is updated once every 30 minutes",
 	"leaderboard.qualification": "Qualification for Season Finale",
 	"leaderboard.qualification.info": "Every player of the roster needs 7 sets of SendouQ played during the season. Every unique roster of 4 have their own points.",
-
 	"chat.connected": "Connected",
 	"chat.connecting": "Connecting...",
 	"chat.disconnected": "Disconnected",
@@ -304,9 +278,7 @@
 	"chat.systemMsg.cancelConfirmed": "{{name}} confirmed canceling the match. Match is now locked",
 	"chat.systemMsg.userLeft": "{{name}} left the group",
 	"chat.newMessages": "New messages",
-
 	"fc.title": "Friend code",
-
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.label": "Builds: Disable automatic ability sorting",
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText": "Outside of your profile page, build abilities are sorted so that same abilities are next to each other. This setting allows you to see the abilities in the order they were authored everywhere.",
 	"settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.label": "Scrims: No adding to pickups by untrusted",
@@ -316,7 +288,6 @@
 	"settings.notifications.disableInfo": "To disable push notifications check your browser settings",
 	"settings.notifications.browserNotSupported": "Push notifications are not supported on this browser",
 	"settings.notifications.permissionDenied": "Push notifications were denied. Check your browser settings to re-enable",
-
 	"badges.selector.none": "No badges selected",
 	"badges.selector.select": "Select badge to add"
 }

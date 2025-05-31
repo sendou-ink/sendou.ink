@@ -19,7 +19,6 @@
 	"privateNote.sentiment.NEUTRAL": "Neutro",
 	"privateNote.sentiment.NEGATIVE": "Negativo",
 	"privateNote.delete.header": "Apagar a sua nota sobre {{name}}?",
-
 	"front.cities.la": "Los Angeles",
 	"front.cities.nyc": "Nova Iorque",
 	"front.cities.paris": "Paris",
@@ -28,6 +27,7 @@
 	"front.noFriendCode": "Defina o código de amigo antes de entrar no grupo",
 	"front.upcomingSeason.header": "Estamos fora da temporada!",
 	"front.upcomingSeason.date": "Entrar na Temporada {{nth}} começando {{date}}",
+	"front.noUpcomingSeason": "",
 	"front.nav.rules.title": "Regras",
 	"front.nav.rules.description": "Leia isso antes de jogar",
 	"front.nav.info.title": "Informações",
@@ -50,7 +50,6 @@
 	"front.seasonOpen": "Temporada {{nth}} aberta",
 	"front.preview": "Pré-visualizar grupos na fila sem entrar",
 	"front.preview.explanation": "Essa função está disponível apenas para patronos (ou patronesses) da tier Supporter (ou acima) do sendou.ink",
-
 	"settings.maps.header": "Mapas e modos",
 	"settings.maps.avoid": "Evitar",
 	"settings.maps.prefer": "Prefere",
@@ -77,7 +76,6 @@
 	"settings.trusted.trustedExplanation": "Uuários confiáveis podem adicionar você aos grupos e times de torneios diretamente. Se removê-lo(a) dessa lista, no futuro você precisará entrar por um link que ele(a) compartilhar.",
 	"settings.trusted.noTrustedExplanation": "No momento, você não confia em nenhum usuário. Usuários podem receber sua confiança quando você entra no grupo dele(a) do SendouQ ou time de torneio por um link. Usuários confiáveis podem adicionar você aos grupos e times de torneios diretamente.",
 	"settings.trusted.teamExplanation": "Juntamente com os usuários acima, um membro do seu time <2>{{name}}</2> pode te adicionar diretamente.",
-
 	"looking.joiningGroupError": "Antes de entrar em outro grupo, saia do atual",
 	"looking.goToSettingsPrompt": "Para ajudar a encontrar um grupo defina sua pool de armas e status de chat de voz na página de configurações",
 	"looking.inactiveGroup.soon": "O grupo será marcado como inativo. Ainda procurando?",
@@ -106,7 +104,9 @@
 	"looking.groups.actions.goBack": "Voltar",
 	"looking.groups.adder.quickAdd": "Adicionar rapidamente (quick add)",
 	"looking.groups.adder.error": "Esse usuário já está em um grupo",
+	"looking.groups.adder.others": "",
 	"looking.groups.adder.inviteLink": "Link de convite",
+	"looking.groups.adder.select": "",
 	"looking.groups.editNote": "Editar nota",
 	"looking.groups.addNote": "Adicionar nota",
 	"looking.replay": "Replay",
@@ -118,7 +118,7 @@
 	"looking.rankCalculating": "Menos que {{count}} sets jogados. O rank ainda está sendo calculado...",
 	"looking.allTiers": "Todas as tiers",
 	"looking.joinQPrompt": "Entre na fila para achar um grupo",
-
+	"looking.range.or": "",
 	"match.header": "Partida #{{number}}",
 	"match.spInfo": "SP será ajustado depois que ambos os times declarem o mesmo resultado",
 	"match.dispute.button": "Disputar?",
@@ -161,14 +161,11 @@
 	"match.outcome.loss": "derrota",
 	"match.screen.ban": "Armas com o/a {{special}} não são permitidas nessa partida",
 	"match.screen.allowed": "Armas com o/a {{special}} são permitidas nessa partida",
-
 	"preparing.joinQ": "Entrar na fila",
-
 	"tiers.currentCriteria": "Critérios atuais",
 	"tiers.info.p1": "Por exemplo, Leviathan é o top 5% dos jogadores. Diamond é top 15% e etc.",
 	"tiers.info.p2": "Nota: Ninguém terá rank Leviathan antes de ter pelo menos {{usersMin}}jogadores nas classificações (ou {{teamsMin}} para times)",
 	"tiers.info.p3": "Cada rank também tem uma tier plus (veja o BRONZE+ como um exemplo). Isso significa que você está no top 50% desse rank.",
-
 	"streams.noStreams": "Nenhuma partida transmitida no momento",
 	"streams.ownStreamInfo": "Sua transmissão está faltando? Verifique se sua conta do Twitch está conectada e o jogo está definido como Splatoon 3.",
 	"streams.ownStreamInfo.linkText": "Veja as Perguntas Frequentes para mais informações em como conectar sua conta do Twitch."

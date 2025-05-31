@@ -58,5 +58,10 @@
 	"MODE_LONG_SZ": "랭크 에어리어",
 	"MODE_LONG_TC": "랭크 타워",
 	"MODE_LONG_RM": "랭크 피시 배틀",
-	"MODE_LONG_CB": "랭크 바지락"
+	"MODE_LONG_CB": "랭크 바지락",
+	"MODE_LONG_SR": "",
+	"MODE_LONG_TB": "",
+	"GAME_S1": "",
+	"GAME_S2": "",
+	"GAME_S3": ""
 }

@@ -19,7 +19,6 @@
 	"privateNote.sentiment.NEUTRAL": "Neutral",
 	"privateNote.sentiment.NEGATIVE": "Negativo",
 	"privateNote.delete.header": "¿Borrar tu nota sobre {{name}}?",
-
 	"front.cities.la": "Los Ángeles",
 	"front.cities.nyc": "Nueva York",
 	"front.cities.paris": "París",
@@ -28,7 +27,6 @@
 	"front.noFriendCode": "Ingresa clave de amigo antes de unirte al grupo",
 	"front.upcomingSeason.header": "¡Es fuera de temporada!",
 	"front.upcomingSeason.date": "Únete a la Temporada {{nth}} empezando {{date}}",
-
 	"front.noUpcomingSeason": "La empieza de la próxima Temporada está por anunciar",
 	"front.nav.rules.title": "Reglas",
 	"front.nav.rules.description": "Leelas antes de jugar",
@@ -52,7 +50,6 @@
 	"front.seasonOpen": "Temporada {{nth}} está abierta",
 	"front.preview": "Ver avance de grupos en fila sin unirte",
 	"front.preview.explanation": "Esta función solo es disponible para Patrons a nivel Supporter (o más alto) de sendou.ink",
-
 	"settings.maps.header": "Escenarios y Estilos",
 	"settings.maps.avoid": "Evitar",
 	"settings.maps.prefer": "Preferir",
@@ -79,7 +76,6 @@
 	"settings.trusted.trustedExplanation": "Los usuarios de confianza pueden añadirte directamente a grupos y equipos de torneos. Si te eliminan de esta lista, en el futuro tendrás que unirte a través de un enlace que ellos compartan.",
 	"settings.trusted.noTrustedExplanation": "Actualmente no confía en ningún usuario. Se puede confiar en los usuarios cuando te unes a su grupo SendouQ o equipo de torneo a través de un enlace. Los usuarios de confianza pueden añadirle a grupos y equipos de torneos directamente.",
 	"settings.trusted.teamExplanation": "Además de los usuarios anteriores, los miembros de tu equipo <2>{{name}}</2> se puede añadirte directamente.",
-
 	"looking.joiningGroupError": "Antes de unirte a otro grupo, deja el corriente",
 	"looking.goToSettingsPrompt": "Para encontrar grupos más facil, elige tu grupo de armas y estado de chat en la página de preferencias",
 	"looking.inactiveGroup.soon": "Grupo será marcado como inactivo. ¿Aún estás buscando?",
@@ -108,7 +104,9 @@
 	"looking.groups.actions.goBack": "Regresar",
 	"looking.groups.adder.quickAdd": "Añadir rápido",
 	"looking.groups.adder.error": "Ese usuario ya está en un grupo",
+	"looking.groups.adder.others": "",
 	"looking.groups.adder.inviteLink": "Enlace de invitación",
+	"looking.groups.adder.select": "",
 	"looking.groups.editNote": "Editar nota",
 	"looking.groups.addNote": "Añadir nota",
 	"looking.replay": "Repetir",
@@ -120,9 +118,7 @@
 	"looking.rankCalculating": "Menos de {{count}} sets jugados. Rango aún se está calculando...",
 	"looking.allTiers": "Todos los niveles",
 	"looking.joinQPrompt": "Únete a la fila para encontrar un grupo",
-
 	"looking.range.or": "o",
-
 	"match.header": "Partido #{{number}}",
 	"match.spInfo": "Fuerza Sendou será ajustada despues de que ambos equipos informen el mismo resultado",
 	"match.dispute.button": "¿Disputar?",
@@ -165,14 +161,11 @@
 	"match.outcome.loss": "perdida",
 	"match.screen.ban": "Armas con {{special}} son prohibidas para este partido",
 	"match.screen.allowed": "Armas con {{special}} se permiten para este partido",
-
 	"preparing.joinQ": "Unirte a la fila",
-
 	"tiers.currentCriteria": "Criterios actuales",
 	"tiers.info.p1": "Por ejemplo, Leviathan se encuentra entre el 5% de los mejores jugadores. Diamond es el percentil 85, etc.",
 	"tiers.info.p2": "NOTA: Nadie tiene rango Leviathan antes de tener al menos {{usersMin}} jugadores en las tablas (o al menos {{teamsMin}} para equipos)",
 	"tiers.info.p3": "Cada rango también tiene un nivel plus (ver BRONCE+ de ejemplo). Significa que estás en el 50% superior de ese rango.",
-
 	"streams.noStreams": "No hay streams de partidos recientes",
 	"streams.ownStreamInfo": "¿Falta tu stream? Asegura que tu cuenta de Twitch esté conectada y que tu juego es Splatoon 3.",
 	"streams.ownStreamInfo.linkText": "Ver el FAQ para más información como sobre conectar tu cuenta de Twitch."

@@ -2,7 +2,6 @@
 	"sq.season": "Season {{nth}}",
 	"sq.prepare": "Prepare now!",
 	"sq.participate": "Participate now!",
-
 	"showcase.tabs.signedUp": "Signed up",
 	"showcase.tabs.organizer": "Organizing",
 	"showcase.tabs.discover": "Discover",
@@ -11,11 +10,9 @@
 	"showcase.card.unranked": "Unranked",
 	"showcase.card.winner": "Winner",
 	"showcase.results": "Recent results",
-
 	"leaderboards.topPlayers": "Top players",
 	"leaderboards.topTeams": "Top teams",
 	"leaderboards.viewFull": "View full leaderboard",
-
 	"updates.header": "Updates",
 	"updates.viewPast": "View past updates"
 }

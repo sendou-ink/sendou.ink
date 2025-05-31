@@ -12,15 +12,16 @@
 	"sens": "Sens",
 	"weaponPool": "Grupo de armas",
 	"discordExplanation": "Tu nombre, foto, y cuentas de YouTube, Bluesky y Twitch se obtienen por tu cuenta en Discord. Ver <1>FAQ</1> para más información.",
+	"favoriteBadges": "",
 	"battlefy": "Nombre de cuenta de Battlefy",
-
 	"forms.showDiscordUniqueName": "Mostrar usuario de Discord",
 	"forms.showDiscordUniqueName.info": "¿Mostrar tu nombre de Discord ({{discordUniqueName}}) publicamente?",
 	"forms.commissionsOpen": "Comisiones abiertas",
 	"forms.commissionText": "Info de comisiones",
 	"forms.commissionText.info": "Precio, espacios abiertos, o cualquier otra información sobre tus comiciones.",
 	"forms.customName.info": "Si vacío, se mostrará tu nombre de Discord: \"{{discordName}}\"",
-
+	"forms.country.search.placeholder": "",
+	"forms.favoriteBadges.nonSupporter": "",
 	"results.title": "Todos los resultados",
 	"results.placing": "Lugar",
 	"results.team": "Equipo",
@@ -32,18 +33,19 @@
 	"results.highlights.explanation": "Elige los resultados que quieres resaltar",
 	"results.button.showHighlights": "Mostrar resaltos",
 	"results.button.showAll": "Mostrar todos",
-
 	"forms.errors.maxWeapons": "Máxima cantidad de armas",
 	"forms.errors.invalidCustomUrl.numbers": "Enlace personalizado no puede ser solo numeros",
 	"forms.errors.invalidCustomUrl.strangeCharacter": "Enlace personalizado no puede contener caracteres especiales",
 	"forms.errors.invalidCustomUrl.duplicate": "Alguien ya tiene ese enlace personalizado",
 	"forms.errors.invalidSens": "Sens de giroscopio no se poner sin la sens de palanca",
-
+	"forms.info.customUrl": "",
 	"forms.info.battlefy": "El nombre de tu cuenta de Battlefy se utiliza para la clasificación y verificación en algunos torneos.",
-
+	"search.info": "",
 	"search.noResults": "No se encontraron usuarios que coincidan con '{{query}}'",
-
+	"search.pleaseLogIn.header": "",
+	"search.pleaseLogIn.button": "",
 	"seasons": "Temporadas",
+	"seasons.noQ": "",
 	"seasons.tabs.weapons": "Armas",
 	"seasons.tabs.stages": "Escenarios",
 	"seasons.tabs.self": "Personal",
@@ -60,7 +62,6 @@
 	"seasons.clickARow": "Haga clic en una fila para ver estadísticas de armas",
 	"seasons.loading": "Cargando...",
 	"seasons.matchBeingProcessed": "No se ha procesado este partido",
-
 	"builds.sorting.changeButton": "Cambiar ordenación",
 	"builds.sorting.header": "Cambiar ordenación de builds",
 	"builds.sorting.backToDefaults": "Volver a los valores predeterminados",
@@ -71,7 +72,6 @@
 	"builds.sorting.WEAPON_IN_GAME_ORDER": "Ordenación de armas en juego",
 	"builds.sorting.ALPHABETICAL_TITLE": "Título alfabético",
 	"builds.sorting.MODE": "Estilo",
-
 	"builds.sorting.HEADGEAR_ID": "Ordenación de accesorios en juego",
 	"builds.sorting.CLOTHES_ID": "Ordenación de ropa en juego",
 	"builds.sorting.SHOES_ID": "Ordenación de calzados en juego",

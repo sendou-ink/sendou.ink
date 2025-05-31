@@ -23,7 +23,8 @@
 		"test:e2e": "npx playwright test",
 		"test:e2e:flaky-detect": "npx playwright test --repeat-each=10 --max-failures=1",
 		"checks": "npm run biome:fix && npm run test:unit && npm run check-translation-jsons && npm run typecheck",
-		"setup": "cross-env DB_PATH=db.sqlite3 tsx ./scripts/setup.ts"
+		"setup": "cross-env DB_PATH=db.sqlite3 tsx ./scripts/setup.ts",
+		"i18n:sync": "i18next-locales-sync -e true -p en -s da de es-ES es-US fr-CA fr-EU he it ja ko nl pl pt-BR ru zh -l locales && npm run biome:fix"
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.797.0",
@@ -51,8 +52,8 @@
 		"i18next": "^23.16.8",
 		"i18next-browser-languagedetector": "^8.0.5",
 		"i18next-http-backend": "^2.6.2",
-		"isbot": "^5.1.27",
 		"ics": "^3.8.1",
+		"isbot": "^5.1.27",
 		"kysely": "^0.28.2",
 		"lru-cache": "^11.1.0",
 		"markdown-to-jsx": "^7.7.6",
@@ -96,6 +97,7 @@
 		"@types/web-push": "^3.6.4",
 		"babel-plugin-react-compiler": "^19.1.0-rc.1",
 		"cross-env": "^7.0.3",
+		"i18next-locales-sync": "^2.1.1",
 		"ley": "^0.8.1",
 		"sql-formatter": "^15.6.1",
 		"tsx": "^4.19.4",
