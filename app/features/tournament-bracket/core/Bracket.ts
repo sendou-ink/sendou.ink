@@ -31,7 +31,7 @@ interface CreateBracketArgs {
 		bracketIdx: number;
 		placements: number[];
 	}[];
-	seeding?: (number | null)[];
+	seeding?: number[];
 	settings: TournamentStageSettings | null;
 	requiresCheckIn: boolean;
 	startTime: Date | null;
@@ -101,10 +101,10 @@ export abstract class Bracket {
 		this.id = id;
 		this.idx = idx;
 		this.preview = preview;
-		this.seeding = seeding?.filter((teamId) => typeof teamId === "number");
+		this.seeding = seeding;
 		this.tournament = tournament;
 		this.settings = settings;
-		this.data = data ?? this.generateMatchesData(seeding!);
+		this.data = data ?? this.generateMatchesData(this.seeding!);
 		this.canBeStarted = canBeStarted;
 		this.name = name;
 		this.teamsPendingCheckIn = teamsPendingCheckIn;
@@ -288,7 +288,7 @@ export abstract class Bracket {
 		});
 	}
 
-	generateMatchesData(teams: (number | null)[]) {
+	generateMatchesData(teams: number[]) {
 		const manager = getTournamentManager();
 
 		// we need some number but does not matter what it is as the manager only contains one tournament
@@ -300,7 +300,7 @@ export abstract class Bracket {
 				name: "Virtual",
 				type: this.type,
 				seeding:
-					this.type === "round_robin" || teams.includes(null)
+					this.type === "round_robin"
 						? teams
 						: fillWithNullTillPowerOfTwo(teams),
 				settings: this.tournament.bracketManagerSettings(

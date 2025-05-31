@@ -15,7 +15,7 @@ import type { Notification as NotificationValue } from "~/features/notifications
 import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
-import type { ParticipantResult, SeedOrdering } from "~/modules/brackets-model";
+import type { ParticipantResult } from "~/modules/brackets-model";
 import type {
 	Ability,
 	MainWeaponId,
@@ -621,9 +621,6 @@ export interface TournamentStageSettings {
 	groupCount?: number;
 	// SWISS
 	roundCount?: number;
-
-	// Not exposed as user setting currently, applies to all brackets except swiss
-	seedOrdering?: SeedOrdering[];
 }
 
 export const TOURNAMENT_STAGE_TYPES = [
