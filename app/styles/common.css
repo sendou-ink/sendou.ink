@@ -252,8 +252,12 @@ details summary {
 	user-select: none;
 }
 
-.clickable {
+.text-only-button {
 	cursor: pointer;
+	border: none;
+	background-color: inherit;
+	color: inherit;
+	margin: none;
 }
 
 .dotted {

@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import * as React from "react";
-import { Dialog } from "react-aria-components";
+import { Dialog, DialogTrigger } from "react-aria-components";
 import { Popover } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
@@ -42,15 +42,16 @@ export default function TimePopover({
 
 	return (
 		<div>
-			<div
+			<button
+				type="button"
 				ref={triggerRef}
-				className="dotted clickable"
+				className="dotted clickable text-only-button"
 				onClick={() => {
 					setOpen(true);
 				}}
 			>
 				{time.toLocaleString(i18n.language, options)}
-			</div>
+			</button>
 			<Popover
 				isOpen={open}
 				className={"sendou-popover-content"}
