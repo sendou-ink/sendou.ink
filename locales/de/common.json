@@ -44,6 +44,7 @@
 	"actions.reset": "Zurücksetzen",
 	"actions.loadMore": "Mehr laden",
 	"actions.copyToClipboard": "In die Zwischenablage kopieren",
+	"actions.copyTimestampForDiscord": "Discord-Zeitstempel kopieren",
 	"actions.create": "Erstellen",
 	"actions.close": "Schließen",
 	"actions.cancel": "Abbrechen",

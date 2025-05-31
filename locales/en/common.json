@@ -105,6 +105,7 @@
 	"actions.showMore": "Show more",
 	"actions.showLess": "Show less",
 	"actions.copyToClipboard": "Copy to clipboard",
+	"actions.copyTimestampForDiscord": "Copy Discord timestamp",
 	"actions.create": "Create",
 	"actions.close": "Close",
 	"actions.cancel": "Cancel",
