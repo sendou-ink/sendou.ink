@@ -8,6 +8,7 @@ import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { TEAM_MEMBER_ROLES } from "./team-constants";
 
 export function findAllUndisbanded() {
 	return db
@@ -100,7 +101,21 @@ export function findByCustomUrl(
 		])
 		.$if(includeInviteCode, (qb) => qb.select("Team.inviteCode"))
 		.where("Team.customUrl", "=", customUrl.toLowerCase())
-		.executeTakeFirst();
+		.executeTakeFirst()
+		.then((t) => {
+			if (t) {
+				t.members.sort((a, b) => {
+					const aIndex = TEAM_MEMBER_ROLES.indexOf(
+						a.role as (typeof TEAM_MEMBER_ROLES)[number],
+					);
+					const bIndex = TEAM_MEMBER_ROLES.indexOf(
+						b.role as (typeof TEAM_MEMBER_ROLES)[number],
+					);
+					return aIndex - bIndex;
+				});
+			}
+			return t;
+		});
 }
 
 export async function teamsByMemberUserId(
