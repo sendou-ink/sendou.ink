@@ -31,5 +31,5 @@ export const action: ActionFunction = async ({ request }) => {
 
 	await seed(variation);
 
-	return null;
+	return new Response(null, { status: 204 });
 };

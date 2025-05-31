@@ -2,12 +2,10 @@ import { expect, test } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
-import type { TournamentLoaderData } from "~/features/tournament/loaders/to.$id.server";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import {
-	fetchSendouInk,
 	impersonate,
 	isNotVisible,
 	navigate,
@@ -16,35 +14,41 @@ import {
 	submit,
 } from "~/utils/playwright";
 import { tournamentBracketsPage, tournamentPage } from "~/utils/urls";
+import { tournamentFromDB } from "../app/features/tournament-bracket/core/Tournament.server";
 
 const fetchTournamentLoaderData = () =>
-	fetchSendouInk<TournamentLoaderData>(
-		"/to/1/admin?_data=features%2Ftournament%2Froutes%2Fto.%24id",
-	);
+	tournamentFromDB({ tournamentId: 1, user: { id: ADMIN_ID } });
 
 const getIsOwnerOfUser = ({
-	data,
+	teams,
 	userId,
 	teamId,
 }: {
-	data: TournamentLoaderData;
+	teams: Array<{
+		id: number;
+		members: Array<{ userId: number; isOwner: number }>;
+	}>;
 	userId: number;
 	teamId: number;
 }) => {
-	const team = data.tournament.ctx.teams.find((t) => t.id === teamId);
+	const team = teams.find((t) => t.id === teamId);
 	invariant(team, "Team not found");
 
 	return team.members.find((m) => m.userId === userId)?.isOwner;
 };
 
 const getTeamCheckedInAt = ({
-	data,
+	teams,
 	teamId,
 }: {
-	data: TournamentLoaderData;
+	teams: Array<{
+		id: number;
+		checkIns: unknown[];
+		members: Array<{ userId: number }>;
+	}>;
 	teamId: number;
 }) => {
-	const team = data.tournament.ctx.teams.find((t) => t.id === teamId);
+	const team = teams.find((t) => t.id === teamId);
 	invariant(team, "Team not found");
 	return team.checkIns.length > 0;
 };
@@ -128,43 +132,67 @@ test.describe("Tournament", () => {
 			await page.getByLabel("Team name").fill("NSTC");
 			await submit(page);
 
-			const data = await fetchTournamentLoaderData();
-			const firstTeam = data.tournament.ctx.teams.find((t) => t.id === 1);
+			const tournament = await fetchTournamentLoaderData();
+			const firstTeam = tournament.ctx.teams.find((t) => t.id === 1);
 			invariant(firstTeam, "First team not found");
 			expect(firstTeam.name).toBe("NSTC");
 		}
 
 		// Change team owner
-		let data = await fetchTournamentLoaderData();
-		expect(getIsOwnerOfUser({ data, userId: ADMIN_ID, teamId: 1 })).toBe(1);
+		let tournament = await fetchTournamentLoaderData();
+		expect(
+			getIsOwnerOfUser({
+				teams: tournament.ctx.teams,
+				userId: ADMIN_ID,
+				teamId: 1,
+			}),
+		).toBe(1);
 
 		await actionSelect.selectOption("CHANGE_TEAM_OWNER");
 		await teamSelect.selectOption("1");
 		await memberSelect.selectOption("2");
 		await submit(page);
 
-		data = await fetchTournamentLoaderData();
-		expect(getIsOwnerOfUser({ data, userId: ADMIN_ID, teamId: 1 })).toBe(0);
-		expect(getIsOwnerOfUser({ data, userId: NZAP_TEST_ID, teamId: 1 })).toBe(1);
+		tournament = await fetchTournamentLoaderData();
+		expect(
+			getIsOwnerOfUser({
+				teams: tournament.ctx.teams,
+				userId: ADMIN_ID,
+				teamId: 1,
+			}),
+		).toBe(0);
+		expect(
+			getIsOwnerOfUser({
+				teams: tournament.ctx.teams,
+				userId: NZAP_TEST_ID,
+				teamId: 1,
+			}),
+		).toBe(1);
 
 		// Check in team
-		expect(getTeamCheckedInAt({ data, teamId: 1 })).toBeFalsy();
+		expect(
+			getTeamCheckedInAt({ teams: tournament.ctx.teams, teamId: 1 }),
+		).toBeFalsy();
 
 		await actionSelect.selectOption("CHECK_IN");
 		await submit(page);
 
-		data = await fetchTournamentLoaderData();
-		expect(getTeamCheckedInAt({ data, teamId: 1 })).toBeTruthy();
+		tournament = await fetchTournamentLoaderData();
+		expect(
+			getTeamCheckedInAt({ teams: tournament.ctx.teams, teamId: 1 }),
+		).toBeTruthy();
 
 		// Check out team
 		await actionSelect.selectOption("CHECK_OUT");
 		await submit(page);
 
-		data = await fetchTournamentLoaderData();
-		expect(getTeamCheckedInAt({ data, teamId: 1 })).toBeFalsy();
+		tournament = await fetchTournamentLoaderData();
+		expect(
+			getTeamCheckedInAt({ teams: tournament.ctx.teams, teamId: 1 }),
+		).toBeFalsy();
 
 		// Remove member...
-		const firstTeam = data.tournament.ctx.teams.find((t) => t.id === 1);
+		const firstTeam = tournament.ctx.teams.find((t) => t.id === 1);
 		invariant(firstTeam, "First team not found");
 		const firstNonOwnerMember = firstTeam.members.find(
 			(m) => m.userId !== 1 && !m.isOwner,
@@ -175,13 +203,13 @@ test.describe("Tournament", () => {
 		await memberSelect.selectOption(String(firstNonOwnerMember.userId));
 		await submit(page);
 
-		data = await fetchTournamentLoaderData();
-		const firstTeamAgain = data.tournament.ctx.teams.find((t) => t.id === 1);
+		tournament = await fetchTournamentLoaderData();
+		const firstTeamAgain = tournament.ctx.teams.find((t) => t.id === 1);
 		invariant(firstTeamAgain, "First team again not found");
 		expect(firstTeamAgain.members.length).toBe(firstTeam.members.length - 1);
 
 		// ...and add to another team
-		const teamWithSpace = data.tournament.ctx.teams.find(
+		const teamWithSpace = tournament.ctx.teams.find(
 			(t) => t.id !== 1 && t.members.length === 4,
 		);
 		invariant(teamWithSpace, "Team with space not found");
@@ -195,8 +223,8 @@ test.describe("Tournament", () => {
 		});
 		await submit(page);
 
-		data = await fetchTournamentLoaderData();
-		const teamWithSpaceAgain = data.tournament.ctx.teams.find(
+		tournament = await fetchTournamentLoaderData();
+		const teamWithSpaceAgain = tournament.ctx.teams.find(
 			(t) => t.id === teamWithSpace.id,
 		);
 		invariant(teamWithSpaceAgain, "Team with space again not found");
@@ -210,8 +238,8 @@ test.describe("Tournament", () => {
 		await teamSelect.selectOption("1");
 		await submit(page);
 
-		data = await fetchTournamentLoaderData();
-		expect(data.tournament.ctx.teams.find((t) => t.id === 1)).toBeFalsy();
+		tournament = await fetchTournamentLoaderData();
+		expect(tournament.ctx.teams.find((t) => t.id === 1)).toBeFalsy();
 	});
 
 	test("adjusts seeds", async ({ page }) => {

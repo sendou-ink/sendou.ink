@@ -13,7 +13,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 	await updatePatreonData();
 
-	return null;
+	return new Response(null, { status: 204 });
 };
 
 export const loader = ({ request }: LoaderFunctionArgs) => {

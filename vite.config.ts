@@ -1,5 +1,4 @@
 import { vitePlugin as remix } from "@remix-run/dev";
-import { installGlobals } from "@remix-run/node";
 import { defineConfig } from "vite";
 import babel from "vite-plugin-babel";
 import tsconfigPaths from "vite-tsconfig-paths";
@@ -10,8 +9,6 @@ declare module "@remix-run/node" {
 		v3_singleFetch: true;
 	}
 }
-
-installGlobals();
 
 const ReactCompilerConfig = {
 	target: "18",
