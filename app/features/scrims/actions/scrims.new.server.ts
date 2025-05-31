@@ -100,9 +100,17 @@ export const usersListForPost = async ({
 	);
 	errorToastIfFalsy(team, "User is not a member of this team");
 
-	return team.members
-		.filter((member) => !ROLES_TO_EXCLUDE.includes(member.role))
-		.map((member) => member.id);
+	const filteredMembers = team.members.filter(
+		(member) => !ROLES_TO_EXCLUDE.includes(member.role),
+	);
+
+	// handle case when all users are from excluded roles
+	const result = (
+		filteredMembers.length > 0 ? filteredMembers : team.members
+	).map((member) => member.id);
+
+	// ensure author is included in the list even if they match the ignore condition
+	return result.includes(authorId) ? result : [authorId, ...result];
 };
 
 async function validatePickup(userIds: number[], authorId: number) {
