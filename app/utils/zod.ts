@@ -1,6 +1,6 @@
 import type { ZodType } from "zod";
 import { z } from "zod";
-import { CUSTOM_CSS_VAR_COLORS, INVITE_CODE_LENGTH } from "~/constants";
+import { CUSTOM_CSS_VAR_COLORS } from "~/features/user-page/user-page-constants";
 import {
 	abilities,
 	type abilitiesShort,
@@ -8,6 +8,7 @@ import {
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { FRIEND_CODE_REGEXP } from "../features/sendouq/q-constants";
+import { SHORT_NANOID_LENGTH } from "./id";
 import type { Unpacked } from "./types";
 import { assertType } from "./types";
 
@@ -17,7 +18,7 @@ export const idObject = z.object({
 });
 export const optionalId = z.coerce.number().int().positive().optional();
 
-export const inviteCode = z.string().length(INVITE_CODE_LENGTH);
+export const inviteCode = z.string().length(SHORT_NANOID_LENGTH);
 export const inviteCodeObject = z.object({
 	inviteCode,
 });

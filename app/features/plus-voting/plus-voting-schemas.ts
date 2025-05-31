@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { PLUS_DOWNVOTE, PLUS_UPVOTE } from "~/constants";
 import type { PlusVoteFromFE } from "~/features/plus-voting/core";
 import { assertType } from "~/utils/types";
 import { safeJSONParse } from "~/utils/zod";
+import { PLUS_DOWNVOTE, PLUS_UPVOTE } from "./plus-voting-constants";
 
 export const voteSchema = z.object({
 	votedId: z.number(),

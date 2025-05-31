@@ -2,7 +2,7 @@ import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useDebounce } from "react-use";
-import { CUSTOM_CSS_VAR_COLORS } from "~/constants";
+import { CUSTOM_CSS_VAR_COLORS } from "~/features/user-page/user-page-constants";
 import { Button } from "./Button";
 import { InfoPopover } from "./InfoPopover";
 import { Label } from "./Label";

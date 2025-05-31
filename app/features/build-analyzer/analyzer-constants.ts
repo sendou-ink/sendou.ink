@@ -124,3 +124,5 @@ export const multiShot = Object.fromEntries(
 export const RAINMAKER_SPEED_PENALTY_MODIFIER = 0.8;
 
 export const UNKNOWN_SHORT = "U";
+
+export const MAX_AP = 57;

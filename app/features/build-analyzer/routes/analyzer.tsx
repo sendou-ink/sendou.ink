@@ -13,7 +13,6 @@ import { Main } from "~/components/Main";
 import { Table } from "~/components/Table";
 import { Tab, Tabs } from "~/components/Tabs";
 import { BeakerIcon } from "~/components/icons/Beaker";
-import { MAX_AP } from "~/constants";
 import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { abilitiesShort } from "~/modules/in-game-lists/abilities";
@@ -50,6 +49,7 @@ import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
 import { metaTags } from "../../../utils/remix";
 import {
+	MAX_AP,
 	MAX_LDE_INTENSITY,
 	damageTypeToWeaponType,
 } from "../analyzer-constants";

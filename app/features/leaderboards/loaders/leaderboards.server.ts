@@ -1,6 +1,5 @@
 import { cachified } from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { HALF_HOUR_IN_MS } from "~/constants";
 import { getUser } from "~/features/auth/core/user.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -9,7 +8,7 @@ import type {
 	RankedModeShort,
 } from "~/modules/in-game-lists/types";
 import type { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
-import { cache, ttl } from "~/utils/cache.server";
+import { IN_MILLISECONDS, cache, ttl } from "~/utils/cache.server";
 import {
 	cachedFullUserLeaderboard,
 	filterByWeaponCategory,
@@ -59,7 +58,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			? await cachified({
 					key: `team-leaderboard-season-${season}-${type}`,
 					cache,
-					ttl: ttl(HALF_HOUR_IN_MS),
+					ttl: ttl(IN_MILLISECONDS.HALF_HOUR),
 					async getFreshValue() {
 						return LeaderboardRepository.teamLeaderboardBySeason({
 							season,

@@ -5,13 +5,10 @@ import { Redirect } from "~/components/Redirect";
 import { SubmitButton } from "~/components/SubmitButton";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { UserSearch } from "~/components/elements/UserSearch";
-import {
-	PLUS_TIERS,
-	PlUS_SUGGESTION_FIRST_COMMENT_MAX_LENGTH,
-} from "~/constants";
 import { useUser } from "~/features/auth/core/user";
 import { atOrError } from "~/utils/arrays";
 import { plusSuggestionPage } from "~/utils/urls";
+import { PLUS_SUGGESTION, PLUS_TIERS } from "../plus-suggestions-constants";
 import { canSuggestNewUser } from "../plus-suggestions-utils";
 import type { PlusSuggestionsLoaderData } from "./plus.suggestions";
 
@@ -67,7 +64,7 @@ export default function PlusNewSuggestionModalPage() {
 					</select>
 				</div>
 				<UserSearch name="userId" label="Suggested user" isRequired />
-				<CommentTextarea maxLength={PlUS_SUGGESTION_FIRST_COMMENT_MAX_LENGTH} />
+				<CommentTextarea maxLength={PLUS_SUGGESTION.FIRST_COMMENT_MAX_LENGTH} />
 				<div>
 					<SubmitButton>Submit</SubmitButton>
 				</div>

@@ -1,8 +1,8 @@
-import { MAX_AP } from "~/constants";
 import { abilities } from "~/modules/in-game-lists/abilities";
 import type { Ability } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
+import { MAX_AP } from "../build-analyzer/analyzer-constants";
 import { isStackableAbility } from "../build-analyzer/core/utils";
 import type { AbilitiesByWeapon } from "./queries/abilitiesByWeaponId.server";
 import type { AverageAbilityPointsResult } from "./queries/averageAbilityPoints.server";

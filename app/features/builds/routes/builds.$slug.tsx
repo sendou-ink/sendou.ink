@@ -18,11 +18,6 @@ import { ChartBarIcon } from "~/components/icons/ChartBar";
 import { FilterIcon } from "~/components/icons/Filter";
 import { FireIcon } from "~/components/icons/Fire";
 import { MapIcon } from "~/components/icons/Map";
-import {
-	BUILDS_PAGE_BATCH_SIZE,
-	BUILDS_PAGE_MAX_BUILDS,
-	PATCHES,
-} from "~/constants";
 import { useUser } from "~/features/auth/core/user";
 import { safeJSONParse } from "~/utils/json";
 import { isRevalidation, metaTags } from "~/utils/remix";
@@ -37,8 +32,11 @@ import {
 	weaponBuildStatsPage,
 } from "~/utils/urls";
 import {
+	BUILDS_PAGE_BATCH_SIZE,
+	BUILDS_PAGE_MAX_BUILDS,
 	FILTER_SEARCH_PARAM_KEY,
 	MAX_BUILD_FILTERS,
+	PATCHES,
 } from "../builds-constants";
 import type { BuildFiltersFromSearchParams } from "../builds-schemas.server";
 import type { AbilityBuildFilter, BuildFilter } from "../builds-types";

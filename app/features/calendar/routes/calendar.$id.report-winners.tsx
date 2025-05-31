@@ -9,9 +9,9 @@ import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { UserSearch } from "~/components/elements/UserSearch";
-import { CALENDAR_EVENT_RESULT } from "~/constants";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
+import { CALENDAR_EVENT_RESULT } from "../calendar-constants";
 
 import { action } from "../actions/calendar.$id.report-winners.server";
 import { loader } from "../loaders/calendar.$id.report-winners.server";

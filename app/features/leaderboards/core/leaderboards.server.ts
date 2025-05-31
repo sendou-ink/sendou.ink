@@ -1,5 +1,4 @@
 import { cachified } from "@epic-web/cachified";
-import { HALF_HOUR_IN_MS } from "~/constants";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN } from "~/features/mmr/mmr-constants";
 import { spToOrdinal } from "~/features/mmr/mmr-utils";
@@ -7,7 +6,7 @@ import { freshUserSkills, userSkills } from "~/features/mmr/tiered.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
-import { cache, ttl } from "~/utils/cache.server";
+import { IN_MILLISECONDS, cache, ttl } from "~/utils/cache.server";
 import type { Unwrapped } from "~/utils/types";
 import { DEFAULT_LEADERBOARD_MAX_SIZE } from "../leaderboards-constants";
 import { seasonHasTopTen } from "../leaderboards-utils";
@@ -23,7 +22,7 @@ export async function cachedFullUserLeaderboard(season: number) {
 	return cachified({
 		key: `user-leaderboard-season-${season}`,
 		cache,
-		ttl: ttl(HALF_HOUR_IN_MS),
+		ttl: ttl(IN_MILLISECONDS.HALF_HOUR),
 		async getFreshValue() {
 			const leaderboard = userSPLeaderboard(season);
 			const withTiers = addTiers(leaderboard, season);

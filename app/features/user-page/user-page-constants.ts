@@ -1,5 +1,28 @@
+export const USER = {
+	BIO_MAX_LENGTH: 2000,
+	CUSTOM_URL_MAX_LENGTH: 32,
+	CUSTOM_NAME_MAX_LENGTH: 32,
+	BATTLEFY_MAX_LENGTH: 32,
+	IN_GAME_NAME_TEXT_MAX_LENGTH: 20,
+	IN_GAME_NAME_DISCRIMINATOR_MAX_LENGTH: 5,
+	WEAPON_POOL_MAX_SIZE: 5,
+	COMMISSION_TEXT_MAX_LENGTH: 1000,
+};
+
 export const MATCHES_PER_SEASONS_PAGE = 8;
 export const DEFAULT_BUILD_SORT = ["WEAPON_POOL", "UPDATED_AT"] as const;
+
+export const CUSTOM_CSS_VAR_COLORS = [
+	"bg",
+	"bg-darker",
+	"bg-lighter",
+	"bg-lightest",
+	"text",
+	"text-lighter",
+	"theme",
+	"theme-secondary",
+	"chat",
+] as const;
 
 /**
  * An array of ISO 3166-1 alpha-2 country codes.

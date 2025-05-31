@@ -1,11 +1,10 @@
 import { sub } from "date-fns";
 import type { Insertable } from "kysely";
 import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
-import { nanoid } from "nanoid";
 import type { Tables, TablesInsertable } from "~/db/tables";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { shortNanoid } from "~/utils/id";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
-import { INVITE_CODE_LENGTH } from "../../constants";
 import { db } from "../../db/sql";
 import invariant from "../../utils/invariant";
 import type { Unwrapped } from "../../utils/types";
@@ -38,7 +37,7 @@ export function insert(args: InsertArgs) {
 				teamId: args.teamId,
 				text: args.text,
 				visibility: args.visibility ? JSON.stringify(args.visibility) : null,
-				chatCode: nanoid(INVITE_CODE_LENGTH),
+				chatCode: shortNanoid(),
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();

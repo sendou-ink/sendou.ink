@@ -1,9 +1,8 @@
 import { faker } from "@faker-js/faker";
 import { add, sub } from "date-fns";
-import { nanoid } from "nanoid";
 import * as R from "remeda";
-import { ADMIN_DISCORD_ID, ADMIN_ID, INVITE_CODE_LENGTH } from "~/constants";
 import { db, sql } from "~/db/sql";
+import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
 import type { SeedVariation } from "~/features/api-private/routes/seed";
 import * as AssociationRepository from "~/features/associations/AssociationRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
@@ -69,6 +68,7 @@ import type { TournamentMapListMap } from "~/modules/tournament-map-list-generat
 import { SENDOUQ_DEFAULT_MAPS } from "~/modules/tournament-map-list-generator/constants";
 import { nullFilledArray } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import { mySlugify } from "~/utils/urls";
 import type { Tables, UserMapModePreferences } from "../tables";
@@ -1269,7 +1269,7 @@ function calendarEventWithToToolsTeams(
 				name,
 				createdAt: dateToDatabaseTimestamp(new Date()),
 				tournamentId,
-				inviteCode: nanoid(INVITE_CODE_LENGTH),
+				inviteCode: shortNanoid(),
 			});
 
 		// in PICNIC & PP Chimera is not checked in + in LUTI no check-ins at all
@@ -1605,7 +1605,7 @@ const detailedTeam = (seedVariation?: SeedVariation | null) => () => {
        values (
           'Alliance Rogue',
           'alliance-rogue',
-          '${nanoid(INVITE_CODE_LENGTH)}',
+          '${shortNanoid()}',
           '${faker.lorem.paragraph()}',
           1,
           2
@@ -1682,7 +1682,7 @@ function otherTeams() {
 				id: i,
 				name: teamName,
 				customUrl: teamCustomUrl,
-				inviteCode: nanoid(INVITE_CODE_LENGTH),
+				inviteCode: shortNanoid(),
 				bio: faker.lorem.paragraph(),
 			});
 

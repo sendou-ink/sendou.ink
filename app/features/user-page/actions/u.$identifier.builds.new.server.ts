@@ -1,9 +1,9 @@
 import { type ActionFunction, redirect } from "@remix-run/node";
 import * as R from "remeda";
 import { z } from "zod";
-import { BUILD } from "~/constants";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
+import { BUILD } from "~/features/builds/builds-constants";
 import { refreshBuildsCacheByWeaponSplIds } from "~/features/builds/core/cached-builds.server";
 import type { BuildWeaponWithTop500Info } from "~/features/builds/queries/buildsBy.server";
 import {

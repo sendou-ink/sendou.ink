@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { USER } from "~/constants";
 import "~/styles/u-edit.css";
-import { BADGE } from "~/features/badges/badges-contants";
+import { BADGE } from "~/features/badges/badges-constants";
 import { isCustomUrl } from "~/utils/urls";
 import {
 	actualNumber,
@@ -22,7 +21,7 @@ import {
 	HIGHLIGHT_CHECKBOX_NAME,
 	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
 } from "./components/UserResultsTable";
-import { COUNTRY_CODES } from "./user-page-constants";
+import { COUNTRY_CODES, USER } from "./user-page-constants";
 
 export const userParamsSchema = z.object({ identifier: z.string() });
 

@@ -1,8 +1,8 @@
 import * as R from "remeda";
-import { INVITE_CODE_LENGTH } from "~/constants";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { weekNumberToDate } from "~/utils/dates";
+import { SHORT_NANOID_LENGTH } from "~/utils/id";
 import { tournamentLogoUrl } from "~/utils/urls";
 import type { Tables, TournamentStageSettings } from "../../db/tables";
 import { assertUnreachable } from "../../utils/types";
@@ -369,7 +369,7 @@ export function validateCanJoinTeam({
 	if (typeof userId !== "number") {
 		return "NOT_LOGGED_IN";
 	}
-	if (!teamToJoin && inviteCode.length !== INVITE_CODE_LENGTH) {
+	if (!teamToJoin && inviteCode.length !== SHORT_NANOID_LENGTH) {
 		return "SHORT_CODE";
 	}
 	if (!teamToJoin) {

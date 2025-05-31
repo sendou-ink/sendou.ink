@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/constants";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
 import {
 	impersonate,
 	isNotVisible,

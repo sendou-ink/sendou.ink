@@ -1,13 +1,12 @@
 import cachified from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { ONE_HOUR_IN_MS, TWO_HOURS_IN_MS } from "~/constants";
 import type { Tables } from "~/db/tables";
 import { getUserId } from "~/features/auth/core/user.server";
 import * as Changelog from "~/features/front-page/core/Changelog.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import { cache, ttl } from "~/utils/cache.server";
+import { IN_MILLISECONDS, cache, ttl } from "~/utils/cache.server";
 import {
 	discordAvatarUrl,
 	teamPage,
@@ -24,8 +23,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		cachified({
 			key: "front-changelog",
 			cache,
-			ttl: ttl(ONE_HOUR_IN_MS),
-			staleWhileRevalidate: ttl(TWO_HOURS_IN_MS),
+			ttl: ttl(IN_MILLISECONDS.ONE_HOUR),
+			staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_HOURS),
 			async getFreshValue() {
 				return Changelog.get();
 			},
@@ -56,8 +55,8 @@ function cachedLeaderboards(): Promise<{
 	return cachified({
 		key: "front-leaderboard",
 		cache,
-		ttl: ttl(ONE_HOUR_IN_MS),
-		staleWhileRevalidate: ttl(TWO_HOURS_IN_MS),
+		ttl: ttl(IN_MILLISECONDS.ONE_HOUR),
+		staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_HOURS),
 		async getFreshValue() {
 			const season = Seasons.currentOrPrevious()?.nth ?? 1;
 

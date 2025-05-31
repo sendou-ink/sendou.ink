@@ -1,15 +1,11 @@
 import { z } from "zod";
-import {
-	PLUS_TIERS,
-	PlUS_SUGGESTION_COMMENT_MAX_LENGTH,
-	PlUS_SUGGESTION_FIRST_COMMENT_MAX_LENGTH,
-} from "~/constants";
 import { _action, actualNumber, trimmedString } from "~/utils/zod";
+import { PLUS_SUGGESTION, PLUS_TIERS } from "./plus-suggestions-constants";
 
 export const followUpCommentActionSchema = z.object({
 	comment: z.preprocess(
 		trimmedString,
-		z.string().min(1).max(PlUS_SUGGESTION_COMMENT_MAX_LENGTH),
+		z.string().min(1).max(PLUS_SUGGESTION.COMMENT_MAX_LENGTH),
 	),
 	tier: z.preprocess(
 		actualNumber,
@@ -31,7 +27,7 @@ export const firstCommentActionSchema = z.object({
 	),
 	comment: z.preprocess(
 		trimmedString,
-		z.string().min(1).max(PlUS_SUGGESTION_FIRST_COMMENT_MAX_LENGTH),
+		z.string().min(1).max(PLUS_SUGGESTION.FIRST_COMMENT_MAX_LENGTH),
 	),
 	userId: z.preprocess(actualNumber, z.number().positive()),
 });

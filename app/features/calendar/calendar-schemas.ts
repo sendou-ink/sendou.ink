@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { CALENDAR_EVENT_RESULT } from "~/constants";
 import { type CalendarEventTag, TOURNAMENT_STAGE_TYPES } from "~/db/tables";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
@@ -14,7 +13,7 @@ import {
 	safeJSONParse,
 	toArray,
 } from "~/utils/zod";
-import { CALENDAR_EVENT } from "./calendar-constants";
+import { CALENDAR_EVENT, CALENDAR_EVENT_RESULT } from "./calendar-constants";
 import * as CalendarEvent from "./core/CalendarEvent";
 
 export const calendarEventTagSchema = z

@@ -1,7 +1,8 @@
 import { nanoid } from "nanoid";
-import { SKALOP_TOKEN_HEADER_NAME } from "~/constants";
 import invariant from "~/utils/invariant";
 import type { ChatMessage } from "./chat-types";
+
+const SKALOP_TOKEN_HEADER_NAME = "Skalop-Token";
 
 type PartialChatMessage = Pick<
 	ChatMessage,

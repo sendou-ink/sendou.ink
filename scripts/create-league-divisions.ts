@@ -2,8 +2,8 @@
 
 import "dotenv/config";
 import { z } from "zod";
-import { ADMIN_ID } from "~/constants";
 import { db } from "~/db/sql";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";

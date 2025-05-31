@@ -11,6 +11,7 @@ import {
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import { USER } from "~/features/user-page/user-page-constants";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
@@ -21,7 +22,6 @@ import {
 	successToast,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { USER } from "../../../constants";
 import { _action, id, idObject } from "../../../utils/zod";
 import { bracketIdx } from "../../tournament-bracket/tournament-bracket-schemas.server";
 import * as TournamentRepository from "../TournamentRepository.server";

@@ -1,5 +1,5 @@
 import test, { expect } from "@playwright/test";
-import { ADMIN_ID } from "~/constants";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
 import {
 	impersonate,
 	navigate,

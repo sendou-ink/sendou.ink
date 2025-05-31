@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { Ability } from "~/components/Ability";
 import { WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
-import { MAX_AP } from "~/constants";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BUILDS_PAGE,
@@ -18,6 +17,7 @@ import { loader } from "../loaders/builds.$slug.stats.server";
 export { loader };
 
 import "../build-stats.css";
+import { MAX_AP } from "~/features/build-analyzer/analyzer-constants";
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.data) return [];
