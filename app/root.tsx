@@ -3,7 +3,7 @@ import type {
 	MetaFunction,
 	SerializeFrom,
 } from "@remix-run/node";
-import { data, redirect } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import {
 	Links,
 	Meta,
@@ -97,7 +97,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		return redirect(SUSPENDED_PAGE);
 	}
 
-	return data(
+	return json(
 		{
 			locale,
 			theme: themeSession.getTheme(),

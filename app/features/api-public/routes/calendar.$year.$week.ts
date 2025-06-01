@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import { type LoaderFunctionArgs, json } from "@remix-run/node";
 import { cors } from "remix-utils/cors";
 import { z } from "zod";
 import { db } from "~/db/sql";
@@ -39,7 +39,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			: null,
 	}));
 
-	return await cors(request, Response.json(result));
+	return await cors(request, json(result));
 };
 
 function fetchEventsOfWeek(args: { week: number; year: number }) {
