@@ -485,7 +485,7 @@ export const specialWeaponImageUrl = (specialWeaponSplId: SpecialWeaponId) =>
 	`/static-assets/img/special-weapons/${specialWeaponSplId}`;
 export const specialWeaponVariantImageUrl = (
 	specialWeaponSplId: SpecialWeaponId,
-	variant: "weakpoints" | "tower",
+	variant: "weakpoints",
 ) =>
 	`/static-assets/img/special-weapons/variants/${specialWeaponSplId}-${variant}`;
 export const abilityImageUrl = (ability: AbilityWithUnknown) =>
