@@ -1325,7 +1325,14 @@ abbr[title] {
 }
 
 .top-leaderboard {
-	min-height: 140px;
+	min-height: 130px;
+	margin: 10px 0;
+}
+
+@media screen and (min-width: 601px) {
+	.top-leaderboard {
+		min-height: 120px;
+	}
 }
 
 .youtube__container {
