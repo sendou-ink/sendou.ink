@@ -21,8 +21,11 @@ export const DAMAGE_RECEIVERS = [
 	"Bomb_TorpedoBullet", // Torpedo
 	"BulletUmbrellaCanopyCompact", // Undercover Brella Canopy
 	"BulletUmbrellaCanopyNormal", // Splat Brella Canopy
+	"BulletUmbrellaCanopyNormal_Launched", // Splat Brella Canopy launched
 	"BulletUmbrellaCanopyWide", // Tenta Brella Canopy
+	"BulletUmbrellaCanopyWide_Launched", // Tenta Brella Canopy launched
 	"BulletShelterCanopyFocus", // Recycled Brella Canopy
+	"BulletShelterCanopyFocus_Launched", // Recycled Brella Canopy launched
 ] as const;
 
 export const damagePriorities: Array<
