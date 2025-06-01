@@ -10,5 +10,5 @@ export const action: ActionFunction = async ({ request }) => {
 	// input untyped but we trust Lohi to give us correctly shaped request here
 	UserRepository.updateMany(await request.json());
 
-	return new Response(null, { status: 204 });
+	return null;
 };

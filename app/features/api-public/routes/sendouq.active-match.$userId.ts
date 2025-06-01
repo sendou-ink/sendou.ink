@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import { type LoaderFunctionArgs, json } from "@remix-run/node";
 import { cors } from "remix-utils/cors";
 import { z } from "zod";
 import { findCurrentGroupByUserId } from "~/features/sendouq/queries/findCurrentGroupByUserId.server";
@@ -29,5 +29,5 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		matchId: current?.matchId ?? null,
 	};
 
-	return await cors(request, Response.json(result));
+	return await cors(request, json(result));
 };

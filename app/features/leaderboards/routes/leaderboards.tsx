@@ -235,7 +235,7 @@ function OwnEntryPeek({
 	entry,
 	nextTier,
 }: {
-	entry: NonNullable<SerializeFrom<typeof loader>["ownEntryPeek"]>["entry"];
+	entry: NonNullable<SerializeFrom<typeof loader>["userLeaderboard"]>[number];
 	nextTier?: SkillTierInterval;
 }) {
 	const data = useLoaderData<typeof loader>();

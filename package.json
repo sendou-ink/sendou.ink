@@ -20,7 +20,7 @@
 		"biome:fix:unsafe": "npx @biomejs/biome check --write --unsafe .",
 		"typecheck": "tsc --noEmit",
 		"test:unit": "cross-env VITE_SITE_DOMAIN=http://localhost:5173 vitest --silent=passed-only run",
-		"test:e2e": "cross-env DB_PATH=db.sqlite3 npx playwright test",
+		"test:e2e": "npx playwright test",
 		"test:e2e:flaky-detect": "npx playwright test --repeat-each=10 --max-failures=1",
 		"checks": "npm run biome:fix && npm run test:unit && npm run check-translation-jsons && npm run typecheck",
 		"setup": "cross-env DB_PATH=db.sqlite3 tsx ./scripts/setup.ts",
