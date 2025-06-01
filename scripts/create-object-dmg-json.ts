@@ -6,7 +6,7 @@ import {
 	mainWeaponIds,
 	specialWeaponIds,
 	subWeaponIds,
-} from "~/modules/in-game-lists/types";
+} from "~/modules/in-game-lists/weapon-ids";
 import weapons from "./dicts/WeaponInfoMain.json";
 import specialWeapons from "./dicts/WeaponInfoSpecial.json";
 import subWeapons from "./dicts/WeaponInfoSub.json";
@@ -76,10 +76,26 @@ for (const cell of Object.values(params.CellList)) {
 		rate: cell.DamageRate,
 	});
 
+	// add a second rate for launched versions, since they have double health
+	if (
+		cell.ColumnKey.includes("BulletUmbrellaCanopyNormal") ||
+		cell.ColumnKey.includes("BulletUmbrellaCanopyWide")
+	) {
+		result[cell.RowKey].rates.push({
+			target: `${cell.ColumnKey}_Launched`,
+			rate: cell.DamageRate,
+		});
+	}
+
 	// if it has special damage rates for Splat Brella, add the same value for Recycled Brella
 	if (cell.ColumnKey === "BulletUmbrellaCanopyNormal") {
 		result[cell.RowKey].rates.push({
 			target: "BulletShelterCanopyFocus",
+			rate: cell.DamageRate,
+		});
+
+		result[cell.RowKey].rates.push({
+			target: "BulletShelterCanopyFocus_Launched",
 			rate: cell.DamageRate,
 		});
 	}

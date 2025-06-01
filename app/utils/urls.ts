@@ -470,6 +470,10 @@ export const weaponCategoryUrl = (
 ) => `/static-assets/img/weapon-categories/${category}`;
 export const mainWeaponImageUrl = (mainWeaponSplId: MainWeaponId) =>
 	`/static-assets/img/main-weapons/${mainWeaponSplId}`;
+export const mainWeaponVariantImageUrl = (
+	mainWeaponSplId: MainWeaponId,
+	variant: "launched",
+) => `/static-assets/img/main-weapons/variants/${mainWeaponSplId}-${variant}`;
 export const outlinedMainWeaponImageUrl = (mainWeaponSplId: MainWeaponId) =>
 	`/static-assets/img/main-weapons-outlined/${mainWeaponSplId}`;
 export const outlinedFiveStarMainWeaponImageUrl = (
@@ -479,6 +483,11 @@ export const subWeaponImageUrl = (subWeaponSplId: SubWeaponId) =>
 	`/static-assets/img/sub-weapons/${subWeaponSplId}`;
 export const specialWeaponImageUrl = (specialWeaponSplId: SpecialWeaponId) =>
 	`/static-assets/img/special-weapons/${specialWeaponSplId}`;
+export const specialWeaponVariantImageUrl = (
+	specialWeaponSplId: SpecialWeaponId,
+	variant: "weakpoints",
+) =>
+	`/static-assets/img/special-weapons/variants/${specialWeaponSplId}-${variant}`;
 export const abilityImageUrl = (ability: AbilityWithUnknown) =>
 	`/static-assets/img/abilities/${ability}`;
 export const modeImageUrl = (mode: ModeShortWithSpecial) =>
