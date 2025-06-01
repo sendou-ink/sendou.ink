@@ -1325,7 +1325,8 @@ abbr[title] {
 }
 
 .top-leaderboard {
-	min-height: 140px;
+	min-height: 120px;
+	margin: 10px 0;
 }
 
 .youtube__container {
