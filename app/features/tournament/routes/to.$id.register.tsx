@@ -59,6 +59,7 @@ import {
 } from "../tournament-utils";
 import { useTournament } from "./to.$id";
 
+import TimePopover from "~/components/TimePopover";
 import { action } from "../actions/to.$id.register.server";
 import { loader } from "../loaders/to.$id.register.server";
 export { loader, action };
@@ -66,7 +67,6 @@ export { loader, action };
 export default function TournamentRegisterPage() {
 	const user = useUser();
 	const isMounted = useIsMounted();
-	const { i18n } = useTranslation();
 	const tournament = useTournament();
 
 	const startsAtEvenHour = tournament.ctx.startTime.getMinutes() === 0;
@@ -123,15 +123,17 @@ export default function TournamentRegisterPage() {
 						<div className="tournament__by mt-2">
 							<div className="stack horizontal xs items-center">
 								<ClockIcon className="tournament__info__icon" />{" "}
-								{isMounted
-									? tournament.ctx.startTime.toLocaleString(i18n.language, {
-											timeZoneName: "short",
+								{isMounted ? (
+									<TimePopover
+										time={tournament.ctx.startTime}
+										options={{
 											minute: startsAtEvenHour ? undefined : "numeric",
 											hour: "numeric",
 											day: "numeric",
 											month: "long",
-										})
-									: null}
+										}}
+									/>
+								) : null}
 							</div>
 						</div>
 					) : null}

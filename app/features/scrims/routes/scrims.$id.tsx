@@ -15,6 +15,7 @@ import type { ScrimPost as ScrimPostType } from "../scrims-types";
 import { loader } from "../loaders/scrims.$id.server";
 export { loader };
 
+import TimePopover from "~/components/TimePopover";
 import styles from "./scrims.$id.module.css";
 
 export const handle: SendouRouteHandle = {
@@ -50,19 +51,21 @@ export default function ScrimPage() {
 function ScrimHeader() {
 	const { t } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof loader>();
-	const { i18n } = useTranslation();
 
 	return (
 		<div className="line-height-tight" data-testid="match-header">
 			<h2 className="text-lg" suppressHydrationWarning>
-				{databaseTimestampToDate(data.post.at).toLocaleString(i18n.language, {
-					weekday: "long",
-					year: "numeric",
-					month: "long",
-					day: "numeric",
-					hour: "numeric",
-					minute: "numeric",
-				})}
+				<TimePopover
+					time={databaseTimestampToDate(data.post.at)}
+					options={{
+						weekday: "long",
+						year: "numeric",
+						month: "long",
+						day: "numeric",
+						hour: "numeric",
+						minute: "numeric",
+					}}
+				/>
 			</h2>
 			<div className="text-lighter text-xs font-bold">
 				{t("scrims:page.scheduledScrim")}

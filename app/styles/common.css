@@ -252,6 +252,21 @@ details summary {
 	user-select: none;
 }
 
+.text-only-button {
+	cursor: pointer;
+	border: 0;
+	background-color: inherit;
+	color: inherit;
+	margin: 0;
+	padding: 0;
+}
+
+.dotted {
+	text-decoration-style: dotted;
+	text-decoration-line: underline;
+	text-decoration-thickness: 2px;
+}
+
 .summary {
 	border-radius: var(--rounded);
 	background-color: var(--bg-darker-transparent);
