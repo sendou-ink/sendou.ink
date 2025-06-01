@@ -141,14 +141,6 @@ export function GroupCard({
 						<div>
 							{group.tier.name}
 							{group.tier.isPlus ? "+" : ""}{" "}
-							{group.isReplay ? (
-								<>
-									/{" "}
-									<span className="text-theme-secondary text-uppercase">
-										{t("q:looking.replay")}
-									</span>
-								</>
-							) : null}
 						</div>
 					</div>
 				) : null}
@@ -160,26 +152,24 @@ export function GroupCard({
 					</div>
 				) : null}
 				{group.tierRange?.range ? (
-					<div className="stack items-center xs">
-						<div className="q__group__display-group-range font-bold">
+					<div className="q__group__display-group-range font-bold">
+						<div className="stack items-center gap-2 text-theme-secondary xxs">
+							{`-${group.tierRange.diff}`}
 							<TierImage tier={group.tierRange.range[0]} width={80} />
-							{t("q:looking.range.or")}
-							<TierImage tier={group.tierRange.range[1]} width={80} />
-							<span className="text-lighter text-xs">
+							<span className="text-xs text-lighter">
 								{group.tierRange.range[0].name}
 								{group.tierRange.range[0].isPlus ? "+" : ""}
 							</span>
-							<span />
-							<span className="text-lighter text-xs">
+						</div>
+						{t("q:looking.range.or")}
+						<div className="stack items-center gap-2 text-theme-secondary xxs">
+							{`+${group.tierRange.diff}`}
+							<TierImage tier={group.tierRange.range[1]} width={80} />
+							<span className="text-xs text-lighter">
 								{group.tierRange.range[1].name}
 								{group.tierRange.range[1].isPlus ? "+" : ""}
 							</span>
 						</div>
-						{group.isReplay ? (
-							<div className="text-theme-secondary text-uppercase text-xs font-bold">
-								{t("q:looking.replay")}
-							</div>
-						) : null}
 					</div>
 				) : null}
 				{group.skillDifference ? (
@@ -199,7 +189,8 @@ export function GroupCard({
 							{action === "MATCH_UP" || action === "MATCH_UP_RECHALLENGE"
 								? t("q:looking.groups.actions.startMatch")
 								: action === "LIKE" && !group.members
-									? t("q:looking.groups.actions.challenge")
+									? t("q:looking.groups.actions.challenge") +
+										(!group.isReplay ? ` (${t("q:looking.replay")})` : "")
 									: action === "LIKE"
 										? t("q:looking.groups.actions.invite")
 										: action === "GROUP_UP"

@@ -320,11 +320,9 @@
 }
 
 .q__group__display-group-range {
-	display: grid;
-	grid-template-columns: 1fr auto 1fr;
-	grid-template-rows: 1fr auto;
+	display: flex;
 	align-items: center;
-	justify-items: center;
+	justify-content: center;
 	column-gap: var(--s-2);
 }
 
