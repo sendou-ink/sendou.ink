@@ -985,6 +985,7 @@ abbr[title] {
 .builds-buttons {
 	display: flex;
 	justify-content: space-between;
+	align-items: flex-start;
 }
 
 .builds-buttons__link {
