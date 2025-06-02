@@ -52,11 +52,11 @@ export type findByCustomUrl = NonNullable<
 	Awaited<ReturnType<typeof findByCustomUrl>>
 >;
 
-export function findByCustomUrl(
+export async function findByCustomUrl(
 	customUrl: string,
 	{ includeInviteCode = false } = {},
 ) {
-	return db
+	const team = await db
 		.selectFrom("Team")
 		.leftJoin(
 			"UserSubmittedImage as AvatarImage",
@@ -101,21 +101,19 @@ export function findByCustomUrl(
 		])
 		.$if(includeInviteCode, (qb) => qb.select("Team.inviteCode"))
 		.where("Team.customUrl", "=", customUrl.toLowerCase())
-		.executeTakeFirst()
-		.then((t) => {
-			if (t) {
-				t.members.sort((a, b) => {
-					const aIndex = TEAM_MEMBER_ROLES.indexOf(
-						a.role as (typeof TEAM_MEMBER_ROLES)[number],
-					);
-					const bIndex = TEAM_MEMBER_ROLES.indexOf(
-						b.role as (typeof TEAM_MEMBER_ROLES)[number],
-					);
-					return aIndex - bIndex;
-				});
-			}
-			return t;
-		});
+		.executeTakeFirst();
+
+	team?.members.sort((a, b) => {
+		const aIndex = TEAM_MEMBER_ROLES.indexOf(
+			a.role as (typeof TEAM_MEMBER_ROLES)[number],
+		);
+		const bIndex = TEAM_MEMBER_ROLES.indexOf(
+			b.role as (typeof TEAM_MEMBER_ROLES)[number],
+		);
+		return aIndex - bIndex;
+	});
+
+	return team;
 }
 
 export async function teamsByMemberUserId(
