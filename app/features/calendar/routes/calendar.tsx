@@ -4,6 +4,7 @@ import clsx from "clsx";
 import type * as React from "react";
 import type { DateValue } from "react-aria-components";
 import { useTranslation } from "react-i18next";
+import { AddNewButton } from "~/components/AddNewButton";
 import { CopyToClipboardPopover } from "~/components/CopyToClipboardPopover";
 import { Main } from "~/components/Main";
 import {
@@ -60,6 +61,7 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
+// xxx: both calendar and tournaments somehow
 export default function CalendarPage() {
 	const { t } = useTranslation(["calendar", "common"]);
 	const data = useLoaderData<typeof loader>();
@@ -103,6 +105,7 @@ export default function CalendarPage() {
 						key={CalendarEvent.filtersToString(data.filters)}
 						filters={data.filters}
 					/>
+					<AddNewButton to="/" navIcon="calendar" />
 				</div>
 			</div>
 			<div

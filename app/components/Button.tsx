@@ -66,7 +66,7 @@ export function Button(props: ButtonProps) {
 	);
 }
 
-type LinkButtonProps = Pick<
+export type LinkButtonProps = Pick<
 	ButtonProps,
 	"variant" | "children" | "className" | "size" | "testId" | "icon"
 > &

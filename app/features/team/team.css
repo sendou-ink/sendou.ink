@@ -1,7 +1,7 @@
 .team-search__input {
 	height: 40px !important;
-	margin: 0 auto;
 	font-size: var(--fonts-lg);
+	max-width: 240px;
 }
 
 .team-search__icon {

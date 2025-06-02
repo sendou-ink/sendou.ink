@@ -5,6 +5,7 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
 import type { z } from "zod";
+import { AddNewButton } from "~/components/AddNewButton";
 import { Avatar } from "~/components/Avatar";
 import { Button, LinkButton } from "~/components/Button";
 import { Divider } from "~/components/Divider";
@@ -26,6 +27,7 @@ import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	associationsPage,
+	newScrimPostPage,
 	scrimPage,
 	userPage,
 	userSubmittedImage,
@@ -87,16 +89,17 @@ export default function ScrimsPage() {
 
 	return (
 		<Main className="stack lg">
-			{user ? (
+			<div className="stack horizontal justify-between items-center">
 				<LinkButton
 					size="tiny"
 					to={associationsPage()}
-					className="mr-auto"
+					className={clsx("mr-auto", { invisible: !user })}
 					variant="outlined"
 				>
 					{t("scrims:associations.title")}
 				</LinkButton>
-			) : null}
+				<AddNewButton to={newScrimPostPage()} navIcon="scrims" />
+			</div>
 			{typeof scrimToRequestId === "number" ? (
 				<RequestScrimModal
 					postId={scrimToRequestId}

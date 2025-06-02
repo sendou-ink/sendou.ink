@@ -2,6 +2,7 @@ import type { MetaFunction } from "@remix-run/node";
 import { Form, Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { AddNewButton } from "~/components/AddNewButton";
 import { Alert } from "~/components/Alert";
 import { FormErrors } from "~/components/FormErrors";
 import { Input } from "~/components/Input";
@@ -17,6 +18,7 @@ import { joinListToNaturalString } from "~/utils/arrays";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
+	NEW_TEAM_PAGE,
 	TEAM_SEARCH_PAGE,
 	navIconUrl,
 	teamPage,
@@ -87,14 +89,17 @@ export default function TeamSearchPage() {
 	return (
 		<Main className="stack lg">
 			<NewTeamDialog />
-			<Input
-				className="team-search__input"
-				icon={<SearchIcon className="team-search__icon" />}
-				value={inputValue}
-				onChange={(e) => setInputValue(e.target.value)}
-				placeholder={t("team:teamSearch.placeholder")}
-				testId="team-search-input"
-			/>
+			<div className="stack sm horizontal justify-between">
+				<Input
+					className="team-search__input"
+					icon={<SearchIcon className="team-search__icon" />}
+					value={inputValue}
+					onChange={(e) => setInputValue(e.target.value)}
+					placeholder={t("team:teamSearch.placeholder")}
+					testId="team-search-input"
+				/>
+				<AddNewButton navIcon="t" to={NEW_TEAM_PAGE} />
+			</div>
 			<div className="mt-6 stack lg">
 				{itemsToDisplay.map((team, i) => (
 					<Link
