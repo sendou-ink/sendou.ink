@@ -35,7 +35,7 @@
 	"forms.notFoundVisibility.explanation": "Leer lassen, wenn sich die Sichtbarkeit deines Posts nicht mit der Zeit ändern soll.",
 	"forms.divs.minDiv.title": "Min div",
 	"forms.divs.maxDiv.title": "Max div",
-	"page.scheduledScrim": "Geplanter scrim",
+	"page.scheduledScrim": "Geplanter Scrim",
 	"associations.title": "Assoziationen",
 	"associations.explanation": "Erstelle eine Assoziation, um in einer kleineren Gruppe zu suchen (zum Beispiel mit regelmäßgien Übungsgegnern deines Teams oder deiner LUTI-Division).",
 	"associations.join.title": "Assoziation {{name}} beitreten?",
