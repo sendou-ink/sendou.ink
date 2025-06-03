@@ -26,7 +26,7 @@
 	"forms.with.user": "Nutzer {{nth}}",
 	"forms.with.pick-up": "Pick-up",
 	"forms.when.title": "Wann",
-	"forms.when.explanation": "Leer lassen, wenn du jetzt nach einem Scrim suchen willst.",
+	"forms.when.explanation": "",
 	"forms.text.title": "Text",
 	"forms.visibility.title": "Sichtbarkeit",
 	"forms.visibility.public": "Öffentlich",

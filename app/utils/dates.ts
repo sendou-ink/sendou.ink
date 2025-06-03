@@ -1,4 +1,4 @@
-import { parseDate } from "@internationalized/date";
+import { CalendarDateTime, parseDate } from "@internationalized/date";
 import { getWeek } from "date-fns";
 import type { MonthYear } from "~/features/plus-voting/core";
 import type { DayMonthYear } from "./zod";
@@ -24,6 +24,20 @@ export function databaseTimestampNow() {
  */
 export function dayMonthYearToDate({ day, month, year }: DayMonthYear) {
 	return new Date(Date.UTC(year, month, day, 12));
+}
+
+/**
+ * Converts a JavaScript Date object into a CalendarDateTime object (used by react-aria-components).
+ */
+export function dateToDateValue(date: Date) {
+	return new CalendarDateTime(
+		date.getFullYear(),
+		date.getMonth() + 1,
+		date.getDate(),
+		date.getHours(),
+		date.getMinutes(),
+		date.getSeconds(),
+	);
 }
 
 /**

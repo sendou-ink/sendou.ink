@@ -26,7 +26,7 @@
 	"forms.with.user": "Utilisateur {{nth}}",
 	"forms.with.pick-up": "Pick-up",
 	"forms.when.title": "Quand",
-	"forms.when.explanation": "Laissez vide si vous voulez chercher un scrim dès maintenant",
+	"forms.when.explanation": "",
 	"forms.text.title": "Texte",
 	"forms.visibility.title": "Visibilité",
 	"forms.visibility.public": "Public",
