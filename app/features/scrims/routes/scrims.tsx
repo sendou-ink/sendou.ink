@@ -48,6 +48,7 @@ import { action } from "../actions/scrims.server";
 import { loader } from "../loaders/scrims.server";
 export { loader, action };
 
+import TimePopover from "~/components/TimePopover";
 import styles from "./scrims.module.css";
 
 export type NewRequestFormFields = z.infer<typeof newRequestSchema>;
@@ -286,7 +287,6 @@ function ScrimsTable({
 }) {
 	const { t } = useTranslation(["common", "scrims"]);
 	const user = useUser();
-	const { i18n } = useTranslation();
 
 	invariant(
 		!(requestScrim && showDeletePost),
@@ -353,15 +353,18 @@ function ScrimsTable({
 								<td>
 									<div className="stack horizontal sm">
 										<div className={styles.postTime}>
-											{inThePast
-												? t("scrims:now")
-												: databaseTimestampToDate(post.at).toLocaleTimeString(
-														i18n.language,
-														{
-															hour: "numeric",
-															minute: "numeric",
-														},
-													)}
+											{inThePast ? (
+												t("scrims:now")
+											) : (
+												<TimePopover
+													time={databaseTimestampToDate(post.at)}
+													options={{
+														hour: "numeric",
+														minute: "numeric",
+													}}
+													underline={false}
+												/>
+											)}
 										</div>
 										{post.isPrivate ? (
 											<SendouPopover
