@@ -8,6 +8,7 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import {
 	actionError,
+	errorToast,
 	errorToastIfFalsy,
 	parseRequestPayload,
 } from "~/utils/remix.server";
@@ -15,6 +16,7 @@ import { scrimsPage } from "~/utils/urls";
 import * as QRepository from "../../sendouq/QRepository.server";
 import * as TeamRepository from "../../team/TeamRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
+import { SCRIM } from "../scrims-constants";
 import {
 	type fromSchema,
 	type newRequestSchema,
@@ -106,8 +108,14 @@ export const usersListForPost = async ({
 
 	// handle case when all users are from excluded roles
 	const result = (
-		filteredMembers.length > 0 ? filteredMembers : team.members
+		filteredMembers.length >= SCRIM.MIN_MEMBERS_PER_TEAM
+			? filteredMembers
+			: team.members
 	).map((member) => member.id);
+
+	if (result.length < SCRIM.MIN_MEMBERS_PER_TEAM) {
+		errorToast("Your team does not have enough members (4) to scrim");
+	}
 
 	// ensure author is included in the list even if they match the ignore condition
 	return result.includes(authorId) ? result : [authorId, ...result];
