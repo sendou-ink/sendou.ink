@@ -103,6 +103,18 @@
 		"displayName": "A Splatoon Brazil Tournament",
 		"authorDiscordId": "701870845550657677"
 	},
+	"bss1": {
+		"displayName": "Biggest School in the Sea (1st)",
+		"authorDiscordId": "629773997822967819"
+	},
+	"bss2": {
+		"displayName": "Biggest School in the Sea (2nd)",
+		"authorDiscordId": "629773997822967819"
+	},
+	"bss3": {
+		"displayName": "Biggest School in the Sea (3rd)",
+		"authorDiscordId": "629773997822967819"
+	},
 	"bucketmeow12": {
 		"displayName": "Token Of Appreciation",
 		"authorDiscordId": "1170249805373657093"
