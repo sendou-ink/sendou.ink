@@ -110,7 +110,10 @@ export async function findByCustomUrl(
 		const bIndex = TEAM_MEMBER_ROLES.indexOf(
 			b.role as (typeof TEAM_MEMBER_ROLES)[number],
 		);
-		return aIndex - bIndex;
+		return (
+			(aIndex === -1 ? Number.POSITIVE_INFINITY : aIndex) -
+			(bIndex === -1 ? Number.POSITIVE_INFINITY : bIndex)
+		);
 	});
 
 	return team;
