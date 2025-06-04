@@ -95,9 +95,17 @@
 		"displayName": "Breeze LAN (3rd)",
 		"authorDiscordId": "342369454719631361"
 	},
-	"breezesr": {
-		"displayName": "Breeze LAN (Salmon Run)",
-		"authorDiscordId": "342369454719631361"
+	"bssBRONZE": {
+		"displayName": "Biggest School in the Sea (3rd)",
+		"authorDiscordId": "629773997822967819"
+	},
+	"bssGOLD": {
+		"displayName": "Biggest School in the Sea (1st)",
+		"authorDiscordId": "629773997822967819"
+	},
+	"bssSILVER": {
+		"displayName": "Biggest School in the Sea (2nd)",
+		"authorDiscordId": "629773997822967819"
 	},
 	"brflgx": {
 		"displayName": "A Splatoon Brazil Tournament",
