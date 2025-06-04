@@ -2367,6 +2367,7 @@ async function scrimPosts() {
 					: null,
 			visibility: null,
 			users: users(),
+			managedByAnyone: true,
 		});
 	}
 
@@ -2380,6 +2381,7 @@ async function scrimPosts() {
 		users: users()
 			.map((u) => ({ ...u, isOwner: 0 }))
 			.concat({ userId: ADMIN_ID, isOwner: 1 }),
+		managedByAnyone: true,
 	});
 	await ScrimPostRepository.insertRequest({
 		scrimPostId: adminPostId,

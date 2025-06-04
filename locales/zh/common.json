@@ -99,6 +99,7 @@
 	"actions.showMore": "显示更多",
 	"actions.showLess": "显示更少",
 	"actions.copyToClipboard": "复制到剪贴板",
+	"actions.copyTimestampForDiscord": "",
 	"actions.create": "创建",
 	"actions.close": "关闭",
 	"actions.cancel": "取消",

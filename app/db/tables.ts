@@ -944,6 +944,14 @@ export interface ScrimPost {
 	chatCode: string;
 	/** Refers to the team looking for the team (can also be a pick-up) */
 	teamId: number | null;
+	/** Indicates if anyone in the post can manage it */
+	managedByAnyone: DBBoolean;
+	/** When the scrim was canceled */
+	canceledAt: number | null;
+	/** User id who canceled the scrim */
+	canceledByUserId: number | null;
+	/** Reason for canceling the scrim */
+	cancelReason: string | null;
 	createdAt: GeneratedAlways<number>;
 	updatedAt: Generated<number>;
 }

@@ -99,6 +99,7 @@
 	"actions.showMore": "もっと見せる",
 	"actions.showLess": "表示を減らす",
 	"actions.copyToClipboard": "クリップボードにコピーする",
+	"actions.copyTimestampForDiscord": "",
 	"actions.create": "作成",
 	"actions.close": "閉じる",
 	"actions.cancel": "キャンセル",

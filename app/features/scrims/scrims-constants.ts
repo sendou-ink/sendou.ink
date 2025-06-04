@@ -16,6 +16,7 @@ export const LUTI_DIVS = [
 export const SCRIM = {
 	MAX_PICKUP_SIZE_EXCLUDING_OWNER: 5,
 	MIN_MEMBERS_PER_TEAM: 4,
+	CANCEL_REASON_MAX_LENGTH: 500,
 };
 
 export const FF_SCRIMS_ENABLED = true;

@@ -17,6 +17,9 @@
 	"deleteModal.title": "",
 	"deleteModal.prevented": "",
 	"cancelModal.title": "",
+	"cancelModal.scrim.title": "",
+	"cancelModal.scrim.reasonLabel": "",
+	"cancelModal.scrim.reasonExplanation": "",
 	"actions.contact": "",
 	"acceptModal.title": "",
 	"acceptModal.prevented": "",
@@ -47,5 +50,8 @@
 	"associations.shareLink.reset": "",
 	"associations.removeMember.title": "",
 	"associations.forms.title": "",
-	"associations.forms.name.title": ""
+	"associations.forms.name.title": "",
+	"forms.managedByAnyone.title": "",
+	"forms.managedByAnyone.explanation": "",
+	"alert.canceled": ""
 }

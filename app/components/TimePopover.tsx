@@ -18,10 +18,12 @@ export default function TimePopover({
 		month: "long",
 	},
 	underline = true,
+	className,
 }: {
 	time: Date;
 	options?: Intl.DateTimeFormatOptions;
 	underline?: boolean;
+	className?: string;
 }) {
 	const { i18n } = useTranslation();
 
@@ -49,6 +51,7 @@ export default function TimePopover({
 				type="button"
 				ref={triggerRef}
 				className={clsx(
+					className,
 					"clickable text-only-button",
 					underline ? "dotted" : "",
 				)}
@@ -66,7 +69,7 @@ export default function TimePopover({
 			>
 				<Dialog>
 					<div className="stack sm">
-						<div className="text-center">
+						<div className="text-center" suppressHydrationWarning>
 							{time.toLocaleTimeString(i18n.language, {
 								timeZoneName: "long",
 								hour: "numeric",

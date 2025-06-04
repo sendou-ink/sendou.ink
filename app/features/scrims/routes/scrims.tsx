@@ -57,6 +57,9 @@ export const handle: SendouRouteHandle = {
 	i18n: ["calendar", "scrims"],
 };
 
+// xxx: cancel status for "we requested"
+// xxx: cancel status for "they requested"
+
 export const meta: MetaFunction<typeof loader> = (args) => {
 	return metaTags({
 		title: "Scrims",
@@ -294,6 +297,7 @@ function ScrimsTable({
 	);
 
 	const getStatus = (post: ScrimPost) => {
+		if (post.canceled) return "CANCELED";
 		if (post.requests.at(0)?.isAccepted) return "CONFIRMED";
 		if (
 			post.requests.some((r) => r.users.some((rUser) => user?.id === rUser.id))
@@ -454,6 +458,7 @@ function ScrimsTable({
 											className={clsx(styles.postStatus, {
 												[styles.postStatusConfirmed]: status === "CONFIRMED",
 												[styles.postStatusPending]: status === "PENDING",
+												[styles.postStatusCanceled]: status === "CANCELED",
 											})}
 										>
 											{status === "CONFIRMED" ? (
@@ -464,6 +469,11 @@ function ScrimsTable({
 											{status === "PENDING" ? (
 												<>
 													<ClockIcon /> {t("scrims:status.pending")}
+												</>
+											) : null}
+											{status === "CANCELED" ? (
+												<>
+													<CrossIcon /> {t("scrims:status.canceled")}
 												</>
 											) : null}
 										</div>
@@ -512,7 +522,9 @@ function ScrimsTable({
 													</SendouButton>
 												}
 											>
-												{t("scrims:deleteModal.prevented")}
+												{t("scrims:deleteModal.prevented", {
+													username: owner.username,
+												})}
 											</SendouPopover>
 										)}
 									</td>
