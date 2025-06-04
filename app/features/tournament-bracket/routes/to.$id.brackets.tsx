@@ -172,9 +172,12 @@ export default function TournamentBracketsPage() {
 						submitButtonText={t("tournament:actions.finalize.action")}
 						submitButtonVariant="outlined"
 					>
-						<Button variant="minimal" testId="finalize-tournament-button">
+						<SendouButton
+							variant="minimal"
+							data-testid="finalize-tournament-button"
+						>
 							{t("tournament:actions.finalize.question")}
-						</Button>
+						</SendouButton>
 					</FormWithConfirm>
 				</div>
 			) : null}
@@ -325,14 +328,14 @@ function BracketStarter({
 					key={bracketIdx}
 				/>
 			) : null}
-			<Button
+			<SendouButton
 				variant="outlined"
-				size="tiny"
-				testId="finalize-bracket-button"
-				onClick={() => setDialogOpen(true)}
+				size="small"
+				data-testid="finalize-bracket-button"
+				onPress={() => setDialogOpen(true)}
 			>
 				Start the bracket
-			</Button>
+			</SendouButton>
 		</>
 	);
 }
@@ -380,15 +383,15 @@ function MapPreparer({
 						testId="prepared-maps-check-icon"
 					/>
 				) : null}
-				<Button
-					size="tiny"
+				<SendouButton
+					size="small"
 					variant="outlined"
 					icon={<MapIcon />}
-					onClick={() => setDialogOpen(true)}
-					testId="prepare-maps-button"
+					onPress={() => setDialogOpen(true)}
+					data-testid="prepare-maps-button"
 				>
 					Prepare maps
-				</Button>
+				</SendouButton>
 			</div>
 		</>
 	);
@@ -522,16 +525,16 @@ function BracketNav({
 			<div className="tournament-bracket__bracket-nav tournament-bracket__button-row">
 				{visibleBrackets.map((bracket, i) => {
 					return (
-						<Button
+						<SendouButton
 							key={bracket.name}
-							onClick={() => setBracketIdx(i)}
+							onPress={() => setBracketIdx(i)}
 							className={clsx("tournament-bracket__bracket-nav__link", {
 								"tournament-bracket__bracket-nav__link__selected":
 									bracketIdx === i,
 							})}
 						>
 							{bracketNameForButton(bracket.name)}
-						</Button>
+						</SendouButton>
 					);
 				})}
 			</div>
@@ -543,14 +546,14 @@ function CompactifyButton() {
 	const { bracketExpanded, setBracketExpanded } = useBracketExpanded();
 
 	return (
-		<Button
-			onClick={() => {
+		<SendouButton
+			onPress={() => {
 				setBracketExpanded(!bracketExpanded);
 			}}
 			className="tournament-bracket__compactify-button"
 			icon={bracketExpanded ? <EyeSlashIcon /> : <EyeIcon />}
 		>
 			{bracketExpanded ? "Compactify" : "Show all"}
-		</Button>
+		</SendouButton>
 	);
 }

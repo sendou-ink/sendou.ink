@@ -1,8 +1,8 @@
 import { Form, useFetcher, useLoaderData } from "@remix-run/react";
 import * as React from "react";
-import { Button } from "~/components/Button";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
 import { EditIcon } from "~/components/icons/Edit";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
@@ -338,7 +338,7 @@ function ReportScoreButtons({
 			<SubmitButton
 				size="tiny"
 				_action="REPORT_SCORE"
-				testId="report-score-button"
+				data-testid="report-score-button"
 				disabled={submitButtonDisabled()}
 			>
 				{wouldEndSet ? "Report & end set" : "Report"}
@@ -384,33 +384,32 @@ function EditScoreForm({
 					state={fetcher.state}
 					_action="UPDATE_REPORTED_SCORE"
 					disabled={submitDisabled}
-					testId="save-revise-button"
+					data-testid="save-revise-button"
 				>
 					Save
 				</SubmitButton>
-				<Button
+				<SendouButton
 					variant="destructive"
-					size="tiny"
+					size="small"
 					onClick={() => setEditing(false)}
 				>
 					Cancel
-				</Button>
+				</SendouButton>
 			</fetcher.Form>
 		);
 	}
 
 	return (
 		<div className="mt-6">
-			<Button
+			<SendouButton
 				icon={<EditIcon />}
 				variant="outlined"
-				size="tiny"
+				size="small"
 				className="mx-auto"
 				onClick={() => setEditing(true)}
-				testId="revise-button"
 			>
 				Edit
-			</Button>
+			</SendouButton>
 		</div>
 	);
 }

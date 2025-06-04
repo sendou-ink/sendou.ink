@@ -2,9 +2,9 @@ import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { Avatar } from "~/components/Avatar";
-import { Button } from "~/components/Button";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import { tournamentTeamPage, userPage } from "~/utils/urls";
@@ -491,15 +491,15 @@ function RosterFormWithButtons({
 	if (!editingRoster) {
 		return (
 			<div className="tournament-bracket__roster-buttons__container">
-				<Button
-					size="tiny"
+				<SendouButton
+					size="small"
 					onClick={() => setEditingRoster(true)}
 					className="tournament-bracket__edit-roster-button"
 					variant="minimal"
-					testId="edit-active-roster-button"
+					data-testid="edit-active-roster-button"
 				>
 					Edit active roster
-				</Button>
+				</SendouButton>
 			</div>
 		);
 	}
@@ -525,15 +525,15 @@ function RosterFormWithButtons({
 				Save
 			</SubmitButton>
 			{showCancelButton ? (
-				<Button
-					size="tiny"
+				<SendouButton
+					size="small"
 					variant="destructive"
 					onClick={() => {
 						setEditingRoster(false);
 					}}
 				>
 					Cancel
-				</Button>
+				</SendouButton>
 			) : null}
 		</fetcher.Form>
 	);

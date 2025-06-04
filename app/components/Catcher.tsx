@@ -5,7 +5,6 @@ import {
 } from "@remix-run/react";
 import * as React from "react";
 import { useCopyToClipboard, useLocation } from "react-use";
-import { Button } from "~/components/Button";
 import { useUser } from "~/features/auth/core/user";
 import {
 	ERROR_GIRL_IMAGE_PATH,
@@ -14,6 +13,7 @@ import {
 } from "~/utils/urls";
 import { Image } from "./Image";
 import { Main } from "./Main";
+import { SendouButton } from "./elements/Button";
 
 export function Catcher() {
 	const error = useRouteError();
@@ -56,9 +56,9 @@ export function Catcher() {
 					<>
 						<div className="mt-4 stack sm items-center">
 							<textarea readOnly defaultValue={errorText} />
-							<Button onClick={() => copyToClipboard(errorText)}>
+							<SendouButton onPress={() => copyToClipboard(errorText)}>
 								Copy to clipboard
-							</Button>
+							</SendouButton>
 						</div>
 					</>
 				) : null}
@@ -77,9 +77,9 @@ export function Catcher() {
 						<form action={LOG_IN_URL} method="post">
 							<p className="button-text-paragraph">
 								You should try{" "}
-								<Button type="submit" variant="minimal">
+								<SendouButton type="submit" variant="minimal">
 									logging in
-								</Button>
+								</SendouButton>
 							</p>
 						</form>
 					)}
