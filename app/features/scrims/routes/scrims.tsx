@@ -57,7 +57,6 @@ export const handle: SendouRouteHandle = {
 	i18n: ["calendar", "scrims"],
 };
 
-// xxx: cancel status for "we requested"
 // xxx: cancel status for "they requested"
 
 export const meta: MetaFunction<typeof loader> = (args) => {
