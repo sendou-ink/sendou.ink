@@ -17,11 +17,11 @@ import { Link, useFetcher, useNavigation } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { Alert } from "~/components/Alert";
-import { Button } from "~/components/Button";
 import { Catcher } from "~/components/Catcher";
 import { Draggable } from "~/components/Draggable";
 import { SubmitButton } from "~/components/SubmitButton";
 import { Table } from "~/components/Table";
+import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import { useTimeoutState } from "~/hooks/useTimeoutState";
@@ -91,12 +91,12 @@ export default function TournamentSeedsPage() {
 						players change
 					</div>
 				) : (
-					<Button
+					<SendouButton
 						className="tournament__seeds__order-button"
 						variant="minimal"
-						size="tiny"
+						size="small"
 						type="button"
-						onClick={() => {
+						onPress={() => {
 							setTeamOrder(
 								structuredClone(tournament.ctx.teams)
 									.sort(
@@ -109,7 +109,7 @@ export default function TournamentSeedsPage() {
 						}}
 					>
 						Sort automatically
-					</Button>
+					</SendouButton>
 				)}
 			</div>
 			{tournament.isMultiStartingBracket ? (
@@ -234,13 +234,13 @@ function StartingBracketDialog() {
 
 	return (
 		<div>
-			<Button
-				size="tiny"
-				onClick={() => setIsOpen(true)}
-				testId="set-starting-brackets"
+			<SendouButton
+				size="small"
+				onPress={() => setIsOpen(true)}
+				data-testid="set-starting-brackets"
 			>
 				Set starting brackets
-			</Button>
+			</SendouButton>
 			<SendouDialog
 				heading="Setting starting brackets"
 				isOpen={isOpen}
@@ -372,8 +372,8 @@ function SeedAlert({ teamOrder }: { teamOrder: number[] }) {
 				{(!showSuccess || teamOrderChanged) && (
 					<SubmitButton
 						state={fetcher.state}
-						disabled={!teamOrderChanged}
-						size="tiny"
+						isDisabled={!teamOrderChanged}
+						size="small"
 					>
 						Save seeds
 					</SubmitButton>

@@ -105,7 +105,7 @@ function InfoText() {
 			>
 				{t("q:looking.inactiveGroup")}{" "}
 				<SubmitButton
-					size="tiny"
+					size="small"
 					variant="minimal"
 					_action="REFRESH_GROUP"
 					state={fetcher.state}
@@ -124,7 +124,7 @@ function InfoText() {
 			>
 				{t("q:looking.inactiveGroup.soon")}{" "}
 				<SubmitButton
-					size="tiny"
+					size="small"
 					variant="minimal"
 					_action="REFRESH_GROUP"
 					state={fetcher.state}

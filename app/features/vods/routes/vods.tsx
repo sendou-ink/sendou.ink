@@ -2,10 +2,10 @@ import type { MetaFunction } from "@remix-run/node";
 import { useLoaderData, useSearchParams } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { AddNewButton } from "~/components/AddNewButton";
-import { Button } from "~/components/Button";
 import { WeaponCombobox } from "~/components/Combobox";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
+import { SendouButton } from "~/components/elements/Button";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
@@ -65,15 +65,15 @@ export default function VodsSearchPage() {
 						))}
 					</div>
 					{data.hasMoreVods && (
-						<Button
+						<SendouButton
 							className="m-0-auto"
-							size="tiny"
-							onClick={() =>
+							size="small"
+							onPress={() =>
 								addToSearchParams("limit", data.limit + VODS_PAGE_BATCH_SIZE)
 							}
 						>
 							{t("common:actions.loadMore")}
-						</Button>
+						</SendouButton>
 					)}
 				</>
 			) : (

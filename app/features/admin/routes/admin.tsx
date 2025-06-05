@@ -9,12 +9,12 @@ import {
 } from "@remix-run/react";
 import * as React from "react";
 import { Avatar } from "~/components/Avatar";
-import { Button } from "~/components/Button";
 import { Catcher } from "~/components/Catcher";
 import { Input } from "~/components/Input";
 import { Main } from "~/components/Main";
 import { NewTabs } from "~/components/NewTabs";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
 import { UserSearch } from "~/components/elements/UserSearch";
 import { SearchIcon } from "~/components/icons/Search";
 import { FRIEND_CODE_REGEXP_PATTERN } from "~/features/sendouq/q-constants";
@@ -149,13 +149,13 @@ function Impersonate() {
 				onChange={(newUser) => setUserId(newUser.id)}
 			/>
 			<div className="stack horizontal md">
-				<Button type="submit" disabled={!userId}>
+				<SendouButton type="submit" isDisabled={!userId}>
 					Go
-				</Button>
+				</SendouButton>
 				{isImpersonating ? (
-					<Button type="submit" formAction={STOP_IMPERSONATING_URL}>
+					<SendouButton type="submit" formAction={STOP_IMPERSONATING_URL}>
 						Stop impersonating
-					</Button>
+					</SendouButton>
 				) : null}
 			</div>
 		</Form>
@@ -193,7 +193,7 @@ function MigrateUser() {
 			<div className="stack horizontal md">
 				<SubmitButton
 					type="submit"
-					disabled={!oldUserId || !newUserId || navigation.state !== "idle"}
+					isDisabled={!oldUserId || !newUserId || navigation.state !== "idle"}
 					_action="MIGRATE"
 					state={fetcher.state}
 				>

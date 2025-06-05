@@ -3,10 +3,10 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { AddNewButton } from "~/components/AddNewButton";
 import { BuildCard } from "~/components/BuildCard";
-import { Button } from "~/components/Button";
 import { FormMessage } from "~/components/FormMessage";
 import { Image, WeaponImage } from "~/components/Image";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { LockIcon } from "~/components/icons/Lock";
@@ -21,7 +21,6 @@ import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { atOrError } from "~/utils/arrays";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { userNewBuildPage, weaponCategoryUrl } from "~/utils/urls";
-import { SendouButton } from "../../../components/elements/Button";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import { DEFAULT_BUILD_SORT } from "../user-page-constants";
 
@@ -156,24 +155,24 @@ function BuildsFilters({
 			</SendouButton>
 			{showPublicPrivateFilters ? (
 				<>
-					<Button
-						onClick={() => setWeaponFilter("PUBLIC")}
+					<SendouButton
+						onPress={() => setWeaponFilter("PUBLIC")}
 						variant={weaponFilter === "PUBLIC" ? undefined : "outlined"}
-						size="tiny"
+						size="small"
 						className="u__build-filter-button"
 						icon={<UnlockIcon />}
 					>
 						{t("builds:stats.public")} ({publicBuildsCount})
-					</Button>
-					<Button
-						onClick={() => setWeaponFilter("PRIVATE")}
+					</SendouButton>
+					<SendouButton
+						onPress={() => setWeaponFilter("PRIVATE")}
 						variant={weaponFilter === "PRIVATE" ? undefined : "outlined"}
-						size="tiny"
+						size="small"
 						className="u__build-filter-button"
 						icon={<LockIcon />}
 					>
 						{t("builds:stats.private")} ({privateBuildsCount})
-					</Button>
+					</SendouButton>
 				</>
 			) : null}
 
@@ -239,14 +238,14 @@ function ChangeSortingDialog({ close }: { close: () => void }) {
 						<FormMessage type="info">
 							{t("user:builds.sorting.info")}
 						</FormMessage>
-						<Button
+						<SendouButton
 							className="ml-auto"
 							variant="minimal"
-							size="tiny"
-							onClick={() => setBuildSorting([...DEFAULT_BUILD_SORT, null])}
+							size="small"
+							onPress={() => setBuildSorting([...DEFAULT_BUILD_SORT, null])}
 						>
 							{t("user:builds.sorting.backToDefaults")}
-						</Button>
+						</SendouButton>
 						{buildSorting.map((sort, i) => {
 							const isLast = i === buildSorting.length - 1;
 							const isSecondToLast = i === buildSorting.length - 2;
@@ -272,10 +271,10 @@ function ChangeSortingDialog({ close }: { close: () => void }) {
 									</div>
 									{(isLast && !canAddMoreSorting) ||
 									(canAddMoreSorting && isSecondToLast) ? (
-										<Button
+										<SendouButton
 											icon={<TrashIcon />}
 											variant="minimal-destructive"
-											onClick={deleteLastSorting}
+											onPress={deleteLastSorting}
 										/>
 									) : null}
 								</div>

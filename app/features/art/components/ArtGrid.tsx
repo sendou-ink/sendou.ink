@@ -3,7 +3,7 @@ import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import { Button, LinkButton } from "~/components/Button";
+import { LinkButton } from "~/components/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Pagination } from "~/components/Pagination";
 import { SendouButton } from "~/components/elements/Button";
@@ -204,7 +204,11 @@ function ImagePreview({
 							["_action", "DELETE_ART"],
 						]}
 					>
-						<Button icon={<TrashIcon />} variant="destructive" size="tiny" />
+						<SendouButton
+							icon={<TrashIcon />}
+							variant="destructive"
+							size="small"
+						/>
 					</FormWithConfirm>
 				</div>
 			</div>
@@ -242,7 +246,11 @@ function ImagePreview({
 							]}
 							submitButtonText={t("common:actions.remove")}
 						>
-							<Button icon={<UnlinkIcon />} variant="destructive" size="tiny" />
+							<SendouButton
+								icon={<UnlinkIcon />}
+								variant="destructive"
+								size="small"
+							/>
 						</FormWithConfirm>
 					) : null}
 				</div>

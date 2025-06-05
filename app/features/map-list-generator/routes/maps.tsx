@@ -4,10 +4,10 @@ import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
-import { Button } from "~/components/Button";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { MapPoolSelector, MapPoolStages } from "~/components/MapPoolSelector";
+import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { EditIcon } from "~/components/icons/Edit";
 import type { Tables } from "~/db/tables";
@@ -77,14 +77,14 @@ export default function MapListPage() {
 							{data.calendarEvent.name}
 						</Link>
 					</div>
-					<Button
+					<SendouButton
 						variant="outlined"
-						onClick={switchToEditMode}
-						size="tiny"
+						onPress={switchToEditMode}
+						size="small"
 						icon={<EditIcon />}
 					>
 						{t("common:actions.edit")}
-					</Button>
+					</SendouButton>
 				</div>
 			)}
 			{readonly ? (
@@ -194,9 +194,9 @@ function MapListCreator({ mapPool }: { mapPool: MapPool }) {
 					size="small"
 				/>
 			</div>
-			<Button onClick={handleCreateMaplist} disabled={disabled}>
+			<SendouButton onPress={handleCreateMaplist} isDisabled={disabled}>
 				{t("common:maps.createMapList")}
-			</Button>
+			</SendouButton>
 			{mapList && (
 				<>
 					<ol className={styles.mapList}>
@@ -212,10 +212,10 @@ function MapListCreator({ mapPool }: { mapPool: MapPool }) {
 							</li>
 						))}
 					</ol>
-					<Button
-						size="tiny"
+					<SendouButton
+						size="small"
 						variant="outlined"
-						onClick={() =>
+						onPress={() =>
 							copyToClipboard(
 								mapList
 									.map(
@@ -229,7 +229,7 @@ function MapListCreator({ mapPool }: { mapPool: MapPool }) {
 						}
 					>
 						{t("common:actions.copyToClipboard")}
-					</Button>
+					</SendouButton>
 				</>
 			)}
 		</div>

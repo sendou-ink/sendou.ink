@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { useRef, useState } from "react";
 import * as React from "react";
 import { Dialog } from "react-aria-components";
@@ -16,9 +17,11 @@ export default function TimePopover({
 		day: "numeric",
 		month: "long",
 	},
+	underline = true,
 }: {
 	time: Date;
 	options?: Intl.DateTimeFormatOptions;
+	underline?: boolean;
 }) {
 	const { i18n } = useTranslation();
 
@@ -45,7 +48,10 @@ export default function TimePopover({
 			<button
 				type="button"
 				ref={triggerRef}
-				className="dotted clickable text-only-button"
+				className={clsx(
+					"clickable text-only-button",
+					underline ? "dotted" : "",
+				)}
 				onClick={() => {
 					setOpen(true);
 				}}

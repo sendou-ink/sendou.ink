@@ -1,7 +1,6 @@
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "~/components/Button";
 import { Image } from "~/components/Image";
 import type { Tables } from "~/db/tables";
 import type { SerializedMapPoolEvent } from "~/features/calendar/routes/map-pool-events";
@@ -14,6 +13,7 @@ import { split, startsWith } from "~/utils/strings";
 import { assertType } from "~/utils/types";
 import { modeImageUrl, stageImageUrl } from "~/utils/urls";
 import { MapPoolEventsCombobox } from "./Combobox";
+import { SendouButton } from "./elements/Button";
 import { ArrowLongLeftIcon } from "./icons/ArrowLongLeft";
 import { CrossIcon } from "./icons/Cross";
 
@@ -120,18 +120,18 @@ export function MapPoolSelector({
 			{Boolean(handleRemoval || allowBulkEdit) && (
 				<div className="stack horizontal sm justify-end">
 					{handleRemoval && (
-						<Button variant="minimal" onClick={handleRemoval}>
+						<SendouButton variant="minimal" onPress={handleRemoval}>
 							{t("actions.remove")}
-						</Button>
+						</SendouButton>
 					)}
 					{allowBulkEdit && (
-						<Button
+						<SendouButton
 							variant="minimal-destructive"
-							disabled={mapPool.isEmpty()}
-							onClick={handleClear}
+							isDisabled={mapPool.isEmpty()}
+							onPress={handleClear}
 						>
 							{t("actions.clear")}
-						</Button>
+						</SendouButton>
 					)}
 				</div>
 			)}
@@ -321,24 +321,26 @@ export function MapPoolStages({
 							{!isPresentational &&
 								allowBulkEdit &&
 								(mapPool.hasStage(stageId) ? (
-									<Button
+									<SendouButton
 										key="clear"
-										onClick={() => handleStageClear(stageId)}
-										icon={<CrossIcon />}
+										onPress={() => handleStageClear(stageId)}
+										icon={<CrossIcon title={t("common:actions.remove")} />}
 										variant="minimal"
 										aria-label={t("common:actions.remove")}
-										title={t("common:actions.remove")}
-										size="tiny"
+										size="small"
 									/>
 								) : (
-									<Button
+									<SendouButton
 										key="select-all"
-										onClick={() => handleStageAdd(stageId)}
-										icon={<ArrowLongLeftIcon />}
+										onPress={() => handleStageAdd(stageId)}
+										icon={
+											<ArrowLongLeftIcon
+												title={t("common:actions.selectAll")}
+											/>
+										}
 										variant="minimal"
 										aria-label={t("common:actions.selectAll")}
-										title={t("common:actions.selectAll")}
-										size="tiny"
+										size="small"
 									/>
 								))}
 						</div>

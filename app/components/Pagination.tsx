@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { Button } from "~/components/Button";
+import { SendouButton } from "~/components/elements/Button";
 import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
 import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import { nullFilledArray } from "~/utils/arrays";
@@ -19,12 +19,12 @@ export function Pagination({
 }) {
 	return (
 		<div className="pagination__container">
-			<Button
+			<SendouButton
 				icon={<ArrowLeftIcon />}
 				variant="outlined"
 				className="fix-rtl"
-				disabled={currentPage === 1}
-				onClick={previousPage}
+				isDisabled={currentPage === 1}
+				onPress={previousPage}
 				aria-label="Previous page"
 			/>
 			<div className="pagination__dots">
@@ -41,12 +41,12 @@ export function Pagination({
 			<div className="pagination__page-count">
 				{currentPage}/{pagesCount}
 			</div>
-			<Button
+			<SendouButton
 				icon={<ArrowRightIcon />}
 				variant="outlined"
 				className="fix-rtl"
-				disabled={currentPage === pagesCount}
-				onClick={nextPage}
+				isDisabled={currentPage === pagesCount}
+				onPress={nextPage}
 				aria-label="Next page"
 			/>
 		</div>

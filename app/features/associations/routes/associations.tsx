@@ -77,7 +77,7 @@ function JoinForm() {
 				})}
 			</Label>
 			<SubmitButton
-				size="tiny"
+				size="small"
 				_action="JOIN_ASSOCIATION"
 				state={fetcher.state}
 			>
@@ -202,7 +202,7 @@ function AssociationInviteCodeActions({
 				<input type="hidden" name="associationId" value={associationId} />
 				<SubmitButton
 					variant="minimal-destructive"
-					size="tiny"
+					size="small"
 					className="mt-4"
 					_action="REFRESH_INVITE_CODE"
 					state={fetcher.state}

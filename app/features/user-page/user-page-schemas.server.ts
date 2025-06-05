@@ -1,5 +1,4 @@
 import { z } from "zod";
-import "~/styles/u-edit.css";
 import { BADGE } from "~/features/badges/badges-constants";
 import { isCustomUrl } from "~/utils/urls";
 import {

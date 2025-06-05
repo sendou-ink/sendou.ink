@@ -2,8 +2,8 @@ import { useFetcher } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
-import { Button } from "~/components/Button";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { ClipboardIcon } from "~/components/icons/Clipboard";
 import { PlusIcon } from "~/components/icons/Plus";
@@ -58,9 +58,9 @@ export function MemberAdder({
 						id="invite"
 						className="q__member-adder__input"
 					/>
-					<Button
+					<SendouButton
 						variant={copySuccess ? "outlined-success" : "outlined"}
-						onClick={() => copyToClipboard(inviteLink)}
+						onPress={() => copyToClipboard(inviteLink)}
 						icon={copySuccess ? <CheckmarkIcon /> : <ClipboardIcon />}
 						aria-label="Copy to clipboard"
 					/>
@@ -75,8 +75,8 @@ export function MemberAdder({
 					/>
 					<SubmitButton
 						variant="outlined"
-						_action="ADD_TRUSTED"
-						disabled={!truster}
+						_action="ADD_MEMBER"
+						isDisabled={!truster}
 						icon={<PlusIcon />}
 					/>
 				</div>

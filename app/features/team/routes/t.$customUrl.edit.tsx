@@ -2,7 +2,6 @@ import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import { Form, Link, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "~/components/Button";
 import { CustomizedColorsInput } from "~/components/CustomizedColorsInput";
 import { FormErrors } from "~/components/FormErrors";
 import { FormMessage } from "~/components/FormMessage";
@@ -11,6 +10,7 @@ import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -69,13 +69,13 @@ export default function EditTeamPage() {
 					dialogHeading={t("team:deleteTeam.header", { teamName: team.name })}
 					fields={[["_action", "DELETE_TEAM"]]}
 				>
-					<Button
+					<SendouButton
 						className="ml-auto"
 						variant="minimal-destructive"
 						data-testid="delete-team-button"
 					>
 						{t("team:actionButtons.deleteTeam")}
-					</Button>
+					</SendouButton>
 				</FormWithConfirm>
 			) : null}
 			<Form method="post" className="stack md items-start">
@@ -150,9 +150,9 @@ function ImageRemoveButtons() {
 							fields={[["_action", "DELETE_AVATAR"]]}
 							submitButtonText={t("common:actions.remove")}
 						>
-							<Button className="ml-auto" variant="minimal-destructive">
+							<SendouButton className="ml-auto" variant="minimal-destructive">
 								{t("team:actionButtons.deleteTeam.profilePicture")}
-							</Button>
+							</SendouButton>
 						</FormWithConfirm>
 					</li>
 				) : null}
@@ -165,9 +165,9 @@ function ImageRemoveButtons() {
 							fields={[["_action", "DELETE_BANNER"]]}
 							submitButtonText={t("common:actions.remove")}
 						>
-							<Button className="ml-auto" variant="minimal-destructive">
+							<SendouButton className="ml-auto" variant="minimal-destructive">
 								{t("team:actionButtons.deleteTeam.banner")}
-							</Button>
+							</SendouButton>
 						</FormWithConfirm>
 					</li>
 				) : null}

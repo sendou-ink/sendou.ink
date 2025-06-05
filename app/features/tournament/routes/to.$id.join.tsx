@@ -84,7 +84,7 @@ export default function JoinTeamPage() {
 			<Form method="post" className="tournament__invite-container">
 				{validationStatus === "VALID" ? (
 					<div className="stack md items-center">
-						<SubmitButton size="big" disabled={!user?.friendCode}>
+						<SubmitButton size="big" isDisabled={!user?.friendCode}>
 							{t("common:actions.join")}
 						</SubmitButton>
 						{!user?.friendCode ? (

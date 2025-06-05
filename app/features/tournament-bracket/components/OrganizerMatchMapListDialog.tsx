@@ -2,7 +2,7 @@ import type { SerializeFrom } from "@remix-run/node";
 import type { TFunction } from "i18next";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "~/components/Button";
+import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { MapIcon } from "~/components/icons/Map";
 import { useTournament } from "~/features/tournament/routes/to.$id";
@@ -102,14 +102,14 @@ export function OrganizerMatchMapListDialog({
 					</div>
 				) : null}
 			</SendouDialog>
-			<Button
+			<SendouButton
 				variant="outlined"
-				size="tiny"
+				size="small"
 				icon={<MapIcon />}
 				onClick={() => setIsOpen(true)}
 			>
 				Show maplist
-			</Button>
+			</SendouButton>
 		</>
 	);
 }

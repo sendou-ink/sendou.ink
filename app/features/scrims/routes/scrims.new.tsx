@@ -4,7 +4,7 @@ import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod";
 import { Label } from "~/components/Label";
-import { DateTimeFormField } from "~/components/form/DateTimeFormField";
+import { DateFormField } from "~/components/form/DateFormField";
 import { SendouForm } from "~/components/form/SendouForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import { nullFilledArray } from "~/utils/arrays";
@@ -62,10 +62,11 @@ export default function NewScrimPage() {
 			>
 				<WithFormField usersTeams={data.teams} />
 
-				<DateTimeFormField<FormFields>
+				<DateFormField<FormFields>
 					label={t("scrims:forms.when.title")}
 					name="at"
 					bottomText={t("scrims:forms.when.explanation")}
+					granularity="minute"
 				/>
 
 				<BaseVisibilityFormField associations={data.associations} />
@@ -143,9 +144,10 @@ function NotFoundVisibilityFormField({
 	return (
 		<div>
 			<div className="stack horizontal sm">
-				<DateTimeFormField<FormFields>
+				<DateFormField<FormFields>
 					label={t("scrims:forms.notFoundVisibility.title")}
 					name="notFoundVisibility.at"
+					granularity="minute"
 				/>
 				{date ? (
 					<div>

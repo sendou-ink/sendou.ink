@@ -1,14 +1,14 @@
-import { Button } from "../Button";
+import { SendouButton } from "../elements/Button";
 import { TrashIcon } from "../icons/Trash";
 
 export function RemoveFieldButton({ onClick }: { onClick: () => void }) {
 	return (
-		<Button
+		<SendouButton
 			icon={<TrashIcon />}
 			aria-label="Remove form field"
-			size="tiny"
+			size="small"
 			variant="minimal-destructive"
-			onClick={onClick}
+			onPress={onClick}
 		/>
 	);
 }

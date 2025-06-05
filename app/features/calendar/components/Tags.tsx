@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "~/components/Button";
+import { SendouButton } from "~/components/elements/Button";
 import { CrossIcon } from "~/components/icons/Cross";
 import type { CalendarEventTag } from "~/db/tables";
 import { tags as allTags } from "../calendar-constants";
@@ -33,13 +33,13 @@ export function Tags({
 					>
 						{t(`tag.name.${tag}`)}
 						{onDelete && (
-							<Button
-								onClick={() => onDelete(tag)}
+							<SendouButton
+								onPress={() => onDelete(tag)}
 								className="calendar__event__tag-delete-button"
 								icon={<CrossIcon />}
 								variant="minimal"
 								aria-label="Remove date"
-								size="tiny"
+								size="small"
 							/>
 						)}
 					</li>

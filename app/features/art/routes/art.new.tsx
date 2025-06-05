@@ -6,11 +6,11 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router-dom";
 import { Alert } from "~/components/Alert";
-import { Button } from "~/components/Button";
 import { Combobox } from "~/components/Combobox";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
+import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { UserSearch } from "~/components/elements/UserSearch";
 import { CrossIcon } from "~/components/icons/Cross";
@@ -90,9 +90,12 @@ export default function NewArtPage() {
 				<LinkedUsers />
 				{data.art ? <ShowcaseToggle /> : null}
 				<div>
-					<Button onClick={handleSubmit} disabled={submitButtonDisabled()}>
+					<SendouButton
+						onPress={handleSubmit}
+						isDisabled={submitButtonDisabled()}
+					>
 						{t("common:actions.save")}
-					</Button>
+					</SendouButton>
 				</div>
 			</Form>
 		</Main>
@@ -243,16 +246,19 @@ function Tags() {
 			<input type="hidden" name="tags" value={JSON.stringify(tags)} />
 			{creationMode ? (
 				<div className="art__creation-mode-switcher-container">
-					<Button variant="minimal" onClick={() => setCreationMode(false)}>
+					<SendouButton
+						variant="minimal"
+						onPress={() => setCreationMode(false)}
+					>
 						{t("art:forms.tags.selectFromExisting")}
-					</Button>
+					</SendouButton>
 				</div>
 			) : (
 				<div className="stack horizontal sm text-xs text-lighter art__creation-mode-switcher-container">
 					{t("art:forms.tags.cantFindExisting")}{" "}
-					<Button variant="minimal" onClick={() => setCreationMode(true)}>
+					<SendouButton variant="minimal" onPress={() => setCreationMode(true)}>
 						{t("art:forms.tags.addNew")}
-					</Button>
+					</SendouButton>
 				</div>
 			)}
 			{tags.length >= ART.TAGS_MAX_LENGTH ? (
@@ -272,9 +278,13 @@ function Tags() {
 							}
 						}}
 					/>
-					<Button size="tiny" variant="outlined" onClick={handleAddNewTag}>
+					<SendouButton
+						size="small"
+						variant="outlined"
+						onPress={handleAddNewTag}
+					>
 						{t("common:actions.add")}
-					</Button>
+					</SendouButton>
 				</div>
 			) : (
 				<Combobox
@@ -301,12 +311,12 @@ function Tags() {
 					return (
 						<div key={t.name} className="stack horizontal">
 							{t.name}{" "}
-							<Button
+							<SendouButton
 								icon={<CrossIcon />}
-								size="tiny"
+								size="small"
 								variant="minimal-destructive"
 								className="art__delete-tag-button"
-								onClick={() => {
+								onPress={() => {
 									setTags(tags.filter((tag) => tag.name !== t.name));
 								}}
 							/>
@@ -353,10 +363,10 @@ function LinkedUsers() {
 							initialUserId={userId}
 						/>
 						{users.length > 1 || users[0].userId ? (
-							<Button
-								size="tiny"
+							<SendouButton
+								size="small"
 								variant="minimal-destructive"
-								onClick={() => {
+								onPress={() => {
 									if (users.length === 1) {
 										setUsers([{ inputId: nanoid() }]);
 									} else {
@@ -369,15 +379,15 @@ function LinkedUsers() {
 					</div>
 				);
 			})}
-			<Button
-				size="tiny"
-				onClick={() => setUsers([...users, { inputId: nanoid() }])}
-				disabled={users.length >= ART.LINKED_USERS_MAX_LENGTH}
+			<SendouButton
+				size="small"
+				onPress={() => setUsers([...users, { inputId: nanoid() }])}
+				isDisabled={users.length >= ART.LINKED_USERS_MAX_LENGTH}
 				className="my-3"
 				variant="outlined"
 			>
 				{t("art:forms.linkedUsers.anotherOne")}
-			</Button>
+			</SendouButton>
 			<FormMessage type="info">{t("art:forms.linkedUsers.info")}</FormMessage>
 		</div>
 	);

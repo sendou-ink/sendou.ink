@@ -1,7 +1,7 @@
 import { Link, useFetcher } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
-import { Button } from "../../../../components/Button";
+import { SendouButton } from "../../../../components/elements/Button";
 import { CheckmarkIcon } from "../../../../components/icons/Checkmark";
 import { CrossIcon } from "../../../../components/icons/Cross";
 import { EditIcon } from "../../../../components/icons/Edit";
@@ -306,19 +306,17 @@ function EditableDestination({
 				</td>
 				<td>
 					<div className="stack horizontal xs">
-						<Button
+						<SendouButton
 							variant="minimal"
-							title="Save destination"
-							icon={<CheckmarkIcon />}
-							size="tiny"
-							onClick={handleSubmit}
+							icon={<CheckmarkIcon title="Save destination" />}
+							size="small"
+							onPress={handleSubmit}
 						/>
-						<Button
+						<SendouButton
 							variant="minimal-destructive"
-							title="Cancel"
-							size="tiny"
-							icon={<CrossIcon />}
-							onClick={() => setEditingDestination(false)}
+							size="small"
+							icon={<CrossIcon title="Cancel" />}
+							onPress={() => setEditingDestination(false)}
 						/>
 					</div>
 				</td>
@@ -347,12 +345,11 @@ function EditableDestination({
 			)}
 			{canEditDestination ? (
 				<td>
-					<Button
+					<SendouButton
 						variant="minimal"
-						title="Edit destination"
-						icon={<EditIcon />}
-						size="tiny"
-						onClick={() => setEditingDestination(true)}
+						icon={<EditIcon title="Edit destination" />}
+						size="small"
+						onPress={() => setEditingDestination(true)}
 					/>
 				</td>
 			) : null}

@@ -4,9 +4,9 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useDebounce } from "react-use";
 import { Avatar } from "~/components/Avatar";
-import { Button } from "~/components/Button";
 import { Input } from "~/components/Input";
 import { Main } from "~/components/Main";
+import { SendouButton } from "~/components/elements/Button";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { SearchIcon } from "~/components/icons/Search";
 import { useUser } from "~/features/auth/core/user";
@@ -68,9 +68,9 @@ export default function UserSearchPage() {
 					action={LOG_IN_URL}
 					method="post"
 				>
-					<Button size="big" type="submit" icon={<DiscordIcon />}>
+					<SendouButton size="big" type="submit" icon={<DiscordIcon />}>
 						{t("user:search.pleaseLogIn.button")}
-					</Button>
+					</SendouButton>
 				</form>
 			</Main>
 		);

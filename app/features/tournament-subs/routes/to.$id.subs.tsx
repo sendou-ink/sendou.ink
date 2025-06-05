@@ -2,7 +2,7 @@ import { Link, useLoaderData } from "@remix-run/react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import { Button, LinkButton } from "~/components/Button";
+import { LinkButton } from "~/components/Button";
 import { Flag } from "~/components/Flag";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { WeaponImage } from "~/components/Image";
@@ -158,14 +158,14 @@ function SubInfoSection({ sub }: { sub: SubByTournamentId }) {
 						}
 						fields={[["userId", sub.userId]]}
 					>
-						<Button
+						<SendouButton
 							variant="minimal-destructive"
-							size="tiny"
+							size="small"
 							type="submit"
 							icon={<TrashIcon />}
 						>
 							{t("common:actions.delete")}
-						</Button>
+						</SendouButton>
 					</FormWithConfirm>
 				</div>
 			) : null}
