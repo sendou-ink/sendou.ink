@@ -9,11 +9,11 @@ import {
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod";
-import { Button } from "~/components/Button";
 import { WeaponCombobox } from "~/components/Combobox";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
+import { SendouButton } from "~/components/elements/Button";
 import { UserSearch } from "~/components/elements/UserSearch";
 import { AddFieldButton } from "~/components/form/AddFieldButton";
 import { RemoveFieldButton } from "~/components/form/RemoveFieldButton";
@@ -191,16 +191,16 @@ function PovFormField() {
 								onBlur={onBlur}
 							/>
 						)}
-						<Button
-							size="tiny"
+						<SendouButton
+							size="small"
 							variant="minimal"
-							onClick={toggleInputType}
+							onPress={toggleInputType}
 							className="outline-theme mt-2"
 						>
 							{asPlainInput
 								? t("calendar:forms.team.player.addAsUser")
 								: t("calendar:forms.team.player.addAsText")}
-						</Button>
+						</SendouButton>
 						{error && (
 							<FormMessage type="error">{error.message as string}</FormMessage>
 						)}

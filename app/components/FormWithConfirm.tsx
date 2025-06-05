@@ -2,10 +2,10 @@ import { type FetcherWithComponents, useFetcher } from "@remix-run/react";
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import type { SendouButtonProps } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import invariant from "~/utils/invariant";
-import type { ButtonProps } from "./Button";
 import { SubmitButton } from "./SubmitButton";
 
 export function FormWithConfirm({
@@ -27,7 +27,7 @@ export function FormWithConfirm({
 	submitButtonText?: string;
 	action?: string;
 	submitButtonTestId?: string;
-	submitButtonVariant?: ButtonProps["variant"];
+	submitButtonVariant?: SendouButtonProps["variant"];
 	fetcher?: FetcherWithComponents<any>;
 }) {
 	const componentsFetcher = useFetcher();

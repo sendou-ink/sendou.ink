@@ -146,7 +146,7 @@ function PostExpiryAlert({ postId }: { postId: number }) {
 			<fetcher.Form method="post" className="stack md horizontal items-center">
 				<input type="hidden" name="id" value={postId} />
 				{t("lfg:expiring")}{" "}
-				<SubmitButton _action="BUMP_POST" variant="outlined" size="tiny">
+				<SubmitButton _action="BUMP_POST" variant="outlined" size="small">
 					{t("common:actions.clickHere")}
 				</SubmitButton>
 			</fetcher.Form>

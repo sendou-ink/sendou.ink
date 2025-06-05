@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import * as R from "remeda";
 import type { z } from "zod";
 import { Avatar } from "~/components/Avatar";
-import { Button, LinkButton } from "~/components/Button";
+import { LinkButton } from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Table } from "~/components/Table";
@@ -471,14 +471,14 @@ function ScrimsTable({
 								) : null}
 								{user && requestScrim && post.requests.length === 0 ? (
 									<td className={styles.postFloatingActionCell}>
-										<Button
-											size="tiny"
-											onClick={() => requestScrim(post.id)}
+										<SendouButton
+											size="small"
+											onPress={() => requestScrim(post.id)}
 											icon={<ArrowUpOnSquareIcon />}
 											className="ml-auto"
 										>
 											{t("scrims:actions.request")}
-										</Button>
+										</SendouButton>
 									</td>
 								) : null}
 								{showDeletePost && !isAccepted ? (
@@ -492,13 +492,13 @@ function ScrimsTable({
 													["_action", "DELETE_POST"],
 												]}
 											>
-												<Button
-													size="tiny"
+												<SendouButton
+													size="small"
 													variant="destructive"
 													className="ml-auto"
 												>
 													{t("common:actions.delete")}
-												</Button>
+												</SendouButton>
 											</FormWithConfirm>
 										) : (
 											<SendouPopover
@@ -531,14 +531,14 @@ function ScrimsTable({
 												["_action", "CANCEL_REQUEST"],
 											]}
 										>
-											<Button
-												size="tiny"
+											<SendouButton
+												size="small"
 												variant="destructive"
 												icon={<CrossIcon />}
 												className="ml-auto"
 											>
 												{t("common:actions.cancel")}
-											</Button>
+											</SendouButton>
 										</FormWithConfirm>
 									</td>
 								) : null}
@@ -645,9 +645,9 @@ function RequestRow({
 						submitButtonVariant="primary"
 						submitButtonText={t("common:actions.accept")}
 					>
-						<Button size="tiny" className="ml-auto">
+						<SendouButton size="small" className="ml-auto">
 							{t("common:actions.accept")}
-						</Button>
+						</SendouButton>
 					</FormWithConfirm>
 				) : !request.isAccepted && !canAccept ? (
 					<SendouPopover

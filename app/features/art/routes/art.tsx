@@ -2,10 +2,10 @@ import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
 import { useLoaderData, useSearchParams } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
-import { Button } from "~/components/Button";
 import { Combobox } from "~/components/Combobox";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
+import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { CrossIcon } from "~/components/icons/Cross";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -107,19 +107,20 @@ export default function ArtPage() {
 			{filteredTag ? (
 				<div className="text-xs text-lighter stack md horizontal items-center">
 					{t("art:filteringByTag", { tag: filteredTag })}
-					<Button
-						size="tiny"
+					<SendouButton
+						size="small"
 						variant="minimal-destructive"
 						icon={<CrossIcon />}
-						onClick={() => {
+						onPress={() => {
 							setSearchParams((prev) => {
 								prev.delete(FILTERED_TAG_KEY_SEARCH_PARAM_KEY);
 								return prev;
 							});
 						}}
+						data-testid="clear-filter-button"
 					>
 						{t("common:actions.clear")}
-					</Button>
+					</SendouButton>
 				</div>
 			) : null}
 			<ArtGrid arts={arts} />

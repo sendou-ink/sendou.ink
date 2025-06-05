@@ -5,7 +5,7 @@ import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import { Button, LinkButton } from "~/components/Button";
+import { LinkButton } from "~/components/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
@@ -13,6 +13,7 @@ import { MapPoolStages } from "~/components/MapPoolSelector";
 import { Placement } from "~/components/Placement";
 import { Section } from "~/components/Section";
 import { Table } from "~/components/Table";
+import { SendouButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -175,14 +176,14 @@ export default function CalendarEventPage() {
 							name: data.event.name,
 						})}
 					>
-						<Button
+						<SendouButton
 							className="ml-auto"
-							size="tiny"
+							size="small"
 							variant="minimal-destructive"
 							type="submit"
 						>
 							{t("calendar:actions.delete")}
-						</Button>
+						</SendouButton>
 					</FormWithConfirm>
 				) : null}
 			</div>

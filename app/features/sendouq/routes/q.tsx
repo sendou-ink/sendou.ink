@@ -4,7 +4,7 @@ import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "~/components/Alert";
-import { Button, LinkButton } from "~/components/Button";
+import { LinkButton } from "~/components/Button";
 import { Flag } from "~/components/Flag";
 import { FormMessage } from "~/components/FormMessage";
 import { FriendCodeInput } from "~/components/FriendCodeInput";
@@ -116,7 +116,7 @@ export default function QPage() {
 								<div className="stack horizontal md items-center mt-4 mx-auto">
 									<SubmitButton
 										icon={<UsersIcon />}
-										disabled={queueJoinStatus !== "NOW"}
+										isDisabled={queueJoinStatus !== "NOW"}
 									>
 										{t("q:front.actions.joinWithGroup")}
 									</SubmitButton>
@@ -126,7 +126,7 @@ export default function QPage() {
 										state={fetcher.state}
 										icon={<UserIcon />}
 										variant="outlined"
-										disabled={queueJoinStatus !== "NOW"}
+										isDisabled={queueJoinStatus !== "NOW"}
 									>
 										{t("q:front.actions.joinSolo")}
 									</SubmitButton>
@@ -160,9 +160,9 @@ export default function QPage() {
 							action={LOG_IN_URL}
 							method="post"
 						>
-							<Button size="big" type="submit">
+							<SendouButton size="big" type="submit">
 								{t("q:front.actions.logIn")}
-							</Button>
+							</SendouButton>
 						</form>
 					)}
 				</>

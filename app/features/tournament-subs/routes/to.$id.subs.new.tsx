@@ -1,7 +1,6 @@
 import { Form, useLoaderData } from "@remix-run/react";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "~/components/Button";
 import { WeaponCombobox } from "~/components/Combobox";
 import { FormMessage } from "~/components/FormMessage";
 import { WeaponImage } from "~/components/Image";
@@ -13,6 +12,7 @@ import { useUser } from "~/features/auth/core/user";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { TOURNAMENT_SUB } from "../tournament-subs-constants";
+import { SendouButton } from "~/components/elements/Button";
 
 import { action } from "../actions/to.$id.subs.new.server";
 import { loader } from "../loaders/to.$id.subs.new.server";
@@ -262,11 +262,11 @@ function WeaponPoolSelect({
 										height={38}
 									/>
 								</div>
-								<Button
+								<SendouButton
 									icon={<TrashIcon />}
 									variant="minimal-destructive"
 									aria-label="Delete weapon"
-									onClick={() =>
+									onPress={() =>
 										setWeapons(weapons.filter((w) => w !== weapon))
 									}
 								/>

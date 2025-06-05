@@ -5,7 +5,6 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
 import { Alert } from "~/components/Alert";
-import { Button } from "~/components/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
@@ -110,13 +109,16 @@ function InviteCodeSection() {
 					{inviteLink}
 				</div>
 				<Form method="post" className="stack horizontal md">
-					<Button size="tiny" onClick={() => copyToClipboard(inviteLink)}>
+					<SendouButton
+						size="small"
+						onPress={() => copyToClipboard(inviteLink)}
+					>
 						{t("common:actions.copyToClipboard")}
-					</Button>
+					</SendouButton>
 					<SubmitButton
 						variant="minimal-destructive"
 						_action="RESET_INVITE_LINK"
-						size="tiny"
+						size="small"
 						testId="reset-invite-link-button"
 					>
 						{t("common:actions.reset")}
@@ -243,14 +245,14 @@ function MemberRow({
 						["userId", member.id],
 					]}
 				>
-					<Button
-						size="tiny"
+					<SendouButton
+						size="small"
 						variant="destructive"
 						icon={<TrashIcon />}
-						testId={!isSelf ? "kick-button" : undefined}
+						data-testid={!isSelf ? "kick-button" : undefined}
 					>
 						{t("team:actionButtons.kick")}
-					</Button>
+					</SendouButton>
 				</FormWithConfirm>
 			</div>
 			<hr className="team__roster__separator" />

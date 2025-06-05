@@ -1,7 +1,7 @@
 import { Form, useMatches, useOutletContext } from "@remix-run/react";
 import * as React from "react";
-import { Button } from "~/components/Button";
 import { Divider } from "~/components/Divider";
+import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { UserSearch } from "~/components/elements/UserSearch";
 import { TrashIcon } from "~/components/icons/Trash";
@@ -73,11 +73,11 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 					{managers.map((manager) => (
 						<li key={manager.id}>
 							{manager.username}
-							<Button
+							<SendouButton
 								icon={<TrashIcon />}
 								variant="minimal-destructive"
 								aria-label="Delete badge manager"
-								onClick={() =>
+								onPress={() =>
 									setManagers(managers.filter((m) => m.id !== manager.id))
 								}
 							/>
@@ -91,14 +91,14 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 				value={JSON.stringify(managers.map((m) => m.id))}
 			/>
 			<div>
-				<Button
+				<SendouButton
 					type="submit"
-					disabled={amountOfChanges === 0}
+					isDisabled={amountOfChanges === 0}
 					name="_action"
 					value="MANAGERS"
 				>
 					{submitButtonText(amountOfChanges)}
-				</Button>
+				</SendouButton>
 			</div>
 		</div>
 	);
@@ -193,14 +193,14 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 				value={JSON.stringify(countArrayToDuplicatedIdsArray(owners))}
 			/>
 			<div>
-				<Button
+				<SendouButton
 					type="submit"
-					disabled={ownerDifferences.length === 0}
+					isDisabled={ownerDifferences.length === 0}
 					name="_action"
 					value="OWNERS"
 				>
 					Submit
-				</Button>
+				</SendouButton>
 			</div>
 		</div>
 	);

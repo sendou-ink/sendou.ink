@@ -1,6 +1,6 @@
 import { Form, useMatches, useParams } from "@remix-run/react";
-import { Button } from "~/components/Button";
 import { Redirect } from "~/components/Redirect";
+import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { useUser } from "~/features/auth/core/user";
 import { atOrError } from "~/utils/arrays";
@@ -51,7 +51,7 @@ export default function PlusCommentModalPage() {
 				<input type="hidden" name="suggestedId" value={targetUserId} />
 				<CommentTextarea maxLength={PLUS_SUGGESTION.COMMENT_MAX_LENGTH} />
 				<div>
-					<Button type="submit">Submit</Button>
+					<SendouButton type="submit">Submit</SendouButton>
 				</div>
 			</Form>
 		</SendouDialog>
