@@ -1,12 +1,13 @@
 import type { Insertable, Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type { DB, Tables } from "~/db/tables";
+import type { DB, MemberRole, Tables } from "~/db/tables";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { TEAM_MEMBER_ROLES } from "./team-constants";
 
 export function findAllUndisbanded() {
 	return db
@@ -50,11 +51,11 @@ export type findByCustomUrl = NonNullable<
 	Awaited<ReturnType<typeof findByCustomUrl>>
 >;
 
-export function findByCustomUrl(
+export async function findByCustomUrl(
 	customUrl: string,
 	{ includeInviteCode = false } = {},
 ) {
-	return db
+	const team = await db
 		.selectFrom("Team")
 		.leftJoin(
 			"UserSubmittedImage as AvatarImage",
@@ -100,6 +101,17 @@ export function findByCustomUrl(
 		.$if(includeInviteCode, (qb) => qb.select("Team.inviteCode"))
 		.where("Team.customUrl", "=", customUrl.toLowerCase())
 		.executeTakeFirst();
+
+	team?.members.sort((a, b) => {
+		const aIndex = TEAM_MEMBER_ROLES.indexOf(a.role as MemberRole);
+		const bIndex = TEAM_MEMBER_ROLES.indexOf(b.role as MemberRole);
+		return (
+			(aIndex === -1 ? Number.POSITIVE_INFINITY : aIndex) -
+			(bIndex === -1 ? Number.POSITIVE_INFINITY : bIndex)
+		);
+	});
+
+	return team;
 }
 
 export async function teamsByMemberUserId(
