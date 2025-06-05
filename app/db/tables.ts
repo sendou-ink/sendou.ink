@@ -483,6 +483,8 @@ export interface Tournament {
 	rules: string | null;
 	/** Related "parent tournament", the tournament that contains the original sign-ups (for leagues) */
 	parentTournamentId: number | null;
+	/** Is the tournament finalized meaning all the matches are played and TO has locked it making it read-only */
+	isFinalized: Generated<DBBoolean>;
 }
 
 export interface PreparedMaps {
@@ -850,6 +852,8 @@ export interface User {
 	noScreen: Generated<DBBoolean>;
 	buildSorting: JSONColumnTypeNullable<BuildSort[]>;
 	preferences: JSONColumnTypeNullable<UserPreferences>;
+	/** User creation date. Can be null because we did not always save this. */
+	createdAt: number | null;
 }
 
 /** Represents User joined with PlusTier table */

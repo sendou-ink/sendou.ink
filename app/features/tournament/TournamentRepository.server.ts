@@ -36,7 +36,7 @@ export async function findById(id: number) {
 			"CalendarEvent.id",
 			"CalendarEventDate.eventId",
 		)
-		.select(({ eb, exists, selectFrom }) => [
+		.select(({ eb }) => [
 			"Tournament.id",
 			"CalendarEvent.id as eventId",
 			"CalendarEvent.discordUrl",
@@ -50,6 +50,7 @@ export async function findById(id: number) {
 			"CalendarEvent.name",
 			"CalendarEvent.description",
 			"CalendarEventDate.startTime",
+			"Tournament.isFinalized",
 			jsonObjectFrom(
 				eb
 					.selectFrom("TournamentOrganization")
@@ -149,11 +150,6 @@ export async function findById(id: number) {
 						"Tournament.id",
 					),
 			).as("bracketProgressionOverrides"),
-			exists(
-				selectFrom("TournamentResult")
-					.where("TournamentResult.tournamentId", "=", id)
-					.select("TournamentResult.tournamentId"),
-			).as("isFinalized"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TournamentTeam")

@@ -120,6 +120,12 @@ const addTournamentResultStm = sql.prepare(/* sql */ `
   )
 `);
 
+const finalizeTournamentStm = sql.prepare(/* sql */ `
+  update "Tournament" set
+    "isFinalized" = 1
+  where "id" = @tournamentId
+`);
+
 export const addSummary = sql.transaction(
 	({
 		tournamentId,
@@ -195,5 +201,10 @@ export const addSummary = sql.transaction(
 				tournamentTeamId: tournamentResult.tournamentTeamId,
 			});
 		}
+
+		finalizeTournamentStm.run({ tournamentId });
 	},
 );
+
+export const finalizeTournament = (tournamentId: number) =>
+	finalizeTournamentStm.run({ tournamentId });
