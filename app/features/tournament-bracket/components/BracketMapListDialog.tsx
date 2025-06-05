@@ -591,7 +591,7 @@ export function BracketMapListDialog({
 								) : (
 									<SubmitButton
 										variant="outlined"
-										size="tiny"
+										size="small"
 										testId="confirm-finalize-bracket-button"
 										_action={isPreparing ? "PREPARE_MAPS" : "START_BRACKET"}
 										className="mx-auto"

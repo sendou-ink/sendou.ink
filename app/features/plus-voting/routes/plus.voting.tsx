@@ -2,8 +2,8 @@ import type { MetaFunction } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { Avatar } from "~/components/Avatar";
-import { Button } from "~/components/Button";
 import { RelativeTime } from "~/components/RelativeTime";
+import { SendouButton } from "~/components/elements/Button";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { usePlusVoting } from "~/features/plus-voting/core";
 import { metaTags } from "~/utils/remix";
@@ -108,9 +108,13 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 						{previous.score}
 					</span>{" "}
 					on {previous.user.username}.
-					<Button className="ml-auto" variant="minimal" onClick={undoLast}>
+					<SendouButton
+						className="ml-auto"
+						variant="minimal"
+						onPress={undoLast}
+					>
 						Undo?
-					</Button>
+					</SendouButton>
 				</p>
 			) : (
 				<p className="text-sm text-lighter">Tip: {randomTip}</p>
@@ -120,20 +124,20 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 					<Avatar user={currentUser.user} size="lg" />
 					<h2>{currentUser.user.username}</h2>
 					<div className="stack horizontal lg">
-						<Button
+						<SendouButton
 							className="plus-voting__vote-button downvote"
 							variant="outlined"
-							onClick={() => addVote("downvote")}
+							onPress={() => addVote("downvote")}
 						>
 							-1
-						</Button>
-						<Button
+						</SendouButton>
+						<SendouButton
 							className="plus-voting__vote-button"
 							variant="outlined"
-							onClick={() => addVote("upvote")}
+							onPress={() => addVote("upvote")}
 						>
 							+1
-						</Button>
+						</SendouButton>
 					</div>
 					{currentUser.suggestion ? (
 						<PlusSuggestionComments
@@ -153,9 +157,9 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 			) : (
 				<Form method="post">
 					<input type="hidden" name="votes" value={JSON.stringify(votes)} />
-					<Button className="plus-voting__submit-button" type="submit">
+					<SendouButton className="plus-voting__submit-button" type="submit">
 						Submit votes
-					</Button>
+					</SendouButton>
 				</Form>
 			)}
 		</div>

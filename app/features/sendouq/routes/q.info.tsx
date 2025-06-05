@@ -10,8 +10,8 @@ import {
 } from "~/utils/urls";
 import "../q.css";
 import type { MetaFunction } from "@remix-run/node";
-import { Button } from "~/components/Button";
 import { Image } from "~/components/Image";
+import { SendouButton } from "~/components/elements/Button";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN } from "~/features/mmr/mmr-constants";
 import { metaTags } from "~/utils/remix";
@@ -57,18 +57,21 @@ function TableOfContents() {
 			<h2>Table of contents</h2>
 			<ul>
 				<li>
-					<Button onClick={handleTitleClick("general-info")} variant="minimal">
+					<SendouButton
+						onPress={handleTitleClick("general-info")}
+						variant="minimal"
+					>
 						General info
-					</Button>
+					</SendouButton>
 				</li>
 
 				<li>
-					<Button
-						onClick={handleTitleClick("before-joining")}
+					<SendouButton
+						onPress={handleTitleClick("before-joining")}
 						variant="minimal"
 					>
 						Before joining
-					</Button>
+					</SendouButton>
 				</li>
 				<li>Make a sendou.ink account</li>
 				<li>Select your map pool</li>
@@ -80,23 +83,23 @@ function TableOfContents() {
 				<li>Reading rules</li>
 
 				<li>
-					<Button
-						onClick={handleTitleClick("joining-the-queue")}
+					<SendouButton
+						onPress={handleTitleClick("joining-the-queue")}
 						variant="minimal"
 					>
 						Joining the queue
-					</Button>
+					</SendouButton>
 				</li>
 				<li>Joining solo</li>
 				<li>Joining with 1-3 mates</li>
 
 				<li>
-					<Button
-						onClick={handleTitleClick("finding-a-group")}
+					<SendouButton
+						onPress={handleTitleClick("finding-a-group")}
 						variant="minimal"
 					>
 						Finding a group
-					</Button>
+					</SendouButton>
 				</li>
 				<li>Plus Server icons</li>
 				<li>Adding a note</li>
@@ -104,22 +107,22 @@ function TableOfContents() {
 				<li>Group managers</li>
 
 				<li>
-					<Button
-						onClick={handleTitleClick("finding-an-opponent")}
+					<SendouButton
+						onPress={handleTitleClick("finding-an-opponent")}
 						variant="minimal"
 					>
 						Finding an opponent
-					</Button>
+					</SendouButton>
 				</li>
 				<li>Rechallenging</li>
 
 				<li>
-					<Button
-						onClick={handleTitleClick("playing-the-match")}
+					<SendouButton
+						onPress={handleTitleClick("playing-the-match")}
 						variant="minimal"
 					>
 						Playing the match
-					</Button>
+					</SendouButton>
 				</li>
 				<li>Canceling the match</li>
 				<li>Enemy not reporting</li>
@@ -128,9 +131,12 @@ function TableOfContents() {
 				<li>Stats</li>
 
 				<li>
-					<Button onClick={handleTitleClick("other-topics")} variant="minimal">
+					<SendouButton
+						onPress={handleTitleClick("other-topics")}
+						variant="minimal"
+					>
 						Other topics
-					</Button>
+					</SendouButton>
 				</li>
 				<li>Ranking algorithm</li>
 				<li>Ranking tiers</li>

@@ -1,9 +1,9 @@
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
-import { Button } from "~/components/Button";
 import { WeaponCombobox } from "~/components/Combobox";
 import { WeaponImage } from "~/components/Image";
 import { Label } from "~/components/Label";
+import { SendouButton } from "~/components/elements/Button";
 import { CrossIcon } from "~/components/icons/Cross";
 import type { Tables } from "~/db/tables";
 import type { TierName } from "~/features/mmr/mmr-constants";
@@ -59,11 +59,11 @@ function Filter({
 				<Label>
 					{t(`lfg:filters.${filter._tag}`)} {t("lfg:filters.suffix")}
 				</Label>
-				<Button
+				<SendouButton
 					icon={<CrossIcon />}
-					size="tiny"
+					size="small"
 					variant="minimal-destructive"
-					onClick={removeFilter}
+					onPress={removeFilter}
 					aria-label="Delete filter"
 				/>
 			</div>
@@ -139,10 +139,10 @@ function WeaponFilterFields({
 				}
 			/>
 			{value.map((weapon) => (
-				<Button
+				<SendouButton
 					key={weapon}
 					variant="minimal"
-					onClick={() =>
+					onPress={() =>
 						changeFilter({
 							_tag: "Weapon",
 							weaponSplIds: value.filter((weaponId) => weaponId !== weapon),
@@ -150,7 +150,7 @@ function WeaponFilterFields({
 					}
 				>
 					<WeaponImage weaponSplId={weapon} size={32} variant="badge" />
-				</Button>
+				</SendouButton>
 			))}
 		</div>
 	);

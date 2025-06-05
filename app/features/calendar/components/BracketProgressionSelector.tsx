@@ -1,11 +1,11 @@
 import { nanoid } from "nanoid";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "~/components/Button";
 import { DateInput } from "~/components/DateInput";
 import { FormMessage } from "~/components/FormMessage";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
+import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { PlusIcon } from "~/components/icons/Plus";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
@@ -113,15 +113,16 @@ export function BracketProgressionSelector({
 					/>
 				))}
 			</div>
-			<Button
+			<SendouButton
 				icon={<PlusIcon />}
-				size="tiny"
+				size="small"
 				variant="outlined"
-				onClick={handleAddBracket}
-				disabled={brackets.length >= TOURNAMENT.MAX_BRACKETS_PER_TOURNAMENT}
+				onPress={handleAddBracket}
+				isDisabled={brackets.length >= TOURNAMENT.MAX_BRACKETS_PER_TOURNAMENT}
+				data-testid="add-bracket-button"
 			>
 				Add bracket
-			</Button>
+			</SendouButton>
 			{Progression.isError(validated) ? (
 				<ErrorMessage error={validated} />
 			) : null}
@@ -171,15 +172,15 @@ function TournamentFormatBracketSelector({
 			<div>
 				<div className="format-selector__count">Bracket #{count}</div>
 				{onDelete ? (
-					<Button
-						size="tiny"
+					<SendouButton
+						size="small"
 						variant="minimal-destructive"
-						onClick={onDelete}
+						onPress={onDelete}
 						className="mx-auto"
-						testId="delete-bracket-button"
+						data-testid="delete-bracket-button"
 					>
 						Delete
-					</Button>
+					</SendouButton>
 				) : null}
 			</div>
 			<div className="format-selector__divider" />

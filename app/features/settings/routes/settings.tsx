@@ -2,7 +2,6 @@ import type { MetaFunction } from "@remix-run/node";
 import { useFetcher, useNavigate, useSearchParams } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "~/components/Button";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
@@ -229,9 +228,9 @@ function PushNotificationsEnabler() {
 						: t("common:settings.notifications.permissionDenied")}
 				</SendouPopover>
 			) : (
-				<Button size="tiny" variant="minimal" onClick={askPermission}>
+				<SendouButton size="small" variant="minimal" onPress={askPermission}>
 					{t("common:actions.enable")}
-				</Button>
+				</SendouButton>
 			)}
 			<FormMessage type="info">
 				{t("common:settings.notifications.description")}

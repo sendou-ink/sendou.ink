@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
 import { useEventSource } from "remix-utils/sse/react";
 import { Alert } from "~/components/Alert";
-import { Button } from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { SendouButton } from "~/components/elements/Button";
@@ -427,15 +426,15 @@ function AddSubsPopOver() {
 					<Divider className="my-2" />
 					<div>{t("tournament:actions.shareLink", { inviteLink })}</div>
 					<div className="my-2 flex justify-center">
-						<Button
-							size="tiny"
-							onClick={() => copyToClipboard(inviteLink)}
+						<SendouButton
+							size="small"
+							onPress={() => copyToClipboard(inviteLink)}
 							variant="minimal"
 							className="tiny"
-							testId="copy-invite-link-button"
+							data-testid="copy-invite-link-button"
 						>
 							{t("common:actions.copyToClipboard")}
-						</Button>
+						</SendouButton>
 					</div>
 				</>
 			) : null}

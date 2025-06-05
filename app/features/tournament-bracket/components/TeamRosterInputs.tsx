@@ -517,9 +517,9 @@ function RosterFormWithButtons({
 			<input type="hidden" name="teamId" value={teamId} />
 			<SubmitButton
 				state={fetcher.state}
-				size="tiny"
+				size="small"
 				_action="SET_ACTIVE_ROSTER"
-				disabled={!valid}
+				isDisabled={!valid}
 				testId="save-active-roster-button"
 			>
 				Save

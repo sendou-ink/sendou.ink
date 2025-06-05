@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Ability } from "~/components/Ability";
-import { Button } from "~/components/Button";
 import { ModeImage } from "~/components/Image";
+import { SendouButton } from "~/components/elements/Button";
 import { CrossIcon } from "~/components/icons/Cross";
 import { possibleApValues } from "~/features/build-analyzer";
 import { abilities } from "~/modules/in-game-lists/abilities";
@@ -40,13 +40,13 @@ export function FilterSection({
 					{nthOfSame > 1 ? nthOfSame : ""}
 				</div>
 				<div>
-					<Button
+					<SendouButton
 						icon={<CrossIcon />}
-						size="tiny"
+						size="small"
 						variant="minimal-destructive"
-						onClick={remove}
+						onPress={remove}
 						aria-label="Delete filter"
-						testId="delete-filter-button"
+						data-testid="delete-filter-button"
 					/>
 				</div>
 			</div>

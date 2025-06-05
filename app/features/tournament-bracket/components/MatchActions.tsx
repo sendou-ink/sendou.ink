@@ -336,10 +336,10 @@ function ReportScoreButtons({
 				</div>
 			) : null}
 			<SubmitButton
-				size="tiny"
+				size="small"
 				_action="REPORT_SCORE"
-				data-testid="report-score-button"
-				disabled={submitButtonDisabled()}
+				testId="report-score-button"
+				isDisabled={submitButtonDisabled()}
 			>
 				{wouldEndSet ? "Report & end set" : "Report"}
 			</SubmitButton>
@@ -380,11 +380,11 @@ function EditScoreForm({
 					<input type="hidden" name="points" value={JSON.stringify(points)} />
 				) : undefined}
 				<SubmitButton
-					size="tiny"
+					size="small"
 					state={fetcher.state}
 					_action="UPDATE_REPORTED_SCORE"
-					disabled={submitDisabled}
-					data-testid="save-revise-button"
+					isDisabled={submitDisabled}
+					testId="save-revise-button"
 				>
 					Save
 				</SubmitButton>
@@ -407,6 +407,7 @@ function EditScoreForm({
 				size="small"
 				className="mx-auto"
 				onClick={() => setEditing(true)}
+				data-testid="revise-button"
 			>
 				Edit
 			</SendouButton>
