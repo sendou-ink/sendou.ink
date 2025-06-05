@@ -7,12 +7,12 @@ import { WeaponImage } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { RequiredHiddenInput } from "~/components/RequiredHiddenInput";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
 import { TrashIcon } from "~/components/icons/Trash";
 import { useUser } from "~/features/auth/core/user";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { TOURNAMENT_SUB } from "../tournament-subs-constants";
-import { SendouButton } from "~/components/elements/Button";
 
 import { action } from "../actions/to.$id.subs.new.server";
 import { loader } from "../loaders/to.$id.subs.new.server";

@@ -12,6 +12,7 @@ import { Label } from "~/components/Label";
 import { containerClassName } from "~/components/Main";
 import { Redirect } from "~/components/Redirect";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { UserSearch } from "~/components/elements/UserSearch";
 import { TrashIcon } from "~/components/icons/Trash";
@@ -30,7 +31,6 @@ import {
 } from "~/utils/urls";
 import { BracketProgressionSelector } from "../../calendar/components/BracketProgressionSelector";
 import { useTournament } from "./to.$id";
-import { SendouButton } from "~/components/elements/Button";
 
 export { action } from "../actions/to.$id.admin.server";
 
