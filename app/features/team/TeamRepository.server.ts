@@ -3,7 +3,7 @@ import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { nanoid } from "nanoid";
 import { INVITE_CODE_LENGTH } from "~/constants";
 import { db } from "~/db/sql";
-import type { DB, Tables } from "~/db/tables";
+import type { DB, MemberRole, Tables } from "~/db/tables";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import invariant from "~/utils/invariant";
@@ -104,12 +104,8 @@ export async function findByCustomUrl(
 		.executeTakeFirst();
 
 	team?.members.sort((a, b) => {
-		const aIndex = TEAM_MEMBER_ROLES.indexOf(
-			a.role as (typeof TEAM_MEMBER_ROLES)[number],
-		);
-		const bIndex = TEAM_MEMBER_ROLES.indexOf(
-			b.role as (typeof TEAM_MEMBER_ROLES)[number],
-		);
+		const aIndex = TEAM_MEMBER_ROLES.indexOf(a.role as MemberRole);
+		const bIndex = TEAM_MEMBER_ROLES.indexOf(b.role as MemberRole);
 		return (
 			(aIndex === -1 ? Number.POSITIVE_INFINITY : aIndex) -
 			(bIndex === -1 ? Number.POSITIVE_INFINITY : bIndex)
