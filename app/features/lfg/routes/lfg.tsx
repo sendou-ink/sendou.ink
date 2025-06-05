@@ -3,6 +3,7 @@ import { useFetcher, useLoaderData } from "@remix-run/react";
 import { add, sub } from "date-fns";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { AddNewButton } from "~/components/AddNewButton";
 import { Alert } from "~/components/Alert";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
@@ -12,7 +13,7 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
-import { LFG_PAGE, navIconUrl } from "~/utils/urls";
+import { LFG_PAGE, lfgNewPostPage, navIconUrl } from "~/utils/urls";
 import { LFGAddFilterButton } from "../components/LFGAddFilterButton";
 import { LFGFilters } from "../components/LFGFilters";
 import { LFGPost } from "../components/LFGPost";
@@ -103,11 +104,12 @@ export default function LFGPage() {
 
 	return (
 		<Main className="stack xl">
-			<div className="stack horizontal justify-end">
+			<div className="stack sm horizontal justify-end">
 				<LFGAddFilterButton
 					addFilter={(newFilter) => setFilters([...filters, newFilter])}
 					filters={filters}
 				/>
+				<AddNewButton navIcon="lfg" to={lfgNewPostPage()} />
 			</div>
 			<LFGFilters
 				filters={filters}

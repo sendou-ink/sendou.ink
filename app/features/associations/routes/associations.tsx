@@ -2,6 +2,7 @@ import { Link, Outlet, useFetcher, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
+import { AddNewButton } from "~/components/AddNewButton";
 import { Avatar } from "~/components/Avatar";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Label } from "~/components/Label";
@@ -14,7 +15,7 @@ import { TrashIcon } from "~/components/icons/Trash";
 import { useUser } from "~/features/auth/core/user";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { associationsPage, userPage } from "~/utils/urls";
+import { associationsPage, newAssociationsPage, userPage } from "~/utils/urls";
 
 import { action } from "~/features/associations/actions/associations.server";
 import {
@@ -33,7 +34,12 @@ export default function AssociationsPage() {
 	return (
 		<Main className="stack lg">
 			<Outlet />
-			<Header />
+			<div className="stack sm">
+				<div className="stack items-end">
+					<AddNewButton to={newAssociationsPage()} navIcon="associations" />
+				</div>
+				<Header />
+			</div>
 			<JoinForm />
 			{data.associations.map((association) => (
 				<Association key={association.id} association={association} />

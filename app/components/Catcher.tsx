@@ -68,21 +68,23 @@ export function Catcher() {
 
 	switch (error.status) {
 		case 401:
+			if (!user) {
+				return (
+					<Main>
+						<h2>Authentication required</h2>
+						<p>This page requires you to be logged in.</p>
+						<form action={LOG_IN_URL} method="post" className="mt-2">
+							<SendouButton type="submit" variant="minimal">
+								Log in via Discord
+							</SendouButton>
+						</form>
+					</Main>
+				);
+			}
 			return (
 				<Main>
 					<h2>Error 401 Unauthorized</h2>
-					{user ? (
-						<GetHelp />
-					) : (
-						<form action={LOG_IN_URL} method="post">
-							<p className="button-text-paragraph">
-								You should try{" "}
-								<SendouButton type="submit" variant="minimal">
-									logging in
-								</SendouButton>
-							</p>
-						</form>
-					)}
+					<GetHelp />
 				</Main>
 			);
 		case 403:

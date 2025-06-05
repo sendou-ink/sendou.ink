@@ -2,6 +2,7 @@ import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
 import { useLoaderData, useSearchParams } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import { AddNewButton } from "~/components/AddNewButton";
 import { Combobox } from "~/components/Combobox";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
@@ -9,7 +10,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { CrossIcon } from "~/components/icons/Cross";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { artPage, navIconUrl } from "~/utils/urls";
+import { artPage, navIconUrl, newArtPage } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
 import { FILTERED_TAG_KEY_SEARCH_PARAM_KEY } from "../art-constants";
 import { ArtGrid } from "../components/ArtGrid";
@@ -85,24 +86,27 @@ export default function ArtPage() {
 						{t("art:openCommissionsOnly")}
 					</Label>
 				</div>
-				<Combobox
-					key={filteredTag}
-					options={data.allTags.map((t) => ({
-						label: t.name,
-						value: String(t.id),
-					}))}
-					inputName="tags"
-					placeholder={t("art:filterByTag")}
-					initialValue={null}
-					onChange={(selection) => {
-						if (!selection) return;
+				<div className="stack horizontal sm items-center">
+					<Combobox
+						key={filteredTag}
+						options={data.allTags.map((t) => ({
+							label: t.name,
+							value: String(t.id),
+						}))}
+						inputName="tags"
+						placeholder={t("art:filterByTag")}
+						initialValue={null}
+						onChange={(selection) => {
+							if (!selection) return;
 
-						setSearchParams((prev) => {
-							prev.set(FILTERED_TAG_KEY_SEARCH_PARAM_KEY, selection.label);
-							return prev;
-						});
-					}}
-				/>
+							setSearchParams((prev) => {
+								prev.set(FILTERED_TAG_KEY_SEARCH_PARAM_KEY, selection.label);
+								return prev;
+							});
+						}}
+					/>
+					<AddNewButton navIcon="art" to={newArtPage()} />
+				</div>
 			</div>
 			{filteredTag ? (
 				<div className="text-xs text-lighter stack md horizontal items-center">

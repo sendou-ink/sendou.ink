@@ -1,6 +1,7 @@
 import { useFetcher, useLoaderData, useMatches } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { AddNewButton } from "~/components/AddNewButton";
 import { BuildCard } from "~/components/BuildCard";
 import { FormMessage } from "~/components/FormMessage";
 import { Image, WeaponImage } from "~/components/Image";
@@ -16,13 +17,13 @@ import { BUILD_SORT_IDENTIFIERS, type BuildSort } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { atOrError } from "~/utils/arrays";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { weaponCategoryUrl } from "~/utils/urls";
+import { userNewBuildPage, weaponCategoryUrl } from "~/utils/urls";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import { DEFAULT_BUILD_SORT } from "../user-page-constants";
 
-import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { action } from "../actions/u.$identifier.builds.server";
 import {
 	type UserBuildsPageData,
@@ -91,6 +92,7 @@ export default function UserBuildsPage() {
 					>
 						{t("user:builds.sorting.changeButton")}
 					</SendouButton>
+					<AddNewButton navIcon="builds" to={userNewBuildPage(user)} />
 				</div>
 			)}
 			<BuildsFilters

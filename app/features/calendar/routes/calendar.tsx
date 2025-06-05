@@ -4,6 +4,7 @@ import clsx from "clsx";
 import type * as React from "react";
 import type { DateValue } from "react-aria-components";
 import { useTranslation } from "react-i18next";
+import { AddNewButton } from "~/components/AddNewButton";
 import { CopyToClipboardPopover } from "~/components/CopyToClipboardPopover";
 import { Main } from "~/components/Main";
 import {
@@ -24,7 +25,9 @@ import { dayMonthYearToDateValue } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
+	CALENDAR_NEW_PAGE,
 	CALENDAR_PAGE,
+	TOURNAMENT_NEW_PAGE,
 	calendarIcalFeed,
 	calendarPage,
 	navIconUrl,
@@ -103,6 +106,8 @@ export default function CalendarPage() {
 						key={CalendarEvent.filtersToString(data.filters)}
 						filters={data.filters}
 					/>
+					<AddNewButton navIcon="calendar" to={CALENDAR_NEW_PAGE} />
+					<AddNewButton navIcon="medal" to={TOURNAMENT_NEW_PAGE} />
 				</div>
 			</div>
 			<div
