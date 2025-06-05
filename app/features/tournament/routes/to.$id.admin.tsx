@@ -30,8 +30,8 @@ import {
 } from "~/utils/urls";
 import { BracketProgressionSelector } from "../../calendar/components/BracketProgressionSelector";
 import { useTournament } from "./to.$id";
-
 import { SendouButton } from "~/components/elements/Button";
+
 export { action } from "../actions/to.$id.admin.server";
 
 export default function TournamentAdminPage() {

@@ -12,13 +12,13 @@ import { useUser } from "~/features/auth/core/user";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { TOURNAMENT_SUB } from "../tournament-subs-constants";
+import { SendouButton } from "~/components/elements/Button";
 
 import { action } from "../actions/to.$id.subs.new.server";
 import { loader } from "../loaders/to.$id.subs.new.server";
 export { action, loader };
 
 import "../tournament-subs.css";
-import { SendouButton } from "~/components/elements/Button";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["user"],
