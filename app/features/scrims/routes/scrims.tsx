@@ -11,6 +11,7 @@ import { LinkButton } from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Table } from "~/components/Table";
+import TimePopover from "~/components/TimePopover";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -50,7 +51,6 @@ import { action } from "../actions/scrims.server";
 import { loader } from "../loaders/scrims.server";
 export { loader, action };
 
-import TimePopover from "~/components/TimePopover";
 import styles from "./scrims.module.css";
 
 export type NewRequestFormFields = z.infer<typeof newRequestSchema>;
@@ -138,6 +138,7 @@ export default function ScrimsPage() {
 								posts={data.posts.owned}
 								showDeletePost
 								showRequestRows
+								showStatus
 							/>
 						),
 					},
@@ -297,6 +298,7 @@ function ScrimsTable({
 	);
 
 	const getStatus = (post: ScrimPost) => {
+		if (post.canceled) return "CANCELED";
 		if (post.requests.at(0)?.isAccepted) return "CONFIRMED";
 		if (
 			post.requests.some((r) => r.users.some((rUser) => user?.id === rUser.id))
@@ -457,6 +459,7 @@ function ScrimsTable({
 											className={clsx(styles.postStatus, {
 												[styles.postStatusConfirmed]: status === "CONFIRMED",
 												[styles.postStatusPending]: status === "PENDING",
+												[styles.postStatusCanceled]: status === "CANCELED",
 											})}
 										>
 											{status === "CONFIRMED" ? (
@@ -467,6 +470,11 @@ function ScrimsTable({
 											{status === "PENDING" ? (
 												<>
 													<ClockIcon /> {t("scrims:status.pending")}
+												</>
+											) : null}
+											{status === "CANCELED" ? (
+												<>
+													<CrossIcon /> {t("scrims:status.canceled")}
 												</>
 											) : null}
 										</div>
@@ -515,7 +523,9 @@ function ScrimsTable({
 													</SendouButton>
 												}
 											>
-												{t("scrims:deleteModal.prevented")}
+												{t("scrims:deleteModal.prevented", {
+													username: owner.username,
+												})}
 											</SendouPopover>
 										)}
 									</td>
@@ -635,6 +645,7 @@ function RequestRow({
 					{groupName}
 				</div>
 			</td>
+			<td />
 			<td />
 			<td />
 			<td className={styles.postFloatingActionCell}>

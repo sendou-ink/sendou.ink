@@ -17,6 +17,9 @@
 	"deleteModal.title": "Scrim post löschen?",
 	"deleteModal.prevented": "Der Post muss von Ersteller ({{username}}) gelöscht werden.",
 	"cancelModal.title": "Anfrage zurückziehen?",
+	"cancelModal.scrim.title": "",
+	"cancelModal.scrim.reasonLabel": "",
+	"cancelModal.scrim.reasonExplanation": "",
 	"actions.contact": "Kontaktieren",
 	"acceptModal.title": "Scrim-Anfrage von {{groupName}} akzeptieren & andere ablehnen (falls vorhanden)?",
 	"acceptModal.prevented": "Bitte den Ersteller des Scrim-Posts, diese Anfrage anzunehmen.",
@@ -47,5 +50,8 @@
 	"associations.shareLink.reset": "Link zurücksetzen",
 	"associations.removeMember.title": "{{username}} aus der Assoziation entfernen?",
 	"associations.forms.title": "Neue Assoziation erstellen",
-	"associations.forms.name.title": "Name"
+	"associations.forms.name.title": "Name",
+	"forms.managedByAnyone.title": "",
+	"forms.managedByAnyone.explanation": "",
+	"alert.canceled": ""
 }

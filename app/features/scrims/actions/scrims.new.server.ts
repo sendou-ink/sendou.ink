@@ -53,6 +53,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		maxDiv: data.divs ? serializeLutiDiv(data.divs.max!) : null,
 		minDiv: data.divs ? serializeLutiDiv(data.divs.min!) : null,
 		text: data.postText,
+		managedByAnyone: data.managedByAnyone,
 		visibility:
 			data.baseVisibility !== "PUBLIC"
 				? {

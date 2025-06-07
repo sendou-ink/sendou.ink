@@ -53,6 +53,14 @@
 	fill: var(--theme-info);
 }
 
+.postStatusCanceled {
+	background-color: var(--theme-warning-transparent);
+}
+
+.postStatusCanceled svg {
+	fill: var(--theme-warning);
+}
+
 .postFloatingActionCell {
 	position: sticky;
 	right: 0;

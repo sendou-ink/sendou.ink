@@ -7,6 +7,7 @@ import { Label } from "~/components/Label";
 import { DateFormField } from "~/components/form/DateFormField";
 import { SendouForm } from "~/components/form/SendouForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
+import { ToggleFormField } from "~/components/form/ToggleFormField";
 import { nullFilledArray } from "~/utils/arrays";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FormMessage } from "../../../components/FormMessage";
@@ -58,6 +59,7 @@ export default function NewScrimPage() {
 										SCRIM.MAX_PICKUP_SIZE_EXCLUDING_OWNER,
 									) as unknown as number[],
 								},
+					managedByAnyone: true,
 				}}
 			>
 				<WithFormField usersTeams={data.teams} />
@@ -79,6 +81,12 @@ export default function NewScrimPage() {
 					label={t("scrims:forms.text.title")}
 					name="postText"
 					maxLength={MAX_SCRIM_POST_TEXT_LENGTH}
+				/>
+
+				<ToggleFormField<FormFields>
+					label={t("scrims:forms.managedByAnyone.title")}
+					name="managedByAnyone"
+					bottomText={t("scrims:forms.managedByAnyone.explanation")}
 				/>
 			</SendouForm>
 		</Main>

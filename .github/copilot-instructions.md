@@ -1,6 +1,9 @@
 ## General
 
-- for new code only rarely use comments, prefer descriptive variable and function names
+- only rarely use comments, prefer descriptive variable and function names (leave existing comments as is)
+- if you encounter an existing TODO comment assume it is there for a reason and do not remove it
+- for running scripts `npm` is used
+- all the imports should be at the top of the file
 
 ## Commands
 
@@ -27,6 +30,7 @@
 - split bigger components into smaller ones
 - one file can have many components
 - all texts should be provided translations via the i18next library's `useTranslations` hook's `t` function
+- instead of `&&` operator for conditional rendering, use the ternary operator
 
 ## Styling
 
@@ -39,3 +43,10 @@
 
 - database is Sqlite3 used with the Kysely library
 - database code should only be written in Repository files
+- down migrations are not needed, only up migrations
+- every database id is of type number
+
+## Playwright
+
+- `page.goto` is forbidden, use the `navigate` function to do a page navigation
+- to submit a form you use the `submit` function

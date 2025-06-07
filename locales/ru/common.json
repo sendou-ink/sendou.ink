@@ -99,6 +99,7 @@
 	"actions.showMore": "Показать больше",
 	"actions.showLess": "Показать меньше",
 	"actions.copyToClipboard": "Скопировать в буфер обмена",
+	"actions.copyTimestampForDiscord": "",
 	"actions.create": "Создать",
 	"actions.close": "Закрыть",
 	"actions.cancel": "Отменить",

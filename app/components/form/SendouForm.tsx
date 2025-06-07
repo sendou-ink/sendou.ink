@@ -15,12 +15,14 @@ export function SendouForm<T extends z.ZodTypeAny>({
 	heading,
 	children,
 	cancelLink,
+	submitButtonTestId,
 }: {
 	schema: T;
 	defaultValues?: DefaultValues<z.infer<T>>;
 	heading?: string;
 	children: React.ReactNode;
 	cancelLink?: string;
+	submitButtonTestId?: string;
 }) {
 	const { t } = useTranslation(["common"]);
 	const fetcher = useFetcher<any>();
@@ -56,7 +58,7 @@ export function SendouForm<T extends z.ZodTypeAny>({
 				{heading ? <h1 className="text-lg">{heading}</h1> : null}
 				{children}
 				<div className="stack horizontal lg justify-between mt-6 w-full">
-					<SubmitButton state={fetcher.state}>
+					<SubmitButton state={fetcher.state} testId={submitButtonTestId}>
 						{t("common:actions.submit")}
 					</SubmitButton>
 					{cancelLink ? (

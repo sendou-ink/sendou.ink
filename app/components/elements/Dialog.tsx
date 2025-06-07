@@ -25,6 +25,8 @@ interface SendouDialogProps extends ModalOverlayProps {
 	"aria-label"?: string;
 	/** If true, the modal takes over the full screen with the content below hidden */
 	isFullScreen?: boolean;
+	/** If true, shows the close button even if onClose is not provided */
+	showCloseButton?: boolean;
 }
 
 /**
@@ -77,11 +79,12 @@ function DialogModal({
 	heading,
 	showHeading = true,
 	className,
+	showCloseButton: showCloseButtonProp,
 	...rest
 }: Omit<SendouDialogProps, "trigger">) {
 	const navigate = useNavigate();
 
-	const showCloseButton = rest.onClose || rest.onCloseTo;
+	const showCloseButton = showCloseButtonProp || rest.onClose || rest.onCloseTo;
 	const onClose = () => {
 		if (rest.onCloseTo) {
 			navigate(rest.onCloseTo);

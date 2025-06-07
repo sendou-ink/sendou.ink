@@ -99,6 +99,7 @@
 	"actions.showMore": "",
 	"actions.showLess": "",
 	"actions.copyToClipboard": "Copiar a clipboard",
+	"actions.copyTimestampForDiscord": "",
 	"actions.create": "Crear",
 	"actions.close": "Cerrar",
 	"actions.cancel": "Cancelar",
