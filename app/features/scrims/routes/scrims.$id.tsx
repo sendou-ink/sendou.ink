@@ -98,7 +98,11 @@ function CancelScrimForm() {
 	const { t } = useTranslation(["scrims"]);
 
 	return (
-		<SendouForm schema={cancelScrimSchema} defaultValues={{ reason: "" }}>
+		<SendouForm
+			schema={cancelScrimSchema}
+			defaultValues={{ reason: "" }}
+			submitButtonTestId="cancel-scrim-submit"
+		>
 			<TextAreaFormField<FormFields>
 				name="reason"
 				label={t("cancelModal.scrim.reasonLabel")}

@@ -45,3 +45,8 @@
 - database code should only be written in Repository files
 - down migrations are not needed, only up migrations
 - every database id is of type number
+
+## Playwright
+
+- `page.goto` is forbidden, use the `navigate` function to do a page navigation
+- to submit a form you use the `submit` function

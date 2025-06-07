@@ -2295,22 +2295,29 @@ async function lfgPosts() {
 async function scrimPosts() {
 	const allUsers = userIdsInRandomOrder(true);
 
-	const date = () => {
+	// Only schedule admin's scrim at least 1 hour in the future, others can be 'now'
+	const date = (isAdmin = false) => {
+		if (isAdmin) {
+			const randomFuture = faker.date.between({
+				from: add(new Date(), { hours: 1 }),
+				to: add(new Date(), { days: 7 }),
+			});
+			randomFuture.setMinutes(0);
+			randomFuture.setSeconds(0);
+			randomFuture.setMilliseconds(0);
+			return dateToDatabaseTimestamp(randomFuture);
+		}
 		const isNow = faker.number.float(1) > 0.5;
-
 		if (isNow) {
 			return databaseTimestampNow();
 		}
-
 		const randomFuture = faker.date.between({
 			from: new Date(),
 			to: add(new Date(), { days: 7 }),
 		});
-
 		randomFuture.setMinutes(0);
 		randomFuture.setSeconds(0);
 		randomFuture.setMilliseconds(0);
-
 		return dateToDatabaseTimestamp(randomFuture);
 	};
 
@@ -2355,7 +2362,6 @@ async function scrimPosts() {
 
 	for (let i = 0; i < 20; i++) {
 		const divs = divRange();
-
 		await ScrimPostRepository.insert({
 			at: date(),
 			maxDiv: divs?.maxDiv,
@@ -2372,7 +2378,7 @@ async function scrimPosts() {
 	}
 
 	const adminPostId = await ScrimPostRepository.insert({
-		at: date(),
+		at: date(true), // admin's scrim is always at least 1 hour in the future
 		text:
 			faker.number.float(1) > 0.5
 				? faker.lorem.sentences({ min: 1, max: 5 })
