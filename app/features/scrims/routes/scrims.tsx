@@ -11,6 +11,7 @@ import { LinkButton } from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Table } from "~/components/Table";
+import TimePopover from "~/components/TimePopover";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -50,7 +51,6 @@ import { action } from "../actions/scrims.server";
 import { loader } from "../loaders/scrims.server";
 export { loader, action };
 
-import TimePopover from "~/components/TimePopover";
 import styles from "./scrims.module.css";
 
 export type NewRequestFormFields = z.infer<typeof newRequestSchema>;
@@ -58,8 +58,6 @@ export type NewRequestFormFields = z.infer<typeof newRequestSchema>;
 export const handle: SendouRouteHandle = {
 	i18n: ["calendar", "scrims"],
 };
-
-// xxx: cancel status for "they requested"
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	return metaTags({
