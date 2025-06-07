@@ -6,6 +6,8 @@ import {
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
+import { databaseTimestampToDate } from "../../../utils/dates";
+import { errorToast } from "../../../utils/remix.server";
 import { requireUser } from "../../auth/core/user.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { cancelScrimSchema } from "../scrims-schemas";
@@ -21,6 +23,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	});
 
 	requirePermission(post, "CANCEL", user);
+
+	if (databaseTimestampToDate(post.at) < new Date()) {
+		errorToast("Cannot cancel a scrim that was already scheduled to start");
+	}
 
 	await ScrimPostRepository.cancelScrim(id, {
 		userId: user.id,

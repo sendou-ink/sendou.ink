@@ -140,6 +140,7 @@ export default function ScrimsPage() {
 								posts={data.posts.owned}
 								showDeletePost
 								showRequestRows
+								showStatus
 							/>
 						),
 					},
@@ -646,6 +647,7 @@ function RequestRow({
 					{groupName}
 				</div>
 			</td>
+			<td />
 			<td />
 			<td />
 			<td className={styles.postFloatingActionCell}>
