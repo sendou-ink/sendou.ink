@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { languagesUnified } from "~/modules/i18n/config";
-import { modesShort } from "~/modules/in-game-lists";
+import { modesShort } from "~/modules/in-game-lists/modes";
 import {
 	_action,
 	checkboxValueToBoolean,

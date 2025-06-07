@@ -1,5 +1,6 @@
 {
 	"pendingApproval_one": "Vous avez {{count}} image en attente de validation par un modérateur.",
+	"pendingApproval_many": "",
 	"pendingApproval_other": "Vous avez {{count}} images en attente de validation par un modérateur.",
 	"madeBy": "Créé par",
 	"radios.all": "Tous",
@@ -25,7 +26,6 @@
 	"forms.tags.addNew.placeholder": "Créer un nouveau tag",
 	"forms.tags.searchExisting.placeholder": "Chercher des tags existants",
 	"forms.tags.maxReached": "Limite de tags atteinte",
-
 	"delete.title": "Êtes vous sûre de vouloir supprimer cette œuvre?",
 	"unlink.title": "Êtes vous sûre de vouloir supprimer cette œuvre de votre profil? (Seulement {{username}} pourra le remettre)"
 }

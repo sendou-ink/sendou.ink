@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 
 const insertStm = sql.prepare(/* sql */ `
   insert into "ReportedWeapon" 

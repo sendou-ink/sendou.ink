@@ -5,16 +5,16 @@ import type {
 	AnalyzedBuild,
 	DamageType,
 } from "~/features/build-analyzer";
-import {
-	exampleMainWeaponIdWithSpecialWeaponId,
-	mainWeaponIds,
-	specialWeaponIds,
-} from "~/modules/in-game-lists";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/types";
+import {
+	exampleMainWeaponIdWithSpecialWeaponId,
+	mainWeaponIds,
+	specialWeaponIds,
+} from "~/modules/in-game-lists/weapon-ids";
 import { calculateDamage } from "./objectDamage";
 
 function calculate({

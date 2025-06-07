@@ -62,7 +62,7 @@ export type Notification =
 	  >
 	| NotificationItem<"SEASON_STARTED", { seasonNth: number }>
 	| NotificationItem<"SCRIM_NEW_REQUEST", { fromUsername: string }>
-	| NotificationItem<"SCRIM_SCHEDULED", { id: number; timeString: string }>;
+	| NotificationItem<"SCRIM_SCHEDULED", { id: number; at: number }>;
 
 type NotificationItem<
 	T extends string,

@@ -1,6 +1,6 @@
 import { type Page, expect, test } from "@playwright/test";
-import { ADMIN_DISCORD_ID } from "~/constants";
 import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
+import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
 import {
 	impersonate,
 	isNotVisible,
@@ -132,6 +132,8 @@ test.describe("User page", () => {
 		await expect(bodyColor()).resolves.toMatch(/#ebebf0/);
 
 		await goToEditPage(page);
+
+		await page.locator("span").filter({ hasText: "Custom colors" }).click();
 
 		await page.getByTestId("color-input-bg").fill("#4a412a");
 

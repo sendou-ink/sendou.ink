@@ -1,5 +1,5 @@
 import type { Tables } from "~/db/tables";
-import type { ModeShort } from "../../../../modules/in-game-lists";
+import type { ModeShort } from "../../../../modules/in-game-lists/types";
 import type { MapPool } from "../map-pool";
 import type { MapPoolObject } from "../map-pool-serializer/types";
 

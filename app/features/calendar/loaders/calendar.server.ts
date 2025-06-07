@@ -1,105 +1,71 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { addMonths, subMonths } from "date-fns";
-import type { PersistedCalendarEventTag } from "~/db/tables";
-import { getUserId } from "~/features/auth/core/user.server";
+import type { UserPreferences } from "~/db/tables";
+import { getUser } from "~/features/auth/core/user.server";
+import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
 import {
-	dateToThisWeeksMonday,
-	dateToThisWeeksSunday,
-	dateToWeekNumber,
-	weekNumberToDate,
-} from "~/utils/dates";
+	calendarFiltersSearchParamsObject,
+	calendarFiltersSearchParamsSchema,
+} from "~/features/calendar/calendar-schemas";
+import type { SerializeFrom } from "~/utils/remix";
+import { parseSafeSearchParams, parseSearchParams } from "~/utils/remix.server";
+import { dayMonthYear } from "~/utils/zod";
 import * as CalendarRepository from "../CalendarRepository.server";
-import {
-	loaderFilterSearchParamsSchema,
-	loaderTournamentsOnlySearchParamsSchema,
-	loaderWeekSearchParamsSchema,
-} from "../calendar-schemas";
-import { closeByWeeks } from "../calendar-utils";
+import * as CalendarEvent from "../core/CalendarEvent";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUserId(request);
-	const url = new URL(request.url);
+export type CalendarLoaderData = SerializeFrom<typeof loader>;
 
-	// separate from tags parse so they can fail independently
-	const parsedWeekParams = loaderWeekSearchParamsSchema.safeParse({
-		year: url.searchParams.get("year"),
-		week: url.searchParams.get("week"),
+export const loader = async (args: LoaderFunctionArgs) => {
+	const user = await getUser(args.request);
+	const parsed = parseSafeSearchParams({
+		request: args.request,
+		schema: dayMonthYear,
 	});
-	const parsedFilterParams = loaderFilterSearchParamsSchema.safeParse({
-		tags: url.searchParams.get("tags"),
+
+	const date = parsed.success
+		? new Date(
+				Date.UTC(parsed.data.year, parsed.data.month, parsed.data.day),
+			).getTime()
+		: Date.now();
+
+	const twentyFourHoursAgo = date - 24 * 60 * 60 * 1000;
+	const fiveDaysFromNow = date + DAYS_SHOWN_AT_A_TIME * 24 * 60 * 60 * 1000;
+
+	const events = await CalendarRepository.findAllBetweenTwoTimestamps({
+		startTime: new Date(twentyFourHoursAgo),
+		endTime: new Date(fiveDaysFromNow),
 	});
-	const parsedTournamentsOnlyParams =
-		loaderTournamentsOnlySearchParamsSchema.safeParse({
-			tournaments: url.searchParams.get("tournaments"),
-		});
 
-	const mondayDate = dateToThisWeeksMonday(new Date());
-	const sundayDate = dateToThisWeeksSunday(new Date());
-	const currentWeek = dateToWeekNumber(mondayDate);
-
-	const displayedWeek = parsedWeekParams.success
-		? parsedWeekParams.data.week
-		: currentWeek;
-	const displayedYear = parsedWeekParams.success
-		? parsedWeekParams.data.year
-		: currentWeek === 1 // handle first week of the year special case
-			? sundayDate.getFullYear()
-			: mondayDate.getFullYear();
-	const tagsToFilterBy = parsedFilterParams.success
-		? (parsedFilterParams.data.tags as PersistedCalendarEventTag[])
-		: [];
-	const onlyTournaments = parsedTournamentsOnlyParams.success
-		? Boolean(parsedTournamentsOnlyParams.data.tournaments)
-		: false;
+	const filters = resolveFilters(args.request, user?.preferences);
+	const filtered = CalendarEvent.applyFilters(events, filters);
 
 	return {
-		currentWeek,
-		displayedWeek,
-		currentDay: new Date().getDay(),
-		nearbyStartTimes: await CalendarRepository.startTimesOfRange({
-			startTime: subMonths(
-				weekNumberToDate({ week: displayedWeek, year: displayedYear }),
-				1,
-			),
-			endTime: addMonths(
-				weekNumberToDate({ week: displayedWeek, year: displayedYear }),
-				1,
-			),
-			tagsToFilterBy,
-			onlyTournaments,
-		}),
-		weeks: closeByWeeks({ week: displayedWeek, year: displayedYear }),
-		events: await fetchEventsOfWeek({
-			week: displayedWeek,
-			year: displayedYear,
-			tagsToFilterBy,
-			onlyTournaments,
-		}),
-		eventsToReport: user
-			? await CalendarRepository.eventsToReport(user.id)
-			: [],
+		eventTimes: filtered,
+		dateViewed: parsed.success ? parsed.data : undefined,
+		filters,
 	};
 };
 
-function fetchEventsOfWeek(args: {
-	week: number;
-	year: number;
-	tagsToFilterBy: PersistedCalendarEventTag[];
-	onlyTournaments: boolean;
-}) {
-	const startTime = weekNumberToDate(args);
+function resolveFilters(
+	request: Request,
+	preferences?: UserPreferences | null,
+) {
+	const parsed = parseSearchParams({
+		request,
+		schema: calendarFiltersSearchParamsObject,
+	}).filters;
 
-	const endTime = new Date(startTime);
-	endTime.setDate(endTime.getDate() + 7);
+	if (!CalendarEvent.isDefaultFilters(parsed)) {
+		return parsed;
+	}
 
-	// handle timezone mismatch between server and client
-	startTime.setHours(startTime.getHours() - 12);
-	endTime.setHours(endTime.getHours() + 12);
+	if (preferences?.defaultCalendarFilters) {
+		// make sure the saved values still match current reality
+		const parsedDefault = calendarFiltersSearchParamsSchema.parse(
+			preferences.defaultCalendarFilters,
+		);
 
-	return CalendarRepository.findAllBetweenTwoTimestamps({
-		startTime,
-		endTime,
-		tagsToFilterBy: args.tagsToFilterBy,
-		onlyTournaments: args.onlyTournaments,
-	});
+		return parsedDefault;
+	}
+
+	return CalendarEvent.defaultFilters();
 }

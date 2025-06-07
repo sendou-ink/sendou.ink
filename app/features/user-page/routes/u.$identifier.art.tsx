@@ -1,11 +1,13 @@
 import { useLoaderData, useMatches } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import { AddNewButton } from "~/components/AddNewButton";
 import { ART_SOURCES, type ArtSource } from "~/features/art/art-types";
 import { ArtGrid } from "~/features/art/components/ArtGrid";
 import { useUser } from "~/features/auth/core/user";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+import { newArtPage } from "~/utils/urls";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 
 import { action } from "../actions/u.$identifier.art.server";
@@ -51,6 +53,9 @@ export default function UserArtPage() {
 
 	return (
 		<div className="stack md">
+			<div className="stack items-end">
+				<AddNewButton navIcon="art" to={newArtPage()} />
+			</div>
 			<div className="stack horizontal justify-between items-start text-xs text-lighter">
 				<div>
 					{data.unvalidatedArtCount > 0

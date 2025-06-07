@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { z } from "zod";
 import { requireUserId } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
-import type { Ability } from "~/modules/in-game-lists";
+import type { Ability } from "~/modules/in-game-lists/types";
 import { actualNumber, id } from "~/utils/zod";
 
 const newBuildLoaderParamsSchema = z.object({

@@ -12,7 +12,7 @@ import {
 	BIG_BUBBLER_ID,
 	CRAB_TANK_ID,
 	SPLASH_WALL_ID,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import type { HitPoints } from "../calculator-types";
 
@@ -59,6 +59,13 @@ export const objectHitPoints = (abilityPoints: AbilityPoints): HitPoints => {
 		),
 		BulletShelterCanopyFocus: hpDivided(
 			weaponParams.mainWeapons[6030].CanopyHP,
+		),
+		BulletUmbrellaCanopyNormal_Launched: SPLAT_BRELLA_SHIELD_HP * 2,
+		BulletUmbrellaCanopyWide_Launched: hpDivided(
+			weaponParams.mainWeapons[6010].CanopyHP * 2,
+		),
+		BulletShelterCanopyFocus_Launched: hpDivided(
+			weaponParams.mainWeapons[6030].CanopyHP * 2,
 		),
 		Wsb_Shield,
 		Bomb_TorpedoBullet: TORPEDO_HP,

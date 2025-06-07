@@ -8,7 +8,6 @@
 	"tabs.results": "Results",
 	"tabs.streams": "Streams ({{count}})",
 	"tabs.subs": "Subs ({{count}})",
-
 	"pre.steps.header": "Complete these steps to play",
 	"pre.steps.name": "Team name",
 	"pre.steps.roster": "Full roster",
@@ -17,55 +16,42 @@
 	"pre.footer": "Registration can be freely changed before the tournament starts",
 	"pre.logIn": "Log in to register",
 	"pre.inATeam": "You are in a team for this event",
-
 	"pre.checkIn.range": "Check-in is open between {{start}} and {{finish}}",
 	"pre.checkIn.over": "Check-in is over",
 	"pre.checkIn.cant": "Complete the previous steps before checking in",
 	"pre.checkIn.button": "Check in",
 	"pre.checkIn.checkedIn": "Your team is checked in",
-
 	"pre.info.header": "Team info",
 	"pre.info.unregister": "Unregister",
 	"pre.info.unregister.confirm": "Unregister from the tournament and delete team info?",
 	"pre.info.noHost": "My team prefers not to host rooms",
 	"pre.info.noScreen": "My team prefers to avoid Splattercolor Screen",
-
 	"pre.roster.header": "Fill roster",
 	"pre.roster.footer": "At least {{atLeastCount}} members are required to participate. Max roster size is {{maxCount}}",
 	"pre.roster.addTrusted.header": "Add people you have played with",
 	"pre.roster.delete.button": "Delete member",
 	"pre.roster.delete.header": "Member to delete",
-
 	"pre.pool.header": "Pick map pool",
 	"pre.pool.banned": "Banned",
 	"pre.pool.tiebreaker.short": "Tiebreaker",
-
 	"pre.sub.prompt": "No team in mind for this event? You can also join the list of subs.",
-
 	"bracket.type.DE_WINNERS": "Winners Round",
 	"bracket.type.DE_LOSERS": "Losers Round",
 	"bracket.type.SE": "Round",
 	"bracket.type.SWISS": "Swiss Round",
 	"bracket.type.GROUPS": "Groups Round",
-
 	"round.label": "Round",
-
 	"team.label": "Team",
 	"team.unlisted": "Unlisted team",
-
 	"bestOf.label.short": "Bo",
-
 	"pickInfo.team": "Team {{number}} pick",
 	"pickInfo.team.specific": "{{team}} picked",
 	"pickInfo.tiebreaker": "Tiebreaker",
 	"pickInfo.both": "Both picked",
 	"pickInfo.default": "Default map",
 	"pickInfo.counterpick": "Counterpick",
-
 	"generator.error": "Changes you made weren't saved since the tournament started",
-
 	"teams.mapsPickedStatus": "Maps picked status",
-
 	"admin.download": "Download participants",
 	"admin.actions.CHANGE_TEAM_OWNER": "Change captain",
 	"admin.actions.CHANGE_TEAM_NAME": "Change team name",
@@ -79,10 +65,8 @@
 	"admin.actions.UNDO_DROP_TEAM_OUT": "Undo drop out",
 	"admin.actions.UPDATE_IN_GAME_NAME": "Update player IGN",
 	"admin.actions.DELETE_LOGO": "Delete logo",
-
 	"staff.role.ORGANIZER": "organizer",
 	"staff.role.STREAMER": "streamer",
-
 	"actions.addSub": "Add sub",
 	"actions.shareLink": "Share your invite link to add members: {{inviteLink}}",
 	"actions.sub.prompt_other": "You can still add {{count}} subs to your roster",
@@ -91,28 +75,22 @@
 	"actions.finalize.question": "When you have checked that reported scores are correct click here to finalize the tournament and process results",
 	"actions.finalize.action": "Finalize",
 	"actions.finalize.confirm": "Are you sure you want to finalize the tournament (can't be undone)?",
-
 	"streams.none": "No live streams of this tournament available currently",
-
 	"team.setWins": "Set wins",
 	"team.mapWins": "Map wins",
 	"team.seed": "Seed",
 	"team.seed.footer": "out of {{count}}",
 	"team.placement": "Placement",
 	"team.placement.footer": "Main/UG",
-
 	"bracket.waiting": "Bracket will be shown here when at least {{count}} teams have registered",
 	"bracket.waiting.checkin": "Bracket will be shown here when at least {{count}} teams have checked in",
 	"bracket.wip": "This bracket is a preview and subject to change",
-
 	"bracket.progress.thanksForPlaying": "Thanks for playing in {{eventName}}!",
 	"bracket.progress.match": "Current opponent: {{opponent}}",
 	"bracket.progress.match.action": "View",
 	"bracket.progress.waiting": "Waiting for match",
-
 	"bracket.standings.showLess": "Show less",
 	"bracket.standings.showMore": "Show more",
-
 	"match.hosts": "{{teamName}} hosts",
 	"match.pass": "Pass",
 	"match.pool": "Pool",
@@ -120,7 +98,6 @@
 	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (Play all {{bestOf}})",
 	"match.action.undoLastScore": "Undo last score",
 	"match.action.reopenMatch": "Reopen match",
-
 	"join.error.MISSING_CODE": "Invite code is missing. Was the full URL copied?",
 	"join.error.SHORT_CODE": "Invite code is not the right length. Was the full URL copied?",
 	"join.error.NO_TEAM_MATCHING_CODE": "No team matching the invite code.",
@@ -129,7 +106,6 @@
 	"join.error.NOT_LOGGED_IN": "You must be logged in to join a team.",
 	"join.VALID": "Join {{teamName}} for {{eventName}}?",
 	"join.giveTrust": "Trust {{name}} to add you on their own to future tournaments?",
-
 	"subs.prefersToPlay": "Prefers to play",
 	"subs.canPlay": "Can play",
 	"subs.canVC": "Can VC",
@@ -144,7 +120,6 @@
 	"subs.message.header": "Message",
 	"subs.visibility.header": "Visibility",
 	"subs.visibility.everyone": "Everyone",
-
 	"progression.error.PLACEMENTS_PARSE_ERROR": "Error parsing placements",
 	"progression.error.NOT_RESOLVING_WINNER": "Progression does not resolve winner",
 	"progression.error.SAME_PLACEMENT_TO_MULTIPLE_BRACKETS": "Same placement leads to multiple brackets",

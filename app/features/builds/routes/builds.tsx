@@ -1,16 +1,22 @@
 import type { MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import { AddNewButton } from "~/components/AddNewButton";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
-import type { MainWeaponId } from "~/modules/in-game-lists";
-import { weaponCategories, weaponIdIsNotAlt } from "~/modules/in-game-lists";
+import { useUser } from "~/features/auth/core/user";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import {
+	weaponCategories,
+	weaponIdIsNotAlt,
+} from "~/modules/in-game-lists/weapon-ids";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BUILDS_PAGE,
 	mainWeaponImageUrl,
 	mySlugify,
 	navIconUrl,
+	userNewBuildPage,
 	weaponBuildPage,
 	weaponCategoryUrl,
 } from "~/utils/urls";
@@ -38,6 +44,7 @@ export const handle: SendouRouteHandle = {
 };
 
 export default function BuildsPage() {
+	const user = useUser();
 	const { t } = useTranslation(["common", "weapons"]);
 
 	const weaponIdToSlug = (weaponId: MainWeaponId) => {
@@ -46,6 +53,11 @@ export default function BuildsPage() {
 
 	return (
 		<Main className="stack md">
+			{user ? (
+				<div className="stack items-end">
+					<AddNewButton navIcon="builds" to={userNewBuildPage(user)} />
+				</div>
+			) : null}
 			{weaponCategories.map((category) => (
 				<div key={category.name} className="builds__category">
 					<div className="builds__category__header">

@@ -1,4 +1,4 @@
-import { MAX_AP } from "~/constants";
+import { MAX_AP } from "../analyzer-constants";
 import type { AbilityPoints } from "../analyzer-types";
 
 export const SPECIAL_EFFECTS = [

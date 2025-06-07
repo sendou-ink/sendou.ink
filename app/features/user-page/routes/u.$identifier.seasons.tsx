@@ -28,12 +28,9 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import { useWeaponUsage } from "~/hooks/swr";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import {
-	type ModeShort,
-	type StageId,
-	stageIds,
-} from "~/modules/in-game-lists";
 import { modesShort } from "~/modules/in-game-lists/modes";
+import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { atOrError } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";

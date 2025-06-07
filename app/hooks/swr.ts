@@ -3,7 +3,7 @@ import type { EventsWithMapPoolsLoaderData } from "~/features/calendar/routes/ma
 import type { PatronsListLoaderData } from "~/features/front-page/routes/patrons-list";
 import type { TrustersLoaderData } from "~/features/sendouq/routes/trusters";
 import type { WeaponUsageLoaderData } from "~/features/sendouq/routes/weapon-usage";
-import type { ModeShort, StageId } from "~/modules/in-game-lists";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
 	GET_ALL_EVENTS_WITH_MAP_POOLS_ROUTE,
 	GET_TRUSTERS_ROUTE,

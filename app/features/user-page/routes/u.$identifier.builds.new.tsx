@@ -8,7 +8,6 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { AbilitiesSelector } from "~/components/AbilitiesSelector";
 import { Alert } from "~/components/Alert";
-import { Button } from "~/components/Button";
 import { GearCombobox, WeaponCombobox } from "~/components/Combobox";
 import { FormMessage } from "~/components/FormMessage";
 import { Image } from "~/components/Image";
@@ -16,15 +15,15 @@ import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { RequiredHiddenInput } from "~/components/RequiredHiddenInput";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
 import { CrossIcon } from "~/components/icons/Cross";
 import { PlusIcon } from "~/components/icons/Plus";
-import { BUILD } from "~/constants";
 import type { GearType } from "~/db/tables";
 import {
 	validatedBuildFromSearchParams,
 	validatedWeaponIdFromSearchParams,
 } from "~/features/build-analyzer";
-import { modesShort } from "~/modules/in-game-lists";
+import { modesShort } from "~/modules/in-game-lists/modes";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type {
 	BuildAbilitiesTupleWithUnknown,
@@ -35,6 +34,7 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { modeImageUrl } from "~/utils/urls";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 
+import { BUILD } from "~/features/builds/builds-constants";
 import { action } from "../actions/u.$identifier.builds.new.server";
 import { loader } from "../loaders/u.$identifier.builds.new.server";
 export { loader, action };
@@ -234,17 +234,17 @@ function WeaponsSelector() {
 							</div>
 							{i === weapons.length - 1 && (
 								<>
-									<Button
-										size="tiny"
-										disabled={weapons.length === BUILD.MAX_WEAPONS_COUNT}
-										onClick={() => setWeapons((weapons) => [...weapons, 0])}
+									<SendouButton
+										size="small"
+										isDisabled={weapons.length === BUILD.MAX_WEAPONS_COUNT}
+										onPress={() => setWeapons((weapons) => [...weapons, 0])}
 										icon={<PlusIcon />}
-										testId="add-weapon-button"
+										data-testid="add-weapon-button"
 									/>
 									{weapons.length > 1 && (
-										<Button
-											size="tiny"
-											onClick={() =>
+										<SendouButton
+											size="small"
+											onPress={() =>
 												setWeapons((weapons) => {
 													const newWeapons = [...weapons];
 													newWeapons.pop();

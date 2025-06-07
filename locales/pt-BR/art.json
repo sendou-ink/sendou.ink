@@ -1,5 +1,6 @@
 {
 	"pendingApproval_one": "Você tem {{count}} imagem aguardando aprovação de um moderador",
+	"pendingApproval_many": "",
 	"pendingApproval_other": "Você tem {{count}} imagens aguardando aprovação de um moderador",
 	"madeBy": "Feito por/pela",
 	"radios.all": "Todas",
@@ -24,5 +25,7 @@
 	"forms.tags.addNew": "Crie uma nova.",
 	"forms.tags.addNew.placeholder": "Criar uma nova marcação",
 	"forms.tags.searchExisting.placeholder": "Pesquisar marcações existentes",
-	"forms.tags.maxReached": "Quantidade máxima de marcações atingida"
+	"forms.tags.maxReached": "Quantidade máxima de marcações atingida",
+	"delete.title": "",
+	"unlink.title": ""
 }

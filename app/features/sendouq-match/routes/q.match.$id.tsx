@@ -13,7 +13,7 @@ import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
-import { Button, LinkButton } from "~/components/Button";
+import { LinkButton } from "~/components/Button";
 import { WeaponCombobox } from "~/components/Combobox";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
@@ -41,7 +41,7 @@ import { useRecentlyReportedWeapons } from "~/features/sendouq/q-hooks";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useWindowSize } from "~/hooks/useWindowSize";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { joinListToNaturalString } from "~/utils/arrays";
@@ -381,15 +381,15 @@ function AfterMatchActions({
 					</SubmitButton>
 				) : null}
 				{showWeaponsFormButton ? (
-					<Button
+					<SendouButton
 						icon={<ArchiveBoxIcon />}
-						onClick={() => setShowWeaponsForm(!showWeaponsForm)}
+						onPress={() => setShowWeaponsForm(!showWeaponsForm)}
 						variant={showWeaponsForm ? "destructive" : undefined}
 					>
 						{showWeaponsForm
 							? t("q:match.actions.stopReportingWeapons")
 							: t("q:match.actions.reportWeapons")}
-					</Button>
+					</SendouButton>
 				) : null}
 			</lookAgainFetcher.Form>
 			{showWeaponsForm ? <ReportWeaponsForm /> : null}
@@ -515,17 +515,17 @@ function ReportWeaponsForm() {
 								showReportedOwnWeapon={false}
 							/>
 							{i !== 0 && reportingMode !== "MYSELF" ? (
-								<Button
-									size="tiny"
+								<SendouButton
+									size="small"
 									variant="outlined"
 									className="self-center"
-									onClick={handleCopyWeaponsFromPreviousMap({
+									onPress={handleCopyWeaponsFromPreviousMap({
 										groupMatchMapId,
 										mapIndex: i,
 									})}
 								>
 									{t("q:match.report.copyWeapons")}
-								</Button>
+								</SendouButton>
 							) : null}
 							<div className="stack sm">
 								{playersToReport().map((member, j) => {
@@ -779,15 +779,15 @@ function BottomSection({
 				submitButtonText={t("common:actions.cancel")}
 				fetcher={cancelFetcher}
 			>
-				<Button
+				<SendouButton
 					variant="minimal-destructive"
-					size="tiny"
+					size="small"
 					type="submit"
-					disabled={ownTeamReported && !data.match.mapList[0].winnerGroupId}
+					isDisabled={ownTeamReported && !data.match.mapList[0].winnerGroupId}
 					className="build__small-text mt-4"
 				>
 					{t("q:match.cancelMatch")}
-				</Button>
+				</SendouButton>
 			</FormWithConfirm>
 		) : null;
 
@@ -1288,8 +1288,8 @@ function MapListMap({
 								{typeof ownWeapon === "number" ? (
 									<div className="font-bold stack sm horizontal">
 										{t(`weapons:MAIN_${ownWeapon}`)}
-										<Button
-											size="tiny"
+										<SendouButton
+											size="small"
 											icon={<CrossIcon />}
 											variant="minimal-destructive"
 											onClick={() => {

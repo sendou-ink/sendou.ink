@@ -14,7 +14,6 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { logger } from "~/utils/logger";
 import {
 	errorToastIfFalsy,
-	notFoundIfFalsy,
 	parseFormData,
 	parseParams,
 	uploadImageIfSubmitted,
@@ -25,7 +24,6 @@ import { idObject } from "~/utils/zod";
 import { checkIn } from "../queries/checkIn.server";
 import { deleteTeam } from "../queries/deleteTeam.server";
 import deleteTeamMember from "../queries/deleteTeamMember.server";
-import { findByIdentifier } from "../queries/findByIdentifier.server";
 import { findOwnTournamentTeam } from "../queries/findOwnTournamentTeam.server";
 import { joinTeam } from "../queries/joinLeaveTeam.server";
 import { upsertCounterpickMaps } from "../queries/upsertCounterpickMaps.server";
@@ -52,7 +50,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 		schema: idObject,
 	});
 	const tournament = await tournamentFromDB({ tournamentId, user });
-	const event = notFoundIfFalsy(findByIdentifier(tournamentId));
 
 	errorToastIfFalsy(
 		!tournament.hasStarted,
@@ -198,7 +195,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 			errorToastIfFalsy(
 				validateCounterPickMapPool(
 					mapPool,
-					isOneModeTournamentOf(event),
+					isOneModeTournamentOf(
+						tournament.ctx.mapPickingStyle,
+						tournament.ctx.toSetMapPool,
+					),
 					tournament.ctx.tieBreakerMapPool,
 				) === "VALID",
 				"Invalid map pool",

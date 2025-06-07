@@ -3,15 +3,15 @@ import { Form, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "~/components/Button";
 import { FormErrors } from "~/components/FormErrors";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
+import { SendouButton } from "~/components/elements/Button";
 import { UserSearch } from "~/components/elements/UserSearch";
-import { CALENDAR_EVENT_RESULT } from "~/constants";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
+import { CALENDAR_EVENT_RESULT } from "../calendar-constants";
 
 import { action } from "../actions/calendar.$id.report-winners.server";
 import { loader } from "../loaders/calendar.$id.report-winners.server";
@@ -36,9 +36,9 @@ export default function ReportWinnersPage() {
 					{t("calendar:forms.reportResultsInfo")}
 				</FormMessage>
 				<TeamInputs />
-				<Button type="submit" className="mt-4">
+				<SendouButton type="submit" className="mt-4">
 					{t("common:actions.submit")}
-				</Button>
+				</SendouButton>
 				<FormErrors namespace="calendar" />
 			</Form>
 		</Main>
@@ -101,12 +101,12 @@ function TeamInputs() {
 					</React.Fragment>
 				);
 			})}
-			<Button
-				onClick={() => setAmountOfTeams((amountOfTeams) => amountOfTeams + 1)}
-				size="tiny"
+			<SendouButton
+				onPress={() => setAmountOfTeams((amountOfTeams) => amountOfTeams + 1)}
+				size="small"
 			>
 				{t("forms.team.add")}
-			</Button>
+			</SendouButton>
 		</>
 	);
 }
@@ -202,14 +202,14 @@ function Team({
 				setPlayers={(players) => setResults({ ...results, players })}
 			/>
 			{onRemoveTeam && (
-				<Button
-					onClick={onRemoveTeam}
-					size="tiny"
+				<SendouButton
+					onPress={onRemoveTeam}
+					size="small"
 					variant="minimal-destructive"
 					className="mt-4"
 				>
 					{t("forms.team.remove")}
-				</Button>
+				</SendouButton>
 			)}
 		</div>
 	);
@@ -256,16 +256,16 @@ function Players({
 							<label htmlFor={formId} className="mb-0">
 								{t("forms.team.player.header", { number: i + 1 })}
 							</label>
-							<Button
-								size="tiny"
+							<SendouButton
+								size="small"
 								variant="minimal"
-								onClick={() => handlePlayerInputTypeChange(i)}
+								onPress={() => handlePlayerInputTypeChange(i)}
 								className="outline-theme"
 							>
 								{asPlainInput
 									? t("forms.team.player.addAsUser")
 									: t("forms.team.player.addAsText")}
-							</Button>
+							</SendouButton>
 						</div>
 						{asPlainInput ? (
 							<input
@@ -286,22 +286,24 @@ function Players({
 				);
 			})}
 			<div className="stack horizontal sm mt-2">
-				<Button
-					size="tiny"
-					onClick={handleAddPlayer}
-					disabled={players.length === CALENDAR_EVENT_RESULT.MAX_PLAYERS_LENGTH}
+				<SendouButton
+					size="small"
+					onPress={handleAddPlayer}
+					isDisabled={
+						players.length === CALENDAR_EVENT_RESULT.MAX_PLAYERS_LENGTH
+					}
 					variant="outlined"
 				>
 					{t("forms.team.player.add")}
-				</Button>{" "}
-				<Button
-					size="tiny"
+				</SendouButton>{" "}
+				<SendouButton
+					size="small"
 					variant="destructive"
-					onClick={handleRemovePlayer}
-					disabled={players.length === 1}
+					onPress={handleRemovePlayer}
+					isDisabled={players.length === 1}
 				>
 					{t("forms.team.player.remove")}
-				</Button>
+				</SendouButton>
 			</div>
 		</div>
 	);

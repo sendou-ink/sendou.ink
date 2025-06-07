@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
 import { useEventSource } from "remix-utils/sse/react";
 import { Alert } from "~/components/Alert";
-import { Button } from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { SendouButton } from "~/components/elements/Button";
@@ -142,7 +141,7 @@ export default function TournamentBracketsPage() {
 		if (bracket.sources) {
 			return (
 				(bracket.teamsPendingCheckIn ?? []).length +
-				bracket.tournamentTeamIds.length
+				bracket.participantTournamentTeamIds.length
 			);
 		}
 
@@ -172,9 +171,12 @@ export default function TournamentBracketsPage() {
 						submitButtonText={t("tournament:actions.finalize.action")}
 						submitButtonVariant="outlined"
 					>
-						<Button variant="minimal" testId="finalize-tournament-button">
+						<SendouButton
+							variant="minimal"
+							data-testid="finalize-tournament-button"
+						>
 							{t("tournament:actions.finalize.question")}
-						</Button>
+						</SendouButton>
 					</FormWithConfirm>
 				</div>
 			) : null}
@@ -189,7 +191,7 @@ export default function TournamentBracketsPage() {
 							alertClassName="tournament-bracket__start-bracket-alert"
 							textClassName="stack horizontal md items-center"
 						>
-							{bracket.tournamentTeamIds.length}/
+							{bracket.participantTournamentTeamIds.length}/
 							{totalTeamsAvailableForTheBracket()} teams checked in
 							{bracket.canBeStarted ? (
 								<BracketStarter bracket={bracket} bracketIdx={bracketIdx} />
@@ -325,14 +327,14 @@ function BracketStarter({
 					key={bracketIdx}
 				/>
 			) : null}
-			<Button
+			<SendouButton
 				variant="outlined"
-				size="tiny"
-				testId="finalize-bracket-button"
-				onClick={() => setDialogOpen(true)}
+				size="small"
+				data-testid="finalize-bracket-button"
+				onPress={() => setDialogOpen(true)}
 			>
 				Start the bracket
-			</Button>
+			</SendouButton>
 		</>
 	);
 }
@@ -380,15 +382,15 @@ function MapPreparer({
 						testId="prepared-maps-check-icon"
 					/>
 				) : null}
-				<Button
-					size="tiny"
+				<SendouButton
+					size="small"
 					variant="outlined"
 					icon={<MapIcon />}
-					onClick={() => setDialogOpen(true)}
-					testId="prepare-maps-button"
+					onPress={() => setDialogOpen(true)}
+					data-testid="prepare-maps-button"
 				>
 					Prepare maps
-				</Button>
+				</SendouButton>
 			</div>
 		</>
 	);
@@ -424,15 +426,15 @@ function AddSubsPopOver() {
 					<Divider className="my-2" />
 					<div>{t("tournament:actions.shareLink", { inviteLink })}</div>
 					<div className="my-2 flex justify-center">
-						<Button
-							size="tiny"
-							onClick={() => copyToClipboard(inviteLink)}
+						<SendouButton
+							size="small"
+							onPress={() => copyToClipboard(inviteLink)}
 							variant="minimal"
 							className="tiny"
-							testId="copy-invite-link-button"
+							data-testid="copy-invite-link-button"
 						>
 							{t("common:actions.copyToClipboard")}
-						</Button>
+						</SendouButton>
 					</div>
 				</>
 			) : null}
@@ -522,16 +524,16 @@ function BracketNav({
 			<div className="tournament-bracket__bracket-nav tournament-bracket__button-row">
 				{visibleBrackets.map((bracket, i) => {
 					return (
-						<Button
+						<SendouButton
 							key={bracket.name}
-							onClick={() => setBracketIdx(i)}
+							onPress={() => setBracketIdx(i)}
 							className={clsx("tournament-bracket__bracket-nav__link", {
 								"tournament-bracket__bracket-nav__link__selected":
 									bracketIdx === i,
 							})}
 						>
 							{bracketNameForButton(bracket.name)}
-						</Button>
+						</SendouButton>
 					);
 				})}
 			</div>
@@ -543,14 +545,14 @@ function CompactifyButton() {
 	const { bracketExpanded, setBracketExpanded } = useBracketExpanded();
 
 	return (
-		<Button
-			onClick={() => {
+		<SendouButton
+			onPress={() => {
 				setBracketExpanded(!bracketExpanded);
 			}}
 			className="tournament-bracket__compactify-button"
 			icon={bracketExpanded ? <EyeSlashIcon /> : <EyeIcon />}
 		>
 			{bracketExpanded ? "Compactify" : "Show all"}
-		</Button>
+		</SendouButton>
 	);
 }

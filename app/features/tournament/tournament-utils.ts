@@ -1,7 +1,8 @@
-import { INVITE_CODE_LENGTH } from "~/constants";
-import type { ModeShort, StageId } from "~/modules/in-game-lists";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
+import * as R from "remeda";
+import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { weekNumberToDate } from "~/utils/dates";
+import { SHORT_NANOID_LENGTH } from "~/utils/id";
 import { tournamentLogoUrl } from "~/utils/urls";
 import type { Tables, TournamentStageSettings } from "../../db/tables";
 import { assertUnreachable } from "../../utils/types";
@@ -13,33 +14,46 @@ import type { TournamentData } from "../tournament-bracket/core/Tournament.serve
 import type { PlayedSet } from "./core/sets.server";
 import { LEAGUES, TOURNAMENT } from "./tournament-constants";
 
+const mapPickingStyleToModeRecord = {
+	AUTO_SZ: ["SZ"],
+	AUTO_TC: ["TC"],
+	AUTO_RM: ["RM"],
+	AUTO_CB: ["CB"],
+	AUTO_ALL: rankedModesShort,
+} as const;
+
+export const mapPickingStyleToModes = (
+	mapPickingStyle: Exclude<Tables["Tournament"]["mapPickingStyle"], "TO">,
+) => {
+	return mapPickingStyleToModeRecord[mapPickingStyle].slice();
+};
+
 export function modesIncluded(
-	tournament: Pick<Tables["Tournament"], "mapPickingStyle">,
+	mapPickingStyle: Tables["Tournament"]["mapPickingStyle"],
+	toSetMapPool: Array<{ mode: ModeShort }>,
 ): ModeShort[] {
-	switch (tournament.mapPickingStyle) {
-		case "AUTO_SZ": {
-			return ["SZ"];
-		}
-		case "AUTO_TC": {
-			return ["TC"];
-		}
-		case "AUTO_RM": {
-			return ["RM"];
-		}
-		case "AUTO_CB": {
-			return ["CB"];
-		}
-		default: {
-			return [...rankedModesShort];
-		}
+	if (mapPickingStyle !== "TO") {
+		return mapPickingStyleToModes(mapPickingStyle);
 	}
+
+	const pickedModes = R.unique(toSetMapPool.map((map) => map.mode));
+
+	// fallback
+	if (pickedModes.length === 0) {
+		return [...rankedModesShort];
+	}
+
+	return pickedModes.sort(
+		(a, b) => modesShort.indexOf(a) - modesShort.indexOf(b),
+	);
 }
 
 export function isOneModeTournamentOf(
-	tournament: Pick<Tables["Tournament"], "mapPickingStyle">,
+	mapPickingStyle: Tables["Tournament"]["mapPickingStyle"],
+	toSetMapPool: Array<{ mode: ModeShort }>,
 ) {
-	return modesIncluded(tournament).length === 1
-		? modesIncluded(tournament)[0]
+	return modesIncluded(mapPickingStyle, toSetMapPool).length === 1
+		? modesIncluded(mapPickingStyle, toSetMapPool)[0]
 		: null;
 }
 
@@ -355,7 +369,7 @@ export function validateCanJoinTeam({
 	if (typeof userId !== "number") {
 		return "NOT_LOGGED_IN";
 	}
-	if (!teamToJoin && inviteCode.length !== INVITE_CODE_LENGTH) {
+	if (!teamToJoin && inviteCode.length !== SHORT_NANOID_LENGTH) {
 		return "SHORT_CODE";
 	}
 	if (!teamToJoin) {
@@ -369,4 +383,11 @@ export function validateCanJoinTeam({
 	}
 
 	return "VALID";
+}
+
+export function normalizedTeamCount({
+	teamsCount,
+	minMembersPerTeam,
+}: { teamsCount: number; minMembersPerTeam: number }) {
+	return teamsCount * minMembersPerTeam;
 }

@@ -1,7 +1,7 @@
 import * as R from "remeda";
 import { sql } from "~/db/sql";
 import type { Tables } from "~/db/tables";
-import type { ModeShort, StageId } from "~/modules/in-game-lists";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { parseDBArray } from "~/utils/sql";
 
 const stm = sql.prepare(/* sql */ `

@@ -1,9 +1,7 @@
-import {
-	SPLATOON_3_XP_BADGE_VALUES,
-	findSplatoon3XpBadgeValue,
-} from "~/constants";
 import { sql } from "~/db/sql";
 import invariant from "~/utils/invariant";
+import { SPLATOON_3_XP_BADGE_VALUES } from "../badges-constants";
+import { findSplatoon3XpBadgeValue } from "../badges-utils";
 
 const badgeCodeToIdStm = sql.prepare(/* sql */ `
   select "id"

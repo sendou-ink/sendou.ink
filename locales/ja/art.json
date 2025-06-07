@@ -1,6 +1,4 @@
 {
-	"pendingApproval_one": "モデレーターの承認待ちの作品が {{count}} あります。",
-	"pendingApproval_other": "モデレータの承認待ちの作品が {{count}} あります",
 	"madeBy": "作者: ",
 	"radios.all": "すべて",
 	"radios.madeBy": "作成した人: ",
@@ -24,5 +22,7 @@
 	"forms.tags.addNew": "新規作成してください。",
 	"forms.tags.addNew.placeholder": "新しいタグを作成",
 	"forms.tags.searchExisting.placeholder": "既存のタグを検索する",
-	"forms.tags.maxReached": "タグの最大数に到達しました"
+	"forms.tags.maxReached": "タグの最大数に到達しました",
+	"delete.title": "",
+	"unlink.title": ""
 }

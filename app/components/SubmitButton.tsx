@@ -1,10 +1,11 @@
 import { type FetcherWithComponents, useNavigation } from "@remix-run/react";
-import { Button, type ButtonProps } from "./Button";
+import { SendouButton, type SendouButtonProps } from "./elements/Button";
 
-interface SubmitButtonProps extends ButtonProps {
+interface SubmitButtonProps extends SendouButtonProps {
 	/** If the page has multiple forms you can pass in fetcher.state to differentiate when this SubmitButton should be in submitting state */
 	state?: FetcherWithComponents<any>["state"];
 	_action?: string;
+	testId?: string;
 }
 
 export function SubmitButton({
@@ -33,15 +34,15 @@ export function SubmitButton({
 	};
 
 	return (
-		<Button
+		<SendouButton
 			{...rest}
-			disabled={rest.disabled || isSubmitting}
+			isDisabled={rest.isDisabled || isSubmitting}
 			type="submit"
 			name={name()}
 			value={value()}
 			data-testid={testId ?? "submit-button"}
 		>
 			{children}
-		</Button>
+		</SendouButton>
 	);
 }

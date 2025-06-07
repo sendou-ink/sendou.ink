@@ -19,7 +19,6 @@
 	"privateNote.sentiment.NEUTRAL": "中立",
 	"privateNote.sentiment.NEGATIVE": "负面",
 	"privateNote.delete.header": "要删除关于 {{name}} 的笔记吗？",
-
 	"front.cities.la": "洛杉矶",
 	"front.cities.nyc": "纽约",
 	"front.cities.paris": "巴黎",
@@ -51,7 +50,6 @@
 	"front.seasonOpen": "赛季 {{nth}} 进行中",
 	"front.preview": "预览当前匹配中的队伍",
 	"front.preview.explanation": "该功能仅对sendou.ink的patron支持者开放",
-
 	"settings.maps.header": "地图和模式",
 	"settings.maps.avoid": "避开",
 	"settings.maps.prefer": "偏好",
@@ -78,7 +76,6 @@
 	"settings.trusted.trustedExplanation": "信任的用户可以将您直接加入SendouQ小队或比赛队伍里。将对方移除后，需要通过对方的邀请链接才能加入。",
 	"settings.trusted.noTrustedExplanation": "您目前没有信任的用户。您可以在通过邀请链接加入其他用户的SendouQ小队或比赛队伍时信任他们。信任的用户可以将您直接加入SendouQ小队或比赛队伍里。",
 	"settings.trusted.teamExplanation": "除了以上用户，您的队伍 <2>{{name}}</2> 的成员也可以直接邀请您。",
-
 	"looking.joiningGroupError": "您需要离开当前小队才能加入其他小队",
 	"looking.goToSettingsPrompt": "请在设置页面设置您的武器池以及语音状态",
 	"looking.inactiveGroup.soon": "小队将被标记为不活跃。要继续匹配吗？",
@@ -107,7 +104,9 @@
 	"looking.groups.actions.goBack": "返回",
 	"looking.groups.adder.quickAdd": "快速添加",
 	"looking.groups.adder.error": "该用户已加入其他小队",
+	"looking.groups.adder.others": "",
 	"looking.groups.adder.inviteLink": "邀请链接",
+	"looking.groups.adder.select": "",
 	"looking.groups.editNote": "编辑笔记",
 	"looking.groups.addNote": "添加笔记",
 	"looking.replay": "重赛",
@@ -120,7 +119,6 @@
 	"looking.allTiers": "所有段位",
 	"looking.joinQPrompt": "参加匹配以寻找小队",
 	"looking.range.or": "或",
-
 	"match.header": "对战 #{{number}}",
 	"match.spInfo": "SP会在双方提交相同的比分后改变",
 	"match.dispute.button": "分歧？",
@@ -163,14 +161,11 @@
 	"match.outcome.loss": "负",
 	"match.screen.ban": "本次对战禁止使用特殊武器为 {{special}} 的武器",
 	"match.screen.allowed": "本次对战允许使用特殊武器为 {{special}} 的武器",
-
 	"preparing.joinQ": "开始匹配",
-
 	"tiers.currentCriteria": "当前规则",
 	"tiers.info.p1": "比如说，Leviathan是前5%的玩家，Diamond是前15%的玩家。",
 	"tiers.info.p2": "请注意：在排行榜上的玩家数量大于 {{usersMin}} 之前，没有人能获得Leviathan段位。队伍排行榜则需要至少 {{teamsMin}} 支队伍。",
 	"tiers.info.p3": "每个段位都有一个+段位，比如 BRONZE+。这表示您是该段位内前50%的玩家。",
-
 	"streams.noStreams": "当前没有直播中的对决",
 	"streams.ownStreamInfo": "没有显示您的直播？请确保您绑定了您的Twitch账号，且当前直播游戏为Splatoon 3。",
 	"streams.ownStreamInfo.linkText": "查看常见问题与解答以获取更多如何绑定Twitch账号的信息。"

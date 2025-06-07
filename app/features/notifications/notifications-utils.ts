@@ -85,3 +85,25 @@ export const notificationLink = (notification: Notification) => {
 			assertUnreachable(notification);
 	}
 };
+
+/** Takes the `meta` object of a notification and transforms it (if needed) to show the translated string to user */
+export const mapMetaForTranslation = (
+	notification: Notification,
+	language: string,
+) => {
+	if (notification.type === "SCRIM_SCHEDULED") {
+		return {
+			...notification.meta,
+			timeString: notification.meta.at // TODO: after two weeks this check can be removed (all notifications will have `at`)
+				? new Date(notification.meta.at).toLocaleString(language, {
+						day: "numeric",
+						month: "numeric",
+						hour: "numeric",
+						minute: "numeric",
+					})
+				: undefined,
+		};
+	}
+
+	return notification.meta;
+};

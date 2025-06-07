@@ -28,14 +28,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 		if (!event) return;
 
-		// special tags that are added automatically
-		const tags = event?.tags?.filter((tag) => tag !== "BADGE");
-
-		if (!event?.tournamentId) return { ...event, tags, tournament: null };
+		if (!event?.tournamentId) return { ...event, tournament: null };
 
 		return {
 			...event,
-			tags,
 			tournament: await tournamentData({
 				tournamentId: event.tournamentId,
 				user,

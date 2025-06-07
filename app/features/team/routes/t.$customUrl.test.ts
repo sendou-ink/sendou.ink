@@ -104,7 +104,7 @@ describe("Secondary teams", () => {
 
 		await editTeamAction(
 			{
-				_action: "DELETE",
+				_action: "DELETE_TEAM",
 			},
 			{
 				user: "regular",
@@ -184,5 +184,96 @@ describe("Secondary teams", () => {
 
 		const { secondaryTeams } = await loadTeams();
 		expect(secondaryTeams).toHaveLength(2);
+	});
+
+	const createTeamWithImage = async (imageType: "avatar" | "banner") => {
+		await createTeamAction({ name: "Team 1" }, { user: "regular" });
+
+		const imageId = await db
+			.insertInto("UnvalidatedUserSubmittedImage")
+			.values({
+				url: `https://example.com/test-${imageType}.jpg`,
+				submitterUserId: REGULAR_USER_TEST_ID,
+			})
+			.returning("id")
+			.executeTakeFirstOrThrow();
+
+		const imageField = imageType === "avatar" ? "avatarImgId" : "bannerImgId";
+		await db
+			.updateTable("AllTeam")
+			.set({ [imageField]: imageId.id })
+			.where("customUrl", "=", "team-1")
+			.execute();
+
+		return imageId.id;
+	};
+
+	it("deletes team avatar", async () => {
+		const imageId = await createTeamWithImage("avatar");
+
+		await editTeamAction(
+			{ _action: "DELETE_AVATAR" },
+			{ user: "regular", params: { customUrl: "team-1" } },
+		);
+
+		const team = await db
+			.selectFrom("Team")
+			.select("avatarImgId")
+			.where("customUrl", "=", "team-1")
+			.executeTakeFirst();
+
+		expect(team?.avatarImgId).toBeNull();
+
+		const image = await db
+			.selectFrom("UnvalidatedUserSubmittedImage")
+			.select("id")
+			.where("id", "=", imageId)
+			.executeTakeFirst();
+
+		expect(image).toBeUndefined();
+	});
+
+	it("deletes team banner", async () => {
+		const imageId = await createTeamWithImage("banner");
+
+		await editTeamAction(
+			{ _action: "DELETE_BANNER" },
+			{ user: "regular", params: { customUrl: "team-1" } },
+		);
+
+		const team = await db
+			.selectFrom("Team")
+			.select("bannerImgId")
+			.where("customUrl", "=", "team-1")
+			.executeTakeFirst();
+
+		expect(team?.bannerImgId).toBeNull();
+
+		const image = await db
+			.selectFrom("UnvalidatedUserSubmittedImage")
+			.select("id")
+			.where("id", "=", imageId)
+			.executeTakeFirst();
+
+		expect(image).toBeUndefined();
+	});
+
+	it("only team owner can delete images", async () => {
+		await createTeamWithImage("avatar");
+
+		await db
+			.insertInto("User")
+			.values({
+				discordName: "otheruser",
+				discordId: "999",
+			})
+			.execute();
+
+		const response = await editTeamAction(
+			{ _action: "DELETE_AVATAR" },
+			{ user: "regular", params: { customUrl: "team-1" } },
+		);
+
+		expect(response.status).toBe(302);
 	});
 });

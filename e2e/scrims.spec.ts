@@ -1,5 +1,5 @@
 import test, { expect } from "@playwright/test";
-import { ADMIN_ID } from "~/constants";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
 import {
 	impersonate,
 	navigate,
@@ -91,5 +91,32 @@ test.describe("Scrims", () => {
 		await page.getByRole("link", { name: "Contact" }).click();
 
 		await expect(page.getByText("Scheduled scrim")).toBeVisible();
+	});
+
+	test("cancels a scrim and shows canceled status", async ({ page }) => {
+		await seed(page);
+		await impersonate(page, ADMIN_ID);
+		await navigate({
+			page,
+			url: scrimsPage(),
+		});
+
+		// Accept the first available scrim request to make it possible to access the scrim details page
+		await page.getByRole("button", { name: "Accept" }).first().click();
+		await page.getByTestId("confirm-button").click();
+
+		await page.getByRole("link", { name: "Contact" }).click();
+
+		// Cancel the scrim
+		await page.getByRole("button", { name: "Cancel" }).click();
+		await page.getByLabel("Reason").fill("Oops something came up");
+		await page.getByTestId("cancel-scrim-submit").click();
+
+		// Go back to the scrims page and check if the scrim is marked as canceled
+		await navigate({
+			page,
+			url: scrimsPage(),
+		});
+		await expect(page.getByText("Canceled")).toBeVisible();
 	});
 });

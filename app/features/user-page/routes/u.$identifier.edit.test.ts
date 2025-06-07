@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { dbInsertUsers, dbReset, wrappedAction } from "~/utils/Test";
 import type { userEditActionSchema } from "../user-page-schemas.server";
 import { action as editUserProfileAction } from "./u.$identifier.edit";

@@ -1,4 +1,4 @@
-import { ADMIN_ID, STAFF_IDS } from "~/constants";
+import { ADMIN_ID, STAFF_IDS } from "~/features/admin/admin-constants";
 
 export function isAdmin(user?: { id: number }) {
 	return user?.id === ADMIN_ID;

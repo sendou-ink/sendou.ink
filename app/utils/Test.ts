@@ -2,9 +2,9 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { Params } from "@remix-run/react";
 import { expect } from "vitest";
 import type { z } from "zod";
-import { ADMIN_ID } from "~/constants";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import { db, sql } from "~/db/sql";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { SESSION_KEY } from "~/features/auth/core/authenticator.server";
 import { authSessionStorage } from "~/features/auth/core/session.server";
 

@@ -88,7 +88,7 @@ export default function UserPageLayout() {
 						{t("common:results")} ({allResultsCount})
 					</SubNavLink>
 				)}
-				{data.user.buildsCount > 0 && (
+				{(data.user.buildsCount > 0 || isOwnPage) && (
 					<SubNavLink
 						to={userBuildsPage(data.user)}
 						prefetch="intent"
@@ -97,12 +97,12 @@ export default function UserPageLayout() {
 						{t("common:pages.builds")} ({data.user.buildsCount})
 					</SubNavLink>
 				)}
-				{data.user.vodsCount > 0 && (
+				{(data.user.vodsCount > 0 || isOwnPage) && (
 					<SubNavLink to={userVodsPage(data.user)}>
 						{t("common:pages.vods")} ({data.user.vodsCount})
 					</SubNavLink>
 				)}
-				{data.user.artCount > 0 && (
+				{(data.user.artCount > 0 || isOwnPage) && (
 					<SubNavLink to={userArtPage(data.user)} end={false}>
 						{t("common:pages.art")} ({data.user.artCount})
 					</SubNavLink>

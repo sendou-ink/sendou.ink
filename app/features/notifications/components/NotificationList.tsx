@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
 import type { LoaderNotification } from "~/components/layout/NotificationPopover";
 import {
+	mapMetaForTranslation,
 	notificationLink,
 	notificationNavIcon,
 } from "~/features/notifications/notifications-utils";
@@ -20,7 +21,7 @@ export function NotificationItem({
 }: {
 	notification: LoaderNotification;
 }) {
-	const { t } = useTranslation(["common"]);
+	const { t, i18n } = useTranslation(["common"]);
 
 	return (
 		<Link to={notificationLink(notification)} className={styles.item}>
@@ -28,7 +29,10 @@ export function NotificationItem({
 				{!notification.seen ? <div className={styles.unseenDot} /> : null}
 			</NotificationImage>
 			<div className={styles.itemHeader}>
-				{t(`common:notifications.text.${notification.type}`, notification.meta)}
+				{t(
+					`common:notifications.text.${notification.type}`,
+					mapMetaForTranslation(notification, i18n.language),
+				)}
 			</div>
 			<div className={styles.timestamp}>
 				{formatDistance(

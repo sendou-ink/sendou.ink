@@ -106,6 +106,16 @@ async function validateMigration(
 	trx: Transaction<DB>,
 	args: { newUserId: number; oldUserId: number },
 ) {
+	const newUserTeam = await trx
+		.selectFrom("TournamentTeamMember")
+		.select(["tournamentTeamId"])
+		.where("userId", "=", args.newUserId)
+		.executeTakeFirst();
+
+	if (newUserTeam) {
+		return "new user is in a tournament team";
+	}
+
 	const oldUserCurrentTeam = await trx
 		.selectFrom("TeamMember")
 		.select(["teamId"])

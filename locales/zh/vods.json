@@ -7,6 +7,8 @@
 	"gameCount": "第 {{count}} 场比赛",
 	"minShort": "分",
 	"secShort": "秒",
+	"forms.title.create": "",
+	"forms.title.edit": "",
 	"forms.title.youtubeUrl": "YouTube链接",
 	"forms.title.videoTitle": "视频标题",
 	"forms.title.videoDate": "视频日期",
@@ -20,6 +22,7 @@
 	"forms.title.weapon": "武器",
 	"forms.action.addMatch": "添加比赛",
 	"forms.action.deleteMatch": "删除比赛",
+	"noVods": "",
 	"gainPerms": "请在我们的Discord服务器的helpdesk频道申请获取上传视频的资格。",
 	"deleteConfirm": "确认要删除 '{{title}}' 吗？"
 }

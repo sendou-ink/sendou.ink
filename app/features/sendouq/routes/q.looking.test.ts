@@ -5,7 +5,7 @@ import type { UserMapModePreferences } from "~/db/tables";
 import type { matchSchema } from "~/features/sendouq-match/q-match-schemas";
 import { action as rawMatchAction } from "~/features/sendouq-match/routes/q.match.$id";
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
-import { stageIds } from "~/modules/in-game-lists";
+import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import {
 	dbInsertUsers,
 	dbReset,

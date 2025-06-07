@@ -19,19 +19,20 @@ import {
 	SQUID_BEAKON_ID,
 	TORPEDO_ID,
 	WAVE_BREAKER_ID,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/weapon-ids";
 import {
 	SUPER_CHUMP_ID,
 	TRIPLE_SPLASHDOWN_ID,
 } from "~/modules/in-game-lists/weapon-ids";
-import { damageTypeTranslationString } from "~/utils/i18next";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	OBJECT_DAMAGE_CALCULATOR_URL,
 	mainWeaponImageUrl,
+	mainWeaponVariantImageUrl,
 	modeImageUrl,
 	navIconUrl,
 	specialWeaponImageUrl,
+	specialWeaponVariantImageUrl,
 	subWeaponImageUrl,
 } from "~/utils/urls";
 import { useObjectDamage } from "../calculator-hooks";
@@ -193,11 +194,7 @@ function DamageTypesSelect({
 			{allDamageTypes.map((damageType) => {
 				return (
 					<option key={damageType} value={damageType}>
-						{t(
-							damageTypeTranslationString({
-								damageType,
-							}) as any,
-						)}
+						{t(`analyzer:damage.${damageType}` as any)}
 					</option>
 				);
 			})}
@@ -211,7 +208,10 @@ const damageReceiverImages: Record<DamageReceiver, string> = {
 	Chariot: specialWeaponImageUrl(CRAB_TANK_ID),
 	Gachihoko_Barrier: modeImageUrl("RM"),
 	GreatBarrier_Barrier: specialWeaponImageUrl(BIG_BUBBLER_ID),
-	GreatBarrier_WeakPoint: specialWeaponImageUrl(BIG_BUBBLER_ID),
+	GreatBarrier_WeakPoint: specialWeaponVariantImageUrl(
+		BIG_BUBBLER_ID,
+		"weakpoints",
+	),
 	NiceBall_Armor: specialWeaponImageUrl(BOOYAH_BOMB_ID),
 	ShockSonar: specialWeaponImageUrl(WAVE_BREAKER_ID),
 	Wsb_Flag: subWeaponImageUrl(SQUID_BEAKON_ID),
@@ -221,6 +221,18 @@ const damageReceiverImages: Record<DamageReceiver, string> = {
 	BulletUmbrellaCanopyWide: mainWeaponImageUrl(6010),
 	BulletUmbrellaCanopyCompact: mainWeaponImageUrl(6020),
 	BulletShelterCanopyFocus: mainWeaponImageUrl(6030),
+	BulletUmbrellaCanopyNormal_Launched: mainWeaponVariantImageUrl(
+		6000,
+		"launched",
+	),
+	BulletUmbrellaCanopyWide_Launched: mainWeaponVariantImageUrl(
+		6010,
+		"launched",
+	),
+	BulletShelterCanopyFocus_Launched: mainWeaponVariantImageUrl(
+		6030,
+		"launched",
+	),
 	Firework: specialWeaponImageUrl(SUPER_CHUMP_ID),
 	BulletPogo: specialWeaponImageUrl(TRIPLE_SPLASHDOWN_ID),
 };
@@ -318,11 +330,7 @@ function DamageReceiversGrid({
 							})}
 						</div>
 						<div className="stack horizontal sm justify-center items-center">
-							{t(
-								damageTypeTranslationString({
-									damageType: damage.type,
-								}) as any,
-							)}
+							{t(`analyzer:damage.${damage.type}` as any)}
 							{damage.objectShredder && <Ability ability="OS" size="TINY" />}
 						</div>
 					</div>

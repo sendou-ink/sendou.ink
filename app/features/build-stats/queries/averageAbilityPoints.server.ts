@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { Ability, MainWeaponId } from "~/modules/in-game-lists";
+import type { Ability, MainWeaponId } from "~/modules/in-game-lists/types";
 
 // TODO: could consider removing private builds from this
 const query = (includeWeaponId: boolean) => /* sql */ `

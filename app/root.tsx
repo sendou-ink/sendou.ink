@@ -35,7 +35,6 @@ import { Catcher } from "./components/Catcher";
 import { SendouToastRegion, toastQueue } from "./components/elements/Toast";
 import { Layout } from "./components/layout";
 import { Ramp } from "./components/ramp/Ramp";
-import { CUSTOMIZED_CSS_VARS_NAME } from "./constants";
 import { getUser } from "./features/auth/core/user.server";
 import { userIsBanned } from "./features/ban/core/banned.server";
 import {
@@ -280,6 +279,8 @@ function usePreloadTranslation() {
 	}, []);
 }
 
+const CUSTOMIZED_CSS_VARS_NAME = "css";
+
 function useCustomizedCSSVars() {
 	const matches = useMatches();
 
@@ -291,7 +292,10 @@ function useCustomizedCSSVars() {
 						string,
 						string
 					>,
-				).map(([key, value]) => [`--${key}`, value]),
+				).map(([key, value]) => [
+					`--${key}`,
+					`var(--preview-${key}, ${value})`,
+				]),
 			) as React.CSSProperties;
 		}
 	}

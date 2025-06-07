@@ -4,9 +4,10 @@ import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod";
 import { Label } from "~/components/Label";
-import { DateTimeFormField } from "~/components/form/DateTimeFormField";
-import { MyForm } from "~/components/form/MyForm";
+import { DateFormField } from "~/components/form/DateFormField";
+import { SendouForm } from "~/components/form/SendouForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
+import { ToggleFormField } from "~/components/form/ToggleFormField";
 import { nullFilledArray } from "~/utils/arrays";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FormMessage } from "../../../components/FormMessage";
@@ -29,13 +30,18 @@ export const handle: SendouRouteHandle = {
 
 type FormFields = z.infer<typeof scrimsNewActionSchema>;
 
+const DEFAULT_NOT_FOUND_VISIBILITY = {
+	at: null,
+	forAssociation: "PUBLIC",
+} as const;
+
 export default function NewScrimPage() {
 	const { t } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof loader>();
 
 	return (
 		<Main>
-			<MyForm
+			<SendouForm
 				schema={scrimsNewActionSchema}
 				heading={t("scrims:forms.title")}
 				defaultValues={{
@@ -43,10 +49,7 @@ export default function NewScrimPage() {
 					at: new Date(),
 					divs: null,
 					baseVisibility: "PUBLIC",
-					notFoundVisibility: {
-						at: null,
-						forAssociation: "PUBLIC",
-					},
+					notFoundVisibility: DEFAULT_NOT_FOUND_VISIBILITY,
 					from:
 						data.teams.length > 0
 							? { mode: "TEAM", teamId: data.teams[0].id }
@@ -56,14 +59,16 @@ export default function NewScrimPage() {
 										SCRIM.MAX_PICKUP_SIZE_EXCLUDING_OWNER,
 									) as unknown as number[],
 								},
+					managedByAnyone: true,
 				}}
 			>
 				<WithFormField usersTeams={data.teams} />
 
-				<DateTimeFormField<FormFields>
+				<DateFormField<FormFields>
 					label={t("scrims:forms.when.title")}
 					name="at"
 					bottomText={t("scrims:forms.when.explanation")}
+					granularity="minute"
 				/>
 
 				<BaseVisibilityFormField associations={data.associations} />
@@ -77,7 +82,13 @@ export default function NewScrimPage() {
 					name="postText"
 					maxLength={MAX_SCRIM_POST_TEXT_LENGTH}
 				/>
-			</MyForm>
+
+				<ToggleFormField<FormFields>
+					label={t("scrims:forms.managedByAnyone.title")}
+					name="managedByAnyone"
+					bottomText={t("scrims:forms.managedByAnyone.explanation")}
+				/>
+			</SendouForm>
 		</Main>
 	);
 }
@@ -119,22 +130,32 @@ function NotFoundVisibilityFormField({
 	associations,
 }: { associations: ScrimsNewLoaderData["associations"] }) {
 	const { t } = useTranslation(["scrims"]);
+	const baseVisibility = useWatch<FormFields>({
+		name: "baseVisibility",
+	});
 	const date = useWatch<FormFields>({ name: "notFoundVisibility.at" }) ?? "";
 	const methods = useFormContext<FormFields>();
+
+	React.useEffect(() => {
+		if (baseVisibility === "PUBLIC") {
+			methods.setValue("notFoundVisibility", DEFAULT_NOT_FOUND_VISIBILITY);
+		}
+	}, [baseVisibility, methods.setValue]);
 
 	const error = methods.formState.errors.notFoundVisibility;
 
 	const noAssociations =
 		associations.virtual.length === 0 && associations.actual.length === 0;
 
-	if (noAssociations) return null;
+	if (noAssociations || baseVisibility === "PUBLIC") return null;
 
 	return (
 		<div>
 			<div className="stack horizontal sm">
-				<DateTimeFormField<FormFields>
+				<DateFormField<FormFields>
 					label={t("scrims:forms.notFoundVisibility.title")}
 					name="notFoundVisibility.at"
+					granularity="minute"
 				/>
 				{date ? (
 					<div>

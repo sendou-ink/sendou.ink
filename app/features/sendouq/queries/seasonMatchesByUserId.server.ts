@@ -3,7 +3,7 @@ import { sql } from "~/db/sql";
 import type { ParsedMemento, Tables } from "~/db/tables";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { MATCHES_PER_SEASONS_PAGE } from "~/features/user-page/user-page-constants";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { parseDBArray, parseDBJsonArray } from "~/utils/sql";
 

@@ -30,28 +30,13 @@ export function resolvePreparedForTheBracket({
 		anotherBracketIdx,
 		bracket,
 	] of tournament.ctx.settings.bracketProgression.entries()) {
-		const bracketSettingKeysToConsiderForEquivalence: Array<
-			keyof typeof bracket.settings
-		> = [
-			"groupCount",
-			"roundCount",
-			"teamsPerGroup",
-			"thirdPlaceMatch",
-		] as const;
-
 		if (
 			bracket.type === bracketPreparingFor.type &&
 			R.isDeepEqual(
 				bracket.sources?.map((s) => s.bracketIdx),
 				bracketPreparingFor.sources?.map((s) => s.bracketIdx),
 			) &&
-			R.isDeepEqual(
-				R.pick(bracket.settings, bracketSettingKeysToConsiderForEquivalence),
-				R.pick(
-					bracketPreparingFor.settings ?? {},
-					bracketSettingKeysToConsiderForEquivalence,
-				),
-			)
+			R.isDeepEqual(bracket.settings, bracketPreparingFor.settings)
 		) {
 			const bracketMaps = preparedByBracket?.[anotherBracketIdx];
 

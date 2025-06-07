@@ -1,6 +1,6 @@
 import { type LFGType, LFG_TYPES } from "~/db/tables";
 import { languagesUnified } from "~/modules/i18n/config";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { assertUnreachable } from "~/utils/types";
 import { TIERS, type TierName } from "../mmr/mmr-constants";
 

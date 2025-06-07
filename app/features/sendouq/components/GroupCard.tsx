@@ -5,7 +5,7 @@ import * as React from "react";
 import { Flipped } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import { Button, LinkButton } from "~/components/Button";
+import { LinkButton } from "~/components/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, ModeImage, TierImage, WeaponImage } from "~/components/Image";
 import { SubmitButton } from "~/components/SubmitButton";
@@ -24,7 +24,7 @@ import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/le
 import { ordinalToRoundedSp } from "~/features/mmr/mmr-utils";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import { languagesUnified } from "~/modules/i18n/config";
-import type { ModeShort } from "~/modules/in-game-lists";
+import type { ModeShort } from "~/modules/in-game-lists/types";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
@@ -187,7 +187,7 @@ export function GroupCard({
 					<fetcher.Form className="stack items-center" method="post">
 						<input type="hidden" name="targetGroupId" value={group.id} />
 						<SubmitButton
-							size="tiny"
+							size="small"
 							variant={action === "UNLIKE" ? "destructive" : "outlined"}
 							_action={action}
 							state={fetcher.state}
@@ -424,14 +424,14 @@ function MemberNote({
 			<div className="text-lighter text-center text-xs mt-1">
 				{note}{" "}
 				{editable ? (
-					<Button
+					<SendouButton
 						size="miniscule"
 						variant="minimal"
-						onClick={startEditing}
+						onPress={startEditing}
 						className="mt-2 ml-auto"
 					>
 						{t("q:looking.groups.editNote")}
-					</Button>
+					</SendouButton>
 				) : null}
 			</div>
 		);
@@ -440,9 +440,9 @@ function MemberNote({
 	if (!editable) return null;
 
 	return (
-		<Button variant="minimal" size="miniscule" onClick={startEditing}>
+		<SendouButton variant="minimal" size="miniscule" onPress={startEditing}>
 			{t("q:looking.groups.addNote")}
-		</Button>
+		</SendouButton>
 	);
 }
 
@@ -478,13 +478,13 @@ function AddPrivateNoteForm({
 				ref={textareaRef}
 			/>
 			<div className="stack horizontal justify-between">
-				<Button
+				<SendouButton
 					variant="minimal-destructive"
 					size="miniscule"
-					onClick={stopEditing}
+					onPress={stopEditing}
 				>
 					{t("common:actions.cancel")}
-				</Button>
+				</SendouButton>
 				{newValueLegal ? (
 					<SubmitButton
 						_action="UPDATE_NOTE"
@@ -550,7 +550,7 @@ function DeletePrivateNoteForm({
 				["_action", "DELETE_PRIVATE_USER_NOTE"],
 			]}
 		>
-			<SubmitButton variant="minimal-destructive" size="tiny" type="submit">
+			<SubmitButton variant="minimal-destructive" size="small" type="submit">
 				<TrashIcon className="build__icon" />
 			</SubmitButton>
 		</FormWithConfirm>
@@ -677,7 +677,7 @@ function MemberRoleManager({
 						{member.role === "REGULAR" ? (
 							<SubmitButton
 								variant="outlined"
-								size="tiny"
+								size="small"
 								_action="GIVE_MANAGER"
 								state={fetcher.state}
 							>
@@ -687,7 +687,7 @@ function MemberRoleManager({
 						{member.role === "MANAGER" ? (
 							<SubmitButton
 								variant="destructive"
-								size="tiny"
+								size="small"
 								_action="REMOVE_MANAGER"
 								state={fetcher.state}
 							>
@@ -697,7 +697,7 @@ function MemberRoleManager({
 						{enableKicking && member.id !== loggedInUser?.id ? (
 							<SubmitButton
 								variant="destructive"
-								size="tiny"
+								size="small"
 								_action="KICK_FROM_GROUP"
 								state={fetcher.state}
 							>

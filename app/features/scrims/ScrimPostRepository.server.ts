@@ -1,17 +1,16 @@
 import { sub } from "date-fns";
 import type { Insertable } from "kysely";
 import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
-import { nanoid } from "nanoid";
 import type { Tables, TablesInsertable } from "~/db/tables";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import { shortNanoid } from "~/utils/id";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
-import { INVITE_CODE_LENGTH } from "../../constants";
 import { db } from "../../db/sql";
 import invariant from "../../utils/invariant";
 import type { Unwrapped } from "../../utils/types";
 import type { AssociationVisibility } from "../associations/associations-types";
 import * as Scrim from "./core/Scrim";
-import type { ScrimPost } from "./scrims-types";
+import type { ScrimPost, ScrimPostUser } from "./scrims-types";
 import { getPostRequestCensor, parseLutiDiv } from "./scrims-utils";
 
 type InsertArgs = Pick<
@@ -21,6 +20,7 @@ type InsertArgs = Pick<
 	/** users related to the post other than the author */
 	users: Array<Pick<Insertable<Tables["ScrimPostUser"]>, "userId" | "isOwner">>;
 	visibility: AssociationVisibility | null;
+	managedByAnyone: boolean;
 };
 
 export function insert(args: InsertArgs) {
@@ -38,7 +38,8 @@ export function insert(args: InsertArgs) {
 				teamId: args.teamId,
 				text: args.text,
 				visibility: args.visibility ? JSON.stringify(args.visibility) : null,
-				chatCode: nanoid(INVITE_CODE_LENGTH),
+				chatCode: shortNanoid(),
+				managedByAnyone: args.managedByAnyone ? 1 : 0,
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();
@@ -102,6 +103,10 @@ const baseFindQuery = db
 		"ScrimPost.maxDiv",
 		"ScrimPost.minDiv",
 		"ScrimPost.text",
+		"ScrimPost.managedByAnyone",
+		"ScrimPost.canceledAt",
+		"ScrimPost.canceledByUserId",
+		"ScrimPost.cancelReason",
 		jsonBuildObject({
 			name: eb.ref("Team.name"),
 			customUrl: eb.ref("Team.customUrl"),
@@ -169,9 +174,34 @@ const mapDBRowToScrimPost = (
 		? row.requests.filter((request) => request.isAccepted)
 		: row.requests;
 
-	const ownerIds = row.users
-		.filter((user) => user.isOwner)
-		.map((user) => user.id);
+	const users: ScrimPostUser[] = row.users.map((user) => ({
+		...user,
+		isOwner: Boolean(user.isOwner),
+	}));
+
+	const ownerIds = users.filter((user) => user.isOwner).map((user) => user.id);
+	const managerIds = row.managedByAnyone
+		? users.map((user) => user.id)
+		: ownerIds;
+
+	let canceled: ScrimPost["canceled"] = null;
+	if (row.canceledAt && row.cancelReason) {
+		let cancelingUser = users.find((u) => u.id === row.canceledByUserId);
+		if (!cancelingUser) {
+			const allRequestUsers = requests.flatMap((request) => request.users);
+			const found = allRequestUsers.find((u) => u.id === row.canceledByUserId);
+			if (found) {
+				cancelingUser = { ...found, isOwner: Boolean(found.isOwner) };
+			}
+		}
+		if (cancelingUser) {
+			canceled = {
+				at: row.canceledAt,
+				byUser: cancelingUser,
+				reason: row.cancelReason,
+			};
+		}
+	}
 
 	return {
 		id: row.id,
@@ -202,29 +232,23 @@ const mapDBRowToScrimPost = (
 							avatarUrl: request.team.avatarUrl,
 						}
 					: null,
-				users: request.users.map((user) => {
-					return {
-						...user,
-						isVerified: false,
-						isOwner: Boolean(user.isOwner),
-					};
-				}),
+				users: request.users.map((user) => ({
+					...user,
+					isOwner: Boolean(user.isOwner),
+				})),
 				permissions: {
 					CANCEL: request.users.map((u) => u.id),
 				},
 			};
 		}),
-		users: row.users.map((user) => {
-			return {
-				...user,
-				isVerified: false,
-				isOwner: Boolean(user.isOwner),
-			};
-		}),
+		users,
 		permissions: {
-			MANAGE_REQUESTS: ownerIds,
-			DELETE_POST: ownerIds,
+			MANAGE_REQUESTS: managerIds,
+			DELETE_POST: managerIds,
+			CANCEL: managerIds.concat(requests.at(0)?.users.map((u) => u.id) ?? []),
 		},
+		managedByAnyone: Boolean(row.managedByAnyone),
+		canceled,
 	};
 };
 
@@ -267,5 +291,21 @@ export function deleteRequest(scrimPostRequestId: number) {
 	return db
 		.deleteFrom("ScrimPostRequest")
 		.where("id", "=", scrimPostRequestId)
+		.execute();
+}
+
+export async function cancelScrim(
+	id: number,
+	{ userId, reason }: { userId: number; reason: string },
+) {
+	await db
+		.updateTable("ScrimPost")
+		.set({
+			canceledAt: databaseTimestampNow(),
+			canceledByUserId: userId,
+			cancelReason: reason,
+		})
+		.where("id", "=", id)
+		.where("canceledAt", "is", null)
 		.execute();
 }

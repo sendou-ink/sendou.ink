@@ -23,6 +23,4 @@ dump
 /playwright-report/
 /playwright/.cache/
 
-.vscode
-
 notepad.txt

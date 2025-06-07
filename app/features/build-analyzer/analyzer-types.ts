@@ -3,7 +3,7 @@ import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/types";
 import type { AbilityWithUnknown } from "~/modules/in-game-lists/types";
 import type { DAMAGE_TYPE } from "./analyzer-constants";
 import type { SPECIAL_EFFECTS } from "./core/specialEffects";

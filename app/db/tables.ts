@@ -8,22 +8,20 @@ import type {
 	Updateable,
 } from "kysely";
 import type { AssociationVisibility } from "~/features/associations/associations-types";
-import type {
-	persistedTags,
-	tags,
-} from "~/features/calendar/calendar-constants";
+import type { tags } from "~/features/calendar/calendar-constants";
+import type { CalendarFilters } from "~/features/calendar/calendar-types";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
 import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
-import type { ParticipantResult, SeedOrdering } from "~/modules/brackets-model";
+import type { ParticipantResult } from "~/modules/brackets-model";
 import type {
 	Ability,
 	MainWeaponId,
 	ModeShort,
 	StageId,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/types";
 import type { JSONColumnTypeNullable } from "~/utils/kysely.server";
 
 type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
@@ -31,6 +29,9 @@ type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 	: ColumnType<T, T | undefined, T>;
 
 export type MemberRole = (typeof TEAM_MEMBER_ROLES)[number];
+
+/** In SQLite booleans are presented as 0 (false) and 1 (true) */
+export type DBBoolean = number;
 
 export interface Team {
 	avatarImgId: number | null;
@@ -54,7 +55,7 @@ export interface TeamMember {
 	role: MemberRole | null;
 	teamId: number;
 	userId: number;
-	isMainTeam: number;
+	isMainTeam: DBBoolean;
 }
 
 export interface Art {
@@ -63,7 +64,7 @@ export interface Art {
 	description: string | null;
 	id: GeneratedAlways<number>;
 	imgId: number;
-	isShowcase: Generated<number>;
+	isShowcase: Generated<DBBoolean>;
 }
 
 export interface ArtTag {
@@ -76,6 +77,11 @@ export interface ArtTag {
 export interface ArtUserMetadata {
 	artId: number;
 	userId: number;
+}
+
+export interface TaggedArt {
+	artId: number;
+	tagId: number;
 }
 
 export interface Badge {
@@ -104,7 +110,7 @@ export interface Build {
 	id: GeneratedAlways<number>;
 	modes: JSONColumnTypeNullable<ModeShort[]>;
 	ownerId: number;
-	private: number | null;
+	private: DBBoolean | null;
 	shoesGearSplId: number;
 	title: string;
 	updatedAt: Generated<number>;
@@ -130,7 +136,6 @@ export type CalendarEventAvatarMetadata = {
 	textColor: string;
 };
 
-export type PersistedCalendarEventTag = keyof typeof persistedTags;
 export type CalendarEventTag = keyof typeof tags;
 
 export interface CalendarEvent {
@@ -143,7 +148,7 @@ export interface CalendarEvent {
 	name: string;
 	participantCount: number | null;
 	tags: string | null;
-	hidden: Generated<number>;
+	hidden: Generated<DBBoolean>;
 	tournamentId: number | null;
 	organizationId: number | null;
 	avatarImgId: number | null;
@@ -194,7 +199,7 @@ export interface GroupLike {
 	createdAt: Generated<number>;
 	likerGroupId: number;
 	targetGroupId: number;
-	isRechallenge: number | null;
+	isRechallenge: DBBoolean | null;
 }
 
 type CalculatingSkill = {
@@ -279,6 +284,7 @@ export interface PrivateUserNote {
 	updatedAt: Generated<number>;
 }
 
+/** Log-in links generated via the Lohi Discord bot commands. */
 export interface LogInLink {
 	code: string;
 	expiresAt: number;
@@ -332,12 +338,6 @@ export interface MapResult {
 	wins: number;
 }
 
-export interface Migrations {
-	created_at: string;
-	id: GeneratedAlways<number>;
-	name: string;
-}
-
 export interface PlayerResult {
 	mapLosses: number;
 	mapWins: number;
@@ -381,8 +381,8 @@ export interface PlusVotingResult {
 	score: number;
 	month: number;
 	year: number;
-	wasSuggested: number;
-	passedVoting: number;
+	wasSuggested: DBBoolean;
+	passedVoting: DBBoolean;
 }
 
 export interface ReportedWeapon {
@@ -409,6 +409,7 @@ export interface SkillTeamUser {
 	userId: number;
 }
 
+/** Used for tournament auto-seeding. Calculates off tournament matches same as SP but does not have seasonal resets. */
 export interface SeedingSkill {
 	mu: number;
 	ordinal: number;
@@ -482,6 +483,8 @@ export interface Tournament {
 	rules: string | null;
 	/** Related "parent tournament", the tournament that contains the original sign-ups (for leagues) */
 	parentTournamentId: number | null;
+	/** Is the tournament finalized meaning all the matches are played and TO has locked it making it read-only */
+	isFinalized: Generated<DBBoolean>;
 }
 
 export interface PreparedMaps {
@@ -547,6 +550,7 @@ export interface TournamentMatch {
 	createdAt: Generated<number>;
 }
 
+/** Represents one decision, pick or ban, during tournaments pick/ban (counterpick, ban 2) phase. */
 export interface TournamentMatchPickBanEvent {
 	type: "PICK" | "BAN";
 	stageId: StageId;
@@ -619,9 +623,6 @@ export interface TournamentStageSettings {
 	groupCount?: number;
 	// SWISS
 	roundCount?: number;
-
-	// Not exposed as user setting currently, applies to all brackets except swiss
-	seedOrdering?: SeedOrdering[];
 }
 
 export const TOURNAMENT_STAGE_TYPES = [
@@ -643,6 +644,7 @@ export interface TournamentStage {
 	createdAt: number | null;
 }
 
+/** Tournament sub post, shown in a list of subs available for teams to pick from. */
 export interface TournamentSub {
 	bestWeapons: string;
 	/** 0 = no, 1 = yes, 2 = listen only */
@@ -666,9 +668,9 @@ export interface TournamentTeam {
 	id: GeneratedAlways<number>;
 	inviteCode: string;
 	name: string;
-	prefersNotToHost: Generated<number>;
-	noScreen: Generated<number>;
-	droppedOut: Generated<number>;
+	prefersNotToHost: Generated<DBBoolean>;
+	noScreen: Generated<DBBoolean>;
+	droppedOut: Generated<DBBoolean>;
 	seed: number | null;
 	/** For formats that have many starting brackets, where should the team start? */
 	startingBracketIdx: number | null;
@@ -741,6 +743,7 @@ export interface TournamentBracketProgressionOverride {
 	tournamentId: number;
 }
 
+/** Indicates a user trusts another. Allows direct adding to groups/teams without invite links. */
 export interface TrustRelationship {
 	trustGiverUserId: number;
 	trustReceiverUserId: number;
@@ -751,6 +754,7 @@ export interface UnvalidatedUserSubmittedImage {
 	id: GeneratedAlways<number>;
 	submitterUserId: number;
 	url: string;
+	/** When was the image validated? If `null` should be hidden from other users. */
 	validatedAt: number | null;
 }
 
@@ -770,6 +774,7 @@ export type Preference = "AVOID" | "PREFER";
 export interface UserMapModePreferences {
 	modes: Array<{
 		mode: ModeShort;
+		/** Users opinion on the mode, `undefined` means neutral */
 		preference?: Preference;
 	}>;
 	pool: Array<{
@@ -802,6 +807,7 @@ export type BuildSort = (typeof BUILD_SORT_IDENTIFIERS)[number];
 export interface UserPreferences {
 	disableBuildAbilitySorting?: boolean;
 	disallowScrimPickupsFromUntrusted?: boolean;
+	defaultCalendarFilters?: CalendarFilters;
 }
 
 export interface User {
@@ -825,15 +831,15 @@ export interface User {
 	favoriteBadgeIds: ColumnType<number[] | null, string | null, string | null>;
 	id: GeneratedAlways<number>;
 	inGameName: string | null;
-	isArtist: Generated<number | null>;
-	isVideoAdder: Generated<number | null>;
-	isTournamentOrganizer: Generated<number | null>;
+	isArtist: Generated<DBBoolean | null>;
+	isVideoAdder: Generated<DBBoolean | null>;
+	isTournamentOrganizer: Generated<DBBoolean | null>;
 	languages: string | null;
 	motionSens: number | null;
 	patronSince: number | null;
 	patronTier: number | null;
 	patronTill: number | null;
-	showDiscordUniqueName: Generated<number>;
+	showDiscordUniqueName: Generated<DBBoolean>;
 	stickSens: number | null;
 	twitch: string | null;
 	bsky: string | null;
@@ -843,9 +849,11 @@ export interface User {
 	mapModePreferences: JSONColumnTypeNullable<UserMapModePreferences>;
 	qWeaponPool: JSONColumnTypeNullable<QWeaponPool[]>;
 	plusSkippedForSeasonNth: number | null;
-	noScreen: Generated<number>;
+	noScreen: Generated<DBBoolean>;
 	buildSorting: JSONColumnTypeNullable<BuildSort[]>;
 	preferences: JSONColumnTypeNullable<UserPreferences>;
+	/** User creation date. Can be null because we did not always save this. */
+	createdAt: number | null;
 }
 
 /** Represents User joined with PlusTier table */
@@ -867,7 +875,7 @@ export interface UserSubmittedImage {
 
 export interface UserWeapon {
 	createdAt: Generated<number>;
-	isFavorite: Generated<number>;
+	isFavorite: Generated<DBBoolean>;
 	order: number;
 	userId: number;
 	weaponSplId: MainWeaponId;
@@ -940,6 +948,14 @@ export interface ScrimPost {
 	chatCode: string;
 	/** Refers to the team looking for the team (can also be a pick-up) */
 	teamId: number | null;
+	/** Indicates if anyone in the post can manage it */
+	managedByAnyone: DBBoolean;
+	/** When the scrim was canceled */
+	canceledAt: number | null;
+	/** User id who canceled the scrim */
+	canceledByUserId: number | null;
+	/** Reason for canceling the scrim */
+	cancelReason: string | null;
 	createdAt: GeneratedAlways<number>;
 	updatedAt: Generated<number>;
 }
@@ -955,15 +971,15 @@ export interface ScrimPostRequest {
 	id: GeneratedAlways<number>;
 	scrimPostId: number;
 	teamId: number | null;
-	isAccepted: Generated<number>;
+	isAccepted: Generated<DBBoolean>;
 	createdAt: GeneratedAlways<number>;
 }
 
 export interface ScrimPostRequestUser {
 	scrimPostRequestId: number;
+	/** User that made the request */
 	userId: number;
-	/** User made the request */
-	isOwner: number;
+	isOwner: DBBoolean;
 }
 
 export interface Association {
@@ -990,7 +1006,7 @@ export interface Notification {
 export interface NotificationUser {
 	notificationId: number;
 	userId: number;
-	seen: Generated<number>;
+	seen: Generated<DBBoolean>;
 }
 
 export interface NotificationSubscription {
@@ -1001,6 +1017,7 @@ export interface NotificationSubscription {
 	};
 }
 
+/** A subscription of user's browser indicating where push notifications can be sent to. */
 export interface NotificationUserSubscription {
 	id: GeneratedAlways<number>;
 	userId: number;
@@ -1017,9 +1034,11 @@ export interface DB {
 	Art: Art;
 	ArtTag: ArtTag;
 	ArtUserMetadata: ArtUserMetadata;
+	TaggedArt: TaggedArt;
 	Badge: Badge;
 	BadgeManager: BadgeManager;
 	BadgeOwner: BadgeOwner;
+	TournamentBadgeOwner: TournamentBadgeOwner;
 	Build: Build;
 	BuildAbility: BuildAbility;
 	BuildWeapon: BuildWeapon;
@@ -1049,13 +1068,11 @@ export interface DB {
 	SkillTeamUser: SkillTeamUser;
 	SeedingSkill: SeedingSkill;
 	SplatoonPlayer: SplatoonPlayer;
-	TaggedArt: TaggedArt;
 	Team: Team;
 	TeamMember: TeamMember;
 	TeamMemberWithSecondary: TeamMember;
 	Tournament: Tournament;
 	TournamentStaff: TournamentStaff;
-	TournamentBadgeOwner: TournamentBadgeOwner;
 	TournamentGroup: TournamentGroup;
 	TournamentMatch: TournamentMatch;
 	TournamentMatchPickBanEvent: TournamentMatchPickBanEvent;

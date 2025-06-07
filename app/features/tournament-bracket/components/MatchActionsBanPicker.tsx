@@ -10,11 +10,8 @@ import { CrossIcon } from "~/components/icons/Cross";
 import type { TournamentRoundMaps } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import {
-	type ModeShort,
-	type StageId,
-	modesShort,
-} from "~/modules/in-game-lists";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { stageImageUrl } from "~/utils/urls";
 import * as PickBan from "../core/PickBan";

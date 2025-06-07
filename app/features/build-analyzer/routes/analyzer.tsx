@@ -13,27 +13,27 @@ import { Main } from "~/components/Main";
 import { Table } from "~/components/Table";
 import { Tab, Tabs } from "~/components/Tabs";
 import { BeakerIcon } from "~/components/icons/Beaker";
-import { MAX_AP } from "~/constants";
 import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import type { Ability as AbilityType } from "~/modules/in-game-lists";
+import { abilitiesShort } from "~/modules/in-game-lists/abilities";
+import type { Ability as AbilityType } from "~/modules/in-game-lists/types";
+import type {
+	BuildAbilitiesTupleWithUnknown,
+	MainWeaponId,
+	SubWeaponId,
+} from "~/modules/in-game-lists/types";
+import { isAbility } from "~/modules/in-game-lists/utils";
 import {
 	ANGLE_SHOOTER_ID,
 	BIG_BUBBLER_ID,
-	type BuildAbilitiesTupleWithUnknown,
 	INK_MINE_ID,
 	INK_STORM_ID,
 	KILLER_WAIL_ID,
-	type MainWeaponId,
 	POINT_SENSOR_ID,
-	type SubWeaponId,
 	TORPEDO_ID,
 	TOXIC_MIST_ID,
-	abilitiesShort,
-	isAbility,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/weapon-ids";
 import { atOrError, nullFilledArray } from "~/utils/arrays";
-import { damageTypeTranslationString } from "~/utils/i18next";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -49,6 +49,7 @@ import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
 import { metaTags } from "../../../utils/remix";
 import {
+	MAX_AP,
 	MAX_LDE_INTENSITY,
 	damageTypeToWeaponType,
 } from "../analyzer-constants";
@@ -1604,10 +1605,8 @@ function DamageTable({
 								: val.value;
 
 						const typeRowName = damageIsSubWeaponDamage(val)
-							? (`weapons:SUB_${val.subWeaponId}` as const)
-							: damageTypeTranslationString({
-									damageType: val.type,
-								});
+							? `weapons:SUB_${val.subWeaponId}`
+							: `analyzer:damage.${val.type}`;
 
 						const comparisonVal = comparisonValues?.[i];
 

@@ -1,7 +1,11 @@
 import * as R from "remeda";
 import { sql } from "~/db/sql";
 import type { Tables } from "~/db/tables";
-import type { MainWeaponId, ModeShort, StageId } from "~/modules/in-game-lists";
+import type {
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "~/modules/in-game-lists/types";
 import { parseDBArray, parseDBJsonArray } from "~/utils/sql";
 import { weaponIdToArrayWithAlts } from "../../../modules/in-game-lists/weapon-ids";
 import { VODS_PAGE_BATCH_SIZE } from "../vods-constants";

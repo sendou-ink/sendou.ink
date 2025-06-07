@@ -74,12 +74,6 @@ for (const file of fileNames) {
 				file,
 			);
 
-			validateNoExtraKeysInOther({
-				english: getKeysWithoutSuffix(englishContent, lang, file),
-				other: otherLanguageContentKeys,
-				lang,
-				file,
-			});
 			validateVariables({
 				english: englishContent,
 				other: otherLanguageContent,
@@ -129,26 +123,6 @@ const translationProgressPath = path.join(
 );
 
 fs.writeFileSync(translationProgressPath, markdown);
-
-function validateNoExtraKeysInOther({
-	english,
-	other,
-	lang,
-	file,
-}: {
-	english: string[];
-	other: string[];
-	lang: string;
-	file: string;
-}) {
-	const validKeys = english;
-
-	for (const key of other) {
-		if (validKeys.includes(key)) continue;
-
-		throw new Error(`unknown key in ${lang}/${file}: ${key}`);
-	}
-}
 
 function validateVariables({
 	english,
@@ -219,7 +193,11 @@ function getKeysWithoutSuffix(
 	const foundSuffixKeys = new Set<string>();
 	const keys = [];
 
-	for (const key of Object.keys(translations)) {
+	for (const [key, value] of Object.entries(translations)) {
+		if (value === "") {
+			continue; // Consider key missing if untranslated
+		}
+
 		const suffix = KNOWN_SUFFIXES.find((sfx) => key.endsWith(sfx));
 		if (!suffix) {
 			if (foundSuffixKeys.has(key)) {

@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 import type { AlertVariation } from "~/components/Alert";
 import { Alert } from "~/components/Alert";
 import { Badge } from "~/components/Badge";
-import { Button } from "~/components/Button";
 import { DateInput } from "~/components/DateInput";
 import { Divider } from "~/components/Divider";
 import { FormMessage } from "~/components/FormMessage";
@@ -17,13 +16,14 @@ import { Main } from "~/components/Main";
 import { MapPoolSelector } from "~/components/MapPoolSelector";
 import { RequiredHiddenInput } from "~/components/RequiredHiddenInput";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
 import { CrossIcon } from "~/components/icons/Cross";
 import { TrashIcon } from "~/components/icons/Trash";
 import type { CalendarEventTag, Tables } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import type { RankedModeShort } from "~/modules/in-game-lists";
+import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import { isDefined } from "~/utils/arrays";
 import {
 	databaseTimestampToDate,
@@ -159,7 +159,7 @@ function TemplateTournamentForm() {
 							</option>
 						))}
 					</select>
-					<SubmitButton disabled={!eventId}>Use template</SubmitButton>
+					<SubmitButton isDisabled={!eventId}>Use template</SubmitButton>
 				</Form>
 			</div>
 			<hr />
@@ -279,14 +279,14 @@ function EventForm() {
 					/>
 				</div>
 			) : null}
-			<Button
+			<SendouButton
 				className="mt-4"
-				onClick={handleSubmit}
-				disabled={submitButtonDisabled()}
-				testId="submit-button"
+				onPress={handleSubmit}
+				isDisabled={submitButtonDisabled()}
+				data-testid="submit-button"
 			>
 				{t("actions.submit")}
-			</Button>
+			</SendouButton>
 		</Form>
 	);
 }
@@ -406,9 +406,9 @@ function AddButton({ onAdd, id }: { onAdd: () => void; id?: string }) {
 	const { t } = useTranslation();
 
 	return (
-		<Button size="tiny" variant="outlined" onClick={onAdd} id={id}>
+		<SendouButton size="small" variant="outlined" onPress={onAdd} id={id}>
 			{t("actions.add")}
-		</Button>
+		</SendouButton>
 	);
 }
 
@@ -509,9 +509,9 @@ function DatesInput({ allowMultiDate }: { allowMultiDate?: boolean }) {
 									/>
 									{/* "Remove" button */}
 									{datesCount > 1 && (
-										<Button
-											size="tiny"
-											onClick={() => {
+										<SendouButton
+											size="small"
+											onPress={() => {
 												setDatesInputState((current) =>
 													current.filter((e) => e.key !== key),
 												);
@@ -519,8 +519,7 @@ function DatesInput({ allowMultiDate }: { allowMultiDate?: boolean }) {
 											aria-controls={`date-input-${key}`}
 											aria-label={t("common:actions.remove")}
 											aria-describedby={`date-input-${key}-label`}
-											title={t("common:actions.remove")}
-											icon={<CrossIcon />}
+											icon={<CrossIcon title={t("common:actions.remove")} />}
 											variant="minimal-destructive"
 										/>
 									)}
@@ -584,9 +583,9 @@ function TagsAdder() {
 	const [tags, setTags] = React.useState(baseEvent?.tags ?? []);
 	const id = React.useId();
 
-	const tagsForSelect = CALENDAR_EVENT.PERSISTED_TAGS.filter(
+	const tagsForSelect = CALENDAR_EVENT.TAGS.filter(
 		(tag) => !tags.includes(tag),
-	);
+	).filter((tag) => tag !== "SZ" && tag !== "TW"); // TODO: these are now added automatically, remove in migration?
 
 	return (
 		<div className="stack sm">
@@ -601,7 +600,6 @@ function TagsAdder() {
 					id={id}
 					className="calendar-new__select"
 					onChange={(e) =>
-						// @ts-expect-error TODO: fix this (5.5 version)
 						setTags([...tags, e.target.value as CalendarEventTag])
 					}
 				>
@@ -612,7 +610,6 @@ function TagsAdder() {
 						</option>
 					))}
 				</select>
-				<FormMessage type="info">{t("calendar:forms.tags.info")}</FormMessage>
 			</div>
 			<Tags
 				tags={tags}
@@ -680,9 +677,9 @@ function BadgesAdder() {
 						<div className="stack horizontal md items-center" key={badge.id}>
 							<Badge badge={badge} isAnimated size={32} />
 							<span>{badge.displayName}</span>
-							<Button
+							<SendouButton
 								className="ml-auto"
-								onClick={() => handleBadgeDelete(badge.id)}
+								onPress={() => handleBadgeDelete(badge.id)}
 								icon={<TrashIcon />}
 								variant="minimal-destructive"
 								aria-label="Remove badge"
@@ -721,13 +718,13 @@ function AvatarImageInput({
 						alt=""
 						className="calendar-new__avatar-preview"
 					/>
-					<Button
+					<SendouButton
 						variant="outlined"
-						size="tiny"
-						onClick={() => setShowPrevious(false)}
+						size="small"
+						onPress={() => setShowPrevious(false)}
 					>
 						Edit logo
-					</Button>
+					</SendouButton>
 				</div>
 			</div>
 		);
@@ -785,14 +782,14 @@ function AvatarImageInput({
 				shown.
 			</FormMessage>
 			{hasPreviousAvatar && (
-				<Button
+				<SendouButton
 					variant="minimal-destructive"
-					size="tiny"
-					onClick={() => setShowPrevious(true)}
+					size="small"
+					onPress={() => setShowPrevious(true)}
 					className="mt-2"
 				>
 					Cancel changing avatar image
-				</Button>
+				</SendouButton>
 			)}
 		</div>
 	);

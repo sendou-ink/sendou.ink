@@ -1,4 +1,4 @@
-import type { Ability, ModeShort } from "~/modules/in-game-lists";
+import type { Ability, ModeShort } from "~/modules/in-game-lists/types";
 
 type WithId<T> = T & { id: string };
 

@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
-import { Button, LinkButton } from "~/components/Button";
+import { LinkButton } from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { FriendCodeInput } from "~/components/FriendCodeInput";
@@ -59,6 +59,7 @@ import {
 } from "../tournament-utils";
 import { useTournament } from "./to.$id";
 
+import TimePopover from "~/components/TimePopover";
 import { action } from "../actions/to.$id.register.server";
 import { loader } from "../loaders/to.$id.register.server";
 export { loader, action };
@@ -66,7 +67,6 @@ export { loader, action };
 export default function TournamentRegisterPage() {
 	const user = useUser();
 	const isMounted = useIsMounted();
-	const { i18n } = useTranslation();
 	const tournament = useTournament();
 
 	const startsAtEvenHour = tournament.ctx.startTime.getMinutes() === 0;
@@ -123,15 +123,17 @@ export default function TournamentRegisterPage() {
 						<div className="tournament__by mt-2">
 							<div className="stack horizontal xs items-center">
 								<ClockIcon className="tournament__info__icon" />{" "}
-								{isMounted
-									? tournament.ctx.startTime.toLocaleString(i18n.language, {
-											timeZoneName: "short",
+								{isMounted ? (
+									<TimePopover
+										time={tournament.ctx.startTime}
+										options={{
 											minute: startsAtEvenHour ? undefined : "numeric",
 											hour: "numeric",
 											day: "numeric",
 											month: "long",
-										})
-									: null}
+										}}
+									/>
+								) : null}
 							</div>
 						</div>
 					) : null}
@@ -265,13 +267,13 @@ function TournamentRegisterInfoTabs() {
 												fields={[["_action", "LEAVE_TEAM"]]}
 												submitButtonText="Leave"
 											>
-												<Button
+												<SendouButton
 													className="build__small-text"
 													variant="minimal-destructive"
 													type="submit"
 												>
 													Leave the team
-												</Button>
+												</SendouButton>
 											</FormWithConfirm>
 										) : null}
 									</div>
@@ -315,9 +317,9 @@ function PleaseLogIn() {
 
 	return (
 		<form className="stack items-center mt-4" action={LOG_IN_URL} method="post">
-			<Button size="big" type="submit">
+			<SendouButton size="big" type="submit">
 				{t("tournament:pre.logIn")}
-			</Button>
+			</SendouButton>
 		</form>
 	);
 }
@@ -591,7 +593,7 @@ function CheckIn({
 	return (
 		<fetcher.Form method="post" className="stack items-center">
 			<SubmitButton
-				size="tiny"
+				size="small"
 				_action="CHECK_IN"
 				state={fetcher.state}
 				testId="check-in-button"
@@ -708,13 +710,13 @@ function TeamInfo({
 						submitButtonText={t("tournament:pre.info.unregister")}
 						fields={[["_action", "UNREGISTER"]]}
 					>
-						<Button
+						<SendouButton
 							className="build__small-text"
 							variant="minimal-destructive"
-							size="tiny"
+							size="small"
 						>
 							{t("tournament:pre.info.unregister")}
-						</Button>
+						</SendouButton>
 					</FormWithConfirm>
 				) : null}
 			</div>
@@ -779,26 +781,26 @@ function TeamInfo({
 									<div className="stack horizontal md items-center">
 										<Avatar size="xsm" url={avatarUrl} />
 										{canEditAvatar ? (
-											<Button
+											<SendouButton
 												variant="minimal"
-												size="tiny"
+												size="small"
 												onClick={() => setUploadedAvatar(null)}
 											>
 												{t("common:actions.edit")}
-											</Button>
+											</SendouButton>
 										) : null}
 										{canDeleteAvatar ? (
 											<FormWithConfirm
 												dialogHeading="Delete team logo?"
 												fields={[["_action", "DELETE_LOGO"]]}
 											>
-												<Button
+												<SendouButton
 													variant="minimal-destructive"
-													size="tiny"
+													size="small"
 													type="submit"
 												>
 													<TrashIcon className="small-icon" />
-												</Button>
+												</SendouButton>
 											</FormWithConfirm>
 										) : null}
 									</div>
@@ -836,13 +838,13 @@ function TeamInfo({
 							) : null}
 						</div>
 					</div>
-					<Button
-						testId="save-team-button"
-						disabled={submitButtonDisabled()}
+					<SendouButton
+						data-testid="save-team-button"
+						isDisabled={submitButtonDisabled()}
 						onClick={handleSubmit}
 					>
 						{t("common:actions.save")}
-					</Button>
+					</SendouButton>
 				</Form>
 			</section>
 		</div>
@@ -1016,13 +1018,13 @@ function FillRoster({
 							{t("tournament:actions.shareLink", { inviteLink })}
 						</div>
 						<div>
-							<Button
-								size="tiny"
+							<SendouButton
+								size="small"
 								onClick={() => copyToClipboard(inviteLink)}
 								variant="outlined"
 							>
 								{t("common:actions.copyToClipboard")}
-							</Button>
+							</SendouButton>
 						</div>
 					</div>
 				) : null}
@@ -1162,13 +1164,13 @@ function DeleteMember({ members }: { members: TournamentDataTeam["members"] }) {
 
 	if (!expanded) {
 		return (
-			<Button
-				size="tiny"
+			<SendouButton
+				size="small"
 				variant="minimal-destructive"
 				onClick={() => setExpanded(true)}
 			>
 				{t("tournament:pre.roster.delete.button")}
-			</Button>
+			</SendouButton>
 		);
 	}
 

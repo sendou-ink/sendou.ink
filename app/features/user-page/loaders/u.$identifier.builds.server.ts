@@ -3,7 +3,7 @@ import { getUserId } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { sortAbilities } from "~/features/builds/core/ability-sorting.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfFalsy, privatelyCachedJson } from "~/utils/remix.server";
 import { sortBuilds } from "../core/build-sorting.server";

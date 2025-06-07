@@ -8,6 +8,7 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import {
 	actionError,
+	errorToast,
 	errorToastIfFalsy,
 	parseRequestPayload,
 } from "~/utils/remix.server";
@@ -15,6 +16,7 @@ import { scrimsPage } from "~/utils/urls";
 import * as QRepository from "../../sendouq/QRepository.server";
 import * as TeamRepository from "../../team/TeamRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
+import { SCRIM } from "../scrims-constants";
 import {
 	type fromSchema,
 	type newRequestSchema,
@@ -51,6 +53,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		maxDiv: data.divs ? serializeLutiDiv(data.divs.max!) : null,
 		minDiv: data.divs ? serializeLutiDiv(data.divs.min!) : null,
 		text: data.postText,
+		managedByAnyone: data.managedByAnyone,
 		visibility:
 			data.baseVisibility !== "PUBLIC"
 				? {
@@ -100,9 +103,23 @@ export const usersListForPost = async ({
 	);
 	errorToastIfFalsy(team, "User is not a member of this team");
 
-	return team.members
-		.filter((member) => !ROLES_TO_EXCLUDE.includes(member.role))
-		.map((member) => member.id);
+	const filteredMembers = team.members.filter(
+		(member) => !ROLES_TO_EXCLUDE.includes(member.role),
+	);
+
+	// handle case when all users are from excluded roles
+	const result = (
+		filteredMembers.length >= SCRIM.MIN_MEMBERS_PER_TEAM
+			? filteredMembers
+			: team.members
+	).map((member) => member.id);
+
+	if (result.length < SCRIM.MIN_MEMBERS_PER_TEAM) {
+		errorToast("Your team does not have enough members (4) to scrim");
+	}
+
+	// ensure author is included in the list even if they match the ignore condition
+	return result.includes(authorId) ? result : [authorId, ...result];
 };
 
 async function validatePickup(userIds: number[], authorId: number) {

@@ -1,1 +1,25 @@
-{}
+{
+	"roles.ADMIN": "",
+	"roles.MEMBER": "",
+	"roles.ORGANIZER": "",
+	"roles.STREAMER": "",
+	"events.established.short": "",
+	"events.all": "",
+	"events.past": "",
+	"events.upcoming": "",
+	"events.tabs.events": "",
+	"events.tabs.leaderboard": "",
+	"edit.form.title": "",
+	"edit.form.uploadLogo": "",
+	"edit.form.socialLinks.title": "",
+	"edit.form.members.title": "",
+	"edit.form.members.info": "",
+	"edit.form.members.user.title": "",
+	"edit.form.members.role.title": "",
+	"edit.form.members.roleDisplayName.title": "",
+	"edit.form.series.title": "",
+	"edit.form.series.seriesName.title": "",
+	"edit.form.series.showLeaderboard.title": "",
+	"edit.form.badges.title": "",
+	"edit.form.errors.noUnadmin": ""
+}

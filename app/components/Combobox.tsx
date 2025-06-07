@@ -6,16 +6,18 @@ import { useTranslation } from "react-i18next";
 import type { GearType } from "~/db/tables";
 import type { SerializedMapPoolEvent } from "~/features/calendar/routes/map-pool-events";
 import { useAllEventsWithMapPools } from "~/hooks/swr";
-import type { MainWeaponId } from "~/modules/in-game-lists";
 import {
 	clothesGearIds,
 	headGearIds,
-	mainWeaponIds,
 	shoesGearIds,
+} from "~/modules/in-game-lists/gear-ids";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { weaponAltNames } from "~/modules/in-game-lists/weapon-alt-names";
+import {
+	mainWeaponIds,
 	subWeaponIds,
 	weaponCategories,
-} from "~/modules/in-game-lists";
-import { weaponAltNames } from "~/modules/in-game-lists/weapon-alt-names";
+} from "~/modules/in-game-lists/weapon-ids";
 import {
 	nonBombSubWeaponIds,
 	nonDamagingSpecialWeaponIds,

@@ -58,5 +58,10 @@
 	"MODE_LONG_SZ": "Défense de Zone",
 	"MODE_LONG_TC": "Expédition Risquée",
 	"MODE_LONG_RM": "Mission Bazookarpe",
-	"MODE_LONG_CB": "Pluie de Palourdes"
+	"MODE_LONG_CB": "Pluie de Palourdes",
+	"MODE_LONG_SR": "",
+	"MODE_LONG_TB": "",
+	"GAME_S1": "",
+	"GAME_S2": "",
+	"GAME_S3": ""
 }

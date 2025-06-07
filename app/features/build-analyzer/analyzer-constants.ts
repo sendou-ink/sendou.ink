@@ -1,4 +1,4 @@
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { DamageType } from "./analyzer-types";
 
 export const MAX_LDE_INTENSITY = 21;
@@ -124,3 +124,5 @@ export const multiShot = Object.fromEntries(
 export const RAINMAKER_SPEED_PENALTY_MODIFIER = 0.8;
 
 export const UNKNOWN_SHORT = "U";
+
+export const MAX_AP = 57;

@@ -1,11 +1,10 @@
 import type { Insertable, Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
-import { nanoid } from "nanoid";
-import { INVITE_CODE_LENGTH } from "~/constants";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { databaseTimestampNow } from "~/utils/dates";
+import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 
@@ -139,7 +138,7 @@ export async function create(
 			.values({
 				name: args.name,
 				customUrl: args.customUrl,
-				inviteCode: nanoid(INVITE_CODE_LENGTH),
+				inviteCode: shortNanoid(),
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();
@@ -259,11 +258,42 @@ export function del(teamId: number) {
 	});
 }
 
+export function removeTeamImage(
+	teamId: number,
+	imageType: "avatar" | "banner",
+) {
+	const imageIdField = imageType === "avatar" ? "avatarImgId" : "bannerImgId";
+
+	return db.transaction().execute(async (trx) => {
+		const team = await trx
+			.selectFrom("Team")
+			.select(imageIdField)
+			.where("id", "=", teamId)
+			.executeTakeFirst();
+
+		const imageId = team?.[imageIdField];
+		if (imageId) {
+			await trx
+				.deleteFrom("UnvalidatedUserSubmittedImage")
+				.where("id", "=", imageId)
+				.execute();
+		}
+
+		await trx
+			.updateTable("AllTeam")
+			.set({
+				[imageIdField]: null,
+			})
+			.where("id", "=", teamId)
+			.execute();
+	});
+}
+
 export function resetInviteCode(teamId: number) {
 	return db
 		.updateTable("AllTeam")
 		.set({
-			inviteCode: nanoid(INVITE_CODE_LENGTH),
+			inviteCode: shortNanoid(),
 		})
 		.where("id", "=", teamId)
 		.execute();

@@ -17,6 +17,9 @@
 	"deleteModal.title": "Supprimer le post?",
 	"deleteModal.prevented": "Le post doit être supprimée par le propriétaire ({{username}})",
 	"cancelModal.title": "Annuler la demande ?",
+	"cancelModal.scrim.title": "",
+	"cancelModal.scrim.reasonLabel": "",
+	"cancelModal.scrim.reasonExplanation": "",
 	"actions.contact": "Contact",
 	"acceptModal.title": "Accepter la demande de scrim de {{groupName}} et rejeter les autres (s'il y en a)?",
 	"acceptModal.prevented": "Demandez à la personne qui a posté le scrim d'accepter cette demande",
@@ -26,7 +29,7 @@
 	"forms.with.user": "Utilisateur {{nth}}",
 	"forms.with.pick-up": "Pick-up",
 	"forms.when.title": "Quand",
-	"forms.when.explanation": "Laissez vide si vous voulez chercher un scrim dès maintenant",
+	"forms.when.explanation": "",
 	"forms.text.title": "Texte",
 	"forms.visibility.title": "Visibilité",
 	"forms.visibility.public": "Public",
@@ -36,7 +39,6 @@
 	"forms.divs.minDiv.title": "Min div",
 	"forms.divs.maxDiv.title": "Max div",
 	"page.scheduledScrim": "Scrim programmé",
-
 	"associations.title": "Association",
 	"associations.explanation": "Créez une ''association'' pour regarder dans un groupe plus petit (par exemple, créez une association avec les adversaires habituels de votre équipe ou avec la division LUTI).",
 	"associations.join.title": "Rejoindre l'association {{name}} ?",
@@ -48,5 +50,8 @@
 	"associations.shareLink.reset": "Réinitialiser le lien",
 	"associations.removeMember.title": "Enlever {{username}} de l'association?",
 	"associations.forms.title": "Créer une nouvelle association",
-	"associations.forms.name.title": "Nom"
+	"associations.forms.name.title": "Nom",
+	"forms.managedByAnyone.title": "",
+	"forms.managedByAnyone.explanation": "",
+	"alert.canceled": ""
 }

@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { ADMIN_ID } from "~/constants";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import type { TournamentLoaderData } from "~/features/tournament/loaders/to.$id.server";
-import type { StageId } from "~/modules/in-game-lists";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
+import type { StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import {
 	fetchSendouInk,

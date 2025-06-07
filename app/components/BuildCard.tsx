@@ -8,7 +8,7 @@ import { useIsMounted } from "~/hooks/useIsMounted";
 import type {
 	Ability as AbilityType,
 	ModeShort,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/types";
 import type { BuildAbilitiesTuple } from "~/modules/in-game-lists/types";
 import { altWeaponIdToId } from "~/modules/in-game-lists/weapon-ids";
 import { databaseTimestampToDate } from "~/utils/dates";

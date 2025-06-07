@@ -9,7 +9,6 @@ import type { Namespace, TFunction } from "i18next";
 import { nanoid } from "nanoid";
 import type { z } from "zod";
 import type { navItems } from "~/components/layout/nav-items";
-import { LOHI_TOKEN_HEADER_NAME } from "~/constants";
 import { s3UploadHandler } from "~/features/img-upload";
 import invariant from "./invariant";
 import { logger } from "./logger";
@@ -181,6 +180,8 @@ function formDataToObject(formData: FormData) {
 
 	return result;
 }
+
+const LOHI_TOKEN_HEADER_NAME = "Lohi-Token";
 
 /** Some endpoints can only be accessed with an auth token. Used by Lohi bot and cron jobs. */
 export function canAccessLohiEndpoint(request: Request) {

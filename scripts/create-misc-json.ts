@@ -1,7 +1,7 @@
 // @ts-nocheck
 
 import fs from "node:fs";
-import { abilitiesShort } from "~/modules/in-game-lists";
+import { abilitiesShort } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import {
 	LANG_JSONS_TO_CREATE,

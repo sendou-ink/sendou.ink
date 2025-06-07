@@ -27,7 +27,11 @@ export function ToggleFormField<T extends FieldValues>({
 				control={methods.control}
 				name={name}
 				render={({ field: { value, onChange } }) => (
-					<SendouSwitch id={id} isSelected={value} onChange={onChange} />
+					<SendouSwitch
+						id={id}
+						isSelected={value ?? false}
+						onChange={onChange}
+					/>
 				)}
 			/>
 			{error && (

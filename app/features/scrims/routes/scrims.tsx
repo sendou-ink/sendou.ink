@@ -5,15 +5,17 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
 import type { z } from "zod";
+import { AddNewButton } from "~/components/AddNewButton";
 import { Avatar } from "~/components/Avatar";
-import { Button, LinkButton } from "~/components/Button";
+import { LinkButton } from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Table } from "~/components/Table";
+import TimePopover from "~/components/TimePopover";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
-import { MyForm } from "~/components/form/MyForm";
+import { SendouForm } from "~/components/form/SendouForm";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
 import { SpeechBubbleIcon } from "~/components/icons/SpeechBubble";
 import { UsersIcon } from "~/components/icons/Users";
@@ -26,6 +28,7 @@ import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	associationsPage,
+	newScrimPostPage,
 	scrimPage,
 	userPage,
 	userSubmittedImage,
@@ -87,16 +90,17 @@ export default function ScrimsPage() {
 
 	return (
 		<Main className="stack lg">
-			{user ? (
+			<div className="stack horizontal justify-between items-center">
 				<LinkButton
 					size="tiny"
 					to={associationsPage()}
-					className="mr-auto"
+					className={clsx("mr-auto", { invisible: !user })}
 					variant="outlined"
 				>
 					{t("scrims:associations.title")}
 				</LinkButton>
-			) : null}
+				<AddNewButton to={newScrimPostPage()} navIcon="scrims" />
+			</div>
 			{typeof scrimToRequestId === "number" ? (
 				<RequestScrimModal
 					postId={scrimToRequestId}
@@ -134,6 +138,7 @@ export default function ScrimsPage() {
 								posts={data.posts.owned}
 								showDeletePost
 								showRequestRows
+								showStatus
 							/>
 						),
 					},
@@ -186,7 +191,7 @@ function RequestScrimModal({
 
 	return (
 		<SendouDialog heading={t("scrims:requestModal.title")} onClose={close}>
-			<MyForm
+			<SendouForm
 				schema={newRequestSchema}
 				defaultValues={{
 					_action: "NEW_REQUEST",
@@ -211,7 +216,7 @@ function RequestScrimModal({
 				) : null}
 				<Divider />
 				<WithFormField usersTeams={data.teams} />
-			</MyForm>
+			</SendouForm>
 		</SendouDialog>
 	);
 }
@@ -286,7 +291,6 @@ function ScrimsTable({
 }) {
 	const { t } = useTranslation(["common", "scrims"]);
 	const user = useUser();
-	const { i18n } = useTranslation();
 
 	invariant(
 		!(requestScrim && showDeletePost),
@@ -294,6 +298,7 @@ function ScrimsTable({
 	);
 
 	const getStatus = (post: ScrimPost) => {
+		if (post.canceled) return "CANCELED";
 		if (post.requests.at(0)?.isAccepted) return "CONFIRMED";
 		if (
 			post.requests.some((r) => r.users.some((rUser) => user?.id === rUser.id))
@@ -353,15 +358,18 @@ function ScrimsTable({
 								<td>
 									<div className="stack horizontal sm">
 										<div className={styles.postTime}>
-											{inThePast
-												? t("scrims:now")
-												: databaseTimestampToDate(post.at).toLocaleTimeString(
-														i18n.language,
-														{
-															hour: "numeric",
-															minute: "numeric",
-														},
-													)}
+											{inThePast ? (
+												t("scrims:now")
+											) : (
+												<TimePopover
+													time={databaseTimestampToDate(post.at)}
+													options={{
+														hour: "numeric",
+														minute: "numeric",
+													}}
+													underline={false}
+												/>
+											)}
 										</div>
 										{post.isPrivate ? (
 											<SendouPopover
@@ -451,6 +459,7 @@ function ScrimsTable({
 											className={clsx(styles.postStatus, {
 												[styles.postStatusConfirmed]: status === "CONFIRMED",
 												[styles.postStatusPending]: status === "PENDING",
+												[styles.postStatusCanceled]: status === "CANCELED",
 											})}
 										>
 											{status === "CONFIRMED" ? (
@@ -463,19 +472,24 @@ function ScrimsTable({
 													<ClockIcon /> {t("scrims:status.pending")}
 												</>
 											) : null}
+											{status === "CANCELED" ? (
+												<>
+													<CrossIcon /> {t("scrims:status.canceled")}
+												</>
+											) : null}
 										</div>
 									</td>
 								) : null}
 								{user && requestScrim && post.requests.length === 0 ? (
 									<td className={styles.postFloatingActionCell}>
-										<Button
-											size="tiny"
-											onClick={() => requestScrim(post.id)}
+										<SendouButton
+											size="small"
+											onPress={() => requestScrim(post.id)}
 											icon={<ArrowUpOnSquareIcon />}
 											className="ml-auto"
 										>
 											{t("scrims:actions.request")}
-										</Button>
+										</SendouButton>
 									</td>
 								) : null}
 								{showDeletePost && !isAccepted ? (
@@ -489,13 +503,13 @@ function ScrimsTable({
 													["_action", "DELETE_POST"],
 												]}
 											>
-												<Button
-													size="tiny"
+												<SendouButton
+													size="small"
 													variant="destructive"
 													className="ml-auto"
 												>
 													{t("common:actions.delete")}
-												</Button>
+												</SendouButton>
 											</FormWithConfirm>
 										) : (
 											<SendouPopover
@@ -509,7 +523,9 @@ function ScrimsTable({
 													</SendouButton>
 												}
 											>
-												{t("scrims:deleteModal.prevented")}
+												{t("scrims:deleteModal.prevented", {
+													username: owner.username,
+												})}
 											</SendouPopover>
 										)}
 									</td>
@@ -528,14 +544,14 @@ function ScrimsTable({
 												["_action", "CANCEL_REQUEST"],
 											]}
 										>
-											<Button
-												size="tiny"
+											<SendouButton
+												size="small"
 												variant="destructive"
 												icon={<CrossIcon />}
 												className="ml-auto"
 											>
 												{t("common:actions.cancel")}
-											</Button>
+											</SendouButton>
 										</FormWithConfirm>
 									</td>
 								) : null}
@@ -631,6 +647,7 @@ function RequestRow({
 			</td>
 			<td />
 			<td />
+			<td />
 			<td className={styles.postFloatingActionCell}>
 				{!request.isAccepted && canAccept ? (
 					<FormWithConfirm
@@ -642,14 +659,14 @@ function RequestRow({
 						submitButtonVariant="primary"
 						submitButtonText={t("common:actions.accept")}
 					>
-						<Button size="tiny" className="ml-auto">
+						<SendouButton size="small" className="ml-auto">
 							{t("common:actions.accept")}
-						</Button>
+						</SendouButton>
 					</FormWithConfirm>
 				) : !request.isAccepted && !canAccept ? (
 					<SendouPopover
 						trigger={
-							<SendouButton size="small">
+							<SendouButton size="small" className="ml-auto">
 								{t("common:actions.accept")}
 							</SendouButton>
 						}

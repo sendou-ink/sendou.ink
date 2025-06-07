@@ -2,7 +2,6 @@ import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import { Form, Link, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "~/components/Button";
 import { CustomizedColorsInput } from "~/components/CustomizedColorsInput";
 import { FormErrors } from "~/components/FormErrors";
 import { FormMessage } from "~/components/FormMessage";
@@ -11,6 +10,7 @@ import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -67,19 +67,20 @@ export default function EditTeamPage() {
 			{isTeamOwner({ team, user }) ? (
 				<FormWithConfirm
 					dialogHeading={t("team:deleteTeam.header", { teamName: team.name })}
-					fields={[["_action", "DELETE"]]}
+					fields={[["_action", "DELETE_TEAM"]]}
 				>
-					<Button
+					<SendouButton
 						className="ml-auto"
 						variant="minimal-destructive"
 						data-testid="delete-team-button"
 					>
 						{t("team:actionButtons.deleteTeam")}
-					</Button>
+					</SendouButton>
 				</FormWithConfirm>
 			) : null}
 			<Form method="post" className="stack md items-start">
 				<ImageUploadLinks />
+				<ImageRemoveButtons />
 				{canAddCustomizedColors(team) ? (
 					<CustomizedColorsInput initialColors={css} />
 				) : null}
@@ -130,6 +131,49 @@ function ImageUploadLinks() {
 			</ol>
 		</div>
 	);
+}
+
+function ImageRemoveButtons() {
+	const { t } = useTranslation(["common", "team"]);
+	const { team } = useLoaderData<typeof loader>();
+
+	return team.avatarSrc || team.bannerSrc ? (
+		<div>
+			<Label>{t("team:forms.fields.removeImages")}</Label>
+			<ol className="team__image-links-list">
+				{team.avatarSrc ? (
+					<li>
+						<FormWithConfirm
+							dialogHeading={t("team:deleteTeam.profilePicture.header", {
+								teamName: team.name,
+							})}
+							fields={[["_action", "DELETE_AVATAR"]]}
+							submitButtonText={t("common:actions.remove")}
+						>
+							<SendouButton className="ml-auto" variant="minimal-destructive">
+								{t("team:actionButtons.deleteTeam.profilePicture")}
+							</SendouButton>
+						</FormWithConfirm>
+					</li>
+				) : null}
+				{team.bannerSrc ? (
+					<li>
+						<FormWithConfirm
+							dialogHeading={t("team:deleteTeam.banner.header", {
+								teamName: team.name,
+							})}
+							fields={[["_action", "DELETE_BANNER"]]}
+							submitButtonText={t("common:actions.remove")}
+						>
+							<SendouButton className="ml-auto" variant="minimal-destructive">
+								{t("team:actionButtons.deleteTeam.banner")}
+							</SendouButton>
+						</FormWithConfirm>
+					</li>
+				) : null}
+			</ol>
+		</div>
+	) : null;
 }
 
 function NameInput() {

@@ -1,9 +1,9 @@
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import invariant from "~/utils/invariant";
-import type { ModeShort, StageId } from "../in-game-lists";
-import { modesShort } from "../in-game-lists";
+import { modesShort } from "../in-game-lists/modes";
 import { stagesObj as s } from "../in-game-lists/stage-ids";
+import type { ModeShort, StageId } from "../in-game-lists/types";
 
 export const SENDOUQ_DEFAULT_MAPS: Record<
 	ModeShort,

@@ -6,6 +6,8 @@
 	"tournament_other": "Tildeldt for at vinde {{tournament}} (×{{count}})",
 	"forYourEvent": "Mærke til dit arrangement?",
 	"managedBy": "Administreres af {{users}}",
+	"madeBy": "",
 	"own.divider": "Administrerede mærker",
-	"other.divider": "Andre mærker"
+	"other.divider": "Andre mærker",
+	"noBadgesFound": ""
 }

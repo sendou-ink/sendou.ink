@@ -3,8 +3,7 @@ import type { LinkProps } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 
-export interface ButtonProps
-	extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 	variant?:
 		| "primary"
 		| "success"
@@ -20,50 +19,6 @@ export interface ButtonProps
 	icon?: JSX.Element;
 	testId?: string;
 	_ref?: React.LegacyRef<HTMLButtonElement> | React.ForwardedRef<unknown>;
-}
-
-export function Button(props: ButtonProps) {
-	const {
-		variant,
-		loading,
-		children,
-		loadingText,
-		size,
-		className,
-		icon,
-		type = "button",
-		testId,
-		_ref,
-		...rest
-	} = props;
-	return (
-		<button
-			className={clsx(
-				"button",
-				variant,
-				{
-					"disabled-opaque": props.disabled,
-					loading,
-					tiny: size === "tiny",
-					big: size === "big",
-					miniscule: size === "miniscule",
-				},
-				className,
-			)}
-			disabled={props.disabled || loading}
-			type={type}
-			data-testid={testId}
-			ref={props._ref as React.LegacyRef<HTMLButtonElement>}
-			{...rest}
-		>
-			{icon &&
-				React.cloneElement(icon, {
-					className: clsx("button-icon", { lonely: !children }),
-					title: rest.title,
-				})}
-			{loading && loadingText ? loadingText : children}
-		</button>
-	);
 }
 
 type LinkButtonProps = Pick<

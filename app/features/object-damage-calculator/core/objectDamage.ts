@@ -10,7 +10,7 @@ import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/types";
 import { altWeaponIdToId } from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";

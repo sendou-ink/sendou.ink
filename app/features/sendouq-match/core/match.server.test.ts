@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { UserMapModePreferences } from "~/db/tables";
-import type { StageId } from "~/modules/in-game-lists";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
+import type { StageId } from "~/modules/in-game-lists/types";
 import { SENDOUQ_DEFAULT_MAPS } from "~/modules/tournament-map-list-generator/constants";
 import * as Test from "~/utils/Test";
 import { nullFilledArray } from "~/utils/arrays";

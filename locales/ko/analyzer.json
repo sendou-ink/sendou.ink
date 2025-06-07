@@ -38,7 +38,6 @@
 	"stat.swimSpeedHoldingRainmaker": "징어대시 (랭크 피쉬)",
 	"stat.runSpeed": "인간 이동 속도 (프레임 당 거리)",
 	"stat.runSpeedInEnemyInk": "상대 잉크에서 인간 이동 속도",
-
 	"stat.shootingRunSpeed": "사격 중 인간 이동 속도",
 	"stat.shootingRunSpeedCharging": "충전 중 인간 이동 속도",
 	"stat.shootingRunSpeedFullCharge": "인간 이동 속도 (풀충전 중)",
@@ -46,7 +45,6 @@
 	"stat.framesBeforeTakingDamageInEnemyInk": "상대 잉크 대미지 받기 전 프레임",
 	"stat.damageTakenInEnemyInkPerSecond": "초 당 상대 잉크 대미지",
 	"stat.enemyInkDamageLimit": "상대 잉크에서 최대 누적 대미지",
-
 	"stat.markedTime": "{{weapon}} 추적 시간",
 	"stat.movementReduction": "{{weapon}} 이동 저하",
 	"stat.damage": "{{weapon}} 대미지",
@@ -55,6 +53,8 @@
 	"stat.consumption.NORMAL": "발",
 	"stat.consumption.SWING": "회",
 	"stat.consumption.SLOSH": "회",
+	"stat.consumption.VERTICAL_SWING": "",
+	"stat.consumption.HORIZONTAL_SWING": "",
 	"stat.consumption.TAP_SHOT": "연타",
 	"stat.consumption.FULL_CHARGE": "풀 충전 샷",
 	"stat.consumption.SPLATLING_CHARGE": "풀 충전",
@@ -70,6 +70,7 @@
 	"stat.sub.qsjBoost": "슈퍼 점프 가속",
 	"stat.special.duration": "{{weapon}} 지속 시간",
 	"stat.special.duration.inkStormExplanation": "칠하는 거리가 증가하지만 총량은 변하지 않습니다.",
+	"stat.special.duration.killerWail": "",
 	"stat.special.damageDistance": "{{weapon}} 피해 범위",
 	"stat.special.paintRadius": "{{weapon}} 칠 범위",
 	"stat.special.shieldHp": "{{weapon}} 실드 내구도",
@@ -78,6 +79,7 @@
 	"stat.special.inkConsumptionPerSecond": "{{weapon}} 초 당 잉크 소모량",
 	"stat.special.reticleRadius": "{{weapon}} 조준경 크기",
 	"stat.special.throwDistance": "{{weapon}} 투척 거리",
+	"stat.special.moveSpeed": "",
 	"stat.special.autoChargeRate": "{{weapon}} 자동 충전 속도",
 	"stat.special.maxRadius": "{{weapon}} 파동 범위",
 	"stat.special.maxRadius.explanation": "범위가 증가하더라도 파동의 속도는 변하지 않습니다.",
@@ -87,9 +89,8 @@
 	"damage.header.type": "종류",
 	"damage.header.damage": "대미지",
 	"damage.header.baseDamage": "기본 대미지",
+	"damage.header.baseDamage.short": "",
 	"damage.header.distance": "거리",
-	"damage.toSplat_one": "쓰러뜨리기 위해 {{count}}회",
-	"damage.toSplat_other": "쓰러뜨리기 위해 {{count}}회",
 	"damage.NORMAL_MIN": "최소",
 	"damage.NORMAL_MAX": "최대",
 	"damage.SECONDARY_MODE_MIN": "보조 모드 (최소)",
@@ -110,9 +111,12 @@
 	"damage.SPLASH_HORIZONTAL_MIN": "가로 간접 (최소)",
 	"damage.SPLASH_HORIZONTAL_MAX": "가로 간접 (최대)",
 	"damage.ROLL_OVER": "밀기",
+	"damage.SPLATANA_VERTICAL_DIRECT": "",
+	"damage.SPLATANA_VERTICAL": "",
+	"damage.SPLATANA_HORIZONTAL_DIRECT": "",
+	"damage.SPLATANA_HORIZONTAL": "",
 	"damage.BOMB_DIRECT": "직격",
 	"damage.BOMB_NORMAL": "간접",
-
 	"damage.WAVE": "파동",
 	"damage.SPECIAL_MAX_CHARGE": "최대 충전",
 	"damage.SPECIAL_MIN_CHARGE": "최소 충전",
@@ -127,7 +131,6 @@
 	"damage.SPECIAL_TICK": "틱",
 	"damage.TURRET_MIN": "구르기 (최소)",
 	"damage.TURRET_MAX": "구르기 (최대)",
-
 	"suffix.seconds": "s",
 	"suffix.hp": "hp",
 	"suffix.specialPointsShort": "p",
@@ -151,5 +154,8 @@
 	"labels.damageType": "대미지 종류",
 	"labels.weapon": "무기",
 	"dmgHtdExplanation": "DMG = 대미지 | HTD = 파괴하는 데 필요한 타수",
-	"noDmgData": "이 무기에는 아직 대미지 정보가 없습니다. 다음에 다시 확인하세요!"
+	"noDmgData": "이 무기에는 아직 대미지 정보가 없습니다. 다음에 다시 확인하세요!",
+	"bigBubblerExplanation": "",
+	"button.showChart": "",
+	"button.showConsumptionGrid": ""
 }

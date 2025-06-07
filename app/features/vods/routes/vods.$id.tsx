@@ -3,7 +3,7 @@ import { useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Button, LinkButton } from "~/components/Button";
+import { LinkButton } from "~/components/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
@@ -25,6 +25,7 @@ import {
 	stageImageUrl,
 	vodVideoPage,
 } from "~/utils/urls";
+import { SendouButton } from "../../../components/elements/Button";
 import { PovUser } from "../components/VodPov";
 import type { Vod } from "../vods-types";
 import { canEditVideo, secondsToHoursMinutesSecondString } from "../vods-utils";
@@ -130,14 +131,14 @@ export default function VodPage() {
 									title: data.vod.title,
 								})}
 							>
-								<Button
+								<SendouButton
 									variant="minimal-destructive"
-									size="tiny"
+									size="small"
 									type="submit"
 									icon={<TrashIcon />}
 								>
 									{t("common:actions.delete")}
-								</Button>
+								</SendouButton>
 							</FormWithConfirm>
 						</div>
 					) : null}
@@ -227,13 +228,13 @@ function Match({
 					</div>
 				</div>
 			) : null}
-			<Button
-				size="tiny"
-				onClick={() => setStart(match.startsAt)}
+			<SendouButton
+				size="small"
+				onPress={() => setStart(match.startsAt)}
 				variant="outlined"
 			>
 				{secondsToHoursMinutesSecondString(match.startsAt)}
-			</Button>
+			</SendouButton>
 		</div>
 	);
 }

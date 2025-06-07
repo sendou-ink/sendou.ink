@@ -1,19 +1,30 @@
 import { Link, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import type { z } from "zod";
+import { Alert } from "~/components/Alert";
+import TimePopover from "~/components/TimePopover";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouDialog } from "~/components/elements/Dialog";
+import { SendouForm } from "~/components/form/SendouForm";
+import { TextAreaFormField } from "~/components/form/TextAreaFormField";
+import { SCRIM } from "~/features/scrims/scrims-constants";
+import { cancelScrimSchema } from "~/features/scrims/scrims-schemas";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { useHasPermission } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Avatar } from "../../../components/Avatar";
 import { Main } from "../../../components/Main";
 import { databaseTimestampToDate } from "../../../utils/dates";
 import { logger } from "../../../utils/logger";
-import { teamPage, userSubmittedImage } from "../../../utils/urls";
+import { teamPage, userPage, userSubmittedImage } from "../../../utils/urls";
 import { ConnectedChat } from "../../chat/components/Chat";
 import * as Scrim from "../core/Scrim";
 import type { ScrimPost as ScrimPostType } from "../scrims-types";
 
+import { action } from "../actions/scrims.$id.server";
 import { loader } from "../loaders/scrims.$id.server";
-export { loader };
+export { loader, action };
 
 import styles from "./scrims.$id.module.css";
 
@@ -22,12 +33,46 @@ export const handle: SendouRouteHandle = {
 };
 
 export default function ScrimPage() {
-	const { t } = useTranslation(["q"]);
+	const { t } = useTranslation(["q", "scrims", "common"]);
 	const data = useLoaderData<typeof loader>();
+
+	const allowedToCancel = useHasPermission(data.post, "CANCEL");
+	const isCanceled = Boolean(data.post.canceled);
+	const canCancel =
+		allowedToCancel &&
+		!isCanceled &&
+		databaseTimestampToDate(data.post.at) > new Date();
 
 	return (
 		<Main className="stack lg">
-			<ScrimHeader />
+			<div className="stack horizontal justify-between">
+				<ScrimHeader />
+				{canCancel && (
+					<div>
+						<SendouDialog
+							trigger={
+								<SendouButton size="small" variant="minimal-destructive">
+									{t("common:actions.cancel")}
+								</SendouButton>
+							}
+							heading={t("scrims:cancelModal.scrim.title")}
+							showCloseButton
+						>
+							<CancelScrimForm />
+						</SendouDialog>
+					</div>
+				)}
+			</div>
+			{data.post.canceled && (
+				<div className="mx-auto">
+					<Alert variation="WARNING">
+						{t("scrims:alert.canceled", {
+							user: data.post.canceled.byUser.username,
+							reason: data.post.canceled.reason,
+						})}
+					</Alert>
+				</div>
+			)}
 			<div className={styles.groupsContainer}>
 				<GroupCard group={data.post} side="ALPHA" />
 				<GroupCard group={data.post.requests[0]} side="BRAVO" />
@@ -47,22 +92,46 @@ export default function ScrimPage() {
 	);
 }
 
+type FormFields = z.infer<typeof cancelScrimSchema>;
+
+function CancelScrimForm() {
+	const { t } = useTranslation(["scrims"]);
+
+	return (
+		<SendouForm
+			schema={cancelScrimSchema}
+			defaultValues={{ reason: "" }}
+			submitButtonTestId="cancel-scrim-submit"
+		>
+			<TextAreaFormField<FormFields>
+				name="reason"
+				label={t("cancelModal.scrim.reasonLabel")}
+				maxLength={SCRIM.CANCEL_REASON_MAX_LENGTH}
+				bottomText={t("scrims:cancelModal.scrim.reasonExplanation")}
+			/>
+		</SendouForm>
+	);
+}
+
 function ScrimHeader() {
 	const { t } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof loader>();
-	const { i18n } = useTranslation();
 
 	return (
 		<div className="line-height-tight" data-testid="match-header">
-			<h2 className="text-lg" suppressHydrationWarning>
-				{databaseTimestampToDate(data.post.at).toLocaleString(i18n.language, {
-					weekday: "long",
-					year: "numeric",
-					month: "long",
-					day: "numeric",
-					hour: "numeric",
-					minute: "numeric",
-				})}
+			<h2 className="text-lg">
+				<TimePopover
+					time={databaseTimestampToDate(data.post.at)}
+					options={{
+						weekday: "long",
+						year: "numeric",
+						month: "long",
+						day: "numeric",
+						hour: "numeric",
+						minute: "numeric",
+					}}
+					className="text-left"
+				/>
 			</h2>
 			<div className="text-lighter text-xs font-bold">
 				{t("scrims:page.scheduledScrim")}
@@ -105,10 +174,10 @@ function GroupCard({
 			</div>
 			<div className={styles.groupCard}>
 				{group.users.map((user) => (
-					<div key={user.id} className={styles.memberRow}>
+					<Link to={userPage(user)} key={user.id} className={styles.memberRow}>
 						<Avatar user={user} size="xs" />
 						{user.username}
-					</div>
+					</Link>
 				))}
 			</div>
 		</div>

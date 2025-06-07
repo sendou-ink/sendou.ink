@@ -7,7 +7,7 @@ import {
 	possibleApValues,
 	validatedAnyWeaponFromSearchParams,
 } from "~/features/build-analyzer";
-import { exampleMainWeaponIdWithSpecialWeaponId } from "~/modules/in-game-lists";
+import { exampleMainWeaponIdWithSpecialWeaponId } from "~/modules/in-game-lists/weapon-ids";
 import { assertType } from "~/utils/types";
 import type { AnyWeapon } from "../build-analyzer/analyzer-types";
 import {

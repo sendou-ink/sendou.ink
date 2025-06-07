@@ -136,4 +136,5 @@ export const config = {
 	interpolation: {
 		escapeValue: false,
 	},
+	returnEmptyString: false,
 };

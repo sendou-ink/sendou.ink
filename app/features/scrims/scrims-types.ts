@@ -24,7 +24,14 @@ export interface ScrimPost {
 	permissions: {
 		MANAGE_REQUESTS: number[];
 		DELETE_POST: number[];
+		CANCEL: number[];
 	};
+	managedByAnyone: boolean;
+	canceled: {
+		at: number;
+		byUser: ScrimPostUser;
+		reason: string;
+	} | null;
 }
 
 export interface ScrimPostRequest {
@@ -38,7 +45,7 @@ export interface ScrimPostRequest {
 	createdAt: number;
 }
 
-interface ScrimPostUser extends CommonUser {
+export interface ScrimPostUser extends CommonUser {
 	isOwner: boolean;
 }
 

@@ -1,5 +1,5 @@
-import type { ModeShort, StageId } from "~/modules/in-game-lists";
 import { stagesObj as s } from "~/modules/in-game-lists/stage-ids";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 
 export const BANNED_MAPS: Record<ModeShort, StageId[]> = {
 	TW: [],

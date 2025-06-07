@@ -50,6 +50,10 @@ export const cancelRequestSchema = z.object({
 	scrimPostRequestId: id,
 });
 
+export const cancelScrimSchema = z.object({
+	reason: z.string().trim().min(1).max(SCRIM.CANCEL_REASON_MAX_LENGTH),
+});
+
 export const scrimsActionSchema = z.union([
 	deletePostSchema,
 	newRequestSchema,
@@ -140,6 +144,7 @@ export const scrimsNewActionSchema = z
 			falsyToNull,
 			z.string().max(MAX_SCRIM_POST_TEXT_LENGTH).nullable(),
 		),
+		managedByAnyone: z.boolean(),
 	})
 	.superRefine((post, ctx) => {
 		if (

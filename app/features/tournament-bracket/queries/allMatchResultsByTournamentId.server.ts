@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { ModeShort, StageId } from "~/modules/in-game-lists";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { parseDBArray, parseDBJsonArray } from "~/utils/sql";
 

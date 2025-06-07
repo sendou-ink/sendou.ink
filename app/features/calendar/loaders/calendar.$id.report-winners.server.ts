@@ -1,15 +1,22 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { requireUserId } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
-import { notFoundIfFalsy, unauthorizedIfFalsy } from "~/utils/remix.server";
-import { reportWinnersParamsSchema } from "../calendar-schemas";
+import {
+	notFoundIfFalsy,
+	parseParams,
+	unauthorizedIfFalsy,
+} from "~/utils/remix.server";
+import { idObject } from "~/utils/zod";
 import { canReportCalendarEventWinners } from "../calendar-utils";
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const parsedParams = reportWinnersParamsSchema.parse(params);
-	const user = await requireUserId(request);
+export const loader = async (args: LoaderFunctionArgs) => {
+	const params = parseParams({
+		params: args.params,
+		schema: idObject,
+	});
+	const user = await requireUserId(args.request);
 	const event = notFoundIfFalsy(
-		await CalendarRepository.findById({ id: parsedParams.id }),
+		await CalendarRepository.findById({ id: params.id }),
 	);
 
 	unauthorizedIfFalsy(
@@ -23,6 +30,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	return {
 		name: event.name,
 		participantCount: event.participantCount,
-		winners: await CalendarRepository.findResultsByEventId(parsedParams.id),
+		winners: await CalendarRepository.findResultsByEventId(params.id),
 	};
 };

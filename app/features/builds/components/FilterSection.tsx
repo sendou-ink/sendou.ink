@@ -1,17 +1,15 @@
 import { useTranslation } from "react-i18next";
 import { Ability } from "~/components/Ability";
-import { Button } from "~/components/Button";
 import { ModeImage } from "~/components/Image";
+import { SendouButton } from "~/components/elements/Button";
 import { CrossIcon } from "~/components/icons/Cross";
-import { PATCHES } from "~/constants";
 import { possibleApValues } from "~/features/build-analyzer";
-import type { ModeShort } from "~/modules/in-game-lists";
-import {
-	type Ability as AbilityType,
-	abilities,
-	modesShort,
-} from "~/modules/in-game-lists";
+import { abilities } from "~/modules/in-game-lists/abilities";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import type { ModeShort } from "~/modules/in-game-lists/types";
+import type { Ability as AbilityType } from "~/modules/in-game-lists/types";
 import { dateToYYYYMMDD } from "~/utils/dates";
+import { PATCHES } from "../builds-constants";
 import type {
 	AbilityBuildFilter,
 	BuildFilter,
@@ -42,13 +40,13 @@ export function FilterSection({
 					{nthOfSame > 1 ? nthOfSame : ""}
 				</div>
 				<div>
-					<Button
+					<SendouButton
 						icon={<CrossIcon />}
-						size="tiny"
+						size="small"
 						variant="minimal-destructive"
-						onClick={remove}
+						onPress={remove}
 						aria-label="Delete filter"
-						testId="delete-filter-button"
+						data-testid="delete-filter-button"
 					/>
 				</div>
 			</div>

@@ -1,5 +1,4 @@
 import cachified from "@epic-web/cachified";
-import { HALF_HOUR_IN_MS } from "~/constants";
 import {
 	type UserLeaderboardWithAdditionsItem,
 	cachedFullUserLeaderboard,
@@ -9,7 +8,7 @@ import { TIERS } from "~/features/mmr/mmr-constants";
 import * as QStreamsRepository from "~/features/sendouq-streams/QStreamsRepository.server";
 import { getStreams } from "~/modules/twitch";
 import type { MappedStream } from "~/modules/twitch/streams";
-import { cache, ttl } from "~/utils/cache.server";
+import { IN_MILLISECONDS, cache, ttl } from "~/utils/cache.server";
 import { SENDOUQ_STREAMS_KEY } from "../q-streams-constants";
 
 export function cachedStreams() {
@@ -18,7 +17,7 @@ export function cachedStreams() {
 	return cachified({
 		key: SENDOUQ_STREAMS_KEY,
 		cache: cache,
-		ttl: ttl(HALF_HOUR_IN_MS),
+		ttl: ttl(IN_MILLISECONDS.HALF_HOUR),
 		async getFreshValue() {
 			return streamedMatches({
 				matchPlayers: await QStreamsRepository.activeMatchPlayers(),

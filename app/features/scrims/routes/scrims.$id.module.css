@@ -28,6 +28,7 @@
 	font-size: var(--fonts-xsm);
 	font-weight: var(--semi-bold);
 	padding-inline-end: var(--s-2-5);
+	color: var(--text);
 }
 
 .infoHeader {

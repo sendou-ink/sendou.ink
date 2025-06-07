@@ -1,5 +1,6 @@
 {
 	"pendingApproval_one": "יש לכם תמונה {{count}} שממתינה לאישור מנחה",
+	"pendingApproval_two": "",
 	"pendingApproval_other": "יש לכם {{count}} תמונות שממתינות לאישור מנחה",
 	"madeBy": "מאת",
 	"radios.all": "הכל",
@@ -24,5 +25,7 @@
 	"forms.tags.addNew": "יצירת חדש.",
 	"forms.tags.addNew.placeholder": "יצירת תג חדש",
 	"forms.tags.searchExisting.placeholder": "חיפוש תגים קיימים",
-	"forms.tags.maxReached": "הגעתם לכמות תגים מקסימלית"
+	"forms.tags.maxReached": "הגעתם לכמות תגים מקסימלית",
+	"delete.title": "",
+	"unlink.title": ""
 }

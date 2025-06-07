@@ -7,6 +7,8 @@
 	"gameCount": "Juego {{count}}",
 	"minShort": "min",
 	"secShort": "seg",
+	"forms.title.create": "",
+	"forms.title.edit": "",
 	"forms.title.youtubeUrl": "Enlace de YouTube",
 	"forms.title.videoTitle": "Título de video",
 	"forms.title.videoDate": "Fecha de video",
@@ -20,5 +22,7 @@
 	"forms.title.weapon": "Arma",
 	"forms.action.addMatch": "Agregar partido",
 	"forms.action.deleteMatch": "Borrar partido",
-	"gainPerms": "Por favor envia un mensaje en el 'helpdesk' de nuestro Discord para obtener permiso para subir videos."
+	"noVods": "",
+	"gainPerms": "Por favor envia un mensaje en el 'helpdesk' de nuestro Discord para obtener permiso para subir videos.",
+	"deleteConfirm": ""
 }

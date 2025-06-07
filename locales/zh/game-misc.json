@@ -58,5 +58,10 @@
 	"MODE_LONG_SZ": "真格区域",
 	"MODE_LONG_TC": "真格塔楼",
 	"MODE_LONG_RM": "真格鱼虎对战",
-	"MODE_LONG_CB": "真格蛤蜊"
+	"MODE_LONG_CB": "真格蛤蜊",
+	"MODE_LONG_SR": "",
+	"MODE_LONG_TB": "",
+	"GAME_S1": "",
+	"GAME_S2": "",
+	"GAME_S3": ""
 }

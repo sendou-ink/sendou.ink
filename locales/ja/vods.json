@@ -7,6 +7,8 @@
 	"gameCount": "ゲーム数: {{count}}",
 	"minShort": "分",
 	"secShort": "秒",
+	"forms.title.create": "",
+	"forms.title.edit": "",
 	"forms.title.youtubeUrl": "YouTube URL",
 	"forms.title.videoTitle": "動画タイトル",
 	"forms.title.videoDate": "動画撮影/投稿日",
@@ -20,6 +22,7 @@
 	"forms.title.weapon": "ブキ",
 	"forms.action.addMatch": "対戦を追加",
 	"forms.action.deleteMatch": "対戦を削除",
+	"noVods": "",
 	"gainPerms": "動画をアップロードする権限を取得するためディスコードのヘルプデスクにメッセージを送ってください。",
 	"deleteConfirm": "動画:'{{title}}'を消去しますか？?"
 }

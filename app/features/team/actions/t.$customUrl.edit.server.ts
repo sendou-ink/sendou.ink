@@ -28,16 +28,25 @@ export const action: ActionFunction = async ({ request, params }) => {
 		schema: editTeamSchema,
 	});
 
+	if (data._action.includes("DELETE")) {
+		errorToastIfFalsy(
+			isTeamOwner({ team, user }),
+			"You are not the team owner",
+		);
+	}
+
 	switch (data._action) {
-		case "DELETE": {
-			errorToastIfFalsy(
-				isTeamOwner({ team, user }),
-				"You are not the team owner",
-			);
-
+		case "DELETE_TEAM": {
 			await TeamRepository.del(team.id);
-
 			throw redirect(TEAM_SEARCH_PAGE);
+		}
+		case "DELETE_AVATAR": {
+			await TeamRepository.removeTeamImage(team.id, "avatar");
+			throw redirect(teamPage(team.customUrl));
+		}
+		case "DELETE_BANNER": {
+			await TeamRepository.removeTeamImage(team.id, "banner");
+			throw redirect(teamPage(team.customUrl));
 		}
 		case "EDIT": {
 			const newCustomUrl = mySlugify(data.name);

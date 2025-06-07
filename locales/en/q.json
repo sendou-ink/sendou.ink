@@ -19,7 +19,6 @@
 	"privateNote.sentiment.NEUTRAL": "Neutral",
 	"privateNote.sentiment.NEGATIVE": "Negative",
 	"privateNote.delete.header": "Delete your note about {{name}}?",
-
 	"front.cities.la": "Los Angeles",
 	"front.cities.nyc": "New York",
 	"front.cities.paris": "Paris",
@@ -51,7 +50,6 @@
 	"front.seasonOpen": "Season {{nth}} open",
 	"front.preview": "Preview groups in the queue without joining",
 	"front.preview.explanation": "This feature is only available to Supporter tier (or above) patrons of sendou.ink",
-
 	"settings.maps.header": "Stages and modes",
 	"settings.maps.avoid": "Avoid",
 	"settings.maps.prefer": "Prefer",
@@ -78,7 +76,6 @@
 	"settings.trusted.trustedExplanation": "Trusted users can add you to groups and tournament teams directly. If removed from this list, in the future you need to join via a link they share.",
 	"settings.trusted.noTrustedExplanation": "You don't currently trust any users. Trusted users can add you to groups, scrim pickups and tournament teams directly.",
 	"settings.trusted.teamExplanation": "In addition to the users above, a member of your team <2>{{name}}</2> can add you directly.",
-
 	"looking.joiningGroupError": "Before joining another group, leave the current one",
 	"looking.goToSettingsPrompt": "To help group finding set your weapon pool and voice chat status on the settings page",
 	"looking.inactiveGroup.soon": "Group will be marked inactive. Still looking?",
@@ -122,7 +119,6 @@
 	"looking.allTiers": "All tiers",
 	"looking.joinQPrompt": "Join the queue to find a group",
 	"looking.range.or": "or",
-
 	"match.header": "Match #{{number}}",
 	"match.spInfo": "SP will be adjusted after both teams report the same result",
 	"match.dispute.button": "Dispute?",
@@ -165,14 +161,11 @@
 	"match.outcome.loss": "loss",
 	"match.screen.ban": "Weapons with {{special}} are not allowed in this match",
 	"match.screen.allowed": "Weapons with {{special}} are allowed in this match",
-
 	"preparing.joinQ": "Join the queue",
-
 	"tiers.currentCriteria": "Current criteria",
 	"tiers.info.p1": "For example Leviathan is the top 5% of players. Diamond is the 85th percentile etc.",
 	"tiers.info.p2": "Note: Nobody has Leviathan rank before there are at least {{usersMin}} players on the leaderboard (or {{teamsMin}} for teams)",
 	"tiers.info.p3": "Each rank also has a plus tier (see BRONZE+ as an example below). This means that you are in the top 50% of that rank.",
-
 	"streams.noStreams": "No streamed matches currently",
 	"streams.ownStreamInfo": "Your stream is missing? Make sure your Twitch account is linked and game is set to Splatoon 3.",
 	"streams.ownStreamInfo.linkText": "See FAQ for more info on how to link your Twitch account."

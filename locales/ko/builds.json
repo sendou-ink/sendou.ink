@@ -4,7 +4,6 @@
 	"noBuilds": "빌드가 아직 없습니다. 첫 빌드를 추가하세요!",
 	"buildCard.info": "정보",
 	"buildCard.edit": "편집",
-
 	"forms.title": "제목",
 	"forms.modes": "모드",
 	"forms.weapons": "무기",
@@ -12,23 +11,30 @@
 	"forms.gear.CLOTHES": "상의 기어",
 	"forms.gear.SHOES": "신발 기어",
 	"forms.private.info": "개인 빌드는 당신에게만 보여집니다",
-
+	"forms.noGear.info": "",
 	"deleteConfirm": "'{{title}}' 빌드를 삭제하시겠습니까?",
-
 	"stats.count.title": "{{weapon}} 빌드 {{count}}개의 통계",
 	"stats.ap.title": "기어 파워 평균",
 	"stats.percentage.title": "메인 한정 기어 파워 빈도",
 	"stats.all": "전체",
-
+	"stats.public": "",
+	"stats.private": "",
 	"addFilter": "필터 추가",
 	"linkButton.abilityStats": "기어 파워 통계",
 	"linkButton.popularBuilds": "인기 빌드",
 	"noPopularBuilds": "이 무기에는 인기 빌드가 아직 없습니다.",
-
 	"emptyAbilitySlot": "빈 기어 슬롯",
-
+	"filters.type.ability": "",
+	"filters.type.mode": "",
+	"filters.type.date": "",
+	"filters.ability.title": "",
+	"filters.mode.title": "",
+	"filters.date.title": "",
 	"filters.has": "포함",
 	"filters.does.not.have": "미포함",
 	"filters.atLeast": "최소",
-	"filters.atMost": "최대"
+	"filters.atMost": "최대",
+	"filters.date.since": "",
+	"filters.date.custom": "",
+	"filters.filterByWeapon": ""
 }

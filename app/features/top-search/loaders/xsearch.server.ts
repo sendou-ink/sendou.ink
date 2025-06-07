@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import type { RankedModeShort } from "~/modules/in-game-lists";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
+import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import { findPlacementsOfMonth } from "../queries/findPlacements.server";
 import { monthYears } from "../queries/monthYears";
 

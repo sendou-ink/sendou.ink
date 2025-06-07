@@ -1,14 +1,17 @@
 import type { MetaFunction } from "@remix-run/node";
 import { useLoaderData, useSearchParams } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
-import { Button } from "~/components/Button";
+import { AddNewButton } from "~/components/AddNewButton";
 import { WeaponCombobox } from "~/components/Combobox";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { mainWeaponIds, modesShort, stageIds } from "~/modules/in-game-lists";
+import { SendouButton } from "~/components/elements/Button";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { VODS_PAGE, navIconUrl } from "~/utils/urls";
+import { VODS_PAGE, navIconUrl, newVodPage } from "~/utils/urls";
 import { VodListing } from "../components/VodListing";
 import { VODS_PAGE_BATCH_SIZE, videoMatchTypes } from "../vods-constants";
 
@@ -50,7 +53,10 @@ export default function VodsSearchPage() {
 
 	return (
 		<Main className="stack lg" bigger>
-			<Filters addToSearchParams={addToSearchParams} />
+			<div className="stack sm horizontal justify-between items-start">
+				<Filters addToSearchParams={addToSearchParams} />
+				<AddNewButton navIcon="vods" to={newVodPage()} />
+			</div>
 			{data.vods.length > 0 ? (
 				<>
 					<div className="vods__listing__list">
@@ -59,15 +65,15 @@ export default function VodsSearchPage() {
 						))}
 					</div>
 					{data.hasMoreVods && (
-						<Button
+						<SendouButton
 							className="m-0-auto"
-							size="tiny"
-							onClick={() =>
+							size="small"
+							onPress={() =>
 								addToSearchParams("limit", data.limit + VODS_PAGE_BATCH_SIZE)
 							}
 						>
 							{t("common:actions.loadMore")}
-						</Button>
+						</SendouButton>
 					)}
 				</>
 			) : (

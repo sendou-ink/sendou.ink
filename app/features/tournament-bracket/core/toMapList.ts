@@ -3,7 +3,7 @@
 import * as R from "remeda";
 import type { Tables, TournamentRoundMaps } from "~/db/tables";
 import type { Round } from "~/modules/brackets-model";
-import type { ModeShort, StageId } from "~/modules/in-game-lists";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { SENDOUQ_DEFAULT_MAPS } from "~/modules/tournament-map-list-generator/constants";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";

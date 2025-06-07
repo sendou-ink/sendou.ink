@@ -1,9 +1,6 @@
 import type { Tables } from "~/db/tables";
-import {
-	type ModeShort,
-	type StageId,
-	stageIds,
-} from "~/modules/in-game-lists";
+import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { mapPoolListToMapPoolObject } from "./map-list-generator/utils";
 import {
 	mapPoolToSerializedString,

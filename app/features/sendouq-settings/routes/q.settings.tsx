@@ -4,13 +4,13 @@ import * as React from "react";
 import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import { Button } from "~/components/Button";
 import { WeaponCombobox } from "~/components/Combobox";
 import { FormMessage } from "~/components/FormMessage";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { ModeImage, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { CrossIcon } from "~/components/icons/Cross";
 import { MapIcon } from "~/components/icons/Map";
@@ -28,8 +28,8 @@ import {
 } from "~/features/chat/chat-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { languagesUnified } from "~/modules/i18n/config";
-import type { MainWeaponId, ModeShort } from "~/modules/in-game-lists";
 import { modesShort } from "~/modules/in-game-lists/modes";
+import type { MainWeaponId, ModeShort } from "~/modules/in-game-lists/types";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
@@ -361,10 +361,10 @@ function Languages() {
 					return (
 						<div key={code} className="stack horizontal items-center sm">
 							{name}{" "}
-							<Button
+							<SendouButton
 								icon={<CrossIcon />}
 								variant="minimal-destructive"
-								onClick={() => {
+								onPress={() => {
 									const newLanguages = value.filter(
 										(codeInArr) => codeInArr !== code,
 									);
@@ -441,11 +441,11 @@ function WeaponPool() {
 									/>
 								</div>
 								<div className="stack sm horizontal items-center justify-center">
-									<Button
+									<SendouButton
 										icon={weapon.isFavorite ? <StarFilledIcon /> : <StarIcon />}
 										variant="minimal"
 										aria-label="Favorite weapon"
-										onClick={() =>
+										onPress={() =>
 											setWeapons(
 												weapons.map((w) =>
 													w.weaponSplId === weapon.weaponSplId
@@ -458,19 +458,19 @@ function WeaponPool() {
 											)
 										}
 									/>
-									<Button
+									<SendouButton
 										icon={<TrashIcon />}
 										variant="minimal-destructive"
 										aria-label="Delete weapon"
-										onClick={() =>
+										onPress={() =>
 											setWeapons(
 												weapons.filter(
 													(w) => w.weaponSplId !== weapon.weaponSplId,
 												),
 											)
 										}
-										testId={`delete-weapon-${weapon.weaponSplId}`}
-										size="tiny"
+										data-testid={`delete-weapon-${weapon.weaponSplId}`}
+										size="small"
 									/>
 								</div>
 							</div>
@@ -640,14 +640,14 @@ function TrustedUsers() {
 											]}
 											submitButtonText="Remove"
 										>
-											<Button
+											<SendouButton
 												className="build__small-text"
 												variant="minimal-destructive"
-												size="tiny"
+												size="small"
 												type="submit"
 											>
 												<TrashIcon className="build__icon" />
-											</Button>
+											</SendouButton>
 										</FormWithConfirm>
 									</div>
 								);

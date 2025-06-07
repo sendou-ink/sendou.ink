@@ -2,11 +2,11 @@ import type { Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { BuildWeapon, DB, Tables, TablesInsertable } from "~/db/tables";
-import {
-	type BuildAbilitiesTuple,
-	type ModeShort,
-	modesShort,
-} from "~/modules/in-game-lists";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import type {
+	BuildAbilitiesTuple,
+	ModeShort,
+} from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 
 export async function allByUserId({

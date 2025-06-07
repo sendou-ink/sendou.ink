@@ -5,7 +5,6 @@
 	"mapListPreference.ALL_MODES_ONLY": "すべてのルールのみ",
 	"mapListPreference.SZ_ONLY": "ガチエリアのみ",
 	"mapListPreference.note": "注意: \"{{optionOne}}\" を選択したチームと対戦することはできません。\"{{optionTwo}}\" を選択することを検討してみてください。",
-
 	"roles.OWNER": "オーナー",
 	"roles.MANAGER": "マネージャー",
 	"roles.REGULAR": "メンバー",
@@ -20,7 +19,6 @@
 	"privateNote.sentiment.NEUTRAL": "普通",
 	"privateNote.sentiment.NEGATIVE": "負",
 	"privateNote.delete.header": "{{name}}についてのメモを消しますか？",
-
 	"front.cities.la": "ロサンゼルス",
 	"front.cities.nyc": "ニューヨーク",
 	"front.cities.paris": "パリ",
@@ -52,7 +50,6 @@
 	"front.seasonOpen": "シーズン{{nth}}開幕",
 	"front.preview": "ジョインせず列にいるグループを見る",
 	"front.preview.explanation": "この機能はサポーター(あるいはそれ以上)の支援者のみ使えます。",
-
 	"settings.maps.header": "ステージ、モード",
 	"settings.maps.avoid": "避ける",
 	"settings.maps.prefer": "好み",
@@ -79,7 +76,6 @@
 	"settings.trusted.trustedExplanation": "信用しているユーザーはトーナメント、グループに直接あなたを追加できます。このりすとから外すことによって次からシェアされたリンクからジョインすることになります。",
 	"settings.trusted.noTrustedExplanation": "信用しているユーザーがいません。リンクから SendoQのグループ、トーナメントに参加する際ユーザーを信用することができます。信用しているユーザーはあなたをグループ、トーナメントに直接追加することができます。",
 	"settings.trusted.teamExplanation": "上記のユーザー以外にもチームメンバー<2>{{name}}</2>があなたを直接追加できます。",
-
 	"looking.joiningGroupError": "違うグループをジョインする前に今入っているやつを出てください",
 	"looking.goToSettingsPrompt": "グループ探しを助けるため武器プール、ボイチャ状態を設定画面でセットしてください",
 	"looking.inactiveGroup.soon": "グループが非活動とマークされます。まだ探していますか？",
@@ -110,6 +106,7 @@
 	"looking.groups.adder.error": "そのユーザーはグループに入っています",
 	"looking.groups.adder.others": "その他",
 	"looking.groups.adder.inviteLink": "インバイトリンク",
+	"looking.groups.adder.select": "",
 	"looking.groups.editNote": "メモを編集する",
 	"looking.groups.addNote": "メモを追加する",
 	"looking.replay": "リプレイ",
@@ -122,7 +119,6 @@
 	"looking.allTiers": "全てのティア",
 	"looking.joinQPrompt": "グループを見つけるには列に入ってください",
 	"looking.range.or": "か",
-
 	"match.header": "マッチ #{{number}}番",
 	"match.spInfo": "SP は両チームが同じ結果を報告してからアップデートされます。",
 	"match.dispute.button": "異議を唱えますか?",
@@ -165,14 +161,11 @@
 	"match.outcome.loss": "負け",
 	"match.screen.ban": "{{special}}が付いてる武器はこのマッチでは禁止です",
 	"match.screen.allowed": "{{special}}が付いてる武器は使用可能です",
-
 	"preparing.joinQ": "列に入る",
-
 	"tiers.currentCriteria": "現在の基準",
 	"tiers.info.p1": "例として、Leviathanはプレイヤーの上位5%、Diamondは上位15%",
 	"tiers.info.p2": "注：{{usersMin}}のプレイヤーはLeviathanのランクを持っていません。(チームの場合{{teamsMin}})",
 	"tiers.info.p3": "各ランクは＋ティアがあります。(下記のBRONZE+をご覧ください。)ランクの上位50%にいるということです。",
-
 	"streams.noStreams": "配信されてるマッチはありません",
 	"streams.ownStreamInfo": "ストリームが見つからない？Twitchのアカウントがリンクされていること、ゲームがスプラ3になってることを確認してください。",
 	"streams.ownStreamInfo.linkText": "Twitch のアカウントのリンクの仕方は FAQのページをご覧ください。"

@@ -79,6 +79,7 @@ function NotificationContent({
 	const { t } = useTranslation(["common"]);
 	const { revalidate, state } = useRevalidator();
 
+	// TODO: for some reason this makes "adds a badge owner sending a notification" E2E test flaky, figure out why and fix
 	useMarkNotificationsAsSeen(unseenIds);
 
 	return (
@@ -131,6 +132,7 @@ function NotificationsFooter() {
 				size="tiny"
 				to={NOTIFICATIONS_URL}
 				className="mt-1-5"
+				testId="notifications-see-all-button"
 			>
 				{t("common:notifications.seeAll")}
 			</LinkButton>

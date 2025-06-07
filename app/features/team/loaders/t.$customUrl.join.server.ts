@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
-import { INVITE_CODE_LENGTH } from "~/constants";
 import { requireUser } from "~/features/auth/core/user.server";
+import { SHORT_NANOID_LENGTH } from "~/utils/id";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 import { teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
@@ -58,7 +58,7 @@ export function validateInviteCode({
 	user?: { id: number; team?: { name: string } };
 	reachedTeamCountLimit: boolean;
 }) {
-	if (inviteCode.length !== INVITE_CODE_LENGTH) {
+	if (inviteCode.length !== SHORT_NANOID_LENGTH) {
 		return "SHORT_CODE";
 	}
 	if (inviteCode !== realInviteCode) {

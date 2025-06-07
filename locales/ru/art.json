@@ -1,5 +1,7 @@
 {
 	"pendingApproval_one": "{{count}} арт ждёт подтверждения модераторов",
+	"pendingApproval_few": "",
+	"pendingApproval_many": "",
 	"pendingApproval_other": "{{count}} артов ждут подтверждения модераторов",
 	"madeBy": "Автор",
 	"radios.all": "Все",
@@ -25,7 +27,6 @@
 	"forms.tags.addNew.placeholder": "Создать тег",
 	"forms.tags.searchExisting.placeholder": "Поиск по существующим тегам",
 	"forms.tags.maxReached": "Максимальное кол-во тегов достигнуто",
-
 	"delete.title": "Вы точно хотите удалить этот арт?",
 	"unlink.title": "Вы точно хотите удалить этот арт с вашего профиля (только {{username}} может добавить его обратно)?"
 }

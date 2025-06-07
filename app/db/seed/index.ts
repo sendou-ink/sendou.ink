@@ -1,14 +1,13 @@
 import { faker } from "@faker-js/faker";
 import { add, sub } from "date-fns";
-import { nanoid } from "nanoid";
 import * as R from "remeda";
-import { ADMIN_DISCORD_ID, ADMIN_ID, INVITE_CODE_LENGTH } from "~/constants";
 import { db, sql } from "~/db/sql";
+import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
 import type { SeedVariation } from "~/features/api-private/routes/seed";
 import * as AssociationRepository from "~/features/associations/AssociationRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
-import { persistedTags } from "~/features/calendar/calendar-constants";
+import { tags } from "~/features/calendar/calendar-constants";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
@@ -50,28 +49,29 @@ import {
 	secondsToHoursMinutesSecondString,
 	youtubeIdToYoutubeUrl,
 } from "~/features/vods/vods-utils";
+import { abilities } from "~/modules/in-game-lists/abilities";
+import {
+	clothesGearIds,
+	headGearIds,
+	shoesGearIds,
+} from "~/modules/in-game-lists/gear-ids";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import { rankedModesShort } from "~/modules/in-game-lists/modes";
+import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type {
 	AbilityType,
 	MainWeaponId,
 	StageId,
-} from "~/modules/in-game-lists";
-import {
-	abilities,
-	clothesGearIds,
-	headGearIds,
-	mainWeaponIds,
-	modesShort,
-	shoesGearIds,
-	stageIds,
-} from "~/modules/in-game-lists";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
+} from "~/modules/in-game-lists/types";
+import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
 import { SENDOUQ_DEFAULT_MAPS } from "~/modules/tournament-map-list-generator/constants";
 import { nullFilledArray } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import { mySlugify } from "~/utils/urls";
-import type { Tables, UserMapModePreferences } from "../tables";
+import type { QWeaponPool, Tables, UserMapModePreferences } from "../tables";
 import {
 	ADMIN_TEST_AVATAR,
 	AMOUNT_OF_CALENDAR_EVENTS,
@@ -469,9 +469,14 @@ async function userQWeaponPool() {
 			.shuffle(mainWeaponIds)
 			.slice(0, faker.helpers.arrayElement([1, 2, 3, 4]));
 
+		const weaponPool: Array<QWeaponPool> = weapons.map((weaponSplId) => ({
+			weaponSplId,
+			isFavorite: faker.number.float(1) > 0.7 ? 1 : 0,
+		}));
+
 		await db
 			.updateTable("User")
-			.set({ qWeaponPool: JSON.stringify(weapons) })
+			.set({ qWeaponPool: JSON.stringify(weaponPool) })
 			.where("User.id", "=", id)
 			.execute();
 	}
@@ -718,7 +723,7 @@ function calendarEvents() {
 	const userIds = userIdsInRandomOrder();
 
 	for (let id = 1; id <= AMOUNT_OF_CALENDAR_EVENTS; id++) {
-		const shuffledTags = faker.helpers.shuffle(Object.keys(persistedTags));
+		const shuffledTags = faker.helpers.shuffle(Object.keys(tags));
 
 		sql
 			.prepare(
@@ -1269,7 +1274,7 @@ function calendarEventWithToToolsTeams(
 				name,
 				createdAt: dateToDatabaseTimestamp(new Date()),
 				tournamentId,
-				inviteCode: nanoid(INVITE_CODE_LENGTH),
+				inviteCode: shortNanoid(),
 			});
 
 		// in PICNIC & PP Chimera is not checked in + in LUTI no check-ins at all
@@ -1605,7 +1610,7 @@ const detailedTeam = (seedVariation?: SeedVariation | null) => () => {
        values (
           'Alliance Rogue',
           'alliance-rogue',
-          '${nanoid(INVITE_CODE_LENGTH)}',
+          '${shortNanoid()}',
           '${faker.lorem.paragraph()}',
           1,
           2
@@ -1682,7 +1687,7 @@ function otherTeams() {
 				id: i,
 				name: teamName,
 				customUrl: teamCustomUrl,
-				inviteCode: nanoid(INVITE_CODE_LENGTH),
+				inviteCode: shortNanoid(),
 				bio: faker.lorem.paragraph(),
 			});
 
@@ -2290,22 +2295,29 @@ async function lfgPosts() {
 async function scrimPosts() {
 	const allUsers = userIdsInRandomOrder(true);
 
-	const date = () => {
+	// Only schedule admin's scrim at least 1 hour in the future, others can be 'now'
+	const date = (isAdmin = false) => {
+		if (isAdmin) {
+			const randomFuture = faker.date.between({
+				from: add(new Date(), { hours: 1 }),
+				to: add(new Date(), { days: 7 }),
+			});
+			randomFuture.setMinutes(0);
+			randomFuture.setSeconds(0);
+			randomFuture.setMilliseconds(0);
+			return dateToDatabaseTimestamp(randomFuture);
+		}
 		const isNow = faker.number.float(1) > 0.5;
-
 		if (isNow) {
 			return databaseTimestampNow();
 		}
-
 		const randomFuture = faker.date.between({
 			from: new Date(),
 			to: add(new Date(), { days: 7 }),
 		});
-
 		randomFuture.setMinutes(0);
 		randomFuture.setSeconds(0);
 		randomFuture.setMilliseconds(0);
-
 		return dateToDatabaseTimestamp(randomFuture);
 	};
 
@@ -2350,7 +2362,6 @@ async function scrimPosts() {
 
 	for (let i = 0; i < 20; i++) {
 		const divs = divRange();
-
 		await ScrimPostRepository.insert({
 			at: date(),
 			maxDiv: divs?.maxDiv,
@@ -2362,11 +2373,12 @@ async function scrimPosts() {
 					: null,
 			visibility: null,
 			users: users(),
+			managedByAnyone: true,
 		});
 	}
 
 	const adminPostId = await ScrimPostRepository.insert({
-		at: date(),
+		at: date(true), // admin's scrim is always at least 1 hour in the future
 		text:
 			faker.number.float(1) > 0.5
 				? faker.lorem.sentences({ min: 1, max: 5 })
@@ -2375,6 +2387,7 @@ async function scrimPosts() {
 		users: users()
 			.map((u) => ({ ...u, isOwner: 0 }))
 			.concat({ userId: ADMIN_ID, isOwner: 1 }),
+		managedByAnyone: true,
 	});
 	await ScrimPostRepository.insertRequest({
 		scrimPostId: adminPostId,

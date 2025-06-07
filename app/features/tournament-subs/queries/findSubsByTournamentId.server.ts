@@ -1,6 +1,6 @@
 import { sql } from "~/db/sql";
 import type { Tables, UserWithPlusTier } from "~/db/tables";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 
 const stm = sql.prepare(/* sql */ `
   select

@@ -5,7 +5,6 @@ import {
 } from "@remix-run/react";
 import * as React from "react";
 import { useCopyToClipboard, useLocation } from "react-use";
-import { Button } from "~/components/Button";
 import { useUser } from "~/features/auth/core/user";
 import {
 	ERROR_GIRL_IMAGE_PATH,
@@ -14,6 +13,7 @@ import {
 } from "~/utils/urls";
 import { Image } from "./Image";
 import { Main } from "./Main";
+import { SendouButton } from "./elements/Button";
 
 export function Catcher() {
 	const error = useRouteError();
@@ -56,9 +56,9 @@ export function Catcher() {
 					<>
 						<div className="mt-4 stack sm items-center">
 							<textarea readOnly defaultValue={errorText} />
-							<Button onClick={() => copyToClipboard(errorText)}>
+							<SendouButton onPress={() => copyToClipboard(errorText)}>
 								Copy to clipboard
-							</Button>
+							</SendouButton>
 						</div>
 					</>
 				) : null}
@@ -68,21 +68,23 @@ export function Catcher() {
 
 	switch (error.status) {
 		case 401:
+			if (!user) {
+				return (
+					<Main>
+						<h2>Authentication required</h2>
+						<p>This page requires you to be logged in.</p>
+						<form action={LOG_IN_URL} method="post" className="mt-2">
+							<SendouButton type="submit" variant="minimal">
+								Log in via Discord
+							</SendouButton>
+						</form>
+					</Main>
+				);
+			}
 			return (
 				<Main>
 					<h2>Error 401 Unauthorized</h2>
-					{user ? (
-						<GetHelp />
-					) : (
-						<form action={LOG_IN_URL} method="post">
-							<p className="button-text-paragraph">
-								You should try{" "}
-								<Button type="submit" variant="minimal">
-									logging in
-								</Button>
-							</p>
-						</form>
-					)}
+					<GetHelp />
 				</Main>
 			);
 		case 403:

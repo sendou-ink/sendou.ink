@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import type {
 	AbilityWithUnknown,
 	BuildAbilitiesTupleWithUnknown,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/types";
 import { getAbilityChunksMapAsArray } from "./abilityChunksCalc";
 
 // Utility function that performs an order-agnostic check to see

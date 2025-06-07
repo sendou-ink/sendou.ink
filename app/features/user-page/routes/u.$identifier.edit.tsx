@@ -1,7 +1,7 @@
 import { Form, Link, useLoaderData, useMatches } from "@remix-run/react";
+import clsx from "clsx";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { Button } from "~/components/Button";
 import { WeaponCombobox } from "~/components/Combobox";
 import { CustomizedColorsInput } from "~/components/CustomizedColorsInput";
 import { FormErrors } from "~/components/FormErrors";
@@ -10,27 +10,29 @@ import { WeaponImage } from "~/components/Image";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
 import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { StarIcon } from "~/components/icons/Star";
 import { StarFilledIcon } from "~/components/icons/StarFilled";
 import { TrashIcon } from "~/components/icons/Trash";
-import { USER } from "~/constants";
 import type { Tables } from "~/db/tables";
-import { BADGE } from "~/features/badges/badges-contants";
+import { BADGE } from "~/features/badges/badges-constants";
 import { BadgesSelector } from "~/features/badges/components/BadgesSelector";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import { useIsMounted } from "~/hooks/useIsMounted";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
 import invariant from "~/utils/invariant";
 import { rawSensToString } from "~/utils/strings";
 import { FAQ_PAGE } from "~/utils/urls";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+import { COUNTRY_CODES, USER } from "../user-page-constants";
 
 import { action } from "../actions/u.$identifier.edit.server";
 import { loader } from "../loaders/u.$identifier.edit.server";
 export { loader, action };
 
-import "~/styles/u-edit.css";
+import styles from "~/styles/u.$identifier.module.css";
 
 export default function UserEditPage() {
 	const { t } = useTranslation(["common", "user"]);
@@ -44,7 +46,7 @@ export default function UserEditPage() {
 
 	return (
 		<div className="half-width">
-			<Form className="u-edit__container" method="post">
+			<Form className={styles.container} method="post">
 				{isSupporter ? (
 					<CustomizedColorsInput initialColors={layoutData.css} />
 				) : null}
@@ -142,15 +144,15 @@ function InGameNameInputs() {
 			<Label>{t("user:ign")}</Label>
 			<div className="stack horizontal sm items-center">
 				<Input
-					className="u-edit__in-game-name-text"
+					className={styles.inGameNameText}
 					name="inGameNameText"
 					aria-label="In game name"
 					maxLength={USER.IN_GAME_NAME_TEXT_MAX_LENGTH}
 					defaultValue={inGameNameParts?.[0]}
 				/>
-				<div className="u-edit__in-game-name-hashtag">#</div>
+				<div className={styles.inGameNameHashtag}>#</div>
 				<Input
-					className="u-edit__in-game-name-discriminator"
+					className={styles.inGameNameDiscriminator}
 					name="inGameNameDiscriminator"
 					aria-label="In game name discriminator"
 					maxLength={USER.IN_GAME_NAME_DISCRIMINATOR_MAX_LENGTH}
@@ -178,7 +180,7 @@ function SensSelects() {
 					id="motionSens"
 					name="motionSens"
 					defaultValue={data.user.motionSens ?? undefined}
-					className="u-edit__sens-select"
+					className={styles.sensSelect}
 				>
 					<option value="">{"-"}</option>
 					{SENS_OPTIONS.map((sens) => (
@@ -195,7 +197,7 @@ function SensSelects() {
 					id="stickSens"
 					name="stickSens"
 					defaultValue={data.user.stickSens ?? undefined}
-					className="u-edit__sens-select"
+					className={styles.sensSelect}
 				>
 					<option value="">{"-"}</option>
 					{SENS_OPTIONS.map((sens) => (
@@ -210,22 +212,33 @@ function SensSelects() {
 }
 
 function CountrySelect() {
-	const { t } = useTranslation(["user"]);
+	const { t, i18n } = useTranslation(["user"]);
 	const data = useLoaderData<typeof loader>();
+	const isMounted = useIsMounted();
+
+	const displayName = new Intl.DisplayNames(i18n.language, { type: "region" });
+
+	// TODO: if react-aria-components start supporting "suppressHydrationWarning" it would likely be a better solution here
+	const items = COUNTRY_CODES.map((countryCode) => ({
+		name: isMounted
+			? (displayName.of(countryCode) ?? countryCode)
+			: countryCode,
+		id: countryCode,
+		key: countryCode,
+	})).sort((a, b) =>
+		a.name.localeCompare(b.name, i18n.language, { sensitivity: "base" }),
+	);
 
 	return (
 		<SendouSelect
-			items={data.countries.map((country) => ({
-				...country,
-				id: country.code,
-				key: country.code,
-			}))}
+			items={items}
 			label={t("user:country")}
 			search={{
 				placeholder: t("user:forms.country.search.placeholder"),
 			}}
 			name="country"
 			defaultSelectedKey={data.user.country ?? undefined}
+			className={styles.countrySelect}
 		>
 			{({ key, ...item }) => (
 				<SendouSelectItem key={key} {...item}>
@@ -263,7 +276,7 @@ function WeaponPoolSelect() {
 	const latestWeapon = weapons[weapons.length - 1];
 
 	return (
-		<div className="stack md u-edit__weapon-pool">
+		<div className={clsx("stack md", styles.weaponPool)}>
 			<input type="hidden" name="weapons" value={JSON.stringify(weapons)} />
 			<div>
 				<label htmlFor="weapon">{t("user:weaponPool")}</label>
@@ -305,11 +318,11 @@ function WeaponPoolSelect() {
 								/>
 							</div>
 							<div className="stack sm horizontal items-center justify-center">
-								<Button
+								<SendouButton
 									icon={weapon.isFavorite ? <StarFilledIcon /> : <StarIcon />}
 									variant="minimal"
 									aria-label="Favorite weapon"
-									onClick={() =>
+									onPress={() =>
 										setWeapons(
 											weapons.map((w) =>
 												w.weaponSplId === weapon.weaponSplId
@@ -322,19 +335,19 @@ function WeaponPoolSelect() {
 										)
 									}
 								/>
-								<Button
+								<SendouButton
 									icon={<TrashIcon />}
 									variant="minimal-destructive"
 									aria-label="Delete weapon"
-									onClick={() =>
+									onPress={() =>
 										setWeapons(
 											weapons.filter(
 												(w) => w.weaponSplId !== weapon.weaponSplId,
 											),
 										)
 									}
-									testId={`delete-weapon-${weapon.weaponSplId}`}
-									size="tiny"
+									data-testid={`delete-weapon-${weapon.weaponSplId}`}
+									size="small"
 								/>
 							</div>
 						</div>
@@ -352,7 +365,7 @@ function BioTextarea({
 	const [value, setValue] = React.useState(initialValue ?? "");
 
 	return (
-		<div className="u-edit__bio-container">
+		<div className={styles.bioContainer}>
 			<Label
 				htmlFor="bio"
 				valueLimits={{ current: value.length, max: USER.BIO_MAX_LENGTH }}
@@ -470,7 +483,7 @@ function CommissionTextArea({
 	const [value, setValue] = React.useState(initialValue ?? "");
 
 	return (
-		<div className="u-edit__bio-container">
+		<div className={styles.bioContainer}>
 			<Label
 				htmlFor="commissionText"
 				valueLimits={{

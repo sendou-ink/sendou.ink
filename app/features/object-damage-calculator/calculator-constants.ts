@@ -1,4 +1,5 @@
-import { type MainWeaponId, mainWeaponIds } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import type { AnyWeapon, DamageType } from "../build-analyzer";
 import type { CombineWith } from "./calculator-types";
@@ -20,8 +21,11 @@ export const DAMAGE_RECEIVERS = [
 	"Bomb_TorpedoBullet", // Torpedo
 	"BulletUmbrellaCanopyCompact", // Undercover Brella Canopy
 	"BulletUmbrellaCanopyNormal", // Splat Brella Canopy
+	"BulletUmbrellaCanopyNormal_Launched", // Splat Brella Canopy launched
 	"BulletUmbrellaCanopyWide", // Tenta Brella Canopy
+	"BulletUmbrellaCanopyWide_Launched", // Tenta Brella Canopy launched
 	"BulletShelterCanopyFocus", // Recycled Brella Canopy
+	"BulletShelterCanopyFocus_Launched", // Recycled Brella Canopy launched
 ] as const;
 
 export const damagePriorities: Array<

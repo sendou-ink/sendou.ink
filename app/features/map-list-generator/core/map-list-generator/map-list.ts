@@ -4,7 +4,7 @@ import type {
 	ModeShort,
 	ModeWithStage,
 	StageId,
-} from "~/modules/in-game-lists";
+} from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import type { MapPool } from "../map-pool";
 import type { MapPoolObject } from "../map-pool-serializer/types";

@@ -1,7 +1,7 @@
 import { sql } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import type { MainWeaponId } from "~/modules/in-game-lists";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "../leaderboards-constants";
 

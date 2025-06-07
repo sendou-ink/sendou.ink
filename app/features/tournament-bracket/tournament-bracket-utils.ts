@@ -2,7 +2,7 @@ import type { TFunction } from "i18next";
 import * as R from "remeda";
 import type { Tables, TournamentRoundMaps } from "~/db/tables";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
-import type { ModeShort, StageId } from "~/modules/in-game-lists";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator";
 import {
 	seededRandom,
