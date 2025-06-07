@@ -3,11 +3,11 @@ import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import { Button } from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { NewTabs } from "~/components/NewTabs";
+import { SendouButton } from "~/components/elements/Button";
 import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import { BSKYLikeIcon } from "~/components/icons/BSKYLike";
 import { BSKYReplyIcon } from "~/components/icons/BSKYReply";
@@ -84,15 +84,15 @@ function DesktopSideNav() {
 			})}
 			{user ? (
 				<form method="post" action={LOG_OUT_URL}>
-					<Button
-						size="tiny"
+					<SendouButton
+						size="small"
 						variant="minimal"
 						icon={<LogOutIcon />}
 						type="submit"
 						className="front-page__side-nav__log-out"
 					>
 						{t("common:header.logout")}
-					</Button>
+					</SendouButton>
 				</form>
 			) : null}
 		</nav>

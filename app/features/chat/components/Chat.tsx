@@ -11,8 +11,8 @@ import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { soundPath } from "~/utils/urls";
 import { Avatar } from "../../../components/Avatar";
-import { Button } from "../../../components/Button";
 import { SubmitButton } from "../../../components/SubmitButton";
+import { SendouButton } from "../../../components/elements/Button";
 import { MESSAGE_MAX_LENGTH } from "../chat-constants";
 import { useChatAutoScroll } from "../chat-hooks";
 import type { ChatMessage } from "../chat-types";
@@ -136,12 +136,13 @@ export function Chat({
 						const unseen = unseenMessages.get(room.code);
 
 						return (
-							<Button
+							<SendouButton
 								key={room.code}
 								className={clsx("chat__room-button", {
 									current: currentRoom === room.code,
 								})}
-								onClick={() => {
+								size="small"
+								onPress={() => {
 									setCurrentRoom(room.code);
 									resetScroller();
 								}}
@@ -153,7 +154,7 @@ export function Chat({
 								) : (
 									<span className="chat__room-button__unseen invisible" />
 								)}
-							</Button>
+							</SendouButton>
 						);
 					})}
 				</div>
@@ -189,9 +190,12 @@ export function Chat({
 					})}
 				</ol>
 				{unseenMessagesInTheRoom ? (
-					<Button className="chat__unseen-messages" onClick={scrollToBottom}>
+					<SendouButton
+						className="chat__unseen-messages"
+						onPress={scrollToBottom}
+					>
 						{t("common:chat.newMessages")}
-					</Button>
+					</SendouButton>
 				) : null}
 				<form onSubmit={handleSubmit} className="mt-4">
 					<input
@@ -216,9 +220,9 @@ export function Chat({
 							</div>
 						)}
 						<SubmitButton
-							size="tiny"
+							size="small"
 							variant="minimal"
-							disabled={sendingMessagesDisabled}
+							isDisabled={sendingMessagesDisabled}
 						>
 							{t("common:chat.send")}
 						</SubmitButton>

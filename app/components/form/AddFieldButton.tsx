@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Button } from "../Button";
+import { SendouButton } from "../elements/Button";
 import { PlusIcon } from "../icons/Plus";
 
 export function AddFieldButton({
@@ -10,16 +10,16 @@ export function AddFieldButton({
 	const { t } = useTranslation(["common"]);
 
 	return (
-		<Button
+		<SendouButton
 			icon={<PlusIcon />}
 			aria-label="Add form field"
-			size="tiny"
+			size="small"
 			variant="minimal"
-			onClick={onClick}
+			onPress={onClick}
 			className="self-start"
-			testId="add-field-button"
+			data-testid="add-field-button"
 		>
 			{t("common:actions.add")}
-		</Button>
+		</SendouButton>
 	);
 }

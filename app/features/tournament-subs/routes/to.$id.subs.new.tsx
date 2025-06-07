@@ -1,13 +1,13 @@
 import { Form, useLoaderData } from "@remix-run/react";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "~/components/Button";
 import { WeaponCombobox } from "~/components/Combobox";
 import { FormMessage } from "~/components/FormMessage";
 import { WeaponImage } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { RequiredHiddenInput } from "~/components/RequiredHiddenInput";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
 import { TrashIcon } from "~/components/icons/Trash";
 import { useUser } from "~/features/auth/core/user";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
@@ -262,11 +262,11 @@ function WeaponPoolSelect({
 										height={38}
 									/>
 								</div>
-								<Button
+								<SendouButton
 									icon={<TrashIcon />}
 									variant="minimal-destructive"
 									aria-label="Delete weapon"
-									onClick={() =>
+									onPress={() =>
 										setWeapons(weapons.filter((w) => w !== weapon))
 									}
 								/>

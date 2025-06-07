@@ -4,11 +4,11 @@ import { formatDistanceToNow } from "date-fns";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import { Button } from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { Flag } from "~/components/Flag";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, TierImage, WeaponImage } from "~/components/Image";
+import { SendouButton } from "~/components/elements/Button";
 import { EditIcon } from "~/components/icons/Edit";
 import { TrashIcon } from "~/components/icons/Trash";
 import { useUser } from "~/features/auth/core/user";
@@ -463,15 +463,15 @@ function PostDeleteButton({ id, type }: { id: number; type: Post["type"] }) {
 			]}
 			fetcher={fetcher}
 		>
-			<Button
+			<SendouButton
 				className="build__small-text"
 				variant="minimal-destructive"
-				size="tiny"
+				size="small"
 				type="submit"
 				icon={<TrashIcon className="build__icon" />}
 			>
 				{t("common:actions.delete")}
-			</Button>
+			</SendouButton>
 		</FormWithConfirm>
 	);
 }
@@ -501,18 +501,18 @@ function PostExpandableText({
 		>
 			<div className={styles.text}>{text}</div>
 			{isExpandable ? (
-				<Button
-					onClick={() => setIsExpanded(!isExpanded)}
+				<SendouButton
+					onPress={() => setIsExpanded(!isExpanded)}
 					className={clsx([styles.showAllButton], {
 						[styles.showAllButtonExpanded]: isExpanded,
 					})}
 					variant="outlined"
-					size="tiny"
+					size="small"
 				>
 					{isExpanded
 						? t("common:actions.showLess")
 						: t("common:actions.showMore")}
-				</Button>
+				</SendouButton>
 			) : null}
 			{!isExpanded ? <div className={styles.textCut} /> : null}
 		</div>

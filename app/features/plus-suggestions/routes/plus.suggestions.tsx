@@ -4,7 +4,7 @@ import { Link, Outlet, useLoaderData, useSearchParams } from "@remix-run/react";
 import clsx from "clsx";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
-import { Button, LinkButton } from "~/components/Button";
+import { LinkButton } from "~/components/Button";
 import { Catcher } from "~/components/Catcher";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { RelativeTime } from "~/components/RelativeTime";
@@ -26,6 +26,7 @@ import {
 	canSuggestNewUser,
 } from "../plus-suggestions-utils";
 
+import { SendouButton } from "~/components/elements/Button";
 import { action } from "../actions/plus.suggestions.server";
 import { loader } from "../loaders/plus.suggestions.server";
 export { action, loader };
@@ -175,14 +176,14 @@ function SuggestedForInfo() {
 							]}
 							dialogHeading={`Delete your suggestion to +${tier}? You won't appear in next voting.`}
 						>
-							<Button
+							<SendouButton
 								key={tier}
-								size="tiny"
+								size="small"
 								variant="destructive"
 								type="submit"
 							>
-								Delete your +{tier} suggestion
-							</Button>
+								Delete
+							</SendouButton>
 						</FormWithConfirm>
 					))}
 				</div>
@@ -325,7 +326,7 @@ function CommentDeleteButton({
 					: `Delete your comment to ${suggestedUsername}'s +${tier} suggestion?`
 			}
 		>
-			<Button
+			<SendouButton
 				className="plus__delete-button"
 				icon={<TrashIcon />}
 				variant="minimal-destructive"

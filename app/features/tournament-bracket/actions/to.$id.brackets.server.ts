@@ -34,7 +34,7 @@ import {
 import { getServerTournamentManager } from "../core/brackets-manager/manager.server";
 import { roundMapsFromInput } from "../core/mapList.server";
 import { tournamentSummary } from "../core/summarizer.server";
-import { addSummary } from "../queries/addSummary.server";
+import { addSummary, finalizeTournament } from "../queries/addSummary.server";
 import { allMatchResultsByTournamentId } from "../queries/allMatchResultsByTournamentId.server";
 import { bracketSchema } from "../tournament-bracket-schemas.server";
 import { fillWithNullTillPowerOfTwo } from "../tournament-bracket-utils";
@@ -260,16 +260,19 @@ export const action: ActionFunction = async ({ params, request }) => {
 				seedingSkillCountsFor,
 			});
 
-			logger.info(
-				`Inserting tournament summary. Tournament id: ${tournamentId}, mapResultDeltas.lenght: ${summary.mapResultDeltas.length}, playerResultDeltas.length ${summary.playerResultDeltas.length}, tournamentResults.length ${summary.tournamentResults.length}, skills.length ${summary.skills.length}, seedingSkills.length ${summary.seedingSkills.length}`,
-			);
-
+			const tournamentSummaryString = `Tournament id: ${tournamentId}, mapResultDeltas.lenght: ${summary.mapResultDeltas.length}, playerResultDeltas.length ${summary.playerResultDeltas.length}, tournamentResults.length ${summary.tournamentResults.length}, skills.length ${summary.skills.length}, seedingSkills.length ${summary.seedingSkills.length}`;
 			if (!tournament.isTest) {
+				logger.info(`Inserting tournament summary. ${tournamentSummaryString}`);
 				addSummary({
 					tournamentId,
 					summary,
 					season,
 				});
+			} else {
+				logger.info(
+					`Did not insert tournament summary. ${tournamentSummaryString}`,
+				);
+				finalizeTournament(tournamentId);
 			}
 
 			if (tournament.ranked) {

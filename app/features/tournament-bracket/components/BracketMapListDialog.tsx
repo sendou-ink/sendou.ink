@@ -2,7 +2,6 @@ import { type FetcherWithComponents, Link, useFetcher } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "~/components/Button";
 import { ModeImage, StageImage } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
@@ -435,11 +434,11 @@ export function BracketMapListDialog({
 								) : null}
 							</div>
 							{tournament.ctx.toSetMapPool.length > 0 ? (
-								<Button
-									size="tiny"
+								<SendouButton
+									size="small"
 									icon={<RefreshArrowsIcon />}
 									variant="outlined"
-									onClick={() =>
+									onPress={() =>
 										setMaps(
 											generateTournamentRoundMaplist({
 												mapCounts,
@@ -454,7 +453,7 @@ export function BracketMapListDialog({
 									}
 								>
 									Reroll all maps
-								</Button>
+								</SendouButton>
 							) : null}
 						</div>
 						{needsToPickEliminationTeamCount ? (
@@ -592,7 +591,7 @@ export function BracketMapListDialog({
 								) : (
 									<SubmitButton
 										variant="outlined"
-										size="tiny"
+										size="small"
 										testId="confirm-finalize-bracket-button"
 										_action={isPreparing ? "PREPARE_MAPS" : "START_BRACKET"}
 										className="mx-auto"
@@ -894,13 +893,13 @@ function RoundMapList({
 		<div>
 			<h3 className="stack horizontal sm">
 				<div>{name}</div>{" "}
-				<Button
+				<SendouButton
 					variant={editing ? "minimal-success" : "minimal"}
-					onClick={() => setEditing(!editing)}
-					testId="edit-round-maps-button"
+					onPress={() => setEditing(!editing)}
+					data-testid="edit-round-maps-button"
 				>
 					{editing ? "Save" : "Edit"}
-				</Button>
+				</SendouButton>
 			</h3>
 			{unlink ? (
 				<SendouButton

@@ -4,8 +4,8 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
-import { Button } from "../Button";
 import { Image } from "../Image";
+import { SendouButton } from "../elements/Button";
 import { HamburgerIcon } from "../icons/Hamburger";
 import { Footer } from "./Footer";
 import { NavDialog } from "./NavDialog";
@@ -54,11 +54,11 @@ export function Layout({
 		<div className="layout__container">
 			<NavDialog isOpen={navDialogOpen} close={() => setNavDialogOpen(false)} />
 			{isFrontPage ? (
-				<Button
+				<SendouButton
 					icon={<HamburgerIcon />}
 					className="layout__hamburger-fab"
 					variant="outlined"
-					onClick={() => setNavDialogOpen(true)}
+					onPress={() => setNavDialogOpen(true)}
 				/>
 			) : null}
 			<header className="layout__header layout__item_size">

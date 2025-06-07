@@ -37,8 +37,8 @@ import {
 	subWeaponImageUrl,
 	weaponCategoryUrl,
 } from "~/utils/urls";
-import { Button } from "../../../components/Button";
 import { Image } from "../../../components/Image";
+import { SendouButton } from "../../../components/elements/Button";
 import type { StageBackgroundStyle } from "../plans-types";
 
 export default function Planner() {
@@ -275,9 +275,9 @@ function OutlineToggle({
 
 	return (
 		<div className="plans__outline-toggle">
-			<Button
+			<SendouButton
 				variant="minimal"
-				onClick={handleClick}
+				onPress={handleClick}
 				className={clsx("plans__outline-toggle__button", {
 					"plans__outline-toggle__button__outlined": outlined,
 				})}
@@ -285,7 +285,7 @@ function OutlineToggle({
 				{outlined
 					? t("common:actions.outlined")
 					: t("common:actions.noOutline")}
-			</Button>
+			</SendouButton>
 		</div>
 	);
 }
@@ -320,10 +320,10 @@ function WeaponImageSelector({
 						<div className="plans__weapons-container">
 							{category.weaponIds.map((weaponId) => {
 								return (
-									<Button
+									<SendouButton
 										key={weaponId}
 										variant="minimal"
-										onClick={() =>
+										onPress={() =>
 											handleAddWeapon(
 												`${outlinedMainWeaponImageUrl(weaponId)}.png`,
 											)
@@ -336,7 +336,7 @@ function WeaponImageSelector({
 											width={36}
 											height={36}
 										/>
-									</Button>
+									</SendouButton>
 								);
 							})}
 						</div>
@@ -351,10 +351,10 @@ function WeaponImageSelector({
 				<div className="plans__weapons-container">
 					{subWeaponIds.map((subWeaponId) => {
 						return (
-							<Button
+							<SendouButton
 								key={subWeaponId}
 								variant="minimal"
-								onClick={() =>
+								onPress={() =>
 									handleAddWeapon(`${subWeaponImageUrl(subWeaponId)}.png`)
 								}
 							>
@@ -365,7 +365,7 @@ function WeaponImageSelector({
 									width={28}
 									height={28}
 								/>
-							</Button>
+							</SendouButton>
 						);
 					})}
 				</div>
@@ -383,10 +383,10 @@ function WeaponImageSelector({
 				<div className="plans__weapons-container">
 					{specialWeaponIds.map((specialWeaponId) => {
 						return (
-							<Button
+							<SendouButton
 								key={specialWeaponId}
 								variant="minimal"
-								onClick={() =>
+								onPress={() =>
 									handleAddWeapon(
 										`${specialWeaponImageUrl(specialWeaponId)}.png`,
 									)
@@ -399,7 +399,7 @@ function WeaponImageSelector({
 									width={28}
 									height={28}
 								/>
-							</Button>
+							</SendouButton>
 						);
 					})}
 				</div>
@@ -412,10 +412,10 @@ function WeaponImageSelector({
 				<div className="plans__weapons-container">
 					{(["TC", "RM", "CB"] as const).map((mode) => {
 						return (
-							<Button
+							<SendouButton
 								key={mode}
 								variant="minimal"
-								onClick={() => handleAddWeapon(`${modeImageUrl(mode)}.png`)}
+								onPress={() => handleAddWeapon(`${modeImageUrl(mode)}.png`)}
 							>
 								<Image
 									alt={t(`game-misc:MODE_LONG_${mode}`)}
@@ -424,7 +424,7 @@ function WeaponImageSelector({
 									width={28}
 									height={28}
 								/>
-							</Button>
+							</SendouButton>
 						);
 					})}
 				</div>
@@ -499,15 +499,15 @@ function StageBackgroundSelector({
 					);
 				})}
 			</select>
-			<Button
-				size="tiny"
-				onClick={() =>
+			<SendouButton
+				size="small"
+				onPress={() =>
 					onAddBackground({ style: backgroundStyle, stageId, mode })
 				}
 				className="w-max"
 			>
 				{t("common:actions.setBg")}
-			</Button>
+			</SendouButton>
 		</div>
 	);
 }

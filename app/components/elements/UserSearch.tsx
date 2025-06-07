@@ -68,7 +68,7 @@ export const UserSearch = React.forwardRef(function UserSearch<
 			name={name}
 			placeholder=""
 			selectedKey={selectedKey}
-			onSelectionChange={onSelectionChange as (key: Key) => void}
+			onSelectionChange={onSelectionChange as (key: Key | null) => void}
 			{...rest}
 		>
 			{label ? (

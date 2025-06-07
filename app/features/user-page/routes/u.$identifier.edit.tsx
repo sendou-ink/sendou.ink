@@ -2,7 +2,6 @@ import { Form, Link, useLoaderData, useMatches } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { Button } from "~/components/Button";
 import { WeaponCombobox } from "~/components/Combobox";
 import { CustomizedColorsInput } from "~/components/CustomizedColorsInput";
 import { FormErrors } from "~/components/FormErrors";
@@ -11,6 +10,7 @@ import { WeaponImage } from "~/components/Image";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SendouButton } from "~/components/elements/Button";
 import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { StarIcon } from "~/components/icons/Star";
@@ -318,11 +318,11 @@ function WeaponPoolSelect() {
 								/>
 							</div>
 							<div className="stack sm horizontal items-center justify-center">
-								<Button
+								<SendouButton
 									icon={weapon.isFavorite ? <StarFilledIcon /> : <StarIcon />}
 									variant="minimal"
 									aria-label="Favorite weapon"
-									onClick={() =>
+									onPress={() =>
 										setWeapons(
 											weapons.map((w) =>
 												w.weaponSplId === weapon.weaponSplId
@@ -335,19 +335,19 @@ function WeaponPoolSelect() {
 										)
 									}
 								/>
-								<Button
+								<SendouButton
 									icon={<TrashIcon />}
 									variant="minimal-destructive"
 									aria-label="Delete weapon"
-									onClick={() =>
+									onPress={() =>
 										setWeapons(
 											weapons.filter(
 												(w) => w.weaponSplId !== weapon.weaponSplId,
 											),
 										)
 									}
-									testId={`delete-weapon-${weapon.weaponSplId}`}
-									size="tiny"
+									data-testid={`delete-weapon-${weapon.weaponSplId}`}
+									size="small"
 								/>
 							</div>
 						</div>

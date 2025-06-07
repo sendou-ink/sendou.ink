@@ -52,7 +52,7 @@ export function TournamentTeamActions() {
 						<input type="hidden" name="bracketIdx" value={status.bracketIdx} />
 						{status.canCheckIn ? (
 							<SubmitButton
-								size="tiny"
+								size="small"
 								variant="minimal"
 								_action="CHECK_IN"
 								state={fetcher.state}
@@ -85,7 +85,7 @@ export function TournamentTeamActions() {
 					<fetcher.Form method="post">
 						<input type="hidden" name="bracketIdx" value={status.bracketIdx} />
 						<SubmitButton
-							size="tiny"
+							size="small"
 							variant="minimal"
 							_action="BRACKET_CHECK_IN"
 							state={fetcher.state}

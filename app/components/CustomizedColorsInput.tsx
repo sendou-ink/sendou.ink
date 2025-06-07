@@ -3,9 +3,9 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useDebounce } from "react-use";
 import { CUSTOM_CSS_VAR_COLORS } from "~/features/user-page/user-page-constants";
-import { Button } from "./Button";
 import { InfoPopover } from "./InfoPopover";
 import { Label } from "./Label";
+import { SendouButton } from "./elements/Button";
 import { AlertIcon } from "./icons/Alert";
 import { CheckmarkIcon } from "./icons/Checkmark";
 
@@ -104,10 +104,10 @@ export function CustomizedColorsInput({
 									}}
 									data-testid={`color-input-${cssVar}`}
 								/>
-								<Button
-									size="tiny"
+								<SendouButton
+									size="small"
 									variant="minimal-destructive"
-									onClick={() => {
+									onPress={() => {
 										const newColors: Record<string, string | undefined> = {
 											...colors,
 										};
@@ -123,7 +123,7 @@ export function CustomizedColorsInput({
 									}}
 								>
 									{t("actions.reset")}
-								</Button>
+								</SendouButton>
 							</React.Fragment>
 						);
 					})}
