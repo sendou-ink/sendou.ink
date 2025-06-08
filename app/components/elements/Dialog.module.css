@@ -11,6 +11,7 @@
 	padding: 1rem;
 	text-align: center;
 	backdrop-filter: blur(10px); /* Adjust blur value as needed */
+	padding-block: var(--s-32);
 }
 
 .fullScreenOverlay {
