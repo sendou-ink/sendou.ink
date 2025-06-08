@@ -42,6 +42,7 @@ import * as QRepository from "~/features/sendouq/QRepository.server";
 import { addMember } from "~/features/sendouq/queries/addMember.server";
 import { createMatch } from "~/features/sendouq/queries/createMatch.server";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { createVod } from "~/features/vods/queries/createVod.server";
@@ -174,6 +175,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	scrimPostRequests,
 	associations,
 	notifications,
+	organization,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -235,6 +237,7 @@ function wipeDB() {
 		"PlusVote",
 		"TournamentBadgeOwner",
 		"BadgeManager",
+		"TournamentOrganization",
 	];
 
 	for (const table of tablesToDelete) {
@@ -2549,4 +2552,35 @@ async function notifications() {
 				id: i + 1,
 			});
 	}
+}
+
+async function organization() {
+	await TournamentOrganizationRepository.create({
+		ownerId: ADMIN_ID,
+		name: "sendou.ink",
+	});
+
+	await TournamentOrganizationRepository.update({
+		id: 1,
+		name: "sendou.ink",
+		description: "Sendou.ink official tournaments",
+		socials: [
+			"https://bsky.app/profile/sendou.ink",
+			"https://twitch.tv/sendou",
+		],
+		members: [
+			{
+				userId: ADMIN_ID,
+				role: "ADMIN",
+				roleDisplayName: null,
+			},
+			{
+				userId: NZAP_TEST_ID,
+				role: "MEMBER",
+				roleDisplayName: null,
+			},
+		],
+		series: [],
+		badges: [],
+	});
 }

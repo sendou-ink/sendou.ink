@@ -35,8 +35,8 @@ export function create(args: CreateArgs) {
 	});
 }
 
-export function findBySlug(slug: string) {
-	return db
+export async function findBySlug(slug: string) {
+	const organization = await db
 		.selectFrom("TournamentOrganization")
 		.leftJoin(
 			"UserSubmittedImage",
@@ -95,6 +95,17 @@ export function findBySlug(slug: string) {
 		])
 		.where("TournamentOrganization.slug", "=", slug)
 		.executeTakeFirst();
+
+	if (!organization) return null;
+
+	return {
+		...organization,
+		permissions: {
+			EDIT: organization.members
+				.filter((member) => member.role === "ADMIN")
+				.map((member) => member.id),
+		},
+	};
 }
 
 export function findByOrganizerUserId(userId: number) {

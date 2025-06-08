@@ -9,9 +9,9 @@ import { NewTabs } from "~/components/NewTabs";
 import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
 import { EditIcon } from "~/components/icons/Edit";
-import { useUser } from "~/features/auth/core/user";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHasPermission } from "~/modules/permissions/hooks";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -27,7 +27,6 @@ import {
 import { EventCalendar } from "../components/EventCalendar";
 import { SocialLinksList } from "../components/SocialLinksList";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "../tournament-organization-constants";
-import { canEditTournamentOrganization } from "../tournament-organization-utils";
 
 import { loader } from "../loaders/org.$slug.server";
 export { loader };
@@ -100,8 +99,8 @@ export default function TournamentOrganizationPage() {
 
 function LogoHeader() {
 	const { t } = useTranslation(["common"]);
-	const user = useUser();
 	const data = useLoaderData<typeof loader>();
+	const canEditOrganization = useHasPermission(data.organization, "EDIT");
 
 	return (
 		<div className="stack horizontal md">
@@ -115,16 +114,14 @@ function LogoHeader() {
 			/>
 			<div className="stack sm">
 				<div className="text-xl font-bold">{data.organization.name}</div>
-				{canEditTournamentOrganization({
-					user,
-					organization: data.organization,
-				}) ? (
+				{canEditOrganization ? (
 					<div className="stack items-start">
 						<LinkButton
 							to={tournamentOrganizationEditPage(data.organization.slug)}
 							icon={<EditIcon />}
 							size="tiny"
 							variant="outlined"
+							testId="edit-org-button"
 						>
 							{t("common:actions.edit")}
 						</LinkButton>

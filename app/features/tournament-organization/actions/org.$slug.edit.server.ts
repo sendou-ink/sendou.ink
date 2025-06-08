@@ -2,16 +2,12 @@ import { type ActionFunctionArgs, redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import i18next from "~/modules/i18n/i18next.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
 import { valueArrayToDBFormat } from "~/utils/form";
-import {
-	actionError,
-	parseRequestPayload,
-	unauthorizedIfFalsy,
-} from "~/utils/remix.server";
+import { actionError, parseRequestPayload } from "~/utils/remix.server";
 import { tournamentOrganizationPage } from "~/utils/urls";
 import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import { organizationEditSchema } from "../tournament-organization-schemas";
-import { canEditTournamentOrganization } from "../tournament-organization-utils";
 import { organizationFromParams } from "../tournament-organization-utils.server";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -24,7 +20,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	const organization = await organizationFromParams(params);
 
-	unauthorizedIfFalsy(canEditTournamentOrganization({ organization, user }));
+	requirePermission(organization, "EDIT", user);
 
 	if (
 		!data.members.some(
