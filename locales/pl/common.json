@@ -75,6 +75,8 @@
 	"notifications.text.SCRIM_NEW_REQUEST": "",
 	"notifications.title.SCRIM_SCHEDULED": "",
 	"notifications.text.SCRIM_SCHEDULED": "",
+	"notifications.title.SCRIM_CANCELED": "",
+	"notifications.text.SCRIM_CANCELED": "",
 	"auth.errors.aborted": "Logowanie przerwane",
 	"auth.errors.failed": "Logowanie nieudane",
 	"auth.errors.discordPermissions": "Do twojego profilu sendou.ink, ta strona potrzebuje dostęp do twojej nazwy, avataru i połączeń konta Discord.",

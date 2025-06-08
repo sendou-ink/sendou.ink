@@ -35,6 +35,7 @@ export const notificationNavIcon = (type: Notification["type"]) => {
 			return "medal";
 		case "SCRIM_NEW_REQUEST":
 		case "SCRIM_SCHEDULED":
+		case "SCRIM_CANCELED":
 			return "scrims";
 		default:
 			assertUnreachable(type);
@@ -78,6 +79,7 @@ export const notificationLink = (notification: Notification) => {
 		case "SCRIM_NEW_REQUEST": {
 			return scrimsPage();
 		}
+		case "SCRIM_CANCELED":
 		case "SCRIM_SCHEDULED": {
 			return scrimPage(notification.meta.id);
 		}
@@ -91,7 +93,10 @@ export const mapMetaForTranslation = (
 	notification: Notification,
 	language: string,
 ) => {
-	if (notification.type === "SCRIM_SCHEDULED") {
+	if (
+		notification.type === "SCRIM_SCHEDULED" ||
+		notification.type === "SCRIM_CANCELED"
+	) {
 		return {
 			...notification.meta,
 			timeString: notification.meta.at // TODO: after two weeks this check can be removed (all notifications will have `at`)

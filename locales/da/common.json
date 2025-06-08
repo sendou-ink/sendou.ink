@@ -75,6 +75,8 @@
 	"notifications.text.SCRIM_NEW_REQUEST": "",
 	"notifications.title.SCRIM_SCHEDULED": "",
 	"notifications.text.SCRIM_SCHEDULED": "",
+	"notifications.title.SCRIM_CANCELED": "",
+	"notifications.text.SCRIM_CANCELED": "",
 	"auth.errors.aborted": "logindforsøg afbrudt",
 	"auth.errors.failed": "Loginforsøg fejlet",
 	"auth.errors.discordPermissions": "Før at du kan oprette en profil på sendou.ink, skal sendou.ink have adgang til din Discordprofils navn, brugerbillede og sociale forbindelser (de sociale medier, som du har tilknyttet din discordprofil).",

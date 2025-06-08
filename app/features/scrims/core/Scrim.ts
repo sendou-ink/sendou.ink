@@ -1,3 +1,4 @@
+import { logger } from "~/utils/logger";
 import type { ScrimPost } from "../scrims-types";
 
 /** Returns true if the original poster has accepted any of the requests. */
@@ -16,4 +17,21 @@ export function isParticipating(post: ScrimPost, userId: number) {
 
 export function resolvePoolCode(postId: number) {
 	return `SC${postId % 10}`;
+}
+
+/**
+ * Returns an array of participant IDs from the given post object that is accepted (scrim page exists).
+ */
+export function participantIdsListFromAccepted(post: ScrimPost) {
+	const acceptedRequest = post.requests.find((r) => r.isAccepted);
+
+	if (!acceptedRequest) {
+		logger.warn(
+			`Scrim post ${post.id} has no accepted request, returning only post users.`,
+		);
+	}
+
+	return post.users
+		.map((u) => u.id)
+		.concat(acceptedRequest?.users.map((u) => u.id) ?? []);
 }

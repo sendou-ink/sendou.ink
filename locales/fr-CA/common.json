@@ -75,6 +75,8 @@
 	"notifications.text.SCRIM_NEW_REQUEST": "",
 	"notifications.title.SCRIM_SCHEDULED": "",
 	"notifications.text.SCRIM_SCHEDULED": "",
+	"notifications.title.SCRIM_CANCELED": "",
+	"notifications.text.SCRIM_CANCELED": "",
 	"auth.errors.aborted": "Connexion abandonnée",
 	"auth.errors.failed": "Connexion échouée",
 	"auth.errors.discordPermissions": "Pour mettre en place votre profil, sendou.ink a besoin de votre nom de profil Discord, de votre avatar et de vos réseaux connectés.",

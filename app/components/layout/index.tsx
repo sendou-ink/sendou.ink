@@ -11,6 +11,8 @@ import { Footer } from "./Footer";
 import { NavDialog } from "./NavDialog";
 import { TopRightButtons } from "./TopRightButtons";
 
+import styles from "./index.module.css";
+
 function useBreadcrumbs() {
 	const { t } = useTranslation();
 	const matches = useMatches();
@@ -56,7 +58,7 @@ export function Layout({
 			{isFrontPage ? (
 				<SendouButton
 					icon={<HamburgerIcon />}
-					className="layout__hamburger-fab"
+					className={clsx(styles.hamburger, styles.fab)}
 					variant="outlined"
 					onPress={() => setNavDialogOpen(true)}
 				/>

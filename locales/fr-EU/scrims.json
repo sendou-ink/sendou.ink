@@ -13,6 +13,7 @@
 	"pickup": "Pickup de {{username}}",
 	"status.booked": "Réservé",
 	"status.pending": "En attente",
+	"status.canceled": "",
 	"actions.request": "Demande",
 	"deleteModal.title": "Supprimer le post?",
 	"deleteModal.prevented": "Le post doit être supprimée par le propriétaire ({{username}})",

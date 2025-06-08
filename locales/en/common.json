@@ -75,6 +75,8 @@
 	"notifications.text.SCRIM_NEW_REQUEST": "{{fromUsername}} requested a scrim",
 	"notifications.title.SCRIM_SCHEDULED": "Scrim Scheduled",
 	"notifications.text.SCRIM_SCHEDULED": "New scrim scheduled at {{timeString}}",
+	"notifications.title.SCRIM_CANCELED": "Scrim Canceled",
+	"notifications.text.SCRIM_CANCELED": "The scrim at {{timeString}} was canceled",
 	"auth.errors.aborted": "Login Aborted",
 	"auth.errors.failed": "Login Failed",
 	"auth.errors.discordPermissions": "For your sendou.ink profile, the site needs access to your Discord profile's name, avatar and social connections.",
