@@ -1,3 +1,4 @@
+import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useUser } from "~/features/auth/core/user";
 import { FF_SCRIMS_ENABLED } from "~/features/scrims/scrims-constants";
@@ -14,7 +15,6 @@ import {
 	plusSuggestionsNewPage,
 	userNewBuildPage,
 } from "~/utils/urls";
-import { SendouButton } from "../elements/Button";
 import {
 	SendouMenu,
 	SendouMenuItem,
@@ -100,12 +100,12 @@ export function AnythingAdder() {
 	return (
 		<SendouMenu
 			trigger={
-				<SendouButton
+				<Button
 					className="layout__header__button"
 					data-testid="anything-adder-menu-button"
 				>
 					<PlusIcon className="layout__header__button__icon" />
-				</SendouButton>
+				</Button>
 			}
 		>
 			{items.map((item) => (

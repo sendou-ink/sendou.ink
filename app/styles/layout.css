@@ -79,24 +79,6 @@
 	letter-spacing: 0.02rem;
 }
 
-.layout__hamburger-fab {
-	display: grid;
-	position: fixed;
-	right: 27.5px;
-	bottom: 105px;
-	border-radius: 100%;
-	width: 3.75rem;
-	height: 3.75rem;
-	backdrop-filter: var(--backdrop-filter);
-	background-color: transparent;
-	border-color: var(--theme-transparent);
-}
-
-.layout__hamburger-fab svg {
-	width: 2.25rem;
-	stroke-width: 2px;
-}
-
 .layout__header__right-container {
 	display: flex;
 	gap: var(--s-3);
@@ -378,12 +360,6 @@
 
 	.layout__main {
 		padding-block-start: env(safe-area-inset-top);
-	}
-}
-
-@media screen and (min-width: 600px) {
-	.layout__hamburger-fab {
-		display: none;
 	}
 }
 
