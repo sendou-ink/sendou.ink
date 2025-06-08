@@ -26,9 +26,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	return {
 		post,
 		chatUsers: await UserRepository.findChatUsersByUserIds(
-			post.users
-				.map((u) => u.id)
-				.concat(post.requests.at(0)?.users.map((u) => u.id) ?? []),
+			Scrim.participantIdsListFromAccepted(post),
 		),
 	};
 };

@@ -13,6 +13,7 @@
 	"pickup": "Pickup von {{username}}",
 	"status.booked": "Gebucht",
 	"status.pending": "Ausstehend",
+	"status.canceled": "",
 	"actions.request": "Anfragen",
 	"deleteModal.title": "Scrim post löschen?",
 	"deleteModal.prevented": "Der Post muss von Ersteller ({{username}}) gelöscht werden.",

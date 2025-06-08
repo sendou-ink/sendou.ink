@@ -75,6 +75,8 @@
 	"notifications.text.SCRIM_NEW_REQUEST": "{{fromUsername}} запросил скрим",
 	"notifications.title.SCRIM_SCHEDULED": "Скрим Запланирован",
 	"notifications.text.SCRIM_SCHEDULED": "Новый скрим запланирован на {{timeString}}",
+	"notifications.title.SCRIM_CANCELED": "",
+	"notifications.text.SCRIM_CANCELED": "",
 	"auth.errors.aborted": "Вход отменён",
 	"auth.errors.failed": "Ошибка входа",
 	"auth.errors.discordPermissions": "Для вашего профиля на sendou.ink странице нужен доступ к вашему имени, аватару и привязанным аккаунтам соц. сетей в Discord.",

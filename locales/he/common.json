@@ -75,6 +75,8 @@
 	"notifications.text.SCRIM_NEW_REQUEST": "",
 	"notifications.title.SCRIM_SCHEDULED": "",
 	"notifications.text.SCRIM_SCHEDULED": "",
+	"notifications.title.SCRIM_CANCELED": "",
+	"notifications.text.SCRIM_CANCELED": "",
 	"auth.errors.aborted": "הכניסה בוטלה",
 	"auth.errors.failed": "הכניסה נכשלה",
 	"auth.errors.discordPermissions": "עבור פרופיל sendou.ink שלך, האתר זקוק לגישה לשם, הפרופיל והקשרים החברתיים של פרופיל ה-Discord שלך.",

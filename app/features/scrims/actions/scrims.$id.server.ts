@@ -1,4 +1,5 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
+import { notify } from "~/features/notifications/core/notify.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import {
 	notFoundIfFalsy,
@@ -6,10 +7,14 @@ import {
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
-import { databaseTimestampToDate } from "../../../utils/dates";
+import {
+	databaseTimestampToDate,
+	databaseTimestampToJavascriptTimestamp,
+} from "../../../utils/dates";
 import { errorToast } from "../../../utils/remix.server";
 import { requireUser } from "../../auth/core/user.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
+import * as Scrim from "../core/Scrim";
 import { cancelScrimSchema } from "../scrims-schemas";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -31,6 +36,18 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	await ScrimPostRepository.cancelScrim(id, {
 		userId: user.id,
 		reason: data.reason,
+	});
+
+	notify({
+		userIds: Scrim.participantIdsListFromAccepted(post),
+		defaultSeenUserIds: [user.id],
+		notification: {
+			type: "SCRIM_CANCELED",
+			meta: {
+				id: post.id,
+				at: databaseTimestampToJavascriptTimestamp(post.at),
+			},
+		},
 	});
 
 	return null;

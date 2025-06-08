@@ -9,6 +9,8 @@
 
 - `npm run typecheck` runs TypeScript type checking
 - `npm run biome:fix` runs Biome code formatter and linter
+- `npm run test:unit` runs all unit tests
+- `npm run i18n:sync` syncs translation jsons with English and should always be run after adding new text to an English translation file 
 
 ## Typescript
 
@@ -46,7 +48,12 @@
 - down migrations are not needed, only up migrations
 - every database id is of type number
 
-## Playwright
+## E2E testing
 
+- library used for E2E testing is Playwright
 - `page.goto` is forbidden, use the `navigate` function to do a page navigation
 - to submit a form you use the `submit` function
+
+## Unit testing
+
+- library used for unit testing is Vitest

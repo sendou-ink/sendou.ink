@@ -13,6 +13,7 @@
 	"pickup": "",
 	"status.booked": "",
 	"status.pending": "",
+	"status.canceled": "",
 	"actions.request": "",
 	"deleteModal.title": "",
 	"deleteModal.prevented": "",
