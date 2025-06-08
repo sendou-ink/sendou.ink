@@ -1219,6 +1219,7 @@ abbr[title] {
 	flex-wrap: wrap;
 	justify-content: center;
 	gap: var(--s-1);
+	touch-action: manipulation;
 }
 
 .ability-selector__ability-button {
