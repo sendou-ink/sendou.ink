@@ -439,6 +439,8 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("result-team-name").first().click();
 		await page.getByTestId("team-member-name").first().click();
 
+		await expect(page).toHaveURL(/\/u\//);
+
 		await page.getByText("Results").click();
 		await expect(
 			page.getByTestId("tournament-name-cell").first(),
