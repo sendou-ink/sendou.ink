@@ -26,7 +26,7 @@ export function FiltersDialog({ filters }: { filters: CalendarFilters }) {
 			<SendouButton
 				size="small"
 				icon={<FilterFilledIcon />}
-				onClick={() => setIsOpen(true)}
+				onPress={() => setIsOpen(true)}
 				data-testid="filter-events-button"
 			>
 				{t("calendar:filter.button")}

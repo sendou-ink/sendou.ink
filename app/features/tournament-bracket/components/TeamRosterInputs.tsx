@@ -493,7 +493,7 @@ function RosterFormWithButtons({
 			<div className="tournament-bracket__roster-buttons__container">
 				<SendouButton
 					size="small"
-					onClick={() => setEditingRoster(true)}
+					onPress={() => setEditingRoster(true)}
 					className="tournament-bracket__edit-roster-button"
 					variant="minimal"
 					data-testid="edit-active-roster-button"
@@ -528,7 +528,7 @@ function RosterFormWithButtons({
 				<SendouButton
 					size="small"
 					variant="destructive"
-					onClick={() => {
+					onPress={() => {
 						setEditingRoster(false);
 					}}
 				>

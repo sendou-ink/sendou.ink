@@ -85,7 +85,7 @@ function FriendCodeLookUp() {
 				<SubmitButton
 					state={fetcher.state}
 					icon={<SearchIcon />}
-					onClick={() => setSearchParams({ friendCode })}
+					onPress={() => setSearchParams({ friendCode })}
 				>
 					Search
 				</SubmitButton>

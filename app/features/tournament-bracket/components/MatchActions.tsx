@@ -391,7 +391,7 @@ function EditScoreForm({
 				<SendouButton
 					variant="destructive"
 					size="small"
-					onClick={() => setEditing(false)}
+					onPress={() => setEditing(false)}
 				>
 					Cancel
 				</SendouButton>
@@ -406,7 +406,7 @@ function EditScoreForm({
 				variant="outlined"
 				size="small"
 				className="mx-auto"
-				onClick={() => setEditing(true)}
+				onPress={() => setEditing(true)}
 				data-testid="revise-button"
 			>
 				Edit

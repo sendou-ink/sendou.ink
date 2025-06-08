@@ -1292,7 +1292,7 @@ function MapListMap({
 											size="small"
 											icon={<CrossIcon />}
 											variant="minimal-destructive"
-											onClick={() => {
+											onPress={() => {
 												const userId = user!.id;
 												const groupMatchMapId = map.id;
 

@@ -784,7 +784,7 @@ function TeamInfo({
 											<SendouButton
 												variant="minimal"
 												size="small"
-												onClick={() => setUploadedAvatar(null)}
+												onPress={() => setUploadedAvatar(null)}
 											>
 												{t("common:actions.edit")}
 											</SendouButton>
@@ -841,7 +841,7 @@ function TeamInfo({
 					<SendouButton
 						data-testid="save-team-button"
 						isDisabled={submitButtonDisabled()}
-						onClick={handleSubmit}
+						onPress={handleSubmit}
 					>
 						{t("common:actions.save")}
 					</SendouButton>
@@ -1020,7 +1020,7 @@ function FillRoster({
 						<div>
 							<SendouButton
 								size="small"
-								onClick={() => copyToClipboard(inviteLink)}
+								onPress={() => copyToClipboard(inviteLink)}
 								variant="outlined"
 							>
 								{t("common:actions.copyToClipboard")}
@@ -1167,7 +1167,7 @@ function DeleteMember({ members }: { members: TournamentDataTeam["members"] }) {
 			<SendouButton
 				size="small"
 				variant="minimal-destructive"
-				onClick={() => setExpanded(true)}
+				onPress={() => setExpanded(true)}
 			>
 				{t("tournament:pre.roster.delete.button")}
 			</SendouButton>
