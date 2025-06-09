@@ -415,6 +415,7 @@ function FavBadgeSelect() {
 				selectedBadges={value}
 				onChange={onChange}
 				maxCount={BADGE.SMALL_BADGES_PER_DISPLAY_PAGE + 1}
+				showSelect={isSupporter || value.length === 0}
 			>
 				{!isSupporter ? (
 					<div className="text-sm text-lighter font-semi-bold text-center">

@@ -11,6 +11,7 @@ export function BadgesSelector({
 	onBlur,
 	children,
 	maxCount,
+	showSelect = true,
 }: {
 	options: BadgeDisplayProps["badges"];
 	selectedBadges: number[];
@@ -18,6 +19,7 @@ export function BadgesSelector({
 	onBlur?: () => void;
 	children?: React.ReactNode;
 	maxCount?: number;
+	showSelect?: boolean;
 }) {
 	const { t } = useTranslation(["common"]);
 
@@ -43,21 +45,25 @@ export function BadgesSelector({
 					{t("common:badges.selector.none")}
 				</div>
 			)}
-			<select
-				onBlur={onBlur}
-				onChange={(e) => onChange([...selectedBadges, Number(e.target.value)])}
-				disabled={Boolean(maxCount && selectedBadges.length >= maxCount)}
-				data-testid="badges-selector"
-			>
-				<option>{t("common:badges.selector.select")}</option>
-				{options
-					.filter((badge) => !selectedBadges.includes(badge.id))
-					.map((badge) => (
-						<option key={badge.id} value={badge.id}>
-							{badge.displayName}
-						</option>
-					))}
-			</select>
+			{showSelect ? (
+				<select
+					onBlur={onBlur}
+					onChange={(e) =>
+						onChange([...selectedBadges, Number(e.target.value)])
+					}
+					disabled={Boolean(maxCount && selectedBadges.length >= maxCount)}
+					data-testid="badges-selector"
+				>
+					<option>{t("common:badges.selector.select")}</option>
+					{options
+						.filter((badge) => !selectedBadges.includes(badge.id))
+						.map((badge) => (
+							<option key={badge.id} value={badge.id}>
+								{badge.displayName}
+							</option>
+						))}
+				</select>
+			) : null}
 		</div>
 	);
 }
