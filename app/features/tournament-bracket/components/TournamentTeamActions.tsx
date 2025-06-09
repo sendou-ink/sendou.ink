@@ -2,8 +2,8 @@ import { useFetcher } from "@remix-run/react";
 import clsx from "clsx";
 import { sub } from "date-fns";
 import * as React from "react";
-import { LinkButton } from "~/components/Button";
 import { SubmitButton } from "~/components/SubmitButton";
+import { LinkButton } from "~/components/elements/Button";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
@@ -31,7 +31,7 @@ export function TournamentTeamActions() {
 						matchId: status.matchId,
 					})}
 					variant="minimal"
-					size="tiny"
+					size="small"
 				>
 					Go to match
 				</LinkButton>

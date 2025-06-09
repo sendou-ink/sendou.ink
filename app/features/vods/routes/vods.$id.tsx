@@ -3,11 +3,11 @@ import { useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { LinkButton } from "~/components/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { YouTubeEmbed } from "~/components/YouTubeEmbed";
+import { LinkButton } from "~/components/elements/Button";
 import { EditIcon } from "~/components/icons/Edit";
 import { TrashIcon } from "~/components/icons/Trash";
 import { useUser } from "~/features/auth/core/user";
@@ -120,7 +120,7 @@ export default function VodPage() {
 						<div className="stack horizontal md">
 							<LinkButton
 								to={newVodPage(data.vod.id)}
-								size="tiny"
+								size="small"
 								testId="edit-vod-button"
 								icon={<EditIcon />}
 							>

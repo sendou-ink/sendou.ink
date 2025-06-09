@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { SUPPORT_PAGE } from "~/utils/urls";
-import { LinkButton } from "../Button";
+import { LinkButton } from "../elements/Button";
 import { HamburgerIcon } from "../icons/Hamburger";
 import { HeartIcon } from "../icons/Heart";
 import { AnythingAdder } from "./AnythingAdder";
@@ -23,7 +23,7 @@ export function TopRightButtons({
 			{showSupport ? (
 				<LinkButton
 					to={SUPPORT_PAGE}
-					size="tiny"
+					size="small"
 					icon={<HeartIcon />}
 					variant="outlined"
 				>

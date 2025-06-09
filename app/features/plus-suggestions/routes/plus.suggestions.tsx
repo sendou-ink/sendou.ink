@@ -4,10 +4,10 @@ import { Link, Outlet, useLoaderData, useSearchParams } from "@remix-run/react";
 import clsx from "clsx";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
-import { LinkButton } from "~/components/Button";
 import { Catcher } from "~/components/Catcher";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { RelativeTime } from "~/components/RelativeTime";
+import { LinkButton } from "~/components/elements/Button";
 import { TrashIcon } from "~/components/icons/Trash";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
@@ -221,7 +221,7 @@ function SuggestedUser({
 				}) ? (
 					<LinkButton
 						className="plus__comment-button"
-						size="tiny"
+						size="small"
 						variant="outlined"
 						to={`comment/${tier}/${suggestion.suggested.id}?tier=${tier}`}
 						prefetch="render"

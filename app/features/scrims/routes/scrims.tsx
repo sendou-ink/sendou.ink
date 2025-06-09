@@ -7,11 +7,11 @@ import * as R from "remeda";
 import type { z } from "zod";
 import { AddNewButton } from "~/components/AddNewButton";
 import { Avatar } from "~/components/Avatar";
-import { LinkButton } from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Table } from "~/components/Table";
 import TimePopover from "~/components/TimePopover";
+import { LinkButton } from "~/components/elements/Button";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -92,7 +92,7 @@ export default function ScrimsPage() {
 		<Main className="stack lg">
 			<div className="stack horizontal justify-between items-center">
 				<LinkButton
-					size="tiny"
+					size="small"
 					to={associationsPage()}
 					className={clsx("mr-auto", { invisible: !user })}
 					variant="outlined"
@@ -583,7 +583,7 @@ function ContactButton({ postId }: { postId: number }) {
 	return (
 		<LinkButton
 			to={scrimPage(postId)}
-			size="tiny"
+			size="small"
 			className="w-max ml-auto"
 			icon={<SpeechBubbleFilledIcon />}
 		>

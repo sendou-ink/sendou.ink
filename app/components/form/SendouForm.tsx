@@ -6,8 +6,8 @@ import { useTranslation } from "react-i18next";
 import type { z } from "zod";
 import { logger } from "~/utils/logger";
 import type { ActionError } from "~/utils/remix.server";
-import { LinkButton } from "../Button";
 import { SubmitButton } from "../SubmitButton";
+import { LinkButton } from "../elements/Button";
 
 export function SendouForm<T extends z.ZodTypeAny>({
 	schema,
@@ -65,7 +65,7 @@ export function SendouForm<T extends z.ZodTypeAny>({
 						<LinkButton
 							variant="minimal-destructive"
 							to={cancelLink}
-							size="tiny"
+							size="small"
 						>
 							{t("common:actions.cancel")}
 						</LinkButton>

@@ -5,7 +5,6 @@ import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import { LinkButton } from "~/components/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
@@ -13,6 +12,7 @@ import { MapPoolStages } from "~/components/MapPoolSelector";
 import { Placement } from "~/components/Placement";
 import { Section } from "~/components/Section";
 import { Table } from "~/components/Table";
+import { LinkButton } from "~/components/elements/Button";
 import { SendouButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
@@ -128,7 +128,7 @@ export default function CalendarEventPage() {
 							<LinkButton
 								to={data.event.discordUrl}
 								variant="outlined"
-								size="tiny"
+								size="small"
 								isExternal
 							>
 								Discord
@@ -137,13 +137,16 @@ export default function CalendarEventPage() {
 						<LinkButton
 							to={data.event.bracketUrl}
 							variant="outlined"
-							size="tiny"
+							size="small"
 							isExternal
 						>
 							{resolveBaseUrl(data.event.bracketUrl)}
 						</LinkButton>
 						{canEditCalendarEvent({ user, event: data.event }) && (
-							<LinkButton size="tiny" to={calendarEditPage(data.event.eventId)}>
+							<LinkButton
+								size="small"
+								to={calendarEditPage(data.event.eventId)}
+							>
 								{t("common:actions.edit")}
 							</LinkButton>
 						)}
@@ -153,7 +156,7 @@ export default function CalendarEventPage() {
 							startTimes: data.event.startTimes,
 						}) && (
 							<LinkButton
-								size="tiny"
+								size="small"
 								to={calendarReportWinnersPage(data.event.eventId)}
 							>
 								{t("calendar:actions.reportWinners")}
@@ -276,7 +279,7 @@ function MapPoolInfo() {
 					className="event__create-map-list-link"
 					to={readonlyMapsPage(data.event.eventId)}
 					variant="outlined"
-					size="tiny"
+					size="small"
 				>
 					<Image alt="" path={navIconUrl("maps")} width={22} height={22} />
 					{t("calendar:createMapList")}

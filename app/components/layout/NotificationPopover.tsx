@@ -12,7 +12,7 @@ import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
 import type { RootLoaderData } from "~/root";
 import { NOTIFICATIONS_URL } from "~/utils/urls";
 import { useMarkNotificationsAsSeen } from "../../features/notifications/notifications-hooks";
-import { LinkButton } from "../Button";
+import { LinkButton } from "../elements/Button";
 import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
 import { BellIcon } from "../icons/Bell";
@@ -129,7 +129,7 @@ function NotificationsFooter() {
 			<hr className={styles.divider} />
 			<LinkButton
 				variant="minimal"
-				size="tiny"
+				size="small"
 				to={NOTIFICATIONS_URL}
 				className="mt-1-5"
 				testId="notifications-see-all-button"

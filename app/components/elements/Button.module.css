@@ -18,15 +18,18 @@
 	user-select: none;
 }
 
-.button[data-focus-visible] {
+.button[data-focus-visible],
+.button:focus-visible {
 	outline: 2px solid var(--theme);
 }
 
-.button[data-pressed] {
+.button[data-pressed],
+.button:active {
 	transform: translateY(1px);
 }
 
-.button[data-disabled] {
+.button[data-disabled],
+.button:disabled {
 	cursor: not-allowed;
 	opacity: 0.5;
 	transform: initial;

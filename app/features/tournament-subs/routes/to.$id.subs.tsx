@@ -2,11 +2,11 @@ import { Link, useLoaderData } from "@remix-run/react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import { LinkButton } from "~/components/Button";
 import { Flag } from "~/components/Flag";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { WeaponImage } from "~/components/Image";
 import { Redirect } from "~/components/Redirect";
+import { LinkButton } from "~/components/elements/Button";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { MicrophoneIcon } from "~/components/icons/Microphone";
@@ -67,7 +67,7 @@ function AddOrEditSubButton() {
 	}
 
 	return (
-		<LinkButton to="new" size="tiny">
+		<LinkButton to="new" size="small">
 			{buttonText}
 		</LinkButton>
 	);

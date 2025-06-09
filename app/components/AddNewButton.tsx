@@ -1,5 +1,5 @@
-import { LinkButton } from "~/components/Button";
 import { Image } from "~/components/Image";
+import { LinkButton } from "~/components/elements/Button";
 import { PlusIcon } from "~/components/icons/Plus";
 import { navIconUrl } from "~/utils/urls";
 
@@ -12,7 +12,7 @@ interface AddNewButtonProps {
 
 export function AddNewButton({ to, navIcon }: AddNewButtonProps) {
 	return (
-		<LinkButton to={to} size="tiny" className={styles.addNewButton}>
+		<LinkButton to={to} size="small" className={styles.addNewButton}>
 			<span className={styles.iconsContainer}>
 				<PlusIcon />
 				<Image path={navIconUrl(navIcon)} size={18} alt="" />

@@ -1,6 +1,6 @@
 import { useLoaderData, useMatches } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
-import { LinkButton } from "~/components/Button";
+import { LinkButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
 import { UserResultsTable } from "~/features/user-page/components/UserResultsTable";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
@@ -44,7 +44,7 @@ export default function UserResultsPage() {
 					<LinkButton
 						to={userResultsEditHighlightsPage(user)}
 						className="ml-auto"
-						size="tiny"
+						size="small"
 					>
 						{t("results.highlights.choose")}
 					</LinkButton>

@@ -1,12 +1,12 @@
 import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { LinkButton } from "~/components/Button";
 import { FormMessage } from "~/components/FormMessage";
 import { WeaponImage } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
+import { LinkButton } from "~/components/elements/Button";
 import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";

@@ -5,12 +5,12 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
 import { Avatar } from "~/components/Avatar";
-import { LinkButton } from "~/components/Button";
 import { Flag } from "~/components/Flag";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
+import { LinkButton } from "~/components/elements/Button";
 import { SendouButton } from "~/components/elements/Button";
 import { BskyIcon } from "~/components/icons/Bsky";
 import { EditIcon } from "~/components/icons/Edit";
@@ -233,7 +233,7 @@ function ActionButtons() {
 			) : null}
 			{isTeamManager({ user, team }) || isAdmin ? (
 				<LinkButton
-					size="tiny"
+					size="small"
 					to={manageTeamRosterPage(team.customUrl)}
 					variant="outlined"
 					prefetch="intent"
@@ -245,7 +245,7 @@ function ActionButtons() {
 			) : null}
 			{isTeamManager({ user, team }) || isAdmin ? (
 				<LinkButton
-					size="tiny"
+					size="small"
 					to={editTeamPage(team.customUrl)}
 					variant="outlined"
 					prefetch="intent"

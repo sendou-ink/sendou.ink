@@ -8,8 +8,8 @@ import { nanoid } from "nanoid";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { BuildCard } from "~/components/BuildCard";
-import { LinkButton } from "~/components/Button";
 import { Main } from "~/components/Main";
+import { LinkButton } from "~/components/elements/Button";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { BeakerFilledIcon } from "~/components/icons/BeakerFilled";
@@ -320,7 +320,7 @@ export default function WeaponsBuildsPage() {
 						to={weaponBuildStatsPage(data.slug)}
 						variant="outlined"
 						icon={<ChartBarIcon />}
-						size="tiny"
+						size="small"
 					>
 						{t("builds:linkButton.abilityStats")}
 					</LinkButton>
@@ -328,7 +328,7 @@ export default function WeaponsBuildsPage() {
 						to={weaponBuildPopularPage(data.slug)}
 						variant="outlined"
 						icon={<FireIcon />}
-						size="tiny"
+						size="small"
 					>
 						{t("builds:linkButton.popularBuilds")}
 					</LinkButton>
@@ -355,7 +355,7 @@ export default function WeaponsBuildsPage() {
 				data.builds.length === data.limit && (
 					<LinkButton
 						className="m-0-auto"
-						size="tiny"
+						size="small"
 						to={loadMoreLink()}
 						preventScrollReset
 					>

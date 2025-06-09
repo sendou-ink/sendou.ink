@@ -2,7 +2,7 @@ import { Outlet, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Badge } from "~/components/Badge";
-import { LinkButton } from "~/components/Button";
+import { LinkButton } from "~/components/elements/Button";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import type { SerializeFrom } from "~/utils/remix";
 import { badgeExplanationText } from "../badges-utils";
@@ -60,7 +60,7 @@ export default function BadgeDetailsPage() {
 				</div>
 			</div>
 			{isStaff || canManageBadge ? (
-				<LinkButton to="edit" variant="outlined" size="tiny">
+				<LinkButton to="edit" variant="outlined" size="small">
 					Edit
 				</LinkButton>
 			) : null}

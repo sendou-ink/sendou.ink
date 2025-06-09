@@ -2,9 +2,9 @@ import { Form, useLoaderData } from "@remix-run/react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "~/components/Alert";
-import { LinkButton } from "~/components/Button";
 import { FriendCodeInput } from "~/components/FriendCodeInput";
 import { SubmitButton } from "~/components/SubmitButton";
+import { LinkButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
 import invariant from "~/utils/invariant";
 import { assertUnreachable } from "~/utils/types";
@@ -60,7 +60,7 @@ export default function JoinTeamPage() {
 			<Alert variation="WARNING" alertClassName="w-max">
 				<div className="stack horizontal sm items-center flex-wrap justify-center text-center">
 					This tournament requires you to have an in-game name set{" "}
-					<LinkButton to={userEditProfilePage(user)} size="tiny">
+					<LinkButton to={userEditProfilePage(user)} size="small">
 						Edit profile
 					</LinkButton>
 				</div>

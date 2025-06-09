@@ -4,13 +4,13 @@ import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "~/components/Alert";
-import { LinkButton } from "~/components/Button";
 import { Flag } from "~/components/Flag";
 import { FormMessage } from "~/components/FormMessage";
 import { FriendCodeInput } from "~/components/FriendCodeInput";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
+import { LinkButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { UserIcon } from "~/components/icons/User";
 import { UsersIcon } from "~/components/icons/Users";
@@ -465,7 +465,11 @@ function PreviewQueueButton() {
 	}
 
 	return (
-		<LinkButton to={SENDOUQ_LOOKING_PREVIEW_PAGE} variant="minimal" size="tiny">
+		<LinkButton
+			to={SENDOUQ_LOOKING_PREVIEW_PAGE}
+			variant="minimal"
+			size="small"
+		>
 			{t("q:front.preview")}
 		</LinkButton>
 	);

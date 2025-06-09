@@ -5,11 +5,11 @@ import * as React from "react";
 import { Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { Alert } from "~/components/Alert";
-import { LinkButton } from "~/components/Button";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { NewTabs } from "~/components/NewTabs";
 import { SubmitButton } from "~/components/SubmitButton";
+import { LinkButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
 import { Chat, useChat } from "~/features/chat/components/Chat";
 import { useAutoRefresh } from "~/hooks/useAutoRefresh";
@@ -144,7 +144,7 @@ function InfoText() {
 			<div className="stack sm horizontal">
 				<LinkButton
 					to={SENDOUQ_SETTINGS_PAGE}
-					size="tiny"
+					size="small"
 					variant="outlined"
 					className="stack horizontal xs"
 				>
@@ -177,7 +177,7 @@ function StreamsLinkButton() {
 	return (
 		<LinkButton
 			to={SENDOUQ_STREAMS_PAGE}
-			size="tiny"
+			size="small"
 			variant="outlined"
 			className="stack horizontal xs"
 		>
@@ -493,7 +493,7 @@ function JoinQueuePrompt() {
 	const { t } = useTranslation(["q"]);
 
 	return (
-		<LinkButton to={SENDOUQ_PAGE} variant="minimal" size="tiny">
+		<LinkButton to={SENDOUQ_PAGE} variant="minimal" size="small">
 			{t("q:looking.joinQPrompt")}
 		</LinkButton>
 	);

@@ -1,6 +1,6 @@
 import type { SerializeFrom } from "@remix-run/node";
 import clsx from "clsx";
-import { LinkButton } from "~/components/Button";
+import { LinkButton } from "~/components/elements/Button";
 import type { MonthYear } from "~/features/plus-voting/core";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { databaseTimestampToDate, nullPaddedDatesOfMonth } from "~/utils/dates";

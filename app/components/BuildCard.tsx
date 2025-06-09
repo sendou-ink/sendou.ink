@@ -24,10 +24,9 @@ import {
 	weaponBuildPage,
 } from "~/utils/urls";
 import { Ability } from "./Ability";
-import { LinkButton } from "./Button";
 import { FormWithConfirm } from "./FormWithConfirm";
 import { Image } from "./Image";
-import { SendouButton } from "./elements/Button";
+import { LinkButton, SendouButton } from "./elements/Button";
 import { SendouPopover } from "./elements/Popover";
 import { EditIcon } from "./icons/Edit";
 import { LockIcon } from "./icons/Lock";
@@ -221,7 +220,7 @@ export function BuildCard({
 						<LinkButton
 							className="build__small-text"
 							variant="minimal"
-							size="tiny"
+							size="small"
 							to={`new?buildId=${id}&userId=${user!.id}`}
 							testId="edit-build"
 						>

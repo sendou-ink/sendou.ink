@@ -3,9 +3,9 @@ import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import { LinkButton } from "~/components/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Pagination } from "~/components/Pagination";
+import { LinkButton } from "~/components/elements/Button";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { CrossIcon } from "~/components/icons/Cross";
@@ -191,7 +191,7 @@ function ImagePreview({
 				>
 					<LinkButton
 						to={newArtPage(art.id)}
-						size="tiny"
+						size="small"
 						variant="outlined"
 						icon={<EditIcon />}
 					>

@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
-import { LinkButton } from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { FriendCodeInput } from "~/components/FriendCodeInput";
@@ -19,6 +18,7 @@ import { MapPoolStages } from "~/components/MapPoolSelector";
 import { NewTabs } from "~/components/NewTabs";
 import { Section } from "~/components/Section";
 import { SubmitButton } from "~/components/SubmitButton";
+import { LinkButton } from "~/components/elements/Button";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
@@ -223,7 +223,7 @@ function TournamentRegisterInfoTabs() {
 										<LinkButton
 											to={tournament.ctx.discordUrl}
 											variant="outlined"
-											size="tiny"
+											size="small"
 											isExternal
 											icon={<DiscordIcon />}
 										>
@@ -282,7 +282,7 @@ function TournamentRegisterInfoTabs() {
 										<Alert variation="WARNING">
 											<div className="stack horizontal sm items-center flex-wrap justify-center text-center">
 												This tournament requires you to have an in-game name set{" "}
-												<LinkButton to={userEditProfilePage(user)} size="tiny">
+												<LinkButton to={userEditProfilePage(user)} size="small">
 													Edit profile
 												</LinkButton>
 											</div>
@@ -1328,7 +1328,7 @@ function TOPickedMapPoolInfo() {
 					className="event__create-map-list-link"
 					to={readonlyMapsPage(tournament.ctx.eventId)}
 					variant="outlined"
-					size="tiny"
+					size="small"
 				>
 					<Image alt="" path={navIconUrl("maps")} width={22} height={22} />
 					{t("calendar:createMapList")}

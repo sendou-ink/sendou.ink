@@ -3,7 +3,6 @@ import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import { LinkButton } from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { FormMessage } from "~/components/FormMessage";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
@@ -12,6 +11,7 @@ import { Label } from "~/components/Label";
 import { containerClassName } from "~/components/Main";
 import { Redirect } from "~/components/Redirect";
 import { SubmitButton } from "~/components/SubmitButton";
+import { LinkButton } from "~/components/elements/Button";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { UserSearch } from "~/components/elements/UserSearch";
@@ -56,7 +56,7 @@ export default function TournamentAdminPage() {
 				<div className="stack horizontal items-end">
 					<LinkButton
 						to={tournamentEditPage(tournament.ctx.eventId)}
-						size="tiny"
+						size="small"
 						variant="outlined"
 						testId="edit-event-info-button"
 					>

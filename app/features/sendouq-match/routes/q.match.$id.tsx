@@ -13,7 +13,6 @@ import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
-import { LinkButton } from "~/components/Button";
 import { WeaponCombobox } from "~/components/Combobox";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
@@ -21,6 +20,7 @@ import { Image, ModeImage, StageImage, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { NewTabs } from "~/components/NewTabs";
 import { SubmitButton } from "~/components/SubmitButton";
+import { LinkButton } from "~/components/elements/Button";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { SendouSwitch } from "~/components/elements/Switch";
@@ -748,7 +748,7 @@ function BottomSection({
 		<LinkButton
 			to={SENDOUQ_RULES_PAGE}
 			variant="outlined"
-			size="tiny"
+			size="small"
 			icon={<ScaleIcon />}
 		>
 			{t("q:front.nav.rules.title")}
@@ -760,7 +760,7 @@ function BottomSection({
 			isExternal
 			to={SENDOU_INK_DISCORD_URL}
 			variant="outlined"
-			size="tiny"
+			size="small"
 			icon={<DiscordIcon />}
 		>
 			{t("q:match.helpdesk")}

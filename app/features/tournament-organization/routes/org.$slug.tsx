@@ -2,12 +2,12 @@ import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import { LinkButton } from "~/components/Button";
 import { Divider } from "~/components/Divider";
 import { Main } from "~/components/Main";
 import { NewTabs } from "~/components/NewTabs";
 import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
+import { LinkButton } from "~/components/elements/Button";
 import { EditIcon } from "~/components/icons/Edit";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -119,7 +119,7 @@ function LogoHeader() {
 						<LinkButton
 							to={tournamentOrganizationEditPage(data.organization.slug)}
 							icon={<EditIcon />}
-							size="tiny"
+							size="small"
 							variant="outlined"
 							testId="edit-org-button"
 						>
@@ -343,7 +343,7 @@ function SeriesButton({
 	return (
 		<LinkButton
 			variant="minimal"
-			size="tiny"
+			size="small"
 			to={`?series=${seriesId ?? "all"}`}
 		>
 			{children}

@@ -2,8 +2,8 @@ import { useLoaderData, useRevalidator } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useEventSource } from "remix-utils/sse/react";
-import { LinkButton } from "~/components/Button";
 import { containerClassName } from "~/components/Main";
+import { LinkButton } from "~/components/elements/Button";
 import { ArrowLongLeftIcon } from "~/components/icons/ArrowLongLeft";
 import { useUser } from "~/features/auth/core/user";
 import { ConnectedChat } from "~/features/chat/components/Chat";
@@ -90,7 +90,7 @@ export default function TournamentMatchPage() {
 							groupId: data.match.groupId,
 						})}
 						variant="outlined"
-						size="tiny"
+						size="small"
 						className="w-max"
 						icon={<ArrowLongLeftIcon />}
 						testId="back-to-bracket-button"
