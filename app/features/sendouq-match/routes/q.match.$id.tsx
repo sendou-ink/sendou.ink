@@ -18,12 +18,17 @@ import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, ModeImage, StageImage, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
-import { NewTabs } from "~/components/NewTabs";
 import { SubmitButton } from "~/components/SubmitButton";
 import { LinkButton } from "~/components/elements/Button";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { SendouSwitch } from "~/components/elements/Switch";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanel,
+	SendouTabs,
+} from "~/components/elements/Tabs";
 import { ArchiveBoxIcon } from "~/components/icons/ArchiveBox";
 import { CrossIcon } from "~/components/icons/Cross";
 import { DiscordIcon } from "~/components/icons/Discord";
@@ -677,6 +682,12 @@ function BottomSection({
 		].filter(Boolean) as ChatProps["rooms"];
 	}, [data.matchChatCode, data.groupChatCode]);
 
+	const chatHidden = chatRooms.length === 0;
+
+	const [selectedTabKey, setSelectedTabKey] = React.useState<string>(
+		chatHidden ? "report" : "chat",
+	);
+
 	const ownWeaponsReported = data.rawReportedWeapons?.some(
 		(rw) => rw.userId === user?.id,
 	);
@@ -796,8 +807,6 @@ function BottomSection({
 			<ScreenLegalityInfo ban={data.banScreen} />
 		) : null;
 
-	const chatHidden = chatRooms.length === 0;
-
 	if (!showMid && chatHidden) {
 		return mapListElement;
 	}
@@ -816,32 +825,29 @@ function BottomSection({
 				</div>
 
 				<div>
-					<NewTabs
-						sticky
-						tabs={[
-							{
-								label: t("q:looking.columns.chat"),
-								number: unseenMessages,
-								hidden: chatHidden,
-							},
-							{
-								label: t("q:match.tabs.reportScore"),
-							},
-						]}
-						disappearing
-						content={[
-							{
-								key: "chat",
-								hidden: chatHidden,
-								element: chatElement,
-							},
-							{
-								key: "report",
-								element: mapListElement,
-								unmount: false,
-							},
-						]}
-					/>
+					<SendouTabs
+						selectedKey={selectedTabKey}
+						onSelectionChange={(key) => setSelectedTabKey(key as string)}
+					>
+						<SendouTabList sticky>
+							{!chatHidden && (
+								<SendouTab id="chat" number={unseenMessages}>
+									{t("q:looking.columns.chat")}
+								</SendouTab>
+							)}
+							<SendouTab id="report">{t("q:match.tabs.reportScore")}</SendouTab>
+						</SendouTabList>
+						<SendouTabPanel id="chat">{chatElement}</SendouTabPanel>
+						<SendouTabPanel
+							id="report"
+							shouldForceMount
+							className={clsx({
+								hidden: selectedTabKey !== "report",
+							})}
+						>
+							{mapListElement}
+						</SendouTabPanel>
+					</SendouTabs>
 				</div>
 			</div>
 		);
