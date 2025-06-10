@@ -982,5 +982,9 @@
 	"zekkocup": {
 		"displayName": "Zekko Cup",
 		"authorDiscordId": "1320944066002681876"
+	},
+	"blackout-bingo": {
+		"displayName": "Double Blackout!",
+		"authorDiscordId": "751912670403362836"
 	}
 }
