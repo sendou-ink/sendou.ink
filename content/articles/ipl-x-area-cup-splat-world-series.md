@@ -1,4 +1,5 @@
-title: IPL x AREA CUP: Splat World Series
+---
+title: "IPL x AREA CUP: Splat World Series"
 date: 2025-06-10
 author:
 - name: YELLOW
