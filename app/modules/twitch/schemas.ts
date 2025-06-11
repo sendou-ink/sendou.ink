@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 import type { Unpacked } from "~/utils/types";
 
 export const streamsSchema = z.object({

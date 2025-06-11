@@ -7,7 +7,7 @@ import {
 import type { Params, UIMatch } from "@remix-run/react";
 import type { Namespace, TFunction } from "i18next";
 import { nanoid } from "nanoid";
-import type { z } from "zod";
+import type { z } from "zod/v4";
 import type { navItems } from "~/components/layout/nav-items";
 import { s3UploadHandler } from "~/features/img-upload";
 import invariant from "./invariant";
@@ -65,7 +65,7 @@ export function parseSafeSearchParams<T extends z.ZodTypeAny>({
 }: {
 	request: Request;
 	schema: T;
-}): z.SafeParseReturnType<any, z.infer<T>> {
+}) {
 	const url = new URL(request.url);
 	return schema.safeParse(Object.fromEntries(url.searchParams));
 }
@@ -152,7 +152,9 @@ export async function safeParseRequestFormData<T extends z.ZodTypeAny>({
 	if (!parsed.success) {
 		return {
 			success: false,
-			errors: parsed.error.errors.map((error) => error.message),
+			errors: parsed.error.issues.map(
+				(issue: { message: string }) => issue.message,
+			),
 		};
 	}
 

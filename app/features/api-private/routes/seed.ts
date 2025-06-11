@@ -1,5 +1,5 @@
 import type { ActionFunction } from "@remix-run/node";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { seed } from "~/db/seed";
 import { parseRequestPayload } from "~/utils/remix.server";
 

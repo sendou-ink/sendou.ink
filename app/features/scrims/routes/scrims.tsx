@@ -4,7 +4,7 @@ import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
-import type { z } from "zod";
+import type { z } from "zod/v4";
 import { AddNewButton } from "~/components/AddNewButton";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";

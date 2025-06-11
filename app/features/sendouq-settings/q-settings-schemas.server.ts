@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 import { languagesUnified } from "~/modules/i18n/config";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import {
