@@ -8,7 +8,7 @@
 // 5) params (weapon folder) inside dicts
 
 import fs from "node:fs";
-import { z } from "zod";
+import { z } from "zod/v4";
 import type { MainWeaponParams, SubWeaponParams } from "~/modules/analyzer";
 import type { ParamsJson } from "~/modules/analyzer/types";
 import {

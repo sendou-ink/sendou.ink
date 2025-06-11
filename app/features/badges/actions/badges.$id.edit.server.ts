@@ -1,6 +1,6 @@
 import type { ActionFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import {

@@ -1,7 +1,7 @@
 import { type LoaderFunctionArgs, json } from "@remix-run/node";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { cors } from "remix-utils/cors";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { db } from "~/db/sql";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";

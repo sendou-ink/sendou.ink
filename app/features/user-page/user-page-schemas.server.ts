@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 import { BADGE } from "~/features/badges/badges-constants";
 import { isCustomUrl } from "~/utils/urls";
 import {

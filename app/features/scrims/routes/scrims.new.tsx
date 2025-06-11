@@ -2,7 +2,7 @@ import { useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import type { z } from "zod";
+import type { z } from "zod/v4";
 import { Label } from "~/components/Label";
 import { DateFormField } from "~/components/form/DateFormField";
 import { SendouForm } from "~/components/form/SendouForm";

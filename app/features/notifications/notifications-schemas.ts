@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 import { id } from "~/utils/zod";
 import { NOTIFICATIONS } from "./notifications-contants";
 

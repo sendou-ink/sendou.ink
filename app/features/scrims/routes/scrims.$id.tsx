@@ -1,7 +1,7 @@
 import { Link, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import type { z } from "zod";
+import type { z } from "zod/v4";
 import { Alert } from "~/components/Alert";
 import TimePopover from "~/components/TimePopover";
 import { SendouButton } from "~/components/elements/Button";
