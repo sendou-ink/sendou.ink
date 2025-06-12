@@ -16,7 +16,7 @@ import {
 import invariant from "~/utils/invariant";
 import type { HitPoints } from "../calculator-types";
 
-const WAVE_BREAKER_HP = 400;
+const WAVE_BREAKER_HP = 480;
 const SPRINKLER_HP = 120;
 const RAINMAKER_HP = 1000;
 const SPLAT_BRELLA_SHIELD_HP = 500;

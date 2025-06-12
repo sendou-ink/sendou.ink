@@ -14,8 +14,9 @@ import type { ParamsJson } from "~/modules/analyzer/types";
 import {
 	SQUID_BEAKON_ID,
 	type SpecialWeaponId,
-} from "~/modules/in-game-lists/types";
-import { type SubWeaponId, subWeaponIds } from "~/modules/in-game-lists/types";
+	type SubWeaponId,
+	subWeaponIds,
+} from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import playersParams from "./dicts/SplPlayer.game__GameParameterTable.json";
 import weapons from "./dicts/WeaponInfoMain.json";

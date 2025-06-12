@@ -88,7 +88,7 @@ import "../analyzer.css";
 import * as R from "remeda";
 import { SendouSwitch } from "~/components/elements/Switch";
 
-export const CURRENT_PATCH = "9.3";
+export const CURRENT_PATCH = "10.0";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
