@@ -5,6 +5,16 @@ import {
 	route,
 } from "@remix-run/route-config";
 
+const devOnlyRoutes =
+	process.env.NODE_ENV === "development"
+		? ([
+				route(
+					"/admin/generate-images",
+					"features/admin/routes/generate-images.tsx",
+				),
+			] satisfies RouteConfig)
+		: [];
+
 export default [
 	index("features/front-page/routes/index.tsx"),
 	route("/patrons-list", "features/front-page/routes/patrons-list.ts"),
@@ -281,4 +291,5 @@ export default [
 		route("impersonate", "features/auth/routes/auth.impersonate.ts"),
 		route("impersonate/stop", "features/auth/routes/auth.impersonate.stop.ts"),
 	]),
+	...devOnlyRoutes,
 ] satisfies RouteConfig;
