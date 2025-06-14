@@ -23,8 +23,6 @@ import {
 } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
 
-import "~/styles/builds.css";
-
 import styles from "./builds.module.css";
 
 export const meta: MetaFunction = (args) => {
@@ -62,8 +60,8 @@ export default function BuildsPage() {
 				</div>
 			) : null}
 			{weaponCategories.map((category) => (
-				<div key={category.name} className="builds__category">
-					<div className="builds__category__header">
+				<div key={category.name} className={styles.category}>
+					<div className={styles.categoryHeader}>
 						<Image
 							path={weaponCategoryUrl(category.name)}
 							width={40}
@@ -72,7 +70,7 @@ export default function BuildsPage() {
 						/>
 						{t(`common:weapon.category.${category.name}`)}
 					</div>
-					<div className="builds__category__weapons">
+					<div className={styles.categoryWeapons}>
 						{(category.weaponIds as readonly MainWeaponId[])
 							.filter(weaponIdIsNotAlt)
 							.map((weaponId, i) => (
@@ -83,11 +81,11 @@ export default function BuildsPage() {
 									<Link
 										key={weaponId}
 										to={weaponBuildPage(weaponIdToSlug(weaponId))}
-										className="builds__category__weapon"
+										className={styles.categoryWeapon}
 										data-testid={`weapon-${weaponId}-link`}
 									>
 										<Image
-											className="builds__category__weapon__img"
+											className={styles.categoryWeaponImg}
 											path={mainWeaponImageUrl(weaponId)}
 											width={28}
 											height={28}

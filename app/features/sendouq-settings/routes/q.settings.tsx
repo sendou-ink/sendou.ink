@@ -641,12 +641,12 @@ function TrustedUsers() {
 											submitButtonText="Remove"
 										>
 											<SendouButton
-												className="build__small-text"
+												className="small-text"
 												variant="minimal-destructive"
 												size="small"
 												type="submit"
 											>
-												<TrashIcon className="build__icon" />
+												<TrashIcon className="small-icon" />
 											</SendouButton>
 										</FormWithConfirm>
 									</div>

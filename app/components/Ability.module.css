@@ -1,0 +1,32 @@
+.ability {
+	width: var(--ability-size);
+	height: var(--ability-size);
+	padding: 0;
+	border: 2px solid var(--theme-transparent);
+	border-radius: 50%;
+	border-right: 0;
+	border-bottom: 0;
+	background: var(--bg-ability);
+	background-size: 100%;
+	box-shadow: 0 0 0 1px var(--bg-ability);
+	transform: scale(1);
+	transition: all 0.1s ease;
+	user-select: none;
+}
+
+.isDragTarget {
+	background: var(--abilities-button-bg);
+	transform: scale(1.15);
+}
+
+.dragStarted:not(.dropAllowed) {
+	filter: grayscale(1);
+	opacity: 0.3;
+	pointer-events: none;
+}
+
+.readonly,
+.readonly:active {
+	cursor: default;
+	transform: none;
+}

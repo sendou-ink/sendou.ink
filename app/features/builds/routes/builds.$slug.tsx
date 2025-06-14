@@ -45,6 +45,8 @@ import { FilterSection } from "../components/FilterSection";
 import { loader } from "../loaders/builds.$slug.server";
 export { loader };
 
+import styles from "./builds.$slug.module.css";
+
 const filterOutMeaninglessFilters = (
 	filter: Unpacked<BuildFiltersFromSearchParams>,
 ) => {
@@ -165,7 +167,7 @@ export function BuildCards({
 	const user = useUser();
 
 	return (
-		<div className="builds-container">
+		<div className={styles.buildsContainer}>
 			{data.builds.map((build) => {
 				return (
 					<BuildCard
@@ -277,7 +279,7 @@ export default function WeaponsBuildsPage() {
 
 	return (
 		<Main className="stack lg">
-			<div className="builds-buttons">
+			<div className={styles.buildsButtons}>
 				<SendouMenu
 					trigger={
 						<SendouButton
@@ -315,7 +317,7 @@ export default function WeaponsBuildsPage() {
 						{t("builds:filters.type.date")}
 					</SendouMenuItem>
 				</SendouMenu>
-				<div className="builds-buttons__link">
+				<div className={styles.buildsButtonsLink}>
 					<LinkButton
 						to={weaponBuildStatsPage(data.slug)}
 						variant="outlined"

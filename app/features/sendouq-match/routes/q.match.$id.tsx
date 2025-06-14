@@ -795,7 +795,7 @@ function BottomSection({
 					size="small"
 					type="submit"
 					isDisabled={ownTeamReported && !data.match.mapList[0].winnerGroupId}
-					className="build__small-text mt-4"
+					className="small-text mt-4"
 				>
 					{t("q:match.cancelMatch")}
 				</SendouButton>
