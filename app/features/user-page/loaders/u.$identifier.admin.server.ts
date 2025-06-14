@@ -25,6 +25,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 	return {
 		...userData,
+		discordId: user.discordId,
 		discordAccountCreatedAt: convertSnowflakeToDate(user.discordId).getTime(),
 	};
 };

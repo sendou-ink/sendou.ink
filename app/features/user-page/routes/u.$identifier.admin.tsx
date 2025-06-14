@@ -1,19 +1,19 @@
 import { useLoaderData } from "@remix-run/react";
 import type { z } from "zod/v4";
 import { Divider } from "~/components/Divider";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Main } from "~/components/Main";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouForm } from "~/components/form/SendouForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import { PlusIcon } from "~/components/icons/Plus";
+import { useUser } from "~/features/auth/core/user";
 import { USER } from "~/features/user-page/user-page-constants";
 import { addModNoteSchema } from "~/features/user-page/user-page-schemas";
 import { databaseTimestampToDate } from "~/utils/dates";
 import styles from "./u.$identifier.admin.module.css";
 
-import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { useUser } from "~/features/auth/core/user";
 import { action } from "../actions/u.$identifier.admin.server";
 import { loader } from "../loaders/u.$identifier.admin.server";
 export { loader, action };
@@ -67,6 +67,9 @@ function AccountInfos() {
 					minute: "2-digit",
 				})}
 			</dd>
+
+			<dt>Discord ID</dt>
+			<dd>{data.discordId}</dd>
 
 			<dt>Discord name</dt>
 			<dd>{data.discordUniqueName}</dd>
