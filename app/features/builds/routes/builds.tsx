@@ -1,5 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { AddNewButton } from "~/components/AddNewButton";
 import { Image } from "~/components/Image";
@@ -23,6 +24,8 @@ import {
 import { metaTags } from "../../../utils/remix";
 
 import "~/styles/builds.css";
+
+import styles from "./builds.module.css";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -72,29 +75,35 @@ export default function BuildsPage() {
 					<div className="builds__category__weapons">
 						{(category.weaponIds as readonly MainWeaponId[])
 							.filter(weaponIdIsNotAlt)
-							.sort((a, b) =>
-								t(`weapons:MAIN_${a}`).localeCompare(t(`weapons:MAIN_${b}`)),
-							)
-							.map((weaponId) => (
-								<Link
-									key={weaponId}
-									to={weaponBuildPage(weaponIdToSlug(weaponId))}
-									className="builds__category__weapon"
-									data-testid={`weapon-${weaponId}-link`}
-								>
-									<Image
-										className="builds__category__weapon__img"
-										path={mainWeaponImageUrl(weaponId)}
-										width={28}
-										height={28}
-										alt={t(`weapons:MAIN_${weaponId}`)}
-									/>
-									{t(`weapons:MAIN_${weaponId}`)}
-								</Link>
+							.map((weaponId, i) => (
+								<React.Fragment key={weaponId}>
+									{i !== 0 && weaponId % 10 === 0 ? (
+										<WeaponFamilyDivider />
+									) : null}
+									<Link
+										key={weaponId}
+										to={weaponBuildPage(weaponIdToSlug(weaponId))}
+										className="builds__category__weapon"
+										data-testid={`weapon-${weaponId}-link`}
+									>
+										<Image
+											className="builds__category__weapon__img"
+											path={mainWeaponImageUrl(weaponId)}
+											width={28}
+											height={28}
+											alt={t(`weapons:MAIN_${weaponId}`)}
+										/>
+										{t(`weapons:MAIN_${weaponId}`)}
+									</Link>
+								</React.Fragment>
 							))}
 					</div>
 				</div>
 			))}
 		</Main>
 	);
+}
+
+function WeaponFamilyDivider() {
+	return <div className={styles.divider} />;
 }
