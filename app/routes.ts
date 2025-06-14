@@ -51,6 +51,7 @@ export default [
 			"results/highlights",
 			"features/user-page/routes/u.$identifier.results.highlights.tsx",
 		),
+		route("admin", "features/user-page/routes/u.$identifier.admin.tsx"),
 	]),
 
 	route("/badges", "features/badges/routes/badges.tsx", [

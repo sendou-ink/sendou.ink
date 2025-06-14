@@ -174,6 +174,7 @@ export const newVodPage = (vodToEditId?: number) =>
 	`${VODS_PAGE}/new${vodToEditId ? `?vod=${vodToEditId}` : ""}`;
 export const userResultsEditHighlightsPage = (user: UserLinkArgs) =>
 	`${userResultsPage(user)}/highlights`;
+export const userAdminPage = (user: UserLinkArgs) => `${userPage(user)}/admin`;
 export const artPage = (tag?: string) => `/art${tag ? `?tag=${tag}` : ""}`;
 export const userArtPage = (
 	user: UserLinkArgs,
