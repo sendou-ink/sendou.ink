@@ -11,6 +11,7 @@ import {
 	USER_SEARCH_PAGE,
 	navIconUrl,
 	userAdminPage,
+	userArtPage,
 	userBuildsPage,
 	userEditProfilePage,
 	userPage,
@@ -102,6 +103,11 @@ export default function UserPageLayout() {
 				{(data.user.vodsCount > 0 || isOwnPage) && (
 					<SubNavLink to={userVodsPage(data.user)}>
 						{t("common:pages.vods")} ({data.user.vodsCount})
+					</SubNavLink>
+				)}
+				{(data.user.artCount > 0 || isOwnPage) && (
+					<SubNavLink to={userArtPage(data.user)} end={false}>
+						{t("common:pages.art")} ({data.user.artCount})
 					</SubNavLink>
 				)}
 				{isStaff && (
