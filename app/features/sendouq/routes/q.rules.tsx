@@ -55,7 +55,8 @@ export default function SendouqRules() {
 
 			<h2 className="text-lg mt-4">Subs</h2>
 			<div>
-				There are no subs. All 8 players in the match MUST be the players listed in the set. If a player is unavailable to play from either team
+				There are no subs. All 8 players in the match MUST be the players listed
+				in the set. If a player is unavailable to play from either team
 				then the set must be played with 3 players or forfeited.
 			</div>
 
@@ -129,7 +130,8 @@ export default function SendouqRules() {
 
 			<h2 className="text-lg mt-4">Aliases</h2>
 			<div>
-				Aliases are allowed, Teams can ask for players to use their IGN. If asked, all players must use the listed IGN on the user&apos;s profile.
+				Aliases are allowed, Teams can ask for players to use their IGN.
+				If asked, all players must use the listed IGN on the user&apos;s profile.
 			</div>
 
 			<h2 className="text-lg mt-4">Discriminatory language</h2>
