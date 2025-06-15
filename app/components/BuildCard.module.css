@@ -1,0 +1,126 @@
+.card {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	padding: var(--s-3);
+	border-radius: var(--rounded);
+	background-color: var(--bg-lighter);
+	gap: var(--s-3);
+}
+
+.private {
+	background-color: var(--bg-lighter-transparent);
+}
+
+.privateText {
+	display: flex;
+	justify-content: center;
+	font-weight: var(--semi-bold);
+	gap: var(--s-1);
+}
+
+.privateIcon {
+	width: 16px;
+	margin-block-end: var(--s-1);
+	stroke-width: 2px;
+}
+
+.title {
+	overflow: hidden;
+	height: 2.5rem;
+	font-size: var(--fonts-sm);
+	line-height: 1.25;
+	word-wrap: break-all;
+}
+
+.topRow {
+	display: flex;
+	justify-content: space-between;
+}
+
+.dateAuthorRow {
+	display: flex;
+	font-size: var(--fonts-xxs);
+	gap: var(--s-1);
+}
+
+.ownerLink {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.modes {
+	position: absolute;
+	right: 0;
+	display: flex;
+	min-width: max-content;
+	margin-top: -21px;
+	gap: var(--s-1);
+}
+
+.weapon {
+	position: relative;
+	padding: var(--s-0-5);
+	border-radius: 50%;
+	background-color: var(--bg-darker-very-transparent);
+}
+
+.top500 {
+	position: absolute;
+	top: -14px;
+	right: 8px;
+}
+
+.weaponText {
+	padding-left: var(--s-1);
+	color: var(--text-lighter);
+	font-size: var(--fonts-xxs);
+	font-weight: var(--semi-bold);
+}
+
+.weapons {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-1);
+}
+
+.gearAbilities {
+	display: grid;
+	gap: var(--s-2) var(--s-1);
+	grid-template-columns: repeat(5, max-content);
+	place-items: center;
+}
+
+.noGear {
+	grid-template-columns: repeat(4, max-content);
+	margin: 0 auto;
+	margin-top: 10px;
+	margin-bottom: 1rem;
+	row-gap: 28px;
+}
+
+.gear {
+	border-radius: 50%;
+	background-color: var(--bg-darker-very-transparent);
+	overflow: visible;
+}
+
+.bottomRow {
+	display: flex;
+	height: 100%;
+	align-items: flex-end;
+	justify-content: center;
+	gap: var(--s-4);
+}
+
+.icon {
+	width: 1.2rem;
+	height: 1.2rem;
+}
+
+.smallText {
+	font-size: var(--fonts-xxs) !important;
+}

@@ -73,7 +73,7 @@ export const list =
 				},
 				{
 					nth: 8,
-					starts: new Date("2025-06-14T18:00:00.000Z"),
+					starts: new Date("2025-06-16T18:00:00.000Z"),
 					ends: new Date("2025-08-24T22:00:00.000Z"),
 				},
 			] as const);

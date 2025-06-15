@@ -6,7 +6,7 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { safeParseRequestFormData } from "~/utils/remix.server";
 import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
 import { userPage } from "~/utils/urls";
-import { userEditActionSchema } from "../user-page-schemas.server";
+import { userEditActionSchema } from "../user-page-schemas";
 
 export const action: ActionFunction = async ({ request }) => {
 	const parsedInput = await safeParseRequestFormData({

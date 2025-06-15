@@ -268,7 +268,7 @@ function TournamentRegisterInfoTabs() {
 											submitButtonText="Leave"
 										>
 											<SendouButton
-												className="build__small-text"
+												className="small-text"
 												variant="minimal-destructive"
 												type="submit"
 											>
@@ -694,7 +694,7 @@ function TeamInfo({
 							<SendouButton
 								size="small"
 								variant="minimal-destructive"
-								className="build__small-text"
+								className="small-text"
 							>
 								{t("tournament:pre.info.unregister")}
 							</SendouButton>
@@ -710,7 +710,7 @@ function TeamInfo({
 						fields={[["_action", "UNREGISTER"]]}
 					>
 						<SendouButton
-							className="build__small-text"
+							className="small-text"
 							variant="minimal-destructive"
 							size="small"
 						>

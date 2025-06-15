@@ -4,7 +4,7 @@ import { getUserId } from "~/features/auth/core/user.server";
 import { countUnvalidatedArt } from "~/features/img-upload";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { notFoundIfFalsy } from "~/utils/remix.server";
-import { userParamsSchema } from "../user-page-schemas.server";
+import { userParamsSchema } from "../user-page-schemas";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const loggedInUser = await getUserId(request);

@@ -551,7 +551,7 @@ function DeletePrivateNoteForm({
 			]}
 		>
 			<SubmitButton variant="minimal-destructive" size="small" type="submit">
-				<TrashIcon className="build__icon" />
+				<TrashIcon className="small-icon" />
 			</SubmitButton>
 		</FormWithConfirm>
 	);

@@ -165,13 +165,6 @@ function MigrateUser() {
 	const navigation = useNavigation();
 	const fetcher = useFetcher();
 
-	const submitButtonText =
-		navigation.state === "submitting"
-			? "Migrating..."
-			: navigation.state === "loading"
-				? "Migrated!"
-				: "Migrate";
-
 	return (
 		<fetcher.Form className="stack md" method="post">
 			<h2>Migrate user data</h2>
@@ -194,7 +187,7 @@ function MigrateUser() {
 					_action="MIGRATE"
 					state={fetcher.state}
 				>
-					{submitButtonText}
+					Migrate
 				</SubmitButton>
 			</div>
 		</fetcher.Form>

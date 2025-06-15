@@ -339,6 +339,48 @@ export async function findLeanById(id: number) {
 	};
 }
 
+export function findModInfoById(id: number) {
+	return db
+		.selectFrom("User")
+		.select((eb) => [
+			"User.discordUniqueName",
+			"User.isVideoAdder",
+			"User.isArtist",
+			"User.isTournamentOrganizer",
+			"User.plusSkippedForSeasonNth",
+			"User.createdAt",
+			jsonArrayFrom(
+				eb
+					.selectFrom("ModNote")
+					.innerJoin("User", "User.id", "ModNote.authorId")
+					.select([
+						"ModNote.id as noteId",
+						"ModNote.text",
+						"ModNote.createdAt",
+						...COMMON_USER_FIELDS,
+					])
+					.where("ModNote.isDeleted", "=", 0)
+					.where("ModNote.userId", "=", id)
+					.orderBy("ModNote.createdAt", "desc"),
+			).as("modNotes"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("BanLog")
+					.innerJoin("User", "User.id", "BanLog.bannedByUserId")
+					.select([
+						"BanLog.banned",
+						"BanLog.bannedReason",
+						"BanLog.createdAt",
+						...COMMON_USER_FIELDS,
+					])
+					.where("BanLog.userId", "=", id)
+					.orderBy("BanLog.createdAt", "desc"),
+			).as("banLogs"),
+		])
+		.where("User.id", "=", id)
+		.executeTakeFirst();
+}
+
 export function findAllPatrons() {
 	return db
 		.selectFrom("User")

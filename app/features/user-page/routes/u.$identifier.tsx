@@ -4,11 +4,13 @@ import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { useUser } from "~/features/auth/core/user";
+import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	USER_SEARCH_PAGE,
 	navIconUrl,
+	userAdminPage,
 	userArtPage,
 	userBuildsPage,
 	userEditProfilePage,
@@ -61,6 +63,7 @@ export const handle: SendouRouteHandle = {
 export default function UserPageLayout() {
 	const data = useLoaderData<typeof loader>();
 	const user = useUser();
+	const isStaff = useHasRole("STAFF");
 	const location = useLocation();
 	const { t } = useTranslation(["common", "user"]);
 
@@ -106,6 +109,9 @@ export default function UserPageLayout() {
 					<SubNavLink to={userArtPage(data.user)} end={false}>
 						{t("common:pages.art")} ({data.user.artCount})
 					</SubNavLink>
+				)}
+				{isStaff && (
+					<SubNavLink to={userAdminPage(data.user)}>Admin</SubNavLink>
 				)}
 			</SubNav>
 			<Outlet />
