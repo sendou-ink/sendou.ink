@@ -127,12 +127,6 @@ export default function SendouqRules() {
 				Using any sort of modded hardware and or software is not allowed.
 			</div>
 
-			<h2 className="text-lg mt-4">Aliases</h2>
-			<div>
-				Aliases are allowed, Teams can ask for players to use their IGN.
-				If asked, all players must use the listed IGN on the user&apos;s profile.
-			</div>
-
 			<h2 className="text-lg mt-4">Discriminatory language</h2>
 			<div>
 				Any kind of discriminatory language such as using slurs is strictly not
