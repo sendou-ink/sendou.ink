@@ -183,6 +183,10 @@
 		"displayName": "Crobattle Royale",
 		"authorDiscordId": "178733052762128385"
 	},
+	"csblast": {
+		"displayName": "10 ST! Tournaments",
+		"authorDiscordId": "752582395076673577"
+	},
 	"current": {
 		"displayName": "FREEDOM DiVE",
 		"authorDiscordId": "564512827285569546"
@@ -958,6 +962,10 @@
 	"vibessecond": {
 		"displayName": "Splat Vibes LAN (Top 4)",
 		"authorDiscordId": "342369454719631361"
+	},
+	"vsblast": {
+		"displayName": "5 ST! Tournaments",
+		"authorDiscordId": "752582395076673577"
 	},
 	"wave-breaker": {
 		"displayName": "Ride the Wave",
