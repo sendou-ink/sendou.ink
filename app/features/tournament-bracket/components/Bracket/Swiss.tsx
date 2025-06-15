@@ -193,7 +193,7 @@ export function SwissBracket({
 											<SendouButton
 												variant="minimal-destructive"
 												type="submit"
-												className="build__small-text mb-4"
+												className="small-text mb-4"
 												size="small"
 												data-testid="reset-round-button"
 											>

@@ -1,7 +1,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import type { Params } from "@remix-run/react";
 import { expect } from "vitest";
-import type { z } from "zod";
+import type { z } from "zod/v4";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import { db, sql } from "~/db/sql";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
@@ -27,7 +27,7 @@ export function wrappedAction<T extends z.ZodTypeAny>({
 			params = {},
 		}: { user?: "admin" | "regular"; params?: Params<string> } = {},
 	) => {
-		const body = new URLSearchParams(args);
+		const body = new URLSearchParams(args as any);
 		const request = new Request("http://app.com/path", {
 			method: "POST",
 			body,

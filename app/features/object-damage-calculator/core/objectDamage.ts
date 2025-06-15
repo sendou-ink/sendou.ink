@@ -11,7 +11,7 @@ import type {
 	SpecialWeaponId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
-import { altWeaponIdToId } from "~/modules/in-game-lists/weapon-ids";
+import { weaponIdToBaseWeaponId } from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import {
@@ -22,14 +22,6 @@ import {
 import type { CombineWith, DamageReceiver } from "../calculator-types";
 import objectDamages from "./object-dmg.json";
 import { objectHitPoints } from "./objectHitPoints";
-
-const getNormalizedMainWeapondId = (id: MainWeaponId) => {
-	if (altWeaponIdToId.has(id)) {
-		return altWeaponIdToId.get(id)!;
-	}
-
-	return id % 10 !== 0 ? ((id - 1) as MainWeaponId) : id;
-};
 
 export function damageTypeToMultipliers({
 	type,
@@ -44,7 +36,7 @@ export function damageTypeToMultipliers({
 		if (
 			weapon.type === "MAIN" &&
 			(objectDamagesObj.mainWeaponIds as MainWeaponId[]).includes(
-				getNormalizedMainWeapondId(weapon.id),
+				weaponIdToBaseWeaponId(weapon.id),
 			)
 		) {
 			matchingKeys.push(key as keyof typeof objectDamages);
@@ -88,9 +80,7 @@ function resolveRelevantKey({
 		// handle alt kits e.g. Splatteshot might have id 10 but Tentatek Splattershot has id 11
 		// but in the context of this function they are one and the same
 		const normalizedWeaponId =
-			weapon.type === "MAIN"
-				? getNormalizedMainWeapondId(weapon.id)
-				: weapon.id;
+			weapon.type === "MAIN" ? weaponIdToBaseWeaponId(weapon.id) : weapon.id;
 
 		if (weaponType !== weapon.type) continue;
 		if (!weaponIds.includes(normalizedWeaponId)) continue;

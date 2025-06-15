@@ -888,6 +888,24 @@ export interface UserFriendCode {
 	createdAt: GeneratedAlways<number>;
 }
 
+export interface BanLog {
+	id: GeneratedAlways<number>;
+	userId: number;
+	banned: number | null;
+	bannedReason: string | null;
+	bannedByUserId: number;
+	createdAt: GeneratedAlways<number>;
+}
+
+export interface ModNote {
+	id: GeneratedAlways<number>;
+	userId: number;
+	authorId: number;
+	text: string;
+	createdAt: GeneratedAlways<number>;
+	isDeleted: Generated<DBBoolean>;
+}
+
 export interface Video {
 	eventId: number | null;
 	id: GeneratedAlways<number>;
@@ -1039,6 +1057,8 @@ export interface DB {
 	BadgeManager: BadgeManager;
 	BadgeOwner: BadgeOwner;
 	TournamentBadgeOwner: TournamentBadgeOwner;
+	BanLog: BanLog;
+	ModNote: ModNote;
 	Build: Build;
 	BuildAbility: BuildAbility;
 	BuildWeapon: BuildWeapon;

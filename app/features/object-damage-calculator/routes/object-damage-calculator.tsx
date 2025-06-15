@@ -42,7 +42,7 @@ import type { MetaFunction } from "@remix-run/node";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { metaTags } from "~/utils/remix";
 
-export const CURRENT_PATCH = "9.3";
+export const CURRENT_PATCH = "10.0";
 
 export const shouldRevalidate: ShouldRevalidateFunction = () => false;
 

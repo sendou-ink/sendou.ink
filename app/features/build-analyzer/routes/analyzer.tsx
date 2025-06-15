@@ -11,7 +11,12 @@ import { WeaponCombobox } from "~/components/Combobox";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { Table } from "~/components/Table";
-import { Tab, Tabs } from "~/components/Tabs";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanel,
+	SendouTabs,
+} from "~/components/elements/Tabs";
 import { BeakerIcon } from "~/components/icons/Beaker";
 import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -83,7 +88,7 @@ import "../analyzer.css";
 import * as R from "remeda";
 import { SendouSwitch } from "~/components/elements/Switch";
 
-export const CURRENT_PATCH = "9.3";
+export const CURRENT_PATCH = "10.0";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -255,71 +260,82 @@ function BuildAnalyzerPage() {
 					</div>
 					<div className="stack md items-center w-full">
 						<div className="w-full">
-							<Tabs className="analyzer__sub-nav" compact>
-								<Tab
-									active={focused === 1}
-									onClick={() => handleChange({ newFocused: 1 })}
-									testId="build1-tab"
-								>
-									{t("analyzer:build1")}
-								</Tab>
-								<Tab
-									active={focused === 2}
-									onClick={() => handleChange({ newFocused: 2 })}
-									testId="build2-tab"
-								>
-									{t("analyzer:build2")}
-								</Tab>
-								<Tab
-									active={focused === 3}
-									onClick={() => handleChange({ newFocused: 3 })}
-									testId="ap-tab"
-								>
-									{t("analyzer:compare")}
-								</Tab>
-							</Tabs>
-							{focusedBuild ? (
-								<AbilitiesSelector
-									selectedAbilities={focusedBuild}
-									onChange={(newBuild) => {
-										const firstBuildIsEmpty = build
-											.flat()
-											.every((ability) => ability === "UNKNOWN");
+							<SendouTabs
+								selectedKey={`build-${focused === 3 ? "compare" : focused}`}
+								onSelectionChange={(id) => {
+									if (id === "build-1") {
+										handleChange({ newFocused: 1 });
+									} else if (id === "build-2") {
+										handleChange({ newFocused: 2 });
+									} else {
+										handleChange({ newFocused: 3 });
+									}
+								}}
+								className="analyzer__sub-nav"
+							>
+								<SendouTabList>
+									<SendouTab id="build-1" data-testid="build1-tab">
+										{t("analyzer:build1")}
+									</SendouTab>
+									<SendouTab id="build-2" data-testid="build2-tab">
+										{t("analyzer:build2")}
+									</SendouTab>
+									<SendouTab id="build-compare" data-testid="ap-tab">
+										{t("analyzer:compare")}
+									</SendouTab>
+								</SendouTabList>
+								{[1, 2].map(
+									(buildIndex) =>
+										focusedBuild && (
+											<SendouTabPanel
+												id={`build-${buildIndex}`}
+												key={`build-${buildIndex}`}
+											>
+												<AbilitiesSelector
+													selectedAbilities={focusedBuild}
+													onChange={(newBuild) => {
+														const firstBuildIsEmpty = build
+															.flat()
+															.every((ability) => ability === "UNKNOWN");
 
-										const buildWasEmptied =
-											!firstBuildIsEmpty &&
-											newBuild
-												.flat()
-												.every((ability) => ability === "UNKNOWN") &&
-											focused === 1;
+														const buildWasEmptied =
+															!firstBuildIsEmpty &&
+															newBuild
+																.flat()
+																.every((ability) => ability === "UNKNOWN") &&
+															focused === 1;
 
-										// if we don't do this the
-										// build2 would be duplicated
-										if (buildWasEmptied) {
-											handleChange({
-												newBuild: build2,
-												newBuild2: newBuild,
-												newFocused: 1,
-											});
-											return;
-										}
+														// if we don't do this the
+														// build2 would be duplicated
+														if (buildWasEmptied) {
+															handleChange({
+																newBuild: build2,
+																newBuild2: newBuild,
+																newFocused: 1,
+															});
+															return;
+														}
 
-										handleChange({
-											[focused === 1 || firstBuildIsEmpty
-												? "newBuild"
-												: "newBuild2"]: newBuild,
-											newFocused: firstBuildIsEmpty ? 1 : undefined,
-										});
-									}}
-								/>
-							) : (
-								<APCompare
-									abilityPoints={abilityPoints}
-									abilityPoints2={abilityPoints2}
-									build={build}
-									build2={build2}
-								/>
-							)}
+														handleChange({
+															[focused === 1 || firstBuildIsEmpty
+																? "newBuild"
+																: "newBuild2"]: newBuild,
+															newFocused: firstBuildIsEmpty ? 1 : undefined,
+														});
+													}}
+												/>
+											</SendouTabPanel>
+										),
+								)}
+								<SendouTabPanel id="build-compare">
+									<APCompare
+										abilityPoints={abilityPoints}
+										abilityPoints2={abilityPoints2}
+										build={build}
+										build2={build2}
+									/>
+								</SendouTabPanel>
+							</SendouTabs>
 						</div>
 						<EffectsSelector
 							build={build}

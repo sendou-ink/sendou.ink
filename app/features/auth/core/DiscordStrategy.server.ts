@@ -1,5 +1,5 @@
 import { OAuth2Strategy } from "remix-auth-oauth2";
-import { z } from "zod";
+import { z } from "zod/v4";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";

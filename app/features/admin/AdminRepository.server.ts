@@ -1,6 +1,6 @@
 import type { Transaction } from "kysely";
 import { db, sql } from "~/db/sql";
-import type { DB, Tables } from "~/db/tables";
+import type { DB, Tables, TablesInsertable } from "~/db/tables";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { syncXPBadges } from "../badges/queries/syncXPBadges.server";
@@ -62,6 +62,15 @@ export function migrate(args: { newUserId: number; oldUserId: number }) {
 			.deleteFrom("UserFriendCode")
 			.where("userId", "=", args.newUserId)
 			.execute();
+		await trx
+			.deleteFrom("LFGPost")
+			.where("authorId", "=", args.newUserId)
+			.execute();
+		await trx
+			.deleteFrom("BanLog")
+			.where("userId", "=", args.newUserId)
+			.execute();
+
 		await trx
 			.updateTable("GroupMember")
 			.where("userId", "=", args.newUserId)
@@ -210,25 +219,85 @@ export function banUser({
 	userId,
 	banned,
 	bannedReason,
+	bannedByUserId,
 }: {
 	userId: number;
 	banned: 1 | Date;
 	bannedReason: string | null;
+	/** Which user banned the user? If null then it means it was an automatic ban. */
+	bannedByUserId: number | null;
 }) {
-	return db
-		.updateTable("User")
-		.set({
+	return db.transaction().execute(async (trx) => {
+		const banArgs = {
 			banned: banned === 1 ? banned : dateToDatabaseTimestamp(banned),
 			bannedReason,
-		})
-		.where("User.id", "=", userId)
-		.execute();
+		};
+
+		await trx
+			.updateTable("User")
+			.set(banArgs)
+			.where("User.id", "=", userId)
+			.execute();
+
+		if (typeof bannedByUserId === "number") {
+			await trx
+				.insertInto("BanLog")
+				.values({
+					...banArgs,
+					userId,
+					bannedByUserId,
+				})
+				.execute();
+		}
+	});
 }
 
-export function unbanUser(userId: number) {
+export function unbanUser({
+	userId,
+	unbannedByUserId,
+}: {
+	userId: number;
+	unbannedByUserId: number;
+}) {
+	return db.transaction().execute(async (trx) => {
+		const banArgs = {
+			banned: 0,
+			bannedReason: null,
+		};
+
+		await trx
+			.updateTable("User")
+			.set(banArgs)
+			.where("User.id", "=", userId)
+			.execute();
+
+		await trx
+			.insertInto("BanLog")
+			.values({
+				...banArgs,
+				userId,
+				bannedByUserId: unbannedByUserId,
+			})
+			.execute();
+	});
+}
+
+export function addModNote(args: TablesInsertable["ModNote"]) {
+	return db.insertInto("ModNote").values(args).execute();
+}
+
+export function findModeNoteById(id: number) {
 	return db
-		.updateTable("User")
-		.set({ banned: 0 })
-		.where("User.id", "=", userId)
+		.selectFrom("ModNote")
+		.selectAll()
+		.where("ModNote.id", "=", id)
+		.executeTakeFirst();
+}
+
+export function deleteModNote(id: number) {
+	return db
+		.updateTable("ModNote")
+		.set({ isDeleted: 1 })
+		.where("ModNote.id", "=", id)
 		.execute();
 }

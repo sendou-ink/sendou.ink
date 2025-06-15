@@ -2176,6 +2176,10 @@
 				"rate": 2.4
 			},
 			{
+				"target": "NiceBall_Armor",
+				"rate": 1
+			},
+			{
 				"target": "ShockSonar",
 				"rate": 2.4
 			},
@@ -2362,7 +2366,7 @@
 			},
 			{
 				"target": "Chariot",
-				"rate": 2
+				"rate": 4
 			},
 			{
 				"target": "Gachihoko_Barrier",
@@ -2963,7 +2967,7 @@
 			},
 			{
 				"target": "ShockSonar",
-				"rate": 4.8
+				"rate": 2.4
 			},
 			{
 				"target": "Wsb_Flag",
@@ -3113,7 +3117,7 @@
 			},
 			{
 				"target": "ShockSonar",
-				"rate": 4.8
+				"rate": 2.4
 			},
 			{
 				"target": "Wsb_Flag",
@@ -5134,7 +5138,7 @@
 			},
 			{
 				"target": "Chariot",
-				"rate": 2
+				"rate": 3
 			},
 			{
 				"target": "Gachihoko_Barrier",

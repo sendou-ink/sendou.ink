@@ -7,7 +7,7 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfFalsy, privatelyCachedJson } from "~/utils/remix.server";
 import { sortBuilds } from "../core/build-sorting.server";
-import { userParamsSchema } from "../user-page-schemas.server";
+import { userParamsSchema } from "../user-page-schemas";
 
 export type UserBuildsPageData = SerializeFrom<typeof loader>;
 

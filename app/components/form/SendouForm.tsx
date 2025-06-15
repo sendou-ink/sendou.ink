@@ -1,9 +1,9 @@
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useFetcher } from "@remix-run/react";
 import * as React from "react";
 import { type DefaultValues, FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import type { z } from "zod";
+import type { z } from "zod/v4";
 import { logger } from "~/utils/logger";
 import type { ActionError } from "~/utils/remix.server";
 import { SubmitButton } from "../SubmitButton";
@@ -27,7 +27,7 @@ export function SendouForm<T extends z.ZodTypeAny>({
 	const { t } = useTranslation(["common"]);
 	const fetcher = useFetcher<any>();
 	const methods = useForm({
-		resolver: zodResolver(schema),
+		resolver: standardSchemaResolver(schema),
 		defaultValues,
 	});
 
@@ -47,7 +47,10 @@ export function SendouForm<T extends z.ZodTypeAny>({
 
 	const onSubmit = React.useCallback(
 		methods.handleSubmit((values) =>
-			fetcher.submit(values, { method: "post", encType: "application/json" }),
+			fetcher.submit(values as Parameters<typeof fetcher.submit>[0], {
+				method: "post",
+				encType: "application/json",
+			}),
 		),
 		[],
 	);

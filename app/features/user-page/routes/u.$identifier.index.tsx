@@ -13,7 +13,6 @@ import { TwitchIcon } from "~/components/icons/Twitch";
 import { YouTubeIcon } from "~/components/icons/YouTube";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { modesShort } from "~/modules/in-game-lists/modes";
-import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { rawSensToString } from "~/utils/strings";
@@ -71,7 +70,6 @@ export default function UserInfoPage() {
 					) : null}
 				</div>
 			</div>
-			<BannedInfo />
 			<ExtraInfos />
 			<WeaponPool />
 			<TopPlacements />
@@ -339,42 +337,5 @@ function TopPlacements() {
 				);
 			})}
 		</Link>
-	);
-}
-
-function BannedInfo() {
-	const data = useLoaderData<typeof loader>();
-
-	const { banned, bannedReason } = data.banned ?? {};
-
-	if (!banned) return null;
-
-	const ends = (() => {
-		if (!banned || banned === 1) return null;
-
-		return databaseTimestampToDate(banned);
-	})();
-
-	return (
-		<div className="mb-4">
-			<h2 className="text-warning">Account suspended</h2>
-			{bannedReason ? <div>Reason: {bannedReason}</div> : null}
-			{ends ? (
-				<div suppressHydrationWarning>
-					Ends:{" "}
-					{ends.toLocaleString("en-US", {
-						month: "long",
-						day: "numeric",
-						year: "numeric",
-						hour: "numeric",
-						minute: "numeric",
-					})}
-				</div>
-			) : (
-				<div>
-					Ends: <i>no end time set</i>
-				</div>
-			)}
-		</div>
 	);
 }

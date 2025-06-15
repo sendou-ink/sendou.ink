@@ -6,7 +6,7 @@ import {
 import type { MapPoolObject } from "./types";
 
 const testSerializedPool =
-	"tw:1998000;sz:1d0a000;tc:164c000;rm:15e0000;cb:1ce0000";
+	"tw:3330000;sz:3a14000;tc:2c98000;rm:2bc0000;cb:39c0000";
 
 describe("Map pool serializer", () => {
 	test("Unserializes and then serializes to same result", () => {
