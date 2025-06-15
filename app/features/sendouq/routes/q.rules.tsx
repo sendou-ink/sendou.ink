@@ -124,8 +124,7 @@ export default function SendouqRules() {
 
 			<h2 className="text-lg mt-4">Cheating / Mods</h2>
 			<div>
-				Cheating with any sort of modded hardware and or software is {" "}
-				<b>STRICTLY PROHIBITED</b>.
+				Using any sort of modded hardware and or software is not allowed.
 			</div>
 
 			<h2 className="text-lg mt-4">Aliases</h2>
