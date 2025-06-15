@@ -63,6 +63,15 @@ export function migrate(args: { newUserId: number; oldUserId: number }) {
 			.where("userId", "=", args.newUserId)
 			.execute();
 		await trx
+			.deleteFrom("LFGPost")
+			.where("authorId", "=", args.newUserId)
+			.execute();
+		await trx
+			.deleteFrom("BanLog")
+			.where("userId", "=", args.newUserId)
+			.execute();
+
+		await trx
 			.updateTable("GroupMember")
 			.where("userId", "=", args.newUserId)
 			.set({ userId: args.oldUserId })
