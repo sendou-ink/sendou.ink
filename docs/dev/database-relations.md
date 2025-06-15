@@ -186,6 +186,9 @@ erDiagram
     Badge ||--o{ TournamentOrganizationBadge : badge_of
 
     TournamentOrganization ||--o{ TournamentOrganizationSeries : has_series
+    
+    TournamentOrganization ||--o{ TournamentOrganizationBannedUser : has_banned
+    User ||--o{ TournamentOrganizationBannedUser : banned_from
 ```
 
 ## Videos

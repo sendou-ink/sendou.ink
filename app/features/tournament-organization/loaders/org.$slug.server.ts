@@ -73,6 +73,12 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 		series: await seriesInfo(),
 		month,
 		year,
+		bannedUsers:
+			user?.id && organization.permissions.BAN.includes(user.id)
+				? await TournamentOrganizationRepository.allBannedUsersByOrganizationId(
+						organization.id,
+					)
+				: null,
 	};
 }
 

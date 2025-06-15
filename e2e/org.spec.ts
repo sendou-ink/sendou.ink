@@ -49,4 +49,8 @@ test.describe("Tournament Organization", () => {
 			page.getByText("Editing tournament organization"),
 		).toBeVisible();
 	});
+
+	// test("banned player cannot join a tournament of that organization", async ({
+	// 	page,
+	// }) => {});
 });

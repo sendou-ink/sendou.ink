@@ -743,6 +743,13 @@ export interface TournamentBracketProgressionOverride {
 	tournamentId: number;
 }
 
+export interface TournamentOrganizationBannedUser {
+	organizationId: number;
+	userId: number;
+	privateReason: string | null; // xxx: rename to privateNote
+	updatedAt: Generated<number>;
+}
+
 /** Indicates a user trusts another. Allows direct adding to groups/teams without invite links. */
 export interface TrustRelationship {
 	trustGiverUserId: number;
@@ -1110,6 +1117,7 @@ export interface DB {
 	TournamentOrganizationBadge: TournamentOrganizationBadge;
 	TournamentOrganizationSeries: TournamentOrganizationSeries;
 	TournamentBracketProgressionOverride: TournamentBracketProgressionOverride;
+	TournamentOrganizationBannedUser: TournamentOrganizationBannedUser;
 	TrustRelationship: TrustRelationship;
 	UnvalidatedUserSubmittedImage: UnvalidatedUserSubmittedImage;
 	UnvalidatedVideo: UnvalidatedVideo;

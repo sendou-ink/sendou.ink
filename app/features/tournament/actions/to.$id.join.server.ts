@@ -21,7 +21,10 @@ import { giveTrust } from "../queries/giveTrust.server";
 import { joinTeam } from "../queries/joinLeaveTeam.server";
 import { joinSchema } from "../tournament-schemas.server";
 import { validateCanJoinTeam } from "../tournament-utils";
-import { inGameNameIfNeeded } from "../tournament-utils.server";
+import {
+	inGameNameIfNeeded,
+	requireNotBannedByOrganization,
+} from "../tournament-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const { id: tournamentId } = parseParams({
@@ -37,6 +40,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const leanTeam = notFoundIfFalsy(findByInviteCode(inviteCode));
 
 	const tournament = await tournamentFromDB({ tournamentId, user });
+
+	await requireNotBannedByOrganization({
+		tournament,
+		user,
+	});
 
 	const teamToJoin = tournament.ctx.teams.find(
 		(team) => team.id === leanTeam.id,

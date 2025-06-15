@@ -13,6 +13,10 @@
 	margin-inline-end: var(--s-1-5);
 }
 
+.tabButton img {
+	margin-inline-end: var(--s-1-5);
+}
+
 .padded .tabPanel {
 	padding-block-start: var(--s-4);
 }
