@@ -152,6 +152,15 @@ export const damageTypesToCombine: Partial<
 			multiplierOnly: true,
 		},
 	],
+	// Stickerz Splatana Stamper
+	8002: [
+		{ when: "SPLATANA_VERTICAL_DIRECT", combineWith: "SPLATANA_VERTICAL" },
+		{
+			when: "SPLATANA_HORIZONTAL_DIRECT",
+			combineWith: "SPLATANA_HORIZONTAL",
+			multiplierOnly: true,
+		},
+	],
 	// Order Splatana Replica
 	8005: [
 		{ when: "SPLATANA_VERTICAL_DIRECT", combineWith: "SPLATANA_VERTICAL" },
@@ -172,6 +181,15 @@ export const damageTypesToCombine: Partial<
 	],
 	// Splatana Wiper Deco
 	8011: [
+		{ when: "SPLATANA_VERTICAL_DIRECT", combineWith: "SPLATANA_VERTICAL" },
+		{
+			when: "SPLATANA_HORIZONTAL_DIRECT",
+			combineWith: "SPLATANA_HORIZONTAL",
+			multiplierOnly: true,
+		},
+	],
+	// Splatana Wiper RUS-T
+	8012: [
 		{ when: "SPLATANA_VERTICAL_DIRECT", combineWith: "SPLATANA_VERTICAL" },
 		{
 			when: "SPLATANA_HORIZONTAL_DIRECT",

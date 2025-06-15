@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 import { TOURNAMENT_ORGANIZATION_ROLES } from "~/db/tables";
 import { mySlugify } from "~/utils/urls";
 import { falsyToNull, id } from "~/utils/zod";

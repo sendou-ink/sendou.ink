@@ -1,5 +1,5 @@
 import type { ActionFunction } from "@remix-run/node";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import { bracketProgressionSchema } from "~/features/calendar/calendar-schemas";

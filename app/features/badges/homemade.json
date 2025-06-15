@@ -135,6 +135,10 @@
 		"displayName": "Supply Closet (Smudge)",
 		"authorDiscordId": "148874365105078272"
 	},
+	"champions": {
+		"displayName": "Champions Cup",
+		"authorDiscordId": "752582395076673577"
+	},
 	"chao": {
 		"displayName": "Chao Garden",
 		"authorDiscordId": "528851510222782474"
@@ -182,6 +186,10 @@
 	"crobattle": {
 		"displayName": "Crobattle Royale",
 		"authorDiscordId": "178733052762128385"
+	},
+	"csblast": {
+		"displayName": "10 ST! Tournaments",
+		"authorDiscordId": "752582395076673577"
 	},
 	"current": {
 		"displayName": "FREEDOM DiVE",
@@ -426,6 +434,10 @@
 	"lemoncider": {
 		"displayName": "Lemon Cider: One Trick!",
 		"authorDiscordId": "1320944066002681876"
+	},
+	"letthemcook": {
+		"displayName": "Let Them Cook",
+		"authorDiscordId": "824681527815438337"
 	},
 	"liftoff": {
 		"displayName": "Liftoff",
@@ -958,6 +970,10 @@
 	"vibessecond": {
 		"displayName": "Splat Vibes LAN (Top 4)",
 		"authorDiscordId": "342369454719631361"
+	},
+	"vsblast": {
+		"displayName": "5 ST! Tournaments",
+		"authorDiscordId": "752582395076673577"
 	},
 	"wave-breaker": {
 		"displayName": "Ride the Wave",

@@ -226,11 +226,7 @@ export async function findProfileByIdentifier(
 		return null;
 	}
 
-	const favoriteBadgeIds = isSupporter(row)
-		? row.favoriteBadgeIds
-		: row.favoriteBadgeIds
-			? [row.favoriteBadgeIds[0]]
-			: null;
+	const favoriteBadgeIds = favoriteBadgesOwnedAndSupporterStatusAdjusted(row);
 
 	return {
 		...row,
@@ -256,6 +252,33 @@ export async function findProfileByIdentifier(
 				? row.discordUniqueName
 				: null,
 	};
+}
+
+function favoriteBadgesOwnedAndSupporterStatusAdjusted(row: {
+	favoriteBadgeIds: number[] | null;
+	badges: Array<{
+		id: number;
+	}>;
+	patronTier: number | null;
+}) {
+	// filter out favorite badges no longer owner of
+	let favoriteBadgeIds =
+		row.favoriteBadgeIds?.filter((badgeId) =>
+			row.badges.some((badge) => badge.id === badgeId),
+		) ?? null;
+
+	if (favoriteBadgeIds?.length === 0) {
+		favoriteBadgeIds = null;
+	}
+
+	// non-supporters can only have one favorite badge, handle losing supporter status
+	favoriteBadgeIds = isSupporter(row)
+		? favoriteBadgeIds
+		: favoriteBadgeIds
+			? [favoriteBadgeIds[0]]
+			: null;
+
+	return favoriteBadgeIds;
 }
 
 export function findByCustomUrl(customUrl: string) {
@@ -314,6 +337,48 @@ export async function findLeanById(id: number) {
 		...R.omit(user, ["isArtist", "isVideoAdder", "isTournamentOrganizer"]),
 		roles: userRoles(user),
 	};
+}
+
+export function findModInfoById(id: number) {
+	return db
+		.selectFrom("User")
+		.select((eb) => [
+			"User.discordUniqueName",
+			"User.isVideoAdder",
+			"User.isArtist",
+			"User.isTournamentOrganizer",
+			"User.plusSkippedForSeasonNth",
+			"User.createdAt",
+			jsonArrayFrom(
+				eb
+					.selectFrom("ModNote")
+					.innerJoin("User", "User.id", "ModNote.authorId")
+					.select([
+						"ModNote.id as noteId",
+						"ModNote.text",
+						"ModNote.createdAt",
+						...COMMON_USER_FIELDS,
+					])
+					.where("ModNote.isDeleted", "=", 0)
+					.where("ModNote.userId", "=", id)
+					.orderBy("ModNote.createdAt", "desc"),
+			).as("modNotes"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("BanLog")
+					.innerJoin("User", "User.id", "BanLog.bannedByUserId")
+					.select([
+						"BanLog.banned",
+						"BanLog.bannedReason",
+						"BanLog.createdAt",
+						...COMMON_USER_FIELDS,
+					])
+					.where("BanLog.userId", "=", id)
+					.orderBy("BanLog.createdAt", "desc"),
+			).as("banLogs"),
+		])
+		.where("User.id", "=", id)
+		.executeTakeFirst();
 }
 
 export function findAllPatrons() {

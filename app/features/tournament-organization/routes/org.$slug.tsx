@@ -4,13 +4,17 @@ import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { Main } from "~/components/Main";
-import { NewTabs } from "~/components/NewTabs";
 import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
 import { LinkButton } from "~/components/elements/Button";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanel,
+	SendouTabs,
+} from "~/components/elements/Tabs";
 import { EditIcon } from "~/components/icons/Edit";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
-import { useIsMounted } from "~/hooks/useIsMounted";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
@@ -139,41 +143,32 @@ function InfoTabs() {
 	const { t } = useTranslation(["org"]);
 	const data = useLoaderData<typeof loader>();
 
+	const hasSocials =
+		data.organization.socials && data.organization.socials.length > 0;
+	const hasBadges = data.organization.badges.length > 0;
+
 	return (
 		<div>
-			<NewTabs
-				tabs={[
-					{
-						label: t("org:edit.form.socialLinks.title"),
-						disabled:
-							!data.organization.socials ||
-							data.organization.socials.length === 0,
-					},
-					{
-						label: t("org:edit.form.members.title"),
-					},
-					{
-						label: t("org:edit.form.badges.title"),
-						disabled: data.organization.badges.length === 0,
-					},
-				]}
-				content={[
-					{
-						element: (
-							<SocialLinksList links={data.organization.socials ?? []} />
-						),
-						key: "socials",
-					},
-					{
-						element: <MembersList />,
-						key: "members",
-					},
-					{
-						element: <BadgeDisplay badges={data.organization.badges} />,
-						key: "badges",
-					},
-				]}
-			/>
+			<SendouTabs>
+				<SendouTabList>
+					<SendouTab id="socials" isDisabled={!hasSocials}>
+						{t("org:edit.form.socialLinks.title")}
+					</SendouTab>
+					<SendouTab id="members">{t("org:edit.form.members.title")}</SendouTab>
+					<SendouTab id="badges" isDisabled={!hasBadges}>
+						{t("org:edit.form.badges.title")}
+					</SendouTab>
+				</SendouTabList>
+				<SendouTabPanel id="socials">
+					<SocialLinksList links={data.organization.socials ?? []} />
+				</SendouTabPanel>
+				<SendouTabPanel id="members">
+					<MembersList />
+				</SendouTabPanel>
+				<SendouTabPanel id="badges">
+					<BadgeDisplay badges={data.organization.badges} />
+				</SendouTabPanel>
+			</SendouTabs>
 		</div>
 	);
 }
@@ -232,43 +227,36 @@ function SeriesView({
 }) {
 	const { t } = useTranslation(["org"]);
 
+	const hasLeaderboard = Boolean(series.leaderboard);
+
 	return (
 		<div className="stack md">
 			<SeriesHeader series={series} />
 			<div>
-				<NewTabs
-					disappearing
-					tabs={[
-						{
-							label: t("org:events.tabs.events"),
-							number: series.eventsCount,
-						},
-						{
-							label: t("org:events.tabs.leaderboard"),
-							disabled: !series.leaderboard,
-						},
-					]}
-					content={[
-						{
-							key: "events",
-							element: (
-								<div className="stack lg">
-									<EventsList showYear />
-									<EventsPagination series={series} />
-								</div>
-							),
-						},
-						{
-							key: "leaderboard",
-							element: series.leaderboard && (
-								<EventLeaderboard
-									leaderboard={series.leaderboard}
-									ownEntry={series.ownEntry}
-								/>
-							),
-						},
-					]}
-				/>
+				<SendouTabs>
+					<SendouTabList>
+						<SendouTab id="events" number={series.eventsCount}>
+							{t("org:events.tabs.events")}
+						</SendouTab>
+						<SendouTab id="leaderboard" isDisabled={!hasLeaderboard}>
+							{t("org:events.tabs.leaderboard")}
+						</SendouTab>
+					</SendouTabList>
+					<SendouTabPanel id="events">
+						<div className="stack lg">
+							<EventsList showYear />
+							<EventsPagination series={series} />
+						</div>
+					</SendouTabPanel>
+					<SendouTabPanel id="leaderboard">
+						{hasLeaderboard && (
+							<EventLeaderboard
+								leaderboard={series.leaderboard!}
+								ownEntry={series.ownEntry}
+							/>
+						)}
+					</SendouTabPanel>
+				</SendouTabs>
 			</div>
 		</div>
 	);
@@ -357,9 +345,6 @@ function EventsList({
 }: { showYear?: boolean; filteredByMonth?: boolean }) {
 	const { t } = useTranslation(["org"]);
 	const data = useLoaderData<typeof loader>();
-	const isMounted = useIsMounted();
-
-	if (!isMounted) return null;
 
 	const now = databaseTimestampNow();
 

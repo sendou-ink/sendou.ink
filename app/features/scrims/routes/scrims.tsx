@@ -4,7 +4,7 @@ import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
-import type { z } from "zod";
+import type { z } from "zod/v4";
 import { AddNewButton } from "~/components/AddNewButton";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
@@ -34,7 +34,12 @@ import {
 	userSubmittedImage,
 } from "~/utils/urls";
 import { Main } from "../../../components/Main";
-import { NewTabs } from "../../../components/NewTabs";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanel,
+	SendouTabs,
+} from "../../../components/elements/Tabs";
 import { ArrowDownOnSquareIcon } from "../../../components/icons/ArrowDownOnSquare";
 import { ArrowUpOnSquareIcon } from "../../../components/icons/ArrowUpOnSquare";
 import { CheckmarkIcon } from "../../../components/icons/Checkmark";
@@ -107,67 +112,64 @@ export default function ScrimsPage() {
 					close={() => setScrimToRequestId(undefined)}
 				/>
 			) : null}
-			<NewTabs
-				sticky
-				disappearing
-				defaultIndex={data.posts.owned.length > 0 ? 0 : 2}
-				tabs={[
-					{
-						label: t("scrims:tabs.owned"),
-						number: data.posts.owned.length,
-						disabled: !user,
-						icon: <ArrowDownOnSquareIcon />,
-					},
-					{
-						label: t("scrims:tabs.requests"),
-						number: data.posts.requested.length,
-						disabled: !user,
-						icon: <ArrowUpOnSquareIcon />,
-					},
-					{
-						label: t("scrims:tabs.available"),
-						number: data.posts.neutral.length,
-						icon: <MegaphoneIcon />,
-					},
-				]}
-				content={[
-					{
-						key: "owned",
-						element: (
-							<ScrimsDaySeparatedTables
-								posts={data.posts.owned}
-								showDeletePost
-								showRequestRows
-								showStatus
-							/>
-						),
-					},
-					{
-						key: "requested",
-						element: (
-							<ScrimsDaySeparatedTables
-								posts={data.posts.requested}
-								requestScrim={setScrimToRequestId}
-								showStatus
-							/>
-						),
-					},
-					{
-						key: "available",
-						element:
-							data.posts.neutral.length > 0 ? (
-								<ScrimsDaySeparatedTables
-									posts={data.posts.neutral}
-									requestScrim={setScrimToRequestId}
-								/>
-							) : (
-								<div className="text-lighter text-lg font-semi-bold text-center mt-6">
-									{t("scrims:noneAvailable")}
-								</div>
-							),
-					},
-				]}
-			/>
+			<SendouTabs
+				defaultSelectedKey={data.posts.owned.length > 0 ? "owned" : "available"}
+			>
+				<SendouTabList sticky>
+					<SendouTab
+						id="owned"
+						isDisabled={!user}
+						icon={<ArrowDownOnSquareIcon />}
+						number={data.posts.owned.length}
+					>
+						{t("scrims:tabs.owned")}
+					</SendouTab>
+					<SendouTab
+						id="requested"
+						isDisabled={!user}
+						icon={<ArrowUpOnSquareIcon />}
+						number={data.posts.requested.length}
+						data-testid="requests-scrims-tab"
+					>
+						{t("scrims:tabs.requests")}
+					</SendouTab>
+					<SendouTab
+						id="available"
+						icon={<MegaphoneIcon />}
+						number={data.posts.neutral.length}
+						data-testid="available-scrims-tab"
+					>
+						{t("scrims:tabs.available")}
+					</SendouTab>
+				</SendouTabList>
+				<SendouTabPanel id="owned">
+					<ScrimsDaySeparatedTables
+						posts={data.posts.owned}
+						showDeletePost
+						showRequestRows
+						showStatus
+					/>
+				</SendouTabPanel>
+				<SendouTabPanel id="requested">
+					<ScrimsDaySeparatedTables
+						posts={data.posts.requested}
+						requestScrim={setScrimToRequestId}
+						showStatus
+					/>
+				</SendouTabPanel>
+				<SendouTabPanel id="available">
+					{data.posts.neutral.length > 0 ? (
+						<ScrimsDaySeparatedTables
+							posts={data.posts.neutral}
+							requestScrim={setScrimToRequestId}
+						/>
+					) : (
+						<div className="text-lighter text-lg font-semi-bold text-center mt-6">
+							{t("scrims:noneAvailable")}
+						</div>
+					)}
+				</SendouTabPanel>
+			</SendouTabs>
 			<div className="mt-6 text-xs text-center text-lighter">
 				{t("calendar:inYourTimeZone")}{" "}
 				{Intl.DateTimeFormat().resolvedOptions().timeZone}

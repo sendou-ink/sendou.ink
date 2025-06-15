@@ -5,6 +5,8 @@ import type { AbilityWithUnknown } from "~/modules/in-game-lists/types";
 import { abilityImageUrl } from "~/utils/urls";
 import { Image } from "./Image";
 
+import styles from "./Ability.module.css";
+
 const sizeMap = {
 	MAIN: 42,
 	SUB: 32,
@@ -56,12 +58,12 @@ export function Ability({
 	return (
 		<AbilityTag
 			className={clsx(
-				"build__ability",
+				styles.ability,
 				{
-					"is-drag-target": isDragTarget,
-					"drag-started": dragStarted,
-					"drop-allowed": dropAllowed,
-					readonly,
+					[styles.isDragTarget]: isDragTarget,
+					[styles.dragStarted]: dragStarted,
+					[styles.dropAllowed]: dropAllowed,
+					[styles.readonly]: readonly,
 				},
 				className,
 			)}
