@@ -14,7 +14,8 @@ export default function SendouqRules() {
 	return (
 		<Main>
 			<h1>SendouQ Rules</h1>
-			<h2 className="text-lg">Disconnections</h2>
+			<br /> <br />
+			<h2 className="text-lg">Disconnections / Replays</h2>
 			<div>
 				Each team is allowed one replay per set due to a team member
 				disconnecting. Replay is only possible if ALL of the following are true:
@@ -32,13 +33,11 @@ export default function SendouqRules() {
 				</ol>
 				For the replay same weapons and gear must be used by both teams. The
 				team who fails to do so loses the map. If players disconnect from both
-				teams a replay can be played without using either team&apos;s one replay
-				for the set (or even if there were no replays left to use from either
-				team). <br /> <br /> The host disconnecting can be replayed with the
-				same conditions as above (in this case the &quot;team with DC&quot; is
-				the host&apos;s team). Host disconnecting can never mean that the
-				hosting team wins the map off that. Only outcomes are that the map is
-				replayed or the team that didn&apos;t host wins the map.
+				teams no replay will be used from either team&apos;s one replay
+				for the set. <br /> <br /> If the host disconnects otherwise known as
+				a "lobby crash" (where all players disconnect from the match) then the
+				team not hosting can either, replay (if the rules above apply) or must
+				make the team that was hosting the room take the loss for that game.
 				<br />
 				<br /> After the DC replay has been used by the team, further DC&apos;s
 				should be played out.
@@ -51,18 +50,21 @@ export default function SendouqRules() {
 				weapons and gear except the player with unallowed weapon who should
 				switch to the allowed variant of the weapon. For example had a player
 				picked Foil Squeezer they need to play regular Squeezer in the replay.
+				If they do not have the other kit of the weapon they will take the loss.
 			</div>
 
 			<h2 className="text-lg mt-4">Subs</h2>
 			<div>
-				There are no subs. If a player is unavailable to play from either team
+				There are no subs. All 8 players in the match MUST be the players listed in the set. If a player is unavailable to play from either team
 				then the set must be played with 3 players or forfeited.
 			</div>
 
 			<h2 className="text-lg mt-4">Canceling match</h2>
 			<div>
 				Match can be canceled if both group owners agree. If the groups
-				don&apos;t agree then the match should be played out.
+				don&apos;t agree then the match should be played out. If the enemy
+				team refuses to play after you not cancelling, raise an issue in the
+				helpdesk in our Discord sever.
 			</div>
 
 			<h2 className="text-lg mt-4">Dodging</h2>
@@ -96,8 +98,10 @@ export default function SendouqRules() {
 			<div>
 				After a team has all their members in the lobby then the other team has{" "}
 				<b>10 minutes</b> to join the lobby. Failing to do so, the match can be
-				started with the members currently in the room. If a player has problems
-				connecting to the room it is advised to try switching the host.
+				started with the members currently in the room. If no one is in the room
+				then please raise an issue in the helpdesk in our Discord server.<br /> <br />
+				If a player has problems connecting to the room it is advised to try switching
+				the host.
 			</div>
 
 			<h2 className="text-lg mt-4">Spectators</h2>
@@ -110,11 +114,22 @@ export default function SendouqRules() {
 				another player&apos;s/team&apos;s ranking.
 			</div>
 
-			<h2 className="text-lg mt-4">Unsportsmanlike conduct</h2>
+			<h2 className="text-lg mt-4">Unsportsmanlike Conduct</h2>
 			<div>
 				It&apos;s not allowed to spawncamp the enemy without pushing the
 				objective provided it can&apos;t be considered a viable strategy taking
 				in account the game situation.
+			</div>
+
+			<h2 className="text-lg mt-4">Cheating / Mods</h2>
+			<div>
+				Cheating with any sort of modded hardware and or software is {" "}
+				<b>STRICTLY PROHIBITED</b>.
+			</div>
+
+			<h2 className="text-lg mt-4">Aliases</h2>
+			<div>
+				Aliases are allowed, Teams can ask for players to use their IGN. If asked, all players must use the listed IGN on the user&apos;s profile.
 			</div>
 
 			<h2 className="text-lg mt-4">Discriminatory language</h2>
