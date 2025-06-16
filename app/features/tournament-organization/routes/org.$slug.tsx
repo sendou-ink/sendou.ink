@@ -1,16 +1,13 @@
 import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
-import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
-import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
-import { Table } from "~/components/Table";
-import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { LinkButton } from "~/components/elements/Button";
 import {
 	SendouTab,
 	SendouTabList,
@@ -22,7 +19,7 @@ import { LinkIcon } from "~/components/icons/Link";
 import { LockIcon } from "~/components/icons/Lock";
 import { UsersIcon } from "~/components/icons/Users";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
-import { BanUserModal } from "~/features/tournament-organization/components/BanUserModal";
+import { BannedUsersList } from "~/features/tournament-organization/components/BannedPlayersList";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
@@ -37,7 +34,6 @@ import {
 	userPage,
 	userSubmittedImage,
 } from "~/utils/urls";
-import styles from "../components/BannedPlayersList.module.css";
 import { EventCalendar } from "../components/EventCalendar";
 import { SocialLinksList } from "../components/SocialLinksList";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "../tournament-organization-constants";
@@ -176,7 +172,7 @@ function InfoTabs() {
 					>
 						{t("org:edit.form.badges.title")}
 					</SendouTab>
-					{canBanPlayers ? (
+					{canBanPlayers && data.bannedUsers ? (
 						<SendouTab
 							id="banned-users"
 							icon={<LockIcon />}
@@ -195,9 +191,11 @@ function InfoTabs() {
 				<SendouTabPanel id="badges">
 					<BadgeDisplay badges={data.organization.badges} />
 				</SendouTabPanel>
-				<SendouTabPanel id="banned-users">
-					<BannedUsersList />
-				</SendouTabPanel>
+				{data.bannedUsers ? (
+					<SendouTabPanel id="banned-users">
+						<BannedUsersList bannedUsers={data.bannedUsers} />
+					</SendouTabPanel>
+				) : null}
 			</SendouTabs>
 		</div>
 	);
@@ -576,94 +574,6 @@ function EventLeaderboardRow({
 				<Placement placement={1} /> ×{entry.placements.first}
 				<Placement placement={2} /> ×{entry.placements.second}
 				<Placement placement={3} /> ×{entry.placements.third}
-			</div>
-		</div>
-	);
-}
-
-// xxx: extract component
-function BannedUsersList() {
-	const { t, i18n } = useTranslation(["org"]);
-	const data = useLoaderData<typeof loader>();
-
-	const bannedUsersKey = (data.bannedUsers ?? [])
-		.map((u) => [u.id, u.privateReason].join("-"))
-		.join(",");
-
-	if (!data.bannedUsers || data.bannedUsers.length === 0) {
-		return (
-			<div className="stack lg">
-				<div className="text-sm">{t("org:banned.empty")}</div>
-				<div className={styles.banPlayerButton}>
-					<BanUserModal key={bannedUsersKey} />
-				</div>
-			</div>
-		);
-	}
-
-	return (
-		<div className="stack lg">
-			<div className="text-sm">{t("org:banned.description")}</div>
-			<div className={styles.bannedUsersContainer}>
-				<Table>
-					<thead>
-						<tr>
-							<th>{t("org:banned.player")}</th>
-							<th>{t("org:banned.note")}</th>
-							<th>{t("org:banned.date")}</th>
-							<th>{t("org:banned.actions")}</th>
-						</tr>
-					</thead>
-					<tbody>
-						{data.bannedUsers.map((bannedUser) => (
-							<tr key={bannedUser.id}>
-								<td>
-									<Link
-										to={userPage(bannedUser)}
-										className="stack horizontal xs items-center w-max"
-									>
-										<Avatar user={bannedUser} size="xs" />
-										{bannedUser.username}
-									</Link>
-								</td>
-								<td
-									className={clsx("text-sm text-lighter", styles.reasonCell)}
-									title={bannedUser.privateReason ?? undefined}
-								>
-									{bannedUser.privateReason ?? "-"}
-								</td>
-								<td className="text-sm text-lighter whitespace-nowrap">
-									{databaseTimestampToDate(
-										bannedUser.updatedAt,
-									).toLocaleDateString(i18n.language, {
-										day: "numeric",
-										month: "short",
-										year: "numeric",
-									})}
-								</td>
-								<td className={styles.actionsCell}>
-									<FormWithConfirm
-										fields={[
-											["_action", "UNBAN_USER"],
-											["userId", bannedUser.id],
-										]}
-										dialogHeading={t("org:banned.unbanConfirm", {
-											username: bannedUser.username,
-										})}
-										submitButtonText={t("org:banned.unban")}
-									>
-										<SendouButton variant="minimal-destructive" size="small">
-											{t("org:banned.unban")}
-										</SendouButton>
-									</FormWithConfirm>
-								</td>
-							</tr>
-						))}
-					</tbody>
-				</Table>
-			</div>
-			<div className={styles.banPlayerButton}>
-				<BanUserModal key={bannedUsersKey} />
 			</div>
 		</div>
 	);

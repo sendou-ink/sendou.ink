@@ -1,12 +1,15 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { z } from "zod/v4";
 import { getUser } from "~/features/auth/core/user.server";
+import type { SerializeFrom } from "~/utils/remix";
 import { parseSafeSearchParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import { eventLeaderboards } from "../core/leaderboards.server";
 import { TOURNAMENT_SERIES_LEADERBOARD_SIZE } from "../tournament-organization-constants";
 import { organizationFromParams } from "../tournament-organization-utils.server";
+
+export type OrganizationPageLoaderData = SerializeFrom<typeof loader>;
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
 	const user = await getUser(request);
