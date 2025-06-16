@@ -177,7 +177,11 @@ function InfoTabs() {
 						{t("org:edit.form.badges.title")}
 					</SendouTab>
 					{canBanPlayers ? (
-						<SendouTab id="banned-users" icon={<LockIcon />}>
+						<SendouTab
+							id="banned-users"
+							icon={<LockIcon />}
+							data-testid="banned-users-tab"
+						>
 							{t("org:banned.title")}
 						</SendouTab>
 					) : null}

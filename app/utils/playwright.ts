@@ -19,12 +19,14 @@ export async function selectUser({
 	page,
 	userName,
 	labelName,
+	exact = false,
 }: {
 	page: Page;
 	userName: string;
 	labelName: string;
+	exact?: boolean;
 }) {
-	const comboboxButton = page.getByLabel(labelName);
+	const comboboxButton = page.getByLabel(labelName, { exact });
 	const searchInput = page.getByTestId("user-search-input");
 	const option = page.getByTestId("user-search-item").first();
 
