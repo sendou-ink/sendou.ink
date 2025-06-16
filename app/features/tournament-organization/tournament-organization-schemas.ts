@@ -1,9 +1,14 @@
 import { z } from "zod/v4";
 import { TOURNAMENT_ORGANIZATION_ROLES } from "~/db/tables";
+import { TOURNAMENT_ORGANIZATION } from "~/features/tournament-organization/tournament-organization-constants";
 import { mySlugify } from "~/utils/urls";
-import { falsyToNull, id } from "~/utils/zod";
+import {
+	_action,
+	falsyToNull,
+	id,
+	safeNullableStringSchema,
+} from "~/utils/zod";
 
-export const DESCRIPTION_MAX_LENGTH = 1_000;
 export const organizationEditSchema = z.object({
 	name: z
 		.string()
@@ -15,7 +20,11 @@ export const organizationEditSchema = z.object({
 		}),
 	description: z.preprocess(
 		falsyToNull,
-		z.string().trim().max(DESCRIPTION_MAX_LENGTH).nullable(),
+		z
+			.string()
+			.trim()
+			.max(TOURNAMENT_ORGANIZATION.DESCRIPTION_MAX_LENGTH)
+			.nullable(),
 	),
 	members: z
 		.array(
@@ -58,7 +67,11 @@ export const organizationEditSchema = z.object({
 				name: z.string().trim().min(1).max(32),
 				description: z.preprocess(
 					falsyToNull,
-					z.string().trim().max(DESCRIPTION_MAX_LENGTH).nullable(),
+					z
+						.string()
+						.trim()
+						.max(TOURNAMENT_ORGANIZATION.DESCRIPTION_MAX_LENGTH)
+						.nullable(),
 				),
 				showLeaderboard: z.boolean(),
 			}),
@@ -73,3 +86,21 @@ export const organizationEditSchema = z.object({
 		),
 	badges: z.array(id).max(50),
 });
+
+export const banUserActionSchema = z.object({
+	_action: _action("BAN_USER"),
+	userId: id,
+	privateNote: safeNullableStringSchema({
+		max: TOURNAMENT_ORGANIZATION.BAN_REASON_MAX_LENGTH,
+	}),
+});
+
+export const unbanUserActionSchema = z.object({
+	_action: _action("UNBAN_USER"),
+	userId: id,
+});
+
+export const orgPageActionSchema = z.union([
+	banUserActionSchema,
+	unbanUserActionSchema,
+]);

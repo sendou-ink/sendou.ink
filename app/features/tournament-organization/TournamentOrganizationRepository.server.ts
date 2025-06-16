@@ -1,8 +1,8 @@
 import { sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type { Tables } from "~/db/tables";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import type { Tables, TablesInsertable } from "~/db/tables";
+import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { mySlugify, userSubmittedImage } from "~/utils/urls";
 import { HACKY_resolvePicture } from "../tournament/tournament-utils";
@@ -98,12 +98,15 @@ export async function findBySlug(slug: string) {
 
 	if (!organization) return null;
 
+	const orgAdminUserIds = organization.members
+		.filter((member) => member.role === "ADMIN")
+		.map((member) => member.id);
+
 	return {
 		...organization,
 		permissions: {
-			EDIT: organization.members
-				.filter((member) => member.role === "ADMIN")
-				.map((member) => member.id),
+			EDIT: orgAdminUserIds,
+			BAN: orgAdminUserIds,
 		},
 	};
 }
@@ -417,4 +420,74 @@ export function update({
 
 		return updatedOrg;
 	});
+}
+
+/**
+ * Inserts a user to the banned list for a tournament organization or updates the existing entry if already exists.
+ */
+export function upsertBannedUser(
+	args: Omit<TablesInsertable["TournamentOrganizationBannedUser"], "updatedAt">,
+) {
+	return db
+		.insertInto("TournamentOrganizationBannedUser")
+		.values({ ...args, updatedAt: databaseTimestampNow() })
+		.execute();
+}
+
+/**
+ * Removes a user from the banned list for a tournament organization
+ */
+export function unbanUser({
+	organizationId,
+	userId,
+}: {
+	organizationId: number;
+	userId: number;
+}) {
+	return db
+		.deleteFrom("TournamentOrganizationBannedUser")
+		.where("organizationId", "=", organizationId)
+		.where("userId", "=", userId)
+		.execute();
+}
+
+/**
+ * Returns all banned users for a specific tournament organization
+ */
+export function allBannedUsersByOrganizationId(organizationId: number) {
+	return db
+		.selectFrom("TournamentOrganizationBannedUser")
+		.innerJoin("User", "User.id", "TournamentOrganizationBannedUser.userId")
+		.select([
+			"TournamentOrganizationBannedUser.privateNote",
+			"TournamentOrganizationBannedUser.updatedAt",
+			...COMMON_USER_FIELDS,
+		])
+		.where(
+			"TournamentOrganizationBannedUser.organizationId",
+			"=",
+			organizationId,
+		)
+		.orderBy("TournamentOrganizationBannedUser.updatedAt", "desc")
+		.execute();
+}
+
+/**
+ * Checks if a user is banned by a specific organization
+ */
+export async function isUserBannedByOrganization({
+	organizationId,
+	userId,
+}: {
+	organizationId: number;
+	userId: number;
+}) {
+	const result = await db
+		.selectFrom("TournamentOrganizationBannedUser")
+		.select("userId")
+		.where("organizationId", "=", organizationId)
+		.where("userId", "=", userId)
+		.executeTakeFirst();
+
+	return Boolean(result);
 }

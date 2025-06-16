@@ -3,6 +3,7 @@ import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
+import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
@@ -14,7 +15,11 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { EditIcon } from "~/components/icons/Edit";
+import { LinkIcon } from "~/components/icons/Link";
+import { LockIcon } from "~/components/icons/Lock";
+import { UsersIcon } from "~/components/icons/Users";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
+import { BannedUsersList } from "~/features/tournament-organization/components/BannedPlayersList";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
@@ -22,6 +27,7 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BLANK_IMAGE_URL,
 	calendarEventPage,
+	navIconUrl,
 	tournamentOrganizationEditPage,
 	tournamentOrganizationPage,
 	tournamentPage,
@@ -32,8 +38,9 @@ import { EventCalendar } from "../components/EventCalendar";
 import { SocialLinksList } from "../components/SocialLinksList";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "../tournament-organization-constants";
 
+import { action } from "../actions/org.$slug.server";
 import { loader } from "../loaders/org.$slug.server";
-export { loader };
+export { action, loader };
 
 import "../tournament-organization.css";
 
@@ -142,6 +149,7 @@ function LogoHeader() {
 function InfoTabs() {
 	const { t } = useTranslation(["org"]);
 	const data = useLoaderData<typeof loader>();
+	const canBanPlayers = useHasPermission(data.organization, "BAN");
 
 	const hasSocials =
 		data.organization.socials && data.organization.socials.length > 0;
@@ -151,13 +159,28 @@ function InfoTabs() {
 		<div>
 			<SendouTabs>
 				<SendouTabList>
-					<SendouTab id="socials" isDisabled={!hasSocials}>
+					<SendouTab id="socials" isDisabled={!hasSocials} icon={<LinkIcon />}>
 						{t("org:edit.form.socialLinks.title")}
 					</SendouTab>
-					<SendouTab id="members">{t("org:edit.form.members.title")}</SendouTab>
-					<SendouTab id="badges" isDisabled={!hasBadges}>
+					<SendouTab id="members" icon={<UsersIcon />}>
+						{t("org:edit.form.members.title")}
+					</SendouTab>
+					<SendouTab
+						id="badges"
+						isDisabled={!hasBadges}
+						icon={<Image path={navIconUrl("badges")} alt="" width={16} />}
+					>
 						{t("org:edit.form.badges.title")}
 					</SendouTab>
+					{canBanPlayers && data.bannedUsers ? (
+						<SendouTab
+							id="banned-users"
+							icon={<LockIcon />}
+							data-testid="banned-users-tab"
+						>
+							{t("org:banned.title")}
+						</SendouTab>
+					) : null}
 				</SendouTabList>
 				<SendouTabPanel id="socials">
 					<SocialLinksList links={data.organization.socials ?? []} />
@@ -168,6 +191,11 @@ function InfoTabs() {
 				<SendouTabPanel id="badges">
 					<BadgeDisplay badges={data.organization.badges} />
 				</SendouTabPanel>
+				{data.bannedUsers ? (
+					<SendouTabPanel id="banned-users">
+						<BannedUsersList bannedUsers={data.bannedUsers} />
+					</SendouTabPanel>
+				) : null}
 			</SendouTabs>
 		</div>
 	);

@@ -21,5 +21,19 @@
 	"edit.form.series.seriesName.title": "Series name",
 	"edit.form.series.showLeaderboard.title": "Show leaderboard",
 	"edit.form.badges.title": "Badges",
-	"edit.form.errors.noUnadmin": "Can't remove yourself as an admin"
+	"edit.form.errors.noUnadmin": "Can't remove yourself as an admin",
+	"banned.title": "Banned players",
+	"banned.empty": "No players are currently banned from this organization.",
+	"banned.description": "Players who are banned cannot create or join teams in tournaments organized by this organization. This tab is only accessible to the admins of this organization.",
+	"banned.player": "Player",
+	"banned.note": "Note",
+	"banned.date": "Banned on",
+	"banned.actions": "Actions",
+	"banned.unban": "Unban",
+	"banned.unbanConfirm": "Are you sure you want to unban {{username}}?",
+	"banned.ban": "New ban",
+	"banned.banModal.title": "Banning a player",
+	"banned.banModal.player": "Player",
+	"banned.banModal.note": "Private note",
+	"banned.banModal.noteHelp": "This note is only visible to organization admins."
 }

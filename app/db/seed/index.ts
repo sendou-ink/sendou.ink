@@ -128,6 +128,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	badgesToUsers,
 	badgeManagers,
 	patrons,
+	organization,
 	calendarEvents,
 	calendarEventBadges,
 	calendarEventResults,
@@ -175,7 +176,6 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	scrimPostRequests,
 	associations,
 	notifications,
-	organization,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -198,6 +198,7 @@ export async function seed(variation?: SeedVariation | null) {
 function wipeDB() {
 	const tablesToDelete = [
 		"ScrimPost",
+		"TournamentOrganizationBannedUser",
 		"Association",
 		"LFGPost",
 		"Skill",
@@ -1095,7 +1096,8 @@ function calendarEventWithToTools(
         "discordInviteCode",
         "bracketUrl",
         "authorId",
-        "tournamentId"
+        "tournamentId",
+				"organizationId"
       ) values (
         $id,
         $name,
@@ -1103,7 +1105,8 @@ function calendarEventWithToTools(
         $discordInviteCode,
         $bracketUrl,
         $authorId,
-        $tournamentId
+        $tournamentId,
+				$organizationId
       )
       `,
 		)
@@ -1115,6 +1118,7 @@ function calendarEventWithToTools(
 			bracketUrl: faker.internet.url(),
 			authorId: ADMIN_ID,
 			tournamentId,
+			organizationId: event === "PICNIC" ? 1 : null,
 		});
 
 	const halfAnHourFromNow = new Date(Date.now() + 1000 * 60 * 30);

@@ -1,4 +1,3 @@
-import * as React from "react";
 import {
 	Controller,
 	type FieldPath,
@@ -7,7 +6,6 @@ import {
 	useFormContext,
 } from "react-hook-form";
 import { FormMessage } from "~/components/FormMessage";
-import { Label } from "~/components/Label";
 import { UserSearch } from "../elements/UserSearch";
 
 export function UserSearchFormField<T extends FieldValues>({
@@ -16,13 +14,11 @@ export function UserSearchFormField<T extends FieldValues>({
 	bottomText,
 }: { label: string; name: FieldPath<T>; bottomText?: string }) {
 	const methods = useFormContext();
-	const id = React.useId();
 
 	const error = get(methods.formState.errors, name);
 
 	return (
 		<div>
-			<Label htmlFor={id}>{label}</Label>
 			<Controller
 				control={methods.control}
 				name={name}
@@ -32,6 +28,7 @@ export function UserSearchFormField<T extends FieldValues>({
 						initialUserId={value}
 						onBlur={onBlur}
 						ref={ref}
+						label={label}
 					/>
 				)}
 			/>

@@ -1,5 +1,6 @@
+import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { errorToastIfFalsy } from "~/utils/remix.server";
+import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
 import type { Tournament } from "../tournament-bracket/core/Tournament";
 
 export const inGameNameIfNeeded = async ({
@@ -17,3 +18,25 @@ export const inGameNameIfNeeded = async ({
 
 	return inGameName;
 };
+
+export async function requireNotBannedByOrganization({
+	tournament,
+	user,
+	message = "You are banned from events hosted by this organization",
+}: {
+	tournament: Tournament;
+	user: { id: number };
+	message?: string;
+}) {
+	if (!tournament.ctx.organization) return;
+
+	const isBanned =
+		await TournamentOrganizationRepository.isUserBannedByOrganization({
+			organizationId: tournament.ctx.organization.id,
+			userId: user.id,
+		});
+
+	if (isBanned) {
+		errorToast(message);
+	}
+}
