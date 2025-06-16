@@ -17,7 +17,7 @@ export function BannedUsersList({
 	const { t, i18n } = useTranslation(["org"]);
 
 	const bannedUsersKey = (bannedUsers ?? [])
-		.map((u) => [u.id, u.privateReason].join("-"))
+		.map((u) => [u.id, u.privateNote].join("-"))
 		.join(",");
 
 	if (bannedUsers.length === 0) {
@@ -58,9 +58,9 @@ export function BannedUsersList({
 								</td>
 								<td
 									className={clsx("text-sm text-lighter", styles.reasonCell)}
-									title={bannedUser.privateReason ?? undefined}
+									title={bannedUser.privateNote ?? undefined}
 								>
-									{bannedUser.privateReason ?? "-"}
+									{bannedUser.privateNote ?? "-"}
 								</td>
 								<td className="text-sm text-lighter whitespace-nowrap">
 									{databaseTimestampToDate(

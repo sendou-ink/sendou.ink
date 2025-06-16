@@ -746,7 +746,7 @@ export interface TournamentBracketProgressionOverride {
 export interface TournamentOrganizationBannedUser {
 	organizationId: number;
 	userId: number;
-	privateReason: string | null; // xxx: rename to privateNote
+	privateNote: string | null;
 	updatedAt: Generated<number>;
 }
 

@@ -459,7 +459,7 @@ export function allBannedUsersByOrganizationId(organizationId: number) {
 		.selectFrom("TournamentOrganizationBannedUser")
 		.innerJoin("User", "User.id", "TournamentOrganizationBannedUser.userId")
 		.select([
-			"TournamentOrganizationBannedUser.privateReason",
+			"TournamentOrganizationBannedUser.privateNote",
 			"TournamentOrganizationBannedUser.updatedAt",
 			...COMMON_USER_FIELDS,
 		])

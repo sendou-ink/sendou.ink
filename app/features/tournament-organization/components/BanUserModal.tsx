@@ -28,7 +28,7 @@ export function BanUserModal() {
 				defaultValues={{
 					_action: "BAN_USER",
 					userId: undefined,
-					privateReason: null,
+					privateNote: null,
 				}}
 			>
 				<UserSearchFormField<FormFields>
@@ -38,7 +38,7 @@ export function BanUserModal() {
 
 				<TextAreaFormField<FormFields>
 					label={t("org:banned.banModal.note")}
-					name="privateReason"
+					name="privateNote"
 					maxLength={TOURNAMENT_ORGANIZATION.BAN_REASON_MAX_LENGTH}
 					bottomText={t("org:banned.banModal.noteHelp")}
 				/>

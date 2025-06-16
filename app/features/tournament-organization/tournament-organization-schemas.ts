@@ -90,7 +90,7 @@ export const organizationEditSchema = z.object({
 export const banUserActionSchema = z.object({
 	_action: _action("BAN_USER"),
 	userId: id,
-	privateReason: safeNullableStringSchema({
+	privateNote: safeNullableStringSchema({
 		max: TOURNAMENT_ORGANIZATION.BAN_REASON_MAX_LENGTH,
 	}),
 });

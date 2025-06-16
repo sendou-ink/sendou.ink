@@ -36,7 +36,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			await TournamentOrganizationRepository.upsertBannedUser({
 				organizationId: organization.id,
 				userId: data.userId,
-				privateReason: data.privateReason,
+				privateNote: data.privateNote,
 			});
 
 			logger.info(
