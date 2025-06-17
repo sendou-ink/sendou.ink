@@ -17,7 +17,13 @@ import { Avatar } from "../../../components/Avatar";
 import { Main } from "../../../components/Main";
 import { databaseTimestampToDate } from "../../../utils/dates";
 import { logger } from "../../../utils/logger";
-import { teamPage, userPage, userSubmittedImage } from "../../../utils/urls";
+import {
+	navIconUrl,
+	scrimsPage,
+	teamPage,
+	userPage,
+	userSubmittedImage,
+} from "../../../utils/urls";
 import { ConnectedChat } from "../../chat/components/Chat";
 import * as Scrim from "../core/Scrim";
 import type { ScrimPost as ScrimPostType } from "../scrims-types";
@@ -30,6 +36,11 @@ import styles from "./scrims.$id.module.css";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["scrims", "q"],
+	breadcrumb: () => ({
+		imgPath: navIconUrl("scrims"),
+		href: scrimsPage(),
+		type: "IMAGE",
+	}),
 };
 
 export default function ScrimPage() {

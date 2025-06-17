@@ -28,8 +28,10 @@ import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	associationsPage,
+	navIconUrl,
 	newScrimPostPage,
 	scrimPage,
+	scrimsPage,
 	userPage,
 	userSubmittedImage,
 } from "~/utils/urls";
@@ -62,6 +64,11 @@ export type NewRequestFormFields = z.infer<typeof newRequestSchema>;
 
 export const handle: SendouRouteHandle = {
 	i18n: ["calendar", "scrims"],
+	breadcrumb: () => ({
+		imgPath: navIconUrl("scrims"),
+		href: scrimsPage(),
+		type: "IMAGE",
+	}),
 };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
