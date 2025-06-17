@@ -26,6 +26,10 @@
 	align-items: center;
 }
 
+.front-page__side-nav-item img {
+	min-width: 20px;
+}
+
 .front-page__side-nav__log-out {
 	display: flex;
 	color: var(--text);
