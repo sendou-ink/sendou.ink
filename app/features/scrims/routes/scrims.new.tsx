@@ -267,8 +267,8 @@ function LutiDivsSelector({
 	return (
 		<div className="stack horizontal sm">
 			<div>
-				<Label htmlFor="min-div">{t("scrims:forms.divs.minDiv.title")}</Label>
-				<select id="min-div" onChange={onChangeMin} onBlur={onBlur}>
+				<Label htmlFor="max-div">{t("scrims:forms.divs.maxDiv.title")}</Label>
+				<select id="max-div" onChange={onChangeMax} onBlur={onBlur}>
 					<option value="">—</option>
 					{LUTI_DIVS.map((div) => (
 						<option key={div} value={div}>
@@ -279,8 +279,8 @@ function LutiDivsSelector({
 			</div>
 
 			<div>
-				<Label htmlFor="max-div">{t("scrims:forms.divs.maxDiv.title")}</Label>
-				<select id="max-div" onChange={onChangeMax} onBlur={onBlur}>
+				<Label htmlFor="min-div">{t("scrims:forms.divs.minDiv.title")}</Label>
+				<select id="min-div" onChange={onChangeMin} onBlur={onBlur}>
 					<option value="">—</option>
 					{LUTI_DIVS.map((div) => (
 						<option key={div} value={div}>
