@@ -14,7 +14,8 @@ On Tuesday, June 10, 2025, Nintendo released a trailer showcasing a variety of c
 Having now seen the weapon kits and their points for special, we have decided to analyse which new kits have the highest chance to shake up the metagame, and which we think will fail to impress. 
 
 First, which weapons *are* getting third kits? From the trailer we can see each of the following weapons showcased with a new look:
-![3rd Kits Infographic](https://imgur.com/ko0Bfvb)
+![3rd Kits - Weapons That Could Completely Alter the Metagame](https://github.com/user-attachments/assets/6e695896-91b8-40ae-9909-60bbb0246b5b)
+
 
 ## **Highest Potential**
 
