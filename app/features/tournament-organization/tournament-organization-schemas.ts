@@ -14,7 +14,7 @@ export const organizationEditSchema = z.object({
 		.string()
 		.trim()
 		.min(2)
-		.max(32)
+		.max(64)
 		.refine((val) => mySlugify(val).length >= 2, {
 			message: "Not enough non-special characters",
 		}),
