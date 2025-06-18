@@ -156,6 +156,8 @@
 	"forms.errors.noSearchMatches": "No matches found",
 	"forms.userSearch.placeholder": "Search users by username, profile URL or Discord ID...",
 	"forms.userSearch.noResults": "No users matching your search found",
+	"forms.weaponSearch.placeholder": "Select a weapon",
+	"forms.weaponSearch.search.placeholder": "Search weapons...",
 	"errors.genericReload": "Something went wrong. Try reloading the page.",
 	"tag.name.SPECIAL": "Special rules",
 	"tag.name.ART": "Art prizes",

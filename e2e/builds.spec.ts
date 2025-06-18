@@ -6,6 +6,7 @@ import {
 	navigate,
 	seed,
 	selectComboboxValue,
+	selectWeapon,
 } from "~/utils/playwright";
 import { BUILDS_PAGE, userBuildsPage, userNewBuildPage } from "~/utils/urls";
 
@@ -18,15 +19,15 @@ test.describe("Builds", () => {
 			url: userNewBuildPage({ discordId: NZAP_TEST_DISCORD_ID }),
 		});
 
-		await selectComboboxValue({
-			locator: page.getByTestId("weapon-combobox-input").first(),
-			value: "Tenta Brella",
+		await selectWeapon({
+			testId: "weapon-0",
+			name: "Tenta Brella",
 			page,
 		});
 		await page.getByTestId("add-weapon-button").click();
-		await selectComboboxValue({
-			locator: page.getByTestId("weapon-combobox-input").nth(1),
-			value: "Splat Brella",
+		await selectWeapon({
+			testId: "weapon-1",
+			name: "Splat Brella",
 			page,
 		});
 

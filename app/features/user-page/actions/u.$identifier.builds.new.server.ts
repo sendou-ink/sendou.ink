@@ -28,6 +28,7 @@ import {
 	clothesMainSlotAbility,
 	dbBoolean,
 	falsyToNull,
+	filterOutNullishMembers,
 	headMainSlotAbility,
 	id,
 	processMany,
@@ -35,7 +36,6 @@ import {
 	safeJSONParse,
 	shoesMainSlotAbility,
 	stackableAbility,
-	toArray,
 	weaponSplId,
 } from "~/utils/zod";
 
@@ -71,7 +71,7 @@ export const action: ActionFunction = async ({ request }) => {
 		clothesGearSplId: (someGearIsMissing ? -1 : data["CLOTHES[value]"])!,
 		shoesGearSplId: (someGearIsMissing ? -1 : data["SHOES[value]"])!,
 		modes: modesShort.filter((mode) => data[mode]),
-		weaponSplIds: data["weapon[value]"],
+		weaponSplIds: data.weapons,
 		ownerId: user.id,
 		private: data.private,
 	};
@@ -115,8 +115,8 @@ const newBuildActionSchema = z.object({
 	RM: z.preprocess(checkboxValueToBoolean, z.boolean()),
 	CB: z.preprocess(checkboxValueToBoolean, z.boolean()),
 	private: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
-	"weapon[value]": z.preprocess(
-		processMany(toArray, removeDuplicatesZod),
+	weapons: z.preprocess(
+		processMany(safeJSONParse, filterOutNullishMembers, removeDuplicatesZod),
 		z.array(weaponSplId).min(1).max(BUILD.MAX_WEAPONS_COUNT),
 	),
 	"HEAD[value]": z.preprocess(

@@ -2,9 +2,9 @@ import type { MetaFunction } from "@remix-run/node";
 import { useLoaderData, useSearchParams } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { AddNewButton } from "~/components/AddNewButton";
-import { WeaponCombobox } from "~/components/Combobox";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
+import { WeaponSelect } from "~/components/WeaponSelect";
 import { SendouButton } from "~/components/elements/Button";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
@@ -144,17 +144,14 @@ function Filters({
 				</select>
 			</div>
 
-			<div>
-				<Label>{t("vods:forms.title.weapon")}</Label>
-				<WeaponCombobox
-					inputName="weapon"
-					initialWeaponId={weapon}
-					onChange={(selected) => {
-						addToSearchParams("weapon", selected?.value ?? "");
-					}}
-					nullable
-				/>
-			</div>
+			<WeaponSelect
+				label={t("vods:forms.title.weapon")}
+				initialWeaponId={weapon}
+				onChange={(weaponId) => {
+					addToSearchParams("weapon", weaponId ?? "");
+				}}
+				clearable
+			/>
 
 			<div>
 				<Label>{t("vods:forms.title.type")}</Label>

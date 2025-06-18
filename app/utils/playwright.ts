@@ -6,13 +6,15 @@ import { tournamentBracketsPage } from "./urls";
 export async function selectWeapon({
 	page,
 	name,
-	inputName = "weapon",
+	testId = "weapon-select",
 }: {
 	page: Page;
 	name: string;
-	inputName?: string;
+	testId?: string;
 }) {
-	return selectComboboxValue({ page, value: name, inputName });
+	await page.getByTestId(testId).click();
+	await page.getByPlaceholder("Search weapons...").fill(name);
+	await page.getByTestId(`weapon-select-option-${name}`).click();
 }
 
 export async function selectUser({

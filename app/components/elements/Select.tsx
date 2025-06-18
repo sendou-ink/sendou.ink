@@ -1,22 +1,27 @@
 import clsx from "clsx";
+import * as React from "react";
 import type { ListBoxItemProps, SelectProps } from "react-aria-components";
 import {
 	Autocomplete,
 	Button,
+	Header,
 	Input,
 	Label,
 	ListBox,
 	ListBoxItem,
+	ListBoxSection,
 	ListLayout,
 	Popover,
 	SearchField,
 	Select,
+	SelectStateContext,
 	SelectValue,
 	Virtualizer,
 	useFilter,
 } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
+import { SendouButton } from "~/components/elements/Button";
 import { ChevronUpDownIcon } from "~/components/icons/ChevronUpDown";
 import { CrossIcon } from "../icons/Cross";
 import { SearchIcon } from "../icons/Search";
@@ -33,8 +38,15 @@ interface SendouSelectProps<T extends object>
 	search?: {
 		placeholder?: string;
 	};
+	popoverClassName?: string;
+	/** Value of the search input, used for controlled components */
+	searchInputValue?: string;
+	/** Callback for when the search input value changes. When defined `items` has to be filtered on the caller side (automatic filtering in component disabled). */
+	onSearchInputChange?: (value: string) => void;
+	clearable?: boolean;
 }
 
+// xxx: ticket for cant be cleared? (country input)
 export function SendouSelect<T extends object>({
 	label,
 	description,
@@ -43,13 +55,32 @@ export function SendouSelect<T extends object>({
 	children,
 	items,
 	search,
+	popoverClassName,
+	searchInputValue,
+	onSearchInputChange,
+	clearable = false,
+	className,
 	...props
 }: SendouSelectProps<T>) {
 	const { t } = useTranslation(["common"]);
 	const { contains } = useFilter({ sensitivity: "base" });
 
+	const isControlled = !!onSearchInputChange;
+
+	const handleOpenChange = (isOpen: boolean) => {
+		if (!isControlled) return;
+
+		if (!isOpen) {
+			onSearchInputChange("");
+		}
+	};
+
 	return (
-		<Select {...props}>
+		<Select
+			{...props}
+			className={clsx(className, styles.select)}
+			onOpenChange={handleOpenChange}
+		>
 			{label ? <Label>{label}</Label> : null}
 			<Button className={styles.button}>
 				<SelectValue className={styles.selectValue} />
@@ -57,9 +88,14 @@ export function SendouSelect<T extends object>({
 					<ChevronUpDownIcon className={styles.icon} />
 				</span>
 			</Button>
+			{clearable ? <SelectClearButton /> : null}
 			<SendouBottomTexts bottomText={bottomText} errorText={errorText} />
-			<Popover className={styles.popover}>
-				<Autocomplete filter={contains}>
+			<Popover className={clsx(popoverClassName, styles.popover)}>
+				<Autocomplete
+					filter={isControlled ? undefined : contains}
+					inputValue={searchInputValue}
+					onInputChange={onSearchInputChange}
+				>
 					{search ? (
 						<SearchField
 							aria-label="Search"
@@ -106,5 +142,42 @@ export function SendouSelectItem(props: SendouSelectItemProps) {
 				})
 			}
 		/>
+	);
+}
+
+interface SendouSelectItemSectionProps {
+	heading: React.ReactNode;
+	children: React.ReactNode;
+}
+
+export function SendouSelectItemSection({
+	heading,
+	children,
+}: SendouSelectItemSectionProps) {
+	return (
+		<ListBoxSection>
+			<Header>{heading}</Header>
+			{children}
+		</ListBoxSection>
+	);
+}
+
+function SelectClearButton() {
+	const state = React.useContext(SelectStateContext);
+
+	if (!state?.selectedKey) return null;
+
+	return (
+		<SendouButton
+			// Don't inherit behavior from Select.
+			slot={null}
+			variant="minimal-destructive"
+			size="miniscule"
+			icon={<CrossIcon />}
+			onPress={() => state?.setSelectedKey(null)}
+			className={styles.clearButton}
+		>
+			Clear
+		</SendouButton>
 	);
 }

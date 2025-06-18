@@ -2,7 +2,6 @@ import { Form, Link, useLoaderData, useMatches } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { WeaponCombobox } from "~/components/Combobox";
 import { CustomizedColorsInput } from "~/components/CustomizedColorsInput";
 import { FormErrors } from "~/components/FormErrors";
 import { FormMessage } from "~/components/FormMessage";
@@ -10,6 +9,7 @@ import { WeaponImage } from "~/components/Image";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
+import { WeaponSelect } from "~/components/WeaponSelect";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { SendouSwitch } from "~/components/elements/Switch";
@@ -20,7 +20,6 @@ import type { Tables } from "~/db/tables";
 import { BADGE } from "~/features/badges/badges-constants";
 import { BadgesSelector } from "~/features/badges/components/BadgesSelector";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
 import invariant from "~/utils/invariant";
 import { rawSensToString } from "~/utils/strings";
@@ -278,33 +277,27 @@ function WeaponPoolSelect() {
 	return (
 		<div className={clsx("stack md", styles.weaponPool)}>
 			<input type="hidden" name="weapons" value={JSON.stringify(weapons)} />
-			<div>
-				<label htmlFor="weapon">{t("user:weaponPool")}</label>
-				{weapons.length < USER.WEAPON_POOL_MAX_SIZE ? (
-					<WeaponCombobox
-						inputName="weapon"
-						id="weapon"
-						onChange={(weapon) => {
-							if (!weapon) return;
-							setWeapons([
-								...weapons,
-								{
-									weaponSplId: Number(weapon.value) as MainWeaponId,
-									isFavorite: 0,
-								},
-							]);
-						}}
-						// empty on selection
-						key={latestWeapon?.weaponSplId ?? "empty"}
-						weaponIdsToOmit={new Set(weapons.map((w) => w.weaponSplId))}
-						fullWidth
-					/>
-				) : (
-					<span className="text-xs text-warning">
-						{t("user:forms.errors.maxWeapons")}
-					</span>
-				)}
-			</div>
+			{weapons.length < USER.WEAPON_POOL_MAX_SIZE ? (
+				<WeaponSelect
+					label={t("user:weaponPool")}
+					onChange={(weaponSplId) => {
+						setWeapons([
+							...weapons,
+							{
+								weaponSplId,
+								isFavorite: 0,
+							},
+						]);
+					}}
+					disabledWeaponIds={weapons.map((w) => w.weaponSplId)}
+					// empty on selection
+					key={latestWeapon?.weaponSplId ?? "empty"}
+				/>
+			) : (
+				<span className="text-xs text-warning">
+					{t("user:forms.errors.maxWeapons")}
+				</span>
+			)}
 			<div className="stack horizontal sm justify-center">
 				{weapons.map((weapon) => {
 					return (

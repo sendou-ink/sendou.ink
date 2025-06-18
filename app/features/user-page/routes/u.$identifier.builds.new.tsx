@@ -8,13 +8,14 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { AbilitiesSelector } from "~/components/AbilitiesSelector";
 import { Alert } from "~/components/Alert";
-import { GearCombobox, WeaponCombobox } from "~/components/Combobox";
+import { GearCombobox } from "~/components/Combobox";
 import { FormMessage } from "~/components/FormMessage";
 import { Image } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { RequiredHiddenInput } from "~/components/RequiredHiddenInput";
 import { SubmitButton } from "~/components/SubmitButton";
+import { WeaponSelect } from "~/components/WeaponSelect";
 import { SendouButton } from "~/components/elements/Button";
 import { CrossIcon } from "~/components/icons/Cross";
 import { PlusIcon } from "~/components/icons/Plus";
@@ -200,7 +201,7 @@ function WeaponsSelector() {
 	const [searchParams] = useSearchParams();
 	const { buildToEdit } = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["common", "weapons", "builds"]);
-	const [weapons, setWeapons] = React.useState(
+	const [weapons, setWeapons] = React.useState<Array<MainWeaponId | null>>(
 		buildToEdit?.weapons.map((wpn) => wpn.weaponSplId) ?? [
 			validatedWeaponIdFromSearchParams(searchParams),
 		],
@@ -211,33 +212,28 @@ function WeaponsSelector() {
 			<Label required htmlFor="weapon">
 				{t("builds:forms.weapons")}
 			</Label>
+			<input type="hidden" name="weapons" value={JSON.stringify(weapons)} />
 			<div className="stack sm">
 				{weapons.map((weapon, i) => {
 					return (
 						<div key={i} className="stack horizontal sm items-center">
-							<div>
-								<WeaponCombobox
-									inputName="weapon"
-									id="weapon"
-									className="u__build-form__weapon"
-									required
-									onChange={(opt) =>
-										opt &&
-										setWeapons((weapons) => {
-											const newWeapons = [...weapons];
-											newWeapons[i] = Number(opt.value) as MainWeaponId;
-											return newWeapons;
-										})
-									}
-									initialWeaponId={weapon ?? undefined}
-								/>
-							</div>
+							<WeaponSelect
+								onChange={(weaponId) =>
+									setWeapons((weapons) => {
+										const newWeapons = [...weapons];
+										newWeapons[i] = weaponId;
+										return newWeapons;
+									})
+								}
+								initialWeaponId={weapon ?? undefined}
+								testId={`weapon-${i}`}
+							/>
 							{i === weapons.length - 1 && (
 								<>
 									<SendouButton
 										size="small"
 										isDisabled={weapons.length === BUILD.MAX_WEAPONS_COUNT}
-										onPress={() => setWeapons((weapons) => [...weapons, 0])}
+										onPress={() => setWeapons((weapons) => [...weapons, null])}
 										icon={<PlusIcon />}
 										data-testid="add-weapon-button"
 									/>
