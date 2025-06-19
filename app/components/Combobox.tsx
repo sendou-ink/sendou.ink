@@ -11,8 +11,6 @@ import {
 	headGearIds,
 	shoesGearIds,
 } from "~/modules/in-game-lists/gear-ids";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { weaponAltNames } from "~/modules/in-game-lists/weapon-alt-names";
 import {
 	mainWeaponIds,
 	subWeaponIds,
@@ -194,87 +192,6 @@ export function Combobox<
 				<HeadlessCombobox.Button ref={buttonRef} className="hidden" />
 			</HeadlessCombobox>
 		</div>
-	);
-}
-
-export function WeaponCombobox({
-	id,
-	required,
-	className,
-	inputName,
-	onChange,
-	initialWeaponId,
-	weaponIdsToOmit,
-	fullWidth,
-	nullable,
-	value,
-	quickSelectWeaponIds,
-}: Pick<
-	ComboboxProps<ComboboxBaseOption>,
-	| "inputName"
-	| "onChange"
-	| "className"
-	| "id"
-	| "required"
-	| "fullWidth"
-	| "nullable"
-> & {
-	initialWeaponId?: (typeof mainWeaponIds)[number];
-	weaponIdsToOmit?: Set<MainWeaponId>;
-	value?: MainWeaponId | null;
-	/** Weapons to show when there is focus but no query */
-	quickSelectWeaponIds?: MainWeaponId[];
-}) {
-	const { t, i18n } = useTranslation("weapons");
-
-	const alt = (id: (typeof mainWeaponIds)[number]) => {
-		const result: string[] = [];
-
-		if (i18n.language !== "en") {
-			result.push(t(`MAIN_${id}`, { lng: "en" }));
-		}
-
-		const altNames = weaponAltNames.get(id);
-		if (typeof altNames === "string") {
-			result.push(altNames);
-		} else if (Array.isArray(altNames)) {
-			result.push(...altNames);
-		}
-
-		return result;
-	};
-	const idToWeapon = (id: (typeof mainWeaponIds)[number]) => ({
-		value: String(id),
-		label: t(`MAIN_${id}`),
-		imgPath: mainWeaponImageUrl(id),
-		alt: alt(id),
-	});
-
-	const options = mainWeaponIds
-		.filter((id) => !weaponIdsToOmit?.has(id))
-		.map(idToWeapon);
-
-	const quickSelectOptions = quickSelectWeaponIds?.flatMap((weaponId) => {
-		return options.find((option) => option.value === String(weaponId)) ?? [];
-	});
-
-	return (
-		<Combobox
-			inputName={inputName}
-			options={options}
-			quickSelectOptions={quickSelectOptions}
-			value={typeof value === "number" ? idToWeapon(value) : null}
-			initialValue={
-				typeof initialWeaponId === "number" ? idToWeapon(initialWeaponId) : null
-			}
-			placeholder={t(`MAIN_${weaponCategories[0].weaponIds[0]}`)}
-			onChange={onChange}
-			className={className}
-			id={id}
-			required={required}
-			fullWidth={fullWidth}
-			nullable={nullable}
-		/>
 	);
 }
 

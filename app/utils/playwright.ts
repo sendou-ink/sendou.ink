@@ -14,7 +14,10 @@ export async function selectWeapon({
 }) {
 	await page.getByTestId(testId).click();
 	await page.getByPlaceholder("Search weapons...").fill(name);
-	await page.getByTestId(`weapon-select-option-${name}`).click();
+	await page
+		.getByRole("listbox", { name: "Suggestions" })
+		.getByTestId(`weapon-select-option-${name}`)
+		.click();
 }
 
 export async function selectUser({

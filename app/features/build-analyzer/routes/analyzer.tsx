@@ -249,7 +249,7 @@ function BuildAnalyzerPage() {
 							<WeaponSelect
 								// xxx: translate
 								label="Weapon to analyze"
-								initialWeaponId={mainWeaponId}
+								initialValue={mainWeaponId}
 								onChange={(val) =>
 									handleChange({
 										newMainWeaponId: val,

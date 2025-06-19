@@ -16,13 +16,15 @@ import styles from "./WeaponSelect.module.css";
 
 interface WeaponSelectProps<Clearable extends boolean | undefined = undefined> {
 	label?: string;
-	initialWeaponId?: MainWeaponId;
+	value?: MainWeaponId | (Clearable extends true ? null : never);
+	initialValue?: MainWeaponId;
 	onChange?: (
 		weaponId: MainWeaponId | (Clearable extends true ? null : never),
 	) => void;
 	clearable?: Clearable;
 	disabledWeaponIds?: Array<MainWeaponId>;
 	testId?: string;
+	isRequired?: boolean;
 }
 
 // xxx: selected value disappears if filtered out
@@ -30,11 +32,13 @@ export function WeaponSelect<
 	Clearable extends boolean | undefined = undefined,
 >({
 	label,
-	initialWeaponId,
+	value,
+	initialValue,
 	onChange,
 	disabledWeaponIds,
 	clearable,
-	testId,
+	testId = "weapon-select",
+	isRequired,
 }: WeaponSelectProps<Clearable>) {
 	const { t } = useTranslation(["common"]);
 	const { items, filterValue, setFilterValue } = useFilteredWeaponItems();
@@ -52,10 +56,12 @@ export function WeaponSelect<
 			popoverClassName={styles.selectWidthWider}
 			searchInputValue={filterValue}
 			onSearchInputChange={setFilterValue}
-			defaultSelectedKey={initialWeaponId}
+			selectedKey={value}
+			defaultSelectedKey={initialValue}
 			onSelectionChange={(key) => onChange?.(key as MainWeaponId)}
 			clearable={clearable}
 			data-testid={testId}
+			isRequired={isRequired}
 		>
 			{({ key, items, name, idx }) => (
 				<SendouSelectItemSection

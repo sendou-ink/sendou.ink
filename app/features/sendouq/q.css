@@ -408,26 +408,11 @@
 
 .q-match__report-section {
 	display: grid;
-	grid-template-columns: max-content max-content 1fr;
+	grid-template-columns: max-content 1fr;
 	row-gap: var(--s-2);
 	column-gap: var(--s-2-5);
 	align-items: center;
 	font-size: var(--fonts-xs);
-}
-
-.q-match__result-dot {
-	width: 12px;
-	height: 12px;
-	border-radius: 100%;
-	background-color: var(--text-lighter);
-}
-
-.q-match__result-dot__won {
-	background-color: var(--theme-success);
-}
-
-.q-match__result-dot__lost {
-	background-color: var(--theme-error);
 }
 
 .q-match__pool-pass-container {
