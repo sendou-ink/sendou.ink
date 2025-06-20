@@ -1,9 +1,10 @@
+import type { AnyWeapon } from "~/features/build-analyzer";
 import {
 	allWeaponAltNames,
 	weaponAltNames,
 } from "~/modules/in-game-lists/weapon-alt-names";
 import { abilities } from "./abilities";
-import type { Ability, MainWeaponId } from "./types";
+import type { Ability } from "./types";
 
 export function isAbility(value: string): value is Ability {
 	return Boolean(abilities.some((a) => a.name === value));
@@ -14,11 +15,11 @@ const normalizeTerm = (term: string): string => {
 };
 
 export function filterWeapon({
-	weaponId,
+	weapon,
 	weaponName,
 	searchTerm,
 }: {
-	weaponId: MainWeaponId;
+	weapon: AnyWeapon;
 	weaponName: string;
 	searchTerm: string;
 }): boolean {
@@ -26,9 +27,9 @@ export function filterWeapon({
 	const normalizedWeaponName = normalizeTerm(weaponName);
 
 	const isAlt = allWeaponAltNames.has(normalizedSearchTerm);
-	if (isAlt) {
+	if (weapon.type === "MAIN" && isAlt) {
 		return (
-			weaponAltNames.get(weaponId)?.includes(normalizedSearchTerm) ?? false
+			weaponAltNames.get(weapon.id)?.includes(normalizedSearchTerm) ?? false
 		);
 	}
 
