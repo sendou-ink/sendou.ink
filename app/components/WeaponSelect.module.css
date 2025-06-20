@@ -31,6 +31,7 @@
 	padding-block-start: var(--s-2-5);
 	padding-block-end: var(--s-1);
 	padding-inline: var(--s-1-5);
+	white-space: nowrap;
 }
 
 .categoryDivider {

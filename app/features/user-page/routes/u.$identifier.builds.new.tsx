@@ -8,8 +8,8 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { AbilitiesSelector } from "~/components/AbilitiesSelector";
 import { Alert } from "~/components/Alert";
-import { GearCombobox } from "~/components/Combobox";
 import { FormMessage } from "~/components/FormMessage";
+import { GearSelect } from "~/components/GearSelect";
 import { Image } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
@@ -24,6 +24,7 @@ import {
 	validatedBuildFromSearchParams,
 	validatedWeaponIdFromSearchParams,
 } from "~/features/build-analyzer";
+import { BUILD } from "~/features/builds/builds-constants";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type {
@@ -35,7 +36,6 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { modeImageUrl } from "~/utils/urls";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 
-import { BUILD } from "~/features/builds/builds-constants";
 import { action } from "../actions/u.$identifier.builds.new.server";
 import { loader } from "../loaders/u.$identifier.builds.new.server";
 export { loader, action };
@@ -87,6 +87,7 @@ export default function NewBuildPage() {
 					abilities={abilities}
 					setAbilities={setAbilities}
 				/>
+				<div /> {/* spacer */}
 				<Abilities abilities={abilities} setAbilities={setAbilities} />
 				<TitleInput />
 				<DescriptionTextarea />
@@ -288,40 +289,34 @@ function GearSelector({
 	};
 
 	return (
-		<div>
-			<Label htmlFor={type}>{t(`forms.gear.${type}`)}</Label>
-			<div>
-				<GearCombobox
-					gearType={type}
-					inputName={type}
-					id={type}
-					initialGearId={initialGearId()}
-					nullable
-					// onChange only exists to copy abilities from existing gear
-					// actual value of combobox is handled in uncontrolled manner
-					onChange={(opt) => {
-						if (!opt) return;
+		<GearSelect
+			label={t(`forms.gear.${type}`)}
+			type={type}
+			initialValue={initialGearId()}
+			clearable
+			// onChange only exists to copy abilities from existing gear
+			// actual value of combobox is handled in uncontrolled manner
+			onChange={(gearId) => {
+				if (!gearId) return;
 
-						const abilitiesFromExistingGear =
-							gearIdToAbilities[`${type}_${opt.value}`];
+				const abilitiesFromExistingGear =
+					gearIdToAbilities[`${type}_${gearId}`];
 
-						if (!abilitiesFromExistingGear) return;
+				if (!abilitiesFromExistingGear) return;
 
-						const gearIndex = type === "HEAD" ? 0 : type === "CLOTHES" ? 1 : 2;
+				const gearIndex = type === "HEAD" ? 0 : type === "CLOTHES" ? 1 : 2;
 
-						const currentAbilities = abilities[gearIndex];
+				const currentAbilities = abilities[gearIndex];
 
-						// let's not overwrite current selections
-						if (!currentAbilities.every((a) => a === "UNKNOWN")) return;
+				// let's not overwrite current selections
+				if (!currentAbilities.every((a) => a === "UNKNOWN")) return;
 
-						const newAbilities = structuredClone(abilities);
-						newAbilities[gearIndex] = abilitiesFromExistingGear;
+				const newAbilities = structuredClone(abilities);
+				newAbilities[gearIndex] = abilitiesFromExistingGear;
 
-						setAbilities(newAbilities);
-					}}
-				/>
-			</div>
-		</div>
+				setAbilities(newAbilities);
+			}}
+		/>
 	);
 }
 

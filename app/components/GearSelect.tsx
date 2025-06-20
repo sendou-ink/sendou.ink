@@ -1,0 +1,162 @@
+import clsx from "clsx";
+import * as React from "react";
+import { useTranslation } from "react-i18next";
+import { Image } from "~/components/Image";
+import {
+	SendouSelect,
+	SendouSelectItem,
+	SendouSelectItemSection,
+} from "~/components/elements/Select";
+import type { GearType } from "~/db/tables";
+import { brandIds } from "~/modules/in-game-lists/brand-ids";
+import {
+	clothesGearBrandGrouped,
+	headGearBrandGrouped,
+	shoesGearBrandGrouped,
+} from "~/modules/in-game-lists/gear-ids";
+import { filterGear } from "~/modules/in-game-lists/utils";
+import { SPLAT_BOMB_ID } from "~/modules/in-game-lists/weapon-ids";
+import { gearImageUrl, subWeaponImageUrl } from "~/utils/urls";
+
+import styles from "./WeaponSelect.module.css";
+
+interface GearSelectProps<Clearable extends boolean | undefined = undefined> {
+	label?: string;
+	value?: number | (Clearable extends true ? null : never);
+	initialValue?: number;
+	onChange?: (
+		weaponId: number | (Clearable extends true ? null : never),
+	) => void;
+	clearable?: Clearable;
+	type: GearType;
+}
+
+export function GearSelect<Clearable extends boolean | undefined = undefined>({
+	label,
+	value,
+	initialValue,
+	onChange,
+	clearable,
+	type,
+}: GearSelectProps<Clearable>) {
+	const { t } = useTranslation(["common"]);
+	const { items, filterValue, setFilterValue } = useFilteredGear(type);
+
+	return (
+		<SendouSelect
+			aria-label={!label ? t("common:forms.gearSearch.placeholder") : undefined}
+			items={items}
+			label={label}
+			placeholder={t("common:forms.gearSearch.placeholder")}
+			search={{
+				placeholder: t("common:forms.gearSearch.search.placeholder"),
+			}}
+			className={styles.selectWidthWider}
+			popoverClassName={styles.selectWidthWider}
+			searchInputValue={filterValue}
+			onSearchInputChange={setFilterValue}
+			selectedKey={value}
+			defaultSelectedKey={initialValue}
+			onSelectionChange={(value) => onChange?.(value as any)}
+			clearable={clearable}
+		>
+			{({ key, items: gear, brandId, idx }) => (
+				<SendouSelectItemSection
+					heading={
+						<CategoryHeading
+							brandId={brandId}
+							className={idx === 0 ? "pt-0-5-forced" : undefined}
+						/>
+					}
+					key={key}
+				>
+					{gear.map(({ id, name }) => (
+						<SendouSelectItem key={id} id={id} textValue={name}>
+							<div className={styles.item}>
+								<Image
+									path={gearImageUrl(type, id)}
+									size={24}
+									alt=""
+									className={styles.weaponImg}
+								/>
+								<span className={styles.weaponLabel}>{name}</span>
+							</div>
+						</SendouSelectItem>
+					))}
+				</SendouSelectItemSection>
+			)}
+		</SendouSelect>
+	);
+}
+
+function CategoryHeading({
+	className,
+	brandId,
+}: {
+	className?: string;
+	brandId: string;
+}) {
+	const { t } = useTranslation(["game-misc"]);
+
+	return (
+		<div className={clsx(className, styles.categoryHeading)}>
+			<Image path={subWeaponImageUrl(SPLAT_BOMB_ID)} size={28} alt="" />
+			{t(`game-misc:BRAND_${brandId}` as any)}
+			<div className={styles.categoryDivider} />
+		</div>
+	);
+}
+
+function useFilteredGear(type: GearType) {
+	const { t } = useTranslation(["gear", "game-misc"]);
+	const [filterValue, setFilterValue] = React.useState("");
+
+	const translationPrefix =
+		type === "HEAD" ? "H" : type === "CLOTHES" ? "C" : "S";
+
+	const groupedGear =
+		type === "HEAD"
+			? headGearBrandGrouped
+			: type === "CLOTHES"
+				? clothesGearBrandGrouped
+				: shoesGearBrandGrouped;
+
+	const items = brandIds.map((brandId, idx) => {
+		const items = groupedGear[brandId] || [];
+
+		return {
+			brandId,
+			key: brandId,
+			idx,
+			items: items.map((gearId) => ({
+				id: gearId,
+				name: t(`${translationPrefix}_${gearId}` as any),
+			})),
+		};
+	});
+
+	const filtered = !filterValue
+		? items
+		: items
+				.map((category) => {
+					const filteredItems = category.items.filter((item) =>
+						filterGear({
+							gearName: item.name,
+							searchTerm: filterValue,
+						}),
+					);
+
+					return {
+						...category,
+						items: filteredItems,
+					};
+				})
+				.filter((category) => category.items.length > 0)
+				.map((category, idx) => ({ ...category, idx }));
+
+	return {
+		items: filtered,
+		filterValue,
+		setFilterValue,
+	};
+}
