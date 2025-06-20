@@ -11,23 +11,8 @@ import {
 	headGearIds,
 	shoesGearIds,
 } from "~/modules/in-game-lists/gear-ids";
-import {
-	mainWeaponIds,
-	subWeaponIds,
-	weaponCategories,
-} from "~/modules/in-game-lists/weapon-ids";
-import {
-	nonBombSubWeaponIds,
-	nonDamagingSpecialWeaponIds,
-	specialWeaponIds,
-} from "~/modules/in-game-lists/weapon-ids";
 import type { Unpacked } from "~/utils/types";
-import {
-	gearImageUrl,
-	mainWeaponImageUrl,
-	specialWeaponImageUrl,
-	subWeaponImageUrl,
-} from "~/utils/urls";
+import { gearImageUrl } from "~/utils/urls";
 import { Image } from "./Image";
 
 const MAX_RESULTS_SHOWN = 6;
@@ -192,66 +177,6 @@ export function Combobox<
 				<HeadlessCombobox.Button ref={buttonRef} className="hidden" />
 			</HeadlessCombobox>
 		</div>
-	);
-}
-
-export function AllWeaponCombobox({
-	id,
-	inputName,
-	onChange,
-	fullWidth,
-}: Pick<
-	ComboboxProps<ComboboxBaseOption>,
-	"inputName" | "onChange" | "id" | "fullWidth"
->) {
-	const { t } = useTranslation("weapons");
-
-	const options = () => {
-		const result: ComboboxProps<
-			Record<string, string | null | number>
-		>["options"] = [];
-
-		for (const mainWeaponId of mainWeaponIds) {
-			result.push({
-				value: `MAIN_${mainWeaponId}`,
-				label: t(`MAIN_${mainWeaponId}`),
-				imgPath: mainWeaponImageUrl(mainWeaponId),
-			});
-		}
-
-		for (const subWeaponId of subWeaponIds) {
-			if (nonBombSubWeaponIds.includes(subWeaponId)) continue;
-
-			result.push({
-				value: `SUB_${subWeaponId}`,
-				label: t(`SUB_${subWeaponId}`),
-				imgPath: subWeaponImageUrl(subWeaponId),
-			});
-		}
-
-		for (const specialWeaponId of specialWeaponIds) {
-			if (nonDamagingSpecialWeaponIds.includes(specialWeaponId)) continue;
-
-			result.push({
-				value: `SPECIAL_${specialWeaponId}`,
-				label: t(`SPECIAL_${specialWeaponId}`),
-				imgPath: specialWeaponImageUrl(specialWeaponId),
-			});
-		}
-
-		return result;
-	};
-
-	return (
-		<Combobox
-			inputName={inputName}
-			options={options()}
-			initialValue={null}
-			placeholder={t(`MAIN_${weaponCategories[0].weaponIds[0]}`)}
-			onChange={onChange}
-			id={id}
-			fullWidth={fullWidth}
-		/>
 	);
 }
 
