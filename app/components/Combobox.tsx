@@ -3,8 +3,6 @@ import clsx from "clsx";
 import Fuse, { type IFuseOptions } from "fuse.js";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import type { SerializedMapPoolEvent } from "~/features/calendar/routes/map-pool-events";
-import { useAllEventsWithMapPools } from "~/hooks/swr";
 import type { Unpacked } from "~/utils/types";
 import { Image } from "./Image";
 
@@ -170,73 +168,5 @@ export function Combobox<
 				<HeadlessCombobox.Button ref={buttonRef} className="hidden" />
 			</HeadlessCombobox>
 		</div>
-	);
-}
-
-const mapPoolEventToOption = (
-	e: SerializedMapPoolEvent,
-): ComboboxOption<Pick<SerializedMapPoolEvent, "serializedMapPool">> => ({
-	serializedMapPool: e.serializedMapPool,
-	label: e.name,
-	value: e.id.toString(),
-});
-
-type MapPoolEventsComboboxProps = Pick<
-	ComboboxProps<Pick<SerializedMapPoolEvent, "serializedMapPool">>,
-	"inputName" | "className" | "id" | "required"
-> & {
-	initialEvent?: SerializedMapPoolEvent;
-	onChange: (event: SerializedMapPoolEvent | null) => void;
-};
-
-export function MapPoolEventsCombobox({
-	id,
-	required,
-	className,
-	inputName,
-	onChange,
-	initialEvent,
-}: MapPoolEventsComboboxProps) {
-	const { t } = useTranslation();
-	const { events, isLoading, isError } = useAllEventsWithMapPools();
-
-	const options = React.useMemo(
-		() => (events ? events.map(mapPoolEventToOption) : []),
-		[events],
-	);
-
-	// this is important so that we don't trigger the reset to the initialEvent every time
-	const initialOption = React.useMemo(
-		() => initialEvent && mapPoolEventToOption(initialEvent),
-		[initialEvent],
-	);
-
-	if (isError) {
-		return (
-			<div className="text-sm text-error">{t("errors.genericReload")}</div>
-		);
-	}
-
-	return (
-		<Combobox
-			inputName={inputName}
-			options={isLoading && initialOption ? [initialOption] : options}
-			placeholder={t("actions.search")}
-			initialValue={initialOption ?? null}
-			onChange={(e) => {
-				onChange(
-					e && {
-						id: Number.parseInt(e.value, 10),
-						name: e.label,
-						serializedMapPool: e.serializedMapPool,
-					},
-				);
-			}}
-			className={className}
-			id={id}
-			required={required}
-			isLoading={isLoading}
-			fullWidth
-		/>
 	);
 }

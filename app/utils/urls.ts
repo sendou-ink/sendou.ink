@@ -139,7 +139,6 @@ export const THIRD_PLACEMENT_ICON_PATH =
 export const soundPath = (fileName: string) =>
 	`/static-assets/sounds/${fileName}.wav`;
 
-export const GET_ALL_EVENTS_WITH_MAP_POOLS_ROUTE = "/calendar/map-pool-events";
 export const GET_TRUSTERS_ROUTE = "/trusters";
 export const PATRONS_LIST_ROUTE = "/patrons-list";
 

@@ -59,6 +59,7 @@ export function GearSelect<Clearable extends boolean | undefined = undefined>({
 			defaultSelectedKey={initialValue}
 			onSelectionChange={(value) => onChange?.(value as any)}
 			clearable={clearable}
+			data-testid={`${type}-gear-select`}
 		>
 			{({ key, items: gear, brandId, idx }) => (
 				<SendouSelectItemSection
@@ -79,7 +80,12 @@ export function GearSelect<Clearable extends boolean | undefined = undefined>({
 									alt=""
 									className={styles.weaponImg}
 								/>
-								<span className={styles.weaponLabel}>{name}</span>
+								<span
+									className={styles.weaponLabel}
+									data-testid={`gear-select-option-${name}`}
+								>
+									{name}
+								</span>
 							</div>
 						</SendouSelectItem>
 					))}

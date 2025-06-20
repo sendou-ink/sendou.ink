@@ -1073,8 +1073,7 @@ const mapPickingStyleToShort: Record<
 function TournamentMapPickingStyleSelect() {
 	const { t } = useTranslation(["common"]);
 	const id = React.useId();
-	const { eventToEdit, recentEventsWithMapPools } =
-		useLoaderData<typeof loader>();
+	const { eventToEdit } = useLoaderData<typeof loader>();
 	const baseEvent = useBaseEvent();
 	const [mode, setMode] = React.useState<"ALL" | "TO" | RankedModeShort>(
 		baseEvent?.mapPickingStyle
@@ -1123,7 +1122,6 @@ function TournamentMapPickingStyleSelect() {
 						mapPool={mapPool}
 						title={t("common:maps.mapPool")}
 						handleMapPoolChange={setMapPool}
-						recentEvents={recentEventsWithMapPools}
 						allowBulkEdit
 					/>
 				</>
@@ -1136,7 +1134,6 @@ function MapPoolSection() {
 	const { t } = useTranslation(["game-misc", "common"]);
 
 	const baseEvent = useBaseEvent();
-	const { recentEventsWithMapPools } = useLoaderData<typeof loader>();
 	const [mapPool, setMapPool] = React.useState<MapPool>(
 		baseEvent?.mapPool ? new MapPool(baseEvent.mapPool) : MapPool.EMPTY,
 	);
@@ -1156,7 +1153,6 @@ function MapPoolSection() {
 				title={t("common:maps.mapPool")}
 				handleRemoval={() => setIncludeMapPool(false)}
 				handleMapPoolChange={setMapPool}
-				recentEvents={recentEventsWithMapPools}
 				allowBulkEdit
 			/>
 		</>

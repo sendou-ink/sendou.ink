@@ -1,11 +1,9 @@
 import useSWRImmutable from "swr/immutable";
-import type { EventsWithMapPoolsLoaderData } from "~/features/calendar/routes/map-pool-events";
 import type { PatronsListLoaderData } from "~/features/front-page/routes/patrons-list";
 import type { TrustersLoaderData } from "~/features/sendouq/routes/trusters";
 import type { WeaponUsageLoaderData } from "~/features/sendouq/routes/weapon-usage";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
-	GET_ALL_EVENTS_WITH_MAP_POOLS_ROUTE,
 	GET_TRUSTERS_ROUTE,
 	PATRONS_LIST_ROUTE,
 	getWeaponUsage,
@@ -21,19 +19,6 @@ const fetcher = (key: string) => async (url: string) => {
 	}
 	return res.json();
 };
-
-export function useAllEventsWithMapPools() {
-	const { data, error } = useSWRImmutable<EventsWithMapPoolsLoaderData>(
-		GET_ALL_EVENTS_WITH_MAP_POOLS_ROUTE,
-		fetcher(GET_ALL_EVENTS_WITH_MAP_POOLS_ROUTE),
-	);
-
-	return {
-		events: data?.events,
-		isLoading: !error && !data,
-		isError: error,
-	};
-}
 
 export function useWeaponUsage(args: {
 	userId: number;
