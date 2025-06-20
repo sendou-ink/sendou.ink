@@ -16,7 +16,7 @@ import { notFoundIfFalsy } from "~/utils/remix.server";
 import {
 	seasonsSearchParamsSchema,
 	userParamsSchema,
-} from "../user-page-schemas.server";
+} from "../user-page-schemas";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const { identifier } = userParamsSchema.parse(params);

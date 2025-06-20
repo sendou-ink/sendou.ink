@@ -49,6 +49,13 @@ async function main() {
 				if (i === 1 && fileName.includes("Lv01")) return true;
 				if (i === 2 && fileName.includes("Lv00")) return true;
 
+				// ver 10.0.0
+				if (fileName.includes("Lv02")) return true;
+				if (fileName.includes("Lv03")) return true;
+				if (fileName.includes("Lv04")) return true;
+				if (fileName.includes("Lv05")) return true;
+				if (fileName.includes("Lv06")) return true;
+
 				return false;
 			};
 

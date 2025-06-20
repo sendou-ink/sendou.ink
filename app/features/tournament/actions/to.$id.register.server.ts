@@ -32,7 +32,10 @@ import {
 	isOneModeTournamentOf,
 	validateCounterPickMapPool,
 } from "../tournament-utils";
-import { inGameNameIfNeeded } from "../tournament-utils.server";
+import {
+	inGameNameIfNeeded,
+	requireNotBannedByOrganization,
+} from "../tournament-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = await requireUser(request);
@@ -93,6 +96,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 					},
 				});
 			} else {
+				await requireNotBannedByOrganization({
+					tournament,
+					user,
+				});
+
 				errorToastIfFalsy(!tournament.isInvitational, "Event is invite only");
 				errorToastIfFalsy(
 					(await UserRepository.findLeanById(user.id))?.friendCode,
@@ -257,6 +265,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"No friend code",
 			);
 			errorToastIfFalsy(tournament.registrationOpen, "Registration is closed");
+
+			await requireNotBannedByOrganization({
+				tournament,
+				user: { id: data.userId },
+				message: "The user is banned from events hosted by this organization",
+			});
 
 			joinTeam({
 				userId: data.userId,

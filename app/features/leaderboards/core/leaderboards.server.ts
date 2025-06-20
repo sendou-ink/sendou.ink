@@ -68,9 +68,9 @@ function addTiers(entries: UserSPLeaderboardItem[], season: number) {
 }
 
 const PLUS_TIER_QUOTA = {
-	"+1": 10,
-	"+2": 20,
-	"+3": 30,
+	"+1": 5,
+	"+2": 10,
+	"+3": 15,
 } as const;
 export function addPendingPlusTiers<T extends UserSPLeaderboardItem>(
 	entries: T[],

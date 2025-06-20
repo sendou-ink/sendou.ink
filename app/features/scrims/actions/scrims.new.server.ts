@@ -1,5 +1,5 @@
 import { type ActionFunctionArgs, redirect } from "@remix-run/node";
-import type { z } from "zod";
+import type { z } from "zod/v4";
 import type { Tables } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";

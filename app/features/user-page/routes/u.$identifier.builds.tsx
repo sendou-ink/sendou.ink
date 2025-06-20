@@ -31,6 +31,8 @@ import {
 } from "../loaders/u.$identifier.builds.server";
 export { loader, action };
 
+import styles from "./u.$identifier.builds.module.css";
+
 export const handle: SendouRouteHandle = {
 	i18n: ["weapons", "builds", "gear"],
 };
@@ -100,7 +102,7 @@ export default function UserBuildsPage() {
 				setWeaponFilter={setWeaponFilter}
 			/>
 			{builds.length > 0 ? (
-				<div className="builds-container">
+				<div className={styles.buildsContainer}>
 					{builds.map((build) => (
 						<BuildCard
 							key={build.id}

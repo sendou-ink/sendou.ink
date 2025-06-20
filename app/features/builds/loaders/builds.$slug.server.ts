@@ -40,7 +40,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	if (!filters.success) {
 		console.error(
 			"Invalid filters",
-			JSON.stringify(filters.error.errors, null, 2),
+			JSON.stringify(filters.error.issues, null, 2),
 		);
 	}
 

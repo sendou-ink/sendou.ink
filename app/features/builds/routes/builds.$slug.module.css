@@ -1,0 +1,24 @@
+.buildsContainer {
+	display: grid;
+	justify-content: center;
+	gap: var(--s-4) var(--s-3);
+	grid-template-columns: repeat(auto-fit, 240px);
+}
+
+.buildsButtons {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+}
+
+.buildsButtonsLink {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+@media screen and (min-width: 480px) {
+	.buildsButtonsLink {
+		flex-direction: row;
+	}
+}

@@ -464,11 +464,11 @@ function PostDeleteButton({ id, type }: { id: number; type: Post["type"] }) {
 			fetcher={fetcher}
 		>
 			<SendouButton
-				className="build__small-text"
+				className="small-text"
 				variant="minimal-destructive"
 				size="small"
 				type="submit"
-				icon={<TrashIcon className="build__icon" />}
+				icon={<TrashIcon className="small-icon" />}
 			>
 				{t("common:actions.delete")}
 			</SendouButton>

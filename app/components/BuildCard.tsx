@@ -33,6 +33,8 @@ import { LockIcon } from "./icons/Lock";
 import { SpeechBubbleIcon } from "./icons/SpeechBubble";
 import { TrashIcon } from "./icons/Trash";
 
+import styles from "./BuildCard.module.css";
+
 interface BuildProps {
 	build: Pick<
 		Tables["Build"],
@@ -92,13 +94,13 @@ export function BuildCard({
 
 	return (
 		<div
-			className={clsx("build", { build__private: build.private })}
+			className={clsx(styles.card, { [styles.private]: build.private })}
 			data-testid="build-card"
 		>
 			<div>
-				<div className="build__top-row">
+				<div className={styles.topRow}>
 					{modes && modes.length > 0 && (
-						<div className="build__modes">
+						<div className={styles.modes}>
 							{modes.map((mode) => (
 								<Image
 									key={mode}
@@ -112,17 +114,14 @@ export function BuildCard({
 							))}
 						</div>
 					)}
-					<h2 className="build__title" data-testid="build-title">
+					<h2 className={styles.title} data-testid="build-title">
 						{title}
 					</h2>
 				</div>
-				<div className="build__date-author-row">
+				<div className={styles.dateAuthorRow}>
 					{owner && (
 						<>
-							<Link
-								to={userBuildsPage(owner)}
-								className="build__date-author-row__owner"
-							>
+							<Link to={userBuildsPage(owner)} className={styles.ownerLink}>
 								{owner.username}
 							</Link>
 							<div>•</div>
@@ -136,8 +135,8 @@ export function BuildCard({
 					) : null}
 					<div className="stack horizontal sm">
 						{build.private ? (
-							<div className="build__private-text">
-								<LockIcon className="build__private-icon" />{" "}
+							<div className={styles.privateText}>
+								<LockIcon className={styles.privateIcon} />{" "}
 								{t("common:build.private")}
 							</div>
 						) : null}
@@ -158,19 +157,19 @@ export function BuildCard({
 					</div>
 				</div>
 			</div>
-			<div className="build__weapons">
+			<div className={styles.weapons}>
 				{weapons.map((weapon) => (
 					<RoundWeaponImage key={weapon.weaponSplId} weapon={weapon} />
 				))}
 				{weapons.length === 1 && (
-					<div className="build__weapon-text">
+					<div className={styles.weaponText}>
 						{t(`weapons:MAIN_${weapons[0].weaponSplId}` as any)}
 					</div>
 				)}
 			</div>
 			<div
-				className={clsx("build__gear-abilities", {
-					"build__gear-abilities__no-gear": isNoGear,
+				className={clsx(styles.gearAbilities, {
+					[styles.noGear]: isNoGear,
 				})}
 			>
 				<AbilitiesRowWithGear
@@ -189,7 +188,7 @@ export function BuildCard({
 					gearId={shoesGearSplId}
 				/>
 			</div>
-			<div className="build__bottom-row">
+			<div className={styles.bottomRow}>
 				<Link
 					to={analyzerPage({
 						weaponId: weapons[0].weaponSplId,
@@ -198,7 +197,7 @@ export function BuildCard({
 				>
 					<Image
 						alt={t("common:pages.analyzer")}
-						className="build__icon"
+						className={styles.icon}
 						path={navIconUrl("analyzer")}
 					/>
 				</Link>
@@ -208,7 +207,7 @@ export function BuildCard({
 							<SendouButton
 								variant="minimal"
 								icon={<SpeechBubbleIcon />}
-								className="build__small-text"
+								className={styles.smallText}
 							/>
 						}
 					>
@@ -218,13 +217,13 @@ export function BuildCard({
 				{canEdit && (
 					<>
 						<LinkButton
-							className="build__small-text"
+							className={styles.smallText}
 							variant="minimal"
 							size="small"
 							to={`new?buildId=${id}&userId=${user!.id}`}
 							testId="edit-build"
 						>
-							<EditIcon className="build__icon" />
+							<EditIcon className={styles.icon} />
 						</LinkButton>
 						<FormWithConfirm
 							dialogHeading={t("builds:deleteConfirm", { title })}
@@ -234,8 +233,8 @@ export function BuildCard({
 							]}
 						>
 							<SendouButton
-								icon={<TrashIcon className="build__icon" />}
-								className="build__small-text"
+								icon={<TrashIcon className={styles.icon} />}
+								className={styles.smallText}
 								variant="minimal-destructive"
 								type="submit"
 							/>
@@ -259,10 +258,10 @@ function RoundWeaponImage({ weapon }: { weapon: BuildWeaponWithTop500Info }) {
 	const isTop500 = typeof maxPower === "number" && typeof minRank === "number";
 
 	return (
-		<div key={weaponSplId} className="build__weapon">
+		<div key={weaponSplId} className={styles.weapon}>
 			{isTop500 ? (
 				<Image
-					className="build__top500"
+					className={styles.top500}
 					path={navIconUrl("xsearch")}
 					alt=""
 					title={`Max X Power: ${maxPower} | Best Rank: ${minRank}`}
@@ -307,7 +306,7 @@ function AbilitiesRowWithGear({
 					alt={translatedGearName}
 					title={translatedGearName}
 					path={gearImageUrl(gearType, gearId)}
-					className="build__gear"
+					className={styles.gear}
 				/>
 			) : null}
 			{abilities.map((ability, i) => (

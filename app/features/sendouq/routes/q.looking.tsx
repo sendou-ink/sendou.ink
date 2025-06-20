@@ -7,9 +7,14 @@ import { useTranslation } from "react-i18next";
 import { Alert } from "~/components/Alert";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
-import { NewTabs } from "~/components/NewTabs";
 import { SubmitButton } from "~/components/SubmitButton";
 import { LinkButton } from "~/components/elements/Button";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanel,
+	SendouTabs,
+} from "~/components/elements/Tabs";
 import { useUser } from "~/features/auth/core/user";
 import { Chat, useChat } from "~/features/chat/components/Chat";
 import { useAutoRefresh } from "~/hooks/useAutoRefresh";
@@ -319,129 +324,101 @@ function Groups() {
 			>
 				{!isMobile ? (
 					<div>
-						<NewTabs
-							disappearing
-							type="divider"
-							tabs={[
-								{
-									label: t("q:looking.columns.myGroup"),
-									number: data.groups.own ? data.groups.own.members!.length : 0,
-									hidden: !data.groups.own,
-								},
-								{
-									label: t("q:looking.columns.chat"),
-									hidden: !renderChat,
-									number: unseenMessages,
-								},
-							]}
-							content={[
-								{
-									key: "own",
-									element: ownGroupElement,
-								},
-								{
-									key: "chat",
-									element: chatElement,
-									hidden: !data.chatCode,
-								},
-							]}
-						/>
+						<SendouTabs>
+							<SendouTabList>
+								{data.groups.own && (
+									<SendouTab id="own" number={data.groups.own.members!.length}>
+										{t("q:looking.columns.myGroup")}
+									</SendouTab>
+								)}
+								{renderChat && (
+									<SendouTab id="chat" number={unseenMessages}>
+										{t("q:looking.columns.chat")}
+									</SendouTab>
+								)}
+							</SendouTabList>
+							<SendouTabPanel id="own">{ownGroupElement}</SendouTabPanel>
+							{data.chatCode && (
+								<SendouTabPanel id="chat">{chatElement}</SendouTabPanel>
+							)}
+						</SendouTabs>
 					</div>
 				) : null}
 				<div className="q__groups-inner-container">
-					<NewTabs
-						disappearing
-						scrolling={isMobile}
-						tabs={[
-							{
-								label: t("q:looking.columns.groups"),
-								number: data.groups.neutral.length,
-							},
-							{
-								label: t(
-									isFullGroup
-										? "q:looking.columns.challenges"
-										: "q:looking.columns.invitations",
-								),
-								number: data.groups.likesReceived.length,
-								hidden: !isMobile,
-							},
-							{
-								label: t("q:looking.columns.myGroup"),
-								number: data.groups.own ? data.groups.own.members!.length : 0,
-								hidden: !isMobile || !data.groups.own,
-							},
-							{
-								label: t("q:looking.columns.chat"),
-								hidden: !isMobile || !renderChat,
-								number: unseenMessages,
-							},
-						]}
-						content={[
-							{
-								key: "groups",
-								element: (
-									<div className="stack sm">
-										<ColumnHeader>
-											{t("q:looking.columns.available")}
-										</ColumnHeader>
-										{data.groups.neutral
-											.filter((group) => isMobile || !group.isLiked)
-											.map((group) => {
-												return (
-													<GroupCard
-														key={group.id}
-														group={group}
-														action={group.isLiked ? "UNLIKE" : "LIKE"}
-														ownRole={data.role}
-														isExpired={data.expiryStatus === "EXPIRED"}
-														showNote
-													/>
-												);
-											})}
-									</div>
-								),
-							},
-							{
-								key: "received",
-								hidden: !isMobile,
-								element: (
-									<div className="stack sm">
-										{!data.groups.own ? <JoinQueuePrompt /> : null}
-										{data.groups.likesReceived.map((group) => {
-											const action = () => {
-												if (!isFullGroup) return "GROUP_UP";
+					<SendouTabs>
+						<SendouTabList scrolling={isMobile}>
+							<SendouTab id="groups" number={data.groups.neutral.length}>
+								{t("q:looking.columns.groups")}
+							</SendouTab>
+							{isMobile && (
+								<SendouTab
+									id="received"
+									number={data.groups.likesReceived.length}
+								>
+									{t(
+										isFullGroup
+											? "q:looking.columns.challenges"
+											: "q:looking.columns.invitations",
+									)}
+								</SendouTab>
+							)}
+							{isMobile && data.groups.own && (
+								<SendouTab id="own" number={data.groups.own.members!.length}>
+									{t("q:looking.columns.myGroup")}
+								</SendouTab>
+							)}
+							{isMobile && renderChat && (
+								<SendouTab id="chat" number={unseenMessages}>
+									{t("q:looking.columns.chat")}
+								</SendouTab>
+							)}
+						</SendouTabList>
+						<SendouTabPanel id="groups">
+							<div className="stack sm">
+								<ColumnHeader>{t("q:looking.columns.available")}</ColumnHeader>
+								{data.groups.neutral
+									.filter((group) => isMobile || !group.isLiked)
+									.map((group) => {
+										return (
+											<GroupCard
+												key={group.id}
+												group={group}
+												action={group.isLiked ? "UNLIKE" : "LIKE"}
+												ownRole={data.role}
+												isExpired={data.expiryStatus === "EXPIRED"}
+												showNote
+											/>
+										);
+									})}
+							</div>
+						</SendouTabPanel>
+						<SendouTabPanel id="received">
+							<div className="stack sm">
+								{!data.groups.own ? <JoinQueuePrompt /> : null}
+								{data.groups.likesReceived.map((group) => {
+									const action = () => {
+										if (!isFullGroup) return "GROUP_UP";
 
-												if (group.isRechallenge) return "MATCH_UP_RECHALLENGE";
-												return "MATCH_UP";
-											};
+										if (group.isRechallenge) return "MATCH_UP_RECHALLENGE";
+										return "MATCH_UP";
+									};
 
-											return (
-												<GroupCard
-													key={group.id}
-													group={group}
-													action={action()}
-													ownRole={data.role}
-													isExpired={data.expiryStatus === "EXPIRED"}
-													showNote
-												/>
-											);
-										})}
-									</div>
-								),
-							},
-							{
-								key: "own",
-								hidden: !isMobile,
-								element: ownGroupElement,
-							},
-							{
-								key: "chat",
-								element: chatElement,
-								hidden: !isMobile || !data.chatCode,
-							},
-						]}
-					/>
+									return (
+										<GroupCard
+											key={group.id}
+											group={group}
+											action={action()}
+											ownRole={data.role}
+											isExpired={data.expiryStatus === "EXPIRED"}
+											showNote
+										/>
+									);
+								})}
+							</div>
+						</SendouTabPanel>
+						<SendouTabPanel id="own">{ownGroupElement}</SendouTabPanel>
+						<SendouTabPanel id="chat">{chatElement}</SendouTabPanel>
+					</SendouTabs>
 				</div>
 				{!isMobile ? (
 					<div className="stack sm">

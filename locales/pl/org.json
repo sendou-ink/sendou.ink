@@ -21,5 +21,20 @@
 	"edit.form.series.seriesName.title": "",
 	"edit.form.series.showLeaderboard.title": "",
 	"edit.form.badges.title": "",
-	"edit.form.errors.noUnadmin": ""
+	"edit.form.errors.noUnadmin": "",
+	"banned.title": "",
+	"banned.empty": "",
+	"banned.description": "",
+	"banned.player": "",
+	"banned.note": "",
+	"banned.date": "",
+	"banned.actions": "",
+	"banned.unban": "",
+	"banned.unbanConfirm": "",
+	"banned.ban": "",
+	"banned.banModal.title": "",
+	"banned.banModal.player": "",
+	"banned.banModal.note": "",
+	"banned.banModal.noteHelp": "",
+	"banned.banModal.explanation": ""
 }

@@ -135,6 +135,6 @@ test.describe("Tournament staff", () => {
 		});
 
 		await expect(roomPassSelector).toBeVisible();
-		await expect(page.getByTestId("tab-Chat")).toBeVisible();
+		await expect(page.getByTestId("chat-tab")).toBeVisible();
 	});
 });

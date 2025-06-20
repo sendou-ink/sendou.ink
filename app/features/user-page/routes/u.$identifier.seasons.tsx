@@ -18,9 +18,14 @@ import {
 } from "~/components/Image";
 import { Pagination } from "~/components/Pagination";
 import { SubNav, SubNavLink } from "~/components/SubNav";
-import { Tab, Tabs } from "~/components/Tabs";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanel,
+	SendouTabs,
+} from "~/components/elements/Tabs";
 import { AlertIcon } from "~/components/icons/Alert";
 import { TopTenPlayer } from "~/features/leaderboards/components/TopTenPlayer";
 import { playerTopTenPlacement } from "~/features/leaderboards/leaderboards-utils";
@@ -436,49 +441,52 @@ function StageWeaponUsageStats(props: {
 				<ModeImage mode={props.modeShort} width={18} />
 				{t(`game-misc:STAGE_${props.stageId}`)}
 			</div>
-			<Tabs compact className="mb-0">
-				<Tab active={tab === "SELF"} onClick={() => setTab("SELF")}>
-					{t("user:seasons.tabs.self")}
-				</Tab>
-				<Tab active={tab === "MATE"} onClick={() => setTab("MATE")}>
-					{t("user:seasons.tabs.teammates")}
-				</Tab>
-				<Tab active={tab === "ENEMY"} onClick={() => setTab("ENEMY")}>
-					{t("user:seasons.tabs.opponents")}
-				</Tab>
-			</Tabs>
-			<div className="u__season__weapon-usage__weapons-container">
-				{usages.map((u) => {
-					const winrate = cutToNDecimalPlaces(
-						(u.wins / (u.wins + u.losses)) * 100,
-					);
+			<SendouTabs
+				selectedKey={tab}
+				onSelectionChange={(id) => setTab(id as "SELF" | "MATE" | "ENEMY")}
+			>
+				<SendouTabList>
+					<SendouTab id="SELF">{t("user:seasons.tabs.self")}</SendouTab>
+					<SendouTab id="MATE">{t("user:seasons.tabs.teammates")}</SendouTab>
+					<SendouTab id="ENEMY">{t("user:seasons.tabs.opponents")}</SendouTab>
+				</SendouTabList>
+				{["SELF", "MATE", "ENEMY"].map((id) => (
+					<SendouTabPanel id={id} key={id}>
+						<div className="u__season__weapon-usage__weapons-container">
+							{usages.map((u) => {
+								const winrate = cutToNDecimalPlaces(
+									(u.wins / (u.wins + u.losses)) * 100,
+								);
 
-					return (
-						<div key={u.weaponSplId}>
-							<WeaponImage
-								weaponSplId={u.weaponSplId}
-								variant="build"
-								width={48}
-								className="u__season__weapon-usage__weapon"
-							/>
-							<div
-								className={clsx("text-xs font-bold", {
-									"text-success": winrate >= 50,
-									"text-warning": winrate < 50,
-								})}
-							>
-								{winrate}%
-							</div>
-							<div className="text-xs">
-								{u.wins} {t("user:seasons.win.short")}
-							</div>
-							<div className="text-xs">
-								{u.losses} {t("user:seasons.loss.short")}
-							</div>
+								return (
+									<div key={u.weaponSplId}>
+										<WeaponImage
+											weaponSplId={u.weaponSplId}
+											variant="build"
+											width={48}
+											className="u__season__weapon-usage__weapon"
+										/>
+										<div
+											className={clsx("text-xs font-bold", {
+												"text-success": winrate >= 50,
+												"text-warning": winrate < 50,
+											})}
+										>
+											{winrate}%
+										</div>
+										<div className="text-xs">
+											{u.wins} {t("user:seasons.win.short")}
+										</div>
+										<div className="text-xs">
+											{u.losses} {t("user:seasons.loss.short")}
+										</div>
+									</div>
+								);
+							})}
 						</div>
-					);
-				})}
-			</div>
+					</SendouTabPanel>
+				))}
+			</SendouTabs>
 		</div>
 	);
 }

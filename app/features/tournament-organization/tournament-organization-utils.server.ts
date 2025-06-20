@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import * as TournamentOrganizationRepository from "./TournamentOrganizationRepository.server";
 

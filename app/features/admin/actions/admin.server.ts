@@ -1,12 +1,11 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
-import { z } from "zod";
+import { z } from "zod/v4";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { makeArtist } from "~/features/art/queries/makeArtist.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { requireRole } from "~/modules/permissions/guards.server";
-import { logger } from "~/utils/logger";
 import {
 	errorToast,
 	parseRequestPayload,
@@ -125,18 +124,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				bannedReason: data.reason ?? null,
 				userId: data.user,
 				banned: data.duration ? new Date(data.duration) : 1,
+				bannedByUserId: user.id,
 			});
 
 			refreshBannedCache();
-
-			logger.info("Banned user", {
-				userId: data.user,
-				byUserId: user.id,
-				reason: data.reason,
-				duration: data.duration
-					? new Date(data.duration).toLocaleString()
-					: undefined,
-			});
 
 			message = "User banned";
 			break;
@@ -144,14 +135,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		case "UNBAN_USER": {
 			requireRole(user, "STAFF");
 
-			await AdminRepository.unbanUser(data.user);
+			await AdminRepository.unbanUser({
+				userId: data.user,
+				unbannedByUserId: user.id,
+			});
 
 			refreshBannedCache();
-
-			logger.info("Unbanned user", {
-				userId: data.user,
-				byUserId: user.id,
-			});
 
 			message = "User unbanned";
 			break;

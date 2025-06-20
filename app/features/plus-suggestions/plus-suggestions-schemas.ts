@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 import { _action, actualNumber, trimmedString } from "~/utils/zod";
 import { PLUS_SUGGESTION, PLUS_TIERS } from "./plus-suggestions-constants";
 

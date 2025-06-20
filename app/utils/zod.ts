@@ -1,5 +1,5 @@
-import type { ZodType } from "zod";
-import { z } from "zod";
+import type { ZodType } from "zod/v4";
+import { z } from "zod/v4";
 import { CUSTOM_CSS_VAR_COLORS } from "~/features/user-page/user-page-constants";
 import {
 	abilities,
@@ -318,7 +318,7 @@ export function checkboxValueToDbBoolean(value: unknown) {
 	return 0;
 }
 
-export const _action = <T extends z.Primitive>(value: T) =>
+export const _action = <T extends string>(value: T) =>
 	z.preprocess(deduplicate, z.literal(value));
 
 // Fix bug at least in Safari 15 where SubmitButton value might get sent twice
@@ -341,9 +341,10 @@ export function numericEnum<TValues extends readonly number[]>(
 	return z.number().superRefine((val, ctx) => {
 		if (!values.includes(val)) {
 			ctx.addIssue({
-				code: z.ZodIssueCode.invalid_enum_value,
-				options: [...values],
-				received: val,
+				code: z.ZodIssueCode.invalid_value,
+				input: val,
+				values: [...values],
+				message: `Expected one of: ${values.join(", ")}, received ${val}`,
 			});
 		}
 	}) as ZodType<TValues[number]>;

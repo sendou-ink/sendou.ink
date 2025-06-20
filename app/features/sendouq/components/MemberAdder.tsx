@@ -75,7 +75,7 @@ export function MemberAdder({
 					/>
 					<SubmitButton
 						variant="outlined"
-						_action="ADD_MEMBER"
+						_action="ADD_TRUSTED"
 						isDisabled={!truster}
 						icon={<PlusIcon />}
 					/>

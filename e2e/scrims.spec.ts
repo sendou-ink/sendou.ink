@@ -61,12 +61,12 @@ test.describe("Scrims", () => {
 			url: scrimsPage(),
 		});
 
-		await page.getByTestId("tab-Available").click();
+		await page.getByTestId("available-scrims-tab").click();
 		await page.getByRole("button", { name: "Request" }).first().click();
 
 		await submit(page);
 
-		await page.getByTestId("tab-Requests").click();
+		await page.getByTestId("requests-scrims-tab").click();
 
 		const cancelRequestButton = page.getByRole("button", {
 			name: "Cancel",

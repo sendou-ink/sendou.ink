@@ -475,7 +475,7 @@ function OtherTopics() {
 			<h3>SendouQ Season Finale</h3>
 			<p>
 				Top 12 teams are invited to a SendouQ Season Finale event that typically
-				happens 1 week after season ending. It has a price pot of $750 and is
+				happens 1 week after season ending. It has a price pot of $500 and is
 				Splat Zones only.
 			</p>
 			<h3>Off-season</h3>

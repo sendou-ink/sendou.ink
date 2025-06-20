@@ -110,6 +110,10 @@
 	background-color: var(--bg);
 }
 
+.bg-lighter {
+	background-color: var(--bg-lighter);
+}
+
 .bg-transparent-important {
 	background-color: transparent !important;
 }

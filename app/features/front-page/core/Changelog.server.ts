@@ -1,5 +1,5 @@
 import { formatDistance } from "date-fns";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { logger } from "~/utils/logger";
 
 const BSKY_URL =

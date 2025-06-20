@@ -502,7 +502,7 @@ function RemoveStaffButton({
 				size="small"
 				data-testid="remove-staff-button"
 			>
-				<TrashIcon className="build__icon" />
+				<TrashIcon className="small-icon" />
 			</SendouButton>
 		</FormWithConfirm>
 	);

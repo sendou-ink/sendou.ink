@@ -1,7 +1,7 @@
 // for testing use the command `npx tsx ./scripts/create-league-divisions.ts 6 'https://gist.githubusercontent.com/Sendouc/38aa4d5d8426035ce178c09598ae627f/raw/17be9bb53a9f017c2097d0624f365d1c5a029f01/league.csv'`
 
 import "dotenv/config";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { db } from "~/db/sql";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";

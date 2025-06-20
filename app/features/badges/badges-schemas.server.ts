@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 import { _action, id, noDuplicates, safeJSONParse } from "~/utils/zod";
 
 export const editBadgeActionSchema = z.union([

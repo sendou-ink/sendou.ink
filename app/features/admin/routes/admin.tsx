@@ -12,9 +12,14 @@ import { Avatar } from "~/components/Avatar";
 import { Catcher } from "~/components/Catcher";
 import { Input } from "~/components/Input";
 import { Main } from "~/components/Main";
-import { NewTabs } from "~/components/NewTabs";
 import { SubmitButton } from "~/components/SubmitButton";
 import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanel,
+	SendouTabs,
+} from "~/components/elements/Tabs";
 import { UserSearch } from "~/components/elements/UserSearch";
 import { SearchIcon } from "~/components/icons/Search";
 import { FRIEND_CODE_REGEXP_PATTERN } from "~/features/sendouq/q-constants";
@@ -41,26 +46,18 @@ export const meta: MetaFunction = (args) => {
 export default function AdminPage() {
 	return (
 		<Main>
-			<NewTabs
-				tabs={[
-					{
-						label: "Actions",
-					},
-					{
-						label: "Friend code look-up",
-					},
-				]}
-				content={[
-					{
-						key: "actions",
-						element: <AdminActions />,
-					},
-					{
-						key: "friend-code-look-up",
-						element: <FriendCodeLookUp />,
-					},
-				]}
-			/>
+			<SendouTabs>
+				<SendouTabList>
+					<SendouTab id="actions">Actions</SendouTab>
+					<SendouTab id="friend-code-look-up">Friend code look-up</SendouTab>
+				</SendouTabList>
+				<SendouTabPanel id="actions">
+					<AdminActions />
+				</SendouTabPanel>
+				<SendouTabPanel id="friend-code-look-up">
+					<FriendCodeLookUp />
+				</SendouTabPanel>
+			</SendouTabs>
 		</Main>
 	);
 }
@@ -168,13 +165,6 @@ function MigrateUser() {
 	const navigation = useNavigation();
 	const fetcher = useFetcher();
 
-	const submitButtonText =
-		navigation.state === "submitting"
-			? "Migrating..."
-			: navigation.state === "loading"
-				? "Migrated!"
-				: "Migrate";
-
 	return (
 		<fetcher.Form className="stack md" method="post">
 			<h2>Migrate user data</h2>
@@ -197,7 +187,7 @@ function MigrateUser() {
 					_action="MIGRATE"
 					state={fetcher.state}
 				>
-					{submitButtonText}
+					Migrate
 				</SubmitButton>
 			</div>
 		</fetcher.Form>

@@ -15,12 +15,17 @@ import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { containerClassName } from "~/components/Main";
 import { MapPoolStages } from "~/components/MapPoolSelector";
-import { NewTabs } from "~/components/NewTabs";
 import { Section } from "~/components/Section";
 import { SubmitButton } from "~/components/SubmitButton";
 import { LinkButton } from "~/components/elements/Button";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanel,
+	SendouTabs,
+} from "~/components/elements/Tabs";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { ClockIcon } from "~/components/icons/Clock";
 import { CrossIcon } from "~/components/icons/Cross";
@@ -166,6 +171,9 @@ export default function TournamentRegisterPage() {
 	);
 }
 
+const TABS = ["description", "rules", "register"] as const;
+type RegisterPageTab = (typeof TABS)[number];
+
 function TournamentRegisterInfoTabs() {
 	const user = useUser();
 	const tournament = useTournament();
@@ -175,16 +183,16 @@ function TournamentRegisterInfoTabs() {
 	const teamOwned = tournament.ownedTeamByUser(user);
 	const isRegularMemberOfATeam = teamMemberOf && !teamOwned;
 
-	const defaultTab = () => {
-		if (tournament.hasStarted || !teamOwned) return 0;
+	const defaultTab = (): RegisterPageTab => {
+		if (tournament.hasStarted || !teamOwned) return "description";
 
-		const registerTab = !tournament.ctx.rules ? 1 : 2;
-		return registerTab;
+		return "register";
 	};
-	const [tabIndex, setTabIndex] = useSearchParamState({
+	const [tabKey, setTabKey] = useSearchParamState({
 		defaultValue: defaultTab(),
 		name: "tab",
-		revive: Number,
+		revive: (val) =>
+			TABS.includes(val as RegisterPageTab) ? (val as RegisterPageTab) : null,
 	});
 
 	const showAddIGNAlert =
@@ -195,119 +203,110 @@ function TournamentRegisterInfoTabs() {
 
 	return (
 		<div>
-			<NewTabs
-				sticky
-				selectedIndex={tabIndex}
-				setSelectedIndex={setTabIndex}
-				tabs={[
-					{
-						label: "Description",
-					},
-					{
-						label: "Rules",
-						hidden: !tournament.ctx.rules,
-					},
-					{
-						label: "Register",
-						hidden: tournament.hasStarted,
-					},
-				]}
-				disappearing
-				content={[
-					{
-						key: "description",
-						element: (
-							<div className="stack lg">
-								{tournament.ctx.discordUrl ? (
-									<div className="w-max">
-										<LinkButton
-											to={tournament.ctx.discordUrl}
-											variant="outlined"
-											size="small"
-											isExternal
-											icon={<DiscordIcon />}
-										>
-											Join the Discord
-										</LinkButton>
-									</div>
-								) : null}
+			<SendouTabs
+				selectedKey={tabKey}
+				onSelectionChange={(key) => setTabKey(key as RegisterPageTab)}
+			>
+				<SendouTabList sticky>
+					<SendouTab id="description">Description</SendouTab>
+					{tournament.ctx.rules ? (
+						<SendouTab id="rules">Rules</SendouTab>
+					) : null}
+					{!tournament.hasStarted ? (
+						<SendouTab id="register" data-testid="register-tab">
+							Register
+						</SendouTab>
+					) : null}
+				</SendouTabList>
 
-								<div className="tournament__info__description">
-									<Markdown options={{ wrapper: React.Fragment }}>
-										{tournament.ctx.description ?? ""}
-									</Markdown>
-								</div>
-								<TOPickedMapPoolInfo />
-								<TiebreakerMapPoolInfo />
+				<SendouTabPanel id="description">
+					<div className="stack lg">
+						{tournament.ctx.discordUrl ? (
+							<div className="w-max">
+								<LinkButton
+									to={tournament.ctx.discordUrl}
+									variant="outlined"
+									size="small"
+									isExternal
+									icon={<DiscordIcon />}
+								>
+									Join the Discord
+								</LinkButton>
 							</div>
-						),
-					},
-					{
-						key: "rules",
-						hidden: !tournament.ctx.rules,
-						element: (
-							<div className="tournament__info__description">
-								<Markdown options={{ wrapper: React.Fragment }}>
-									{tournament.ctx.rules ?? ""}
-								</Markdown>
-							</div>
-						),
-					},
-					{
-						key: "register",
-						hidden: tournament.hasStarted,
-						element: (
-							<div className="stack lg">
-								{isRegularMemberOfATeam ? (
-									<div className="stack md items-center">
-										<Alert>{t("tournament:pre.inATeam")}</Alert>
-										{teamMemberOf && teamMemberOf.checkIns.length === 0 ? (
-											<FormWithConfirm
-												dialogHeading={`Leave "${tournament.teamMemberOfByUser(user)?.name}"?`}
-												fields={[["_action", "LEAVE_TEAM"]]}
-												submitButtonText="Leave"
+						) : null}
+
+						<div className="tournament__info__description">
+							<Markdown options={{ wrapper: React.Fragment }}>
+								{tournament.ctx.description ?? ""}
+							</Markdown>
+						</div>
+						<TOPickedMapPoolInfo />
+						<TiebreakerMapPoolInfo />
+					</div>
+				</SendouTabPanel>
+
+				{tournament.ctx.rules ? (
+					<SendouTabPanel id="rules">
+						<div className="tournament__info__description">
+							<Markdown options={{ wrapper: React.Fragment }}>
+								{tournament.ctx.rules ?? ""}
+							</Markdown>
+						</div>
+					</SendouTabPanel>
+				) : null}
+
+				{!tournament.hasStarted ? (
+					<SendouTabPanel id="register">
+						<div className="stack lg">
+							{isRegularMemberOfATeam ? (
+								<div className="stack md items-center">
+									<Alert>{t("tournament:pre.inATeam")}</Alert>
+									{teamMemberOf && teamMemberOf.checkIns.length === 0 ? (
+										<FormWithConfirm
+											dialogHeading={`Leave "${tournament.teamMemberOfByUser(user)?.name}"?`}
+											fields={[["_action", "LEAVE_TEAM"]]}
+											submitButtonText="Leave"
+										>
+											<SendouButton
+												className="small-text"
+												variant="minimal-destructive"
+												type="submit"
 											>
-												<SendouButton
-													className="build__small-text"
-													variant="minimal-destructive"
-													type="submit"
-												>
-													Leave the team
-												</SendouButton>
-											</FormWithConfirm>
-										) : null}
-									</div>
-								) : showAddIGNAlert ? (
-									<div>
-										<Alert variation="WARNING">
-											<div className="stack horizontal sm items-center flex-wrap justify-center text-center">
-												This tournament requires you to have an in-game name set{" "}
-												<LinkButton to={userEditProfilePage(user)} size="small">
-													Edit profile
-												</LinkButton>
-											</div>
-										</Alert>
-									</div>
-								) : (
-									<RegistrationForms />
-								)}
-								{user &&
-								!tournament.teamMemberOfByUser(user) &&
-								tournament.canAddNewSubPost &&
-								!showAddIGNAlert &&
-								!tournament.hasStarted ? (
-									<Link
-										to={tournamentSubsPage(tournament.ctx.id)}
-										className="text-xs text-center"
-									>
-										{t("tournament:pre.sub.prompt")}
-									</Link>
-								) : null}
-							</div>
-						),
-					},
-				]}
-			/>
+												Leave the team
+											</SendouButton>
+										</FormWithConfirm>
+									) : null}
+								</div>
+							) : showAddIGNAlert ? (
+								<div>
+									<Alert variation="WARNING">
+										<div className="stack horizontal sm items-center flex-wrap justify-center text-center">
+											This tournament requires you to have an in-game name set{" "}
+											<LinkButton to={userEditProfilePage(user)} size="small">
+												Edit profile
+											</LinkButton>
+										</div>
+									</Alert>
+								</div>
+							) : (
+								<RegistrationForms />
+							)}
+							{user &&
+							!tournament.teamMemberOfByUser(user) &&
+							tournament.canAddNewSubPost &&
+							!showAddIGNAlert &&
+							!tournament.hasStarted ? (
+								<Link
+									to={tournamentSubsPage(tournament.ctx.id)}
+									className="text-xs text-center"
+								>
+									{t("tournament:pre.sub.prompt")}
+								</Link>
+							) : null}
+						</div>
+					</SendouTabPanel>
+				) : null}
+			</SendouTabs>
 		</div>
 	);
 }
@@ -695,7 +694,7 @@ function TeamInfo({
 							<SendouButton
 								size="small"
 								variant="minimal-destructive"
-								className="build__small-text"
+								className="small-text"
 							>
 								{t("tournament:pre.info.unregister")}
 							</SendouButton>
@@ -711,7 +710,7 @@ function TeamInfo({
 						fields={[["_action", "UNREGISTER"]]}
 					>
 						<SendouButton
-							className="build__small-text"
+							className="small-text"
 							variant="minimal-destructive"
 							size="small"
 						>

@@ -8,7 +8,7 @@ import {
 import { normalizeFormFieldArray } from "~/utils/arrays";
 import { parseRequestPayload } from "~/utils/remix.server";
 import { userResultsPage } from "~/utils/urls";
-import { editHighlightsActionSchema } from "../user-page-schemas.server";
+import { editHighlightsActionSchema } from "../user-page-schemas";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = await requireUser(request);

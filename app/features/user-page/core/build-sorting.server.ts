@@ -2,7 +2,7 @@ import type { BuildSort } from "~/db/tables";
 import type * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { weaponIdToBucketId } from "~/modules/in-game-lists/weapon-ids";
+import { weaponIdToBaseWeaponId } from "~/modules/in-game-lists/weapon-ids";
 import { DEFAULT_BUILD_SORT } from "../user-page-constants";
 
 interface SortBuildsArgs {
@@ -56,13 +56,13 @@ export function sortBuilds({
 		WEAPON_POOL: (a, b) => {
 			const aLowestWeaponIdx = weaponPool.findIndex((wp) =>
 				a.weapons
-					.map((wpn) => weaponIdToBucketId(wpn.weaponSplId))
-					.includes(weaponIdToBucketId(wp)),
+					.map((wpn) => weaponIdToBaseWeaponId(wpn.weaponSplId))
+					.includes(weaponIdToBaseWeaponId(wp)),
 			);
 			const bLowestWeaponIdx = weaponPool.findIndex((wp) =>
 				b.weapons
-					.map((wpn) => weaponIdToBucketId(wpn.weaponSplId))
-					.includes(weaponIdToBucketId(wp)),
+					.map((wpn) => weaponIdToBaseWeaponId(wpn.weaponSplId))
+					.includes(weaponIdToBaseWeaponId(wp)),
 			);
 
 			if (aLowestWeaponIdx === -1 && bLowestWeaponIdx !== -1) return 1;

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 import { ability, modeShort, safeJSONParse } from "~/utils/zod";
 import { MAX_BUILD_FILTERS } from "./builds-constants";
 

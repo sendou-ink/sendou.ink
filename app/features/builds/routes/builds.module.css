@@ -1,10 +1,18 @@
-.builds__top-container {
+.divider {
+	height: 20px;
+	margin: auto 0;
+	width: 4px;
+	border-radius: var(--rounded);
+	background-color: var(--bg-lightest);
+}
+
+.topContainer {
 	display: flex;
 	align-items: center;
 	justify-content: flex-end;
 }
 
-.builds__category {
+.category {
 	display: flex;
 	flex-direction: column;
 	padding: var(--s-3);
@@ -15,19 +23,19 @@
 	gap: var(--s-4);
 }
 
-.builds__category__header {
+.categoryHeader {
 	display: flex;
 	align-items: center;
 	gap: var(--s-2-5);
 }
 
-.builds__category__weapons {
+.categoryWeapons {
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--s-3);
 }
 
-.builds__category__weapon {
+.categoryWeapon {
 	display: flex;
 	align-items: center;
 	color: var(--text);
@@ -36,7 +44,7 @@
 	gap: var(--s-1);
 }
 
-.builds__category__weapon__img {
+.categoryWeaponImg {
 	border-radius: var(--rounded);
 	background-color: var(--bg-darker);
 }

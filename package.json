@@ -36,7 +36,7 @@
 		"@epic-web/cachified": "^5.5.2",
 		"@faker-js/faker": "^9.7.0",
 		"@headlessui/react": "^1.7.19",
-		"@hookform/resolvers": "^5.0.1",
+		"@hookform/resolvers": "^5.1.1",
 		"@remix-run/node": "^2.16.5",
 		"@remix-run/react": "^2.16.5",
 		"@remix-run/serve": "^2.16.5",
@@ -81,7 +81,7 @@
 		"slugify": "^1.6.6",
 		"swr": "^2.3.3",
 		"web-push": "^3.6.7",
-		"zod": "^3.24.3"
+		"zod": "^3.25.61"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",

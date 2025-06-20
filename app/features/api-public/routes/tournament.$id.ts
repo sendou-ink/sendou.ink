@@ -1,7 +1,7 @@
 import { type LoaderFunctionArgs, json } from "@remix-run/node";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { cors } from "remix-utils/cors";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { db } from "~/db/sql";
 import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { databaseTimestampToDate } from "~/utils/dates";

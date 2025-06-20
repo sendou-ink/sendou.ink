@@ -1,0 +1,20 @@
+.bannedUsersContainer {
+	width: 100%;
+}
+
+.actionsCell {
+	text-align: center;
+	width: 100px;
+}
+
+.reasonCell {
+	max-width: 250px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.banPlayerButton {
+	display: flex;
+	justify-content: flex-end;
+}

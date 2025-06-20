@@ -743,6 +743,13 @@ export interface TournamentBracketProgressionOverride {
 	tournamentId: number;
 }
 
+export interface TournamentOrganizationBannedUser {
+	organizationId: number;
+	userId: number;
+	privateNote: string | null;
+	updatedAt: Generated<number>;
+}
+
 /** Indicates a user trusts another. Allows direct adding to groups/teams without invite links. */
 export interface TrustRelationship {
 	trustGiverUserId: number;
@@ -886,6 +893,24 @@ export interface UserFriendCode {
 	userId: number;
 	submitterUserId: number;
 	createdAt: GeneratedAlways<number>;
+}
+
+export interface BanLog {
+	id: GeneratedAlways<number>;
+	userId: number;
+	banned: number | null;
+	bannedReason: string | null;
+	bannedByUserId: number;
+	createdAt: GeneratedAlways<number>;
+}
+
+export interface ModNote {
+	id: GeneratedAlways<number>;
+	userId: number;
+	authorId: number;
+	text: string;
+	createdAt: GeneratedAlways<number>;
+	isDeleted: Generated<DBBoolean>;
 }
 
 export interface Video {
@@ -1039,6 +1064,8 @@ export interface DB {
 	BadgeManager: BadgeManager;
 	BadgeOwner: BadgeOwner;
 	TournamentBadgeOwner: TournamentBadgeOwner;
+	BanLog: BanLog;
+	ModNote: ModNote;
 	Build: Build;
 	BuildAbility: BuildAbility;
 	BuildWeapon: BuildWeapon;
@@ -1090,6 +1117,7 @@ export interface DB {
 	TournamentOrganizationBadge: TournamentOrganizationBadge;
 	TournamentOrganizationSeries: TournamentOrganizationSeries;
 	TournamentBracketProgressionOverride: TournamentBracketProgressionOverride;
+	TournamentOrganizationBannedUser: TournamentOrganizationBannedUser;
 	TrustRelationship: TrustRelationship;
 	UnvalidatedUserSubmittedImage: UnvalidatedUserSubmittedImage;
 	UnvalidatedVideo: UnvalidatedVideo;

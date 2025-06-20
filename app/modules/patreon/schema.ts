@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 import {
 	TIER_1_ID,
 	TIER_2_ID,

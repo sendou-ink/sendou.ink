@@ -110,6 +110,7 @@ export const action: ActionFunction = async ({ request }) => {
 					banned: 1,
 					bannedReason:
 						"[automatic ban] This friend code is already in use by some other account. Please contact staff on our Discord helpdesk for resolution including merging accounts.",
+					bannedByUserId: null,
 				});
 
 				refreshBannedCache();

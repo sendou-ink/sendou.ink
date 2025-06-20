@@ -109,8 +109,8 @@ function Association({
 						]}
 					>
 						<SendouButton
-							icon={<TrashIcon className="build__icon" />}
-							className="build__small-text"
+							icon={<TrashIcon className="small-icon" />}
+							className="small-text"
 							variant="minimal-destructive"
 							type="submit"
 							data-testid="delete-association"
@@ -249,8 +249,8 @@ function AssociationMember({
 					]}
 				>
 					<SendouButton
-						icon={<TrashIcon className="build__icon" />}
-						className="build__small-text"
+						icon={<TrashIcon className="small-icon" />}
+						className="small-text"
 						variant="minimal-destructive"
 						type="submit"
 					/>

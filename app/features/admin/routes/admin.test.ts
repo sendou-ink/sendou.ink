@@ -159,8 +159,8 @@ describe("Plus voting", () => {
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
 
-		expect(await countPlusTierMembers(1)).toBe(10);
-		expect(await countPlusTierMembers(2)).toBe(0);
+		expect(await countPlusTierMembers(1)).toBe(5);
+		expect(await countPlusTierMembers(2)).toBe(5);
 	});
 
 	test("plus server skip flag ignored if for past season", async () => {
@@ -177,8 +177,8 @@ describe("Plus voting", () => {
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
 
-		expect(await countPlusTierMembers(1)).toBe(10);
-		expect(await countPlusTierMembers(2)).toBe(1);
+		expect(await countPlusTierMembers(1)).toBe(5);
+		expect(await countPlusTierMembers(2)).toBe(6);
 	});
 
 	test("ignores leaderboard while season is ongoing", async () => {

@@ -1,4 +1,4 @@
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useFetcher, useSearchParams } from "@remix-run/react";
 import * as React from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -66,7 +66,7 @@ function FiltersForm({
 	const user = useUser();
 	const { t } = useTranslation(["game-misc", "calendar"]);
 	const methods = useForm({
-		resolver: zodResolver(calendarFiltersFormSchema),
+		resolver: standardSchemaResolver(calendarFiltersFormSchema),
 		defaultValues: filters,
 	});
 	const fetcher = useFetcher<any>();
@@ -81,7 +81,7 @@ function FiltersForm({
 
 	const onApply = React.useCallback(
 		methods.handleSubmit((values) => {
-			filtersToSearchParams(values);
+			filtersToSearchParams(values as CalendarFilters);
 			closeDialog();
 		}),
 		[],
@@ -89,7 +89,10 @@ function FiltersForm({
 
 	const onApplyAndPersist = React.useCallback(
 		methods.handleSubmit((values) =>
-			fetcher.submit(values, { method: "post", encType: "application/json" }),
+			fetcher.submit(values as Parameters<typeof fetcher.submit>[0], {
+				method: "post",
+				encType: "application/json",
+			}),
 		),
 		[],
 	);

@@ -1,7 +1,8 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 import { BADGE } from "~/features/badges/badges-constants";
 import { isCustomUrl } from "~/utils/urls";
 import {
+	_action,
 	actualNumber,
 	checkboxValueToDbBoolean,
 	customCssVarObject,
@@ -142,3 +143,18 @@ export const editHighlightsActionSchema = z.object({
 		z.union([z.array(z.string()), z.string()]),
 	),
 });
+
+export const addModNoteSchema = z.object({
+	_action: _action("ADD_MOD_NOTE"),
+	value: z.string().trim().min(1).max(USER.MOD_NOTE_MAX_LENGTH),
+});
+
+export const deleteModNoteSchema = z.object({
+	_action: _action("DELETE_MOD_NOTE"),
+	noteId: id,
+});
+
+export const adminTabActionSchema = z.union([
+	addModNoteSchema,
+	deleteModNoteSchema,
+]);

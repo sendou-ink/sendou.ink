@@ -1,7 +1,7 @@
 // @ts-nocheck
 
 import fs from "node:fs";
-import { abilitiesShort } from "~/modules/in-game-lists/types";
+import { abilitiesShort } from "~/modules/in-game-lists/abilities";
 import invariant from "~/utils/invariant";
 import {
 	LANG_JSONS_TO_CREATE,
@@ -40,6 +40,7 @@ const stages = [
 	"Robo ROM-en",
 	"Marlin Airport",
 	"Lemuria Hub",
+	"Urchin Underpass",
 ] as const;
 
 const abilityShortToInternalName = new Map([

@@ -3,7 +3,7 @@ import { requireUserId } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 import { userPage } from "~/utils/urls";
-import { userParamsSchema } from "../user-page-schemas.server";
+import { userParamsSchema } from "../user-page-schemas";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const user = await requireUserId(request);

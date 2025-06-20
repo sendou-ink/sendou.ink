@@ -1,4 +1,4 @@
-import type { z } from "zod";
+import type { z } from "zod/v4";
 import type { Tables } from "~/db/tables";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { videoMatchSchema, videoSchema } from "./vods-schemas";

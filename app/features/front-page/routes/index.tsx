@@ -6,8 +6,13 @@ import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
-import { NewTabs } from "~/components/NewTabs";
 import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanel,
+	SendouTabs,
+} from "~/components/elements/Tabs";
 import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import { BSKYLikeIcon } from "~/components/icons/BSKYLike";
 import { BSKYReplyIcon } from "~/components/icons/BSKYReply";
@@ -177,58 +182,44 @@ function TournamentCards() {
 		return null;
 	}
 
+	const showSignedUpTab = data.tournaments.participatingFor.length > 0;
+	const showOrganizerTab = data.tournaments.organizingFor.length > 0;
+	const showDiscoverTab = data.tournaments.showcase.length > 0;
+
 	return (
 		<div>
-			<NewTabs
-				disappearing
-				padded={false}
-				tabs={[
-					{
-						label: t("front:showcase.tabs.signedUp"),
-						hidden: data.tournaments.participatingFor.length === 0,
-						icon: <UsersIcon />,
-					},
-					{
-						label: t("front:showcase.tabs.organizer"),
-						hidden: data.tournaments.organizingFor.length === 0,
-						icon: <KeyIcon />,
-					},
-					{
-						label: t("front:showcase.tabs.discover"),
-						hidden: data.tournaments.showcase.length === 0,
-						icon: <SearchIcon />,
-					},
-				]}
-				content={[
-					{
-						key: "your",
-						hidden: data.tournaments.participatingFor.length === 0,
-						element: (
-							<ShowcaseTournamentScroller
-								tournaments={data.tournaments.participatingFor}
-							/>
-						),
-					},
-					{
-						key: "organizer",
-						hidden: data.tournaments.organizingFor.length === 0,
-						element: (
-							<ShowcaseTournamentScroller
-								tournaments={data.tournaments.organizingFor}
-							/>
-						),
-					},
-					{
-						key: "discover",
-						hidden: data.tournaments.showcase.length === 0,
-						element: (
-							<ShowcaseTournamentScroller
-								tournaments={data.tournaments.showcase}
-							/>
-						),
-					},
-				]}
-			/>
+			<SendouTabs padded={false}>
+				<SendouTabList>
+					{showSignedUpTab ? (
+						<SendouTab id="signed-up" icon={<UsersIcon />}>
+							{t("front:showcase.tabs.signedUp")}
+						</SendouTab>
+					) : null}
+					{showOrganizerTab ? (
+						<SendouTab id="organizer" icon={<KeyIcon />}>
+							{t("front:showcase.tabs.organizer")}
+						</SendouTab>
+					) : null}
+					{showDiscoverTab ? (
+						<SendouTab id="discover" icon={<SearchIcon />}>
+							{t("front:showcase.tabs.discover")}
+						</SendouTab>
+					) : null}
+				</SendouTabList>
+				<SendouTabPanel id="signed-up">
+					<ShowcaseTournamentScroller
+						tournaments={data.tournaments.participatingFor}
+					/>
+				</SendouTabPanel>
+				<SendouTabPanel id="organizer">
+					<ShowcaseTournamentScroller
+						tournaments={data.tournaments.organizingFor}
+					/>
+				</SendouTabPanel>
+				<SendouTabPanel id="discover">
+					<ShowcaseTournamentScroller tournaments={data.tournaments.showcase} />
+				</SendouTabPanel>
+			</SendouTabs>
 		</div>
 	);
 }
