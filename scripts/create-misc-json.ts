@@ -8,6 +8,7 @@ import {
 	loadLangDicts,
 	translationJsonFolderName,
 } from "./utils";
+import { brandIds } from "~/modules/in-game-lists/brand-ids";
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -116,6 +117,25 @@ async function main() {
 			translationsMap[`ABILITY_${ability}`] = translation;
 		}
 
+		for (const brandCode of brandIds) {
+			const translation = decodeURIComponent(
+				langDict["CommonMsg/Gear/GearBrandName"][brandCode],
+			);
+
+			translationsMap[`BRAND_${brandCode}`] = translation;
+		}
+
+		const jsonPath = path.join(
+			__dirname,
+			"..",
+			"locales",
+			translationJsonFolderName(langCode),
+			"game-misc.json",
+		);
+
+		const jsonCurrentContents = fs.readFileSync(jsonPath, "utf-8");
+		const jsonCurrent = JSON.parse(jsonCurrentContents);
+
 		fs.writeFileSync(
 			path.join(
 				__dirname,
@@ -124,7 +144,7 @@ async function main() {
 				translationJsonFolderName(langCode),
 				"game-misc.json",
 			),
-			`${JSON.stringify(translationsMap, null, 2)}\n`,
+			`${JSON.stringify({ ...jsonCurrent, ...translationsMap }, null, 2)}\n`,
 		);
 	}
 }
