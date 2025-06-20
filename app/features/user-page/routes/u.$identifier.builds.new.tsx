@@ -273,50 +273,52 @@ function GearSelector({
 }) {
 	const { buildToEdit, gearIdToAbilities } = useLoaderData<typeof loader>();
 	const { t } = useTranslation("builds");
-
-	const initialGearId = () => {
+	const [value, setValue] = React.useState(() => {
 		const gearId = !buildToEdit
-			? undefined
+			? null
 			: type === "HEAD"
 				? buildToEdit.headGearSplId
 				: type === "CLOTHES"
 					? buildToEdit.clothesGearSplId
 					: buildToEdit.shoesGearSplId;
 
-		if (gearId === -1) return undefined;
+		if (gearId === -1) return null;
 
 		return gearId;
-	};
+	});
 
 	return (
-		<GearSelect
-			label={t(`forms.gear.${type}`)}
-			type={type}
-			initialValue={initialGearId()}
-			clearable
-			// onChange only exists to copy abilities from existing gear
-			// actual value of combobox is handled in uncontrolled manner
-			onChange={(gearId) => {
-				if (!gearId) return;
+		<>
+			<input type="hidden" name={type} value={value ?? ""} />
+			<GearSelect
+				label={t(`forms.gear.${type}`)}
+				type={type}
+				value={value}
+				clearable
+				onChange={(gearId) => {
+					setValue(gearId);
 
-				const abilitiesFromExistingGear =
-					gearIdToAbilities[`${type}_${gearId}`];
+					if (!gearId) return;
 
-				if (!abilitiesFromExistingGear) return;
+					const abilitiesFromExistingGear =
+						gearIdToAbilities[`${type}_${gearId}`];
 
-				const gearIndex = type === "HEAD" ? 0 : type === "CLOTHES" ? 1 : 2;
+					if (!abilitiesFromExistingGear) return;
 
-				const currentAbilities = abilities[gearIndex];
+					const gearIndex = type === "HEAD" ? 0 : type === "CLOTHES" ? 1 : 2;
 
-				// let's not overwrite current selections
-				if (!currentAbilities.every((a) => a === "UNKNOWN")) return;
+					const currentAbilities = abilities[gearIndex];
 
-				const newAbilities = structuredClone(abilities);
-				newAbilities[gearIndex] = abilitiesFromExistingGear;
+					// let's not overwrite current selections
+					if (!currentAbilities.every((a) => a === "UNKNOWN")) return;
 
-				setAbilities(newAbilities);
-			}}
-		/>
+					const newAbilities = structuredClone(abilities);
+					newAbilities[gearIndex] = abilitiesFromExistingGear;
+
+					setAbilities(newAbilities);
+				}}
+			/>
+		</>
 	);
 }
 

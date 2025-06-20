@@ -3,16 +3,9 @@ import clsx from "clsx";
 import Fuse, { type IFuseOptions } from "fuse.js";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import type { GearType } from "~/db/tables";
 import type { SerializedMapPoolEvent } from "~/features/calendar/routes/map-pool-events";
 import { useAllEventsWithMapPools } from "~/hooks/swr";
-import {
-	clothesGearIds,
-	headGearIds,
-	shoesGearIds,
-} from "~/modules/in-game-lists/gear-ids";
 import type { Unpacked } from "~/utils/types";
-import { gearImageUrl } from "~/utils/urls";
 import { Image } from "./Image";
 
 const MAX_RESULTS_SHOWN = 6;
@@ -177,51 +170,6 @@ export function Combobox<
 				<HeadlessCombobox.Button ref={buttonRef} className="hidden" />
 			</HeadlessCombobox>
 		</div>
-	);
-}
-
-export function GearCombobox({
-	id,
-	required,
-	className,
-	inputName,
-	onChange,
-	gearType,
-	initialGearId,
-	nullable,
-}: Pick<
-	ComboboxProps<ComboboxBaseOption>,
-	"inputName" | "onChange" | "className" | "id" | "required" | "nullable"
-> & { gearType: GearType; initialGearId?: number }) {
-	const { t } = useTranslation("gear");
-
-	const translationPrefix =
-		gearType === "HEAD" ? "H" : gearType === "CLOTHES" ? "C" : "S";
-	const ids =
-		gearType === "HEAD"
-			? headGearIds
-			: gearType === "CLOTHES"
-				? clothesGearIds
-				: shoesGearIds;
-
-	const idToGear = (id: (typeof ids)[number]) => ({
-		value: String(id),
-		label: t(`${translationPrefix}_${id}` as any),
-		imgPath: gearImageUrl(gearType, id),
-	});
-
-	return (
-		<Combobox
-			inputName={inputName}
-			options={ids.map(idToGear)}
-			placeholder={idToGear(ids[0]).label}
-			initialValue={initialGearId ? idToGear(initialGearId as any) : null}
-			onChange={onChange}
-			className={className}
-			id={id}
-			required={required}
-			nullable={nullable}
-		/>
 	);
 }
 
