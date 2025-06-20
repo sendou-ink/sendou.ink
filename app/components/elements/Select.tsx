@@ -46,7 +46,6 @@ interface SendouSelectProps<T extends object>
 	clearable?: boolean;
 }
 
-// xxx: ticket for cant be cleared? (country input)
 export function SendouSelect<T extends object>({
 	label,
 	description,

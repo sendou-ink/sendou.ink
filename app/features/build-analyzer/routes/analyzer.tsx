@@ -247,8 +247,7 @@ function BuildAnalyzerPage() {
 					<div className="stack sm items-center w-full">
 						<div className="w-full">
 							<WeaponSelect
-								// xxx: translate
-								label="Weapon to analyze"
+								label={t("analyzer:weaponSelect.label")}
 								initialValue={mainWeaponId}
 								onChange={(val) =>
 									handleChange({

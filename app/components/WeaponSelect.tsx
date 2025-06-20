@@ -88,7 +88,9 @@ export function WeaponSelect<
 
 	return (
 		<SendouSelect
-			aria-label={!label ? "Select a weapon" : undefined}
+			aria-label={
+				!label ? t("common:forms.weaponSearch.placeholder") : undefined
+			}
 			items={items}
 			label={label}
 			placeholder={t("common:forms.weaponSearch.placeholder")}

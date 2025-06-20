@@ -214,6 +214,7 @@ function CountrySelect() {
 	const { t, i18n } = useTranslation(["user"]);
 	const data = useLoaderData<typeof loader>();
 	const isMounted = useIsMounted();
+	const [value, setValue] = React.useState(data.user.country ?? null);
 
 	const displayName = new Intl.DisplayNames(i18n.language, { type: "region" });
 
@@ -229,22 +230,26 @@ function CountrySelect() {
 	);
 
 	return (
-		<SendouSelect
-			items={items}
-			label={t("user:country")}
-			search={{
-				placeholder: t("user:forms.country.search.placeholder"),
-			}}
-			name="country"
-			defaultSelectedKey={data.user.country ?? undefined}
-			className={styles.countrySelect}
-		>
-			{({ key, ...item }) => (
-				<SendouSelectItem key={key} {...item}>
-					{item.name}
-				</SendouSelectItem>
-			)}
-		</SendouSelect>
+		<>
+			{/* TODO: this is a workaround for clearable not working with uncontrolled values, in future the component should handle this one way or another */}
+			<input type="hidden" name="country" value={value ?? ""} />
+			<SendouSelect
+				items={items}
+				label={t("user:country")}
+				search={{
+					placeholder: t("user:forms.country.search.placeholder"),
+				}}
+				selectedKey={value}
+				onSelectionChange={(value) => setValue(value as string | null)}
+				clearable
+			>
+				{({ key, ...item }) => (
+					<SendouSelectItem key={key} {...item}>
+						{item.name}
+					</SendouSelectItem>
+				)}
+			</SendouSelect>
+		</>
 	);
 }
 
