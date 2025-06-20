@@ -7,7 +7,7 @@ import type { CalendarFilters } from "~/features/calendar/calendar-types";
 import type { StageBackgroundStyle } from "~/features/map-planner";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import { JOIN_CODE_SEARCH_PARAM_KEY } from "~/features/sendouq/q-constants";
-import type { ModeShort } from "~/modules/in-game-lists/types";
+import type { BrandId, ModeShort } from "~/modules/in-game-lists/types";
 import type {
 	Ability,
 	AbilityWithUnknown,
@@ -491,12 +491,12 @@ export const specialWeaponVariantImageUrl = (
 	`/static-assets/img/special-weapons/variants/${specialWeaponSplId}-${variant}`;
 export const abilityImageUrl = (ability: AbilityWithUnknown) =>
 	`/static-assets/img/abilities/${ability}`;
+export const brandImageUrl = (brand: BrandId) =>
+	`/static-assets/img/brands/${brand}`;
 export const modeImageUrl = (mode: ModeShortWithSpecial) =>
 	`/static-assets/img/modes/${mode}`;
 export const stageImageUrl = (stageId: StageId) =>
 	`/static-assets/img/stages/${stageId}`;
-export const brandImageUrl = (brand: "tentatek" | "takoroka") =>
-	`/static-assets/img/layout/${brand}`;
 export const tierImageUrl = (tier: TierName | "CALCULATING") =>
 	`/static-assets/img/tiers/${tier.toLowerCase()}`;
 export const preferenceEmojiUrl = (preference?: Preference) => {

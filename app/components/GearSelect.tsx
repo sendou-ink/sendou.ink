@@ -14,9 +14,9 @@ import {
 	headGearBrandGrouped,
 	shoesGearBrandGrouped,
 } from "~/modules/in-game-lists/gear-ids";
+import type { BrandId } from "~/modules/in-game-lists/types";
 import { filterGear } from "~/modules/in-game-lists/utils";
-import { SPLAT_BOMB_ID } from "~/modules/in-game-lists/weapon-ids";
-import { gearImageUrl, subWeaponImageUrl } from "~/utils/urls";
+import { brandImageUrl, gearImageUrl } from "~/utils/urls";
 
 import styles from "./WeaponSelect.module.css";
 
@@ -94,13 +94,13 @@ function CategoryHeading({
 	brandId,
 }: {
 	className?: string;
-	brandId: string;
+	brandId: BrandId;
 }) {
 	const { t } = useTranslation(["game-misc"]);
 
 	return (
 		<div className={clsx(className, styles.categoryHeading)}>
-			<Image path={subWeaponImageUrl(SPLAT_BOMB_ID)} size={28} alt="" />
+			<Image path={brandImageUrl(brandId)} size={28} alt="" />
 			{t(`game-misc:BRAND_${brandId}` as any)}
 			<div className={styles.categoryDivider} />
 		</div>

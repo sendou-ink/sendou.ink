@@ -1,4 +1,5 @@
 import type { abilities } from "./abilities";
+import type { brandIds } from "./brand-ids";
 import type { modesShort, modesShortWithSpecial } from "./modes";
 import type { stageIds } from "./stage-ids";
 import type {
@@ -48,3 +49,5 @@ export type BuildAbilitiesTupleWithUnknown = [
 		s3: AbilityWithUnknown,
 	],
 ];
+
+export type BrandId = (typeof brandIds)[number];
