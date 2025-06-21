@@ -69,6 +69,7 @@ export const UserSearch = React.forwardRef(function UserSearch<
 			placeholder=""
 			selectedKey={selectedKey}
 			onSelectionChange={onSelectionChange as (key: Key | null) => void}
+			aria-label="User search"
 			{...rest}
 		>
 			{label ? (

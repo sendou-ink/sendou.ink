@@ -52,7 +52,7 @@ test.describe("VoDs page", () => {
 		await selectWeapon({
 			name: "Zink Mini Splatling",
 			page,
-			inputName: "match-0-weapon",
+			testId: "match-0-weapon",
 		});
 
 		await page.getByTestId("add-field-button").click();
@@ -63,7 +63,7 @@ test.describe("VoDs page", () => {
 		await selectWeapon({
 			name: "Tenta Brella",
 			page,
-			inputName: "match-1-weapon",
+			testId: "match-1-weapon",
 		});
 
 		await submit(page);
@@ -105,7 +105,7 @@ test.describe("VoDs page", () => {
 			await selectWeapon({
 				name: i < 4 ? "Luna Blaster" : "Tenta Brella",
 				page,
-				inputName: `player-${i}-weapon`,
+				testId: `player-${i}-weapon`,
 			});
 		}
 
@@ -131,7 +131,7 @@ test.describe("VoDs page", () => {
 		await selectWeapon({
 			name: "Luna Blaster",
 			page,
-			inputName: "match-3-weapon",
+			testId: "match-3-weapon",
 		});
 
 		await submit(page);
@@ -149,8 +149,10 @@ test.describe("VoDs page", () => {
 			url: VODS_PAGE,
 		});
 
-		await page.getByText("N-ZAP").isVisible();
+		const nzapUserPageLink = page.getByRole("link", { name: "N-ZAP" });
+
+		await nzapUserPageLink.isVisible();
 		await selectWeapon({ page, name: "Carbon Roller" });
-		await isNotVisible(page.getByText("N-ZAP"));
+		await isNotVisible(nzapUserPageLink);
 	});
 });

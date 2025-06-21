@@ -13,12 +13,12 @@ import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
-import { WeaponCombobox } from "~/components/Combobox";
 import { Divider } from "~/components/Divider";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, ModeImage, StageImage, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
+import { WeaponSelect } from "~/components/WeaponSelect";
 import { LinkButton } from "~/components/elements/Button";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -30,7 +30,6 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { ArchiveBoxIcon } from "~/components/icons/ArchiveBox";
-import { CrossIcon } from "~/components/icons/Cross";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { RefreshArrowsIcon } from "~/components/icons/RefreshArrows";
 import { ScaleIcon } from "~/components/icons/Scale";
@@ -42,7 +41,6 @@ import { AddPrivateNoteDialog } from "~/features/sendouq-match/components/AddPri
 import type { ReportedWeaponForMerging } from "~/features/sendouq-match/core/reported-weapons.server";
 import { GroupCard } from "~/features/sendouq/components/GroupCard";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
-import { useRecentlyReportedWeapons } from "~/features/sendouq/q-hooks";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useWindowSize } from "~/hooks/useWindowSize";
@@ -414,8 +412,6 @@ function ReportWeaponsForm() {
 	const [reportingMode, setReportingMode] = React.useState<
 		"ALL" | "MYSELF" | "MY_TEAM"
 	>("MYSELF");
-	const { recentlyReportedWeapons, addRecentlyReportedWeapon } =
-		useRecentlyReportedWeapons();
 
 	const playedMaps = data.match.mapList.filter((m) => m.winnerGroupId);
 	const winners = playedMaps.map((m) =>
@@ -479,7 +475,7 @@ function ReportWeaponsForm() {
 				name="weapons"
 				value={JSON.stringify(weaponsUsage)}
 			/>
-			<div className="stack horizontal sm justify-between w-max mx-auto">
+			<div className="stack horizontal md justify-between w-max mx-auto">
 				<h3 className="text-md">{t("q:match.report.whoToReport")}</h3>
 				<label className="stack horizontal xs items-center mb-0">
 					{t("q:match.report.whoToReport.me")}
@@ -573,27 +569,9 @@ function ReportWeaponsForm() {
 													)}
 												</div>
 												<div className="stack horizontal sm items-center">
-													<WeaponImage
-														weaponSplId={weaponSplId ?? 0}
-														variant="badge"
-														width={32}
-														className={clsx("ml-auto", {
-															invisible: typeof weaponSplId !== "number",
-														})}
-													/>
-													<WeaponCombobox
-														inputName="weapon"
-														value={weaponSplId}
-														quickSelectWeaponIds={recentlyReportedWeapons}
-														onChange={(weapon) => {
-															if (!weapon) return;
-
-															const weaponSplId = Number(
-																weapon.value,
-															) as MainWeaponId;
-
-															addRecentlyReportedWeapon(weaponSplId);
-
+													<WeaponSelect
+														value={weaponSplId ?? undefined}
+														onChange={(weaponSplId) => {
 															setWeaponsUsage((val) => {
 																const result = val.filter(
 																	(reportedWeapon) =>
@@ -953,8 +931,6 @@ function MapList({
 	const [ownWeaponsUsage, setOwnWeaponsUsage] = React.useState<
 		ReportedWeaponForMerging[]
 	>([]);
-	const { recentlyReportedWeapons, addRecentlyReportedWeapon } =
-		useRecentlyReportedWeapons();
 
 	const previouslyReportedWinners = isResubmission
 		? data.match.mapList
@@ -1000,11 +976,6 @@ function MapList({
 								setWinners={setWinners}
 								weapons={data.reportedWeapons?.[i]}
 								showReportedOwnWeapon={!ownWeaponReported}
-								recentlyReportedWeapons={recentlyReportedWeapons}
-								addRecentlyReportedWeapon={addRecentlyReportedWeapon}
-								ownWeapon={
-									ownWeaponsUsage.find((w) => w.mapIndex === i)?.weaponSplId
-								}
 								onOwnWeaponSelected={(newReportedWeapon) => {
 									if (!newReportedWeapon) return;
 
@@ -1060,11 +1031,8 @@ function MapListMap({
 	setWinners,
 	canReportScore,
 	weapons,
-	ownWeapon,
 	onOwnWeaponSelected,
 	showReportedOwnWeapon,
-	recentlyReportedWeapons,
-	addRecentlyReportedWeapon,
 }: {
 	i: number;
 	map: Unpacked<SerializeFrom<typeof loader>["match"]["mapList"]>;
@@ -1072,11 +1040,8 @@ function MapListMap({
 	setWinners?: (winners: ("ALPHA" | "BRAVO")[]) => void;
 	canReportScore: boolean;
 	weapons?: (MainWeaponId | null)[] | null;
-	ownWeapon?: MainWeaponId | null;
 	onOwnWeaponSelected?: (weapon: ReportedWeaponForMerging | null) => void;
 	showReportedOwnWeapon: boolean;
-	recentlyReportedWeapons?: MainWeaponId[];
-	addRecentlyReportedWeapon?: (weapon: MainWeaponId) => void;
 }) {
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
@@ -1230,15 +1195,6 @@ function MapListMap({
 						<label className="mb-0 text-theme-secondary">
 							{t("q:match.report.winnerLabel")}
 						</label>
-						<div className="stack items-center">
-							<div
-								className={clsx("q-match__result-dot", {
-									"q-match__result-dot__won": winners[i] === data.groupMemberOf,
-									"q-match__result-dot__lost":
-										winners[i] && winners[i] !== data.groupMemberOf,
-								})}
-							/>
-						</div>
 						<div className="stack sm horizontal items-center">
 							<div className="stack sm horizontal items-center font-semi-bold">
 								<input
@@ -1273,68 +1229,24 @@ function MapListMap({
 								<label className="mb-0 text-theme-secondary">
 									{t("q:match.report.weaponLabel")}
 								</label>
-								<div
-									className={clsx({ invisible: typeof ownWeapon !== "number" })}
-								>
-									{typeof ownWeapon === "number" ? (
-										<WeaponImage
-											weaponSplId={ownWeapon}
-											variant="badge"
-											size={36}
-										/>
-									) : (
-										<WeaponImage
-											weaponSplId={0}
-											variant="badge"
-											size={36}
-											className="invisible"
-										/>
-									)}
-								</div>
-								{typeof ownWeapon === "number" ? (
-									<div className="font-bold stack sm horizontal">
-										{t(`weapons:MAIN_${ownWeapon}`)}
-										<SendouButton
-											size="small"
-											icon={<CrossIcon />}
-											variant="minimal-destructive"
-											onPress={() => {
-												const userId = user!.id;
-												const groupMatchMapId = map.id;
+								<WeaponSelect
+									clearable
+									onChange={(weaponSplId) => {
+										const userId = user!.id;
+										const groupMatchMapId = map.id;
 
-												onOwnWeaponSelected({
-													mapIndex: i,
-													groupMatchMapId,
-													userId,
-												});
-											}}
-										/>
-									</div>
-								) : (
-									<WeaponCombobox
-										inputName="weapon"
-										quickSelectWeaponIds={recentlyReportedWeapons}
-										onChange={(weapon) => {
-											const userId = user!.id;
-											const groupMatchMapId = map.id;
-
-											const weaponSplId = Number(weapon?.value) as MainWeaponId;
-
-											addRecentlyReportedWeapon?.(weaponSplId);
-
-											onOwnWeaponSelected(
-												weapon
-													? {
-															weaponSplId,
-															mapIndex: i,
-															groupMatchMapId,
-															userId,
-														}
-													: null,
-											);
-										}}
-									/>
-								)}
+										onOwnWeaponSelected(
+											typeof weaponSplId === "number"
+												? {
+														weaponSplId,
+														mapIndex: i,
+														groupMatchMapId,
+														userId,
+													}
+												: null,
+										);
+									}}
+								/>
 							</>
 						) : null}
 					</div>

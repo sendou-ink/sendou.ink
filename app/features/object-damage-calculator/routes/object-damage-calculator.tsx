@@ -3,11 +3,10 @@ import clsx from "clsx";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Ability } from "~/components/Ability";
-import { AllWeaponCombobox } from "~/components/Combobox";
 import { Image, WeaponImage } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import type { AnyWeapon, DamageType } from "~/features/build-analyzer";
+import type { DamageType } from "~/features/build-analyzer";
 import { possibleApValues } from "~/features/build-analyzer";
 import {
 	BIG_BUBBLER_ID,
@@ -39,6 +38,7 @@ import { useObjectDamage } from "../calculator-hooks";
 import type { DamageReceiver } from "../calculator-types";
 import "../calculator.css";
 import type { MetaFunction } from "@remix-run/node";
+import { WeaponSelect } from "~/components/WeaponSelect";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { metaTags } from "~/utils/remix";
 
@@ -84,22 +84,13 @@ export default function ObjectDamagePage() {
 				<div className="object-damage__selects">
 					<div className="object-damage__selects__weapon">
 						<Label htmlFor="weapon">{t("analyzer:labels.weapon")}</Label>
-						<AllWeaponCombobox
-							id="weapon"
-							inputName="weapon"
-							onChange={(opt) => {
-								if (!opt) return;
-
-								const [type, id] = opt.value.split("_");
-
+						<WeaponSelect
+							includeSubSpecial
+							onChange={(newAnyWeapon) => {
 								handleChange({
-									newAnyWeapon: {
-										id: Number(id),
-										type,
-									} as AnyWeapon,
+									newAnyWeapon,
 								});
 							}}
-							fullWidth
 						/>
 					</div>
 					{allDamageTypes.length > 0 ? (

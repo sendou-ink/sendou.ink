@@ -24,7 +24,8 @@
 	"forms.tags.cantFindExisting": "¿No eucuentras una etiqueta existente?",
 	"forms.tags.addNew": "Crear nueva.",
 	"forms.tags.addNew.placeholder": "Crear una nueva etiqueta",
-	"forms.tags.searchExisting.placeholder": "Buscar etiquetas existentes",
+	"forms.tags.search.placeholder": "",
+	"forms.tags.placeholder": "",
 	"forms.tags.maxReached": "Limite máximo de etiquetas",
 	"delete.title": "",
 	"unlink.title": ""

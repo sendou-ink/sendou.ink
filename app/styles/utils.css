@@ -222,6 +222,10 @@
 	padding-block-start: 0;
 }
 
+.pt-0-5-forced {
+	padding-block-start: var(--s-0-5) !important;
+}
+
 .pt-8-forced {
 	padding-block-start: var(--s-8) !important;
 }
@@ -235,7 +239,7 @@
 }
 
 .mt-0 {
-	margin-block-start: var(--s-0);
+	margin-block-start: 0;
 }
 
 .-mt-1px {

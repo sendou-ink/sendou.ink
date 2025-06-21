@@ -21,7 +21,8 @@
 	"forms.tags.cantFindExisting": "タグが見つからない場合:",
 	"forms.tags.addNew": "新規作成してください。",
 	"forms.tags.addNew.placeholder": "新しいタグを作成",
-	"forms.tags.searchExisting.placeholder": "既存のタグを検索する",
+	"forms.tags.search.placeholder": "",
+	"forms.tags.placeholder": "",
 	"forms.tags.maxReached": "タグの最大数に到達しました",
 	"delete.title": "",
 	"unlink.title": ""

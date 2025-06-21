@@ -3,7 +3,6 @@ import type { ShouldRevalidateFunction } from "@remix-run/react";
 import { useLoaderData, useSearchParams } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { AddNewButton } from "~/components/AddNewButton";
-import { Combobox } from "~/components/Combobox";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { SendouButton } from "~/components/elements/Button";
@@ -14,6 +13,7 @@ import { artPage, navIconUrl, newArtPage } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
 import { FILTERED_TAG_KEY_SEARCH_PARAM_KEY } from "../art-constants";
 import { ArtGrid } from "../components/ArtGrid";
+import { TagSelect } from "../components/TagSelect";
 
 import { loader } from "../loaders/art.server";
 export { loader };
@@ -87,20 +87,12 @@ export default function ArtPage() {
 					</Label>
 				</div>
 				<div className="stack horizontal sm items-center">
-					<Combobox
+					<TagSelect
 						key={filteredTag}
-						options={data.allTags.map((t) => ({
-							label: t.name,
-							value: String(t.id),
-						}))}
-						inputName="tags"
-						placeholder={t("art:filterByTag")}
-						initialValue={null}
-						onChange={(selection) => {
-							if (!selection) return;
-
+						tags={data.allTags}
+						onSelectionChange={(tagName) => {
 							setSearchParams((prev) => {
-								prev.set(FILTERED_TAG_KEY_SEARCH_PARAM_KEY, selection.label);
+								prev.set(FILTERED_TAG_KEY_SEARCH_PARAM_KEY, tagName as string);
 								return prev;
 							});
 						}}

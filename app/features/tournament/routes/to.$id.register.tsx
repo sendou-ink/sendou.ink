@@ -46,8 +46,8 @@ import {
 	LOG_IN_URL,
 	SENDOU_INK_BASE_URL,
 	SENDOU_INK_DISCORD_URL,
+	mapsPageWithMapPool,
 	navIconUrl,
-	readonlyMapsPage,
 	tournamentJoinPage,
 	tournamentOrganizationPage,
 	tournamentSubsPage,
@@ -1319,13 +1319,15 @@ function TOPickedMapPoolInfo() {
 
 	if (tournament.ctx.toSetMapPool.length === 0) return null;
 
+	const mapPool = new MapPool(tournament.ctx.toSetMapPool);
+
 	return (
 		<Section title={t("calendar:forms.mapPool")}>
 			<div className="event__map-pool-section">
-				<MapPoolStages mapPool={new MapPool(tournament.ctx.toSetMapPool)} />
+				<MapPoolStages mapPool={mapPool} />
 				<LinkButton
 					className="event__create-map-list-link"
-					to={readonlyMapsPage(tournament.ctx.eventId)}
+					to={mapsPageWithMapPool(mapPool)}
 					variant="outlined"
 					size="small"
 				>

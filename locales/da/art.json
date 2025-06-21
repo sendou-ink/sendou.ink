@@ -23,7 +23,8 @@
 	"forms.tags.cantFindExisting": "Kan du ikke finde en eksisterende etiket?",
 	"forms.tags.addNew": "Lav en ny en",
 	"forms.tags.addNew.placeholder": "Lav en ny etiket",
-	"forms.tags.searchExisting.placeholder": "Søg i eksisterende etiketter",
+	"forms.tags.search.placeholder": "",
+	"forms.tags.placeholder": "",
 	"forms.tags.maxReached": "Maks antal etiketter opnået",
 	"delete.title": "",
 	"unlink.title": ""

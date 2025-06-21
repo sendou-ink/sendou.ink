@@ -6,10 +6,6 @@
 	gap: var(--s-6);
 }
 
-.countrySelect {
-	max-width: 10rem;
-}
-
 .inGameNameText {
 	max-width: 8rem;
 }

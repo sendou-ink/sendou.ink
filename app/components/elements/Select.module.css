@@ -64,6 +64,9 @@
 .listBox {
 	overflow: auto;
 	flex: 1;
+	scrollbar-color: rgb(83 65 91) rgba(83 65 91 / 0.3);
+	scrollbar-width: thin;
+	scrollbar-gutter: stable;
 }
 
 .item {
@@ -76,6 +79,11 @@
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	overflow: hidden;
+}
+
+.item[data-disabled] {
+	color: var(--text-lighter);
+	font-style: italic;
 }
 
 .itemFocused {
@@ -133,4 +141,14 @@
 	text-align: center;
 	padding-block: var(--s-8);
 	color: var(--text-lighter);
+}
+
+.select {
+	position: relative;
+}
+
+.clearButton {
+	position: absolute;
+	bottom: -17px;
+	right: 9px;
 }

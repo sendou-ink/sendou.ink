@@ -14,6 +14,7 @@ import {
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { brandIds } from "~/modules/in-game-lists/brand-ids";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -29,6 +30,7 @@ async function main() {
 		id: number;
 		internalName: string;
 		type: string;
+		brand: string;
 		translations: Array<{ language: string; name: string }>;
 	}> = [];
 	const langDicts = await loadLangDicts();
@@ -54,6 +56,7 @@ async function main() {
 			id: gear.Id,
 			type,
 			internalName,
+			brand: gear.Brand,
 			translations: langDicts.map(([langCode, translations]) => {
 				const name = translations[categoryKey]?.[internalName];
 				invariant(name, `Missing translation for ${internalName}`);
@@ -80,9 +83,24 @@ async function main() {
 	invariant(clothesGear.length);
 	invariant(shoesGear.length);
 
-	const headIds = headGear.map((w) => w.id);
-	const clothesIds = clothesGear.map((w) => w.id);
-	const shoesIds = shoesGear.map((w) => w.id);
+	const headIds = Object.fromEntries(
+		brandIds.map((brand) => [
+			brand,
+			headGear.filter((w) => w.brand === brand).map((w) => w.id),
+		]),
+	);
+	const clothesIds = Object.fromEntries(
+		brandIds.map((brand) => [
+			brand,
+			clothesGear.filter((w) => w.brand === brand).map((w) => w.id),
+		]),
+	);
+	const shoesIds = Object.fromEntries(
+		brandIds.map((brand) => [
+			brand,
+			shoesGear.filter((w) => w.brand === brand).map((w) => w.id),
+		]),
+	);
 
 	fs.writeFileSync(
 		path.join(OUTPUT_DIR_PATH, "head-ids.json"),

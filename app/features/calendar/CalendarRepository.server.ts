@@ -15,7 +15,6 @@ import type {
 	TournamentSettings,
 } from "~/db/tables";
 import { EXCLUDED_TAGS } from "~/features/calendar/calendar-constants";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
 	databaseTimestampNow,
@@ -429,29 +428,6 @@ function tagsArray(args: {
 	return tags;
 }
 
-export async function findRecentMapPoolsByAuthorId(authorId: number) {
-	const rows = await db
-		.selectFrom("CalendarEvent")
-		.innerJoin("MapPoolMap", "CalendarEvent.id", "MapPoolMap.calendarEventId")
-		.select(({ eb }) => [
-			"CalendarEvent.id",
-			"CalendarEvent.name",
-			withMapPool(eb),
-		])
-		.where("CalendarEvent.authorId", "=", authorId)
-		.where("CalendarEvent.hidden", "=", 0)
-		.orderBy("CalendarEvent.id", "desc")
-		.groupBy("CalendarEvent.id")
-		.limit(5)
-		.execute();
-
-	return rows.map((row) => ({
-		id: row.id,
-		name: row.name,
-		serializedMapPool: MapPool.serialize(row.mapPool),
-	}));
-}
-
 export async function findResultsByEventId(eventId: number) {
 	return db
 		.selectFrom("CalendarEventResultTeam")
@@ -481,31 +457,6 @@ export async function findResultsByEventId(eventId: number) {
 		.where("CalendarEventResultTeam.eventId", "=", eventId)
 		.orderBy("CalendarEventResultTeam.placement", "asc")
 		.execute();
-}
-
-export async function allEventsWithMapPools() {
-	const rows = await db
-		.selectFrom("CalendarEvent")
-		.select(({ eb }) => [
-			"CalendarEvent.id",
-			"CalendarEvent.name",
-			jsonArrayFrom(
-				eb
-					.selectFrom("MapPoolMap")
-					.select(["MapPoolMap.stageId", "MapPoolMap.mode"])
-					.whereRef("MapPoolMap.calendarEventId", "=", "CalendarEvent.id"),
-			).as("mapPool"),
-		])
-		.innerJoin("MapPoolMap", "CalendarEvent.id", "MapPoolMap.calendarEventId")
-		.groupBy("CalendarEvent.id")
-		.orderBy("CalendarEvent.id", "desc")
-		.execute();
-
-	return rows.map((row) => ({
-		id: row.id,
-		name: row.name,
-		serializedMapPool: MapPool.serialize(row.mapPool),
-	}));
 }
 
 type CreateArgs = Pick<

@@ -15,6 +15,9 @@ interface PlacementsTableProps {
 	type?: "PLAYER_NAME" | "MODE_INFO";
 }
 
+const TENTATEK_BRAND_ID = "B10";
+const TAKOROKA_BRAND_ID = "B11";
+
 export function PlacementsTable({
 	placements,
 	type = "PLAYER_NAME",
@@ -46,7 +49,9 @@ export function PlacementsTable({
 												: "Takoroka Division"
 										}
 										path={brandImageUrl(
-											placement.region === "WEST" ? "tentatek" : "takoroka",
+											placement.region === "WEST"
+												? TENTATEK_BRAND_ID
+												: TAKOROKA_BRAND_ID,
 										)}
 										width={24}
 									/>
