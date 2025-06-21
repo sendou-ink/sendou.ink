@@ -801,15 +801,15 @@
 	},
 	"splattershotpro": {
 		"displayName": "MIDLINES ONLY",
-		"authorDiscordId": "342369454719631361"
-	},
-	"splattershotproforge": {
-		"displayName": "MIDLINES ONLY: FORGE",
-		"authorDiscordId": "342369454719631361"
+		"authorDiscordId": "336683473714544641"
 	},
 	"splattershotproberry": {
 		"displayName": "MIDLINES ONLY: BERRY",
-		"authorDiscordId": "342369454719631361"
+		"authorDiscordId": "336683473714544641"
+	},
+	"splattershotproforge": {
+		"displayName": "MIDLINES ONLY: FORGE",
+		"authorDiscordId": "336683473714544641"
 	},
 	"squidtheforce": {
 		"displayName": "Squidforce Cup",
