@@ -4,6 +4,7 @@ import type { ArtSource } from "~/features/art/art-types";
 import type { AuthErrorCode } from "~/features/auth/core/errors";
 import { serializeBuild } from "~/features/build-analyzer";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
+import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { StageBackgroundStyle } from "~/features/map-planner";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import { JOIN_CODE_SEARCH_PARAM_KEY } from "~/features/sendouq/q-constants";
@@ -416,10 +417,8 @@ export const getWeaponUsage = ({
 	return `/weapon-usage?userId=${userId}&season=${season}&modeShort=${modeShort}&stageId=${stageId}`;
 };
 
-export const mapsPage = (eventId?: Tables["MapPoolMap"]["calendarEventId"]) =>
-	`/maps${eventId ? `?eventId=${eventId}` : ""}`;
-export const readonlyMapsPage = (eventId: Tables["CalendarEvent"]["id"]) =>
-	`/maps?readonly&eventId=${eventId}`;
+export const mapsPageWithMapPool = (mapPool: MapPool) =>
+	`/maps?readonly&pool=${mapPool.serialized}`;
 export const articlePage = (slug: string) => `${ARTICLES_MAIN_PAGE}/${slug}`;
 export const analyzerPage = (args?: {
 	weaponId: MainWeaponId;
