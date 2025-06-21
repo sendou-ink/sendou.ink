@@ -799,6 +799,18 @@
 		"displayName": "Splat Legacy LAN",
 		"authorDiscordId": "342369454719631361"
 	},
+	"splattershotpro": {
+		"displayName": "MIDLINES ONLY",
+		"authorDiscordId": "342369454719631361"
+	},
+	"splattershotproforge": {
+		"displayName": "MIDLINES ONLY: FORGE",
+		"authorDiscordId": "342369454719631361"
+	},
+	"splattershotproberry": {
+		"displayName": "MIDLINES ONLY: BERRY",
+		"authorDiscordId": "342369454719631361"
+	},
 	"squidtheforce": {
 		"displayName": "Squidforce Cup",
 		"authorDiscordId": "1320944066002681876"
