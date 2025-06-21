@@ -1,4 +1,5 @@
 {
+	"weaponSelect.label": "Weapon to analyze",
 	"attribute.weight": "Weight",
 	"attribute.weight.Fast": "Light",
 	"attribute.weight.Slow": "Heavy",

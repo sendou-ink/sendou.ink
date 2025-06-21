@@ -70,8 +70,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				eventToEdit?.tournament,
 		),
 		managedBadges: await BadgeRepository.findManagedByUserId(user.id),
-		recentEventsWithMapPools:
-			await CalendarRepository.findRecentMapPoolsByAuthorId(user.id),
 		eventToEdit: canEditEvent ? eventToEdit : undefined,
 		eventToCopy:
 			user.roles.includes("TOURNAMENT_ADDER") && !eventToEdit

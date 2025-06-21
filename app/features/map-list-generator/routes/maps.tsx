@@ -1,6 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
-import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
+import { useSearchParams } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
@@ -9,28 +9,19 @@ import { Main } from "~/components/Main";
 import { MapPoolSelector, MapPoolStages } from "~/components/MapPoolSelector";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
-import { EditIcon } from "~/components/icons/Edit";
 import type { Tables } from "~/db/tables";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeWithStage } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import {
-	MAPS_URL,
-	calendarEventPage,
-	ipLabsMaps,
-	navIconUrl,
-} from "~/utils/urls";
+import { MAPS_URL, ipLabsMaps, navIconUrl } from "~/utils/urls";
 import { generateMapList } from "../core/map-list-generator/map-list";
 import { modesOrder } from "../core/map-list-generator/modes";
 import { mapPoolToNonEmptyModes } from "../core/map-list-generator/utils";
 import { MapPool } from "../core/map-pool";
 
 import styles from "./maps.module.css";
-
-import { loader } from "../loaders/maps.server";
-export { loader };
 
 const AMOUNT_OF_MAPS_IN_MAP_LIST = stageIds.length * 2;
 
@@ -62,39 +53,17 @@ export const handle: SendouRouteHandle = {
 
 export default function MapListPage() {
 	const { t } = useTranslation(["common"]);
-	const data = useLoaderData<typeof loader>();
-	const [searchParams] = useSearchParams();
-	const { mapPool, handleMapPoolChange, readonly, switchToEditMode } =
+	const { mapPool, handleMapPoolChange, readonly } =
 		useSearchParamPersistedMapPool();
 
 	return (
 		<Main className={`${styles.container} stack lg`}>
-			{searchParams.has("readonly") && data.calendarEvent && (
-				<div className={styles.poolMeta}>
-					<div className={styles.poolInfo}>
-						{t("common:maps.mapPool")}:{" "}
-						<Link to={calendarEventPage(data.calendarEvent.id)}>
-							{data.calendarEvent.name}
-						</Link>
-					</div>
-					<SendouButton
-						variant="outlined"
-						onPress={switchToEditMode}
-						size="small"
-						icon={<EditIcon />}
-					>
-						{t("common:actions.edit")}
-					</SendouButton>
-				</div>
-			)}
 			{readonly ? (
 				<MapPoolStages mapPool={mapPool} />
 			) : (
 				<MapPoolSelector
 					mapPool={mapPool}
 					handleMapPoolChange={handleMapPoolChange}
-					recentEvents={data.recentEventsWithMapPools}
-					initialEvent={data.calendarEvent}
 					allowBulkEdit
 					className={styles.poolSelector}
 				/>
@@ -113,16 +82,11 @@ export default function MapListPage() {
 }
 
 export function useSearchParamPersistedMapPool() {
-	const data = useLoaderData<typeof loader>();
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const [mapPool, setMapPool] = React.useState(() => {
 		if (searchParams.has("pool")) {
 			return new MapPool(searchParams.get("pool")!);
-		}
-
-		if (data.calendarEvent?.mapPool) {
-			return new MapPool(data.calendarEvent.mapPool);
 		}
 
 		return MapPool.ANARCHY;
@@ -143,20 +107,10 @@ export function useSearchParamPersistedMapPool() {
 		);
 	};
 
-	const switchToEditMode = () => {
-		const newSearchParams = new URLSearchParams(searchParams);
-		newSearchParams.delete("readonly");
-		setSearchParams(newSearchParams, {
-			replace: false,
-			preventScrollReset: true,
-		});
-	};
-
 	return {
 		mapPool,
 		readonly: searchParams.has("readonly"),
 		handleMapPoolChange,
-		switchToEditMode,
 	};
 }
 

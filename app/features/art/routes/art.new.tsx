@@ -6,7 +6,6 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router-dom";
 import { Alert } from "~/components/Alert";
-import { Combobox } from "~/components/Combobox";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
@@ -25,6 +24,7 @@ import {
 import { metaTitle } from "../../../utils/remix";
 import { ART } from "../art-constants";
 import { previewUrl } from "../art-utils";
+import { TagSelect } from "../components/TagSelect";
 
 import { action } from "../actions/art.new.server";
 import { loader } from "../loaders/art.new.server";
@@ -205,11 +205,6 @@ function Tags() {
 	);
 	const [newTagValue, setNewTagValue] = React.useState("");
 
-	const existingTags = data.tags;
-	const unselectedTags = existingTags.filter(
-		(t) => !tags.some((tag) => tag.id === t.id),
-	);
-
 	const handleAddNewTag = () => {
 		const normalizedNewTagValue = newTagValue
 			.trim()
@@ -224,7 +219,7 @@ function Tags() {
 			return;
 		}
 
-		const alreadyCreatedTag = existingTags.find(
+		const alreadyCreatedTag = data.tags.find(
 			(t) => t.name === normalizedNewTagValue,
 		);
 
@@ -287,23 +282,14 @@ function Tags() {
 					</SendouButton>
 				</div>
 			) : (
-				<Combobox
+				<TagSelect
 					// empty combobox on select
 					key={tags.length}
-					options={unselectedTags.map((t) => ({
-						label: t.name,
-						value: String(t.id),
-					}))}
-					inputName="tags"
-					placeholder={t("art:forms.tags.searchExisting.placeholder")}
-					initialValue={null}
-					onChange={(selection) => {
-						if (!selection) return;
-						setTags([
-							...tags,
-							{ name: selection.label, id: Number(selection.value) },
-						]);
-					}}
+					tags={data.tags}
+					disabledKeys={tags.map((t) => t.id).filter((id) => id !== undefined)}
+					onSelectionChange={(tagName) =>
+						setTags([...tags, data.tags.find((t) => t.name === tagName)!])
+					}
 				/>
 			)}
 			<div className="text-sm stack sm flex-wrap horizontal">

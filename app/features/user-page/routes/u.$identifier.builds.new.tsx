@@ -8,13 +8,14 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { AbilitiesSelector } from "~/components/AbilitiesSelector";
 import { Alert } from "~/components/Alert";
-import { GearCombobox, WeaponCombobox } from "~/components/Combobox";
 import { FormMessage } from "~/components/FormMessage";
+import { GearSelect } from "~/components/GearSelect";
 import { Image } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { RequiredHiddenInput } from "~/components/RequiredHiddenInput";
 import { SubmitButton } from "~/components/SubmitButton";
+import { WeaponSelect } from "~/components/WeaponSelect";
 import { SendouButton } from "~/components/elements/Button";
 import { CrossIcon } from "~/components/icons/Cross";
 import { PlusIcon } from "~/components/icons/Plus";
@@ -23,6 +24,7 @@ import {
 	validatedBuildFromSearchParams,
 	validatedWeaponIdFromSearchParams,
 } from "~/features/build-analyzer";
+import { BUILD } from "~/features/builds/builds-constants";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type {
@@ -34,7 +36,6 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { modeImageUrl } from "~/utils/urls";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 
-import { BUILD } from "~/features/builds/builds-constants";
 import { action } from "../actions/u.$identifier.builds.new.server";
 import { loader } from "../loaders/u.$identifier.builds.new.server";
 export { loader, action };
@@ -86,6 +87,7 @@ export default function NewBuildPage() {
 					abilities={abilities}
 					setAbilities={setAbilities}
 				/>
+				<div /> {/* spacer */}
 				<Abilities abilities={abilities} setAbilities={setAbilities} />
 				<TitleInput />
 				<DescriptionTextarea />
@@ -200,7 +202,7 @@ function WeaponsSelector() {
 	const [searchParams] = useSearchParams();
 	const { buildToEdit } = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["common", "weapons", "builds"]);
-	const [weapons, setWeapons] = React.useState(
+	const [weapons, setWeapons] = React.useState<Array<MainWeaponId | null>>(
 		buildToEdit?.weapons.map((wpn) => wpn.weaponSplId) ?? [
 			validatedWeaponIdFromSearchParams(searchParams),
 		],
@@ -211,33 +213,28 @@ function WeaponsSelector() {
 			<Label required htmlFor="weapon">
 				{t("builds:forms.weapons")}
 			</Label>
+			<input type="hidden" name="weapons" value={JSON.stringify(weapons)} />
 			<div className="stack sm">
 				{weapons.map((weapon, i) => {
 					return (
 						<div key={i} className="stack horizontal sm items-center">
-							<div>
-								<WeaponCombobox
-									inputName="weapon"
-									id="weapon"
-									className="u__build-form__weapon"
-									required
-									onChange={(opt) =>
-										opt &&
-										setWeapons((weapons) => {
-											const newWeapons = [...weapons];
-											newWeapons[i] = Number(opt.value) as MainWeaponId;
-											return newWeapons;
-										})
-									}
-									initialWeaponId={weapon ?? undefined}
-								/>
-							</div>
+							<WeaponSelect
+								onChange={(weaponId) =>
+									setWeapons((weapons) => {
+										const newWeapons = [...weapons];
+										newWeapons[i] = weaponId;
+										return newWeapons;
+									})
+								}
+								initialValue={weapon ?? undefined}
+								testId={`weapon-${i}`}
+							/>
 							{i === weapons.length - 1 && (
 								<>
 									<SendouButton
 										size="small"
 										isDisabled={weapons.length === BUILD.MAX_WEAPONS_COUNT}
-										onPress={() => setWeapons((weapons) => [...weapons, 0])}
+										onPress={() => setWeapons((weapons) => [...weapons, null])}
 										icon={<PlusIcon />}
 										data-testid="add-weapon-button"
 									/>
@@ -276,56 +273,52 @@ function GearSelector({
 }) {
 	const { buildToEdit, gearIdToAbilities } = useLoaderData<typeof loader>();
 	const { t } = useTranslation("builds");
-
-	const initialGearId = () => {
+	const [value, setValue] = React.useState(() => {
 		const gearId = !buildToEdit
-			? undefined
+			? null
 			: type === "HEAD"
 				? buildToEdit.headGearSplId
 				: type === "CLOTHES"
 					? buildToEdit.clothesGearSplId
 					: buildToEdit.shoesGearSplId;
 
-		if (gearId === -1) return undefined;
+		if (gearId === -1) return null;
 
 		return gearId;
-	};
+	});
 
 	return (
-		<div>
-			<Label htmlFor={type}>{t(`forms.gear.${type}`)}</Label>
-			<div>
-				<GearCombobox
-					gearType={type}
-					inputName={type}
-					id={type}
-					initialGearId={initialGearId()}
-					nullable
-					// onChange only exists to copy abilities from existing gear
-					// actual value of combobox is handled in uncontrolled manner
-					onChange={(opt) => {
-						if (!opt) return;
+		<>
+			<input type="hidden" name={type} value={value ?? ""} />
+			<GearSelect
+				label={t(`forms.gear.${type}`)}
+				type={type}
+				value={value}
+				clearable
+				onChange={(gearId) => {
+					setValue(gearId);
 
-						const abilitiesFromExistingGear =
-							gearIdToAbilities[`${type}_${opt.value}`];
+					if (!gearId) return;
 
-						if (!abilitiesFromExistingGear) return;
+					const abilitiesFromExistingGear =
+						gearIdToAbilities[`${type}_${gearId}`];
 
-						const gearIndex = type === "HEAD" ? 0 : type === "CLOTHES" ? 1 : 2;
+					if (!abilitiesFromExistingGear) return;
 
-						const currentAbilities = abilities[gearIndex];
+					const gearIndex = type === "HEAD" ? 0 : type === "CLOTHES" ? 1 : 2;
 
-						// let's not overwrite current selections
-						if (!currentAbilities.every((a) => a === "UNKNOWN")) return;
+					const currentAbilities = abilities[gearIndex];
 
-						const newAbilities = structuredClone(abilities);
-						newAbilities[gearIndex] = abilitiesFromExistingGear;
+					// let's not overwrite current selections
+					if (!currentAbilities.every((a) => a === "UNKNOWN")) return;
 
-						setAbilities(newAbilities);
-					}}
-				/>
-			</div>
-		</div>
+					const newAbilities = structuredClone(abilities);
+					newAbilities[gearIndex] = abilitiesFromExistingGear;
+
+					setAbilities(newAbilities);
+				}}
+			/>
+		</>
 	);
 }
 

@@ -24,8 +24,8 @@ import {
 	calendarEditPage,
 	calendarEventPage,
 	calendarReportWinnersPage,
+	mapsPageWithMapPool,
 	navIconUrl,
-	readonlyMapsPage,
 	resolveBaseUrl,
 	userPage,
 } from "~/utils/urls";
@@ -271,13 +271,15 @@ function MapPoolInfo() {
 
 	if (!data.event.mapPool || data.event.mapPool.length === 0) return null;
 
+	const mapPool = new MapPool(data.event.mapPool);
+
 	return (
 		<Section title={t("calendar:forms.mapPool")}>
 			<div className="event__map-pool-section">
-				<MapPoolStages mapPool={new MapPool(data.event.mapPool)} />
+				<MapPoolStages mapPool={mapPool} />
 				<LinkButton
 					className="event__create-map-list-link"
-					to={readonlyMapsPage(data.event.eventId)}
+					to={mapsPageWithMapPool(mapPool)}
 					variant="outlined"
 					size="small"
 				>

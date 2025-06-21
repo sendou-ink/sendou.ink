@@ -1,12 +1,8 @@
-import { expect, test } from "@playwright/test";
+import { type Page, expect, test } from "@playwright/test";
 import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
+import type { GearType } from "~/db/tables";
 import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
-import {
-	impersonate,
-	navigate,
-	seed,
-	selectComboboxValue,
-} from "~/utils/playwright";
+import { impersonate, navigate, seed, selectWeapon } from "~/utils/playwright";
 import { BUILDS_PAGE, userBuildsPage, userNewBuildPage } from "~/utils/urls";
 
 test.describe("Builds", () => {
@@ -18,31 +14,31 @@ test.describe("Builds", () => {
 			url: userNewBuildPage({ discordId: NZAP_TEST_DISCORD_ID }),
 		});
 
-		await selectComboboxValue({
-			locator: page.getByTestId("weapon-combobox-input").first(),
-			value: "Tenta Brella",
+		await selectWeapon({
+			testId: "weapon-0",
+			name: "Tenta Brella",
 			page,
 		});
 		await page.getByTestId("add-weapon-button").click();
-		await selectComboboxValue({
-			locator: page.getByTestId("weapon-combobox-input").nth(1),
-			value: "Splat Brella",
+		await selectWeapon({
+			testId: "weapon-1",
+			name: "Splat Brella",
 			page,
 		});
 
-		await selectComboboxValue({
-			inputName: "HEAD",
-			value: "White Headband",
+		await selectGear({
+			type: "HEAD",
+			name: "White Headband",
 			page,
 		});
-		await selectComboboxValue({
-			inputName: "CLOTHES",
-			value: "Basic Tee",
+		await selectGear({
+			type: "CLOTHES",
+			name: "Basic Tee",
 			page,
 		});
-		await selectComboboxValue({
-			inputName: "SHOES",
-			value: "Blue Lo-Tops",
+		await selectGear({
+			type: "SHOES",
+			name: "Blue Lo-Tops",
 			page,
 		});
 
@@ -144,3 +140,20 @@ test.describe("Builds", () => {
 		await expect(page.getByTestId("build-card")).toHaveCount(24);
 	});
 });
+
+async function selectGear({
+	page,
+	name,
+	type,
+}: {
+	page: Page;
+	name: string;
+	type: GearType;
+}) {
+	await page.getByTestId(`${type}-gear-select`).click();
+	await page.getByPlaceholder("Search gear...").fill(name);
+	await page
+		.getByRole("listbox", { name: "Suggestions" })
+		.getByTestId(`gear-select-option-${name}`)
+		.click();
+}

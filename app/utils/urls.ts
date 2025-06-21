@@ -4,10 +4,11 @@ import type { ArtSource } from "~/features/art/art-types";
 import type { AuthErrorCode } from "~/features/auth/core/errors";
 import { serializeBuild } from "~/features/build-analyzer";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
+import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { StageBackgroundStyle } from "~/features/map-planner";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import { JOIN_CODE_SEARCH_PARAM_KEY } from "~/features/sendouq/q-constants";
-import type { ModeShort } from "~/modules/in-game-lists/types";
+import type { BrandId, ModeShort } from "~/modules/in-game-lists/types";
 import type {
 	Ability,
 	AbilityWithUnknown,
@@ -139,7 +140,6 @@ export const THIRD_PLACEMENT_ICON_PATH =
 export const soundPath = (fileName: string) =>
 	`/static-assets/sounds/${fileName}.wav`;
 
-export const GET_ALL_EVENTS_WITH_MAP_POOLS_ROUTE = "/calendar/map-pool-events";
 export const GET_TRUSTERS_ROUTE = "/trusters";
 export const PATRONS_LIST_ROUTE = "/patrons-list";
 
@@ -417,10 +417,8 @@ export const getWeaponUsage = ({
 	return `/weapon-usage?userId=${userId}&season=${season}&modeShort=${modeShort}&stageId=${stageId}`;
 };
 
-export const mapsPage = (eventId?: Tables["MapPoolMap"]["calendarEventId"]) =>
-	`/maps${eventId ? `?eventId=${eventId}` : ""}`;
-export const readonlyMapsPage = (eventId: Tables["CalendarEvent"]["id"]) =>
-	`/maps?readonly&eventId=${eventId}`;
+export const mapsPageWithMapPool = (mapPool: MapPool) =>
+	`/maps?readonly&pool=${mapPool.serialized}`;
 export const articlePage = (slug: string) => `${ARTICLES_MAIN_PAGE}/${slug}`;
 export const analyzerPage = (args?: {
 	weaponId: MainWeaponId;
@@ -491,12 +489,12 @@ export const specialWeaponVariantImageUrl = (
 	`/static-assets/img/special-weapons/variants/${specialWeaponSplId}-${variant}`;
 export const abilityImageUrl = (ability: AbilityWithUnknown) =>
 	`/static-assets/img/abilities/${ability}`;
+export const brandImageUrl = (brand: BrandId) =>
+	`/static-assets/img/brands/${brand}`;
 export const modeImageUrl = (mode: ModeShortWithSpecial) =>
 	`/static-assets/img/modes/${mode}`;
 export const stageImageUrl = (stageId: StageId) =>
 	`/static-assets/img/stages/${stageId}`;
-export const brandImageUrl = (brand: "tentatek" | "takoroka") =>
-	`/static-assets/img/layout/${brand}`;
 export const tierImageUrl = (tier: TierName | "CALCULATING") =>
 	`/static-assets/img/tiers/${tier.toLowerCase()}`;
 export const preferenceEmojiUrl = (preference?: Preference) => {

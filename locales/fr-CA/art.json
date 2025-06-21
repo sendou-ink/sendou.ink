@@ -24,7 +24,8 @@
 	"forms.tags.cantFindExisting": "Impossible de trouver un tag existant ?",
 	"forms.tags.addNew": "En créer un nouveau.",
 	"forms.tags.addNew.placeholder": "Créer un nouveau tag",
-	"forms.tags.searchExisting.placeholder": "Chercher des tags existants",
+	"forms.tags.search.placeholder": "",
+	"forms.tags.placeholder": "",
 	"forms.tags.maxReached": "Limite de tags atteinte",
 	"delete.title": "",
 	"unlink.title": ""

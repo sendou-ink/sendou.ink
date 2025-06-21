@@ -78,6 +78,11 @@
 	overflow: hidden;
 }
 
+.item[data-disabled] {
+	color: var(--text-lighter);
+	font-style: italic;
+}
+
 .itemFocused {
 	background-color: var(--theme-transparent);
 	color: var(--text);
@@ -133,4 +138,14 @@
 	text-align: center;
 	padding-block: var(--s-8);
 	color: var(--text-lighter);
+}
+
+.select {
+	position: relative;
+}
+
+.clearButton {
+	position: absolute;
+	bottom: -17px;
+	right: 9px;
 }

@@ -4,12 +4,12 @@ import * as React from "react";
 import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import { WeaponCombobox } from "~/components/Combobox";
 import { FormMessage } from "~/components/FormMessage";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { ModeImage, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
+import { WeaponSelect } from "~/components/WeaponSelect";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { CrossIcon } from "~/components/icons/Cross";
@@ -29,7 +29,7 @@ import {
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { languagesUnified } from "~/modules/i18n/config";
 import { modesShort } from "~/modules/in-game-lists/modes";
-import type { MainWeaponId, ModeShort } from "~/modules/in-game-lists/types";
+import type { ModeShort } from "~/modules/in-game-lists/types";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
@@ -402,33 +402,27 @@ function WeaponPool() {
 				/>
 				<div className="q-settings__weapon-pool-select-container">
 					{weapons.length < SENDOUQ_WEAPON_POOL_MAX_SIZE ? (
-						<div>
-							<WeaponCombobox
-								inputName="weapon"
-								id="weapon"
-								onChange={(weapon) => {
-									if (!weapon) return;
-									setWeapons([
-										...weapons,
-										{
-											weaponSplId: Number(weapon.value) as MainWeaponId,
-											isFavorite: 0,
-										},
-									]);
-								}}
-								// empty on selection
-								key={latestWeapon ?? "empty"}
-								weaponIdsToOmit={new Set(weapons.map((w) => w.weaponSplId))}
-								fullWidth
-							/>
-						</div>
+						<WeaponSelect
+							onChange={(weaponSplId) => {
+								setWeapons([
+									...weapons,
+									{
+										weaponSplId,
+										isFavorite: 0,
+									},
+								]);
+							}}
+							// empty on selection
+							key={latestWeapon ?? "empty"}
+							disabledWeaponIds={weapons.map((w) => w.weaponSplId)}
+						/>
 					) : (
 						<span className="text-xs text-info">
 							{t("q:settings.weaponPool.full")}
 						</span>
 					)}
 				</div>
-				<div className="stack horizontal sm justify-center">
+				<div className="stack horizontal md justify-center">
 					{weapons.map((weapon) => {
 						return (
 							<div key={weapon.weaponSplId} className="stack xs">

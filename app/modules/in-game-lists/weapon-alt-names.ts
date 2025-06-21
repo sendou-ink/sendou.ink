@@ -76,3 +76,9 @@ export const weaponAltNames = new Map<MainWeaponId, string[] | string>()
 	.set(8010, ["sword", "vwiper"])
 	.set(8011, ["sword", "diper", "dwiper"])
 	.set(8012, ["rust", "kwiper", "barazushi"]);
+
+export const allWeaponAltNames = new Set(
+	Array.from(weaponAltNames.values()).flatMap((name) =>
+		typeof name === "string" ? [name] : name,
+	),
+);
