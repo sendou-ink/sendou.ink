@@ -1,3 +1,4 @@
+---
 title: "3rd Kits - Weapons That Could Completely Alter the Metagame"
 date: 2025-06-13
 author:
