@@ -27,7 +27,7 @@ import { CrossIcon } from "../icons/Cross";
 import { SearchIcon } from "../icons/Search";
 import styles from "./Select.module.css";
 
-interface SendouSelectProps<T extends object>
+export interface SendouSelectProps<T extends object>
 	extends Omit<SelectProps<T>, "children"> {
 	label?: string;
 	description?: string;
@@ -46,6 +46,20 @@ interface SendouSelectProps<T extends object>
 	clearable?: boolean;
 }
 
+/**
+ * A customizable select component with optional search functionality. Virtualizes the list of items for performance.
+ *
+ * @example
+ * ```tsx
+ * <SendouSelect items={items} search={{ placeholder: "Search for items..." }}>
+ *   {({ key, ...item }) => (
+ *     <SendouSelectItem key={key} {...item}>
+ *       {item.name}
+ *     </SendouSelectItem>
+ *   )}
+ * </SendouSelect>
+ * ```
+ */
 export function SendouSelect<T extends object>({
 	label,
 	description,

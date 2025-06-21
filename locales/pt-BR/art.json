@@ -24,7 +24,8 @@
 	"forms.tags.cantFindExisting": "Não consegue encontrar uma marcação existente?",
 	"forms.tags.addNew": "Crie uma nova.",
 	"forms.tags.addNew.placeholder": "Criar uma nova marcação",
-	"forms.tags.searchExisting.placeholder": "Pesquisar marcações existentes",
+	"forms.tags.search.placeholder": "",
+	"forms.tags.placeholder": "",
 	"forms.tags.maxReached": "Quantidade máxima de marcações atingida",
 	"delete.title": "",
 	"unlink.title": ""

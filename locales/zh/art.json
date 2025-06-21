@@ -21,7 +21,8 @@
 	"forms.tags.cantFindExisting": "找不到已有标签？",
 	"forms.tags.addNew": "创建新标签。",
 	"forms.tags.addNew.placeholder": "创建新标签",
-	"forms.tags.searchExisting.placeholder": "搜索已有标签",
+	"forms.tags.search.placeholder": "",
+	"forms.tags.placeholder": "",
 	"forms.tags.maxReached": "已达到最大标签数",
 	"delete.title": "",
 	"unlink.title": ""

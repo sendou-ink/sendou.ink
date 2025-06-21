@@ -25,7 +25,8 @@
 	"forms.tags.cantFindExisting": "",
 	"forms.tags.addNew": "",
 	"forms.tags.addNew.placeholder": "",
-	"forms.tags.searchExisting.placeholder": "",
+	"forms.tags.search.placeholder": "",
+	"forms.tags.placeholder": "",
 	"forms.tags.maxReached": "",
 	"delete.title": "",
 	"unlink.title": ""
