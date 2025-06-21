@@ -47,7 +47,7 @@ interface WeaponSelectProps<
 	isRequired?: boolean;
 }
 
-// xxx: selected value disappears if filtered out
+// TODO: fix selected value disappears when filtered out. This is because `items` is filtered in a controlled manner and the selected key might not be included in the filtered items.
 export function WeaponSelect<
 	Clearable extends boolean | undefined = undefined,
 	IncludeSubSpecial extends boolean | undefined = undefined,
