@@ -1,5 +1,4 @@
 import clsx from "clsx";
-import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
 import {
@@ -15,7 +14,6 @@ import {
 	shoesGearBrandGrouped,
 } from "~/modules/in-game-lists/gear-ids";
 import type { BrandId } from "~/modules/in-game-lists/types";
-import { filterGear } from "~/modules/in-game-lists/utils";
 import { brandImageUrl, gearImageUrl } from "~/utils/urls";
 
 import styles from "./WeaponSelect.module.css";
@@ -40,7 +38,7 @@ export function GearSelect<Clearable extends boolean | undefined = undefined>({
 	type,
 }: GearSelectProps<Clearable>) {
 	const { t } = useTranslation(["common"]);
-	const { items, filterValue, setFilterValue } = useFilteredGear(type);
+	const items = useGearItems(type);
 
 	return (
 		<SendouSelect
@@ -53,8 +51,6 @@ export function GearSelect<Clearable extends boolean | undefined = undefined>({
 			}}
 			className={styles.selectWidthWider}
 			popoverClassName={styles.selectWidthWider}
-			searchInputValue={filterValue}
-			onSearchInputChange={setFilterValue}
 			selectedKey={value}
 			defaultSelectedKey={initialValue}
 			onSelectionChange={(value) => onChange?.(value as any)}
@@ -113,9 +109,8 @@ function CategoryHeading({
 	);
 }
 
-function useFilteredGear(type: GearType) {
+function useGearItems(type: GearType) {
 	const { t } = useTranslation(["gear", "game-misc"]);
-	const [filterValue, setFilterValue] = React.useState("");
 
 	const translationPrefix =
 		type === "HEAD" ? "H" : type === "CLOTHES" ? "C" : "S";
@@ -141,28 +136,5 @@ function useFilteredGear(type: GearType) {
 		};
 	});
 
-	const filtered = !filterValue
-		? items
-		: items
-				.map((category) => {
-					const filteredItems = category.items.filter((item) =>
-						filterGear({
-							gearName: item.name,
-							searchTerm: filterValue,
-						}),
-					);
-
-					return {
-						...category,
-						items: filteredItems,
-					};
-				})
-				.filter((category) => category.items.length > 0)
-				.map((category, idx) => ({ ...category, idx }));
-
-	return {
-		items: filtered,
-		filterValue,
-		setFilterValue,
-	};
+	return items;
 }

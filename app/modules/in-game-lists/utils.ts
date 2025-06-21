@@ -35,16 +35,3 @@ export function filterWeapon({
 
 	return normalizedWeaponName.includes(normalizedSearchTerm);
 }
-
-export function filterGear({
-	gearName,
-	searchTerm,
-}: {
-	gearName: string;
-	searchTerm: string;
-}): boolean {
-	const normalizedSearchTerm = normalizeTerm(searchTerm);
-	const normalizedGearName = normalizeTerm(gearName);
-
-	return normalizedGearName.includes(normalizedSearchTerm);
-}
