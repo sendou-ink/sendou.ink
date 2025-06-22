@@ -13,8 +13,7 @@ export function assertUnreachable(x: never): never {
 }
 
 /** @link https://stackoverflow.com/a/69413184 */
-// @ts-expect-error helper to assert type to be another compile time
-export const assertType = <A, B extends A>() => {};
+export const assertType = <A, _B extends A>() => {};
 
 export type Unpacked<T> = T extends (infer U)[]
 	? U

@@ -113,7 +113,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 async function findPost({
 	userId,
 	postId,
-}: { userId: number; postId: number }) {
+}: {
+	userId: number;
+	postId: number;
+}) {
 	const posts = await ScrimPostRepository.findAllRelevant(userId);
 	const post = posts.find((post) => post.id === postId);
 
@@ -125,7 +128,10 @@ async function findPost({
 async function findRequest({
 	userId,
 	requestId,
-}: { userId: number; requestId: number }) {
+}: {
+	userId: number;
+	requestId: number;
+}) {
 	const posts = await ScrimPostRepository.findAllRelevant(userId);
 	const post = posts.find((post) =>
 		post.requests.some((request) => request.id === requestId),

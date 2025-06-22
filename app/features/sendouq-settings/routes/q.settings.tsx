@@ -4,14 +4,11 @@ import * as React from "react";
 import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { ModeImage, WeaponImage } from "~/components/Image";
-import { Main } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
-import { WeaponSelect } from "~/components/WeaponSelect";
-import { SendouButton } from "~/components/elements/Button";
-import { SendouSwitch } from "~/components/elements/Switch";
 import { CrossIcon } from "~/components/icons/Cross";
 import { MapIcon } from "~/components/icons/Map";
 import { MicrophoneFilledIcon } from "~/components/icons/MicrophoneFilled";
@@ -21,6 +18,9 @@ import { StarIcon } from "~/components/icons/Star";
 import { StarFilledIcon } from "~/components/icons/StarFilled";
 import { TrashIcon } from "~/components/icons/Trash";
 import { UsersIcon } from "~/components/icons/Users";
+import { Main } from "~/components/Main";
+import { SubmitButton } from "~/components/SubmitButton";
+import { WeaponSelect } from "~/components/WeaponSelect";
 import type { Preference, Tables, UserMapModePreferences } from "~/db/tables";
 import {
 	soundCodeToLocalStorageKey,
@@ -34,21 +34,20 @@ import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import {
+	navIconUrl,
 	SENDOUQ_PAGE,
 	SENDOUQ_SETTINGS_PAGE,
-	navIconUrl,
 	soundPath,
 } from "~/utils/urls";
+import { action } from "../actions/q.settings.server";
 import { BANNED_MAPS } from "../banned-maps";
 import { ModeMapPoolPicker } from "../components/ModeMapPoolPicker";
 import { PreferenceRadioGroup } from "../components/PreferenceRadioGroup";
+import { loader } from "../loaders/q.settings.server";
 import {
 	AMOUNT_OF_MAPS_IN_POOL_PER_MODE,
 	SENDOUQ_WEAPON_POOL_MAX_SIZE,
 } from "../q-settings-constants";
-
-import { action } from "../actions/q.settings.server";
-import { loader } from "../loaders/q.settings.server";
 export { loader, action };
 
 import "../q-settings.css";
@@ -612,45 +611,43 @@ function TrustedUsers() {
 			</summary>
 			<div className="mb-4">
 				{data.trusted.length > 0 ? (
-					<>
-						<div className="stack md mt-2">
-							{data.trusted.map((trustedUser) => {
-								return (
-									<div
-										key={trustedUser.id}
-										className="stack horizontal xs items-center"
-									>
-										<Avatar user={trustedUser} size="xxs" />
-										<div className="text-sm font-semi-bold">
-											{trustedUser.username}
-										</div>
-										<FormWithConfirm
-											dialogHeading={t("q:settings.trusted.confirm", {
-												name: trustedUser.username,
-											})}
-											fields={[
-												["_action", "REMOVE_TRUST"],
-												["userToRemoveTrustFromId", trustedUser.id],
-											]}
-											submitButtonText="Remove"
-										>
-											<SendouButton
-												className="small-text"
-												variant="minimal-destructive"
-												size="small"
-												type="submit"
-											>
-												<TrashIcon className="small-icon" />
-											</SendouButton>
-										</FormWithConfirm>
+					<div className="stack md mt-2">
+						{data.trusted.map((trustedUser) => {
+							return (
+								<div
+									key={trustedUser.id}
+									className="stack horizontal xs items-center"
+								>
+									<Avatar user={trustedUser} size="xxs" />
+									<div className="text-sm font-semi-bold">
+										{trustedUser.username}
 									</div>
-								);
-							})}
-							<FormMessage type="info">
-								{t("q:settings.trusted.trustedExplanation")}
-							</FormMessage>
-						</div>
-					</>
+									<FormWithConfirm
+										dialogHeading={t("q:settings.trusted.confirm", {
+											name: trustedUser.username,
+										})}
+										fields={[
+											["_action", "REMOVE_TRUST"],
+											["userToRemoveTrustFromId", trustedUser.id],
+										]}
+										submitButtonText="Remove"
+									>
+										<SendouButton
+											className="small-text"
+											variant="minimal-destructive"
+											size="small"
+											type="submit"
+										>
+											<TrashIcon className="small-icon" />
+										</SendouButton>
+									</FormWithConfirm>
+								</div>
+							);
+						})}
+						<FormMessage type="info">
+							{t("q:settings.trusted.trustedExplanation")}
+						</FormMessage>
+					</div>
 				) : (
 					<FormMessage type="info" className="mb-2">
 						{t("q:settings.trusted.noTrustedExplanation")}

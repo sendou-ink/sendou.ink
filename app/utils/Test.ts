@@ -64,7 +64,10 @@ export function wrappedLoader<T>({
 	return async ({
 		user,
 		params = {},
-	}: { user?: "admin" | "regular"; params?: Params<string> } = {}) => {
+	}: {
+		user?: "admin" | "regular";
+		params?: Params<string>;
+	} = {}) => {
 		const request = new Request("http://app.com/path", {
 			method: "GET",
 			headers: await authHeader(user),

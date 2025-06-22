@@ -23,7 +23,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	invariant(ownGroup, "No own group found");
 
 	return {
-		lastUpdated: new Date().getTime(),
+		lastUpdated: Date.now(),
 		group: ownGroup,
 		role: currentGroup!.role,
 	};

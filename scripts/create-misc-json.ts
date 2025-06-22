@@ -1,6 +1,8 @@
 // @ts-nocheck
 
 import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { abilitiesShort } from "~/modules/in-game-lists/abilities";
 import { brandIds } from "~/modules/in-game-lists/brand-ids";
 import invariant from "~/utils/invariant";
@@ -10,8 +12,6 @@ import {
 	translationJsonFolderName,
 } from "./utils";
 
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 

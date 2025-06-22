@@ -1,5 +1,6 @@
 import { cachified } from "@epic-web/cachified";
 import { cache } from "~/utils/cache.server";
+import { logger } from "~/utils/logger";
 import type { Unpacked } from "~/utils/types";
 import { type RawStream, type StreamsResponse, streamsSchema } from "./schemas";
 import { getToken, purgeCachedToken } from "./token";
@@ -86,7 +87,7 @@ export async function getStreams() {
 
 		return result;
 	} catch (e) {
-		console.error(e);
+		logger.error(e);
 		return [];
 	}
 }
@@ -107,7 +108,7 @@ async function getAllStreams() {
 
 	const result: RawStream[] = [];
 
-	let cursor: string | undefined = undefined;
+	let cursor: string | undefined;
 	let count = 0;
 	while (true) {
 		if (count === 50) {

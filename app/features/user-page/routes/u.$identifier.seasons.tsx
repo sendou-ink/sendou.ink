@@ -10,14 +10,6 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import Chart from "~/components/Chart";
-import {
-	ModeImage,
-	StageImage,
-	TierImage,
-	WeaponImage,
-} from "~/components/Image";
-import { Pagination } from "~/components/Pagination";
-import { SubNav, SubNavLink } from "~/components/SubNav";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import {
@@ -26,7 +18,15 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import {
+	ModeImage,
+	StageImage,
+	TierImage,
+	WeaponImage,
+} from "~/components/Image";
 import { AlertIcon } from "~/components/icons/Alert";
+import { Pagination } from "~/components/Pagination";
+import { SubNav, SubNavLink } from "~/components/SubNav";
 import { TopTenPlayer } from "~/features/leaderboards/components/TopTenPlayer";
 import { playerTopTenPlacement } from "~/features/leaderboards/leaderboards-utils";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -41,7 +41,7 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { cutToNDecimalPlaces, roundToNDecimalPlaces } from "~/utils/number";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { TIERS_PAGE, sendouQMatchPage, userSeasonsPage } from "~/utils/urls";
+import { sendouQMatchPage, TIERS_PAGE, userSeasonsPage } from "~/utils/urls";
 
 import { loader } from "../loaders/u.$identifier.seasons.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";

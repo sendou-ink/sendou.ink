@@ -1,14 +1,15 @@
 import cachified from "@epic-web/cachified";
 import {
-	type UserLeaderboardWithAdditionsItem,
 	cachedFullUserLeaderboard,
+	type UserLeaderboardWithAdditionsItem,
 } from "~/features/leaderboards/core/leaderboards.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { TIERS } from "~/features/mmr/mmr-constants";
 import * as QStreamsRepository from "~/features/sendouq-streams/QStreamsRepository.server";
 import { getStreams } from "~/modules/twitch";
 import type { MappedStream } from "~/modules/twitch/streams";
-import { IN_MILLISECONDS, cache, ttl } from "~/utils/cache.server";
+import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
+import { logger } from "~/utils/logger";
 import { SENDOUQ_STREAMS_KEY } from "../q-streams-constants";
 
 export function cachedStreams() {
@@ -59,7 +60,7 @@ export function cachedStreams() {
 export function refreshStreamsCache() {
 	cache.delete(SENDOUQ_STREAMS_KEY);
 	void cachedStreams().catch((err) =>
-		console.error(`Failed to refresh cache: ${err}`),
+		logger.error(`Failed to refresh cache: ${err}`),
 	);
 }
 

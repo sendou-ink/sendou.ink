@@ -10,10 +10,10 @@ import {
 	wrappedLoader,
 } from "~/utils/Test";
 import { loader as userProfileLoader } from "../../user-page/loaders/u.$identifier.index.server";
-import * as TeamRepository from "../TeamRepository.server";
 import { action as _teamPageAction } from "../actions/t.$customUrl.server";
 import { action as teamIndexPageAction } from "../actions/t.server";
 import { action as _editTeamAction } from "../routes/t.$customUrl.edit";
+import * as TeamRepository from "../TeamRepository.server";
 import type {
 	createTeamSchema,
 	editTeamSchema,

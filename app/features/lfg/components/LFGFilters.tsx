@@ -1,10 +1,10 @@
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
+import { SendouButton } from "~/components/elements/Button";
 import { WeaponImage } from "~/components/Image";
+import { CrossIcon } from "~/components/icons/Cross";
 import { Label } from "~/components/Label";
 import { WeaponSelect } from "~/components/WeaponSelect";
-import { SendouButton } from "~/components/elements/Button";
-import { CrossIcon } from "~/components/icons/Cross";
 import type { Tables } from "~/db/tables";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import { TIERS } from "~/features/mmr/mmr-constants";

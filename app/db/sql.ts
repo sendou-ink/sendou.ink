@@ -8,6 +8,7 @@ import {
 } from "kysely";
 import { format } from "sql-formatter";
 import invariant from "~/utils/invariant";
+import { logger } from "~/utils/logger";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import type { DB } from "./tables";
 
@@ -43,16 +44,16 @@ function logQuery(event: LogEvent) {
 			(event.query.query as any).from.froms.map(
 				(f: any) => f.table.identifier.name,
 			);
-		// biome-ignore lint/suspicious/noConsoleLog: dev only
+		// biome-ignore lint/suspicious/noConsole: dev only
 		console.log(styleText("blue", `-- SQLITE QUERY to "${from()}" --`));
-		// biome-ignore lint/suspicious/noConsoleLog: dev only
+		// biome-ignore lint/suspicious/noConsole: dev only
 		console.log(
 			styleText(
 				millisToColor(event.queryDurationMillis),
 				`${roundToNDecimalPlaces(event.queryDurationMillis, 1)}ms`,
 			),
 		);
-		// biome-ignore lint/suspicious/noConsoleLog: dev only
+		// biome-ignore lint/suspicious/noConsole: dev only
 		console.log(formatSql(event.query.sql, event.query.parameters));
 	} else {
 		logError(event);
@@ -70,7 +71,7 @@ function logError(event: LogEvent) {
 		// btw this particular check is here just to avoid the double "no transaction is active" log
 		!(event.error as any).message.includes("no transaction is active")
 	) {
-		console.error(event.error);
+		logger.error(event.error);
 	}
 }
 

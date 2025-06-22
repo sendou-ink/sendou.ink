@@ -8,10 +8,9 @@ import { useSearchParamState } from "~/hooks/useSearchParamState";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { newArtPage } from "~/utils/urls";
-import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
-
 import { action } from "../actions/u.$identifier.art.server";
 import { loader } from "../loaders/u.$identifier.art.server";
+import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 export { action, loader };
 
 export const handle: SendouRouteHandle = {

@@ -8,16 +8,19 @@
 // 5) params (weapon folder) inside dicts
 
 import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { z } from "zod/v4";
 import type { MainWeaponParams, SubWeaponParams } from "~/modules/analyzer";
 import type { ParamsJson } from "~/modules/analyzer/types";
 import {
-	SQUID_BEAKON_ID,
 	type SpecialWeaponId,
+	SQUID_BEAKON_ID,
 	type SubWeaponId,
 	subWeaponIds,
 } from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
+import { logger } from "~/utils/logger";
 import playersParams from "./dicts/SplPlayer.game__GameParameterTable.json";
 import weapons from "./dicts/WeaponInfoMain.json";
 import specialWeapons from "./dicts/WeaponInfoSpecial.json";
@@ -28,9 +31,6 @@ import {
 	translationJsonFolderName,
 } from "./utils";
 
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { logger } from "~/utils/logger";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 

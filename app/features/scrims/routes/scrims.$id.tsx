@@ -3,11 +3,11 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod/v4";
 import { Alert } from "~/components/Alert";
-import TimePopover from "~/components/TimePopover";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouForm } from "~/components/form/SendouForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
+import TimePopover from "~/components/TimePopover";
 import { SCRIM } from "~/features/scrims/scrims-constants";
 import { cancelScrimSchema } from "~/features/scrims/scrims-schemas";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
@@ -25,11 +25,10 @@ import {
 	userSubmittedImage,
 } from "../../../utils/urls";
 import { ConnectedChat } from "../../chat/components/Chat";
-import * as Scrim from "../core/Scrim";
-import type { ScrimPost as ScrimPostType } from "../scrims-types";
-
 import { action } from "../actions/scrims.$id.server";
+import * as Scrim from "../core/Scrim";
 import { loader } from "../loaders/scrims.$id.server";
+import type { ScrimPost as ScrimPostType } from "../scrims-types";
 export { loader, action };
 
 import styles from "./scrims.$id.module.css";
@@ -208,15 +207,15 @@ function ScrimChat() {
 	const data = useLoaderData<typeof loader>();
 
 	const chatCode = data.post.chatCode;
+	const rooms = React.useMemo(
+		() => (chatCode ? [{ label: "Scrim", code: chatCode }] : []),
+		[chatCode],
+	);
+
 	if (!chatCode) {
 		logger.warn("No chat code found");
 		return null;
 	}
-
-	const rooms = React.useMemo(
-		() => [{ label: "Scrim", code: chatCode }],
-		[chatCode],
-	);
 
 	return (
 		<div className={styles.chatContainer}>

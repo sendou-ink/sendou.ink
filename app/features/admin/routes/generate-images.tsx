@@ -94,7 +94,10 @@ function SendouQSeason() {
 function InfoSquare({
 	title,
 	children,
-}: { title: string; children: React.ReactNode }) {
+}: {
+	title: string;
+	children: React.ReactNode;
+}) {
 	return (
 		<div className="font-semi-bold">
 			{title}
@@ -122,7 +125,11 @@ function EventSchedule({
 	name,
 	date,
 	imgId,
-}: { name: string; date: Date; imgId: string }) {
+}: {
+	name: string;
+	date: Date;
+	imgId: string;
+}) {
 	return (
 		<div className="stack md horizontal items-center mx-auto">
 			<img

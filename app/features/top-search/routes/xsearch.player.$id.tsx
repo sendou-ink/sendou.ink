@@ -1,10 +1,10 @@
 import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
-import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { Main } from "~/components/Main";
 import { SendouButton } from "~/components/elements/Button";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { UnlinkIcon } from "~/components/icons/Unlink";
+import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -14,9 +14,8 @@ import {
 	topSearchPlayerPage,
 	userPage,
 } from "~/utils/urls";
-import { PlacementsTable } from "../components/Placements";
-
 import { action } from "../actions/xsearch.player.$id.server";
+import { PlacementsTable } from "../components/Placements";
 import { loader } from "../loaders/xsearch.player.$id.server";
 export { loader, action };
 
@@ -77,7 +76,7 @@ export default function XSearchPlayerPage() {
 					{hasUserLinked ? (
 						<Link to={userPage(data.placements[0])}>{data.names.primary}</Link>
 					) : (
-						<>{data.names.primary}</>
+						data.names.primary
 					)}{" "}
 					{t("common:xsearch.placements")}
 				</h2>

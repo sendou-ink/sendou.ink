@@ -1,12 +1,12 @@
 import type { LoaderFunction } from "@remix-run/node";
 import { formatDistance } from "date-fns";
 import { getUser } from "~/features/auth/core/user.server";
-import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import {
 	nextNonCompletedVoting,
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
 import { isVotingActive } from "~/features/plus-voting/core/voting-time";
+import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 
 export type PlusVotingLoaderData =
 	// next voting date is not in the system

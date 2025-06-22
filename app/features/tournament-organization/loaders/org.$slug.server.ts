@@ -4,8 +4,8 @@ import { getUser } from "~/features/auth/core/user.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseSafeSearchParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
-import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import { eventLeaderboards } from "../core/leaderboards.server";
+import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import { TOURNAMENT_SERIES_LEADERBOARD_SIZE } from "../tournament-organization-constants";
 import { organizationFromParams } from "../tournament-organization-utils.server";
 

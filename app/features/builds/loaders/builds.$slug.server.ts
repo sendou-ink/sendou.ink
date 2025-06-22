@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { i18next } from "~/modules/i18n/i18next.server";
 import { weaponIdIsNotAlt } from "~/modules/in-game-lists/weapon-ids";
+import { logger } from "~/utils/logger";
 import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import { mySlugify } from "~/utils/urls";
 import {
@@ -38,7 +39,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const filters = buildFiltersSearchParams.safeParse(rawFilters ?? "[]");
 
 	if (!filters.success) {
-		console.error(
+		logger.error(
 			"Invalid filters",
 			JSON.stringify(filters.error.issues, null, 2),
 		);

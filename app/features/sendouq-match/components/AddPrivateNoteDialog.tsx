@@ -1,10 +1,10 @@
 import { useFetcher } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { SendouDialog } from "~/components/elements/Dialog";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
-import { SendouDialog } from "~/components/elements/Dialog";
 import type { Tables } from "~/db/tables";
 import { SENDOUQ } from "~/features/sendouq/q-constants";
 import { preferenceEmojiUrl } from "~/utils/urls";

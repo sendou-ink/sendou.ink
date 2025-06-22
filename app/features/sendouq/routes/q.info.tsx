@@ -3,15 +3,15 @@ import { Main } from "~/components/Main";
 import {
 	CALENDAR_PAGE,
 	FAQ_PAGE,
+	navIconUrl,
 	SENDOUQ_RULES_PAGE,
 	SENDOUQ_SETTINGS_PAGE,
 	TIERS_PAGE,
-	navIconUrl,
 } from "~/utils/urls";
 import "../q.css";
 import type { MetaFunction } from "@remix-run/node";
-import { Image } from "~/components/Image";
 import { SendouButton } from "~/components/elements/Button";
+import { Image } from "~/components/Image";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN } from "~/features/mmr/mmr-constants";
 import { metaTags } from "~/utils/remix";

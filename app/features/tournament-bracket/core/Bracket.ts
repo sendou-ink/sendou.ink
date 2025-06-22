@@ -9,10 +9,10 @@ import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
 import { cutToNDecimalPlaces } from "../../../utils/number";
 import { fillWithNullTillPowerOfTwo } from "../tournament-bracket-utils";
+import { getTournamentManager } from "./brackets-manager";
 import * as Progression from "./Progression";
 import type { OptionalIdObject, Tournament } from "./Tournament";
 import type { TournamentDataTeam } from "./Tournament.server";
-import { getTournamentManager } from "./brackets-manager";
 import type { BracketMapCounts } from "./toMapList";
 
 interface CreateBracketArgs {
@@ -214,7 +214,7 @@ export abstract class Bracket {
 			const opponent1Seed = result.get(match.opponent1.id) ?? -1;
 			const opponent2Seed = result.get(match.opponent2.id) ?? -1;
 			if (opponent1Seed === -1 || opponent2Seed === -1) {
-				console.error("opponent1Seed or opponent2Seed not found");
+				logger.error("opponent1Seed or opponent2Seed not found");
 				continue;
 			}
 

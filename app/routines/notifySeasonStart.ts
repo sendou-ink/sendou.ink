@@ -1,8 +1,8 @@
 import { add } from "date-fns";
 import * as Seasons from "../features/mmr/core/Seasons";
 import { userSkills } from "../features/mmr/tiered.server";
-import * as NotificationRepository from "../features/notifications/NotificationRepository.server";
 import { notify } from "../features/notifications/core/notify.server";
+import * as NotificationRepository from "../features/notifications/NotificationRepository.server";
 import { Routine } from "./routine.server";
 
 export const NotifySeasonStartRoutine = new Routine({

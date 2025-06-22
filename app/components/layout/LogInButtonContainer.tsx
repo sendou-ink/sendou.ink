@@ -34,7 +34,7 @@ export function LogInButtonContainer({
 					>
 						<div className="stack md layout__user-item">
 							{authError === "aborted" ? (
-								<>{t("auth.errors.discordPermissions")}</>
+								t("auth.errors.discordPermissions")
 							) : (
 								<>
 									{t("auth.errors.unknown")}{" "}

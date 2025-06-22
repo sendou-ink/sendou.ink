@@ -4,16 +4,16 @@ import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "~/components/Alert";
+import { LinkButton } from "~/components/elements/Button";
+import { SendouDialog } from "~/components/elements/Dialog";
 import { Flag } from "~/components/Flag";
 import { FormMessage } from "~/components/FormMessage";
 import { FriendCodeInput } from "~/components/FriendCodeInput";
 import { Image } from "~/components/Image";
-import { Main } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
-import { LinkButton } from "~/components/elements/Button";
-import { SendouDialog } from "~/components/elements/Dialog";
 import { UserIcon } from "~/components/icons/User";
 import { UsersIcon } from "~/components/icons/Users";
+import { Main } from "~/components/Main";
+import { SubmitButton } from "~/components/SubmitButton";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import type * as Seasons from "~/features/mmr/core/Seasons";
@@ -27,22 +27,21 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	LEADERBOARDS_PAGE,
 	LOG_IN_URL,
+	navIconUrl,
 	SENDOUQ_INFO_PAGE,
 	SENDOUQ_LOOKING_PREVIEW_PAGE,
 	SENDOUQ_PAGE,
 	SENDOUQ_RULES_PAGE,
 	SENDOUQ_SETTINGS_PAGE,
 	SENDOUQ_STREAMS_PAGE,
-	navIconUrl,
 	userSeasonsPage,
 } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
-import { FULL_GROUP_SIZE } from "../q-constants";
-import { userCanJoinQueueAt } from "../q-utils";
-
 import { action } from "../actions/q.server";
 import { loader } from "../loaders/q.server";
+import { FULL_GROUP_SIZE } from "../q-constants";
+import { userCanJoinQueueAt } from "../q-utils";
 export { loader, action };
 
 import "../q.css";
@@ -110,50 +109,48 @@ export default function QPage() {
 						<FriendCodeInput friendCode={data.friendCode?.friendCode} />
 					) : null}
 					{user ? (
-						<>
-							<fetcher.Form className="stack md" method="post">
-								<input type="hidden" name="_action" value="JOIN_QUEUE" />
-								<div className="stack horizontal md items-center mt-4 mx-auto">
-									<SubmitButton
-										icon={<UsersIcon />}
-										isDisabled={queueJoinStatus !== "NOW"}
-									>
-										{t("q:front.actions.joinWithGroup")}
-									</SubmitButton>
-									<SubmitButton
-										name="direct"
-										value="true"
-										state={fetcher.state}
-										icon={<UserIcon />}
-										variant="outlined"
-										isDisabled={queueJoinStatus !== "NOW"}
-									>
-										{t("q:front.actions.joinSolo")}
-									</SubmitButton>
+						<fetcher.Form className="stack md" method="post">
+							<input type="hidden" name="_action" value="JOIN_QUEUE" />
+							<div className="stack horizontal md items-center mt-4 mx-auto">
+								<SubmitButton
+									icon={<UsersIcon />}
+									isDisabled={queueJoinStatus !== "NOW"}
+								>
+									{t("q:front.actions.joinWithGroup")}
+								</SubmitButton>
+								<SubmitButton
+									name="direct"
+									value="true"
+									state={fetcher.state}
+									icon={<UserIcon />}
+									variant="outlined"
+									isDisabled={queueJoinStatus !== "NOW"}
+								>
+									{t("q:front.actions.joinSolo")}
+								</SubmitButton>
+							</div>
+							{queueJoinStatus instanceof Date ? (
+								<div
+									className="text-lighter text-xs text-center text-warning"
+									suppressHydrationWarning
+								>
+									As a fresh account please wait before joining the queue. You
+									can join{" "}
+									{queueJoinStatus.toLocaleString("en-US", {
+										day: "numeric",
+										month: "long",
+										hour: "numeric",
+										minute: "numeric",
+									})}
 								</div>
-								{queueJoinStatus instanceof Date ? (
-									<div
-										className="text-lighter text-xs text-center text-warning"
-										suppressHydrationWarning
-									>
-										As a fresh account please wait before joining the queue. You
-										can join{" "}
-										{queueJoinStatus.toLocaleString("en-US", {
-											day: "numeric",
-											month: "long",
-											hour: "numeric",
-											minute: "numeric",
-										})}
-									</div>
-								) : !data.friendCode ? (
-									<div className="text-lighter text-xs text-center text-error">
-										Save your friend code to join the queue
-									</div>
-								) : (
-									<PreviewQueueButton />
-								)}
-							</fetcher.Form>
-						</>
+							) : !data.friendCode ? (
+								<div className="text-lighter text-xs text-center text-error">
+									Save your friend code to join the queue
+								</div>
+							) : (
+								<PreviewQueueButton />
+							)}
+						</fetcher.Form>
 					) : (
 						<form
 							className="stack md items-center"

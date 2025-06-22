@@ -16,8 +16,8 @@ import {
 	Select,
 	SelectStateContext,
 	SelectValue,
-	Virtualizer,
 	useFilter,
+	Virtualizer,
 } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";

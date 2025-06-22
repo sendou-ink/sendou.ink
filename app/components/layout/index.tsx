@@ -4,14 +4,13 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
-import { Image } from "../Image";
 import { SendouButton } from "../elements/Button";
+import { Image } from "../Image";
 import { HamburgerIcon } from "../icons/Hamburger";
 import { Footer } from "./Footer";
+import styles from "./index.module.css";
 import { NavDialog } from "./NavDialog";
 import { TopRightButtons } from "./TopRightButtons";
-
-import styles from "./index.module.css";
 
 function useBreadcrumbs() {
 	const { t } = useTranslation();

@@ -8,12 +8,13 @@ import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { StageBackgroundStyle } from "~/features/map-planner";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import { JOIN_CODE_SEARCH_PARAM_KEY } from "~/features/sendouq/q-constants";
-import type { BrandId, ModeShort } from "~/modules/in-game-lists/types";
 import type {
 	Ability,
 	AbilityWithUnknown,
+	BrandId,
 	BuildAbilitiesTupleWithUnknown,
 	MainWeaponId,
+	ModeShort,
 	ModeShortWithSpecial,
 	SpecialWeaponId,
 	StageId,
@@ -247,7 +248,10 @@ export const badgePage = (badgeId: number) => `${BADGES_PAGE}/${badgeId}`;
 export const plusSuggestionPage = ({
 	tier,
 	showAlert,
-}: { tier?: string | number; showAlert?: boolean } = {}) => {
+}: {
+	tier?: string | number;
+	showAlert?: boolean;
+} = {}) => {
 	const params = new URLSearchParams();
 	if (tier) {
 		params.set("tier", String(tier));
@@ -371,7 +375,10 @@ export const tournamentStreamsPage = (tournamentId: number) => {
 export const tournamentOrganizationPage = ({
 	organizationSlug,
 	tournamentName,
-}: { organizationSlug: string; tournamentName?: string }) =>
+}: {
+	organizationSlug: string;
+	tournamentName?: string;
+}) =>
 	`/org/${organizationSlug}${tournamentName ? `?source=${decodeURIComponent(tournamentName)}` : ""}`;
 export const tournamentOrganizationEditPage = (organizationSlug: string) =>
 	`${tournamentOrganizationPage({ organizationSlug })}/edit`;

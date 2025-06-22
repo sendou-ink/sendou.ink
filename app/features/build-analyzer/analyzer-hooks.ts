@@ -10,7 +10,7 @@ import { isAbility } from "~/modules/in-game-lists/utils";
 import invariant from "~/utils/invariant";
 import { MAX_LDE_INTENSITY } from "./analyzer-constants";
 import type { SpecialEffectType } from "./analyzer-types";
-import { SPECIAL_EFFECTS, applySpecialEffects } from "./core/specialEffects";
+import { applySpecialEffects, SPECIAL_EFFECTS } from "./core/specialEffects";
 import { buildStats } from "./core/stats";
 import {
 	buildIsEmpty,

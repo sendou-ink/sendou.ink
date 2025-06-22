@@ -3,10 +3,10 @@ import { Link, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import { ModeImage, StageImage } from "~/components/Image";
-import { Placement } from "~/components/Placement";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import { ModeImage, StageImage } from "~/components/Image";
+import { Placement } from "~/components/Placement";
 import type {
 	TournamentData,
 	TournamentDataTeam,
@@ -22,9 +22,8 @@ import {
 } from "~/utils/urls";
 import { TeamWithRoster } from "../components/TeamWithRoster";
 import type { PlayedSet } from "../core/sets.server";
-import { useTournament } from "./to.$id";
-
 import { loader } from "../loaders/to.$id.teams.$tid.server";
+import { useTournament } from "./to.$id";
 export { loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {

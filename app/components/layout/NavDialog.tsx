@@ -5,8 +5,8 @@ import { navItems } from "~/components/layout/nav-items";
 import { useUser } from "~/features/auth/core/user";
 import { LOG_OUT_URL, navIconUrl, userPage } from "~/utils/urls";
 import { Avatar } from "../Avatar";
-import { Image } from "../Image";
 import { SendouButton } from "../elements/Button";
+import { Image } from "../Image";
 import { CrossIcon } from "../icons/Cross";
 import { LogOutIcon } from "../icons/LogOut";
 import { LogInButtonContainer } from "./LogInButtonContainer";
@@ -14,7 +14,10 @@ import { LogInButtonContainer } from "./LogInButtonContainer";
 export function NavDialog({
 	isOpen,
 	close,
-}: { isOpen: boolean; close: () => void }) {
+}: {
+	isOpen: boolean;
+	close: () => void;
+}) {
 	const user = useUser();
 	const { t } = useTranslation(["common"]);
 

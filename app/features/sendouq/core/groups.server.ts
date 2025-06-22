@@ -31,7 +31,7 @@ export function divideGroups({
 		"likerGroupId" | "targetGroupId" | "isRechallenge"
 	>[];
 }): DividedGroupsUncensored {
-	let own: LookingGroupWithInviteCode | undefined = undefined;
+	let own: LookingGroupWithInviteCode | undefined;
 	const neutral: LookingGroupWithInviteCode[] = [];
 	const likesReceived: LookingGroupWithInviteCode[] = [];
 
@@ -474,7 +474,7 @@ export function groupExpiryStatus(
 	const groupExpiresAt =
 		databaseTimestampToDate(group.latestActionAt).getTime() + 30 * 60 * 1000;
 
-	const now = new Date().getTime();
+	const now = Date.now();
 
 	if (now > groupExpiresAt) {
 		return "EXPIRED";

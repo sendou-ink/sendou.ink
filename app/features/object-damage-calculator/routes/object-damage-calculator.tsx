@@ -16,20 +16,18 @@ import {
 	SPLASH_WALL_ID,
 	SPRINKLER_ID,
 	SQUID_BEAKON_ID,
-	TORPEDO_ID,
-	WAVE_BREAKER_ID,
-} from "~/modules/in-game-lists/weapon-ids";
-import {
 	SUPER_CHUMP_ID,
+	TORPEDO_ID,
 	TRIPLE_SPLASHDOWN_ID,
+	WAVE_BREAKER_ID,
 } from "~/modules/in-game-lists/weapon-ids";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
-	OBJECT_DAMAGE_CALCULATOR_URL,
 	mainWeaponImageUrl,
 	mainWeaponVariantImageUrl,
 	modeImageUrl,
 	navIconUrl,
+	OBJECT_DAMAGE_CALCULATOR_URL,
 	specialWeaponImageUrl,
 	specialWeaponVariantImageUrl,
 	subWeaponImageUrl,
@@ -38,8 +36,8 @@ import { useObjectDamage } from "../calculator-hooks";
 import type { DamageReceiver } from "../calculator-types";
 import "../calculator.css";
 import type { MetaFunction } from "@remix-run/node";
-import { WeaponSelect } from "~/components/WeaponSelect";
 import { SendouSwitch } from "~/components/elements/Switch";
+import { WeaponSelect } from "~/components/WeaponSelect";
 import { metaTags } from "~/utils/remix";
 
 export const CURRENT_PATCH = "10.0";

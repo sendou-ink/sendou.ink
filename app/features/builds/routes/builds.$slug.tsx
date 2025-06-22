@@ -7,10 +7,9 @@ import {
 import { nanoid } from "nanoid";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import * as R from "remeda";
 import { BuildCard } from "~/components/BuildCard";
-import { Main } from "~/components/Main";
-import { LinkButton } from "~/components/elements/Button";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { BeakerFilledIcon } from "~/components/icons/BeakerFilled";
 import { CalendarIcon } from "~/components/icons/Calendar";
@@ -18,6 +17,7 @@ import { ChartBarIcon } from "~/components/icons/ChartBar";
 import { FilterIcon } from "~/components/icons/Filter";
 import { FireIcon } from "~/components/icons/Fire";
 import { MapIcon } from "~/components/icons/Map";
+import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
 import { safeJSONParse } from "~/utils/json";
 import { isRevalidation, metaTags } from "~/utils/remix";
@@ -159,11 +159,7 @@ export const handle: SendouRouteHandle = {
 	},
 };
 
-export function BuildCards({
-	data,
-}: {
-	data: SerializeFrom<typeof loader>;
-}) {
+export function BuildCards({ data }: { data: SerializeFrom<typeof loader> }) {
 	const user = useUser();
 
 	return (
@@ -194,8 +190,7 @@ export default function WeaponsBuildsPage() {
 	const filtersForSearchParams = (filters: BuildFilter[]) =>
 		JSON.stringify(
 			filters.map((f) => {
-				const { id, ...rest } = f;
-				return rest;
+				return R.omit(f, ["id"]);
 			}),
 		);
 	const syncSearchParams = (newFilters: BuildFilter[]) => {

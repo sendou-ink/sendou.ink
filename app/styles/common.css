@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/style/noDescendingSpecificity: Biome v2 migration */
 *,
 *::before,
 *::after {
@@ -1248,7 +1249,9 @@ html[dir="rtl"] .fix-rtl {
 	width: var(--map-width);
 	border: none;
 	background-color: transparent;
-	transition: filter, opacity 0.2s;
+	transition:
+		filter,
+		opacity 0.2s;
 	border-radius: var(--rounded);
 }
 

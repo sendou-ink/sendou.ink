@@ -1,7 +1,7 @@
 import { cachified } from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { i18next } from "~/modules/i18n/i18next.server";
-import { IN_MILLISECONDS, cache, ttl } from "~/utils/cache.server";
+import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { notFoundIfNullLike } from "~/utils/remix.server";
 import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import { abilityPointCountsToAverages } from "../build-stats-utils";

@@ -3,7 +3,7 @@ import { lazy } from "react";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { PLANNER_URL, navIconUrl } from "~/utils/urls";
+import { navIconUrl, PLANNER_URL } from "~/utils/urls";
 
 import "../plans.css";
 

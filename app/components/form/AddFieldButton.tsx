@@ -2,11 +2,7 @@ import { useTranslation } from "react-i18next";
 import { SendouButton } from "../elements/Button";
 import { PlusIcon } from "../icons/Plus";
 
-export function AddFieldButton({
-	onClick,
-}: {
-	onClick: () => void;
-}) {
+export function AddFieldButton({ onClick }: { onClick: () => void }) {
 	const { t } = useTranslation(["common"]);
 
 	return (

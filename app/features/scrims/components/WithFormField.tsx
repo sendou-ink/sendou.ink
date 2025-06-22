@@ -1,8 +1,8 @@
 import { Controller, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { UserSearch } from "~/components/elements/UserSearch";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
-import { UserSearch } from "~/components/elements/UserSearch";
 import { useUser } from "~/features/auth/core/user";
 import { SCRIM } from "~/features/scrims/scrims-constants";
 import { nullFilledArray } from "~/utils/arrays";

@@ -1,5 +1,7 @@
-import { abilities } from "~/modules/in-game-lists/abilities";
-import { mainOnlyAbilitiesShort } from "~/modules/in-game-lists/abilities";
+import {
+	abilities,
+	mainOnlyAbilitiesShort,
+} from "~/modules/in-game-lists/abilities";
 import type {
 	Ability,
 	BuildAbilitiesTuple,

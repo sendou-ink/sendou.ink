@@ -59,6 +59,7 @@ export function SendouMenuItem(props: SendouMenuItemProps) {
 				})
 			}
 		>
+			{/** biome-ignore lint/complexity/noUselessFragments: Biome v2 migration */}
 			<>
 				{props.icon ? (
 					<span className={styles.itemIcon}>{props.icon}</span>

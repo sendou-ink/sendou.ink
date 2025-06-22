@@ -211,7 +211,10 @@ function resolveSharedTeam(entries: ReturnType<typeof filterOneEntryPerUser>) {
 function ignoreTeams({
 	season,
 	entries,
-}: { season: number; entries: TeamLeaderboardBySeasonQueryReturnType }) {
+}: {
+	season: number;
+	entries: TeamLeaderboardBySeasonQueryReturnType;
+}) {
 	const ignoredTeams = IGNORED_TEAMS.get(season);
 
 	if (!ignoredTeams) return entries;

@@ -15,14 +15,6 @@
 	color: var(--text);
 }
 
-.item:hover .imageContainer {
-	outline: 3px solid var(--theme-transparent);
-}
-
-.item:focus-within .imageContainer {
-	outline: 3px solid var(--theme-transparent);
-}
-
 .unseenDot {
 	background-color: var(--theme);
 	border-radius: 100%;
@@ -44,6 +36,14 @@
 	display: grid;
 	place-items: center;
 	position: relative;
+}
+
+.item:hover .imageContainer {
+	outline: 3px solid var(--theme-transparent);
+}
+
+.item:focus-within .imageContainer {
+	outline: 3px solid var(--theme-transparent);
 }
 
 .itemImage {

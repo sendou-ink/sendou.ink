@@ -14,13 +14,7 @@ import { useTranslation } from "react-i18next";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
-import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { Image, ModeImage, StageImage, WeaponImage } from "~/components/Image";
-import { Main } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
-import { WeaponSelect } from "~/components/WeaponSelect";
-import { LinkButton } from "~/components/elements/Button";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { SendouSwitch } from "~/components/elements/Switch";
 import {
@@ -29,18 +23,23 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
+import { Image, ModeImage, StageImage, WeaponImage } from "~/components/Image";
 import { ArchiveBoxIcon } from "~/components/icons/ArchiveBox";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { RefreshArrowsIcon } from "~/components/icons/RefreshArrows";
 import { ScaleIcon } from "~/components/icons/Scale";
+import { Main } from "~/components/Main";
+import { SubmitButton } from "~/components/SubmitButton";
+import { WeaponSelect } from "~/components/WeaponSelect";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { Chat, type ChatProps, useChat } from "~/features/chat/components/Chat";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import { AddPrivateNoteDialog } from "~/features/sendouq-match/components/AddPrivateNoteDialog";
-import type { ReportedWeaponForMerging } from "~/features/sendouq-match/core/reported-weapons.server";
 import { GroupCard } from "~/features/sendouq/components/GroupCard";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
+import { AddPrivateNoteDialog } from "~/features/sendouq-match/components/AddPrivateNoteDialog";
+import type { ReportedWeaponForMerging } from "~/features/sendouq-match/core/reported-weapons.server";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useWindowSize } from "~/hooks/useWindowSize";
@@ -58,19 +57,18 @@ import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import type { Unpacked } from "~/utils/types";
 import { assertUnreachable } from "~/utils/types";
 import {
-	SENDOUQ_PAGE,
-	SENDOUQ_RULES_PAGE,
-	SENDOU_INK_DISCORD_URL,
 	navIconUrl,
 	preferenceEmojiUrl,
+	SENDOU_INK_DISCORD_URL,
+	SENDOUQ_PAGE,
+	SENDOUQ_RULES_PAGE,
 	sendouQMatchPage,
 	specialWeaponImageUrl,
 	teamPage,
 	userSubmittedImage,
 } from "~/utils/urls";
-import { matchEndedAtIndex } from "../core/match";
-
 import { action } from "../actions/q.match.$id.server";
+import { matchEndedAtIndex } from "../core/match";
 import { loader } from "../loaders/q.match.$id.server";
 export { loader, action };
 

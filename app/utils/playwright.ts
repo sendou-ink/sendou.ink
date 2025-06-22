@@ -1,4 +1,4 @@
-import { type Locator, type Page, expect } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import type { SeedVariation } from "~/features/api-private/routes/seed";
 import { tournamentBracketsPage } from "./urls";

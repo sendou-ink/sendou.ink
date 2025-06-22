@@ -26,7 +26,7 @@ export function unJsonify<T>(value: T) {
 		return value;
 	}
 
-	if (value.match(/^[\[\{]/) === null) {
+	if (value.match(/^[[{]/) === null) {
 		return value;
 	}
 

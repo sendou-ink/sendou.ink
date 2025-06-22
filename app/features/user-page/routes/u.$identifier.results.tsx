@@ -7,9 +7,8 @@ import { useSearchParamState } from "~/hooks/useSearchParamState";
 import invariant from "~/utils/invariant";
 import { userResultsEditHighlightsPage } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
-import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
-
 import { loader } from "../loaders/u.$identifier.results.server";
+import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 export { loader };
 
 export default function UserResultsPage() {

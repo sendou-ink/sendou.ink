@@ -1,11 +1,11 @@
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
-import { Image } from "~/components/Image";
 import {
 	SendouSelect,
 	SendouSelectItem,
 	SendouSelectItemSection,
 } from "~/components/elements/Select";
+import { Image } from "~/components/Image";
 import type { GearType } from "~/db/tables";
 import { brandIds } from "~/modules/in-game-lists/brand-ids";
 import {

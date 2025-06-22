@@ -1,8 +1,8 @@
 import { useFetcher } from "@remix-run/react";
 import clsx from "clsx";
+import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { SubmitButton } from "~/components/SubmitButton";
-import { SendouButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
 import {
 	useBracketExpanded,

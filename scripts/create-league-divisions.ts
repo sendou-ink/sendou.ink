@@ -5,9 +5,9 @@ import { z } from "zod/v4";
 import { db } from "~/db/sql";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
-import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -24,8 +24,6 @@ const csvUrl = process.argv[3]?.trim();
 invariant(z.string().url().parse(csvUrl), "csv url is required (argument 2)");
 
 async function main() {
-	console.time("create-league-divisions");
-
 	const tournament = await tournamentFromDB({
 		tournamentId,
 		user: { id: ADMIN_ID },
@@ -118,8 +116,6 @@ async function main() {
 
 		logger.info(`Created division ${div} (id: ${createdEvent.tournamentId})`);
 	}
-
-	console.timeEnd("create-league-divisions");
 }
 
 async function loadCsv() {

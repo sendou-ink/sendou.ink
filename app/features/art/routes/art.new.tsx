@@ -6,15 +6,16 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router-dom";
 import { Alert } from "~/components/Alert";
-import { FormMessage } from "~/components/FormMessage";
-import { Label } from "~/components/Label";
-import { Main } from "~/components/Main";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { UserSearch } from "~/components/elements/UserSearch";
+import { FormMessage } from "~/components/FormMessage";
 import { CrossIcon } from "~/components/icons/Cross";
+import { Label } from "~/components/Label";
+import { Main } from "~/components/Main";
 import { useHasRole } from "~/modules/permissions/hooks";
 import invariant from "~/utils/invariant";
+import { logger } from "~/utils/logger";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	artPage,
@@ -22,11 +23,10 @@ import {
 	navIconUrl,
 } from "~/utils/urls";
 import { metaTitle } from "../../../utils/remix";
+import { action } from "../actions/art.new.server";
 import { ART } from "../art-constants";
 import { previewUrl } from "../art-utils";
 import { TagSelect } from "../components/TagSelect";
-
-import { action } from "../actions/art.new.server";
 import { loader } from "../loaders/art.new.server";
 export { loader, action };
 
@@ -113,6 +113,7 @@ function ImageUpload({
 }) {
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["common"]);
+	const id = React.useId();
 
 	if (data.art) {
 		return (
@@ -125,9 +126,9 @@ function ImageUpload({
 
 	return (
 		<div>
-			<label htmlFor="img-field">{t("common:upload.imageToUpload")}</label>
+			<label htmlFor={id}>{t("common:upload.imageToUpload")}</label>
 			<input
-				id="img-field"
+				id={id}
 				className="plain"
 				type="file"
 				name="img"
@@ -147,7 +148,7 @@ function ImageUpload({
 							setImg(file);
 						},
 						error(err) {
-							console.error(err.message);
+							logger.error(err.message);
 						},
 					});
 
@@ -160,7 +161,7 @@ function ImageUpload({
 							setSmallImg(file);
 						},
 						error(err) {
-							console.error(err.message);
+							logger.error(err.message);
 						},
 					});
 				}}
@@ -174,17 +175,18 @@ function Description() {
 	const { t } = useTranslation(["art"]);
 	const data = useLoaderData<typeof loader>();
 	const [value, setValue] = React.useState(data.art?.description ?? "");
+	const id = React.useId();
 
 	return (
 		<div>
 			<Label
-				htmlFor="description"
+				htmlFor={id}
 				valueLimits={{ current: value.length, max: ART.DESCRIPTION_MAX_LENGTH }}
 			>
 				{t("art:forms.description.title")}
 			</Label>
 			<textarea
-				id="description"
+				id={id}
 				name="description"
 				value={value}
 				onChange={(e) => setValue(e.target.value)}
@@ -384,15 +386,16 @@ function ShowcaseToggle() {
 	const data = useLoaderData<typeof loader>();
 	const isCurrentlyShowcase = Boolean(data.art?.isShowcase);
 	const [checked, setChecked] = React.useState(isCurrentlyShowcase);
+	const id = React.useId();
 
 	return (
 		<div>
-			<label htmlFor="isShowcase">{t("art:forms.showcase.title")}</label>
+			<label htmlFor={id}>{t("art:forms.showcase.title")}</label>
 			<SendouSwitch
 				isSelected={checked}
 				onChange={setChecked}
 				name="isShowcase"
-				id="isShowcase"
+				id={id}
 				isDisabled={isCurrentlyShowcase}
 			/>
 			<FormMessage type="info">{t("art:forms.showcase.info")}</FormMessage>

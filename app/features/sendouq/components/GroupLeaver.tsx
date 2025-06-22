@@ -1,8 +1,8 @@
 import { useFetcher } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { SubmitButton } from "~/components/SubmitButton";
-import { SendouButton } from "~/components/elements/Button";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 
 export function GroupLeaver({

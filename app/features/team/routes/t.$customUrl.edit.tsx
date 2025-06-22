@@ -3,6 +3,7 @@ import { Form, Link, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { CustomizedColorsInput } from "~/components/CustomizedColorsInput";
+import { SendouButton } from "~/components/elements/Button";
 import { FormErrors } from "~/components/FormErrors";
 import { FormMessage } from "~/components/FormMessage";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
@@ -10,12 +11,11 @@ import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
-import { SendouButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
-	TEAM_SEARCH_PAGE,
 	navIconUrl,
+	TEAM_SEARCH_PAGE,
 	teamPage,
 	uploadImagePage,
 } from "~/utils/urls";

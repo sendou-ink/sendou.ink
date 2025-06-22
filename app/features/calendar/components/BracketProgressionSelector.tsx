@@ -2,14 +2,14 @@ import { nanoid } from "nanoid";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { DateInput } from "~/components/DateInput";
-import { FormMessage } from "~/components/FormMessage";
-import { Input } from "~/components/Input";
-import { Label } from "~/components/Label";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
+import { FormMessage } from "~/components/FormMessage";
+import { Input } from "~/components/Input";
 import { PlusIcon } from "~/components/icons/Plus";
-import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { Label } from "~/components/Label";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { defaultBracketSettings } from "../../tournament/tournament-utils";
 
 const defaultBracket = (): Progression.InputBracket => ({
@@ -395,11 +395,9 @@ function TournamentFormatBracketSelector({
 					) : null}
 					{!bracket.sources ? (
 						<FormMessage type="info">
-							{isInvitationalTournament ? (
-								<>Participants added by the organizer</>
-							) : (
-								<>Participants join from sign-up</>
-							)}
+							{isInvitationalTournament
+								? "Participants added by the organizer"
+								: "Participants join from sign-up"}
 						</FormMessage>
 					) : (
 						<SourcesSelector

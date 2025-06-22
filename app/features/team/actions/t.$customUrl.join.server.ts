@@ -2,8 +2,8 @@ import { type ActionFunction, redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import { errorToastIfFalsy, notFoundIfFalsy } from "~/utils/remix.server";
 import { teamPage } from "~/utils/urls";
-import * as TeamRepository from "../TeamRepository.server";
 import { validateInviteCode } from "../loaders/t.$customUrl.join.server";
+import * as TeamRepository from "../TeamRepository.server";
 import { TEAM } from "../team-constants";
 import { teamParamsSchema } from "../team-schemas.server";
 

@@ -1,12 +1,14 @@
 import clsx from "clsx";
-import { Tabs, type TabsProps } from "react-aria-components";
 import {
+	Tab,
 	TabList,
 	type TabListProps,
 	TabPanel,
 	type TabPanelProps,
+	type TabProps,
+	Tabs,
+	type TabsProps,
 } from "react-aria-components";
-import { Tab, type TabProps } from "react-aria-components";
 
 import buttonStyles from "./Button.module.css";
 import styles from "./Tabs.module.css";

@@ -2,20 +2,20 @@ import clsx from "clsx";
 import * as React from "react";
 import type { Key } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { Image, WeaponImage } from "~/components/Image";
 import {
 	SendouSelect,
 	SendouSelectItem,
 	SendouSelectItemSection,
 } from "~/components/elements/Select";
+import { Image, WeaponImage } from "~/components/Image";
 import type { AnyWeapon } from "~/features/build-analyzer";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { filterWeapon } from "~/modules/in-game-lists/utils";
 import {
 	SPLAT_BOMB_ID,
-	TRIZOOKA_ID,
 	specialWeaponIds,
 	subWeaponIds,
+	TRIZOOKA_ID,
 	weaponCategories,
 } from "~/modules/in-game-lists/weapon-ids";
 import {

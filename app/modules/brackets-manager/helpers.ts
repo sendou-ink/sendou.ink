@@ -6,8 +6,8 @@ import type {
 	ParticipantResult,
 	Result,
 	RoundRobinMode,
-	SeedOrdering,
 	Seeding,
+	SeedOrdering,
 	Stage,
 	StageType,
 } from "~/modules/brackets-model";

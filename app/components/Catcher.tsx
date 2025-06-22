@@ -11,9 +11,9 @@ import {
 	LOG_IN_URL,
 	SENDOU_INK_DISCORD_URL,
 } from "~/utils/urls";
+import { SendouButton } from "./elements/Button";
 import { Image } from "./Image";
 import { Main } from "./Main";
-import { SendouButton } from "./elements/Button";
 
 export function Catcher() {
 	const error = useRouteError();
@@ -53,14 +53,12 @@ export function Catcher() {
 					<a href={SENDOU_INK_DISCORD_URL}>our Discord</a> so it can be fixed.
 				</p>
 				{errorText ? (
-					<>
-						<div className="mt-4 stack sm items-center">
-							<textarea readOnly defaultValue={errorText} />
-							<SendouButton onPress={() => copyToClipboard(errorText)}>
-								Copy to clipboard
-							</SendouButton>
-						</div>
-					</>
+					<div className="mt-4 stack sm items-center">
+						<textarea readOnly defaultValue={errorText} />
+						<SendouButton onPress={() => copyToClipboard(errorText)}>
+							Copy to clipboard
+						</SendouButton>
+					</div>
 				) : null}
 			</Main>
 		);
