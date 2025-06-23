@@ -231,3 +231,15 @@ function ignoreTeams({
 		return true;
 	});
 }
+
+export async function seasonsParticipatedInByUserId(userId: number) {
+	const rows = await db
+		.selectFrom("Skill")
+		.select("season")
+		.where("userId", "=", userId)
+		.groupBy("season")
+		.orderBy("season", "desc")
+		.execute();
+
+	return rows.map((row) => row.season);
+}
