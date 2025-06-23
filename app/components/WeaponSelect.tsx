@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import * as React from "react";
 import type { Key } from "react-aria-components";
 import { useTranslation } from "react-i18next";
@@ -110,12 +109,15 @@ export function WeaponSelect<
 		>
 			{({ key, items: weapons, name, idx }) => (
 				<SendouSelectItemSection
-					heading={
-						<CategoryHeading
-							name={name}
-							className={idx === 0 ? "pt-0-5-forced" : undefined}
-						/>
+					heading={name}
+					headingImgPath={
+						name === "subs"
+							? subWeaponImageUrl(SPLAT_BOMB_ID)
+							: name === "specials"
+								? specialWeaponImageUrl(TRIZOOKA_ID)
+								: weaponCategoryUrl(name)
 					}
+					className={idx === 0 ? "pt-0-5-forced" : undefined}
 					key={key}
 				>
 					{weapons.map(({ weapon, name }) => (
@@ -164,31 +166,6 @@ export function WeaponSelect<
 				</SendouSelectItemSection>
 			)}
 		</SendouSelect>
-	);
-}
-
-function CategoryHeading({
-	name,
-	className,
-}: {
-	name: (typeof weaponCategories)[number]["name"] | "subs" | "specials";
-	className?: string;
-}) {
-	const { t } = useTranslation(["common"]);
-
-	const path = () => {
-		if (name === "subs") return subWeaponImageUrl(SPLAT_BOMB_ID);
-		if (name === "specials") return specialWeaponImageUrl(TRIZOOKA_ID);
-
-		return weaponCategoryUrl(name);
-	};
-
-	return (
-		<div className={clsx(className, styles.categoryHeading)}>
-			<Image path={path()} size={28} alt="" />
-			{t(`common:weapon.category.${name}`)}
-			<div className={styles.categoryDivider} />
-		</div>
 	);
 }
 

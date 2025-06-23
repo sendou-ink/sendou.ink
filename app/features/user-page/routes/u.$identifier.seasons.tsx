@@ -184,6 +184,8 @@ function SeasonHeader({
 				selectedKey={seasonViewed}
 				onSelectionChange={(seasonNth) => navigate(`?season=${seasonNth}`)}
 				items={options}
+				className="u__season__select"
+				popoverClassName="u__season__select"
 			>
 				{({ year, items, key }) => (
 					<SendouSelectItemSection heading={year} key={key}>
@@ -243,11 +245,13 @@ function useSeasonSelectOptions() {
 		{} as Record<number, typeof seasonSelectItems>,
 	);
 
-	return Object.entries(groupedSeasonItems).map(([year, items]) => ({
-		year,
-		items,
-		key: year,
-	}));
+	return Object.entries(groupedSeasonItems)
+		.sort(([yearA], [yearB]) => Number(yearB) - Number(yearA))
+		.map(([year, items]) => ({
+			year,
+			items: items.sort((a, b) => b.seasonNth - a.seasonNth),
+			key: year,
+		}));
 }
 
 function Winrates({
