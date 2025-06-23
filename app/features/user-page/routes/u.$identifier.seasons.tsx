@@ -12,7 +12,11 @@ import { Avatar } from "~/components/Avatar";
 import Chart from "~/components/Chart";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
-import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
+import {
+	SendouSelect,
+	SendouSelectItem,
+	SendouSelectItemSection,
+} from "~/components/elements/Select";
 import {
 	SendouTab,
 	SendouTabList,
@@ -165,10 +169,11 @@ function SeasonHeader({
 	seasonViewed: number;
 	seasonsParticipatedIn: number[];
 }) {
-	const { t, i18n } = useTranslation(["user"]);
+	const { i18n } = useTranslation(["user"]);
 	const isMounted = useIsMounted();
 	const { starts, ends } = Seasons.nthToDateRange(seasonViewed);
 	const navigate = useNavigate();
+	const options = useSeasonSelectOptions();
 
 	const isDifferentYears =
 		new Date(starts).getFullYear() !== new Date(ends).getFullYear();
@@ -178,20 +183,20 @@ function SeasonHeader({
 			<SendouSelect
 				selectedKey={seasonViewed}
 				onSelectionChange={(seasonNth) => navigate(`?season=${seasonNth}`)}
-				items={Seasons.allStarted().map((seasonNth) => ({
-					seasonNth,
-					key: seasonNth,
-					name: `${t("user:seasons.season")} ${seasonNth}`,
-				}))}
+				items={options}
 			>
-				{({ key, seasonNth, name }) => (
-					<SendouSelectItem
-						key={key}
-						id={seasonNth}
-						isDisabled={!seasonsParticipatedIn.includes(seasonNth)}
-					>
-						{name}
-					</SendouSelectItem>
+				{({ year, items, key }) => (
+					<SendouSelectItemSection heading={year} key={key}>
+						{items.map((item) => (
+							<SendouSelectItem
+								key={item.key}
+								id={item.seasonNth}
+								isDisabled={!seasonsParticipatedIn.includes(item.seasonNth)}
+							>
+								{item.name}
+							</SendouSelectItem>
+						))}
+					</SendouSelectItemSection>
 				)}
 			</SendouSelect>
 			<div className={clsx("text-sm text-lighter", { invisible: !isMounted })}>
@@ -215,6 +220,34 @@ function SeasonHeader({
 			</div>
 		</div>
 	);
+}
+
+function useSeasonSelectOptions() {
+	const { t } = useTranslation(["user"]);
+
+	const seasonSelectItems = Seasons.allStarted().map((seasonNth) => ({
+		seasonNth,
+		key: seasonNth,
+		name: `${t("user:seasons.season")} ${seasonNth}`,
+	}));
+
+	const groupedSeasonItems = seasonSelectItems.reduce(
+		(acc, item) => {
+			const year = Seasons.nthToDateRange(item.seasonNth).starts.getFullYear();
+			if (!acc[year]) {
+				acc[year] = [];
+			}
+			acc[year].push(item);
+			return acc;
+		},
+		{} as Record<number, typeof seasonSelectItems>,
+	);
+
+	return Object.entries(groupedSeasonItems).map(([year, items]) => ({
+		year,
+		items,
+		key: year,
+	}));
 }
 
 function Winrates({
