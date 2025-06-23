@@ -2,6 +2,7 @@ import {
 	Link,
 	useLoaderData,
 	useMatches,
+	useNavigate,
 	useSearchParams,
 } from "@remix-run/react";
 import clsx from "clsx";
@@ -11,6 +12,7 @@ import { Avatar } from "~/components/Avatar";
 import Chart from "~/components/Chart";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import {
 	SendouTab,
 	SendouTabList,
@@ -166,33 +168,32 @@ function SeasonHeader({
 	const { t, i18n } = useTranslation(["user"]);
 	const isMounted = useIsMounted();
 	const { starts, ends } = Seasons.nthToDateRange(seasonViewed);
+	const navigate = useNavigate();
 
 	const isDifferentYears =
 		new Date(starts).getFullYear() !== new Date(ends).getFullYear();
 
 	return (
 		<div>
-			<div className="stack horizontal xs">
-				{seasonsParticipatedIn.map((s) => {
-					const isActive = s === seasonViewed;
-
-					return (
-						<Link
-							to={`?season=${s}`}
-							key={s}
-							className={clsx("text-xl font-bold", {
-								"text-lighter": !isActive,
-								"text-main-forced": isActive,
-							})}
-						>
-							{isActive
-								? `${t("user:seasons.season")} `
-								: t("user:seasons.season.short")}
-							{s}
-						</Link>
-					);
-				})}
-			</div>
+			<SendouSelect
+				selectedKey={seasonViewed}
+				onSelectionChange={(seasonNth) => navigate(`?season=${seasonNth}`)}
+				items={Seasons.allStarted().map((seasonNth) => ({
+					seasonNth,
+					key: seasonNth,
+					name: `${t("user:seasons.season")} ${seasonNth}`,
+				}))}
+			>
+				{({ key, seasonNth, name }) => (
+					<SendouSelectItem
+						key={key}
+						id={seasonNth}
+						isDisabled={!seasonsParticipatedIn.includes(seasonNth)}
+					>
+						{name}
+					</SendouSelectItem>
+				)}
+			</SendouSelect>
 			<div className={clsx("text-sm text-lighter", { invisible: !isMounted })}>
 				{isMounted ? (
 					<>
