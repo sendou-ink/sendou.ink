@@ -1,4 +1,3 @@
-import type { SerializeFrom } from "@remix-run/node";
 import {
 	Link,
 	useLoaderData,
@@ -43,7 +42,10 @@ import { cutToNDecimalPlaces, roundToNDecimalPlaces } from "~/utils/number";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { sendouQMatchPage, TIERS_PAGE, userSeasonsPage } from "~/utils/urls";
 
-import { loader } from "../loaders/u.$identifier.seasons.server";
+import {
+	loader,
+	type UserSeasonsPageLoaderData,
+} from "../loaders/u.$identifier.seasons.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 export { loader };
 
@@ -56,13 +58,21 @@ export default function UserSeasonsPage() {
 	const { t } = useTranslation(["user"]);
 	const data = useLoaderData<typeof loader>();
 
-	const tabLink = (tab: string) =>
-		`?info=${tab}&page=${data.matches.currentPage}&season=${data.season}`;
+	if (!data) {
+		return (
+			<div className="text-lg text-lighter font-semi-bold text-center mt-2">
+				{t("user:seasons.noSeasons")}
+			</div>
+		);
+	}
 
 	if (data.matches.value.length === 0) {
 		return (
 			<div className="stack lg half-width">
-				<SeasonHeader />
+				<SeasonHeader
+					seasonViewed={data.season}
+					seasonsParticipatedIn={data.seasonsParticipatedIn}
+				/>
 				<div className="text-lg text-lighter font-semi-bold text-center mt-2">
 					{t("user:seasons.noQ")}
 				</div>
@@ -70,17 +80,29 @@ export default function UserSeasonsPage() {
 		);
 	}
 
+	const tabLink = (tab: string) =>
+		`?info=${tab}&page=${data.matches.currentPage}&season=${data.season}`;
+
 	return (
 		<div className="stack lg half-width">
-			<SeasonHeader />
+			<SeasonHeader
+				seasonViewed={data.season}
+				seasonsParticipatedIn={data.seasonsParticipatedIn}
+			/>
 			{data.currentOrdinal ? (
 				<div className="stack md">
-					<Rank currentOrdinal={data.currentOrdinal} />
+					<Rank
+						currentOrdinal={data.currentOrdinal}
+						seasonViewed={data.season}
+						isAccurateTiers={data.isAccurateTiers}
+						skills={data.skills}
+						tier={data.tier}
+					/>
 					{data.winrates.maps.wins + data.winrates.maps.losses > 0 ? (
-						<Winrates />
+						<Winrates winrates={data.winrates} />
 					) : null}
 					{data.skills.length >= DAYS_WITH_SKILL_NEEDED_TO_SHOW_POWER_CHART ? (
-						<PowerChart />
+						<PowerChart skills={data.skills} />
 					) : null}
 				</div>
 			) : null}
@@ -121,20 +143,29 @@ export default function UserSeasonsPage() {
 				</SubNav>
 				<div className="u__season__info-container">
 					{data.info.weapons ? <Weapons weapons={data.info.weapons} /> : null}
-					{data.info.stages ? <Stages stages={data.info.stages} /> : null}
-					{data.info.players ? <Players players={data.info.players} /> : null}
+					{data.info.stages ? (
+						<Stages stages={data.info.stages} seasonViewed={data.season} />
+					) : null}
+					{data.info.players ? (
+						<Players players={data.info.players} seasonViewed={data.season} />
+					) : null}
 				</div>
 			</div>
-			<Matches />
+			<Matches matches={data.matches} seasonViewed={data.season} />
 		</div>
 	);
 }
 
-function SeasonHeader() {
+function SeasonHeader({
+	seasonViewed,
+	seasonsParticipatedIn,
+}: {
+	seasonViewed: number;
+	seasonsParticipatedIn: number[];
+}) {
 	const { t, i18n } = useTranslation(["user"]);
-	const data = useLoaderData<typeof loader>();
 	const isMounted = useIsMounted();
-	const { starts, ends } = Seasons.nthToDateRange(data.season);
+	const { starts, ends } = Seasons.nthToDateRange(seasonViewed);
 
 	const isDifferentYears =
 		new Date(starts).getFullYear() !== new Date(ends).getFullYear();
@@ -142,8 +173,8 @@ function SeasonHeader() {
 	return (
 		<div>
 			<div className="stack horizontal xs">
-				{Seasons.allStarted().map((s) => {
-					const isActive = s === data.season;
+				{seasonsParticipatedIn.map((s) => {
+					const isActive = s === seasonViewed;
 
 					return (
 						<Link
@@ -185,9 +216,12 @@ function SeasonHeader() {
 	);
 }
 
-function Winrates() {
+function Winrates({
+	winrates,
+}: {
+	winrates: UserSeasonsPageLoaderData["winrates"];
+}) {
 	const { t } = useTranslation(["user"]);
-	const data = useLoaderData<typeof loader>();
 
 	const winrate = (wins: number, losses: number) =>
 		Math.round((wins / (wins + losses)) * 100);
@@ -195,48 +229,57 @@ function Winrates() {
 	return (
 		<div className="stack horizontal sm">
 			<div className="u__season__winrate">
-				<span className="text-theme text-xxs">Sets</span>{" "}
-				{data.winrates.sets.wins}
-				{t("user:seasons.win.short")} {data.winrates.sets.losses}
+				<span className="text-theme text-xxs">Sets</span> {winrates.sets.wins}
+				{t("user:seasons.win.short")} {winrates.sets.losses}
 				{t("user:seasons.loss.short")} (
-				{winrate(data.winrates.sets.wins, data.winrates.sets.losses)}%)
+				{winrate(winrates.sets.wins, winrates.sets.losses)}%)
 			</div>
 			<div className="u__season__winrate">
-				<span className="text-theme text-xxs">Maps</span>{" "}
-				{data.winrates.maps.wins}
-				{t("user:seasons.win.short")} {data.winrates.maps.losses}
+				<span className="text-theme text-xxs">Maps</span> {winrates.maps.wins}
+				{t("user:seasons.win.short")} {winrates.maps.losses}
 				{t("user:seasons.loss.short")} (
-				{winrate(data.winrates.maps.wins, data.winrates.maps.losses)}%)
+				{winrate(winrates.maps.wins, winrates.maps.losses)}%)
 			</div>
 		</div>
 	);
 }
 
-function Rank({ currentOrdinal }: { currentOrdinal: number }) {
+function Rank({
+	currentOrdinal,
+	seasonViewed,
+	tier,
+	isAccurateTiers,
+	skills,
+}: {
+	currentOrdinal: number;
+	seasonViewed: number;
+	tier: UserSeasonsPageLoaderData["tier"];
+	isAccurateTiers: UserSeasonsPageLoaderData["isAccurateTiers"];
+	skills: UserSeasonsPageLoaderData["skills"];
+}) {
 	const { t } = useTranslation(["user"]);
-	const data = useLoaderData<typeof loader>();
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
 	const layoutData = parentRoute.data as UserPageLoaderData;
 
-	const maxOrdinal = Math.max(...data.skills.map((s) => s.ordinal));
+	const maxOrdinal = Math.max(...skills.map((s) => s.ordinal));
 
 	const peakAndCurrentSame = currentOrdinal === maxOrdinal;
 
 	const topTenPlacement = playerTopTenPlacement({
-		season: data.season,
+		season: seasonViewed,
 		userId: layoutData.user.id,
 	});
 
 	return (
 		<div className="stack horizontal items-center justify-center sm">
-			<TierImage tier={data.tier} />
+			<TierImage tier={tier} />
 			<div>
 				<Link to={TIERS_PAGE} className="text-xl font-bold">
-					{data.tier.name}
-					{data.tier.isPlus ? "+" : ""}
+					{tier.name}
+					{tier.isPlus ? "+" : ""}
 				</Link>
-				{!data.isAccurateTiers ? (
+				{!isAccurateTiers ? (
 					<div className="u__season__tentative">
 						{t("user:seasons.tentative")}{" "}
 						<SendouPopover
@@ -263,7 +306,7 @@ function Rank({ currentOrdinal }: { currentOrdinal: number }) {
 					<TopTenPlayer
 						small
 						placement={topTenPlacement}
-						season={data.season}
+						season={seasonViewed}
 					/>
 				) : null}
 			</div>
@@ -271,14 +314,16 @@ function Rank({ currentOrdinal }: { currentOrdinal: number }) {
 	);
 }
 
-function PowerChart() {
-	const data = useLoaderData<typeof loader>();
-
+function PowerChart({
+	skills,
+}: {
+	skills: UserSeasonsPageLoaderData["skills"];
+}) {
 	const chartOptions = React.useMemo(() => {
 		return [
 			{
 				label: "SP",
-				data: data.skills.map((s) => {
+				data: skills.map((s) => {
 					return {
 						primary: new Date(s.date),
 						secondary: ordinalToSp(s.ordinal),
@@ -286,7 +331,7 @@ function PowerChart() {
 				}),
 			},
 		];
-	}, [data]);
+	}, [skills]);
 
 	return <Chart options={chartOptions as any} xAxis="localTime" />;
 }
@@ -296,7 +341,7 @@ const WEAPONS_TO_SHOW = 9;
 function Weapons({
 	weapons,
 }: {
-	weapons: NonNullable<SerializeFrom<typeof loader>["info"]["weapons"]>;
+	weapons: NonNullable<UserSeasonsPageLoaderData["info"]["weapons"]>;
 }) {
 	const { t } = useTranslation(["user", "weapons"]);
 
@@ -345,11 +390,12 @@ function Weapons({
 }
 
 function Stages({
+	seasonViewed,
 	stages,
 }: {
-	stages: NonNullable<SerializeFrom<typeof loader>["info"]["stages"]>;
+	seasonViewed: number;
+	stages: NonNullable<UserSeasonsPageLoaderData["info"]["stages"]>;
 }) {
-	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["user", "game-misc"]);
 	const layoutData = atOrError(useMatches(), -2).data as UserPageLoaderData;
 
@@ -390,7 +436,7 @@ function Stages({
 								>
 									<StageWeaponUsageStats
 										modeShort={mode}
-										season={data.season}
+										season={seasonViewed}
 										stageId={id}
 										userId={layoutData.user.id}
 									/>
@@ -493,11 +539,12 @@ function StageWeaponUsageStats(props: {
 
 function Players({
 	players,
+	seasonViewed,
 }: {
-	players: NonNullable<SerializeFrom<typeof loader>["info"]["players"]>;
+	players: NonNullable<UserSeasonsPageLoaderData["info"]["players"]>;
+	seasonViewed: number;
 }) {
 	const { t } = useTranslation(["user"]);
-	const data = useLoaderData<typeof loader>();
 
 	return (
 		<div className="stack md horizontal justify-center flex-wrap">
@@ -511,7 +558,7 @@ function Players({
 				return (
 					<div key={player.user.id} className="stack">
 						<Link
-							to={userSeasonsPage({ user: player.user, season: data.season })}
+							to={userSeasonsPage({ user: player.user, season: seasonViewed })}
 							className="u__season__player-name"
 						>
 							<Avatar user={player.user} size="xs" className="mx-auto" />
@@ -562,22 +609,27 @@ function WeaponCircle({
 	);
 }
 
-function Matches() {
+function Matches({
+	seasonViewed,
+	matches,
+}: {
+	seasonViewed: number;
+	matches: UserSeasonsPageLoaderData["matches"];
+}) {
 	const isMounted = useIsMounted();
-	const data = useLoaderData<typeof loader>();
 	const [, setSearchParams] = useSearchParams();
 	const ref = React.useRef<HTMLDivElement>(null);
 
 	const setPage = (page: number) => {
-		setSearchParams({ page: String(page), season: String(data.season) });
+		setSearchParams({ page: String(page), season: String(seasonViewed) });
 	};
 
 	React.useEffect(() => {
-		if (data.matches.currentPage === 1) return;
+		if (matches.currentPage === 1) return;
 		ref.current?.scrollIntoView({
 			block: "center",
 		});
-	}, [data.matches.currentPage]);
+	}, [matches.currentPage]);
 
 	let lastDayRendered: number | null = null;
 	return (
@@ -585,7 +637,7 @@ function Matches() {
 			<div ref={ref} />
 			<div className="stack lg">
 				<div className="stack">
-					{data.matches.value.map((match) => {
+					{matches.value.map((match) => {
 						const day = databaseTimestampToDate(match.createdAt).getDate();
 						const shouldRenderDateHeader = day !== lastDayRendered;
 						lastDayRendered = day;
@@ -616,12 +668,12 @@ function Matches() {
 						);
 					})}
 				</div>
-				{data.matches.pages > 1 ? (
+				{matches.pages > 1 ? (
 					<Pagination
-						currentPage={data.matches.currentPage}
-						pagesCount={data.matches.pages}
-						nextPage={() => setPage(data.matches.currentPage + 1)}
-						previousPage={() => setPage(data.matches.currentPage - 1)}
+						currentPage={matches.currentPage}
+						pagesCount={matches.pages}
+						nextPage={() => setPage(matches.currentPage + 1)}
+						previousPage={() => setPage(matches.currentPage - 1)}
 						setPage={(page) => setPage(page)}
 					/>
 				) : null}
@@ -633,7 +685,7 @@ function Matches() {
 function Match({
 	match,
 }: {
-	match: SerializeFrom<typeof loader>["matches"]["value"][0];
+	match: UserSeasonsPageLoaderData["matches"]["value"][0];
 }) {
 	const { t } = useTranslation(["user"]);
 	const [, parentRoute] = useMatches();
@@ -728,9 +780,7 @@ function MatchMembersRow({
 	reserveWeaponSpace,
 }: {
 	score: React.ReactNode;
-	members: SerializeFrom<
-		typeof loader
-	>["matches"]["value"][0]["groupAlphaMembers"];
+	members: UserSeasonsPageLoaderData["matches"]["value"][0]["groupAlphaMembers"];
 	reserveWeaponSpace: boolean;
 }) {
 	return (
