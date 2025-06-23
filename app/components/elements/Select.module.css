@@ -72,7 +72,6 @@
 .item {
 	font-size: var(--fonts-xsm);
 	font-weight: var(--semi-bold);
-	white-space: pre-wrap;
 	padding: var(--s-1-5);
 	border-radius: var(--rounded-sm);
 	height: 33px;
@@ -151,4 +150,32 @@
 	position: absolute;
 	bottom: -17px;
 	right: 9px;
+}
+
+.categoryHeading {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	font-weight: bold;
+	color: var(--text-lighter);
+	text-transform: uppercase;
+	font-size: var(--fonts-xxs);
+	padding-block-start: var(--s-2-5);
+	padding-block-end: var(--s-1);
+	padding-inline: var(--s-1-5);
+	white-space: nowrap;
+}
+
+.categoryDivider {
+	background-color: var(--border);
+	width: 100%;
+	height: 2px;
+	margin-block: var(--s-2);
+}
+
+.categoryHeading img {
+	border-radius: 100%;
+	background-color: var(--bg-lightest);
+	padding: var(--s-1);
+	min-width: 28px;
 }

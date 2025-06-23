@@ -3,7 +3,6 @@ import { useFetcher, useSearchParams } from "@remix-run/react";
 import * as React from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { SubmitButton } from "~/components/SubmitButton";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { InputFormField } from "~/components/form/InputFormField";
@@ -11,6 +10,7 @@ import { InputGroupFormField } from "~/components/form/InputGroupFormField";
 import { TextArrayFormField } from "~/components/form/TextArrayFormField";
 import { ToggleFormField } from "~/components/form/ToggleFormField";
 import { FilterFilledIcon } from "~/components/icons/FilterFilled";
+import { SubmitButton } from "~/components/SubmitButton";
 import type { CalendarEventTag } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { calendarFiltersFormSchema } from "~/features/calendar/calendar-schemas";
@@ -62,7 +62,10 @@ const TAGS_TO_OMIT: Array<CalendarEventTag> = [
 function FiltersForm({
 	filters,
 	closeDialog,
-}: { filters: CalendarFilters; closeDialog: () => void }) {
+}: {
+	filters: CalendarFilters;
+	closeDialog: () => void;
+}) {
 	const user = useUser();
 	const { t } = useTranslation(["game-misc", "calendar"]);
 	const methods = useForm({

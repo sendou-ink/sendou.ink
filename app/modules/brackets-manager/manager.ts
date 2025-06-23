@@ -5,8 +5,8 @@ import * as helpers from "./helpers";
 import { Reset } from "./reset";
 import type {
 	CrudInterface,
-	DataTypes,
 	Database,
+	DataTypes,
 	Storage,
 	Table,
 } from "./types";

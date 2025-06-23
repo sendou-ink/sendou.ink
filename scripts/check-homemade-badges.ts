@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/noConsole: Biome v2 migration */
 import fs from "node:fs";
 import path from "node:path";
 import { z } from "zod/v4";

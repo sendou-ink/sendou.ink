@@ -8,8 +8,8 @@ import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
-	USER_SEARCH_PAGE,
 	navIconUrl,
+	USER_SEARCH_PAGE,
 	userAdminPage,
 	userArtPage,
 	userBuildsPage,
@@ -21,8 +21,8 @@ import {
 } from "~/utils/urls";
 
 import {
-	type UserPageLoaderData,
 	loader,
+	type UserPageLoaderData,
 } from "../loaders/u.$identifier.server";
 export { loader };
 

@@ -3,10 +3,11 @@ import type { PatronsListLoaderData } from "~/features/front-page/routes/patrons
 import type { TrustersLoaderData } from "~/features/sendouq/routes/trusters";
 import type { WeaponUsageLoaderData } from "~/features/sendouq/routes/weapon-usage";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import { logger } from "~/utils/logger";
 import {
 	GET_TRUSTERS_ROUTE,
-	PATRONS_LIST_ROUTE,
 	getWeaponUsage,
+	PATRONS_LIST_ROUTE,
 } from "~/utils/urls";
 
 // TODO: replace with useFetcher after proper errr handling is implemented https://github.com/remix-run/react-router/discussions/10013
@@ -14,7 +15,7 @@ import {
 const fetcher = (key: string) => async (url: string) => {
 	const res = await fetch(url);
 	if (res.status !== 200) {
-		console.error(`swr error ${key}: status code ${res.status}`);
+		logger.error(`swr error ${key}: status code ${res.status}`);
 		throw new Error("fetching failed");
 	}
 	return res.json();

@@ -1,6 +1,12 @@
 import { useFetcher } from "@remix-run/react";
-import { type ReactNode, useCallback } from "react";
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+	createContext,
+	type ReactNode,
+	useCallback,
+	useContext,
+	useEffect,
+	useState,
+} from "react";
 
 const Theme = {
 	DARK: "dark",

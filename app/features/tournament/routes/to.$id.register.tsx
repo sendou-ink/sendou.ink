@@ -8,17 +8,7 @@ import { useCopyToClipboard } from "react-use";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
-import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { FriendCodeInput } from "~/components/FriendCodeInput";
-import { Image, ModeImage } from "~/components/Image";
-import { Input } from "~/components/Input";
-import { Label } from "~/components/Label";
-import { containerClassName } from "~/components/Main";
-import { MapPoolStages } from "~/components/MapPoolSelector";
-import { Section } from "~/components/Section";
-import { SubmitButton } from "~/components/SubmitButton";
-import { LinkButton } from "~/components/elements/Button";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import {
 	SendouTab,
@@ -26,12 +16,22 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
+import { FriendCodeInput } from "~/components/FriendCodeInput";
+import { Image, ModeImage } from "~/components/Image";
+import { Input } from "~/components/Input";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { ClockIcon } from "~/components/icons/Clock";
 import { CrossIcon } from "~/components/icons/Cross";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { TrashIcon } from "~/components/icons/Trash";
 import { UserIcon } from "~/components/icons/User";
+import { Label } from "~/components/Label";
+import { containerClassName } from "~/components/Main";
+import { MapPoolStages } from "~/components/MapPoolSelector";
+import { Section } from "~/components/Section";
+import { SubmitButton } from "~/components/SubmitButton";
+import TimePopover from "~/components/TimePopover";
 import { useUser } from "~/features/auth/core/user";
 import { imgTypeToDimensions } from "~/features/img-upload/upload-constants";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
@@ -42,12 +42,13 @@ import { useIsMounted } from "~/hooks/useIsMounted";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import invariant from "~/utils/invariant";
+import { logger } from "~/utils/logger";
 import {
 	LOG_IN_URL,
-	SENDOU_INK_BASE_URL,
-	SENDOU_INK_DISCORD_URL,
 	mapsPageWithMapPool,
 	navIconUrl,
+	SENDOU_INK_BASE_URL,
+	SENDOU_INK_DISCORD_URL,
 	tournamentJoinPage,
 	tournamentOrganizationPage,
 	tournamentSubsPage,
@@ -56,17 +57,15 @@ import {
 	userSubmittedImage,
 } from "~/utils/urls";
 import { AlertIcon } from "../../../components/icons/Alert";
+import { action } from "../actions/to.$id.register.server";
 import type { TournamentRegisterPageLoader } from "../loaders/to.$id.register.server";
+import { loader } from "../loaders/to.$id.register.server";
 import { TOURNAMENT } from "../tournament-constants";
 import {
 	type CounterPickValidationStatus,
 	validateCounterPickMapPool,
 } from "../tournament-utils";
 import { useTournament } from "./to.$id";
-
-import TimePopover from "~/components/TimePopover";
-import { action } from "../actions/to.$id.register.server";
-import { loader } from "../loaders/to.$id.register.server";
 export { loader, action };
 
 export default function TournamentRegisterPage() {
@@ -885,7 +884,7 @@ function TournamentLogoUpload({
 						onChange(file);
 					},
 					error(err) {
-						console.error(err.message);
+						logger.error(err.message);
 					},
 				});
 			}}

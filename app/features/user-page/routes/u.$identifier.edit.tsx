@@ -3,19 +3,19 @@ import clsx from "clsx";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { CustomizedColorsInput } from "~/components/CustomizedColorsInput";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { FormErrors } from "~/components/FormErrors";
 import { FormMessage } from "~/components/FormMessage";
 import { WeaponImage } from "~/components/Image";
 import { Input } from "~/components/Input";
-import { Label } from "~/components/Label";
-import { SubmitButton } from "~/components/SubmitButton";
-import { WeaponSelect } from "~/components/WeaponSelect";
-import { SendouButton } from "~/components/elements/Button";
-import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
-import { SendouSwitch } from "~/components/elements/Switch";
 import { StarIcon } from "~/components/icons/Star";
 import { StarFilledIcon } from "~/components/icons/StarFilled";
 import { TrashIcon } from "~/components/icons/Trash";
+import { Label } from "~/components/Label";
+import { SubmitButton } from "~/components/SubmitButton";
+import { WeaponSelect } from "~/components/WeaponSelect";
 import type { Tables } from "~/db/tables";
 import { BADGE } from "~/features/badges/badges-constants";
 import { BadgesSelector } from "~/features/badges/components/BadgesSelector";
@@ -24,11 +24,10 @@ import { useHasRole } from "~/modules/permissions/hooks";
 import invariant from "~/utils/invariant";
 import { rawSensToString } from "~/utils/strings";
 import { FAQ_PAGE } from "~/utils/urls";
-import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
-import { COUNTRY_CODES, USER } from "../user-page-constants";
-
 import { action } from "../actions/u.$identifier.edit.server";
 import { loader } from "../loaders/u.$identifier.edit.server";
+import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+import { COUNTRY_CODES, USER } from "../user-page-constants";
 export { loader, action };
 
 import styles from "~/styles/u.$identifier.module.css";
@@ -358,7 +357,9 @@ function WeaponPoolSelect() {
 
 function BioTextarea({
 	initialValue,
-}: { initialValue: Tables["User"]["bio"] }) {
+}: {
+	initialValue: Tables["User"]["bio"];
+}) {
 	const { t } = useTranslation("user");
 	const [value, setValue] = React.useState(initialValue ?? "");
 

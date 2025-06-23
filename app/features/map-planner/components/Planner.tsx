@@ -1,11 +1,3 @@
-import {
-	AssetRecordType,
-	DefaultQuickActions,
-	DefaultStylePanel,
-	DefaultZoomMenu,
-	Tldraw,
-	createShapeId,
-} from "@tldraw/tldraw";
 import type {
 	Editor,
 	TLAssetId,
@@ -13,6 +5,14 @@ import type {
 	TLImageAsset,
 	TLShapeId,
 	TLUiStylePanelProps,
+} from "@tldraw/tldraw";
+import {
+	AssetRecordType,
+	createShapeId,
+	DefaultQuickActions,
+	DefaultStylePanel,
+	DefaultZoomMenu,
+	Tldraw,
 } from "@tldraw/tldraw";
 import clsx from "clsx";
 import * as React from "react";
@@ -28,6 +28,7 @@ import {
 	subWeaponIds,
 	weaponCategories,
 } from "~/modules/in-game-lists/weapon-ids";
+import { logger } from "~/utils/logger";
 import {
 	mainWeaponImageUrl,
 	modeImageUrl,
@@ -37,8 +38,8 @@ import {
 	subWeaponImageUrl,
 	weaponCategoryUrl,
 } from "~/utils/urls";
-import { Image } from "../../../components/Image";
 import { SendouButton } from "../../../components/elements/Button";
+import { Image } from "../../../components/Image";
 import type { StageBackgroundStyle } from "../plans-types";
 
 export default function Planner() {
@@ -542,6 +543,6 @@ function ourLanguageToTldrawLanguage(ourLanguageUserSelected: string) {
 		}
 	}
 
-	console.error(`No tldraw language found for: ${ourLanguageUserSelected}`);
+	logger.error(`No tldraw language found for: ${ourLanguageUserSelected}`);
 	return "en";
 }

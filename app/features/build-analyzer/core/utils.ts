@@ -293,7 +293,7 @@ export function validatedBuildFromSearchParams(
 				validateAbility(["STACKABLE"], abilitiesArr[11]),
 			],
 		];
-	} catch (err) {
+	} catch {
 		return EMPTY_BUILD;
 	}
 }

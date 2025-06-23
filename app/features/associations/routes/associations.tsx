@@ -4,24 +4,23 @@ import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
 import { AddNewButton } from "~/components/AddNewButton";
 import { Avatar } from "~/components/Avatar";
-import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { Label } from "~/components/Label";
-import { Main } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
 import { SendouButton } from "~/components/elements/Button";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { ClipboardIcon } from "~/components/icons/Clipboard";
 import { TrashIcon } from "~/components/icons/Trash";
-import { useUser } from "~/features/auth/core/user";
-import { useHasPermission } from "~/modules/permissions/hooks";
-import type { SendouRouteHandle } from "~/utils/remix.server";
-import { associationsPage, newAssociationsPage, userPage } from "~/utils/urls";
-
+import { Label } from "~/components/Label";
+import { Main } from "~/components/Main";
+import { SubmitButton } from "~/components/SubmitButton";
 import { action } from "~/features/associations/actions/associations.server";
 import {
 	type AssociationsLoaderData,
 	loader,
 } from "~/features/associations/loaders/associations.server";
+import { useUser } from "~/features/auth/core/user";
+import { useHasPermission } from "~/modules/permissions/hooks";
+import type { SendouRouteHandle } from "~/utils/remix.server";
+import { associationsPage, newAssociationsPage, userPage } from "~/utils/urls";
 export { loader, action };
 
 export const handle: SendouRouteHandle = {
@@ -89,7 +88,9 @@ function JoinForm() {
 
 function Association({
 	association,
-}: { association: AssociationsLoaderData["associations"][number] }) {
+}: {
+	association: AssociationsLoaderData["associations"][number];
+}) {
 	const { t } = useTranslation(["common", "scrims"]);
 	const user = useUser();
 	const canManage = useHasPermission(association, "MANAGE");
@@ -169,11 +170,15 @@ function Association({
 function AssociationInviteCodeActions({
 	associationId,
 	inviteCode,
-}: { associationId: number; inviteCode: string }) {
+}: {
+	associationId: number;
+	inviteCode: string;
+}) {
 	const { t } = useTranslation(["common", "scrims"]);
 	const [state, copyToClipboard] = useCopyToClipboard();
 	const [copySuccess, setCopySuccess] = React.useState(false);
 	const fetcher = useFetcher();
+	const id = React.useId();
 
 	React.useEffect(() => {
 		if (!state.value) return;
@@ -188,9 +193,9 @@ function AssociationInviteCodeActions({
 
 	return (
 		<div className="mt-6">
-			<label htmlFor="invite">{t("scrims:associations.shareLink.title")}</label>
+			<label htmlFor={id}>{t("scrims:associations.shareLink.title")}</label>
 			<div className="stack horizontal sm items-center">
-				<input type="text" value={inviteLink} readOnly id="invite" />
+				<input type="text" value={inviteLink} readOnly id={id} />
 				<SendouButton
 					variant={copySuccess ? "outlined-success" : "outlined"}
 					onPress={() => copyToClipboard(inviteLink)}

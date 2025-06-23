@@ -4,8 +4,6 @@ import clsx from "clsx";
 import type { TFunction } from "i18next";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Image } from "~/components/Image";
-import { SubmitButton } from "~/components/SubmitButton";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import {
@@ -14,9 +12,11 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { Image } from "~/components/Image";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { CrossIcon } from "~/components/icons/Cross";
 import { PickIcon } from "~/components/icons/Pick";
+import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { Chat, useChat } from "~/features/chat/components/Chat";
 import { useTournament } from "~/features/tournament/routes/to.$id";

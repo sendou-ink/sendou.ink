@@ -3,8 +3,8 @@ import { describe, expect, test } from "vitest";
 import invariant from "~/utils/invariant";
 import type { Tables } from "../../../db/tables";
 import type { AllMatchResult } from "../queries/allMatchResultsByTournamentId.server";
-import type { TournamentDataTeam } from "./Tournament.server";
 import { tournamentSummary } from "./summarizer.server";
+import type { TournamentDataTeam } from "./Tournament.server";
 
 describe("tournamentSummary()", () => {
 	const createTeam = (

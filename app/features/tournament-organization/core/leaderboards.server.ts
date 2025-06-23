@@ -136,7 +136,10 @@ async function calendarEventPoints(
 function pointsAdjustedToTeamSize({
 	basePoints,
 	teamSize,
-}: { basePoints: number; teamSize: number }) {
+}: {
+	basePoints: number;
+	teamSize: number;
+}) {
 	if (teamSize <= 4) return basePoints;
 
 	return (basePoints * 4) / teamSize;

@@ -7,7 +7,7 @@ import {
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { TEAM_SEARCH_PAGE, mySlugify, teamPage } from "~/utils/urls";
+import { mySlugify, TEAM_SEARCH_PAGE, teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
 import { editTeamSchema, teamParamsSchema } from "../team-schemas.server";
 import { isTeamManager, isTeamOwner } from "../team-utils";

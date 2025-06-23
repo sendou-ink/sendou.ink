@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { buildStats } from "~/features/build-analyzer";
 import type {
 	AbilityPoints,
 	AnalyzedBuild,
 	DamageType,
 } from "~/features/build-analyzer";
+import { buildStats } from "~/features/build-analyzer";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,

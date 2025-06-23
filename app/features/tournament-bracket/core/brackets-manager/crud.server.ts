@@ -264,7 +264,7 @@ export class SqlDatabase {
 		return false;
 	}
 
-	delete(table, filter) {
+	delete(_table, _filter) {
 		throw new Error("not implemented");
 		// switch (table) {
 		// 	case "stage":

@@ -121,7 +121,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 async function validateHasManagePermissions({
 	user,
 	associationId,
-}: { user: { id: number }; associationId: number }) {
+}: {
+	user: { id: number };
+	associationId: number;
+}) {
 	const association = badRequestIfFalsy(
 		await AssociationRepository.findById(associationId, { withMembers: true }),
 	);

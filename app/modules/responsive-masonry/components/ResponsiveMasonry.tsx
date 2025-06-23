@@ -14,7 +14,9 @@ const useBreakpoint = createBreakpoint({ L: 900, M: 750, S: 350 });
 
 const MasonryResponsive = ({
 	children,
-}: { children: React.ReactNode | React.ReactNode[] }) => {
+}: {
+	children: React.ReactNode | React.ReactNode[];
+}) => {
 	const breakpoint = useBreakpoint() as "L" | "M" | "S";
 
 	const columnsCount = COLUMN_COUNTS[breakpoint];

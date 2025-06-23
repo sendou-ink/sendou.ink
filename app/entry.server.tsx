@@ -1,7 +1,7 @@
 import { PassThrough } from "node:stream";
 import {
-	type EntryContext,
 	createReadableStreamFromReadable,
+	type EntryContext,
 } from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
 import { createInstance } from "i18next";
@@ -13,6 +13,7 @@ import { config } from "~/modules/i18n/config"; // your i18n configuration file
 import i18next from "~/modules/i18n/i18next.server";
 import { resources } from "./modules/i18n/resources.server";
 import { daily, everyHourAt00, everyHourAt30 } from "./routines/list.server";
+import { logger } from "./utils/logger";
 
 const ABORT_DELAY = 5000;
 
@@ -67,7 +68,7 @@ export default async function handleRequest(
 				onError(error: unknown) {
 					didError = true;
 
-					console.error(error);
+					logger.error(error);
 				},
 			},
 		);
@@ -105,5 +106,5 @@ if (!global.appStartSignal && process.env.NODE_ENV === "production") {
 }
 
 process.on("unhandledRejection", (reason: string, p: Promise<any>) => {
-	console.error("Unhandled Rejection at:", p, "reason:", reason);
+	logger.error("Unhandled Rejection at:", p, "reason:", reason);
 });

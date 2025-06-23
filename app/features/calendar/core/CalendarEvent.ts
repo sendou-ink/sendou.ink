@@ -298,6 +298,9 @@ function matchesFilter(
 function orgNameMatches({
 	orgName,
 	value,
-}: { orgName: string; value: string }) {
+}: {
+	orgName: string;
+	value: string;
+}) {
 	return orgName.trim().toLowerCase() === value.trim().toLowerCase();
 }

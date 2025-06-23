@@ -1,7 +1,10 @@
 export function TrophyIcon({
 	className,
 	title,
-}: { className?: string; title?: string }) {
+}: {
+	className?: string;
+	title?: string;
+}) {
 	return (
 		<svg
 			xmlns="http://www.w3.org/2000/svg"

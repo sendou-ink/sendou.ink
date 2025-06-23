@@ -5,10 +5,10 @@ import clsx from "clsx";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { Catcher } from "~/components/Catcher";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { RelativeTime } from "~/components/RelativeTime";
-import { LinkButton } from "~/components/elements/Button";
 import { TrashIcon } from "~/components/icons/Trash";
+import { RelativeTime } from "~/components/RelativeTime";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import type * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
@@ -20,15 +20,13 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { metaTags } from "~/utils/remix";
 import { userPage } from "~/utils/urls";
+import { action } from "../actions/plus.suggestions.server";
+import { loader } from "../loaders/plus.suggestions.server";
 import {
 	canAddCommentToSuggestionFE,
 	canDeleteComment,
 	canSuggestNewUser,
 } from "../plus-suggestions-utils";
-
-import { SendouButton } from "~/components/elements/Button";
-import { action } from "../actions/plus.suggestions.server";
-import { loader } from "../loaders/plus.suggestions.server";
 export { action, loader };
 
 export const meta: MetaFunction = (args) => {

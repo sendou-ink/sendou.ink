@@ -1,7 +1,6 @@
 .item {
 	font-size: var(--fonts-xsm);
 	font-weight: var(--semi-bold);
-	white-space: pre-wrap;
 	padding: var(--s-1-5);
 	border-radius: var(--rounded-sm);
 	height: 33px;

@@ -91,7 +91,7 @@ export const DiscordStrategy = () => {
 
 				return userFromDb.id;
 			} catch (e) {
-				console.error("Failed to finish authentication:\n", e);
+				logger.error("Failed to finish authentication:\n", e);
 				throw new Error("Failed to finish authentication");
 			}
 		},

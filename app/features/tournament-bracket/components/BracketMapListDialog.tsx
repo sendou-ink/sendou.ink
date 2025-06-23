@@ -2,19 +2,19 @@ import { type FetcherWithComponents, Link, useFetcher } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { ModeImage, StageImage } from "~/components/Image";
-import { Label } from "~/components/Label";
-import { SubmitButton } from "~/components/SubmitButton";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouSwitch } from "~/components/elements/Switch";
+import { ModeImage, StageImage } from "~/components/Image";
 import { RefreshArrowsIcon } from "~/components/icons/RefreshArrows";
+import { Label } from "~/components/Label";
+import { SubmitButton } from "~/components/SubmitButton";
 import type { TournamentRoundMaps } from "~/db/tables";
-import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import {
 	useTournament,
 	useTournamentPreparedMaps,
 } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { nullFilledArray } from "~/utils/arrays";
@@ -28,12 +28,12 @@ import { UnlinkIcon } from "../../../components/icons/Unlink";
 import { logger } from "../../../utils/logger";
 import type { Bracket } from "../core/Bracket";
 import * as PreparedMaps from "../core/PreparedMaps";
-import type { Tournament } from "../core/Tournament";
 import { getRounds } from "../core/rounds";
+import type { Tournament } from "../core/Tournament";
 import {
 	type BracketMapCounts,
-	type TournamentRoundMapList,
 	generateTournamentRoundMaplist,
+	type TournamentRoundMapList,
 } from "../core/toMapList";
 
 export function BracketMapListDialog({
@@ -689,7 +689,10 @@ function authorIdToUsername(tournament: Tournament, authorId: number) {
 function teamCountAdjustedBracketData({
 	bracket,
 	teamCount,
-}: { bracket: Bracket; teamCount: number }) {
+}: {
+	bracket: Bracket;
+	teamCount: number;
+}) {
 	switch (bracket.type) {
 		case "swiss":
 			// always has the same amount of rounds even if 0 participants
@@ -1076,13 +1079,11 @@ function MysteryRow({
 				})}
 			>
 				<span className="text-lg">{number}.</span>
-				{isCounterpicks ? (
-					<>Counterpick</>
-				) : isTiebreaker ? (
-					<>Tiebreaker</>
-				) : (
-					<>Team&apos;s pick</>
-				)}
+				{isCounterpicks
+					? "Counterpick"
+					: isTiebreaker
+						? "Tiebreaker"
+						: "Team's pick"}
 			</div>
 		</li>
 	);

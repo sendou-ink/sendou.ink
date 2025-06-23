@@ -7,21 +7,21 @@ import { useTranslation } from "react-i18next";
 import { AbilitiesSelector } from "~/components/AbilitiesSelector";
 import { Ability } from "~/components/Ability";
 import Chart from "~/components/Chart";
-import { Image } from "~/components/Image";
-import { Main } from "~/components/Main";
-import { Table } from "~/components/Table";
 import {
 	SendouTab,
 	SendouTabList,
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { Image } from "~/components/Image";
 import { BeakerIcon } from "~/components/icons/Beaker";
+import { Main } from "~/components/Main";
+import { Table } from "~/components/Table";
 import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { abilitiesShort } from "~/modules/in-game-lists/abilities";
-import type { Ability as AbilityType } from "~/modules/in-game-lists/types";
 import type {
+	Ability as AbilityType,
 	BuildAbilitiesTupleWithUnknown,
 	MainWeaponId,
 	SubWeaponId,
@@ -53,9 +53,9 @@ import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
 import { metaTags } from "../../../utils/remix";
 import {
+	damageTypeToWeaponType,
 	MAX_AP,
 	MAX_LDE_INTENSITY,
-	damageTypeToWeaponType,
 } from "../analyzer-constants";
 import { useAnalyzeBuild } from "../analyzer-hooks";
 import type {
@@ -73,8 +73,8 @@ import {
 	getAbilityChunksMapAsArray,
 } from "../core/abilityChunksCalc";
 import {
-	SPECIAL_EFFECTS,
 	lastDitchEffortIntensityToAp,
+	SPECIAL_EFFECTS,
 } from "../core/specialEffects";
 import { buildStats } from "../core/stats";
 import {
@@ -85,8 +85,9 @@ import {
 } from "../core/utils";
 import "../analyzer.css";
 import * as R from "remeda";
-import { WeaponSelect } from "~/components/WeaponSelect";
 import { SendouSwitch } from "~/components/elements/Switch";
+import { WeaponSelect } from "~/components/WeaponSelect";
+import { logger } from "~/utils/logger";
 
 export const CURRENT_PATCH = "10.0";
 
@@ -1039,7 +1040,7 @@ function StatChart({
 
 	// prevent crash but this should not happen
 	if (chartOptions.length === 0) {
-		console.error("no chart options");
+		logger.error("no chart options");
 		return null;
 	}
 

@@ -4,15 +4,15 @@ import { useUser } from "~/features/auth/core/user";
 import { FF_SCRIMS_ENABLED } from "~/features/scrims/scrims-constants";
 import {
 	CALENDAR_NEW_PAGE,
-	NEW_TEAM_PAGE,
-	TOURNAMENT_NEW_PAGE,
 	lfgNewPostPage,
+	NEW_TEAM_PAGE,
 	navIconUrl,
 	newArtPage,
 	newAssociationsPage,
 	newScrimPostPage,
 	newVodPage,
 	plusSuggestionsNewPage,
+	TOURNAMENT_NEW_PAGE,
 	userNewBuildPage,
 } from "~/utils/urls";
 import {

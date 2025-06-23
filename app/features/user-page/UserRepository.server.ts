@@ -724,11 +724,10 @@ export function upsert(
 		.insertInto("User")
 		.values(args)
 		.onConflict((oc) => {
-			const { discordId, ...rest } = args;
-
-			return oc
-				.column("discordId")
-				.doUpdateSet({ ...rest, createdAt: databaseTimestampNow() });
+			return oc.column("discordId").doUpdateSet({
+				...R.omit(args, ["discordId"]),
+				createdAt: databaseTimestampNow(),
+			});
 		})
 		.returning("id")
 		.executeTakeFirstOrThrow();
@@ -880,7 +879,10 @@ export function updateResultHighlights(args: UpdateResultHighlightsArgs) {
 export function updateBuildSorting({
 	userId,
 	buildSorting,
-}: { userId: number; buildSorting: BuildSort[] | null }) {
+}: {
+	userId: number;
+	buildSorting: BuildSort[] | null;
+}) {
 	return db
 		.updateTable("User")
 		.set({ buildSorting: buildSorting ? JSON.stringify(buildSorting) : null })

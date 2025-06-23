@@ -3,8 +3,6 @@ import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod/v4";
 import { FormMessage } from "~/components/FormMessage";
-import { Label } from "~/components/Label";
-import { Main } from "~/components/Main";
 import { AddFieldButton } from "~/components/form/AddFieldButton";
 import { FormFieldset } from "~/components/form/FormFieldset";
 import { InputFormField } from "~/components/form/InputFormField";
@@ -14,17 +12,18 @@ import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import { TextArrayFormField } from "~/components/form/TextArrayFormField";
 import { ToggleFormField } from "~/components/form/ToggleFormField";
 import { UserSearchFormField } from "~/components/form/UserSearchFormField";
+import { Label } from "~/components/Label";
+import { Main } from "~/components/Main";
 import { TOURNAMENT_ORGANIZATION_ROLES } from "~/db/tables";
 import { BadgesSelector } from "~/features/badges/components/BadgesSelector";
 import { wrapToValueStringArrayWithDefault } from "~/utils/form";
 import type { Unpacked } from "~/utils/types";
 import { uploadImagePage } from "~/utils/urls";
-import { TOURNAMENT_ORGANIZATION } from "../tournament-organization-constants";
-import { organizationEditSchema } from "../tournament-organization-schemas";
-
 import { action } from "../actions/org.$slug.edit.server";
 import { loader } from "../loaders/org.$slug.edit.server";
 import { handle, meta } from "../routes/org.$slug";
+import { TOURNAMENT_ORGANIZATION } from "../tournament-organization-constants";
+import { organizationEditSchema } from "../tournament-organization-schemas";
 export { action, handle, loader, meta };
 
 type FormFields = z.infer<typeof organizationEditSchema> & {
@@ -136,7 +135,10 @@ function MembersFormField() {
 function MemberFieldset({
 	idx,
 	remove,
-}: { idx: number; remove: (idx: number) => void }) {
+}: {
+	idx: number;
+	remove: (idx: number) => void;
+}) {
 	const { t } = useTranslation(["org"]);
 	const { clearErrors } = useFormContext<FormFields>();
 
@@ -204,7 +206,10 @@ function SeriesFormField() {
 function SeriesFieldset({
 	idx,
 	remove,
-}: { idx: number; remove: (idx: number) => void }) {
+}: {
+	idx: number;
+	remove: (idx: number) => void;
+}) {
 	const { t } = useTranslation(["org", "common"]);
 	const { clearErrors } = useFormContext<FormFields>();
 

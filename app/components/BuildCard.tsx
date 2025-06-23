@@ -7,9 +7,9 @@ import type { BuildWeaponWithTop500Info } from "~/features/builds/queries/builds
 import { useIsMounted } from "~/hooks/useIsMounted";
 import type {
 	Ability as AbilityType,
+	BuildAbilitiesTuple,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import type { BuildAbilitiesTuple } from "~/modules/in-game-lists/types";
 import { altWeaponIdToId } from "~/modules/in-game-lists/weapon-ids";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { gearTypeToInitial } from "~/utils/strings";
@@ -24,16 +24,15 @@ import {
 	weaponBuildPage,
 } from "~/utils/urls";
 import { Ability } from "./Ability";
-import { FormWithConfirm } from "./FormWithConfirm";
-import { Image } from "./Image";
+import styles from "./BuildCard.module.css";
 import { LinkButton, SendouButton } from "./elements/Button";
 import { SendouPopover } from "./elements/Popover";
+import { FormWithConfirm } from "./FormWithConfirm";
+import { Image } from "./Image";
 import { EditIcon } from "./icons/Edit";
 import { LockIcon } from "./icons/Lock";
 import { SpeechBubbleIcon } from "./icons/SpeechBubble";
 import { TrashIcon } from "./icons/Trash";
-
-import styles from "./BuildCard.module.css";
 
 interface BuildProps {
 	build: Pick<

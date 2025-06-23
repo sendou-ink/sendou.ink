@@ -211,7 +211,10 @@ function resolveSharedTeam(entries: ReturnType<typeof filterOneEntryPerUser>) {
 function ignoreTeams({
 	season,
 	entries,
-}: { season: number; entries: TeamLeaderboardBySeasonQueryReturnType }) {
+}: {
+	season: number;
+	entries: TeamLeaderboardBySeasonQueryReturnType;
+}) {
 	const ignoredTeams = IGNORED_TEAMS.get(season);
 
 	if (!ignoredTeams) return entries;
@@ -227,4 +230,16 @@ function ignoreTeams({
 
 		return true;
 	});
+}
+
+export async function seasonsParticipatedInByUserId(userId: number) {
+	const rows = await db
+		.selectFrom("Skill")
+		.select("season")
+		.where("userId", "=", userId)
+		.groupBy("season")
+		.orderBy("season", "desc")
+		.execute();
+
+	return rows.map((row) => row.season);
 }

@@ -2,15 +2,15 @@ import { useFetcher } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
-import { SubmitButton } from "~/components/SubmitButton";
 import { SendouButton } from "~/components/elements/Button";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { ClipboardIcon } from "~/components/icons/Clipboard";
 import { PlusIcon } from "~/components/icons/Plus";
+import { SubmitButton } from "~/components/SubmitButton";
 import { useTrusted } from "~/hooks/swr";
 import {
-	SENDOUQ_PREPARING_PAGE,
 	SENDOU_INK_BASE_URL,
+	SENDOUQ_PREPARING_PAGE,
 	sendouQInviteLink,
 } from "~/utils/urls";
 import type { SendouQPreparingAction } from "../actions/q.preparing.server";

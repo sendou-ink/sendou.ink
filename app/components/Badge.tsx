@@ -19,7 +19,6 @@ export function Badge({ badge, onClick, isAnimated, size }: BadgeProps) {
 
 	if (isAnimated) {
 		return (
-			// biome-ignore lint/a11y/useAltText: false positive..?
 			<img
 				src={badgeUrl({ code: badge.code, extension: "gif" })}
 				alt={badge.displayName}

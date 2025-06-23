@@ -1,8 +1,8 @@
 import { addPendingPlusTiers } from "~/features/leaderboards/core/leaderboards.server";
 import { userSPLeaderboard } from "~/features/leaderboards/queries/userSPLeaderboard.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import { seasonToVotingRange } from "~/features/plus-voting/core/voting-time";
+import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import invariant from "~/utils/invariant";
 import { userIsBanned } from "../../ban/core/banned.server";
 

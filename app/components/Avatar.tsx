@@ -47,7 +47,6 @@ export function Avatar({
 			: BLANK_IMAGE_URL); // avoid broken image placeholder
 
 	return (
-		// biome-ignore lint/a11y/useAltText: spread messes it up https://github.com/biomejs/biome/issues/3081
 		<img
 			className={clsx("avatar", className)}
 			src={src}

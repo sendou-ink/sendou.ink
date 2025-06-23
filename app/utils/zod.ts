@@ -144,7 +144,7 @@ export function safeJSONParse(value: unknown): unknown {
 		if (typeof value !== "string") return value;
 		const parsedValue = z.string().parse(value);
 		return JSON.parse(parsedValue);
-	} catch (e) {
+	} catch {
 		return undefined;
 	}
 }

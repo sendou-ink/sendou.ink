@@ -1,9 +1,9 @@
 import "dotenv/config";
-import { type Rating, ordinal, rating } from "openskill";
+import { ordinal, type Rating, rating } from "openskill";
 import { db } from "../app/db/sql";
 import type { Tables } from "../app/db/tables";
-import { tournamentFromDB } from "../app/features/tournament-bracket/core/Tournament.server";
 import { calculateIndividualPlayerSkills } from "../app/features/tournament-bracket/core/summarizer.server";
+import { tournamentFromDB } from "../app/features/tournament-bracket/core/Tournament.server";
 import { allMatchResultsByTournamentId } from "../app/features/tournament-bracket/queries/allMatchResultsByTournamentId.server";
 import invariant from "../app/utils/invariant";
 import { logger } from "../app/utils/logger";
@@ -15,7 +15,6 @@ async function main() {
 		const ratings = new Map<number, Rating>();
 		let count = 0;
 
-		console.time(`Tournament skills: ${type}`);
 		for await (const tournament of tournaments(type)) {
 			count++;
 			const results = allMatchResultsByTournamentId(tournament.ctx.id);
@@ -32,7 +31,6 @@ async function main() {
 				ratings.set(userId, rating({ mu, sigma }));
 			}
 		}
-		console.timeEnd(`Tournament skills: ${type}`);
 		logger.info(`Processed ${count} tournaments`);
 
 		for (const [userId, { mu, sigma }] of ratings) {
@@ -81,7 +79,7 @@ async function* tournaments(type: "RANKED" | "UNRANKED") {
 			) {
 				yield tournament;
 			}
-		} catch (err) {
+		} catch {
 			// logger.info(`Skipped tournament with id ${tournamentId}`);
 		}
 	}

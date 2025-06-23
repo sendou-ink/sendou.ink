@@ -22,10 +22,6 @@
 	max-width: var(--card-width);
 }
 
-.card:hover .avatarImg {
-	outline: 6px solid var(--theme-transparent);
-}
-
 .imgContainer {
 	background-color: var(--bg);
 	padding: var(--s-1-5);
@@ -36,6 +32,10 @@
 
 .avatarImg {
 	border-radius: 100%;
+}
+
+.card:hover .avatarImg {
+	outline: 6px solid var(--theme-transparent);
 }
 
 .org {

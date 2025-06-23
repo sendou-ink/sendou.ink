@@ -1,21 +1,20 @@
 import { Form, useLoaderData } from "@remix-run/react";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { SendouButton } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
 import { WeaponImage } from "~/components/Image";
+import { TrashIcon } from "~/components/icons/Trash";
 import { Label } from "~/components/Label";
 import { RequiredHiddenInput } from "~/components/RequiredHiddenInput";
 import { SubmitButton } from "~/components/SubmitButton";
 import { WeaponSelect } from "~/components/WeaponSelect";
-import { SendouButton } from "~/components/elements/Button";
-import { TrashIcon } from "~/components/icons/Trash";
 import { useUser } from "~/features/auth/core/user";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { TOURNAMENT_SUB } from "../tournament-subs-constants";
-
 import { action } from "../actions/to.$id.subs.new.server";
 import { loader } from "../loaders/to.$id.subs.new.server";
+import { TOURNAMENT_SUB } from "../tournament-subs-constants";
 export { action, loader };
 
 import "../tournament-subs.css";

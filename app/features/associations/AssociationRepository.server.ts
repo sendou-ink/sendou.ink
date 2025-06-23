@@ -162,7 +162,10 @@ export function refreshInviteCode(associationId: number) {
 export function addMember({
 	associationId,
 	userId,
-}: { associationId: number; userId: number }) {
+}: {
+	associationId: number;
+	userId: number;
+}) {
 	return db
 		.insertInto("AssociationMember")
 		.values({ associationId, userId, role: "MEMBER" })
@@ -172,7 +175,10 @@ export function addMember({
 export function removeMember({
 	associationId,
 	userId,
-}: { associationId: number; userId: number }) {
+}: {
+	associationId: number;
+	userId: number;
+}) {
 	return db
 		.deleteFrom("AssociationMember")
 		.where("associationId", "=", associationId)

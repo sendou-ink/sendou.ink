@@ -2,9 +2,9 @@ import type { MetaFunction } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { Avatar } from "~/components/Avatar";
-import { RelativeTime } from "~/components/RelativeTime";
 import { SendouButton } from "~/components/elements/Button";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
+import { RelativeTime } from "~/components/RelativeTime";
 import { usePlusVoting } from "~/features/plus-voting/core";
 import { metaTags } from "~/utils/remix";
 import { assertUnreachable } from "~/utils/types";
@@ -12,8 +12,8 @@ import { PlusSuggestionComments } from "../../plus-suggestions/routes/plus.sugge
 
 import { action } from "../actions/plus.voting.server";
 import {
-	type PlusVotingLoaderData,
 	loader,
+	type PlusVotingLoaderData,
 } from "../loaders/plus.voting.server";
 export { action, loader };
 
@@ -146,12 +146,10 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 						/>
 					) : null}
 					{currentUser.user.bio ? (
-						<>
-							<article className="w-full">
-								<h2 className="plus-voting__bio-header">Bio</h2>
-								{currentUser.user.bio}
-							</article>
-						</>
+						<article className="w-full">
+							<h2 className="plus-voting__bio-header">Bio</h2>
+							{currentUser.user.bio}
+						</article>
 					) : null}
 				</div>
 			) : (

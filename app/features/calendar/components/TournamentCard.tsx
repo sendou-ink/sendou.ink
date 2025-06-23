@@ -1,10 +1,10 @@
 import { Link } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
-import { Flag } from "~/components/Flag";
-import { Image, ModeImage } from "~/components/Image";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import { Flag } from "~/components/Flag";
+import { Image, ModeImage } from "~/components/Image";
 import { TrophyIcon } from "~/components/icons/Trophy";
 import { UsersIcon } from "~/components/icons/Users";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
@@ -187,7 +187,9 @@ function ModesPill({ modes }: { modes: NonNullable<CalendarEvent["modes"]> }) {
 
 function BadgePrizesPill({
 	badges,
-}: { badges: NonNullable<CalendarEvent["badges"]> }) {
+}: {
+	badges: NonNullable<CalendarEvent["badges"]>;
+}) {
 	return (
 		<SendouPopover
 			trigger={

@@ -14,18 +14,17 @@ import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
 import { LFG_PAGE, lfgNewPostPage, navIconUrl } from "~/utils/urls";
+import { action } from "../actions/lfg.server";
 import { LFGAddFilterButton } from "../components/LFGAddFilterButton";
 import { LFGFilters } from "../components/LFGFilters";
 import { LFGPost } from "../components/LFGPost";
 import { filterPosts } from "../core/filtering";
 import { LFG } from "../lfg-constants";
 import {
-	type LFGFilter,
 	filterToSmallStr,
+	type LFGFilter,
 	smallStrToFilter,
 } from "../lfg-types";
-
-import { action } from "../actions/lfg.server";
 import { loader } from "../loaders/lfg.server";
 export { loader, action };
 

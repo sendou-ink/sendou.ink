@@ -1,13 +1,13 @@
 import type { Tables, TournamentRoundMaps } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { mapPickingStyleToModes } from "~/features/tournament/tournament-utils";
+import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { Round } from "~/modules/brackets-model";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
 import {
-	type TournamentMaplistSource,
 	createTournamentMapList,
+	type TournamentMaplistSource,
 } from "~/modules/tournament-map-list-generator";
 import { starterMap } from "~/modules/tournament-map-list-generator/starter-map";
 import { syncCached } from "~/utils/cache.server";
@@ -165,10 +165,7 @@ export function resolveFreshTeamPickedMapList(
 			],
 		});
 	} catch (e) {
-		console.error(
-			"Failed to create map list. Falling back to default maps.",
-			e,
-		);
+		logger.error("Failed to create map list. Falling back to default maps.", e);
 
 		return createTournamentMapList({
 			count: count(),

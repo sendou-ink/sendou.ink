@@ -46,6 +46,7 @@
 	"search.pleaseLogIn.button": "",
 	"seasons": "シーズン",
 	"seasons.noQ": "このプレイヤーは今シーズンSendouQをプレイしていません",
+	"seasons.noSeasons": "",
 	"seasons.tabs.weapons": "武器",
 	"seasons.tabs.stages": "ステージ",
 	"seasons.tabs.self": "自分",

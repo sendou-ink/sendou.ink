@@ -2,9 +2,9 @@ import type { MetaFunction } from "@remix-run/node";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Badge } from "~/components/Badge";
-import { Main } from "~/components/Main";
 import { LinkButton } from "~/components/elements/Button";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
+import { Main } from "~/components/Main";
 import { FF_SCRIMS_ENABLED } from "~/features/scrims/scrims-constants";
 import { metaTags } from "~/utils/remix";
 import {

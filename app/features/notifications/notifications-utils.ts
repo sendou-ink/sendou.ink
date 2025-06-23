@@ -1,9 +1,9 @@
 import { assertUnreachable } from "~/utils/types";
 import {
-	PLUS_VOTING_PAGE,
-	SENDOUQ_PAGE,
 	badgePage,
+	PLUS_VOTING_PAGE,
 	plusSuggestionPage,
+	SENDOUQ_PAGE,
 	scrimPage,
 	scrimsPage,
 	sendouQMatchPage,

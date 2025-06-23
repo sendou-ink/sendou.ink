@@ -8,10 +8,10 @@ import { useCopyToClipboard } from "react-use";
 import { useEventSource } from "remix-utils/sse/react";
 import { Alert } from "~/components/Alert";
 import { Divider } from "~/components/Divider";
-import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { SendouPopover } from "~/components/elements/Popover";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { EyeIcon } from "~/components/icons/Eye";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
@@ -31,14 +31,13 @@ import {
 	useTournament,
 	useTournamentPreparedMaps,
 } from "../../tournament/routes/to.$id";
+import { action } from "../actions/to.$id.brackets.server";
 import { Bracket } from "../components/Bracket";
 import { BracketMapListDialog } from "../components/BracketMapListDialog";
 import { TournamentTeamActions } from "../components/TournamentTeamActions";
 import type { Bracket as BracketType } from "../core/Bracket";
 import * as PreparedMaps from "../core/PreparedMaps";
 import { bracketSubscriptionKey } from "../tournament-bracket-utils";
-
-import { action } from "../actions/to.$id.brackets.server";
 export { action };
 
 import "../components/Bracket/bracket.css";
@@ -200,13 +199,11 @@ export default function TournamentBracketsPage() {
 						{!bracket.canBeStarted ? (
 							<div className="tournament-bracket__mini-alert">
 								⚠️{" "}
-								{bracketIdx === 0 ? (
-									<>Tournament start time is in the future</>
-								) : bracket.startTime && bracket.startTime > new Date() ? (
-									<>Bracket start time is in the future</>
-								) : (
-									<>Teams pending from the previous bracket</>
-								)}{" "}
+								{bracketIdx === 0
+									? "Tournament start time is in the future"
+									: bracket.startTime && bracket.startTime > new Date()
+										? "Bracket start time is in the future"
+										: "Teams pending from the previous bracket"}{" "}
 								(blocks starting)
 							</div>
 						) : null}

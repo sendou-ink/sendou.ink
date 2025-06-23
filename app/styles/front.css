@@ -32,7 +32,6 @@
 
 .front-page__side-nav__log-out {
 	display: flex;
-	color: var(--text);
 	font-size: var(--fonts-xs);
 	font-weight: var(--bold);
 	gap: var(--s-1-5);
@@ -43,7 +42,6 @@
 .front-page__side-nav__log-out svg {
 	background-color: var(--bg-lightest);
 	border-radius: var(--rounded);
-	padding: var(--s-1);
 	min-width: 28px;
 	margin-inline-end: 0 !important;
 	padding: var(--s-1-5);

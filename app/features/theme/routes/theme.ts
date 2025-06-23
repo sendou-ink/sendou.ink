@@ -1,7 +1,7 @@
 import {
 	type ActionFunction,
-	type LoaderFunction,
 	json,
+	type LoaderFunction,
 	redirect,
 } from "@remix-run/node";
 import { isTheme } from "../core/provider";

@@ -3,10 +3,10 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import type { Tables } from "~/db/tables";
 import { getUserId } from "~/features/auth/core/user.server";
 import * as Changelog from "~/features/front-page/core/Changelog.server";
-import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
+import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import { IN_MILLISECONDS, cache, ttl } from "~/utils/cache.server";
+import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import {
 	discordAvatarUrl,
 	teamPage,

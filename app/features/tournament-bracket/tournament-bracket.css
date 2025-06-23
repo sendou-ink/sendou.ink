@@ -450,7 +450,6 @@
 
 .tournament-bracket__bracket-nav__link__selected {
 	color: var(--text);
-	background-color: var(--bg);
 	background-color: var(--bg-lighter);
 }
 

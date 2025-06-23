@@ -16,13 +16,14 @@ import {
 	Select,
 	SelectStateContext,
 	SelectValue,
-	Virtualizer,
 	useFilter,
+	Virtualizer,
 } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouButton } from "~/components/elements/Button";
 import { ChevronUpDownIcon } from "~/components/icons/ChevronUpDown";
+import { Image } from "../Image";
 import { CrossIcon } from "../icons/Cross";
 import { SearchIcon } from "../icons/Search";
 import styles from "./Select.module.css";
@@ -159,17 +160,27 @@ export function SendouSelectItem(props: SendouSelectItemProps) {
 }
 
 interface SendouSelectItemSectionProps {
-	heading: React.ReactNode;
+	heading: string;
+	headingImgPath?: string;
 	children: React.ReactNode;
+	className?: string;
 }
 
 export function SendouSelectItemSection({
 	heading,
+	headingImgPath,
 	children,
+	className,
 }: SendouSelectItemSectionProps) {
 	return (
 		<ListBoxSection>
-			<Header>{heading}</Header>
+			<Header className={clsx(className, styles.categoryHeading)}>
+				{headingImgPath ? (
+					<Image path={headingImgPath} size={28} alt="" />
+				) : null}
+				{heading}
+				<div className={styles.categoryDivider} />
+			</Header>
 			{children}
 		</ListBoxSection>
 	);

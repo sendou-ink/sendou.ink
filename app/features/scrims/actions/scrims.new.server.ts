@@ -92,7 +92,10 @@ const ROLES_TO_EXCLUDE: Tables["TeamMember"]["role"][] = [
 export const usersListForPost = async ({
 	from,
 	authorId,
-}: { from: z.infer<typeof fromSchema>; authorId: number }) => {
+}: {
+	from: z.infer<typeof fromSchema>;
+	authorId: number;
+}) => {
 	if (from.mode === "PICKUP") {
 		return [authorId, ...from.users];
 	}

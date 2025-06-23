@@ -8,10 +8,9 @@ import { TrashIcon } from "~/components/icons/Trash";
 import type { Tables } from "~/db/tables";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { atOrError } from "~/utils/arrays";
+import { action } from "../actions/badges.$id.edit.server";
 import type { BadgeDetailsLoaderData } from "../loaders/badges.$id.server";
 import type { BadgeDetailsContext } from "./badges.$id";
-
-import { action } from "../actions/badges.$id.edit.server";
 export { action };
 
 export default function EditBadgePage() {
@@ -148,7 +147,6 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 						{owner.username}
 						<input
 							className="badges-edit__number-input"
-							id="number"
 							type="number"
 							value={owner.count}
 							min={0}
