@@ -722,11 +722,10 @@ export function upsert(
 ) {
 	return db
 		.insertInto("User")
-		.values(args)
+		.values({ ...args, createdAt: databaseTimestampNow() })
 		.onConflict((oc) => {
 			return oc.column("discordId").doUpdateSet({
 				...R.omit(args, ["discordId"]),
-				createdAt: databaseTimestampNow(),
 			});
 		})
 		.returning("id")
