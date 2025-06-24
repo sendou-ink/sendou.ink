@@ -981,6 +981,8 @@ export interface ScrimPost {
 	canceledByUserId: number | null;
 	/** Reason for canceling the scrim */
 	cancelReason: string | null;
+	/** When the post was made was it scheduled for a future time slot (as opposed to looking now) */
+	isScheduledForFuture: Generated<DBBoolean>;
 	createdAt: GeneratedAlways<number>;
 	updatedAt: Generated<number>;
 }

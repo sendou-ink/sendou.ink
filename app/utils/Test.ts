@@ -14,11 +14,25 @@ export function arrayContainsSameItems<T>(arr1: T[], arr2: T[]) {
 	);
 }
 
+/**
+ * Wraps an action function to provide a strongly-typed, reusable handler for executing actions
+ * in unit tests as if it was a normal function. The returned function allows you to pass
+ * parameters that match the schema defined by the action, and it simulates a request with
+ * authentication headers based on the provided user type.
+ *
+ * @example
+ * import { someAction } from "../actions/some.action.server";
+ *
+ * const someAction = wrappedAction<typeof someActionSchema>({ action });
+ */
 export function wrappedAction<T extends z.ZodTypeAny>({
 	action,
+	/** Is this action submitted as json (via SendouForm) */
+	isNewForm = false,
 }: {
 	// TODO: strongly type this
 	action: (args: ActionFunctionArgs) => any;
+	isNewForm?: boolean;
 }) {
 	return async (
 		args: z.infer<T>,
@@ -27,11 +41,19 @@ export function wrappedAction<T extends z.ZodTypeAny>({
 			params = {},
 		}: { user?: "admin" | "regular"; params?: Params<string> } = {},
 	) => {
-		const body = new URLSearchParams(args as any);
+		const body = isNewForm
+			? JSON.stringify(args)
+			: new URLSearchParams(args as any);
 		const request = new Request("http://app.com/path", {
 			method: "POST",
 			body,
-			headers: await authHeader(user),
+			headers: [
+				...(await authHeader(user)),
+				[
+					"Content-Type",
+					isNewForm ? "application/json" : "application/x-www-form-urlencoded",
+				],
+			],
 		});
 
 		try {
@@ -70,7 +92,10 @@ export function wrappedLoader<T>({
 	} = {}) => {
 		const request = new Request("http://app.com/path", {
 			method: "GET",
-			headers: await authHeader(user),
+			headers: [
+				...(await authHeader(user)),
+				["Content-Type", "application/x-www-form-urlencoded"],
+			],
 		});
 
 		try {
@@ -104,7 +129,9 @@ export function assertResponseErrored(response: Response, message?: string) {
 	}
 }
 
-async function authHeader(user?: "admin" | "regular"): Promise<HeadersInit> {
+async function authHeader(
+	user?: "admin" | "regular",
+): Promise<[string, string][]> {
 	if (!user) return [];
 
 	const session = await authSessionStorage.getSession();

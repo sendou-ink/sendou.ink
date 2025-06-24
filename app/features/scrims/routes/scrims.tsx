@@ -1,6 +1,7 @@
 import type { MetaFunction } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
+import { formatDistance } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
@@ -336,9 +337,6 @@ function ScrimsTable({
 					const owner =
 						post.users.find((user) => user.isOwner) ?? post.users[0];
 
-					const date = databaseTimestampToDate(post.at);
-					const inThePast = date < new Date();
-
 					const requests = showRequestRows
 						? post.requests.map((request) => (
 								<RequestRow
@@ -368,7 +366,7 @@ function ScrimsTable({
 								<td>
 									<div className="stack horizontal sm">
 										<div className={styles.postTime}>
-											{inThePast ? (
+											{!post.isScheduledForFuture ? (
 												t("scrims:now")
 											) : (
 												<TimePopover
@@ -378,6 +376,15 @@ function ScrimsTable({
 														minute: "numeric",
 													}}
 													underline={false}
+													footerText={t("scrims:postModal.footer", {
+														time: formatDistance(
+															databaseTimestampToDate(post.createdAt),
+															new Date(),
+															{
+																addSuffix: true,
+															},
+														),
+													})}
 												/>
 											)}
 										</div>
