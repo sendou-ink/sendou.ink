@@ -1204,7 +1204,14 @@ function MapListMap({
 									onChange={handleReportScore(i, "ALPHA")}
 								/>
 								<label className="mb-0" htmlFor={`alpha-${i}`}>
-									{`${t("q:match.sides.alpha")}${relativeSideText("ALPHA")}`}
+									{t("q:match.sides.alpha")}
+									<span
+										className={clsx({
+											"text-success": data.groupMemberOf === "ALPHA",
+										})}
+									>
+										{relativeSideText("ALPHA")}
+									</span>
 								</label>
 							</div>
 							<div className="stack sm horizontal items-center font-semi-bold">
@@ -1217,7 +1224,14 @@ function MapListMap({
 									onChange={handleReportScore(i, "BRAVO")}
 								/>
 								<label className="mb-0" htmlFor={`bravo-${i}`}>
-									{`${t("q:match.sides.bravo")}${relativeSideText("BRAVO")}`}
+									{t("q:match.sides.bravo")}
+									<span
+										className={clsx({
+											"text-success": data.groupMemberOf === "BRAVO",
+										})}
+									>
+										{relativeSideText("BRAVO")}
+									</span>
 								</label>
 							</div>
 						</div>
