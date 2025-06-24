@@ -803,6 +803,18 @@
 		"displayName": "Splat Legacy LAN",
 		"authorDiscordId": "342369454719631361"
 	},
+	"splattershotpro": {
+		"displayName": "MIDLINES ONLY",
+		"authorDiscordId": "336683473714544641"
+	},
+	"splattershotproberry": {
+		"displayName": "MIDLINES ONLY: BERRY",
+		"authorDiscordId": "336683473714544641"
+	},
+	"splattershotproforge": {
+		"displayName": "MIDLINES ONLY: FORGE",
+		"authorDiscordId": "336683473714544641"
+	},
 	"squidtheforce": {
 		"displayName": "Squidforce Cup",
 		"authorDiscordId": "1320944066002681876"
