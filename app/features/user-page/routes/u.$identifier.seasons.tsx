@@ -169,7 +169,7 @@ function SeasonHeader({
 	seasonViewed: number;
 	seasonsParticipatedIn: number[];
 }) {
-	const { i18n } = useTranslation(["user"]);
+	const { t, i18n } = useTranslation(["user"]);
 	const isMounted = useIsMounted();
 	const { starts, ends } = Seasons.nthToDateRange(seasonViewed);
 	const navigate = useNavigate();
@@ -181,6 +181,7 @@ function SeasonHeader({
 	return (
 		<div>
 			<SendouSelect
+				label={t("user:seasons.season")}
 				selectedKey={seasonViewed}
 				onSelectionChange={(seasonNth) => navigate(`?season=${seasonNth}`)}
 				items={options}
@@ -201,7 +202,9 @@ function SeasonHeader({
 					</SendouSelectItemSection>
 				)}
 			</SendouSelect>
-			<div className={clsx("text-sm text-lighter", { invisible: !isMounted })}>
+			<div
+				className={clsx("text-sm text-lighter mt-2", { invisible: !isMounted })}
+			>
 				{isMounted ? (
 					<>
 						{new Date(starts).toLocaleString(i18n.language, {
