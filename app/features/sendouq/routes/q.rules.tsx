@@ -14,7 +14,17 @@ export default function SendouqRules() {
 	return (
 		<Main>
 			<h1>SendouQ Rules</h1>
-			<br /> <br />
+			<br />
+			<p>
+				<a
+					href="https://github.com/Sendouc/sendou.ink/blob/rewrite/docs/banning-policy.md"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					Banning policy
+				</a>
+			</p>
+			<br />
 			<h2 className="text-lg">Disconnections / Replays</h2>
 			<div>
 				Each team is allowed one replay per set due to a team member
