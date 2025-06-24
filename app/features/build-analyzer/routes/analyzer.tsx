@@ -110,7 +110,7 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-// Resolves this Github issue: https://github.com/Sendouc/sendou.ink/issues/1053
+// Resolves this Github issue: https://github.com/sendou-ink/sendou.ink/issues/1053
 export const shouldRevalidate: ShouldRevalidateFunction = () => false;
 
 export default function BuildAnalyzerShell() {

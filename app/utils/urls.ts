@@ -30,7 +30,7 @@ const staticAssetsUrl = ({
 	folder: string;
 	fileName: string;
 }) =>
-	`https://raw.githubusercontent.com/Sendouc/sendou-ink-assets/main/${folder}/${fileName}`;
+	`https://raw.githubusercontent.com/sendou-ink/assets/main/${folder}/${fileName}`;
 
 export const discordAvatarUrl = ({
 	discordId,
@@ -48,10 +48,10 @@ export const discordAvatarUrl = ({
 export const SENDOU_INK_BASE_URL = "https://sendou.ink";
 
 export const BADGES_DOC_LINK =
-	"https://github.com/Sendouc/sendou.ink/blob/rewrite/docs/badges.md";
+	"https://github.com/sendou-ink/sendou.ink/blob/rewrite/docs/badges.md";
 
 export const CREATING_TOURNAMENT_DOC_LINK =
-	"https://github.com/Sendouc/sendou.ink/blob/rewrite/docs/tournament-creation.md";
+	"https://github.com/sendou-ink/sendou.ink/blob/rewrite/docs/tournament-creation.md";
 
 const USER_SUBMITTED_IMAGE_ROOT =
 	"https://sendou.nyc3.cdn.digitaloceanspaces.com";
@@ -68,9 +68,9 @@ export const NINTENDO_COMMUNITY_TOURNAMENTS_GUIDELINES_URL =
 	"https://en-americas-support.nintendo.com/app/answers/detail/a_id/63454";
 export const PATREON_HOW_TO_CONNECT_DISCORD_URL =
 	"https://support.patreon.com/hc/en-us/articles/212052266-How-do-I-connect-Discord-to-Patreon-Patron-";
-export const SENDOU_INK_GITHUB_URL = "https://github.com/Sendouc/sendou.ink";
+export const SENDOU_INK_GITHUB_URL = "https://github.com/sendou-ink/sendou.ink";
 export const GITHUB_CONTRIBUTORS_URL =
-	"https://github.com/Sendouc/sendou.ink/graphs/contributors";
+	"https://github.com/sendou-ink/sendou.ink/graphs/contributors";
 export const ipLabsMaps = (pool: string) =>
 	`https://maps.iplabs.ink/?3&pool=${pool}`;
 export const SPLATOON_3_INK = "https://splatoon3.ink/";

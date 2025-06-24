@@ -186,7 +186,7 @@ describe("Follow-up bracket progression", () => {
 
 	// TODO: handle LUTI bracket progression
 	// test("avoids rematches in RR -> SE (LUTI S16 Div 1) - avoid as long as possible", () => {
-	// 	https://github.com/Sendouc/sendou.ink/pull/2192
+	// 	https://github.com/sendou-ink/sendou.ink/pull/2192
 	// });
 });
 

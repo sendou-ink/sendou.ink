@@ -80,7 +80,7 @@ git version 2.39.5 (Apple Git-154)
 Then there is a sequence of commands you need to run:
 
 ```bash
-git clone https://github.com/Sendouc/sendou.ink.git # Clones repository
+git clone https://github.com/sendou-ink/sendou.ink.git # Clones repository
 cd sendou.ink # Change to the project's folder
 npm install # Install dependencies
 npm run dev # Setup the development environment and run the project

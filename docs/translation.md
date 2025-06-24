@@ -1,6 +1,6 @@
 # Translation
 
-[Translation Progress](https://github.com/Sendouc/sendou.ink/issues/1104)
+[Translation Progress](https://github.com/sendou-ink/sendou.ink/issues/1104)
 
 sendou.ink can be translated into any language. All the translations can be found in the [locales folder](./locales). Here is how you can contribute:
 

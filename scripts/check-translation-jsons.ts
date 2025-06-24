@@ -13,7 +13,7 @@ const dontWrite = process.argv.includes(NO_WRITE_KEY);
 const KNOWN_SUFFIXES = ["_zero", "_one", "_two", "_few", "_many", "_other"];
 
 const REPO_TRANSLATIONS_INFO_URL =
-	"https://github.com/Sendouc/sendou.ink#translations";
+	"https://github.com/sendou-ink/sendou.ink#translations";
 
 const MD = {
 	inlineCode: (s: string) => `\`${s}\``,

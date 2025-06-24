@@ -1,6 +1,6 @@
 # Articles
 
-1. Take an existing article as a base: https://raw.githubusercontent.com/Sendouc/sendou.ink/rewrite/content/articles/in-the-zone-26-winners.md
+1. Take an existing article as a base: https://raw.githubusercontent.com/sendou-ink/sendou.ink/rewrite/content/articles/in-the-zone-26-winners.md
 2. Copy and paste the contents to a text file
 3. First, edit the info section at the top:
 

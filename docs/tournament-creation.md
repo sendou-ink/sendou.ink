@@ -98,7 +98,7 @@ Then when the tournament in in progress an algorithm decides the map list for ea
 
 ![alt text](./img/tournament-map-list-algo.png)
 
-[More info on how it works](https://gist.github.com/Sendouc/285c697ad98171243bf5c08a4c7e1f30).
+[More info on how it works](https://gist.github.com/sendou-ink/285c697ad98171243bf5c08a4c7e1f30).
 
 ### Picked by TO
 
