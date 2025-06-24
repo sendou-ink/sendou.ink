@@ -2367,6 +2367,7 @@ async function scrimPosts() {
 		const divs = divRange();
 		await ScrimPostRepository.insert({
 			at: date(),
+			isScheduledForFuture: true,
 			maxDiv: divs?.maxDiv,
 			minDiv: divs?.minDiv,
 			teamId: team(),
@@ -2382,6 +2383,7 @@ async function scrimPosts() {
 
 	const adminPostId = await ScrimPostRepository.insert({
 		at: date(true), // admin's scrim is always at least 1 hour in the future
+		isScheduledForFuture: true,
 		text:
 			faker.number.float(1) > 0.5
 				? faker.lorem.sentences({ min: 1, max: 5 })

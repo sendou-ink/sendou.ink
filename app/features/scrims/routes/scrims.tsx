@@ -336,9 +336,6 @@ function ScrimsTable({
 					const owner =
 						post.users.find((user) => user.isOwner) ?? post.users[0];
 
-					const date = databaseTimestampToDate(post.at);
-					const inThePast = date < new Date();
-
 					const requests = showRequestRows
 						? post.requests.map((request) => (
 								<RequestRow
@@ -368,7 +365,7 @@ function ScrimsTable({
 								<td>
 									<div className="stack horizontal sm">
 										<div className={styles.postTime}>
-											{inThePast ? (
+											{!post.isScheduledForFuture ? (
 												t("scrims:now")
 											) : (
 												<TimePopover

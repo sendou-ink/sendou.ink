@@ -1,4 +1,5 @@
 import { type ActionFunctionArgs, redirect } from "@remix-run/node";
+import { add } from "date-fns";
 import type { z } from "zod/v4";
 import type { Tables } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
@@ -54,6 +55,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		minDiv: data.divs ? serializeLutiDiv(data.divs.min!) : null,
 		text: data.postText,
 		managedByAnyone: data.managedByAnyone,
+		isScheduledForFuture:
+			data.at >
+			// 10 minutes is an arbitrary threshold
+			add(new Date(), {
+				minutes: 10,
+			}),
 		visibility:
 			data.baseVisibility !== "PUBLIC"
 				? {

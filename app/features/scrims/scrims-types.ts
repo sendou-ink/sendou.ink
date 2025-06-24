@@ -27,6 +27,8 @@ export interface ScrimPost {
 		CANCEL: number[];
 	};
 	managedByAnyone: boolean;
+	/** When the post was made was it scheduled for a future time slot (as opposed to looking now) */
+	isScheduledForFuture: boolean;
 	canceled: {
 		at: number;
 		byUser: ScrimPostUser;
