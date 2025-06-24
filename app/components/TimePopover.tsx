@@ -18,11 +18,13 @@ export default function TimePopover({
 	},
 	underline = true,
 	className,
+	footerText,
 }: {
 	time: Date;
 	options?: Intl.DateTimeFormatOptions;
 	underline?: boolean;
 	className?: string;
+	footerText?: string;
 }) {
 	const { i18n } = useTranslation();
 
@@ -83,6 +85,11 @@ export default function TimePopover({
 						>
 							{t("common:actions.copyTimestampForDiscord")}
 						</SendouButton>
+						{footerText ? (
+							<div className="text-lighter text-center mt-2 text-xs">
+								{footerText}
+							</div>
+						) : null}
 					</div>
 				</Dialog>
 			</Popover>

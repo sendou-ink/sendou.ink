@@ -101,6 +101,7 @@ const baseFindQuery = db
 	.select((eb) => [
 		"ScrimPost.id",
 		"ScrimPost.at",
+		"ScrimPost.createdAt",
 		"ScrimPost.visibility",
 		"ScrimPost.maxDiv",
 		"ScrimPost.minDiv",
@@ -209,6 +210,7 @@ const mapDBRowToScrimPost = (
 	return {
 		id: row.id,
 		at: row.at,
+		createdAt: row.createdAt,
 		visibility: row.visibility,
 		text: row.text,
 		isScheduledForFuture: Boolean(row.isScheduledForFuture),

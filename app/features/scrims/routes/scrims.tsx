@@ -1,6 +1,7 @@
 import type { MetaFunction } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
+import { formatDistance } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
@@ -375,6 +376,15 @@ function ScrimsTable({
 														minute: "numeric",
 													}}
 													underline={false}
+													footerText={t("scrims:postModal.footer", {
+														time: formatDistance(
+															databaseTimestampToDate(post.createdAt),
+															new Date(),
+															{
+																addSuffix: true,
+															},
+														),
+													})}
 												/>
 											)}
 										</div>

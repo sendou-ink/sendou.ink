@@ -7,6 +7,7 @@ export type LutiDiv = (typeof LUTI_DIVS)[number];
 export interface ScrimPost {
 	id: number;
 	at: number;
+	createdAt: number;
 	visibility: AssociationVisibility | null;
 	text: string | null;
 	divs: {
