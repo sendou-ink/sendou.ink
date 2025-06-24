@@ -151,8 +151,10 @@ test.describe("User page", () => {
 		await goToEditPage(page);
 		await page.locator("span").filter({ hasText: "Custom colors" }).click();
 
-		for (const button of await page.getByRole("button", { name: "Reset" }).all()) {
-  		await button.click();
+		for (const button of await page
+			.getByRole("button", { name: "Reset" })
+			.all()) {
+			await button.click();
 		}
 
 		await submitEditForm(page);

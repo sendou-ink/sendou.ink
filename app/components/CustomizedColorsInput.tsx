@@ -79,7 +79,13 @@ export function CustomizedColorsInput({
 			</summary>
 			<div>
 				<Label>{t("custom.colors.title")}</Label>
-				<input type="hidden" name="css" value={JSON.stringify(colorsWithDefaultsFilteredOut(colors, defaultColors))} />
+				<input
+					type="hidden"
+					name="css"
+					value={JSON.stringify(
+						colorsWithDefaultsFilteredOut(colors, defaultColors),
+					)}
+				/>
 				<div className="colors__container colors__grid">
 					{CUSTOM_CSS_VAR_COLORS.filter(
 						(cssVar) => cssVar !== "bg-lightest",
@@ -112,9 +118,9 @@ export function CustomizedColorsInput({
 											...colors,
 										};
 										if (cssVar === "bg-lighter") {
-											newColors["bg-lightest"] = defaultColors.find((color) => color["bg-lightest"])?.[
-												"bg-lightest"
-											];
+											newColors["bg-lightest"] = defaultColors.find(
+												(color) => color["bg-lightest"],
+											)?.["bg-lightest"];
 										}
 										setColors({
 											...newColors,
