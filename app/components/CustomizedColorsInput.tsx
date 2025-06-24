@@ -79,7 +79,7 @@ export function CustomizedColorsInput({
 			</summary>
 			<div>
 				<Label>{t("custom.colors.title")}</Label>
-				<input type="hidden" name="css" value={JSON.stringify(colors)} />
+				<input type="hidden" name="css" value={JSON.stringify(colorsWithDefaultsFilteredOut(colors, defaultColors))} />
 				<div className="colors__container colors__grid">
 					{CUSTOM_CSS_VAR_COLORS.filter(
 						(cssVar) => cssVar !== "bg-lightest",
@@ -112,7 +112,9 @@ export function CustomizedColorsInput({
 											...colors,
 										};
 										if (cssVar === "bg-lighter") {
-											newColors["bg-lightest"] = undefined;
+											newColors["bg-lightest"] = defaultColors.find((color) => color["bg-lightest"])?.[
+												"bg-lightest"
+											];
 										}
 										setColors({
 											...newColors,
@@ -185,6 +187,23 @@ export function CustomizedColorsInput({
 			</div>
 		</details>
 	);
+}
+
+function colorsWithDefaultsFilteredOut(
+	colors: CustomColorsRecord,
+	defaultColors: Record<string, string>[],
+): CustomColorsRecord {
+	const colorsWithoutDefaults: CustomColorsRecord = {};
+	for (const color in colors) {
+		if (
+			colors[color as (typeof CUSTOM_CSS_VAR_COLORS)[number]] !==
+			defaultColors.find((c) => c[color])?.[color]
+		) {
+			colorsWithoutDefaults[color as keyof CustomColorsRecord] =
+				colors[color as (typeof CUSTOM_CSS_VAR_COLORS)[number]];
+		}
+	}
+	return colorsWithoutDefaults;
 }
 
 function handleContrast(
