@@ -48,6 +48,8 @@ const stm = sql.prepare(/* sql */ `
   order by "m"."id" asc
 `);
 
+// xxx: order by should be "order by "groupNumber" asc, "roundNumber" asc, "r"."number" asc" - see setHistoryByTeamId.server.ts
+
 interface Opponent {
 	id: number;
 	score: number;

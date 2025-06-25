@@ -108,15 +108,21 @@ const addTournamentResultStm = sql.prepare(/* sql */ `
   insert into "TournamentResult" (
     "tournamentId",
     "userId",
-    "placement",
+    "placement", 
     "participantCount",
-    "tournamentTeamId"
+    "tournamentTeamId",
+    "setResults",
+    "mapResults",
+    "spDiff"
   ) values (
     @tournamentId,
     @userId,
     @placement,
     @participantCount,
-    @tournamentTeamId
+    @tournamentTeamId,
+    @setResults,
+    @mapResults,
+    @spDiff
   )
 `);
 
@@ -199,6 +205,9 @@ export const addSummary = sql.transaction(
 				placement: tournamentResult.placement,
 				participantCount: tournamentResult.participantCount,
 				tournamentTeamId: tournamentResult.tournamentTeamId,
+				setResults: null,
+				mapResults: null,
+				spDiff: summary.spDiffs?.get(tournamentResult.userId) ?? null,
 			});
 		}
 

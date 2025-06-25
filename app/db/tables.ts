@@ -582,12 +582,26 @@ export interface TournamentMatchGameResultParticipant {
 	tournamentTeamId: number | null;
 }
 
+export type WinLossParticipationArray = Array<"W" | "L" | null>;
+
 export interface TournamentResult {
 	isHighlight: Generated<SqlBool>;
 	participantCount: number;
 	placement: number;
 	tournamentId: number;
 	tournamentTeamId: number;
+	/**
+	 * The result of sets in the tournament.
+	 * E.g. ["W", "L", null] would mean the user won the first set, lost the second and did not play the third.
+	 * */
+	setResults: JSONColumnTypeNullable<WinLossParticipationArray>;
+	/**
+	 * The result of maps in the tournament. Each sets consists of multiple maps.
+	 * E.g. ["W", "L", null] would mean the user won the first map, lost the second and did not play the third.
+	 * */
+	mapResults: JSONColumnTypeNullable<WinLossParticipationArray>;
+	/** The SP change in total after the finalization of a ranked tournament. */
+	spDiff: number | null;
 	userId: number;
 }
 

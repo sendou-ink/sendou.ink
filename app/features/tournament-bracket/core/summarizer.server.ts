@@ -3,10 +3,12 @@ import { ordinal } from "openskill";
 import * as R from "remeda";
 import {
 	identifierToUserIds,
+	ordinalToSp,
 	rate,
 	userIdsToIdentifier,
 } from "~/features/mmr/mmr-utils";
 import invariant from "~/utils/invariant";
+import { roundToNDecimalPlaces } from "~/utils/number";
 import type { Tables } from "../../../db/tables";
 import type { AllMatchResult } from "../queries/allMatchResultsByTournamentId.server";
 import { ensureOneStandingPerUser } from "../tournament-bracket-utils";
@@ -22,8 +24,10 @@ export interface TournamentSummary {
 	playerResultDeltas: Omit<Tables["PlayerResult"], "season">[];
 	tournamentResults: Omit<
 		Tables["TournamentResult"],
-		"tournamentId" | "isHighlight"
+		"tournamentId" | "isHighlight" | "spDiff" | "mapResults" | "setResults"
 	>[];
+	/** Map of user id to diff or null if not ranked event */
+	spDiffs: Map<number, number> | null;
 }
 
 type UserIdToTeamId = Record<number, number>;
@@ -54,15 +58,17 @@ export function tournamentSummary({
 	seedingSkillCountsFor: Tables["SeedingSkill"]["type"] | null;
 	calculateSeasonalStats?: boolean;
 }): TournamentSummary {
+	const skills = calculateSeasonalStats
+		? calculateSkills({
+				results,
+				queryCurrentTeamRating,
+				queryCurrentUserRating,
+				queryTeamPlayerRatingAverage,
+			})
+		: [];
+
 	return {
-		skills: calculateSeasonalStats
-			? skills({
-					results,
-					queryCurrentTeamRating,
-					queryCurrentUserRating,
-					queryTeamPlayerRatingAverage,
-				})
-			: [],
+		skills,
 		seedingSkills: seedingSkillCountsFor
 			? calculateIndividualPlayerSkills({
 					queryCurrentUserRating: queryCurrentSeedingRating,
@@ -81,6 +87,9 @@ export function tournamentSummary({
 			participantCount: teams.length,
 			finalStandings: ensureOneStandingPerUser(finalStandings),
 		}),
+		spDiffs: calculateSeasonalStats
+			? spDiffs({ skills, queryCurrentUserRating })
+			: null,
 	};
 }
 
@@ -96,7 +105,7 @@ export function userIdsToTeamIdRecord(teams: TeamsArg) {
 	return result;
 }
 
-function skills(args: {
+function calculateSkills(args: {
 	results: AllMatchResult[];
 	queryCurrentTeamRating: (identifier: string) => Rating;
 	queryTeamPlayerRatingAverage: (identifier: string) => Rating;
@@ -469,4 +478,27 @@ function tournamentResults({
 	}
 
 	return result;
+}
+
+function spDiffs({
+	skills,
+	queryCurrentUserRating,
+}: {
+	skills: TournamentSummary["skills"];
+	queryCurrentUserRating: (userId: number) => Rating;
+}): TournamentSummary["spDiffs"] {
+	const spDiffs = new Map<number, number>();
+
+	for (const skill of skills) {
+		if (skill.userId === null) continue;
+
+		const oldRating = queryCurrentUserRating(skill.userId);
+		const diff = roundToNDecimalPlaces(
+			ordinalToSp(ordinal(skill)) - ordinalToSp(ordinal(oldRating)),
+		);
+
+		spDiffs.set(skill.userId, diff);
+	}
+
+	return spDiffs;
 }
