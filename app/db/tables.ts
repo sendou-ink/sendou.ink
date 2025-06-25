@@ -578,8 +578,7 @@ export interface TournamentMatchGameResult {
 export interface TournamentMatchGameResultParticipant {
 	matchGameResultId: number;
 	userId: number;
-	// it only started mattering when we added the possibility to join many teams in a tournament, null for legacy events
-	tournamentTeamId: number | null;
+	tournamentTeamId: number;
 }
 
 export type WinLossParticipationArray = Array<"W" | "L" | null>;

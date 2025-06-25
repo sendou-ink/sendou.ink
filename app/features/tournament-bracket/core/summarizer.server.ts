@@ -531,7 +531,7 @@ function spDiffs({
 	return spDiffs;
 }
 
-function mapSetResults({
+export function mapSetResults({
 	results,
 	teams,
 }: {

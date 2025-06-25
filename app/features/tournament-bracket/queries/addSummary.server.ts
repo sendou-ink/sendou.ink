@@ -199,14 +199,17 @@ export const addSummary = sql.transaction(
 		}
 
 		for (const tournamentResult of summary.tournamentResults) {
+			const mapResults = summary.mapResults.get(tournamentResult.userId);
+			const setResults = summary.setResults.get(tournamentResult.userId);
+
 			addTournamentResultStm.run({
 				tournamentId,
 				userId: tournamentResult.userId,
 				placement: tournamentResult.placement,
 				participantCount: tournamentResult.participantCount,
 				tournamentTeamId: tournamentResult.tournamentTeamId,
-				setResults: summary.setResults?.get(tournamentResult.userId) ?? null,
-				mapResults: summary.mapResults?.get(tournamentResult.userId) ?? null,
+				setResults: setResults ? JSON.stringify(setResults) : null,
+				mapResults: mapResults ? JSON.stringify(mapResults) : null,
 				spDiff: summary.spDiffs?.get(tournamentResult.userId) ?? null,
 			});
 		}

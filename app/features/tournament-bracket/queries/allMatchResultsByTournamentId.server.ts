@@ -96,6 +96,14 @@ export function allMatchResultsByTournamentId(
 					),
 					"Some participants have no team id",
 				);
+				invariant(
+					participants.every(
+						(p: any) =>
+							p.tournamentTeamId === row.opponentOneId ||
+							p.tournamentTeamId === row.opponentTwoId,
+					),
+					"Some participants have an invalid team id",
+				);
 
 				return {
 					...map,
