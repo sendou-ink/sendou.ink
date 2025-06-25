@@ -205,8 +205,8 @@ export const addSummary = sql.transaction(
 				placement: tournamentResult.placement,
 				participantCount: tournamentResult.participantCount,
 				tournamentTeamId: tournamentResult.tournamentTeamId,
-				setResults: null,
-				mapResults: null,
+				setResults: summary.setResults?.get(tournamentResult.userId) ?? null,
+				mapResults: summary.mapResults?.get(tournamentResult.userId) ?? null,
 				spDiff: summary.spDiffs?.get(tournamentResult.userId) ?? null,
 			});
 		}

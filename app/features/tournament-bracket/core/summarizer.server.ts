@@ -127,22 +127,7 @@ export function calculateIndividualPlayerSkills({
 	};
 
 	for (const match of results) {
-		const winnerTeamId =
-			match.opponentOne.result === "win"
-				? match.opponentOne.id
-				: match.opponentTwo.id;
-
-		const participants = match.maps.flatMap((m) => m.participants);
-		const winnerUserIds = R.unique(
-			participants
-				.filter((p) => p.tournamentTeamId === winnerTeamId)
-				.map((p) => p.userId),
-		);
-		const loserUserIds = R.unique(
-			participants
-				.filter((p) => p.tournamentTeamId !== winnerTeamId)
-				.map((p) => p.userId),
-		);
+		const { winnerUserIds, loserUserIds } = matchToSetMostPlayedUsers(match);
 
 		const [ratedWinners, ratedLosers] = rate([
 			winnerUserIds.map(getUserRating),
@@ -178,6 +163,58 @@ export function calculateIndividualPlayerSkills({
 			matchesCount,
 		};
 	});
+}
+
+/**
+ * Determines the most frequently appearing user IDs for both the winning and losing teams in a match/set.
+ *
+ * For each team (winner and loser), this function collects all user IDs from the match's map participants,
+ * counts their occurrences, and returns the most popular user IDs up to a full team's worth depending on the tournament format (4v4, 3v3 etc.).
+ * If there are ties at the cutoff, all tied user IDs are included.
+ */
+function matchToSetMostPlayedUsers(match: AllMatchResult) {
+	const resolveMostPopularUserIds = (userIds: number[]) => {
+		const counts = userIds.reduce((acc, userId) => {
+			acc.set(userId, (acc.get(userId) ?? 0) + 1);
+			return acc;
+		}, new Map<number, number>());
+
+		const sorted = Array.from(counts.entries()).sort(
+			([, countA], [, countB]) => countB - countA,
+		);
+
+		const targetAmount = Math.ceil(match.maps[0].participants.length / 2);
+
+		const result: number[] = [];
+		let previousCount = 0;
+		for (const [userId, count] of sorted) {
+			// take target amount of most popular users
+			// or more if there are ties
+			if (result.length >= targetAmount && count < previousCount) break;
+
+			result.push(userId);
+			previousCount = count;
+		}
+
+		return result;
+	};
+
+	const winnerTeamId =
+		match.opponentOne.result === "win"
+			? match.opponentOne.id
+			: match.opponentTwo.id;
+	const participants = match.maps.flatMap((m) => m.participants);
+	const winnerUserIds = participants
+		.filter((p) => p.tournamentTeamId === winnerTeamId)
+		.map((p) => p.userId);
+	const loserUserIds = participants
+		.filter((p) => p.tournamentTeamId !== winnerTeamId)
+		.map((p) => p.userId);
+
+	return {
+		winnerUserIds: resolveMostPopularUserIds(winnerUserIds),
+		loserUserIds: resolveMostPopularUserIds(loserUserIds),
+	};
 }
 
 function calculateTeamSkills({
@@ -528,6 +565,17 @@ function mapSetResults({
 			return userIdsFromTeamId(teams, team.id);
 		});
 
+		const { winnerUserIds, loserUserIds } = matchToSetMostPlayedUsers(match);
+		const subbedOut = allMatchUserIds.filter(
+			(userId) =>
+				!winnerUserIds.some((wUserId) => wUserId === userId) &&
+				!loserUserIds.some((lUserId) => lUserId === userId),
+		);
+
+		for (const winnerUserId of winnerUserIds) addTo("set", winnerUserId, "W");
+		for (const loserUserId of loserUserIds) addTo("set", loserUserId, "L");
+		for (const subUserId of subbedOut) addTo("set", subUserId, null);
+
 		for (const map of match.maps) {
 			const winners = map.participants.filter(
 				(p) => p.tournamentTeamId === map.winnerTeamId,
@@ -543,7 +591,7 @@ function mapSetResults({
 
 			for (const winner of winners) addTo("map", winner.userId, "W");
 			for (const loser of losers) addTo("map", loser.userId, "L");
-			for (const sub of subbedOut) addTo("map", sub, null);
+			for (const subUserId of subbedOut) addTo("map", subUserId, null);
 		}
 	}
 
