@@ -9,7 +9,7 @@ import {
 } from "~/features/mmr/mmr-utils";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
-import type { Tables } from "../../../db/tables";
+import type { Tables, WinLossParticipationArray } from "../../../db/tables";
 import type { AllMatchResult } from "../queries/allMatchResultsByTournamentId.server";
 import { ensureOneStandingPerUser } from "../tournament-bracket-utils";
 import type { Standing } from "./Bracket";
@@ -28,9 +28,11 @@ export interface TournamentSummary {
 	>[];
 	/** Map of user id to diff or null if not ranked event */
 	spDiffs: Map<number, number> | null;
+	/** Map of user id to map results */
+	mapResults: Map<number, WinLossParticipationArray>;
+	/** Map of user id to set results */
+	setResults: Map<number, WinLossParticipationArray>;
 }
-
-type UserIdToTeamId = Record<number, number>;
 
 type TeamsArg = Array<{
 	id: number;
@@ -90,19 +92,8 @@ export function tournamentSummary({
 		spDiffs: calculateSeasonalStats
 			? spDiffs({ skills, queryCurrentUserRating })
 			: null,
+		...mapSetResults({ results, teams }),
 	};
-}
-
-export function userIdsToTeamIdRecord(teams: TeamsArg) {
-	const result: UserIdToTeamId = {};
-
-	for (const team of teams) {
-		for (const member of team.members) {
-			result[member.userId] = team.id;
-		}
-	}
-
-	return result;
 }
 
 function calculateSkills(args: {
@@ -501,4 +492,70 @@ function spDiffs({
 	}
 
 	return spDiffs;
+}
+
+function mapSetResults({
+	results,
+	teams,
+}: {
+	results: AllMatchResult[];
+	teams: TeamsArg;
+}) {
+	const mapResults = new Map<number, WinLossParticipationArray>();
+	const setResults = new Map<number, WinLossParticipationArray>();
+
+	const addTo = (
+		where: "map" | "set",
+		userId: number,
+		result: WinLossParticipationArray[number],
+	) => {
+		const map = where === "map" ? mapResults : setResults;
+
+		const existing = map.get(userId) ?? [];
+		existing.push(result);
+
+		map.set(userId, existing);
+	};
+
+	// xxx: handle setResults
+
+	for (const match of results) {
+		const allMatchUserIds = teams.flatMap((team) => {
+			const didParticipateInTheMatch =
+				match.opponentOne.id === team.id || match.opponentTwo.id === team.id;
+			if (!didParticipateInTheMatch) return [];
+
+			return userIdsFromTeamId(teams, team.id);
+		});
+
+		for (const map of match.maps) {
+			const winners = map.participants.filter(
+				(p) => p.tournamentTeamId === map.winnerTeamId,
+			);
+			const losers = map.participants.filter(
+				(p) => p.tournamentTeamId !== map.winnerTeamId,
+			);
+			const subbedOut = allMatchUserIds.filter(
+				(userId) =>
+					!winners.some((p) => p.userId === userId) &&
+					!losers.some((p) => p.userId === userId),
+			);
+
+			for (const winner of winners) addTo("map", winner.userId, "W");
+			for (const loser of losers) addTo("map", loser.userId, "L");
+			for (const sub of subbedOut) addTo("map", sub, null);
+		}
+	}
+
+	return {
+		mapResults,
+		setResults,
+	};
+}
+
+function userIdsFromTeamId(teams: TeamsArg, teamId: number) {
+	const team = teams.find((t) => t.id === teamId);
+	invariant(team, `Team with id ${teamId} not found`);
+
+	return team.members.map((m) => m.userId);
 }
