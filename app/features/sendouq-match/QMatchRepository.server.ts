@@ -1,12 +1,16 @@
+import type { ExpressionBuilder } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type {
+	DB,
 	ParsedMemento,
 	QWeaponPool,
 	Tables,
 	UserSkillDifference,
 } from "~/db/tables";
+import invariant from "~/utils/invariant";
 import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
+import { MATCHES_PER_SEASONS_PAGE } from "../user-page/user-page-constants";
 
 export function findById(id: number) {
 	return db
@@ -176,4 +180,134 @@ export function groupMembersNoScreenSettings(groups: GroupForMatch[]) {
 			groups.flatMap((group) => group.members.map((member) => member.id)),
 		)
 		.execute();
+}
+
+// xxx: this new implementation does not show in progress and canceled matches
+
+/**
+ * Retrieves the pages count of results for a specific user and season. Counting both SendouQ matches and ranked tournaments.
+ */
+export async function seasonResultPagesByUserId({
+	userId,
+	season,
+}: {
+	userId: number;
+	season: number;
+}): Promise<number> {
+	const row = await db
+		.selectFrom("Skill")
+		.select(({ fn }) => [fn.countAll().as("count")])
+		.where("userId", "=", userId)
+		.where("season", "=", season)
+		.executeTakeFirstOrThrow();
+
+	return Math.ceil((row.count as number) / MATCHES_PER_SEASONS_PAGE);
+}
+
+// xxx: how should tournament skill handle calculated concept? spDiff: skillDiff?.calculated ? skillDiff.spDiff : null,
+const tournamentResultsSubQuery = (
+	eb: ExpressionBuilder<DB, "Skill">,
+	userId: number,
+) =>
+	eb
+		.selectFrom("TournamentResult")
+		.innerJoin(
+			"CalendarEvent",
+			"TournamentResult.tournamentId",
+			"CalendarEvent.tournamentId",
+		)
+		.select([
+			"TournamentResult.spDiff",
+			"TournamentResult.setResults",
+			"CalendarEvent.name as tournamentName",
+		])
+		.whereRef("TournamentResult.tournamentId", "=", "Skill.tournamentId")
+		.where("TournamentResult.userId", "=", userId);
+
+const groupMatchResultsSubQuery = (eb: ExpressionBuilder<DB, "Skill">) => {
+	const groupMembersSubQuery = (
+		eb: ExpressionBuilder<DB, "GroupMatch">,
+		side: "alpha" | "bravo",
+	) =>
+		jsonArrayFrom(
+			eb
+				.selectFrom("GroupMember")
+				.innerJoin("User", "GroupMember.userId", "User.id")
+				.select([...COMMON_USER_FIELDS])
+				.whereRef(
+					"GroupMember.groupId",
+					"=",
+					side === "alpha"
+						? "GroupMatch.alphaGroupId"
+						: "GroupMatch.bravoGroupId",
+				),
+		);
+
+	// xxx: ReportedWeapon
+	return eb
+		.selectFrom("GroupMatch")
+		.select((innerEb) => [
+			"GroupMatch.id",
+			"GroupMatch.memento",
+			"GroupMatch.createdAt",
+			"GroupMatch.alphaGroupId",
+			"GroupMatch.bravoGroupId",
+			groupMembersSubQuery(innerEb, "alpha").as("groupAlphaMembers"),
+			groupMembersSubQuery(innerEb, "bravo").as("groupBravoMembers"),
+			jsonArrayFrom(
+				innerEb
+					.selectFrom("GroupMatchMap")
+					.select(["GroupMatchMap.winnerGroupId"])
+					.whereRef("GroupMatchMap.matchId", "=", "GroupMatch.id"),
+			).as("winners"),
+		])
+		.whereRef("Skill.groupMatchId", "=", "GroupMatch.id");
+};
+
+/**
+ * Retrieves results of given user, competitive season & page. Both SendouQ matches and ranked tournaments.
+ */
+export async function seasonResultsByUserId({
+	userId,
+	season,
+	page = 1,
+}: {
+	userId: number;
+	season: number;
+	page: number;
+}) {
+	const rows = await db
+		.selectFrom("Skill")
+		.select((eb) => [
+			"Skill.id",
+			jsonObjectFrom(tournamentResultsSubQuery(eb, userId)).as(
+				"tournamentResult",
+			),
+			jsonObjectFrom(groupMatchResultsSubQuery(eb)).as("groupMatch"),
+		])
+		.where("userId", "=", userId)
+		.where("season", "=", season)
+		.limit(MATCHES_PER_SEASONS_PAGE)
+		.offset(MATCHES_PER_SEASONS_PAGE * (page - 1))
+		.orderBy("Skill.id", "desc")
+		.execute();
+
+	return rows.map((row) => {
+		const skillDiff = row.groupMatch?.memento?.users[userId]?.skillDifference;
+
+		invariant(
+			row.groupMatch || row.tournamentResult,
+			"No result related to skill",
+		);
+
+		return {
+			...row,
+			groupMatch: row.groupMatch
+				? {
+						...row.groupMatch,
+						spDiff: skillDiff?.calculated ? skillDiff.spDiff : null,
+					}
+				: null,
+		};
+	});
 }

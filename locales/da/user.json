@@ -63,7 +63,6 @@
 	"seasons.noReportedWeapons": "Der er endnu ikke blevet indrapporteret nogle våben",
 	"seasons.clickARow": "Tryk på en række for at se våbenbrugsstatistikker.",
 	"seasons.loading": "indlæser...",
-	"seasons.matchBeingProcessed": "Denne kamp er endnu ikke blevet færdigbehandlet",
 	"builds.sorting.changeButton": "Ændr sortering",
 	"builds.sorting.header": "Ændr sæt-sortering",
 	"builds.sorting.backToDefaults": "Nulstil visning",

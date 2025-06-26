@@ -63,7 +63,6 @@
 	"seasons.noReportedWeapons": "報告された武器がありません",
 	"seasons.clickARow": "武器の使用統計を見るには行を選択してください",
 	"seasons.loading": "読み込み中...",
-	"seasons.matchBeingProcessed": "このマッチはまだ処理されていません。",
 	"builds.sorting.changeButton": "並べ替え変更",
 	"builds.sorting.header": "ギアの並べ替えを変更",
 	"builds.sorting.backToDefaults": "デフォルトに戻す",

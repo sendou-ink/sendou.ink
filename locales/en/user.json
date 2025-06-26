@@ -63,7 +63,6 @@
 	"seasons.noReportedWeapons": "No reported weapons yet",
 	"seasons.clickARow": "Click a row to see weapon usage stats",
 	"seasons.loading": "Loading...",
-	"seasons.matchBeingProcessed": "This match has not been processed yet",
 	"builds.sorting.changeButton": "Change sorting",
 	"builds.sorting.header": "Change build sorting",
 	"builds.sorting.backToDefaults": "Back to defaults",

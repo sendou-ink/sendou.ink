@@ -63,7 +63,6 @@
 	"seasons.noReportedWeapons": "No se han informado armas",
 	"seasons.clickARow": "Haga clic en una fila para ver estadísticas de armas",
 	"seasons.loading": "Cargando...",
-	"seasons.matchBeingProcessed": "No se ha procesado este partido",
 	"builds.sorting.changeButton": "Cambiar ordenación",
 	"builds.sorting.header": "Cambiar ordenación de builds",
 	"builds.sorting.backToDefaults": "Volver a los valores predeterminados",

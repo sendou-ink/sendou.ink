@@ -63,7 +63,6 @@
 	"seasons.noReportedWeapons": "Aucune arme a été reporté",
 	"seasons.clickARow": "Cliquez sur une ligne pour voir les statistiques d'utilisation des armes",
 	"seasons.loading": "Chargement...",
-	"seasons.matchBeingProcessed": "Le match n'a pas encore été terminé",
 	"builds.sorting.changeButton": "Changer le tri",
 	"builds.sorting.header": "Modifier le tri des builds",
 	"builds.sorting.backToDefaults": "Revenir par défaut",

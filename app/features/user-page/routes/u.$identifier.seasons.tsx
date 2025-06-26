@@ -29,7 +29,6 @@ import {
 	TierImage,
 	WeaponImage,
 } from "~/components/Image";
-import { AlertIcon } from "~/components/icons/Alert";
 import { Pagination } from "~/components/Pagination";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { TopTenPlayer } from "~/features/leaderboards/components/TopTenPlayer";
@@ -72,7 +71,7 @@ export default function UserSeasonsPage() {
 		);
 	}
 
-	if (data.matches.value.length === 0) {
+	if (data.results.value.length === 0) {
 		return (
 			<div className="stack lg half-width">
 				<SeasonHeader
@@ -87,7 +86,7 @@ export default function UserSeasonsPage() {
 	}
 
 	const tabLink = (tab: string) =>
-		`?info=${tab}&page=${data.matches.currentPage}&season=${data.season}`;
+		`?info=${tab}&page=${data.results.currentPage}&season=${data.season}`;
 
 	return (
 		<div className="stack lg half-width">
@@ -157,7 +156,7 @@ export default function UserSeasonsPage() {
 					) : null}
 				</div>
 			</div>
-			<Matches matches={data.matches} seasonViewed={data.season} />
+			<Matches results={data.results} seasonViewed={data.season} />
 		</div>
 	);
 }
@@ -652,10 +651,10 @@ function WeaponCircle({
 
 function Matches({
 	seasonViewed,
-	matches,
+	results,
 }: {
 	seasonViewed: number;
-	matches: UserSeasonsPageLoaderData["matches"];
+	results: UserSeasonsPageLoaderData["results"];
 }) {
 	const isMounted = useIsMounted();
 	const [, setSearchParams] = useSearchParams();
@@ -666,11 +665,11 @@ function Matches({
 	};
 
 	React.useEffect(() => {
-		if (matches.currentPage === 1) return;
+		if (results.currentPage === 1) return;
 		ref.current?.scrollIntoView({
 			block: "center",
 		});
-	}, [matches.currentPage]);
+	}, [results.currentPage]);
 
 	let lastDayRendered: number | null = null;
 	return (
@@ -678,7 +677,10 @@ function Matches({
 			<div ref={ref} />
 			<div className="stack lg">
 				<div className="stack">
-					{matches.value.map((match) => {
+					{results.value.map((result) => {
+						const match = result.groupMatch;
+						if (!match) return null;
+
 						const day = databaseTimestampToDate(match.createdAt).getDate();
 						const shouldRenderDateHeader = day !== lastDayRendered;
 						lastDayRendered = day;
@@ -709,12 +711,12 @@ function Matches({
 						);
 					})}
 				</div>
-				{matches.pages > 1 ? (
+				{results.pages > 1 ? (
 					<Pagination
-						currentPage={matches.currentPage}
-						pagesCount={matches.pages}
-						nextPage={() => setPage(matches.currentPage + 1)}
-						previousPage={() => setPage(matches.currentPage - 1)}
+						currentPage={results.currentPage}
+						pagesCount={results.pages}
+						nextPage={() => setPage(results.currentPage + 1)}
+						previousPage={() => setPage(results.currentPage - 1)}
 						setPage={(page) => setPage(page)}
 					/>
 				) : null}
@@ -726,32 +728,34 @@ function Matches({
 function Match({
 	match,
 }: {
-	match: UserSeasonsPageLoaderData["matches"]["value"][0];
+	match: NonNullable<
+		UserSeasonsPageLoaderData["results"]["value"][number]["groupMatch"]
+	>;
 }) {
-	const { t } = useTranslation(["user"]);
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
 	const layoutData = parentRoute.data as UserPageLoaderData;
 	const userId = layoutData.user.id;
 
-	const score = match.winnerGroupIds.reduce(
+	const score = match.winners.reduce(
 		(acc, cur) => [
-			acc[0] + (cur === match.alphaGroupId ? 1 : 0),
-			acc[1] + (cur === match.bravoGroupId ? 1 : 0),
+			acc[0] + (cur.winnerGroupId === match.alphaGroupId ? 1 : 0),
+			acc[1] + (cur.winnerGroupId === match.bravoGroupId ? 1 : 0),
 		],
 		[0, 0],
 	);
 
 	// score when match has not yet been played or was canceled
 	const specialScoreMarking = () => {
-		if (score[0] + score[1] === 0) return match.isLocked ? "-" : " ";
+		if (score[0] + score[1] === 0) return " ";
 
 		return null;
 	};
 
-	const reserveWeaponSpace =
-		match.groupAlphaMembers.some((m) => m.weaponSplId) ||
-		match.groupBravoMembers.some((m) => m.weaponSplId);
+	// const reserveWeaponSpace =
+	// 	match.groupAlphaMembers.some((m) => m.weaponSplId) ||
+	// 	match.groupBravoMembers.some((m) => m.weaponSplId);
+	const reserveWeaponSpace = false; // xxx: remove this when weapon usage is implemented
 
 	// make sure user's team is always on the top
 	const rows = match.groupAlphaMembers.some((m) => m.id === userId)
@@ -789,8 +793,7 @@ function Match({
 			<Link
 				to={sendouQMatchPage(match.id)}
 				className={clsx("u__season__match", {
-					"u__season__match__with-sub-section ":
-						match.spDiff || !match.isLocked,
+					"u__season__match__with-sub-section ": match.spDiff,
 				})}
 			>
 				{rows}
@@ -805,12 +808,6 @@ function Match({
 					{Math.abs(roundToNDecimalPlaces(match.spDiff))}SP
 				</div>
 			) : null}
-			{!match.isLocked ? (
-				<div className="u__season__match__sub-section">
-					<AlertIcon className="u__season__match__sub-section__icon" />
-					{t("user:seasons.matchBeingProcessed")}
-				</div>
-			) : null}
 		</div>
 	);
 }
@@ -818,10 +815,12 @@ function Match({
 function MatchMembersRow({
 	score,
 	members,
-	reserveWeaponSpace,
+	reserveWeaponSpace: _reserveWeaponSpace,
 }: {
 	score: React.ReactNode;
-	members: UserSeasonsPageLoaderData["matches"]["value"][0]["groupAlphaMembers"];
+	members: NonNullable<
+		UserSeasonsPageLoaderData["results"]["value"][number]["groupMatch"]
+	>["groupAlphaMembers"];
 	reserveWeaponSpace: boolean;
 }) {
 	return (
@@ -833,7 +832,8 @@ function MatchMembersRow({
 						<span className="u__season__match__user__name">
 							{member.username}
 						</span>
-						{typeof member.weaponSplId === "number" ? (
+						{/** xxx: weapon back */}
+						{/* {typeof member.weaponSplId === "number" ? (
 							<WeaponImage
 								weaponSplId={member.weaponSplId}
 								variant="badge"
@@ -846,7 +846,7 @@ function MatchMembersRow({
 								size={28}
 								className="invisible"
 							/>
-						) : null}
+						) : null} */}
 					</div>
 				);
 			})}

@@ -374,11 +374,6 @@
 	padding-block: var(--s-0-5);
 }
 
-.u__season__match__sub-section__icon {
-	width: 18px;
-	color: var(--theme-warning);
-}
-
 .u__season__match:hover {
 	background-color: var(--theme-transparent);
 }

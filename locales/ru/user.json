@@ -63,7 +63,6 @@
 	"seasons.noReportedWeapons": "Нет записанного оружия",
 	"seasons.clickARow": "Нажмите на ряд, чтобы посмотреть на статистику использованного оружия.",
 	"seasons.loading": "Загрузка...",
-	"seasons.matchBeingProcessed": "Данный матч ещё не был обработан",
 	"builds.sorting.changeButton": "Изменить сортировку",
 	"builds.sorting.header": "Изменить сортировку сборок",
 	"builds.sorting.backToDefaults": "По умолчанию",
