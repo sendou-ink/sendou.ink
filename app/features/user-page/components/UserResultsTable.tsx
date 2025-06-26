@@ -1,4 +1,5 @@
 import { Link } from "@remix-run/react";
+import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { Placement } from "~/components/Placement";
@@ -30,15 +31,18 @@ export function UserResultsTable({
 
 	const placementHeaderId = `${id}-th-placement`;
 
+	// xxx: combine mates and team into one column? instead of user profile pics show team profile pic?
+
 	return (
 		<Table>
 			<thead>
 				<tr>
 					{hasHighlightCheckboxes && <th />}
 					<th id={placementHeaderId}>{t("results.placing")}</th>
-					<th>{t("results.team")}</th>
 					<th>{t("results.tournament")}</th>
+					<th>{t("results.participation")}</th>
 					<th>{t("results.date")}</th>
+					<th>{t("results.team")}</th>
 					<th>{t("results.mates")}</th>
 				</tr>
 			</thead>
@@ -77,20 +81,6 @@ export function UserResultsTable({
 									</div>
 								</div>
 							</td>
-							<td>
-								{result.tournamentId ? (
-									<Link
-										to={tournamentTeamPage({
-											tournamentId: result.tournamentId,
-											tournamentTeamId: result.teamId,
-										})}
-									>
-										{result.teamName}
-									</Link>
-								) : (
-									result.teamName
-								)}
-							</td>
 							<td id={nameCellId}>
 								{result.eventId ? (
 									<Link to={calendarEventPage(result.eventId)}>
@@ -109,13 +99,30 @@ export function UserResultsTable({
 								) : null}
 							</td>
 							<td>
+								<ParticipationPill setResults={result.setResults} />
+							</td>
+							<td className="whitespace-nowrap">
 								{databaseTimestampToDate(result.startTime).toLocaleDateString(
 									i18n.language,
 									{
 										day: "numeric",
-										month: "long",
+										month: "short",
 										year: "numeric",
 									},
+								)}
+							</td>
+							<td>
+								{result.tournamentId ? (
+									<Link
+										to={tournamentTeamPage({
+											tournamentId: result.tournamentId,
+											tournamentTeamId: result.teamId,
+										})}
+									>
+										{result.teamName}
+									</Link>
+								) : (
+									result.teamName
 								)}
 							</td>
 							<td>
@@ -149,5 +156,34 @@ export function UserResultsTable({
 				})}
 			</tbody>
 		</Table>
+	);
+}
+
+function ParticipationPill({
+	setResults,
+}: {
+	setResults: UserResultsTableProps["results"][number]["setResults"];
+}) {
+	if (!setResults) {
+		return null;
+	}
+
+	const playedCount = setResults.filter(Boolean).length;
+	const playedPercentage = Math.round((playedCount / setResults.length) * 100);
+
+	return (
+		<div className="u__results__pill__container">
+			<div className="u__results__pill__text">{playedPercentage}%</div>
+			<div className="u__results__pill">
+				{setResults.map((result, i) => (
+					<div
+						key={i}
+						className={clsx("u__results__pill-line", {
+							"u__results__pill-line__participating": result,
+						})}
+					/>
+				))}
+			</div>
+		</div>
 	);
 }

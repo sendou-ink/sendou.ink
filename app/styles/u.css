@@ -145,6 +145,36 @@
 	list-style: none;
 }
 
+.u__results__pill__container {
+	width: 60px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.u__results__pill__text {
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	text-align: center;
+}
+
+.u__results__pill {
+	display: flex;
+	gap: var(--s-1);
+	height: 10px;
+}
+
+.u__results__pill-line {
+	width: 100%;
+	height: 100%;
+	background-color: var(--bg-lightest);
+	border-radius: var(--rounded);
+}
+
+.u__results__pill-line__participating {
+	background-color: var(--theme);
+}
+
 .u-search__container {
 	display: flex;
 	flex-direction: column;
