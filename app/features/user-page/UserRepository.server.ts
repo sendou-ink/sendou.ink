@@ -432,8 +432,11 @@ const withMaxEventStartTime = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
 		.whereRef("CalendarEventDate.eventId", "=", "CalendarEvent.id")
 		.as("startTime");
 };
-export function findResultsByUserId(userId: number) {
-	return db
+export function findResultsByUserId(
+	userId: number,
+	{ showHighlightsOnly = false }: { showHighlightsOnly?: boolean } = {},
+) {
+	let calendarEventResultsQuery = db
 		.selectFrom("CalendarEventResultPlayer")
 		.innerJoin(
 			"CalendarEventResultTeam",
@@ -445,26 +448,27 @@ export function findResultsByUserId(userId: number) {
 			"CalendarEvent.id",
 			"CalendarEventResultTeam.eventId",
 		)
-		.select(({ eb, exists, selectFrom }) => [
+		.leftJoin("UserResultHighlight", (join) =>
+			join
+				.onRef("UserResultHighlight.teamId", "=", "CalendarEventResultTeam.id")
+				.on("UserResultHighlight.userId", "=", userId),
+		)
+		.select(({ eb, fn }) => [
 			"CalendarEvent.id as eventId",
 			sql<number>`null`.as("tournamentId"),
 			"CalendarEventResultTeam.placement",
 			"CalendarEvent.participantCount",
 			sql<Tables["TournamentResult"]["setResults"]>`null`.as("setResults"),
+			sql<string | null>`null`.as("logoUrl"),
 			"CalendarEvent.name as eventName",
 			"CalendarEventResultTeam.id as teamId",
 			"CalendarEventResultTeam.name as teamName",
+			fn<number | null>("iif", [
+				"UserResultHighlight.userId",
+				sql`1`,
+				sql`0`,
+			]).as("isHighlight"),
 			withMaxEventStartTime(eb),
-			exists(
-				selectFrom("UserResultHighlight")
-					.where("UserResultHighlight.userId", "=", userId)
-					.whereRef(
-						"UserResultHighlight.teamId",
-						"=",
-						"CalendarEventResultTeam.id",
-					)
-					.select("UserResultHighlight.userId"),
-			).as("isHighlight"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("CalendarEventResultPlayer")
@@ -483,52 +487,92 @@ export function findResultsByUserId(userId: number) {
 					),
 			).as("mates"),
 		])
-		.where("CalendarEventResultPlayer.userId", "=", userId)
-		.unionAll(
-			db
-				.selectFrom("TournamentResult")
-				.innerJoin(
-					"TournamentTeam",
-					"TournamentTeam.id",
-					"TournamentResult.tournamentTeamId",
-				)
-				.innerJoin(
-					"CalendarEvent",
-					"CalendarEvent.tournamentId",
-					"TournamentResult.tournamentId",
-				)
-				.select(({ eb }) => [
-					sql<number>`null`.as("eventId"),
-					"TournamentResult.tournamentId",
-					"TournamentResult.placement",
-					"TournamentResult.participantCount",
-					"TournamentResult.setResults",
-					"CalendarEvent.name as eventName",
-					"TournamentTeam.id as teamId",
-					"TournamentTeam.name as teamName",
-					withMaxEventStartTime(eb),
-					"TournamentResult.isHighlight",
-					jsonArrayFrom(
-						eb
-							.selectFrom("TournamentResult as TournamentResult2")
-							.innerJoin("User", "User.id", "TournamentResult2.userId")
-							.select([
-								...COMMON_USER_FIELDS,
-								sql<string | null>`null`.as("name"),
-							])
-							.whereRef(
-								"TournamentResult2.tournamentTeamId",
-								"=",
-								"TournamentResult.tournamentTeamId",
-							)
-							.where("TournamentResult2.userId", "!=", userId),
-					).as("mates"),
-				])
-				.where("TournamentResult.userId", "=", userId),
+		.where("CalendarEventResultPlayer.userId", "=", userId);
+
+	let tournamentResultsQuery = db
+		.selectFrom("TournamentResult")
+		.innerJoin(
+			"TournamentTeam",
+			"TournamentTeam.id",
+			"TournamentResult.tournamentTeamId",
 		)
+		.innerJoin(
+			"CalendarEvent",
+			"CalendarEvent.tournamentId",
+			"TournamentResult.tournamentId",
+		)
+		.select(({ eb }) => [
+			sql<number>`null`.as("eventId"),
+			"TournamentResult.tournamentId",
+			"TournamentResult.placement",
+			"TournamentResult.participantCount",
+			"TournamentResult.setResults",
+			eb
+				.selectFrom("UserSubmittedImage")
+				.select(["UserSubmittedImage.url"])
+				.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id")
+				.as("logoUrl"),
+			"CalendarEvent.name as eventName",
+			"TournamentTeam.id as teamId",
+			"TournamentTeam.name as teamName",
+			"TournamentResult.isHighlight",
+			withMaxEventStartTime(eb),
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentResult as TournamentResult2")
+					.innerJoin("User", "User.id", "TournamentResult2.userId")
+					.select([...COMMON_USER_FIELDS, sql<string | null>`null`.as("name")])
+					.whereRef(
+						"TournamentResult2.tournamentTeamId",
+						"=",
+						"TournamentResult.tournamentTeamId",
+					)
+					.where("TournamentResult2.userId", "!=", userId),
+			).as("mates"),
+		])
+		.where("TournamentResult.userId", "=", userId);
+
+	if (showHighlightsOnly) {
+		calendarEventResultsQuery = calendarEventResultsQuery.where(
+			"UserResultHighlight.userId",
+			"is not",
+			null,
+		);
+		tournamentResultsQuery = tournamentResultsQuery.where(
+			"TournamentResult.isHighlight",
+			"=",
+			1,
+		);
+	}
+
+	return calendarEventResultsQuery
+		.unionAll(tournamentResultsQuery)
 		.orderBy("startTime", "desc")
 		.$narrowType<{ startTime: NotNull }>()
 		.execute();
+}
+
+export async function hasHighlightedResultsByUserId(userId: number) {
+	const highlightedTournamentResult = await db
+		.selectFrom("TournamentResult")
+		.where("userId", "=", userId)
+		.where("isHighlight", "=", 1)
+		.select("userId")
+		.limit(1)
+		.executeTakeFirst();
+
+	if (highlightedTournamentResult) {
+		return true;
+	}
+
+	const highlightedCalendarEventResult = await db
+		.selectFrom("UserResultHighlight")
+		.where("userId", "=", userId)
+		.select(["userId"])
+		.limit(1)
+		.executeTakeFirst();
+
+	return !!highlightedCalendarEventResult;
 }
 
 const searchSelectedFields = ({ fn }: { fn: FunctionModule<DB, "User"> }) =>

@@ -4,7 +4,6 @@ import type {
 	Insertable,
 	JSONColumnType,
 	Selectable,
-	SqlBool,
 	Updateable,
 } from "kysely";
 import type { AssociationVisibility } from "~/features/associations/associations-types";
@@ -584,7 +583,7 @@ export interface TournamentMatchGameResultParticipant {
 export type WinLossParticipationArray = Array<"W" | "L" | null>;
 
 export interface TournamentResult {
-	isHighlight: Generated<SqlBool>;
+	isHighlight: Generated<DBBoolean>;
 	participantCount: number;
 	placement: number;
 	tournamentId: number;

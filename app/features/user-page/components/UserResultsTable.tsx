@@ -7,12 +7,15 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { UsersIcon } from "~/components/icons/Users";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
+import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { databaseTimestampToDate } from "~/utils/dates";
 import {
 	calendarEventPage,
 	tournamentBracketsPage,
+	tournamentLogoUrl,
 	tournamentTeamPage,
 	userPage,
+	userSubmittedImage,
 } from "~/utils/urls";
 import type { UserResultsLoaderData } from "../loaders/u.$identifier.results.server";
 
@@ -58,6 +61,10 @@ export function UserResultsTable({
 					const nameCellId = `${id}-${result.teamId}-name`;
 					const checkboxLabelIds = `${nameCellId} ${placementHeaderId} ${placementCellId}`;
 
+					const logoUrl = result.logoUrl
+						? userSubmittedImage(result.logoUrl)
+						: HACKY_resolvePicture({ name: result.eventName });
+
 					return (
 						<tr key={result.teamId}>
 							{hasHighlightCheckboxes && (
@@ -94,21 +101,34 @@ export function UserResultsTable({
 								)}
 							</td>
 							<td id={nameCellId}>
-								{result.eventId ? (
-									<Link to={calendarEventPage(result.eventId)}>
-										{result.eventName}
-									</Link>
-								) : null}
-								{result.tournamentId ? (
-									<Link
-										to={tournamentBracketsPage({
-											tournamentId: result.tournamentId,
-										})}
-										data-testid="tournament-name-cell"
-									>
-										{result.eventName}
-									</Link>
-								) : null}
+								<div className="stack horizontal xs items-center">
+									{result.eventId ? (
+										<Link to={calendarEventPage(result.eventId)}>
+											{result.eventName}
+										</Link>
+									) : null}
+									{result.tournamentId ? (
+										<>
+											{logoUrl !== tournamentLogoUrl("default") ? (
+												<img
+													src={logoUrl}
+													alt=""
+													width={18}
+													height={18}
+													className="rounded-full"
+												/>
+											) : null}
+											<Link
+												to={tournamentBracketsPage({
+													tournamentId: result.tournamentId,
+												})}
+												data-testid="tournament-name-cell"
+											>
+												{result.eventName}
+											</Link>
+										</>
+									) : null}
+								</div>
 							</td>
 							<td>
 								<ParticipationPill setResults={result.setResults} />
