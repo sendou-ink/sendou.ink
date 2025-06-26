@@ -2,6 +2,9 @@ import { Link } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
+import { UsersIcon } from "~/components/icons/Users";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -39,11 +42,10 @@ export function UserResultsTable({
 				<tr>
 					{hasHighlightCheckboxes && <th />}
 					<th id={placementHeaderId}>{t("results.placing")}</th>
+					<th>{t("results.date")}</th>
 					<th>{t("results.tournament")}</th>
 					<th>{t("results.participation")}</th>
-					<th>{t("results.date")}</th>
 					<th>{t("results.team")}</th>
-					<th>{t("results.mates")}</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -81,6 +83,16 @@ export function UserResultsTable({
 									</div>
 								</div>
 							</td>
+							<td className="whitespace-nowrap">
+								{databaseTimestampToDate(result.startTime).toLocaleDateString(
+									i18n.language,
+									{
+										day: "numeric",
+										month: "short",
+										year: "numeric",
+									},
+								)}
+							</td>
 							<td id={nameCellId}>
 								{result.eventId ? (
 									<Link to={calendarEventPage(result.eventId)}>
@@ -101,55 +113,55 @@ export function UserResultsTable({
 							<td>
 								<ParticipationPill setResults={result.setResults} />
 							</td>
-							<td className="whitespace-nowrap">
-								{databaseTimestampToDate(result.startTime).toLocaleDateString(
-									i18n.language,
-									{
-										day: "numeric",
-										month: "short",
-										year: "numeric",
-									},
-								)}
-							</td>
 							<td>
-								{result.tournamentId ? (
-									<Link
-										to={tournamentTeamPage({
-											tournamentId: result.tournamentId,
-											tournamentTeamId: result.teamId,
-										})}
+								<div className="stack horizontal md items-center">
+									<SendouPopover
+										trigger={
+											<SendouButton
+												icon={<UsersIcon />}
+												size="miniscule"
+												variant="minimal"
+											/>
+										}
 									>
-										{result.teamName}
-									</Link>
-								) : (
-									result.teamName
-								)}
-							</td>
-							<td>
-								<ul
-									className="u__results-players"
-									data-testid={`mates-cell-placement-${i}`}
-								>
-									{result.mates.map((player) => (
-										<li
-											key={player.name ? player.name : player.id}
-											className="flex items-center"
+										<ul
+											className="u__results-players"
+											data-testid={`mates-cell-placement-${i}`}
 										>
-											{player.name ? (
-												player.name
-											) : (
-												// as any but we know it's a user since it doesn't have name
-												<Link
-													to={userPage(player as any)}
-													className="stack horizontal xs items-center"
+											{result.mates.map((player) => (
+												<li
+													key={player.name ? player.name : player.id}
+													className="flex items-center"
 												>
-													<Avatar user={player as any} size="xxs" />
-													{player.username}
-												</Link>
-											)}
-										</li>
-									))}
-								</ul>
+													{player.name ? (
+														player.name
+													) : (
+														// as any but we know it's a user since it doesn't have name
+														<Link
+															to={userPage(player as any)}
+															className="stack horizontal xs items-center"
+														>
+															<Avatar user={player as any} size="xxs" />
+															{player.username}
+														</Link>
+													)}
+												</li>
+											))}
+										</ul>
+									</SendouPopover>
+									{result.tournamentId ? (
+										<Link
+											to={tournamentTeamPage({
+												tournamentId: result.tournamentId,
+												tournamentTeamId: result.teamId,
+											})}
+										>
+											{result.teamName}
+										</Link>
+									) : (
+										result.teamName
+									)}
+								</div>
 							</td>
 						</tr>
 					);
