@@ -120,7 +120,7 @@ To find a scrimmage, there are a number of ways to go about this. In our Discord
 * **LUTI:** [*https://discord.com/invite/0dZpaQB1mwcd2MCs*](https://discord.com/invite/0dZpaQB1mwcd2MCs)  
 * **Inkling Performance Labs:** [*https://discord.gg/F7RaNUR*](https://discord.gg/F7RaNUR)  
 * **Dapple Productions:** [*https://discord.gg/TPpyVTDXDv*](https://discord.gg/TPpyVTDXDv)  
-* **Under Pressure:** *[https://discord.gg/underpressure](https://discord.gg/underpressure)*
+* **Under Pressure:** *[https://discord.gg/M4uTXXXGXt](https://discord.gg/M4uTXXXGXt)*
 
 ## **SendouQ**
 
