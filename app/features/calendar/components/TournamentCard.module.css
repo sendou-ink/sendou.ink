@@ -95,6 +95,7 @@
 	gap: var(--s-1);
 	justify-content: end;
 	padding-inline-end: 12px;
+	width: 100%;
 }
 
 .pillsContainer.lonely {

@@ -103,25 +103,25 @@ export function TournamentCard({
 			</Link>
 			<div className="stack horizontal justify-between items-center">
 				{tournament.modes ? <ModesPill modes={tournament.modes} /> : null}
-				{isHostedOnSendouInk ? (
-					<div
-						className={clsx(styles.pillsContainer, {
-							[styles.lonely]: !tournament.modes,
-						})}
-					>
-						{tournament.isRanked ? (
-							<div className={clsx(styles.pill, styles.pillRanked)}>
-								<TrophyIcon title="Ranked (impacts this seasons SP)" />
-							</div>
-						) : null}
-						{isCalendar && tournament.badges && tournament.badges.length > 0 ? (
-							<BadgePrizesPill badges={tournament.badges} />
-						) : null}
+				<div
+					className={clsx(styles.pillsContainer, {
+						[styles.lonely]: !tournament.modes && isHostedOnSendouInk,
+					})}
+				>
+					{tournament.isRanked ? (
+						<div className={clsx(styles.pill, styles.pillRanked)}>
+							<TrophyIcon title="Ranked (impacts this seasons SP)" />
+						</div>
+					) : null}
+					{isCalendar && tournament.badges && tournament.badges.length > 0 ? (
+						<BadgePrizesPill badges={tournament.badges} />
+					) : null}
+					{isHostedOnSendouInk ? (
 						<div className={styles.teamCount}>
 							<UsersIcon /> {tournament.teamsCount}
 						</div>
-					</div>
-				) : null}
+					) : null}
+				</div>
 			</div>
 		</div>
 	);
