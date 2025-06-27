@@ -35,6 +35,10 @@ import { TopTenPlayer } from "~/features/leaderboards/components/TopTenPlayer";
 import { playerTopTenPlacement } from "~/features/leaderboards/leaderboards-utils";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
+import type {
+	SeasonGroupMatch,
+	SeasonTournamentResult,
+} from "~/features/sendouq-match/QMatchRepository.server";
 import { useWeaponUsage } from "~/hooks/swr";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { modesShort } from "~/modules/in-game-lists/modes";
@@ -46,7 +50,6 @@ import invariant from "~/utils/invariant";
 import { cutToNDecimalPlaces, roundToNDecimalPlaces } from "~/utils/number";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { sendouQMatchPage, TIERS_PAGE, userSeasonsPage } from "~/utils/urls";
-
 import {
 	loader,
 	type UserSeasonsPageLoaderData,
@@ -156,7 +159,7 @@ export default function UserSeasonsPage() {
 					) : null}
 				</div>
 			</div>
-			<Matches results={data.results} seasonViewed={data.season} />
+			<Results results={data.results} seasonViewed={data.season} />
 		</div>
 	);
 }
@@ -649,7 +652,7 @@ function WeaponCircle({
 	);
 }
 
-function Matches({
+function Results({
 	seasonViewed,
 	results,
 }: {
@@ -678,15 +681,12 @@ function Matches({
 			<div className="stack lg">
 				<div className="stack">
 					{results.value.map((result) => {
-						const match = result.groupMatch;
-						if (!match) return null;
-
-						const day = databaseTimestampToDate(match.createdAt).getDate();
+						const day = databaseTimestampToDate(result.createdAt).getDate();
 						const shouldRenderDateHeader = day !== lastDayRendered;
 						lastDayRendered = day;
 
 						return (
-							<React.Fragment key={match.id}>
+							<React.Fragment key={result.id}>
 								<div
 									className={clsx(
 										"text-xs font-semi-bold text-theme-secondary",
@@ -696,7 +696,7 @@ function Matches({
 									)}
 								>
 									{isMounted
-										? databaseTimestampToDate(match.createdAt).toLocaleString(
+										? databaseTimestampToDate(result.createdAt).toLocaleString(
 												"en",
 												{
 													weekday: "long",
@@ -706,7 +706,11 @@ function Matches({
 											)
 										: "t"}
 								</div>
-								<Match match={match} />
+								{result.type === "GROUP_MATCH" ? (
+									<GroupMatchResult match={result.groupMatch} />
+								) : (
+									<TournamentResult result={result.tournamentResult} />
+								)}
 							</React.Fragment>
 						);
 					})}
@@ -725,13 +729,7 @@ function Matches({
 	);
 }
 
-function Match({
-	match,
-}: {
-	match: NonNullable<
-		UserSeasonsPageLoaderData["results"]["value"][number]["groupMatch"]
-	>;
-}) {
+function GroupMatchResult({ match }: { match: SeasonGroupMatch }) {
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
 	const layoutData = parentRoute.data as UserPageLoaderData;
@@ -812,15 +810,17 @@ function Match({
 	);
 }
 
+function TournamentResult({ result }: { result: SeasonTournamentResult }) {
+	return <div>tournament result {result.setResults}</div>;
+}
+
 function MatchMembersRow({
 	score,
 	members,
 	reserveWeaponSpace: _reserveWeaponSpace,
 }: {
 	score: React.ReactNode;
-	members: NonNullable<
-		UserSeasonsPageLoaderData["results"]["value"][number]["groupMatch"]
-	>["groupAlphaMembers"];
+	members: SeasonGroupMatch["groupAlphaMembers"];
 	reserveWeaponSpace: boolean;
 }) {
 	return (

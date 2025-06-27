@@ -1,5 +1,6 @@
 import type { ExpressionBuilder } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import type {
 	DB,
@@ -8,8 +9,10 @@ import type {
 	Tables,
 	UserSkillDifference,
 } from "~/db/tables";
+import { databaseTimestampNow } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
+import type { Unpacked } from "~/utils/types";
 import { MATCHES_PER_SEASONS_PAGE } from "../user-page/user-page-constants";
 
 export function findById(id: number) {
@@ -264,6 +267,16 @@ const groupMatchResultsSubQuery = (eb: ExpressionBuilder<DB, "Skill">) => {
 		.whereRef("Skill.groupMatchId", "=", "GroupMatch.id");
 };
 
+export type SeasonGroupMatch = Extract<
+	Unpacked<Unpacked<ReturnType<typeof seasonResultsByUserId>>>,
+	{ type: "GROUP_MATCH" }
+>["groupMatch"];
+
+export type SeasonTournamentResult = Extract<
+	Unpacked<Unpacked<ReturnType<typeof seasonResultsByUserId>>>,
+	{ type: "TOURNAMENT_RESULT" }
+>["tournamentResult"];
+
 /**
  * Retrieves results of given user, competitive season & page. Both SendouQ matches and ranked tournaments.
  */
@@ -300,14 +313,27 @@ export async function seasonResultsByUserId({
 			"No result related to skill",
 		);
 
-		return {
-			...row,
-			groupMatch: row.groupMatch
-				? {
-						...row.groupMatch,
-						spDiff: skillDiff?.calculated ? skillDiff.spDiff : null,
-					}
-				: null,
-		};
+		if (row.groupMatch) {
+			return {
+				...R.omit(row, ["groupMatch", "tournamentResult"]),
+				type: "GROUP_MATCH" as const,
+				createdAt: row.groupMatch.createdAt, // xxx: createdAt, optimally would be part of skill?
+				groupMatch: {
+					...R.omit(row.groupMatch, ["createdAt", "memento"]),
+					spDiff: skillDiff?.calculated ? skillDiff.spDiff : null,
+				},
+			};
+		}
+
+		if (row.tournamentResult) {
+			return {
+				...R.omit(row, ["groupMatch", "tournamentResult"]),
+				type: "TOURNAMENT_RESULT" as const,
+				createdAt: databaseTimestampNow(),
+				tournamentResult: row.tournamentResult,
+			};
+		}
+
+		throw new Error("Row does not contain groupMatch or tournamentResult");
 	});
 }
