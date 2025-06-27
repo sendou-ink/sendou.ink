@@ -45,9 +45,9 @@ Although your stat will reset in-game, SplatNet 3 will continue to show you the 
 
 When queueing up to play multiplayer, Splatoon 3 will use Series Weapon Power to try matching you with players who have a similar power to the weapon you have equipped. This is to give you a challenge and chance to grow with your best weapons, and give you an easier time to build your skills with weapons you aren’t as great with. 
 
-Does Series Weapon Power affect players outside of Anarchy Battle (Series) though? When playing in Anarchy Open, matchmaking is still based on the skill level of the player who opened the party, meaning if your party host is in S rank, you’ll be matched against others of similar level, even if you have players in a lower rank, and vice versa. 
+Does Series Weapon Power affect players outside of Anarchy Battle (Series) though? When playing in Anarchy Open, matchmaking will try to pair you against teams based on the skill level of the entire party, meaning if your party host is in S rank but everyone else is in B-C rank, you’ll be matched against a wide variety of skill levels. 
 
-It’s important to keep in mind that when matchmaking, Series Weapon Power is not the only metric being measured when trying to put you in a match. Splatoon 3 will still try to match you with players in your region, or the lobby wait time, or players with a similar rate of disconnection, among other values. So it’s not a guarantee that you will always get into a game against other players close to you in Weapon Power when playing a Series. 
+It’s important to keep in mind that when matchmaking, Series Weapon Power is not the only metric being measured when trying to put you in a match. Splatoon 3 will still try to match you with players in your region, or the lobby wait time, or players with a similar connection strength, among other values. So it’s not a guarantee that you will always get into a game against other players close to you in Weapon Power when playing a Series. 
 
 Series Weapon Power is a neat little feature with a lot of nuance to it, and so far it seems to be well-received by the playerbase. It has a lot of potential to breathe new life to the competitive scene by giving players a new way to measure skill level that narrows down to weapon-specific capability, and we look forward to hearing how high it can go\!
 
