@@ -3,10 +3,6 @@ import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
-import { Image } from "~/components/Image";
-import { Main } from "~/components/Main";
-import { Pagination } from "~/components/Pagination";
-import { Placement } from "~/components/Placement";
 import { LinkButton } from "~/components/elements/Button";
 import {
 	SendouTab,
@@ -14,10 +10,14 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { Image } from "~/components/Image";
 import { EditIcon } from "~/components/icons/Edit";
 import { LinkIcon } from "~/components/icons/Link";
 import { LockIcon } from "~/components/icons/Lock";
 import { UsersIcon } from "~/components/icons/Users";
+import { Main } from "~/components/Main";
+import { Pagination } from "~/components/Pagination";
+import { Placement } from "~/components/Placement";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { BannedUsersList } from "~/features/tournament-organization/components/BannedPlayersList";
 import { useHasPermission } from "~/modules/permissions/hooks";
@@ -34,12 +34,11 @@ import {
 	userPage,
 	userSubmittedImage,
 } from "~/utils/urls";
+import { action } from "../actions/org.$slug.server";
 import { EventCalendar } from "../components/EventCalendar";
 import { SocialLinksList } from "../components/SocialLinksList";
-import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "../tournament-organization-constants";
-
-import { action } from "../actions/org.$slug.server";
 import { loader } from "../loaders/org.$slug.server";
+import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "../tournament-organization-constants";
 export { action, loader };
 
 import "../tournament-organization.css";
@@ -370,7 +369,10 @@ function SeriesButton({
 function EventsList({
 	showYear,
 	filteredByMonth,
-}: { showYear?: boolean; filteredByMonth?: boolean }) {
+}: {
+	showYear?: boolean;
+	filteredByMonth?: boolean;
+}) {
 	const { t } = useTranslation(["org"]);
 	const data = useLoaderData<typeof loader>();
 
@@ -493,6 +495,8 @@ function EventsPagination({
 }: {
 	series: NonNullable<SerializeFrom<typeof loader>["series"]>;
 }) {
+	const [, setSearchParams] = useSearchParams();
+
 	if (!series.eventsCount) return null;
 
 	const pagesCount = Math.ceil(
@@ -500,8 +504,6 @@ function EventsPagination({
 	);
 
 	if (pagesCount <= 1) return null;
-
-	const [, setSearchParams] = useSearchParams();
 
 	const setPage = (page: number) =>
 		setSearchParams((prev) => {

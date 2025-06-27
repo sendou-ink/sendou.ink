@@ -167,7 +167,11 @@ function MatchResultSquare({
 	result,
 	matchId,
 	children,
-}: { result: "win" | "loss"; matchId: number; children: React.ReactNode }) {
+}: {
+	result: "win" | "loss";
+	matchId: number;
+	children: React.ReactNode;
+}) {
 	const tournament = useTournament();
 
 	return (

@@ -1,7 +1,10 @@
+/** biome-ignore-all lint/suspicious/noConsole: Biome v2 migration */
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
 import path from "node:path";
 
 function main() {

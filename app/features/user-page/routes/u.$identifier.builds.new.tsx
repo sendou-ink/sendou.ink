@@ -8,25 +8,24 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { AbilitiesSelector } from "~/components/AbilitiesSelector";
 import { Alert } from "~/components/Alert";
+import { SendouButton } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
 import { GearSelect } from "~/components/GearSelect";
 import { Image } from "~/components/Image";
+import { CrossIcon } from "~/components/icons/Cross";
+import { PlusIcon } from "~/components/icons/Plus";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { RequiredHiddenInput } from "~/components/RequiredHiddenInput";
 import { SubmitButton } from "~/components/SubmitButton";
 import { WeaponSelect } from "~/components/WeaponSelect";
-import { SendouButton } from "~/components/elements/Button";
-import { CrossIcon } from "~/components/icons/Cross";
-import { PlusIcon } from "~/components/icons/Plus";
 import type { GearType } from "~/db/tables";
 import {
 	validatedBuildFromSearchParams,
 	validatedWeaponIdFromSearchParams,
 } from "~/features/build-analyzer";
 import { BUILD } from "~/features/builds/builds-constants";
-import { modesShort } from "~/modules/in-game-lists/modes";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
+import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import type {
 	BuildAbilitiesTupleWithUnknown,
 	MainWeaponId,
@@ -34,10 +33,9 @@ import type {
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { modeImageUrl } from "~/utils/urls";
-import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
-
 import { action } from "../actions/u.$identifier.builds.new.server";
 import { loader } from "../loaders/u.$identifier.builds.new.server";
+import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 export { loader, action };
 
 export const handle: SendouRouteHandle = {

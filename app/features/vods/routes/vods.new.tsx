@@ -8,14 +8,14 @@ import {
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod/v4";
+import { SendouButton } from "~/components/elements/Button";
+import { UserSearch } from "~/components/elements/UserSearch";
 import { FormMessage } from "~/components/FormMessage";
+import { AddFieldButton } from "~/components/form/AddFieldButton";
+import { RemoveFieldButton } from "~/components/form/RemoveFieldButton";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { WeaponSelect } from "~/components/WeaponSelect";
-import { SendouButton } from "~/components/elements/Button";
-import { UserSearch } from "~/components/elements/UserSearch";
-import { AddFieldButton } from "~/components/form/AddFieldButton";
-import { RemoveFieldButton } from "~/components/form/RemoveFieldButton";
 import type { Tables } from "~/db/tables";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
@@ -26,11 +26,10 @@ import { DateFormField } from "../../../components/form/DateFormField";
 import { InputFormField } from "../../../components/form/InputFormField";
 import { SelectFormField } from "../../../components/form/SelectFormField";
 import { SendouForm } from "../../../components/form/SendouForm";
-import { videoMatchTypes } from "../vods-constants";
-import { videoInputSchema } from "../vods-schemas";
-
 import { action } from "../actions/vods.new.server";
 import { loader } from "../loaders/vods.new.server";
+import { videoMatchTypes } from "../vods-constants";
+import { videoInputSchema } from "../vods-schemas";
 export { action, loader };
 
 export const handle: SendouRouteHandle = {
@@ -216,7 +215,9 @@ function PovFormField() {
 
 function MatchesFormfield({
 	videoType,
-}: { videoType: Tables["Video"]["type"] }) {
+}: {
+	videoType: Tables["Video"]["type"];
+}) {
 	const {
 		formState: { errors },
 	} = useFormContext<VodFormFields>();

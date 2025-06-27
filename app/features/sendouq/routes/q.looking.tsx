@@ -5,9 +5,6 @@ import * as React from "react";
 import { Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { Alert } from "~/components/Alert";
-import { Image } from "~/components/Image";
-import { Main } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
 import { LinkButton } from "~/components/elements/Button";
 import {
 	SendouTab,
@@ -15,6 +12,9 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { Image } from "~/components/Image";
+import { Main } from "~/components/Main";
+import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { Chat, useChat } from "~/features/chat/components/Chat";
 import { useAutoRefresh } from "~/hooks/useAutoRefresh";
@@ -23,20 +23,19 @@ import { useWindowSize } from "~/hooks/useWindowSize";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
+	navIconUrl,
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PAGE,
 	SENDOUQ_SETTINGS_PAGE,
 	SENDOUQ_STREAMS_PAGE,
-	navIconUrl,
 } from "~/utils/urls";
+import { action } from "../actions/q.looking.server";
 import { GroupCard } from "../components/GroupCard";
 import { GroupLeaver } from "../components/GroupLeaver";
 import { MemberAdder } from "../components/MemberAdder";
+import { loader } from "../loaders/q.looking.server";
 import { FULL_GROUP_SIZE } from "../q-constants";
 import type { LookingGroupWithInviteCode } from "../q-types";
-
-import { action } from "../actions/q.looking.server";
-import { loader } from "../loaders/q.looking.server";
 export { action, loader };
 
 import "../q.css";

@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
 import { getUser } from "~/features/auth/core/user.server";
-import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";

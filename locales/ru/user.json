@@ -14,7 +14,6 @@
 	"discordExplanation": "Имя пользователя, аватар, ссылка на аккаунты YouTube, Bluesky и Twitch берутся из вашего аккаунта в Discord. Посмотрите <1>FAQ</1> для дополнительной информации.",
 	"favoriteBadges": "Любимые награды",
 	"battlefy": "Аккаунт Battlefy",
-
 	"forms.showDiscordUniqueName": "Показать пользовательское имя Discord",
 	"forms.showDiscordUniqueName.info": "Показывать ваше уникальное Discord имя ({{discordUniqueName}})?",
 	"forms.commissionsOpen": "Коммишены открыты",
@@ -23,7 +22,6 @@
 	"forms.customName.info": "Если пользовательское имя отсутствует, то будет использовано ваше имя в Discord: \"{{discordName}}\"",
 	"forms.country.search.placeholder": "Искать страны",
 	"forms.favoriteBadges.nonSupporter": "Станьте суппортером sendou.ink, чтобы выбрать какие награды и в каком порядке отображаются на первой странице",
-
 	"results.title": "Все результаты",
 	"results.placing": "Место",
 	"results.team": "Команда",
@@ -35,7 +33,6 @@
 	"results.highlights.explanation": "Выберите ваш избранный результат",
 	"results.button.showHighlights": "Показать избранные",
 	"results.button.showAll": "Показать все",
-
 	"forms.errors.maxWeapons": "Достигнут максимум",
 	"forms.errors.invalidCustomUrl.numbers": "Пользовательский URL не может содержать только цифры",
 	"forms.errors.invalidCustomUrl.strangeCharacter": "Пользовательский URL не может содержать особые символы",
@@ -43,14 +40,13 @@
 	"forms.errors.invalidSens": "Чувствительность наклона не может быть указана, если не указана чувствительность стика",
 	"forms.info.customUrl": "Для меценатов (Supporter и выше) доступна короткая ссылка. Например, вместо sendou.ink/u/sendou может быть использована сссылка snd.ink/sendou.",
 	"forms.info.battlefy": "Имя на Battlefy может быть использовано для посева и верификации в некоторых турнирах",
-
 	"search.info": "Поиск пользователей по имени Discord или Splatoon 3",
 	"search.noResults": "По запросу '{{query}}' пользователь не найден",
 	"search.pleaseLogIn.header": "Пожалуйста, войдите в аккаунт для поиска пользователя",
 	"search.pleaseLogIn.button": "Войти с помощью Discord",
-
 	"seasons": "Сезоны",
 	"seasons.noQ": "Данный пользователь не играл в SendouQ в этом сезоне",
+	"seasons.noSeasons": "",
 	"seasons.tabs.weapons": "Оружие",
 	"seasons.tabs.stages": "Арены",
 	"seasons.tabs.self": "Я",
@@ -67,7 +63,6 @@
 	"seasons.clickARow": "Нажмите на ряд, чтобы посмотреть на статистику использованного оружия.",
 	"seasons.loading": "Загрузка...",
 	"seasons.matchBeingProcessed": "Данный матч ещё не был обработан",
-
 	"builds.sorting.changeButton": "Изменить сортировку",
 	"builds.sorting.header": "Изменить сортировку сборок",
 	"builds.sorting.backToDefaults": "По умолчанию",

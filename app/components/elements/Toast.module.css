@@ -20,7 +20,6 @@
 	border: 2px solid var(--border);
 	width: 250px;
 	outline: none;
-	/* biome-ignore lint/correctness/noUnknownProperty: it exists */
 	view-transition-class: toast;
 }
 

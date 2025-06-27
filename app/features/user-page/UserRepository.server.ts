@@ -453,8 +453,7 @@ export function findResultsByUserId(userId: number) {
 			"CalendarEvent.name as eventName",
 			"CalendarEventResultTeam.id as teamId",
 			"CalendarEventResultTeam.name as teamName",
-			// TODO: can we get rid of the "as"?
-			withMaxEventStartTime(eb as ExpressionBuilder<DB, "CalendarEvent">),
+			withMaxEventStartTime(eb),
 			exists(
 				selectFrom("UserResultHighlight")
 					.where("UserResultHighlight.userId", "=", userId)
@@ -722,13 +721,11 @@ export function upsert(
 ) {
 	return db
 		.insertInto("User")
-		.values(args)
+		.values({ ...args, createdAt: databaseTimestampNow() })
 		.onConflict((oc) => {
-			const { discordId, ...rest } = args;
-
-			return oc
-				.column("discordId")
-				.doUpdateSet({ ...rest, createdAt: databaseTimestampNow() });
+			return oc.column("discordId").doUpdateSet({
+				...R.omit(args, ["discordId"]),
+			});
 		})
 		.returning("id")
 		.executeTakeFirstOrThrow();
@@ -880,7 +877,10 @@ export function updateResultHighlights(args: UpdateResultHighlightsArgs) {
 export function updateBuildSorting({
 	userId,
 	buildSorting,
-}: { userId: number; buildSorting: BuildSort[] | null }) {
+}: {
+	userId: number;
+	buildSorting: BuildSort[] | null;
+}) {
 	return db
 		.updateTable("User")
 		.set({ buildSorting: buildSorting ? JSON.stringify(buildSorting) : null })

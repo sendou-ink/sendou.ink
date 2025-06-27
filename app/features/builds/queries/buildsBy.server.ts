@@ -1,9 +1,9 @@
 import { sql } from "~/db/sql";
 import type { Tables, UserWithPlusTier } from "~/db/tables";
-import type { ModeShort } from "~/modules/in-game-lists/types";
 import type {
 	BuildAbilitiesTuple,
 	MainWeaponId,
+	ModeShort,
 } from "~/modules/in-game-lists/types";
 import { weaponIdToAltId } from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";

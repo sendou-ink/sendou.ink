@@ -12,7 +12,6 @@
 	font-size: var(--fonts-sm);
 	font-weight: var(--bold);
 	color: var(--text-lighter);
-	align-items: center;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -237,12 +236,10 @@
 }
 
 .q__group-member__add-note-button {
-	background-color: transparent;
 	border: none;
 	padding: 0 var(--s-1-5);
 	color: var(--body);
 	font-size: var(--fonts-xxs);
-	font-weight: var(--body);
 	font-weight: var(--semi-bold);
 	background-color: var(--bg-darker);
 	white-space: nowrap;

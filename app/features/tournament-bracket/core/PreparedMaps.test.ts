@@ -187,7 +187,6 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 
 	test("returns null if no elimination team count recorded", () => {
 		const copy = structuredClone(FOUR_TEAM_SE_PREPARED);
-		// biome-ignore lint/performance/noDelete: for testing purposes
 		delete copy.eliminationTeamCount;
 
 		const trimmed = PreparedMaps.trimPreparedEliminationMaps({

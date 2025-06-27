@@ -6,18 +6,19 @@ import {
 } from "~/features/map-list-generator/core/map-pool";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { userSkills } from "~/features/mmr/tiered.server";
-import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import { addSkillsToGroups } from "~/features/sendouq/core/groups.server";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import type { LookingGroupWithInviteCode } from "~/features/sendouq/q-types";
+import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
-	type TournamentMapListMap,
 	createTournamentMapList,
+	type TournamentMapListMap,
 } from "~/modules/tournament-map-list-generator";
 import { SENDOUQ_DEFAULT_MAPS } from "~/modules/tournament-map-list-generator/constants";
 import invariant from "~/utils/invariant";
+import { logger } from "~/utils/logger";
 import { averageArray } from "~/utils/number";
 import type { MatchById } from "../queries/findMatchById.server";
 
@@ -69,7 +70,7 @@ export function matchMapList(
 		// in rare cases, the map list generator can fail
 		// in that case, just return a map list from our default set of maps
 	} catch (e) {
-		console.error(e);
+		logger.error(e);
 		return createTournamentMapList({
 			count: SENDOUQ_BEST_OF,
 			seed: String(groupOne.id),

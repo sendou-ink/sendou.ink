@@ -1,6 +1,7 @@
 import type { MetaFunction } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
+import { formatDistance } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
@@ -8,17 +9,16 @@ import type { z } from "zod/v4";
 import { AddNewButton } from "~/components/AddNewButton";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
-import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { Table } from "~/components/Table";
-import TimePopover from "~/components/TimePopover";
-import { LinkButton } from "~/components/elements/Button";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { SendouForm } from "~/components/form/SendouForm";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
 import { SpeechBubbleIcon } from "~/components/icons/SpeechBubble";
 import { UsersIcon } from "~/components/icons/Users";
+import { Table } from "~/components/Table";
+import TimePopover from "~/components/TimePopover";
 import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { joinListToNaturalString, nullFilledArray } from "~/utils/arrays";
@@ -35,7 +35,6 @@ import {
 	userPage,
 	userSubmittedImage,
 } from "~/utils/urls";
-import { Main } from "../../../components/Main";
 import {
 	SendouTab,
 	SendouTabList,
@@ -49,13 +48,13 @@ import { ClockIcon } from "../../../components/icons/Clock";
 import { CrossIcon } from "../../../components/icons/Cross";
 import { MegaphoneIcon } from "../../../components/icons/MegaphoneIcon";
 import { SpeechBubbleFilledIcon } from "../../../components/icons/SpeechBubbleFilled";
+import { Main } from "../../../components/Main";
+import { action } from "../actions/scrims.server";
 import { WithFormField } from "../components/WithFormField";
+import { loader } from "../loaders/scrims.server";
 import { SCRIM } from "../scrims-constants";
 import { newRequestSchema } from "../scrims-schemas";
 import type { ScrimPost, ScrimPostRequest } from "../scrims-types";
-
-import { action } from "../actions/scrims.server";
-import { loader } from "../loaders/scrims.server";
 export { loader, action };
 
 import styles from "./scrims.module.css";
@@ -188,7 +187,10 @@ export default function ScrimsPage() {
 function RequestScrimModal({
 	postId,
 	close,
-}: { postId: number; close: () => void }) {
+}: {
+	postId: number;
+	close: () => void;
+}) {
 	const { t } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof loader>();
 
@@ -335,9 +337,6 @@ function ScrimsTable({
 					const owner =
 						post.users.find((user) => user.isOwner) ?? post.users[0];
 
-					const date = databaseTimestampToDate(post.at);
-					const inThePast = date < new Date();
-
 					const requests = showRequestRows
 						? post.requests.map((request) => (
 								<RequestRow
@@ -367,7 +366,7 @@ function ScrimsTable({
 								<td>
 									<div className="stack horizontal sm">
 										<div className={styles.postTime}>
-											{inThePast ? (
+											{!post.isScheduledForFuture ? (
 												t("scrims:now")
 											) : (
 												<TimePopover
@@ -377,6 +376,15 @@ function ScrimsTable({
 														minute: "numeric",
 													}}
 													underline={false}
+													footerText={t("scrims:postModal.footer", {
+														time: formatDistance(
+															databaseTimestampToDate(post.createdAt),
+															new Date(),
+															{
+																addSuffix: true,
+															},
+														),
+													})}
 												/>
 											)}
 										</div>
@@ -605,7 +613,11 @@ function RequestRow({
 	canAccept,
 	request,
 	postId,
-}: { canAccept: boolean; request: ScrimPostRequest; postId: number }) {
+}: {
+	canAccept: boolean;
+	request: ScrimPostRequest;
+	postId: number;
+}) {
 	const { t } = useTranslation(["common", "scrims"]);
 
 	const requestOwner =

@@ -6,8 +6,7 @@ import {
 	wrappedAction,
 } from "~/utils/Test";
 import { action as teamIndexPageAction } from "../actions/t.server";
-import type { editTeamSchema } from "../team-schemas.server";
-import type { createTeamSchema } from "../team-schemas.server";
+import type { createTeamSchema, editTeamSchema } from "../team-schemas.server";
 import { action as _editTeamProfileAction } from "./t.$customUrl.edit.server";
 
 const createTeamAction = wrappedAction<typeof createTeamSchema>({

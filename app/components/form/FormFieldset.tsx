@@ -5,7 +5,11 @@ export function FormFieldset({
 	title,
 	children,
 	onRemove,
-}: { title: string; children: React.ReactNode; onRemove: () => void }) {
+}: {
+	title: string;
+	children: React.ReactNode;
+	onRemove: () => void;
+}) {
 	return (
 		<fieldset className="w-min">
 			<legend>{title}</legend>

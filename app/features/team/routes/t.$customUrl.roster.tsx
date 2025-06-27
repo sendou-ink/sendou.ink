@@ -5,19 +5,19 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
 import { Alert } from "~/components/Alert";
-import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { Main } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { SendouSwitch } from "~/components/elements/Switch";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { TrashIcon } from "~/components/icons/Trash";
+import { Main } from "~/components/Main";
+import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
-	TEAM_SEARCH_PAGE,
 	joinTeamPage,
 	navIconUrl,
+	TEAM_SEARCH_PAGE,
 	teamPage,
 } from "~/utils/urls";
 import type * as TeamRepository from "../TeamRepository.server";

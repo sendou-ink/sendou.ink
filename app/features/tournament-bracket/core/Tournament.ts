@@ -3,7 +3,6 @@ import type {
 	TournamentStage,
 	TournamentStageSettings,
 } from "~/db/tables";
-import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as Standings from "~/features/tournament/core/Standings";
 import {
 	LEAGUES,
@@ -13,6 +12,7 @@ import {
 	modesIncluded,
 	tournamentIsRanked,
 } from "~/features/tournament/tournament-utils";
+import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { Match, Stage } from "~/modules/brackets-model";
 import type { ModeShort } from "~/modules/in-game-lists/types";
@@ -31,10 +31,10 @@ import {
 	groupNumberToLetters,
 } from "../tournament-bracket-utils";
 import { Bracket } from "./Bracket";
-import * as Swiss from "./Swiss";
-import type { TournamentData, TournamentDataTeam } from "./Tournament.server";
 import { getTournamentManager } from "./brackets-manager";
 import { getRounds } from "./rounds";
+import * as Swiss from "./Swiss";
+import type { TournamentData, TournamentDataTeam } from "./Tournament.server";
 
 export type OptionalIdObject = { id: number } | undefined;
 

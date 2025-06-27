@@ -14,7 +14,11 @@ export function ToggleFormField<T extends FieldValues>({
 	label,
 	name,
 	bottomText,
-}: { label: string; name: FieldPath<T>; bottomText?: string }) {
+}: {
+	label: string;
+	name: FieldPath<T>;
+	bottomText?: string;
+}) {
 	const methods = useFormContext();
 	const id = React.useId();
 

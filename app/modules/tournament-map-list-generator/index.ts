@@ -1,9 +1,9 @@
+export { sourceTypes } from "./constants";
 export { createTournamentMapList } from "./tournament-map-list";
 export type {
 	BracketType,
+	TournamentMapListMap,
 	TournamentMaplistInput,
 	TournamentMaplistSource,
-	TournamentMapListMap,
 } from "./types";
-export { sourceTypes } from "./constants";
 export { seededRandom } from "./utils";

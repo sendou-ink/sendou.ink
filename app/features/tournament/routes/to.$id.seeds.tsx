@@ -1,15 +1,15 @@
 import {
+	closestCenter,
 	DndContext,
 	DragOverlay,
 	KeyboardSensor,
 	PointerSensor,
-	closestCenter,
 	useSensor,
 	useSensors,
 } from "@dnd-kit/core";
 import {
-	SortableContext,
 	arrayMove,
+	SortableContext,
 	sortableKeyboardCoordinates,
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
@@ -19,10 +19,10 @@ import * as React from "react";
 import { Alert } from "~/components/Alert";
 import { Catcher } from "~/components/Catcher";
 import { Draggable } from "~/components/Draggable";
-import { SubmitButton } from "~/components/SubmitButton";
-import { Table } from "~/components/Table";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
+import { SubmitButton } from "~/components/SubmitButton";
+import { Table } from "~/components/Table";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import { useTimeoutState } from "~/hooks/useTimeoutState";
 import invariant from "~/utils/invariant";
@@ -30,10 +30,9 @@ import { userResultsPage } from "~/utils/urls";
 import { Avatar } from "../../../components/Avatar";
 import { InfoPopover } from "../../../components/InfoPopover";
 import { ordinalToRoundedSp } from "../../mmr/mmr-utils";
-import { useTournament } from "./to.$id";
-
 import { action } from "../actions/to.$id.seeds.server";
 import { loader } from "../loaders/to.$id.seeds.server";
+import { useTournament } from "./to.$id";
 export { loader, action };
 
 export default function TournamentSeedsPage() {
@@ -362,13 +361,11 @@ function SeedAlert({ teamOrder }: { teamOrder: number[] }) {
 				alertClassName="tournament-bracket__start-bracket-alert"
 				textClassName="stack horizontal md items-center"
 			>
-				{teamOrderChanged ? (
-					<>You have unchanged changes to seeding</>
-				) : showSuccess ? (
-					<>Seeds saved successfully!</>
-				) : (
-					<>Drag teams to adjust their seeding</>
-				)}
+				{teamOrderChanged
+					? "You have unchanged changes to seeding"
+					: showSuccess
+						? "Seeds saved successfully!"
+						: "Drag teams to adjust their seeding"}
 				{(!showSuccess || teamOrderChanged) && (
 					<SubmitButton
 						state={fetcher.state}

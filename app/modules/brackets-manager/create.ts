@@ -3,8 +3,8 @@ import type {
 	InputStage,
 	Match,
 	Round,
-	SeedOrdering,
 	Seeding,
+	SeedOrdering,
 	Stage,
 } from "~/modules/brackets-model";
 import type { BracketsManager } from ".";

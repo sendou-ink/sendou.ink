@@ -1,11 +1,10 @@
-import clsx from "clsx";
 import { useTranslation } from "react-i18next";
-import { Image } from "~/components/Image";
 import {
 	SendouSelect,
 	SendouSelectItem,
 	SendouSelectItemSection,
 } from "~/components/elements/Select";
+import { Image } from "~/components/Image";
 import type { GearType } from "~/db/tables";
 import { brandIds } from "~/modules/in-game-lists/brand-ids";
 import {
@@ -13,7 +12,6 @@ import {
 	headGearBrandGrouped,
 	shoesGearBrandGrouped,
 } from "~/modules/in-game-lists/gear-ids";
-import type { BrandId } from "~/modules/in-game-lists/types";
 import { brandImageUrl, gearImageUrl } from "~/utils/urls";
 
 import styles from "./WeaponSelect.module.css";
@@ -59,12 +57,9 @@ export function GearSelect<Clearable extends boolean | undefined = undefined>({
 		>
 			{({ key, items: gear, brandId, idx }) => (
 				<SendouSelectItemSection
-					heading={
-						<CategoryHeading
-							brandId={brandId}
-							className={idx === 0 ? "pt-0-5-forced" : undefined}
-						/>
-					}
+					className={idx === 0 ? "pt-0-5-forced" : undefined}
+					heading={t(`game-misc:BRAND_${brandId}` as any)}
+					headingImgPath={brandImageUrl(brandId)}
 					key={key}
 				>
 					{gear.map(({ id, name }) => (
@@ -88,24 +83,6 @@ export function GearSelect<Clearable extends boolean | undefined = undefined>({
 				</SendouSelectItemSection>
 			)}
 		</SendouSelect>
-	);
-}
-
-function CategoryHeading({
-	className,
-	brandId,
-}: {
-	className?: string;
-	brandId: BrandId;
-}) {
-	const { t } = useTranslation(["game-misc"]);
-
-	return (
-		<div className={clsx(className, styles.categoryHeading)}>
-			<Image path={brandImageUrl(brandId)} size={28} alt="" />
-			{t(`game-misc:BRAND_${brandId}` as any)}
-			<div className={styles.categoryDivider} />
-		</div>
 	);
 }
 

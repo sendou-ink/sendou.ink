@@ -54,7 +54,10 @@ export function NotificationItemDivider() {
 function NotificationImage({
 	notification,
 	children,
-}: { notification: LoaderNotification; children: React.ReactNode }) {
+}: {
+	notification: LoaderNotification;
+	children: React.ReactNode;
+}) {
 	if (notification.pictureUrl) {
 		return (
 			<div className={styles.imageContainer}>

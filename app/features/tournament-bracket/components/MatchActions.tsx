@@ -1,9 +1,9 @@
 import { Form, useFetcher, useLoaderData } from "@remix-run/react";
 import * as React from "react";
-import { Label } from "~/components/Label";
-import { SubmitButton } from "~/components/SubmitButton";
 import { SendouButton } from "~/components/elements/Button";
 import { EditIcon } from "~/components/icons/Edit";
+import { Label } from "~/components/Label";
+import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { resolveLeagueRoundStartDate } from "~/features/tournament/tournament-utils";

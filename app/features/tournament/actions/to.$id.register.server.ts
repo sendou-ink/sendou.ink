@@ -5,11 +5,11 @@ import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { logger } from "~/utils/logger";
 import {

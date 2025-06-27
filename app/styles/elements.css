@@ -56,10 +56,6 @@
 	outline: none;
 }
 
-.react-aria-DatePicker .react-aria-Button[data-focused] svg {
-	fill: var(--theme);
-}
-
 .react-aria-DatePicker svg {
 	fill: var(--input-icon);
 	width: 17.5px;
@@ -96,6 +92,10 @@
 .react-aria-Calendar .react-aria-Button svg {
 	fill: var(--theme);
 	width: 27.5px;
+}
+
+.react-aria-DatePicker .react-aria-Button[data-focused] svg {
+	fill: var(--theme);
 }
 
 .react-aria-CalendarGrid {

@@ -6,8 +6,8 @@ import { useTranslation } from "react-i18next";
 import type { z } from "zod/v4";
 import { logger } from "~/utils/logger";
 import type { ActionError } from "~/utils/remix.server";
-import { SubmitButton } from "../SubmitButton";
 import { LinkButton } from "../elements/Button";
+import { SubmitButton } from "../SubmitButton";
 
 export function SendouForm<T extends z.ZodTypeAny>({
 	schema,

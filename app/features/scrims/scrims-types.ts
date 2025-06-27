@@ -7,6 +7,7 @@ export type LutiDiv = (typeof LUTI_DIVS)[number];
 export interface ScrimPost {
 	id: number;
 	at: number;
+	createdAt: number;
 	visibility: AssociationVisibility | null;
 	text: string | null;
 	divs: {
@@ -27,6 +28,8 @@ export interface ScrimPost {
 		CANCEL: number[];
 	};
 	managedByAnyone: boolean;
+	/** When the post was made was it scheduled for a future time slot (as opposed to looking now) */
+	isScheduledForFuture: boolean;
 	canceled: {
 		at: number;
 		byUser: ScrimPostUser;

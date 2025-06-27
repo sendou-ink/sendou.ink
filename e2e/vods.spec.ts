@@ -8,7 +8,7 @@ import {
 	selectWeapon,
 	submit,
 } from "~/utils/playwright";
-import { VODS_PAGE, newVodPage, vodVideoPage } from "~/utils/urls";
+import { newVodPage, VODS_PAGE, vodVideoPage } from "~/utils/urls";
 
 const chooseVideoDate = async (page: Page) => {
 	await page.getByTestId("open-calendar-button").click();

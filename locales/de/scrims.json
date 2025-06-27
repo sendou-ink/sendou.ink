@@ -24,6 +24,7 @@
 	"actions.contact": "Kontaktieren",
 	"acceptModal.title": "Scrim-Anfrage von {{groupName}} akzeptieren & andere ablehnen (falls vorhanden)?",
 	"acceptModal.prevented": "Bitte den Ersteller des Scrim-Posts, diese Anfrage anzunehmen.",
+	"postModal.footer": "",
 	"forms.title": "Neuen Scrim-Post erstellen",
 	"forms.with.title": "Mit",
 	"forms.with.explanation": "Du kannst nach Usern per Nutzername, Discord ID oder sendou.ink Profil-URL suchen.",

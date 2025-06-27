@@ -1,8 +1,8 @@
 import { useFetcher } from "@remix-run/react";
 import { InfoPopover } from "~/components/InfoPopover";
-import { SubmitButton } from "~/components/SubmitButton";
 import { LockIcon } from "~/components/icons/Lock";
 import { UnlockIcon } from "~/components/icons/Unlock";
+import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 

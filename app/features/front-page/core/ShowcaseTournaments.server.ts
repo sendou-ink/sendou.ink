@@ -2,7 +2,7 @@ import cachified from "@epic-web/cachified";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { tournamentIsRanked } from "~/features/tournament/tournament-utils";
-import { IN_MILLISECONDS, cache, ttl } from "~/utils/cache.server";
+import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
@@ -122,7 +122,10 @@ export function removeFromCached({
 export function updateCachedTournamentTeamCount({
 	tournamentId,
 	newTeamCount,
-}: { tournamentId: number; newTeamCount: number }) {
+}: {
+	tournamentId: number;
+	newTeamCount: number;
+}) {
 	cachedTournaments().then((tournaments) => {
 		const tournament = tournaments.upcoming.find(
 			(tournament) => tournament.id === tournamentId,

@@ -193,8 +193,7 @@ function eventStartedInThePast(
 	startTimes: CanReportCalendarEventWinnersArgs["startTimes"],
 ) {
 	return startTimes.every(
-		(startTime) =>
-			databaseTimestampToDate(startTime).getTime() < new Date().getTime(),
+		(startTime) => databaseTimestampToDate(startTime).getTime() < Date.now(),
 	);
 }
 

@@ -43,7 +43,7 @@ export async function notify({
 			})),
 		);
 	} catch (e) {
-		console.error("Failed to notify users", e);
+		logger.error("Failed to notify users", e);
 	}
 
 	const subscriptions = await NotificationRepository.subscriptionsByUserIds(

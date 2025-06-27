@@ -8,8 +8,9 @@ import {
 	seededRandom,
 	sourceTypes,
 } from "~/modules/tournament-map-list-generator";
-import type { FindMatchById } from "../tournament-bracket/queries/findMatchById.server";
+import { logger } from "~/utils/logger";
 import type { TournamentLoaderData } from "../tournament/loaders/to.$id.server";
+import type { FindMatchById } from "../tournament-bracket/queries/findMatchById.server";
 import type { Standing } from "./core/Bracket";
 import type { Tournament } from "./core/Tournament";
 import type { TournamentDataTeam } from "./core/Tournament.server";
@@ -55,7 +56,7 @@ export function resolveHostingTeam(
 	if (teams[0].seed < teams[1].seed) return teams[0];
 	if (teams[1].seed < teams[0].seed) return teams[1];
 
-	console.error("resolveHostingTeam: unexpected default");
+	logger.error("resolveHostingTeam: unexpected default");
 	return teams[0];
 }
 
@@ -200,7 +201,7 @@ export function pickInfoText({
 	}
 	if (map.source === "TO") return "";
 
-	console.error(`Unknown source: ${String(map.source)}`);
+	logger.error(`Unknown source: ${String(map.source)}`);
 	return "";
 }
 

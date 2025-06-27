@@ -29,8 +29,8 @@ graph TD
 
 List of the dependencies in production:
 
-- [Skalop](https://github.com/Sendouc/skalop) - WebSocket server
-- [Lohi](https://github.com/Sendouc/lohi) - Discord bot for profile updates, log-in links etc.
+- [Skalop](https://github.com/sendou-ink/skalop) - WebSocket server
+- [Lohi](https://github.com/sendou-ink/lohi) - Discord bot for profile updates, log-in links etc.
 - [Leanny/splat3](https://github.com/Leanny/splat3) - In-game data (manual update) 
 - [splatoon3.ink](https://github.com/misenhower/splatoon3.ink) - X Rank placement data (manual update)
 - Discord - Auth  

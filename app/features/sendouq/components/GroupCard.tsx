@@ -5,12 +5,10 @@ import * as React from "react";
 import { Flipped } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, ModeImage, TierImage, WeaponImage } from "~/components/Image";
-import { SubmitButton } from "~/components/SubmitButton";
-import { LinkButton } from "~/components/elements/Button";
-import { SendouButton } from "~/components/elements/Button";
-import { SendouPopover } from "~/components/elements/Popover";
 import { EditIcon } from "~/components/icons/Edit";
 import { MicrophoneIcon } from "~/components/icons/Microphone";
 import { SpeakerIcon } from "~/components/icons/Speaker";
@@ -18,6 +16,7 @@ import { SpeakerXIcon } from "~/components/icons/SpeakerX";
 import { StarIcon } from "~/components/icons/Star";
 import { StarFilledIcon } from "~/components/icons/StarFilled";
 import { TrashIcon } from "~/components/icons/Trash";
+import { SubmitButton } from "~/components/SubmitButton";
 import type { ParsedMemento, Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
@@ -29,10 +28,10 @@ import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import {
-	SENDOUQ_LOOKING_PAGE,
-	TIERS_PAGE,
 	navIconUrl,
+	SENDOUQ_LOOKING_PAGE,
 	specialWeaponImageUrl,
+	TIERS_PAGE,
 	tierImageUrl,
 	userPage,
 } from "~/utils/urls";

@@ -11,9 +11,8 @@ import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, topSearchPage } from "~/utils/urls";
 import { PlacementsTable } from "../components/Placements";
-import type { MonthYear } from "../top-search-utils";
-
 import { loader } from "../loaders/xsearch.server";
+import type { MonthYear } from "../top-search-utils";
 export { loader };
 
 import "../top-search.css";

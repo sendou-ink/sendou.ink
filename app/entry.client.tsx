@@ -3,6 +3,7 @@ import i18next from "i18next";
 import { hydrateRoot } from "react-dom/client";
 import { I18nextProvider } from "react-i18next";
 import { i18nLoader } from "./modules/i18n/loader";
+import { logger } from "./utils/logger";
 
 if ("serviceWorker" in navigator) {
 	window.addEventListener("load", () => {
@@ -20,4 +21,4 @@ i18nLoader()
 			</I18nextProvider>,
 		),
 	)
-	.catch(console.error);
+	.catch(logger.error);

@@ -1,10 +1,10 @@
 import { Link } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
-import { Flag } from "~/components/Flag";
-import { Image, ModeImage } from "~/components/Image";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import { Flag } from "~/components/Flag";
+import { Image, ModeImage } from "~/components/Image";
 import { TrophyIcon } from "~/components/icons/Trophy";
 import { UsersIcon } from "~/components/icons/Users";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
@@ -103,25 +103,25 @@ export function TournamentCard({
 			</Link>
 			<div className="stack horizontal justify-between items-center">
 				{tournament.modes ? <ModesPill modes={tournament.modes} /> : null}
-				{isHostedOnSendouInk ? (
-					<div
-						className={clsx(styles.pillsContainer, {
-							[styles.lonely]: !tournament.modes,
-						})}
-					>
-						{tournament.isRanked ? (
-							<div className={clsx(styles.pill, styles.pillRanked)}>
-								<TrophyIcon title="Ranked (impacts this seasons SP)" />
-							</div>
-						) : null}
-						{isCalendar && tournament.badges && tournament.badges.length > 0 ? (
-							<BadgePrizesPill badges={tournament.badges} />
-						) : null}
+				<div
+					className={clsx(styles.pillsContainer, {
+						[styles.lonely]: !tournament.modes && isHostedOnSendouInk,
+					})}
+				>
+					{tournament.isRanked ? (
+						<div className={clsx(styles.pill, styles.pillRanked)}>
+							<TrophyIcon title="Ranked (impacts this seasons SP)" />
+						</div>
+					) : null}
+					{isCalendar && tournament.badges && tournament.badges.length > 0 ? (
+						<BadgePrizesPill badges={tournament.badges} />
+					) : null}
+					{isHostedOnSendouInk ? (
 						<div className={styles.teamCount}>
 							<UsersIcon /> {tournament.teamsCount}
 						</div>
-					</div>
-				) : null}
+					) : null}
+				</div>
 			</div>
 		</div>
 	);
@@ -187,7 +187,9 @@ function ModesPill({ modes }: { modes: NonNullable<CalendarEvent["modes"]> }) {
 
 function BadgePrizesPill({
 	badges,
-}: { badges: NonNullable<CalendarEvent["badges"]> }) {
+}: {
+	badges: NonNullable<CalendarEvent["badges"]>;
+}) {
 	return (
 		<SendouPopover
 			trigger={

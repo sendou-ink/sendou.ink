@@ -76,7 +76,7 @@ export class InMemoryDatabase implements CrudInterface {
 					// @ts-expect-error imported
 					this.data[table].push({ id, ...values });
 				}
-			} catch (error) {
+			} catch {
 				return -1;
 			}
 			return id;
@@ -93,7 +93,7 @@ export class InMemoryDatabase implements CrudInterface {
 					this.data[table].push({ id: id++, ...object });
 				}
 			}
-		} catch (error) {
+		} catch {
 			return false;
 		}
 
@@ -141,7 +141,7 @@ export class InMemoryDatabase implements CrudInterface {
 			return this.data[table]
 				.filter(this.makeFilter(arg))
 				.map((val) => structuredClone(val));
-		} catch (error) {
+		} catch {
 			return null;
 		}
 	}
@@ -190,7 +190,7 @@ export class InMemoryDatabase implements CrudInterface {
 				// @ts-expect-error imported
 				this.data[table][arg] = value;
 				return true;
-			} catch (error) {
+			} catch {
 				return false;
 			}
 		}

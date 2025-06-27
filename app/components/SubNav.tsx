@@ -1,5 +1,5 @@
-import { NavLink } from "@remix-run/react";
 import type { LinkProps } from "@remix-run/react";
+import { NavLink } from "@remix-run/react";
 import clsx from "clsx";
 import type * as React from "react";
 

@@ -2,11 +2,7 @@ import { useActionData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import type { Namespace } from "~/modules/i18n/resources.server";
 
-export function FormErrors({
-	namespace,
-}: {
-	namespace: Namespace;
-}) {
+export function FormErrors({ namespace }: { namespace: Namespace }) {
 	const { t } = useTranslation(["common", namespace]);
 	const actionData = useActionData<{ errors?: string[] }>();
 

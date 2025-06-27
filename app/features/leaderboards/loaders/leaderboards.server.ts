@@ -8,7 +8,7 @@ import type {
 	RankedModeShort,
 } from "~/modules/in-game-lists/types";
 import type { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
-import { IN_MILLISECONDS, cache, ttl } from "~/utils/cache.server";
+import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import {
 	cachedFullUserLeaderboard,
 	filterByWeaponCategory,

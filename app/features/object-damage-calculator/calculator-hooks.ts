@@ -1,9 +1,9 @@
 import { useSearchParams } from "@remix-run/react";
 import {
 	type AnalyzedBuild,
+	buildStats,
 	type DAMAGE_TYPE,
 	type DamageType,
-	buildStats,
 	possibleApValues,
 	validatedAnyWeaponFromSearchParams,
 } from "~/features/build-analyzer";

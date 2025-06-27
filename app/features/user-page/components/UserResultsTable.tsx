@@ -88,7 +88,7 @@ export function UserResultsTable({
 										{result.teamName}
 									</Link>
 								) : (
-									<>{result.teamName}</>
+									result.teamName
 								)}
 							</td>
 							<td id={nameCellId}>

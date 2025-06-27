@@ -29,6 +29,7 @@ export function Pagination({
 			/>
 			<div className="pagination__dots">
 				{nullFilledArray(pagesCount).map((_, i) => (
+					// biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration
 					<div
 						key={i}
 						className={clsx("pagination__dot", {

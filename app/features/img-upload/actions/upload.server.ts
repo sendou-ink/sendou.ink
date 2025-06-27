@@ -88,7 +88,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 async function validatedTeam({
 	user,
 	request,
-}: { user: { id: number }; request: Request }) {
+}: {
+	user: { id: number };
+	request: Request;
+}) {
 	const { team: teamCustomUrl } = parseSearchParams({
 		request,
 		schema: z.object({ team: z.string() }),
@@ -107,7 +110,10 @@ async function validatedTeam({
 async function requireEditableOrganization({
 	user,
 	request,
-}: { user: { id: number }; request: Request }) {
+}: {
+	user: { id: number };
+	request: Request;
+}) {
 	const { slug } = parseSearchParams({
 		request,
 		schema: z.object({ slug: z.string() }),

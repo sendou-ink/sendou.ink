@@ -1,18 +1,17 @@
 import { Form, useMatches } from "@remix-run/react";
 import * as React from "react";
+import { SendouDialog } from "~/components/elements/Dialog";
+import { UserSearch } from "~/components/elements/UserSearch";
 import { Label } from "~/components/Label";
 import { Redirect } from "~/components/Redirect";
 import { SubmitButton } from "~/components/SubmitButton";
-import { SendouDialog } from "~/components/elements/Dialog";
-import { UserSearch } from "~/components/elements/UserSearch";
 import { useUser } from "~/features/auth/core/user";
 import { atOrError } from "~/utils/arrays";
 import { plusSuggestionPage } from "~/utils/urls";
+import { action } from "../actions/plus.suggestions.new.server";
 import { PLUS_SUGGESTION, PLUS_TIERS } from "../plus-suggestions-constants";
 import { canSuggestNewUser } from "../plus-suggestions-utils";
 import type { PlusSuggestionsLoaderData } from "./plus.suggestions";
-
-import { action } from "../actions/plus.suggestions.new.server";
 export { action };
 
 export default function PlusNewSuggestionModalPage() {

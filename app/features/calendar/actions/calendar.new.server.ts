@@ -25,8 +25,7 @@ import {
 } from "~/utils/remix.server";
 import { calendarEventPage } from "~/utils/urls";
 import { CALENDAR_EVENT } from "../calendar-constants";
-import { canEditCalendarEvent } from "../calendar-utils";
-import { regClosesAtDate } from "../calendar-utils";
+import { canEditCalendarEvent, regClosesAtDate } from "../calendar-utils";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = await requireUser(request);

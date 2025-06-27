@@ -1,4 +1,4 @@
-import { type LoaderFunctionArgs, json } from "@remix-run/node";
+import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { cors } from "remix-utils/cors";
 import { z } from "zod/v4";

@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/style/noDescendingSpecificity: Biome v2 migration */
 *,
 *::before,
 *::after {
@@ -198,7 +199,7 @@ select:disabled {
 	transform: initial;
 }
 
-/* Temporary solution for issue: https://github.com/Sendouc/sendou.ink/issues/1141 */
+/* Temporary solution for issue: https://github.com/sendou-ink/sendou.ink/issues/1141 */
 .light select {
 	/* TODO: Get color from CSS var */
 	background-image: url('data:image/svg+xml;utf8,<svg width="1rem" color="rgb(0 0 0 / 55%)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>');
@@ -1248,7 +1249,9 @@ html[dir="rtl"] .fix-rtl {
 	width: var(--map-width);
 	border: none;
 	background-color: transparent;
-	transition: filter, opacity 0.2s;
+	transition:
+		filter,
+		opacity 0.2s;
 	border-radius: var(--rounded);
 }
 

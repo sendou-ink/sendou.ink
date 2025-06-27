@@ -1,8 +1,7 @@
 import clsx from "clsx";
-import { useRef, useState } from "react";
 import * as React from "react";
-import { Dialog } from "react-aria-components";
-import { Popover } from "react-aria-components";
+import { useRef, useState } from "react";
+import { Dialog, Popover } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
 import { SendouButton } from "./elements/Button";
@@ -19,11 +18,13 @@ export default function TimePopover({
 	},
 	underline = true,
 	className,
+	footerText,
 }: {
 	time: Date;
 	options?: Intl.DateTimeFormatOptions;
 	underline?: boolean;
 	className?: string;
+	footerText?: string;
 }) {
 	const { i18n } = useTranslation();
 
@@ -84,6 +85,11 @@ export default function TimePopover({
 						>
 							{t("common:actions.copyTimestampForDiscord")}
 						</SendouButton>
+						{footerText ? (
+							<div className="text-lighter text-center mt-2 text-xs">
+								{footerText}
+							</div>
+						) : null}
 					</div>
 				</Dialog>
 			</Popover>

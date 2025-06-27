@@ -4,18 +4,18 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useDebounce } from "react-use";
 import { Avatar } from "~/components/Avatar";
-import { Input } from "~/components/Input";
-import { Main } from "~/components/Main";
 import { SendouButton } from "~/components/elements/Button";
+import { Input } from "~/components/Input";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { SearchIcon } from "~/components/icons/Search";
+import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	LOG_IN_URL,
-	USER_SEARCH_PAGE,
 	navIconUrl,
+	USER_SEARCH_PAGE,
 	userPage,
 } from "~/utils/urls";
 

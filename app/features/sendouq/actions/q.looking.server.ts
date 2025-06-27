@@ -3,12 +3,12 @@ import { redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
+import * as QRepository from "~/features/sendouq/QRepository.server";
+import type { LookingGroupWithInviteCode } from "~/features/sendouq/q-types";
 import {
 	createMatchMemento,
 	matchMapList,
 } from "~/features/sendouq-match/core/match.server";
-import * as QRepository from "~/features/sendouq/QRepository.server";
-import type { LookingGroupWithInviteCode } from "~/features/sendouq/q-types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {

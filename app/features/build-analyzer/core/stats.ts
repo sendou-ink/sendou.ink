@@ -18,17 +18,17 @@ import {
 	SPLAT_BOMB_ID,
 	SPRINKLER_ID,
 	SUCTION_BOMB_ID,
+	subWeaponIds,
 	TORPEDO_ID,
 	ZIPCASTER_ID,
-	subWeaponIds,
 } from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import { cutToNDecimalPlaces, roundToNDecimalPlaces } from "~/utils/number";
 import { assertUnreachable } from "~/utils/types";
 import {
 	DAMAGE_TYPE,
-	RAINMAKER_SPEED_PENALTY_MODIFIER,
 	multiShot,
+	RAINMAKER_SPEED_PENALTY_MODIFIER,
 } from "../analyzer-constants";
 import type {
 	AbilityPoints,

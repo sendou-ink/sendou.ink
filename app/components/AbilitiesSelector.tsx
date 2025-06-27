@@ -4,10 +4,9 @@ import { abilities } from "~/modules/in-game-lists/abilities";
 import type { BuildAbilitiesTupleWithUnknown } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { abilityImageUrl } from "~/utils/urls";
+import styles from "./AbilitiesSelector.module.css";
 import { Ability } from "./Ability";
 import { Image } from "./Image";
-
-import styles from "./AbilitiesSelector.module.css";
 
 interface AbilitiesSelectorProps {
 	selectedAbilities: BuildAbilitiesTupleWithUnknown;

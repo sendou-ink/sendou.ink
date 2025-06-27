@@ -1,7 +1,9 @@
+/** biome-ignore-all lint/suspicious/noConsole: Biome v2 migration */
 import fs from "node:fs";
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -11,7 +13,7 @@ const dontWrite = process.argv.includes(NO_WRITE_KEY);
 const KNOWN_SUFFIXES = ["_zero", "_one", "_two", "_few", "_many", "_other"];
 
 const REPO_TRANSLATIONS_INFO_URL =
-	"https://github.com/Sendouc/sendou.ink#translations";
+	"https://github.com/sendou-ink/sendou.ink#translations";
 
 const MD = {
 	inlineCode: (s: string) => `\`${s}\``,
@@ -64,7 +66,7 @@ for (const file of fileNames) {
 			let otherLanguageContent: Record<string, string>;
 			try {
 				otherLanguageContent = JSON.parse(otherRawContent);
-			} catch (e) {
+			} catch {
 				throw new Error(`failed to parse ${lang}/${file}`);
 			}
 

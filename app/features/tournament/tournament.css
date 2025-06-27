@@ -246,7 +246,6 @@
 	font-weight: var(--bold);
 	padding: var(--s-0-5) var(--s-2);
 	border-radius: var(--rounded);
-	display: grid;
 	place-items: center;
 	width: max-content;
 	display: flex;
@@ -389,15 +388,6 @@
 	cursor: grab;
 }
 
-.tournament__seeds__teams-list-row.sortable:hover:not(.disabled)
-	.tournament__seeds__team-member {
-	background-color: var(--bg-lighter-transparent);
-}
-
-.tournament__seeds__teams-list-row.active .tournament__seeds__team-member {
-	background-color: var(--bg-lighter-transparent);
-}
-
 .tournament__seeds__teams-list-row.active {
 	cursor: grabbing;
 }
@@ -424,6 +414,10 @@
 	border-radius: var(--rounded);
 	padding: var(--s-1) var(--s-3);
 	place-items: center;
+}
+
+.tournament__seeds__teams-list-row.active .tournament__seeds__team-member {
+	background-color: var(--bg-lighter-transparent);
 }
 
 .tournament__seeds__team-member__name {

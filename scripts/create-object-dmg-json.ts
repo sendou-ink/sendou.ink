@@ -1,23 +1,23 @@
 // @ts-nocheck
 
 import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { DAMAGE_RECEIVERS } from "~/features/object-damage-calculator/calculator-constants";
 import {
 	mainWeaponIds,
 	specialWeaponIds,
 	subWeaponIds,
 } from "~/modules/in-game-lists/weapon-ids";
-import weapons from "./dicts/WeaponInfoMain.json";
-import specialWeapons from "./dicts/WeaponInfoSpecial.json";
-import subWeapons from "./dicts/WeaponInfoSub.json";
 // 1) WeaponInfoMain.json inside dicts
 // 2) WeaponInfoSub.json inside dicts
 // 3) WeaponInfoSpecial.json inside dicts
 // 4) misc/spl__DamageRateInfoConfig.pp__CombinationDataTableData.json
 import params from "./dicts/spl__DamageRateInfoConfig.pp__CombinationDataTableData.json";
+import weapons from "./dicts/WeaponInfoMain.json";
+import specialWeapons from "./dicts/WeaponInfoSpecial.json";
+import subWeapons from "./dicts/WeaponInfoSub.json";
 
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 

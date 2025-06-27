@@ -2,9 +2,9 @@ import { Link } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
+import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Table } from "~/components/Table";
-import { SendouButton } from "~/components/elements/Button";
 import { BanUserModal } from "~/features/tournament-organization/components/BanUserModal";
 import type { OrganizationPageLoaderData } from "~/features/tournament-organization/loaders/org.$slug.server";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -13,7 +13,9 @@ import styles from "../components/BannedPlayersList.module.css";
 
 export function BannedUsersList({
 	bannedUsers,
-}: { bannedUsers: NonNullable<OrganizationPageLoaderData["bannedUsers"]> }) {
+}: {
+	bannedUsers: NonNullable<OrganizationPageLoaderData["bannedUsers"]>;
+}) {
 	const { t, i18n } = useTranslation(["org"]);
 
 	const bannedUsersKey = (bannedUsers ?? [])

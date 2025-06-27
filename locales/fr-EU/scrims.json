@@ -24,6 +24,7 @@
 	"actions.contact": "Contact",
 	"acceptModal.title": "Accepter la demande de scrim de {{groupName}} et rejeter les autres (s'il y en a)?",
 	"acceptModal.prevented": "Demandez à la personne qui a posté le scrim d'accepter cette demande",
+	"postModal.footer": "",
 	"forms.title": "Créer un nouveau post",
 	"forms.with.title": "Avec",
 	"forms.with.explanation": "Vous pouvez rechercher des utilisateurs avec leur pseudo, l'ID Discord ou l'URL de leur profil sendou.ink.",

@@ -3,25 +3,24 @@ import * as React from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod/v4";
-import { Label } from "~/components/Label";
 import { DateFormField } from "~/components/form/DateFormField";
 import { SendouForm } from "~/components/form/SendouForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import { ToggleFormField } from "~/components/form/ToggleFormField";
+import { Label } from "~/components/Label";
 import { nullFilledArray } from "~/utils/arrays";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FormMessage } from "../../../components/FormMessage";
 import { Main } from "../../../components/Main";
+import { action } from "../actions/scrims.new.server";
 import { WithFormField } from "../components/WithFormField";
+import { loader, type ScrimsNewLoaderData } from "../loaders/scrims.new.server";
 import { LUTI_DIVS, SCRIM } from "../scrims-constants";
 import {
 	MAX_SCRIM_POST_TEXT_LENGTH,
 	scrimsNewActionSchema,
 } from "../scrims-schemas";
 import type { LutiDiv } from "../scrims-types";
-
-import { action } from "../actions/scrims.new.server";
-import { type ScrimsNewLoaderData, loader } from "../loaders/scrims.new.server";
 export { loader, action };
 
 export const handle: SendouRouteHandle = {
@@ -95,7 +94,9 @@ export default function NewScrimPage() {
 
 function BaseVisibilityFormField({
 	associations,
-}: { associations: ScrimsNewLoaderData["associations"] }) {
+}: {
+	associations: ScrimsNewLoaderData["associations"];
+}) {
 	const { t } = useTranslation(["scrims"]);
 	const methods = useFormContext<FormFields>();
 
@@ -128,7 +129,9 @@ function BaseVisibilityFormField({
 
 function NotFoundVisibilityFormField({
 	associations,
-}: { associations: ScrimsNewLoaderData["associations"] }) {
+}: {
+	associations: ScrimsNewLoaderData["associations"];
+}) {
 	const { t } = useTranslation(["scrims"]);
 	const baseVisibility = useWatch<FormFields>({
 		name: "baseVisibility",

@@ -2,9 +2,9 @@ import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { Avatar } from "~/components/Avatar";
+import { SendouButton } from "~/components/elements/Button";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
-import { SendouButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import { tournamentTeamPage, userPage } from "~/utils/urls";
@@ -356,7 +356,7 @@ export function PointInput({
 	if (presentational) {
 		return (
 			<div className="text-xs text-lighter">
-				{value === 100 ? <>KO</> : <>{value}p</>}
+				{value === 100 ? "KO" : <>{value}p</>}
 			</div>
 		);
 	}

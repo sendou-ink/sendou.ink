@@ -14,7 +14,6 @@
 	"discordExplanation": "Votre pseudo, votre photo de profil et vos comptes Youtube, Bluesky et Twitch viennent de votre compte Discord. Voir la <1>FAQ</1> pour plus d'informations.",
 	"favoriteBadges": "Badge favori",
 	"battlefy": "Nom du compte Battlefy",
-
 	"forms.showDiscordUniqueName": "Montrer le pseudo Discord",
 	"forms.showDiscordUniqueName.info": "Show your unique Discord name ({{discordUniqueName}}) publicly?",
 	"forms.commissionsOpen": "Commissions acceptées",
@@ -23,7 +22,6 @@
 	"forms.customName.info": "Si il n'est pas présent, votre pseudo discord est utilisé: \"{{discordName}}\"",
 	"forms.country.search.placeholder": "Rechercher de pays",
 	"forms.favoriteBadges.nonSupporter": "Devenez supporter pour définir l'ordre des badges qui apparaissent sur la première page",
-
 	"results.title": "Tout les résultats",
 	"results.placing": "Placement",
 	"results.team": "Équipe",
@@ -35,7 +33,6 @@
 	"results.highlights.explanation": "Sélectionnez les résultats que vous voulez mettre en avant",
 	"results.button.showHighlights": "Montrer les highlights",
 	"results.button.showAll": "Tout montrer",
-
 	"forms.errors.maxWeapons": "Nombre d'armes maximum atteint",
 	"forms.errors.invalidCustomUrl.numbers": "Votre URL personnalisée ne peut pas contenir que des nombres",
 	"forms.errors.invalidCustomUrl.strangeCharacter": "Votre URL personnalisée ne peut pas contenir de caractères spéciaux",
@@ -43,14 +40,13 @@
 	"forms.errors.invalidSens": "La sensibilité du gyroscope ne peut pas être choisie si la sensibilité du stick droit ne l'est pas",
 	"forms.info.customUrl": "Pour les Supporter patrons (& plus), les liens courts sont disponibles. Exemple: Au mieux de sendou.ink/u/sendou, snd.ink/sendou peut être utilisé.",
 	"forms.info.battlefy": "Votre nom Battlefy est utiliser pour le seeding et la verification de certains tournois",
-
 	"search.info": "Recherchez avec le pseudo Discord ou Splatoon 3 du compte",
 	"search.noResults": "Aucun utilisateur correspondant à '{{query}}' n'a été trouvé",
 	"search.pleaseLogIn.header": "Veuillez vous connecter pour rechercher des utilisateurs",
 	"search.pleaseLogIn.button": "Connectez-vous via Discord",
-
 	"seasons": "Saison",
 	"seasons.noQ": "Ce joueur ne joue pas en SendouQ cette saison",
+	"seasons.noSeasons": "",
 	"seasons.tabs.weapons": "Armes",
 	"seasons.tabs.stages": "Stages",
 	"seasons.tabs.self": "Soi",
@@ -67,7 +63,6 @@
 	"seasons.clickARow": "Cliquez sur une ligne pour voir les statistiques d'utilisation des armes",
 	"seasons.loading": "Chargement...",
 	"seasons.matchBeingProcessed": "Le match n'a pas encore été terminé",
-
 	"builds.sorting.changeButton": "Changer le tri",
 	"builds.sorting.header": "Modifier le tri des builds",
 	"builds.sorting.backToDefaults": "Revenir par défaut",

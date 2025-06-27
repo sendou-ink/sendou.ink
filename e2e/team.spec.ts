@@ -10,8 +10,8 @@ import {
 	submit,
 } from "~/utils/playwright";
 import {
-	TEAM_SEARCH_PAGE,
 	editTeamPage,
+	TEAM_SEARCH_PAGE,
 	teamPage,
 	userPage,
 } from "~/utils/urls";

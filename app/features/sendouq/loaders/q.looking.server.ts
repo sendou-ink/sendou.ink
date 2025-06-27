@@ -3,8 +3,8 @@ import { redirect } from "@remix-run/node";
 import { getUser } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { userSkills } from "~/features/mmr/tiered.server";
-import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
+import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
 import invariant from "~/utils/invariant";
 import { hasGroupManagerPerms } from "../core/groups";
 import {
@@ -124,7 +124,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		}),
 		role: currentGroup ? currentGroup.role : ("PREVIEWER" as const),
 		chatCode: currentGroup?.chatCode,
-		lastUpdated: new Date().getTime(),
+		lastUpdated: Date.now(),
 		streamsCount: (await cachedStreams()).length,
 		expiryStatus: groupExpiryStatus(currentGroup),
 	};

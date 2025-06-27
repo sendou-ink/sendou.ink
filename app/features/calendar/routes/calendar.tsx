@@ -6,7 +6,6 @@ import type { DateValue } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { AddNewButton } from "~/components/AddNewButton";
 import { CopyToClipboardPopover } from "~/components/CopyToClipboardPopover";
-import { Main } from "~/components/Main";
 import {
 	SendouButton,
 	type SendouButtonProps,
@@ -19,6 +18,7 @@ import { CalendarIcon } from "~/components/icons/Calendar";
 import { EyeIcon } from "~/components/icons/Eye";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
 import { LinkIcon } from "~/components/icons/Link";
+import { Main } from "~/components/Main";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
 import { useCollapsableEvents } from "~/features/calendar/calendar-hooks";
 import { dayMonthYearToDateValue } from "~/utils/dates";
@@ -27,18 +27,17 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	CALENDAR_NEW_PAGE,
 	CALENDAR_PAGE,
-	TOURNAMENT_NEW_PAGE,
 	calendarIcalFeed,
 	calendarPage,
 	navIconUrl,
+	TOURNAMENT_NEW_PAGE,
 } from "~/utils/urls";
 import type { DayMonthYear } from "~/utils/zod";
+import { action } from "../actions/calendar";
 import { daysForCalendar } from "../calendar-utils";
 import { FiltersDialog } from "../components/FiltersDialog";
 import { TournamentCard } from "../components/TournamentCard";
 import * as CalendarEvent from "../core/CalendarEvent";
-
-import { action } from "../actions/calendar";
 import { type CalendarLoaderData, loader } from "../loaders/calendar.server";
 export { action, loader };
 
@@ -180,7 +179,10 @@ function NavigateButton({
 function CalendarDatePicker({
 	dayMonthYear,
 	filters,
-}: { dayMonthYear: DayMonthYear; filters?: CalendarLoaderData["filters"] }) {
+}: {
+	dayMonthYear: DayMonthYear;
+	filters?: CalendarLoaderData["filters"];
+}) {
 	const navigate = useNavigate();
 
 	const onChange = (date: DateValue) => {

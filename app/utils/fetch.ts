@@ -1,3 +1,5 @@
+import { logger } from "./logger";
+
 // https://stackoverflow.com/a/50101022
 export async function fetchWithTimeout(
 	input: RequestInfo | URL,
@@ -7,7 +9,7 @@ export async function fetchWithTimeout(
 	const controller = new AbortController();
 	const timeoutId = setTimeout(() => {
 		controller.abort();
-		console.error("Fetch timed out");
+		logger.error("Fetch timed out");
 	}, timeout);
 
 	const response = await fetch(input, { signal: controller.signal, ...init });

@@ -5,6 +5,7 @@ import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
@@ -12,8 +13,6 @@ import { MapPoolStages } from "~/components/MapPoolSelector";
 import { Placement } from "~/components/Placement";
 import { Section } from "~/components/Section";
 import { Table } from "~/components/Table";
-import { LinkButton } from "~/components/elements/Button";
-import { SendouButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -30,14 +29,13 @@ import {
 	userPage,
 } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
+import { action } from "../actions/calendar.$id.server";
 import {
 	canDeleteCalendarEvent,
 	canEditCalendarEvent,
 	canReportCalendarEventWinners,
 } from "../calendar-utils";
 import { Tags } from "../components/Tags";
-
-import { action } from "../actions/calendar.$id.server";
 import { loader } from "../loaders/calendar.$id.server";
 export { loader, action };
 

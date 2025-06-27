@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { dateToYearMonthDayHourMinuteString, isValidDate } from "~/utils/dates";
+import { logger } from "~/utils/logger";
 
 export interface DateInputProps
 	extends Omit<
@@ -33,7 +34,7 @@ export function DateInput({
 			if (isValidDate(defaultValue)) {
 				return [defaultValue, dateToYearMonthDayHourMinuteString(defaultValue)];
 			}
-			console.warn("DateInput got invalid date as defaultValue");
+			logger.warn("DateInput got invalid date as defaultValue");
 		}
 		return [null, ""];
 	});

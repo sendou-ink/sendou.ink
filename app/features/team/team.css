@@ -138,7 +138,6 @@
 }
 
 .team__badges {
-	display: flex;
 	justify-content: flex-end;
 	display: flex;
 	gap: var(--s-3);

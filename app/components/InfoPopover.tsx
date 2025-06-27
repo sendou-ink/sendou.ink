@@ -5,7 +5,10 @@ import { SendouPopover } from "./elements/Popover";
 export function InfoPopover({
 	children,
 	tiny = false,
-}: { children: React.ReactNode; tiny?: boolean }) {
+}: {
+	children: React.ReactNode;
+	tiny?: boolean;
+}) {
 	return (
 		<SendouPopover
 			trigger={

@@ -30,7 +30,9 @@ export default function TournamentDivisionsPage() {
 
 function DivisionLink({
 	div,
-}: { div: SerializeFrom<typeof loader>["divisions"][number] }) {
+}: {
+	div: SerializeFrom<typeof loader>["divisions"][number];
+}) {
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["calendar"]);
 	const shortName = div.name.split("-").at(-1);

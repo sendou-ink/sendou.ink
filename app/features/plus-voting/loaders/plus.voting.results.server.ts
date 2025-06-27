@@ -1,8 +1,8 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import type { UserWithPlusTier } from "~/db/tables";
 import { getUser } from "~/features/auth/core/user.server";
-import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import { lastCompletedVoting } from "~/features/plus-voting/core";
+import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import { isSupporter } from "~/modules/permissions/utils";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";

@@ -2,18 +2,17 @@ import { Form, useLoaderData } from "@remix-run/react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "~/components/Alert";
+import { LinkButton } from "~/components/elements/Button";
 import { FriendCodeInput } from "~/components/FriendCodeInput";
 import { SubmitButton } from "~/components/SubmitButton";
-import { LinkButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
 import invariant from "~/utils/invariant";
 import { assertUnreachable } from "~/utils/types";
 import { userEditProfilePage } from "~/utils/urls";
-import { validateCanJoinTeam } from "../tournament-utils";
-import { useTournament } from "./to.$id";
-
 import { action } from "../actions/to.$id.join.server";
 import { loader } from "../loaders/to.$id.join.server";
+import { validateCanJoinTeam } from "../tournament-utils";
+import { useTournament } from "./to.$id";
 export { action, loader };
 
 export default function JoinTeamPage() {

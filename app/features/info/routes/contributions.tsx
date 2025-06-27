@@ -1,7 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
 import * as React from "react";
-import { Trans } from "react-i18next";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
 import { languages } from "~/modules/i18n/config";
 import { metaTags } from "~/utils/remix";

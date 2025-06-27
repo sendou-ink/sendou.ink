@@ -1,10 +1,10 @@
 import { type ActionFunction, redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import {
 	HIGHLIGHT_CHECKBOX_NAME,
 	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
 } from "~/features/user-page/components/UserResultsTable";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { normalizeFormFieldArray } from "~/utils/arrays";
 import { parseRequestPayload } from "~/utils/remix.server";
 import { userResultsPage } from "~/utils/urls";

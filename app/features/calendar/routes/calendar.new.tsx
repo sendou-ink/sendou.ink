@@ -9,16 +9,16 @@ import { Alert } from "~/components/Alert";
 import { Badge } from "~/components/Badge";
 import { DateInput } from "~/components/DateInput";
 import { Divider } from "~/components/Divider";
+import { SendouButton } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
 import { Input } from "~/components/Input";
+import { CrossIcon } from "~/components/icons/Cross";
+import { TrashIcon } from "~/components/icons/Trash";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { MapPoolSelector } from "~/components/MapPoolSelector";
 import { RequiredHiddenInput } from "~/components/RequiredHiddenInput";
 import { SubmitButton } from "~/components/SubmitButton";
-import { SendouButton } from "~/components/elements/Button";
-import { CrossIcon } from "~/components/icons/Cross";
-import { TrashIcon } from "~/components/icons/Trash";
 import type { CalendarEventTag, Tables } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
@@ -50,8 +50,8 @@ import { Tags } from "../components/Tags";
 import "~/styles/calendar-new.css";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { useHasRole } from "~/modules/permissions/hooks";
+import { logger } from "~/utils/logger";
 import { metaTags } from "~/utils/remix";
-
 import { action } from "../actions/calendar.new.server";
 import { loader } from "../loaders/calendar.new.server";
 export { loader, action };
@@ -763,7 +763,7 @@ function AvatarImageInput({
 							setAvatarImg(file);
 						},
 						error(err) {
-							console.error(err.message);
+							logger.error(err.message);
 						},
 					});
 				}}

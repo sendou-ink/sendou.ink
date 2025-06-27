@@ -1,8 +1,8 @@
 import { Link, type MetaFunction, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Main } from "~/components/Main";
 import { BellIcon } from "~/components/icons/Bell";
+import { Main } from "~/components/Main";
 import { metaTags } from "../../../utils/remix";
 import { SETTINGS_PAGE } from "../../../utils/urls";
 import {
@@ -10,9 +10,8 @@ import {
 	NotificationItemDivider,
 	NotificationsList,
 } from "../components/NotificationList";
-import { useMarkNotificationsAsSeen } from "../notifications-hooks";
-
 import { loader } from "../loaders/notifications.server";
+import { useMarkNotificationsAsSeen } from "../notifications-hooks";
 export { loader };
 
 import styles from "./notifications.module.css";

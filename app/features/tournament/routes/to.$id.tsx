@@ -24,7 +24,7 @@ import {
 } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
 
-import { type TournamentLoaderData, loader } from "../loaders/to.$id.server";
+import { loader, type TournamentLoaderData } from "../loaders/to.$id.server";
 export { loader };
 
 import "~/styles/calendar-event.css";
@@ -120,6 +120,7 @@ export function TournamentLayout() {
 
 	// this is nice to debug with tournament in browser console
 	if (process.env.NODE_ENV === "development") {
+		// biome-ignore lint/correctness/useHookAtTopLevel: process.env.NODE_ENV is a constant
 		React.useEffect(() => {
 			// @ts-expect-error for dev purposes
 			window.tourney = tournament;

@@ -1,20 +1,19 @@
 // @ts-nocheck
 
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { brandIds } from "~/modules/in-game-lists/brand-ids";
+import invariant from "~/utils/invariant";
 import clothes from "./dicts/GearInfoClothes.json";
 import head from "./dicts/GearInfoHead.json";
 import shoes from "./dicts/GearInfoShoes.json";
-
-import fs from "node:fs";
-import invariant from "~/utils/invariant";
 import {
 	LANG_JSONS_TO_CREATE,
 	loadLangDicts,
 	translationJsonFolderName,
 } from "./utils";
 
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { brandIds } from "~/modules/in-game-lists/brand-ids";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 

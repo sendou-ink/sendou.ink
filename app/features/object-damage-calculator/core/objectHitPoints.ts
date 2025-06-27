@@ -1,8 +1,8 @@
 import {
 	type AbilityPoints,
+	hpDivided,
 	type SpecialWeaponParams,
 	type SubWeaponParams,
-	hpDivided,
 	specialDeviceHp,
 	specialFieldHp,
 	subStats,

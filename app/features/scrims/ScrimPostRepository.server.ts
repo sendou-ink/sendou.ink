@@ -21,6 +21,7 @@ type InsertArgs = Pick<
 	users: Array<Pick<Insertable<Tables["ScrimPostUser"]>, "userId" | "isOwner">>;
 	visibility: AssociationVisibility | null;
 	managedByAnyone: boolean;
+	isScheduledForFuture: boolean;
 };
 
 export function insert(args: InsertArgs) {
@@ -40,6 +41,7 @@ export function insert(args: InsertArgs) {
 				visibility: args.visibility ? JSON.stringify(args.visibility) : null,
 				chatCode: shortNanoid(),
 				managedByAnyone: args.managedByAnyone ? 1 : 0,
+				isScheduledForFuture: args.isScheduledForFuture ? 1 : 0,
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();
@@ -99,6 +101,7 @@ const baseFindQuery = db
 	.select((eb) => [
 		"ScrimPost.id",
 		"ScrimPost.at",
+		"ScrimPost.createdAt",
 		"ScrimPost.visibility",
 		"ScrimPost.maxDiv",
 		"ScrimPost.minDiv",
@@ -107,6 +110,7 @@ const baseFindQuery = db
 		"ScrimPost.canceledAt",
 		"ScrimPost.canceledByUserId",
 		"ScrimPost.cancelReason",
+		"ScrimPost.isScheduledForFuture",
 		jsonBuildObject({
 			name: eb.ref("Team.name"),
 			customUrl: eb.ref("Team.customUrl"),
@@ -206,8 +210,10 @@ const mapDBRowToScrimPost = (
 	return {
 		id: row.id,
 		at: row.at,
+		createdAt: row.createdAt,
 		visibility: row.visibility,
 		text: row.text,
+		isScheduledForFuture: Boolean(row.isScheduledForFuture),
 		divs:
 			typeof row.maxDiv === "number" && typeof row.minDiv === "number"
 				? { max: parseLutiDiv(row.maxDiv), min: parseLutiDiv(row.minDiv) }

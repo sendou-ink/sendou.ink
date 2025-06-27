@@ -2,9 +2,9 @@ import { useLoaderData, useRevalidator } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useEventSource } from "remix-utils/sse/react";
-import { containerClassName } from "~/components/Main";
 import { LinkButton } from "~/components/elements/Button";
 import { ArrowLongLeftIcon } from "~/components/icons/ArrowLongLeft";
+import { containerClassName } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
 import { ConnectedChat } from "~/features/chat/components/Chat";
 import { useTournament } from "~/features/tournament/routes/to.$id";
@@ -17,18 +17,17 @@ import {
 	tournamentBracketsPage,
 	tournamentMatchSubscribePage,
 } from "~/utils/urls";
+import { action } from "../actions/to.$id.matches.$mid.server";
 import { CastInfo } from "../components/CastInfo";
 import { MatchRosters } from "../components/MatchRosters";
 import { OrganizerMatchMapListDialog } from "../components/OrganizerMatchMapListDialog";
 import { StartedMatch } from "../components/StartedMatch";
 import { getRounds } from "../core/rounds";
+import { loader } from "../loaders/to.$id.matches.$mid.server";
 import {
 	groupNumberToLetters,
 	matchSubscriptionKey,
 } from "../tournament-bracket-utils";
-
-import { action } from "../actions/to.$id.matches.$mid.server";
-import { loader } from "../loaders/to.$id.matches.$mid.server";
 export { action, loader };
 
 import "../tournament-bracket.css";

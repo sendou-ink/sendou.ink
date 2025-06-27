@@ -6,7 +6,7 @@ import { freshUserSkills, userSkills } from "~/features/mmr/tiered.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
-import { IN_MILLISECONDS, cache, ttl } from "~/utils/cache.server";
+import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import type { Unwrapped } from "~/utils/types";
 import { DEFAULT_LEADERBOARD_MAX_SIZE } from "../leaderboards-constants";
 import { seasonHasTopTen } from "../leaderboards-utils";

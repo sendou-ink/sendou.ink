@@ -3,9 +3,8 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import type { AbilityWithUnknown } from "~/modules/in-game-lists/types";
 import { abilityImageUrl } from "~/utils/urls";
-import { Image } from "./Image";
-
 import styles from "./Ability.module.css";
+import { Image } from "./Image";
 
 const sizeMap = {
 	MAIN: 42,

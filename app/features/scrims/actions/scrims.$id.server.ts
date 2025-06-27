@@ -13,8 +13,8 @@ import {
 } from "../../../utils/dates";
 import { errorToast } from "../../../utils/remix.server";
 import { requireUser } from "../../auth/core/user.server";
-import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import * as Scrim from "../core/Scrim";
+import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { cancelScrimSchema } from "../scrims-schemas";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {

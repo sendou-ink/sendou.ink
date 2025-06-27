@@ -52,7 +52,7 @@ export function canEditVideo({
 
 export function extractYoutubeIdFromVideoUrl(url: string): string | null {
 	const match = url.match(
-		/^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|live\/)|youtu\.be\/)([^&\/\?]+)/,
+		/^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|live\/)|youtu\.be\/)([^&/?]+)/,
 	);
 	return match ? match[1] : null;
 }

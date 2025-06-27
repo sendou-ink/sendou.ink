@@ -3,17 +3,16 @@ import { Form, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { SendouButton } from "~/components/elements/Button";
+import { UserSearch } from "~/components/elements/UserSearch";
 import { FormErrors } from "~/components/FormErrors";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { SendouButton } from "~/components/elements/Button";
-import { UserSearch } from "~/components/elements/UserSearch";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
-import { CALENDAR_EVENT_RESULT } from "../calendar-constants";
-
 import { action } from "../actions/calendar.$id.report-winners.server";
+import { CALENDAR_EVENT_RESULT } from "../calendar-constants";
 import { loader } from "../loaders/calendar.$id.report-winners.server";
 export { loader, action };
 

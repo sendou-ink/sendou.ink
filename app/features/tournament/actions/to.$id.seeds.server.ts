@@ -10,8 +10,8 @@ import {
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
-import * as TournamentTeamRepository from "../TournamentTeamRepository.server";
 import { updateTeamSeeds } from "../queries/updateTeamSeeds.server";
+import * as TournamentTeamRepository from "../TournamentTeamRepository.server";
 import { seedsActionSchema } from "../tournament-schemas.server";
 
 export const action: ActionFunction = async ({ request, params }) => {

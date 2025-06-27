@@ -4,8 +4,8 @@ import * as Association from "~/features/associations/core/Association";
 import { getUser } from "~/features/auth/core/user.server";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 import * as TeamRepository from "../../team/TeamRepository.server";
-import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import * as Scrim from "../core/Scrim";
+import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { FF_SCRIMS_ENABLED } from "../scrims-constants";
 import { dividePosts } from "../scrims-utils";
 

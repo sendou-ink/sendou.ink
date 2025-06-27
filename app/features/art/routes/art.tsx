@@ -1,13 +1,14 @@
 import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
 import { useLoaderData, useSearchParams } from "@remix-run/react";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { AddNewButton } from "~/components/AddNewButton";
-import { Label } from "~/components/Label";
-import { Main } from "~/components/Main";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { CrossIcon } from "~/components/icons/Cross";
+import { Label } from "~/components/Label";
+import { Main } from "~/components/Main";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { artPage, navIconUrl, newArtPage } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
@@ -60,6 +61,7 @@ export default function ArtPage() {
 	const { t } = useTranslation(["art", "common"]);
 	const data = useLoaderData<typeof loader>();
 	const [searchParams, setSearchParams] = useSearchParams();
+	const switchId = React.useId();
 
 	const filteredTag = searchParams.get(FILTERED_TAG_KEY_SEARCH_PARAM_KEY);
 	const showOpenCommissions = searchParams.get(OPEN_COMMISIONS_KEY) === "true";
@@ -80,9 +82,9 @@ export default function ArtPage() {
 								return prev;
 							})
 						}
-						id="open"
+						id={switchId}
 					/>
-					<Label htmlFor="open" className="m-auto-0">
+					<Label htmlFor={switchId} className="m-auto-0">
 						{t("art:openCommissionsOnly")}
 					</Label>
 				</div>

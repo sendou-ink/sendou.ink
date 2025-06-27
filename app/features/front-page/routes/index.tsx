@@ -4,8 +4,6 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
-import { Image } from "~/components/Image";
-import { Main } from "~/components/Main";
 import { SendouButton } from "~/components/elements/Button";
 import {
 	SendouTab,
@@ -13,6 +11,7 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { Image } from "~/components/Image";
 import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import { BSKYLikeIcon } from "~/components/icons/BSKYLike";
 import { BSKYReplyIcon } from "~/components/icons/BSKYReply";
@@ -23,6 +22,7 @@ import { LogOutIcon } from "~/components/icons/LogOut";
 import { SearchIcon } from "~/components/icons/Search";
 import { UsersIcon } from "~/components/icons/Users";
 import { navItems } from "~/components/layout/nav-items";
+import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import { TournamentCard } from "~/features/calendar/components/TournamentCard";
@@ -35,9 +35,9 @@ import {
 	CALENDAR_TOURNAMENTS_PAGE,
 	LOG_OUT_URL,
 	LUTI_PAGE,
-	SENDOUQ_PAGE,
 	leaderboardsPage,
 	navIconUrl,
+	SENDOUQ_PAGE,
 	sqHeaderGuyImageUrl,
 } from "~/utils/urls";
 
@@ -145,11 +145,7 @@ function SeasonBanner() {
 			<Link to={SENDOUQ_PAGE} className="front__season-banner__link">
 				<div className="stack horizontal xs items-center">
 					<Image path={navIconUrl("sendouq")} width={24} alt="" />
-					{isInFuture ? (
-						<>{t("front:sq.prepare")}</>
-					) : (
-						<>{t("front:sq.participate")}</>
-					)}
+					{isInFuture ? t("front:sq.prepare") : t("front:sq.participate")}
 					<ArrowRightIcon />
 				</div>
 			</Link>
@@ -226,7 +222,9 @@ function TournamentCards() {
 
 function ShowcaseTournamentScroller({
 	tournaments,
-}: { tournaments: ShowcaseCalendarEvent[] }) {
+}: {
+	tournaments: ShowcaseCalendarEvent[];
+}) {
 	return (
 		<div className="front__tournament-cards">
 			<div className="front__tournament-cards__spacer overflow-x-scroll">
@@ -328,7 +326,10 @@ function ResultHighlights() {
 function Leaderboard({
 	entries,
 	fullLeaderboardUrl,
-}: { entries: LeaderboardEntry[]; fullLeaderboardUrl: string }) {
+}: {
+	entries: LeaderboardEntry[];
+	fullLeaderboardUrl: string;
+}) {
 	const { t } = useTranslation(["front"]);
 
 	return (
@@ -392,11 +393,7 @@ function ChangelogList() {
 const ADMIN_PFP_URL =
 	"https://cdn.discordapp.com/avatars/79237403620945920/6fc41a44b069a0d2152ac06d1e496c6c.webp?size=80";
 
-function ChangelogItem({
-	item,
-}: {
-	item: Changelog.ChangelogItem;
-}) {
+function ChangelogItem({ item }: { item: Changelog.ChangelogItem }) {
 	return (
 		<div className="stack sm horizontal">
 			<Avatar size="sm" url={ADMIN_PFP_URL} />
@@ -438,7 +435,11 @@ function BSKYIconLink({
 	children,
 	count,
 	postUrl,
-}: { children: React.ReactNode; count: number; postUrl: string }) {
+}: {
+	children: React.ReactNode;
+	count: number;
+	postUrl: string;
+}) {
 	return (
 		<a
 			href={postUrl}

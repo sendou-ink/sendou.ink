@@ -8,7 +8,7 @@ type PlannerBgParams = {
 	pointOffsetY: number;
 };
 
-// Dynamic background size. See this issue for more info: https://github.com/Sendouc/sendou.ink/issues/1161
+// Dynamic background size. See this issue for more info: https://github.com/sendou-ink/sendou.ink/issues/1161
 const bgSizeFactor = 0.8;
 
 export function usePlannerBg() {

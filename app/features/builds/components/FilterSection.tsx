@@ -1,14 +1,16 @@
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Ability } from "~/components/Ability";
-import { ModeImage } from "~/components/Image";
 import { SendouButton } from "~/components/elements/Button";
+import { ModeImage } from "~/components/Image";
 import { CrossIcon } from "~/components/icons/Cross";
 import { possibleApValues } from "~/features/build-analyzer";
 import { abilities } from "~/modules/in-game-lists/abilities";
 import { modesShort } from "~/modules/in-game-lists/modes";
-import type { ModeShort } from "~/modules/in-game-lists/types";
-import type { Ability as AbilityType } from "~/modules/in-game-lists/types";
+import type {
+	Ability as AbilityType,
+	ModeShort,
+} from "~/modules/in-game-lists/types";
 import { dateToYYYYMMDD } from "~/utils/dates";
 import { PATCHES } from "../builds-constants";
 import type {

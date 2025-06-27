@@ -50,7 +50,6 @@
 }
 
 .modeButton {
-	padding: 0;
 	padding: var(--s-1);
 	border: 2px solid var(--bg-darker);
 	border-radius: var(--rounded-full);
