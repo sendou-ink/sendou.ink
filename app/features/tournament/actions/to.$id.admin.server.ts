@@ -191,6 +191,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"Cannot remove player that has participated in the tournament",
 			);
 
+			if (team.activeRosterUserIds?.includes(data.memberId)) {
+				await TournamentTeamRepository.setActiveRoster({
+					teamId: team.id,
+					activeRosterUserIds: null,
+				});
+			}
+
 			leaveTeam({
 				userId: data.memberId,
 				teamId: team.id,
