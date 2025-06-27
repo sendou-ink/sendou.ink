@@ -1,4 +1,8 @@
 {
+	"19dollarfortnitecard": {
+		"displayName": "19 dollar fortnite card",
+		"authorDiscordId": "309327923129745409"
+	},
 	"2v2tuesdays": {
 		"displayName": "2v2 TUESDAYS",
 		"authorDiscordId": "754368445910614046"
@@ -22,6 +26,10 @@
 	"alicehand3": {
 		"displayName": "Gamers Outreach Charity Tournament",
 		"authorDiscordId": "528851510222782474"
+	},
+	"alterrareaper": {
+		"displayName": "Alterra Reaper Bracket",
+		"authorDiscordId": "309327923129745409"
 	},
 	"artsupplies": {
 		"displayName": "Art Supplies Pencil Award",
@@ -82,6 +90,10 @@
 	"bluelock": {
 		"displayName": "Blue Lock",
 		"authorDiscordId": "528851510222782474"
+	},
+	"breakpoint": {
+		"displayName": "Breakpoint",
+		"authorDiscordId": "309327923129745409"
 	},
 	"breakzachsbank": {
 		"displayName": "Break Zach's Bank",
