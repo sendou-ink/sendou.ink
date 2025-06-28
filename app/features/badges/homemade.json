@@ -39,6 +39,10 @@
 		"displayName": "OCE Open",
 		"authorDiscordId": "1170249805373657093"
 	},
+	"badgeapple": {
+		"displayName": "Mega Splat Party!",
+		"authorDiscordId": "751912670403362836"
+	},
 	"badgepalooza": {
 		"displayName": "Badge Palooza",
 		"authorDiscordId": "528851510222782474"
@@ -194,6 +198,10 @@
 	"csblast": {
 		"displayName": "10 ST! Tournaments",
 		"authorDiscordId": "752582395076673577"
+	},
+	"ctrl_ink_delete": {
+		"displayName": "Won CTRL + Ink + Delete!",
+		"authorDiscordId": "751912670403362836"
 	},
 	"current": {
 		"displayName": "FREEDOM DiVE",
