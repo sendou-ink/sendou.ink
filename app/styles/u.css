@@ -399,6 +399,32 @@
 	margin-inline: auto;
 }
 
+.u__season__match__set-results {
+	list-style: none;
+	display: flex;
+	gap: var(--s-2);
+	flex-direction: row;
+	margin: 0 auto;
+	padding: 0;
+}
+
+.u__season__match__set-results li {
+	width: 28px;
+	height: 28px;
+	display: grid;
+	place-items: center;
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	border: 3px solid var(--theme);
+	border-radius: var(--rounded-sm);
+	color: var(--text);
+	border-color: var(--theme-error);
+}
+
+.u__season__match__set-results li[data-is-win] {
+	border-color: var(--theme-success);
+}
+
 .u__season__info-container {
 	background-color: var(--bg-lighter);
 	padding: var(--s-2-5) var(--s-2);

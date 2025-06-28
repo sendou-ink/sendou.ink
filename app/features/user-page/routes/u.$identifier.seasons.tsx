@@ -39,6 +39,7 @@ import type {
 	SeasonGroupMatch,
 	SeasonTournamentResult,
 } from "~/features/sendouq-match/QMatchRepository.server";
+import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { useWeaponUsage } from "~/hooks/swr";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { modesShort } from "~/modules/in-game-lists/modes";
@@ -49,7 +50,13 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { cutToNDecimalPlaces, roundToNDecimalPlaces } from "~/utils/number";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { sendouQMatchPage, TIERS_PAGE, userSeasonsPage } from "~/utils/urls";
+import {
+	sendouQMatchPage,
+	TIERS_PAGE,
+	tournamentTeamPage,
+	userSeasonsPage,
+	userSubmittedImage,
+} from "~/utils/urls";
 import {
 	loader,
 	type UserSeasonsPageLoaderData,
@@ -802,7 +809,48 @@ function GroupMatchResult({ match }: { match: SeasonGroupMatch }) {
 }
 
 function TournamentResult({ result }: { result: SeasonTournamentResult }) {
-	return <div>tournament result {result.setResults}</div>;
+	const logoUrl = result.logoUrl
+		? userSubmittedImage(result.logoUrl)
+		: HACKY_resolvePicture({ name: result.tournamentName });
+
+	return (
+		<div>
+			<Link
+				to={tournamentTeamPage(result)}
+				className={clsx("u__season__match", {
+					"u__season__match__with-sub-section ": result.spDiff,
+				})}
+			>
+				<div className="stack font-bold items-center text-lg">
+					<img
+						src={logoUrl}
+						width={36}
+						height={36}
+						alt=""
+						className="rounded-full"
+					/>
+					{result.tournamentName}
+				</div>
+				<ul className="u__season__match__set-results">
+					{result.setResults.map((result, i) => (
+						<li key={i} data-is-win={String(result === "W")}>
+							{result}
+						</li>
+					))}
+				</ul>
+			</Link>
+			{result.spDiff ? (
+				<div className="u__season__match__sub-section">
+					{result.spDiff > 0 ? (
+						<span className="text-success">▲</span>
+					) : (
+						<span className="text-warning">▼</span>
+					)}
+					{Math.abs(roundToNDecimalPlaces(result.spDiff))}SP
+				</div>
+			) : null}
+		</div>
+	);
 }
 
 function MatchMembersRow({

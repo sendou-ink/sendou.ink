@@ -592,12 +592,12 @@ export interface TournamentResult {
 	 * The result of sets in the tournament.
 	 * E.g. ["W", "L", null] would mean the user won the first set, lost the second and did not play the third.
 	 * */
-	setResults: JSONColumnTypeNullable<WinLossParticipationArray>;
+	setResults: JSONColumnType<WinLossParticipationArray>;
 	/**
 	 * The result of maps in the tournament. Each sets consists of multiple maps.
 	 * E.g. ["W", "L", null] would mean the user won the first map, lost the second and did not play the third.
 	 * */
-	mapResults: JSONColumnTypeNullable<WinLossParticipationArray>;
+	mapResults: JSONColumnType<WinLossParticipationArray>;
 	/** The SP change in total after the finalization of a ranked tournament. */
 	spDiff: number | null;
 	userId: number;

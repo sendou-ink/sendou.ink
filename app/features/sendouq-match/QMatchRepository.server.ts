@@ -220,10 +220,18 @@ const tournamentResultsSubQuery = (
 			"TournamentResult.tournamentId",
 			"CalendarEvent.tournamentId",
 		)
+		.leftJoin(
+			"UserSubmittedImage",
+			"CalendarEvent.avatarImgId",
+			"UserSubmittedImage.id",
+		)
 		.select([
 			"TournamentResult.spDiff",
 			"TournamentResult.setResults",
+			"TournamentResult.tournamentId",
+			"TournamentResult.tournamentTeamId",
 			"CalendarEvent.name as tournamentName",
+			"UserSubmittedImage.url as logoUrl",
 		])
 		.whereRef("TournamentResult.tournamentId", "=", "Skill.tournamentId")
 		.where("TournamentResult.userId", "=", userId);

@@ -43,8 +43,8 @@ async function main() {
 		await trx
 			.updateTable("TournamentResult")
 			.set({
-				setResults: null,
-				mapResults: null,
+				setResults: JSON.stringify([]),
+				mapResults: JSON.stringify([]),
 			})
 			.execute();
 		for (const { tournamentId, mapResults, setResults } of result) {
