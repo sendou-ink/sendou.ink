@@ -17,9 +17,9 @@ Splatoon 3’s Patch 10.0.0 in June 2025 introduced a new stat for high-achievin
 In order to get a weapon’s Series Power, there are two prerequisites that you must meet: 
 
 1. Reach S rank or higher in Anarchy Battle.   
-2. Complete at least one full series with a single weapon. 
+2. Complete at least five matches in a series with a single weapon. 
 
-After you’ve completed the series, using the same weapon for each battle, your Series Weapon Power will be calculated. Once you have unlocked it, this new stat will be visible in a few different areas: 
+After you’ve completed the five matches, using the same weapon for each battle, your Series Weapon Power will be calculated. Once you have unlocked it, this new stat will be visible in a few different areas: 
 
 * On the Equip screen, press the ZL button while your weapon is selected and you’ll find it.   
 * In the Match menu in the Lobby.   
