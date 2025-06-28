@@ -735,25 +735,16 @@ function GroupMatchResult({ match }: { match: SeasonGroupMatch }) {
 	const layoutData = parentRoute.data as UserPageLoaderData;
 	const userId = layoutData.user.id;
 
-	const score = match.winners.reduce(
-		(acc, cur) => [
-			acc[0] + (cur.winnerGroupId === match.alphaGroupId ? 1 : 0),
-			acc[1] + (cur.winnerGroupId === match.bravoGroupId ? 1 : 0),
-		],
-		[0, 0],
-	);
-
 	// score when match has not yet been played or was canceled
 	const specialScoreMarking = () => {
-		if (score[0] + score[1] === 0) return " ";
+		if (match.score[0] + match.score[1] === 0) return " ";
 
 		return null;
 	};
 
-	// const reserveWeaponSpace =
-	// 	match.groupAlphaMembers.some((m) => m.weaponSplId) ||
-	// 	match.groupBravoMembers.some((m) => m.weaponSplId);
-	const reserveWeaponSpace = false; // xxx: remove this when weapon usage is implemented
+	const reserveWeaponSpace =
+		match.groupAlphaMembers.some((m) => m.weaponSplId) ||
+		match.groupBravoMembers.some((m) => m.weaponSplId);
 
 	// make sure user's team is always on the top
 	const rows = match.groupAlphaMembers.some((m) => m.id === userId)
@@ -761,13 +752,13 @@ function GroupMatchResult({ match }: { match: SeasonGroupMatch }) {
 				<MatchMembersRow
 					key="alpha"
 					members={match.groupAlphaMembers}
-					score={specialScoreMarking() ?? score[0]}
+					score={specialScoreMarking() ?? match.score[0]}
 					reserveWeaponSpace={reserveWeaponSpace}
 				/>,
 				<MatchMembersRow
 					key="bravo"
 					members={match.groupBravoMembers}
-					score={specialScoreMarking() ?? score[1]}
+					score={specialScoreMarking() ?? match.score[1]}
 					reserveWeaponSpace={reserveWeaponSpace}
 				/>,
 			]
@@ -775,13 +766,13 @@ function GroupMatchResult({ match }: { match: SeasonGroupMatch }) {
 				<MatchMembersRow
 					key="bravo"
 					members={match.groupBravoMembers}
-					score={specialScoreMarking() ?? score[1]}
+					score={specialScoreMarking() ?? match.score[1]}
 					reserveWeaponSpace={reserveWeaponSpace}
 				/>,
 				<MatchMembersRow
 					key="alpha"
 					members={match.groupAlphaMembers}
-					score={specialScoreMarking() ?? score[0]}
+					score={specialScoreMarking() ?? match.score[0]}
 					reserveWeaponSpace={reserveWeaponSpace}
 				/>,
 			];
@@ -817,7 +808,7 @@ function TournamentResult({ result }: { result: SeasonTournamentResult }) {
 function MatchMembersRow({
 	score,
 	members,
-	reserveWeaponSpace: _reserveWeaponSpace,
+	reserveWeaponSpace,
 }: {
 	score: React.ReactNode;
 	members: SeasonGroupMatch["groupAlphaMembers"];
@@ -832,8 +823,7 @@ function MatchMembersRow({
 						<span className="u__season__match__user__name">
 							{member.username}
 						</span>
-						{/** xxx: weapon back */}
-						{/* {typeof member.weaponSplId === "number" ? (
+						{typeof member.weaponSplId === "number" ? (
 							<WeaponImage
 								weaponSplId={member.weaponSplId}
 								variant="badge"
@@ -846,7 +836,7 @@ function MatchMembersRow({
 								size={28}
 								className="invisible"
 							/>
-						) : null} */}
+						) : null}
 					</div>
 				);
 			})}

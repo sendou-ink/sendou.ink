@@ -9,6 +9,7 @@ import type {
 	Tables,
 	UserSkillDifference,
 } from "~/db/tables";
+import { mostPopularArrayElement } from "~/utils/arrays";
 import { databaseTimestampNow } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
@@ -246,7 +247,6 @@ const groupMatchResultsSubQuery = (eb: ExpressionBuilder<DB, "Skill">) => {
 				),
 		);
 
-	// xxx: ReportedWeapon
 	return eb
 		.selectFrom("GroupMatch")
 		.select((innerEb) => [
@@ -260,9 +260,21 @@ const groupMatchResultsSubQuery = (eb: ExpressionBuilder<DB, "Skill">) => {
 			jsonArrayFrom(
 				innerEb
 					.selectFrom("GroupMatchMap")
-					.select(["GroupMatchMap.winnerGroupId"])
+					.select((innerEb2) => [
+						"GroupMatchMap.winnerGroupId",
+						jsonArrayFrom(
+							innerEb2
+								.selectFrom("ReportedWeapon")
+								.select(["ReportedWeapon.userId", "ReportedWeapon.weaponSplId"])
+								.whereRef(
+									"ReportedWeapon.groupMatchMapId",
+									"=",
+									"GroupMatchMap.id",
+								),
+						).as("weapons"),
+					])
 					.whereRef("GroupMatchMap.matchId", "=", "GroupMatch.id"),
-			).as("winners"),
+			).as("maps"),
 		])
 		.whereRef("Skill.groupMatchId", "=", "GroupMatch.id");
 };
@@ -314,21 +326,47 @@ export async function seasonResultsByUserId({
 		);
 
 		if (row.groupMatch) {
+			const chooseMostPopularWeapon = (userId: number) => {
+				const weaponSplIds = row
+					.groupMatch!.maps.flatMap((map) => map.weapons)
+					.filter((w) => w.userId === userId)
+					.map((w) => w.weaponSplId);
+
+				return mostPopularArrayElement(weaponSplIds);
+			};
+
 			return {
-				...R.omit(row, ["groupMatch", "tournamentResult"]),
 				type: "GROUP_MATCH" as const,
+				...R.omit(row, ["groupMatch", "tournamentResult"]),
 				createdAt: row.groupMatch.createdAt, // xxx: createdAt, optimally would be part of skill?
 				groupMatch: {
-					...R.omit(row.groupMatch, ["createdAt", "memento"]),
+					...R.omit(row.groupMatch, ["createdAt", "memento", "maps"]),
 					spDiff: skillDiff?.calculated ? skillDiff.spDiff : null,
+					groupAlphaMembers: row.groupMatch.groupAlphaMembers.map((m) => ({
+						...m,
+						weaponSplId: chooseMostPopularWeapon(m.id),
+					})),
+					groupBravoMembers: row.groupMatch.groupBravoMembers.map((m) => ({
+						...m,
+						weaponSplId: chooseMostPopularWeapon(m.id),
+					})),
+					score: row.groupMatch.maps.reduce(
+						(acc, cur) => [
+							acc[0] +
+								(cur.winnerGroupId === row.groupMatch!.alphaGroupId ? 1 : 0),
+							acc[1] +
+								(cur.winnerGroupId === row.groupMatch!.bravoGroupId ? 1 : 0),
+						],
+						[0, 0],
+					),
 				},
 			};
 		}
 
 		if (row.tournamentResult) {
 			return {
-				...R.omit(row, ["groupMatch", "tournamentResult"]),
 				type: "TOURNAMENT_RESULT" as const,
+				...R.omit(row, ["groupMatch", "tournamentResult"]),
 				createdAt: databaseTimestampNow(),
 				tournamentResult: row.tournamentResult,
 			};

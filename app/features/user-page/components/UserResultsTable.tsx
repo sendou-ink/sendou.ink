@@ -37,8 +37,6 @@ export function UserResultsTable({
 
 	const placementHeaderId = `${id}-th-placement`;
 
-	// xxx: combine mates and team into one column? instead of user profile pics show team profile pic?
-
 	return (
 		<Table>
 			<thead>
