@@ -11,7 +11,6 @@ import type {
 } from "~/db/tables";
 import { mostPopularArrayElement } from "~/utils/arrays";
 import { databaseTimestampNow } from "~/utils/dates";
-import invariant from "~/utils/invariant";
 import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
 import type { Unpacked } from "~/utils/types";
 import { MATCHES_PER_SEASONS_PAGE } from "../user-page/user-page-constants";
@@ -208,7 +207,6 @@ export async function seasonResultPagesByUserId({
 	return Math.ceil((row.count as number) / MATCHES_PER_SEASONS_PAGE);
 }
 
-// xxx: how should tournament skill handle calculated concept? spDiff: skillDiff?.calculated ? skillDiff.spDiff : null,
 const tournamentResultsSubQuery = (
 	eb: ExpressionBuilder<DB, "Skill">,
 	userId: number,
@@ -326,14 +324,9 @@ export async function seasonResultsByUserId({
 		.execute();
 
 	return rows.map((row) => {
-		const skillDiff = row.groupMatch?.memento?.users[userId]?.skillDifference;
-
-		invariant(
-			row.groupMatch || row.tournamentResult,
-			"No result related to skill",
-		);
-
 		if (row.groupMatch) {
+			const skillDiff = row.groupMatch?.memento?.users[userId]?.skillDifference;
+
 			const chooseMostPopularWeapon = (userId: number) => {
 				const weaponSplIds = row
 					.groupMatch!.maps.flatMap((map) => map.weapons)
@@ -349,6 +342,9 @@ export async function seasonResultsByUserId({
 				createdAt: row.groupMatch.createdAt, // xxx: createdAt, optimally would be part of skill?
 				groupMatch: {
 					...R.omit(row.groupMatch, ["createdAt", "memento", "maps"]),
+					// note there is no corresponding "censoring logic" for tournament result
+					// because for those the sp diff is not inserted in the first place
+					// if it should not be shown to the user
 					spDiff: skillDiff?.calculated ? skillDiff.spDiff : null,
 					groupAlphaMembers: row.groupMatch.groupAlphaMembers.map((m) => ({
 						...m,

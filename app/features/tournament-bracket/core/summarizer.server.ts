@@ -1,6 +1,6 @@
-import type { Rating } from "node_modules/openskill/dist/types";
 import { ordinal } from "openskill";
 import * as R from "remeda";
+import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import {
 	identifierToUserIds,
 	ordinalToSp,
@@ -39,6 +39,12 @@ type TeamsArg = Array<{
 	members: Array<{ userId: number }>;
 }>;
 
+type Rating = Pick<Tables["Skill"], "mu" | "sigma">;
+type RatingWithMatchesCount = {
+	rating: Rating;
+	matchesCount: number;
+};
+
 export function tournamentSummary({
 	results,
 	teams,
@@ -55,7 +61,7 @@ export function tournamentSummary({
 	finalStandings: Standing[];
 	queryCurrentTeamRating: (identifier: string) => Rating;
 	queryTeamPlayerRatingAverage: (identifier: string) => Rating;
-	queryCurrentUserRating: (userId: number) => Rating;
+	queryCurrentUserRating: (userId: number) => RatingWithMatchesCount;
 	queryCurrentSeedingRating: (userId: number) => Rating;
 	seedingSkillCountsFor: Tables["SeedingSkill"]["type"] | null;
 	calculateSeasonalStats?: boolean;
@@ -73,7 +79,10 @@ export function tournamentSummary({
 		skills,
 		seedingSkills: seedingSkillCountsFor
 			? calculateIndividualPlayerSkills({
-					queryCurrentUserRating: queryCurrentSeedingRating,
+					queryCurrentUserRating: (userId) => ({
+						rating: queryCurrentSeedingRating(userId),
+						matchesCount: 0, // Seeding skills do not have matches count
+					}),
 					results,
 				}).map((skill) => ({
 					...skill,
@@ -100,7 +109,7 @@ function calculateSkills(args: {
 	results: AllMatchResult[];
 	queryCurrentTeamRating: (identifier: string) => Rating;
 	queryTeamPlayerRatingAverage: (identifier: string) => Rating;
-	queryCurrentUserRating: (userId: number) => Rating;
+	queryCurrentUserRating: (userId: number) => RatingWithMatchesCount;
 }) {
 	const result: TournamentSummary["skills"] = [];
 
@@ -115,7 +124,7 @@ export function calculateIndividualPlayerSkills({
 	queryCurrentUserRating,
 }: {
 	results: AllMatchResult[];
-	queryCurrentUserRating: (userId: number) => Rating;
+	queryCurrentUserRating: (userId: number) => RatingWithMatchesCount;
 }) {
 	const userRatings = new Map<number, Rating>();
 	const userMatchesCount = new Map<number, number>();
@@ -123,7 +132,7 @@ export function calculateIndividualPlayerSkills({
 		const existingRating = userRatings.get(userId);
 		if (existingRating) return existingRating;
 
-		return queryCurrentUserRating(userId);
+		return queryCurrentUserRating(userId).rating;
 	};
 
 	for (const match of results) {
@@ -513,7 +522,7 @@ function spDiffs({
 	queryCurrentUserRating,
 }: {
 	skills: TournamentSummary["skills"];
-	queryCurrentUserRating: (userId: number) => Rating;
+	queryCurrentUserRating: (userId: number) => RatingWithMatchesCount;
 }): TournamentSummary["spDiffs"] {
 	const spDiffs = new Map<number, number>();
 
@@ -521,8 +530,16 @@ function spDiffs({
 		if (skill.userId === null) continue;
 
 		const oldRating = queryCurrentUserRating(skill.userId);
+
+		// there should be no user visible sp diff if the user has less than
+		// MATCHES_COUNT_NEEDED_FOR_LEADERBOARD matches played before because
+		// the sp is not visible to user before that threshold
+		if (oldRating.matchesCount < MATCHES_COUNT_NEEDED_FOR_LEADERBOARD) {
+			continue;
+		}
+
 		const diff = roundToNDecimalPlaces(
-			ordinalToSp(ordinal(skill)) - ordinalToSp(ordinal(oldRating)),
+			ordinalToSp(ordinal(skill)) - ordinalToSp(ordinal(oldRating.rating)),
 		);
 
 		spDiffs.set(skill.userId, diff);
