@@ -1,9 +1,8 @@
-import { useLoaderData, useMatches } from "@remix-run/react";
+import { useLoaderData, useMatches, useSearchParams } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { LinkButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
 import { UserResultsTable } from "~/features/user-page/components/UserResultsTable";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
 import invariant from "~/utils/invariant";
 import { userResultsEditHighlightsPage } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
@@ -20,18 +19,8 @@ export default function UserResultsPage() {
 	invariant(parentRoute);
 	const layoutData = parentRoute.data as UserPageLoaderData;
 
-	const highlightedResults = data.results.filter(
-		(result) => result.isHighlight,
-	);
-	const hasHighlightedResults = highlightedResults.length > 0;
-
-	const [showAll, setShowAll] = useSearchParamState({
-		defaultValue: !hasHighlightedResults,
-		name: "all",
-		revive: (v) => (!hasHighlightedResults ? true : v === "true"),
-	});
-
-	const resultsToShow = showAll ? data.results : highlightedResults;
+	const [searchParams, setSearchParams] = useSearchParams();
+	const showAll = searchParams.get("all") === "true";
 
 	return (
 		<div className="stack lg">
@@ -49,12 +38,18 @@ export default function UserResultsPage() {
 					</LinkButton>
 				) : null}
 			</div>
-			<UserResultsTable id="user-results-table" results={resultsToShow} />
-			{hasHighlightedResults ? (
+			<UserResultsTable id="user-results-table" results={data.results} />
+			{data.hasHighlightedResults ? (
 				<SendouButton
 					variant="minimal"
 					size="small"
-					onPress={() => setShowAll(!showAll)}
+					onPress={() =>
+						setSearchParams((params) => {
+							params.set("all", showAll ? "false" : "true");
+
+							return params;
+						})
+					}
 				>
 					{showAll
 						? t("results.button.showHighlights")

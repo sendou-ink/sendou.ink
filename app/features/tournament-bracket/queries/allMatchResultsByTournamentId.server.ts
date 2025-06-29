@@ -48,6 +48,8 @@ const stm = sql.prepare(/* sql */ `
   order by "m"."id" asc
 `);
 
+// xxx: order by should be "order by "groupNumber" asc, "roundNumber" asc, "r"."number" asc" - see setHistoryByTeamId.server.ts
+
 interface Opponent {
 	id: number;
 	score: number;
@@ -93,6 +95,14 @@ export function allMatchResultsByTournamentId(
 						(p: any) => typeof p.tournamentTeamId === "number",
 					),
 					"Some participants have no team id",
+				);
+				invariant(
+					participants.every(
+						(p: any) =>
+							p.tournamentTeamId === row.opponentOneId ||
+							p.tournamentTeamId === row.opponentTwoId,
+					),
+					"Some participants have an invalid team id",
 				);
 
 				return {

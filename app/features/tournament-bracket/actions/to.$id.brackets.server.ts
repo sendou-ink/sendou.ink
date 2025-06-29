@@ -39,6 +39,7 @@ import { allMatchResultsByTournamentId } from "../queries/allMatchResultsByTourn
 import { bracketSchema } from "../tournament-bracket-schemas.server";
 import { fillWithNullTillPowerOfTwo } from "../tournament-bracket-utils";
 
+// xxx: if participation = 0% should they get the result? see phoenix paddling pool 278
 export const action: ActionFunction = async ({ params, request }) => {
 	const user = await requireUser(request);
 	const { id: tournamentId } = parseParams({
@@ -246,7 +247,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				queryCurrentTeamRating: (identifier) =>
 					queryCurrentTeamRating({ identifier, season: season! }).rating,
 				queryCurrentUserRating: (userId) =>
-					queryCurrentUserRating({ userId, season: season! }).rating,
+					queryCurrentUserRating({ userId, season: season! }),
 				queryTeamPlayerRatingAverage: (identifier) =>
 					queryTeamPlayerRatingAverage({
 						identifier,

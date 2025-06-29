@@ -22,7 +22,7 @@ async function main() {
 
 			const skills = calculateIndividualPlayerSkills({
 				queryCurrentUserRating(userId) {
-					return ratings.get(userId) ?? rating();
+					return { rating: ratings.get(userId) ?? rating(), matchesCount: 0 };
 				},
 				results,
 			});
