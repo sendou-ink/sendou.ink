@@ -13,11 +13,15 @@ export function setActiveRoster({
 	activeRosterUserIds,
 }: {
 	teamId: number;
-	activeRosterUserIds: number[];
+	activeRosterUserIds: number[] | null;
 }) {
 	return db
 		.updateTable("TournamentTeam")
-		.set({ activeRosterUserIds: JSON.stringify(activeRosterUserIds) })
+		.set({
+			activeRosterUserIds: activeRosterUserIds
+				? JSON.stringify(activeRosterUserIds)
+				: null,
+		})
 		.where("TournamentTeam.id", "=", teamId)
 		.execute();
 }
@@ -150,6 +154,8 @@ export function create({
 				inGameName: ownerInGameName,
 			})
 			.execute();
+
+		return tournamentTeam;
 	});
 }
 
