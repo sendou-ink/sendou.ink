@@ -302,6 +302,7 @@ function NameInput() {
 			</Label>
 			<input
 				name="name"
+				id="name"
 				required
 				minLength={CALENDAR_EVENT.NAME_MIN_LENGTH}
 				maxLength={CALENDAR_EVENT.NAME_MAX_LENGTH}

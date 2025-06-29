@@ -16,7 +16,7 @@ const url = tournamentOrganizationPage({
 });
 
 test.describe("Tournament Organization", () => {
-	test("user can be promoted to admin gaining org controls", async ({
+	test("user can be promoted to admin gaining org controls and can edit tournaments", async ({
 		page,
 	}) => {
 		await seed(page);
@@ -49,6 +49,16 @@ test.describe("Tournament Organization", () => {
 		await expect(
 			page.getByText("Editing tournament organization"),
 		).toBeVisible();
+
+		// 4. As the promoted user, verify they can edit tournaments
+		await navigate({
+			page,
+			url: tournamentPage(1),
+		});
+
+		await page.getByTestId("admin-tab").click();
+		await page.getByTestId("edit-event-info-button").click();
+		await expect(page.getByLabel("Name")).toContainText("PICNIC #2");
 	});
 
 	test("banned player cannot join a tournament of that organization", async ({
