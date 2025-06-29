@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { db } from "../app/db/sql";
 import {
-	mapSetResults,
+	setResults,
 	type TournamentSummary,
 } from "../app/features/tournament-bracket/core/summarizer.server";
 import { tournamentFromDB } from "../app/features/tournament-bracket/core/Tournament.server";
@@ -17,10 +17,7 @@ async function main() {
 	logger.info("Fixed tournamentTeamId in TournamentMatchGameResultParticipant");
 
 	const result: Array<
-		{ tournamentId: number } & Pick<
-			TournamentSummary,
-			"mapResults" | "setResults"
-		>
+		{ tournamentId: number } & Pick<TournamentSummary, "setResults">
 	> = [];
 
 	let count = 0;
@@ -31,7 +28,7 @@ async function main() {
 
 		result.push({
 			tournamentId: tournament.ctx.id,
-			...mapSetResults({ results, teams: tournament.ctx.teams }),
+			setResults: setResults({ results, teams: tournament.ctx.teams }),
 		});
 
 		if (count % 100 === 0) {
@@ -44,21 +41,9 @@ async function main() {
 			.updateTable("TournamentResult")
 			.set({
 				setResults: JSON.stringify([]),
-				mapResults: JSON.stringify([]),
 			})
 			.execute();
-		for (const { tournamentId, mapResults, setResults } of result) {
-			for (const [userId, mapResult] of mapResults.entries()) {
-				await trx
-					.updateTable("TournamentResult")
-					.set({
-						mapResults: JSON.stringify(mapResult),
-					})
-					.where("tournamentId", "=", tournamentId)
-					.where("userId", "=", userId)
-					.execute();
-			}
-
+		for (const { tournamentId, setResults } of result) {
 			for (const [userId, setResult] of setResults.entries()) {
 				await trx
 					.updateTable("TournamentResult")

@@ -401,6 +401,7 @@ export interface Skill {
 	season: number;
 	tournamentId: number | null;
 	userId: number | null;
+	createdAt: number | null;
 }
 
 export interface SkillTeamUser {
@@ -593,11 +594,6 @@ export interface TournamentResult {
 	 * E.g. ["W", "L", null] would mean the user won the first set, lost the second and did not play the third.
 	 * */
 	setResults: JSONColumnType<WinLossParticipationArray>;
-	/**
-	 * The result of maps in the tournament. Each sets consists of multiple maps.
-	 * E.g. ["W", "L", null] would mean the user won the first map, lost the second and did not play the third.
-	 * */
-	mapResults: JSONColumnType<WinLossParticipationArray>;
 	/** The SP change in total after the finalization of a ranked tournament. */
 	spDiff: number | null;
 	userId: number;

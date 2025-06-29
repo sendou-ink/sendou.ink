@@ -17,7 +17,7 @@ import type { Standing } from "./Bracket";
 export interface TournamentSummary {
 	skills: Omit<
 		Tables["Skill"],
-		"tournamentId" | "id" | "ordinal" | "season" | "groupMatchId"
+		"tournamentId" | "id" | "ordinal" | "season" | "groupMatchId" | "createdAt"
 	>[];
 	seedingSkills: Tables["SeedingSkill"][];
 	mapResultDeltas: Omit<Tables["MapResult"], "season">[];
@@ -28,8 +28,6 @@ export interface TournamentSummary {
 	>[];
 	/** Map of user id to diff or null if not ranked event */
 	spDiffs: Map<number, number> | null;
-	/** Map of user id to map results */
-	mapResults: Map<number, WinLossParticipationArray>;
 	/** Map of user id to set results */
 	setResults: Map<number, WinLossParticipationArray>;
 }
@@ -101,7 +99,7 @@ export function tournamentSummary({
 		spDiffs: calculateSeasonalStats
 			? spDiffs({ skills, queryCurrentUserRating })
 			: null,
-		...mapSetResults({ results, teams }),
+		setResults: setResults({ results, teams }),
 	};
 }
 
@@ -548,30 +546,24 @@ function spDiffs({
 	return spDiffs;
 }
 
-export function mapSetResults({
+export function setResults({
 	results,
 	teams,
 }: {
 	results: AllMatchResult[];
 	teams: TeamsArg;
 }) {
-	const mapResults = new Map<number, WinLossParticipationArray>();
 	const setResults = new Map<number, WinLossParticipationArray>();
 
-	const addTo = (
-		where: "map" | "set",
+	const addToMap = (
 		userId: number,
 		result: WinLossParticipationArray[number],
 	) => {
-		const map = where === "map" ? mapResults : setResults;
-
-		const existing = map.get(userId) ?? [];
+		const existing = setResults.get(userId) ?? [];
 		existing.push(result);
 
-		map.set(userId, existing);
+		setResults.set(userId, existing);
 	};
-
-	// xxx: handle setResults
 
 	for (const match of results) {
 		const allMatchUserIds = teams.flatMap((team) => {
@@ -579,7 +571,7 @@ export function mapSetResults({
 				match.opponentOne.id === team.id || match.opponentTwo.id === team.id;
 			if (!didParticipateInTheMatch) return [];
 
-			return userIdsFromTeamId(teams, team.id);
+			return teamIdToMembersUserIds(teams, team.id);
 		});
 
 		const { winnerUserIds, loserUserIds } = matchToSetMostPlayedUsers(match);
@@ -589,36 +581,15 @@ export function mapSetResults({
 				!loserUserIds.some((lUserId) => lUserId === userId),
 		);
 
-		for (const winnerUserId of winnerUserIds) addTo("set", winnerUserId, "W");
-		for (const loserUserId of loserUserIds) addTo("set", loserUserId, "L");
-		for (const subUserId of subbedOut) addTo("set", subUserId, null);
-
-		for (const map of match.maps) {
-			const winners = map.participants.filter(
-				(p) => p.tournamentTeamId === map.winnerTeamId,
-			);
-			const losers = map.participants.filter(
-				(p) => p.tournamentTeamId !== map.winnerTeamId,
-			);
-			const subbedOut = allMatchUserIds.filter(
-				(userId) =>
-					!winners.some((p) => p.userId === userId) &&
-					!losers.some((p) => p.userId === userId),
-			);
-
-			for (const winner of winners) addTo("map", winner.userId, "W");
-			for (const loser of losers) addTo("map", loser.userId, "L");
-			for (const subUserId of subbedOut) addTo("map", subUserId, null);
-		}
+		for (const winnerUserId of winnerUserIds) addToMap(winnerUserId, "W");
+		for (const loserUserId of loserUserIds) addToMap(loserUserId, "L");
+		for (const subUserId of subbedOut) addToMap(subUserId, null);
 	}
 
-	return {
-		mapResults,
-		setResults,
-	};
+	return setResults;
 }
 
-function userIdsFromTeamId(teams: TeamsArg, teamId: number) {
+function teamIdToMembersUserIds(teams: TeamsArg, teamId: number) {
 	const team = teams.find((t) => t.id === teamId);
 	invariant(team, `Team with id ${teamId} not found`);
 
