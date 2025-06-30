@@ -273,6 +273,16 @@ export async function findEventsByMonth({
 	return events.map(mapEvent);
 }
 
+export function findAllUnfinalizedEvents(organizationId: number) {
+	return db
+		.selectFrom("Tournament")
+		.innerJoin("CalendarEvent", "CalendarEvent.tournamentId", "Tournament.id")
+		.select(["Tournament.id"])
+		.where("Tournament.isFinalized", "=", 0)
+		.where("CalendarEvent.organizationId", "=", organizationId)
+		.execute();
+}
+
 const findSeriesEventsBaseQuery = ({
 	organizationId,
 	substringMatches,

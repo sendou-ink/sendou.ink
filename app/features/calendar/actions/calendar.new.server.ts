@@ -1,7 +1,10 @@
 import type { ActionFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import type { CalendarEventTag } from "~/db/tables";
-import { requireUser } from "~/features/auth/core/user.server";
+import {
+	type AuthenticatedUser,
+	requireUser,
+} from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { newCalendarEventActionSchema } from "~/features/calendar/calendar-schemas.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
@@ -40,7 +43,11 @@ export const action: ActionFunction = async ({ request }) => {
 		parseAsync: true,
 	});
 
-	requireRole(user, "CALENDAR_EVENT_ADDER");
+	requireRoleIfNeeded({
+		isAddingTournament: data.toToolsEnabled,
+		isEditing: Boolean(data.eventToEditId),
+		user,
+	});
 
 	const startTimes = data.date.map((date) => dateToDatabaseTimestamp(date));
 	const commonArgs = {
@@ -67,9 +74,7 @@ export const action: ActionFunction = async ({ request }) => {
 		// reused avatar either via edit or template
 		avatarImgId: data.avatarImgId ?? undefined,
 		autoValidateAvatar: user.roles.includes("SUPPORTER"),
-		toToolsEnabled: user.roles.includes("TOURNAMENT_ADDER")
-			? Number(data.toToolsEnabled)
-			: 0,
+		toToolsEnabled: Number(data.toToolsEnabled),
 		toToolsMode:
 			rankedModesShort.find((mode) => mode === data.toToolsMode) ?? null,
 		bracketProgression: data.bracketProgression ?? null,
@@ -175,3 +180,20 @@ export const action: ActionFunction = async ({ request }) => {
 
 	throw redirect(calendarEventPage(createdEventId));
 };
+
+function requireRoleIfNeeded({
+	isAddingTournament,
+	isEditing,
+	user,
+}: {
+	isAddingTournament: boolean;
+	isEditing: boolean;
+	user: AuthenticatedUser;
+}) {
+	if (isEditing) return;
+
+	requireRole(
+		user,
+		isAddingTournament ? "TOURNAMENT_ADDER" : "CALENDAR_EVENT_ADDER",
+	);
+}
