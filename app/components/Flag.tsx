@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
+import { countryCodeToTranslatedName } from "~/utils/i18n";
 
 export function Flag({
 	countryCode,
@@ -9,15 +10,17 @@ export function Flag({
 	tiny?: boolean;
 }) {
 	const { i18n } = useTranslation();
+
 	return (
 		<div
 			className={clsx(`twf twf-${countryCode.toLowerCase()}`, {
 				"twf-s": tiny,
 			})}
 			data-testid={`flag-${countryCode}`}
-			title={new Intl.DisplayNames([i18n.language], { type: "region" }).of(
+			title={countryCodeToTranslatedName({
 				countryCode,
-			)}
+				language: i18n.language,
+			})}
 		/>
 	);
 }
