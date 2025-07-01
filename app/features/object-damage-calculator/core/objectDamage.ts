@@ -206,7 +206,7 @@ export function calculateDamage({
 }) {
 	const toCombine =
 		anyWeapon.type === "MAIN"
-			? (damageTypesToCombine[anyWeapon.id] ?? []).find(
+			? (damageTypesToCombine[weaponIdToBaseWeaponId(anyWeapon.id)] ?? []).find(
 					(c) => c.when === damageType,
 				)
 			: undefined;
@@ -253,7 +253,8 @@ export function calculateDamage({
 					const otherDamage = () => {
 						//[Special Case] Booyah ignores Tri-Stringer's otherDamage at full charge. In-game bug
 						if (
-							[7010, 7011].includes(anyWeapon.id) &&
+							anyWeapon.type === "MAIN" &&
+							weaponIdToBaseWeaponId(anyWeapon.id) === 7010 &&
 							receiver === "NiceBall_Armor"
 						) {
 							return 0;

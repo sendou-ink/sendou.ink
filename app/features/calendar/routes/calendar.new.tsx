@@ -83,7 +83,7 @@ export default function CalendarNewEventPage() {
 	const isTournamentAdder = useHasRole("TOURNAMENT_ADDER");
 	const data = useLoaderData<typeof loader>();
 
-	if (!isCalendarEventAdder) {
+	if (!data.eventToEdit && !isCalendarEventAdder) {
 		return (
 			<Main className="stack items-center">
 				<Alert variation="WARNING">
@@ -93,7 +93,7 @@ export default function CalendarNewEventPage() {
 		);
 	}
 
-	if (data.isAddingTournament && !isTournamentAdder) {
+	if (!data.eventToEdit && data.isAddingTournament && !isTournamentAdder) {
 		return (
 			<Main className="stack items-center">
 				<Alert variation="WARNING">
@@ -302,10 +302,12 @@ function NameInput() {
 			</Label>
 			<input
 				name="name"
+				id="name"
 				required
 				minLength={CALENDAR_EVENT.NAME_MIN_LENGTH}
 				maxLength={CALENDAR_EVENT.NAME_MAX_LENGTH}
 				defaultValue={eventToEdit?.name}
+				data-testid="calendar-event-name-input"
 			/>
 		</div>
 	);

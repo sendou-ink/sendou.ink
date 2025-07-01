@@ -13,7 +13,7 @@ import type { scrimsNewActionSchema } from "../scrims-schemas";
 
 const newScrimAction = wrappedAction<typeof scrimsNewActionSchema>({
 	action,
-	isNewForm: true,
+	isJsonSubmission: true,
 });
 
 const scrimPostsLoader = wrappedLoader<SerializeFrom<typeof loader>>({

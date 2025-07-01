@@ -6,6 +6,10 @@ import { SUSPENDED_PAGE } from "~/utils/urls";
 import { IMPERSONATED_SESSION_KEY, SESSION_KEY } from "./authenticator.server";
 import { authSessionStorage } from "./session.server";
 
+export type AuthenticatedUser = NonNullable<
+	Awaited<ReturnType<typeof getUser>>
+>;
+
 export async function getUserId(
 	request: Request,
 	redirectIfBanned = true,

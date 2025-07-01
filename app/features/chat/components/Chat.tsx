@@ -4,6 +4,7 @@ import { sub } from "date-fns";
 import { nanoid } from "nanoid";
 import { WebSocket } from "partysocket";
 import * as React from "react";
+import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
@@ -136,12 +137,11 @@ export function Chat({
 						const unseen = unseenMessages.get(room.code);
 
 						return (
-							<SendouButton
+							<Button
 								key={room.code}
 								className={clsx("chat__room-button", {
 									current: currentRoom === room.code,
 								})}
-								size="small"
 								onPress={() => {
 									setCurrentRoom(room.code);
 									resetScroller();
@@ -154,7 +154,7 @@ export function Chat({
 								) : (
 									<span className="chat__room-button__unseen invisible" />
 								)}
-							</SendouButton>
+							</Button>
 						);
 					})}
 				</div>

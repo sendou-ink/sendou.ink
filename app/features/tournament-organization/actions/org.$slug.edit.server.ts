@@ -1,6 +1,7 @@
 import { type ActionFunctionArgs, redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
+import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import i18next from "~/modules/i18n/i18next.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { valueArrayToDBFormat } from "~/utils/form";
@@ -43,8 +44,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		badges: data.badges,
 	});
 
-	// in case members changed
+	// in case members changed...
+	// 1) clear the participation info map (front page)
 	ShowcaseTournaments.clearParticipationInfoMap();
+
+	// 2) clear tournament data caches (so permission changes are shown immediately)
+	for (const tournament of await TournamentOrganizationRepository.findAllUnfinalizedEvents(
+		organization.id,
+	)) {
+		clearTournamentDataCache(tournament.id);
+	}
 
 	return redirect(
 		tournamentOrganizationPage({ organizationSlug: newOrganization.slug }),

@@ -7,6 +7,7 @@ import { db, sql } from "~/db/sql";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { SESSION_KEY } from "~/features/auth/core/authenticator.server";
 import { authSessionStorage } from "~/features/auth/core/session.server";
+import { logger } from "./logger";
 
 export function arrayContainsSameItems<T>(arr1: T[], arr2: T[]) {
 	return (
@@ -28,11 +29,11 @@ export function arrayContainsSameItems<T>(arr1: T[], arr2: T[]) {
 export function wrappedAction<T extends z.ZodTypeAny>({
 	action,
 	/** Is this action submitted as json (via SendouForm) */
-	isNewForm = false,
+	isJsonSubmission = false,
 }: {
 	// TODO: strongly type this
 	action: (args: ActionFunctionArgs) => any;
-	isNewForm?: boolean;
+	isJsonSubmission?: boolean;
 }) {
 	return async (
 		args: z.infer<T>,
@@ -41,7 +42,7 @@ export function wrappedAction<T extends z.ZodTypeAny>({
 			params = {},
 		}: { user?: "admin" | "regular"; params?: Params<string> } = {},
 	) => {
-		const body = isNewForm
+		const body = isJsonSubmission
 			? JSON.stringify(args)
 			: new URLSearchParams(args as any);
 		const request = new Request("http://app.com/path", {
@@ -51,7 +52,9 @@ export function wrappedAction<T extends z.ZodTypeAny>({
 				...(await authHeader(user)),
 				[
 					"Content-Type",
-					isNewForm ? "application/json" : "application/x-www-form-urlencoded",
+					isJsonSubmission
+						? "application/json"
+						: "application/x-www-form-urlencoded",
 				],
 			],
 		});
@@ -65,6 +68,9 @@ export function wrappedAction<T extends z.ZodTypeAny>({
 
 			return response;
 		} catch (thrown) {
+			// we only log errors in vitest for failed tests so this is okay (more context)
+			logger.error("Error in wrappedAction:", thrown);
+
 			if (thrown instanceof Response) {
 				// it was a redirect
 				if (thrown.status === 302) return thrown;
@@ -123,6 +129,10 @@ export function wrappedLoader<T>({
  * @param message - Optional. The expected error toast message shown to the user.
  */
 export function assertResponseErrored(response: Response, message?: string) {
+	if (!response) {
+		throw new Error(`Expected a Response, got: ${response}`);
+	}
+
 	expect(response.headers.get("Location")).toContain("?__error=");
 	if (message) {
 		expect(response.headers.get("Location")).toContain(message);

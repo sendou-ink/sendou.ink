@@ -27,7 +27,6 @@ import { cutToNDecimalPlaces, roundToNDecimalPlaces } from "~/utils/number";
 import { assertUnreachable } from "~/utils/types";
 import {
 	DAMAGE_TYPE,
-	multiShot,
 	RAINMAKER_SPEED_PENALTY_MODIFIER,
 } from "../analyzer-constants";
 import type {
@@ -48,6 +47,7 @@ import {
 	apFromMap,
 	hasEffect,
 	hpDivided,
+	weaponIdToMultiShotCount,
 	weaponParams,
 } from "./utils";
 
@@ -102,7 +102,7 @@ export function buildStats({
 				? framesToSeconds(mainWeaponParams.KeepChargeFullFrame)
 				: undefined,
 			speedType: mainWeaponParams.WeaponSpeedType ?? "Normal",
-			multiShots: multiShot[weaponSplId],
+			multiShots: weaponIdToMultiShotCount(weaponSplId),
 		},
 		stats: {
 			specialPoint: specialPoint(input),
@@ -461,7 +461,7 @@ function damages(args: StatFunctionInput): AnalyzedBuild["stats"]["damages"] {
 						value: subValue.Damage / 10,
 						distance: subValue.Distance,
 						id: nanoid(),
-						multiShots: multiShot[args.weaponSplId],
+						multiShots: weaponIdToMultiShotCount(args.weaponSplId),
 					});
 				}
 
@@ -477,9 +477,9 @@ function damages(args: StatFunctionInput): AnalyzedBuild["stats"]["damages"] {
 				shotsToSplat: shotsToSplat({
 					value,
 					type,
-					multiShots: multiShot[args.weaponSplId],
+					multiShots: weaponIdToMultiShotCount(args.weaponSplId),
 				}),
-				multiShots: multiShot[args.weaponSplId],
+				multiShots: weaponIdToMultiShotCount(args.weaponSplId),
 			});
 		}
 	}
@@ -503,7 +503,7 @@ function specialWeaponDamages(
 						value: subValue.Damage / 10,
 						distance: subValue.Distance,
 						id: nanoid(),
-						multiShots: multiShot[args.weaponSplId],
+						multiShots: weaponIdToMultiShotCount(args.weaponSplId),
 					});
 				}
 
@@ -519,9 +519,9 @@ function specialWeaponDamages(
 				shotsToSplat: shotsToSplat({
 					value,
 					type,
-					multiShots: multiShot[args.weaponSplId],
+					multiShots: weaponIdToMultiShotCount(args.weaponSplId),
 				}),
-				multiShots: multiShot[args.weaponSplId],
+				multiShots: weaponIdToMultiShotCount(args.weaponSplId),
 			});
 		}
 	}

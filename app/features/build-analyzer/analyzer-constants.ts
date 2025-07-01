@@ -1,4 +1,3 @@
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { DamageType } from "./analyzer-types";
 
 export const MAX_LDE_INTENSITY = 21;
@@ -95,31 +94,6 @@ export const damageTypeToWeaponType: Record<
 	SPECIAL_JUMP: "SPECIAL",
 	SPECIAL_TICK: "SPECIAL",
 };
-
-const rawMultiShot: Partial<Record<MainWeaponId, number>> = {
-	// L-3
-	300: 3,
-	// H-3
-	310: 3,
-	// Tri-Stringer,
-	7010: 3,
-	// REEF-LUX,
-	7020: 3,
-	// Wellstring V,
-	7030: 5,
-	// Bloblobber
-	3030: 4,
-	// Dread Winger
-	3050: 2,
-};
-
-// automatically handle alt kits
-export const multiShot = Object.fromEntries(
-	Object.entries(rawMultiShot).flatMap(([key, value]) => [
-		[Number(key), value],
-		[Number(key) + 1, value],
-	]),
-) as Record<MainWeaponId, number>;
 
 export const RAINMAKER_SPEED_PENALTY_MODIFIER = 0.8;
 
