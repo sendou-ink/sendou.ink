@@ -18,6 +18,7 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { UserSearch } from "~/components/elements/UserSearch";
+import { FormMessage } from "~/components/FormMessage";
 import { Input } from "~/components/Input";
 import { SearchIcon } from "~/components/icons/Search";
 import { Main } from "~/components/Main";
@@ -31,7 +32,6 @@ import {
 	STOP_IMPERSONATING_URL,
 	userPage,
 } from "~/utils/urls";
-
 import { action } from "../actions/admin.server";
 import { loader } from "../loaders/admin.server";
 export { loader, action };
@@ -190,6 +190,9 @@ function MigrateUser() {
 					Migrate
 				</SubmitButton>
 			</div>
+			<FormMessage type="info">
+				Note: data on "New user" will be deleted (e.g. builds)
+			</FormMessage>
 		</fetcher.Form>
 	);
 }

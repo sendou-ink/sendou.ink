@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, test, vi } from "vitest";
 import { db } from "~/db/sql";
+import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -347,5 +348,63 @@ describe("Account migration", () => {
 		const membershipAfterMigration = await membershipQuery.executeTakeFirst();
 
 		expect(membershipAfterMigration).toBeUndefined();
+	});
+
+	it("deletes weapon pool from the new user when migrating (takes weapon pool from the old user)", async () => {
+		await UserRepository.updateProfile({
+			userId: 1,
+			weapons: [{ weaponSplId: 1, isFavorite: 1 }],
+		});
+		await UserRepository.updateProfile({
+			userId: 2,
+			weapons: [{ weaponSplId: 10 }],
+		});
+
+		await migrateUserAction();
+
+		const oldUser = await UserRepository.findProfileByIdentifier("0");
+		const newUser = await UserRepository.findProfileByIdentifier("1");
+
+		expect(oldUser).toBeNull();
+		expect(newUser?.weapons).toEqual([{ weaponSplId: 1, isFavorite: 1 }]);
+	});
+
+	it("deletes builds from the new user when migrating", async () => {
+		await BuildRepository.create({
+			title: "Test build",
+			ownerId: 2,
+			headGearSplId: 1,
+			clothesGearSplId: 1,
+			shoesGearSplId: 1,
+			abilities: [
+				["SCU", "SCU", "SCU", "SCU"],
+				["SCU", "SCU", "SCU", "SCU"],
+				["SCU", "SCU", "SCU", "SCU"],
+			],
+			modes: null,
+			weaponSplIds: [1],
+			description: null,
+			private: 0,
+		});
+
+		const buildsBefore = await BuildRepository.allByUserId({
+			userId: 2,
+			showPrivate: false,
+		});
+
+		expect(buildsBefore.length).toBe(1);
+
+		await migrateUserAction();
+
+		const oldUser = await UserRepository.findProfileByIdentifier("0");
+		expect(oldUser).toBeNull();
+
+		for (const userId of [1, 2]) {
+			const buildsAfter = await BuildRepository.allByUserId({
+				userId,
+				showPrivate: false,
+			});
+			expect(buildsAfter.length).toBe(0);
+		}
 	});
 });

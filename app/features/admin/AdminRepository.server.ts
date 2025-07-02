@@ -59,6 +59,10 @@ export function migrate(args: { newUserId: number; oldUserId: number }) {
 			.where("userId", "=", args.newUserId)
 			.execute();
 		await trx
+			.deleteFrom("Build")
+			.where("ownerId", "=", args.newUserId)
+			.execute();
+		await trx
 			.deleteFrom("UserFriendCode")
 			.where("userId", "=", args.newUserId)
 			.execute();
