@@ -115,7 +115,6 @@ const addTournamentResultStm = sql.prepare(/* sql */ `
     "participantCount",
     "tournamentTeamId",
     "setResults",
-    "mapResults",
     "spDiff"
   ) values (
     @tournamentId,
@@ -124,7 +123,6 @@ const addTournamentResultStm = sql.prepare(/* sql */ `
     @participantCount,
     @tournamentTeamId,
     @setResults,
-    @mapResults,
     @spDiff
   )
 `);
@@ -204,6 +202,10 @@ export const addSummary = sql.transaction(
 
 		for (const tournamentResult of summary.tournamentResults) {
 			const setResults = summary.setResults.get(tournamentResult.userId);
+
+			if (setResults?.every((result) => !result)) {
+				continue;
+			}
 
 			addTournamentResultStm.run({
 				tournamentId,

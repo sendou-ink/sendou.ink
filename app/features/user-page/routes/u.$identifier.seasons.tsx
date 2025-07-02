@@ -821,7 +821,7 @@ function TournamentResult({ result }: { result: SeasonTournamentResult }) {
 					"u__season__match__with-sub-section ": result.spDiff,
 				})}
 			>
-				<div className="stack font-bold items-center text-lg">
+				<div className="stack font-bold items-center text-lg text-center">
 					<img
 						src={logoUrl}
 						width={36}
@@ -832,7 +832,7 @@ function TournamentResult({ result }: { result: SeasonTournamentResult }) {
 					{result.tournamentName}
 				</div>
 				<ul className="u__season__match__set-results">
-					{result.setResults.map((result, i) => (
+					{result.setResults.filter(Boolean).map((result, i) => (
 						<li key={i} data-is-win={String(result === "W")}>
 							{result}
 						</li>

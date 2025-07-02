@@ -10,7 +10,6 @@ import type {
 	UserSkillDifference,
 } from "~/db/tables";
 import { mostPopularArrayElement } from "~/utils/arrays";
-import { databaseTimestampNow } from "~/utils/dates";
 import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
 import type { Unpacked } from "~/utils/types";
 import { MATCHES_PER_SEASONS_PAGE } from "../user-page/user-page-constants";
@@ -218,6 +217,11 @@ const tournamentResultsSubQuery = (
 			"TournamentResult.tournamentId",
 			"CalendarEvent.tournamentId",
 		)
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEvent.id",
+			"CalendarEventDate.eventId",
+		)
 		.leftJoin(
 			"UserSubmittedImage",
 			"CalendarEvent.avatarImgId",
@@ -228,6 +232,7 @@ const tournamentResultsSubQuery = (
 			"TournamentResult.setResults",
 			"TournamentResult.tournamentId",
 			"TournamentResult.tournamentTeamId",
+			"CalendarEventDate.startTime as tournamentStartTime",
 			"CalendarEvent.name as tournamentName",
 			"UserSubmittedImage.url as logoUrl",
 		])
@@ -311,6 +316,7 @@ export async function seasonResultsByUserId({
 		.selectFrom("Skill")
 		.select((eb) => [
 			"Skill.id",
+			"Skill.createdAt",
 			jsonObjectFrom(tournamentResultsSubQuery(eb, userId)).as(
 				"tournamentResult",
 			),
@@ -339,7 +345,8 @@ export async function seasonResultsByUserId({
 			return {
 				type: "GROUP_MATCH" as const,
 				...R.omit(row, ["groupMatch", "tournamentResult"]),
-				createdAt: row.groupMatch.createdAt, // xxx: createdAt, optimally would be part of skill?
+				// older skills don't have createdAt, so we use groupMatch's createdAt as fallback
+				createdAt: row.createdAt ?? row.groupMatch.createdAt,
 				groupMatch: {
 					...R.omit(row.groupMatch, ["createdAt", "memento", "maps"]),
 					// note there is no corresponding "censoring logic" for tournament result
@@ -371,7 +378,8 @@ export async function seasonResultsByUserId({
 			return {
 				type: "TOURNAMENT_RESULT" as const,
 				...R.omit(row, ["groupMatch", "tournamentResult"]),
-				createdAt: databaseTimestampNow(),
+				// older skills don't have createdAt, so we use tournament's start time as a fallback
+				createdAt: row.createdAt ?? row.tournamentResult.tournamentStartTime,
 				tournamentResult: row.tournamentResult,
 			};
 		}

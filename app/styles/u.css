@@ -421,7 +421,7 @@
 	border-color: var(--theme-error);
 }
 
-.u__season__match__set-results li[data-is-win] {
+.u__season__match__set-results li[data-is-win="true"] {
 	border-color: var(--theme-success);
 }
 

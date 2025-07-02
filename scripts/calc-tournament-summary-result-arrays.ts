@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { sql } from "kysely";
 import { db } from "../app/db/sql";
 import {
 	setResults,
@@ -57,6 +58,8 @@ async function main() {
 		}
 	});
 	logger.info(`Done. Total of ${result.length} results inserted.`);
+
+	await wipeEmptyResults();
 }
 
 async function* tournaments() {
@@ -165,6 +168,20 @@ async function tournamentTeamIdsToTournamentMatchGameResultParticipantTable() {
 		.where("userId", "=", 10585)
 		.where("tournamentTeamId", "is", null)
 		.execute();
+}
+
+async function wipeEmptyResults() {
+	logger.info("Wiping empty results from TournamentResult table...");
+
+	const { numDeletedRows } = await db
+		.deleteFrom("TournamentResult")
+		.where(sql<boolean>`instr(setResults, 'W') = 0`)
+		.where(sql<boolean>`instr(setResults, 'L') = 0`)
+		.executeTakeFirst();
+
+	logger.info(
+		`Wiped ${numDeletedRows} empty results from TournamentResult table.`,
+	);
 }
 
 main().catch((err) => {
