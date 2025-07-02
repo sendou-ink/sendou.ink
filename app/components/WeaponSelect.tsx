@@ -44,6 +44,8 @@ interface WeaponSelectProps<
 	disabledWeaponIds?: Array<MainWeaponId>; // TODO: implement for `AnyWeapon` if needed
 	testId?: string;
 	isRequired?: boolean;
+	/** If set, selection of weapons that user sees when search input is empty allowing for quick select for e.g. previous selections */
+	quickSelectWeaponsIds?: Array<MainWeaponId>;
 }
 
 // TODO: fix selected value disappears when filtered out. This is because `items` is filtered in a controlled manner and the selected key might not be included in the filtered items.
@@ -60,10 +62,13 @@ export function WeaponSelect<
 	includeSubSpecial,
 	testId = "weapon-select",
 	isRequired,
+	quickSelectWeaponsIds,
 }: WeaponSelectProps<Clearable, IncludeSubSpecial>) {
 	const { t } = useTranslation(["common"]);
-	const { items, filterValue, setFilterValue } =
-		useFilteredWeaponItems(includeSubSpecial);
+	const { items, filterValue, setFilterValue } = useFilteredWeaponItems({
+		includeSubSpecial,
+		quickSelectWeaponsIds,
+	});
 
 	const keyify = (value?: MainWeaponId | AnyWeapon | null) => {
 		if (typeof value === "number") return `MAIN_${value}`;
@@ -111,11 +116,13 @@ export function WeaponSelect<
 				<SendouSelectItemSection
 					heading={name}
 					headingImgPath={
-						name === "subs"
-							? subWeaponImageUrl(SPLAT_BOMB_ID)
-							: name === "specials"
-								? specialWeaponImageUrl(TRIZOOKA_ID)
-								: weaponCategoryUrl(name)
+						key === "quick-select"
+							? undefined
+							: name === "subs"
+								? subWeaponImageUrl(SPLAT_BOMB_ID)
+								: name === "specials"
+									? specialWeaponImageUrl(TRIZOOKA_ID)
+									: weaponCategoryUrl(name)
 					}
 					className={idx === 0 ? "pt-0-5-forced" : undefined}
 					key={key}
@@ -169,32 +176,72 @@ export function WeaponSelect<
 	);
 }
 
-function useFilteredWeaponItems(includeSubSpecial: boolean | undefined) {
+function useFilteredWeaponItems({
+	includeSubSpecial,
+	quickSelectWeaponsIds,
+}: {
+	includeSubSpecial: boolean | undefined;
+	quickSelectWeaponsIds?: Array<MainWeaponId>;
+}) {
 	const items = useAllWeaponCategories(includeSubSpecial);
 	const [filterValue, setFilterValue] = React.useState("");
+	const { t } = useTranslation(["common"]);
 
-	const filtered = !filterValue
-		? items
-		: items
-				.map((category) => {
-					const filteredItems = category.items.filter((item) =>
-						filterWeapon({
-							weapon: item.weapon,
-							weaponName: item.name,
-							searchTerm: filterValue,
+	const showQuickSelectWeapons =
+		filterValue === "" && quickSelectWeaponsIds?.length;
+
+	const filteredItems = () => {
+		if (showQuickSelectWeapons) {
+			return [
+				{
+					idx: 0,
+					key: "quick-select" as const,
+					name: t("common:forms.weaponSearch.quickSelect"),
+					items: items
+						.flatMap((c) =>
+							c.items
+								.map((item) => (item.weapon.type === "MAIN" ? item : null))
+								.filter((val) => val !== null),
+						)
+						.filter((item) =>
+							quickSelectWeaponsIds.includes(item.weapon.id as MainWeaponId),
+						)
+						.sort((a, b) => {
+							const aIdx = quickSelectWeaponsIds.indexOf(
+								a.weapon.id as MainWeaponId,
+							);
+							const bIdx = quickSelectWeaponsIds.indexOf(
+								b.weapon.id as MainWeaponId,
+							);
+							return aIdx - bIdx;
 						}),
-					);
+				},
+			];
+		}
 
-					return {
-						...category,
-						items: filteredItems,
-					};
-				})
-				.filter((category) => category.items.length > 0)
-				.map((category, idx) => ({ ...category, idx }));
+		return !filterValue
+			? items
+			: items
+					.map((category) => {
+						const filteredItems = category.items.filter((item) =>
+							filterWeapon({
+								weapon: item.weapon,
+								weaponName: item.name,
+								searchTerm: filterValue,
+							}),
+						);
+
+						return {
+							...category,
+							items: filteredItems,
+						};
+					})
+					.filter((category) => category.items.length > 0)
+					.map((category, idx) => ({ ...category, idx }));
+	};
 
 	return {
-		items: filtered,
+		items: filteredItems(),
 		filterValue,
 		setFilterValue,
 	};

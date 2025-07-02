@@ -157,6 +157,7 @@
 	"forms.userSearch.noResults": "No users matching your search found",
 	"forms.weaponSearch.placeholder": "Select a weapon",
 	"forms.weaponSearch.search.placeholder": "Search weapons...",
+	"forms.weaponSearch.quickSelect": "Recent",
 	"forms.gearSearch.placeholder": "Select a gear",
 	"forms.gearSearch.search.placeholder": "Search gear...",
 	"tag.name.SPECIAL": "Special rules",
