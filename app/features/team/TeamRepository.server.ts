@@ -6,7 +6,7 @@ import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { COMMON_USER_FIELDS, type CommonUser } from "~/utils/kysely.server";
 
 export function findAllUndisbanded() {
 	return db
@@ -100,6 +100,141 @@ export function findByCustomUrl(
 		.$if(includeInviteCode, (qb) => qb.select("Team.inviteCode"))
 		.where("Team.customUrl", "=", customUrl.toLowerCase())
 		.executeTakeFirst();
+}
+
+export type FindResultPlacementsById = NonNullable<
+	Awaited<ReturnType<typeof findResultPlacementsById>>
+>;
+
+export function findResultPlacementsById(teamId: number) {
+	return db
+		.selectFrom("TournamentTeam")
+		.innerJoin(
+			"TournamentResult",
+			"TournamentResult.tournamentTeamId",
+			"TournamentTeam.id",
+		)
+		.select(["TournamentResult.placement"])
+		.where("teamId", "=", teamId)
+		.groupBy("TournamentResult.tournamentId")
+		.execute();
+}
+
+export type FindResultsById = NonNullable<
+	Awaited<ReturnType<typeof findResultsById>>
+>;
+
+// xxx: clean up this function a bit?
+export async function findResultsById(teamId: number) {
+	const rows = await db
+		.with("results", (db) =>
+			db
+				.selectFrom("TournamentTeam")
+				.innerJoin(
+					"TournamentResult",
+					"TournamentResult.tournamentTeamId",
+					"TournamentTeam.id",
+				)
+				.select([
+					"TournamentResult.userId",
+					"TournamentResult.tournamentTeamId",
+					"TournamentResult.tournamentId",
+					"TournamentResult.placement",
+					"TournamentResult.participantCount",
+				])
+				.where("teamId", "=", teamId)
+				.groupBy("TournamentResult.tournamentId"),
+		)
+		.selectFrom("results")
+		.innerJoin(
+			"CalendarEvent",
+			"CalendarEvent.tournamentId",
+			"results.tournamentId",
+		)
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEventDate.eventId",
+			"CalendarEvent.id",
+		)
+		.select((eb) => [
+			"results.placement",
+			"results.tournamentId",
+			"results.participantCount",
+			"CalendarEvent.name",
+			"CalendarEventDate.startTime",
+			eb
+				.selectFrom("UserSubmittedImage")
+				.select(["UserSubmittedImage.url"])
+				.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id")
+				.as("logoUrl"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("results as results2")
+					.innerJoin("TournamentResult", (join) =>
+						join
+							.onRef(
+								"TournamentResult.tournamentTeamId",
+								"=",
+								"results2.tournamentTeamId",
+							)
+							.onRef(
+								"TournamentResult.tournamentId",
+								"=",
+								"results2.tournamentId",
+							),
+					)
+					.innerJoin("User", "User.id", "TournamentResult.userId")
+					.whereRef("results2.tournamentId", "=", "results.tournamentId")
+					.select(COMMON_USER_FIELDS),
+			).as("participants"),
+		])
+		.orderBy("CalendarEventDate.startTime", "desc")
+		.execute();
+
+	const members = await allMembersById(teamId);
+
+	const currentMembers = new Set(
+		members.filter((member) => !member.leftAt).map((member) => member.userId),
+	);
+	const pastMembers = members.filter((member) => member.leftAt);
+
+	return rows.map(({ participants, ...row }) => {
+		const subs = participants.reduce((acc: Array<CommonUser>, cur) => {
+			if (currentMembers.has(cur.id)) return acc;
+			if (
+				pastMembers.some(
+					(member) =>
+						member.userId === cur.id &&
+						member.createdAt < row.startTime &&
+						member.leftAt &&
+						member.leftAt > row.startTime,
+				)
+			) {
+				return acc;
+			}
+
+			acc.push(cur);
+
+			return acc;
+		}, []);
+
+		return {
+			...row,
+			subs,
+		};
+	});
+}
+
+function allMembersById(teamId: number) {
+	return db
+		.selectFrom("TeamMemberWithSecondary")
+		.select([
+			"TeamMemberWithSecondary.userId",
+			"TeamMemberWithSecondary.leftAt",
+			"TeamMemberWithSecondary.createdAt",
+		])
+		.where("TeamMemberWithSecondary.teamId", "=", teamId)
+		.execute();
 }
 
 export async function teamsByMemberUserId(

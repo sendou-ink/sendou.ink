@@ -46,9 +46,7 @@ const stm = sql.prepare(/* sql */ `
     and "opponentOneResult" is not null
   group by "m"."id"
   order by "m"."id" asc
-`);
-
-// xxx: order by should be "order by "groupNumber" asc, "roundNumber" asc, "r"."number" asc" - see setHistoryByTeamId.server.ts
+`); // strictly speaking the order by condition is not accurate, future improvement would be to add order conditions that match the tournament structure
 
 interface Opponent {
 	id: number;

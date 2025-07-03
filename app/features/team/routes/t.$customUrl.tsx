@@ -35,9 +35,9 @@ import {
 	resolveNewOwner,
 } from "../team-utils";
 import "../team.css";
+import { Placement } from "~/components/Placement";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
-
 import { action } from "../actions/t.$customUrl.server";
 import { loader } from "../loaders/t.$customUrl.server";
 export { action, loader };
@@ -84,20 +84,21 @@ export const handle: SendouRouteHandle = {
 };
 
 export default function TeamPage() {
-	const { team } = useLoaderData<typeof loader>();
+	const data = useLoaderData<typeof loader>();
 
 	return (
 		<Main className="stack lg">
 			<div className="stack sm">
 				<TeamBanner />
-				{/* <InfoBadges /> */}
 			</div>
 			<MobileTeamNameCountry />
 			<ActionButtons />
-			{/* {team.results ? <ResultsBanner results={team.results} /> : null} */}
-			{team.bio ? <article data-testid="team-bio">{team.bio}</article> : null}
+			{data.results ? <ResultsBanner results={data.results} /> : null}
+			{data.team.bio ? (
+				<article data-testid="team-bio">{data.team.bio}</article>
+			) : null}
 			<div className="stack lg">
-				{team.members.map((member, i) => (
+				{data.team.members.map((member, i) => (
 					<React.Fragment key={member.discordId}>
 						<MemberRow member={member} number={i} />
 						<MobileMemberCard member={member} />
@@ -277,22 +278,26 @@ function ChangeMainTeamButton() {
 	);
 }
 
-// function ResultsBanner({ results }: { results: TeamResultPeek }) {
-// 	return (
-// 		<Link className="team__results" to="results">
-// 			<div>View {results.count} results</div>
-// 			<ul className="team__results__placements">
-// 				{results.placements.map(({ placement, count }) => {
-// 					return (
-// 						<li key={placement}>
-// 							<Placement placement={placement} />×{count}
-// 						</li>
-// 					);
-// 				})}
-// 			</ul>
-// 		</Link>
-// 	);
-// }
+function ResultsBanner({
+	results,
+}: {
+	results: NonNullable<SerializeFrom<typeof loader>["results"]>;
+}) {
+	return (
+		<Link className="team__results" to="results">
+			<div>View {results.count} results</div>
+			<ul className="team__results__placements">
+				{results.placements.map(({ placement, count }) => {
+					return (
+						<li key={placement}>
+							<Placement placement={placement} />×{count}
+						</li>
+					);
+				})}
+			</ul>
+		</Link>
+	);
+}
 
 function MemberRow({
 	member,

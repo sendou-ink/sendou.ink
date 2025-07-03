@@ -135,6 +135,7 @@ export default [
 		route("edit", "features/team/routes/t.$customUrl.edit.tsx"),
 		route("roster", "features/team/routes/t.$customUrl.roster.tsx"),
 		route("join", "features/team/routes/t.$customUrl.join.tsx"),
+		route("results", "features/team/routes/t.$customUrl.results.tsx"),
 	]),
 
 	...prefix("/vods", [
