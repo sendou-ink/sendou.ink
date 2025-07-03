@@ -1,4 +1,4 @@
-import { formatDistance } from "date-fns";
+import { formatDistanceWithI18n } from '~/utils/formatDistanceWithI18n';
 import type { Insertable } from "kysely";
 import { jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
@@ -32,7 +32,7 @@ type FindAllByMonthRow = {
 
 // TODO: naming is a bit weird here (suggestion inside suggestions)
 export type FindAllByMonthItem = Unwrapped<typeof findAllByMonth>;
-export async function findAllByMonth(args: MonthYear) {
+export async function findAllByMonth(args: MonthYear, locale: string) {
 	const allRows = (await db
 		.selectFrom("PlusSuggestion")
 		.select(({ eb }) => [
@@ -91,9 +91,10 @@ export async function findAllByMonth(args: MonthYear) {
 		const mappedSuggestion = {
 			id: row.id,
 			text: row.text,
-			createdAtRelative: formatDistance(
+			createdAtRelative: formatDistanceWithI18n(
 				databaseTimestampToDate(row.createdAt),
 				new Date(),
+				locale,
 				{ addSuffix: true },
 			),
 			createdAt: row.createdAt,

@@ -1,7 +1,7 @@
 import type { MetaFunction } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
-import { formatDistance } from "date-fns";
+import { useFormatDistance } from '~/utils/formatDistanceWithI18n';
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
@@ -359,7 +359,7 @@ function ScrimsTable({
 						post.requests.at(0)?.users.some((rUser) => rUser.id === user?.id);
 
 					const status = getStatus(post);
-
+					const { formatDistanceWithI18n } = useFormatDistance()
 					return (
 						<React.Fragment key={post.id}>
 							<tr>
@@ -377,7 +377,7 @@ function ScrimsTable({
 													}}
 													underline={false}
 													footerText={t("scrims:postModal.footer", {
-														time: formatDistance(
+														time: formatDistanceWithI18n(
 															databaseTimestampToDate(post.createdAt),
 															new Date(),
 															{

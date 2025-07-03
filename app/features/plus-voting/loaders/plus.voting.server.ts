@@ -1,5 +1,5 @@
 import type { LoaderFunction } from "@remix-run/node";
-import { formatDistance } from "date-fns";
+import { formatDistanceWithI18n } from '~/utils/formatDistanceWithI18n';
 import { getUser } from "~/features/auth/core/user.server";
 import {
 	nextNonCompletedVoting,
@@ -7,6 +7,7 @@ import {
 } from "~/features/plus-voting/core";
 import { isVotingActive } from "~/features/plus-voting/core/voting-time";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
+import i18next from "~/modules/i18n/i18next.server";
 
 export type PlusVotingLoaderData =
 	// next voting date is not in the system
@@ -38,6 +39,8 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 	const now = new Date();
 	const nextVotingRange = nextNonCompletedVoting(now);
+	const locale = await i18next.getLocale(request);
+
 
 	if (!nextVotingRange) {
 		return { type: "noTimeDefinedInfo" };
@@ -47,7 +50,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 		return {
 			type: "timeInfo",
 			timeInfo: {
-				relativeTime: formatDistance(nextVotingRange.startDate, now, {
+				relativeTime: formatDistanceWithI18n(nextVotingRange.startDate, now, locale, {
 					addSuffix: true,
 				}),
 				timestamp: nextVotingRange.startDate.getTime(),
@@ -74,7 +77,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 			type: "timeInfo",
 			voted: hasVoted,
 			timeInfo: {
-				relativeTime: formatDistance(nextVotingRange.endDate, now, {
+				relativeTime: formatDistanceWithI18n(nextVotingRange.endDate, now, locale,{
 					addSuffix: true,
 				}),
 				timestamp: nextVotingRange.endDate.getTime(),
@@ -88,7 +91,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 		usersForVoting,
 		votingEnds: {
 			timestamp: nextVotingRange.endDate.getTime(),
-			relativeTime: formatDistance(nextVotingRange.endDate, now, {
+			relativeTime: formatDistanceWithI18n(nextVotingRange.endDate, now, locale,{
 				addSuffix: true,
 			}),
 		},

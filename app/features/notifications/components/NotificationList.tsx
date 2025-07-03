@@ -1,5 +1,5 @@
 import { Link } from "@remix-run/react";
-import { formatDistance } from "date-fns";
+import { useFormatDistance } from '~/utils/formatDistanceWithI18n';
 import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
 import type { LoaderNotification } from "~/components/layout/NotificationPopover";
@@ -22,7 +22,7 @@ export function NotificationItem({
 	notification: LoaderNotification;
 }) {
 	const { t, i18n } = useTranslation(["common"]);
-
+	const { formatDistanceWithI18n } = useFormatDistance()
 	return (
 		<Link to={notificationLink(notification)} className={styles.item}>
 			<NotificationImage notification={notification}>
@@ -35,7 +35,7 @@ export function NotificationItem({
 				)}
 			</div>
 			<div className={styles.timestamp}>
-				{formatDistance(
+				{formatDistanceWithI18n(
 					databaseTimestampToDate(notification.createdAt),
 					new Date(),
 					{
