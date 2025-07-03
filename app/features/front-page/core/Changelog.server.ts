@@ -1,4 +1,4 @@
-import { formatDistance } from "date-fns";
+import { formatDistanceWithI18n } from '~/utils/formatDistanceWithI18n';
 import { z } from "zod/v4";
 import { logger } from "~/utils/logger";
 
@@ -54,13 +54,13 @@ const postsSchema = z.object({
 	),
 });
 
-export async function get() {
+export async function get(locale: string) {
 	let result: ChangelogItem[];
 	try {
 		const data = await fetchPosts();
 		result = parsePosts(data)
 			.filter(postHasSendouInkTag)
-			.map(rawPostToChangelogItem)
+			.map((post) => rawPostToChangelogItem(post, locale))
 			.slice(0, CHANGE_LOG_ITEMS_MAX);
 	} catch (error) {
 		if (!(error instanceof Error)) {
@@ -123,13 +123,14 @@ function postHasSendouInkTag(post: RawPost) {
 	);
 }
 
-function rawPostToChangelogItem(post: RawPost): ChangelogItem {
+function rawPostToChangelogItem(post: RawPost, locale: string): ChangelogItem {
 	return {
 		id: post.uri,
 		text: post.record.text.replace("#sendouink", "").trim(),
-		createdAtRelative: formatDistance(
+		createdAtRelative: formatDistanceWithI18n(
 			new Date(post.record.createdAt),
 			new Date(),
+			locale,
 			{
 				addSuffix: true,
 			},
