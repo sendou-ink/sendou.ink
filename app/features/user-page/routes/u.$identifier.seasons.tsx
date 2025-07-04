@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import Chart from "~/components/Chart";
 import { SendouButton } from "~/components/elements/Button";
+import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
 import {
 	SendouSelect,
@@ -166,6 +167,9 @@ export default function UserSeasonsPage() {
 					) : null}
 				</div>
 			</div>
+			{data.canceled ? (
+				<CanceledMatchesDialog canceledMatches={data.canceled} />
+			) : null}
 			<Results results={data.results} seasonViewed={data.season} />
 		</div>
 	);
@@ -656,6 +660,38 @@ function WeaponCircle({
 			</div>
 			{count ? <div className="u__season__weapon-count">{count}</div> : null}
 		</div>
+	);
+}
+
+/** Dialog for staff view all season's canceled matches per user */
+function CanceledMatchesDialog({
+	canceledMatches,
+}: {
+	canceledMatches: NonNullable<UserSeasonsPageLoaderData["canceled"]>;
+}) {
+	return (
+		<SendouDialog
+			trigger={
+				<SendouButton
+					variant="minimal"
+					isDisabled={canceledMatches.length === 0}
+				>
+					Canceled Matches ({canceledMatches.length})
+				</SendouButton>
+			}
+			heading="Season's canceled matches for this user"
+		>
+			<div className="stack lg">
+				{canceledMatches.map((match) => (
+					<div key={match.id}>
+						<Link to={sendouQMatchPage(match.id)}>#{match.id}</Link>
+						<div>
+							{databaseTimestampToDate(match.createdAt).toLocaleString()}
+						</div>
+					</div>
+				))}
+			</div>
+		</SendouDialog>
 	);
 }
 

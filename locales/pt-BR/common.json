@@ -122,6 +122,7 @@
 	"actions.accept": "",
 	"actions.next": "",
 	"actions.previous": "",
+	"actions.back": "",
 	"noResults": "",
 	"maps.createMapList": "Criar lista de mapas",
 	"maps.halfSz": "50% Zones",

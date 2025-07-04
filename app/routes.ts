@@ -130,8 +130,8 @@ export default [
 	route("/support", "features/info/routes/support.tsx"),
 
 	route("/t", "features/team/routes/t.tsx"),
-	...prefix("/t/:customUrl", [
-		index("features/team/routes/t.$customUrl.tsx"),
+	route("/t/:customUrl", "features/team/routes/t.$customUrl.tsx", [
+		index("features/team/routes/t.$customUrl.index.tsx"),
 		route("edit", "features/team/routes/t.$customUrl.edit.tsx"),
 		route("roster", "features/team/routes/t.$customUrl.roster.tsx"),
 		route("join", "features/team/routes/t.$customUrl.join.tsx"),

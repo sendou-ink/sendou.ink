@@ -3,10 +3,11 @@ import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
+import { subsOfResult } from "~/features/team/team-utils";
 import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
-import { COMMON_USER_FIELDS, type CommonUser } from "~/utils/kysely.server";
+import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 
 export function findAllUndisbanded() {
 	return db
@@ -124,7 +125,9 @@ export type FindResultsById = NonNullable<
 	Awaited<ReturnType<typeof findResultsById>>
 >;
 
-// xxx: clean up this function a bit?
+/**
+ * Retrieves tournament results for a given team by its ID.
+ */
 export async function findResultsById(teamId: number) {
 	const rows = await db
 		.with("results", (db) =>
@@ -160,7 +163,8 @@ export async function findResultsById(teamId: number) {
 			"results.placement",
 			"results.tournamentId",
 			"results.participantCount",
-			"CalendarEvent.name",
+			"results.tournamentTeamId",
+			"CalendarEvent.name as tournamentName",
 			"CalendarEventDate.startTime",
 			eb
 				.selectFrom("UserSubmittedImage")
@@ -193,30 +197,8 @@ export async function findResultsById(teamId: number) {
 
 	const members = await allMembersById(teamId);
 
-	const currentMembers = new Set(
-		members.filter((member) => !member.leftAt).map((member) => member.userId),
-	);
-	const pastMembers = members.filter((member) => member.leftAt);
-
-	return rows.map(({ participants, ...row }) => {
-		const subs = participants.reduce((acc: Array<CommonUser>, cur) => {
-			if (currentMembers.has(cur.id)) return acc;
-			if (
-				pastMembers.some(
-					(member) =>
-						member.userId === cur.id &&
-						member.createdAt < row.startTime &&
-						member.leftAt &&
-						member.leftAt > row.startTime,
-				)
-			) {
-				return acc;
-			}
-
-			acc.push(cur);
-
-			return acc;
-		}, []);
+	return rows.map((row) => {
+		const subs = subsOfResult(row, members);
 
 		return {
 			...row,

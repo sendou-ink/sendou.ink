@@ -1,3 +1,4 @@
+import { add } from "date-fns";
 import type { ExpressionBuilder } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
@@ -9,7 +10,9 @@ import type {
 	Tables,
 	UserSkillDifference,
 } from "~/db/tables";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import { mostPopularArrayElement } from "~/utils/arrays";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
 import type { Unpacked } from "~/utils/types";
 import { MATCHES_PER_SEASONS_PAGE } from "../user-page/user-page-constants";
@@ -386,4 +389,42 @@ export async function seasonResultsByUserId({
 
 		throw new Error("Row does not contain groupMatch or tournamentResult");
 	});
+}
+
+export async function seasonCanceledMatchesByUserId({
+	userId,
+	season,
+}: {
+	userId: number;
+	season: number;
+}) {
+	const { starts, ends } = Seasons.nthToDateRange(season);
+
+	return db
+		.selectFrom("GroupMember")
+		.innerJoin("Group", "GroupMember.groupId", "Group.id")
+		.innerJoin("GroupMatch", (join) =>
+			join.on((eb) =>
+				eb.or([
+					eb("GroupMatch.alphaGroupId", "=", eb.ref("Group.id")),
+					eb("GroupMatch.bravoGroupId", "=", eb.ref("Group.id")),
+				]),
+			),
+		)
+		.innerJoin("Skill", (join) =>
+			join
+				.onRef("GroupMatch.id", "=", "Skill.groupMatchId")
+				// dummy skills used to close match when it's canceled have season -1
+				.on("Skill.season", "=", -1),
+		)
+		.select(["GroupMatch.id", "GroupMatch.createdAt"])
+		.where("GroupMember.userId", "=", userId)
+		.where("GroupMatch.createdAt", ">=", dateToDatabaseTimestamp(starts))
+		.where(
+			"GroupMatch.createdAt",
+			"<=",
+			dateToDatabaseTimestamp(add(ends, { days: 1 })),
+		)
+		.orderBy("GroupMatch.createdAt", "desc")
+		.execute();
 }

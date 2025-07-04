@@ -122,6 +122,7 @@
 	"actions.accept": "",
 	"actions.next": "",
 	"actions.previous": "",
+	"actions.back": "",
 	"noResults": "",
 	"maps.createMapList": "ステージ一覧を作る",
 	"maps.halfSz": "ガチエリア (2ヶ所)",

@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
+import { getUser } from "~/features/auth/core/user.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import { seasonAllMMRByUserId } from "~/features/mmr/queries/seasonAllMMRByUserId.server";
 import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
@@ -21,6 +22,7 @@ export type UserSeasonsPageLoaderData = NonNullable<
 >;
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+	const loggedInUser = await getUser(request);
 	const { identifier } = userParamsSchema.parse(params);
 	const parsedSearchParams = seasonsSearchParamsSchema.safeParse(
 		Object.fromEntries(new URL(request.url).searchParams),
@@ -71,6 +73,12 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 				userId: user.id,
 			}),
 		},
+		canceled: loggedInUser?.roles.includes("STAFF")
+			? await QMatchRepository.seasonCanceledMatchesByUserId({
+					season,
+					userId: user.id,
+				})
+			: null,
 		season,
 		info: {
 			currentTab: info,

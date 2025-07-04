@@ -122,6 +122,7 @@
 	"actions.accept": "Подтвердить",
 	"actions.next": "",
 	"actions.previous": "",
+	"actions.back": "",
 	"noResults": "Нет результатов",
 	"maps.createMapList": "Создать список карт",
 	"maps.halfSz": "50% Зон",
