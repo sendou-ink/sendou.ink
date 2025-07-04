@@ -8,16 +8,9 @@ import { nullFilledArray } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import type { Bracket, Standing } from "./Bracket";
 
-/**
- * Creates a Swiss tournament data set (initial matches) based on the provided arguments. Mimics bracket-manager module's interfaces.
- */
 export function create(
-	args: Omit<InputStage, "type" | "number" | "seeding"> & { seeding: number[] },
+	args: Omit<InputStage, "type" | "number">,
 ): TournamentManagerDataSet {
-	if (args.seeding.length < 2) {
-		throw new Error("Not enough teams for Swiss tournament");
-	}
-
 	const swissSettings = args.settings?.swiss;
 
 	const groupCount =
@@ -149,13 +142,6 @@ function firstRoundMatches({
 	}
 }
 
-/**
- * Generates the next round of matchups for a Swiss tournament bracket within a specific group.
- *
- * Considers only the matches and teams within the specified group. Teams that have dropped out are excluded from the pairing process.
- * If the group has an uneven number of teams, the lowest standing team that has not already received a bye will receive one.
- * Matches are generated such that teams do not replay previous opponents if possible.
- */
 export function generateMatchUps({
 	bracket,
 	groupId,
