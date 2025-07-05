@@ -1,6 +1,6 @@
 ---
 title: "SuperJump 5 - The Road to Splat World Series"
-date: 2025-07-1
+date: 2025-07-01
 author:
    - name: YELLOW
      link: https://sendou.ink/u/great-hero-yellow
