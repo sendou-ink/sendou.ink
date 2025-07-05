@@ -1,6 +1,6 @@
 import { Link, useFetcher } from "@remix-run/react";
 import clsx from "clsx";
-import { formatDistanceToNow } from "date-fns";
+import { useFormatDistance } from '~/utils/formatDistanceWithI18n';
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
@@ -266,6 +266,7 @@ function PostTime({
 	updatedAt: number;
 }) {
 	const { t, i18n } = useTranslation(["lfg"]);
+	const { formatDistanceToNowWithI18n } = useFormatDistance()
 
 	const createdAtDate = databaseTimestampToDate(createdAt);
 	const updatedAtDate = databaseTimestampToDate(updatedAt);
@@ -282,7 +283,7 @@ function PostTime({
 				<div className="text-xxs">
 					<i>
 						({t("lfg:post.lastActive")}{" "}
-						{formatDistanceToNow(updatedAtDate, {
+						{formatDistanceToNowWithI18n(updatedAtDate, {
 							addSuffix: true,
 						})}
 						)
