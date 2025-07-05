@@ -3,7 +3,7 @@ name: Updates translation progress
 on:
   push:
     branches:
-      - rewrite
+      - main
 
 jobs:
   update-translation-progress-issue:
