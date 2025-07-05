@@ -2,11 +2,12 @@ import { ordinal } from "openskill";
 import { sql } from "~/db/sql";
 import type { ParsedMemento, Tables } from "~/db/tables";
 import { identifierToUserIds } from "~/features/mmr/mmr-utils";
+import { databaseTimestampNow } from "~/utils/dates";
 import type { MementoSkillDifferences } from "../core/skills.server";
 
 const getStm = (type: "user" | "team") =>
 	sql.prepare(/* sql */ `
-  insert into "Skill" ("groupMatchId", "identifier", "mu", "season", "sigma", "ordinal", "userId", "matchesCount")
+  insert into "Skill" ("groupMatchId", "identifier", "mu", "season", "sigma", "ordinal", "userId", "createdAt", "matchesCount")
   values (
     @groupMatchId, 
     @identifier, 
@@ -15,6 +16,7 @@ const getStm = (type: "user" | "team") =>
     @sigma, 
     @ordinal,
     @userId,
+		@createdAt,
     1 + coalesce((
       select max("matchesCount") from "Skill" 
       where 
@@ -65,6 +67,7 @@ export function addSkills({
 		const stm = skill.userId ? userStm : teamStm;
 		const insertedSkill = stm.get({
 			...skill,
+			createdAt: databaseTimestampNow(),
 			ordinal: ordinal(skill),
 		}) as Tables["Skill"];
 

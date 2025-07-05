@@ -81,7 +81,9 @@ test.describe("Builds", () => {
 
 		await page.getByTestId("submit-button").click();
 
-		await expect(page.getByTestId("builds-tab")).toContainText("Builds (50)");
+		await expect(page.getByTestId("user-builds-tab")).toContainText(
+			"Builds (50)",
+		);
 		await expect(page.getByTestId("build-card").first()).toContainText(
 			"Private",
 		);
@@ -91,7 +93,9 @@ test.describe("Builds", () => {
 			page,
 			url: userBuildsPage({ discordId: ADMIN_DISCORD_ID }),
 		});
-		await expect(page.getByTestId("builds-tab")).toContainText("Builds (49)");
+		await expect(page.getByTestId("user-builds-tab")).toContainText(
+			"Builds (49)",
+		);
 		await expect(page.getByTestId("build-card").first()).not.toContainText(
 			"Private",
 		);

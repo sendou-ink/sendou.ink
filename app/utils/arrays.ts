@@ -47,11 +47,6 @@ export function normalizeFormFieldArray(
 	return value == null ? [] : typeof value === "string" ? [value] : value;
 }
 
-/** Can be used as a strongly typed array filter */
-export function isDefined<T>(value: T | undefined | null): value is T {
-	return value !== null && value !== undefined;
-}
-
 export function nullFilledArray(size: number): null[] {
 	return new Array(size).fill(null);
 }
@@ -97,4 +92,21 @@ export function diff<T extends string | number>(arr1: T[], arr2: T[]): T[] {
 	}
 
 	return result;
+}
+
+export function mostPopularArrayElement<T>(arr: T[]): T | null {
+	if (arr.length === 0) return null;
+
+	const counts = countElements(arr);
+	let mostPopularElement: T | null = null;
+	let maxCount = 0;
+
+	for (const [element, count] of counts) {
+		if (count > maxCount) {
+			maxCount = count;
+			mostPopularElement = element;
+		}
+	}
+
+	return mostPopularElement;
 }

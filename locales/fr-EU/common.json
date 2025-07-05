@@ -122,6 +122,7 @@
 	"actions.accept": "Accepter",
 	"actions.next": "",
 	"actions.previous": "",
+	"actions.back": "",
 	"noResults": "Aucun résultats",
 	"maps.createMapList": "Créer une liste de stages",
 	"maps.halfSz": "50% DdZ",

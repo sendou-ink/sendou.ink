@@ -4,7 +4,6 @@ import type {
 	Insertable,
 	JSONColumnType,
 	Selectable,
-	SqlBool,
 	Updateable,
 } from "kysely";
 import type { AssociationVisibility } from "~/features/associations/associations-types";
@@ -402,6 +401,7 @@ export interface Skill {
 	season: number;
 	tournamentId: number | null;
 	userId: number | null;
+	createdAt: number | null;
 }
 
 export interface SkillTeamUser {
@@ -578,16 +578,24 @@ export interface TournamentMatchGameResult {
 export interface TournamentMatchGameResultParticipant {
 	matchGameResultId: number;
 	userId: number;
-	// it only started mattering when we added the possibility to join many teams in a tournament, null for legacy events
-	tournamentTeamId: number | null;
+	tournamentTeamId: number;
 }
 
+export type WinLossParticipationArray = Array<"W" | "L" | null>;
+
 export interface TournamentResult {
-	isHighlight: Generated<SqlBool>;
+	isHighlight: Generated<DBBoolean>;
 	participantCount: number;
 	placement: number;
 	tournamentId: number;
 	tournamentTeamId: number;
+	/**
+	 * The result of sets in the tournament.
+	 * E.g. ["W", "L", null] would mean the user won the first set, lost the second and did not play the third.
+	 * */
+	setResults: JSONColumnType<WinLossParticipationArray>;
+	/** The SP change in total after the finalization of a ranked tournament. */
+	spDiff: number | null;
 	userId: number;
 }
 
