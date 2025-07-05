@@ -37,3 +37,5 @@ jobs:
         run: npm run check-translation-jsons:no-write
       - name: Check homemade badges
         run: npm run check-homemade-badges
+      - name: Check articles
+        run: npm run check-articles 
