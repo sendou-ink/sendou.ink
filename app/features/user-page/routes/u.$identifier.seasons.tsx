@@ -850,7 +850,7 @@ function TournamentResult({ result }: { result: SeasonTournamentResult }) {
 		: HACKY_resolvePicture({ name: result.tournamentName });
 
 	return (
-		<div>
+		<div data-testid="seasons-tournament-result">
 			<Link
 				to={tournamentTeamPage(result)}
 				className={clsx("u__season__match", {

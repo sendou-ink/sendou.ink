@@ -139,6 +139,7 @@ export function UserResultsTable({
 												icon={<UsersIcon />}
 												size="miniscule"
 												variant="minimal"
+												data-testid="mates-button"
 											/>
 										}
 									>

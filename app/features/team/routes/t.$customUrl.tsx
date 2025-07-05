@@ -14,9 +14,8 @@ import {
 	teamPage,
 	userSubmittedImage,
 } from "~/utils/urls";
-import { action } from "../actions/t.$customUrl.server";
 import { loader } from "../loaders/t.$customUrl.server";
-export { action, loader };
+export { loader };
 
 import "../team.css";
 

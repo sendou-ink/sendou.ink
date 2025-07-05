@@ -111,7 +111,7 @@ const addTournamentResultStm = sql.prepare(/* sql */ `
   insert into "TournamentResult" (
     "tournamentId",
     "userId",
-    "placement", 
+    "placement",
     "participantCount",
     "tournamentTeamId",
     "setResults",
