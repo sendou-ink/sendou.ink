@@ -4,6 +4,7 @@ import { seed } from "~/db/seed";
 import { db } from "~/db/sql";
 import { logger } from "~/utils/logger";
 
+// xxx: delete comments from .env
 async function main() {
 	// Step 1: Create .env if it doesn't exist
 	if (!fs.existsSync(".env")) {
