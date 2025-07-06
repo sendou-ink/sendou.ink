@@ -39,6 +39,10 @@
 		"displayName": "OCE Open",
 		"authorDiscordId": "1170249805373657093"
 	},
+	"badgeapple": {
+		"displayName": "Mega Splat Party",
+		"authorDiscordId": "751912670403362836"
+	},
 	"badgepalooza": {
 		"displayName": "Badge Palooza",
 		"authorDiscordId": "528851510222782474"
@@ -131,6 +135,10 @@
 		"displayName": "Canada Day!",
 		"authorDiscordId": "1170249805373657093"
 	},
+	"capzone": {
+		"displayName": "Cap the Zone",
+		"authorDiscordId": "752582395076673577"
+	},
 	"catfoodbowl": {
 		"displayName": "Dr. Meowser's Cat Food Bowl",
 		"authorDiscordId": "324396128906903552"
@@ -199,12 +207,16 @@
 		"displayName": "10 ST! Tournaments",
 		"authorDiscordId": "752582395076673577"
 	},
+	"ctrl_ink_delete": {
+		"displayName": "CTRL + Ink + Delete",
+		"authorDiscordId": "751912670403362836"
+	},
 	"current": {
 		"displayName": "FREEDOM DiVE",
 		"authorDiscordId": "564512827285569546"
 	},
 	"curseofexcalibur": {
-		"displayName": "5 Unique Curse of Excalibur Events",
+		"displayName": "Curse of Excalibur Special Events",
 		"authorDiscordId": "338806780446638082"
 	},
 	"custom_e-liter": {
@@ -234,6 +246,10 @@
 	"dreadnoughtus": {
 		"displayName": "Mesozoic Mayhem: Dreadnoughtus Undefeated",
 		"authorDiscordId": "352207524390240257"
+	},
+	"dualin": {
+		"displayName": "Dualin' Horizons",
+		"authorDiscordId": "752582395076673577"
 	},
 	"dynamo": {
 		"displayName": "Dynamo Roller",
@@ -376,7 +392,7 @@
 		"authorDiscordId": "338806780446638082"
 	},
 	"hatsunemikuteto": {
-		"displayName": "MIKU MIKU BEAM!!! Teto Takeover!",
+		"displayName": "MIKU MIKU BEAM!!! Grand Stage",
 		"authorDiscordId": "338806780446638082"
 	},
 	"headband": {
@@ -763,6 +779,10 @@
 		"displayName": "Sylveon",
 		"authorDiscordId": "338806780446638082"
 	},
+	"solosquidshowdown": {
+		"displayName": "Solo Squid Showdown",
+		"authorDiscordId": "824681527815438337"
+	},
 	"soulcupgold": {
 		"displayName": "Soul League (Div 1)",
 		"authorDiscordId": "309327923129745409"
@@ -806,6 +826,10 @@
 	"splatlegacy": {
 		"displayName": "Splat Legacy LAN",
 		"authorDiscordId": "342369454719631361"
+	},
+	"splatoonolympics": {
+		"displayName": "Splatoon Olympics",
+		"authorDiscordId": "338702451156844545"
 	},
 	"splattershotpro": {
 		"displayName": "MIDLINES ONLY",

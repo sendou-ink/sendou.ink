@@ -3,6 +3,7 @@ import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
+import { subsOfResult } from "~/features/team/team-utils";
 import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
@@ -100,6 +101,122 @@ export function findByCustomUrl(
 		.$if(includeInviteCode, (qb) => qb.select("Team.inviteCode"))
 		.where("Team.customUrl", "=", customUrl.toLowerCase())
 		.executeTakeFirst();
+}
+
+export type FindResultPlacementsById = NonNullable<
+	Awaited<ReturnType<typeof findResultPlacementsById>>
+>;
+
+export function findResultPlacementsById(teamId: number) {
+	return db
+		.selectFrom("TournamentTeam")
+		.innerJoin(
+			"TournamentResult",
+			"TournamentResult.tournamentTeamId",
+			"TournamentTeam.id",
+		)
+		.select(["TournamentResult.placement"])
+		.where("teamId", "=", teamId)
+		.groupBy("TournamentResult.tournamentId")
+		.execute();
+}
+
+export type FindResultsById = NonNullable<
+	Awaited<ReturnType<typeof findResultsById>>
+>;
+
+/**
+ * Retrieves tournament results for a given team by its ID.
+ */
+export async function findResultsById(teamId: number) {
+	const rows = await db
+		.with("results", (db) =>
+			db
+				.selectFrom("TournamentTeam")
+				.innerJoin(
+					"TournamentResult",
+					"TournamentResult.tournamentTeamId",
+					"TournamentTeam.id",
+				)
+				.select([
+					"TournamentResult.userId",
+					"TournamentResult.tournamentTeamId",
+					"TournamentResult.tournamentId",
+					"TournamentResult.placement",
+					"TournamentResult.participantCount",
+				])
+				.where("teamId", "=", teamId)
+				.groupBy("TournamentResult.tournamentId"),
+		)
+		.selectFrom("results")
+		.innerJoin(
+			"CalendarEvent",
+			"CalendarEvent.tournamentId",
+			"results.tournamentId",
+		)
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEventDate.eventId",
+			"CalendarEvent.id",
+		)
+		.select((eb) => [
+			"results.placement",
+			"results.tournamentId",
+			"results.participantCount",
+			"results.tournamentTeamId",
+			"CalendarEvent.name as tournamentName",
+			"CalendarEventDate.startTime",
+			eb
+				.selectFrom("UserSubmittedImage")
+				.select(["UserSubmittedImage.url"])
+				.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id")
+				.as("logoUrl"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("results as results2")
+					.innerJoin("TournamentResult", (join) =>
+						join
+							.onRef(
+								"TournamentResult.tournamentTeamId",
+								"=",
+								"results2.tournamentTeamId",
+							)
+							.onRef(
+								"TournamentResult.tournamentId",
+								"=",
+								"results2.tournamentId",
+							),
+					)
+					.innerJoin("User", "User.id", "TournamentResult.userId")
+					.whereRef("results2.tournamentId", "=", "results.tournamentId")
+					.select(COMMON_USER_FIELDS),
+			).as("participants"),
+		])
+		.orderBy("CalendarEventDate.startTime", "desc")
+		.execute();
+
+	const members = await allMembersById(teamId);
+
+	return rows.map((row) => {
+		const subs = subsOfResult(row, members);
+
+		return {
+			...row,
+			subs,
+		};
+	});
+}
+
+function allMembersById(teamId: number) {
+	return db
+		.selectFrom("TeamMemberWithSecondary")
+		.select([
+			"TeamMemberWithSecondary.userId",
+			"TeamMemberWithSecondary.leftAt",
+			"TeamMemberWithSecondary.createdAt",
+		])
+		.where("TeamMemberWithSecondary.teamId", "=", teamId)
+		.execute();
 }
 
 export async function teamsByMemberUserId(
