@@ -326,6 +326,13 @@ describe("Account migration", () => {
 		assertResponseErrored(response, "both old and new user are in teams");
 	});
 
+	const membershipOf = (userId: number) =>
+		db
+			.selectFrom("AllTeamMember")
+			.select(["userId"])
+			.where("userId", "=", userId)
+			.executeTakeFirst();
+
 	it("deletes past team membership status of the new user", async () => {
 		await TeamRepository.create({
 			customUrl: "team-1",
@@ -335,19 +342,42 @@ describe("Account migration", () => {
 		});
 		await TeamRepository.del(1);
 
-		const membershipQuery = db
-			.selectFrom("AllTeamMember")
-			.select(["userId"])
-			.where("userId", "=", 2);
-
-		const membershipBeforeMigration = await membershipQuery.executeTakeFirst();
+		const membershipBeforeMigration = await membershipOf(2);
 		expect(membershipBeforeMigration).toBeDefined();
 
 		await migrateUserAction();
 
-		const membershipAfterMigration = await membershipQuery.executeTakeFirst();
+		const membershipAfterMigration = await membershipOf(2);
 
 		expect(membershipAfterMigration).toBeUndefined();
+	});
+
+	it("handles old user member of the same team as new user (old user has left the team, new user current)", async () => {
+		await TeamRepository.create({
+			customUrl: "team-1",
+			name: "Team 1",
+			ownerUserId: 2,
+			isMainTeam: true,
+		});
+		await TeamRepository.addNewTeamMember({
+			teamId: 1,
+			userId: 1,
+			maxTeamsAllowed: 1,
+		});
+		await TeamRepository.handleMemberLeaving({ teamId: 1, userId: 1 });
+
+		for (const userId of [1, 2]) {
+			const membership = await membershipOf(userId);
+			expect(membership).toBeDefined();
+		}
+
+		await migrateUserAction();
+
+		const membershipOldUser = await membershipOf(1);
+		const membershipNewUser = await membershipOf(2);
+
+		expect(membershipOldUser).toBeDefined();
+		expect(membershipNewUser).toBeUndefined();
 	});
 
 	it("deletes weapon pool from the new user when migrating (takes weapon pool from the old user)", async () => {

@@ -86,6 +86,24 @@ export function migrate(args: { newUserId: number; oldUserId: number }) {
 			.set({ submitterUserId: args.oldUserId })
 			.execute();
 
+		// special case: delete same team membership to avoid unique constraint violation
+		await trx
+			.deleteFrom("AllTeamMember")
+			.where("userId", "=", args.oldUserId)
+			.where("leftAt", "is not", null)
+			.where((eb) =>
+				eb(
+					"AllTeamMember.teamId",
+					"=",
+					eb
+						.selectFrom("AllTeamMember")
+						.select("teamId")
+						.where("userId", "=", args.newUserId)
+						.where("leftAt", "is", null),
+				),
+			)
+			.execute();
+
 		// delete past team membership data (not user visible)
 		await trx
 			.deleteFrom("AllTeamMember")
