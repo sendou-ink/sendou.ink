@@ -859,6 +859,10 @@
 		"displayName": "LAN Championship Showdown (Second)",
 		"authorDiscordId": "201922904781357057"
 	},
+	"stlcsthird": {
+		"displayName": "LAN Championship Showdown (Third)",
+		"authorDiscordId": "201922904781357057"
+	},
 	"sunday-run": {
 		"displayName": "Sunday Run",
 		"authorDiscordId": "570323825669963972"
