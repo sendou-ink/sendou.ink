@@ -851,6 +851,10 @@
 		"displayName": "Stellated Zone",
 		"authorDiscordId": "309327923129745409"
 	},
+	"stlcsfirst": {
+		"displayName": "LAN Championship Showdown (First)",
+		"authorDiscordId": "201922904781357057"
+	},
 	"sunday-run": {
 		"displayName": "Sunday Run",
 		"authorDiscordId": "570323825669963972"
