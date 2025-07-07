@@ -1,5 +1,7 @@
 // separate from brackets-manager as this wasn't part of the original brackets-manager library
 
+import blossom from "edmonds-blossom-fixed";
+import * as R from "remeda";
 import type { TournamentRepositoryInsertableMatch } from "~/features/tournament/TournamentRepository.server";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
@@ -561,4 +563,173 @@ function makeRounds(n: number) {
 		pairings.push(pairing);
 	}
 	return pairings;
+}
+
+export function generateMatchUpsNew({
+	bracket,
+	groupId,
+}: {
+	bracket: Bracket;
+	groupId: number;
+}): Array<TournamentRepositoryInsertableMatch> {
+	// lets consider only this groups matches
+	// in the case that there are more than one group
+	const groupsMatches = bracket.data.match.filter(
+		(m) => m.group_id === groupId,
+	);
+
+	invariant(groupsMatches.length > 0, "No matches found for group");
+
+	// new matches can't be generated till old are over
+	if (!everyMatchOver(groupsMatches)) {
+		throw new Error("Not all matches are over");
+	}
+
+	const groupsTeams = groupsMatches
+		.flatMap((match) => [match.opponent1, match.opponent2])
+		.filter(Boolean);
+	const groupsStandings = bracket.standings.filter((standing) => {
+		return groupsTeams.some((team) => team?.id === standing.team.id);
+	});
+
+	// teams who have dropped out are not considered
+	const standingsWithoutDropouts = groupsStandings.filter(
+		(s) => !s.team.droppedOut,
+	);
+
+	const teamsThatHaveHadByes = groupsMatches
+		.filter((m) => m.opponent2 === null)
+		.map((m) => m.opponent1?.id);
+
+	const pairs = Swiss(
+		standingsWithoutDropouts.map((standing) => ({
+			id: standing.team.id,
+			score: standing.stats?.setWins ?? 0,
+			receivedBye: teamsThatHaveHadByes.includes(standing.team.id),
+		})),
+	);
+
+	let matchNumber = 1;
+	const newRoundId = bracket.data.round
+		.slice()
+		.sort((a, b) => a.id - b.id)
+		.filter((r) => r.group_id === groupId)
+		.find(
+			(r) => r.id > Math.max(...groupsMatches.map((match) => match.round_id)),
+		)?.id;
+	invariant(newRoundId, "newRoundId not found");
+	const result: TournamentRepositoryInsertableMatch[] = pairs.map(
+		({ opponentOne, opponentTwo }) => ({
+			groupId,
+			number: matchNumber++,
+			roundId: newRoundId,
+			stageId: groupsMatches[0].stage_id,
+			opponentOne: JSON.stringify({
+				id: opponentOne,
+			}),
+			opponentTwo:
+				typeof opponentTwo === "number"
+					? JSON.stringify({
+							id: opponentTwo,
+						})
+					: JSON.stringify(null),
+		}),
+	);
+
+	return result;
+}
+
+interface SwissPairingPlayer {
+	id: number;
+	/** How many matches has the team won */
+	score: number;
+	receivedBye?: boolean;
+}
+
+// adapted from https://github.com/slashinfty/tournament-pairings
+export function Swiss(players: SwissPairingPlayer[]) {
+	const matches = [];
+	const playerArray = R.shuffle(players).map((p, i) => ({ ...p, index: i }));
+	const scoreGroups = [...new Set(playerArray.map((p) => p.score))].sort(
+		(a, b) => a - b,
+	);
+	const scoreSums = [
+		...new Set(
+			scoreGroups.flatMap((s, i, a) => {
+				const sums = [];
+				for (let j = i; j < a.length; j++) {
+					sums.push(s + a[j]);
+				}
+				return sums;
+			}),
+		),
+	].sort((a, b) => a - b);
+	const pairs = [];
+	for (let i = 0; i < playerArray.length; i++) {
+		const curr = playerArray[i];
+		const next = playerArray.slice(i + 1);
+		for (let j = 0; j < next.length; j++) {
+			const opp = next[j];
+			let wt =
+				75 -
+				75 /
+					(scoreGroups.findIndex((s) => s === Math.min(curr.score, opp.score)) +
+						2);
+			wt +=
+				5 - 5 / (scoreSums.findIndex((s) => s === curr.score + opp.score) + 1);
+			let scoreGroupDiff = Math.abs(
+				scoreGroups.findIndex((s) => s === curr.score) -
+					scoreGroups.findIndex((s) => s === opp.score),
+			);
+			scoreGroupDiff += 0.2;
+			wt += 23 / (2 * (scoreGroupDiff + 2));
+			if (
+				(Object.hasOwn(curr, "receivedBye") && curr.receivedBye) ||
+				(Object.hasOwn(opp, "receivedBye") && opp.receivedBye)
+			) {
+				wt += 40;
+			}
+			pairs.push([curr.index, opp.index, wt]);
+		}
+	}
+	const blossomPairs = blossom(pairs, true);
+	const playerCopy = [...playerArray];
+	let byeArray = [];
+	do {
+		const indexA = playerCopy[0].index;
+		const indexB = blossomPairs[indexA];
+		if (indexB === -1) {
+			byeArray.push(playerCopy.splice(0, 1)[0]);
+			continue;
+		}
+		playerCopy.splice(0, 1);
+		playerCopy.splice(
+			playerCopy.findIndex((p) => p.index === indexB),
+			1,
+		);
+		const playerA = playerArray.find((p) => p.index === indexA);
+		const playerB = playerArray.find((p) => p.index === indexB);
+		invariant(playerA, "Player A not found");
+		invariant(playerB, "Player B not found");
+
+		matches.push({
+			opponentOne: playerA.id,
+			opponentTwo: playerB.id,
+		});
+	} while (
+		playerCopy.length >
+		blossomPairs.reduce(
+			(sum: number, idx: number) => (idx === -1 ? sum + 1 : sum),
+			0,
+		)
+	);
+	byeArray = [...byeArray, ...playerCopy];
+	for (let i = 0; i < byeArray.length; i++) {
+		matches.push({
+			opponentOne: byeArray[i].id,
+			opponentTwo: null,
+		});
+	}
+
+	return matches;
 }
