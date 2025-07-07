@@ -1,0 +1,7 @@
+.players {
+	display: flex;
+	flex-direction: column;
+	padding: 0;
+	gap: var(--s-3);
+	list-style: none;
+}

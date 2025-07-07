@@ -261,8 +261,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"No trust given from this user",
 			);
 			errorToastIfFalsy(
-				(await UserRepository.findLeanById(user.id))?.friendCode,
-				"No friend code",
+				(await UserRepository.findLeanById(data.userId))?.friendCode,
+				"User you are trying to add has no friend code set",
 			);
 			errorToastIfFalsy(tournament.registrationOpen, "Registration is closed");
 
@@ -304,7 +304,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 							tournamentName: tournament.ctx.name,
 							tournamentTeamId: ownTeam.id,
 						},
-						pictureUrl: tournament.logoSrc,
+						pictureUrl: tournament.ctx.logoSrc,
 					},
 				});
 			}

@@ -122,6 +122,7 @@
 	"actions.accept": "",
 	"actions.next": "",
 	"actions.previous": "",
+	"actions.back": "",
 	"noResults": "",
 	"maps.createMapList": "맵 목록 생성",
 	"maps.halfSz": "에어리어 50%",

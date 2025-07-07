@@ -153,7 +153,7 @@ describe("tournamentSummary()", () => {
 				},
 			],
 			queryCurrentTeamRating: () => rating(),
-			queryCurrentUserRating: () => rating(),
+			queryCurrentUserRating: () => ({ rating: rating(), matchesCount: 0 }),
 			queryTeamPlayerRatingAverage: () => rating(),
 			queryCurrentSeedingRating: () => rating(),
 			seedingSkillCountsFor: seedingSkillCountsFor ?? null,
@@ -466,5 +466,159 @@ describe("tournamentSummary()", () => {
 		const result = summary.mapResultDeltas.filter((r) => r.userId === 1);
 		expect(result.length).toBe(2);
 		expect(result.every((r) => r.wins === 1 && r.losses === 0)).toBeTruthy();
+	});
+
+	test("calculates set results array", () => {
+		const summary = summarize();
+
+		const winner = summary.setResults.get(1);
+		const loser = summary.setResults.get(5);
+		const sub = summary.setResults.get(20);
+
+		invariant(winner, "winner should be defined");
+		invariant(loser, "loser should be defined");
+		invariant(sub, "sub should be defined");
+
+		expect(winner).toEqual(["W"]);
+		expect(loser).toEqual(["L"]);
+		expect(sub).toEqual([null]);
+	});
+
+	test("playing for many teams should include combined sets in the set results array", () => {
+		const summary = summarize({
+			withMemberInTwoTeams: true,
+			results: resultsWith20,
+		});
+
+		const results = summary.setResults.get(20);
+
+		// only sub for the first team (null) and winning for the second team (W)
+		expect(results).toEqual([null, "W"]);
+	});
+
+	test("playing minority of maps in a set should not be count for set results", () => {
+		const summary = summarize({
+			results: [
+				{
+					maps: [
+						{
+							mode: "SZ",
+							stageId: 1,
+							participants: [
+								{ tournamentTeamId: 1, userId: 1 },
+								{ tournamentTeamId: 1, userId: 2 },
+								{ tournamentTeamId: 1, userId: 3 },
+								{ tournamentTeamId: 1, userId: 4 },
+								{ tournamentTeamId: 2, userId: 5 },
+								{ tournamentTeamId: 2, userId: 6 },
+								{ tournamentTeamId: 2, userId: 7 },
+								{ tournamentTeamId: 2, userId: 8 },
+							],
+							winnerTeamId: 1,
+						},
+						{
+							mode: "SZ",
+							stageId: 1,
+							participants: [
+								{ tournamentTeamId: 1, userId: 20 },
+								{ tournamentTeamId: 1, userId: 2 },
+								{ tournamentTeamId: 1, userId: 3 },
+								{ tournamentTeamId: 1, userId: 4 },
+								{ tournamentTeamId: 2, userId: 5 },
+								{ tournamentTeamId: 2, userId: 6 },
+								{ tournamentTeamId: 2, userId: 7 },
+								{ tournamentTeamId: 2, userId: 8 },
+							],
+							winnerTeamId: 1,
+						},
+						{
+							mode: "SZ",
+							stageId: 1,
+							participants: [
+								{ tournamentTeamId: 1, userId: 20 },
+								{ tournamentTeamId: 1, userId: 2 },
+								{ tournamentTeamId: 1, userId: 3 },
+								{ tournamentTeamId: 1, userId: 4 },
+								{ tournamentTeamId: 2, userId: 5 },
+								{ tournamentTeamId: 2, userId: 6 },
+								{ tournamentTeamId: 2, userId: 7 },
+								{ tournamentTeamId: 2, userId: 8 },
+							],
+							winnerTeamId: 1,
+						},
+					],
+					opponentOne: {
+						id: 1,
+						result: "win",
+						score: 3,
+					},
+					opponentTwo: {
+						id: 2,
+						result: "loss",
+						score: 0,
+					},
+				},
+			],
+		});
+
+		const results = summary.setResults.get(1);
+		expect(results).toEqual([null]);
+	});
+
+	test("playing in half the maps should be enough to count for set results", () => {
+		const summary = summarize({
+			results: [
+				{
+					maps: [
+						{
+							mode: "SZ",
+							stageId: 1,
+							participants: [
+								{ tournamentTeamId: 1, userId: 1 },
+								{ tournamentTeamId: 1, userId: 2 },
+								{ tournamentTeamId: 1, userId: 3 },
+								{ tournamentTeamId: 1, userId: 4 },
+								{ tournamentTeamId: 2, userId: 5 },
+								{ tournamentTeamId: 2, userId: 6 },
+								{ tournamentTeamId: 2, userId: 7 },
+								{ tournamentTeamId: 2, userId: 8 },
+							],
+							winnerTeamId: 1,
+						},
+						{
+							mode: "SZ",
+							stageId: 1,
+							participants: [
+								{ tournamentTeamId: 1, userId: 20 },
+								{ tournamentTeamId: 1, userId: 2 },
+								{ tournamentTeamId: 1, userId: 3 },
+								{ tournamentTeamId: 1, userId: 4 },
+								{ tournamentTeamId: 2, userId: 5 },
+								{ tournamentTeamId: 2, userId: 6 },
+								{ tournamentTeamId: 2, userId: 7 },
+								{ tournamentTeamId: 2, userId: 8 },
+							],
+							winnerTeamId: 1,
+						},
+					],
+					opponentOne: {
+						id: 1,
+						result: "win",
+						score: 2,
+					},
+					opponentTwo: {
+						id: 2,
+						result: "loss",
+						score: 0,
+					},
+				},
+			],
+		});
+
+		for (const userId of [1, 20]) {
+			const results = summary.setResults.get(userId);
+			invariant(results, `results for user ${userId} should be defined`);
+			expect(results).toEqual(["W"]);
+		}
 	});
 });

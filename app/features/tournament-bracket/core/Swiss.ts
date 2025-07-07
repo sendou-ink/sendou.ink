@@ -14,10 +14,6 @@ import type { Bracket, Standing } from "./Bracket";
 export function create(
 	args: Omit<InputStage, "type" | "number" | "seeding"> & { seeding: number[] },
 ): TournamentManagerDataSet {
-	if (args.seeding.length < 2) {
-		throw new Error("Not enough teams for Swiss tournament");
-	}
-
 	const swissSettings = args.settings?.swiss;
 
 	const groupCount =

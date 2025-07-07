@@ -10,6 +10,7 @@ import {
 } from "~/features/mmr/mmr-utils.server";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import { notify } from "~/features/notifications/core/notify.server";
+import * as Standings from "~/features/tournament/core/Standings";
 import { createSwissBracketInTransaction } from "~/features/tournament/queries/createSwissBracketInTransaction.server";
 import { updateRoundMaps } from "~/features/tournament/queries/updateRoundMaps.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
@@ -230,7 +231,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Can't finalize tournament",
 			);
 
-			const _finalStandings = tournament.standings;
+			const _finalStandings = Standings.tournamentStandings(tournament);
 
 			const results = allMatchResultsByTournamentId(tournamentId);
 			invariant(results.length > 0, "No results found");
@@ -246,7 +247,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				queryCurrentTeamRating: (identifier) =>
 					queryCurrentTeamRating({ identifier, season: season! }).rating,
 				queryCurrentUserRating: (userId) =>
-					queryCurrentUserRating({ userId, season: season! }).rating,
+					queryCurrentUserRating({ userId, season: season! }),
 				queryTeamPlayerRatingAverage: (identifier) =>
 					queryTeamPlayerRatingAverage({
 						identifier,

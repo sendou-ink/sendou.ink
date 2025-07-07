@@ -28,7 +28,7 @@ function ImageValidator() {
 	}, [data]);
 
 	if (data.images.length === 0) {
-		return <>All validated!</>;
+		return "All validated!";
 	}
 
 	return (

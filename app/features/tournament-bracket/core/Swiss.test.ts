@@ -91,10 +91,10 @@ describe("Swiss", () => {
 			expect(byes).toHaveLength(1);
 		});
 
-		it("throws if not enough teams are provided", () => {
-			expect(() => {
-				Swiss.create(createArgsWithDefaults({ seeding: [1] }));
-			}).toThrow("Not enough teams for Swiss tournament");
+		it("if no teams, should generate a bracket data with no matches", () => {
+			const data = Swiss.create(createArgsWithDefaults({ seeding: [] }));
+
+			expect(data.match).toHaveLength(0);
 		});
 	});
 
