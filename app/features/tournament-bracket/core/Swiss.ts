@@ -8,7 +8,7 @@ import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types"
 import type { InputStage, Match } from "~/modules/brackets-model";
 import { nullFilledArray } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
-import type { Bracket, Standing } from "./Bracket";
+import type { Bracket } from "./Bracket";
 
 /**
  * Creates a Swiss tournament data set (initial matches) based on the provided arguments. Mimics bracket-manager module's interfaces.
@@ -147,146 +147,6 @@ function firstRoundMatches({
 	}
 }
 
-/**
- * Generates the next round of matchups for a Swiss tournament bracket within a specific group.
- *
- * Considers only the matches and teams within the specified group. Teams that have dropped out are excluded from the pairing process.
- * If the group has an uneven number of teams, the lowest standing team that has not already received a bye will receive one.
- * Matches are generated such that teams do not replay previous opponents if possible.
- */
-export function generateMatchUps({
-	bracket,
-	groupId,
-}: {
-	bracket: Bracket;
-	groupId: number;
-}) {
-	// lets consider only this groups matches
-	// in the case that there are more than one group
-	const groupsMatches = bracket.data.match.filter(
-		(m) => m.group_id === groupId,
-	);
-
-	invariant(groupsMatches.length > 0, "No matches found for group");
-
-	// new matches can't be generated till old are over
-	if (!everyMatchOver(groupsMatches)) {
-		throw new Error("Not all matches are over");
-	}
-
-	const groupsTeams = groupsMatches
-		.flatMap((match) => [match.opponent1, match.opponent2])
-		.filter(Boolean);
-	const groupsStandings = bracket.standings.filter((standing) => {
-		return groupsTeams.some((team) => team?.id === standing.team.id);
-	});
-
-	// teams who have dropped out are not considered
-	const standingsWithoutDropouts = groupsStandings.filter(
-		(s) => !s.team.droppedOut,
-	);
-
-	// if group has uneven number of teams
-	// the lowest standing team gets a bye
-	// that did not already receive one
-	const { bye, play } = splitToByeAndPlay(
-		standingsWithoutDropouts,
-		groupsMatches,
-	);
-
-	// split participating teams to sections
-	// each section resolves matches between teams of that section
-	// section could look something like this (team counts inaccurate):
-	// 3-0'ers - 4 members
-	// 2-1'ers - 6 members
-	// 1-2'ers - 6 members
-	// 0-3'ers - 4 members
-	// ---
-	// if a section has an uneven number of teams
-	// the lowest standing team gets dropped to the section below
-	// or if the lowest section is unevent the highest team of the lowest section
-	// gets promoted to the section above
-	let sections = splitPlayingTeamsToSections(play);
-
-	let iteration = 0;
-	let matches: [opponentOneId: number, opponentTwoId: number][] = [];
-	while (true) {
-		iteration++;
-		if (iteration > 100) {
-			throw new Error("Swiss bracket generation failed (too many iterations)");
-		}
-
-		// lets attempt to create matches for the current sections
-		// might fail if some section can't be matches so that nobody replays
-		const maybeMatches = sectionsToMatches(sections, groupsMatches);
-
-		// ok good matches found!
-		if (Array.isArray(maybeMatches)) {
-			matches = maybeMatches;
-			break;
-		}
-
-		// for some reason we couldn't find new opponent for everyone
-		// even with everyone in the same section, so let's just replay
-		// (should not be possible to happen if running swiss normally)
-		if (sections.length === 1) {
-			const maybeMatches = sectionsToMatches(sections, groupsMatches, true);
-			if (Array.isArray(maybeMatches)) {
-				matches = maybeMatches;
-				break;
-			}
-
-			throw new Error(
-				"Swiss bracket generation failed (failed to generate matches even with fallback behavior)",
-			);
-		}
-
-		// let's unify sections so that we can try again with a better chance
-		sections = unifySections(sections, maybeMatches.impossibleSectionIdx);
-	}
-
-	// finally lets just convert the generated pairs to match objects
-	// for the database
-	const newRoundId = bracket.data.round
-		.slice()
-		.sort((a, b) => a.id - b.id)
-		.filter((r) => r.group_id === groupId)
-		.find(
-			(r) => r.id > Math.max(...groupsMatches.map((match) => match.round_id)),
-		)?.id;
-	invariant(newRoundId, "newRoundId not found");
-	let matchNumber = 1;
-	const result: TournamentRepositoryInsertableMatch[] = matches.map(
-		([opponentOneId, opponentTwoId]) => ({
-			groupId,
-			number: matchNumber++,
-			roundId: newRoundId,
-			stageId: groupsMatches[0].stage_id,
-			opponentOne: JSON.stringify({
-				id: opponentOneId,
-			}),
-			opponentTwo: JSON.stringify({
-				id: opponentTwoId,
-			}),
-		}),
-	);
-
-	if (bye) {
-		result.push({
-			groupId,
-			stageId: groupsMatches[0].stage_id,
-			roundId: newRoundId,
-			number: matchNumber,
-			opponentOne: JSON.stringify({
-				id: bye.team.id,
-			}),
-			opponentTwo: JSON.stringify(null),
-		});
-	}
-
-	return result;
-}
-
 function everyMatchOver(matches: Match[]) {
 	for (const match of matches) {
 		// bye
@@ -300,272 +160,14 @@ function everyMatchOver(matches: Match[]) {
 	return true;
 }
 
-function splitToByeAndPlay(standings: Standing[], matches: Match[]) {
-	if (standings.length % 2 === 0) {
-		return {
-			bye: null,
-			play: standings,
-		};
-	}
-
-	const teamsThatHaveHadByes = matches
-		.filter((m) => m.opponent2 === null)
-		.map((m) => m.opponent1?.id);
-
-	const play = standings.slice();
-	const bye = play
-		.slice()
-		.reverse()
-		.find((s) => !teamsThatHaveHadByes.includes(s.team.id));
-
-	// should not happen
-	if (!bye) {
-		const reBye = play[play.length - 1];
-
-		return {
-			bye: reBye,
-			play: play.filter((s) => s.team.id !== reBye.team.id),
-		};
-	}
-
-	return {
-		bye: bye,
-		play: play.filter((s) => s.team.id !== bye.team.id),
-	};
-}
-
-type TournamentDataTeamSections = Standing[][];
-
-function splitPlayingTeamsToSections(standings: Standing[]) {
-	let result: TournamentDataTeamSections = [];
-
-	let lastMapWins = -1;
-	let currentSection: Standing[] = [];
-	for (const standing of standings) {
-		const mapWins = standing.stats?.mapWins;
-		invariant(mapWins !== undefined, "mapWins not found");
-
-		if (mapWins !== lastMapWins) {
-			if (currentSection.length > 0) result.push(currentSection);
-			currentSection = [];
-		}
-
-		currentSection.push(standing);
-		lastMapWins = mapWins;
-	}
-	result.push(currentSection);
-
-	result = evenOutSectionsForward(result);
-	result = evenOutSectionsBackward(result);
-
-	return result;
-}
-
-function evenOutSectionsForward(sections: TournamentDataTeamSections) {
-	if (sections.every((section) => section.length % 2 === 0)) {
-		return sections;
-	}
-
-	const result: TournamentDataTeamSections = [];
-
-	let pushedStanding: Standing | null = null;
-	for (const [i, section] of sections.entries()) {
-		const newSection = section.slice();
-
-		if (pushedStanding) {
-			newSection.unshift(pushedStanding);
-			pushedStanding = null;
-		}
-
-		if (newSection.length % 2 !== 0 && i < sections.length - 1) {
-			pushedStanding = newSection.pop()!;
-		}
-
-		result.push(newSection);
-	}
-
-	return result;
-}
-
-function evenOutSectionsBackward(sections: TournamentDataTeamSections) {
-	if (sections.every((section) => section.length % 2 === 0)) {
-		return sections;
-	}
-
-	const result: TournamentDataTeamSections = [];
-
-	let pushedTeam: Standing | null = null;
-	for (const [i, section] of sections.slice().reverse().entries()) {
-		const newSection = section.slice();
-
-		if (pushedTeam) {
-			newSection.push(pushedTeam);
-			pushedTeam = null;
-		}
-
-		if (newSection.length % 2 !== 0) {
-			if (i === sections.length - 1) {
-				throw new Error("Can't even out sections");
-			}
-			pushedTeam = newSection.shift()!;
-		}
-
-		result.unshift(newSection);
-	}
-
-	return result;
-}
-
-function sectionsToMatches(
-	sections: TournamentDataTeamSections,
-	previousMatches: Match[],
-	fallbackBehaviorWithReplays = false,
-):
-	| [opponentOneId: number, opponentTwoId: number][]
-	| { impossibleSectionIdx: number } {
-	const matches: [opponentOneId: number, opponentTwoId: number][] = [];
-
-	for (const [i, section] of sections.entries()) {
-		const isLossless = section.every(
-			(standing) => standing.stats!.setLosses === 0,
-		);
-		const isWinless = section.every(
-			(standing) => standing.stats!.setWins === 0,
-		);
-
-		if (isLossless || isWinless || fallbackBehaviorWithReplays) {
-			// doing it like this to make it so that if everyone plays to their seed
-			// then seeds 1 & 2 meet in the final round (assuming proper amount of rounds)
-			// these sections can't have replays no matter how we divide them
-			matches.push(...matchesBySeed(section));
-		} else {
-			const sectionMatches = matchesByNotPlayedBefore(section, previousMatches);
-			if (sectionMatches === null) {
-				return { impossibleSectionIdx: i };
-			}
-
-			matches.push(...sectionMatches);
-		}
-	}
-
-	return matches;
-}
-
-function unifySections(
-	sections: TournamentDataTeamSections,
-	sectionToUnifyIdx: number,
-) {
-	const result: TournamentDataTeamSections = sections.slice();
-	if (sectionToUnifyIdx < sections.length - 1) {
-		// Combine section at sectionToUnifyIdx with the section after it
-		const currentSection = result[sectionToUnifyIdx];
-		const nextSection = result[sectionToUnifyIdx + 1];
-		const combinedSection = [...currentSection, ...nextSection];
-		result[sectionToUnifyIdx] = combinedSection;
-		result.splice(sectionToUnifyIdx + 1, 1);
-	} else {
-		// Combine last section with the section before it
-		const lastSection = result.pop()!;
-		const previousSection = result.pop()!;
-		const combinedSection = [...previousSection, ...lastSection];
-		result.push(combinedSection);
-	}
-
-	invariant(
-		sections.length - 1 === result.length,
-		"unifySections: length invalid",
-	);
-	return result;
-}
-
-function matchesBySeed(
-	teams: Standing[],
-): [opponentOneId: number, opponentTwoId: number][] {
-	// we know that here nobody has played each other
-	const sortedBySeed = teams.slice().sort((a, b) => {
-		invariant(a.team.seed, "matchesBySeed: a.seed is falsy");
-		invariant(b.team.seed, "matchesBySeed: b.seed is falsy");
-
-		return a.team.seed - b.team.seed;
-	});
-
-	const matches: [opponentOneId: number, opponentTwoId: number][] = [];
-	while (sortedBySeed.length > 0) {
-		const one = sortedBySeed.shift()!;
-		const two = sortedBySeed.pop()!;
-
-		matches.push([one.team.id, two.team.id]);
-	}
-
-	return matches;
-}
-
-function matchesByNotPlayedBefore(
-	teams: Standing[],
-	previousMatches: Match[],
-): [opponentOneId: number, opponentTwoId: number][] | null {
-	invariant(teams.length % 2 === 0, "matchesByNotPlayedBefore: uneven teams");
-
-	const alreadyPlayed = previousMatches.reduce((acc, cur) => {
-		if (!cur.opponent1?.id || !cur.opponent2?.id) return acc;
-
-		if (!acc.has(cur.opponent1.id)) {
-			acc.set(cur.opponent1.id, new Set());
-		}
-		acc.get(cur.opponent1.id)!.add(cur.opponent2.id);
-
-		if (!acc.has(cur.opponent2.id)) {
-			acc.set(cur.opponent2.id, new Set());
-		}
-		acc.get(cur.opponent2.id)!.add(cur.opponent1.id);
-
-		return acc;
-	}, new Map<number, Set<number>>());
-
-	const possibleRounds = makeRounds(teams.length);
-
-	for (const round of possibleRounds) {
-		let allNew = true;
-		for (const pair of round) {
-			const one = teams[pair[0]];
-			const two = teams[pair[1]];
-
-			if (alreadyPlayed.get(one.team.id)?.has(two.team.id)) {
-				allNew = false;
-				break;
-			}
-		}
-
-		if (!allNew) continue;
-
-		const matches: [opponentOneId: number, opponentTwoId: number][] = [];
-		for (const pair of round) {
-			const one = teams[pair[0]];
-			const two = teams[pair[1]];
-
-			matches.push([one.team.id, two.team.id]);
-		}
-		return matches;
-	}
-
-	return null;
-}
-
-// https://stackoverflow.com/a/75330079
-function makeRounds(n: number) {
-	const pairings = [];
-	const max = n - 1;
-	for (let i = 0; i < max; i++) {
-		const pairing = [[max, i]];
-		for (let k = 1; k < n / 2; k++) {
-			pairing.push([(i + k) % max, (max + i - k) % max]);
-		}
-		pairings.push(pairing);
-	}
-	return pairings;
-}
-
-export function generateMatchUpsNew({
+/**
+ * Generates the next round of matchups for a Swiss tournament bracket within a specific group.
+ *
+ * Considers only the matches and teams within the specified group. Teams that have dropped out are excluded from the pairing process.
+ * If the group has an uneven number of teams, the lowest standing team that has not already received a bye is preferred to receive one.
+ * Matches are generated such that teams do not replay previous opponents if possible.
+ */
+export function generateMatchUps({
 	bracket,
 	groupId,
 }: {
@@ -601,11 +203,20 @@ export function generateMatchUpsNew({
 		.filter((m) => m.opponent2 === null)
 		.map((m) => m.opponent1?.id);
 
-	const pairs = Swiss(
+	const pairs = pairUp(
 		standingsWithoutDropouts.map((standing) => ({
 			id: standing.team.id,
 			score: standing.stats?.setWins ?? 0,
 			receivedBye: teamsThatHaveHadByes.includes(standing.team.id),
+			avoid: groupsMatches.flatMap((match) => {
+				if (match.opponent1?.id === standing.team.id) {
+					return match.opponent2?.id ? [match.opponent2.id] : [];
+				}
+				if (match.opponent2?.id === standing.team.id) {
+					return match.opponent1?.id ? [match.opponent1.id] : [];
+				}
+				return [];
+			}),
 		})),
 	);
 
@@ -639,15 +250,17 @@ export function generateMatchUpsNew({
 	return result;
 }
 
-interface SwissPairingPlayer {
+interface SwissPairingTeam {
 	id: number;
 	/** How many matches has the team won */
 	score: number;
+	/** List of tournament team ids this team already played */
+	avoid: Array<number>;
 	receivedBye?: boolean;
 }
 
 // adapted from https://github.com/slashinfty/tournament-pairings
-export function Swiss(players: SwissPairingPlayer[]) {
+function pairUp(players: SwissPairingTeam[]) {
 	const matches = [];
 	const playerArray = R.shuffle(players).map((p, i) => ({ ...p, index: i }));
 	const scoreGroups = [...new Set(playerArray.map((p) => p.score))].sort(
@@ -670,6 +283,9 @@ export function Swiss(players: SwissPairingPlayer[]) {
 		const next = playerArray.slice(i + 1);
 		for (let j = 0; j < next.length; j++) {
 			const opp = next[j];
+			if (Object.hasOwn(curr, "avoid") && curr.avoid.includes(opp.id)) {
+				continue;
+			}
 			let wt =
 				75 -
 				75 /

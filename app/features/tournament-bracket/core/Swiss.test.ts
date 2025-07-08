@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { Tournament } from "~/features/tournament-bracket/core/Tournament";
+import { ZONES_WEEKLY_38 } from "~/features/tournament-bracket/core/tests/mocks-zones-weekly";
+import invariant from "~/utils/invariant";
 import * as Swiss from "./Swiss";
 
 describe("Swiss", () => {
@@ -98,6 +101,65 @@ describe("Swiss", () => {
 		});
 	});
 
-	// TODO:
-	// describe("generateMatchUps()", () => {});
+	describe("generateMatchUps()", () => {
+		describe("Zones Weekly 38", () => {
+			const tournament = new Tournament({
+				...ZONES_WEEKLY_38(),
+				simulateBrackets: false,
+			});
+
+			const bracket = tournament.bracketByIdx(0)!;
+
+			const matches = Swiss.generateMatchUps({
+				bracket,
+				groupId: 4443,
+			});
+
+			it("finds new opponents for each team in the last round", () => {
+				for (const match of matches) {
+					if (match.opponentTwo === "null") continue;
+
+					const opponent1 = JSON.parse(match.opponentOne).id as number;
+					const opponent2 = JSON.parse(match.opponentTwo).id as number;
+
+					const existingMatch = bracket.data.match.find(
+						(m) =>
+							(m.opponent1?.id === opponent1 &&
+								m.opponent2?.id === opponent2) ||
+							(m.opponent1?.id === opponent2 && m.opponent2?.id === opponent1),
+					);
+
+					expect(existingMatch).toBeUndefined();
+				}
+			});
+
+			it("generates a bye", () => {
+				const byes = matches.filter((match) => match.opponentTwo === "null");
+				expect(byes).toHaveLength(1);
+			});
+
+			it("every pair is max one set win from each other", () => {
+				for (const match of matches) {
+					if (match.opponentTwo === "null") continue;
+
+					const opponent1 = JSON.parse(match.opponentOne).id as number;
+					const opponent2 = JSON.parse(match.opponentTwo).id as number;
+
+					const opponent1Stats = bracket.standings.find(
+						(s) => s.team.id === opponent1,
+					)?.stats;
+					const opponent2Stats = bracket.standings.find(
+						(s) => s.team.id === opponent2,
+					)?.stats;
+
+					invariant(opponent1Stats, "Opponent 1 not found in standings");
+					invariant(opponent2Stats, "Opponent 2 not found in standings");
+
+					expect(
+						Math.abs(opponent1Stats.setWins - opponent2Stats.setWins),
+					).toBeLessThanOrEqual(1);
+				}
+			});
+		});
+	});
 });
