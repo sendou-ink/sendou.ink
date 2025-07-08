@@ -26,7 +26,7 @@ export const weaponCategories = [
 	},
 	{
 		name: "BRUSHES",
-		weaponIds: [1100, 1101, 1110, 1111, 1112, 1122, 1115, 1121, 1120],
+		weaponIds: [1100, 1101, 1110, 1111, 1112, 1115, 1120, 1121, 1122],
 	},
 	{
 		name: "CHARGERS",
