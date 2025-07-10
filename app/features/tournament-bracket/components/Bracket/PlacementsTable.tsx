@@ -89,6 +89,8 @@ export function PlacementsTable({
 		bracket.tournament.ctx.settings.bracketProgression,
 	).map((idx) => bracket.tournament.bracketByIdx(idx)!);
 	const canEditDestination = (() => {
+		if (possibleDestinationBrackets.length === 0) return false;
+
 		const allDestinationsPreview = possibleDestinationBrackets.every(
 			(b) => b.preview,
 		);

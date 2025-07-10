@@ -46,6 +46,7 @@
 		"clsx": "^2.1.1",
 		"compressorjs": "^1.2.1",
 		"date-fns": "^4.1.0",
+		"edmonds-blossom-fixed": "^1.0.1",
 		"gray-matter": "^4.0.3",
 		"i18next": "^23.16.8",
 		"i18next-browser-languagedetector": "^8.0.5",
