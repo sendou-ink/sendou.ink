@@ -23,6 +23,10 @@
 		"displayName": "Gamers Outreach Charity Tournament",
 		"authorDiscordId": "528851510222782474"
 	},
+	"alterrareaper": {
+		"displayName": "Alterra",
+		"authorDiscordId": "309327923129745409"
+	},
 	"artsupplies": {
 		"displayName": "Art Supplies Pencil Award",
 		"authorDiscordId": "1320944066002681876"
@@ -342,6 +346,10 @@
 	"getcoupled": {
 		"displayName": "Get Coupled",
 		"authorDiscordId": "418496741088690177"
+	},
+	"girlsbandcryawa": {
+		"displayName": "Togenashi Togeari Subaru Bracket",
+		"authorDiscordId": "309327923129745409"
 	},
 	"glaze": {
 		"displayName": "THE GLAZE GAUNTLET",
@@ -1042,13 +1050,5 @@
 	"zekkocup": {
 		"displayName": "Zekko Cup",
 		"authorDiscordId": "1320944066002681876"
-	},
-	"alterrareaper": {
-		"displayName": "Alterra",
-		"authorDiscordId": "309327923129745409"
-	},
-	"girlsbandcryawa": {
-		"displayName": "Togenashi Togeari Subaru Bracket",
-		"authorDiscordId": "309327923129745409"
 	}
 }
