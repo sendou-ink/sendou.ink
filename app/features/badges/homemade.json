@@ -1042,5 +1042,13 @@
 	"zekkocup": {
 		"displayName": "Zekko Cup",
 		"authorDiscordId": "1320944066002681876"
+	},
+	"alterrareaper": {
+		"displayName": "Alterra",
+		"authorDiscordId": "309327923129745409"
+	},
+	"girlsbandcryawa": {
+		"displayName": "Togenashi Togeari Subaru Bracket",
+		"authorDiscordId": "309327923129745409"
 	}
 }
