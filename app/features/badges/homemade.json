@@ -292,7 +292,7 @@
 		"authorDiscordId": "960213930586824766"
 	},
 	"freedomdive": {
-		"displayName": "Freedom Dive ↓",
+		"displayName": "Freedom Dive â†“",
 		"authorDiscordId": "631246535560265749"
 	},
 	"frostbitebase2x": {
@@ -480,7 +480,7 @@
 		"authorDiscordId": "430487372015206410"
 	},
 	"lumiere": {
-		"displayName": "Stellaris Phantasm: Lumière Bracket",
+		"displayName": "Stellaris Phantasm: LumiÃ¨re Bracket",
 		"authorDiscordId": "617399529532293150"
 	},
 	"lunablaster": {
@@ -548,7 +548,7 @@
 		"authorDiscordId": "1131109226551459881"
 	},
 	"muchen": {
-		"displayName": "Bastard München",
+		"displayName": "Bastard MÃ¼nchen",
 		"authorDiscordId": "528851510222782474"
 	},
 	"mugcupmini": {
@@ -731,8 +731,12 @@
 		"displayName": "Seabattle",
 		"authorDiscordId": "528851510222782474"
 	},
+	"seior": {
+		"displayName": "Sei�rs Scramble",
+		"authorDiscordId": "528851510222782474"
+	},
 	"seiorsilver": {
-		"displayName": "Sei�rs Scramble (2nd place)",
+		"displayName": "Seiðrs Scramble (2nd place)",
 		"authorDiscordId": "528851510222782474"
 	},
 	"serenade": {
