@@ -114,7 +114,6 @@ const tournamentRoundMaps = z.object({
 	type: z.enum(["BEST_OF", "PLAY_ALL"]),
 	pickBan: z.enum(PickBan.types).nullish(),
 });
-
 export const bracketSchema = z.union([
 	z.object({
 		_action: _action("START_BRACKET"),
@@ -165,4 +164,17 @@ export const matchPageParamsSchema = z.object({ id, mid: id });
 export const tournamentTeamPageParamsSchema = z.object({
 	id,
 	tid: id,
+});
+
+export type NewTournamentBadgeOwners = z.infer<typeof newBadgeOwners>;
+
+const newBadgeOwners = z.array(
+	z.object({
+		badgeId: id,
+		ownerIds: z.array(id).min(1).max(50),
+	}),
+);
+
+export const finalizeTournamentActionSchema = z.object({
+	badges: z.preprocess(safeJSONParse, newBadgeOwners.nullish()),
 });

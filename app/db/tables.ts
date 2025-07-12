@@ -98,8 +98,10 @@ export interface BadgeManager {
 }
 
 export type BadgeOwner = {
-	badgeId: number | null;
-	userId: number | null;
+	badgeId: number;
+	userId: number;
+	/** Which tournament the badge is from, if null was added manually by a badge manager as opposed to once a tournament was finalized. */
+	tournamentId: number | null;
 };
 
 export interface Build {
