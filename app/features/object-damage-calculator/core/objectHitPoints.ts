@@ -62,7 +62,7 @@ export const objectHitPoints = (abilityPoints: AbilityPoints): HitPoints => {
 		),
 		BulletUmbrellaCanopyNormal_Launched: SPLAT_BRELLA_SHIELD_HP * 2,
 		BulletUmbrellaCanopyWide_Launched: hpDivided(
-			weaponParams.mainWeapons[6010].CanopyHP * 2,
+			weaponParams.mainWeapons[6010].CanopyHP * (10 / 6),
 		),
 		BulletShelterCanopyFocus_Launched: hpDivided(
 			weaponParams.mainWeapons[6030].CanopyHP * 2,
