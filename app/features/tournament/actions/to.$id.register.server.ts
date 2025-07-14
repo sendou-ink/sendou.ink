@@ -18,7 +18,6 @@ import {
 	parseParams,
 	uploadImageIfSubmitted,
 } from "~/utils/remix.server";
-import { booleanToInt } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "~/utils/zod";
 import { checkIn } from "../queries/checkIn.server";
@@ -90,8 +89,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 					team: {
 						id: ownTeam.id,
 						name: data.teamName,
-						prefersNotToHost: booleanToInt(data.prefersNotToHost),
-						noScreen: booleanToInt(data.noScreen),
+						prefersNotToHost: Number(data.prefersNotToHost),
+						noScreen: Number(data.noScreen),
 						teamId: data.teamId ?? null,
 					},
 				});
@@ -126,8 +125,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 					}),
 					team: {
 						name: data.teamName,
-						noScreen: booleanToInt(data.noScreen),
-						prefersNotToHost: booleanToInt(data.prefersNotToHost),
+						noScreen: Number(data.noScreen),
+						prefersNotToHost: Number(data.prefersNotToHost),
 						teamId: data.teamId ?? null,
 					},
 					userId: user.id,
