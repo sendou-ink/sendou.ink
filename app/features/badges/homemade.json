@@ -847,6 +847,10 @@
 		"displayName": "Mount Squidmore A-Side",
 		"authorDiscordId": "631246535560265749"
 	},
+	"squidmorebside": {
+		"displayName": "Mount Squidmore B-Side",
+		"authorDiscordId": "631246535560265749"
+	},
 	"squidtheforce": {
 		"displayName": "Squidforce Cup",
 		"authorDiscordId": "1320944066002681876"
