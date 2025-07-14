@@ -121,20 +121,18 @@ export function PlacementsTable({
 						</th>
 					) : null}
 					{bracket.type === "swiss" ? (
-						<>
-							<th>
-								<abbr title="Opponents' set win percentage average">OW%</abbr>
-							</th>
-							<th>
-								<abbr title="Opponents' map win percentage average">
-									OW% (M)
-								</abbr>
-							</th>
-						</>
+						<th>
+							<abbr title="Opponents' set win percentage average">OW%</abbr>
+						</th>
 					) : null}
 					<th>
 						<abbr title="Map wins and losses">W/L (M)</abbr>
 					</th>
+					{bracket.type === "swiss" ? (
+						<th>
+							<abbr title="Opponents' map win percentage average">OW% (M)</abbr>
+						</th>
+					) : null}
 					{bracket.type === "round_robin" ? (
 						<th>
 							<abbr title="Score summed up">Scr</abbr>
@@ -210,20 +208,20 @@ export function PlacementsTable({
 								</td>
 							) : null}
 							{bracket.type === "swiss" ? (
-								<>
-									<td>
-										<span>{stats.opponentSetWinPercentage?.toFixed(2)}</span>
-									</td>
-									<td>
-										<span>{stats.opponentMapWinPercentage?.toFixed(2)}</span>
-									</td>
-								</>
+								<td>
+									<span>{stats.opponentSetWinPercentage?.toFixed(2)}</span>
+								</td>
 							) : null}
 							<td>
 								<span>
 									{stats.mapWins}/{stats.mapLosses}
 								</span>
 							</td>
+							{bracket.type === "swiss" ? (
+								<td>
+									<span>{stats.opponentMapWinPercentage?.toFixed(2)}</span>
+								</td>
+							) : null}
 							{bracket.type === "round_robin" ? (
 								<td>
 									<span>{stats.points}</span>
