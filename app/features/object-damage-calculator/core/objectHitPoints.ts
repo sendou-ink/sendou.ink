@@ -78,7 +78,7 @@ export const objectHitPoints = (abilityPoints: AbilityPoints): HitPoints => {
 		ShockSonar: WAVE_BREAKER_HP,
 		Wsb_Flag: BEAKON_HP,
 		Wsb_Sprinkler: SPRINKLER_HP,
-		Firework: SUPER_CHUMP_HP,
+		Decoy: SUPER_CHUMP_HP,
 		BulletPogo: TRIPLE_SPLASHDOWN_HP,
 	};
 };

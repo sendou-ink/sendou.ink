@@ -223,7 +223,7 @@ const damageReceiverImages: Record<DamageReceiver, string> = {
 		6030,
 		"launched",
 	),
-	Firework: specialWeaponImageUrl(SUPER_CHUMP_ID),
+	Decoy: specialWeaponImageUrl(SUPER_CHUMP_ID),
 	BulletPogo: specialWeaponImageUrl(TRIPLE_SPLASHDOWN_ID),
 };
 
