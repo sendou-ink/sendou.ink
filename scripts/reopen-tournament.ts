@@ -14,5 +14,8 @@ sql
 		`delete from "TournamentResult" where "TournamentResult"."tournamentId" = @id`,
 	)
 	.run({ id });
+sql
+	.prepare(`update "Tournament" set "isFinalized" = 0 where "id" = @id`)
+	.run({ id });
 
 logger.info(`Reopened tournament with id ${id}`);

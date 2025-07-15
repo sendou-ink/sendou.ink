@@ -151,7 +151,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			tournamentId: match.tournamentId,
 			user: undefined,
 		})
-	).matchNameById(id);
+	).matchContextNamesById(id);
 
 	const result: GetTournamentMatchResponse = {
 		teamOne: match.opponentOne.id

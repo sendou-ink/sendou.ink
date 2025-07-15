@@ -113,10 +113,14 @@ export function BracketMapListDialog({
 				return true;
 			}
 
-			return finalsMaps.list.every(
-				(map, i) =>
-					map.mode === thirdPlaceMaps.list![i].mode &&
-					map.stageId === thirdPlaceMaps.list![i].stageId,
+			return (
+				finalsMaps.count === thirdPlaceMaps.count &&
+				finalsMaps.pickBan === thirdPlaceMaps.pickBan &&
+				finalsMaps.list.every(
+					(map, i) =>
+						map.mode === thirdPlaceMaps.list![i].mode &&
+						map.stageId === thirdPlaceMaps.list![i].stageId,
+				)
 			);
 		},
 	);
