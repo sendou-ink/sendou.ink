@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import { type LoaderFunctionArgs, redirect } from "@remix-run/node";
 import { requireUserId } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -15,6 +15,7 @@ import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.
 import { allMatchResultsByTournamentId } from "~/features/tournament-bracket/queries/allMatchResultsByTournamentId.server";
 import invariant from "~/utils/invariant";
 import { parseParams } from "~/utils/remix.server";
+import { tournamentBracketsPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -25,6 +26,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	});
 
 	const tournament = await tournamentFromDB({ tournamentId, user });
+
+	if (!tournament.canFinalize(user)) {
+		return redirect(
+			tournamentBracketsPage({ tournamentId: tournament.ctx.id }),
+		);
+	}
 
 	const badges = (
 		await CalendarRepository.findById(tournament.ctx.eventId, {

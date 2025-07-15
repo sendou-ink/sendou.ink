@@ -145,9 +145,6 @@ export const bracketSchema = z.union([
 		bracketIdx,
 	}),
 	z.object({
-		_action: _action("FINALIZE_TOURNAMENT"),
-	}),
-	z.object({
 		_action: _action("BRACKET_CHECK_IN"),
 		bracketIdx,
 	}),

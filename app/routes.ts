@@ -99,10 +99,15 @@ export default [
 		route("subs", "features/tournament-subs/routes/to.$id.subs.tsx"),
 		route("subs/new", "features/tournament-subs/routes/to.$id.subs.new.tsx"),
 
-		route("brackets", "features/tournament-bracket/routes/to.$id.brackets.tsx"),
 		route(
 			"divisions",
 			"features/tournament-bracket/routes/to.$id.divisions.tsx",
+		),
+		// xxx: if we don't want the bracket below to disappear, make child route
+		route("brackets", "features/tournament-bracket/routes/to.$id.brackets.tsx"),
+		route(
+			"brackets/finalize",
+			"features/tournament-bracket/routes/to.$id.brackets.finalize.tsx",
 		),
 		route(
 			"brackets/subscribe",

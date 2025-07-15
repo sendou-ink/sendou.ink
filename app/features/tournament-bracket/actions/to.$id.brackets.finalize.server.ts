@@ -12,7 +12,10 @@ import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import * as Standings from "~/features/tournament/core/Standings";
 import { tournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
+import {
+	clearTournamentDataCache,
+	tournamentFromDB,
+} from "~/features/tournament-bracket/core/Tournament.server";
 import {
 	addSummary,
 	finalizeTournament,
@@ -103,6 +106,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		}
 	}
 
+	// xxx: notify users about badges
+	// if (data.badges) {
+	// 	notify({...});
+	// }
+
+	clearTournamentDataCache(tournamentId);
+
+	// xxx: success toast?
 	return null;
 };
 
