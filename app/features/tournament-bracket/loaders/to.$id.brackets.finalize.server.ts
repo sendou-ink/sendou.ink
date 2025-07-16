@@ -14,9 +14,12 @@ import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import { allMatchResultsByTournamentId } from "~/features/tournament-bracket/queries/allMatchResultsByTournamentId.server";
 import invariant from "~/utils/invariant";
+import type { SerializeFrom } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
 import { tournamentBracketsPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
+
+export type FinalizeTournamentLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const user = await requireUserId(request);
@@ -38,6 +41,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 			includeBadgePrizes: true,
 		})
 	)?.badgePrizes;
+
+	invariant(
+		badges,
+		`Tournament ${tournament.ctx.id} event not found for badges`,
+	);
 
 	return {
 		badges,
