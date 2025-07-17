@@ -40,7 +40,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		await CalendarRepository.findById(tournament.ctx.eventId, {
 			includeBadgePrizes: true,
 		})
-	)?.badgePrizes;
+	)?.badgePrizes?.sort((a, b) => a.id - b.id);
 
 	invariant(
 		badges,
@@ -88,6 +88,8 @@ async function standingsWithSetParticipation(tournament: Tournament) {
 	return finalStandings.map((standing) => {
 		standing.team.members;
 		return {
+			placement: standing.placement,
+			tournamentTeamId: standing.team.id,
 			name: standing.team.name,
 			members: standing.team.members.map((member) => ({
 				...member,

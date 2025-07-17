@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { requireUserId } from "~/features/auth/core/user.server";
+import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import {
@@ -9,6 +10,7 @@ import {
 	queryTeamPlayerRatingAverage,
 } from "~/features/mmr/mmr-utils.server";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
+import { notify } from "~/features/notifications/core/notify.server";
 import * as Standings from "~/features/tournament/core/Standings";
 import { tournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
@@ -23,7 +25,7 @@ import {
 import { allMatchResultsByTournamentId } from "~/features/tournament-bracket/queries/allMatchResultsByTournamentId.server";
 import {
 	finalizeTournamentActionSchema,
-	type NewTournamentBadgeOwners,
+	type TournamentBadgeReceivers,
 } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -32,6 +34,7 @@ import {
 	errorToastIfFalsy,
 	parseParams,
 	parseRequestPayload,
+	successToast,
 } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
 
@@ -49,8 +52,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	errorToastIfFalsy(tournament.canFinalize(user), "Can't finalize tournament");
 
-	const badgeOwnersValid = data.badges
-		? await validateBadgeOwners(data.badges, tournament)
+	const badgeOwnersValid = data.badgeReceivers
+		? await validateBadgeReceivers(data.badgeReceivers, tournament)
 		: true;
 	if (!badgeOwnersValid) errorToast("New badge owners invalid");
 
@@ -89,7 +92,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			tournamentId,
 			summary,
 			season,
-			badgeOwners: data.badges ?? undefined,
+			badgeReceivers: data.badgeReceivers ?? undefined,
 		});
 	} else {
 		logger.info(
@@ -106,26 +109,25 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		}
 	}
 
-	// xxx: notify users about badges
-	// if (data.badges) {
-	// 	notify({...});
-	// }
+	if (data.badgeReceivers) {
+		notifyBadgeReceivers(data.badgeReceivers);
+	}
 
 	clearTournamentDataCache(tournamentId);
 
-	// xxx: success toast?
-	return null;
+	// xxx: this not working because of the redirect
+	return successToast("Tournament finalized");
 };
 
 /**
  * Validates that all badge owners are members of teams in the given tournament
  * and that all badge IDs are valid for the tournament's event.
  */
-async function validateBadgeOwners(
-	badgeOwners: NewTournamentBadgeOwners,
+async function validateBadgeReceivers(
+	badgeReceivers: TournamentBadgeReceivers,
 	tournament: Tournament,
 ) {
-	const userIds = badgeOwners.flatMap((bo) => bo.ownerIds);
+	const userIds = badgeReceivers.flatMap((bo) => bo.userIds);
 
 	for (const userId of userIds) {
 		// this is not validating that all user ids per badge are from the same team but that is ok
@@ -151,7 +153,7 @@ async function validateBadgeOwners(
 		"validateBadgeOwners: Event with badge prizes not found",
 	);
 
-	const badgeIds = badgeOwners.map((bo) => bo.badgeId);
+	const badgeIds = badgeReceivers.map((bo) => bo.badgeId);
 
 	for (const badgeId of badgeIds) {
 		const isValidBadge = eventBadgePrizes.some(
@@ -165,4 +167,26 @@ async function validateBadgeOwners(
 	}
 
 	return true;
+}
+
+async function notifyBadgeReceivers(badgeReceivers: TournamentBadgeReceivers) {
+	try {
+		for (const receiver of badgeReceivers) {
+			const badge = await BadgeRepository.findById(receiver.badgeId);
+			invariant(badge, `Badge with id ${receiver.badgeId} not found`);
+
+			notify({
+				userIds: receiver.userIds,
+				notification: {
+					type: "BADGE_ADDED",
+					meta: {
+						badgeName: badge.displayName,
+						badgeId: receiver.badgeId,
+					},
+				},
+			});
+		}
+	} catch (error) {
+		logger.error("Error notifying badge receivers", error);
+	}
 }

@@ -163,15 +163,16 @@ export const tournamentTeamPageParamsSchema = z.object({
 	tid: id,
 });
 
-export type NewTournamentBadgeOwners = z.infer<typeof newBadgeOwners>;
+export type TournamentBadgeReceivers = z.infer<typeof badgeReceivers>;
 
-const newBadgeOwners = z.array(
+const badgeReceivers = z.array(
 	z.object({
 		badgeId: id,
-		ownerIds: z.array(id).min(1).max(50),
+		tournamentTeamId: id,
+		userIds: z.array(id).min(1).max(50),
 	}),
 );
 
 export const finalizeTournamentActionSchema = z.object({
-	badges: z.preprocess(safeJSONParse, newBadgeOwners.nullish()),
+	badgeReceivers: z.preprocess(safeJSONParse, badgeReceivers.nullish()),
 });

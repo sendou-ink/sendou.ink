@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 import * as R from "remeda";
 import type { Tables, TournamentRoundMaps } from "~/db/tables";
+import type { TournamentBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator";
@@ -303,4 +304,31 @@ export function ensureOneStandingPerUser(standings: Standing[]) {
 			},
 		};
 	});
+}
+
+export function validateBadgeReceivers({
+	badgeReceivers,
+	badges,
+}: {
+	badgeReceivers: TournamentBadgeReceivers;
+	badges: ReadonlyArray<{ id: number }>;
+}) {
+	for (const badge of badges) {
+		const owner = badgeReceivers.find(
+			(receiver) => receiver.badgeId === badge.id,
+		);
+		if (!owner || owner.userIds.length === 0) {
+			return "BADGE_NOT_ASSIGNED";
+		}
+	}
+
+	const tournamentTeamIds = badgeReceivers.map(
+		(receiver) => receiver.tournamentTeamId,
+	);
+	const uniqueTournamentTeamIds = new Set(tournamentTeamIds);
+	if (tournamentTeamIds.length !== uniqueTournamentTeamIds.size) {
+		return "DUPLICATE_TOURNAMENT_TEAM_ID";
+	}
+
+	return null;
 }

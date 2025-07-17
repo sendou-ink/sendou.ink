@@ -2,7 +2,7 @@ import { ordinal } from "openskill";
 import { sql } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import { identifierToUserIds } from "~/features/mmr/mmr-utils";
-import type { NewTournamentBadgeOwners } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+import type { TournamentBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import type { TournamentSummary } from "../core/summarizer.server";
 
@@ -151,12 +151,12 @@ export const addSummary = sql.transaction(
 		tournamentId,
 		summary,
 		season,
-		badgeOwners = [],
+		badgeReceivers = [],
 	}: {
 		tournamentId: number;
 		summary: TournamentSummary;
 		season?: number;
-		badgeOwners?: NewTournamentBadgeOwners;
+		badgeReceivers?: TournamentBadgeReceivers;
 	}) => {
 		for (const skill of summary.skills) {
 			const insertedSkill = addSkillStm.get({
@@ -215,8 +215,8 @@ export const addSummary = sql.transaction(
 			});
 		}
 
-		for (const badgeOwner of badgeOwners) {
-			for (const userId of badgeOwner.ownerIds) {
+		for (const badgeOwner of badgeReceivers) {
+			for (const userId of badgeOwner.userIds) {
 				addTournamentBadgeOwnersStm.run({
 					tournamentId,
 					badgeId: badgeOwner.badgeId,
