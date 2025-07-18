@@ -306,6 +306,16 @@ export function ensureOneStandingPerUser(standings: Standing[]) {
 	});
 }
 
+/**
+ * Validates the assignment of badges to receivers in a tournament finalization context.
+ *
+ * Checks the following conditions:
+ * - Each badge receiver references a valid badge from the provided list.
+ * - Every badge has at least one assigned receiver (both team and at least one user).
+ * - No duplicate tournament team IDs exist among the badge receivers.
+ *
+ *   Returns `null` if all validations pass.
+ */
 export function validateBadgeReceivers({
 	badgeReceivers,
 	badges,
@@ -313,6 +323,14 @@ export function validateBadgeReceivers({
 	badgeReceivers: TournamentBadgeReceivers;
 	badges: ReadonlyArray<{ id: number }>;
 }) {
+	if (
+		badgeReceivers.some(
+			(receiver) => !badges.some((badge) => badge.id === receiver.badgeId),
+		)
+	) {
+		return "BADGE_NOT_FOUND";
+	}
+
 	for (const badge of badges) {
 		const owner = badgeReceivers.find(
 			(receiver) => receiver.badgeId === badge.id,

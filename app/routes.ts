@@ -103,11 +103,15 @@ export default [
 			"divisions",
 			"features/tournament-bracket/routes/to.$id.divisions.tsx",
 		),
-		// xxx: if we don't want the bracket below to disappear, make child route
-		route("brackets", "features/tournament-bracket/routes/to.$id.brackets.tsx"),
 		route(
-			"brackets/finalize",
-			"features/tournament-bracket/routes/to.$id.brackets.finalize.tsx",
+			"brackets",
+			"features/tournament-bracket/routes/to.$id.brackets.tsx",
+			[
+				route(
+					"finalize",
+					"features/tournament-bracket/routes/to.$id.brackets.finalize.tsx",
+				),
+			],
 		),
 		route(
 			"brackets/subscribe",

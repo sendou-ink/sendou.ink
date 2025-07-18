@@ -105,6 +105,15 @@ describe("groupNumberToLetters()", () => {
 			);
 		});
 
+		test("returns BADGE_NOT_FOUND if some receiver has a badge not from the tournament", () => {
+			const badgeReceivers = [
+				{ badgeId: 1, userIds: [10], tournamentTeamId: 100 },
+			];
+			expect(
+				validateBadgeReceivers({ badgeReceivers, badges: [{ id: 2 }] }),
+			).toBe("BADGE_NOT_FOUND");
+		});
+
 		test("returns null if all badges are assigned and tournamentTeamIds are unique", () => {
 			const badgeReceivers = [
 				{ badgeId: 1, userIds: [10], tournamentTeamId: 100 },

@@ -27,6 +27,7 @@ import {
 	finalizeTournamentActionSchema,
 	type TournamentBadgeReceivers,
 } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+import { validateBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-utils";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
@@ -34,8 +35,9 @@ import {
 	errorToastIfFalsy,
 	parseParams,
 	parseRequestPayload,
-	successToast,
+	successToastWithRedirect,
 } from "~/utils/remix.server";
+import { tournamentBracketsPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -53,7 +55,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	errorToastIfFalsy(tournament.canFinalize(user), "Can't finalize tournament");
 
 	const badgeOwnersValid = data.badgeReceivers
-		? await validateBadgeReceivers(data.badgeReceivers, tournament)
+		? await requireValidBadgeReceivers(data.badgeReceivers, tournament)
 		: true;
 	if (!badgeOwnersValid) errorToast("New badge owners invalid");
 
@@ -110,60 +112,42 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	}
 
 	if (data.badgeReceivers) {
+		logger.info(
+			`Badge receivers for tournament id ${tournamentId}: ${JSON.stringify(data.badgeReceivers)}`,
+		);
+
 		notifyBadgeReceivers(data.badgeReceivers);
 	}
 
 	clearTournamentDataCache(tournamentId);
 
-	// xxx: this not working because of the redirect
-	return successToast("Tournament finalized");
+	return successToastWithRedirect({
+		url: tournamentBracketsPage({ tournamentId }),
+		message: "Tournament finalized",
+	});
 };
 
-/**
- * Validates that all badge owners are members of teams in the given tournament
- * and that all badge IDs are valid for the tournament's event.
- */
-async function validateBadgeReceivers(
+async function requireValidBadgeReceivers(
 	badgeReceivers: TournamentBadgeReceivers,
 	tournament: Tournament,
 ) {
-	const userIds = badgeReceivers.flatMap((bo) => bo.userIds);
-
-	for (const userId of userIds) {
-		// this is not validating that all user ids per badge are from the same team but that is ok
-		const isMemberOfSomeTeam = tournament.ctx.teams.some((team) =>
-			team.members.some((member) => member.userId === userId),
-		);
-
-		if (!isMemberOfSomeTeam) {
-			logger.error(
-				`validateBadgeOwners: Invalid badge owner userId: ${userId}`,
-			);
-			return false;
-		}
-	}
-
-	const eventBadgePrizes = (
+	const badges = (
 		await CalendarRepository.findById(tournament.ctx.eventId, {
 			includeBadgePrizes: true,
 		})
 	)?.badgePrizes;
-	invariant(
-		eventBadgePrizes,
-		"validateBadgeOwners: Event with badge prizes not found",
-	);
+	invariant(badges, "validateBadgeOwners: Event with badge prizes not found");
 
-	const badgeIds = badgeReceivers.map((bo) => bo.badgeId);
+	const error = validateBadgeReceivers({
+		badgeReceivers,
+		badges,
+	});
 
-	for (const badgeId of badgeIds) {
-		const isValidBadge = eventBadgePrizes.some(
-			(badgePrize) => badgePrize.id === badgeId,
+	if (error) {
+		logger.warn(
+			`validateBadgeOwners: Invalid badge receivers for tournament ${tournament.ctx.id}: ${error}`,
 		);
-
-		if (!isValidBadge) {
-			logger.error(`validateBadgeOwners: Invalid badgeId: ${badgeId}`);
-			return false;
-		}
+		return false;
 	}
 
 	return true;

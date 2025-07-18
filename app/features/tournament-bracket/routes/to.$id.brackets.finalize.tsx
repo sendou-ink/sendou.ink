@@ -54,8 +54,9 @@ export default function TournamentFinalizePage() {
 						<SendouSwitch
 							isSelected={isAssignLaterSelected}
 							onChange={setIsAssignLaterSelected}
+							data-testid="assign-badges-later-switch"
 						>
-							Assign badges later manually
+							{t("tournament:actions.finalize.assignBadgesLater")}
 						</SendouSwitch>
 						{!isAssignLaterSelected ? (
 							<>
@@ -128,7 +129,9 @@ function NewBadgeReceiversSelector({
 	badgeReceivers: TournamentBadgeReceivers;
 	setBadgeReceivers: (owners: TournamentBadgeReceivers) => void;
 }) {
+	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
+	const id = React.useId();
 
 	const handleTeamSelected =
 		(badgeId: number) => (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -191,20 +194,31 @@ function NewBadgeReceiversSelector({
 				return (
 					<div key={badge.id} className="stack md">
 						<h2 className="stack sm horizontal items-center text-sm">
-							<Badge badge={badge} size={32} isAnimated /> {badge.displayName}
+							<div className="finalize__badge-container">
+								<Badge badge={badge} size={32} isAnimated />
+							</div>{" "}
+							{badge.displayName}
 						</h2>
-						<select
-							value={receiver?.tournamentTeamId ?? ""}
-							onChange={handleTeamSelected(badge.id)}
-						>
-							<option value="">Select receiving team</option>
-							{standings.map((standing) => (
-								<option key={standing.name} value={standing.tournamentTeamId}>
-									<Placement placement={standing.placement} plain />){" "}
-									{standing.name}
+						<div>
+							<label htmlFor={`${id}-${badge.id}`}>
+								{t("tournament:finalize.receivingTeam.label")}
+							</label>
+							<select
+								id={`${id}-${badge.id}`}
+								value={receiver?.tournamentTeamId ?? ""}
+								onChange={handleTeamSelected(badge.id)}
+							>
+								<option value="">
+									{t("tournament:finalize.receivingTeam.placeholder")}
 								</option>
-							))}
-						</select>
+								{standings.map((standing) => (
+									<option key={standing.name} value={standing.tournamentTeamId}>
+										<Placement placement={standing.placement} plain />){" "}
+										{standing.name}
+									</option>
+								))}
+							</select>
+						</div>
 						{standingToReceive?.members.map((member, i) => {
 							return (
 								<div key={member.userId} className="stack sm">

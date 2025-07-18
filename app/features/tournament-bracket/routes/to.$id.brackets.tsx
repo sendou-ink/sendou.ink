@@ -1,4 +1,4 @@
-import { useRevalidator } from "@remix-run/react";
+import { Outlet, useOutletContext, useRevalidator } from "@remix-run/react";
 import clsx from "clsx";
 import { sub } from "date-fns";
 import * as React from "react";
@@ -49,6 +49,7 @@ export default function TournamentBracketsPage() {
 	const user = useUser();
 	const tournament = useTournament();
 	const isMounted = useIsMounted();
+	const ctx = useOutletContext();
 
 	const defaultBracketIdx = () => {
 		if (
@@ -158,6 +159,7 @@ export default function TournamentBracketsPage() {
 
 	return (
 		<div>
+			<Outlet context={ctx} />
 			{visibility !== "hidden" && !tournament.everyBracketOver ? (
 				<AutoRefresher />
 			) : null}
@@ -165,7 +167,7 @@ export default function TournamentBracketsPage() {
 				<div className="tournament-bracket__finalize">
 					<LinkButton
 						variant="minimal"
-						data-testid="finalize-tournament-button"
+						testId="finalize-tournament-button"
 						to="finalize"
 					>
 						{t("tournament:actions.finalize.question")}

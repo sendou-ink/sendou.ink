@@ -215,11 +215,11 @@ export const addSummary = sql.transaction(
 			});
 		}
 
-		for (const badgeOwner of badgeReceivers) {
-			for (const userId of badgeOwner.userIds) {
+		for (const badgeReceiver of badgeReceivers) {
+			for (const userId of badgeReceiver.userIds) {
 				addTournamentBadgeOwnersStm.run({
 					tournamentId,
-					badgeId: badgeOwner.badgeId,
+					badgeId: badgeReceiver.badgeId,
 					userId,
 				});
 			}
