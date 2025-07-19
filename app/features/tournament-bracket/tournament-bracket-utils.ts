@@ -1,6 +1,6 @@
 import type { TFunction } from "i18next";
 import * as R from "remeda";
-import type { Tables, TournamentRoundMaps } from "~/db/tables";
+import type { TournamentRoundMaps } from "~/db/tables";
 import type { TournamentBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -28,10 +28,15 @@ const NUM_MAP = {
 	"9": ["9", "6", "8"],
 	"0": ["0", "8"],
 };
-export function resolveRoomPass(matchId: Tables["TournamentMatch"]["id"]) {
+/**
+ * Generates a deterministic 4-digit Splatoon private battle room password based on the provided seed.
+ *
+ * Given the same seed, this function will always return the same password.
+ */
+export function resolveRoomPass(seed: number | string) {
 	let pass = "5";
 	for (let i = 0; i < 3; i++) {
-		const { shuffle } = seededRandom(`${matchId}-${i}`);
+		const { shuffle } = seededRandom(`${seed}-${i}`);
 
 		const key = pass[i] as keyof typeof NUM_MAP;
 		const opts = NUM_MAP[key];
