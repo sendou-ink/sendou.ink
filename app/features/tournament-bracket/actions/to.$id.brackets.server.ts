@@ -8,6 +8,7 @@ import * as TournamentRepository from "~/features/tournament/TournamentRepositor
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import invariant from "~/utils/invariant";
 import {
+	errorToastIfErr,
 	errorToastIfFalsy,
 	parseParams,
 	parseRequestPayload,
@@ -180,17 +181,15 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			errorToastIfFalsy(bracket, "Bracket not found");
-			errorToastIfFalsy(
-				bracket.type === "swiss",
-				"Can't advance non-swiss bracket",
-			);
 
 			const matches = Swiss.generateMatchUps({
 				bracket,
 				groupId: data.groupId,
 			});
 
-			await TournamentRepository.insertSwissMatches(matches);
+			errorToastIfErr(matches);
+
+			await TournamentRepository.insertSwissMatches(matches.value);
 
 			break;
 		}

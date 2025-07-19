@@ -8,6 +8,7 @@ import {
 import type { Params, UIMatch } from "@remix-run/react";
 import type { Namespace, TFunction } from "i18next";
 import { nanoid } from "nanoid";
+import type { Ok, Result } from "neverthrow";
 import type { z } from "zod/v4";
 import type { navItems } from "~/components/layout/nav-items";
 import { s3UploadHandler } from "~/features/img-upload";
@@ -206,6 +207,19 @@ export function errorToastIfFalsy(
 	if (condition) return;
 
 	throw errorToastRedirect(message);
+}
+
+/**
+ * To be used in loader or action function. Asserts that the provided `Result` value is an `Ok` variant of the `neverthrow` library.
+ *
+ * If the value is an `Err`, shows an error toast to the user with the error message. The function will stop execution by throwing a redirect meaning it is safe to operate on the value after this function call.
+ */
+export function errorToastIfErr<T, E extends string>(
+	value: Result<T, E>,
+): asserts value is Ok<T, never> {
+	if (value.isErr()) {
+		throw errorToastRedirect(value.error);
+	}
 }
 
 /** Throws a redirect triggering an error toast with given message.  */
