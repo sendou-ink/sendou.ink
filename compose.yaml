@@ -22,3 +22,20 @@ services:
     volumes:
       - ~/minio/data:/data
     command: server /data --console-address ":9001"
+
+  skalop:
+    image: ghcr.io/sendou-ink/skalop:latest
+    ports:
+      - "5900:5900"
+    environment:
+      - REDIS_URL=${REDIS_URL}
+      - SKALOP_TOKEN=${SKALOP_TOKEN}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - PORT=5900
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
