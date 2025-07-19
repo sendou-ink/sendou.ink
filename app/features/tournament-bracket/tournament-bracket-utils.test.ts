@@ -3,6 +3,7 @@ import {
 	fillWithNullTillPowerOfTwo,
 	groupNumberToLetters,
 	mapCountPlayedInSetWithCertainty,
+	validateBadgeReceivers,
 } from "./tournament-bracket-utils";
 
 const mapCountParamsToResult: {
@@ -71,4 +72,54 @@ describe("groupNumberToLetters()", () => {
 			expect(groupNumberToLetters(groupNumber)).toBe(expected);
 		});
 	}
+
+	describe("validateNewBadgeOwners", () => {
+		const badges = [{ id: 1 }, { id: 2 }];
+
+		test("returns BADGE_NOT_ASSIGNED if a badge has no owner", () => {
+			const badgeReceivers = [
+				{ badgeId: 1, userIds: [10], tournamentTeamId: 100 },
+			];
+			expect(validateBadgeReceivers({ badgeReceivers, badges })).toBe(
+				"BADGE_NOT_ASSIGNED",
+			);
+		});
+
+		test("returns BADGE_NOT_ASSIGNED if a badge owner has empty userIds", () => {
+			const badgeReceivers = [
+				{ badgeId: 1, userIds: [], tournamentTeamId: 100 },
+				{ badgeId: 2, userIds: [20], tournamentTeamId: 101 },
+			];
+			expect(validateBadgeReceivers({ badgeReceivers, badges })).toBe(
+				"BADGE_NOT_ASSIGNED",
+			);
+		});
+
+		test("returns DUPLICATE_TOURNAMENT_TEAM_ID if tournamentTeamId is duplicated", () => {
+			const badgeReceivers = [
+				{ badgeId: 1, userIds: [10], tournamentTeamId: 100 },
+				{ badgeId: 2, userIds: [20], tournamentTeamId: 100 },
+			];
+			expect(validateBadgeReceivers({ badgeReceivers, badges })).toBe(
+				"DUPLICATE_TOURNAMENT_TEAM_ID",
+			);
+		});
+
+		test("returns BADGE_NOT_FOUND if some receiver has a badge not from the tournament", () => {
+			const badgeReceivers = [
+				{ badgeId: 1, userIds: [10], tournamentTeamId: 100 },
+			];
+			expect(
+				validateBadgeReceivers({ badgeReceivers, badges: [{ id: 2 }] }),
+			).toBe("BADGE_NOT_FOUND");
+		});
+
+		test("returns null if all badges are assigned and tournamentTeamIds are unique", () => {
+			const badgeReceivers = [
+				{ badgeId: 1, userIds: [10], tournamentTeamId: 100 },
+				{ badgeId: 2, userIds: [20], tournamentTeamId: 101 },
+			];
+			expect(validateBadgeReceivers({ badgeReceivers, badges })).toBeNull();
+		});
+	});
 });

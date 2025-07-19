@@ -217,6 +217,16 @@ export function successToast(message: string) {
 	return redirect(`?__success=${message}`);
 }
 
+export function successToastWithRedirect({
+	message,
+	url,
+}: {
+	message: string;
+	url: string;
+}) {
+	return redirect(`${url}?__success=${message}`);
+}
+
 export type ActionError = { field: string; msg: string; isError: true };
 
 export function actionError<T extends z.ZodTypeAny>({

@@ -11,6 +11,8 @@ export type PlacementProps = {
 	textClassName?: string;
 	size?: number;
 	textOnly?: boolean;
+	/** Render plain text, no icon or wrapping html elements */
+	plain?: boolean;
 	showAsSuperscript?: boolean;
 };
 
@@ -34,11 +36,11 @@ export function Placement({
 	size = 20,
 	textOnly = false,
 	showAsSuperscript = true,
+	plain = false,
 }: PlacementProps) {
 	const { t } = useTranslation(undefined, {});
 
-	// Remove assertion if types stop claiming result is "never".
-	const ordinalSuffix: string = t("results.placeSuffix", {
+	const ordinalSuffix = t("results.placeSuffix", {
 		count: placement,
 		ordinal: true,
 		// no suffix is a better default than english
@@ -50,6 +52,10 @@ export function Placement({
 	const ordinalSuffixText = ordinalSuffix.replace(/^\^/, "");
 
 	const iconPath = textOnly ? null : getSpecialPlacementIconPath(placement);
+
+	if (plain) {
+		return `${placement}${ordinalSuffixText}`;
+	}
 
 	if (!iconPath) {
 		return (
