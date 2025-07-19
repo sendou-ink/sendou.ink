@@ -53,8 +53,11 @@ export const BADGES_DOC_LINK =
 export const CREATING_TOURNAMENT_DOC_LINK =
 	"https://github.com/sendou-ink/sendou.ink/blob/rewrite/docs/tournament-creation.md";
 
+// xxx: do this the proper way
 const USER_SUBMITTED_IMAGE_ROOT =
-	"https://sendou.nyc3.cdn.digitaloceanspaces.com";
+	process.env.NODE_ENV === "development"
+		? "http://127.0.0.1:9000/sendou"
+		: "https://sendou.nyc3.cdn.digitaloceanspaces.com";
 export const userSubmittedImage = (fileName: string) =>
 	`${USER_SUBMITTED_IMAGE_ROOT}/${fileName}`;
 // images with https are not hosted on spaces, this is used for local development
