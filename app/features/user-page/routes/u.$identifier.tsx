@@ -75,44 +75,63 @@ export default function UserPageLayout() {
 	return (
 		<Main bigger={location.pathname.includes("results")}>
 			<SubNav>
-				<SubNavLink to={userPage(data.user)}>
+				<SubNavLink to={userPage(data.user)} data-testid="user-profile-tab">
 					{t("common:header.profile")}
 				</SubNavLink>
-				<SubNavLink to={userSeasonsPage({ user: data.user })}>
+				<SubNavLink
+					to={userSeasonsPage({ user: data.user })}
+					data-testid="user-seasons-tab"
+				>
 					{t("user:seasons")}
 				</SubNavLink>
-				{isOwnPage && (
-					<SubNavLink to={userEditProfilePage(data.user)} prefetch="intent">
+				{isOwnPage ? (
+					<SubNavLink
+						to={userEditProfilePage(data.user)}
+						prefetch="intent"
+						data-testid="user-edit-tab"
+					>
 						{t("common:actions.edit")}
 					</SubNavLink>
-				)}
-				{allResultsCount > 0 && (
-					<SubNavLink to={userResultsPage(data.user)}>
+				) : null}
+				{allResultsCount > 0 ? (
+					<SubNavLink
+						to={userResultsPage(data.user)}
+						data-testid="user-results-tab"
+					>
 						{t("common:results")} ({allResultsCount})
 					</SubNavLink>
-				)}
-				{(data.user.buildsCount > 0 || isOwnPage) && (
+				) : null}
+				{data.user.buildsCount > 0 || isOwnPage ? (
 					<SubNavLink
 						to={userBuildsPage(data.user)}
 						prefetch="intent"
-						data-testid="builds-tab"
+						data-testid="user-builds-tab"
 					>
 						{t("common:pages.builds")} ({data.user.buildsCount})
 					</SubNavLink>
-				)}
-				{(data.user.vodsCount > 0 || isOwnPage) && (
-					<SubNavLink to={userVodsPage(data.user)}>
+				) : null}
+				{data.user.vodsCount > 0 || isOwnPage ? (
+					<SubNavLink to={userVodsPage(data.user)} data-testid="user-vods-tab">
 						{t("common:pages.vods")} ({data.user.vodsCount})
 					</SubNavLink>
-				)}
-				{(data.user.artCount > 0 || isOwnPage) && (
-					<SubNavLink to={userArtPage(data.user)} end={false}>
+				) : null}
+				{data.user.artCount > 0 || isOwnPage ? (
+					<SubNavLink
+						to={userArtPage(data.user)}
+						end={false}
+						data-testid="user-art-tab"
+					>
 						{t("common:pages.art")} ({data.user.artCount})
 					</SubNavLink>
-				)}
-				{isStaff && (
-					<SubNavLink to={userAdminPage(data.user)}>Admin</SubNavLink>
-				)}
+				) : null}
+				{isStaff ? (
+					<SubNavLink
+						to={userAdminPage(data.user)}
+						data-testid="user-admin-tab"
+					>
+						Admin
+					</SubNavLink>
+				) : null}
 			</SubNav>
 			<Outlet />
 		</Main>

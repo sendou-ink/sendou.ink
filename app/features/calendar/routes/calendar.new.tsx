@@ -24,7 +24,6 @@ import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
-import { isDefined } from "~/utils/arrays";
 import {
 	databaseTimestampToDate,
 	getDateAtNextFullHour,
@@ -461,7 +460,7 @@ function DatesInput({ allowMultiDate }: { allowMultiDate?: boolean }) {
 			// .reverse() is mutating, but map/filter returns a new array anyway.
 			const lastValidDate = current
 				.map((e) => e.date)
-				.filter(isDefined)
+				.filter((date) => date !== null)
 				.reverse()[0];
 
 			const addedDate = lastValidDate

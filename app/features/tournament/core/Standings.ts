@@ -86,6 +86,13 @@ export function matchesPlayed({
 	});
 }
 
+/**
+ * Computes the standings for a given tournament by aggregating results from relevant brackets.
+ *
+ * For example if the tournament format is round robin (where 2 out of 4 teams per group advance) to single elimination,
+ * the top teams are decided by the single elimination bracket, and the teams who failed to make the bracket are ordered
+ * by their performance in the round robin group stage.
+ */
 export function tournamentStandings(tournament: Tournament): Standing[] {
 	const bracketIdxs = Progression.bracketIdxsForStandings(
 		tournament.ctx.settings.bracketProgression,

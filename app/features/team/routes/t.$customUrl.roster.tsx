@@ -1,4 +1,4 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/node";
 import { Form, useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
@@ -13,17 +13,12 @@ import { TrashIcon } from "~/components/icons/Trash";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
-import type { SendouRouteHandle } from "~/utils/remix.server";
-import {
-	joinTeamPage,
-	navIconUrl,
-	TEAM_SEARCH_PAGE,
-	teamPage,
-} from "~/utils/urls";
+import { joinTeamPage } from "~/utils/urls";
 import type * as TeamRepository from "../TeamRepository.server";
 import { TEAM_MEMBER_ROLES } from "../team-constants";
 import { isTeamFull } from "../team-utils";
 import "../team.css";
+import { TeamGoBackButton } from "~/features/team/components/TeamGoBackButton";
 import { metaTags } from "~/utils/remix";
 
 import { action } from "../actions/t.$customUrl.roster.server";
@@ -37,33 +32,12 @@ export const meta: MetaFunction = (args) => {
 	});
 };
 
-export const handle: SendouRouteHandle = {
-	i18n: ["team"],
-	breadcrumb: ({ match }) => {
-		const data = match.data as SerializeFrom<typeof loader> | undefined;
-
-		if (!data) return [];
-
-		return [
-			{
-				imgPath: navIconUrl("t"),
-				href: TEAM_SEARCH_PAGE,
-				type: "IMAGE",
-			},
-			{
-				text: data.team.name,
-				href: teamPage(data.team.customUrl),
-				type: "TEXT",
-			},
-		];
-	},
-};
-
 export default function ManageTeamRosterPage() {
 	const { t } = useTranslation(["team"]);
 
 	return (
 		<Main className="stack lg">
+			<TeamGoBackButton />
 			<InviteCodeSection />
 			<MemberActions />
 			<SendouPopover

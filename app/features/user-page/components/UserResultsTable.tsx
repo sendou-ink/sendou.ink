@@ -1,14 +1,21 @@
 import { Link } from "@remix-run/react";
+import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
+import { UsersIcon } from "~/components/icons/Users";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
+import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { databaseTimestampToDate } from "~/utils/dates";
 import {
 	calendarEventPage,
 	tournamentBracketsPage,
+	tournamentLogoUrl,
 	tournamentTeamPage,
 	userPage,
+	userSubmittedImage,
 } from "~/utils/urls";
 import type { UserResultsLoaderData } from "../loaders/u.$identifier.results.server";
 
@@ -36,10 +43,10 @@ export function UserResultsTable({
 				<tr>
 					{hasHighlightCheckboxes && <th />}
 					<th id={placementHeaderId}>{t("results.placing")}</th>
-					<th>{t("results.team")}</th>
-					<th>{t("results.tournament")}</th>
 					<th>{t("results.date")}</th>
-					<th>{t("results.mates")}</th>
+					<th>{t("results.tournament")}</th>
+					<th>{t("results.participation")}</th>
+					<th>{t("results.team")}</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -51,6 +58,10 @@ export function UserResultsTable({
 					const placementCellId = `${id}-${result.teamId}-placement`;
 					const nameCellId = `${id}-${result.teamId}-name`;
 					const checkboxLabelIds = `${nameCellId} ${placementHeaderId} ${placementCellId}`;
+
+					const logoUrl = result.logoUrl
+						? userSubmittedImage(result.logoUrl)
+						: HACKY_resolvePicture({ name: result.eventName });
 
 					return (
 						<tr key={result.teamId}>
@@ -77,77 +88,133 @@ export function UserResultsTable({
 									</div>
 								</div>
 							</td>
-							<td>
-								{result.tournamentId ? (
-									<Link
-										to={tournamentTeamPage({
-											tournamentId: result.tournamentId,
-											tournamentTeamId: result.teamId,
-										})}
-									>
-										{result.teamName}
-									</Link>
-								) : (
-									result.teamName
-								)}
-							</td>
-							<td id={nameCellId}>
-								{result.eventId ? (
-									<Link to={calendarEventPage(result.eventId)}>
-										{result.eventName}
-									</Link>
-								) : null}
-								{result.tournamentId ? (
-									<Link
-										to={tournamentBracketsPage({
-											tournamentId: result.tournamentId,
-										})}
-										data-testid="tournament-name-cell"
-									>
-										{result.eventName}
-									</Link>
-								) : null}
-							</td>
-							<td>
+							<td className="whitespace-nowrap">
 								{databaseTimestampToDate(result.startTime).toLocaleDateString(
 									i18n.language,
 									{
 										day: "numeric",
-										month: "long",
+										month: "short",
 										year: "numeric",
 									},
 								)}
 							</td>
+							<td id={nameCellId}>
+								<div className="stack horizontal xs items-center">
+									{result.eventId ? (
+										<Link to={calendarEventPage(result.eventId)}>
+											{result.eventName}
+										</Link>
+									) : null}
+									{result.tournamentId ? (
+										<>
+											{logoUrl !== tournamentLogoUrl("default") ? (
+												<img
+													src={logoUrl}
+													alt=""
+													width={18}
+													height={18}
+													className="rounded-full"
+												/>
+											) : null}
+											<Link
+												to={tournamentBracketsPage({
+													tournamentId: result.tournamentId,
+												})}
+												data-testid="tournament-name-cell"
+											>
+												{result.eventName}
+											</Link>
+										</>
+									) : null}
+								</div>
+							</td>
 							<td>
-								<ul
-									className="u__results-players"
-									data-testid={`mates-cell-placement-${i}`}
-								>
-									{result.mates.map((player) => (
-										<li
-											key={player.name ? player.name : player.id}
-											className="flex items-center"
+								<ParticipationPill setResults={result.setResults} />
+							</td>
+							<td>
+								<div className="stack horizontal md items-center">
+									<SendouPopover
+										trigger={
+											<SendouButton
+												icon={<UsersIcon />}
+												size="miniscule"
+												variant="minimal"
+												data-testid="mates-button"
+											/>
+										}
+									>
+										<ul
+											className="u__results-players"
+											data-testid={`mates-cell-placement-${i}`}
 										>
-											{player.name ? (
-												player.name
-											) : (
-												// as any but we know it's a user since it doesn't have name
-												<Link
-													to={userPage(player as any)}
-													className="stack horizontal xs items-center"
+											{result.mates.map((player) => (
+												<li
+													key={player.name ? player.name : player.id}
+													className="flex items-center"
 												>
-													<Avatar user={player as any} size="xxs" />
-													{player.username}
-												</Link>
-											)}
-										</li>
-									))}
-								</ul>
+													{player.name ? (
+														player.name
+													) : (
+														// as any but we know it's a user since it doesn't have name
+														<Link
+															to={userPage(player as any)}
+															className="stack horizontal xs items-center"
+														>
+															<Avatar user={player as any} size="xxs" />
+															{player.username}
+														</Link>
+													)}
+												</li>
+											))}
+										</ul>
+									</SendouPopover>
+									{result.tournamentId ? (
+										<Link
+											to={tournamentTeamPage({
+												tournamentId: result.tournamentId,
+												tournamentTeamId: result.teamId,
+											})}
+										>
+											{result.teamName}
+										</Link>
+									) : (
+										result.teamName
+									)}
+								</div>
 							</td>
 						</tr>
 					);
 				})}
 			</tbody>
 		</Table>
+	);
+}
+
+function ParticipationPill({
+	setResults,
+}: {
+	setResults: UserResultsTableProps["results"][number]["setResults"];
+}) {
+	if (!setResults) {
+		return null;
+	}
+
+	const playedCount = setResults.filter(Boolean).length;
+	const playedPercentage = Math.round((playedCount / setResults.length) * 100);
+
+	return (
+		<div className="u__results__pill__container">
+			<div className="u__results__pill__text">{playedPercentage}%</div>
+			<div className="u__results__pill">
+				{setResults.map((result, i) => (
+					<div
+						key={i}
+						className={clsx("u__results__pill-line", {
+							"u__results__pill-line__participating": result,
+						})}
+					/>
+				))}
+			</div>
+		</div>
 	);
 }

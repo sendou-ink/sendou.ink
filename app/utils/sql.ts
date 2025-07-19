@@ -29,7 +29,3 @@ export function parseDBArray(value: any) {
 
 	return parsed;
 }
-
-export function booleanToInt(value: boolean) {
-	return value ? 1 : 0;
-}

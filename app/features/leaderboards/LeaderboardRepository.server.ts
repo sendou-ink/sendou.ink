@@ -237,6 +237,12 @@ export async function seasonsParticipatedInByUserId(userId: number) {
 		.selectFrom("Skill")
 		.select("season")
 		.where("userId", "=", userId)
+		.where(({ or, eb }) =>
+			or([
+				eb("groupMatchId", "is not", null),
+				eb("tournamentId", "is not", null),
+			]),
+		)
 		.groupBy("season")
 		.orderBy("season", "desc")
 		.execute();

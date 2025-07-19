@@ -17,7 +17,7 @@ import { useTournament } from "./to.$id";
 export default function TournamentResultsPage() {
 	const tournament = useTournament();
 
-	const standings = tournament.standings;
+	const standings = Standings.tournamentStandings(tournament);
 
 	if (standings.length === 0) {
 		return (

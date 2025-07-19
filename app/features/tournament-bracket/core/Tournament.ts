@@ -3,7 +3,6 @@ import type {
 	TournamentStage,
 	TournamentStageSettings,
 } from "~/db/tables";
-import * as Standings from "~/features/tournament/core/Standings";
 import {
 	LEAGUES,
 	TOURNAMENT,
@@ -51,6 +50,7 @@ export class Tournament {
 	}: {
 		data: TournamentData["data"];
 		ctx: TournamentData["ctx"];
+		/** Should the bracket results be simulated (showing how teams are expected to advance), skipping it is a performance optimization if it's not needed */
 		simulateBrackets?: boolean;
 	}) {
 		const hasStarted = data.stage.length > 0;
@@ -565,6 +565,7 @@ export class Tournament {
 		);
 	}
 
+	/** Provides settings for the brackets-manager module with our selected defaults */
 	bracketManagerSettings(
 		selectedSettings: TournamentStageSettings | null,
 		type: Tables["TournamentStage"]["type"],
@@ -617,6 +618,7 @@ export class Tournament {
 		}
 	}
 
+	/** Is tournament ranked (affects SP/Skill). For tournament to be ranked the organizer needs to enable it and it needs to fit the conditions e.g. it needs to happen when a ranked season is active. */
 	get ranked() {
 		return tournamentIsRanked({
 			isSetAsRanked: this.ctx.settings.isRanked,
@@ -645,22 +647,22 @@ export class Tournament {
 		return null;
 	}
 
+	/** What is the format of the tournament 4v4 (default), 3v3, 2v2 or 1v1. */
 	get minMembersPerTeam() {
 		return this.ctx.settings.minMembersPerTeam ?? 4;
 	}
 
+	/** Do teams need to pick map during registration, or is this TO's responsibility */
 	get teamsPrePickMaps() {
 		return this.ctx.mapPickingStyle !== "TO";
 	}
 
-	get logoSrc() {
-		return this.ctx.logoSrc;
-	}
-
+	/** What Splatoon modes are played in this tournament */
 	get modesIncluded(): ModeShort[] {
 		return modesIncluded(this.ctx.mapPickingStyle, this.ctx.toSetMapPool);
 	}
 
+	/** Tournament teams logo image path, either from the team or the pickup avatar uploaded specifically for this tournament */
 	tournamentTeamLogoSrc(team: TournamentDataTeam) {
 		const url = team.team?.logoUrl ?? team.pickupAvatarUrl;
 
@@ -669,6 +671,7 @@ export class Tournament {
 		return userSubmittedImage(url);
 	}
 
+	/** Generates a Splatoon 3 pool code to join the tournament match. It tries to make it so that teams don't need to change the pool all the time, but provides different ones not to run into the in-game limit of max people in a pool at a time. */
 	resolvePoolCode({
 		hostingTeamId,
 		groupLetters,
@@ -707,16 +710,12 @@ export class Tournament {
 		};
 	}
 
-	get mapPickCountPerMode() {
-		return this.modesIncluded.length === 1
-			? TOURNAMENT.COUNTERPICK_ONE_MODE_TOURNAMENT_MAPS_PER_MODE
-			: TOURNAMENT.COUNTERPICK_MAPS_PER_MODE;
-	}
-
+	/** Has tournament started, meaning that at least one bracket has started. Also finalized tournaments are considered started. */
 	get hasStarted() {
 		return this.brackets.some((bracket) => !bracket.preview);
 	}
 
+	/** Is every bracket over (bracket is over when every match is over). */
 	get everyBracketOver() {
 		if (this.ctx.isFinalized) return true;
 
@@ -750,10 +749,7 @@ export class Tournament {
 		return idx;
 	}
 
-	get standings() {
-		return Standings.tournamentStandings(this);
-	}
-
+	/** Should it be possible for the given user to finalize this tournament at this time? */
 	canFinalize(user: OptionalIdObject) {
 		// can skip underground bracket
 		const relevantBrackets = this.brackets.filter(
@@ -786,6 +782,7 @@ export class Tournament {
 		);
 	}
 
+	/** Should it be possible for the given user to report score for this match at this time? */
 	canReportScore({
 		matchId,
 		user,
@@ -815,6 +812,9 @@ export class Tournament {
 		return isParticipant || this.isOrganizer(user);
 	}
 
+	/**
+	 * Checks if a team fulfills all the conditions to check-in. Returns the reason, if not.
+	 */
 	checkInConditionsFulfilledByTeamId(tournamentTeamId: number) {
 		const team = this.teamById(tournamentTeamId);
 		invariant(team, "Team not found");
@@ -837,14 +837,17 @@ export class Tournament {
 		return { isFulfilled: true, reason: null };
 	}
 
+	/** Is the tournament invitational meaning the organizer adds all teams and there is no public registration. */
 	get isInvitational() {
 		return this.ctx.settings.isInvitational ?? false;
 	}
 
+	/** Does this tournament have the option for teams to sign up as subs? Subs is a solo sign-up that teams can ask to join their team if they need more players. */
 	get subsFeatureEnabled() {
 		return this.ctx.settings.enableSubs ?? true;
 	}
 
+	/** Can a new sub post be made at this time? */
 	get canAddNewSubPost() {
 		if (!this.subsFeatureEnabled) return false;
 
@@ -856,6 +859,7 @@ export class Tournament {
 		);
 	}
 
+	/** what is the max amount of members teams can add in total? This limit doesn't apply to the organizer adding members to a team. */
 	get maxTeamMemberCount() {
 		// special format
 		if (this.minMembersPerTeam !== 4) return this.minMembersPerTeam;
@@ -876,6 +880,7 @@ export class Tournament {
 		return maxMembersBeforeStart;
 	}
 
+	/** Is the regular check-in (check-in for the whole tournament) open at this time? */
 	get regularCheckInIsOpen() {
 		return (
 			this.regularCheckInStartsAt < new Date() &&
@@ -883,51 +888,80 @@ export class Tournament {
 		);
 	}
 
+	/** Has the regular check-in (check-in for the whole tournament) ended? */
 	get regularCheckInHasEnded() {
 		return this.ctx.startTime < new Date();
 	}
 
+	/** Has the regular check-in (check-in for the whole tournament) started? Note it is also considered started if it has ended. */
 	get regularCheckInStartInThePast() {
 		return this.regularCheckInStartsAt < new Date();
 	}
 
+	/** Date when the regular check-in is scheduled to start. */
 	get regularCheckInStartsAt() {
 		const result = new Date(this.ctx.startTime);
 		result.setMinutes(result.getMinutes() - 60);
 		return result;
 	}
 
+	/** Date when the regular check-in is scheduled to start. */
 	get regularCheckInEndsAt() {
 		return this.ctx.startTime;
 	}
 
+	/** Date when the tournament registration is scheduled to end. This can be set by the organizer. */
 	get registrationClosesAt() {
 		return this.ctx.settings.regClosesAt
 			? databaseTimestampToDate(this.ctx.settings.regClosesAt)
 			: this.ctx.startTime;
 	}
 
+	/** Is the tournament registration open at this time? */
 	get registrationOpen() {
 		if (this.isInvitational) return false;
 
 		return this.registrationClosesAt > new Date();
 	}
 
+	/**
+	 * Does this tournament have autonomous subs feature enabled?
+	 * If enabled, teams can add members to their roster while tournament is in progress without having to request the organizer to do it.
+	 * */
 	get autonomousSubs() {
 		return this.ctx.settings.autonomousSubs ?? true;
 	}
 
+	/**
+	 * Is this tournament a league sign-up? League sign-up tournament is a special case which just exists for registration.
+	 * It won't have brackets.
+	 * */
 	get isLeagueSignup() {
 		return Object.values(LEAGUES)
 			.flat()
 			.some((entry) => entry.tournamentId === this.ctx.id);
 	}
 
+	/** Is this tournament a league division? League division is a normal tournament that connects to a league sign-up tournament where teams are sourced from. */
 	get isLeagueDivision() {
 		return Boolean(this.ctx.parentTournamentId);
 	}
 
-	matchNameById(matchId: number) {
+	/** Does this tournament have many brackets that act as the first bracket? In this format many bracket progressions advance independently from each other (so not all teams can meet). */
+	get isMultiStartingBracket() {
+		let count = 0;
+		for (const bracket of this.ctx.settings.bracketProgression) {
+			if (!bracket.sources) count++;
+		}
+
+		return count > 1;
+	}
+
+	/** Returns the bracket and round names for the given match ID.
+	 * @example
+	 * tournament.matchNameById(123) // { bracketName: "Groups Stage", roundName: "Round 1.1", roundNameWithoutMatchIdentifier: "Round 1" }
+	 */
+	matchContextNamesById(matchId: number) {
 		let bracketName: string | undefined;
 		let roundName: string | undefined;
 
@@ -1026,6 +1060,7 @@ export class Tournament {
 		};
 	}
 
+	/** Returns a `Bracket` with the given index or the first bracket if not found. */
 	bracketByIdxOrDefault(idx: number): Bracket {
 		const bracket = this.brackets[idx];
 		if (bracket) return bracket;
@@ -1037,6 +1072,7 @@ export class Tournament {
 		return defaultBracket;
 	}
 
+	/** Returns a `Bracket` with the given index or null if not found. */
 	bracketByIdx(idx: number) {
 		const bracket = this.brackets[idx];
 		if (!bracket) return null;
@@ -1044,15 +1080,7 @@ export class Tournament {
 		return bracket;
 	}
 
-	get isMultiStartingBracket() {
-		let count = 0;
-		for (const bracket of this.ctx.settings.bracketProgression) {
-			if (!bracket.sources) count++;
-		}
-
-		return count > 1;
-	}
-
+	/** Returns the team that the user is the owner of, or null if not found. Includes invite code (only owner should see this, logic in the loader function). */
 	ownedTeamByUser(
 		user: OptionalIdObject,
 	): ((typeof this.ctx.teams)[number] & { inviteCode: string }) | null {
@@ -1065,6 +1093,10 @@ export class Tournament {
 		) as (typeof this.ctx.teams)[number] & { inviteCode: string };
 	}
 
+	/**
+	 * Returns the team that the user is a member of, or null if not found.
+	 * Note that user can be a member of multiple teams, this returns the team that the user joined most recently.
+	 */
 	teamMemberOfByUser(user: OptionalIdObject) {
 		if (!user) return null;
 
@@ -1086,6 +1118,10 @@ export class Tournament {
 		return result;
 	}
 
+	/**
+	 * Returns the progress status of the user in the tournament, or null if not participating.
+	 * e.g. might return "WAITING_FOR_MATCH" if the user is waiting for their next match or "WAITING_FOR_CAST" if the match is ready to be played but locked waiting for the cast.
+	 */
 	teamMemberOfProgressStatus(user: OptionalIdObject) {
 		const team = this.teamMemberOfByUser(user);
 		if (!team) return null;
@@ -1199,8 +1235,10 @@ export class Tournament {
 		return { type: "THANKS_FOR_PLAYING" } as const;
 	}
 
-	// basic idea is that they can reopen match as long as they don't have a following match
-	// in progress whose participants could be dependent on the results of this match
+	/**
+	 * Can the given match be reopened? This is used to allow reopening matches were the wrong score was reported.
+	 * In principle match can be reopened as long as no match that follows it has started.
+	 */
 	matchCanBeReopened(matchId: number) {
 		if (this.ctx.isFinalized) return false;
 
@@ -1279,6 +1317,7 @@ export class Tournament {
 		return participantInAnotherBracket;
 	}
 
+	/** Returns matches that follow the given match in the same bracket and stage, but only if they have the same participants and come after the given match. */
 	followingMatches(matchId: number) {
 		const match = this.brackets
 			.flatMap((bracket) => bracket.data.match)
@@ -1319,6 +1358,7 @@ export class Tournament {
 			});
 	}
 
+	/** Checks if the given user is an admin of the tournament. */
 	isAdmin(user: OptionalIdObject) {
 		if (!user) return false;
 		if (isAdmin(user)) return true;
@@ -1334,6 +1374,7 @@ export class Tournament {
 		return this.ctx.author.id === user.id;
 	}
 
+	/** Checks if the given user is an organizer of the tournament. */
 	isOrganizer(user: OptionalIdObject) {
 		if (!user) return false;
 		if (isAdmin(user)) return true;
@@ -1355,6 +1396,7 @@ export class Tournament {
 		);
 	}
 
+	/** Checks if the given user is an organizer or streamer of the tournament. */
 	isOrganizerOrStreamer(user: OptionalIdObject) {
 		if (!user) return false;
 		if (isAdmin(user)) return true;

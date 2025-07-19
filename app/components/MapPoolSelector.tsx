@@ -210,9 +210,9 @@ export function MapPoolStages({
 						width={80}
 						height={45}
 					/>
+					{/** biome-ignore lint/a11y/useSemanticElements: todo */}
 					<div
 						className={styles.stageNameRow}
-						// biome-ignore lint/a11y/useSemanticElements: todo
 						role="group"
 						aria-labelledby={`${id}-stage-name-${stageId}`}
 					>

@@ -39,6 +39,10 @@
 		"displayName": "OCE Open",
 		"authorDiscordId": "1170249805373657093"
 	},
+	"badgeapple": {
+		"displayName": "Mega Splat Party",
+		"authorDiscordId": "751912670403362836"
+	},
 	"badgepalooza": {
 		"displayName": "Badge Palooza",
 		"authorDiscordId": "528851510222782474"
@@ -127,6 +131,14 @@
 		"displayName": "Calm Before the Storm",
 		"authorDiscordId": "631246535560265749"
 	},
+	"canada": {
+		"displayName": "Canada Day!",
+		"authorDiscordId": "1170249805373657093"
+	},
+	"capzone": {
+		"displayName": "Cap the Zone",
+		"authorDiscordId": "752582395076673577"
+	},
 	"catfoodbowl": {
 		"displayName": "Dr. Meowser's Cat Food Bowl",
 		"authorDiscordId": "324396128906903552"
@@ -195,12 +207,16 @@
 		"displayName": "10 ST! Tournaments",
 		"authorDiscordId": "752582395076673577"
 	},
+	"ctrl_ink_delete": {
+		"displayName": "CTRL + Ink + Delete",
+		"authorDiscordId": "751912670403362836"
+	},
 	"current": {
 		"displayName": "FREEDOM DiVE",
 		"authorDiscordId": "564512827285569546"
 	},
 	"curseofexcalibur": {
-		"displayName": "5 Unique Curse of Excalibur Events",
+		"displayName": "Curse of Excalibur Special Events",
 		"authorDiscordId": "338806780446638082"
 	},
 	"custom_e-liter": {
@@ -230,6 +246,10 @@
 	"dreadnoughtus": {
 		"displayName": "Mesozoic Mayhem: Dreadnoughtus Undefeated",
 		"authorDiscordId": "352207524390240257"
+	},
+	"dualin": {
+		"displayName": "Dualin' Horizons",
+		"authorDiscordId": "752582395076673577"
 	},
 	"dynamo": {
 		"displayName": "Dynamo Roller",
@@ -372,7 +392,7 @@
 		"authorDiscordId": "338806780446638082"
 	},
 	"hatsunemikuteto": {
-		"displayName": "MIKU MIKU BEAM!!! Teto Takeover!",
+		"displayName": "MIKU MIKU BEAM!!! Grand Stage",
 		"authorDiscordId": "338806780446638082"
 	},
 	"headband": {
@@ -458,6 +478,10 @@
 	"lte_badge": {
 		"displayName": "Low Tier Experiments",
 		"authorDiscordId": "430487372015206410"
+	},
+	"lugia": {
+		"displayName": "Soul Silver Cup",
+		"authorDiscordId": "671419359058722826"
 	},
 	"lumiere": {
 		"displayName": "Stellaris Phantasm: Lumière Bracket",
@@ -711,6 +735,18 @@
 		"displayName": "Seabattle",
 		"authorDiscordId": "528851510222782474"
 	},
+	"seior": {
+		"displayName": "Seiors Scramble",
+		"authorDiscordId": "528851510222782474"
+	},
+	"seiorbronze": {
+		"displayName": "Seiors Scramble (3rd place)",
+		"authorDiscordId": "528851510222782474"
+	},
+	"seiorsilver": {
+		"displayName": "Seiors Scramble (2rd place)",
+		"authorDiscordId": "528851510222782474"
+	},
 	"serenade": {
 		"displayName": "Stellaris Phantasm: Serenade Bracket",
 		"authorDiscordId": "617399529532293150"
@@ -759,6 +795,10 @@
 		"displayName": "Sylveon",
 		"authorDiscordId": "338806780446638082"
 	},
+	"solosquidshowdown": {
+		"displayName": "Solo Squid Showdown",
+		"authorDiscordId": "824681527815438337"
+	},
 	"soulcupgold": {
 		"displayName": "Soul League (Div 1)",
 		"authorDiscordId": "309327923129745409"
@@ -803,6 +843,10 @@
 		"displayName": "Splat Legacy LAN",
 		"authorDiscordId": "342369454719631361"
 	},
+	"splatoonolympics": {
+		"displayName": "Splatoon Olympics",
+		"authorDiscordId": "338702451156844545"
+	},
 	"splattershotpro": {
 		"displayName": "MIDLINES ONLY",
 		"authorDiscordId": "336683473714544641"
@@ -815,6 +859,14 @@
 		"displayName": "MIDLINES ONLY: FORGE",
 		"authorDiscordId": "336683473714544641"
 	},
+	"squidmoreaside": {
+		"displayName": "Mount Squidmore A-Side",
+		"authorDiscordId": "631246535560265749"
+	},
+	"squidmorebside": {
+		"displayName": "Mount Squidmore B-Side",
+		"authorDiscordId": "631246535560265749"
+	},
 	"squidtheforce": {
 		"displayName": "Squidforce Cup",
 		"authorDiscordId": "1320944066002681876"
@@ -822,6 +874,18 @@
 	"stellatedzone": {
 		"displayName": "Stellated Zone",
 		"authorDiscordId": "309327923129745409"
+	},
+	"stlcsfirst": {
+		"displayName": "LAN Championship Showdown (First)",
+		"authorDiscordId": "201922904781357057"
+	},
+	"stlcssecond": {
+		"displayName": "LAN Championship Showdown (Second)",
+		"authorDiscordId": "201922904781357057"
+	},
+	"stlcsthird": {
+		"displayName": "LAN Championship Showdown (Third)",
+		"authorDiscordId": "201922904781357057"
 	},
 	"sunday-run": {
 		"displayName": "Sunday Run",
@@ -890,6 +954,10 @@
 	"tralalero": {
 		"displayName": "Tralalero Tralala",
 		"authorDiscordId": "528851510222782474"
+	},
+	"transvivian": {
+		"displayName": "Trans Cup",
+		"authorDiscordId": "338806780446638082"
 	},
 	"treasure": {
 		"displayName": "Buried Treasure",

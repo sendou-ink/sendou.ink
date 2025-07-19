@@ -145,6 +145,7 @@ function PovFormField() {
 				field: { onChange, onBlur, value },
 				fieldState: { error },
 			}) => {
+				// biome-ignore lint/complexity/noUselessFragments: Biome upgrade
 				if (!value) return <></>;
 
 				const asPlainInput = value.type === "NAME";

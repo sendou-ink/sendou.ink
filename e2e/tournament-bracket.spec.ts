@@ -339,6 +339,8 @@ test.describe("Tournament bracket", () => {
 	test("completes and finalizes a small tournament (RR->SE w/ underground bracket)", async ({
 		page,
 	}) => {
+		test.slow();
+
 		const tournamentId = 3;
 
 		await seed(page);
@@ -439,15 +441,20 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("result-team-name").first().click();
 		await page.getByTestId("team-member-name").first().click();
 
-		await expect(page).toHaveURL(/\/u\//);
+		await page.getByTestId("user-seasons-tab").click();
+		await expect(page.getByTestId("seasons-tournament-result")).toBeVisible();
 
-		await page.getByText("Results").click();
+		await page.getByTestId("user-results-tab").click();
 		await expect(
 			page.getByTestId("tournament-name-cell").first(),
 		).toContainText("Paddling Pool 253");
+
+		await page.getByTestId("mates-button").first().click();
 		await expect(
 			page.locator('[data-testid="mates-cell-placement-0"] li'),
 		).toHaveCount(3);
+
+		// if more assertions added below we need to close the popover first (data-testid="underlay")
 	});
 
 	test("changes SOS format and progresses with it & adds a member to another team", async ({

@@ -59,6 +59,10 @@ export function migrate(args: { newUserId: number; oldUserId: number }) {
 			.where("userId", "=", args.newUserId)
 			.execute();
 		await trx
+			.deleteFrom("Build")
+			.where("ownerId", "=", args.newUserId)
+			.execute();
+		await trx
 			.deleteFrom("UserFriendCode")
 			.where("userId", "=", args.newUserId)
 			.execute();
@@ -80,6 +84,24 @@ export function migrate(args: { newUserId: number; oldUserId: number }) {
 			.updateTable("UnvalidatedUserSubmittedImage")
 			.where("submitterUserId", "=", args.newUserId)
 			.set({ submitterUserId: args.oldUserId })
+			.execute();
+
+		// special case: delete same team membership to avoid unique constraint violation
+		await trx
+			.deleteFrom("AllTeamMember")
+			.where("userId", "=", args.oldUserId)
+			.where("leftAt", "is not", null)
+			.where((eb) =>
+				eb(
+					"AllTeamMember.teamId",
+					"=",
+					eb
+						.selectFrom("AllTeamMember")
+						.select("teamId")
+						.where("userId", "=", args.newUserId)
+						.where("leftAt", "is", null),
+				),
+			)
 			.execute();
 
 		// delete past team membership data (not user visible)

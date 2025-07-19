@@ -46,7 +46,7 @@ const stm = sql.prepare(/* sql */ `
     and "opponentOneResult" is not null
   group by "m"."id"
   order by "m"."id" asc
-`);
+`); // strictly speaking the order by condition is not accurate, future improvement would be to add order conditions that match the tournament structure
 
 interface Opponent {
 	id: number;
@@ -93,6 +93,14 @@ export function allMatchResultsByTournamentId(
 						(p: any) => typeof p.tournamentTeamId === "number",
 					),
 					"Some participants have no team id",
+				);
+				invariant(
+					participants.every(
+						(p: any) =>
+							p.tournamentTeamId === row.opponentOneId ||
+							p.tournamentTeamId === row.opponentTwoId,
+					),
+					"Some participants have an invalid team id",
 				);
 
 				return {
