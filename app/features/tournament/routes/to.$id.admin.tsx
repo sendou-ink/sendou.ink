@@ -45,7 +45,7 @@ export default function TournamentAdminPage() {
 		setEditingProgression(false);
 	}, [tournament]);
 
-	if (!tournament.isOrganizer(user) || tournament.everyBracketOver) {
+	if (!tournament.isOrganizer(user) || tournament.ctx.isFinalized) {
 		return <Redirect to={tournamentPage(tournament.ctx.id)} />;
 	}
 

@@ -479,6 +479,10 @@
 		"displayName": "Low Tier Experiments",
 		"authorDiscordId": "430487372015206410"
 	},
+	"lugia": {
+		"displayName": "Soul Silver Cup",
+		"authorDiscordId": "671419359058722826"
+	},
 	"lumiere": {
 		"displayName": "Stellaris Phantasm: Lumière Bracket",
 		"authorDiscordId": "617399529532293150"
@@ -731,6 +735,18 @@
 		"displayName": "Seabattle",
 		"authorDiscordId": "528851510222782474"
 	},
+	"seior": {
+		"displayName": "Seiors Scramble",
+		"authorDiscordId": "528851510222782474"
+	},
+	"seiorbronze": {
+		"displayName": "Seiors Scramble (3rd place)",
+		"authorDiscordId": "528851510222782474"
+	},
+	"seiorsilver": {
+		"displayName": "Seiors Scramble (2rd place)",
+		"authorDiscordId": "528851510222782474"
+	},
 	"serenade": {
 		"displayName": "Stellaris Phantasm: Serenade Bracket",
 		"authorDiscordId": "617399529532293150"
@@ -843,6 +859,14 @@
 		"displayName": "MIDLINES ONLY: FORGE",
 		"authorDiscordId": "336683473714544641"
 	},
+	"squidmoreaside": {
+		"displayName": "Mount Squidmore A-Side",
+		"authorDiscordId": "631246535560265749"
+	},
+	"squidmorebside": {
+		"displayName": "Mount Squidmore B-Side",
+		"authorDiscordId": "631246535560265749"
+	},
 	"squidtheforce": {
 		"displayName": "Squidforce Cup",
 		"authorDiscordId": "1320944066002681876"
@@ -850,6 +874,18 @@
 	"stellatedzone": {
 		"displayName": "Stellated Zone",
 		"authorDiscordId": "309327923129745409"
+	},
+	"stlcsfirst": {
+		"displayName": "LAN Championship Showdown (First)",
+		"authorDiscordId": "201922904781357057"
+	},
+	"stlcssecond": {
+		"displayName": "LAN Championship Showdown (Second)",
+		"authorDiscordId": "201922904781357057"
+	},
+	"stlcsthird": {
+		"displayName": "LAN Championship Showdown (Third)",
+		"authorDiscordId": "201922904781357057"
 	},
 	"sunday-run": {
 		"displayName": "Sunday Run",
@@ -918,6 +954,10 @@
 	"tralalero": {
 		"displayName": "Tralalero Tralala",
 		"authorDiscordId": "528851510222782474"
+	},
+	"transvivian": {
+		"displayName": "Trans Cup",
+		"authorDiscordId": "338806780446638082"
 	},
 	"treasure": {
 		"displayName": "Buried Treasure",
