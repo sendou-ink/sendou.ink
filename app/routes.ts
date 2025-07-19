@@ -99,10 +99,19 @@ export default [
 		route("subs", "features/tournament-subs/routes/to.$id.subs.tsx"),
 		route("subs/new", "features/tournament-subs/routes/to.$id.subs.new.tsx"),
 
-		route("brackets", "features/tournament-bracket/routes/to.$id.brackets.tsx"),
 		route(
 			"divisions",
 			"features/tournament-bracket/routes/to.$id.divisions.tsx",
+		),
+		route(
+			"brackets",
+			"features/tournament-bracket/routes/to.$id.brackets.tsx",
+			[
+				route(
+					"finalize",
+					"features/tournament-bracket/routes/to.$id.brackets.finalize.tsx",
+				),
+			],
 		),
 		route(
 			"brackets/subscribe",

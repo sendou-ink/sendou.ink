@@ -571,7 +571,7 @@ function ReportWeaponsForm() {
 												</div>
 												<div className="stack horizontal sm items-center">
 													<WeaponSelect
-														value={weaponSplId ?? undefined}
+														value={weaponSplId}
 														quickSelectWeaponsIds={recentlyReportedWeapons}
 														onChange={(weaponSplId) => {
 															setWeaponsUsage((val) => {

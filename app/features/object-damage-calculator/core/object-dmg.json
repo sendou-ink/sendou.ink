@@ -2412,6 +2412,10 @@
 				"rate": 1.3
 			},
 			{
+				"target": "Decoy",
+				"rate": 2
+			},
+			{
 				"target": "Gachihoko_Barrier",
 				"rate": 1.1
 			},

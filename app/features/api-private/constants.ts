@@ -1,0 +1,7 @@
+export const SEED_VARIATIONS = [
+	"NO_TOURNAMENT_TEAMS",
+	"DEFAULT",
+	"REG_OPEN",
+	"SMALL_SOS",
+	"NZAP_IN_TEAM",
+] as const;

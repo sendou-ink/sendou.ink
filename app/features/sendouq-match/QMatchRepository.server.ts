@@ -187,8 +187,6 @@ export function groupMembersNoScreenSettings(groups: GroupForMatch[]) {
 		.execute();
 }
 
-// xxx: this new implementation does not show in progress and canceled matches
-
 /**
  * Retrieves the pages count of results for a specific user and season. Counting both SendouQ matches and ranked tournaments.
  */
@@ -204,6 +202,12 @@ export async function seasonResultPagesByUserId({
 		.select(({ fn }) => [fn.countAll().as("count")])
 		.where("userId", "=", userId)
 		.where("season", "=", season)
+		.where(({ or, eb }) =>
+			or([
+				eb("groupMatchId", "is not", null),
+				eb("tournamentId", "is not", null),
+			]),
+		)
 		.executeTakeFirstOrThrow();
 
 	return Math.ceil((row.count as number) / MATCHES_PER_SEASONS_PAGE);
@@ -327,6 +331,12 @@ export async function seasonResultsByUserId({
 		])
 		.where("userId", "=", userId)
 		.where("season", "=", season)
+		.where(({ or, eb }) =>
+			or([
+				eb("groupMatchId", "is not", null),
+				eb("tournamentId", "is not", null),
+			]),
+		)
 		.limit(MATCHES_PER_SEASONS_PAGE)
 		.offset(MATCHES_PER_SEASONS_PAGE * (page - 1))
 		.orderBy("Skill.id", "desc")

@@ -1,5 +1,4 @@
 import { Link } from "@remix-run/react";
-import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
@@ -18,6 +17,7 @@ import {
 	userSubmittedImage,
 } from "~/utils/urls";
 import type { UserResultsLoaderData } from "../loaders/u.$identifier.results.server";
+import { ParticipationPill } from "./ParticipationPill";
 
 export type UserResultsTableProps = {
 	results: UserResultsLoaderData["results"];
@@ -187,34 +187,5 @@ export function UserResultsTable({
 				})}
 			</tbody>
 		</Table>
-	);
-}
-
-function ParticipationPill({
-	setResults,
-}: {
-	setResults: UserResultsTableProps["results"][number]["setResults"];
-}) {
-	if (!setResults) {
-		return null;
-	}
-
-	const playedCount = setResults.filter(Boolean).length;
-	const playedPercentage = Math.round((playedCount / setResults.length) * 100);
-
-	return (
-		<div className="u__results__pill__container">
-			<div className="u__results__pill__text">{playedPercentage}%</div>
-			<div className="u__results__pill">
-				{setResults.map((result, i) => (
-					<div
-						key={i}
-						className={clsx("u__results__pill-line", {
-							"u__results__pill-line__participating": result,
-						})}
-					/>
-				))}
-			</div>
-		</div>
 	);
 }

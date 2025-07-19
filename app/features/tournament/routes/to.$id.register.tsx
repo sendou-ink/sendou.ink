@@ -84,7 +84,7 @@ export default function TournamentRegisterPage() {
 		<div className={clsx("stack lg", containerClassName("normal"))}>
 			<div className="tournament__logo-container">
 				<img
-					src={tournament.logoSrc}
+					src={tournament.ctx.logoSrc}
 					alt=""
 					className="tournament__logo"
 					width={124}

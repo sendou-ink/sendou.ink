@@ -213,7 +213,7 @@ export function TournamentLayout() {
 					!tournament.isLeagueSignup && (
 						<SubNavLink to="seeds">{t("tournament:tabs.seeds")}</SubNavLink>
 					)}
-				{tournament.isOrganizer(user) && !tournament.everyBracketOver && (
+				{tournament.isOrganizer(user) && !tournament.ctx.isFinalized && (
 					<SubNavLink to="admin" data-testid="admin-tab">
 						{t("tournament:tabs.admin")}
 					</SubNavLink>
