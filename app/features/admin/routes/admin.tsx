@@ -119,7 +119,7 @@ function AdminActions() {
 			{isStaff ? <LinkPlayer /> : null}
 			{isStaff ? <GiveArtist /> : null}
 			{isStaff ? <GiveVideoAdder /> : null}
-			{isStaff ? <GiveTournamentOrganizer /> : null}
+			{isAdmin ? <GiveTournamentOrganizer /> : null}
 			{isStaff ? <UpdateFriendCode /> : null}
 			{isStaff ? <MigrateUser /> : null}
 			{isAdmin ? <ForcePatron /> : null}
