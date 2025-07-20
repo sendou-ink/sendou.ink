@@ -9,12 +9,8 @@ import { Table } from "~/components/Table";
 import type { TeamResultsLoaderData } from "~/features/team/loaders/t.$customUrl.results.server";
 import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { databaseTimestampToDate } from "~/utils/dates";
-import {
-	tournamentLogoUrl,
-	tournamentTeamPage,
-	userPage,
-	userSubmittedImage,
-} from "~/utils/urls";
+import { tournamentLogoUrl, tournamentTeamPage, userPage } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 
 import styles from "./TeamResultsTable.module.css";
 

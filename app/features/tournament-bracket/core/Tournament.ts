@@ -24,7 +24,7 @@ import {
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
-import { userSubmittedImage } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import {
 	fillWithNullTillPowerOfTwo,
 	groupNumberToLetters,

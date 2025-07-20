@@ -23,8 +23,8 @@ import {
 	navIconUrl,
 	teamPage,
 	topSearchPlayerPage,
-	userSubmittedImage,
 } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import { loader } from "../loaders/u.$identifier.index.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 export { loader };
