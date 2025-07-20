@@ -14,8 +14,8 @@ import {
 	tournamentLogoUrl,
 	tournamentTeamPage,
 	userPage,
-	userSubmittedImage,
 } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import type { UserResultsLoaderData } from "../loaders/u.$identifier.results.server";
 import { ParticipationPill } from "./ParticipationPill";
 

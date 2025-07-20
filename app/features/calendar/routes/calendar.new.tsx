@@ -32,7 +32,8 @@ import {
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { pathnameFromPotentialURL } from "~/utils/strings";
-import { CREATING_TOURNAMENT_DOC_LINK, userSubmittedImage } from "~/utils/urls";
+import { CREATING_TOURNAMENT_DOC_LINK } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import {
 	CALENDAR_EVENT,
 	REG_CLOSES_AT_OPTIONS,

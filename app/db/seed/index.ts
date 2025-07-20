@@ -1616,25 +1616,12 @@ const detailedTeam = (seedVariation?: SeedVariation | null) => () => {
 	sql
 		.prepare(
 			/* sql */ `
-    insert into "UnvalidatedUserSubmittedImage" ("validatedAt", "url", "submitterUserId")
-      values 
-        (1672587342, 'AiGSM5T-cxm6BFGT7N_lA-1673297699133.webp', ${ADMIN_ID}), 
-        (1672587342, 'jTbWd95klxU2MzGFIdi1c-1673297932788.webp', ${ADMIN_ID})
-  `,
-		)
-		.run();
-
-	sql
-		.prepare(
-			/* sql */ `
-      insert into "AllTeam" ("name", "customUrl", "inviteCode", "bio", "avatarImgId", "bannerImgId")
+      insert into "AllTeam" ("name", "customUrl", "inviteCode", "bio")
        values (
           'Alliance Rogue',
           'alliance-rogue',
           '${shortNanoid()}',
-          '${faker.lorem.paragraph()}',
-          1,
-          2
+          '${faker.lorem.paragraph()}'
        )
   `,
 		)

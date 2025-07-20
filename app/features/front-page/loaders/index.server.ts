@@ -7,12 +7,8 @@ import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderbo
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
-import {
-	discordAvatarUrl,
-	teamPage,
-	userPage,
-	userSubmittedImage,
-} from "~/utils/urls";
+import { discordAvatarUrl, teamPage, userPage } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import * as ShowcaseTournaments from "../core/ShowcaseTournaments.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
