@@ -60,7 +60,7 @@ for (const cell of Object.values(params.CellList)) {
 		};
 	}
 
-	// if it has applies to no PvP weapons, we don't care about it
+	// if it applies to no PvP weapons, we don't care about it
 	if (
 		result[cell.RowKey].mainWeaponIds.length === 0 &&
 		result[cell.RowKey].subWeaponIds.length === 0 &&

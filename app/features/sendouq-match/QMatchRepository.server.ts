@@ -187,8 +187,6 @@ export function groupMembersNoScreenSettings(groups: GroupForMatch[]) {
 		.execute();
 }
 
-// xxx: this new implementation does not show in progress and canceled matches
-
 /**
  * Retrieves the pages count of results for a specific user and season. Counting both SendouQ matches and ranked tournaments.
  */

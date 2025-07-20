@@ -19,8 +19,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		const eventId = Number(url.searchParams.get(key));
 		const event = Number.isNaN(eventId)
 			? undefined
-			: await CalendarRepository.findById({
-					id: eventId,
+			: await CalendarRepository.findById(eventId, {
 					includeMapPool: true,
 					includeTieBreakerMapPool: true,
 					includeBadgePrizes: true,

@@ -1,6 +1,7 @@
 // separate from brackets-manager as this wasn't part of the original brackets-manager library
 
 import blossom from "edmonds-blossom-fixed";
+import { err, ok } from "neverthrow";
 import * as R from "remeda";
 import type { TournamentRepositoryInsertableMatch } from "~/features/tournament/TournamentRepository.server";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
@@ -173,18 +174,19 @@ export function generateMatchUps({
 }: {
 	bracket: Bracket;
 	groupId: number;
-}): Array<TournamentRepositoryInsertableMatch> {
+}) {
 	// lets consider only this groups matches
 	// in the case that there are more than one group
 	const groupsMatches = bracket.data.match.filter(
 		(m) => m.group_id === groupId,
 	);
 
-	invariant(groupsMatches.length > 0, "No matches found for group");
+	if (groupsMatches.length === 0) return err("No matches found for group");
+	if (bracket.type !== "swiss") return err("Bracket is not Swiss type");
 
 	// new matches can't be generated till old are over
 	if (!everyMatchOver(groupsMatches)) {
-		throw new Error("Not all matches are over");
+		return err("Not all matches are over");
 	}
 
 	const groupsTeams = groupsMatches
@@ -247,7 +249,7 @@ export function generateMatchUps({
 		}),
 	);
 
-	return result;
+	return ok(result);
 }
 
 interface SwissPairingTeam {

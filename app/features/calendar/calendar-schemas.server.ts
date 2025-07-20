@@ -92,9 +92,9 @@ export const newCalendarEventActionSchema = z
 	.refine(
 		async (schema) => {
 			if (schema.eventToEditId) {
-				const eventToEdit = await CalendarRepository.findById({
-					id: schema.eventToEditId,
-				});
+				const eventToEdit = await CalendarRepository.findById(
+					schema.eventToEditId,
+				);
 				return schema.date.length === 1 || !eventToEdit?.tournamentId;
 			}
 			return schema.date.length === 1 || !schema.toToolsEnabled;

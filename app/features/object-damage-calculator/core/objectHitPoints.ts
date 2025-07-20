@@ -62,7 +62,7 @@ export const objectHitPoints = (abilityPoints: AbilityPoints): HitPoints => {
 		),
 		BulletUmbrellaCanopyNormal_Launched: SPLAT_BRELLA_SHIELD_HP * 2,
 		BulletUmbrellaCanopyWide_Launched: hpDivided(
-			weaponParams.mainWeapons[6010].CanopyHP * 2,
+			weaponParams.mainWeapons[6010].CanopyHP * (10 / 6),
 		),
 		BulletShelterCanopyFocus_Launched: hpDivided(
 			weaponParams.mainWeapons[6030].CanopyHP * 2,
@@ -78,7 +78,7 @@ export const objectHitPoints = (abilityPoints: AbilityPoints): HitPoints => {
 		ShockSonar: WAVE_BREAKER_HP,
 		Wsb_Flag: BEAKON_HP,
 		Wsb_Sprinkler: SPRINKLER_HP,
-		Firework: SUPER_CHUMP_HP,
+		Decoy: SUPER_CHUMP_HP,
 		BulletPogo: TRIPLE_SPLASHDOWN_HP,
 	};
 };

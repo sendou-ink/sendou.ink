@@ -57,6 +57,7 @@
 		"lru-cache": "^11.1.0",
 		"markdown-to-jsx": "^7.7.6",
 		"nanoid": "^5.1.5",
+		"neverthrow": "^8.2.0",
 		"node-cron": "3.0.3",
 		"nprogress": "^0.2.0",
 		"openskill": "^4.1.0",
