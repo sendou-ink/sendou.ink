@@ -68,9 +68,11 @@ export function WeaponSelect<
 		quickSelectWeaponsIds,
 	});
 
+	const isControlled = value !== undefined;
+
 	const keyify = (value?: MainWeaponId | AnyWeapon | null) => {
 		if (typeof value === "number") return `MAIN_${value}`;
-		if (!value) return null;
+		if (!value) return value;
 
 		return `${value.type}_${value.id}`;
 	};
@@ -103,8 +105,10 @@ export function WeaponSelect<
 			popoverClassName={styles.selectWidthWider}
 			searchInputValue={filterValue}
 			onSearchInputChange={setFilterValue}
-			selectedKey={keyify(value)}
-			defaultSelectedKey={keyify(initialValue) ?? undefined}
+			selectedKey={isControlled ? keyify(value) : undefined}
+			defaultSelectedKey={
+				isControlled ? undefined : (keyify(initialValue) as Key)
+			}
 			onSelectionChange={handleOnChange}
 			clearable={clearable}
 			data-testid={testId}
