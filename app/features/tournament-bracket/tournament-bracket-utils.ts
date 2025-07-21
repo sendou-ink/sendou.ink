@@ -16,6 +16,12 @@ import type { Standing } from "./core/Bracket";
 import type { Tournament } from "./core/Tournament";
 import type { TournamentDataTeam } from "./core/Tournament.server";
 
+export const tournamentWebsocketRoom = (tournamentId: number) =>
+	`tournament__${tournamentId}`;
+
+export const tournamentMatchWebsocketRoom = (matchId: number) =>
+	`match__${matchId}`;
+
 const NUM_MAP = {
 	"1": ["1", "2", "4"],
 	"2": ["2", "1", "3", "5"],
@@ -94,14 +100,6 @@ export function checkSourceIsValid({
 	if (match.opponentTwo?.id === asTeamId) return true;
 
 	return false;
-}
-
-export function bracketSubscriptionKey(tournamentId: number) {
-	return `BRACKET_CHANGED_${tournamentId}`;
-}
-
-export function matchSubscriptionKey(matchId: number) {
-	return `MATCH_CHANGED_${matchId}`;
 }
 
 export function fillWithNullTillPowerOfTwo<T>(arr: T[]) {

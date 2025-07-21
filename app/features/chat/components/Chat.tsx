@@ -317,15 +317,23 @@ function MessageTimestamp({ timestamp }: { timestamp: number }) {
 	);
 }
 
+// xxx: move to chat-hooks.ts
+// xxx: rename from useChat because it doesn't always relate to chat
 // TODO: should contain unseen messages logic, now it's duplicated
 export function useChat({
-	rooms,
+	rooms: rawRooms,
 	onNewMessage,
 	revalidates = true,
+	connected = true,
 }: {
-	rooms: ChatProps["rooms"];
+	/** Which rooms to join. Proving a `string` is a shortcut for [{ label: "some-room", code: "some-room" }] without the need of the React.useMemo ceremony */
+	rooms: ChatProps["rooms"] | string;
+	/** Callback function when a new chat message is received. Note: not fired for system messages. */
 	onNewMessage?: (message: ChatMessage) => void;
+	/** If false, skips revalidating on new message. Can be used if more fine grained control is needed regarding when the revalidation happens to e.g. preserve local state. Defaults to true.  */
 	revalidates?: boolean;
+	/** If true, the chat is connected to the server. Defaults to true.  */
+	connected?: boolean;
 }) {
 	const { revalidate } = useRevalidator();
 	const shouldRevalidate = React.useRef<boolean>();
@@ -337,7 +345,7 @@ export function useChat({
 	>("CONNECTING");
 	const [sentMessage, setSentMessage] = React.useState<ChatMessage>();
 	const [currentRoom, setCurrentRoom] = React.useState<string | undefined>(
-		rooms[0]?.code,
+		typeof rawRooms === "string" ? rawRooms : rawRooms[0]?.code,
 	);
 
 	const ws = React.useRef<WebSocket>();
@@ -349,7 +357,11 @@ export function useChat({
 	}, [revalidates]);
 
 	React.useEffect(() => {
-		if (rooms.length === 0) return;
+		const rooms = Array.isArray(rawRooms)
+			? rawRooms
+			: [{ label: rawRooms, code: rawRooms }];
+
+		if (rooms.length === 0 || !connected) return;
 		if (!import.meta.env.VITE_SKALOP_WS_URL) {
 			logger.warn("No WS URL provided");
 			return;
@@ -376,7 +388,7 @@ export function useChat({
 			) as ChatMessage[];
 
 			// something interesting happened
-			// -> let's run data loaders so they can see it sooner
+			// -> let's run data loaders so they can see it without needing to refresh the page
 			const isSystemMessage = Boolean(messageArr[0].type);
 			if (isSystemMessage && shouldRevalidate.current) {
 				revalidate();
@@ -417,7 +429,7 @@ export function useChat({
 			wsCurrent?.close();
 			setMessages([]);
 		};
-	}, [rooms, onNewMessage, revalidate]);
+	}, [rawRooms, onNewMessage, revalidate, connected]);
 
 	React.useEffect(() => {
 		// ping every minute to keep connection alive

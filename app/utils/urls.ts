@@ -334,8 +334,6 @@ export const tournamentDivisionsPage = (tournamentId: number) =>
 	`/to/${tournamentId}/divisions`;
 export const tournamentResultsPage = (tournamentId: number) =>
 	`/to/${tournamentId}/results`;
-export const tournamentBracketsSubscribePage = (tournamentId: number) =>
-	`/to/${tournamentId}/brackets/subscribe`;
 export const tournamentMatchPage = ({
 	tournamentId,
 	matchId,
@@ -343,13 +341,6 @@ export const tournamentMatchPage = ({
 	tournamentId: number;
 	matchId: number;
 }) => `/to/${tournamentId}/matches/${matchId}`;
-export const tournamentMatchSubscribePage = ({
-	tournamentId,
-	matchId,
-}: {
-	tournamentId: number;
-	matchId: number;
-}) => `/to/${tournamentId}/matches/${matchId}/subscribe`;
 export const tournamentJoinPage = ({
 	tournamentId,
 	inviteCode,
