@@ -17,12 +17,8 @@ import type { TieredSkill } from "~/features/mmr/tiered.server";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
-import {
-	lfgNewPostPage,
-	navIconUrl,
-	userPage,
-	userSubmittedImage,
-} from "~/utils/urls";
+import { lfgNewPostPage, navIconUrl, userPage } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import { hourDifferenceBetweenTimezones } from "../core/timezone";
 import type { LFGLoaderData, TiersMap } from "../routes/lfg";
 

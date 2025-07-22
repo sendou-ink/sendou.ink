@@ -1,6 +1,5 @@
 // this file offers database functions specifically for the crud.server.ts file
 
-import { nanoid } from "nanoid";
 import { sql } from "~/db/sql";
 import type { Tables, TournamentRoundMaps } from "~/db/tables";
 import type {
@@ -10,6 +9,7 @@ import type {
 	Stage as StageType,
 } from "~/modules/brackets-model";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { shortNanoid } from "~/utils/id";
 
 const stage_getByIdStm = sql.prepare(/*sql*/ `
   select
@@ -478,7 +478,7 @@ export class Match {
 			opponentOne: this.opponentOne ?? "null",
 			opponentTwo: this.opponentTwo ?? "null",
 			status: this.status,
-			chatCode: nanoid(10),
+			chatCode: shortNanoid(),
 		}) as any;
 
 		this.id = match.id;

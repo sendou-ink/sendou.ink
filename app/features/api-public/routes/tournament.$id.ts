@@ -6,7 +6,7 @@ import { db } from "~/db/sql";
 import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
-import { userSubmittedImage } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import { id } from "~/utils/zod";
 import {
 	handleOptionsRequest,

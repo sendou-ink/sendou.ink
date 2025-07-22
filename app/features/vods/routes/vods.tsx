@@ -145,7 +145,7 @@ function Filters({
 
 			<WeaponSelect
 				label={t("vods:forms.title.weapon")}
-				initialValue={weapon}
+				value={weapon ?? null}
 				onChange={(weaponId) => {
 					addToSearchParams("weapon", weaponId ?? "");
 				}}

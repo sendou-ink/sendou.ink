@@ -22,8 +22,8 @@ import {
 	navIconUrl,
 	TEAM_SEARCH_PAGE,
 	teamPage,
-	userSubmittedImage,
 } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import { action } from "../actions/t.server";
 import { loader } from "../loaders/t.server";
 import { TEAM, TEAMS_PER_PAGE } from "../team-constants";

@@ -24,7 +24,11 @@ export function NotificationItem({
 	const { t, i18n } = useTranslation(["common"]);
 
 	return (
-		<Link to={notificationLink(notification)} className={styles.item}>
+		<Link
+			to={notificationLink(notification)}
+			className={styles.item}
+			data-testid="notification-item"
+		>
 			<NotificationImage notification={notification}>
 				{!notification.seen ? <div className={styles.unseenDot} /> : null}
 			</NotificationImage>

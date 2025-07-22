@@ -15,13 +15,8 @@ import { useIsMounted } from "~/hooks/useIsMounted";
 import { usePagination } from "~/hooks/usePagination";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { databaseTimestampToDate } from "~/utils/dates";
-import {
-	artPage,
-	conditionalUserSubmittedImage,
-	newArtPage,
-	userArtPage,
-	userPage,
-} from "~/utils/urls";
+import { artPage, newArtPage, userArtPage, userPage } from "~/utils/urls";
+import { conditionalUserSubmittedImage } from "~/utils/urls-img";
 import { ResponsiveMasonry } from "../../../modules/responsive-masonry/components/ResponsiveMasonry";
 import { ART_PER_PAGE } from "../art-constants";
 import type { ListedArt } from "../art-types";

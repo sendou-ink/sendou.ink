@@ -561,3 +561,9 @@
 	min-width: 275px;
 	text-align: start;
 }
+
+.finalize__badge-container {
+	padding: var(--s-2);
+	background-color: black;
+	border-radius: var(--rounded);
+}

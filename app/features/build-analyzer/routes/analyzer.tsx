@@ -249,7 +249,7 @@ function BuildAnalyzerPage() {
 						<div className="w-full">
 							<WeaponSelect
 								label={t("analyzer:weaponSelect.label")}
-								initialValue={mainWeaponId}
+								value={mainWeaponId}
 								onChange={(val) =>
 									handleChange({
 										newMainWeaponId: val,

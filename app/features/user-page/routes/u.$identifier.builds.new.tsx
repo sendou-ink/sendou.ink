@@ -224,7 +224,7 @@ function WeaponsSelector() {
 										return newWeapons;
 									})
 								}
-								initialValue={weapon ?? undefined}
+								value={weapon ?? null}
 								testId={`weapon-${i}`}
 							/>
 							{i === weapons.length - 1 && (

@@ -320,7 +320,7 @@ function MatchesFieldset({
 													key={i}
 													isRequired
 													testId={`player-${i}-weapon`}
-													initialValue={value[i]}
+													value={value[i] ?? null}
 													onChange={(weaponId) => {
 														const weapons = [...value];
 														weapons[i] = weaponId;
@@ -343,7 +343,7 @@ function MatchesFieldset({
 														key={i}
 														isRequired
 														testId={`player-${adjustedI}-weapon`}
-														initialValue={value[adjustedI]}
+														value={value[adjustedI] ?? null}
 														onChange={(weaponId) => {
 															const weapons = [...value];
 															weapons[adjustedI] = weaponId;
@@ -361,7 +361,7 @@ function MatchesFieldset({
 									label={t("vods:forms.title.weapon")}
 									isRequired
 									testId={`match-${idx}-weapon`}
-									initialValue={value[0]}
+									value={value[0] ?? null}
 									onChange={(weaponId) => onChange([weaponId])}
 								/>
 							)}

@@ -20,7 +20,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 		.object({ id: z.preprocess(actualNumber, id) })
 		.parse(params);
 	const event = notFoundIfFalsy(
-		await CalendarRepository.findById({ id: parsedParams.id }),
+		await CalendarRepository.findById(parsedParams.id),
 	);
 
 	if (event.tournamentId) {

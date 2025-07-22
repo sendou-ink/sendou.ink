@@ -11,6 +11,7 @@ import * as React from "react";
 import { Avatar } from "~/components/Avatar";
 import { Catcher } from "~/components/Catcher";
 import { SendouButton } from "~/components/elements/Button";
+import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import {
 	SendouTab,
 	SendouTabList,
@@ -23,6 +24,7 @@ import { Input } from "~/components/Input";
 import { SearchIcon } from "~/components/icons/Search";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SEED_VARIATIONS } from "~/features/api-private/constants";
 import { FRIEND_CODE_REGEXP_PATTERN } from "~/features/sendouq/q-constants";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
@@ -117,7 +119,7 @@ function AdminActions() {
 			{isStaff ? <LinkPlayer /> : null}
 			{isStaff ? <GiveArtist /> : null}
 			{isStaff ? <GiveVideoAdder /> : null}
-			{isStaff ? <GiveTournamentOrganizer /> : null}
+			{isAdmin ? <GiveTournamentOrganizer /> : null}
 			{isStaff ? <UpdateFriendCode /> : null}
 			{isStaff ? <MigrateUser /> : null}
 			{isAdmin ? <ForcePatron /> : null}
@@ -423,8 +425,16 @@ function Seed() {
 			method="post"
 			action={SEED_URL}
 		>
-			<h2>Seed</h2>
-			<SubmitButton state={fetcher.state}>Seed</SubmitButton>
+			<div className="stack horizontal md items-end">
+				<SubmitButton state={fetcher.state}>Seed</SubmitButton>
+				<SendouSelect label="Variation" name="variation">
+					{SEED_VARIATIONS.map((variation) => (
+						<SendouSelectItem key={variation} id={variation}>
+							{variation}
+						</SendouSelectItem>
+					))}
+				</SendouSelect>
+			</div>
 		</fetcher.Form>
 	);
 }

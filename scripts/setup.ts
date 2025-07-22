@@ -8,8 +8,13 @@ async function main() {
 	// Step 1: Create .env if it doesn't exist
 	if (!fs.existsSync(".env")) {
 		logger.info("📄 .env not found. Creating from .env.example...");
-		fs.copyFileSync(".env.example", ".env");
-		logger.info(".env created with defaults values");
+		const envContent = fs.readFileSync(".env.example", "utf-8");
+		const filteredEnv = envContent
+			.split("\n")
+			.filter((line) => !line.trim().startsWith("//")) // remove comments to prevent issues with Docker
+			.join("\n");
+		fs.writeFileSync(".env", filteredEnv);
+		logger.info(".env created with default values");
 	}
 
 	const dbEmpty = !(await db.selectFrom("User").selectAll().executeTakeFirst());

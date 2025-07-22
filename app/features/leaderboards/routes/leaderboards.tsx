@@ -19,8 +19,8 @@ import {
 	topSearchPlayerPage,
 	userPage,
 	userSeasonsPage,
-	userSubmittedImage,
 } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import { InfoPopover } from "../../../components/InfoPopover";
 import { TopTenPlayer } from "../components/TopTenPlayer";
 import {

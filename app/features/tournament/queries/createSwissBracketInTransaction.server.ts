@@ -1,8 +1,8 @@
-import { nanoid } from "nanoid";
 import { sql } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 
 const createTournamentStageStm = sql.prepare(/* sql */ `
@@ -108,7 +108,7 @@ export function createSwissBracketInTransaction(
 				}
 
 				createTournamentMatchStm.run({
-					chatCode: nanoid(10),
+					chatCode: shortNanoid(),
 					groupId: groupFromDB.id,
 					number: match.number,
 					opponentOne: match.opponent1

@@ -66,8 +66,8 @@ import {
 	sendouQMatchPage,
 	specialWeaponImageUrl,
 	teamPage,
-	userSubmittedImage,
 } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import { action } from "../actions/q.match.$id.server";
 import { matchEndedAtIndex } from "../core/match";
 import { loader } from "../loaders/q.match.$id.server";
@@ -571,7 +571,7 @@ function ReportWeaponsForm() {
 												</div>
 												<div className="stack horizontal sm items-center">
 													<WeaponSelect
-														value={weaponSplId ?? undefined}
+														value={weaponSplId}
 														quickSelectWeaponsIds={recentlyReportedWeapons}
 														onChange={(weaponSplId) => {
 															setWeaponsUsage((val) => {

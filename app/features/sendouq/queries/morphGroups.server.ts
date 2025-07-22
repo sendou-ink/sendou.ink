@@ -1,6 +1,6 @@
-import { nanoid } from "nanoid";
 import { sql } from "~/db/sql";
 import type { Tables } from "~/db/tables";
+import { shortNanoid } from "~/utils/id";
 import { deleteLikesByGroupId } from "./deleteLikesByGroupId.server";
 
 const findToBeDeletedGroupNonRegularsStm = sql.prepare(/* sql */ `
@@ -48,7 +48,7 @@ export const morphGroups = sql.transaction(
 		// reset chat code so previous messages are not visible
 		updateGroupStm.run({
 			groupId: survivingGroupId,
-			chatCode: nanoid(10),
+			chatCode: shortNanoid(),
 		});
 
 		for (const userId of newMembers) {

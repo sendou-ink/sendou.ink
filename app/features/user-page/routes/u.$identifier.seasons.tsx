@@ -56,8 +56,8 @@ import {
 	TIERS_PAGE,
 	tournamentTeamPage,
 	userSeasonsPage,
-	userSubmittedImage,
 } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import {
 	loader,
 	type UserSeasonsPageLoaderData,

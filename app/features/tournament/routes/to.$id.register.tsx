@@ -54,8 +54,8 @@ import {
 	tournamentSubsPage,
 	userEditProfilePage,
 	userPage,
-	userSubmittedImage,
 } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import { AlertIcon } from "../../../components/icons/Alert";
 import { action } from "../actions/to.$id.register.server";
 import type { TournamentRegisterPageLoader } from "../loaders/to.$id.register.server";

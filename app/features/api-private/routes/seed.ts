@@ -1,18 +1,11 @@
 import type { ActionFunction } from "@remix-run/node";
 import { z } from "zod/v4";
 import { seed } from "~/db/seed";
+import { SEED_VARIATIONS } from "~/features/api-private/constants";
 import { parseRequestPayload } from "~/utils/remix.server";
 
 const seedSchema = z.object({
-	variation: z
-		.enum([
-			"NO_TOURNAMENT_TEAMS",
-			"DEFAULT",
-			"REG_OPEN",
-			"SMALL_SOS",
-			"NZAP_IN_TEAM",
-		])
-		.nullish(),
+	variation: z.enum(SEED_VARIATIONS).nullish(),
 });
 
 export type SeedVariation = NonNullable<

@@ -2,6 +2,7 @@ import { ordinal } from "openskill";
 import { sql } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import { identifierToUserIds } from "~/features/mmr/mmr-utils";
+import type { TournamentBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import type { TournamentSummary } from "../core/summarizer.server";
 
@@ -127,6 +128,18 @@ const addTournamentResultStm = sql.prepare(/* sql */ `
   )
 `);
 
+const addTournamentBadgeOwnersStm = sql.prepare(/* sql */ `
+  insert into "TournamentBadgeOwner" (
+    "tournamentId",
+    "badgeId",
+    "userId"
+  ) values (
+    @tournamentId,
+    @badgeId,
+    @userId
+  )
+`);
+
 const finalizeTournamentStm = sql.prepare(/* sql */ `
   update "Tournament" set
     "isFinalized" = 1
@@ -138,10 +151,12 @@ export const addSummary = sql.transaction(
 		tournamentId,
 		summary,
 		season,
+		badgeReceivers = [],
 	}: {
 		tournamentId: number;
 		summary: TournamentSummary;
 		season?: number;
+		badgeReceivers?: TournamentBadgeReceivers;
 	}) => {
 		for (const skill of summary.skills) {
 			const insertedSkill = addSkillStm.get({
@@ -198,6 +213,16 @@ export const addSummary = sql.transaction(
 				type: playerResultDelta.type,
 				season: season ?? null,
 			});
+		}
+
+		for (const badgeReceiver of badgeReceivers) {
+			for (const userId of badgeReceiver.userIds) {
+				addTournamentBadgeOwnersStm.run({
+					tournamentId,
+					badgeId: badgeReceiver.badgeId,
+					userId,
+				});
+			}
 		}
 
 		for (const tournamentResult of summary.tournamentResults) {
