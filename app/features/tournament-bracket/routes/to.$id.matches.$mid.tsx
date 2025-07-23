@@ -5,7 +5,10 @@ import { LinkButton } from "~/components/elements/Button";
 import { ArrowLongLeftIcon } from "~/components/icons/ArrowLongLeft";
 import { containerClassName } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
-import { ConnectedChat, useChat } from "~/features/chat/components/Chat";
+import {
+	ConnectedChat,
+	useWebsocketRevalidation,
+} from "~/features/chat/components/Chat";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
@@ -35,8 +38,8 @@ export default function TournamentMatchPage() {
 	const tournament = useTournament();
 	const data = useLoaderData<typeof loader>();
 
-	useChat({
-		rooms: tournamentMatchWebsocketRoom(data.match.id),
+	useWebsocketRevalidation({
+		room: tournamentMatchWebsocketRoom(data.match.id),
 		connected: !tournament.ctx.isFinalized,
 	});
 

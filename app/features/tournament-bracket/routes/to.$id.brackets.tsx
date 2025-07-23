@@ -15,7 +15,7 @@ import { EyeIcon } from "~/components/icons/Eye";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
 import { MapIcon } from "~/components/icons/Map";
 import { useUser } from "~/features/auth/core/user";
-import { useChat } from "~/features/chat/components/Chat";
+import { useWebsocketRevalidation } from "~/features/chat/components/Chat";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { tournamentWebsocketRoom } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -47,8 +47,8 @@ export default function TournamentBracketsPage() {
 	const isMounted = useIsMounted();
 	const ctx = useOutletContext();
 
-	useChat({
-		rooms: tournamentWebsocketRoom(tournament.ctx.id),
+	useWebsocketRevalidation({
+		room: tournamentWebsocketRoom(tournament.ctx.id),
 		connected: !tournament.ctx.isFinalized,
 	});
 

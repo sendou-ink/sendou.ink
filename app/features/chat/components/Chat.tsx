@@ -318,16 +318,15 @@ function MessageTimestamp({ timestamp }: { timestamp: number }) {
 }
 
 // xxx: move to chat-hooks.ts
-// xxx: rename from useChat because it doesn't always relate to chat
 // TODO: should contain unseen messages logic, now it's duplicated
 export function useChat({
-	rooms: rawRooms,
+	rooms,
 	onNewMessage,
 	revalidates = true,
 	connected = true,
 }: {
-	/** Which rooms to join. Proving a `string` is a shortcut for [{ label: "some-room", code: "some-room" }] without the need of the React.useMemo ceremony */
-	rooms: ChatProps["rooms"] | string;
+	/** Which chat rooms to join. */
+	rooms: ChatProps["rooms"];
 	/** Callback function when a new chat message is received. Note: not fired for system messages. */
 	onNewMessage?: (message: ChatMessage) => void;
 	/** If false, skips revalidating on new message. Can be used if more fine grained control is needed regarding when the revalidation happens to e.g. preserve local state. Defaults to true.  */
@@ -345,7 +344,7 @@ export function useChat({
 	>("CONNECTING");
 	const [sentMessage, setSentMessage] = React.useState<ChatMessage>();
 	const [currentRoom, setCurrentRoom] = React.useState<string | undefined>(
-		typeof rawRooms === "string" ? rawRooms : rawRooms[0]?.code,
+		rooms[0]?.code,
 	);
 
 	const ws = React.useRef<WebSocket>();
@@ -357,10 +356,6 @@ export function useChat({
 	}, [revalidates]);
 
 	React.useEffect(() => {
-		const rooms = Array.isArray(rawRooms)
-			? rawRooms
-			: [{ label: rawRooms, code: rawRooms }];
-
 		if (rooms.length === 0 || !connected) return;
 		if (!import.meta.env.VITE_SKALOP_WS_URL) {
 			logger.warn("No WS URL provided");
@@ -429,7 +424,7 @@ export function useChat({
 			wsCurrent?.close();
 			setMessages([]);
 		};
-	}, [rawRooms, onNewMessage, revalidate, connected]);
+	}, [rooms, onNewMessage, revalidate, connected]);
 
 	React.useEffect(() => {
 		// ping every minute to keep connection alive
@@ -487,6 +482,23 @@ export function useChat({
 		readyState,
 		unseenMessages,
 	};
+}
+
+/** Listens to system messages sent via WebSocket to the given room triggering data loader revalidations. */
+export function useWebsocketRevalidation({
+	room,
+	connected,
+}: {
+	room: string;
+	/** If true, the websocket is connected. Defaults to true.  */
+	connected?: boolean;
+}) {
+	const rooms = React.useMemo(() => [{ label: room, code: room }], [room]);
+
+	useChat({
+		rooms,
+		connected,
+	});
 }
 
 function unseenMessagesCountByRoomId({
