@@ -1114,5 +1114,17 @@
 	"zekkocup": {
 		"displayName": "Zekko Cup",
 		"authorDiscordId": "1320944066002681876"
+	},
+	"ld4gold": {
+		"displayName": "LD4 (1er)",
+		"authorDiscordId": "570323825669963972"
+	},
+	"ld4silver": {
+		"displayName": "LD4 (2e)",
+		"authorDiscordId": "570323825669963972"
+	},
+	"ld4copper": {
+		"displayName": "LD4 (3e)",
+		"authorDiscordId": "570323825669963972"
 	}
 }
