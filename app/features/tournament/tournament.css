@@ -1,7 +1,3 @@
-.tournament__placeholder {
-	min-height: 100vh;
-}
-
 .tournament__action-section {
 	padding: var(--s-0-5) var(--s-6) var(--s-6) var(--s-6);
 	border-radius: var(--rounded);
