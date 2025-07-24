@@ -560,7 +560,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 	clearTournamentDataCache(tournamentId);
 
-	// xxx: add authorUserId to the message?
+	// TODO: we could optimize this in the future by including an `authorUserId` field and skip revalidation if the author is the same as the current user
 	if (emitMatchUpdate) {
 		ChatSystemMessage.send([
 			{

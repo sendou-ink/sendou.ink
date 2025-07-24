@@ -9,8 +9,6 @@ import { streamsByTournamentId } from "../core/streams.server";
 
 export type TournamentLoaderData = SerializeFrom<typeof loader>;
 
-// xxx: dont cache tournament if finalized
-
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const user = await getUser(request);
 	const { id: tournamentId } = parseParams({

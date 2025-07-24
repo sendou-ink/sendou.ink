@@ -1,3 +1,5 @@
+import type { Tables } from "~/db/tables";
+
 export type SystemMessageType =
 	| "NEW_GROUP"
 	| "USER_LEFT"
@@ -24,4 +26,26 @@ export interface ChatMessage {
 	timestamp: number;
 	room: string;
 	pending?: boolean;
+}
+
+export type ChatUser = Pick<
+	Tables["User"],
+	"username" | "discordId" | "discordAvatar"
+> & {
+	chatNameColor: string | null;
+	title?: string;
+};
+
+export interface ChatProps {
+	users: Record<number, ChatUser>;
+	rooms: { label: string; code: string }[];
+	className?: string;
+	messagesContainerClassName?: string;
+	hidden?: boolean;
+	onNewMessage?: (message: ChatMessage) => void;
+	onMount?: () => void;
+	onUnmount?: () => void;
+	disabled?: boolean;
+	missingUserName?: string;
+	revalidates?: boolean;
 }
