@@ -8,7 +8,6 @@ export function ArchiveBoxIcon({ className }: { className?: string }) {
 			stroke="currentColor"
 			className={className}
 		>
-			<title>Archive Box Icon</title>
 			<path
 				strokeLinecap="round"
 				strokeLinejoin="round"

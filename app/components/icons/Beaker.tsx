@@ -14,7 +14,7 @@ export function BeakerIcon({
 			stroke="currentColor"
 			className={className}
 		>
-			<title>{title ?? "Beaker Icon"}</title>
+			{title ? <title>{title}</title> : null}
 			<path
 				strokeLinecap="round"
 				strokeLinejoin="round"

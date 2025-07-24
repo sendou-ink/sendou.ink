@@ -7,7 +7,6 @@ export function BSKYRepostIcon({ className }: { className?: string }) {
 			height="18"
 			className={className}
 		>
-			<title>Repost Icon</title>
 			<path
 				fill="currentColor"
 				fillRule="evenodd"
