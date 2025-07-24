@@ -7,7 +7,7 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
-import { soundVolume } from "~/features/chat/chat-utils";
+import { soundEnabled, soundVolume } from "~/features/chat/chat-utils";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { logger } from "~/utils/logger";
 import {
@@ -213,8 +213,6 @@ function useMatchReadySound(statusType?: string) {
 	React.useEffect(() => {
 		if (statusType === "MATCH" && isWaiting.current) {
 			const sound = "tournament_match";
-
-			const soundEnabled = (_mocked: string) => true; // xxx: mocked for now
 
 			if (soundEnabled(sound)) {
 				const audio = new Audio(soundPath(sound));

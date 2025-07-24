@@ -52,8 +52,6 @@ export { loader, action };
 
 import "../q-settings.css";
 
-// xxx: add tournament sound
-
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
 	breadcrumb: () => [
@@ -521,6 +519,10 @@ function SoundCheckboxes() {
 		{
 			code: "sq_match",
 			name: t("q:settings.sounds.matchStarted"),
+		},
+		{
+			code: "tournament_match",
+			name: t("q:settings.sounds.tournamentMatchStarted"),
 		},
 	];
 
