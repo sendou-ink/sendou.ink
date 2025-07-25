@@ -10,21 +10,14 @@ import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { discordAvatarUrl, teamPage, userPage } from "~/utils/urls";
 import { userSubmittedImage } from "~/utils/urls-img";
 import * as ShowcaseTournaments from "../core/ShowcaseTournaments.server";
+import { i18next } from "~/modules/i18n/i18next.server"
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await getUserId(request);
-
+	const locale = await i18next.getLocale(request)
 	const [tournaments, changelog, leaderboards] = await Promise.all([
 		ShowcaseTournaments.frontPageTournamentsByUserId(user?.id ?? null),
-		cachified({
-			key: "front-changelog",
-			cache,
-			ttl: ttl(IN_MILLISECONDS.ONE_HOUR),
-			staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_HOURS),
-			async getFreshValue() {
-				return Changelog.get();
-			},
-		}),
+		Changelog.get(locale),
 		cachedLeaderboards(),
 	]);
 
