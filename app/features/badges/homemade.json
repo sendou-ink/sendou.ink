@@ -631,6 +631,18 @@
 		"displayName": "Weapon Lockdown",
 		"authorDiscordId": "338806780446638082"
 	},
+	"oktofest-bronze": {
+		"displayName": "Oktofest LAN (Third)",
+		"authorDiscordId": "751912670403362836"
+	},
+	"oktofest-gold": {
+		"displayName": "Oktofest LAN (First)",
+		"authorDiscordId": "751912670403362836"
+	},
+	"oktofest-silver": {
+		"displayName": "Oktofest LAN (Second)",
+		"authorDiscordId": "751912670403362836"
+	},
 	"original-message-deleted": {
 		"displayName": "[Original Message Deleted]",
 		"authorDiscordId": "751912670403362836"
