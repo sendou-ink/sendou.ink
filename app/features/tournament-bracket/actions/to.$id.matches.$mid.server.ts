@@ -89,7 +89,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 	const mapList =
 		match.opponentOne?.id && match.opponentTwo?.id
 			? resolveMapList({
-					bestOf: match.bestOf,
 					tournamentId,
 					matchId,
 					teams: [match.opponentOne.id, match.opponentTwo.id],

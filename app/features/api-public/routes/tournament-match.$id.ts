@@ -49,7 +49,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 				"TournamentMatch.opponentOne",
 				"TournamentMatch.opponentTwo",
 				"Tournament.mapPickingStyle",
-				"TournamentMatch.bestOf",
 				"TournamentRound.maps",
 				jsonArrayFrom(
 					eb
@@ -122,7 +121,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			: [];
 
 		return resolveMapList({
-			bestOf: match.bestOf,
 			tournamentId: match.tournamentId,
 			matchId: id,
 			teams: [match.opponentOne.id, match.opponentTwo.id],

@@ -9,7 +9,6 @@ const stm = sql.prepare(/* sql */ `
     "TournamentMatch"."groupId",
     "TournamentMatch"."opponentOne",
     "TournamentMatch"."opponentTwo",
-    "TournamentMatch"."bestOf",
     "TournamentMatch"."chatCode",
     "Tournament"."mapPickingStyle",
     "TournamentRound"."id" as "roundId",
@@ -50,27 +49,22 @@ export type FindMatchById = ReturnType<typeof findMatchById>;
 
 export const findMatchById = (id: number) => {
 	const row = stm.get({ id }) as
-		| ((Pick<
-				Tables["TournamentMatch"],
-				"id" | "groupId" | "bestOf" | "chatCode"
-		  > &
+		| ((Pick<Tables["TournamentMatch"], "id" | "groupId" | "chatCode"> &
 				Pick<Tables["Tournament"], "mapPickingStyle"> & { players: string }) & {
 				opponentOne: string;
 				opponentTwo: string;
 				roundId: number;
-				roundMaps: string | null;
+				roundMaps: string;
 		  })
 		| undefined;
 
 	if (!row) return;
 
-	const roundMaps = row.roundMaps
-		? (JSON.parse(row.roundMaps) as TournamentRoundMaps)
-		: null;
+	const roundMaps = JSON.parse(row.roundMaps) as TournamentRoundMaps;
 
 	return {
 		...row,
-		bestOf: (roundMaps?.count ?? row.bestOf) as 3 | 5 | 7,
+		bestOf: roundMaps.count,
 		roundId: row.roundId,
 		roundMaps,
 		opponentOne: JSON.parse(row.opponentOne) as Match["opponent1"],

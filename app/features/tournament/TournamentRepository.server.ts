@@ -1095,7 +1095,7 @@ export function resetBracket(tournamentStageId: number) {
 
 export type TournamentRepositoryInsertableMatch = Omit<
 	Insertable<DB["TournamentMatch"]>,
-	"status" | "bestOf" | "chatCode"
+	"status" | "chatCode"
 >;
 
 export function insertSwissMatches(
