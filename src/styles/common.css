@@ -28,7 +28,7 @@ a {
 }
 
 /* :not([name="text"]) workaround not to select textarea on map planner  */
-textarea:not(.plain, [name="text"]) {
+textarea:not(.plain, [name='text']) {
 	width: 18rem;
 	max-width: 100%;
 	height: 8rem;
@@ -47,14 +47,14 @@ progress {
 	accent-color: var(--theme);
 }
 
-textarea:not(.plain, [name="text"]):focus-within {
+textarea:not(.plain, [name='text']):focus-within {
 	border-color: transparent;
 
 	/* TODO: rectangle on Safari */
 	outline: 2px solid var(--theme);
 }
 
-input:not(.plain, [type="radio"]) {
+input:not(.plain, [type='radio']) {
 	width: var(--input-width, 12rem);
 }
 
@@ -110,7 +110,7 @@ input:not(.plain).error {
 	outline: 2px solid var(--theme-error);
 }
 
-input[type="checkbox"] {
+input[type='checkbox'] {
 	width: 16px;
 	height: 16px;
 }
@@ -253,7 +253,7 @@ select:focus {
 	border-bottom: 1px solid var(--border);
 }
 
-td > input[type="checkbox"] {
+td > input[type='checkbox'] {
 	vertical-align: middle;
 }
 
@@ -512,7 +512,7 @@ abbr[title] {
 
 /* Hack to deal with Safari bug when the image is loading. See: https://stackoverflow.com/a/73466877 */
 @media not all and (min-resolution: 0.001dpcm) {
-	img[loading="lazy"] {
+	img[loading='lazy'] {
 		clip-path: inset(0.5px);
 	}
 }
@@ -822,7 +822,7 @@ abbr[title] {
 .divider::after {
 	flex: 1;
 	border-bottom: 2px solid var(--theme-transparent);
-	content: "";
+	content: '';
 }
 
 .divider:not(:empty)::before {
@@ -992,7 +992,7 @@ abbr[title] {
 	margin-block-start: var(--s-0-5);
 }
 
-html[dir="rtl"] .fix-rtl {
+html[dir='rtl'] .fix-rtl {
 	transform: rotate(180deg);
 }
 
