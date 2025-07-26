@@ -1,6 +1,0 @@
-export const PLUS_SUGGESTION = {
-	FIRST_COMMENT_MAX_LENGTH: 500,
-	COMMENT_MAX_LENGTH: 280,
-};
-
-export const PLUS_TIERS = [1, 2, 3];

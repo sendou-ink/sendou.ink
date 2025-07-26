@@ -1,1 +1,0 @@
-export { getTournamentManager } from "./manager";
