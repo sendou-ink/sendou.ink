@@ -118,8 +118,7 @@
 // export const PLUS_VOTING_PAGE = "/plus/voting";
 
 // export const BLANK_IMAGE_URL = "/static-assets/img/blank.gif";
-// export const COMMON_PREVIEW_IMAGE =
-// 	"/static-assets/img/layout/common-preview.png";
+export const COMMON_PREVIEW_IMAGE = '/static-assets/img/layout/common-preview.png';
 // export const ERROR_GIRL_IMAGE_PATH = "/static-assets/img/layout/error-girl";
 // export const LOGO_PATH = "/static-assets/img/layout/logo";
 // export const SENDOU_LOVE_EMOJI_PATH = "/static-assets/img/layout/sendou_love";

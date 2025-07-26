@@ -907,18 +907,6 @@ abbr[title] {
 	min-height: 24px;
 }
 
-.discord-icon {
-	width: 1rem;
-	display: inline;
-	fill: #7289da;
-}
-
-.youtube-icon {
-	width: 1rem;
-	display: inline;
-	fill: #f00;
-}
-
 .art__dialog__image-container {
 	width: 100vw;
 	height: 90vh;
