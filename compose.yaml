@@ -1,9 +1,9 @@
 services:
   minio:
-    image: "minio/minio:latest"
+    image: 'minio/minio:latest'
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - '9000:9000'
+      - '9001:9001'
     environment:
       MINIO_ROOT_USER: minio-user
       MINIO_ROOT_PASSWORD: minio-password
@@ -26,7 +26,7 @@ services:
   skalop:
     image: ghcr.io/sendou-ink/skalop:latest
     ports:
-      - "5900:5900"
+      - '5900:5900'
     environment:
       - REDIS_URL=${REDIS_URL}
       - SKALOP_TOKEN=${SKALOP_TOKEN}

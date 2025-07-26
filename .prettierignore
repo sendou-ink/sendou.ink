@@ -1,0 +1,23 @@
+# Package Managers
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+bun.lock
+bun.lockb
+
+# Miscellaneous
+/static/
+
+# Old Remix app
+/app/
+/public/
+
+# TODO: include these
+/migrations/
+/locales/
+/e2e/
+/scripts/
+/docs/
+/content/
+/.github/
+/types/
