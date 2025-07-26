@@ -98,8 +98,10 @@ export interface BadgeManager {
 }
 
 export type BadgeOwner = {
-	badgeId: number | null;
-	userId: number | null;
+	badgeId: number;
+	userId: number;
+	/** Which tournament the badge is from, if null was added manually by a badge manager as opposed to once a tournament was finalized. */
+	tournamentId: number | null;
 };
 
 export interface Build {
@@ -129,12 +131,6 @@ export interface BuildWeapon {
 	weaponSplId: MainWeaponId;
 }
 
-/** Image associated with the avatar when the event is showcased on the front page */
-export type CalendarEventAvatarMetadata = {
-	backgroundColor: string;
-	textColor: string;
-};
-
 export type CalendarEventTag = keyof typeof tags;
 
 export interface CalendarEvent {
@@ -151,8 +147,6 @@ export interface CalendarEvent {
 	tournamentId: number | null;
 	organizationId: number | null;
 	avatarImgId: number | null;
-	// TODO: remove in migration
-	avatarMetadata: JSONColumnTypeNullable<CalendarEventAvatarMetadata>;
 }
 
 export interface CalendarEventBadge {
@@ -535,8 +529,6 @@ export const TournamentMatchStatus = {
 };
 
 export interface TournamentMatch {
-	// TODO: remove
-	bestOf: Generated<3 | 5 | 7>;
 	chatCode: string | null;
 	groupId: number;
 	id: GeneratedAlways<number>;
@@ -618,7 +610,7 @@ export interface TournamentRound {
 	id: GeneratedAlways<number>;
 	number: number;
 	stageId: number;
-	maps: JSONColumnTypeNullable<TournamentRoundMaps>;
+	maps: JSONColumnType<TournamentRoundMaps>;
 }
 
 // when updating this also update `defaultBracketSettings` in tournament-utils.ts

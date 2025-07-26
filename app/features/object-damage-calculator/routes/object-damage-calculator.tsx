@@ -85,6 +85,7 @@ export default function ObjectDamagePage() {
 						<Label htmlFor="weapon">{t("analyzer:labels.weapon")}</Label>
 						<WeaponSelect
 							includeSubSpecial
+							value={weapon}
 							onChange={(newAnyWeapon) => {
 								handleChange({
 									newAnyWeapon,

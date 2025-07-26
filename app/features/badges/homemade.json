@@ -23,6 +23,10 @@
 		"displayName": "Gamers Outreach Charity Tournament",
 		"authorDiscordId": "528851510222782474"
 	},
+	"alterrareaper": {
+		"displayName": "Alterra",
+		"authorDiscordId": "309327923129745409"
+	},
 	"artsupplies": {
 		"displayName": "Art Supplies Pencil Award",
 		"authorDiscordId": "1320944066002681876"
@@ -343,6 +347,10 @@
 		"displayName": "Get Coupled",
 		"authorDiscordId": "418496741088690177"
 	},
+	"girlsbandcryawa": {
+		"displayName": "Togenashi Togeari Subaru Bracket",
+		"authorDiscordId": "309327923129745409"
+	},
 	"glaze": {
 		"displayName": "THE GLAZE GAUNTLET",
 		"authorDiscordId": "528851510222782474"
@@ -607,6 +615,14 @@
 		"displayName": "Banning Legends 2nd",
 		"authorDiscordId": "338806780446638082"
 	},
+	"nwnlw": {
+		"displayName": "Next Wave Nexus",
+		"authorDiscordId": "707620991500550235"
+	},
+	"nwnsm": {
+		"displayName": "Next Wave Nexus (Small Wave)",
+		"authorDiscordId": "707620991500550235"
+	},
 	"octobrush": {
 		"displayName": "Brush Brawls",
 		"authorDiscordId": "338806780446638082"
@@ -711,6 +727,10 @@
 		"displayName": "MIKU MIKU BEAM!!! Lower Brackets",
 		"authorDiscordId": "338806780446638082"
 	},
+	"rpdeco": {
+		"displayName": "Rapid Rushdown",
+		"authorDiscordId": "528851510222782474"
+	},
 	"s50badge": {
 		"displayName": "Anarchy Adventures",
 		"authorDiscordId": "336683473714544641"
@@ -750,6 +770,10 @@
 	"serenade": {
 		"displayName": "Stellaris Phantasm: Serenade Bracket",
 		"authorDiscordId": "617399529532293150"
+	},
+	"sfcsunfish": {
+		"displayName": "Sunfish Saturday",
+		"authorDiscordId": "375410300373172225"
 	},
 	"sharktank1st": {
 		"displayName": "Shark Tank (Gold)",
@@ -899,6 +923,10 @@
 		"displayName": "Big Swig",
 		"authorDiscordId": "534502084134043648"
 	},
+	"switzerland": {
+		"displayName": "Switzerland",
+		"authorDiscordId": "338005893377556480"
+	},
 	"szclassic": {
 		"displayName": "Zones Classic",
 		"authorDiscordId": "528851510222782474"
@@ -1014,6 +1042,10 @@
 	"tso5blueberry": {
 		"displayName": "Division 5 (Blueberry)",
 		"authorDiscordId": "338806780446638082"
+	},
+	"turbo": {
+		"displayName": "Turbo Tourney",
+		"authorDiscordId": "671419359058722826"
 	},
 	"turf1230": {
 		"displayName": "Turf War Takedown",

@@ -33,8 +33,8 @@ import {
 	scrimPage,
 	scrimsPage,
 	userPage,
-	userSubmittedImage,
 } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import {
 	SendouTab,
 	SendouTabList,

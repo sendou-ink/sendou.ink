@@ -20,8 +20,8 @@ import {
 	tournamentOrganizationPage,
 	tournamentPage,
 	tournamentRegisterPage,
-	userSubmittedImage,
 } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import { metaTags } from "../../../utils/remix";
 
 import { loader, type TournamentLoaderData } from "../loaders/to.$id.server";

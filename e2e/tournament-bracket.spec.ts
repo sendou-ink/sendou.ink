@@ -11,6 +11,7 @@ import {
 	submit,
 } from "~/utils/playwright";
 import {
+	NOTIFICATIONS_URL,
 	tournamentAdminPage,
 	tournamentBracketsPage,
 	tournamentMatchPage,
@@ -285,7 +286,9 @@ test.describe("Tournament bracket", () => {
 		await expect(page).toHaveURL(/brackets/);
 	});
 
-	test("completes and finalizes a small tournament", async ({ page }) => {
+	test("completes and finalizes a small tournament with badge assigning", async ({
+		page,
+	}) => {
 		const tournamentId = 2;
 
 		await seed(page);
@@ -322,6 +325,10 @@ test.describe("Tournament bracket", () => {
 		await backToBracket(page);
 
 		await page.getByTestId("finalize-tournament-button").click();
+
+		await page.getByLabel("Receiving team").first().selectOption("101");
+		await page.getByLabel("Receiving team").last().selectOption("102");
+
 		await page.getByTestId("confirm-button").click();
 
 		await page.getByTestId("results-tab").click();
@@ -334,6 +341,15 @@ test.describe("Tournament bracket", () => {
 		});
 
 		await expect(page.getByText("In The Zone 22")).toBeVisible();
+
+		await navigate({
+			page,
+			url: NOTIFICATIONS_URL,
+		});
+
+		await expect(page.getByTestId("notification-item").first()).toContainText(
+			"New badge",
+		);
 	});
 
 	test("completes and finalizes a small tournament (RR->SE w/ underground bracket)", async ({
@@ -429,6 +445,7 @@ test.describe("Tournament bracket", () => {
 			await backToBracket(page);
 		}
 		await page.getByTestId("finalize-tournament-button").click();
+		await page.getByTestId("assign-badges-later-switch").click();
 		await page.getByTestId("confirm-button").click();
 
 		// not possible to reopen finals match anymore

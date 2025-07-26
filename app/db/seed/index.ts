@@ -816,6 +816,12 @@ function calendarEvents() {
 	}
 }
 
+const addCalendarEventBadgeStm = sql.prepare(
+	/*sql */ `insert into "CalendarEventBadge" 
+          ("eventId", "badgeId") 
+          values ($eventId, $badgeId)`,
+);
+
 function calendarEventBadges() {
 	for (let eventId = 1; eventId <= AMOUNT_OF_CALENDAR_EVENTS; eventId++) {
 		if (faker.number.float(1) > 0.25) continue;
@@ -827,13 +833,10 @@ function calendarEventBadges() {
 			i < faker.helpers.arrayElement([1, 1, 1, 1, 2, 2, 3]);
 			i++
 		) {
-			sql
-				.prepare(
-					`insert into "CalendarEventBadge" 
-          ("eventId", "badgeId") 
-          values ($eventId, $badgeId)`,
-				)
-				.run({ eventId, badgeId: availableBadgeIds.pop() });
+			addCalendarEventBadgeStm.run({
+				eventId,
+				badgeId: availableBadgeIds.pop(),
+			});
 		}
 	}
 }
@@ -912,6 +915,14 @@ function calendarEventWithToTools(
 		SOS: "Swim or Sink 101",
 		DEPTHS: "The Depths 5",
 		LUTI: "Leagues Under The Ink Season 15",
+	}[event];
+	const badges = {
+		PICNIC: [1, 2],
+		ITZ: [3, 4],
+		PP: [5, 6],
+		SOS: [7, 8],
+		DEPTHS: [9, 10],
+		LUTI: [],
 	}[event];
 
 	const settings: Tables["Tournament"]["settings"] =
@@ -1139,6 +1150,13 @@ function calendarEventWithToTools(
 					: new Date(Date.now() - 1000 * 60 * 60),
 			),
 		});
+
+	for (const badgeId of badges) {
+		addCalendarEventBadgeStm.run({
+			eventId,
+			badgeId,
+		});
+	}
 }
 
 const tiebreakerPicks = new MapPool([
@@ -1598,25 +1616,12 @@ const detailedTeam = (seedVariation?: SeedVariation | null) => () => {
 	sql
 		.prepare(
 			/* sql */ `
-    insert into "UnvalidatedUserSubmittedImage" ("validatedAt", "url", "submitterUserId")
-      values 
-        (1672587342, 'AiGSM5T-cxm6BFGT7N_lA-1673297699133.webp', ${ADMIN_ID}), 
-        (1672587342, 'jTbWd95klxU2MzGFIdi1c-1673297932788.webp', ${ADMIN_ID})
-  `,
-		)
-		.run();
-
-	sql
-		.prepare(
-			/* sql */ `
-      insert into "AllTeam" ("name", "customUrl", "inviteCode", "bio", "avatarImgId", "bannerImgId")
+      insert into "AllTeam" ("name", "customUrl", "inviteCode", "bio")
        values (
           'Alliance Rogue',
           'alliance-rogue',
           '${shortNanoid()}',
-          '${faker.lorem.paragraph()}',
-          1,
-          2
+          '${faker.lorem.paragraph()}'
        )
   `,
 		)

@@ -11,8 +11,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 		schema: idObject,
 	});
 	const event = notFoundIfFalsy(
-		await CalendarRepository.findById({
-			id: params.id,
+		await CalendarRepository.findById(params.id, {
 			includeBadgePrizes: true,
 			includeMapPool: true,
 		}),
