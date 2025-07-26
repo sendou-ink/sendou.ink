@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
+	import type { Snippet } from 'svelte';
 
 	interface Props {
 		children?: Snippet;
@@ -16,7 +16,7 @@
 		classNameOverwrite,
 		halfWidth = false,
 		bigger = false,
-		style,
+		style
 	}: Props = $props();
 
 	// const isMinorSupporter = useHasRole('MINOR_SUPPORT');
@@ -25,23 +25,19 @@
 	const isRouteErrorResponse = false; // xxx: replace with actual error check if needed
 
 	const showLeaderboard = $derived(
-		import.meta.env.VITE_PLAYWIRE_PUBLISHER_ID &&
-			!isMinorSupporter &&
-			!isRouteErrorResponse,
+		import.meta.env.VITE_PLAYWIRE_PUBLISHER_ID && !isMinorSupporter && !isRouteErrorResponse
 	);
 
-	export const containerClassName = (
-		width: "narrow" | "normal" | "wide",
-	): string => {
-		if (width === "narrow") {
-			return "half-width";
+	export const containerClassName = (width: 'narrow' | 'normal' | 'wide'): string => {
+		if (width === 'narrow') {
+			return 'half-width';
 		}
 
-		if (width === "wide") {
-			return "bigger";
+		if (width === 'wide') {
+			return 'bigger';
 		}
 
-		return "main";
+		return 'main';
 	};
 </script>
 
@@ -50,10 +46,10 @@
 		class={{
 			classNameOverwrite,
 			className: className && !classNameOverwrite,
-			[containerClassName("normal")]: !classNameOverwrite,
-			[containerClassName("narrow")]: halfWidth,
-			[containerClassName("wide")]: bigger,
-			"pt-8-forced": showLeaderboard,
+			[containerClassName('normal')]: !classNameOverwrite,
+			[containerClassName('narrow')]: halfWidth,
+			[containerClassName('wide')]: bigger,
+			'pt-8-forced': showLeaderboard
 		}}
 		{style}
 	>

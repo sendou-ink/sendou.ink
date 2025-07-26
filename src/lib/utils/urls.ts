@@ -23,6 +23,8 @@
 // import type { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
 // import type { DayMonthYear } from "~/utils/zod";
 
+import type { Tables } from '$lib/server/db/tables';
+
 // const staticAssetsUrl = ({
 // 	folder,
 // 	fileName,
@@ -47,8 +49,8 @@
 
 // export const SENDOU_INK_BASE_URL = "https://sendou.ink";
 
-// export const BADGES_DOC_LINK =
-// 	"https://github.com/sendou-ink/sendou.ink/blob/rewrite/docs/badges.md";
+export const BADGES_DOC_LINK =
+	'https://github.com/sendou-ink/sendou.ink/blob/rewrite/docs/badges.md';
 
 // export const CREATING_TOURNAMENT_DOC_LINK =
 // 	"https://github.com/sendou-ink/sendou.ink/blob/rewrite/docs/tournament-creation.md";
@@ -117,20 +119,20 @@
 // export const LUTI_PAGE = "/luti";
 // export const PLUS_VOTING_PAGE = "/plus/voting";
 
-// export const BLANK_IMAGE_URL = "/static-assets/img/blank.gif";
-export const COMMON_PREVIEW_IMAGE = '/static-assets/img/layout/common-preview.png';
-// export const ERROR_GIRL_IMAGE_PATH = "/static-assets/img/layout/error-girl";
-// export const LOGO_PATH = "/static-assets/img/layout/logo";
-// export const SENDOU_LOVE_EMOJI_PATH = "/static-assets/img/layout/sendou_love";
+// export const BLANK_IMAGE_URL = "/img/blank.gif";
+export const COMMON_PREVIEW_IMAGE = '/img/layout/common-preview.png';
+// export const ERROR_GIRL_IMAGE_PATH = "/img/layout/error-girl";
+// export const LOGO_PATH = "/img/layout/logo";
+// export const SENDOU_LOVE_EMOJI_PATH = "/img/layout/sendou_love";
 // export const FIRST_PLACEMENT_ICON_PATH =
-// 	"/static-assets/svg/placements/first.svg";
+// 	"/svg/placements/first.svg";
 // export const SECOND_PLACEMENT_ICON_PATH =
-// 	"/static-assets/svg/placements/second.svg";
+// 	"/svg/placements/second.svg";
 // export const THIRD_PLACEMENT_ICON_PATH =
-// 	"/static-assets/svg/placements/third.svg";
+// 	"/svg/placements/third.svg";
 
 // export const soundPath = (fileName: string) =>
-// 	`/static-assets/sounds/${fileName}.wav`;
+// 	`/sounds/${fileName}.wav`;
 
 // export const GET_TRUSTERS_ROUTE = "/trusters";
 // export const PATRONS_LIST_ROUTE = "/patrons-list";
@@ -446,53 +448,53 @@ export const tournamentBracketsPage = ({
 // export const lfgNewPostPage = (postId?: number) =>
 // 	`${LFG_PAGE}/new${postId ? `?postId=${postId}` : ""}`;
 
-// export const badgeUrl = ({
-// 	code,
-// 	extension,
-// }: {
-// 	code: Tables["Badge"]["code"];
-// 	extension?: "gif";
-// }) => `/static-assets/badges/${code}${extension ? `.${extension}` : ""}`;
+export const badgeUrl = ({
+	code,
+	extension
+}: {
+	code: Tables['Badge']['code'];
+	extension?: 'gif';
+}) => `/badges/${code}${extension ? `.${extension}` : ''}`;
 // export const articlePreviewUrl = (slug: string) =>
-// 	`/static-assets/img/article-previews/${slug}.png`;
+// 	`/img/article-previews/${slug}.png`;
 
 // export const navIconUrl = (navItem: string) =>
-// 	`/static-assets/img/layout/${navItem}`;
+// 	`/img/layout/${navItem}`;
 // export const gearImageUrl = (gearType: GearType, gearSplId: number) =>
-// 	`/static-assets/img/gear/${gearType.toLowerCase()}/${gearSplId}`;
+// 	`/img/gear/${gearType.toLowerCase()}/${gearSplId}`;
 // export const weaponCategoryUrl = (
 // 	category: (typeof weaponCategories)[number]["name"],
-// ) => `/static-assets/img/weapon-categories/${category}`;
+// ) => `/img/weapon-categories/${category}`;
 // export const mainWeaponImageUrl = (mainWeaponSplId: MainWeaponId) =>
-// 	`/static-assets/img/main-weapons/${mainWeaponSplId}`;
+// 	`/img/main-weapons/${mainWeaponSplId}`;
 // export const mainWeaponVariantImageUrl = (
 // 	mainWeaponSplId: MainWeaponId,
 // 	variant: "launched",
-// ) => `/static-assets/img/main-weapons/variants/${mainWeaponSplId}-${variant}`;
+// ) => `/img/main-weapons/variants/${mainWeaponSplId}-${variant}`;
 // export const outlinedMainWeaponImageUrl = (mainWeaponSplId: MainWeaponId) =>
-// 	`/static-assets/img/main-weapons-outlined/${mainWeaponSplId}`;
+// 	`/img/main-weapons-outlined/${mainWeaponSplId}`;
 // export const outlinedFiveStarMainWeaponImageUrl = (
 // 	mainWeaponSplId: MainWeaponId,
-// ) => `/static-assets/img/main-weapons-outlined-2/${mainWeaponSplId}`;
+// ) => `/img/main-weapons-outlined-2/${mainWeaponSplId}`;
 // export const subWeaponImageUrl = (subWeaponSplId: SubWeaponId) =>
-// 	`/static-assets/img/sub-weapons/${subWeaponSplId}`;
+// 	`/img/sub-weapons/${subWeaponSplId}`;
 // export const specialWeaponImageUrl = (specialWeaponSplId: SpecialWeaponId) =>
-// 	`/static-assets/img/special-weapons/${specialWeaponSplId}`;
+// 	`/img/special-weapons/${specialWeaponSplId}`;
 // export const specialWeaponVariantImageUrl = (
 // 	specialWeaponSplId: SpecialWeaponId,
 // 	variant: "weakpoints",
 // ) =>
-// 	`/static-assets/img/special-weapons/variants/${specialWeaponSplId}-${variant}`;
+// 	`/img/special-weapons/variants/${specialWeaponSplId}-${variant}`;
 // export const abilityImageUrl = (ability: AbilityWithUnknown) =>
-// 	`/static-assets/img/abilities/${ability}`;
+// 	`/img/abilities/${ability}`;
 // export const brandImageUrl = (brand: BrandId) =>
-// 	`/static-assets/img/brands/${brand}`;
+// 	`/img/brands/${brand}`;
 // export const modeImageUrl = (mode: ModeShortWithSpecial) =>
-// 	`/static-assets/img/modes/${mode}`;
+// 	`/img/modes/${mode}`;
 // export const stageImageUrl = (stageId: StageId) =>
-// 	`/static-assets/img/stages/${stageId}`;
+// 	`/img/stages/${stageId}`;
 // export const tierImageUrl = (tier: TierName | "CALCULATING") =>
-// 	`/static-assets/img/tiers/${tier.toLowerCase()}`;
+// 	`/img/tiers/${tier.toLowerCase()}`;
 // export const preferenceEmojiUrl = (preference?: Preference) => {
 // 	const emoji =
 // 		preference === "PREFER"
@@ -501,11 +503,11 @@ export const tournamentBracketsPage = ({
 // 				? "unamused"
 // 				: "no-mouth";
 
-// 	return `/static-assets/img/emoji/${emoji}.svg`;
+// 	return `/img/emoji/${emoji}.svg`;
 // };
 // export const tournamentLogoUrl = (identifier: string) =>
-// 	`/static-assets/img/tournament-logos/${identifier}.png`;
-// export const TIER_PLUS_URL = "/static-assets/img/tiers/plus";
+// 	`/img/tournament-logos/${identifier}.png`;
+// export const TIER_PLUS_URL = "/img/tiers/plus";
 
 // export const winnersImageUrl = ({
 // 	season,
@@ -513,10 +515,10 @@ export const tournamentBracketsPage = ({
 // }: {
 // 	season: number;
 // 	placement: number;
-// }) => `/static-assets/img/winners/${season}/${placement}`;
+// }) => `/img/winners/${season}/${placement}`;
 
 // export const sqHeaderGuyImageUrl = (season: number) =>
-// 	`/static-assets/img/sq-header/${season}`;
+// 	`/img/sq-header/${season}`;
 
 // export const stageMinimapImageUrlWithEnding = ({
 // 	stageId,

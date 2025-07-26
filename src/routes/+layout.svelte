@@ -5,4 +5,10 @@
 	import '../styles/reset.css';
 </script>
 
-<slot />
+<svelte:boundary>
+	{#snippet pending()}
+		<p>loading...</p>
+	{/snippet}
+
+	<slot />
+</svelte:boundary>

@@ -1,8 +1,8 @@
 <script lang="ts">
-	import DiscordIcon from "$lib/components/icons/discord.svelte";
-	import YouTubeIcon from "$lib/components/icons/youtube.svelte";
-	import Main from "$lib/components/main.svelte";
-	import links from "./links.json";
+	import DiscordIcon from '$lib/components/icons/discord.svelte';
+	import YouTubeIcon from '$lib/components/icons/youtube.svelte';
+	import Main from '$lib/components/main.svelte';
+	import links from './links.json';
 
 	// links should be sorted in the json like so: links.sort((a, b) => a.title.localeCompare(b.title))
 </script>
@@ -19,9 +19,9 @@
 						class="stack sm horizontal items-center"
 					>
 						{link.title}
-						{#if link.url.includes("discord")}
+						{#if link.url.includes('discord')}
 							<DiscordIcon class="discord-icon" />
-						{:else if link.url.includes("youtube")}
+						{:else if link.url.includes('youtube')}
 							<YouTubeIcon class="youtube-icon" />
 						{/if}
 					</a>
