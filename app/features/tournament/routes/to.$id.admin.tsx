@@ -118,6 +118,8 @@ export default function TournamentAdminPage() {
 					<BracketReset />
 				</>
 			) : null}
+			<Divider smallText>Tournament Information</Divider>
+			<TournamentInformation />
 		</div>
 	);
 }
@@ -415,6 +417,38 @@ function CastTwitchAccounts() {
 			</FormMessage>
 		</fetcher.Form>
 	);
+}
+
+function TournamentInformation() {
+    const tournament = useTournament();
+
+    const teamCount = tournament.ctx.teams.length;
+    const playerCount = tournament.ctx.teams.reduce(
+        (total, team) => total + team.members.length,
+        0,
+    );
+    const checkedInTeams = tournament.ctx.teams.filter(
+        (team) => team.checkIns.length > 0,
+    ).length;
+
+    return (
+        <div className="stack sm">
+            <div>
+                <strong>Tournament details</strong>
+            </div>
+            <div>Tournament ID: {tournament.ctx.id}</div>
+            <div>Event ID: {tournament.ctx.eventId}</div>
+			<div>Ranked Status: {tournament.skillCountsFor}</div>
+            <div>Teams: {teamCount}</div>
+            <div>Players: {playerCount}</div>
+            <div>Checked in teams: {checkedInTeams}</div>
+			
+			<FormMessage type="info">
+				Event ID includes all calender events, this is also the ID used for copying your event.
+			</FormMessage>
+        </div>
+    );
+	
 }
 
 function StaffAdder() {
