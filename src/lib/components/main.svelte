@@ -4,20 +4,12 @@
 	interface Props {
 		children?: Snippet;
 		className?: string;
-		classNameOverwrite?: string;
 		halfWidth?: boolean;
 		bigger?: boolean;
 		style?: string;
 	}
 
-	let {
-		children,
-		className,
-		classNameOverwrite,
-		halfWidth = false,
-		bigger = false,
-		style
-	}: Props = $props();
+	let { children, className, halfWidth = false, bigger = false, style }: Props = $props();
 
 	// const isMinorSupporter = useHasRole('MINOR_SUPPORT');
 	const isMinorSupporter = false; // xxx: replace with actual role check
@@ -27,30 +19,19 @@
 	const showLeaderboard = $derived(
 		import.meta.env.VITE_PLAYWIRE_PUBLISHER_ID && !isMinorSupporter && !isRouteErrorResponse
 	);
-
-	export const containerClassName = (width: 'narrow' | 'normal' | 'wide'): string => {
-		if (width === 'narrow') {
-			return 'half-width';
-		}
-
-		if (width === 'wide') {
-			return 'bigger';
-		}
-
-		return 'main';
-	};
 </script>
 
 <div class="container">
 	<main
-		class={{
-			classNameOverwrite,
-			className: className && !classNameOverwrite,
-			[containerClassName('normal')]: !classNameOverwrite,
-			[containerClassName('narrow')]: halfWidth,
-			[containerClassName('wide')]: bigger,
-			'pt-8-forced': showLeaderboard
-		}}
+		class={[
+			className,
+			'main',
+			{
+				'pt-8-forced': showLeaderboard,
+				'half-width': halfWidth,
+				bigger
+			}
+		]}
 		{style}
 	>
 		{@render children?.()}
@@ -64,6 +45,23 @@
 	}
 
 	.main {
+		width: 100%;
+		max-width: 48rem;
+		margin: 0 auto;
+		padding-inline: var(--s-3);
+		min-height: 75vh;
 		padding-block: var(--s-4) var(--s-32);
+	}
+
+	.half-width {
+		width: 100%;
+		max-width: 24rem;
+		margin: 0 auto;
+	}
+
+	.bigger {
+		width: 100%;
+		max-width: 72rem;
+		margin: 0 auto;
 	}
 </style>
