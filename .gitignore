@@ -24,3 +24,5 @@ dump
 /playwright/.cache/
 
 notepad.txt
+
+/.svelte-kit
