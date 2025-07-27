@@ -4,15 +4,9 @@
 	import '../styles/vars.css';
 	import '../styles/reset.css';
 
-	import { page } from '$app/state';
+	import { loggedInUser } from './queries/logged-in-user.remote';
 
 	let { children } = $props();
-
-	const showLeaderboard = $derived(
-		import.meta.env.VITE_PLAYWIRE_PUBLISHER_ID &&
-			// !data?.user?.roles.includes('MINOR_SUPPORT') && xxx: add MINOR_SUPPORT
-			!page.url.pathname.includes('plans')
-	);
 </script>
 
 <svelte:boundary>
@@ -45,7 +39,7 @@
 			{openNavDialog}
 		/> -->
 		</header>
-		{#if showLeaderboard}
+		{#if !(await loggedInUser())?.roles.includes('MINOR_SUPPORT')}
 			<div class="top-leaderboard" id="pw-leaderboard_atf"></div>
 		{/if}
 		{@render children()}
