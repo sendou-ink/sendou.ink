@@ -5,6 +5,7 @@
 	import '../styles/reset.css';
 
 	import { loggedInUser } from './queries/logged-in-user.remote';
+	import Footer from './footer.svelte';
 
 	let { children } = $props();
 </script>
@@ -39,15 +40,15 @@
 			{openNavDialog}
 		/> -->
 		</header>
-		{#if !(await loggedInUser())?.roles.includes('MINOR_SUPPORT')}
+		{#if !(await loggedInUser())?.roles.includes('MINOR_SUPPORT') && process.env.NODE_ENV === 'production'}
 			<div class="top-leaderboard" id="pw-leaderboard_atf"></div>
 		{/if}
 		{@render children()}
-		<!-- xxx: implement Footer -->
-		<!-- <Footer /> -->
+		<Footer />
 	</div>
 </svelte:boundary>
 
+<!-- xxx: Check the mobile styles -->
 <style>
 	.container {
 		width: 100%;

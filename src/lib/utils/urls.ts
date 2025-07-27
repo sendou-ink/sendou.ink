@@ -23,6 +23,8 @@
 // import type { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
 // import type { DayMonthYear } from "~/utils/zod";
 
+// xxx: should this be in the constants folder?
+
 import type { Tables } from '$lib/server/db/tables';
 
 // const staticAssetsUrl = ({
@@ -56,13 +58,13 @@ export const BADGES_DOC_LINK =
 // 	"https://github.com/sendou-ink/sendou.ink/blob/rewrite/docs/tournament-creation.md";
 
 // export const PLUS_SERVER_DISCORD_URL = "https://discord.gg/FW4dKrY";
-// export const SENDOU_INK_DISCORD_URL = "https://discord.gg/sendou";
+export const SENDOU_INK_DISCORD_URL = 'https://discord.gg/sendou';
 // export const SENDOU_INK_PATREON_URL = "https://patreon.com/sendou";
-// export const NINTENDO_COMMUNITY_TOURNAMENTS_GUIDELINES_URL =
-// 	"https://en-americas-support.nintendo.com/app/answers/detail/a_id/63454";
+export const NINTENDO_COMMUNITY_TOURNAMENTS_GUIDELINES_URL =
+	'https://en-americas-support.nintendo.com/app/answers/detail/a_id/63454';
 // export const PATREON_HOW_TO_CONNECT_DISCORD_URL =
 // 	"https://support.patreon.com/hc/en-us/articles/212052266-How-do-I-connect-Discord-to-Patreon-Patron-";
-// export const SENDOU_INK_GITHUB_URL = "https://github.com/sendou-ink/sendou.ink";
+export const SENDOU_INK_GITHUB_URL = 'https://github.com/sendou-ink/sendou.ink';
 // export const GITHUB_CONTRIBUTORS_URL =
 // 	"https://github.com/sendou-ink/sendou.ink/graphs/contributors";
 // export const ipLabsMaps = (pool: string) =>
@@ -82,10 +84,10 @@ export const BADGES_DOC_LINK =
 // export const LOG_OUT_URL = "/auth/logout";
 // export const ADMIN_PAGE = "/admin";
 // export const ARTICLES_MAIN_PAGE = "/a";
-// export const FAQ_PAGE = "/faq";
-// export const PRIVACY_POLICY_PAGE = "/privacy-policy";
-// export const SUPPORT_PAGE = "/support";
-// export const CONTRIBUTIONS_PAGE = "/contributions";
+export const FAQ_PAGE = '/faq';
+export const PRIVACY_POLICY_PAGE = '/privacy-policy';
+export const SUPPORT_PAGE = '/support';
+export const CONTRIBUTIONS_PAGE = '/contributions';
 // export const BADGES_PAGE = "/badges";
 // export const BUILDS_PAGE = "/builds";
 // export const USER_SEARCH_PAGE = "/u";
@@ -123,7 +125,7 @@ export const BADGES_DOC_LINK =
 export const COMMON_PREVIEW_IMAGE = '/img/layout/common-preview.png';
 // export const ERROR_GIRL_IMAGE_PATH = "/img/layout/error-girl";
 // export const LOGO_PATH = "/img/layout/logo";
-// export const SENDOU_LOVE_EMOJI_PATH = "/img/layout/sendou_love";
+export const SENDOU_LOVE_EMOJI_PATH = '/img/layout/sendou_love';
 // export const FIRST_PLACEMENT_ICON_PATH =
 // 	"/svg/placements/first.svg";
 // export const SECOND_PLACEMENT_ICON_PATH =
@@ -140,13 +142,12 @@ export const COMMON_PREVIEW_IMAGE = '/img/layout/common-preview.png';
 // export const NOTIFICATIONS_URL = "/notifications";
 // export const NOTIFICATIONS_MARK_AS_SEEN_ROUTE = "/notifications/seen";
 
-// interface UserLinkArgs {
-// 	discordId: Tables["User"]["discordId"];
-// 	customUrl?: Tables["User"]["customUrl"];
-// }
+interface UserLinkArgs {
+	discordId: Tables['User']['discordId'];
+	customUrl?: Tables['User']['customUrl'];
+}
 
-// export const userPage = (user: UserLinkArgs) =>
-// 	`/u/${user.customUrl ?? user.discordId}`;
+export const userPage = (user: UserLinkArgs) => `/u/${user.customUrl ?? user.discordId}`;
 // export const userSeasonsPage = ({
 // 	user,
 // 	season,
