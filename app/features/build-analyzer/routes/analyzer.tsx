@@ -86,6 +86,7 @@ import {
 import "../analyzer.css";
 import * as R from "remeda";
 import { SendouSwitch } from "~/components/elements/Switch";
+import { Placeholder } from "~/components/Placeholder";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import { logger } from "~/utils/logger";
 
@@ -117,7 +118,7 @@ export default function BuildAnalyzerShell() {
 	const isMounted = useIsMounted();
 
 	if (!isMounted) {
-		return null;
+		return <Placeholder />;
 	}
 
 	return <BuildAnalyzerPage />;

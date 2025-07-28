@@ -1,7 +1,7 @@
 import type { ActionFunction } from "@remix-run/node";
-import { nanoid } from "nanoid";
 import { sql } from "~/db/sql";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as TournamentMatchRepository from "~/features/tournament-bracket/TournamentMatchRepository.server";
@@ -15,7 +15,6 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { getServerTournamentManager } from "../core/brackets-manager/manager.server";
-import { emitter } from "../core/emitters.server";
 import { resolveMapList } from "../core/mapList.server";
 import * as PickBan from "../core/PickBan";
 import {
@@ -39,11 +38,11 @@ import {
 	matchSchema,
 } from "../tournament-bracket-schemas.server";
 import {
-	bracketSubscriptionKey,
 	isSetOverByScore,
 	matchIsLocked,
-	matchSubscriptionKey,
+	tournamentMatchWebsocketRoom,
 	tournamentTeamToActiveRosterUserIds,
+	tournamentWebsocketRoom,
 } from "../tournament-bracket-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
@@ -99,7 +98,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			: null;
 
 	let emitMatchUpdate = false;
-	let emitBracketUpdate = false;
+	let emitTournamentUpdate = false;
 	switch (data._action) {
 		case "REPORT_SCORE": {
 			// they are trying to report score that was already reported
@@ -212,7 +211,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			})();
 
 			emitMatchUpdate = true;
-			emitBracketUpdate = true;
+			emitTournamentUpdate = true;
 
 			break;
 		}
@@ -311,7 +310,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			})();
 
 			emitMatchUpdate = true;
-			emitBracketUpdate = true;
+			emitTournamentUpdate = true;
 
 			break;
 		}
@@ -386,7 +385,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			})();
 
 			emitMatchUpdate = true;
-			emitBracketUpdate = true;
+			emitTournamentUpdate = true;
 
 			break;
 		}
@@ -498,7 +497,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			})();
 
 			emitMatchUpdate = true;
-			emitBracketUpdate = true;
+			emitTournamentUpdate = true;
 
 			break;
 		}
@@ -514,7 +513,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				twitchAccount: data.twitchAccount,
 			});
 
-			emitBracketUpdate = true;
+			emitTournamentUpdate = true;
 
 			break;
 		}
@@ -558,23 +557,27 @@ export const action: ActionFunction = async ({ params, request }) => {
 		}
 	}
 
-	if (emitMatchUpdate) {
-		emitter.emit(matchSubscriptionKey(match.id), {
-			eventId: nanoid(),
-			userId: user.id,
-		});
-	}
-	if (emitBracketUpdate) {
-		emitter.emit(bracketSubscriptionKey(tournament.ctx.id), {
-			matchId: match.id,
-			scores,
-			isOver:
-				scores[0] === Math.ceil(match.bestOf / 2) ||
-				scores[1] === Math.ceil(match.bestOf / 2),
-		});
-	}
-
 	clearTournamentDataCache(tournamentId);
+
+	// TODO: we could optimize this in the future by including an `authorUserId` field and skip revalidation if the author is the same as the current user
+	if (emitMatchUpdate) {
+		ChatSystemMessage.send([
+			{
+				room: tournamentMatchWebsocketRoom(matchId),
+				type: "TOURNAMENT_MATCH_UPDATED",
+				revalidateOnly: true,
+			},
+		]);
+	}
+	if (emitTournamentUpdate) {
+		ChatSystemMessage.send([
+			{
+				room: tournamentWebsocketRoom(tournament.ctx.id),
+				type: "TOURNAMENT_UPDATED",
+				revalidateOnly: true,
+			},
+		]);
+	}
 
 	return null;
 };
