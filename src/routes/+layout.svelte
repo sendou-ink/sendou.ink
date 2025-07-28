@@ -6,8 +6,15 @@
 
 	import { loggedInUser } from './queries/logged-in-user.remote';
 	import Footer from './footer.svelte';
+	import Button from '$lib/components/button.svelte';
+	import HeartIcon from '$lib/components/icons/heart.svelte';
+	import { m } from '$lib/paraglide/messages';
+	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 
 	let { children } = $props();
+
+	const isFrontPage = $derived(page.url.pathname === '/');
 </script>
 
 <svelte:boundary>
@@ -39,6 +46,9 @@
 			)}
 			{openNavDialog}
 		/> -->
+			{@render topRightButtons(
+				isFrontPage && !(await loggedInUser())?.roles.includes('MINOR_SUPPORT')
+			)}
 		</header>
 		{#if !(await loggedInUser())?.roles.includes('MINOR_SUPPORT') && process.env.NODE_ENV === 'production'}
 			<div class="top-leaderboard" id="pw-leaderboard_atf"></div>
@@ -47,6 +57,30 @@
 		<Footer />
 	</div>
 </svelte:boundary>
+
+{#snippet topRightButtons(showSupport: boolean)}
+	<div class="right-container">
+		{#if showSupport}
+			<Button href={resolve('/support')} size="small" variant="outlined">
+				{#snippet icon()}
+					<HeartIcon />
+				{/snippet}
+				{m['common:pages.support']()}
+			</Button>
+		{/if}
+		<!-- <NotificationPopover />
+			<AnythingAdder /> -->
+		<!-- <button
+				aria-label="Open navigation"
+				onClick={openNavDialog}
+				className="layout__header__button"
+				type="button"
+			>
+				<HamburgerIcon className="layout__header__button__icon" />
+			</button> -->
+		<!-- <UserItem /> -->
+	</div>
+{/snippet}
 
 <!-- xxx: Check the mobile styles -->
 <style>
@@ -109,6 +143,12 @@
 	.top-leaderboard {
 		min-height: 130px;
 		margin: 10px 0;
+	}
+
+	.right-container {
+		display: flex;
+		gap: var(--s-3);
+		justify-self: flex-end;
 	}
 
 	@media screen and (min-width: 601px) {

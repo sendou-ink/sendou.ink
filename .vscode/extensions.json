@@ -1,3 +1,8 @@
 {
-	"recommendations": ["bierner.markdown-mermaid", "biomejs.biome"]
+	"recommendations": [
+		"bierner.markdown-mermaid",
+		"inlang.vs-code-extension",
+		"esbenp.prettier-vscode",
+		"dbaeumer.vscode-eslint"
+	]
 }

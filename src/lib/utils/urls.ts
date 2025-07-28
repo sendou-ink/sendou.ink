@@ -59,11 +59,11 @@ export const BADGES_DOC_LINK =
 
 // export const PLUS_SERVER_DISCORD_URL = "https://discord.gg/FW4dKrY";
 export const SENDOU_INK_DISCORD_URL = 'https://discord.gg/sendou';
-// export const SENDOU_INK_PATREON_URL = "https://patreon.com/sendou";
+export const SENDOU_INK_PATREON_URL = 'https://patreon.com/sendou';
 export const NINTENDO_COMMUNITY_TOURNAMENTS_GUIDELINES_URL =
 	'https://en-americas-support.nintendo.com/app/answers/detail/a_id/63454';
-// export const PATREON_HOW_TO_CONNECT_DISCORD_URL =
-// 	"https://support.patreon.com/hc/en-us/articles/212052266-How-do-I-connect-Discord-to-Patreon-Patron-";
+export const PATREON_HOW_TO_CONNECT_DISCORD_URL =
+	'https://support.patreon.com/hc/en-us/articles/212052266-How-do-I-connect-Discord-to-Patreon-Patron-';
 export const SENDOU_INK_GITHUB_URL = 'https://github.com/sendou-ink/sendou.ink';
 // export const GITHUB_CONTRIBUTORS_URL =
 // 	"https://github.com/sendou-ink/sendou.ink/graphs/contributors";
@@ -459,8 +459,7 @@ export const badgeUrl = ({
 // export const articlePreviewUrl = (slug: string) =>
 // 	`/img/article-previews/${slug}.png`;
 
-// export const navIconUrl = (navItem: string) =>
-// 	`/img/layout/${navItem}`;
+export const navIconUrl = (navItem: string) => `/img/layout/${navItem}`;
 // export const gearImageUrl = (gearType: GearType, gearSplId: number) =>
 // 	`/img/gear/${gearType.toLowerCase()}/${gearSplId}`;
 // export const weaponCategoryUrl = (

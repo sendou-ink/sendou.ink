@@ -3,13 +3,13 @@
 
 	interface Props {
 		children?: Snippet;
-		className?: string;
+		class?: string;
 		halfWidth?: boolean;
 		bigger?: boolean;
 		style?: string;
 	}
 
-	let { children, className, halfWidth = false, bigger = false, style }: Props = $props();
+	let { children, class: className, halfWidth = false, bigger = false, style }: Props = $props();
 
 	// const isMinorSupporter = useHasRole('MINOR_SUPPORT');
 	const isMinorSupporter = false; // xxx: replace with actual role check

@@ -5,51 +5,29 @@
 	import SearchIcon from '$lib/components/icons/search.svelte';
 	import { BADGES_DOC_LINK } from '$lib/utils/urls';
 	import Main from '$lib/components/main.svelte';
-	import { allBadges, type AllBadgesQuery } from './queries/all-badges.remote';
+	import { allBadges } from './queries/all-badges.remote';
 	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';
+	import { m } from '$lib/paraglide/messages';
 
 	let { children } = $props();
 
 	let searchInputValue = $state('');
 
-	const { ownBadges: allOwnBadges, otherBadges: allOtherBadges } = $derived(
-		splitBadges(await allBadges())
-	);
+	const badges = await allBadges();
 
 	const inputValueNormalized = $derived(searchInputValue.toLowerCase());
 
 	const ownBadges = $derived(
-		allOwnBadges.filter(
+		badges.own.filter(
 			(b) => !inputValueNormalized || b.displayName.toLowerCase().includes(inputValueNormalized)
 		)
 	);
 
 	const otherBadges = $derived(
-		allOtherBadges.filter(
+		badges.other.filter(
 			(b) => !inputValueNormalized || b.displayName.toLowerCase().includes(inputValueNormalized)
 		)
 	);
-
-	function splitBadges(
-		badges: AllBadgesQuery
-		// currentUser: typeof $user xxx: TODO current user handling
-	) {
-		const ownBadges: AllBadgesQuery = [];
-		const otherBadges: AllBadgesQuery = [];
-
-		for (const badge of badges) {
-			// xxx: TODO
-			// if (currentUser && badge.permissions.MANAGE.includes(currentUser.id)) {
-			// 	ownBadges.push(badge);
-			// } else {
-			// 	otherBadges.push(badge);
-			// }
-
-			otherBadges.push(badge);
-		}
-
-		return { ownBadges, otherBadges };
-	}
 </script>
 
 <OpenGraphMeta
@@ -70,7 +48,7 @@
 
 		{#if ownBadges.length > 0}
 			<div class="w-full">
-				<Divider smallText>i18n: own.divider</Divider>
+				<Divider smallText>{m['badges:own.divider']()}</Divider>
 				<div class="small-badges">
 					{#each ownBadges as badge (badge.id)}
 						<a class="nav-link" href="/badges/{badge.id}">
@@ -85,7 +63,7 @@
 			<div class="w-full">
 				<div class="small-badges">
 					{#if ownBadges.length > 0}
-						<Divider smallText>i18n: other.divider</Divider>
+						<Divider smallText>{m['badges:other.divider']()}</Divider>
 					{/if}
 					{#each otherBadges as badge (badge.id)}
 						<!-- xxx: hide conditionally (when viewing the page of it) -->
@@ -96,13 +74,15 @@
 				</div>
 			</div>
 		{:else}
-			<div class="text-lg font-bold my-24">i18n: badges:noBadgesFound</div>
+			<div class="text-lg font-bold my-24">{m['badges:noBadgesFound']()}</div>
 		{/if}
 	</div>
 
 	<div class="general-info-texts">
 		<p>
-			<a href={BADGES_DOC_LINK} target="_blank" rel="noopener noreferrer"> i18n: forYourEvent </a>
+			<a href={BADGES_DOC_LINK} target="_blank" rel="noopener noreferrer"
+				>{m['badges:forYourEvent']()}</a
+			>
 		</p>
 	</div>
 </Main>

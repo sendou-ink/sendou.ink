@@ -10,7 +10,7 @@
 	let { children, class: className, smallText }: Props = $props();
 </script>
 
-<div class={['divider', className, { 'text-sm': smallText }]}>
+<div class={['divider', className, { smallText }]}>
 	{@render children?.()}
 </div>
 
@@ -37,5 +37,9 @@
 
 	.divider:not(:empty)::after {
 		margin-left: 0.25em;
+	}
+
+	.smallText {
+		font-size: var(--fonts-sm);
 	}
 </style>

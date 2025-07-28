@@ -15,35 +15,36 @@
 	import GitHubIcon from '$lib/components/icons/github.svelte';
 	import PatreonIcon from '$lib/components/icons/patreon.svelte';
 	import { patrons } from './queries/patrons.remote';
+	import { m } from '$lib/paraglide/messages';
 
 	const currentYear = new Date().getFullYear();
 </script>
 
 <footer>
 	<div class="link-list">
-		<a href={PRIVACY_POLICY_PAGE}>i18n: privacy</a>
-		<a href={CONTRIBUTIONS_PAGE}>i18n: pages.contributors</a>
-		<a href={FAQ_PAGE}>i18n: pages.faq</a>
+		<a href={PRIVACY_POLICY_PAGE}>{m['common:pages.privacy']()}</a>
+		<a href={CONTRIBUTIONS_PAGE}>{m['common:pages.contributors']()}</a>
+		<a href={FAQ_PAGE}>{m['common:pages.faq']()}</a>
 	</div>
 	<div class="socials">
 		<a class="social-link" href={SENDOU_INK_GITHUB_URL} target="_blank" rel="noreferrer">
 			<div class="social-header">
 				GitHub
-				<p>i18n: footer.github.subtitle</p>
+				<p>{m['common:footer.github.subtitle']()}</p>
 			</div>
 			<GitHubIcon class="social-icon github" />
 		</a>
 		<a class="social-link" href={SENDOU_INK_DISCORD_URL} target="_blank" rel="noreferrer">
 			<div class="social-header">
 				Discord
-				<p>i18n: footer.discord.subtitle</p>
+				<p>{m['common:footer.discord.subtitle']()}</p>
 			</div>
 			<DiscordIcon class="social-icon discord" />
 		</a>
 		<a class="social-link" href={SUPPORT_PAGE}>
 			<div class="social-header">
 				Patreon
-				<p>i18n: footer.patreon.subtitle</p>
+				<p>{m['common:footer.patreon.subtitle']()}</p>
 			</div>
 			<PatreonIcon class="social-icon patreon" />
 		</a>
@@ -51,7 +52,7 @@
 
 	<div>
 		<h4 class="patron-title">
-			i18n: footer.thanks
+			{m['common:footer.thanks']()}
 			<Image alt="" path={SENDOU_LOVE_EMOJI_PATH} width={24} height={24} />
 		</h4>
 		<ul class="patron-list">

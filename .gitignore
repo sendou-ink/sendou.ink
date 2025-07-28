@@ -26,3 +26,5 @@ dump
 notepad.txt
 
 /.svelte-kit
+
+/src/lib/paraglide
