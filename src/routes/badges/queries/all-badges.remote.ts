@@ -1,8 +1,8 @@
-import { prerender } from '$app/server';
+import { query } from '$app/server';
 import { getUser, type AuthenticatedUser } from '$lib/server/auth/session';
 import * as BadgeRepository from '$lib/server/db/repositories/badge';
 
-export const allBadges = prerender(async () => {
+export const allBadges = query(async () => {
 	const user = await getUser();
 	return splitBadges(await BadgeRepository.all(), user);
 });

@@ -27,23 +27,6 @@ const withManagers = (eb: ExpressionBuilder<DB, 'Badge'>) => {
 	).as('managers');
 };
 
-const withOwners = (eb: ExpressionBuilder<DB, 'Badge'>) => {
-	return jsonArrayFrom(
-		eb
-			.selectFrom('BadgeOwner')
-			.innerJoin('User', 'BadgeOwner.userId', 'User.id')
-			.select(({ fn }) => [
-				fn.count<number>('BadgeOwner.badgeId').as('count'),
-				'User.id',
-				'User.discordId',
-				'User.username'
-			])
-			.whereRef('BadgeOwner.badgeId', '=', 'Badge.id')
-			.groupBy('User.id')
-			.orderBy('count', 'desc')
-	).as('owners');
-};
-
 export async function all() {
 	const rows = await db
 		.selectFrom('Badge')
@@ -53,26 +36,20 @@ export async function all() {
 	return rows.map(addPermissions);
 }
 
-export async function findById(badgeId: number) {
-	const row = await db
-		.selectFrom('Badge')
-		.select((eb) => [
-			'Badge.id',
-			'Badge.displayName',
-			'Badge.code',
-			'Badge.hue',
-			withAuthor(eb),
-			withManagers(eb),
-			withOwners(eb)
+export async function findOwnersById(badgeId: number) {
+	return db
+		.selectFrom('BadgeOwner')
+		.innerJoin('User', 'BadgeOwner.userId', 'User.id')
+		.select(({ fn }) => [
+			fn.count<number>('BadgeOwner.badgeId').as('count'),
+			'User.id',
+			'User.discordId',
+			'User.username'
 		])
-		.where('id', '=', badgeId)
-		.executeTakeFirst();
-
-	if (!row) {
-		return null;
-	}
-
-	return addPermissions(row);
+		.where('BadgeOwner.badgeId', '=', badgeId)
+		.groupBy('User.id')
+		.orderBy('count', 'desc')
+		.execute();
 }
 
 export function findByManagersList(userIds: number[]) {
