@@ -1,8 +1,9 @@
 <script>
 	import { badgeOwners } from './queries/badge-owners.remote';
-	import { page } from '$app/state';
+
+	let { params } = $props();
 </script>
 
 <pre>
-  {JSON.stringify(await badgeOwners(Number(page.params.id)), null, 2)}
+  {JSON.stringify(await badgeOwners(Number(params.id)), null, 2)}
 </pre>

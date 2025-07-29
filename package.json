@@ -66,7 +66,7 @@
 		"@eslint/js": "^9.32.0",
 		"@playwright/test": "^1.52.0",
 		"@sveltejs/adapter-auto": "^6.0.0",
-		"@sveltejs/kit": "https://pkg.pr.new/sveltejs/kit/@sveltejs/kit@44f3c63",
+		"@sveltejs/kit": "https://pkg.pr.new/sveltejs/kit/@sveltejs/kit@18225a5",
 		"@sveltejs/vite-plugin-svelte": "^6.0.0",
 		"@types/better-sqlite3": "^7.6.13",
 		"@types/node-cron": "^3.0.11",
