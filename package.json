@@ -6,9 +6,11 @@
 	"type": "module",
 	"scripts": {
 		"deploy": "npm ci && npm run build",
-		"build": "remix vite:build",
+		"build": "cross-env DB_PATH=db.sqlite3 vite build",
+		"preview": "cross-env DB_PATH=db.sqlite3 vite preview",
+		"build:experimental": "tsx scripts/build-with-all-locales.ts",
 		"dev": "cross-env DB_PATH=db.sqlite3 npm run migrate up && npm run setup && vite dev",
-		"dev:only": "cross-env DB_PATH=db-prod.sqlite3 vite dev",
+		"dev:only": "cross-env DB_PATH=db.sqlite3 vite dev",
 		"dev:prod": "DB_PATH=db-prod.sqlite3 VITE_PROD_MODE=true npm run dev",
 		"start": "npm run migrate up && remix-serve ./build/server/index.js",
 		"migrate": "ley",

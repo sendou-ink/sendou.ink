@@ -5,13 +5,14 @@ import { defineConfig } from 'vite';
 // xxx: ensure translations are tree shaken
 // xxx: remove english from translation jsons and empty keys
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
 	plugins: [
 		paraglideVitePlugin({
 			project: './project.inlang',
 			outdir: './src/lib/paraglide',
-			strategy: ['cookie', 'preferredLanguage', 'baseLocale']
+			strategy: ['cookie', 'preferredLanguage', 'baseLocale'],
+			outputStructure: mode === 'production' ? 'message-modules' : 'locale-modules'
 		}),
 		sveltekit()
 	]
-});
+}));
