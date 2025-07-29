@@ -35,6 +35,8 @@ const locales = fs.readdirSync(LOCALES_DIR).filter(item => {
   return fs.statSync(path.join(LOCALES_DIR, item)).isDirectory();
 });
 
+console.log(`\nCreating ${locales.length} language files from /${LOCALES_DIR} to /${OUTPUT_DIR}...`);
+
 for (const locale of locales) {
   const localeDir = path.join(LOCALES_DIR, locale);
   const jsonFiles = fs.readdirSync(localeDir).filter(file => file.endsWith('.json'));
@@ -61,4 +63,4 @@ for (const locale of locales) {
   console.log(`✓ Created ${outputPath}`);
 }
 
-console.log('Done!');
+console.log('Done creating language files!');

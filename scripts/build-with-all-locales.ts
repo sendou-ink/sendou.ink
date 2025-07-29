@@ -21,33 +21,30 @@ const ALL_LOCALES = [
   "zh"
 ];
 
-function readSettingsFile() {
-  const content = fs.readFileSync(SETTINGS_PATH, 'utf8');
-  return JSON.parse(content);
-}
-
 function run() {
-  const originalSettings = readSettingsFile();
+  console.log(`Building with languages: ${ALL_LOCALES.join(', ')}`);
+
   const backupPath = `${SETTINGS_PATH}.backup`;
 
-  fs.writeFileSync(backupPath, JSON.stringify(originalSettings, null, '\t') + '\n', 'utf8');
+  fs.writeFileSync(backupPath, fs.readFileSync(SETTINGS_PATH, 'utf8'));
   
   try {
     const buildSettings = {
-      ...originalSettings,
+      ...JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8')),
       locales: ALL_LOCALES
     };
 
     fs.writeFileSync(SETTINGS_PATH, JSON.stringify(buildSettings, null, '\t') + '\n', 'utf8');
 
     execSync('npx tsx scripts/combine-locales.ts', { stdio: 'inherit' });
+
+    console.log('\nStarting build process...');
     execSync('npm run build', { stdio: 'inherit' });
   } catch (error) {
     console.error('Build failed:', error);
   } finally {
     fs.writeFileSync(SETTINGS_PATH, fs.readFileSync(backupPath, 'utf8'));
     fs.unlinkSync(backupPath);
-    
   }
 }
 
