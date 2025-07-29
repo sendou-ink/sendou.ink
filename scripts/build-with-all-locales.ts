@@ -41,13 +41,13 @@ function run() {
     fs.writeFileSync(SETTINGS_PATH, JSON.stringify(buildSettings, null, '\t') + '\n', 'utf8');
 
     execSync('npx tsx scripts/combine-locales.ts', { stdio: 'inherit' });
-    execSync('remix vite:build', { stdio: 'inherit' });    
+    execSync('npm run build', { stdio: 'inherit' });
   } catch (error) {
     console.error('Build failed:', error);
-    process.exit(1);
   } finally {
     fs.writeFileSync(SETTINGS_PATH, fs.readFileSync(backupPath, 'utf8'));
     fs.unlinkSync(backupPath);
+    
   }
 }
 
