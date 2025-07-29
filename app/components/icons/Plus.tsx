@@ -8,7 +8,6 @@ export function PlusIcon({ className }: { className?: string }) {
 			stroke="currentColor"
 			className={className}
 		>
-			<title>Plus Icon</title>
 			<path
 				strokeLinecap="round"
 				strokeLinejoin="round"

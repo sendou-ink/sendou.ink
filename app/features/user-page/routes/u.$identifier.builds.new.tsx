@@ -217,6 +217,7 @@ function WeaponsSelector() {
 					return (
 						<div key={i} className="stack horizontal sm items-center">
 							<WeaponSelect
+								isRequired
 								onChange={(weaponId) =>
 									setWeapons((weapons) => {
 										const newWeapons = [...weapons];

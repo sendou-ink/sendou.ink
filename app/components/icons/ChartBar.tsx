@@ -17,7 +17,6 @@ export function ChartBarIcon({
 			className={className}
 			style={style}
 		>
-			<title>Chart Bar Icon</title>
 			<path
 				strokeLinecap="round"
 				strokeLinejoin="round"

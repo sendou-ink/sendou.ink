@@ -8,7 +8,6 @@ export function SpeechBubbleIcon({ className }: { className?: string }) {
 			stroke="currentColor"
 			strokeWidth={2}
 		>
-			<title>Speech Bubble Icon</title>
 			<path
 				strokeLinecap="round"
 				strokeLinejoin="round"

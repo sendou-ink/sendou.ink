@@ -229,12 +229,15 @@ export function validatedAnyWeaponFromSearchParams(
 		return { type: "MAIN", id: id as MainWeaponId };
 	}
 
-	return { type: "MAIN", id: validatedWeaponIdFromSearchParams(searchParams) };
+	return {
+		type: "MAIN",
+		id: validatedWeaponIdFromSearchParams(searchParams) ?? 0,
+	};
 }
 
 export function validatedWeaponIdFromSearchParams(
 	searchParams: URLSearchParams,
-): MainWeaponId {
+) {
 	const weaponId = searchParams.get("weapon")
 		? Number(searchParams.get("weapon"))
 		: null;
@@ -243,7 +246,7 @@ export function validatedWeaponIdFromSearchParams(
 		return weaponId as MainWeaponId;
 	}
 
-	return weaponCategories[0].weaponIds[0];
+	return null;
 }
 
 function validateAbility(

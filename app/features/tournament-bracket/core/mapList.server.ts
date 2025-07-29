@@ -21,11 +21,9 @@ import type { Bracket } from "./Bracket";
 interface ResolveCurrentMapListArgs {
 	tournamentId: number;
 	mapPickingStyle: Tables["Tournament"]["mapPickingStyle"];
-	/** @deprecated use maps.count instead */
-	bestOf: 3 | 5 | 7;
 	matchId: number;
 	teams: [teamOneId: number, teamTwoId: number];
-	maps: TournamentRoundMaps | null;
+	maps: TournamentRoundMaps;
 	pickBanEvents: Array<{
 		mode: ModeShort;
 		stageId: StageId;
@@ -120,8 +118,6 @@ export function resolveFreshTeamPickedMapList(
 	};
 
 	const count = () => {
-		if (!args.maps?.count) return args.bestOf;
-
 		if (args.maps.pickBan) {
 			return pickBanCount(args.maps.pickBan, args.maps.count);
 		}

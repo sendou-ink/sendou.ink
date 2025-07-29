@@ -8,7 +8,6 @@ export function HamburgerIcon({ className }: { className?: string }) {
 			stroke="currentColor"
 			className={className}
 		>
-			<title>Hamburger icon</title>
 			<path
 				strokeLinecap="round"
 				strokeLinejoin="round"

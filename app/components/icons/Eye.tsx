@@ -8,7 +8,6 @@ export function EyeIcon({ className }: { className?: string }) {
 			stroke="currentColor"
 			className={className}
 		>
-			<title>Eye Icon</title>
 			<path
 				strokeLinecap="round"
 				strokeLinejoin="round"

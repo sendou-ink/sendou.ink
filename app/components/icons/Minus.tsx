@@ -7,7 +7,6 @@ export function MinusIcon({ className }: { className?: string }) {
 			viewBox="0 0 24 24"
 			stroke="currentColor"
 		>
-			<title>Minus Icon</title>
 			<path
 				strokeLinecap="round"
 				strokeLinejoin="round"

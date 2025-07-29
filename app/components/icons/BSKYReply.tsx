@@ -7,7 +7,6 @@ export function BSKYReplyIcon({ className }: { className?: string }) {
 			height="18"
 			className={className}
 		>
-			<title>Reply Icon</title>
 			<path
 				fill="currentColor"
 				fillRule="evenodd"

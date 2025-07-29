@@ -8,7 +8,6 @@ export function MicrophoneIcon({ className }: { className?: string }) {
 			stroke="currentColor"
 			className={className}
 		>
-			<title>Microphone Icon</title>
 			<path
 				strokeLinecap="round"
 				strokeLinejoin="round"

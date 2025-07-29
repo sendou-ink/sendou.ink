@@ -17,7 +17,6 @@ export function FireIcon({
 			className={className}
 			style={style}
 		>
-			<title>Fire Icon</title>
 			<path
 				strokeLinecap="round"
 				strokeLinejoin="round"

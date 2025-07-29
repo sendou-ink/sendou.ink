@@ -14,7 +14,7 @@ export function ArrowLongLeftIcon({
 			stroke="currentColor"
 			className={className}
 		>
-			<title>{title ?? "Arrow Long Left Icon"}</title>
+			{title ? <title>{title}</title> : null}
 			<path
 				strokeLinecap="round"
 				strokeLinejoin="round"
