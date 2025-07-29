@@ -4,7 +4,7 @@
 	import '../styles/vars.css';
 	import '../styles/reset.css';
 
-	import { loggedInUser } from './queries/logged-in-user.remote';
+	import { me } from './queries/me.remote';
 	import Footer from './footer.svelte';
 	import Button from '$lib/components/button.svelte';
 	import HeartIcon from '$lib/components/icons/heart.svelte';
@@ -46,11 +46,9 @@
 			)}
 			{openNavDialog}
 		/> -->
-			{@render topRightButtons(
-				isFrontPage && !(await loggedInUser())?.roles.includes('MINOR_SUPPORT')
-			)}
+			{@render topRightButtons(isFrontPage && !(await me())?.roles.includes('MINOR_SUPPORT'))}
 		</header>
-		{#if !(await loggedInUser())?.roles.includes('MINOR_SUPPORT') && process.env.NODE_ENV === 'production'}
+		{#if !(await me())?.roles.includes('MINOR_SUPPORT') && process.env.NODE_ENV === 'production'}
 			<div class="top-leaderboard" id="pw-leaderboard_atf"></div>
 		{/if}
 		{@render children()}

@@ -62,9 +62,7 @@ export async function identifierToBuildFields(identifier: string) {
 export function findLayoutDataByIdentifier(identifier: string, loggedInUserId?: number) {
 	return identifierToUserIdQuery(identifier)
 		.select((eb) => [
-			...COMMON_USER_FIELDS,
-			'User.commissionText',
-			'User.commissionsOpen',
+			"User.id",
 			sql<Record<
 				string,
 				string

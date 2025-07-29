@@ -8,6 +8,7 @@
 	import { allBadges } from './queries/all-badges.remote';
 	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';
 	import { m } from '$lib/paraglide/messages';
+	import { resolve } from '$app/paths';
 
 	let { children } = $props();
 
@@ -40,18 +41,18 @@
 	<div class="container">
 		{@render children?.()}
 
-		{#snippet searchIcon()}
-			<SearchIcon class="search-icon" />
-		{/snippet}
-
-		<Input class="search-input" icon={searchIcon} bind:value={searchInputValue} />
+		<Input class="search-input" bind:value={searchInputValue}>
+			{#snippet icon()}
+				<SearchIcon class="search-icon" />
+			{/snippet}
+		</Input>
 
 		{#if ownBadges.length > 0}
 			<div class="w-full">
 				<Divider smallText>{m.badges_own_divider()}</Divider>
 				<div class="small-badges">
 					{#each ownBadges as badge (badge.id)}
-						<a class="nav-link" href="/badges/{badge.id}">
+						<a class="nav-link" href={resolve(`/badges/${badge.id}`)}>
 							<Badge {badge} size={64} isAnimated={false} />
 						</a>
 					{/each}
@@ -67,7 +68,7 @@
 					{/if}
 					{#each otherBadges as badge (badge.id)}
 						<!-- xxx: hide conditionally (when viewing the page of it) -->
-						<a class="nav-link" href="/badges/{badge.id}">
+						<a class="nav-link" href={resolve(`/badges/${badge.id}`)}>
 							<Badge {badge} size={64} isAnimated={false} />
 						</a>
 					{/each}
