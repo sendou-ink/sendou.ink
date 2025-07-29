@@ -20,31 +20,10 @@
 		"zh"
 	],
 	"modules": [
-		"https://cdn.jsdelivr.net/npm/@inlang/plugin-m-function-matcher@2/dist/index.js",
-		"https://cdn.jsdelivr.net/npm/@inlang/plugin-i18next@latest/dist/index.js"
+		"https://cdn.jsdelivr.net/npm/@inlang/plugin-message-format@4/dist/index.js",
+		"https://cdn.jsdelivr.net/npm/@inlang/plugin-m-function-matcher@2/dist/index.js"
 	],
-	"plugin.inlang.i18next": {
-		"pathPattern": {
-			"analyzer": "./locales/{locale}/analyzer.json",
-			"art": "./locales/{locale}/art.json",
-			"badges": "./locales/{locale}/badges.json",
-			"builds": "./locales/{locale}/builds.json",
-			"calendar": "./locales/{locale}/calendar.json",
-			"common": "./locales/{locale}/common.json",
-			"contributions": "./locales/{locale}/contributions.json",
-			"faq": "./locales/{locale}/faq.json",
-			"front": "./locales/{locale}/front.json",
-			"game-misc": "./locales/{locale}/game-misc.json",
-			"gear": "./locales/{locale}/gear.json",
-			"lfg": "./locales/{locale}/lfg.json",
-			"org": "./locales/{locale}/org.json",
-			"q": "./locales/{locale}/q.json",
-			"scrims": "./locales/{locale}/scrims.json",
-			"team": "./locales/{locale}/team.json",
-			"tournament": "./locales/{locale}/tournament.json",
-			"user": "./locales/{locale}/user.json",
-			"vods": "./locales/{locale}/vods.json",
-			"weapons": "./locales/{locale}/weapons.json"
-		}
+	"plugin.inlang.messageFormat": {
+		"pathPattern": "./messages/{locale}.json"
 	}
 }

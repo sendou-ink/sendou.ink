@@ -16,8 +16,8 @@
 
 <Main class="stack lg">
 	<div class="stack md">
-		<p>{m['common:support.intro.first']()}</p>
-		<p>{m['common:support.intro.second']()}</p>
+		<p>{m.common_support_intro_first()}</p>
+		<p>{m.common_support_intro_second()}</p>
 
 		<div class="table">
 			<div></div>
@@ -27,7 +27,7 @@
 
 			{#each perks as perk (perk.id)}
 				<div class="justify-self-start">
-					{perk.name()}
+					{perk.name}
 					<!-- xxx: implement popover -->
 					<!-- {#if perk.extraInfo}
 						<SendouPopover>
@@ -77,7 +77,7 @@
 	</div>
 
 	<Button href={SENDOU_INK_PATREON_URL} size="big" class="mx-auto">
-		{m['common:support.action']()}
+		{m.common_support_action()}
 	</Button>
 
 	<!-- xxx: add footer -->

@@ -7,8 +7,8 @@
 <nav>
 	{#each navItems as item (item.id)}
 		<a href="/{item.url}" data-sveltekit-preload-data={item.prefetch ? 'hover' : 'off'}>
-			<Image path={navIconUrl(item.id)} height={20} width={20} alt={item.name()} />
-			<div>{item.name()}</div>
+			<Image path={navIconUrl(item.id)} height={20} width={20} alt={item.name} />
+			<div>{item.name}</div>
 		</a>
 	{/each}
 	<!-- xxx: add logout -->

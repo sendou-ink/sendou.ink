@@ -22,29 +22,29 @@
 
 <footer>
 	<div class="link-list">
-		<a href={PRIVACY_POLICY_PAGE}>{m['common:pages.privacy']()}</a>
-		<a href={CONTRIBUTIONS_PAGE}>{m['common:pages.contributors']()}</a>
-		<a href={FAQ_PAGE}>{m['common:pages.faq']()}</a>
+		<a href={PRIVACY_POLICY_PAGE}>{m.common_pages_privacy()}</a>
+		<a href={CONTRIBUTIONS_PAGE}>{m.common_pages_contributors()}</a>
+		<a href={FAQ_PAGE}>{m.common_pages_faq()}</a>
 	</div>
 	<div class="socials">
 		<a class="social-link" href={SENDOU_INK_GITHUB_URL} target="_blank" rel="noreferrer">
 			<div class="social-header">
 				GitHub
-				<p>{m['common:footer.github.subtitle']()}</p>
+				<p>{m.common_footer_github_subtitle()}</p>
 			</div>
 			<GitHubIcon class="social-icon github" />
 		</a>
 		<a class="social-link" href={SENDOU_INK_DISCORD_URL} target="_blank" rel="noreferrer">
 			<div class="social-header">
 				Discord
-				<p>{m['common:footer.discord.subtitle']()}</p>
+				<p>{m.common_footer_discord_subtitle()}</p>
 			</div>
 			<DiscordIcon class="social-icon discord" />
 		</a>
 		<a class="social-link" href={SUPPORT_PAGE}>
 			<div class="social-header">
 				Patreon
-				<p>{m['common:footer.patreon.subtitle']()}</p>
+				<p>{m.common_footer_patreon_subtitle()}</p>
 			</div>
 			<PatreonIcon class="social-icon patreon" />
 		</a>
@@ -52,7 +52,7 @@
 
 	<div>
 		<h4 class="patron-title">
-			{m['common:footer.thanks']()}
+			{m.common_footer_thanks()}
 			<Image alt="" path={SENDOU_LOVE_EMOJI_PATH} width={24} height={24} />
 		</h4>
 		<ul class="patron-list">

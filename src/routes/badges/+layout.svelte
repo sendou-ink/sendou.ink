@@ -48,7 +48,7 @@
 
 		{#if ownBadges.length > 0}
 			<div class="w-full">
-				<Divider smallText>{m['badges:own.divider']()}</Divider>
+				<Divider smallText>{m.badges_own_divider()}</Divider>
 				<div class="small-badges">
 					{#each ownBadges as badge (badge.id)}
 						<a class="nav-link" href="/badges/{badge.id}">
@@ -63,7 +63,7 @@
 			<div class="w-full">
 				<div class="small-badges">
 					{#if ownBadges.length > 0}
-						<Divider smallText>{m['badges:other.divider']()}</Divider>
+						<Divider smallText>{m.badges_other_divider()}</Divider>
 					{/if}
 					{#each otherBadges as badge (badge.id)}
 						<!-- xxx: hide conditionally (when viewing the page of it) -->
@@ -74,14 +74,14 @@
 				</div>
 			</div>
 		{:else}
-			<div class="text-lg font-bold my-24">{m['badges:noBadgesFound']()}</div>
+			<div class="text-lg font-bold my-24">{m.badges_noBadgesFound()}</div>
 		{/if}
 	</div>
 
 	<div class="general-info-texts">
 		<p>
 			<a href={BADGES_DOC_LINK} target="_blank" rel="noopener noreferrer"
-				>{m['badges:forYourEvent']()}</a
+				>{m.badges_forYourEvent()}</a
 			>
 		</p>
 	</div>

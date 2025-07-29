@@ -65,7 +65,7 @@
 				{#snippet icon()}
 					<HeartIcon />
 				{/snippet}
-				{m['common:pages.support']()}
+				{m.common_pages_support()}
 			</Button>
 		{/if}
 		<!-- <NotificationPopover />
