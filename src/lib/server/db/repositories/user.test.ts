@@ -27,7 +27,7 @@ describe('UserRepository', () => {
 			discordAvatar: null
 		});
 
-		const user = await UserRepository.findLayoutDataByIdentifier('1');
+		const user = (await UserRepository.findLayoutDataByIdentifier('1'))?.user;
 
 		expect(user?.username).toBe('TestUser');
 
@@ -37,7 +37,7 @@ describe('UserRepository', () => {
 			discordAvatar: null
 		});
 
-		const updatedUser = await UserRepository.findLayoutDataByIdentifier('1');
+		const updatedUser = (await UserRepository.findLayoutDataByIdentifier('1'))?.user;
 		expect(updatedUser?.username).toBe('UpdatedUser');
 	});
 

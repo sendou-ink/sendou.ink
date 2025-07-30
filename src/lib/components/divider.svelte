@@ -22,21 +22,21 @@
 		color: var(--theme);
 		font-size: var(--fonts-lg);
 		text-align: center;
-	}
 
-	.divider::before,
-	.divider::after {
-		flex: 1;
-		border-bottom: 2px solid var(--theme-transparent);
-		content: '';
-	}
+		&::before,
+		&::after {
+			flex: 1;
+			border-bottom: 2px solid var(--theme-transparent);
+			content: '';
+		}
 
-	.divider:not(:empty)::before {
-		margin-right: 0.25em;
-	}
+		&:not(:empty)::before {
+			margin-right: 0.25em;
+		}
 
-	.divider:not(:empty)::after {
-		margin-left: 0.25em;
+		&:not(:empty)::after {
+			margin-left: 0.25em;
+		}
 	}
 
 	.smallText {

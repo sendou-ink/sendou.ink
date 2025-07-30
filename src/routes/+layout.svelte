@@ -2,12 +2,13 @@
 	import '../styles/common.css';
 	import '../styles/utils.css';
 	import '../styles/vars.css';
+	import '../styles/flags.css';
 	import '../styles/reset.css';
 
-	import { me } from './queries/me.remote';
+	import { me } from './me.remote';
 	import Footer from './footer.svelte';
 	import Button from '$lib/components/button.svelte';
-	import HeartIcon from '$lib/components/icons/heart.svelte';
+	import HeartSolidIcon from '$lib/components/icons/heart-solid.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
@@ -61,7 +62,7 @@
 		{#if showSupport}
 			<Button href={resolve('/support')} size="small" variant="outlined">
 				{#snippet icon()}
-					<HeartIcon />
+					<HeartSolidIcon />
 				{/snippet}
 				{m.common_pages_support()}
 			</Button>
@@ -105,10 +106,10 @@
 		font-weight: 600;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-	}
 
-	.breadcrumb.logo {
-		overflow: initial;
+		&.logo {
+			overflow: initial;
+		}
 	}
 
 	.logo:focus-visible {
@@ -141,17 +142,15 @@
 	.top-leaderboard {
 		min-height: 130px;
 		margin: 10px 0;
+
+		@media screen and (min-width: 601px) {
+			min-height: 120px;
+		}
 	}
 
 	.right-container {
 		display: flex;
 		gap: var(--s-3);
 		justify-self: flex-end;
-	}
-
-	@media screen and (min-width: 601px) {
-		.top-leaderboard {
-			min-height: 120px;
-		}
 	}
 </style>

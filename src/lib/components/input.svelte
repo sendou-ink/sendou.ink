@@ -70,23 +70,21 @@
 		color: var(--text);
 		font-size: var(--fonts-sm);
 		outline: none;
+
+		&:focus-within {
+			border-color: transparent;
+			outline: 2px solid var(--theme);
+		}
+
+		> input:focus-within {
+			outline: none;
+		}
 	}
 
-	.container:focus-within {
-		border-color: transparent;
-
-		/* TODO: rectangle on Safari */
-		outline: 2px solid var(--theme);
-	}
-
-	.container > input {
+	input {
 		width: 100%;
 		border: none;
 		margin: auto 0;
-	}
-
-	.container > input:focus-within {
-		outline: none;
 	}
 
 	.addon {

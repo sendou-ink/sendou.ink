@@ -92,20 +92,20 @@
 		padding-block: var(--s-1-5);
 		padding-inline: var(--s-2-5);
 		user-select: none;
-	}
 
-	.button:focus-visible {
-		outline: 2px solid var(--theme);
-	}
+		&:focus-visible {
+			outline: 2px solid var(--theme);
+		}
 
-	.button:active {
-		transform: translateY(1px);
-	}
+		&:active {
+			transform: translateY(1px);
+		}
 
-	.button:disabled {
-		cursor: not-allowed;
-		opacity: 0.5;
-		transform: initial;
+		&:disabled {
+			cursor: not-allowed;
+			opacity: 0.5;
+			transform: initial;
+		}
 	}
 
 	.outlined {
@@ -123,12 +123,22 @@
 		font-size: var(--fonts-xs);
 		padding-block: var(--s-1);
 		padding-inline: var(--s-2);
+
+		> .buttonIcon {
+			width: 1rem;
+			margin-inline-end: var(--s-1);
+		}
 	}
 
 	.miniscule {
 		font-size: var(--fonts-xxs);
 		padding-block: var(--s-1);
 		padding-inline: var(--s-2);
+
+		> .buttonIcon {
+			width: 0.857rem;
+			margin-inline-end: var(--s-1);
+		}
 	}
 
 	.big {
@@ -143,10 +153,10 @@
 		background-color: transparent;
 		color: var(--theme);
 		outline: initial;
-	}
 
-	.minimal:focus-visible {
-		outline: 2px solid var(--theme);
+		&:focus-visible {
+			outline: 2px solid var(--theme);
+		}
 	}
 
 	.minimalSuccess {
@@ -180,19 +190,9 @@
 	.buttonIcon {
 		width: 1.25rem;
 		margin-inline-end: var(--s-1-5);
-	}
 
-	.buttonIcon.lonely {
-		margin-inline-end: 0 !important;
-	}
-
-	.small > .buttonIcon {
-		width: 1rem;
-		margin-inline-end: var(--s-1);
-	}
-
-	.miniscule > .buttonIcon {
-		width: 0.857rem;
-		margin-inline-end: var(--s-1);
+		&.lonely {
+			margin-inline-end: 0 !important;
+		}
 	}
 </style>

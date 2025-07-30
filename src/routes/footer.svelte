@@ -10,11 +10,11 @@
 		SUPPORT_PAGE,
 		userPage
 	} from '$lib/utils/urls';
-	import Image from '$lib/components/image.svelte';
+	import Image from '$lib/components/image/image.svelte';
 	import DiscordIcon from '$lib/components/icons/discord.svelte';
 	import GitHubIcon from '$lib/components/icons/github.svelte';
 	import PatreonIcon from '$lib/components/icons/patreon.svelte';
-	import { patrons } from './queries/patrons.remote';
+	import { patrons } from './patrons.remote';
 	import { m } from '$lib/paraglide/messages';
 
 	const currentYear = new Date().getFullYear();
@@ -107,6 +107,10 @@
 		display: flex;
 		justify-content: center;
 		gap: var(--s-2);
+
+		@media screen and (max-width: 640px) {
+			flex-direction: column;
+		}
 	}
 
 	.social-link {
@@ -122,23 +126,47 @@
 		background-color: var(--theme-transparent);
 		cursor: pointer;
 		font-size: var(--fonts-lg);
+
+		@media screen and (max-width: 640px) {
+			max-width: initial;
+			flex-direction: row;
+		}
 	}
 
 	footer :global(.social-icon) {
 		height: 2.25rem;
 		transition: transform 0.25s ease-in-out;
+
+		@media screen and (max-width: 640px) {
+			height: 1.75rem;
+		}
 	}
 
 	footer :global(.social-link:hover > .social-icon) {
 		transform: translateY(-0.3rem);
+
+		@media screen and (max-width: 640px) {
+			transform: translateX(-0.3rem);
+		}
 	}
 
 	.social-header {
 		text-align: center;
+
+		@media screen and (max-width: 640px) {
+			display: flex;
+			align-items: center;
+			gap: var(--s-2);
+			text-align: initial;
+		}
 	}
 
 	.social-header > p {
 		font-size: var(--fonts-xxs);
+
+		@media screen and (max-width: 640px) {
+			margin-block-start: var(--s-1);
+		}
 	}
 
 	.patron-title {
@@ -177,35 +205,5 @@
 		color: var(--text-lighter);
 		font-size: var(--fonts-xxs);
 		text-align: center;
-	}
-
-	@media screen and (max-width: 640px) {
-		.socials {
-			flex-direction: column;
-		}
-
-		.social-link {
-			max-width: initial;
-			flex-direction: row;
-		}
-
-		.social-header {
-			display: flex;
-			align-items: center;
-			gap: var(--s-2);
-			text-align: initial;
-		}
-
-		.social-header > p {
-			margin-block-start: var(--s-1);
-		}
-
-		footer :global(.social-icon) {
-			height: 1.75rem;
-		}
-
-		footer :global(.social-link:hover > .social-icon) {
-			transform: translateX(-0.3rem);
-		}
 	}
 </style>

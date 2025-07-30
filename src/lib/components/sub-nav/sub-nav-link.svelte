@@ -66,16 +66,19 @@
 <style>
 	.container {
 		display: flex;
-		max-width: 110px;
-		flex: 1;
+		flex: 0 0 110px;
 		flex-direction: column;
 		align-items: center;
 		color: var(--text);
 		gap: var(--s-1-5);
-	}
 
-	.sub-nav__link__container.active {
-		color: var(--theme-secondary);
+		&.active {
+			color: var(--theme-secondary);
+
+			.border-guy {
+				visibility: initial;
+			}
+		}
 	}
 
 	.link {
@@ -89,14 +92,10 @@
 		white-space: nowrap;
 	}
 
-	.sub-nav__link__secondary {
+	.link__secondary {
 		font-size: var(--fonts-xxs);
 		padding: var(--s-0-5) var(--s-2);
 		background-color: var(--bg-lighter-solid);
-	}
-
-	.sub-nav__container.compact .sub-nav__link {
-		padding: var(--s-1) var(--s-2);
 	}
 
 	.border-guy {
@@ -110,9 +109,5 @@
 	.border-guy__secondary {
 		height: 2.5px;
 		background-color: var(--bg-lighter-solid);
-	}
-
-	.link__container.active > .border-guy {
-		visibility: initial;
 	}
 </style>

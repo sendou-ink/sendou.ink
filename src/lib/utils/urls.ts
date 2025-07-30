@@ -25,7 +25,8 @@
 
 // xxx: should this be in the constants folder?
 
-import type { Tables } from '$lib/server/db/tables';
+import type { ModeShortWithSpecial } from '$lib/constants/in-game/types';
+import type { MainWeaponId, Tables } from '$lib/server/db/tables';
 
 // const staticAssetsUrl = ({
 // 	folder,
@@ -36,18 +37,18 @@ import type { Tables } from '$lib/server/db/tables';
 // }) =>
 // 	`https://raw.githubusercontent.com/sendou-ink/assets/main/${folder}/${fileName}`;
 
-// export const discordAvatarUrl = ({
-// 	discordId,
-// 	discordAvatar,
-// 	size,
-// }: {
-// 	discordId: string;
-// 	discordAvatar: string;
-// 	size: "lg" | "sm";
-// }) =>
-// 	`https://cdn.discordapp.com/avatars/${discordId}/${
-// 		discordAvatar
-// 	}.webp${size === "lg" ? "?size=240" : "?size=80"}`;
+export const discordAvatarUrl = ({
+	discordId,
+	discordAvatar,
+	size
+}: {
+	discordId: string;
+	discordAvatar: string;
+	size: 'lg' | 'sm';
+}) =>
+	`https://cdn.discordapp.com/avatars/${discordId}/${
+		discordAvatar
+	}.webp${size === 'lg' ? '?size=240' : '?size=80'}`;
 
 // export const SENDOU_INK_BASE_URL = "https://sendou.ink";
 
@@ -75,8 +76,7 @@ export const SENDOU_INK_GITHUB_URL = 'https://github.com/sendou-ink/sendou.ink';
 // export const SPR_INFO_URL =
 // 	"https://web.archive.org/web/20250513034545/https://www.pgstats.com/articles/introducing-spr-and-uf";
 
-// export const bskyUrl = (accountName: string) =>
-// 	`https://bsky.app/profile/${accountName}`;
+export const bskyUrl = (accountName: string) => `https://bsky.app/profile/${accountName}`;
 // export const twitchUrl = (accountName: string) =>
 // 	`https://twitch.tv/${accountName}`;
 
@@ -121,7 +121,7 @@ export const CONTRIBUTIONS_PAGE = '/contributions';
 // export const LUTI_PAGE = "/luti";
 // export const PLUS_VOTING_PAGE = "/plus/voting";
 
-// export const BLANK_IMAGE_URL = "/img/blank.gif";
+export const BLANK_IMAGE_URL = '/img/blank.gif';
 export const COMMON_PREVIEW_IMAGE = '/img/layout/common-preview.png';
 // export const ERROR_GIRL_IMAGE_PATH = "/img/layout/error-girl";
 // export const LOGO_PATH = "/img/layout/logo";
@@ -465,17 +465,16 @@ export const navIconUrl = (navItem: string) => `/img/layout/${navItem}`;
 // export const weaponCategoryUrl = (
 // 	category: (typeof weaponCategories)[number]["name"],
 // ) => `/img/weapon-categories/${category}`;
-// export const mainWeaponImageUrl = (mainWeaponSplId: MainWeaponId) =>
-// 	`/img/main-weapons/${mainWeaponSplId}`;
+export const mainWeaponImageUrl = (mainWeaponSplId: MainWeaponId) =>
+	`/img/main-weapons/${mainWeaponSplId}`;
 // export const mainWeaponVariantImageUrl = (
 // 	mainWeaponSplId: MainWeaponId,
 // 	variant: "launched",
 // ) => `/img/main-weapons/variants/${mainWeaponSplId}-${variant}`;
-// export const outlinedMainWeaponImageUrl = (mainWeaponSplId: MainWeaponId) =>
-// 	`/img/main-weapons-outlined/${mainWeaponSplId}`;
-// export const outlinedFiveStarMainWeaponImageUrl = (
-// 	mainWeaponSplId: MainWeaponId,
-// ) => `/img/main-weapons-outlined-2/${mainWeaponSplId}`;
+export const outlinedMainWeaponImageUrl = (mainWeaponSplId: MainWeaponId) =>
+	`/img/main-weapons-outlined/${mainWeaponSplId}`;
+export const outlinedFiveStarMainWeaponImageUrl = (mainWeaponSplId: MainWeaponId) =>
+	`/img/main-weapons-outlined-2/${mainWeaponSplId}`;
 // export const subWeaponImageUrl = (subWeaponSplId: SubWeaponId) =>
 // 	`/img/sub-weapons/${subWeaponSplId}`;
 // export const specialWeaponImageUrl = (specialWeaponSplId: SpecialWeaponId) =>
@@ -489,8 +488,7 @@ export const navIconUrl = (navItem: string) => `/img/layout/${navItem}`;
 // 	`/img/abilities/${ability}`;
 // export const brandImageUrl = (brand: BrandId) =>
 // 	`/img/brands/${brand}`;
-// export const modeImageUrl = (mode: ModeShortWithSpecial) =>
-// 	`/img/modes/${mode}`;
+export const modeImageUrl = (mode: ModeShortWithSpecial) => `/img/modes/${mode}`;
 // export const stageImageUrl = (stageId: StageId) =>
 // 	`/img/stages/${stageId}`;
 // export const tierImageUrl = (tier: TierName | "CALCULATING") =>

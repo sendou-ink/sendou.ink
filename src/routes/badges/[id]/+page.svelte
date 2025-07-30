@@ -1,5 +1,5 @@
 <script>
-	import { badgeOwners } from './queries/badge-owners.remote';
+	import { badgeOwners } from './badge-owners.remote';
 
 	let { params } = $props();
 </script>

@@ -1,15 +1,19 @@
+<!--
+	This file is auto-generated. Do not modify directly.
+	Generated from SVG file by convert-icons script.
+-->
 <script lang="ts">
-	import type { IconProps } from './props';
+	import type { SvelteHTMLElements } from 'svelte/elements';
 
-	let { class: className }: IconProps = $props();
+	let props: SvelteHTMLElements['svg'] = $props();
 </script>
 
 <svg
-	class={className}
 	xmlns="http://www.w3.org/2000/svg"
 	fill="none"
 	viewBox="0 0 24 24"
 	stroke="currentColor"
+	{...props}
 >
 	<path
 		stroke-linecap="round"

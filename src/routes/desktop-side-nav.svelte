@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { navItems } from './nav-items'; // Adjust import path as needed
 	import { navIconUrl } from '$lib/utils/urls';
-	import Image from '$lib/components/image.svelte';
+	import Image from '$lib/components/image/image.svelte';
 </script>
 
 <nav>
@@ -39,18 +39,20 @@
 		height: 100vh;
 		padding-block-end: var(--s-48);
 		padding-inline-end: var(--s-4);
-	}
 
-	@media screen and (min-width: 1130px) {
-		nav {
+		:global(picture) {
+			background-color: var(--bg-lightest);
+			border-radius: var(--rounded);
+			padding: 0.225rem;
+		}
+
+		:global(img) {
+			min-width: 20px;
+		}
+
+		@media screen and (min-width: 1130px) {
 			display: flex;
 		}
-	}
-
-	nav :global(picture) {
-		background-color: var(--bg-lightest);
-		border-radius: var(--rounded);
-		padding: 0.225rem;
 	}
 
 	a {
@@ -60,9 +62,5 @@
 		font-weight: var(--bold);
 		gap: var(--s-1-5);
 		align-items: center;
-	}
-
-	nav :global(img) {
-		min-width: 20px;
 	}
 </style>

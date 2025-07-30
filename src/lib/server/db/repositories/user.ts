@@ -59,10 +59,10 @@ export async function identifierToBuildFields(identifier: string) {
 	};
 }
 
-export function findLayoutDataByIdentifier(identifier: string, loggedInUserId?: number) {
-	return identifierToUserIdQuery(identifier)
+export async function findLayoutDataByIdentifier(identifier: string, loggedInUserId?: number) {
+	const row = await identifierToUserIdQuery(identifier)
 		.select((eb) => [
-			"User.id",
+			...COMMON_USER_FIELDS,
 			sql<Record<
 				string,
 				string
@@ -117,6 +117,18 @@ export function findLayoutDataByIdentifier(identifier: string, loggedInUserId?: 
 			artCount: NotNull;
 		}>()
 		.executeTakeFirst();
+
+	if (!row) return null;
+
+	const { css, calendarEventResultsCount, tournamentResultsCount, ...rest } = row;
+
+	return {
+		css,
+		user: {
+			resultsCount: calendarEventResultsCount + tournamentResultsCount,
+			...rest
+		}
+	};
 }
 
 export async function findProfileByIdentifier(

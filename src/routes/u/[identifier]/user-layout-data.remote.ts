@@ -5,18 +5,10 @@ import { notFoundIfFalsy } from '$lib/server/remote-functions';
 import { z } from 'zod/v4';
 
 // xxx: better schema?
-export const userLayoutDataByIdentifier = query(z.string(), async (identifier) => {
+export const userLayoutData = query(z.string(), async (identifier) => {
 	const loggedInUser = await getUser();
 
-	const user = notFoundIfFalsy(
+	return notFoundIfFalsy(
 		await UserRepository.findLayoutDataByIdentifier(identifier, loggedInUser?.id)
 	);
-
-	return {
-		user: {
-			...user,
-			css: undefined
-		},
-		css: user.css
-	};
 });

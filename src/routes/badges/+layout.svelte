@@ -5,7 +5,7 @@
 	import SearchIcon from '$lib/components/icons/search.svelte';
 	import { BADGES_DOC_LINK } from '$lib/utils/urls';
 	import Main from '$lib/components/main.svelte';
-	import { allBadges } from './queries/all-badges.remote';
+	import { allBadges } from './all-badges.remote';
 	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { resolve } from '$app/paths';
@@ -99,6 +99,18 @@
 		gap: var(--s-6);
 		padding-block: var(--s-2);
 		padding-inline: var(--s-3);
+
+		:global(.search-input) {
+			height: 40px !important;
+			margin: 0 auto;
+			font-size: var(--fonts-lg);
+		}
+
+		:global(.search-icon) {
+			height: 25px;
+			margin: auto;
+			margin-right: 15px;
+		}
 	}
 
 	.small-badges {
@@ -115,17 +127,5 @@
 		color: var(--text-lighter);
 		font-size: var(--fonts-xs);
 		padding-inline: var(--s-1);
-	}
-
-	.container :global(.search-input) {
-		height: 40px !important;
-		margin: 0 auto;
-		font-size: var(--fonts-lg);
-	}
-
-	.container :global(.search-icon) {
-		height: 25px;
-		margin: auto;
-		margin-right: 15px;
 	}
 </style>

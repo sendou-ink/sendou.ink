@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Image from './image.svelte';
+	import Image from './image/image.svelte';
 	import { badgeUrl } from '$lib/utils/urls';
 
 	interface Props {
