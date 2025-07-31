@@ -14,22 +14,31 @@
 	const id = $props.id();
 </script>
 
-<!-- xxx: add polyfill -->
-<!-- xxx: anchor-name for the button -->
-<!-- xxx: unique anchor-name? -->
 <!-- xxx: hide when button hits the top nav bar -->
 
 {#if anchor}
-	<button popovertarget={id} class="anchor-button">{@render anchor()}</button>
+	<button popovertarget={id} class="anchor" style="--anchor-name:{id}">{@render anchor()}</button>
 {:else if anchorButton}
 	{@render anchorButton(id)}
 {/if}
 
-<div popover {id} class="positioned-notice">{@render children()}</div>
+<div
+	popover
+	{id}
+	class={[
+		'popover-message',
+		{
+			padded: Boolean(anchorButton)
+		}
+	]}
+	style="--anchor-name:{id}"
+>
+	{@render children()}
+</div>
 
 <style>
-	.anchor-button {
-		anchor-name: --anchor-el;
+	.anchor {
+		anchor-name: var(--anchor-name);
 
 		padding: 0;
 		border: none;
@@ -38,12 +47,12 @@
 		outline: initial;
 	}
 
-	.positioned-notice {
-		position-anchor: --anchor-el;
+	.popover-message {
+		position-anchor: var(--anchor-name);
 		position-area: end center;
-		/* position-visibility: no-overflow; */
 		margin-block-start: var(--s-0-5);
 		inset: auto;
+		position-try-fallbacks: --top;
 
 		max-width: 20rem;
 		padding: var(--s-2);
@@ -54,11 +63,20 @@
 		font-weight: var(--semi-bold);
 		white-space: pre-wrap;
 		color: var(--text);
-		position-try-fallbacks: --top;
+
+		&.padded {
+			margin-block-start: var(--s-2);
+			position-try-fallbacks: --top-padded;
+		}
 	}
 
 	@position-try --top {
 		position-area: start center;
 		margin-block-start: var(--s-0-5);
+	}
+
+	@position-try --top-padded {
+		position-area: start center;
+		margin-block-start: var(--s-2);
 	}
 </style>

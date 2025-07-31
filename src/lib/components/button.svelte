@@ -29,6 +29,7 @@
 		BaseProps & {
 			type?: never;
 			disabled?: never;
+			popovertarget?: never;
 		};
 
 	type Props = ButtonProps | LinkProps;
@@ -45,6 +46,8 @@
 
 <svelte:element
 	this={rest.href ? 'a' : 'button'}
+	popovertarget={rest.popovertarget}
+	style={rest.popovertarget ? '--anchor-name:{rest.popovertarget}' : undefined}
 	class={[
 		className,
 		'button',
@@ -91,6 +94,7 @@
 		padding-block: var(--s-1-5);
 		padding-inline: var(--s-2-5);
 		user-select: none;
+		anchor-name: var(--anchor-name);
 
 		&:focus-visible {
 			outline: 2px solid var(--theme);
