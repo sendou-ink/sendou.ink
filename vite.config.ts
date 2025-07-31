@@ -3,7 +3,6 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
 // xxx: ensure translations are tree shaken
-// xxx: remove english from translation jsons and empty keys
 
 export default defineConfig(({ mode }) => ({
 	plugins: [

@@ -7,23 +7,11 @@
 		end?: boolean;
 		children: Snippet;
 		secondary?: boolean;
-		controlled?: boolean;
-		active?: boolean;
 	}
 
-	let {
-		children,
-		class: className,
-		end = true,
-		secondary = false,
-		controlled = false,
-		active = false,
-		...rest
-	}: Props = $props();
+	let { children, class: className, end = true, secondary = false, ...rest }: Props = $props();
 
-	const isActive = $derived(() => {
-		if (controlled) return active;
-
+	const isActive = $derived.by(() => {
 		const currentPath = page.url.pathname;
 		if (end) {
 			return currentPath === rest.href;
@@ -71,6 +59,7 @@
 		align-items: center;
 		color: var(--text);
 		gap: var(--s-1-5);
+		font-weight: var(--semi-bold);
 
 		&.active {
 			color: var(--theme-secondary);

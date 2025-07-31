@@ -1,5 +1,4 @@
 <script lang="ts">
-	import '../styles/common.css';
 	import '../styles/utils.css';
 	import '../styles/vars.css';
 	import '../styles/flags.css';
@@ -83,6 +82,18 @@
 
 <!-- xxx: Check the mobile styles -->
 <style>
+	:global(:root) {
+		width: 100%;
+		background-color: var(--bg);
+		color: var(--text);
+		font-family: lexend, sans-serif;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: antialiased;
+		line-height: 1.5;
+		overflow-x: hidden;
+		-webkit-tap-highlight-color: transparent;
+	}
+
 	.container {
 		width: 100%;
 		min-height: 100vh;

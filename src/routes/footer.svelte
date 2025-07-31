@@ -87,6 +87,11 @@
 </footer>
 
 <style>
+	a {
+		font-weight: var(--semi-bold);
+		color: var(--theme);
+	}
+
 	footer {
 		display: flex;
 		flex-direction: column;

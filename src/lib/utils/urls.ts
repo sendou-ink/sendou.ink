@@ -1,4 +1,4 @@
-// import slugify from "slugify";
+import slugify from 'slugify';
 // import type { GearType, Preference, Tables } from "~/db/tables";
 // import type { ArtSource } from "~/features/art/art-types";
 // import type { AuthErrorCode } from "~/features/auth/core/errors";
@@ -25,8 +25,9 @@
 
 // xxx: should this be in the constants folder?
 
-import type { ModeShortWithSpecial } from '$lib/constants/in-game/types';
-import type { MainWeaponId, Tables } from '$lib/server/db/tables';
+import type { MainWeaponId, ModeShortWithSpecial } from '$lib/constants/in-game/types';
+import type { weaponCategories } from '$lib/constants/in-game/weapon-ids';
+import type { Tables } from '$lib/server/db/tables';
 
 // const staticAssetsUrl = ({
 // 	folder,
@@ -462,9 +463,8 @@ export const badgeUrl = ({
 export const navIconUrl = (navItem: string) => `/img/layout/${navItem}`;
 // export const gearImageUrl = (gearType: GearType, gearSplId: number) =>
 // 	`/img/gear/${gearType.toLowerCase()}/${gearSplId}`;
-// export const weaponCategoryUrl = (
-// 	category: (typeof weaponCategories)[number]["name"],
-// ) => `/img/weapon-categories/${category}`;
+export const weaponCategoryUrl = (category: (typeof weaponCategories)[number]['name']) =>
+	`/img/weapon-categories/${category}`;
 export const mainWeaponImageUrl = (mainWeaponSplId: MainWeaponId) =>
 	`/img/main-weapons/${mainWeaponSplId}`;
 // export const mainWeaponVariantImageUrl = (
@@ -536,12 +536,12 @@ export const modeImageUrl = (mode: ModeShortWithSpecial) => `/img/modes/${mode}`
 // 	return new URL(url).host;
 // }
 
-// export const mySlugify = (name: string) => {
-// 	return slugify(name, {
-// 		lower: true,
-// 		strict: true,
-// 	});
-// };
+export const mySlugify = (name: string) => {
+	return slugify(name, {
+		lower: true,
+		strict: true
+	});
+};
 
 export const isCustomUrl = (value: string) => {
 	return Number.isNaN(Number(value));

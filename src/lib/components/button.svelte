@@ -13,7 +13,6 @@
 		| 'minimal-destructive';
 
 	interface BaseProps {
-		class?: string;
 		variant?: ButtonVariant;
 		size?: 'miniscule' | 'small' | 'medium' | 'big';
 		icon?: Snippet;

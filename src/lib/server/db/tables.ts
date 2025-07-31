@@ -1,3 +1,4 @@
+import type { Ability, MainWeaponId, ModeShort, StageId } from '$lib/constants/in-game/types';
 import type { JSONColumnTypeNullable } from '$lib/utils/kysely.server';
 import type {
 	ColumnType,
@@ -16,10 +17,6 @@ export type TieredSkill = any;
 export type NotificationValue = any;
 export const TEAM_MEMBER_ROLES: any = [];
 export type ParticipantResult = any;
-export type Ability = any;
-export type MainWeaponId = any;
-export type ModeShort = any;
-export type StageId = any;
 
 type Generated<T> =
 	T extends ColumnType<infer S, infer I, infer U>

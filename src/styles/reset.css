@@ -12,6 +12,10 @@
 	overflow-wrap: break-word;
 }
 
+a {
+	text-decoration: none;
+}
+
 img,
 picture,
 video,

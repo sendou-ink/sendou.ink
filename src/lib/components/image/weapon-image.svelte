@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ImageProps } from '$lib/components/image/image.svelte';
 	import Image from '$lib/components/image/image.svelte';
-	import type { MainWeaponId } from '$lib/server/db/tables';
+	import type { MainWeaponId } from '$lib/constants/in-game/types';
 	import {
 		mainWeaponImageUrl,
 		outlinedFiveStarMainWeaponImageUrl,

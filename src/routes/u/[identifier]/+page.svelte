@@ -8,6 +8,10 @@
 	import ExtraInfos from './extra-infos.svelte';
 	import WeaponPool from './weapon-pool.svelte';
 	import TopPlacements from './top-placements.svelte';
+	import BadgeDisplay from '$lib/components/badge-display.svelte';
+	import Popover from '$lib/components/popover.svelte';
+	import { countryCodeToTranslatedName } from '$lib/utils/i18n';
+	import { getLocale } from '$lib/paraglide/runtime';
 
 	let { params } = $props();
 
@@ -20,6 +24,15 @@
 			profile.discordUniqueName ||
 			profile.plusTier
 	);
+
+	const countryName = $derived(
+		profile.country
+			? countryCodeToTranslatedName({
+					countryCode: profile.country,
+					language: getLocale()
+				})
+			: null
+	);
 </script>
 
 <div class="container">
@@ -30,7 +43,12 @@
 				<div>{user.username}</div>
 				<div>
 					{#if profile.country}
-						<Flag countryCode={profile.country} tiny />
+						<Popover>
+							{#snippet anchor()}
+								<Flag countryCode={profile.country!} tiny />
+							{/snippet}
+							{countryName}</Popover
+						>
 					{/if}
 				</div>
 			</h2>
@@ -55,8 +73,7 @@
 		<TopPlacements placements={profile.topPlacements} />
 	{/if}
 
-	<!-- xxx: add BadgeDisplay -->
-	<!-- <BadgeDisplay badges={data.user.badges} key={data.user.id} /> -->
+	<BadgeDisplay badges={profile.badges} />
 
 	{#if profile.bio}
 		<article>{profile.bio}</article>
@@ -89,5 +106,9 @@
 		grid-area: name;
 		overflow-wrap: anywhere;
 		gap: var(--s-2-5);
+	}
+
+	article {
+		white-space: pre-wrap;
 	}
 </style>

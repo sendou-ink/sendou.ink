@@ -1,3 +1,64 @@
+.stack {
+	display: flex;
+	flex-direction: column;
+}
+
+.stack.xxxs {
+	gap: var(--s-0-5);
+}
+
+.stack.xxs {
+	gap: var(--s-1);
+}
+
+.stack.xs {
+	gap: var(--s-1-5);
+}
+
+.stack.sm {
+	gap: var(--s-2);
+}
+
+.stack.sm-column {
+	column-gap: var(--s-2);
+}
+
+.stack.sm-plus {
+	gap: var(--s-3);
+}
+
+.stack.md {
+	gap: var(--s-4);
+}
+
+.stack.md-plus {
+	gap: var(--s-6);
+}
+
+.stack.lg {
+	gap: var(--s-8);
+}
+
+.stack.xs-row {
+	row-gap: var(--s-1-5);
+}
+
+.stack.lg-row {
+	row-gap: var(--s-8);
+}
+
+.stack.xl {
+	gap: var(--s-12);
+}
+
+.stack.xxl {
+	gap: var(--s-16);
+}
+
+.stack.horizontal {
+	flex-direction: row;
+}
+
 .text-xl {
 	font-size: var(--fonts-xl);
 }

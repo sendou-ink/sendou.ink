@@ -15,8 +15,6 @@
 			language: getLocale()
 		})
 	);
-
-	// xxx: popover so it works for mobile too
 </script>
 
 <div
