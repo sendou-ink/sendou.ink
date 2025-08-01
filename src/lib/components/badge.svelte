@@ -1,9 +1,8 @@
 <script lang="ts">
-	import Image from './image/image.svelte';
 	import { badgeUrl } from '$lib/utils/urls';
 
 	interface Props {
-		badge: { displayName: string; hue?: number | null; code: string };
+		badge: { displayName: string; code: string };
 		onclick?: () => void;
 		isAnimated: boolean;
 		size: number;
@@ -15,22 +14,8 @@
 		title: badge.displayName,
 		onclick,
 		width: size,
-		height: size,
-		style: badge.hue ? `filter: hue-rotate(${badge.hue}deg)` : undefined
+		height: size
 	});
 </script>
 
-{#if isAnimated}
-	<img
-		src={badgeUrl({ code: badge.code, extension: 'gif' })}
-		alt={badge.displayName}
-		{...commonProps}
-	/>
-{:else}
-	<Image
-		path={badgeUrl({ code: badge.code })}
-		alt={badge.displayName}
-		loading="lazy"
-		{...commonProps}
-	/>
-{/if}
+<img src={badgeUrl({ code: badge.code, isAnimated })} alt={badge.displayName} {...commonProps} />

@@ -11,7 +11,6 @@ export function assertUnreachable(x: never): never {
 }
 
 /** @link https://stackoverflow.com/a/69413184 */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const assertType = <A, _B extends A>() => {};
 
 export type Unpacked<T> = T extends (infer U)[]

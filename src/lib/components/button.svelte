@@ -47,7 +47,7 @@
 <svelte:element
 	this={rest.href ? 'a' : 'button'}
 	popovertarget={rest.popovertarget}
-	style={rest.popovertarget ? '--anchor-name:{rest.popovertarget}' : undefined}
+	style={rest.popovertarget ? `--anchor-name:${rest.popovertarget}` : undefined}
 	class={[
 		className,
 		'button',
@@ -58,17 +58,24 @@
 			primary: variant === 'primary',
 			success: variant === 'success',
 			outlined: variant === 'outlined',
-			outlinedSuccess: variant === 'outlined-success',
+			'outlined-success': variant === 'outlined-success',
 			destructive: variant === 'destructive',
 			minimal: variant === 'minimal',
-			minimalSuccess: variant === 'minimal-success',
-			minimalDestructive: variant === 'minimal-destructive'
+			'minimal-success': variant === 'minimal-success',
+			'minimal-destructive': variant === 'minimal-destructive'
 		}
 	]}
 	{...rest}
 >
 	{#if icon}
-		<span class="buttonIcon">
+		<span
+			class={[
+				'button-icon',
+				{
+					lonely: !children
+				}
+			]}
+		>
 			{@render icon()}
 		</span>
 	{/if}
@@ -116,7 +123,7 @@
 		color: var(--theme);
 	}
 
-	.outlinedSuccess {
+	.outlined-success {
 		border-color: var(--theme-success);
 		background-color: transparent;
 		color: var(--theme-success);
@@ -127,7 +134,7 @@
 		padding-block: var(--s-1);
 		padding-inline: var(--s-2);
 
-		> .buttonIcon {
+		> .button-icon {
 			width: 1rem;
 			margin-inline-end: var(--s-1);
 		}
@@ -138,7 +145,7 @@
 		padding-block: var(--s-1);
 		padding-inline: var(--s-2);
 
-		> .buttonIcon {
+		> .button-icon {
 			width: 0.857rem;
 			margin-inline-end: var(--s-1);
 		}
@@ -162,7 +169,7 @@
 		}
 	}
 
-	.minimalSuccess {
+	.minimal-success {
 		padding: 0;
 		border: none;
 		background-color: transparent;
@@ -182,7 +189,7 @@
 		outline-color: var(--theme-error);
 	}
 
-	.minimalDestructive {
+	.minimal-destructive {
 		padding: 0;
 		border: none;
 		background-color: transparent;
@@ -190,7 +197,7 @@
 		outline-color: var(--theme-error);
 	}
 
-	.buttonIcon {
+	.button-icon {
 		width: 1.25rem;
 		margin-inline-end: var(--s-1-5);
 

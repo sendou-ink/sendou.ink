@@ -18,9 +18,8 @@
 </script>
 
 <svelte:boundary>
-	{#snippet pending()}
-		<p>loading...</p>
-	{/snippet}
+	<!-- empty snippet to make navigation "suspend" while data is loading -->
+	{#snippet pending()}{/snippet}
 
 	<div class="container">
 		<!-- xxx: implement NavDialog & Hamburger -->

@@ -30,7 +30,7 @@ const withManagers = (eb: ExpressionBuilder<DB, 'Badge'>) => {
 export async function all() {
 	const rows = await db
 		.selectFrom('Badge')
-		.select(({ eb }) => ['id', 'displayName', 'code', 'hue', withManagers(eb), withAuthor(eb)])
+		.select(({ eb }) => ['id', 'displayName', 'code', withManagers(eb), withAuthor(eb)])
 		.execute();
 
 	return rows.map(addPermissions);
@@ -55,7 +55,7 @@ export async function findOwnersById(badgeId: number) {
 export function findByManagersList(userIds: number[]) {
 	return db
 		.selectFrom('Badge')
-		.select(['Badge.id', 'Badge.code', 'Badge.displayName', 'Badge.hue'])
+		.select(['Badge.id', 'Badge.code', 'Badge.displayName'])
 		.innerJoin('BadgeManager', 'Badge.id', 'BadgeManager.badgeId')
 		.where('BadgeManager.userId', 'in', userIds)
 		.orderBy('Badge.id', 'asc')
@@ -67,7 +67,7 @@ export function findManagedByUserId(userId: number) {
 	return db
 		.selectFrom('BadgeManager')
 		.innerJoin('Badge', 'Badge.id', 'BadgeManager.badgeId')
-		.select(['Badge.id', 'Badge.code', 'Badge.displayName', 'Badge.hue'])
+		.select(['Badge.id', 'Badge.code', 'Badge.displayName'])
 		.where('BadgeManager.userId', '=', userId)
 		.execute();
 }

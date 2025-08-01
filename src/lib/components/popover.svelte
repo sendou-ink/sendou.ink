@@ -54,6 +54,7 @@
 		inset: auto;
 		position-try-fallbacks: --top;
 
+		width: max-content;
 		max-width: 20rem;
 		padding: var(--s-2);
 		border: 2px solid var(--border);

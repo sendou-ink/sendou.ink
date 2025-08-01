@@ -32,10 +32,10 @@ export interface Team {
 	avatarImgId: number | null;
 	bannerImgId: number | null;
 	bio: string | null;
-	createdAt: Generated<number>;
+	createdAt: Generated<Date>;
 	css: JSONColumnTypeNullable<Record<string, string>>;
 	customUrl: string;
-	deletedAt: number | null;
+	deletedAt: Date | null;
 	id: GeneratedAlways<number>;
 	inviteCode: string;
 	name: string;
@@ -43,10 +43,10 @@ export interface Team {
 }
 
 export interface TeamMember {
-	createdAt: Generated<number>;
+	createdAt: Generated<Date>;
 	isOwner: Generated<number>;
 	isManager: Generated<number>;
-	leftAt: number | null;
+	leftAt: Date | null;
 	role: MemberRole | null;
 	teamId: number;
 	userId: number;
@@ -55,7 +55,7 @@ export interface TeamMember {
 
 export interface Art {
 	authorId: number;
-	createdAt: Generated<number>;
+	createdAt: Generated<Date>;
 	description: string | null;
 	id: GeneratedAlways<number>;
 	imgId: number;
@@ -64,7 +64,7 @@ export interface Art {
 
 export interface ArtTag {
 	authorId: number;
-	createdAt: Generated<number>;
+	createdAt: Generated<Date>;
 	id: GeneratedAlways<number>;
 	name: string;
 }
@@ -83,7 +83,6 @@ export interface Badge {
 	id: GeneratedAlways<number>;
 	code: string;
 	displayName: string;
-	hue: number | null;
 	/** Who made the badge? If null, a legacy badge. */
 	authorId: number | null;
 }
@@ -110,7 +109,7 @@ export interface Build {
 	private: DBBoolean | null;
 	shoesGearSplId: number;
 	title: string;
-	updatedAt: Generated<number>;
+	updatedAt: Generated<Date>;
 }
 
 export type GearType = 'HEAD' | 'CLOTHES' | 'SHOES';
@@ -153,7 +152,7 @@ export interface CalendarEventBadge {
 export interface CalendarEventDate {
 	eventId: number;
 	id: GeneratedAlways<number>;
-	startTime: number;
+	startTime: Date;
 }
 
 export interface CalendarEventResultPlayer {
@@ -238,10 +237,10 @@ export interface GroupMatch {
 	alphaGroupId: number;
 	bravoGroupId: number;
 	chatCode: string | null;
-	createdAt: Generated<number>;
+	createdAt: Generated<Date>;
 	id: GeneratedAlways<number>;
 	memento: JSONColumnTypeNullable<ParsedMemento>;
-	reportedAt: number | null;
+	reportedAt: Date | null;
 	reportedByUserId: number | null;
 }
 
@@ -256,7 +255,7 @@ export interface GroupMatchMap {
 }
 
 export interface GroupMember {
-	createdAt: Generated<number>;
+	createdAt: Generated<Date>;
 	groupId: number;
 	note: string | null;
 	role: 'OWNER' | 'MANAGER' | 'REGULAR';
@@ -268,13 +267,13 @@ export interface PrivateUserNote {
 	targetId: number;
 	text: string | null;
 	sentiment: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE';
-	updatedAt: Generated<number>;
+	updatedAt: Generated<Date>;
 }
 
 /** Log-in links generated via the Lohi Discord bot commands. */
 export interface LogInLink {
 	code: string;
-	expiresAt: number;
+	expiresAt: Date;
 	userId: number;
 }
 
@@ -304,8 +303,8 @@ export interface LFGPost {
 	authorId: number;
 	teamId: number | null;
 	plusTierVisibility: number | null;
-	updatedAt: Generated<number>;
-	createdAt: GeneratedAlways<number>;
+	updatedAt: Generated<Date>;
+	createdAt: GeneratedAlways<Date>;
 }
 
 export interface MapPoolMap {
@@ -338,7 +337,7 @@ export interface PlayerResult {
 
 export interface PlusSuggestion {
 	authorId: number;
-	createdAt: GeneratedAlways<number>;
+	createdAt: GeneratedAlways<Date>;
 	id: GeneratedAlways<number>;
 	month: number;
 	suggestedId: number;
@@ -389,7 +388,7 @@ export interface Skill {
 	season: number;
 	tournamentId: number | null;
 	userId: number | null;
-	createdAt: number | null;
+	createdAt: Date | null;
 }
 
 export interface SkillTeamUser {
@@ -472,7 +471,7 @@ export interface Tournament {
 
 export interface PreparedMaps {
 	authorId: number;
-	createdAt: number;
+	createdAt: Date;
 	maps: Array<TournamentRoundMaps & { roundId: number; groupId: number }>;
 	eliminationTeamCount?: number;
 }
@@ -528,7 +527,7 @@ export interface TournamentMatch {
 	stageId: number;
 	status: (typeof TournamentMatchStatus)[keyof typeof TournamentMatchStatus];
 	// used only for swiss because it's the only stage type where matches are not created in advance
-	createdAt: Generated<number>;
+	createdAt: Generated<Date>;
 }
 
 /** Represents one decision, pick or ban, during tournaments pick/ban (counterpick, ban 2) phase. */
@@ -539,11 +538,11 @@ export interface TournamentMatchPickBanEvent {
 	matchId: number;
 	authorId: number;
 	number: number;
-	createdAt: GeneratedAlways<number>;
+	createdAt: GeneratedAlways<Date>;
 }
 
 export interface TournamentMatchGameResult {
-	createdAt: Generated<number>;
+	createdAt: Generated<Date>;
 	id: GeneratedAlways<number>;
 	matchId: number;
 	mode: ModeShort;
@@ -732,7 +731,7 @@ export interface TournamentOrganizationBannedUser {
 	organizationId: number;
 	userId: number;
 	privateNote: string | null;
-	updatedAt: Generated<number>;
+	updatedAt: Generated<Date>;
 }
 
 /** Indicates a user trusts another. Allows direct adding to groups/teams without invite links. */
@@ -756,8 +755,8 @@ export interface UnvalidatedVideo {
 	submitterUserId: number;
 	title: string;
 	type: string;
-	validatedAt: number | null;
-	youtubeDate: number;
+	validatedAt: Date | null;
+	youtubeDate: Date;
 	youtubeId: string;
 }
 
@@ -804,7 +803,7 @@ export interface UserPreferences {
 
 export interface User {
 	/** 1 = permabanned, timestamp = ban active till then */
-	banned: Generated<number | null>;
+	banned: Generated<Date | null>;
 	bannedReason: string | null;
 	bio: string | null;
 	commissionsOpen: Generated<number | null>;
@@ -830,7 +829,7 @@ export interface User {
 	motionSens: number | null;
 	patronSince: number | null;
 	patronTier: number | null;
-	patronTill: number | null;
+	patronTill: Date | null;
 	showDiscordUniqueName: Generated<DBBoolean>;
 	stickSens: number | null;
 	twitch: string | null;
@@ -845,7 +844,7 @@ export interface User {
 	buildSorting: JSONColumnTypeNullable<BuildSort[]>;
 	preferences: JSONColumnTypeNullable<UserPreferences>;
 	/** User creation date. Can be null because we did not always save this. */
-	createdAt: number | null;
+	createdAt: Date | null;
 }
 
 /** Represents User joined with PlusTier table */
@@ -862,11 +861,11 @@ export interface UserSubmittedImage {
 	id: GeneratedAlways<number>;
 	submitterUserId: number | null;
 	url: string;
-	validatedAt: number | null;
+	validatedAt: Date | null;
 }
 
 export interface UserWeapon {
-	createdAt: Generated<number>;
+	createdAt: Generated<Date>;
 	isFavorite: Generated<DBBoolean>;
 	order: number;
 	userId: number;
@@ -877,7 +876,7 @@ export interface UserFriendCode {
 	friendCode: string;
 	userId: number;
 	submitterUserId: number;
-	createdAt: GeneratedAlways<number>;
+	createdAt: GeneratedAlways<Date>;
 }
 
 export interface BanLog {
@@ -886,7 +885,7 @@ export interface BanLog {
 	banned: number | null;
 	bannedReason: string | null;
 	bannedByUserId: number;
-	createdAt: GeneratedAlways<number>;
+	createdAt: GeneratedAlways<Date>;
 }
 
 export interface ModNote {
@@ -894,7 +893,7 @@ export interface ModNote {
 	userId: number;
 	authorId: number;
 	text: string;
-	createdAt: GeneratedAlways<number>;
+	createdAt: GeneratedAlways<Date>;
 	isDeleted: Generated<DBBoolean>;
 }
 
@@ -904,7 +903,7 @@ export interface Video {
 	submitterUserId: number;
 	title: string;
 	type: 'SCRIM' | 'TOURNAMENT' | 'MATCHMAKING' | 'CAST' | 'SENDOUQ';
-	validatedAt: number | null;
+	validatedAt: Date | null;
 	youtubeDate: number;
 	youtubeId: string;
 }
@@ -913,7 +912,7 @@ export interface VideoMatch {
 	id: GeneratedAlways<number>;
 	mode: ModeShort;
 	stageId: StageId;
-	startsAt: number;
+	startsAt: Date;
 	videoId: number;
 }
 
@@ -961,15 +960,15 @@ export interface ScrimPost {
 	/** Indicates if anyone in the post can manage it */
 	managedByAnyone: DBBoolean;
 	/** When the scrim was canceled */
-	canceledAt: number | null;
+	canceledAt: Date | null;
 	/** User id who canceled the scrim */
 	canceledByUserId: number | null;
 	/** Reason for canceling the scrim */
 	cancelReason: string | null;
 	/** When the post was made was it scheduled for a future time slot (as opposed to looking now) */
 	isScheduledForFuture: Generated<DBBoolean>;
-	createdAt: GeneratedAlways<number>;
-	updatedAt: Generated<number>;
+	createdAt: GeneratedAlways<Date>;
+	updatedAt: Generated<Date>;
 }
 
 export interface ScrimPostUser {
@@ -984,7 +983,7 @@ export interface ScrimPostRequest {
 	scrimPostId: number;
 	teamId: number | null;
 	isAccepted: Generated<DBBoolean>;
-	createdAt: GeneratedAlways<number>;
+	createdAt: GeneratedAlways<Date>;
 }
 
 export interface ScrimPostRequestUser {
@@ -1012,7 +1011,7 @@ export interface Notification {
 	type: NotificationValue['type'];
 	meta: JSONColumnTypeNullable<Record<string, number | string>>;
 	pictureUrl: string | null;
-	createdAt: GeneratedAlways<number>;
+	createdAt: GeneratedAlways<Date>;
 }
 
 export interface NotificationUser {

@@ -25,9 +25,15 @@ import slugify from 'slugify';
 
 // xxx: should this be in the constants folder?
 
-import type { MainWeaponId, ModeShortWithSpecial } from '$lib/constants/in-game/types';
+import type {
+	AbilityWithUnknown,
+	BuildAbilitiesTupleWithUnknown,
+	MainWeaponId,
+	ModeShortWithSpecial
+} from '$lib/constants/in-game/types';
 import type { weaponCategories } from '$lib/constants/in-game/weapon-ids';
-import type { Tables } from '$lib/server/db/tables';
+import type { GearType, Tables } from '$lib/server/db/tables';
+import type Ability from '$lib/components/ability.svelte';
 
 // const staticAssetsUrl = ({
 // 	folder,
@@ -161,8 +167,7 @@ export const userPage = (user: UserLinkArgs) => `/u/${user.customUrl ?? user.dis
 // 	}`;
 // export const userEditProfilePage = (user: UserLinkArgs) =>
 // 	`${userPage(user)}/edit`;
-// export const userBuildsPage = (user: UserLinkArgs) =>
-// 	`${userPage(user)}/builds`;
+export const userBuildsPage = (user: UserLinkArgs) => `${userPage(user)}/builds`;
 // export const userResultsPage = (user: UserLinkArgs, showAll?: boolean) =>
 // 	`${userPage(user)}/results${showAll ? "?all=true" : ""}`;
 // export const userVodsPage = (user: UserLinkArgs) => `${userPage(user)}/vods`;
@@ -180,20 +185,21 @@ export const userPage = (user: UserLinkArgs) => `/u/${user.customUrl ?? user.dis
 // 	`${userPage(user)}/art${source ? `?source=${source}` : ""}${bigArtId ? `?big=${bigArtId}` : ""}`;
 // export const newArtPage = (artId?: Tables["Art"]["id"]) =>
 // 	`${artPage()}/new${artId ? `?art=${artId}` : ""}`;
-// export const userNewBuildPage = (
-// 	user: UserLinkArgs,
-// 	params?: { weapon: MainWeaponId; build: BuildAbilitiesTupleWithUnknown },
-// ) =>
-// 	`${userBuildsPage(user)}/new${
-// 		params
-// 			? `?${String(
-// 					new URLSearchParams({
-// 						weapon: String(params.weapon),
-// 						build: serializeBuild(params.build),
-// 					}),
-// 				)}`
-// 			: ""
-// 	}`;
+export const userNewBuildPage = (
+	user: UserLinkArgs,
+	params?: { weapon: MainWeaponId; build: BuildAbilitiesTupleWithUnknown }
+) =>
+	`${userBuildsPage(user)}/new${
+		params
+			? `?${String(
+					new URLSearchParams({
+						weapon: String(params.weapon),
+						// build: serializeBuild(params.build), // xxx: serializeBuild
+						build: JSON.stringify(params.build)
+					})
+				)}`
+			: ''
+	}`;
 
 // export const teamPage = (customUrl: string) => `/t/${customUrl}`;
 // export const editTeamPage = (customUrl: string) =>
@@ -259,8 +265,7 @@ export const userPage = (user: UserLinkArgs) => `/u/${user.customUrl ?? user.dis
 // export const plusSuggestionsNewPage = (tier?: string | number) =>
 // 	`/plus/suggestions/new${tier ? `?tier=${tier}` : ""}`;
 
-// export const weaponBuildPage = (weaponSlug: string) =>
-// 	`${BUILDS_PAGE}/${weaponSlug}`;
+export const weaponBuildPage = (weaponId: MainWeaponId) => `/builds/${weaponId}`; // xxx: slug
 // export const weaponBuildStatsPage = (weaponSlug: string) =>
 // 	`${weaponBuildPage(weaponSlug)}/stats`;
 // export const weaponBuildPopularPage = (weaponSlug: string) =>
@@ -420,17 +425,10 @@ export const tournamentBracketsPage = ({
 // export const mapsPageWithMapPool = (mapPool: MapPool) =>
 // 	`/maps?readonly&pool=${mapPool.serialized}`;
 // export const articlePage = (slug: string) => `${ARTICLES_MAIN_PAGE}/${slug}`;
-// export const analyzerPage = (args?: {
-// 	weaponId: MainWeaponId;
-// 	abilities: Ability[];
-// }) =>
-// 	`/analyzer${
-// 		args
-// 			? `?weapon=${args.weaponId}&build=${encodeURIComponent(
-// 					args.abilities.join(","),
-// 				)}`
-// 			: ""
-// 	}`;
+export const analyzerPage = (args?: { weaponId: MainWeaponId; abilities: Ability[] }) =>
+	`/analyzer${
+		args ? `?weapon=${args.weaponId}&build=${encodeURIComponent(args.abilities.join(','))}` : ''
+	}`;
 // export const objectDamageCalculatorPage = (weaponId?: MainWeaponId) =>
 // 	`/object-damage-calculator${
 // 		typeof weaponId === "number" ? `?weapon=${weaponId}` : ""
@@ -452,17 +450,17 @@ export const tournamentBracketsPage = ({
 
 export const badgeUrl = ({
 	code,
-	extension
+	isAnimated
 }: {
 	code: Tables['Badge']['code'];
-	extension?: 'gif';
-}) => `/badges/${code}${extension ? `.${extension}` : ''}`;
+	isAnimated: boolean;
+}) => `/badges/${isAnimated ? 'animated' : 'static'}/${code}.avif`;
 // export const articlePreviewUrl = (slug: string) =>
 // 	`/img/article-previews/${slug}.png`;
 
 export const navIconUrl = (navItem: string) => `/img/layout/${navItem}`;
-// export const gearImageUrl = (gearType: GearType, gearSplId: number) =>
-// 	`/img/gear/${gearType.toLowerCase()}/${gearSplId}`;
+export const gearImageUrl = (gearType: GearType, gearSplId: number) =>
+	`/img/gear/${gearType.toLowerCase()}/${gearSplId}`;
 export const weaponCategoryUrl = (category: (typeof weaponCategories)[number]['name']) =>
 	`/img/weapon-categories/${category}`;
 export const mainWeaponImageUrl = (mainWeaponSplId: MainWeaponId) =>
@@ -484,8 +482,7 @@ export const outlinedFiveStarMainWeaponImageUrl = (mainWeaponSplId: MainWeaponId
 // 	variant: "weakpoints",
 // ) =>
 // 	`/img/special-weapons/variants/${specialWeaponSplId}-${variant}`;
-// export const abilityImageUrl = (ability: AbilityWithUnknown) =>
-// 	`/img/abilities/${ability}`;
+export const abilityImageUrl = (ability: AbilityWithUnknown) => `/img/abilities/${ability}`;
 // export const brandImageUrl = (brand: BrandId) =>
 // 	`/img/brands/${brand}`;
 export const modeImageUrl = (mode: ModeShortWithSpecial) => `/img/modes/${mode}`;

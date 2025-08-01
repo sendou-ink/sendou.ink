@@ -1,6 +1,7 @@
 import { getWeek } from 'date-fns';
 import type { DayMonthYear, MonthYear } from './zod';
 
+// xxx: delete these
 export function databaseTimestampToDate(timestamp: number) {
 	return new Date(databaseTimestampToJavascriptTimestamp(timestamp));
 }

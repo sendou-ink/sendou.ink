@@ -1,5 +1,6 @@
 import * as UserRepository from '$lib/server/db/repositories/user';
 import { getRequestEvent } from '$app/server';
+import { error } from '@sveltejs/kit';
 
 export type AuthenticatedUser = UserRepository.FindWithRolesByIdResult;
 
@@ -33,6 +34,14 @@ export async function getUser(/*_redirectIfBanned = true*/) {
 	locals.user = userPromise;
 
 	return userPromise;
+}
+
+export async function requireUser() {
+	const user = await getUser();
+
+	if (!user) error(401);
+
+	return user;
 }
 
 async function loggedInUserWithRolesFromSession() {

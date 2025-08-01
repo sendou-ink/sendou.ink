@@ -25,7 +25,19 @@ export default ts.config(
 			// see: https://typescript-eslint.io/troubleshooting/faqs/eslint/#i-get-errors-from-the-no-undef-rule-about-global-variables-not-being-defined-even-though-there-are-no-typescript-errors
 			'no-undef': 'off',
 			'@typescript-eslint/no-explicit-any': 'off',
-			'@typescript-eslint/ban-ts-comment': 'off'
+			'@typescript-eslint/ban-ts-comment': 'off',
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{
+					args: 'all',
+					argsIgnorePattern: '^_',
+					caughtErrors: 'all',
+					caughtErrorsIgnorePattern: '^_',
+					destructuredArrayIgnorePattern: '^_',
+					varsIgnorePattern: '^_',
+					ignoreRestSiblings: true
+				}
+			]
 		}
 	},
 	{

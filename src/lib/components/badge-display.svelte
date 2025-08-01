@@ -137,10 +137,6 @@
 		margin-inline: auto;
 	}
 
-	.bigBadge {
-		view-transition-name: none;
-	}
-
 	.smallBadges {
 		display: grid;
 		place-items: center;
@@ -148,43 +144,6 @@
 		margin: 0 auto;
 		cursor: pointer;
 		gap: var(--s-3);
-		view-transition-name: badges;
-	}
-
-	@keyframes fade-in {
-		from {
-			opacity: 0;
-		}
-	}
-
-	@keyframes fade-out {
-		to {
-			opacity: 0;
-		}
-	}
-
-	@keyframes slide-from-right {
-		from {
-			transform: translateX(20px);
-		}
-	}
-
-	@keyframes slide-to-left {
-		to {
-			transform: translateX(-20px);
-		}
-	}
-
-	.smallBadges::view-transition-old(badges) {
-		animation:
-			90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
-			300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
-	}
-
-	.smallBadges::view-transition-new(badges) {
-		animation:
-			210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
-			300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
 	}
 
 	.badgeExplanation {

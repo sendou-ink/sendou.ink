@@ -5,7 +5,6 @@ import * as R from 'remeda';
 import { db, sql as dbDirect } from '../sql';
 import type { BuildSort, DB, Tables, TablesInsertable, UserPreferences } from '../tables';
 // import type { ChatUser } from "~/features/chat/components/Chat";
-import { databaseTimestampNow, dateToDatabaseTimestamp } from '$lib/utils/dates';
 import invariant from '$lib/utils/invariant';
 import type { CommonUser } from '$lib/utils/kysely.server';
 import { COMMON_USER_FIELDS } from '$lib/utils/kysely.server';
@@ -184,8 +183,7 @@ export async function findProfileByIdentifier(
 						fn.count<number>('BadgeOwner.badgeId').as('count'),
 						'Badge.id',
 						'Badge.displayName',
-						'Badge.code',
-						'Badge.hue'
+						'Badge.code'
 					])
 					.whereRef('BadgeOwner.userId', '=', 'User.id')
 					.groupBy(['BadgeOwner.badgeId', 'BadgeOwner.userId'])
@@ -694,7 +692,7 @@ export function upsert(
 ) {
 	return db
 		.insertInto('User')
-		.values({ ...args, createdAt: databaseTimestampNow() })
+		.values({ ...args, createdAt: new Date() })
 		.onConflict((oc) => {
 			return oc.column('discordId').doUpdateSet({
 				...R.omit(args, ['discordId'])
@@ -858,12 +856,7 @@ export function updatePatronData(users: UpdatePatronDataArgs) {
 				patronSince: null,
 				patronTill: null
 			})
-			.where((eb) =>
-				eb.or([
-					eb('patronTill', '<', dateToDatabaseTimestamp(new Date())),
-					eb('patronTill', 'is', null)
-				])
-			)
+			.where((eb) => eb.or([eb('patronTill', '<', new Date()), eb('patronTill', 'is', null)]))
 			.execute();
 
 		for (const user of users) {

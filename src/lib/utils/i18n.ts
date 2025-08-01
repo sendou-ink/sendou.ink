@@ -1,4 +1,4 @@
-import type { MainWeaponId } from '$lib/constants/in-game/types';
+import type { AbilityWithUnknown, MainWeaponId, ModeShort } from '$lib/constants/in-game/types';
 import type { weaponCategories } from '$lib/constants/in-game/weapon-ids';
 import { m } from '$lib/paraglide/messages';
 import { logger } from './logger';
@@ -52,6 +52,52 @@ export const weaponCategoryTranslations: Record<
 	SPLATANAS: m.common_weapon_category_SPLATANAS,
 	SPLATLINGS: m.common_weapon_category_SPLATLINGS,
 	STRINGERS: m.common_weapon_category_STRINGERS
+};
+
+export const abilityTranslations: Record<AbilityWithUnknown, () => string> = {
+	AD: m.game_misc_ABILITY_AD,
+	BRU: m.game_misc_ABILITY_BRU,
+	CB: m.game_misc_ABILITY_CB,
+	DR: m.game_misc_ABILITY_DR,
+	H: m.game_misc_ABILITY_H,
+	IA: m.game_misc_ABILITY_IA,
+	IRU: m.game_misc_ABILITY_IRU,
+	ISM: m.game_misc_ABILITY_ISM,
+	ISS: m.game_misc_ABILITY_ISS,
+	LDE: m.game_misc_ABILITY_LDE,
+	NS: m.game_misc_ABILITY_NS,
+	OG: m.game_misc_ABILITY_OG,
+	OS: m.game_misc_ABILITY_OS,
+	QR: m.game_misc_ABILITY_QR,
+	QSJ: m.game_misc_ABILITY_QSJ,
+	RES: m.game_misc_ABILITY_RES,
+	RP: m.game_misc_ABILITY_RP,
+	RSU: m.game_misc_ABILITY_RSU,
+	SCU: m.game_misc_ABILITY_SCU,
+	SJ: m.game_misc_ABILITY_SJ,
+	SPU: m.game_misc_ABILITY_SPU,
+	SRU: m.game_misc_ABILITY_SRU,
+	SS: m.game_misc_ABILITY_SS,
+	SSU: m.game_misc_ABILITY_SSU,
+	T: m.game_misc_ABILITY_T,
+	TI: m.game_misc_ABILITY_TI,
+	UNKNOWN: m.builds_emptyAbilitySlot
+};
+
+export const modesLongTranslations: Record<ModeShort, () => string> = {
+	TW: m.game_misc_MODE_LONG_TW,
+	SZ: m.game_misc_MODE_LONG_SZ,
+	TC: m.game_misc_MODE_LONG_TC,
+	RM: m.game_misc_MODE_LONG_RM,
+	CB: m.game_misc_MODE_LONG_CB
+};
+
+export const modesShortTranslations: Record<ModeShort, () => string> = {
+	TW: m.game_misc_MODE_SHORT_TW,
+	SZ: m.game_misc_MODE_SHORT_SZ,
+	TC: m.game_misc_MODE_SHORT_TC,
+	RM: m.game_misc_MODE_SHORT_RM,
+	CB: m.game_misc_MODE_SHORT_CB
 };
 
 export const weaponTranslations: Record<MainWeaponId, () => string> = {

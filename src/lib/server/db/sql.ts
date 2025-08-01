@@ -6,6 +6,7 @@ import type { DB } from './tables';
 import { roundToNDecimalPlaces } from '$lib/utils/number';
 import { logger } from '$lib/utils/logger';
 import invariant from '$lib/utils/invariant';
+import { SqliteDatePlugin } from '$lib/server/db/plugins';
 
 const LOG_LEVEL = (['trunc', 'full', 'none'] as const).find((val) => val === process.env.SQL_LOG);
 
@@ -26,7 +27,7 @@ export const db = new Kysely<DB>({
 		database: sql
 	}),
 	log: LOG_LEVEL === 'trunc' || LOG_LEVEL === 'full' ? logQuery : logError,
-	plugins: [new ParseJSONResultsPlugin()]
+	plugins: [new ParseJSONResultsPlugin(), new SqliteDatePlugin()]
 });
 
 function logQuery(event: LogEvent) {
