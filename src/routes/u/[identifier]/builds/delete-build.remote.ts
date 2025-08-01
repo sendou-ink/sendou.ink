@@ -25,9 +25,8 @@ export const deleteBuild = command(
 
 		await BuildRepository.deleteById(args.buildId);
 
-		// xxx: not working?
-		userBuilds(args.identifier).refresh();
-		userLayoutData(args.identifier).refresh();
+		await userBuilds(args.identifier).refresh();
+		await userLayoutData(args.identifier).refresh();
 
 		// xxx: clear cache
 		// try {
