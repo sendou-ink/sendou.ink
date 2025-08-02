@@ -22,6 +22,8 @@ export const CUSTOM_CSS_VAR_COLORS = [
 	'chat'
 ] as const;
 
+export const MAX_AP = 57;
+
 export const SPLATOON_3_XP_BADGE_VALUES = [
 	5000, 4500, 4000, 3500, 3400, 3300, 3200, 3100, 3000, 2900, 2800, 2700, 2600
 ] as const;

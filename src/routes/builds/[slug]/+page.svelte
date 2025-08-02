@@ -8,6 +8,9 @@
 	import { m } from '$lib/paraglide/messages';
 	import { weaponTranslations } from '$lib/utils/i18n';
 	import { buildsBySlug } from './builds-by-slug.remote';
+	import ChartBarIcon from '$lib/components/icons/chart-bar-solid.svelte';
+	import FireIcon from '$lib/components/icons/fire-solid.svelte';
+	import { resolve } from '$app/paths';
 
 	let { params } = $props();
 
@@ -68,25 +71,21 @@
 						{t("builds:filters.type.date")}
 					</SendouMenuItem>
 				</SendouMenu> -->
-		<div />
-		<!-- <div class="builds-buttons-link">
-					<Button
-						href={weaponBuildStatsPage(data.slug)}
-						variant="outlined"
-						icon={<ChartBarIcon />}
-						size="small"
-					>
-						{t("builds:linkButton.abilityStats")}
-					</Button>
-					<Button
-						href={weaponBuildPopularPage(data.slug)}
-						variant="outlined"
-						icon={<FireIcon />}
-						size="small"
-					>
-						{t("builds:linkButton.popularBuilds")}
-					</Button>
-				</div> -->
+		<div></div>
+		<div class="builds-buttons-link">
+			<Button href={resolve(`/builds/${params.slug}/stats`)} variant="outlined" size="small">
+				{#snippet icon()}
+					<ChartBarIcon />
+				{/snippet}
+				{m.builds_linkButton_abilityStats()}
+			</Button>
+			<Button href={resolve(`/builds/${params.slug}/popular`)} variant="outlined" size="small">
+				{#snippet icon()}
+					<FireIcon />
+				{/snippet}
+				{m.builds_linkButton_popularBuilds()}
+			</Button>
+		</div>
 	</div>
 	<!-- {filters.length > 0 ? (
 				<div class="stack md">
