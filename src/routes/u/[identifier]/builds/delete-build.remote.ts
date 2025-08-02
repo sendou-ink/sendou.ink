@@ -33,7 +33,6 @@ export const deleteBuild = command(
 			logger.warn('Error refreshing builds cache', error);
 		}
 
-		await userBuilds(args.identifier).refresh();
 		await userLayoutData(args.identifier).refresh();
 	}
 );

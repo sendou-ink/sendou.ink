@@ -27,6 +27,7 @@
 	import SpeechBubbleIcon from '$lib/components/icons/speech-bubble.svelte';
 	import TrashIcon from '$lib/components/icons/trash.svelte';
 	import { deleteBuild } from '../../routes/u/[identifier]/builds/delete-build.remote';
+	import { userBuilds } from '../../routes/u/[identifier]/builds/user-builds.remote';
 
 	interface BuildWeaponWithTop500Info {
 		weaponSplId: MainWeaponId;
@@ -181,11 +182,19 @@
 				onclick={async () => {
 					console.log('Deleting build', build.id);
 
-					// xxx: optimistic
+					// xxx: pass identifiers, currently hardcoded
+					// xxx: popover needs to be updated to allow programmatic closing
 					await deleteBuild({
 						buildId: build.id,
-						identifier: 'sendou' // xxx: pass identifier
-					});
+						identifier: 'sendou'
+					}).updates(
+						userBuilds('274').withOverride((current) => {
+							return {
+								...current,
+								builds: current.builds.filter((b) => b.id !== build.id)
+							};
+						})
+					);
 				}}>Delete</Button
 			>
 		</Popover>
