@@ -1,12 +1,12 @@
 <script lang="ts">
+	import type { Tables } from '$lib/server/db/tables';
+	import type { Unpacked } from '$lib/utils/types';
+	import { fly, scale } from 'svelte/transition';
+	import { badgeExplanationText } from '$lib/utils/badges';
+	import { Pagination } from '$lib/runes/pagination.svelte';
 	import TrashIcon from '$lib/components/icons/trash.svelte';
 	import Badge from '$lib/components/badge.svelte';
 	import Button from '$lib/components/button.svelte';
-	import type { Tables } from '$lib/server/db/tables';
-	import type { Unpacked } from '$lib/utils/types';
-	import { badgeExplanationText } from '$lib/utils/badges';
-	import { Pagination } from '$lib/runes/pagination.svelte';
-	import { fly, scale } from 'svelte/transition';
 
 	const SMALL_BADGES_PER_DISPLAY_PAGE = 9;
 
@@ -18,18 +18,18 @@
 		class?: string;
 	}
 
-	let { badges: _badges, onChange, children, showText = true, class: className }: Props = $props();
+	let { badges, onChange, children, showText = true, class: className }: Props = $props();
 
-	let badges = $state(_badges);
 	const bigBadge = $derived(badges[0]);
 	const smallBadges = $derived(badges.slice(1));
 
-	const isPaginated = !onChange;
-
-	const pagination = new Pagination(() => smallBadges, {
-		pageSize: isPaginated ? SMALL_BADGES_PER_DISPLAY_PAGE : 1000,
-		scrollToTop: false
-	});
+	const isPaginated = $derived(!onChange);
+	const pagination = $derived(
+		new Pagination(() => smallBadges, {
+			pageSize: isPaginated ? SMALL_BADGES_PER_DISPLAY_PAGE : 1000,
+			scrollToTop: false
+		})
+	);
 
 	function setBadgeFirst(badge: Unpacked<Props['badges']>) {
 		const newBadges = badges.map((b, i) => {
@@ -85,9 +85,7 @@
 				</div>
 			{/if}
 
-			{#if children}
-				{@render children()}
-			{/if}
+			{@render children?.()}
 		</div>
 
 		{#if !isPaginated}
@@ -127,19 +125,18 @@
 <style>
 	.badges {
 		display: flex;
-		min-width: 20rem;
-		max-width: 20rem;
+		width: 20rem;
 		min-height: 12rem;
 		align-items: center;
 		padding: var(--s-2);
 		border-radius: var(--rounded);
 		background-color: var(--bg-badge);
 		margin-inline: auto;
+		margin-block: var(--s-2);
 	}
 
 	.smallBadges {
 		display: grid;
-		place-items: center;
 		grid-template-columns: repeat(3, 1fr);
 		margin: 0 auto;
 		cursor: pointer;
@@ -152,8 +149,6 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		gap: var(--s-2);
-		margin-block-end: var(--s-1);
 	}
 
 	.smallBadgeContainer {
@@ -178,9 +173,8 @@
 		gap: var(--s-2-5);
 		justify-content: center;
 		align-items: center;
-		max-width: 20rem;
+		width: 20rem;
 		margin: 0 auto;
-		margin-block-start: var(--s-2);
 
 		:global(.paginationButton) {
 			background-color: var(--bg-darker);
