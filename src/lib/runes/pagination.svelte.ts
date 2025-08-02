@@ -1,8 +1,8 @@
 export class Pagination<T> {
+	private items: T[];
+	private pageSize: number;
+	private scrollToTop: boolean;
 	page = $state(1);
-	items: T[];
-	pageSize: number;
-	scrollToTop: boolean;
 
 	constructor(items: () => T[], options: { pageSize: number; scrollToTop?: boolean }) {
 		this.items = $derived(items());
