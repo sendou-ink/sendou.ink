@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { truncateBySentence } from '$lib/utils/strings';
 	import { COMMON_PREVIEW_IMAGE } from '$lib/utils/urls';
 
@@ -31,7 +31,7 @@
 
 	const truncatedDescription = $derived(description ? truncateBySentence(description, 300) : null);
 
-	const pageUrl = $derived(url ?? $page.url.pathname);
+	const pageUrl = $derived(url ?? page.url.pathname);
 
 	const imageUrl = $derived.by(() => {
 		if (image?.url.startsWith('http')) {
