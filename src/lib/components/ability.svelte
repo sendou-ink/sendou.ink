@@ -51,7 +51,6 @@
 	};
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
 <svelte:element
 	this={readonly ? 'div' : 'button'}
 	class={[
@@ -70,7 +69,8 @@
 	ondragover={onDragOver}
 	ondragleave={onDragLeave}
 	ondrop={handleDrop}
-	type="button"
+	type={readonly ? undefined : 'button'}
+	role={readonly ? undefined : 'button'}
 >
 	<Image
 		alt={abilityTranslations[ability]()}
