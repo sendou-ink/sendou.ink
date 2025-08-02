@@ -9,7 +9,7 @@
 		size: keyof typeof sizeMap;
 		dragStarted?: boolean;
 		dropAllowed?: boolean;
-		onClick?: () => void;
+		onClick?: VoidFunction;
 		onDrop?: (event: DragEvent) => void;
 		class?: string;
 	}

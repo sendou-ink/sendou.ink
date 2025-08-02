@@ -1,6 +1,6 @@
 export interface IconProps {
 	class?: string;
 	testId?: string;
-	onClick?: () => void;
+	onClick?: VoidFunction;
 	title?: string;
 }

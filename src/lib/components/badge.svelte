@@ -5,7 +5,7 @@
 
 	interface Props {
 		badge: { displayName: string; code: string };
-		onclick?: () => void;
+		onclick?: VoidFunction;
 		isAnimated: boolean;
 		size: number;
 	}
