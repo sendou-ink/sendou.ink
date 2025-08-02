@@ -23,8 +23,6 @@ import slugify from 'slugify';
 // import type { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
 // import type { DayMonthYear } from "~/utils/zod";
 
-// xxx: should this be in the constants folder?
-
 import type {
 	AbilityWithUnknown,
 	BuildAbilitiesTupleWithUnknown,
@@ -34,6 +32,8 @@ import type {
 import type { weaponCategories } from '$lib/constants/in-game/weapon-ids';
 import type { GearType, Tables } from '$lib/server/db/tables';
 import type Ability from '$lib/components/ability.svelte';
+import { weaponTranslations } from './i18n';
+import { resolve } from '$app/paths';
 
 // const staticAssetsUrl = ({
 // 	folder,
@@ -265,7 +265,8 @@ export const userNewBuildPage = (
 // export const plusSuggestionsNewPage = (tier?: string | number) =>
 // 	`/plus/suggestions/new${tier ? `?tier=${tier}` : ""}`;
 
-export const weaponBuildPage = (weaponId: MainWeaponId) => `/builds/${weaponId}`; // xxx: slug
+export const weaponBuildPage = (weaponId: MainWeaponId) =>
+	resolve(`/builds/${mySlugify(weaponTranslations[weaponId]({}, { locale: 'en' }))}`);
 // export const weaponBuildStatsPage = (weaponSlug: string) =>
 // 	`${weaponBuildPage(weaponSlug)}/stats`;
 // export const weaponBuildPopularPage = (weaponSlug: string) =>
@@ -455,8 +456,7 @@ export const badgeUrl = ({
 	code: Tables['Badge']['code'];
 	isAnimated: boolean;
 }) => `/badges/${isAnimated ? 'animated' : 'static'}/${code}.avif`;
-// export const articlePreviewUrl = (slug: string) =>
-// 	`/img/article-previews/${slug}.png`;
+export const articlePreviewUrl = (slug: string) => `/img/article-previews/${slug}.png`;
 
 export const navIconUrl = (navItem: string) => `/img/layout/${navItem}`;
 export const gearImageUrl = (gearType: GearType, gearSplId: number) =>

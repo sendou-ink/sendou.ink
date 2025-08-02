@@ -1,7 +1,7 @@
 import type { Ability, BuildAbilitiesTuple, ModeShort } from '$lib/constants/in-game/types';
 import type { Tables } from '$lib/server/db/tables';
 import { assertUnreachable } from '$lib/utils/types';
-import type { BuildFiltersFromSearchParams } from './schemas';
+import type { BuildFiltersFromSearchParams } from '../../../routes/builds/schemas';
 
 type PartialBuild = {
 	abilities: BuildAbilitiesTuple;

@@ -100,7 +100,15 @@ export const modesShortTranslations: Record<ModeShort, () => string> = {
 	CB: m.game_misc_MODE_SHORT_CB
 };
 
-export const weaponTranslations: Record<MainWeaponId, () => string> = {
+export const weaponTranslations: Record<
+	MainWeaponId,
+	(
+		inputs?: object,
+		options?: {
+			locale?: 'en';
+		}
+	) => string
+> = {
 	0: m.weapons_MAIN_0,
 	1: m.weapons_MAIN_1,
 	10: m.weapons_MAIN_10,

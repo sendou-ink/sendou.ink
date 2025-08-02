@@ -4,6 +4,9 @@ import path from 'node:path';
 import matter from 'gray-matter';
 import { z, ZodError } from 'zod/v4';
 import invariant from '$lib/utils/invariant';
+import markdownit from 'markdown-it';
+
+const md = markdownit();
 
 const ARTICLES_FOLDER_PATH = 'content/articles';
 
@@ -76,7 +79,7 @@ async function articleFromFs(slug: string) {
 		const { date, ...restParsed } = articleDataSchema.parse(data);
 
 		return {
-			content,
+			content: md.render(content),
 			date,
 			dateString: date.toLocaleDateString('en-US', {
 				day: '2-digit',

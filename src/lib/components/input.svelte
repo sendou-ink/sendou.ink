@@ -83,8 +83,14 @@
 
 	input {
 		width: 100%;
-		border: none;
 		margin: auto 0;
+		height: 1rem;
+		padding: var(--s-4) var(--s-3);
+		border-color: transparent;
+		accent-color: var(--theme-secondary);
+		background-color: var(--bg-input);
+		color: var(--text);
+		outline: none;
 	}
 
 	.addon {

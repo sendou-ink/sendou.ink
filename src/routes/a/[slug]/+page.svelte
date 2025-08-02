@@ -1,11 +1,22 @@
 <script lang="ts">
 	import Main from '$lib/components/main.svelte';
+	import Markdown from '$lib/components/markdown.svelte';
+	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';
+	import { articlePreviewUrl } from '$lib/utils/urls';
 	import { articleBySlug, type ArticleBySlugData } from '../articles.remote';
 
 	const { params } = $props();
 
 	const article = $derived(await articleBySlug(params.slug));
 </script>
+
+<OpenGraphMeta
+	title={article.title}
+	description={article.content.trim().split('\n')[0]}
+	image={{
+		url: articlePreviewUrl(params.slug)
+	}}
+/>
 
 <Main>
 	<article>
@@ -14,9 +25,7 @@
 			by {@render authors(article.authors)} • <time>{article.dateString}</time>
 		</div>
 		<!-- xxx: add markdown -->
-		<div class="markdown-content">
-			{article.content}
-		</div>
+		<Markdown content={article.content} />
 	</article>
 </Main>
 

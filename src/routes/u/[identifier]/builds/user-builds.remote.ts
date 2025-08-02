@@ -6,8 +6,8 @@ import { query } from '$app/server';
 import { error } from '@sveltejs/kit';
 import { notFoundIfFalsy } from '$lib/server/remote-functions';
 import { sortBuilds } from './build-sorting';
-import { sortAbilities } from '../../../builds/ability-sorting';
 import type { MainWeaponId } from '$lib/constants/in-game/types';
+import { sortAbilities } from '$lib/core/build/ability-sorting';
 
 // xxx: better schema?
 export const userBuilds = query(z.string(), async (identifier) => {

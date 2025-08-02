@@ -6,6 +6,8 @@ import { error } from '@sveltejs/kit';
 import { userBuilds } from './user-builds.remote';
 import { z } from 'zod/v4';
 import { userLayoutData } from '../user-layout-data.remote';
+import { logger } from '$lib/utils/logger';
+import { refreshBuildsCacheByWeaponSplIds } from '../../../builds/[slug]/cached-builds.server';
 
 export const deleteBuild = command(
 	z.object({
@@ -25,16 +27,13 @@ export const deleteBuild = command(
 
 		await BuildRepository.deleteById(args.buildId);
 
+		try {
+			refreshBuildsCacheByWeaponSplIds(buildToDelete.weapons.map((weapon) => weapon.weaponSplId));
+		} catch (error) {
+			logger.warn('Error refreshing builds cache', error);
+		}
+
 		await userBuilds(args.identifier).refresh();
 		await userLayoutData(args.identifier).refresh();
-
-		// xxx: clear cache
-		// try {
-		// 	refreshBuildsCacheByWeaponSplIds(
-		// 		buildToDelete.weapons.map((weapon) => weapon.weaponSplId),
-		// 	);
-		// } catch (error) {
-		// 	logger.warn("Error refreshing builds cache", error);
-		// }
 	}
 );

@@ -178,7 +178,7 @@ export interface Group {
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
 	inviteCode: string;
-	latestActionAt: Generated<number>;
+	latestActionAt: Generated<Date>;
 	status: 'PREPARING' | 'ACTIVE' | 'INACTIVE';
 	teamId: number | null;
 }
@@ -738,7 +738,7 @@ export interface TournamentOrganizationBannedUser {
 export interface TrustRelationship {
 	trustGiverUserId: number;
 	trustReceiverUserId: number;
-	lastUsedAt: number;
+	lastUsedAt: Date;
 }
 
 export interface UnvalidatedUserSubmittedImage {
@@ -803,7 +803,7 @@ export interface UserPreferences {
 
 export interface User {
 	/** 1 = permabanned, timestamp = ban active till then */
-	banned: Generated<Date | null>;
+	banned: Generated<0 | 1 | Date | null>;
 	bannedReason: string | null;
 	bio: string | null;
 	commissionsOpen: Generated<number | null>;
@@ -827,7 +827,7 @@ export interface User {
 	isTournamentOrganizer: Generated<DBBoolean | null>;
 	languages: string | null;
 	motionSens: number | null;
-	patronSince: number | null;
+	patronSince: Date | null;
 	patronTier: number | null;
 	patronTill: Date | null;
 	showDiscordUniqueName: Generated<DBBoolean>;
@@ -882,7 +882,7 @@ export interface UserFriendCode {
 export interface BanLog {
 	id: GeneratedAlways<number>;
 	userId: number;
-	banned: number | null;
+	banned: Date | 1 | 0 | null;
 	bannedReason: string | null;
 	bannedByUserId: number;
 	createdAt: GeneratedAlways<Date>;

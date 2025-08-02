@@ -1,5 +1,6 @@
 import { z } from 'zod/v4';
 import { ability, modeShort, safeJSONParse } from '$lib/utils/zod';
+import { weaponSplId } from '$lib/schemas';
 
 export const MAX_BUILD_FILTERS = 6;
 
@@ -35,3 +36,11 @@ export const buildFiltersSearchParams = z.preprocess(
 );
 
 export type BuildFiltersFromSearchParams = NonNullable<z.infer<typeof buildFiltersSearchParams>>;
+
+export const weaponIdFromSlug = z.preprocess((val) => {
+	if (typeof val === 'string') {
+		return 0; // xxx:
+	}
+
+	return val;
+}, weaponSplId);

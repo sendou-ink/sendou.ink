@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { mainWeaponImageUrl, mySlugify, weaponCategoryUrl } from '$lib/utils/urls';
+	import { mainWeaponImageUrl, weaponBuildPage, weaponCategoryUrl } from '$lib/utils/urls';
 	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';
 	import Image from '$lib/components/image/image.svelte';
 	import AddNewButton from '$lib/components/add-new-button.svelte';
@@ -11,10 +11,6 @@
 	import type { MainWeaponId } from '$lib/constants/in-game/types';
 
 	const user = $derived(await me());
-
-	function weaponIdToSlug(weaponId: MainWeaponId): string {
-		return mySlugify(weaponTranslations[weaponId]());
-	}
 </script>
 
 <OpenGraphMeta
@@ -50,7 +46,7 @@
 						<div class="category-divider"></div>
 					{/if}
 					<a
-						href={resolve(`/builds/${weaponIdToSlug(weaponId)}`)}
+						href={weaponBuildPage(weaponId)}
 						class="category-weapon"
 						data-testid={`weapon-${weaponId}-link`}
 					>

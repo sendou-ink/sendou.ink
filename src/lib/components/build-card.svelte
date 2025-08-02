@@ -306,6 +306,8 @@
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		color: var(--theme);
+		font-weight: var(--semi-bold);
 	}
 
 	.modes {

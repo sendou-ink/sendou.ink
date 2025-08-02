@@ -47,5 +47,6 @@
 	.title {
 		color: var(--theme);
 		font-size: var(--fonts-md);
+		font-weight: var(--semi-bold);
 	}
 </style>

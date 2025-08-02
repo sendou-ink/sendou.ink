@@ -1,0 +1,2 @@
+export const BUILDS_PAGE_MAX_BUILDS = 240;
+export const BUILDS_PAGE_BATCH_SIZE = 24;
