@@ -1,8 +1,8 @@
 <script lang="ts">
-	import Image from '$lib/components/image/image.svelte';
 	import type { AbilityWithUnknown } from '$lib/constants/in-game/types';
 	import { abilityTranslations } from '$lib/utils/i18n';
 	import { abilityImageUrl } from '$lib/utils/urls';
+	import Image from '$lib/components/image/image.svelte';
 
 	interface Props {
 		ability: AbilityWithUnknown;
@@ -19,7 +19,7 @@
 		size,
 		dragStarted = false,
 		dropAllowed = false,
-		onClick,
+		onClick: onclick,
 		onDrop,
 		class: className
 	}: Props = $props();
@@ -32,20 +32,20 @@
 	} as const;
 
 	const sizeNumber = $derived(sizeMap[size]);
+	const readonly = $derived(typeof onclick === 'undefined' || ability === 'UNKNOWN');
+
 	let isDragTarget = $state(false);
 
-	const onDragOver = (event: DragEvent) => {
+	const ondragover = (event: DragEvent) => {
 		event.preventDefault();
 		isDragTarget = true;
 	};
 
-	const onDragLeave = () => {
+	const ondragleave = () => {
 		isDragTarget = false;
 	};
 
-	const readonly = $derived(typeof onClick === 'undefined' || ability === 'UNKNOWN');
-
-	const handleDrop = (event: DragEvent) => {
+	const ondrop = (event: DragEvent) => {
 		isDragTarget = false;
 		onDrop?.(event);
 	};
@@ -64,13 +64,13 @@
 		}
 	]}
 	style:--ability-size="{sizeNumber}px"
-	onclick={onClick}
-	data-testid="{ability}-ability"
-	ondragover={onDragOver}
-	ondragleave={onDragLeave}
-	ondrop={handleDrop}
 	type={readonly ? undefined : 'button'}
 	role={readonly ? undefined : 'button'}
+	data-testid="{ability}-ability"
+	{onclick}
+	{ondragover}
+	{ondragleave}
+	{ondrop}
 >
 	<Image
 		alt={abilityTranslations[ability]()}
