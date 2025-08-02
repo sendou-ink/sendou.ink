@@ -13,17 +13,17 @@
 </div>
 
 <style>
-	.markdown-content {
-		:global(a) {
+	.markdown-content :global {
+		a {
 			font-weight: var(--semi-bold);
 			color: var(--theme);
 		}
 
-		:global(h1) {
+		h1 {
 			padding-block-end: var(--s-6);
 		}
 
-		:global(p) {
+		p {
 			padding-block: var(--s-2-5);
 		}
 	}
