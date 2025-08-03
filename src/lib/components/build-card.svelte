@@ -8,7 +8,6 @@
 	} from '$lib/utils/urls';
 	import Ability from './ability.svelte';
 	import Image from './image/image.svelte';
-	import LockIcon from './icons/lock.svelte';
 	import type {
 		Ability as AbilityType,
 		BuildAbilitiesTuple,
@@ -23,11 +22,9 @@
 	import { getLocale } from '$lib/paraglide/runtime';
 	import Popover from '$lib/components/popover.svelte';
 	import Button from '$lib/components/button.svelte';
-	import EditIcon from '$lib/components/icons/edit.svelte';
-	import SpeechBubbleIcon from '$lib/components/icons/speech-bubble.svelte';
-	import TrashIcon from '$lib/components/icons/trash.svelte';
 	import { deleteBuild } from '../../routes/u/[identifier]/builds/delete-build.remote';
 	import { userBuilds } from '../../routes/u/[identifier]/builds/user-builds.remote';
+	import { Lock, MessageCircleMore, SquarePen, Trash2 } from '@lucide/svelte';
 
 	interface BuildWeaponWithTop500Info {
 		weaponSplId: MainWeaponId;
@@ -112,7 +109,7 @@
 			<div class="stack horizontal sm">
 				{#if build.private}
 					<div class="private-text">
-						<LockIcon class="private-icon" />
+						<Lock class="private-icon" />
 						{m.common_build_private()}
 					</div>
 				{/if}
@@ -141,6 +138,7 @@
 		{@render abilitiesRowWithGear('CLOTHES', abilities[1], build.clothesGearSplId)}
 		{@render abilitiesRowWithGear('SHOES', abilities[2], build.shoesGearSplId)}
 	</div>
+	<!-- xxx: this whole bottom row is placeholder, the idea is to instead have a sort of "description" sneak peek and collapse actions under menu button -->
 	<div class="bottom-row">
 		<a href="xxx:">
 			<Image alt={m.common_pages_analyzer()} class="icon" path={navIconUrl('analyzer')} />
@@ -148,7 +146,7 @@
 		{#if build.description}
 			<Popover>
 				{#snippet anchorButton(popovertarget)}
-					<Button variant="minimal" class="small-text" icon={SpeechBubbleIcon} {popovertarget}
+					<Button variant="minimal" class="small-text" icon={MessageCircleMore} {popovertarget}
 					></Button>
 				{/snippet}
 				{build.description}
@@ -157,7 +155,7 @@
 		{#if true}
 			<Button
 				class="small-text"
-				icon={EditIcon}
+				icon={SquarePen}
 				variant="minimal"
 				size="small"
 				href="xxx:"
@@ -166,7 +164,7 @@
 		{/if}
 		<Popover>
 			{#snippet anchorButton(popovertarget)}
-				<Button {popovertarget} icon={TrashIcon} variant="minimal-destructive"></Button>
+				<Button {popovertarget} icon={Trash2} variant="minimal-destructive"></Button>
 			{/snippet}
 			Delete build? <Button
 				onclick={async () => {

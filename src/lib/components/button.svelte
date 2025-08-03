@@ -201,6 +201,10 @@
 		width: 1.25rem;
 		margin-inline-end: var(--s-1-5);
 
+		:global(svg) {
+			height: max-content;
+		}
+
 		&.lonely {
 			margin-inline-end: 0 !important;
 		}

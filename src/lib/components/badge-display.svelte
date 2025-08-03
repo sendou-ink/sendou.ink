@@ -4,9 +4,9 @@
 	import { fly, scale } from 'svelte/transition';
 	import { badgeExplanationText } from '$lib/utils/badges';
 	import { Pagination } from '$lib/runes/pagination.svelte';
-	import TrashIcon from '$lib/components/icons/trash.svelte';
 	import Badge from '$lib/components/badge.svelte';
 	import Button from '$lib/components/button.svelte';
+	import { Trash2 } from '@lucide/svelte';
 
 	const SMALL_BADGES_PER_DISPLAY_PAGE = 9;
 
@@ -91,7 +91,7 @@
 		{#if !isPaginated}
 			<div class="badge-explanation">
 				{badgeExplanationText(bigBadge)}
-				<Button variant="minimal-destructive" icon={TrashIcon} onclick={removeBadge}></Button>
+				<Button variant="minimal-destructive" icon={Trash2} onclick={removeBadge}></Button>
 			</div>
 		{/if}
 

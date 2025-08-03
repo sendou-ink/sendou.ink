@@ -8,9 +8,8 @@
 	import { m } from '$lib/paraglide/messages';
 	import { weaponTranslations } from '$lib/utils/i18n';
 	import { buildsBySlug } from './builds-by-slug.remote';
-	import ChartBarIcon from '$lib/components/icons/chart-bar-solid.svelte';
-	import FireIcon from '$lib/components/icons/fire-solid.svelte';
 	import { resolve } from '$app/paths';
+	import { ChartNoAxesColumnDecreasing, Flame } from '@lucide/svelte';
 
 	let { params } = $props();
 
@@ -75,7 +74,7 @@
 		<div class="builds-buttons-link">
 			<Button
 				href={resolve(`/builds/${params.slug}/stats`)}
-				icon={ChartBarIcon}
+				icon={ChartNoAxesColumnDecreasing}
 				variant="outlined"
 				size="small"
 			>
@@ -83,7 +82,7 @@
 			</Button>
 			<Button
 				href={resolve(`/builds/${params.slug}/popular`)}
-				icon={FireIcon}
+				icon={Flame}
 				variant="outlined"
 				size="small"
 			>
@@ -159,6 +158,11 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-2);
+
+		:global(svg) {
+			stroke-width: 3.25px;
+			fill: var(--color-primary);
+		}
 
 		@media screen and (min-width: 480px) {
 			flex-direction: row;

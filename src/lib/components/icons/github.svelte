@@ -1,7 +1,3 @@
-<!--
-	This file is auto-generated. Do not modify directly.
-	Generated from SVG file by convert-icons script.
--->
 <script lang="ts">
 	import type { SvelteHTMLElements } from 'svelte/elements';
 

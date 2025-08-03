@@ -7,10 +7,10 @@
 	import { me } from './me.remote';
 	import Footer from './footer.svelte';
 	import Button from '$lib/components/button.svelte';
-	import HeartSolidIcon from '$lib/components/icons/heart-solid.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import { Heart } from '@lucide/svelte';
 
 	let { children } = $props();
 
@@ -58,7 +58,7 @@
 {#snippet topRightButtons(showSupport: boolean)}
 	<div class="right-container">
 		{#if showSupport}
-			<Button href={resolve('/support')} icon={HeartSolidIcon} size="small" variant="outlined">
+			<Button href={resolve('/support')} icon={Heart} size="small" variant="outlined">
 				{m.common_pages_support()}
 			</Button>
 		{/if}
@@ -157,5 +157,9 @@
 		display: flex;
 		gap: var(--s-3);
 		justify-self: flex-end;
+
+		:global(svg) {
+			fill: var(--color-primary);
+		}
 	}
 </style>

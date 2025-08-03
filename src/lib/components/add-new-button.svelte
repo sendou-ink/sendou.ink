@@ -1,8 +1,8 @@
 <script lang="ts">
 	import Image from '$lib/components/image/image.svelte';
 	import { navIconUrl } from '$lib/utils/urls';
+	import { Plus } from '@lucide/svelte';
 	import Button from './button.svelte';
-	import PlusIcon from '$lib/components/icons/plus.svelte';
 
 	interface Props {
 		href: string;
@@ -14,7 +14,7 @@
 
 <Button {href} class="addNewButton">
 	<span class="iconsContainer">
-		<PlusIcon />
+		<Plus />
 		<Image path={navIconUrl(navIcon)} size={18} alt="" />
 	</span>
 	<span class="textContainer">New</span>
@@ -68,5 +68,6 @@
 		display: flex;
 		align-items: center;
 		border-radius: 0 var(--inner-border-radius) var(--inner-border-radius) 0;
+		font-size: var(--fonts-xs);
 	}
 </style>

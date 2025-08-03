@@ -1,5 +1,4 @@
 <script lang="ts">
-	import CheckmarkIcon from '$lib/components/icons/checkmark.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { perks } from './perks';
 	import Badge from '$lib/components/badge.svelte';
@@ -7,6 +6,7 @@
 	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';
 	import { SENDOU_INK_PATREON_URL } from '$lib/utils/urls';
 	import Main from '$lib/components/main.svelte';
+	import { Check } from '@lucide/svelte';
 </script>
 
 <OpenGraphMeta
@@ -40,7 +40,7 @@
 				</div>
 				<div>
 					{#if perk.tier === 1}
-						<CheckmarkIcon class="checkmark" />
+						<Check class="checkmark" />
 					{/if}
 				</div>
 				{#if perk.id === 'badge'}
@@ -50,7 +50,7 @@
 				{:else}
 					<div>
 						{#if perk.tier <= 2}
-							<CheckmarkIcon class="checkmark" />
+							<Check class="checkmark" />
 						{/if}
 					</div>
 				{/if}
@@ -68,7 +68,7 @@
 				{:else}
 					<div>
 						{#if perk.tier <= 3}
-							<CheckmarkIcon class="checkmark" />
+							<Check class="checkmark" />
 						{/if}
 					</div>
 				{/if}
@@ -100,7 +100,7 @@
 	}
 
 	.table :global(.checkmark) {
-		color: var(--theme-success);
+		color: var(--color-success);
 		width: 25px;
 	}
 </style>

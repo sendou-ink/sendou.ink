@@ -2,13 +2,13 @@
 	import Badge from '$lib/components/badge.svelte';
 	import Divider from '$lib/components/divider.svelte';
 	import Input from '$lib/components/input.svelte';
-	import SearchIcon from '$lib/components/icons/search.svelte';
 	import { BADGES_DOC_LINK } from '$lib/utils/urls';
 	import Main from '$lib/components/main.svelte';
 	import { allBadges } from './all-badges.remote';
 	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { resolve } from '$app/paths';
+	import { Search } from '@lucide/svelte';
 
 	let { children } = $props();
 
@@ -43,7 +43,7 @@
 
 		<Input class="search-input" bind:value={searchInputValue}>
 			{#snippet icon()}
-				<SearchIcon class="search-icon" />
+				<Search class="search-icon" />
 			{/snippet}
 		</Input>
 
