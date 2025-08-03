@@ -89,14 +89,14 @@
 <style>
 	a {
 		font-weight: var(--semi-bold);
-		color: var(--theme);
+		color: var(--color-primary);
 	}
 
 	footer {
 		display: flex;
 		flex-direction: column;
 		padding: var(--s-2-5);
-		background-color: var(--bg-lighter);
+		background-color: var(--color-base-section);
 		gap: var(--s-6);
 		margin-block-start: auto;
 		padding-block-end: var(--s-32);
@@ -127,8 +127,8 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: var(--s-4);
-		border-radius: var(--rounded);
-		background-color: var(--theme-transparent);
+		border-radius: var(--radius-box);
+		background-color: var(--color-primary-transparent);
 		cursor: pointer;
 		font-size: var(--fonts-lg);
 
@@ -207,7 +207,7 @@
 	.layout__copyright-note {
 		display: flex;
 		flex-direction: column;
-		color: var(--text-lighter);
+		color: var(--color-base-content-secondary);
 		font-size: var(--fonts-xxs);
 		text-align: center;
 	}

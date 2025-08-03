@@ -61,7 +61,7 @@
 
 <style>
 	.heading {
-		color: var(--theme);
+		color: var(--color-primary);
 		font-weight: var(--bold);
 
 		:global(svg) {
@@ -79,8 +79,9 @@
 
 	.extra-info {
 		padding: var(--s-1) var(--s-1-5);
-		border-radius: var(--rounded);
-		background-color: var(--bg-darker);
+		border-radius: var(--radius-box);
+		background-color: var(--color-base-section);
+		border: var(--border-style);
 		font-size: var(--fonts-xxs);
 		display: flex;
 		align-items: center;

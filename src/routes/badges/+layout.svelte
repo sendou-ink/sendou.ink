@@ -93,9 +93,9 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		border-radius: var(--rounded);
-		background-color: var(--bg-badge);
-		color: var(--badge-text);
+		border-radius: var(--radius-box);
+		background-color: #000;
+		color: #fff;
 		gap: var(--s-6);
 		padding-block: var(--s-2);
 		padding-inline: var(--s-3);
@@ -124,7 +124,7 @@
 	.general-info-texts {
 		display: flex;
 		justify-content: space-between;
-		color: var(--text-lighter);
+		color: var(--color-base-content-secondary);
 		font-size: var(--fonts-xs);
 		padding-inline: var(--s-1);
 	}

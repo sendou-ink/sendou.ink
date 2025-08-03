@@ -113,7 +113,7 @@
 	}
 
 	.bar {
-		background-color: var(--theme);
+		background-color: var(--color-primary);
 		height: 100%;
 	}
 </style>

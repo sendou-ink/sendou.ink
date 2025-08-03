@@ -69,19 +69,20 @@
 		height: 20px;
 		margin: auto 0;
 		width: 4px;
-		border-radius: var(--rounded);
-		background-color: var(--bg-lightest);
+		border-radius: var(--radius-box);
+		background-color: var(--color-primary-transparent);
 	}
 
 	.category {
 		display: flex;
 		flex-direction: column;
 		padding: var(--s-3);
-		border-radius: var(--rounded);
-		background-color: var(--bg-lighter);
+		border-radius: var(--radius-box);
+		background-color: var(--color-base-section);
 		font-size: var(--fonts-sm);
 		font-weight: 600;
 		gap: var(--s-4);
+		border: var(--border-style);
 	}
 
 	.category-header {
@@ -99,7 +100,7 @@
 	.category-weapon {
 		display: flex;
 		align-items: center;
-		color: var(--text);
+		color: var(--color-base-content);
 		font-size: var(--fonts-xs);
 		font-weight: var(--body);
 		gap: var(--s-1);

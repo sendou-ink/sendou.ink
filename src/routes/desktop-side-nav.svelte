@@ -41,8 +41,8 @@
 		padding-inline-end: var(--s-4);
 
 		:global(picture) {
-			background-color: var(--bg-lightest);
-			border-radius: var(--rounded);
+			background-color: var(--color-base-card);
+			border-radius: var(--radius-box);
 			padding: 0.225rem;
 		}
 
@@ -57,7 +57,7 @@
 
 	a {
 		display: flex;
-		color: var(--text);
+		color: var(--color-base-content);
 		font-size: var(--fonts-xs);
 		font-weight: var(--bold);
 		gap: var(--s-1-5);

@@ -80,8 +80,8 @@
 <style>
 	:global(:root) {
 		width: 100%;
-		background-color: var(--bg);
-		color: var(--text);
+		background-color: var(--color-base-bg);
+		color: var(--color-base-content);
 		font-family: lexend, sans-serif;
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: antialiased;
@@ -108,7 +108,7 @@
 	.breadcrumb {
 		overflow: hidden;
 		max-width: 350px;
-		color: var(--text);
+		color: var(--color-base-content);
 		font-size: var(--fonts-xs);
 		font-weight: 600;
 		text-overflow: ellipsis;
@@ -120,9 +120,9 @@
 	}
 
 	.logo:focus-visible {
-		outline: 2px solid var(--theme);
+		outline: 2px solid var(--color-primary);
 		outline-offset: 2px;
-		border-radius: var(--rounded);
+		border-radius: var(--radius-box);
 	}
 
 	.item-size {
@@ -134,12 +134,10 @@
 		width: 100%;
 		align-items: center;
 		justify-content: space-between;
-		border-bottom: 1.5px solid var(--border);
-		-webkit-backdrop-filter: var(--backdrop-filter);
-		backdrop-filter: var(--backdrop-filter);
-		background-color: transparent;
+		border-bottom: var(--border-style);
+		background-color: var(--color-base-section);
 		font-weight: bold;
-		padding-block: var(--s-2);
+		padding-block: var(--s-1-5);
 		padding-inline: var(--s-4);
 		position: fixed;
 		top: 0;

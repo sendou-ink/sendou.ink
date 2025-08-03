@@ -88,11 +88,11 @@
 		width: auto;
 		align-items: center;
 		justify-content: center;
-		border: 2px solid var(--theme);
-		border-radius: var(--rounded-sm);
+		border: 2px solid var(--color-primary);
+		border-radius: var(--radius-field);
 		appearance: none;
-		background: var(--theme);
-		color: var(--button-text);
+		background: var(--color-primary);
+		color: var(--color-primary-content);
 		cursor: pointer;
 		font-size: var(--fonts-sm);
 		font-weight: var(--bold);
@@ -104,7 +104,7 @@
 		anchor-name: var(--anchor-name);
 
 		&:focus-visible {
-			outline: 2px solid var(--theme);
+			outline: 2px solid var(--color-primary);
 		}
 
 		&:active {
@@ -119,14 +119,14 @@
 	}
 
 	.outlined {
-		background-color: var(--theme-very-transparent);
-		color: var(--theme);
+		background-color: var(--color-primary-transparent);
+		color: var(--color-primary);
 	}
 
 	.outlined-success {
-		border-color: var(--theme-success);
+		border-color: var(--color-success);
 		background-color: transparent;
-		color: var(--theme-success);
+		color: var(--color-success);
 	}
 
 	.small {
@@ -161,11 +161,11 @@
 		padding: 0;
 		border: none;
 		background-color: transparent;
-		color: var(--theme);
+		color: var(--color-primary);
 		outline: initial;
 
 		&:focus-visible {
-			outline: 2px solid var(--theme);
+			outline: 2px solid var(--color-primary);
 		}
 	}
 
@@ -173,28 +173,28 @@
 		padding: 0;
 		border: none;
 		background-color: transparent;
-		color: var(--theme-success);
+		color: var(--color-success);
 	}
 
 	.success {
-		border-color: var(--theme-success);
-		background-color: var(--theme-success);
-		outline-color: var(--theme-success);
+		border-color: var(--color-success);
+		background-color: var(--color-success);
+		outline-color: var(--color-success);
 	}
 
 	.destructive {
-		border-color: var(--theme-error);
+		border-color: var(--color-error);
 		background-color: transparent;
-		color: var(--theme-error);
-		outline-color: var(--theme-error);
+		color: var(--color-error);
+		outline-color: var(--color-error);
 	}
 
 	.minimal-destructive {
 		padding: 0;
 		border: none;
 		background-color: transparent;
-		color: var(--theme-error);
-		outline-color: var(--theme-error);
+		color: var(--color-error);
+		outline-color: var(--color-error);
 	}
 
 	.button-icon {

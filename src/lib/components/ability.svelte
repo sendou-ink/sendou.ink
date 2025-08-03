@@ -85,20 +85,20 @@
 		width: var(--ability-size);
 		height: var(--ability-size);
 		padding: 0;
-		border: 2px solid var(--theme-transparent);
+		border: 2px solid var(--color-primary-transparent);
 		border-radius: 50%;
 		border-right: 0;
 		border-bottom: 0;
-		background: var(--bg-ability);
+		background: var(--color-base-border);
 		background-size: 100%;
-		box-shadow: 0 0 0 1px var(--bg-ability);
+		box-shadow: 0 0 0 1px var(--color-base-border);
 		transform: scale(1);
 		transition: all 0.1s ease;
 		user-select: none;
 	}
 
 	.is-drag-target {
-		background: var(--abilities-button-bg);
+		/* background: var(--abilities-button-bg); xxx: different color? */
 		transform: scale(1.15);
 	}
 

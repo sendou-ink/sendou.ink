@@ -249,8 +249,8 @@
 		display: flex;
 		flex-direction: column;
 		padding: var(--s-3);
-		border-radius: var(--rounded);
-		background-color: var(--bg-lighter);
+		border-radius: var(--radius-box);
+		background-color: var(--color-base-card);
 		gap: var(--s-3);
 
 		:global(.icon) {
@@ -260,13 +260,9 @@
 
 		:global(.gear) {
 			border-radius: 50%;
-			background-color: var(--bg-darker-very-transparent);
+			background-color: var(--color-base-border);
 			overflow: visible;
 		}
-	}
-
-	.private {
-		background-color: var(--bg-lighter-transparent);
 	}
 
 	.private-text {
@@ -305,7 +301,7 @@
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
-		color: var(--theme);
+		color: var(--color-primary);
 		font-weight: var(--semi-bold);
 	}
 
@@ -322,7 +318,7 @@
 		position: relative;
 		padding: var(--s-0-5);
 		border-radius: 50%;
-		background-color: var(--bg-darker-very-transparent);
+		background-color: var(--color-base-border);
 
 		:global(.top-500) {
 			position: absolute;
@@ -333,7 +329,7 @@
 
 	.weapon-text {
 		padding-left: var(--s-1);
-		color: var(--text-lighter);
+		color: var(--color-base-content-secondary);
 		font-size: var(--fonts-xxs);
 		font-weight: var(--semi-bold);
 	}

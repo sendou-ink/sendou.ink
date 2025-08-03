@@ -100,43 +100,43 @@
 }
 
 .text-lighter {
-	color: var(--text-lighter);
+	color: var(--color-base-content-secondary);
 }
 
 .text-lighter-important {
-	color: var(--text-lighter) !important;
+	color: var(--color-base-content-secondary) !important;
 }
 
 .text-theme-transparent {
-	color: var(--theme-transparent);
+	color: var(--color-primary-transparent);
 }
 
 .text-error {
-	color: var(--theme-error);
+	color: var(--color-error);
 }
 
 .text-success {
-	color: var(--theme-success);
+	color: var(--color-success);
 }
 
 .text-info {
-	color: var(--theme-info);
+	color: var(--color-info);
 }
 
 .text-warning {
-	color: var(--theme-warning);
+	color: var(--color-warning);
 }
 
 .text-warning-important {
-	color: var(--theme-warning) !important;
+	color: var(--color-warning) !important;
 }
 
 .text-theme {
-	color: var(--theme);
+	color: var(--color-primary);
 }
 
 .text-theme-secondary {
-	color: var(--theme-secondary);
+	color: var(--color-secondary);
 }
 
 .text-uppercase {
@@ -152,23 +152,23 @@
 }
 
 .fill-success {
-	fill: var(--theme-success);
+	fill: var(--color-success);
 }
 
 .fill-warning {
-	fill: var(--theme-warning);
+	fill: var(--color-warning);
 }
 
 .fill-error {
-	fill: var(--theme-error);
+	fill: var(--color-error);
 }
 
 .fill-info {
-	fill: var(--theme-info);
+	fill: var(--color-info);
 }
 
 .bg {
-	background-color: var(--bg);
+	background-color: var(--color-base-bg);
 }
 
 .bg-lighter {

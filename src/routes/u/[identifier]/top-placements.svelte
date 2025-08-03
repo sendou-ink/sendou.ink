@@ -31,9 +31,9 @@
 		display: flex;
 		flex-wrap: wrap;
 		padding: var(--s-4);
-		border-radius: var(--rounded);
+		border-radius: var(--radius-box);
 		margin: 0 auto;
-		background-color: var(--bg-lighter);
+		background-color: var(--color-base-card);
 		color: var(--text);
 		gap: var(--s-6);
 		transition: 0.1s ease-in-out background-color;
@@ -43,7 +43,7 @@
 		}
 
 		&:hover {
-			background-color: var(--theme-transparent);
+			background-color: var(--color-base-card-transparent);
 		}
 	}
 

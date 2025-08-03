@@ -6,10 +6,9 @@
 	interface Props extends HTMLAnchorAttributes {
 		end?: boolean;
 		children: Snippet;
-		secondary?: boolean;
 	}
 
-	let { children, class: className, end = true, secondary = false, ...rest }: Props = $props();
+	let { children, class: className, end = true, ...rest }: Props = $props();
 
 	const isActive = $derived.by(() => {
 		const currentPath = page.url.pathname;
@@ -30,25 +29,10 @@
 	]}
 	{...rest}
 >
-	<div
-		class={[
-			'link',
-			className,
-			{
-				link__secondary: secondary
-			}
-		]}
-	>
+	<div class={['link', className]}>
 		{@render children?.()}
 	</div>
-	<div
-		class={[
-			'border-guy',
-			{
-				'border-guy__secondary': secondary
-			}
-		]}
-	></div>
+	<div class="border-guy"></div>
 </a>
 
 <style>
@@ -57,12 +41,12 @@
 		flex: 0 0 110px;
 		flex-direction: column;
 		align-items: center;
-		color: var(--text);
+		color: var(--color-base-content);
 		gap: var(--s-1-5);
 		font-weight: var(--semi-bold);
 
 		&.active {
-			color: var(--theme-secondary);
+			color: var(--color-secondary);
 
 			.border-guy {
 				visibility: initial;
@@ -73,8 +57,8 @@
 	.link {
 		width: 100%;
 		padding: var(--s-1) var(--s-4);
-		border-radius: var(--rounded);
-		background-color: var(--bg-lightest);
+		border-radius: var(--radius-box);
+		background-color: var(--color-base-card);
 		cursor: pointer;
 		font-size: var(--fonts-xs);
 		text-align: center;
@@ -90,13 +74,8 @@
 	.border-guy {
 		width: 78%;
 		height: 3px;
-		border-radius: var(--rounded);
-		background-color: var(--bg-lightest);
+		border-radius: var(--radius-box);
+		background-color: var(--color-base-card);
 		visibility: hidden;
-	}
-
-	.border-guy__secondary {
-		height: 2.5px;
-		background-color: var(--bg-lighter-solid);
 	}
 </style>

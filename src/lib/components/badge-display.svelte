@@ -51,7 +51,7 @@
 {#if bigBadge}
 	<div data-testid="badge-display">
 		{#if isPaginated && showText}
-			<div class="badgeExplanation">
+			<div class="badge-explanation">
 				{badgeExplanationText(bigBadge)}
 			</div>
 		{/if}
@@ -73,12 +73,12 @@
 
 			<!-- xxx: would be nice if the animation also went slightly left or right -->
 			{#if !children && smallBadges.length > 0}
-				<div class="smallBadges">
+				<div class="small-badges">
 					{#each pagination.itemsOnPage as badge (badge.id)}
-						<div class="smallBadgeContainer" in:fly={{ duration: 500 }}>
+						<div class="small-badge-container" in:fly={{ duration: 500 }}>
 							<Badge {badge} onclick={() => setBadgeFirst(badge)} size={48} isAnimated />
 							{#if badge.count && badge.count > 1}
-								<div class="smallBadgeCount">×{badge.count}</div>
+								<div class="small-badge-count">×{badge.count}</div>
 							{/if}
 						</div>
 					{/each}
@@ -89,7 +89,7 @@
 		</div>
 
 		{#if !isPaginated}
-			<div class="badgeExplanation">
+			<div class="badge-explanation">
 				{badgeExplanationText(bigBadge)}
 				<Button variant="minimal-destructive" icon={TrashIcon} onclick={removeBadge}></Button>
 			</div>
@@ -103,9 +103,9 @@
 						aria-label={`Badges page ${i + 1}`}
 						onclick={() => pagination.setPage(i + 1)}
 						class={[
-							'paginationButton',
+							'pagination-button',
 							{
-								paginationButtonActive: pagination.page === i + 1
+								'pagination-button-active': pagination.page === i + 1
 							}
 						]}
 						data-testid="badge-pagination-button"
@@ -125,13 +125,13 @@
 		min-height: 12rem;
 		align-items: center;
 		padding: var(--s-2);
-		border-radius: var(--rounded);
-		background-color: var(--bg-badge);
+		border-radius: var(--radius-box);
+		background-color: #000;
 		margin-inline: auto;
 		margin-block: var(--s-2);
 	}
 
-	.smallBadges {
+	.small-badges {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
 		margin: 0 auto;
@@ -139,26 +139,26 @@
 		gap: var(--s-3);
 	}
 
-	.badgeExplanation {
-		color: var(--text-lighter);
+	.badge-explanation {
+		color: var(--color-base-content-secondary);
 		font-size: var(--fonts-xs);
 		display: flex;
 		align-items: center;
 		justify-content: center;
 	}
 
-	.smallBadgeContainer {
+	.small-badge-container {
 		position: relative;
 	}
 
-	.smallBadgeCount {
+	.small-badge-count {
 		position: absolute;
 		top: 0;
 		right: 0;
 		margin-top: -8px;
 		margin-right: auto;
 		margin-left: auto;
-		color: var(--theme-vibrant);
+		color: var(--color-secondary);
 		font-size: var(--fonts-xxxs);
 		font-weight: var(--bold);
 	}
@@ -172,20 +172,20 @@
 		width: 20rem;
 		margin: 0 auto;
 
-		:global(.paginationButton) {
-			background-color: var(--bg-darker);
+		:global(.pagination-button) {
+			background-color: var(--color-base-section);
 			border-radius: 100%;
 			padding: var(--s-1);
 			height: 24px;
 			width: 24px;
-			border: 2px solid var(--border);
+			border: var(--border-style);
 			font-size: var(--fonts-xs);
-			color: var(--text-lighter);
+			color: var(--color-base-content-secondary);
 		}
 
-		:global(.paginationButtonActive) {
-			color: var(--theme);
-			background-color: var(--bg-lightest);
+		:global(.pagination-button-active) {
+			color: var(--color-secondary);
+			background-color: var(--color-base-card);
 		}
 	}
 </style>

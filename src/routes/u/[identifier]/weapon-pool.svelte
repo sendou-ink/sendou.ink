@@ -26,6 +26,7 @@
 	.weapon {
 		padding: var(--s-2);
 		border-radius: 100%;
-		background-color: var(--bg-lighter);
+		background-color: var(--color-base-section);
+		border: var(--border-style);
 	}
 </style>

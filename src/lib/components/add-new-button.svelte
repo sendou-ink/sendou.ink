@@ -39,7 +39,7 @@
 		gap: var(--s-0-5);
 		align-items: center;
 		justify-content: center;
-		background-color: var(--theme-very-transparent);
+		background-color: var(--color-primary-transparent);
 		height: calc(var(--button-height) - var(--border-width) * 2);
 		border-radius: var(--inner-border-radius) 0 0 var(--inner-border-radius);
 		padding-inline: var(--s-1);
@@ -50,7 +50,7 @@
 		max-height: var(--icon-size);
 		min-width: var(--icon-size);
 		min-height: var(--icon-size);
-		color: var(--theme);
+		color: var(--color-primary);
 		stroke-width: 4px;
 	}
 
@@ -63,7 +63,7 @@
 
 	.textContainer {
 		padding-inline: var(--s-1-5);
-		background-color: var(--theme) !important;
+		background-color: var(--color-primary) !important;
 		height: calc(var(--button-height) - var(--border-width) * 2);
 		display: flex;
 		align-items: center;
