@@ -7,11 +7,13 @@ import type { AbilitiesByWeapon } from '../../../routes/builds/[slug]/popular/po
 import type { AverageAbilityPointsResult } from '../../../routes/builds/[slug]/stats/build-stats-by-slug.remote';
 import { isStackableAbility } from '../analyzer/utils';
 
-const toBuildsCount = (counts: AverageAbilityPointsResult[]) =>
-	counts.reduce((acc, cur) => acc + cur.abilityPointsSum, 0) / MAX_AP;
+function toBuildsCount(counts: AverageAbilityPointsResult[]) {
+	return counts.reduce((acc, cur) => acc + cur.abilityPointsSum, 0) / MAX_AP;
+}
 
-const toAbilityPoints = (abilities: AverageAbilityPointsResult[], ability: Ability) =>
-	abilities.find((current) => current.ability === ability)?.abilityPointsSum ?? 0;
+function toAbilityPoints(abilities: AverageAbilityPointsResult[], ability: Ability) {
+	return abilities.find((current) => current.ability === ability)?.abilityPointsSum ?? 0;
+}
 
 export function abilityPointCountsToAverages({
 	allAbilities,

@@ -194,8 +194,9 @@ function specialLost(
 	const hasRespawnPunisher = mainOnlyAbilities.includes('RP');
 	const extraSpecialLost = hasRespawnPunisher ? OWN_RESPAWN_PUNISHER_EXTRA_SPECIAL_LOST : 0;
 
-	const specialSavedAfterDeathForDisplay = (effect: number) =>
-		Number(((1.0 - effect) * 100).toFixed(2));
+	function specialSavedAfterDeathForDisplay(effect: number) {
+		return Number(((1.0 - effect) * 100).toFixed(2));
+	}
 
 	const { baseEffect, effect } = abilityPointsToEffects({
 		abilityPoints: apFromMap({
@@ -679,7 +680,10 @@ function subWeaponDamageValue({
 	return cutToNDecimalPlaces(baseValue * effect, 1);
 }
 
-const framesToSeconds = (frames: number) => effectToRounded(Math.ceil(frames) / 60);
+function framesToSeconds(frames: number) {
+	return effectToRounded(Math.ceil(frames) / 60);
+}
+
 function squidFormInkRecoverySeconds(
 	args: StatFunctionInput
 ): AnalyzedBuild['stats']['squidFormInkRecoverySeconds'] {
@@ -825,8 +829,9 @@ function swimSpeedHoldingRainmaker(
 	};
 }
 
-const qrApAfterRespawnPunish = ({ ap, hasTacticooler }: { ap: number; hasTacticooler: boolean }) =>
-	hasTacticooler ? ap : Math.ceil(ap * 0.15);
+function qrApAfterRespawnPunish({ ap, hasTacticooler }: { ap: number; hasTacticooler: boolean }) {
+	return hasTacticooler ? ap : Math.ceil(ap * 0.15);
+}
 
 const RESPAWN_CHASE_FRAME = 150;
 const OWN_RESPAWN_PUNISHER_EXTRA_RESPAWN_FRAMES = 68;
@@ -1131,7 +1136,7 @@ export function subStats(args: Pick<StatFunctionInput, 'subWeaponParams' | 'abil
 			weapon: args.subWeaponParams
 		});
 
-		const toValue = (effect: number) => {
+		function toValue(effect: number) {
 			switch (type) {
 				case 'NO_CHANGE':
 					return roundToNDecimalPlaces(effect);
@@ -1144,7 +1149,7 @@ export function subStats(args: Pick<StatFunctionInput, 'subWeaponParams' | 'abil
 				default:
 					assertUnreachable(type);
 			}
-		};
+		}
 
 		result[analyzedBuildKey] = {
 			baseValue: toValue(baseEffect),
@@ -1273,7 +1278,7 @@ function subQsjBoost(args: StatFunctionInput): AnalyzedBuild['stats']['subQsjBoo
 	const SUB_QSJ_BOOST_KEY = 'BRU';
 
 	// Lean: This is the base that is used with their weird formula (I didn't even bother renaming the vars and just used what my disassembler gave me)
-	const calculate = (ap: number) => {
+	function calculate(ap: number) {
 		const multiplier = abilityValues({
 			key: 'SubSpecUpParam',
 			weapon: args.subWeaponParams
@@ -1286,7 +1291,7 @@ function subQsjBoost(args: StatFunctionInput): AnalyzedBuild['stats']['subQsjBoo
 		const v8 = (ap / multiplier[0]) * ((ap / multiplier[0]) * v7 + (1.0 - v7));
 
 		return Math.floor(multiplier[2] + (multiplier[0] - multiplier[2]) * v8);
-	};
+	}
 
 	return {
 		baseValue: calculate(0),

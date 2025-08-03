@@ -11,10 +11,12 @@ import {
 } from "~/utils/playwright";
 import { userEditProfilePage, userPage } from "~/utils/urls";
 
-const goToEditPage = (page: Page) =>
-	page.getByText("Edit", { exact: true }).click();
-const submitEditForm = (page: Page) =>
-	page.getByText("Save", { exact: true }).click();
+function goToEditPage(page: Page) {
+	return page.getByText("Edit", { exact: true }).click();
+}
+function submitEditForm(page: Page) {
+	return page.getByText("Save", { exact: true }).click();
+}
 
 test.describe("User page", () => {
 	test("uses badge pagination", async ({ page }) => {
@@ -124,10 +126,11 @@ test.describe("User page", () => {
 		});
 
 		const body = page.locator("body");
-		const bodyColor = () =>
-			body.evaluate((element) =>
+		function bodyColor() {
+			return body.evaluate((element) =>
 				window.getComputedStyle(element).getPropertyValue("--bg").trim(),
 			);
+		}
 
 		await expect(bodyColor()).resolves.toMatch(/#ebebf0/);
 

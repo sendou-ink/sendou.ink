@@ -15,13 +15,13 @@
 		await buildStatsBySlug(params.slug as unknown as MainWeaponId)
 	); // xxx: https://github.com/sveltejs/kit/issues/14083
 
-	const apToPx = (ap: number): number => {
+	function apToPx(ap: number) {
 		return Math.floor((ap / stats.stackableAbilities[0].apAverage.weapon) * 200);
-	};
+	}
 
-	const percentageToPx = (percentage: number): number => {
+	function percentageToPx(percentage: number) {
 		return Math.floor((percentage / MAX_AP) * 125);
-	};
+	}
 
 	const weaponNameInEnglish = $derived(weaponTranslations[weaponId]({}, { locale: 'en' }));
 </script>

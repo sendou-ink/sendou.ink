@@ -22,13 +22,15 @@ export const buildStatsBySlug = prerender(
 
 // TODO: convert to Kysely
 // TODO: exclude private builds
-const sqlQuery = (includeWeaponId: boolean) => /* sql */ `
+function sqlQuery(includeWeaponId: boolean) {
+	return /* sql */ `
   select "BuildAbility"."ability", sum("BuildAbility"."abilityPoints") as "abilityPointsSum"
-    from "BuildAbility"
-    left join "BuildWeapon" on "BuildAbility"."buildId" = "BuildWeapon"."buildId"
+	from "BuildAbility"
+	left join "BuildWeapon" on "BuildAbility"."buildId" = "BuildWeapon"."buildId"
   ${includeWeaponId ? /* sql */ `where "BuildWeapon"."weaponSplId" = @weaponSplId` : ''}
   group by "BuildAbility"."ability"
 `;
+}
 
 const findByWeaponIdStm = sql.prepare(sqlQuery(true));
 const findAllStm = sql.prepare(sqlQuery(false));

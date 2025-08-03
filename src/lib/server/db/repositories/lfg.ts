@@ -87,7 +87,9 @@ export async function posts(user?: { id: number; plusTier: number | null }) {
 	});
 }
 
-const postExpiryCutoff = () => sub(new Date(), { days: LFG.POST_FRESHNESS_DAYS });
+function postExpiryCutoff() {
+	return sub(new Date(), { days: LFG.POST_FRESHNESS_DAYS });
+}
 
 export function insertPost(args: Omit<TablesInsertable['LFGPost'], 'updatedAt'>) {
 	return db.insertInto('LFGPost').values(args).execute();

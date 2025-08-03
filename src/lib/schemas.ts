@@ -27,7 +27,9 @@ export const dbBoolean = z.coerce.number().min(0).max(1).int();
 const hexCodeRegex = /^#(?:[0-9a-fA-F]{3}){1,2}[0-9]{0,2}$/; // https://stackoverflow.com/a/1636354
 export const hexCode = z.string().regex(hexCodeRegex);
 
-const abilityNameToType = (val: string) => abilities.find((ability) => ability.name === val)?.type;
+function abilityNameToType(val: string) {
+	return abilities.find((ability) => ability.name === val)?.type;
+}
 export const headMainSlotAbility = z
 	.string()
 	.refine((val) => ['STACKABLE', 'HEAD_MAIN_ONLY'].includes(abilityNameToType(val) as any));
@@ -39,7 +41,7 @@ export const shoesMainSlotAbility = z
 	.refine((val) => ['STACKABLE', 'SHOES_MAIN_ONLY'].includes(abilityNameToType(val) as any));
 export const stackableAbility = z.string().refine((val) => abilityNameToType(val) === 'STACKABLE');
 
-export const normalizeFriendCode = (value: string) => {
+export function normalizeFriendCode(value: string) {
 	const onlyNumbers = value.replace(/\D/g, '');
 
 	const withDashes = onlyNumbers
@@ -48,7 +50,7 @@ export const normalizeFriendCode = (value: string) => {
 		.join('-');
 
 	return withDashes;
-};
+}
 
 export const friendCode = z.string().regex(FRIEND_CODE_REGEXP).transform(normalizeFriendCode);
 
@@ -122,11 +124,13 @@ const EMPTY_CHARACTERS = ['\u200B', '\u200C', '\u200D', '\u200E', '\u200F', '�
 const EMPTY_CHARACTERS_REGEX = new RegExp(EMPTY_CHARACTERS.join('|'), 'g');
 
 const zalgoRe = /%CC%/g;
-export const hasZalgo = (txt: string) => zalgoRe.test(encodeURIComponent(txt));
+export function hasZalgo(txt: string) {
+	return zalgoRe.test(encodeURIComponent(txt));
+}
 
 /** Non-empty string that has the given length (max and optionally min). Prevents z͎͗ͣḁ̵̑l̉̃ͦg̐̓̒o͓̔ͥ text as well as filters out characters that have no width. */
-export const safeStringSchema = ({ min, max }: { min?: number; max: number }) =>
-	z.preprocess(
+export function safeStringSchema({ min, max }: { min?: number; max: number }) {
+	return z.preprocess(
 		actuallyNonEmptyStringOrNull, // if this returns null, none of the checks below will run because it's not a string
 		z
 			.string()
@@ -136,10 +140,11 @@ export const safeStringSchema = ({ min, max }: { min?: number; max: number }) =>
 				message: 'Includes not allowed characters.'
 			})
 	);
+}
 
 /** Nullable string that has the given length (max and optionally min). Prevents z͎͗ͣḁ̵̑l̉̃ͦg̐̓̒o͓̔ͥ text as well as filters out characters that have no width. */
-export const safeNullableStringSchema = ({ min, max }: { min?: number; max: number }) =>
-	z.preprocess(
+export function safeNullableStringSchema({ min, max }: { min?: number; max: number }) {
+	return z.preprocess(
 		actuallyNonEmptyStringOrNull,
 		z
 			.string()
@@ -157,6 +162,7 @@ export const safeNullableStringSchema = ({ min, max }: { min?: number; max: numb
 				}
 			)
 	);
+}
 
 /**
  * Processes the input value and returns a non-empty string with invisible characters cleaned out or null.
@@ -176,13 +182,13 @@ export function actuallyNonEmptyStringOrNull(value: unknown) {
  * @returns A function that takes a value and returns the split string if the value is a string,
  *          otherwise returns the original value.
  */
-export const safeSplit =
-	(splitBy = ',') =>
-	(value: unknown): unknown => {
+export function safeSplit(splitBy = ',') {
+	return (value: unknown): unknown => {
 		if (typeof value !== 'string') return value;
 
 		return value.split(splitBy);
 	};
+}
 
 export function falsyToNull(value: unknown): unknown {
 	if (value) return value;
@@ -280,8 +286,6 @@ export function checkboxValueToDbBoolean(value: unknown) {
 
 	return 0;
 }
-
-export const _action = <T extends string>(value: T) => z.preprocess(deduplicate, z.literal(value));
 
 // Fix bug at least in Safari 15 where SubmitButton value might get sent twice
 export function deduplicate(value: unknown) {

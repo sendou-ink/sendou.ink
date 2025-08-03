@@ -36,19 +36,19 @@
 
 	let isDragTarget = $state(false);
 
-	const ondragover = (event: DragEvent) => {
+	function ondragover(event: DragEvent) {
 		event.preventDefault();
 		isDragTarget = true;
-	};
+	}
 
-	const ondragleave = () => {
+	function ondragleave() {
 		isDragTarget = false;
-	};
+	}
 
-	const ondrop = (event: DragEvent) => {
+	function ondrop(event: DragEvent) {
 		isDragTarget = false;
 		onDrop?.(event);
-	};
+	}
 </script>
 
 <svelte:element

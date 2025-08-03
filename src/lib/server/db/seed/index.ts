@@ -1,3 +1,4 @@
+/* eslint-disable func-style -- TODO: migrate to function syntax */
 // @ts-nocheck xxx: seed.ts
 
 import { faker } from '@faker-js/faker';

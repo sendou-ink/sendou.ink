@@ -10,7 +10,9 @@ import { cache, syncCached } from '$lib/utils/cache.server';
 import { BUILDS_PAGE_MAX_BUILDS } from '$lib/constants/build';
 import { databaseTimestampToDate } from '$lib/utils/dates';
 
-const buildsCacheKey = (weaponSplId: MainWeaponId) => `builds-${weaponSplId}`;
+function buildsCacheKey(weaponSplId: MainWeaponId) {
+	return `builds-${weaponSplId}`;
+}
 
 export function cachedBuildsByWeaponId(weaponSplId: MainWeaponId) {
 	return syncCached(buildsCacheKey(weaponSplId), () =>

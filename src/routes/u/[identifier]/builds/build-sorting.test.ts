@@ -4,7 +4,7 @@ import type { MainWeaponId } from '$lib/constants/in-game/types';
 
 type BuildSortingBuildArg = Parameters<typeof sortBuilds>[number]['builds'][number];
 
-const mockBuild = (partialBuild: Partial<BuildSortingBuildArg>): BuildSortingBuildArg => {
+function mockBuild(partialBuild: Partial<BuildSortingBuildArg>): BuildSortingBuildArg {
 	return {
 		id: 0,
 		abilities: [
@@ -23,7 +23,7 @@ const mockBuild = (partialBuild: Partial<BuildSortingBuildArg>): BuildSortingBui
 		weapons: [{ weaponSplId: 0, maxPower: null, minRank: null }],
 		...partialBuild
 	};
-};
+}
 
 describe('sortBuilds()', () => {
 	it('sorts by UPDATED_AT', () => {
@@ -129,7 +129,7 @@ describe('sortBuilds()', () => {
 	});
 
 	it('sorts by WEAPON_POOL (alt kits are same priority)', () => {
-		const mockBuildBuilder = (id: number, weaponIds: MainWeaponId[]): BuildSortingBuildArg => {
+		function mockBuildBuilder(id: number, weaponIds: MainWeaponId[]): BuildSortingBuildArg {
 			return mockBuild({
 				id,
 				weapons: weaponIds.map((wepId) => ({
@@ -138,7 +138,7 @@ describe('sortBuilds()', () => {
 					minRank: null
 				}))
 			});
-		};
+		}
 
 		const builds1 = [
 			[1, [1000]],

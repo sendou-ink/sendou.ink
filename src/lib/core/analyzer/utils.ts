@@ -284,7 +284,9 @@ export function serializeBuild(build: BuildAbilitiesTupleWithUnknown) {
 		.join(',');
 }
 
-export const hpDivided = (hp: number) => hp / 10;
+export function hpDivided(hp: number) {
+	return hp / 10;
+}
 
 export function possibleApValues() {
 	const uniqueValues = new Set<number>();
@@ -298,8 +300,9 @@ export function possibleApValues() {
 	return Array.from(uniqueValues).sort((a, b) => a - b);
 }
 
-export const buildIsEmpty = (build: BuildAbilitiesTupleWithUnknown) =>
-	build.flat().every((ability) => ability === 'UNKNOWN');
+export function buildIsEmpty(build: BuildAbilitiesTupleWithUnknown) {
+	return build.flat().every((ability) => ability === 'UNKNOWN');
+}
 
 export function damageIsSubWeaponDamage(
 	damage:
@@ -332,6 +335,6 @@ const rawMultiShot: Partial<Record<MainWeaponId, number>> = {
  *
  * @returns The multi-shot count associated with the weapon, or `undefined` if not found.
  */
-export const weaponIdToMultiShotCount = (weaponId: MainWeaponId) => {
+export function weaponIdToMultiShotCount(weaponId: MainWeaponId) {
 	return rawMultiShot[weaponIdToBaseWeaponId(weaponId) as keyof typeof rawMultiShot];
-};
+}

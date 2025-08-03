@@ -5,7 +5,9 @@ export function inGameNameWithoutDiscriminator(inGameName: string) {
 	return inGameName.split('#')[0];
 }
 
-export const rawSensToString = (sens: number) => `${sens > 0 ? '+' : ''}${sens / 10}`;
+export function rawSensToString(sens: number) {
+	return `${sens > 0 ? '+' : ''}${sens / 10}`;
+}
 
 type WithStart<S extends string, Start extends string> = S extends `${Start}${infer Rest}`
 	? `${Start}${Rest}`

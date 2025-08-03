@@ -11,7 +11,9 @@ const abilityToIndex = abilities.reduce(
 
 const mainOnlyAbilitiesSet = new Set(mainOnlyAbilitiesShort);
 
-const abilitySorter = (a: Ability, b: Ability) => abilityToIndex[a] - abilityToIndex[b];
+function abilitySorter(a: Ability, b: Ability) {
+	return abilityToIndex[a] - abilityToIndex[b];
+}
 
 export function sortAbilities(abilities: BuildAbilitiesTuple): BuildAbilitiesTuple {
 	const m1 = abilities[0][0];
@@ -35,13 +37,13 @@ export function sortAbilities(abilities: BuildAbilitiesTuple): BuildAbilitiesTup
 	] as BuildAbilitiesTuple);
 }
 
-const sortAbilityCount = (a: [Ability, number], b: [Ability, number]) => {
+function sortAbilityCount(a: [Ability, number], b: [Ability, number]) {
 	if (a[1] === b[1]) {
 		return abilitySorter(a[0], b[0]);
 	}
 
 	return b[1] - a[1];
-};
+}
 function subAbilitiesSorted(abilities: BuildAbilitiesTuple): Ability[] {
 	const subAbilitiesUnsorted = [
 		abilities[0].slice(1),

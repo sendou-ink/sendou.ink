@@ -7,7 +7,10 @@ const USER_SUBMITTED_IMAGE_ROOT =
 
 // TODO: move development images to minio and deprecate this hack
 // images with https are not hosted on spaces, this is used for local development
-export const conditionalUserSubmittedImage = (fileName: string) =>
-	fileName.includes('https') ? fileName : userSubmittedImage(fileName);
+export function conditionalUserSubmittedImage(fileName: string) {
+	return fileName.includes('https') ? fileName : userSubmittedImage(fileName);
+}
 
-export const userSubmittedImage = (fileName: string) => `${USER_SUBMITTED_IMAGE_ROOT}/${fileName}`;
+export function userSubmittedImage(fileName: string) {
+	return `${USER_SUBMITTED_IMAGE_ROOT}/${fileName}`;
+}

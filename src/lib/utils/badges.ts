@@ -27,7 +27,7 @@ export function badgeExplanationText(
 		.replace('&#39;', "'");
 }
 
-export const findSplatoon3XpBadgeValue = (xPower: number) => {
+export function findSplatoon3XpBadgeValue(xPower: number) {
 	for (const value of SPLATOON_3_XP_BADGE_VALUES) {
 		if (xPower >= value) {
 			return value;
@@ -35,4 +35,4 @@ export const findSplatoon3XpBadgeValue = (xPower: number) => {
 	}
 
 	return null;
-};
+}

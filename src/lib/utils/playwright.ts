@@ -89,7 +89,7 @@ export async function fetchSendouInk<T>(url: string) {
 	return res.json() as T;
 }
 
-export const startBracket = async (page: Page, tournamentId = 2) => {
+export async function startBracket(page: Page, tournamentId = 2) {
 	await seed(page);
 	await impersonate(page);
 
@@ -100,4 +100,4 @@ export const startBracket = async (page: Page, tournamentId = 2) => {
 
 	await page.getByTestId('finalize-bracket-button').click();
 	await page.getByTestId('confirm-finalize-bracket-button').click();
-};
+}

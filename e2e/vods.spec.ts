@@ -10,14 +10,14 @@ import {
 } from "~/utils/playwright";
 import { newVodPage, VODS_PAGE, vodVideoPage } from "~/utils/urls";
 
-const chooseVideoDate = async (page: Page) => {
+async function chooseVideoDate(page: Page) {
 	await page.getByTestId("open-calendar-button").click();
 	await page
 		.getByTestId("choose-date-button")
 		.filter({ has: page.locator(`text="1"`) })
 		.first()
 		.click();
-};
+}
 
 test.describe("VoDs page", () => {
 	test("adds video (pov)", async ({ page }) => {

@@ -12,8 +12,8 @@ import { safeNumberParse } from '$lib/utils/number';
 import { isSupporter } from '$lib/modules/permissions/utils';
 import { userRoles } from '$lib/modules/permissions/mapper.server';
 
-const identifierToUserIdQuery = (identifier: string) =>
-	db
+function identifierToUserIdQuery(identifier: string) {
+	return db
 		.selectFrom('User')
 		.select('User.id')
 		.where((eb) => {
@@ -29,6 +29,7 @@ const identifierToUserIdQuery = (identifier: string) =>
 
 			return eb('User.customUrl', '=', identifier);
 		});
+}
 
 export function identifierToUserId(identifier: string) {
 	return identifierToUserIdQuery(identifier).executeTakeFirst();
@@ -398,13 +399,14 @@ export function findAllPlusServerMembers() {
 // 	return result;
 // }
 
-const withMaxEventStartTime = (eb: ExpressionBuilder<DB, 'CalendarEvent'>) => {
+function withMaxEventStartTime(eb: ExpressionBuilder<DB, 'CalendarEvent'>) {
 	return eb
 		.selectFrom('CalendarEventDate')
 		.select(({ fn }) => [fn.max('CalendarEventDate.startTime').as('startTime')])
 		.whereRef('CalendarEventDate.eventId', '=', 'CalendarEvent.id')
 		.as('startTime');
-};
+}
+
 export function findResultsByUserId(
 	userId: number,
 	{ showHighlightsOnly = false }: { showHighlightsOnly?: boolean } = {}
@@ -520,8 +522,8 @@ export async function hasHighlightedResultsByUserId(userId: number) {
 	return !!highlightedCalendarEventResult;
 }
 
-const searchSelectedFields = ({ fn }: { fn: FunctionModule<DB, 'User'> }) =>
-	[
+function searchSelectedFields({ fn }: { fn: FunctionModule<DB, 'User'> }) {
+	return [
 		...COMMON_USER_FIELDS,
 		'User.inGameName',
 		'PlusTier.tier as plusTier',
@@ -531,6 +533,8 @@ const searchSelectedFields = ({ fn }: { fn: FunctionModule<DB, 'User'> }) =>
 			sql`null`
 		]).as('discordUniqueName')
 	] as const;
+}
+
 export async function search({ query, limit }: { query: string; limit: number }) {
 	let exactMatches: Array<
 		CommonUser & {

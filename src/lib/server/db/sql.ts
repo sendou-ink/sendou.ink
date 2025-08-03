@@ -34,8 +34,9 @@ function logQuery(event: LogEvent) {
 	const isSelectQuery = Boolean((event.query.query as any).from?.froms);
 
 	if (event.level === 'query' && isSelectQuery) {
-		const from = () =>
-			(event.query.query as any).from.froms.map((f: any) => f.table.identifier.name);
+		function from() {
+			return (event.query.query as any).from.froms.map((f: any) => f.table.identifier.name);
+		}
 		// biome-ignore lint/suspicious/noConsole: dev only
 		console.log(styleText('blue', `-- SQLITE QUERY to "${from()}" --`));
 		// biome-ignore lint/suspicious/noConsole: dev only

@@ -6,9 +6,9 @@ export function isAbility(value: string): value is Ability {
 	return Boolean(abilities.some((a) => a.name === value));
 }
 
-const normalizeTerm = (term: string): string => {
+function normalizeTerm(term: string) {
 	return term.trim().toLocaleLowerCase();
-};
+}
 
 export function filterWeapon({
 	weapon,

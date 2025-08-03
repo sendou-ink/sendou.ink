@@ -11,7 +11,9 @@ export const cache = (global.__lruCache = global.__lruCache
 	? global.__lruCache
 	: new LRUCache<string, CacheEntry<unknown>>({ max: 5000 }));
 
-export const ttl = (ms: number) => (process.env.DISABLE_CACHE === 'true' ? 0 : ms);
+export function ttl(ms: number) {
+	return process.env.DISABLE_CACHE === 'true' ? 0 : ms;
+}
 
 export function syncCached<T>(key: string, getFreshValue: () => T) {
 	if (cache.has(key)) {

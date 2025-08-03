@@ -44,7 +44,7 @@ import { resolve } from '$app/paths';
 // }) =>
 // 	`https://raw.githubusercontent.com/sendou-ink/assets/main/${folder}/${fileName}`;
 
-export const discordAvatarUrl = ({
+export function discordAvatarUrl({
 	discordId,
 	discordAvatar,
 	size
@@ -52,10 +52,11 @@ export const discordAvatarUrl = ({
 	discordId: string;
 	discordAvatar: string;
 	size: 'lg' | 'sm';
-}) =>
-	`https://cdn.discordapp.com/avatars/${discordId}/${
+}) {
+	return `https://cdn.discordapp.com/avatars/${discordId}/${
 		discordAvatar
 	}.webp${size === 'lg' ? '?size=240' : '?size=80'}`;
+}
 
 // export const SENDOU_INK_BASE_URL = "https://sendou.ink";
 
@@ -83,7 +84,9 @@ export const SENDOU_INK_GITHUB_URL = 'https://github.com/sendou-ink/sendou.ink';
 // export const SPR_INFO_URL =
 // 	"https://web.archive.org/web/20250513034545/https://www.pgstats.com/articles/introducing-spr-and-uf";
 
-export const bskyUrl = (accountName: string) => `https://bsky.app/profile/${accountName}`;
+export function bskyUrl(accountName: string) {
+	return `https://bsky.app/profile/${accountName}`;
+}
 // export const twitchUrl = (accountName: string) =>
 // 	`https://twitch.tv/${accountName}`;
 
@@ -154,7 +157,9 @@ interface UserLinkArgs {
 	customUrl?: Tables['User']['customUrl'];
 }
 
-export const userPage = (user: UserLinkArgs) => `/u/${user.customUrl ?? user.discordId}`;
+export function userPage(user: UserLinkArgs) {
+	return `/u/${user.customUrl ?? user.discordId}`;
+}
 // export const userSeasonsPage = ({
 // 	user,
 // 	season,
@@ -167,7 +172,9 @@ export const userPage = (user: UserLinkArgs) => `/u/${user.customUrl ?? user.dis
 // 	}`;
 // export const userEditProfilePage = (user: UserLinkArgs) =>
 // 	`${userPage(user)}/edit`;
-export const userBuildsPage = (user: UserLinkArgs) => `${userPage(user)}/builds`;
+export function userBuildsPage(user: UserLinkArgs) {
+	return `${userPage(user)}/builds`;
+}
 // export const userResultsPage = (user: UserLinkArgs, showAll?: boolean) =>
 // 	`${userPage(user)}/results${showAll ? "?all=true" : ""}`;
 // export const userVodsPage = (user: UserLinkArgs) => `${userPage(user)}/vods`;
@@ -185,11 +192,11 @@ export const userBuildsPage = (user: UserLinkArgs) => `${userPage(user)}/builds`
 // 	`${userPage(user)}/art${source ? `?source=${source}` : ""}${bigArtId ? `?big=${bigArtId}` : ""}`;
 // export const newArtPage = (artId?: Tables["Art"]["id"]) =>
 // 	`${artPage()}/new${artId ? `?art=${artId}` : ""}`;
-export const userNewBuildPage = (
+export function userNewBuildPage(
 	user: UserLinkArgs,
 	params?: { weapon: MainWeaponId; build: BuildAbilitiesTupleWithUnknown }
-) =>
-	`${userBuildsPage(user)}/new${
+) {
+	return `${userBuildsPage(user)}/new${
 		params
 			? `?${String(
 					new URLSearchParams({
@@ -200,6 +207,7 @@ export const userNewBuildPage = (
 				)}`
 			: ''
 	}`;
+}
 
 // export const teamPage = (customUrl: string) => `/t/${customUrl}`;
 // export const editTeamPage = (customUrl: string) =>
@@ -265,8 +273,9 @@ export const userNewBuildPage = (
 // export const plusSuggestionsNewPage = (tier?: string | number) =>
 // 	`/plus/suggestions/new${tier ? `?tier=${tier}` : ""}`;
 
-export const weaponBuildPage = (weaponId: MainWeaponId) =>
-	resolve(`/builds/${mySlugify(weaponTranslations[weaponId]({}, { locale: 'en' }))}`);
+export function weaponBuildPage(weaponId: MainWeaponId) {
+	return resolve(`/builds/${mySlugify(weaponTranslations[weaponId]({}, { locale: 'en' }))}`);
+}
 // export const weaponBuildStatsPage = (weaponSlug: string) =>
 // 	`${weaponBuildPage(weaponSlug)}/stats`;
 // export const weaponBuildPopularPage = (weaponSlug: string) =>
@@ -318,7 +327,7 @@ export const weaponBuildPage = (weaponId: MainWeaponId) =>
 // 	`/to/${tournamentId}/maps`;
 // export const tournamentAdminPage = (tournamentId: number) =>
 // 	`/to/${tournamentId}/admin`;
-export const tournamentBracketsPage = ({
+export function tournamentBracketsPage({
 	tournamentId,
 	bracketIdx,
 	groupId
@@ -326,7 +335,7 @@ export const tournamentBracketsPage = ({
 	tournamentId: number;
 	bracketIdx?: number | null;
 	groupId?: number;
-}) => {
+}) {
 	const query = new URLSearchParams();
 	if (typeof bracketIdx === 'number') {
 		query.set('idx', String(bracketIdx));
@@ -336,7 +345,7 @@ export const tournamentBracketsPage = ({
 	}
 
 	return `/to/${tournamentId}/brackets${query.size > 0 ? `?${query.toString()}` : ''}`;
-};
+}
 // export const tournamentDivisionsPage = (tournamentId: number) =>
 // 	`/to/${tournamentId}/divisions`;
 // export const tournamentResultsPage = (tournamentId: number) =>
@@ -426,10 +435,11 @@ export const tournamentBracketsPage = ({
 // export const mapsPageWithMapPool = (mapPool: MapPool) =>
 // 	`/maps?readonly&pool=${mapPool.serialized}`;
 // export const articlePage = (slug: string) => `${ARTICLES_MAIN_PAGE}/${slug}`;
-export const analyzerPage = (args?: { weaponId: MainWeaponId; abilities: Ability[] }) =>
-	`/analyzer${
+export function analyzerPage(args?: { weaponId: MainWeaponId; abilities: Ability[] }) {
+	return `/analyzer${
 		args ? `?weapon=${args.weaponId}&build=${encodeURIComponent(args.abilities.join(','))}` : ''
 	}`;
+}
 // export const objectDamageCalculatorPage = (weaponId?: MainWeaponId) =>
 // 	`/object-damage-calculator${
 // 		typeof weaponId === "number" ? `?weapon=${weaponId}` : ""
@@ -449,30 +459,45 @@ export const analyzerPage = (args?: { weaponId: MainWeaponId; abilities: Ability
 // export const lfgNewPostPage = (postId?: number) =>
 // 	`${LFG_PAGE}/new${postId ? `?postId=${postId}` : ""}`;
 
-export const badgeUrl = ({
+export function badgeUrl({
 	code,
 	isAnimated
 }: {
 	code: Tables['Badge']['code'];
 	isAnimated: boolean;
-}) => `/badges/${isAnimated ? 'animated' : 'static'}/${code}.avif`;
-export const articlePreviewUrl = (slug: string) => `/img/article-previews/${slug}.png`;
+}) {
+	return `/badges/${isAnimated ? 'animated' : 'static'}/${code}.avif`;
+}
 
-export const navIconUrl = (navItem: string) => `/img/layout/${navItem}`;
-export const gearImageUrl = (gearType: GearType, gearSplId: number) =>
-	`/img/gear/${gearType.toLowerCase()}/${gearSplId}`;
-export const weaponCategoryUrl = (category: (typeof weaponCategories)[number]['name']) =>
-	`/img/weapon-categories/${category}`;
-export const mainWeaponImageUrl = (mainWeaponSplId: MainWeaponId) =>
-	`/img/main-weapons/${mainWeaponSplId}`;
+export function articlePreviewUrl(slug: string) {
+	return `/img/article-previews/${slug}.png`;
+}
+
+export function navIconUrl(navItem: string) {
+	return `/img/layout/${navItem}`;
+}
+
+export function gearImageUrl(gearType: GearType, gearSplId: number) {
+	return `/img/gear/${gearType.toLowerCase()}/${gearSplId}`;
+}
+
+export function weaponCategoryUrl(category: (typeof weaponCategories)[number]['name']) {
+	return `/img/weapon-categories/${category}`;
+}
+
+export function mainWeaponImageUrl(mainWeaponSplId: MainWeaponId) {
+	return `/img/main-weapons/${mainWeaponSplId}`;
+}
 // export const mainWeaponVariantImageUrl = (
 // 	mainWeaponSplId: MainWeaponId,
 // 	variant: "launched",
 // ) => `/img/main-weapons/variants/${mainWeaponSplId}-${variant}`;
-export const outlinedMainWeaponImageUrl = (mainWeaponSplId: MainWeaponId) =>
-	`/img/main-weapons-outlined/${mainWeaponSplId}`;
-export const outlinedFiveStarMainWeaponImageUrl = (mainWeaponSplId: MainWeaponId) =>
-	`/img/main-weapons-outlined-2/${mainWeaponSplId}`;
+export function outlinedMainWeaponImageUrl(mainWeaponSplId: MainWeaponId) {
+	return `/img/main-weapons-outlined/${mainWeaponSplId}`;
+}
+export function outlinedFiveStarMainWeaponImageUrl(mainWeaponSplId: MainWeaponId) {
+	return `/img/main-weapons-outlined-2/${mainWeaponSplId}`;
+}
 // export const subWeaponImageUrl = (subWeaponSplId: SubWeaponId) =>
 // 	`/img/sub-weapons/${subWeaponSplId}`;
 // export const specialWeaponImageUrl = (specialWeaponSplId: SpecialWeaponId) =>
@@ -482,10 +507,14 @@ export const outlinedFiveStarMainWeaponImageUrl = (mainWeaponSplId: MainWeaponId
 // 	variant: "weakpoints",
 // ) =>
 // 	`/img/special-weapons/variants/${specialWeaponSplId}-${variant}`;
-export const abilityImageUrl = (ability: AbilityWithUnknown) => `/img/abilities/${ability}`;
+export function abilityImageUrl(ability: AbilityWithUnknown) {
+	return `/img/abilities/${ability}`;
+}
 // export const brandImageUrl = (brand: BrandId) =>
 // 	`/img/brands/${brand}`;
-export const modeImageUrl = (mode: ModeShortWithSpecial) => `/img/modes/${mode}`;
+export function modeImageUrl(mode: ModeShortWithSpecial) {
+	return `/img/modes/${mode}`;
+}
 // export const stageImageUrl = (stageId: StageId) =>
 // 	`/img/stages/${stageId}`;
 // export const tierImageUrl = (tier: TierName | "CALCULATING") =>
@@ -533,13 +562,13 @@ export const modeImageUrl = (mode: ModeShortWithSpecial) => `/img/modes/${mode}`
 // 	return new URL(url).host;
 // }
 
-export const mySlugify = (name: string) => {
+export function mySlugify(name: string) {
 	return slugify(name, {
 		lower: true,
 		strict: true
 	});
-};
+}
 
-export const isCustomUrl = (value: string) => {
+export function isCustomUrl(value: string) {
 	return Number.isNaN(Number(value));
-};
+}

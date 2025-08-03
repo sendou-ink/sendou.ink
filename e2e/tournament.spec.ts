@@ -17,12 +17,13 @@ import {
 } from "~/utils/playwright";
 import { tournamentBracketsPage, tournamentPage } from "~/utils/urls";
 
-const fetchTournamentLoaderData = () =>
-	fetchSendouInk<TournamentLoaderData>(
+function fetchTournamentLoaderData() {
+	return fetchSendouInk<TournamentLoaderData>(
 		"/to/1/admin?_data=features%2Ftournament%2Froutes%2Fto.%24id",
 	);
+}
 
-const getIsOwnerOfUser = ({
+function getIsOwnerOfUser({
 	data,
 	userId,
 	teamId,
@@ -30,24 +31,24 @@ const getIsOwnerOfUser = ({
 	data: TournamentLoaderData;
 	userId: number;
 	teamId: number;
-}) => {
+}) {
 	const team = data.tournament.ctx.teams.find((t) => t.id === teamId);
 	invariant(team, "Team not found");
 
 	return team.members.find((m) => m.userId === userId)?.isOwner;
-};
+}
 
-const getTeamCheckedInAt = ({
+function getTeamCheckedInAt({
 	data,
 	teamId,
 }: {
 	data: TournamentLoaderData;
 	teamId: number;
-}) => {
+}) {
 	const team = data.tournament.ctx.teams.find((t) => t.id === teamId);
 	invariant(team, "Team not found");
 	return team.checkIns.length > 0;
-};
+}
 
 test.describe("Tournament", () => {
 	test("registers for tournament", async ({ page }) => {

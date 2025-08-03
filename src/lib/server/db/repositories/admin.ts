@@ -26,11 +26,11 @@ const cleanUpStm = sql.prepare(/*sql*/ `
   vacuum
 `);
 
-export const cleanUp = () => {
+export function cleanUp() {
 	removeOldLikesStm.run();
 	removeOldGroupStm.run();
 	cleanUpStm.run();
-};
+}
 
 /**
  * Migrates user-related data. Takes data from the "old user" and remaps it to the Discord ID of the "new user". Used when user switches their Discord accounts.

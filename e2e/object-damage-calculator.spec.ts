@@ -7,8 +7,9 @@ test.describe("Object Damage Calculator", () => {
 		await navigate({ page, url: OBJECT_DAMAGE_CALCULATOR_URL });
 	});
 
-	const cellId = (id: string, damageReceiver = "Chariot") =>
-		`${id}-${damageReceiver}`;
+	function cellId(id: string, damageReceiver = "Chariot") {
+		return `${id}-${damageReceiver}`;
+	}
 
 	test("operates damage type select, max damage > min damage", async ({
 		page,

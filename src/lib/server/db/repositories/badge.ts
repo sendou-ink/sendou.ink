@@ -4,20 +4,22 @@ import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/sqlite';
 import type { DB } from '../tables';
 import { db } from '../sql';
 
-const addPermissions = <T extends { managers: { userId: number }[] }>(row: T) => ({
-	...row,
-	permissions: {
-		MANAGE: row.managers.map((m) => m.userId)
-	}
-});
+function addPermissions<T extends { managers: { userId: number }[] }>(row: T) {
+	return {
+		...row,
+		permissions: {
+			MANAGE: row.managers.map((m) => m.userId)
+		}
+	};
+}
 
-const withAuthor = (eb: ExpressionBuilder<DB, 'Badge'>) => {
+function withAuthor(eb: ExpressionBuilder<DB, 'Badge'>) {
 	return jsonObjectFrom(
 		eb.selectFrom('User').select(COMMON_USER_FIELDS).whereRef('User.id', '=', 'Badge.authorId')
 	).as('author');
-};
+}
 
-const withManagers = (eb: ExpressionBuilder<DB, 'Badge'>) => {
+function withManagers(eb: ExpressionBuilder<DB, 'Badge'>) {
 	return jsonArrayFrom(
 		eb
 			.selectFrom('BadgeManager')
@@ -25,7 +27,7 @@ const withManagers = (eb: ExpressionBuilder<DB, 'Badge'>) => {
 			.select(['userId', ...COMMON_USER_FIELDS])
 			.whereRef('BadgeManager.badgeId', '=', 'Badge.id')
 	).as('managers');
-};
+}
 
 export async function all() {
 	const rows = await db

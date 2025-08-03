@@ -17,7 +17,7 @@ import { db, sql } from '$lib/server/db/sql';
  *   // tests go here
  * });
  */
-export const dbReset = () => {
+export function dbReset() {
 	const tables = sql
 		.prepare(
 			"SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'migrations';"
@@ -29,7 +29,7 @@ export const dbReset = () => {
 		sql.prepare(`DELETE FROM "${table.name}"`).run();
 	}
 	sql.prepare('PRAGMA foreign_keys = ON').run();
-};
+}
 
 /**
  * Inserts a specified number of user records into the "User" table in the database for integration testing.
@@ -46,8 +46,8 @@ export const dbReset = () => {
  * // Inserts 2 users (default)
  * await dbInsertUsers();
  */
-export const dbInsertUsers = (count = 2) =>
-	db
+export function dbInsertUsers(count = 2) {
+	return db
 		.insertInto('User')
 		.values(
 			Array.from({ length: count }).map((_, i) => ({
@@ -57,3 +57,4 @@ export const dbInsertUsers = (count = 2) =>
 			}))
 		)
 		.execute();
+}

@@ -115,7 +115,9 @@ export function weaponIdToArrayWithAlts(weaponId: MainWeaponId) {
 }
 
 const altWeaponIds = new Set(altWeaponIdToId.keys());
-export const weaponIdIsNotAlt = (weaponId: MainWeaponId) => !altWeaponIds.has(weaponId);
+export function weaponIdIsNotAlt(weaponId: MainWeaponId) {
+	return !altWeaponIds.has(weaponId);
+}
 
 export const SPLAT_BOMB_ID = 0;
 export const SUCTION_BOMB_ID = 1;
@@ -201,9 +203,9 @@ export const specialWeaponIds = [
 
 export const nonDamagingSpecialWeaponIds = [BIG_BUBBLER_ID, TACTICOOLER_ID];
 
-export const exampleMainWeaponIdWithSpecialWeaponId = (
+export function exampleMainWeaponIdWithSpecialWeaponId(
 	specialWeaponId: SpecialWeaponId
-): MainWeaponId => {
+): MainWeaponId {
 	switch (specialWeaponId) {
 		case TRIZOOKA_ID:
 			return 40;
@@ -247,7 +249,7 @@ export const exampleMainWeaponIdWithSpecialWeaponId = (
 			assertUnreachable(specialWeaponId);
 		}
 	}
-};
+}
 
 /**
  * Calculates the base weapon ID from a main weapon ID.
@@ -262,4 +264,6 @@ export const exampleMainWeaponIdWithSpecialWeaponId = (
  * // (45 is Hero Shot Replica, which is an alt skin of Splattershot)
  * weaponIdToBaseWeaponId(45); // -> 40
  */
-export const weaponIdToBaseWeaponId = (id: MainWeaponId) => (id - (id % 10)) as MainWeaponId;
+export function weaponIdToBaseWeaponId(id: MainWeaponId) {
+	return (id - (id % 10)) as MainWeaponId;
+}

@@ -20,14 +20,14 @@ import {
 	userResultsPage,
 } from "~/utils/urls";
 
-const navigateToMatch = async (page: Page, matchId: number) => {
+async function navigateToMatch(page: Page, matchId: number) {
 	await expect(async () => {
 		await page.locator(`[data-match-id="${matchId}"]`).click();
 		await expect(page.getByTestId("match-header")).toBeVisible();
 	}).toPass();
-};
+}
 
-const reportResult = async ({
+async function reportResult({
 	page,
 	amountOfMapsToReport,
 	sidesWithMoreThanFourPlayers = ["last"],
@@ -39,14 +39,14 @@ const reportResult = async ({
 	sidesWithMoreThanFourPlayers?: ("first" | "last")[];
 	winner?: 1 | 2;
 	points?: [number, number];
-}) => {
+}) {
 	const confirmCheckbox = page.getByTestId("end-confirmation");
 
-	const fillPointsInput = async () => {
+	async function fillPointsInput() {
 		if (!points) return;
 		await page.getByTestId("points-input-1").fill(String(points[0]));
 		await page.getByTestId("points-input-2").fill(String(points[1]));
-	};
+	}
 
 	await page.getByTestId("actions-tab").click();
 
@@ -123,15 +123,16 @@ const reportResult = async ({
 
 		await expect(page.getByTestId("report-timestamp")).toBeVisible();
 	}
-};
+}
 
-const backToBracket = async (page: Page) => {
+async function backToBracket(page: Page) {
 	await page.getByTestId("back-to-bracket-button").click();
 	await expect(page.getByTestId("brackets-viewer")).toBeVisible();
-};
+}
 
-const expectScore = (page: Page, score: [number, number]) =>
-	expect(page.getByText(score.join("-"))).toBeVisible();
+async function expectScore(page: Page, score: [number, number]) {
+	await expect(page.getByText(score.join("-"))).toBeVisible();
+}
 
 test.describe("Tournament bracket", () => {
 	test("sets active roster as regular member", async ({ page }) => {

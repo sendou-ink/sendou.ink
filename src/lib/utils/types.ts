@@ -11,7 +11,7 @@ export function assertUnreachable(x: never): never {
 }
 
 /** @link https://stackoverflow.com/a/69413184 */
-export const assertType = <A, _B extends A>() => {};
+export function assertType<A, _B extends A>() {}
 
 export type Unpacked<T> = T extends (infer U)[]
 	? U
