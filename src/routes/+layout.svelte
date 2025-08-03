@@ -58,10 +58,7 @@
 {#snippet topRightButtons(showSupport: boolean)}
 	<div class="right-container">
 		{#if showSupport}
-			<Button href={resolve('/support')} size="small" variant="outlined">
-				{#snippet icon()}
-					<HeartSolidIcon />
-				{/snippet}
+			<Button href={resolve('/support')} icon={HeartSolidIcon} size="small" variant="outlined">
 				{m.common_pages_support()}
 			</Button>
 		{/if}

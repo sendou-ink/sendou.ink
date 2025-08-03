@@ -223,7 +223,7 @@ assertType<(typeof slugToMainWeaponId)[keyof typeof slugToMainWeaponId], MainWea
 
 export const weaponIdFromSlug = z.preprocess((val) => {
 	if (typeof val === 'string') {
-		return slugToMainWeaponId[val.toLowerCase() as keyof typeof slugToMainWeaponId];
+		return slugToMainWeaponId[val as keyof typeof slugToMainWeaponId];
 	}
 
 	return val;

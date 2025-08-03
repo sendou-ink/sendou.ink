@@ -148,11 +148,8 @@
 		{#if build.description}
 			<Popover>
 				{#snippet anchorButton(popovertarget)}
-					<Button variant="minimal" class="small-text" {popovertarget}>
-						{#snippet icon()}
-							<SpeechBubbleIcon />
-						{/snippet}
-					</Button>
+					<Button variant="minimal" class="small-text" icon={SpeechBubbleIcon} {popovertarget}
+					></Button>
 				{/snippet}
 				{build.description}
 			</Popover>
@@ -160,23 +157,16 @@
 		{#if true}
 			<Button
 				class="small-text"
+				icon={EditIcon}
 				variant="minimal"
 				size="small"
 				href="xxx:"
 				data-testid="edit-build"
-			>
-				{#snippet icon()}
-					<EditIcon class="icon" />
-				{/snippet}
-			</Button>
+			></Button>
 		{/if}
 		<Popover>
 			{#snippet anchorButton(popovertarget)}
-				<Button {popovertarget} variant="minimal-destructive">
-					{#snippet icon()}
-						<TrashIcon class="icon" />
-					{/snippet}
-				</Button>
+				<Button {popovertarget} icon={TrashIcon} variant="minimal-destructive"></Button>
 			{/snippet}
 			Delete build? <Button
 				onclick={async () => {

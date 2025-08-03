@@ -64,7 +64,7 @@
 							{stat.apAverage.all}
 							{m.analyzer_abilityPoints_short()}
 						</div>
-						<div class="build-stats__bar" style:width="{apToPx(stat.apAverage.all)}px"></div>
+						<div class="bar" style:width="{apToPx(stat.apAverage.all)}px"></div>
 					</div>
 				</div>
 			{/each}

@@ -129,4 +129,4 @@ export const navItems = [
 		url: 'maps',
 		prefetch: false
 	}
-].filter(Boolean);
+].filter((item) => item !== null);

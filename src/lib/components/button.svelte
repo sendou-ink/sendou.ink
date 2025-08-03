@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
+	import type { Component, Snippet } from 'svelte';
 	import type { HTMLAnchorAttributes, HTMLButtonAttributes } from 'svelte/elements';
 
 	type ButtonVariant =
@@ -15,7 +15,7 @@
 	interface BaseProps {
 		variant?: ButtonVariant;
 		size?: 'miniscule' | 'small' | 'medium' | 'big';
-		icon?: Snippet;
+		icon?: Component;
 		children?: Snippet;
 	}
 
@@ -38,7 +38,7 @@
 		class: className,
 		variant = 'primary',
 		size = 'medium',
-		icon,
+		icon: Icon,
 		children,
 		...rest
 	}: Props = $props();
@@ -67,7 +67,7 @@
 	]}
 	{...rest}
 >
-	{#if icon}
+	{#if Icon}
 		<span
 			class={[
 				'button-icon',
@@ -76,7 +76,7 @@
 				}
 			]}
 		>
-			{@render icon()}
+			<Icon />
 		</span>
 	{/if}
 	{@render children?.()}

@@ -73,16 +73,20 @@
 				</SendouMenu> -->
 		<div></div>
 		<div class="builds-buttons-link">
-			<Button href={resolve(`/builds/${params.slug}/stats`)} variant="outlined" size="small">
-				{#snippet icon()}
-					<ChartBarIcon />
-				{/snippet}
+			<Button
+				href={resolve(`/builds/${params.slug}/stats`)}
+				icon={ChartBarIcon}
+				variant="outlined"
+				size="small"
+			>
 				{m.builds_linkButton_abilityStats()}
 			</Button>
-			<Button href={resolve(`/builds/${params.slug}/popular`)} variant="outlined" size="small">
-				{#snippet icon()}
-					<FireIcon />
-				{/snippet}
+			<Button
+				href={resolve(`/builds/${params.slug}/popular`)}
+				icon={FireIcon}
+				variant="outlined"
+				size="small"
+			>
 				{m.builds_linkButton_popularBuilds()}
 			</Button>
 		</div>

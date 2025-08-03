@@ -91,11 +91,7 @@
 		{#if !isPaginated}
 			<div class="badgeExplanation">
 				{badgeExplanationText(bigBadge)}
-				<Button variant="minimal-destructive" onclick={removeBadge}>
-					{#snippet icon()}
-						<TrashIcon />
-					{/snippet}
-				</Button>
+				<Button variant="minimal-destructive" icon={TrashIcon} onclick={removeBadge}></Button>
 			</div>
 		{/if}
 
