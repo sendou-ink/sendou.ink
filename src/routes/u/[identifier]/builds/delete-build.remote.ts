@@ -3,7 +3,6 @@ import { id } from '$lib/schemas';
 import { requireUser } from '$lib/server/auth/session';
 import * as BuildRepository from '$lib/server/db/repositories/build';
 import { error } from '@sveltejs/kit';
-import { userBuilds } from './user-builds.remote';
 import { z } from 'zod/v4';
 import { userLayoutData } from '../user-layout-data.remote';
 import { logger } from '$lib/utils/logger';
@@ -33,7 +32,6 @@ export const deleteBuild = command(
 			logger.warn('Error refreshing builds cache', error);
 		}
 
-		await userBuilds(args.identifier).refresh();
 		await userLayoutData(args.identifier).refresh();
 	}
 );

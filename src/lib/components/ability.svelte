@@ -1,15 +1,15 @@
 <script lang="ts">
-	import Image from '$lib/components/image/image.svelte';
 	import type { AbilityWithUnknown } from '$lib/constants/in-game/types';
 	import { abilityTranslations } from '$lib/utils/i18n';
 	import { abilityImageUrl } from '$lib/utils/urls';
+	import Image from '$lib/components/image/image.svelte';
 
 	interface Props {
 		ability: AbilityWithUnknown;
 		size: keyof typeof sizeMap;
 		dragStarted?: boolean;
 		dropAllowed?: boolean;
-		onClick?: () => void;
+		onClick?: VoidFunction;
 		onDrop?: (event: DragEvent) => void;
 		class?: string;
 	}
@@ -19,7 +19,7 @@
 		size,
 		dragStarted = false,
 		dropAllowed = false,
-		onClick,
+		onClick: onclick,
 		onDrop,
 		class: className
 	}: Props = $props();
@@ -32,26 +32,25 @@
 	} as const;
 
 	const sizeNumber = $derived(sizeMap[size]);
+	const readonly = $derived(typeof onclick === 'undefined' || ability === 'UNKNOWN');
+
 	let isDragTarget = $state(false);
 
-	const onDragOver = (event: DragEvent) => {
+	const ondragover = (event: DragEvent) => {
 		event.preventDefault();
 		isDragTarget = true;
 	};
 
-	const onDragLeave = () => {
+	const ondragleave = () => {
 		isDragTarget = false;
 	};
 
-	const readonly = $derived(typeof onClick === 'undefined' || ability === 'UNKNOWN');
-
-	const handleDrop = (event: DragEvent) => {
+	const ondrop = (event: DragEvent) => {
 		isDragTarget = false;
 		onDrop?.(event);
 	};
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
 <svelte:element
 	this={readonly ? 'div' : 'button'}
 	class={[
@@ -65,12 +64,13 @@
 		}
 	]}
 	style:--ability-size="{sizeNumber}px"
-	onclick={onClick}
+	type={readonly ? undefined : 'button'}
+	role={readonly ? undefined : 'button'}
 	data-testid="{ability}-ability"
-	ondragover={onDragOver}
-	ondragleave={onDragLeave}
-	ondrop={handleDrop}
-	type="button"
+	{onclick}
+	{ondragover}
+	{ondragleave}
+	{ondrop}
 >
 	<Image
 		alt={abilityTranslations[ability]()}

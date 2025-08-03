@@ -1,8 +1,8 @@
 export class Pagination<T> {
+	private items: T[];
+	private pageSize: number;
+	private scrollToTop: boolean;
 	page = $state(1);
-	items;
-	pageSize;
-	scrollToTop;
 
 	constructor(items: () => T[], options: { pageSize: number; scrollToTop?: boolean }) {
 		this.items = $derived(items());
@@ -15,35 +15,37 @@ export class Pagination<T> {
 	}
 
 	get itemsOnPage() {
-		return this.items.slice((this.page - 1) * this.pageSize, this.page * this.pageSize);
+		const startIndex = (this.page - 1) * this.pageSize;
+		const endIndex = startIndex + this.pageSize;
+		return this.items.slice(startIndex, endIndex);
 	}
 
 	get everythingVisible() {
-		return this.itemsOnPage.length === this.items.length;
+		return this.items.length <= this.pageSize;
 	}
 
 	nextPage() {
-		if (this.page < this.pagesCount) {
-			this.page += 1;
-			this.#scrollToTopIfEnabled();
-		}
+		if (this.page >= this.pagesCount) return;
+
+		this.page += 1;
+		this.scrollToTopIfEnabled();
 	}
 
 	previousPage() {
-		if (this.page > 1) {
-			this.page -= 1;
-			this.#scrollToTopIfEnabled();
-		}
+		if (this.page <= 1) return;
+
+		this.page -= 1;
+		this.scrollToTopIfEnabled();
 	}
 
 	setPage(page: number) {
-		if (page > 0 && page <= this.pagesCount) {
-			this.page = page;
-			this.#scrollToTopIfEnabled();
-		}
+		if (page < 1 || page > this.pagesCount) return;
+
+		this.page = page;
+		this.scrollToTopIfEnabled();
 	}
 
-	#scrollToTopIfEnabled() {
+	private scrollToTopIfEnabled() {
 		if (this.scrollToTop) {
 			window.scrollTo(0, 0);
 		}
