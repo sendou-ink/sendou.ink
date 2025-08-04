@@ -9,7 +9,34 @@
 
 * {
 	margin: 0;
+	min-width: 0;
 	overflow-wrap: break-word;
+}
+
+html {
+	color-scheme: light dark;
+	accent-color: var(--color-primary);
+	-webkit-tab-highlight-color: transparent;
+	-webkit-text-size-adjust: 100%;
+
+	scrollbar-width: thin;
+	scrollbar-color: var(--color-primary) var(--color-base-section);
+
+	&::-webkit-scrollbar,
+	&::-webkit-scrollbar-track {
+		background-color: var(--color-base-section);
+		height: 5px;
+		width: 5px;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background-color: var(--color-primary);
+		border-radius: 5px;
+	}
+}
+
+body {
+	-webkit-font-smoothing: antialiased;
 }
 
 a {
