@@ -1,7 +1,7 @@
 <script lang="ts">
-	import Image from '$lib/components/image/image.svelte';
+	import Image from '$lib/components/image/Image.svelte';
 	import { navIconUrl } from '$lib/utils/urls';
-	import { Plus } from '@lucide/svelte';
+	import Plus from '@lucide/svelte/icons/plus';
 	import Button from './button.svelte';
 
 	interface Props {

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { mainWeaponImageUrl, weaponBuildPage, weaponCategoryUrl } from '$lib/utils/urls';
 	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';
-	import Image from '$lib/components/image/image.svelte';
+	import Image from '$lib/components/image/Image.svelte';
 	import AddNewButton from '$lib/components/add-new-button.svelte';
 	import { resolve } from '$app/paths';
 	import { me } from '../me.remote';

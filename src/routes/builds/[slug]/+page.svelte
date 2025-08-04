@@ -1,5 +1,5 @@
 <script lang="ts">
-	import BuildCard from '$lib/components/build-card.svelte';
+	import BuildCard from '$lib/components/build-card/BuildCard.svelte';
 	import Button from '$lib/components/button.svelte';
 	import Main from '$lib/components/main.svelte';
 	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';
@@ -9,7 +9,14 @@
 	import { weaponTranslations } from '$lib/utils/i18n';
 	import { buildsBySlug } from './builds-by-slug.remote';
 	import { resolve } from '$app/paths';
-	import { ChartNoAxesColumnDecreasing, Flame } from '@lucide/svelte';
+	import Flame from '@lucide/svelte/icons/flame';
+	import ChartNoAxesColumnDecreasing from '@lucide/svelte/icons/chart-no-axes-column-decreasing';
+	import Menu from '$lib/components/menu/Menu.svelte';
+	import Funnel from '@lucide/svelte/icons/funnel';
+	import MenuTriggerButton from '$lib/components/menu/MenuTriggerButton.svelte';
+	import FlaskRound from '@lucide/svelte/icons/flask-round';
+	import Map from '@lucide/svelte/icons/map';
+	import Calendar from '@lucide/svelte/icons/calendar';
 
 	let { params } = $props();
 
@@ -23,6 +30,10 @@
 	);
 
 	const weaponNameInEnglish = $derived(weaponTranslations[weaponId]({}, { locale: 'en' }));
+
+	function handleFilterAdd(_type: string) {
+		return null;
+	}
 </script>
 
 <OpenGraphMeta
@@ -31,7 +42,7 @@
 	description={`Collection of ${weaponNameInEnglish} builds from the top competitive players. Find the best combination of abilities and level up your gameplay.`}
 />
 
-<Main class="stack lg">
+<Main class="stack lg" bigger>
 	<div class="builds-buttons">
 		<!-- <SendouMenu
 					trigger={
@@ -70,6 +81,35 @@
 						{t("builds:filters.type.date")}
 					</SendouMenuItem>
 				</SendouMenu> -->
+		<Menu
+			items={[
+				{
+					icon: FlaskRound,
+					label: m.builds_filters_type_ability(),
+					onclick: () => handleFilterAdd('ability')
+				},
+				{
+					icon: Map,
+					label: m.builds_filters_type_mode(),
+					onclick: () => handleFilterAdd('mode')
+				},
+				{
+					icon: Calendar,
+					label: m.builds_filters_type_date(),
+					onclick: () => handleFilterAdd('date'),
+					disabled: true
+				}
+			]}
+		>
+			<MenuTriggerButton
+				variant="outlined"
+				size="small"
+				icon={Funnel}
+				data-testid="add-filter-button"
+			>
+				{m.builds_addFilter()}
+			</MenuTriggerButton>
+		</Menu>
 		<div></div>
 		<div class="builds-buttons-link">
 			<Button
@@ -152,17 +192,17 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: flex-start;
+
+		:global(svg) {
+			stroke-width: 3.25px;
+			fill: var(--color-primary);
+		}
 	}
 
 	.builds-buttons-link {
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-2);
-
-		:global(svg) {
-			stroke-width: 3.25px;
-			fill: var(--color-primary);
-		}
 
 		@media screen and (min-width: 480px) {
 			flex-direction: row;

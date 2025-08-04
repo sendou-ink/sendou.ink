@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Ability from '$lib/components/ability.svelte';
+	import Ability from '$lib/components/Ability.svelte';
 	import WeaponImage from '$lib/components/image/weapon-image.svelte';
 	import Main from '$lib/components/main.svelte';
 	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';

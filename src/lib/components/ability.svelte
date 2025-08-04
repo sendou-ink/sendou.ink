@@ -2,7 +2,7 @@
 	import type { AbilityWithUnknown } from '$lib/constants/in-game/types';
 	import { abilityTranslations } from '$lib/utils/i18n';
 	import { abilityImageUrl } from '$lib/utils/urls';
-	import Image from '$lib/components/image/image.svelte';
+	import Image from '$lib/components/image/Image.svelte';
 
 	interface Props {
 		ability: AbilityWithUnknown;
@@ -89,12 +89,16 @@
 		border-radius: 50%;
 		border-right: 0;
 		border-bottom: 0;
-		background: var(--color-base-border);
+		background: var(--color-base-card-section);
 		background-size: 100%;
-		box-shadow: 0 0 0 1px var(--color-base-border);
+		box-shadow: 0 0 0 1px var(--color-base-card-section);
 		transform: scale(1);
 		transition: all 0.1s ease;
 		user-select: none;
+
+		:global(img) {
+			margin-block-start: -1px;
+		}
 	}
 
 	.is-drag-target {

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Ability from '$lib/components/ability.svelte';
+	import Ability from '$lib/components/Ability.svelte';
 	import Main from '$lib/components/main.svelte';
 	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';
 	import type { MainWeaponId } from '$lib/constants/in-game/types';

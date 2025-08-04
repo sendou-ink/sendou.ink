@@ -10,7 +10,7 @@
 		SUPPORT_PAGE,
 		userPage
 	} from '$lib/utils/urls';
-	import Image from '$lib/components/image/image.svelte';
+	import Image from '$lib/components/image/Image.svelte';
 	import DiscordIcon from '$lib/components/icons/discord.svelte';
 	import GitHubIcon from '$lib/components/icons/github.svelte';
 	import PatreonIcon from '$lib/components/icons/patreon.svelte';

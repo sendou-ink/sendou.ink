@@ -6,7 +6,7 @@
 	import { Pagination } from '$lib/runes/pagination.svelte';
 	import Badge from '$lib/components/badge.svelte';
 	import Button from '$lib/components/button.svelte';
-	import { Trash2 } from '@lucide/svelte';
+	import Trash2 from '@lucide/svelte/icons/trash-2';
 
 	const SMALL_BADGES_PER_DISPLAY_PAGE = 9;
 

@@ -31,7 +31,7 @@ import type {
 } from '$lib/constants/in-game/types';
 import type { weaponCategories } from '$lib/constants/in-game/weapon-ids';
 import type { GearType, Tables } from '$lib/server/db/tables';
-import type Ability from '$lib/components/ability.svelte';
+import type Ability from '$lib/components/Ability.svelte';
 import { weaponTranslations } from './i18n';
 import { resolve } from '$app/paths';
 

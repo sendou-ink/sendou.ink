@@ -6,8 +6,8 @@
 		userBuildsPage,
 		weaponBuildPage
 	} from '$lib/utils/urls';
-	import Ability from './ability.svelte';
-	import Image from './image/image.svelte';
+	import Ability from '$lib/components/Ability.svelte';
+	import Image from '$lib/components/image/Image.svelte';
 	import type {
 		Ability as AbilityType,
 		BuildAbilitiesTuple,
@@ -20,11 +20,10 @@
 	import WeaponImage from '$lib/components/image/weapon-image.svelte';
 	import { altWeaponIdToId } from '$lib/constants/in-game/weapon-ids';
 	import { getLocale } from '$lib/paraglide/runtime';
-	import Popover from '$lib/components/popover.svelte';
-	import Button from '$lib/components/button.svelte';
-	import { deleteBuild } from '../../routes/u/[identifier]/builds/delete-build.remote';
-	import { userBuilds } from '../../routes/u/[identifier]/builds/user-builds.remote';
-	import { Lock, MessageCircleMore, SquarePen, Trash2 } from '@lucide/svelte';
+	import Lock from '@lucide/svelte/icons/lock';
+	import Popover from '$lib/components/popover/Popover.svelte';
+	import PopoverTriggerButton from '$lib/components/popover/PopoverTriggerButton.svelte';
+	import ActionsMenu from '$lib/components/build-card/ActionsMenu.svelte';
 
 	interface BuildWeaponWithTop500Info {
 		weaponSplId: MainWeaponId;
@@ -95,32 +94,35 @@
 				{build.title}
 			</h2>
 		</div>
-		<div class="date-author-row">
-			{#if owner}
-				<a href={userBuildsPage(owner)} class="owner-link">
-					{owner.username}
-				</a>
-				<div>•</div>
-			{/if}
-			{#if owner?.plusTier}
-				<span>+{owner.plusTier}</span>
-				<div>•</div>
-			{/if}
-			<div class="stack horizontal sm">
-				{#if build.private}
-					<div class="private-text">
-						<Lock class="private-icon" />
-						{m.common_build_private()}
-					</div>
+		<div class="stack horizontal justify-between items-center">
+			<div class="date-author-row">
+				{#if owner}
+					<a href={userBuildsPage(owner)} class="owner-link">
+						{owner.username}
+					</a>
+					<div>•</div>
 				{/if}
-				<time class="whitespace-nowrap">
-					{build.updatedAt.toLocaleDateString(getLocale(), {
-						day: 'numeric',
-						month: 'long',
-						year: 'numeric'
-					})}
-				</time>
+				{#if owner?.plusTier}
+					<span>+{owner.plusTier}</span>
+					<div>•</div>
+				{/if}
+				<div class="stack horizontal sm">
+					{#if build.private}
+						<div class="private-text">
+							<Lock class="private-icon" />
+							{m.common_build_private()}
+						</div>
+					{/if}
+					<time class="whitespace-nowrap">
+						{build.updatedAt.toLocaleDateString(getLocale(), {
+							day: 'numeric',
+							month: 'numeric',
+							year: 'numeric'
+						})}
+					</time>
+				</div>
 			</div>
+			<ActionsMenu />
 		</div>
 	</div>
 	<div class="weapons">
@@ -138,69 +140,17 @@
 		{@render abilitiesRowWithGear('CLOTHES', abilities[1], build.clothesGearSplId)}
 		{@render abilitiesRowWithGear('SHOES', abilities[2], build.shoesGearSplId)}
 	</div>
-	<!-- xxx: this whole bottom row is placeholder, the idea is to instead have a sort of "description" sneak peek and collapse actions under menu button -->
-	<div class="bottom-row">
-		<a href="xxx:">
-			<Image alt={m.common_pages_analyzer()} class="icon" path={navIconUrl('analyzer')} />
-		</a>
-		{#if build.description}
-			<Popover>
-				{#snippet anchorButton(popovertarget)}
-					<Button variant="minimal" class="small-text" icon={MessageCircleMore} {popovertarget}
-					></Button>
-				{/snippet}
-				{build.description}
-			</Popover>
-		{/if}
-		{#if true}
-			<Button
-				class="small-text"
-				icon={SquarePen}
-				variant="minimal"
-				size="small"
-				href="xxx:"
-				data-testid="edit-build"
-			></Button>
-		{/if}
-		<Popover>
-			{#snippet anchorButton(popovertarget)}
-				<Button {popovertarget} icon={Trash2} variant="minimal-destructive"></Button>
-			{/snippet}
-			Delete build? <Button
-				onclick={async () => {
-					console.log('Deleting build', build.id);
 
-					// xxx: pass identifiers, currently hardcoded
-					// xxx: popover needs to be updated to allow programmatic closing
-					await deleteBuild({
-						buildId: build.id,
-						identifier: 'sendou'
-					}).updates(
-						userBuilds('274').withOverride((current) => {
-							return {
-								...current,
-								builds: current.builds.filter((b) => b.id !== build.id)
-							};
-						})
-					);
-				}}>Delete</Button
-			>
+	{#if build.description}
+		<Popover>
+			{#snippet trigger()}
+				<PopoverTriggerButton class="description-button">
+					{build.description}
+				</PopoverTriggerButton>
+			{/snippet}
+			{build.description}
 		</Popover>
-		<!-- <FormWithConfirm
-				dialogHeading={$_('builds.deleteConfirm', { values: { title } })}
-				fields={[
-					['buildToDeleteId', id],
-					['_action', 'DELETE_BUILD']
-				]}
-			>
-				<SendouButton
-					icon={TrashIcon}
-					class="small-text icon"
-					variant="minimal-destructive"
-					type="submit"
-				/>
-			</FormWithConfirm> -->
-	</div>
+	{/if}
 </div>
 
 {#snippet roundWeaponImage(weapon: BuildWeaponWithTop500Info)}
@@ -261,18 +211,29 @@
 			background-color: var(--color-base-border);
 			overflow: visible;
 		}
+
+		:global(.description-button) {
+			all: unset;
+			background-color: var(--color-base-border);
+			text-align: center;
+			font-size: var(--fonts-xs);
+			border-radius: 0 0 var(--radius-box) var(--radius-box);
+			white-space: nowrap;
+			text-overflow: ellipsis;
+			overflow-x: hidden;
+			padding: var(--s-1) var(--s-3);
+			margin: -2px -12px -12px -12px;
+		}
 	}
 
 	.private-text {
 		display: flex;
-		justify-content: center;
+		align-items: center;
 		font-weight: var(--semi-bold);
 		gap: var(--s-1);
 
 		:global(.private-icon) {
 			width: 16px;
-			margin-block-end: var(--s-1);
-			stroke-width: 2px;
 		}
 	}
 
@@ -338,6 +299,7 @@
 		align-items: center;
 		justify-content: center;
 		gap: var(--s-1);
+		padding-block-start: var(--s-2);
 	}
 
 	.gear-abilities {
@@ -354,19 +316,4 @@
 		margin-bottom: 1rem;
 		row-gap: 28px;
 	}
-
-	.bottom-row {
-		display: flex;
-		height: 100%;
-		align-items: flex-end;
-		justify-content: center;
-		gap: var(--s-4);
-	}
-
-	/*
-
-
-	.small-text {
-		font-size: var(--fonts-xxs) !important;
-	} */
 </style>

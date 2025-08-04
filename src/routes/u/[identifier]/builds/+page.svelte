@@ -1,5 +1,5 @@
 <script lang="ts">
-	import BuildCard from '$lib/components/build-card.svelte';
+	import BuildCard from '$lib/components/build-card/BuildCard.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { userBuilds } from './user-builds.remote';
 

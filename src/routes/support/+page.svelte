@@ -6,7 +6,7 @@
 	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';
 	import { SENDOU_INK_PATREON_URL } from '$lib/utils/urls';
 	import Main from '$lib/components/main.svelte';
-	import { Check } from '@lucide/svelte';
+	import Check from '@lucide/svelte/icons/check';
 </script>
 
 <OpenGraphMeta

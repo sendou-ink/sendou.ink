@@ -5,6 +5,9 @@ import { defineConfig } from 'vite';
 // xxx: ensure translations are tree shaken
 
 export default defineConfig(({ mode }) => ({
+	optimizeDeps: {
+		exclude: ['@lucide/svelte']
+	},
 	plugins: [
 		paraglideVitePlugin({
 			project: './project.inlang',

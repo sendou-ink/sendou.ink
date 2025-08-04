@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import Image from '$lib/components/image/image.svelte';
+	import Image from '$lib/components/image/Image.svelte';
 	import { rankedModesShort } from '$lib/constants/in-game/modes';
 	import { modeImageUrl } from '$lib/utils/urls';
 	import type { UserProfileData } from './user-profile.remote';

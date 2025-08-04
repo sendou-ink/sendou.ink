@@ -10,7 +10,7 @@
 	import { m } from '$lib/paraglide/messages';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { Heart } from '@lucide/svelte';
+	import Heart from '@lucide/svelte/icons/heart';
 
 	let { children } = $props();
 
@@ -141,7 +141,7 @@
 		padding-inline: var(--s-4);
 		position: fixed;
 		top: 0;
-		z-index: 10;
+		z-index: 50;
 	}
 
 	.top-leaderboard {

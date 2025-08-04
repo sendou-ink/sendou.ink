@@ -19,7 +19,7 @@
 		children?: Snippet;
 	}
 
-	type ButtonProps = HTMLButtonAttributes &
+	export type ButtonProps = HTMLButtonAttributes &
 		BaseProps & {
 			href?: never;
 			target?: never;
@@ -201,6 +201,7 @@
 		width: 1.25rem;
 		margin-inline-end: var(--s-1-5);
 
+		/** xxx: this is not correct, on safari different size (check Support button for example)*/
 		:global(svg) {
 			height: max-content;
 		}

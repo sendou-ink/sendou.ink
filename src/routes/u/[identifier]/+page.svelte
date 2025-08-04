@@ -9,9 +9,10 @@
 	import WeaponPool from './weapon-pool.svelte';
 	import TopPlacements from './top-placements.svelte';
 	import BadgeDisplay from '$lib/components/badge-display.svelte';
-	import Popover from '$lib/components/popover.svelte';
+	import Popover from '$lib/components/popover/Popover.svelte';
 	import { countryCodeToTranslatedName } from '$lib/utils/i18n';
 	import { getLocale } from '$lib/paraglide/runtime';
+	import PopoverTriggerButton from '$lib/components/popover/PopoverTriggerButton.svelte';
 
 	let { params } = $props();
 
@@ -44,8 +45,10 @@
 				<div>
 					{#if profile.country}
 						<Popover>
-							{#snippet anchor()}
-								<Flag countryCode={profile.country!} tiny />
+							{#snippet trigger()}
+								<PopoverTriggerButton variant="minimal">
+									<Flag countryCode={profile.country!} tiny />
+								</PopoverTriggerButton>
 							{/snippet}
 							{countryName}</Popover
 						>
