@@ -73,7 +73,7 @@
 				<Command.List>
 					<Command.Empty>{m.common_noResults()}</Command.Empty>
 					{#each data as group (group.label)}
-						<Command.Group>
+						<Command.Group value={group.label}>
 							<Command.GroupHeading>
 								<div class="group-heading">
 									{#if group.image}
@@ -83,8 +83,8 @@
 									<div></div>
 								</div>
 							</Command.GroupHeading>
-							{#each group.items as item (item.value)}
-								<Command.GroupItems>
+							<Command.GroupItems>
+								{#each group.items as item (item.value)}
 									<Command.Item
 										keywords={item.keywords}
 										value={item.value}
@@ -97,8 +97,8 @@
 											<span>{item.label}</span>
 										</div>
 									</Command.Item>
-								</Command.GroupItems>
-							{/each}
+								{/each}
+							</Command.GroupItems>
 						</Command.Group>
 					{/each}
 				</Command.List>
