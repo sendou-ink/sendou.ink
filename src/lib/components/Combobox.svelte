@@ -71,38 +71,36 @@
 					<Command.Input placeholder={searchPlaceholder} />
 				</div>
 				<Command.List>
-					<Command.Viewport>
-						<Command.Empty>{m.common_noResults()}</Command.Empty>
-						{#each data as group (group.label)}
-							<Command.Group>
-								<Command.GroupHeading>
-									<div class="group-heading">
-										{#if group.image}
-											<Image path={group.image} size={28} lazy />
-										{/if}
-										{group.label}
-										<div></div>
-									</div>
-								</Command.GroupHeading>
-								{#each group.items as item (item.value)}
-									<Command.GroupItems>
-										<Command.Item
-											keywords={item.keywords}
-											value={item.value}
-											onSelect={() => onSelect(item)}
-										>
-											<div class="item">
-												{#if item.image}
-													<Image path={item.image} size={24} lazy />
-												{/if}
-												<span>{item.label}</span>
-											</div>
-										</Command.Item>
-									</Command.GroupItems>
-								{/each}
-							</Command.Group>
-						{/each}
-					</Command.Viewport>
+					<Command.Empty>{m.common_noResults()}</Command.Empty>
+					{#each data as group (group.label)}
+						<Command.Group>
+							<Command.GroupHeading>
+								<div class="group-heading">
+									{#if group.image}
+										<Image path={group.image} size={28} lazy />
+									{/if}
+									{group.label}
+									<div></div>
+								</div>
+							</Command.GroupHeading>
+							{#each group.items as item (item.value)}
+								<Command.GroupItems>
+									<Command.Item
+										keywords={item.keywords}
+										value={item.value}
+										onSelect={() => onSelect(item)}
+									>
+										<div class="item">
+											{#if item.image}
+												<Image path={item.image} size={24} lazy />
+											{/if}
+											<span>{item.label}</span>
+										</div>
+									</Command.Item>
+								</Command.GroupItems>
+							{/each}
+						</Command.Group>
+					{/each}
 				</Command.List>
 			</Command.Root>
 		</Popover.Content>
