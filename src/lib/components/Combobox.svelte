@@ -2,21 +2,37 @@
 	import { tick } from 'svelte';
 	import { Command, Popover } from 'bits-ui';
 	import { m } from '$lib/paraglide/messages';
-	import CheckIcon from '@lucide/svelte/icons/check';
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
 	import Search from '@lucide/svelte/icons/search';
+	import Image from './image/Image.svelte';
 
-	interface Props {
-		data: Array<{ value: string; label: string }>;
+	interface Item {
+		value: string;
+		label: string;
+		image?: string;
+		keywords?: string[];
 	}
 
-	let { data }: Props = $props();
+	interface Group {
+		label: string;
+		image?: string;
+		items: Item[];
+	}
+
+	interface Props {
+		data: Group[];
+		title: string;
+		buttonPlaceholder: string;
+		searchPlaceholder: string;
+	}
+
+	let { data, title, buttonPlaceholder, searchPlaceholder }: Props = $props();
 
 	let open = $state(false);
 	let value = $state('');
-	let trigger = $state<HTMLButtonElement>(null!);
-
-	const selectedValue = $derived(data.find((item) => item.value === value)?.label);
+	let trigger = $state<HTMLButtonElement>()!;
+	let selectedValue = $state('');
+	let selectedImage = $state('');
 
 	function closeAndReturnFocus() {
 		open = false;
@@ -27,12 +43,18 @@
 </script>
 
 <div class="combobox">
-	<span>Select</span>
+	<span>{title}</span>
 	<Popover.Root bind:open>
 		<Popover.Trigger>
 			{#snippet child({ props })}
 				<button {...props}>
-					<span class={{ 'text-white': selectedValue }}>{selectedValue || 'Select an option'}</span>
+					<div>
+						{#if selectedImage}
+							<Image path={selectedImage} size={24} lazy />
+						{/if}
+						<span class={{ 'text-white': selectedValue }}>{selectedValue || buttonPlaceholder}</span
+						>
+					</div>
 					<ChevronsUpDownIcon size="1rem" />
 				</button>
 			{/snippet}
@@ -41,24 +63,46 @@
 			<Command.Root>
 				<div class="input-container">
 					<Search color="currentColor" size="1rem" />
-					<Command.Input placeholder="Search..." />
+					<Command.Input placeholder={searchPlaceholder} />
 				</div>
 				<Command.List>
-					<Command.Empty>{m.common_noResults()}</Command.Empty>
-					<Command.Group>
-						{#each data as item (item.value)}
-							<Command.Item
-								value={item.value}
-								onSelect={() => {
-									value = item.value;
-									closeAndReturnFocus();
-								}}
-							>
-								<CheckIcon color={value !== item.value ? 'transparent' : 'currentColor'} />
-								<span>{item.label}</span>
-							</Command.Item>
+					<Command.Viewport>
+						<Command.Empty>{m.common_noResults()}</Command.Empty>
+						{#each data as group (group.label)}
+							<Command.Group>
+								<Command.GroupHeading
+									><div class="group-heading">
+										{#if group.image}
+											<Image path={group.image} size={28} lazy />
+										{/if}
+										{group.label}
+										<div></div>
+									</div></Command.GroupHeading
+								>
+								{#each group.items as item (item.value)}
+									<Command.GroupItems>
+										<Command.Item
+											keywords={item.keywords}
+											value={item.value}
+											onSelect={() => {
+												value = item.value;
+												selectedValue = item.label;
+												selectedImage = item.image || '';
+												closeAndReturnFocus();
+											}}
+										>
+											<div class="item">
+												{#if item.image}
+													<Image path={item.image} size={24} lazy />
+												{/if}
+												<span>{item.label}</span>
+											</div>
+										</Command.Item>
+									</Command.GroupItems>
+								{/each}
+							</Command.Group>
 						{/each}
-					</Command.Group>
+					</Command.Viewport>
 				</Command.List>
 			</Command.Root>
 		</Popover.Content>
@@ -87,9 +131,17 @@
 		gap: var(--s-1-5);
 		width: 100%;
 		letter-spacing: 0.5px;
+		cursor: pointer;
 
 		&:focus-visible {
 			outline: 2px solid var(--color-primary);
+		}
+
+		div {
+			display: flex;
+			align-items: center;
+			gap: var(--s-2);
+			flex-grow: 1;
 		}
 
 		span.text-white {
@@ -105,6 +157,44 @@
 		border-bottom: var(--border-style);
 		padding: var(--s-2-5) var(--s-2);
 		gap: var(--s-2);
+	}
+
+	.group-heading {
+		display: flex;
+		align-items: center;
+		gap: var(--s-2);
+		padding: var(--s-1-5);
+		white-space: nowrap;
+		font-size: var(--fonts-xxs);
+		color: var(--color-base-content-secondary);
+		font-weight: var(--bold);
+		text-transform: uppercase;
+
+		& > div {
+			width: 100%;
+			height: 2px;
+			margin-block: var(--s-2);
+			background-color: var(--color-base-card);
+		}
+
+		:global {
+			img {
+				background-color: var(--color-base-card);
+				padding: var(--s-1);
+				border-radius: 100%;
+				min-width: 28px;
+			}
+		}
+	}
+
+	.item {
+		display: flex;
+		align-items: center;
+		gap: var(--s-2);
+		width: 100%;
+		padding: var(--s-1-5);
+		border-radius: var(--radius-field);
+		cursor: pointer;
 	}
 
 	.combobox :global {
@@ -137,8 +227,8 @@
 		}
 
 		[data-command-list] {
-			padding: var(--s-2);
-			max-height: 250px;
+			padding: var(--s-1);
+			height: 250px;
 			overflow-y: auto;
 			width: 100%;
 			border-radius: var(--radius-field);
@@ -153,6 +243,27 @@
 
 			&::-webkit-scrollbar-thumb {
 				border-radius: var(--radius-field);
+			}
+		}
+
+		[data-command-group] {
+			margin-bottom: var(--s-2);
+		}
+
+		[data-command-empty] {
+			color: var(--color-base-content-secondary);
+			font-size: var(--fonts-xs);
+			font-weight: var(--bold);
+			height: 100%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		[data-command-item] {
+			&:hover > .item,
+			&[aria-selected='true'] > .item {
+				background-color: var(--color-base-card);
 			}
 		}
 	}
