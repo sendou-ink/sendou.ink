@@ -1,7 +1,7 @@
 <script lang="ts">
-	import DiscordIcon from '$lib/components/icons/discord.svelte';
-	import YouTubeIcon from '$lib/components/icons/youtube.svelte';
-	import Main from '$lib/components/main.svelte';
+	import DiscordIcon from '$lib/components/icons/Discord.svelte';
+	import YouTubeIcon from '$lib/components/icons/YouTube.svelte';
+	import Main from '$lib/components/Main.svelte';
 	import links from './links.json';
 
 	// links should be sorted in the json like so: links.sort((a, b) => a.title.localeCompare(b.title))

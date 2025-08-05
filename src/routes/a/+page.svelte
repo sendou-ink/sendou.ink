@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import Main from '$lib/components/main.svelte';
-	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';
+	import Main from '$lib/components/Main.svelte';
+	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { joinListToNaturalString } from '$lib/utils/arrays';
 

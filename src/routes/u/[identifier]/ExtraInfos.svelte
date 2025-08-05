@@ -2,7 +2,7 @@
 	import type { UserProfileData } from './user-profile.remote';
 	import { navIconUrl } from '$lib/utils/urls';
 	import Image from '$lib/components/image/Image.svelte';
-	import DiscordIcon from '$lib/components/icons/discord.svelte';
+	import DiscordIcon from '$lib/components/icons/Discord.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { rawSensToString } from '$lib/utils/strings';
 

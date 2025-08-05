@@ -17,7 +17,7 @@
 	import type { GearType, Tables, UserWithPlusTier } from '$lib/server/db/tables';
 	import { m } from '$lib/paraglide/messages';
 	import { modesLongTranslations, weaponTranslations } from '$lib/utils/i18n';
-	import WeaponImage from '$lib/components/image/weapon-image.svelte';
+	import WeaponImage from '$lib/components/image/WeaponImage.svelte';
 	import { altWeaponIdToId } from '$lib/constants/in-game/weapon-ids';
 	import { getLocale } from '$lib/paraglide/runtime';
 	import Lock from '@lucide/svelte/icons/lock';

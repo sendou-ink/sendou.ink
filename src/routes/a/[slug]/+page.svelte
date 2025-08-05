@@ -1,7 +1,7 @@
 <script lang="ts">
-	import Main from '$lib/components/main.svelte';
-	import Markdown from '$lib/components/markdown.svelte';
-	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';
+	import Main from '$lib/components/Main.svelte';
+	import Markdown from '$lib/components/Markdown.svelte';
+	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { articlePreviewUrl } from '$lib/utils/urls';
 	import { articleBySlug, type ArticleBySlugData } from '../articles.remote';
 

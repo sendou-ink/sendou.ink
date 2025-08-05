@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { mainWeaponImageUrl, weaponBuildPage, weaponCategoryUrl } from '$lib/utils/urls';
-	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';
+	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import Image from '$lib/components/image/Image.svelte';
-	import AddNewButton from '$lib/components/add-new-button.svelte';
+	import AddNewButton from '$lib/components/AddNewButton.svelte';
 	import { resolve } from '$app/paths';
 	import { me } from '../me.remote';
 	import { weaponCategories, weaponIdIsNotAlt } from '$lib/constants/in-game/weapon-ids';
-	import Main from '$lib/components/main.svelte';
+	import Main from '$lib/components/Main.svelte';
 	import { weaponCategoryTranslations, weaponTranslations } from '$lib/utils/i18n';
 	import type { MainWeaponId } from '$lib/constants/in-game/types';
 

@@ -1,14 +1,14 @@
 <script lang="ts">
-	import Avatar from '$lib/components/avatar.svelte';
-	import Flag from '$lib/components/flag.svelte';
-	import TeamInfo from './team-info.svelte';
+	import Avatar from '$lib/components/Avatar.svelte';
+	import Flag from '$lib/components/Flag.svelte';
+	import TeamInfo from './TeamInfo.svelte';
 	import { userLayoutData } from './user-layout-data.remote';
 	import { userProfile } from './user-profile.remote';
-	import Socials from './socials.svelte';
-	import ExtraInfos from './extra-infos.svelte';
-	import WeaponPool from './weapon-pool.svelte';
-	import TopPlacements from './top-placements.svelte';
-	import BadgeDisplay from '$lib/components/badge-display.svelte';
+	import Socials from './Socials.svelte';
+	import ExtraInfos from './ExtraInfos.svelte';
+	import WeaponPool from './WeaponPool.svelte';
+	import TopPlacements from './TopPlacements.svelte';
+	import BadgeDisplay from '$lib/components/BadgeDisplay.svelte';
 	import Popover from '$lib/components/popover/Popover.svelte';
 	import { countryCodeToTranslatedName } from '$lib/utils/i18n';
 	import { getLocale } from '$lib/paraglide/runtime';

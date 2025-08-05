@@ -11,9 +11,9 @@
 		userPage
 	} from '$lib/utils/urls';
 	import Image from '$lib/components/image/Image.svelte';
-	import DiscordIcon from '$lib/components/icons/discord.svelte';
-	import GitHubIcon from '$lib/components/icons/github.svelte';
-	import PatreonIcon from '$lib/components/icons/patreon.svelte';
+	import DiscordIcon from '$lib/components/icons/Discord.svelte';
+	import GitHubIcon from '$lib/components/icons/Github.svelte';
+	import PatreonIcon from '$lib/components/icons/Patreon.svelte';
 	import { patrons } from './patrons.remote';
 	import { m } from '$lib/paraglide/messages';
 

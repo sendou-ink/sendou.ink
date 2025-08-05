@@ -1,5 +1,5 @@
 <script>
-	import Main from '$lib/components/main.svelte';
+	import Main from '$lib/components/Main.svelte';
 </script>
 
 <!-- xxx: redirect to /search -->

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Button from '$lib/components/button.svelte';
+	import Button from '$lib/components/Button.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import Lock from '@lucide/svelte/icons/lock';
 	import LockOpen from '@lucide/svelte/icons/lock-open';

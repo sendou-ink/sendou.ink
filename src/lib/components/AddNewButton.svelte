@@ -2,7 +2,7 @@
 	import Image from '$lib/components/image/Image.svelte';
 	import { navIconUrl } from '$lib/utils/urls';
 	import Plus from '@lucide/svelte/icons/plus';
-	import Button from './button.svelte';
+	import Button from './Button.svelte';
 
 	interface Props {
 		href: string;

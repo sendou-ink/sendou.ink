@@ -1,8 +1,8 @@
 <script lang="ts">
 	import BuildCard from '$lib/components/build-card/BuildCard.svelte';
-	import Button from '$lib/components/button.svelte';
-	import Main from '$lib/components/main.svelte';
-	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';
+	import Button from '$lib/components/Button.svelte';
+	import Main from '$lib/components/Main.svelte';
+	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { BUILDS_PAGE_BATCH_SIZE } from '$lib/constants/build';
 	import type { MainWeaponId } from '$lib/constants/in-game/types';
 	import { m } from '$lib/paraglide/messages';

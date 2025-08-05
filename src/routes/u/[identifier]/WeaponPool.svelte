@@ -1,5 +1,5 @@
 <script lang="ts">
-	import WeaponImage from '$lib/components/image/weapon-image.svelte';
+	import WeaponImage from '$lib/components/image/WeaponImage.svelte';
 	import type { UserProfileData } from './user-profile.remote';
 
 	interface Props {

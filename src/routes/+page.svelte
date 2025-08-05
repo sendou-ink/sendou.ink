@@ -1,6 +1,6 @@
 <script>
-	import Main from '$lib/components/main.svelte';
-	import DesktopSideNav from './desktop-side-nav.svelte';
+	import Main from '$lib/components/Main.svelte';
+	import DesktopSideNav from './DesktopSideNav.svelte';
 </script>
 
 <Main class="front-page__container">

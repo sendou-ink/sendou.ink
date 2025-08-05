@@ -1,9 +1,9 @@
 <script lang="ts">
 	import type { UserProfileData } from './user-profile.remote';
-	import TwitchIcon from '$lib/components/icons/twitch.svelte';
-	import YouTubeIcon from '$lib/components/icons/youtube.svelte';
-	import BattlefyIcon from '$lib/components/icons/battlefy.svelte';
-	import BskyIcon from '$lib/components/icons/bsky.svelte';
+	import TwitchIcon from '$lib/components/icons/Twitch.svelte';
+	import YouTubeIcon from '$lib/components/icons/YouTube.svelte';
+	import BattlefyIcon from '$lib/components/icons/Battlefy.svelte';
+	import BskyIcon from '$lib/components/icons/Bsky.svelte';
 	import { bskyUrl } from '$lib/utils/urls';
 
 	interface Props {

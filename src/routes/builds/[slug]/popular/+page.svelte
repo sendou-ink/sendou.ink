@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Ability from '$lib/components/Ability.svelte';
-	import Main from '$lib/components/main.svelte';
-	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';
+	import Main from '$lib/components/Main.svelte';
+	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import type { MainWeaponId } from '$lib/constants/in-game/types';
 	import { builds_noPopularBuilds, m } from '$lib/paraglide/messages';
 	import { weaponTranslations } from '$lib/utils/i18n';

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import Main from '$lib/components/main.svelte';
-	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';
+	import Main from '$lib/components/Main.svelte';
+	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { m } from '$lib/paraglide/messages';
 
 	const questionsAndAnswers = [

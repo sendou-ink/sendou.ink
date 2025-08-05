@@ -1,11 +1,11 @@
 <script lang="ts">
-	import Badge from '$lib/components/badge.svelte';
-	import Divider from '$lib/components/divider.svelte';
-	import Input from '$lib/components/input.svelte';
+	import Badge from '$lib/components/Badge.svelte';
+	import Divider from '$lib/components/Divider.svelte';
+	import Input from '$lib/components/Input.svelte';
 	import { BADGES_DOC_LINK } from '$lib/utils/urls';
-	import Main from '$lib/components/main.svelte';
+	import Main from '$lib/components/Main.svelte';
 	import { allBadges } from './all-badges.remote';
-	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';
+	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { resolve } from '$app/paths';
 	import { Search } from '@lucide/svelte';

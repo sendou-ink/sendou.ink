@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import type { PageProps } from './$types';
-	import Main from '$lib/components/main.svelte';
-	import SubNav from '$lib/components/sub-nav/sub-nav.svelte';
-	import SubNavLink from '$lib/components/sub-nav/sub-nav-link.svelte';
-	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';
+	import Main from '$lib/components/Main.svelte';
+	import SubNav from '$lib/components/sub-nav/SubNav.svelte';
+	import SubNavLink from '$lib/components/sub-nav/SubNavLink.svelte';
+	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { me } from '../../me.remote';
 	import { userLayoutData } from './user-layout-data.remote';

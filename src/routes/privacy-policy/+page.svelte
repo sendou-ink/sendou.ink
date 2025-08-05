@@ -1,6 +1,6 @@
 <script>
-	import Main from '$lib/components/main.svelte';
-	import OpenGraphMeta from '$lib/components/open-graph-meta.svelte';
+	import Main from '$lib/components/Main.svelte';
+	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 </script>
 
 <OpenGraphMeta title="Privacy Policy" />
