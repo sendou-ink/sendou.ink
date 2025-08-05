@@ -27,7 +27,9 @@ import type {
 	AbilityWithUnknown,
 	BuildAbilitiesTupleWithUnknown,
 	MainWeaponId,
-	ModeShortWithSpecial
+	ModeShortWithSpecial,
+	SpecialWeaponId,
+	SubWeaponId
 } from '$lib/constants/in-game/types';
 import type { weaponCategories } from '$lib/constants/in-game/weapon-ids';
 import type { GearType, Tables } from '$lib/server/db/tables';
@@ -498,10 +500,12 @@ export function outlinedMainWeaponImageUrl(mainWeaponSplId: MainWeaponId) {
 export function outlinedFiveStarMainWeaponImageUrl(mainWeaponSplId: MainWeaponId) {
 	return `/img/main-weapons-outlined-2/${mainWeaponSplId}`;
 }
-// export const subWeaponImageUrl = (subWeaponSplId: SubWeaponId) =>
-// 	`/img/sub-weapons/${subWeaponSplId}`;
-// export const specialWeaponImageUrl = (specialWeaponSplId: SpecialWeaponId) =>
-// 	`/img/special-weapons/${specialWeaponSplId}`;
+export function subWeaponImageUrl(subWeaponSplId: SubWeaponId) {
+	return `/img/sub-weapons/${subWeaponSplId}`;
+}
+export function specialWeaponImageUrl(specialWeaponSplId: SpecialWeaponId) {
+	return `/img/special-weapons/${specialWeaponSplId}`;
+}
 // export const specialWeaponVariantImageUrl = (
 // 	specialWeaponSplId: SpecialWeaponId,
 // 	variant: "weakpoints",
