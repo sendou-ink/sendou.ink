@@ -59,7 +59,7 @@
 
 	let { build, owner, withAbilitySorting = true, canEdit: _canEdit = false }: BuildProps = $props();
 
-	// why does the build not show updates (on build privacy change) even when this does log?
+	// xxx: why does the build not show updates (on build privacy change) even when this does log?
 	// $inspect(build.private);
 
 	const abilities = $derived(withAbilitySorting ? build.abilities : build.unsortedAbilities);
