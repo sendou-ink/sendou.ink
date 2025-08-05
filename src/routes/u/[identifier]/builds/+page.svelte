@@ -10,7 +10,7 @@
 
 	// const isOwnPage = $derived(user?.id === layoutData.user.id);
 
-	const allBuilds = $derived((await userBuilds(params.identifier)).builds);
+	const { builds: allBuilds, weaponCounts } = $derived(await userBuilds(params.identifier));
 
 	// Sorting dialog state
 	// let changingSorting = $state<boolean>(() => {
@@ -64,7 +64,7 @@
 		</div>
 	{/if} -->
 
-	<BuildsFilters bind:filter isOwnPage />
+	<BuildsFilters bind:filter isOwnPage builds={allBuilds} {weaponCounts} />
 
 	{#if builds.length > 0}
 		<div class="builds-container">

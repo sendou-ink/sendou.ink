@@ -5,6 +5,7 @@
 	// xxx: missing some props
 	interface Props {
 		children: Snippet;
+		scrolling?: boolean;
 		items: Array<{
 			icon?: Component;
 			imgSrc?: string;
@@ -17,7 +18,7 @@
 		}>;
 	}
 
-	let { children, items }: Props = $props();
+	let { children, items, scrolling }: Props = $props();
 
 	const visibleItems = $derived(items.filter((item) => !item.hidden));
 </script>
@@ -31,7 +32,7 @@
 			{#snippet child({ wrapperProps, props, open })}
 				{#if open}
 					<div {...wrapperProps}>
-						<div {...props} class="items-container">
+						<div {...props} class={['items-container', { scrolling }]}>
 							{#each visibleItems as { icon: Icon, imgSrc, label, onclick, href, disabled, destructive } (label)}
 								{@const tag = href ? 'a' : 'div'}
 								<DropdownMenu.Item {onclick} {disabled}>
@@ -81,6 +82,11 @@
 		}
 	}
 
+	.scrolling {
+		max-height: 300px !important;
+		overflow-y: auto;
+	}
+
 	.item {
 		display: flex;
 		align-items: center;
@@ -88,14 +94,15 @@
 		font-size: var(--fonts-xs);
 		color: var(--color-base-content);
 		white-space: nowrap;
-		gap: var(--s-2);
+		gap: var(--s-2-5);
 		padding-inline: var(--s-3-5);
 		background-color: var(--color-base-section);
 		width: 100%;
 		border: 0;
 		outline: none;
 		justify-content: flex-start;
-		height: 36px;
+		min-height: 36px;
+		max-height: 36px;
 
 		&:first-child {
 			border-radius: 14.5px 14.5px var(--rounded-xs) var(--rounded-xs);
@@ -120,7 +127,11 @@
 	}
 
 	.item-icon {
-		min-width: 18px;
-		max-width: 18px;
+		min-width: 24px;
+		max-width: 24px;
+	}
+
+	span.item-icon {
+		padding: var(--s-0-5);
 	}
 </style>

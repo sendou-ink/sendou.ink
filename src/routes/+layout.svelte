@@ -88,6 +88,10 @@
 		line-height: 1.5;
 		overflow-x: hidden;
 		-webkit-tap-highlight-color: transparent;
+
+		scrollbar-color: var(--color-primary-transparent) transparent;
+		scrollbar-width: thin;
+		scrollbar-gutter: stable;
 	}
 
 	.container {

@@ -9,6 +9,8 @@ import { sortBuilds } from './build-sorting';
 import type { MainWeaponId } from '$lib/constants/in-game/types';
 import { sortAbilities } from '$lib/core/build/ability-sorting';
 
+export type UserBuildsData = Awaited<ReturnType<typeof userBuilds>>;
+
 // xxx: better schema?
 export const userBuilds = query(z.string(), async (identifier) => {
 	const loggedInUser = await getUser();
