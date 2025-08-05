@@ -59,6 +59,9 @@
 
 	let { build, owner, withAbilitySorting = true, canEdit: _canEdit = false }: BuildProps = $props();
 
+	// why does the build not show updates (on build privacy change) even when this does log?
+	// $inspect(build.private);
+
 	const abilities = $derived(withAbilitySorting ? build.abilities : build.unsortedAbilities);
 	const isNoGear = $derived(
 		[build.headGearSplId, build.clothesGearSplId, build.shoesGearSplId].some((id) => id === -1)
@@ -106,7 +109,7 @@
 					<span>+{owner.plusTier}</span>
 					<div>•</div>
 				{/if}
-				<div class="stack horizontal sm">
+				<div class="stack horizontal items-center sm">
 					{#if build.private}
 						<div class="private-text">
 							<Lock class="private-icon" />
@@ -122,7 +125,7 @@
 					</time>
 				</div>
 			</div>
-			<ActionsMenu />
+			<ActionsMenu buildId={build.id} isPrivate={Boolean(build.private)} showActions={!owner} />
 		</div>
 	</div>
 	<div class="weapons">
@@ -222,7 +225,7 @@
 			text-overflow: ellipsis;
 			overflow-x: hidden;
 			padding: var(--s-1) var(--s-3);
-			margin: -2px -12px -12px -12px;
+			margin: auto -12px -12px -12px;
 		}
 	}
 

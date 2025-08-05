@@ -2416,5 +2416,8 @@
 	"weapons_SPECIAL_3": "Zipcaster",
 	"weapons_SPECIAL_14": "Triple Inkstrike",
 	"weapons_SPECIAL_1": "Trizooka",
-	"weapons_SPECIAL_11": "Ultra Stamp"
+	"weapons_SPECIAL_11": "Ultra Stamp",
+	"builds_actions_analyze": "Analyze",
+	"builds_actions_makePrivate": "Make private",
+	"builds_actions_makePublic": "Make public"
 }

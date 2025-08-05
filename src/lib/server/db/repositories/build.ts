@@ -180,3 +180,13 @@ export async function update(args: CreateArgs & { id: number }) {
 export function deleteById(id: number) {
 	return db.deleteFrom('Build').where('id', '=', id).execute();
 }
+
+export function updateVisibilityById(args: { id: number; private: number }) {
+	return db
+		.updateTable('Build')
+		.set({
+			private: args.private
+		})
+		.where('id', '=', args.id)
+		.execute();
+}

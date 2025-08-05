@@ -14,35 +14,41 @@
 	{@render trigger()}
 	<Popover.Portal>
 		<Popover.Content sideOffset={8}>
-			{@render children()}
+			{#snippet child({ wrapperProps, props, open })}
+				{#if open}
+					<div {...wrapperProps}>
+						<div {...props} class="popover-content">
+							{@render children()}
+						</div>
+					</div>
+				{/if}
+			{/snippet}
 		</Popover.Content>
 	</Popover.Portal>
 </Popover.Root>
 
 <style>
-	:global {
-		[data-popover-content] {
-			width: max-content;
-			max-width: 20rem;
-			padding: var(--s-2);
-			border: var(--border-style);
-			border-radius: var(--radius-box);
-			background-color: var(--color-base-section);
-			font-size: var(--fonts-sm);
-			font-weight: var(--semi-bold);
-			white-space: pre-wrap;
-			color: var(--color-base-content);
+	.popover-content {
+		width: max-content;
+		max-width: 20rem;
+		padding: var(--s-2);
+		border: var(--border-style);
+		border-radius: var(--radius-box);
+		background-color: var(--color-base-section);
+		font-size: var(--fonts-sm);
+		font-weight: var(--semi-bold);
+		white-space: pre-wrap;
+		color: var(--color-base-content);
 
-			opacity: 1;
-			transform: translateY(0);
-			transition:
-				opacity 0.2s ease-out,
-				transform 0.2s ease-out;
+		opacity: 1;
+		transform: translateY(0);
+		transition:
+			opacity 0.2s ease-out,
+			transform 0.2s ease-out;
 
-			@starting-style {
-				opacity: 0;
-				transform: translateY(-4px);
-			}
+		@starting-style {
+			opacity: 0;
+			transform: translateY(-4px);
 		}
 	}
 </style>

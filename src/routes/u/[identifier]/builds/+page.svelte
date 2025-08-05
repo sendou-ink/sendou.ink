@@ -1,13 +1,16 @@
 <script lang="ts">
 	import BuildCard from '$lib/components/build-card/BuildCard.svelte';
+	import type { MainWeaponId } from '$lib/constants/in-game/types';
 	import { m } from '$lib/paraglide/messages';
 	import { userBuilds } from './user-builds.remote';
+	import BuildsFilters from './BuildFilters.svelte';
+	import type { BuildFilter } from './types';
 
 	let { params } = $props();
 
 	// const isOwnPage = $derived(user?.id === layoutData.user.id);
 
-	const builds = $derived((await userBuilds(params.identifier)).builds);
+	const allBuilds = $derived((await userBuilds(params.identifier)).builds);
 
 	// Sorting dialog state
 	// let changingSorting = $state<boolean>(() => {
@@ -23,19 +26,22 @@
 	// const closeSortingDialog = () => setChangingSorting(false);
 
 	// Filtered builds
-	// const builds = $derived(() => {
-	// 	if (weaponFilter === 'ALL') {
-	// 		return data.builds;
-	// 	} else if (weaponFilter === 'PUBLIC') {
-	// 		return data.builds.filter((build) => !build.private);
-	// 	} else if (weaponFilter === 'PRIVATE') {
-	// 		return data.builds.filter((build) => build.private);
-	// 	} else {
-	// 		return data.builds.filter((build) =>
-	// 			build.weapons.map((wpn) => wpn.weaponSplId).includes(weaponFilter as number)
-	// 		);
-	// 	}
-	// });
+
+	let filter = $state<BuildFilter>('ALL');
+
+	const builds = $derived.by(() => {
+		if (filter === 'ALL') {
+			return allBuilds;
+		} else if (filter === 'PUBLIC') {
+			return allBuilds.filter((build) => !build.private);
+		} else if (filter === 'PRIVATE') {
+			return allBuilds.filter((build) => build.private);
+		} else {
+			return allBuilds.filter((build) =>
+				build.weapons.map((wpn) => wpn.weaponSplId).includes(filter as MainWeaponId)
+			);
+		}
+	});
 </script>
 
 <div class="stack lg">
@@ -58,10 +64,7 @@
 		</div>
 	{/if} -->
 
-	<!-- <BuildsFilters
-		{weaponFilter}
-		{setWeaponFilter}
-	/> -->
+	<BuildsFilters bind:filter isOwnPage />
 
 	{#if builds.length > 0}
 		<div class="builds-container">
