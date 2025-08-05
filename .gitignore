@@ -15,10 +15,10 @@ dump
 .DS_Store
 .excalidraw
 
-/scripts/output/*
-!/scripts/output/.gitkeep
+/src/scripts/output/*
+!/src/scripts/output/.gitkeep
 
-/scripts/dicts/**/*.json
+/src/scripts/dicts/**/*.json
 /test-results/
 /playwright-report/
 /playwright/.cache/

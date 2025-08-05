@@ -3,6 +3,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
 // xxx: ensure translations are tree shaken
+// xxx: when running npm run dev paraglide compiles twice, first with the setup script then dev server boot up
 
 export default defineConfig(({ mode }) => ({
 	optimizeDeps: {
