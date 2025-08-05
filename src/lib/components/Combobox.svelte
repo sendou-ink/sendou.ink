@@ -19,6 +19,7 @@
 		items: Item[];
 	}
 
+	// xxx: allow for data to just be an array of items
 	interface Props {
 		data: Group[];
 		title: string;
@@ -34,8 +35,12 @@
 	let selectedValue = $state('');
 	let selectedImage = $state('');
 
-	function closeAndReturnFocus() {
+	function onSelect(item: Item) {
 		open = false;
+		value = item.value;
+		selectedValue = item.label;
+		selectedImage = item.image || '';
+
 		tick().then(() => {
 			trigger.focus();
 		});
@@ -70,26 +75,21 @@
 						<Command.Empty>{m.common_noResults()}</Command.Empty>
 						{#each data as group (group.label)}
 							<Command.Group>
-								<Command.GroupHeading
-									><div class="group-heading">
+								<Command.GroupHeading>
+									<div class="group-heading">
 										{#if group.image}
 											<Image path={group.image} size={28} lazy />
 										{/if}
 										{group.label}
 										<div></div>
-									</div></Command.GroupHeading
-								>
+									</div>
+								</Command.GroupHeading>
 								{#each group.items as item (item.value)}
 									<Command.GroupItems>
 										<Command.Item
 											keywords={item.keywords}
 											value={item.value}
-											onSelect={() => {
-												value = item.value;
-												selectedValue = item.label;
-												selectedImage = item.image || '';
-												closeAndReturnFocus();
-											}}
+											onSelect={() => onSelect(item)}
 										>
 											<div class="item">
 												{#if item.image}
