@@ -25,12 +25,21 @@
 		title: string;
 		buttonPlaceholder: string;
 		searchPlaceholder: string;
+		open?: boolean;
+		value?: string;
+		onselect?: (item: Item) => void;
 	}
 
-	let { data, title, buttonPlaceholder, searchPlaceholder }: Props = $props();
+	let {
+		data,
+		title,
+		buttonPlaceholder,
+		searchPlaceholder,
+		open = $bindable(false),
+		value = $bindable(''),
+		onselect
+	}: Props = $props();
 
-	let open = $state(false);
-	let value = $state('');
 	let trigger = $state<HTMLButtonElement>()!;
 	let selectedValue = $state('');
 	let selectedImage = $state('');
@@ -40,6 +49,8 @@
 		value = item.value;
 		selectedValue = item.label;
 		selectedImage = item.image || '';
+
+		onselect?.(item);
 
 		tick().then(() => {
 			trigger.focus();
