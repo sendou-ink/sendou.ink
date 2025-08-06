@@ -25,7 +25,7 @@
 		buttonPlaceholder: string;
 		searchPlaceholder: string;
 		open?: boolean;
-		value?: string;
+		value?: Item;
 		onselect?: (item: Item) => void;
 	}
 
@@ -35,7 +35,7 @@
 		buttonPlaceholder,
 		searchPlaceholder,
 		open = $bindable(false),
-		value = $bindable(''),
+		value = $bindable(undefined),
 		onselect
 	}: Props = $props();
 
@@ -45,8 +45,8 @@
 
 	function onSelect(item: Item) {
 		open = false;
-		value = item.value;
-		selectedValue = item.label;
+		value = item;
+		selectedValue = item.value;
 		selectedImage = item.image || '';
 
 		onselect?.(item);
@@ -80,7 +80,7 @@
 			{/snippet}
 		</Popover.Trigger>
 		<Popover.Content>
-			<Command.Root>
+			<Command.Root loop>
 				<div class="input-container">
 					<Search color="currentColor" size="1rem" />
 					<Command.Input placeholder={searchPlaceholder} />
@@ -107,11 +107,9 @@
 							</Command.Group>
 						{/each}
 					{:else if data.length > 0}
-						<Command.Group value="all">
-							{#each data as item (item.value)}
-								{@render commandItem(item)}
-							{/each}
-						</Command.Group>
+						{#each data as item (item.value)}
+							{@render commandItem(item)}
+						{/each}
 					{/if}
 				</Command.List>
 			</Command.Root>
@@ -121,7 +119,7 @@
 
 {#snippet commandItem(item: Item)}
 	<Command.Item keywords={item.keywords} value={item.value} onSelect={() => onSelect(item)}>
-		<div class="item">
+		<div class={['item', item.value === selectedValue ? 'selected' : '']}>
 			{#if item.image}
 				<Image path={item.image} size={24} lazy />
 			{/if}
@@ -216,6 +214,11 @@
 		padding: var(--s-1-5);
 		border-radius: var(--radius-field);
 		cursor: pointer;
+
+		&.selected {
+			color: var(--color-primary);
+			font-weight: var(--extra-bold);
+		}
 	}
 
 	.combobox :global {
@@ -248,8 +251,8 @@
 		}
 
 		[data-command-list] {
-			padding: var(--s-1);
-			height: 250px;
+			max-height: 250px;
+			padding: var(--s-1-5);
 			overflow-y: auto;
 			width: 100%;
 			border-radius: var(--radius-field);
@@ -267,14 +270,11 @@
 			}
 		}
 
-		[data-command-group] {
-			margin-bottom: var(--s-2);
-		}
-
 		[data-command-empty] {
 			color: var(--color-base-content-secondary);
 			font-size: var(--fonts-xs);
 			font-weight: var(--bold);
+			padding: var(--s-2);
 			height: 100%;
 			display: flex;
 			align-items: center;
