@@ -4,16 +4,13 @@
 	import Main from '$lib/components/Main.svelte';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { MAX_AP } from '$lib/constants/common';
-	import type { MainWeaponId } from '$lib/constants/in-game/types';
 	import { m } from '$lib/paraglide/messages';
 	import { weaponTranslations } from '$lib/utils/i18n';
 	import { buildStatsBySlug } from './build-stats-by-slug.remote';
 
 	let { params } = $props();
 
-	const { stats, weaponId } = $derived(
-		await buildStatsBySlug(params.slug as unknown as MainWeaponId)
-	); // xxx: https://github.com/sveltejs/kit/issues/14083
+	const { stats, weaponId } = $derived(await buildStatsBySlug(params.slug));
 
 	function apToPx(ap: number) {
 		return Math.floor((ap / stats.stackableAbilities[0].apAverage.weapon) * 200);

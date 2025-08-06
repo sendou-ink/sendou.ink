@@ -2,16 +2,13 @@
 	import Ability from '$lib/components/Ability.svelte';
 	import Main from '$lib/components/Main.svelte';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
-	import type { MainWeaponId } from '$lib/constants/in-game/types';
 	import { builds_noPopularBuilds, m } from '$lib/paraglide/messages';
 	import { weaponTranslations } from '$lib/utils/i18n';
 	import { popularAbilitiesBySlug } from './popular-abilities-by-slug.remote';
 
 	let { params } = $props();
 
-	const { popular, weaponId } = $derived(
-		await popularAbilitiesBySlug(params.slug as unknown as MainWeaponId)
-	); // xxx: https://github.com/sveltejs/kit/issues/14083
+	const { popular, weaponId } = $derived(await popularAbilitiesBySlug(params.slug));
 
 	const weaponNameInEnglish = $derived(weaponTranslations[weaponId]({}, { locale: 'en' }));
 </script>

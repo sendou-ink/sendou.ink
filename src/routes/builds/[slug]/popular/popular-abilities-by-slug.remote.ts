@@ -10,7 +10,7 @@ export const popularAbilitiesBySlug = prerender(
 		return { weaponId, popular: popularBuilds(abilitiesByWeaponId(weaponId)) };
 	},
 	{
-		inputs: () => allWeaponSlugs as unknown as MainWeaponId[] // xxx: https://github.com/sveltejs/kit/issues/14083
+		inputs: () => allWeaponSlugs
 	}
 );
 

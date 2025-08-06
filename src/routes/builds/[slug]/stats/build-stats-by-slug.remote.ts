@@ -16,7 +16,7 @@ export const buildStatsBySlug = prerender(
 		};
 	},
 	{
-		inputs: () => allWeaponSlugs as unknown as MainWeaponId[] // xxx: https://github.com/sveltejs/kit/issues/14083
+		inputs: () => allWeaponSlugs
 	}
 );
 

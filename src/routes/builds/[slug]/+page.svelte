@@ -4,7 +4,6 @@
 	import Main from '$lib/components/Main.svelte';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { BUILDS_PAGE_BATCH_SIZE } from '$lib/constants/build';
-	import type { MainWeaponId } from '$lib/constants/in-game/types';
 	import { m } from '$lib/paraglide/messages';
 	import { weaponTranslations } from '$lib/utils/i18n';
 	import { buildsBySlug } from './builds-by-slug.remote';
@@ -24,7 +23,7 @@
 
 	const { builds, weaponId, hasMore } = $derived(
 		await buildsBySlug({
-			slug: params.slug as unknown as MainWeaponId, // xxx: https://github.com/sveltejs/kit/issues/14083
+			slug: params.slug,
 			limit
 		})
 	);
