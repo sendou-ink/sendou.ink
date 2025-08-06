@@ -6,22 +6,21 @@
 	import Search from '@lucide/svelte/icons/search';
 	import Image from './image/Image.svelte';
 
-	interface Item {
+	export interface Item {
 		value: string;
 		label: string;
 		image?: string;
 		keywords?: string[];
 	}
 
-	interface Group {
+	export interface Group {
 		label: string;
 		image?: string;
 		items: Item[];
 	}
 
-	// xxx: allow for data to just be an array of items
 	interface Props {
-		data: Group[];
+		data: Item[] | Group[];
 		title: string;
 		buttonPlaceholder: string;
 		searchPlaceholder: string;
@@ -56,6 +55,11 @@
 			trigger.focus();
 		});
 	}
+
+	// xxx: Better way to do this?
+	function isGroupData(data: Item[] | Group[]): data is Group[] {
+		return data.length > 0 && 'items' in data[0];
+	}
 </script>
 
 <div class="combobox">
@@ -83,40 +87,48 @@
 				</div>
 				<Command.List>
 					<Command.Empty>{m.common_noResults()}</Command.Empty>
-					{#each data as group (group.label)}
-						<Command.Group value={group.label}>
-							<Command.GroupHeading>
-								<div class="group-heading">
-									{#if group.image}
-										<Image path={group.image} size={28} lazy />
-									{/if}
-									{group.label}
-									<div></div>
-								</div>
-							</Command.GroupHeading>
-							<Command.GroupItems>
-								{#each group.items as item (item.value)}
-									<Command.Item
-										keywords={item.keywords}
-										value={item.value}
-										onSelect={() => onSelect(item)}
-									>
-										<div class="item">
-											{#if item.image}
-												<Image path={item.image} size={24} lazy />
-											{/if}
-											<span>{item.label}</span>
-										</div>
-									</Command.Item>
-								{/each}
-							</Command.GroupItems>
+					{#if isGroupData(data)}
+						{#each data as group (group.label)}
+							<Command.Group value={group.label}>
+								<Command.GroupHeading>
+									<div class="group-heading">
+										{#if group.image}
+											<Image path={group.image} size={28} lazy />
+										{/if}
+										{group.label}
+										<div></div>
+									</div>
+								</Command.GroupHeading>
+								<Command.GroupItems>
+									{#each group.items as item (item.value)}
+										{@render commandItem(item)}
+									{/each}
+								</Command.GroupItems>
+							</Command.Group>
+						{/each}
+					{:else if data.length > 0}
+						<Command.Group value="all">
+							{#each data as item (item.value)}
+								{@render commandItem(item)}
+							{/each}
 						</Command.Group>
-					{/each}
+					{/if}
 				</Command.List>
 			</Command.Root>
 		</Popover.Content>
 	</Popover.Root>
 </div>
+
+{#snippet commandItem(item: Item)}
+	<Command.Item keywords={item.keywords} value={item.value} onSelect={() => onSelect(item)}>
+		<div class="item">
+			{#if item.image}
+				<Image path={item.image} size={24} lazy />
+			{/if}
+			<span>{item.label}</span>
+		</div>
+	</Command.Item>
+{/snippet}
 
 <style>
 	span {
