@@ -23,8 +23,6 @@
 	const visibleItems = $derived(items.filter((item) => !item.hidden));
 </script>
 
-<!-- xxx: moves the whole page left on open -->
-
 <DropdownMenu.Root>
 	{@render children()}
 	<DropdownMenu.Portal>
