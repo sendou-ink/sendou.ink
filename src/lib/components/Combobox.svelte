@@ -80,51 +80,69 @@
 			{/snippet}
 		</Popover.Trigger>
 		<Popover.Content>
-			<Command.Root loop>
-				<div class="input-container">
-					<Search color="currentColor" size="1rem" />
-					<Command.Input placeholder={searchPlaceholder} />
-				</div>
-				<Command.List>
-					<Command.Empty>{m.common_noResults()}</Command.Empty>
-					{#if isGroupData(data)}
-						{#each data as group (group.label)}
-							<Command.Group value={group.label}>
-								<Command.GroupHeading>
-									<div class="group-heading">
-										{#if group.image}
-											<Image path={group.image} size={28} lazy />
-										{/if}
-										{group.label}
-										<div></div>
-									</div>
-								</Command.GroupHeading>
-								<Command.GroupItems>
-									{#each group.items as item (item.value)}
-										{@render commandItem(item)}
-									{/each}
-								</Command.GroupItems>
-							</Command.Group>
-						{/each}
-					{:else if data.length > 0}
-						{#each data as item (item.value)}
-							{@render commandItem(item)}
-						{/each}
-					{/if}
-				</Command.List>
-			</Command.Root>
+			{#snippet child({ props, wrapperProps, open })}
+				{#if open}
+					<div {...wrapperProps}>
+						<div {...props}>
+							<Command.Root loop>
+								<div class="input-container">
+									<Search color="currentColor" size="1rem" />
+									<Command.Input placeholder={searchPlaceholder} />
+								</div>
+								<Command.List>
+									{#snippet child({ props })}
+										<div {...props}>
+											<Command.Empty>
+												{#snippet child({ props })}
+													<span {...props}>{m.common_noResults()}</span>
+												{/snippet}
+											</Command.Empty>
+											{#if isGroupData(data)}
+												{#each data as group (group.label)}
+													<Command.Group value={group.label}>
+														<Command.GroupHeading>
+															<div class="group-heading">
+																{#if group.image}
+																	<Image path={group.image} size={28} lazy />
+																{/if}
+																{group.label}
+																<div></div>
+															</div>
+														</Command.GroupHeading>
+														<Command.GroupItems>
+															{#each group.items as item (item.value)}
+																{@render commandItem(item)}
+															{/each}
+														</Command.GroupItems>
+													</Command.Group>
+												{/each}
+											{:else if data.length > 0}
+												{#each data as item (item.value)}
+													{@render commandItem(item)}
+												{/each}
+											{/if}
+										</div>
+									{/snippet}
+								</Command.List>
+							</Command.Root>
+						</div>
+					</div>
+				{/if}
+			{/snippet}
 		</Popover.Content>
 	</Popover.Root>
 </div>
 
 {#snippet commandItem(item: Item)}
 	<Command.Item keywords={item.keywords} value={item.value} onSelect={() => onSelect(item)}>
-		<div class={['item', item.value === selectedValue ? 'selected' : '']}>
-			{#if item.image}
-				<Image path={item.image} size={24} lazy />
-			{/if}
-			<span>{item.label}</span>
-		</div>
+		{#snippet child({ props })}
+			<div {...props} class={['item', item.value === selectedValue ? 'selected' : '']}>
+				{#if item.image}
+					<Image path={item.image} size={24} lazy />
+				{/if}
+				<span>{item.label}</span>
+			</div>
+		{/snippet}
 	</Command.Item>
 {/snippet}
 
@@ -219,24 +237,62 @@
 			color: var(--color-primary);
 			font-weight: var(--extra-bold);
 		}
+
+		&:hover,
+		&[aria-selected='true'] {
+			background-color: var(--color-base-card);
+		}
+	}
+
+	[data-popover-content] {
+		border: var(--border-style);
+		border-radius: var(--radius-field);
+		background-color: var(--color-base-section);
+		flex-direction: column;
+		width: var(--bits-popover-anchor-width);
+		margin-top: var(--s-2);
+		margin-bottom: var(--s-7);
+		overflow: hidden;
+	}
+
+	[data-command-list] {
+		max-height: 250px;
+		padding: var(--s-1-5);
+		overflow-y: auto;
+		width: 100%;
+		border-radius: var(--radius-field);
+
+		scrollbar-width: thin;
+
+		&::-webkit-scrollbar,
+		&::-webkit-scrollbar-track {
+			height: 5px;
+			width: 5px;
+		}
+
+		&::-webkit-scrollbar-thumb {
+			border-radius: var(--radius-field);
+		}
+	}
+
+	[data-command-empty] {
+		color: var(--color-base-content-secondary);
+		font-size: var(--fonts-xs);
+		font-weight: var(--bold);
+		padding: var(--s-2);
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.combobox :global {
-		[data-popover-content] {
-			border: var(--border-style);
-			border-radius: var(--radius-field);
-			background-color: var(--color-base-section);
-			flex-direction: column;
-			width: var(--bits-popover-anchor-width);
-			margin-top: var(--s-2);
-			overflow: hidden;
-		}
-
 		[data-command-input] {
 			color: initial;
 			height: 1rem;
 			border: none;
 			background-color: var(--color-base-section);
+			font-size: var(--fonts-xs);
 
 			width: 100%;
 			outline: none;
@@ -247,44 +303,6 @@
 				font-size: var(--fonts-xs);
 				font-weight: var(--bold);
 				letter-spacing: 0.5px;
-			}
-		}
-
-		[data-command-list] {
-			max-height: 250px;
-			padding: var(--s-1-5);
-			overflow-y: auto;
-			width: 100%;
-			border-radius: var(--radius-field);
-
-			scrollbar-width: thin;
-
-			&::-webkit-scrollbar,
-			&::-webkit-scrollbar-track {
-				height: 5px;
-				width: 5px;
-			}
-
-			&::-webkit-scrollbar-thumb {
-				border-radius: var(--radius-field);
-			}
-		}
-
-		[data-command-empty] {
-			color: var(--color-base-content-secondary);
-			font-size: var(--fonts-xs);
-			font-weight: var(--bold);
-			padding: var(--s-2);
-			height: 100%;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-		}
-
-		[data-command-item] {
-			&:hover > .item,
-			&[aria-selected='true'] > .item {
-				background-color: var(--color-base-card);
 			}
 		}
 	}
