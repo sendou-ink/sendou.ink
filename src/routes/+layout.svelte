@@ -21,11 +21,9 @@
 <svelte:boundary>
 	<!-- empty snippet to make navigation "suspend" while data is loading -->
 	{#snippet pending()}{/snippet}
-
-	<div class="container">
-		<!-- xxx: implement NavDialog & Hamburger -->
-		<!-- <NavDialog isOpen={navDialogOpen} close={closeNavDialog} /> -->
-		<!-- {#if isFrontPage}
+	<!-- xxx: implement NavDialog & Hamburger -->
+	<!-- <NavDialog isOpen={navDialogOpen} close={closeNavDialog} /> -->
+	<!-- {#if isFrontPage}
 		<SendouButton
 			icon={HamburgerIcon}
 			class="hamburger fab"
@@ -33,27 +31,23 @@
 			onPress={openNavDialog}
 		/>
 	{/if} -->
-		<header class="header item-size">
-			<div class="breadcrumb-container">
-				<a href="/" class="breadcrumb logo"> sendou.ink </a>
-				<!-- xxx: breadcrumbs go here -->
-			</div>
-			<!-- xxx: implement TopRightButtons -->
-			<!-- <TopRightButtons
+	<header class="header item-size">
+		<div class="breadcrumb-container">
+			<a href="/" class="breadcrumb logo"> sendou.ink </a>
+			<!-- xxx: breadcrumbs go here -->
+		</div>
+		<!-- xxx: implement TopRightButtons -->
+		<!-- <TopRightButtons
 			{isErrored}
 			showSupport={Boolean(
 				data && !data?.user?.roles.includes('MINOR_SUPPORT') && isFrontPage
 			)}
 			{openNavDialog}
 		/> -->
-			{@render topRightButtons(isFrontPage && !(await me())?.roles.includes('MINOR_SUPPORT'))}
-		</header>
-		{#if !(await me())?.roles.includes('MINOR_SUPPORT') && process.env.NODE_ENV === 'production'}
-			<div class="top-leaderboard" id="pw-leaderboard_atf"></div>
-		{/if}
-		{@render children()}
-		<Footer />
-	</div>
+		{@render topRightButtons(isFrontPage && !(await me())?.roles.includes('MINOR_SUPPORT'))}
+	</header>
+	{@render children()}
+	<Footer />
 </svelte:boundary>
 
 <ConfirmDialog />
@@ -81,12 +75,6 @@
 
 <!-- xxx: Check the mobile styles -->
 <style>
-	.container {
-		width: 100%;
-		min-height: 100vh;
-		padding-top: 50px; /** compensate for header */
-	}
-
 	.breadcrumb-container {
 		display: flex;
 
@@ -130,18 +118,9 @@
 		font-weight: bold;
 		padding-block: var(--s-1-5);
 		padding-inline: var(--s-4);
-		position: fixed;
+		position: sticky;
 		top: 0;
 		z-index: 50;
-	}
-
-	.top-leaderboard {
-		min-height: 130px;
-		margin: 10px 0;
-
-		@media screen and (min-width: 601px) {
-			min-height: 120px;
-		}
 	}
 
 	.right-container {

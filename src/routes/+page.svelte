@@ -1,10 +1,14 @@
 <script>
+	import { me } from './me.remote';
 	import Main from '$lib/components/Main.svelte';
 	import DesktopSideNav from './DesktopSideNav.svelte';
 </script>
 
 <Main class="front-page__container">
 	<DesktopSideNav />
+	{#if !(await me())?.roles.includes('MINOR_SUPPORT') && process.env.NODE_ENV === 'production'}
+		<div class="top-leaderboard" id="pw-leaderboard_atf"></div>
+	{/if}
 	<h1>Welcome to SvelteKit</h1>
 	<p>
 		Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation
@@ -12,6 +16,15 @@
 </Main>
 
 <style>
+	.top-leaderboard {
+		min-height: 130px;
+		margin: 10px 0;
+
+		@media screen and (min-width: 601px) {
+			min-height: 120px;
+		}
+	}
+
 	:global(.front-page__container) {
 		--card-width: 225px;
 		--card-height: 90px;

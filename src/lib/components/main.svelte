@@ -21,22 +21,20 @@
 	);
 </script>
 
-<div class="container">
-	<main
-		class={[
-			className,
-			'main',
-			{
-				'pt-8-forced': showLeaderboard,
-				'half-width': halfWidth,
-				bigger
-			}
-		]}
-		{style}
-	>
-		{@render children?.()}
-	</main>
-</div>
+<main
+	class={[
+		className,
+		'main',
+		{
+			'pt-8-forced': showLeaderboard,
+			'half-width': halfWidth,
+			bigger
+		}
+	]}
+	{style}
+>
+	{@render children?.()}
+</main>
 
 <style>
 	.container {
