@@ -2,7 +2,7 @@
 	import type { Component, Snippet } from 'svelte';
 	import type { HTMLAnchorAttributes, HTMLButtonAttributes } from 'svelte/elements';
 
-	type ButtonVariant =
+	export type ButtonVariant =
 		| 'primary'
 		| 'success'
 		| 'outlined'

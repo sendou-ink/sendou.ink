@@ -11,6 +11,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import Heart from '@lucide/svelte/icons/heart';
+	import ConfirmDialog from './ConfirmDialog.svelte';
 
 	let { children } = $props();
 
@@ -54,6 +55,8 @@
 		<Footer />
 	</div>
 </svelte:boundary>
+
+<ConfirmDialog />
 
 {#snippet topRightButtons(showSupport: boolean)}
 	<div class="right-container">

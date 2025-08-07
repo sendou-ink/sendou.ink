@@ -13,14 +13,16 @@
 	import { navIconUrl } from '$lib/utils/urls';
 	import { m } from '$lib/paraglide/messages';
 	import { resolve } from '$app/paths';
+	import { confirmAction } from '$lib/utils/form';
 
 	interface Props {
 		buildId: number;
+		buildTitle: string;
 		isPrivate: boolean;
 		showActions?: boolean;
 	}
 
-	let { buildId, isPrivate, showActions }: Props = $props();
+	let { buildId, buildTitle, isPrivate, showActions }: Props = $props();
 </script>
 
 <!-- xxx: add build actions menu -->
@@ -53,7 +55,10 @@
 			{
 				label: m.common_actions_delete(),
 				icon: Trash2,
-				onclick: async () => await deleteBuild(buildId),
+				onclick: () =>
+					confirmAction(() => deleteBuild(buildId), {
+						title: m.builds_deleteConfirm({ title: buildTitle })
+					}),
 				hidden: !showActions,
 				destructive: true
 			}

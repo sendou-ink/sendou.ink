@@ -56,6 +56,7 @@ html.dark {
 	--color-base-border: oklch(0.2908 0.0699 292.19); /** color-base-300 */
 	--color-base-content: oklch(98% 0.002 247.839);
 	--color-base-content-secondary: oklch(0.7552 0.0556 286.16);
+	--color-base-backdrop: oklch(13.232% 0.06693 272.495 / 0.8);
 	--color-primary: oklch(0.8839 0.0714 351.57);
 	--color-primary-transparent: oklch(0.8839 0.0714 351.57 / 0.3);
 	--color-primary-content: oklch(21% 0.006 56.043);

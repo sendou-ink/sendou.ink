@@ -10,6 +10,8 @@ import { refreshBuildsCacheByWeaponSplIds } from '../../../builds/[slug]/cached-
 export const deleteBuild = command(id, async (buildId) => {
 	const build = await requirePermissions(buildId);
 
+	await BuildRepository.deleteById(buildId);
+
 	try {
 		refreshBuildsCacheByWeaponSplIds(build.weapons.map((weapon) => weapon.weaponSplId));
 	} catch (error) {

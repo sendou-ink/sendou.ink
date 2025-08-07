@@ -125,7 +125,12 @@
 					</time>
 				</div>
 			</div>
-			<ActionsMenu buildId={build.id} isPrivate={Boolean(build.private)} showActions={!owner} />
+			<ActionsMenu
+				buildId={build.id}
+				isPrivate={Boolean(build.private)}
+				showActions={!owner}
+				buildTitle={build.title}
+			/>
 		</div>
 	</div>
 	<div class="weapons">
