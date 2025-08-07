@@ -20,7 +20,6 @@ html {
 
 	scrollbar-width: thin;
 	scrollbar-color: var(--color-primary) var(--color-base-section);
-	scrollbar-gutter: stable;
 
 	&::-webkit-scrollbar,
 	&::-webkit-scrollbar-track {
