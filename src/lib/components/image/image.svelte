@@ -9,6 +9,7 @@
 		height?: number;
 		size?: number;
 		containerStyle?: string;
+		lazy?: boolean;
 	}
 
 	let {
@@ -20,11 +21,18 @@
 		style,
 		containerClassName,
 		containerStyle,
+		lazy = false,
 		...rest
 	}: ImageProps = $props();
 </script>
 
 <picture {title} class={containerClassName} style={containerStyle}>
 	<source type="image/avif" srcset="{path}.avif" {width} {height} {style} />
-	<img src="{path}.png" width={size ?? width} height={size ?? height} {...rest} />
+	<img
+		src="{path}.png"
+		width={size ?? width}
+		height={size ?? height}
+		{...rest}
+		loading={lazy ? 'lazy' : 'eager'}
+	/>
 </picture>

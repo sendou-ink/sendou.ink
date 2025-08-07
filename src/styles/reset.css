@@ -12,6 +12,40 @@
 	overflow-wrap: break-word;
 }
 
+html {
+	color-scheme: light dark;
+	accent-color: var(--color-primary);
+	-webkit-tab-highlight-color: transparent;
+	-webkit-text-size-adjust: 100%;
+
+	scrollbar-width: thin;
+	scrollbar-color: var(--color-primary) var(--color-base-section);
+	scrollbar-gutter: stable;
+
+	&::-webkit-scrollbar,
+	&::-webkit-scrollbar-track {
+		background-color: var(--color-base-section);
+		height: 5px;
+		width: 5px;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background-color: var(--color-primary);
+		border-radius: 5px;
+	}
+}
+
+body {
+	width: 100%;
+	line-height: 1.5;
+	overflow-x: hidden;
+	background-color: var(--color-base-bg);
+	color: var(--color-base-content);
+	font-family: lexend, sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: antialiased;
+}
+
 a {
 	text-decoration: none;
 }
