@@ -28,5 +28,11 @@
 
 <picture {title} class={containerClassName} style={containerStyle}>
 	<source type="image/avif" srcset="{path}.avif" {width} {height} {style} />
-	<img src="{path}.png" width={size ?? width} height={size ?? height} {...rest} loading="lazy" />
+	<img
+		src="{path}.png"
+		width={size ?? width}
+		height={size ?? height}
+		{...rest}
+		loading={lazy ? 'lazy' : 'eager'}
+	/>
 </picture>
