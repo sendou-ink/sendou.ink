@@ -8,7 +8,7 @@
 	import ExtraInfos from './ExtraInfos.svelte';
 	import WeaponPool from './WeaponPool.svelte';
 	import TopPlacements from './TopPlacements.svelte';
-	import BadgeDisplay from '$lib/components/BadgeDisplay.svelte';
+	import BadgeDisplay from '$lib/components/badge/BadgeDisplay.svelte';
 	import Popover from '$lib/components/popover/Popover.svelte';
 	import { countryCodeToTranslatedName } from '$lib/utils/i18n';
 	import { getLocale } from '$lib/paraglide/runtime';
