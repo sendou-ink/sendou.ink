@@ -5,7 +5,6 @@
 	import { me } from '../../../routes/me.remote';
 	import Heart from '@lucide/svelte/icons/heart';
 	import Button from '$lib/components/buttons/Button.svelte';
-	import Breadcrumbs from './Breadcrumbs.svelte';
 
 	const isFrontPage = $derived(page.url.pathname === '/');
 </script>
@@ -24,6 +23,8 @@ xxx: implement NavDialog & Hamburger
 -->
 <header class="header item-size">
 	<!-- 
+	xxx: reconsider breadcrumbs
+
     xxx: implement TopRightButtons
     <TopRightButtons
 		{isErrored}
@@ -31,9 +32,9 @@ xxx: implement NavDialog & Hamburger
 		    data && !data?.user?.roles.includes('MINOR_SUPPORT') && isFrontPage
 		)}
 		{openNavDialog}
-	/> 
+	/>
     -->
-	<Breadcrumbs />
+	<a href="/" class="logo"> sendou.ink </a>
 	<div class="right-container">
 		{#if isFrontPage && !(await me())?.roles.includes('MINOR_SUPPORT')}
 			<Button href={resolve('/support')} icon={Heart} size="small" variant="outlined">
@@ -76,6 +77,18 @@ xxx: implement NavDialog & Hamburger
 		position: sticky;
 		top: 0;
 		z-index: 50;
+	}
+
+	.logo {
+		color: var(--color-base-content);
+		font-size: var(--fonts-xs);
+		font-weight: 600;
+
+		&:focus-visible {
+			outline: 2px solid var(--color-primary);
+			outline-offset: 2px;
+			border-radius: var(--radius-box);
+		}
 	}
 
 	.right-container {
