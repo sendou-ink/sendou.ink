@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Button from '$lib/components/Button.svelte';
+	import Button from '$lib/components/buttons/Button.svelte';
 	import Dialog from '$lib/components/dialog/Dialog.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { confirmDialogState } from './globals.svelte';

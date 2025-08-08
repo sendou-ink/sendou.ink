@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Main from '$lib/components/Main.svelte';
+	import Main from '$lib/components/layout/Main.svelte';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { m } from '$lib/paraglide/messages';
 

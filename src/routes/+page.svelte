@@ -1,7 +1,7 @@
 <script>
 	import { me } from './me.remote';
-	import Main from '$lib/components/Main.svelte';
-	import DesktopSideNav from './DesktopSideNav.svelte';
+	import Main from '$lib/components/layout/Main.svelte';
+	import DesktopSideNav from '../lib/components/layout/DesktopSideNav.svelte';
 </script>
 
 <div class="main-container">

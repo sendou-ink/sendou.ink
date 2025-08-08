@@ -1,4 +1,4 @@
-import type { ButtonVariant } from '$lib/components/Button.svelte';
+import type { ButtonVariant } from '$lib/components/buttons/Button.svelte';
 
 export interface ConfirmDialogProps {
 	isOpen: boolean;

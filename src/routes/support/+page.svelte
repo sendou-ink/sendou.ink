@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages';
 	import { perks } from './perks';
-	import Badge from '$lib/components/Badge.svelte';
-	import Button from '$lib/components/Button.svelte';
+	import Badge from '$lib/components/badge/Badge.svelte';
+	import Button from '$lib/components/buttons/Button.svelte';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { SENDOU_INK_PATREON_URL } from '$lib/utils/urls';
-	import Main from '$lib/components/Main.svelte';
+	import Main from '$lib/components/layout/Main.svelte';
 	import Check from '@lucide/svelte/icons/check';
 	import Popover from '$lib/components/popover/Popover.svelte';
 	import PopoverTriggerButton from '$lib/components/popover/PopoverTriggerButton.svelte';

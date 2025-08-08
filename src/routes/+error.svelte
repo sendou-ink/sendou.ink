@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import Main from '$lib/components/Main.svelte';
+	import Main from '$lib/components/layout/Main.svelte';
 	import { SENDOU_INK_DISCORD_URL } from '$lib/utils/urls';
 </script>
 

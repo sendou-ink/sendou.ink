@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { navItems } from './nav-items'; // Adjust import path as needed
+	import { navItems } from '../../../routes/nav-items'; // Adjust import path as needed
 	import { navIconUrl } from '$lib/utils/urls';
 	import Image from '$lib/components/image/Image.svelte';
 </script>

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Ability from '$lib/components/Ability.svelte';
 	import WeaponImage from '$lib/components/image/WeaponImage.svelte';
-	import Main from '$lib/components/Main.svelte';
+	import Main from '$lib/components/layout/Main.svelte';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { MAX_AP } from '$lib/constants/common';
 	import { m } from '$lib/paraglide/messages';

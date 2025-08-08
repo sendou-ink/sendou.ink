@@ -1,9 +1,9 @@
 <script lang="ts">
-	import Badge from '$lib/components/Badge.svelte';
+	import Badge from '$lib/components/badge/Badge.svelte';
 	import Divider from '$lib/components/Divider.svelte';
 	import Input from '$lib/components/Input.svelte';
 	import { BADGES_DOC_LINK } from '$lib/utils/urls';
-	import Main from '$lib/components/Main.svelte';
+	import Main from '$lib/components/layout/Main.svelte';
 	import { allBadges } from './all-badges.remote';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { m } from '$lib/paraglide/messages';

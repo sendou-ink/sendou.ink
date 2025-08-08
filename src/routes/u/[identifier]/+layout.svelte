@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import type { PageProps } from './$types';
-	import Main from '$lib/components/Main.svelte';
+	import Main from '$lib/components/layout/Main.svelte';
 	import SubNav from '$lib/components/sub-nav/SubNav.svelte';
 	import SubNavLink from '$lib/components/sub-nav/SubNavLink.svelte';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';

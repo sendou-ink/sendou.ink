@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Ability from '$lib/components/Ability.svelte';
-	import Button from '$lib/components/Button.svelte';
+	import Button from '$lib/components/buttons/Button.svelte';
 	import Select from '$lib/components/Select.svelte';
 	import { PATCHES } from '$lib/constants/build';
 	import { abilities } from '$lib/constants/in-game/abilities';

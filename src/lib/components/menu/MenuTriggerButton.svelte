@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { ButtonProps } from '$lib/components/Button.svelte';
-	import Button from '$lib/components/Button.svelte';
+	import type { ButtonProps } from '$lib/components/buttons/Button.svelte';
+	import Button from '$lib/components/buttons/Button.svelte';
 	import { DropdownMenu } from 'bits-ui';
 
 	let buttonProps: ButtonProps = $props();

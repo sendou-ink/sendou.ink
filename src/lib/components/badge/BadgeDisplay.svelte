@@ -4,8 +4,8 @@
 	import { fly, scale } from 'svelte/transition';
 	import { badgeExplanationText } from '$lib/utils/badges';
 	import { Pagination } from '$lib/runes/pagination.svelte';
-	import Badge from '$lib/components/Badge.svelte';
-	import Button from '$lib/components/Button.svelte';
+	import Badge from './Badge.svelte';
+	import Button from '$lib/components/buttons/Button.svelte';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 
 	const SMALL_BADGES_PER_DISPLAY_PAGE = 9;

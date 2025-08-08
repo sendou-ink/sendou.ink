@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import Main from '$lib/components/Main.svelte';
+	import Main from '$lib/components/layout/Main.svelte';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { joinListToNaturalString } from '$lib/utils/arrays';

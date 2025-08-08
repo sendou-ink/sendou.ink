@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Ability from '$lib/components/Ability.svelte';
-	import Main from '$lib/components/Main.svelte';
+	import Main from '$lib/components/layout/Main.svelte';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { builds_noPopularBuilds, m } from '$lib/paraglide/messages';
 	import { weaponTranslations } from '$lib/utils/i18n';

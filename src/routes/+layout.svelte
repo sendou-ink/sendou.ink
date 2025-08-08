@@ -5,8 +5,8 @@
 	import '../styles/reset.css';
 
 	import { me } from './me.remote';
-	import Footer from './Footer.svelte';
-	import Button from '$lib/components/Button.svelte';
+	import Footer from '../lib/components/layout/Footer.svelte';
+	import Button from '$lib/components/buttons/Button.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';

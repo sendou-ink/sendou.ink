@@ -1,7 +1,7 @@
 <script lang="ts">
 	import BuildCard from '$lib/components/build-card/BuildCard.svelte';
-	import Button from '$lib/components/Button.svelte';
-	import Main from '$lib/components/Main.svelte';
+	import Button from '$lib/components/buttons/Button.svelte';
+	import Main from '$lib/components/layout/Main.svelte';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { BUILDS_PAGE_BATCH_SIZE, PATCHES } from '$lib/constants/build';
 	import { m } from '$lib/paraglide/messages';

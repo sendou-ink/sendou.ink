@@ -14,7 +14,7 @@
 	import DiscordIcon from '$lib/components/icons/Discord.svelte';
 	import GitHubIcon from '$lib/components/icons/GitHub.svelte';
 	import PatreonIcon from '$lib/components/icons/Patreon.svelte';
-	import { patrons } from './patrons.remote';
+	import { patrons } from '../../../routes/patrons.remote';
 	import { m } from '$lib/paraglide/messages';
 
 	const currentYear = new Date().getFullYear();
