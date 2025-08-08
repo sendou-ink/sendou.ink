@@ -7,6 +7,8 @@
 	import { SENDOU_INK_PATREON_URL } from '$lib/utils/urls';
 	import Main from '$lib/components/Main.svelte';
 	import Check from '@lucide/svelte/icons/check';
+	import Popover from '$lib/components/popover/Popover.svelte';
+	import PopoverTriggerButton from '$lib/components/popover/PopoverTriggerButton.svelte';
 </script>
 
 <OpenGraphMeta
@@ -28,15 +30,16 @@
 			{#each perks as perk (perk.id)}
 				<div class="justify-self-start">
 					{perk.name}
-					<!-- xxx: implement popover -->
-					<!-- {#if perk.extraInfo}
-						<SendouPopover>
+					{#if perk.extraInfo}
+						<Popover>
 							{#snippet trigger()}
-								<SendouButton className="support__popover-trigger">?</SendouButton>
+								<PopoverTriggerButton variant="minimal" class="inline-important ml-1" size="big"
+									>?</PopoverTriggerButton
+								>
 							{/snippet}
-							{m[`support_perk_${perk.name}_extra`]()}
-						</SendouPopover>
-					{/if} -->
+							{perk.extraInfo}
+						</Popover>
+					{/if}
 				</div>
 				<div>
 					{#if perk.tier === 1}

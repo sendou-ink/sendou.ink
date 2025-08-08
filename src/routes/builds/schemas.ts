@@ -29,12 +29,7 @@ const dateFilterSchema = z.object({
 
 export const buildFiltersSearchParams = z.preprocess(
 	safeJSONParse,
-	z.union([
-		z.null(),
-		z
-			.array(z.union([abilityFilterSchema, modeFilterSchema, dateFilterSchema]))
-			.max(MAX_BUILD_FILTERS)
-	])
+	z.array(z.union([abilityFilterSchema, modeFilterSchema, dateFilterSchema])).max(MAX_BUILD_FILTERS)
 );
 
 export type BuildFiltersFromSearchParams = NonNullable<z.infer<typeof buildFiltersSearchParams>>;

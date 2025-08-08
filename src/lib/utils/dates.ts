@@ -161,10 +161,6 @@ export function getDateAtNextFullHour(date: Date) {
 	return copiedDate;
 }
 
-export function dateToYYYYMMDD(date: Date) {
-	return date.toISOString().split('T')[0];
-}
-
 // same as datesOfMonth but contains null at the start to start with monday
 export function nullPaddedDatesOfMonth({ month, year }: MonthYear) {
 	const dates = datesOfMonth({ month, year });
