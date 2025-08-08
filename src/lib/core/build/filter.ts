@@ -1,4 +1,5 @@
 import type { Ability, BuildAbilitiesTuple, ModeShort } from '$lib/constants/in-game/types';
+import { buildToAbilityPoints } from '$lib/core/analyzer/utils';
 import type { Tables } from '$lib/server/db/tables';
 import { assertUnreachable } from '$lib/utils/types';
 import type { BuildFiltersFromSearchParams } from '../../../routes/builds/schemas';
@@ -9,26 +10,24 @@ type PartialBuild = {
 	updatedAt: Tables['Build']['updatedAt'];
 };
 
-type WithId<T> = T & { id: string };
-
-export type AbilityBuildFilter = WithId<{
+export type AbilityBuildFilter = {
 	type: 'ability';
 	ability: Ability;
 	/** Ability points value or "has"/"doesn't have" */
 	value?: number | boolean;
 	comparison?: 'AT_LEAST' | 'AT_MOST';
-}>;
+};
 
-export type ModeBuildFilter = WithId<{
+export type ModeBuildFilter = {
 	type: 'mode';
 	mode: ModeShort;
-}>;
+};
 
-export type DateBuildFilter = WithId<{
+export type DateBuildFilter = {
 	type: 'date';
 	/** YYYY-MM-DD */
 	date: string;
-}>;
+};
 
 export type BuildFilter = AbilityBuildFilter | ModeBuildFilter | DateBuildFilter;
 
@@ -124,9 +123,4 @@ function matchesDateFilter({
 	const date = new Date(filter.date);
 
 	return date < build.updatedAt;
-}
-
-// xxx: mock
-function buildToAbilityPoints(_abilities: BuildAbilitiesTuple) {
-	return new Map<any, any>();
 }

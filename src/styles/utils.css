@@ -550,6 +550,14 @@
 	display: inherit;
 }
 
+.inline {
+	display: inline;
+}
+
+.inline-important {
+	display: inline !important;
+}
+
 .cursor-pointer {
 	cursor: pointer;
 }

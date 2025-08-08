@@ -23,9 +23,11 @@
 	}
 
 	let { buildId, buildTitle, isPrivate, showActions }: Props = $props();
+
+	// xxx: error throwing during rendering should have some kind of msg to user
+	// throw new Error('oops!');
 </script>
 
-<!-- xxx: add build actions menu -->
 <div>
 	<Menu
 		items={[

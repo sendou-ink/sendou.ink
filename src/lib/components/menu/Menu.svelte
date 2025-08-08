@@ -33,7 +33,7 @@
 						<div {...props} class={['items-container', { scrolling }]}>
 							{#each visibleItems as { icon: Icon, imgSrc, label, onclick, href, disabled, destructive } (label)}
 								{@const tag = href ? 'a' : 'div'}
-								<DropdownMenu.Item {onclick} {disabled}>
+								<DropdownMenu.Item onclick={!disabled ? onclick : undefined} {disabled}>
 									{#snippet child({ props })}
 										<svelte:element this={tag} {...props} {href} class={['item', { destructive }]}>
 											{#if Icon}

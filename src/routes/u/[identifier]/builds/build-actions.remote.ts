@@ -10,6 +10,9 @@ import { refreshBuildsCacheByWeaponSplIds } from '../../../builds/[slug]/cached-
 export const deleteBuild = command(id, async (buildId) => {
 	const build = await requirePermissions(buildId);
 
+	// xxx: error throwing during server actions should have some kind of toast to user
+	// throw new Error('delete build!');
+
 	await BuildRepository.deleteById(buildId);
 
 	try {

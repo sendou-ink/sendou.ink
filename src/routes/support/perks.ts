@@ -8,114 +8,114 @@ export const perks = [
 		id: 'supportMyWork',
 		tier: 1,
 		name: m.common_support_perk_supportMyWork(),
-		extraInfo: false
+		extraInfo: null
 	},
 	{
 		id: 'adFree',
 		tier: 1,
 		name: m.common_support_perk_adFree(),
-		extraInfo: false
+		extraInfo: null
 	},
 	{
 		id: 'nameInFooter',
 		tier: 1,
 		name: m.common_support_perk_nameInFooter(),
-		extraInfo: false
+		extraInfo: null
 	},
 	{
 		id: 'privateDiscord',
 		tier: 2,
 		name: m.common_support_perk_privateDiscord(),
-		extraInfo: true
+		extraInfo: m.common_support_perk_privateDiscord_extra()
 	},
 	{
 		id: 'prioritySupport',
 		tier: 2,
 		name: m.common_support_perk_prioritySupport(),
-		extraInfo: true
+		extraInfo: m.common_support_perk_prioritySupport_extra()
 	},
 	{
 		id: 'tournamentsBeta',
 		tier: 2,
 		name: m.common_support_perk_tournamentsBeta(),
-		extraInfo: false
+		extraInfo: null
 	},
 	{
 		id: 'previewQ',
 		tier: 2,
 		name: m.common_support_perk_previewQ(),
-		extraInfo: false
+		extraInfo: null
 	},
 	{
 		id: 'userShortLink',
 		tier: 2,
 		name: m.common_support_perk_userShortLink(),
-		extraInfo: true
+		extraInfo: m.common_support_perk_userShortLink_extra()
 	},
 	{
 		id: 'autoValidatePictures',
 		tier: 2,
 		name: m.common_support_perk_autoValidatePictures(),
-		extraInfo: true
+		extraInfo: m.common_support_perk_autoValidatePictures_extra()
 	},
 	{
 		id: 'customizedColorsUser',
 		tier: 2,
 		name: m.common_support_perk_customizedColorsUser(),
-		extraInfo: false
+		extraInfo: null
 	},
 	{
 		id: 'favoriteBadges',
 		tier: 2,
 		name: m.common_support_perk_favoriteBadges(),
-		extraInfo: true
+		extraInfo: m.common_support_perk_favoriteBadges_extra()
 	},
 	{
 		id: 'customizedColorsTeam',
 		tier: 2,
 		name: m.common_support_perk_customizedColorsTeam(),
-		extraInfo: true
+		extraInfo: m.common_support_perk_customizedColorsTeam_extra()
 	},
 	{
 		id: 'badge',
 		tier: 2,
 		name: m.common_support_perk_badge(),
-		extraInfo: false
+		extraInfo: null
 	},
 	{
 		id: 'discordColorRole',
 		tier: 2,
 		name: m.common_support_perk_discordColorRole(),
-		extraInfo: true
+		extraInfo: m.common_support_perk_discordColorRole_extra()
 	},
 	{
 		id: 'chatColor',
 		tier: 2,
 		name: m.common_support_perk_chatColor(),
-		extraInfo: false
+		extraInfo: null
 	},
 	{
 		id: 'seePlusPercentage',
 		tier: 2,
 		name: m.common_support_perk_seePlusPercentage(),
-		extraInfo: true
+		extraInfo: m.common_support_perk_seePlusPercentage_extra()
 	},
 	{
 		id: 'joinFive',
 		tier: 2,
 		name: m.common_support_perk_joinFive(),
-		extraInfo: false
+		extraInfo: null
 	},
 	{
 		id: 'joinMoreAssociations',
 		tier: 2,
 		name: m.common_support_perk_joinMoreAssociations(),
-		extraInfo: false
+		extraInfo: null
 	},
 	{
 		id: 'useBotToLogIn',
 		tier: 2,
 		name: m.common_support_perk_useBotToLogIn(),
-		extraInfo: true
+		extraInfo: m.common_support_perk_useBotToLogIn_extra()
 	}
 ] as const;
