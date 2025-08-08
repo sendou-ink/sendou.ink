@@ -34,7 +34,7 @@
 		left: 0;
 		top: var(--layout-nav-height);
 		flex-direction: column;
-		gap: var(--s-4);
+		gap: var(--s-3);
 		overflow-y: auto;
 		max-height: calc(100vh - var(--layout-nav-height));
 		min-width: fit-content;
