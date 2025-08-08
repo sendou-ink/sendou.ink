@@ -16,7 +16,7 @@ export const navItems = [
 			}
 		: null,
 	{
-		id: 'sendouq',
+		id: 'q',
 		name: m.common_pages_sendouq(),
 		url: 'q',
 		prefetch: false
