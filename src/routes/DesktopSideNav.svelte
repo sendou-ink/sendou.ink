@@ -41,20 +41,15 @@
 		padding: var(--s-4) var(--s-6);
 		border-right: var(--border-style);
 
-		@supports not selector(::-webkit-scrollbar) {
-			scrollbar-width: thin;
-			scrollbar-color: var(--color-primary) transparent;
-		}
-
 		&::-webkit-scrollbar,
 		&::-webkit-scrollbar-track {
 			background-color: inherit;
-			height: 15px;
-			width: 15px;
+			height: 18px;
+			width: 18px;
 		}
 
 		&::-webkit-scrollbar-thumb {
-			background-color: var(--color-primary);
+			background-color: var(--color-primary-transparent);
 			border: 6px solid transparent;
 			border-radius: 99999px;
 			background-clip: content-box;
