@@ -30,15 +30,35 @@
 <style>
 	nav {
 		display: none;
-		position: fixed;
-		left: 15px;
-		top: 60px;
+		position: sticky;
+		left: 0;
+		top: var(--layout-nav-height);
 		flex-direction: column;
-		gap: var(--s-3);
+		gap: var(--s-4);
 		overflow-y: auto;
-		height: 100vh;
-		padding-block-end: var(--s-48);
-		padding-inline-end: var(--s-4);
+		max-height: calc(100vh - var(--layout-nav-height));
+		min-width: fit-content;
+		padding: var(--s-4) var(--s-6);
+		border-right: var(--border-style);
+
+		@supports not selector(::-webkit-scrollbar) {
+			scrollbar-width: thin;
+			scrollbar-color: var(--color-primary) transparent;
+		}
+
+		&::-webkit-scrollbar,
+		&::-webkit-scrollbar-track {
+			background-color: inherit;
+			height: 15px;
+			width: 15px;
+		}
+
+		&::-webkit-scrollbar-thumb {
+			background-color: var(--color-primary);
+			border: 6px solid transparent;
+			border-radius: 99999px;
+			background-clip: content-box;
+		}
 
 		:global(picture) {
 			background-color: var(--color-base-card);

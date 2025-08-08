@@ -45,6 +45,8 @@ html {
 	--s-80: 20rem;
 	--s-96: 2rem;
 	--border-style: var(--border) solid var(--color-base-border);
+
+	--layout-nav-height: 3rem;
 }
 
 html.dark {

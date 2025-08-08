@@ -47,7 +47,7 @@
 		max-width: 48rem;
 		margin: 0 auto;
 		padding-inline: var(--s-3);
-		min-height: 75vh;
+		min-height: calc(100vh - var(--layout-nav-height));
 		padding-block: var(--s-4) var(--s-32);
 	}
 

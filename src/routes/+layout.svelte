@@ -111,6 +111,7 @@
 	.header {
 		display: flex;
 		width: 100%;
+		height: var(--layout-nav-height);
 		align-items: center;
 		justify-content: space-between;
 		border-bottom: var(--border-style);

@@ -4,18 +4,25 @@
 	import DesktopSideNav from './DesktopSideNav.svelte';
 </script>
 
-<Main class="front-page__container">
+<div class="main-container">
 	<DesktopSideNav />
-	{#if !(await me())?.roles.includes('MINOR_SUPPORT') && process.env.NODE_ENV === 'production'}
-		<div class="top-leaderboard" id="pw-leaderboard_atf"></div>
-	{/if}
-	<h1>Welcome to SvelteKit</h1>
-	<p>
-		Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation
-	</p>
-</Main>
+	<Main class="front-page__container">
+		{#if !(await me())?.roles.includes('MINOR_SUPPORT') && process.env.NODE_ENV === 'production'}
+			<div class="top-leaderboard" id="pw-leaderboard_atf"></div>
+		{/if}
+		<h1>Welcome to SvelteKit</h1>
+		<p>
+			Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation
+		</p>
+	</Main>
+</div>
 
 <style>
+	.main-container {
+		display: flex;
+		flex-direction: row;
+	}
+
 	.top-leaderboard {
 		min-height: 130px;
 		margin: 10px 0;
