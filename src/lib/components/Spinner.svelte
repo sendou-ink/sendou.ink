@@ -1,8 +1,6 @@
 <script lang="ts">
-	type Color = 'theme' | 'green' | 'red' | 'currentColor';
-
 	type Props = {
-		color?: Color;
+		color?: 'theme' | 'green' | 'red' | 'currentColor';
 		size?: number | string;
 		strokeWidth?: number | string;
 	};
@@ -20,7 +18,7 @@
 	width={size}
 	height={size}
 	stroke-width={strokeWidth}
-	class={`spinner ${color}`}
+	class={['spinner', color]}
 >
 	<g>
 		<circle cx="12" cy="12" r="9.5"
