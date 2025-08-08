@@ -3,8 +3,9 @@
 	import { resolve } from '$app/paths';
 	import { m } from '$lib/paraglide/messages';
 	import { me } from '../../../routes/me.remote';
-	import Button from '$lib/components/buttons/Button.svelte';
 	import Heart from '@lucide/svelte/icons/heart';
+	import Button from '$lib/components/buttons/Button.svelte';
+	import Breadcrumbs from './Breadcrumbs.svelte';
 
 	const isFrontPage = $derived(page.url.pathname === '/');
 </script>
@@ -22,10 +23,6 @@ xxx: implement NavDialog & Hamburger
 {/if} 
 -->
 <header class="header item-size">
-	<div class="breadcrumb-container">
-		<a href="/" class="breadcrumb logo"> sendou.ink </a>
-		<!-- xxx: breadcrumbs go here -->
-	</div>
 	<!-- 
     xxx: implement TopRightButtons
     <TopRightButtons
@@ -36,6 +33,7 @@ xxx: implement NavDialog & Hamburger
 		{openNavDialog}
 	/> 
     -->
+	<Breadcrumbs />
 	<div class="right-container">
 		{#if isFrontPage && !(await me())?.roles.includes('MINOR_SUPPORT')}
 			<Button href={resolve('/support')} icon={Heart} size="small" variant="outlined">
@@ -60,35 +58,6 @@ xxx: implement NavDialog & Hamburger
 
 <!-- xxx: Check the mobile styles -->
 <style>
-	.breadcrumb-container {
-		display: flex;
-
-		/** check if should use px or not */
-		height: 30px;
-		align-items: center;
-		gap: var(--s-2);
-	}
-
-	.breadcrumb {
-		overflow: hidden;
-		max-width: 350px;
-		color: var(--color-base-content);
-		font-size: var(--fonts-xs);
-		font-weight: 600;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-
-		&.logo {
-			overflow: initial;
-		}
-	}
-
-	.logo:focus-visible {
-		outline: 2px solid var(--color-primary);
-		outline-offset: 2px;
-		border-radius: var(--radius-box);
-	}
-
 	.item-size {
 		--item-size: 1.9rem;
 	}
