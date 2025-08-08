@@ -4,133 +4,18 @@
 	import '../styles/flags.css';
 	import '../styles/reset.css';
 
-	import { me } from './me.remote';
+	import Header from '$lib/components/layout/Header.svelte';
 	import Footer from '../lib/components/layout/Footer.svelte';
-	import Button from '$lib/components/buttons/Button.svelte';
-	import { m } from '$lib/paraglide/messages';
-	import { resolve } from '$app/paths';
-	import { page } from '$app/state';
-	import Heart from '@lucide/svelte/icons/heart';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 
 	let { children } = $props();
-
-	const isFrontPage = $derived(page.url.pathname === '/');
 </script>
 
 <svelte:boundary>
-	<!-- empty snippet to make navigation "suspend" while data is loading -->
+	<Header />
 	{#snippet pending()}{/snippet}
-	<!-- xxx: implement NavDialog & Hamburger -->
-	<!-- <NavDialog isOpen={navDialogOpen} close={closeNavDialog} /> -->
-	<!-- {#if isFrontPage}
-		<SendouButton
-			icon={HamburgerIcon}
-			class="hamburger fab"
-			variant="outlined"
-			onPress={openNavDialog}
-		/>
-	{/if} -->
-	<header class="header item-size">
-		<div class="breadcrumb-container">
-			<a href="/" class="breadcrumb logo"> sendou.ink </a>
-			<!-- xxx: breadcrumbs go here -->
-		</div>
-		<!-- xxx: implement TopRightButtons -->
-		<!-- <TopRightButtons
-			{isErrored}
-			showSupport={Boolean(
-				data && !data?.user?.roles.includes('MINOR_SUPPORT') && isFrontPage
-			)}
-			{openNavDialog}
-		/> -->
-		{@render topRightButtons(isFrontPage && !(await me())?.roles.includes('MINOR_SUPPORT'))}
-	</header>
 	{@render children()}
 	<Footer />
 </svelte:boundary>
 
 <ConfirmDialog />
-
-{#snippet topRightButtons(showSupport: boolean)}
-	<div class="right-container">
-		{#if showSupport}
-			<Button href={resolve('/support')} icon={Heart} size="small" variant="outlined">
-				{m.common_pages_support()}
-			</Button>
-		{/if}
-		<!-- <NotificationPopover />
-			<AnythingAdder /> -->
-		<!-- <button
-				aria-label="Open navigation"
-				onClick={openNavDialog}
-				className="layout__header__button"
-				type="button"
-			>
-				<HamburgerIcon className="layout__header__button__icon" />
-			</button> -->
-		<!-- <UserItem /> -->
-	</div>
-{/snippet}
-
-<!-- xxx: Check the mobile styles -->
-<style>
-	.breadcrumb-container {
-		display: flex;
-
-		/** check if should use px or not */
-		height: 30px;
-		align-items: center;
-		gap: var(--s-2);
-	}
-
-	.breadcrumb {
-		overflow: hidden;
-		max-width: 350px;
-		color: var(--color-base-content);
-		font-size: var(--fonts-xs);
-		font-weight: 600;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-
-		&.logo {
-			overflow: initial;
-		}
-	}
-
-	.logo:focus-visible {
-		outline: 2px solid var(--color-primary);
-		outline-offset: 2px;
-		border-radius: var(--radius-box);
-	}
-
-	.item-size {
-		--item-size: 1.9rem;
-	}
-
-	.header {
-		display: flex;
-		width: 100%;
-		height: var(--layout-nav-height);
-		align-items: center;
-		justify-content: space-between;
-		border-bottom: var(--border-style);
-		background-color: var(--color-base-section);
-		font-weight: bold;
-		padding-block: var(--s-1-5);
-		padding-inline: var(--s-4);
-		position: sticky;
-		top: 0;
-		z-index: 50;
-	}
-
-	.right-container {
-		display: flex;
-		gap: var(--s-3);
-		justify-self: flex-end;
-
-		:global(svg) {
-			fill: var(--color-primary);
-		}
-	}
-</style>
