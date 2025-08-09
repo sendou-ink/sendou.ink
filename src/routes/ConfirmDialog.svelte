@@ -20,7 +20,6 @@
 	import Button from '$lib/components/buttons/Button.svelte';
 	import Dialog from '$lib/components/dialog/Dialog.svelte';
 	import { m } from '$lib/paraglide/messages';
-	import type { I } from 'vitest/dist/chunks/reporters.d.BFLkQcL6.js';
 
 	let isSubmitting = $state(false);
 </script>
