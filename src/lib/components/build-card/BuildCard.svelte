@@ -60,6 +60,7 @@
 	let { build, owner, withAbilitySorting = true, canEdit: _canEdit = false }: BuildProps = $props();
 
 	// xxx: why does the build not show updates (on build privacy change) even when this does log?
+	// tracked: https://github.com/sveltejs/kit/issues/14140
 	// $inspect(build.private);
 
 	const abilities = $derived(withAbilitySorting ? build.abilities : build.unsortedAbilities);
