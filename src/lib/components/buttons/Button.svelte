@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Component, Snippet } from 'svelte';
 	import type { HTMLAnchorAttributes, HTMLButtonAttributes } from 'svelte/elements';
+	import Spinner from '../Spinner.svelte';
 
 	export type ButtonVariant =
 		| 'primary'
@@ -16,6 +17,8 @@
 		variant?: ButtonVariant;
 		size?: 'miniscule' | 'small' | 'medium' | 'big';
 		icon?: Component;
+		loading?: boolean;
+		disabled?: boolean;
 		children?: Snippet;
 	}
 
@@ -39,6 +42,8 @@
 		variant = 'primary',
 		size = 'medium',
 		icon: Icon,
+		loading = false,
+		disabled = false,
 		children,
 		...rest
 	}: Props = $props();
@@ -65,9 +70,12 @@
 			'minimal-destructive': variant === 'minimal-destructive'
 		}
 	]}
+	aria-busy={loading}
+	aria-disabled={disabled}
+	{disabled}
 	{...rest}
 >
-	{#if Icon}
+	{#if Icon && !loading}
 		<span
 			class={[
 				'button-icon',
@@ -79,26 +87,33 @@
 			<Icon />
 		</span>
 	{/if}
-	{@render children?.()}
+	{#if loading}
+		<Spinner size="20" />
+	{/if}
+	<div>
+		{@render children?.()}
+	</div>
 </svelte:element>
 
 <style>
 	.button {
 		display: flex;
-		width: auto;
-		align-items: center;
 		justify-content: center;
+		align-items: center;
+		vertical-align: middle;
+		min-height: 2.15rem;
+		height: auto;
 		border: 2px solid var(--color-primary);
 		border-radius: var(--radius-field);
+		position: relative;
+		cursor: pointer;
 		appearance: none;
 		background: var(--color-primary);
 		color: var(--color-primary-content);
-		cursor: pointer;
 		font-size: var(--fonts-sm);
 		font-weight: var(--bold);
 		line-height: 1.2;
 		outline-offset: 2px;
-		padding-block: var(--s-1-5);
 		padding-inline: var(--s-2-5);
 		user-select: none;
 		anchor-name: var(--anchor-name);
@@ -111,10 +126,21 @@
 			transform: translateY(1px);
 		}
 
-		&:disabled {
+		&:disabled,
+		&[aria-busy='true'] {
 			cursor: not-allowed;
 			opacity: 0.5;
 			transform: initial;
+		}
+
+		&[aria-busy='true'] > div {
+			visibility: hidden;
+		}
+
+		:global(.spinner) {
+			position: absolute;
+			top: calc(50% - 10px);
+			left: calc(50% - 10px);
 		}
 	}
 
@@ -130,8 +156,8 @@
 	}
 
 	.small {
+		min-height: 1.75rem;
 		font-size: var(--fonts-xs);
-		padding-block: var(--s-1);
 		padding-inline: var(--s-2);
 
 		> .button-icon {
@@ -141,8 +167,8 @@
 	}
 
 	.miniscule {
+		min-height: 1.5rem;
 		font-size: var(--fonts-xxs);
-		padding-block: var(--s-1);
 		padding-inline: var(--s-2);
 
 		> .button-icon {
@@ -152,8 +178,8 @@
 	}
 
 	.big {
+		min-height: 2.75rem;
 		font-size: var(--fonts-md);
-		padding-block: var(--s-2-5);
 		padding-inline: var(--s-6);
 	}
 

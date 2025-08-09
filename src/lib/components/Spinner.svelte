@@ -5,7 +5,7 @@
 		strokeWidth?: number | string;
 	};
 
-	let { color = 'currentColor', size = 24, strokeWidth = 2 }: Props = $props();
+	let { color = 'currentColor', size = 24, strokeWidth = 3 }: Props = $props();
 </script>
 
 <svg
