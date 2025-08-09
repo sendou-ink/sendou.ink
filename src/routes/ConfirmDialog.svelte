@@ -1,8 +1,26 @@
+<script lang="ts" module>
+	import type { ButtonVariant } from '$lib/components/buttons/Button.svelte';
+
+	export interface ConfirmDialogProps {
+		isOpen: boolean;
+		title?: string;
+		onConfirm?: () => Promise<void>;
+		button?: {
+			text?: string;
+			variant?: ButtonVariant;
+		};
+	}
+
+	export const confirmDialogState = $state<ConfirmDialogProps>({
+		isOpen: false
+	});
+</script>
+
 <script lang="ts">
 	import Button from '$lib/components/buttons/Button.svelte';
 	import Dialog from '$lib/components/dialog/Dialog.svelte';
 	import { m } from '$lib/paraglide/messages';
-	import { confirmDialogState } from './globals.svelte';
+	import type { I } from 'vitest/dist/chunks/reporters.d.BFLkQcL6.js';
 
 	let isSubmitting = $state(false);
 </script>

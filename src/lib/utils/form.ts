@@ -1,4 +1,4 @@
-import { confirmDialogState, type ConfirmDialogProps } from '../../routes/globals.svelte';
+import { confirmDialogState, type ConfirmDialogProps } from '../../routes/ConfirmDialog.svelte';
 
 export function valueArrayToDBFormat<T>(arr: Array<{ value?: T }>) {
 	const unwrapped = arr
