@@ -8,8 +8,9 @@ import type {
 } from "~/modules/in-game-lists/types";
 import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
 import { selectPlayers } from "~/utils/kysely.server";
+import { logger } from "~/utils/logger";
 import { VODS_PAGE_BATCH_SIZE } from "./vods-constants";
-import type { ListVod } from "./vods-types";
+import type { ListVod, Vod } from "./vods-types";
 
 export function deleteById(id: number) {
 	return db.deleteFrom("UnvalidatedVideo").where("id", "=", id).execute();
@@ -89,4 +90,80 @@ export async function findVods({
 		};
 	});
 	return vods as ListVod[];
+}
+
+export async function findVodById(
+	id: Tables["Video"]["id"],
+): Promise<Vod | null> {
+	const video_query = db
+		.selectFrom("Video")
+		.select([
+			"id",
+			"title",
+			"youtubeDate",
+			"youtubeId",
+			"type",
+			"submitterUserId",
+		])
+		.where("Video.id", "=", id);
+
+	const video = await video_query.executeTakeFirst();
+
+	if (video) {
+		const video_match_query = db
+			.selectFrom("VideoMatch")
+			.select([
+				"VideoMatch.id",
+				"VideoMatch.mode",
+				"VideoMatch.stageId",
+				"VideoMatch.startsAt",
+			])
+			.leftJoin(
+				"VideoMatchPlayer",
+				"VideoMatch.id",
+				"VideoMatchPlayer.videoMatchId",
+			)
+			.leftJoin("User", "VideoMatchPlayer.playerUserId", "User.id")
+			.select(selectPlayers())
+			.select(({ fn }) => [
+				fn
+					.agg("json_group_array", ["VideoMatchPlayer.weaponSplId"])
+					.$castTo<MainWeaponId[]>()
+					.as("weapons"),
+				fn
+					.agg("json_group_array", ["VideoMatchPlayer.playerName"])
+					.as("playerNames"),
+			])
+			.where("VideoMatch.videoId", "=", id)
+			.groupBy("VideoMatch.id")
+			.orderBy("VideoMatch.startsAt", "asc")
+			.orderBy("VideoMatchPlayer.player", "asc");
+
+		const matches = await video_match_query.execute();
+
+		return {
+			...video,
+			pov: resolvePov(matches),
+			matches: matches.map(({ players: _1, playerNames: _2, ...match }) => {
+				return {
+					...match,
+				};
+			}),
+		};
+	}
+	return null;
+}
+
+function resolvePov(matches: any): Vod["pov"] {
+	for (const match of matches) {
+		if (match.playerNames.length > 0) {
+			return match.playerNames[0];
+		}
+
+		if (match.players.length > 0) {
+			return match.players[0];
+		}
+	}
+
+	return;
 }

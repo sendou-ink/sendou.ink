@@ -3,7 +3,7 @@ import { z } from "zod/v4";
 import { requireUser } from "~/features/auth/core/user.server";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 import { actualNumber, id } from "~/utils/zod";
-import { findVodById } from "../queries/findVodById.server";
+import { findVodById } from "../VodRepository.server";
 import { canEditVideo, vodToVideoBeingAdded } from "../vods-utils";
 
 const newVodLoaderParamsSchema = z.object({
@@ -22,7 +22,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		return { vodToEdit: null };
 	}
 
-	const vod = notFoundIfFalsy(findVodById(params.data.vod));
+	const vod = notFoundIfFalsy(await findVodById(params.data.vod));
 	const vodToEdit = vodToVideoBeingAdded(vod);
 
 	if (

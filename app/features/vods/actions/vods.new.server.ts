@@ -5,7 +5,7 @@ import { requireRole } from "~/modules/permissions/guards.server";
 import { notFoundIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { vodVideoPage } from "~/utils/urls";
 import { createVod, updateVodByReplacing } from "../queries/createVod.server";
-import { findVodById } from "../queries/findVodById.server";
+import { findVodById } from "../VodRepository.server";
 import { videoInputSchema } from "../vods-schemas";
 import { canEditVideo } from "../vods-utils";
 
@@ -20,7 +20,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 	let video: Tables["Video"];
 	if (data.vodToEditId) {
-		const vod = notFoundIfFalsy(findVodById(data.vodToEditId));
+		const vod = notFoundIfFalsy(await findVodById(data.vodToEditId));
 
 		if (
 			!canEditVideo({
