@@ -2,7 +2,6 @@ import type { Ability, BuildAbilitiesTuple, ModeShort } from '$lib/constants/in-
 import { buildToAbilityPoints } from '$lib/core/analyzer/utils';
 import type { Tables } from '$lib/server/db/tables';
 import { assertUnreachable } from '$lib/utils/types';
-import type { BuildFiltersFromSearchParams } from '../../../routes/builds/schemas';
 
 type PartialBuild = {
 	abilities: BuildAbilitiesTuple;
@@ -41,7 +40,7 @@ export function filterBuilds<T extends PartialBuild>({
 	count,
 	builds
 }: {
-	filters: BuildFiltersFromSearchParams;
+	filters: BuildFilter[];
 	count: number;
 	builds: T[];
 }) {
@@ -63,7 +62,7 @@ function buildMatchesFilters<T extends PartialBuild>({
 	filters
 }: {
 	build: T;
-	filters: BuildFiltersFromSearchParams;
+	filters: BuildFilter[];
 }) {
 	for (const filter of filters) {
 		if (filter.type === 'ability') {

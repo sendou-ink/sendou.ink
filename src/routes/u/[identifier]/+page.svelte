@@ -2,8 +2,6 @@
 	import Avatar from '$lib/components/Avatar.svelte';
 	import Flag from '$lib/components/Flag.svelte';
 	import TeamInfo from './TeamInfo.svelte';
-	import { userLayoutData } from './user-layout-data.remote';
-	import { userProfile } from './user-profile.remote';
 	import Socials from './Socials.svelte';
 	import ExtraInfos from './ExtraInfos.svelte';
 	import WeaponPool from './WeaponPool.svelte';
@@ -13,11 +11,12 @@
 	import { countryCodeToTranslatedName } from '$lib/utils/i18n';
 	import { getLocale } from '$lib/paraglide/runtime';
 	import PopoverTriggerButton from '$lib/components/popover/PopoverTriggerButton.svelte';
+	import { UserAPI } from '$lib/api/user';
 
 	let { params } = $props();
 
-	const user = $derived((await userLayoutData(params.identifier)).user);
-	const profile = $derived(await userProfile(params.identifier));
+	const user = $derived((await UserAPI.layoutDataByIdentifier(params.identifier)).user);
+	const profile = $derived(await UserAPI.profileByIdentifier(params.identifier));
 
 	const hasExtraInfos = $derived(
 		profile.inGameName ||

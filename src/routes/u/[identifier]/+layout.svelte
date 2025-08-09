@@ -6,10 +6,10 @@
 	import SubNavLink from '$lib/components/sub-nav/SubNavLink.svelte';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { m } from '$lib/paraglide/messages';
-	import { me } from '../../me.remote';
-	import { userLayoutData } from './user-layout-data.remote';
 	import { resolve } from '$app/paths';
 	import type { Snippet } from 'svelte';
+	import { UserAPI } from '$lib/api/user';
+	import { AuthAPI } from '$lib/api/auth';
 
 	interface Props extends PageProps {
 		children: Snippet;
@@ -17,8 +17,8 @@
 
 	let { children, params }: Props = $props();
 
-	const loggedInUser = $derived(await me()); // xxx: await_waterfall
-	const user = $derived((await userLayoutData(params.identifier)).user);
+	const loggedInUser = $derived(await AuthAPI.me()); // xxx: await_waterfall
+	const user = $derived((await UserAPI.layoutDataByIdentifier(params.identifier)).user);
 
 	const isOwnPage = $derived(loggedInUser?.id === user.id);
 	const isResultsPage = $derived(page.url.pathname.includes('results'));

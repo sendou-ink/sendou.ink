@@ -27,12 +27,12 @@ const dateFilterSchema = z.object({
 	date: z.string()
 });
 
-export const buildFiltersSearchParams = z.preprocess(
+export const filtersSearchParams = z.preprocess(
 	safeJSONParse,
 	z.array(z.union([abilityFilterSchema, modeFilterSchema, dateFilterSchema])).max(MAX_BUILD_FILTERS)
 );
 
-export type BuildFiltersFromSearchParams = NonNullable<z.infer<typeof buildFiltersSearchParams>>;
+export type filtersFromSearchParams = NonNullable<z.infer<typeof filtersSearchParams>>;
 
 const slugToMainWeaponId = {
 	'sploosh-o-matic': 0,

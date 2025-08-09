@@ -4,13 +4,13 @@
 	import Image from '$lib/components/image/Image.svelte';
 	import AddNewButton from '$lib/components/buttons/AddNewButton.svelte';
 	import { resolve } from '$app/paths';
-	import { me } from '../me.remote';
 	import { weaponCategories, weaponIdIsNotAlt } from '$lib/constants/in-game/weapon-ids';
 	import Main from '$lib/components/layout/Main.svelte';
 	import { weaponCategoryTranslations, weaponTranslations } from '$lib/utils/i18n';
 	import type { MainWeaponId } from '$lib/constants/in-game/types';
+	import { AuthAPI } from '$lib/api/auth';
 
-	const user = $derived(await me());
+	const user = $derived(await AuthAPI.me());
 </script>
 
 <OpenGraphMeta

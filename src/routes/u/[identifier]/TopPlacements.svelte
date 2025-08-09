@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import type { ProfileByIdentifierData } from '$lib/api/user/queries.remote';
 	import Image from '$lib/components/image/Image.svelte';
 	import { rankedModesShort } from '$lib/constants/in-game/modes';
 	import { modeImageUrl } from '$lib/utils/urls';
-	import type { UserProfileData } from './user-profile.remote';
 
 	interface Props {
-		placements: UserProfileData['topPlacements'];
+		placements: ProfileByIdentifierData['topPlacements'];
 	}
 
 	let { placements }: Props = $props();

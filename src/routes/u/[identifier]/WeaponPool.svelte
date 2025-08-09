@@ -1,9 +1,9 @@
 <script lang="ts">
+	import type { ProfileByIdentifierData } from '$lib/api/user/queries.remote';
 	import WeaponImage from '$lib/components/image/WeaponImage.svelte';
-	import type { UserProfileData } from './user-profile.remote';
 
 	interface Props {
-		weapons: UserProfileData['weapons'];
+		weapons: ProfileByIdentifierData['weapons'];
 	}
 
 	let { weapons }: Props = $props();

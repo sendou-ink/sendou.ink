@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { BuildAPI } from '$lib/api/build';
 	import BuildCard from '$lib/components/build-card/BuildCard.svelte';
 	import type { MainWeaponId } from '$lib/constants/in-game/types';
 	import { m } from '$lib/paraglide/messages';
-	import { userBuilds } from './user-builds.remote';
 	import BuildsFilters from './BuildFilters.svelte';
 	import type { BuildFilter } from './types';
 
@@ -10,7 +10,9 @@
 
 	// const isOwnPage = $derived(user?.id === layoutData.user.id);
 
-	const { builds: allBuilds, weaponCounts } = $derived(await userBuilds(params.identifier));
+	const { builds: allBuilds, weaponCounts } = $derived(
+		await BuildAPI.byUserIdentifier(params.identifier)
+	);
 
 	// Sorting dialog state
 	// let changingSorting = $state<boolean>(() => {

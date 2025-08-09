@@ -1,15 +1,15 @@
 <script lang="ts">
-	import type { UserProfileData } from './user-profile.remote';
 	import { navIconUrl } from '$lib/utils/urls';
 	import Image from '$lib/components/image/Image.svelte';
 	import DiscordIcon from '$lib/components/icons/Discord.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { rawSensToString } from '$lib/utils/strings';
+	import type { ProfileByIdentifierData } from '$lib/api/user/queries.remote';
 
 	interface Props {
 		userId: number;
 		profile: Pick<
-			UserProfileData,
+			ProfileByIdentifierData,
 			'discordUniqueName' | 'inGameName' | 'stickSens' | 'motionSens' | 'plusTier'
 		>;
 	}

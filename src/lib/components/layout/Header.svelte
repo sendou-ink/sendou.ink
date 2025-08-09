@@ -2,9 +2,9 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { m } from '$lib/paraglide/messages';
-	import { me } from '../../../routes/me.remote';
 	import Heart from '@lucide/svelte/icons/heart';
 	import Button from '$lib/components/buttons/Button.svelte';
+	import { AuthAPI } from '$lib/api/auth';
 
 	const isFrontPage = $derived(page.url.pathname === '/');
 </script>
@@ -36,7 +36,7 @@ xxx: implement NavDialog & Hamburger
     -->
 	<a href="/" class="logo"> sendou.ink </a>
 	<div class="right-container">
-		{#if isFrontPage && !(await me())?.roles.includes('MINOR_SUPPORT')}
+		{#if isFrontPage && !(await AuthAPI.me())?.roles.includes('MINOR_SUPPORT')}
 			<Button href={resolve('/support')} icon={Heart} size="small" variant="outlined">
 				{m.common_pages_support()}
 			</Button>

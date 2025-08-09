@@ -35,7 +35,7 @@
 
 <div class="breadcrumb-container">
 	<a href="/" class="breadcrumb logo"> sendou.ink </a>
-	{#each crumbs as crumb}
+	{#each crumbs as crumb (crumb.url)}
 		<span class="separator">»</span>
 		<a href={crumb.url} class="breadcrumb">
 			<Image path={crumb.image} width={24} height={24} />

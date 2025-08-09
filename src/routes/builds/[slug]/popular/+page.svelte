@@ -1,14 +1,14 @@
 <script lang="ts">
+	import { BuildAPI } from '$lib/api/build/index.js';
 	import Ability from '$lib/components/Ability.svelte';
 	import Main from '$lib/components/layout/Main.svelte';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { builds_noPopularBuilds, m } from '$lib/paraglide/messages';
 	import { weaponTranslations } from '$lib/utils/i18n';
-	import { popularAbilitiesBySlug } from './popular-abilities-by-slug.remote';
 
 	let { params } = $props();
 
-	const { popular, weaponId } = $derived(await popularAbilitiesBySlug(params.slug));
+	const { popular, weaponId } = $derived(await BuildAPI.popularAbilitiesBySlug(params.slug));
 
 	const weaponNameInEnglish = $derived(weaponTranslations[weaponId]({}, { locale: 'en' }));
 </script>

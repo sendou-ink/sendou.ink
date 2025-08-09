@@ -14,6 +14,8 @@ function buildsCacheKey(weaponSplId: MainWeaponId) {
 	return `builds-${weaponSplId}`;
 }
 
+// xxx: convert to Kysely and move to api/build
+
 export function cachedBuildsByWeaponId(weaponSplId: MainWeaponId) {
 	return syncCached(buildsCacheKey(weaponSplId), () =>
 		buildsByWeaponId({

@@ -5,15 +5,12 @@
 	import LockOpen from '@lucide/svelte/icons/lock-open';
 	import SquarePen from '@lucide/svelte/icons/square-pen';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
-	import {
-		deleteBuild,
-		updateBuildVisibility
-	} from '../../../routes/u/[identifier]/builds/build-actions.remote';
 	import MenuTriggerButton from '../menu/MenuTriggerButton.svelte';
 	import { navIconUrl } from '$lib/utils/urls';
 	import { m } from '$lib/paraglide/messages';
 	import { resolve } from '$app/paths';
 	import { confirmAction } from '$lib/utils/form';
+	import { BuildAPI } from '$lib/api/build';
 
 	interface Props {
 		buildId: number;
@@ -45,20 +42,20 @@
 			{
 				label: m.builds_actions_makePrivate(),
 				icon: Lock,
-				onclick: async () => await updateBuildVisibility({ buildId, isPrivate: true }),
+				onclick: async () => await BuildAPI.updateVisibilityById({ buildId, isPrivate: true }),
 				hidden: isPrivate || !showActions
 			},
 			{
 				label: m.builds_actions_makePublic(),
 				icon: LockOpen,
-				onclick: async () => await updateBuildVisibility({ buildId, isPrivate: false }),
+				onclick: async () => await BuildAPI.updateVisibilityById({ buildId, isPrivate: false }),
 				hidden: !isPrivate || !showActions
 			},
 			{
 				label: m.common_actions_delete(),
 				icon: Trash2,
 				onclick: () =>
-					confirmAction(() => deleteBuild(buildId), {
+					confirmAction(() => BuildAPI.deleteById(buildId), {
 						title: m.builds_deleteConfirm({ title: buildTitle })
 					}),
 				hidden: !showActions,

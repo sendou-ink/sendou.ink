@@ -6,7 +6,6 @@
 	import { BUILDS_PAGE_BATCH_SIZE, PATCHES } from '$lib/constants/build';
 	import { m } from '$lib/paraglide/messages';
 	import { weaponTranslations } from '$lib/utils/i18n';
-	import { buildsBySlug } from './builds-by-slug.remote';
 	import { resolve } from '$app/paths';
 	import Flame from '@lucide/svelte/icons/flame';
 	import ChartNoAxesColumnDecreasing from '@lucide/svelte/icons/chart-no-axes-column-decreasing';
@@ -17,9 +16,9 @@
 	import Map from '@lucide/svelte/icons/map';
 	import Calendar from '@lucide/svelte/icons/calendar';
 	import { SearchParamState } from '$lib/runes/search-param-state.svelte';
-	import { buildFiltersSearchParams, type BuildFiltersFromSearchParams } from '../schemas';
 	import BuildFilterSection from './BuildFilterSection.svelte';
 	import type { BuildFilter } from '$lib/core/build/filter';
+	import { BuildAPI } from '$lib/api/build';
 
 	let { params } = $props();
 
@@ -28,12 +27,12 @@
 	const filters = new SearchParamState({
 		key: 'f',
 		defaultValue: [],
-		schema: buildFiltersSearchParams
+		schema: BuildAPI.schemas.filtersSearchParams
 	});
 
 	// xxx: skip if filters state the only change is default ability filter (ISM 0 AP)
 	const { builds, weaponId, hasMore } = $derived(
-		await buildsBySlug({
+		await BuildAPI.bySlug({
 			slug: params.slug,
 			limit,
 			filters: filters.state
@@ -42,8 +41,8 @@
 
 	const weaponNameInEnglish = $derived(weaponTranslations[weaponId]({}, { locale: 'en' }));
 
-	function handleFilterAdd(type: BuildFiltersFromSearchParams[number]['type']) {
-		const newFilter: BuildFiltersFromSearchParams[number] =
+	function handleFilterAdd(type: BuildFilter['type']) {
+		const newFilter: (typeof filters.state)[number] =
 			type === 'ability'
 				? {
 						type: 'ability',
@@ -72,7 +71,7 @@
 		filters.update(newFilters);
 	}
 
-	function handleFilterDelete(type: BuildFiltersFromSearchParams[number]['type']) {
+	function handleFilterDelete(type: BuildFilter['type']) {
 		filters.update(filters.state.filter((f) => f.type !== type));
 	}
 </script>

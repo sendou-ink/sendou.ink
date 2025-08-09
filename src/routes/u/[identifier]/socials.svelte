@@ -1,13 +1,13 @@
 <script lang="ts">
-	import type { UserProfileData } from './user-profile.remote';
 	import TwitchIcon from '$lib/components/icons/Twitch.svelte';
 	import YouTubeIcon from '$lib/components/icons/YouTube.svelte';
 	import BattlefyIcon from '$lib/components/icons/Battlefy.svelte';
 	import BskyIcon from '$lib/components/icons/Bsky.svelte';
 	import { bskyUrl } from '$lib/utils/urls';
+	import type { ProfileByIdentifierData } from '$lib/api/user/queries.remote';
 
 	interface Props {
-		profile: Pick<UserProfileData, 'twitch' | 'youtubeId' | 'battlefy' | 'bsky'>;
+		profile: Pick<ProfileByIdentifierData, 'twitch' | 'youtubeId' | 'battlefy' | 'bsky'>;
 	}
 
 	let { profile }: Props = $props();

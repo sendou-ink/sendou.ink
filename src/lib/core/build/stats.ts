@@ -1,10 +1,9 @@
+import type { AbilitiesByWeapon, AverageAbilityPointsResult } from '$lib/api/build/queries.remote';
 import { MAX_AP } from '$lib/constants/common';
 import { abilities } from '$lib/constants/in-game/abilities';
 import type { Ability } from '$lib/constants/in-game/types';
 import invariant from '$lib/utils/invariant';
 import { roundToNDecimalPlaces } from '$lib/utils/number';
-import type { AbilitiesByWeapon } from '../../../routes/builds/[slug]/popular/popular-abilities-by-slug.remote';
-import type { AverageAbilityPointsResult } from '../../../routes/builds/[slug]/stats/build-stats-by-slug.remote';
 import { isStackableAbility } from '../analyzer/utils';
 
 function toBuildsCount(counts: AverageAbilityPointsResult[]) {

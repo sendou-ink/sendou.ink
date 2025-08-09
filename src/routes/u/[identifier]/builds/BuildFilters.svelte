@@ -4,19 +4,19 @@
 	import Lock from '@lucide/svelte/icons/lock';
 	import LockOpen from '@lucide/svelte/icons/lock-open';
 	import type { BuildFilter } from './types';
-	import type { UserBuildsData } from './user-builds.remote';
 	import Menu from '$lib/components/menu/Menu.svelte';
 	import MenuTriggerButton from '$lib/components/menu/MenuTriggerButton.svelte';
 	import { mainWeaponIds } from '$lib/constants/in-game/weapon-ids';
 	import { weaponTranslations } from '$lib/utils/i18n';
 	import Sword from '@lucide/svelte/icons/sword';
 	import { mainWeaponImageUrl } from '$lib/utils/urls';
+	import type { ByUserIdentifierData } from '$lib/api/build/queries.remote';
 
 	interface Props {
 		filter: BuildFilter;
 		isOwnPage: boolean;
-		builds: UserBuildsData['builds'];
-		weaponCounts: UserBuildsData['weaponCounts'];
+		builds: ByUserIdentifierData['builds'];
+		weaponCounts: ByUserIdentifierData['weaponCounts'];
 	}
 
 	let { filter = $bindable(), isOwnPage, builds, weaponCounts }: Props = $props();

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { BuildAPI } from '$lib/api/build/index.js';
 	import Ability from '$lib/components/Ability.svelte';
 	import WeaponImage from '$lib/components/image/WeaponImage.svelte';
 	import Main from '$lib/components/layout/Main.svelte';
@@ -6,11 +7,10 @@
 	import { MAX_AP } from '$lib/constants/common';
 	import { m } from '$lib/paraglide/messages';
 	import { weaponTranslations } from '$lib/utils/i18n';
-	import { buildStatsBySlug } from './build-stats-by-slug.remote';
 
 	let { params } = $props();
 
-	const { stats, weaponId } = $derived(await buildStatsBySlug(params.slug));
+	const { stats, weaponId } = $derived(await BuildAPI.statsBySlug(params.slug));
 
 	function apToPx(ap: number) {
 		return Math.floor((ap / stats.stackableAbilities[0].apAverage.weapon) * 200);
