@@ -7,6 +7,7 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
+import { selectPlayers } from "~/utils/kysely.server";
 import { VODS_PAGE_BATCH_SIZE } from "./vods-constants";
 import type { ListVod } from "./vods-types";
 
@@ -39,29 +40,16 @@ export async function findVods({
 		)
 		.leftJoin("User", "VideoMatchPlayer.playerUserId", "User.id")
 		.selectAll("Video")
-		.select(({ fn, val, ref }) => [
+		.select(({ fn, ref }) => [
 			sql<
 				Array<number>
-			>`json_group_array(distinct ${ref("VideoMatchPlayer.weaponSplId")})`.as(
-				"weapons",
-			),
+			>`json_group_array(distinct ${ref("VideoMatchPlayer.weaponSplId")})`
+				.$castTo<MainWeaponId[]>()
+				.as("weapons"),
 			fn
 				.agg("json_group_array", ["VideoMatchPlayer.playerName"])
 				.as("playerNames"),
-			fn
-				.agg("json_group_array", [
-					fn.agg("json_object", [
-						val("username"),
-						"User.username",
-						val("discordId"),
-						"User.discordId",
-						val("discordAvatar"),
-						"User.discordAvatar",
-						val("customUrl"),
-						"User.customUrl",
-					]),
-				])
-				.as("players"),
+			selectPlayers(),
 		]);
 	if (userId) {
 		query = query.where("User.id", "=", userId);
