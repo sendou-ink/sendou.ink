@@ -8,7 +8,6 @@ import type {
 } from "~/modules/in-game-lists/types";
 import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
 import { selectPlayers } from "~/utils/kysely.server";
-import { logger } from "~/utils/logger";
 import { VODS_PAGE_BATCH_SIZE } from "./vods-constants";
 import type { ListVod, Vod } from "./vods-types";
 
