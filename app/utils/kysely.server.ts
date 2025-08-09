@@ -1,5 +1,6 @@
-import { type ColumnType, sql } from "kysely";
-import type { Tables } from "~/db/tables";
+import { type ColumnType, expressionBuilder, sql } from "kysely";
+import { jsonArrayFrom } from "kysely/helpers/sqlite";
+import type { DB, Tables } from "~/db/tables";
 
 export const COMMON_USER_FIELDS = [
 	"User.id",
@@ -31,6 +32,21 @@ export function unJsonify<T>(value: T) {
 	}
 
 	return `\\${value}`;
+}
+
+export function selectPlayers() {
+	const eb = expressionBuilder<DB>();
+
+	return jsonArrayFrom(
+		eb
+			.selectFrom("User")
+			.select([
+				"User.username",
+				"User.discordId",
+				"User.discordAvatar",
+				"User.customUrl",
+			]),
+	).as("players");
 }
 
 export type JSONColumnTypeNullable<SelectType extends object | null> =
