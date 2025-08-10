@@ -35,7 +35,8 @@ export class SearchParamState<S extends z4.$ZodType<unknown>> {
 		newParams.set(this.key, typeof newValues === 'string' ? newValues : JSON.stringify(newValues));
 
 		goto(`?${newParams.toString()}`, {
-			noScroll: this.noScroll
+			noScroll: this.noScroll,
+			keepFocus: true
 		});
 	}
 }

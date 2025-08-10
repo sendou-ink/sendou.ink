@@ -14,8 +14,6 @@
 	import { SearchParamState } from '$lib/runes/search-param-state.svelte';
 	import z from 'zod';
 
-	// xxx: using arrow up/down to navigate also scrolls the page -> focus lost
-
 	const tab = new SearchParamState({
 		defaultValue: 'preferences',
 		schema: z.enum(['preferences', 'match-profile', 'trusted-users', 'accessibility']),
