@@ -167,6 +167,18 @@
 		"displayName": "Chao Garden",
 		"authorDiscordId": "528851510222782474"
 	},
+	"chaodark": {
+		"displayName": "Chao Garden: Dark Edition",
+		"authorDiscordId": "528851510222782474"
+	},
+	"chaohero": {
+		"displayName": "Chao Garden: Hero Edition",
+		"authorDiscordId": "528851510222782474"
+	},
+	"chaorobot": {
+		"displayName": "Chao Race",
+		"authorDiscordId": "528851510222782474"
+	},
 	"chara_special": {
 		"displayName": "A Special Tournament",
 		"authorDiscordId": "1081428018666422313"
