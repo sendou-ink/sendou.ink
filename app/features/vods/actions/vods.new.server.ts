@@ -4,8 +4,11 @@ import { requireUser } from "~/features/auth/core/user.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { notFoundIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { vodVideoPage } from "~/utils/urls";
-import { createVod, updateVodByReplacing } from "../queries/createVod.server";
-import { findVodById } from "../VodRepository.server";
+import {
+	createVod,
+	findVodById,
+	updateVodByReplacing,
+} from "../VodRepository.server";
 import { videoInputSchema } from "../vods-schemas";
 import { canEditVideo } from "../vods-utils";
 
@@ -32,14 +35,14 @@ export const action: ActionFunction = async ({ request }) => {
 			throw new Response("no permissions to edit this vod", { status: 401 });
 		}
 
-		video = updateVodByReplacing({
+		video = await updateVodByReplacing({
 			...data.video,
 			submitterUserId: user.id,
 			isValidated: true,
 			id: data.vodToEditId,
 		});
 	} else {
-		video = createVod({
+		video = await createVod({
 			...data.video,
 			submitterUserId: user.id,
 			isValidated: true,

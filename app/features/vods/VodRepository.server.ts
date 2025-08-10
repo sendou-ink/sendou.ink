@@ -7,9 +7,18 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
+import {
+	dateToDatabaseTimestamp,
+	dayMonthYearToDatabaseTimestamp,
+} from "~/utils/dates";
+import invariant from "~/utils/invariant";
 import { selectPlayers } from "~/utils/kysely.server";
 import { VODS_PAGE_BATCH_SIZE } from "./vods-constants";
-import type { ListVod, Vod } from "./vods-types";
+import type { ListVod, VideoBeingAdded, Vod } from "./vods-types";
+import {
+	extractYoutubeIdFromVideoUrl,
+	hoursMinutesSecondsStringToSeconds,
+} from "./vods-utils";
 
 export function deleteById(id: number) {
 	return db.deleteFrom("UnvalidatedVideo").where("id", "=", id).execute();
@@ -165,4 +174,85 @@ function resolvePov(matches: any): Vod["pov"] {
 	}
 
 	return;
+}
+
+export async function updateVodByReplacing(
+	args: VideoBeingAdded & {
+		submitterUserId: number;
+		isValidated: boolean;
+		id: number;
+	},
+): Promise<Tables["Video"]> {
+	return createVod(args);
+}
+
+export async function createVod(
+	args: VideoBeingAdded & {
+		submitterUserId: number;
+		isValidated: boolean;
+		id?: number;
+	},
+): Promise<Tables["Video"]> {
+	const youtubeId = extractYoutubeIdFromVideoUrl(args.youtubeUrl);
+	invariant(youtubeId, "Invalid YouTube URL");
+	return db.transaction().execute(async (trx) => {
+		var videoId: number | undefined;
+		const video = {
+			title: args.title,
+			type: args.type,
+			youtubeDate: dayMonthYearToDatabaseTimestamp(args.date),
+			eventId: args.eventId ?? null,
+			youtubeId,
+			submitterUserId: args.submitterUserId,
+			validatedAt: args.isValidated
+				? dateToDatabaseTimestamp(new Date())
+				: null,
+		};
+		if (args.id) {
+			await trx
+				.deleteFrom("VideoMatch")
+				.where("videoId", "=", args.id)
+				.execute();
+
+			await trx
+				.updateTable("UnvalidatedVideo")
+				.set(video)
+				.where("id", "=", args.id)
+				.executeTakeFirst();
+			videoId = args.id;
+		} else {
+			const result = await trx
+				.insertInto("UnvalidatedVideo")
+				.values(video)
+				.executeTakeFirst();
+			videoId = Number(result.insertId);
+		}
+		for (const match of args.matches) {
+			const video_match_result = await trx
+				.insertInto("VideoMatch")
+				.values({
+					videoId: videoId,
+					startsAt: hoursMinutesSecondsStringToSeconds(match.startsAt),
+					stageId: match.stageId,
+					mode: match.mode,
+				})
+				.executeTakeFirst();
+			invariant(video_match_result.insertId);
+			const matchId = Number(video_match_result.insertId);
+
+			for (const [i, weaponSplId] of match.weapons.entries()) {
+				await trx
+					.insertInto("VideoMatchPlayer")
+					.values({
+						videoMatchId: matchId,
+						playerUserId: args.pov?.type === "USER" ? args.pov.userId : null,
+						playerName: args.pov?.type === "NAME" ? args.pov.name : null,
+						weaponSplId,
+						player: i + 1,
+					})
+					.executeTakeFirst();
+			}
+		}
+		return { ...video, id: videoId };
+	});
 }
