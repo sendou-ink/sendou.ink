@@ -31,7 +31,8 @@ export class SearchParamState<S extends z4.$ZodType<unknown>> {
 
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity
 		const newParams = new URLSearchParams(page.url.searchParams);
-		newParams.set(this.key, JSON.stringify(newValues));
+
+		newParams.set(this.key, typeof newValues === 'string' ? newValues : JSON.stringify(newValues));
 
 		goto(`?${newParams.toString()}`, {
 			noScroll: this.noScroll

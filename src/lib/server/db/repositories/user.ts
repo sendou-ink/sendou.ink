@@ -766,6 +766,16 @@ export function updateProfile(args: UpdateProfileArgs) {
 	});
 }
 
+export async function preferencesById(userId: number) {
+	const row = await db
+		.selectFrom('User')
+		.select('User.preferences')
+		.where('id', '=', userId)
+		.executeTakeFirst();
+
+	return row?.preferences;
+}
+
 export function updatePreferences(userId: number, newPreferences: UserPreferences) {
 	return db.transaction().execute(async (trx) => {
 		const current =

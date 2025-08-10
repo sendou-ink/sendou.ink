@@ -82,12 +82,6 @@ export const navItems = [
 		prefetch: false
 	},
 	{
-		id: 'u',
-		name: m.common_pages_u(),
-		url: 'u',
-		prefetch: false
-	},
-	{
 		id: 'xsearch',
 		name: m.common_pages_xsearch(),
 		url: 'xsearch',
@@ -109,12 +103,6 @@ export const navItems = [
 		id: 'art',
 		name: m.common_pages_art(),
 		url: 'art',
-		prefetch: false
-	},
-	{
-		id: 't',
-		name: m.common_pages_t(),
-		url: 't',
 		prefetch: false
 	},
 	{
