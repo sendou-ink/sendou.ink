@@ -12,8 +12,11 @@
 
 <Tabs.Content {value}>
 	{#snippet child({ props })}
-		<div {...props}>
-			{@render children()}
+		<div {...props} class="tab-panel">
+			<!-- conditional rendering to avoid triggering data loading too early -->
+			{#if !props.hidden}
+				{@render children()}
+			{/if}
 		</div>
 	{/snippet}
 </Tabs.Content>
@@ -25,7 +28,7 @@
 
 	div[data-orientation='vertical'] {
 		padding-block-start: var(--s-1);
-		padding-inline-start: var(--s-4);
+		padding-inline-start: var(--s-6);
 	}
 
 	/* xxx: disappearing style */
