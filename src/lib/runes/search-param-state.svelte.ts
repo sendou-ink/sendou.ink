@@ -3,13 +3,26 @@ import type * as z4 from 'zod/v4/core';
 import { page } from '$app/state';
 import { goto } from '$app/navigation';
 
+interface GotoOptions {
+	replaceState?: boolean;
+	noScroll?: boolean;
+	keepFocus?: boolean;
+	invalidateAll?: boolean;
+	invalidate?: (string | URL | ((url: URL) => boolean))[] | undefined;
+}
+
 // xxx: add encoding (option to JSON.stringify)
 export class SearchParamState<S extends z4.$ZodType<unknown>> {
 	private internalState = $state<z.infer<S>>();
-	private noScroll;
-	private key;
+	private key: string;
+	private options: GotoOptions = {
+		replaceState: false,
+		noScroll: true,
+		keepFocus: true,
+		invalidateAll: false
+	};
 
-	constructor(args: { key: string; defaultValue: z.infer<S>; schema: S; noScroll?: boolean }) {
+	constructor(args: { key: string; defaultValue: z.infer<S>; schema: S; options?: GotoOptions }) {
 		const parsed = z.safeParse(args.schema, page.url.searchParams.get(args.key));
 
 		if (parsed.success) {
@@ -19,7 +32,7 @@ export class SearchParamState<S extends z4.$ZodType<unknown>> {
 		}
 
 		this.key = args.key;
-		this.noScroll = args.noScroll ?? true;
+		this.options = { ...this.options, ...args.options };
 	}
 
 	get state() {
@@ -34,9 +47,6 @@ export class SearchParamState<S extends z4.$ZodType<unknown>> {
 
 		newParams.set(this.key, typeof newValues === 'string' ? newValues : JSON.stringify(newValues));
 
-		goto(`?${newParams.toString()}`, {
-			noScroll: this.noScroll,
-			keepFocus: true
-		});
+		goto(`?${newParams.toString()}`, this.options);
 	}
 }
