@@ -2419,5 +2419,9 @@
 	"weapons_SPECIAL_11": "Ultra Stamp",
 	"builds_actions_analyze": "Analyze",
 	"builds_actions_makePrivate": "Make private",
-	"builds_actions_makePublic": "Make public"
+	"builds_actions_makePublic": "Make public",
+	"common_settings_tabs_preferences": "Preferences",
+	"common_settings_tabs_matchProfile": "Match profile",
+	"common_settings_tabs_trustedUsers": "Trusted users",
+	"common_settings_tabs_accessibility": "Accessibility"
 }
