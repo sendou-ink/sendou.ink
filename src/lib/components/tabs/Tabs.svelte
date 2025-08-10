@@ -22,7 +22,7 @@
 	let { children, value = $bindable(), orientation, triggers }: Props = $props();
 </script>
 
-<Tabs.Root {value} {orientation}>
+<Tabs.Root bind:value {orientation}>
 	{#snippet child({ props })}
 		<div {...props} class="container">
 			<Tabs.List>
