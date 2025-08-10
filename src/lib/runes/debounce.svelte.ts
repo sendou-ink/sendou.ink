@@ -1,6 +1,6 @@
 class TimeoutManager {
 	private timeoutId!: ReturnType<typeof setTimeout>;
-	private pending = $state<boolean>();
+	private pending = $state<boolean>()!;
 
 	get isPending() {
 		return this.pending;
@@ -22,12 +22,12 @@ class TimeoutManager {
 	}
 }
 
-export class DebounceFunction {
-	private target: VoidFunction;
+export class DebounceFunction<T extends unknown[]> {
+	private target: (...args: T) => void;
 	private timeoutManager = new TimeoutManager();
 	private time: number;
 
-	constructor(target: VoidFunction, time = 300) {
+	constructor(target: (...args: T) => void, time = 300) {
 		this.target = target;
 		this.time = time;
 	}
@@ -36,13 +36,13 @@ export class DebounceFunction {
 		return this.timeoutManager.isPending;
 	}
 
-	run() {
-		this.timeoutManager.schedule(() => this.target(), this.time);
+	run(...args: T) {
+		this.timeoutManager.schedule(() => this.target(...args), this.time);
 	}
 
-	runNow() {
+	runNow(...args: T) {
 		this.timeoutManager.cancel();
-		this.target();
+		this.target(...args);
 	}
 
 	cancel() {
@@ -68,7 +68,7 @@ export class DebounceState<T> {
 	}
 
 	get value() {
-		return this.current;
+		return this.current!;
 	}
 
 	get pending() {
