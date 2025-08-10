@@ -6,7 +6,6 @@ import * as UserRepository from '$lib/server/db/repositories/user';
 import * as TeamRepository from '$lib/server/db/repositories/team';
 import { getUser } from '$lib/server/auth/session';
 import { queryToUserIdentifier } from '$lib/utils/users';
-import { searchUsersSchema } from './schemas';
 
 export const getAllTeams = query(z.void(), async () => {
 	const user = await getUser();
@@ -60,15 +59,21 @@ function membersToCommonPlusTierRating(members: Pick<UserWithPlusTier, 'plusTier
 	);
 }
 
-export const searchUsers = query(searchUsersSchema, async ({ input, limit }) => {
-	if (process.env.NODE_ENV === 'production' && !(await getUser())) return null;
+export const searchUsers = query(
+	z.object({
+		input: z.string().max(100).catch(''),
+		limit: z.coerce.number().int().min(1).max(25).catch(25)
+	}),
+	async ({ input, limit }) => {
+		if (process.env.NODE_ENV === 'production' && !(await getUser())) return null;
 
-	const identifier = queryToUserIdentifier(input);
+		const identifier = queryToUserIdentifier(input);
 
-	return {
-		users: identifier
-			? await UserRepository.searchExact(identifier)
-			: await UserRepository.search({ query: input, limit }),
-		input
-	};
-});
+		return {
+			users: identifier
+				? await UserRepository.searchExact(identifier)
+				: await UserRepository.search({ query: input, limit }),
+			input
+		};
+	}
+);

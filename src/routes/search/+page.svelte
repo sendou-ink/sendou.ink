@@ -5,16 +5,16 @@
 	import { SearchParamState } from '$lib/runes/search-param-state.svelte';
 
 	const searchState = new SearchParamState({
-		defaultValue: { input: '', limit: 25 },
+		defaultValue: '',
 		schema: searchUsersSchema,
-		key: 'search'
+		key: 'q'
 	});
 
 	const debounce = new DebounceFunction((input: string) => {
-		searchState.update({ input, limit: 25 });
+		searchState.update(input);
 	}, 1000);
 
-	const users = $derived(await searchUsers(searchState.state));
+	const users = $derived(await searchUsers({ input: searchState.state, limit: 25 }));
 </script>
 
 <input
