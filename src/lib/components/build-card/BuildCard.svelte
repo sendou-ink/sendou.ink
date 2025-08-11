@@ -44,7 +44,6 @@
 			| 'private'
 		> & {
 			abilities: BuildAbilitiesTuple;
-			unsortedAbilities: BuildAbilitiesTuple;
 			modes: ModeShort[] | null;
 			weapons: Array<{
 				weaponSplId: Tables['BuildWeapon']['weaponSplId'];
@@ -53,17 +52,15 @@
 			}>;
 		};
 		owner?: Pick<UserWithPlusTier, 'discordId' | 'username' | 'plusTier'>;
-		withAbilitySorting?: boolean;
 		canEdit?: boolean;
 	}
 
-	let { build, owner, withAbilitySorting = true, canEdit: _canEdit = false }: BuildProps = $props();
+	let { build, owner, canEdit: _canEdit = false }: BuildProps = $props();
 
 	// xxx: why does the build not show updates (on build privacy change) even when this does log?
 	// tracked: https://github.com/sveltejs/kit/issues/14140
 	// $inspect(build.private);
 
-	const abilities = $derived(withAbilitySorting ? build.abilities : build.unsortedAbilities);
 	const isNoGear = $derived(
 		[build.headGearSplId, build.clothesGearSplId, build.shoesGearSplId].some((id) => id === -1)
 	);
@@ -145,9 +142,9 @@
 		{/if}
 	</div>
 	<div class="gear-abilities {isNoGear ? 'no-gear' : ''}">
-		{@render abilitiesRowWithGear('HEAD', abilities[0], build.headGearSplId)}
-		{@render abilitiesRowWithGear('CLOTHES', abilities[1], build.clothesGearSplId)}
-		{@render abilitiesRowWithGear('SHOES', abilities[2], build.shoesGearSplId)}
+		{@render abilitiesRowWithGear('HEAD', build.abilities[0], build.headGearSplId)}
+		{@render abilitiesRowWithGear('CLOTHES', build.abilities[1], build.clothesGearSplId)}
+		{@render abilitiesRowWithGear('SHOES', build.abilities[2], build.shoesGearSplId)}
 	</div>
 
 	{#if build.description}

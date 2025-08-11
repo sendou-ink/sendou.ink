@@ -298,6 +298,7 @@ export async function findWithRolesById(id: number) {
 			'User.isArtist',
 			'User.isVideoAdder',
 			'User.isTournamentOrganizer',
+			'User.preferences',
 			'User.patronTier',
 			'PlusTier.tier as plusTier'
 		])

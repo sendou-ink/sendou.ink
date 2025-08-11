@@ -37,8 +37,9 @@ export const byUserIdentifier = query(z.string(), async (identifier) => {
 		weaponPool: user.weapons
 	}).map((build) => ({
 		...build,
-		abilities: sortAbilities(build.abilities),
-		unsortedAbilities: build.abilities
+		abilities: loggedInUser?.preferences?.disableBuildAbilitySorting
+			? build.abilities
+			: sortAbilities(build.abilities)
 	}));
 
 	return {

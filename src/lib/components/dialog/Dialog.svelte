@@ -24,7 +24,6 @@
 	let { open = $bindable(false), children, title, trigger }: Props = $props();
 </script>
 
-<!-- xxx: scroll lock not working -->
 <Dialog.Root bind:open>
 	{@render trigger?.()}
 	<Dialog.Portal>
