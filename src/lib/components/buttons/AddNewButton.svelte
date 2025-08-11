@@ -10,8 +10,6 @@
 	}
 
 	let { href, navIcon }: Props = $props();
-
-	// xxx: styles broken
 </script>
 
 <Button {href} class="addNewButton">
@@ -42,7 +40,7 @@
 		align-items: center;
 		justify-content: center;
 		background-color: var(--color-primary-transparent);
-		height: calc(var(--button-height) - var(--border-width) * 2);
+		height: var(--button-height);
 		border-radius: var(--inner-border-radius) 0 0 var(--inner-border-radius);
 		padding-inline: var(--s-1);
 	}
@@ -66,7 +64,7 @@
 	.textContainer {
 		padding-inline: var(--s-1-5);
 		background-color: var(--color-primary) !important;
-		height: calc(var(--button-height) - var(--border-width) * 2);
+		height: var(--button-height);
 		display: flex;
 		align-items: center;
 		border-radius: 0 var(--inner-border-radius) var(--inner-border-radius) 0;

@@ -71,11 +71,11 @@
 		}
 	]}
 	aria-busy={loading}
-	aria-disabled={disabled}
-	{disabled}
+	aria-disabled={rest.href ? undefined : disabled}
+	disabled={rest.href ? undefined : disabled}
 	{...rest}
 >
-	{#if Icon && !loading}
+	{#if Icon}
 		<span
 			class={[
 				'button-icon',
@@ -90,9 +90,9 @@
 	{#if loading}
 		<Spinner size="20" />
 	{/if}
-	<div>
+	<span class="child-container">
 		{@render children?.()}
-	</div>
+	</span>
 </svelte:element>
 
 <style>
@@ -101,8 +101,6 @@
 		justify-content: center;
 		align-items: center;
 		vertical-align: middle;
-		min-height: 2.15rem;
-		height: auto;
 		border: 2px solid var(--color-primary);
 		border-radius: var(--radius-field);
 		position: relative;
@@ -114,6 +112,7 @@
 		font-weight: var(--bold);
 		line-height: 1.2;
 		outline-offset: 2px;
+		padding-block: var(--s-1-5);
 		padding-inline: var(--s-2-5);
 		user-select: none;
 		anchor-name: var(--anchor-name);
@@ -133,8 +132,13 @@
 			transform: initial;
 		}
 
-		&[aria-busy='true'] > div {
+		&[aria-busy='true'] > .child-container,
+		&[aria-busy='true'] > .button-icon {
 			visibility: hidden;
+		}
+
+		& > .child-container {
+			display: contents;
 		}
 
 		:global(.spinner) {
@@ -156,8 +160,8 @@
 	}
 
 	.small {
-		min-height: 1.75rem;
 		font-size: var(--fonts-xs);
+		padding-block: var(--s-1);
 		padding-inline: var(--s-2);
 
 		> .button-icon {
@@ -167,8 +171,8 @@
 	}
 
 	.miniscule {
-		min-height: 1.5rem;
 		font-size: var(--fonts-xxs);
+		padding-block: var(--s-1);
 		padding-inline: var(--s-2);
 
 		> .button-icon {
@@ -178,8 +182,8 @@
 	}
 
 	.big {
-		min-height: 2.75rem;
 		font-size: var(--fonts-md);
+		padding-block: var(--s-2-5);
 		padding-inline: var(--s-6);
 	}
 
