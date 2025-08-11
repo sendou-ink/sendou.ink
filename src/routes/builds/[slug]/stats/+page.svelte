@@ -50,7 +50,7 @@
 							<WeaponImage variant="badge" weaponSplId={weaponId} width={22} />
 						</div>
 						<div>
-							{stat.apAverage.weapon}
+							{stat.apAverage.weapon.toFixed(2)}
 							{m.analyzer_abilityPoints_short()}
 						</div>
 						<div class="bar" style:width="{apToPx(stat.apAverage.weapon)}px"></div>
@@ -58,7 +58,7 @@
 							{m.builds_stats_all()}
 						</div>
 						<div>
-							{stat.apAverage.all}
+							{stat.apAverage.all.toFixed(2)}
 							{m.analyzer_abilityPoints_short()}
 						</div>
 						<div class="bar" style:width="{apToPx(stat.apAverage.all)}px"></div>

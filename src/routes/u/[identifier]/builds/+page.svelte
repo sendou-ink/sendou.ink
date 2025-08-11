@@ -73,7 +73,7 @@
 			<!-- eslint-disable svelte/require-each-key -- Needed so that the builds update when the data loader reruns -->
 			{#each builds as build}
 				<!-- xxx: actual args -->
-				<BuildCard {build} withAbilitySorting={true} />
+				<BuildCard {build} />
 			{/each}
 		</div>
 	{:else}

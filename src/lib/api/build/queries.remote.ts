@@ -92,14 +92,17 @@ export const bySlug = query(
 	}
 );
 
+// we only need to load this once (build speed optimization)
+const allAbilitiesStatsPromise = BuildRepository.abilityPointAverages();
+
 export const statsBySlug = prerender(
 	weaponIdFromSlug,
 	async (weaponId) => {
 		return {
 			weaponId,
 			stats: abilityPointCountsToAverages({
-				allAbilities: averageAbilityPoints(),
-				weaponAbilities: averageAbilityPoints(weaponId)
+				allAbilities: await allAbilitiesStatsPromise,
+				weaponAbilities: await BuildRepository.abilityPointAverages(weaponId)
 			})
 		};
 	},
@@ -108,32 +111,9 @@ export const statsBySlug = prerender(
 	}
 );
 
-// TODO: convert to Kysely
-// TODO: exclude private builds
-function sqlQuery(includeWeaponId: boolean) {
-	return /* sql */ `
-	select "BuildAbility"."ability", sum("BuildAbility"."abilityPoints") as "abilityPointsSum"
-	from "BuildAbility"
-	left join "BuildWeapon" on "BuildAbility"."buildId" = "BuildWeapon"."buildId"
-	${includeWeaponId ? /* sql */ `where "BuildWeapon"."weaponSplId" = @weaponSplId` : ''}
-	group by "BuildAbility"."ability"
-`;
-}
-
-const findByWeaponIdStm = sql.prepare(sqlQuery(true));
-const findAllStm = sql.prepare(sqlQuery(false));
-
 export interface AverageAbilityPointsResult {
 	ability: Ability;
 	abilityPointsSum: number;
-}
-
-function averageAbilityPoints(weaponSplId?: MainWeaponId | null) {
-	const stm = typeof weaponSplId === 'number' ? findByWeaponIdStm : findAllStm;
-
-	return stm.all({
-		weaponSplId: weaponSplId ?? null
-	}) as Array<AverageAbilityPointsResult>;
 }
 
 export const popularAbilitiesBySlug = prerender(

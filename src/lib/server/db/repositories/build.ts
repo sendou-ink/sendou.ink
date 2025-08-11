@@ -96,7 +96,7 @@ export async function allByWeaponId(
 		)
 		.selectFrom('BuildWeaponWithXRankInfo')
 		.innerJoin('Build', 'Build.id', 'BuildWeaponWithXRankInfo.buildId')
-		.leftJoin("PlusTier", "PlusTier.userId", "Build.ownerId")
+		.leftJoin('PlusTier', 'PlusTier.userId', 'Build.ownerId')
 		.select(({ eb }) => [
 			'Build.id',
 			'Build.title',
@@ -106,7 +106,7 @@ export async function allByWeaponId(
 			'Build.clothesGearSplId',
 			'Build.shoesGearSplId',
 			'Build.updatedAt',
-			"PlusTier.tier as plusTier",
+			'PlusTier.tier as plusTier',
 			withAbilities(eb),
 			jsonArrayFrom(
 				eb
@@ -133,12 +133,7 @@ export async function allByWeaponId(
 		])
 		.orderBy(
 			(eb) =>
-				eb
-					.case()
-					.when("PlusTier.tier", 'is', null)
-					.then(4)
-					.else(eb.ref("PlusTier.tier"))
-					.end(),
+				eb.case().when('PlusTier.tier', 'is', null).then(4).else(eb.ref('PlusTier.tier')).end(),
 			'asc'
 		)
 		.orderBy(
@@ -201,6 +196,21 @@ export async function countByUserId({
 			.$if(!showPrivate, (qb) => qb.where('Build.private', '=', 0))
 			.executeTakeFirstOrThrow()
 	).count;
+}
+
+export async function abilityPointAverages(weaponId?: MainWeaponId) {
+	return db
+		.selectFrom('BuildAbility')
+		.select(({ fn }) => [
+			'BuildAbility.ability',
+			fn.sum<number>('BuildAbility.abilityPoints').as('abilityPointsSum')
+		])
+		.innerJoin('BuildWeapon', 'BuildAbility.buildId', 'BuildWeapon.buildId')
+		.innerJoin('Build', 'Build.id', 'BuildWeapon.buildId')
+		.$if(typeof weaponId === 'number', (qb) => qb.where('BuildWeapon.weaponSplId', '=', weaponId!))
+		.groupBy('BuildAbility.ability')
+		.where('Build.private', '=', 0)
+		.execute();
 }
 
 interface CreateArgs {

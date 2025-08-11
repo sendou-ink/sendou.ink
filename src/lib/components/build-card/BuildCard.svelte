@@ -52,7 +52,7 @@
 			}>;
 			owner?: BySlugData['builds'][number]['owner'];
 			private?: Tables['Build']['private'];
-			plusTier?: number;
+			plusTier?: number | null;
 		};
 		canEdit?: boolean;
 	}
