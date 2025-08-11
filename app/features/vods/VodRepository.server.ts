@@ -196,7 +196,7 @@ export async function createVod(
 	const youtubeId = extractYoutubeIdFromVideoUrl(args.youtubeUrl);
 	invariant(youtubeId, "Invalid YouTube URL");
 	return db.transaction().execute(async (trx) => {
-		var videoId: number | undefined;
+		let videoId: number;
 		const video = {
 			title: args.title,
 			type: args.type,
@@ -212,20 +212,22 @@ export async function createVod(
 			await trx
 				.deleteFrom("VideoMatch")
 				.where("videoId", "=", args.id)
-				.execute();
+				.executeTakeFirstOrThrow();
 
 			await trx
 				.updateTable("UnvalidatedVideo")
 				.set(video)
 				.where("id", "=", args.id)
-				.executeTakeFirst();
+				.executeTakeFirstOrThrow();
 			videoId = args.id;
 		} else {
 			const result = await trx
 				.insertInto("UnvalidatedVideo")
 				.values(video)
-				.executeTakeFirst();
-			videoId = Number(result.insertId);
+				// as id is needed for sqlite, see https://sqlite.org/forum/forumpost/033daf0b32 or the docs for `returning`
+				.returning("UnvalidatedVideo.id as id") 
+				.executeTakeFirstOrThrow();
+			videoId = result.id;
 		}
 		for (const match of args.matches) {
 			const video_match_result = await trx
@@ -236,9 +238,10 @@ export async function createVod(
 					stageId: match.stageId,
 					mode: match.mode,
 				})
-				.executeTakeFirst();
-			invariant(video_match_result.insertId);
-			const matchId = Number(video_match_result.insertId);
+				// as id is needed for sqlite, see comment above
+				.returning("VideoMatch.id as id")
+				.executeTakeFirstOrThrow();
+			const matchId = video_match_result.id;
 
 			for (const [i, weaponSplId] of match.weapons.entries()) {
 				await trx
@@ -250,7 +253,7 @@ export async function createVod(
 						weaponSplId,
 						player: i + 1,
 					})
-					.executeTakeFirst();
+					.executeTakeFirstOrThrow();
 			}
 		}
 		return { ...video, id: videoId };
