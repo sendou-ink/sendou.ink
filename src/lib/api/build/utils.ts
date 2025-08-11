@@ -4,9 +4,9 @@ import { error } from '@sveltejs/kit';
 
 export async function requirePermissionsToManageBuild(buildId: number) {
 	const user = await requireUser();
-	const usersBuilds = await BuildRepository.allByUserId({
-		userId: user.id,
-		showPrivate: true
+	const usersBuilds = await BuildRepository.allByUserId(user.id, {
+		showPrivate: true,
+		sortAbilities: false
 	});
 
 	const build = usersBuilds.find((build) => build.id === buildId);

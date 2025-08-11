@@ -5,7 +5,6 @@ import { z } from 'zod/v4';
 import { query } from '$app/server';
 import { error } from '@sveltejs/kit';
 import { notFoundIfFalsy } from '$lib/server/remote-functions';
-import { sortAbilities } from '$lib/core/build/ability-sorting';
 import { sortBuilds } from '$lib/core/build/build-sorting';
 import { BUILDS_PAGE_MAX_BUILDS } from '$lib/constants/build';
 import * as R from 'remeda';
@@ -13,7 +12,6 @@ import { filterBuilds } from '$lib/core/build/filter';
 import { allWeaponSlugs, filtersSearchParams, weaponIdFromSlug } from './schemas';
 import { prerender } from '$app/server';
 import type { Ability, MainWeaponId } from '$lib/constants/in-game/types';
-import { sql } from '$lib/server/db/sql';
 import { abilityPointCountsToAverages, popularBuilds } from '$lib/core/build/stats';
 
 export type ByUserIdentifierData = Awaited<ReturnType<typeof byUserIdentifier>>;
@@ -23,8 +21,9 @@ export const byUserIdentifier = query(z.string(), async (identifier) => {
 	const loggedInUser = await getUser();
 	const user = notFoundIfFalsy(await UserRepository.identifierToBuildFields(identifier));
 
-	const builds = await BuildRepository.allByUserId({
-		userId: user.id,
+	const builds = await BuildRepository.allByUserId(user.id, {
+		sortAbilities:
+			!loggedInUser?.preferences?.disableBuildAbilitySorting && loggedInUser?.id !== user.id,
 		showPrivate: loggedInUser?.id === user.id
 	});
 
@@ -34,12 +33,7 @@ export const byUserIdentifier = query(z.string(), async (identifier) => {
 		builds,
 		buildSorting: user.buildSorting,
 		weaponPool: user.weapons
-	}).map((build) => ({
-		...build,
-		abilities: loggedInUser?.preferences?.disableBuildAbilitySorting
-			? build.abilities
-			: sortAbilities(build.abilities)
-	}));
+	});
 
 	return {
 		buildSorting: user.buildSorting,
@@ -73,7 +67,11 @@ export const bySlug = query(
 		filters: filtersSearchParams.catch([])
 	}),
 	async ({ slug: weaponId, limit, filters }) => {
-		const builds = await BuildRepository.allByWeaponId(weaponId, { limit: limit + 1 });
+		const loggedInUser = await getUser();
+		const builds = await BuildRepository.allByWeaponId(weaponId, {
+			limit: limit + 1,
+			sortAbilities: !loggedInUser?.preferences?.disableBuildAbilitySorting
+		});
 
 		const filteredBuilds =
 			filters.length > 0
@@ -92,14 +90,17 @@ export const bySlug = query(
 	}
 );
 
+// we only need to load this once (build speed optimization)
+const allAbilitiesStatsPromise = BuildRepository.abilityPointAverages();
+
 export const statsBySlug = prerender(
 	weaponIdFromSlug,
 	async (weaponId) => {
 		return {
 			weaponId,
 			stats: abilityPointCountsToAverages({
-				allAbilities: averageAbilityPoints(),
-				weaponAbilities: averageAbilityPoints(weaponId)
+				allAbilities: await allAbilitiesStatsPromise,
+				weaponAbilities: await BuildRepository.abilityPointAverages(weaponId)
 			})
 		};
 	},
@@ -108,79 +109,27 @@ export const statsBySlug = prerender(
 	}
 );
 
-// TODO: convert to Kysely
-// TODO: exclude private builds
-function sqlQuery(includeWeaponId: boolean) {
-	return /* sql */ `
-	select "BuildAbility"."ability", sum("BuildAbility"."abilityPoints") as "abilityPointsSum"
-	from "BuildAbility"
-	left join "BuildWeapon" on "BuildAbility"."buildId" = "BuildWeapon"."buildId"
-	${includeWeaponId ? /* sql */ `where "BuildWeapon"."weaponSplId" = @weaponSplId` : ''}
-	group by "BuildAbility"."ability"
-`;
-}
-
-const findByWeaponIdStm = sql.prepare(sqlQuery(true));
-const findAllStm = sql.prepare(sqlQuery(false));
-
 export interface AverageAbilityPointsResult {
 	ability: Ability;
 	abilityPointsSum: number;
 }
 
-function averageAbilityPoints(weaponSplId?: MainWeaponId | null) {
-	const stm = typeof weaponSplId === 'number' ? findByWeaponIdStm : findAllStm;
-
-	return stm.all({
-		weaponSplId: weaponSplId ?? null
-	}) as Array<AverageAbilityPointsResult>;
-}
-
 export const popularAbilitiesBySlug = prerender(
 	weaponIdFromSlug,
 	async (weaponId) => {
-		return { weaponId, popular: popularBuilds(abilitiesByWeaponId(weaponId)) };
+		return {
+			weaponId,
+			popular: popularBuilds(await BuildRepository.popularAbilitiesByWeaponId(weaponId))
+		};
 	},
 	{
 		inputs: () => allWeaponSlugs
 	}
 );
 
-// TODO: convert to Kysely
-// TODO: exclude private builds
-const stm = sql.prepare(/* sql */ `
-	with "GroupedAbilities" as (
-		select 
-			json_group_array(
-				json_object(
-					'ability',
-					"BuildAbility"."ability",
-					'abilityPoints',
-					"BuildAbility"."abilityPoints"
-				)
-			) as "abilities",
-			"Build"."ownerId"
-		from "BuildAbility"
-		left join "BuildWeapon" on "BuildWeapon"."buildId" = "BuildAbility"."buildId"
-		left join "Build" on "Build"."id" = "BuildWeapon"."buildId"
-		where "BuildWeapon"."weaponSplId" = @weaponSplId
-		group by "BuildAbility"."buildId"
-	)
-	-- group by owner id so every user gets one build considered
-	select "abilities" 
-		from "GroupedAbilities"
-		group by "ownerId"
-`);
-
 export interface AbilitiesByWeapon {
 	abilities: Array<{
 		ability: Ability;
 		abilityPoints: number;
 	}>;
-}
-
-function abilitiesByWeaponId(weaponSplId: MainWeaponId): Array<AbilitiesByWeapon> {
-	return (stm.all({ weaponSplId }) as any[]).map((row) => ({
-		abilities: JSON.parse(row.abilities)
-	}));
 }

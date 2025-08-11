@@ -1,21 +1,22 @@
 import { modesShort } from '$lib/constants/in-game/modes';
 import type { BuildAbilitiesTuple, MainWeaponId, ModeShort } from '$lib/constants/in-game/types';
 import { weaponIdToArrayWithAlts } from '$lib/constants/in-game/weapon-ids';
+import { sortAbilities } from '$lib/core/build/ability-sorting';
 import { db } from '$lib/server/db/sql';
 import type { BuildWeapon, DB, Tables, TablesInsertable } from '$lib/server/db/tables';
 import invariant from '$lib/utils/invariant';
 import { COMMON_USER_FIELDS } from '$lib/utils/kysely.server';
-import { sql, type ExpressionBuilder, type Transaction } from 'kysely';
+import { type ExpressionBuilder, type Transaction } from 'kysely';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/sqlite';
 
 // xxx: optimize this by denormalizing XRankPlacement.rank / XRankPlacement.power fields to BuildWeapon
-export async function allByUserId({
-	userId,
-	showPrivate
-}: {
-	userId: number;
-	showPrivate: boolean;
-}) {
+export async function allByUserId(
+	userId: number,
+	options: {
+		showPrivate: boolean;
+		sortAbilities: boolean;
+	}
+) {
 	const rows = await db
 		.with('BuildWeaponWithXRankInfo', (db) =>
 			db
@@ -61,18 +62,22 @@ export async function allByUserId({
 			withAbilities(eb)
 		])
 		.where('Build.ownerId', '=', userId)
-		.$if(!showPrivate, (qb) => qb.where('Build.private', '=', 0))
+		.$if(!options.showPrivate, (qb) => qb.where('Build.private', '=', 0))
 		.execute();
 
-	return rows.map((row) => ({
-		...row,
-		abilities: dbAbilitiesToArrayOfArrays(row.abilities)
-	}));
+	return rows.map((row) => {
+		const abilities = dbAbilitiesToArrayOfArrays(row.abilities);
+
+		return {
+			...row,
+			abilities: options.sortAbilities ? sortAbilities(abilities) : abilities
+		};
+	});
 }
 
 export async function allByWeaponId(
 	weaponId: MainWeaponId,
-	{ limit = 24 }: { limit?: number } = {}
+	options: { limit: number; sortAbilities: boolean }
 ) {
 	const rows = await db
 		.with('BuildWeaponWithXRankInfo', (db) =>
@@ -96,6 +101,7 @@ export async function allByWeaponId(
 		)
 		.selectFrom('BuildWeaponWithXRankInfo')
 		.innerJoin('Build', 'Build.id', 'BuildWeaponWithXRankInfo.buildId')
+		.leftJoin('PlusTier', 'PlusTier.userId', 'Build.ownerId')
 		.select(({ eb }) => [
 			'Build.id',
 			'Build.title',
@@ -105,6 +111,8 @@ export async function allByWeaponId(
 			'Build.clothesGearSplId',
 			'Build.shoesGearSplId',
 			'Build.updatedAt',
+			'PlusTier.tier as plusTier',
+			withAbilities(eb),
 			jsonArrayFrom(
 				eb
 					.selectFrom('BuildWeapon')
@@ -121,23 +129,16 @@ export async function allByWeaponId(
 					.orderBy('BuildWeapon.weaponSplId', 'asc')
 					.whereRef('BuildWeapon.buildId', '=', 'Build.id')
 			).as('weapons'),
-			withAbilities(eb),
 			jsonObjectFrom(
 				eb
 					.selectFrom('User')
-					.leftJoin('PlusTier', 'User.id', 'PlusTier.userId')
-					.select([...COMMON_USER_FIELDS, 'PlusTier.tier as plusTier'])
+					.select([...COMMON_USER_FIELDS])
 					.whereRef('User.id', '=', 'Build.ownerId')
 			).as('owner')
 		])
 		.orderBy(
 			(eb) =>
-				eb
-					.case()
-					.when(sql.raw(`json_extract(owner, '$.plusTier')`), 'is', null)
-					.then(4)
-					.else(sql.raw(`json_extract(owner, '$.plusTier')`))
-					.end(),
+				eb.case().when('PlusTier.tier', 'is', null).then(4).else(eb.ref('PlusTier.tier')).end(),
 			'asc'
 		)
 		.orderBy(
@@ -146,13 +147,18 @@ export async function allByWeaponId(
 			'asc'
 		)
 		.orderBy('Build.updatedAt', 'desc')
-		.limit(limit)
+		.limit(options.limit)
+		.where('Build.private', '=', 0)
 		.execute();
 
-	return rows.map((row) => ({
-		...row,
-		abilities: dbAbilitiesToArrayOfArrays(row.abilities)
-	}));
+	return rows.map((row) => {
+		const abilities = dbAbilitiesToArrayOfArrays(row.abilities);
+
+		return {
+			...row,
+			abilities: options.sortAbilities ? sortAbilities(abilities) : abilities
+		};
+	});
 }
 
 function withAbilities(eb: ExpressionBuilder<DB, 'Build'>) {
@@ -200,6 +206,39 @@ export async function countByUserId({
 			.$if(!showPrivate, (qb) => qb.where('Build.private', '=', 0))
 			.executeTakeFirstOrThrow()
 	).count;
+}
+
+export async function abilityPointAverages(weaponId?: MainWeaponId) {
+	return db
+		.selectFrom('BuildAbility')
+		.select(({ fn }) => [
+			'BuildAbility.ability',
+			fn.sum<number>('BuildAbility.abilityPoints').as('abilityPointsSum')
+		])
+		.innerJoin('BuildWeapon', 'BuildAbility.buildId', 'BuildWeapon.buildId')
+		.innerJoin('Build', 'Build.id', 'BuildWeapon.buildId')
+		.$if(typeof weaponId === 'number', (qb) => qb.where('BuildWeapon.weaponSplId', '=', weaponId!))
+		.groupBy('BuildAbility.ability')
+		.where('Build.private', '=', 0)
+		.execute();
+}
+
+export async function popularAbilitiesByWeaponId(weaponId: MainWeaponId) {
+	return db
+		.selectFrom('BuildWeapon')
+		.innerJoin('Build', 'Build.id', 'BuildWeapon.buildId')
+		.select((eb) => [
+			jsonArrayFrom(
+				eb
+					.selectFrom('BuildAbility')
+					.select(['BuildAbility.ability', 'BuildAbility.abilityPoints'])
+					.whereRef('BuildAbility.buildId', '=', 'BuildWeapon.buildId')
+			).as('abilities')
+		])
+		.where('BuildWeapon.weaponSplId', '=', weaponId)
+		.where('Build.private', '=', 0)
+		.groupBy('Build.ownerId') // consider only one build per user
+		.execute();
 }
 
 interface CreateArgs {

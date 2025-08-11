@@ -119,6 +119,8 @@ export interface BuildAbility {
 	buildId: number;
 	gearType: GearType;
 	slotIndex: number;
+	/** "AP", if main slot then 10. 3 for sub abilities. */
+	abilityPoints: GeneratedAlways<number>;
 }
 
 export interface BuildWeapon {
