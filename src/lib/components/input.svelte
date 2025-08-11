@@ -1,62 +1,23 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import type { HTMLInputAttributes } from 'svelte/elements';
 
-	interface Props {
-		name?: string;
-		id?: string;
+	interface Props extends HTMLInputAttributes {
 		class?: string;
-		minlength?: number;
-		maxlength?: number;
-		required?: boolean;
-		defaultValue?: string;
 		leftAddon?: string;
 		icon?: Snippet;
-		type?: 'number' | 'date';
-		min?: number;
-		max?: number | string;
-		pattern?: string;
-		list?: string;
 		testId?: string;
-		'aria-label'?: string;
 		value?: string;
-		placeholder?: string;
-		disableAutoComplete?: boolean;
-		readonly?: boolean;
 	}
 
-	let {
-		class: className,
-		leftAddon,
-		icon,
-		testId,
-		'aria-label': ariaLabel,
-		value = $bindable(),
-		disableAutoComplete = false,
-		readonly,
-		...rest
-	}: Props = $props();
+	let { class: className, leftAddon, icon, testId, value = $bindable(), ...rest }: Props = $props();
 </script>
 
-<div
-	class={[
-		'container',
-		className,
-		{
-			'read-only': readonly
-		}
-	]}
->
+<div class={['container', className]}>
 	{#if leftAddon}
 		<div class="input-addon">{leftAddon}</div>
 	{/if}
-	<input
-		data-testid={testId}
-		bind:value
-		aria-label={ariaLabel}
-		autocomplete={disableAutoComplete ? 'one-time-code' : undefined}
-		{readonly}
-		{...rest}
-	/>
+	<input bind:value data-testid={testId} {...rest} />
 	{@render icon?.()}
 </div>
 
@@ -92,6 +53,20 @@
 		color: var(--text);
 		outline: none;
 		border-radius: var(--radius-field);
+
+		&[readonly],
+		&[disabled] {
+			cursor: not-allowed;
+			opacity: 0.5;
+		}
+
+		&::-webkit-input-placeholder,
+		&::placeholder {
+			color: var(--color-base-content-secondary);
+			font-size: var(--fonts-xs);
+			font-weight: var(--bold);
+			letter-spacing: 0.5px;
+		}
 	}
 
 	.addon {
@@ -104,10 +79,5 @@
 		padding-inline: var(--s-2);
 		place-items: center;
 		white-space: nowrap;
-	}
-
-	.read-only {
-		cursor: not-allowed;
-		opacity: 0.5;
 	}
 </style>
