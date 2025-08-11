@@ -223,6 +223,24 @@ export async function abilityPointAverages(weaponId?: MainWeaponId) {
 		.execute();
 }
 
+export async function popularAbilitiesByWeaponId(weaponId: MainWeaponId) {
+	return db
+		.selectFrom('BuildWeapon')
+		.innerJoin('Build', 'Build.id', 'BuildWeapon.buildId')
+		.select((eb) => [
+			jsonArrayFrom(
+				eb
+					.selectFrom('BuildAbility')
+					.select(['BuildAbility.ability', 'BuildAbility.abilityPoints'])
+					.whereRef('BuildAbility.buildId', '=', 'BuildWeapon.buildId')
+			).as('abilities')
+		])
+		.where('BuildWeapon.weaponSplId', '=', weaponId)
+		.where('Build.private', '=', 0)
+		.groupBy('Build.ownerId') // consider only one build per user
+		.execute();
+}
+
 interface CreateArgs {
 	ownerId: TablesInsertable['Build']['ownerId'];
 	title: TablesInsertable['Build']['title'];
