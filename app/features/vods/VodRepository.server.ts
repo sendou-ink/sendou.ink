@@ -1,6 +1,7 @@
-import { sql } from "kysely";
+import { expressionBuilder, sql } from "kysely";
+import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type { Tables } from "~/db/tables";
+import type { DB, Tables } from "~/db/tables";
 import type {
 	MainWeaponId,
 	ModeShort,
@@ -12,7 +13,6 @@ import {
 	dayMonthYearToDatabaseTimestamp,
 } from "~/utils/dates";
 import invariant from "~/utils/invariant";
-import { selectPlayers } from "~/utils/kysely.server";
 import { VODS_PAGE_BATCH_SIZE } from "./vods-constants";
 import type { ListVod, VideoBeingAdded, Vod } from "./vods-types";
 import {
@@ -255,4 +255,19 @@ export async function createVod(
 		}
 		return { ...video, id: videoId };
 	});
+}
+
+function selectPlayers() {
+	const eb = expressionBuilder<DB>();
+
+	return jsonArrayFrom(
+		eb
+			.selectFrom("User")
+			.select([
+				"User.username",
+				"User.discordId",
+				"User.discordAvatar",
+				"User.customUrl",
+			]),
+	).as("players");
 }
