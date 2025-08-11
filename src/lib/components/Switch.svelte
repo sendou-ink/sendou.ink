@@ -12,21 +12,19 @@
 		// xxx: small
 	}
 
-	// xxx: why clicking label doesn't toggle switch?
-
 	let { size, name, children, id = useId(), checked = $bindable(false) }: Props = $props();
 </script>
 
 <div class="stack horizontal sm items-center">
 	<Switch.Root {name} {id} bind:checked>
 		{#snippet child({ props })}
-			<div {...props} class={['root', { small: size === 'small' }]}>
+			<button {...props} class={['root', { small: size === 'small' }]}>
 				<Switch.Thumb>
 					{#snippet child({ props })}
 						<div {...props} class="thumb"></div>
 					{/snippet}
 				</Switch.Thumb>
-			</div>
+			</button>
 		{/snippet}
 	</Switch.Root>
 	{#if children}
@@ -51,6 +49,9 @@
 		font-weight: var(--bold);
 		margin-block-end: 0;
 		border-radius: var(--radius-box);
+		appearance: none;
+		border: 0;
+		padding: 0;
 	}
 
 	.root .thumb {
