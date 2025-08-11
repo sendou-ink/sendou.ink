@@ -5,7 +5,7 @@ import { db } from '$lib/server/db/sql';
 import type { BuildWeapon, DB, Tables, TablesInsertable } from '$lib/server/db/tables';
 import invariant from '$lib/utils/invariant';
 import { COMMON_USER_FIELDS } from '$lib/utils/kysely.server';
-import { sql, type ExpressionBuilder, type Transaction } from 'kysely';
+import { type ExpressionBuilder, type Transaction } from 'kysely';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/sqlite';
 
 // xxx: optimize this by denormalizing XRankPlacement.rank / XRankPlacement.power fields to BuildWeapon
@@ -96,6 +96,7 @@ export async function allByWeaponId(
 		)
 		.selectFrom('BuildWeaponWithXRankInfo')
 		.innerJoin('Build', 'Build.id', 'BuildWeaponWithXRankInfo.buildId')
+		.leftJoin("PlusTier", "PlusTier.userId", "Build.ownerId")
 		.select(({ eb }) => [
 			'Build.id',
 			'Build.title',
@@ -105,6 +106,8 @@ export async function allByWeaponId(
 			'Build.clothesGearSplId',
 			'Build.shoesGearSplId',
 			'Build.updatedAt',
+			"PlusTier.tier as plusTier",
+			withAbilities(eb),
 			jsonArrayFrom(
 				eb
 					.selectFrom('BuildWeapon')
@@ -121,12 +124,10 @@ export async function allByWeaponId(
 					.orderBy('BuildWeapon.weaponSplId', 'asc')
 					.whereRef('BuildWeapon.buildId', '=', 'Build.id')
 			).as('weapons'),
-			withAbilities(eb),
 			jsonObjectFrom(
 				eb
 					.selectFrom('User')
-					.leftJoin('PlusTier', 'User.id', 'PlusTier.userId')
-					.select([...COMMON_USER_FIELDS, 'PlusTier.tier as plusTier'])
+					.select([...COMMON_USER_FIELDS])
 					.whereRef('User.id', '=', 'Build.ownerId')
 			).as('owner')
 		])
@@ -134,9 +135,9 @@ export async function allByWeaponId(
 			(eb) =>
 				eb
 					.case()
-					.when(sql.raw(`json_extract(owner, '$.plusTier')`), 'is', null)
+					.when("PlusTier.tier", 'is', null)
 					.then(4)
-					.else(sql.raw(`json_extract(owner, '$.plusTier')`))
+					.else(eb.ref("PlusTier.tier"))
 					.end(),
 			'asc'
 		)

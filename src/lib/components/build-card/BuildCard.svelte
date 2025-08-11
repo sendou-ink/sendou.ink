@@ -52,6 +52,7 @@
 			}>;
 			owner?: BySlugData['builds'][number]['owner'];
 			private?: Tables['Build']['private'];
+			plusTier?: number;
 		};
 		canEdit?: boolean;
 	}
@@ -106,8 +107,8 @@
 					</a>
 					<div>•</div>
 				{/if}
-				{#if build.owner?.plusTier}
-					<span>+{build.owner.plusTier}</span>
+				{#if build.plusTier}
+					<span>+{build.plusTier}</span>
 					<div>•</div>
 				{/if}
 				<div class="stack horizontal items-center sm">
@@ -272,6 +273,7 @@
 		text-overflow: ellipsis;
 		color: var(--color-primary);
 		font-weight: var(--semi-bold);
+		max-width: 6rem;
 	}
 
 	.modes {
