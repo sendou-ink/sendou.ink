@@ -1,6 +1,5 @@
-import { type ColumnType, expressionBuilder, sql } from "kysely";
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
-import type { DB, Tables } from "~/db/tables";
+import { type ColumnType, sql } from "kysely";
+import type { Tables }  from "~/db/tables";
 
 export const COMMON_USER_FIELDS = [
 	"User.id",
