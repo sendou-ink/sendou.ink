@@ -1,5 +1,6 @@
 import { expressionBuilder, sql } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type {
@@ -152,11 +153,7 @@ export async function findVodById(
 		return {
 			...video,
 			pov: resolvePov(matches),
-			matches: matches.map(({ players: _1, playerNames: _2, ...match }) => {
-				return {
-					...match,
-				};
-			}),
+			matches: R.map(matches, R.omit(["players", "playerNames"])),
 		};
 	}
 	return null;
@@ -225,7 +222,7 @@ export async function createVod(
 				.insertInto("UnvalidatedVideo")
 				.values(video)
 				// as id is needed for sqlite, see https://sqlite.org/forum/forumpost/033daf0b32 or the docs for `returning`
-				.returning("UnvalidatedVideo.id as id") 
+				.returning("UnvalidatedVideo.id as id")
 				.executeTakeFirstOrThrow();
 			videoId = result.id;
 		}
