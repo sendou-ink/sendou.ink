@@ -1,6 +1,7 @@
 import { modesShort } from '$lib/constants/in-game/modes';
 import type { BuildAbilitiesTuple, MainWeaponId, ModeShort } from '$lib/constants/in-game/types';
 import { weaponIdToArrayWithAlts } from '$lib/constants/in-game/weapon-ids';
+import { sortAbilities } from '$lib/core/build/ability-sorting';
 import { db } from '$lib/server/db/sql';
 import type { BuildWeapon, DB, Tables, TablesInsertable } from '$lib/server/db/tables';
 import invariant from '$lib/utils/invariant';
@@ -9,13 +10,13 @@ import { type ExpressionBuilder, type Transaction } from 'kysely';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/sqlite';
 
 // xxx: optimize this by denormalizing XRankPlacement.rank / XRankPlacement.power fields to BuildWeapon
-export async function allByUserId({
-	userId,
-	showPrivate
-}: {
-	userId: number;
-	showPrivate: boolean;
-}) {
+export async function allByUserId(
+	userId: number,
+	options: {
+		showPrivate: boolean;
+		sortAbilities: boolean;
+	}
+) {
 	const rows = await db
 		.with('BuildWeaponWithXRankInfo', (db) =>
 			db
@@ -61,18 +62,22 @@ export async function allByUserId({
 			withAbilities(eb)
 		])
 		.where('Build.ownerId', '=', userId)
-		.$if(!showPrivate, (qb) => qb.where('Build.private', '=', 0))
+		.$if(!options.showPrivate, (qb) => qb.where('Build.private', '=', 0))
 		.execute();
 
-	return rows.map((row) => ({
-		...row,
-		abilities: dbAbilitiesToArrayOfArrays(row.abilities)
-	}));
+	return rows.map((row) => {
+		const abilities = dbAbilitiesToArrayOfArrays(row.abilities);
+
+		return {
+			...row,
+			abilities: options.sortAbilities ? sortAbilities(abilities) : abilities
+		};
+	});
 }
 
 export async function allByWeaponId(
 	weaponId: MainWeaponId,
-	{ limit = 24 }: { limit?: number } = {}
+	options: { limit: number; sortAbilities: boolean }
 ) {
 	const rows = await db
 		.with('BuildWeaponWithXRankInfo', (db) =>
@@ -142,13 +147,18 @@ export async function allByWeaponId(
 			'asc'
 		)
 		.orderBy('Build.updatedAt', 'desc')
-		.limit(limit)
+		.limit(options.limit)
+		.where('Build.private', '=', 0)
 		.execute();
 
-	return rows.map((row) => ({
-		...row,
-		abilities: dbAbilitiesToArrayOfArrays(row.abilities)
-	}));
+	return rows.map((row) => {
+		const abilities = dbAbilitiesToArrayOfArrays(row.abilities);
+
+		return {
+			...row,
+			abilities: options.sortAbilities ? sortAbilities(abilities) : abilities
+		};
+	});
 }
 
 function withAbilities(eb: ExpressionBuilder<DB, 'Build'>) {
