@@ -10,7 +10,6 @@ import { sortBuilds } from '$lib/core/build/build-sorting';
 import { BUILDS_PAGE_MAX_BUILDS } from '$lib/constants/build';
 import * as R from 'remeda';
 import { filterBuilds } from '$lib/core/build/filter';
-import { cachedBuildsByWeaponId } from '../../../routes/builds/[slug]/cached-builds.server';
 import { allWeaponSlugs, filtersSearchParams, weaponIdFromSlug } from './schemas';
 import { prerender } from '$app/server';
 import type { Ability, MainWeaponId } from '$lib/constants/in-game/types';
@@ -74,22 +73,21 @@ export const bySlug = query(
 		filters: filtersSearchParams.catch([])
 	}),
 	async ({ slug: weaponId, limit, filters }) => {
-		const cachedBuilds = cachedBuildsByWeaponId(weaponId);
+		const builds = await BuildRepository.allByWeaponId(weaponId, { limit: limit + 1 });
 
 		const filteredBuilds =
 			filters.length > 0
 				? filterBuilds({
-						builds: cachedBuilds,
+						builds,
 						filters,
 						count: limit
 					})
-				: cachedBuilds.slice(0, limit);
+				: builds.slice(0, limit);
 
 		return {
-			builds: filteredBuilds,
+			builds: filteredBuilds.slice(0, limit),
 			weaponId,
-			hasMore: cachedBuilds.length > filteredBuilds.length
-			// filters: filters.success ? filters.data : [],
+			hasMore: builds.length === limit + 1 && limit < BUILDS_PAGE_MAX_BUILDS
 		};
 	}
 );

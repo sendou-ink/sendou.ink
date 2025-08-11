@@ -148,9 +148,8 @@
 	{/if}
 
 	<div class="builds-container">
-		<!-- xxx: ability sorting -->
 		{#each builds as build (build.id)}
-			<BuildCard {build} owner={build} canEdit={false} />
+			<BuildCard {build} canEdit={false} />
 		{/each}
 	</div>
 	{#if hasMore}

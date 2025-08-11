@@ -1,11 +1,14 @@
 import { modesShort } from '$lib/constants/in-game/modes';
-import type { BuildAbilitiesTuple, ModeShort } from '$lib/constants/in-game/types';
+import type { BuildAbilitiesTuple, MainWeaponId, ModeShort } from '$lib/constants/in-game/types';
+import { weaponIdToArrayWithAlts } from '$lib/constants/in-game/weapon-ids';
 import { db } from '$lib/server/db/sql';
 import type { BuildWeapon, DB, Tables, TablesInsertable } from '$lib/server/db/tables';
 import invariant from '$lib/utils/invariant';
-import type { Transaction } from 'kysely';
-import { jsonArrayFrom } from 'kysely/helpers/sqlite';
+import { COMMON_USER_FIELDS } from '$lib/utils/kysely.server';
+import { sql, type ExpressionBuilder, type Transaction } from 'kysely';
+import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/sqlite';
 
+// xxx: optimize this by denormalizing XRankPlacement.rank / XRankPlacement.power fields to BuildWeapon
 export async function allByUserId({
 	userId,
 	showPrivate
@@ -14,7 +17,7 @@ export async function allByUserId({
 	showPrivate: boolean;
 }) {
 	const rows = await db
-		.with('Top500Weapon', (db) =>
+		.with('BuildWeaponWithXRankInfo', (db) =>
 			db
 				.selectFrom('Build')
 				.innerJoin('BuildWeapon', 'Build.id', 'BuildWeapon.buildId')
@@ -46,17 +49,16 @@ export async function allByUserId({
 			'Build.private',
 			jsonArrayFrom(
 				eb
-					.selectFrom('Top500Weapon')
-					.select(['Top500Weapon.weaponSplId', 'Top500Weapon.maxPower', 'Top500Weapon.minRank'])
-					.orderBy('Top500Weapon.weaponSplId', 'asc')
-					.whereRef('Top500Weapon.buildId', '=', 'Build.id')
+					.selectFrom('BuildWeaponWithXRankInfo')
+					.select([
+						'BuildWeaponWithXRankInfo.weaponSplId',
+						'BuildWeaponWithXRankInfo.maxPower',
+						'BuildWeaponWithXRankInfo.minRank'
+					])
+					.orderBy('BuildWeaponWithXRankInfo.weaponSplId', 'asc')
+					.whereRef('BuildWeaponWithXRankInfo.buildId', '=', 'Build.id')
 			).as('weapons'),
-			jsonArrayFrom(
-				eb
-					.selectFrom('BuildAbility')
-					.select(['BuildAbility.gearType', 'BuildAbility.ability', 'BuildAbility.slotIndex'])
-					.whereRef('BuildAbility.buildId', '=', 'Build.id')
-			).as('abilities')
+			withAbilities(eb)
 		])
 		.where('Build.ownerId', '=', userId)
 		.$if(!showPrivate, (qb) => qb.where('Build.private', '=', 0))
@@ -68,12 +70,105 @@ export async function allByUserId({
 	}));
 }
 
+export async function allByWeaponId(
+	weaponId: MainWeaponId,
+	{ limit = 24 }: { limit?: number } = {}
+) {
+	const rows = await db
+		.with('BuildWeaponWithXRankInfo', (db) =>
+			db
+				.selectFrom('BuildWeapon')
+				.innerJoin('Build', 'Build.id', 'BuildWeapon.buildId')
+				.leftJoin('SplatoonPlayer', 'SplatoonPlayer.userId', 'Build.ownerId')
+				.leftJoin('XRankPlacement', (join) =>
+					join
+						.onRef('XRankPlacement.playerId', '=', 'SplatoonPlayer.id')
+						.onRef('XRankPlacement.weaponSplId', '=', 'BuildWeapon.weaponSplId')
+				)
+				.select(({ fn }) => [
+					'BuildWeapon.buildId',
+					'BuildWeapon.weaponSplId',
+					fn.min('XRankPlacement.rank').as('minRank'),
+					fn.max('XRankPlacement.power').as('maxPower')
+				])
+				.where('BuildWeapon.weaponSplId', 'in', weaponIdToArrayWithAlts(weaponId))
+				.groupBy(['BuildWeapon.buildId', 'BuildWeapon.weaponSplId'])
+		)
+		.selectFrom('BuildWeaponWithXRankInfo')
+		.innerJoin('Build', 'Build.id', 'BuildWeaponWithXRankInfo.buildId')
+		.select(({ eb }) => [
+			'Build.id',
+			'Build.title',
+			'Build.description',
+			'Build.modes',
+			'Build.headGearSplId',
+			'Build.clothesGearSplId',
+			'Build.shoesGearSplId',
+			'Build.updatedAt',
+			jsonArrayFrom(
+				eb
+					.selectFrom('BuildWeapon')
+					.leftJoin('BuildWeaponWithXRankInfo', (join) =>
+						join
+							.onRef('BuildWeapon.weaponSplId', '=', 'BuildWeaponWithXRankInfo.weaponSplId')
+							.onRef('BuildWeapon.buildId', '=', 'BuildWeaponWithXRankInfo.buildId')
+					)
+					.select([
+						'BuildWeapon.weaponSplId',
+						'BuildWeaponWithXRankInfo.maxPower',
+						'BuildWeaponWithXRankInfo.minRank'
+					])
+					.orderBy('BuildWeapon.weaponSplId', 'asc')
+					.whereRef('BuildWeapon.buildId', '=', 'Build.id')
+			).as('weapons'),
+			withAbilities(eb),
+			jsonObjectFrom(
+				eb
+					.selectFrom('User')
+					.leftJoin('PlusTier', 'User.id', 'PlusTier.userId')
+					.select([...COMMON_USER_FIELDS, 'PlusTier.tier as plusTier'])
+					.whereRef('User.id', '=', 'Build.ownerId')
+			).as('owner')
+		])
+		.orderBy(
+			(eb) =>
+				eb
+					.case()
+					.when(sql.raw(`json_extract(owner, '$.plusTier')`), 'is', null)
+					.then(4)
+					.else(sql.raw(`json_extract(owner, '$.plusTier')`))
+					.end(),
+			'asc'
+		)
+		.orderBy(
+			(eb) =>
+				eb.case().when('BuildWeaponWithXRankInfo.maxPower', 'is not', null).then(0).else(1).end(),
+			'asc'
+		)
+		.orderBy('Build.updatedAt', 'desc')
+		.limit(limit)
+		.execute();
+
+	return rows.map((row) => ({
+		...row,
+		abilities: dbAbilitiesToArrayOfArrays(row.abilities)
+	}));
+}
+
+function withAbilities(eb: ExpressionBuilder<DB, 'Build'>) {
+	return jsonArrayFrom(
+		eb
+			.selectFrom('BuildAbility')
+			.select(['BuildAbility.gearType', 'BuildAbility.ability', 'BuildAbility.slotIndex'])
+			.whereRef('BuildAbility.buildId', '=', 'Build.id')
+	).as('abilities');
+}
+
 const gearOrder: Array<Tables['BuildAbility']['gearType']> = ['HEAD', 'CLOTHES', 'SHOES'];
 function dbAbilitiesToArrayOfArrays(
 	abilities: Array<Pick<Tables['BuildAbility'], 'ability' | 'gearType' | 'slotIndex'>>
 ): BuildAbilitiesTuple {
 	const sorted = abilities
-		.slice()
 		.sort((a, b) => {
 			if (a.gearType === b.gearType) return a.slotIndex - b.slotIndex;
 
@@ -120,7 +215,7 @@ interface CreateArgs {
 	private: TablesInsertable['Build']['private'];
 }
 
-export async function createInTrx({ args, trx }: { args: CreateArgs; trx: Transaction<DB> }) {
+async function createInTrx({ args, trx }: { args: CreateArgs; trx: Transaction<DB> }) {
 	const { id: buildId } = await trx
 		.insertInto('Build')
 		.values({

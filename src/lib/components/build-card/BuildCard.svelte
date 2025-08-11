@@ -14,7 +14,7 @@
 		MainWeaponId,
 		ModeShort
 	} from '$lib/constants/in-game/types';
-	import type { GearType, Tables, UserWithPlusTier } from '$lib/server/db/tables';
+	import type { GearType, Tables } from '$lib/server/db/tables';
 	import { m } from '$lib/paraglide/messages';
 	import { modesLongTranslations, weaponTranslations } from '$lib/utils/i18n';
 	import WeaponImage from '$lib/components/image/WeaponImage.svelte';
@@ -24,6 +24,7 @@
 	import Popover from '$lib/components/popover/Popover.svelte';
 	import PopoverTriggerButton from '$lib/components/popover/PopoverTriggerButton.svelte';
 	import ActionsMenu from '$lib/components/build-card/ActionsMenu.svelte';
+	import type { BySlugData } from '$lib/api/build/queries.remote';
 
 	interface BuildWeaponWithTop500Info {
 		weaponSplId: MainWeaponId;
@@ -41,7 +42,6 @@
 			| 'headGearSplId'
 			| 'shoesGearSplId'
 			| 'updatedAt'
-			| 'private'
 		> & {
 			abilities: BuildAbilitiesTuple;
 			modes: ModeShort[] | null;
@@ -50,16 +50,19 @@
 				minRank: number | null;
 				maxPower: number | null;
 			}>;
+			owner?: BySlugData['builds'][number]['owner'];
+			private?: Tables['Build']['private'];
 		};
-		owner?: Pick<UserWithPlusTier, 'discordId' | 'username' | 'plusTier'>;
 		canEdit?: boolean;
 	}
 
-	let { build, owner, canEdit: _canEdit = false }: BuildProps = $props();
+	let { build, canEdit: _canEdit = false }: BuildProps = $props();
 
 	// xxx: why does the build not show updates (on build privacy change) even when this does log?
 	// tracked: https://github.com/sveltejs/kit/issues/14140
 	// $inspect(build.private);
+
+	// xxx: description button showing too long text e.g. splattershot jr
 
 	const isNoGear = $derived(
 		[build.headGearSplId, build.clothesGearSplId, build.shoesGearSplId].some((id) => id === -1)
@@ -97,14 +100,14 @@
 		</div>
 		<div class="stack horizontal justify-between items-center">
 			<div class="date-author-row">
-				{#if owner}
-					<a href={userBuildsPage(owner)} class="owner-link">
-						{owner.username}
+				{#if build.owner}
+					<a href={userBuildsPage(build.owner)} class="owner-link">
+						{build.owner.username}
 					</a>
 					<div>•</div>
 				{/if}
-				{#if owner?.plusTier}
-					<span>+{owner.plusTier}</span>
+				{#if build.owner?.plusTier}
+					<span>+{build.owner.plusTier}</span>
 					<div>•</div>
 				{/if}
 				<div class="stack horizontal items-center sm">
@@ -123,10 +126,11 @@
 					</time>
 				</div>
 			</div>
+			<!--- xxx: fix showActions -->
 			<ActionsMenu
 				buildId={build.id}
 				isPrivate={Boolean(build.private)}
-				showActions={!owner}
+				showActions={!build.owner}
 				buildTitle={build.title}
 			/>
 		</div>

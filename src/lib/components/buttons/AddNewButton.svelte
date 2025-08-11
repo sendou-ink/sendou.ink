@@ -10,6 +10,8 @@
 	}
 
 	let { href, navIcon }: Props = $props();
+
+	// xxx: styles broken
 </script>
 
 <Button {href} class="addNewButton">

@@ -3,8 +3,6 @@ import { z } from 'zod/v4';
 import { requirePermissionsToManageBuild } from './utils';
 import { command } from '$app/server';
 import { id } from '$lib/schemas';
-import { logger } from '$lib/utils/logger';
-import { refreshBuildsCacheByWeaponSplIds } from '../../../routes/builds/[slug]/cached-builds.server';
 
 export const updateVisibilityById = command(
 	z.object({
@@ -22,16 +20,10 @@ export const updateVisibilityById = command(
 );
 
 export const deleteById = command(id, async (buildId) => {
-	const build = await requirePermissionsToManageBuild(buildId);
+	await requirePermissionsToManageBuild(buildId);
 
 	// xxx: error throwing during server actions should have some kind of toast to user
 	// throw new Error('delete build!');
 
 	await BuildRepository.deleteById(buildId);
-
-	try {
-		refreshBuildsCacheByWeaponSplIds(build.weapons.map((weapon) => weapon.weaponSplId));
-	} catch (error) {
-		logger.warn('Error refreshing builds cache', error);
-	}
 });
