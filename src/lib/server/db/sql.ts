@@ -8,6 +8,8 @@ import { logger } from '$lib/utils/logger';
 import invariant from '$lib/utils/invariant';
 import { SqliteDatePlugin } from '$lib/server/db/plugins';
 
+// xxx: currently can't toggle LOG_LEVEL, this would be the correct way to do it but vite-node thinks its running as client side code
+// import { SQL_LOG } from "$env/static/private";
 const LOG_LEVEL = (['trunc', 'full', 'none'] as const).find((val) => val === process.env.SQL_LOG);
 
 const migratedEmptyDb = new Database('db-test.sqlite3').serialize();
