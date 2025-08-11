@@ -851,6 +851,10 @@
 		"displayName": "Abandon Ship",
 		"authorDiscordId": "528851510222782474"
 	},
+	"shrimpoftheday": {
+		"displayName": "Shrimp of the Day",
+		"authorDiscordId": "309327923129745409"
+	},
 	"silverstars": {
 		"displayName": "Leblanc Hideout Beta Bracket",
 		"authorDiscordId": "338806780446638082"
