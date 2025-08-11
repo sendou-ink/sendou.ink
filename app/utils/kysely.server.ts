@@ -34,20 +34,5 @@ export function unJsonify<T>(value: T) {
 	return `\\${value}`;
 }
 
-export function selectPlayers() {
-	const eb = expressionBuilder<DB>();
-
-	return jsonArrayFrom(
-		eb
-			.selectFrom("User")
-			.select([
-				"User.username",
-				"User.discordId",
-				"User.discordAvatar",
-				"User.customUrl",
-			]),
-	).as("players");
-}
-
 export type JSONColumnTypeNullable<SelectType extends object | null> =
 	ColumnType<SelectType | null, string | null, string | null>;
