@@ -19,8 +19,6 @@
 		// disappearing?: boolean;
 	}
 
-	// xxx: make it so that the divider of the vertical nav extends all the way to the bottom, should not change size depending on the content currently rendered
-
 	let { children, value = $bindable(), orientation, triggers }: Props = $props();
 </script>
 
@@ -57,6 +55,7 @@
 	.container[data-orientation='vertical'] {
 		display: flex;
 		flex-direction: row;
+		min-height: 100vh;
 	}
 
 	.tab-list {
@@ -102,6 +101,7 @@
 		border-inline-end: 2px solid transparent;
 		justify-content: start;
 		padding: var(--s-2-5) var(--s-3);
+		flex-grow: 0;
 	}
 
 	.tab-button[data-state='active'] {

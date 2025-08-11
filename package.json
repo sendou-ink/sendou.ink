@@ -45,7 +45,7 @@
 		"edmonds-blossom-fixed": "^1.0.1",
 		"gray-matter": "^4.0.3",
 		"ics": "^3.8.1",
-		"kysely": "^0.28.4",
+		"kysely": "^0.28.5",
 		"lru-cache": "^11.1.0",
 		"markdown-it": "^14.1.0",
 		"nanoid": "^5.1.5",

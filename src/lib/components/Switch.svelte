@@ -1,27 +1,44 @@
 <script lang="ts">
-	import { Switch } from 'bits-ui';
+	import { Switch, Label, useId } from 'bits-ui';
+	import type { Snippet } from 'svelte';
+	import MyLabel from './form/Label.svelte';
 
 	interface Props {
 		size?: 'small' | 'medium';
 		name?: string;
+		children?: Snippet;
 		id?: string;
+		checked?: boolean;
 		// xxx: small
 	}
 
-	let { size, name, id }: Props = $props();
+	// xxx: why clicking label doesn't toggle switch?
+
+	let { size, name, children, id = useId(), checked = $bindable(false) }: Props = $props();
 </script>
 
-<Switch.Root {name} {id}>
-	{#snippet child({ props })}
-		<div {...props} class={['root', { small: size === 'small' }]}>
-			<Switch.Thumb>
-				{#snippet child({ props })}
-					<div {...props} class="thumb"></div>
-				{/snippet}
-			</Switch.Thumb>
-		</div>
-	{/snippet}
-</Switch.Root>
+<div class="stack horizontal sm items-center">
+	<Switch.Root {name} {id} bind:checked>
+		{#snippet child({ props })}
+			<div {...props} class={['root', { small: size === 'small' }]}>
+				<Switch.Thumb>
+					{#snippet child({ props })}
+						<div {...props} class="thumb"></div>
+					{/snippet}
+				</Switch.Thumb>
+			</div>
+		{/snippet}
+	</Switch.Root>
+	{#if children}
+		<Label.Root for={id}>
+			{#snippet child({ props })}
+				<MyLabel {...props}>
+					{@render children()}
+				</MyLabel>
+			{/snippet}
+		</Label.Root>
+	{/if}
+</div>
 
 <style>
 	.root {
@@ -75,10 +92,11 @@
 
 	.thumb[data-state='checked']:before {
 		transform: translateX(125%);
+		box-shadow: 0 0 0.1rem var(--color-primary-content);
 	}
 
 	.thumb[data-state='checked']:before {
-		transform: translateX(100%);
+		transform: translateX(125%);
 	}
 
 	.root:focus-visible {
