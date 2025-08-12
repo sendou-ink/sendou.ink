@@ -1,4 +1,8 @@
 {
+	"2v2tuesdays": {
+		"displayName": "2v2 TUESDAYS",
+		"authorDiscordId": "754368445910614046"
+	},
 	"50-cal-fir": {
 		"displayName": "Gun (Winning 50 Calibur League)",
 		"authorDiscordId": "530093822806458368"
@@ -19,6 +23,10 @@
 		"displayName": "Gamers Outreach Charity Tournament",
 		"authorDiscordId": "528851510222782474"
 	},
+	"alterrareaper": {
+		"displayName": "Alterra",
+		"authorDiscordId": "309327923129745409"
+	},
 	"artsupplies": {
 		"displayName": "Art Supplies Pencil Award",
 		"authorDiscordId": "1320944066002681876"
@@ -35,9 +43,17 @@
 		"displayName": "OCE Open",
 		"authorDiscordId": "1170249805373657093"
 	},
+	"badgeapple": {
+		"displayName": "Mega Splat Party",
+		"authorDiscordId": "751912670403362836"
+	},
 	"badgepalooza": {
 		"displayName": "Badge Palooza",
 		"authorDiscordId": "528851510222782474"
+	},
+	"bajablast": {
+		"displayName": "Baja's Blast",
+		"authorDiscordId": "336683473714544641"
 	},
 	"barcha": {
 		"displayName": "FC Barcha",
@@ -62,6 +78,10 @@
 	"birthday_cake": {
 		"displayName": "Eggs and Salad: Birthday Edition",
 		"authorDiscordId": "336683473714544641"
+	},
+	"blackoutbingo": {
+		"displayName": "DOUBLE BINGO!",
+		"authorDiscordId": "751912670403362836"
 	},
 	"blahajopen": {
 		"displayName": "Shark Tank: Deep Waters",
@@ -95,9 +115,17 @@
 		"displayName": "A Splatoon Brazil Tournament",
 		"authorDiscordId": "701870845550657677"
 	},
+	"bss1": {
+		"displayName": "Biggest School in the Sea",
+		"authorDiscordId": "629773997822967819"
+	},
 	"bucketmeow12": {
 		"displayName": "Token Of Appreciation",
 		"authorDiscordId": "1170249805373657093"
+	},
+	"buckeyesquid": {
+		"displayName": "Game Arena Splatoon 3 Downtown Doubles",
+		"authorDiscordId": "308313761779941376"
 	},
 	"calliesit": {
 		"displayName": "Splatoon 1 Tournament (Callie)",
@@ -106,6 +134,18 @@
 	"calmbefore": {
 		"displayName": "Calm Before the Storm",
 		"authorDiscordId": "631246535560265749"
+	},
+	"canada": {
+		"displayName": "Canada Day!",
+		"authorDiscordId": "1170249805373657093"
+	},
+	"capzone": {
+		"displayName": "Cap the Zone",
+		"authorDiscordId": "752582395076673577"
+	},
+	"carma": {
+		"displayName": "Carma's Colosseum",
+		"authorDiscordId": "338806780446638082"
 	},
 	"catfoodbowl": {
 		"displayName": "Dr. Meowser's Cat Food Bowl",
@@ -119,8 +159,24 @@
 		"displayName": "Supply Closet (Smudge)",
 		"authorDiscordId": "148874365105078272"
 	},
+	"champions": {
+		"displayName": "Champions Cup",
+		"authorDiscordId": "752582395076673577"
+	},
 	"chao": {
 		"displayName": "Chao Garden",
+		"authorDiscordId": "528851510222782474"
+	},
+	"chaodark": {
+		"displayName": "Chao Garden: Dark Edition",
+		"authorDiscordId": "528851510222782474"
+	},
+	"chaohero": {
+		"displayName": "Chao Garden: Hero Edition",
+		"authorDiscordId": "528851510222782474"
+	},
+	"chaorobot": {
+		"displayName": "Chao Race",
 		"authorDiscordId": "528851510222782474"
 	},
 	"chara_special": {
@@ -147,16 +203,40 @@
 		"displayName": "VERSUS THE WORLD",
 		"authorDiscordId": "528851510222782474"
 	},
+	"cosmisclash": {
+		"displayName": "Cosmic Clash (Pilot Event)",
+		"authorDiscordId": "1320944066002681876"
+	},
 	"crab_tank": {
 		"displayName": "Torneo Crab Cancel Perfect and Shadow",
 		"authorDiscordId": "336683473714544641"
+	},
+	"crazyhand": {
+		"displayName": "Lucky Dice Crazy",
+		"authorDiscordId": "752582395076673577"
 	},
 	"crimson": {
 		"displayName": "Stellaris Phantasm: Crimson Bracket",
 		"authorDiscordId": "617399529532293150"
 	},
+	"crobattle": {
+		"displayName": "Crobattle Royale",
+		"authorDiscordId": "178733052762128385"
+	},
+	"csblast": {
+		"displayName": "10 ST! Tournaments",
+		"authorDiscordId": "752582395076673577"
+	},
+	"ctrl_ink_delete": {
+		"displayName": "CTRL + Ink + Delete",
+		"authorDiscordId": "751912670403362836"
+	},
+	"current": {
+		"displayName": "FREEDOM DiVE",
+		"authorDiscordId": "564512827285569546"
+	},
 	"curseofexcalibur": {
-		"displayName": "5 Unique Curse of Excalibur Events",
+		"displayName": "Curse of Excalibur Special Events",
 		"authorDiscordId": "338806780446638082"
 	},
 	"custom_e-liter": {
@@ -187,9 +267,17 @@
 		"displayName": "Mesozoic Mayhem: Dreadnoughtus Undefeated",
 		"authorDiscordId": "352207524390240257"
 	},
+	"dualin": {
+		"displayName": "Dualin' Horizons",
+		"authorDiscordId": "752582395076673577"
+	},
 	"dynamo": {
 		"displayName": "Dynamo Roller",
 		"authorDiscordId": "534502084134043648"
+	},
+	"emparrydualies": {
+		"displayName": "Dilly Dally Dualies",
+		"authorDiscordId": "338806780446638082"
 	},
 	"enabbq": {
 		"displayName": "ENA (Dream BBQ)",
@@ -222,6 +310,10 @@
 	"frcup": {
 		"displayName": "fractured cup",
 		"authorDiscordId": "960213930586824766"
+	},
+	"freedomdive": {
+		"displayName": "Freedom Dive ↓",
+		"authorDiscordId": "631246535560265749"
 	},
 	"frostbitebase2x": {
 		"displayName": "Frostbite Ascent (Top 8)",
@@ -271,8 +363,16 @@
 		"displayName": "Get Coupled",
 		"authorDiscordId": "418496741088690177"
 	},
+	"girlsbandcryawa": {
+		"displayName": "Togenashi Togeari Subaru Bracket",
+		"authorDiscordId": "309327923129745409"
+	},
 	"glaze": {
 		"displayName": "THE GLAZE GAUNTLET",
+		"authorDiscordId": "528851510222782474"
+	},
+	"glooga": {
+		"displayName": "Glooga Cult Glooga Day Gimmick Tourney",
 		"authorDiscordId": "528851510222782474"
 	},
 	"goldenbrush": {
@@ -282,6 +382,14 @@
 	"gyra": {
 		"displayName": "Level Up x2 - Leveled Up!",
 		"authorDiscordId": "528851510222782474"
+	},
+	"habibi": {
+		"displayName": "Habibi 1v1",
+		"authorDiscordId": "752582395076673577"
+	},
+	"habibigold": {
+		"displayName": "Habibi 1v1 Gold Edition",
+		"authorDiscordId": "752582395076673577"
 	},
 	"hacker-cup-bronze": {
 		"displayName": "HACKER Cup (3rd Place)",
@@ -308,7 +416,7 @@
 		"authorDiscordId": "338806780446638082"
 	},
 	"hatsunemikuteto": {
-		"displayName": "MIKU MIKU BEAM!!! Teto Takeover!",
+		"displayName": "MIKU MIKU BEAM!!! Grand Stage",
 		"authorDiscordId": "338806780446638082"
 	},
 	"headband": {
@@ -371,6 +479,14 @@
 		"displayName": "Reef Reunion (500 KT Power)",
 		"authorDiscordId": "1170249805373657093"
 	},
+	"lemoncider": {
+		"displayName": "Lemon Cider Birthday Bash",
+		"authorDiscordId": "1320944066002681876"
+	},
+	"letthemcook": {
+		"displayName": "Let Them Cook",
+		"authorDiscordId": "824681527815438337"
+	},
 	"liftoff": {
 		"displayName": "Liftoff",
 		"authorDiscordId": "789943264370884708"
@@ -387,6 +503,10 @@
 		"displayName": "Low Tier Experiments",
 		"authorDiscordId": "430487372015206410"
 	},
+	"lugia": {
+		"displayName": "Soul Silver Cup",
+		"authorDiscordId": "671419359058722826"
+	},
 	"lumiere": {
 		"displayName": "Stellaris Phantasm: Lumière Bracket",
 		"authorDiscordId": "617399529532293150"
@@ -394,6 +514,10 @@
 	"lunablaster": {
 		"displayName": "Blast Away!",
 		"authorDiscordId": "342369454719631361"
+	},
+	"madrid": {
+		"displayName": "Madridista",
+		"authorDiscordId": "752582395076673577"
 	},
 	"magatama": {
 		"displayName": "Magatama Turnabout",
@@ -411,6 +535,14 @@
 		"displayName": "Splatoon 1 Tournament (Marie)",
 		"authorDiscordId": "336683473714544641"
 	},
+	"marss": {
+		"displayName": "Mars",
+		"authorDiscordId": "528851510222782474"
+	},
+	"masterhand": {
+		"displayName": "Lucky Dice Master",
+		"authorDiscordId": "752582395076673577"
+	},
 	"matchmeet": {
 		"displayName": "Meet Your Match",
 		"authorDiscordId": "631246535560265749"
@@ -424,7 +556,7 @@
 		"authorDiscordId": "528851510222782474"
 	},
 	"mew": {
-		"displayName": "5 TSO Tournaments",
+		"displayName": "5 IKT Tournaments",
 		"authorDiscordId": "528851510222782474"
 	},
 	"mimikyu": {
@@ -442,6 +574,10 @@
 	"minus-one-open": {
 		"displayName": "Minus One Open",
 		"authorDiscordId": "569271521776762896"
+	},
+	"moxiaward": {
+		"displayName": "Moxi Achievement",
+		"authorDiscordId": "1131109226551459881"
 	},
 	"muchen": {
 		"displayName": "Bastard München",
@@ -499,9 +635,33 @@
 		"displayName": "Banning Legends 2nd",
 		"authorDiscordId": "338806780446638082"
 	},
+	"nwnlw": {
+		"displayName": "Next Wave Nexus",
+		"authorDiscordId": "707620991500550235"
+	},
+	"nwnsm": {
+		"displayName": "Next Wave Nexus (Small Wave)",
+		"authorDiscordId": "707620991500550235"
+	},
+	"octobrush": {
+		"displayName": "Brush Brawls",
+		"authorDiscordId": "338806780446638082"
+	},
 	"octoshot": {
 		"displayName": "Weapon Lockdown",
 		"authorDiscordId": "338806780446638082"
+	},
+	"oktofest-bronze": {
+		"displayName": "Oktofest LAN (Third)",
+		"authorDiscordId": "751912670403362836"
+	},
+	"oktofest-gold": {
+		"displayName": "Oktofest LAN (First)",
+		"authorDiscordId": "751912670403362836"
+	},
+	"oktofest-silver": {
+		"displayName": "Oktofest LAN (Second)",
+		"authorDiscordId": "751912670403362836"
 	},
 	"original-message-deleted": {
 		"displayName": "[Original Message Deleted]",
@@ -575,6 +735,18 @@
 		"displayName": "Re Al",
 		"authorDiscordId": "528851510222782474"
 	},
+	"reccent": {
+		"displayName": "The REC Center",
+		"authorDiscordId": "1320944066002681876"
+	},
+	"reshiram": {
+		"displayName": "Fusion Flare",
+		"authorDiscordId": "336683473714544641"
+	},
+	"reshiramshiny": {
+		"displayName": "Fusion Flare (Shiny Edition)",
+		"authorDiscordId": "336683473714544641"
+	},
 	"revocup": {
 		"displayName": "Revo'Cup",
 		"authorDiscordId": "309327923129745409"
@@ -595,9 +767,17 @@
 		"displayName": "MIKU MIKU BEAM!!! Lower Brackets",
 		"authorDiscordId": "338806780446638082"
 	},
+	"rpdeco": {
+		"displayName": "Rapid Rushdown",
+		"authorDiscordId": "528851510222782474"
+	},
 	"s50badge": {
 		"displayName": "Anarchy Adventures",
 		"authorDiscordId": "336683473714544641"
+	},
+	"sainsburysscrap": {
+		"displayName": "Sainsbury's Scrap",
+		"authorDiscordId": "978008725451325500"
 	},
 	"sakuramiku": {
 		"displayName": "MIKU MIKU BEAM!!! Sakura Edition",
@@ -615,9 +795,25 @@
 		"displayName": "Seabattle",
 		"authorDiscordId": "528851510222782474"
 	},
+	"seior": {
+		"displayName": "Seiors Scramble",
+		"authorDiscordId": "528851510222782474"
+	},
+	"seiorbronze": {
+		"displayName": "Seiors Scramble (3rd place)",
+		"authorDiscordId": "528851510222782474"
+	},
+	"seiorsilver": {
+		"displayName": "Seiors Scramble (2rd place)",
+		"authorDiscordId": "528851510222782474"
+	},
 	"serenade": {
 		"displayName": "Stellaris Phantasm: Serenade Bracket",
 		"authorDiscordId": "617399529532293150"
+	},
+	"sfcsunfish": {
+		"displayName": "Sunfish Saturday",
+		"authorDiscordId": "375410300373172225"
 	},
 	"sharktank1st": {
 		"displayName": "Shark Tank (Gold)",
@@ -644,7 +840,7 @@
 		"authorDiscordId": "528851510222782474"
 	},
 	"shinymew": {
-		"displayName": "10 TSO Tournaments",
+		"displayName": "10 IKT Tournaments",
 		"authorDiscordId": "528851510222782474"
 	},
 	"shinywooper": {
@@ -656,12 +852,16 @@
 		"authorDiscordId": "528851510222782474"
 	},
 	"silverstars": {
-		"displayName": "Beta Bracket",
+		"displayName": "Leblanc Hideout Beta Bracket",
 		"authorDiscordId": "338806780446638082"
 	},
 	"slyeion": {
 		"displayName": "Sylveon",
 		"authorDiscordId": "338806780446638082"
+	},
+	"solosquidshowdown": {
+		"displayName": "Solo Squid Showdown",
+		"authorDiscordId": "824681527815438337"
 	},
 	"soulcupgold": {
 		"displayName": "Soul League (Div 1)",
@@ -707,6 +907,30 @@
 		"displayName": "Splat Legacy LAN",
 		"authorDiscordId": "342369454719631361"
 	},
+	"splatoonolympics": {
+		"displayName": "Splatoon Olympics",
+		"authorDiscordId": "338702451156844545"
+	},
+	"splattershotpro": {
+		"displayName": "MIDLINES ONLY",
+		"authorDiscordId": "336683473714544641"
+	},
+	"splattershotproberry": {
+		"displayName": "MIDLINES ONLY: BERRY",
+		"authorDiscordId": "336683473714544641"
+	},
+	"splattershotproforge": {
+		"displayName": "MIDLINES ONLY: FORGE",
+		"authorDiscordId": "336683473714544641"
+	},
+	"squidmoreaside": {
+		"displayName": "Mount Squidmore A-Side",
+		"authorDiscordId": "631246535560265749"
+	},
+	"squidmorebside": {
+		"displayName": "Mount Squidmore B-Side",
+		"authorDiscordId": "631246535560265749"
+	},
 	"squidtheforce": {
 		"displayName": "Squidforce Cup",
 		"authorDiscordId": "1320944066002681876"
@@ -714,6 +938,18 @@
 	"stellatedzone": {
 		"displayName": "Stellated Zone",
 		"authorDiscordId": "309327923129745409"
+	},
+	"stlcsfirst": {
+		"displayName": "LAN Championship Showdown (First)",
+		"authorDiscordId": "201922904781357057"
+	},
+	"stlcssecond": {
+		"displayName": "LAN Championship Showdown (Second)",
+		"authorDiscordId": "201922904781357057"
+	},
+	"stlcsthird": {
+		"displayName": "LAN Championship Showdown (Third)",
+		"authorDiscordId": "201922904781357057"
 	},
 	"sunday-run": {
 		"displayName": "Sunday Run",
@@ -726,6 +962,10 @@
 	"swig": {
 		"displayName": "Big Swig",
 		"authorDiscordId": "534502084134043648"
+	},
+	"switzerland": {
+		"displayName": "Switzerland",
+		"authorDiscordId": "338005893377556480"
 	},
 	"szclassic": {
 		"displayName": "Zones Classic",
@@ -747,6 +987,10 @@
 		"displayName": "TeaCup",
 		"authorDiscordId": "338806780446638082"
 	},
+	"tentatek": {
+		"displayName": "Tentatek Takeover",
+		"authorDiscordId": "1170249805373657093"
+	},
 	"tentatekshowdown": {
 		"displayName": "Tentatek Showdown!",
 		"authorDiscordId": "754368445910614046"
@@ -763,6 +1007,10 @@
 		"displayName": "Squids For Palestinian Kids",
 		"authorDiscordId": "338806780446638082"
 	},
+	"threeofa": {
+		"displayName": "Three of a Kind (1st Place)",
+		"authorDiscordId": "1320944066002681876"
+	},
 	"tnttoken12": {
 		"displayName": "DYNAMITE TOKEN",
 		"authorDiscordId": "1170249805373657093"
@@ -773,6 +1021,14 @@
 	},
 	"tonytonyc": {
 		"displayName": "Tony Tony Challenge",
+		"authorDiscordId": "338806780446638082"
+	},
+	"tralalero": {
+		"displayName": "Tralalero Tralala",
+		"authorDiscordId": "528851510222782474"
+	},
+	"transvivian": {
+		"displayName": "Trans Cup",
 		"authorDiscordId": "338806780446638082"
 	},
 	"treasure": {
@@ -794,6 +1050,10 @@
 	"triceragold": {
 		"displayName": "Mesozoic Mayhem: Gold Triceratrials",
 		"authorDiscordId": "352207524390240257"
+	},
+	"trisquid": {
+		"displayName": "Tri Squid Achievement",
+		"authorDiscordId": "1320944066002681876"
 	},
 	"tristriked3": {
 		"displayName": "Tristrike Tuesday",
@@ -827,6 +1087,10 @@
 		"displayName": "Division 5 (Blueberry)",
 		"authorDiscordId": "338806780446638082"
 	},
+	"turbo": {
+		"displayName": "Turbo Tourney",
+		"authorDiscordId": "671419359058722826"
+	},
 	"turf1230": {
 		"displayName": "Turf War Takedown",
 		"authorDiscordId": "1170249805373657093"
@@ -851,6 +1115,10 @@
 		"displayName": "Ubers",
 		"authorDiscordId": "528851510222782474"
 	},
+	"urchincup": {
+		"displayName": "Urchin-Cup",
+		"authorDiscordId": "338806780446638082"
+	},
 	"vchargersplash": {
 		"displayName": "Charger Assault",
 		"authorDiscordId": "338806780446638082"
@@ -863,6 +1131,10 @@
 		"displayName": "Splat Vibes LAN (Top 4)",
 		"authorDiscordId": "342369454719631361"
 	},
+	"vsblast": {
+		"displayName": "5 ST! Tournaments",
+		"authorDiscordId": "752582395076673577"
+	},
 	"wave-breaker": {
 		"displayName": "Ride the Wave",
 		"authorDiscordId": "534502084134043648"
@@ -870,6 +1142,10 @@
 	"wave1234567_4": {
 		"displayName": "Tough Tides",
 		"authorDiscordId": "1170249805373657093"
+	},
+	"whitecat": {
+		"displayName": "White Cat Achievement",
+		"authorDiscordId": "631246535560265749"
 	},
 	"wi-wi-wi": {
 		"displayName": "Wi Wi Wi Cat",
