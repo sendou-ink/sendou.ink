@@ -2,7 +2,7 @@
 	import type { UserSearchData, AllTeamsData } from '$lib/api/search/queries.remote';
 	import { DebounceFunction } from '$lib/runes/debounce.svelte';
 	import { SearchParamState } from '$lib/runes/search-param-state.svelte';
-	import { SearchAPI } from '$lib/api/search';
+	import * as SearchAPI from '$lib/api/search';
 	import z from 'zod';
 	import User from '@lucide/svelte/icons/user';
 	import Users from '@lucide/svelte/icons/users';
@@ -32,13 +32,13 @@
 
 	const usersPromise = $derived.by(() => {
 		if (tab.state !== 'users' || searchState.state === '') return Promise.resolve(null);
-		return SearchAPI.searchUsers({ input: searchState.state, limit: 25 });
+		return SearchAPI.queries.searchUsers({ input: searchState.state, limit: 25 });
 	});
 	const usersResult = $derived(await usersPromise);
 
 	let search = $state(searchState.state);
 
-	const teamsResult = $derived(await SearchAPI.getAllTeams());
+	const teamsResult = $derived(await SearchAPI.queries.getAllTeams());
 	const filteredTeams = $derived.by(() => {
 		if (tab.state !== 'teams') return teamsResult.teams;
 

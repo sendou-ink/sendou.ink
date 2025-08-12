@@ -13,7 +13,7 @@ import { allWeaponSlugs, filtersSearchParams, weaponIdFromSlug } from './schemas
 import { prerender } from '$app/server';
 import type { Ability, MainWeaponId } from '$lib/constants/in-game/types';
 import { abilityPointCountsToAverages, popularBuilds } from '$lib/core/build/stats';
-import { UserAPI } from '../user';
+import * as UserAPI from '../user';
 
 export type ByUserIdentifierData = Awaited<ReturnType<typeof byUserIdentifier>>;
 

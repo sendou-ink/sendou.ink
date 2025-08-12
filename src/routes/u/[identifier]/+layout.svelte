@@ -8,8 +8,8 @@
 	import { m } from '$lib/paraglide/messages';
 	import { resolve } from '$app/paths';
 	import type { Snippet } from 'svelte';
-	import { UserAPI } from '$lib/api/user';
-	import { AuthAPI } from '$lib/api/auth';
+	import * as UserAPI from '$lib/api/user';
+	import * as AuthAPI from '$lib/api/auth';
 
 	interface Props extends PageProps {
 		children: Snippet;
@@ -17,8 +17,8 @@
 
 	let { children, params }: Props = $props();
 
-	const loggedInUser = $derived(await AuthAPI.me()); // xxx: await_waterfall
-	const user = $derived((await UserAPI.layoutDataByIdentifier(params.identifier)).user);
+	const loggedInUser = $derived(await AuthAPI.queries.me()); // xxx: await_waterfall
+	const user = $derived((await UserAPI.queries.layoutDataByIdentifier(params.identifier)).user);
 
 	const isOwnPage = $derived(loggedInUser?.id === user.id);
 	const isResultsPage = $derived(page.url.pathname.includes('results'));

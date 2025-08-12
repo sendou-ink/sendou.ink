@@ -8,9 +8,9 @@
 	import Main from '$lib/components/layout/Main.svelte';
 	import { weaponCategoryTranslations, weaponTranslations } from '$lib/utils/i18n';
 	import type { MainWeaponId } from '$lib/constants/in-game/types';
-	import { AuthAPI } from '$lib/api/auth';
+	import * as AuthAPI from '$lib/api/auth';
 
-	const user = $derived(await AuthAPI.me());
+	const user = $derived(await AuthAPI.queries.me());
 </script>
 
 <OpenGraphMeta

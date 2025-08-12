@@ -1,5 +1,1 @@
-import * as queries from './queries.remote';
-
-export const AuthAPI = {
-	...queries
-};
+export * as queries from './queries.remote';

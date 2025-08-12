@@ -1,13 +1,13 @@
 <script>
 	import Main from '$lib/components/layout/Main.svelte';
 	import DesktopSideNav from '../lib/components/layout/DesktopSideNav.svelte';
-	import { AuthAPI } from '$lib/api/auth';
+	import * as AuthAPI from '$lib/api/auth';
 </script>
 
 <div class="main-container">
 	<DesktopSideNav />
 	<Main class="front-page__container">
-		{#if !(await AuthAPI.me())?.roles.includes('MINOR_SUPPORT') && process.env.NODE_ENV === 'production'}
+		{#if !(await AuthAPI.queries.me())?.roles.includes('MINOR_SUPPORT') && process.env.NODE_ENV === 'production'}
 			<div class="top-leaderboard" id="pw-leaderboard_atf"></div>
 		{/if}
 		<h1>Welcome to SvelteKit</h1>

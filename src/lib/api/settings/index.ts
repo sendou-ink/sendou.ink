@@ -1,7 +1,2 @@
-import * as queries from './queries.remote';
-import * as actions from './actions.remote';
-
-export const SettingsAPI = {
-	...queries,
-	...actions
-};
+export * as queries from './queries.remote';
+export * as actions from './actions.remote';

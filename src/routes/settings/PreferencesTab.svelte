@@ -1,15 +1,15 @@
 <script lang="ts">
-	import { SettingsAPI } from '$lib/api/settings';
+	import * as SettingsAPI from '$lib/api/settings';
 	import SwitchFormField from '$lib/components/form/SwitchFormField.svelte';
 	import { m } from '$lib/paraglide/messages';
 
-	const preferences = $derived(await SettingsAPI.byLoggedInUser()); // xxx: spinner
+	const preferences = $derived(await SettingsAPI.queries.byLoggedInUser()); // xxx: spinner
 
 	async function updatePreferences(
-		args: Parameters<typeof SettingsAPI.updateBooleanPreferences>[0]
+		args: Parameters<typeof SettingsAPI.actions.updateBooleanPreferences>[0]
 	) {
-		await SettingsAPI.updateBooleanPreferences(args).updates(
-			SettingsAPI.byLoggedInUser().withOverride((preferences) => ({
+		await SettingsAPI.actions.updateBooleanPreferences(args).updates(
+			SettingsAPI.queries.byLoggedInUser().withOverride((preferences) => ({
 				...preferences,
 				...args
 			}))

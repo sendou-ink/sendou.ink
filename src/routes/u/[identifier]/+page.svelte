@@ -11,12 +11,12 @@
 	import { countryCodeToTranslatedName } from '$lib/utils/i18n';
 	import { getLocale } from '$lib/paraglide/runtime';
 	import PopoverTriggerButton from '$lib/components/popover/PopoverTriggerButton.svelte';
-	import { UserAPI } from '$lib/api/user';
+	import * as UserAPI from '$lib/api/user';
 
 	let { params } = $props();
 
-	const user = $derived((await UserAPI.layoutDataByIdentifier(params.identifier)).user);
-	const profile = $derived(await UserAPI.profileByIdentifier(params.identifier));
+	const user = $derived((await UserAPI.queries.layoutDataByIdentifier(params.identifier)).user);
+	const profile = $derived(await UserAPI.queries.profileByIdentifier(params.identifier));
 
 	const hasExtraInfos = $derived(
 		profile.inGameName ||
