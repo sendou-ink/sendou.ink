@@ -312,7 +312,7 @@ export async function update(args: CreateArgs & { id: number }) {
 }
 
 export function deleteById(id: number) {
-	return db.deleteFrom('Build').where('id', '=', id).execute();
+	return db.deleteFrom('Build').where('id', '=', id).returning('ownerId').executeTakeFirstOrThrow();
 }
 
 export function updateVisibilityById(args: { id: number; private: number }) {
@@ -322,5 +322,6 @@ export function updateVisibilityById(args: { id: number; private: number }) {
 			private: args.private
 		})
 		.where('id', '=', args.id)
-		.execute();
+		.returning('ownerId')
+		.executeTakeFirstOrThrow();
 }

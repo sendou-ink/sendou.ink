@@ -3,6 +3,9 @@ import { z } from 'zod/v4';
 import { requirePermissionsToManageBuild } from './utils';
 import { command } from '$app/server';
 import { id } from '$lib/schemas';
+import * as UserRepository from '$lib/server/db/repositories/user';
+import invariant from '$lib/utils/invariant';
+import { byUserIdentifier } from './queries.remote';
 
 export const updateVisibilityById = command(
 	z.object({
@@ -12,10 +15,12 @@ export const updateVisibilityById = command(
 	async (args) => {
 		const build = await requirePermissionsToManageBuild(args.buildId);
 
-		await BuildRepository.updateVisibilityById({
+		const { ownerId } = await BuildRepository.updateVisibilityById({
 			id: build.id,
 			private: args.isPrivate ? 1 : 0
 		});
+
+		await refreshBuildsPageQuery(ownerId);
 	}
 );
 
@@ -25,5 +30,16 @@ export const deleteById = command(id, async (buildId) => {
 	// xxx: error throwing during server actions should have some kind of toast to user
 	// throw new Error('delete build!');
 
-	await BuildRepository.deleteById(buildId);
+	const { ownerId } = await BuildRepository.deleteById(buildId);
+
+	await refreshBuildsPageQuery(ownerId);
 });
+
+async function refreshBuildsPageQuery(userId: number) {
+	const data = await UserRepository.findLayoutDataByIdentifier(String(userId));
+	invariant(data, 'User not found');
+
+	const identifier = data.user.customUrl ?? data.user.discordId;
+
+	await byUserIdentifier(identifier).refresh();
+}

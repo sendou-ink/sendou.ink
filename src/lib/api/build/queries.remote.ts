@@ -13,11 +13,11 @@ import { allWeaponSlugs, filtersSearchParams, weaponIdFromSlug } from './schemas
 import { prerender } from '$app/server';
 import type { Ability, MainWeaponId } from '$lib/constants/in-game/types';
 import { abilityPointCountsToAverages, popularBuilds } from '$lib/core/build/stats';
+import { UserAPI } from '../user';
 
 export type ByUserIdentifierData = Awaited<ReturnType<typeof byUserIdentifier>>;
 
-// xxx: better schema?
-export const byUserIdentifier = query(z.string(), async (identifier) => {
+export const byUserIdentifier = query(UserAPI.schemas.identifier, async (identifier) => {
 	const loggedInUser = await getUser();
 	const user = notFoundIfFalsy(await UserRepository.identifierToBuildFields(identifier));
 
