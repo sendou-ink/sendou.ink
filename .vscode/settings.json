@@ -3,6 +3,9 @@
 	"[svelte]": {
 		"editor.defaultFormatter": "svelte.svelte-vscode"
 	},
+	"[typescript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
 	"explorer.sortOrder": "filesFirst",
 	"workbench.editor.customLabels.patterns": {
 		"**/routes/**/*/+page.svelte": "${filename}",
