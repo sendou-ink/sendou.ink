@@ -1,0 +1,15 @@
+interface FormFieldBase<T extends string> {
+	type: T;
+	label: string;
+	bottomText?: string;
+}
+
+interface FormFieldText<T extends string> extends FormFieldBase<T> {
+	maxLength: number;
+	toLowerCase?: boolean;
+}
+
+export type FormField =
+	| FormFieldText<'text-field'>
+	| FormFieldText<'text-area'>
+	| FormFieldBase<'toggle'>;

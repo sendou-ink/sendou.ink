@@ -7,8 +7,7 @@
 	import Badge from './Badge.svelte';
 	import Button from '$lib/components/buttons/Button.svelte';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
-
-	const SMALL_BADGES_PER_DISPLAY_PAGE = 9;
+	import { SMALL_BADGES_PER_DISPLAY_PAGE } from '$lib/api/user/schemas';
 
 	interface Props {
 		badges: Array<Omit<Tables['Badge'], 'authorId'> & { count?: number }>;
