@@ -1,5 +1,3 @@
-import { db, sql } from '$lib/server/db/sql';
-
 /**
  * Resets all data in the database by deleting all rows from every table,
  * except for SQLite system tables and the 'migrations' table.
@@ -18,17 +16,18 @@ import { db, sql } from '$lib/server/db/sql';
  * });
  */
 export function dbReset() {
-	const tables = sql
-		.prepare(
-			"SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'migrations';"
-		)
-		.all() as { name: string }[];
+	return; // xxx: implement dbReset for unit tests
+	// const tables = sql
+	// 	.prepare(
+	// 		"SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'migrations';"
+	// 	)
+	// 	.all() as { name: string }[];
 
-	sql.prepare('PRAGMA foreign_keys = OFF').run();
-	for (const table of tables) {
-		sql.prepare(`DELETE FROM "${table.name}"`).run();
-	}
-	sql.prepare('PRAGMA foreign_keys = ON').run();
+	// sql.prepare('PRAGMA foreign_keys = OFF').run();
+	// for (const table of tables) {
+	// 	sql.prepare(`DELETE FROM "${table.name}"`).run();
+	// }
+	// sql.prepare('PRAGMA foreign_keys = ON').run();
 }
 
 /**
@@ -46,15 +45,16 @@ export function dbReset() {
  * // Inserts 2 users (default)
  * await dbInsertUsers();
  */
-export function dbInsertUsers(count = 2) {
-	return db
-		.insertInto('User')
-		.values(
-			Array.from({ length: count }).map((_, i) => ({
-				id: i + 1,
-				discordName: `user${i + 1}`,
-				discordId: String(i)
-			}))
-		)
-		.execute();
+export function dbInsertUsers(_count = 2) {
+	return; // xxx: implement dbInsertUsers for unit tests
+	// return db
+	// 	.insertInto('User')
+	// 	.values(
+	// 		Array.from({ length: count }).map((_, i) => ({
+	// 			id: i + 1,
+	// 			discordName: `user${i + 1}`,
+	// 			discordId: String(i)
+	// 		}))
+	// 	)
+	// 	.execute();
 }

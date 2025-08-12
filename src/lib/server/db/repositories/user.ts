@@ -2,7 +2,7 @@ import type { ExpressionBuilder, FunctionModule, NotNull } from 'kysely';
 import { sql } from 'kysely';
 import { jsonArrayFrom } from 'kysely/helpers/sqlite';
 import * as R from 'remeda';
-import { db, sql as dbDirect } from '../sql';
+import { db } from '../sql';
 import type { BuildSort, DB, Tables, TablesInsertable, UserPreferences } from '../tables';
 // import type { ChatUser } from "~/features/chat/components/Chat";
 import invariant from '$lib/utils/invariant';
@@ -888,25 +888,25 @@ export function updatePatronData(users: UpdatePatronDataArgs) {
 	});
 }
 
-// TODO: use Kysely
-const updateByDiscordIdStm = dbDirect.prepare(/* sql */ `
-  update
-    "User"
-  set
-    "discordAvatar" = @discordAvatar,
-    "discordName" = coalesce(@discordName, "discordName"),
-    "discordUniqueName" = coalesce(@discordUniqueName, "discordUniqueName")
-  where
-    "discordId" = @discordId
-`);
-export const updateMany = dbDirect.transaction(
-	(
-		argsArr: Array<
-			Pick<Tables['User'], 'discordAvatar' | 'discordName' | 'discordUniqueName' | 'discordId'>
-		>
-	) => {
-		for (const updateArgs of argsArr) {
-			updateByDiscordIdStm.run(updateArgs);
-		}
-	}
-);
+// xxx: use Kysely
+// const updateByDiscordIdStm = dbDirect.prepare(/* sql */ `
+//   update
+//     "User"
+//   set
+//     "discordAvatar" = @discordAvatar,
+//     "discordName" = coalesce(@discordName, "discordName"),
+//     "discordUniqueName" = coalesce(@discordUniqueName, "discordUniqueName")
+//   where
+//     "discordId" = @discordId
+// `);
+// export const updateMany = dbDirect.transaction(
+// 	(
+// 		argsArr: Array<
+// 			Pick<Tables['User'], 'discordAvatar' | 'discordName' | 'discordUniqueName' | 'discordId'>
+// 		>
+// 	) => {
+// 		for (const updateArgs of argsArr) {
+// 			updateByDiscordIdStm.run(updateArgs);
+// 		}
+// 	}
+// );

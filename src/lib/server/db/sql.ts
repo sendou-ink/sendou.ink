@@ -1,33 +1,31 @@
 import { styleText } from 'node:util';
-import Database from 'better-sqlite3';
-import { Kysely, type LogEvent, ParseJSONResultsPlugin, SqliteDialect } from 'kysely';
+import { DatabaseSync } from 'node:sqlite';
+import { Kysely, type LogEvent, ParseJSONResultsPlugin } from 'kysely';
 import { format } from 'sql-formatter';
 import type { DB } from './tables';
 import { roundToNDecimalPlaces } from '$lib/utils/number';
 import { logger } from '$lib/utils/logger';
 import invariant from '$lib/utils/invariant';
 import { SqliteDatePlugin } from '$lib/server/db/plugins';
+import { nodeSqliteDialect } from './dialect';
 
 // xxx: currently can't toggle LOG_LEVEL, this would be the correct way to do it but vite-node thinks its running as client side code
 // import { SQL_LOG } from "$env/static/private";
 const LOG_LEVEL = (['trunc', 'full', 'none'] as const).find((val) => val === process.env.SQL_LOG);
 
-const migratedEmptyDb = new Database('db-test.sqlite3').serialize();
+// xxx: use changeset for this (unit tests)
+// const migratedEmptyDb = new Database('db-test.sqlite3').serialize();
 
 invariant(process.env.DB_PATH, 'DB_PATH env variable must be set');
 
-export const sql = new Database(
-	process.env.NODE_ENV === 'test' ? migratedEmptyDb : process.env.DB_PATH
-);
+const sql = new DatabaseSync(process.env.DB_PATH);
 
-sql.pragma('journal_mode = WAL');
-sql.pragma('foreign_keys = ON');
-sql.pragma('busy_timeout = 5000');
+sql.exec('PRAGMA journal_mode = WAL');
+sql.exec('PRAGMA foreign_keys = ON');
+sql.exec('PRAGMA busy_timeout = 5000');
 
 export const db = new Kysely<DB>({
-	dialect: new SqliteDialect({
-		database: sql
-	}),
+	dialect: nodeSqliteDialect(sql),
 	log: LOG_LEVEL === 'trunc' || LOG_LEVEL === 'full' ? logQuery : logError,
 	plugins: [new ParseJSONResultsPlugin(), new SqliteDatePlugin()]
 });

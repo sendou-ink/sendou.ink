@@ -1,36 +1,27 @@
 import type { Transaction } from 'kysely';
-import { db, sql } from '../sql';
+import { db } from '../sql';
 import type { DB, Tables, TablesInsertable } from '../tables';
 import invariant from '$lib/utils/invariant';
 
-const removeOldLikesStm = sql.prepare(/*sql*/ `
-  delete from 
-    "GroupLike"
-    where 
-      "GroupLike"."createdAt" < cast(strftime('%s', datetime('now', 'start of day', '-7 days')) as int)
-`);
+// xxx: add to routines
+// const removeOldLikesStm = sql.prepare(/*sql*/ `
+//   delete from
+//     "GroupLike"
+//     where
+//       "GroupLike"."createdAt" < cast(strftime('%s', datetime('now', 'start of day', '-7 days')) as int)
+// `);
 
-const removeOldGroupStm = sql.prepare(/*sql*/ `
-  delete from
-    "Group"
-  where "Group"."id" in (
-    select "Group"."id"
-    from "Group"
-    left join "GroupMatch" on "Group"."id" = "GroupMatch"."alphaGroupId" or "Group"."id" = "GroupMatch"."bravoGroupId"
-      where "Group"."status" = 'INACTIVE'
-        and "GroupMatch"."id" is null
-  )
-`);
-
-const cleanUpStm = sql.prepare(/*sql*/ `
-  vacuum
-`);
-
-export function cleanUp() {
-	removeOldLikesStm.run();
-	removeOldGroupStm.run();
-	cleanUpStm.run();
-}
+// const removeOldGroupStm = sql.prepare(/*sql*/ `
+//   delete from
+//     "Group"
+//   where "Group"."id" in (
+//     select "Group"."id"
+//     from "Group"
+//     left join "GroupMatch" on "Group"."id" = "GroupMatch"."alphaGroupId" or "Group"."id" = "GroupMatch"."bravoGroupId"
+//       where "Group"."status" = 'INACTIVE'
+//         and "GroupMatch"."id" is null
+//   )
+// `);
 
 /**
  * Migrates user-related data. Takes data from the "old user" and remaps it to the Discord ID of the "new user". Used when user switches their Discord accounts.
