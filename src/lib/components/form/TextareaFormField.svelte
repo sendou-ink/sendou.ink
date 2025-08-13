@@ -8,7 +8,7 @@
 		value?: string;
 	};
 
-	let { label, name, bottomText, maxLength, value = $bindable('') }: Props = $props();
+	let { label, name, bottomText, maxLength, error, value = $bindable('') }: Props = $props();
 	const id = $props.id();
 </script>
 
@@ -17,7 +17,5 @@
 		{label}
 	</Label>
 	<Textarea {name} {id} bind:value />
-	{#if bottomText}
-		<BottomText>{bottomText}</BottomText>
-	{/if}
+	<BottomText info={bottomText} {error} />
 </div>

@@ -7,7 +7,7 @@
 		checked?: boolean;
 	};
 
-	let { label, name, bottomText, checked = $bindable(false) }: Props = $props();
+	let { label, name, bottomText, error, checked = $bindable(false) }: Props = $props();
 </script>
 
 <div>
@@ -16,7 +16,5 @@
 			{label}
 		</Switch>
 	</div>
-	{#if bottomText}
-		<BottomText>{bottomText}</BottomText>
-	{/if}
+	<BottomText info={bottomText} {error} />
 </div>

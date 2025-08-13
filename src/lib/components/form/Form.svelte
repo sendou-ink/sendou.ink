@@ -16,7 +16,9 @@
 
 	let { children, heading, action, schema, defaultValues }: Props = $props();
 
-	setContext('form', { schema, defaultValues });
+	let errors = $state<Partial<Record<keyof T, string>>>({});
+
+	setContext('form', { schema, defaultValues, errors });
 </script>
 
 <form {...action} class="stack md-plus items-start">

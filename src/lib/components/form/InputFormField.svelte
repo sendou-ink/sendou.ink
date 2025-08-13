@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { FormFieldProps } from '$lib/form/types';
-	import { regex } from 'zod';
 	import Input from '../Input.svelte';
 	import BottomText from './BottomText.svelte';
 	import Label from './Label.svelte';
@@ -16,6 +15,7 @@
 		leftAddon,
 		maxLength,
 		regExp,
+		error,
 		value = $bindable('')
 	}: Props = $props();
 	const id = $props.id();
@@ -35,7 +35,5 @@
 		pattern={regExp ? regExp.pattern.source : undefined}
 		bind:value
 	/>
-	{#if bottomText}
-		<BottomText>{bottomText}</BottomText>
-	{/if}
+	<BottomText info={bottomText} {error} />
 </div>

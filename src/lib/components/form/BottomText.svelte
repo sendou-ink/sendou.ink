@@ -1,16 +1,26 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-
 	interface Props {
-		children: Snippet;
+		error?: string;
+		info?: string;
 	}
 
-	let { children }: Props = $props();
+	let { error, info }: Props = $props();
 </script>
 
-<div class="info-message">
-	{@render children()}
-</div>
+{#if info || error}
+	<div>
+		{#if error}
+			<div class="info-message error">
+				{error}
+			</div>
+		{/if}
+		{#if info}
+			<div class="info-message">
+				{info}
+			</div>
+		{/if}
+	</div>
+{/if}
 
 <style>
 	.info-message {
@@ -19,5 +29,9 @@
 		font-size: var(--fonts-xs);
 		margin-block-start: var(--s-1-5);
 		text-wrap: balance;
+	}
+
+	.error {
+		color: var(--color-error);
 	}
 </style>

@@ -21,4 +21,5 @@ export type FormField =
 
 export type FormFieldProps<T extends FormField['type']> = Extract<FormField, { type: T }> & {
 	name: string;
+	error?: string;
 };
