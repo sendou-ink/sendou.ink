@@ -991,6 +991,10 @@
 		"displayName": "Tentatek Takeover",
 		"authorDiscordId": "1170249805373657093"
 	},
+	"tentatekshowdown": {
+		"displayName": "Tentatek Showdown!",
+		"authorDiscordId": "754368445910614046"
+	},
 	"texaslan": {
 		"displayName": "H-Town Splashdown",
 		"authorDiscordId": "528851510222782474"
