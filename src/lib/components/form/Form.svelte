@@ -21,6 +21,16 @@
 	let form: HTMLFormElement;
 	let errors = $state<Partial<Record<keyof T, string>>>({});
 
+	$effect(() => {
+		if (!action.result) return;
+
+		// xxx: any
+		// xxx: focus first error
+		errors = (action.result as any).errors;
+	});
+
+	$inspect(action.result);
+
 	function handleBlur() {
 		// @ts-expect-error TODO: types wrong?
 		const formData = new FormData(document.forms[id]);

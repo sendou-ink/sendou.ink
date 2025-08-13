@@ -1,5 +1,7 @@
+import { form } from '$app/server';
 import { error } from '@sveltejs/kit';
-import type z from 'zod';
+import z from 'zod';
+import * as z4 from 'zod/v4/core';
 
 export function notFoundIfFalsy<T>(value: T | null | undefined): T {
 	if (!value) error(404);
@@ -7,7 +9,7 @@ export function notFoundIfFalsy<T>(value: T | null | undefined): T {
 	return value;
 }
 
-export function parseFormData<T extends z.ZodTypeAny>({
+export function parseFormData<T extends z4.$ZodType>({
 	formData,
 	schema
 }: {
@@ -16,7 +18,7 @@ export function parseFormData<T extends z.ZodTypeAny>({
 }): z.infer<T> {
 	const formDataObj = formDataToObject(formData);
 	try {
-		return schema.parse(formDataObj);
+		return z.parse(schema, formDataObj);
 	} catch {
 		// xxx: return errors back to the user
 
@@ -42,4 +44,17 @@ function formDataToObject(formData: FormData) {
 	}
 
 	return result;
+}
+
+export function validatedForm<T extends z4.$ZodType>(
+	schema: T,
+	callback: (
+		data: z.infer<T>
+	) => Promise<void | { errors: Partial<Record<keyof z.infer<T>, string>> }>
+) {
+	return form((formData) => {
+		const data = parseFormData({ formData, schema });
+
+		return callback(data);
+	});
 }

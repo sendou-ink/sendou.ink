@@ -48,7 +48,7 @@
 {#if formField.type === 'text-field'}
 	<InputFormField {name} value={defaultValue} {error} {onblur} {...formField} />
 {:else if formField.type === 'switch'}
-	<SwitchFormField {name} checked={defaultValue ?? formField.default} {error} {...formField} />
+	<SwitchFormField {name} checked={defaultValue} {error} {...formField} />
 {:else if formField.type === 'text-area'}
 	<TextareaFormField {name} value={defaultValue} {error} {onblur} {...formField} />
 {:else}

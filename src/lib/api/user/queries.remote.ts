@@ -39,7 +39,7 @@ export const editProfileFormData = query(
 			bio: userProfile.bio,
 			customName: userProfile.customName,
 			customUrl: userProfile.customUrl,
-			showDiscordUniqueName: Boolean(userProfile.showDiscordUniqueName),
+			hideDiscordUniqueName: !userProfile.showDiscordUniqueName,
 			commissionsOpen: Boolean(userProfile.commissionsOpen)
 		};
 	}
