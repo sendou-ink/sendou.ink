@@ -9,11 +9,9 @@ import {
 	id,
 	processMany,
 	safeJSONParse,
-	safeNullableStringSchema,
 	undefinedToNull,
 	weaponSplId
 } from '$lib/schemas';
-import { isCustomUrl } from '$lib/utils/urls';
 import z from 'zod';
 import * as Fields from '$lib/form/fields';
 import { COUNTRY_CODES } from '$lib/constants/common';
@@ -23,6 +21,8 @@ const CUSTOM_URL_MAX_LENGTH = 32;
 export const SMALL_BADGES_PER_DISPLAY_PAGE = 9;
 
 export const identifier = z.string().min(1).max(CUSTOM_URL_MAX_LENGTH).toLowerCase().trim();
+
+export const customUrlRegexp = new RegExp(/^(?=.*[a-zA-Z_-])[a-zA-Z0-9_-]+$/);
 
 export const editProfileSchema = z.object({
 	customName: Fields.textFieldOptional({
@@ -35,7 +35,11 @@ export const editProfileSchema = z.object({
 		bottomText: m.user_forms_info_customUrl(),
 		maxLength: CUSTOM_URL_MAX_LENGTH,
 		leftAddon: 'sendou.ink/u/',
-		toLowerCase: true
+		toLowerCase: true,
+		regExp: {
+			pattern: customUrlRegexp,
+			message: m.user_forms_errors_invalidCustomUrl_format()
+		}
 	}),
 	bio: Fields.textAreaOptional({ label: m.user_bio(), maxLength: 2000 }),
 	showDiscordUniqueName: Fields.toggle({
@@ -58,22 +62,6 @@ export const userEditActionSchemaOld = z
 				.refine((val) => !val || COUNTRY_CODES.includes(val as any))
 				.nullable()
 		),
-		bio: z.preprocess(falsyToNull, z.string().max(2000).nullable()),
-		customUrl: z.preprocess(
-			falsyToNull,
-			z
-				.string()
-				.max(CUSTOM_URL_MAX_LENGTH)
-				.refine((val) => val === null || isCustomUrl(val), {
-					message: 'forms.errors.invalidCustomUrl.numbers'
-				})
-				.refine((val) => val === null || /^[a-zA-Z0-9-_]+$/.test(val), {
-					message: 'forms.errors.invalidCustomUrl.strangeCharacter'
-				})
-				.transform((val) => val?.toLowerCase())
-				.nullable()
-		),
-		customName: safeNullableStringSchema({ max: CUSTOM_URL_MAX_LENGTH }),
 		battlefy: z.preprocess(falsyToNull, z.string().max(32).nullable()),
 		stickSens: z.preprocess(
 			processMany(actualNumber, undefinedToNull),
@@ -121,7 +109,6 @@ export const userEditActionSchemaOld = z
 				.max(SMALL_BADGES_PER_DISPLAY_PAGE + 1)
 				.nullish()
 		),
-		showDiscordUniqueName: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
 		commissionsOpen: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
 		commissionText: z.preprocess(falsyToNull, z.string().max(1000).nullable())
 	})

@@ -7,6 +7,19 @@ export const formRegistry = z.registry<FormField>();
 export function textFieldOptional(args: Omit<Extract<FormField, { type: 'text-field' }>, 'type'>) {
 	let schema = safeNullableStringSchema({ max: args.maxLength });
 
+	if (args.regExp) {
+		schema = schema.refine(
+			(val) => {
+				if (val === null) return true;
+
+				return args.regExp!.pattern.test(val);
+			},
+			{
+				message: args.regExp!.message
+			}
+		);
+	}
+
 	if (args.toLowerCase) {
 		schema = schema.transform((val) => val?.toLowerCase() ?? null) as unknown as typeof schema;
 	}

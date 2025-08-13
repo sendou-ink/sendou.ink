@@ -47,7 +47,7 @@
 	input {
 		width: 100%;
 		margin: auto 0;
-		height: 1rem;
+		height: 34px;
 		padding: var(--s-3-5) var(--s-3);
 		border-color: transparent;
 		accent-color: var(--color-secondary);
@@ -72,8 +72,9 @@
 	}
 
 	.addon {
+		--addon-radius: calc(var(--radius-field) - 1.5px);
 		display: grid;
-		border-radius: var(--radius-field) 0 0 var(--radius-field);
+		border-radius: var(--addon-radius) 0 0 var(--addon-radius);
 		background-color: var(--color-base-card);
 		color: var(--color-base-content-secondary);
 		font-size: var(--fonts-xs);

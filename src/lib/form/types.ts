@@ -8,6 +8,10 @@ interface FormFieldText<T extends string> extends FormFieldBase<T> {
 	maxLength: number;
 	toLowerCase?: boolean;
 	leftAddon?: string;
+	regExp?: {
+		pattern: RegExp;
+		message: string;
+	};
 }
 
 export type FormField =
