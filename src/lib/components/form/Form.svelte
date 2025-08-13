@@ -1,20 +1,22 @@
-<script lang="ts">
+<script lang="ts" generics="T extends z4.$ZodType<object>">
 	import type { Snippet } from 'svelte';
 	import Button from '../buttons/Button.svelte';
 	import { m } from '$lib/paraglide/messages';
-	import type z from 'zod';
+	import * as z4 from 'zod/v4/core';
 	import { setContext } from 'svelte';
+	import type { RemoteForm } from '@sveltejs/kit';
 
 	interface Props {
 		children: Snippet;
 		heading?: string;
-		action: any; // xxx: type this
-		schema: z.ZodType<unknown>;
+		action: RemoteForm<unknown>;
+		schema: T;
+		defaultValues?: z4.output<T>;
 	}
 
-	let { children, heading, action, schema }: Props = $props();
+	let { children, heading, action, schema, defaultValues }: Props = $props();
 
-	setContext('form', { schema });
+	setContext('form', { schema, defaultValues });
 </script>
 
 <form {...action} class="stack md-plus items-start">
@@ -25,17 +27,8 @@
 	{@render children()}
 
 	<div class="stack horizontal lg justify-between mt-6 w-full">
-		<Button>
+		<Button type="submit" loading={action.pending > 0}>
 			{m.common_actions_submit()}
 		</Button>
-		<!-- {cancelLink ? (
-						<LinkButton
-							variant="minimal-destructive"
-							to={cancelLink}
-							size="small"
-						>
-							{t("common:actions.cancel")}
-						</LinkButton>
-					) : null} -->
 	</div>
 </form>

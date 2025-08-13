@@ -13,7 +13,12 @@
 
 	let { name }: Props = $props();
 
-	const { schema } = getContext('form') as { schema: z.ZodType<z.ZodObject> };
+	const { schema, defaultValues } = getContext('form') as {
+		schema: z.ZodType<z.ZodObject>;
+		defaultValues?: any;
+	};
+
+	const defaultValue = $derived(defaultValues?.[name]);
 
 	if (!schema) {
 		throw new Error('Missing schema in context');
@@ -32,11 +37,11 @@
 </script>
 
 {#if formField.type === 'text-field'}
-	<InputFormField {name} {...formField} />
+	<InputFormField {name} value={defaultValue} {...formField} />
 {:else if formField.type === 'toggle'}
-	<SwitchFormField {name} {...formField} />
+	<SwitchFormField {name} checked={defaultValue} {...formField} />
 {:else if formField.type === 'text-area'}
-	<TextareaFormField {name} {...formField} />
+	<TextareaFormField {name} value={defaultValue} {...formField} />
 {:else}
 	<p>Unsupported form field type</p>
 {/if}

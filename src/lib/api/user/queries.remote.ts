@@ -1,9 +1,9 @@
 import { query } from '$app/server';
-import { getUser } from '$lib/server/auth/session';
+import { getUser, requireUser } from '$lib/server/auth/session';
 import * as UserRepository from '$lib/server/db/repositories/user';
 import { notFoundIfFalsy } from '$lib/server/remote-functions';
-import { identifier } from './schemas';
-import { redirect } from '@sveltejs/kit';
+import { identifier, type EditProfileSchemaData } from './schemas';
+import { error, redirect } from '@sveltejs/kit';
 import { resolve } from '$app/paths';
 
 export const layoutDataByIdentifier = query(identifier, async (identifier) => {
@@ -25,3 +25,21 @@ export type ProfileByIdentifierData = Awaited<ReturnType<typeof profileByIdentif
 export const profileByIdentifier = query(identifier, async (identifier) => {
 	return notFoundIfFalsy(await UserRepository.findProfileByIdentifier(identifier));
 });
+
+export const editProfileFormData = query(
+	identifier,
+	async (identifier): Promise<EditProfileSchemaData> => {
+		const loggedInUser = await requireUser();
+		const userProfile = notFoundIfFalsy(await UserRepository.findProfileByIdentifier(identifier));
+		if (loggedInUser.id !== userProfile.id) {
+			error(403);
+		}
+
+		return {
+			bio: userProfile.bio,
+			customName: userProfile.customName,
+			showDiscordUniqueName: Boolean(userProfile.showDiscordUniqueName),
+			commissionsOpen: Boolean(userProfile.commissionsOpen)
+		};
+	}
+);

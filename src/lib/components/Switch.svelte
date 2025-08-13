@@ -52,6 +52,7 @@
 		appearance: none;
 		border: 0;
 		padding: 0;
+		background: transparent;
 	}
 
 	.root .thumb {

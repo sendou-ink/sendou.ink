@@ -2,8 +2,6 @@
 	import type { HTMLTextareaAttributes } from 'svelte/elements';
 
 	let { value = $bindable(), ...rest }: HTMLTextareaAttributes = $props();
-
-	$inspect(value);
 </script>
 
 <textarea bind:value {...rest}></textarea>

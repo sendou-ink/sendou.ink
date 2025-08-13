@@ -283,7 +283,7 @@ export const COUNTRY_CODES = [
 	'ZW'
 ] as const;
 
-export const userEditActionSchemaNew = z.object({
+export const editProfileSchema = z.object({
 	customName: Fields.textFieldOptional({
 		label: m.user_customName(),
 		bottomText: m.user_forms_customName_info(),
@@ -299,6 +299,8 @@ export const userEditActionSchemaNew = z.object({
 		label: m.user_forms_commissionsOpen()
 	})
 });
+
+export type EditProfileSchemaData = z.infer<typeof editProfileSchema>;
 
 export const userEditActionSchemaOld = z
 	.object({

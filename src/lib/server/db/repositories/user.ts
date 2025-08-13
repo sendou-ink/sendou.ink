@@ -151,6 +151,7 @@ export async function findProfileByIdentifier(
 			'User.discordName',
 			'User.showDiscordUniqueName',
 			'User.discordUniqueName',
+			'User.commissionsOpen',
 			'User.favoriteBadgeIds',
 			'User.patronTier',
 			'PlusTier.tier as plusTier',
