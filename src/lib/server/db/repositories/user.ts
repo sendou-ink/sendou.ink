@@ -148,6 +148,7 @@ export async function findProfileByIdentifier(
 			'User.stickSens',
 			'User.inGameName',
 			'User.customName',
+			'User.customUrl',
 			'User.discordName',
 			'User.showDiscordUniqueName',
 			'User.discordUniqueName',

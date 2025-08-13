@@ -18,5 +18,6 @@
 		color: var(--color-base-content-secondary);
 		font-size: var(--fonts-xs);
 		margin-block-start: var(--s-1-5);
+		text-wrap: balance;
 	}
 </style>

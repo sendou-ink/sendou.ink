@@ -38,6 +38,7 @@ export const editProfileFormData = query(
 		return {
 			bio: userProfile.bio,
 			customName: userProfile.customName,
+			customUrl: userProfile.customUrl,
 			showDiscordUniqueName: Boolean(userProfile.showDiscordUniqueName),
 			commissionsOpen: Boolean(userProfile.commissionsOpen)
 		};

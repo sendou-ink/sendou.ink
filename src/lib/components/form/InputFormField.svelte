@@ -8,7 +8,7 @@
 		value?: string;
 	};
 
-	let { label, name, bottomText, value = $bindable('') }: Props = $props();
+	let { label, name, bottomText, leftAddon, value = $bindable('') }: Props = $props();
 	const id = $props.id();
 </script>
 
@@ -16,7 +16,7 @@
 	<Label for={id} withMargin>
 		{label}
 	</Label>
-	<Input {name} {id} bind:value />
+	<Input {name} {id} {leftAddon} bind:value />
 	{#if bottomText}
 		<BottomText>{bottomText}</BottomText>
 	{/if}

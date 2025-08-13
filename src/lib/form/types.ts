@@ -7,6 +7,7 @@ interface FormFieldBase<T extends string> {
 interface FormFieldText<T extends string> extends FormFieldBase<T> {
 	maxLength: number;
 	toLowerCase?: boolean;
+	leftAddon?: string;
 }
 
 export type FormField =

@@ -13,6 +13,7 @@
 	heading="Editing user profile"
 >
 	<FormField name="customName" />
+	<FormField name="customUrl" />
 	<FormField name="bio" />
 	<FormField name="showDiscordUniqueName" />
 	<FormField name="commissionsOpen" />
