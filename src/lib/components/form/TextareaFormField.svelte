@@ -6,9 +6,18 @@
 
 	type Props = FormFieldProps<'text-area'> & {
 		value?: string;
+		onblur?: () => void;
 	};
 
-	let { label, name, bottomText, maxLength, error, value = $bindable('') }: Props = $props();
+	let {
+		label,
+		name,
+		bottomText,
+		maxLength,
+		error,
+		onblur,
+		value = $bindable('')
+	}: Props = $props();
 	const id = $props.id();
 </script>
 
@@ -16,6 +25,6 @@
 	<Label for={id} withMargin valueLimits={{ current: value.length, max: maxLength }}>
 		{label}
 	</Label>
-	<Textarea {name} {id} bind:value />
+	<Textarea {name} {id} {onblur} bind:value />
 	<BottomText info={bottomText} {error} />
 </div>

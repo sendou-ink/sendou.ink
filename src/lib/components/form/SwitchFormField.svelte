@@ -3,7 +3,7 @@
 	import Switch from '../Switch.svelte';
 	import BottomText from './BottomText.svelte';
 
-	type Props = Omit<FormFieldProps<'toggle'>, 'type'> & {
+	type Props = Omit<FormFieldProps<'switch'>, 'type' | 'default'> & {
 		checked?: boolean;
 	};
 

@@ -6,6 +6,7 @@
 
 	type Props = FormFieldProps<'text-field'> & {
 		value?: string;
+		onblur?: () => void;
 	};
 
 	let {
@@ -16,6 +17,7 @@
 		maxLength,
 		regExp,
 		error,
+		onblur,
 		value = $bindable('')
 	}: Props = $props();
 	const id = $props.id();
@@ -31,6 +33,7 @@
 		{name}
 		{id}
 		{leftAddon}
+		{onblur}
 		maxlength={maxLength}
 		pattern={regExp ? regExp.pattern.source : undefined}
 		bind:value

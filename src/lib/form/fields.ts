@@ -37,9 +37,9 @@ export function textAreaOptional(args: Omit<Extract<FormField, { type: 'text-are
 	});
 }
 
-export function toggle(args: Omit<Extract<FormField, { type: 'toggle' }>, 'type'>) {
+export function toggle(args: Omit<Extract<FormField, { type: 'switch' }>, 'type'>) {
 	return z.union([z.stringbool(), z.boolean()]).register(formRegistry, {
 		...args,
-		type: 'toggle'
+		type: 'switch'
 	});
 }

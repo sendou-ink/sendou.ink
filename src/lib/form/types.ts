@@ -14,10 +14,14 @@ interface FormFieldText<T extends string> extends FormFieldBase<T> {
 	};
 }
 
+interface FormFieldSwitch<T extends string> extends FormFieldBase<T> {
+	default: boolean; // xxx: better name or explanation for this
+}
+
 export type FormField =
 	| FormFieldText<'text-field'>
 	| FormFieldText<'text-area'>
-	| FormFieldBase<'toggle'>;
+	| FormFieldSwitch<'switch'>;
 
 export type FormFieldProps<T extends FormField['type']> = Extract<FormField, { type: T }> & {
 	name: string;
