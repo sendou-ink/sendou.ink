@@ -1,15 +1,11 @@
 <script lang="ts">
+	import type { FormFieldProps } from '$lib/form/types';
 	import Switch from '../Switch.svelte';
 	import BottomText from './BottomText.svelte';
 
-	// xxx: make a shared interface
-	interface Props {
-		label: string;
-		name: string;
-		bottomText?: string;
+	type Props = Omit<FormFieldProps<'toggle'>, 'type'> & {
 		checked?: boolean;
-		// xxx: onchange
-	}
+	};
 
 	let { label, name, bottomText, checked = $bindable(false) }: Props = $props();
 </script>

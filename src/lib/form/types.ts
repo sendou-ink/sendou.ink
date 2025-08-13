@@ -13,3 +13,7 @@ export type FormField =
 	| FormFieldText<'text-field'>
 	| FormFieldText<'text-area'>
 	| FormFieldBase<'toggle'>;
+
+export type FormFieldProps<T extends FormField['type']> = Extract<FormField, { type: T }> & {
+	name: string;
+};

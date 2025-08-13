@@ -27,10 +27,11 @@
 		border: var(--border-style);
 		border-radius: var(--radius-field);
 		accent-color: var(--color-secondary);
-		background-color: var(--color-base-section);
+		background-color: var(--color-base-card-section);
 		color: var(--text);
 		font-size: var(--fonts-sm);
 		outline: none;
+		font-weight: var(--body);
 
 		&:focus-within {
 			border-color: transparent;
@@ -49,7 +50,7 @@
 		padding: var(--s-4) var(--s-3);
 		border-color: transparent;
 		accent-color: var(--color-secondary);
-		background-color: var(--color-base-section);
+		background-color: var(--color-base-card-section);
 		color: var(--text);
 		outline: none;
 		border-radius: var(--radius-field);
@@ -72,7 +73,7 @@
 	.addon {
 		display: grid;
 		border-radius: var(--radius-field) 0 0 var(--radius-field);
-		background-color: var(--color-base-section);
+		background-color: var(--color-base-card-section);
 		color: var(--color-base-content-secondary);
 		font-size: var(--fonts-xs);
 		font-weight: var(--semi-bold);
