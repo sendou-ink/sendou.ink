@@ -36,7 +36,7 @@
 		for (const issue of parsed.error.issues) {
 			if (issue.path.length !== 1) throw new Error('Not implemented');
 
-			newErrors[issue.path[0]] = issue.message;
+			newErrors[issue.path[0] as keyof T] = issue.message;
 		}
 
 		errors = newErrors;

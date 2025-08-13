@@ -42,14 +42,12 @@ export const editProfileSchema = z.object({
 		}
 	}),
 	bio: Fields.textAreaOptional({ label: m.user_bio(), maxLength: 2000 }),
-	showDiscordUniqueName: Fields.toggle({
-		label: m.user_forms_showDiscordUniqueName(),
-		bottomText: m.user_forms_showDiscordUniqueName_info(),
-		default: true
+	hideDiscordUniqueName: Fields.toggle({
+		label: m.user_forms_hideDiscordUniqueName(),
+		bottomText: m.user_forms_hideDiscordUniqueName_info()
 	}),
 	commissionsOpen: Fields.toggle({
-		label: m.user_forms_commissionsOpen(),
-		default: false
+		label: m.user_forms_commissionsOpen()
 	})
 });
 

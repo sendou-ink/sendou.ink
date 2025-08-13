@@ -23,13 +23,19 @@
 	const defaultValue = $derived(defaultValues?.[name]);
 	const error = $derived(errors()[name]);
 
-	if (!schema) {
-		throw new Error('Missing schema in context');
-	}
+	const fieldSchema = $derived.by(() => {
+		// @ts-expect-error TODO: figure out correct Zod types
+		const result = schema.def.shape[name];
+		if (!result) {
+			throw new Error(
+				`Field schema not found for name: ${name}. Does the schema have a corresponding key to the name property of FormField?`
+			);
+		}
+		return result;
+	});
 
 	const formField = $derived.by(() => {
-		// @ts-expect-error TODO: figure out correct Zod types
-		const field = formRegistry.get(schema.def.shape[name]) as FormField | undefined;
+		const field = formRegistry.get(fieldSchema) as FormField | undefined;
 
 		if (!field) {
 			throw new Error(`Form field not found for name: ${name}`);

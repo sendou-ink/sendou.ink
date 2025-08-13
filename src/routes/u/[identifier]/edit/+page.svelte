@@ -15,6 +15,6 @@
 	<FormField name="customName" />
 	<FormField name="customUrl" />
 	<FormField name="bio" />
-	<FormField name="showDiscordUniqueName" />
+	<FormField name="hideDiscordUniqueName" />
 	<FormField name="commissionsOpen" />
 </Form>

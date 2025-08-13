@@ -38,8 +38,12 @@ export function textAreaOptional(args: Omit<Extract<FormField, { type: 'text-are
 }
 
 export function toggle(args: Omit<Extract<FormField, { type: 'switch' }>, 'type'>) {
-	return z.union([z.stringbool(), z.boolean()]).register(formRegistry, {
-		...args,
-		type: 'switch'
-	});
+	return z
+		.union([z.stringbool(), z.boolean()])
+		.optional() // optional because "off" is missing in the form data see https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/input/checkbox#value
+		.default(false)
+		.register(formRegistry, {
+			...args,
+			type: 'switch'
+		});
 }
