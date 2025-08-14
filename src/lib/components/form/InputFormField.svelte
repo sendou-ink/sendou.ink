@@ -24,8 +24,6 @@
 	const id = $props.id();
 </script>
 
-<!-- xxx: pattern not working -->
-
 <div>
 	<Label for={id} withMargin>
 		{label}
@@ -36,7 +34,6 @@
 		{leftAddon}
 		{onblur}
 		maxlength={maxLength}
-		pattern={regExp ? regExp.pattern.source : undefined}
 		bind:value
 		{...ariaAttributes({
 			id,
