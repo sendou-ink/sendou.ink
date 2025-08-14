@@ -7,12 +7,14 @@
 	import type { RemoteForm } from '@sveltejs/kit';
 	import z from 'zod';
 
+	type Output = z4.output<T>;
+
 	interface Props {
 		children: Snippet;
 		heading?: string;
 		action: RemoteForm<unknown>;
 		schema: T;
-		defaultValues?: z4.output<T>;
+		defaultValues?: Output;
 	}
 
 	let { children, heading, action, schema, defaultValues }: Props = $props();
@@ -20,49 +22,36 @@
 
 	let form: HTMLFormElement;
 
-	let errors = $state<Partial<Record<keyof T, string>>>({});
-	let isServerError = $state(false);
+	let errors = $state<Partial<Record<keyof Output, string>>>({});
 
 	$effect(() => {
-		if (!action.result) {
-			isServerError = false;
-			return;
-		}
-
-		// xxx: any
-		// xxx: focus first error
-		errors = (action.result as any).errors;
-		isServerError = true;
+		errors =
+			(action.result as { errors?: Partial<Record<keyof Output, string>> } | null)?.errors ?? {};
 		tick().then(() => focusFirstInvalidField());
 	});
 
 	function handleBlur() {
-		// @ts-expect-error TODO: types wrong?
-		const formData = new FormData(document.forms[id]);
-		// @ts-expect-error TODO: types wrong here too?
-		const data = Object.fromEntries(formData);
-
+		const formData = new FormData(form);
+		const data = Object.fromEntries(formData.entries());
 		const parsed = z.safeParse(schema, data);
 
-		if (parsed.success && !isServerError) {
+		if (parsed.success) {
 			errors = {};
 			return;
 		}
 
-		const newErrors: Partial<Record<keyof T, string>> = {};
+		const newErrors: Partial<Record<keyof Output, string>> = {};
 
 		for (const issue of parsed.error.issues) {
 			if (issue.path.length !== 1) throw new Error('Not implemented');
-
-			newErrors[issue.path[0] as keyof T] = issue.message;
+			newErrors[issue.path[0] as keyof Output] = issue.message as string;
 		}
 
 		errors = newErrors;
 	}
 
 	function focusFirstInvalidField() {
-		const form = document.getElementById(id);
-		const invalidElement = form?.querySelector('[aria-invalid="true"]') as HTMLInputElement;
+		const invalidElement = form.querySelector('[aria-invalid="true"]') as HTMLInputElement;
 
 		invalidElement?.focus();
 		invalidElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
