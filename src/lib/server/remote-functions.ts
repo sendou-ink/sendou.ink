@@ -1,4 +1,5 @@
 import { form } from '$app/server';
+import { zodErrorsToFormErrors } from '$lib/utils/zod';
 import { error } from '@sveltejs/kit';
 import z from 'zod';
 import * as z4 from 'zod/v4/core';
@@ -9,21 +10,24 @@ export function notFoundIfFalsy<T>(value: T | null | undefined): T {
 	return value;
 }
 
-export function parseFormData<T extends z4.$ZodType>({
-	formData,
-	schema
-}: {
-	formData: FormData;
-	schema: T;
-}): z.infer<T> {
-	const formDataObj = formDataToObject(formData);
-	try {
-		return z.parse(schema, formDataObj);
-	} catch {
-		// xxx: return errors back to the user
+export function validatedForm<T extends z4.$ZodType>(
+	schema: T,
+	callback: (
+		data: z.infer<T>
+	) => Promise<void | { errors: Partial<Record<keyof z.infer<T>, string>> }>
+) {
+	return form((formData) => {
+		const formDataObj = formDataToObject(formData);
+		const parsed = z.safeParse(schema, formDataObj);
 
-		throw new Error('form errors not implemented');
-	}
+		if (!parsed.success) {
+			return {
+				errors: zodErrorsToFormErrors(parsed.error)
+			};
+		}
+
+		return callback(parsed.data);
+	});
 }
 
 function formDataToObject(formData: FormData) {
@@ -44,17 +48,4 @@ function formDataToObject(formData: FormData) {
 	}
 
 	return result;
-}
-
-export function validatedForm<T extends z4.$ZodType>(
-	schema: T,
-	callback: (
-		data: z.infer<T>
-	) => Promise<void | { errors: Partial<Record<keyof z.infer<T>, string>> }>
-) {
-	return form((formData) => {
-		const data = parseFormData({ formData, schema });
-
-		return callback(data);
-	});
 }

@@ -6,6 +6,7 @@
 	import { setContext, tick } from 'svelte';
 	import type { RemoteForm } from '@sveltejs/kit';
 	import z from 'zod';
+	import { zodErrorsToFormErrors } from '$lib/utils/zod';
 
 	type Output = z4.output<T>;
 
@@ -40,14 +41,7 @@
 			return;
 		}
 
-		const newErrors: Partial<Record<keyof Output, string>> = {};
-
-		for (const issue of parsed.error.issues) {
-			if (issue.path.length !== 1) throw new Error('Not implemented');
-			newErrors[issue.path[0] as keyof Output] = issue.message as string;
-		}
-
-		errors = newErrors;
+		errors = zodErrorsToFormErrors(parsed.error);
 	}
 
 	function focusFirstInvalidField() {

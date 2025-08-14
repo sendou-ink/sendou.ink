@@ -350,3 +350,14 @@ function validSerializedCustomCssVarObject(value: unknown) {
 		return false;
 	}
 }
+
+export function zodErrorsToFormErrors<T>(error: z.ZodError<T>) {
+	const result: Partial<Record<keyof T, string>> = {};
+
+	for (const issue of error.issues) {
+		if (issue.path.length !== 1) throw new Error('Not implemented');
+		result[issue.path[0] as keyof T] = issue.message as string;
+	}
+
+	return result;
+}
