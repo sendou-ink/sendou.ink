@@ -11,7 +11,7 @@
 	const id = $props.id();
 </script>
 
-<div>
+<div class="stack xs">
 	<div class="stack horizontal sm items-center">
 		<Switch {name} {id} bind:checked>
 			{label}

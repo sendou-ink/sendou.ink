@@ -22,8 +22,8 @@
 	const id = $props.id();
 </script>
 
-<div>
-	<Label for={id} withMargin valueLimits={{ current: value?.length, max: maxLength }}>
+<div class="stack xs">
+	<Label for={id} valueLimits={{ current: value?.length, max: maxLength }}>
 		{label}
 	</Label>
 	<Textarea

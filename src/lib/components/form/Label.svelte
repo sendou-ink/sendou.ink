@@ -4,7 +4,6 @@
 
 	interface Props extends HTMLLabelAttributes {
 		children: Snippet;
-		withMargin?: boolean;
 		valueLimits?: {
 			current?: number;
 			max: number;
@@ -12,7 +11,7 @@
 		required?: boolean;
 	}
 
-	let { children, withMargin, valueLimits, required, ...rest }: Props = $props();
+	let { children, valueLimits, required, ...rest }: Props = $props();
 
 	function lengthWarning(valueLimits: NonNullable<Props['valueLimits']>) {
 		if (!valueLimits.current) return;
@@ -24,7 +23,7 @@
 	}
 </script>
 
-<div class={['container', { 'with-margin': withMargin }]}>
+<div class="container">
 	<label {...rest}>
 		{@render children()}
 		{#if required}
@@ -43,12 +42,6 @@
 		display: block;
 		font-size: var(--fonts-xs);
 		font-weight: var(--bold);
-	}
-
-	.with-margin {
-		margin-block-end: var(
-			--s-1-5
-		); /** instead of this probably just use stack in FormField (now inconsistent see how BottomText does it)*/
 	}
 
 	.container {

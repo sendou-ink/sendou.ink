@@ -19,8 +19,8 @@
 	$inspect(value);
 </script>
 
-<div>
-	<Label for={id} withMargin>
+<div class="stack xs">
+	<Label for={id}>
 		{label}
 	</Label>
 	<!-- <Select
