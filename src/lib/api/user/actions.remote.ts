@@ -4,6 +4,7 @@ import { editProfileSchema } from './schemas';
 import * as UserRepository from '$lib/server/db/repositories/user';
 import { err, ok } from 'neverthrow';
 import { m } from '$lib/paraglide/messages';
+import { logger } from '$lib/utils/logger';
 
 export const updateProfile = validatedForm(editProfileSchema, async (data) => {
 	const user = await requireUser();
@@ -19,6 +20,8 @@ export const updateProfile = validatedForm(editProfileSchema, async (data) => {
 			}
 		};
 	}
+
+	logger.info(data);
 
 	// const inGameName =
 	// 	inGameNameText && inGameNameDiscriminator

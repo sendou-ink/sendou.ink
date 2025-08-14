@@ -40,7 +40,8 @@ export const editProfileFormData = query(
 			customName: userProfile.customName,
 			customUrl: userProfile.customUrl,
 			hideDiscordUniqueName: !userProfile.showDiscordUniqueName,
-			commissionsOpen: Boolean(userProfile.commissionsOpen)
+			commissionsOpen: Boolean(userProfile.commissionsOpen),
+			inGameName: userProfile.inGameName
 		};
 	}
 );

@@ -14,6 +14,7 @@
 >
 	<FormField name="customName" />
 	<FormField name="customUrl" />
+	<FormField name="inGameName" />
 	<FormField name="bio" />
 	<FormField name="hideDiscordUniqueName" />
 	<FormField name="commissionsOpen" />
