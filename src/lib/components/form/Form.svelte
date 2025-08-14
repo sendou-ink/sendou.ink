@@ -1,21 +1,21 @@
 <script lang="ts" generics="T extends z4.$ZodType<object>">
-	import type { Snippet } from 'svelte';
-	import Button from '../buttons/Button.svelte';
-	import { m } from '$lib/paraglide/messages';
-	import * as z4 from 'zod/v4/core';
-	import { setContext, tick } from 'svelte';
 	import type { RemoteForm } from '@sveltejs/kit';
-	import z from 'zod';
+	import type { Snippet } from 'svelte';
+	import { setContext, tick } from 'svelte';
+	import { m } from '$lib/paraglide/messages';
 	import { zodErrorsToFormErrors } from '$lib/utils/zod';
+	import * as z4 from 'zod/v4/core';
+	import z from 'zod';
+	import Button from '../buttons/Button.svelte';
 
 	type Output = z4.output<T>;
 
 	interface Props {
 		children: Snippet;
 		heading?: string;
-		action: RemoteForm<unknown>;
+		action: RemoteForm<{ errors?: Partial<Record<keyof Output, string>> }>;
 		schema: T;
-		defaultValues?: Output;
+		defaultValues?: Partial<Output>;
 	}
 
 	let { children, heading, action, schema, defaultValues }: Props = $props();
@@ -26,8 +26,7 @@
 	let errors = $state<Partial<Record<keyof Output, string>>>({});
 
 	$effect(() => {
-		errors =
-			(action.result as { errors?: Partial<Record<keyof Output, string>> } | null)?.errors ?? {};
+		errors = action.result?.errors ?? {};
 		tick().then(() => focusFirstInvalidField());
 	});
 
