@@ -7,7 +7,7 @@
 
 	type Props = FormFieldProps<'text-field'> & {
 		value?: string;
-		onblur?: (e: FocusEvent) => void;
+		onblur?: () => void;
 	};
 
 	let {

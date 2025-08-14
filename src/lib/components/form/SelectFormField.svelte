@@ -7,7 +7,7 @@
 
 	type Props = FormFieldProps<'select'> & {
 		value?: string;
-		onblur?: (e: FocusEvent) => void;
+		onblur?: () => void;
 		clearable?: boolean;
 	};
 
