@@ -13,7 +13,7 @@
 	interface Props {
 		children: Snippet;
 		heading?: string;
-		action: RemoteForm<{ errors?: Partial<Record<keyof Output, string>> }>;
+		action: RemoteForm<void | { errors: Partial<Record<keyof Output, string>> }>;
 		schema: T;
 		defaultValues?: Partial<Output>;
 	}
