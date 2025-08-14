@@ -36,28 +36,28 @@
 		tick().then(() => focusFirstInvalidField());
 	});
 
-	function handleBlur() {
-		// @ts-expect-error TODO: types wrong?
-		const formData = new FormData(document.forms[id]);
-		// @ts-expect-error TODO: types wrong here too?
-		const data = Object.fromEntries(formData);
+	function handleBlur(
+		event: Event & {
+			currentTarget: (EventTarget & HTMLInputElement) | HTMLTextAreaElement;
+		},
+		fieldName: string
+	) {
+		// @ts-expect-error xxx: figure out correct Zod types
+		const fieldSchema = schema.def.shape[fieldName];
+		console.log(fieldSchema);
+		if (!fieldSchema) return;
 
-		const parsed = z.safeParse(schema, data);
+		const eventValue = event.currentTarget?.value ?? null;
+		const parsed = z.safeParse(fieldSchema, eventValue);
 
 		if (parsed.success && !isServerError) {
-			errors = {};
+			delete errors[fieldName as keyof T];
 			return;
 		}
 
-		const newErrors: Partial<Record<keyof T, string>> = {};
-
-		for (const issue of parsed.error.issues) {
-			if (issue.path.length !== 1) throw new Error('Not implemented');
-
-			newErrors[issue.path[0] as keyof T] = issue.message;
+		if (parsed.error?.issues[0]) {
+			errors[fieldName as keyof T] = parsed.error.issues[0].message;
 		}
-
-		errors = newErrors;
 	}
 
 	function focusFirstInvalidField() {

@@ -45,18 +45,34 @@
 		return field;
 	});
 
-	const commonProps = $derived({ name, error, onblur });
+	const commonProps = $derived({ name, error });
 </script>
 
 <!-- xxx: how to differentiate optional and not? -->
 {#if formField.type === 'text-field'}
-	<InputFormField value={defaultValue} {...commonProps} {...formField} />
+	<InputFormField
+		value={defaultValue}
+		onblur={(e) => onblur(e, name)}
+		{...commonProps}
+		{...formField}
+	/>
 {:else if formField.type === 'switch'}
 	<SwitchFormField checked={defaultValue} {...commonProps} {...formField} />
 {:else if formField.type === 'text-area'}
-	<TextareaFormField value={defaultValue} {...commonProps} {...formField} />
+	<TextareaFormField
+		value={defaultValue}
+		onblur={(e) => onblur(e, name)}
+		{...commonProps}
+		{...formField}
+	/>
 {:else if formField.type === 'select'}
-	<SelectFormField value={defaultValue} clearable {...commonProps} {...formField} />
+	<SelectFormField
+		value={defaultValue}
+		onblur={(e) => onblur(e, name)}
+		clearable
+		{...commonProps}
+		{...formField}
+	/>
 {:else}
 	<p>Unsupported form field type</p>
 {/if}
