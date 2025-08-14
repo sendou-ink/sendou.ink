@@ -44,7 +44,6 @@
 	) {
 		// @ts-expect-error xxx: figure out correct Zod types
 		const fieldSchema = schema.def.shape[fieldName];
-		console.log(fieldSchema);
 		if (!fieldSchema) return;
 
 		const eventValue = event.currentTarget?.value ?? null;
