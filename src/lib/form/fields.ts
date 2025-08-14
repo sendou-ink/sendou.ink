@@ -1,4 +1,4 @@
-import { falsyToNull, safeNullableStringSchema } from '$lib/schemas';
+import { falsyToNull, safeJSONParse, safeNullableStringSchema, weaponSplId } from '$lib/schemas';
 import z from 'zod';
 import type { FormField } from './types';
 
@@ -60,5 +60,24 @@ export function selectOptional(args: Omit<Extract<FormField, { type: 'select' }>
 		.register(formRegistry, {
 			...args,
 			type: 'select'
+		});
+}
+
+export function weaponPool(args: Omit<Extract<FormField, { type: 'weapon-pool' }>, 'type'>) {
+	return z
+		.preprocess(
+			safeJSONParse,
+			z
+				.array(
+					z.object({
+						weaponSplId,
+						isFavorite: z.boolean()
+					})
+				)
+				.max(5)
+		)
+		.register(formRegistry, {
+			...args,
+			type: 'weapon-pool'
 		});
 }

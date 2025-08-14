@@ -10,9 +10,10 @@
 		open?: boolean;
 		value?: Item;
 		onselect?: (item: Item) => void;
+		id?: string;
 	}
 
-	let { open = $bindable(false), value = $bindable(undefined), onselect }: Props = $props();
+	let { open = $bindable(false), value = $bindable(undefined), onselect, id }: Props = $props();
 
 	const data = weaponCategories.map((category) => ({
 		label: weaponCategoryTranslations[category.name](),
@@ -33,9 +34,8 @@
 <Combobox
 	bind:open
 	bind:value
+	{id}
 	{data}
 	{onselect}
-	title={m.builds_forms_weapons()}
-	buttonPlaceholder={m.common_forms_weaponSearch_placeholder()}
 	searchPlaceholder={m.common_forms_weaponSearch_search_placeholder()}
 />

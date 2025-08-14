@@ -44,7 +44,11 @@ export const editProfileFormData = query(
 			commissionText: userProfile.commissionText,
 			inGameName: userProfile.inGameName,
 			battlefy: userProfile.battlefy,
-			country: userProfile.country
+			country: userProfile.country,
+			weapons: userProfile.weapons.map((weapon) => ({
+				weaponSplId: weapon.weaponSplId,
+				isFavorite: Boolean(weapon.isFavorite)
+			}))
 		};
 	}
 );

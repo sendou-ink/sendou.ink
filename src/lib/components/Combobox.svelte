@@ -21,22 +21,20 @@
 
 	interface Props {
 		data: Item[] | Group[];
-		title: string;
-		buttonPlaceholder: string;
 		searchPlaceholder: string;
 		open?: boolean;
 		value?: Item;
 		onselect?: (item: Item) => void;
+		id?: string;
 	}
 
 	let {
 		data,
-		title,
-		buttonPlaceholder,
 		searchPlaceholder,
 		open = $bindable(false),
 		value = $bindable(undefined),
-		onselect
+		onselect,
+		id
 	}: Props = $props();
 
 	let trigger = $state<HTMLButtonElement>()!;
@@ -63,17 +61,15 @@
 </script>
 
 <div class="combobox">
-	<span>{title}</span>
 	<Popover.Root bind:open>
-		<Popover.Trigger>
+		<Popover.Trigger {id}>
 			{#snippet child({ props })}
 				<button {...props}>
 					<div>
 						{#if selectedImage}
 							<Image path={selectedImage} size={24} lazy />
 						{/if}
-						<span class={{ 'text-white': selectedValue }}>{selectedValue || buttonPlaceholder}</span
-						>
+						<span class={{ 'text-white': selectedValue }}>{selectedValue}</span>
 					</div>
 					<ChevronsUpDownIcon size="1rem" />
 				</button>
@@ -154,19 +150,18 @@
 	}
 
 	button {
-		margin-top: var(--s-1);
-		height: 1rem;
+		height: 37px;
 		padding: var(--s-4) var(--s-3);
 		border: var(--border-style);
 		border-radius: var(--radius-field);
-		background-color: var(--color-base-section);
+		background-color: var(--color-base-card-section);
 		color: var(--color-base-content-secondary);
 		outline: none;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: var(--s-1-5);
-		width: 100%;
+		width: var(--field-width-medium);
 		letter-spacing: 0.5px;
 		cursor: pointer;
 

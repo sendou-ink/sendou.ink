@@ -69,6 +69,10 @@ export const editProfileSchema = z.object({
 			value: countryCode
 		}))
 	}),
+	weapons: Fields.weaponPool({
+		label: m.user_weaponPool(),
+		maxCount: 5
+	}),
 	bio: Fields.textAreaOptional({ label: m.user_bio(), maxLength: 2000 }),
 	hideDiscordUniqueName: Fields.toggle({
 		label: m.user_forms_hideDiscordUniqueName(),

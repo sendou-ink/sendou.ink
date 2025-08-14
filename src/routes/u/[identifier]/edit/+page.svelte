@@ -20,6 +20,7 @@
 	<FormField name="inGameName" />
 	<FormField name="battlefy" />
 	<FormField name="country" />
+	<FormField name="weapons" />
 	<FormField name="bio" />
 	<FormField name="hideDiscordUniqueName" />
 	{#if loggedInUser?.roles.includes('ARTIST')}
