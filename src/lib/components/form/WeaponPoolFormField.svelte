@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { MainWeaponId } from '$lib/constants/in-game/types';
 	import type { FormFieldProps } from '$lib/form/types';
-	import WeaponSelect from '../WeaponSelect.svelte';
+	import WeaponSelect from '../WeaponCombobox.svelte';
 	import BottomText from './BottomText.svelte';
 	import Label from './Label.svelte';
 
@@ -16,7 +16,9 @@
 	let { label, name, bottomText, error, onblur, value = $bindable() }: Props = $props();
 	const id = $props.id();
 
-	$inspect(value);
+	let mid = $state<MainWeaponId>(20); // testing
+
+	$inspect(mid);
 </script>
 
 <div class="stack xs">
@@ -36,7 +38,7 @@
 			error
 		})}
 	/> -->
-	<WeaponSelect {id} onselect={console.log} />
+	<WeaponSelect {id} bind:value={mid} onselect={console.log} />
 	<input type="hidden" {name} value={JSON.stringify(value ?? [])} />
 	<BottomText info={bottomText} {error} fieldId={id} />
 </div>

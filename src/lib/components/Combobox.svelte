@@ -38,7 +38,7 @@
 	}: Props = $props();
 
 	let trigger = $state<HTMLButtonElement>()!;
-	let selectedValue = $state('');
+	let selectedValue = $state(''); // xxx: these need to be also set for the default value
 	let selectedImage = $state('');
 
 	function onSelect(item: Item) {

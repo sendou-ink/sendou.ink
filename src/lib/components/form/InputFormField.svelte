@@ -16,7 +16,6 @@
 		bottomText,
 		leftAddon,
 		maxLength,
-		regExp,
 		error,
 		onblur,
 		value = $bindable()

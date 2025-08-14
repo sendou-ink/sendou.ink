@@ -5,11 +5,12 @@
 	import { mainWeaponImageUrl, weaponCategoryUrl } from '$lib/utils/urls';
 	import { weaponCategoryTranslations, weaponTranslations } from '$lib/utils/i18n';
 	import Combobox, { type Item } from './Combobox.svelte';
+	import type { MainWeaponId } from '$lib/constants/in-game/types';
 
 	interface Props {
 		open?: boolean;
-		value?: Item;
-		onselect?: (item: Item) => void;
+		value?: MainWeaponId;
+		onselect?: (item: MainWeaponId | null) => void;
 		id?: string;
 	}
 
@@ -22,6 +23,7 @@
 			value: weaponTranslations[weaponId](),
 			label: weaponTranslations[weaponId](),
 			image: mainWeaponImageUrl(weaponId),
+			id: weaponId,
 			keywords: (() => {
 				const altNames = weaponAltNames.get(weaponId);
 				if (!altNames) return [];
@@ -29,13 +31,26 @@
 			})()
 		}))
 	}));
+
+	function handleSelect(item: Item) {
+		// @ts-expect-error TODO: this could be made more typesafe by making Combobox accept a generic
+		onselect?.(item?.id ?? null);
+	}
 </script>
 
 <Combobox
 	bind:open
-	bind:value
+	bind:value={
+		() =>
+			value
+				? data
+						.flatMap((category) => category.items)
+						.find((item) => item.value === weaponTranslations[value]())
+				: undefined,
+		(item) => item?.id
+	}
 	{id}
 	{data}
-	{onselect}
+	onselect={handleSelect}
 	searchPlaceholder={m.common_forms_weaponSearch_search_placeholder()}
 />
