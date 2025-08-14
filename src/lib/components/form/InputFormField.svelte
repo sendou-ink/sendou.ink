@@ -6,7 +6,7 @@
 	import { ariaAttributes } from './utils';
 
 	type Props = FormFieldProps<'text-field'> & {
-		value?: string;
+		value: string;
 		onblur?: () => void;
 	};
 
@@ -19,12 +19,10 @@
 		regExp,
 		error,
 		onblur,
-		value = $bindable('')
+		value = $bindable()
 	}: Props = $props();
 	const id = $props.id();
 </script>
-
-<!-- xxx: value reverts to default when error -->
 
 <!-- xxx: pattern not working -->
 

@@ -21,7 +21,7 @@
 		onblur: any;
 	};
 
-	const defaultValue = $derived(defaultValues?.[name]);
+	let value = $state(defaultValues?.[name]);
 	const error = $derived(errors()[name]);
 
 	const fieldSchema = $derived.by(() => {
@@ -50,13 +50,13 @@
 
 <!-- xxx: how to differentiate optional and not? -->
 {#if formField.type === 'text-field'}
-	<InputFormField value={defaultValue} {...commonProps} {...formField} />
+	<InputFormField bind:value {...commonProps} {...formField} />
 {:else if formField.type === 'switch'}
-	<SwitchFormField checked={defaultValue} {...commonProps} {...formField} />
+	<SwitchFormField bind:checked={value} {...commonProps} {...formField} />
 {:else if formField.type === 'text-area'}
-	<TextareaFormField value={defaultValue} {...commonProps} {...formField} />
+	<TextareaFormField bind:value {...commonProps} {...formField} />
 {:else if formField.type === 'select'}
-	<SelectFormField value={defaultValue} clearable {...commonProps} {...formField} />
+	<SelectFormField bind:value {...commonProps} {...formField} />
 {:else}
 	<p>Unsupported form field type</p>
 {/if}
