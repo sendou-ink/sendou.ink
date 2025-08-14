@@ -1,44 +1,46 @@
 <script lang="ts">
 	import type { FormFieldProps } from '$lib/form/types';
-	import Input from '../Input.svelte';
+	import Select from '../Select.svelte';
 	import BottomText from './BottomText.svelte';
 	import Label from './Label.svelte';
 	import { ariaAttributes } from './utils';
 
-	type Props = FormFieldProps<'text-field'> & {
+	type Props = FormFieldProps<'select'> & {
 		value?: string;
 		onblur?: () => void;
+		clearable?: boolean;
 	};
 
 	let {
 		label,
 		name,
 		bottomText,
-		leftAddon,
-		maxLength,
-		regExp,
+		items,
 		error,
 		onblur,
-		value = $bindable('')
+		value = $bindable(''),
+		clearable
 	}: Props = $props();
 	const id = $props.id();
+
+	const itemsWithLabels = $derived(
+		items.map((item) => ({
+			...item,
+			label: typeof item.label === 'function' ? item.label('en') : item.label
+		}))
+	);
 </script>
-
-<!-- xxx: value reverts to default when error -->
-
-<!-- xxx: pattern not working -->
 
 <div>
 	<Label for={id} withMargin>
 		{label}
 	</Label>
-	<Input
+	<Select
 		{name}
 		{id}
-		{leftAddon}
 		{onblur}
-		maxlength={maxLength}
-		pattern={regExp ? regExp.pattern.source : undefined}
+		{clearable}
+		items={itemsWithLabels}
 		bind:value
 		{...ariaAttributes({
 			id,

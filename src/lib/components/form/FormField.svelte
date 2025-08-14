@@ -6,6 +6,7 @@
 	import InputFormField from './InputFormField.svelte';
 	import SwitchFormField from './SwitchFormField.svelte';
 	import TextareaFormField from './TextareaFormField.svelte';
+	import SelectFormField from './SelectFormField.svelte';
 
 	interface Props {
 		name: string;
@@ -43,14 +44,19 @@
 
 		return field;
 	});
+
+	const commonProps = $derived({ name, error, onblur });
 </script>
 
+<!-- xxx: how to differentiate optional and not? -->
 {#if formField.type === 'text-field'}
-	<InputFormField {name} value={defaultValue} {error} {onblur} {...formField} />
+	<InputFormField value={defaultValue} {...commonProps} {...formField} />
 {:else if formField.type === 'switch'}
-	<SwitchFormField {name} checked={defaultValue} {error} {...formField} />
+	<SwitchFormField checked={defaultValue} {...commonProps} {...formField} />
 {:else if formField.type === 'text-area'}
-	<TextareaFormField {name} value={defaultValue} {error} {onblur} {...formField} />
+	<TextareaFormField value={defaultValue} {...commonProps} {...formField} />
+{:else if formField.type === 'select'}
+	<SelectFormField value={defaultValue} clearable {...commonProps} {...formField} />
 {:else}
 	<p>Unsupported form field type</p>
 {/if}

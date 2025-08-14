@@ -1,4 +1,4 @@
-import { safeNullableStringSchema } from '$lib/schemas';
+import { falsyToNull, safeNullableStringSchema } from '$lib/schemas';
 import z from 'zod';
 import type { FormField } from './types';
 
@@ -45,5 +45,20 @@ export function toggle(args: Omit<Extract<FormField, { type: 'switch' }>, 'type'
 		.register(formRegistry, {
 			...args,
 			type: 'switch'
+		});
+}
+
+export function selectOptional(args: Omit<Extract<FormField, { type: 'select' }>, 'type'>) {
+	return z
+		.preprocess(
+			falsyToNull,
+			z
+				.string()
+				.refine((val) => val === null || args.items.some((item) => item.value === val))
+				.nullable()
+		)
+		.register(formRegistry, {
+			...args,
+			type: 'select'
 		});
 }

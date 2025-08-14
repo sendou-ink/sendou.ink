@@ -14,6 +14,7 @@ import {
 import z from 'zod';
 import * as Fields from '$lib/form/fields';
 import { COUNTRY_CODES } from '$lib/constants/common';
+import { countryCodeToTranslatedName } from '$lib/utils/i18n';
 
 const CUSTOM_URL_MAX_LENGTH = 32;
 
@@ -56,6 +57,17 @@ export const editProfileSchema = z.object({
 		bottomText: m.user_forms_info_battlefy(),
 		leftAddon: 'battlefy.com/users/',
 		maxLength: 32
+	}),
+	country: Fields.selectOptional({
+		label: m.user_country(),
+		items: COUNTRY_CODES.map((countryCode) => ({
+			label: (language) =>
+				countryCodeToTranslatedName({
+					countryCode,
+					language
+				}),
+			value: countryCode
+		}))
 	}),
 	bio: Fields.textAreaOptional({ label: m.user_bio(), maxLength: 2000 }),
 	hideDiscordUniqueName: Fields.toggle({

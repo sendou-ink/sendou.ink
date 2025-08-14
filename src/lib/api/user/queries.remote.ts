@@ -43,7 +43,8 @@ export const editProfileFormData = query(
 			commissionsOpen: Boolean(userProfile.commissionsOpen),
 			commissionText: userProfile.commissionText,
 			inGameName: userProfile.inGameName,
-			battlefy: userProfile.battlefy
+			battlefy: userProfile.battlefy,
+			country: userProfile.country
 		};
 	}
 );

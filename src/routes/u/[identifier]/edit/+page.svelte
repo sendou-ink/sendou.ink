@@ -19,6 +19,7 @@
 	<FormField name="customUrl" />
 	<FormField name="inGameName" />
 	<FormField name="battlefy" />
+	<FormField name="country" />
 	<FormField name="bio" />
 	<FormField name="hideDiscordUniqueName" />
 	{#if loggedInUser?.roles.includes('ARTIST')}

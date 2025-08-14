@@ -14,10 +14,15 @@ interface FormFieldText<T extends string> extends FormFieldBase<T> {
 	};
 }
 
+interface FormFieldSelect<T extends string> extends FormFieldBase<T> {
+	items: Array<{ label: string | number | ((lang: string) => string); value: string | number }>;
+}
+
 export type FormField =
 	| FormFieldText<'text-field'>
 	| FormFieldText<'text-area'>
-	| FormFieldBase<'switch'>;
+	| FormFieldBase<'switch'>
+	| FormFieldSelect<'select'>;
 
 export type FormFieldProps<T extends FormField['type']> = Extract<FormField, { type: T }> & {
 	name: string;

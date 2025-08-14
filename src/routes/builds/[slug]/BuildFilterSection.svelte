@@ -84,7 +84,7 @@
 
 		<Select
 			value={filter.ability}
-			values={abilities.map((ability) => ({
+			items={abilities.map((ability) => ({
 				label: abilityTranslations[ability.name](),
 				value: ability.name
 			}))}
@@ -99,7 +99,7 @@
 		{#if abilityObject.type !== 'STACKABLE'}
 			<Select
 				value={!filter.value ? 'false' : 'true'}
-				values={[
+				items={[
 					{ label: m.builds_filters_has(), value: 'true' },
 					{ label: m.builds_filters_does_not_have(), value: 'false' }
 				]}
@@ -110,7 +110,7 @@
 		{#if abilityObject.type === 'STACKABLE'}
 			<Select
 				value={filter.comparison}
-				values={[
+				items={[
 					{ label: m.builds_filters_atLeast(), value: 'AT_LEAST' },
 					{ label: m.builds_filters_atMost(), value: 'AT_MOST' }
 				]}
@@ -126,7 +126,7 @@
 			<div class="stack horizontal sm items-center">
 				<Select
 					value={typeof filter.value === 'number' ? filter.value : '0'}
-					values={possibleApValues().map((value) => ({
+					items={possibleApValues().map((value) => ({
 						label: value,
 						value
 					}))}
@@ -166,7 +166,7 @@
 
 		<Select
 			value={dateSelectValue(filter.date)}
-			values={[
+			items={[
 				...PATCHES.map(({ date: dateString }) => ({
 					label: dateString,
 					value: dateString
