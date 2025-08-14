@@ -3,6 +3,7 @@
 	import Textarea from '../Textarea.svelte';
 	import BottomText from './BottomText.svelte';
 	import Label from './Label.svelte';
+	import { ariaAttributes } from './utils';
 
 	type Props = FormFieldProps<'text-area'> & {
 		value?: string;
@@ -25,6 +26,16 @@
 	<Label for={id} withMargin valueLimits={{ current: value.length, max: maxLength }}>
 		{label}
 	</Label>
-	<Textarea {name} {id} {onblur} bind:value />
-	<BottomText info={bottomText} {error} />
+	<Textarea
+		{name}
+		{id}
+		{onblur}
+		bind:value
+		{...ariaAttributes({
+			id,
+			bottomText,
+			error
+		})}
+	/>
+	<BottomText info={bottomText} {error} fieldId={id} />
 </div>

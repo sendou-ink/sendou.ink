@@ -3,6 +3,7 @@
 	import Input from '../Input.svelte';
 	import BottomText from './BottomText.svelte';
 	import Label from './Label.svelte';
+	import { ariaAttributes } from './utils';
 
 	type Props = FormFieldProps<'text-field'> & {
 		value?: string;
@@ -37,6 +38,11 @@
 		maxlength={maxLength}
 		pattern={regExp ? regExp.pattern.source : undefined}
 		bind:value
+		{...ariaAttributes({
+			id,
+			bottomText,
+			error
+		})}
 	/>
-	<BottomText info={bottomText} {error} />
+	<BottomText info={bottomText} {error} fieldId={id} />
 </div>

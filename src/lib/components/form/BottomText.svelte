@@ -1,21 +1,24 @@
 <script lang="ts">
+	import { errorMessageId, infoMessageId } from './utils';
+
 	interface Props {
 		error?: string;
 		info?: string;
+		fieldId: string;
 	}
 
-	let { error, info }: Props = $props();
+	let { error, info, fieldId }: Props = $props();
 </script>
 
 {#if info || error}
 	<div>
 		{#if error}
-			<div class="info-message error">
+			<div class="info-message error" id={errorMessageId(fieldId)}>
 				{error}
 			</div>
 		{/if}
 		{#if info}
-			<div class="info-message">
+			<div class="info-message" id={infoMessageId(fieldId)}>
 				{info}
 			</div>
 		{/if}

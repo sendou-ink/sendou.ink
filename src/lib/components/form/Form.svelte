@@ -3,7 +3,7 @@
 	import Button from '../buttons/Button.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import * as z4 from 'zod/v4/core';
-	import { setContext } from 'svelte';
+	import { setContext, tick } from 'svelte';
 	import type { RemoteForm } from '@sveltejs/kit';
 	import z from 'zod';
 
@@ -19,17 +19,22 @@
 	const id = $props.id();
 
 	let form: HTMLFormElement;
+
 	let errors = $state<Partial<Record<keyof T, string>>>({});
+	let isServerError = $state(false);
 
 	$effect(() => {
-		if (!action.result) return;
+		if (!action.result) {
+			isServerError = false;
+			return;
+		}
 
 		// xxx: any
 		// xxx: focus first error
 		errors = (action.result as any).errors;
+		isServerError = true;
+		tick().then(() => focusFirstInvalidField());
 	});
-
-	$inspect(action.result);
 
 	function handleBlur() {
 		// @ts-expect-error TODO: types wrong?
@@ -39,7 +44,10 @@
 
 		const parsed = z.safeParse(schema, data);
 
-		if (parsed.success) return;
+		if (parsed.success && !isServerError) {
+			errors = {};
+			return;
+		}
 
 		const newErrors: Partial<Record<keyof T, string>> = {};
 
@@ -50,6 +58,14 @@
 		}
 
 		errors = newErrors;
+	}
+
+	function focusFirstInvalidField() {
+		const form = document.getElementById(id);
+		const invalidElement = form?.querySelector('[aria-invalid="true"]') as HTMLInputElement;
+
+		invalidElement?.focus();
+		invalidElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 	}
 
 	setContext('form', { schema, defaultValues, errors: () => errors, onblur: handleBlur });

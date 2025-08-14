@@ -8,13 +8,14 @@
 	};
 
 	let { label, name, bottomText, error, checked = $bindable(false) }: Props = $props();
+	const id = $props.id();
 </script>
 
 <div>
 	<div class="stack horizontal sm items-center">
-		<Switch {name} bind:checked>
+		<Switch {name} {id} bind:checked>
 			{label}
 		</Switch>
 	</div>
-	<BottomText info={bottomText} {error} />
+	<BottomText info={bottomText} {error} fieldId={id} />
 </div>
