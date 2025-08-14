@@ -23,7 +23,7 @@
 </script>
 
 <div>
-	<Label for={id} withMargin valueLimits={{ current: value.length, max: maxLength }}>
+	<Label for={id} withMargin valueLimits={{ current: value?.length, max: maxLength }}>
 		{label}
 	</Label>
 	<Textarea

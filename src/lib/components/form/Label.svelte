@@ -6,7 +6,7 @@
 		children: Snippet;
 		withMargin?: boolean;
 		valueLimits?: {
-			current: number;
+			current?: number;
 			max: number;
 		};
 		required?: boolean;
@@ -15,6 +15,8 @@
 	let { children, withMargin, valueLimits, required, ...rest }: Props = $props();
 
 	function lengthWarning(valueLimits: NonNullable<Props['valueLimits']>) {
+		if (!valueLimits.current) return;
+
 		if (valueLimits.current > valueLimits.max) return 'error';
 		if (valueLimits.current / valueLimits.max >= 0.9) return 'warning';
 
@@ -31,7 +33,7 @@
 	</label>
 	{#if valueLimits}
 		<div class={['value', lengthWarning(valueLimits)]}>
-			{valueLimits.current}/{valueLimits.max}
+			{valueLimits.current ?? 0}/{valueLimits.max}
 		</div>
 	{/if}
 </div>

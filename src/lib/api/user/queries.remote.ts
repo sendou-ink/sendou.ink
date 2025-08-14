@@ -41,7 +41,9 @@ export const editProfileFormData = query(
 			customUrl: userProfile.customUrl,
 			hideDiscordUniqueName: !userProfile.showDiscordUniqueName,
 			commissionsOpen: Boolean(userProfile.commissionsOpen),
-			inGameName: userProfile.inGameName
+			commissionText: userProfile.commissionText,
+			inGameName: userProfile.inGameName,
+			battlefy: userProfile.battlefy
 		};
 	}
 );

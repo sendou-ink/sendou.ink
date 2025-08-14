@@ -1,7 +1,6 @@
 import { m } from '$lib/paraglide/messages';
 import {
 	actualNumber,
-	checkboxValueToDbBoolean,
 	customCssVarObject,
 	dbBoolean,
 	emptyArrayToNull,
@@ -52,6 +51,12 @@ export const editProfileSchema = z.object({
 			message: m.user_forms_errors_invalidInGameName_format()
 		}
 	}),
+	battlefy: Fields.textFieldOptional({
+		label: m.user_battlefy(),
+		bottomText: m.user_forms_info_battlefy(),
+		leftAddon: 'battlefy.com/users/',
+		maxLength: 32
+	}),
 	bio: Fields.textAreaOptional({ label: m.user_bio(), maxLength: 2000 }),
 	hideDiscordUniqueName: Fields.toggle({
 		label: m.user_forms_hideDiscordUniqueName(),
@@ -59,6 +64,11 @@ export const editProfileSchema = z.object({
 	}),
 	commissionsOpen: Fields.toggle({
 		label: m.user_forms_commissionsOpen()
+	}),
+	commissionText: Fields.textAreaOptional({
+		label: m.user_forms_commissionText(),
+		bottomText: m.user_forms_commissionText_info(),
+		maxLength: 1000
 	})
 });
 
@@ -73,7 +83,6 @@ export const userEditActionSchemaOld = z
 				.refine((val) => !val || COUNTRY_CODES.includes(val as any))
 				.nullable()
 		),
-		battlefy: z.preprocess(falsyToNull, z.string().max(32).nullable()),
 		stickSens: z.preprocess(
 			processMany(actualNumber, undefinedToNull),
 			z
@@ -111,9 +120,7 @@ export const userEditActionSchemaOld = z
 				.min(1)
 				.max(SMALL_BADGES_PER_DISPLAY_PAGE + 1)
 				.nullish()
-		),
-		commissionsOpen: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
-		commissionText: z.preprocess(falsyToNull, z.string().max(1000).nullable())
+		)
 	})
 	.refine(
 		(val) => {
