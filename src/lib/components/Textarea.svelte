@@ -8,7 +8,7 @@
 
 <style>
 	textarea {
-		width: 18rem;
+		width: var(--field-width-medium);
 		max-width: 100%;
 		height: 8rem;
 		padding: var(--s-2-5) var(--s-3);

@@ -47,6 +47,7 @@ html {
 	--border-style: var(--border) solid var(--color-base-border);
 
 	--layout-nav-height: 3rem;
+	--field-width-medium: 18rem;
 }
 
 html.dark {

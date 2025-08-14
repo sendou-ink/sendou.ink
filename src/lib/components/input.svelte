@@ -32,7 +32,7 @@
 		font-size: var(--fonts-sm);
 		outline: none;
 		font-weight: var(--body);
-		max-width: 18rem;
+		max-width: var(--field-width-medium);
 
 		&:focus-within {
 			border-color: transparent;
