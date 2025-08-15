@@ -21,6 +21,7 @@
 
 	interface Props {
 		data: Item[] | Group[];
+		buttonPlaceholder?: string;
 		searchPlaceholder: string;
 		open?: boolean;
 		value?: Item;
@@ -31,6 +32,7 @@
 	let {
 		data,
 		searchPlaceholder,
+		buttonPlaceholder,
 		open = $bindable(false),
 		value = $bindable(undefined),
 		onselect,
@@ -69,7 +71,8 @@
 						{#if selectedImage}
 							<Image path={selectedImage} size={24} lazy />
 						{/if}
-						<span class={{ 'text-white': selectedValue }}>{selectedValue}</span>
+						<span class={{ 'text-white': selectedValue }}>{selectedValue || buttonPlaceholder}</span
+						>
 					</div>
 					<ChevronsUpDownIcon size="1rem" />
 				</button>

@@ -52,5 +52,6 @@
 	{id}
 	{data}
 	onselect={handleSelect}
+	buttonPlaceholder={m.common_forms_weaponSearch_placeholder()}
 	searchPlaceholder={m.common_forms_weaponSearch_search_placeholder()}
 />
