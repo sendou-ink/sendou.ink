@@ -10,7 +10,7 @@
 	let { value: selectedValue = $bindable(), clearable, items, ...rest }: Props = $props();
 </script>
 
-<select {...rest}>
+<select {...rest} bind:value={selectedValue}>
 	{#if clearable}
 		<option value="" selected={!selectedValue}>–</option>
 	{/if}

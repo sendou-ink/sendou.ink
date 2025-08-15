@@ -14,15 +14,12 @@
 
 	let { name, bottomText, error, onblur, value = $bindable(), clearable, fields }: Props = $props();
 	const id = $props.id();
-
-	$inspect(value);
 </script>
 
 <div class="container stack xs">
 	<div class="stack horizontal md">
 		{#each fields as { items, label }, i}
 			<SelectFormField {id} {clearable} {items} {label} bind:value={value[i]} />
-			<!-- xxx: bind not working, why? -->
 		{/each}
 	</div>
 	<input type="hidden" {name} value={JSON.stringify(value)} />
