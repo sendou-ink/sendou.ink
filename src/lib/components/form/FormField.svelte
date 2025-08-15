@@ -15,7 +15,7 @@
 	type ValueType = Output[keyof Output];
 
 	interface Props {
-		name: keyof Output;
+		name: string;
 	}
 
 	let { name }: Props = $props();
@@ -25,7 +25,7 @@
 	let value = $state(defaultValues?.[name as keyof typeof defaultValues] as ValueType);
 	const error = $derived(errors()[name as keyof typeof errors]);
 
-	const fieldSchema = $derived.by(() => {
+	const fieldSchema = (() => {
 		const zodObject = schema as ZodObject<ZodRawShape>;
 		const result = zodObject.shape[name as string];
 
@@ -35,9 +35,9 @@
 			);
 		}
 		return result;
-	});
+	})();
 
-	const formField = $derived.by(() => {
+	const formField = (() => {
 		const field = formRegistry.get(fieldSchema) as FormField | undefined;
 
 		if (!field) {
@@ -45,9 +45,9 @@
 		}
 
 		return field;
-	});
+	})();
 
-	const commonProps = $derived({ name: name as string, error, onblur });
+	const commonProps = $derived({ name, error, onblur });
 </script>
 
 {#if formField.type === 'text-field'}
