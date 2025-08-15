@@ -29,7 +29,7 @@ export async function findVodsByUserId(
 	userId: Tables["User"]["id"],
 	limit = 100,
 ) {
-	findVods({ userId, limit });
+	return findVods({ userId, limit });
 }
 
 export async function findVods({
