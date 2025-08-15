@@ -1,10 +1,7 @@
 <script lang="ts">
 	import type { FormFieldProps } from '$lib/form/types';
-	import Select from '../Select.svelte';
 	import BottomText from './BottomText.svelte';
-	import Label from './Label.svelte';
 	import SelectFormField from './SelectFormField.svelte';
-	import { ariaAttributes } from './utils';
 
 	type Props = FormFieldProps<'dual-select'> & {
 		value: [string | null, string | null];
@@ -19,7 +16,7 @@
 <div class="container stack xs">
 	<div class="stack horizontal md">
 		{#each fields as { items, label }, i}
-			<SelectFormField id={id + i} {clearable} {items} {label} bind:value={value[i]} />
+			<SelectFormField id={id + i} {clearable} {items} {label} {onblur} bind:value={value[i]} />
 		{/each}
 	</div>
 	<input type="hidden" {name} value={JSON.stringify(value)} />
