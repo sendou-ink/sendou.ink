@@ -15,7 +15,7 @@ import {
 } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { VODS_PAGE_BATCH_SIZE } from "./vods-constants";
-import type { ListVod, VideoBeingAdded, Vod } from "./vods-types";
+import type { VideoBeingAdded, Vod } from "./vods-types";
 import {
 	extractYoutubeIdFromVideoUrl,
 	hoursMinutesSecondsStringToSeconds,
@@ -39,7 +39,7 @@ export async function findVods({
 	type?: Tables["Video"]["type"];
 	userId?: number;
 	limit?: number;
-}): Promise<Array<ListVod>> {
+}) {
 	let query = db
 		.selectFrom("Video")
 		.leftJoin("VideoMatch", "Video.id", "VideoMatch.videoId")
@@ -96,12 +96,10 @@ export async function findVods({
 			pov: playerNamesArray[0] ?? playersArray[0],
 		};
 	});
-	return vods as ListVod[];
+	return vods;
 }
 
-export async function findVodById(
-	id: Tables["Video"]["id"],
-): Promise<Vod | null> {
+export async function findVodById(id: Tables["Video"]["id"]) {
 	const video_query = db
 		.selectFrom("Video")
 		.select([
@@ -177,7 +175,7 @@ export async function updateVodByReplacing(
 		isValidated: boolean;
 		id: number;
 	},
-): Promise<Tables["Video"]> {
+) {
 	return createVod(args);
 }
 
@@ -187,7 +185,7 @@ export async function createVod(
 		isValidated: boolean;
 		id?: number;
 	},
-): Promise<Tables["Video"]> {
+) {
 	const youtubeId = extractYoutubeIdFromVideoUrl(args.youtubeUrl);
 	invariant(youtubeId, "Invalid YouTube URL");
 	return db.transaction().execute(async (trx) => {
