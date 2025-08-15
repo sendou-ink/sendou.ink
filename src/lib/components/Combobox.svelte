@@ -27,6 +27,7 @@
 		open?: boolean;
 		value?: Item;
 		onselect?: (item: Item) => void;
+		onblur?: VoidFunction;
 		id?: string;
 	}
 
@@ -37,6 +38,7 @@
 		open = $bindable(false),
 		value = $bindable(undefined),
 		onselect,
+		onblur,
 		id
 	}: Props = $props();
 
@@ -53,7 +55,7 @@
 		onselect?.(item);
 
 		tick().then(() => {
-			trigger.focus();
+			trigger.focus(); // xxx: this is not doing anything?
 		});
 	}
 
@@ -67,7 +69,7 @@
 	<Popover.Root bind:open>
 		<Popover.Trigger {id}>
 			{#snippet child({ props })}
-				<button {...props}>
+				<button bind:this={trigger} {...props}>
 					<div>
 						{#if selectedImage}
 							<Image path={selectedImage} size={24} lazy />
@@ -88,7 +90,7 @@
 							<Command.Root loop>
 								<div class="input-container">
 									<Search color="currentColor" size="1rem" />
-									<Command.Input placeholder={searchPlaceholder} />
+									<Command.Input placeholder={searchPlaceholder} {onblur} />
 								</div>
 								<Command.List>
 									{#snippet child({ props })}

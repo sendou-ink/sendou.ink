@@ -29,6 +29,7 @@
 	</Label>
 	<WeaponSelect
 		{id}
+		{onblur}
 		disabledWeaponIds={value.map((weapon) => weapon.weaponSplId)}
 		onselect={(weaponSplId) => {
 			value.push({

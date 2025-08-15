@@ -11,6 +11,7 @@
 		open?: boolean;
 		value?: MainWeaponId;
 		onselect?: (item: MainWeaponId) => void;
+		onblur?: VoidFunction;
 		disabledWeaponIds?: Array<MainWeaponId>;
 		id?: string;
 	}
@@ -19,6 +20,7 @@
 		open = $bindable(false),
 		value = $bindable(undefined),
 		onselect,
+		onblur,
 		id,
 		disabledWeaponIds
 	}: Props = $props();
@@ -62,6 +64,7 @@
 	{id}
 	{data}
 	onselect={handleSelect}
+	{onblur}
 	buttonPlaceholder={m.common_forms_weaponSearch_placeholder()}
 	searchPlaceholder={m.common_forms_weaponSearch_search_placeholder()}
 />
