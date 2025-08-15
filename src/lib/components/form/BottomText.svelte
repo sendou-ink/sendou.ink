@@ -11,7 +11,7 @@
 </script>
 
 {#if info || error}
-	<div>
+	<div class="stack xs">
 		{#if error}
 			<div class="info-message error" id={errorMessageId(fieldId)}>
 				{error}
