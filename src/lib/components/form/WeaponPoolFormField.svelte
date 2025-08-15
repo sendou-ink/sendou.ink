@@ -73,8 +73,9 @@
 		<span class="weapon-row-text">
 			{weaponTranslations[weaponSplId]()}
 		</span>
-		<div class="ml-auto stack horizontal md">
+		<div class="icons ml-auto stack horizontal md">
 			<Button
+				class={isFavorite ? 'favorite' : ''}
 				icon={Star}
 				variant="minimal-secondary"
 				onclick={() => {
@@ -127,5 +128,9 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		text-wrap: nowrap;
+	}
+
+	.icons :global(.favorite svg) {
+		fill: currentColor;
 	}
 </style>
