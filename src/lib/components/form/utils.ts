@@ -1,3 +1,6 @@
+import type { ZodObject } from 'zod';
+import z from 'zod';
+
 export function infoMessageId(fieldId: string) {
 	return `${fieldId}-info`;
 }
@@ -20,4 +23,10 @@ export function ariaAttributes({
 		'aria-describedby': bottomText ? infoMessageId(id) : undefined,
 		'aria-errormessage': error ? errorMessageId(id) : undefined
 	} as const;
+}
+
+export function createFieldValidator<T extends ZodObject<any>>(_schema: T) {
+	return function validField<K extends keyof z.output<T>>(fieldName: K): K {
+		return fieldName;
+	};
 }

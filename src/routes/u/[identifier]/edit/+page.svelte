@@ -3,29 +3,33 @@
 	import * as AuthAPI from '$lib/api/auth';
 	import Form from '$lib/components/form/Form.svelte';
 	import FormField from '$lib/components/form/FormField.svelte';
+	import { createFieldValidator } from '$lib/components/form/utils.js';
 
 	let { params } = $props();
 
 	const loggedInUser = $derived(await AuthAPI.queries.me());
+
+	const schema = UserAPI.schemas.editProfileSchema;
+	const validField = createFieldValidator(schema);
 </script>
 
 <Form
+	{schema}
 	action={UserAPI.actions.updateProfile}
-	schema={UserAPI.schemas.editProfileSchema}
 	defaultValues={await UserAPI.queries.editProfileFormData(params.identifier)}
 	heading="Editing user profile"
 >
-	<FormField name="customName" />
-	<FormField name="customUrl" />
-	<FormField name="inGameName" />
-	<FormField name="sens" />
-	<FormField name="battlefy" />
-	<FormField name="country" />
-	<FormField name="weapons" />
-	<FormField name="bio" />
-	<FormField name="hideDiscordUniqueName" />
+	<FormField name={validField('customName')} />
+	<FormField name={validField('customUrl')} />
+	<FormField name={validField('inGameName')} />
+	<FormField name={validField('sens')} />
+	<FormField name={validField('battlefy')} />
+	<FormField name={validField('country')} />
+	<FormField name={validField('weapons')} />
+	<FormField name={validField('bio')} />
+	<FormField name={validField('hideDiscordUniqueName')} />
 	{#if loggedInUser?.roles.includes('ARTIST')}
-		<FormField name="commissionsOpen" />
-		<FormField name="commissionText" />
+		<FormField name={validField('commissionsOpen')} />
+		<FormField name={validField('commissionText')} />
 	{/if}
 </Form>
