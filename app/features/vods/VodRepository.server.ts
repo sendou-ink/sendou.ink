@@ -25,6 +25,10 @@ export function deleteById(id: number) {
 	return db.deleteFrom("UnvalidatedVideo").where("id", "=", id).execute();
 }
 
+export async function findVodsByUserId(userId: Tables["User"]["id"]) {
+	findVods({ userId });
+}
+
 export async function findVods({
 	weapon,
 	mode,
