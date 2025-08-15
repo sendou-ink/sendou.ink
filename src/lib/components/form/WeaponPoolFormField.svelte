@@ -21,34 +21,23 @@
 
 	let { label, name, bottomText, error, onblur, value = $bindable() }: Props = $props();
 	const id = $props.id();
-
-	$inspect(value);
 </script>
 
 <div class="stack xs">
 	<Label for={id}>
 		{label}
 	</Label>
-	<!-- <Select
-		{name}
-		{id}
-		{onblur}
-		{clearable}
-		items={itemsWithLabels}
-		bind:value
-		{...ariaAttributes({
-			id,
-			bottomText,
-			error
-		})}
-	/> -->
 	<WeaponSelect
 		{id}
-		onselect={(weaponSplId) =>
+		disabledWeaponIds={value.map((weapon) => weapon.weaponSplId)}
+		onselect={(weaponSplId) => {
 			value.push({
 				weaponSplId,
 				isFavorite: false
-			})}
+			});
+
+			// xxx: also clear the current input selected value (can we do it without key block?)
+		}}
 	/>
 	<input type="hidden" {name} value={JSON.stringify(value ?? [])} />
 

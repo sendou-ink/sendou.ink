@@ -11,26 +11,36 @@
 		open?: boolean;
 		value?: MainWeaponId;
 		onselect?: (item: MainWeaponId) => void;
+		disabledWeaponIds?: Array<MainWeaponId>;
 		id?: string;
 	}
 
-	let { open = $bindable(false), value = $bindable(undefined), onselect, id }: Props = $props();
+	let {
+		open = $bindable(false),
+		value = $bindable(undefined),
+		onselect,
+		id,
+		disabledWeaponIds
+	}: Props = $props();
 
-	const data = weaponCategories.map((category) => ({
-		label: weaponCategoryTranslations[category.name](),
-		image: weaponCategoryUrl(category.name),
-		items: category.weaponIds.map((weaponId) => ({
-			value: weaponTranslations[weaponId](),
-			label: weaponTranslations[weaponId](),
-			image: mainWeaponImageUrl(weaponId),
-			id: weaponId,
-			keywords: (() => {
-				const altNames = weaponAltNames.get(weaponId);
-				if (!altNames) return [];
-				return Array.isArray(altNames) ? altNames : [altNames];
-			})()
+	const data = $derived(
+		weaponCategories.map((category) => ({
+			label: weaponCategoryTranslations[category.name](),
+			image: weaponCategoryUrl(category.name),
+			items: category.weaponIds.map((weaponId) => ({
+				value: weaponTranslations[weaponId](),
+				label: weaponTranslations[weaponId](),
+				image: mainWeaponImageUrl(weaponId),
+				disabled: disabledWeaponIds?.includes(weaponId),
+				id: weaponId,
+				keywords: (() => {
+					const altNames = weaponAltNames.get(weaponId);
+					if (!altNames) return [];
+					return Array.isArray(altNames) ? altNames : [altNames];
+				})()
+			}))
 		}))
-	}));
+	);
 
 	function handleSelect(item: Item) {
 		// @ts-expect-error TODO: this could be made more typesafe by making Combobox accept a generic

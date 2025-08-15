@@ -9,6 +9,7 @@
 	export interface Item {
 		value: string;
 		label: string;
+		disabled?: boolean;
 		image?: string;
 		keywords?: string[];
 	}
@@ -134,7 +135,12 @@
 </div>
 
 {#snippet commandItem(item: Item)}
-	<Command.Item keywords={item.keywords} value={item.value} onSelect={() => onSelect(item)}>
+	<Command.Item
+		keywords={item.keywords}
+		value={item.value}
+		onSelect={() => onSelect(item)}
+		disabled={item.disabled}
+	>
 		{#snippet child({ props })}
 			<div {...props} class={['item', item.value === selectedValue ? 'selected' : '']}>
 				{#if item.image}
@@ -243,10 +249,15 @@
 			font-weight: var(--extra-bold);
 		}
 
-		&:hover,
-		&[aria-selected='true'] {
+		&:hover:not([data-disabled]),
+		&[aria-selected='true']:not([data-disabled]) {
 			background-color: var(--color-base-card);
 		}
+	}
+
+	.item[data-disabled] {
+		color: var(--color-base-content-secondary);
+		font-style: italic;
 	}
 
 	[data-popover-content] {
@@ -258,6 +269,7 @@
 		margin-top: var(--s-2);
 		margin-bottom: var(--s-7);
 		overflow: hidden;
+		z-index: 1;
 	}
 
 	[data-command-list] {
