@@ -15,7 +15,12 @@ interface FormFieldText<T extends string> extends FormFieldBase<T> {
 }
 
 interface FormFieldSelect<T extends string> extends FormFieldBase<T> {
-	items: Array<{ label: string | number | ((lang: string) => string); value: string | number }>;
+	items: Array<{ label: string | number | ((lang: string) => string); value: string }>;
+}
+
+type FormFieldDualSelectField<T extends string> = Omit<FormFieldSelect<T>, 'bottomText' | 'type'>;
+interface FormFieldDualSelect<T extends string> extends Omit<FormFieldBase<T>, 'label'> {
+	fields: [FormFieldDualSelectField<T>, FormFieldDualSelectField<T>];
 }
 
 interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {
@@ -27,9 +32,13 @@ export type FormField =
 	| FormFieldText<'text-area'>
 	| FormFieldBase<'switch'>
 	| FormFieldSelect<'select'>
+	| FormFieldDualSelect<'dual-select'>
 	| FormFieldWeaponPool<'weapon-pool'>;
 
-export type FormFieldProps<T extends FormField['type']> = Extract<FormField, { type: T }> & {
+export type FormFieldProps<T extends FormField['type']> = Omit<
+	Extract<FormField, { type: T }>,
+	'type'
+> & {
 	name: string;
 	error?: string;
 };

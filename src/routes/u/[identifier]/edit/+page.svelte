@@ -18,6 +18,7 @@
 	<FormField name="customName" />
 	<FormField name="customUrl" />
 	<FormField name="inGameName" />
+	<FormField name="sens" />
 	<FormField name="battlefy" />
 	<FormField name="country" />
 	<FormField name="weapons" />

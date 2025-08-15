@@ -1,14 +1,17 @@
 <script lang="ts">
 	import type { FormFieldProps } from '$lib/form/types';
+	import { useId } from 'bits-ui';
 	import Select from '../Select.svelte';
 	import BottomText from './BottomText.svelte';
 	import Label from './Label.svelte';
 	import { ariaAttributes } from './utils';
 
-	type Props = FormFieldProps<'select'> & {
+	type Props = Omit<FormFieldProps<'select'>, 'name'> & {
 		value?: string;
 		onblur?: () => void;
 		clearable?: boolean;
+		id?: string;
+		name?: string;
 	};
 
 	let {
@@ -19,10 +22,9 @@
 		error,
 		onblur,
 		value = $bindable(''),
-		clearable
+		clearable,
+		id = useId()
 	}: Props = $props();
-	const id = $props.id();
-
 	const itemsWithLabels = $derived(
 		items.map((item) => ({
 			...item,

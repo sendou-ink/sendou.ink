@@ -1,16 +1,5 @@
 import { m } from '$lib/paraglide/messages';
-import {
-	actualNumber,
-	customCssVarObject,
-	dbBoolean,
-	emptyArrayToNull,
-	falsyToNull,
-	id,
-	processMany,
-	safeJSONParse,
-	undefinedToNull,
-	weaponSplId
-} from '$lib/schemas';
+import { customCssVarObject, emptyArrayToNull, id, processMany, safeJSONParse } from '$lib/schemas';
 import z from 'zod';
 import * as Fields from '$lib/form/fields';
 import { COUNTRY_CODES } from '$lib/constants/common';
@@ -25,6 +14,13 @@ export const identifier = z.string().min(1).max(CUSTOM_URL_MAX_LENGTH).toLowerCa
 export const customUrlRegexp = new RegExp(/^(?=.*[a-zA-Z_-])[a-zA-Z0-9_-]+$/);
 
 export const inGameNameRegexp = new RegExp(/^\D{1,20}#[0-9a-z]{4,5}$/);
+
+const profileSensItems = [
+	-50, -45, -40, -35, -30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50
+].map((sens) => ({
+	label: `${sens > 0 ? '+' : ''}${sens / 10}`,
+	value: String(sens)
+}));
 
 export const editProfileSchema = z.object({
 	customName: Fields.textFieldOptional({
@@ -51,6 +47,19 @@ export const editProfileSchema = z.object({
 			pattern: inGameNameRegexp,
 			message: m.user_forms_errors_invalidInGameName_format()
 		}
+	}),
+	// xxx: add validation that either both or only r-stick
+	sens: Fields.dualSelectOptional({
+		fields: [
+			{
+				label: m.user_motionSens(),
+				items: profileSensItems
+			},
+			{
+				label: m.user_stickSens(),
+				items: profileSensItems
+			}
+		]
 	}),
 	battlefy: Fields.textFieldOptional({
 		label: m.user_battlefy(),
@@ -90,63 +99,14 @@ export const editProfileSchema = z.object({
 
 export type EditProfileSchemaData = z.infer<typeof editProfileSchema>;
 
-export const userEditActionSchemaOld = z
-	.object({
-		country: z.preprocess(
-			falsyToNull,
-			z
-				.string()
-				.refine((val) => !val || COUNTRY_CODES.includes(val as any))
-				.nullable()
-		),
-		stickSens: z.preprocess(
-			processMany(actualNumber, undefinedToNull),
-			z
-				.number()
-				.min(-50)
-				.max(50)
-				.refine((val) => val % 5 === 0)
-				.nullable()
-		),
-		motionSens: z.preprocess(
-			processMany(actualNumber, undefinedToNull),
-			z
-				.number()
-				.min(-50)
-				.max(50)
-				.refine((val) => val % 5 === 0)
-				.nullable()
-		),
-		css: customCssVarObject,
-		weapons: z.preprocess(
-			safeJSONParse,
-			z
-				.array(
-					z.object({
-						weaponSplId,
-						isFavorite: dbBoolean
-					})
-				)
-				.max(5)
-		),
-		favoriteBadgeIds: z.preprocess(
-			processMany(safeJSONParse, emptyArrayToNull),
-			z
-				.array(id)
-				.min(1)
-				.max(SMALL_BADGES_PER_DISPLAY_PAGE + 1)
-				.nullish()
-		)
-	})
-	.refine(
-		(val) => {
-			if (val.motionSens !== null && val.stickSens === null) {
-				return false;
-			}
-
-			return true;
-		},
-		{
-			message: m.user_forms_errors_invalidSens()
-		}
-	);
+export const userEditActionSchemaOld = z.object({
+	css: customCssVarObject,
+	favoriteBadgeIds: z.preprocess(
+		processMany(safeJSONParse, emptyArrayToNull),
+		z
+			.array(id)
+			.min(1)
+			.max(SMALL_BADGES_PER_DISPLAY_PAGE + 1)
+			.nullish()
+	)
+});
