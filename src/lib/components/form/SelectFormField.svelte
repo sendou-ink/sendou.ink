@@ -7,7 +7,7 @@
 	import { ariaAttributes } from './utils';
 
 	type Props = Omit<FormFieldProps<'select'>, 'name'> & {
-		value?: string;
+		value: string | null;
 		onblur?: () => void;
 		clearable?: boolean;
 		id?: string;
@@ -21,7 +21,7 @@
 		items,
 		error,
 		onblur,
-		value = $bindable(''),
+		value = $bindable(null),
 		clearable,
 		id = useId()
 	}: Props = $props();
