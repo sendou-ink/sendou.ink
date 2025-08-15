@@ -61,7 +61,7 @@
 	{@render children()}
 
 	<div class="stack horizontal lg justify-between mt-6 w-full">
-		<Button type="submit" loading={action.pending > 0}>
+		<Button type="submit" loading={action.pending > 0} disabled={Object.keys(errors).length > 0}>
 			{m.common_actions_submit()}
 		</Button>
 	</div>
