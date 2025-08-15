@@ -21,7 +21,7 @@
 		items,
 		error,
 		onblur,
-		value = $bindable(null),
+		value = $bindable(),
 		clearable,
 		id = useId()
 	}: Props = $props();

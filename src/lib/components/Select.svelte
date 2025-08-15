@@ -2,7 +2,7 @@
 	import type { HTMLSelectAttributes } from 'svelte/elements';
 
 	interface Props extends Omit<HTMLSelectAttributes, 'children'> {
-		value?: string | number;
+		value?: string | number | null;
 		items: Array<{ label: string | number; value: string | number }>;
 		clearable?: boolean;
 	}
@@ -12,7 +12,7 @@
 
 <select {...rest}>
 	{#if clearable}
-		<option value="">–</option>
+		<option value="" selected={!selectedValue}>–</option>
 	{/if}
 	{#each items as { label, value } (value)}
 		<option {value} selected={value === selectedValue}>{label}</option>
