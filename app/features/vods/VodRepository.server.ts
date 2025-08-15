@@ -90,7 +90,7 @@ export async function findVods({
 	const vods = result.map((value) => {
 		const { playerNames, players, ...vod } = value;
 		const playerNamesArray: string[] = playerNames as string[];
-		const playersArray: Tables["User"][] = players as Tables["User"][];
+		const playersArray = players;
 		return {
 			...vod,
 			pov: playerNamesArray[0] ?? playersArray[0],
