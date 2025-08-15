@@ -10,6 +10,7 @@
 		| 'outlined-success'
 		| 'destructive'
 		| 'minimal'
+		| 'minimal-secondary'
 		| 'minimal-success'
 		| 'minimal-destructive';
 
@@ -51,6 +52,7 @@
 
 <svelte:element
 	this={rest.href ? 'a' : 'button'}
+	type={rest.href ? undefined : 'button'}
 	popovertarget={rest.popovertarget}
 	style={rest.popovertarget ? `--anchor-name:${rest.popovertarget}` : undefined}
 	class={[
@@ -66,6 +68,7 @@
 			'outlined-success': variant === 'outlined-success',
 			destructive: variant === 'destructive',
 			minimal: variant === 'minimal',
+			'minimal-secondary': variant === 'minimal-secondary',
 			'minimal-success': variant === 'minimal-success',
 			'minimal-destructive': variant === 'minimal-destructive'
 		}
@@ -197,6 +200,18 @@
 
 		&:focus-visible {
 			outline: 2px solid var(--color-primary);
+		}
+	}
+
+	.minimal-secondary {
+		padding: 0;
+		border: none;
+		background-color: transparent;
+		color: var(--color-secondary);
+		outline: initial;
+
+		&:focus-visible {
+			outline: 2px solid var(--color-secondary);
 		}
 	}
 

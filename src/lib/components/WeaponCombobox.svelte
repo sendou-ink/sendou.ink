@@ -10,7 +10,7 @@
 	interface Props {
 		open?: boolean;
 		value?: MainWeaponId;
-		onselect?: (item: MainWeaponId | null) => void;
+		onselect?: (item: MainWeaponId) => void;
 		id?: string;
 	}
 
@@ -34,7 +34,7 @@
 
 	function handleSelect(item: Item) {
 		// @ts-expect-error TODO: this could be made more typesafe by making Combobox accept a generic
-		onselect?.(item?.id ?? null);
+		onselect?.(item.id);
 	}
 </script>
 

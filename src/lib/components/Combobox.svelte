@@ -71,7 +71,8 @@
 						{#if selectedImage}
 							<Image path={selectedImage} size={24} lazy />
 						{/if}
-						<span class={{ 'text-white': selectedValue }}>{selectedValue || buttonPlaceholder}</span
+						<span class={['button-text', { 'text-white': selectedValue }]}
+							>{selectedValue || buttonPlaceholder}</span
 						>
 					</div>
 					<ChevronsUpDownIcon size="1rem" />
@@ -150,6 +151,12 @@
 		font-size: var(--fonts-xs);
 		font-weight: var(--bold);
 		display: block;
+	}
+
+	.button-text {
+		text-wrap: nowrap;
+		text-overflow: ellipsis;
+		overflow-x: hidden;
 	}
 
 	button {
