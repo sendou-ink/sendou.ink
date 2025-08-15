@@ -10,6 +10,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	return {
 		// TODO: add pagination instead of not showing oldest vods at all
-		vods: await VodRepository.findVods({ userId, limit: 100 }),
+		vods: await VodRepository.findVodsByUserId(userId),
 	};
 };
