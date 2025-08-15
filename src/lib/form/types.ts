@@ -21,6 +21,10 @@ interface FormFieldSelect<T extends string> extends FormFieldBase<T> {
 type FormFieldDualSelectField<T extends string> = Omit<FormFieldSelect<T>, 'bottomText' | 'type'>;
 interface FormFieldDualSelect<T extends string> extends Omit<FormFieldBase<T>, 'label'> {
 	fields: [FormFieldDualSelectField<T>, FormFieldDualSelectField<T>];
+	validate?: {
+		func: (value: [string | null, string | null]) => boolean;
+		message: string;
+	};
 }
 
 interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {

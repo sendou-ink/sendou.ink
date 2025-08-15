@@ -59,7 +59,11 @@ export const editProfileSchema = z.object({
 				label: m.user_stickSens(),
 				items: profileSensItems
 			}
-		]
+		],
+		validate: {
+			func: ([motionSens, stickSens]) => Boolean(!motionSens || stickSens),
+			message: m.user_forms_errors_invalidSens()
+		}
 	}),
 	battlefy: Fields.textFieldOptional({
 		label: m.user_battlefy(),

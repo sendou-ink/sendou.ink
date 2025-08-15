@@ -70,20 +70,34 @@ export function selectOptional(args: Omit<Extract<FormField, { type: 'select' }>
 export function dualSelectOptional(
 	args: Omit<Extract<FormField, { type: 'dual-select' }>, 'type'>
 ) {
-	return z
-		.preprocess(
-			safeJSONParse,
-			z
-				.tuple([
-					clearableSelectFieldSchema(args.fields[0].items),
-					clearableSelectFieldSchema(args.fields[1].items)
-				])
-				.optional()
-		)
-		.register(formRegistry, {
-			...args,
-			type: 'dual-select'
-		});
+	let schema = z.preprocess(
+		safeJSONParse,
+		z
+			.tuple([
+				clearableSelectFieldSchema(args.fields[0].items),
+				clearableSelectFieldSchema(args.fields[1].items)
+			])
+			.optional()
+	);
+
+	if (args.validate) {
+		schema = schema.refine(
+			(val) => {
+				if (!val) return true;
+
+				const [first, second] = val;
+				return args.validate!.func([first, second]);
+			},
+			{
+				message: args.validate!.message
+			}
+		);
+	}
+
+	return schema.register(formRegistry, {
+		...args,
+		type: 'dual-select'
+	});
 }
 
 export function weaponPool(args: Omit<Extract<FormField, { type: 'weapon-pool' }>, 'type'>) {
