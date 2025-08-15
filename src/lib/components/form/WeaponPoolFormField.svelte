@@ -11,11 +11,13 @@
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import Star from '@lucide/svelte/icons/star';
 
+	export interface WeaponPool {
+		weaponSplId: MainWeaponId;
+		isFavorite: boolean;
+	}
+
 	type Props = FormFieldProps<'weapon-pool'> & {
-		value: Array<{
-			weaponSplId: MainWeaponId;
-			isFavorite: boolean;
-		}>;
+		value: WeaponPool[];
 		onblur?: () => void;
 	};
 

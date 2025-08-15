@@ -2,16 +2,17 @@
 	import type { ZodObject, ZodRawShape } from 'zod';
 	import type { FormField } from '$lib/form/types';
 	import { formRegistry } from '$lib/form/fields';
+	import { formContext } from './context';
+	import z from 'zod';
+	import WeaponPoolFormField, { type WeaponPool } from './WeaponPoolFormField.svelte';
 	import InputFormField from './InputFormField.svelte';
 	import SwitchFormField from './SwitchFormField.svelte';
 	import TextareaFormField from './TextareaFormField.svelte';
 	import SelectFormField from './SelectFormField.svelte';
-	import WeaponPoolFormField from './WeaponPoolFormField.svelte';
 	import DualSelectFormField from './DualSelectFormField.svelte';
-	import { formContext } from './context';
-	import z from 'zod';
 
 	type Output = z.output<T>;
+	type ValueType = Output[keyof Output];
 
 	interface Props {
 		name: keyof Output;
@@ -21,7 +22,7 @@
 
 	const { schema, defaultValues, errors, onblur } = formContext.get();
 
-	let value = $state(defaultValues?.[name as keyof typeof defaultValues]);
+	let value = $state(defaultValues?.[name as keyof typeof defaultValues] as ValueType);
 	const error = $derived(errors()[name as keyof typeof errors]);
 
 	const fieldSchema = $derived.by(() => {
@@ -50,17 +51,22 @@
 </script>
 
 {#if formField.type === 'text-field'}
-	<InputFormField bind:value {...commonProps} {...formField} />
+	<InputFormField bind:value={value as string} {...commonProps} {...formField} />
 {:else if formField.type === 'switch'}
-	<SwitchFormField bind:checked={value} {...commonProps} {...formField} />
+	<SwitchFormField bind:checked={value as boolean} {...commonProps} {...formField} />
 {:else if formField.type === 'text-area'}
-	<TextareaFormField bind:value {...commonProps} {...formField} />
+	<TextareaFormField bind:value={value as string} {...commonProps} {...formField} />
 {:else if formField.type === 'select'}
-	<SelectFormField bind:value clearable {...commonProps} {...formField} />
+	<SelectFormField bind:value={value as string} clearable {...commonProps} {...formField} />
 {:else if formField.type === 'dual-select'}
-	<DualSelectFormField bind:value clearable {...commonProps} {...formField} />
+	<DualSelectFormField
+		bind:value={value as [string, string]}
+		clearable
+		{...commonProps}
+		{...formField}
+	/>
 {:else if formField.type === 'weapon-pool'}
-	<WeaponPoolFormField bind:value {...commonProps} {...formField} />
+	<WeaponPoolFormField bind:value={value as WeaponPool[]} {...commonProps} {...formField} />
 {:else}
 	<p>Unsupported form field type</p>
 {/if}

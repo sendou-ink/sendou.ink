@@ -32,6 +32,7 @@
 	});
 
 	function validateForm(data: FormData) {
+		// @ts-expect-error
 		const parsed = z.safeParse(schema, Object.fromEntries(data.entries()));
 		if (parsed.success) {
 			errors = {};
