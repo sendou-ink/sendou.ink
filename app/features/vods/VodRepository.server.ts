@@ -75,13 +75,7 @@ export async function findVods({
 		}
 	}
 	if (weapon) {
-		query = query.where((eb) =>
-			eb.or(
-				weaponIdToArrayWithAlts(weapon).map((weapon) => {
-					return eb("VideoMatchPlayer.weaponSplId", "=", weapon);
-				}),
-			),
-		);
+		query = query.where("VideoMatchPlayer.weaponSplId", "in", weaponIdToArrayWithAlts(weapon));
 	}
 	const result = query
 		.groupBy("Video.id")
