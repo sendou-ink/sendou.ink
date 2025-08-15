@@ -38,26 +38,27 @@
 		font-weight: 500;
 		padding-block: 5px; /** check correct value here */
 		padding-inline: var(--s-3) var(--s-9);
-	}
 
-	select:disabled {
-		cursor: not-allowed;
-		opacity: 0.5;
-		transform: initial;
+		&:focus {
+			border-color: transparent;
+			outline: 2px solid var(--color-primary);
+		}
+
+		&:disabled {
+			cursor: not-allowed;
+			opacity: 0.5;
+			transform: initial;
+		}
+
+		&::selection {
+			overflow: hidden;
+			font-weight: bold;
+		}
 	}
 
 	/* Temporary solution for issue: https://github.com/sendou-ink/sendou.ink/issues/1141 */
 	:global(html.light) select {
 		/* TODO: Get color from CSS var */
 		background-image: url('data:image/svg+xml;utf8,<svg width="1rem" color="rgb(0 0 0 / 55%)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>');
-	}
-
-	select::selection {
-		overflow: hidden;
-		font-weight: bold;
-	}
-
-	select:focus {
-		outline: 2px solid var(--theme);
 	}
 </style>

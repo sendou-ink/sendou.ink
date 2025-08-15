@@ -94,6 +94,7 @@ export function dualSelectOptional(
 		);
 	}
 
+	// xxx: type error, why?
 	return schema.register(formRegistry, {
 		...args,
 		type: 'dual-select'
