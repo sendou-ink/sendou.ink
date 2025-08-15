@@ -8,6 +8,7 @@
 	import TextareaFormField from './TextareaFormField.svelte';
 	import SelectFormField from './SelectFormField.svelte';
 	import WeaponPoolFormField from './WeaponPoolFormField.svelte';
+	import DualSelectFormField from './DualSelectFormField.svelte';
 
 	interface FormContext<T extends Record<string, any> = Record<string, any>> {
 		schema: ZodType<T>;
@@ -61,7 +62,9 @@
 {:else if formField.type === 'text-area'}
 	<TextareaFormField bind:value {...commonProps} {...formField} />
 {:else if formField.type === 'select'}
-	<SelectFormField bind:value {...commonProps} {...formField} />
+	<SelectFormField bind:value clearable {...commonProps} {...formField} />
+{:else if formField.type === 'dual-select'}
+	<DualSelectFormField bind:value clearable {...commonProps} {...formField} />
 {:else if formField.type === 'weapon-pool'}
 	<WeaponPoolFormField bind:value {...commonProps} {...formField} />
 {:else}

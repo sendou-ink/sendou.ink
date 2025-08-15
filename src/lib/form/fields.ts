@@ -48,18 +48,41 @@ export function toggle(args: Omit<Extract<FormField, { type: 'switch' }>, 'type'
 		});
 }
 
+function clearableSelectFieldSchema(items: Extract<FormField, { type: 'select' }>['items']) {
+	return z.preprocess(
+		falsyToNull,
+		z
+			.string()
+			.refine((val) => val === null || items.some((item) => item.value === val))
+			.nullable()
+	);
+}
+
+// xxx: strong typing
 export function selectOptional(args: Omit<Extract<FormField, { type: 'select' }>, 'type'>) {
+	return clearableSelectFieldSchema(args.items).register(formRegistry, {
+		...args,
+		type: 'select'
+	});
+}
+
+// xxx: strong typing
+export function dualSelectOptional(
+	args: Omit<Extract<FormField, { type: 'dual-select' }>, 'type'>
+) {
 	return z
 		.preprocess(
-			falsyToNull,
+			safeJSONParse,
 			z
-				.string()
-				.refine((val) => val === null || args.items.some((item) => item.value === val))
-				.nullable()
+				.tuple([
+					clearableSelectFieldSchema(args.fields[0].items),
+					clearableSelectFieldSchema(args.fields[1].items)
+				])
+				.optional()
 		)
 		.register(formRegistry, {
 			...args,
-			type: 'select'
+			type: 'dual-select'
 		});
 }
 

@@ -23,6 +23,7 @@
 	const id = $props.id();
 </script>
 
+<!-- xxx: handle max reached -->
 <div class="stack xs">
 	<Label for={id}>
 		{label}

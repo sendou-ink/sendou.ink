@@ -6,19 +6,11 @@
 	import { ariaAttributes } from './utils';
 
 	type Props = FormFieldProps<'text-area'> & {
-		value?: string;
+		value: string;
 		onblur?: () => void;
 	};
 
-	let {
-		label,
-		name,
-		bottomText,
-		maxLength,
-		error,
-		onblur,
-		value = $bindable('')
-	}: Props = $props();
+	let { label, name, bottomText, maxLength, error, onblur, value = $bindable() }: Props = $props();
 	const id = $props.id();
 </script>
 

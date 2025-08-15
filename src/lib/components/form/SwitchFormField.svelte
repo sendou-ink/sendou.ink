@@ -4,10 +4,10 @@
 	import BottomText from './BottomText.svelte';
 
 	type Props = Omit<FormFieldProps<'switch'>, 'type' | 'default'> & {
-		checked?: boolean;
+		checked: boolean;
 	};
 
-	let { label, name, bottomText, error, checked = $bindable(false) }: Props = $props();
+	let { label, name, bottomText, error, checked = $bindable() }: Props = $props();
 	const id = $props.id();
 </script>
 

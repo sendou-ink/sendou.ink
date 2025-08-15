@@ -48,7 +48,11 @@ export const editProfileFormData = query(
 			weapons: userProfile.weapons.map((weapon) => ({
 				weaponSplId: weapon.weaponSplId,
 				isFavorite: Boolean(weapon.isFavorite)
-			}))
+			})),
+			sens: [
+				typeof userProfile.motionSens === 'number' ? String(userProfile.motionSens) : null,
+				typeof userProfile.stickSens === 'number' ? String(userProfile.stickSens) : null
+			]
 		};
 	}
 );
