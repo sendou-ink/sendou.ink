@@ -10,7 +10,7 @@
 	interface Props {
 		open?: boolean;
 		value?: MainWeaponId;
-		onselect?: (item: MainWeaponId) => void;
+		onselect?: (item: MainWeaponId, clear: () => void) => void;
 		onblur?: VoidFunction;
 		disabledWeaponIds?: Array<MainWeaponId>;
 		id?: string;
@@ -46,7 +46,9 @@
 
 	function handleSelect(item: Item) {
 		// @ts-expect-error TODO: this could be made more typesafe by making Combobox accept a generic
-		onselect?.(item.id);
+		onselect?.(item.id, () => {
+			value = undefined;
+		});
 	}
 </script>
 
@@ -54,17 +56,13 @@
 	bind:open
 	bind:value={
 		() =>
-			value
-				? data
-						.flatMap((category) => category.items)
-						.find((item) => item.value === weaponTranslations[value]())
-				: undefined,
-		(item) => item?.id
+			value ? data.flatMap((group) => group.items).find((item) => item.id === value) : undefined,
+		(item) => (value = item?.id)
 	}
 	{id}
 	{data}
-	onselect={handleSelect}
 	{onblur}
+	onselect={handleSelect}
 	buttonPlaceholder={m.common_forms_weaponSearch_placeholder()}
 	searchPlaceholder={m.common_forms_weaponSearch_search_placeholder()}
 />

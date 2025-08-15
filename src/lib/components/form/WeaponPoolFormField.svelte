@@ -34,19 +34,18 @@
 		{id}
 		{onblur}
 		disabledWeaponIds={value.map((weapon) => weapon.weaponSplId)}
-		onselect={(weaponSplId) => {
+		onselect={(weaponSplId, clear) => {
 			value.push({
 				weaponSplId,
 				isFavorite: false
 			});
-
-			// xxx: also clear the current input selected value (can we do it without key block?)
+			clear();
 		}}
 	/>
 	<input type="hidden" {name} value={JSON.stringify(value ?? [])} />
 
 	<ol>
-		{#each value as weapon (weapon.weaponSplId)}
+		{#each value as weapon}
 			{@render weaponRow(weapon)}
 		{/each}
 	</ol>

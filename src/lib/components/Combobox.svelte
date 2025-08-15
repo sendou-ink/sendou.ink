@@ -43,14 +43,12 @@
 	}: Props = $props();
 
 	let trigger = $state<HTMLButtonElement>()!;
-	let selectedValue = $state(''); // xxx: these need to be also set for the default value
-	let selectedImage = $state('');
+	let selectedValue = $derived(value?.label);
+	let selectedImage = $derived(value?.image);
 
 	function onSelect(item: Item) {
 		open = false;
 		value = item;
-		selectedValue = item.value;
-		selectedImage = item.image || '';
 
 		onselect?.(item);
 
