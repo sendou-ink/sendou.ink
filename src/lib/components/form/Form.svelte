@@ -1,17 +1,17 @@
-<script lang="ts" generics="T extends z4.$ZodType<object>">
+<script lang="ts" generics="T extends z.ZodType<object>">
 	import type { RemoteForm } from '@sveltejs/kit';
 	import type { Snippet } from 'svelte';
 	import { setContext, tick } from 'svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { zodErrorsToFormErrors } from '$lib/utils/zod';
-	import * as z4 from 'zod/v4/core';
 	import z from 'zod';
 	import Button from '../buttons/Button.svelte';
+	import { formContext } from './context';
 
-	type Output = z4.output<T>;
+	type Output = z.output<T>;
 
 	interface Props {
-		children: Snippet;
+		children: Snippet<[T]>; // Pass schema type to children
 		heading?: string;
 		action: RemoteForm<void | { errors: Partial<Record<keyof Output, string>> }>;
 		schema: T;
@@ -50,7 +50,12 @@
 		invalidElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 	}
 
-	setContext('form', { schema, defaultValues, errors: () => errors, onblur: handleBlur });
+	formContext.set({
+		schema,
+		defaultValues,
+		errors: () => errors,
+		onblur: handleBlur
+	});
 </script>
 
 <form {id} bind:this={form} {...action} class="stack md-plus items-start">
@@ -58,7 +63,7 @@
 		<h1 class="text-lg">{heading}</h1>
 	{/if}
 
-	{@render children()}
+	{@render children(schema)}
 
 	<div class="stack horizontal lg justify-between mt-6 w-full">
 		<Button type="submit" loading={action.pending > 0} disabled={Object.keys(errors).length > 0}>
