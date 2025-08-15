@@ -75,15 +75,19 @@ export async function findVods({
 		}
 	}
 	if (weapon) {
-		query = query.where("VideoMatchPlayer.weaponSplId", "in", weaponIdToArrayWithAlts(weapon));
+		query = query.where(
+			"VideoMatchPlayer.weaponSplId",
+			"in",
+			weaponIdToArrayWithAlts(weapon),
+		);
 	}
-	const result = query
+	const result = await query
 		.groupBy("Video.id")
 		.orderBy("Video.youtubeDate", "desc")
 		.limit(limit)
 		.execute();
 
-	const vods = (await result).map((value) => {
+	const vods = result.map((value) => {
 		const { playerNames, players, ...vod } = value;
 		const playerNamesArray: string[] = playerNames as string[];
 		const playersArray: Tables["User"][] = players as Tables["User"][];

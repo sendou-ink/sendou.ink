@@ -19,7 +19,9 @@ export const action: ActionFunction = async ({ request }) => {
 
 	let video: Tables["Video"];
 	if (data.vodToEditId) {
-		const vod = notFoundIfFalsy(await VodRepository.findVodById(data.vodToEditId));
+		const vod = notFoundIfFalsy(
+			await VodRepository.findVodById(data.vodToEditId),
+		);
 
 		if (
 			!canEditVideo({
