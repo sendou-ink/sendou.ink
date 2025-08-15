@@ -32,6 +32,13 @@
 	});
 
 	function validateForm(data: FormData) {
+		/*
+		xxx: temporary fix because having remote functions in any parent at any level
+			 will cause onMount to not run, leaving form undefined until it has been interacted with
+			 remove when this is fixed
+		*/
+		if (!form) return false;
+
 		// @ts-expect-error
 		const parsed = z.safeParse(schema, Object.fromEntries(data.entries()));
 		if (parsed.success) {
