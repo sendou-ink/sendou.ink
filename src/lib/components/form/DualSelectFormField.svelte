@@ -5,7 +5,6 @@
 
 	type Props = FormFieldProps<'dual-select'> & {
 		value: [string | null, string | null];
-		onblur?: () => void;
 		clearable?: boolean;
 	};
 

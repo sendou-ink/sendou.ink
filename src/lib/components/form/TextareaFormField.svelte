@@ -7,7 +7,6 @@
 
 	type Props = FormFieldProps<'text-area'> & {
 		value: string;
-		onblur?: () => void;
 	};
 
 	let { label, name, bottomText, maxLength, error, onblur, value = $bindable() }: Props = $props();

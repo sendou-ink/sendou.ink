@@ -7,7 +7,6 @@
 
 	type Props = FormFieldProps<'text-field'> & {
 		value: string;
-		onblur?: () => void;
 	};
 
 	let {

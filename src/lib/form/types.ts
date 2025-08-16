@@ -32,6 +32,7 @@ interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {
 }
 
 export type FormField =
+	| FormFieldBase<'custom'>
 	| FormFieldText<'text-field'>
 	| FormFieldText<'text-area'>
 	| FormFieldBase<'switch'>
@@ -45,4 +46,5 @@ export type FormFieldProps<T extends FormField['type']> = Omit<
 > & {
 	name: string;
 	error?: string;
+	onblur: () => void;
 };

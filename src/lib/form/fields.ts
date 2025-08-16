@@ -4,6 +4,17 @@ import type { FormField } from './types';
 
 export const formRegistry = z.registry<FormField>();
 
+/** Field for custom JSON data, the form field element must be provided to the `<Form />` */
+export function customJsonFieldOptional<T extends z.ZodType>(
+	args: Omit<Extract<FormField, { type: 'custom' }>, 'type'>,
+	schema: T
+) {
+	return z.preprocess(safeJSONParse, schema.optional()).register(formRegistry, {
+		...args,
+		type: 'custom'
+	});
+}
+
 export function textFieldOptional(args: Omit<Extract<FormField, { type: 'text-field' }>, 'type'>) {
 	let schema = safeNullableStringSchema({ max: args.maxLength });
 

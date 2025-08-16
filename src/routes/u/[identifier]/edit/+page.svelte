@@ -4,6 +4,7 @@
 	import Form from '$lib/components/form/Form.svelte';
 	import FormField from '$lib/components/form/FormField.svelte';
 	import { createFieldValidator } from '$lib/components/form/utils.js';
+	import FavoriteBadgeField from './FavoriteBadgeField.svelte';
 
 	let { params } = $props();
 
@@ -25,6 +26,11 @@
 	<FormField name={validField('sens')} />
 	<FormField name={validField('battlefy')} />
 	<FormField name={validField('country')} />
+	<FormField name={validField('favoriteBadges')}>
+		{#snippet children(props)}
+			<FavoriteBadgeField {...props} />
+		{/snippet}
+	</FormField>
 	<FormField name={validField('weapons')} />
 	<FormField name={validField('bio')} />
 	<FormField name={validField('hideDiscordUniqueName')} />

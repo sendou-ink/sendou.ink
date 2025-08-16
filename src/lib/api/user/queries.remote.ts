@@ -5,6 +5,7 @@ import { notFoundIfFalsy } from '$lib/server/remote-functions';
 import { identifier, type EditProfileSchemaData } from './schemas';
 import { error, redirect } from '@sveltejs/kit';
 import { resolve } from '$app/paths';
+import invariant from '$lib/utils/invariant';
 
 export const layoutDataByIdentifier = query(identifier, async (identifier) => {
 	const loggedInUser = await getUser();
@@ -52,7 +53,17 @@ export const editProfileFormData = query(
 			sens: [
 				typeof userProfile.motionSens === 'number' ? String(userProfile.motionSens) : null,
 				typeof userProfile.stickSens === 'number' ? String(userProfile.stickSens) : null
-			]
+			],
+			favoriteBadges: userProfile.favoriteBadgeIds ?? undefined
 		};
 	}
 );
+
+export const allBadgesByMe = query(async () => {
+	const loggedInUser = await requireUser();
+	const profile = await UserRepository.findProfileByIdentifier(String(loggedInUser.id));
+
+	invariant(profile);
+
+	return profile.badges;
+});

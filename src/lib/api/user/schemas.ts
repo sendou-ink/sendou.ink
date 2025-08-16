@@ -82,6 +82,15 @@ export const editProfileSchema = z.object({
 			value: countryCode
 		}))
 	}),
+	favoriteBadges: Fields.customJsonFieldOptional(
+		{
+			label: m.user_favoriteBadges()
+		},
+		z
+			.array(id)
+			.min(1)
+			.max(SMALL_BADGES_PER_DISPLAY_PAGE + 1)
+	),
 	weapons: Fields.weaponPool({
 		label: m.user_weaponPool(),
 		maxCount: 5

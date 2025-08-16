@@ -2,7 +2,7 @@
 	import type { ZodObject, ZodRawShape } from 'zod';
 	import type { FormField } from '$lib/form/types';
 	import { formRegistry } from '$lib/form/fields';
-	import { formContext } from './context';
+	import { formContext, type FormContextValue } from './context';
 	import z from 'zod';
 	import WeaponPoolFormField, { type WeaponPool } from './WeaponPoolFormField.svelte';
 	import InputFormField from './InputFormField.svelte';
@@ -10,15 +10,26 @@
 	import TextareaFormField from './TextareaFormField.svelte';
 	import SelectFormField from './SelectFormField.svelte';
 	import DualSelectFormField from './DualSelectFormField.svelte';
+	import type { Snippet } from 'svelte';
 
 	type Output = z.output<T>;
 	type ValueType = Output[keyof Output];
 
 	interface Props {
 		name: string;
+		children?: Snippet<
+			[
+				{
+					label: string;
+					onblur: FormContextValue['onblur'];
+					error: never;
+					name: string;
+				}
+			]
+		>;
 	}
 
-	let { name }: Props = $props();
+	let { name, children }: Props = $props();
 
 	const { schema, defaultValues, errors, onblur } = formContext.get();
 
@@ -47,7 +58,7 @@
 		return field;
 	})();
 
-	const commonProps = $derived({ name, error, onblur });
+	const commonProps = $derived({ name, error, onblur }); // xxx: error is of type never
 </script>
 
 {#if formField.type === 'text-field'}
@@ -67,6 +78,8 @@
 	/>
 {:else if formField.type === 'weapon-pool'}
 	<WeaponPoolFormField bind:value={value as WeaponPool[]} {...commonProps} {...formField} />
+{:else if formField.type === 'custom'}
+	{@render children?.({ ...commonProps, ...formField })}
 {:else}
 	<p>Unsupported form field type</p>
 {/if}

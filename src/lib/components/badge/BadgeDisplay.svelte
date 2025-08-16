@@ -9,20 +9,26 @@
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import { SMALL_BADGES_PER_DISPLAY_PAGE } from '$lib/api/user/schemas';
 
-	interface Props {
+	export interface BadgeDisplayProps {
 		badges: Array<Omit<Tables['Badge'], 'authorId'> & { count?: number }>;
-		onChange?: (badgeIds: number[]) => void;
+		onchange?: (badgeIds: number[]) => void;
 		children?: import('svelte').Snippet;
 		showText?: boolean;
 		class?: string;
 	}
 
-	let { badges, onChange, children, showText = true, class: className }: Props = $props();
+	let {
+		badges,
+		onchange,
+		children,
+		showText = true,
+		class: className
+	}: BadgeDisplayProps = $props();
 
 	const bigBadge = $derived(badges[0]);
 	const smallBadges = $derived(badges.slice(1));
 
-	const isPaginated = $derived(!onChange);
+	const isPaginated = $derived(!onchange);
 	const pagination = $derived(
 		new Pagination(() => smallBadges, {
 			pageSize: isPaginated ? SMALL_BADGES_PER_DISPLAY_PAGE : 1000,
@@ -30,7 +36,7 @@
 		})
 	);
 
-	function setBadgeFirst(badge: Unpacked<Props['badges']>) {
+	function setBadgeFirst(badge: Unpacked<BadgeDisplayProps['badges']>) {
 		const newBadges = badges.map((b, i) => {
 			if (i === 0) return badge;
 			if (b.id === badge.id) return badges[0];
@@ -38,12 +44,12 @@
 		});
 
 		badges = newBadges;
-		onChange?.(newBadges.map((b) => b.id));
+		onchange?.(newBadges.map((b) => b.id));
 	}
 
 	function removeBadge() {
-		if (!bigBadge || !onChange) return;
-		onChange(badges.filter((b) => b.id !== bigBadge.id).map((b) => b.id));
+		if (!bigBadge || !onchange) return;
+		onchange(badges.filter((b) => b.id !== bigBadge.id).map((b) => b.id));
 	}
 </script>
 

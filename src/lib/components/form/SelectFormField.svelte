@@ -8,7 +8,6 @@
 
 	type Props = Omit<FormFieldProps<'select'>, 'name'> & {
 		value: string | null;
-		onblur?: () => void;
 		clearable?: boolean;
 		id?: string;
 		name?: string;
