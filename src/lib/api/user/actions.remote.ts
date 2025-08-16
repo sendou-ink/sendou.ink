@@ -6,7 +6,6 @@ import { err, ok } from 'neverthrow';
 import { m } from '$lib/paraglide/messages';
 import { logger } from '$lib/utils/logger';
 import { redirect } from '@sveltejs/kit';
-import { resolve } from '$app/paths';
 import { userPage } from '$lib/utils/urls';
 import * as TournamentTeamRepository from '$lib/server/db/repositories/tournament-team';
 
@@ -44,7 +43,7 @@ export const updateProfile = validatedForm(editProfileSchema, async (data) => {
 		}
 	}
 
-	redirect(303, resolve('/u/[identifier]', { identifier: userPage(editedUser) }));
+	redirect(303, userPage(editedUser));
 });
 
 async function validateCustomUrl(newCustomUrl: string | null, loggedInUserId: number) {

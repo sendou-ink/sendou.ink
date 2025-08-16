@@ -1,9 +1,11 @@
 import {
 	OperationNodeTransformer,
+	PrimitiveValueListNode,
 	ValueNode,
 	type KyselyPlugin,
 	type PluginTransformQueryArgs,
 	type PluginTransformResultArgs,
+	type QueryId,
 	type QueryResult,
 	type RootOperationNode,
 	type UnknownRow
@@ -45,7 +47,6 @@ class SqliteDateTransformer extends OperationNodeTransformer {
 }
 
 // credits https://github.com/kysely-org/kysely/issues/123#issuecomment-1194184342
-// xxx: not working yet, why?
 export class SqliteBooleanPlugin implements KyselyPlugin {
 	readonly #transformer = new SqliteBooleanTransformer();
 
@@ -58,12 +59,28 @@ export class SqliteBooleanPlugin implements KyselyPlugin {
 	}
 }
 
+function maybeBooleanToNumber(value: unknown): unknown {
+	if (typeof value === 'boolean') {
+		return value ? 1 : 0;
+	}
+	return value;
+}
+
 class SqliteBooleanTransformer extends OperationNodeTransformer {
 	transformValue(node: ValueNode): ValueNode {
-		console.log({ node });
 		return {
 			...super.transformValue(node),
-			value: typeof node.value === 'boolean' ? (node.value ? 1 : 0) : node.value
+			value: maybeBooleanToNumber(node.value)
+		};
+	}
+
+	protected transformPrimitiveValueList(
+		node: PrimitiveValueListNode,
+		_queryId?: QueryId
+	): PrimitiveValueListNode {
+		return {
+			...node,
+			values: node.values.map((value) => maybeBooleanToNumber(value))
 		};
 	}
 }
