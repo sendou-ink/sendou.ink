@@ -167,6 +167,18 @@
 		"displayName": "Chao Garden",
 		"authorDiscordId": "528851510222782474"
 	},
+	"chaodark": {
+		"displayName": "Chao Garden: Dark Edition",
+		"authorDiscordId": "528851510222782474"
+	},
+	"chaohero": {
+		"displayName": "Chao Garden: Hero Edition",
+		"authorDiscordId": "528851510222782474"
+	},
+	"chaorobot": {
+		"displayName": "Chao Race",
+		"authorDiscordId": "528851510222782474"
+	},
 	"chara_special": {
 		"displayName": "A Special Tournament",
 		"authorDiscordId": "1081428018666422313"
@@ -726,6 +738,14 @@
 	"reccent": {
 		"displayName": "The REC Center",
 		"authorDiscordId": "1320944066002681876"
+	},
+	"reshiram": {
+		"displayName": "Fusion Flare",
+		"authorDiscordId": "336683473714544641"
+	},
+	"reshiramshiny": {
+		"displayName": "Fusion Flare (Shiny Edition)",
+		"authorDiscordId": "336683473714544641"
 	},
 	"revocup": {
 		"displayName": "Revo'Cup",

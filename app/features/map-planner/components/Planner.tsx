@@ -434,7 +434,7 @@ function WeaponImageSelector({
 	);
 }
 
-const LAST_STAGE_ID_WITH_IMAGES = 23;
+const LAST_STAGE_ID_WITH_IMAGES = 24;
 function StageBackgroundSelector({
 	onAddBackground,
 }: {
