@@ -15,8 +15,7 @@ export const updateProfile = validatedForm(editProfileSchema, async (data) => {
 	if (customUrlValidationResult.isErr()) {
 		return {
 			errors: {
-				// xxx: translate, getLocaleFromCookie??
-				customUrl: m.user_forms_errors_invalidCustomUrl_duplicate()
+				customUrl: m.user_forms_errors_invalidCustomUrl_duplicate
 			}
 		};
 	}

@@ -1,4 +1,5 @@
-import { form } from '$app/server';
+import { form, getRequestEvent } from '$app/server';
+import { extractLocaleFromRequest } from '$lib/paraglide/runtime';
 import { zodErrorsToFormErrors } from '$lib/utils/zod';
 import { error } from '@sveltejs/kit';
 import z from 'zod';
@@ -10,13 +11,20 @@ export function notFoundIfFalsy<T>(value: T | null | undefined): T {
 	return value;
 }
 
+type ParaglideFunction = (
+	inputs?: any,
+	options?: {
+		locale?: 'en' | undefined;
+	}
+) => string;
+
 export function validatedForm<T extends z4.$ZodType>(
 	schema: T,
-	callback: (
-		data: z.infer<T>
-	) => Promise<void | { errors: Partial<Record<keyof z.infer<T>, string>> }>
+	callback: (data: z.infer<T>) => Promise<void | {
+		errors: Partial<Record<keyof z.infer<T>, ParaglideFunction>>;
+	}>
 ) {
-	return form((formData) => {
+	return form(async (formData) => {
 		const formDataObj = formDataToObject(formData);
 		const parsed = z.safeParse(schema, formDataObj);
 
@@ -26,7 +34,23 @@ export function validatedForm<T extends z4.$ZodType>(
 			};
 		}
 
-		return callback(parsed.data);
+		const result = await callback(parsed.data);
+		if (!result) return;
+
+		// translate errors
+
+		const request = getRequestEvent().request;
+
+		return {
+			errors: Object.fromEntries(
+				Object.entries(result.errors).map(([key, i18nFn]) => {
+					return [
+						key,
+						(i18nFn as ParaglideFunction)(undefined, { locale: extractLocaleFromRequest(request) })
+					];
+				})
+			)
+		};
 	});
 }
 
