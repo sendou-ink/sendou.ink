@@ -23,6 +23,9 @@ const profileSensItems = [
 }));
 
 export const editProfileSchema = z.object({
+	theme: Fields.themeOptional({
+		label: m.common_custom_colors_title()
+	}),
 	customName: Fields.textFieldOptional({
 		label: m.user_customName(),
 		bottomText: m.user_forms_customName_info(),

@@ -5,6 +5,10 @@ import * as UserRepository from '$lib/server/db/repositories/user';
 import { err, ok } from 'neverthrow';
 import { m } from '$lib/paraglide/messages';
 import { logger } from '$lib/utils/logger';
+import { redirect } from '@sveltejs/kit';
+import { resolve } from '$app/paths';
+import { userPage } from '$lib/utils/urls';
+import * as TournamentTeamRepository from '$lib/server/db/repositories/tournament-team';
 
 export const updateProfile = validatedForm(editProfileSchema, async (data) => {
 	const user = await requireUser();
@@ -20,43 +24,27 @@ export const updateProfile = validatedForm(editProfileSchema, async (data) => {
 		};
 	}
 
-	logger.info(data);
+	const editedUser = await UserRepository.updateProfile({
+		...data,
+		userId: user.id
+	});
 
-	// const inGameName =
-	// 	inGameNameText && inGameNameDiscriminator
-	// 		? `${inGameNameText}#${inGameNameDiscriminator}`
-	// 		: null;
+	// TODO: to transaction
+	if (data.inGameName) {
+		const tournamentIdsAffected =
+			await TournamentTeamRepository.updateMemberInGameNameForNonStarted({
+				inGameName: data.inGameName,
+				userId: user.id
+			});
 
-	// try {
-	// 	const editedUser = await UserRepository.updateProfile({
-	// 		...data,
-	// 		inGameName,
-	// 		userId: user.id
-	// 	});
+		for (const tournamentId of tournamentIdsAffected) {
+			logger.warn('TODO: clear tournament cache', tournamentId);
+			// xxx: add clearing tournament cache
+			// clearTournamentDataCache(tournamentId);
+		}
+	}
 
-	// 	// TODO: to transaction
-	// 	if (inGameName) {
-	// 		const tournamentIdsAffected =
-	// 			await TournamentTeamRepository.updateMemberInGameNameForNonStarted({
-	// 				inGameName,
-	// 				userId: user.id
-	// 			});
-
-	// 		for (const tournamentId of tournamentIdsAffected) {
-	// 			clearTournamentDataCache(tournamentId);
-	// 		}
-	// 	}
-
-	// 	throw redirect(userPage(editedUser));
-	// } catch (e) {
-	// 	if (!errorIsSqliteUniqueConstraintFailure(e)) {
-	// 		throw e;
-	// 	}
-
-	// 	return {
-	// 		errors: ['forms.errors.invalidCustomUrl.duplicate']
-	// 	};
-	// }
+	redirect(303, resolve('/u/[identifier]', { identifier: userPage(editedUser) }));
 });
 
 async function validateCustomUrl(newCustomUrl: string | null, loggedInUserId: number) {

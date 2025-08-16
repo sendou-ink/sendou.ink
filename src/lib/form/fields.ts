@@ -130,3 +130,13 @@ export function weaponPool(args: Omit<Extract<FormField, { type: 'weapon-pool' }
 			type: 'weapon-pool'
 		});
 }
+
+export function themeOptional(args: Omit<Extract<FormField, { type: 'theme' }>, 'type'>) {
+	return z
+		.unknown() // xxx: CustomizedColors
+		.optional()
+		.register(formRegistry, {
+			...args,
+			type: 'theme'
+		});
+}

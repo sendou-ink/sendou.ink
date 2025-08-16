@@ -315,7 +315,7 @@ export function deleteById(id: number) {
 	return db.deleteFrom('Build').where('id', '=', id).returning('ownerId').executeTakeFirstOrThrow();
 }
 
-export function updateVisibilityById(args: { id: number; private: number }) {
+export function updateVisibilityById(args: { id: number; private: boolean }) {
 	return db
 		.updateTable('Build')
 		.set({

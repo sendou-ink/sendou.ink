@@ -830,7 +830,7 @@ export function updateResultHighlights(args: UpdateResultHighlightsArgs) {
 		await trx
 			.updateTable('TournamentResult')
 			.set({
-				isHighlight: 0
+				isHighlight: false
 			})
 			.where('TournamentResult.userId', '=', args.userId)
 			.execute();
@@ -839,7 +839,7 @@ export function updateResultHighlights(args: UpdateResultHighlightsArgs) {
 			await trx
 				.updateTable('TournamentResult')
 				.set({
-					isHighlight: 1
+					isHighlight: true
 				})
 				.where('TournamentResult.userId', '=', args.userId)
 				.where('TournamentResult.tournamentTeamId', 'in', args.resultTournamentTeamIds)

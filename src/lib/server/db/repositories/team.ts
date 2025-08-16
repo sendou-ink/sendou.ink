@@ -216,9 +216,9 @@ export async function create(
 			.insertInto('AllTeamMember')
 			.values({
 				userId: args.ownerUserId,
+				isMainTeam: args.isMainTeam,
 				teamId: team.id,
-				isOwner: 1,
-				isMainTeam: Number(args.isMainTeam)
+				isOwner: true
 			})
 			.execute();
 	});
@@ -258,7 +258,7 @@ export function switchMainTeam({ userId, teamId }: { userId: number; teamId: num
 		await trx
 			.updateTable('AllTeamMember')
 			.set({
-				isMainTeam: 0
+				isMainTeam: false
 			})
 			.where('userId', '=', userId)
 			.execute();
@@ -266,7 +266,7 @@ export function switchMainTeam({ userId, teamId }: { userId: number; teamId: num
 		await trx
 			.updateTable('AllTeamMember')
 			.set({
-				isMainTeam: 1
+				isMainTeam: true
 			})
 			.where('userId', '=', userId)
 			.where('teamId', '=', teamId)
@@ -293,7 +293,7 @@ export function del(teamId: number) {
 			await trx
 				.updateTable('AllTeamMember')
 				.set({
-					isMainTeam: 1
+					isMainTeam: true
 				})
 				.where('userId', '=', member.userId)
 				.where('teamId', '=', teamToSwitchTo.id)
@@ -303,7 +303,7 @@ export function del(teamId: number) {
 		await trx
 			.updateTable('AllTeamMember')
 			.set({
-				isMainTeam: 0
+				isMainTeam: false
 			})
 			.where('AllTeamMember.teamId', '=', teamId)
 			.execute();
@@ -371,7 +371,7 @@ export function addNewTeamMember({
 			throw new Error('Trying to exceed allowed team count');
 		}
 
-		const isMainTeam = Number(teamCount === 0);
+		const isMainTeam = teamCount === 0;
 
 		await trx
 			.insertInto('AllTeamMember')
@@ -411,7 +411,7 @@ export function handleMemberLeaving({
 			await trx
 				.updateTable('AllTeamMember')
 				.set({
-					isMainTeam: 1
+					isMainTeam: true
 				})
 				.where('userId', '=', userId)
 				.where('teamId', '=', newMainTeam.id)
@@ -422,9 +422,9 @@ export function handleMemberLeaving({
 			.updateTable('AllTeamMember')
 			.set({
 				leftAt: new Date(),
-				isMainTeam: 0,
-				isOwner: 0,
-				isManager: 0
+				isMainTeam: false,
+				isOwner: false,
+				isManager: false
 			})
 			.where('userId', '=', userId)
 			.where('teamId', '=', teamId)
@@ -433,8 +433,8 @@ export function handleMemberLeaving({
 			await trx
 				.updateTable('AllTeamMember')
 				.set({
-					isOwner: 1,
-					isManager: 0
+					isOwner: true,
+					isManager: false
 				})
 				.where('userId', '=', newOwnerUserId)
 				.where('teamId', '=', teamId)

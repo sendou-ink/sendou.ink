@@ -20,17 +20,20 @@
 	defaultValues={await UserAPI.queries.editProfileFormData(params.identifier)}
 	heading="Editing user profile"
 >
+	{#if loggedInUser?.roles.includes('SUPPORTER')}
+		<FormField name={validField('theme')} />
+	{/if}
 	<FormField name={validField('customName')} />
 	<FormField name={validField('customUrl')} />
 	<FormField name={validField('inGameName')} />
 	<FormField name={validField('sens')} />
 	<FormField name={validField('battlefy')} />
 	<FormField name={validField('country')} />
-	<FormField name={validField('favoriteBadges')}>
+	<!-- <FormField name={validField('favoriteBadges')}>
 		{#snippet children(props)}
 			<FavoriteBadgeField {...props} />
 		{/snippet}
-	</FormField>
+	</FormField> -->
 	<FormField name={validField('weapons')} />
 	<FormField name={validField('bio')} />
 	<FormField name={validField('hideDiscordUniqueName')} />

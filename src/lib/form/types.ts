@@ -38,7 +38,8 @@ export type FormField =
 	| FormFieldBase<'switch'>
 	| FormFieldSelect<'select'>
 	| FormFieldDualSelect<'dual-select'>
-	| FormFieldWeaponPool<'weapon-pool'>;
+	| FormFieldWeaponPool<'weapon-pool'>
+	| FormFieldBase<'theme'>;
 
 export type FormFieldProps<T extends FormField['type']> = Omit<
 	Extract<FormField, { type: T }>,
