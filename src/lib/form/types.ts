@@ -5,13 +5,19 @@ interface FormFieldBase<T extends string> {
 }
 
 interface FormFieldText<T extends string> extends FormFieldBase<T> {
+	minLength?: number;
 	maxLength: number;
 	toLowerCase?: boolean;
 	leftAddon?: string;
+	required: boolean;
 	regExp?: {
 		pattern: RegExp;
 		message: string;
 	};
+}
+
+interface FormFieldTextarea<T extends string> extends FormFieldBase<T> {
+	maxLength: number;
 }
 
 interface FormFieldSelect<T extends string> extends FormFieldBase<T> {
@@ -34,7 +40,7 @@ interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {
 export type FormField =
 	| FormFieldBase<'custom'>
 	| FormFieldText<'text-field'>
-	| FormFieldText<'text-area'>
+	| FormFieldTextarea<'text-area'>
 	| FormFieldBase<'switch'>
 	| FormFieldSelect<'select'>
 	| FormFieldDualSelect<'dual-select'>

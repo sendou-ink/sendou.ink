@@ -1,4 +1,3 @@
-import { requireUser } from '$lib/server/auth/session';
 import { validatedForm } from '$lib/server/remote-functions';
 import { editProfileSchema } from './schemas';
 import * as UserRepository from '$lib/server/db/repositories/user';
@@ -9,10 +8,8 @@ import { redirect } from '@sveltejs/kit';
 import { userPage } from '$lib/utils/urls';
 import * as TournamentTeamRepository from '$lib/server/db/repositories/tournament-team';
 
-export const updateProfile = validatedForm(editProfileSchema, async (data) => {
-	const user = await requireUser();
-
-	await new Promise((resolve) => setTimeout(resolve, 1500));
+export const updateProfile = validatedForm(editProfileSchema, async (data, user) => {
+	await new Promise((resolve) => setTimeout(resolve, 1500)); // xxx: remove
 
 	const customUrlValidationResult = await validateCustomUrl(data.customUrl, user.id);
 	if (customUrlValidationResult.isErr()) {

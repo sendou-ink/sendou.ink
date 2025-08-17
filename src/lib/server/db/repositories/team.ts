@@ -198,7 +198,6 @@ export async function teamsByMemberUserId(userId: number, trx?: Transaction<DB>)
 export async function create(
 	args: Pick<Insertable<Tables['Team']>, 'name' | 'customUrl'> & {
 		ownerUserId: number;
-		isMainTeam: boolean;
 	}
 ) {
 	return db.transaction().execute(async (trx) => {
@@ -216,7 +215,7 @@ export async function create(
 			.insertInto('AllTeamMember')
 			.values({
 				userId: args.ownerUserId,
-				isMainTeam: args.isMainTeam,
+				isMainTeam: true, // xxx: make into subquery
 				teamId: team.id,
 				isOwner: true
 			})

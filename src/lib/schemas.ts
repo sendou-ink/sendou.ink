@@ -6,6 +6,7 @@ import { SHORT_NANOID_LENGTH } from '$lib/utils/id';
 import { mainWeaponIds } from '$lib/constants/in-game/weapon-ids';
 import { stageIds } from '$lib/constants/in-game/stage-ids';
 import { CUSTOM_CSS_VAR_COLORS, FRIEND_CODE_REGEXP } from '$lib/constants/common';
+import { m } from './paraglide/messages';
 
 export const id = z.coerce.number({ message: 'Required' }).int().positive();
 export const idObject = z.object({
@@ -133,7 +134,7 @@ export function safeStringSchema({ min, max }: { min?: number; max: number }) {
 	return z.preprocess(
 		actuallyNonEmptyStringOrNull, // if this returns null, none of the checks below will run because it's not a string
 		z
-			.string()
+			.string({ error: m.common_forms_errors_required() })
 			.min(min ?? 0)
 			.max(max)
 			.refine((text) => !hasZalgo(text), {

@@ -21,7 +21,6 @@
 	let { children, heading, action, schema, defaultValues }: Props = $props();
 	const id = $props.id();
 
-	let form: HTMLFormElement;
 	let errors = $state<Partial<Record<keyof Output, string>>>({});
 
 	formContext.set({
@@ -32,14 +31,10 @@
 	});
 
 	function validateForm() {
-		/*
-		xxx: temporary fix because having remote functions in any parent at any level
-			 will cause onMount to not run, leaving form undefined until it has been interacted with
-			 remove when this is fixed
-		*/
-		if (!form) return false;
+		// TODO: at the time of the writing form with reference did not play together nicely remote functions, convert to ref later
+		const form = document.getElementById(id) as HTMLFormElement;
 
-		tick().then(() => {
+		return tick().then(() => {
 			const data = new FormData(form);
 			// @ts-expect-error
 			const parsed = z.safeParse(schema, Object.fromEntries(data.entries()));
@@ -54,6 +49,8 @@
 	}
 
 	function focusFirstInvalid() {
+		const form = document.getElementById(id) as HTMLFormElement;
+
 		tick().then(() => {
 			const invalidElement = form.querySelector('[aria-invalid="true"]') as HTMLInputElement;
 
@@ -74,7 +71,7 @@
 	}
 </script>
 
-<form {id} bind:this={form} {...action.enhance(enhanced)} class="stack md-plus items-start">
+<form {id} {...action.enhance(enhanced)} class="stack md-plus items-start">
 	{#if heading}
 		<h1 class="text-lg">{heading}</h1>
 	{/if}

@@ -1,4 +1,10 @@
-import { falsyToNull, safeJSONParse, safeNullableStringSchema, weaponSplId } from '$lib/schemas';
+import {
+	falsyToNull,
+	safeJSONParse,
+	safeNullableStringSchema,
+	safeStringSchema,
+	weaponSplId
+} from '$lib/schemas';
 import z from 'zod';
 import type { FormField } from './types';
 
@@ -15,9 +21,34 @@ export function customJsonFieldOptional<T extends z.ZodType>(
 	});
 }
 
-export function textFieldOptional(args: Omit<Extract<FormField, { type: 'text-field' }>, 'type'>) {
-	let schema = safeNullableStringSchema({ max: args.maxLength });
+export function textFieldOptional(
+	args: Omit<Extract<FormField, { type: 'text-field' }>, 'type' | 'required'>
+) {
+	const schema = safeNullableStringSchema({ min: args.minLength, max: args.maxLength });
 
+	return textFieldRefined(schema, args).register(formRegistry, {
+		...args,
+		required: false,
+		type: 'text-field'
+	});
+}
+
+export function textFieldRequired(
+	args: Omit<Extract<FormField, { type: 'text-field' }>, 'type' | 'required'>
+) {
+	const schema = safeStringSchema({ min: args.minLength, max: args.maxLength });
+
+	return textFieldRefined(schema, args).register(formRegistry, {
+		...args,
+		required: true,
+		type: 'text-field'
+	});
+}
+
+function textFieldRefined<T extends z.ZodType<string | null>>(
+	schema: T,
+	args: Omit<Extract<FormField, { type: 'text-field' }>, 'type' | 'required'>
+) {
 	if (args.regExp) {
 		schema = schema.refine(
 			(val) => {
@@ -35,10 +66,7 @@ export function textFieldOptional(args: Omit<Extract<FormField, { type: 'text-fi
 		schema = schema.transform((val) => val?.toLowerCase() ?? null) as unknown as typeof schema;
 	}
 
-	return schema.register(formRegistry, {
-		...args,
-		type: 'text-field'
-	});
+	return schema;
 }
 
 export function textAreaOptional(args: Omit<Extract<FormField, { type: 'text-area' }>, 'type'>) {
@@ -105,7 +133,7 @@ export function dualSelectOptional(
 		);
 	}
 
-	// xxx: type error, why?
+	// @ts-expect-error TODO: not sure why TS doesn't like this
 	return schema.register(formRegistry, {
 		...args,
 		type: 'dual-select'

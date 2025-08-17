@@ -32,6 +32,7 @@
 		font-size: var(--fonts-sm);
 		outline: none;
 		font-weight: var(--body);
+		min-width: var(--field-width-medium);
 		max-width: var(--field-width-medium);
 
 		&:focus-within {

@@ -4,6 +4,7 @@ import { zodErrorsToFormErrors } from '$lib/utils/zod';
 import { error } from '@sveltejs/kit';
 import z from 'zod';
 import * as z4 from 'zod/v4/core';
+import { requireUser, type AuthenticatedUser } from './auth/session';
 
 export function notFoundIfFalsy<T>(value: T | null | undefined): T {
 	if (!value) error(404);
@@ -20,7 +21,10 @@ type ParaglideFunction = (
 
 export function validatedForm<T extends z4.$ZodType>(
 	schema: T,
-	callback: (data: z.infer<T>) => Promise<void | {
+	callback: (
+		data: z.infer<T>,
+		user: AuthenticatedUser
+	) => Promise<void | {
 		errors: Partial<Record<keyof z.infer<T>, ParaglideFunction>>;
 	}>
 ) {
@@ -34,7 +38,7 @@ export function validatedForm<T extends z4.$ZodType>(
 			};
 		}
 
-		const result = await callback(parsed.data);
+		const result = await callback(parsed.data, await requireUser());
 		if (!result) return;
 
 		// translate errors

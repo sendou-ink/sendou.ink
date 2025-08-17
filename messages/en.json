@@ -2426,5 +2426,7 @@
 	"common_settings_tabs_trustedUsers": "Trusted users",
 	"common_settings_tabs_accessibility": "Accessibility",
 	"user_forms_errors_invalidCustomUrl_format": "Custom URL can only contain alphanumeric characters, dashes, and underscores. In addition it must contain one non-digit character.",
-	"user_forms_errors_invalidInGameName_format": "Invalid in-game name. Did you include the pound sign and numbers?"
+	"user_forms_errors_invalidInGameName_format": "Invalid in-game name. Did you include the pound sign and numbers?",
+	"common_forms_errors_required": "This field is required.",
+	"common_forms_errors_notAllowedCharacters": "Includes forbidden characters."
 }

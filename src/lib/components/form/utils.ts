@@ -12,16 +12,19 @@ export function errorMessageId(fieldId: string) {
 export function ariaAttributes({
 	id,
 	error,
-	bottomText
+	bottomText,
+	required
 }: {
 	id: string;
 	error?: string;
 	bottomText?: string;
+	required?: boolean;
 }) {
 	return {
 		'aria-invalid': error ? 'true' : undefined,
 		'aria-describedby': bottomText ? infoMessageId(id) : undefined,
-		'aria-errormessage': error ? errorMessageId(id) : undefined
+		'aria-errormessage': error ? errorMessageId(id) : undefined,
+		'aria-required': required ? 'true' : undefined
 	} as const;
 }
 

@@ -17,13 +17,14 @@
 		maxLength,
 		error,
 		onblur,
+		required,
 		value = $bindable()
 	}: Props = $props();
 	const id = $props.id();
 </script>
 
 <div class="stack xs">
-	<Label for={id}>
+	<Label for={id} {required}>
 		{label}
 	</Label>
 	<Input
@@ -36,7 +37,8 @@
 		{...ariaAttributes({
 			id,
 			bottomText,
-			error
+			error,
+			required
 		})}
 	/>
 	<BottomText info={bottomText} {error} fieldId={id} />
