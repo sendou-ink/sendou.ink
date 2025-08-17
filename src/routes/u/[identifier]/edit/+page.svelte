@@ -5,6 +5,7 @@
 	import FormField from '$lib/components/form/FormField.svelte';
 	import { createFieldValidator } from '$lib/components/form/utils.js';
 	import FavoriteBadgeField from './FavoriteBadgeField.svelte';
+	import { m } from '$lib/paraglide/messages';
 
 	let { params } = $props();
 
@@ -18,7 +19,7 @@
 	{schema}
 	action={UserAPI.actions.updateProfile}
 	defaultValues={await UserAPI.queries.editProfileFormData(params.identifier)}
-	heading="Editing user profile"
+	heading={m.user_forms_editProfile_heading()}
 >
 	{#if loggedInUser?.roles.includes('SUPPORTER')}
 		<FormField name={validField('theme')} />

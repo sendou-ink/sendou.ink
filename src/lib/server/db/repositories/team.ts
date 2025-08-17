@@ -211,13 +211,19 @@ export async function create(
 			.returning('id')
 			.executeTakeFirstOrThrow();
 
+		const teamAlreadyMemberOf = await trx
+			.selectFrom('TeamMember')
+			.select('TeamMember.userId')
+			.where('userId', '=', args.ownerUserId)
+			.executeTakeFirst();
+
 		await trx
 			.insertInto('AllTeamMember')
 			.values({
 				userId: args.ownerUserId,
-				isMainTeam: true, // xxx: make into subquery
 				teamId: team.id,
-				isOwner: true
+				isOwner: true,
+				isMainTeam: !teamAlreadyMemberOf
 			})
 			.execute();
 	});

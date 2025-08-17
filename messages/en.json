@@ -2428,5 +2428,7 @@
 	"user_forms_errors_invalidCustomUrl_format": "Custom URL can only contain alphanumeric characters, dashes, and underscores. In addition it must contain one non-digit character.",
 	"user_forms_errors_invalidInGameName_format": "Invalid in-game name. Did you include the pound sign and numbers?",
 	"common_forms_errors_required": "This field is required.",
-	"common_forms_errors_notAllowedCharacters": "Includes forbidden characters."
+	"common_forms_errors_notAllowedCharacters": "Includes forbidden characters.",
+	"team_forms_errors_noOnlySpecialCharacters": "Team name can't be only special characters.",
+	"user_forms_editProfile_heading": "Editing user profile"
 }

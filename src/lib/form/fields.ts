@@ -62,6 +62,20 @@ function textFieldRefined<T extends z.ZodType<string | null>>(
 		);
 	}
 
+	if (args.validate) {
+		schema = schema.refine(
+			(val) => {
+				// if it's not supposed be null, other check will catch it
+				if (val === null) return true;
+
+				return args.validate!.func(val);
+			},
+			{
+				message: args.validate!.message
+			}
+		);
+	}
+
 	if (args.toLowerCase) {
 		schema = schema.transform((val) => val?.toLowerCase() ?? null) as unknown as typeof schema;
 	}
