@@ -23,10 +23,7 @@ export const updateProfile = validatedForm(editProfileSchema, async (data) => {
 		};
 	}
 
-	const editedUser = await UserRepository.updateProfile({
-		...data,
-		userId: user.id
-	});
+	const editedUser = await UserRepository.updateProfile(user.id, data);
 
 	// TODO: to transaction
 	if (data.inGameName) {

@@ -14,8 +14,6 @@
 
 	let { name, label, value = $bindable() }: Props = $props();
 
-	$inspect(value);
-
 	const loggedInUser = $derived(await AuthAPI.queries.me());
 	const badges = $derived(await UserAPI.queries.allBadgesByMe());
 	const isSupporter = $derived(loggedInUser?.roles.includes('SUPPORTER') ?? false);
@@ -28,7 +26,7 @@
 		bind:selectedBadges={value}
 		options={badges}
 		maxCount={SMALL_BADGES_PER_DISPLAY_PAGE + 1}
-		showSelect={isSupporter || value.length === 0}
+		showSelect={isSupporter || (value ?? []).length === 0}
 	>
 		{#if !isSupporter}
 			<div class="text-sm text-lighter font-semi-bold text-center">

@@ -54,7 +54,7 @@ export const editProfileFormData = query(
 				typeof userProfile.motionSens === 'number' ? String(userProfile.motionSens) : null,
 				typeof userProfile.stickSens === 'number' ? String(userProfile.stickSens) : null
 			],
-			favoriteBadges: userProfile.favoriteBadgeIds ?? undefined
+			favoriteBadges: userProfile.favoriteBadgeIds ?? []
 		};
 	}
 );
