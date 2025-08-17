@@ -14,6 +14,10 @@ interface FormFieldText<T extends string> extends FormFieldBase<T> {
 		pattern: RegExp;
 		message: string;
 	};
+	validate?: {
+		func: (value: string) => boolean;
+		message: string;
+	};
 }
 
 interface FormFieldTextarea<T extends string> extends FormFieldBase<T> {

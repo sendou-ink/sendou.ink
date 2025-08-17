@@ -12,8 +12,6 @@ export const create = validatedForm(createTeamSchema, async (data, user) => {
 
 	const customUrl = mySlugify(data.name);
 
-	// errorToastIfFalsy(customUrl.length > 0, "Team name can't be only special characters"); // xxx: to validators
-
 	if (await TeamRepository.findByCustomUrl(customUrl)) {
 		return {
 			errors: {
