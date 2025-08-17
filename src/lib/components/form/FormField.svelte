@@ -22,7 +22,7 @@
 				{
 					label: string;
 					onblur: FormContextValue['onblur'];
-					error: never;
+					error: string | undefined;
 					name: string;
 					data: { value: unknown };
 				}
@@ -35,7 +35,7 @@
 	const { schema, defaultValues, errors, onblur } = formContext.get();
 
 	let data = $state({ value: defaultValues?.[name as keyof typeof defaultValues] as ValueType });
-	const error = $derived(errors()[name as keyof typeof errors]);
+	const error = $derived<string | undefined>(errors()[name as keyof typeof errors]);
 
 	const fieldSchema = (() => {
 		const zodObject = schema as ZodObject<ZodRawShape>;
@@ -59,7 +59,7 @@
 		return field;
 	})();
 
-	const commonProps = $derived({ name, error, onblur }); // xxx: error is of type never
+	const commonProps = $derived({ name, error, onblur });
 </script>
 
 {#if formField.type === 'text-field'}
