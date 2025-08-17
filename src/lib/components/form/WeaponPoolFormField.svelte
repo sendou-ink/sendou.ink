@@ -21,25 +21,26 @@
 		onblur?: () => void;
 	};
 
-	let { label, name, bottomText, error, onblur, value = $bindable() }: Props = $props();
+	let { label, name, bottomText, error, onblur, value = $bindable(), maxCount }: Props = $props();
 	const id = $props.id();
 </script>
 
-<!-- xxx: handle max reached -->
 <div class="stack xs">
 	<Label for={id}>
 		{label}
 	</Label>
 	<WeaponSelect
 		{id}
-		{onblur}
+		disabled={value.length >= maxCount}
 		disabledWeaponIds={value.map((weapon) => weapon.weaponSplId)}
 		onselect={(weaponSplId, clear) => {
 			value.push({
 				weaponSplId,
 				isFavorite: false
 			});
+
 			clear();
+			onblur?.();
 		}}
 	/>
 	<input type="hidden" {name} value={JSON.stringify(value ?? [])} />
@@ -88,7 +89,10 @@
 			<Button
 				icon={Trash2}
 				variant="minimal-destructive"
-				onclick={() => (value = value.filter((weapon) => weapon.weaponSplId !== weaponSplId))}
+				onclick={() => {
+					value = value.filter((weapon) => weapon.weaponSplId !== weaponSplId);
+					onblur?.();
+				}}
 				size="small"
 			/>
 		</div>

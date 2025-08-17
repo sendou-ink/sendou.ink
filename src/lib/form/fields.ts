@@ -123,7 +123,7 @@ export function weaponPool(args: Omit<Extract<FormField, { type: 'weapon-pool' }
 						isFavorite: z.boolean()
 					})
 				)
-				.max(5)
+				.max(args.maxCount)
 		)
 		.register(formRegistry, {
 			...args,

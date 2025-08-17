@@ -11,7 +11,7 @@
 		open?: boolean;
 		value?: MainWeaponId;
 		onselect?: (item: MainWeaponId, clear: () => void) => void;
-		onblur?: VoidFunction;
+		disabled?: boolean;
 		disabledWeaponIds?: Array<MainWeaponId>;
 		id?: string;
 	}
@@ -20,9 +20,9 @@
 		open = $bindable(false),
 		value = $bindable(undefined),
 		onselect,
-		onblur,
-		id,
-		disabledWeaponIds
+		disabled,
+		disabledWeaponIds,
+		id
 	}: Props = $props();
 
 	const data = $derived(
@@ -44,7 +44,7 @@
 		}))
 	);
 
-	function handleSelect(item: Item) {
+	function onSelect(item: Item) {
 		// @ts-expect-error TODO: this could be made more typesafe by making Combobox accept a generic
 		onselect?.(item.id, () => {
 			value = undefined;
@@ -61,8 +61,8 @@
 	}
 	{id}
 	{data}
-	{onblur}
-	onselect={handleSelect}
+	{disabled}
+	onselect={onSelect}
 	buttonPlaceholder={m.common_forms_weaponSearch_placeholder()}
 	searchPlaceholder={m.common_forms_weaponSearch_search_placeholder()}
 />

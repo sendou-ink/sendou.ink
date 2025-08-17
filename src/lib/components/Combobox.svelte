@@ -22,23 +22,23 @@
 
 	interface Props {
 		data: Item[] | Group[];
+		disabled?: boolean;
 		buttonPlaceholder?: string;
 		searchPlaceholder: string;
 		open?: boolean;
 		value?: Item;
 		onselect?: (item: Item) => void;
-		onblur?: VoidFunction;
 		id?: string;
 	}
 
 	let {
 		data,
+		disabled,
 		searchPlaceholder,
 		buttonPlaceholder,
 		open = $bindable(false),
 		value = $bindable(undefined),
 		onselect,
-		onblur,
 		id
 	}: Props = $props();
 
@@ -65,7 +65,7 @@
 
 <div class="combobox">
 	<Popover.Root bind:open>
-		<Popover.Trigger {id}>
+		<Popover.Trigger {id} {disabled}>
 			{#snippet child({ props })}
 				<button bind:this={trigger} {...props}>
 					<div>
@@ -88,7 +88,7 @@
 							<Command.Root loop>
 								<div class="input-container">
 									<Search color="currentColor" size="1rem" />
-									<Command.Input placeholder={searchPlaceholder} {onblur} />
+									<Command.Input placeholder={searchPlaceholder} />
 								</div>
 								<Command.List>
 									{#snippet child({ props })}
@@ -183,6 +183,12 @@
 
 		&:focus-visible {
 			outline: 2px solid var(--color-primary);
+		}
+
+		&:disabled {
+			pointer-events: none;
+			cursor: not-allowed;
+			opacity: 0.5;
 		}
 
 		div {

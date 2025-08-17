@@ -28,10 +28,10 @@
 		schema,
 		defaultValues,
 		errors: () => errors,
-		onblur: () => validateForm(new FormData(form))
+		onblur: () => validateForm()
 	});
 
-	function validateForm(data: FormData) {
+	function validateForm() {
 		/*
 		xxx: temporary fix because having remote functions in any parent at any level
 			 will cause onMount to not run, leaving form undefined until it has been interacted with
@@ -39,15 +39,18 @@
 		*/
 		if (!form) return false;
 
-		// @ts-expect-error
-		const parsed = z.safeParse(schema, Object.fromEntries(data.entries()));
-		if (parsed.success) {
-			errors = {};
-			return true;
-		}
+		tick().then(() => {
+			const data = new FormData(form);
+			// @ts-expect-error
+			const parsed = z.safeParse(schema, Object.fromEntries(data.entries()));
+			if (parsed.success) {
+				errors = {};
+				return true;
+			}
 
-		errors = zodErrorsToFormErrors(parsed.error);
-		return false;
+			errors = zodErrorsToFormErrors(parsed.error);
+			return false;
+		});
 	}
 
 	function focusFirstInvalid() {
@@ -59,8 +62,8 @@
 		});
 	}
 
-	async function enhanced({ data, submit }: { data: FormData; submit: () => Promise<void> }) {
-		if (!validateForm(data)) {
+	async function enhanced({ submit }: { submit: () => Promise<void> }) {
+		if (!validateForm()) {
 			focusFirstInvalid();
 			return;
 		}
