@@ -24,6 +24,7 @@
 					onblur: FormContextValue['onblur'];
 					error: never;
 					name: string;
+					data: { value: unknown };
 				}
 			]
 		>;
@@ -33,7 +34,7 @@
 
 	const { schema, defaultValues, errors, onblur } = formContext.get();
 
-	let value = $state(defaultValues?.[name as keyof typeof defaultValues] as ValueType);
+	let data = $state({ value: defaultValues?.[name as keyof typeof defaultValues] as ValueType });
 	const error = $derived(errors()[name as keyof typeof errors]);
 
 	const fieldSchema = (() => {
@@ -62,24 +63,24 @@
 </script>
 
 {#if formField.type === 'text-field'}
-	<InputFormField bind:value={value as string} {...commonProps} {...formField} />
+	<InputFormField bind:value={data.value as string} {...commonProps} {...formField} />
 {:else if formField.type === 'switch'}
-	<SwitchFormField bind:checked={value as boolean} {...commonProps} {...formField} />
+	<SwitchFormField bind:checked={data.value as boolean} {...commonProps} {...formField} />
 {:else if formField.type === 'text-area'}
-	<TextareaFormField bind:value={value as string} {...commonProps} {...formField} />
+	<TextareaFormField bind:value={data.value as string} {...commonProps} {...formField} />
 {:else if formField.type === 'select'}
-	<SelectFormField bind:value={value as string} clearable {...commonProps} {...formField} />
+	<SelectFormField bind:value={data.value as string} clearable {...commonProps} {...formField} />
 {:else if formField.type === 'dual-select'}
 	<DualSelectFormField
-		bind:value={value as [string, string]}
+		bind:value={data.value as [string, string]}
 		clearable
 		{...commonProps}
 		{...formField}
 	/>
 {:else if formField.type === 'weapon-pool'}
-	<WeaponPoolFormField bind:value={value as WeaponPool[]} {...commonProps} {...formField} />
+	<WeaponPoolFormField bind:value={data.value as WeaponPool[]} {...commonProps} {...formField} />
 {:else if formField.type === 'custom'}
-	{@render children?.({ ...commonProps, ...formField })}
+	{@render children?.({ data, ...commonProps, ...formField })}
 {:else}
 	<p>Unsupported form field type</p>
 {/if}

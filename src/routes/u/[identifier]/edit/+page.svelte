@@ -29,11 +29,11 @@
 	<FormField name={validField('sens')} />
 	<FormField name={validField('battlefy')} />
 	<FormField name={validField('country')} />
-	<!-- <FormField name={validField('favoriteBadges')}>
-		{#snippet children(props)}
-			<FavoriteBadgeField {...props} />
+	<FormField name={validField('favoriteBadges')}>
+		{#snippet children({ data, ...rest })}
+			<FavoriteBadgeField bind:value={data.value} {...rest} />
 		{/snippet}
-	</FormField> -->
+	</FormField>
 	<FormField name={validField('weapons')} />
 	<FormField name={validField('bio')} />
 	<FormField name={validField('hideDiscordUniqueName')} />

@@ -5,14 +5,21 @@
 		value?: string | number | null;
 		items: Array<{ label: string | number; value: string | number }>;
 		clearable?: boolean;
+		placeholder?: string;
 	}
 
-	let { value: selectedValue = $bindable(), clearable, items, ...rest }: Props = $props();
+	let {
+		value: selectedValue = $bindable(),
+		clearable,
+		items,
+		placeholder,
+		...rest
+	}: Props = $props();
 </script>
 
 <select {...rest} bind:value={selectedValue}>
 	{#if clearable}
-		<option value="" selected={!selectedValue}>–</option>
+		<option value="" selected={!selectedValue}>{placeholder ?? '–'}</option>
 	{/if}
 	{#each items as { label, value } (value)}
 		<option {value} selected={value === selectedValue}>{label}</option>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages';
+	import Select from '../Select.svelte';
 	import type { BadgeDisplayProps } from './BadgeDisplay.svelte';
 	import BadgeDisplay from './BadgeDisplay.svelte';
 
@@ -47,7 +48,7 @@
 
 <div class="stack md">
 	{#if selectedBadges.length > 0}
-		<BadgeDisplay badges={selectedBadgeData}>
+		<BadgeDisplay badges={selectedBadgeData} onchange={(badges) => (selectedBadges = badges)}>
 			{@render children?.()}
 		</BadgeDisplay>
 	{:else}
@@ -57,18 +58,17 @@
 	{/if}
 
 	{#if showSelect}
-		<select
+		<Select
 			{onblur}
 			onchange={handleSelectChange}
 			disabled={isSelectDisabled}
 			data-testid="badges-selector"
-		>
-			<option value="">{m.common_badges_selector_select()}</option>
-			{#each availableOptions as badge (badge.id)}
-				<option value={badge.id}>
-					{badge.displayName}
-				</option>
-			{/each}
-		</select>
+			placeholder={m.common_badges_selector_select()}
+			clearable
+			items={availableOptions.map((option) => ({
+				label: option.displayName,
+				value: option.id
+			}))}
+		/>
 	{/if}
 </div>

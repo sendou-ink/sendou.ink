@@ -25,8 +25,8 @@
 	<input type="hidden" {name} value={JSON.stringify(value)} />
 	<Label>{label}</Label>
 	<BadgesSelector
+		bind:selectedBadges={value}
 		options={badges}
-		selectedBadges={value}
 		maxCount={SMALL_BADGES_PER_DISPLAY_PAGE + 1}
 		showSelect={isSupporter || value.length === 0}
 	>

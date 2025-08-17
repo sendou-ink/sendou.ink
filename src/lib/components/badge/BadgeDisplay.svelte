@@ -96,7 +96,8 @@
 		{#if !isPaginated}
 			<div class="badge-explanation">
 				{badgeExplanationText(bigBadge)}
-				<Button variant="minimal-destructive" icon={Trash2} onclick={removeBadge}></Button>
+				<Button variant="minimal-destructive" size="small" icon={Trash2} onclick={removeBadge}
+				></Button>
 			</div>
 		{/if}
 
@@ -149,6 +150,7 @@
 		font-size: var(--fonts-xs);
 		display: flex;
 		align-items: center;
+		gap: var(--s-1-5);
 		justify-content: center;
 	}
 
