@@ -1,5 +1,5 @@
 import { m } from '$lib/paraglide/messages';
-import { customCssVarObject, emptyArrayToNull, id, processMany, safeJSONParse } from '$lib/schemas';
+import { id } from '$lib/schemas';
 import z from 'zod';
 import * as Fields from '$lib/form/fields';
 import { COUNTRY_CODES } from '$lib/constants/common';
@@ -51,7 +51,6 @@ export const editProfileSchema = z.object({
 			message: m.user_forms_errors_invalidInGameName_format()
 		}
 	}),
-	// xxx: add validation that either both or only r-stick
 	sens: Fields.dualSelectOptional({
 		fields: [
 			{
@@ -114,15 +113,3 @@ export const editProfileSchema = z.object({
 });
 
 export type EditProfileSchemaData = z.infer<typeof editProfileSchema>;
-
-export const userEditActionSchemaOld = z.object({
-	css: customCssVarObject,
-	favoriteBadgeIds: z.preprocess(
-		processMany(safeJSONParse, emptyArrayToNull),
-		z
-			.array(id)
-			.min(1)
-			.max(SMALL_BADGES_PER_DISPLAY_PAGE + 1)
-			.nullish()
-	)
-});
