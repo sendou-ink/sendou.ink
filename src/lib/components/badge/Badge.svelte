@@ -20,4 +20,16 @@
 	});
 </script>
 
-<img src={badgeUrl({ code: badge.code, isAnimated })} alt={badge.displayName} {...commonProps} />
+<img
+	src={badgeUrl({ code: badge.code, isAnimated })}
+	style="--badge-size:${size}px"
+	alt={badge.displayName}
+	{...commonProps}
+/>
+
+<style>
+	img {
+		min-width: var(--badge-size);
+		max-width: var(--badge-size);
+	}
+</style>

@@ -223,7 +223,7 @@ export function rechallenge({
 }) {
 	return db
 		.updateTable('GroupLike')
-		.set({ isRechallenge: 1 })
+		.set({ isRechallenge: true })
 		.where('likerGroupId', '=', likerGroupId)
 		.where('targetGroupId', '=', targetGroupId)
 		.execute();

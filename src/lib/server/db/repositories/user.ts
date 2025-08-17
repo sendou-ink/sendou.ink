@@ -4,13 +4,13 @@ import { jsonArrayFrom } from 'kysely/helpers/sqlite';
 import * as R from 'remeda';
 import { db } from '../sql';
 import type { BuildSort, DB, Tables, TablesInsertable, UserPreferences } from '../tables';
-// import type { ChatUser } from "~/features/chat/components/Chat";
 import invariant from '$lib/utils/invariant';
 import type { CommonUser } from '$lib/utils/kysely.server';
 import { COMMON_USER_FIELDS } from '$lib/utils/kysely.server';
 import { safeNumberParse } from '$lib/utils/number';
 import { isSupporter } from '$lib/modules/permissions/utils';
 import { userRoles } from '$lib/modules/permissions/mapper.server';
+import type { EditProfileSchemaData } from '$lib/api/user/schemas';
 
 function identifierToUserIdQuery(identifier: string) {
 	return db
@@ -148,9 +148,12 @@ export async function findProfileByIdentifier(
 			'User.stickSens',
 			'User.inGameName',
 			'User.customName',
+			'User.customUrl',
 			'User.discordName',
 			'User.showDiscordUniqueName',
 			'User.discordUniqueName',
+			'User.commissionsOpen',
+			'User.commissionText',
 			'User.favoriteBadgeIds',
 			'User.patronTier',
 			'PlusTier.tier as plusTier',
@@ -707,35 +710,16 @@ export function upsert(
 		.executeTakeFirstOrThrow();
 }
 
-type UpdateProfileArgs = Pick<
-	TablesInsertable['User'],
-	| 'country'
-	| 'bio'
-	| 'customUrl'
-	| 'customName'
-	| 'motionSens'
-	| 'stickSens'
-	| 'inGameName'
-	| 'battlefy'
-	| 'css'
-	| 'showDiscordUniqueName'
-	| 'commissionText'
-	| 'commissionsOpen'
-> & {
-	userId: number;
-	weapons: Pick<TablesInsertable['UserWeapon'], 'weaponSplId' | 'isFavorite'>[];
-	favoriteBadgeIds?: number[] | null;
-};
-export function updateProfile(args: UpdateProfileArgs) {
+export function updateProfile(userId: number, args: EditProfileSchemaData) {
 	return db.transaction().execute(async (trx) => {
-		await trx.deleteFrom('UserWeapon').where('userId', '=', args.userId).execute();
+		await trx.deleteFrom('UserWeapon').where('userId', '=', userId).execute();
 
 		if (args.weapons.length > 0) {
 			await trx
 				.insertInto('UserWeapon')
 				.values(
 					args.weapons.map((weapon, i) => ({
-						userId: args.userId,
+						userId,
 						weaponSplId: weapon.weaponSplId,
 						isFavorite: weapon.isFavorite,
 						order: i + 1
@@ -751,17 +735,17 @@ export function updateProfile(args: UpdateProfileArgs) {
 				bio: args.bio,
 				customUrl: args.customUrl,
 				customName: args.customName,
-				motionSens: args.motionSens,
-				stickSens: args.stickSens,
+				motionSens: args.sens?.[0] ? Number(args.sens[0]) : null,
+				stickSens: args.sens?.[1] ? Number(args.sens[1]) : null,
 				inGameName: args.inGameName,
-				css: args.css,
+				css: null, // xxx: CustomizedColors
 				battlefy: args.battlefy,
-				favoriteBadgeIds: args.favoriteBadgeIds ? JSON.stringify(args.favoriteBadgeIds) : null,
-				showDiscordUniqueName: args.showDiscordUniqueName,
+				favoriteBadgeIds: args.favoriteBadges ? JSON.stringify(args.favoriteBadges) : null,
+				showDiscordUniqueName: !args.hideDiscordUniqueName,
 				commissionText: args.commissionText,
 				commissionsOpen: args.commissionsOpen
 			})
-			.where('id', '=', args.userId)
+			.where('id', '=', userId)
 			.returning(['User.id', 'User.customUrl', 'User.discordId'])
 			.executeTakeFirstOrThrow();
 	});
@@ -827,7 +811,7 @@ export function updateResultHighlights(args: UpdateResultHighlightsArgs) {
 		await trx
 			.updateTable('TournamentResult')
 			.set({
-				isHighlight: 0
+				isHighlight: false
 			})
 			.where('TournamentResult.userId', '=', args.userId)
 			.execute();
@@ -836,7 +820,7 @@ export function updateResultHighlights(args: UpdateResultHighlightsArgs) {
 			await trx
 				.updateTable('TournamentResult')
 				.set({
-					isHighlight: 1
+					isHighlight: true
 				})
 				.where('TournamentResult.userId', '=', args.userId)
 				.where('TournamentResult.tournamentTeamId', 'in', args.resultTournamentTeamIds)

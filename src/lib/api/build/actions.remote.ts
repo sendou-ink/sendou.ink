@@ -17,7 +17,7 @@ export const updateVisibilityById = command(
 
 		const { ownerId } = await BuildRepository.updateVisibilityById({
 			id: build.id,
-			private: args.isPrivate ? 1 : 0
+			private: args.isPrivate
 		});
 
 		await refreshBuildsPageQuery(ownerId);

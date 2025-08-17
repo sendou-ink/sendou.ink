@@ -1,26 +1,21 @@
 <script lang="ts">
+	import type { FormFieldProps } from '$lib/form/types';
 	import Switch from '../Switch.svelte';
 	import BottomText from './BottomText.svelte';
 
-	// xxx: make a shared interface
-	interface Props {
-		label: string;
-		name: string;
-		bottomText?: string;
-		checked?: boolean;
-		// xxx: onchange
-	}
+	type Props = Omit<FormFieldProps<'switch'>, 'type' | 'default' | 'onblur'> & {
+		checked: boolean;
+	};
 
-	let { label, name, bottomText, checked = $bindable(false) }: Props = $props();
+	let { label, name, bottomText, error, checked = $bindable() }: Props = $props();
+	const id = $props.id();
 </script>
 
-<div>
+<div class="stack xs">
 	<div class="stack horizontal sm items-center">
-		<Switch {name} bind:checked>
+		<Switch {name} {id} bind:checked>
 			{label}
 		</Switch>
 	</div>
-	{#if bottomText}
-		<BottomText>{bottomText}</BottomText>
-	{/if}
+	<BottomText info={bottomText} {error} fieldId={id} />
 </div>

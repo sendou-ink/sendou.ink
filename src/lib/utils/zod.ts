@@ -6,6 +6,7 @@ import { assertType } from './types';
 import { abilities, abilitiesShort } from '$lib/constants/in-game/abilities';
 import { mainWeaponIds } from '$lib/constants/in-game/weapon-ids';
 import { stageIds } from '$lib/constants/in-game/stage-ids';
+import { m } from '$lib/paraglide/messages';
 
 // xxx: fix these with imported
 const FRIEND_CODE_REGEXP = /^\d{4}-\d{4}-\d{4}$/;
@@ -20,10 +21,6 @@ export const optionalId = z.coerce.number().int().positive().optional();
 export const inviteCode = z.string().length(SHORT_NANOID_LENGTH);
 export const inviteCodeObject = z.object({
 	inviteCode
-});
-
-export const nonEmptyString = z.string().trim().min(1, {
-	message: 'Required'
 });
 
 export const dbBoolean = z.coerce.number().min(0).max(1).int();
@@ -141,7 +138,7 @@ export function safeStringSchema({ min, max }: { min?: number; max: number }) {
 			.min(min ?? 0)
 			.max(max)
 			.refine((text) => !hasZalgo(text), {
-				message: 'Includes not allowed characters.'
+				message: m.common_forms_errors_notAllowedCharacters()
 			})
 	);
 }
@@ -162,7 +159,7 @@ export function safeNullableStringSchema({ min, max }: { min?: number; max: numb
 					return !hasZalgo(text);
 				},
 				{
-					message: 'Includes not allowed characters.'
+					message: m.common_forms_errors_notAllowedCharacters()
 				}
 			)
 	);
@@ -349,4 +346,15 @@ function validSerializedCustomCssVarObject(value: unknown) {
 	} catch {
 		return false;
 	}
+}
+
+export function zodErrorsToFormErrors<T>(error: z.ZodError<T>) {
+	const result: Partial<Record<keyof T, string>> = {};
+
+	for (const issue of error.issues) {
+		if (issue.path.length !== 1) throw new Error('Not implemented');
+		result[issue.path[0] as keyof T] = issue.message as string;
+	}
+
+	return result;
 }

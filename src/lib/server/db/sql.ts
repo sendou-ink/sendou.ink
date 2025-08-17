@@ -6,7 +6,7 @@ import type { DB } from './tables';
 import { roundToNDecimalPlaces } from '$lib/utils/number';
 import { logger } from '$lib/utils/logger';
 import invariant from '$lib/utils/invariant';
-import { SqliteDatePlugin } from '$lib/server/db/plugins';
+import { SqliteBooleanPlugin, SqliteDatePlugin } from '$lib/server/db/plugins';
 import { nodeSqliteDialect } from './dialect';
 
 // xxx: currently can't toggle LOG_LEVEL, this would be the correct way to do it but vite-node thinks its running as client side code
@@ -27,7 +27,7 @@ sql.exec('PRAGMA busy_timeout = 5000');
 export const db = new Kysely<DB>({
 	dialect: nodeSqliteDialect(sql),
 	log: LOG_LEVEL === 'trunc' || LOG_LEVEL === 'full' ? logQuery : logError,
-	plugins: [new ParseJSONResultsPlugin(), new SqliteDatePlugin()]
+	plugins: [new ParseJSONResultsPlugin(), new SqliteDatePlugin(), new SqliteBooleanPlugin()]
 });
 
 function logQuery(event: LogEvent) {

@@ -1,3 +1,4 @@
+import type { CountryCode } from '$lib/constants/common';
 import type { Ability, MainWeaponId, ModeShort, StageId } from '$lib/constants/in-game/types';
 import type { JSONColumnTypeNullable } from '$lib/utils/kysely.server';
 import type {
@@ -25,8 +26,8 @@ type Generated<T> =
 
 export type MemberRole = (typeof TEAM_MEMBER_ROLES)[number];
 
-/** In SQLite booleans are presented as 0 (false) and 1 (true) */
-export type DBBoolean = number;
+/** In SQLite booleans are presented as 0 (false) and 1 (true) but can be inserted as booleans thanks to a Kysely plugin */
+export type DBBoolean = ColumnType<number, boolean, boolean>;
 
 export interface Team {
 	avatarImgId: number | null;
@@ -44,8 +45,8 @@ export interface Team {
 
 export interface TeamMember {
 	createdAt: Generated<Date>;
-	isOwner: Generated<number>;
-	isManager: Generated<number>;
+	isOwner: Generated<DBBoolean>;
+	isManager: Generated<DBBoolean>;
 	leftAt: Date | null;
 	role: MemberRole | null;
 	teamId: number;
@@ -683,7 +684,7 @@ export interface TournamentTeamCheckIn {
 
 export interface TournamentTeamMember {
 	createdAt: Generated<number>;
-	isOwner: Generated<number>;
+	isOwner: Generated<DBBoolean>;
 	inGameName: string | null;
 	tournamentTeamId: number;
 	userId: number;
@@ -748,7 +749,7 @@ export interface UnvalidatedUserSubmittedImage {
 	submitterUserId: number;
 	url: string;
 	/** When was the image validated? If `null` should be hidden from other users. */
-	validatedAt: number | null;
+	validatedAt: Date | null;
 }
 
 export interface UnvalidatedVideo {
@@ -808,9 +809,9 @@ export interface User {
 	banned: Generated<0 | 1 | Date | null>;
 	bannedReason: string | null;
 	bio: string | null;
-	commissionsOpen: Generated<number | null>;
+	commissionsOpen: Generated<DBBoolean | null>;
 	commissionText: string | null;
-	country: string | null;
+	country: CountryCode | null;
 	css: JSONColumnTypeNullable<Record<string, string>>;
 	customUrl: string | null;
 	discordAvatar: string | null;

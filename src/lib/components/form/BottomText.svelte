@@ -1,22 +1,39 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
+	import { errorMessageId, infoMessageId } from './utils';
 
 	interface Props {
-		children: Snippet;
+		error?: string;
+		info?: string;
+		fieldId: string;
 	}
 
-	let { children }: Props = $props();
+	let { error, info, fieldId }: Props = $props();
 </script>
 
-<div class="info-message">
-	{@render children()}
-</div>
+{#if info || error}
+	<div class="stack xs">
+		{#if error}
+			<div class="info-message error" id={errorMessageId(fieldId)}>
+				{error}
+			</div>
+		{/if}
+		{#if info}
+			<div class="info-message" id={infoMessageId(fieldId)}>
+				{info}
+			</div>
+		{/if}
+	</div>
+{/if}
 
 <style>
 	.info-message {
 		display: block;
 		color: var(--color-base-content-secondary);
 		font-size: var(--fonts-xs);
-		margin-block-start: var(--s-2);
+		text-wrap: balance;
+	}
+
+	.error {
+		color: var(--color-error);
 	}
 </style>

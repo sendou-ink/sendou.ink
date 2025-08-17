@@ -47,13 +47,14 @@ html {
 	--border-style: var(--border) solid var(--color-base-border);
 
 	--layout-nav-height: 3rem;
+	--field-width-medium: 18rem;
 }
 
 html.dark {
 	--color-base-bg: oklch(0.133 0.0673 272.37); /** color-base-200 */
 	--color-base-section: oklch(0.201 0.0699 284.33);
 	--color-base-card: oklch(0.3303 0.0921 288.85); /** color-base-100 */
-	--color-base-card-section: oklch(0.23 0.07 292.19 / 1);
+	--color-base-card-section: oklch(0.23 0.07 292.19 / 1); /** xxx: rename to color-base-input ? */
 	--color-base-card-transparent: oklch(0.3303 0.0921 288.85 / 0.3);
 	--color-base-border: oklch(0.2908 0.0699 292.19); /** color-base-300 */
 	--color-base-content: oklch(98% 0.002 247.839);

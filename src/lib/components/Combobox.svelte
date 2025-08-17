@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { tick } from 'svelte';
 	import { Command, Popover } from 'bits-ui';
 	import { m } from '$lib/paraglide/messages';
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
@@ -9,6 +8,7 @@
 	export interface Item {
 		value: string;
 		label: string;
+		disabled?: boolean;
 		image?: string;
 		keywords?: string[];
 	}
@@ -21,39 +21,34 @@
 
 	interface Props {
 		data: Item[] | Group[];
-		title: string;
-		buttonPlaceholder: string;
+		disabled?: boolean;
+		buttonPlaceholder?: string;
 		searchPlaceholder: string;
 		open?: boolean;
 		value?: Item;
 		onselect?: (item: Item) => void;
+		id?: string;
 	}
 
 	let {
 		data,
-		title,
-		buttonPlaceholder,
+		disabled,
 		searchPlaceholder,
+		buttonPlaceholder,
 		open = $bindable(false),
 		value = $bindable(undefined),
-		onselect
+		onselect,
+		id
 	}: Props = $props();
 
-	let trigger = $state<HTMLButtonElement>()!;
-	let selectedValue = $state('');
-	let selectedImage = $state('');
+	let selectedValue = $derived(value?.label);
+	let selectedImage = $derived(value?.image);
 
 	function onSelect(item: Item) {
 		open = false;
 		value = item;
-		selectedValue = item.value;
-		selectedImage = item.image || '';
 
 		onselect?.(item);
-
-		tick().then(() => {
-			trigger.focus();
-		});
 	}
 
 	// xxx: Better way to do this?
@@ -63,16 +58,16 @@
 </script>
 
 <div class="combobox">
-	<span>{title}</span>
 	<Popover.Root bind:open>
-		<Popover.Trigger>
+		<Popover.Trigger {id} {disabled}>
 			{#snippet child({ props })}
 				<button {...props}>
 					<div>
 						{#if selectedImage}
 							<Image path={selectedImage} size={24} lazy />
 						{/if}
-						<span class={{ 'text-white': selectedValue }}>{selectedValue || buttonPlaceholder}</span
+						<span class={['button-text', { 'text-white': selectedValue }]}
+							>{selectedValue || buttonPlaceholder}</span
 						>
 					</div>
 					<ChevronsUpDownIcon size="1rem" />
@@ -134,7 +129,12 @@
 </div>
 
 {#snippet commandItem(item: Item)}
-	<Command.Item keywords={item.keywords} value={item.value} onSelect={() => onSelect(item)}>
+	<Command.Item
+		keywords={item.keywords}
+		value={item.value}
+		onSelect={() => onSelect(item)}
+		disabled={item.disabled}
+	>
 		{#snippet child({ props })}
 			<div {...props} class={['item', item.value === selectedValue ? 'selected' : '']}>
 				{#if item.image}
@@ -153,25 +153,36 @@
 		display: block;
 	}
 
+	.button-text {
+		text-wrap: nowrap;
+		text-overflow: ellipsis;
+		overflow-x: hidden;
+	}
+
 	button {
-		margin-top: var(--s-1);
-		height: 1rem;
+		height: 37px;
 		padding: var(--s-4) var(--s-3);
 		border: var(--border-style);
 		border-radius: var(--radius-field);
-		background-color: var(--color-base-section);
+		background-color: var(--color-base-card-section);
 		color: var(--color-base-content-secondary);
 		outline: none;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: var(--s-1-5);
-		width: 100%;
+		width: var(--field-width-medium);
 		letter-spacing: 0.5px;
 		cursor: pointer;
 
 		&:focus-visible {
 			outline: 2px solid var(--color-primary);
+		}
+
+		&:disabled {
+			pointer-events: none;
+			cursor: not-allowed;
+			opacity: 0.5;
 		}
 
 		div {
@@ -238,10 +249,15 @@
 			font-weight: var(--extra-bold);
 		}
 
-		&:hover,
-		&[aria-selected='true'] {
+		&:hover:not([data-disabled]),
+		&[aria-selected='true']:not([data-disabled]) {
 			background-color: var(--color-base-card);
 		}
+	}
+
+	.item[data-disabled] {
+		color: var(--color-base-content-secondary);
+		font-style: italic;
 	}
 
 	[data-popover-content] {
@@ -253,6 +269,7 @@
 		margin-top: var(--s-2);
 		margin-bottom: var(--s-7);
 		overflow: hidden;
+		z-index: 1;
 	}
 
 	[data-command-list] {

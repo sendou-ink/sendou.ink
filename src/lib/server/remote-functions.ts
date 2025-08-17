@@ -1,5 +1,10 @@
+import { form, getRequestEvent } from '$app/server';
+import { extractLocaleFromRequest } from '$lib/paraglide/runtime';
+import { zodErrorsToFormErrors } from '$lib/utils/zod';
 import { error } from '@sveltejs/kit';
-import type z from 'zod';
+import z from 'zod';
+import * as z4 from 'zod/v4/core';
+import { requireUser, type AuthenticatedUser } from './auth/session';
 
 export function notFoundIfFalsy<T>(value: T | null | undefined): T {
 	if (!value) error(404);
@@ -7,21 +12,50 @@ export function notFoundIfFalsy<T>(value: T | null | undefined): T {
 	return value;
 }
 
-export function parseFormData<T extends z.ZodTypeAny>({
-	formData,
-	schema
-}: {
-	formData: FormData;
-	schema: T;
-}): z.infer<T> {
-	const formDataObj = formDataToObject(formData);
-	try {
-		return schema.parse(formDataObj);
-	} catch {
-		// xxx: return errors back to the user
-
-		throw new Error('form errors not implemented');
+type ParaglideFunction = (
+	inputs?: any,
+	options?: {
+		locale?: 'en' | undefined;
 	}
+) => string;
+
+export function validatedForm<T extends z4.$ZodType>(
+	schema: T,
+	callback: (
+		data: z.infer<T>,
+		user: AuthenticatedUser
+	) => Promise<void | {
+		errors: Partial<Record<keyof z.infer<T>, ParaglideFunction>>;
+	}>
+) {
+	return form(async (formData) => {
+		const formDataObj = formDataToObject(formData);
+		const parsed = z.safeParse(schema, formDataObj);
+
+		if (!parsed.success) {
+			return {
+				errors: zodErrorsToFormErrors(parsed.error)
+			};
+		}
+
+		const result = await callback(parsed.data, await requireUser());
+		if (!result) return;
+
+		// translate errors
+
+		const request = getRequestEvent().request;
+
+		return {
+			errors: Object.fromEntries(
+				Object.entries(result.errors).map(([key, i18nFn]) => {
+					return [
+						key,
+						(i18nFn as ParaglideFunction)(undefined, { locale: extractLocaleFromRequest(request) })
+					];
+				})
+			)
+		};
+	});
 }
 
 function formDataToObject(formData: FormData) {

@@ -153,13 +153,13 @@ export function replacePlusTiers(plusTiers: Array<{ userId: number; plusTier: nu
 }
 
 export function makeVideoAdderByUserId(userId: number) {
-	return db.updateTable('User').set({ isVideoAdder: 1 }).where('User.id', '=', userId).execute();
+	return db.updateTable('User').set({ isVideoAdder: true }).where('User.id', '=', userId).execute();
 }
 
 export function makeTournamentOrganizerByUserId(userId: number) {
 	return db
 		.updateTable('User')
-		.set({ isTournamentOrganizer: 1 })
+		.set({ isTournamentOrganizer: true })
 		.where('User.id', '=', userId)
 		.execute();
 }
@@ -272,5 +272,5 @@ export function findModeNoteById(id: number) {
 }
 
 export function deleteModNote(id: number) {
-	return db.updateTable('ModNote').set({ isDeleted: 1 }).where('ModNote.id', '=', id).execute();
+	return db.updateTable('ModNote').set({ isDeleted: true }).where('ModNote.id', '=', id).execute();
 }
