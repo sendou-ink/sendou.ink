@@ -6,7 +6,7 @@ import {
 	weaponSplId
 } from '$lib/schemas';
 import z from 'zod';
-import type { FormField } from './types';
+import type { FormField, FormFieldDualSelect, FormFieldSelect } from './types';
 
 export const formRegistry = z.registry<FormField>();
 
@@ -101,27 +101,21 @@ export function toggle(args: Omit<Extract<FormField, { type: 'switch' }>, 'type'
 		});
 }
 
-function clearableSelectFieldSchema(items: Extract<FormField, { type: 'select' }>['items']) {
-	return z.preprocess(
-		falsyToNull,
-		z
-			.string()
-			.refine((val) => val === null || items.some((item) => item.value === val))
-			.nullable()
-	);
+function clearableSelectFieldSchema<V extends string>(
+	items: FormFieldSelect<'select', V>['items']
+) {
+	return z.preprocess(falsyToNull, z.enum(items.map((item) => item.value)).nullable());
 }
 
-// xxx: strong typing
-export function selectOptional(args: Omit<Extract<FormField, { type: 'select' }>, 'type'>) {
+export function selectOptional<V extends string>(args: Omit<FormFieldSelect<'select', V>, 'type'>) {
 	return clearableSelectFieldSchema(args.items).register(formRegistry, {
 		...args,
 		type: 'select'
 	});
 }
 
-// xxx: strong typing
-export function dualSelectOptional(
-	args: Omit<Extract<FormField, { type: 'dual-select' }>, 'type'>
+export function dualSelectOptional<V extends string>(
+	args: Omit<FormFieldDualSelect<'dual-select', V>, 'type'>
 ) {
 	let schema = z.preprocess(
 		safeJSONParse,

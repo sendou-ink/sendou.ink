@@ -1,3 +1,4 @@
+import type { CountryCode } from '$lib/constants/common';
 import type { Ability, MainWeaponId, ModeShort, StageId } from '$lib/constants/in-game/types';
 import type { JSONColumnTypeNullable } from '$lib/utils/kysely.server';
 import type {
@@ -810,7 +811,7 @@ export interface User {
 	bio: string | null;
 	commissionsOpen: Generated<DBBoolean | null>;
 	commissionText: string | null;
-	country: string | null;
+	country: CountryCode | null;
 	css: JSONColumnTypeNullable<Record<string, string>>;
 	customUrl: string | null;
 	discordAvatar: string | null;

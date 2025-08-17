@@ -24,15 +24,19 @@ interface FormFieldTextarea<T extends string> extends FormFieldBase<T> {
 	maxLength: number;
 }
 
-interface FormFieldSelect<T extends string> extends FormFieldBase<T> {
-	items: Array<{ label: string | number | ((lang: string) => string); value: string }>;
+export interface FormFieldSelect<T extends string, V extends string> extends FormFieldBase<T> {
+	items: Array<{ label: string | number | ((lang: string) => string); value: V }>;
 }
 
-type FormFieldDualSelectField<T extends string> = Omit<FormFieldSelect<T>, 'bottomText' | 'type'>;
-interface FormFieldDualSelect<T extends string> extends Omit<FormFieldBase<T>, 'label'> {
-	fields: [FormFieldDualSelectField<T>, FormFieldDualSelectField<T>];
+type FormFieldDualSelectField<T extends string, V extends string> = Omit<
+	FormFieldSelect<T, V>,
+	'bottomText' | 'type'
+>;
+export interface FormFieldDualSelect<T extends string, V extends string>
+	extends Omit<FormFieldBase<T>, 'label'> {
+	fields: [FormFieldDualSelectField<T, V>, FormFieldDualSelectField<T, V>];
 	validate?: {
-		func: (value: [string | null, string | null]) => boolean;
+		func: (value: [V | null, V | null]) => boolean;
 		message: string;
 	};
 }
@@ -41,13 +45,13 @@ interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {
 	maxCount: number;
 }
 
-export type FormField =
+export type FormField<V extends string = string> =
 	| FormFieldBase<'custom'>
 	| FormFieldText<'text-field'>
 	| FormFieldTextarea<'text-area'>
 	| FormFieldBase<'switch'>
-	| FormFieldSelect<'select'>
-	| FormFieldDualSelect<'dual-select'>
+	| FormFieldSelect<'select', V>
+	| FormFieldDualSelect<'dual-select', V>
 	| FormFieldWeaponPool<'weapon-pool'>
 	| FormFieldBase<'theme'>;
 

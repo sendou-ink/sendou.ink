@@ -636,3 +636,5 @@ export const COUNTRY_CODES = [
 	'ZM',
 	'ZW'
 ] as const;
+
+export type CountryCode = (typeof COUNTRY_CODES)[number];
