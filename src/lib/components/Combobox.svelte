@@ -41,7 +41,6 @@
 		id
 	}: Props = $props();
 
-	let trigger = $state<HTMLButtonElement>()!;
 	let selectedValue = $derived(value?.label);
 	let selectedImage = $derived(value?.image);
 
@@ -62,7 +61,7 @@
 	<Popover.Root bind:open>
 		<Popover.Trigger {id} {disabled}>
 			{#snippet child({ props })}
-				<button bind:this={trigger} {...props}>
+				<button {...props}>
 					<div>
 						{#if selectedImage}
 							<Image path={selectedImage} size={24} lazy />
