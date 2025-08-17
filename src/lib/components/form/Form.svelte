@@ -27,12 +27,7 @@
 		schema,
 		defaultValues,
 		errors: () => errors,
-		onblur: () => {
-			// keep displaying the server error till a new submit happens
-			if (!action.result?.errors) {
-				validateForm();
-			}
-		}
+		onblur: () => validateForm()
 	});
 
 	function validateForm() {
@@ -43,6 +38,13 @@
 			const data = new FormData(form);
 			// @ts-expect-error
 			const parsed = z.safeParse(schema, Object.fromEntries(data.entries()));
+
+			if (action.result?.errors) {
+				const formErrors = parsed.success ? {} : zodErrorsToFormErrors(parsed.error);
+				errors = { ...formErrors, ...action.result.errors };
+				return false;
+			}
+
 			if (parsed.success) {
 				errors = {};
 				return true;
@@ -65,8 +67,7 @@
 	}
 
 	async function enhanced({ submit }: { submit: () => Promise<void> }) {
-		// allow trying resubmit if we are currently displaying server errors
-		if (!action.result?.errors && !validateForm()) {
+		if (!validateForm()) {
 			focusFirstInvalid();
 			return;
 		}
