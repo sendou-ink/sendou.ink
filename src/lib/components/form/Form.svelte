@@ -27,7 +27,12 @@
 		schema,
 		defaultValues,
 		errors: () => errors,
-		onblur: () => validateForm()
+		onblur: () => {
+			// keep displaying the server error till a new submit happens
+			if (!action.result?.errors) {
+				validateForm();
+			}
+		}
 	});
 
 	function validateForm() {
@@ -60,7 +65,8 @@
 	}
 
 	async function enhanced({ submit }: { submit: () => Promise<void> }) {
-		if (!validateForm()) {
+		// allow trying resubmit if we are currently displaying server errors
+		if (!action.result?.errors && !validateForm()) {
 			focusFirstInvalid();
 			return;
 		}
