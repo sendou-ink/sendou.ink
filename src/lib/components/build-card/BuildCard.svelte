@@ -112,12 +112,6 @@
 					<div>•</div>
 				{/if}
 				<div class="stack horizontal items-center sm">
-					{#if build.private}
-						<div class="private-text">
-							<Lock class="private-icon" />
-							{m.common_build_private()}
-						</div>
-					{/if}
 					<time class="whitespace-nowrap">
 						{build.updatedAt.toLocaleDateString(getLocale(), {
 							day: 'numeric',
@@ -125,6 +119,12 @@
 							year: 'numeric'
 						})}
 					</time>
+					{#if build.private}
+						<div class="private-text">
+							<Lock class="private-icon" />
+							{m.common_build_private()}
+						</div>
+					{/if}
 				</div>
 			</div>
 			<!--- xxx: fix showActions -->
@@ -244,7 +244,8 @@
 		gap: var(--s-1);
 
 		:global(.private-icon) {
-			width: 16px;
+			width: 12px;
+			height: max-content;
 		}
 	}
 
