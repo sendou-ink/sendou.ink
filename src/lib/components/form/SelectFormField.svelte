@@ -5,6 +5,7 @@
 	import BottomText from './BottomText.svelte';
 	import Label from './Label.svelte';
 	import { ariaAttributes } from './utils';
+	import { getLocale } from '$lib/paraglide/runtime';
 
 	type Props = Omit<FormFieldProps<'select'>, 'name'> & {
 		value: string | null;
@@ -27,7 +28,7 @@
 	const itemsWithLabels = $derived(
 		items.map((item) => ({
 			...item,
-			label: typeof item.label === 'function' ? item.label('en') : item.label
+			label: typeof item.label === 'function' ? item.label(getLocale()) : item.label
 		}))
 	);
 </script>
