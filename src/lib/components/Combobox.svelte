@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { tick } from 'svelte';
 	import { Command, Popover } from 'bits-ui';
 	import { m } from '$lib/paraglide/messages';
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
@@ -51,10 +50,6 @@
 		value = item;
 
 		onselect?.(item);
-
-		tick().then(() => {
-			trigger.focus(); // xxx: this is not doing anything?
-		});
 	}
 
 	// xxx: Better way to do this?
