@@ -3,6 +3,7 @@
 	import { Dialog } from 'bits-ui';
 	import Button from '$lib/components/buttons/Button.svelte';
 	import X from '@lucide/svelte/icons/x';
+	import { goto } from '$app/navigation';
 
 	type Props = {
 		open?: boolean;
@@ -13,7 +14,7 @@
 		// xxx: missing props
 		// showHeading?: boolean;
 		// /** When closing the modal which URL to navigate to */
-		// onCloseTo?: string;
+		onCloseTo?: string;
 		// /** If true, shows the close button even if onClose is not provided */
 		// showCloseButton?: boolean;
 	};
@@ -21,10 +22,17 @@
 	// xxx: placeholder
 	const showCloseButton = true;
 
-	let { open = $bindable(false), children, title, trigger }: Props = $props();
+	let { open = $bindable(false), children, title, trigger, onCloseTo }: Props = $props();
 </script>
 
-<Dialog.Root bind:open>
+<Dialog.Root
+	bind:open
+	onOpenChange={onCloseTo
+		? (open) => {
+				if (!open) goto(onCloseTo);
+			}
+		: undefined}
+>
 	{@render trigger?.()}
 	<Dialog.Portal>
 		<Dialog.Overlay>
@@ -147,7 +155,7 @@
 		align-items: center;
 		margin-block-start: -3px;
 		font-size: var(--fonts-lg);
-		font-weight: var(--semi-bold);
+		font-weight: var(--bold);
 	}
 
 	.noHeading {

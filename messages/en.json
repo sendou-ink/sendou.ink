@@ -2430,5 +2430,7 @@
 	"common_forms_errors_required": "This field is required.",
 	"common_forms_errors_notAllowedCharacters": "Includes forbidden characters.",
 	"team_forms_errors_noOnlySpecialCharacters": "Team name can't be only special characters.",
-	"user_forms_editProfile_heading": "Editing user profile"
+	"user_forms_editProfile_heading": "Editing user profile",
+	"teary_pretty_jannes_quiz": "Can't create a new team",
+	"calm_chunky_goldfish_dance": "The maximum amount of teams is two (five for Supporters)."
 }
