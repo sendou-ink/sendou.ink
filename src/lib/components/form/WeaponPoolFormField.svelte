@@ -46,7 +46,7 @@
 	<input type="hidden" {name} value={JSON.stringify(value ?? [])} />
 
 	<ol>
-		{#each value as weapon}
+		{#each value as weapon (weapon.weaponSplId)}
 			{@render weaponRow(weapon)}
 		{/each}
 	</ol>

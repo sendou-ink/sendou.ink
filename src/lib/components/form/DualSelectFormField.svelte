@@ -14,7 +14,7 @@
 
 <div class="container stack xs">
 	<div class="stack horizontal md">
-		{#each fields as { items, label }, i}
+		{#each fields as { items, label }, i (label)}
 			<SelectFormField id={id + i} {clearable} {items} {label} {onblur} bind:value={value[i]} />
 		{/each}
 	</div>
