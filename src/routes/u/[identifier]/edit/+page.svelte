@@ -31,7 +31,7 @@
 	<FormField name={validField('country')} />
 	<FormField name={validField('favoriteBadges')}>
 		{#snippet children({ data, ...rest })}
-			<FavoriteBadgeField bind:value={data.value} {...rest} />
+			<FavoriteBadgeField bind:value={data.value as number[]} {...rest} />
 		{/snippet}
 	</FormField>
 	<FormField name={validField('weapons')} />
