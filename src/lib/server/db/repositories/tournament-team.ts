@@ -101,7 +101,7 @@ export function create({
 	tournamentId,
 	ownerInGameName
 }: {
-	team: Pick<TablesInsertable['TournamentTeam'], 'name' | 'prefersNotToHost' | 'teamId'>;
+	team: Pick<TablesInsertable['TournamentTeam'], 'name' | 'teamId'>;
 	avatarFileName?: string;
 	userId: number;
 	tournamentId: number;
@@ -122,7 +122,6 @@ export function create({
 				tournamentId,
 				name: team.name,
 				inviteCode: shortNanoid(),
-				prefersNotToHost: team.prefersNotToHost,
 				teamId: team.teamId,
 				avatarImgId
 			})
@@ -161,7 +160,6 @@ export function copyFromAnotherTournament({
 				'TournamentTeam.avatarImgId',
 				'TournamentTeam.createdAt',
 				'TournamentTeam.name',
-				'TournamentTeam.prefersNotToHost',
 				'TournamentTeam.teamId'
 
 				// -- exclude these
@@ -202,7 +200,6 @@ export function copyFromAnotherTournament({
 			.insertInto('TournamentTeam')
 			.values({
 				...oldTeam,
-				prefersNotToHost: Boolean(oldTeam.prefersNotToHost),
 				tournamentId: destinationTournamentId,
 				inviteCode: shortNanoid(),
 				seed
@@ -251,7 +248,7 @@ export function update({
 	avatarFileName,
 	userId
 }: {
-	team: Pick<TablesInsertable['TournamentTeam'], 'name' | 'prefersNotToHost' | 'teamId'> & {
+	team: Pick<TablesInsertable['TournamentTeam'], 'name' | 'teamId'> & {
 		id: number;
 	};
 	avatarFileName?: string;
@@ -272,7 +269,6 @@ export function update({
 			.updateTable('TournamentTeam')
 			.set({
 				name: team.name,
-				prefersNotToHost: team.prefersNotToHost,
 				teamId: team.teamId,
 				avatarImgId
 			})
