@@ -27,6 +27,7 @@ export const matchProfile = query(async (): Promise<UpdateMatchProfileData> => {
 			id: weapon.weaponSplId,
 			isFavorite: Boolean(weapon.isFavorite)
 		})),
-		vc: profile.vc
+		vc: profile.vc,
+		languages: profile.languages?.split(',') ?? []
 	};
 });

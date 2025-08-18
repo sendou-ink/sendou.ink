@@ -1,6 +1,7 @@
 import z from 'zod';
 import * as Fields from '$lib/form/fields';
 import { m } from '$lib/paraglide/messages';
+import { languagesUnified } from '$lib/utils/i18n';
 
 export const updatePreferencesSchema = z.object({
 	disableBuildAbilitySorting: z.boolean().optional(),
@@ -32,6 +33,13 @@ export const updateMatchProfileSchema = z.object({
 						? m.q_settings_voiceChat_canVC_no()
 						: m.q_settings_voiceChat_canVC_listenOnly(),
 			value
+		}))
+	}),
+	languages: Fields.checkboxGroup({
+		label: m.q_settings_voiceChat_languages_header(),
+		items: languagesUnified.map((lang) => ({
+			label: lang.name,
+			value: lang.code
 		}))
 	})
 });

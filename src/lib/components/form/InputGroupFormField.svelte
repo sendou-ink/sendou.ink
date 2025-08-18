@@ -1,15 +1,16 @@
-<script lang="ts">
+<script lang="ts" generics="T extends 'radio' | 'checkbox'">
 	import type { FormFieldProps } from '$lib/form/types';
 	import BottomText from './BottomText.svelte';
 	import Label from './Label.svelte';
 	import { getLocale } from '$lib/paraglide/runtime';
 
 	type Props = Omit<FormFieldProps<'radio-group'>, 'name'> & {
-		value: string;
+		value: T extends 'radio' ? string : string[];
 		name: string;
+		inputType: T;
 	};
 
-	let { label, name, bottomText, items, error, value = $bindable() }: Props = $props();
+	let { label, name, bottomText, items, error, inputType, value = $bindable() }: Props = $props();
 	const id = $props.id();
 
 	const itemsWithLabels = $derived(
@@ -26,7 +27,24 @@
 	</Label>
 	{#each itemsWithLabels as item (item.label)}
 		<div class="stack horizontal sm">
-			<input type="radio" id={`${id}-${item.value}`} {name} value={item.value} bind:group={value} />
+			<!-- some duplication here because when binding "type" has to be static according to Svelte rules -->
+			{#if inputType === 'radio'}
+				<input
+					type="radio"
+					bind:group={value}
+					id={`${id}-${item.value}`}
+					{name}
+					value={item.value}
+				/>
+			{:else}
+				<input
+					type="checkbox"
+					bind:group={value}
+					id={`${id}-${item.value}`}
+					{name}
+					value={item.value}
+				/>
+			{/if}
 			<label for={`${id}-${item.value}`}>{item.label}</label>
 		</div>
 	{/each}

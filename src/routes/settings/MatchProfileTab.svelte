@@ -18,4 +18,5 @@
 >
 	<FormField name={validField('qWeaponPool')} />
 	<FormField name={validField('vc')} />
+	<FormField name={validField('languages')} />
 </Form>

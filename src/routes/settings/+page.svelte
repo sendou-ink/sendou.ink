@@ -13,6 +13,7 @@
 	import AccessibilityTab from './AccessibilityTab.svelte';
 	import { SearchParamState } from '$lib/runes/search-param-state.svelte';
 	import z from 'zod';
+	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 
 	const tab = new SearchParamState({
 		defaultValue: 'preferences',
@@ -20,6 +21,8 @@
 		key: 'tab'
 	});
 </script>
+
+<OpenGraphMeta title="Settings" />
 
 <Main>
 	<Tabs

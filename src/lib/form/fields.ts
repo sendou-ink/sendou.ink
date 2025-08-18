@@ -158,10 +158,19 @@ export function radioGroup(args: Omit<Extract<FormField, { type: 'radio-group' }
 }
 
 export function checkboxGroup(args: Omit<Extract<FormField, { type: 'checkbox-group' }>, 'type'>) {
-	return z.preprocess(safeJSONParse, z.array(itemsSchema(args.items))).register(formRegistry, {
-		...args,
-		type: 'checkbox-group'
-	});
+	return z
+		.preprocess(
+			(value) => {
+				if (Array.isArray(value)) return value;
+				if (typeof value === 'string') return [value];
+				if (!value) return [];
+			},
+			z.array(itemsSchema(args.items))
+		)
+		.register(formRegistry, {
+			...args,
+			type: 'checkbox-group'
+		});
 }
 
 export function weaponPool(args: Omit<Extract<FormField, { type: 'weapon-pool' }>, 'type'>) {
