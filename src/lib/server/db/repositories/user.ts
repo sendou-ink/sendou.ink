@@ -641,7 +641,16 @@ export async function currentFriendCodeByUserId(userId: number) {
 		.executeTakeFirst();
 }
 
-export async function hasNoScreen(userIds: number[]) {
+export async function matchProfileById(userId: number) {
+	return db
+		.selectFrom('User')
+		.select(['User.qWeaponPool', 'User.vc', 'User.languages', 'User.mapModePreferences'])
+		.where('User.id', '=', userId)
+		.executeTakeFirst();
+}
+
+/** Returns true if any of the given users prefers to avoid playing against Splattercolor Screen */
+export async function hasNoScreenByUserIds(userIds: number[]) {
 	const row = await db
 		.selectFrom('User')
 		.select('id')
@@ -733,7 +742,7 @@ export function updateProfile(userId: number, args: EditProfileData) {
 				.values(
 					args.weapons.map((weapon, i) => ({
 						userId,
-						weaponSplId: weapon.weaponSplId,
+						weaponSplId: weapon.id,
 						isFavorite: weapon.isFavorite,
 						order: i + 1
 					}))

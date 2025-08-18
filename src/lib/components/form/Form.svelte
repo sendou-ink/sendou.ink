@@ -16,9 +16,10 @@
 		action: RemoteForm<void | { errors: Partial<Record<keyof Output, string>> }>;
 		schema: T;
 		defaultValues?: Partial<Output>;
+		info?: string;
 	}
 
-	let { children, heading, action, schema, defaultValues }: Props = $props();
+	let { children, heading, action, schema, defaultValues, info }: Props = $props();
 	const id = $props.id();
 
 	let errors = $state<Partial<Record<keyof Output, string>>>({});
@@ -79,9 +80,16 @@
 </script>
 
 <form {id} {...action.enhance(enhanced)} class="stack md-plus items-start">
-	{#if heading}
-		<h1 class="text-lg">{heading}</h1>
-	{/if}
+	<div class="stack xs">
+		{#if heading}
+			<h1 class="text-lg">{heading}</h1>
+		{/if}
+		{#if info}
+			<div class="info-message">
+				{info}
+			</div>
+		{/if}
+	</div>
 
 	{@render children()}
 
@@ -91,3 +99,11 @@
 		</Button>
 	</div>
 </form>
+
+<style>
+	.info-message {
+		color: var(--color-base-content-secondary);
+		font-size: var(--fonts-xs);
+		text-wrap: balance;
+	}
+</style>

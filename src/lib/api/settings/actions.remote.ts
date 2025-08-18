@@ -3,8 +3,12 @@ import { requireUser } from '$lib/server/auth/session';
 import * as UserRepository from '$lib/server/db/repositories/user';
 import { validatedForm } from '$lib/server/remote-functions';
 import { logger } from '$lib/utils/logger';
-import { prefersNoScreen } from './queries.remote';
-import { updateAccessibilitySettingsSchema, updatePreferencesSchema } from './schemas';
+import { matchProfile, prefersNoScreen } from './queries.remote';
+import {
+	updateAccessibilitySettingsSchema,
+	updateMatchProfileSchema,
+	updatePreferencesSchema
+} from './schemas';
 
 export const updateBooleanPreferences = command(updatePreferencesSchema, async (data) => {
 	const user = await requireUser();
@@ -22,3 +26,11 @@ export const updateAccessibilitySettings = validatedForm(
 		await prefersNoScreen().refresh();
 	}
 );
+
+export const updateMatchProfile = validatedForm(updateMatchProfileSchema, async (data) => {
+	console.log('Match profile updated', data);
+
+	// xxx: update the thing
+
+	await matchProfile().refresh();
+});

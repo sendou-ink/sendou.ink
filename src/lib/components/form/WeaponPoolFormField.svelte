@@ -11,7 +11,7 @@
 	import { asset } from '$app/paths';
 
 	export interface WeaponPool {
-		weaponSplId: MainWeaponId;
+		id: MainWeaponId;
 		isFavorite: boolean;
 	}
 
@@ -31,10 +31,10 @@
 	<WeaponSelect
 		{id}
 		disabled={value.length >= maxCount}
-		disabledWeaponIds={value.map((weapon) => weapon.weaponSplId)}
-		onselect={(weaponSplId, clear) => {
+		disabledWeaponIds={value.map((weapon) => weapon.id)}
+		onselect={(id, clear) => {
 			value.push({
-				weaponSplId,
+				id,
 				isFavorite: false
 			});
 
@@ -45,7 +45,7 @@
 	<input type="hidden" {name} value={JSON.stringify(value ?? [])} />
 
 	<ol>
-		{#each value as weapon (weapon.weaponSplId)}
+		{#each value as weapon (weapon.id)}
 			{@render weaponRow(weapon)}
 		{/each}
 	</ol>
@@ -53,26 +53,20 @@
 	<BottomText info={bottomText} {error} fieldId={id} />
 </div>
 
-{#snippet weaponRow({
-	weaponSplId,
-	isFavorite
-}: {
-	weaponSplId: MainWeaponId;
-	isFavorite: boolean;
-})}
+{#snippet weaponRow({ id, isFavorite }: { id: MainWeaponId; isFavorite: boolean })}
 	<li>
 		<div class="line"></div>
 		<img
 			src={isFavorite
-				? asset(`/img/main-weapons-outlined-2/${weaponSplId}.avif`)
-				: asset(`/img/main-weapons-outlined/${weaponSplId}.avif`)}
+				? asset(`/img/main-weapons-outlined-2/${id}.avif`)
+				: asset(`/img/main-weapons-outlined/${id}.avif`)}
 			width={32}
 			height={32}
 			loading="lazy"
 			alt=""
 		/>
 		<span class="weapon-row-text">
-			{weaponTranslations[weaponSplId]()}
+			{weaponTranslations[id]()}
 		</span>
 		<div class="icons ml-auto stack horizontal md">
 			<Button
@@ -80,7 +74,7 @@
 				icon={Star}
 				variant="minimal-secondary"
 				onclick={() => {
-					const item = value.find((weapon) => weapon.weaponSplId === weaponSplId);
+					const item = value.find((weapon) => weapon.id === id);
 					if (item) {
 						item.isFavorite = !item.isFavorite;
 					}
@@ -91,7 +85,7 @@
 				icon={Trash2}
 				variant="minimal-destructive"
 				onclick={() => {
-					value = value.filter((weapon) => weapon.weaponSplId !== weaponSplId);
+					value = value.filter((weapon) => weapon.id !== id);
 					onblur?.();
 				}}
 				size="small"

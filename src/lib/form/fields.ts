@@ -155,7 +155,7 @@ export function weaponPool(args: Omit<Extract<FormField, { type: 'weapon-pool' }
 			z
 				.array(
 					z.object({
-						weaponSplId,
+						id: weaponSplId,
 						isFavorite: z.boolean()
 					})
 				)

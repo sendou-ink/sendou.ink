@@ -15,3 +15,13 @@ export const updateAccessibilitySettingsSchema = z.object({
 });
 
 export type UpdateAccessibilitySettingsData = z.infer<typeof updateAccessibilitySettingsSchema>;
+
+export const updateMatchProfileSchema = z.object({
+	qWeaponPool: Fields.weaponPool({
+		label: m.user_weaponPool(),
+		bottomText: m.early_weird_nils_splash(),
+		maxCount: 4
+	})
+});
+
+export type UpdateMatchProfileData = z.infer<typeof updateMatchProfileSchema>;
