@@ -1,4 +1,9 @@
-import type { AbilityWithUnknown, MainWeaponId, ModeShort } from '$lib/constants/in-game/types';
+import type {
+	AbilityWithUnknown,
+	MainWeaponId,
+	ModeShort,
+	StageId
+} from '$lib/constants/in-game/types';
 import type { weaponCategories } from '$lib/constants/in-game/weapon-ids';
 import { m } from '$lib/paraglide/messages';
 import { logger } from './logger';
@@ -226,6 +231,34 @@ export const modesShortTranslations: Record<ModeShort, () => string> = {
 	TC: m.game_misc_MODE_SHORT_TC,
 	RM: m.game_misc_MODE_SHORT_RM,
 	CB: m.game_misc_MODE_SHORT_CB
+};
+
+export const stageTranslations: Record<StageId, () => string> = {
+	0: m.game_misc_STAGE_0,
+	1: m.game_misc_STAGE_1,
+	2: m.game_misc_STAGE_2,
+	3: m.game_misc_STAGE_3,
+	4: m.game_misc_STAGE_4,
+	5: m.game_misc_STAGE_5,
+	6: m.game_misc_STAGE_6,
+	7: m.game_misc_STAGE_7,
+	8: m.game_misc_STAGE_8,
+	9: m.game_misc_STAGE_9,
+	10: m.game_misc_STAGE_10,
+	11: m.game_misc_STAGE_11,
+	12: m.game_misc_STAGE_12,
+	13: m.game_misc_STAGE_13,
+	14: m.game_misc_STAGE_14,
+	15: m.game_misc_STAGE_15,
+	16: m.game_misc_STAGE_16,
+	17: m.game_misc_STAGE_17,
+	18: m.game_misc_STAGE_18,
+	19: m.game_misc_STAGE_19,
+	20: m.game_misc_STAGE_20,
+	21: m.game_misc_STAGE_21,
+	22: m.game_misc_STAGE_22,
+	23: m.game_misc_STAGE_23,
+	24: m.game_misc_STAGE_24
 };
 
 export const weaponTranslations: Record<
