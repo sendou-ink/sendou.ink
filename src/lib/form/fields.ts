@@ -7,6 +7,7 @@ import {
 } from '$lib/schemas';
 import z from 'zod';
 import type { FormField, FormFieldDualSelect, FormFieldItems, FormFieldSelect } from './types';
+import { m } from '$lib/paraglide/messages';
 
 export const formRegistry = z.registry<FormField>();
 
@@ -165,7 +166,9 @@ export function checkboxGroup(args: Omit<Extract<FormField, { type: 'checkbox-gr
 				if (typeof value === 'string') return [value];
 				if (!value) return [];
 			},
-			z.array(itemsSchema(args.items))
+			z.array(itemsSchema(args.items)).min(1, {
+				error: m.least_sea_beetle_adapt()
+			})
 		)
 		.register(formRegistry, {
 			...args,

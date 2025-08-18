@@ -10,7 +10,16 @@
 		inputType: T;
 	};
 
-	let { label, name, bottomText, items, error, inputType, value = $bindable() }: Props = $props();
+	let {
+		label,
+		name,
+		bottomText,
+		items,
+		error,
+		onblur, // xxx: better name for onblur? since here it is attached to onclick instead
+		inputType,
+		value = $bindable()
+	}: Props = $props();
 	const id = $props.id();
 
 	const itemsWithLabels = $derived(
@@ -43,6 +52,7 @@
 					id={`${id}-${item.value}`}
 					{name}
 					value={item.value}
+					onclick={onblur}
 				/>
 			{/if}
 			<label for={`${id}-${item.value}`} class="stack horizontal sm items-center"
