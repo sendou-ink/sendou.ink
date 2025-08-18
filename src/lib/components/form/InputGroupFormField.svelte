@@ -26,7 +26,7 @@
 		{label}
 	</Label>
 	{#each itemsWithLabels as item (item.label)}
-		<div class="stack horizontal sm">
+		<div class="stack horizontal sm-plus items-center">
 			<!-- some duplication here because when binding "type" has to be static according to Svelte rules -->
 			{#if inputType === 'radio'}
 				<input
@@ -45,7 +45,11 @@
 					value={item.value}
 				/>
 			{/if}
-			<label for={`${id}-${item.value}`}>{item.label}</label>
+			<label for={`${id}-${item.value}`} class="stack horizontal sm items-center"
+				>{#if item.imgSrc}
+					<img src={item.imgSrc} width={24} height={24} alt="" />
+				{/if}{item.label}</label
+			>
 		</div>
 	{/each}
 	<BottomText info={bottomText} {error} fieldId={id} />

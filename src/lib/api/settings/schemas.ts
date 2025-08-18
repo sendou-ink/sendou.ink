@@ -1,7 +1,9 @@
 import z from 'zod';
 import * as Fields from '$lib/form/fields';
 import { m } from '$lib/paraglide/messages';
-import { languagesUnified } from '$lib/utils/i18n';
+import { languagesUnified, modesLongTranslations } from '$lib/utils/i18n';
+import { modesShort } from '$lib/constants/in-game/modes';
+import { asset } from '$app/paths';
 
 export const updatePreferencesSchema = z.object({
 	disableBuildAbilitySorting: z.boolean().optional(),
@@ -40,6 +42,15 @@ export const updateMatchProfileSchema = z.object({
 		items: languagesUnified.map((lang) => ({
 			label: lang.name,
 			value: lang.code
+		}))
+	}),
+	modes: Fields.checkboxGroup({
+		label: m.dirty_heroic_jackdaw_radiate(),
+		bottomText: m.male_merry_weasel_sprout(),
+		items: modesShort.map((mode) => ({
+			value: mode,
+			label: modesLongTranslations[mode](),
+			imgSrc: asset(`/img/modes/${mode}.avif`)
 		}))
 	})
 });

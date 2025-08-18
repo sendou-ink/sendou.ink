@@ -28,6 +28,11 @@ export const matchProfile = query(async (): Promise<UpdateMatchProfileData> => {
 			isFavorite: Boolean(weapon.isFavorite)
 		})),
 		vc: profile.vc,
-		languages: profile.languages?.split(',') ?? []
+		languages: profile.languages?.split(',') ?? [],
+		modes:
+			// xxx: we could handle this better via a migration
+			profile.mapModePreferences?.modes.flatMap((pref) =>
+				pref.preference === 'PREFER' ? pref.mode : []
+			) ?? []
 	};
 });
