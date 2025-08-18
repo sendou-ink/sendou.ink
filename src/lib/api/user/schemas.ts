@@ -112,4 +112,4 @@ export const editProfileSchema = z.object({
 	})
 });
 
-export type EditProfileSchemaData = z.infer<typeof editProfileSchema>;
+export type EditProfileData = z.infer<typeof editProfileSchema>;

@@ -10,7 +10,8 @@ import { COMMON_USER_FIELDS } from '$lib/utils/kysely.server';
 import { safeNumberParse } from '$lib/utils/number';
 import { isSupporter } from '$lib/modules/permissions/utils';
 import { userRoles } from '$lib/modules/permissions/mapper.server';
-import type { EditProfileSchemaData } from '$lib/api/user/schemas';
+import type { EditProfileData } from '$lib/api/user/schemas';
+import type { UpdateAccessibilitySettingsData } from '$lib/api/settings/schemas';
 
 function identifierToUserIdQuery(identifier: string) {
 	return db
@@ -640,6 +641,18 @@ export async function currentFriendCodeByUserId(userId: number) {
 		.executeTakeFirst();
 }
 
+export async function hasNoScreen(userIds: number[]) {
+	const row = await db
+		.selectFrom('User')
+		.select('id')
+		.where('User.noScreen', '=', 1)
+		.where('id', 'in', userIds)
+		.limit(1)
+		.executeTakeFirst();
+
+	return Boolean(row);
+}
+
 let cachedFriendCodes: Set<string> | null = null;
 
 export async function allCurrentFriendCodes() {
@@ -710,7 +723,7 @@ export function upsert(
 		.executeTakeFirstOrThrow();
 }
 
-export function updateProfile(userId: number, args: EditProfileSchemaData) {
+export function updateProfile(userId: number, args: EditProfileData) {
 	return db.transaction().execute(async (trx) => {
 		await trx.deleteFrom('UserWeapon').where('userId', '=', userId).execute();
 
@@ -841,6 +854,10 @@ export function updateBuildSorting({
 		.set({ buildSorting: buildSorting ? JSON.stringify(buildSorting) : null })
 		.where('id', '=', userId)
 		.execute();
+}
+
+export function updateAccessibilitySettings(userId: number, data: UpdateAccessibilitySettingsData) {
+	return db.updateTable('User').set(data).where('id', '=', userId).execute();
 }
 
 export type UpdatePatronDataArgs = Array<

@@ -2432,5 +2432,8 @@
 	"team_forms_errors_noOnlySpecialCharacters": "Team name can't be only special characters.",
 	"user_forms_editProfile_heading": "Editing user profile",
 	"teary_pretty_jannes_quiz": "Can't create a new team",
-	"calm_chunky_goldfish_dance": "The maximum amount of teams is two (five for Supporters)."
+	"calm_chunky_goldfish_dance": "The maximum amount of teams is two (five for Supporters).",
+	"less_quick_ox_dash": "Avoid playing against Splattercolor Screen",
+	"heavy_weary_mink_twist": "If Splattercolor Screen causes discomfort to you, enabling this option forbids playing it in the tournament, SendouQ and scrim matches you participate in.",
+	"topical_steep_panther_honor": "Updating accessibility settings"
 }

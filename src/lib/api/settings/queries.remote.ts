@@ -7,3 +7,9 @@ export const byLoggedInUser = query(async () => {
 
 	return await UserRepository.preferencesById(user.id);
 });
+
+export const prefersNoScreen = query(async () => {
+	const loggedInUser = await requireUser();
+
+	return { noScreen: await UserRepository.hasNoScreen([loggedInUser.id]) };
+});

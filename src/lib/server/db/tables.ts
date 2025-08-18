@@ -26,7 +26,7 @@ type Generated<T> =
 
 export type MemberRole = (typeof TEAM_MEMBER_ROLES)[number];
 
-/** In SQLite booleans are presented as 0 (false) and 1 (true) but can be inserted as booleans thanks to a Kysely plugin */
+/** In SQLite booleans are represented as 0 (false) and 1 (true) but can be inserted as booleans thanks to a Kysely plugin */
 export type DBBoolean = ColumnType<number, boolean, boolean>;
 
 export interface Team {
@@ -431,7 +431,6 @@ export interface TournamentSettings {
 	/** @deprecated use bracketProgression instead */
 	thirdPlaceMatch?: boolean;
 	isRanked?: boolean;
-	enableNoScreenToggle?: boolean;
 	/** Enable the subs tab, default true */
 	enableSubs?: boolean;
 	deadlines?: 'STRICT' | 'DEFAULT';
@@ -662,7 +661,6 @@ export interface TournamentTeam {
 	inviteCode: string;
 	name: string;
 	prefersNotToHost: Generated<DBBoolean>;
-	noScreen: Generated<DBBoolean>;
 	droppedOut: Generated<DBBoolean>;
 	seed: number | null;
 	/** For formats that have many starting brackets, where should the team start? */

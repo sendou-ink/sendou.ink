@@ -2,7 +2,7 @@ import { query } from '$app/server';
 import { getUser, requireUser } from '$lib/server/auth/session';
 import * as UserRepository from '$lib/server/db/repositories/user';
 import { notFoundIfFalsy } from '$lib/server/remote-functions';
-import { identifier, type EditProfileSchemaData } from './schemas';
+import { identifier, type EditProfileData } from './schemas';
 import { error, redirect } from '@sveltejs/kit';
 import { resolve } from '$app/paths';
 import invariant from '$lib/utils/invariant';
@@ -29,7 +29,7 @@ export const profileByIdentifier = query(identifier, async (identifier) => {
 
 export const editProfileFormData = query(
 	identifier,
-	async (identifier): Promise<EditProfileSchemaData> => {
+	async (identifier): Promise<EditProfileData> => {
 		const loggedInUser = await requireUser();
 		const userProfile = notFoundIfFalsy(await UserRepository.findProfileByIdentifier(identifier));
 		if (loggedInUser.id !== userProfile.id) {
