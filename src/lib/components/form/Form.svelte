@@ -72,7 +72,7 @@
 	}
 
 	function handleOnchange(event: Event) {
-		const target = event.currentTarget as (EventTarget & HTMLInputElement) | HTMLTextAreaElement;
+		const target = event.target as (EventTarget & HTMLInputElement) | HTMLTextAreaElement;
 		const name = target.name;
 
 		const fieldData = new FormData(formElement()).getAll(name);
