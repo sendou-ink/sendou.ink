@@ -24,8 +24,13 @@ interface FormFieldTextarea<T extends string> extends FormFieldBase<T> {
 	maxLength: number;
 }
 
+export type FormFieldItems<V extends string> = Array<{
+	label: string | number | ((lang: string) => string);
+	value: V;
+}>;
+
 export interface FormFieldSelect<T extends string, V extends string> extends FormFieldBase<T> {
-	items: Array<{ label: string | number | ((lang: string) => string); value: V }>;
+	items: FormFieldItems<V>;
 }
 
 type FormFieldDualSelectField<T extends string, V extends string> = Omit<
@@ -41,6 +46,15 @@ export interface FormFieldDualSelect<T extends string, V extends string>
 	};
 }
 
+export interface FormFieldRadioGroup<T extends string, V extends string> extends FormFieldBase<T> {
+	items: FormFieldItems<V>;
+}
+
+export interface FormFieldCheckboxGroup<T extends string, V extends string>
+	extends FormFieldBase<T> {
+	items: FormFieldItems<V>;
+}
+
 interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {
 	maxCount: number;
 }
@@ -52,6 +66,8 @@ export type FormField<V extends string = string> =
 	| FormFieldBase<'switch'>
 	| FormFieldSelect<'select', V>
 	| FormFieldDualSelect<'dual-select', V>
+	| FormFieldRadioGroup<'radio-group', V>
+	| FormFieldCheckboxGroup<'checkbox-group', V>
 	| FormFieldWeaponPool<'weapon-pool'>
 	| FormFieldBase<'theme'>;
 

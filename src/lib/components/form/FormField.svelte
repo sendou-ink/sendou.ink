@@ -11,6 +11,7 @@
 	import SelectFormField from './SelectFormField.svelte';
 	import DualSelectFormField from './DualSelectFormField.svelte';
 	import type { Snippet } from 'svelte';
+	import RadioGroupFormField from './RadioGroupFormField.svelte';
 
 	type Output = z.output<T>;
 	type ValueType = Output[keyof Output];
@@ -77,6 +78,8 @@
 		{...commonProps}
 		{...formField}
 	/>
+{:else if formField.type === 'radio-group'}
+	<RadioGroupFormField bind:value={data.value as string} {...commonProps} {...formField} />
 {:else if formField.type === 'weapon-pool'}
 	<WeaponPoolFormField bind:value={data.value as WeaponPool[]} {...commonProps} {...formField} />
 {:else if formField.type === 'custom'}

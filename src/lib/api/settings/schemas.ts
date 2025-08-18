@@ -21,6 +21,18 @@ export const updateMatchProfileSchema = z.object({
 		label: m.user_weaponPool(),
 		bottomText: m.early_weird_nils_splash(),
 		maxCount: 4
+	}),
+	vc: Fields.radioGroup({
+		label: m.q_settings_voiceChat_canVC_header(),
+		items: (['YES', 'NO', 'LISTEN_ONLY'] as const).map((value) => ({
+			label:
+				value === 'YES'
+					? m.q_settings_voiceChat_canVC_yes()
+					: value === 'NO'
+						? m.q_settings_voiceChat_canVC_no()
+						: m.q_settings_voiceChat_canVC_listenOnly(),
+			value
+		}))
 	})
 });
 

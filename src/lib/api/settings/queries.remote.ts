@@ -26,6 +26,7 @@ export const matchProfile = query(async (): Promise<UpdateMatchProfileData> => {
 		qWeaponPool: (profile.qWeaponPool ?? []).map((weapon) => ({
 			id: weapon.weaponSplId,
 			isFavorite: Boolean(weapon.isFavorite)
-		}))
+		})),
+		vc: profile.vc
 	};
 });

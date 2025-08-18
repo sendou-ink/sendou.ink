@@ -1,0 +1,53 @@
+<script lang="ts">
+	import type { FormFieldProps } from '$lib/form/types';
+	import BottomText from './BottomText.svelte';
+	import Label from './Label.svelte';
+	import { getLocale } from '$lib/paraglide/runtime';
+
+	type Props = Omit<FormFieldProps<'radio-group'>, 'name'> & {
+		value: string;
+		name: string;
+	};
+
+	let { label, name, bottomText, items, error, value = $bindable() }: Props = $props();
+	const id = $props.id();
+
+	const itemsWithLabels = $derived(
+		items.map((item) => ({
+			...item,
+			label: typeof item.label === 'function' ? item.label(getLocale()) : item.label
+		}))
+	);
+</script>
+
+<div class="stack xs" role="radiogroup" aria-orientation="vertical" aria-labelledby={id}>
+	<Label {id}>
+		{label}
+	</Label>
+	{#each itemsWithLabels as item (item.label)}
+		<div class="stack horizontal sm">
+			<input type="radio" id={`${id}-${item.value}`} {name} value={item.value} bind:group={value} />
+			<label for={`${id}-${item.value}`}>{item.label}</label>
+		</div>
+	{/each}
+	<BottomText info={bottomText} {error} fieldId={id} />
+</div>
+
+<style>
+	/** TODO: round focus styling */
+	input {
+		accent-color: var(--color-secondary);
+		height: max-content;
+		border-radius: 100%;
+		margin: auto 0;
+
+		&:focus-visible {
+			outline: 2px solid var(--color-secondary);
+		}
+	}
+
+	label {
+		font-weight: var(--semi-bold);
+		font-size: var(--fonts-sm);
+	}
+</style>

@@ -6,7 +6,7 @@ import {
 	weaponSplId
 } from '$lib/schemas';
 import z from 'zod';
-import type { FormField, FormFieldDualSelect, FormFieldSelect } from './types';
+import type { FormField, FormFieldDualSelect, FormFieldItems, FormFieldSelect } from './types';
 
 export const formRegistry = z.registry<FormField>();
 
@@ -101,14 +101,16 @@ export function toggle(args: Omit<Extract<FormField, { type: 'switch' }>, 'type'
 		});
 }
 
-function clearableSelectFieldSchema<V extends string>(
-	items: FormFieldSelect<'select', V>['items']
-) {
+function itemsSchema<V extends string>(items: FormFieldItems<V>) {
+	return z.enum(items.map((item) => item.value));
+}
+
+function clearableItemsSchema<V extends string>(items: FormFieldItems<V>) {
 	return z.preprocess(falsyToNull, z.enum(items.map((item) => item.value)).nullable());
 }
 
 export function selectOptional<V extends string>(args: Omit<FormFieldSelect<'select', V>, 'type'>) {
-	return clearableSelectFieldSchema(args.items).register(formRegistry, {
+	return clearableItemsSchema(args.items).register(formRegistry, {
 		...args,
 		type: 'select'
 	});
@@ -121,8 +123,8 @@ export function dualSelectOptional<V extends string>(
 		safeJSONParse,
 		z
 			.tuple([
-				clearableSelectFieldSchema(args.fields[0].items),
-				clearableSelectFieldSchema(args.fields[1].items)
+				clearableItemsSchema(args.fields[0].items),
+				clearableItemsSchema(args.fields[1].items)
 			])
 			.optional()
 	);
@@ -145,6 +147,20 @@ export function dualSelectOptional<V extends string>(
 	return schema.register(formRegistry, {
 		...args,
 		type: 'dual-select'
+	});
+}
+
+export function radioGroup(args: Omit<Extract<FormField, { type: 'radio-group' }>, 'type'>) {
+	return itemsSchema(args.items).register(formRegistry, {
+		...args,
+		type: 'radio-group'
+	});
+}
+
+export function checkboxGroup(args: Omit<Extract<FormField, { type: 'checkbox-group' }>, 'type'>) {
+	return z.preprocess(safeJSONParse, z.array(itemsSchema(args.items))).register(formRegistry, {
+		...args,
+		type: 'checkbox-group'
 	});
 }
 

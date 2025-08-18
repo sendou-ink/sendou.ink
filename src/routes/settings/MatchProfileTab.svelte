@@ -17,4 +17,5 @@
 	info={m.due_main_salmon_trust()}
 >
 	<FormField name={validField('qWeaponPool')} />
+	<FormField name={validField('vc')} />
 </Form>
