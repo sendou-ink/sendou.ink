@@ -475,10 +475,6 @@ export function articlePreviewUrl(slug: string) {
 	return `/img/article-previews/${slug}.png`;
 }
 
-export function navIconUrl(navItem: string) {
-	return `/img/layout/${navItem}`;
-}
-
 export function gearImageUrl(gearType: GearType, gearSplId: number) {
 	return `/img/gear/${gearType.toLowerCase()}/${gearSplId}`;
 }

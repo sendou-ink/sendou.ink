@@ -5,6 +5,7 @@
 	import Heart from '@lucide/svelte/icons/heart';
 	import Button from '$lib/components/buttons/Button.svelte';
 	import * as AuthAPI from '$lib/api/auth';
+	import AnythingAdder from './AnythingAdder.svelte';
 
 	const isFrontPage = $derived(page.url.pathname === '/');
 </script>
@@ -41,9 +42,11 @@ xxx: implement NavDialog & Hamburger
 				{m.common_pages_support()}
 			</Button>
 		{/if}
+		{#if await AuthAPI.queries.me()}
+			<!-- <NotificationPopover /> -->
+			<AnythingAdder />
+		{/if}
 		<!-- 
-        <NotificationPopover />
-		<AnythingAdder /> 
         <button
 			aria-label="Open navigation"
 			onClick={openNavDialog}

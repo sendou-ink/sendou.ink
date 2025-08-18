@@ -1,20 +1,12 @@
 import { m } from '$lib/paraglide/messages';
 
-export const navItems = [
+const navItemsBase = [
 	{
 		id: 'settings',
 		name: m.common_pages_settings(),
 		url: 'settings',
 		prefetch: true
 	},
-	import.meta.env.VITE_SHOW_LUTI_NAV_ITEM === 'true'
-		? {
-				id: 'luti',
-				name: m.common_pages_luti(),
-				url: 'luti',
-				prefetch: false
-			}
-		: null,
 	{
 		id: 'q',
 		name: m.common_pages_sendouq(),
@@ -117,4 +109,17 @@ export const navItems = [
 		url: 'maps',
 		prefetch: false
 	}
-].filter((item) => item !== null);
+] as const;
+
+const navItemsWithLuti = [
+	{
+		id: 'luti',
+		name: m.common_pages_luti(),
+		url: 'luti',
+		prefetch: false
+	},
+	...navItemsBase
+] as const;
+
+export const navItems =
+	import.meta.env.VITE_SHOW_LUTI_NAV_ITEM === 'true' ? navItemsWithLuti : navItemsBase;

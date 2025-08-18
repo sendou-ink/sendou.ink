@@ -1,11 +1,5 @@
 <script lang="ts">
-	import {
-		gearImageUrl,
-		modeImageUrl,
-		navIconUrl,
-		userBuildsPage,
-		weaponBuildPage
-	} from '$lib/utils/urls';
+	import { gearImageUrl, modeImageUrl, userBuildsPage, weaponBuildPage } from '$lib/utils/urls';
 	import Ability from '$lib/components/Ability.svelte';
 	import Image from '$lib/components/image/Image.svelte';
 	import type {
@@ -25,6 +19,7 @@
 	import PopoverTriggerButton from '$lib/components/popover/PopoverTriggerButton.svelte';
 	import ActionsMenu from '$lib/components/build-card/ActionsMenu.svelte';
 	import type { BySlugData } from '$lib/api/build/queries.remote';
+	import { asset } from '$app/paths';
 
 	interface BuildWeaponWithTop500Info {
 		weaponSplId: MainWeaponId;
@@ -172,7 +167,7 @@
 		{#if isTop500}
 			<Image
 				class="top-500"
-				path={navIconUrl('xsearch')}
+				path={asset('/img/layout/xsearch.avif')}
 				alt=""
 				title="Max X Power: {weapon.maxPower} | Best Rank: {weapon.minRank}"
 				height={24}

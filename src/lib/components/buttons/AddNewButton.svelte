@@ -1,12 +1,12 @@
 <script lang="ts">
-	import Image from '$lib/components/image/Image.svelte';
-	import { navIconUrl } from '$lib/utils/urls';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Button from './Button.svelte';
+	import { asset } from '$app/paths';
+	import type { navItems } from '../../../routes/nav-items';
 
 	interface Props {
 		href: string;
-		navIcon: string;
+		navIcon: (typeof navItems)[number]['id'];
 	}
 
 	let { href, navIcon }: Props = $props();
@@ -15,7 +15,7 @@
 <Button {href} class="addNewButton">
 	<span class="iconsContainer">
 		<Plus />
-		<Image path={navIconUrl(navIcon)} size={18} alt="" />
+		<img src={asset(`/img/layout/${navIcon}.avif`)} height={18} width={18} alt="" />
 	</span>
 	<span class="textContainer">New</span>
 </Button>

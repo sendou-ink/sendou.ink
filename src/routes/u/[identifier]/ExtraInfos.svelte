@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { navIconUrl } from '$lib/utils/urls';
-	import Image from '$lib/components/image/Image.svelte';
 	import DiscordIcon from '$lib/components/icons/Discord.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { rawSensToString } from '$lib/utils/strings';
 	import type { ProfileByIdentifierData } from '$lib/api/user/queries.remote';
+	import { asset } from '$app/paths';
 
 	interface Props {
 		userId: number;
@@ -53,7 +52,7 @@
 	{/if}
 	{#if profile.plusTier}
 		<div class="extra-info">
-			<Image path={navIconUrl('plus')} width={20} height={20} alt="" />
+			<img src={asset(`/img/layout/plus.avif`)} width={20} height={20} alt="" />
 			{profile.plusTier}
 		</div>
 	{/if}

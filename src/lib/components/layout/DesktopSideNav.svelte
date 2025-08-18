@@ -1,13 +1,12 @@
 <script lang="ts">
-	import { navItems } from '../../../routes/nav-items'; // Adjust import path as needed
-	import { navIconUrl } from '$lib/utils/urls';
-	import Image from '$lib/components/image/Image.svelte';
+	import { navItems } from '../../../routes/nav-items';
+	import { asset } from '$app/paths';
 </script>
 
 <nav>
 	{#each navItems as item (item.id)}
 		<a href="/{item.url}" data-sveltekit-preload-data={item.prefetch ? 'hover' : 'off'}>
-			<Image path={navIconUrl(item.id)} height={20} width={20} alt={item.name} />
+			<img src={asset(`/img/layout/${item.id}.avif`)} height={28} width={28} alt={item.name} />
 			<div>{item.name}</div>
 		</a>
 	{/each}
@@ -55,14 +54,10 @@
 			background-clip: content-box;
 		}
 
-		:global(picture) {
+		img {
 			background-color: var(--color-base-card);
 			border-radius: var(--radius-box);
 			padding: 0.225rem;
-		}
-
-		:global(img) {
-			min-width: 20px;
 		}
 
 		@media screen and (min-width: 1130px) {

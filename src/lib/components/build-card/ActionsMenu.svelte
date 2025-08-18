@@ -6,9 +6,8 @@
 	import SquarePen from '@lucide/svelte/icons/square-pen';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import MenuTriggerButton from '../menu/MenuTriggerButton.svelte';
-	import { navIconUrl } from '$lib/utils/urls';
 	import { m } from '$lib/paraglide/messages';
-	import { resolve } from '$app/paths';
+	import { asset, resolve } from '$app/paths';
 	import { confirmAction } from '$lib/utils/form';
 	import { BuildAPI } from '$lib/api/build';
 
@@ -30,7 +29,7 @@
 		items={[
 			{
 				label: m.builds_actions_analyze(),
-				imgSrc: navIconUrl('analyzer') + '.avif',
+				imgSrc: asset('/img/layout/analyzer.avif'),
 				href: resolve('/') // xxx: analyzer URL
 			},
 			{
