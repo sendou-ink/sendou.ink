@@ -254,6 +254,7 @@
 
 		&.lonely {
 			margin-inline-end: 0 !important;
+			max-width: max-content;
 		}
 	}
 </style>
