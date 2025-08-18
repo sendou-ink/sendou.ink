@@ -1,11 +1,11 @@
-<script lang="ts" generics="T extends z.ZodType<object>">
+<script lang="ts" generics="T extends z.ZodObject<ZodRawShape>">
 	import type { RemoteForm } from '@sveltejs/kit';
 	import type { Snippet } from 'svelte';
 	import { tick } from 'svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { zodErrorsToFormErrors } from '$lib/utils/zod';
 	import { formContext } from './context';
-	import z from 'zod';
+	import z, { ZodObject, type ZodRawShape } from 'zod';
 	import Button from '../buttons/Button.svelte';
 
 	type Output = z.output<T>;
@@ -72,19 +72,17 @@
 	}
 
 	function handleOnchange(event: Event) {
-		const target = event.target as HTMLInputElement;
+		const target = event.currentTarget as (EventTarget & HTMLInputElement) | HTMLTextAreaElement;
 		const name = target.name;
 
 		const fieldData = new FormData(formElement()).getAll(name);
-
-		// @ts-expect-error xxx: figure out correct Zod types
-		const fieldSchema = schema.def.shape[name];
+		const zodObject = schema as ZodObject<ZodRawShape>;
+		const fieldSchema = zodObject.shape[name];
 
 		const parsed = z.safeParse(fieldSchema, fieldData);
-
 		if (!parsed.success) return;
 
-		onchange!({
+		onchange?.({
 			[name]: parsed.data
 		} as Partial<Output>);
 	}
