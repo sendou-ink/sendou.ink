@@ -7,14 +7,21 @@
 
 	const schema = SettingsAPI.schemas.updateMatchProfileSchema;
 	const validField = createFieldValidator(schema);
+
+	const defaultValues = await SettingsAPI.queries.matchProfile();
+
+	let modes = $state(defaultValues.modes);
 </script>
 
 <Form
 	{schema}
 	action={SettingsAPI.actions.updateMatchProfile}
-	defaultValues={await SettingsAPI.queries.matchProfile()}
+	{defaultValues}
 	heading={m.keen_main_bear_reside()}
 	info={m.due_main_salmon_trust()}
+	onchange={(data) => {
+		if (data.modes) modes = data.modes;
+	}}
 >
 	<FormField name={validField('qWeaponPool')} />
 	<FormField name={validField('vc')} />

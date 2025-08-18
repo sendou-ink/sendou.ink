@@ -17,9 +17,11 @@
 		schema: T;
 		defaultValues?: Partial<Output>;
 		info?: string;
+		/** Fires when the form changes and the resulting data is considered valid as defined by the given schema. Note: only works for "primitive" fields such as plain inputs, selects and input groups.*/
+		onchange?: (data: Partial<Output>) => void;
 	}
 
-	let { children, heading, action, schema, defaultValues, info }: Props = $props();
+	let { children, heading, action, schema, defaultValues, info, onchange }: Props = $props();
 	const id = $props.id();
 
 	let errors = $state<Partial<Record<keyof Output, string>>>({});
@@ -31,12 +33,14 @@
 		onblur: () => validateForm()
 	});
 
-	function validateForm() {
+	function formElement() {
 		// TODO: at the time of the writing form with reference did not play together nicely remote functions, convert to ref later
-		const form = document.getElementById(id) as HTMLFormElement;
+		return document.getElementById(id) as HTMLFormElement;
+	}
 
+	function validateForm() {
 		return tick().then(() => {
-			const data = new FormData(form);
+			const data = new FormData(formElement());
 			// @ts-expect-error
 			const parsed = z.safeParse(schema, Object.fromEntries(data.entries()));
 
@@ -67,6 +71,24 @@
 		});
 	}
 
+	function handleOnchange(event: Event) {
+		const target = event.target as HTMLInputElement;
+		const name = target.name;
+
+		const fieldData = new FormData(formElement()).getAll(name);
+
+		// @ts-expect-error xxx: figure out correct Zod types
+		const fieldSchema = schema.def.shape[name];
+
+		const parsed = z.safeParse(fieldSchema, fieldData);
+
+		if (!parsed.success) return;
+
+		onchange!({
+			[name]: parsed.data
+		} as Partial<Output>);
+	}
+
 	async function enhanced({ submit }: { submit: () => Promise<void> }) {
 		if (!validateForm()) {
 			focusFirstInvalid();
@@ -79,7 +101,12 @@
 	}
 </script>
 
-<form {id} {...action.enhance(enhanced)} class="stack md-plus items-start">
+<form
+	{id}
+	{...action.enhance(enhanced)}
+	class="stack md-plus items-start"
+	onchange={onchange ? handleOnchange : undefined}
+>
 	<div class="stack xs">
 		{#if heading}
 			<h1 class="text-lg">{heading}</h1>
