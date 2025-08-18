@@ -123,3 +123,6 @@ const navItemsWithLuti = [
 
 export const navItems =
 	import.meta.env.VITE_SHOW_LUTI_NAV_ITEM === 'true' ? navItemsWithLuti : navItemsBase;
+
+/** Nav icon ids corresponding to drawn images representing different sendou.ink features */
+export type NavIconId = (typeof navItems)[number]['id'] | 't';

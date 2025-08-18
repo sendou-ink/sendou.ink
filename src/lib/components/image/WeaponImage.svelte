@@ -1,33 +1,30 @@
 <script lang="ts">
-	import type { ImageProps } from '$lib/components/image/Image.svelte';
-	import Image from '$lib/components/image/Image.svelte';
+	import { asset } from '$app/paths';
 	import type { MainWeaponId } from '$lib/constants/in-game/types';
+	import type { HTMLImgAttributes } from 'svelte/elements';
 	import { weaponTranslations } from '$lib/utils/i18n';
-	import {
-		mainWeaponImageUrl,
-		outlinedFiveStarMainWeaponImageUrl,
-		outlinedMainWeaponImageUrl
-	} from '$lib/utils/urls';
 
 	type Props = {
 		weaponSplId: MainWeaponId;
 		variant: 'badge' | 'badge-5-star' | 'build';
-	} & Omit<ImageProps, 'path'>;
+		size?: number;
+	} & Omit<HTMLImgAttributes, 'src'>;
 
-	let { weaponSplId, variant, ...rest }: Props = $props();
+	let { weaponSplId, variant, width, height, size, ...rest }: Props = $props();
 
-	const path = $derived(
-		variant === 'badge'
-			? outlinedMainWeaponImageUrl(weaponSplId)
-			: variant === 'badge-5-star'
-				? outlinedFiveStarMainWeaponImageUrl(weaponSplId)
-				: mainWeaponImageUrl(weaponSplId)
-	);
+	const src = $derived.by(() => {
+		if (variant === 'badge') return asset(`/img/main-weapons-outlined/${weaponSplId}.avif`);
+		if (variant === 'badge-5-star')
+			return asset(`/img/main-weapons-outlined-2/${weaponSplId}.avif`);
+		return asset(`/img/main-weapons/${weaponSplId}.avif`);
+	});
 </script>
 
-<Image
-	{path}
+<img
+	{src}
 	alt={weaponTranslations[weaponSplId]()}
 	title={weaponTranslations[weaponSplId]()}
+	width={width ?? size}
+	height={height ?? size}
 	{...rest}
 />

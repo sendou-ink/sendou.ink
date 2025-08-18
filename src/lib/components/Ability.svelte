@@ -1,8 +1,7 @@
 <script lang="ts">
+	import { asset } from '$app/paths';
 	import type { AbilityWithUnknown } from '$lib/constants/in-game/types';
 	import { abilityTranslations } from '$lib/utils/i18n';
-	import { abilityImageUrl } from '$lib/utils/urls';
-	import Image from '$lib/components/image/Image.svelte';
 
 	interface Props {
 		ability: AbilityWithUnknown;
@@ -72,11 +71,12 @@
 	{ondragleave}
 	{ondrop}
 >
-	<Image
+	<img
 		alt={abilityTranslations[ability]()}
 		title={abilityTranslations[ability]()}
-		path={abilityImageUrl(ability)}
-		size={sizeNumber}
+		src={asset(`/img/abilities/${ability}.avif`)}
+		width={sizeNumber}
+		height={sizeNumber}
 	/>
 </svelte:element>
 

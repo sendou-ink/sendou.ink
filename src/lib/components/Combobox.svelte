@@ -3,7 +3,6 @@
 	import { m } from '$lib/paraglide/messages';
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
 	import Search from '@lucide/svelte/icons/search';
-	import Image from './image/Image.svelte';
 
 	export interface Item {
 		value: string;
@@ -64,7 +63,7 @@
 				<button {...props}>
 					<div>
 						{#if selectedImage}
-							<Image path={selectedImage} size={24} lazy />
+							<img src={selectedImage} width={24} height={24} loading="lazy" alt="" />
 						{/if}
 						<span class={['button-text', { 'text-white': selectedValue }]}
 							>{selectedValue || buttonPlaceholder}</span
@@ -98,7 +97,13 @@
 														<Command.GroupHeading>
 															<div class="group-heading">
 																{#if group.image}
-																	<Image path={group.image} size={28} lazy />
+																	<img
+																		src={group.image}
+																		width={28}
+																		height={28}
+																		loading="lazy"
+																		alt=""
+																	/>
 																{/if}
 																{group.label}
 																<div></div>
@@ -138,7 +143,7 @@
 		{#snippet child({ props })}
 			<div {...props} class={['item', item.value === selectedValue ? 'selected' : '']}>
 				{#if item.image}
-					<Image path={item.image} size={24} lazy />
+					<img src={item.image} width={24} height={24} loading="lazy" alt="" />
 				{/if}
 				<span>{item.label}</span>
 			</div>

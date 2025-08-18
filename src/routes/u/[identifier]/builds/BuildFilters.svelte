@@ -9,8 +9,8 @@
 	import { mainWeaponIds } from '$lib/constants/in-game/weapon-ids';
 	import { weaponTranslations } from '$lib/utils/i18n';
 	import Sword from '@lucide/svelte/icons/sword';
-	import { mainWeaponImageUrl } from '$lib/utils/urls';
 	import type { ByUserIdentifierData } from '$lib/api/build/queries.remote';
+	import { asset } from '$app/paths';
 
 	interface Props {
 		filter: BuildFilter;
@@ -79,7 +79,7 @@
 					value: id,
 					selected: filter === id,
 					onclick: () => (filter = id),
-					imgSrc: mainWeaponImageUrl(id) + '.avif' // xxx: include .avif in the function
+					imgSrc: asset(`/img/main-weapons/${id}.avif`)
 				}))}
 		>
 			<MenuTriggerButton

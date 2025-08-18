@@ -2,14 +2,13 @@
 	import type { MainWeaponId } from '$lib/constants/in-game/types';
 	import type { FormFieldProps } from '$lib/form/types';
 	import { weaponTranslations } from '$lib/utils/i18n';
-	import { outlinedFiveStarMainWeaponImageUrl, outlinedMainWeaponImageUrl } from '$lib/utils/urls';
 	import Button from '../buttons/Button.svelte';
-	import Image from '../image/Image.svelte';
 	import WeaponSelect from '../WeaponCombobox.svelte';
 	import BottomText from './BottomText.svelte';
 	import Label from './Label.svelte';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import Star from '@lucide/svelte/icons/star';
+	import { asset } from '$app/paths';
 
 	export interface WeaponPool {
 		weaponSplId: MainWeaponId;
@@ -63,12 +62,14 @@
 })}
 	<li>
 		<div class="line"></div>
-		<Image
-			path={isFavorite
-				? outlinedFiveStarMainWeaponImageUrl(weaponSplId)
-				: outlinedMainWeaponImageUrl(weaponSplId)}
-			size={32}
-			lazy
+		<img
+			src={isFavorite
+				? asset(`/img/main-weapons-outlined-2/${weaponSplId}.avif`)
+				: asset(`/img/main-weapons-outlined/${weaponSplId}.avif`)}
+			width={32}
+			height={32}
+			loading="lazy"
+			alt=""
 		/>
 		<span class="weapon-row-text">
 			{weaponTranslations[weaponSplId]()}

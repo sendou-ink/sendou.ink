@@ -25,15 +25,10 @@ import slugify from 'slugify';
 
 import type {
 	Ability,
-	AbilityWithUnknown,
 	BuildAbilitiesTupleWithUnknown,
-	MainWeaponId,
-	ModeShortWithSpecial,
-	SpecialWeaponId,
-	SubWeaponId
+	MainWeaponId
 } from '$lib/constants/in-game/types';
-import type { weaponCategories } from '$lib/constants/in-game/weapon-ids';
-import type { GearType, Tables } from '$lib/server/db/tables';
+import type { Tables } from '$lib/server/db/tables';
 import { weaponTranslations } from './i18n';
 import { resolve } from '$app/paths';
 
@@ -461,60 +456,20 @@ export function analyzerPage(args?: { weaponId: MainWeaponId; abilities: Ability
 // export const lfgNewPostPage = (postId?: number) =>
 // 	`${LFG_PAGE}/new${postId ? `?postId=${postId}` : ""}`;
 
-export function badgeUrl({
-	code,
-	isAnimated
-}: {
-	code: Tables['Badge']['code'];
-	isAnimated: boolean;
-}) {
-	return `/badges/${isAnimated ? 'animated' : 'static'}/${code}.avif`;
-}
-
 export function articlePreviewUrl(slug: string) {
 	return `/img/article-previews/${slug}.png`;
-}
-
-export function gearImageUrl(gearType: GearType, gearSplId: number) {
-	return `/img/gear/${gearType.toLowerCase()}/${gearSplId}`;
-}
-
-export function weaponCategoryUrl(category: (typeof weaponCategories)[number]['name']) {
-	return `/img/weapon-categories/${category}`;
-}
-
-export function mainWeaponImageUrl(mainWeaponSplId: MainWeaponId) {
-	return `/img/main-weapons/${mainWeaponSplId}`;
 }
 // export const mainWeaponVariantImageUrl = (
 // 	mainWeaponSplId: MainWeaponId,
 // 	variant: "launched",
 // ) => `/img/main-weapons/variants/${mainWeaponSplId}-${variant}`;
-export function outlinedMainWeaponImageUrl(mainWeaponSplId: MainWeaponId) {
-	return `/img/main-weapons-outlined/${mainWeaponSplId}`;
-}
-export function outlinedFiveStarMainWeaponImageUrl(mainWeaponSplId: MainWeaponId) {
-	return `/img/main-weapons-outlined-2/${mainWeaponSplId}`;
-}
-export function subWeaponImageUrl(subWeaponSplId: SubWeaponId) {
-	return `/img/sub-weapons/${subWeaponSplId}`;
-}
-export function specialWeaponImageUrl(specialWeaponSplId: SpecialWeaponId) {
-	return `/img/special-weapons/${specialWeaponSplId}`;
-}
 // export const specialWeaponVariantImageUrl = (
 // 	specialWeaponSplId: SpecialWeaponId,
 // 	variant: "weakpoints",
 // ) =>
 // 	`/img/special-weapons/variants/${specialWeaponSplId}-${variant}`;
-export function abilityImageUrl(ability: AbilityWithUnknown) {
-	return `/img/abilities/${ability}`;
-}
 // export const brandImageUrl = (brand: BrandId) =>
 // 	`/img/brands/${brand}`;
-export function modeImageUrl(mode: ModeShortWithSpecial) {
-	return `/img/modes/${mode}`;
-}
 // export const stageImageUrl = (stageId: StageId) =>
 // 	`/img/stages/${stageId}`;
 // export const tierImageUrl = (tier: TierName | "CALCULATING") =>

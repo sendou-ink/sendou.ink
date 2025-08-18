@@ -76,7 +76,7 @@
 					<Ability ability={stat.name} size="SUB" />
 					<div class="bars">
 						<div>
-							<WeaponImage variant="badge" weaponSplId={weaponId} width={22} />
+							<WeaponImage variant="badge" weaponSplId={weaponId} size={22} />
 						</div>
 						<div>{stat.percentage.weapon}%</div>
 						<div class="bar" style:width="{percentageToPx(stat.percentage.weapon)}px"></div>

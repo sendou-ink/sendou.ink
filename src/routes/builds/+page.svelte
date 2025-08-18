@@ -1,14 +1,13 @@
 <script lang="ts">
-	import { mainWeaponImageUrl, weaponBuildPage, weaponCategoryUrl } from '$lib/utils/urls';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
-	import Image from '$lib/components/image/Image.svelte';
 	import AddNewButton from '$lib/components/buttons/AddNewButton.svelte';
-	import { resolve } from '$app/paths';
+	import { asset, resolve } from '$app/paths';
 	import { weaponCategories, weaponIdIsNotAlt } from '$lib/constants/in-game/weapon-ids';
 	import Main from '$lib/components/layout/Main.svelte';
 	import { weaponCategoryTranslations, weaponTranslations } from '$lib/utils/i18n';
 	import type { MainWeaponId } from '$lib/constants/in-game/types';
 	import * as AuthAPI from '$lib/api/auth';
+	import { weaponBuildPage } from '$lib/utils/urls';
 
 	const user = $derived(await AuthAPI.queries.me());
 </script>
@@ -32,8 +31,8 @@
 	{#each weaponCategories as category (category.name)}
 		<div class="category">
 			<div class="category-header">
-				<Image
-					path={weaponCategoryUrl(category.name)}
+				<img
+					src={asset(`/img/weapon-categories/${category.name}.avif`)}
 					width={40}
 					height={40}
 					alt={weaponCategoryTranslations[category.name]()}
@@ -50,11 +49,12 @@
 						class="category-weapon"
 						data-testid={`weapon-${weaponId}-link`}
 					>
-						<Image
+						<img
 							class="category-weapon-img"
-							path={mainWeaponImageUrl(weaponId)}
+							src={asset(`/img/main-weapons/${weaponId}.avif`)}
 							width={28}
 							height={28}
+							alt=""
 						/>
 						{weaponTranslations[weaponId]()}
 					</a>

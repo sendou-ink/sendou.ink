@@ -2,11 +2,11 @@
 	import Plus from '@lucide/svelte/icons/plus';
 	import Button from './Button.svelte';
 	import { asset } from '$app/paths';
-	import type { navItems } from '../../../routes/nav-items';
+	import type { NavIconId } from '../../../routes/nav-items';
 
 	interface Props {
 		href: string;
-		navIcon: (typeof navItems)[number]['id'];
+		navIcon: NavIconId;
 	}
 
 	let { href, navIcon }: Props = $props();

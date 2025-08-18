@@ -6,16 +6,15 @@
 		PRIVACY_POLICY_PAGE,
 		SENDOU_INK_DISCORD_URL,
 		SENDOU_INK_GITHUB_URL,
-		SENDOU_LOVE_EMOJI_PATH,
 		SUPPORT_PAGE,
 		userPage
 	} from '$lib/utils/urls';
-	import Image from '$lib/components/image/Image.svelte';
 	import DiscordIcon from '$lib/components/icons/Discord.svelte';
 	import GitHubIcon from '$lib/components/icons/GitHub.svelte';
 	import PatreonIcon from '$lib/components/icons/Patreon.svelte';
 	import { patrons } from '../../../routes/patrons.remote';
 	import { m } from '$lib/paraglide/messages';
+	import { asset } from '$app/paths';
 
 	const currentYear = new Date().getFullYear();
 </script>
@@ -53,7 +52,7 @@
 	<div>
 		<h4 class="patron-title">
 			{m.common_footer_thanks()}
-			<Image alt="" path={SENDOU_LOVE_EMOJI_PATH} width={24} height={24} />
+			<img alt="" src={asset('/img/layout/sendou_love.avif')} width={24} height={24} />
 		</h4>
 		<ul class="patron-list">
 			{#each await patrons() as patron (patron.id)}

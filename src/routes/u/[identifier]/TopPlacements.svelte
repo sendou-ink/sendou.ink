@@ -1,9 +1,7 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
+	import { asset, resolve } from '$app/paths';
 	import type { ProfileByIdentifierData } from '$lib/api/user/queries.remote';
-	import Image from '$lib/components/image/Image.svelte';
 	import { rankedModesShort } from '$lib/constants/in-game/modes';
-	import { modeImageUrl } from '$lib/utils/urls';
 
 	interface Props {
 		placements: ProfileByIdentifierData['topPlacements'];
@@ -17,7 +15,7 @@
 		{@const placement = placements.find((p) => p.mode === mode)}
 		{#if placement}
 			<div class="mode">
-				<Image path={modeImageUrl(mode)} alt="" size={24} />
+				<img src={asset(`/img/modes/${mode}.avif`)} alt="" height={24} width={24} />
 				<div>
 					{placement.rank} / {placement.power}
 				</div>

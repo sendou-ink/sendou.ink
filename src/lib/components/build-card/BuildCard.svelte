@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { gearImageUrl, modeImageUrl, userBuildsPage, weaponBuildPage } from '$lib/utils/urls';
+	import { userBuildsPage, weaponBuildPage } from '$lib/utils/urls';
 	import Ability from '$lib/components/Ability.svelte';
-	import Image from '$lib/components/image/Image.svelte';
 	import type {
 		Ability as AbilityType,
 		BuildAbilitiesTuple,
@@ -79,10 +78,10 @@
 			{#if build.modes && build.modes.length > 0}
 				<div class="modes">
 					{#each build.modes as mode (mode)}
-						<Image
+						<img
 							alt={modesLongTranslations[mode]()}
 							title={modesLongTranslations[mode]()}
-							path={modeImageUrl(mode)}
+							src={asset(`/img/modes/${mode}.avif`)}
 							width={18}
 							height={18}
 							data-testid="build-mode-{mode}"
@@ -165,9 +164,9 @@
 
 	<div class="weapon">
 		{#if isTop500}
-			<Image
+			<img
 				class="top-500"
-				path={asset('/img/layout/xsearch.avif')}
+				src={asset('/img/layout/xsearch.avif')}
 				alt=""
 				title="Max X Power: {weapon.maxPower} | Best Rank: {weapon.minRank}"
 				height={24}
@@ -183,12 +182,12 @@
 
 {#snippet abilitiesRowWithGear(gearType: GearType, abilities: AbilityType[], gearId: number)}
 	{#if gearId !== -1}
-		<Image
+		<img
 			height={64}
 			width={64}
 			alt="xxx: TODO"
 			title="xxx: TODO"
-			path={gearImageUrl(gearType, gearId)}
+			src={`/img/gear/${gearType === 'HEAD' ? 'head' : gearType === 'CLOTHES' ? 'clothes' : 'shoes'}/${gearId}.avif`}
 			class="gear"
 		/>
 	{/if}
