@@ -52,7 +52,15 @@ export const updateMatchProfileSchema = z.object({
 			label: modesLongTranslations[mode](),
 			imgSrc: asset(`/img/modes/${mode}.avif`)
 		}))
-	})
+	}),
+	maps: Fields.customJsonFieldOptional(
+		// xxx: or map pool form field?
+		// xxx: use Fields.mapPool & make with children FormField.svelte
+		{
+			label: m.just_steep_ocelot_tend()
+		},
+		z.any()
+	)
 });
 
 export type UpdateMatchProfileData = z.infer<typeof updateMatchProfileSchema>;

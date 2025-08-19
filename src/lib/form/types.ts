@@ -67,6 +67,11 @@ interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {
 	maxCount: number;
 }
 
+interface FormFieldMapPool<T extends string> extends FormFieldBase<T> {
+	/** Max amount of maps to pick per mode */
+	maxCount: number;
+}
+
 export type FormField<V extends string = string> =
 	| FormFieldBase<'custom'>
 	| FormFieldText<'text-field'>
@@ -77,6 +82,7 @@ export type FormField<V extends string = string> =
 	| FormFieldRadioGroup<'radio-group', V>
 	| FormFieldCheckboxGroup<'checkbox-group', V>
 	| FormFieldWeaponPool<'weapon-pool'>
+	| FormFieldMapPool<'map-pool'>
 	| FormFieldBase<'theme'>;
 
 export type FormFieldProps<T extends FormField['type']> = Omit<

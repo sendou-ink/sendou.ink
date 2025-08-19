@@ -31,7 +31,7 @@
 </script>
 
 <div class="stack xs" role="radiogroup" aria-orientation="vertical" aria-labelledby={id}>
-	<Label {id}>
+	<Label {id} required>
 		{label}
 	</Label>
 	{#each itemsWithLabels as item (item.label)}

@@ -11,7 +11,7 @@ import { m } from '$lib/paraglide/messages';
 
 export const formRegistry = z.registry<FormField>();
 
-/** Field for custom JSON data, the form field element must be provided to the `<Form />` */
+/** Field for custom JSON data, the form field element must be provided to the `<Form />`. .optional() is appended to the schema. */
 export function customJsonFieldOptional<T extends z.ZodType>(
 	args: Omit<Extract<FormField, { type: 'custom' }>, 'type'>,
 	schema: T
@@ -180,6 +180,25 @@ export function weaponPool(args: Omit<Extract<FormField, { type: 'weapon-pool' }
 	return z
 		.preprocess(
 			safeJSONParse,
+			z
+				.array(
+					z.object({
+						id: weaponSplId,
+						isFavorite: z.boolean()
+					})
+				)
+				.max(args.maxCount)
+		)
+		.register(formRegistry, {
+			...args,
+			type: 'weapon-pool'
+		});
+}
+
+export function mapPool(args: Omit<Extract<FormField, { type: 'map-pool' }>, 'type'>) {
+	return z
+		.preprocess(
+			safeJSONParse, // xxx: TODO set correct map pool
 			z
 				.array(
 					z.object({
