@@ -200,6 +200,18 @@ export type GetTournamentTeamsResponse = Array<{
 	}>;
 }>;
 
+/** GET /api/tournament/{tournamentId}/players */
+
+export type GetTournamentPlayersResponse = Array<{
+	userId: number;
+	name: string;
+	discordId: string;
+	discordAvatar: string | null;
+	customUrl: string | null;
+	country: string | null;
+	tournamentTeamId: number;
+}>;
+
 /** GET /api/tournament/{tournamentId}/casted */
 
 export interface GetCastedTournamentMatchesResponse {
