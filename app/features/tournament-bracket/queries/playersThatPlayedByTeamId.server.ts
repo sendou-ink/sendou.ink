@@ -33,3 +33,42 @@ export type PlayerThatPlayedByTeamId = Pick<
 export function playersThatPlayedByTournamentId(tournamentId: number) {
 	return stm.all({ tournamentId }) as PlayerThatPlayedByTeamId[];
 }
+
+const stmWithMatches = sql.prepare(/* sql */ `
+  with player_matches as (
+    select 
+      p."userId",
+      p."tournamentTeamId",
+      gr."matchId"
+    from "TournamentMatchGameResultParticipant" p
+    join "TournamentMatchGameResult" gr on gr."id" = p."matchGameResultId"
+    join "TournamentMatch" m on m."id" = gr."matchId"
+    join "TournamentStage" s on s."id" = m."stageId"
+    where s."tournamentId" = @tournamentId
+  )
+  select
+    u."id",
+    u."username",
+    u."discordAvatar",
+    u."discordId",
+    u."customUrl",
+    u."country",
+    pm."tournamentTeamId",
+    json_group_array(distinct pm."matchId") as "matchIds"
+  from (select distinct "userId", "tournamentTeamId" from player_matches) players
+  join "User" u on u."id" = players."userId"
+  join player_matches pm on pm."userId" = players."userId"
+  group by u."id"
+`);
+
+export type PlayerWithMatches = PlayerThatPlayedByTeamId & { 
+	matchIds: number[] 
+};
+
+export function playersThatPlayedWithMatchesByTournamentId(tournamentId: number) {
+	const results = stmWithMatches.all({ tournamentId }) as Array<PlayerThatPlayedByTeamId & { matchIds: string }>;
+	return results.map(player => ({
+		...player,
+		matchIds: JSON.parse(player.matchIds) as number[]
+	})) as PlayerWithMatches[];
+}

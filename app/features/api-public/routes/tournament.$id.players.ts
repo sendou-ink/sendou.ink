@@ -1,7 +1,7 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { cors } from "remix-utils/cors";
 import { z } from "zod/v4";
-import { playersThatPlayedByTournamentId } from "~/features/tournament-bracket/queries/playersThatPlayedByTeamId.server";
+import { playersThatPlayedWithMatchesByTournamentId } from "~/features/tournament-bracket/queries/playersThatPlayedByTeamId.server";
 import { parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import {
@@ -23,7 +23,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		schema: paramsSchema,
 	});
 
-	const players = playersThatPlayedByTournamentId(id);
+	const players = playersThatPlayedWithMatchesByTournamentId(id);
 
 	const result: GetTournamentPlayersResponse = players.map((player) => ({
 		userId: player.id,
@@ -33,6 +33,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		customUrl: player.customUrl,
 		country: player.country,
 		tournamentTeamId: player.tournamentTeamId,
+		matchIds: player.matchIds,
 	}));
 
 	return await cors(request, json(result));

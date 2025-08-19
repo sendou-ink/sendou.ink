@@ -210,6 +210,7 @@ export type GetTournamentPlayersResponse = Array<{
 	customUrl: string | null;
 	country: string | null;
 	tournamentTeamId: number;
+	matchIds: number[];
 }>;
 
 /** GET /api/tournament/{tournamentId}/casted */
