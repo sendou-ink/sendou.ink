@@ -230,9 +230,6 @@ export type ParsedMemento = {
 			skillDifference?: GroupSkillDifference;
 		}
 	>;
-	modePreferences?: Partial<Record<ModeShort, Array<{ userId: number; preference?: Preference }>>>;
-	/** mapPreferences of season 2 */
-	mapPreferences?: Array<{ userId: number; preference?: Preference }[]>;
 	pools: Array<{ userId: number; pool: UserMapModePreferences['pool'] }>;
 };
 
@@ -760,18 +757,9 @@ export interface UnvalidatedVideo {
 	youtubeId: string;
 }
 
-// missing means "neutral"
-export type Preference = 'AVOID' | 'PREFER';
 export interface UserMapModePreferences {
-	modes: Array<{
-		mode: ModeShort;
-		/** Users opinion on the mode, `undefined` means neutral */
-		preference?: Preference;
-	}>;
-	pool: Array<{
-		mode: ModeShort;
-		stages: StageId[];
-	}>;
+	modes: Array<ModeShort>;
+	pool: Partial<Record<ModeShort, StageId[]>>;
 }
 
 export interface QWeaponPool {

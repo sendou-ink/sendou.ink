@@ -1,4 +1,6 @@
 import { Kysely } from 'kysely'    
+import * as MapPool from '$lib/core/maps/MapPool';
+import * as R from 'remeda';
 
 export async function up(db: Kysely<any>): Promise<void> {
   await db.schema.alterTable("Badge").dropColumn("hue").execute()
@@ -6,6 +8,7 @@ export async function up(db: Kysely<any>): Promise<void> {
   await db.schema.alterTable("TournamentTeam").dropColumn("prefersNotToHost").execute()
 
   await fixQWeaponPools(db);
+  await fixUserMapModePreferences(db);
 
   await db.schema
     .createIndex('build_weapon_weapon_spl_id')
@@ -19,10 +22,30 @@ const qWeaponPools = await db.selectFrom("User").select(["id", "qWeaponPool"]).w
 
 for (const {qWeaponPool, id} of qWeaponPools) {
   await db.updateTable("User").set({
-    qWeaponPool: qWeaponPool ? JSON.stringify(JSON.parse(qWeaponPool).map(wp => ({
+    qWeaponPool: JSON.stringify(JSON.parse(qWeaponPool).map(wp => ({
       id: wp.weaponSplId,
       isFavorite: Boolean(wp.isFavorite)
-    }))) : null
+    })))
   }).where("id", "=", id).execute();
 }
+}
+
+async function fixUserMapModePreferences(db: Kysely<any>) {
+  const userMapModePreferences = await db.selectFrom("User").select(["id", "mapModePreferences"]).where("mapModePreferences", "is not", null).execute();
+
+  for (const {mapModePreferences, id} of userMapModePreferences) {
+    const mp = JSON.parse(mapModePreferences);
+
+    console.log("mp", JSON.stringify(mp, null, 2));
+
+    await db.updateTable("User").set({
+      mapModePreferences: JSON.stringify({
+        modes:
+			mp.modes.flatMap((pref) =>
+				pref.preference === 'PREFER' ? pref.mode : []
+			) ?? [],
+        pool: R.pipe(MapPool.fromSendouQMapPoolPreferences(mp), R.omitBy(R.isEmpty))
+      })
+    }).where("id", "=", id).execute();
+  }
 }

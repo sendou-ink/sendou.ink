@@ -22,7 +22,6 @@ import type {
 	UpdateAccessibilitySettingsData,
 	UpdateMatchProfileData
 } from '$lib/api/settings/schemas';
-import { modesShort } from '$lib/constants/in-game/modes';
 
 function identifierToUserIdQuery(identifier: string) {
 	return db
@@ -882,21 +881,8 @@ export function updateAccessibilitySettings(userId: number, data: UpdateAccessib
 
 export function updateMatchProfile(userId: number, data: UpdateMatchProfileData) {
 	const mapModePreferences: UserMapModePreferences = {
-		modes: data.modes.map((mode) => ({
-			mode,
-			preference: 'PREFER'
-		})),
-		pool: modesShort
-			.map((mode) => {
-				const stages = data.maps[mode];
-				if (!stages) return null;
-
-				return {
-					mode,
-					stages
-				};
-			})
-			.filter(R.isTruthy)
+		modes: data.modes,
+		pool: data.maps
 	};
 
 	return db
