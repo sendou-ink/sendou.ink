@@ -15,9 +15,7 @@ export function fromSendouQMapPoolPreferences(preferences: UserMapModePreference
 
 		if (!pref || !prefersTheMode) {
 			result[mode] = [];
-		}
-
-		if (pref) {
+		} else {
 			result[mode] = pref.stages;
 		}
 	}

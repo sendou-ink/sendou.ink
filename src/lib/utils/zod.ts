@@ -244,8 +244,11 @@ export function date(value: unknown) {
 	return value;
 }
 
-export function noDuplicates(arr: (number | string)[]) {
-	return new Set(arr).size === arr.length;
+// https://github.com/colinhacks/zod/discussions/2316#discussioncomment-10728545
+export function uniqueArray(schema: ZodType) {
+	return z.array(schema).refine((items) => new Set(items).size === items.length, {
+		message: 'All items must be unique, no duplicate values allowed'
+	});
 }
 
 export function filterOutNullishMembers(value: unknown) {
@@ -352,7 +355,10 @@ export function zodErrorsToFormErrors<T>(error: z.ZodError<T>) {
 	const result: Partial<Record<keyof T, string>> = {};
 
 	for (const issue of error.issues) {
-		if (issue.path.length !== 1) throw new Error('Not implemented');
+		if (issue.path.length !== 1) {
+			console.error(issue);
+			throw new Error('Not implemented');
+		}
 		result[issue.path[0] as keyof T] = issue.message as string;
 	}
 

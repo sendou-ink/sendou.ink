@@ -65,6 +65,8 @@ interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {
 interface FormFieldMapPool<T extends string> extends FormFieldBase<T> {
 	/** Max amount of maps to pick per mode */
 	maxCount: number;
+	/** Should maps that are currently banned from SendouQ be disabled */
+	disabledBannedMaps: boolean;
 }
 
 export type FormField<V extends string = string> =

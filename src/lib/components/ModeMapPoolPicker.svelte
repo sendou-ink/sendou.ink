@@ -247,6 +247,7 @@
 		text-transform: uppercase;
 		font-weight: var(--bold);
 		cursor: not-allowed;
+		user-select: none;
 	}
 
 	.map-button__label {

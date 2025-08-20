@@ -55,7 +55,8 @@ export const updateMatchProfileSchema = z.object({
 	}),
 	maps: Fields.mapPool({
 		label: m.just_steep_ocelot_tend(),
-		maxCount: 7
+		maxCount: 7,
+		disabledBannedMaps: true
 	})
 });
 
