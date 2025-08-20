@@ -355,9 +355,9 @@ interface GlobalTeamMembership {
 	/**
 	 * URL for the global team avatar.
 	 *
-	 * @example "https://sendou.ink/t/moonlight"
+	 * @example "whzjEQS-r4CR2I1ZestUR-1726541597091.webp"
 	 */
-	avatarUrl: string | null;
+	avatarId: string | null;
 }
 
 type TeamMemberRole =
