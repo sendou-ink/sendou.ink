@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type * as z4 from 'zod/v4/core';
 import { page } from '$app/state';
 import { goto } from '$app/navigation';
+import { afterNavigate } from '$app/navigation';
 
 interface GotoOptions {
 	replaceState?: boolean;
@@ -12,6 +13,8 @@ interface GotoOptions {
 }
 
 // xxx: add encoding (option to JSON.stringify)
+// xxx: add option for the back button to navigate to the previous path
+// 		instead of going through the search param changes
 export class SearchParamState<S extends z4.$ZodType<unknown>> {
 	private internalState = $state<z.infer<S>>();
 	private key: string;
@@ -33,6 +36,11 @@ export class SearchParamState<S extends z4.$ZodType<unknown>> {
 
 		this.key = args.key;
 		this.options = { ...this.options, ...args.options };
+
+		afterNavigate((navigation) => {
+			const value = navigation.to?.url.searchParams.get(args.key) as z.infer<S> | undefined;
+			this.internalState = value ?? args.defaultValue;
+		});
 	}
 
 	get state() {
