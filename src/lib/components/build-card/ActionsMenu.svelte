@@ -9,7 +9,7 @@
 	import { m } from '$lib/paraglide/messages';
 	import { asset, resolve } from '$app/paths';
 	import { confirmAction } from '$lib/utils/form';
-	import { BuildAPI } from '$lib/api/build';
+	import * as BuildAPI from '$lib/api/build';
 
 	interface Props {
 		buildId: number;
@@ -41,20 +41,22 @@
 			{
 				label: m.builds_actions_makePrivate(),
 				icon: Lock,
-				onclick: async () => await BuildAPI.updateVisibilityById({ buildId, isPrivate: true }),
+				onclick: async () =>
+					await BuildAPI.actions.updateVisibilityById({ buildId, isPrivate: true }),
 				hidden: isPrivate || !showActions
 			},
 			{
 				label: m.builds_actions_makePublic(),
 				icon: LockOpen,
-				onclick: async () => await BuildAPI.updateVisibilityById({ buildId, isPrivate: false }),
+				onclick: async () =>
+					await BuildAPI.actions.updateVisibilityById({ buildId, isPrivate: false }),
 				hidden: !isPrivate || !showActions
 			},
 			{
 				label: m.common_actions_delete(),
 				icon: Trash2,
 				onclick: () =>
-					confirmAction(() => BuildAPI.deleteById(buildId), {
+					confirmAction(() => BuildAPI.actions.deleteById(buildId), {
 						title: m.builds_deleteConfirm({ title: buildTitle })
 					}),
 				hidden: !showActions,

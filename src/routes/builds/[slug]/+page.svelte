@@ -18,7 +18,7 @@
 	import { SearchParamState } from '$lib/runes/search-param-state.svelte';
 	import BuildFilterSection from './BuildFilterSection.svelte';
 	import type { BuildFilter } from '$lib/core/build/filter';
-	import { BuildAPI } from '$lib/api/build';
+	import * as BuildAPI from '$lib/api/build';
 
 	let { params } = $props();
 
@@ -32,7 +32,7 @@
 
 	// xxx: skip if filters state the only change is default ability filter (ISM 0 AP)
 	const { builds, weaponId, hasMore } = $derived(
-		await BuildAPI.bySlug({
+		await BuildAPI.queries.bySlug({
 			slug: params.slug,
 			limit,
 			filters: filters.state

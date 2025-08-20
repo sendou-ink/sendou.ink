@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { BuildAPI } from '$lib/api/build/index.js';
+	import * as BuildAPI from '$lib/api/build/index.js';
 	import Ability from '$lib/components/Ability.svelte';
 	import Main from '$lib/components/layout/Main.svelte';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
@@ -8,7 +8,9 @@
 
 	let { params } = $props();
 
-	const { popular, weaponId } = $derived(await BuildAPI.popularAbilitiesBySlug(params.slug));
+	const { popular, weaponId } = $derived(
+		await BuildAPI.queries.popularAbilitiesBySlug(params.slug)
+	);
 
 	const weaponNameInEnglish = $derived(weaponTranslations[weaponId]({}, { locale: 'en' }));
 </script>

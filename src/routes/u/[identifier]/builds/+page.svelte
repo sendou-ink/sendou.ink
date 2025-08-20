@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { BuildAPI } from '$lib/api/build';
+	import * as BuildAPI from '$lib/api/build';
 	import BuildCard from '$lib/components/build-card/BuildCard.svelte';
 	import type { MainWeaponId } from '$lib/constants/in-game/types';
 	import { m } from '$lib/paraglide/messages';
@@ -8,10 +8,8 @@
 
 	let { params } = $props();
 
-	// const isOwnPage = $derived(user?.id === layoutData.user.id);
-
 	const { builds: allBuilds, weaponCounts } = $derived(
-		await BuildAPI.byUserIdentifier(params.identifier)
+		await BuildAPI.queries.byUserIdentifier(params.identifier)
 	);
 
 	// Sorting dialog state
@@ -51,7 +49,7 @@
 		<ChangeSortingDialog close={closeSortingDialog} />
 	{/if} -->
 
-	<!-- {#if isOwnPage}
+	<!-- {#if await Auth}
 		<div class="stack sm horizontal items-center justify-end">
 			<Button
 				onclick={() => setChangingSorting(true)}

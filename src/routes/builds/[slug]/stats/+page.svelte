@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { BuildAPI } from '$lib/api/build/index.js';
+	import * as BuildAPI from '$lib/api/build/index.js';
 	import Ability from '$lib/components/Ability.svelte';
 	import WeaponImage from '$lib/components/image/WeaponImage.svelte';
 	import Main from '$lib/components/layout/Main.svelte';
@@ -10,7 +10,7 @@
 
 	let { params } = $props();
 
-	const { stats, weaponId } = $derived(await BuildAPI.statsBySlug(params.slug));
+	const { stats, weaponId } = $derived(await BuildAPI.queries.statsBySlug(params.slug));
 
 	function apToPx(ap: number) {
 		return Math.floor((ap / stats.stackableAbilities[0].apAverage.weapon) * 200);

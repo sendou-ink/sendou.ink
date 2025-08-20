@@ -1,9 +1,3 @@
-import * as actions from './actions.remote';
-import * as queries from './queries.remote';
-import * as schemas from './schemas';
-
-export const BuildAPI = {
-	...actions,
-	...queries,
-	schemas
-};
+export * as queries from './queries.remote';
+export * as actions from './actions.remote';
+export * as schemas from './schemas';
