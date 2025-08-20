@@ -28,7 +28,7 @@ export const matchProfile = query(async (): Promise<UpdateMatchProfileData> => {
 			isFavorite: Boolean(weapon.isFavorite)
 		})),
 		vc: profile.vc,
-		languages: profile.languages?.split(',') ?? [],
+		languages: (profile.languages?.split(',') ?? []) as UpdateMatchProfileData['languages'],
 		modes:
 			// xxx: we could handle this better via a migration
 			profile.mapModePreferences?.modes.flatMap((pref) =>

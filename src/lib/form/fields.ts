@@ -6,7 +6,13 @@ import {
 	weaponSplId
 } from '$lib/schemas';
 import z from 'zod';
-import type { FormField, FormFieldDualSelect, FormFieldItems, FormFieldSelect } from './types';
+import type {
+	FormField,
+	FormFieldDualSelect,
+	FormFieldInputGroup,
+	FormFieldItems,
+	FormFieldSelect
+} from './types';
 import { m } from '$lib/paraglide/messages';
 
 export const formRegistry = z.registry<FormField>();
@@ -151,14 +157,18 @@ export function dualSelectOptional<V extends string>(
 	});
 }
 
-export function radioGroup(args: Omit<Extract<FormField, { type: 'radio-group' }>, 'type'>) {
+export function radioGroup<V extends string>(
+	args: Omit<FormFieldInputGroup<'radio-group', V>, 'type'>
+) {
 	return itemsSchema(args.items).register(formRegistry, {
 		...args,
 		type: 'radio-group'
 	});
 }
 
-export function checkboxGroup(args: Omit<Extract<FormField, { type: 'checkbox-group' }>, 'type'>) {
+export function checkboxGroup<V extends string>(
+	args: Omit<FormFieldInputGroup<'checkbox-group', V>, 'type'>
+) {
 	return z
 		.preprocess(
 			(value) => {

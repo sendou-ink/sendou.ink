@@ -54,12 +54,7 @@ export interface FormFieldDualSelect<T extends string, V extends string>
 	};
 }
 
-export interface FormFieldRadioGroup<T extends string, V extends string> extends FormFieldBase<T> {
-	items: FormFieldItemsWithImage<V>;
-}
-
-export interface FormFieldCheckboxGroup<T extends string, V extends string>
-	extends FormFieldBase<T> {
+export interface FormFieldInputGroup<T extends string, V extends string> extends FormFieldBase<T> {
 	items: FormFieldItemsWithImage<V>;
 }
 
@@ -79,8 +74,8 @@ export type FormField<V extends string = string> =
 	| FormFieldBase<'switch'>
 	| FormFieldSelect<'select', V>
 	| FormFieldDualSelect<'dual-select', V>
-	| FormFieldRadioGroup<'radio-group', V>
-	| FormFieldCheckboxGroup<'checkbox-group', V>
+	| FormFieldInputGroup<'radio-group', V>
+	| FormFieldInputGroup<'checkbox-group', V>
 	| FormFieldWeaponPool<'weapon-pool'>
 	| FormFieldMapPool<'map-pool'>
 	| FormFieldBase<'theme'>;

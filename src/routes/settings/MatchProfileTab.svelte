@@ -14,9 +14,6 @@
 	let modes = $state(defaultValues.modes);
 </script>
 
-<!-- maybe <FormField {...validField('qWeaponPool')} /> -->
-<!-- maybe <FormField.qWeaponPool /> -->
-
 <Form
 	{schema}
 	action={SettingsAPI.actions.updateMatchProfile}
