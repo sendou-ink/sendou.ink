@@ -50,6 +50,6 @@
 <style>
 	.avatar {
 		border-radius: 50%;
-		background-color: var(--bg-lightest);
+		background-color: var(--color-base-card-section);
 	}
 </style>
