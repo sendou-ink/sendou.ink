@@ -13,8 +13,11 @@
 	import TabPanel from '$lib/components/tabs/TabPanel.svelte';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import AddNewButton from '$lib/components/buttons/AddNewButton.svelte';
+	import { asset, resolve } from '$app/paths';
+	import Button from '$lib/components/buttons/Button.svelte';
+	import Pagination from '$lib/components/Pagination.svelte';
 
-	const tab = new SearchParamState({
+	const tabState = new SearchParamState({
 		defaultValue: 'users',
 		schema: z.enum(['users', 'teams', 'tournaments']),
 		key: 'tab'
@@ -31,16 +34,16 @@
 	}, 1000);
 
 	const usersPromise = $derived.by(() => {
-		if (tab.state !== 'users' || searchState.state === '') return Promise.resolve(null);
+		if (tabState.state !== 'users' || searchState.state === '') return Promise.resolve(null);
 		return SearchAPI.queries.searchUsers({ input: searchState.state, limit: 25 });
 	});
 	const usersResult = $derived(await usersPromise);
 
-	let search = $state(searchState.state);
+	let search = $derived(searchState.state);
 
 	const teamsResult = $derived(await SearchAPI.queries.getAllTeams());
 	const filteredTeams = $derived.by(() => {
-		if (tab.state !== 'teams') return teamsResult.teams;
+		if (tabState.state !== 'teams') return teamsResult.teams;
 
 		return teamsResult.teams.filter((team) =>
 			team.name.toLowerCase().includes(search.toLowerCase())
@@ -59,15 +62,15 @@
 				value ? debounce.run(value) : (debounce.cancel(), searchState.update(''));
 			}}
 		/>
-		{#if tab.state === 'teams'}
+		{#if tabState.state === 'teams'}
 			<AddNewButton navIcon="t" href="/t?new='true'" />
-		{:else if tab.state === 'tournaments'}
+		{:else if tabState.state === 'tournaments'}
 			<AddNewButton navIcon="calendar" href="/calendar/new" />
 		{/if}
 	</div>
 
 	<Tabs
-		bind:value={() => tab.state, (value) => tab.update(value)}
+		bind:value={() => tabState.state, (value) => tabState.update(value)}
 		triggers={[
 			{ label: 'Users', value: 'users', icon: User },
 			{ label: 'Teams', value: 'teams', icon: Users },
@@ -84,24 +87,82 @@
 	{#if users === undefined}
 		<p>You need to be logged in to search users</p>
 	{:else if users !== null}
-		{#each users as user}
-			<p>{user.username}</p>
-		{/each}
+		<ul>
+			{#each users as user}
+				<li>
+					<a
+						class="link-item"
+						href={resolve('/u/[identifier]', {
+							identifier: user.customUrl ?? user.discordId
+						})}
+					>
+						<Avatar {user} size="sm" />
+						<div class="item-info">
+							<p>{user.username}</p>
+							<p>IGN: {user.inGameName}</p>
+						</div>
+					</a>
+				</li>
+			{/each}
+		</ul>
 	{/if}
 {/snippet}
 
 {#snippet teamsList(teams: AllTeamsData['teams'])}
-	{#each teams as team}
-		<p>{team.name}</p>
-	{/each}
+	<Pagination items={teams} pageSize={25}>
+		{#snippet child({ items })}
+			<ul>
+				{#each items as team}
+					<li>
+						<a href={team.customUrl} class="link-item">
+							<Avatar url={team.avatarSrc ?? ''} size="sm" />
+							<div class="item-info">
+								<p>{team.name}</p>
+								<p>{team.members.map((member) => member.username).join(', ')}</p>
+							</div>
+						</a>
+					</li>
+				{/each}
+			</ul>
+		{/snippet}
+	</Pagination>
 {/snippet}
 
 <style>
 	.input-container {
+		--field-width-medium: 100%;
+
 		margin-block: var(--s-6);
 		display: grid;
 		grid-template-columns: 1fr auto;
 		gap: var(--s-4);
 		align-items: center;
+	}
+
+	.link-item {
+		display: flex;
+		gap: var(--s-4);
+		align-items: center;
+
+		.item-info :last-child {
+			color: var(--color-base-content-secondary);
+			font-size: var(--fonts-xs);
+		}
+	}
+
+	li {
+		list-style: none;
+	}
+
+	ul {
+		margin-block: var(--s-4) var(--s-8);
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-4);
+	}
+
+	a {
+		color: initial;
 	}
 </style>
