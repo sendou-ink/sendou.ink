@@ -212,13 +212,13 @@ export async function createVod(
 			await trx
 				.deleteFrom("VideoMatch")
 				.where("videoId", "=", args.id)
-				.executeTakeFirstOrThrow();
+				.execute();
 
 			await trx
 				.updateTable("UnvalidatedVideo")
 				.set(video)
 				.where("id", "=", args.id)
-				.executeTakeFirstOrThrow();
+				.execute();
 			videoId = args.id;
 		} else {
 			const result = await trx
