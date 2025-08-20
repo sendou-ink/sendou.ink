@@ -65,6 +65,7 @@ export async function findVods({
 				.as("weapons"),
 			fn
 				.agg("json_group_array", ["VideoMatchPlayer.playerName"])
+				.$castTo<string[]>()
 				.as("playerNames"),
 			selectPlayers(),
 		]);
@@ -96,11 +97,9 @@ export async function findVods({
 
 	const vods = result.map((value) => {
 		const { playerNames, players, ...vod } = value;
-		const playerNamesArray: string[] = playerNames as string[];
-		const playersArray = players;
 		return {
 			...vod,
-			pov: playerNamesArray[0] ?? playersArray[0],
+			pov: playerNames[0] ?? players[0],
 		};
 	});
 	return vods;
