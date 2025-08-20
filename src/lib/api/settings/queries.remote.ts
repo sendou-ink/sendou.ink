@@ -24,10 +24,7 @@ export const matchProfile = query(async (): Promise<UpdateMatchProfileData> => {
 	invariant(profile);
 
 	return {
-		qWeaponPool: (profile.qWeaponPool ?? []).map((weapon) => ({
-			id: weapon.weaponSplId,
-			isFavorite: Boolean(weapon.isFavorite)
-		})),
+		qWeaponPool: profile.qWeaponPool ?? [],
 		vc: profile.vc,
 		languages: (profile.languages?.split(',') ?? []) as UpdateMatchProfileData['languages'],
 		modes:

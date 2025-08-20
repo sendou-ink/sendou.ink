@@ -881,10 +881,6 @@ export function updateAccessibilitySettings(userId: number, data: UpdateAccessib
 }
 
 export function updateMatchProfile(userId: number, data: UpdateMatchProfileData) {
-	const qWeaponPool: Tables['User']['qWeaponPool'] = data.qWeaponPool.map((weapon) => ({
-		weaponSplId: weapon.id,
-		isFavorite: Number(weapon.isFavorite)
-	}));
 	const mapModePreferences: UserMapModePreferences = {
 		modes: data.modes.map((mode) => ({
 			mode,
@@ -908,7 +904,7 @@ export function updateMatchProfile(userId: number, data: UpdateMatchProfileData)
 		.set({
 			vc: data.vc,
 			languages: data.languages.length > 0 ? data.languages.join(',') : null,
-			qWeaponPool: qWeaponPool.length > 0 ? JSON.stringify(qWeaponPool) : null,
+			qWeaponPool: data.qWeaponPool.length > 0 ? JSON.stringify(data.qWeaponPool) : null,
 			mapModePreferences: JSON.stringify(mapModePreferences)
 		})
 		.where('id', '=', userId)
