@@ -85,6 +85,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			score: score[0],
 			players: groupAlpha.members.map((member) => ({
 				userId: member.id,
+				discordId: member.discordId,
+				name: member.username,
 				rank: userIdToRank(member.id),
 			})),
 		},
@@ -92,6 +94,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			score: score[1],
 			players: groupBravo.members.map((member) => ({
 				userId: member.id,
+				discordId: member.discordId,
+				name: member.username,
 				rank: userIdToRank(member.id),
 			})),
 		},

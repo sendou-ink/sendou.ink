@@ -74,9 +74,15 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 					eb
 						.selectFrom("TeamMemberWithSecondary")
 						.innerJoin("Team", "Team.id", "TeamMemberWithSecondary.teamId")
+						.leftJoin(
+							"UserSubmittedImage",
+							"UserSubmittedImage.id",
+							"Team.avatarImgId",
+						)
 						.select([
 							"Team.name",
 							"Team.customUrl",
+							"UserSubmittedImage.url as avatarUrl",
 							"TeamMemberWithSecondary.role",
 						])
 						.whereRef("TeamMemberWithSecondary.userId", "=", "User.id")
@@ -146,6 +152,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			name: team.name,
 			role: team.role,
 			teamPageUrl: `https://sendou.ink/t/${team.customUrl}`,
+			avatarUrl: team.avatarUrl,
 		})),
 	};
 
