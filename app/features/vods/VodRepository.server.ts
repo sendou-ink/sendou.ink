@@ -107,7 +107,7 @@ export async function findVods({
 }
 
 export async function findVodById(id: Tables["Video"]["id"]) {
-	const video_query = db
+	const videoQuery = db
 		.selectFrom("Video")
 		.select([
 			"id",
@@ -119,10 +119,10 @@ export async function findVodById(id: Tables["Video"]["id"]) {
 		])
 		.where("Video.id", "=", id);
 
-	const video = await video_query.executeTakeFirst();
+	const video = await videoQuery.executeTakeFirst();
 
 	if (video) {
-		const video_match_query = db
+		const videoMatchQuery = db
 			.selectFrom("VideoMatch")
 			.select([
 				"VideoMatch.id",
@@ -151,7 +151,7 @@ export async function findVodById(id: Tables["Video"]["id"]) {
 			.orderBy("VideoMatch.startsAt", "asc")
 			.orderBy("VideoMatchPlayer.player", "asc");
 
-		const matches = await video_match_query.execute();
+		const matches = await videoMatchQuery.execute();
 
 		return {
 			...video,
@@ -230,7 +230,7 @@ export async function createVod(
 			videoId = result.id;
 		}
 		for (const match of args.matches) {
-			const video_match_result = await trx
+			const videoMatchResult = await trx
 				.insertInto("VideoMatch")
 				.values({
 					videoId: videoId,
@@ -241,7 +241,7 @@ export async function createVod(
 				// as id is needed for sqlite, see comment above
 				.returning("VideoMatch.id as id")
 				.executeTakeFirstOrThrow();
-			const matchId = video_match_result.id;
+			const matchId = videoMatchResult.id;
 
 			for (const [i, weaponSplId] of match.weapons.entries()) {
 				await trx
