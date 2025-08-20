@@ -61,14 +61,18 @@ const stmWithMatches = sql.prepare(/* sql */ `
   group by u."id"
 `);
 
-export type PlayerWithMatches = PlayerThatPlayedByTeamId & { 
-	matchIds: number[] 
+export type PlayerWithMatches = PlayerThatPlayedByTeamId & {
+	matchIds: number[];
 };
 
-export function playersThatPlayedWithMatchesByTournamentId(tournamentId: number) {
-	const results = stmWithMatches.all({ tournamentId }) as Array<PlayerThatPlayedByTeamId & { matchIds: string }>;
-	return results.map(player => ({
+export function playersThatPlayedWithMatchesByTournamentId(
+	tournamentId: number,
+) {
+	const results = stmWithMatches.all({ tournamentId }) as Array<
+		PlayerThatPlayedByTeamId & { matchIds: string }
+	>;
+	return results.map((player) => ({
 		...player,
-		matchIds: JSON.parse(player.matchIds) as number[]
+		matchIds: JSON.parse(player.matchIds) as number[],
 	})) as PlayerWithMatches[];
 }
