@@ -4,6 +4,8 @@ import { m } from '$lib/paraglide/messages';
 import { languagesUnified, modesLongTranslations } from '$lib/utils/i18n';
 import { modesShort } from '$lib/constants/in-game/modes';
 import { asset } from '$app/paths';
+import { stageId } from '$lib/schemas';
+import { modeShort } from '$lib/utils/zod';
 
 export const updatePreferencesSchema = z.object({
 	disableBuildAbilitySorting: z.boolean().optional(),
@@ -59,7 +61,7 @@ export const updateMatchProfileSchema = z.object({
 		{
 			label: m.just_steep_ocelot_tend()
 		},
-		z.any()
+		z.record(modeShort, z.array(stageId))
 	)
 });
 
