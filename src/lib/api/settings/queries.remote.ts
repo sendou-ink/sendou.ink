@@ -3,6 +3,7 @@ import { requireUser } from '$lib/server/auth/session';
 import * as UserRepository from '$lib/server/db/repositories/user';
 import invariant from '$lib/utils/invariant';
 import type { UpdateMatchProfileData } from './schemas';
+import * as MapPool from '$lib/core/maps/MapPool';
 
 export const byLoggedInUser = query(async () => {
 	const user = await requireUser();
@@ -33,6 +34,9 @@ export const matchProfile = query(async (): Promise<UpdateMatchProfileData> => {
 			// xxx: we could handle this better via a migration
 			profile.mapModePreferences?.modes.flatMap((pref) =>
 				pref.preference === 'PREFER' ? pref.mode : []
-			) ?? []
+			) ?? [],
+		maps: profile.mapModePreferences
+			? MapPool.fromSendouQMapPoolPreferences(profile.mapModePreferences)
+			: MapPool.empty()
 	};
 });

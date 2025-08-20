@@ -9,13 +9,13 @@
 
 	interface Props {
 		mode: ModeShort;
-		maxAmount: number;
+		maxCount: number;
 		pool: StageId[];
 		bannedMaps?: StageId[];
 		tiebreaker?: StageId;
 	}
 
-	let { mode, maxAmount, pool = $bindable(), tiebreaker, bannedMaps }: Props = $props();
+	let { mode, maxCount, pool = $bindable(), tiebreaker, bannedMaps }: Props = $props();
 
 	let wigglingStageId = $state<StageId | null>(null);
 	$effect(() => {
@@ -29,7 +29,7 @@
 		};
 	});
 
-	const stages = $derived([...pool, ...nullFilledArray(maxAmount - pool.length)]);
+	const stages = $derived([...pool, ...nullFilledArray(maxCount - pool.length)]);
 
 	function stageClickHandler(stageId: StageId) {
 		return () => {
@@ -46,7 +46,7 @@
 
 	function handleUnpickedStageClick(stageId: StageId) {
 		// is there space left?
-		if (stages[maxAmount - 1] !== null) {
+		if (stages[maxCount - 1] !== null) {
 			wigglingStageId = stageId;
 			return;
 		}
@@ -63,7 +63,7 @@
 
 <div class="container stack sm">
 	<div class="stack sm horizontal justify-center">
-		{#each { length: maxAmount }, index}
+		{#each { length: maxCount }, index}
 			{@render mapSlot({ number: index + 1, picked: stages[index] !== null })}
 		{/each}
 	</div>
