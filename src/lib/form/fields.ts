@@ -14,7 +14,7 @@ import type {
 	FormFieldSelect
 } from './types';
 import { m } from '$lib/paraglide/messages';
-import { modeShort, stageId, uniqueArray } from '$lib/utils/zod';
+import { modeShort, stageId } from '$lib/utils/zod';
 
 export const formRegistry = z.registry<FormField>();
 
@@ -222,7 +222,14 @@ export function mapPool(args: Omit<Extract<FormField, { type: 'map-pool' }>, 'ty
 	return z
 		.preprocess(
 			safeJSONParse,
-			z.partialRecord(modeShort, uniqueArray(stageId).min(1).max(args.maxCount))
+			z.partialRecord(
+				modeShort,
+				z
+					.array(stageId)
+					.refine((items) => new Set(items).size === items.length)
+					.min(1)
+					.max(args.maxCount)
+			)
 		)
 		.register(formRegistry, {
 			...args,

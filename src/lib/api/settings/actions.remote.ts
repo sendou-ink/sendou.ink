@@ -27,10 +27,8 @@ export const updateAccessibilitySettings = validatedForm(
 	}
 );
 
-export const updateMatchProfile = validatedForm(updateMatchProfileSchema, async (data) => {
-	console.log('Match profile updated', data);
-
-	// xxx: update the thing
+export const updateMatchProfile = validatedForm(updateMatchProfileSchema, async (data, user) => {
+	await UserRepository.updateMatchProfile(user.id, data);
 
 	await matchProfile().refresh();
 });

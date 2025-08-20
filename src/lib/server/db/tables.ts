@@ -774,6 +774,7 @@ export interface UserMapModePreferences {
 	}>;
 }
 
+// xxx: update to id: weaponSplId, isFavorite: boolean
 export interface QWeaponPool {
 	weaponSplId: MainWeaponId;
 	isFavorite: number;

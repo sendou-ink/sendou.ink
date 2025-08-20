@@ -244,13 +244,6 @@ export function date(value: unknown) {
 	return value;
 }
 
-// https://github.com/colinhacks/zod/discussions/2316#discussioncomment-10728545
-export function uniqueArray(schema: ZodType) {
-	return z.array(schema).refine((items) => new Set(items).size === items.length, {
-		message: 'All items must be unique, no duplicate values allowed'
-	});
-}
-
 export function filterOutNullishMembers(value: unknown) {
 	if (!Array.isArray(value)) return value;
 

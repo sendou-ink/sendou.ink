@@ -3,7 +3,14 @@ import { sql } from 'kysely';
 import { jsonArrayFrom } from 'kysely/helpers/sqlite';
 import * as R from 'remeda';
 import { db } from '../sql';
-import type { BuildSort, DB, Tables, TablesInsertable, UserPreferences } from '../tables';
+import type {
+	BuildSort,
+	DB,
+	Tables,
+	TablesInsertable,
+	UserMapModePreferences,
+	UserPreferences
+} from '../tables';
 import invariant from '$lib/utils/invariant';
 import type { CommonUser } from '$lib/utils/kysely.server';
 import { COMMON_USER_FIELDS } from '$lib/utils/kysely.server';
@@ -11,7 +18,11 @@ import { safeNumberParse } from '$lib/utils/number';
 import { isSupporter } from '$lib/modules/permissions/utils';
 import { userRoles } from '$lib/modules/permissions/mapper.server';
 import type { EditProfileData } from '$lib/api/user/schemas';
-import type { UpdateAccessibilitySettingsData } from '$lib/api/settings/schemas';
+import type {
+	UpdateAccessibilitySettingsData,
+	UpdateMatchProfileData
+} from '$lib/api/settings/schemas';
+import { modesShort } from '$lib/constants/in-game/modes';
 
 function identifierToUserIdQuery(identifier: string) {
 	return db
@@ -867,6 +878,41 @@ export function updateBuildSorting({
 
 export function updateAccessibilitySettings(userId: number, data: UpdateAccessibilitySettingsData) {
 	return db.updateTable('User').set(data).where('id', '=', userId).execute();
+}
+
+export function updateMatchProfile(userId: number, data: UpdateMatchProfileData) {
+	const qWeaponPool: Tables['User']['qWeaponPool'] = data.qWeaponPool.map((weapon) => ({
+		weaponSplId: weapon.id,
+		isFavorite: Number(weapon.isFavorite)
+	}));
+	const mapModePreferences: UserMapModePreferences = {
+		modes: data.modes.map((mode) => ({
+			mode,
+			preference: 'PREFER'
+		})),
+		pool: modesShort
+			.map((mode) => {
+				const stages = data.maps[mode];
+				if (!stages) return null;
+
+				return {
+					mode,
+					stages
+				};
+			})
+			.filter(R.isTruthy)
+	};
+
+	return db
+		.updateTable('User')
+		.set({
+			vc: data.vc,
+			languages: data.languages.length > 0 ? data.languages.join(',') : null,
+			qWeaponPool: qWeaponPool.length > 0 ? JSON.stringify(qWeaponPool) : null,
+			mapModePreferences: JSON.stringify(mapModePreferences)
+		})
+		.where('id', '=', userId)
+		.execute();
 }
 
 export type UpdatePatronDataArgs = Array<
