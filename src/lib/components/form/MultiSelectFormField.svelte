@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { FormFieldProps } from '$lib/form/types';
+	import { slide } from 'svelte/transition';
 	import Button from '../buttons/Button.svelte';
 	import BottomText from './BottomText.svelte';
 	import SelectFormField from './SelectFormField.svelte';
@@ -12,7 +13,9 @@
 	let { name, bottomText, error, onblur, value = $bindable(), items, label }: Props = $props();
 	const id = $props.id();
 
-	const itemsPicked = $derived(items.filter((item) => value.includes(item.value)));
+	let selectValue = $derived(null);
+
+	const itemsPicked = $derived(value.map((v) => items.find((item) => item.value === v)!));
 	const itemsAvailable = $derived(items.filter((item) => !value.includes(item.value)));
 </script>
 
@@ -25,18 +28,28 @@
 				{label}
 				{onblur}
 				clearable
-				value={null}
-				onSelect={(selectedValue) => value.push(selectedValue)}
+				bind:value={selectValue}
+				onSelect={(selectedValue) => {
+					value.push(selectedValue);
+					selectValue = null;
+				}}
 			/>
 		</div>
 		{#if value.length > 0}
 			<ol>
 				{#each itemsPicked as item, idx (item.value)}
-					{@render selectedValue({
-						item,
-						idx,
-						onDelete: () => (value = value.filter((v) => v !== item.value))
-					})}
+					<li in:slide={{ duration: 250 }}>
+						{idx + 1}) {item.label}
+						<Button
+							icon={X}
+							variant="minimal-destructive"
+							size="small"
+							onclick={() => {
+								value = value.filter((v) => v !== item.value);
+								selectValue = null;
+							}}
+						/>
+					</li>
 				{/each}
 			</ol>
 			<input type="hidden" {name} value={JSON.stringify(value)} />
@@ -44,21 +57,6 @@
 	</div>
 	<BottomText info={bottomText} {error} fieldId={id} />
 </div>
-
-{#snippet selectedValue({
-	item,
-	idx,
-	onDelete
-}: {
-	item: FormFieldProps<'multi-select'>['items'][number];
-	idx: number;
-	onDelete: () => void;
-})}
-	<li>
-		{idx + 1}) {item.label}
-		<Button icon={X} variant="minimal-destructive" size="small" onclick={onDelete} />
-	</li>
-{/snippet}
 
 <style>
 	ol {

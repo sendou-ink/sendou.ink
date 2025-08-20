@@ -10,6 +10,7 @@
 		trigger?: Snippet;
 		children?: Snippet;
 		title?: string;
+		size?: 'medium' | 'big';
 
 		// xxx: missing props
 		// showHeading?: boolean;
@@ -30,7 +31,8 @@
 		title,
 		trigger,
 		onCloseTo,
-		isDismissable = true
+		isDismissable = true,
+		size = 'medium'
 	}: Props = $props();
 </script>
 
@@ -54,7 +56,7 @@
 		<Dialog.Content interactOutsideBehavior={isDismissable ? undefined : 'ignore'}>
 			{#snippet child({ props, open })}
 				{#if open}
-					<div {...props} class="content">
+					<div {...props} class={['content', { big: size === 'big' }]}>
 						<div class="title">
 							{#if title}
 								<Dialog.Title>
@@ -133,6 +135,10 @@
 		left: 50%;
 		transform: translate(-50%, -50%);
 		z-index: 100;
+
+		&.big {
+			max-width: 40rem;
+		}
 	}
 
 	.content[data-entering] {

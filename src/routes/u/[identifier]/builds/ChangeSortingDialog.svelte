@@ -20,7 +20,7 @@
 	const validField = createFieldValidator(schema);
 </script>
 
-<Dialog bind:open title={m.user_builds_sorting_header()} isDismissable={false}>
+<Dialog bind:open title={m.user_builds_sorting_header()} isDismissable={false} size="big">
 	{#snippet trigger()}
 		<DialogTriggerButton
 			data-testid="change-sorting-button"
