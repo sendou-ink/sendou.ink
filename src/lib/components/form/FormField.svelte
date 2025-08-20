@@ -12,12 +12,16 @@
 	import DualSelectFormField from './DualSelectFormField.svelte';
 	import type { Snippet } from 'svelte';
 	import InputGroupFormField from './InputGroupFormField.svelte';
+	import MapPoolFormField, { type MapPool } from './MapPoolFormField.svelte';
+	import type { ModeShort } from '$lib/constants/in-game/types';
 
 	type Output = z.output<T>;
 	type ValueType = Output[keyof Output];
 
 	interface Props {
 		name: string;
+		/** For map pool form field, what modes to pick for? */
+		modes?: ModeShort[];
 		children?: Snippet<
 			[
 				{
@@ -31,7 +35,7 @@
 		>;
 	}
 
-	let { name, children }: Props = $props();
+	let { name, children, modes }: Props = $props();
 
 	const { schema, defaultValues, errors, onblur } = formContext.get();
 
@@ -94,6 +98,8 @@
 	/>
 {:else if formField.type === 'weapon-pool'}
 	<WeaponPoolFormField bind:value={data.value as WeaponPool[]} {...commonProps} {...formField} />
+{:else if formField.type === 'map-pool'}
+	<MapPoolFormField bind:value={data.value as MapPool} {modes} {...commonProps} {...formField} />
 {:else if formField.type === 'custom'}
 	{@render children?.({ data, ...commonProps, ...formField })}
 {:else}

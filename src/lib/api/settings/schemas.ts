@@ -4,8 +4,6 @@ import { m } from '$lib/paraglide/messages';
 import { languagesUnified, modesLongTranslations } from '$lib/utils/i18n';
 import { modesShort } from '$lib/constants/in-game/modes';
 import { asset } from '$app/paths';
-import { stageId } from '$lib/schemas';
-import { modeShort } from '$lib/utils/zod';
 
 export const updatePreferencesSchema = z.object({
 	disableBuildAbilitySorting: z.boolean().optional(),
@@ -55,14 +53,10 @@ export const updateMatchProfileSchema = z.object({
 			imgSrc: asset(`/img/modes/${mode}.avif`)
 		}))
 	}),
-	maps: Fields.customJsonFieldOptional(
-		// xxx: or map pool form field?
-		// xxx: use Fields.mapPool & make with children FormField.svelte
-		{
-			label: m.just_steep_ocelot_tend()
-		},
-		z.record(modeShort, z.array(stageId))
-	)
+	maps: Fields.mapPool({
+		label: m.just_steep_ocelot_tend(),
+		maxCount: 7
+	})
 });
 
 export type UpdateMatchProfileData = z.infer<typeof updateMatchProfileSchema>;

@@ -4,7 +4,6 @@
 	import * as SettingsAPI from '$lib/api/settings';
 	import { createFieldValidator } from '$lib/components/form/utils';
 	import { m } from '$lib/paraglide/messages';
-	import MapPoolFormField from '$lib/components/form/MapPoolFormField.svelte';
 
 	const schema = SettingsAPI.schemas.updateMatchProfileSchema;
 	const validField = createFieldValidator(schema);
@@ -29,9 +28,5 @@
 	<FormField name={validField('languages')} />
 
 	<FormField name={validField('modes')} />
-	<FormField name={validField('maps')}>
-		{#snippet children({ data, ...rest })}
-			<MapPoolFormField bind:value={data.value as number[]} {modes} maxAmount={4} {...rest} />
-		{/snippet}
-	</FormField>
+	<FormField name={validField('maps')} {modes} />
 </Form>
