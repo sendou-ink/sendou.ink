@@ -1717,8 +1717,8 @@ function otherTeams() {
 	}
 }
 
-function realVideo() {
-	VodRepository.createVod({
+async function realVideo() {
+	await VodRepository.createVod({
 		type: "TOURNAMENT",
 		youtubeUrl: youtubeIdToYoutubeUrl("M4aV-BQWlVg"),
 		date: { day: 2, month: 2, year: 2023 },
@@ -1771,8 +1771,8 @@ function realVideo() {
 	});
 }
 
-function realVideoCast() {
-	VodRepository.createVod({
+async function realVideoCast() {
+	await VodRepository.createVod({
 		type: "CAST",
 		youtubeUrl: youtubeIdToYoutubeUrl("M4aV-BQWlVg"),
 		date: { day: 2, month: 2, year: 2023 },
