@@ -1,31 +1,28 @@
 <script lang="ts">
 	import * as BuildAPI from '$lib/api/build';
+	import * as AuthAPI from '$lib/api/auth';
+	import * as UserAPI from '$lib/api/user';
 	import BuildCard from '$lib/components/build-card/BuildCard.svelte';
 	import type { MainWeaponId } from '$lib/constants/in-game/types';
 	import { m } from '$lib/paraglide/messages';
 	import BuildsFilters from './BuildFilters.svelte';
 	import type { BuildFilter } from './types';
+	import AddNewButton from '$lib/components/buttons/AddNewButton.svelte';
+	import { resolve } from '$app/paths';
+	import ChangeSortingDialog from './ChangeSortingDialog.svelte';
 
 	let { params } = $props();
 
-	const { builds: allBuilds, weaponCounts } = $derived(
-		await BuildAPI.queries.byUserIdentifier(params.identifier)
+	const {
+		builds: allBuilds,
+		weaponCounts,
+		buildSorting
+	} = $derived(await BuildAPI.queries.byUserIdentifier(params.identifier));
+
+	const isOwnPage = $derived(
+		(await AuthAPI.queries.me())?.id ===
+			(await UserAPI.queries.layoutDataByIdentifier(params.identifier)).user.id
 	);
-
-	// Sorting dialog state
-	// let changingSorting = $state<boolean>(() => {
-	// 	const param = getSearchParam('sorting');
-	// 	return param === 'true' && isOwnPage;
-	// });
-
-	// function setChangingSorting(value: boolean) {
-	// 	changingSorting = value;
-	// 	setSearchParam('sorting', value && isOwnPage ? 'true' : null);
-	// }
-
-	// const closeSortingDialog = () => setChangingSorting(false);
-
-	// Filtered builds
 
 	let filter = $state<BuildFilter>('ALL');
 
@@ -45,24 +42,12 @@
 </script>
 
 <div class="stack lg">
-	<!-- {#if changingSorting}
-		<ChangeSortingDialog close={closeSortingDialog} />
-	{/if} -->
-
-	<!-- {#if await Auth}
+	{#if isOwnPage}
 		<div class="stack sm horizontal items-center justify-end">
-			<Button
-				onclick={() => setChangingSorting(true)}
-				size="small"
-				variant="outlined"
-				icon={SortIcon}
-				data-testid="change-sorting-button"
-			>
-				{m.user_builds_sorting_changeButton()}
-			</Button>
-			<AddNewButton navIcon="builds" href={userNewBuildPage(user)} />
+			<ChangeSortingDialog {buildSorting} />
+			<AddNewButton navIcon="builds" href={resolve('/builds/new')} />
 		</div>
-	{/if} -->
+	{/if}
 
 	<BuildsFilters bind:filter isOwnPage builds={allBuilds} {weaponCounts} />
 
@@ -70,8 +55,7 @@
 		<div class="builds-container">
 			<!-- eslint-disable svelte/require-each-key -- Needed so that the builds update when the data loader reruns -->
 			{#each builds as build}
-				<!-- xxx: actual args -->
-				<BuildCard {build} />
+				<BuildCard {build} canEdit={isOwnPage} />
 			{/each}
 		</div>
 	{:else}

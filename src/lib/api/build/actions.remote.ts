@@ -6,6 +6,8 @@ import { id } from '$lib/schemas';
 import * as UserRepository from '$lib/server/db/repositories/user';
 import invariant from '$lib/utils/invariant';
 import { byUserIdentifier } from './queries.remote';
+import { validatedForm } from '$lib/server/remote-functions';
+import { updateBuildSortingSchema } from './schemas';
 
 export const updateVisibilityById = command(
 	z.object({
@@ -33,6 +35,15 @@ export const deleteById = command(id, async (buildId) => {
 	const { ownerId } = await BuildRepository.deleteById(buildId);
 
 	await refreshBuildsPageQuery(ownerId);
+});
+
+export const updateBuildSorting = validatedForm(updateBuildSortingSchema, async (data, user) => {
+	await UserRepository.updateBuildSorting({
+		userId: user.id,
+		buildSorting: data.buildSorting ?? null
+	});
+
+	await refreshBuildsPageQuery(user.id);
 });
 
 async function refreshBuildsPageQuery(userId: number) {

@@ -19,9 +19,12 @@
 		info?: string;
 		/** Fires when the form changes and the resulting data is considered valid as defined by the given schema. Note: only works for "primitive" fields such as plain inputs, selects and input groups.*/
 		onchange?: (data: Partial<Output>) => void;
+		/** Fires when the form is succesfully submitted to the server. */
+		onSubmit?: () => void;
 	}
 
-	let { children, heading, action, schema, defaultValues, info, onchange }: Props = $props();
+	let { children, heading, action, schema, defaultValues, info, onchange, onSubmit }: Props =
+		$props();
 	const id = $props.id();
 
 	let errors = $state<Partial<Record<keyof Output, string>>>({});
@@ -94,6 +97,8 @@
 		}
 
 		await submit();
+		onSubmit?.();
+
 		errors = action.result?.errors ?? {};
 		focusFirstInvalid();
 	}
@@ -105,16 +110,18 @@
 	class="stack md-plus items-start"
 	onchange={onchange ? handleOnchange : undefined}
 >
-	<div class="stack xs">
-		{#if heading}
-			<h1 class="text-lg">{heading}</h1>
-		{/if}
-		{#if info}
-			<div class="info-message">
-				{info}
-			</div>
-		{/if}
-	</div>
+	{#if heading || info}
+		<div class="stack xs">
+			{#if heading}
+				<h1 class="text-lg">{heading}</h1>
+			{/if}
+			{#if info}
+				<div class="info-message">
+					{info}
+				</div>
+			{/if}
+		</div>
+	{/if}
 
 	{@render children()}
 

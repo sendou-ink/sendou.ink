@@ -15,6 +15,7 @@ import type {
 } from './types';
 import { m } from '$lib/paraglide/messages';
 import { modeShort, stageId } from '$lib/utils/zod';
+import * as R from 'remeda';
 
 export const formRegistry = z.registry<FormField>();
 
@@ -124,6 +125,26 @@ export function selectOptional<V extends string>(args: Omit<FormFieldSelect<'sel
 	});
 }
 
+export function multiSelectOptional<V extends string>(
+	args: Omit<FormFieldSelect<'multi-select', V>, 'type'>
+) {
+	return z
+		.preprocess(
+			safeJSONParse,
+			z
+				.array(itemsSchema(args.items))
+				.min(1)
+				.refine((val) => {
+					return !val || val.length === R.unique(val).length;
+				})
+				.optional()
+		)
+		.register(formRegistry, {
+			...args,
+			type: 'multi-select'
+		});
+}
+
 export function dualSelectOptional<V extends string>(
 	args: Omit<FormFieldDualSelect<'dual-select', V>, 'type'>
 ) {
@@ -200,16 +221,7 @@ export function weaponPool(args: Omit<Extract<FormField, { type: 'weapon-pool' }
 				)
 				.max(args.maxCount)
 				.refine((val) => {
-					const seen = new Set();
-
-					for (const item of val) {
-						if (seen.has(item.id)) {
-							return false;
-						}
-						seen.add(item.id);
-					}
-
-					return true;
+					return val.length === R.uniqueBy(val, (item) => item.id).length;
 				})
 		)
 		.register(formRegistry, {

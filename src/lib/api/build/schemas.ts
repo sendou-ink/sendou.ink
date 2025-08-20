@@ -3,6 +3,8 @@ import { ability, modeShort, safeJSONParse } from '$lib/utils/zod';
 import { weaponSplId } from '$lib/schemas';
 import type { MainWeaponId } from '$lib/constants/in-game/types';
 import { assertType } from '$lib/utils/types';
+import * as Fields from '$lib/form/fields';
+import { m } from '$lib/paraglide/messages';
 
 export const MAX_BUILD_FILTERS = 6;
 
@@ -223,3 +225,56 @@ export const weaponIdFromSlug = z.preprocess((val) => {
 
 	return val;
 }, weaponSplId);
+
+export const updateBuildSortingSchema = z.object({
+	buildSorting: Fields.multiSelectOptional({
+		label: m.petty_icy_leopard_treasure(),
+		bottomText: m.last_spicy_earthworm_wave(),
+		items: [
+			{
+				value: 'UPDATED_AT',
+				label: m.user_builds_sorting_UPDATED_AT()
+			},
+			{
+				value: 'TOP_500',
+				label: m.user_builds_sorting_TOP_500()
+			},
+			{
+				value: 'WEAPON_POOL',
+				label: m.user_builds_sorting_WEAPON_POOL()
+			},
+			{
+				value: 'WEAPON_IN_GAME_ORDER',
+				label: m.user_builds_sorting_WEAPON_IN_GAME_ORDER()
+			},
+			{
+				value: 'ALPHABETICAL_TITLE',
+				label: m.user_builds_sorting_ALPHABETICAL_TITLE()
+			},
+			{
+				value: 'MODE',
+				label: m.user_builds_sorting_MODE()
+			},
+			{
+				value: 'HEADGEAR_ID',
+				label: m.user_builds_sorting_HEADGEAR_ID()
+			},
+			{
+				value: 'CLOTHES_ID',
+				label: m.user_builds_sorting_CLOTHES_ID()
+			},
+			{
+				value: 'SHOES_ID',
+				label: m.user_builds_sorting_SHOES_ID()
+			},
+			{
+				value: 'PUBLIC_BUILD',
+				label: m.user_builds_sorting_PUBLIC_BUILD()
+			},
+			{
+				value: 'PRIVATE_BUILD',
+				label: m.user_builds_sorting_PRIVATE_BUILD()
+			}
+		]
+	})
+});

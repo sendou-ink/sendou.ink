@@ -10,6 +10,7 @@
 		trigger?: Snippet;
 		children?: Snippet;
 		title?: string;
+		size?: 'medium' | 'big';
 
 		// xxx: missing props
 		// showHeading?: boolean;
@@ -17,12 +18,22 @@
 		onCloseTo?: string;
 		// /** If true, shows the close button even if onClose is not provided */
 		// showCloseButton?: boolean;
+		/** Should the dialog close when clicking outside? */
+		isDismissable?: boolean;
 	};
 
 	// xxx: placeholder
 	const showCloseButton = true;
 
-	let { open = $bindable(false), children, title, trigger, onCloseTo }: Props = $props();
+	let {
+		open = $bindable(false),
+		children,
+		title,
+		trigger,
+		onCloseTo,
+		isDismissable = true,
+		size = 'medium'
+	}: Props = $props();
 </script>
 
 <Dialog.Root
@@ -42,10 +53,10 @@
 				{/if}
 			{/snippet}
 		</Dialog.Overlay>
-		<Dialog.Content>
+		<Dialog.Content interactOutsideBehavior={isDismissable ? undefined : 'ignore'}>
 			{#snippet child({ props, open })}
 				{#if open}
-					<div {...props} class="content">
+					<div {...props} class={['content', { big: size === 'big' }]}>
 						<div class="title">
 							{#if title}
 								<Dialog.Title>
@@ -124,6 +135,10 @@
 		left: 50%;
 		transform: translate(-50%, -50%);
 		z-index: 100;
+
+		&.big {
+			max-width: 40rem;
+		}
 	}
 
 	.content[data-entering] {
