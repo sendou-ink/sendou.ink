@@ -14,6 +14,7 @@
 	import InputGroupFormField from './InputGroupFormField.svelte';
 	import MapPoolFormField, { type MapPool } from './MapPoolFormField.svelte';
 	import type { ModeShort } from '$lib/constants/in-game/types';
+	import MultiSelectFormField from './MultiSelectFormField.svelte';
 
 	type Output = z.output<T>;
 	type ValueType = Output[keyof Output];
@@ -82,6 +83,8 @@
 		{...commonProps}
 		{...formField}
 	/>
+{:else if formField.type === 'multi-select'}
+	<MultiSelectFormField bind:value={data.value as string[]} {...commonProps} {...formField} />
 {:else if formField.type === 'radio-group'}
 	<InputGroupFormField
 		inputType="radio"

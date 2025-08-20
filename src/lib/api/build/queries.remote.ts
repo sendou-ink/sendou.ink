@@ -5,7 +5,7 @@ import { z } from 'zod/v4';
 import { query } from '$app/server';
 import { error } from '@sveltejs/kit';
 import { notFoundIfFalsy } from '$lib/server/remote-functions';
-import { sortBuilds } from '$lib/core/build/build-sorting';
+import { DEFAULT_BUILD_SORT, sortBuilds } from '$lib/core/build/build-sorting';
 import { BUILDS_PAGE_MAX_BUILDS } from '$lib/constants/build';
 import * as R from 'remeda';
 import { filterBuilds } from '$lib/core/build/filter';
@@ -36,7 +36,7 @@ export const byUserIdentifier = query(UserAPI.schemas.identifier, async (identif
 	});
 
 	return {
-		buildSorting: user.buildSorting,
+		buildSorting: user.buildSorting ?? [...DEFAULT_BUILD_SORT],
 		builds: sortedBuilds,
 		weaponCounts: calculateWeaponCounts()
 	};

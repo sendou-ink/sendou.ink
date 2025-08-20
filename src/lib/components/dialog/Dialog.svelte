@@ -17,12 +17,21 @@
 		onCloseTo?: string;
 		// /** If true, shows the close button even if onClose is not provided */
 		// showCloseButton?: boolean;
+		/** Should the dialog close when clicking outside? */
+		isDismissable?: boolean;
 	};
 
 	// xxx: placeholder
 	const showCloseButton = true;
 
-	let { open = $bindable(false), children, title, trigger, onCloseTo }: Props = $props();
+	let {
+		open = $bindable(false),
+		children,
+		title,
+		trigger,
+		onCloseTo,
+		isDismissable = true
+	}: Props = $props();
 </script>
 
 <Dialog.Root
@@ -42,7 +51,7 @@
 				{/if}
 			{/snippet}
 		</Dialog.Overlay>
-		<Dialog.Content>
+		<Dialog.Content interactOutsideBehavior={isDismissable ? undefined : 'ignore'}>
 			{#snippet child({ props, open })}
 				{#if open}
 					<div {...props} class="content">

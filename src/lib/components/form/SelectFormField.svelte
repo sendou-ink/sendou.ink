@@ -12,11 +12,13 @@
 		clearable?: boolean;
 		id?: string;
 		name?: string;
+		onSelect?: (value: string) => void;
 	};
 
 	let {
 		label,
 		name,
+		onSelect,
 		bottomText,
 		items,
 		error,
@@ -43,6 +45,9 @@
 		{onblur}
 		{clearable}
 		items={itemsWithLabels}
+		onchange={onSelect
+			? (e) => e.currentTarget.value && onSelect(e.currentTarget.value)
+			: undefined}
 		bind:value
 		{...ariaAttributes({
 			id,

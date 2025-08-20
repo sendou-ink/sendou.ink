@@ -17,7 +17,7 @@
 
 	let { children, params }: Props = $props();
 
-	const loggedInUser = $derived(await AuthAPI.queries.me()); // xxx: await_waterfall
+	const loggedInUser = await AuthAPI.queries.me(); // xxx: await_waterfall
 	const user = $derived((await UserAPI.queries.layoutDataByIdentifier(params.identifier)).user);
 
 	const isOwnPage = $derived(loggedInUser?.id === user.id);
