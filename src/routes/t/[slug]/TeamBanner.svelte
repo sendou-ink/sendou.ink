@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as TeamAPI from '$lib/api/team';
+	import type * as TeamAPI from '$lib/api/team';
 	import Flag from '$lib/components/Flag.svelte';
 	import Bsky from '$lib/components/icons/Bsky.svelte';
 	import { bskyUrl } from '$lib/utils/urls';

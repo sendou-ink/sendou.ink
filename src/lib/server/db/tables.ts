@@ -1,5 +1,6 @@
 import type { CountryCode } from '$lib/constants/common';
 import type { Ability, MainWeaponId, ModeShort, StageId } from '$lib/constants/in-game/types';
+import type { TEAM_MEMBER_ROLES } from '$lib/constants/team';
 import type { JSONColumnTypeNullable } from '$lib/utils/kysely.server';
 import type {
 	ColumnType,
@@ -16,7 +17,6 @@ export const tags: any = {};
 export type CalendarFilters = any;
 export type TieredSkill = any;
 export type NotificationValue = any;
-export const TEAM_MEMBER_ROLES: any = [];
 export type ParticipantResult = any;
 
 type Generated<T> =

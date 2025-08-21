@@ -133,12 +133,9 @@ export const COMMON_PREVIEW_IMAGE = '/img/layout/common-preview.png';
 // export const ERROR_GIRL_IMAGE_PATH = "/img/layout/error-girl";
 // export const LOGO_PATH = "/img/layout/logo";
 export const SENDOU_LOVE_EMOJI_PATH = '/img/layout/sendou_love';
-// export const FIRST_PLACEMENT_ICON_PATH =
-// 	"/svg/placements/first.svg";
-// export const SECOND_PLACEMENT_ICON_PATH =
-// 	"/svg/placements/second.svg";
-// export const THIRD_PLACEMENT_ICON_PATH =
-// 	"/svg/placements/third.svg";
+export const FIRST_PLACEMENT_ICON_PATH = '/svg/placements/first.svg';
+export const SECOND_PLACEMENT_ICON_PATH = '/svg/placements/second.svg';
+export const THIRD_PLACEMENT_ICON_PATH = '/svg/placements/third.svg';
 
 // export const soundPath = (fileName: string) =>
 // 	`/sounds/${fileName}.wav`;

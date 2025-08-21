@@ -6,6 +6,7 @@ import type {
 } from '$lib/constants/in-game/types';
 import type { weaponCategories } from '$lib/constants/in-game/weapon-ids';
 import { m } from '$lib/paraglide/messages';
+import type { Tables } from '$lib/server/db/tables';
 import { logger } from './logger';
 
 /**
@@ -443,4 +444,22 @@ export const weaponTranslations: Record<
 	8012: m.weapons_MAIN_8012,
 	8020: m.weapons_MAIN_8020,
 	8021: m.weapons_MAIN_8021
+};
+
+export const teamRoleTranslations: Record<
+	NonNullable<Tables['TeamMember']['role']>,
+	() => string
+> = {
+	CAPTAIN: m.team_roles_CAPTAIN,
+	CO_CAPTAIN: m.team_roles_CO_CAPTAIN,
+	FRONTLINE: m.team_roles_FRONTLINE,
+	SLAYER: m.team_roles_SLAYER,
+	SKIRMISHER: m.team_roles_SKIRMISHER,
+	SUPPORT: m.team_roles_SUPPORT,
+	MIDLINE: m.team_roles_MIDLINE,
+	BACKLINE: m.team_roles_BACKLINE,
+	FLEX: m.team_roles_FLEX,
+	SUB: m.team_roles_SUB,
+	COACH: m.team_roles_COACH,
+	CHEERLEADER: m.team_roles_CHEERLEADER
 };

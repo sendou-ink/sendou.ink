@@ -26,22 +26,18 @@
 
 <style>
 	a {
+		background-color: var(--color-base-card-section);
+		border: var(--border-style);
 		display: flex;
 		flex-wrap: wrap;
 		padding: var(--s-4);
 		border-radius: var(--radius-box);
 		margin: 0 auto;
-		background-color: var(--color-base-card);
 		color: var(--text);
 		gap: var(--s-6);
-		transition: 0.1s ease-in-out background-color;
 
 		@media screen and (min-width: 480px) {
 			gap: var(--s-10);
-		}
-
-		&:hover {
-			background-color: var(--color-base-card-transparent);
 		}
 	}
 
