@@ -12,7 +12,7 @@ export const create = validatedForm(createTeamSchema, async (data, user) => {
 
 	const customUrl = mySlugify(data.name);
 
-	if (await TeamRepository.findByCustomUrl(customUrl)) {
+	if (await TeamRepository.findBySlug(customUrl)) {
 		return {
 			errors: {
 				name: m.team_forms_errors_duplicateName

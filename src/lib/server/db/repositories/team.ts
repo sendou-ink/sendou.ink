@@ -41,9 +41,9 @@ export function findAllMemberOfByUserId(userId: number) {
 		.execute();
 }
 
-export type findByCustomUrl = NonNullable<Awaited<ReturnType<typeof findByCustomUrl>>>;
+export type findBySlug = NonNullable<Awaited<ReturnType<typeof findBySlug>>>;
 
-export function findByCustomUrl(customUrl: string, { includeInviteCode = false } = {}) {
+export function findBySlug(customUrl: string, { includeInviteCode = false } = {}) {
 	return db
 		.selectFrom('Team')
 		.leftJoin('UserSubmittedImage as AvatarImage', 'AvatarImage.id', 'Team.avatarImgId')

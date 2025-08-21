@@ -1,10 +1,12 @@
-import { query } from '$app/server';
+import { prerender, query } from '$app/server';
 import { z } from 'zod/v4';
 import * as UserRepository from '$lib/server/db/repositories/user';
 import * as TeamRepository from '$lib/server/db/repositories/team';
 import { getUser } from '$lib/server/auth/session';
 import { queryToUserIdentifier } from '$lib/utils/users';
 import { membersToCommonPlusTierRating } from './utils';
+import { redirect } from '@sveltejs/kit';
+import { resolve } from '$app/paths';
 
 export const getAllTeams = query(z.void(), async () => {
 	const user = await getUser();
@@ -68,3 +70,7 @@ export const searchUsers = query(
 
 export type AllTeamsData = Awaited<ReturnType<typeof getAllTeams>>;
 export type UserSearchData = Awaited<ReturnType<typeof searchUsers>>;
+
+export const redirectToSearchPage = prerender(() => {
+	redirect(308, resolve('/search'));
+});

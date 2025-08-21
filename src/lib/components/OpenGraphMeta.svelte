@@ -9,7 +9,7 @@
 		/** Title as shown when shared on Bluesky, Discord etc. Also used in search results. If omitted, "title" is used instead. */
 		ogTitle?: string;
 		/** Brief description of the page's contents used by search engines and social media sharing. If the description is over 300 characters long it is automatically truncated. */
-		description?: string;
+		description?: string | null;
 		/** Optionally override location pathname. */
 		url?: string;
 		image?: {

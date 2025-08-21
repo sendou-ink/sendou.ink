@@ -24,60 +24,53 @@
 	const isResultsPage = $derived(page.url.pathname.includes('results'));
 </script>
 
-{#snippet template()}
-	<OpenGraphMeta
-		title={user.username}
-		description={`${user.username}'s profile on sendou.ink including builds, tournament results, art and more.`}
-	/>
+<OpenGraphMeta
+	title={user.username}
+	description={`${user.username}'s profile on sendou.ink including builds, tournament results, art and more.`}
+/>
 
-	<Main bigger={isResultsPage}>
-		<SubNav>
-			<SubNavLink href={resolve(`/u/${params.identifier}`)} data-testid="user-profile-tab">
-				{m.common_header_profile()}
+<Main bigger={isResultsPage}>
+	<SubNav>
+		<SubNavLink href={resolve(`/u/${params.identifier}`)} data-testid="user-profile-tab">
+			{m.common_header_profile()}
+		</SubNavLink>
+		<SubNavLink href={resolve(`/u/${params.identifier}/seasons`)} data-testid="user-seasons-tab">
+			{m.user_seasons()}
+		</SubNavLink>
+		{#if isOwnPage}
+			<SubNavLink href={resolve(`/u/${params.identifier}/edit`)} data-testid="user-edit-tab">
+				{m.common_actions_edit()}
 			</SubNavLink>
-			<SubNavLink href={resolve(`/u/${params.identifier}/seasons`)} data-testid="user-seasons-tab">
-				{m.user_seasons()}
+		{/if}
+		{#if user.resultsCount > 0}
+			<SubNavLink href={resolve(`/u/${params.identifier}/results`)} data-testid="user-results-tab">
+				{m.common_results()} ({user.resultsCount})
 			</SubNavLink>
-			{#if isOwnPage}
-				<SubNavLink href={resolve(`/u/${params.identifier}/edit`)} data-testid="user-edit-tab">
-					{m.common_actions_edit()}
-				</SubNavLink>
-			{/if}
-			{#if user.resultsCount > 0}
-				<SubNavLink
-					href={resolve(`/u/${params.identifier}/results`)}
-					data-testid="user-results-tab"
-				>
-					{m.common_results()} ({user.resultsCount})
-				</SubNavLink>
-			{/if}
-			{#if user.buildsCount > 0 || isOwnPage}
-				<SubNavLink href={resolve(`/u/${params.identifier}/builds`)} data-testid="user-builds-tab">
-					{m.common_pages_builds()} ({user.buildsCount})
-				</SubNavLink>
-			{/if}
-			{#if user.vodsCount > 0 || isOwnPage}
-				<SubNavLink href={resolve(`/u/${params.identifier}/vods`)} data-testid="user-vods-tab">
-					{m.common_pages_vods()} ({user.vodsCount})
-				</SubNavLink>
-			{/if}
-			{#if user.artCount > 0 || isOwnPage}
-				<SubNavLink
-					href={resolve(`/u/${params.identifier}/art`)}
-					end={false}
-					data-testid="user-art-tab"
-				>
-					{m.common_pages_art()} ({user.artCount})
-				</SubNavLink>
-			{/if}
-			{#if loggedInUser?.roles.includes('STAFF')}
-				<SubNavLink href={resolve(`/u/${params.identifier}/admin`)} data-testid="user-admin-tab"
-					>Admin</SubNavLink
-				>
-			{/if}
-		</SubNav>
-		{@render children()}
-	</Main>
-{/snippet}
-
-{@render template()}
+		{/if}
+		{#if user.buildsCount > 0 || isOwnPage}
+			<SubNavLink href={resolve(`/u/${params.identifier}/builds`)} data-testid="user-builds-tab">
+				{m.common_pages_builds()} ({user.buildsCount})
+			</SubNavLink>
+		{/if}
+		{#if user.vodsCount > 0 || isOwnPage}
+			<SubNavLink href={resolve(`/u/${params.identifier}/vods`)} data-testid="user-vods-tab">
+				{m.common_pages_vods()} ({user.vodsCount})
+			</SubNavLink>
+		{/if}
+		{#if user.artCount > 0 || isOwnPage}
+			<SubNavLink
+				href={resolve(`/u/${params.identifier}/art`)}
+				end={false}
+				data-testid="user-art-tab"
+			>
+				{m.common_pages_art()} ({user.artCount})
+			</SubNavLink>
+		{/if}
+		{#if loggedInUser?.roles.includes('STAFF')}
+			<SubNavLink href={resolve(`/u/${params.identifier}/admin`)} data-testid="user-admin-tab"
+				>Admin</SubNavLink
+			>
+		{/if}
+	</SubNav>
+	{@render children()}
+</Main>

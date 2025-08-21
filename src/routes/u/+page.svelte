@@ -1,6 +1,5 @@
-<script>
-	import Main from '$lib/components/layout/Main.svelte';
-</script>
+<script lang="ts">
+	import * as SearchAPI from '$lib/api/search';
 
-<!-- xxx: redirect to /search -->
-<Main>User search here</Main>
+	await SearchAPI.queries.redirectToSearchPage();
+</script>

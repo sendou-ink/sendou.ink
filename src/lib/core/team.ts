@@ -6,7 +6,7 @@ export function isTeamOwner({
 	team,
 	user
 }: {
-	team: TeamRepository.findByCustomUrl;
+	team: TeamRepository.findBySlug;
 	user?: { id: number };
 }) {
 	if (!user) return false;
@@ -18,7 +18,7 @@ export function isTeamManager({
 	team,
 	user
 }: {
-	team: TeamRepository.findByCustomUrl;
+	team: TeamRepository.findBySlug;
 	user?: { id: number };
 }) {
 	if (!user) return false;
@@ -32,7 +32,7 @@ export function isTeamMember({
 	team,
 	user
 }: {
-	team: TeamRepository.findByCustomUrl;
+	team: TeamRepository.findBySlug;
 	user?: { id: number };
 }) {
 	if (!user) return false;
@@ -40,7 +40,7 @@ export function isTeamMember({
 	return team.members.some((member) => member.id === user.id);
 }
 
-export function isTeamFull(team: TeamRepository.findByCustomUrl) {
+export function isTeamFull(team: TeamRepository.findBySlug) {
 	return team.members.length >= TEAM.MAX_MEMBER_COUNT;
 }
 
