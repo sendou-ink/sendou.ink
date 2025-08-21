@@ -13,8 +13,7 @@
 	import TabPanel from '$lib/components/tabs/TabPanel.svelte';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import AddNewButton from '$lib/components/buttons/AddNewButton.svelte';
-	import { asset, resolve } from '$app/paths';
-	import Button from '$lib/components/buttons/Button.svelte';
+	import { resolve } from '$app/paths';
 	import Pagination from '$lib/components/Pagination.svelte';
 
 	const tabState = new SearchParamState({
@@ -59,7 +58,13 @@
 			type="search"
 			oninput={(event) => {
 				const value = event.currentTarget.value.toLowerCase();
-				value ? debounce.run(value) : (debounce.cancel(), searchState.update(''));
+
+				if (value) {
+					debounce.run(value);
+				} else {
+					debounce.cancel();
+					searchState.update('');
+				}
 			}}
 		/>
 		{#if tabState.state === 'teams'}
@@ -88,7 +93,7 @@
 		<p>You need to be logged in to search users</p>
 	{:else if users !== null}
 		<ul>
-			{#each users as user}
+			{#each users as user (user.id)}
 				<li>
 					<a
 						class="link-item"
@@ -112,7 +117,7 @@
 	<Pagination items={teams} pageSize={25}>
 		{#snippet child({ items })}
 			<ul>
-				{#each items as team}
+				{#each items as team (team.customUrl)}
 					<li>
 						<a href={team.customUrl} class="link-item">
 							<Avatar url={team.avatarSrc ?? ''} size="sm" />
