@@ -6,22 +6,11 @@
 	interface Props {
 		ability: AbilityWithUnknown;
 		size: keyof typeof sizeMap;
-		dragStarted?: boolean;
-		dropAllowed?: boolean;
-		onClick?: VoidFunction;
-		onDrop?: (event: DragEvent) => void;
+		onclick?: VoidFunction;
 		class?: string;
 	}
 
-	const {
-		ability,
-		size,
-		dragStarted = false,
-		dropAllowed = false,
-		onClick: onclick,
-		onDrop,
-		class: className
-	}: Props = $props();
+	const { ability, size, onclick, class: className }: Props = $props();
 
 	const sizeMap = {
 		MAIN: 42,
@@ -32,22 +21,6 @@
 
 	const sizeNumber = $derived(sizeMap[size]);
 	const readonly = $derived(typeof onclick === 'undefined' || ability === 'UNKNOWN');
-
-	let isDragTarget = $state(false);
-
-	function ondragover(event: DragEvent) {
-		event.preventDefault();
-		isDragTarget = true;
-	}
-
-	function ondragleave() {
-		isDragTarget = false;
-	}
-
-	function ondrop(event: DragEvent) {
-		isDragTarget = false;
-		onDrop?.(event);
-	}
 </script>
 
 <svelte:element
@@ -56,9 +29,6 @@
 		'ability',
 		className,
 		{
-			'is-drag-target': isDragTarget,
-			'drag-started': dragStarted,
-			'drop-allowed': dropAllowed,
 			readonly
 		}
 	]}
@@ -67,9 +37,6 @@
 	role={readonly ? undefined : 'button'}
 	data-testid="{ability}-ability"
 	{onclick}
-	{ondragover}
-	{ondragleave}
-	{ondrop}
 >
 	<img
 		alt={abilityTranslations[ability]()}
@@ -99,17 +66,6 @@
 		:global(img) {
 			margin-block-start: -1px;
 		}
-	}
-
-	.is-drag-target {
-		/* background: var(--abilities-button-bg); xxx: different color? */
-		transform: scale(1.15);
-	}
-
-	.drag-started:not(.drop-allowed) {
-		filter: grayscale(1);
-		opacity: 0.3;
-		pointer-events: none;
 	}
 
 	.readonly,
