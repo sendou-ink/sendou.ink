@@ -8,8 +8,23 @@
 	import type { MainWeaponId } from '$lib/constants/in-game/types';
 	import * as AuthAPI from '$lib/api/auth';
 	import { weaponBuildPage } from '$lib/utils/urls';
+	import Input from '$lib/components/Input.svelte';
+	import Search from '@lucide/svelte/icons/search';
 
 	const user = $derived(await AuthAPI.queries.me());
+
+	let search = $state('');
+
+	let filteredWeaponCategories = $derived(
+		weaponCategories
+			.map((category) => ({
+				...category,
+				weaponIds: category.weaponIds.filter((weaponId) =>
+					weaponTranslations[weaponId]().toLowerCase().includes(search.toLowerCase())
+				)
+			}))
+			.filter((category) => category.weaponIds.length > 0)
+	);
 </script>
 
 <OpenGraphMeta
@@ -20,7 +35,8 @@
 
 <Main class="stack md">
 	{#if user}
-		<div class="stack items-end">
+		<div class="input-container">
+			<Input bind:value={search} type="search" icon={Search} />
 			<AddNewButton
 				navIcon="builds"
 				href={resolve(`/u/${user.customUrl ?? user.discordId}/builds`)}
@@ -28,7 +44,7 @@
 		</div>
 	{/if}
 
-	{#each weaponCategories as category (category.name)}
+	{#each filteredWeaponCategories as category (category.name)}
 		<div class="category">
 			<div class="category-header">
 				<img
@@ -65,6 +81,13 @@
 </Main>
 
 <style>
+	.input-container {
+		--field-width-medium: 100%;
+		display: grid;
+		grid-template-columns: 1fr auto;
+		gap: var(--s-4);
+		align-items: center;
+	}
 	.category-divider {
 		height: 20px;
 		margin: auto 0;
