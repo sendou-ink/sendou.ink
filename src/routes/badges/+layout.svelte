@@ -41,11 +41,7 @@
 	<div class="container">
 		{@render children?.()}
 
-		<Input class="search-input" bind:value={searchInputValue}>
-			{#snippet icon()}
-				<Search class="search-icon" />
-			{/snippet}
-		</Input>
+		<Input class="search-input" bind:value={searchInputValue} icon={Search} />
 
 		{#if ownBadges.length > 0}
 			<div class="w-full">
@@ -104,12 +100,6 @@
 			height: 40px !important;
 			margin: 0 auto;
 			font-size: var(--fonts-lg);
-		}
-
-		:global(.search-icon) {
-			height: 25px;
-			margin: auto;
-			margin-right: 15px;
 		}
 	}
 

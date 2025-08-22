@@ -1,16 +1,23 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
+	import type { Component, Snippet } from 'svelte';
 	import type { HTMLInputAttributes } from 'svelte/elements';
 
 	interface Props extends HTMLInputAttributes {
 		class?: string;
 		leftAddon?: string;
-		icon?: Snippet;
+		icon?: Component;
 		testId?: string;
 		value?: string;
 	}
 
-	let { class: className, leftAddon, icon, testId, value = $bindable(), ...rest }: Props = $props();
+	let {
+		class: className,
+		leftAddon,
+		icon: Icon,
+		testId,
+		value = $bindable(),
+		...rest
+	}: Props = $props();
 </script>
 
 <div class={['container', className]}>
@@ -18,7 +25,7 @@
 		<div class="addon">{leftAddon}</div>
 	{/if}
 	<input bind:value data-testid={testId} {...rest} />
-	{@render icon?.()}
+	<Icon />
 </div>
 
 <style>
@@ -42,6 +49,12 @@
 
 		> input:focus-within {
 			outline: none;
+		}
+
+		:global(.lucide-icon:last-child) {
+			height: 25px;
+			margin: auto;
+			margin-right: 15px;
 		}
 	}
 
