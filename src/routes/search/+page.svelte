@@ -15,6 +15,7 @@
 	import AddNewButton from '$lib/components/buttons/AddNewButton.svelte';
 	import { resolve } from '$app/paths';
 	import Pagination from '$lib/components/Pagination.svelte';
+	import Search from '@lucide/svelte/icons/search';
 
 	const tabState = new SearchParamState({
 		defaultValue: 'users',
@@ -56,6 +57,7 @@
 		<Input
 			bind:value={search}
 			type="search"
+			icon={Search}
 			oninput={(event) => {
 				const value = event.currentTarget.value.toLowerCase();
 
