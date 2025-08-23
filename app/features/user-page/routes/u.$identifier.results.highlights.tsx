@@ -29,7 +29,9 @@ export default function ResultHighlightsEditPage() {
 			</Form>
 			<div className="u__highlights-sticky-button">
 				<FormErrors namespace="user" />
-				<SubmitButton form="highlights-form">{t("common:actions.save")}</SubmitButton>
+				<SubmitButton form="highlights-form">
+					{t("common:actions.save")}
+				</SubmitButton>
 			</div>
 		</div>
 	);
