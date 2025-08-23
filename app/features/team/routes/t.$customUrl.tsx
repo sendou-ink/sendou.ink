@@ -7,13 +7,8 @@ import { BskyIcon } from "~/components/icons/Bsky";
 import { Main } from "~/components/Main";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import {
-	bskyUrl,
-	navIconUrl,
-	TEAM_SEARCH_PAGE,
-	teamPage,
-	userSubmittedImage,
-} from "~/utils/urls";
+import { bskyUrl, navIconUrl, TEAM_SEARCH_PAGE, teamPage } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import { loader } from "../loaders/t.$customUrl.server";
 export { loader };
 

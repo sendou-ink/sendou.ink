@@ -1,4 +1,4 @@
-import { useRevalidator } from "@remix-run/react";
+import { Outlet, useOutletContext, useRevalidator } from "@remix-run/react";
 import clsx from "clsx";
 import { sub } from "date-fns";
 import * as React from "react";
@@ -8,10 +8,9 @@ import { useCopyToClipboard } from "react-use";
 import { useEventSource } from "remix-utils/sse/react";
 import { Alert } from "~/components/Alert";
 import { Divider } from "~/components/Divider";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { SendouPopover } from "~/components/elements/Popover";
-import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { EyeIcon } from "~/components/icons/Eye";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
@@ -50,6 +49,7 @@ export default function TournamentBracketsPage() {
 	const user = useUser();
 	const tournament = useTournament();
 	const isMounted = useIsMounted();
+	const ctx = useOutletContext();
 
 	const defaultBracketIdx = () => {
 		if (
@@ -159,24 +159,19 @@ export default function TournamentBracketsPage() {
 
 	return (
 		<div>
+			<Outlet context={ctx} />
 			{visibility !== "hidden" && !tournament.everyBracketOver ? (
 				<AutoRefresher />
 			) : null}
 			{tournament.canFinalize(user) ? (
 				<div className="tournament-bracket__finalize">
-					<FormWithConfirm
-						dialogHeading={t("tournament:actions.finalize.confirm")}
-						fields={[["_action", "FINALIZE_TOURNAMENT"]]}
-						submitButtonText={t("tournament:actions.finalize.action")}
-						submitButtonVariant="outlined"
+					<LinkButton
+						variant="minimal"
+						testId="finalize-tournament-button"
+						to="finalize"
 					>
-						<SendouButton
-							variant="minimal"
-							data-testid="finalize-tournament-button"
-						>
-							{t("tournament:actions.finalize.question")}
-						</SendouButton>
-					</FormWithConfirm>
+						{t("tournament:actions.finalize.question")}
+					</LinkButton>
 				</div>
 			) : null}
 			{bracket.preview &&

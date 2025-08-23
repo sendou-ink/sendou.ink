@@ -11,7 +11,9 @@ import { canEditCalendarEvent } from "../calendar-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await requireUser(request);
-	requireRole(user, "CALENDAR_EVENT_ADDER");
+	if (!user.roles.includes("SUPPORTER")) {
+		requireRole(user, "CALENDAR_EVENT_ADDER");
+	}
 
 	const url = new URL(request.url);
 
@@ -19,8 +21,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		const eventId = Number(url.searchParams.get(key));
 		const event = Number.isNaN(eventId)
 			? undefined
-			: await CalendarRepository.findById({
-					id: eventId,
+			: await CalendarRepository.findById(eventId, {
 					includeMapPool: true,
 					includeTieBreakerMapPool: true,
 					includeBadgePrizes: true,

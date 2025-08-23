@@ -42,7 +42,8 @@
 			},
 			"a11y": {
 				"useKeyWithClickEvents": "off",
-				"noLabelWithoutControl": "off"
+				"noLabelWithoutControl": "off",
+				"noSvgWithoutTitle": "off"
 			},
 			"complexity": {
 				"useLiteralKeys": {

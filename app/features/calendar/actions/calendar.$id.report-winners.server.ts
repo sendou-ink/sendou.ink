@@ -30,9 +30,7 @@ export const action: ActionFunction = async (args) => {
 		};
 	}
 
-	const event = notFoundIfFalsy(
-		await CalendarRepository.findById({ id: params.id }),
-	);
+	const event = notFoundIfFalsy(await CalendarRepository.findById(params.id));
 	errorToastIfFalsy(
 		canReportCalendarEventWinners({
 			user,

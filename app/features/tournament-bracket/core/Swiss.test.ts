@@ -113,7 +113,7 @@ describe("Swiss", () => {
 			const matches = Swiss.generateMatchUps({
 				bracket,
 				groupId: 4443,
-			});
+			})._unsafeUnwrap();
 
 			it("finds new opponents for each team in the last round", () => {
 				for (const match of matches) {

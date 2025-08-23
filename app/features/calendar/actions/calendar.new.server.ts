@@ -110,7 +110,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 	if (data.eventToEditId) {
 		const eventToEdit = badRequestIfFalsy(
-			await CalendarRepository.findById({ id: data.eventToEditId }),
+			await CalendarRepository.findById(data.eventToEditId),
 		);
 		if (eventToEdit.tournamentId) {
 			const tournament = await tournamentFromDB({

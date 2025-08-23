@@ -17,5 +17,9 @@ sql
 sql
 	.prepare(`update "Tournament" set "isFinalized" = 0 where "id" = @id`)
 	.run({ id });
+sql.prepare(`delete from "Skill" where "tournamentId" = @id`).run({ id });
+sql
+	.prepare(`delete from "TournamentBadgeOwner" where "tournamentId" = @id`)
+	.run({ id });
 
 logger.info(`Reopened tournament with id ${id}`);

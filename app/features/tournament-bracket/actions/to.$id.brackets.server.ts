@@ -1,23 +1,14 @@
 import type { ActionFunction } from "@remix-run/node";
 import { sql } from "~/db/sql";
 import { requireUser } from "~/features/auth/core/user.server";
-import * as Seasons from "~/features/mmr/core/Seasons";
-import {
-	queryCurrentTeamRating,
-	queryCurrentUserRating,
-	queryCurrentUserSeedingRating,
-	queryTeamPlayerRatingAverage,
-} from "~/features/mmr/mmr-utils.server";
-import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import { notify } from "~/features/notifications/core/notify.server";
-import * as Standings from "~/features/tournament/core/Standings";
 import { createSwissBracketInTransaction } from "~/features/tournament/queries/createSwissBracketInTransaction.server";
 import { updateRoundMaps } from "~/features/tournament/queries/updateRoundMaps.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import invariant from "~/utils/invariant";
-import { logger } from "~/utils/logger";
 import {
+	errorToastIfErr,
 	errorToastIfFalsy,
 	parseParams,
 	parseRequestPayload,
@@ -29,14 +20,11 @@ import { updateTeamSeeds } from "../../tournament/queries/updateTeamSeeds.server
 import { getServerTournamentManager } from "../core/brackets-manager/manager.server";
 import { roundMapsFromInput } from "../core/mapList.server";
 import * as Swiss from "../core/Swiss";
-import { tournamentSummary } from "../core/summarizer.server";
 import type { Tournament } from "../core/Tournament";
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "../core/Tournament.server";
-import { addSummary, finalizeTournament } from "../queries/addSummary.server";
-import { allMatchResultsByTournamentId } from "../queries/allMatchResultsByTournamentId.server";
 import { bracketSchema } from "../tournament-bracket-schemas.server";
 import { fillWithNullTillPowerOfTwo } from "../tournament-bracket-utils";
 
@@ -193,17 +181,15 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			errorToastIfFalsy(bracket, "Bracket not found");
-			errorToastIfFalsy(
-				bracket.type === "swiss",
-				"Can't advance non-swiss bracket",
-			);
 
 			const matches = Swiss.generateMatchUps({
 				bracket,
 				groupId: data.groupId,
 			});
 
-			await TournamentRepository.insertSwissMatches(matches);
+			errorToastIfErr(matches);
+
+			await TournamentRepository.insertSwissMatches(matches.value);
 
 			break;
 		}
@@ -222,67 +208,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 				groupId: data.groupId,
 				roundId: data.roundId,
 			});
-
-			break;
-		}
-		case "FINALIZE_TOURNAMENT": {
-			errorToastIfFalsy(
-				tournament.canFinalize(user),
-				"Can't finalize tournament",
-			);
-
-			const _finalStandings = Standings.tournamentStandings(tournament);
-
-			const results = allMatchResultsByTournamentId(tournamentId);
-			invariant(results.length > 0, "No results found");
-
-			const season = Seasons.current(tournament.ctx.startTime)?.nth;
-
-			const seedingSkillCountsFor = tournament.skillCountsFor;
-			const summary = tournamentSummary({
-				teams: tournament.ctx.teams,
-				finalStandings: _finalStandings,
-				results,
-				calculateSeasonalStats: tournament.ranked,
-				queryCurrentTeamRating: (identifier) =>
-					queryCurrentTeamRating({ identifier, season: season! }).rating,
-				queryCurrentUserRating: (userId) =>
-					queryCurrentUserRating({ userId, season: season! }),
-				queryTeamPlayerRatingAverage: (identifier) =>
-					queryTeamPlayerRatingAverage({
-						identifier,
-						season: season!,
-					}),
-				queryCurrentSeedingRating: (userId) =>
-					queryCurrentUserSeedingRating({
-						userId,
-						type: seedingSkillCountsFor!,
-					}),
-				seedingSkillCountsFor,
-			});
-
-			const tournamentSummaryString = `Tournament id: ${tournamentId}, mapResultDeltas.lenght: ${summary.mapResultDeltas.length}, playerResultDeltas.length ${summary.playerResultDeltas.length}, tournamentResults.length ${summary.tournamentResults.length}, skills.length ${summary.skills.length}, seedingSkills.length ${summary.seedingSkills.length}`;
-			if (!tournament.isTest) {
-				logger.info(`Inserting tournament summary. ${tournamentSummaryString}`);
-				addSummary({
-					tournamentId,
-					summary,
-					season,
-				});
-			} else {
-				logger.info(
-					`Did not insert tournament summary. ${tournamentSummaryString}`,
-				);
-				finalizeTournament(tournamentId);
-			}
-
-			if (tournament.ranked) {
-				try {
-					refreshUserSkills(season!);
-				} catch (error) {
-					logger.warn("Error refreshing user skills", error);
-				}
-			}
 
 			break;
 		}

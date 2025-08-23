@@ -99,7 +99,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "TOURNAMENT_ORGANIZER": {
-			requireRole(user, "STAFF");
+			requireRole(user, "ADMIN");
 
 			await AdminRepository.makeTournamentOrganizerByUserId(data.user);
 

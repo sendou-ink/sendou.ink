@@ -1,6 +1,5 @@
 import { type Insertable, type NotNull, sql, type Transaction } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
-import { nanoid } from "nanoid";
 import { db } from "~/db/sql";
 import type {
 	CastedMatchesInfo,
@@ -14,9 +13,10 @@ import { Status } from "~/modules/brackets-model";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { nullFilledArray, nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import { shortNanoid } from "~/utils/id";
 import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
-import { userSubmittedImage } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import { HACKY_resolvePicture } from "./tournament-utils";
 
 export type FindById = NonNullable<Unwrapped<typeof findById>>;
@@ -1095,7 +1095,7 @@ export function resetBracket(tournamentStageId: number) {
 
 export type TournamentRepositoryInsertableMatch = Omit<
 	Insertable<DB["TournamentMatch"]>,
-	"status" | "bestOf" | "chatCode"
+	"status" | "chatCode"
 >;
 
 export function insertSwissMatches(
@@ -1117,7 +1117,7 @@ export function insertSwissMatches(
 				stageId: match.stageId,
 				status: Status.Ready,
 				createdAt: dateToDatabaseTimestamp(new Date()),
-				chatCode: nanoid(10),
+				chatCode: shortNanoid(),
 			})),
 		)
 		.execute();

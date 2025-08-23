@@ -18,8 +18,8 @@ import {
 	tournamentMatchPage,
 	tournamentTeamPage,
 	userPage,
-	userSubmittedImage,
 } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import { TeamWithRoster } from "../components/TeamWithRoster";
 import * as Standings from "../core/Standings";
 import type { PlayedSet } from "../core/sets.server";
