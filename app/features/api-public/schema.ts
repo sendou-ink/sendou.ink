@@ -82,6 +82,8 @@ type SendouqMatchTeam = {
 
 type SendouqMatchPlayer = {
 	userId: number;
+	discordId: string;
+	name: string;
 	/** User's at the start time of the match */
 	rank: SendouQRank | null;
 };
@@ -350,6 +352,12 @@ interface GlobalTeamMembership {
 	 * @example "https://sendou.ink/t/moonlight"
 	 */
 	teamPageUrl: string;
+	/**
+	 * URL for the global team avatar.
+	 *
+	 * @example "whzjEQS-r4CR2I1ZestUR-1726541597091.webp"
+	 */
+	avatarId: string | null;
 }
 
 type TeamMemberRole =
