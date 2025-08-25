@@ -7,7 +7,7 @@
 		SHADOW_ITEM_MARKER_PROPERTY_NAME,
 		type DndEvent
 	} from 'svelte-dnd-action';
-	import Ability from '$lib/components/Ability.svelte';
+	import Ability from './Ability.svelte';
 
 	interface Props {
 		abilities: AbilityItemWithShadow[];

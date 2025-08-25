@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { userBuildsPage, weaponBuildPage } from '$lib/utils/urls';
-	import Ability from '$lib/components/Ability.svelte';
+	import Ability from '../builder/Ability.svelte';
 	import type {
 		Ability as AbilityType,
 		BuildAbilitiesTuple,

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import * as BuildAPI from '$lib/api/build/index.js';
-	import Ability from '$lib/components/Ability.svelte';
+	import Ability from '$lib/components/builder/Ability.svelte';
 	import Main from '$lib/components/layout/Main.svelte';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { builds_noPopularBuilds, m } from '$lib/paraglide/messages';

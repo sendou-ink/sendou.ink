@@ -1,7 +1,8 @@
 <script lang="ts">
-	import AbilityBuilder from './AbilityBuilder.svelte';
+	import AbilityBuilder from '../../lib/components/builder/AbilityBuilder.svelte';
+	import type { BuildAbilitiesTupleWithUnknown } from '$lib/constants/in-game/types';
 
-	let abilities = $state([
+	let abilities: BuildAbilitiesTupleWithUnknown = $state([
 		['UNKNOWN', 'UNKNOWN', 'UNKNOWN', 'UNKNOWN'],
 		['UNKNOWN', 'UNKNOWN', 'UNKNOWN', 'UNKNOWN'],
 		['UNKNOWN', 'UNKNOWN', 'UNKNOWN', 'UNKNOWN']

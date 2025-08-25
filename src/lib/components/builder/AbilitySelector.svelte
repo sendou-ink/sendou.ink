@@ -2,7 +2,7 @@
 	import type { AbilityItem } from './types';
 	import type { AbilityType } from '$lib/constants/in-game/types';
 	import { dndzone, TRIGGERS, type DndEvent } from 'svelte-dnd-action';
-	import Ability from '$lib/components/Ability.svelte';
+	import Ability from './Ability.svelte';
 
 	interface Props {
 		abilities: AbilityItem[];
