@@ -61,34 +61,6 @@
 			}
 		]}
 	>
-		<MenuTriggerButton icon={Plus} size="big" variant="minimal" />
+		<MenuTriggerButton icon={Plus} variant="popover" />
 	</Menu>
 </div>
-
-<style>
-	div {
-		:global {
-			button {
-				width: var(--item-size);
-				height: var(--item-size);
-				outline-offset: 2px;
-				padding: 0.25rem;
-				border: 2px solid !important;
-				border-color: var(--color-primary-transparent) !important;
-				border-radius: 50% !important;
-				background-color: transparent;
-				color: inherit;
-				cursor: pointer;
-			}
-
-			button:focus-visible {
-				outline: 2px solid var(--theme);
-			}
-
-			svg {
-				width: 1.15rem;
-				stroke-width: 4px;
-			}
-		}
-	}
-</style>

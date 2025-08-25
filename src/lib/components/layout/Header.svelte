@@ -22,7 +22,7 @@ xxx: implement NavDialog & Hamburger
 	/>
 {/if} 
 -->
-<header class="header item-size">
+<header class="header">
 	<!-- 
 	xxx: reconsider breadcrumbs
 
@@ -62,10 +62,6 @@ xxx: implement NavDialog & Hamburger
 
 <!-- xxx: Check the mobile styles -->
 <style>
-	.item-size {
-		--item-size: 1.9rem;
-	}
-
 	.header {
 		display: flex;
 		width: 100%;

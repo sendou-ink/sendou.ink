@@ -21,6 +21,7 @@
 	let { buildId, buildTitle, isPrivate, showActions }: Props = $props();
 
 	// xxx: error throwing during rendering should have some kind of msg to user
+	// xxx: "Go to editor" with abilities, weapons and gear preselected?
 	// throw new Error('oops!');
 </script>
 
@@ -64,6 +65,6 @@
 			}
 		]}
 	>
-		<MenuTriggerButton icon={EllipsisVertical} size="big" variant="minimal" />
+		<MenuTriggerButton icon={EllipsisVertical} variant="popover" size="small" />
 	</Menu>
 </div>

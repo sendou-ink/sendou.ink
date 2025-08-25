@@ -10,6 +10,7 @@
 		| 'outlined-success'
 		| 'destructive'
 		| 'minimal'
+		| 'popover'
 		| 'minimal-secondary'
 		| 'minimal-success'
 		| 'minimal-destructive';
@@ -68,6 +69,7 @@
 			'outlined-success': variant === 'outlined-success',
 			destructive: variant === 'destructive',
 			minimal: variant === 'minimal',
+			popover: variant === 'popover',
 			'minimal-secondary': variant === 'minimal-secondary',
 			'minimal-success': variant === 'minimal-success',
 			'minimal-destructive': variant === 'minimal-destructive'
@@ -200,6 +202,33 @@
 
 		&:focus-visible {
 			outline: 2px solid var(--color-primary);
+		}
+	}
+
+	.popover {
+		padding: 0;
+		border: none;
+		background-color: transparent;
+		color: var(--color-primary);
+		outline: initial;
+		border: 2px solid !important;
+		border-color: var(--color-primary-transparent) !important;
+		padding: 0.2rem;
+		border-radius: 50% !important;
+
+		&.small {
+			padding: 0.125rem;
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--color-primary);
+		}
+
+		:global {
+			svg {
+				width: 1.25rem;
+				stroke-width: 3px;
+			}
 		}
 	}
 

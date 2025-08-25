@@ -2,9 +2,12 @@
 	import type * as TeamAPI from '$lib/api/team';
 	import Flag from '$lib/components/Flag.svelte';
 	import Bsky from '$lib/components/icons/Bsky.svelte';
+	import Menu from '$lib/components/menu/Menu.svelte';
+	import MenuTriggerButton from '$lib/components/menu/MenuTriggerButton.svelte';
 	import { bskyUrl } from '$lib/utils/urls';
 	import { userSubmittedImage } from '$lib/utils/urls-img';
 	import * as R from 'remeda';
+	import EllipsisVertical from '@lucide/svelte/icons/ellipsis-vertical';
 
 	interface Props {
 		team: TeamAPI.queries.BySlugData['team'];
@@ -44,6 +47,8 @@
 	{#if team.avatarSrc}
 		<div class="avatar__spacer"></div>
 	{/if}
+
+	{@render actionsPopover()}
 </div>
 
 <div class="mobile-name-country">
@@ -70,6 +75,16 @@
 			<Bsky />
 		</a>
 	{/if}
+{/snippet}
+
+{#snippet actionsPopover()}
+	<div class="popover-container">
+		<div class="popover">
+			<Menu items={[]}>
+				<MenuTriggerButton icon={EllipsisVertical} variant="popover" />
+			</Menu>
+		</div>
+	</div>
 {/snippet}
 
 <style>
@@ -193,5 +208,15 @@
 
 	.avatar img {
 		border-radius: 100%;
+	}
+
+	.popover-container {
+		position: relative;
+	}
+
+	.popover {
+		position: absolute;
+		right: 0;
+		top: -72px;
 	}
 </style>
