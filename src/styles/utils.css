@@ -95,8 +95,12 @@
 	text-align: left;
 }
 
+.text-main {
+	color: var(--color-base-content);
+}
+
 .text-main-forced {
-	color: var(--text) !important;
+	color: var(--color-base-content) !important;
 }
 
 .text-lighter {

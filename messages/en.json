@@ -2109,7 +2109,6 @@
 	"user_customName": "Custom name",
 	"user_ign": "In-game name",
 	"user_ign_short": "IGN",
-	"user_ign_bottomText": "Splatoon 3 in-game name as it appears on the splashtag, including the pound sign (#) and numbers.",
 	"user_country": "Country",
 	"user_bio": "Bio",
 	"user_stickSens": "R-stick sens",
@@ -2121,8 +2120,8 @@
 	"user_discordExplanation": "Username, profile picture, YouTube, Bluesky and Twitch accounts come from your Discord account. See <1>FAQ</1> for more information.",
 	"user_favoriteBadges": "Favorite badges",
 	"user_battlefy": "Battlefy account name",
-	"user_forms_hideDiscordUniqueName": "Hide Discord username",
-	"user_forms_hideDiscordUniqueName_info": "Hide unique Discord name from your profile?",
+	"user_forms_showDiscordUniqueName": "Show Discord username",
+	"user_forms_showDiscordUniqueName_info": "Show your unique Discord name ({discordUniqueName}) publicly?",
 	"user_forms_commissionsOpen": "Commissions open",
 	"user_forms_commissionText": "Commission info",
 	"user_forms_commissionText_info": "Price, slots open or other info related to commissioning you",
@@ -2421,6 +2420,9 @@
 	"builds_actions_analyze": "Analyze",
 	"builds_actions_makePrivate": "Make private",
 	"builds_actions_makePublic": "Make public",
+	"user_ign_bottomText": "Splatoon 3 in-game name as it appears on the splashtag, including the pound sign (#) and numbers.",
+	"user_forms_hideDiscordUniqueName": "Hide Discord username",
+	"user_forms_hideDiscordUniqueName_info": "Hide unique Discord name from your profile?",
 	"common_settings_tabs_preferences": "Preferences",
 	"common_settings_tabs_matchProfile": "Match profile",
 	"common_settings_tabs_trustedUsers": "Trusted users",
@@ -2445,5 +2447,6 @@
 	"just_steep_ocelot_tend": "Map preferences",
 	"petty_icy_leopard_treasure": "Sorting",
 	"last_spicy_earthworm_wave": "The sorting you choose affects both you and others viewing your builds.",
-	"less_careful_tern_cry": "View {count} results"
+	"less_careful_tern_cry": "View {count} results",
+	"fun_mealy_mongoose_yell": "No weapons matching the search criteria"
 }

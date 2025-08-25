@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Component, Snippet } from 'svelte';
+	import type { Component } from 'svelte';
 	import type { HTMLInputAttributes } from 'svelte/elements';
 
 	interface Props extends HTMLInputAttributes {
@@ -35,12 +35,11 @@
 		border-radius: var(--radius-field);
 		accent-color: var(--color-secondary);
 		background-color: var(--color-base-card-section);
-		color: var(--text);
+		color: var(--color-base-content);
 		font-size: var(--fonts-sm);
 		outline: none;
 		font-weight: var(--body);
-		min-width: var(--field-width-medium);
-		max-width: var(--field-width-medium);
+		width: var(--input-width, var(--field-width-medium));
 
 		&:focus-within {
 			border-color: transparent;
@@ -52,9 +51,10 @@
 		}
 
 		:global(.lucide-icon:last-child) {
-			height: 25px;
 			margin: auto;
 			margin-right: 15px;
+			min-width: 18px;
+			color: var(--color-base-content-secondary);
 		}
 	}
 

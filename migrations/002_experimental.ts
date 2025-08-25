@@ -36,8 +36,6 @@ async function fixUserMapModePreferences(db: Kysely<any>) {
   for (const {mapModePreferences, id} of userMapModePreferences) {
     const mp = JSON.parse(mapModePreferences);
 
-    console.log("mp", JSON.stringify(mp, null, 2));
-
     await db.updateTable("User").set({
       mapModePreferences: JSON.stringify({
         modes:

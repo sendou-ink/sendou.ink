@@ -43,6 +43,7 @@
 		height: var(--button-height);
 		border-radius: var(--inner-border-radius) 0 0 var(--inner-border-radius);
 		padding-inline: var(--s-1);
+		min-width: 42px;
 	}
 
 	.iconsContainer > :global(svg) {

@@ -121,7 +121,7 @@
 			<ul>
 				{#each items as team (team.customUrl)}
 					<li>
-						<a href={team.customUrl} class="link-item">
+						<a href={resolve('/t/[slug]', { slug: team.customUrl })} class="link-item">
 							<Avatar url={team.avatarSrc ?? ''} size="sm" />
 							<div class="item-info">
 								<p>{team.name}</p>

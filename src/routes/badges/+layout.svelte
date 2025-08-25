@@ -41,7 +41,7 @@
 	<div class="container">
 		{@render children?.()}
 
-		<Input class="search-input" bind:value={searchInputValue} icon={Search} />
+		<Input type="search" bind:value={searchInputValue} icon={Search} />
 
 		{#if ownBadges.length > 0}
 			<div class="w-full">
@@ -95,12 +95,6 @@
 		gap: var(--s-6);
 		padding-block: var(--s-2);
 		padding-inline: var(--s-3);
-
-		:global(.search-input) {
-			height: 40px !important;
-			margin: 0 auto;
-			font-size: var(--fonts-lg);
-		}
 	}
 
 	.small-badges {

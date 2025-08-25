@@ -10,11 +10,13 @@
 	import { weaponBuildPage } from '$lib/utils/urls';
 	import Input from '$lib/components/Input.svelte';
 	import Search from '@lucide/svelte/icons/search';
+	import { m } from '$lib/paraglide/messages';
 
-	const user = $derived(await AuthAPI.queries.me());
+	const user = await AuthAPI.queries.me();
 
 	let search = $state('');
 
+	// xxx: should use same filtering logic as weapon combobox so with aliases etc.
 	let filteredWeaponCategories = $derived(
 		weaponCategories
 			.map((category) => ({
@@ -33,16 +35,16 @@
 	description="View Splatoon 3 builds for all weapons by the best players. Includes collection of user submitted builds and an aggregation of ability stats."
 />
 
-<Main class="stack md">
-	{#if user}
-		<div class="input-container">
-			<Input bind:value={search} type="search" icon={Search} />
+<Main class="stack lg">
+	<div class="input-container">
+		<Input bind:value={search} type="search" icon={Search} />
+		{#if user}
 			<AddNewButton
 				navIcon="builds"
 				href={resolve(`/u/${user.customUrl ?? user.discordId}/builds`)}
 			/>
-		</div>
-	{/if}
+		{/if}
+	</div>
 
 	{#each filteredWeaponCategories as category (category.name)}
 		<div class="category">
@@ -77,16 +79,20 @@
 				{/each}
 			</div>
 		</div>
+	{:else}
+		<div class="mt-4 text-lighter text-lg font-semi-bold text-center">
+			{m.fun_mealy_mongoose_yell()}
+		</div>
 	{/each}
 </Main>
 
 <style>
 	.input-container {
-		--field-width-medium: 100%;
-		display: grid;
-		grid-template-columns: 1fr auto;
+		--input-width: 18rem;
+		display: flex;
 		gap: var(--s-4);
 		align-items: center;
+		justify-content: space-between;
 	}
 	.category-divider {
 		height: 20px;
