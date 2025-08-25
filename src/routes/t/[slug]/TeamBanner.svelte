@@ -2,12 +2,13 @@
 	import type * as TeamAPI from '$lib/api/team';
 	import Flag from '$lib/components/Flag.svelte';
 	import Bsky from '$lib/components/icons/Bsky.svelte';
-	import Menu from '$lib/components/menu/Menu.svelte';
-	import MenuTriggerButton from '$lib/components/menu/MenuTriggerButton.svelte';
 	import { bskyUrl } from '$lib/utils/urls';
 	import { userSubmittedImage } from '$lib/utils/urls-img';
 	import * as R from 'remeda';
-	import EllipsisVertical from '@lucide/svelte/icons/ellipsis-vertical';
+	import Button from '$lib/components/buttons/Button.svelte';
+	import { resolve } from '$app/paths';
+	import SquarePen from '@lucide/svelte/icons/square-pen';
+	import { m } from '$lib/paraglide/messages';
 
 	interface Props {
 		team: TeamAPI.queries.BySlugData['team'];
@@ -48,7 +49,17 @@
 		<div class="avatar__spacer"></div>
 	{/if}
 
-	{@render actionsPopover()}
+	<!-- xxx: permissions -->
+	<div class="popover-container">
+		<div class="popover">
+			<Button
+				href={resolve('/t/[slug]/edit', { slug: team.customUrl })}
+				variant="outlined"
+				size="small"
+				icon={SquarePen}>{m.common_actions_edit()}</Button
+			>
+		</div>
+	</div>
 </div>
 
 <div class="mobile-name-country">
@@ -75,16 +86,6 @@
 			<Bsky />
 		</a>
 	{/if}
-{/snippet}
-
-{#snippet actionsPopover()}
-	<div class="popover-container">
-		<div class="popover">
-			<Menu items={[]}>
-				<MenuTriggerButton icon={EllipsisVertical} variant="popover" />
-			</Menu>
-		</div>
-	</div>
 {/snippet}
 
 <style>
@@ -218,5 +219,9 @@
 		position: absolute;
 		right: 0;
 		top: -72px;
+
+		:global path:last-of-type {
+			fill: var(--color-primary);
+		}
 	}
 </style>

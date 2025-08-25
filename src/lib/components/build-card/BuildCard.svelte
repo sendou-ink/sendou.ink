@@ -16,7 +16,7 @@
 	import Lock from '@lucide/svelte/icons/lock';
 	import Popover from '$lib/components/popover/Popover.svelte';
 	import PopoverTriggerButton from '$lib/components/popover/PopoverTriggerButton.svelte';
-	import ActionsMenu from '$lib/components/build-card/ActionsMenu.svelte';
+	import BuildActionsMenu from '$lib/components/build-card/BuildActionsMenu.svelte';
 	import type { BySlugData } from '$lib/api/build/queries.remote';
 	import { asset } from '$app/paths';
 
@@ -122,7 +122,7 @@
 				</div>
 			</div>
 			<!--- xxx: fix showActions -->
-			<ActionsMenu
+			<BuildActionsMenu
 				buildId={build.id}
 				isPrivate={Boolean(build.private)}
 				showActions={!build.owner}

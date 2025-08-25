@@ -43,8 +43,8 @@ export function findAllMemberOfByUserId(userId: number) {
 
 export type findBySlug = NonNullable<Awaited<ReturnType<typeof findBySlug>>>;
 
-export function findBySlug(customUrl: string, { includeInviteCode = false } = {}) {
-	return db
+export async function findBySlug(customUrl: string, { includeInviteCode = false } = {}) {
+	const row = await db
 		.selectFrom('Team')
 		.leftJoin('UserSubmittedImage as AvatarImage', 'AvatarImage.id', 'Team.avatarImgId')
 		.leftJoin('UserSubmittedImage as BannerImage', 'BannerImage.id', 'Team.bannerImgId')
@@ -82,6 +82,17 @@ export function findBySlug(customUrl: string, { includeInviteCode = false } = {}
 		.$if(includeInviteCode, (qb) => qb.select('Team.inviteCode'))
 		.where('Team.customUrl', '=', customUrl.toLowerCase())
 		.executeTakeFirst();
+
+	if (!row) {
+		return null;
+	}
+
+	return {
+		...row,
+		permissions: {
+			EDIT: row.members.some((member) => member.isOwner || member.isManager)
+		}
+	};
 }
 
 export type FindResultPlacementsById = NonNullable<
