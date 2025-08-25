@@ -37,27 +37,27 @@
 
 	let { abilities = $bindable([...emptyBuild]) }: Props = $props();
 
-	function slotTypeFromIndex(i: number, j: number) {
-		if (i === 0 && j === 0) return 'HEAD_MAIN_ONLY';
-		if (i === 1 && j === 0) return 'CLOTHES_MAIN_ONLY';
-		if (i === 2 && j === 0) return 'SHOES_MAIN_ONLY';
+	function getSlotType(row: number, col: number) {
+		if (row === 0 && col === 0) return 'HEAD_MAIN_ONLY';
+		if (row === 1 && col === 0) return 'CLOTHES_MAIN_ONLY';
+		if (row === 2 && col === 0) return 'SHOES_MAIN_ONLY';
 		return 'STACKABLE';
 	}
 
-	function abilityTypeFromName(ability: AbilityWithUnknown) {
+	function getAbilityType(ability: AbilityWithUnknown): AbilityType {
 		const main = mainAbilities.find((item) => item.ability === ability);
-		if (main) return main.abilityType;
-		return 'STACKABLE';
+		return main?.abilityType ?? 'STACKABLE';
 	}
 
 	function addAbility(ability: AbilityItem) {
-		for (let i = 0; i < abilities.length; i++) {
-			for (let j = 0; j < abilities[i].length; j++) {
-				if (
-					abilities[i][j] === 'UNKNOWN' &&
-					(ability.abilityType === 'STACKABLE' || ability.abilityType === slotTypeFromIndex(i, j))
-				) {
-					abilities[i][j] = ability.ability;
+		for (let row = 0; row < abilities.length; row++) {
+			for (let col = 0; col < abilities[row].length; col++) {
+				const isEmptySlot = abilities[row][col] === 'UNKNOWN';
+				const slotType = getSlotType(row, col);
+				const canPlace = ability.abilityType === 'STACKABLE' || ability.abilityType === slotType;
+
+				if (isEmptySlot && canPlace) {
+					abilities[row][col] = ability.ability;
 					return;
 				}
 			}
@@ -67,23 +67,20 @@
 	let enabledSlots = $state<AbilityType>('STACKABLE');
 
 	function updateEnabledSlots(ability: AbilityItem | undefined) {
-		if (!ability || ability.abilityType === 'STACKABLE') {
-			enabledSlots = 'STACKABLE';
-			return;
-		}
-
-		enabledSlots = ability.abilityType;
+		enabledSlots =
+			ability?.abilityType === 'STACKABLE' || !ability ? 'STACKABLE' : ability.abilityType;
 	}
 
 	let disabledAbilities: AbilityType[] = $derived.by(() => {
-		const temp: AbilityType[] = [];
+		const disabled: AbilityType[] = [];
+		const filledSlots = abilities.flat().filter((a) => a !== 'UNKNOWN').length;
 
-		abilities[0][0] !== 'UNKNOWN' ? temp.push('HEAD_MAIN_ONLY') : null;
-		abilities[1][0] !== 'UNKNOWN' ? temp.push('CLOTHES_MAIN_ONLY') : null;
-		abilities[2][0] !== 'UNKNOWN' ? temp.push('SHOES_MAIN_ONLY') : null;
-		abilities.flat().filter((a) => a !== 'UNKNOWN').length >= 12 ? temp.push('STACKABLE') : null;
+		if (abilities[0][0] !== 'UNKNOWN') disabled.push('HEAD_MAIN_ONLY');
+		if (abilities[1][0] !== 'UNKNOWN') disabled.push('CLOTHES_MAIN_ONLY');
+		if (abilities[2][0] !== 'UNKNOWN') disabled.push('SHOES_MAIN_ONLY');
+		if (filledSlots >= 12) disabled.push('STACKABLE');
 
-		return temp;
+		return disabled;
 	});
 </script>
 
@@ -91,8 +88,8 @@
 	<div class="slots">
 		{#each abilities as row, i}
 			{#each row as item, j}
-				{@const abilityType = abilityTypeFromName(item)}
-				{@const slotType = slotTypeFromIndex(i, j)}
+				{@const abilityType = getAbilityType(item)}
+				{@const slotType = getSlotType(i, j)}
 				<AbilitySlot
 					abilities={[
 						{

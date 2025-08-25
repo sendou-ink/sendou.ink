@@ -25,6 +25,9 @@
 
 	let { abilities, slotType, disabled, ondrag, onchange }: Props = $props();
 
+	const currentAbility = $derived(abilities[0]);
+	const dragDisabled = $derived(!currentAbility || currentAbility.ability === 'UNKNOWN');
+
 	function onconsider(event: CustomEvent<DndEvent<AbilityItem>>) {
 		const { trigger, id } = event.detail.info;
 
@@ -64,7 +67,7 @@
 		zoneTabIndex: -1,
 		zoneItemTabIndex: -1,
 		dropFromOthersDisabled: disabled,
-		dragDisabled: abilities[0] ? abilities[0].ability === 'UNKNOWN' : true,
+		dragDisabled,
 		dropTargetStyle: {}
 	}}
 	{onconsider}

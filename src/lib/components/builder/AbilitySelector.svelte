@@ -13,6 +13,12 @@
 
 	let { abilities, disabledAbilities, onclick, ondrag }: Props = $props();
 
+	function createDuplicateItem(item: AbilityItem): AbilityItem {
+		const [prefix, idNumber, suffix = '0'] = item.id.split('_');
+		const newSuffix = String(Number(suffix) + 1);
+		return { ...item, id: `${prefix}_${idNumber}_${newSuffix}` };
+	}
+
 	function onconsider(event: CustomEvent<DndEvent<AbilityItem>>) {
 		const { trigger, id } = event.detail.info;
 
@@ -20,17 +26,14 @@
 			const draggedAbility = abilities.find((ability) => ability.id === id);
 			ondrag(draggedAbility);
 
-			const idIndex = abilities.findIndex((item) => item.id === id);
-			const prefix = id.toString().split('_')[0];
-			const idNumber = id.toString().split('_')[1];
-			const suffix = id.split('_')[2] ?? '0';
-			const newId = `${prefix}_${idNumber}_${+suffix + +'1'}`;
+			const itemIndex = abilities.findIndex((item) => item.id === id);
+			const duplicateItem = createDuplicateItem(abilities[itemIndex]);
 
 			event.detail.items = event.detail.items.filter(
 				(item) => !item.hasOwnProperty('isDndShadowItem')
 			);
 
-			event.detail.items.splice(idIndex, 0, { ...abilities[idIndex], id: newId });
+			event.detail.items.splice(itemIndex, 0, duplicateItem);
 			abilities = event.detail.items;
 		} else {
 			abilities = [...abilities];
