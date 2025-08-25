@@ -1,15 +1,17 @@
 <script lang="ts">
-	import { dndzone, TRIGGERS, type DndEvent } from 'svelte-dnd-action';
 	import type { AbilityItem } from './types';
+	import type { AbilityType } from '$lib/constants/in-game/types';
+	import { dndzone, TRIGGERS, type DndEvent } from 'svelte-dnd-action';
 	import Ability from '$lib/components/Ability.svelte';
 
 	interface Props {
 		abilities: AbilityItem[];
+		disabledAbilities: AbilityType[];
 		ondrag: (ability: AbilityItem | undefined) => void;
 		onclick: (ability: AbilityItem) => void;
 	}
 
-	let { abilities, onclick, ondrag }: Props = $props();
+	let { abilities, disabledAbilities, onclick, ondrag }: Props = $props();
 
 	function onconsider(event: CustomEvent<DndEvent<AbilityItem>>) {
 		const { trigger, id } = event.detail.info;
@@ -54,12 +56,20 @@
 	{onfinalize}
 >
 	{#each abilities as ability (ability.id)}
-		<Ability ability={ability.ability} size="SUB" onclick={() => onclick(ability)} />
+		<Ability
+			ability={ability.ability}
+			size="SUB"
+			onclick={() => onclick(ability)}
+			disabled={disabledAbilities.includes(ability.abilityType)}
+		/>
 	{/each}
 </div>
 
 <style>
 	div {
 		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: var(--s-1-5);
 	}
 </style>

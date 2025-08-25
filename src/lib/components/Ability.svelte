@@ -1,16 +1,17 @@
 <script lang="ts">
-	import { asset } from '$app/paths';
 	import type { AbilityWithUnknown } from '$lib/constants/in-game/types';
+	import { asset } from '$app/paths';
 	import { abilityTranslations } from '$lib/utils/i18n';
 
 	interface Props {
 		ability: AbilityWithUnknown;
 		size: keyof typeof sizeMap;
-		onclick?: VoidFunction;
+		disabled?: boolean;
 		class?: string;
+		onclick?: VoidFunction;
 	}
 
-	const { ability, size, onclick, class: className }: Props = $props();
+	const { ability, size, disabled, class: className, onclick }: Props = $props();
 
 	const sizeMap = {
 		MAIN: 42,
@@ -29,12 +30,14 @@
 		'ability',
 		className,
 		{
-			readonly
+			readonly,
+			disabled
 		}
 	]}
 	style:--ability-size="{sizeNumber}px"
 	type={readonly ? undefined : 'button'}
 	role={readonly ? undefined : 'button'}
+	disabled={!readonly && disabled}
 	data-testid="{ability}-ability"
 	{onclick}
 >
@@ -53,24 +56,32 @@
 		height: var(--ability-size);
 		padding: 0;
 		border: 2px solid var(--color-primary-transparent);
+		border-width: 2px 0 0 2px !important;
 		border-radius: 50%;
-		border-right: 0;
-		border-bottom: 0;
 		background: var(--color-base-card-section);
 		background-size: 100%;
 		box-shadow: 0 0 0 1px var(--color-base-card-section);
-		transform: scale(1);
-		transition: all 0.1s ease;
 		user-select: none;
+		display: block;
+		outline: 0;
 
 		:global(img) {
 			margin-block-start: -1px;
 		}
+
+		&.disabled {
+			pointer-events: none;
+			cursor: not-allowed;
+			opacity: 0.5;
+		}
+
+		&.readonly {
+			cursor: default;
+		}
 	}
 
-	.readonly,
-	.readonly:active {
-		cursor: default;
-		transform: none;
+	img {
+		width: 100%;
+		height: 100%;
 	}
 </style>

@@ -1,15 +1,18 @@
 <script lang="ts">
-	import { fromAction } from 'svelte/attachments';
-	import { dndzone, TRIGGERS, type DndEvent } from 'svelte-dnd-action';
-	import Ability from '$lib/components/Ability.svelte';
-	import type { AbilityItem } from './types';
+	import type { AbilityItem, AbilityItemWithShadow } from './types';
 	import type { AbilityType, AbilityWithUnknown } from '$lib/constants/in-game/types';
+	import {
+		dndzone,
+		TRIGGERS,
+		SHADOW_ITEM_MARKER_PROPERTY_NAME,
+		type DndEvent
+	} from 'svelte-dnd-action';
+	import Ability from '$lib/components/Ability.svelte';
 
 	interface Props {
-		ability: AbilityItem[];
+		abilities: AbilityItemWithShadow[];
 		slotType: AbilityType;
-		disabled?: boolean;
-		dragDisabled?: boolean;
+		disabled: boolean;
 		ondrag: (ability: AbilityItem | undefined) => void;
 		onchange: (ability: AbilityWithUnknown) => void;
 	}
@@ -20,69 +23,75 @@
 		ability: 'UNKNOWN'
 	};
 
-	/*
-	We have to make ability an array because the library demands it,
-	but the array will only ever contain one item, which is the ability the slot is currently holding
-	*/
-	let {
-		ability,
-		slotType,
-		disabled = false,
-		dragDisabled = false,
-		ondrag,
-		onchange
-	}: Props = $props();
+	let { abilities, slotType, disabled, ondrag, onchange }: Props = $props();
 
 	function onconsider(event: CustomEvent<DndEvent<AbilityItem>>) {
 		const { trigger, id } = event.detail.info;
 
 		if (trigger === TRIGGERS.DRAG_STARTED) {
-			const draggedAbility = ability.find((ability) => ability.id === id);
+			const draggedAbility = abilities.find((ability) => ability.id === id);
 			ondrag(draggedAbility);
 		}
 
-		ability = event.detail.items;
+		abilities = event.detail.items.length > 0 ? event.detail.items : [emptyAbility];
 	}
 
 	function onfinalize(event: CustomEvent<DndEvent<AbilityItem>>) {
 		ondrag(undefined);
 
 		const item = event.detail.items[0];
-		console.log(item);
 
 		if (item && item.abilityType !== 'STACKABLE' && item.abilityType !== slotType) {
-			ability = [emptyAbility];
+			abilities = [emptyAbility];
 			onchange('UNKNOWN');
 			return;
 		}
 
-		ability = item ? [item] : [emptyAbility];
+		abilities = item ? [item] : [emptyAbility];
 		onchange(item?.ability || 'UNKNOWN');
 	}
 
 	function removeItem() {
-		ability = [emptyAbility];
+		abilities = [emptyAbility];
 		onchange('UNKNOWN');
 	}
 </script>
 
 <div
 	use:dndzone={{
-		items: ability,
+		items: abilities,
 		flipDurationMs: 200,
 		zoneTabIndex: -1,
 		zoneItemTabIndex: -1,
 		dropFromOthersDisabled: disabled,
-		dragDisabled,
+		dragDisabled: abilities[0] ? abilities[0].ability === 'UNKNOWN' : true,
 		dropTargetStyle: {}
 	}}
 	{onconsider}
 	{onfinalize}
-	class={disabled ? 'disabled' : ''}
 >
-	{#each ability as item, i (item.id)}
-		{#if i === 0}
-			<Ability ability={item.ability} size="SUB" onclick={() => removeItem()} />
-		{/if}
+	{#each abilities as item (item.id)}
+		{@const isShadow = item[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
+		<Ability
+			class={isShadow ? 'shadow-item' : ''}
+			ability={isShadow ? 'UNKNOWN' : item.ability}
+			size={slotType === 'STACKABLE' ? 'SUB' : 'MAIN'}
+			onclick={() => removeItem()}
+			{disabled}
+		/>
 	{/each}
 </div>
+
+<style>
+	div {
+		position: relative;
+		display: block;
+
+		:global(.shadow-item) {
+			visibility: visible !important;
+			position: absolute;
+			inset: 0;
+			pointer-events: none;
+		}
+	}
+</style>
