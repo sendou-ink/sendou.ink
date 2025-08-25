@@ -1,3 +1,5 @@
+import type { BuildAbilitiesTupleWithUnknown } from './types';
+
 // Reference for Ability Chunks of Primary Slot-Only abilities: https://splatoonwiki.org/wiki/Ability_chunk#Splatoon_3
 export const abilities = [
 	{ name: 'ISM', type: 'STACKABLE', abilityChunkTypesRequired: [] },
@@ -81,3 +83,9 @@ export const stackableAbilitiesShort = abilities
 export const mainOnlyAbilitiesShort = abilities
 	.filter((ability) => ability.type !== 'STACKABLE')
 	.map((ability) => ability.name);
+
+export const emptyBuild: BuildAbilitiesTupleWithUnknown = [
+	['UNKNOWN', 'UNKNOWN', 'UNKNOWN', 'UNKNOWN'],
+	['UNKNOWN', 'UNKNOWN', 'UNKNOWN', 'UNKNOWN'],
+	['UNKNOWN', 'UNKNOWN', 'UNKNOWN', 'UNKNOWN']
+];

@@ -5,19 +5,13 @@
 		AbilityType
 	} from '$lib/constants/in-game/types';
 	import type { AbilityItem } from './types';
-	import { abilities as abilitiesList } from '$lib/constants/in-game/abilities';
+	import { abilities as abilitiesList, emptyBuild } from '$lib/constants/in-game/abilities';
 	import AbilitySlot from './AbilitySlot.svelte';
 	import AbilitySelector from './AbilitySelector.svelte';
 
 	interface Props {
 		abilities?: BuildAbilitiesTupleWithUnknown;
 	}
-
-	const emptyBuild: BuildAbilitiesTupleWithUnknown = [
-		['UNKNOWN', 'UNKNOWN', 'UNKNOWN', 'UNKNOWN'],
-		['UNKNOWN', 'UNKNOWN', 'UNKNOWN', 'UNKNOWN'],
-		['UNKNOWN', 'UNKNOWN', 'UNKNOWN', 'UNKNOWN']
-	];
 
 	let mainAbilities: AbilityItem[] = abilitiesList
 		.filter((ability) => ability.type !== 'STACKABLE')
