@@ -10,7 +10,6 @@ import type {
 	TablesInsertable,
 	UserPreferences,
 } from "~/db/tables";
-import type { ChatUser } from "~/features/chat/components/Chat";
 import { userRoles } from "~/modules/permissions/mapper.server";
 import { isSupporter } from "~/modules/permissions/utils";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
@@ -18,6 +17,7 @@ import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
 import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
 import { safeNumberParse } from "~/utils/number";
+import type { ChatUser } from "../chat/chat-types";
 
 const identifierToUserIdQuery = (identifier: string) =>
 	db

@@ -192,9 +192,32 @@ Cron jobs to perform actions on the server at certain intervals. To add a new on
 
 ### Real time
 
-Webhooks via Skalop service (see logic in the Chat module).
+Webhooks via Skalop service (see logic in the Chat module). In short an action file can send an update via the `ChatSystemMessage` module:
 
-Old way: server-sent events still in use for tournament bracket & match pages.
+```ts
+ChatSystemMessage.send([
+    {
+        room: `tournament__${tournament.id}`,
+        type: "TOURNAMENT_UPDATED",
+        revalidateOnly: true,
+    },
+]);
+```
+
+which then can be listed to in a React component via the `useChat` hook:
+
+```tsx
+const chatRooms = React.useMemo(
+    () => [
+        { code: `tournament__${tournament.id}`, label: "Tournament" },
+    ],
+    [tournament.ctx.id],
+);
+useChat({
+    rooms: chatRooms,
+    connected: !tournament.ctx.isFinalized,
+});
+```
 
 ### Notifications
 
