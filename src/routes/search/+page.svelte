@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { UserSearchData, AllTeamsData } from '$lib/api/search/queries.remote';
 	import { DebounceFunction } from '$lib/runes/debounce.svelte';
 	import { SearchParamState } from '$lib/runes/search-param-state.svelte';
 	import * as SearchAPI from '$lib/api/search';
@@ -84,18 +83,18 @@
 			{ label: 'Tournaments', value: 'tournaments', icon: Trophy }
 		]}
 	>
-		<TabPanel value="users">{@render usersList(usersResult)}</TabPanel>
-		<TabPanel value="teams">{@render teamsList(filteredTeams)}</TabPanel>
+		<TabPanel value="users">{@render usersList()}</TabPanel>
+		<TabPanel value="teams">{@render teamsList()}</TabPanel>
 		<TabPanel value="tournaments">Tournaments</TabPanel>
 	</Tabs>
 </Main>
 
-{#snippet usersList(users: UserSearchData | null)}
-	{#if users === undefined}
+{#snippet usersList()}
+	{#if usersResult === undefined}
 		<p>You need to be logged in to search users</p>
-	{:else if users !== null}
+	{:else if usersResult !== null}
 		<ul>
-			{#each users as user (user.id)}
+			{#each usersResult as user (user.id)}
 				<li>
 					<a
 						class="link-item"
@@ -115,8 +114,8 @@
 	{/if}
 {/snippet}
 
-{#snippet teamsList(teams: AllTeamsData['teams'])}
-	<Pagination items={teams} pageSize={25}>
+{#snippet teamsList()}
+	<Pagination items={filteredTeams} pageSize={25}>
 		{#snippet child({ items })}
 			<ul>
 				{#each items as team (team.customUrl)}

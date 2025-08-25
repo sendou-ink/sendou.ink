@@ -38,7 +38,7 @@
 		</div>
 		<div class="name">
 			{team.name}
-			{@render bskyLink(team.bsky)}
+			{@render bskyLink()}
 		</div>
 	</div>
 	{#if team.avatarSrc}
@@ -54,16 +54,16 @@
 	</div>
 	<div class="mobile-team-name">
 		{team.name}
-		{@render bskyLink(team.bsky)}
+		{@render bskyLink()}
 	</div>
 </div>
 
-{#snippet bskyLink(bsky: string | null)}
-	{#if bsky}
+{#snippet bskyLink()}
+	{#if team.bsky}
 		<a
 			class="bsky-link"
 			data-testid="bsky-link"
-			href={bskyUrl(bsky)}
+			href={bskyUrl(team.bsky)}
 			target="_blank"
 			rel="noreferrer"
 		>

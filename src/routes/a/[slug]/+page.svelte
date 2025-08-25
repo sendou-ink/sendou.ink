@@ -3,7 +3,7 @@
 	import Markdown from '$lib/components/Markdown.svelte';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { articlePreviewUrl } from '$lib/utils/urls';
-	import { articleBySlug, type ArticleBySlugData } from '../articles.remote';
+	import { articleBySlug } from '../articles.remote';
 
 	const { params } = $props();
 
@@ -22,15 +22,14 @@
 	<article>
 		<h1>{article.title}</h1>
 		<div class="text-sm text-lighter">
-			by {@render authors(article.authors)} • <time>{article.dateString}</time>
+			by {@render authors()} • <time>{article.dateString}</time>
 		</div>
-		<!-- xxx: add markdown -->
 		<Markdown content={article.content} />
 	</article>
 </Main>
 
-{#snippet authors(authors: ArticleBySlugData['authors'])}
-	{#each authors as author, i (author.name)}
+{#snippet authors()}
+	{#each article.authors as author, i (author.name)}
 		{#if !author.link}
 			{author.name}
 		{:else}
