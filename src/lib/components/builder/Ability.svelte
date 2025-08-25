@@ -21,24 +21,23 @@
 	} as const;
 
 	const sizeNumber = $derived(sizeMap[size]);
-	const isReadonly = $derived(!onclick || ability === 'UNKNOWN');
-	const isDisabled = $derived(!isReadonly && disabled);
+	const readonly = $derived(!onclick || ability === 'UNKNOWN');
 </script>
 
 <svelte:element
-	this={isReadonly ? 'div' : 'button'}
+	this={readonly ? 'div' : 'button'}
 	class={[
 		'ability',
 		className,
 		{
-			readonly: isReadonly,
-			disabled: isDisabled
+			readonly: readonly,
+			disabled
 		}
 	]}
 	style:--ability-size="{sizeNumber}px"
-	type={isReadonly ? undefined : 'button'}
-	role={isReadonly ? undefined : 'button'}
-	disabled={!isReadonly && isDisabled}
+	type={readonly ? undefined : 'button'}
+	role={readonly ? undefined : 'button'}
+	disabled={!readonly && disabled}
 	data-testid="{ability}-ability"
 	{onclick}
 >

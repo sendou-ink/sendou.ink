@@ -68,7 +68,7 @@
 
 	function updateEnabledSlots(ability: AbilityItem | undefined) {
 		enabledSlots =
-			ability?.abilityType === 'STACKABLE' || !ability ? 'STACKABLE' : ability.abilityType;
+			ability && ability.abilityType !== 'STACKABLE' ? ability.abilityType : 'STACKABLE';
 	}
 
 	let disabledAbilities: AbilityType[] = $derived.by(() => {
