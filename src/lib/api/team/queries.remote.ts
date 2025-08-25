@@ -59,3 +59,12 @@ function resultsMapped(results: TeamRepository.FindResultPlacementsById) {
 }
 
 export type BySlugData = Awaited<ReturnType<typeof bySlug>>;
+
+export const resultsBySlug = query(teamSlug, async (slug) => {
+	const team = notFoundIfFalsy(await TeamRepository.findBySlug(slug));
+	const results = await TeamRepository.findResultsById(team.id);
+
+	return {
+		results
+	};
+});
