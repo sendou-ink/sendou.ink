@@ -1,9 +1,10 @@
 import { query } from '$app/server';
 import { requireUser } from '$lib/server/auth/session';
 import * as TeamRepository from '$lib/server/db/repositories/team';
-import { teamSlug } from './schemas';
+import { teamSlug, type EditTeamData } from './schemas';
 import { notFoundIfFalsy } from '$lib/server/remote-functions';
 import { canAddCustomizedColors } from '$lib/core/team';
+import { requirePermission } from '$lib/modules/permissions/guards.server';
 
 export const canCreateTeam = query(async () => {
 	const user = await requireUser();
@@ -66,5 +67,18 @@ export const resultsBySlug = query(teamSlug, async (slug) => {
 
 	return {
 		results
+	};
+});
+
+export const editTeamFormData = query(teamSlug, async (slug): Promise<EditTeamData> => {
+	const team = notFoundIfFalsy(await TeamRepository.findBySlug(slug));
+
+	requirePermission(team, 'EDIT');
+
+	return {
+		slug: team.customUrl,
+		name: team.name,
+		bio: team.bio,
+		bsky: team.bsky
 	};
 });

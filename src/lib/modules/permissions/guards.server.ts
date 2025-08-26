@@ -1,7 +1,7 @@
-// import type { EntityWithPermissions, Role } from "~/modules/permissions/types";
-// import { isAdmin } from "./utils";
-
-// // TODO: could avoid passing user in after remix middlewares land with async context
+import { requireUser } from '$lib/server/auth/session';
+import { error } from '@sveltejs/kit';
+import type { EntityWithPermissions } from './types';
+import { isAdmin } from './utils';
 
 // /**
 //  * Checks if a user has the required global role.
@@ -14,25 +14,31 @@
 // 	}
 // }
 
-// /**
-//  * Checks if a user has the required permission to perform an action on a given entity.
-//  *
-//  * @throws {Response} - Throws a 403 Forbidden response if the user does not have the required permission.
-//  */
-// export function requirePermission<
-// 	T extends EntityWithPermissions,
-// 	K extends keyof T["permissions"],
-// >(obj: T, permission: K, user: { id: number }) {
-// 	// admin can do anything in production but not in development for better testing
-// 	if (process.env.NODE_ENV === "production" && isAdmin(user)) {
-// 		return;
-// 	}
+/**
+ * Checks if a user has the required permission to perform an action on a given entity.
+ *
+ * @throws {Response} - Throws a 403 Forbidden response if the user does not have the required permission.
+ */
+export async function requirePermission<
+	T extends EntityWithPermissions,
+	K extends keyof T['permissions']
+>(obj: T, permission: K) {
+	const user = await requireUser();
 
-// 	const permissions = obj.permissions as Record<K, number[]>;
+	// admin can do anything in production but not in development for better testing
+	// if (process.env.NODE_ENV === 'production' && isAdmin(user)) {
+	// 	return;
+	// } xxx: return condition
 
-// 	if (permissions[permission].includes(user.id)) {
-// 		return;
-// 	}
+	if (isAdmin(user)) {
+		return;
+	}
 
-// 	throw new Response("Forbidden", { status: 403 });
-// }
+	const permissions = obj.permissions as Record<K, number[]>;
+
+	if (permissions[permission].includes(user.id)) {
+		return;
+	}
+
+	error(403);
+}

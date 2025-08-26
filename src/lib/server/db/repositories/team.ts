@@ -7,6 +7,7 @@ import { shortNanoid } from '$lib/utils/id';
 import invariant from '$lib/utils/invariant';
 import * as LFGRepository from './lfg';
 import * as Team from '$lib/core/team';
+import type { EditTeamData } from '$lib/api/team/schemas';
 
 export function findAllUndisbanded() {
 	return db
@@ -90,7 +91,9 @@ export async function findBySlug(customUrl: string, { includeInviteCode = false 
 	return {
 		...row,
 		permissions: {
-			EDIT: row.members.some((member) => member.isOwner || member.isManager)
+			EDIT: row.members
+				.filter((member) => member.isOwner || member.isManager)
+				.map((member) => member.id)
 		}
 	};
 }
@@ -240,26 +243,17 @@ export async function create(
 	});
 }
 
-export async function update({
-	id,
-	name,
-	customUrl,
-	bio,
-	bsky,
-	css
-}: Pick<Insertable<Tables['Team']>, 'id' | 'name' | 'customUrl' | 'bio' | 'bsky'> & {
-	css: string | null;
-}) {
+export async function update(teamId: number, { name, slug, bio, bsky }: EditTeamData) {
 	return db
 		.updateTable('AllTeam')
 		.set({
 			name,
-			customUrl,
+			customUrl: slug,
 			bio,
-			bsky,
-			css
+			bsky
+			// css xxx: add custom colors for team
 		})
-		.where('id', '=', id)
+		.where('id', '=', teamId)
 		.returningAll()
 		.executeTakeFirstOrThrow();
 }

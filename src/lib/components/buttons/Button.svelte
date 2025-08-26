@@ -172,7 +172,7 @@
 
 		> .button-icon {
 			width: 1rem;
-			margin-inline-end: var(--s-1);
+			margin-inline-end: 0.3rem;
 		}
 	}
 

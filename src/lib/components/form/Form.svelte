@@ -29,6 +29,14 @@
 
 	let errors = $state<Partial<Record<keyof Output, string>>>({});
 
+	const containsFileInput = $derived.by(() => {
+		for (const field of Object.values(schema.shape)) {
+			// @ts-expect-error this is too beautiful for typescript... more seriously though TODO: do this more prettily
+			if (field.def?.out?.def?.innerType?.def?.innerType?.def?.type === 'file') return true;
+		}
+		return false;
+	});
+
 	formContext.set({
 		schema,
 		defaultValues,
@@ -109,6 +117,7 @@
 	{id}
 	{...action.enhance(enhanced)}
 	class="stack md-plus items-start"
+	enctype={containsFileInput ? 'multipart/form-data' : undefined}
 	onchange={onchange ? handleOnchange : undefined}
 >
 	{#if heading || info}

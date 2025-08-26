@@ -258,3 +258,33 @@ export function themeOptional(args: Omit<Extract<FormField, { type: 'theme' }>, 
 			type: 'theme'
 		});
 }
+
+export function imageOptional(args: Omit<Extract<FormField, { type: 'image' }>, 'type'>) {
+	return z
+		.preprocess(
+			(value) => {
+				if (typeof window === 'undefined') return null; // xxx: implement sending images serverside
+
+				if (!(value instanceof File)) return value;
+
+				if (value.name === '') return undefined;
+
+				return value;
+			},
+			z
+				.file()
+				.max(2_000_000) // 2MB
+				.mime('image/webp')
+				.nullish()
+		)
+		.register(formRegistry, {
+			...args,
+			type: 'image'
+		});
+}
+
+export function stringConstant() {
+	return z.string().max(100).register(formRegistry, {
+		type: 'string-constant'
+	});
+}

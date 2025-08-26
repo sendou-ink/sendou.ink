@@ -19,6 +19,7 @@ type ParaglideFunction = (
 	}
 ) => string;
 
+// xxx: handle image upload
 export function validatedForm<T extends z4.$ZodType>(
 	schema: T,
 	callback: (

@@ -9,6 +9,7 @@
 	import { resolve } from '$app/paths';
 	import SquarePen from '@lucide/svelte/icons/square-pen';
 	import { m } from '$lib/paraglide/messages';
+	import UserRoundPen from '@lucide/svelte/icons/user-round-pen';
 
 	interface Props {
 		team: TeamAPI.queries.BySlugData['team'];
@@ -50,8 +51,15 @@
 	{/if}
 
 	<!-- xxx: permissions -->
-	<div class="popover-container">
-		<div class="popover">
+	<div class="actions-buttons-container">
+		<div class="action-buttons">
+			<Button
+				id="roster-button"
+				href={resolve('/t/[slug]/roster', { slug: team.customUrl })}
+				variant="outlined"
+				size="small"
+				icon={UserRoundPen}>{m.key_candid_ox_sew()}</Button
+			>
 			<Button
 				href={resolve('/t/[slug]/edit', { slug: team.customUrl })}
 				variant="outlined"
@@ -211,17 +219,21 @@
 		border-radius: 100%;
 	}
 
-	.popover-container {
+	.actions-buttons-container {
 		position: relative;
 	}
 
-	.popover {
+	.action-buttons {
+		display: flex;
+		gap: var(--s-2-5);
 		position: absolute;
 		right: 0;
-		top: -72px;
+		top: -68px;
 
-		:global path:last-of-type {
-			fill: var(--color-primary);
+		:global {
+			path:last-of-type {
+				fill: var(--color-primary);
+			}
 		}
 	}
 </style>

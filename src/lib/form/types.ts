@@ -4,6 +4,8 @@ interface FormFieldBase<T extends string> {
 	bottomText?: string;
 }
 
+type FormFieldConstant<T extends string> = Omit<FormFieldBase<T>, 'label' | 'bottomText'>;
+
 interface FormFieldText<T extends string> extends FormFieldBase<T> {
 	minLength?: number;
 	maxLength: number;
@@ -69,6 +71,10 @@ interface FormFieldMapPool<T extends string> extends FormFieldBase<T> {
 	disabledBannedMaps: boolean;
 }
 
+interface FormFieldImage<T extends string> extends Omit<FormFieldBase<T>, 'bottomText'> {
+	dimensions: 'logo' | 'thick-banner';
+}
+
 export type FormField<V extends string = string> =
 	| FormFieldBase<'custom'>
 	| FormFieldText<'text-field'>
@@ -81,7 +87,9 @@ export type FormField<V extends string = string> =
 	| FormFieldInputGroup<'checkbox-group', V>
 	| FormFieldWeaponPool<'weapon-pool'>
 	| FormFieldMapPool<'map-pool'>
-	| FormFieldBase<'theme'>;
+	| FormFieldBase<'theme'>
+	| FormFieldImage<'image'>
+	| FormFieldConstant<'string-constant'>;
 
 export type FormFieldProps<T extends FormField['type']> = Omit<
 	Extract<FormField, { type: T }>,

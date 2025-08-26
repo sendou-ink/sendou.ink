@@ -15,6 +15,7 @@
 	import MapPoolFormField, { type MapPool } from './MapPoolFormField.svelte';
 	import type { ModeShort } from '$lib/constants/in-game/types';
 	import MultiSelectFormField from './MultiSelectFormField.svelte';
+	import ImageFormField from '$lib/components/form/ImageFormField.svelte';
 
 	type Output = z.output<T>;
 	type ValueType = Output[keyof Output];
@@ -105,6 +106,10 @@
 	<MapPoolFormField bind:value={data.value as MapPool} {modes} {...commonProps} {...formField} />
 {:else if formField.type === 'custom'}
 	{@render children?.({ data, ...commonProps, ...formField })}
+{:else if formField.type === 'image'}
+	<ImageFormField bind:value={data.value as File} {...commonProps} {...formField} />
+{:else if formField.type === 'string-constant'}
+	<input type="hidden" {name} value={data.value} />
 {:else}
 	<p>Unsupported form field type</p>
 {/if}
