@@ -223,8 +223,7 @@ export async function createVod(
 			const result = await trx
 				.insertInto("UnvalidatedVideo")
 				.values(video)
-				// as id is needed for sqlite, see https://sqlite.org/forum/forumpost/033daf0b32 or the docs for `returning`
-				.returning("UnvalidatedVideo.id as id")
+				.returning("UnvalidatedVideo.id")
 				.executeTakeFirstOrThrow();
 			videoId = result.id;
 		}
@@ -237,8 +236,7 @@ export async function createVod(
 					stageId: match.stageId,
 					mode: match.mode,
 				})
-				// as id is needed for sqlite, see comment above
-				.returning("VideoMatch.id as id")
+				.returning("VideoMatch.id")
 				.executeTakeFirstOrThrow();
 			const matchId = videoMatchResult.id;
 
