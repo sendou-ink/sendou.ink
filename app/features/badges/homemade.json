@@ -320,7 +320,7 @@
 		"authorDiscordId": "960213930586824766"
 	},
 	"freedomdive": {
-		"displayName": "Freedom Dive ↓",
+		"displayName": "Freedom Dive â",
 		"authorDiscordId": "631246535560265749"
 	},
 	"frostbitebase2x": {
@@ -487,12 +487,16 @@
 		"displayName": "Reef Reunion (500 KT Power)",
 		"authorDiscordId": "1170249805373657093"
 	},
+	"ld4copper": {
+		"displayName": "LD4 (3�me)",
+		"authorDiscordId": "570323825669963972"
+	},
 	"ld4gold": {
 		"displayName": "LD4 (1er)",
 		"authorDiscordId": "570323825669963972"
 	},
 	"ld4silver": {
-		"displayName": "LD4 (2�me)",
+		"displayName": "LD4 (2ème)",
 		"authorDiscordId": "570323825669963972"
 	},
 	"lemoncider": {
@@ -524,7 +528,7 @@
 		"authorDiscordId": "671419359058722826"
 	},
 	"lumiere": {
-		"displayName": "Stellaris Phantasm: Lumière Bracket",
+		"displayName": "Stellaris Phantasm: LumiÃ¨re Bracket",
 		"authorDiscordId": "617399529532293150"
 	},
 	"lunablaster": {
@@ -596,7 +600,7 @@
 		"authorDiscordId": "1131109226551459881"
 	},
 	"muchen": {
-		"displayName": "Bastard München",
+		"displayName": "Bastard MÃ¼nchen",
 		"authorDiscordId": "528851510222782474"
 	},
 	"mugcupmini": {
