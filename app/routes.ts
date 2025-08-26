@@ -270,6 +270,10 @@ export default [
 			"features/api-public/routes/tournament.$id.teams.ts",
 		),
 		route(
+			"/tournament/:id/players",
+			"features/api-public/routes/tournament.$id.players.ts",
+		),
+		route(
 			"/tournament/:id/casted",
 			"features/api-public/routes/tournament.$id.casted.ts",
 		),
