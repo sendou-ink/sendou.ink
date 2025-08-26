@@ -54,8 +54,8 @@
 	let { build, canEdit: _canEdit = false }: BuildProps = $props();
 
 	// xxx: why does the build not show updates (on build privacy change) even when this does log?
-	// tracked: https://github.com/sveltejs/kit/issues/14140
 	// $inspect(build.private);
+	// tracked: https://github.com/sveltejs/kit/issues/14140
 
 	// xxx: description button showing too long text e.g. splattershot jr
 
