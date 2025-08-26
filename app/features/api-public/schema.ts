@@ -204,12 +204,6 @@ export type GetTournamentTeamsResponse = Array<{
 
 export type GetTournamentPlayersResponse = Array<{
 	userId: number;
-	name: string;
-	discordId: string;
-	discordAvatar: string | null;
-	customUrl: string | null;
-	country: string | null;
-	tournamentTeamId: number;
 	matchIds: number[];
 }>;
 
