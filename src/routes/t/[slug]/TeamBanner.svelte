@@ -51,6 +51,7 @@
 	{/if}
 
 	<!-- xxx: permissions -->
+	<!-- xxx: placement off if no avatar -->
 	<div class="actions-buttons-container">
 		<div class="action-buttons">
 			<Button

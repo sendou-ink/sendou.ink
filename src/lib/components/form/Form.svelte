@@ -7,6 +7,7 @@
 	import { formContext } from './context';
 	import z, { ZodObject, type ZodRawShape } from 'zod';
 	import Button from '../buttons/Button.svelte';
+	import { resolveFieldsByType } from '$lib/utils/form';
 
 	type Output = z.output<T>;
 
@@ -29,13 +30,7 @@
 
 	let errors = $state<Partial<Record<keyof Output, string>>>({});
 
-	const containsFileInput = $derived.by(() => {
-		for (const field of Object.values(schema.shape)) {
-			// @ts-expect-error this is too beautiful for typescript... more seriously though TODO: do this more prettily
-			if (field.def?.out?.def?.innerType?.def?.innerType?.def?.type === 'file') return true;
-		}
-		return false;
-	});
+	const containsFileInput = $derived(resolveFieldsByType(schema, 'file').length > 0);
 
 	formContext.set({
 		schema,

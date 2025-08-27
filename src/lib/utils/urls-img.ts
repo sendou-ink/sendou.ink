@@ -1,9 +1,6 @@
-// TODO: separating this file from urls.ts is a temporary solution. The reason is that import.meta.env cannot currently be used in files that are consumed by plain Node.js
+// xxx: move back to urls.ts
 
-const USER_SUBMITTED_IMAGE_ROOT =
-	process.env.NODE_ENV === 'development' && import.meta.env.VITE_PROD_MODE !== 'true'
-		? 'http://127.0.0.1:9000/sendou'
-		: 'https://sendou.nyc3.cdn.digitaloceanspaces.com';
+import { PUBLIC_USER_SUBMITTED_IMAGE_URL_ROOT } from '$env/static/public';
 
 // TODO: move development images to minio and deprecate this hack
 // images with https are not hosted on spaces, this is used for local development
@@ -12,5 +9,5 @@ export function conditionalUserSubmittedImage(fileName: string) {
 }
 
 export function userSubmittedImage(fileName: string) {
-	return `${USER_SUBMITTED_IMAGE_ROOT}/${fileName}`;
+	return `${PUBLIC_USER_SUBMITTED_IMAGE_URL_ROOT}/${fileName}`;
 }

@@ -8,6 +8,7 @@ import invariant from '$lib/utils/invariant';
 import * as LFGRepository from './lfg';
 import * as Team from '$lib/core/team';
 import type { EditTeamData } from '$lib/api/team/schemas';
+import type { ReplaceFileWithId } from '$lib/server/remote-functions';
 
 export function findAllUndisbanded() {
 	return db
@@ -243,14 +244,19 @@ export async function create(
 	});
 }
 
-export async function update(teamId: number, { name, slug, bio, bsky }: EditTeamData) {
+export async function update(
+	teamId: number,
+	{ name, slug, bio, bsky, logo, banner }: ReplaceFileWithId<EditTeamData>
+) {
 	return db
 		.updateTable('AllTeam')
 		.set({
 			name,
 			customUrl: slug,
 			bio,
-			bsky
+			bsky,
+			avatarImgId: logo,
+			bannerImgId: banner
 			// css xxx: add custom colors for team
 		})
 		.where('id', '=', teamId)

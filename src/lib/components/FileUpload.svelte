@@ -51,6 +51,7 @@
 				return;
 			}
 
+			// xxx: attach the compressed image to the input
 			new Compressor(uploadedFile, {
 				width: dimensions.width,
 				height: dimensions.height,

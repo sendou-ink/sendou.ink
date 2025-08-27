@@ -3,8 +3,10 @@ import { extractLocaleFromRequest } from '$lib/paraglide/runtime';
 import { zodErrorsToFormErrors } from '$lib/utils/zod';
 import { error } from '@sveltejs/kit';
 import z from 'zod';
-import * as z4 from 'zod/v4/core';
 import { requireUser, type AuthenticatedUser } from './auth/session';
+import * as ImageRepository from '$lib/server/db/repositories/image';
+import { resolveFieldsByType } from '$lib/utils/form';
+import * as S3 from './s3';
 
 export function notFoundIfFalsy<T>(value: T | null | undefined): T {
 	if (!value) error(404);
@@ -20,10 +22,19 @@ type ParaglideFunction = (
 ) => string;
 
 // xxx: handle image upload
-export function validatedForm<T extends z4.$ZodType>(
+
+export type ReplaceFileWithId<T> = {
+	[K in keyof T]: T[K] extends File | null | undefined
+		? number | null | undefined
+		: T[K] extends (File | null | undefined)[]
+			? (number | null | undefined)[]
+			: T[K];
+};
+
+export function validatedForm<T extends z.ZodObject>(
 	schema: T,
 	callback: (
-		data: z.infer<T>,
+		data: ReplaceFileWithId<z.infer<T>>,
 		user: AuthenticatedUser
 	) => Promise<void | {
 		errors: Partial<Record<keyof z.infer<T>, ParaglideFunction>>;
@@ -39,7 +50,12 @@ export function validatedForm<T extends z4.$ZodType>(
 			};
 		}
 
-		const result = await callback(parsed.data, await requireUser());
+		const uploadedImages = await uploadImages(schema, formData);
+
+		const result = await callback(
+			{ ...parsed.data, ...uploadedImages } as ReplaceFileWithId<z.infer<T>>,
+			await requireUser()
+		);
 		if (!result) return;
 
 		// translate errors
@@ -74,6 +90,48 @@ function formDataToObject(formData: FormData) {
 		} else {
 			result[key] = newValue;
 		}
+	}
+
+	return result;
+}
+
+/**
+ * Uploads images to S3 compatible storage and saves them to the SQLite database, if any included in the request.
+ * Images are automatically validated for eligible users. Only validated images are shown to other users.
+ *
+ * @returns an object where keys are form field names and values ids of "UserSubmittedImage" table or null if no images were uploaded
+ */
+async function uploadImages<T extends z.ZodObject>(schema: T, formData: FormData) {
+	const fileFields = resolveFieldsByType(schema, 'file');
+	if (fileFields.length === 0) return null;
+
+	const user = await requireUser();
+	const result: Partial<Record<keyof T, number | null>> = {};
+
+	for (const field of fileFields) {
+		const file = formData.get(field);
+
+		if (!(file instanceof File)) {
+			// they keep the existing uploaded image
+			continue;
+		}
+
+		const isEmptyInput = file.size === 0;
+		if (isEmptyInput) {
+			// previously uploaded file should be deleted
+			result[field as keyof T] = null;
+			continue;
+		}
+
+		const uploadedFileName = await S3.putFile(file);
+
+		const shouldAutoValidate = user.roles.includes('SUPPORTER');
+		const { id } = await ImageRepository.insert({
+			submitterUserId: user.id,
+			url: uploadedFileName,
+			validatedAt: shouldAutoValidate ? new Date() : null
+		});
+		result[field as keyof T] = id;
 	}
 
 	return result;
