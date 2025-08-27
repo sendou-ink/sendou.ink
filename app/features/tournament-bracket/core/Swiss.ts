@@ -262,7 +262,10 @@ interface SwissPairingTeam {
 }
 
 // adapted from https://github.com/slashinfty/tournament-pairings
-function pairUp(players: SwissPairingTeam[]) {
+export function pairUp(players: SwissPairingTeam[]) {
+	// uncomment to add a new test case to PAIR_UP_TEST_CASES
+	// console.log(players);
+
 	const matches = [];
 	const playerArray = R.shuffle(players).map((p, i) => ({ ...p, index: i }));
 	const scoreGroups = [...new Set(playerArray.map((p) => p.score))].sort(
@@ -295,12 +298,35 @@ function pairUp(players: SwissPairingTeam[]) {
 						2);
 			wt +=
 				5 - 5 / (scoreSums.findIndex((s) => s === curr.score + opp.score) + 1);
-			let scoreGroupDiff = Math.abs(
+			const scoreGroupDiff = Math.abs(
 				scoreGroups.findIndex((s) => s === curr.score) -
 					scoreGroups.findIndex((s) => s === opp.score),
 			);
-			scoreGroupDiff += 0.2;
+
+			// TODO: consider "pairedUpDown"
+			// if (
+			// 	scoreGroupDiff === 1 &&
+			// 	curr.hasOwnProperty("pairedUpDown") &&
+			// 	curr.pairedUpDown === false &&
+			// 	opp.hasOwnProperty("pairedUpDown") &&
+			// 	opp.pairedUpDown === false
+			// ) {
+			// 	scoreGroupDiff -= 0.65;
+			// } else if (
+			// 	scoreGroupDiff > 0 &&
+			// 	((curr.hasOwnProperty("pairedUpDown") && curr.pairedUpDown === true) ||
+			// 		(opp.hasOwnProperty("pairedUpDown") && opp.pairedUpDown === true))
+			// ) {
+			// 	scoreGroupDiff += 0.2;
+			// }
+
 			wt += 23 / (2 * (scoreGroupDiff + 2));
+
+			// Lower weight for larger score differences, we really want to avoid 2-0 playing 0-2 etc.
+			if (scoreGroupDiff >= 2) {
+				wt -= 10;
+			}
+
 			if (
 				(Object.hasOwn(curr, "receivedBye") && curr.receivedBye) ||
 				(Object.hasOwn(opp, "receivedBye") && opp.receivedBye)

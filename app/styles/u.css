@@ -447,3 +447,22 @@
 .u__season__tentative__explanation {
 	text-transform: initial;
 }
+
+.u__highlights-container {
+	position: relative;
+	padding-bottom: 80px; /* Leave space for sticky button */
+}
+
+.u__highlights-sticky-button {
+	position: sticky;
+	bottom: 0;
+	background-color: var(--bg);
+	padding: var(--s-2) 0;
+	border-top: 1px solid var(--bg-lighter);
+	z-index: 10;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-2);
+	margin-top: var(--s-4);
+}

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
+import {
+	LOW_INK_AUGUST_2025,
+	RUSH_WEEKEND_3,
+} from "~/features/tournament-bracket/core/tests/mocks-swiss";
 import { ZONES_WEEKLY_38 } from "~/features/tournament-bracket/core/tests/mocks-zones-weekly";
 import invariant from "~/utils/invariant";
 import * as Swiss from "./Swiss";
@@ -161,5 +165,101 @@ describe("Swiss", () => {
 				}
 			});
 		});
+	});
+
+	const PAIR_UP_TEST_CASES = [RUSH_WEEKEND_3, LOW_INK_AUGUST_2025];
+
+	describe("pairUp()", () => {
+		it.for(PAIR_UP_TEST_CASES)(
+			"all teams have matches (pair up test cases idx %#)",
+			(testCase) => {
+				const result = Swiss.pairUp(testCase);
+
+				const inputTeams = testCase
+					.map((team) => team.id)
+					.sort((a, b) => a - b);
+				const resultTeams = result
+					.flatMap((match) => [match.opponentOne, match.opponentTwo])
+					.filter((val) => val !== null)
+					.sort((a, b) => a - b);
+
+				expect(inputTeams).toEqual(resultTeams);
+			},
+		);
+
+		it.for(PAIR_UP_TEST_CASES)(
+			"every pair is max one set win from each other (pair up test cases idx %#)",
+			(testCase) => {
+				const result = Swiss.pairUp(testCase);
+
+				for (const match of result) {
+					if (match.opponentOne === null || match.opponentTwo === null)
+						continue;
+
+					const opponentOneScore = testCase.find(
+						(t) => t.id === match.opponentOne,
+					)!.score;
+					const opponentTwoScore = testCase.find(
+						(t) => t.id === match.opponentTwo,
+					)!.score;
+
+					expect(
+						Math.abs(opponentOneScore - opponentTwoScore),
+						`Teams ${match.opponentOne} and ${match.opponentTwo} have too large score difference (${opponentOneScore} vs ${opponentTwoScore})`,
+					).toBeLessThanOrEqual(1);
+				}
+			},
+		);
+
+		it.for(PAIR_UP_TEST_CASES)(
+			"should match perfect records against each other as much as possible (pair up test cases idx %#)",
+			(testCase) => {
+				const result = Swiss.pairUp(testCase);
+
+				const maxScore = testCase.reduce(
+					(max, team) => Math.max(max, team.score),
+					0,
+				);
+				const perfectRecordsCount = testCase.filter(
+					(team) => team.score === maxScore,
+				).length;
+
+				let perfectRecordsPlayingEachOtherCount = 0;
+
+				for (const match of result) {
+					if (match.opponentOne === null || match.opponentTwo === null)
+						continue;
+
+					const oneIsPerfectScore = testCase.some(
+						(team) => team.id === match.opponentOne && team.score === maxScore,
+					);
+					const twoIsPerfectScore = testCase.some(
+						(team) => team.id === match.opponentTwo && team.score === maxScore,
+					);
+
+					if (oneIsPerfectScore && twoIsPerfectScore) {
+						perfectRecordsPlayingEachOtherCount++;
+					}
+				}
+
+				expect(perfectRecordsPlayingEachOtherCount).toBe(
+					Math.floor(perfectRecordsCount / 2),
+				);
+			},
+		);
+
+		it.for(PAIR_UP_TEST_CASES)(
+			"generates max one bye (pair up test cases idx %#)",
+			(testCase) => {
+				const result = Swiss.pairUp(testCase);
+
+				let byes = 0;
+				for (const match of result) {
+					if (match.opponentOne === null || match.opponentTwo === null) byes++;
+				}
+
+				expect(byes).toBeLessThanOrEqual(1);
+			},
+		);
 	});
 });
