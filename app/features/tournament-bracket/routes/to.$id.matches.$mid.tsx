@@ -1,11 +1,11 @@
 import { useLoaderData, useRevalidator } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
-import { useEventSource } from "remix-utils/sse/react";
 import { LinkButton } from "~/components/elements/Button";
 import { ArrowLongLeftIcon } from "~/components/icons/ArrowLongLeft";
 import { containerClassName } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
+import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import { ConnectedChat } from "~/features/chat/components/Chat";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
@@ -13,10 +13,7 @@ import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { useVisibilityChange } from "~/hooks/useVisibilityChange";
 import invariant from "~/utils/invariant";
 import { assertUnreachable } from "~/utils/types";
-import {
-	tournamentBracketsPage,
-	tournamentMatchSubscribePage,
-} from "~/utils/urls";
+import { tournamentBracketsPage } from "~/utils/urls";
 import { action } from "../actions/to.$id.matches.$mid.server";
 import { CastInfo } from "../components/CastInfo";
 import { MatchRosters } from "../components/MatchRosters";
@@ -26,7 +23,7 @@ import { getRounds } from "../core/rounds";
 import { loader } from "../loaders/to.$id.matches.$mid.server";
 import {
 	groupNumberToLetters,
-	matchSubscriptionKey,
+	tournamentMatchWebsocketRoom,
 } from "../tournament-bracket-utils";
 export { action, loader };
 
@@ -39,11 +36,16 @@ export default function TournamentMatchPage() {
 	const tournament = useTournament();
 	const data = useLoaderData<typeof loader>();
 
+	useWebsocketRevalidation({
+		room: tournamentMatchWebsocketRoom(data.match.id),
+		connected: !tournament.ctx.isFinalized,
+	});
+
 	React.useEffect(() => {
-		if (visibility !== "visible" || data.matchIsOver) return;
+		if (visibility !== "visible" || tournament.ctx.isFinalized) return;
 
 		revalidate();
-	}, [visibility, revalidate, data.matchIsOver]);
+	}, [visibility, revalidate, tournament.ctx.isFinalized]);
 
 	const type =
 		tournament.canReportScore({ matchId: data.match.id, user }) ||
@@ -75,7 +77,6 @@ export default function TournamentMatchPage() {
 
 	return (
 		<div className={clsx("stack lg", containerClassName("normal"))}>
-			{!data.matchIsOver && visibility !== "hidden" ? <AutoRefresher /> : null}
 			<div className="flex horizontal justify-between items-center">
 				<MatchHeader />
 				<div className="stack md horizontal flex-wrap-reverse justify-end">
@@ -280,33 +281,6 @@ function MatchHeader() {
 			) : null}
 		</div>
 	);
-}
-
-function AutoRefresher() {
-	useAutoRefresh();
-
-	return null;
-}
-
-function useAutoRefresh() {
-	const { revalidate } = useRevalidator();
-	const tournament = useTournament();
-	const data = useLoaderData<typeof loader>();
-	const lastEventId = useEventSource(
-		tournamentMatchSubscribePage({
-			tournamentId: tournament.ctx.id,
-			matchId: data.match.id,
-		}),
-		{
-			event: matchSubscriptionKey(data.match.id),
-		},
-	);
-
-	React.useEffect(() => {
-		if (lastEventId) {
-			revalidate();
-		}
-	}, [lastEventId, revalidate]);
 }
 
 function MapListSection({

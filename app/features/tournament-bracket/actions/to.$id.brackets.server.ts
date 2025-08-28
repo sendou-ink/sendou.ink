@@ -1,6 +1,7 @@
 import type { ActionFunction } from "@remix-run/node";
 import { sql } from "~/db/sql";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { createSwissBracketInTransaction } from "~/features/tournament/queries/createSwissBracketInTransaction.server";
 import { updateRoundMaps } from "~/features/tournament/queries/updateRoundMaps.server";
@@ -26,7 +27,10 @@ import {
 	tournamentFromDB,
 } from "../core/Tournament.server";
 import { bracketSchema } from "../tournament-bracket-schemas.server";
-import { fillWithNullTillPowerOfTwo } from "../tournament-bracket-utils";
+import {
+	fillWithNullTillPowerOfTwo,
+	tournamentWebsocketRoom,
+} from "../tournament-bracket-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
 	const user = await requireUser(request);
@@ -37,6 +41,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 	const tournament = await tournamentFromDB({ tournamentId, user });
 	const data = await parseRequestPayload({ request, schema: bracketSchema });
 	const manager = getServerTournamentManager();
+
+	let emitTournamentUpdate = false;
 
 	switch (data._action) {
 		case "START_BRACKET": {
@@ -136,6 +142,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 				});
 			}
 
+			emitTournamentUpdate = true;
+
 			break;
 		}
 		case "PREPARE_MAPS": {
@@ -191,6 +199,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			await TournamentRepository.insertSwissMatches(matches.value);
 
+			emitTournamentUpdate = true;
+
 			break;
 		}
 		case "UNADVANCE_BRACKET": {
@@ -208,6 +218,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 				groupId: data.groupId,
 				roundId: data.roundId,
 			});
+
+			emitTournamentUpdate = true;
 
 			break;
 		}
@@ -251,6 +263,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 				destinationBracketIdx: data.destinationBracketIdx,
 				tournamentId,
 			});
+
+			emitTournamentUpdate = true;
+
 			break;
 		}
 		default: {
@@ -259,6 +274,16 @@ export const action: ActionFunction = async ({ params, request }) => {
 	}
 
 	clearTournamentDataCache(tournamentId);
+
+	if (emitTournamentUpdate) {
+		ChatSystemMessage.send([
+			{
+				room: tournamentWebsocketRoom(tournament.ctx.id),
+				type: "TOURNAMENT_UPDATED",
+				revalidateOnly: true,
+			},
+		]);
+	}
 
 	return null;
 };

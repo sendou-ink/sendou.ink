@@ -75,10 +75,6 @@ button[data-state="closed"][aria-haspopup="dialog"] {
 	background-color: var(--bg);
 }
 
-.plans__placeholder {
-	min-height: 100%;
-}
-
 .plans__top-section {
 	position: fixed;
 	z-index: 10;
