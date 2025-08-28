@@ -39,6 +39,7 @@
 		"@lucide/svelte": "^0.542.0",
 		"aws-sdk": "^2.1692.0",
 		"bits-ui": "^2.9.4",
+		"chart.js": "^4.5.0",
 		"compressorjs": "^1.2.1",
 		"date-fns": "^4.1.0",
 		"edmonds-blossom-fixed": "^1.0.1",

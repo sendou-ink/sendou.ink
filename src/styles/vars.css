@@ -75,6 +75,13 @@ html.dark {
 	--size-selector: 0.25rem; /** xxx: not used anywhere yet */
 	--size-field: 0.25rem; /** xxx: not used anywhere yet */
 	--border: 1.5px;
+
+	--chart-grid: color-mix(in oklch, var(--color-base-border), var(--color-base-section) 75%);
+	--chart-heading: var(--color-base-content);
+	--chart-text: var(--color-base-content-secondary);
+	--chart-line: var(--color-primary);
+	--chart-bg: var(--color-base-section);
+	--chart-border: var(--color-base-border);
 }
 
 /* xs: "(min-width: 480px)",
