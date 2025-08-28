@@ -23,7 +23,7 @@ type ParaglideFunction = (
 
 // xxx: handle image upload
 
-export type ReplaceFileWithId<T> = {
+export type SchemaToFunctionInput<T> = {
 	[K in keyof T]: T[K] extends File | null | undefined
 		? number | null | undefined
 		: T[K] extends (File | null | undefined)[]
@@ -31,10 +31,18 @@ export type ReplaceFileWithId<T> = {
 			: T[K];
 };
 
+export type SchemaToDefaultValues<T> = {
+	[K in keyof T]: T[K] extends File | null | undefined
+		? string | null | undefined
+		: T[K] extends (File | null | undefined)[]
+			? (string | null | undefined)[]
+			: T[K];
+};
+
 export function validatedForm<T extends z.ZodObject>(
 	schema: T,
 	callback: (
-		data: ReplaceFileWithId<z.infer<T>>,
+		data: SchemaToFunctionInput<z.infer<T>>,
 		user: AuthenticatedUser
 	) => Promise<void | {
 		errors: Partial<Record<keyof z.infer<T>, ParaglideFunction>>;
@@ -53,7 +61,7 @@ export function validatedForm<T extends z.ZodObject>(
 		const uploadedImages = await uploadImages(schema, formData);
 
 		const result = await callback(
-			{ ...parsed.data, ...uploadedImages } as ReplaceFileWithId<z.infer<T>>,
+			{ ...parsed.data, ...uploadedImages } as SchemaToFunctionInput<z.infer<T>>,
 			await requireUser()
 		);
 		if (!result) return;
@@ -113,6 +121,7 @@ async function uploadImages<T extends z.ZodObject>(schema: T, formData: FormData
 
 		if (!(file instanceof File)) {
 			// they keep the existing uploaded image
+			result[field as keyof T] = undefined;
 			continue;
 		}
 

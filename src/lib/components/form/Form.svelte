@@ -8,6 +8,7 @@
 	import z, { ZodObject, type ZodRawShape } from 'zod';
 	import Button from '../buttons/Button.svelte';
 	import { resolveFieldsByType } from '$lib/utils/form';
+	import type { SchemaToDefaultValues } from '$lib/server/remote-functions';
 
 	type Output = z.output<T>;
 
@@ -16,7 +17,7 @@
 		heading?: string;
 		action: RemoteForm<void | { errors: Partial<Record<keyof Output, string>> }>;
 		schema: T;
-		defaultValues?: Partial<Output>;
+		defaultValues?: Partial<SchemaToDefaultValues<Output>>;
 		info?: string;
 		/** Fires when the form changes and the resulting data is considered valid as defined by the given schema. Note: only works for "primitive" fields such as plain inputs, selects and input groups.*/
 		onchange?: (data: Partial<Output>) => void;

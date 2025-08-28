@@ -2,7 +2,7 @@ import { query } from '$app/server';
 import { requireUser } from '$lib/server/auth/session';
 import * as TeamRepository from '$lib/server/db/repositories/team';
 import { teamSlug, type EditTeamData } from './schemas';
-import { notFoundIfFalsy } from '$lib/server/remote-functions';
+import { notFoundIfFalsy, type SchemaToDefaultValues } from '$lib/server/remote-functions';
 import { canAddCustomizedColors } from '$lib/core/team';
 import { requirePermission } from '$lib/modules/permissions/guards.server';
 
@@ -70,15 +70,20 @@ export const resultsBySlug = query(teamSlug, async (slug) => {
 	};
 });
 
-export const editTeamFormData = query(teamSlug, async (slug): Promise<EditTeamData> => {
-	const team = notFoundIfFalsy(await TeamRepository.findBySlug(slug));
+export const editTeamFormData = query(
+	teamSlug,
+	async (slug): Promise<SchemaToDefaultValues<EditTeamData>> => {
+		const team = notFoundIfFalsy(await TeamRepository.findBySlug(slug));
 
-	requirePermission(team, 'EDIT');
+		requirePermission(team, 'EDIT');
 
-	return {
-		slug: team.customUrl,
-		name: team.name,
-		bio: team.bio,
-		bsky: team.bsky
-	};
-});
+		return {
+			slug: team.customUrl,
+			name: team.name,
+			bio: team.bio,
+			bsky: team.bsky,
+			banner: team.bannerSrc,
+			logo: team.avatarSrc
+		};
+	}
+);

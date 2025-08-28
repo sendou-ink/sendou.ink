@@ -8,7 +8,7 @@ import invariant from '$lib/utils/invariant';
 import * as LFGRepository from './lfg';
 import * as Team from '$lib/core/team';
 import type { EditTeamData } from '$lib/api/team/schemas';
-import type { ReplaceFileWithId } from '$lib/server/remote-functions';
+import type { SchemaToFunctionInput } from '$lib/server/remote-functions';
 
 export function findAllUndisbanded() {
 	return db
@@ -246,7 +246,7 @@ export async function create(
 
 export async function update(
 	teamId: number,
-	{ name, slug, bio, bsky, logo, banner }: ReplaceFileWithId<EditTeamData>
+	{ name, slug, bio, bsky, logo, banner }: SchemaToFunctionInput<EditTeamData>
 ) {
 	return db
 		.updateTable('AllTeam')
