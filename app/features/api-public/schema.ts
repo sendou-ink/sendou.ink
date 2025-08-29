@@ -42,6 +42,30 @@ export interface GetUserResponse {
 	currentRank: SeasonalRank | null;
 }
 
+/** GET /api/team/{teamId} */
+
+export interface GetTeamResponse {
+	id: number;
+	/**
+	 * Name of the global team.
+	 *
+	 * @example "Moonlight"
+	 */
+	name: string;
+	/**
+	 * URL for the global team page.
+	 *
+	 * @example "https://sendou.ink/t/moonlight"
+	 */
+	teamPageUrl: string;
+	/**
+	 * URL for the global team logo.
+	 *
+	 * @example "https://sendou.nyc3.cdn.digitaloceanspaces.com/pickup-logo-uReSb1b1XS3TWGLCKMDUD-1719054364813.webp"
+	 */
+	logoUrl: string | null;
+}
+
 /** GET /api/calendar/{year}/{week} */
 
 export type GetCalendarWeekResponse = Array<{
@@ -335,27 +359,15 @@ type ProfileWeapon = Weapon & { isFiveStar: boolean };
 
 interface GlobalTeamMembership {
 	/**
-	 * Name of the global team.
-	 *
-	 * @example "Moonlight"
-	 */
-	name: string;
-	/**
 	 * Role of the user in the team.
 	 */
 	role: TeamMemberRole | null;
 	/**
-	 * URL for the global team page.
+	 * ID for the global team page.
 	 *
-	 * @example "https://sendou.ink/t/moonlight"
+	 * @example 13
 	 */
-	teamPageUrl: string;
-	/**
-	 * URL for the global team avatar.
-	 *
-	 * @example "whzjEQS-r4CR2I1ZestUR-1726541597091.webp"
-	 */
-	avatarId: string | null;
+	id: number;
 }
 
 type TeamMemberRole =
