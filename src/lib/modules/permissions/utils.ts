@@ -1,4 +1,6 @@
 import { ADMIN_ID, DISCORD_ID_MIN_LENGTH, STAFF_IDS } from '$lib/constants/common';
+import type { EntityWithPermissions } from '$lib/modules/permissions/types';
+import type { AuthenticatedUser } from '$lib/server/auth/session';
 import { logger } from '$lib/utils/logger';
 
 export function isAdmin(user?: { id: number }) {
@@ -45,4 +47,25 @@ export function accountCreatedInTheLastSixMonths(discordId: string) {
 	const timestamp = convertSnowflakeToDate(discordId).getTime();
 
 	return Date.now() - timestamp < 1000 * 60 * 60 * 24 * 30 * 6;
+}
+
+/**
+ * Determines whether a user has a specific permission for a given entity.
+ *
+ * @returns A boolean indicating whether the user has the specified permission. Always false if user is not logged in.
+ */
+export function hasPermission<T extends EntityWithPermissions, K extends keyof T['permissions']>(
+	obj: T,
+	permission: K,
+	user: AuthenticatedUser | undefined
+) {
+	if (!user) return false;
+
+	// xxx: uncomment this
+	// admin can do anything in production but not in development for better testing
+	if (/*process.env.NODE_ENV === 'production' && */ isAdmin(user)) {
+		return true;
+	}
+
+	return (obj.permissions as Record<K, number[]>)[permission].includes(user.id);
 }

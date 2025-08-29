@@ -206,7 +206,6 @@
 	}
 
 	.popover {
-		padding: 0;
 		border: none;
 		background-color: transparent;
 		color: var(--color-primary);

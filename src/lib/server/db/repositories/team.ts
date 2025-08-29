@@ -94,7 +94,8 @@ export async function findBySlug(customUrl: string, { includeInviteCode = false 
 		permissions: {
 			EDIT: row.members
 				.filter((member) => member.isOwner || member.isManager)
-				.map((member) => member.id)
+				.map((member) => member.id),
+			ADMIN: row.members.filter((member) => member.isOwner).map((member) => member.id)
 		}
 	};
 }

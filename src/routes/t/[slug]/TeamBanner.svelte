@@ -10,6 +10,10 @@
 	import SquarePen from '@lucide/svelte/icons/square-pen';
 	import { m } from '$lib/paraglide/messages';
 	import UserRoundPen from '@lucide/svelte/icons/user-round-pen';
+	import Menu from '$lib/components/menu/Menu.svelte';
+	import MenuTriggerButton from '$lib/components/menu/MenuTriggerButton.svelte';
+	import EllipsisVertical from '@lucide/svelte/icons/ellipsis-vertical';
+	import * as AuthAPI from '$lib/api/auth';
 
 	interface Props {
 		team: TeamAPI.queries.BySlugData['team'];
@@ -20,6 +24,9 @@
 	const countries = $derived(
 		R.unique(team.members.map((member) => member.country).filter((country) => country !== null))
 	);
+
+	const user = await AuthAPI.queries.me();
+	const userMember = $derived(user && team.members.find((member) => member.id === user.id));
 </script>
 
 <div class="stack sm">
@@ -67,6 +74,9 @@
 				size="small"
 				icon={SquarePen}>{m.common_actions_edit()}</Button
 			>
+			{#if userMember}
+				{@render actionsMenu()}
+			{/if}
 		</div>
 	</div>
 </div>
@@ -95,6 +105,12 @@
 			<Bsky />
 		</a>
 	{/if}
+{/snippet}
+
+{#snippet actionsMenu()}
+	<Menu items={[]}>
+		<MenuTriggerButton icon={EllipsisVertical} variant="popover" size="small" />
+	</Menu>
 {/snippet}
 
 <style>

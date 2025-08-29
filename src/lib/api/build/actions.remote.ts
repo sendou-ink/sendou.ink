@@ -52,5 +52,5 @@ async function refreshBuildsPageQuery(userId: number) {
 
 	const identifier = data.user.customUrl ?? data.user.discordId;
 
-	await byUserIdentifier(identifier).refresh();
+	byUserIdentifier(identifier).refresh();
 }

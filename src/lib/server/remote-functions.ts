@@ -7,11 +7,20 @@ import { requireUser, type AuthenticatedUser } from './auth/session';
 import * as ImageRepository from '$lib/server/db/repositories/image';
 import { resolveFieldsByType } from '$lib/utils/form';
 import * as S3 from './s3';
+import type { Result } from 'neverthrow';
 
 export function notFoundIfFalsy<T>(value: T | null | undefined): T {
 	if (!value) error(404);
 
 	return value;
+}
+
+export function badRequestIfErr<T, E>(result: Result<T, E>): T {
+	if (result.isErr()) {
+		error(400);
+	}
+
+	return result.value;
 }
 
 type ParaglideFunction = (

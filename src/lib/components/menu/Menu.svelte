@@ -23,6 +23,7 @@
 	const visibleItems = $derived(items.filter((item) => !item.hidden));
 </script>
 
+<!-- xxx: disable if no items? -->
 <DropdownMenu.Root>
 	{@render children()}
 	<DropdownMenu.Portal>

@@ -23,12 +23,12 @@ export const updateAccessibilitySettings = validatedForm(
 
 		logger.info('No screen updated', { userId: user.id });
 
-		await prefersNoScreen().refresh();
+		prefersNoScreen().refresh();
 	}
 );
 
 export const updateMatchProfile = validatedForm(updateMatchProfileSchema, async (data, user) => {
 	await UserRepository.updateMatchProfile(user.id, data);
 
-	await matchProfile().refresh();
+	matchProfile().refresh();
 });
