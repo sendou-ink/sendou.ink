@@ -82,8 +82,6 @@ type SendouqMatchTeam = {
 
 type SendouqMatchPlayer = {
 	userId: number;
-	discordId: string;
-	name: string;
 	/** User's at the start time of the match */
 	rank: SendouQRank | null;
 };
