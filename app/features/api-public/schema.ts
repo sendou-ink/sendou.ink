@@ -359,15 +359,13 @@ type ProfileWeapon = Weapon & { isFiveStar: boolean };
 
 interface GlobalTeamMembership {
 	/**
+	 * ID for the global team page.
+	 */
+	id: number;
+	/**
 	 * Role of the user in the team.
 	 */
 	role: TeamMemberRole | null;
-	/**
-	 * ID for the global team page.
-	 *
-	 * @example 13
-	 */
-	id: number;
 }
 
 type TeamMemberRole =
