@@ -1,139 +1,176 @@
 <script lang="ts">
-	import { getChartColors, createLineAnimation } from './utils';
+	import type { Attachment } from 'svelte/attachments';
+	import type { ChartConfiguration } from 'chart.js/auto';
+	import { getChartColors, createLineAnimation, deepMerge } from './utils';
 	import Chart from 'chart.js/auto';
-	import Popover from '../popover/Popover.svelte';
-	import PopoverTriggerButton from '../popover/PopoverTriggerButton.svelte';
 
-	function test(element: HTMLCanvasElement) {
-		const colors = getChartColors();
+	export interface Data {
+		x: string;
+		y: string;
+	}
 
-		const data = [];
+	export interface DataSet {
+		label: string;
+		data: Data[];
+	}
 
-		for (let i = 0; i < 100; i++) {
-			const sineWave = Math.sin(i / 5) * 150;
-			const trend = i * 3;
-			const randomness = Math.random() * 100;
+	export type ChartConfig = ChartConfiguration<'line', Array<Data>, string> & {
+		options: {
+			animations?: never;
+			animation?: never;
+		};
+	};
 
-			const event = i % 25 === 0 ? 200 : 0;
+	interface Props {
+		datasets: DataSet[];
+		animationSpeed?: number;
+		config?: Partial<ChartConfig>;
+	}
 
-			const value = Math.round(sineWave + trend + randomness + event);
-			data.push({ year: 1920 + i, count: Math.max(0, value) });
-		}
+	let { datasets, animationSpeed = 500, config = {} }: Props = $props();
 
-		const chart = new Chart(element, {
-			type: 'line',
-			data: {
-				labels: data.map((row, i) => row.year),
-				datasets: [
-					{
-						label: 'Acquisitions',
-						data: data.map((row) => row.count)
-					}
-				]
-			},
-			options: {
-				animations: createLineAnimation(data, 500),
-				responsive: true,
-				maintainAspectRatio: true,
-				aspectRatio: 2,
-				interaction: {
-					mode: 'index',
-					intersect: false
+	function createLineChart(): Attachment<HTMLCanvasElement> {
+		return (element) => {
+			const colors = getChartColors();
+
+			const defaultConfig: ChartConfig = {
+				type: 'line',
+				data: {
+					datasets: [
+						{
+							borderColor: colors.line,
+							backgroundColor: colors.line,
+							label: 'INIT',
+							data: [{ x: '0', y: '0' }]
+						}
+					]
 				},
-				elements: {
-					line: {
-						borderWidth: 2,
-						borderColor: colors.line,
-						tension: 0.0
+				options: {
+					responsive: true,
+					maintainAspectRatio: true,
+					aspectRatio: 2,
+					interaction: {
+						mode: 'index',
+						intersect: false
 					},
-					point: {
-						radius: 0,
-						backgroundColor: colors.line,
-						hoverRadius: 5
-					}
-				},
-				scales: {
-					x: {
-						ticks: {
-							font: {
-								family: 'monospace'
-							},
-							color: colors.text,
-							padding: 5,
-							maxRotation: 0,
-							autoSkipPadding: 10
+					elements: {
+						line: {
+							borderWidth: 2,
+							tension: 0.25
 						},
-						grid: {
-							color: colors.grid,
-							tickColor: colors.border
-						},
-						border: {
-							color: colors.border
+						point: {
+							radius: 0,
+							hoverRadius: 5
 						}
 					},
-					y: {
-						ticks: {
-							font: {
-								family: 'monospace'
+					scales: {
+						x: {
+							ticks: {
+								font: {
+									family: 'monospace'
+								},
+								color: colors.text,
+								padding: 5,
+								maxRotation: 0,
+								autoSkipPadding: 10
 							},
-							color: colors.text,
-							padding: 5,
-							maxRotation: 0,
-							autoSkipPadding: 5
+							grid: {
+								color: colors.grid,
+								tickColor: colors.border
+							},
+							border: {
+								color: colors.border
+							}
 						},
-						grid: {
-							color: colors.grid,
-							tickColor: colors.border
-						},
-						border: {
-							color: colors.border
+						y: {
+							ticks: {
+								font: {
+									family: 'monospace'
+								},
+								color: colors.text,
+								padding: 5,
+								maxRotation: 0,
+								autoSkipPadding: 5
+							},
+							grid: {
+								color: colors.grid,
+								tickColor: colors.border
+							},
+							border: {
+								color: colors.border
+							}
 						}
-					}
-				},
-				plugins: {
-					legend: {
-						display: false
 					},
-					title: {
-						font: {
-							family: 'lexend',
-							size: 18
+					plugins: {
+						legend: {
+							display: false
 						},
-						text: 'Line Chart Example',
-						color: colors.heading,
-						display: true
-					},
-					tooltip: {
-						backgroundColor: colors.bg,
-						borderColor: colors.border,
-						borderWidth: 1,
-						caretPadding: 10,
-						boxPadding: 2,
-						titleFont: {
-							family: 'lexend'
+						title: {
+							font: {
+								family: 'lexend',
+								size: 18
+							},
+							text: 'Line Chart Example',
+							color: colors.heading,
+							display: true
 						},
-						bodyFont: {
-							family: 'lexend'
+						tooltip: {
+							backgroundColor: colors.bg,
+							borderColor: colors.border,
+							borderWidth: 1,
+							caretPadding: 10,
+							boxPadding: 2,
+							multiKeyBackground: colors.line,
+							usePointStyle: true,
+							titleFont: {
+								family: 'lexend'
+							},
+							bodyFont: {
+								family: 'lexend'
+							}
 						}
 					}
 				}
-			}
-		});
+			};
 
-		return () => {
-			chart.destroy();
+			const chart = new Chart(element, deepMerge(defaultConfig, config));
+
+			$effect(() => {
+				chart.options.animations =
+					chart.data.datasets[0].label === 'INIT'
+						? createLineAnimation(datasets[0].data, animationSpeed)
+						: Chart.defaults.animations;
+
+				const data = $state.snapshot(datasets);
+
+				data.forEach((newDs, index) => {
+					if (chart.data.datasets[index]) {
+						chart.data.datasets[index].label = newDs.label;
+						chart.data.datasets[index].data = newDs.data;
+					} else {
+						const lineColor =
+							colors[`line-${(index % 3) + 1}` as keyof typeof colors] || colors.line;
+
+						chart.data.datasets.push({
+							label: newDs.label,
+							data: newDs.data,
+							borderColor: lineColor,
+							backgroundColor: lineColor
+						});
+					}
+				});
+
+				chart.update();
+			});
+
+			return () => chart.destroy();
 		};
 	}
 </script>
 
-<Popover>
-	{#snippet trigger()}
-		<PopoverTriggerButton>Show Chart Data</PopoverTriggerButton>
-	{/snippet}
-	<div>
-		<canvas {@attach test}></canvas>
-	</div>
-</Popover>
+<div>
+	<canvas {@attach createLineChart()}></canvas>
+</div>
 
 <style>
 	div {

@@ -1,7 +1,17 @@
-const varPrefix = '--chart-';
-const rulesToExtract = ['heading', 'text', 'grid', 'axis', 'line', 'bg', 'border'] as const;
-// import type { ScriptableContext } from 'chart.js';
-// import type { AnimationsSpec, Scriptable } from 'chart.js';
+import type { Data } from './LineChart.svelte';
+
+const rulePrefix = '--chart-';
+const rulesToExtract = [
+	'heading',
+	'text',
+	'grid',
+	'axis',
+	'line',
+	'line-2',
+	'line-3',
+	'bg',
+	'border'
+] as const;
 
 /*
 xxx: ideally we would pass the canvas element into this function,
@@ -18,7 +28,7 @@ export function getChartColors() {
 	const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
 
 	for (const rule of rulesToExtract) {
-		const value = styles.getPropertyValue(`${varPrefix}${rule}`).trim();
+		const value = styles.getPropertyValue(`${rulePrefix}${rule}`).trim();
 		if (!value) continue;
 
 		ctx.clearRect(0, 0, 1, 1);
@@ -32,8 +42,7 @@ export function getChartColors() {
 }
 
 // xxx: types.....
-export function createLineAnimation(data: Record<string, unknown>[], duration: number): any {
-	// AnimationsSpec<'line'>
+export function createLineAnimation(data: Data[], duration: number): any {
 	const delayBetweenPoints = duration / data.length;
 
 	return {
@@ -66,4 +75,25 @@ export function createLineAnimation(data: Record<string, unknown>[], duration: n
 			}
 		}
 	};
+}
+
+export function deepMerge<T extends Record<string, any>>(target: T, source: Partial<T>): T {
+	const result = { ...target };
+
+	for (const key in source) {
+		if (
+			typeof source[key] === 'object' &&
+			source[key] !== null &&
+			!Array.isArray(source[key]) &&
+			typeof result[key] === 'object' &&
+			result[key] !== null &&
+			!Array.isArray(result[key])
+		) {
+			result[key] = deepMerge(result[key], source[key]);
+		} else if (source[key] !== undefined) {
+			result[key] = source[key];
+		}
+	}
+
+	return result;
 }
