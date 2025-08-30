@@ -3,6 +3,7 @@ import * as Fields from '$lib/form/fields';
 import { m } from '$lib/paraglide/messages';
 import { tags } from '$lib/constants/calendar';
 import type { CalendarEventTag } from '$lib/server/db/tables';
+import { calendarEventTagTranslations } from '$lib/utils/i18n';
 
 export const newCalendarEventSchema = z.object({
 	name: Fields.textFieldRequired({
@@ -26,13 +27,13 @@ export const newCalendarEventSchema = z.object({
 		maxLength: 100,
 		leftAddon: 'discord.gg/'
 	}),
-	// xxx: should be optional
 	tags: Fields.checkboxGroup({
 		label: m.calendar_forms_tags(),
 		items: Object.keys(tags).map((tag) => ({
 			value: tag as CalendarEventTag,
-			label: tag
-		}))
+			label: calendarEventTagTranslations[tag as CalendarEventTag]()
+		})),
+		minLength: 0
 	}),
 	// xxx: badges
 	mapPool: Fields.mapPool({

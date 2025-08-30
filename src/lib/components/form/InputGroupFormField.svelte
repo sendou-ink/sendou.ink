@@ -4,9 +4,8 @@
 	import Label from './Label.svelte';
 	import { getLocale } from '$lib/paraglide/runtime';
 
-	type Props = Omit<FormFieldProps<'radio-group'>, 'name'> & {
+	type Props = FormFieldProps<'radio-group'> & {
 		value: T extends 'radio' ? string : string[];
-		name: string;
 		inputType: T;
 	};
 
@@ -18,6 +17,7 @@
 		error,
 		onblur, // xxx: better name for onblur? since here it is attached to onclick instead
 		inputType,
+		minLength,
 		value = $bindable()
 	}: Props = $props();
 	const id = $props.id();
@@ -31,7 +31,7 @@
 </script>
 
 <div class="stack xs" role="radiogroup" aria-orientation="vertical" aria-labelledby={id}>
-	<Label {id} required>
+	<Label {id} required={typeof minLength !== 'number' || minLength > 0}>
 		{label}
 	</Label>
 	{#each itemsWithLabels as item (item.label)}

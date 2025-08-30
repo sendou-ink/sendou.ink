@@ -199,7 +199,7 @@ export function checkboxGroup<V extends string>(
 				if (typeof value === 'string') return [value];
 				if (!value) return [];
 			},
-			z.array(itemsSchema(args.items)).min(1, {
+			z.array(itemsSchema(args.items)).min(args.minLength ?? 1, {
 				error: m.least_sea_beetle_adapt()
 			})
 		)

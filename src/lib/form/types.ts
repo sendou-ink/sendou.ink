@@ -58,6 +58,7 @@ export interface FormFieldDualSelect<T extends string, V extends string>
 
 export interface FormFieldInputGroup<T extends string, V extends string> extends FormFieldBase<T> {
 	items: FormFieldItemsWithImage<V>;
+	minLength?: number;
 }
 
 interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {
