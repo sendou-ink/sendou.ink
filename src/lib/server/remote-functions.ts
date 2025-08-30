@@ -8,6 +8,7 @@ import * as ImageRepository from '$lib/server/db/repositories/image';
 import { resolveFieldsByType } from '$lib/utils/form';
 import * as S3 from './s3';
 import type { Result } from 'neverthrow';
+import { formDataToObject } from '$lib/form/utils';
 
 export function notFoundIfFalsy<T>(value: T | null | undefined): T {
 	if (!value) error(404);
@@ -90,26 +91,6 @@ export function validatedForm<T extends z.ZodObject>(
 			)
 		};
 	});
-}
-
-function formDataToObject(formData: FormData) {
-	const result: Record<string, string | string[]> = {};
-
-	// @ts-expect-error TODO: figure out why it's missing
-	for (const [key, value] of formData.entries()) {
-		const newValue = String(value);
-		const existingValue = result[key];
-
-		if (Array.isArray(existingValue)) {
-			existingValue.push(newValue);
-		} else if (typeof existingValue === 'string') {
-			result[key] = [existingValue, newValue];
-		} else {
-			result[key] = newValue;
-		}
-	}
-
-	return result;
 }
 
 /**

@@ -9,6 +9,7 @@
 	import Button from '../buttons/Button.svelte';
 	import { resolveFieldsByType } from '$lib/utils/form';
 	import type { SchemaToDefaultValues } from '$lib/server/remote-functions';
+	import { formDataToObject } from '$lib/form/utils';
 
 	type Output = z.output<T>;
 
@@ -49,8 +50,7 @@
 	function validateForm() {
 		return tick().then(() => {
 			const data = new FormData(formElement());
-			// @ts-expect-error
-			const parsed = z.safeParse(schema, Object.fromEntries(data.entries()));
+			const parsed = z.safeParse(schema, formDataToObject(data));
 
 			if (action.result?.errors) {
 				const formErrors = parsed.success ? {} : zodErrorsToFormErrors(parsed.error);
