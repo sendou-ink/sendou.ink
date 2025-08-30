@@ -9,13 +9,14 @@
 		children?: Snippet;
 		id?: string;
 		checked?: boolean;
+		reverse?: boolean;
 		// xxx: small
 	}
 
-	let { size, name, children, id = useId(), checked = $bindable(false) }: Props = $props();
+	let { size, name, children, id = useId(), checked = $bindable(false), reverse }: Props = $props();
 </script>
 
-<div class="stack horizontal sm items-center">
+<div class={['stack horizontal sm items-center', { reverse }]}>
 	<Switch.Root {name} {id} bind:checked>
 		{#snippet child({ props })}
 			<button {...props} class={['root', { small: size === 'small' }]}>
@@ -39,6 +40,9 @@
 </div>
 
 <style>
+	.reverse {
+		flex-direction: row-reverse;
+	}
 	.root {
 		display: grid;
 		grid-template-columns: auto 1fr;
