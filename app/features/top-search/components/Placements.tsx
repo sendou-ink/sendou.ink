@@ -7,7 +7,7 @@ import {
 	topSearchPage,
 	topSearchPlayerPage,
 } from "~/utils/urls";
-import type { FindPlacement } from "../queries/findPlacements.server";
+import type { FindPlacement } from "../SplatoonPlayerRepository.server";
 import { monthYearToSpan } from "../top-search-utils";
 
 interface PlacementsTableProps {
