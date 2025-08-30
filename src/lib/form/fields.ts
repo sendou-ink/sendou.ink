@@ -8,6 +8,7 @@ import {
 import z from 'zod';
 import type {
 	FormField,
+	FormFieldDatetime,
 	FormFieldDualSelect,
 	FormFieldInputGroup,
 	FormFieldItems,
@@ -187,6 +188,21 @@ export function radioGroup<V extends string>(
 		...args,
 		type: 'radio-group'
 	});
+}
+
+export function datetime(args: Omit<FormFieldDatetime<'datetime'>, 'type'>) {
+	return z
+		.preprocess(
+			(value) => (typeof value === 'string' ? new Date(value) : value),
+			z
+				.date()
+				.min(args.min ?? new Date(Date.UTC(2015, 4, 28)))
+				.max(args.max ?? new Date(Date.UTC(2030, 4, 28)))
+		)
+		.register(formRegistry, {
+			...args,
+			type: 'datetime'
+		});
 }
 
 export function checkboxGroup<V extends string>(

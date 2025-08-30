@@ -18,6 +18,7 @@
 	import ImageFormField from '$lib/components/form/ImageFormField.svelte';
 	import * as MapPool from '$lib/core/maps/MapPool';
 	import { fieldTypeToDefaultValue } from '$lib/form/utils';
+	import DatetimeFormField from './DatetimeFormField.svelte';
 
 	type Output = z.output<T>;
 	type ValueType = Output[keyof Output];
@@ -106,6 +107,8 @@
 		{...commonProps}
 		{...formField}
 	/>
+{:else if formField.type === 'datetime'}
+	<DatetimeFormField bind:value={data.value as Date} {...commonProps} {...formField} />
 {:else if formField.type === 'weapon-pool'}
 	<WeaponPoolFormField bind:value={data.value as WeaponPool[]} {...commonProps} {...formField} />
 {:else if formField.type === 'map-pool'}

@@ -17,6 +17,14 @@ export const newCalendarEventSchema = z.object({
 	}),
 	// xxx: org
 	// xxx: dates
+	date: Fields.datetime({
+		label: m.calendar_forms_dates(),
+		max: (() => {
+			const result = new Date();
+			result.setFullYear(result.getFullYear() + 1);
+			return result;
+		})()
+	}),
 	bracketUrl: Fields.textFieldRequired({
 		// xxx: validate is url
 		label: m.calendar_forms_bracketUrl(),

@@ -61,6 +61,11 @@ export interface FormFieldInputGroup<T extends string, V extends string> extends
 	minLength?: number;
 }
 
+export interface FormFieldDatetime<T extends string> extends FormFieldBase<T> {
+	min?: Date;
+	max?: Date;
+}
+
 interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {
 	maxCount: number;
 }
@@ -86,6 +91,7 @@ export type FormField<V extends string = string> =
 	| FormFieldDualSelect<'dual-select', V>
 	| FormFieldInputGroup<'radio-group', V>
 	| FormFieldInputGroup<'checkbox-group', V>
+	| FormFieldDatetime<'datetime'>
 	| FormFieldWeaponPool<'weapon-pool'>
 	| FormFieldMapPool<'map-pool'>
 	| FormFieldBase<'theme'>
