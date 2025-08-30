@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type * as TeamAPI from '$lib/api/team';
+	import * as TeamAPI from '$lib/api/team';
 	import Flag from '$lib/components/Flag.svelte';
 	import Bsky from '$lib/components/icons/Bsky.svelte';
 	import { bskyUrl } from '$lib/utils/urls';
@@ -14,6 +14,10 @@
 	import MenuTriggerButton from '$lib/components/menu/MenuTriggerButton.svelte';
 	import EllipsisVertical from '@lucide/svelte/icons/ellipsis-vertical';
 	import * as AuthAPI from '$lib/api/auth';
+	import DoorOpen from '@lucide/svelte/icons/door-open';
+	import Trash from '@lucide/svelte/icons/trash';
+	import { confirmAction } from '$lib/utils/form';
+	import { hasPermission } from '$lib/modules/permissions/utils';
 
 	interface Props {
 		team: TeamAPI.queries.BySlugData['team'];
@@ -53,12 +57,9 @@
 			{@render bskyLink()}
 		</div>
 	</div>
-	{#if team.avatarSrc}
-		<div class="avatar__spacer"></div>
-	{/if}
+	<div class="avatar__spacer"></div>
 
 	<!-- xxx: permissions -->
-	<!-- xxx: placement off if no avatar -->
 	<div class="actions-buttons-container">
 		<div class="action-buttons">
 			<Button
@@ -108,8 +109,34 @@
 {/snippet}
 
 {#snippet actionsMenu()}
-	<Menu items={[]}>
-		<MenuTriggerButton icon={EllipsisVertical} variant="popover" size="small" />
+	<Menu
+		items={[
+			{
+				label: m.team_actionButtons_leaveTeam(),
+				destructive: true,
+				icon: DoorOpen,
+				hidden: team.members.length === 1,
+				onclick: () =>
+					confirmAction(() => TeamAPI.actions.leave(team.customUrl), {
+						title: m.team_leaveTeam_header({ teamName: team.name }),
+						button: {
+							text: m.team_actionButtons_leaveTeam_confirm()
+						}
+					})
+			},
+			{
+				label: m.team_actionButtons_deleteTeam(),
+				destructive: true,
+				icon: Trash,
+				hidden: !hasPermission(team, 'ADMIN', user),
+				onclick: () =>
+					confirmAction(() => TeamAPI.actions.deleteBySlug(team.customUrl), {
+						title: m.team_deleteTeam_header({ teamName: team.name })
+					})
+			}
+		]}
+	>
+		<MenuTriggerButton icon={EllipsisVertical} variant="popover" />
 	</Menu>
 {/snippet}
 
@@ -134,6 +161,7 @@
 
 	.placeholder {
 		height: 6rem;
+		padding-block-end: 5.5rem;
 		background-color: var(--color-primary-transparent);
 	}
 
