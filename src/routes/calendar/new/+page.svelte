@@ -20,6 +20,6 @@
 		<FormField name={validField('bracketUrl')} />
 		<FormField name={validField('discordInviteCode')} />
 		<FormField name={validField('tags')} />
-		<!-- <FormField name={validField('mapPool')} /> -->
+		<FormField name={validField('mapPool')} />
 	</Form>
 </Main>

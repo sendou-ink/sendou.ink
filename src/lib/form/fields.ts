@@ -16,6 +16,7 @@ import type {
 import { m } from '$lib/paraglide/messages';
 import { modeShort, stageId } from '$lib/utils/zod';
 import * as R from 'remeda';
+import { stageIds } from '$lib/constants/in-game/stage-ids';
 
 export const formRegistry = z.registry<FormField>();
 
@@ -240,7 +241,7 @@ export function mapPool(args: Omit<Extract<FormField, { type: 'map-pool' }>, 'ty
 					.array(stageId)
 					.refine((items) => new Set(items).size === items.length)
 					.min(1)
-					.max(args.maxCount)
+					.max(args.maxCount ?? stageIds.length)
 			)
 		)
 		.register(formRegistry, {
