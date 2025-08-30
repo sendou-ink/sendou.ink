@@ -12,10 +12,12 @@
 	import DualSelectFormField from './DualSelectFormField.svelte';
 	import type { Snippet } from 'svelte';
 	import InputGroupFormField from './InputGroupFormField.svelte';
-	import MapPoolFormField, { type MapPool } from './MapPoolFormField.svelte';
+	import MapPoolFormField from './MapPoolFormField.svelte';
 	import type { ModeShort } from '$lib/constants/in-game/types';
 	import MultiSelectFormField from './MultiSelectFormField.svelte';
 	import ImageFormField from '$lib/components/form/ImageFormField.svelte';
+	import * as MapPool from '$lib/core/maps/MapPool';
+	import { fieldTypeToDefaultValue } from '$lib/form/utils';
 
 	type Output = z.output<T>;
 	type ValueType = Output[keyof Output];
@@ -41,9 +43,6 @@
 
 	const { schema, defaultValues, errors, onblur } = formContext.get();
 
-	let data = $state({ value: defaultValues?.[name as keyof typeof defaultValues] as ValueType });
-	const error = $derived<string | undefined>(errors()[name as keyof typeof errors]);
-
 	const fieldSchema = (() => {
 		const zodObject = schema as ZodObject<ZodRawShape>;
 		const result = zodObject.shape[name as string];
@@ -65,6 +64,13 @@
 
 		return field;
 	})();
+
+	let data = $state({
+		value:
+			defaultValues?.[name as keyof typeof defaultValues] ??
+			(fieldTypeToDefaultValue[formField.type] as ValueType)
+	});
+	const error = $derived<string | undefined>(errors()[name as keyof typeof errors]);
 
 	const commonProps = $derived({ name, error, onblur });
 </script>
@@ -103,7 +109,12 @@
 {:else if formField.type === 'weapon-pool'}
 	<WeaponPoolFormField bind:value={data.value as WeaponPool[]} {...commonProps} {...formField} />
 {:else if formField.type === 'map-pool'}
-	<MapPoolFormField bind:value={data.value as MapPool} {modes} {...commonProps} {...formField} />
+	<MapPoolFormField
+		bind:value={data.value as MapPool.MapPool}
+		{modes}
+		{...commonProps}
+		{...formField}
+	/>
 {:else if formField.type === 'custom'}
 	{@render children?.({ data, ...commonProps, ...formField })}
 {:else if formField.type === 'image'}

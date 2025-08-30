@@ -6,7 +6,7 @@ import type {
 } from '$lib/constants/in-game/types';
 import type { weaponCategories } from '$lib/constants/in-game/weapon-ids';
 import { m } from '$lib/paraglide/messages';
-import type { Tables } from '$lib/server/db/tables';
+import type { CalendarEventTag, Tables } from '$lib/server/db/tables';
 import { logger } from './logger';
 
 /**
@@ -462,4 +462,26 @@ export const teamRoleTranslations: Record<
 	SUB: m.team_roles_SUB,
 	COACH: m.team_roles_COACH,
 	CHEERLEADER: m.team_roles_CHEERLEADER
+};
+
+export const calendarEventTagTranslations: Record<CalendarEventTag, () => string> = {
+	SPECIAL: m.common_tag_name_SPECIAL,
+	ART: m.common_tag_name_ART,
+	CARDS: m.common_tag_name_CARDS,
+	COLLEGIATE: m.common_tag_name_COLLEGIATE,
+	COUNT: m.common_tag_name_COUNT,
+	DUOS: m.common_tag_name_DUOS,
+	HIGH: m.common_tag_name_HIGH,
+	LAN: m.common_tag_name_LAN,
+	LOW: m.common_tag_name_LOW,
+	MONEY: m.common_tag_name_MONEY,
+	ONES: m.common_tag_name_ONES,
+	QUALIFIER: m.common_tag_name_QUALIFIER,
+	REGION: m.common_tag_name_REGION,
+	S1: m.common_tag_name_S1,
+	S2: m.common_tag_name_S2,
+	SR: m.common_tag_name_SR,
+	SZ: m.common_tag_name_SZ,
+	TRIOS: m.common_tag_name_TRIOS,
+	TW: m.common_tag_name_TW
 };

@@ -9,7 +9,7 @@
 
 	interface Props {
 		mode: ModeShort;
-		maxCount: number;
+		maxCount?: number;
 		pool: StageId[];
 		bannedMaps?: StageId[];
 		tiebreaker?: StageId;
@@ -29,7 +29,10 @@
 		};
 	});
 
-	const stages = $derived([...pool, ...nullFilledArray(maxCount - pool.length)]);
+	const stages = $derived([
+		...pool,
+		...nullFilledArray((maxCount ?? stageIds.length) - pool.length)
+	]);
 
 	function stageClickHandler(stageId: StageId) {
 		return () => {
@@ -46,7 +49,7 @@
 
 	function handleUnpickedStageClick(stageId: StageId) {
 		// is there space left?
-		if (stages[maxCount - 1] !== null) {
+		if (maxCount && stages[maxCount - 1] !== null) {
 			wigglingStageId = stageId;
 			return;
 		}
@@ -62,11 +65,13 @@
 </script>
 
 <div class="container stack sm">
-	<div class="stack sm horizontal justify-center">
-		{#each { length: maxCount }, index}
-			{@render mapSlot({ number: index + 1, picked: stages[index] !== null })}
-		{/each}
-	</div>
+	{#if maxCount}
+		<div class="stack sm horizontal justify-center">
+			{#each { length: maxCount }, index}
+				{@render mapSlot({ number: index + 1, picked: stages[index] !== null })}
+			{/each}
+		</div>
+	{/if}
 	<Divider class="divider">
 		<img src={asset(`/img/modes/${mode}.avif`)} height={32} width={32} alt="" />
 	</Divider>

@@ -1,3 +1,4 @@
+import type { tags } from '$lib/constants/calendar';
 import type { CountryCode } from '$lib/constants/common';
 import type { Ability, MainWeaponId, ModeShort, StageId } from '$lib/constants/in-game/types';
 import type { TEAM_MEMBER_ROLES } from '$lib/constants/team';
@@ -13,7 +14,6 @@ import type {
 
 // xxx: actual values
 export type AssociationVisibility = any;
-export const tags: any = {};
 export type CalendarFilters = any;
 export type TieredSkill = any;
 export type NotificationValue = any;

@@ -58,6 +58,7 @@ export interface FormFieldDualSelect<T extends string, V extends string>
 
 export interface FormFieldInputGroup<T extends string, V extends string> extends FormFieldBase<T> {
 	items: FormFieldItemsWithImage<V>;
+	minLength?: number;
 }
 
 interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {
@@ -66,9 +67,9 @@ interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {
 
 interface FormFieldMapPool<T extends string> extends FormFieldBase<T> {
 	/** Max amount of maps to pick per mode */
-	maxCount: number;
-	/** Should maps that are currently banned from SendouQ be disabled */
-	disabledBannedMaps: boolean;
+	maxCount?: number;
+	/** Should the maps that are currently banned from SendouQ be disabled */
+	disableBannedMaps?: boolean;
 }
 
 interface FormFieldImage<T extends string> extends Omit<FormFieldBase<T>, 'bottomText'> {
