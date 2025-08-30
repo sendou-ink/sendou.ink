@@ -23,11 +23,12 @@
 
 	interface Props {
 		datasets: DataSet[];
+		heading: string;
 		animationSpeed?: number;
 		config?: Partial<ChartConfig>;
 	}
 
-	let { datasets, animationSpeed = 500, config = {} }: Props = $props();
+	let { datasets, heading, animationSpeed = 500, config = {} }: Props = $props();
 
 	function createLineChart(): Attachment<HTMLCanvasElement> {
 		return (element) => {
@@ -110,7 +111,7 @@
 								family: 'lexend',
 								size: 18
 							},
-							text: 'Line Chart Example',
+							text: heading,
 							color: colors.heading,
 							display: true
 						},
@@ -136,18 +137,37 @@
 			const chart = new Chart(element, deepMerge(defaultConfig, config));
 
 			$effect(() => {
-				chart.options.animations =
-					chart.data.datasets[0].label === 'INIT'
-						? createLineAnimation(datasets[0].data, animationSpeed)
-						: Chart.defaults.animations;
+				chart.options.animations = createLineAnimation(datasets[0].data, animationSpeed);
 
 				const data = $state.snapshot(datasets);
 
 				data.forEach((newDs, index) => {
 					if (chart.data.datasets[index]) {
+						if (chart.data.datasets[0].label !== 'INIT') {
+							const newPointsStart = chart.data.datasets[index].data.length;
+
+							chart.options.animations = {
+								y: {
+									type: 'number',
+									easing: 'linear',
+									duration: 250,
+									from: (ctx) => {
+										if (ctx.type !== 'data') return;
+										if (ctx.dataIndex >= newPointsStart) {
+											return ctx.chart
+												.getDatasetMeta(ctx.datasetIndex)
+												.data[ctx.dataIndex - 1].getProps(['y'], true).y;
+										}
+									}
+								}
+							};
+						}
+
 						chart.data.datasets[index].label = newDs.label;
 						chart.data.datasets[index].data = newDs.data;
 					} else {
+						chart.options.animations = createLineAnimation(newDs.data, animationSpeed);
+
 						const lineColor =
 							colors[`line-${(index % 3) + 1}` as keyof typeof colors] || colors.line;
 

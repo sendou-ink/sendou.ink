@@ -47,13 +47,11 @@ export function createLineAnimation(data: Data[], duration: number): any {
 
 	return {
 		x: {
-			properties: ['x'],
 			type: 'number',
 			easing: 'linear',
 			duration: delayBetweenPoints,
 			from: NaN,
 			delay: (ctx: any) => {
-				if (!ctx) return 0;
 				if (ctx.type !== 'data' || ctx.xStarted) return 0;
 
 				ctx.xStarted = true;
@@ -61,13 +59,11 @@ export function createLineAnimation(data: Data[], duration: number): any {
 			}
 		},
 		y: {
-			properties: ['y'],
 			type: 'number',
 			easing: 'linear',
 			duration: delayBetweenPoints,
 			from: NaN,
 			delay(ctx: any) {
-				if (!ctx) return 0;
 				if (ctx.type !== 'data' || ctx.yStarted) return 0;
 
 				ctx.yStarted = true;

@@ -83,7 +83,7 @@ html.dark {
 	--chart-line-3: oklch(from var(--color-primary) l c calc(h - 200));
 	--chart-bg: var(--color-base-bg);
 	--chart-border: var(--color-base-border);
-	--chart-grid: color-mix(in oklch, var(--color-base-border), var(--chart-bg) 60%);
+	--chart-grid: color-mix(in oklch, var(--color-base-border), var(--chart-bg) 50%);
 }
 
 /* xs: "(min-width: 480px)",
