@@ -1,7 +1,6 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import { syncXPBadges } from "~/features/badges/queries/syncXPBadges.server";
-import { findPlacementsByPlayerId } from "~/features/top-search/queries/findPlacements.server";
 import { logger } from "~/utils/logger";
 import {
 	errorToastIfFalsy,
@@ -19,7 +18,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		schema: idObject,
 	});
 
-	const placements = notFoundIfFalsy(findPlacementsByPlayerId(id));
+	const placements = notFoundIfFalsy(await SplatoonPlayerRepository.findPlacementsByPlayerId(id));
 	const currentLinkedUserDiscordId = placements[0].discordId;
 
 	errorToastIfFalsy(
