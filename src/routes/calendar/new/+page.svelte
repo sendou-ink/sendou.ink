@@ -17,7 +17,7 @@
 	>
 		<FormField name={validField('name')} />
 		<FormField name={validField('description')} />
-		<FormField name={validField('date')} />
+		<FormField name={validField('dates')} />
 		<FormField name={validField('bracketUrl')} />
 		<FormField name={validField('discordInviteCode')} />
 		<FormField name={validField('tags')} />

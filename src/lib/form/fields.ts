@@ -5,9 +5,10 @@ import {
 	safeStringSchema,
 	weaponSplId
 } from '$lib/schemas';
-import z from 'zod';
+import * as z from 'zod';
 import type {
 	FormField,
+	FormFieldArray,
 	FormFieldDatetime,
 	FormFieldDualSelect,
 	FormFieldInputGroup,
@@ -304,4 +305,15 @@ export function stringConstant() {
 	return z.string().max(100).register(formRegistry, {
 		type: 'string-constant'
 	});
+}
+
+export function array<S extends z.ZodType>(args: Omit<FormFieldArray<'array', S>, 'type'>) {
+	return z
+		.array(args.field)
+		.min(args.min)
+		.max(args.max)
+		.register(formRegistry, {
+			...args,
+			type: 'array'
+		});
 }

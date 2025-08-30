@@ -19,12 +19,16 @@
 	import * as MapPool from '$lib/core/maps/MapPool';
 	import { fieldTypeToDefaultValue } from '$lib/form/utils';
 	import DatetimeFormField from './DatetimeFormField.svelte';
+	import ArrayFormField from './ArrayFormField.svelte';
 
 	type Output = z.output<T>;
 	type ValueType = Output[keyof Output];
 
 	interface Props {
+		/** Name of the form field, should correspond to a key in the form schema if `field` was not provided. */
 		name: string;
+		/** The zod object containing form registry information. Used for array form fields. */
+		field?: ZodObject<ZodRawShape>;
 		/** For map pool form field, what modes to pick for? */
 		modes?: ModeShort[];
 		children?: Snippet<
@@ -40,11 +44,13 @@
 		>;
 	}
 
-	let { name, children, modes }: Props = $props();
+	let { name, children, modes, field }: Props = $props();
 
 	const { schema, defaultValues, errors, onblur } = formContext.get();
 
 	const fieldSchema = (() => {
+		if (field) return field;
+
 		const zodObject = schema as ZodObject<ZodRawShape>;
 		const result = zodObject.shape[name as string];
 
@@ -57,13 +63,13 @@
 	})();
 
 	const formField = (() => {
-		const field = formRegistry.get(fieldSchema) as FormField | undefined;
+		const result = formRegistry.get(fieldSchema) as FormField | undefined;
 
-		if (!field) {
+		if (!result) {
 			throw new Error(`Form field not found for name: ${String(name)}`);
 		}
 
-		return field;
+		return result;
 	})();
 
 	let data = $state({
@@ -124,6 +130,8 @@
 	<ImageFormField bind:value={data.value as File} {...commonProps} {...formField} />
 {:else if formField.type === 'string-constant'}
 	<input type="hidden" {name} value={data.value} />
+{:else if formField.type === 'array'}
+	<ArrayFormField bind:value={data.value as string[]} {...commonProps} {...formField} />
 {:else}
 	<p>Unsupported form field type</p>
 {/if}

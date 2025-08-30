@@ -1,3 +1,5 @@
+import type z from 'zod';
+
 interface FormFieldBase<T extends string> {
 	type: T;
 	label: string;
@@ -81,6 +83,12 @@ interface FormFieldImage<T extends string> extends Omit<FormFieldBase<T>, 'botto
 	dimensions: 'logo' | 'thick-banner';
 }
 
+export interface FormFieldArray<T extends string, S extends z.ZodType> extends FormFieldBase<T> {
+	min: number;
+	max: number;
+	field: S;
+}
+
 export type FormField<V extends string = string> =
 	| FormFieldBase<'custom'>
 	| FormFieldText<'text-field'>
@@ -96,7 +104,8 @@ export type FormField<V extends string = string> =
 	| FormFieldMapPool<'map-pool'>
 	| FormFieldBase<'theme'>
 	| FormFieldImage<'image'>
-	| FormFieldConstant<'string-constant'>;
+	| FormFieldConstant<'string-constant'>
+	| FormFieldArray<'array', any>; // any here to stop infinite recursion of types, we don't need to know the exact type here
 
 export type FormFieldProps<T extends FormField['type']> = Omit<
 	Extract<FormField, { type: T }>,
