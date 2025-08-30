@@ -15,6 +15,7 @@
 	import EllipsisVertical from '@lucide/svelte/icons/ellipsis-vertical';
 	import * as AuthAPI from '$lib/api/auth';
 	import DoorOpen from '@lucide/svelte/icons/door-open';
+	import Star from '@lucide/svelte/icons/star';
 	import Trash from '@lucide/svelte/icons/trash';
 	import { confirmAction } from '$lib/utils/form';
 	import { hasPermission } from '$lib/modules/permissions/utils';
@@ -111,6 +112,12 @@
 {#snippet actionsMenu()}
 	<Menu
 		items={[
+			{
+				label: m.team_actionButtons_makeMainTeam(),
+				icon: Star,
+				hidden: Boolean(userMember?.isMainTeam),
+				onclick: async () => await TeamAPI.actions.makeMainTeam(team.customUrl)
+			},
 			{
 				label: m.team_actionButtons_leaveTeam(),
 				destructive: true,

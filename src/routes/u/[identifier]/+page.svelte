@@ -56,7 +56,7 @@
 			</h2>
 
 			{#if profile.team}
-				<TeamInfo />
+				<TeamInfo team={profile.team} secondaryTeams={profile.secondaryTeams} />
 			{/if}
 		</div>
 

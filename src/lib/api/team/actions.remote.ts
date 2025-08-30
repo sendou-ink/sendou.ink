@@ -104,6 +104,8 @@ export const makeMainTeam = command(teamSlug, async (slug) => {
 		userId: user.id,
 		teamId: team.id
 	});
+
+	bySlug(slug).refresh();
 });
 
 export const leave = command(teamSlug, async (slug) => {
