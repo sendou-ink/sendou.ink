@@ -59,10 +59,11 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 	});
 };
 
-function hasUserLinked<T extends { discordId: string | null }>(user: T): user is T & { discordId: string } {
-  return user.discordId !== null;
+function hasUserLinked<T extends { discordId: string | null }>(
+	user: T,
+): user is T & { discordId: string } {
+	return user.discordId !== null;
 }
-
 
 export default function XSearchPlayerPage() {
 	const { t } = useTranslation(["common"]);

@@ -27,7 +27,7 @@ function selector() {
 		.leftJoin("SplatoonPlayer", "XRankPlacement.playerId", "SplatoonPlayer.id")
 		.leftJoin("User", "SplatoonPlayer.userId", "User.id")
 		.select(["User.discordId", "User.customUrl"]);
-		// .$assertType<FindPlacement>();
+	// .$assertType<FindPlacement>();
 }
 
 export async function findPlacementsOfMonth(
@@ -76,4 +76,4 @@ export type FindPlacement = Pick<
 	| "mode"
 > &
 	Pick<Tables["User"], "customUrl"> &
-	(Pick<Tables["User"], "discordId"> | { "discordId" : null }) ;
+	(Pick<Tables["User"], "discordId"> | { discordId: null });

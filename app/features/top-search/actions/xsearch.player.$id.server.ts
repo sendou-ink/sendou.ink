@@ -18,7 +18,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		schema: idObject,
 	});
 
-	const placements = notFoundIfFalsy(await SplatoonPlayerRepository.findPlacementsByPlayerId(id));
+	const placements = notFoundIfFalsy(
+		await SplatoonPlayerRepository.findPlacementsByPlayerId(id),
+	);
 	const currentLinkedUserDiscordId = placements[0].discordId;
 
 	errorToastIfFalsy(
