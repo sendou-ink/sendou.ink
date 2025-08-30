@@ -30,8 +30,8 @@
 		"setup": "vite-node ./src/scripts/setup.ts"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.878.0",
-		"@aws-sdk/lib-storage": "^3.878.0",
+		"@aws-sdk/client-s3": "^3.879.0",
+		"@aws-sdk/lib-storage": "^3.879.0",
 		"@date-fns/tz": "^1.4.1",
 		"@epic-web/cachified": "^5.6.0",
 		"@faker-js/faker": "^10.0.0",
