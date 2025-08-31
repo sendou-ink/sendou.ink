@@ -56,7 +56,9 @@
 	bind:open
 	bind:value={
 		() =>
-			value ? data.flatMap((group) => group.items).find((item) => item.id === value) : undefined,
+			value !== undefined
+				? data.flatMap((group) => group.items).find((item) => item.id === value)
+				: undefined,
 		(item) => (value = item?.id)
 	}
 	{id}
