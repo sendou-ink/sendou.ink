@@ -16,7 +16,7 @@ import type {
 	FormFieldSelect
 } from './types';
 import { m } from '$lib/paraglide/messages';
-import { modeShort, stageId } from '$lib/utils/zod';
+import { modeShort, stageId, webUrl } from '$lib/utils/zod';
 import * as R from 'remeda';
 import { stageIds } from '$lib/constants/in-game/stage-ids';
 
@@ -36,7 +36,10 @@ export function customJsonFieldOptional<T extends z.ZodType>(
 export function textFieldOptional(
 	args: Omit<Extract<FormField, { type: 'text-field' }>, 'type' | 'required'>
 ) {
-	const schema = safeNullableStringSchema({ min: args.minLength, max: args.maxLength });
+	const schema =
+		args.validate === 'url'
+			? webUrl
+			: safeNullableStringSchema({ min: args.minLength, max: args.maxLength });
 
 	return textFieldRefined(schema, args).register(formRegistry, {
 		...args,
@@ -48,7 +51,10 @@ export function textFieldOptional(
 export function textFieldRequired(
 	args: Omit<Extract<FormField, { type: 'text-field' }>, 'type' | 'required'>
 ) {
-	const schema = safeStringSchema({ min: args.minLength, max: args.maxLength });
+	const schema =
+		args.validate === 'url'
+			? webUrl
+			: safeStringSchema({ min: args.minLength, max: args.maxLength });
 
 	return textFieldRefined(schema, args).register(formRegistry, {
 		...args,
@@ -74,13 +80,13 @@ function textFieldRefined<T extends z.ZodType<string | null>>(
 		);
 	}
 
-	if (args.validate) {
+	if (args.validate && typeof args.validate !== 'string') {
 		schema = schema.refine(
 			(val) => {
 				// if it's not supposed be null, other check will catch it
 				if (val === null) return true;
 
-				return args.validate!.func(val);
+				return (args.validate as { func: (value: string) => boolean }).func(val);
 			},
 			{
 				message: args.validate!.message

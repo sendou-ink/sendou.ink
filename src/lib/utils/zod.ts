@@ -55,6 +55,11 @@ export function normalizeFriendCode(value: string) {
 
 export const friendCode = z.string().regex(FRIEND_CODE_REGEXP).transform(normalizeFriendCode);
 
+export const webUrl = z.url({
+	protocol: /^https$/,
+	hostname: z.regexes.domain
+});
+
 export const ability = z.enum([
 	'ISM',
 	'ISS',

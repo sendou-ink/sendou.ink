@@ -29,9 +29,9 @@ export const newCalendarEventSchema = z.object({
 		})
 	}),
 	bracketUrl: Fields.textFieldRequired({
-		// xxx: validate is url
 		label: m.calendar_forms_bracketUrl(),
-		maxLength: 200
+		maxLength: 200,
+		validate: 'url'
 	}),
 	discordInviteCode: Fields.textFieldOptional({
 		label: m.calendar_forms_discordInvite(),
