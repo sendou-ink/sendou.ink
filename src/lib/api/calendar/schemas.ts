@@ -4,6 +4,7 @@ import { m } from '$lib/paraglide/messages';
 import { userSelectableTags } from '$lib/constants/calendar';
 import type { CalendarEventUserSelectableTag } from '$lib/server/db/tables';
 import { calendarEventTagTranslations } from '$lib/utils/i18n';
+import { id } from '$lib/schemas';
 
 export const newCalendarEventSchema = z.object({
 	name: Fields.textFieldRequired({
@@ -15,7 +16,12 @@ export const newCalendarEventSchema = z.object({
 		label: m.common_forms_description(),
 		maxLength: 3000
 	}),
-	// xxx: org
+	organizationId: Fields.customJsonFieldOptional(
+		{
+			label: m.slimy_these_pony_hope()
+		},
+		z.preprocess((value) => (value ? Number(value) : undefined), id)
+	),
 	dates: Fields.array({
 		label: m.calendar_forms_dates(),
 		min: 1,
