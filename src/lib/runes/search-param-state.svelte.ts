@@ -27,6 +27,31 @@ export class SearchParamState<S extends z4.$ZodType<unknown>> {
 		invalidateAll: false
 	};
 
+	/**
+	 * Creates a state that is synchronized with a URL search parameter
+	 *
+	 * @param args Configuration options
+	 * @param args.key The name of the search parameter
+	 * @param args.defaultValue Default value to use when parameter is missing or invalid
+	 * @param args.schema Zod schema to validate the parameter
+	 * @param args.options Navigation options
+	 *
+	 * @example
+	 * ```ts
+	 * // Create a state synchronized with the 'tab' search parameter
+	 * const currentTab = new SearchParamState({
+	 *   key: 'tab',
+	 *   schema: z.enum(['home', 'search', 'settings']),
+	 *   defaultValue: 'home'
+	 * });
+	 *
+	 * // Access the current state
+	 * console.log(currentTab.state);
+	 *
+	 * // Update the state and 'tab' search parameter
+	 * currentTab.update('search');
+	 * ```
+	 */
 	constructor(args: { key: string; defaultValue: z.infer<S>; schema: S; options?: GotoOptions }) {
 		this.key = args.key;
 		this.options = { ...this.options, ...args.options };
@@ -41,10 +66,18 @@ export class SearchParamState<S extends z4.$ZodType<unknown>> {
 		});
 	}
 
+	/**
+	 * Gets the current state
+	 * @returns The current state that matches the schema type
+	 */
 	get state() {
 		return this.internalState!;
 	}
 
+	/**
+	 * Updates the state and synchronizes it with the URL search parameter
+	 * @param newValues The new state values to set
+	 */
 	update(newValues: z.infer<S>) {
 		this.internalState = newValues;
 
