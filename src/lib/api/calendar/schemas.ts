@@ -1,8 +1,8 @@
 import z from 'zod';
 import * as Fields from '$lib/form/fields';
 import { m } from '$lib/paraglide/messages';
-import { tags } from '$lib/constants/calendar';
-import type { CalendarEventTag } from '$lib/server/db/tables';
+import { userSelectableTags } from '$lib/constants/calendar';
+import type { CalendarEventUserSelectableTag } from '$lib/server/db/tables';
 import { calendarEventTagTranslations } from '$lib/utils/i18n';
 
 export const newCalendarEventSchema = z.object({
@@ -40,9 +40,9 @@ export const newCalendarEventSchema = z.object({
 	}),
 	tags: Fields.checkboxGroup({
 		label: m.calendar_forms_tags(),
-		items: Object.keys(tags).map((tag) => ({
-			value: tag as CalendarEventTag,
-			label: calendarEventTagTranslations[tag as CalendarEventTag]()
+		items: userSelectableTags.map((tag) => ({
+			value: tag as CalendarEventUserSelectableTag,
+			label: calendarEventTagTranslations[tag as CalendarEventUserSelectableTag]()
 		})),
 		minLength: 0
 	}),

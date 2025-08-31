@@ -15,6 +15,8 @@ export async function up(db: Kysely<any>): Promise<void> {
     .on('BuildWeapon')
     .column('weaponSplId')
     .execute();
+
+  // xxx: delete "TW" and "SZ" from calendar event tags
 }
 
 async function fixQWeaponPools(db: Kysely<any>) {
