@@ -5,7 +5,6 @@ import {
 	type KyselyPlugin,
 	type PluginTransformQueryArgs,
 	type PluginTransformResultArgs,
-	type QueryId,
 	type QueryResult,
 	type RootOperationNode,
 	type UnknownRow
@@ -38,12 +37,26 @@ export class SqliteDatePlugin implements KyselyPlugin {
 }
 
 class SqliteDateTransformer extends OperationNodeTransformer {
+	protected transformPrimitiveValueList(node: PrimitiveValueListNode): PrimitiveValueListNode {
+		return {
+			...node,
+			values: node.values.map((value) => maybeDateToNumber(value))
+		};
+	}
+
 	transformValue(node: ValueNode): ValueNode {
 		return {
 			...super.transformValue(node),
-			value: node.value instanceof Date ? Math.floor(node.value.getTime() / 1000) : node.value
+			value: maybeDateToNumber(node.value)
 		};
 	}
+}
+
+function maybeDateToNumber(value: unknown): unknown {
+	if (value instanceof Date) {
+		return Math.floor(value.getTime() / 1000);
+	}
+	return value;
 }
 
 // credits https://github.com/kysely-org/kysely/issues/123#issuecomment-1194184342
@@ -74,10 +87,7 @@ class SqliteBooleanTransformer extends OperationNodeTransformer {
 		};
 	}
 
-	protected transformPrimitiveValueList(
-		node: PrimitiveValueListNode,
-		_queryId?: QueryId
-	): PrimitiveValueListNode {
+	protected transformPrimitiveValueList(node: PrimitiveValueListNode): PrimitiveValueListNode {
 		return {
 			...node,
 			values: node.values.map((value) => maybeBooleanToNumber(value))

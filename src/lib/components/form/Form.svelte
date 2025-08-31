@@ -50,6 +50,7 @@
 	function validateForm() {
 		return tick().then(() => {
 			const data = new FormData(formElement());
+			// xxx: this is not the best UX because blurring causes all the errors to show up (also those that did have not input yet)
 			const parsed = z.safeParse(schema, formDataToObject(data));
 
 			if (action.result?.errors) {

@@ -6,6 +6,7 @@
 	import Main from '$lib/components/layout/Main.svelte';
 	import * as OrganizationAPI from '$lib/api/organization';
 	import SelectFormField from '$lib/components/form/SelectFormField.svelte';
+	import { m } from '$lib/paraglide/messages';
 
 	const organizations = await OrganizationAPI.queries.byLoggedInUserOrganizerOf();
 
@@ -15,14 +16,14 @@
 
 <Main>
 	<Form
-		heading="Creating a new calendar event"
+		heading={m.home_great_fireant_treat()}
 		schema={CalendarAPI.schemas.newCalendarEventSchema}
 		action={CalendarAPI.actions.upsertEvent}
 	>
 		<FormField name={validField('name')} />
 		<FormField name={validField('description')} />
 		{#if organizations.length > 0}
-			<FormField name={validField('organizationId')}>
+			<FormField name={validField('organization')}>
 				{#snippet children({ data, ...rest })}
 					<SelectFormField
 						{...rest}

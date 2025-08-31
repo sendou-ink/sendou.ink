@@ -16,7 +16,7 @@ export const newCalendarEventSchema = z.object({
 		label: m.common_forms_description(),
 		maxLength: 3000
 	}),
-	organizationId: Fields.customJsonFieldOptional(
+	organization: Fields.customJsonFieldOptional(
 		{
 			label: m.slimy_these_pony_hope()
 		},
@@ -52,8 +52,15 @@ export const newCalendarEventSchema = z.object({
 		})),
 		minLength: 0
 	}),
-	// xxx: badges
+	badges: Fields.customJsonFieldOptional(
+		{
+			label: m.org_edit_form_badges_title()
+		},
+		z.array(z.number()) // xxx: correct schema & add form field
+	),
 	mapPool: Fields.mapPool({
 		label: m.calendar_forms_mapPool()
 	})
 });
+
+export type NewCalendarEventData = z.infer<typeof newCalendarEventSchema>;
