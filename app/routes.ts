@@ -114,16 +114,8 @@ export default [
 			],
 		),
 		route(
-			"brackets/subscribe",
-			"features/tournament-bracket/routes/to.$id.brackets.subscribe.ts",
-		),
-		route(
 			"matches/:mid",
 			"features/tournament-bracket/routes/to.$id.matches.$mid.tsx",
-		),
-		route(
-			"matches/:mid/subscribe",
-			"features/tournament-bracket/routes/to.$id.matches.$mid.subscribe.ts",
 		),
 	]),
 	route("luti", "features/tournament/routes/luti.ts"),
@@ -268,6 +260,10 @@ export default [
 		route(
 			"/tournament/:id/teams",
 			"features/api-public/routes/tournament.$id.teams.ts",
+		),
+		route(
+			"/tournament/:id/players",
+			"features/api-public/routes/tournament.$id.players.ts",
 		),
 		route(
 			"/tournament/:id/casted",

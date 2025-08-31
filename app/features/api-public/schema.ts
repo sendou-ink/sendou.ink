@@ -200,6 +200,13 @@ export type GetTournamentTeamsResponse = Array<{
 	}>;
 }>;
 
+/** GET /api/tournament/{tournamentId}/players */
+
+export type GetTournamentPlayersResponse = Array<{
+	userId: number;
+	matchIds: number[];
+}>;
+
 /** GET /api/tournament/{tournamentId}/casted */
 
 export interface GetCastedTournamentMatchesResponse {

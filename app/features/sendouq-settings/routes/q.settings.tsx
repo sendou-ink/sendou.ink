@@ -520,6 +520,10 @@ function SoundCheckboxes() {
 			code: "sq_match",
 			name: t("q:settings.sounds.matchStarted"),
 		},
+		{
+			code: "tournament_match",
+			name: t("q:settings.sounds.tournamentMatchStarted"),
+		},
 	];
 
 	// default to true

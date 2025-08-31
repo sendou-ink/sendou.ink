@@ -8,6 +8,7 @@ import {
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
+import { Placeholder } from "~/components/Placeholder";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { useUser } from "~/features/auth/core/user";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
@@ -32,7 +33,9 @@ import "../tournament.css";
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	const navigatedToMatchPage =
-		typeof args.nextParams.mid === "string" && args.formMethod !== "POST";
+		typeof args.nextParams.mid === "string" &&
+		args.formMethod !== "POST" &&
+		args.currentParams.mid !== args.nextParams.mid;
 
 	if (navigatedToMatchPage) return false;
 
@@ -101,7 +104,7 @@ export default function TournamentLayoutShell() {
 	if (!isMounted)
 		return (
 			<Main bigger>
-				<div className="tournament__placeholder" />
+				<Placeholder />
 			</Main>
 		);
 
