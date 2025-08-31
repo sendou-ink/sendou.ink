@@ -40,8 +40,6 @@
 			error
 		})}
 	/>
-	{#if value}
-		<input {name} type="hidden" value={value.toISOString()} />
-	{/if}
+	<input {name} type="hidden" value={value ? value.toISOString() : ''} />
 	<BottomText info={bottomText} {error} fieldId={id} />
 </div>

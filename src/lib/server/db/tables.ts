@@ -1,4 +1,4 @@
-import type { tags } from '$lib/constants/calendar';
+import type { tags, userSelectableTags } from '$lib/constants/calendar';
 import type { CountryCode } from '$lib/constants/common';
 import type { Ability, MainWeaponId, ModeShort, StageId } from '$lib/constants/in-game/types';
 import type { TEAM_MEMBER_ROLES } from '$lib/constants/team';
@@ -130,6 +130,7 @@ export interface BuildWeapon {
 }
 
 export type CalendarEventTag = keyof typeof tags;
+export type CalendarEventUserSelectableTag = (typeof userSelectableTags)[number];
 
 export interface CalendarEvent {
 	authorId: number;

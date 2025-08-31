@@ -19,3 +19,9 @@ export function empty(): MapPool {
 		CB: []
 	};
 }
+
+export function toArray(pool: Partial<MapPool>) {
+	return Object.entries(pool).flatMap(([mode, stageIds]) =>
+		stageIds.map((stageId) => ({ mode: mode as ModeShort, stageId }))
+	);
+}

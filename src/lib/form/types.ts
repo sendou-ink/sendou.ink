@@ -2,7 +2,7 @@ import type z from 'zod';
 
 interface FormFieldBase<T extends string> {
 	type: T;
-	label: string;
+	label?: string;
 	bottomText?: string;
 }
 
@@ -18,10 +18,12 @@ interface FormFieldText<T extends string> extends FormFieldBase<T> {
 		pattern: RegExp;
 		message: string;
 	};
-	validate?: {
-		func: (value: string) => boolean;
-		message: string;
-	};
+	validate?:
+		| 'url'
+		| {
+				func: (value: string) => boolean;
+				message: string;
+		  };
 }
 
 interface FormFieldTextarea<T extends string> extends FormFieldBase<T> {

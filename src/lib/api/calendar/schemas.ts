@@ -1,9 +1,10 @@
 import z from 'zod';
 import * as Fields from '$lib/form/fields';
 import { m } from '$lib/paraglide/messages';
-import { tags } from '$lib/constants/calendar';
-import type { CalendarEventTag } from '$lib/server/db/tables';
+import { userSelectableTags } from '$lib/constants/calendar';
+import type { CalendarEventUserSelectableTag } from '$lib/server/db/tables';
 import { calendarEventTagTranslations } from '$lib/utils/i18n';
+import { id } from '$lib/schemas';
 
 export const newCalendarEventSchema = z.object({
 	name: Fields.textFieldRequired({
@@ -15,13 +16,17 @@ export const newCalendarEventSchema = z.object({
 		label: m.common_forms_description(),
 		maxLength: 3000
 	}),
-	// xxx: org
+	organization: Fields.customJsonFieldOptional(
+		{
+			label: m.slimy_these_pony_hope()
+		},
+		z.preprocess((value) => (value ? Number(value) : undefined), id)
+	),
 	dates: Fields.array({
 		label: m.calendar_forms_dates(),
 		min: 1,
 		max: 5,
 		field: Fields.datetime({
-			label: m.calendar_forms_dates(),
 			max: (() => {
 				const result = new Date();
 				result.setFullYear(result.getFullYear() + 1);
@@ -30,9 +35,9 @@ export const newCalendarEventSchema = z.object({
 		})
 	}),
 	bracketUrl: Fields.textFieldRequired({
-		// xxx: validate is url
 		label: m.calendar_forms_bracketUrl(),
-		maxLength: 200
+		maxLength: 200,
+		validate: 'url'
 	}),
 	discordInviteCode: Fields.textFieldOptional({
 		label: m.calendar_forms_discordInvite(),
@@ -41,14 +46,21 @@ export const newCalendarEventSchema = z.object({
 	}),
 	tags: Fields.checkboxGroup({
 		label: m.calendar_forms_tags(),
-		items: Object.keys(tags).map((tag) => ({
-			value: tag as CalendarEventTag,
-			label: calendarEventTagTranslations[tag as CalendarEventTag]()
+		items: userSelectableTags.map((tag) => ({
+			value: tag as CalendarEventUserSelectableTag,
+			label: calendarEventTagTranslations[tag as CalendarEventUserSelectableTag]()
 		})),
 		minLength: 0
 	}),
-	// xxx: badges
+	badges: Fields.customJsonFieldOptional(
+		{
+			label: m.org_edit_form_badges_title()
+		},
+		z.array(z.number()) // xxx: correct schema & add form field
+	),
 	mapPool: Fields.mapPool({
 		label: m.calendar_forms_mapPool()
 	})
 });
+
+export type NewCalendarEventData = z.infer<typeof newCalendarEventSchema>;
