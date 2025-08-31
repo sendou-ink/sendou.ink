@@ -11,7 +11,7 @@
 		value: Array<unknown>;
 	};
 
-	let { label, name, bottomText, error, field, min, max, value = $bindable() }: Props = $props();
+	let { label, name, bottomText, error, field, max, value = $bindable() }: Props = $props();
 	const id = $props.id();
 
 	let count = $state(1);
@@ -21,8 +21,8 @@
 	<legend>
 		{label}
 	</legend>
-	{#each { length: count }}
-		<FormField {field} name={`${name}[]`} />
+	{#each { length: count }, idx}
+		<FormField {field} name={`${name}[${idx}]`} />
 	{/each}
 	<BottomText info={bottomText} {error} fieldId={id} />
 	<div class="stack sm horizontal">

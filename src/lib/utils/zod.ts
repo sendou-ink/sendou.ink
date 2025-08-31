@@ -348,11 +348,15 @@ export function zodErrorsToFormErrors<T>(error: z.ZodError<T>) {
 	const result: Partial<Record<keyof T, string>> = {};
 
 	for (const issue of error.issues) {
-		if (issue.path.length !== 1) {
+		if (issue.path.length > 2) {
 			console.error(issue);
 			throw new Error('Not implemented');
+		} else if (issue.path.length !== 1) {
+			result[`${String(issue.path[0])}[${String(issue.path[1])}]` as keyof T] =
+				issue.message as string;
+		} else {
+			result[issue.path[0] as keyof T] = issue.message as string;
 		}
-		result[issue.path[0] as keyof T] = issue.message as string;
 	}
 
 	return result;

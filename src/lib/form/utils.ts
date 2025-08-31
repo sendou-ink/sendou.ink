@@ -12,14 +12,15 @@ export function formDataToObject(formData: FormData): Record<string, unknown> {
 	const result: Record<string, unknown> = {};
 
 	for (const [key, value] of values) {
-		if (key.endsWith('[]')) {
-			result[key.replace('[]', '')] = formData.getAll(key);
+		if (key.endsWith(']')) {
+			const baseKey = key.split('[')[0];
+
+			if (Array.isArray(result[baseKey])) result[baseKey].push(value);
+			else result[baseKey] = [value];
 		} else {
 			result[key] = value;
 		}
 	}
-
-	console.log(result);
 
 	return result;
 }

@@ -194,9 +194,14 @@ export function radioGroup<V extends string>(
 export function datetime(args: Omit<FormFieldDatetime<'datetime'>, 'type'>) {
 	return z
 		.preprocess(
-			(value) => (typeof value === 'string' ? new Date(value) : value),
+			(value) => {
+				if (typeof value !== 'string') return value;
+				if (value === '') return null;
+
+				return new Date(value);
+			},
 			z
-				.date()
+				.date({ error: m.common_forms_errors_required() })
 				.min(args.min ?? new Date(Date.UTC(2015, 4, 28)))
 				.max(args.max ?? new Date(Date.UTC(2030, 4, 28)))
 		)
@@ -309,9 +314,7 @@ export function stringConstant() {
 
 export function array<S extends z.ZodType>(args: Omit<FormFieldArray<'array', S>, 'type'>) {
 	return z
-		.array(args.field)
-		.min(args.min)
-		.max(args.max)
+		.preprocess((value) => (!value ? [] : value), z.array(args.field).min(args.min).max(args.max))
 		.register(formRegistry, {
 			...args,
 			type: 'array'
