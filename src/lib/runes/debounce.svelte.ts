@@ -48,7 +48,7 @@ export class DebounceFunction<T extends unknown[]> {
 	 *   search.update(value);
 	 * }, 1000);
 	 *
-	 * // Call the debounced function (resets timer if called again within specified time)
+	 * // Schedule a call to the debounced function
 	 * <input type="text" oninput={(e) => debounce.run(e.currentTarget.value)} />
 	 *
 	 * // Show loading state while a debounced call is pending
