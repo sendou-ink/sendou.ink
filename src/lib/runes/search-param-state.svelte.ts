@@ -17,7 +17,9 @@ interface GotoOptions {
 // 		instead of going through the search param changes
 export class SearchParamState<S extends z4.$ZodType<unknown>> {
 	private internalState = $state<z.infer<S>>();
+	private defaultValue: z.infer<S>;
 	private key: string;
+	private schema: S;
 	private options: GotoOptions = {
 		replaceState: false,
 		noScroll: true,
@@ -26,20 +28,16 @@ export class SearchParamState<S extends z4.$ZodType<unknown>> {
 	};
 
 	constructor(args: { key: string; defaultValue: z.infer<S>; schema: S; options?: GotoOptions }) {
-		const parsed = z.safeParse(args.schema, page.url.searchParams.get(args.key));
-
-		if (parsed.success) {
-			this.internalState = parsed.data;
-		} else {
-			this.internalState = args.defaultValue;
-		}
-
 		this.key = args.key;
 		this.options = { ...this.options, ...args.options };
+		this.schema = args.schema;
+		this.defaultValue = args.defaultValue;
+
+		this.updateStateFromParams(page.url.searchParams);
 
 		afterNavigate((navigation) => {
-			const value = navigation.to?.url.searchParams.get(args.key) as z.infer<S> | undefined;
-			this.internalState = value ?? args.defaultValue;
+			// eslint-disable-next-line svelte/prefer-svelte-reactivity
+			this.updateStateFromParams(navigation.to?.url.searchParams ?? new URLSearchParams());
 		});
 	}
 
@@ -56,5 +54,26 @@ export class SearchParamState<S extends z4.$ZodType<unknown>> {
 		newParams.set(this.key, typeof newValues === 'string' ? newValues : JSON.stringify(newValues));
 
 		goto(`?${newParams.toString()}`, this.options);
+	}
+
+	private updateStateFromParams(params: URLSearchParams) {
+		const rawValue = params.get(this.key);
+		let valueToValidate: unknown = rawValue;
+
+		if (rawValue) {
+			try {
+				valueToValidate = JSON.parse(rawValue);
+			} catch {
+				valueToValidate = rawValue;
+			}
+		}
+
+		const parsed = z.safeParse(this.schema, valueToValidate);
+
+		if (parsed.success) {
+			this.internalState = parsed.data;
+		} else {
+			this.internalState = this.defaultValue;
+		}
 	}
 }
