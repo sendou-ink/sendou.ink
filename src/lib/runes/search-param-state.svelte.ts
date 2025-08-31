@@ -15,6 +15,11 @@ interface GotoOptions {
 // xxx: add encoding (option to JSON.stringify)
 // xxx: add option for the back button to navigate to the previous path
 // 		instead of going through the search param changes
+
+/**
+ * Creates a state that is synchronized with a URL search parameter.
+ * @template S Zod schema type for the state
+ */
 export class SearchParamState<S extends z4.$ZodType<unknown>> {
 	private internalState = $state<z.infer<S>>();
 	private defaultValue: z.infer<S>;
@@ -28,13 +33,13 @@ export class SearchParamState<S extends z4.$ZodType<unknown>> {
 	};
 
 	/**
-	 * Creates a state that is synchronized with a URL search parameter
+	 * Creates a state that is synchronized with a URL search parameter.
 	 *
-	 * @param args Configuration options
-	 * @param args.key The name of the search parameter
-	 * @param args.defaultValue Default value to use when parameter is missing or invalid
-	 * @param args.schema Zod schema to validate the parameter
-	 * @param args.options Navigation options
+	 * @param args Configuration options.
+	 * @param args.key The name of the search parameter.
+	 * @param args.defaultValue Default value to use when parameter is missing or invalid.
+	 * @param args.schema Zod schema to validate the parameter.
+	 * @param args.options Navigation options.
 	 *
 	 * @example
 	 * ```ts
@@ -67,16 +72,16 @@ export class SearchParamState<S extends z4.$ZodType<unknown>> {
 	}
 
 	/**
-	 * Gets the current state
-	 * @returns The current state that matches the schema type
+	 * The current state.
 	 */
 	get state() {
 		return this.internalState!;
 	}
 
 	/**
-	 * Updates the state and synchronizes it with the URL search parameter
-	 * @param newValues The new state values to set
+	 * Updates the states value and synchronizes it with the URL search parameter.
+	 *
+	 * @param newValues The new state value to set.
 	 */
 	update(newValues: z.infer<S>) {
 		this.internalState = newValues;
