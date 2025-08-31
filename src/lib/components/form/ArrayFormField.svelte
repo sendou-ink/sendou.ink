@@ -22,7 +22,7 @@
 		{label}
 	</legend>
 	{#each { length: count }, idx}
-		<FormField {field} name={`${name}[${idx}]`} />
+		<FormField {field} name={`${name}[${idx}]`} label={`#${idx + 1}`} />
 	{/each}
 	<BottomText info={bottomText} {error} fieldId={id} />
 	<div class="stack sm horizontal">
@@ -46,5 +46,16 @@
 				stroke-width: 3px;
 			}
 		}
+	}
+
+	fieldset {
+		border: var(--border-style);
+		border-radius: var(--radius-field);
+		background-color: var(--color-base-section);
+	}
+
+	legend {
+		font-size: var(--fonts-xs);
+		font-weight: var(--semi-bold);
 	}
 </style>

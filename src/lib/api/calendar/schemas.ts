@@ -21,7 +21,6 @@ export const newCalendarEventSchema = z.object({
 		min: 1,
 		max: 5,
 		field: Fields.datetime({
-			label: m.calendar_forms_dates(),
 			max: (() => {
 				const result = new Date();
 				result.setFullYear(result.getFullYear() + 1);

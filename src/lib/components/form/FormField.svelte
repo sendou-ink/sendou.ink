@@ -29,12 +29,13 @@
 		name: string;
 		/** The zod object containing form registry information. Used for array form fields. */
 		field?: ZodObject<ZodRawShape>;
+		label?: string;
 		/** For map pool form field, what modes to pick for? */
 		modes?: ModeShort[];
 		children?: Snippet<
 			[
 				{
-					label: string;
+					label?: string;
 					onblur: FormContextValue['onblur'];
 					error: string | undefined;
 					name: string;
@@ -44,7 +45,7 @@
 		>;
 	}
 
-	let { name, children, modes, field }: Props = $props();
+	let { name, children, modes, field, label }: Props = $props();
 
 	const { schema, defaultValues, errors, onblur } = formContext.get();
 
@@ -69,7 +70,7 @@
 			throw new Error(`Form field not found for name: ${String(name)}`);
 		}
 
-		return result;
+		return label ? { ...result, label } : result;
 	})();
 
 	let data = $state({

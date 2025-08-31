@@ -2,7 +2,7 @@ import type z from 'zod';
 
 interface FormFieldBase<T extends string> {
 	type: T;
-	label: string;
+	label?: string;
 	bottomText?: string;
 }
 

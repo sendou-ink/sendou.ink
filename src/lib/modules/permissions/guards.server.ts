@@ -8,7 +8,8 @@ import { isAdmin } from './utils';
  *
  * @throws {Response} - Throws a 403 Forbidden response if the user does not have the required role.
  */
-export function requireRole(user: { roles: Array<Role> }, role: Role) {
+export async function requireRole(role: Role) {
+	const user = await requireUser();
 	if (!user.roles.includes(role)) error(403);
 }
 
