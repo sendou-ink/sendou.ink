@@ -13,9 +13,17 @@
 		pool: StageId[];
 		bannedMaps?: StageId[];
 		tiebreaker?: StageId;
+		presentational?: boolean;
 	}
 
-	let { mode, maxCount, pool = $bindable(), tiebreaker, bannedMaps }: Props = $props();
+	let {
+		mode,
+		maxCount,
+		pool = $bindable(),
+		tiebreaker,
+		bannedMaps,
+		presentational
+	}: Props = $props();
 
 	let wigglingStageId = $state<StageId | null>(null);
 	$effect(() => {
@@ -77,15 +85,17 @@
 	</Divider>
 	<div class="stack sm horizontal flex-wrap justify-center mt-1">
 		{#each stageIds as stageId (stageId)}
-			{@render mapButton({
-				stageId,
-				onclick: stageClickHandler(stageId),
-				selected: stages.includes(stageId),
-				banned: bannedMaps?.includes(stageId),
-				tiebreaker: tiebreaker === stageId,
-				wiggling: wigglingStageId === stageId,
-				testId: `map-pool-${mode}-${stageId}`
-			})}
+			{#if !presentational || stages.includes(stageId)}
+				{@render mapButton({
+					stageId,
+					onclick: stageClickHandler(stageId),
+					selected: !presentational && stages.includes(stageId),
+					banned: bannedMaps?.includes(stageId),
+					tiebreaker: tiebreaker === stageId,
+					wiggling: wigglingStageId === stageId,
+					testId: `map-pool-${mode}-${stageId}`
+				})}
+			{/if}
 		{/each}
 	</div>
 </div>
@@ -117,16 +127,22 @@
 	wiggling?: boolean;
 	testId?: string;
 })}
+	{@const element = presentational ? 'div' : 'button'}
 	<div class="stack items-center relative">
-		<button
-			class={['map-button', { 'greyed-out': selected || banned || tiebreaker, wiggling }]}
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<svelte:element
+			this={element}
+			class={[
+				'map-button',
+				{ 'greyed-out': selected || banned || tiebreaker, wiggling, presentational }
+			]}
 			style="--map-image-url: url('{asset(`/img/stages/${stageId}.avif`)}')"
-			{onclick}
+			onclick={presentational ? undefined : onclick}
 			disabled={banned}
 			type="button"
 			data-testid={testId}
 			aria-label={stageTranslations[stageId]()}
-		></button>
+		></svelte:element>
 		{#if selected}
 			<Check class="map-button__icon" {onclick} />
 		{/if}
@@ -216,6 +232,10 @@
 
 		&:focus-visible {
 			outline: 1px solid var(--color-secondary);
+		}
+
+		&.presentational {
+			cursor: default;
 		}
 	}
 

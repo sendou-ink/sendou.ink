@@ -1,9 +1,8 @@
-<script lang="ts" generics="T extends z.ZodObject<ZodRawShape>">
+<script lang="ts">
 	import type { ZodObject, ZodRawShape } from 'zod';
 	import type { FormField } from '$lib/form/types';
 	import { formRegistry } from '$lib/form/fields';
 	import { formContext, type FormContextValue } from './context';
-	import z from 'zod';
 	import WeaponPoolFormField, { type WeaponPool } from './WeaponPoolFormField.svelte';
 	import InputFormField from './InputFormField.svelte';
 	import SwitchFormField from './SwitchFormField.svelte';
@@ -17,12 +16,9 @@
 	import MultiSelectFormField from './MultiSelectFormField.svelte';
 	import ImageFormField from '$lib/components/form/ImageFormField.svelte';
 	import * as MapPool from '$lib/core/maps/MapPool';
-	import { fieldTypeToDefaultValue } from '$lib/form/utils';
+	import { resolveDefaultValue } from '$lib/form/utils';
 	import DatetimeFormField from './DatetimeFormField.svelte';
 	import ArrayFormField from './ArrayFormField.svelte';
-
-	type Output = z.output<T>;
-	type ValueType = Output[keyof Output];
 
 	interface Props {
 		/** Name of the form field, should correspond to a key in the form schema if `field` was not provided. */
@@ -74,9 +70,11 @@
 	})();
 
 	let data = $state({
-		value:
-			defaultValues?.[name as keyof typeof defaultValues] ??
-			(fieldTypeToDefaultValue[formField.type] as ValueType)
+		value: resolveDefaultValue({
+			defaultValues,
+			field: formField,
+			name
+		})
 	});
 	const error = $derived<string | undefined>(errors()[name as keyof typeof errors]);
 
@@ -130,6 +128,8 @@
 {:else if formField.type === 'image'}
 	<ImageFormField bind:value={data.value as File} {...commonProps} {...formField} />
 {:else if formField.type === 'string-constant'}
+	<input type="hidden" {name} value={data.value} />
+{:else if formField.type === 'id-constant'}
 	<input type="hidden" {name} value={data.value} />
 {:else if formField.type === 'array'}
 	<ArrayFormField bind:value={data.value as string[]} {...commonProps} {...formField} />

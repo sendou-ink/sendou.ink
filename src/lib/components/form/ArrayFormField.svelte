@@ -14,7 +14,7 @@
 	let { label, name, bottomText, error, field, max, value = $bindable() }: Props = $props();
 	const id = $props.id();
 
-	let count = $state(1);
+	let count = $state(value.length || 1);
 </script>
 
 <fieldset class="container stack md">

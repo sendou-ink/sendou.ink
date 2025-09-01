@@ -1,5 +1,6 @@
 import {
 	falsyToNull,
+	id,
 	safeJSONParse,
 	safeNullableStringSchema,
 	safeStringSchema,
@@ -315,6 +316,24 @@ export function imageOptional(args: Omit<Extract<FormField, { type: 'image' }>, 
 export function stringConstant() {
 	return z.string().max(100).register(formRegistry, {
 		type: 'string-constant'
+	});
+}
+
+export function stringConstantOptional() {
+	return z.string().max(100).optional().register(formRegistry, {
+		type: 'string-constant'
+	});
+}
+
+export function idConstant() {
+	return id.register(formRegistry, {
+		type: 'id-constant'
+	});
+}
+
+export function idConstantOptional() {
+	return id.optional().register(formRegistry, {
+		type: 'id-constant'
 	});
 }
 

@@ -107,6 +107,7 @@ export type FormField<V extends string = string> =
 	| FormFieldBase<'theme'>
 	| FormFieldImage<'image'>
 	| FormFieldConstant<'string-constant'>
+	| FormFieldConstant<'id-constant'>
 	| FormFieldArray<'array', any>; // any here to stop infinite recursion of types, we don't need to know the exact type here
 
 export type FormFieldProps<T extends FormField['type']> = Omit<

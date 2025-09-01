@@ -24,6 +24,13 @@ describe('formDataToObject()', () => {
 		expect(formDataToObject(fd)).toEqual({ name: 'bob', roles: ['admin', 'user'] });
 	});
 
+	test('handles radio group', () => {
+		const fd = new FormData();
+		fd.append('tag', 'pizza');
+		fd.append('tag', 'nachos');
+		expect(formDataToObject(fd)).toEqual({ tag: ['pizza', 'nachos'] });
+	});
+
 	test('handles empty FormData', () => {
 		const fd = new FormData();
 		expect(formDataToObject(fd)).toEqual({});

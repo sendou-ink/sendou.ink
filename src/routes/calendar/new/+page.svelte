@@ -7,6 +7,10 @@
 	import * as OrganizationAPI from '$lib/api/organization';
 	import SelectFormField from '$lib/components/form/SelectFormField.svelte';
 	import { m } from '$lib/paraglide/messages';
+	import { validatedSearchParam } from '$lib/utils/sveltekit';
+	import { id } from '$lib/schemas';
+
+	const eventIdToEdit = validatedSearchParam(id, 'id');
 
 	const organizations = await OrganizationAPI.queries.byLoggedInUserOrganizerOf();
 
@@ -18,6 +22,9 @@
 	<Form
 		heading={m.home_great_fireant_treat()}
 		schema={CalendarAPI.schemas.newCalendarEventSchema}
+		defaultValues={eventIdToEdit
+			? await CalendarAPI.queries.editCalendarEventFormData(eventIdToEdit)
+			: undefined}
 		action={CalendarAPI.actions.upsertEvent}
 	>
 		<FormField name={validField('name')} />
@@ -42,5 +49,8 @@
 		<FormField name={validField('discordInviteCode')} />
 		<FormField name={validField('tags')} />
 		<FormField name={validField('mapPool')} />
+		{#if eventIdToEdit}
+			<FormField name={validField('eventIdToEdit')} />
+		{/if}
 	</Form>
 </Main>

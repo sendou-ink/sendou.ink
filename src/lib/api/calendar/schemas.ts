@@ -60,7 +60,8 @@ export const newCalendarEventSchema = z.object({
 	),
 	mapPool: Fields.mapPool({
 		label: m.calendar_forms_mapPool()
-	})
+	}),
+	eventIdToEdit: Fields.idConstantOptional()
 });
 
 export type NewCalendarEventData = z.infer<typeof newCalendarEventSchema>;

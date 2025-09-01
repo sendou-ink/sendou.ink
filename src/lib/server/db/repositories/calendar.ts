@@ -3,7 +3,7 @@ import { db } from '../sql';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/sqlite';
 import { COMMON_USER_FIELDS } from '$lib/utils/kysely.server';
 import { sub } from 'date-fns';
-import type { CalendarEventTag, DB, Tables } from '../tables';
+import type { CalendarEventUserSelectableTag, DB, Tables } from '../tables';
 import type { Unwrapped } from '$lib/utils/types';
 import type * as CalendarAPI from '$lib/api/calendar';
 import * as MapPool from '$lib/core/maps/MapPool';
@@ -249,17 +249,18 @@ export function forShowcase() {
 		.execute();
 }
 
-export async function findById({
-	id,
-	includeMapPool = false,
-	includeTieBreakerMapPool = false,
-	includeBadgePrizes = false
-}: {
-	id: number;
-	includeMapPool?: boolean;
-	includeTieBreakerMapPool?: boolean;
-	includeBadgePrizes?: boolean;
-}) {
+export async function findById(
+	id: number,
+	{
+		includeMapPool = false,
+		includeTieBreakerMapPool = false,
+		includeBadgePrizes = false
+	}: {
+		includeMapPool?: boolean;
+		includeTieBreakerMapPool?: boolean;
+		includeBadgePrizes?: boolean;
+	}
+) {
 	const [firstRow, ...rest] = await db
 		.selectFrom('CalendarEvent')
 		.$if(includeMapPool, (qb) => qb.select(withMapPool))
@@ -285,6 +286,7 @@ export async function findById({
 			'User.username',
 			'User.discordId',
 			'User.discordAvatar',
+			'User.customUrl',
 			hasBadge,
 			tournamentOrganization(ref('CalendarEvent.organizationId')).as('organization')
 		])
@@ -296,9 +298,13 @@ export async function findById({
 
 	return {
 		...firstRow,
+		mapPool: firstRow.mapPool ? MapPool.fromArray(firstRow.mapPool) : undefined,
 		tags: tagsArray(firstRow),
 		startTimes: [firstRow, ...rest].map((row) => row.startTime),
-		startTime: undefined
+		startTime: undefined,
+		permissions: {
+			EDIT: [firstRow.authorId]
+		}
 	};
 }
 
@@ -319,7 +325,7 @@ function tagsArray(args: {
 	tags?: Tables['CalendarEvent']['tags'];
 	tournamentId: Tables['CalendarEvent']['tournamentId'];
 }) {
-	const tags = (args.tags ? args.tags.split(',') : []) as Array<CalendarEventTag>;
+	const tags = (args.tags ? args.tags.split(',') : []) as Array<CalendarEventUserSelectableTag>;
 
 	return tags;
 }
@@ -358,9 +364,7 @@ export async function create(args: CalendarAPI.schemas.NewCalendarEventData & { 
 			.values({
 				name: args.name,
 				authorId: args.userId,
-				tags: args.tags
-					.sort((a, b) => userSelectableTags.indexOf(a) - userSelectableTags.indexOf(b))
-					.join(','),
+				tags: serializeTags(args.tags),
 				description: args.description,
 				discordInviteCode: args.discordInviteCode,
 				bracketUrl: args.bracketUrl,
@@ -369,9 +373,7 @@ export async function create(args: CalendarAPI.schemas.NewCalendarEventData & { 
 			.returning('id')
 			.executeTakeFirstOrThrow();
 
-		console.log('1');
 		await createDatesInTrx({ eventId, startTimes: args.dates, trx });
-		console.log('2');
 		await createBadgesInTrx({ eventId, badges: args.badges, trx });
 
 		await upsertMapPoolInTrx({
@@ -385,63 +387,49 @@ export async function create(args: CalendarAPI.schemas.NewCalendarEventData & { 
 	});
 }
 
-// type UpdateArgs = Omit<CreateArgs, 'createTournament' | 'mapPickingStyle' | 'isFullTournament'> & {
-// 	eventId: number;
-// };
-// export async function update(args: UpdateArgs) {
-// 	return db.transaction().execute(async (trx) => {
-// 		const avatarImgId = args.avatarFileName
-// 			? await createSubmittedImageInTrx({
-// 					trx,
-// 					avatarFileName: args.avatarFileName,
-// 					autoValidateAvatar: args.autoValidateAvatar,
-// 					userId: args.authorId
-// 				})
-// 			: null;
+export async function update(args: CalendarAPI.schemas.NewCalendarEventData & { eventId: number }) {
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.updateTable('CalendarEvent')
+			.set({
+				name: args.name,
+				tags: serializeTags(args.tags),
+				description: args.description,
+				discordInviteCode: args.discordInviteCode,
+				bracketUrl: args.bracketUrl,
+				organizationId: args.organization
+			})
+			.where('id', '=', args.eventId)
+			.execute();
 
-// 		const { tournamentId } = await trx
-// 			.updateTable('CalendarEvent')
-// 			.set({
-// 				name: args.name,
-// 				tags: args.tags,
-// 				description: args.description,
-// 				discordInviteCode: args.discordInviteCode,
-// 				bracketUrl: args.bracketUrl,
-// 				avatarImgId: args.avatarImgId ?? avatarImgId,
-// 				organizationId: args.organizationId
-// 			})
-// 			.where('id', '=', args.eventId)
-// 			.returning('tournamentId')
-// 			.executeTakeFirstOrThrow();
+		await trx.deleteFrom('CalendarEventDate').where('eventId', '=', args.eventId).execute();
+		await createDatesInTrx({
+			eventId: args.eventId,
+			startTimes: args.dates,
+			trx
+		});
 
-// 		const mapPickingStyle = tournamentId
-// 			? await updateTournamentTables(args, trx, tournamentId)
-// 			: null;
+		await trx.deleteFrom('CalendarEventBadge').where('eventId', '=', args.eventId).execute();
+		await createBadgesInTrx({
+			eventId: args.eventId,
+			badges: args.badges,
+			trx
+		});
 
-// 		await trx.deleteFrom('CalendarEventDate').where('eventId', '=', args.eventId).execute();
-// 		await createDatesInTrx({
-// 			eventId: args.eventId,
-// 			startTimes: args.startTimes,
-// 			trx
-// 		});
+		await upsertMapPoolInTrx({
+			trx,
+			eventId: args.eventId,
+			mapPool: args.mapPool ?? [],
+			column: 'calendarEventId'
+		});
+	});
+}
 
-// 		await trx.deleteFrom('CalendarEventBadge').where('eventId', '=', args.eventId).execute();
-// 		await createBadgesInTrx({
-// 			eventId: args.eventId,
-// 			badges: args.badges,
-// 			trx
-// 		});
-
-// 		if (!tournamentId || mapPickingStyle === 'TO') {
-// 			await upsertMapPoolInTrx({
-// 				trx,
-// 				eventId: args.eventId,
-// 				mapPool: args.mapPool ?? [],
-// 				column: 'calendarEventId'
-// 			});
-// 		}
-// 	});
-// }
+function serializeTags(tags: Array<CalendarEventUserSelectableTag>) {
+	return tags
+		.toSorted((a, b) => userSelectableTags.indexOf(a) - userSelectableTags.indexOf(b))
+		.join(',');
+}
 
 function createDatesInTrx({
 	eventId,
@@ -572,7 +560,7 @@ export function deleteById({
 	tournamentId
 }: {
 	eventId: number;
-	tournamentId: number | null;
+	tournamentId?: number | null;
 }) {
 	return db.transaction().execute(async (trx) => {
 		await trx.deleteFrom('CalendarEvent').where('id', '=', eventId).execute();
