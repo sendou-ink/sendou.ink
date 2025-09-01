@@ -44,7 +44,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const result: GetTeamResponse = {
 		id: team.id,
 		name: team.name,
-		teamPageUrl: `https://sendou.ink/t/${team.customUrl ?? team.id}`,
+		teamPageUrl: `https://sendou.ink/t/${team.customUrl}`,
 		logoUrl,
 	};
 
