@@ -25,6 +25,20 @@ export function syncCached<T>(key: string, getFreshValue: () => T) {
 	return value;
 }
 
+export async function asyncCached<T>(
+	key: string,
+	getFreshValue: () => Promise<T>,
+) {
+	if (cache.has(key)) {
+		return cache.get(key) as T;
+	}
+
+	const value = await getFreshValue();
+	cache.set(key, value as any);
+
+	return value;
+}
+
 export const IN_MILLISECONDS = {
 	HALF_HOUR: 30 * 60 * 1000,
 	ONE_HOUR: 60 * 60 * 1000,

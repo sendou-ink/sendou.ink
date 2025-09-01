@@ -90,7 +90,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	// avoid redirection loop
 	if (
 		user &&
-		userIsBanned(user?.id) &&
+		(await userIsBanned(user?.id)) &&
 		new URL(request.url).pathname !== SUSPENDED_PAGE
 	) {
 		return redirect(SUSPENDED_PAGE);

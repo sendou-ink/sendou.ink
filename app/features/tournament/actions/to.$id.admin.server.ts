@@ -230,7 +230,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			);
 
 			errorToastIfFalsy(
-				!userIsBanned(data.userId),
+				!(await userIsBanned(data.userId)),
 				"User trying to be added currently has an active ban from sendou.ink",
 			);
 

@@ -1,3 +1,4 @@
+import { info } from "node:console";
 import { add } from "date-fns";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import type { SerializeFrom } from "~/utils/remix";
@@ -54,6 +55,8 @@ describe("New scrim post action", () => {
 				user: "regular",
 			},
 		);
+
+		info(response);
 
 		expect(response).toBeInstanceOf(Response);
 

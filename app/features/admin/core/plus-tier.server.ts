@@ -4,22 +4,25 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import { seasonToVotingRange } from "~/features/plus-voting/core/voting-time";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import invariant from "~/utils/invariant";
-import { userIsBanned } from "../../ban/core/banned.server";
+import { filterBannedUsers } from "../../ban/core/banned.server";
 
 export async function plusTiersFromVotingAndLeaderboard() {
 	const newMembersFromVoting =
 		await PlusVotingRepository.allPlusTiersFromLatestVoting();
 	const newMembersFromLeaderboard = fromLeaderboard(newMembersFromVoting);
-	return [
-		...newMembersFromLeaderboard,
-		// filter to ensure that user gets their highest tier
-		...newMembersFromVoting.filter(
-			(member) =>
-				!newMembersFromLeaderboard.some(
-					(leaderboardMember) => leaderboardMember.userId === member.userId,
-				),
-		),
-	].filter(({ userId }) => !userIsBanned(userId));
+	return await filterBannedUsers(
+		[
+			...newMembersFromLeaderboard,
+			// filter to ensure that user gets their highest tier
+			...newMembersFromVoting.filter(
+				(member) =>
+					!newMembersFromLeaderboard.some(
+						(leaderboardMember) => leaderboardMember.userId === member.userId,
+					),
+			),
+		],
+		(value) => value.userId,
+	);
 }
 
 function fromLeaderboard(

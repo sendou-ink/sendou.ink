@@ -10,7 +10,7 @@ import type {
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
-import { userIsBanned } from "../ban/core/banned.server";
+import { filterBannedUsers } from "../ban/core/banned.server";
 import type { LookingGroupWithInviteCode } from "./q-types";
 
 export function mapModePreferencesByGroupId(groupId: number) {
@@ -317,7 +317,7 @@ export async function usersThatTrusted(userId: number) {
 		)
 		.execute();
 
-	const rowsWithoutBanned = rows.filter((row) => !userIsBanned(row.id));
+	const rowsWithoutBanned = await filterBannedUsers(rows, (row) => row.id);
 
 	const teamMemberIds = rowsWithoutBanned
 		.filter((row) => row.teamId)

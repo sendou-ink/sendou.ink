@@ -23,7 +23,8 @@ export async function getUserId(
 
 	if (!userId) return;
 
-	if (userIsBanned(userId) && redirectIfBanned) throw redirect(SUSPENDED_PAGE);
+	if ((await userIsBanned(userId)) && redirectIfBanned)
+		throw redirect(SUSPENDED_PAGE);
 
 	return { id: userId };
 }
