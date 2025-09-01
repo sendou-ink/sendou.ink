@@ -74,11 +74,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 					eb
 						.selectFrom("TeamMemberWithSecondary")
 						.innerJoin("Team", "Team.id", "TeamMemberWithSecondary.teamId")
-						.leftJoin(
-							"UserSubmittedImage",
-							"UserSubmittedImage.id",
-							"Team.avatarImgId",
-						)
 						.select(["Team.id", "TeamMemberWithSecondary.role"])
 						.whereRef("TeamMemberWithSecondary.userId", "=", "User.id")
 						.orderBy("TeamMemberWithSecondary.isMainTeam", "desc")
