@@ -1,8 +1,8 @@
-import { expressionBuilder, sql } from "kysely";
+import { sql } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
 import { db } from "~/db/sql";
-import type { DB, Tables } from "~/db/tables";
+import type { Tables } from "~/db/tables";
 import type {
 	MainWeaponId,
 	ModeShort,
@@ -49,7 +49,7 @@ export async function findVods({
 }) {
 	let query = db
 		.selectFrom("Video")
-		.leftJoin("VideoMatch", "Video.id", "VideoMatch.videoId")
+		.leftJoin("VideoMatch", "VideoMatch.videoId", "Video.id")
 		.leftJoin(
 			"VideoMatchPlayer",
 			"VideoMatch.id",
@@ -57,7 +57,7 @@ export async function findVods({
 		)
 		.leftJoin("User", "VideoMatchPlayer.playerUserId", "User.id")
 		.selectAll("Video")
-		.select(({ fn, ref }) => [
+		.select(({ fn, ref, eb }) => [
 			sql<
 				Array<number>
 			>`json_group_array(distinct ${ref("VideoMatchPlayer.weaponSplId")})`
@@ -67,7 +67,17 @@ export async function findVods({
 				.agg("json_group_array", ["VideoMatchPlayer.playerName"])
 				.$castTo<string[]>()
 				.as("playerNames"),
-			selectPlayers(),
+			jsonArrayFrom(
+				eb
+					.selectFrom("User")
+					.select([
+						"User.username",
+						"User.discordId",
+						"User.discordAvatar",
+						"User.customUrl",
+					])
+					.whereRef("User.id", "=", "VideoMatchPlayer.playerUserId"),
+			).as("players"),
 		]);
 	if (userId) {
 		query = query.where("User.id", "=", userId);
@@ -135,8 +145,7 @@ export async function findVodById(id: Tables["Video"]["id"]) {
 				"VideoMatchPlayer.videoMatchId",
 			)
 			.leftJoin("User", "VideoMatchPlayer.playerUserId", "User.id")
-			.select(selectPlayers())
-			.select(({ fn }) => [
+			.select(({ fn, eb }) => [
 				fn
 					.agg("json_group_array", ["VideoMatchPlayer.weaponSplId"])
 					.$castTo<MainWeaponId[]>()
@@ -144,6 +153,17 @@ export async function findVodById(id: Tables["Video"]["id"]) {
 				fn
 					.agg("json_group_array", ["VideoMatchPlayer.playerName"])
 					.as("playerNames"),
+				jsonArrayFrom(
+					eb
+						.selectFrom("User")
+						.select([
+							"User.username",
+							"User.discordId",
+							"User.discordAvatar",
+							"User.customUrl",
+						])
+						.whereRef("User.id", "=", "VideoMatchPlayer.playerUserId"),
+				).as("players"),
 			])
 			.where("VideoMatch.videoId", "=", id)
 			.groupBy("VideoMatch.id")
@@ -255,19 +275,4 @@ export async function createVod(
 		}
 		return { ...video, id: videoId };
 	});
-}
-
-function selectPlayers() {
-	const eb = expressionBuilder<DB>();
-
-	return jsonArrayFrom(
-		eb
-			.selectFrom("User")
-			.select([
-				"User.username",
-				"User.discordId",
-				"User.discordAvatar",
-				"User.customUrl",
-			]),
-	).as("players");
 }
