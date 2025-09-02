@@ -45,7 +45,7 @@ import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import * as VodRepository from "~/features/vods/VodRepository.server";
+import { createVod } from "~/features/vods/queries/createVod.server";
 import {
 	secondsToHoursMinutesSecondString,
 	youtubeIdToYoutubeUrl,
@@ -1722,8 +1722,8 @@ function otherTeams() {
 	}
 }
 
-async function realVideo() {
-	await VodRepository.createVod({
+function realVideo() {
+	createVod({
 		type: "TOURNAMENT",
 		youtubeUrl: youtubeIdToYoutubeUrl("M4aV-BQWlVg"),
 		date: { day: 2, month: 2, year: 2023 },
@@ -1776,8 +1776,8 @@ async function realVideo() {
 	});
 }
 
-async function realVideoCast() {
-	await VodRepository.createVod({
+function realVideoCast() {
+	createVod({
 		type: "CAST",
 		youtubeUrl: youtubeIdToYoutubeUrl("M4aV-BQWlVg"),
 		date: { day: 2, month: 2, year: 2023 },
