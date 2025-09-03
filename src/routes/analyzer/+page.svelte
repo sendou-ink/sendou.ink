@@ -161,24 +161,6 @@
 						reverse
 					/>
 				{/if}
-				{#if togglesToShow.includes('LDE')}
-					<img src={asset('/img/abilities/LDE.avif')} alt="" height="40" width="40" />
-					<Select
-						bind:value={
-							() => (tab === 'buildA' ? effectsA.state['LDE'] : effectsB.state['LDE']) || 0,
-							(value) =>
-								tab === 'buildA'
-									? effectsA.update({ ...effectsA.state, LDE: value })
-									: effectsB.update({ ...effectsB.state, LDE: value })
-						}
-						items={Array.from({ length: MAX_LDE_INTENSITY + 1 }, (_, i) => {
-							return {
-								label: `${((i / MAX_LDE_INTENSITY) * 100).toFixed(2).replace('.00', '')}% (+${lastDitchEffortIntensityToAp(i)} AP)`,
-								value: i
-							};
-						})}
-					/>
-				{/if}
 				{#if togglesToShow.includes('OG')}
 					<img src={asset('/img/abilities/OG.avif')} height="40" width="40" alt="" />
 					<Switch
@@ -203,6 +185,24 @@
 									: effectsB.update({ ...effectsB.state, DR: checked })
 						}
 						reverse
+					/>
+				{/if}
+				{#if togglesToShow.includes('LDE')}
+					<img src={asset('/img/abilities/LDE.avif')} alt="" height="40" width="40" />
+					<Select
+						bind:value={
+							() => (tab === 'buildA' ? effectsA.state['LDE'] : effectsB.state['LDE']) || 0,
+							(value) =>
+								tab === 'buildA'
+									? effectsA.update({ ...effectsA.state, LDE: value })
+									: effectsB.update({ ...effectsB.state, LDE: value })
+						}
+						items={Array.from({ length: MAX_LDE_INTENSITY + 1 }, (_, i) => {
+							return {
+								label: `${((i / MAX_LDE_INTENSITY) * 100).toFixed(2).replace('.00', '')}% (+${lastDitchEffortIntensityToAp(i)} AP)`,
+								value: i
+							};
+						})}
 					/>
 				{/if}
 			</div>
@@ -230,9 +230,10 @@
 	}
 
 	.toggles {
+		--select-width: 100%;
 		display: grid;
 		grid-template-columns: 40px auto;
-		place-items: center;
+		place-items: center start;
 		gap: var(--s-2);
 	}
 </style>
