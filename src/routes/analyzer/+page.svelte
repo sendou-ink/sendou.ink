@@ -1,72 +1,238 @@
 <script lang="ts">
-	import type { BuildAbilitiesTupleWithUnknown } from '$lib/constants/in-game/types';
-	import { emptyBuild } from '$lib/constants/in-game/abilities';
+	import type {
+		BuildAbilitiesTupleWithUnknown,
+		AbilityWithUnknown,
+		MainWeaponId
+	} from '$lib/constants/in-game/types';
+	import type { SpecialEffectType } from '$lib/core/analyzer/types';
+	import { asset } from '$app/paths';
+	import { m } from '$lib/paraglide/messages';
+	import {
+		SPECIAL_EFFECTS_SHORT,
+		lastDitchEffortIntensityToAp
+	} from '$lib/core/analyzer/specialEffects';
+	import { EMPTY_BUILD } from '$lib/constants/build';
+	import { MAX_LDE_INTENSITY } from '$lib/constants/analyzer';
+	import { SearchParamState } from '$lib/runes/search-param-state.svelte';
+	import z from 'zod';
+	import Main from '$lib/components/layout/Main.svelte';
+	import WeaponCombobox from '$lib/components/WeaponCombobox.svelte';
+	import Tabs from '$lib/components/tabs/Tabs.svelte';
+	import TabPanel from '$lib/components/tabs/TabPanel.svelte';
 	import AbilityBuilder from '../../lib/components/builder/AbilityBuilder.svelte';
-	import LineChart, { type DataSet } from '$lib/components/charts/LineChart.svelte';
+	import Switch from '$lib/components/Switch.svelte';
+	import Select from '$lib/components/Select.svelte';
 
-	let datasets = $state<DataSet[]>(generateRandomData(0));
+	const ABILITY_SCHEMA = z.string() as z.ZodType<AbilityWithUnknown>;
+	const GEAR_SLOTS_SCHEMA = z.tuple([
+		ABILITY_SCHEMA,
+		ABILITY_SCHEMA,
+		ABILITY_SCHEMA,
+		ABILITY_SCHEMA
+	]);
+	const BUILD_SCHEMA = z.tuple([GEAR_SLOTS_SCHEMA, GEAR_SLOTS_SCHEMA, GEAR_SLOTS_SCHEMA]);
 
-	function generateRandomData(length: number) {
-		const data: any = [];
-		for (let i = 0; i < 100; i++) {
-			const sineWave = Math.sin((i + length) / 5) * 150;
-			const trend = i * 3;
-			const randomness = Math.random() * 100;
+	const EFFECTS_SCHEMA = z
+		.object({
+			DR: z.boolean(),
+			OG: z.boolean(),
+			LDE: z.number(),
+			CB: z.boolean(),
+			TACTICOOLER: z.boolean()
+		})
+		.partial();
 
-			const event = i % 25 === 0 ? 200 : 0;
+	const weapon = new SearchParamState({
+		key: 'weapon',
+		defaultValue: 0,
+		schema: z.number() as z.ZodType<MainWeaponId>
+	});
 
-			if (i === 0) {
-				data.push({
-					label: 'Test',
-					data: []
-				});
-			}
+	const buildA = new SearchParamState({
+		key: 'buildA',
+		defaultValue: EMPTY_BUILD,
+		schema: BUILD_SCHEMA
+	});
 
-			const value = Math.round(sineWave + trend + randomness + event + length * 200);
-			data[0].data.push({ x: String(1920 + i), y: String(Math.max(0, value)) });
-		}
+	const buildB = new SearchParamState({
+		key: 'buildB',
+		defaultValue: EMPTY_BUILD,
+		schema: BUILD_SCHEMA
+	});
 
-		return data;
-	}
+	const effectsA = new SearchParamState({
+		key: 'effectsA',
+		defaultValue: {},
+		schema: EFFECTS_SCHEMA
+	});
 
-	setInterval(() => {
-		if (datasets.length < 3) {
-			datasets = [...datasets, ...generateRandomData(datasets.length)];
+	const effectsB = new SearchParamState({
+		key: 'effectsB',
+		defaultValue: {},
+		schema: EFFECTS_SCHEMA
+	});
+
+	let tab = $state('buildA');
+
+	const togglesToShow = $derived.by(() => {
+		if (tab === 'buildA') {
+			return buildA.state.flatMap((gearPiece) =>
+				gearPiece.filter((ability) => SPECIAL_EFFECTS_SHORT.includes(ability as SpecialEffectType))
+			) as SpecialEffectType[];
+		} else if (tab === 'buildB') {
+			return buildB.state.flatMap((gearPiece) =>
+				gearPiece.filter((ability) => SPECIAL_EFFECTS_SHORT.includes(ability as SpecialEffectType))
+			) as SpecialEffectType[];
 		} else {
-			datasets = datasets.map((ds, i) => {
-				const lastData = ds.data[ds.data.length - 1];
-				const lastX = parseInt(lastData.x);
-
-				const sineWave = Math.sin((i + datasets.length) / 5) * 150;
-				const trend = i * 3 * 100;
-				const randomness = Math.random() * 100;
-				const event = i % 25 === 0 ? 200 : 0;
-
-				const newY = Math.round(sineWave + trend + randomness + event);
-				const newData = [{ x: String(lastX + 1), y: String(Math.max(0, newY)) }];
-				const newData2 = [{ x: String(lastX + 2), y: String(Math.max(0, newY + 50)) }];
-				const newData3 = [{ x: String(lastX + 3), y: String(Math.max(0, newY - 30)) }];
-
-				return {
-					...ds,
-					data: [...ds.data, ...newData, ...newData2, ...newData3]
-				};
-			});
+			return [];
 		}
-	}, 1000);
+	});
 
-	let abilities: BuildAbilitiesTupleWithUnknown = $state(emptyBuild);
+	function syncBuildWithUrl(abilities: BuildAbilitiesTupleWithUnknown, primary: boolean) {
+		if (primary) {
+			buildA.update(abilities);
+		} else {
+			buildB.update(abilities);
+		}
+	}
 </script>
 
-<div>
-	<LineChart {datasets} animationSpeed={500} heading="Example" />
-</div>
-<AbilityBuilder bind:abilities />
+<Main>
+	<div class="container">
+		<div class="left">
+			<WeaponCombobox value={weapon.state} onselect={(value) => weapon.update(value)} />
+			<div class="w-full">
+				<Tabs
+					bind:value={tab}
+					triggers={[
+						{
+							label: m.analyzer_build1(),
+							value: 'buildA'
+						},
+						{
+							label: m.analyzer_build2(),
+							value: 'buildB'
+						},
+						{
+							label: m.analyzer_compare(),
+							value: 'compare'
+						}
+					]}
+				>
+					<TabPanel value="buildA">
+						<AbilityBuilder
+							abilities={buildA.state}
+							onchange={(abilities) => syncBuildWithUrl(abilities, true)}
+						/>
+					</TabPanel>
+					<TabPanel value="buildB">
+						<AbilityBuilder
+							abilities={buildB.state}
+							onchange={(abilities) => syncBuildWithUrl(abilities, false)}
+						/>
+					</TabPanel>
+					<TabPanel value="compare">Compare</TabPanel>
+				</Tabs>
+			</div>
+			<div class="toggles">
+				<img src={asset('/img/special-weapons/15.avif')} height="40" width="40" alt="" />
+				<Switch
+					bind:checked={
+						() =>
+							(tab === 'buildA' ? effectsA.state['TACTICOOLER'] : effectsB.state['TACTICOOLER']) ||
+							false,
+						(checked) =>
+							tab === 'buildA'
+								? effectsA.update({ ...effectsA.state, TACTICOOLER: checked })
+								: effectsB.update({ ...effectsB.state, TACTICOOLER: checked })
+					}
+					reverse
+				/>
+				{#if togglesToShow.includes('CB')}
+					<img src={asset('/img/abilities/CB.avif')} height="40" width="40" alt="" />
+					<Switch
+						bind:checked={
+							() => (tab === 'buildA' ? effectsA.state['CB'] : effectsB.state['CB']) || false,
+							(checked) =>
+								tab === 'buildA'
+									? effectsA.update({ ...effectsA.state, CB: checked })
+									: effectsB.update({ ...effectsB.state, CB: checked })
+						}
+						reverse
+					/>
+				{/if}
+				{#if togglesToShow.includes('LDE')}
+					<img src={asset('/img/abilities/LDE.avif')} alt="" height="40" width="40" />
+					<Select
+						bind:value={
+							() => (tab === 'buildA' ? effectsA.state['LDE'] : effectsB.state['LDE']) || 0,
+							(value) =>
+								tab === 'buildA'
+									? effectsA.update({ ...effectsA.state, LDE: value })
+									: effectsB.update({ ...effectsB.state, LDE: value })
+						}
+						items={Array.from({ length: MAX_LDE_INTENSITY + 1 }, (_, i) => {
+							return {
+								label: `${((i / MAX_LDE_INTENSITY) * 100).toFixed(2).replace('.00', '')}% (+${lastDitchEffortIntensityToAp(i)} AP)`,
+								value: i
+							};
+						})}
+					/>
+				{/if}
+				{#if togglesToShow.includes('OG')}
+					<img src={asset('/img/abilities/OG.avif')} height="40" width="40" alt="" />
+					<Switch
+						bind:checked={
+							() => (tab === 'buildA' ? effectsA.state['OG'] : effectsB.state['OG']) || false,
+							(checked) =>
+								tab === 'buildA'
+									? effectsA.update({ ...effectsA.state, OG: checked })
+									: effectsB.update({ ...effectsB.state, OG: checked })
+						}
+						reverse
+					/>
+				{/if}
+				{#if togglesToShow.includes('DR')}
+					<img src={asset('/img/abilities/DR.avif')} height="40" width="40" alt="" />
+					<Switch
+						bind:checked={
+							() => (tab === 'buildA' ? effectsA.state['DR'] : effectsB.state['DR']) || false,
+							(checked) =>
+								tab === 'buildA'
+									? effectsA.update({ ...effectsA.state, DR: checked })
+									: effectsB.update({ ...effectsB.state, DR: checked })
+						}
+						reverse
+					/>
+				{/if}
+			</div>
+		</div>
+		<div class="stack md"></div>
+	</div>
+</Main>
 
 <style>
-	div {
+	.container {
+		display: grid;
+		gap: var(--s-8);
+		grid-template-columns: 1fr 2fr;
+	}
+
+	.left {
+		position: sticky;
+		inset: 0;
+		top: var(--layout-nav-height);
 		display: flex;
-		justify-content: center;
-		margin: 5rem;
+		height: max-content;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--s-8);
+	}
+
+	.toggles {
+		display: grid;
+		grid-template-columns: 40px auto;
+		place-items: center;
+		gap: var(--s-2);
 	}
 </style>

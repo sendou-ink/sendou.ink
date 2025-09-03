@@ -110,6 +110,8 @@ export const SPECIAL_EFFECTS = [
 	}
 ] as const;
 
+export const SPECIAL_EFFECTS_SHORT = SPECIAL_EFFECTS.map((effect) => effect.type);
+
 export function lastDitchEffortIntensityToAp(intensity: number) {
 	return Math.floor((18 / 21) * intensity);
 }
