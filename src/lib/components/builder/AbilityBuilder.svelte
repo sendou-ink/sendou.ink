@@ -5,12 +5,14 @@
 		AbilityType
 	} from '$lib/constants/in-game/types';
 	import type { AbilityItem } from './types';
-	import { abilities as abilitiesList, emptyBuild } from '$lib/constants/in-game/abilities';
+	import { abilities as abilitiesList } from '$lib/constants/in-game/abilities';
+	import { EMPTY_BUILD } from '$lib/constants/build';
 	import AbilitySlot from './AbilitySlot.svelte';
 	import AbilitySelector from './AbilitySelector.svelte';
 
 	interface Props {
 		abilities?: BuildAbilitiesTupleWithUnknown;
+		onchange?: (abilities: BuildAbilitiesTupleWithUnknown) => void;
 	}
 
 	let mainAbilities: AbilityItem[] = abilitiesList
@@ -29,7 +31,7 @@
 			ability: ability.name
 		}));
 
-	let { abilities = $bindable([...emptyBuild]) }: Props = $props();
+	let { abilities = $bindable([...EMPTY_BUILD]), onchange }: Props = $props();
 
 	function getSlotType(row: number, col: number) {
 		if (row === 0 && col === 0) return 'HEAD_MAIN_ONLY';
@@ -97,6 +99,7 @@
 					ondrag={(ability) => updateEnabledSlots(ability)}
 					onchange={(ability) => {
 						abilities[i][j] = ability;
+						onchange?.(abilities);
 					}}
 				/>
 			{/each}
@@ -107,13 +110,19 @@
 		abilities={stackableAbilities}
 		{disabledAbilities}
 		ondrag={(ability) => updateEnabledSlots(ability)}
-		onclick={(ability) => addAbility(ability)}
+		onclick={(ability) => {
+			addAbility(ability);
+			onchange?.(abilities);
+		}}
 	/>
 	<AbilitySelector
 		abilities={mainAbilities}
 		{disabledAbilities}
 		ondrag={(ability) => updateEnabledSlots(ability)}
-		onclick={(ability) => addAbility(ability)}
+		onclick={(ability) => {
+			addAbility(ability);
+			onchange?.(abilities);
+		}}
 	/>
 </div>
 
@@ -122,7 +131,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: var(--s-3);
+		gap: var(--s-4);
 	}
 	.slots {
 		display: grid;
