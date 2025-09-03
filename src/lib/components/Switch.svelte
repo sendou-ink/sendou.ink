@@ -10,14 +10,23 @@
 		id?: string;
 		checked?: boolean;
 		reverse?: boolean;
+		onchange?: (checked: boolean) => void;
 		// xxx: small
 	}
 
-	let { size, name, children, id = useId(), checked = $bindable(false), reverse }: Props = $props();
+	let {
+		size,
+		name,
+		children,
+		id = useId(),
+		checked = $bindable(false),
+		reverse,
+		onchange
+	}: Props = $props();
 </script>
 
 <div class={['stack horizontal sm items-center', { reverse }]}>
-	<Switch.Root {name} {id} bind:checked>
+	<Switch.Root {name} {id} bind:checked onCheckedChange={(checked) => onchange?.(checked)}>
 		{#snippet child({ props })}
 			<button {...props} class={['root', { small: size === 'small' }]}>
 				<Switch.Thumb>
@@ -40,9 +49,10 @@
 </div>
 
 <style>
-	.reverse {
+	.reverse.reverse {
 		flex-direction: row-reverse;
 	}
+
 	.root {
 		display: grid;
 		grid-template-columns: auto 1fr;
