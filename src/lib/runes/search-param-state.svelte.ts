@@ -66,6 +66,10 @@ export class SearchParamState<S extends z4.$ZodType<unknown>> {
 		this.updateStateFromParams(page.url.searchParams);
 
 		afterNavigate((navigation) => {
+			const current = navigation.from?.url.searchParams.get(this.key);
+			const next = navigation.to?.url.searchParams.get(this.key);
+			if (current === next) return;
+
 			// eslint-disable-next-line svelte/prefer-svelte-reactivity
 			this.updateStateFromParams(navigation.to?.url.searchParams ?? new URLSearchParams());
 		});
