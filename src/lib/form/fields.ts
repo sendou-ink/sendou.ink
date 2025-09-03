@@ -1,5 +1,6 @@
 import {
 	falsyToNull,
+	id,
 	safeJSONParse,
 	safeNullableStringSchema,
 	safeStringSchema,
@@ -19,6 +20,8 @@ import { m } from '$lib/paraglide/messages';
 import { modeShort, stageId, webUrl } from '$lib/utils/zod';
 import * as R from 'remeda';
 import { stageIds } from '$lib/constants/in-game/stage-ids';
+import * as MapPool from '$lib/core/maps/MapPool';
+import invariant from '$lib/utils/invariant';
 
 export const formRegistry = z.registry<FormField>();
 
@@ -34,7 +37,7 @@ export function customJsonFieldOptional<T extends z.ZodType>(
 }
 
 export function textFieldOptional(
-	args: Omit<Extract<FormField, { type: 'text-field' }>, 'type' | 'required'>
+	args: Omit<Extract<FormField, { type: 'text-field' }>, 'type' | 'initialValue' | 'required'>
 ) {
 	const schema =
 		args.validate === 'url'
@@ -44,12 +47,13 @@ export function textFieldOptional(
 	return textFieldRefined(schema, args).register(formRegistry, {
 		...args,
 		required: false,
-		type: 'text-field'
+		type: 'text-field',
+		initialValue: ''
 	});
 }
 
 export function textFieldRequired(
-	args: Omit<Extract<FormField, { type: 'text-field' }>, 'type' | 'required'>
+	args: Omit<Extract<FormField, { type: 'text-field' }>, 'type' | 'initialValue' | 'required'>
 ) {
 	const schema =
 		args.validate === 'url'
@@ -59,13 +63,14 @@ export function textFieldRequired(
 	return textFieldRefined(schema, args).register(formRegistry, {
 		...args,
 		required: true,
-		type: 'text-field'
+		type: 'text-field',
+		initialValue: ''
 	});
 }
 
 function textFieldRefined<T extends z.ZodType<string | null>>(
 	schema: T,
-	args: Omit<Extract<FormField, { type: 'text-field' }>, 'type' | 'required'>
+	args: Omit<Extract<FormField, { type: 'text-field' }>, 'type' | 'initialValue' | 'required'>
 ) {
 	if (args.regExp) {
 		schema = schema.refine(
@@ -101,21 +106,27 @@ function textFieldRefined<T extends z.ZodType<string | null>>(
 	return schema;
 }
 
-export function textAreaOptional(args: Omit<Extract<FormField, { type: 'text-area' }>, 'type'>) {
+export function textAreaOptional(
+	args: Omit<Extract<FormField, { type: 'text-area' }>, 'type' | 'initialValue'>
+) {
 	return safeNullableStringSchema({ max: args.maxLength }).register(formRegistry, {
 		...args,
-		type: 'text-area'
+		type: 'text-area',
+		initialValue: ''
 	});
 }
 
-export function toggle(args: Omit<Extract<FormField, { type: 'switch' }>, 'type'>) {
+export function toggle(
+	args: Omit<Extract<FormField, { type: 'switch' }>, 'type' | 'initialValue'>
+) {
 	return z
 		.union([z.stringbool(), z.boolean()])
 		.optional() // optional because "off" is missing in the form data see https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/input/checkbox#value
 		.default(false)
 		.register(formRegistry, {
 			...args,
-			type: 'switch'
+			type: 'switch',
+			initialValue: false
 		});
 }
 
@@ -127,15 +138,28 @@ function clearableItemsSchema<V extends string>(items: FormFieldItems<V>) {
 	return z.preprocess(falsyToNull, z.enum(items.map((item) => item.value)).nullable());
 }
 
-export function selectOptional<V extends string>(args: Omit<FormFieldSelect<'select', V>, 'type'>) {
+export function selectOptional<V extends string>(
+	args: Omit<FormFieldSelect<'select', V>, 'type' | 'initialValue'>
+) {
 	return clearableItemsSchema(args.items).register(formRegistry, {
 		...args,
-		type: 'select'
+		type: 'select',
+		initialValue: null
+	});
+}
+
+export function select<V extends string>(
+	args: Omit<FormFieldSelect<'select', V>, 'type' | 'initialValue'>
+) {
+	return itemsSchema(args.items).register(formRegistry, {
+		...args,
+		type: 'select',
+		initialValue: args.items[0].value
 	});
 }
 
 export function multiSelectOptional<V extends string>(
-	args: Omit<FormFieldSelect<'multi-select', V>, 'type'>
+	args: Omit<FormFieldSelect<'multi-select', V>, 'type' | 'initialValue'>
 ) {
 	return z
 		.preprocess(
@@ -150,12 +174,13 @@ export function multiSelectOptional<V extends string>(
 		)
 		.register(formRegistry, {
 			...args,
-			type: 'multi-select'
+			type: 'multi-select',
+			initialValue: []
 		});
 }
 
 export function dualSelectOptional<V extends string>(
-	args: Omit<FormFieldDualSelect<'dual-select', V>, 'type'>
+	args: Omit<FormFieldDualSelect<'dual-select', V>, 'type' | 'initialValue'>
 ) {
 	let schema = z.preprocess(
 		safeJSONParse,
@@ -189,15 +214,16 @@ export function dualSelectOptional<V extends string>(
 }
 
 export function radioGroup<V extends string>(
-	args: Omit<FormFieldInputGroup<'radio-group', V>, 'type'>
+	args: Omit<FormFieldInputGroup<'radio-group', V>, 'type' | 'initialValue'>
 ) {
 	return itemsSchema(args.items).register(formRegistry, {
 		...args,
-		type: 'radio-group'
+		type: 'radio-group',
+		initialValue: args.items[0].value
 	});
 }
 
-export function datetime(args: Omit<FormFieldDatetime<'datetime'>, 'type'>) {
+export function datetime(args: Omit<FormFieldDatetime<'datetime'>, 'type' | 'initialValue'>) {
 	return z
 		.preprocess(
 			(value) => {
@@ -213,12 +239,13 @@ export function datetime(args: Omit<FormFieldDatetime<'datetime'>, 'type'>) {
 		)
 		.register(formRegistry, {
 			...args,
-			type: 'datetime'
+			type: 'datetime',
+			initialValue: null
 		});
 }
 
 export function checkboxGroup<V extends string>(
-	args: Omit<FormFieldInputGroup<'checkbox-group', V>, 'type'>
+	args: Omit<FormFieldInputGroup<'checkbox-group', V>, 'type' | 'initialValue'>
 ) {
 	return z
 		.preprocess(
@@ -233,11 +260,14 @@ export function checkboxGroup<V extends string>(
 		)
 		.register(formRegistry, {
 			...args,
-			type: 'checkbox-group'
+			type: 'checkbox-group',
+			initialValue: []
 		});
 }
 
-export function weaponPool(args: Omit<Extract<FormField, { type: 'weapon-pool' }>, 'type'>) {
+export function weaponPool(
+	args: Omit<Extract<FormField, { type: 'weapon-pool' }>, 'type' | 'initialValue'>
+) {
 	return z
 		.preprocess(
 			safeJSONParse,
@@ -255,11 +285,14 @@ export function weaponPool(args: Omit<Extract<FormField, { type: 'weapon-pool' }
 		)
 		.register(formRegistry, {
 			...args,
-			type: 'weapon-pool'
+			type: 'weapon-pool',
+			initialValue: []
 		});
 }
 
-export function mapPool(args: Omit<Extract<FormField, { type: 'map-pool' }>, 'type'>) {
+export function mapPool(
+	args: Omit<Extract<FormField, { type: 'map-pool' }>, 'type' | 'initialValue'>
+) {
 	return z
 		.preprocess(
 			safeJSONParse,
@@ -272,23 +305,43 @@ export function mapPool(args: Omit<Extract<FormField, { type: 'map-pool' }>, 'ty
 					.max(args.maxCount ?? stageIds.length)
 			)
 		)
+		.refine(
+			(mapPool) => {
+				if (!args.minCount) return true;
+
+				invariant(args.modes, 'If minCount is set, modes must be set');
+
+				for (const mode of args.modes) {
+					if (!mapPool[mode]?.length || mapPool[mode]?.length < args.minCount) {
+						return false;
+					}
+				}
+			},
+			{ error: `Every mode should contain at least the minimum amount of maps (${args.minCount})` } // xxx: translate, involve maxCount?
+		)
 		.register(formRegistry, {
 			...args,
-			type: 'map-pool'
+			type: 'map-pool',
+			initialValue: MapPool.empty()
 		});
 }
 
-export function themeOptional(args: Omit<Extract<FormField, { type: 'theme' }>, 'type'>) {
+export function themeOptional(
+	args: Omit<Extract<FormField, { type: 'theme' }>, 'type' | 'initialValue'>
+) {
 	return z
 		.unknown() // xxx: CustomizedColors
 		.optional()
 		.register(formRegistry, {
 			...args,
-			type: 'theme'
+			type: 'theme',
+			initialValue: null
 		});
 }
 
-export function imageOptional(args: Omit<Extract<FormField, { type: 'image' }>, 'type'>) {
+export function imageOptional(
+	args: Omit<Extract<FormField, { type: 'image' }>, 'type' | 'initialValue'>
+) {
 	return z
 		.preprocess(
 			(value) => {
@@ -308,21 +361,47 @@ export function imageOptional(args: Omit<Extract<FormField, { type: 'image' }>, 
 		)
 		.register(formRegistry, {
 			...args,
-			type: 'image'
+			type: 'image',
+			initialValue: null
 		});
 }
 
 export function stringConstant() {
 	return z.string().max(100).register(formRegistry, {
-		type: 'string-constant'
+		type: 'string-constant',
+		initialValue: null
 	});
 }
 
-export function array<S extends z.ZodType>(args: Omit<FormFieldArray<'array', S>, 'type'>) {
+export function stringConstantOptional() {
+	return z.string().max(100).optional().register(formRegistry, {
+		type: 'string-constant',
+		initialValue: null
+	});
+}
+
+export function idConstant() {
+	return id.register(formRegistry, {
+		type: 'id-constant',
+		initialValue: null
+	});
+}
+
+export function idConstantOptional() {
+	return id.optional().register(formRegistry, {
+		type: 'id-constant',
+		initialValue: null
+	});
+}
+
+export function array<S extends z.ZodType>(
+	args: Omit<FormFieldArray<'array', S>, 'type' | 'initialValue'>
+) {
 	return z
 		.preprocess((value) => (!value ? [] : value), z.array(args.field).min(args.min).max(args.max))
 		.register(formRegistry, {
 			...args,
-			type: 'array'
+			type: 'array',
+			initialValue: []
 		});
 }

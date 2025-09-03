@@ -510,9 +510,9 @@ export function articlePreviewUrl(slug: string) {
 // 		fileName: `${stageId}-${mode}-${style}.png`,
 // 	});
 
-// export function resolveBaseUrl(url: string) {
-// 	return new URL(url).host;
-// }
+export function resolveBaseUrl(url: string) {
+	return new URL(url).host;
+}
 
 export function mySlugify(name: string) {
 	return slugify(name, {

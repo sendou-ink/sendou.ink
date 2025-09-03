@@ -14,9 +14,9 @@
 
 	let { name, label, value = $bindable() }: Props = $props();
 
-	const loggedInUser = $derived(await AuthAPI.queries.me());
-	const badges = $derived(await UserAPI.queries.allBadgesByMe());
-	const isSupporter = $derived(loggedInUser?.roles.includes('SUPPORTER') ?? false);
+	const loggedInUser = await AuthAPI.queries.me();
+	const badges = await UserAPI.queries.allBadgesOwnedByMe();
+	const isSupporter = loggedInUser?.roles.includes('SUPPORTER') ?? false;
 </script>
 
 <div>

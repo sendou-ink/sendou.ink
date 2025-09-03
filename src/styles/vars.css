@@ -65,9 +65,13 @@ html.dark {
 	--color-primary-content: oklch(21% 0.006 56.043);
 	--color-secondary: oklch(0.8839 0.1059 89.24);
 	--color-info: oklch(0.8839 0.0714 209.94);
+	--color-info-transparent: oklch(0.8839 0.0714 209.94 / 0.3);
 	--color-success: oklch(0.8839 0.0714 146.57);
+	--color-success-transparent: oklch(0.8839 0.0714 146.57 / 0.3);
 	--color-warning: oklch(82% 0.189 84.429);
+	--color-warning-transparent: oklch(82% 0.189 84.429 / 0.3);
 	--color-error: oklch(0.6897 0.2541 22.24);
+	--color-error-transparent: oklch(0.6897 0.2541 22.24 / 0.3);
 	/** checkbox, toggle, badge, button, input, select, tab */
 	--radius-field: 0.5rem;
 	/** card, modal, alert */

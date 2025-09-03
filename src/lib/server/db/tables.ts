@@ -1,4 +1,8 @@
-import type { tags, userSelectableTags } from '$lib/constants/calendar';
+import type {
+	tags,
+	TOURNAMENT_MAP_PICKING_STYLES,
+	userSelectableTags
+} from '$lib/constants/calendar';
 import type { CountryCode } from '$lib/constants/common';
 import type { Ability, MainWeaponId, ModeShort, StageId } from '$lib/constants/in-game/types';
 import type { TEAM_MEMBER_ROLES } from '$lib/constants/team';
@@ -417,9 +421,7 @@ export interface TaggedArt {
 	tagId: number;
 }
 
-// AUTO = style where teams pick their map pool ahead of time and the map lists are automatically made for each round
-// could also have the traditional style where TO picks the maps later
-type TournamentMapPickingStyle = 'TO' | 'AUTO_ALL' | 'AUTO_SZ' | 'AUTO_TC' | 'AUTO_RM' | 'AUTO_CB';
+export type TournamentMapPickingStyle = (typeof TOURNAMENT_MAP_PICKING_STYLES)[number];
 
 export interface TournamentSettings {
 	// bracketProgression: Progression.ParsedBracket[];

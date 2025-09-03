@@ -86,7 +86,8 @@ export const editProfileSchema = z.object({
 	}),
 	favoriteBadges: Fields.customJsonFieldOptional(
 		{
-			label: m.user_favoriteBadges()
+			label: m.user_favoriteBadges(),
+			initialValue: []
 		},
 		z
 			.array(id)

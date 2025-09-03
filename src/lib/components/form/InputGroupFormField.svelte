@@ -50,7 +50,7 @@
 					type="checkbox"
 					bind:group={value}
 					id={`${id}-${item.value}`}
-					{name}
+					name={`${name}[]`}
 					value={item.value}
 					onclick={onblur}
 				/>

@@ -16,6 +16,12 @@ describe('formDataToObject()', () => {
 		expect(formDataToObject(fd)).toEqual({ tags: ['tag1', 'tag2'] });
 	});
 
+	test('handles array fields with [] suffix (1 item only)', () => {
+		const fd = new FormData();
+		fd.append('tags[0]', 'tag1');
+		expect(formDataToObject(fd)).toEqual({ tags: ['tag1'] });
+	});
+
 	test('handles mix of single and array fields', () => {
 		const fd = new FormData();
 		fd.append('name', 'bob');

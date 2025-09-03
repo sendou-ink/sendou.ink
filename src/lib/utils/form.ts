@@ -7,12 +7,15 @@ export function confirmAction(
 	args?: {
 		title: string;
 		button?: ConfirmDialogProps['button'];
+		/** Where should the user be redirected after the action has been completed? */
+		redirectTo?: string;
 	}
 ) {
 	confirmDialogState.isOpen = true;
 	confirmDialogState.title = args?.title;
 	confirmDialogState.button = args?.button;
 	confirmDialogState.onConfirm = action;
+	confirmDialogState.redirectTo = args?.redirectTo;
 }
 
 export function resolveFieldsByType<T extends z.ZodObject>(formSchema: T, type: string) {

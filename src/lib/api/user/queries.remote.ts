@@ -59,7 +59,7 @@ export const editProfileFormData = query(
 	}
 );
 
-export const allBadgesByMe = query(async () => {
+export const allBadgesOwnedByMe = query(async () => {
 	const loggedInUser = await requireUser();
 	const profile = await UserRepository.findProfileByIdentifier(String(loggedInUser.id));
 

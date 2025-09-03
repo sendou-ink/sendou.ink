@@ -1,9 +1,11 @@
+import type { ModeShort } from '$lib/constants/in-game/types';
 import type z from 'zod';
 
 interface FormFieldBase<T extends string> {
 	type: T;
 	label?: string;
 	bottomText?: string;
+	initialValue: unknown;
 }
 
 type FormFieldConstant<T extends string> = Omit<FormFieldBase<T>, 'label' | 'bottomText'>;
@@ -53,7 +55,10 @@ type FormFieldDualSelectField<T extends string, V extends string> = Omit<
 >;
 export interface FormFieldDualSelect<T extends string, V extends string>
 	extends Omit<FormFieldBase<T>, 'label'> {
-	fields: [FormFieldDualSelectField<T, V>, FormFieldDualSelectField<T, V>];
+	fields: [
+		Omit<FormFieldDualSelectField<T, V>, 'initialValue'>,
+		Omit<FormFieldDualSelectField<T, V>, 'initialValue'>
+	];
 	validate?: {
 		func: (value: [V | null, V | null]) => boolean;
 		message: string;
@@ -75,6 +80,9 @@ interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {
 }
 
 interface FormFieldMapPool<T extends string> extends FormFieldBase<T> {
+	modes?: ModeShort[];
+	/** Min amount of maps to pick per mode */
+	minCount?: number;
 	/** Max amount of maps to pick per mode */
 	maxCount?: number;
 	/** Should the maps that are currently banned from SendouQ be disabled */
@@ -107,11 +115,12 @@ export type FormField<V extends string = string> =
 	| FormFieldBase<'theme'>
 	| FormFieldImage<'image'>
 	| FormFieldConstant<'string-constant'>
+	| FormFieldConstant<'id-constant'>
 	| FormFieldArray<'array', any>; // any here to stop infinite recursion of types, we don't need to know the exact type here
 
 export type FormFieldProps<T extends FormField['type']> = Omit<
 	Extract<FormField, { type: T }>,
-	'type'
+	'type' | 'initialValue'
 > & {
 	name: string;
 	error?: string;

@@ -19,14 +19,16 @@
 		display: flex;
 		width: 100%;
 		align-items: center;
-		color: var(--theme);
-		font-size: var(--fonts-lg);
+		color: var(--color-primary);
 		text-align: center;
+		font-size: var(--fonts-sm);
+		text-transform: uppercase;
+		font-weight: var(--semi-bold);
 
 		&::before,
 		&::after {
 			flex: 1;
-			border-bottom: 2px solid var(--theme-transparent);
+			border-bottom: 2px solid var(--color-primary-transparent);
 			content: '';
 		}
 

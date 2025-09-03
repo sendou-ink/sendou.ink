@@ -9,6 +9,7 @@
 			label: string;
 			value: string;
 			number?: number;
+			hidden?: boolean;
 		}>;
 		value: string;
 		orientation?: 'horizontal' | 'vertical';
@@ -20,6 +21,8 @@
 	}
 
 	let { children, value = $bindable(), orientation, triggers }: Props = $props();
+
+	const visibleTriggers = $derived(triggers.filter((trigger) => !trigger.hidden));
 </script>
 
 <Tabs.Root bind:value {orientation}>
@@ -28,7 +31,7 @@
 			<Tabs.List>
 				{#snippet child({ props })}
 					<div {...props} class="tab-list">
-						{#each triggers as { label, value, icon: Icon, number } (label)}
+						{#each visibleTriggers as { label, value, icon: Icon, number } (label)}
 							<Tabs.Trigger {value} class="tab-button">
 								{#snippet child({ props })}
 									<button {...props} class="tab-button">

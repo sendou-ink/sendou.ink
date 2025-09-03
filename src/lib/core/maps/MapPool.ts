@@ -20,8 +20,21 @@ export function empty(): MapPool {
 	};
 }
 
+export function isEmpty(pool: Partial<MapPool>): boolean {
+	return Object.values(pool).every((stageIds) => stageIds.length === 0);
+}
+
 export function toArray(pool: Partial<MapPool>) {
 	return Object.entries(pool).flatMap(([mode, stageIds]) =>
 		stageIds.map((stageId) => ({ mode: mode as ModeShort, stageId }))
 	);
+}
+
+export function fromArray(array: Array<{ mode: ModeShort; stageId: StageId }>): MapPool {
+	return array.reduce((acc, { mode, stageId }) => {
+		acc[mode] = acc[mode] ?? [];
+		acc[mode].push(stageId);
+		acc[mode].sort((a, b) => a - b);
+		return acc;
+	}, empty());
 }

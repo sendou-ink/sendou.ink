@@ -1,4 +1,5 @@
 <script lang="ts" module>
+	import { goto } from '$app/navigation';
 	import type { ButtonVariant } from '$lib/components/buttons/Button.svelte';
 
 	export interface ConfirmDialogProps {
@@ -9,6 +10,7 @@
 			text?: string;
 			variant?: ButtonVariant;
 		};
+		redirectTo?: string;
 	}
 
 	export const confirmDialogState = $state<ConfirmDialogProps>({
@@ -35,6 +37,9 @@
 					isSubmitting = true;
 					try {
 						await confirmDialogState.onConfirm?.();
+						if (confirmDialogState.redirectTo) {
+							goto(confirmDialogState.redirectTo);
+						}
 					} catch (error) {
 						console.error('Error during confirmation action:', error);
 					} finally {
