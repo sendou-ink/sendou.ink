@@ -3,7 +3,7 @@ import { add } from "date-fns";
 import type { z } from "zod/v4";
 import type { Tables } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
-import { userIsBanned } from "~/features/ban/core/banned.server";
+import { filterBannedIds } from "~/features/ban/core/banned.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
@@ -171,9 +171,9 @@ async function validatePickupTrust(userIds: number[], authorId: number) {
 }
 
 async function validatePickupAllUnbanned(userIds: number[]) {
-	const bannedUsers = userIds.filter(userIsBanned);
+	const bannedUsers = await filterBannedIds(userIds);
 
-	return bannedUsers.length === 0
+	return bannedUsers.length === userIds.length
 		? null
 		: {
 				error: "Pickup includes banned users.",
