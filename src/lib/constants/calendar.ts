@@ -83,3 +83,12 @@ export const tags = {
 export const userSelectableTags = Object.entries(tags)
 	.filter(([, value]) => value.userSelectable)
 	.map(([key]) => key as CalendarEventTag) as Array<Exclude<CalendarEventTag, 'SZ' | 'TW'>>;
+
+export const TOURNAMENT_MAP_PICKING_STYLES = [
+	'TO',
+	'AUTO_ALL',
+	'AUTO_SZ',
+	'AUTO_TC',
+	'AUTO_RM',
+	'AUTO_CB'
+] as const;

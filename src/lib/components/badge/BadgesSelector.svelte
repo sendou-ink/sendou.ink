@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages';
+	import type { Snippet } from 'svelte';
 	import Select from '../Select.svelte';
 	import type { BadgeDisplayProps } from './BadgeDisplay.svelte';
 	import BadgeDisplay from './BadgeDisplay.svelte';
@@ -8,7 +9,7 @@
 		options: BadgeDisplayProps['badges'];
 		selectedBadges: number[];
 		onblur?: () => void;
-		children?: import('svelte').Snippet;
+		children?: Snippet;
 		maxCount?: number;
 		showSelect?: boolean;
 	}
@@ -48,9 +49,13 @@
 
 <div class="stack md">
 	{#if selectedBadges.length > 0}
-		<BadgeDisplay badges={selectedBadgeData} onchange={(badges) => (selectedBadges = badges)}>
-			{@render children?.()}
-		</BadgeDisplay>
+		{#if children}
+			<BadgeDisplay badges={selectedBadgeData} onchange={(badges) => (selectedBadges = badges)}>
+				{@render children()}
+			</BadgeDisplay>
+		{:else}
+			<BadgeDisplay badges={selectedBadgeData} onchange={(badges) => (selectedBadges = badges)} />
+		{/if}
 	{:else}
 		<div class="text-lighter text-md font-bold">
 			{m.common_badges_selector_none()}

@@ -1,5 +1,4 @@
-import type { FormField } from './types';
-import * as MapPool from '$lib/core/maps/MapPool';
+// xxx: should utils/form.ts be here?
 
 export function formDataToObject(formData: FormData): Record<string, unknown> {
 	/** @ts-expect-error why is the type missing? */
@@ -8,11 +7,12 @@ export function formDataToObject(formData: FormData): Record<string, unknown> {
 	const result: Record<string, unknown> = {};
 
 	for (const [key, value] of values) {
-		const baseKey = key.endsWith(']') ? key.split('[')[0] : key;
+		const isArrayField = key.endsWith(']');
+		const baseKey = isArrayField ? key.split('[')[0] : key;
 
-		if (result[baseKey]) {
+		if (isArrayField) {
 			if (Array.isArray(result[baseKey])) result[baseKey].push(value);
-			else result[baseKey] = [result[baseKey], value];
+			else result[baseKey] = [value];
 		} else {
 			result[baseKey] = value;
 		}
@@ -21,19 +21,7 @@ export function formDataToObject(formData: FormData): Record<string, unknown> {
 	return result;
 }
 
-const fieldTypeToDefaultValue: Partial<Record<FormField['type'], unknown>> = {
-	'map-pool': MapPool.empty()
-};
-
-export function resolveDefaultValue({
-	name,
-	defaultValues,
-	field
-}: {
-	name: string;
-	defaultValues: any;
-	field: FormField;
-}) {
+export function resolveDefaultValue({ name, defaultValues }: { name: string; defaultValues: any }) {
 	const idx = name.match(/\[(\d+)\]$/)?.[1];
 	if (idx && defaultValues) {
 		const nameWithoutIdx = name.split('[')[0] as keyof typeof defaultValues;
@@ -41,5 +29,5 @@ export function resolveDefaultValue({
 		if (defaultValue) return defaultValue;
 	}
 
-	return defaultValues?.[name as keyof typeof defaultValues] ?? fieldTypeToDefaultValue[field.type];
+	return defaultValues?.[name as keyof typeof defaultValues];
 }

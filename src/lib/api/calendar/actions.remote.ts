@@ -1,6 +1,6 @@
 import { requirePermission, requireRole } from '$lib/modules/permissions/guards.server';
 import { validatedForm } from '$lib/server/remote-functions';
-import { newCalendarEventSchema } from './schemas';
+import { newCalendarEventSchema, newTournamentSchema } from './schemas';
 import * as CalendarRepository from '$lib/server/db/repositories/calendar';
 import { error, redirect } from '@sveltejs/kit';
 import { resolve } from '$app/paths';
@@ -28,6 +28,12 @@ export const upsertEvent = validatedForm(newCalendarEventSchema, async (data, us
 	}
 
 	redirect(303, resolve('/calendar/[id]', { id: String(eventId) }));
+});
+
+export const upsertTournament = validatedForm(newTournamentSchema, async () => {
+	requireRole('TOURNAMENT_ADDER');
+
+	// xxx: upsert tournament logic here
 });
 
 export const deleteById = command(id, async (id) => {

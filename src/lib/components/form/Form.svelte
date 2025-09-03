@@ -84,7 +84,7 @@
 		const target = event.target as (EventTarget & HTMLInputElement) | HTMLTextAreaElement;
 		const name = target.name;
 
-		const fieldData = new FormData(formElement()).getAll(name);
+		const fieldData = new FormData(formElement()).get(name);
 		const zodObject = schema as ZodObject<ZodRawShape>;
 		const fieldSchema = zodObject.shape[name];
 

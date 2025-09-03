@@ -6,7 +6,7 @@ import type {
 } from '$lib/constants/in-game/types';
 import type { weaponCategories } from '$lib/constants/in-game/weapon-ids';
 import { m } from '$lib/paraglide/messages';
-import type { CalendarEventTag, Tables } from '$lib/server/db/tables';
+import type { CalendarEventTag, Tables, TournamentMapPickingStyle } from '$lib/server/db/tables';
 import { logger } from './logger';
 
 /**
@@ -484,4 +484,16 @@ export const calendarEventTagTranslations: Record<CalendarEventTag, () => string
 	SZ: m.common_tag_name_SZ,
 	TRIOS: m.common_tag_name_TRIOS,
 	TW: m.common_tag_name_TW
+};
+
+export const tournamentMapPickingStylesTranslations: Record<
+	TournamentMapPickingStyle,
+	() => string
+> = {
+	TO: m.tournament_mapPickingStyle_TO,
+	AUTO_ALL: m.tournament_mapPickingStyle_AUTO_ALL,
+	AUTO_SZ: m.tournament_mapPickingStyle_AUTO_SZ,
+	AUTO_TC: m.tournament_mapPickingStyle_AUTO_TC,
+	AUTO_RM: m.tournament_mapPickingStyle_AUTO_RM,
+	AUTO_CB: m.tournament_mapPickingStyle_AUTO_CB
 };

@@ -70,11 +70,11 @@
 	})();
 
 	let data = $state({
-		value: resolveDefaultValue({
-			defaultValues,
-			field: formField,
-			name
-		})
+		value:
+			resolveDefaultValue({
+				defaultValues,
+				name
+			}) ?? formField.initialValue
 	});
 	const error = $derived<string | undefined>(errors()[name as keyof typeof errors]);
 
