@@ -9,7 +9,7 @@ import i18next from "~/modules/i18n/i18next.server";
 import { nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { parseParams } from "~/utils/remix.server";
-import { userSubmittedImage } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import { id } from "~/utils/zod";
 import {
 	handleOptionsRequest,
@@ -85,6 +85,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 						"User.discordId",
 						"User.discordAvatar",
 						"User.battlefy",
+						"User.country",
 						"TournamentTeamMember.inGameName",
 						"TournamentTeamMember.isOwner",
 						"TournamentTeamMember.createdAt",
@@ -147,6 +148,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 					avatarUrl: member.discordAvatar
 						? `https://cdn.discordapp.com/avatars/${member.discordId}/${member.discordAvatar}.png`
 						: null,
+					country: member.country,
 					captain: Boolean(member.isOwner),
 					inGameName: member.inGameName,
 					friendCode: friendCodes[member.userId],

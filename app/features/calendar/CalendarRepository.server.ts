@@ -337,17 +337,18 @@ function databaseTimestampWeekAgo() {
 	return dateToDatabaseTimestamp(now);
 }
 
-export async function findById({
-	id,
-	includeMapPool = false,
-	includeTieBreakerMapPool = false,
-	includeBadgePrizes = false,
-}: {
-	id: number;
-	includeMapPool?: boolean;
-	includeTieBreakerMapPool?: boolean;
-	includeBadgePrizes?: boolean;
-}) {
+export async function findById(
+	id: number,
+	{
+		includeMapPool = false,
+		includeTieBreakerMapPool = false,
+		includeBadgePrizes = false,
+	}: {
+		includeMapPool?: boolean;
+		includeTieBreakerMapPool?: boolean;
+		includeBadgePrizes?: boolean;
+	} = {},
+) {
 	const [firstRow, ...rest] = await db
 		.selectFrom("CalendarEvent")
 		.$if(includeMapPool, (qb) => qb.select(withMapPool))

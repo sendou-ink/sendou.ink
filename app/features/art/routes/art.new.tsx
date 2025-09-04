@@ -17,11 +17,8 @@ import { useHasRole } from "~/modules/permissions/hooks";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import {
-	artPage,
-	conditionalUserSubmittedImage,
-	navIconUrl,
-} from "~/utils/urls";
+import { artPage, navIconUrl } from "~/utils/urls";
+import { conditionalUserSubmittedImage } from "~/utils/urls-img";
 import { metaTitle } from "../../../utils/remix";
 import { action } from "../actions/art.new.server";
 import { ART } from "../art-constants";

@@ -93,7 +93,7 @@ export function MatchActions({
 		scores[1] + (winnerId === teams[1].id ? 1 : 0),
 	];
 	const wouldEndSet = isSetOverByScore({
-		count: data.match.roundMaps?.count ?? data.match.bestOf,
+		count: data.match.roundMaps.count,
 		countType: data.match.roundMaps?.type ?? "BEST_OF",
 		scores: newScore,
 	});

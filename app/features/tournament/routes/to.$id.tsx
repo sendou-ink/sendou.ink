@@ -8,6 +8,7 @@ import {
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
+import { Placeholder } from "~/components/Placeholder";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { useUser } from "~/features/auth/core/user";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
@@ -20,8 +21,8 @@ import {
 	tournamentOrganizationPage,
 	tournamentPage,
 	tournamentRegisterPage,
-	userSubmittedImage,
 } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import { metaTags } from "../../../utils/remix";
 
 import { loader, type TournamentLoaderData } from "../loaders/to.$id.server";
@@ -32,7 +33,9 @@ import "../tournament.css";
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	const navigatedToMatchPage =
-		typeof args.nextParams.mid === "string" && args.formMethod !== "POST";
+		typeof args.nextParams.mid === "string" &&
+		args.formMethod !== "POST" &&
+		args.currentParams.mid !== args.nextParams.mid;
 
 	if (navigatedToMatchPage) return false;
 
@@ -101,7 +104,7 @@ export default function TournamentLayoutShell() {
 	if (!isMounted)
 		return (
 			<Main bigger>
-				<div className="tournament__placeholder" />
+				<Placeholder />
 			</Main>
 		);
 
@@ -213,7 +216,7 @@ export function TournamentLayout() {
 					!tournament.isLeagueSignup && (
 						<SubNavLink to="seeds">{t("tournament:tabs.seeds")}</SubNavLink>
 					)}
-				{tournament.isOrganizer(user) && !tournament.everyBracketOver && (
+				{tournament.isOrganizer(user) && !tournament.ctx.isFinalized && (
 					<SubNavLink to="admin" data-testid="admin-tab">
 						{t("tournament:tabs.admin")}
 					</SubNavLink>

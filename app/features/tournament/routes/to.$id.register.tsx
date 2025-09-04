@@ -54,8 +54,8 @@ import {
 	tournamentSubsPage,
 	userEditProfilePage,
 	userPage,
-	userSubmittedImage,
 } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import { AlertIcon } from "../../../components/icons/Alert";
 import { action } from "../actions/to.$id.register.server";
 import type { TournamentRegisterPageLoader } from "../loaders/to.$id.register.server";
@@ -84,7 +84,7 @@ export default function TournamentRegisterPage() {
 		<div className={clsx("stack lg", containerClassName("normal"))}>
 			<div className="tournament__logo-container">
 				<img
-					src={tournament.logoSrc}
+					src={tournament.ctx.logoSrc}
 					alt=""
 					className="tournament__logo"
 					width={124}

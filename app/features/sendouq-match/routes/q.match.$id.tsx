@@ -34,10 +34,13 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
-import { Chat, type ChatProps, useChat } from "~/features/chat/components/Chat";
+import { useChat } from "~/features/chat/chat-hooks";
+import type { ChatProps } from "~/features/chat/chat-types";
+import { Chat } from "~/features/chat/components/Chat";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { GroupCard } from "~/features/sendouq/components/GroupCard";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
+import { useRecentlyReportedWeapons } from "~/features/sendouq/q-hooks";
 import { AddPrivateNoteDialog } from "~/features/sendouq-match/components/AddPrivateNoteDialog";
 import type { ReportedWeaponForMerging } from "~/features/sendouq-match/core/reported-weapons.server";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
@@ -65,8 +68,8 @@ import {
 	sendouQMatchPage,
 	specialWeaponImageUrl,
 	teamPage,
-	userSubmittedImage,
 } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import { action } from "../actions/q.match.$id.server";
 import { matchEndedAtIndex } from "../core/match";
 import { loader } from "../loaders/q.match.$id.server";
@@ -410,6 +413,8 @@ function ReportWeaponsForm() {
 	const [reportingMode, setReportingMode] = React.useState<
 		"ALL" | "MYSELF" | "MY_TEAM"
 	>("MYSELF");
+	const { recentlyReportedWeapons, addRecentlyReportedWeapon } =
+		useRecentlyReportedWeapons();
 
 	const playedMaps = data.match.mapList.filter((m) => m.winnerGroupId);
 	const winners = playedMaps.map((m) =>
@@ -568,7 +573,8 @@ function ReportWeaponsForm() {
 												</div>
 												<div className="stack horizontal sm items-center">
 													<WeaponSelect
-														value={weaponSplId ?? undefined}
+														value={weaponSplId}
+														quickSelectWeaponsIds={recentlyReportedWeapons}
 														onChange={(weaponSplId) => {
 															setWeaponsUsage((val) => {
 																const result = val.filter(
@@ -584,6 +590,8 @@ function ReportWeaponsForm() {
 																	groupMatchMapId,
 																	userId: member.id,
 																});
+
+																addRecentlyReportedWeapon(weaponSplId);
 
 																return result;
 															});
@@ -929,6 +937,8 @@ function MapList({
 	const [ownWeaponsUsage, setOwnWeaponsUsage] = React.useState<
 		ReportedWeaponForMerging[]
 	>([]);
+	const { recentlyReportedWeapons, addRecentlyReportedWeapon } =
+		useRecentlyReportedWeapons();
 
 	const previouslyReportedWinners = isResubmission
 		? data.match.mapList
@@ -974,6 +984,8 @@ function MapList({
 								setWinners={setWinners}
 								weapons={data.reportedWeapons?.[i]}
 								showReportedOwnWeapon={!ownWeaponReported}
+								recentlyReportedWeapons={recentlyReportedWeapons}
+								addRecentlyReportedWeapon={addRecentlyReportedWeapon}
 								onOwnWeaponSelected={(newReportedWeapon) => {
 									if (!newReportedWeapon) return;
 
@@ -1031,6 +1043,8 @@ function MapListMap({
 	weapons,
 	onOwnWeaponSelected,
 	showReportedOwnWeapon,
+	recentlyReportedWeapons,
+	addRecentlyReportedWeapon,
 }: {
 	i: number;
 	map: Unpacked<SerializeFrom<typeof loader>["match"]["mapList"]>;
@@ -1040,6 +1054,8 @@ function MapListMap({
 	weapons?: (MainWeaponId | null)[] | null;
 	onOwnWeaponSelected?: (weapon: ReportedWeaponForMerging | null) => void;
 	showReportedOwnWeapon: boolean;
+	recentlyReportedWeapons?: MainWeaponId[];
+	addRecentlyReportedWeapon?: (weapon: MainWeaponId) => void;
 }) {
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
@@ -1243,9 +1259,14 @@ function MapListMap({
 								</label>
 								<WeaponSelect
 									clearable
+									quickSelectWeaponsIds={recentlyReportedWeapons}
 									onChange={(weaponSplId) => {
 										const userId = user!.id;
 										const groupMatchMapId = map.id;
+
+										if (typeof weaponSplId === "number") {
+											addRecentlyReportedWeapon?.(weaponSplId);
+										}
 
 										onOwnWeaponSelected(
 											typeof weaponSplId === "number"

@@ -99,22 +99,23 @@ export default [
 		route("subs", "features/tournament-subs/routes/to.$id.subs.tsx"),
 		route("subs/new", "features/tournament-subs/routes/to.$id.subs.new.tsx"),
 
-		route("brackets", "features/tournament-bracket/routes/to.$id.brackets.tsx"),
 		route(
 			"divisions",
 			"features/tournament-bracket/routes/to.$id.divisions.tsx",
 		),
 		route(
-			"brackets/subscribe",
-			"features/tournament-bracket/routes/to.$id.brackets.subscribe.ts",
+			"brackets",
+			"features/tournament-bracket/routes/to.$id.brackets.tsx",
+			[
+				route(
+					"finalize",
+					"features/tournament-bracket/routes/to.$id.brackets.finalize.tsx",
+				),
+			],
 		),
 		route(
 			"matches/:mid",
 			"features/tournament-bracket/routes/to.$id.matches.$mid.tsx",
-		),
-		route(
-			"matches/:mid/subscribe",
-			"features/tournament-bracket/routes/to.$id.matches.$mid.subscribe.ts",
 		),
 	]),
 	route("luti", "features/tournament/routes/luti.ts"),
@@ -130,11 +131,12 @@ export default [
 	route("/support", "features/info/routes/support.tsx"),
 
 	route("/t", "features/team/routes/t.tsx"),
-	...prefix("/t/:customUrl", [
-		index("features/team/routes/t.$customUrl.tsx"),
+	route("/t/:customUrl", "features/team/routes/t.$customUrl.tsx", [
+		index("features/team/routes/t.$customUrl.index.tsx"),
 		route("edit", "features/team/routes/t.$customUrl.edit.tsx"),
 		route("roster", "features/team/routes/t.$customUrl.roster.tsx"),
 		route("join", "features/team/routes/t.$customUrl.join.tsx"),
+		route("results", "features/team/routes/t.$customUrl.results.tsx"),
 	]),
 
 	...prefix("/vods", [
@@ -260,6 +262,10 @@ export default [
 			"features/api-public/routes/tournament.$id.teams.ts",
 		),
 		route(
+			"/tournament/:id/players",
+			"features/api-public/routes/tournament.$id.players.ts",
+		),
+		route(
 			"/tournament/:id/casted",
 			"features/api-public/routes/tournament.$id.casted.ts",
 		),
@@ -276,6 +282,7 @@ export default [
 			"features/api-public/routes/tournament-match.$id.ts",
 		),
 		route("/org/:id", "features/api-public/routes/org.$id.ts"),
+		route("/team/:id", "features/api-public/routes/team.$id.ts"),
 	]),
 
 	route("/short/:customUrl", "features/user-page/routes/short.$customUrl.ts"),

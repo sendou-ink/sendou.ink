@@ -13,6 +13,7 @@ import { cancelScrimSchema } from "~/features/scrims/scrims-schemas";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+import { userSubmittedImage } from "~/utils/urls-img";
 import { Avatar } from "../../../components/Avatar";
 import { Main } from "../../../components/Main";
 import { databaseTimestampToDate } from "../../../utils/dates";
@@ -22,7 +23,6 @@ import {
 	scrimsPage,
 	teamPage,
 	userPage,
-	userSubmittedImage,
 } from "../../../utils/urls";
 import { ConnectedChat } from "../../chat/components/Chat";
 import { action } from "../actions/scrims.$id.server";

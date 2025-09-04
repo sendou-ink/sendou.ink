@@ -38,6 +38,7 @@ import "../calculator.css";
 import type { MetaFunction } from "@remix-run/node";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { WeaponSelect } from "~/components/WeaponSelect";
+import { roundToNDecimalPlaces } from "~/utils/number";
 import { metaTags } from "~/utils/remix";
 
 export const CURRENT_PATCH = "10.0";
@@ -84,6 +85,7 @@ export default function ObjectDamagePage() {
 						<Label htmlFor="weapon">{t("analyzer:labels.weapon")}</Label>
 						<WeaponSelect
 							includeSubSpecial
+							value={weapon}
 							onChange={(newAnyWeapon) => {
 								handleChange({
 									newAnyWeapon,
@@ -222,7 +224,7 @@ const damageReceiverImages: Record<DamageReceiver, string> = {
 		6030,
 		"launched",
 	),
-	Firework: specialWeaponImageUrl(SUPER_CHUMP_ID),
+	Decoy: specialWeaponImageUrl(SUPER_CHUMP_ID),
 	BulletPogo: specialWeaponImageUrl(TRIPLE_SPLASHDOWN_ID),
 };
 
@@ -346,7 +348,7 @@ function DamageReceiversGrid({
 								</div>
 								<div className="object-damage__hp">
 									<span data-testid={`hp-${damageToReceiver.receiver}`}>
-										{damageToReceiver.hitPoints}
+										{roundToNDecimalPlaces(damageToReceiver.hitPoints)}
 									</span>
 									{t("analyzer:suffix.hp")}
 								</div>

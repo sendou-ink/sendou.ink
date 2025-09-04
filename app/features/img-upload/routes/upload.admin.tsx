@@ -5,7 +5,7 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { TrashIcon } from "~/components/icons/Trash";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
-import { userSubmittedImage } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 
 import { action } from "../actions/upload.admin.server";
 import { loader } from "../loaders/upload.admin.server";
@@ -28,7 +28,7 @@ function ImageValidator() {
 	}, [data]);
 
 	if (data.images.length === 0) {
-		return <>All validated!</>;
+		return "All validated!";
 	}
 
 	return (

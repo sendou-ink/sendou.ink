@@ -7,9 +7,14 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
+import { soundEnabled, soundVolume } from "~/features/chat/chat-utils";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { logger } from "~/utils/logger";
-import { tournamentMatchPage, tournamentRegisterPage } from "~/utils/urls";
+import {
+	soundPath,
+	tournamentMatchPage,
+	tournamentRegisterPage,
+} from "~/utils/urls";
 
 export function TournamentTeamActions() {
 	const tournament = useTournament();
@@ -17,6 +22,8 @@ export function TournamentTeamActions() {
 	const fetcher = useFetcher();
 
 	const status = tournament.teamMemberOfProgressStatus(user);
+
+	useMatchReadySound(status?.type);
 
 	if (!status) return null;
 
@@ -198,4 +205,26 @@ function Dots() {
 			..<span className={clsx({ invisible: !thirdVisible })}>.</span>
 		</span>
 	);
+}
+
+function useMatchReadySound(statusType?: string) {
+	const isWaiting = React.useRef(false);
+
+	React.useEffect(() => {
+		if (statusType === "MATCH" && isWaiting.current) {
+			const sound = "tournament_match";
+
+			if (soundEnabled(sound)) {
+				const audio = new Audio(soundPath(sound));
+				audio.volume = soundVolume() / 100;
+				void audio
+					.play()
+					.catch((e) => logger.error(`Couldn't play sound: ${e}`));
+			}
+		}
+
+		isWaiting.current = !statusType || statusType?.startsWith("WAITING_");
+	}, [statusType]);
+
+	return isWaiting;
 }

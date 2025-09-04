@@ -21,6 +21,7 @@ import { BADGE } from "~/features/badges/badges-constants";
 import { BadgesSelector } from "~/features/badges/components/BadgesSelector";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useHasRole } from "~/modules/permissions/hooks";
+import { countryCodeToTranslatedName } from "~/utils/i18n";
 import invariant from "~/utils/invariant";
 import { rawSensToString } from "~/utils/strings";
 import { FAQ_PAGE } from "~/utils/urls";
@@ -215,12 +216,13 @@ function CountrySelect() {
 	const isMounted = useIsMounted();
 	const [value, setValue] = React.useState(data.user.country ?? null);
 
-	const displayName = new Intl.DisplayNames(i18n.language, { type: "region" });
-
 	// TODO: if react-aria-components start supporting "suppressHydrationWarning" it would likely be a better solution here
 	const items = COUNTRY_CODES.map((countryCode) => ({
 		name: isMounted
-			? (displayName.of(countryCode) ?? countryCode)
+			? countryCodeToTranslatedName({
+					countryCode,
+					language: i18n.language,
+				})
 			: countryCode,
 		id: countryCode,
 		key: countryCode,

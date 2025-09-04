@@ -4,7 +4,8 @@ import { db } from "~/db/sql";
 import type { Tables, TablesInsertable } from "~/db/tables";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
-import { mySlugify, userSubmittedImage } from "~/utils/urls";
+import { mySlugify } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import { HACKY_resolvePicture } from "../tournament/tournament-utils";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "./tournament-organization-constants";
 
@@ -271,6 +272,16 @@ export async function findEventsByMonth({
 		.execute();
 
 	return events.map(mapEvent);
+}
+
+export function findAllUnfinalizedEvents(organizationId: number) {
+	return db
+		.selectFrom("Tournament")
+		.innerJoin("CalendarEvent", "CalendarEvent.tournamentId", "Tournament.id")
+		.select(["Tournament.id"])
+		.where("Tournament.isFinalized", "=", 0)
+		.where("CalendarEvent.organizationId", "=", organizationId)
+		.execute();
 }
 
 const findSeriesEventsBaseQuery = ({

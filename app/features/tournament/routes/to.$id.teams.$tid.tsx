@@ -18,9 +18,10 @@ import {
 	tournamentMatchPage,
 	tournamentTeamPage,
 	userPage,
-	userSubmittedImage,
 } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import { TeamWithRoster } from "../components/TeamWithRoster";
+import * as Standings from "../core/Standings";
 import type { PlayedSet } from "../core/sets.server";
 import { loader } from "../loaders/to.$id.teams.$tid.server";
 import { useTournament } from "./to.$id";
@@ -106,7 +107,7 @@ function StatSquares({
 	const data = useLoaderData<typeof loader>();
 	const tournament = useTournament();
 
-	const placement = tournament.standings.find(
+	const placement = Standings.tournamentStandings(tournament).find(
 		(s) => s.team.id === data.tournamentTeamId,
 	)?.placement;
 
@@ -196,7 +197,7 @@ function SetInfo({ set, team }: { set: PlayedSet; team: TournamentDataTeam }) {
 	};
 
 	const { bracketName, roundNameWithoutMatchIdentifier } =
-		tournament.matchNameById(set.tournamentMatchId);
+		tournament.matchContextNamesById(set.tournamentMatchId);
 
 	return (
 		<div className="tournament__team__set">

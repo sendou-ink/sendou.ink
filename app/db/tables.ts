@@ -4,7 +4,6 @@ import type {
 	Insertable,
 	JSONColumnType,
 	Selectable,
-	SqlBool,
 	Updateable,
 } from "kysely";
 import type { AssociationVisibility } from "~/features/associations/associations-types";
@@ -99,8 +98,10 @@ export interface BadgeManager {
 }
 
 export type BadgeOwner = {
-	badgeId: number | null;
-	userId: number | null;
+	badgeId: number;
+	userId: number;
+	/** Which tournament the badge is from, if null was added manually by a badge manager as opposed to once a tournament was finalized. */
+	tournamentId: number | null;
 };
 
 export interface Build {
@@ -130,12 +131,6 @@ export interface BuildWeapon {
 	weaponSplId: MainWeaponId;
 }
 
-/** Image associated with the avatar when the event is showcased on the front page */
-export type CalendarEventAvatarMetadata = {
-	backgroundColor: string;
-	textColor: string;
-};
-
 export type CalendarEventTag = keyof typeof tags;
 
 export interface CalendarEvent {
@@ -152,8 +147,6 @@ export interface CalendarEvent {
 	tournamentId: number | null;
 	organizationId: number | null;
 	avatarImgId: number | null;
-	// TODO: remove in migration
-	avatarMetadata: JSONColumnTypeNullable<CalendarEventAvatarMetadata>;
 }
 
 export interface CalendarEventBadge {
@@ -402,6 +395,7 @@ export interface Skill {
 	season: number;
 	tournamentId: number | null;
 	userId: number | null;
+	createdAt: number | null;
 }
 
 export interface SkillTeamUser {
@@ -535,8 +529,6 @@ export const TournamentMatchStatus = {
 };
 
 export interface TournamentMatch {
-	// TODO: remove
-	bestOf: Generated<3 | 5 | 7>;
 	chatCode: string | null;
 	groupId: number;
 	id: GeneratedAlways<number>;
@@ -578,16 +570,24 @@ export interface TournamentMatchGameResult {
 export interface TournamentMatchGameResultParticipant {
 	matchGameResultId: number;
 	userId: number;
-	// it only started mattering when we added the possibility to join many teams in a tournament, null for legacy events
-	tournamentTeamId: number | null;
+	tournamentTeamId: number;
 }
 
+export type WinLossParticipationArray = Array<"W" | "L" | null>;
+
 export interface TournamentResult {
-	isHighlight: Generated<SqlBool>;
+	isHighlight: Generated<DBBoolean>;
 	participantCount: number;
 	placement: number;
 	tournamentId: number;
 	tournamentTeamId: number;
+	/**
+	 * The result of sets in the tournament.
+	 * E.g. ["W", "L", null] would mean the user won the first set, lost the second and did not play the third.
+	 * */
+	setResults: JSONColumnType<WinLossParticipationArray>;
+	/** The SP change in total after the finalization of a ranked tournament. */
+	spDiff: number | null;
 	userId: number;
 }
 
@@ -610,7 +610,7 @@ export interface TournamentRound {
 	id: GeneratedAlways<number>;
 	number: number;
 	stageId: number;
-	maps: JSONColumnTypeNullable<TournamentRoundMaps>;
+	maps: JSONColumnType<TournamentRoundMaps>;
 }
 
 // when updating this also update `defaultBracketSettings` in tournament-utils.ts

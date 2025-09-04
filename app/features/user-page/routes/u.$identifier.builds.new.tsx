@@ -217,6 +217,7 @@ function WeaponsSelector() {
 					return (
 						<div key={i} className="stack horizontal sm items-center">
 							<WeaponSelect
+								isRequired
 								onChange={(weaponId) =>
 									setWeapons((weapons) => {
 										const newWeapons = [...weapons];
@@ -224,7 +225,7 @@ function WeaponsSelector() {
 										return newWeapons;
 									})
 								}
-								initialValue={weapon ?? undefined}
+								value={weapon ?? null}
 								testId={`weapon-${i}`}
 							/>
 							{i === weapons.length - 1 && (

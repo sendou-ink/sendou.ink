@@ -1138,12 +1138,20 @@ html[dir="rtl"] .fix-rtl {
 }
 
 .chat__room-button {
-	background-color: var(--bg-light);
+	background-color: transparent;
 	color: var(--text-lighter);
 	border-radius: var(--rounded) var(--rounded) 0 0;
-	font-size: var(--fonts-xs);
 	padding: var(--s-1) var(--s-1);
 	border-color: var(--bg-light-variation);
+	font-size: var(--fonts-xs);
+	padding-block: var(--s-1);
+	padding-inline: var(--s-2);
+	display: flex;
+	width: auto;
+	align-items: center;
+	justify-content: center;
+	font-weight: var(--bold);
+	flex: 1 1 0px;
 }
 
 .chat__room-button.current {

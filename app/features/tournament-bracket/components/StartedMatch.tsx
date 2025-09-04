@@ -18,7 +18,8 @@ import { CrossIcon } from "~/components/icons/Cross";
 import { PickIcon } from "~/components/icons/Pick";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
-import { Chat, useChat } from "~/features/chat/components/Chat";
+import { useChat } from "~/features/chat/chat-hooks";
+import { Chat } from "~/features/chat/components/Chat";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { resolveLeagueRoundStartDate } from "~/features/tournament/tournament-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
@@ -118,6 +119,12 @@ export function StartedMatch({
 		});
 	}, [tournament, hostingTeamId, data.match.id]);
 
+	// using team ids as the seed to ensure grand finals and bracket reset have the same room pass
+	const roomPassSeed = [data.match.opponentOne?.id, data.match.opponentOne?.id]
+		.filter((value) => typeof value === "number")
+		.sort((a, b) => a - b)
+		.join("-");
+
 	const roundInfos = [
 		showFullInfos ? (
 			<React.Fragment key="hosts">
@@ -130,7 +137,7 @@ export function StartedMatch({
 			<React.Fragment key="pass">
 				{t("tournament:match.pass")}{" "}
 				<span className="text-theme font-bold" data-testid="room-pass">
-					{resolveRoomPass(data.match.id)}
+					{resolveRoomPass(roomPassSeed)}
 				</span>
 			</React.Fragment>
 		) : null,

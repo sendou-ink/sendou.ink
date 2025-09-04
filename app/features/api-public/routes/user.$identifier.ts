@@ -3,6 +3,8 @@ import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { cors } from "remix-utils/cors";
 import { z } from "zod/v4";
 import { db } from "~/db/sql";
+import * as Seasons from "~/features/mmr/core/Seasons";
+import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
 import { i18next } from "~/modules/i18n/i18next.server";
 import { safeNumberParse } from "~/utils/number";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
@@ -68,6 +70,15 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 						.select(["XRankPlacement.power"])
 						.whereRef("SplatoonPlayer.userId", "=", "User.id"),
 				).as("xRankPlacements"),
+				jsonArrayFrom(
+					eb
+						.selectFrom("TeamMemberWithSecondary")
+						.innerJoin("Team", "Team.id", "TeamMemberWithSecondary.teamId")
+						.select(["Team.id", "TeamMemberWithSecondary.role"])
+						.whereRef("TeamMemberWithSecondary.userId", "=", "User.id")
+						.orderBy("TeamMemberWithSecondary.isMainTeam", "desc")
+						.orderBy("TeamMemberWithSecondary.createdAt", "asc"),
+				).as("teams"),
 			])
 			.where((eb) => {
 				// we don't want to parse discord id's as numbers (length = 18)
@@ -81,6 +92,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			})
 			.executeTakeFirst(),
 	);
+
+	const season = Seasons.currentOrPrevious(new Date())!.nth;
+
+	const { isAccurateTiers, userSkills } = _userSkills(season);
+	const skill = isAccurateTiers ? userSkills[user.id] : null;
 
 	const result: GetUserResponse = {
 		id: user.id,
@@ -98,6 +114,12 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			bsky: user.bsky,
 			twitter: null, // deprecated field
 		},
+		currentRank: skill?.tier
+			? {
+					season,
+					tier: skill.tier,
+				}
+			: null,
 		peakXp:
 			user.xRankPlacements.length > 0
 				? user.xRankPlacements.reduce((acc, cur) => {
@@ -115,6 +137,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			count: badge.count,
 			gifUrl: `https://sendou.ink/static-assets/badges/${badge.code}.gif`,
 			imageUrl: `https://sendou.ink/static-assets/badges/${badge.code}.png`,
+		})),
+		teams: user.teams.map((team) => ({
+			id: team.id,
+			role: team.role,
 		})),
 	};
 

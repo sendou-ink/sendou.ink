@@ -24,7 +24,6 @@ import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
-import { isDefined } from "~/utils/arrays";
 import {
 	databaseTimestampToDate,
 	getDateAtNextFullHour,
@@ -33,7 +32,8 @@ import {
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { pathnameFromPotentialURL } from "~/utils/strings";
-import { CREATING_TOURNAMENT_DOC_LINK, userSubmittedImage } from "~/utils/urls";
+import { CREATING_TOURNAMENT_DOC_LINK } from "~/utils/urls";
+import { userSubmittedImage } from "~/utils/urls-img";
 import {
 	CALENDAR_EVENT,
 	REG_CLOSES_AT_OPTIONS,
@@ -83,7 +83,7 @@ export default function CalendarNewEventPage() {
 	const isTournamentAdder = useHasRole("TOURNAMENT_ADDER");
 	const data = useLoaderData<typeof loader>();
 
-	if (!isCalendarEventAdder) {
+	if (!data.eventToEdit && !isCalendarEventAdder) {
 		return (
 			<Main className="stack items-center">
 				<Alert variation="WARNING">
@@ -93,7 +93,7 @@ export default function CalendarNewEventPage() {
 		);
 	}
 
-	if (data.isAddingTournament && !isTournamentAdder) {
+	if (!data.eventToEdit && data.isAddingTournament && !isTournamentAdder) {
 		return (
 			<Main className="stack items-center">
 				<Alert variation="WARNING">
@@ -302,10 +302,12 @@ function NameInput() {
 			</Label>
 			<input
 				name="name"
+				id="name"
 				required
 				minLength={CALENDAR_EVENT.NAME_MIN_LENGTH}
 				maxLength={CALENDAR_EVENT.NAME_MAX_LENGTH}
 				defaultValue={eventToEdit?.name}
+				data-testid="calendar-event-name-input"
 			/>
 		</div>
 	);
@@ -459,7 +461,7 @@ function DatesInput({ allowMultiDate }: { allowMultiDate?: boolean }) {
 			// .reverse() is mutating, but map/filter returns a new array anyway.
 			const lastValidDate = current
 				.map((e) => e.date)
-				.filter(isDefined)
+				.filter((date) => date !== null)
 				.reverse()[0];
 
 			const addedDate = lastValidDate
