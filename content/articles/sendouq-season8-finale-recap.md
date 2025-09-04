@@ -79,9 +79,9 @@ In the other round, we had FTWin vs ezmd. Ezmd had a very tough match ahead of t
 In the grand finals, FTWin opened strong against La Vacca on Urchin Underpass. They took the first game and were hoping to build momentum into this set. La Vacca counter-picked Lemuria Hub and spelled doom for FTWin for the rest of the set. The set ended 4-1 in favor of La Vacca and was a stark difference from their match-up in the group stage, where their set was close. FTWin failed to secure the top spot, but had an amazing showing in this event. As for La Vacca, they continue to showcase why this core of players is the best in the West. [Yu\_liter](https://sendou.ink/u/yu) secures the three-peat, being the first player to ever win three consecutive SendouQ Season Finales. Yu is not the only repeat winner. [Jordan](https://sendou.ink/u/855150114238234645) has won two consecutive SendouQ Season Finales, and [Gos](https://sendou.ink/gosgosu) secures his third SendouQ Season Finale title, tied with Yu.
 
 ### Final Standings  
-Voie Lactée—1st Place  
+La Vacca—1st Place  
 FTWin—2nd Place  
-La Vacca—3rd Place  
+Voie Lactée—3rd Place  
 ezmd—3rd Place  
 6am—5th Place  
 Hypernova—5th Place  
