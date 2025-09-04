@@ -73,8 +73,9 @@ export const PATREON_HOW_TO_CONNECT_DISCORD_URL =
 export const SENDOU_INK_GITHUB_URL = 'https://github.com/sendou-ink/sendou.ink';
 // export const GITHUB_CONTRIBUTORS_URL =
 // 	"https://github.com/sendou-ink/sendou.ink/graphs/contributors";
-// export const ipLabsMaps = (pool: string) =>
-// 	`https://maps.iplabs.ink/?3&pool=${pool}`;
+export function ipLabsMaps(pool: string) {
+	return `https://maps.iplabs.ink/?3&pool=${pool}`;
+}
 // export const SPLATOON_3_INK = "https://splatoon3.ink/";
 // export const RHODESMAS_FREESOUND_PROFILE_URL =
 // 	"https://freesound.org/people/rhodesmas/";

@@ -1,4 +1,3 @@
-import type { ZodType } from 'zod/v4';
 import { z } from 'zod/v4';
 import { SHORT_NANOID_LENGTH } from './id';
 import type { Unpacked } from './types';
@@ -91,7 +90,7 @@ export const ability = z.enum([
 // keep in-game-lists and the zod enum in sync
 assertType<z.infer<typeof ability>, Unpacked<typeof abilitiesShort>>();
 
-export const weaponSplId = z.preprocess(actualNumber, numericEnum(mainWeaponIds));
+export const weaponSplId = z.preprocess(actualNumber, z.literal(mainWeaponIds));
 
 export const qWeapon = z.object({
 	weaponSplId,
@@ -103,7 +102,21 @@ export const modeShortWithSpecial = z.enum(['TW', 'SZ', 'TC', 'RM', 'CB', 'SR', 
 
 export const gamesShortSchema = z.enum(['S1', 'S2', 'S3']);
 
-export const stageId = z.preprocess(actualNumber, numericEnum(stageIds));
+export const stageId = z.literal(stageIds);
+
+export function partialMapPoolSchema({
+	maxCount,
+	minCount
+}: { maxCount?: number; minCount?: number } = {}) {
+	return z.partialRecord(
+		modeShort,
+		z
+			.array(stageId)
+			.refine((items) => new Set(items).size === items.length)
+			.min(minCount ?? 0)
+			.max(maxCount ?? stageIds.length)
+	);
+}
 
 export function processMany(...processFuncs: Array<(value: unknown) => unknown>) {
 	return (value: unknown) => {
@@ -300,20 +313,6 @@ export function deduplicate(value: unknown) {
 	}
 
 	return value;
-}
-
-// https://github.com/colinhacks/zod/issues/1118#issuecomment-1235065111
-export function numericEnum<TValues extends readonly number[]>(values: TValues) {
-	return z.number().superRefine((val, ctx) => {
-		if (!values.includes(val)) {
-			ctx.addIssue({
-				code: z.ZodIssueCode.invalid_value,
-				input: val,
-				values: [...values],
-				message: `Expected one of: ${values.join(', ')}, received ${val}`
-			});
-		}
-	}) as ZodType<TValues[number]>;
 }
 
 export const dayMonthYear = z.object({

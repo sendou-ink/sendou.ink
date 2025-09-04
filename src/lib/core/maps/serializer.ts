@@ -1,12 +1,10 @@
 import { modesShort } from '$lib/constants/in-game/modes';
 import { stageIds } from '$lib/constants/in-game/stage-ids';
-import type { ModeShort, StageId } from '$lib/constants/in-game/types';
+import type { StageId } from '$lib/constants/in-game/types';
+import type { MapPool } from '$lib/core/maps/MapPool';
 import invariant from '$lib/utils/invariant';
 
-export type MapPoolObject = Record<ModeShort, StageId[]>;
-export type ReadonlyMapPoolObject = Readonly<Record<ModeShort, readonly StageId[]>>;
-
-export function mapPoolToSerializedString(mapPool: ReadonlyMapPoolObject): string {
+export function mapPoolToSerializedString(mapPool: MapPool): string {
 	const serializedModes = [];
 
 	for (const mode of modesShort) {
@@ -37,8 +35,8 @@ function binaryToHex(binary: string) {
 	return Number.parseInt(binary, 2).toString(16);
 }
 
-export function serializedStringToMapPool(serialized: string): ReadonlyMapPoolObject {
-	const result: MapPoolObject = {
+export function serializedStringToMapPool(serialized: string): MapPool {
+	const result: MapPool = {
 		SZ: [],
 		CB: [],
 		RM: [],

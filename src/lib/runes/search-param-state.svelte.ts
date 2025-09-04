@@ -12,7 +12,6 @@ interface GotoOptions {
 	invalidate?: (string | URL | ((url: URL) => boolean))[] | undefined;
 }
 
-// xxx: add encoding (option to JSON.stringify)
 // xxx: add option for the back button to navigate to the previous path
 // 		instead of going through the search param changes
 
@@ -21,7 +20,7 @@ interface GotoOptions {
  * @template S Zod schema type for the state
  */
 export class SearchParamState<S extends z4.$ZodType<unknown>> {
-	private internalState = $state<z.infer<S>>();
+	private internalState = $state<z.output<S>>();
 	private defaultValue: z.infer<S>;
 	private key: string;
 	private schema: S;
@@ -87,33 +86,25 @@ export class SearchParamState<S extends z4.$ZodType<unknown>> {
 	 *
 	 * @param newValues The new state value to set.
 	 */
-	update(newValues: z.infer<S>) {
+	update(newValues: z.output<S>) {
 		this.internalState = newValues;
 
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity
 		const newParams = new URLSearchParams(page.url.searchParams);
 
-		newParams.set(this.key, typeof newValues === 'string' ? newValues : JSON.stringify(newValues));
+		// not safeEncode because we should be able to trust the value we encode unlike decoding
+		const encoded = z.encode(this.schema, newValues);
+		newParams.set(this.key, encoded as string); // xxx: can we constrain the value?
 
 		goto(`?${newParams.toString()}`, this.options);
 	}
 
 	private updateStateFromParams(params: URLSearchParams) {
 		const rawValue = params.get(this.key);
-		let valueToValidate: unknown = rawValue;
+		const decoded = z.safeDecode(this.schema, rawValue as any);
 
-		if (rawValue) {
-			try {
-				valueToValidate = JSON.parse(rawValue);
-			} catch {
-				valueToValidate = rawValue;
-			}
-		}
-
-		const parsed = z.safeParse(this.schema, valueToValidate);
-
-		if (parsed.success) {
-			this.internalState = parsed.data;
+		if (decoded.success) {
+			this.internalState = decoded.data;
 		} else {
 			this.internalState = this.defaultValue;
 		}

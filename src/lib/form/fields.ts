@@ -17,9 +17,8 @@ import type {
 	FormFieldSelect
 } from './types';
 import { m } from '$lib/paraglide/messages';
-import { modeShort, stageId, webUrl } from '$lib/utils/zod';
+import { partialMapPoolSchema, webUrl } from '$lib/utils/zod';
 import * as R from 'remeda';
-import { stageIds } from '$lib/constants/in-game/stage-ids';
 import * as MapPool from '$lib/core/maps/MapPool';
 import invariant from '$lib/utils/invariant';
 
@@ -294,17 +293,7 @@ export function mapPool(
 	args: Omit<Extract<FormField, { type: 'map-pool' }>, 'type' | 'initialValue'>
 ) {
 	return z
-		.preprocess(
-			safeJSONParse,
-			z.partialRecord(
-				modeShort,
-				z
-					.array(stageId)
-					.refine((items) => new Set(items).size === items.length)
-					.min(1)
-					.max(args.maxCount ?? stageIds.length)
-			)
-		)
+		.preprocess(safeJSONParse, partialMapPoolSchema({ ...args, minCount: 1 }))
 		.refine(
 			(mapPool) => {
 				if (!args.minCount) return true;

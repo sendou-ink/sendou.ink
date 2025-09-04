@@ -191,6 +191,11 @@
 		font-size: var(--fonts-md);
 		padding-block: var(--s-2-5);
 		padding-inline: var(--s-6);
+
+		& > .button-icon {
+			width: 1.5rem;
+			margin-inline-end: var(--s-2);
+		}
 	}
 
 	.minimal {

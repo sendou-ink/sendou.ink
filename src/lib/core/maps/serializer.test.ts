@@ -1,9 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import {
-	mapPoolToSerializedString,
-	serializedStringToMapPool,
-	type MapPoolObject
-} from './serializer';
+import { mapPoolToSerializedString, serializedStringToMapPool } from './serializer';
+import type { MapPool } from './MapPool';
 
 const testSerializedPool = 'tw:3330000;sz:3a14000;tc:2c98000;rm:2bc0000;cb:39c0000';
 
@@ -22,7 +19,7 @@ describe('Map pool serializer', () => {
 	});
 
 	test('Matching serialization with IPLMapGen2', () => {
-		const testMapPool: MapPoolObject = {
+		const testMapPool: MapPool = {
 			// Gorge, Spillway, Mincemeat, Mahi-Mahi, Inkblot
 			TW: [0, 3, 4, 7, 8],
 			// Gorge, Eeltail, Spillway, Inkblot, MakoMart
@@ -39,7 +36,7 @@ describe('Map pool serializer', () => {
 	});
 
 	test('Omits key if mode has no maps', () => {
-		const testPoolWithoutTw: MapPoolObject = {
+		const testPoolWithoutTw: MapPool = {
 			CB: [1, 2],
 			RM: [1, 8],
 			TC: [8, 4],
@@ -53,7 +50,7 @@ describe('Map pool serializer', () => {
 	});
 
 	test('Returns empty string if no maps', () => {
-		const testPoolWithoutTw: MapPoolObject = {
+		const testPoolWithoutTw: MapPool = {
 			CB: [],
 			RM: [],
 			TC: [],
@@ -67,7 +64,7 @@ describe('Map pool serializer', () => {
 	});
 
 	test('Value of two modes is the same with same maps', () => {
-		const testPoolWithDuplicateMaps: MapPoolObject = {
+		const testPoolWithDuplicateMaps: MapPool = {
 			CB: [1, 2],
 			RM: [1, 2],
 			TC: [],

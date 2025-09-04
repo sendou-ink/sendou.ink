@@ -25,6 +25,7 @@
 	import ModeMapPoolPicker from '$lib/components/ModeMapPoolPicker.svelte';
 	import { confirmAction } from '$lib/utils/form';
 	import * as MapPool from '$lib/core/maps/MapPool';
+	import ListOrdered from '@lucide/svelte/icons/list-ordered';
 
 	const { params } = $props();
 
@@ -219,6 +220,16 @@
 				<ModeMapPoolPicker {mode} {pool} presentational />
 			{/if}
 		{/each}
+		{#if event.mapPool}
+			<Button
+				href={resolve('/maps') + `?pool=${MapPool.toSerialized(event.mapPool)}`}
+				icon={ListOrdered}
+				class="mx-auto"
+				size="small"
+			>
+				{m.common_maps_createMapList()}
+			</Button>
+		{/if}
 	</div>
 {/snippet}
 
