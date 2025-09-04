@@ -4,15 +4,18 @@
 		AbilityWithUnknown,
 		MainWeaponId
 	} from '$lib/constants/in-game/types';
-	import type { SpecialEffectType } from '$lib/core/analyzer/types';
+	import type { SpecialEffectType, AnalyzedBuild, Stat } from '$lib/core/analyzer/types';
 	import { asset } from '$app/paths';
 	import { m } from '$lib/paraglide/messages';
 	import {
 		SPECIAL_EFFECTS_SHORT,
+		applySpecialEffects,
 		lastDitchEffortIntensityToAp
 	} from '$lib/core/analyzer/specialEffects';
 	import { EMPTY_BUILD } from '$lib/constants/build';
 	import { MAX_LDE_INTENSITY } from '$lib/constants/analyzer';
+	import { buildStats } from '$lib/core/analyzer/stats';
+	import { buildIsEmpty, buildToAbilityPoints } from '$lib/core/analyzer/utils';
 	import { SearchParamState } from '$lib/runes/search-param-state.svelte';
 	import z from 'zod';
 	import Main from '$lib/components/layout/Main.svelte';
@@ -22,6 +25,8 @@
 	import AbilityBuilder from '../../lib/components/builder/AbilityBuilder.svelte';
 	import Switch from '$lib/components/Switch.svelte';
 	import Select from '$lib/components/Select.svelte';
+	import StatsCategory from './StatsCategory.svelte';
+	import StatsCard from './StatsCard.svelte';
 
 	const ABILITY_SCHEMA = z.string() as z.ZodType<AbilityWithUnknown>;
 	const GEAR_SLOTS_SCHEMA = z.tuple([
@@ -41,6 +46,8 @@
 			TACTICOOLER: z.boolean()
 		})
 		.partial();
+
+	let tab = $state('buildA');
 
 	const weapon = new SearchParamState({
 		key: 'weapon',
@@ -72,8 +79,6 @@
 		schema: EFFECTS_SCHEMA
 	});
 
-	let tab = $state('buildA');
-
 	const togglesToShow = $derived.by(() => {
 		if (tab === 'buildA') {
 			return buildA.state.flatMap((gearPiece) =>
@@ -88,6 +93,55 @@
 		}
 	});
 
+	const { analyzed: analyzedA, abilityPoints: abilityPointsA } = $derived(
+		analyzeBuild(buildA.state, effectsA.state)
+	);
+	const { analyzed: analyzedB, abilityPoints: abilityPointsB } = $derived(
+		analyzeBuild(buildB.state, effectsB.state)
+	);
+
+	const context = $derived({
+		isComparing: !buildIsEmpty(buildB.state) && !buildIsEmpty(buildA.state),
+		mainWeaponId: weapon.state,
+		abilityPoints: abilityPointsA
+	});
+
+	function analyzeBuild(
+		build: BuildAbilitiesTupleWithUnknown,
+		effects: Record<string, boolean | number>
+	) {
+		const buildAbilityPoints = buildToAbilityPoints(build);
+		const effectsToArray = Object.entries(effects)
+			.filter(([_, value]) => value)
+			.map(([key]) => key as SpecialEffectType);
+
+		const abilityPoints = applySpecialEffects({
+			abilityPoints: buildAbilityPoints,
+			effects: effectsToArray,
+			ldeIntensity: effectsA.state.LDE || 0
+		});
+
+		const analyzed = buildStats({
+			abilityPoints,
+			weaponSplId: weapon.state,
+			mainOnlyAbilities: buildA.state
+				.map((row) => row[0])
+				.filter((ability) => ability !== 'UNKNOWN'),
+			hasTacticooler: effectsA.state.TACTICOOLER || false
+		});
+
+		return { analyzed, abilityPoints };
+	}
+
+	function statKeyToTuple(key: keyof AnalyzedBuild['stats']) {
+		return [analyzedA.stats[key], analyzedB.stats[key], key] as [
+			Stat,
+			Stat,
+			keyof AnalyzedBuild['stats']
+		];
+	}
+
+	// xxx: use bind for builds instead
 	function syncBuildWithUrl(abilities: BuildAbilitiesTupleWithUnknown, primary: boolean) {
 		if (primary) {
 			buildA.update(abilities);
@@ -207,7 +261,11 @@
 				{/if}
 			</div>
 		</div>
-		<div class="stack md"></div>
+		<div class="stack md">
+			<StatsCategory title="Test">
+				<StatsCard title="Test" stat="Test" {context} popoverInfo="a" />
+			</StatsCategory>
+		</div>
 	</div>
 </Main>
 
