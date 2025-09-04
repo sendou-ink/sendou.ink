@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import * as VodRepository from "../VodRepository.server";
+import { findVods } from "../queries/findVods.server";
 import { VODS_PAGE_BATCH_SIZE } from "../vods-constants";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -7,7 +7,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	const limit = Number(url.searchParams.get("limit") ?? VODS_PAGE_BATCH_SIZE);
 
-	const vods = await VodRepository.findVods({
+	const vods = findVods({
 		...Object.fromEntries(
 			Array.from(url.searchParams.entries()).filter(([, value]) => value),
 		),

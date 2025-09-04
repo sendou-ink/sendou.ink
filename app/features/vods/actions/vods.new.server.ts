@@ -4,7 +4,8 @@ import { requireUser } from "~/features/auth/core/user.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { notFoundIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { vodVideoPage } from "~/utils/urls";
-import * as VodRepository from "../VodRepository.server";
+import { createVod, updateVodByReplacing } from "../queries/createVod.server";
+import { findVodById } from "../queries/findVodById.server";
 import { videoInputSchema } from "../vods-schemas";
 import { canEditVideo } from "../vods-utils";
 
@@ -19,9 +20,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 	let video: Tables["Video"];
 	if (data.vodToEditId) {
-		const vod = notFoundIfFalsy(
-			await VodRepository.findVodById(data.vodToEditId),
-		);
+		const vod = notFoundIfFalsy(findVodById(data.vodToEditId));
 
 		if (
 			!canEditVideo({
@@ -33,14 +32,14 @@ export const action: ActionFunction = async ({ request }) => {
 			throw new Response("no permissions to edit this vod", { status: 401 });
 		}
 
-		video = await VodRepository.updateVodByReplacing({
+		video = updateVodByReplacing({
 			...data.video,
 			submitterUserId: user.id,
 			isValidated: true,
 			id: data.vodToEditId,
 		});
 	} else {
-		video = await VodRepository.createVod({
+		video = createVod({
 			...data.video,
 			submitterUserId: user.id,
 			isValidated: true,
