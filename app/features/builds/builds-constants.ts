@@ -6,6 +6,10 @@ export const FILTER_SEARCH_PARAM_KEY = "f";
 
 export const PATCHES = [
 	{
+		patch: "10.1.0",
+		date: "2025-09-03",
+	},
+	{
 		patch: "10.0.0",
 		date: "2025-06-12",
 	},
@@ -13,10 +17,10 @@ export const PATCHES = [
 		patch: "9.3.0",
 		date: "2025-03-13",
 	},
-	{
-		patch: "9.2.0",
-		date: "2024-11-20",
-	},
+	// {
+	// 	patch: "9.2.0",
+	// 	date: "2024-11-20",
+	// },
 	// {
 	// 	patch: "9.0.0",
 	// 	date: "2024-08-29",
