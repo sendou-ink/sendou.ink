@@ -48,10 +48,10 @@
 			private?: Tables['Build']['private'];
 			plusTier?: number | null;
 		};
-		canEdit?: boolean;
+		showActions?: boolean;
 	}
 
-	let { build, canEdit: _canEdit = false }: BuildProps = $props();
+	let { build, showActions = false }: BuildProps = $props();
 
 	// xxx: why does the build not show updates (on build privacy change) even when this does log?
 	// $inspect(build.private);
@@ -121,11 +121,10 @@
 					{/if}
 				</div>
 			</div>
-			<!--- xxx: fix showActions -->
 			<BuildActionsMenu
 				buildId={build.id}
 				isPrivate={Boolean(build.private)}
-				showActions={!build.owner}
+				{showActions}
 				buildTitle={build.title}
 			/>
 		</div>

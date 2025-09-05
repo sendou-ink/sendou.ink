@@ -5,7 +5,7 @@
 
 	type Props = FormFieldProps<'dual-select'> & {
 		value: [string | null, string | null];
-		clearable?: boolean;
+		clearable: boolean;
 	};
 
 	let { name, bottomText, error, onblur, value = $bindable(), clearable, fields }: Props = $props();

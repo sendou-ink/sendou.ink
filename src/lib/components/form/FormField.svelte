@@ -88,11 +88,10 @@
 {:else if formField.type === 'text-area'}
 	<TextareaFormField bind:value={data.value as string} {...commonProps} {...formField} />
 {:else if formField.type === 'select'}
-	<SelectFormField bind:value={data.value as string} clearable {...commonProps} {...formField} />
+	<SelectFormField bind:value={data.value as string} {...commonProps} {...formField} />
 {:else if formField.type === 'dual-select'}
 	<DualSelectFormField
 		bind:value={data.value as [string, string]}
-		clearable
 		{...commonProps}
 		{...formField}
 	/>

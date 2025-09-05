@@ -8,6 +8,8 @@ import type { Unwrapped } from '$lib/utils/types';
 import type * as CalendarAPI from '$lib/api/calendar';
 import * as MapPool from '$lib/core/maps/MapPool';
 import { userSelectableTags } from '$lib/constants/calendar';
+import { dateToDatabaseTimestamp } from '$lib/utils/dates';
+import type { SchemaToFunctionInput } from '$lib/server/remote-functions';
 
 // TODO: convert from raw to using the "exists" function
 const hasBadge = sql<number> /* sql */ `exists (
@@ -422,6 +424,76 @@ export async function update(args: CalendarAPI.schemas.NewCalendarEventData & { 
 			mapPool: args.mapPool ?? [],
 			column: 'calendarEventId'
 		});
+	});
+}
+
+// xxx: handle tournamentToCopyId (templates)
+export async function createTournament(
+	args: SchemaToFunctionInput<CalendarAPI.schemas.NewTournamentData> & {
+		userId: number;
+		parentTournamentId?: number;
+	}
+) {
+	return db.transaction().execute(async (trx) => {
+		const settings: Tables['Tournament']['settings'] = {
+			bracketProgression: null as any, // xxx: add bracket progression
+			isRanked: args.isRanked,
+			isTest: args.isTest,
+			deadlines: args.strictDeadlines ? 'STRICT' : 'DEFAULT',
+			isInvitational: args.isInvitational,
+			enableSubs: !args.disableSubsTab,
+			autonomousSubs: args.autonomousSubs,
+			regClosesAt: args.regClosesAt ? dateToDatabaseTimestamp(args.regClosesAt) : undefined,
+			requireInGameNames: args.requireInGameNames,
+			minMembersPerTeam: {
+				'4v4': 4,
+				'3v3': 3,
+				'2v2': 2,
+				'1v1': 1
+			}[args.minMembersPerTeam]
+		};
+
+		const tournamentId = (
+			await trx
+				.insertInto('Tournament')
+				.values({
+					mapPickingStyle: args.mapPickingStyle,
+					settings: JSON.stringify(settings),
+					parentTournamentId: args.parentTournamentId,
+					rules: args.rules
+				})
+				.returning('id')
+				.executeTakeFirstOrThrow()
+		).id;
+
+		const { id: eventId } = await trx
+			.insertInto('CalendarEvent')
+			.values({
+				name: args.name,
+				authorId: args.userId,
+				tags: serializeTags(args.tags),
+				description: args.description,
+				discordInviteCode: args.discordInviteCode,
+				bracketUrl: 'https://sendou.ink',
+				organizationId: args.organization,
+				hidden: Boolean(args.parentTournamentId || args.isTest),
+				avatarImgId: args.logo,
+				tournamentId
+			})
+			.returning('id')
+			.executeTakeFirstOrThrow();
+
+		await createDatesInTrx({ eventId, startTimes: [args.startsAt], trx });
+		await createBadgesInTrx({ eventId, badges: args.badges, trx });
+
+		await upsertMapPoolInTrx({
+			trx,
+			eventId,
+			mapPool: args.mapPool ?? [],
+			column: args.mapPickingStyle === 'TO' ? 'calendarEventId' : 'tieBreakerCalendarEventId'
+		});
+
+		return tournamentId;
 	});
 }
 

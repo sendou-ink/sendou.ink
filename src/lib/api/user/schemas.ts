@@ -1,5 +1,5 @@
 import { m } from '$lib/paraglide/messages';
-import { id } from '$lib/schemas';
+import { id } from '$lib/utils/zod';
 import z from 'zod';
 import * as Fields from '$lib/form/fields';
 import { COUNTRY_CODES } from '$lib/constants/common';

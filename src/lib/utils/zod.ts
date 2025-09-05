@@ -90,12 +90,7 @@ export const ability = z.enum([
 // keep in-game-lists and the zod enum in sync
 assertType<z.infer<typeof ability>, Unpacked<typeof abilitiesShort>>();
 
-export const weaponSplId = z.preprocess(actualNumber, z.literal(mainWeaponIds));
-
-export const qWeapon = z.object({
-	weaponSplId,
-	isFavorite: z.union([z.literal(0), z.literal(1)])
-});
+export const weaponSplId = z.literal(mainWeaponIds);
 
 export const modeShort = z.enum(['TW', 'SZ', 'TC', 'RM', 'CB']);
 export const modeShortWithSpecial = z.enum(['TW', 'SZ', 'TC', 'RM', 'CB', 'SR', 'TB']);

@@ -12,7 +12,7 @@ import { requireUser } from '$lib/server/auth/session';
 import z from 'zod';
 import { TEAM, TEAM_MEMBER_ROLES } from '$lib/constants/team';
 import { resolveNewOwner } from '$lib/core/team';
-import { id } from '$lib/schemas';
+import { id } from '$lib/utils/zod';
 import * as TeamMemberRepository from '$lib/server/db/repositories/team-member';
 
 export const create = validatedForm(createTeamSchema, async (data, user) => {

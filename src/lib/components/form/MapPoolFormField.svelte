@@ -17,6 +17,7 @@
 
 	let {
 		modes = [...modesShort],
+		minCount,
 		maxCount,
 		disableBannedMaps,
 		name,
@@ -29,7 +30,7 @@
 </script>
 
 <div class="stack xs">
-	<Label for={id}>
+	<Label for={id} required={Boolean(minCount)}>
 		{label}
 	</Label>
 	<div class="stack lg">

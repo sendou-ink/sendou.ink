@@ -2,7 +2,7 @@ import * as BuildRepository from '$lib/server/db/repositories/build';
 import { z } from 'zod/v4';
 import { requirePermissionsToManageBuild } from './utils';
 import { command } from '$app/server';
-import { id } from '$lib/schemas';
+import { id } from '$lib/utils/zod';
 import * as UserRepository from '$lib/server/db/repositories/user';
 import invariant from '$lib/utils/invariant';
 import { byUserIdentifier } from './queries.remote';

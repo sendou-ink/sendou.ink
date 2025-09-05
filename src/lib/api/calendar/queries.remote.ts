@@ -2,7 +2,7 @@ import { resolve } from '$app/paths';
 import { query } from '$app/server';
 import type { NewCalendarEventData, NewTournamentData } from '$lib/api/calendar/schemas';
 import { requirePermission } from '$lib/modules/permissions/guards.server';
-import { id } from '$lib/schemas';
+import { id } from '$lib/utils/zod';
 import * as CalendarRepository from '$lib/server/db/repositories/calendar';
 import { notFoundIfFalsy, type SchemaToDefaultValues } from '$lib/server/remote-functions';
 import { redirect } from '@sveltejs/kit';

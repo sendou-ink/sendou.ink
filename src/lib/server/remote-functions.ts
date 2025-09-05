@@ -31,8 +31,6 @@ type ParaglideFunction = (
 	}
 ) => string;
 
-// xxx: handle image upload
-
 export type SchemaToFunctionInput<T> = {
 	[K in keyof T]: T[K] extends File | null | undefined
 		? number | null | undefined

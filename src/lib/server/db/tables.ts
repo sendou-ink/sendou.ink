@@ -15,6 +15,8 @@ import type {
 	Selectable,
 	Updateable
 } from 'kysely';
+import type * as PickBan from '$lib/core/tournament-match/PickBan';
+import type * as Progression from '$lib/core/tournament-bracket/Progression';
 
 // xxx: actual values
 export type AssociationVisibility = any;
@@ -424,8 +426,7 @@ export interface TaggedArt {
 export type TournamentMapPickingStyle = (typeof TOURNAMENT_MAP_PICKING_STYLES)[number];
 
 export interface TournamentSettings {
-	// bracketProgression: Progression.ParsedBracket[];
-	bracketProgression: any; // xxx: fix this
+	bracketProgression: Progression.ParsedBracket[];
 	/** @deprecated use bracketProgression instead */
 	teamsPerGroup?: number;
 	/** @deprecated use bracketProgression instead */
@@ -585,9 +586,7 @@ export interface TournamentRoundMaps {
 	list?: Array<{ mode: ModeShort; stageId: StageId }> | null;
 	count: number;
 	type: 'BEST_OF' | 'PLAY_ALL';
-	// pickBan?: PickBan.Type | null;
-	// xxx: fix this
-	pickBan?: any | null;
+	pickBan?: PickBan.Type | null;
 }
 
 /**
@@ -671,7 +670,7 @@ export interface TournamentTeam {
 }
 
 export interface TournamentTeamCheckIn {
-	checkedInAt: number;
+	checkedInAt: Date;
 	/** Which bracket checked in for. If missing is check in for the whole event. */
 	bracketIdx: number | null;
 	tournamentTeamId: number;

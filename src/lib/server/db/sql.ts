@@ -18,7 +18,8 @@ const LOG_LEVEL = (['trunc', 'full', 'none'] as const).find((val) => val === pro
 
 invariant(process.env.DB_PATH, 'DB_PATH env variable must be set');
 
-const sql = new DatabaseSync(process.env.DB_PATH);
+// TODO: in the future this should not be exported and everything should go through `db`
+export const sql = new DatabaseSync(process.env.DB_PATH);
 
 sql.exec('PRAGMA journal_mode = WAL');
 sql.exec('PRAGMA foreign_keys = ON');

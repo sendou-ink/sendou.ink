@@ -36,7 +36,7 @@
 </script>
 
 <div class="stack xs">
-	<Label for={id}>
+	<Label for={id} required={!clearable}>
 		{label}
 	</Label>
 	<Select

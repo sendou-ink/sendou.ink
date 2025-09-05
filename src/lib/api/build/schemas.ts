@@ -1,6 +1,6 @@
 import { z } from 'zod/v4';
 import { ability, modeShort, safeJSONParse } from '$lib/utils/zod';
-import { weaponSplId } from '$lib/schemas';
+import { weaponSplId } from '$lib/utils/zod';
 import type { MainWeaponId } from '$lib/constants/in-game/types';
 import { assertType } from '$lib/utils/types';
 import * as Fields from '$lib/form/fields';

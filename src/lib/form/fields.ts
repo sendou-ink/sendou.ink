@@ -5,7 +5,7 @@ import {
 	safeNullableStringSchema,
 	safeStringSchema,
 	weaponSplId
-} from '$lib/schemas';
+} from '$lib/utils/zod';
 import * as z from 'zod';
 import type {
 	FormField,
@@ -138,27 +138,29 @@ function clearableItemsSchema<V extends string>(items: FormFieldItems<V>) {
 }
 
 export function selectOptional<V extends string>(
-	args: Omit<FormFieldSelect<'select', V>, 'type' | 'initialValue'>
+	args: Omit<FormFieldSelect<'select', V>, 'type' | 'initialValue' | 'clearable'>
 ) {
 	return clearableItemsSchema(args.items).register(formRegistry, {
 		...args,
 		type: 'select',
-		initialValue: null
+		initialValue: null,
+		clearable: true
 	});
 }
 
 export function select<V extends string>(
-	args: Omit<FormFieldSelect<'select', V>, 'type' | 'initialValue'>
+	args: Omit<FormFieldSelect<'select', V>, 'type' | 'initialValue' | 'clearable'>
 ) {
 	return itemsSchema(args.items).register(formRegistry, {
 		...args,
 		type: 'select',
-		initialValue: args.items[0].value
+		initialValue: args.items[0].value,
+		clearable: false
 	});
 }
 
 export function multiSelectOptional<V extends string>(
-	args: Omit<FormFieldSelect<'multi-select', V>, 'type' | 'initialValue'>
+	args: Omit<FormFieldSelect<'multi-select', V>, 'type' | 'initialValue' | 'clearable'>
 ) {
 	return z
 		.preprocess(
@@ -174,12 +176,13 @@ export function multiSelectOptional<V extends string>(
 		.register(formRegistry, {
 			...args,
 			type: 'multi-select',
-			initialValue: []
+			initialValue: [],
+			clearable: true
 		});
 }
 
 export function dualSelectOptional<V extends string>(
-	args: Omit<FormFieldDualSelect<'dual-select', V>, 'type' | 'initialValue'>
+	args: Omit<FormFieldDualSelect<'dual-select', V>, 'type' | 'initialValue' | 'clearable'>
 ) {
 	let schema = z.preprocess(
 		safeJSONParse,
@@ -208,7 +211,8 @@ export function dualSelectOptional<V extends string>(
 	// @ts-expect-error TODO: not sure why TS doesn't like this
 	return schema.register(formRegistry, {
 		...args,
-		type: 'dual-select'
+		type: 'dual-select',
+		clearable: true
 	});
 }
 

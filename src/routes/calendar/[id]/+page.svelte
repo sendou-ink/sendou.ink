@@ -211,7 +211,6 @@
 		</Table>
 	</div>{/snippet}
 
-<!-- xxx: generate map list link -->
 {#snippet mapPool()}
 	<div class="stack lg">
 		{#each modesShort as mode (mode)}

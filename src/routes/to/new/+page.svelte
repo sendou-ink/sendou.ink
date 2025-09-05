@@ -8,12 +8,12 @@
 	import SelectFormField from '$lib/components/form/SelectFormField.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { validatedSearchParam } from '$lib/utils/sveltekit';
-	import { id } from '$lib/schemas';
 	import EventBadgeField from '../../calendar/new/EventBadgeField.svelte';
 	import * as AuthAPI from '$lib/api/auth';
 	import Alert from '$lib/components/Alert.svelte';
 	import Divider from '$lib/components/Divider.svelte';
 	import { TOURNAMENT_MAP_PICKING_STYLES } from '$lib/constants/calendar';
+	import { id } from '$lib/utils/zod';
 
 	const tournamentIdToEdit = validatedSearchParam(id, 'id');
 

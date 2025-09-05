@@ -8,10 +8,10 @@
 	import SelectFormField from '$lib/components/form/SelectFormField.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { validatedSearchParam } from '$lib/utils/sveltekit';
-	import { id } from '$lib/schemas';
 	import EventBadgeField from './EventBadgeField.svelte';
 	import * as AuthAPI from '$lib/api/auth';
 	import Alert from '$lib/components/Alert.svelte';
+	import { id } from '$lib/utils/zod';
 
 	const eventIdToEdit = validatedSearchParam(id, 'id');
 

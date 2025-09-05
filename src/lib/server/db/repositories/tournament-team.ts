@@ -211,7 +211,7 @@ export function copyFromAnotherTournament({
 			await trx
 				.insertInto('TournamentTeamCheckIn')
 				.values({
-					checkedInAt: databaseTimestampNow(),
+					checkedInAt: new Date(),
 					tournamentTeamId: newTeam.id,
 					bracketIdx: null
 				})

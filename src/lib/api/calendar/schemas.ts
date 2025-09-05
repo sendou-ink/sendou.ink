@@ -7,7 +7,7 @@ import {
 	calendarEventTagTranslations,
 	tournamentMapPickingStylesTranslations
 } from '$lib/utils/i18n';
-import { id } from '$lib/schemas';
+import { id } from '$lib/utils/zod';
 import { add } from 'date-fns';
 import { modesShort, rankedModesShort } from '$lib/constants/in-game/modes';
 

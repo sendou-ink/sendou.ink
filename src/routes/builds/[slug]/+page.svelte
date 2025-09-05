@@ -149,7 +149,7 @@
 
 	<div class="builds-container">
 		{#each builds as build (build.id)}
-			<BuildCard {build} canEdit={false} />
+			<BuildCard {build} />
 		{/each}
 	</div>
 	{#if hasMore}

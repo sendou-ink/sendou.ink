@@ -47,11 +47,12 @@ export type FormFieldItemsWithImage<V extends string> = Array<FormFieldItemWithI
 
 export interface FormFieldSelect<T extends string, V extends string> extends FormFieldBase<T> {
 	items: FormFieldItems<V>;
+	clearable: boolean;
 }
 
 type FormFieldDualSelectField<T extends string, V extends string> = Omit<
 	FormFieldSelect<T, V>,
-	'bottomText' | 'type'
+	'bottomText' | 'type' | 'clearable'
 >;
 export interface FormFieldDualSelect<T extends string, V extends string>
 	extends Omit<FormFieldBase<T>, 'label'> {
@@ -63,6 +64,7 @@ export interface FormFieldDualSelect<T extends string, V extends string>
 		func: (value: [V | null, V | null]) => boolean;
 		message: string;
 	};
+	clearable: boolean;
 }
 
 export interface FormFieldInputGroup<T extends string, V extends string> extends FormFieldBase<T> {
