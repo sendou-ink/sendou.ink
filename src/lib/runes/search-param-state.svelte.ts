@@ -23,6 +23,8 @@ export class SearchParamState<S extends z4.$ZodType<unknown>> {
 	private internalState = $state<z.output<S>>();
 	private defaultValue: z.infer<S>;
 	private key: string;
+	/** @link https://zod.dev/codecs */
+	private isCodec: boolean;
 	private schema: S;
 	private options: GotoOptions = {
 		replaceState: false,
@@ -32,12 +34,12 @@ export class SearchParamState<S extends z4.$ZodType<unknown>> {
 	};
 
 	/**
-	 * Creates a state that is synchronized with a URL search parameter.
+	 * Creates a state that is synchronized with a URL search parameter. Default serialization is JSON.stringify (except for strings), but this can be customized via a Zod codec
 	 *
 	 * @param args Configuration options.
 	 * @param args.key The name of the search parameter.
 	 * @param args.defaultValue Default value to use when parameter is missing or invalid.
-	 * @param args.schema Zod schema to validate the parameter.
+	 * @param args.schema Zod schema to validate the parameter. Can be either a codec or a normal schema.
 	 * @param args.options Navigation options.
 	 *
 	 * @example
@@ -61,6 +63,8 @@ export class SearchParamState<S extends z4.$ZodType<unknown>> {
 		this.options = { ...this.options, ...args.options };
 		this.schema = args.schema;
 		this.defaultValue = args.defaultValue;
+		/** @ts-expect-error TODO: figure out the correct type */
+		this.isCodec = Boolean(args.schema.def.reverseTransform);
 
 		this.updateStateFromParams(page.url.searchParams);
 
@@ -92,21 +96,48 @@ export class SearchParamState<S extends z4.$ZodType<unknown>> {
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity
 		const newParams = new URLSearchParams(page.url.searchParams);
 
-		// not safeEncode because we should be able to trust the value we encode unlike decoding
-		const encoded = z.encode(this.schema, newValues);
+		const encoded = this.isCodec
+			? // not safeEncode because we should be able to trust the value we encode unlike decoding
+				z.encode(this.schema, newValues)
+			: typeof newValues === 'string'
+				? // no need to encode, it's already a string
+					newValues
+				: // default to JSON.stringify if no other way of encoding specified as a codec
+					JSON.stringify(newValues);
 		newParams.set(this.key, encoded as string); // xxx: can we constrain the value?
 
+		// eslint-disable-next-line svelte/no-navigation-without-resolve
 		goto(`?${newParams.toString()}`, this.options);
 	}
 
 	private updateStateFromParams(params: URLSearchParams) {
 		const rawValue = params.get(this.key);
-		const decoded = z.safeDecode(this.schema, rawValue as any);
+		const decoded = this.isCodec
+			? this.decodedValueViaCodec(rawValue)
+			: this.decodedValueViaNormalSchema(rawValue);
 
 		if (decoded.success) {
 			this.internalState = decoded.data;
 		} else {
 			this.internalState = this.defaultValue;
 		}
+	}
+
+	private decodedValueViaCodec(rawValue: string | null) {
+		return z.safeDecode(this.schema, rawValue as any);
+	}
+
+	private decodedValueViaNormalSchema(rawValue: string | null) {
+		let valueToValidate;
+
+		if (rawValue) {
+			try {
+				valueToValidate = JSON.parse(rawValue);
+			} catch {
+				valueToValidate = rawValue;
+			}
+		}
+
+		return z.safeParse(this.schema, valueToValidate);
 	}
 }
