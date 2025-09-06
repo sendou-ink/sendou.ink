@@ -19,7 +19,8 @@ import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/sqlite';
 import * as Progression from '$lib/core/tournament-bracket/Progression';
 import { Status } from '$lib/core/brackets-model';
 
-export type FindById = NonNullable<Unwrapped<typeof findById>>;
+export type TournamentData = NonNullable<Unwrapped<typeof findById>>;
+export type TournamentDataTeam = TournamentData['teams'][number];
 export async function findById(id: number) {
 	const isSetAsRanked = await db
 		.selectFrom('Tournament')

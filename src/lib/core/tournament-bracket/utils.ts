@@ -1,7 +1,7 @@
 import type { TournamentManagerDataSet } from '$lib/core/brackets-manager/types';
 import type { Standing } from '$lib/core/tournament-bracket/Bracket';
 import type { Tournament } from '$lib/core/tournament/Tournament';
-import type { TournamentDataTeam } from '$lib/core/tournament/Tournament.server';
+import type { TournamentDataTeam } from '$lib/server/db/repositories/tournament';
 import type { TournamentRoundMaps } from '$lib/server/db/tables';
 import { logger } from '$lib/utils/logger';
 import { seededRandom } from '$lib/utils/random';

@@ -9,7 +9,7 @@ import { command } from '$app/server';
 import { id } from '$lib/utils/zod';
 import { byId } from '$lib/api/calendar/queries.remote';
 import * as ShowcaseTournaments from '$lib/core/tournament/ShowcaseTournament.server';
-import { clearTournamentDataCache } from '$lib/core/tournament/Tournament.server';
+import { clearTournamentDataCache } from '../tournament/utils.server';
 
 export const upsertEvent = validatedForm(newCalendarEventSchema, async (data, user) => {
 	requireRole('CALENDAR_EVENT_ADDER');

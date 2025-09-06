@@ -1,6 +1,6 @@
 import type { ModeShort, ModeWithStage, StageId } from '$lib/constants/in-game/types';
 import { isSetOverByResults } from '$lib/core/tournament-bracket/utils';
-import type { TournamentDataTeam } from '$lib/core/tournament/Tournament.server';
+import type { TournamentDataTeam } from '$lib/server/db/repositories/tournament';
 import type { TournamentRoundMaps } from '$lib/server/db/tables';
 import invariant from '$lib/utils/invariant';
 import { logger } from '$lib/utils/logger';

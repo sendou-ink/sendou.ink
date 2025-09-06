@@ -2,7 +2,6 @@ import { sub } from 'date-fns';
 import * as R from 'remeda';
 import * as Progression from './Progression';
 import type { OptionalIdObject, Tournament } from '../tournament/Tournament';
-import type { TournamentDataTeam } from '../tournament/Tournament.server';
 import type { TournamentManagerDataSet } from '$lib/core/brackets-manager/types';
 import type { Tables, TournamentStageSettings } from '$lib/server/db/tables';
 import { logger } from '$lib/utils/logger';
@@ -14,6 +13,7 @@ import invariant from '$lib/utils/invariant';
 import { assertUnreachable } from '$lib/utils/types';
 import type { BracketMapCounts } from '$lib/core/tournament-bracket/to-map-list';
 import { cutToNDecimalPlaces } from '$lib/utils/number';
+import type { TournamentDataTeam } from '$lib/server/db/repositories/tournament';
 
 interface CreateBracketArgs {
 	id: number;

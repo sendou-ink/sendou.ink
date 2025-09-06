@@ -321,13 +321,7 @@ export async function findWithRolesById(id: number) {
 	if (!user) return;
 
 	return {
-		...R.omit(user, [
-			'isArtist',
-			'isVideoAdder',
-			'plusTier',
-			'patronTier',
-			'isTournamentOrganizer'
-		]),
+		...R.omit(user, ['isArtist', 'isVideoAdder', 'patronTier', 'isTournamentOrganizer']),
 		roles: userRoles(user)
 	};
 }

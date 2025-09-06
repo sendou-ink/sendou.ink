@@ -1,7 +1,9 @@
 import { LEAGUES, TOURNAMENT } from '$lib/constants/tournament';
-import type { TournamentManagerDataSet } from '$lib/core/brackets-manager/types';
+import type {
+	Database as BracketsManagerDatabase,
+	TournamentManagerDataSet
+} from '$lib/core/brackets-manager/types';
 import { Bracket } from '$lib/core/tournament-bracket/Bracket';
-import type { TournamentData, TournamentDataTeam } from '$lib/core/tournament/Tournament.server';
 import { databaseTimestampToDate, dateToDatabaseTimestamp } from '$lib/utils/dates';
 import invariant from '$lib/utils/invariant';
 import type * as Progression from '$lib/core/tournament-bracket/Progression';
@@ -23,6 +25,7 @@ import { userSubmittedImage } from '$lib/utils/urls-img';
 import { getRounds } from '$lib/core/tournament/rounds';
 import { isAdmin } from '$lib/modules/permissions/utils';
 import { isPast } from 'date-fns';
+import type { TournamentData, TournamentDataTeam } from '$lib/server/db/repositories/tournament';
 
 export type OptionalIdObject = { id: number } | undefined;
 
@@ -37,8 +40,8 @@ export class Tournament {
 		ctx,
 		simulateBrackets = true
 	}: {
-		data: TournamentData['data'];
-		ctx: TournamentData['ctx'];
+		data: BracketsManagerDatabase;
+		ctx: TournamentData;
 		/** Should the bracket results be simulated (showing how teams are expected to advance), skipping it is a performance optimization if it's not needed */
 		simulateBrackets?: boolean;
 	}) {
@@ -72,8 +75,8 @@ export class Tournament {
 	}
 
 	private compareUnseededTeams(
-		a: TournamentData['ctx']['teams'][number],
-		b: TournamentData['ctx']['teams'][number],
+		a: TournamentData['teams'][number],
+		b: TournamentData['teams'][number],
 		minMembersPerTeam: number
 	) {
 		const aIsFull = a.members.length >= minMembersPerTeam;
