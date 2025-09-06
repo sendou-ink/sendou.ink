@@ -1,7 +1,11 @@
 import { query } from '$app/server';
 import { getUser } from '$lib/server/auth/session';
+import { notFoundIfFalsy } from '$lib/server/remote-functions';
 import { id } from '$lib/utils/zod';
 import { requireTournament } from './utils.server';
+import markdownit from 'markdown-it';
+
+const md = markdownit();
 
 export const tabsById = query(id, async (id) => {
 	return {
@@ -60,3 +64,8 @@ async function tabCounts(tournamentId: number) {
 		}, 0)
 	};
 }
+
+export const rulesById = query(id, async (id) => {
+	const rules = notFoundIfFalsy((await requireTournament(id)).ctx.rules);
+	return md.render(rules);
+});

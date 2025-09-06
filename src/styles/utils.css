@@ -59,6 +59,26 @@
 	flex-direction: row;
 }
 
+.main {
+	width: 100%;
+	max-width: 48rem;
+	margin: 0 auto;
+	padding-inline: var(--s-3);
+	min-height: 75vh;
+}
+
+.half-width {
+	width: 100%;
+	max-width: 24rem;
+	margin: 0 auto;
+}
+
+.bigger {
+	width: 100%;
+	max-width: 72rem;
+	margin: 0 auto;
+}
+
 .text-xl {
 	font-size: var(--fonts-xl);
 }
