@@ -5,7 +5,7 @@
 	import { m } from '$lib/paraglide/messages';
 	import { joinListToNaturalString } from '$lib/utils/arrays';
 
-	import { allArticles } from './articles.remote';
+	import * as ArticleAPI from '$lib/api/article';
 </script>
 
 <OpenGraphMeta
@@ -16,7 +16,7 @@
 
 <Main class="stack lg">
 	<ul class="articles-list">
-		{#each await allArticles() as article (article.title)}
+		{#each await ArticleAPI.queries.all() as article (article.title)}
 			<li>
 				<a href={resolve(`/a/${article.slug}`)} class="title">
 					{article.title}

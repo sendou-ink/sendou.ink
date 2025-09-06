@@ -18,7 +18,7 @@ const articleDataSchema = z.object({
 	date: z.date()
 });
 
-export const allArticles = prerender(async () => {
+export const all = prerender(async () => {
 	return allArticlesFromFs();
 });
 
@@ -54,9 +54,9 @@ async function allArticlesFromFs() {
 		.map(({ date: _date, ...rest }) => rest);
 }
 
-export type ArticleBySlugData = Awaited<ReturnType<typeof articleBySlug>>;
+export type ArticleBySlugData = Awaited<ReturnType<typeof bySlug>>;
 
-export const articleBySlug = prerender(
+export const bySlug = prerender(
 	z.string(),
 	async (slug) => {
 		const article = await articleFromFs(slug);

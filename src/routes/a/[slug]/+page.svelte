@@ -2,11 +2,11 @@
 	import Main from '$lib/components/layout/Main.svelte';
 	import Markdown from '$lib/components/Markdown.svelte';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
-	import { articleBySlug } from '../articles.remote';
+	import * as ArticleAPI from '$lib/api/article';
 
 	const { params } = $props();
 
-	const article = $derived(await articleBySlug(params.slug));
+	const article = $derived(await ArticleAPI.queries.bySlug(params.slug));
 </script>
 
 <OpenGraphMeta
