@@ -90,7 +90,7 @@ const bracketProgressionSchema = z.preprocess(
 					roundCount: z.number().int().optional()
 				}),
 				requiresCheckIn: z.boolean(),
-				startTime: z.date().optional(),
+				startTime: z.number().optional(),
 				sources: z
 					.array(
 						z.object({

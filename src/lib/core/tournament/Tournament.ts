@@ -125,7 +125,7 @@ export class Tournament {
 						sources,
 						createdAt: inProgressStage.createdAt,
 						requiresCheckIn,
-						startTime,
+						startTime: startTime ? databaseTimestampToDate(startTime) : null,
 						settings: settings ?? null,
 						data: {
 							...data,
@@ -158,7 +158,7 @@ export class Tournament {
 						preview: true,
 						name,
 						requiresCheckIn,
-						startTime,
+						startTime: startTime ? databaseTimestampToDate(startTime) : null,
 						settings: settings ?? null,
 						data: null as any, // xxx: Swiss.create
 						// data: Swiss.create({
@@ -207,7 +207,7 @@ export class Tournament {
 						preview: true,
 						name,
 						requiresCheckIn,
-						startTime,
+						startTime: startTime ? databaseTimestampToDate(startTime) : null,
 						settings: settings ?? null,
 						type,
 						sources,

@@ -7,6 +7,8 @@
 	import { resolve } from '$app/paths';
 	import type { Snippet } from 'svelte';
 	import * as TournamentAPI from '$lib/api/tournament';
+	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
+	import { removeMarkdown } from '$lib/utils/strings';
 
 	interface Props extends LayoutProps {
 		children: Snippet;
@@ -14,8 +16,18 @@
 
 	let { children, params }: Props = $props();
 
+	const tournament = $derived(await TournamentAPI.queries.infoById(params.id));
 	const { tabs, counts } = $derived(await TournamentAPI.queries.tabsById(params.id));
 </script>
+
+<OpenGraphMeta
+	title={tournament.name}
+	description={tournament.description ? removeMarkdown(tournament.description) : undefined}
+	image={{
+		url: tournament.logoSrc,
+		dimensions: { width: 124, height: 124 }
+	}}
+/>
 
 <Main bigger>
 	<SubNav>

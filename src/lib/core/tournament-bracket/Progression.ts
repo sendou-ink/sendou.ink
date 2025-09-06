@@ -29,14 +29,14 @@ interface BracketBase {
 export interface InputBracket extends BracketBase {
 	id: string;
 	sources?: EditableSource[];
-	startTime?: Date;
+	startTime?: number;
 	/** This bracket cannot be edited (because it is already underway) */
 	disabled?: boolean;
 }
 
 export interface ParsedBracket extends BracketBase {
 	sources?: DBSource[];
-	startTime?: Date;
+	startTime?: number;
 }
 
 export type ValidationError =
