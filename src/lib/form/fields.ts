@@ -24,8 +24,8 @@ import invariant from '$lib/utils/invariant';
 
 export const formRegistry = z.registry<FormField>();
 
-/** Field for custom JSON data, the form field element must be provided to the `<Form />`. .optional() is appended to the schema. */
-export function customJsonFieldOptional<T extends z.ZodType>(
+/** Field for custom JSON data, the form field element must be provided to the `<Form />`. */
+export function customJsonField<T extends z.ZodType>(
 	args: Omit<Extract<FormField, { type: 'custom' }>, 'type'>,
 	schema: T
 ) {

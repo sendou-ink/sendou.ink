@@ -7,10 +7,12 @@ import {
 	calendarEventTagTranslations,
 	tournamentMapPickingStylesTranslations
 } from '$lib/utils/i18n';
-import { id } from '$lib/utils/zod';
+import { id, safeJSONParse } from '$lib/utils/zod';
 import { add } from 'date-fns';
 import { modesShort, rankedModesShort } from '$lib/constants/in-game/modes';
 import * as R from 'remeda';
+import { TOURNAMENT } from '$lib/constants/tournament';
+import * as Progression from '$lib/core/tournament-bracket/Progression';
 
 const commonNewFields = {
 	name: Fields.textFieldRequired({
@@ -18,12 +20,12 @@ const commonNewFields = {
 		minLength: 2,
 		maxLength: 100
 	}),
-	organization: Fields.customJsonFieldOptional(
+	organization: Fields.customJsonField(
 		{
 			label: m.slimy_these_pony_hope(),
 			initialValue: null
 		},
-		z.preprocess((value) => (value ? Number(value) : undefined), id)
+		z.preprocess((value) => (value ? Number(value) : undefined), id.optional())
 	),
 	discordInviteCode: Fields.textFieldOptional({
 		label: m.calendar_forms_discordInvite(),
@@ -38,12 +40,12 @@ const commonNewFields = {
 		})),
 		minLength: 0
 	}),
-	badges: Fields.customJsonFieldOptional(
+	badges: Fields.customJsonField(
 		{
 			label: m.org_edit_form_badges_title(),
 			initialValue: []
 		},
-		z.array(z.number()) // xxx: correct schema & add form field
+		z.array(z.number()).optional() // xxx: correct schema & add form field
 	)
 };
 
@@ -73,6 +75,37 @@ export const newCalendarEventSchema = z.object({
 });
 
 export type NewCalendarEventData = z.infer<typeof newCalendarEventSchema>;
+
+const bracketProgressionSchema = z.preprocess(
+	safeJSONParse,
+	z
+		.array(
+			z.object({
+				type: z.enum(TOURNAMENT.STAGE_TYPES),
+				name: z.string().min(1).max(TOURNAMENT.BRACKET_NAME_MAX_LENGTH),
+				settings: z.object({
+					thirdPlaceMatch: z.boolean().optional(),
+					teamsPerGroup: z.number().int().optional(),
+					groupCount: z.number().int().optional(),
+					roundCount: z.number().int().optional()
+				}),
+				requiresCheckIn: z.boolean(),
+				startTime: z.date().optional(),
+				sources: z
+					.array(
+						z.object({
+							bracketIdx: z.number(),
+							placements: z.array(z.number())
+						})
+					)
+					.optional()
+			})
+		)
+		.refine(
+			(progression) => Progression.bracketsToValidationError(progression) === null,
+			'Invalid bracket progression'
+		)
+);
 
 export const newTournamentSchema = z
 	.object({
@@ -147,8 +180,13 @@ export const newTournamentSchema = z
 			label: m.common_maps_mapPool(),
 			modes: [...modesShort]
 		}),
-		tournamentIdToEdit: Fields.idConstantOptional()
-		// xxx: bracket progression
+		tournamentIdToEdit: Fields.idConstantOptional(),
+		bracketProgression: Fields.customJsonField(
+			{
+				initialValue: null
+			},
+			bracketProgressionSchema
+		)
 	})
 	.refine(
 		(data) => {

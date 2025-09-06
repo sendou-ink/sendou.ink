@@ -14,6 +14,7 @@ export const TOURNAMENT = {
 	SWISS_DEFAULT_GROUP_COUNT: 1,
 	SWISS_DEFAULT_ROUND_COUNT: 5,
 	SE_DEFAULT_HAS_THIRD_PLACE_MATCH: true,
+	STAGE_TYPES: ['single_elimination', 'double_elimination', 'round_robin', 'swiss'],
 	ROUND_NAMES: {
 		WB_FINALS: 'WB Finals',
 		GRAND_FINALS: 'Grand Finals',

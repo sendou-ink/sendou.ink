@@ -17,6 +17,7 @@ import type {
 } from 'kysely';
 import type * as PickBan from '$lib/core/tournament-match/PickBan';
 import type * as Progression from '$lib/core/tournament-bracket/Progression';
+import type { TOURNAMENT } from '$lib/constants/tournament';
 
 // xxx: actual values
 export type AssociationVisibility = any;
@@ -616,13 +617,6 @@ export interface TournamentStageSettings {
 	roundCount?: number;
 }
 
-export const TOURNAMENT_STAGE_TYPES = [
-	'single_elimination',
-	'double_elimination',
-	'round_robin',
-	'swiss'
-] as const;
-
 /** A stage is an intermediate phase in a tournament. In essence a bracket. */
 export interface TournamentStage {
 	id: GeneratedAlways<number>;
@@ -630,7 +624,7 @@ export interface TournamentStage {
 	number: number;
 	settings: string;
 	tournamentId: number;
-	type: (typeof TOURNAMENT_STAGE_TYPES)[number];
+	type: (typeof TOURNAMENT.STAGE_TYPES)[number];
 	// not Generated<> because SQLite doesn't allow altering tables to add columns with default values :(
 	createdAt: number | null;
 }
