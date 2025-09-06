@@ -10,6 +10,7 @@ import {
 import { id } from '$lib/utils/zod';
 import { add } from 'date-fns';
 import { modesShort, rankedModesShort } from '$lib/constants/in-game/modes';
+import * as R from 'remeda';
 
 const commonNewFields = {
 	name: Fields.textFieldRequired({
@@ -56,7 +57,7 @@ export const newCalendarEventSchema = z.object({
 		label: m.calendar_forms_dates(),
 		min: 1,
 		max: 5,
-		field: Fields.datetime({
+		field: Fields.datetimeRequired({
 			max: add(new Date(), { years: 1 })
 		})
 	}),
@@ -73,89 +74,120 @@ export const newCalendarEventSchema = z.object({
 
 export type NewCalendarEventData = z.infer<typeof newCalendarEventSchema>;
 
-export const newTournamentSchema = z.object({
-	...commonNewFields,
-	description: Fields.textAreaOptional({
-		label: m.common_forms_description(),
-		bottomText: m.grassy_major_mare_link(),
-		maxLength: 3_000
-	}),
-	rules: Fields.textAreaOptional({
-		label: m.q_front_nav_rules_title(),
-		bottomText: m.grassy_major_mare_link(),
-		maxLength: 10_000
-	}),
-	startsAt: Fields.datetime({
-		label: m.bold_east_capybara_walk(),
-		max: add(new Date(), { years: 1 })
-	}),
-	// xxx: should be optional
-	regClosesAt: Fields.datetime({
-		label: m.knotty_tough_parrot_lead(),
-		bottomText: m.small_kind_warbler_honor()
-		// xxx: validate is before start date
-	}),
-	logo: Fields.imageOptional({
-		dimensions: 'logo',
-		label: m.tidy_real_elk_attend()
-	}),
-	minMembersPerTeam: Fields.select({
-		items: (['4v4', '3v3', '2v2', '1v1'] as const).map((v) => ({ value: v, label: v }))
-	}),
-	// xxx: translations
-	isRanked: Fields.toggle({
-		label: 'Ranked',
-		bottomText:
-			'Ranked tournaments affect SP. Tournaments that don\'t have open registration (skill capped) or "gimmick tournaments" must always be hosted as unranked. Any tournament hosted during off-season is always unranked no matter what is chosen here.'
-	}),
-	disableSubsTab: Fields.toggle({
-		label: 'Disable subs tab',
-		bottomText: 'Prevents users from signing up as substitutes and hides the related tab.'
-	}),
-	autonomousSubs: Fields.toggle({
-		label: 'Autonomous subs',
-		bottomText:
-			'If enabled teams can add subs on their own while the tournament is in progress. When disabled needs to be done by the organizers.'
-	}),
-	requireInGameNames: Fields.toggle({
-		label: 'Require in-game names',
-		bottomText:
-			"If enabled players can't join the tournament without an in-game name (e.g. Sendou#1234). Players can't change the IGNs after the registration closes."
-	}),
-	isInvitational: Fields.toggle({
-		label: 'Invitational',
-		bottomText: 'No open registration or subs list. All teams must be added by the organizer.'
-	}),
-	strictDeadlines: Fields.toggle({
-		label: 'Strict deadlines',
-		bottomText:
-			'Strict deadlines has 5 minutes less for the target time of each round (25min Bo3, 35min Bo5 compared to 30min Bo3, 40min Bo5 normal).'
-	}),
-	isTest: Fields.toggle({
-		label: 'Test',
-		bottomText:
-			"Test tournaments don't appear on the calendar, don't send notifications to players, and won't show up in players' profiles or results"
-	}),
-	mapPickingStyle: Fields.select({
-		label: 'Map picking style',
-		items: TOURNAMENT_MAP_PICKING_STYLES.map((style) => ({
-			value: style,
-			label: tournamentMapPickingStylesTranslations[style]()
-		}))
-	}),
-	// xxx: validate correct map pool set in respect to mapPickingStyle
-	tieBreakerMapPool: Fields.mapPool({
-		minCount: 1,
-		maxCount: 1,
-		label: m.common_maps_tieBreakerMapPool(),
-		modes: [...rankedModesShort]
-	}),
-	mapPool: Fields.mapPool({
-		label: m.common_maps_mapPool(),
-		modes: [...modesShort]
-	}),
-	tournamentIdToEdit: Fields.idConstantOptional()
-	// xxx: bracket progression
-});
+export const newTournamentSchema = z
+	.object({
+		...commonNewFields,
+		description: Fields.textAreaOptional({
+			label: m.common_forms_description(),
+			bottomText: m.grassy_major_mare_link(),
+			maxLength: 3_000
+		}),
+		rules: Fields.textAreaOptional({
+			label: m.q_front_nav_rules_title(),
+			bottomText: m.grassy_major_mare_link(),
+			maxLength: 10_000
+		}),
+		startsAt: Fields.datetimeRequired({
+			label: m.bold_east_capybara_walk(),
+			max: add(new Date(), { years: 1 })
+		}),
+		regClosesAt: Fields.datetimeOptional({
+			label: m.knotty_tough_parrot_lead(),
+			bottomText: m.small_kind_warbler_honor()
+		}),
+		logo: Fields.imageOptional({
+			dimensions: 'logo',
+			label: m.tidy_real_elk_attend()
+		}),
+		minMembersPerTeam: Fields.select({
+			label: m.plane_big_gecko_lead(),
+			items: (['4v4', '3v3', '2v2', '1v1'] as const).map((v) => ({ value: v, label: v }))
+		}),
+		isRanked: Fields.toggle({
+			label: m.deft_red_platypus_fall(),
+			bottomText: m.ago_grassy_skate_tap()
+		}),
+		disableSubsTab: Fields.toggle({
+			label: m.clean_great_orangutan_nudge(),
+			bottomText: m.gaudy_wacky_coyote_succeed()
+		}),
+		autonomousSubs: Fields.toggle({
+			label: m.loved_grassy_jannes_pull(),
+			bottomText: m.curly_spry_wolf_swim()
+		}),
+		requireInGameNames: Fields.toggle({
+			label: m.any_simple_flamingo_launch(),
+			bottomText: m.proof_such_llama_hush()
+		}),
+		isInvitational: Fields.toggle({
+			label: m.grassy_crazy_dog_launch(),
+			bottomText: m.free_fair_carp_aid()
+		}),
+		strictDeadlines: Fields.toggle({
+			label: m.active_polite_oryx_borrow(),
+			bottomText: m.lost_drab_mole_evoke()
+		}),
+		isTest: Fields.toggle({
+			label: m.wild_awake_elk_gasp(),
+			bottomText: m.real_dirty_kangaroo_accept()
+		}),
+		mapPickingStyle: Fields.select({
+			label: m.odd_teal_kangaroo_trip(),
+			items: TOURNAMENT_MAP_PICKING_STYLES.map((style) => ({
+				value: style,
+				label: tournamentMapPickingStylesTranslations[style]()
+			}))
+		}),
+		tieBreakerMapPool: Fields.mapPool({
+			maxCount: 1,
+			label: m.common_maps_tieBreakerMapPool(),
+			modes: [...rankedModesShort]
+		}),
+		mapPool: Fields.mapPool({
+			label: m.common_maps_mapPool(),
+			modes: [...modesShort]
+		}),
+		tournamentIdToEdit: Fields.idConstantOptional()
+		// xxx: bracket progression
+	})
+	.refine(
+		(data) => {
+			if (!data.regClosesAt) return true;
+			return data.regClosesAt < data.startsAt;
+		},
+		{
+			error: m.day_maroon_crab_gulp(),
+			path: ['regClosesAt']
+		}
+	)
+	.refine(
+		(data) => {
+			if (data.mapPickingStyle !== 'AUTO_ALL') return true;
+
+			for (const mode of rankedModesShort) {
+				if (!data.tieBreakerMapPool[mode] || data.tieBreakerMapPool[mode].length !== 1)
+					return false;
+			}
+
+			return true;
+		},
+		{
+			error: m.spicy_yummy_ox_quiz(),
+			path: ['tieBreakerMapPool']
+		}
+	)
+	.refine(
+		(data) => {
+			if (data.mapPickingStyle !== 'AUTO_ALL') return true;
+
+			const allStages = Object.values(data.tieBreakerMapPool).flat();
+
+			return allStages.length === R.unique(allStages).length;
+		},
+		{
+			error: m.busy_fun_pig_quiz(),
+			path: ['tieBreakerMapPool']
+		}
+	);
 
 export type NewTournamentData = z.infer<typeof newTournamentSchema>;

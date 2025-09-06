@@ -102,7 +102,10 @@ export const stageId = z.literal(stageIds);
 export function partialMapPoolSchema({
 	maxCount,
 	minCount
-}: { maxCount?: number; minCount?: number } = {}) {
+}: {
+	maxCount?: number;
+	minCount?: number;
+} = {}) {
 	return z.partialRecord(
 		modeShort,
 		z
@@ -111,6 +114,12 @@ export function partialMapPoolSchema({
 			.min(minCount ?? 0)
 			.max(maxCount ?? stageIds.length)
 	);
+}
+
+export function partialMapPoolWithDefaultSchema(
+	args: { maxCount?: number; minCount?: number } = {}
+) {
+	return z.preprocess((value) => value ?? {}, partialMapPoolSchema(args));
 }
 
 export function processMany(...processFuncs: Array<(value: unknown) => unknown>) {
@@ -147,7 +156,7 @@ export function safeStringSchema({ min, max }: { min?: number; max: number }) {
 	return z.preprocess(
 		actuallyNonEmptyStringOrNull, // if this returns null, none of the checks below will run because it's not a string
 		z
-			.string()
+			.string({ error: m.common_forms_errors_required() })
 			.min(min ?? 0)
 			.max(max)
 			.refine((text) => !hasZalgo(text), {

@@ -10,13 +10,13 @@
 		value?: Date;
 	};
 
-	let { label, name, bottomText, error, onblur, value = $bindable() }: Props = $props();
+	let { label, name, bottomText, error, required, onblur, value = $bindable() }: Props = $props();
 
 	const id = $props.id();
 </script>
 
 <div class="stack xs">
-	<Label for={id} required>
+	<Label for={id} {required}>
 		{label}
 	</Label>
 	<Input

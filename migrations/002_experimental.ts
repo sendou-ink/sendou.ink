@@ -17,6 +17,8 @@ export async function up(db: Kysely<any>): Promise<void> {
     .execute();
 
   // xxx: delete "TW" and "SZ" from calendar event tags
+
+  // xxx: turn off all commissions open? to make sure all are recent for art
 }
 
 async function fixQWeaponPools(db: Kysely<any>) {

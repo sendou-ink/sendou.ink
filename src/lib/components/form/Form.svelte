@@ -20,7 +20,7 @@
 		schema: T;
 		defaultValues?: Partial<SchemaToDefaultValues<Output>>;
 		info?: string;
-		/** Fires when the form changes and the resulting data is considered valid as defined by the given schema. Note: only works for "primitive" fields such as plain inputs, selects and input groups.*/
+		/** Fires when the form changes and the resulting data is considered valid as defined by the given schema. Note: only works for "primitive" fields such as plain inputs, selects and input groups. */
 		onchange?: (data: Partial<Output>) => void;
 		/** Fires when the form is succesfully submitted to the server. */
 		onSubmit?: () => void;
@@ -83,6 +83,9 @@
 	function handleOnchange(event: Event) {
 		const target = event.target as (EventTarget & HTMLInputElement) | HTMLTextAreaElement;
 		const name = target.name;
+
+		// at least datetime input uses input hidden to hold the actual value so it is not supported for onchange
+		if (!name) return;
 
 		const fieldData = new FormData(formElement()).get(name);
 		const zodObject = schema as ZodObject<ZodRawShape>;

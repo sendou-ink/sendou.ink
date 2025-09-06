@@ -75,6 +75,7 @@
 			<FormField name={validField('logo')} />
 
 			<Divider>Tournament settings</Divider>
+			<FormField name={validField('minMembersPerTeam')} />
 			<FormField name={validField('isRanked')} />
 			<FormField name={validField('disableSubsTab')} />
 			<FormField name={validField('autonomousSubs')} />

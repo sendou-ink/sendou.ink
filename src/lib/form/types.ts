@@ -75,6 +75,7 @@ export interface FormFieldInputGroup<T extends string, V extends string> extends
 export interface FormFieldDatetime<T extends string> extends FormFieldBase<T> {
 	min?: Date;
 	max?: Date;
+	required: boolean;
 }
 
 interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {

@@ -486,12 +486,21 @@ export async function createTournament(
 		await createDatesInTrx({ eventId, startTimes: [args.startsAt], trx });
 		await createBadgesInTrx({ eventId, badges: args.badges, trx });
 
-		await upsertMapPoolInTrx({
-			trx,
-			eventId,
-			mapPool: args.mapPool ?? [],
-			column: args.mapPickingStyle === 'TO' ? 'calendarEventId' : 'tieBreakerCalendarEventId'
-		});
+		if (args.mapPickingStyle === 'TO') {
+			await upsertMapPoolInTrx({
+				trx,
+				eventId,
+				mapPool: args.mapPool ?? [],
+				column: 'calendarEventId'
+			});
+		} else if (args.mapPickingStyle === 'AUTO_ALL') {
+			await upsertMapPoolInTrx({
+				trx,
+				eventId,
+				mapPool: args.tieBreakerMapPool ?? [],
+				column: 'tieBreakerCalendarEventId'
+			});
+		}
 
 		return tournamentId;
 	});

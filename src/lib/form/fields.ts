@@ -17,7 +17,7 @@ import type {
 	FormFieldSelect
 } from './types';
 import { m } from '$lib/paraglide/messages';
-import { partialMapPoolSchema, webUrl } from '$lib/utils/zod';
+import { partialMapPoolWithDefaultSchema, webUrl } from '$lib/utils/zod';
 import * as R from 'remeda';
 import * as MapPool from '$lib/core/maps/MapPool';
 import invariant from '$lib/utils/invariant';
@@ -226,15 +226,19 @@ export function radioGroup<V extends string>(
 	});
 }
 
-export function datetime(args: Omit<FormFieldDatetime<'datetime'>, 'type' | 'initialValue'>) {
+type DateTimeArgs = Omit<FormFieldDatetime<'datetime'>, 'type' | 'initialValue' | 'required'>;
+
+function dateTimePreprocess(value: unknown) {
+	if (typeof value !== 'string') return value;
+	if (value === '') return;
+
+	return new Date(value);
+}
+
+export function datetimeRequired(args: DateTimeArgs) {
 	return z
 		.preprocess(
-			(value) => {
-				if (typeof value !== 'string') return value;
-				if (value === '') return null;
-
-				return new Date(value);
-			},
+			dateTimePreprocess,
 			z
 				.date({ error: m.common_forms_errors_required() })
 				.min(args.min ?? new Date(Date.UTC(2015, 4, 28)))
@@ -243,7 +247,26 @@ export function datetime(args: Omit<FormFieldDatetime<'datetime'>, 'type' | 'ini
 		.register(formRegistry, {
 			...args,
 			type: 'datetime',
-			initialValue: null
+			initialValue: null,
+			required: true
+		});
+}
+
+export function datetimeOptional(args: DateTimeArgs) {
+	return z
+		.preprocess(
+			dateTimePreprocess,
+			z
+				.date()
+				.min(args.min ?? new Date(Date.UTC(2015, 4, 28)))
+				.max(args.max ?? new Date(Date.UTC(2030, 4, 28)))
+				.optional()
+		)
+		.register(formRegistry, {
+			...args,
+			type: 'datetime',
+			initialValue: null,
+			required: false
 		});
 }
 
@@ -297,7 +320,7 @@ export function mapPool(
 	args: Omit<Extract<FormField, { type: 'map-pool' }>, 'type' | 'initialValue'>
 ) {
 	return z
-		.preprocess(safeJSONParse, partialMapPoolSchema({ ...args, minCount: 1 }))
+		.preprocess(safeJSONParse, partialMapPoolWithDefaultSchema(args))
 		.refine(
 			(mapPool) => {
 				if (!args.minCount) return true;
