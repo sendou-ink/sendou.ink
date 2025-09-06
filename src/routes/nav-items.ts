@@ -1,112 +1,113 @@
+import { resolve } from '$app/paths';
 import { m } from '$lib/paraglide/messages';
 
 const navItemsBase = [
 	{
 		id: 'settings',
 		name: m.common_pages_settings(),
-		url: 'settings',
+		url: resolve('/settings'),
 		prefetch: true
 	},
 	{
 		id: 'q',
 		name: m.common_pages_sendouq(),
-		url: 'q',
+		url: resolve('/q'),
 		prefetch: false
 	},
 	{
 		id: 'analyzer',
 		name: m.common_pages_analyzer(),
-		url: 'analyzer',
+		url: resolve('/analyzer'),
 		prefetch: true
 	},
 	{
 		id: 'builds',
 		name: m.common_pages_builds(),
-		url: 'builds',
+		url: resolve('/builds'),
 		prefetch: true
 	},
 	{
 		id: 'object-damage-calculator',
 		name: m.common_pages_object_damage_calculator(),
-		url: 'object-damage-calculator',
+		url: resolve('/object-damage-calculator'),
 		prefetch: true
 	},
 	{
 		id: 'leaderboards',
 		name: m.common_pages_leaderboards(),
-		url: 'leaderboards',
+		url: resolve('/leaderboards'),
 		prefetch: false
 	},
 	{
 		id: 'scrims',
 		name: m.common_pages_scrims(),
-		url: 'scrims',
+		url: resolve('/scrims'),
 		prefetch: false
 	},
 	{
 		id: 'lfg',
 		name: m.common_pages_lfg(),
-		url: 'lfg',
+		url: resolve('/lfg'),
 		prefetch: false
 	},
 	{
 		id: 'plans',
 		name: m.common_pages_plans(),
-		url: 'plans',
+		url: resolve('/plans'),
 		prefetch: false
 	},
 	{
 		id: 'badges',
 		name: m.common_pages_badges(),
-		url: 'badges',
+		url: resolve('/badges'),
 		prefetch: false
 	},
 	{
 		id: 'calendar',
 		name: m.common_pages_calendar(),
-		url: 'calendar',
+		url: resolve('/calendar'),
 		prefetch: false
 	},
 	{
 		id: 'plus',
 		name: m.common_pages_plus(),
-		url: 'plus/suggestions',
+		url: resolve('/plus/suggestions'),
 		prefetch: false
 	},
 	{
 		id: 'xsearch',
 		name: m.common_pages_xsearch(),
-		url: 'xsearch',
+		url: resolve('/xsearch'),
 		prefetch: false
 	},
 	{
 		id: 'articles',
 		name: m.common_pages_articles(),
-		url: 'a',
+		url: resolve('/a'),
 		prefetch: false
 	},
 	{
 		id: 'vods',
 		name: m.common_pages_vods(),
-		url: 'vods',
+		url: resolve('/vods'),
 		prefetch: false
 	},
 	{
 		id: 'art',
 		name: m.common_pages_art(),
-		url: 'art',
+		url: resolve('/art'),
 		prefetch: false
 	},
 	{
 		id: 'links',
 		name: m.common_pages_links(),
-		url: 'links',
+		url: resolve('/links'),
 		prefetch: true
 	},
 	{
 		id: 'maps',
 		name: m.common_pages_maps(),
-		url: 'maps',
+		url: resolve('/maps'),
 		prefetch: false
 	}
 ] as const;

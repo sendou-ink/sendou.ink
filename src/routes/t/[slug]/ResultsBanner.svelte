@@ -1,17 +1,18 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import type * as TeamAPI from '$lib/api/team';
 	import Placement from '$lib/components/Placement.svelte';
 	import { m } from '$lib/paraglide/messages';
 
 	interface Props {
-		resultsPageHref: string;
+		teamSlug: string;
 		results: NonNullable<TeamAPI.queries.BySlugData['results']>;
 	}
 
-	const { results, resultsPageHref }: Props = $props();
+	const { results, teamSlug }: Props = $props();
 </script>
 
-<a href={resultsPageHref}>
+<a href={resolve('/t/[slug]/results', { slug: teamSlug })}>
 	<div>{m.less_careful_tern_cry({ count: results.count })}</div>
 	<ul>
 		{#each results.placements as { placement, count } (placement)}

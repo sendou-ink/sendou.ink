@@ -57,7 +57,7 @@
 			{
 				label: m.common_header_adder_plusSuggestion(),
 				imgSrc: asset('/img/layout/plus.avif'),
-				href: resolve('/plus/new')
+				href: resolve('/plus/suggestions/new')
 			}
 		]}
 	>

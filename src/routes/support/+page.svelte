@@ -4,7 +4,6 @@
 	import Badge from '$lib/components/badge/Badge.svelte';
 	import Button from '$lib/components/buttons/Button.svelte';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
-	import { SENDOU_INK_PATREON_URL } from '$lib/utils/urls';
 	import Main from '$lib/components/layout/Main.svelte';
 	import Check from '@lucide/svelte/icons/check';
 	import Popover from '$lib/components/popover/Popover.svelte';
@@ -79,7 +78,7 @@
 		</div>
 	</div>
 
-	<Button href={SENDOU_INK_PATREON_URL} size="big" class="mx-auto">
+	<Button href="https://patreon.com/sendou" size="big" class="mx-auto">
 		{m.common_support_action()}
 	</Button>
 

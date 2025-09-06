@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { userBuildsPage, weaponBuildPage } from '$lib/utils/urls';
+	import { mySlugify } from '$lib/utils/urls';
 	import Ability from '../builder/Ability.svelte';
 	import type {
 		Ability as AbilityType,
@@ -18,7 +18,7 @@
 	import PopoverTriggerButton from '$lib/components/popover/PopoverTriggerButton.svelte';
 	import BuildActionsMenu from '$lib/components/build-card/BuildActionsMenu.svelte';
 	import type { BySlugData } from '$lib/api/build/queries.remote';
-	import { asset } from '$app/paths';
+	import { asset, resolve } from '$app/paths';
 
 	interface BuildWeaponWithTop500Info {
 		weaponSplId: MainWeaponId;
@@ -96,7 +96,12 @@
 		<div class="stack horizontal justify-between items-center">
 			<div class="date-author-row">
 				{#if build.owner}
-					<a href={userBuildsPage(build.owner)} class="owner-link">
+					<a
+						href={resolve('/u/[identifier]/builds', {
+							identifier: build.owner.customUrl ?? build.owner.discordId
+						})}
+						class="owner-link"
+					>
 						{build.owner.username}
 					</a>
 					<div>•</div>
@@ -173,7 +178,11 @@
 				data-testid="top500-crown"
 			/>
 		{/if}
-		<a href={weaponBuildPage(normalizedWeaponSplId)}>
+		<a
+			href={resolve(
+				`/builds/${mySlugify(weaponTranslations[normalizedWeaponSplId]({}, { locale: 'en' }))}`
+			)}
+		>
 			<WeaponImage weaponSplId={weapon.weaponSplId} size={36} variant="build" />
 		</a>
 	</div>

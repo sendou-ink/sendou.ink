@@ -1,46 +1,41 @@
 <script lang="ts">
-	import {
-		CONTRIBUTIONS_PAGE,
-		FAQ_PAGE,
-		NINTENDO_COMMUNITY_TOURNAMENTS_GUIDELINES_URL,
-		PRIVACY_POLICY_PAGE,
-		SENDOU_INK_DISCORD_URL,
-		SENDOU_INK_GITHUB_URL,
-		SUPPORT_PAGE,
-		userPage
-	} from '$lib/utils/urls';
 	import DiscordIcon from '$lib/components/icons/Discord.svelte';
 	import GitHubIcon from '$lib/components/icons/GitHub.svelte';
 	import PatreonIcon from '$lib/components/icons/Patreon.svelte';
 	import { patrons } from '../../../routes/patrons.remote';
 	import { m } from '$lib/paraglide/messages';
-	import { asset } from '$app/paths';
+	import { asset, resolve } from '$app/paths';
 
 	const currentYear = new Date().getFullYear();
 </script>
 
 <footer>
 	<div class="link-list">
-		<a href={PRIVACY_POLICY_PAGE}>{m.common_pages_privacy()}</a>
-		<a href={CONTRIBUTIONS_PAGE}>{m.common_pages_contributors()}</a>
-		<a href={FAQ_PAGE}>{m.common_pages_faq()}</a>
+		<a href={resolve('/privacy-policy')}>{m.common_pages_privacy()}</a>
+		<a href={resolve('/contributions')}>{m.common_pages_contributors()}</a>
+		<a href={resolve('/faq')}>{m.common_pages_faq()}</a>
 	</div>
 	<div class="socials">
-		<a class="social-link" href={SENDOU_INK_GITHUB_URL} target="_blank" rel="noreferrer">
+		<a
+			class="social-link"
+			href="https://github.com/sendou-ink/sendou.ink"
+			target="_blank"
+			rel="noreferrer"
+		>
 			<div class="social-header">
 				GitHub
 				<p>{m.common_footer_github_subtitle()}</p>
 			</div>
 			<GitHubIcon class="social-icon github" />
 		</a>
-		<a class="social-link" href={SENDOU_INK_DISCORD_URL} target="_blank" rel="noreferrer">
+		<a class="social-link" href="https://discord.gg/sendou" target="_blank" rel="noreferrer">
 			<div class="social-header">
 				Discord
 				<p>{m.common_footer_discord_subtitle()}</p>
 			</div>
 			<DiscordIcon class="social-icon discord" />
 		</a>
-		<a class="social-link" href={SUPPORT_PAGE}>
+		<a class="social-link" href={resolve('/support')}>
 			<div class="social-header">
 				Patreon
 				<p>{m.common_footer_patreon_subtitle()}</p>
@@ -57,7 +52,10 @@
 		<ul class="patron-list">
 			{#each await patrons() as patron (patron.id)}
 				<li>
-					<a href={userPage(patron)} class="patron">
+					<a
+						href={resolve('/u/[identifier]', { identifier: patron.customUrl ?? patron.discordId })}
+						class="patron"
+					>
 						{patron.username}
 					</a>
 				</li>
@@ -78,8 +76,12 @@
 			Any tournaments hosted on sendou.ink are unofficial and Nintendo is not a sponsor or
 			affiliated with them. Terms for participating in and viewing Community Tournaments using
 			Nintendo Games can be found here:
-			<a href={NINTENDO_COMMUNITY_TOURNAMENTS_GUIDELINES_URL} target="_blank" rel="noreferrer">
-				{NINTENDO_COMMUNITY_TOURNAMENTS_GUIDELINES_URL}
+			<a
+				href="https://en-americas-support.nintendo.com/app/answers/detail/a_id/63454"
+				target="_blank"
+				rel="noreferrer"
+			>
+				https://en-americas-support.nintendo.com/app/answers/detail/a_id/63454
 			</a>
 		</p>
 	</div>

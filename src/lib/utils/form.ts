@@ -1,3 +1,4 @@
+import type { ResolvedPathname } from '$app/types';
 import { confirmDialogState, type ConfirmDialogProps } from '../../routes/ConfirmDialog.svelte';
 import * as z from 'zod';
 
@@ -8,7 +9,7 @@ export function confirmAction(
 		title: string;
 		button?: ConfirmDialogProps['button'];
 		/** Where should the user be redirected after the action has been completed? */
-		redirectTo?: string;
+		redirectTo?: ResolvedPathname;
 	}
 ) {
 	confirmDialogState.isOpen = true;

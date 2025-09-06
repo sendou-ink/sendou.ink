@@ -7,7 +7,7 @@
 	import { weaponCategoryTranslations, weaponTranslations } from '$lib/utils/i18n';
 	import type { MainWeaponId } from '$lib/constants/in-game/types';
 	import * as AuthAPI from '$lib/api/auth';
-	import { weaponBuildPage } from '$lib/utils/urls';
+	import { mySlugify } from '$lib/utils/urls';
 	import Input from '$lib/components/Input.svelte';
 	import Search from '@lucide/svelte/icons/search';
 	import { m } from '$lib/paraglide/messages';
@@ -63,7 +63,9 @@
 						<div class="category-divider"></div>
 					{/if}
 					<a
-						href={weaponBuildPage(weaponId)}
+						href={resolve(
+							`/builds/${mySlugify(weaponTranslations[weaponId]({}, { locale: 'en' }))}`
+						)}
 						class="category-weapon"
 						data-testid={`weapon-${weaponId}-link`}
 					>

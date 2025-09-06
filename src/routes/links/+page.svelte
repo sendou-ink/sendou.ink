@@ -9,24 +9,24 @@
 
 <Main>
 	<div class="stack md container">
-		{#each links as link (link.url)}
+		{#each links as { href, title, description } (href)}
 			<div>
 				<h2 class="text-sm">
 					<a
-						href={link.url}
+						{href}
 						target="_blank"
 						rel="noopener noreferrer"
 						class="stack sm horizontal items-center"
 					>
-						{link.title}
-						{#if link.url.includes('discord')}
+						{title}
+						{#if href.includes('discord')}
 							<DiscordIcon class="discord-icon" />
-						{:else if link.url.includes('youtube')}
+						{:else if href.includes('youtube')}
 							<YouTubeIcon class="youtube-icon" />
 						{/if}
 					</a>
 				</h2>
-				<div class="text-sm text-lighter">{link.description}</div>
+				<div class="text-sm text-lighter">{description}</div>
 			</div>
 		{/each}
 	</div>

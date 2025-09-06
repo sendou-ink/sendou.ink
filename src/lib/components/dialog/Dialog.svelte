@@ -4,6 +4,7 @@
 	import Button from '$lib/components/buttons/Button.svelte';
 	import X from '@lucide/svelte/icons/x';
 	import { goto } from '$app/navigation';
+	import type { ResolvedPathname } from '$app/types';
 
 	type Props = {
 		open?: boolean;
@@ -15,7 +16,7 @@
 		// xxx: missing props
 		// showHeading?: boolean;
 		// /** When closing the modal which URL to navigate to */
-		onCloseTo?: string;
+		onCloseTo?: ResolvedPathname;
 		// /** If true, shows the close button even if onClose is not provided */
 		// showCloseButton?: boolean;
 		/** Should the dialog close when clicking outside? */
@@ -40,6 +41,8 @@
 	bind:open
 	onOpenChange={onCloseTo
 		? (open) => {
+				// xxx: should be removed after https://github.com/sveltejs/eslint-plugin-svelte/issues/1319 is resolved
+				// eslint-disable-next-line svelte/no-navigation-without-resolve
 				if (!open) goto(onCloseTo);
 			}
 		: undefined}

@@ -2,7 +2,6 @@
 	import Main from '$lib/components/layout/Main.svelte';
 	import Markdown from '$lib/components/Markdown.svelte';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
-	import { articlePreviewUrl } from '$lib/utils/urls';
 	import { articleBySlug } from '../articles.remote';
 
 	const { params } = $props();
@@ -14,7 +13,7 @@
 	title={article.title}
 	description={article.content.trim().split('\n')[0]}
 	image={{
-		url: articlePreviewUrl(params.slug)
+		url: `/img/article-previews/${params.slug}.png`
 	}}
 />
 
@@ -38,8 +37,10 @@
 				: author.link}
 
 			{#if author.link.includes('https://sendou.ink')}
+				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 				<a href={authorLink}>{author.name}</a>
 			{:else}
+				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 				<a href={author.link}>{author.name}</a>
 			{/if}
 		{/if}

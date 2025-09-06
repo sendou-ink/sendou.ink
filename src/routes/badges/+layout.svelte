@@ -2,7 +2,6 @@
 	import Badge from '$lib/components/badge/Badge.svelte';
 	import Divider from '$lib/components/Divider.svelte';
 	import Input from '$lib/components/Input.svelte';
-	import { BADGES_DOC_LINK } from '$lib/utils/urls';
 	import Main from '$lib/components/layout/Main.svelte';
 	import { allBadges } from './all-badges.remote';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
@@ -77,8 +76,10 @@
 
 	<div class="general-info-texts">
 		<p>
-			<a href={BADGES_DOC_LINK} target="_blank" rel="noopener noreferrer"
-				>{m.badges_forYourEvent()}</a
+			<a
+				href="https://github.com/sendou-ink/sendou.ink/blob/rewrite/docs/badges.md"
+				target="_blank"
+				rel="noopener noreferrer">{m.badges_forYourEvent()}</a
 			>
 		</p>
 	</div>

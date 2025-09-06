@@ -2,7 +2,7 @@
 	import * as CalendarAPI from '$lib/api/calendar';
 	import * as AuthAPI from '$lib/api/auth';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
-	import { resolveBaseUrl, userPage } from '$lib/utils/urls';
+	import { resolveBaseUrl } from '$lib/utils/urls';
 	import Main from '$lib/components/layout/Main.svelte';
 	import { getLocale } from '$lib/paraglide/runtime';
 	import { m } from '$lib/paraglide/messages';
@@ -146,7 +146,10 @@
 {#snippet description()}
 	<div class="stack sm">
 		<span class="text-lighter font-bold text-xs">{m.odd_every_pig_wish()}</span>
-		<a href={userPage(event)} class="author">
+		<a
+			href={resolve('/u/[identifier]', { identifier: event.customUrl ?? event.discordId })}
+			class="author"
+		>
 			<Avatar user={event} size="xxs" />
 			{event.username}
 		</a>
@@ -191,7 +194,9 @@
 											{player.name}
 										{:else}
 											<a
-												href={userPage(player as { discordId: string; customUrl: string | null })}
+												href={resolve('/u/[identifier]', {
+													identifier: player.customUrl ?? player.discordId!
+												})}
 												class="stack horizontal xs items-center"
 											>
 												<Avatar

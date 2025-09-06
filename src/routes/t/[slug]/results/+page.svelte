@@ -11,7 +11,6 @@
 	import Popover from '$lib/components/popover/Popover.svelte';
 	import PopoverTriggerButton from '$lib/components/popover/PopoverTriggerButton.svelte';
 	import BookUser from '@lucide/svelte/icons/book-user';
-	import { userPage } from '$lib/utils/urls';
 	import Avatar from '$lib/components/Avatar.svelte';
 
 	const { params } = $props();
@@ -83,7 +82,9 @@
 										{#each result.subs as player (player.id)}
 											<li class="flex items-center">
 												<a
-													href={userPage(player)}
+													href={resolve('/u/[identifier]', {
+														identifier: player.customUrl ?? player.discordId
+													})}
 													class="stack horizontal xs items-center text-main"
 												>
 													<Avatar user={player} size="xxs" />

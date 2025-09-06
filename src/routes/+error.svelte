@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import Main from '$lib/components/layout/Main.svelte';
-	import { SENDOU_INK_DISCORD_URL } from '$lib/utils/urls';
 </script>
 
 <!-- xxx: translate -->
@@ -36,7 +35,7 @@
 {#snippet getHelp()}
 	<p class="mt-2">
 		If you need assistance you can ask for help on
-		<a href={SENDOU_INK_DISCORD_URL}>our Discord</a>
+		<a href="https://discord.gg/sendou">our Discord</a>
 	</p>
 {/snippet}
 

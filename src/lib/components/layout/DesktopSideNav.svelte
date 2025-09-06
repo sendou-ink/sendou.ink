@@ -5,7 +5,8 @@
 
 <nav>
 	{#each navItems as item (item.id)}
-		<a href="/{item.url}" data-sveltekit-preload-data={item.prefetch ? 'hover' : 'off'}>
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve-->
+		<a href={item.url} data-sveltekit-preload-data={item.prefetch ? 'hover' : 'off'}>
 			<img src={asset(`/img/layout/${item.id}.avif`)} height={28} width={28} alt={item.name} />
 			<div>{item.name}</div>
 		</a>

@@ -45,10 +45,7 @@
 
 <div class="stack lg">
 	{#if results}
-		<ResultsBanner
-			{results}
-			resultsPageHref={resolve('/t/[slug]/results', { slug: team.customUrl })}
-		/>
+		<ResultsBanner {results} teamSlug={team.customUrl} />
 	{/if}
 	{#if team.bio}
 		<article data-testid="team-bio" class="whitespace-pre-wrap">{team.bio}</article>

@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { asset } from '$app/paths';
 	import type { Tables } from '$lib/server/db/tables';
-	import { BLANK_IMAGE_URL, discordAvatarUrl } from '$lib/utils/urls';
 	import type { HTMLImgAttributes } from 'svelte/elements';
 
 	const dimensions = {
@@ -27,14 +27,12 @@
 		if (url) return url;
 
 		if (user?.discordAvatar && !isErrored) {
-			return discordAvatarUrl({
-				discordAvatar: user.discordAvatar,
-				discordId: user.discordId,
-				size: size === 'lg' ? 'lg' : 'sm'
-			});
+			return `https://cdn.discordapp.com/avatars/${user.discordId}/${
+				user.discordAvatar
+			}.webp${size === 'lg' ? '?size=240' : '?size=80'}`;
 		}
 
-		return BLANK_IMAGE_URL;
+		return asset('/img/blank.gif');
 	});
 </script>
 

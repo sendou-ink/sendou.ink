@@ -3,7 +3,6 @@
 	import YouTubeIcon from '$lib/components/icons/YouTube.svelte';
 	import BattlefyIcon from '$lib/components/icons/Battlefy.svelte';
 	import BskyIcon from '$lib/components/icons/Bsky.svelte';
-	import { bskyUrl } from '$lib/utils/urls';
 	import type { ProfileByIdentifierData } from '$lib/api/user/queries.remote';
 
 	interface Props {
@@ -11,41 +10,26 @@
 	}
 
 	let { profile }: Props = $props();
-
-	function getSocialHref(type: keyof Props['profile'], identifier: string): string {
-		switch (type) {
-			case 'twitch':
-				return `https://www.twitch.tv/${identifier}`;
-			case 'youtubeId':
-				return `https://www.youtube.com/channel/${identifier}`;
-			case 'battlefy':
-				return `https://battlefy.com/users/${identifier}`;
-			case 'bsky':
-				return bskyUrl(identifier);
-			default:
-				throw new Error(`Unreachable: ${type}`);
-		}
-	}
 </script>
 
 <div class="socials">
 	{#if profile.twitch}
-		<a class="social-link twitch" href={getSocialHref('twitch', profile.twitch)}>
+		<a class="social-link twitch" href={`https://www.twitch.tv/${profile.twitch}`}>
 			<TwitchIcon />
 		</a>
 	{/if}
 	{#if profile.youtubeId}
-		<a class="social-link youtube" href={getSocialHref('youtubeId', profile.youtubeId)}>
+		<a class="social-link youtube" href={`https://www.youtube.com/channel/${profile.youtubeId}`}>
 			<YouTubeIcon />
 		</a>
 	{/if}
 	{#if profile.battlefy}
-		<a class="social-link battlefy" href={getSocialHref('battlefy', profile.battlefy)}>
+		<a class="social-link battlefy" href={`https://battlefy.com/users/${profile.battlefy}`}>
 			<BattlefyIcon />
 		</a>
 	{/if}
 	{#if profile.bsky}
-		<a class="social-link bsky" href={getSocialHref('bsky', profile.bsky)}>
+		<a class="social-link bsky" href={`https://bsky.app/profile/${profile.bsky}`}>
 			<BskyIcon />
 		</a>
 	{/if}

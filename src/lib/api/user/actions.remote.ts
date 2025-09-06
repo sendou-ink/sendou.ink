@@ -5,8 +5,8 @@ import { err, ok } from 'neverthrow';
 import { m } from '$lib/paraglide/messages';
 import { logger } from '$lib/utils/logger';
 import { redirect } from '@sveltejs/kit';
-import { userPage } from '$lib/utils/urls';
 import * as TournamentTeamRepository from '$lib/server/db/repositories/tournament-team';
+import { resolve } from '$app/paths';
 
 export const updateProfile = validatedForm(editProfileSchema, async (data, user) => {
 	const customUrlValidationResult = await validateCustomUrl(data.customUrl, user.id);
@@ -35,7 +35,10 @@ export const updateProfile = validatedForm(editProfileSchema, async (data, user)
 		}
 	}
 
-	redirect(303, userPage(editedUser));
+	redirect(
+		303,
+		resolve('/u/[identifier]', { identifier: editedUser.customUrl ?? editedUser.discordId })
+	);
 });
 
 async function validateCustomUrl(newCustomUrl: string | null, loggedInUserId: number) {

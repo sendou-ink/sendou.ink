@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { asset } from '$app/paths';
 	import { page } from '$app/state';
 	import { truncateBySentence } from '$lib/utils/strings';
-	import { COMMON_PREVIEW_IMAGE } from '$lib/utils/urls';
 
 	interface Props {
 		/** Title as shown by the browser in the tab etc. Appended with "| sendou.ink"*/
@@ -42,7 +42,7 @@
 			return `${ROOT_URL}${image.url}`;
 		}
 
-		return `${ROOT_URL}${COMMON_PREVIEW_IMAGE}`;
+		return asset('/img/layout/common-preview.png');
 	});
 
 	const imageWidth = $derived(

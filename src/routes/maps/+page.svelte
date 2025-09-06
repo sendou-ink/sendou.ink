@@ -12,7 +12,6 @@
 	import Tally5 from '@lucide/svelte/icons/tally-5';
 	import { m } from '$lib/paraglide/messages';
 	import { stageIds } from '$lib/constants/in-game/stage-ids';
-	import { ipLabsMaps } from '$lib/utils/urls';
 	import ListOrdered from '@lucide/svelte/icons/list-ordered';
 	import SwitchFormField from '$lib/components/form/SwitchFormField.svelte';
 	import { generateMapList, modesOrder } from '$lib/core/maps/map-list-generator';
@@ -59,7 +58,7 @@
 <Main class="stack lg">
 	{@render mapPoolPicker()}
 	<a
-		href={ipLabsMaps(MapPool.toSerialized(mapPool.state))}
+		href={`https://maps.iplabs.ink/?3&pool=${MapPool.toSerialized(mapPool.state)}`}
 		target="_blank"
 		rel="noreferrer"
 		class="tournament-map-list-link"

@@ -1,10 +1,4 @@
 <script lang="ts">
-	import {
-		FIRST_PLACEMENT_ICON_PATH,
-		SECOND_PLACEMENT_ICON_PATH,
-		THIRD_PLACEMENT_ICON_PATH
-	} from '$lib/utils/urls';
-
 	interface Props {
 		placement: number;
 		iconClassName?: string;
@@ -29,11 +23,11 @@
 	function getSpecialPlacementIconPath(placement: number): string | null {
 		switch (placement) {
 			case 3:
-				return THIRD_PLACEMENT_ICON_PATH;
+				return '/svg/placements/third.svg';
 			case 2:
-				return SECOND_PLACEMENT_ICON_PATH;
+				return '/svg/placements/second.svg';
 			case 1:
-				return FIRST_PLACEMENT_ICON_PATH;
+				return '/svg/placements/first.svg';
 			default:
 				return null;
 		}

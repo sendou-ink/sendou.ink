@@ -2,7 +2,6 @@
 	import * as TeamAPI from '$lib/api/team';
 	import Flag from '$lib/components/Flag.svelte';
 	import Bsky from '$lib/components/icons/Bsky.svelte';
-	import { bskyUrl } from '$lib/utils/urls';
 	import { userSubmittedImage } from '$lib/utils/urls-img';
 	import * as R from 'remeda';
 	import Button from '$lib/components/buttons/Button.svelte';
@@ -100,7 +99,7 @@
 		<a
 			class="bsky-link"
 			data-testid="bsky-link"
-			href={bskyUrl(team.bsky)}
+			href={`https://bsky.app/profile/${team.bsky}`}
 			target="_blank"
 			rel="noreferrer"
 		>

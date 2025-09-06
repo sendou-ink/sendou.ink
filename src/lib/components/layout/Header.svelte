@@ -35,7 +35,7 @@ xxx: implement NavDialog & Hamburger
 		{openNavDialog}
 	/>
     -->
-	<a href="/" class="logo"> sendou.ink </a>
+	<a href={resolve('/')} class="logo"> sendou.ink </a>
 	<div class="right-container">
 		{#if isFrontPage && !(await AuthAPI.queries.me())?.roles.includes('MINOR_SUPPORT')}
 			<Button href={resolve('/support')} icon={Heart} size="small" variant="outlined">

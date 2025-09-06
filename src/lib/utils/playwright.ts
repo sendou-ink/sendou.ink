@@ -1,7 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 // import { ADMIN_ID } from "~/features/admin/admin-constants";
 // import type { SeedVariation } from "~/features/api-private/routes/seed";
-import { tournamentBracketsPage } from './urls';
 
 // xxx: actual values
 const ADMIN_ID = 1;
@@ -89,13 +88,13 @@ export async function fetchSendouInk<T>(url: string) {
 	return res.json() as T;
 }
 
-export async function startBracket(page: Page, tournamentId = 2) {
+export async function startBracket(page: Page, _tournamentId = 2) {
 	await seed(page);
 	await impersonate(page);
 
 	await navigate({
 		page,
-		url: tournamentBracketsPage({ tournamentId })
+		url: '' // xxx: correct url here
 	});
 
 	await page.getByTestId('finalize-bracket-button').click();

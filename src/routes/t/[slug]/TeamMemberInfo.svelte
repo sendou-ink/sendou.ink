@@ -1,9 +1,9 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import type * as TeamAPI from '$lib/api/team';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import WeaponImage from '$lib/components/image/WeaponImage.svelte';
 	import { teamRoleTranslations } from '$lib/utils/i18n';
-	import { userPage } from '$lib/utils/urls';
 
 	interface Props {
 		member: TeamAPI.queries.BySlugData['team']['members'][number];
@@ -21,7 +21,10 @@
 		</span>
 	{/if}
 	<div class="section">
-		<a href={userPage(member)} class="avatar-name-container">
+		<a
+			href={resolve('/u/[identifier]', { identifier: member.customUrl ?? member.discordId })}
+			class="avatar-name-container"
+		>
 			<div class="avatar">
 				<Avatar user={member} size="md" />
 			</div>
@@ -43,7 +46,10 @@
 <!-- Mobile -->
 <div class="card-container">
 	<div class="card">
-		<a href={userPage(member)} class="stack items-center">
+		<a
+			href={resolve('/u/[identifier]', { identifier: member.customUrl ?? member.discordId })}
+			class="stack items-center"
+		>
 			<Avatar user={member} size="md" />
 			<div class="card-name">{member.username}</div>
 		</a>

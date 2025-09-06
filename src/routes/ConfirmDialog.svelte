@@ -1,5 +1,6 @@
 <script lang="ts" module>
 	import { goto } from '$app/navigation';
+	import type { ResolvedPathname } from '$app/types';
 	import type { ButtonVariant } from '$lib/components/buttons/Button.svelte';
 
 	export interface ConfirmDialogProps {
@@ -10,7 +11,7 @@
 			text?: string;
 			variant?: ButtonVariant;
 		};
-		redirectTo?: string;
+		redirectTo?: ResolvedPathname;
 	}
 
 	export const confirmDialogState = $state<ConfirmDialogProps>({
@@ -38,6 +39,8 @@
 					try {
 						await confirmDialogState.onConfirm?.();
 						if (confirmDialogState.redirectTo) {
+							// xxx: should be removed after https://github.com/sveltejs/eslint-plugin-svelte/issues/1319 is resolved
+							// eslint-disable-next-line svelte/no-navigation-without-resolve
 							goto(confirmDialogState.redirectTo);
 						}
 					} catch (error) {
