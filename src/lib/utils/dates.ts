@@ -178,3 +178,7 @@ function datesOfMonth({ month, year }: MonthYear) {
 	}
 	return dates;
 }
+
+export function dateToDiscordTimestamp(date: Date) {
+	return `<t:${date.valueOf() / 1000}:F>`;
+}

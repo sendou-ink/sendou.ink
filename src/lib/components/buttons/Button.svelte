@@ -11,6 +11,7 @@
 		| 'destructive'
 		| 'minimal'
 		| 'popover'
+		| 'info'
 		| 'minimal-secondary'
 		| 'minimal-success'
 		| 'minimal-destructive';
@@ -70,6 +71,7 @@
 			destructive: variant === 'destructive',
 			minimal: variant === 'minimal',
 			popover: variant === 'popover',
+			info: variant === 'info',
 			'minimal-secondary': variant === 'minimal-secondary',
 			'minimal-success': variant === 'minimal-success',
 			'minimal-destructive': variant === 'minimal-destructive'
@@ -204,6 +206,19 @@
 		background-color: transparent;
 		color: var(--color-primary);
 		outline: initial;
+
+		&:focus-visible {
+			outline: 2px solid var(--color-primary);
+		}
+	}
+
+	.info {
+		padding: 0;
+		border: none;
+		background-color: transparent;
+		color: var(--color-base-content);
+		outline: initial;
+		text-decoration: underline dotted;
 
 		&:focus-visible {
 			outline: 2px solid var(--color-primary);

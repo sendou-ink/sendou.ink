@@ -4,6 +4,9 @@
 	import { getMinutes } from 'date-fns';
 	import Clock from '@lucide/svelte/icons/clock';
 	import { m } from '$lib/paraglide/messages';
+	import Popover from '$lib/components/popover/Popover.svelte';
+	import PopoverTriggerButton from '$lib/components/popover/PopoverTriggerButton.svelte';
+	import TimePopoverContent from '$lib/components/TimePopoverContent.svelte';
 
 	interface Props {
 		times: TournamentAPI.queries.InfoByIdData['times'];
@@ -23,8 +26,6 @@
 	}
 </script>
 
-<!-- xxx: add discord copy popover -->
-<!-- xxx: sort so chronological? -->
 <div class="times-container">
 	<h2>
 		<div class="time-line"></div>
@@ -53,7 +54,16 @@
 </div>
 
 {#snippet timeButton(date: Date)}
-	<dd>{formatDate(date)}</dd>
+	<dd>
+		<Popover>
+			{#snippet trigger()}
+				<PopoverTriggerButton variant="info">
+					{formatDate(date)}
+				</PopoverTriggerButton>
+			{/snippet}
+			<TimePopoverContent {date} />
+		</Popover>
+	</dd>
 {/snippet}
 
 <style>
@@ -118,6 +128,14 @@
 		&:not(:last-of-type) {
 			@container (width < 450px) {
 				margin-block-end: var(--s-4);
+			}
+		}
+	}
+
+	.time-popover {
+		:global {
+			svg {
+				width: 1rem;
 			}
 		}
 	}
