@@ -64,6 +64,7 @@ html.dark {
 	--color-primary-transparent: oklch(0.8839 0.0714 351.57 / 0.3);
 	--color-primary-content: oklch(21% 0.006 56.043);
 	--color-secondary: oklch(0.8839 0.1059 89.24);
+	--color-secondary-transparent: oklch(0.8839 0.1059 89.24 / 0.3);
 	--color-info: oklch(0.8839 0.0714 209.94);
 	--color-info-transparent: oklch(0.8839 0.0714 209.94 / 0.3);
 	--color-success: oklch(0.8839 0.0714 146.57);

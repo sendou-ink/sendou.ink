@@ -6,6 +6,7 @@ import { add, sub } from 'date-fns';
 import { requireTournament } from './utils.server';
 import markdownit from 'markdown-it';
 import { databaseTimestampToDate } from '$lib/utils/dates';
+import { userSubmittedImage } from '$lib/utils/urls-img';
 
 const md = markdownit();
 
@@ -67,6 +68,8 @@ async function tabCounts(tournamentId: number) {
 	};
 }
 
+export type InfoByIdData = Awaited<ReturnType<typeof infoById>>;
+
 export const infoById = query(id, async (id) => {
 	const tournament = await requireTournament(id);
 
@@ -80,11 +83,25 @@ export const infoById = query(id, async (id) => {
 		name: tournament.ctx.name,
 		logoSrc: tournament.ctx.logoSrc,
 		description: tournament.ctx.description ? md.render(tournament.ctx.description) : null,
+		author: {
+			discordId: tournament.ctx.author.discordId,
+			username: tournament.ctx.author.username,
+			customUrl: tournament.ctx.author.customUrl,
+			discordAvatar: tournament.ctx.author.discordAvatar
+		},
+		infos: {
+			isRanked: tournament.ranked,
+			modes: tournament.modesIncluded,
+			minMembersPerTeam: tournament.ctx.settings.minMembersPerTeam ?? 4,
+			isSkillCapped: tournament.ctx.tags?.includes('LOW')
+		},
 		organization: tournament.ctx.organization
 			? {
 					name: tournament.ctx.organization.name,
 					slug: tournament.ctx.organization.slug,
-					avatarUrl: tournament.ctx.organization.avatarUrl
+					logoSrc: tournament.ctx.organization.avatarUrl
+						? userSubmittedImage(tournament.ctx.organization.avatarUrl)
+						: null
 				}
 			: null,
 		times: {

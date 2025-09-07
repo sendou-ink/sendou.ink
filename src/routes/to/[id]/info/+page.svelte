@@ -1,129 +1,113 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import * as TournamentAPI from '$lib/api/tournament';
+	import Avatar from '$lib/components/Avatar.svelte';
 	import Markdown from '$lib/components/Markdown.svelte';
-	import { getLocale } from '$lib/paraglide/runtime';
-	import { getMinutes } from 'date-fns';
+	import { modesShortTranslations } from '$lib/utils/i18n';
 	import type { PageProps } from './$types';
-	import Clock from '@lucide/svelte/icons/clock';
+	import TournamentTimes from './TournamentTimes.svelte';
 	import { m } from '$lib/paraglide/messages';
 
 	let { params }: PageProps = $props();
 	const tournament = $derived(await TournamentAPI.queries.infoById(params.id));
 
-	function formatDate(date: Date) {
-		return date.toLocaleString(getLocale(), {
-			weekday: 'short',
-			day: 'numeric',
-			month: 'numeric',
-			year: '2-digit',
-			hour: 'numeric',
-			minute: getMinutes(date) === 0 ? undefined : 'numeric'
-		});
-	}
+	const quickInfos = $derived(
+		[
+			tournament.infos.isRanked ? m.deft_red_platypus_fall() : m.front_showcase_card_unranked(),
+			`${tournament.infos.minMembersPerTeam}v${tournament.infos.minMembersPerTeam}`,
+			tournament.infos.modes.map((mode) => modesShortTranslations[mode]()).join('/'),
+			tournament.infos.isSkillCapped ? m.common_tag_name_LOW() : null
+		].filter((value) => value !== null)
+	);
 </script>
 
-<div class="main stack lg">
-	{@render times()}
+<!-- xxx: register now button -->
+
+<div class="main stack md-plus">
+	<div class="stack sm items-center justify-center">
+		<img src={tournament.logoSrc} alt="" class="tournament-logo" />
+		<div>
+			<h2>{tournament.name}</h2>
+			{#if tournament.organization}
+				<div class="org">
+					{#if tournament.organization.logoSrc}
+						<img src={tournament.organization.logoSrc} alt="" class="org-logo" />
+					{/if}
+					<a href={resolve('/org/[slug]', { slug: tournament.organization.slug })}>
+						{tournament.organization.name}
+					</a>
+				</div>
+			{:else}
+				<div class="org">
+					{#if tournament.author.discordAvatar}
+						<Avatar size="xxs" user={tournament.author} />
+					{/if}
+					<a
+						href={resolve('/u/[identifier]', {
+							identifier: tournament.author.customUrl ?? tournament.author.discordId
+						})}
+					>
+						{tournament.author.username}
+					</a>
+				</div>
+			{/if}
+		</div>
+	</div>
+
+	<div class="quick-infos">
+		{#each quickInfos as info, i (info)}
+			<span class="badge">{info}</span>
+			{#if i < quickInfos.length - 1}
+				<div class="line"></div>
+			{/if}
+		{/each}
+	</div>
+
+	<TournamentTimes times={tournament.times} />
 	{#if tournament.description}
 		<Markdown content={tournament.description} />
 	{/if}
 </div>
 
-<!-- xxx: add discord copy popover -->
-{#snippet times()}
-	<div class="times-container">
-		<h2>
-			<div class="time-line"></div>
-			<Clock />{m.equal_smart_moose_kick()}
-			<div class="time-line"></div>
-		</h2>
-		<div class="times">
-			<dt>{m.knotty_tough_parrot_lead()}</dt>
-			<div class="line"></div>
-			<dd>
-				{formatDate(tournament.times.registrationEndsAt)}
-			</dd>
-
-			<dt>{m.sunny_tired_insect_dust()}</dt>
-			<div class="line"></div>
-			<dd>{formatDate(tournament.times.checkinStartsAt)}</dd>
-
-			<dt>{m.civil_clear_canary_renew()}</dt>
-			<div class="line"></div>
-			<dd>{formatDate(tournament.times.startsAt)}</dd>
-
-			{#if tournament.times.dayTwoStartsAt}
-				<dt>{m.super_bald_poodle_hunt()}</dt>
-				<div class="line"></div>
-				<dd>{formatDate(tournament.times.dayTwoStartsAt)}</dd>
-			{/if}
-		</div>
-	</div>
-{/snippet}
-
 <style>
-	.times-container {
-		container-type: inline-size;
-
-		& h2 {
-			font-size: var(--fonts-sm);
-			margin-block-end: var(--s-1);
-			justify-content: center;
-			align-items: center;
-			display: flex;
-			gap: var(--s-1-5);
-		}
-
-		& :global(svg) {
-			width: 1rem;
-			height: 1rem;
-		}
+	.tournament-logo {
+		border-radius: 100%;
+		height: 7.5rem;
 	}
 
-	.times {
-		display: grid;
-		grid-template-columns: max-content 1fr max-content;
-		background-color: var(--color-base-card);
-		border-radius: var(--radius-box);
-		padding: var(--s-2) var(--s-4);
+	.org {
+		display: flex;
 		align-items: center;
-		column-gap: var(--s-4);
+		justify-self: center;
+		gap: var(--s-1);
+		font-size: var(--fonts-sm);
+		font-weight: var(--semi-bold);
 
-		@container (width < 450px) {
-			grid-template-columns: 1fr;
-			place-items: center;
+		a {
+			color: var(--color-base-content-secondary);
+		}
+
+		img {
+			border-radius: 100%;
+			height: 24px;
 		}
 	}
 
-	.time-line {
-		height: 4px;
-		background-color: var(--color-base-card);
-		flex-grow: 1;
-		margin-inline: var(--s-2);
+	.quick-infos {
+		display: flex;
+		gap: var(--s-2-5);
+		flex-wrap: wrap;
+		justify-content: center;
+		font-weight: var(--semi-bold);
+		text-transform: uppercase;
+		font-size: var(--fonts-xs);
+		color: var(--color-secondary);
 	}
 
 	.line {
-		height: 2px;
-		background-color: var(--color-primary-transparent);
+		width: 3px;
+		background-color: var(--color-secondary-transparent);
+		flex-shrink: 0;
 		border-radius: 2px;
-		width: 100%;
-
-		@container (width < 450px) {
-			display: none;
-		}
-	}
-
-	dt {
-		font-style: italic;
-	}
-
-	dd {
-		font-weight: var(--semi-bold);
-
-		&:not(:last-of-type) {
-			@container (width < 450px) {
-				margin-block-end: var(--s-4);
-			}
-		}
 	}
 </style>
