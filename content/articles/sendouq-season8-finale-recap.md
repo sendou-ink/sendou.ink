@@ -43,7 +43,7 @@ The qualifying teams can be found on the [SendouQ leaderboards](https://sendou.i
 12. [Zipcat](https://sendou.ink/t/zipcat)—15th Place  
     *(eli, NomNom, Frook, Tame, Nami)*
 
-\* Honorable mentions that could not attend or declined their invitation: [Pathway](https://sendou.ink/t/pathway) (2nd Place), [Heavy Metal](https://sendou.ink/t/heavy-metal) (11th Place), [Parasail](https://sendou.ink/t/parasail) (14th Place).
+*Honorable mentions that could not attend or declined their invitation: [Pathway](https://sendou.ink/t/pathway) (2nd Place), [Heavy Metal](https://sendou.ink/t/heavy-metal) (11th Place), [Parasail](https://sendou.ink/t/parasail) (14th Place).
 
 ### Group A
 The groups for this edition were practically divided by region. In Group A, there was a diverse range of European talent across the board, and it showcased everything Europe had to offer.
