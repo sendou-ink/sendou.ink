@@ -8,6 +8,7 @@ author:
     link: https://sendou.ink/u/759473187598762014
   - name: Samino
     link: https://sendou.ink/u/samino
+---
 
 <img width="1200" height="675" alt="ARTICLE_BANNER" src="https://github.com/user-attachments/assets/3cc38497-8e27-4d86-8818-20cea7b234d3" />
 
@@ -16,7 +17,7 @@ Article originally posted on the [Splatoon Stronghold](https://www.splatoonstron
 SendouQ Season 8 Finale Recap  
 SendouQ seasons always end with a bang. This one was no exception. All of your favorite teams faced off this past weekend for the title of [SendouQ Season 8](https://sendou.ink/to/2091) Winner and $500.
 
-The qualifying teams can be found on the [SendouQ leaderboards](https://sendou.ink/leaderboards?type=TEAM&season=8). Here were the teams and their placements on the leaderboard
+The qualifying teams can be found on the [SendouQ leaderboards](https://sendou.ink/leaderboards?type=TEAM&season=8). Here were the teams and their placements on the leaderboard:
 
 1. Voie Lactée—1st Place  
    *(Grey, Jared, Bran, .q)*  
@@ -43,7 +44,7 @@ The qualifying teams can be found on the [SendouQ leaderboards](https://sendou.i
 12. [Zipcat](https://sendou.ink/t/zipcat)—15th Place  
     *(eli, NomNom, Frook, Tame, Nami)*
 
-*Honorable mentions that could not attend or declined their invitation: [Pathway](https://sendou.ink/t/pathway) (2nd Place), [Heavy Metal](https://sendou.ink/t/heavy-metal) (11th Place), [Parasail](https://sendou.ink/t/parasail) (14th Place).
+*/ Honorable mentions that could not attend or declined their invitation: [Pathway](https://sendou.ink/t/pathway) (2nd Place), [Heavy Metal](https://sendou.ink/t/heavy-metal) (11th Place), [Parasail](https://sendou.ink/t/parasail) (14th Place).
 
 ### Group A
 The groups for this edition were practically divided by region. In Group A, there was a diverse range of European talent across the board, and it showcased everything Europe had to offer.
