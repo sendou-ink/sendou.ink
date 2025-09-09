@@ -11,7 +11,7 @@ author:
 
 <img width="1200" height="675" alt="ARTICLE_BANNER" src="https://github.com/user-attachments/assets/3cc38497-8e27-4d86-8818-20cea7b234d3" />
 
-Article originally posted at: [https://www.splatoonstronghold.com/news/sendouq-season-8-finale-recap](https://www.splatoonstronghold.com/news/sendouq-season-8-finale-recap)
+Article originally posted on the [Splatoon Stronghold](https://www.splatoonstronghold.com/news/sendouq-season-8-finale-recap) website.
 
 SendouQ Season 8 Finale Recap  
 SendouQ seasons always end with a bang. This one was no exception. All of your favorite teams faced off this past weekend for the title of [SendouQ Season 8](https://sendou.ink/to/2091) Winner and $500.
