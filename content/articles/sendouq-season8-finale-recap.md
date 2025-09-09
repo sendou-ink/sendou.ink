@@ -16,7 +16,7 @@ Article originally posted on the [Splatoon Stronghold](https://www.splatoonstron
 SendouQ Season 8 Finale Recap  
 SendouQ seasons always end with a bang. This one was no exception. All of your favorite teams faced off this past weekend for the title of [SendouQ Season 8](https://sendou.ink/to/2091) Winner and $500.
 
-The qualifying teams can be found on the [SendouQ leaderboards](https://sendou.ink/leaderboards?type=TEAM&season=8). Here were the teams and their placements on the leaderboard:
+The qualifying teams can be found on the [SendouQ leaderboards](https://sendou.ink/leaderboards?type=TEAM&season=8). Here were the teams and their placements on the leaderboard
 
 1. Voie Lactée—1st Place  
    *(Grey, Jared, Bran, .q)*  
