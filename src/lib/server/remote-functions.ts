@@ -24,6 +24,11 @@ export function badRequestIfErr<T, E>(result: Result<T, E>): T {
 	return result.value;
 }
 
+/** Throws HTTP Error 400 Bad Request with the given message */
+export function badRequest(message: string): never {
+	error(400, message);
+}
+
 type ParaglideFunction = (
 	inputs?: any,
 	options?: {

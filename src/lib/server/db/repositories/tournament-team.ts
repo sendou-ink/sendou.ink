@@ -96,26 +96,18 @@ export async function updateMemberInGameNameForNonStarted({
 
 export function create({
 	team,
-	avatarFileName,
+	avatarImgId,
 	userId,
 	tournamentId,
 	ownerInGameName
 }: {
 	team: Pick<TablesInsertable['TournamentTeam'], 'name' | 'teamId'>;
-	avatarFileName?: string;
+	avatarImgId?: number | null;
 	userId: number;
 	tournamentId: number;
 	ownerInGameName: string | null;
 }) {
 	return db.transaction().execute(async (trx) => {
-		const avatarImgId = avatarFileName
-			? await createSubmittedImageInTrx({
-					trx,
-					avatarFileName,
-					userId
-				})
-			: null;
-
 		const tournamentTeam = await trx
 			.insertInto('TournamentTeam')
 			.values({

@@ -115,3 +115,16 @@ export const editProfileSchema = z.object({
 });
 
 export type EditProfileData = z.infer<typeof editProfileSchema>;
+
+export const insertFriendCodeSchema = z.object({
+	friendCode: Fields.textFieldRequired({
+		label: m.common_fc_title(),
+		leftAddon: 'SW-',
+		regExp: {
+			pattern: /^\d{4}-\d{4}-\d{4}$/,
+			message: m.active_icy_boar_jest()
+		},
+		maxLength: 12 + 3,
+		bottomText: m.seemly_neat_crow_inspire()
+	})
+});

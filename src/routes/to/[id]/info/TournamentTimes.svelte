@@ -131,12 +131,4 @@
 			}
 		}
 	}
-
-	.time-popover {
-		:global {
-			svg {
-				width: 1rem;
-			}
-		}
-	}
 </style>

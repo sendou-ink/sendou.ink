@@ -8,7 +8,6 @@ import { stageIds } from '$lib/constants/in-game/stage-ids';
 import { m } from '$lib/paraglide/messages';
 
 // xxx: fix these with imported
-const FRIEND_CODE_REGEXP = /^\d{4}-\d{4}-\d{4}$/;
 const CUSTOM_CSS_VAR_COLORS: unknown[] = [];
 
 export const id = z.coerce.number({ message: 'Required' }).int().positive();
@@ -40,19 +39,6 @@ export const shoesMainSlotAbility = z
 	.string()
 	.refine((val) => ['STACKABLE', 'SHOES_MAIN_ONLY'].includes(abilityNameToType(val) as any));
 export const stackableAbility = z.string().refine((val) => abilityNameToType(val) === 'STACKABLE');
-
-export function normalizeFriendCode(value: string) {
-	const onlyNumbers = value.replace(/\D/g, '');
-
-	const withDashes = onlyNumbers
-		.split(/(\d{4})/)
-		.filter(Boolean)
-		.join('-');
-
-	return withDashes;
-}
-
-export const friendCode = z.string().regex(FRIEND_CODE_REGEXP).transform(normalizeFriendCode);
 
 export const webUrl = z.url({
 	protocol: /^https$/,

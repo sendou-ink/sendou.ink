@@ -67,3 +67,8 @@ export const allBadgesOwnedByMe = query(async () => {
 
 	return profile.badges;
 });
+
+export const myFriendCode = query(async () => {
+	const loggedInUser = await requireUser();
+	return (await UserRepository.currentFriendCodeByUserId(loggedInUser.id))?.friendCode;
+});
