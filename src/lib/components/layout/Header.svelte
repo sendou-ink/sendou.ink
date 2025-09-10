@@ -61,6 +61,7 @@ xxx: implement NavDialog & Hamburger
 </header>
 
 <!-- xxx: Check the mobile styles -->
+<!-- xxx: deprecate all --layout-nav-height?-->
 <style>
 	.header {
 		display: flex;
@@ -69,13 +70,9 @@ xxx: implement NavDialog & Hamburger
 		align-items: center;
 		justify-content: space-between;
 		border-bottom: var(--border-style);
-		background-color: var(--color-base-section);
 		font-weight: bold;
 		padding-block: var(--s-1-5);
 		padding-inline: var(--s-4);
-		position: sticky;
-		top: 0;
-		z-index: 50;
 	}
 
 	.logo {

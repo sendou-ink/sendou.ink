@@ -1,14 +1,27 @@
 <script lang="ts">
 	import type { LayoutProps } from './$types';
 	import Main from '$lib/components/layout/Main.svelte';
-	import SubNav from '$lib/components/sub-nav/SubNav.svelte';
-	import SubNavLink from '$lib/components/sub-nav/SubNavLink.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { resolve } from '$app/paths';
 	import type { Snippet } from 'svelte';
 	import * as TournamentAPI from '$lib/api/tournament';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { removeMarkdown } from '$lib/utils/strings';
+	import { getLocale } from '$lib/paraglide/runtime';
+	import ListPlus from '@lucide/svelte/icons/list-plus';
+	import Scale from '@lucide/svelte/icons/scale';
+	import Trophy from '@lucide/svelte/icons/trophy';
+	import SquareSplitHorizontal from '@lucide/svelte/icons/square-split-horizontal';
+	import Users from '@lucide/svelte/icons/users';
+	import ListOrdered from '@lucide/svelte/icons/list-ordered';
+	import KeyRound from '@lucide/svelte/icons/key-round';
+	import SideNavItem from '$lib/components/layout/SideNavItem.svelte';
+	import Handshake from '@lucide/svelte/icons/handshake';
+	import Tv from '@lucide/svelte/icons/tv';
+	import SubSideNav from '$lib/components/layout/SubSideNav.svelte';
+	import SubSideNavLink from '$lib/components/layout/SubSideNavLink.svelte';
+	import type { ResolvedPathname } from '$app/types';
+	import SideNavHeader from '$lib/components/layout/SideNavHeader.svelte';
 
 	interface Props extends LayoutProps {
 		children: Snippet;
@@ -30,83 +43,133 @@
 />
 
 <Main bigger>
-	<SubNav>
+	{#snippet sideNavHeading()}
+		<SideNavHeader
+			href={resolve(`/to/${params.id}/info`)}
+			imgSrc={tournament.logoSrc}
+			heading={tournament.name}
+			subheading={tournament.times.startsAt.toLocaleString(getLocale(), {
+				year: 'numeric',
+				month: 'long',
+				day: 'numeric'
+			})}
+		/>
+	{/snippet}
+	{#snippet sideNav()}
 		{#if tabs.has('register')}
 			<!-- xxx: handle redirect to tournament.ctx.parentTournamentId on register page if needed -->
-			<SubNavLink
-				href={resolve('/to/[id]/register', { id: String(params.id) })}
-				data-testid="register-tab"
-			>
+			<!-- xxx: show (!) if reg is not complete? -->
+			<SideNavItem href={resolve(`/to/${params.id}/register`)} data-testid="register-tab">
+				{#snippet icon()}
+					<ListPlus />
+				{/snippet}
 				{m.tournament_tabs_register()}
-			</SubNavLink>
+			</SideNavItem>
 		{/if}
-		{#if tabs.has('info')}
-			<SubNavLink href={resolve('/to/[id]/info', { id: String(params.id) })} data-testid="info-tab">
-				{m.q_front_nav_info_title()}
-			</SubNavLink>
-		{/if}
+
 		{#if tabs.has('rules')}
-			<SubNavLink
-				href={resolve('/to/[id]/rules', { id: String(params.id) })}
-				data-testid="rules-tab"
-			>
+			<SideNavItem href={resolve(`/to/${params.id}/rules`)} data-testid="rules-tab">
+				{#snippet icon()}
+					<Scale />
+				{/snippet}
 				{m.q_front_nav_rules_title()}
-			</SubNavLink>
+			</SideNavItem>
 		{/if}
+
 		{#if tabs.has('brackets')}
-			<SubNavLink
-				href={resolve('/to/[id]/brackets', { id: String(params.id) })}
-				data-testid="brackets-tab"
-			>
-				{m.tournament_tabs_brackets()}
-			</SubNavLink>
+			<div>
+				<SideNavItem>
+					{#snippet icon()}
+						<Trophy />
+					{/snippet}
+					{m.tournament_tabs_brackets()}
+				</SideNavItem>
+				<SubSideNav>
+					{#each tournament.brackets as bracket, idx (bracket)}
+						<SubSideNavLink href={resolve(`/to/${params.id}/brackets/${idx}`)}>
+							{bracket}
+						</SubSideNavLink>
+					{/each}
+				</SubSideNav>
+			</div>
 		{/if}
+
+		{#if tabs.has('streams')}
+			<SideNavItem
+				href={resolve(`/to/${params.id}/streams`)}
+				data-testid="streams-tab"
+				number={counts.streams}
+			>
+				{#snippet icon()}
+					<Tv />
+				{/snippet}
+				{m.q_front_nav_streams_title()}
+			</SideNavItem>
+		{/if}
+
 		<!-- xxx: handle redirect to tournament.ctx.parentTournamentId on divisons page if needed -->
 		{#if tabs.has('divisions')}
-			<SubNavLink
-				href={resolve('/to/[id]/divisions', { id: String(params.id) })}
-				data-testid="divisions-tab"
-			>
+			<SideNavItem href={resolve(`/to/${params.id}/divisions`)} data-testid="divisions-tab">
+				{#snippet icon()}
+					<SquareSplitHorizontal />
+				{/snippet}
 				{m.topical_due_pigeon_enrich()}
-			</SubNavLink>
+			</SideNavItem>
 		{/if}
+
 		{#if tabs.has('teams')}
-			<SubNavLink
-				href={resolve('/to/[id]/teams', { id: String(params.id) })}
+			<SideNavItem
+				href={resolve(`/to/${params.id}/teams`)}
+				number={counts.teams}
 				data-testid="teams-tab"
 			>
-				{m.tournament_tabs_teams({ count: counts.teams })}
-			</SubNavLink>
+				{#snippet icon()}
+					<Users />
+				{/snippet}
+				{m.common_pages_t()}
+			</SideNavItem>
 		{/if}
+
 		{#if tabs.has('subs')}
-			<SubNavLink href={resolve('/to/[id]/subs', { id: String(params.id) })} data-testid="subs-tab">
-				{m.tournament_tabs_subs({ count: counts.subs })}
-			</SubNavLink>
-		{/if}
-		{#if tabs.has('streams')}
-			<SubNavLink
-				href={resolve('/to/[id]/streams', { id: String(params.id) })}
-				data-testid="streams-tab"
+			<SideNavItem
+				href={resolve(`/to/${params.id}/subs`)}
+				number={counts.subs}
+				data-testid="subs-tab"
 			>
-				{m.tournament_tabs_streams({ count: counts.streams })}
-			</SubNavLink>
+				{#snippet icon()}
+					<Handshake />
+				{/snippet}
+				Matchmaking
+			</SideNavItem>
 		{/if}
+
 		{#if tabs.has('results')}
-			<SubNavLink
-				href={resolve('/to/[id]/results', { id: String(params.id) })}
-				data-testid="results-tab"
-			>
+			<SideNavItem href={resolve(`/to/${params.id}/results`)} data-testid="results-tab">
+				{#snippet icon()}
+					<ListOrdered />
+				{/snippet}
 				{m.tournament_tabs_results()}
-			</SubNavLink>
+			</SideNavItem>
 		{/if}
+
 		{#if tabs.has('admin')}
-			<SubNavLink
-				href={resolve('/to/[id]/admin', { id: String(params.id) })}
-				data-testid="admin-tab"
-			>
-				{m.tournament_tabs_admin()}
-			</SubNavLink>
+			<div>
+				<SideNavItem>
+					{#snippet icon()}
+						<KeyRound />
+					{/snippet}
+					{m.tournament_tabs_admin()}
+				</SideNavItem>
+				<SubSideNav>
+					<SubSideNavLink href={resolve(`/to/${params.id}/admin/staff`)}>Staff</SubSideNavLink>
+					<SubSideNavLink href={resolve(`/to/${params.id}/admin/teams`)}>Teams</SubSideNavLink>
+					<SubSideNavLink href={resolve(`/to/${params.id}/admin/players`)}>Players</SubSideNavLink>
+					<SubSideNavLink href={(resolve('/to/new') + `?id=${params.id}`) as ResolvedPathname}
+						>Edit</SubSideNavLink
+					>
+				</SubSideNav>
+			</div>
 		{/if}
-	</SubNav>
+	{/snippet}
 	{@render children()}
 </Main>

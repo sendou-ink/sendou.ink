@@ -101,6 +101,7 @@
 		gap: var(--s-6);
 		margin-block-start: auto;
 		padding-block-end: var(--s-32);
+		border-block-start: var(--border-style);
 	}
 
 	.link-list {

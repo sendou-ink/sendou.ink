@@ -104,6 +104,7 @@ export const infoById = query(id, async (id) => {
 						: null
 				}
 			: null,
+		brackets: tournament.ctx.settings.bracketProgression.map((bracket) => bracket.name),
 		times: {
 			registrationEndsAt: tournament.ctx.settings.regClosesAt
 				? databaseTimestampToDate(tournament.ctx.settings.regClosesAt)

@@ -1,3 +1,4 @@
+<!-- xxx: deprecate in favor of the SideNav component? -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
