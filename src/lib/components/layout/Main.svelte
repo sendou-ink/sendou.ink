@@ -35,6 +35,8 @@
 	const showLeaderboard = $derived(
 		import.meta.env.VITE_PLAYWIRE_PUBLISHER_ID && !isMinorSupporter && !isRouteErrorResponse
 	);
+
+	let isMobileSideNavOpen = $state(false);
 </script>
 
 <!-- xxx: SideNav for mobile -->
@@ -49,11 +51,19 @@
 		>
 	{/if}
 	<div class="w-full">
-		{#if sideNavHeading}
+		{#if sideNavHeading && sideNav}
 			<div class="mobile-sidenav-heading">
 				{@render sideNavHeading()}
 				<div class="divider"></div>
-				<Button icon={menu} variant="minimal" size="big" />
+				<Button
+					icon={menu}
+					variant="minimal"
+					size="big"
+					onclick={() => (isMobileSideNavOpen = true)}
+				/>
+				<SideNav bind:isMobileSideNavOpen isMobile>
+					{@render sideNav()}
+				</SideNav>
 			</div>
 		{/if}
 		<main
