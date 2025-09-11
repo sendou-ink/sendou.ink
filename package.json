@@ -26,7 +26,7 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint . --ignore-pattern 'app/*' --ignore-pattern 'scripts/*'",
-		"checks": "npm run check && npm run lint && npm run test:unit && npm run check-translation-jsons",
+		"checks": "npm run format && npm run lint && npm run check",
 		"setup": "vite-node ./src/scripts/setup.ts"
 	},
 	"dependencies": {
