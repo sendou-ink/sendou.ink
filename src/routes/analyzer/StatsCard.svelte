@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { Stat, AnalyzedBuild } from '$lib/core/analyzer/types';
-	import type { MainWeaponId } from '$lib/constants/in-game/types';
 	import type { AbilityPoints } from '$lib/core/analyzer/types';
 	import Popover from '$lib/components/popover/Popover.svelte';
 	import PopoverTriggerButton from '$lib/components/popover/PopoverTriggerButton.svelte';
@@ -10,17 +9,17 @@
 	interface Props {
 		title: string;
 		stat: StatTuple | StatTuple<string> | number | string;
-		suffix?: string;
+		// suffix?: string; xxx: suffix not used yet
 		popoverInfo?: string;
 		testId?: string;
 		context: {
-			mainWeaponId: MainWeaponId;
+			// mainWeaponId: MainWeaponId; // xxx: mainWeaponId not used yet
 			abilityPoints: AbilityPoints;
 			isComparing: boolean;
 		};
 	}
 
-	let { title, stat, suffix, popoverInfo, testId, context }: Props = $props();
+	let { title, stat, popoverInfo, testId, context }: Props = $props();
 
 	// We have to use a derived.by with a destructure because TS wont work with two seperate deriveds
 	const { isStatic, baseValue } = $derived.by(() => {

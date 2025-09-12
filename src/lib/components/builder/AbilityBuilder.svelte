@@ -82,8 +82,8 @@
 
 <div class="container">
 	<div class="slots">
-		{#each abilities as row, i}
-			{#each row as item, j}
+		{#each abilities as row, i (i)}
+			{#each row as item, j (j)}
 				{@const abilityType = getAbilityType(item)}
 				{@const slotType = getSlotType(i, j)}
 				<AbilitySlot

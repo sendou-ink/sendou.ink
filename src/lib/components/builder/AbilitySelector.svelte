@@ -30,7 +30,7 @@
 			const duplicateItem = createDuplicateItem(abilities[itemIndex]);
 
 			event.detail.items = event.detail.items.filter(
-				(item) => !item.hasOwnProperty('isDndShadowItem')
+				(item) => !Object.hasOwn(item, 'isDndShadowItem')
 			);
 
 			event.detail.items.splice(itemIndex, 0, duplicateItem);

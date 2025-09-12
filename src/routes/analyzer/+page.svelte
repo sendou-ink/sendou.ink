@@ -96,7 +96,7 @@
 	const { analyzed: analyzedA, abilityPoints: abilityPointsA } = $derived(
 		analyzeBuild(buildA.state, effectsA.state)
 	);
-	const { analyzed: analyzedB, abilityPoints: abilityPointsB } = $derived(
+	const { analyzed: analyzedB, abilityPoints: _abilityPointsB } = $derived(
 		analyzeBuild(buildB.state, effectsB.state)
 	);
 
@@ -133,7 +133,7 @@
 		return { analyzed, abilityPoints };
 	}
 
-	function statKeyToTuple(key: keyof AnalyzedBuild['stats']) {
+	function _statKeyToTuple(key: keyof AnalyzedBuild['stats']) {
 		return [analyzedA.stats[key], analyzedB.stats[key], key] as [
 			Stat,
 			Stat,
