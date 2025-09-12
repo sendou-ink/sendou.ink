@@ -295,9 +295,9 @@
 		width: 1.25rem;
 		margin-inline-end: var(--s-1-5);
 
-		/** xxx: this is not correct, on safari different size (check Support button for example)*/
 		:global(svg) {
-			height: max-content;
+			height: 1.25rem;
+			width: 100%;
 		}
 
 		&.lonely {

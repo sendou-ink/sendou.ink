@@ -91,6 +91,7 @@ xxx: implement NavDialog & Hamburger
 		display: flex;
 		gap: var(--s-3);
 		justify-self: flex-end;
+		align-items: center;
 
 		:global(svg) {
 			fill: var(--color-primary);
