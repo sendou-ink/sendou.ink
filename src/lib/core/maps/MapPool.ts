@@ -1,11 +1,10 @@
 import { modesShort } from '$lib/constants/in-game/modes';
-import type { ModeShort, StageId } from '$lib/constants/in-game/types';
+import type { ModeShort, ModeWithStage, StageId } from '$lib/constants/in-game/types';
 import { mapPoolToSerializedString, serializedStringToMapPool } from '$lib/core/maps/serializer';
 import type { UserMapModePreferences } from '$lib/server/db/tables';
 
 export type MapPool = Record<ModeShort, Array<StageId>>;
 export type PartialMapPool = Partial<Record<ModeShort, Array<StageId>>>;
-export type ModeWithStage = { mode: ModeShort; stageId: StageId }; // xxx: duplicate type
 
 export function fromSendouQMapPoolPreferences(pool: UserMapModePreferences['pool']) {
 	return {

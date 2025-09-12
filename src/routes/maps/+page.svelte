@@ -3,6 +3,7 @@
 	import ModeMapPoolPicker from '$lib/components/ModeMapPoolPicker.svelte';
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { modesShort } from '$lib/constants/in-game/modes';
+	import type { ModeWithStage } from '$lib/constants/in-game/types';
 	import { SearchParamState } from '$lib/runes/search-param-state.svelte';
 	import * as MapPool from '$lib/core/maps/MapPool';
 	import z from 'zod';
@@ -36,7 +37,7 @@
 	});
 
 	let splatZonesEveryOther = $state(false);
-	let mapList = $state<Array<MapPool.ModeWithStage> | null>(null);
+	let mapList = $state<Array<ModeWithStage> | null>(null);
 
 	function generateMapListFromSelection() {
 		const [createdMapList] = generateMapList(
