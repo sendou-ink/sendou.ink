@@ -50,7 +50,6 @@
 		onselect?.(item);
 	}
 
-	// xxx: Better way to do this?
 	function isGroupData(data: Item[] | Group[]): data is Group[] {
 		return data.length > 0 && 'items' in data[0];
 	}
