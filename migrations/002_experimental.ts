@@ -1,6 +1,7 @@
 import { Kysely } from 'kysely'    
-import * as MapPool from '$lib/core/maps/MapPool';
-import * as R from 'remeda';
+// TODO: "Cannot find package '$lib' imported" - migrator doesn't understand the import
+// import * as MapPool from '$lib/core/maps/MapPool';
+// import * as R from 'remeda';
 
 export async function up(db: Kysely<any>): Promise<void> {
   await db.schema.alterTable("Badge").dropColumn("hue").execute()
@@ -8,7 +9,7 @@ export async function up(db: Kysely<any>): Promise<void> {
   await db.schema.alterTable("TournamentTeam").dropColumn("prefersNotToHost").execute()
 
   await fixQWeaponPools(db);
-  await fixUserMapModePreferences(db);
+  // await fixUserMapModePreferences(db);
 
   await db.schema
     .createIndex('build_weapon_weapon_spl_id')
@@ -34,20 +35,20 @@ for (const {qWeaponPool, id} of qWeaponPools) {
 }
 }
 
-async function fixUserMapModePreferences(db: Kysely<any>) {
-  const userMapModePreferences = await db.selectFrom("User").select(["id", "mapModePreferences"]).where("mapModePreferences", "is not", null).execute();
+// async function fixUserMapModePreferences(db: Kysely<any>) {
+//   const userMapModePreferences = await db.selectFrom("User").select(["id", "mapModePreferences"]).where("mapModePreferences", "is not", null).execute();
 
-  for (const {mapModePreferences, id} of userMapModePreferences) {
-    const mp = JSON.parse(mapModePreferences);
+//   for (const {mapModePreferences, id} of userMapModePreferences) {
+//     const mp = JSON.parse(mapModePreferences);
 
-    await db.updateTable("User").set({
-      mapModePreferences: JSON.stringify({
-        modes:
-			mp.modes.flatMap((pref) =>
-				pref.preference === 'PREFER' ? pref.mode : []
-			) ?? [],
-        pool: R.pipe(MapPool.fromSendouQMapPoolPreferences(mp), R.omitBy(R.isEmpty))
-      })
-    }).where("id", "=", id).execute();
-  }
-}
+//     await db.updateTable("User").set({
+//       mapModePreferences: JSON.stringify({
+//         modes:
+// 			mp.modes.flatMap((pref) =>
+// 				pref.preference === 'PREFER' ? pref.mode : []
+// 			) ?? [],
+//         pool: R.pipe(MapPool.fromSendouQMapPoolPreferences(mp), R.omitBy(R.isEmpty))
+//       })
+//     }).where("id", "=", id).execute();
+//   }
+// }
