@@ -31,6 +31,7 @@
 	const id = $props.id();
 
 	let errors = $state<Partial<Record<keyof Output, string>>>({});
+	let form = $state<HTMLFormElement>();
 
 	const containsFileInput = $derived(resolveFieldsByType(schema, 'file').length > 0);
 
@@ -41,15 +42,9 @@
 		onblur: () => validateForm()
 	});
 
-	function formElement() {
-		// xxx: at the time of the writing form with reference did not play together nicely remote functions, convert to ref later
-		// tracked: https://github.com/sveltejs/svelte/issues/16582
-		return document.getElementById(id) as HTMLFormElement;
-	}
-
 	function validateForm() {
 		return tick().then(() => {
-			const data = new FormData(formElement());
+			const data = new FormData(form);
 			// xxx: this is not the best UX because blurring causes all the errors to show up (also those that did have not input yet)
 			const parsed = z.safeParse(schema, formDataToObject(data));
 
@@ -87,7 +82,7 @@
 		// at least datetime input uses input hidden to hold the actual value so it is not supported for onchange
 		if (!name) return;
 
-		const fieldData = new FormData(formElement()).get(name);
+		const fieldData = new FormData(form).get(name);
 		const zodObject = schema as ZodObject<ZodRawShape>;
 		const fieldSchema = zodObject.shape[name];
 
@@ -114,6 +109,7 @@
 </script>
 
 <form
+	bind:this={form}
 	{id}
 	{...action.enhance(enhanced)}
 	class="stack md-plus items-start"

@@ -13,12 +13,6 @@ const rulesToExtract = [
 	'border'
 ] as const;
 
-/*
-xxx: ideally we would pass the canvas element into this function,
-     which would allow each chart component to override the vars colors in their style tag
-	 but currently not possible because of the onMount bug
-	 tracked: https://github.com/sveltejs/svelte/issues/16582
-*/
 export function getChartColors() {
 	const styles = getComputedStyle(document.documentElement);
 	const colors = {} as Record<(typeof rulesToExtract)[number], string>;
