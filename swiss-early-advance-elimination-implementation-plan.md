@@ -38,7 +38,7 @@ Implement a Swiss tournament variation where teams only play as many rounds as r
 
 ### Phase 2: Core Logic Implementation
 
-- [ ] #### 2.1 Team Status Tracking
+- [x] #### 2.1 Team Status Tracking
 **File**: `app/features/tournament-bracket/core/Swiss.ts`
 - Add new type for team status:
   ```typescript
@@ -56,7 +56,7 @@ Implement a Swiss tournament variation where teams only play as many rounds as r
   ): SwissTeamStatus
   ```
 
-- [ ] #### 2.3 Update generateMatchUps Function
+- [x] #### 2.3 Update generateMatchUps Function
 **File**: `app/features/tournament-bracket/core/Swiss.ts`
 - Modify `generateMatchUps()` to:
   - Filter out teams that have advanced or been eliminated

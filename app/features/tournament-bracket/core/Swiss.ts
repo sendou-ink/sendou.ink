@@ -197,9 +197,34 @@ export function generateMatchUps({
 	});
 
 	// teams who have dropped out are not considered
-	const standingsWithoutDropouts = groupsStandings.filter(
+	let standingsWithoutDropouts = groupsStandings.filter(
 		(s) => !s.team.droppedOut,
 	);
+
+	// filter out teams that have advanced or been eliminated if early advance/elimination is enabled
+	if (typeof bracket.settings?.advanceThreshold === "number") {
+		const roundCount =
+			bracket.settings.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT;
+		const advanceThreshold = bracket.settings.advanceThreshold;
+
+		standingsWithoutDropouts = standingsWithoutDropouts.filter((standing) => {
+			const wins = standing.stats?.setWins ?? 0;
+			const losses = standing.stats?.setLosses ?? 0;
+			const status = calculateTeamStatus({
+				wins,
+				losses,
+				advanceThreshold,
+				roundCount,
+			});
+
+			return status === "active";
+		});
+	}
+
+	// if there are fewer than 2 active teams, no more matches can be generated
+	if (standingsWithoutDropouts.length < 2) {
+		return err("Not enough active teams to generate matches");
+	}
 
 	const teamsThatHaveHadByes = groupsMatches
 		.filter((m) => m.opponent2 === null)
@@ -255,16 +280,16 @@ export function generateMatchUps({
 type SwissTeamStatus = "active" | "advanced" | "eliminated";
 
 /**
- * Calculates whether a team should advance, be eliminated, or remain active 
+ * Calculates whether a team should advance, be eliminated, or remain active
  * in a Swiss tournament with early advance/elimination rules.
- * 
- * @returns The team's status: "advanced" if they've secured advancement, 
+ *
+ * @returns The team's status: "advanced" if they've secured advancement,
  *          "eliminated" if they can no longer mathematically advance, or "active" if still competing
- * 
+ *
  * @example
  * // In a 5-round Swiss where teams need 3 wins to advance:
  * calculateTeamStatus({ wins: 3, losses: 1, advanceThreshold: 3, roundCount: 5 }) // "advanced"
- * calculateTeamStatus({ wins: 2, losses: 3, advanceThreshold: 3, roundCount: 5 }) // "eliminated" 
+ * calculateTeamStatus({ wins: 2, losses: 3, advanceThreshold: 3, roundCount: 5 }) // "eliminated"
  * calculateTeamStatus({ wins: 2, losses: 2, advanceThreshold: 3, roundCount: 5 }) // "active"
  */
 export function calculateTeamStatus({
