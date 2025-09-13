@@ -26,15 +26,15 @@ Implement a Swiss tournament variation where teams only play as many rounds as r
 
 ### Phase 1: Database Schema Updates
 
-- [ ] #### 1.1 Extend TournamentStageSettings
+- [x] #### 1.1 Extend TournamentStageSettings
 **File**: `app/db/tables.ts`
-- Add new optional properties to `TournamentStageSettings`:
+- Add new optional property to `TournamentStageSettings`:
   ```typescript
   // SWISS early advance/elimination settings
-  earlyAdvanceEnabled?: boolean;
   advanceThreshold?: number;  // wins needed to advance (e.g., 3)
-  eliminationThreshold?: number;  // losses needed to be eliminated (e.g., 3)
   ```
+  
+**Note**: Only `advanceThreshold` is needed. The elimination threshold can be calculated as `roundCount - advanceThreshold + 1`, and the feature is enabled when `advanceThreshold` is defined.
 
 ### Phase 2: Core Logic Implementation
 
@@ -51,7 +51,8 @@ Implement a Swiss tournament variation where teams only play as many rounds as r
   function calculateTeamStatus(
     wins: number,
     losses: number,
-    settings: { advanceThreshold?: number; eliminationThreshold?: number }
+    advanceThreshold: number,
+    roundCount: number
   ): SwissTeamStatus
   ```
 
