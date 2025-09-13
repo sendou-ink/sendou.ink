@@ -666,13 +666,7 @@ export function overrideTeamBracketProgression({
 		.execute();
 }
 
-export function updateTeamName({
-	tournamentTeamId,
-	name
-}: {
-	tournamentTeamId: number;
-	name: string;
-}) {
+export function updateTeamName(tournamentTeamId: number, { name }: { name: string }) {
 	return db
 		.updateTable('TournamentTeam')
 		.set({
@@ -682,13 +676,10 @@ export function updateTeamName({
 		.execute();
 }
 
-export function dropTeamOut({
-	tournamentTeamId,
-	previewBracketIdxs
-}: {
-	tournamentTeamId: number;
-	previewBracketIdxs: number[];
-}) {
+export function dropTeamOut(
+	tournamentTeamId: number,
+	{ previewBracketIdxs }: { previewBracketIdxs: number[] }
+) {
 	return db.transaction().execute(async (trx) => {
 		await trx
 			.deleteFrom('TournamentTeamCheckIn')
@@ -716,15 +707,16 @@ export function undoDropTeamOut(tournamentTeamId: number) {
 		.execute();
 }
 
-export function addStaff({
-	tournamentId,
-	userId,
-	role
-}: {
-	tournamentId: number;
-	userId: number;
-	role: Tables['TournamentStaff']['role'];
-}) {
+export function addStaff(
+	tournamentId: number,
+	{
+		userId,
+		role
+	}: {
+		userId: number;
+		role: Tables['TournamentStaff']['role'];
+	}
+) {
 	return db
 		.insertInto('TournamentStaff')
 		.values({
@@ -735,7 +727,7 @@ export function addStaff({
 		.execute();
 }
 
-export function removeStaff({ tournamentId, userId }: { tournamentId: number; userId: number }) {
+export function removeStaff(tournamentId: number, { userId }: { userId: number }) {
 	return db
 		.deleteFrom('TournamentStaff')
 		.where('tournamentId', '=', tournamentId)
@@ -802,7 +794,7 @@ async function castedMatchesInfoByTournamentId(trx: Transaction<DB>, tournamentI
 	);
 }
 
-export function lockMatch({ matchId, tournamentId }: { matchId: number; tournamentId: number }) {
+export function lockMatch(matchId: number, { tournamentId }: { tournamentId: number }) {
 	return db.transaction().execute(async (trx) => {
 		const castedMatchesInfo = await castedMatchesInfoByTournamentId(trx, tournamentId);
 
@@ -820,7 +812,7 @@ export function lockMatch({ matchId, tournamentId }: { matchId: number; tourname
 	});
 }
 
-export function unlockMatch({ matchId, tournamentId }: { matchId: number; tournamentId: number }) {
+export function unlockMatch(matchId: number, { tournamentId }: { tournamentId: number }) {
 	return db.transaction().execute(async (trx) => {
 		const castedMatchesInfo = await castedMatchesInfoByTournamentId(trx, tournamentId);
 

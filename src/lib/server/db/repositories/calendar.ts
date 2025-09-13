@@ -636,13 +636,10 @@ async function upsertMapPoolInTrx({
 		.execute();
 }
 
-export function deleteById({
-	eventId,
-	tournamentId
-}: {
-	eventId: number;
-	tournamentId?: number | null;
-}) {
+export function deleteById(
+	eventId: number,
+	{ tournamentId }: { tournamentId?: number | null } = {}
+) {
 	return db.transaction().execute(async (trx) => {
 		await trx.deleteFrom('CalendarEvent').where('id', '=', eventId).execute();
 		if (tournamentId) {

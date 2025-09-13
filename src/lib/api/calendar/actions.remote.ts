@@ -76,7 +76,5 @@ export const deleteById = command(id, async (id) => {
 	const event = (await byId(id)).event;
 	requirePermission(event, 'EDIT');
 
-	await CalendarRepository.deleteById({
-		eventId: event.eventId
-	});
+	await CalendarRepository.deleteById(event.eventId);
 });

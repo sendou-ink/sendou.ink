@@ -164,13 +164,7 @@ export function makeTournamentOrganizerByUserId(userId: number) {
 		.execute();
 }
 
-export async function linkUserAndPlayer({
-	userId,
-	playerId
-}: {
-	userId: number;
-	playerId: number;
-}) {
+export async function linkUserAndPlayer(userId: number, { playerId }: { playerId: number }) {
 	await db
 		.updateTable('SplatoonPlayer')
 		.set({ userId: null })
@@ -204,18 +198,19 @@ export function forcePatron(args: {
 		.execute();
 }
 
-export function banUser({
-	userId,
-	banned,
-	bannedReason,
-	bannedByUserId
-}: {
-	userId: number;
-	banned: 1 | Date;
-	bannedReason: string | null;
-	/** Which user banned the user? If null then it means it was an automatic ban. */
-	bannedByUserId: number | null;
-}) {
+export function banUser(
+	userId: number,
+	{
+		banned,
+		bannedReason,
+		bannedByUserId
+	}: {
+		banned: 1 | Date;
+		bannedReason: string | null;
+		/** Which user banned the user? If null then it means it was an automatic ban. */
+		bannedByUserId: number | null;
+	}
+) {
 	return db.transaction().execute(async (trx) => {
 		const banArgs = {
 			banned,
@@ -237,13 +232,7 @@ export function banUser({
 	});
 }
 
-export function unbanUser({
-	userId,
-	unbannedByUserId
-}: {
-	userId: number;
-	unbannedByUserId: number;
-}) {
+export function unbanUser(userId: number, { unbannedByUserId }: { unbannedByUserId: number }) {
 	return db.transaction().execute(async (trx) => {
 		const banArgs = {
 			banned: 0,

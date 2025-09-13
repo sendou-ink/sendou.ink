@@ -66,8 +66,7 @@ export const insertFriendCode = validatedForm(insertFriendCodeSchema, async (dat
 	});
 
 	if (isTakenFriendCode) {
-		await AdminRepository.banUser({
-			userId: user.id,
+		await AdminRepository.banUser(user.id, {
 			banned: 1,
 			bannedReason:
 				'[automatic ban] This friend code is already in use by some other account. Please contact staff on our Discord helpdesk for resolution including merging accounts.',
