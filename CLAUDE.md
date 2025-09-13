@@ -4,8 +4,8 @@
 - `npm run lint` - Run eslint
 - `npm run format` - Format files with Prettier
 - `npm run check` - Run Svelte checks including typechecks
-
-Lint & format and check should all pass before committing.
+- `npm run test:unit` - Run unit tests via Vitest
+- `npm run checks` - Run all checks that would run in the CI pipeline. These should pass before any task is considered complete.
 
 ## Project Architecture
 
