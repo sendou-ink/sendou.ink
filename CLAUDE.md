@@ -29,6 +29,11 @@ Svelte components can also be colocated next to the route file as long as it is 
 - Always include the `lang="ts"` attribute in the script tag
 - Do not use index as a key in each block, key should come from the data
 
+## Styling
+
+- Plain CSS via Svelte scoped style tags
+- Use design system tokens defined in the `vars.css` file instead of hard coding colors and spacings
+
 ## Typescript
 
 - TypeScript strict mode is enabled
@@ -59,3 +64,12 @@ Svelte components can also be colocated next to the route file as long as it is 
 - Integration tests using in-memory SQLite sparingly (via Vitest)
 - E2E tests for critical user flows (via Playwright)
 - Test files co-located with source code
+
+#### Error handling
+
+- Throwing for normal control flow should be avoided, instead use the `neverthrow` library
+
+#### Importing
+
+- Typescript files that start with a capital letter are modules and should be imported like so: `* as ExampleModule from "./ExampleModule.ts` instead of importing the functions directly
+- Use SvelteKit's `$lib` short-hand import instead of relative imports
