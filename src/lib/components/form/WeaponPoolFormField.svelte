@@ -17,7 +17,6 @@
 
 	type Props = FormFieldProps<'weapon-pool'> & {
 		value: WeaponPool[];
-		onblur?: () => void;
 	};
 
 	let { label, name, bottomText, error, onblur, value = $bindable(), maxCount }: Props = $props();

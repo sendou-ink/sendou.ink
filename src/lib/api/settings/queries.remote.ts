@@ -1,8 +1,8 @@
-import { query } from '$app/server';
+import { getRequestEvent, query } from '$app/server';
 import { requireUser } from '$lib/server/auth/session';
 import * as UserRepository from '$lib/server/db/repositories/user';
 import invariant from '$lib/utils/invariant';
-import type { UpdateMatchProfileData } from './schemas';
+import type { Theme, UpdateMatchProfileData } from './schemas';
 import * as MapPool from '$lib/core/maps/MapPool';
 import { rankedModesShort } from '$lib/constants/in-game/modes';
 
@@ -33,4 +33,11 @@ export const matchProfile = query(async (): Promise<UpdateMatchProfileData> => {
 			? MapPool.fromSendouQMapPoolPreferences(profile.mapModePreferences.pool)
 			: MapPool.empty()
 	};
+});
+
+export const myTheme = query(() => {
+	const request = getRequestEvent();
+	const theme = request.cookies.get('theme') ?? 'auto';
+
+	return theme as Theme;
 });

@@ -23,6 +23,30 @@ html {
 	--color-error: oklch(0.55 0.25 22.24);
 	--color-error-transparent: oklch(0.55 0.25 22.24 / 0.3);
 
+	/** Dark mode color definitions */
+	--dark-color-base-bg: oklch(0.133 0.0673 272.37);
+	--dark-color-base-section: oklch(0.201 0.0699 284.33);
+	--dark-color-base-card: oklch(0.3303 0.0921 288.85);
+	--dark-color-base-card-section: oklch(0.23 0.07 292.19 / 1);
+	--dark-color-base-card-transparent: oklch(0.3303 0.0921 288.85 / 0.3);
+	--dark-color-base-border: oklch(0.2908 0.0699 292.19);
+	--dark-color-base-content: oklch(98% 0.002 247.839);
+	--dark-color-base-content-secondary: oklch(0.7552 0.0556 286.16);
+	--dark-color-base-backdrop: oklch(13.232% 0.06693 272.495 / 0.8);
+	--dark-color-primary: oklch(0.8839 0.0714 351.57);
+	--dark-color-primary-transparent: oklch(0.8839 0.0714 351.57 / 0.3);
+	--dark-color-primary-content: oklch(21% 0.006 56.043);
+	--dark-color-secondary: oklch(0.8839 0.1059 89.24);
+	--dark-color-secondary-transparent: oklch(0.8839 0.1059 89.24 / 0.3);
+	--dark-color-info: oklch(0.8839 0.0714 209.94);
+	--dark-color-info-transparent: oklch(0.8839 0.0714 209.94 / 0.3);
+	--dark-color-success: oklch(0.8839 0.0714 146.57);
+	--dark-color-success-transparent: oklch(0.8839 0.0714 146.57 / 0.3);
+	--dark-color-warning: oklch(82% 0.189 84.429);
+	--dark-color-warning-transparent: oklch(82% 0.189 84.429 / 0.3);
+	--dark-color-error: oklch(0.6897 0.2541 22.24);
+	--dark-color-error-transparent: oklch(0.6897 0.2541 22.24 / 0.3);
+
 	/** Sizing and layout */
 	--fonts-xl: 1.5rem;
 	--fonts-lg: 1.2rem;
@@ -92,28 +116,56 @@ html {
 
 html.dark {
 	/** Dark mode theming tokens */
-	--color-base-bg: oklch(0.133 0.0673 272.37); /** color-base-200 */
-	--color-base-section: oklch(0.201 0.0699 284.33);
-	--color-base-card: oklch(0.3303 0.0921 288.85); /** color-base-100 */
-	--color-base-card-section: oklch(0.23 0.07 292.19 / 1); /** xxx: rename to color-base-input ? */
-	--color-base-card-transparent: oklch(0.3303 0.0921 288.85 / 0.3);
-	--color-base-border: oklch(0.2908 0.0699 292.19); /** color-base-300 */
-	--color-base-content: oklch(98% 0.002 247.839);
-	--color-base-content-secondary: oklch(0.7552 0.0556 286.16);
-	--color-base-backdrop: oklch(13.232% 0.06693 272.495 / 0.8);
-	--color-primary: oklch(0.8839 0.0714 351.57);
-	--color-primary-transparent: oklch(0.8839 0.0714 351.57 / 0.3);
-	--color-primary-content: oklch(21% 0.006 56.043);
-	--color-secondary: oklch(0.8839 0.1059 89.24);
-	--color-secondary-transparent: oklch(0.8839 0.1059 89.24 / 0.3);
-	--color-info: oklch(0.8839 0.0714 209.94);
-	--color-info-transparent: oklch(0.8839 0.0714 209.94 / 0.3);
-	--color-success: oklch(0.8839 0.0714 146.57);
-	--color-success-transparent: oklch(0.8839 0.0714 146.57 / 0.3);
-	--color-warning: oklch(82% 0.189 84.429);
-	--color-warning-transparent: oklch(82% 0.189 84.429 / 0.3);
-	--color-error: oklch(0.6897 0.2541 22.24);
-	--color-error-transparent: oklch(0.6897 0.2541 22.24 / 0.3);
+	--color-base-bg: var(--dark-color-base-bg);
+	--color-base-section: var(--dark-color-base-section);
+	--color-base-card: var(--dark-color-base-card);
+	--color-base-card-section: var(--dark-color-base-card-section);
+	--color-base-card-transparent: var(--dark-color-base-card-transparent);
+	--color-base-border: var(--dark-color-base-border);
+	--color-base-content: var(--dark-color-base-content);
+	--color-base-content-secondary: var(--dark-color-base-content-secondary);
+	--color-base-backdrop: var(--dark-color-base-backdrop);
+	--color-primary: var(--dark-color-primary);
+	--color-primary-transparent: var(--dark-color-primary-transparent);
+	--color-primary-content: var(--dark-color-primary-content);
+	--color-secondary: var(--dark-color-secondary);
+	--color-secondary-transparent: var(--dark-color-secondary-transparent);
+	--color-info: var(--dark-color-info);
+	--color-info-transparent: var(--dark-color-info-transparent);
+	--color-success: var(--dark-color-success);
+	--color-success-transparent: var(--dark-color-success-transparent);
+	--color-warning: var(--dark-color-warning);
+	--color-warning-transparent: var(--dark-color-warning-transparent);
+	--color-error: var(--dark-color-error);
+	--color-error-transparent: var(--dark-color-error-transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+	html.auto {
+		/** Auto dark mode theming tokens - matches user's system preference */
+		--color-base-bg: var(--dark-color-base-bg);
+		--color-base-section: var(--dark-color-base-section);
+		--color-base-card: var(--dark-color-base-card);
+		--color-base-card-section: var(--dark-color-base-card-section);
+		--color-base-card-transparent: var(--dark-color-base-card-transparent);
+		--color-base-border: var(--dark-color-base-border);
+		--color-base-content: var(--dark-color-base-content);
+		--color-base-content-secondary: var(--dark-color-base-content-secondary);
+		--color-base-backdrop: var(--dark-color-base-backdrop);
+		--color-primary: var(--dark-color-primary);
+		--color-primary-transparent: var(--dark-color-primary-transparent);
+		--color-primary-content: var(--dark-color-primary-content);
+		--color-secondary: var(--dark-color-secondary);
+		--color-secondary-transparent: var(--dark-color-secondary-transparent);
+		--color-info: var(--dark-color-info);
+		--color-info-transparent: var(--dark-color-info-transparent);
+		--color-success: var(--dark-color-success);
+		--color-success-transparent: var(--dark-color-success-transparent);
+		--color-warning: var(--dark-color-warning);
+		--color-warning-transparent: var(--dark-color-warning-transparent);
+		--color-error: var(--dark-color-error);
+		--color-error-transparent: var(--dark-color-error-transparent);
+	}
 }
 
 /* xs: "(min-width: 480px)",

@@ -7,11 +7,12 @@
 	import { ariaAttributes } from './utils';
 	import { getLocale } from '$lib/paraglide/runtime';
 
-	type Props = Omit<FormFieldProps<'select'>, 'name'> & {
+	type Props = Omit<FormFieldProps<'select'>, 'name' | 'clearable'> & {
 		value: string | null;
 		clearable?: boolean;
 		id?: string;
 		name?: string;
+		// TODO: infer value from "items" instead of string
 		onSelect?: (value: string) => void;
 	};
 

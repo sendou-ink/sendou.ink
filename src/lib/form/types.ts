@@ -127,5 +127,5 @@ export type FormFieldProps<T extends FormField['type']> = Omit<
 > & {
 	name: string;
 	error?: string;
-	onblur: () => void;
+	onblur?: () => void;
 };

@@ -12,7 +12,8 @@ const paraglideHandle: Handle = ({ event, resolve }) => {
 		event.request = localizedRequest;
 		return resolve(event, {
 			transformPageChunk: ({ html }) => {
-				return html.replace('%lang%', locale);
+				const theme = event.cookies.get('theme') ?? 'auto';
+				return html.replace('%lang%', locale).replace('%theme%', theme);
 			}
 		});
 	});

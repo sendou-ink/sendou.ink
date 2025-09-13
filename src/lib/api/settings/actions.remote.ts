@@ -1,10 +1,12 @@
-import { command } from '$app/server';
+import { command, getRequestEvent } from '$app/server';
 import { requireUser } from '$lib/server/auth/session';
 import * as UserRepository from '$lib/server/db/repositories/user';
 import { validatedForm } from '$lib/server/remote-functions';
 import { logger } from '$lib/utils/logger';
+import z from 'zod';
 import { matchProfile, prefersNoScreen } from './queries.remote';
 import {
+	theme,
 	updateAccessibilitySettingsSchema,
 	updateMatchProfileSchema,
 	updatePreferencesSchema
@@ -32,3 +34,10 @@ export const updateMatchProfile = validatedForm(updateMatchProfileSchema, async 
 
 	matchProfile().refresh();
 });
+
+export const setTheme = command(
+	z.object({
+		theme
+	}),
+	async ({ theme }) => getRequestEvent().cookies.set('theme', theme, { path: '/' })
+);

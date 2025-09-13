@@ -17,6 +17,9 @@ export const updateAccessibilitySettingsSchema = z.object({
 	})
 });
 
+export const theme = z.enum(['light', 'dark', 'auto']);
+export type Theme = z.infer<typeof theme>;
+
 export type UpdateAccessibilitySettingsData = z.infer<typeof updateAccessibilitySettingsSchema>;
 
 export const updateMatchProfileSchema = z.object({

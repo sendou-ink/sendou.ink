@@ -26,6 +26,7 @@
 	{/each}
 </select>
 
+<!-- TODO: light mode arrow is bigger than dark mode arrow -->
 <style>
 	select {
 		all: unset;

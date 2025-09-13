@@ -1,9 +1,12 @@
 <script lang="ts">
 	import * as SettingsAPI from '$lib/api/settings';
 	import SwitchFormField from '$lib/components/form/SwitchFormField.svelte';
+	import SelectFormField from '$lib/components/form/SelectFormField.svelte';
 	import { m } from '$lib/paraglide/messages';
+	import type { Theme } from '$lib/api/settings/schemas';
 
-	const preferences = $derived(await SettingsAPI.queries.byLoggedInUser()); // xxx: spinner
+	const preferences = await SettingsAPI.queries.byLoggedInUser(); // xxx: spinner
+	const theme = await SettingsAPI.queries.myTheme();
 
 	async function updatePreferences(
 		args: Parameters<typeof SettingsAPI.actions.updateBooleanPreferences>[0]
@@ -19,7 +22,22 @@
 
 <div class="stack lg">
 	<!-- xxx: language -->
-	<!-- xxx: theme -->
+
+	<SelectFormField
+		name="theme"
+		label={m.common_header_theme()}
+		items={[
+			{ value: 'auto', label: m.common_theme_auto() },
+			{ value: 'dark', label: m.common_theme_dark() },
+			{ value: 'light', label: m.common_theme_light() }
+		]}
+		value={theme}
+		onSelect={async (theme) => {
+			await SettingsAPI.actions.setTheme({ theme: theme as Theme });
+			document.documentElement.className = theme;
+		}}
+	/>
+
 	<!-- xxx: push notifs -->
 
 	<SwitchFormField
