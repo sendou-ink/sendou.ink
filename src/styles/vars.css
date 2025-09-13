@@ -1,6 +1,29 @@
 html {
-	/** xxx: light mose theming tokens */
+	/** Light mode theming tokens */
+	--color-base-bg: oklch(0.93 0.02 272.37); /** color-base-200 */
+	--color-base-section: oklch(0.97 0.005 272.37);
+	--color-base-card: oklch(0.98 0.002 272.37); /** color-base-100 */
+	--color-base-card-section: oklch(1 0 0); /** xxx: rename to color-base-input ? */
+	--color-base-card-transparent: oklch(0.98 0.002 272.37 / 0.3);
+	--color-base-border: oklch(0.85 0.02 272.37); /** color-base-300 */
+	--color-base-content: oklch(0.15 0.002 272.37);
+	--color-base-content-secondary: oklch(0.45 0.01 272.37);
+	--color-base-backdrop: oklch(0.8 0.03 200 / 0.3);
+	--color-primary: oklch(0.65 0.2 351.57);
+	--color-primary-transparent: oklch(0.65 0.2 351.57 / 0.3);
+	--color-primary-content: oklch(0.15 0.002 272.37);
+	--color-secondary: oklch(0.55 0.25 272.37);
+	--color-secondary-transparent: oklch(0.55 0.25 272.37 / 0.3);
+	--color-info: oklch(0.65 0.15 209.94);
+	--color-info-transparent: oklch(0.65 0.15 209.94 / 0.3);
+	--color-success: oklch(0.55 0.2 146.57);
+	--color-success-transparent: oklch(0.55 0.2 146.57 / 0.3);
+	--color-warning: oklch(0.75 0.2 84.429);
+	--color-warning-transparent: oklch(0.75 0.2 84.429 / 0.3);
+	--color-error: oklch(0.55 0.25 22.24);
+	--color-error-transparent: oklch(0.55 0.25 22.24 / 0.3);
 
+	/** Sizing and layout */
 	--fonts-xl: 1.5rem;
 	--fonts-lg: 1.2rem;
 	--fonts-md: 1rem;
@@ -44,13 +67,31 @@ html {
 	--s-72: 18rem;
 	--s-80: 20rem;
 	--s-96: 2rem;
+
+	/** checkbox, toggle, badge, button, input, select, tab */
+	--radius-field: 0.5rem;
+	/** card, modal, alert */
+	--radius-box: 1rem;
+	--size-selector: 0.25rem; /** xxx: not used anywhere yet */
+	--size-field: 0.25rem; /** xxx: not used anywhere yet */
+	--border: 1.5px;
 	--border-style: var(--border) solid var(--color-base-border);
+
+	--chart-heading: var(--color-base-content);
+	--chart-text: var(--color-base-content-secondary);
+	--chart-line: var(--color-primary);
+	--chart-line-2: oklch(from var(--color-primary) l c calc(h - 100));
+	--chart-line-3: oklch(from var(--color-primary) l c calc(h - 200));
+	--chart-bg: var(--color-base-bg);
+	--chart-border: var(--color-base-border);
+	--chart-grid: color-mix(in oklch, var(--color-base-border), var(--chart-bg) 50%);
 
 	--layout-nav-height: 3rem;
 	--field-width-medium: 18rem;
 }
 
 html.dark {
+	/** Dark mode theming tokens */
 	--color-base-bg: oklch(0.133 0.0673 272.37); /** color-base-200 */
 	--color-base-section: oklch(0.201 0.0699 284.33);
 	--color-base-card: oklch(0.3303 0.0921 288.85); /** color-base-100 */
@@ -73,22 +114,6 @@ html.dark {
 	--color-warning-transparent: oklch(82% 0.189 84.429 / 0.3);
 	--color-error: oklch(0.6897 0.2541 22.24);
 	--color-error-transparent: oklch(0.6897 0.2541 22.24 / 0.3);
-	/** checkbox, toggle, badge, button, input, select, tab */
-	--radius-field: 0.5rem;
-	/** card, modal, alert */
-	--radius-box: 1rem;
-	--size-selector: 0.25rem; /** xxx: not used anywhere yet */
-	--size-field: 0.25rem; /** xxx: not used anywhere yet */
-	--border: 1.5px;
-
-	--chart-heading: var(--color-base-content);
-	--chart-text: var(--color-base-content-secondary);
-	--chart-line: var(--color-primary);
-	--chart-line-2: oklch(from var(--color-primary) l c calc(h - 100));
-	--chart-line-3: oklch(from var(--color-primary) l c calc(h - 200));
-	--chart-bg: var(--color-base-bg);
-	--chart-border: var(--color-base-border);
-	--chart-grid: color-mix(in oklch, var(--color-base-border), var(--chart-bg) 50%);
 }
 
 /* xs: "(min-width: 480px)",
