@@ -1,8 +1,5 @@
-// @ts-nocheck
-// xxx: fix type errors etc.
-
 import { beforeEach, describe, expect, test } from 'vitest';
-import { InMemoryDatabase } from '~/modules/brackets-memory-db';
+import { InMemoryDatabase } from '$lib/core/brackets-memory-db';
 import { BracketsManager } from '../manager';
 
 const storage = new InMemoryDatabase();

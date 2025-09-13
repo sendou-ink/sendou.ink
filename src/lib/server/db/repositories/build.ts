@@ -315,13 +315,13 @@ export function deleteById(id: number) {
 	return db.deleteFrom('Build').where('id', '=', id).returning('ownerId').executeTakeFirstOrThrow();
 }
 
-export function updateVisibilityById(args: { id: number; private: boolean }) {
+export function updateVisibilityById(id: number, options: { private: boolean }) {
 	return db
 		.updateTable('Build')
 		.set({
-			private: args.private
+			private: options.private
 		})
-		.where('id', '=', args.id)
+		.where('id', '=', id)
 		.returning('ownerId')
 		.executeTakeFirstOrThrow();
 }

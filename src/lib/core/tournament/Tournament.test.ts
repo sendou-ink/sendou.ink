@@ -1,17 +1,15 @@
-// @ts-nocheck
-// xxx: fix type errors etc.
-
 import { describe, expect, it, test } from 'vitest';
-import type { Match } from '~/modules/brackets-model';
 import { Tournament } from './Tournament';
 import {
 	IN_THE_ZONE_32,
 	PADDLING_POOL_255,
 	PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES,
 	PADDLING_POOL_257
-} from './tests/mocks';
-import { SWIM_OR_SINK_167 } from './tests/mocks-sos';
-import { progressions, testTournament, tournamentCtxTeam } from './tests/test-utils';
+} from '../tournament-bracket/tests/mocks';
+import type { Match } from '../brackets-model';
+import { SWIM_OR_SINK_167 } from '../tournament-bracket/tests/mocks-sos';
+import { progressions } from '../tournament-bracket/tests/test-utils';
+import { testTournament, tournamentCtxTeam } from '../brackets-manager/test/test-utils';
 
 describe('Follow-up bracket progression', () => {
 	const tournamentPP257 = new Tournament(PADDLING_POOL_257());

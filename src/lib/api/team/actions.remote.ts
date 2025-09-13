@@ -77,11 +77,11 @@ export const joinTeam = command(
 		const { teamId } = badRequestIfErr(await validateInviteCode({ inviteCode, slug }));
 
 		await TeamRepository.addNewTeamMember({
+			userId: user.id,
+			teamId,
 			maxTeamsAllowed: user.roles.includes('SUPPORTER')
 				? TEAM.MAX_TEAM_COUNT_PATRON
-				: TEAM.MAX_TEAM_COUNT_NON_PATRON,
-			teamId,
-			userId: user.id
+				: TEAM.MAX_TEAM_COUNT_NON_PATRON
 		});
 
 		bySlug(slug).refresh();
@@ -124,8 +124,8 @@ export const leave = command(teamSlug, async (slug) => {
 	}
 
 	await TeamRepository.handleMemberLeaving({
-		teamId: team.id,
 		userId: user.id,
+		teamId: team.id,
 		newOwnerUserId: newOwner?.id
 	});
 
@@ -144,8 +144,8 @@ export const kick = command(z.object({ userId: id, slug: teamSlug }), async ({ u
 	if (member.isOwner) error(400, "Can't kick the owner");
 
 	await TeamRepository.handleMemberLeaving({
-		teamId: team.id,
-		userId
+		userId,
+		teamId: team.id
 	});
 
 	bySlug(slug).refresh();

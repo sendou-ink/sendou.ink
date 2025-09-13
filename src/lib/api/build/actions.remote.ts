@@ -17,8 +17,7 @@ export const updateVisibilityById = command(
 	async (args) => {
 		const build = await requirePermissionsToManageBuild(args.buildId);
 
-		const { ownerId } = await BuildRepository.updateVisibilityById({
-			id: build.id,
+		const { ownerId } = await BuildRepository.updateVisibilityById(build.id, {
 			private: args.isPrivate
 		});
 
@@ -38,8 +37,7 @@ export const deleteById = command(id, async (buildId) => {
 });
 
 export const updateBuildSorting = validatedForm(updateBuildSortingSchema, async (data, user) => {
-	await UserRepository.updateBuildSorting({
-		userId: user.id,
+	await UserRepository.updateBuildSorting(user.id, {
 		buildSorting: data.buildSorting ?? null
 	});
 

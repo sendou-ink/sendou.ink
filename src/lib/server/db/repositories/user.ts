@@ -855,13 +855,10 @@ export function updateResultHighlights(args: UpdateResultHighlightsArgs) {
 	});
 }
 
-export function updateBuildSorting({
-	userId,
-	buildSorting
-}: {
-	userId: number;
-	buildSorting: BuildSort[] | null;
-}) {
+export function updateBuildSorting(
+	userId: number,
+	{ buildSorting }: { buildSorting: BuildSort[] | null }
+) {
 	return db
 		.updateTable('User')
 		.set({ buildSorting: buildSorting ? JSON.stringify(buildSorting) : null })
