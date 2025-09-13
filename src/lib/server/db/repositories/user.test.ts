@@ -3,8 +3,8 @@ import { dbReset } from '$lib/utils/test';
 import * as UserRepository from './user';
 
 describe('UserRepository', () => {
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test('created user has createdAt field', async () => {
