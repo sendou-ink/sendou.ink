@@ -90,7 +90,7 @@ import { Placeholder } from "~/components/Placeholder";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import { logger } from "~/utils/logger";
 
-export const CURRENT_PATCH = "10.0";
+export const CURRENT_PATCH = "10.1";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({

@@ -202,7 +202,7 @@ export const weaponParams = {
 			DamageParam_ValueMin: 300,
 			Jump_DegSwerve: 12,
 			Stand_DegSwerve: 6,
-			InkConsume: 0.013,
+			InkConsume: 0.015,
 		},
 		"51": {
 			SpecialPoint: 190,
@@ -213,7 +213,7 @@ export const weaponParams = {
 			DamageParam_ValueMin: 300,
 			Jump_DegSwerve: 12,
 			Stand_DegSwerve: 6,
-			InkConsume: 0.013,
+			InkConsume: 0.015,
 		},
 		"60": {
 			SpecialPoint: 200,
@@ -364,7 +364,7 @@ export const weaponParams = {
 			DamageParam_ValueMax: 240,
 			DamageParam_ValueMin: 120,
 			Jump_DegSwerve: 8,
-			Stand_DegSwerve: 5.5,
+			Stand_DegSwerve: 4.5,
 			InkConsume: 0.0096,
 		},
 		"101": {
@@ -375,7 +375,7 @@ export const weaponParams = {
 			DamageParam_ValueMax: 240,
 			DamageParam_ValueMin: 120,
 			Jump_DegSwerve: 8,
-			Stand_DegSwerve: 5.5,
+			Stand_DegSwerve: 4.5,
 			InkConsume: 0.0096,
 		},
 		"200": {
@@ -988,7 +988,7 @@ export const weaponParams = {
 			InkConsume_WeaponSwingParam: 0.0396,
 		},
 		"1002": {
-			SpecialPoint: 180,
+			SpecialPoint: 170,
 			subWeaponId: 5,
 			specialWeaponId: 16,
 			WeaponSpeedType: "Fast",
@@ -1111,7 +1111,7 @@ export const weaponParams = {
 			InkConsume_WeaponWideSwingParam: 0.08,
 		},
 		"1040": {
-			SpecialPoint: 190,
+			SpecialPoint: 180,
 			subWeaponId: 4,
 			specialWeaponId: 8,
 			BodyParam_Damage: 700,
@@ -1122,7 +1122,7 @@ export const weaponParams = {
 			InkConsume_WeaponSwingParam: 0.09,
 		},
 		"1041": {
-			SpecialPoint: 190,
+			SpecialPoint: 180,
 			subWeaponId: 12,
 			specialWeaponId: 5,
 			BodyParam_Damage: 700,
@@ -1182,7 +1182,7 @@ export const weaponParams = {
 			InkConsume_WeaponSwingParam: 0.03,
 		},
 		"1112": {
-			SpecialPoint: 200,
+			SpecialPoint: 190,
 			subWeaponId: 7,
 			specialWeaponId: 17,
 			BodyParam_Damage: 250,
@@ -1218,7 +1218,7 @@ export const weaponParams = {
 			InkConsume_WeaponSwingParam: 0.048,
 		},
 		"1122": {
-			SpecialPoint: 180,
+			SpecialPoint: 190,
 			subWeaponId: 4,
 			specialWeaponId: 1,
 			BodyParam_Damage: 300,
@@ -1425,7 +1425,7 @@ export const weaponParams = {
 			InkConsumeMinCharge: 0.028,
 		},
 		"2051": {
-			SpecialPoint: 200,
+			SpecialPoint: 190,
 			subWeaponId: 5,
 			specialWeaponId: 16,
 			WeaponSpeedType: "Fast",
@@ -1608,7 +1608,7 @@ export const weaponParams = {
 			InkConsumeSlosher: 0.117,
 		},
 		"3041": {
-			SpecialPoint: 200,
+			SpecialPoint: 190,
 			subWeaponId: 4,
 			specialWeaponId: 18,
 			WeaponSpeedType: "Slow",
@@ -1698,7 +1698,7 @@ export const weaponParams = {
 			InkConsumeFullChargeSplatling: 0.15,
 		},
 		"4002": {
-			SpecialPoint: 190,
+			SpecialPoint: 200,
 			subWeaponId: 8,
 			specialWeaponId: 1,
 			overwrites: {
@@ -1930,7 +1930,7 @@ export const weaponParams = {
 			InkConsumeFullChargeSplatling: 0.15,
 		},
 		"4041": {
-			SpecialPoint: 210,
+			SpecialPoint: 200,
 			subWeaponId: 1,
 			specialWeaponId: 18,
 			overwrites: {
@@ -2118,7 +2118,7 @@ export const weaponParams = {
 			InkConsume_SideStepParam: 0.08,
 		},
 		"5031": {
-			SpecialPoint: 210,
+			SpecialPoint: 200,
 			subWeaponId: 8,
 			specialWeaponId: 16,
 			MoveSpeed: 0.072,
@@ -2194,7 +2194,7 @@ export const weaponParams = {
 			InkConsume_SideStepParam: 0.1,
 		},
 		"6000": {
-			SpecialPoint: 200,
+			SpecialPoint: 210,
 			subWeaponId: 3,
 			specialWeaponId: 14,
 			MoveSpeed: 0.065,
@@ -2203,7 +2203,7 @@ export const weaponParams = {
 			InkConsume_WeaponShelterShotgunParam: 0.055,
 		},
 		"6001": {
-			SpecialPoint: 190,
+			SpecialPoint: 210,
 			subWeaponId: 7,
 			specialWeaponId: 10,
 			MoveSpeed: 0.065,
@@ -2212,7 +2212,7 @@ export const weaponParams = {
 			InkConsume_WeaponShelterShotgunParam: 0.055,
 		},
 		"6005": {
-			SpecialPoint: 200,
+			SpecialPoint: 210,
 			subWeaponId: 3,
 			specialWeaponId: 14,
 			MoveSpeed: 0.065,
@@ -2255,7 +2255,7 @@ export const weaponParams = {
 			InkConsume_WeaponShelterShotgunParam: 0.11,
 		},
 		"6012": {
-			SpecialPoint: 190,
+			SpecialPoint: 180,
 			subWeaponId: 11,
 			specialWeaponId: 16,
 			overwrites: {
@@ -2307,7 +2307,7 @@ export const weaponParams = {
 			specialWeaponId: 2,
 			MoveSpeed: 0.058,
 			DamageParam_ValueMax: 900,
-			CanopyHP: 1000,
+			CanopyHP: 1500,
 			InkConsumeUmbrella_WeaponShelterCanopyParam: 0.15,
 			InkConsume_WeaponShelterShotgunParam: 0.06,
 		},
@@ -2317,7 +2317,7 @@ export const weaponParams = {
 			specialWeaponId: 18,
 			MoveSpeed: 0.058,
 			DamageParam_ValueMax: 900,
-			CanopyHP: 1000,
+			CanopyHP: 1500,
 			InkConsumeUmbrella_WeaponShelterCanopyParam: 0.15,
 			InkConsume_WeaponShelterShotgunParam: 0.06,
 		},
@@ -2416,7 +2416,7 @@ export const weaponParams = {
 			InkConsumeFullCharge_ChargeParam: 0.065,
 		},
 		"7022": {
-			SpecialPoint: 200,
+			SpecialPoint: 210,
 			subWeaponId: 13,
 			specialWeaponId: 6,
 			WeaponSpeedType: "Fast",
@@ -2948,7 +2948,7 @@ export const weaponParams = {
 			DistanceDamage: [
 				{
 					Damage: 450,
-					Distance: 4.8,
+					Distance: 5.25,
 				},
 				{
 					Damage: 350,
@@ -3042,7 +3042,7 @@ export const weaponParams = {
 			ExhaleBlastParamMaxChargeDistanceDamage: [
 				{
 					Damage: 2200,
-					Distance: 10,
+					Distance: 11,
 				},
 			],
 		},
