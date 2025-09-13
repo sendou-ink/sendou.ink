@@ -51,6 +51,7 @@ Svelte components can also be colocated next to the route file as long as it is 
 
 - The database used is SQLite3
 - Always use Kysely for type-safe queries
+- Copy of production database is available at the following file path: `./db-prod.sqlite3`
 
 #### Testing Strategy
 

@@ -1,10 +1,9 @@
 <script lang="ts">
 	import Button from '$lib/components/buttons/Button.svelte';
-	import invariant from '$lib/utils/invariant';
 	import { logger } from '$lib/utils/logger';
 	import Upload from '@lucide/svelte/icons/upload';
 	import Trash from '@lucide/svelte/icons/trash';
-	import Compressor from 'compressorjs';
+	import imageCompression from 'browser-image-compression';
 	import { m } from '$lib/paraglide/messages';
 
 	interface Props {
@@ -20,6 +19,24 @@
 	let { name, file = $bindable(), dimensions, radius }: Props = $props();
 
 	let input: HTMLInputElement;
+
+	function webPWithNoCompression(originalFile: File) {
+		const webpFile = new File([originalFile], 'img.webp', {
+			type: 'image/webp'
+		});
+
+		updateFileState(webpFile);
+	}
+
+	function updateFileState(newFile: File) {
+		// Attach the compressed image to the input using DataTransfer API
+
+		const dataTransfer = new DataTransfer();
+		dataTransfer.items.add(newFile);
+		input.files = dataTransfer.files;
+
+		file = newFile;
+	}
 </script>
 
 <div class="stack md items-start">
@@ -44,32 +61,41 @@
 		type="file"
 		{name}
 		accept="image/png, image/jpeg, image/jpg, image/webp"
-		onchange={(e) => {
+		onchange={async (e) => {
 			const uploadedFile = e.currentTarget.files?.[0];
 			if (!uploadedFile) {
 				file = null;
 				return;
 			}
 
-			// xxx: attach the compressed image to the input
-			new Compressor(uploadedFile, {
-				width: dimensions.width,
-				height: dimensions.height,
-				maxHeight: dimensions.height,
-				maxWidth: dimensions.width,
-				resize: 'cover',
-				success(result) {
-					invariant(result instanceof Blob);
-					const compressedFile = new File([result], 'img.webp', {
-						type: 'image/webp'
-					});
-
-					file = compressedFile;
-				},
-				error(err) {
-					logger.error(err.message);
+			try {
+				// Skip compression for very small files (< 5KB) but still convert to WebP for consistency
+				if (uploadedFile.size < 5000) {
+					return webPWithNoCompression(uploadedFile);
 				}
-			});
+
+				const compressedFile = await imageCompression(uploadedFile, {
+					maxWidthOrHeight: Math.max(dimensions.width, dimensions.height),
+					maxSizeMB: 1,
+					fileType: 'image/webp',
+					initialQuality: 0.8
+				});
+
+				// Use original file (as webp) if compression didn't reduce size significantly
+				if (compressedFile.size > uploadedFile.size * 0.9) {
+					return webPWithNoCompression(uploadedFile);
+				}
+
+				const finalFile = new File([compressedFile], 'img.webp', {
+					type: 'image/webp'
+				});
+
+				updateFileState(finalFile);
+			} catch (err) {
+				logger.error('Image compression failed:', err);
+				// Fall back to original file
+				file = uploadedFile;
+			}
 		}}
 	/>
 </div>
