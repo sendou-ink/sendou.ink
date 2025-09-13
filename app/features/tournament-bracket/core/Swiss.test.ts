@@ -262,4 +262,189 @@ describe("Swiss", () => {
 			},
 		);
 	});
+
+	describe("calculateTeamStatus()", () => {
+		it("returns 'advanced' when team has enough wins", () => {
+			expect(
+				Swiss.calculateTeamStatus({
+					wins: 3,
+					losses: 0,
+					advanceThreshold: 3,
+					roundCount: 5,
+				}),
+			).toBe("advanced");
+			expect(
+				Swiss.calculateTeamStatus({
+					wins: 3,
+					losses: 1,
+					advanceThreshold: 3,
+					roundCount: 5,
+				}),
+			).toBe("advanced");
+			expect(
+				Swiss.calculateTeamStatus({
+					wins: 4,
+					losses: 1,
+					advanceThreshold: 3,
+					roundCount: 5,
+				}),
+			).toBe("advanced");
+		});
+
+		it("returns 'eliminated' when team has too many losses", () => {
+			expect(
+				Swiss.calculateTeamStatus({
+					wins: 0,
+					losses: 3,
+					advanceThreshold: 3,
+					roundCount: 5,
+				}),
+			).toBe("eliminated");
+			expect(
+				Swiss.calculateTeamStatus({
+					wins: 1,
+					losses: 3,
+					advanceThreshold: 3,
+					roundCount: 5,
+				}),
+			).toBe("eliminated");
+			expect(
+				Swiss.calculateTeamStatus({
+					wins: 2,
+					losses: 3,
+					advanceThreshold: 3,
+					roundCount: 5,
+				}),
+			).toBe("eliminated");
+		});
+
+		it("returns 'active' when team can still advance or be eliminated", () => {
+			expect(
+				Swiss.calculateTeamStatus({
+					wins: 2,
+					losses: 2,
+					advanceThreshold: 3,
+					roundCount: 5,
+				}),
+			).toBe("active");
+			expect(
+				Swiss.calculateTeamStatus({
+					wins: 1,
+					losses: 1,
+					advanceThreshold: 3,
+					roundCount: 5,
+				}),
+			).toBe("active");
+			expect(
+				Swiss.calculateTeamStatus({
+					wins: 0,
+					losses: 0,
+					advanceThreshold: 3,
+					roundCount: 5,
+				}),
+			).toBe("active");
+			expect(
+				Swiss.calculateTeamStatus({
+					wins: 2,
+					losses: 1,
+					advanceThreshold: 3,
+					roundCount: 5,
+				}),
+			).toBe("active");
+		});
+
+		it("handles different tournament configurations", () => {
+			// 4-round tournament with advance threshold 2
+			expect(
+				Swiss.calculateTeamStatus({
+					wins: 2,
+					losses: 0,
+					advanceThreshold: 2,
+					roundCount: 4,
+				}),
+			).toBe("advanced");
+			expect(
+				Swiss.calculateTeamStatus({
+					wins: 0,
+					losses: 3,
+					advanceThreshold: 2,
+					roundCount: 4,
+				}),
+			).toBe("eliminated");
+			expect(
+				Swiss.calculateTeamStatus({
+					wins: 1,
+					losses: 2,
+					advanceThreshold: 2,
+					roundCount: 4,
+				}),
+			).toBe("active");
+
+			// 6-round tournament with advance threshold 4
+			expect(
+				Swiss.calculateTeamStatus({
+					wins: 4,
+					losses: 1,
+					advanceThreshold: 4,
+					roundCount: 6,
+				}),
+			).toBe("advanced");
+			expect(
+				Swiss.calculateTeamStatus({
+					wins: 2,
+					losses: 3,
+					advanceThreshold: 4,
+					roundCount: 6,
+				}),
+			).toBe("eliminated");
+			expect(
+				Swiss.calculateTeamStatus({
+					wins: 3,
+					losses: 2,
+					advanceThreshold: 4,
+					roundCount: 6,
+				}),
+			).toBe("active");
+		});
+
+		it("handles edge cases correctly", () => {
+			// Team reaches advance threshold exactly
+			expect(
+				Swiss.calculateTeamStatus({
+					wins: 3,
+					losses: 2,
+					advanceThreshold: 3,
+					roundCount: 5,
+				}),
+			).toBe("advanced");
+
+			// Team reaches elimination threshold exactly
+			expect(
+				Swiss.calculateTeamStatus({
+					wins: 2,
+					losses: 3,
+					advanceThreshold: 3,
+					roundCount: 5,
+				}),
+			).toBe("eliminated");
+
+			// Tournament where advance threshold equals round count
+			expect(
+				Swiss.calculateTeamStatus({
+					wins: 3,
+					losses: 0,
+					advanceThreshold: 3,
+					roundCount: 3,
+				}),
+			).toBe("advanced");
+			expect(
+				Swiss.calculateTeamStatus({
+					wins: 0,
+					losses: 3,
+					advanceThreshold: 3,
+					roundCount: 3,
+				}),
+			).toBe("eliminated");
+		});
+	});
 });

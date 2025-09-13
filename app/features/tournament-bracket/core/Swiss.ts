@@ -252,6 +252,49 @@ export function generateMatchUps({
 	return ok(result);
 }
 
+type SwissTeamStatus = "active" | "advanced" | "eliminated";
+
+/**
+ * Calculates whether a team should advance, be eliminated, or remain active 
+ * in a Swiss tournament with early advance/elimination rules.
+ * 
+ * @returns The team's status: "advanced" if they've secured advancement, 
+ *          "eliminated" if they can no longer mathematically advance, or "active" if still competing
+ * 
+ * @example
+ * // In a 5-round Swiss where teams need 3 wins to advance:
+ * calculateTeamStatus({ wins: 3, losses: 1, advanceThreshold: 3, roundCount: 5 }) // "advanced"
+ * calculateTeamStatus({ wins: 2, losses: 3, advanceThreshold: 3, roundCount: 5 }) // "eliminated" 
+ * calculateTeamStatus({ wins: 2, losses: 2, advanceThreshold: 3, roundCount: 5 }) // "active"
+ */
+export function calculateTeamStatus({
+	wins,
+	losses,
+	advanceThreshold,
+	roundCount,
+}: {
+	/** Number of matches the team has won */
+	wins: number;
+	/** Number of matches the team has lost */
+	losses: number;
+	/** Number of wins required to advance to the next stage */
+	advanceThreshold: number;
+	/** Total number of rounds in the Swiss stage */
+	roundCount: number;
+}): SwissTeamStatus {
+	const eliminationThreshold = roundCount - advanceThreshold + 1;
+
+	if (wins >= advanceThreshold) {
+		return "advanced";
+	}
+
+	if (losses >= eliminationThreshold) {
+		return "eliminated";
+	}
+
+	return "active";
+}
+
 interface SwissPairingTeam {
 	id: number;
 	/** How many matches has the team won */

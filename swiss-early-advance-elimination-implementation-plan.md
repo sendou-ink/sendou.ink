@@ -45,7 +45,7 @@ Implement a Swiss tournament variation where teams only play as many rounds as r
   type SwissTeamStatus = "active" | "advanced" | "eliminated";
   ```
 
-- [ ] #### 2.2 Status Calculation Function
+- [x] #### 2.2 Status Calculation Function
 - Implement function to determine team status based on win/loss record:
   ```typescript
   function calculateTeamStatus(
