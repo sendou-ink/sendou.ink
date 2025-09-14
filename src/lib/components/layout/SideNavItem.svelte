@@ -2,6 +2,7 @@
 	import type { ResolvedPathname } from '$app/types';
 	import type { Snippet } from 'svelte';
 	import type { HTMLAnchorAttributes } from 'svelte/elements';
+	import { closeMobileNavContext } from './mobile-nav-context';
 
 	interface Props extends HTMLAnchorAttributes {
 		icon: Snippet;
@@ -13,9 +14,16 @@
 	const { icon, children, href, number, ...rest }: Props = $props();
 
 	const element = $derived(href ? 'a' : 'div');
+	const closeMobileNav = $derived(closeMobileNavContext.getOr(undefined));
+
+	function handleClick() {
+		if (href && closeMobileNav) {
+			closeMobileNav();
+		}
+	}
 </script>
 
-<svelte:element this={element} class="item" {href} {...rest}>
+<svelte:element this={element} class="item" {href} onclick={handleClick} {...rest}>
 	{@render icon()}
 	{@render children()}
 	{#if number !== undefined}

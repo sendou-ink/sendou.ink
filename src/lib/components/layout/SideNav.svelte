@@ -3,14 +3,26 @@
 	import { Dialog } from 'bits-ui';
 	import { on } from 'svelte/events';
 	import { browser } from '$app/environment';
+	import { closeMobileNavContext } from './mobile-nav-context';
 
 	interface Props {
 		children: Snippet;
 		isMobile?: boolean;
 		isMobileSideNavOpen?: boolean;
+		closeMobileNav?: () => void;
 	}
 
-	let { children, isMobile = false, isMobileSideNavOpen = $bindable(false) }: Props = $props();
+	let {
+		children,
+		isMobile = false,
+		isMobileSideNavOpen = $bindable(false),
+		closeMobileNav
+	}: Props = $props();
+
+	if (isMobile && closeMobileNav) {
+		// TODO: is this correct? or should the context contain just the reactive piece of state
+		closeMobileNavContext.set(closeMobileNav);
+	}
 </script>
 
 <!-- xxx: active symbols -->
