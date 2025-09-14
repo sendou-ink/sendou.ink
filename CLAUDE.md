@@ -52,6 +52,10 @@ Svelte components can also be colocated next to the route file as long as it is 
   - `queries.remote.ts` - Database queries
   - `actions.remote.ts` - Mutation actions
 
+## Coding styles
+
+- Prefer destructed object for function arguments if there are more than two parameters, especially if they are of the same type to avoid mixing them up
+
 ## Key Concepts
 
 #### Database
