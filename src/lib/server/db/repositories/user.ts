@@ -74,6 +74,7 @@ export async function findLayoutDataByIdentifier(identifier: string, loggedInUse
 	const row = await identifierToUserIdQuery(identifier)
 		.select((eb) => [
 			...COMMON_USER_FIELDS,
+			'User.country',
 			sql<Record<
 				string,
 				string

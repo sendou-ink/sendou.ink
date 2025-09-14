@@ -1,16 +1,11 @@
 <script lang="ts">
 	import Avatar from '$lib/components/Avatar.svelte';
-	import Flag from '$lib/components/Flag.svelte';
 	import TeamInfo from './TeamInfo.svelte';
 	import Socials from './Socials.svelte';
 	import ExtraInfos from './ExtraInfos.svelte';
 	import WeaponPool from './WeaponPool.svelte';
 	import TopPlacements from './TopPlacements.svelte';
 	import BadgeDisplay from '$lib/components/badge/BadgeDisplay.svelte';
-	import Popover from '$lib/components/popover/Popover.svelte';
-	import { countryCodeToTranslatedName } from '$lib/utils/i18n';
-	import { getLocale } from '$lib/paraglide/runtime';
-	import PopoverTriggerButton from '$lib/components/popover/PopoverTriggerButton.svelte';
 	import * as UserAPI from '$lib/api/user';
 
 	let { params } = $props();
@@ -24,15 +19,6 @@
 			profile.discordUniqueName ||
 			profile.plusTier
 	);
-
-	const countryName = $derived(
-		profile.country
-			? countryCodeToTranslatedName({
-					countryCode: profile.country,
-					language: getLocale()
-				})
-			: null
-	);
 </script>
 
 <div class="container">
@@ -40,19 +26,7 @@
 		<Avatar {user} size="lg" class="avatar" />
 		<div>
 			<h2 class="name">
-				<div>{user.username}</div>
-				<div>
-					{#if profile.country}
-						<Popover>
-							{#snippet trigger()}
-								<PopoverTriggerButton variant="minimal">
-									<Flag countryCode={profile.country!} tiny />
-								</PopoverTriggerButton>
-							{/snippet}
-							{countryName}</Popover
-						>
-					{/if}
-				</div>
+				{user.username}
 			</h2>
 
 			{#if profile.team}

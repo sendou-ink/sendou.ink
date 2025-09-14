@@ -14,6 +14,7 @@ src/
 ├── lib/
 │   ├── api/           # API routes organized by feature
 │   ├── components/    # Reusable Svelte components
+│   ├── constants/     # Constants organizer by feature
 │   ├── paraglide/     # Generated i18n files
 │   └── server/        # Server-side utilities
 ├── routes/            # SvelteKit file-based routing
@@ -28,6 +29,7 @@ Svelte components can also be colocated next to the route file as long as it is 
 - All Svelte code written should be Svelte 5 with runes
 - Always include the `lang="ts"` attribute in the script tag
 - Do not use index as a key in each block, key should come from the data
+- Instead of using the `$derived` rune, prefer inlining the computation if it's a simple oneliner or just accessing a key of an object
 
 ## Styling
 

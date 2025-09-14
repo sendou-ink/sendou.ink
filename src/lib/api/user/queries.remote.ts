@@ -6,6 +6,7 @@ import { identifier, type EditProfileData } from './schemas';
 import { error, redirect } from '@sveltejs/kit';
 import { resolve } from '$app/paths';
 import invariant from '$lib/utils/invariant';
+import * as LeaderboardRepository from '$lib/server/db/repositories/leaderboard';
 
 export const layoutDataByIdentifier = query(identifier, async (identifier) => {
 	const loggedInUser = await getUser();
@@ -18,7 +19,10 @@ export const layoutDataByIdentifier = query(identifier, async (identifier) => {
 		redirect(302, resolve(`/u/${data.user.customUrl}`));
 	}
 
-	return data;
+	return {
+		...data,
+		seasonsParticipatedIn: await LeaderboardRepository.seasonsParticipatedInByUserId(data.user.id)
+	};
 });
 
 export type ProfileByIdentifierData = Awaited<ReturnType<typeof profileByIdentifier>>;

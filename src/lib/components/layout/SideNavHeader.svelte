@@ -1,11 +1,12 @@
 <script lang="ts">
 	import type { ResolvedPathname } from '$app/types';
+	import type { Snippet } from 'svelte';
 
 	interface Props {
 		href: ResolvedPathname;
 		imgSrc: string;
 		heading: string;
-		subheading: string;
+		subheading?: string | Snippet;
 	}
 
 	const { href, imgSrc, heading, subheading }: Props = $props();
@@ -15,9 +16,15 @@
 	<img src={imgSrc} alt="" />
 	<div>
 		<div class="heading">{heading}</div>
-		<div class="subheading">
-			{subheading}
-		</div>
+		{#if subheading}
+			<div class="subheading">
+				{#if typeof subheading !== 'string'}
+					{@render subheading()}
+				{:else if subheading}
+					{subheading}
+				{/if}
+			</div>
+		{/if}
 	</div>
 </a>
 
