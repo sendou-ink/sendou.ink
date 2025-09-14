@@ -5,12 +5,14 @@
 
 	interface Props {
 		status: 'OK' | 'MISSING' | 'WAIT';
+		/** For position sticky, offset from top */
+		top?: number;
 	}
 
-	const { status }: Props = $props();
+	const { status, top }: Props = $props();
 </script>
 
-<div class={status}>
+<div class={status} style={`--top: ${top ?? 0}px`}>
 	{#if status === 'OK'}
 		<Check />
 	{:else if status === 'MISSING'}
@@ -45,7 +47,7 @@
 		width: 48px;
 		height: 48px;
 		position: sticky;
-		top: 0;
+		top: var(--top);
 
 		:global(svg) {
 			color: var(--status-circle-color);

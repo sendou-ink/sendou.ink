@@ -34,7 +34,7 @@ Svelte components can also be colocated next to the route file as long as it is 
 ## Styling
 
 - Plain CSS via Svelte scoped style tags
-- Use design system tokens defined in the `vars.css` file instead of hard coding colors and spacings
+- Use design system tokens (css custom properties/variables) as defined in the `src/styles/vars.css` file instead of hard coding colors and spacings
 
 ## Typescript
 
