@@ -1,8 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { Dialog } from 'bits-ui';
-	import { on } from 'svelte/events';
-	import { browser } from '$app/environment';
 
 	interface Props {
 		children: Snippet;
