@@ -27,6 +27,8 @@
 		const realHeight = div.getBoundingClientRect().height;
 		document.body.removeChild(div);
 
+		scrollHeight = Math.max(0, realHeight - window.scrollY);
+
 		on(window, 'scroll', () => {
 			scrollHeight = Math.max(0, realHeight - window.scrollY);
 		});
