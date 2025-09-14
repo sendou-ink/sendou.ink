@@ -7,7 +7,7 @@ import { logger } from '$lib/utils/logger';
 import { error, redirect } from '@sveltejs/kit';
 import * as TournamentTeamRepository from '$lib/server/db/repositories/tournament-team';
 import { resolve } from '$app/paths';
-import { myFriendCode } from '$lib/api/user/queries.remote';
+import * as UserAPI from '$lib/api/user';
 import * as AdminRepository from '$lib/server/db/repositories/admin';
 
 export const updateProfile = validatedForm(editProfileSchema, async (data, user) => {
@@ -54,7 +54,7 @@ async function validateCustomUrl(newCustomUrl: string | null, loggedInUserId: nu
 }
 
 export const insertFriendCode = validatedForm(insertFriendCodeSchema, async (data, user) => {
-	const existingFriendCode = await myFriendCode();
+	const existingFriendCode = await UserAPI.queries.myFriendCode();
 	if (existingFriendCode) error(400);
 
 	const isTakenFriendCode = (await UserRepository.allCurrentFriendCodes()).has(data.friendCode);
@@ -75,7 +75,7 @@ export const insertFriendCode = validatedForm(insertFriendCodeSchema, async (dat
 
 		// refreshBannedCache(); xxx: refresh banned cache
 
-		myFriendCode().refresh();
+		UserAPI.queries.myFriendCode().refresh();
 
 		redirect(303, resolve('/suspended'));
 	}

@@ -1,7 +1,7 @@
-import type { MapPool } from '$lib/core/maps/MapPool';
+import type * as MapPool from '$lib/core/maps/MapPool';
 import { stagesObj as s } from './in-game/stage-ids';
 
-export const BANNED_MAPS: MapPool = {
+export const BANNED_MAPS: MapPool.MapPool = {
 	TW: [],
 	SZ: [s.STURGEON_SHIPYARD, s.EELTAIL_ALLEY],
 	TC: [

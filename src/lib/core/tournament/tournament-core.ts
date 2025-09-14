@@ -3,7 +3,7 @@ import type {
 	Database as BracketsManagerDatabase,
 	TournamentManagerDataSet
 } from '$lib/core/brackets-manager/types';
-import { Bracket } from '$lib/core/tournament-bracket/Bracket';
+import { BracketCore } from '$lib/core/tournament-bracket/bracket-core';
 import { databaseTimestampToDate, dateToDatabaseTimestamp } from '$lib/utils/dates';
 import invariant from '$lib/utils/invariant';
 import type * as Progression from '$lib/core/tournament-bracket/Progression';
@@ -25,13 +25,13 @@ import { userSubmittedImage } from '$lib/utils/urls-img';
 import { getRounds } from '$lib/core/tournament/rounds';
 import { isAdmin } from '$lib/modules/permissions/utils';
 import { isPast } from 'date-fns';
-import type { TournamentData, TournamentDataTeam } from '$lib/server/db/repositories/tournament';
+import type * as TournamentRepository from '$lib/server/db/repositories/tournament';
 
 export type OptionalIdObject = { id: number } | undefined;
 
 /** Extends and providers utility functions on top of the bracket-manager library. Updating data after the bracket has started is responsibility of bracket-manager. */
-export class Tournament {
-	brackets: Bracket[] = [];
+export class TournamentCore {
+	brackets: BracketCore[] = [];
 	ctx;
 	simulateBrackets;
 
@@ -41,7 +41,7 @@ export class Tournament {
 		simulateBrackets = true
 	}: {
 		data: BracketsManagerDatabase;
-		ctx: TournamentData;
+		ctx: TournamentRepository.TournamentData;
 		/** Should the bracket results be simulated (showing how teams are expected to advance), skipping it is a performance optimization if it's not needed */
 		simulateBrackets?: boolean;
 	}) {
@@ -75,8 +75,8 @@ export class Tournament {
 	}
 
 	private compareUnseededTeams(
-		a: TournamentData['teams'][number],
-		b: TournamentData['teams'][number],
+		a: TournamentRepository.TournamentData['teams'][number],
+		b: TournamentRepository.TournamentData['teams'][number],
 		minMembersPerTeam: number
 	) {
 		const aIsFull = a.members.length >= minMembersPerTeam;
@@ -116,7 +116,7 @@ export class Tournament {
 				const match = data.match.filter((match) => match.stage_id === inProgressStage.id);
 
 				this.brackets.push(
-					Bracket.create({
+					BracketCore.create({
 						id: inProgressStage.id,
 						idx: bracketIdx,
 						tournament: this,
@@ -150,7 +150,7 @@ export class Tournament {
 				});
 
 				this.brackets.push(
-					Bracket.create({
+					BracketCore.create({
 						id: -1 * bracketIdx,
 						idx: bracketIdx,
 						tournament: this,
@@ -199,7 +199,7 @@ export class Tournament {
 				);
 
 				this.brackets.push(
-					Bracket.create({
+					BracketCore.create({
 						id: -1 * bracketIdx,
 						idx: bracketIdx,
 						tournament: this,
@@ -601,7 +601,7 @@ export class Tournament {
 	}
 
 	/** Tournament teams logo image path, either from the team or the pickup avatar uploaded specifically for this tournament */
-	tournamentTeamLogoSrc(team: TournamentDataTeam) {
+	tournamentTeamLogoSrc(team: TournamentRepository.TournamentDataTeam) {
 		const url = team.team?.logoUrl ?? team.pickupAvatarUrl;
 
 		if (!url) return;
@@ -966,7 +966,7 @@ export class Tournament {
 	}
 
 	/** Returns a `Bracket` with the given index or the first bracket if not found. */
-	bracketByIdxOrDefault(idx: number): Bracket {
+	bracketByIdxOrDefault(idx: number): BracketCore {
 		const bracket = this.brackets[idx];
 		if (bracket) return bracket;
 
@@ -1186,7 +1186,7 @@ export class Tournament {
 		bracketIdx
 	}: {
 		match: Match;
-		matchBracket: Bracket;
+		matchBracket: BracketCore;
 		bracketIdx: number;
 	}) {
 		const ongoingFollowUpBrackets = this.brackets.filter(

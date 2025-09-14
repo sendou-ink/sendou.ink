@@ -1,6 +1,6 @@
 import { PADDLING_POOL_255 } from '$lib/core/tournament-bracket/tests/mocks';
 import { LOW_INK_DECEMBER_2024 } from '$lib/core/tournament-bracket/tests/mocks-li';
-import { Tournament } from '$lib/core/tournament/Tournament';
+import { TournamentCore } from '$lib/core/tournament/tournament-core';
 import invariant from '$lib/utils/invariant';
 import * as R from 'remeda';
 import { describe, expect, it } from 'vitest';
@@ -10,7 +10,7 @@ const TEAM_THIS_IS_FINE_ID = 17513;
 
 describe('swiss standings - losses against tied', () => {
 	it('should calculate losses against tied', () => {
-		const tournament = new Tournament({
+		const tournament = new TournamentCore({
 			...LOW_INK_DECEMBER_2024(),
 			simulateBrackets: false
 		});
@@ -26,7 +26,7 @@ describe('swiss standings - losses against tied', () => {
 	});
 
 	it('should ignore early dropped out teams for standings (losses against tied)', () => {
-		const tournament = new Tournament({
+		const tournament = new TournamentCore({
 			...LOW_INK_DECEMBER_2024(),
 			simulateBrackets: false
 		});
@@ -106,7 +106,7 @@ describe('swiss standings - losses against tied', () => {
 
 describe('round robin standings', () => {
 	it('should sort teams primarily by set wins (per group) in paddling pool 255', () => {
-		const tournamentPP255 = new Tournament(PADDLING_POOL_255());
+		const tournamentPP255 = new TournamentCore(PADDLING_POOL_255());
 
 		const standings = tournamentPP255.bracketByIdx(0)!.standings;
 
@@ -133,7 +133,7 @@ describe('round robin standings', () => {
 	});
 
 	it('has ascending order from lower group id to higher group id for same placements', () => {
-		const tournamentPP255 = new Tournament(PADDLING_POOL_255());
+		const tournamentPP255 = new TournamentCore(PADDLING_POOL_255());
 
 		const standings = tournamentPP255.bracketByIdx(0)!.standings;
 

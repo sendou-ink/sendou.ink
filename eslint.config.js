@@ -6,6 +6,7 @@ import globals from 'globals';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript-eslint';
 import svelteConfig from './svelte.config.js';
+import capitalImports from './eslint-plugin-capital-imports.js';
 
 const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url));
 
@@ -19,6 +20,9 @@ export default ts.config(
 	{
 		languageOptions: {
 			globals: { ...globals.browser, ...globals.node }
+		},
+		plugins: {
+			'capital-imports': capitalImports
 		},
 		rules: {
 			// typescript-eslint strongly recommend that you do not use the no-undef lint rule on TypeScript projects.
@@ -39,7 +43,8 @@ export default ts.config(
 					varsIgnorePattern: '^_',
 					ignoreRestSiblings: true
 				}
-			]
+			],
+			'capital-imports/capital-imports': 'error'
 		}
 	},
 	{

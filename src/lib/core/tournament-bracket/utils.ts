@@ -1,7 +1,7 @@
 import type { TournamentManagerDataSet } from '$lib/core/brackets-manager/types';
-import type { Standing } from '$lib/core/tournament-bracket/Bracket';
-import type { Tournament } from '$lib/core/tournament/Tournament';
-import type { TournamentDataTeam } from '$lib/server/db/repositories/tournament';
+import type { Standing } from '$lib/core/tournament-bracket/bracket-core';
+import type { TournamentCore } from '$lib/core/tournament/tournament-core';
+import type * as TournamentRepository from '$lib/server/db/repositories/tournament';
 import type { TournamentRoundMaps } from '$lib/server/db/tables';
 import { logger } from '$lib/utils/logger';
 import { seededRandom } from '$lib/utils/random';
@@ -42,7 +42,9 @@ export function resolveRoomPass(seed: number | string) {
 	return pass;
 }
 
-export function resolveHostingTeam(teams: [TournamentDataTeam, TournamentDataTeam]) {
+export function resolveHostingTeam(
+	teams: [TournamentRepository.TournamentDataTeam, TournamentRepository.TournamentDataTeam]
+) {
 	if (!teams[0].seed && !teams[1].seed) return teams[0];
 	if (!teams[0].seed) return teams[1];
 	if (!teams[1].seed) return teams[0];
@@ -142,7 +144,7 @@ export function matchIsLocked({
 	matchId,
 	scores
 }: {
-	tournament: Tournament;
+	tournament: TournamentCore;
 	matchId: number;
 	scores: [number, number];
 }) {

@@ -1,9 +1,9 @@
 import { badRequest, validatedForm } from '$lib/server/remote-functions';
 import * as TournamentTeamRepository from '$lib/server/db/repositories/tournament-team';
-import { upsertTeamSchema } from '$lib/api/tournament/schemas';
-import { requireTournament } from '$lib/api/tournament/utils.server';
+import { upsertTeamSchema } from './schemas';
+import { requireTournament } from './utils.server';
 import * as TeamRepository from '$lib/server/db/repositories/team';
-import type { Tournament } from '$lib/core/tournament/Tournament';
+import type { TournamentCore } from '$lib/core/tournament/tournament-core';
 import * as TournamentOrganizationRepository from '$lib/server/db/repositories/tournament-organization';
 import * as UserAPI from '$lib/api/user';
 import * as UserRepository from '$lib/server/db/repositories/user';
@@ -71,7 +71,7 @@ async function requireNotBannedByOrganization({
 	user,
 	message = 'You are banned from events hosted by this organization'
 }: {
-	tournament: Tournament;
+	tournament: TournamentCore;
 	user: { id: number };
 	message?: string;
 }) {
@@ -90,7 +90,7 @@ async function inGameNameIfNeeded({
 	tournament,
 	userId
 }: {
-	tournament: Tournament;
+	tournament: TournamentCore;
 	userId: number;
 }) {
 	if (!tournament.ctx.settings.requireInGameNames) return null;

@@ -9,7 +9,7 @@ import type { Tables, TournamentStageSettings } from '$lib/server/db/tables';
 import { weekNumberToDate } from '$lib/utils/dates';
 import { assertUnreachable } from '$lib/utils/types';
 import * as R from 'remeda';
-import { Tournament as TournamentClass } from './Tournament';
+import { TournamentCore } from './tournament-core';
 
 const mapPickingStyleToModeRecord = {
 	AUTO_SZ: ['SZ'],
@@ -151,7 +151,7 @@ export function tournamentIsRanked({
 	return isSetAsRanked ?? true;
 }
 
-export function resolveLeagueRoundStartDate(tournament: TournamentClass, roundId: number) {
+export function resolveLeagueRoundStartDate(tournament: TournamentCore, roundId: number) {
 	if (!tournament.isLeagueDivision) return null;
 
 	const league = Object.values(LEAGUES)

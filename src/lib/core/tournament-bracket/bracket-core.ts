@@ -1,7 +1,7 @@
 import { sub } from 'date-fns';
 import * as R from 'remeda';
 import * as Progression from './Progression';
-import type { OptionalIdObject, Tournament } from '../tournament/Tournament';
+import type { OptionalIdObject, TournamentCore } from '../tournament/tournament-core';
 import type { TournamentManagerDataSet } from '$lib/core/brackets-manager/types';
 import type { Tables, TournamentStageSettings } from '$lib/server/db/tables';
 import { logger } from '$lib/utils/logger';
@@ -13,7 +13,7 @@ import invariant from '$lib/utils/invariant';
 import { assertUnreachable } from '$lib/utils/types';
 import type { BracketMapCounts } from '$lib/core/tournament-bracket/to-map-list';
 import { cutToNDecimalPlaces } from '$lib/utils/number';
-import type { TournamentDataTeam } from '$lib/server/db/repositories/tournament';
+import type * as TournamentRepository from '$lib/server/db/repositories/tournament';
 
 interface CreateBracketArgs {
 	id: number;
@@ -25,7 +25,7 @@ interface CreateBracketArgs {
 	canBeStarted?: boolean;
 	name: string;
 	teamsPendingCheckIn?: number[];
-	tournament: Tournament;
+	tournament: TournamentCore;
 	createdAt?: number | null;
 	sources?: {
 		bracketIdx: number;
@@ -38,7 +38,7 @@ interface CreateBracketArgs {
 }
 
 export interface Standing {
-	team: TournamentDataTeam;
+	team: TournamentRepository.TournamentDataTeam;
 	placement: number; // 1st, 2nd, 3rd, 4th, 5th, 5th...
 	groupId?: number;
 	stats?: {
@@ -61,7 +61,7 @@ interface TeamTrackRecord {
 	losses: number;
 }
 
-export abstract class Bracket {
+export abstract class BracketCore {
 	id;
 	idx;
 	preview;
@@ -393,7 +393,7 @@ export abstract class Bracket {
 	}
 }
 
-class SingleEliminationBracket extends Bracket {
+class SingleEliminationBracket extends BracketCore {
 	get type(): Tables['TournamentStage']['type'] {
 		return 'single_elimination';
 	}
@@ -529,7 +529,7 @@ class SingleEliminationBracket extends Bracket {
 	}
 }
 
-class DoubleEliminationBracket extends Bracket {
+class DoubleEliminationBracket extends BracketCore {
 	get type(): Tables['TournamentStage']['type'] {
 		return 'double_elimination';
 	}
@@ -777,7 +777,7 @@ class DoubleEliminationBracket extends Bracket {
 	}
 }
 
-class RoundRobinBracket extends Bracket {
+class RoundRobinBracket extends BracketCore {
 	get collectResultsWithPoints() {
 		return true;
 	}
@@ -1031,7 +1031,7 @@ class RoundRobinBracket extends Bracket {
 	}
 }
 
-class SwissBracket extends Bracket {
+class SwissBracket extends BracketCore {
 	get collectResultsWithPoints() {
 		return false;
 	}

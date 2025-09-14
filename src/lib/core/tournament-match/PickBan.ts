@@ -1,6 +1,6 @@
 import type { ModeShort, ModeWithStage, StageId } from '$lib/constants/in-game/types';
 import { isSetOverByResults } from '$lib/core/tournament-bracket/utils';
-import type { TournamentDataTeam } from '$lib/server/db/repositories/tournament';
+import type * as TournamentRepository from '$lib/server/db/repositories/tournament';
 import type { TournamentRoundMaps } from '$lib/server/db/tables';
 import invariant from '$lib/utils/invariant';
 import { logger } from '$lib/utils/logger';
@@ -75,7 +75,7 @@ interface MapListWithStatusesArgs {
 	results: Array<{ mode: ModeShort; stageId: StageId; winnerTeamId: number }>;
 	maps: TournamentRoundMaps | null;
 	mapList: TournamentMapListMap[] | null;
-	teams: [TournamentDataTeam, TournamentDataTeam];
+	teams: [TournamentRepository.TournamentDataTeam, TournamentRepository.TournamentDataTeam];
 	pickerTeamId: number;
 	tieBreakerMapPool: ModeWithStage[];
 	toSetMapPool: Array<{ mode: ModeShort; stageId: StageId }>;

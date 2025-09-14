@@ -1,13 +1,13 @@
-import { Tournament } from '$lib/core/tournament/Tournament';
-import type { TournamentData } from '$lib/server/db/repositories/tournament';
-import type { ParsedBracket } from '$lib/core/tournament-bracket/Progression';
+import { TournamentCore } from '$lib/core/tournament/tournament-core';
+import type * as TournamentRepository from '$lib/server/db/repositories/tournament';
+import type * as Progression from '$lib/core/tournament-bracket/Progression';
 import * as R from 'remeda';
 import type { TournamentManagerDataSet } from '../types';
 
 export function tournamentCtxTeam(
 	teamId: number,
-	partial?: Partial<TournamentData['teams'][0]>
-): TournamentData['teams'][0] {
+	partial?: Partial<TournamentRepository.TournamentData['teams'][0]>
+): TournamentRepository.TournamentData['teams'][0] {
 	return {
 		checkIns: [
 			{ checkedInAt: new Date(1705858841 * 1000).toString(), bracketIdx: null, isCheckOut: 0 }
@@ -47,7 +47,7 @@ export function testTournament({
 	ctx
 }: {
 	data?: TournamentManagerDataSet;
-	ctx?: Partial<TournamentData>;
+	ctx?: Partial<TournamentRepository.TournamentData>;
 }) {
 	const participant = R.pipe(
 		data.match,
@@ -56,7 +56,7 @@ export function testTournament({
 		R.unique<number[]>
 	);
 
-	return new Tournament({
+	return new TournamentCore({
 		data,
 		ctx: {
 			eventId: 1,
@@ -283,4 +283,4 @@ export const progressions = {
 			]
 		}
 	]
-} satisfies Record<string, ParsedBracket[]>;
+} satisfies Record<string, Progression.ParsedBracket[]>;

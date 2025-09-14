@@ -1,6 +1,6 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 
-import type { Tournament } from '$lib/core/tournament/Tournament';
+import type { TournamentCore } from '$lib/core/tournament/tournament-core';
 import type { AuthenticatedUser } from '$lib/server/auth/session';
 
 // for information about these interfaces
@@ -9,7 +9,7 @@ declare global {
 		// interface Error {}
 		interface Locals {
 			user?: Promise<AuthenticatedUser | undefined>;
-			tournament?: Record<number, Promise<Tournament>>;
+			tournament?: Record<number, Promise<TournamentCore>>;
 		}
 		// interface PageData {}
 		// interface PageState {}

@@ -1,5 +1,5 @@
 import { describe, expect, it, test } from 'vitest';
-import { Tournament } from './Tournament';
+import { TournamentCore } from './tournament-core';
 import {
 	IN_THE_ZONE_32,
 	PADDLING_POOL_255,
@@ -12,13 +12,13 @@ import { progressions } from '../tournament-bracket/tests/test-utils';
 import { testTournament, tournamentCtxTeam } from '../brackets-manager/test/test-utils';
 
 describe('Follow-up bracket progression', () => {
-	const tournamentPP257 = new Tournament(PADDLING_POOL_257());
-	const tournamentPP255 = new Tournament(PADDLING_POOL_255());
-	const tournamentITZ32 = new Tournament(IN_THE_ZONE_32({}));
-	const tournamentITZ32UndergroundWithoutCheckIn = new Tournament(
+	const tournamentPP257 = new TournamentCore(PADDLING_POOL_257());
+	const tournamentPP255 = new TournamentCore(PADDLING_POOL_255());
+	const tournamentITZ32 = new TournamentCore(IN_THE_ZONE_32({}));
+	const tournamentITZ32UndergroundWithoutCheckIn = new TournamentCore(
 		IN_THE_ZONE_32({ undergroundRequiresCheckIn: false })
 	);
-	const tournamentITZ32UndergroundWithoutCheckInWithCheckedOut = new Tournament(
+	const tournamentITZ32UndergroundWithoutCheckInWithCheckedOut = new TournamentCore(
 		IN_THE_ZONE_32({
 			undergroundRequiresCheckIn: false,
 			hasCheckedOutTeam: true
@@ -167,7 +167,7 @@ describe('Follow-up bracket progression', () => {
 
 describe('Bracket progression override', () => {
 	it('handles no override', () => {
-		const tournament = new Tournament({
+		const tournament = new TournamentCore({
 			...SWIM_OR_SINK_167()
 		});
 
@@ -178,7 +178,7 @@ describe('Bracket progression override', () => {
 	});
 
 	it('overrides causing the team to go to another bracket', () => {
-		const tournament = new Tournament({
+		const tournament = new TournamentCore({
 			...SWIM_OR_SINK_167([
 				{
 					tournamentTeamId: 14809,
@@ -192,7 +192,7 @@ describe('Bracket progression override', () => {
 	});
 
 	it('overrides causing the team not to go to their original bracket', () => {
-		const tournament = new Tournament({
+		const tournament = new TournamentCore({
 			...SWIM_OR_SINK_167([
 				{
 					tournamentTeamId: 14809,
@@ -206,7 +206,7 @@ describe('Bracket progression override', () => {
 	});
 
 	it('destinationBracketIdx = -1 eliminates the team', () => {
-		const tournament = new Tournament({
+		const tournament = new TournamentCore({
 			...SWIM_OR_SINK_167([
 				{
 					tournamentTeamId: 14809,
@@ -223,7 +223,7 @@ describe('Bracket progression override', () => {
 	});
 
 	it('override teams seeded at the end', () => {
-		const tournament = new Tournament({
+		const tournament = new TournamentCore({
 			...SWIM_OR_SINK_167([
 				{
 					tournamentTeamId: 14809,
@@ -237,7 +237,7 @@ describe('Bracket progression override', () => {
 	});
 
 	it('if redundant override, still in the right bracket', () => {
-		const tournament = new Tournament({
+		const tournament = new TournamentCore({
 			...SWIM_OR_SINK_167([
 				{
 					tournamentTeamId: 14809,
@@ -252,10 +252,10 @@ describe('Bracket progression override', () => {
 
 	it('redundants override does not affect the seed', () => {
 		const tournamentTeamId = 14735;
-		const tournament = new Tournament({
+		const tournament = new TournamentCore({
 			...SWIM_OR_SINK_167()
 		});
-		const tournamentWOverride = new Tournament({
+		const tournamentWOverride = new TournamentCore({
 			...SWIM_OR_SINK_167([
 				{
 					tournamentTeamId,
@@ -274,7 +274,7 @@ describe('Bracket progression override', () => {
 
 	// note there is also logic for avoiding replays
 	it('override teams seeded according to their placement in the source bracket', () => {
-		const tournament = new Tournament({
+		const tournament = new TournamentCore({
 			...SWIM_OR_SINK_167([
 				// throw these to different brackets to avoid replays
 				{

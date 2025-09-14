@@ -1,7 +1,7 @@
 import { getRequestEvent } from '$app/server';
 import { BracketsManager } from '$lib/core/brackets-manager';
 import { SqlDatabase } from '$lib/core/tournament/crud.server';
-import { Tournament } from '$lib/core/tournament/Tournament';
+import { TournamentCore } from '$lib/core/tournament/tournament-core';
 import * as TournamentRepository from '$lib/server/db/repositories/tournament';
 import { notFoundIfFalsy } from '$lib/server/remote-functions';
 
@@ -29,7 +29,7 @@ async function fetchTournament(tournamentId: number) {
 	const data = manager.get.tournamentData(tournamentId);
 
 	// xxx: turn simulateBrackets: true?
-	return new Tournament({ data, ctx, simulateBrackets: false });
+	return new TournamentCore({ data, ctx, simulateBrackets: false });
 }
 
 export function clearTournamentDataCache(_tournamentId: number) {

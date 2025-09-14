@@ -7,7 +7,7 @@ import { resolve } from '$app/paths';
 import * as OrganizationAPI from '$lib/api/organization';
 import { command } from '$app/server';
 import { id } from '$lib/utils/zod';
-import { byId } from '$lib/api/calendar/queries.remote';
+import * as CalendarAPI from '$lib/api/calendar';
 import * as ShowcaseTournaments from '$lib/core/tournament/ShowcaseTournament.server';
 import { clearTournamentDataCache } from '../tournament/utils.server';
 
@@ -21,7 +21,7 @@ export const upsertEvent = validatedForm(newCalendarEventSchema, async (data, us
 
 	let eventId = data.eventIdToEdit;
 	if (data.eventIdToEdit) {
-		const event = (await byId(data.eventIdToEdit)).event;
+		const event = (await CalendarAPI.queries.byId(data.eventIdToEdit)).event;
 		requirePermission(event, 'EDIT');
 
 		await CalendarRepository.update({ ...data, eventId: data.eventIdToEdit });
@@ -73,7 +73,7 @@ export const upsertTournament = validatedForm(newTournamentSchema, async (data, 
 });
 
 export const deleteById = command(id, async (id) => {
-	const event = (await byId(id)).event;
+	const event = (await CalendarAPI.queries.byId(id)).event;
 	requirePermission(event, 'EDIT');
 
 	await CalendarRepository.deleteById(event.eventId);
