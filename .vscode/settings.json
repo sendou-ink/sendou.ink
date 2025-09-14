@@ -10,5 +10,6 @@
 	"workbench.editor.customLabels.patterns": {
 		"**/routes/**/*/+page.svelte": "${filename}",
 		"**/routes/**/*/+layout.svelte": "${filename}"
-	}
+	},
+	"eslint.validate": ["typescript", "svelte"]
 }

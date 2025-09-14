@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { ResolvedPathname } from '$app/types';
 	import Main from '$lib/components/layout/Main.svelte';
-	import SideNav from '$lib/components/layout/SideNav.svelte';
 	import SideNavItem from '$lib/components/layout/SideNavItem.svelte';
 	import * as AuthAPI from '$lib/api/auth';
 	import { navItems } from './nav-items';
