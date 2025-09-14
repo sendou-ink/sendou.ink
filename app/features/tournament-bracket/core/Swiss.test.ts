@@ -447,4 +447,86 @@ describe("Swiss", () => {
 			).toBe("eliminated");
 		});
 	});
+
+	describe("Threshold validation utilities", () => {
+		describe("maxAdvanceThreshold()", () => {
+			it("calculates maximum advance threshold correctly", () => {
+				expect(Swiss.maxAdvanceThreshold({ roundCount: 3 })).toBe(3); // ceil(3/2) + 1 = 2 + 1 = 3
+				expect(Swiss.maxAdvanceThreshold({ roundCount: 4 })).toBe(3); // ceil(4/2) + 1 = 2 + 1 = 3
+				expect(Swiss.maxAdvanceThreshold({ roundCount: 5 })).toBe(4); // ceil(5/2) + 1 = 3 + 1 = 4
+				expect(Swiss.maxAdvanceThreshold({ roundCount: 6 })).toBe(4); // ceil(6/2) + 1 = 3 + 1 = 4
+				expect(Swiss.maxAdvanceThreshold({ roundCount: 7 })).toBe(5); // ceil(7/2) + 1 = 4 + 1 = 5
+			});
+		});
+
+		describe("isValidAdvanceThreshold()", () => {
+			it("validates correct thresholds", () => {
+				expect(
+					Swiss.isValidAdvanceThreshold({ roundCount: 5, advanceThreshold: 3 }),
+				).toBe(true);
+				expect(
+					Swiss.isValidAdvanceThreshold({ roundCount: 4, advanceThreshold: 2 }),
+				).toBe(true);
+				expect(
+					Swiss.isValidAdvanceThreshold({ roundCount: 6, advanceThreshold: 4 }),
+				).toBe(true);
+				expect(
+					Swiss.isValidAdvanceThreshold({ roundCount: 3, advanceThreshold: 2 }),
+				).toBe(true);
+			});
+
+			it("rejects invalid thresholds", () => {
+				// Threshold too high
+				expect(
+					Swiss.isValidAdvanceThreshold({ roundCount: 5, advanceThreshold: 5 }),
+				).toBe(false); // equals round count
+				expect(
+					Swiss.isValidAdvanceThreshold({ roundCount: 5, advanceThreshold: 6 }),
+				).toBe(false); // exceeds round count
+
+				// Threshold too low
+				expect(
+					Swiss.isValidAdvanceThreshold({ roundCount: 5, advanceThreshold: 0 }),
+				).toBe(false);
+				expect(
+					Swiss.isValidAdvanceThreshold({
+						roundCount: 3,
+						advanceThreshold: -1,
+					}),
+				).toBe(false);
+			});
+
+			it("handles edge cases", () => {
+				expect(
+					Swiss.isValidAdvanceThreshold({ roundCount: 3, advanceThreshold: 2 }),
+				).toBe(true); // minimum valid
+				expect(
+					Swiss.isValidAdvanceThreshold({ roundCount: 5, advanceThreshold: 4 }),
+				).toBe(true); // maximum valid for 5 rounds
+			});
+		});
+
+		describe("validAdvanceThresholdOptions()", () => {
+			it("returns correct options for different round counts", () => {
+				expect(Swiss.validAdvanceThresholdOptions({ roundCount: 3 })).toEqual([
+					2, 3,
+				]);
+				expect(Swiss.validAdvanceThresholdOptions({ roundCount: 5 })).toEqual([
+					2, 3, 4,
+				]);
+				expect(Swiss.validAdvanceThresholdOptions({ roundCount: 8 })).toEqual([
+					2, 3, 4, 5,
+				]);
+			});
+
+			it("handles minimal round counts", () => {
+				expect(Swiss.validAdvanceThresholdOptions({ roundCount: 2 })).toEqual([
+					2,
+				]);
+				expect(Swiss.validAdvanceThresholdOptions({ roundCount: 1 })).toEqual([
+					2,
+				]);
+			});
+		});
+	});
 });

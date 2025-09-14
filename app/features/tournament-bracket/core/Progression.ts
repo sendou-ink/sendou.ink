@@ -92,6 +92,11 @@ export type ValidationError =
 	| {
 			type: "NO_DE_POSITIVE";
 			bracketIdx: number;
+	  }
+	// Swiss bracket with early advance/elimination must have a destination bracket
+	| {
+			type: "SWISS_EARLY_ADVANCE_NO_DESTINATION";
+			bracketIdx: number;
 	  };
 
 /** Takes validated brackets and returns them in the format that is ready for user input. */
@@ -254,6 +259,14 @@ export function bracketsToValidationError(
 	if (typeof faultyBracketIdx === "number") {
 		return {
 			type: "NO_DE_POSITIVE",
+			bracketIdx: faultyBracketIdx,
+		};
+	}
+
+	faultyBracketIdx = swissEarlyAdvanceWithoutDestination(brackets);
+	if (typeof faultyBracketIdx === "number") {
+		return {
+			type: "SWISS_EARLY_ADVANCE_NO_DESTINATION",
 			bracketIdx: faultyBracketIdx,
 		};
 	}
@@ -508,6 +521,26 @@ function noDoubleEliminationPositive(brackets: ParsedBracket[]) {
 				sourceBracket.type === "double_elimination" &&
 				source.placements.some((placement) => placement > 0)
 			) {
+				return bracketIdx;
+			}
+		}
+	}
+
+	return null;
+}
+
+function swissEarlyAdvanceWithoutDestination(brackets: ParsedBracket[]) {
+	for (const [bracketIdx, bracket] of brackets.entries()) {
+		// Check if this is a Swiss bracket with early advance enabled
+		if (bracket.type === "swiss" && bracket.settings.advanceThreshold) {
+			// Check if this bracket has a destination (is used as source by another bracket)
+			const hasDestination = brackets.some((otherBracket) =>
+				otherBracket.sources?.some(
+					(source) => source.bracketIdx === bracketIdx,
+				),
+			);
+
+			if (!hasDestination) {
 				return bracketIdx;
 			}
 		}

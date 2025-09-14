@@ -2,6 +2,7 @@ import { z } from "zod/v4";
 import { type CalendarEventTag, TOURNAMENT_STAGE_TYPES } from "~/db/tables";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import * as Swiss from "~/features/tournament-bracket/core/Swiss";
 import "~/styles/calendar-new.css";
 import { gamesShort, versusShort } from "~/modules/in-game-lists/games";
 import { modesShortWithSpecial } from "~/modules/in-game-lists/modes";
@@ -163,7 +164,23 @@ export const bracketProgressionSchema = z.preprocess(
 					teamsPerGroup: z.number().int().optional(),
 					groupCount: z.number().int().optional(),
 					roundCount: z.number().int().optional(),
-				}),
+					advanceThreshold: z.number().int().optional(),
+				}).refine(
+					(settings) => {
+						// Validate advanceThreshold for Swiss tournaments
+						if (settings.advanceThreshold && settings.roundCount) {
+							return Swiss.isValidAdvanceThreshold({
+								roundCount: settings.roundCount,
+								advanceThreshold: settings.advanceThreshold,
+							});
+						}
+						return true;
+					},
+					{
+						message: "Invalid advance threshold for the given round count",
+						path: ["advanceThreshold"],
+					}
+				),
 				requiresCheckIn: z.boolean(),
 				startTime: z.number().optional(),
 				sources: z

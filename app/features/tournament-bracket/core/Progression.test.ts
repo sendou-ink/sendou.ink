@@ -446,6 +446,46 @@ describe("validatedSources - other rules", () => {
 		expect(error.type).toBe("NO_DE_POSITIVE");
 		expect((error as any).bracketIdx).toEqual(1);
 	});
+
+	it("handles SWISS_EARLY_ADVANCE_NO_DESTINATION", () => {
+		// Swiss bracket with early advance but no destination
+		const error = getValidatedBrackets([
+			{
+				settings: {
+					advanceThreshold: 3,
+				},
+				type: "swiss",
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("SWISS_EARLY_ADVANCE_NO_DESTINATION");
+		expect((error as any).bracketIdx).toEqual(0);
+	});
+
+	it("allows Swiss early advance when bracket has destination", () => {
+		// Swiss bracket with early advance that leads to another bracket should be valid
+		const result = getValidatedBrackets([
+			{
+				settings: {
+					advanceThreshold: 3,
+				},
+				type: "swiss",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-4",
+					},
+				],
+			},
+		]);
+
+		// Should be valid (no error returned)
+		expect(Array.isArray(result)).toBe(true);
+	});
 });
 
 describe("isFinals", () => {
