@@ -1,12 +1,48 @@
-<script>
+<script lang="ts">
+	import type { ResolvedPathname } from '$app/types';
 	import Main from '$lib/components/layout/Main.svelte';
-	import DesktopSideNav from '../lib/components/layout/DesktopSideNav.svelte';
+	import SideNav from '$lib/components/layout/SideNav.svelte';
+	import SideNavItem from '$lib/components/layout/SideNavItem.svelte';
 	import * as AuthAPI from '$lib/api/auth';
+	import { navItems } from './nav-items';
+	import { asset } from '$app/paths';
 </script>
 
 <div class="main-container">
-	<DesktopSideNav />
 	<Main class="front-page__container">
+		{#snippet sideNav()}
+			{#each navItems as item (item.id)}
+				<SideNavItem
+					href={item.url as ResolvedPathname}
+					data-sveltekit-preload-data={item.prefetch ? 'hover' : 'off'}
+				>
+					{#snippet icon()}
+						<img
+							src={asset(`/img/layout/${item.id}.avif`)}
+							height={28}
+							width={28}
+							alt={item.name}
+						/>
+					{/snippet}
+					<div>{item.name}</div>
+				</SideNavItem>
+			{/each}
+			<!-- xxx: add logout
+			{#if $user}
+				<form method="post" action={LOG_OUT_URL}>
+					<SendouButton
+						size="small"
+						variant="minimal"
+						icon={LogOutIcon}
+						type="submit"
+						class="front-page__side-nav__log-out"
+					>
+						{$t('common:header.logout')}
+					</SendouButton>
+				</form>
+			{/if} 
+			-->
+		{/snippet}
 		{#if !(await AuthAPI.queries.me())?.roles.includes('MINOR_SUPPORT') && process.env.NODE_ENV === 'production'}
 			<div class="top-leaderboard" id="pw-leaderboard_atf"></div>
 		{/if}
@@ -21,6 +57,7 @@
 	.main-container {
 		display: flex;
 		flex-direction: row;
+		padding-bottom: 100rem;
 	}
 
 	.top-leaderboard {
