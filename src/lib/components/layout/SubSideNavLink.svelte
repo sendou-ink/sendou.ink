@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { ResolvedPathname } from '$app/types';
 	import type { Snippet } from 'svelte';
+	import { closeMobileNavContext } from './mobile-nav-context';
 
 	interface Props {
 		children: Snippet;
@@ -8,11 +9,16 @@
 	}
 
 	const { children, href }: Props = $props();
+	const closeMobileNav = $derived(closeMobileNavContext.getOr(undefined));
+
+	function handleClick() {
+		closeMobileNav?.();
+	}
 </script>
 
 <li>
 	<div class="dot"></div>
-	<a {href}>{@render children()}</a>
+	<a {href} onclick={handleClick}>{@render children()}</a>
 </li>
 
 <style>

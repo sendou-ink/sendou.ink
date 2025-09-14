@@ -16,7 +16,6 @@
 	import { countryCodeToTranslatedName } from '$lib/utils/i18n';
 	import { getLocale } from '$lib/paraglide/runtime';
 	import * as AuthAPI from '$lib/api/auth';
-	import User from '@lucide/svelte/icons/user';
 	import Calendar from '@lucide/svelte/icons/calendar';
 	import Edit from '@lucide/svelte/icons/edit';
 	import Trophy from '@lucide/svelte/icons/trophy';
@@ -83,12 +82,6 @@
 				{m.common_actions_edit()}
 			</SideNavItem>
 		{/if}
-		<SideNavItem href={resolve(`/u/${params.identifier}`)} data-testid="user-profile-tab">
-			{#snippet icon()}
-				<User />
-			{/snippet}
-			{m.common_header_profile()}
-		</SideNavItem>
 		{#if user.resultsCount > 0}
 			<SideNavItem
 				href={resolve(`/u/${params.identifier}/results`)}

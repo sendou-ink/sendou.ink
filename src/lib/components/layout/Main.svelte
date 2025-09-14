@@ -61,7 +61,11 @@
 					size="big"
 					onclick={() => (isMobileSideNavOpen = true)}
 				/>
-				<SideNav bind:isMobileSideNavOpen isMobile>
+				<SideNav
+					bind:isMobileSideNavOpen
+					isMobile
+					closeMobileNav={() => (isMobileSideNavOpen = false)}
+				>
 					{@render sideNav()}
 				</SideNav>
 			</div>
