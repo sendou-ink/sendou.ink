@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { Dialog } from 'bits-ui';
+	import { closeMobileNavContext } from './mobile-nav-context';
 
 	interface Props {
 		children: Snippet;
