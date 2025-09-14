@@ -8,26 +8,20 @@
 	import { asset } from '$app/paths';
 </script>
 
-<div class="main-container">
-	<Main class="front-page__container">
-		{#snippet sideNav()}
-			{#each navItems as item (item.id)}
-				<SideNavItem
-					href={item.url as ResolvedPathname}
-					data-sveltekit-preload-data={item.prefetch ? 'hover' : 'off'}
-				>
-					{#snippet icon()}
-						<img
-							src={asset(`/img/layout/${item.id}.avif`)}
-							height={28}
-							width={28}
-							alt={item.name}
-						/>
-					{/snippet}
-					<div>{item.name}</div>
-				</SideNavItem>
-			{/each}
-			<!-- xxx: add logout
+<Main class="front-page__container">
+	{#snippet sideNav()}
+		{#each navItems as item (item.id)}
+			<SideNavItem
+				href={item.url as ResolvedPathname}
+				data-sveltekit-preload-data={item.prefetch ? 'hover' : 'off'}
+			>
+				{#snippet icon()}
+					<img src={asset(`/img/layout/${item.id}.avif`)} height={28} width={28} alt={item.name} />
+				{/snippet}
+				<div>{item.name}</div>
+			</SideNavItem>
+		{/each}
+		<!-- xxx: add logout
 			{#if $user}
 				<form method="post" action={LOG_OUT_URL}>
 					<SendouButton
@@ -42,24 +36,20 @@
 				</form>
 			{/if} 
 			-->
-		{/snippet}
-		{#if !(await AuthAPI.queries.me())?.roles.includes('MINOR_SUPPORT') && process.env.NODE_ENV === 'production'}
-			<div class="top-leaderboard" id="pw-leaderboard_atf"></div>
-		{/if}
-		<h1>Welcome to SvelteKit</h1>
-		<p>
-			Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation
-		</p>
-	</Main>
-</div>
+	{/snippet}
+	{#if !(await AuthAPI.queries.me())?.roles.includes('MINOR_SUPPORT') && process.env.NODE_ENV === 'production'}
+		<div class="top-leaderboard" id="pw-leaderboard_atf"></div>
+	{/if}
+	<h1>Welcome to SvelteKit</h1>
+	<p>
+		Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation
+	</p>
+</Main>
 
 <style>
-	.main-container {
-		display: flex;
-		flex-direction: row;
-		padding-bottom: 100rem;
+	p {
+		margin-bottom: 100rem;
 	}
-
 	.top-leaderboard {
 		min-height: 130px;
 		margin: 10px 0;
