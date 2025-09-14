@@ -1,6 +1,8 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { Dialog } from 'bits-ui';
+	import { on } from 'svelte/events';
+	import { browser } from '$app/environment';
 
 	interface Props {
 		children: Snippet;
@@ -9,6 +11,26 @@
 	}
 
 	let { children, isMobile = false, isMobileSideNavOpen = $bindable(false) }: Props = $props();
+
+	let scrollHeight = $state(0);
+
+	if (browser) {
+		const heightParam = getComputedStyle(document.documentElement).getPropertyValue(
+			'--layout-nav-height'
+		);
+
+		const div = document.createElement('div');
+		div.style.height = heightParam;
+		div.style.position = 'absolute';
+		document.body.appendChild(div);
+
+		const realHeight = div.getBoundingClientRect().height;
+		document.body.removeChild(div);
+
+		on(window, 'scroll', () => {
+			scrollHeight = Math.max(0, realHeight - window.scrollY);
+		});
+	}
 </script>
 
 <!-- xxx: active symbols -->
@@ -34,13 +56,14 @@
 		</Dialog.Portal>
 	</Dialog.Root>
 {:else}
-	<nav>
+	<nav style={`--scroll-height: ${scrollHeight}px`}>
 		{@render children()}
 	</nav>
 {/if}
 
 <style>
 	nav {
+		--scroll-height: 0px;
 		--side-nav-width: 225px;
 		background-color: var(--color-base-section);
 		position: sticky;
@@ -49,18 +72,17 @@
 		flex-direction: column;
 		gap: var(--s-2);
 		overflow-y: auto;
-		max-height: calc(100vh - var(--layout-nav-height));
+		max-height: calc(100vh - var(--scroll-height) - var(--s-5));
 		min-width: var(--side-nav-width);
 		max-width: var(--side-nav-width);
 		padding: var(--s-4) var(--s-2-5);
 		border: var(--border-style);
 		border-radius: var(--radius-box);
 		margin: var(--s-2-5);
-		max-height: 93vh;
 
 		&::-webkit-scrollbar,
 		&::-webkit-scrollbar-track {
-			background-color: inherit;
+			background-color: transparent;
 			height: 18px;
 			width: 18px;
 		}
