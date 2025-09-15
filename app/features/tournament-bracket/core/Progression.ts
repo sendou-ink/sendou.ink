@@ -10,7 +10,7 @@ import invariant from "../../../utils/invariant";
 export interface DBSource {
 	/** Index of the bracket where the teams come from */
 	bracketIdx: number;
-	/** Team placements that join this bracket. E.g. [1, 2] would mean top 1 & 2 teams. [-1] would mean the last placing teams. */
+	/** Team placements that join this bracket. E.g. [1, 2] would mean top 1 & 2 teams. [-1] would mean the last placing teams. Can be empty array for Swiss brackets with early advance. */
 	placements: number[];
 }
 
@@ -115,7 +115,10 @@ export function validatedBracketsToInputFormat(
 				: undefined,
 			sources: bracket.sources?.map((source) => ({
 				bracketId: String(source.bracketIdx),
-				placements: placementsToString(source.placements),
+				placements:
+					source.placements.length > 0
+						? placementsToString(source.placements)
+						: "",
 			})),
 		};
 	});
@@ -286,13 +289,26 @@ function toOutputBracketFormat(brackets: InputBracket[]): ParsedBracket[] {
 				: undefined,
 			sources: bracket.sources?.map((source) => {
 				const placements = parsePlacements(source.placements);
-				if (!placements) {
+				const sourceBracketIdx = brackets.findIndex(
+					(b) => b.id === source.bracketId,
+				);
+				const sourceBracket = brackets[sourceBracketIdx];
+
+				// Allow empty placements only for Swiss brackets with early advance
+				if (placements && placements.length === 0) {
+					const isSwissWithEarlyAdvance =
+						sourceBracket?.type === "swiss" &&
+						sourceBracket?.settings?.advanceThreshold;
+					if (!isSwissWithEarlyAdvance) {
+						throw { badBracketIdx: bracketIdx };
+					}
+				} else if (placements === null) {
 					throw { badBracketIdx: bracketIdx };
 				}
 
 				return {
-					bracketIdx: brackets.findIndex((b) => b.id === source.bracketId),
-					placements,
+					bracketIdx: sourceBracketIdx,
+					placements: placements ?? [],
 				};
 			}),
 		};
@@ -311,6 +327,11 @@ function toOutputBracketFormat(brackets: InputBracket[]): ParsedBracket[] {
 }
 
 function parsePlacements(placements: string) {
+	// Handle empty string case
+	if (placements.trim() === "") {
+		return [];
+	}
+
 	const parts = placements.split(",");
 
 	const result: number[] = [];

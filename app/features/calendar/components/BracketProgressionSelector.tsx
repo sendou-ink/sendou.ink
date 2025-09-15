@@ -411,7 +411,8 @@ function TournamentFormatBracketSelector({
 							isDisabled={bracket.disabled}
 						/>
 						<FormMessage type="info">
-							Teams stop playing once they reach required wins or maximum losses
+							Teams stop playing once they reach required wins or exceed maximum
+							losses
 						</FormMessage>
 					</div>
 				) : null}
@@ -520,6 +521,8 @@ function SourcesSelector({
 		return `${id}-${label}`;
 	};
 
+	const inputBracket = brackets.find((b) => b.id === source?.bracketId);
+
 	return (
 		<div className="stack horizontal sm items-end">
 			<div>
@@ -538,22 +541,24 @@ function SourcesSelector({
 					))}
 				</select>
 			</div>
-			<div>
-				<Label htmlFor={createId("placements")}>Placements</Label>
-				<Input
-					id={createId("placements")}
-					placeholder="1,2,3"
-					value={source?.placements ?? ""}
-					testId="placements-input"
-					onChange={(e) =>
-						onChange({
-							bracketId: brackets[0].id,
-							...source,
-							placements: e.target.value,
-						})
-					}
-				/>
-			</div>
+			{!inputBracket?.settings.advanceThreshold ? (
+				<div>
+					<Label htmlFor={createId("placements")}>Placements</Label>
+					<Input
+						id={createId("placements")}
+						placeholder="1,2,3"
+						value={source?.placements ?? ""}
+						testId="placements-input"
+						onChange={(e) =>
+							onChange({
+								bracketId: brackets[0].id,
+								...source,
+								placements: e.target.value,
+							})
+						}
+					/>
+				</div>
+			) : null}
 		</div>
 	);
 }

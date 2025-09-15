@@ -791,6 +791,7 @@ class DoubleEliminationBracket extends Bracket {
 	}
 
 	source({ placements }: { placements: number[] }) {
+		invariant(placements.length > 0, "Empty placements not supported");
 		const resolveLosersGroupId = (data: TournamentManagerDataSet) => {
 			const minGroupId = Math.min(...data.round.map((round) => round.group_id));
 
@@ -886,6 +887,7 @@ class RoundRobinBracket extends Bracket {
 		relevantMatchesFinished: boolean;
 		teams: number[];
 	} {
+		invariant(placements.length > 0, "Empty placements not supported");
 		if (placements.some((p) => p < 0)) {
 			throw new Error("Negative placements not implemented");
 		}
@@ -1161,6 +1163,10 @@ class SwissBracket extends Bracket {
 		relevantMatchesFinished: boolean;
 		teams: number[];
 	} {
+		invariant(
+			advanceThreshold || placements.length > 0,
+			"Placements or advanceThreshold required",
+		);
 		if (placements.some((p) => p < 0)) {
 			throw new Error("Negative placements not implemented");
 		}

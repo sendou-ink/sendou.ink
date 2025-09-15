@@ -173,6 +173,89 @@ describe("validatedSources - PLACEMENTS_PARSE_ERROR", () => {
 
 		expect(error.type).toBe("PLACEMENTS_PARSE_ERROR");
 	});
+
+	it("allows empty string placements for Swiss brackets with early advance", () => {
+		const result = Progression.validatedBrackets([
+			{
+				id: "1",
+				name: "Swiss Bracket",
+				type: "swiss",
+				settings: {
+					advanceThreshold: 3,
+				},
+				requiresCheckIn: false,
+			},
+			{
+				id: "2",
+				name: "Final Bracket",
+				type: "single_elimination",
+				settings: {},
+				requiresCheckIn: false,
+				sources: [
+					{
+						bracketId: "1",
+						placements: "",
+					},
+				],
+			},
+		]) as Progression.ParsedBracket[];
+
+		expect(result[1].sources).toEqual([{ bracketIdx: 0, placements: [] }]);
+	});
+
+	it("parsing fails with empty string placements for non-Swiss brackets", () => {
+		const error = Progression.validatedBrackets([
+			{
+				id: "1",
+				name: "Round Robin Bracket",
+				type: "round_robin",
+				settings: {},
+				requiresCheckIn: false,
+			},
+			{
+				id: "2",
+				name: "Final Bracket",
+				type: "single_elimination",
+				settings: {},
+				requiresCheckIn: false,
+				sources: [
+					{
+						bracketId: "1",
+						placements: "",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("PLACEMENTS_PARSE_ERROR");
+	});
+
+	it("parsing fails with empty string placements for Swiss brackets without early advance", () => {
+		const error = Progression.validatedBrackets([
+			{
+				id: "1",
+				name: "Swiss Bracket",
+				type: "swiss",
+				settings: {},
+				requiresCheckIn: false,
+			},
+			{
+				id: "2",
+				name: "Final Bracket",
+				type: "single_elimination",
+				settings: {},
+				requiresCheckIn: false,
+				sources: [
+					{
+						bracketId: "1",
+						placements: "",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("PLACEMENTS_PARSE_ERROR");
+	});
 });
 
 const getValidatedBrackets = (
@@ -691,5 +774,71 @@ describe("destinationByPlacement", () => {
 			progression: progressions.manyStartBrackets,
 		});
 		expect(result).toBe(3);
+	});
+});
+
+describe("validatedBracketsToInputFormat", () => {
+	it("converts empty placements back to empty string", () => {
+		const parsedBrackets: Progression.ParsedBracket[] = [
+			{
+				type: "swiss",
+				settings: { advanceThreshold: 3 },
+				name: "Swiss Bracket",
+				requiresCheckIn: false,
+			},
+			{
+				type: "single_elimination",
+				settings: {},
+				name: "Final Bracket",
+				requiresCheckIn: false,
+				sources: [
+					{
+						bracketIdx: 0,
+						placements: [],
+					},
+				],
+			},
+		];
+
+		const result = Progression.validatedBracketsToInputFormat(parsedBrackets);
+
+		expect(result[1].sources).toEqual([
+			{
+				bracketId: "0",
+				placements: "",
+			},
+		]);
+	});
+
+	it("converts regular placements to string correctly", () => {
+		const parsedBrackets: Progression.ParsedBracket[] = [
+			{
+				type: "round_robin",
+				settings: {},
+				name: "Group Stage",
+				requiresCheckIn: false,
+			},
+			{
+				type: "single_elimination",
+				settings: {},
+				name: "Finals",
+				requiresCheckIn: false,
+				sources: [
+					{
+						bracketIdx: 0,
+						placements: [1, 2, 3, 4],
+					},
+				],
+			},
+		];
+
+		const result = Progression.validatedBracketsToInputFormat(parsedBrackets);
+
+		expect(result[1].sources).toEqual([
+			{
+				bracketId: "0",
+				placements: "1-4",
+			},
+		]);
 	});
 });

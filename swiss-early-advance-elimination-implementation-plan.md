@@ -93,7 +93,7 @@ Implement a Swiss tournament variation where teams only play as many rounds as r
   - Input fields for advance and elimination thresholds
   - Validation to ensure thresholds make sense for the tournament size
 
-- [ ] #### 4.2 User Interface Update
+- [x] #### 4.2 User Interface Update
 **Files**: New tournament brackets UI components
 - When early advance is enabled, disable the "select placements" input on the follow-up bracket
 
