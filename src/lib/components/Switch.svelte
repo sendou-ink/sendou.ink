@@ -57,7 +57,7 @@
 		display: grid;
 		grid-template-columns: auto 1fr;
 		align-items: center;
-		color: var(--color-primary-content);
+		color: #fff;
 		forced-color-adjust: none;
 		font-size: var(--fonts-xs);
 		font-weight: var(--bold);
@@ -87,7 +87,7 @@
 		margin: 0.26rem;
 		width: var(--s-4);
 		height: var(--s-4);
-		background: var(--color-base-content);
+		background: #fff;
 		border-radius: 16px;
 		transition: transform 200ms;
 	}
@@ -96,10 +96,6 @@
 		width: 0.857rem;
 		height: 0.857rem;
 		margin: 0.143rem;
-	}
-
-	.thumb[data-state='checked']:before {
-		opacity: 0.8;
 	}
 
 	.thumb[data-state='checked'] {
