@@ -17,19 +17,54 @@
 <details>
 	<summary>
 		<span>{title}</span>
-		<div>
-			{#if titleContent?.image}
-				<img src={titleContent?.image} alt={titleContent?.text} />
-			{/if}
-			{#if titleContent?.text}
-				<span>{titleContent?.text}</span>
-			{/if}
-		</div>
+		{#if titleContent}
+			<div class="title-content">
+				{#if titleContent?.image}
+					<img src={titleContent?.image} alt={titleContent?.text} width="20" height="20" />
+				{/if}
+				{#if titleContent?.text}
+					<span>{titleContent?.text}</span>
+				{/if}
+			</div>
+		{/if}
 	</summary>
-	<div>
+	<div class="content">
 		{@render children()}
 	</div>
 	{#if bottomText}
 		<p>{bottomText}</p>
 	{/if}
 </details>
+
+<style>
+	summary {
+		border-radius: var(--radius-box);
+		background-color: var(--color-base-card);
+		font-size: var(--fonts-md);
+		font-weight: var(--bold);
+		padding: var(--s-2) var(--s-3);
+		position: relative;
+	}
+
+	.title-content {
+		display: inline-flex;
+		font-size: var(--fonts-xs);
+		gap: var(--s-2);
+		align-items: center;
+		background-color: var(--color-base-card-section);
+		border-radius: 99999px;
+		padding: var(--s-1) var(--s-3);
+		position: absolute;
+		right: 10px;
+		top: 50%;
+		transform: translateY(-50%);
+		color: var(--color-base-content-secondary);
+	}
+
+	.content {
+		display: grid;
+		gap: var(--s-2);
+		grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+		margin-block: var(--s-2) var(--s-4);
+	}
+</style>
