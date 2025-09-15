@@ -79,12 +79,11 @@ Implement a Swiss tournament variation where teams only play as many rounds as r
   - All teams have been classified (advanced/eliminated), OR
   - Maximum round limit is reached
 
-- [ ] #### 3.3 Bracket Progression Logic Updates
-**File**: `app/features/tournament-bracket/core/Progression.ts`
-- Modify bracket progression logic to handle early advance/elimination:
-  - Detect when early advance/elimination is enabled for a Swiss stage
-  - Override normal manual progression selection
-  - Automatically advance teams based on calculated status (advanced/eliminated)
+- [x] #### 3.3 Bracket Progression Logic Updates
+**File**: `/app/features/tournament-bracket/core/Bracket.ts`
+- Modify Bracket.source to handle early advance/elimination:
+  - Pass advanceThreshold to the source function (convert the parameter to an object)
+  - Handle in Swiss classes source function only that if advanceThreshold is passed then use logic based on that
 
 ### Phase 4: Tournament Configuration UI
 

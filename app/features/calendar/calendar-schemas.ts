@@ -159,28 +159,30 @@ export const bracketProgressionSchema = z.preprocess(
 			z.object({
 				type: z.enum(TOURNAMENT_STAGE_TYPES),
 				name: z.string().min(1).max(TOURNAMENT.BRACKET_NAME_MAX_LENGTH),
-				settings: z.object({
-					thirdPlaceMatch: z.boolean().optional(),
-					teamsPerGroup: z.number().int().optional(),
-					groupCount: z.number().int().optional(),
-					roundCount: z.number().int().optional(),
-					advanceThreshold: z.number().int().optional(),
-				}).refine(
-					(settings) => {
-						// Validate advanceThreshold for Swiss tournaments
-						if (settings.advanceThreshold && settings.roundCount) {
-							return Swiss.isValidAdvanceThreshold({
-								roundCount: settings.roundCount,
-								advanceThreshold: settings.advanceThreshold,
-							});
-						}
-						return true;
-					},
-					{
-						message: "Invalid advance threshold for the given round count",
-						path: ["advanceThreshold"],
-					}
-				),
+				settings: z
+					.object({
+						thirdPlaceMatch: z.boolean().optional(),
+						teamsPerGroup: z.number().int().optional(),
+						groupCount: z.number().int().optional(),
+						roundCount: z.number().int().optional(),
+						advanceThreshold: z.number().int().optional(),
+					})
+					.refine(
+						(settings) => {
+							// Validate advanceThreshold for Swiss tournaments
+							if (settings.advanceThreshold && settings.roundCount) {
+								return Swiss.isValidAdvanceThreshold({
+									roundCount: settings.roundCount,
+									advanceThreshold: settings.advanceThreshold,
+								});
+							}
+							return true;
+						},
+						{
+							message: "Invalid advance threshold for the given round count",
+							path: ["advanceThreshold"],
+						},
+					),
 				requiresCheckIn: z.boolean(),
 				startTime: z.number().optional(),
 				sources: z

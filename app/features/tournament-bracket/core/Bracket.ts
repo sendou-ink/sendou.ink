@@ -11,6 +11,7 @@ import { cutToNDecimalPlaces } from "../../../utils/number";
 import { fillWithNullTillPowerOfTwo } from "../tournament-bracket-utils";
 import { getTournamentManager } from "./brackets-manager";
 import * as Progression from "./Progression";
+import { calculateTeamStatus } from "./Swiss";
 import type { OptionalIdObject, Tournament } from "./Tournament";
 import type { TournamentDataTeam } from "./Tournament.server";
 import type { BracketMapCounts } from "./toMapList";
@@ -372,7 +373,7 @@ export abstract class Bracket {
 		return this.teamsPendingCheckIn.includes(team.id);
 	}
 
-	source(_placements: number[]): {
+	source(_options: { placements: number[]; advanceThreshold?: number }): {
 		relevantMatchesFinished: boolean;
 		teams: number[];
 	} {
@@ -789,7 +790,7 @@ class DoubleEliminationBracket extends Bracket {
 		return true;
 	}
 
-	source(placements: number[]) {
+	source({ placements }: { placements: number[] }) {
 		const resolveLosersGroupId = (data: TournamentManagerDataSet) => {
 			const minGroupId = Math.min(...data.round.map((round) => round.group_id));
 
@@ -881,7 +882,7 @@ class RoundRobinBracket extends Bracket {
 		return true;
 	}
 
-	source(placements: number[]): {
+	source({ placements }: { placements: number[] }): {
 		relevantMatchesFinished: boolean;
 		teams: number[];
 	} {
@@ -1150,7 +1151,13 @@ class SwissBracket extends Bracket {
 		return false;
 	}
 
-	source(placements: number[]): {
+	source({
+		placements,
+		advanceThreshold,
+	}: {
+		placements: number[];
+		advanceThreshold?: number;
+	}): {
 		relevantMatchesFinished: boolean;
 		teams: number[];
 	} {
@@ -1158,6 +1165,7 @@ class SwissBracket extends Bracket {
 			throw new Error("Negative placements not implemented");
 		}
 		const standings = this.standings;
+
 		const relevantMatchesFinished = this.data.round.every((round) => {
 			const roundsMatches = this.data.match.filter(
 				(match) => match.round_id === round.id,
@@ -1180,6 +1188,27 @@ class SwissBracket extends Bracket {
 			});
 		});
 
+		if (advanceThreshold) {
+			return {
+				relevantMatchesFinished,
+				teams: standings
+					.map((standing) => ({
+						...standing,
+						status: calculateTeamStatus({
+							advanceThreshold,
+							wins: standing.stats?.setWins ?? 0,
+							losses: standing.stats?.setLosses ?? 0,
+							roundCount:
+								this.settings?.roundCount ??
+								TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+						}),
+					}))
+					.filter((t) => t.status === "advanced")
+					.map((t) => t.team.id),
+			};
+		}
+
+		// Standard Swiss logic without early advance/elimination
 		const uniquePlacements = R.unique(standings.map((s) => s.placement));
 
 		// 1,3,5 -> 1,2,3 e.g.
