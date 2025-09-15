@@ -20,8 +20,6 @@
 			abilityPointsB: AbilityPoints;
 			effectsA: Partial<Record<SpecialEffectType, boolean | number>>;
 			effectsB: Partial<Record<SpecialEffectType, boolean | number>>;
-			emptyA: boolean;
-			emptyB: boolean;
 		};
 	}
 
@@ -34,7 +32,8 @@
 		return { isStatic, baseValue };
 	});
 
-	const isComparing = $derived(!context.emptyA && !context.emptyB);
+	const showA = $derived(checkBuildHasEffect(0, context.abilityPointsA) && !isStatic);
+	const showB = $derived(checkBuildHasEffect(1, context.abilityPointsB) && !isStatic);
 
 	function getAllRelevantEffects(statIndex: 0 | 1) {
 		if (!Array.isArray(stat)) return [];
@@ -89,14 +88,14 @@
 				</Popover>
 			{/if}
 		</h3>
-		<div class={['values', { comparing: isComparing }]}>
+		<div class={['values', { comparing: showA && showB, unchanged: !isHighlighted() }]}>
 			<div>
 				<h4>
 					{m.analyzer_base()}
 				</h4>
 				<p>{baseValue}{suffix}</p>
 			</div>
-			{#if !isStatic && checkBuildHasEffect(0, context.abilityPointsA)}
+			{#if showA}
 				<div>
 					<h4>
 						{m.analyzer_build1()}
@@ -105,14 +104,14 @@
 						{(stat as StatTuple)[0].value}
 						{suffix}
 					</p>
-					<div>
+					<div class="effects">
 						{#each getAllRelevantEffects(0) as effect (effect)}
-							<img src={effectToImgUrl(effect)} alt="" />
+							<img src={effectToImgUrl(effect)} alt="" width="24" height="24" />
 						{/each}
 					</div>
 				</div>
 			{/if}
-			{#if !isStatic && checkBuildHasEffect(1, context.abilityPointsB)}
+			{#if showB}
 				<div>
 					<h4>
 						{m.analyzer_build2()}
@@ -121,9 +120,9 @@
 						{(stat as StatTuple)[1].value}
 						{suffix}
 					</p>
-					<div>
+					<div class="effects">
 						{#each getAllRelevantEffects(1) as effect (effect)}
-							<img src={effectToImgUrl(effect)} alt="" />
+							<img src={effectToImgUrl(effect)} alt="" width="24" height="24" />
 						{/each}
 					</div>
 				</div>
@@ -141,9 +140,57 @@
 		padding: var(--s-2);
 		border-radius: var(--radius-box);
 		background-color: var(--color-base-card-section);
+		font-size: var(--fonts-md);
+		gap: var(--s-4);
+
+		&.highlighted {
+			background-color: var(--color-base-card);
+		}
 	}
+
+	.values {
+		display: grid;
+		gap: var(--s-2) var(--s-2);
+		margin-top: var(--s-4);
+		justify-items: center;
+		grid-template-areas: 'A B';
+
+		> :nth-child(1) {
+			grid-area: A;
+		}
+
+		> :nth-child(2) {
+			grid-area: B;
+		}
+
+		> :nth-child(3) {
+			grid-area: C;
+		}
+
+		> div {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+
+			.effects {
+				display: grid;
+				grid-template-columns: repeat(2, 24px);
+			}
+		}
+
+		&.comparing {
+			grid-template-areas:
+				'A A'
+				'B C';
+		}
+
+		&.unchanged {
+			grid-template-areas: 'A';
+		}
+	}
+
 	h3 {
-		font-size: var(--font-xs);
+		font-size: var(--fonts-xs);
 		line-height: 1.35;
 		text-align: center;
 		word-break: break-word;
@@ -153,5 +200,13 @@
 			font-size: var(--fonts-md);
 			vertical-align: baseline;
 		}
+	}
+
+	h4 {
+		color: var(--color-base-content-secondary);
+		font-size: var(--fonts-xxs);
+		font-weight: 400;
+		letter-spacing: 0.5px;
+		text-transform: uppercase;
 	}
 </style>

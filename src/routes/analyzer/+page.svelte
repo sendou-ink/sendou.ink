@@ -102,8 +102,6 @@
 	);
 
 	const context = $derived({
-		emptyA: buildIsEmpty(buildA.state),
-		emptyB: buildIsEmpty(buildB.state),
 		mainWeaponId: weapon.state,
 		abilityPointsA: abilityPointsA,
 		abilityPointsB: abilityPointsB,

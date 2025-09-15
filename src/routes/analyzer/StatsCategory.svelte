@@ -64,7 +64,7 @@
 	.content {
 		display: grid;
 		gap: var(--s-2);
-		grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+		grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
 		margin-block: var(--s-2) var(--s-4);
 	}
 </style>
