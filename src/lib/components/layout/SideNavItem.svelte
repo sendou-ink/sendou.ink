@@ -2,6 +2,7 @@
 	import type { ResolvedPathname } from '$app/types';
 	import type { Snippet } from 'svelte';
 	import type { HTMLAnchorAttributes } from 'svelte/elements';
+	import { page } from '$app/state';
 	import { closeMobileNavContext } from './mobile-nav-context';
 
 	interface Props extends HTMLAnchorAttributes {
@@ -15,6 +16,7 @@
 
 	const element = $derived(href ? 'a' : 'div');
 	const closeMobileNav = $derived(closeMobileNavContext.getOr(undefined));
+	const isActive = $derived(href && page.url.pathname === href);
 
 	function handleClick() {
 		if (href && closeMobileNav) {
@@ -24,6 +26,9 @@
 </script>
 
 <svelte:element this={element} class="item" {href} onclick={handleClick} {...rest}>
+	{#if isActive}
+		<div class="active-indicator"></div>
+	{/if}
 	{@render icon()}
 	{@render children()}
 	{#if number !== undefined}
@@ -42,11 +47,24 @@
 		background-color: var(--color-base-section);
 		border-radius: var(--radius-field);
 		padding: var(--s-1-5) var(--s-2);
+		position: relative;
 
 		:global(svg) {
 			width: 1.25rem;
 			height: 1.25rem;
 		}
+	}
+
+	.active-indicator {
+		position: absolute;
+		left: calc(-1 * var(--s-1));
+		top: 50%;
+		transform: translateY(-50%);
+		width: var(--s-1);
+		height: var(--s-5);
+		background-color: var(--color-primary);
+		border-radius: 0 var(--s-1) var(--s-1) 0;
+		margin-inline-start: -5.5px;
 	}
 
 	a {

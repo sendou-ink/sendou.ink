@@ -23,7 +23,6 @@
 	}
 </script>
 
-<!-- xxx: active symbols -->
 {#if isMobile}
 	<Dialog.Root bind:open={isMobileSideNavOpen}>
 		<Dialog.Portal>
