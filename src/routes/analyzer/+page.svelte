@@ -12,6 +12,7 @@
 		applySpecialEffects,
 		lastDitchEffortIntensityToAp
 	} from '$lib/core/analyzer/specialEffects';
+	import { weaponTranslations } from '$lib/utils/i18n';
 	import { EMPTY_BUILD } from '$lib/constants/build';
 	import { MAX_LDE_INTENSITY } from '$lib/constants/analyzer';
 	import { buildStats } from '$lib/core/analyzer/stats';
@@ -96,14 +97,18 @@
 	const { analyzed: analyzedA, abilityPoints: abilityPointsA } = $derived(
 		analyzeBuild(buildA.state, effectsA.state)
 	);
-	const { analyzed: analyzedB, abilityPoints: _abilityPointsB } = $derived(
+	const { analyzed: analyzedB, abilityPoints: abilityPointsB } = $derived(
 		analyzeBuild(buildB.state, effectsB.state)
 	);
 
 	const context = $derived({
-		isComparing: !buildIsEmpty(buildB.state) && !buildIsEmpty(buildA.state),
+		emptyA: buildIsEmpty(buildA.state),
+		emptyB: buildIsEmpty(buildB.state),
 		mainWeaponId: weapon.state,
-		abilityPoints: abilityPointsA
+		abilityPointsA: abilityPointsA,
+		abilityPointsB: abilityPointsB,
+		effectsA: effectsA.state,
+		effectsB: effectsB.state
 	});
 
 	function analyzeBuild(
@@ -133,7 +138,7 @@
 		return { analyzed, abilityPoints };
 	}
 
-	function _statKeyToTuple(key: keyof AnalyzedBuild['stats']) {
+	function statKeyToTuple(key: keyof AnalyzedBuild['stats']) {
 		return [analyzedA.stats[key], analyzedB.stats[key], key] as [
 			Stat,
 			Stat,
@@ -262,8 +267,14 @@
 			</div>
 		</div>
 		<div class="stack md">
-			<StatsCategory title="Test">
-				<StatsCard title="Test" stat="Test" {context} popoverInfo="a" />
+			<StatsCategory
+				title={m.analyzer_stat_category_main()}
+				titleContent={{
+					text: weaponTranslations[context.mainWeaponId](),
+					image: asset(`/img/main-weapons/${context.mainWeaponId}.avif`)
+				}}
+			>
+				<StatsCard title="Run Speed" stat={statKeyToTuple('runSpeed')} {context} popoverInfo="a" />
 			</StatsCategory>
 		</div>
 	</div>

@@ -177,3 +177,8 @@ function effectObjToValuesArr({
 
 	return effectObj.values;
 }
+
+export function effectToImgUrl(effect: (typeof SPECIAL_EFFECTS)[number]['type']) {
+	if (effect === 'TACTICOOLER') return `/img/special-weapons/15.avif`;
+	return `/img/abilities/${effect}.avif`;
+}
