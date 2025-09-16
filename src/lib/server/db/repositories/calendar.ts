@@ -521,8 +521,6 @@ function createDatesInTrx({
 	startTimes: CalendarAPI.schemas.NewCalendarEventData['dates'];
 	trx: Transaction<DB>;
 }) {
-	console.log({ eventId, startTimes });
-
 	return trx
 		.insertInto('CalendarEventDate')
 		.values(

@@ -959,7 +959,7 @@ export interface ScrimPostUser {
 	scrimPostId: number;
 	userId: number;
 	/** User is the author of the post */
-	isOwner: number;
+	isOwner: DBBoolean;
 }
 
 export interface ScrimPostRequest {
