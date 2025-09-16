@@ -18,7 +18,7 @@
 		heading?: string;
 		action: RemoteForm<void | { errors: Partial<Record<keyof Output, string>> }>;
 		schema: T;
-		defaultValues?: Partial<SchemaToDefaultValues<Output>>;
+		defaultValues?: Partial<SchemaToDefaultValues<Output>> | null;
 		info?: string;
 		/** Fires when the form changes and the resulting data is considered valid as defined by the given schema. Note: only works for "primitive" fields such as plain inputs, selects and input groups. */
 		onchange?: (data: Partial<Output>) => void;

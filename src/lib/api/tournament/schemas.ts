@@ -14,3 +14,5 @@ export const upsertTeamSchema = z.object({
 		dimensions: 'logo'
 	})
 }); // xxx: validate did set at least one pickupName or teamId
+
+export type UpsertTeamData = z.infer<typeof upsertTeamSchema>;

@@ -1,12 +1,13 @@
 import { query } from '$app/server';
-import { getUser } from '$lib/server/auth/session';
-import { notFoundIfFalsy } from '$lib/server/remote-functions';
+import { getUser, requireUser } from '$lib/server/auth/session';
+import { notFoundIfFalsy, type SchemaToDefaultValues } from '$lib/server/remote-functions';
 import { id } from '$lib/utils/zod';
 import { add, sub } from 'date-fns';
 import { requireTournament } from './utils.server';
 import markdownit from 'markdown-it';
 import { databaseTimestampToDate } from '$lib/utils/dates';
 import { userSubmittedImage } from '$lib/utils/urls-img';
+import type { UpsertTeamData } from './schemas';
 
 const md = markdownit();
 
@@ -25,7 +26,7 @@ async function tabs(tournamentId: number) {
 			[
 				'info',
 				'teams',
-				tournament.hasStarted || tournament.isLeagueDivision ? 'register' : null,
+				!tournament.ctx.isFinalized ? 'register' : null,
 				tournament.ctx.rules ? 'rules' : null,
 				!tournament.isLeagueSignup ? 'brackets' : null,
 				tournament.isLeagueSignup || tournament.isLeagueDivision ? 'divisions' : null,
@@ -61,7 +62,7 @@ async function tabCounts(tournamentId: number) {
 					return userPlusTier <= 3 ? acc + cur.count : acc;
 				}
 				default: {
-					throw new Error('Unexpected plus tier');
+					return acc; // xxx: throw new Error('Unexpected plus tier'); - add back when plus server seed exists
 				}
 			}
 		}, 0)
@@ -126,4 +127,27 @@ export const descriptionsById = query(id, async (id) => {
 export const rulesById = query(id, async (id) => {
 	const rules = notFoundIfFalsy((await requireTournament(id)).ctx.rules);
 	return md.render(rules);
+});
+
+export const myRegistrationByTournamentId = query(id, async (tournamentId) => {
+	const user = notFoundIfFalsy(await requireUser());
+	const tournament = await requireTournament(tournamentId);
+
+	const team = tournament.ctx.teams.find((team) =>
+		team.members.some((member) => member.userId === user.id)
+	);
+
+	const teamInfoDefaultValues: SchemaToDefaultValues<UpsertTeamData> | null = team
+		? {
+				tournamentId: tournament.ctx.id,
+				teamId: team.id ?? undefined,
+				pickupName: team.id ? null : team.name,
+				avatar: undefined
+			}
+		: null;
+
+	return {
+		teamInfoDefaultValues,
+		registrationOpen: tournament.registrationOpen
+	};
 });

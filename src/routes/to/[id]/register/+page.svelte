@@ -6,6 +6,13 @@
 	import * as TournamentAPI from '$lib/api/tournament';
 	import { createFieldValidator } from '$lib/components/form/utils';
 	import FormField from '$lib/components/form/FormField.svelte';
+	import type { PageProps } from './$types';
+
+	let { params }: PageProps = $props();
+
+	const registeredTeam = $derived(
+		await TournamentAPI.queries.myRegistrationByTournamentId(params.id)
+	);
 
 	const schema = TournamentAPI.schemas.upsertTeamSchema;
 	const validField = createFieldValidator(schema);
@@ -14,10 +21,15 @@
 <Main>
 	<FriendCodeGate>
 		<div class="registration-flow">
-			<StatusCircle status="OK" />
+			<StatusCircle status={registeredTeam.teamInfoDefaultValues ? 'OK' : 'MISSING'} />
 			<section>
 				<div class="section-content">
-					<Form {schema} action={TournamentAPI.actions.registerNewTeam} heading="Team info">
+					<Form
+						{schema}
+						action={TournamentAPI.actions.registerNewTeam}
+						defaultValues={registeredTeam.teamInfoDefaultValues}
+						heading="Team info"
+					>
 						<FormField name={validField('pickupName')} />
 						<FormField name={validField('avatar')} />
 					</Form>
