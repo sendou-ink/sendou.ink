@@ -369,6 +369,7 @@ function TournamentFormatBracketSelector({
 									);
 								}
 
+								// xxx: also clear "placements" of any destination bracket
 								updateBracket({
 									settings: {
 										...bracket.settings,

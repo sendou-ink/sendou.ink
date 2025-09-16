@@ -403,7 +403,7 @@ export function pairUp(players: SwissPairingTeam[]) {
 	return matches;
 }
 
-type SwissTeamStatus = "active" | "advanced" | "eliminated";
+export type SwissTeamStatus = "active" | "advanced" | "eliminated";
 
 /**
  * Calculates whether a team should advance, be eliminated, or remain active

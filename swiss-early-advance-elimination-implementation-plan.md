@@ -65,13 +65,9 @@ Implement a Swiss tournament variation where teams only play as many rounds as r
 
 ### Phase 3: Standings and UI Updates
 
-- [ ] #### 3.1 Enhanced Standings Display
+- [x] #### 3.1 Enhanced Standings Display
 **File**: `app/features/tournament-bracket/core/Bracket.ts`
 - Modify `Standing` interface to include team status
-- Update standings calculation to show:
-  - Current win-loss record
-  - Team status (Active/Advanced/Eliminated)
-  - Remaining matches needed (if any)
 
 - [ ] #### 3.2 Match Generation Logic
 - Update the Swiss bracket to stop generating new rounds when:
@@ -99,18 +95,7 @@ Implement a Swiss tournament variation where teams only play as many rounds as r
 
 ### Phase 6: Testing and Validation
 
-- [ ] #### 6.1 Unit Tests
-**Files**: 
-- `app/features/tournament-bracket/core/Swiss.test.ts`
-- New test file for early advance/elimination logic
-
-Test scenarios:
-- Teams advancing early (3-0, 3-1)
-- Teams eliminated early (0-3, 1-3)
-- Mixed scenarios with different team counts
-- Edge cases (uneven remaining teams, all teams classified early)
-
-- [ ] #### 6.2 Integration Tests
+- [ ] #### 1.2 Integration Tests
 - Test full tournament flow with early advance/elimination
 - Verify standings calculations
 - Test progression to next bracket stage
