@@ -139,6 +139,7 @@
 			$effect(() => {
 				chart.options.animations = createLineAnimation(datasets[0].data, animationSpeed);
 
+				// we need to snapshot because the library cant handle proxies
 				const data = $state.snapshot(datasets);
 
 				data.forEach((newDs, index) => {

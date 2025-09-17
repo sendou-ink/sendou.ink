@@ -1,10 +1,13 @@
 <script lang="ts">
 	import type { Stat, AnalyzedBuild } from '$lib/core/analyzer/types';
 	import type { AbilityPoints, SpecialEffectType } from '$lib/core/analyzer/types';
+	import type { MainWeaponId } from '$lib/constants/in-game/types';
 	import { m } from '$lib/paraglide/messages';
 	import { SPECIAL_EFFECTS, effectToImgUrl } from '$lib/core/analyzer/specialEffects';
 	import Popover from '$lib/components/popover/Popover.svelte';
 	import PopoverTriggerButton from '$lib/components/popover/PopoverTriggerButton.svelte';
+	import Ability from '$lib/components/builder/Ability.svelte';
+	import StatsChart from './StatsChart.svelte';
 
 	type StatTuple<T = number> = [Stat<T>, Stat<T>, keyof AnalyzedBuild['stats']];
 
@@ -15,7 +18,7 @@
 		popoverInfo?: string;
 		testId?: string;
 		context: {
-			// mainWeaponId: MainWeaponId; // xxx: mainWeaponId not used yet
+			mainWeaponId: MainWeaponId;
 			abilityPointsA: AbilityPoints;
 			abilityPointsB: AbilityPoints;
 			effectsA: Partial<Record<SpecialEffectType, boolean | number>>;
@@ -32,8 +35,9 @@
 		return { isStatic, baseValue };
 	});
 
-	const showA = $derived(checkBuildHasEffect(0, context.abilityPointsA) && !isStatic);
-	const showB = $derived(checkBuildHasEffect(1, context.abilityPointsB) && !isStatic);
+	const showA = $derived(statIsNotBaseValue(0, context.abilityPointsA) && !isStatic);
+	const showB = $derived(statIsNotBaseValue(1, context.abilityPointsB) && !isStatic);
+	const highlighted = $derived(showA || showB);
 
 	function getAllRelevantEffects(statIndex: 0 | 1) {
 		if (!Array.isArray(stat)) return [];
@@ -57,7 +61,7 @@
 	// where baseValue === value which can happen when
 	// you have Ninja Squid and stack swim speed
 	// -> we still want to show the build value
-	function checkBuildHasEffect(statIndex: 0 | 1, abilityPoints: AbilityPoints) {
+	function statIsNotBaseValue(statIndex: 0 | 1, abilityPoints: AbilityPoints) {
 		if (!Array.isArray(stat)) return false;
 
 		return [stat[statIndex].modifiedBy].flat().some((ability) => {
@@ -67,16 +71,10 @@
 			return hasEffect || hasStackable;
 		});
 	}
-
-	function isHighlighted() {
-		if (!Array.isArray(stat)) return false;
-
-		return stat[0].value !== stat[0].baseValue || stat[1].value !== stat[1].baseValue;
-	}
 </script>
 
-<div class={['card', { highlighted: isHighlighted() }]} data-testid={testId}>
-	<div class="stat">
+<div class={['card', { highlighted }]} data-testid={testId}>
+	<div>
 		<h3>
 			{title}
 			{#if popoverInfo}
@@ -88,7 +86,7 @@
 				</Popover>
 			{/if}
 		</h3>
-		<div class={['values', { comparing: showA && showB, unchanged: !isHighlighted() }]}>
+		<div class={['values', { comparing: showA && showB, unchanged: !highlighted }]}>
 			<div>
 				<h4>
 					{m.analyzer_base()}
@@ -129,7 +127,25 @@
 			{/if}
 		</div>
 	</div>
-	<div class="abilities"></div>
+	<div class="abilities">
+		{#if Array.isArray(stat)}
+			{@const modifiedArray = Array.isArray(stat[0].modifiedBy)
+				? stat[0].modifiedBy
+				: [stat[0].modifiedBy]}
+			<div>
+				{#each modifiedArray as ability (ability)}
+					<Ability {ability} size="SUBTINY" />
+				{/each}
+			</div>
+			<StatsChart
+				{title}
+				{suffix}
+				mainWeaponId={context.mainWeaponId}
+				statKey={stat[2]}
+				modifiedBy={modifiedArray}
+			/>
+		{/if}
+	</div>
 </div>
 
 <style>
@@ -145,6 +161,12 @@
 
 		&.highlighted {
 			background-color: var(--color-base-card);
+		}
+
+		:global(.chart-button) {
+			border-radius: 99999px;
+			padding: 4px;
+			border: none;
 		}
 	}
 
@@ -187,6 +209,12 @@
 		&.unchanged {
 			grid-template-areas: 'A';
 		}
+	}
+
+	.abilities {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 	}
 
 	h3 {
