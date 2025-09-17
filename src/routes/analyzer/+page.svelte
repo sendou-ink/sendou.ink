@@ -16,7 +16,7 @@
 	import { EMPTY_BUILD } from '$lib/constants/build';
 	import { MAX_LDE_INTENSITY } from '$lib/constants/analyzer';
 	import { buildStats } from '$lib/core/analyzer/stats';
-	import { buildIsEmpty, buildToAbilityPoints } from '$lib/core/analyzer/utils';
+	import { buildToAbilityPoints } from '$lib/core/analyzer/utils';
 	import { SearchParamState } from '$lib/runes/search-param-state.svelte';
 	import z from 'zod';
 	import Main from '$lib/components/layout/Main.svelte';

@@ -3,7 +3,7 @@ import { Context } from '$lib/runes/context';
 
 export type FormContextValue<T extends z.ZodType<object> = z.ZodType<object>> = {
 	schema: T;
-	defaultValues?: Partial<z.output<T>>;
+	defaultValues?: Partial<z.output<T>> | null;
 	errors: () => Partial<Record<keyof z.output<T>, string>>;
 	onblur: () => void;
 };

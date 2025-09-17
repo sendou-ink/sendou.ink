@@ -5,22 +5,18 @@ import { format } from 'sql-formatter';
 import type { DB } from './tables';
 import { roundToNDecimalPlaces } from '$lib/utils/number';
 import { logger } from '$lib/utils/logger';
-import invariant from '$lib/utils/invariant';
 import { SqliteBooleanPlugin, SqliteDatePlugin } from '$lib/server/db/plugins';
 import { nodeSqliteDialect } from './dialect';
 import { createTestDatabase } from './test/in-memory-test-db';
+import { DB_PATH } from '$env/static/private';
 
 // xxx: currently can't toggle LOG_LEVEL, this would be the correct way to do it but vite-node thinks its running as client side code
 // import { SQL_LOG } from "$env/static/private";
 const LOG_LEVEL = (['trunc', 'full', 'none'] as const).find((val) => val === process.env.SQL_LOG);
 
-if (process.env.NODE_ENV !== 'test') {
-	invariant(process.env.DB_PATH, 'DB_PATH env variable must be set');
-}
-
 // TODO: in the future this should not be exported and everything should go through `db`
 export const sql =
-	process.env.NODE_ENV === 'test' ? createTestDatabase() : new DatabaseSync(process.env.DB_PATH!);
+	process.env.NODE_ENV === 'test' ? createTestDatabase() : new DatabaseSync(DB_PATH);
 
 sql.exec('PRAGMA journal_mode = WAL');
 sql.exec('PRAGMA foreign_keys = ON');
