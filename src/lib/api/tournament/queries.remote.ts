@@ -129,25 +129,52 @@ export const rulesById = query(id, async (id) => {
 	return md.render(rules);
 });
 
-export const myRegistrationByTournamentId = query(id, async (tournamentId) => {
+export const myRegistrationById = query(id, async (tournamentId) => {
 	const user = notFoundIfFalsy(await requireUser());
 	const tournament = await requireTournament(tournamentId);
 
-	const team = tournament.ctx.teams.find((team) =>
+	const tournamentTeam = tournament.ctx.teams.find((team) =>
 		team.members.some((member) => member.userId === user.id)
 	);
 
-	const teamInfoDefaultValues: SchemaToDefaultValues<UpsertTeamData> | null = team
+	const teamInfoDefaultValues: Partial<SchemaToDefaultValues<UpsertTeamData>> = tournamentTeam
 		? {
 				tournamentId: tournament.ctx.id,
-				teamId: team.id ?? undefined,
-				pickupName: team.id ? null : team.name,
+				// xxx: fix after remote form functions migration lands
+				teamId: (tournamentTeam.team?.id ? String(tournamentTeam.team.id) : 'pickup') as any,
+				pickupName: tournamentTeam.team ? null : tournamentTeam.name,
 				avatar: undefined
 			}
-		: null;
+		: { tournamentId: tournament.ctx.id };
 
 	return {
 		teamInfoDefaultValues,
 		registrationOpen: tournament.registrationOpen
 	};
 });
+
+export const teamsById = query(id, async (tournamentId) => {
+	const tournament = await requireTournament(tournamentId);
+
+	return tournament.ctx.teams.map((team, i) => ({
+		id: team.id,
+		seed: i + 1,
+		name: team.name,
+		logoSrc: tournament.tournamentTeamLogoSrc(team),
+		members: team.members.map((member) => {
+			return {
+				discordId: member.discordId,
+				customUrl: member.customUrl,
+				discordAvatar: member.discordAvatar,
+				isSub: false,
+				isInactive: false,
+				isOwner: member.isOwner,
+				name: tournament.ctx.settings.requireInGameNames
+					? (member.inGameName ?? member.username)
+					: member.username
+			};
+		})
+	}));
+});
+
+export type TeamsByIdData = Awaited<ReturnType<typeof teamsById>>;

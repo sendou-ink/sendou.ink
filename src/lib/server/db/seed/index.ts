@@ -102,7 +102,7 @@ const basicSeeds = (variation: SeedVariation) => [
 	users,
 	fixAdminId,
 	adminUserWeaponPool,
-	// userProfiles,
+	userProfiles,
 	userMapModePreferences,
 	userQWeaponPool,
 	// lastMonthsVoting,
@@ -285,98 +285,98 @@ async function users() {
 	}
 }
 
-// xxx: user profiles
-// async function userProfiles() {
-// 	for (const args of [
-// 		{
-// 			userId: ADMIN_ID,
-// 			country: 'FI',
-// 			customUrl: 'sendou',
-// 			motionSens: 50,
-// 			stickSens: 5,
-// 			inGameName: 'Sendou#1234'
-// 		},
-// 		{
-// 			userId: 2,
-// 			country: 'SE',
-// 			customUrl: 'nzap',
-// 			motionSens: -40,
-// 			stickSens: 0,
-// 			inGameName: 'N-ZAP#5678'
-// 		}
-// 	]) {
-// 		sql
-// 			.prepare(
-// 				`
-//         UPDATE "User" SET
-//           country = $country,
-//           customUrl = $customUrl,
-//           motionSens = $motionSens,
-//           stickSens = $stickSens,
-//           inGameName = $inGameName
-//         WHERE id = $userId`
-// 			)
-// 			.run(args);
-// 	}
+async function userProfiles() {
+	for (const args of [
+		{
+			userId: ADMIN_ID,
+			country: 'FI',
+			customUrl: 'sendou',
+			motionSens: 50,
+			stickSens: 5,
+			inGameName: 'Sendou#1234'
+		},
+		{
+			userId: 2,
+			country: 'SE',
+			customUrl: 'nzap',
+			motionSens: -40,
+			stickSens: 0,
+			inGameName: 'N-ZAP#5678'
+		}
+	]) {
+		sql
+			.prepare(
+				`
+        UPDATE "User" SET
+          country = $country,
+          customUrl = $customUrl,
+          motionSens = $motionSens,
+          stickSens = $stickSens,
+          inGameName = $inGameName
+        WHERE id = $userId`
+			)
+			.run(args);
+	}
 
-// 	for (let id = 2; id < 500; id++) {
-// 		if (id === ADMIN_ID || id === NZAP_TEST_ID) continue;
-// 		if (faker.number.float(1) < 0.25) continue; // 75% have bio
+	for (let id = 2; id < 500; id++) {
+		if (id === ADMIN_ID || id === NZAP_TEST_ID) continue;
+		if (faker.number.float(1) < 0.25) continue; // 75% have bio
 
-// 		sql.prepare(`UPDATE "User" SET bio = $bio, country = $country WHERE id = $id`).run({
-// 			id,
-// 			bio: faker.lorem.paragraphs(faker.helpers.arrayElement([1, 1, 1, 2, 3, 4]), '\n\n'),
-// 			country: faker.number.float(1) > 0.5 ? faker.location.countryCode() : null
-// 		});
-// 	}
+		sql.prepare(`UPDATE "User" SET bio = $bio, country = $country WHERE id = $id`).run({
+			id,
+			bio: faker.lorem.paragraphs(faker.helpers.arrayElement([1, 1, 1, 2, 3, 4]), '\n\n'),
+			country: faker.number.float(1) > 0.5 ? faker.location.countryCode() : null
+		});
+	}
 
-// 	for (let id = 2; id < 500; id++) {
-// 		if (id === ADMIN_ID || id === NZAP_TEST_ID) continue;
-// 		if (faker.number.float(1) < 0.15) continue; // 85% have weapons
+	for (let id = 2; id < 500; id++) {
+		if (id === ADMIN_ID || id === NZAP_TEST_ID) continue;
+		if (faker.number.float(1) < 0.15) continue; // 85% have weapons
 
-// 		const weapons = faker.helpers.shuffle(mainWeaponIds);
+		const weapons = faker.helpers.shuffle(mainWeaponIds);
 
-// 		for (let j = 0; j < faker.helpers.arrayElement([1, 2, 3, 4, 5]); j++) {
-// 			sql
-// 				.prepare(
-// 					/* sql */ `insert into "UserWeapon" (
-//           "userId",
-//           "weaponSplId",
-//           "order",
-//           "isFavorite"
-//         ) values (
-//           @userId,
-//           @weaponSplId,
-//           @order,
-//           @isFavorite
-//         )`
-// 				)
-// 				.run({
-// 					userId: id,
-// 					weaponSplId: weapons.pop()!,
-// 					order: j + 1,
-// 					isFavorite: faker.number.float(1) > 0.8 ? 1 : 0
-// 				});
-// 		}
-// 	}
+		for (let j = 0; j < faker.helpers.arrayElement([1, 2, 3, 4, 5]); j++) {
+			sql
+				.prepare(
+					/* sql */ `insert into "UserWeapon" (
+          "userId",
+          "weaponSplId",
+          "order",
+          "isFavorite"
+        ) values (
+          @userId,
+          @weaponSplId,
+          @order,
+          @isFavorite
+        )`
+				)
+				.run({
+					userId: id,
+					weaponSplId: weapons.pop()!,
+					order: j + 1,
+					isFavorite: faker.number.float(1) > 0.8 ? 1 : 0
+				});
+		}
+	}
 
-// 	for (let id = 1; id < 500; id++) {
-// 		const defaultLanguages = faker.number.float(1) > 0.1 ? ['en'] : [];
-// 		if (faker.number.float(1) > 0.9) defaultLanguages.push('es');
-// 		if (faker.number.float(1) > 0.9) defaultLanguages.push('fr');
-// 		if (faker.number.float(1) > 0.9) defaultLanguages.push('de');
-// 		if (faker.number.float(1) > 0.9) defaultLanguages.push('it');
-// 		if (faker.number.float(1) > 0.9) defaultLanguages.push('ja');
+	// xxx: match profiles
+	// for (let id = 1; id < 500; id++) {
+	// 	const defaultLanguages = faker.number.float(1) > 0.1 ? ['en'] : [];
+	// 	if (faker.number.float(1) > 0.9) defaultLanguages.push('es');
+	// 	if (faker.number.float(1) > 0.9) defaultLanguages.push('fr');
+	// 	if (faker.number.float(1) > 0.9) defaultLanguages.push('de');
+	// 	if (faker.number.float(1) > 0.9) defaultLanguages.push('it');
+	// 	if (faker.number.float(1) > 0.9) defaultLanguages.push('ja');
 
-// 		await UserRepository.updateMatchProfile(id, {
-// 			languages: defaultLanguages as Array<"en" | "es" | "fr" | "de" | "it" | "ja">,
-// 			vc:
-// 				faker.number.float(1) > 0.2
-// 					? 'YES'
-// 					: faker.helpers.arrayElement(['YES', 'NO', 'LISTEN_ONLY'])
-// 		});
-// 	}
-// }
+	// 	await UserRepository.updateMatchProfile(id, {
+	// 		languages: defaultLanguages as Array<'en' | 'es' | 'fr' | 'de' | 'it' | 'ja'>,
+	// 		vc:
+	// 			faker.number.float(1) > 0.2
+	// 				? 'YES'
+	// 				: faker.helpers.arrayElement(['YES', 'NO', 'LISTEN_ONLY'])
+	// 	});
+	// }
+}
 
 const randomPreferences = (): UserMapModePreferences => {
 	const modes: UserMapModePreferences['modes'] = modesShort.flatMap((mode) => {

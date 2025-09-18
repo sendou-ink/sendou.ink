@@ -13,11 +13,11 @@ import { allWeaponSlugs, filtersSearchParams, weaponIdFromSlug } from './schemas
 import { prerender } from '$app/server';
 import type { Ability, MainWeaponId } from '$lib/constants/in-game/types';
 import { abilityPointCountsToAverages, popularBuilds } from '$lib/core/build/stats';
-import * as UserAPI from '../user';
+import { identifier } from '../user/schemas';
 
 export type ByUserIdentifierData = Awaited<ReturnType<typeof byUserIdentifier>>;
 
-export const byUserIdentifier = query(UserAPI.schemas.identifier, async (identifier) => {
+export const byUserIdentifier = query(identifier, async (identifier) => {
 	const loggedInUser = await getUser();
 	const user = notFoundIfFalsy(await UserRepository.identifierToBuildFields(identifier));
 

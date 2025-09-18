@@ -9,14 +9,22 @@ import * as UserAPI from '$lib/api/user';
 import * as UserRepository from '$lib/server/db/repositories/user';
 import invariant from '$lib/utils/invariant';
 import * as ShowcaseTournaments from '$lib/core/tournament/ShowcaseTournament.server';
+import { m } from '$lib/paraglide/messages';
 
 export const registerNewTeam = validatedForm(upsertTeamSchema, async (data, user) => {
 	const tournament = await requireTournament(data.tournamentId);
 	const ownTeam = tournament.teamMemberOfByUser(user);
 
-	// xxx: return as field error
-	if (data.pickupName && !tournament.ctx.teams.some((team) => team.name === data.pickupName)) {
-		badRequest('Team name already taken for this tournament');
+	if (
+		tournament.ctx.teams.some(
+			(team) => team.name === data.pickupName && (!ownTeam || team.id !== ownTeam.id)
+		)
+	) {
+		return {
+			errors: {
+				pickupName: m.wise_icy_cougar_tend
+			}
+		};
 	}
 
 	if (ownTeam) badRequest('You are already in a team for this tournament');

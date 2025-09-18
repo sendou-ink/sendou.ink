@@ -148,3 +148,9 @@ export const editTeamFormData = query(
 		};
 	}
 );
+
+/** Returns the teams the user is currently a member of */
+export const myTeams = query(async () => {
+	const user = await requireUser();
+	return await TeamRepository.findAllMemberOfByUserId(user.id);
+});
