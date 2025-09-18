@@ -47,6 +47,7 @@
 					]
 				},
 				options: {
+					animations: createLineAnimation(datasets[0].data, animationSpeed),
 					responsive: true,
 					maintainAspectRatio: true,
 					aspectRatio: 2,
@@ -137,8 +138,6 @@
 			const chart = new Chart(element, deepMerge(defaultConfig, config));
 
 			$effect(() => {
-				chart.options.animations = createLineAnimation(datasets[0].data, animationSpeed);
-
 				// we need to snapshot because the library cant handle proxies
 				const data = $state.snapshot(datasets);
 
