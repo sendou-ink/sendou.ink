@@ -1,5 +1,6 @@
 // xxx: should utils/form.ts be here?
 
+// xxx: delete?
 export function formDataToObject(formData: FormData): Record<string, unknown> {
 	/** @ts-expect-error why is the type missing? */
 	const values = formData.entries();

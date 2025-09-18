@@ -32,7 +32,7 @@
 			[
 				{
 					label?: string;
-					onblur: FormContextValue['onblur'];
+					action: any; // xxx: any
 					error: string | undefined;
 					name: string;
 					data: { value: unknown };
@@ -43,7 +43,9 @@
 
 	let { name, children, modes, field, label }: Props = $props();
 
-	const { schema, defaultValues, errors, onblur } = formContext.get();
+	const { schema, defaultValues, errors, onblur, action } = formContext.get();
+
+	console.log(schema);
 
 	const fieldSchema = (() => {
 		if (field) return field;
@@ -76,7 +78,7 @@
 				name
 			}) ?? formField.initialValue
 	});
-	const error = $derived<string | undefined>(errors()[name as keyof typeof errors]);
+	const error = $derived<string | undefined>(action.issues[name]?.[0].message); // xxx: what if many problems?
 
 	const commonProps = $derived({ name, error, onblur });
 </script>

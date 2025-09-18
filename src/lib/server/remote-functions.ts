@@ -1,6 +1,5 @@
 import { form, getRequestEvent } from '$app/server';
 import { extractLocaleFromRequest } from '$lib/paraglide/runtime';
-import { zodErrorsToFormErrors } from '$lib/utils/zod';
 import { error } from '@sveltejs/kit';
 import z from 'zod';
 import { requireUser, type AuthenticatedUser } from './auth/session';
@@ -8,7 +7,6 @@ import * as ImageRepository from '$lib/server/db/repositories/image';
 import { resolveFieldsByType } from '$lib/utils/form';
 import * as S3 from './s3';
 import type { Result } from 'neverthrow';
-import { formDataToObject } from '$lib/form/utils';
 
 export function notFoundIfFalsy<T>(value: T | null | undefined): T {
 	if (!value) error(404);
@@ -52,7 +50,10 @@ export type SchemaToDefaultValues<T> = {
 			: T[K];
 };
 
-export function validatedForm<T extends z.ZodObject>(
+export type RemoteFunctionFormSchema = Parameters<typeof form>[0];
+
+// xxx: rename this guy
+export function validatedForm<T extends RemoteFunctionFormSchema>(
 	schema: T,
 	callback: (
 		data: SchemaToFunctionInput<z.infer<T>>,
@@ -61,20 +62,21 @@ export function validatedForm<T extends z.ZodObject>(
 		errors: Partial<Record<keyof z.infer<T>, ParaglideFunction>>;
 	}>
 ) {
-	return form(async (formData) => {
-		const formDataObj = formDataToObject(formData);
-		const parsed = z.safeParse(schema, formDataObj);
+	// xxx: svelte form doesn't like the type as it might also have unknown as input
+	return form(schema, async (data) => {
+		// const formDataObj = formDataToObject(formData);
+		// const parsed = z.safeParse(schema, formDataObj);
 
-		if (!parsed.success) {
-			return {
-				errors: zodErrorsToFormErrors(parsed.error)
-			};
-		}
+		// if (!parsed.success) {
+		// 	return {
+		// 		errors: zodErrorsToFormErrors(parsed.error)
+		// 	};
+		// }
 
-		const uploadedImages = await uploadImages(schema, formData);
+		const uploadedImages = await uploadImages(schema, data);
 
 		const result = await callback(
-			{ ...parsed.data, ...uploadedImages } as SchemaToFunctionInput<z.infer<T>>,
+			{ ...data, ...uploadedImages } as SchemaToFunctionInput<z.infer<T>>,
 			await requireUser()
 		);
 		if (!result) return;
@@ -102,7 +104,7 @@ export function validatedForm<T extends z.ZodObject>(
  *
  * @returns an object where keys are form field names and values ids of "UserSubmittedImage" table or null if no images were uploaded
  */
-async function uploadImages<T extends z.ZodObject>(schema: T, formData: FormData) {
+async function uploadImages<T extends z.ZodObject>(schema: T, data: Record<string, unknown>) {
 	const fileFields = resolveFieldsByType(schema, 'file');
 	if (fileFields.length === 0) return null;
 
@@ -110,7 +112,7 @@ async function uploadImages<T extends z.ZodObject>(schema: T, formData: FormData
 	const result: Partial<Record<keyof T, number | null>> = {};
 
 	for (const field of fileFields) {
-		const file = formData.get(field);
+		const file = data[field];
 
 		if (!(file instanceof File)) {
 			// they keep the existing uploaded image

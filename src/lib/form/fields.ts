@@ -346,8 +346,7 @@ export function themeOptional(
 	args: Omit<Extract<FormField, { type: 'theme' }>, 'type' | 'initialValue'>
 ) {
 	return z
-		.unknown() // xxx: CustomizedColors
-		.optional()
+		.string() // xxx: CustomizedColors
 		.register(formRegistry, {
 			...args,
 			type: 'theme',
@@ -359,21 +358,22 @@ export function imageOptional(
 	args: Omit<Extract<FormField, { type: 'image' }>, 'type' | 'initialValue'>
 ) {
 	return z
-		.preprocess(
-			(value) => {
-				if (typeof window === 'undefined') return null; // xxx: implement sending images serverside
-
-				if (!(value instanceof File)) return value;
-
-				if (value.name === '') return undefined;
-
-				return value;
-			},
+		.codec(
+			z.union([z.string(), z.file()]),
 			z
 				.file()
 				.max(2_000_000) // 2MB
 				.mime('image/webp')
-				.nullish()
+				.nullish(),
+			{
+				decode: (value) => {
+					if (typeof value === 'string') return null; // keeping the existing image
+					if (value.name === '') return undefined; // no file selected
+
+					return value;
+				},
+				encode: () => ''
+			}
 		)
 		.register(formRegistry, {
 			...args,

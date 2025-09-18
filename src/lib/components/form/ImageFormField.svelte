@@ -35,6 +35,7 @@
 					? '100%'
 					: 'var(--radius-box)'};"
 			/>
+			<input type="hidden" {name} value="" />
 			<Button size="miniscule" variant="destructive" icon={Trash} onclick={() => (value = null)}
 				>{m.common_actions_delete()}</Button
 			>

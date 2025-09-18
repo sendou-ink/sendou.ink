@@ -28,6 +28,8 @@
 		: undefined;
 
 	let mapPickingStyle = $state(defaultValues?.mapPickingStyle ?? TOURNAMENT_MAP_PICKING_STYLES[0]);
+
+	$inspect(CalendarAPI.actions.upsertTournament.input);
 </script>
 
 <!-- xxx: templates -->
@@ -41,9 +43,6 @@
 				? await CalendarAPI.queries.editTournamentFormData(tournamentIdToEdit)
 				: undefined}
 			action={CalendarAPI.actions.upsertTournament}
-			onchange={(data) => {
-				if (data.mapPickingStyle) mapPickingStyle = data.mapPickingStyle;
-			}}
 		>
 			<FormField name={validField('name')} />
 			<FormField name={validField('description')} />
