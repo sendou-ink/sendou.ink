@@ -29,7 +29,7 @@
 	const stackableAbility = $derived(modifiedBy.find(isStackableAbility) ?? 'UNKNOWN');
 	const mainOnlyAbility = $derived(modifiedBy.find(isMainOnlyAbility) ?? 'UNKNOWN');
 
-	const dataSets = $derived(
+	const dataSets = $derived<DataSet[]>(
 		statKey ? statKeyGraphData() : typeof subWeaponId === 'number' ? subDefenseGraphData() : []
 	);
 
@@ -46,6 +46,7 @@
 		);
 
 		dataSets.push({
+			metadata: 'INIT',
 			label: '',
 			data: analyzedBuilds.map((build, i) => ({
 				x: i.toString() + m.analyzer_abilityPoints_short(),
@@ -129,5 +130,15 @@
 			<ChartNoAxesCombined size="16" />
 		</PopoverTriggerButton>
 	{/snippet}
-	<LineChart datasets={dataSets} heading={title} />
+	<LineChart datasets={dataSets} heading={title}>
+		{#snippet tooltip(data)}
+			<p {...data.titleStyles}>{data.datasets[0].raw.x}</p>
+			{#each data.datasets as dataset, i (i)}
+				<span class="tooltip-item" {...dataset.itemStyles}>
+					<div class="tooltip-point" {...dataset.pointStyles}></div>
+					<p>{dataset.parsed.y}{suffix}</p>
+				</span>
+			{/each}
+		{/snippet}
+	</LineChart>
 </Popover>

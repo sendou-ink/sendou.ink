@@ -1,8 +1,20 @@
 <script lang="ts">
 	import type { Attachment } from 'svelte/attachments';
-	import type { ChartConfiguration } from 'chart.js/auto';
+	import type { Snippet } from 'svelte';
 	import { getChartColors, createLineAnimation, deepMerge } from './utils';
-	import Chart from 'chart.js/auto';
+	import {
+		Chart,
+		CategoryScale,
+		LinearScale,
+		LineController,
+		PointElement,
+		LineElement,
+		Title,
+		Tooltip,
+		type FontSpec,
+		type ChartConfiguration,
+		type TooltipOptions
+	} from 'chart.js';
 
 	export interface Data {
 		x: string;
@@ -12,6 +24,7 @@
 	export interface DataSet {
 		label: string;
 		data: Data[];
+		metadata?: unknown;
 	}
 
 	export type ChartConfig = ChartConfiguration<'line', Array<Data>, string> & {
@@ -21,14 +34,38 @@
 		};
 	};
 
+	export interface TooltipDataset {
+		parsed: { x: number; y: number };
+		raw: Data;
+		metadata: unknown;
+		itemStyles: {
+			style: string;
+		};
+		pointStyles: {
+			style: string;
+		};
+	}
+
+	export interface TooltipData {
+		datasets: TooltipDataset[];
+		titleStyles: {
+			style: string;
+		};
+	}
+
 	interface Props {
 		datasets: DataSet[];
 		heading: string;
 		animationSpeed?: number;
 		config?: Partial<ChartConfig>;
+		tooltip?: Snippet<[data: TooltipData]>;
 	}
 
-	let { datasets, heading, animationSpeed = 500, config = {} }: Props = $props();
+	let { datasets, heading, animationSpeed = 500, config = {}, tooltip }: Props = $props();
+
+	let tooltipElement = $state<HTMLElement>();
+	let tooltipAlign = $state<'left' | 'center' | 'right'>('center');
+	let tooltipData = $state<TooltipData>();
 
 	function createLineChart(): Attachment<HTMLCanvasElement> {
 		return (element) => {
@@ -121,19 +158,97 @@
 							borderColor: colors.border,
 							borderWidth: 1,
 							caretPadding: 10,
-							boxPadding: 2,
+							boxPadding: 4,
+							boxHeight: 10,
+							boxWidth: 10,
 							multiKeyBackground: colors.line,
 							usePointStyle: true,
+							position: 'nearest',
+							titleColor: colors.heading,
+							titleMarginBottom: 6,
+							titleAlign: 'center',
 							titleFont: {
-								family: 'lexend'
+								family: 'lexend',
+								size: 14,
+								weight: 'bold',
+								lineHeight: 1.2
 							},
+							bodyColor: colors.heading,
 							bodyFont: {
-								family: 'lexend'
+								family: 'lexend',
+								size: 12,
+								weight: 'normal',
+								lineHeight: 1.2
+							},
+							enabled: tooltip ? false : true,
+							external: (ctx) => {
+								if (!tooltipElement) return;
+
+								const calculated = ctx.tooltip;
+								const config = ctx.chart.config.options?.plugins?.tooltip as TooltipOptions & {
+									titleFont: FontSpec;
+									bodyFont: FontSpec;
+								};
+
+								tooltipAlign = calculated.xAlign;
+								tooltipData = {
+									titleStyles: {
+										style: `color: ${config.titleColor};
+											 	font-family: ${config.titleFont.family};
+												font-size: ${config.titleFont.size}px;
+												font-weight: ${config.titleFont.weight};
+												margin-bottom: ${config.titleMarginBottom}px;
+												text-align: ${config.titleAlign};
+												line-height: ${config.titleFont.lineHeight};`
+									},
+									datasets: calculated.dataPoints.map((point, i) => {
+										return {
+											parsed: point.parsed,
+											raw: point.raw as Data,
+											metadata: datasets[i].metadata,
+											itemStyles: {
+												style: `color: ${config.bodyColor};
+											 			font-family: ${config.bodyFont.family};
+														font-size: ${config.bodyFont.size}px;
+														font-weight: ${config.bodyFont.weight};
+														line-height: ${config.bodyFont.lineHeight};
+														display: flex;
+														align-items: center;`
+											},
+											pointStyles: {
+												style: `background-color: ${point.dataset.backgroundColor};
+														width: ${config.boxWidth}px;
+														height: ${config.boxHeight}px;
+														margin-right: ${config.boxPadding}px;
+														border-radius: 50%;`
+											}
+										};
+									})
+								};
+
+								if (calculated.opacity === 0) {
+									tooltipElement.style.opacity = '0';
+									return;
+								}
+
+								tooltipElement.style.opacity = '1';
+								tooltipElement.style.left = calculated.caretX + 'px';
+								tooltipElement.style.top = calculated.caretY + 'px';
 							}
 						}
 					}
 				}
 			};
+
+			Chart.register(
+				CategoryScale,
+				LinearScale,
+				LineController,
+				PointElement,
+				LineElement,
+				Title,
+				Tooltip
+			);
 
 			const chart = new Chart(element, deepMerge(defaultConfig, config));
 
@@ -188,15 +303,86 @@
 	}
 </script>
 
-<div>
+<div class="chart-container">
 	<canvas {@attach createLineChart()}></canvas>
+	{#if tooltip}
+		<div bind:this={tooltipElement} class={['tooltip', tooltipAlign]}>
+			{#if tooltipData}
+				{@render tooltip(tooltipData)}
+			{/if}
+		</div>
+	{/if}
 </div>
 
 <style>
-	div {
+	.chart-container {
 		position: relative;
 		width: 80vw;
 		aspect-ratio: 2 / 1;
+	}
+
+	.tooltip {
+		--offset: 16px;
+		--caret-size: 6px;
+
+		padding: var(--s-2);
+		background-color: var(--chart-bg);
+		border: 1px solid var(--chart-border);
+		border-radius: var(--radius-field);
+		position: absolute;
+		pointer-events: none;
+		transition: all 0.1s ease;
+		opacity: 0;
+		display: flex;
+		flex-direction: column;
+
+		&::before,
+		&::after {
+			content: '';
+			position: absolute;
+			top: 50%;
+			transform: translateY(-50%);
+			width: 0;
+			height: 0;
+		}
+
+		&::before {
+			border: var(--caret-size) solid transparent;
+		}
+
+		&::after {
+			border: calc(var(--caret-size) - 1px) solid transparent;
+		}
+
+		&.left {
+			transform: translate(var(--offset), -50%);
+
+			&::before {
+				right: 100%;
+				border-right-color: var(--chart-border);
+			}
+
+			&::after {
+				right: 100%;
+				border-right-color: var(--chart-bg);
+				margin-right: -1px;
+			}
+		}
+
+		&.right {
+			transform: translate(calc(-100% - var(--offset)), -50%);
+
+			&::before {
+				left: 100%;
+				border-left-color: var(--chart-border);
+			}
+
+			&::after {
+				left: 100%;
+				border-left-color: var(--chart-bg);
+				margin-left: -1px;
+			}
+		}
 	}
 
 	canvas {
