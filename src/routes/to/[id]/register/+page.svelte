@@ -18,6 +18,7 @@
 
 	// xxx: add friend code somwhere
 	// xxx: Pickup name should show required asterisk
+	// xxx: tiebreakers in map pool
 </script>
 
 <Main class="stack lg">
