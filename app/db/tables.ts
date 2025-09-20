@@ -623,6 +623,8 @@ export interface TournamentStageSettings {
 	groupCount?: number;
 	// SWISS
 	roundCount?: number;
+	/** (Swiss only) Number of wins required for a team to advance early. When set, teams advance at this win count and are eliminated at (roundCount - advanceThreshold + 1) losses. */
+	advanceThreshold?: number;
 }
 
 export const TOURNAMENT_STAGE_TYPES = [

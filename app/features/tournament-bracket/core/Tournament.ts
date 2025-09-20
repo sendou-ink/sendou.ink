@@ -272,7 +272,10 @@ export class Tournament {
 			invariant(sourceBracket, "Bracket not found");
 
 			const { teams: sourcedTeams, relevantMatchesFinished } =
-				sourceBracket.source(source.placements);
+				sourceBracket.source({
+					placements: source.placements,
+					advanceThreshold: sourceBracket.settings?.advanceThreshold,
+				});
 			if (!relevantMatchesFinished) {
 				allRelevantMatchesFinished = false;
 			}

@@ -694,3 +694,58 @@
 	width: 1rem;
 	margin-block-end: 1px;
 }
+
+.tournament__standings__divider-row {
+	background: transparent !important;
+	height: auto;
+}
+
+.tournament__standings__divider {
+	padding-block: var(--s-2);
+	background: transparent;
+}
+
+.tournament__standings__divider-content {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	gap: var(--s-2);
+}
+
+.tournament__standings__divider-line {
+	flex: 1;
+	height: 4px;
+	border-radius: var(--rounded);
+}
+
+.tournament__standings__divider-text {
+	font-size: var(--fonts-xs);
+	font-weight: var(--bold);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	white-space: nowrap;
+	padding: var(--s-0-5) var(--s-1-5);
+	border-radius: var(--rounded);
+}
+
+.tournament__standings__divider--qualified
+	.tournament__standings__divider-line {
+	background-color: var(--theme-success);
+}
+
+.tournament__standings__divider--qualified
+	.tournament__standings__divider-text {
+	color: var(--theme-success);
+	background-color: transparent;
+}
+
+.tournament__standings__divider--eliminated
+	.tournament__standings__divider-line {
+	background-color: var(--theme-error);
+}
+
+.tournament__standings__divider--eliminated
+	.tournament__standings__divider-text {
+	color: var(--theme-error);
+	background-color: transparent;
+}
