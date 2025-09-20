@@ -30,9 +30,11 @@
 </script>
 
 <div class="stack xs">
-	<Label for={id} required={Boolean(minCount)}>
-		{label}
-	</Label>
+	{#if label}
+		<Label for={id} required={Boolean(minCount)}>
+			{label}
+		</Label>
+	{/if}
 	<div class="stack lg">
 		{#each modes as mode (mode)}
 			<ModeMapPoolPicker

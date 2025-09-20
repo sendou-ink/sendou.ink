@@ -1,12 +1,12 @@
 // TODO: add rest of the functions here that relate more to tournament teams than tournament/bracket
 
-import type { Transaction } from 'kysely';
 import { sql } from 'kysely';
 import { db } from '../sql';
 import { databaseTimestampNow } from '$lib/utils/dates';
-import type { DB, TablesInsertable } from '../tables';
+import type { TablesInsertable } from '../tables';
 import invariant from '$lib/utils/invariant';
 import { shortNanoid } from '$lib/utils/id';
+import * as MapPool from '$lib/core/maps/MapPool';
 
 export function setActiveRoster({
 	teamId,
@@ -235,62 +235,43 @@ export function copyFromAnotherTournament({
 	});
 }
 
-export function update({
-	team,
-	avatarFileName,
-	userId
-}: {
-	team: Pick<TablesInsertable['TournamentTeam'], 'name' | 'teamId'> & {
-		id: number;
-	};
-	avatarFileName?: string;
-	userId: number;
-}) {
-	return db.transaction().execute(async (trx) => {
-		const avatarImgId = avatarFileName
-			? await createSubmittedImageInTrx({
-					trx,
-					avatarFileName,
-					userId
-				})
-			: // don't overwrite the existing avatarImgId even if no new avatar is provided
-				// delete is a separate functionality
-				undefined;
+export function update(
+	id: number,
+	{
+		name,
+		teamId,
+		avatarImgId
+	}: Pick<TablesInsertable['TournamentTeam'], 'name' | 'teamId'> & {
+		avatarImgId: number | null;
+	}
+) {
+	return db
+		.updateTable('TournamentTeam')
+		.set({
+			name,
+			teamId,
+			avatarImgId
+		})
+		.where('TournamentTeam.id', '=', id)
+		.execute();
+}
 
-		await trx
-			.updateTable('TournamentTeam')
-			.set({
-				name: team.name,
-				teamId: team.teamId,
-				avatarImgId
-			})
-			.where('TournamentTeam.id', '=', team.id)
-			.execute();
+export function deleteById(tournamentTeamId: number) {
+	return db.transaction().execute(async (trx) => {
+		await trx.deleteFrom('MapPoolMap').where('tournamentTeamId', '=', tournamentTeamId).execute();
+		await trx.deleteFrom('TournamentTeam').where('id', '=', tournamentTeamId).execute();
 	});
 }
 
-async function createSubmittedImageInTrx({
-	trx,
-	avatarFileName,
-	userId
-}: {
-	trx: Transaction<DB>;
-	avatarFileName: string;
-	userId: number;
-}) {
-	const result = await trx
-		.insertInto('UnvalidatedUserSubmittedImage')
-		.values({
-			url: avatarFileName,
-			// in the context of tournament teams images are treated as globally "validated"
-			// instead the TO takes responsibility for removing inappropriate images
-			validatedAt: new Date(),
-			submitterUserId: userId
-		})
-		.returning('id')
-		.executeTakeFirstOrThrow();
+export function upsertMapPool(id: number, { mapPool }: { mapPool: MapPool.PartialMapPool }) {
+	return db.transaction().execute(async (trx) => {
+		await trx.deleteFrom('MapPoolMap').where('tournamentTeamId', '=', id).execute();
 
-	return result.id;
+		await trx
+			.insertInto('MapPoolMap')
+			.values([...MapPool.toArray(mapPool)].map((values) => ({ ...values, tournamentTeamId: id })))
+			.execute();
+	});
 }
 
 export function deleteLogo(tournamentTeamId: number) {

@@ -22,7 +22,7 @@ import type { Match, Stage } from '$lib/core/brackets-model';
 import { assertUnreachable } from '$lib/utils/types';
 import type { ModeShort } from '$lib/constants/in-game/types';
 import { userSubmittedImage } from '$lib/utils/urls-img';
-import { getRounds } from '$lib/core/tournament/rounds';
+import { getEliminationBracketRounds } from '$lib/core/tournament/rounds';
 import { isAdmin } from '$lib/modules/permissions/utils';
 import { isPast } from 'date-fns';
 import type * as TournamentRepository from '$lib/server/db/repositories/tournament';
@@ -904,13 +904,13 @@ export class TournamentCore {
 					) {
 						const rounds =
 							bracket.type === 'single_elimination'
-								? getRounds({ type: 'single', bracketData: bracket.data })
+								? getEliminationBracketRounds({ type: 'single', bracketData: bracket.data })
 								: [
-										...getRounds({
+										...getEliminationBracketRounds({
 											type: 'winners',
 											bracketData: bracket.data
 										}),
-										...getRounds({ type: 'losers', bracketData: bracket.data })
+										...getEliminationBracketRounds({ type: 'losers', bracketData: bracket.data })
 									];
 
 						const round = rounds.find((round) => round.id === match.round_id);

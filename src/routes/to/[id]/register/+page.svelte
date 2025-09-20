@@ -1,50 +1,51 @@
 <script lang="ts">
-	import Form from '$lib/components/form/Form.svelte';
 	import FriendCodeGate from '$lib/components/FriendCodeGate.svelte';
 	import Main from '$lib/components/layout/Main.svelte';
 	import StatusCircle from './StatusCircle.svelte';
 	import * as TournamentAPI from '$lib/api/tournament';
-	import { createFieldValidator } from '$lib/components/form/utils';
-	import FormField from '$lib/components/form/FormField.svelte';
 	import type { PageProps } from './$types';
+	import { getLocale } from '$lib/paraglide/runtime';
+	import { getMinutes } from 'date-fns';
+	import TeamInfoSection from './TeamInfo.svelte';
+	import RegFlowSection from './RegFlowSection.svelte';
+	import MapPool from './MapPool.svelte';
 
 	let { params }: PageProps = $props();
 
-	const registeredTeam = $derived(
-		await TournamentAPI.queries.myRegistrationByTournamentId(params.id)
+	const { registrationClosesAt, mapPickingStyle } = $derived(
+		await TournamentAPI.queries.myRegistrationById(params.id)
 	);
 
-	const schema = TournamentAPI.schemas.upsertTeamSchema;
-	const validField = createFieldValidator(schema);
+	// xxx: add friend code somwhere
+	// xxx: Pickup name should show required asterisk
+	// xxx: tiebreakers in map pool
 </script>
 
-<Main>
+<Main class="stack lg">
+	<div>
+		<h2>Registration</h2>
+		<div class="text-sm text-lighter">
+			Closes at
+			{registrationClosesAt.toLocaleString(getLocale(), {
+				weekday: 'short',
+				day: 'numeric',
+				month: 'numeric',
+				year: '2-digit',
+				hour: 'numeric',
+				minute: getMinutes(registrationClosesAt) === 0 ? undefined : 'numeric'
+			})}
+		</div>
+	</div>
 	<FriendCodeGate>
 		<div class="registration-flow">
-			<StatusCircle status={registeredTeam.teamInfoDefaultValues ? 'OK' : 'MISSING'} />
-			<section>
-				<div class="section-content">
-					<Form
-						{schema}
-						action={TournamentAPI.actions.registerNewTeam}
-						defaultValues={registeredTeam.teamInfoDefaultValues}
-						heading="Team info"
-					>
-						<FormField name={validField('pickupName')} />
-						<FormField name={validField('avatar')} />
-					</Form>
-				</div>
-			</section>
+			<TeamInfoSection tournamentId={params.id} />
 
-			<StatusCircle status="MISSING" top={60} />
-			<section>
-				<div class="section-content"></div>
-			</section>
+			{#if mapPickingStyle}
+				<MapPool tournamentId={params.id} />
+			{/if}
 
 			<StatusCircle status="WAIT" top={60 * 2} />
-			<section>
-				<div class="section-content"></div>
-			</section>
+			<RegFlowSection>3.</RegFlowSection>
 		</div>
 	</FriendCodeGate>
 </Main>
@@ -60,21 +61,5 @@
 			grid-template-columns: 1fr;
 			gap: var(--s-4);
 		}
-	}
-
-	section {
-		border: var(--border-style);
-		border-radius: var(--radius-box);
-		padding: var(--s-6);
-		background-color: var(--color-base-section);
-		margin-bottom: var(--s-8);
-
-		@media (max-width: 768px) {
-			margin-bottom: var(--s-4);
-		}
-	}
-
-	.section-content {
-		min-height: 200px;
 	}
 </style>
