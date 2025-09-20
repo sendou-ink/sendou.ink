@@ -17,6 +17,8 @@
 		children: Snippet;
 		heading?: string;
 		action: RemoteForm<void | { errors: Partial<Record<keyof Output, string>> }>;
+		/** Secondary button located at the bottom of the form to perform some alternative action.*/
+		secondaryButton?: Snippet;
 		schema: T;
 		defaultValues?: Partial<SchemaToDefaultValues<Output>> | null;
 		info?: string;
@@ -26,8 +28,17 @@
 		onSubmit?: () => void;
 	}
 
-	let { children, heading, action, schema, defaultValues, info, onchange, onSubmit }: Props =
-		$props();
+	let {
+		children,
+		heading,
+		action,
+		schema,
+		defaultValues,
+		info,
+		onchange,
+		onSubmit,
+		secondaryButton
+	}: Props = $props();
 	const id = $props.id();
 
 	let errors = $state<Partial<Record<keyof Output, string>>>({});
@@ -135,6 +146,7 @@
 		<Button type="submit" loading={action.pending > 0}>
 			{m.common_actions_submit()}
 		</Button>
+		{@render secondaryButton?.()}
 	</div>
 </form>
 

@@ -1,86 +1,50 @@
 <script lang="ts">
-	import Form from '$lib/components/form/Form.svelte';
 	import FriendCodeGate from '$lib/components/FriendCodeGate.svelte';
 	import Main from '$lib/components/layout/Main.svelte';
 	import StatusCircle from './StatusCircle.svelte';
 	import * as TournamentAPI from '$lib/api/tournament';
-	import { createFieldValidator } from '$lib/components/form/utils';
-	import FormField from '$lib/components/form/FormField.svelte';
 	import type { PageProps } from './$types';
-	import * as TeamAPI from '$lib/api/team';
-	import InputGroupFormField from '$lib/components/form/InputGroupFormField.svelte';
+	import { getLocale } from '$lib/paraglide/runtime';
+	import { getMinutes } from 'date-fns';
+	import TeamInfoSection from './TeamInfo.svelte';
+	import RegFlowSection from './RegFlowSection.svelte';
+	import MapPool from './MapPool.svelte';
 
 	let { params }: PageProps = $props();
 
-	const { registrationOpen: _registrationOpen, teamInfoDefaultValues } = $derived(
+	const { registrationClosesAt, mapPickingStyle } = $derived(
 		await TournamentAPI.queries.myRegistrationById(params.id)
 	);
-	const myTeams = await TeamAPI.queries.myTeams();
-
-	// xxx: fix warning
-	let isPickup = $state(Boolean(teamInfoDefaultValues?.teamId));
-
-	const schema = TournamentAPI.schemas.upsertTeamSchema;
-	const validField = createFieldValidator(schema);
 
 	// xxx: add friend code somwhere
 	// xxx: Pickup name should show required asterisk
 </script>
 
-<Main>
+<Main class="stack lg">
+	<div>
+		<h2>Registration</h2>
+		<div class="text-sm text-lighter">
+			Closes at
+			{registrationClosesAt.toLocaleString(getLocale(), {
+				weekday: 'short',
+				day: 'numeric',
+				month: 'numeric',
+				year: '2-digit',
+				hour: 'numeric',
+				minute: getMinutes(registrationClosesAt) === 0 ? undefined : 'numeric'
+			})}
+		</div>
+	</div>
 	<FriendCodeGate>
 		<div class="registration-flow">
-			<StatusCircle status={teamInfoDefaultValues ? 'OK' : 'MISSING'} />
-			<section>
-				<div class="section-content">
-					<Form
-						{schema}
-						action={TournamentAPI.actions.registerNewTeam}
-						defaultValues={teamInfoDefaultValues}
-						heading="Team info"
-						onchange={(data) => {
-							if (data.teamId) isPickup = false;
-							else isPickup = true;
-						}}
-					>
-						<FormField name={validField('tournamentId')} />
-						{#if myTeams.length > 0}
-							<FormField name={validField('teamId')}>
-								{#snippet children({ data, ...rest })}
-									<InputGroupFormField
-										{...rest}
-										inputType="radio"
-										bind:value={data.value as string}
-										items={myTeams
-											.map((team) => ({
-												label: team.name,
-												value: String(team.id)
-											}))
-											.concat({
-												label: 'Pickup',
-												value: 'pickup'
-											})}
-									/>
-								{/snippet}
-							</FormField>
-						{/if}
-						{#if isPickup}
-							<FormField name={validField('pickupName')} />
-							<FormField name={validField('avatar')} />
-						{/if}
-					</Form>
-				</div>
-			</section>
+			<TeamInfoSection tournamentId={params.id} />
 
-			<StatusCircle status="MISSING" top={60} />
-			<section>
-				<div class="section-content"></div>
-			</section>
+			{#if mapPickingStyle}
+				<MapPool tournamentId={params.id} />
+			{/if}
 
 			<StatusCircle status="WAIT" top={60 * 2} />
-			<section>
-				<div class="section-content"></div>
-			</section>
+			<RegFlowSection>3.</RegFlowSection>
 		</div>
 	</FriendCodeGate>
 </Main>
@@ -96,21 +60,5 @@
 			grid-template-columns: 1fr;
 			gap: var(--s-4);
 		}
-	}
-
-	section {
-		border: var(--border-style);
-		border-radius: var(--radius-box);
-		padding: var(--s-6);
-		background-color: var(--color-base-section);
-		margin-bottom: var(--s-8);
-
-		@media (max-width: 768px) {
-			margin-bottom: var(--s-4);
-		}
-	}
-
-	.section-content {
-		min-height: 200px;
 	}
 </style>

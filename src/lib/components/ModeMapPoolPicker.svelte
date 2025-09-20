@@ -207,6 +207,7 @@
 			svg {
 				color: var(--color-success);
 				width: 16px;
+				height: 16px;
 				stroke-width: 3px;
 			}
 		}

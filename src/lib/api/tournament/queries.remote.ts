@@ -7,9 +7,27 @@ import { requireTournament } from './utils.server';
 import markdownit from 'markdown-it';
 import { databaseTimestampToDate } from '$lib/utils/dates';
 import { userSubmittedImage } from '$lib/utils/urls-img';
-import type { UpsertTeamData } from './schemas';
+import type { UpsertTeamData, UpsertTeamMapPoolData } from './schemas';
+import { redirect } from '@sveltejs/kit';
+import { resolve } from '$app/paths';
+import * as MapPool from '$lib/core/maps/MapPool';
+import { TOURNAMENT_MAP_PICKING_STYLES } from '$lib/constants/calendar';
 
 const md = markdownit();
+
+export const redirectToCurrentMainPage = query(id, async (tournamentId) => {
+	const tournament = await requireTournament(tournamentId);
+
+	if (tournament.ctx.isFinalized) {
+		redirect(307, resolve(`/to/${tournament.ctx.id}/results`));
+	}
+
+	if (tournament.regularCheckInHasEnded) {
+		redirect(307, resolve(`/to/${tournament.ctx.id}/brackets/0`));
+	}
+
+	redirect(307, resolve(`/to/${tournament.ctx.id}/register`));
+});
 
 export const tabsById = query(id, async (id) => {
 	return {
@@ -129,6 +147,7 @@ export const rulesById = query(id, async (id) => {
 	return md.render(rules);
 });
 
+/** User's registration for the specified tournament. Note that before tournament starts each user can only be in one team, but afterwards it's possible to be in many teams (as added by the organizer). */
 export const myRegistrationById = query(id, async (tournamentId) => {
 	const user = notFoundIfFalsy(await requireUser());
 	const tournament = await requireTournament(tournamentId);
@@ -147,9 +166,45 @@ export const myRegistrationById = query(id, async (tournamentId) => {
 			}
 		: { tournamentId: tournament.ctx.id };
 
+	const mapPickingStyle =
+		tournament.ctx.mapPickingStyle !== 'TO' ? tournament.ctx.mapPickingStyle : null;
+	const mapPoolDefaultValues: Partial<SchemaToDefaultValues<UpsertTeamMapPoolData>> = tournamentTeam
+		? {
+				tournamentId: tournament.ctx.id,
+				...Object.fromEntries(
+					TOURNAMENT_MAP_PICKING_STYLES.filter((style) => style !== 'TO').map((style) => [
+						style,
+						mapPickingStyle === style
+							? (MapPool.fromArray(tournamentTeam.mapPool) ?? undefined)
+							: undefined
+					])
+				)
+			}
+		: {};
+
 	return {
+		tournamentTeamId: tournamentTeam?.id ?? null,
+		/** Is the team checked in (main check-in for the whole tournament) */
+		checkedIn: (tournamentTeam?.checkIns ?? []).length > 0,
 		teamInfoDefaultValues,
-		registrationOpen: tournament.registrationOpen
+		mapPoolDefaultValues,
+		members: tournamentTeam?.members.map((member) => ({
+			userId: member.userId,
+			discordId: member.discordId,
+			customUrl: member.customUrl,
+			discordAvatar: member.discordAvatar,
+			name: tournament.ctx.settings.requireInGameNames
+				? (member.inGameName ?? member.username)
+				: member.username
+		})),
+		registrationClosesAt: tournament.registrationClosesAt,
+		/** Do teams need to pick a map pool as part of registration and if so then in which style? */
+		mapPickingStyle:
+			tournament.ctx.mapPickingStyle !== 'TO' ? tournament.ctx.mapPickingStyle : null,
+		/** Is it possible to change registration right now for this user and at this point in time? */
+		canChangeRegistration:
+			tournament.registrationOpen &&
+			tournamentTeam?.members.some((member) => member.userId === user.id && member.isOwner)
 	};
 });
 

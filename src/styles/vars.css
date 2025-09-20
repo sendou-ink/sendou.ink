@@ -8,7 +8,7 @@ html {
 	--color-base-border: oklch(0.85 0.02 272.37); /** color-base-300 */
 	--color-base-content: oklch(0.15 0.002 272.37);
 	--color-base-content-secondary: oklch(0.45 0.01 272.37);
-	--color-base-backdrop: oklch(0.8 0.03 200 / 0.3);
+	--color-base-backdrop: oklch(0.5 0.02 300 / 0.8);
 	--color-primary: oklch(0.65 0.2 351.57);
 	--color-primary-transparent: oklch(0.65 0.2 351.57 / 0.3);
 	--color-primary-content: oklch(0.15 0.002 272.37);

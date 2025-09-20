@@ -32,6 +32,12 @@ async function fetchTournament(tournamentId: number) {
 	return new TournamentCore({ data, ctx, simulateBrackets: false });
 }
 
-export function clearTournamentDataCache(_tournamentId: number) {
-	// xxx: todo implement cache clearing
+export function clearTournamentDataCache(tournamentId: number) {
+	const { locals } = getRequestEvent();
+
+	const tournamentPromise = fetchTournament(tournamentId);
+	if (!locals.tournament) locals.tournament = {};
+	locals.tournament[tournamentId] = tournamentPromise;
+
+	// xxx: todo implement in-memory cache clearing
 }
