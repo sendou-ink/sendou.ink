@@ -1,6 +1,7 @@
 import { Link, useFetcher } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
+import invariant from "~/utils/invariant";
 import { SendouButton } from "../../../../components/elements/Button";
 import { CheckmarkIcon } from "../../../../components/icons/Checkmark";
 import { CrossIcon } from "../../../../components/icons/Cross";
@@ -13,7 +14,6 @@ import type { Bracket } from "../../core/Bracket";
 import * as Progression from "../../core/Progression";
 import * as Swiss from "../../core/Swiss";
 
-// xxx: check that bracket advance indicator + editing works logically
 export function PlacementsTable({
 	groupId,
 	bracket,
@@ -76,8 +76,28 @@ export function PlacementsTable({
 			return a.placement - b.placement;
 		});
 
-	const destinationBracket = (placement: number) =>
-		bracket.tournament.brackets.find(
+	const destinationBracket = (placement: number) => {
+		if (bracket.type === "swiss" && bracket.settings?.advanceThreshold) {
+			const standing = standings[placement - 1];
+			const stats = standing.stats;
+			invariant(stats);
+
+			return Swiss.calculateTeamStatus({
+				advanceThreshold: bracket.settings.advanceThreshold,
+				losses: stats.setLosses,
+				wins: stats.setWins,
+				roundCount:
+					bracket.settings.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+			}) === "advanced"
+				? bracket.tournament.brackets.find((otherBracket) =>
+						otherBracket.sources?.some(
+							(source) => source.bracketIdx === bracket.idx,
+						),
+					)
+				: undefined;
+		}
+
+		return bracket.tournament.brackets.find(
 			(b) =>
 				b.idx ===
 				Progression.destinationByPlacement({
@@ -85,15 +105,6 @@ export function PlacementsTable({
 					placement,
 					progression: bracket.tournament.ctx.settings.bracketProgression,
 				}),
-		);
-
-	const swissEarlyAdvanceDestinationBracket = () => {
-		if (bracket.type !== "swiss" || !bracket.settings?.advanceThreshold) {
-			return undefined;
-		}
-
-		return bracket.tournament.brackets.find((bracket) =>
-			bracket.sources?.some((source) => source.bracketIdx === bracket.idx),
 		);
 	};
 
@@ -169,8 +180,7 @@ export function PlacementsTable({
 
 					const team = bracket.tournament.teamById(s.team.id);
 
-					const dest =
-						swissEarlyAdvanceDestinationBracket() ?? destinationBracket(i + 1);
+					const dest = destinationBracket(i + 1);
 
 					const overridenDestination =
 						bracket.tournament.ctx.bracketProgressionOverrides.find(
@@ -207,7 +217,7 @@ export function PlacementsTable({
 							wins: s.stats.setWins,
 							roundCount:
 								bracket.settings.roundCount ??
-								TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT,
+								TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
 						}) === "eliminated";
 
 					if (renderQualifiedRow) qualifiedRowRendered = true;
@@ -294,18 +304,6 @@ export function PlacementsTable({
 									allMatchesFinished={allMatchesFinished}
 									canEditDestination={canEditDestination}
 									tournamentTeamId={s.team.id}
-									swissTeamStatus={
-										bracket.settings?.advanceThreshold
-											? Swiss.calculateTeamStatus({
-													advanceThreshold: bracket.settings?.advanceThreshold,
-													losses: stats.setLosses,
-													wins: stats.setWins,
-													roundCount:
-														bracket.settings?.roundCount ??
-														TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT,
-												})
-											: undefined
-									}
 								/>
 							</tr>
 							{!eliminatedRowRendered &&
@@ -335,7 +333,6 @@ function EditableDestination({
 	allMatchesFinished,
 	canEditDestination,
 	tournamentTeamId,
-	swissTeamStatus,
 }: {
 	source: Bracket;
 	destination?: Bracket;
@@ -344,7 +341,6 @@ function EditableDestination({
 	allMatchesFinished: boolean;
 	canEditDestination: boolean;
 	tournamentTeamId: number;
-	swissTeamStatus?: Swiss.SwissTeamStatus;
 }) {
 	const fetcher = useFetcher<any>();
 	const [editingDestination, setEditingDestination] = React.useState(false);
@@ -415,12 +411,10 @@ function EditableDestination({
 				<td className="text-theme font-bold">
 					<span>→ {overridenDestination.name}</span>
 				</td>
-			) : destination &&
-				(!swissTeamStatus || swissTeamStatus === "advanced") &&
-				overridenDestination !== null ? (
+			) : destination && overridenDestination !== null ? (
 				<td
 					className={clsx({
-						"italic text-lighter": !swissTeamStatus && !allMatchesFinished,
+						"italic text-lighter": !allMatchesFinished,
 					})}
 				>
 					<span>→ {destination.name}</span>

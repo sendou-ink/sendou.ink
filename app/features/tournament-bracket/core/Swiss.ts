@@ -288,6 +288,13 @@ interface SwissPairingTeam {
 
 // adapted from https://github.com/slashinfty/tournament-pairings
 export function pairUp(players: SwissPairingTeam[]) {
+	if (players.length < 2) {
+		throw new Error("Need at least two players to pair up");
+	}
+	if (players.length === 2) {
+		return [{ opponentOne: players[0].id, opponentTwo: players[1].id }];
+	}
+
 	// uncomment to add a new test case to PAIR_UP_TEST_CASES
 	// console.log(players);
 
