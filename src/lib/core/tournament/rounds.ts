@@ -2,7 +2,7 @@ import { TOURNAMENT } from '$lib/constants/tournament';
 import type { TournamentManagerDataSet } from '$lib/core/brackets-manager/types';
 import * as R from 'remeda';
 
-export function getRounds(args: {
+export function getEliminationBracketRounds(args: {
 	bracketData: TournamentManagerDataSet;
 	type: 'winners' | 'losers' | 'single';
 }) {
@@ -83,6 +83,7 @@ export function getRounds(args: {
 
 		return {
 			...round,
+			matches: args.bracketData.match.filter((match) => match.round_id === round.id),
 			name: name()
 		};
 	});
