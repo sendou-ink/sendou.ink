@@ -1,4 +1,4 @@
-<script lang="ts">
+<script lang="ts" generics="M">
 	import type { Attachment } from 'svelte/attachments';
 	import type { Snippet } from 'svelte';
 	import { getChartColors, createLineAnimation, deepMerge } from './utils';
@@ -12,66 +12,29 @@
 		Title,
 		Tooltip,
 		type FontSpec,
-		type ChartConfiguration,
 		type TooltipOptions
 	} from 'chart.js';
-
-	export interface Data {
-		x: string;
-		y: string;
-	}
-
-	export interface DataSet {
-		label: string;
-		data: Data[];
-		metadata?: unknown;
-	}
-
-	export type ChartConfig = ChartConfiguration<'line', Array<Data>, string> & {
-		options: {
-			animations?: never;
-			animation?: never;
-		};
-	};
-
-	export interface TooltipDataset {
-		parsed: { x: number; y: number };
-		raw: Data;
-		metadata: unknown;
-		itemStyles: {
-			style: string;
-		};
-		pointStyles: {
-			style: string;
-		};
-	}
-
-	export interface TooltipData {
-		datasets: TooltipDataset[];
-		titleStyles: {
-			style: string;
-		};
-	}
+	import type { Data, DataSet, ChartConfig, TooltipData, TooltipAlign } from './types';
 
 	interface Props {
-		datasets: DataSet[];
+		datasets: DataSet<'line', M>[];
 		heading: string;
 		animationSpeed?: number;
-		config?: Partial<ChartConfig>;
-		tooltip?: Snippet<[data: TooltipData]>;
+		config?: Partial<ChartConfig<'line'>>;
+		tooltip?: Snippet<[data: TooltipData<'line', M>]>;
 	}
 
 	let { datasets, heading, animationSpeed = 500, config = {}, tooltip }: Props = $props();
 
 	let tooltipElement = $state<HTMLElement>();
-	let tooltipAlign = $state<'left' | 'center' | 'right'>('center');
-	let tooltipData = $state<TooltipData>();
+	let tooltipAlign = $state<TooltipAlign>('center');
+	let tooltipData = $state<TooltipData<'line', M>>();
 
 	function createLineChart(): Attachment<HTMLCanvasElement> {
 		return (element) => {
 			const colors = getChartColors();
 
-			const defaultConfig: ChartConfig = {
+			const defaultConfig: ChartConfig<'line'> = {
 				type: 'line',
 				data: {
 					datasets: [
@@ -204,7 +167,7 @@
 									datasets: calculated.dataPoints.map((point, i) => {
 										return {
 											parsed: point.parsed,
-											raw: point.raw as Data,
+											raw: point.raw as Data<'line'>,
 											metadata: datasets[i].metadata,
 											itemStyles: {
 												style: `color: ${config.bodyColor};

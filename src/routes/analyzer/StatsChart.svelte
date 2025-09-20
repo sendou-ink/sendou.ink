@@ -4,16 +4,21 @@
 	import type { MainWeaponId, SubWeaponId } from '$lib/constants/in-game/types';
 	import type { Stat } from '$lib/core/analyzer/types';
 	import type { SubWeaponDamage } from '$lib/core/analyzer/types';
+	import type { DataSet } from '$lib/components/charts/types';
 	import { isStackableAbility, isMainOnlyAbility } from '$lib/core/analyzer/utils';
 	import { buildStats } from '$lib/core/analyzer/stats';
 	import { MAX_AP } from '$lib/constants/analyzer';
 	import { nullFilledArray } from '$lib/utils/arrays';
 	import { m } from '$lib/paraglide/messages';
 	import * as R from 'ramda';
-	import LineChart, { type DataSet } from '$lib/components/charts/LineChart.svelte';
+	import LineChart from '$lib/components/charts/LineChart.svelte';
 	import Popover from '$lib/components/popover/Popover.svelte';
 	import PopoverTriggerButton from '$lib/components/popover/PopoverTriggerButton.svelte';
 	import ChartNoAxesCombined from '@lucide/svelte/icons/chart-no-axes-combined';
+
+	interface MetaData {
+		test: string;
+	}
 
 	interface Props {
 		title: string;
@@ -29,12 +34,12 @@
 	const stackableAbility = $derived(modifiedBy.find(isStackableAbility) ?? 'UNKNOWN');
 	const mainOnlyAbility = $derived(modifiedBy.find(isMainOnlyAbility) ?? 'UNKNOWN');
 
-	const dataSets = $derived<DataSet[]>(
+	const dataSets = $derived<DataSet<'line', MetaData>[]>(
 		statKey ? statKeyGraphData() : typeof subWeaponId === 'number' ? subDefenseGraphData() : []
 	);
 
 	function statKeyGraphData() {
-		const dataSets: DataSet[] = [];
+		const dataSets: DataSet<'line', MetaData>[] = [];
 
 		const analyzedBuilds = nullFilledArray(MAX_AP + 1).map((_, i) =>
 			buildStats({
@@ -46,7 +51,7 @@
 		);
 
 		dataSets.push({
-			metadata: 'INIT',
+			metadata: { test: 'test' },
 			label: '',
 			data: analyzedBuilds.map((build, i) => ({
 				x: i.toString() + m.analyzer_abilityPoints_short(),
@@ -65,6 +70,7 @@
 			);
 
 			dataSets.push({
+				metadata: { test: 'test' },
 				label: mainOnlyAbility,
 				data: analyzedBuildsMainOnly.map((build, i) => ({
 					x: i.toString() + m.analyzer_abilityPoints_short(),
@@ -77,7 +83,7 @@
 	}
 
 	function subDefenseGraphData() {
-		const dataSets: DataSet[] = [];
+		const dataSets: DataSet<'line', MetaData>[] = [];
 
 		const analyzedBuilds = nullFilledArray(MAX_AP + 1).map((_, i) =>
 			buildStats({
@@ -99,6 +105,7 @@
 			const distance = key.split(',')[0];
 
 			dataSets.push({
+				metadata: { test: 'test' },
 				label: `${m.analyzer_damage_header_distance}: ${distance}`,
 				data: analyzedBuilds.map((build, i) => {
 					const damage = build.stats.subWeaponDefenseDamages.find(
@@ -136,7 +143,7 @@
 			{#each data.datasets as dataset, i (i)}
 				<span class="tooltip-item" {...dataset.itemStyles}>
 					<div class="tooltip-point" {...dataset.pointStyles}></div>
-					<p>{dataset.parsed.y}{suffix}</p>
+					<p>{dataset.parsed.y}{suffix}{dataset.metadata?.test}</p>
 				</span>
 			{/each}
 		{/snippet}

@@ -1,4 +1,4 @@
-import type { Data } from './LineChart.svelte';
+import type { Data } from './types';
 
 const rulePrefix = '--chart-';
 const rulesToExtract = [
@@ -36,7 +36,7 @@ export function getChartColors() {
 }
 
 // xxx: types.....
-export function createLineAnimation(data: Data[], duration: number): any {
+export function createLineAnimation(data: Data<'line'>[], duration: number): any {
 	const delayBetweenPoints = duration / data.length;
 
 	return {
