@@ -552,9 +552,7 @@ function noDoubleEliminationPositive(brackets: ParsedBracket[]) {
 
 function swissEarlyAdvanceWithoutDestination(brackets: ParsedBracket[]) {
 	for (const [bracketIdx, bracket] of brackets.entries()) {
-		// Check if this is a Swiss bracket with early advance enabled
 		if (bracket.type === "swiss" && bracket.settings.advanceThreshold) {
-			// Check if this bracket has a destination (is used as source by another bracket)
 			const hasDestination = brackets.some((otherBracket) =>
 				otherBracket.sources?.some(
 					(source) => source.bracketIdx === bracketIdx,

@@ -350,31 +350,20 @@ function TournamentFormatBracketSelector({
 								const newRoundCount = Number(e.target.value);
 								const currentAdvanceThreshold =
 									bracket.settings.advanceThreshold;
-								let newAdvanceThreshold = currentAdvanceThreshold;
-
-								// Validate advance threshold against new round count
-								if (
-									currentAdvanceThreshold &&
-									!Swiss.isValidAdvanceThreshold({
-										roundCount: newRoundCount,
-										advanceThreshold: currentAdvanceThreshold,
-									})
-								) {
-									const maxValidThreshold = Swiss.maxAdvanceThreshold({
-										roundCount: newRoundCount,
-									});
-									newAdvanceThreshold = Math.min(
-										currentAdvanceThreshold,
-										maxValidThreshold,
-									);
-								}
 
 								// xxx: also clear "placements" of any destination bracket
 								updateBracket({
 									settings: {
 										...bracket.settings,
 										roundCount: newRoundCount,
-										advanceThreshold: newAdvanceThreshold,
+										advanceThreshold:
+											currentAdvanceThreshold &&
+											!Swiss.isValidAdvanceThreshold({
+												roundCount: newRoundCount,
+												advanceThreshold: currentAdvanceThreshold,
+											})
+												? 3
+												: currentAdvanceThreshold,
 									},
 								});
 							}}

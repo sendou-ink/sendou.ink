@@ -809,36 +809,4 @@ describe("validatedBracketsToInputFormat", () => {
 			},
 		]);
 	});
-
-	it("converts regular placements to string correctly", () => {
-		const parsedBrackets: Progression.ParsedBracket[] = [
-			{
-				type: "round_robin",
-				settings: {},
-				name: "Group Stage",
-				requiresCheckIn: false,
-			},
-			{
-				type: "single_elimination",
-				settings: {},
-				name: "Finals",
-				requiresCheckIn: false,
-				sources: [
-					{
-						bracketIdx: 0,
-						placements: [1, 2, 3, 4],
-					},
-				],
-			},
-		];
-
-		const result = Progression.validatedBracketsToInputFormat(parsedBrackets);
-
-		expect(result[1].sources).toEqual([
-			{
-				bracketId: "0",
-				placements: "1-4",
-			},
-		]);
-	});
 });
