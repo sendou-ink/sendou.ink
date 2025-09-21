@@ -88,7 +88,7 @@
 	<div class={['values', { comparing: showA && showB, unchanged: !highlighted }]}>
 		<div>
 			<h4>
-				{m.analyzer_base()}
+				{isStatic ? m.analyzer_value() : m.analyzer_base()}
 			</h4>
 			<p>{baseValue}{suffix}</p>
 		</div>
