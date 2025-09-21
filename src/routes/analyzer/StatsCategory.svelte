@@ -39,11 +39,17 @@
 <style>
 	summary {
 		border-radius: var(--radius-box);
-		background-color: var(--color-base-card);
+		background-color: var(--color-base-card-section);
 		font-size: var(--fonts-md);
 		font-weight: var(--bold);
 		padding: var(--s-2) var(--s-3);
 		position: relative;
+
+		:global {
+			&:has(+ div > .highlighted) {
+				background-color: var(--color-base-card);
+			}
+		}
 	}
 
 	.title-content {

@@ -151,7 +151,7 @@
 		grid-row: span 3;
 		padding: var(--s-2);
 		border-radius: var(--radius-box);
-		background-color: var(--color-base-card-section);
+		background-color: var(--color-base-section);
 		font-size: var(--fonts-md);
 		gap: var(--s-4);
 
