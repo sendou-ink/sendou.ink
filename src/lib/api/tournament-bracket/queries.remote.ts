@@ -76,7 +76,8 @@ function getRoundMapper(
 						seed: fullTeam.seed,
 						name: fullTeam.name,
 						logoUrl: tournament.tournamentTeamLogoSrc(fullTeam) ?? null,
-						result: team.result ?? null
+						result: team.result ?? null,
+						roster: fullTeam.members.map((member) => member.username)
 					};
 				}
 
@@ -99,6 +100,7 @@ export type BracketTeamData = {
 	seed: number;
 	name: string;
 	logoUrl: string | null;
+	roster: string[];
 };
 
 export type BracketMatchData = {

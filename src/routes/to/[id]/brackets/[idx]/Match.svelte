@@ -43,7 +43,7 @@
 			'stack horizontal': true,
 			'text-lighter': team?.result === 'loss'
 		}}
-		title={team ? team.name : ''}
+		title={team?.roster.join(', ')}
 	>
 		<div
 			class={{
