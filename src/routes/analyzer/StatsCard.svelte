@@ -74,58 +74,54 @@
 </script>
 
 <div class={['card', { highlighted }]} data-testid={testId}>
-	<div>
-		<h3>
-			{title}
-			{#if popoverInfo}
-				<Popover>
-					{#snippet trigger()}
-						<PopoverTriggerButton variant="minimal">?</PopoverTriggerButton>
-					{/snippet}
-					{popoverInfo}
-				</Popover>
-			{/if}
-		</h3>
-		<div class={['values', { comparing: showA && showB, unchanged: !highlighted }]}>
+	<h3>
+		{title}
+		{#if popoverInfo}
+			<Popover>
+				{#snippet trigger()}
+					<PopoverTriggerButton variant="minimal">?</PopoverTriggerButton>
+				{/snippet}
+				{popoverInfo}
+			</Popover>
+		{/if}
+	</h3>
+	<div class={['values', { comparing: showA && showB, unchanged: !highlighted }]}>
+		<div>
+			<h4>
+				{m.analyzer_base()}
+			</h4>
+			<p>{baseValue}{suffix}</p>
+		</div>
+		{#if showA}
 			<div>
 				<h4>
-					{m.analyzer_base()}
+					{m.analyzer_build1()}
 				</h4>
-				<p>{baseValue}{suffix}</p>
+				<p>
+					{(stat as StatTuple)[0].value}{suffix}
+				</p>
+				<div class="effects">
+					{#each getAllRelevantEffects(0) as effect (effect)}
+						<img src={effectToImgUrl(effect)} alt="" width="24" height="24" />
+					{/each}
+				</div>
 			</div>
-			{#if showA}
-				<div>
-					<h4>
-						{m.analyzer_build1()}
-					</h4>
-					<p>
-						{(stat as StatTuple)[0].value}
-						{suffix}
-					</p>
-					<div class="effects">
-						{#each getAllRelevantEffects(0) as effect (effect)}
-							<img src={effectToImgUrl(effect)} alt="" width="24" height="24" />
-						{/each}
-					</div>
+		{/if}
+		{#if showB}
+			<div>
+				<h4>
+					{m.analyzer_build2()}
+				</h4>
+				<p>
+					{(stat as StatTuple)[1].value}{suffix}
+				</p>
+				<div class="effects">
+					{#each getAllRelevantEffects(1) as effect (effect)}
+						<img src={effectToImgUrl(effect)} alt="" width="24" height="24" />
+					{/each}
 				</div>
-			{/if}
-			{#if showB}
-				<div>
-					<h4>
-						{m.analyzer_build2()}
-					</h4>
-					<p>
-						{(stat as StatTuple)[1].value}
-						{suffix}
-					</p>
-					<div class="effects">
-						{#each getAllRelevantEffects(1) as effect (effect)}
-							<img src={effectToImgUrl(effect)} alt="" width="24" height="24" />
-						{/each}
-					</div>
-				</div>
-			{/if}
-		</div>
+			</div>
+		{/if}
 	</div>
 	<div class="abilities">
 		{#if Array.isArray(stat)}
@@ -150,9 +146,9 @@
 
 <style>
 	.card {
-		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
+		display: grid;
+		grid-template-rows: subgrid;
+		grid-row: span 3;
 		padding: var(--s-2);
 		border-radius: var(--radius-box);
 		background-color: var(--color-base-card-section);
@@ -167,7 +163,6 @@
 	.values {
 		display: grid;
 		gap: var(--s-2) var(--s-2);
-		margin-top: var(--s-4);
 		justify-items: center;
 		grid-template-areas: 'A B';
 
