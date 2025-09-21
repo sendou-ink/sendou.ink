@@ -121,7 +121,6 @@
 
 	a.match:hover {
 		background-color: var(--bg-lighter);
-		border-radius: var(--rounded-sm);
 	}
 
 	.separator {
