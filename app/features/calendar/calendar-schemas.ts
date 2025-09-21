@@ -169,10 +169,10 @@ export const bracketProgressionSchema = z.preprocess(
 					})
 					.refine(
 						(settings) => {
-							// Validate advanceThreshold for Swiss tournaments
-							if (settings.advanceThreshold && settings.roundCount) {
+							if (settings.advanceThreshold) {
 								return Swiss.isValidAdvanceThreshold({
-									roundCount: settings.roundCount,
+									roundCount:
+										settings.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
 									advanceThreshold: settings.advanceThreshold,
 								});
 							}
