@@ -607,7 +607,8 @@ function resolveMainBracketProgression(brackets: ParsedBracket[]) {
 		const bracket = brackets.findIndex((bracket) =>
 			bracket.sources?.some(
 				(source) =>
-					source.placements.includes(1) &&
+					// empty array is the swiss early advance case
+					(source.placements.includes(1) || source.placements.length === 0) &&
 					source.bracketIdx === bracketIdxToFind,
 			),
 		);

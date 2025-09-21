@@ -592,6 +592,10 @@ describe("isFinals", () => {
 		expect(Progression.isFinals(3, progressions.lowInk)).toBe(true);
 	});
 
+	it("handles swiss (early advance", () => {
+		expect(Progression.isFinals(1, progressions.swissEarlyAdvance)).toBe(true);
+	});
+
 	it("many starter brackets", () => {
 		expect(Progression.isFinals(0, progressions.manyStartBrackets)).toBe(false);
 		expect(Progression.isFinals(1, progressions.manyStartBrackets)).toBe(false);

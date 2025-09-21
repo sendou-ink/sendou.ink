@@ -266,6 +266,26 @@ export const progressions = {
 			},
 		},
 	],
+	swissEarlyAdvance: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "swiss",
+			settings: {
+				advanceThreshold: 3,
+			},
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "B1",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [],
+				},
+			],
+		},
+	],
 	doubleEliminationWithUnderground: [
 		{
 			...DEFAULT_PROGRESSION_ARGS,
