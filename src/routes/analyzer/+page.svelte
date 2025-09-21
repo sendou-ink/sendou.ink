@@ -272,7 +272,155 @@
 					image: asset(`/img/main-weapons/${context.mainWeaponId}.avif`)
 				}}
 			>
-				<StatsCard title="Run Speed" stat={statKeyToTuple('runSpeed')} {context} popoverInfo="a" />
+				{#if analyzedA.stats.shotSpreadAir !== undefined}
+					<StatsCard
+						{context}
+						stat={statKeyToTuple('shotSpreadAir')}
+						title={m.analyzer_stat_jumpShotSpread()}
+						suffix="°"
+					/>
+				{/if}
+				{#if analyzedA.stats.shotSpreadGround !== undefined}
+					<StatsCard
+						{context}
+						stat={analyzedA.stats.shotSpreadGround}
+						title={m.analyzer_stat_groundShotSpread()}
+						suffix="°"
+					/>
+				{/if}
+
+				<!-- Squeezer -->
+				{#if analyzedA.stats.shotAutofireSpreadAir !== undefined}
+					<StatsCard
+						{context}
+						stat={statKeyToTuple('shotAutofireSpreadAir')}
+						title={m.analyzer_stat_shotAutofireSpreadAir()}
+						suffix="°"
+					/>
+				{/if}
+				{#if analyzedA.stats.shotAutofireSpreadGround !== undefined}
+					<StatsCard
+						{context}
+						stat={analyzedA.stats.shotAutofireSpreadGround}
+						title={m.analyzer_stat_shotAutofireSpreadGround()}
+						suffix="°"
+					/>
+				{/if}
+				<!--  -->
+
+				{#if analyzedA.stats.mainWeaponWhiteInkSeconds !== undefined}
+					<StatsCard
+						{context}
+						stat={analyzedA.stats.mainWeaponWhiteInkSeconds}
+						title={m.analyzer_stat_whiteInk()}
+						suffix={m.analyzer_suffix_seconds()}
+					/>
+				{/if}
+				{#if analyzedA.weapon.brellaCanopyHp !== undefined}
+					<StatsCard
+						{context}
+						stat={analyzedA.weapon.brellaCanopyHp}
+						title={m.analyzer_stat_canopyHp()}
+						suffix={m.analyzer_suffix_hp()}
+					/>
+				{/if}
+				{#if analyzedA.weapon.fullChargeSeconds !== undefined}
+					<StatsCard
+						{context}
+						stat={analyzedA.weapon.fullChargeSeconds}
+						title={m.analyzer_stat_fullChargeSeconds()}
+						suffix={m.analyzer_suffix_seconds()}
+					/>
+				{/if}
+				{#if analyzedA.weapon.maxChargeHoldSeconds !== undefined}
+					<StatsCard
+						{context}
+						stat={analyzedA.weapon.maxChargeHoldSeconds}
+						title={m.analyzer_stat_maxChargeHoldSeconds()}
+						suffix={m.analyzer_suffix_seconds()}
+					/>
+				{/if}
+			</StatsCategory>
+			<StatsCategory
+				title={m.analyzer_stat_category_sub()}
+				titleContent={{
+					text: '',
+					image: asset(`/img/sub-weapons/${analyzedA.weapon.subWeaponSplId}.avif`)
+				}}
+			>
+				<StatsCard
+					{context}
+					stat={statKeyToTuple('subWeaponInkConsumptionPercentage')}
+					title={m.analyzer_stat_subWeaponInkConsumptionPercentage()}
+					suffix="%"
+				/>
+				<StatsCard
+					{context}
+					stat={analyzedA.stats.subWeaponWhiteInkSeconds}
+					title={m.analyzer_stat_whiteInk()}
+					suffix={m.analyzer_suffix_seconds()}
+				/>
+				{#if analyzedA.stats.subVelocity !== undefined}
+					<StatsCard
+						{context}
+						stat={statKeyToTuple('subVelocity')}
+						title={m.analyzer_stat_sub_velocity()}
+					/>
+				{/if}
+				{#if analyzedA.stats.subFirstPhaseDuration !== undefined}
+					<StatsCard
+						{context}
+						stat={statKeyToTuple('subFirstPhaseDuration')}
+						title={m.analyzer_stat_sub_firstPhaseDuration()}
+						suffix={m.analyzer_suffix_seconds()}
+					/>
+				{/if}
+				{#if analyzedA.stats.subSecondPhaseDuration !== undefined}
+					<StatsCard
+						{context}
+						stat={statKeyToTuple('subSecondPhaseDuration')}
+						title={m.analyzer_stat_sub_secondPhaseDuration()}
+						suffix={m.analyzer_suffix_seconds()}
+					/>
+				{/if}
+				{#if analyzedA.stats.subMarkingTimeInSeconds !== undefined}
+					<StatsCard
+						{context}
+						stat={statKeyToTuple('subMarkingTimeInSeconds')}
+						title={m.analyzer_stat_sub_markingTimeInSeconds()}
+						suffix={m.analyzer_suffix_seconds()}
+					/>
+				{/if}
+				{#if analyzedA.stats.subMarkingRadius !== undefined}
+					<StatsCard
+						{context}
+						stat={statKeyToTuple('subMarkingRadius')}
+						title={m.analyzer_stat_sub_markingRadius()}
+					/>
+				{/if}
+				{#if analyzedA.stats.subExplosionRadius !== undefined}
+					<StatsCard
+						{context}
+						stat={statKeyToTuple('subExplosionRadius')}
+						title={m.analyzer_stat_sub_explosionRadius()}
+					/>
+				{/if}
+				{#if analyzedA.stats.subHp !== undefined}
+					<StatsCard
+						{context}
+						stat={statKeyToTuple('subHp')}
+						title={m.analyzer_stat_sub_hp()}
+						suffix={m.analyzer_suffix_hp()}
+					/>
+				{/if}
+				{#if analyzedA.stats.subQsjBoost !== undefined}
+					<StatsCard
+						{context}
+						stat={statKeyToTuple('subQsjBoost')}
+						title={m.analyzer_stat_sub_qsjBoost()}
+						suffix={m.analyzer_abilityPoints_short()}
+					/>
+				{/if}
 			</StatsCategory>
 		</div>
 	</div>
