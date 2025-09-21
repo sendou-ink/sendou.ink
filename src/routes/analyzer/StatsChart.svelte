@@ -172,10 +172,6 @@
 				padding: 4px;
 				border: none;
 			}
-
-			.popover-content {
-				max-width: unset;
-			}
 		}
 	}
 
