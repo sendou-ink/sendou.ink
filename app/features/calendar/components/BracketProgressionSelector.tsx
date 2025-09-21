@@ -99,8 +99,26 @@ export function BracketProgressionSelector({
 						bracket={bracket}
 						brackets={brackets}
 						onChange={(newBracket) => {
-							const newBrackets = [...brackets];
+							const newBrackets = structuredClone(brackets);
 							newBrackets[i] = newBracket;
+
+							if (newBracket.settings.advanceThreshold) {
+								const destinationIdx = newBrackets.findIndex((b) =>
+									b.sources?.some(
+										(source) => source.bracketId === newBracket.id,
+									),
+								);
+
+								if (destinationIdx !== -1) {
+									newBrackets[destinationIdx].sources = newBrackets[
+										destinationIdx
+									].sources?.map((source) => ({
+										...source,
+										placements: "",
+									}));
+								}
+							}
+
 							setBrackets(newBrackets);
 						}}
 						onDelete={
@@ -351,7 +369,6 @@ function TournamentFormatBracketSelector({
 								const currentAdvanceThreshold =
 									bracket.settings.advanceThreshold;
 
-								// xxx: also clear "placements" of any destination bracket
 								updateBracket({
 									settings: {
 										...bracket.settings,
