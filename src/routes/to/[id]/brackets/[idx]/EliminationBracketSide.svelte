@@ -2,19 +2,27 @@
 	import RoundHeader from './RoundHeader.svelte';
 	import type * as BracketAPI from '$lib/api/tournament-bracket';
 	import Match from './Match.svelte';
+	import { bracketState } from './compact.svelte';
 
 	interface Props {
 		rounds: Array<BracketAPI.queries.RoundData>;
 		matchPageBaseHref?: string;
+		type: 'winners' | 'losers';
 	}
 
-	let { rounds, matchPageBaseHref }: Props = $props();
+	let { rounds, matchPageBaseHref, type }: Props = $props();
 
-	// const atLeastOneColumnHidden = false; xxx: implement
+	const visibleRounds = $derived(
+		!bracketState.isCompact
+			? rounds
+			: rounds.filter((r, i) => i >= rounds.length - 2 || r.matches.some((m) => !m.isOver))
+	);
+
+	const atLeastOneColumnHidden = $derived(visibleRounds.length !== rounds.length);
 </script>
 
 <div class="container" style="--round-count: {rounds.length}">
-	{#each rounds as round (round.id)}
+	{#each visibleRounds as round (round.id)}
 		<div class="round-column" data-round-id={round.id}>
 			<RoundHeader maps={round.maps}>
 				{round.name}
@@ -23,10 +31,10 @@
 				class={[
 					'matches-container',
 					{
-						'top-bye': false // xxx: correct value here
-						// !atLeastOneColumnHidden &&
-						// type === 'winners' &&
-						// (!bracket.data.match[0].opponent1 || !bracket.data.match[0].opponent2)
+						'top-bye':
+							!atLeastOneColumnHidden &&
+							type === 'winners' &&
+							(!rounds[0].matches[0].teams[0] || !rounds[0].matches[0].teams[1])
 					}
 				]}
 			>

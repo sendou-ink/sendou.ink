@@ -16,8 +16,8 @@
 
 <div class="bracket">
 	{#if bracket.type === 'double_elimination'}
-		<EliminationBracketSide rounds={bracket.winners} {matchPageBaseHref} />
-		<EliminationBracketSide rounds={bracket.losers} {matchPageBaseHref} />
+		<EliminationBracketSide type="winners" rounds={bracket.winners} {matchPageBaseHref} />
+		<EliminationBracketSide type="losers" rounds={bracket.losers} {matchPageBaseHref} />
 	{/if}
 </div>
 

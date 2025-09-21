@@ -40,7 +40,7 @@ function bracketManagerDataSetToBracketData(bracket: BracketCore): BracketData {
 				isPreview: bracket.preview,
 				winners: winnersRounds.map(
 					getRoundMapper(bracket.tournament, (round) =>
-						round.name.includes('Grand') ? 'GF' : 'WB'
+						round.name.includes('Grand') || round.name.includes('Bracket') ? 'GF' : 'WB'
 					)
 				),
 				losers: losersRounds.map(getRoundMapper(bracket.tournament, () => 'LB'))
@@ -57,7 +57,6 @@ function getRoundMapper(
 	identifierPrefix: (round: ReturnType<typeof getEliminationBracketRounds>[number]) => string
 ) {
 	return (round: ReturnType<typeof getEliminationBracketRounds>[number]): RoundData => {
-		console.log(round);
 		return {
 			name: round.name,
 			id: round.id,
@@ -86,7 +85,11 @@ function getRoundMapper(
 					identifier: `${identifierPrefix(round)} ${round.number}.${match.number}`,
 					teams: [resolveTeam(0), resolveTeam(1)],
 					score: null,
-					isOver: false,
+					isOver:
+						match.opponent1?.result === 'win' ||
+						match.opponent2?.result === 'win' ||
+						match.opponent1 === null ||
+						match.opponent2 === null,
 					stream: null
 				};
 			})
@@ -111,6 +114,7 @@ export type BracketMatchData = {
 	/** Short identifier e.g. "WB 1.1" */
 	identifier: string;
 	stream: 'LIVE' | 'LOCK' | null;
+	isOver: boolean;
 };
 
 export interface RoundData {
