@@ -14,7 +14,7 @@
 <Popover.Root>
 	{@render trigger()}
 	<Popover.Portal>
-		<Popover.Content sideOffset={8}>
+		<Popover.Content sideOffset={8} collisionPadding={16}>
 			{#snippet child({ wrapperProps, props, open })}
 				{#if open}
 					<div {...wrapperProps}>
