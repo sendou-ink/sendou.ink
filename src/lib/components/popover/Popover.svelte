@@ -5,9 +5,10 @@
 	interface Props {
 		children: Snippet;
 		trigger: Snippet;
+		fullWidth?: boolean;
 	}
 
-	let { children, trigger }: Props = $props();
+	let { children, trigger, fullWidth }: Props = $props();
 </script>
 
 <Popover.Root>
@@ -17,7 +18,7 @@
 			{#snippet child({ wrapperProps, props, open })}
 				{#if open}
 					<div {...wrapperProps}>
-						<div {...props} class="popover-content">
+						<div {...props} class={['popover-content', { 'full-width': fullWidth }]}>
 							{@render children()}
 						</div>
 					</div>
@@ -49,6 +50,10 @@
 		@starting-style {
 			opacity: 0;
 			transform: translateY(-4px);
+		}
+
+		&.full-width {
+			max-width: unset;
 		}
 	}
 </style>
