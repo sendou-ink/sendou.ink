@@ -37,6 +37,12 @@
 </details>
 
 <style>
+	details :global {
+		&:not(:has(.card)) {
+			display: none;
+		}
+	}
+
 	summary {
 		border-radius: var(--radius-box);
 		background-color: var(--color-base-card-section);
