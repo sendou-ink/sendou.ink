@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Ability } from '$lib/constants/in-game/types';
+	import type { Ability as AbilityType, AbilityWithUnknown } from '$lib/constants/in-game/types';
 	import type { AnalyzedBuild } from '$lib/core/analyzer/types';
 	import type { MainWeaponId, SubWeaponId } from '$lib/constants/in-game/types';
 	import type { Stat } from '$lib/core/analyzer/types';
@@ -15,9 +15,10 @@
 	import Popover from '$lib/components/popover/Popover.svelte';
 	import PopoverTriggerButton from '$lib/components/popover/PopoverTriggerButton.svelte';
 	import ChartNoAxesCombined from '@lucide/svelte/icons/chart-no-axes-combined';
+	import Ability from '$lib/components/builder/Ability.svelte';
 
 	interface MetaData {
-		test: string;
+		abilities: AbilityWithUnknown[];
 	}
 
 	interface Props {
@@ -26,7 +27,7 @@
 		mainWeaponId: MainWeaponId;
 		subWeaponId?: SubWeaponId;
 		statKey?: keyof AnalyzedBuild['stats'];
-		modifiedBy: Ability[];
+		modifiedBy: AbilityType[];
 	}
 
 	let { title, suffix, mainWeaponId, subWeaponId, statKey, modifiedBy }: Props = $props();
@@ -51,7 +52,7 @@
 		);
 
 		dataSets.push({
-			metadata: { test: 'test' },
+			metadata: { abilities: [stackableAbility] },
 			label: '',
 			data: analyzedBuilds.map((build, i) => ({
 				x: i.toString() + m.analyzer_abilityPoints_short(),
@@ -70,7 +71,7 @@
 			);
 
 			dataSets.push({
-				metadata: { test: 'test' },
+				metadata: { abilities: [stackableAbility, mainOnlyAbility] },
 				label: mainOnlyAbility,
 				data: analyzedBuildsMainOnly.map((build, i) => ({
 					x: i.toString() + m.analyzer_abilityPoints_short(),
@@ -105,7 +106,7 @@
 			const distance = key.split(',')[0];
 
 			dataSets.push({
-				metadata: { test: 'test' },
+				metadata: { abilities: ['UNKNOWN'] },
 				label: `${m.analyzer_damage_header_distance}: ${distance}`,
 				data: analyzedBuilds.map((build, i) => {
 					const damage = build.stats.subWeaponDefenseDamages.find(
@@ -131,21 +132,58 @@
 	}
 </script>
 
-<Popover>
-	{#snippet trigger()}
-		<PopoverTriggerButton class="chart-button" size="small">
-			<ChartNoAxesCombined size="16" />
-		</PopoverTriggerButton>
-	{/snippet}
-	<LineChart datasets={dataSets} heading={title}>
-		{#snippet tooltip(data)}
-			<p {...data.titleStyles}>{data.datasets[0].raw.x}</p>
-			{#each data.datasets as dataset, i (i)}
-				<span class="tooltip-item" {...dataset.itemStyles}>
-					<div class="tooltip-point" {...dataset.pointStyles}></div>
-					<p>{dataset.parsed.y}{suffix}{dataset.metadata?.test}</p>
-				</span>
-			{/each}
+<div class="wrapper">
+	<Popover fullWidth>
+		{#snippet trigger()}
+			<PopoverTriggerButton class="chart-button" size="small">
+				<ChartNoAxesCombined size="16" />
+			</PopoverTriggerButton>
 		{/snippet}
-	</LineChart>
-</Popover>
+		<LineChart datasets={dataSets} heading={title}>
+			{#snippet tooltip(data)}
+				<p {...data.titleStyles}>{data.datasets[0].raw.x}</p>
+				{#each data.datasets as dataset, i (i)}
+					<span {...dataset.itemStyles}>
+						<div {...dataset.pointStyles}></div>
+						<span class="abilities">
+							<div>
+								{#each dataset.metadata?.abilities ?? [] as ability (ability)}
+									{#if ability !== 'UNKNOWN'}
+										<Ability {ability} size="TINY" />
+									{/if}
+								{/each}
+							</div>
+							<p>{dataset.parsed.y}{suffix}</p>
+						</span>
+					</span>
+				{/each}
+			{/snippet}
+		</LineChart>
+	</Popover>
+</div>
+
+<style>
+	.wrapper {
+		display: contents;
+
+		:global {
+			.chart-button {
+				border-radius: 99999px;
+				padding: 4px;
+				border: none;
+			}
+
+			.popover-content {
+				max-width: unset;
+			}
+		}
+	}
+
+	.abilities {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: var(--s-2);
+		margin-left: var(--s-1);
+	}
+</style>

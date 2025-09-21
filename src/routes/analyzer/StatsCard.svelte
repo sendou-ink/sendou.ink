@@ -162,12 +162,6 @@
 		&.highlighted {
 			background-color: var(--color-base-card);
 		}
-
-		:global(.chart-button) {
-			border-radius: 99999px;
-			padding: 4px;
-			border: none;
-		}
 	}
 
 	.values {
