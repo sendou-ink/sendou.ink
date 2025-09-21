@@ -38,8 +38,12 @@ function bracketManagerDataSetToBracketData(bracket: BracketCore): BracketData {
 			return {
 				type: 'double_elimination',
 				isPreview: bracket.preview,
-				winners: winnersRounds.map(getRoundMapper(bracket.tournament)),
-				losers: losersRounds.map(getRoundMapper(bracket.tournament))
+				winners: winnersRounds.map(
+					getRoundMapper(bracket.tournament, (round) =>
+						round.name.includes('Grand') || round.name.includes('Bracket') ? 'GF' : 'WB'
+					)
+				),
+				losers: losersRounds.map(getRoundMapper(bracket.tournament, () => 'LB'))
 			};
 		}
 		default: {
@@ -48,9 +52,11 @@ function bracketManagerDataSetToBracketData(bracket: BracketCore): BracketData {
 	}
 }
 
-function getRoundMapper(tournament: TournamentCore) {
+function getRoundMapper(
+	tournament: TournamentCore,
+	identifierPrefix: (round: ReturnType<typeof getEliminationBracketRounds>[number]) => string
+) {
 	return (round: ReturnType<typeof getEliminationBracketRounds>[number]): RoundData => {
-		console.log(round);
 		return {
 			name: round.name,
 			id: round.id,
@@ -69,16 +75,21 @@ function getRoundMapper(tournament: TournamentCore) {
 						seed: fullTeam.seed,
 						name: fullTeam.name,
 						logoUrl: tournament.tournamentTeamLogoSrc(fullTeam) ?? null,
-						result: team.result ?? null
+						result: team.result ?? null,
+						roster: fullTeam.members.map((member) => member.username)
 					};
 				}
 
 				return {
 					id: match.id,
-					identifier: 'WB 1.1', // xxx: actual round identifier
+					identifier: `${identifierPrefix(round)} ${round.number}.${match.number}`,
 					teams: [resolveTeam(0), resolveTeam(1)],
 					score: null,
-					isOver: false,
+					isOver:
+						match.opponent1?.result === 'win' ||
+						match.opponent2?.result === 'win' ||
+						match.opponent1 === null ||
+						match.opponent2 === null,
 					stream: null
 				};
 			})
@@ -92,6 +103,7 @@ export type BracketTeamData = {
 	seed: number;
 	name: string;
 	logoUrl: string | null;
+	roster: string[];
 };
 
 export type BracketMatchData = {
@@ -102,6 +114,7 @@ export type BracketMatchData = {
 	/** Short identifier e.g. "WB 1.1" */
 	identifier: string;
 	stream: 'LIVE' | 'LOCK' | null;
+	isOver: boolean;
 };
 
 export interface RoundData {
