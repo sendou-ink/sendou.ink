@@ -15,7 +15,7 @@
 </script>
 
 <div class="stack lg">
-	<div class="ml-auto">
+	<div>
 		<Button
 			onclick={() => {
 				bracketState.isCompact = !bracketState.isCompact;
