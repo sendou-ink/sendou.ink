@@ -38,8 +38,12 @@ function bracketManagerDataSetToBracketData(bracket: BracketCore): BracketData {
 			return {
 				type: 'double_elimination',
 				isPreview: bracket.preview,
-				winners: winnersRounds.map(getRoundMapper(bracket.tournament)),
-				losers: losersRounds.map(getRoundMapper(bracket.tournament))
+				winners: winnersRounds.map(
+					getRoundMapper(bracket.tournament, (round) =>
+						round.name.includes('Grand') ? 'GF' : 'WB'
+					)
+				),
+				losers: losersRounds.map(getRoundMapper(bracket.tournament, () => 'LB'))
 			};
 		}
 		default: {
@@ -48,7 +52,10 @@ function bracketManagerDataSetToBracketData(bracket: BracketCore): BracketData {
 	}
 }
 
-function getRoundMapper(tournament: TournamentCore) {
+function getRoundMapper(
+	tournament: TournamentCore,
+	identifierPrefix: (round: ReturnType<typeof getEliminationBracketRounds>[number]) => string
+) {
 	return (round: ReturnType<typeof getEliminationBracketRounds>[number]): RoundData => {
 		console.log(round);
 		return {
@@ -75,7 +82,7 @@ function getRoundMapper(tournament: TournamentCore) {
 
 				return {
 					id: match.id,
-					identifier: 'WB 1.1', // xxx: actual round identifier
+					identifier: `${identifierPrefix(round)} ${round.number}.${match.number}`,
 					teams: [resolveTeam(0), resolveTeam(1)],
 					score: null,
 					isOver: false,
