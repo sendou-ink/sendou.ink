@@ -12,6 +12,7 @@ import { redirect } from '@sveltejs/kit';
 import { resolve } from '$app/paths';
 import * as MapPool from '$lib/core/maps/MapPool';
 import { TOURNAMENT_MAP_PICKING_STYLES } from '$lib/constants/calendar';
+import * as Standings from '$lib/core/tournament/Standings';
 
 const md = markdownit();
 
@@ -233,3 +234,31 @@ export const teamsById = query(id, async (tournamentId) => {
 });
 
 export type TeamsByIdData = Awaited<ReturnType<typeof teamsById>>;
+
+export const resultsById = query(id, async (tournamentId) => {
+	const tournament = await requireTournament(tournamentId);
+
+	const standings = Standings.tournamentStandings(tournament);
+
+	let lastPlacement = 0;
+	return standings.map((standing) => {
+		let shouldHavePlacement = false;
+		if (standing.placement !== lastPlacement) {
+			shouldHavePlacement = true;
+			lastPlacement = standing.placement;
+		}
+
+		return {
+			team: standing.team,
+			placement: shouldHavePlacement ? standing.placement : null,
+			spr: tournament.ctx.isFinalized
+				? Standings.calculateSPR({
+						standings,
+						teamId: standing.team.id
+					})
+				: null,
+			matches: Standings.matchesPlayed({ tournament, teamId: standing.team.id }),
+			teamLogoSrc: tournament.tournamentTeamLogoSrc(standing.team)
+		};
+	});
+});

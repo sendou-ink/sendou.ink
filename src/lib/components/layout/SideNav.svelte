@@ -21,6 +21,8 @@
 		// TODO: is this correct? or should the context contain just the reactive piece of state
 		closeMobileNavContext.set(closeMobileNav);
 	}
+
+	// xxx: overflows, check low ink august 2025 results for example
 </script>
 
 {#if isMobile}
