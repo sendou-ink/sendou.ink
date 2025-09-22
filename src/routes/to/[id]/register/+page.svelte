@@ -1,14 +1,14 @@
 <script lang="ts">
 	import FriendCodeGate from '$lib/components/FriendCodeGate.svelte';
 	import Main from '$lib/components/layout/Main.svelte';
-	import StatusCircle from './StatusCircle.svelte';
 	import * as TournamentAPI from '$lib/api/tournament';
 	import type { PageProps } from './$types';
 	import { getLocale } from '$lib/paraglide/runtime';
 	import { getMinutes } from 'date-fns';
 	import TeamInfoSection from './TeamInfo.svelte';
-	import RegFlowSection from './RegFlowSection.svelte';
 	import MapPool from './MapPool.svelte';
+	import RosterSection from './RosterSection.svelte';
+	import RegistrationSteps from './RegistrationSteps.svelte';
 
 	let { params }: PageProps = $props();
 
@@ -37,29 +37,16 @@
 		</div>
 	</div>
 	<FriendCodeGate>
-		<div class="registration-flow">
+		<div class="stack lg">
+			<RegistrationSteps tournamentId={params.id} />
+
 			<TeamInfoSection tournamentId={params.id} />
+
+			<RosterSection tournamentId={params.id} />
 
 			{#if mapPickingStyle}
 				<MapPool tournamentId={params.id} />
 			{/if}
-
-			<StatusCircle status="WAIT" top={60 * 2} />
-			<RegFlowSection>3.</RegFlowSection>
 		</div>
 	</FriendCodeGate>
 </Main>
-
-<style>
-	.registration-flow {
-		display: grid;
-		grid-template-columns: auto 1fr;
-		gap: var(--s-6) var(--s-6);
-		align-items: start;
-
-		@media (max-width: 768px) {
-			grid-template-columns: 1fr;
-			gap: var(--s-4);
-		}
-	}
-</style>

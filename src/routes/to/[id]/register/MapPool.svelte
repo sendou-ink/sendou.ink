@@ -1,6 +1,5 @@
 <script lang="ts">
 	import Form from '$lib/components/form/Form.svelte';
-	import StatusCircle from './StatusCircle.svelte';
 	import * as TournamentAPI from '$lib/api/tournament';
 	import { createFieldValidator } from '$lib/components/form/utils';
 	import FormField from '$lib/components/form/FormField.svelte';
@@ -18,15 +17,6 @@
 	const validField = createFieldValidator(schema);
 </script>
 
-<StatusCircle
-	status={mapPoolDefaultValues.AUTO_ALL ||
-	mapPoolDefaultValues.AUTO_SZ ||
-	mapPoolDefaultValues.AUTO_TC ||
-	mapPoolDefaultValues.AUTO_RM ||
-	mapPoolDefaultValues.AUTO_CB
-		? 'OK'
-		: 'MISSING'}
-/>
 <RegFlowSection>
 	<Form
 		{schema}

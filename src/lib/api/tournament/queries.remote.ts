@@ -157,6 +157,7 @@ export const myRegistrationById = query(id, async (tournamentId) => {
 		team.members.some((member) => member.userId === user.id)
 	);
 
+	// xxx: extract to different remote function?
 	const teamInfoDefaultValues: Partial<SchemaToDefaultValues<UpsertTeamData>> = tournamentTeam
 		? {
 				tournamentId: tournament.ctx.id,
@@ -169,6 +170,7 @@ export const myRegistrationById = query(id, async (tournamentId) => {
 
 	const mapPickingStyle =
 		tournament.ctx.mapPickingStyle !== 'TO' ? tournament.ctx.mapPickingStyle : null;
+	// xxx: extract to different remote function?
 	const mapPoolDefaultValues: Partial<SchemaToDefaultValues<UpsertTeamMapPoolData>> = tournamentTeam
 		? {
 				tournamentId: tournament.ctx.id,
@@ -183,12 +185,20 @@ export const myRegistrationById = query(id, async (tournamentId) => {
 			}
 		: {};
 
+	const isTeamManager = Boolean(
+		tournamentTeam?.members.some((member) => member.userId === user.id && member.isOwner)
+	);
+
 	return {
 		tournamentTeamId: tournamentTeam?.id ?? null,
 		/** Is the team checked in (main check-in for the whole tournament) */
 		checkedIn: (tournamentTeam?.checkIns ?? []).length > 0,
 		teamInfoDefaultValues,
 		mapPoolDefaultValues,
+		minMembers: tournament.minMembersPerTeam,
+		maxMembers: tournament.maxTeamMemberCount,
+		inviteCode: isTeamManager ? (tournamentTeam?.inviteCode ?? null) : null,
+		isTeamManager,
 		members: tournamentTeam?.members.map((member) => ({
 			userId: member.userId,
 			discordId: member.discordId,
@@ -203,9 +213,7 @@ export const myRegistrationById = query(id, async (tournamentId) => {
 		mapPickingStyle:
 			tournament.ctx.mapPickingStyle !== 'TO' ? tournament.ctx.mapPickingStyle : null,
 		/** Is it possible to change registration right now for this user and at this point in time? */
-		canChangeRegistration:
-			tournament.registrationOpen &&
-			tournamentTeam?.members.some((member) => member.userId === user.id && member.isOwner)
+		canChangeRegistration: tournament.registrationOpen && isTeamManager
 	};
 });
 

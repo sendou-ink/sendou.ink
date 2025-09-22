@@ -10,9 +10,7 @@
 
 	const { match, href }: Props = $props();
 
-	const isBye = $derived(!match.teams[0] || !match.teams[1]);
-
-	// xxx: show roster on hover
+	const isBye = $derived(match.teams.some((team) => team === null));
 </script>
 
 {#if isBye}
@@ -60,15 +58,16 @@
 		{/if}
 
 		<div
-			class={{
-				'team-name': true,
-				'text-lighter italic opaque': match.teams[side]?.isSimulated,
-				'team-name__narrow': (team && team.logoUrl) || isBigSeedNumber,
-				'team-name__narrowest': team && team.logoUrl && isBigSeedNumber,
-				invisible: !team
-			}}
+			class={[
+				'team-name',
+				{
+					'text-lighter italic opaque': match.teams[side]?.isSimulated,
+					narrow: (team && team.logoUrl) || isBigSeedNumber,
+					narrowest: team && team.logoUrl && isBigSeedNumber
+				}
+			]}
 		>
-			{team ? team.name : team === 'BYE' ? 'BYE' : '???'}
+			{team?.name}
 		</div>
 
 		<div class="score">
@@ -147,14 +146,15 @@
 		overflow: hidden;
 		white-space: nowrap;
 		text-overflow: ellipsis;
-	}
+		min-height: 16px;
 
-	.team-name__narrow {
-		max-width: 75px;
-	}
+		&.narrow {
+			max-width: 75px;
+		}
 
-	.team-name__narrowest {
-		max-width: 70px;
+		&.narrowest {
+			max-width: 70px;
+		}
 	}
 
 	.score {

@@ -274,14 +274,6 @@ export function upsertMapPool(id: number, { mapPool }: { mapPool: MapPool.Partia
 	});
 }
 
-export function deleteLogo(tournamentTeamId: number) {
-	return db
-		.updateTable('TournamentTeam')
-		.set({ avatarImgId: null })
-		.where('TournamentTeam.id', '=', tournamentTeamId)
-		.execute();
-}
-
 export function updateStartingBrackets(
 	startingBrackets: {
 		tournamentTeamId: number;
@@ -303,4 +295,26 @@ export function updateStartingBrackets(
 				.execute();
 		}
 	});
+}
+
+export function deleteMember({
+	userId,
+	tournamentTeamId
+}: {
+	userId: number;
+	tournamentTeamId: number;
+}) {
+	return db
+		.deleteFrom('TournamentTeamMember')
+		.where('userId', '=', userId)
+		.where('tournamentTeamId', '=', tournamentTeamId)
+		.execute();
+}
+
+export function resetInviteCode(tournamentTeamId: number) {
+	return db
+		.updateTable('TournamentTeam')
+		.set({ inviteCode: shortNanoid() })
+		.where('id', '=', tournamentTeamId)
+		.execute();
 }

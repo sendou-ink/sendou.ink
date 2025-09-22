@@ -63,9 +63,10 @@ function getRoundMapper(
 			deadline: undefined, // xxx: add deadline info
 			maps: round.maps ?? undefined,
 			matches: round.matches.map((match) => {
-				function resolveTeam(side: 0 | 1): BracketTeamData | null {
+				function resolveTeam(side: 0 | 1): BracketTeamData | null | undefined {
 					const team = side === 0 ? match.opponent1 : match.opponent2;
-					if (!team || !team.id) return null;
+					if (!team) return null;
+					if (!team.id) return undefined;
 
 					const fullTeam = tournament.teamById(team.id);
 					invariant(fullTeam);
@@ -108,8 +109,8 @@ export type BracketTeamData = {
 
 export type BracketMatchData = {
 	id: number;
-	/** Teams of the match. If null, it is a BYE. */
-	teams: [BracketTeamData | null, BracketTeamData | null];
+	/** Teams of the match. If `null`, it is a BYE. `undefined` means no team yet */
+	teams: [BracketTeamData | null | undefined, BracketTeamData | null | undefined];
 	score: [number, number] | null;
 	/** Short identifier e.g. "WB 1.1" */
 	identifier: string;

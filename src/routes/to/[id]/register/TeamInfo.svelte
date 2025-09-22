@@ -1,6 +1,5 @@
 <script lang="ts">
 	import Form from '$lib/components/form/Form.svelte';
-	import StatusCircle from './StatusCircle.svelte';
 	import * as TournamentAPI from '$lib/api/tournament';
 	import { createFieldValidator } from '$lib/components/form/utils';
 	import FormField from '$lib/components/form/FormField.svelte';
@@ -26,7 +25,6 @@
 	// xxx: Pickup name should show required asterisk
 </script>
 
-<StatusCircle status={tournamentTeamId ? 'OK' : 'MISSING'} />
 <RegFlowSection>
 	<Form
 		{schema}
