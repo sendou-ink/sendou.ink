@@ -42,4 +42,13 @@ describe('MapList.generate()', () => {
 			expect(map).toEqual({ mode: 'TW', stageId: 1 });
 		}
 	});
+
+	it('contains every mode once before repeating', () => {
+		const maps = MapList.generate({ amount: 5, mapPool: ALL_MODES_TEST_MAP_POOL }).next().value;
+		const modes = maps!.map((m) => m.mode);
+
+		for (const modeShort of ['TW', 'SZ', 'TC', 'RM', 'CB'] as const) {
+			expect(modes).toContain(modeShort);
+		}
+	});
 });

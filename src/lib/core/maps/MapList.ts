@@ -21,10 +21,23 @@ interface GenerateBalancedInput extends GenerateInputCommon {
 export function* generate(args: GenerateInput) {
 	const result = [];
 
-	const pool = MapPool.toArray(args.mapPool);
+	const modes = MapPool.toModes(args.mapPool);
+	let currModeIdx = 0;
 
 	for (let i = 0; i < args.amount; i++) {
-		result.push(pool[i % pool.length]);
+		const mode = modes[currModeIdx];
+		const stages = args.mapPool[mode]!;
+
+		result.push({
+			mode,
+			stageId: stages[i % stages.length]
+		});
+
+		if (currModeIdx === modes.length - 1) {
+			currModeIdx = 0;
+		} else {
+			currModeIdx++;
+		}
 	}
 	yield result;
 }
