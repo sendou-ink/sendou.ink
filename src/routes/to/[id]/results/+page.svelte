@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { PageProps } from '../$types';
 	import * as TournamentAPI from '$lib/api/tournament';
-	import Table from '$lib/components/Table.svelte';
+	import Table from '$lib/components/tables/Table.svelte';
 	import Placement from '$lib/components/Placement.svelte';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import Flag from '$lib/components/Flag.svelte';

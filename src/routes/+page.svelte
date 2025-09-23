@@ -5,6 +5,27 @@
 	import * as AuthAPI from '$lib/api/auth';
 	import { navItems } from './nav-items';
 	import { asset } from '$app/paths';
+	import Test from '$lib/components/tables/Test.svelte';
+
+	const columns = [
+		{
+			accessorKey: 'status',
+			header: 'Status'
+		},
+		{
+			accessorKey: 'email',
+			header: 'Email'
+		},
+		{
+			accessorKey: 'amount',
+			header: 'Amount'
+		}
+	];
+
+	const data = [
+		{ status: 'Active', email: 'user@example.com', amount: 100 },
+		{ status: 'Inactive', email: 'user2@example.com', amount: 200 }
+	];
 </script>
 
 <Main class="front-page__container">
@@ -43,12 +64,10 @@
 	<p>
 		Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation
 	</p>
+	<Test {columns} {data} />
 </Main>
 
 <style>
-	p {
-		margin-bottom: 100rem;
-	}
 	.top-leaderboard {
 		min-height: 130px;
 		margin: 10px 0;

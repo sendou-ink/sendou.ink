@@ -63,7 +63,7 @@
 		font-size: var(--fonts-xs);
 		gap: var(--s-2);
 		align-items: center;
-		background-color: var(--color-base-card-section);
+		background-color: var(--color-base-bg);
 		border-radius: 99999px;
 		padding: var(--s-1) var(--s-3);
 		position: absolute;

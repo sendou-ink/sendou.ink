@@ -18,7 +18,7 @@
 	import TabPanel from '$lib/components/tabs/TabPanel.svelte';
 	import { SearchParamState } from '$lib/runes/search-param-state.svelte';
 	import z from 'zod';
-	import Table from '$lib/components/Table.svelte';
+	import Table from '$lib/components/tables/Table.svelte';
 	import Placement from '$lib/components/Placement.svelte';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import { modesShort } from '$lib/constants/in-game/modes';

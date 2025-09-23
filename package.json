@@ -37,6 +37,7 @@
 		"@epic-web/cachified": "^5.6.0",
 		"@faker-js/faker": "^10.0.0",
 		"@lucide/svelte": "^0.544.0",
+		"@tanstack/table-core": "^8.21.3",
 		"aws-sdk": "^2.1692.0",
 		"bits-ui": "^2.10.0",
 		"browser-image-compression": "^2.0.2",

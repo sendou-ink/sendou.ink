@@ -5,7 +5,7 @@
 	import * as TeamAPI from '$lib/api/team';
 	import { getLocale } from '$lib/paraglide/runtime';
 	import Placement from '$lib/components/Placement.svelte';
-	import Table from '$lib/components/Table.svelte';
+	import Table from '$lib/components/tables/Table.svelte';
 	import { userSubmittedImage } from '$lib/utils/urls-img';
 	import { resolve } from '$app/paths';
 	import Popover from '$lib/components/popover/Popover.svelte';
