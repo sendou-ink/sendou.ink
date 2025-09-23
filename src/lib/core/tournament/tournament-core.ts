@@ -776,7 +776,7 @@ export class TournamentCore {
 		);
 	}
 
-	/** what is the max amount of members teams can add in total? This limit doesn't apply to the organizer adding members to a team. */
+	/** What is the max amount of members teams can add in total? This limit doesn't apply to the organizer adding members to a team. */
 	get maxTeamMemberCount() {
 		// special format
 		if (this.minMembersPerTeam !== 4) return this.minMembersPerTeam;

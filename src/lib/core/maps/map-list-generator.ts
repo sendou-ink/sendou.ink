@@ -1,3 +1,4 @@
+// xxx: delete file
 // Original version by Lean
 
 import type { ModeShort, ModeWithStage, StageId } from '$lib/constants/in-game/types';

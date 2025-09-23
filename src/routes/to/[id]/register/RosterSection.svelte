@@ -12,6 +12,7 @@
 	import * as AuthAPI from '$lib/api/auth';
 	import InviteLink from '$lib/components/InviteLink.svelte';
 	import { resolve } from '$app/paths';
+	import * as UserAPI from '$lib/api/user';
 
 	const { tournamentId }: { tournamentId: string } = $props();
 
@@ -61,6 +62,13 @@
 				{@render memberActions(member)}
 			{/if}
 		</div>
+		{#if member.userId === (await AuthAPI.queries.me())?.id}
+			<div class="text-xs text-lighter font-semi-bold italic">
+				Your friend code is <b>SW-{await UserAPI.queries.myFriendCode()}</b>. Make sure you play on
+				the account matching this friend code. Not doing so might be considered alting which is a
+				bannable offense.
+			</div>
+		{/if}
 	{:else}
 		<div class="member-row placeholder"><span>Member {nth}</span></div>
 	{/if}

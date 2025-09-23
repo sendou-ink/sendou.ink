@@ -8,6 +8,14 @@ import invariant from '$lib/utils/invariant';
 import { shortNanoid } from '$lib/utils/id';
 import * as MapPool from '$lib/core/maps/MapPool';
 
+export function findByInviteCode(inviteCode: string) {
+	return db
+		.selectFrom('TournamentTeam')
+		.select(['id'])
+		.where('TournamentTeam.inviteCode', '=', inviteCode)
+		.executeTakeFirst();
+}
+
 export function setActiveRoster({
 	teamId,
 	activeRosterUserIds
@@ -131,6 +139,62 @@ export function create({
 			.execute();
 
 		return tournamentTeam;
+	});
+}
+
+export function join({
+	previousTeamId,
+	whatToDoWithPreviousTeam,
+	newTeamId,
+	userId,
+	inGameName,
+	tournamentId,
+	checkOutTeam = false
+}: {
+	previousTeamId?: number;
+	whatToDoWithPreviousTeam?: 'LEAVE' | 'DELETE';
+	newTeamId: number;
+	userId: number;
+	inGameName: string | null;
+	tournamentId: number;
+	checkOutTeam?: boolean;
+}) {
+	return db.transaction().execute(async (trx) => {
+		if (whatToDoWithPreviousTeam === 'DELETE' && previousTeamId) {
+			await trx.deleteFrom('MapPoolMap').where('tournamentTeamId', '=', previousTeamId).execute();
+			await trx.deleteFrom('TournamentTeam').where('id', '=', previousTeamId).execute();
+		} else if (whatToDoWithPreviousTeam === 'LEAVE' && previousTeamId) {
+			await trx
+				.deleteFrom('TournamentTeamMember')
+				.where('tournamentTeamId', '=', previousTeamId)
+				.where('userId', '=', userId)
+				.execute();
+		}
+
+		if (!previousTeamId) {
+			await trx
+				.deleteFrom('TournamentSub')
+				.where('tournamentId', '=', tournamentId)
+				.where('userId', '=', userId)
+				.execute();
+		}
+
+		if (checkOutTeam) {
+			invariant(previousTeamId, 'previousTeamId is required when checking out team');
+			await trx
+				.deleteFrom('TournamentTeamCheckIn')
+				.where('tournamentTeamId', '=', previousTeamId)
+				.execute();
+		}
+
+		await trx
+			.insertInto('TournamentTeamMember')
+			.values({
+				tournamentTeamId: newTeamId,
+				inGameName,
+				userId
+			})
+			.execute();
 	});
 }
 
