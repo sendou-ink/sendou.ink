@@ -134,6 +134,15 @@ export default function TournamentBracketsPage() {
 			)} rounds of the losers bracket can play in this bracket`;
 		}
 
+		const advanceThreshold = tournament.brackets[0].settings?.advanceThreshold;
+		if (
+			advanceThreshold &&
+			tournament.ctx.settings.bracketProgression[bracketIdx].sources?.[0]
+				.placements.length === 0
+		) {
+			return `Teams that win at least ${advanceThreshold} sets in the Swiss bracket will advance to this stage`;
+		}
+
 		return null;
 	};
 

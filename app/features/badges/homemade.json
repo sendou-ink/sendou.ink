@@ -43,6 +43,10 @@
 		"displayName": "Art Supplies Pencil Award (Silver)",
 		"authorDiscordId": "1320944066002681876"
 	},
+	"asaudinationaldayevent": {
+		"displayName": "A Saudi national day event",
+		"authorDiscordId": "754368445910614046"
+	},
 	"ausflag": {
 		"displayName": "OCE Open",
 		"authorDiscordId": "1170249805373657093"
@@ -614,6 +618,14 @@
 	"matchmeetex": {
 		"displayName": "Meet Your Match Counterpick Gauntlet",
 		"authorDiscordId": "631246535560265749"
+	},
+	"mayadiamond1": {
+		"displayName": "Maya's Diamond Heist",
+		"authorDiscordId": "338806780446638082"
+	},
+	"mayadiamond2": {
+		"displayName": "Golden Diamond Heist",
+		"authorDiscordId": "338806780446638082"
 	},
 	"meadowscow": {
 		"displayName": "Moo Moo Cup",
