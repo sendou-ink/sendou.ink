@@ -19,7 +19,14 @@ interface GenerateBalancedInput extends GenerateInputCommon {
 }
 
 export function* generate(args: GenerateInput) {
-	yield new Array(args.amount).fill(null).map(() => ({ mode: 'TW', stageId: 1 }));
+	const result = [];
+
+	const pool = MapPool.toArray(args.mapPool);
+
+	for (let i = 0; i < args.amount; i++) {
+		result.push(pool[i]);
+	}
+	yield result;
 }
 
-export function* generateBalanced(args: GenerateBalancedInput) {}
+export function* generateBalanced(_args: GenerateBalancedInput) {}
