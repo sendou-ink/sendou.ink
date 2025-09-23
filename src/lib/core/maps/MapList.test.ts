@@ -51,4 +51,10 @@ describe('MapList.generate()', () => {
 			expect(modes).toContain(modeShort);
 		}
 	});
+
+	it('repeats a mode following the pattern when amount bigger than mode count', () => {
+		const maps = MapList.generate({ amount: 6, mapPool: ALL_MODES_TEST_MAP_POOL }).next().value;
+
+		expect(maps![0].mode).toBe(maps![5].mode);
+	});
 });
