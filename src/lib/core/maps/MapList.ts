@@ -24,7 +24,7 @@ export function* generate(args: GenerateInput) {
 	const pool = MapPool.toArray(args.mapPool);
 
 	for (let i = 0; i < args.amount; i++) {
-		result.push(pool[i]);
+		result.push(pool[i % pool.length]);
 	}
 	yield result;
 }

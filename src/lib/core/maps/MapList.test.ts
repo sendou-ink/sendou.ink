@@ -33,4 +33,13 @@ describe('MapList.generate()', () => {
 
 		expect(maps).toHaveLength(new Set(maps!.map((m) => `${m.mode}-${m.stageId}`)).size);
 	});
+
+	it('repeats maps when amount is larger than pool size', () => {
+		const maps = MapList.generate({ amount: 3, mapPool: { TW: [1] } }).next().value;
+
+		expect(maps).toHaveLength(3);
+		for (const map of maps!) {
+			expect(map).toEqual({ mode: 'TW', stageId: 1 });
+		}
+	});
 });
