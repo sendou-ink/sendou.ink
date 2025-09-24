@@ -19,27 +19,32 @@ interface GenerateBalancedInput extends GenerateInputCommon {
 }
 
 export function* generate(args: GenerateInput) {
-	const result = [];
-
 	const modes = MapPool.toModes(args.mapPool);
-	let currModeIdx = 0;
+	let globalStageCounter = 0;
 
-	for (let i = 0; i < args.amount; i++) {
-		const mode = modes[currModeIdx];
-		const stages = args.mapPool[mode]!;
+	while (true) {
+		const result = [];
+		let currModeIdx = 0;
 
-		result.push({
-			mode,
-			stageId: stages[i % stages.length]
-		});
+		for (let i = 0; i < args.amount; i++) {
+			const mode = modes[currModeIdx];
+			const stages = args.mapPool[mode]!;
 
-		if (currModeIdx === modes.length - 1) {
-			currModeIdx = 0;
-		} else {
-			currModeIdx++;
+			result.push({
+				mode,
+				stageId: stages[(globalStageCounter + i) % stages.length]
+			});
+
+			if (currModeIdx === modes.length - 1) {
+				currModeIdx = 0;
+			} else {
+				currModeIdx++;
+			}
 		}
+
+		globalStageCounter += args.amount;
+		yield result;
 	}
-	yield result;
 }
 
 export function* generateBalanced(_args: GenerateBalancedInput) {}
