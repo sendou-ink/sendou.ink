@@ -173,6 +173,89 @@ describe("validatedSources - PLACEMENTS_PARSE_ERROR", () => {
 
 		expect(error.type).toBe("PLACEMENTS_PARSE_ERROR");
 	});
+
+	it("allows empty string placements for Swiss brackets with early advance", () => {
+		const result = Progression.validatedBrackets([
+			{
+				id: "1",
+				name: "Swiss Bracket",
+				type: "swiss",
+				settings: {
+					advanceThreshold: 3,
+				},
+				requiresCheckIn: false,
+			},
+			{
+				id: "2",
+				name: "Final Bracket",
+				type: "single_elimination",
+				settings: {},
+				requiresCheckIn: false,
+				sources: [
+					{
+						bracketId: "1",
+						placements: "",
+					},
+				],
+			},
+		]) as Progression.ParsedBracket[];
+
+		expect(result[1].sources).toEqual([{ bracketIdx: 0, placements: [] }]);
+	});
+
+	it("parsing fails with empty string placements for non-Swiss brackets", () => {
+		const error = Progression.validatedBrackets([
+			{
+				id: "1",
+				name: "Round Robin Bracket",
+				type: "round_robin",
+				settings: {},
+				requiresCheckIn: false,
+			},
+			{
+				id: "2",
+				name: "Final Bracket",
+				type: "single_elimination",
+				settings: {},
+				requiresCheckIn: false,
+				sources: [
+					{
+						bracketId: "1",
+						placements: "",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("PLACEMENTS_PARSE_ERROR");
+	});
+
+	it("parsing fails with empty string placements for Swiss brackets without early advance", () => {
+		const error = Progression.validatedBrackets([
+			{
+				id: "1",
+				name: "Swiss Bracket",
+				type: "swiss",
+				settings: {},
+				requiresCheckIn: false,
+			},
+			{
+				id: "2",
+				name: "Final Bracket",
+				type: "single_elimination",
+				settings: {},
+				requiresCheckIn: false,
+				sources: [
+					{
+						bracketId: "1",
+						placements: "",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("PLACEMENTS_PARSE_ERROR");
+	});
 });
 
 const getValidatedBrackets = (
@@ -446,6 +529,46 @@ describe("validatedSources - other rules", () => {
 		expect(error.type).toBe("NO_DE_POSITIVE");
 		expect((error as any).bracketIdx).toEqual(1);
 	});
+
+	it("handles SWISS_EARLY_ADVANCE_NO_DESTINATION", () => {
+		// Swiss bracket with early advance but no destination
+		const error = getValidatedBrackets([
+			{
+				settings: {
+					advanceThreshold: 3,
+				},
+				type: "swiss",
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("SWISS_EARLY_ADVANCE_NO_DESTINATION");
+		expect((error as any).bracketIdx).toEqual(0);
+	});
+
+	it("allows Swiss early advance when bracket has destination", () => {
+		// Swiss bracket with early advance that leads to another bracket should be valid
+		const result = getValidatedBrackets([
+			{
+				settings: {
+					advanceThreshold: 3,
+				},
+				type: "swiss",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-4",
+					},
+				],
+			},
+		]);
+
+		// Should be valid (no error returned)
+		expect(Array.isArray(result)).toBe(true);
+	});
 });
 
 describe("isFinals", () => {
@@ -467,6 +590,10 @@ describe("isFinals", () => {
 		expect(Progression.isFinals(1, progressions.lowInk)).toBe(false);
 		expect(Progression.isFinals(2, progressions.lowInk)).toBe(false);
 		expect(Progression.isFinals(3, progressions.lowInk)).toBe(true);
+	});
+
+	it("handles swiss (early advance", () => {
+		expect(Progression.isFinals(1, progressions.swissEarlyAdvance)).toBe(true);
 	});
 
 	it("many starter brackets", () => {
@@ -651,5 +778,39 @@ describe("destinationByPlacement", () => {
 			progression: progressions.manyStartBrackets,
 		});
 		expect(result).toBe(3);
+	});
+});
+
+describe("validatedBracketsToInputFormat", () => {
+	it("converts empty placements back to empty string", () => {
+		const parsedBrackets: Progression.ParsedBracket[] = [
+			{
+				type: "swiss",
+				settings: { advanceThreshold: 3 },
+				name: "Swiss Bracket",
+				requiresCheckIn: false,
+			},
+			{
+				type: "single_elimination",
+				settings: {},
+				name: "Final Bracket",
+				requiresCheckIn: false,
+				sources: [
+					{
+						bracketIdx: 0,
+						placements: [],
+					},
+				],
+			},
+		];
+
+		const result = Progression.validatedBracketsToInputFormat(parsedBrackets);
+
+		expect(result[1].sources).toEqual([
+			{
+				bracketId: "0",
+				placements: "",
+			},
+		]);
 	});
 });

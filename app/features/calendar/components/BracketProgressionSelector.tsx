@@ -10,6 +10,7 @@ import { PlusIcon } from "~/components/icons/Plus";
 import { Label } from "~/components/Label";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import * as Swiss from "~/features/tournament-bracket/core/Swiss";
 import { defaultBracketSettings } from "../../tournament/tournament-utils";
 
 const defaultBracket = (): Progression.InputBracket => ({
@@ -98,8 +99,26 @@ export function BracketProgressionSelector({
 						bracket={bracket}
 						brackets={brackets}
 						onChange={(newBracket) => {
-							const newBrackets = [...brackets];
+							const newBrackets = structuredClone(brackets);
 							newBrackets[i] = newBracket;
+
+							if (newBracket.settings.advanceThreshold) {
+								const destinationIdx = newBrackets.findIndex((b) =>
+									b.sources?.some(
+										(source) => source.bracketId === newBracket.id,
+									),
+								);
+
+								if (destinationIdx !== -1) {
+									newBrackets[destinationIdx].sources = newBrackets[
+										destinationIdx
+									].sources?.map((source) => ({
+										...source,
+										placements: "",
+									}));
+								}
+							}
+
 							setBrackets(newBrackets);
 						}}
 						onDelete={
@@ -345,14 +364,26 @@ function TournamentFormatBracketSelector({
 								bracket.settings.roundCount ??
 								TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT
 							}
-							onChange={(e) =>
+							onChange={(e) => {
+								const newRoundCount = Number(e.target.value);
+								const currentAdvanceThreshold =
+									bracket.settings.advanceThreshold;
+
 								updateBracket({
 									settings: {
 										...bracket.settings,
-										roundCount: Number(e.target.value),
+										roundCount: newRoundCount,
+										advanceThreshold:
+											currentAdvanceThreshold &&
+											!Swiss.isValidAdvanceThreshold({
+												roundCount: newRoundCount,
+												advanceThreshold: currentAdvanceThreshold,
+											})
+												? 3
+												: currentAdvanceThreshold,
 									},
-								})
-							}
+								});
+							}}
 							className="w-max"
 							name="swissRoundCount"
 							id="swissRoundCount"
@@ -365,6 +396,74 @@ function TournamentFormatBracketSelector({
 							<option value="7">7</option>
 							<option value="8">8</option>
 						</select>
+					</div>
+				) : null}
+
+				{bracket.type === "swiss" ? (
+					<div>
+						<Label htmlFor={createId("earlyAdvance")}>
+							Early advance/elimination
+						</Label>
+						<SendouSwitch
+							id={createId("earlyAdvance")}
+							isSelected={Boolean(bracket.settings.advanceThreshold)}
+							onChange={(isSelected) =>
+								updateBracket({
+									settings: {
+										...bracket.settings,
+										advanceThreshold: isSelected ? 3 : undefined,
+									},
+								})
+							}
+							isDisabled={bracket.disabled}
+						/>
+						<FormMessage type="info">
+							Teams stop playing once they reach required wins or exceed maximum
+							losses
+						</FormMessage>
+					</div>
+				) : null}
+
+				{bracket.type === "swiss" && bracket.settings.advanceThreshold ? (
+					<div>
+						<Label htmlFor={createId("advanceThreshold")}>
+							Wins needed to advance
+						</Label>
+						<select
+							value={bracket.settings.advanceThreshold}
+							onChange={(e) => {
+								const newThreshold = Number(e.target.value);
+								updateBracket({
+									settings: {
+										...bracket.settings,
+										advanceThreshold: newThreshold,
+									},
+								});
+							}}
+							className="w-max"
+							name="advanceThreshold"
+							id={createId("advanceThreshold")}
+							disabled={bracket.disabled}
+						>
+							{Swiss.validAdvanceThresholdOptions({
+								roundCount:
+									bracket.settings.roundCount ??
+									TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+							}).map((threshold) => (
+								<option key={threshold} value={threshold}>
+									{threshold}
+								</option>
+							))}
+						</select>
+						<FormMessage type="info">
+							Maximum losses allowed:{" "}
+							{Swiss.eliminationThreshold({
+								roundCount:
+									bracket.settings.roundCount ??
+									TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+								advanceThreshold: bracket.settings.advanceThreshold,
+							}) - 1}
+						</FormMessage>
 					</div>
 				) : null}
 
@@ -429,6 +528,8 @@ function SourcesSelector({
 		return `${id}-${label}`;
 	};
 
+	const inputBracket = brackets.find((b) => b.id === source?.bracketId);
+
 	return (
 		<div className="stack horizontal sm items-end">
 			<div>
@@ -447,22 +548,24 @@ function SourcesSelector({
 					))}
 				</select>
 			</div>
-			<div>
-				<Label htmlFor={createId("placements")}>Placements</Label>
-				<Input
-					id={createId("placements")}
-					placeholder="1,2,3"
-					value={source?.placements ?? ""}
-					testId="placements-input"
-					onChange={(e) =>
-						onChange({
-							bracketId: brackets[0].id,
-							...source,
-							placements: e.target.value,
-						})
-					}
-				/>
-			</div>
+			{!inputBracket?.settings.advanceThreshold ? (
+				<div>
+					<Label htmlFor={createId("placements")}>Placements</Label>
+					<Input
+						id={createId("placements")}
+						placeholder="1,2,3"
+						value={source?.placements ?? ""}
+						testId="placements-input"
+						onChange={(e) =>
+							onChange({
+								bracketId: brackets[0].id,
+								...source,
+								placements: e.target.value,
+							})
+						}
+					/>
+				</div>
+			) : null}
 		</div>
 	);
 }
