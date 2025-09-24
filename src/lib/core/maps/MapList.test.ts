@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import * as MapList from './MapList';
 import * as MapPool from './MapPool';
+import * as R from 'remeda';
 
 const ALL_MODES_TEST_MAP_POOL: MapPool.MapPool = {
 	TW: [1, 2, 3],
@@ -68,6 +69,30 @@ describe('MapList.generate()', () => {
 
 			expect(first).toBeInstanceOf(Array);
 			expect(second).toBeInstanceOf(Array);
+		});
+
+		it('has different maps in each list', () => {
+			// TW, SZ & TC with 3 maps each
+			const mapPool = R.pick(ALL_MODES_TEST_MAP_POOL, ['TW', 'SZ', 'TC']);
+
+			const generator = MapList.generate({ amount: 3, mapPool });
+
+			const first = generator.next().value;
+			const second = generator.next().value;
+			const third = generator.next().value;
+			const all = [...first!, ...second!, ...third!];
+
+			console.log(all);
+
+			expect(all).toContainEqual({ mode: 'TW', stageId: 1 });
+			expect(all).toContainEqual({ mode: 'TW', stageId: 2 });
+			expect(all).toContainEqual({ mode: 'TW', stageId: 3 });
+			expect(all).toContainEqual({ mode: 'SZ', stageId: 4 });
+			expect(all).toContainEqual({ mode: 'SZ', stageId: 5 });
+			expect(all).toContainEqual({ mode: 'SZ', stageId: 6 });
+			expect(all).toContainEqual({ mode: 'TC', stageId: 7 });
+			expect(all).toContainEqual({ mode: 'TC', stageId: 8 });
+			expect(all).toContainEqual({ mode: 'TC', stageId: 9 });
 		});
 	});
 });

@@ -20,7 +20,7 @@ interface GenerateBalancedInput extends GenerateInputCommon {
 
 export function* generate(args: GenerateInput) {
 	const modes = MapPool.toModes(args.mapPool);
-	let globalStageCounter = 0;
+	let globalCounter = 0;
 
 	while (true) {
 		const result = [];
@@ -30,9 +30,13 @@ export function* generate(args: GenerateInput) {
 			const mode = modes[currModeIdx];
 			const stages = args.mapPool[mode]!;
 
+			// Calculate which stage to use for this mode based on how many times we've used this mode
+			const modeUsageCount = Math.floor((globalCounter + i) / modes.length);
+			const stageIndex = modeUsageCount % stages.length;
+
 			result.push({
 				mode,
-				stageId: stages[(globalStageCounter + i) % stages.length]
+				stageId: stages[stageIndex]
 			});
 
 			if (currModeIdx === modes.length - 1) {
@@ -42,7 +46,7 @@ export function* generate(args: GenerateInput) {
 			}
 		}
 
-		globalStageCounter += args.amount;
+		globalCounter += args.amount;
 		yield result;
 	}
 }
