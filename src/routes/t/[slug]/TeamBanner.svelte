@@ -53,6 +53,11 @@
 			{/each}
 		</div>
 		<div class="name">
+			{#if team.tag}
+				<div class="tag desktop">
+					{team.tag}
+				</div>
+			{/if}
 			{team.name}
 			{@render bskyLink()}
 		</div>
@@ -92,6 +97,11 @@
 		{team.name}
 		{@render bskyLink()}
 	</div>
+	{#if team.tag}
+		<div class="tag mobile">
+			{team.tag}
+		</div>
+	{/if}
 </div>
 
 {#snippet bskyLink()}
@@ -193,9 +203,35 @@
 		display: none;
 		align-items: center;
 		gap: var(--s-3);
+		position: relative;
 
 		@media screen and (min-width: 640px) {
 			display: flex;
+		}
+	}
+
+	.tag {
+		font-size: var(--fonts-sm);
+		background-color: var(--color-primary-transparent);
+		color: var(--color-primary);
+		padding: var(--s-1) var(--s-1-5);
+		border-radius: var(--radius-box);
+
+		&.desktop {
+			position: absolute;
+			bottom: 41px;
+			right: 0;
+			display: none;
+
+			@media screen and (min-width: 640px) {
+				display: initial;
+			}
+		}
+
+		&.mobile {
+			font-size: var(--fonts-xs);
+			padding: var(--s-0-5) var(--s-1);
+			margin-block: var(--s-1);
 		}
 	}
 

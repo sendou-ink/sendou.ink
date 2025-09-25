@@ -40,6 +40,8 @@ export interface Team {
 	avatarImgId: number | null;
 	bannerImgId: number | null;
 	bio: string | null;
+	/** Team's tag, typically used in-game in front of users' names to indicate they are a member of the team. */
+	tag: string | null;
 	createdAt: Generated<Date>;
 	css: JSONColumnTypeNullable<Record<string, string>>;
 	customUrl: string;

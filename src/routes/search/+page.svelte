@@ -44,9 +44,22 @@
 	const filteredTeams = $derived.by(() => {
 		if (tabState.state !== 'teams') return teamsResult.teams;
 
-		return teamsResult.teams.filter((team) =>
-			team.name.toLowerCase().includes(search.toLowerCase())
+		const searchLower = search.toLowerCase();
+		const matchingTeams = teamsResult.teams.filter(
+			(team) =>
+				team.name.toLowerCase().includes(searchLower) ||
+				(team.tag && team.tag.toLowerCase() === searchLower)
 		);
+
+		// Sort with exact tag matches first, then others
+		return matchingTeams.sort((a, b) => {
+			const aTagExactMatch = a.tag && a.tag.toLowerCase() === searchLower;
+			const bTagExactMatch = b.tag && b.tag.toLowerCase() === searchLower;
+
+			if (aTagExactMatch && !bTagExactMatch) return -1;
+			if (!aTagExactMatch && bTagExactMatch) return 1;
+			return 0;
+		});
 	});
 </script>
 
@@ -149,10 +162,11 @@
 		display: flex;
 		gap: var(--s-4);
 		align-items: center;
+		color: var(--color-base-content);
 
 		.item-info :last-child {
-			color: var(--color-base-content-secondary);
 			font-size: var(--fonts-xs);
+			color: var(--color-base-content-secondary);
 		}
 	}
 

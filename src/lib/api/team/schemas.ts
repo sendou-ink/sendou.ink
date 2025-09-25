@@ -36,6 +36,11 @@ export const editTeamSchema = z.object({
 		label: m.common_custom_colors_title()
 	}),
 	name: teamNameField(m.team_forms_info_name()),
+	tag: Fields.textFieldOptional({
+		label: 'Tag',
+		maxLength: 6,
+		bottomText: "Team's in-game tag that members might have in front of their names."
+	}),
 	bsky: Fields.textFieldOptional({
 		label: m.team_forms_fields_teamBsky(),
 		maxLength: 50,

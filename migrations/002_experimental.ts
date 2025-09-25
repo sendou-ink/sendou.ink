@@ -20,6 +20,8 @@ export async function up(db: Kysely<any>): Promise<void> {
   // xxx: delete "TW" and "SZ" from calendar event tags
 
   // xxx: turn off all commissions open? to make sure all are recent for art
+
+  await db.schema.alterTable("AllTeam").addColumn('tag', 'text').execute();
 }
 
 async function fixQWeaponPools(db: Kysely<any>) {
