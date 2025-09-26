@@ -127,7 +127,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				bannedByUserId: user.id,
 			});
 
-			refreshBannedCache();
+			await refreshBannedCache();
 
 			message = "User banned";
 			break;
@@ -140,7 +140,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				unbannedByUserId: user.id,
 			});
 
-			refreshBannedCache();
+			await refreshBannedCache();
 
 			message = "User unbanned";
 			break;
