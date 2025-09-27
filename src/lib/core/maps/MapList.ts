@@ -14,7 +14,7 @@ interface GenerateNext {
 }
 
 interface MaplistPattern {
-	mustInclude?: ModeWithStage[];
+	mustInclude?: ModeShort[];
 	pattern: Array<'ANY' | ModeShort>;
 }
 
@@ -106,6 +106,14 @@ export function* generateBalanced(_args: {
 
 const validPatternParts = new Set(['*', ...modesShort] as const);
 export function parsePattern(pattern: string) {
+	const mustInclude: ModeShort[] = [];
+	for (const mode of modesShort) {
+		if (pattern.includes(`[${mode}]`)) {
+			mustInclude.push(mode);
+			pattern = pattern.replaceAll(`[${mode}]`, '');
+		}
+	}
+
 	for (const part of validPatternParts) {
 		pattern = pattern.replaceAll(part, `${part},`);
 	}
@@ -122,6 +130,7 @@ export function parsePattern(pattern: string) {
 	return ok({
 		pattern: parts.map((part) =>
 			modesShort.includes(part as ModeShort) ? (part as ModeShort) : 'ANY'
-		)
+		),
+		mustInclude: mustInclude.length > 0 ? mustInclude : undefined
 	} as MaplistPattern);
 }

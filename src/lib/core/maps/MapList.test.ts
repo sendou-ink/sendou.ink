@@ -176,4 +176,11 @@ describe('MapList.parsePattern()', () => {
 	it('returns error on invalid mode', () => {
 		expect(MapList.parsePattern('*INVALID*')).toBeInstanceOf(Err);
 	});
+
+	it('parses a mustInclude mode', () => {
+		expect(MapList.parsePattern('[SZ]')._unsafeUnwrap()).toEqual({
+			mustInclude: ['SZ'],
+			pattern: []
+		});
+	});
 });
