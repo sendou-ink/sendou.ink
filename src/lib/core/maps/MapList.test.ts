@@ -80,7 +80,7 @@ describe('MapList.generate()', () => {
 			const first = generator.next().value;
 			const second = generator.next().value;
 			const third = generator.next().value;
-			const all = [...first!, ...second!, ...third!];
+			const all = [...first, ...second, ...third];
 
 			console.log(all);
 
@@ -94,5 +94,11 @@ describe('MapList.generate()', () => {
 			expect(all).toContainEqual({ mode: 'TC', stageId: 8 });
 			expect(all).toContainEqual({ mode: 'TC', stageId: 9 });
 		});
+
+		// it('rotates the mode order', () => {
+
+		// it('works when have to start repeating stages', () => {
+
+		// it('repeats stages in a different order than the original', () => {
 	});
 });

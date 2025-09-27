@@ -53,6 +53,17 @@ export function toModes(pool: PartialMapPool) {
 	return result;
 }
 
+/** Returns an array containing all unique stage IDs in the map pool. */
+export function toStageIds(pool: PartialMapPool): StageId[] {
+	const stageIds: StageId[] = [];
+
+	for (const stages of Object.values(pool)) {
+		stageIds.push(...stages);
+	}
+
+	return Array.from(new Set(stageIds)).sort((a, b) => a - b);
+}
+
 export function fromArray(array: Array<ModeWithStage>): MapPool {
 	return array.reduce((acc, { mode, stageId }) => {
 		acc[mode] = acc[mode] ?? [];
