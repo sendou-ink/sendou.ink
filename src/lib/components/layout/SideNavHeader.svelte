@@ -40,7 +40,7 @@
 			font-weight: var(--semi-bold);
 			font-size: var(--fonts-sm);
 			line-height: 1.2;
-			max-width: 175px;
+			max-width: 160px;
 			text-overflow: ellipsis;
 			overflow: hidden;
 			white-space: nowrap;

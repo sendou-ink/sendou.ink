@@ -72,13 +72,16 @@ export function truncateBySentence(value: string, max: number) {
 	return result.length > 0 ? result.trim() : value.slice(0, max).trim();
 }
 
+const htmlReplaceRegex = /<[^>]*>/g;
+export function removeHtmlTags(value: string) {
+	return value.replace(htmlReplaceRegex, '');
+}
+
 // based on https://github.com/zuchka/remove-markdown
+/** Converts markdown to a plain text string that can be inserted to e.g. OpenGraph description field */
 export function removeMarkdown(value: string) {
-	const htmlReplaceRegex = /<[^>]*>/g;
 	return (
-		value
-			// Remove HTML tags
-			.replace(htmlReplaceRegex, '')
+		removeHtmlTags(value)
 			// Remove setext-style headers
 			.replace(/^[=-]{2,}\s*$/g, '')
 			// Remove footnotes?
@@ -87,13 +90,13 @@ export function removeMarkdown(value: string) {
 			// Remove images
 			.replace(/!\[(.*?)\][[(].*?[\])]/g, '')
 			// Remove inline links
-			.replace(/\[([^\]]*?)\][[(].*?[\])]/g, '$2')
+			.replace(/\[([^\]]*?)\][[(].*?[\])]/g, '$1')
 			// Remove blockquotes
 			.replace(/^(\n)?\s{0,3}>\s?/gm, '$1')
 			// Remove reference-style links?
 			.replace(/^\s{1,2}\[(.*?)\]: (\S+)( ".*?")?\s*$/g, '')
 			// Remove headers
-			.replaceAll('#', '')
+			.replace(/^#{1,6}\s+/gm, '')
 			// Remove * emphasis
 			.replace(/([*]+)(\S)(.*?\S)??\1/g, '$2$3')
 			// Remove _ emphasis. Unlike *, _ emphasis gets rendered only if
@@ -101,11 +104,11 @@ export function removeMarkdown(value: string) {
 			//   2. Or _ is at the start/end of the string.
 			.replace(/(^|\W)([_]+)(\S)(.*?\S)??\2($|\W)/g, '$1$3$4$5')
 			// Remove code blocks
-			.replace(/(`{3,})(.*?)\1/gm, '$2')
+			.replace(/```[\s\S]*?```/g, '')
 			// Remove inline code
 			.replace(/`(.+?)`/g, '$1')
-			// // Replace two or more newlines with exactly two? Not entirely sure this belongs here...
-			// .replace(/\n{2,}/g, '\n\n')
+			// // Replace two or more newlines with exactly two
+			.replace(/\n{2,}/g, '\n\n')
 			// // Remove newlines in a paragraph
 			// .replace(/(\S+)\n\s*(\S+)/g, '$1 $2')
 			// Replace strike through
