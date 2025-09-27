@@ -158,3 +158,11 @@ describe('MapList.generate()', () => {
 		// it('repeats stages in a different order than the original', () => {
 	});
 });
+
+describe('MapList.parsePattern()', () => {
+	it('parses a simple pattern', () => {
+		expect(MapList.parsePattern('*SZ*')).toEqual({
+			pattern: ['ANY', 'SZ', 'ANY']
+		});
+	});
+});
