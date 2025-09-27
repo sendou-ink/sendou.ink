@@ -88,8 +88,6 @@ describe('MapList.generate()', () => {
 			const third = gen.next({ amount: 3 }).value;
 			const all = [...first, ...second, ...third];
 
-			console.log(all);
-
 			expect(all).toContainEqual({ mode: 'TW', stageId: 1 });
 			expect(all).toContainEqual({ mode: 'TW', stageId: 2 });
 			expect(all).toContainEqual({ mode: 'TW', stageId: 3 });
