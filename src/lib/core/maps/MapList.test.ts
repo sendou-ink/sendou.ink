@@ -184,6 +184,13 @@ describe('MapList.parsePattern()', () => {
 		});
 	});
 
+	it('parses a complex pattern', () => {
+		expect(MapList.parsePattern(' * [SZ] * TC [TW]')._unsafeUnwrap()).toEqual({
+			mustInclude: ['TW', 'SZ'],
+			pattern: ['ANY', 'ANY', 'TC']
+		});
+	});
+
 	it('parses an empty pattern', () => {
 		expect(MapList.parsePattern('')._unsafeUnwrap()).toEqual({
 			pattern: []
