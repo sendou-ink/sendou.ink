@@ -183,4 +183,18 @@ describe('MapList.parsePattern()', () => {
 			pattern: []
 		});
 	});
+
+	it('parses an empty pattern', () => {
+		expect(MapList.parsePattern('')._unsafeUnwrap()).toEqual({
+			pattern: []
+		});
+	});
+
+	it('return error on lorem ipsum', () => {
+		expect(
+			MapList.parsePattern(
+				'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi ut varius velit. Ut egestas lacus dolor, sit amet iaculis justo dictum sed. Fusce aliquet sed nunc sit amet ullamcorper. Interdum et malesuada fames ac ante ipsum primis in faucibus. Integer leo ex, congue eu porta nec, imperdiet sed neque.'
+			)
+		).toBeInstanceOf(Err);
+	});
 });
