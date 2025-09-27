@@ -99,6 +99,30 @@ describe('MapList.generate()', () => {
 			expect(all).toContainEqual({ mode: 'TC', stageId: 9 });
 		});
 
+		it('rotates the mode order', () => {
+			const gen = initGenerator();
+			const first = gen.next({ amount: 5 }).value;
+			const second = gen.next({ amount: 5 }).value;
+
+			const firstModes = first!.map((m) => m.mode);
+			const secondModes = second!.map((m) => m.mode);
+
+			expect(firstModes).not.toEqual(secondModes);
+		});
+
+		it('starts with a different mode each time modes are rotated', () => {
+			for (let i = 0; i < 10; i++) {
+				const gen = initGenerator();
+				const first = gen.next({ amount: 5 }).value;
+				const second = gen.next({ amount: 5 }).value;
+
+				const firstModes = first!.map((m) => m.mode);
+				const secondModes = second!.map((m) => m.mode);
+
+				expect(firstModes[0]).not.toEqual(secondModes[0]);
+			}
+		});
+
 		// it('rotates the mode order', () => {
 
 		// it('works when have to start repeating stages', () => {
