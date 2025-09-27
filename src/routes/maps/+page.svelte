@@ -15,13 +15,13 @@
 	import { stageIds } from '$lib/constants/in-game/stage-ids';
 	import ListOrdered from '@lucide/svelte/icons/list-ordered';
 	import SwitchFormField from '$lib/components/form/SwitchFormField.svelte';
-	import { generateMapList, modesOrder } from '$lib/core/maps/map-list-generator';
 	import {
 		modesLongTranslations,
 		modesShortTranslations,
 		stageTranslations
 	} from '$lib/utils/i18n';
 	import CopyToClipboardButton from '$lib/components/CopyToClipboardButton.svelte';
+	import * as MapList from '$lib/core/maps/MapList';
 
 	const AMOUNT_OF_MAPS_TO_GENERATE = stageIds.length;
 
@@ -40,11 +40,13 @@
 	let mapList = $state<Array<ModeWithStage> | null>(null);
 
 	function generateMapListFromSelection() {
-		const [createdMapList] = generateMapList(
-			$state.snapshot(mapPool.state),
-			modesOrder(splatZonesEveryOther ? 'SZ_EVERY_OTHER' : 'EQUAL', MapPool.toModes(mapPool.state)),
-			[AMOUNT_OF_MAPS_TO_GENERATE]
-		);
+		const generator = MapList.generate({ mapPool: mapPool.state });
+		generator.next();
+
+		const createdMapList = generator.next({
+			amount: AMOUNT_OF_MAPS_TO_GENERATE,
+			pattern: ''
+		}).value;
 
 		mapList = createdMapList;
 	}
