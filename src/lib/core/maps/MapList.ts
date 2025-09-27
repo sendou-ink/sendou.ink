@@ -4,22 +4,10 @@ import invariant from '$lib/utils/invariant';
 
 type ModeWithStagePreferences = Map<string, number>;
 
-interface GenerateInputCommon {
-	mapPool: MapPool.PartialMapPool;
-
-	// TODO: these should be arguments of the "next" function
+interface GenerateNext {
 	/** How many maps to return? E.g. for a Bo5 set, amount should be 5 */
 	amount: number;
 	pattern?: string;
-}
-
-interface GenerateInput extends GenerateInputCommon {
-	/** What maps to prefer? Value can be either positive which means it is preferred or negative which means it should be avoided */
-	preferences?: ModeWithStagePreferences;
-}
-
-interface GenerateBalancedInput extends GenerateInputCommon {
-	preferences: [ModeWithStagePreferences, ModeWithStagePreferences];
 }
 
 interface MaplistPattern {
@@ -27,16 +15,21 @@ interface MaplistPattern {
 	pattern: Array<'ANY' | ModeShort>;
 }
 
-export function* generate(
-	args: GenerateInput
-): Generator<Array<ModeWithStage>, Array<ModeWithStage>, unknown> {
+export function* generate(args: {
+	mapPool: MapPool.PartialMapPool;
+	preferences?: ModeWithStagePreferences;
+}): Generator<Array<ModeWithStage>, Array<ModeWithStage>, GenerateNext> {
 	const modes = MapPool.toModes(args.mapPool);
 	const stageCounts = initializeStageCounts(args.mapPool);
+
+	const firstArgs = yield [];
+	let amount = firstArgs.amount;
+	let _pattern = firstArgs.pattern;
 
 	while (true) {
 		const result: ModeWithStage[] = [];
 
-		for (let i = 0; i < args.amount; i++) {
+		for (let i = 0; i < amount; i++) {
 			const mode = modes[i % modes.length];
 			const possibleStages = args.mapPool[mode]!;
 
@@ -46,7 +39,9 @@ export function* generate(
 			stageCounts.set(stageId, stageCounts.get(stageId)! + 1);
 		}
 
-		yield result;
+		const nextArgs = yield result;
+		amount = nextArgs.amount;
+		_pattern = nextArgs.pattern;
 	}
 }
 
@@ -68,7 +63,10 @@ function mostRarelySeenStage(possibleStages: StageId[], stageCounts: Map<StageId
 	return result;
 }
 
-export function* generateBalanced(_args: GenerateBalancedInput) {}
+export function* generateBalanced(_args: {
+	mapPool: MapPool.PartialMapPool;
+	preferences: [ModeWithStagePreferences, ModeWithStagePreferences];
+}) {}
 
 export function parsePattern(_pattern: string): MaplistPattern {
 	return {

@@ -3,7 +3,7 @@ import * as MapList from './MapList';
 import * as MapPool from './MapPool';
 import * as R from 'remeda';
 
-const ALL_MODES_TEST_MAP_POOL: MapPool.MapPool = {
+const ALL_MODES_TEST_MAP_POOL: MapPool.PartialMapPool = {
 	TW: [1, 2, 3],
 	SZ: [4, 5, 6],
 	TC: [7, 8, 9],
@@ -12,18 +12,21 @@ const ALL_MODES_TEST_MAP_POOL: MapPool.MapPool = {
 };
 
 describe('MapList.generate()', () => {
+	function initGenerator(mapPool = ALL_MODES_TEST_MAP_POOL) {
+		const gen = MapList.generate({ mapPool });
+		gen.next();
+		return gen;
+	}
+
 	describe('singular map list', () => {
 		it('returns array with given amount of items', () => {
-			expect(
-				MapList.generate({
-					amount: 3,
-					mapPool: ALL_MODES_TEST_MAP_POOL
-				}).next().value
-			).toHaveLength(3);
+			const gen = initGenerator();
+			expect(gen.next({ amount: 3 }).value).toHaveLength(3);
 		});
 
 		it('includes only maps from the given map pool', () => {
-			const maps = MapList.generate({ amount: 3, mapPool: ALL_MODES_TEST_MAP_POOL }).next().value;
+			const gen = initGenerator();
+			const maps = gen.next({ amount: 3 }).value;
 
 			for (const map of maps!) {
 				expect(MapPool.toArray(ALL_MODES_TEST_MAP_POOL)).toContainEqual(map);
@@ -31,13 +34,15 @@ describe('MapList.generate()', () => {
 		});
 
 		it('contains only unique maps, when possible', () => {
-			const maps = MapList.generate({ amount: 3, mapPool: ALL_MODES_TEST_MAP_POOL }).next().value;
+			const gen = initGenerator();
+			const maps = gen.next({ amount: 3 }).value;
 
 			expect(maps).toHaveLength(new Set(maps!.map((m) => `${m.mode}-${m.stageId}`)).size);
 		});
 
 		it('repeats maps when amount is larger than pool size', () => {
-			const maps = MapList.generate({ amount: 3, mapPool: { TW: [1] } }).next().value;
+			const gen = initGenerator({ TW: [1] });
+			const maps = gen.next({ amount: 3 }).value;
 
 			expect(maps).toHaveLength(3);
 			for (const map of maps!) {
@@ -46,7 +51,8 @@ describe('MapList.generate()', () => {
 		});
 
 		it('contains every mode once before repeating', () => {
-			const maps = MapList.generate({ amount: 5, mapPool: ALL_MODES_TEST_MAP_POOL }).next().value;
+			const gen = initGenerator();
+			const maps = gen.next({ amount: 5 }).value;
 			const modes = maps!.map((m) => m.mode);
 
 			for (const modeShort of ['TW', 'SZ', 'TC', 'RM', 'CB'] as const) {
@@ -55,7 +61,8 @@ describe('MapList.generate()', () => {
 		});
 
 		it('repeats a mode following the pattern when amount bigger than mode count', () => {
-			const maps = MapList.generate({ amount: 6, mapPool: ALL_MODES_TEST_MAP_POOL }).next().value;
+			const gen = initGenerator();
+			const maps = gen.next({ amount: 6 }).value;
 
 			expect(maps![0].mode).toBe(maps![5].mode);
 		});
@@ -63,9 +70,9 @@ describe('MapList.generate()', () => {
 
 	describe('many map lists', () => {
 		it('generates many map lists', () => {
-			const generator = MapList.generate({ amount: 3, mapPool: ALL_MODES_TEST_MAP_POOL });
-			const first = generator.next().value;
-			const second = generator.next().value;
+			const gen = initGenerator();
+			const first = gen.next({ amount: 3 }).value;
+			const second = gen.next({ amount: 3 }).value;
 
 			expect(first).toBeInstanceOf(Array);
 			expect(second).toBeInstanceOf(Array);
@@ -75,11 +82,10 @@ describe('MapList.generate()', () => {
 			// TW, SZ & TC with 3 maps each
 			const mapPool = R.pick(ALL_MODES_TEST_MAP_POOL, ['TW', 'SZ', 'TC']);
 
-			const generator = MapList.generate({ amount: 3, mapPool });
-
-			const first = generator.next().value;
-			const second = generator.next().value;
-			const third = generator.next().value;
+			const gen = initGenerator(mapPool);
+			const first = gen.next({ amount: 3 }).value;
+			const second = gen.next({ amount: 3 }).value;
+			const third = gen.next({ amount: 3 }).value;
 			const all = [...first, ...second, ...third];
 
 			console.log(all);
