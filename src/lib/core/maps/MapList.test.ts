@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import * as MapList from './MapList';
 import * as MapPool from './MapPool';
 import * as R from 'remeda';
+import { stageIds } from '$lib/constants/in-game/stage-ids';
 
 const ALL_MODES_TEST_MAP_POOL: MapPool.PartialMapPool = {
 	TW: [1, 2, 3],
@@ -9,6 +10,14 @@ const ALL_MODES_TEST_MAP_POOL: MapPool.PartialMapPool = {
 	TC: [7, 8, 9],
 	RM: [10, 11, 12],
 	CB: [13, 14, 15]
+};
+
+const ALL_MAPS_TEST_MAP_POOL: MapPool.PartialMapPool = {
+	TW: [...stageIds],
+	SZ: [...stageIds],
+	TC: [...stageIds],
+	RM: [...stageIds],
+	CB: [...stageIds]
 };
 
 describe('MapList.generate()', () => {
@@ -97,6 +106,18 @@ describe('MapList.generate()', () => {
 			expect(all).toContainEqual({ mode: 'TC', stageId: 7 });
 			expect(all).toContainEqual({ mode: 'TC', stageId: 8 });
 			expect(all).toContainEqual({ mode: 'TC', stageId: 9 });
+		});
+
+		it('randomizes the stage order', () => {
+			const stagesSeen = new Set<number>();
+			for (let i = 0; i < 10; i++) {
+				const gen = initGenerator(ALL_MAPS_TEST_MAP_POOL);
+				const maps = gen.next({ amount: 5 }).value;
+
+				stagesSeen.add(maps![0].stageId);
+			}
+
+			expect(stagesSeen.size).toBeGreaterThan(1);
 		});
 
 		it('rotates the mode order', () => {

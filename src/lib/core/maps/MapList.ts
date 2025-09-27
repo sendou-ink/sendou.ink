@@ -35,7 +35,7 @@ export function* generate(args: {
 
 		for (let i = 0; i < amount; i++) {
 			const mode = currentModeOrder[i % currentModeOrder.length];
-			const possibleStages = args.mapPool[mode]!;
+			const possibleStages = R.shuffle(args.mapPool[mode]!);
 
 			const stageId = mostRarelySeenStage(possibleStages, stageCounts);
 
