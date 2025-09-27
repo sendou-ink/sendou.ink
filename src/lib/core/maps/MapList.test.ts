@@ -83,6 +83,16 @@ describe('MapList.generate()', () => {
 
 			expect(maps).toHaveLength(0);
 		});
+
+		it('follows a pattern', () => {
+			for (let i = 0; i < 10; i++) {
+				const gen = initGenerator();
+				const maps = gen.next({ amount: 3, pattern: '*SZ*' }).value;
+
+				expect(maps).toHaveLength(3);
+				expect(maps![1].mode).toBe('SZ');
+			}
+		});
 	});
 
 	describe('many map lists', () => {

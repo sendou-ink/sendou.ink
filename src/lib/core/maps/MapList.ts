@@ -33,11 +33,15 @@ export function* generate(args: {
 
 	const firstArgs = yield [];
 	let amount = firstArgs.amount;
-	let _pattern = firstArgs.pattern;
+	let pattern = firstArgs.pattern ? parsePattern(firstArgs.pattern).unwrapOr(null) : undefined;
 
 	while (true) {
 		const result: ModeWithStage[] = [];
-		const currentModeOrder = orderedModes[currentOrderIndex % orderedModes.length];
+
+		let currentModeOrder = orderedModes[currentOrderIndex % orderedModes.length];
+		if (pattern) {
+			currentModeOrder = modifyModeOrderByPattern(currentModeOrder, pattern);
+		}
 
 		for (let i = 0; i < amount; i++) {
 			const mode = currentModeOrder[i % currentModeOrder.length];
@@ -52,7 +56,7 @@ export function* generate(args: {
 		currentOrderIndex++;
 		const nextArgs = yield result;
 		amount = nextArgs.amount;
-		_pattern = nextArgs.pattern;
+		pattern = nextArgs.pattern ? parsePattern(nextArgs.pattern).unwrapOr(null) : undefined;
 	}
 }
 
@@ -103,6 +107,18 @@ export function* generateBalanced(_args: {
 	mapPool: MapPool.PartialMapPool;
 	preferences: [ModeWithStagePreferences, ModeWithStagePreferences];
 }) {}
+
+function modifyModeOrderByPattern(modeOrder: ModeShort[], pattern: MaplistPattern) {
+	const result: ModeShort[] = modeOrder.filter((mode) => !pattern.pattern.includes(mode));
+
+	for (const [idx, mode] of pattern.pattern.entries()) {
+		if (mode === 'ANY') continue;
+
+		result.splice(idx, 0, mode);
+	}
+
+	return result;
+}
 
 const validPatternParts = new Set(['*', ...modesShort] as const);
 export function parsePattern(pattern: string) {
