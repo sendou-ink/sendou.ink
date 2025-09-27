@@ -13,13 +13,21 @@
 
 	const schema = UserAPI.schemas.editProfileSchema;
 	const validField = createFieldValidator(schema);
+	const defaultValues = $derived(await UserAPI.queries.editProfileFormData(params.identifier));
+
+	let country = $state(defaultValues?.country ?? null);
 </script>
 
 <Form
 	{schema}
 	action={UserAPI.actions.updateProfile}
-	defaultValues={await UserAPI.queries.editProfileFormData(params.identifier)}
+	{defaultValues}
 	heading={m.user_forms_editProfile_heading()}
+	onchange={(field) => {
+		if (field.country) {
+			country = field.country;
+		}
+	}}
 >
 	{#if loggedInUser?.roles.includes('SUPPORTER')}
 		<FormField name={validField('theme')} />
@@ -30,6 +38,9 @@
 	<FormField name={validField('sens')} />
 	<FormField name={validField('battlefy')} />
 	<FormField name={validField('country')} />
+	{#if country === 'US'}
+		<FormField name={validField('region')} />
+	{/if}
 	<FormField name={validField('favoriteBadges')}>
 		{#snippet children({ data, ...rest })}
 			<FavoriteBadgeField bind:value={data.value as number[]} {...rest} />

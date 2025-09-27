@@ -75,6 +75,7 @@ export async function findLayoutDataByIdentifier(identifier: string, loggedInUse
 		.select((eb) => [
 			...COMMON_USER_FIELDS,
 			'User.country',
+			'User.region',
 			sql<Record<
 				string,
 				string
@@ -155,6 +156,7 @@ export async function findProfileByIdentifier(
 			'User.battlefy',
 			'User.bsky',
 			'User.country',
+			'User.region',
 			'User.bio',
 			'User.motionSens',
 			'User.stickSens',
@@ -759,6 +761,7 @@ export function updateProfile(userId: number, args: EditProfileData) {
 			.updateTable('User')
 			.set({
 				country: args.country,
+				region: args.country === 'US' ? args.region : null,
 				bio: args.bio,
 				customUrl: args.customUrl,
 				customName: args.customName,

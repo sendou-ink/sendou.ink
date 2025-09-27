@@ -3,7 +3,7 @@ import type {
 	TOURNAMENT_MAP_PICKING_STYLES,
 	userSelectableTags
 } from '$lib/constants/calendar';
-import type { CountryCode } from '$lib/constants/common';
+import type { CountryCode, US_STATES } from '$lib/constants/common';
 import type { Ability, MainWeaponId, ModeShort, StageId } from '$lib/constants/in-game/types';
 import type { TEAM_MEMBER_ROLES } from '$lib/constants/team';
 import type { JSONColumnTypeNullable } from '$lib/utils/kysely.server';
@@ -795,6 +795,8 @@ export interface User {
 	commissionsOpen: Generated<DBBoolean | null>;
 	commissionText: string | null;
 	country: CountryCode | null;
+	/** Some region of country. Currently only used for US states. */
+	region: (typeof US_STATES)[number]['short'] | null;
 	css: JSONColumnTypeNullable<Record<string, string>>;
 	customUrl: string | null;
 	discordAvatar: string | null;

@@ -2,7 +2,7 @@ import { m } from '$lib/paraglide/messages';
 import { id } from '$lib/utils/zod';
 import z from 'zod';
 import * as Fields from '$lib/form/fields';
-import { COUNTRY_CODES } from '$lib/constants/common';
+import { COUNTRY_CODES, US_STATES } from '$lib/constants/common';
 import { countryCodeToTranslatedName } from '$lib/utils/i18n';
 
 const CUSTOM_URL_MAX_LENGTH = 32;
@@ -82,6 +82,13 @@ export const editProfileSchema = z.object({
 					language
 				}),
 			value: countryCode
+		}))
+	}),
+	region: Fields.selectOptional({
+		label: 'State',
+		items: US_STATES.map((state) => ({
+			label: state.name,
+			value: state.short
 		}))
 	}),
 	favoriteBadges: Fields.customJsonField(

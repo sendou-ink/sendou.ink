@@ -30,10 +30,10 @@ export function countryCodeToTranslatedName({
 	countryCode: string;
 	language: string;
 }) {
-	// known limitation, function cannot handle e.g. GB-WLS (Wales)
-	if (countryCode.includes('-')) {
-		return countryCode;
-	}
+	if (countryCode === 'GB-WLS') return 'Wales';
+	if (countryCode === 'GB-SCT') return 'Scotland';
+	if (countryCode === 'GB-NIR') return 'Northern Ireland';
+	if (countryCode === 'GB-ENG') return 'England';
 
 	try {
 		return new Intl.DisplayNames([language], { type: 'region' }).of(countryCode) ?? countryCode;

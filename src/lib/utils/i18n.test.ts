@@ -10,12 +10,12 @@ describe('countryCodeToTranslatedName()', () => {
 		expect(result).toBe('Suomi');
 	});
 
-	it('returns the country code if it contains a dash (Intl.DisplayNames throws)', () => {
+	it('returns the country name in english if the code contains a dash', () => {
 		const result = countryCodeToTranslatedName({
 			countryCode: 'GB-WLS',
-			language: 'en'
+			language: 'fi'
 		});
-		expect(result).toBe('GB-WLS');
+		expect(result).toBe('Wales');
 	});
 
 	it('returns the country code as is for unknown country', () => {
