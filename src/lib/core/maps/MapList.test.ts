@@ -75,6 +75,13 @@ describe('MapList.generate()', () => {
 
 			expect(maps![0].mode).toBe(maps![5].mode);
 		});
+
+		it('handles empty map pool', () => {
+			const gen = initGenerator({});
+			const maps = gen.next({ amount: 3 }).value;
+
+			expect(maps).toHaveLength(0);
+		});
 	});
 
 	describe('many map lists', () => {

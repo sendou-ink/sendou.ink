@@ -20,6 +20,10 @@ export function* generate(args: {
 	mapPool: MapPool.PartialMapPool;
 	preferences?: ModeWithStagePreferences;
 }): Generator<Array<ModeWithStage>, Array<ModeWithStage>, GenerateNext> {
+	if (MapPool.isEmpty(args.mapPool)) {
+		while (true) yield [];
+	}
+
 	const modes = MapPool.toModes(args.mapPool);
 	const stageCounts = initializeStageCounts(args.mapPool);
 	const orderedModes = modeOrders(modes);
