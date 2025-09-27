@@ -3,6 +3,7 @@ import * as MapList from './MapList';
 import * as MapPool from './MapPool';
 import * as R from 'remeda';
 import { stageIds } from '$lib/constants/in-game/stage-ids';
+import { Err } from 'neverthrow';
 
 const ALL_MODES_TEST_MAP_POOL: MapPool.PartialMapPool = {
 	TW: [1, 2, 3],
@@ -161,8 +162,18 @@ describe('MapList.generate()', () => {
 
 describe('MapList.parsePattern()', () => {
 	it('parses a simple pattern', () => {
-		expect(MapList.parsePattern('*SZ*')).toEqual({
+		expect(MapList.parsePattern('*SZ*')._unsafeUnwrap()).toEqual({
 			pattern: ['ANY', 'SZ', 'ANY']
 		});
+	});
+
+	it('handles extra spaces', () => {
+		expect(MapList.parsePattern(' *  SZ  * ')._unsafeUnwrap()).toEqual({
+			pattern: ['ANY', 'SZ', 'ANY']
+		});
+	});
+
+	it('returns error on invalid mode', () => {
+		expect(MapList.parsePattern('*INVALID*')).toBeInstanceOf(Err);
 	});
 });

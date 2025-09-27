@@ -2,6 +2,7 @@ import { modesShort } from '$lib/constants/in-game/modes';
 import type { ModeShort, ModeWithStage, StageId } from '$lib/constants/in-game/types';
 import * as MapPool from '$lib/core/maps/MapPool';
 import invariant from '$lib/utils/invariant';
+import { err, ok } from 'neverthrow';
 import * as R from 'remeda';
 
 type ModeWithStagePreferences = Map<string, number>;
@@ -104,7 +105,7 @@ export function* generateBalanced(_args: {
 }) {}
 
 const validPatternParts = new Set(['*', ...modesShort] as const);
-export function parsePattern(pattern: string): MaplistPattern {
+export function parsePattern(pattern: string) {
 	for (const part of validPatternParts) {
 		pattern = pattern.replaceAll(part, `${part},`);
 	}
@@ -114,9 +115,13 @@ export function parsePattern(pattern: string): MaplistPattern {
 		.map((part) => part.trim())
 		.filter((part) => part.length > 0);
 
-	return {
+	if (parts.some((part) => !validPatternParts.has(part as any))) {
+		return err('invalid mode in pattern');
+	}
+
+	return ok({
 		pattern: parts.map((part) =>
 			modesShort.includes(part as ModeShort) ? (part as ModeShort) : 'ANY'
 		)
-	};
+	} as MaplistPattern);
 }
