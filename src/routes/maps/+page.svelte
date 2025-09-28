@@ -45,7 +45,7 @@
 
 		const createdMapList = generator.next({
 			amount: AMOUNT_OF_MAPS_TO_GENERATE,
-			pattern: ''
+			pattern: splatZonesEveryOther ? (Math.random() > 0.5 ? 'SZ*' : '*SZ') : ''
 		}).value;
 
 		mapList = createdMapList;
