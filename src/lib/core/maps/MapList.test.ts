@@ -150,6 +150,24 @@ describe('MapList.generate()', () => {
 			expect(maps).toHaveLength(1);
 			expect(['TW', 'SZ']).toContain(maps[0].mode);
 		});
+
+		it('ignores a mode in the pattern not in the map pool', () => {
+			const gen = initGenerator({ TW: [1, 2, 3] });
+			const maps = gen.next({ amount: 3, pattern: '*SZ*' }).value;
+
+			expect(maps).toHaveLength(3);
+			expect(maps[0].mode).toBe('TW');
+			expect(maps[1].mode).toBe('TW');
+			expect(maps[2].mode).toBe('TW');
+		});
+
+		it('ignores a must include mode not in the map pool', () => {
+			const gen = initGenerator({ TW: [1, 2, 3] });
+			const maps = gen.next({ amount: 1, pattern: '[SZ]' }).value;
+
+			expect(maps).toHaveLength(1);
+			expect(maps[0].mode).toBe('TW');
+		});
 	});
 
 	describe('many map lists', () => {

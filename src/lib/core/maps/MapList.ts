@@ -113,6 +113,8 @@ function modifyModeOrderByPattern(modeOrder: ModeShort[], pattern: MaplistPatter
 
 	if (pattern.mustInclude) {
 		for (const mode of pattern.mustInclude) {
+			if (!modeOrder.includes(mode)) continue;
+
 			if (!result.slice(0, amount).includes(mode)) {
 				const randomIndex = Math.floor(Math.random() * amount);
 				result.splice(randomIndex, 0, mode);
