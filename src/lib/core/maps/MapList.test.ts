@@ -236,7 +236,11 @@ describe('MapList.parsePattern()', () => {
 		});
 	});
 
-	// it handles same mode twice in pattern
+	it('handles the same mode twice in pattern', () => {
+		expect(MapList.parsePattern('SZ*SZ')._unsafeUnwrap()).toEqual({
+			pattern: ['SZ', 'ANY', 'SZ']
+		});
+	});
 
 	it('returns error on invalid mode', () => {
 		expect(MapList.parsePattern('*INVALID*')).toBeInstanceOf(Err);
@@ -262,7 +266,12 @@ describe('MapList.parsePattern()', () => {
 		});
 	});
 
-	// it return error on repeated must include mode
+	it('ignores repeated must include mode', () => {
+		expect(MapList.parsePattern('[SZ][SZ]')._unsafeUnwrap()).toEqual({
+			mustInclude: ['SZ'],
+			pattern: []
+		});
+	});
 
 	it('parses an empty pattern', () => {
 		expect(MapList.parsePattern('')._unsafeUnwrap()).toEqual({
