@@ -43,7 +43,7 @@ describe('MapList.generate()', () => {
 			const gen = initGenerator();
 			const maps = gen.next({ amount: 3 }).value;
 
-			for (const map of maps!) {
+			for (const map of maps) {
 				expect(MapPool.toArray(ALL_MODES_TEST_MAP_POOL)).toContainEqual(map);
 			}
 		});
@@ -52,7 +52,7 @@ describe('MapList.generate()', () => {
 			const gen = initGenerator();
 			const maps = gen.next({ amount: 3 }).value;
 
-			expect(maps).toHaveLength(new Set(maps!.map((m) => `${m.mode}-${m.stageId}`)).size);
+			expect(maps).toHaveLength(new Set(maps.map((m) => `${m.mode}-${m.stageId}`)).size);
 		});
 
 		it('repeats maps when amount is larger than pool size', () => {
@@ -60,7 +60,7 @@ describe('MapList.generate()', () => {
 			const maps = gen.next({ amount: 3 }).value;
 
 			expect(maps).toHaveLength(3);
-			for (const map of maps!) {
+			for (const map of maps) {
 				expect(map).toEqual({ mode: 'TW', stageId: 1 });
 			}
 		});
@@ -68,7 +68,7 @@ describe('MapList.generate()', () => {
 		it('contains every mode once before repeating', () => {
 			const gen = initGenerator();
 			const maps = gen.next({ amount: 5 }).value;
-			const modes = maps!.map((m) => m.mode);
+			const modes = maps.map((m) => m.mode);
 
 			for (const modeShort of ['TW', 'SZ', 'TC', 'RM', 'CB'] as const) {
 				expect(modes).toContain(modeShort);
@@ -79,7 +79,7 @@ describe('MapList.generate()', () => {
 			const gen = initGenerator();
 			const maps = gen.next({ amount: 6 }).value;
 
-			expect(maps![0].mode).toBe(maps![5].mode);
+			expect(maps[0].mode).toBe(maps[5].mode);
 		});
 
 		it('handles empty map pool', () => {
@@ -95,7 +95,7 @@ describe('MapList.generate()', () => {
 				const maps = gen.next({ amount: 3, pattern: '*SZ*' }).value;
 
 				expect(maps).toHaveLength(3);
-				expect(maps![1].mode).toBe('SZ');
+				expect(maps[1].mode).toBe('SZ');
 			}
 		});
 
@@ -104,8 +104,17 @@ describe('MapList.generate()', () => {
 			const maps = gen.next({ amount: 5, pattern: '*SZ*' }).value;
 
 			expect(maps).toHaveLength(5);
-			expect(maps![1].mode).toBe('SZ');
-			expect(maps![3].mode).toBe('SZ');
+			expect(maps[1].mode).toBe('SZ');
+			expect(maps[3].mode).toBe('SZ');
+		});
+
+		it('follows a one mode only pattern', () => {
+			const gen = initGenerator();
+			const maps = gen.next({ amount: 3, pattern: 'SZ' }).value;
+
+			expect(maps[0].mode).toBe('SZ');
+			expect(maps[1].mode).toBe('SZ');
+			expect(maps[2].mode).toBe('SZ');
 		});
 
 		it('includes a mustInclude mode', () => {
@@ -113,15 +122,34 @@ describe('MapList.generate()', () => {
 				const gen = initGenerator();
 				const maps = gen.next({ amount: 1, pattern: '[SZ]' }).value;
 
-				expect(maps![0].mode).toBe('SZ');
+				expect(maps[0].mode).toBe('SZ');
 			}
 		});
 
-		// it follows a pattern with multiple specific modes
+		it('follows a pattern with multiple specific modes', () => {
+			const gen = initGenerator();
+			const maps = gen.next({ amount: 5, pattern: 'SZ*TC' }).value;
 
-		// it handles conflict between pattern and must include
+			expect(maps).toHaveLength(5);
+			expect(maps[0].mode).toBe('SZ');
+			expect(maps[2].mode).toBe('TC');
+		});
 
-		// it handles more must include modes than amount
+		it('handles a conflict between pattern and must include', () => {
+			const gen = initGenerator();
+			const maps = gen.next({ amount: 1, pattern: 'TW[SZ]' }).value;
+
+			expect(maps).toHaveLength(1);
+			expect(maps[0].mode).toBe('TW'); // pattern has priority
+		});
+
+		it('handles more must include modes than amount', () => {
+			const gen = initGenerator();
+			const maps = gen.next({ amount: 1, pattern: '[TW][SZ]' }).value;
+
+			expect(maps).toHaveLength(1);
+			expect(['TW', 'SZ']).toContain(maps[0].mode);
+		});
 	});
 
 	describe('many map lists', () => {
@@ -161,7 +189,7 @@ describe('MapList.generate()', () => {
 				const gen = initGenerator(ALL_MAPS_TEST_MAP_POOL);
 				const maps = gen.next({ amount: 5 }).value;
 
-				stagesSeen.add(maps![0].stageId);
+				stagesSeen.add(maps[0].stageId);
 			}
 
 			expect(stagesSeen.size).toBeGreaterThan(1);
