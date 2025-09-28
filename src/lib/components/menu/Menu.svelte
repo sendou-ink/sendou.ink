@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { DropdownMenu } from 'bits-ui';
 	import type { Component, Snippet } from 'svelte';
+	import { DropdownMenu } from 'bits-ui';
+	import Check from '@lucide/svelte/icons/check';
 
 	// xxx: missing some props
 	interface Props {
@@ -15,6 +16,7 @@
 			disabled?: boolean;
 			hidden?: boolean;
 			destructive?: boolean;
+			checked?: boolean;
 		}>;
 	}
 
@@ -32,20 +34,38 @@
 				{#if open}
 					<div {...wrapperProps}>
 						<div {...props} class={['items-container', { scrolling }]}>
-							{#each visibleItems as { icon: Icon, imgSrc, label, onclick, href, disabled, destructive } (label)}
+							{#each visibleItems as { icon: Icon, imgSrc, label, onclick, href, disabled, destructive, checked } (label)}
 								{@const tag = href ? 'a' : 'div'}
-								<DropdownMenu.Item onclick={!disabled ? onclick : undefined} {disabled}>
-									{#snippet child({ props })}
-										<svelte:element this={tag} {...props} {href} class={['item', { destructive }]}>
-											{#if Icon}
-												<span class="item-icon"><Icon /></span>
-											{:else if imgSrc}
-												<img class="item-icon" src={imgSrc} alt="" />
-											{/if}
-											{label}
-										</svelte:element>
-									{/snippet}
-								</DropdownMenu.Item>
+								{#if checked === undefined}
+									<DropdownMenu.Item onclick={!disabled ? onclick : undefined} {disabled}>
+										{#snippet child({ props })}
+											<svelte:element
+												this={tag}
+												{...props}
+												{href}
+												class={['item', { destructive }]}
+											>
+												{#if Icon}
+													<span class="item-icon"><Icon /></span>
+												{:else if imgSrc}
+													<img class="item-icon" src={imgSrc} alt="" />
+												{/if}
+												{label}
+											</svelte:element>
+										{/snippet}
+									</DropdownMenu.Item>
+								{:else}
+									<DropdownMenu.CheckboxItem onclick={!disabled ? onclick : undefined} {disabled}>
+										{#snippet child({ props })}
+											<div {...props} class="item checkbox">
+												{#if checked}
+													<span class="item-icon"><Check /></span>
+												{/if}
+												{label}
+											</div>
+										{/snippet}
+									</DropdownMenu.CheckboxItem>
+								{/if}
 							{/each}
 						</div>
 					</div>
@@ -113,6 +133,16 @@
 
 		&.destructive {
 			color: var(--color-error);
+		}
+
+		&.checkbox {
+			position: relative;
+			padding-inline-start: calc(var(--s-3-5) + var(--s-2-5) + 24px);
+
+			.item-icon {
+				position: absolute;
+				left: var(--s-3-5);
+			}
 		}
 	}
 
