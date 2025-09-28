@@ -93,6 +93,15 @@ describe('MapList.generate()', () => {
 				expect(maps![1].mode).toBe('SZ');
 			}
 		});
+
+		it('follows and repeats a pattern', () => {
+			const gen = initGenerator();
+			const maps = gen.next({ amount: 5, pattern: '*SZ*' }).value;
+
+			expect(maps).toHaveLength(5);
+			expect(maps![1].mode).toBe('SZ');
+			expect(maps![3].mode).toBe('SZ');
+		});
 	});
 
 	describe('many map lists', () => {
@@ -172,19 +181,25 @@ describe('MapList.generate()', () => {
 
 describe('MapList.parsePattern()', () => {
 	it('parses a simple pattern', () => {
-		expect(MapList.parsePattern('*SZ*')._unsafeUnwrap()).toEqual({
-			pattern: ['ANY', 'SZ', 'ANY']
+		expect(MapList.parsePattern('SZ*TC')._unsafeUnwrap()).toEqual({
+			pattern: ['SZ', 'ANY', 'TC']
 		});
 	});
 
 	it('handles extra spaces', () => {
-		expect(MapList.parsePattern(' *  SZ  * ')._unsafeUnwrap()).toEqual({
-			pattern: ['ANY', 'SZ', 'ANY']
+		expect(MapList.parsePattern(' *  SZ    ')._unsafeUnwrap()).toEqual({
+			pattern: ['ANY', 'SZ']
 		});
 	});
 
 	it('returns error on invalid mode', () => {
 		expect(MapList.parsePattern('*INVALID*')).toBeInstanceOf(Err);
+	});
+
+	it('if starts and ends with ANY, the ending ANY is dropped', () => {
+		expect(MapList.parsePattern('*SZ*')._unsafeUnwrap()).toEqual({
+			pattern: ['ANY', 'SZ']
+		});
 	});
 
 	it('parses a mustInclude mode', () => {

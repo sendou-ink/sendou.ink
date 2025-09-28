@@ -111,7 +111,11 @@ export function* generateBalanced(_args: {
 function modifyModeOrderByPattern(modeOrder: ModeShort[], pattern: MaplistPattern) {
 	const result: ModeShort[] = modeOrder.filter((mode) => !pattern.pattern.includes(mode));
 
-	for (const [idx, mode] of pattern.pattern.entries()) {
+	const expandedPattern = new Array(modeOrder.length)
+		.fill(null)
+		.map((_, i) => pattern.pattern[i % pattern.pattern.length]);
+
+	for (const [idx, mode] of expandedPattern.entries()) {
 		if (mode === 'ANY') continue;
 
 		result.splice(idx, 0, mode);
@@ -141,6 +145,10 @@ export function parsePattern(pattern: string) {
 
 	if (parts.some((part) => !validPatternParts.has(part as any))) {
 		return err('invalid mode in pattern');
+	}
+
+	if (parts.length > 0 && parts[0] === '*' && parts.at(-1) === '*') {
+		parts.pop();
 	}
 
 	return ok({
