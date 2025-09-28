@@ -1251,12 +1251,12 @@
 		"displayName": "Squeaky Clean Scrap",
 		"authorDiscordId": "528851510222782474"
 	},
-	"worldrallychampionship": {
-		"displayName": "WRC #0",
-		"authorDiscordId": "683603297839743009"
-	},
 	"worldendurancechampionship": {
 		"displayName": "WEC #0",
+		"authorDiscordId": "683603297839743009"
+	},
+	"worldrallychampionship": {
+		"displayName": "WRC #0",
 		"authorDiscordId": "683603297839743009"
 	},
 	"zekkocup": {
