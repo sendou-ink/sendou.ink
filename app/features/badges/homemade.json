@@ -1255,6 +1255,10 @@
 		"displayName": "WEC #0",
 		"authorDiscordId": "683603297839743009"
 	},
+	"worldrallychampionship": {
+		"displayName": "WRC #0",
+		"authorDiscordId": "683603297839743009"
+	},
 	"zekkocup": {
 		"displayName": "Zekko Cup",
 		"authorDiscordId": "1320944066002681876"
