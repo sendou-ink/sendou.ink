@@ -29,9 +29,14 @@ describe('MapList.generate()', () => {
 	}
 
 	describe('singular map list', () => {
-		it('returns array with given amount of items', () => {
+		it('returns an array with given amount of items', () => {
 			const gen = initGenerator();
 			expect(gen.next({ amount: 3 }).value).toHaveLength(3);
+		});
+
+		it('returns an array with only one item', () => {
+			const gen = initGenerator();
+			expect(gen.next({ amount: 1 }).value).toHaveLength(1);
 		});
 
 		it('includes only maps from the given map pool', () => {
@@ -102,6 +107,21 @@ describe('MapList.generate()', () => {
 			expect(maps![1].mode).toBe('SZ');
 			expect(maps![3].mode).toBe('SZ');
 		});
+
+		it('includes a mustInclude mode', () => {
+			for (let i = 0; i < 10; i++) {
+				const gen = initGenerator();
+				const maps = gen.next({ amount: 1, pattern: '[SZ]' }).value;
+
+				expect(maps![0].mode).toBe('SZ');
+			}
+		});
+
+		// it follows a pattern with multiple specific modes
+
+		// it handles conflict between pattern and must include
+
+		// it handles more must include modes than amount
 	});
 
 	describe('many map lists', () => {
@@ -171,11 +191,7 @@ describe('MapList.generate()', () => {
 			}
 		});
 
-		// it('rotates the mode order', () => {
-
-		// it('works when have to start repeating stages', () => {
-
-		// it('repeats stages in a different order than the original', () => {
+		// it replenishes the stage id pool when exhausted
 	});
 });
 
@@ -191,6 +207,8 @@ describe('MapList.parsePattern()', () => {
 			pattern: ['ANY', 'SZ']
 		});
 	});
+
+	// it handles same mode twice in pattern
 
 	it('returns error on invalid mode', () => {
 		expect(MapList.parsePattern('*INVALID*')).toBeInstanceOf(Err);
@@ -215,6 +233,8 @@ describe('MapList.parsePattern()', () => {
 			pattern: ['ANY', 'ANY', 'TC']
 		});
 	});
+
+	// it return error on repeated must include mode
 
 	it('parses an empty pattern', () => {
 		expect(MapList.parsePattern('')._unsafeUnwrap()).toEqual({

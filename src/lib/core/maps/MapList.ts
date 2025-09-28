@@ -40,7 +40,7 @@ export function* generate(args: {
 
 		let currentModeOrder = orderedModes[currentOrderIndex % orderedModes.length];
 		if (pattern) {
-			currentModeOrder = modifyModeOrderByPattern(currentModeOrder, pattern);
+			currentModeOrder = modifyModeOrderByPattern(currentModeOrder, pattern, amount);
 		}
 
 		for (let i = 0; i < amount; i++) {
@@ -108,8 +108,21 @@ export function* generateBalanced(_args: {
 	preferences: [ModeWithStagePreferences, ModeWithStagePreferences];
 }) {}
 
-function modifyModeOrderByPattern(modeOrder: ModeShort[], pattern: MaplistPattern) {
+function modifyModeOrderByPattern(modeOrder: ModeShort[], pattern: MaplistPattern, amount: number) {
 	const result: ModeShort[] = modeOrder.filter((mode) => !pattern.pattern.includes(mode));
+
+	if (pattern.mustInclude) {
+		for (const mode of pattern.mustInclude) {
+			if (!result.slice(0, amount).includes(mode)) {
+				const randomIndex = Math.floor(Math.random() * amount);
+				result.splice(randomIndex, 0, mode);
+			}
+		}
+	}
+
+	if (pattern.pattern.every((part) => part === 'ANY')) {
+		return result;
+	}
 
 	const expandedPattern = new Array(modeOrder.length)
 		.fill(null)
@@ -156,5 +169,5 @@ export function parsePattern(pattern: string) {
 			modesShort.includes(part as ModeShort) ? (part as ModeShort) : 'ANY'
 		),
 		mustInclude: mustInclude.length > 0 ? mustInclude : undefined
-	} as MaplistPattern);
+	});
 }
