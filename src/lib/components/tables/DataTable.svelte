@@ -102,52 +102,63 @@
 	});
 </script>
 
-<div class="top-controls">
-	<span>
-		<ColumnFilter {table} {filterColumn} />
-	</span>
-	<span>
-		<VisibilityMenu {table} {toggleColumns} />
-	</span>
-</div>
-<Table>
-	<thead>
-		{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
-			<tr>
-				{#each headerGroup.headers as header (header.id)}
-					<th colspan={header.colSpan}>
-						{#if !header.isPlaceholder}
-							<FlexRender content={header.column.columnDef.header} context={header.getContext()} />
-						{/if}
-					</th>
-				{/each}
-			</tr>
-		{/each}
-	</thead>
-	<tbody>
-		{#each table.getRowModel().rows as row (row.id)}
-			<tr data-state={row.getIsSelected() && 'selected'}>
-				{#each row.getVisibleCells() as cell (cell.id)}
-					<td>
-						<FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
-					</td>
-				{/each}
-			</tr>
-		{:else}
-			<tr>
-				<td colspan={columns.length}>{m.tables_noData()}</td>
-			</tr>
-		{/each}
-	</tbody>
-</Table>
-<div class="bottom-controls">
-	<span></span>
-	<span>
-		<RowPagination {table} {pageSize} />
-	</span>
+<div class="container">
+	<div class="top-controls">
+		<span>
+			<ColumnFilter {table} {filterColumn} />
+		</span>
+		<span>
+			<VisibilityMenu {table} {toggleColumns} />
+		</span>
+	</div>
+	<Table>
+		<thead>
+			{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
+				<tr>
+					{#each headerGroup.headers as header (header.id)}
+						<th colspan={header.colSpan}>
+							{#if !header.isPlaceholder}
+								<FlexRender
+									content={header.column.columnDef.header}
+									context={header.getContext()}
+								/>
+							{/if}
+						</th>
+					{/each}
+				</tr>
+			{/each}
+		</thead>
+		<tbody>
+			{#each table.getRowModel().rows as row (row.id)}
+				<tr data-state={row.getIsSelected() && 'selected'}>
+					{#each row.getVisibleCells() as cell (cell.id)}
+						<td>
+							<FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
+						</td>
+					{/each}
+				</tr>
+			{:else}
+				<tr>
+					<td colspan={columns.length}>{m.tables_noData()}</td>
+				</tr>
+			{/each}
+		</tbody>
+	</Table>
+	<div class="bottom-controls">
+		<span></span>
+		<span>
+			<RowPagination {table} {pageSize} />
+		</span>
+	</div>
 </div>
 
 <style>
+	.container {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-6);
+	}
+
 	.top-controls,
 	.bottom-controls {
 		display: flex;

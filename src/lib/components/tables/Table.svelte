@@ -9,7 +9,7 @@
 </script>
 
 <div class="scrollbar">
-	<table class="my-table">{@render children()}</table>
+	<table>{@render children()}</table>
 </div>
 
 <style>
@@ -17,7 +17,6 @@
 		position: relative;
 		width: 100%;
 		overflow: auto;
-		border-radius: var(--radius-box);
 	}
 
 	table {
@@ -43,22 +42,17 @@
 			tbody {
 				td {
 					padding: var(--s-2) var(--s-2-5);
-					white-space: nowrap;
 					vertical-align: middle;
+					border-bottom: 1px solid var(--color-base-border);
 				}
 
 				tr:hover {
 					background-color: var(--color-base-section);
 				}
-			}
 
-			td {
-				border-bottom: 1px solid var(--color-base-border);
-				min-width: max-content;
-			}
-
-			tr:first-child td {
-				border-top: 1px solid var(--color-base-border);
+				tr:first-child td {
+					border-top: 1px solid var(--color-base-border);
+				}
 			}
 		}
 	}
