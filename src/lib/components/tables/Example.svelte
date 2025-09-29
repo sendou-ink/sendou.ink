@@ -16,7 +16,14 @@
 		amount: number;
 	};
 
-	const columns: ColumnDef<Payment>[] = [
+	/**
+	 * Columns define the shape of the data and how to render it.
+	 * We can format cells and headers by defining a function that returns a string.
+	 * By using renderComponent or renderSnippet we can render Svelte components or snippets instead.
+	 * The SortableHeader component can be used to create sortable columns.
+	 * Docs: https://tanstack.com/table/latest/docs/guide/column-defs
+	 */
+	const columnsA: ColumnDef<Payment>[] = [
 		{
 			accessorKey: 'status',
 			header: 'Status',
@@ -48,7 +55,34 @@
 		}
 	];
 
-	const data: Payment[] = createFakeData(50);
+	/**
+	 * A simpler table without custom cell rendering.
+	 */
+	const columnsB: ColumnDef<Payment>[] = [
+		{
+			accessorKey: 'status',
+			header: 'Status'
+		},
+		{
+			accessorKey: 'email',
+			header: 'Email'
+		},
+		{
+			accessorKey: 'createdAt',
+			header: 'Created At'
+		},
+		{
+			accessorKey: 'amount',
+			header: 'Amount'
+		}
+	];
+
+	/*
+	 * The data which takes the shape defined by the columns,
+	 * where every entry has the same keys as defined in the columns id or accessorKey.
+	 */
+	const dataA: Payment[] = createFakeData(50);
+	const dataB: Payment[] = createFakeData(10);
 
 	function createFakeData(count: number): Payment[] {
 		const statuses: Payment['status'][] = ['Pending', 'Processing', 'Success', 'Failed'];
@@ -92,13 +126,20 @@
 	{/if}
 {/snippet}
 
+<!-- A table using all features -->
 <DataTable
-	{columns}
-	{data}
+	columns={columnsA}
+	data={dataA}
 	filterColumn="email"
 	pageSize={5}
 	toggleColumns={['email', 'createdAt', 'amount']}
 />
+
+<!-- 
+A simple, static table. 
+In this case it would be better to use the basic Table component instead.
+-->
+<DataTable columns={columnsB} data={dataB} />
 
 <style>
 	span {
