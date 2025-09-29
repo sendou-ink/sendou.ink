@@ -29,7 +29,7 @@
 <DropdownMenu.Root>
 	{@render children()}
 	<DropdownMenu.Portal>
-		<DropdownMenu.Content forceMount>
+		<DropdownMenu.Content sideOffset={8} collisionPadding={8} forceMount>
 			{#snippet child({ wrapperProps, props, open })}
 				{#if open}
 					<div {...wrapperProps}>
@@ -77,7 +77,6 @@
 
 <style>
 	.items-container {
-		margin-block-start: var(--s-2-5);
 		border-radius: var(--radius-box);
 		background-color: var(--color-base-section);
 		border: var(--border-style);
