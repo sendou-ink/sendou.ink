@@ -14,6 +14,7 @@
 
 {#if filterColumn}
 	<Input
+		type="search"
 		placeholder={`${m.common_actions_filter()} ${filterColumn}...`}
 		value={(table.getColumn(filterColumn)?.getFilterValue() as string) ?? ''}
 		oninput={(e) => {

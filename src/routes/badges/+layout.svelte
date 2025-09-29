@@ -7,7 +7,6 @@
 	import OpenGraphMeta from '$lib/components/OpenGraphMeta.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { resolve } from '$app/paths';
-	import { Search } from '@lucide/svelte';
 
 	let { children } = $props();
 
@@ -40,7 +39,7 @@
 	<div class="container">
 		{@render children?.()}
 
-		<Input type="search" bind:value={searchInputValue} icon={Search} />
+		<Input type="search" bind:value={searchInputValue} />
 
 		{#if ownBadges.length > 0}
 			<div class="w-full">

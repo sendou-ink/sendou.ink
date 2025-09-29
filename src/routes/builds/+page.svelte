@@ -9,7 +9,6 @@
 	import * as AuthAPI from '$lib/api/auth';
 	import { mySlugify } from '$lib/utils/urls';
 	import Input from '$lib/components/Input.svelte';
-	import Search from '@lucide/svelte/icons/search';
 	import { m } from '$lib/paraglide/messages';
 
 	const user = await AuthAPI.queries.me();
@@ -37,7 +36,7 @@
 
 <Main class="stack lg">
 	<div class="input-container">
-		<Input bind:value={search} type="search" icon={Search} />
+		<Input bind:value={search} type="search" />
 		{#if user}
 			<AddNewButton
 				navIcon="builds"

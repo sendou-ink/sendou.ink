@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Component } from 'svelte';
 	import type { HTMLInputAttributes } from 'svelte/elements';
+	import Search from '@lucide/svelte/icons/search';
 
 	interface Props extends HTMLInputAttributes {
 		class?: string;
@@ -25,7 +26,11 @@
 		<div class="addon">{leftAddon}</div>
 	{/if}
 	<input bind:value data-testid={testId} {...rest} />
-	<Icon />
+	{#if rest.type === 'search' && !Icon}
+		<Search />
+	{:else if Icon}
+		<Icon />
+	{/if}
 </div>
 
 <style>
