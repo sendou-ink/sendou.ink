@@ -27,6 +27,7 @@
 	 * We can format cells and headers by defining a function that returns a string.
 	 * By using renderComponent or renderSnippet we can render Svelte components or snippets instead.
 	 * The SortableHeader component can be used to create sortable columns.
+	 * The RowActions component can be used to create a menu with actions for each row.
 	 * Docs: https://tanstack.com/table/latest/docs/guide/column-defs
 	 */
 	const columnsA: ColumnDef<Payment>[] = [
@@ -151,25 +152,25 @@
 
 {#snippet statusCell(status: Payment['status'])}
 	{#if status === 'Success'}
-		<span class="status">
-			<CircleCheck />
+		<div class="status">
+			<CircleCheck size="16" />
 			{status}
-		</span>
+		</div>
 	{:else if status === 'Processing'}
-		<span class="status">
-			<CircleDashed />
+		<div class="status">
+			<CircleDashed size="16" />
 			{status}
-		</span>
+		</div>
 	{:else if status === 'Pending'}
-		<span class="status">
-			<Circle />
+		<div class="status">
+			<Circle size="16" />
 			{status}
-		</span>
+		</div>
 	{:else if status === 'Failed'}
-		<span class="status">
-			<CircleAlert />
+		<div class="status">
+			<CircleAlert size="16" />
 			{status}
-		</span>
+		</div>
 	{/if}
 {/snippet}
 
@@ -189,9 +190,10 @@ In this case it would be better to use the basic Table component instead.
 <DataTable columns={columnsB} data={dataB} />
 
 <style>
-	span {
+	div {
 		display: flex;
 		align-items: center;
 		gap: var(--s-2);
+		min-width: max-content;
 	}
 </style>

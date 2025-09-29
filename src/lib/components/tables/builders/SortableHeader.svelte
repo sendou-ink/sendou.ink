@@ -29,9 +29,10 @@
 
 <style>
 	.content {
-		display: inline-flex;
+		display: flex;
 		align-items: center;
 		gap: var(--s-1);
+		min-width: max-content;
 		line-height: normal;
 	}
 </style>
