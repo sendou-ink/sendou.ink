@@ -34,6 +34,7 @@
 			<Button
 				variant={confirmDialogState.button?.variant ?? 'destructive'}
 				disabled={isSubmitting}
+				loading={isSubmitting}
 				onclick={async () => {
 					isSubmitting = true;
 					try {
