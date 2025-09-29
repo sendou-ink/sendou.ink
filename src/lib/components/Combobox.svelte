@@ -82,7 +82,7 @@
 									<Search color="currentColor" size="1rem" />
 									<Command.Input placeholder={searchPlaceholder} />
 								</div>
-								<Command.List>
+								<Command.List class="scrollbar">
 									{#snippet child({ props })}
 										<div {...props}>
 											<Command.Empty>
@@ -282,18 +282,6 @@
 		overflow-y: auto;
 		width: 100%;
 		border-radius: var(--radius-field);
-
-		scrollbar-width: thin;
-
-		&::-webkit-scrollbar,
-		&::-webkit-scrollbar-track {
-			height: 5px;
-			width: 5px;
-		}
-
-		&::-webkit-scrollbar-thumb {
-			border-radius: var(--radius-field);
-		}
 	}
 
 	[data-command-empty] {

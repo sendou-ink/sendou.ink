@@ -47,7 +47,7 @@
 		</Dialog.Portal>
 	</Dialog.Root>
 {:else}
-	<nav>
+	<nav class="scrollbar">
 		{@render children()}
 	</nav>
 {/if}
@@ -70,20 +70,6 @@
 		border: var(--border-style);
 		border-radius: var(--radius-box);
 		margin: var(--s-2-5);
-
-		&::-webkit-scrollbar,
-		&::-webkit-scrollbar-track {
-			background-color: transparent;
-			height: 18px;
-			width: 18px;
-		}
-
-		&::-webkit-scrollbar-thumb {
-			background-color: var(--color-primary-transparent);
-			border: 6px solid transparent;
-			border-radius: 99999px;
-			background-clip: content-box;
-		}
 	}
 
 	:not(.dialog-content) {

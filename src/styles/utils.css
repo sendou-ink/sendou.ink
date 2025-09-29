@@ -602,6 +602,22 @@
 	list-style: none;
 }
 
+.scrollbar {
+	&::-webkit-scrollbar,
+	&::-webkit-scrollbar-track {
+		background-color: transparent;
+		height: 18px;
+		width: 18px;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background-color: var(--color-primary-transparent);
+		border: 6px solid transparent;
+		border-radius: 99999px;
+		background-clip: content-box;
+	}
+}
+
 @media screen and (min-width: 480px) {
 	.mobile-hidden {
 		display: inherit;
