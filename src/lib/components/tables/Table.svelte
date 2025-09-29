@@ -8,7 +8,7 @@
 	const { children }: Props = $props();
 </script>
 
-<div class="my-table__container">
+<div class="scrollbar">
 	<table class="my-table">{@render children()}</table>
 </div>
 
@@ -17,15 +17,17 @@
 		position: relative;
 		width: 100%;
 		overflow: auto;
+		border-radius: var(--radius-box);
 	}
 
 	table {
 		width: 100%;
-		border-collapse: separate;
-		border-spacing: 0;
 		font-size: var(--fonts-xs);
 		text-align: left;
+		text-indent: 0;
 		border-color: var(--color-base-border);
+		border-collapse: collapse;
+		border-spacing: 0;
 
 		:global {
 			thead {
@@ -33,12 +35,16 @@
 
 				th {
 					padding: var(--s-2);
+					white-space: nowrap;
+					vertical-align: middle;
 				}
 			}
 
 			tbody {
 				td {
 					padding: var(--s-2) var(--s-2-5);
+					white-space: nowrap;
+					vertical-align: middle;
 				}
 
 				tr:hover {
@@ -48,6 +54,7 @@
 
 			td {
 				border-bottom: 1px solid var(--color-base-border);
+				min-width: max-content;
 			}
 
 			tr:first-child td {
