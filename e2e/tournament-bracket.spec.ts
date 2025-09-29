@@ -542,7 +542,7 @@ test.describe("Tournament bracket", () => {
 	}) => {
 		const tournamentId = 4;
 
-		await seed(page, "SMALL_SOS");
+		await seed(page);
 		await impersonate(page);
 
 		await navigate({
@@ -552,34 +552,56 @@ test.describe("Tournament bracket", () => {
 
 		await page.getByTestId("edit-event-info-button").click();
 		await page.getByTestId("delete-bracket-button").last().click();
-		await page.getByTestId("delete-bracket-button").last().click();
-		await page.getByTestId("delete-bracket-button").last().click();
 
-		await page.getByTestId("follow-up-bracket-switch").click();
+		for (const toggle of await page
+			.getByTestId("follow-up-bracket-switch")
+			.all()) {
+			await toggle.click();
+		}
+
 		await page.getByLabel("Format").first().selectOption("Single-elimination");
+		await page.getByLabel("Format").nth(1).selectOption("Single-elimination");
+		await page.getByLabel("Format").nth(2).selectOption("Swiss");
+		await page.getByLabel("Format").nth(3).selectOption("Swiss");
 
 		await submit(page);
 
 		await page.getByText("Seeds").click();
 		await page.getByTestId("set-starting-brackets").click();
 
-		await page
-			.getByTestId("starting-bracket-select")
-			.first()
-			.selectOption("Great White");
-		await page
-			.getByTestId("starting-bracket-select")
-			.nth(1)
-			.selectOption("Great White");
+		for (let i = 0; i < 16; i++) {
+			let bracketName: string;
+			if (i < 4) {
+				bracketName = "Groups stage";
+			} else if (i < 8) {
+				bracketName = "Great White";
+			} else if (i < 12) {
+				bracketName = "Hammerhead";
+			} else {
+				bracketName = "Mako";
+			}
+
+			await page
+				.getByTestId("starting-bracket-select")
+				.nth(i)
+				.selectOption(bracketName);
+		}
 
 		await submit(page, "set-starting-brackets-submit-button");
-		await page.getByTestId("brackets-tab").click();
-		await page.getByText("Great White").click();
-		await page.getByTestId("finalize-bracket-button").click();
-		await page.getByTestId("confirm-finalize-bracket-button").click();
 
-		await expect(page.locator('[data-match-id="1"]')).toBeVisible();
-		await isNotVisible(page.locator('[data-match-id="2"]'));
+		await page.getByTestId("brackets-tab").click();
+		for (const bracketName of [
+			"Groups stage",
+			"Great White",
+			"Hammerhead",
+			"Mako",
+		]) {
+			await page.getByRole("button", { name: bracketName }).click();
+			await page.getByTestId("finalize-bracket-button").click();
+			await page.getByTestId("confirm-finalize-bracket-button").click();
+		}
+
+		await expect(page.locator('[data-match-id="11"]')).toBeVisible();
 	});
 
 	test("organizer edits a match after it is done", async ({ page }) => {
