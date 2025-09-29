@@ -17,6 +17,12 @@
 
 {#if pageSize}
 	<div class="container">
+		<p>
+			{m.tables_pagination_info({
+				current: table.getState().pagination.pageIndex + 1,
+				total: table.getPageCount()
+			})}
+		</p>
 		<div class="controls">
 			<Button
 				variant="outlined"
@@ -30,14 +36,6 @@
 				onclick={() => table.previousPage()}
 				disabled={!table.getCanPreviousPage()}
 			/>
-		</div>
-		<p>
-			{m.tables_pagination_info({
-				current: table.getState().pagination.pageIndex + 1,
-				total: table.getPageCount()
-			})}
-		</p>
-		<div class="controls">
 			<Button
 				variant="outlined"
 				icon={ChevronRight}
@@ -56,13 +54,11 @@
 
 <style>
 	.container {
-		display: grid;
-		grid-template-columns: auto auto auto;
+		display: flex;
 		gap: var(--s-4);
 		align-items: center;
-		justify-items: center;
-		justify-content: center;
 		font-size: var(--fonts-xs);
+		user-select: none;
 	}
 
 	.controls {

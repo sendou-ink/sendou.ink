@@ -103,8 +103,12 @@
 </script>
 
 <div class="top-controls">
-	<ColumnFilter {table} {filterColumn} />
-	<VisibilityMenu {table} {toggleColumns} />
+	<span>
+		<ColumnFilter {table} {filterColumn} />
+	</span>
+	<span>
+		<VisibilityMenu {table} {toggleColumns} />
+	</span>
 </div>
 <Table>
 	<thead>
@@ -137,19 +141,18 @@
 	</tbody>
 </Table>
 <div class="bottom-controls">
-	<RowPagination {table} {pageSize} />
+	<span></span>
+	<span>
+		<RowPagination {table} {pageSize} />
+	</span>
 </div>
 
 <style>
-	.top-controls {
+	.top-controls,
+	.bottom-controls {
 		display: flex;
 		gap: var(--s-2);
 		justify-content: space-between;
 		align-items: center;
-	}
-
-	.bottom-controls {
-		display: flex;
-		justify-content: flex-end;
 	}
 </style>
