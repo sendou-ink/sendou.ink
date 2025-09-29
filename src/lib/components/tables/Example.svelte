@@ -1,12 +1,18 @@
 <script lang="ts">
 	import type { ColumnDef } from '@tanstack/table-core';
 	import { renderComponent, renderSnippet } from './internals';
+	import { confirmAction } from '$lib/utils/form';
 	import CircleCheck from '@lucide/svelte/icons/circle-check';
 	import CircleAlert from '@lucide/svelte/icons/circle-alert';
 	import CircleDashed from '@lucide/svelte/icons/circle-dashed';
 	import Circle from '@lucide/svelte/icons/circle';
+	import SquarePen from '@lucide/svelte/icons/square-pen';
+	import Trash2 from '@lucide/svelte/icons/trash-2';
+	import NotepadText from '@lucide/svelte/icons/notepad-text';
+	import HandCoins from '@lucide/svelte/icons/hand-coins';
 	import DataTable from './DataTable.svelte';
 	import SortableHeader from './builders/SortableHeader.svelte';
+	import RowActions from './builders/RowActions.svelte';
 
 	type Payment = {
 		id: string;
@@ -52,6 +58,47 @@
 					label: 'Amount'
 				}),
 			cell: ({ row }) => `$ ${row.getValue('amount')}`
+		},
+		{
+			id: 'actions',
+			cell: ({ row }) =>
+				renderComponent(RowActions, {
+					items: [
+						{
+							label: 'View Details',
+							icon: NotepadText,
+							href: `#`
+						},
+						{
+							label: 'Edit',
+							icon: SquarePen,
+							href: `#`
+						},
+						{
+							label: 'Refund',
+							icon: HandCoins,
+							hidden: row.original.status !== 'Success'
+						},
+						{
+							label: 'Delete',
+							icon: Trash2,
+							destructive: true,
+							onclick: () =>
+								confirmAction(
+									async () =>
+										await new Promise((resolve) =>
+											setTimeout(() => {
+												dataA = dataA.filter((p) => p.id !== row.original.id);
+												resolve();
+											}, 1000)
+										),
+									{
+										title: `Are you sure you want to delete payment ${row.original.id}? This action cannot be undone.`
+									}
+								)
+						}
+					]
+				})
 		}
 	];
 
@@ -81,8 +128,8 @@
 	 * The data which takes the shape defined by the columns,
 	 * where every entry has the same keys as defined in the columns id or accessorKey.
 	 */
-	const dataA: Payment[] = createFakeData(50);
-	const dataB: Payment[] = createFakeData(10);
+	let dataA: Payment[] = createFakeData(50);
+	let dataB: Payment[] = createFakeData(10);
 
 	function createFakeData(count: number): Payment[] {
 		const statuses: Payment['status'][] = ['Pending', 'Processing', 'Success', 'Failed'];
