@@ -29,6 +29,7 @@ export function* generate(args: {
 	const modes = MapPool.toModes(args.mapPool);
 	const stageCounts = initializeStageCounts(args.mapPool);
 	const orderedModes = modeOrders(modes);
+	const stageUsageTracker = new Map<StageId, number>();
 	let currentOrderIndex = 0;
 
 	const firstArgs = yield [];
@@ -47,10 +48,12 @@ export function* generate(args: {
 			const mode = currentModeOrder[i % currentModeOrder.length];
 			const possibleStages = R.shuffle(args.mapPool[mode]!);
 
+			replenishStageIds({ possibleStages, stageCounts, stageUsageTracker });
 			const stageId = mostRarelySeenStage(possibleStages, stageCounts);
 
 			result.push({ mode, stageId });
 			stageCounts.set(stageId, stageCounts.get(stageId)! + 1);
+			stageUsageTracker.set(stageId, currentOrderIndex);
 		}
 
 		currentOrderIndex++;
@@ -69,6 +72,37 @@ function initializeStageCounts(mapPool: MapPool.PartialMapPool) {
 	}
 
 	return counts;
+}
+
+/** This function is used for controlling in which order we start reusing the stage ids */
+function replenishStageIds({
+	possibleStages,
+	stageCounts,
+	stageUsageTracker
+}: {
+	possibleStages: StageId[];
+	stageCounts: Map<StageId, number>;
+	stageUsageTracker: Map<StageId, number>;
+}) {
+	const allOptionsEqual = possibleStages.every(
+		(stageId) => stageCounts.get(stageId) === stageCounts.get(possibleStages[0])
+	);
+	if (!allOptionsEqual) return;
+
+	const relevantStageUsage = Array.from(stageUsageTracker.entries())
+		.filter(([stageId]) => possibleStages.includes(stageId))
+		.sort((a, b) => a[1] - b[1]);
+
+	const stagesToReplenish: StageId[] = [];
+
+	for (const [stageId] of relevantStageUsage) {
+		stagesToReplenish.push(stageId);
+		if (stagesToReplenish.length >= possibleStages.length / 2) break;
+	}
+
+	for (const stageId of stagesToReplenish) {
+		stageCounts.set(stageId, (stageCounts.get(stageId) ?? 0) - 0.5);
+	}
 }
 
 function mostRarelySeenStage(possibleStages: StageId[], stageCounts: Map<StageId, number>) {

@@ -237,7 +237,33 @@ describe('MapList.generate()', () => {
 			}
 		});
 
-		// it replenishes the stage id pool when exhausted
+		it('replenishes the stage id pool when exhausted', { retry: 10 }, () => {
+			const gen = initGenerator({ SZ: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] });
+			const first = gen.next({ amount: 5 }).value.map((m) => m.stageId);
+			gen.next({ amount: 5 });
+			const third = gen.next({ amount: 5 }).value.map((m) => m.stageId);
+
+			for (const stageId of third) {
+				expect(first).toContainEqual(stageId);
+			}
+		});
+
+		it('replenishes the stage id pool with different order', () => {
+			const gen = initGenerator({ SZ: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] });
+			const first = gen.next({ amount: 5 }).value.map((m) => m.stageId);
+			gen.next({ amount: 5 });
+			const third = gen.next({ amount: 5 }).value.map((m) => m.stageId);
+
+			let someDifferent = false;
+			for (let i = 0; i < 5; i++) {
+				if (first[i] !== third[i]) {
+					someDifferent = true;
+					break;
+				}
+			}
+
+			expect(someDifferent).toBe(true);
+		});
 	});
 });
 
