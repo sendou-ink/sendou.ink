@@ -4,7 +4,6 @@ import { notFoundIfFalsy, type SchemaToDefaultValues } from '$lib/server/remote-
 import { id } from '$lib/utils/zod';
 import { add, sub } from 'date-fns';
 import { requireTournament } from './utils.server';
-import markdownit from 'markdown-it';
 import { databaseTimestampToDate } from '$lib/utils/dates';
 import { userSubmittedImage } from '$lib/utils/urls-img';
 import type { UpsertTeamData, UpsertTeamMapPoolData } from './schemas';
@@ -13,8 +12,7 @@ import { resolve } from '$app/paths';
 import * as MapPool from '$lib/core/maps/MapPool';
 import { TOURNAMENT_MAP_PICKING_STYLES } from '$lib/constants/calendar';
 import * as Standings from '$lib/core/tournament/Standings';
-
-const md = markdownit();
+import { renderMarkdown } from '$lib/utils/markdown.server';
 
 export const redirectToCurrentMainPage = query(id, async (tournamentId) => {
 	const tournament = await requireTournament(tournamentId);
@@ -102,7 +100,7 @@ export const infoById = query(id, async (id) => {
 	return {
 		name: tournament.ctx.name,
 		logoSrc: tournament.ctx.logoSrc,
-		description: tournament.ctx.description ? md.render(tournament.ctx.description) : null,
+		description: tournament.ctx.description ? renderMarkdown(tournament.ctx.description) : null,
 		author: {
 			discordId: tournament.ctx.author.discordId,
 			username: tournament.ctx.author.username,
@@ -138,14 +136,9 @@ export const infoById = query(id, async (id) => {
 	};
 });
 
-export const descriptionsById = query(id, async (id) => {
-	const description = (await requireTournament(id)).ctx.description;
-	return description ? md.render(description) : null;
-});
-
 export const rulesById = query(id, async (id) => {
 	const rules = notFoundIfFalsy((await requireTournament(id)).ctx.rules);
-	return md.render(rules);
+	return renderMarkdown(rules);
 });
 
 /** User's registration for the specified tournament. Note that before tournament starts each user can only be in one team, but afterwards it's possible to be in many teams (as added by the organizer). */

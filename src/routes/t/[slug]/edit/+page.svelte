@@ -21,6 +21,7 @@
 		defaultValues={await TeamAPI.queries.editTeamFormData(params.slug)}
 	>
 		<FormField name={validField('name')} />
+		<FormField name={validField('tag')} />
 		<FormField name={validField('bsky')} />
 		<FormField name={validField('bio')} />
 		<FormField name={validField('logo')} />

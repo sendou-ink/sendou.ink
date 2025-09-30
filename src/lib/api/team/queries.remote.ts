@@ -142,6 +142,7 @@ export const editTeamFormData = query(
 			slug: team.customUrl,
 			name: team.name,
 			bio: team.bio,
+			tag: team.tag,
 			bsky: team.bsky,
 			banner: team.bannerSrc,
 			logo: team.avatarSrc

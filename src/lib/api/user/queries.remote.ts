@@ -50,6 +50,7 @@ export const editProfileFormData = query(
 			inGameName: userProfile.inGameName,
 			battlefy: userProfile.battlefy,
 			country: userProfile.country,
+			region: userProfile.region,
 			weapons: userProfile.weapons.map((weapon) => ({
 				id: weapon.weaponSplId,
 				isFavorite: Boolean(weapon.isFavorite)

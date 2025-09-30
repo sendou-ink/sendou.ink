@@ -16,6 +16,7 @@ export function findAllUndisbanded() {
 		.select(({ eb }) => [
 			'Team.customUrl',
 			'Team.name',
+			'Team.tag',
 			eb
 				.selectFrom('UserSubmittedImage')
 				.whereRef('UserSubmittedImage.id', '=', 'Team.avatarImgId')
@@ -55,6 +56,7 @@ export async function findBySlug(customUrl: string, { includeInviteCode = false 
 			'Team.name',
 			'Team.bsky',
 			'Team.bio',
+			'Team.tag',
 			'Team.customUrl',
 			'Team.css',
 			'AvatarImage.url as avatarSrc',
@@ -247,7 +249,7 @@ export async function create(
 
 export async function update(
 	teamId: number,
-	{ name, slug, bio, bsky, logo, banner }: SchemaToFunctionInput<EditTeamData>
+	{ name, slug, bio, tag, bsky, logo, banner }: SchemaToFunctionInput<EditTeamData>
 ) {
 	return db
 		.updateTable('AllTeam')
@@ -255,6 +257,7 @@ export async function update(
 			name,
 			customUrl: slug,
 			bio,
+			tag,
 			bsky,
 			avatarImgId: logo,
 			bannerImgId: banner

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import EliminationBracketSide from './EliminationBracketSide.svelte';
+	import RoundRobinBracket from './RoundRobinBracket.svelte';
 	import type * as BracketAPI from '$lib/api/tournament-bracket';
 
 	interface Props {
@@ -15,9 +16,15 @@
 </script>
 
 <div class="bracket">
+	{#if bracket.type === 'single_elimination'}
+		<EliminationBracketSide type="single" rounds={bracket.rounds} {matchPageBaseHref} />
+	{/if}
 	{#if bracket.type === 'double_elimination'}
 		<EliminationBracketSide type="winners" rounds={bracket.winners} {matchPageBaseHref} />
 		<EliminationBracketSide type="losers" rounds={bracket.losers} {matchPageBaseHref} />
+	{/if}
+	{#if bracket.type === 'round_robin'}
+		<RoundRobinBracket {bracket} {matchPageBaseHref} />
 	{/if}
 </div>
 

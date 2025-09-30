@@ -4,6 +4,9 @@ import { SqlDatabase } from '$lib/core/tournament/crud.server';
 import { TournamentCore } from '$lib/core/tournament/tournament-core';
 import * as TournamentRepository from '$lib/server/db/repositories/tournament';
 import { notFoundIfFalsy } from '$lib/server/remote-functions';
+import { badRequest } from '$lib/server/remote-functions';
+import * as TournamentOrganizationRepository from '$lib/server/db/repositories/tournament-organization';
+import * as UserRepository from '$lib/server/db/repositories/user';
 
 export async function requireTournament(tournamentId: number) {
 	const { locals } = getRequestEvent();
@@ -40,4 +43,41 @@ export function clearTournamentDataCache(tournamentId: number) {
 	locals.tournament[tournamentId] = tournamentPromise;
 
 	// xxx: todo implement in-memory cache clearing
+}
+
+export async function requireNotBannedByOrganization({
+	tournament,
+	user,
+	message = 'You are banned from events hosted by this organization'
+}: {
+	tournament: TournamentCore;
+	user: { id: number };
+	message?: string;
+}) {
+	if (!tournament.ctx.organization) return;
+
+	const isBanned = await TournamentOrganizationRepository.isUserBannedByOrganization({
+		organizationId: tournament.ctx.organization.id,
+		userId: user.id
+	});
+
+	if (isBanned) {
+		badRequest(message);
+	}
+}
+
+export async function inGameNameIfNeeded({
+	tournament,
+	userId
+}: {
+	tournament: TournamentCore;
+	userId: number;
+}) {
+	if (!tournament.ctx.settings.requireInGameNames) return null;
+
+	const inGameName = await UserRepository.inGameNameByUserId(userId);
+
+	if (!inGameName) badRequest('No in-game name');
+
+	return inGameName;
 }

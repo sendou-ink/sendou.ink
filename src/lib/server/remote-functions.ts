@@ -16,6 +16,14 @@ export function notFoundIfFalsy<T>(value: T | null | undefined): T {
 	return value;
 }
 
+export function badRequestIfFalsy<T>(value: T | null | undefined): T {
+	if (!value) {
+		error(400);
+	}
+
+	return value;
+}
+
 export function badRequestIfErr<T, E>(result: Result<T, E>): T {
 	if (result.isErr()) {
 		error(400);

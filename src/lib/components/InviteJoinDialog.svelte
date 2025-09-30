@@ -9,7 +9,7 @@
 		dialogTitle: string;
 		onConfirm: () => Promise<void>;
 		confirmPending: boolean;
-		/** Result of the invite code validation, ok() or err(errMessage) where errMessage is something we can show to user (translated)*/
+		/** Result of the invite code validation, ok() or err(errMessage) where errMessage is something we can show to user (translated) */
 		validation: Result<unknown, string>;
 	}
 

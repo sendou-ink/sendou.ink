@@ -9,8 +9,16 @@
 	import MapPool from './MapPool.svelte';
 	import RosterSection from './RosterSection.svelte';
 	import RegistrationSteps from './RegistrationSteps.svelte';
+	import { page } from '$app/state';
+	import * as TournamentTeamAPI from '$lib/api/tournament-team';
+	import { goto } from '$app/navigation';
+	import { m } from '$lib/paraglide/messages';
+	import InviteJoinDialog from '$lib/components/InviteJoinDialog.svelte';
+	import { resolve } from '$app/paths';
 
 	let { params }: PageProps = $props();
+
+	const inviteCode = $derived(page.url.searchParams.get('code'));
 
 	const { registrationClosesAt, mapPickingStyle } = $derived(
 		await TournamentAPI.queries.myRegistrationById(params.id)
@@ -37,6 +45,21 @@
 		</div>
 	</div>
 	<FriendCodeGate>
+		{#if inviteCode}
+			<!-- xxx: add teamName and eventName -->
+			<InviteJoinDialog
+				dialogTitle={m.tournament_join_VALID({ teamName: '', eventName: '' })}
+				validation={await TournamentTeamAPI.queries.validateInviteCode({
+					inviteCode,
+					tournamentId: params.id
+				})}
+				onConfirm={async () => {
+					await TournamentTeamAPI.actions.joinTeam({ inviteCode, tournamentId: params.id });
+					goto(resolve(`/to/[id]/register`, { id: params.id }));
+				}}
+				confirmPending={TournamentTeamAPI.actions.joinTeam.pending > 0}
+			/>
+		{/if}
 		<div class="stack lg">
 			<RegistrationSteps tournamentId={params.id} />
 

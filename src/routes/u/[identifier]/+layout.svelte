@@ -49,6 +49,9 @@
 				})
 			: null
 	);
+	const countryNameWithRegion = $derived(
+		user.country === 'US' && user.region ? `${user.region}, ${countryName}` : countryName
+	);
 </script>
 
 <OpenGraphMeta
@@ -64,10 +67,10 @@
 			heading={user.username}
 		>
 			{#snippet subheading()}
-				{#if user.country && countryName}
+				{#if countryNameWithRegion}
 					<div class="stack horizontal xs items-center">
-						<Flag countryCode={user.country} tiny />
-						{countryName}
+						<Flag countryCode={user.country!} tiny />
+						{countryNameWithRegion}
 					</div>
 				{/if}
 			{/snippet}</SideNavHeader

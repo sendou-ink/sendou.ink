@@ -7,7 +7,7 @@
 	interface Props {
 		rounds: Array<BracketAPI.queries.RoundData>;
 		matchPageBaseHref?: string;
-		type: 'winners' | 'losers';
+		type: 'winners' | 'losers' | 'single';
 	}
 
 	let { rounds, matchPageBaseHref, type }: Props = $props();

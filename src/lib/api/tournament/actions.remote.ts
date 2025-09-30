@@ -1,12 +1,14 @@
 import { badRequest, validatedForm } from '$lib/server/remote-functions';
 import * as TournamentTeamRepository from '$lib/server/db/repositories/tournament-team';
 import { upsertTeamMapPool, upsertTeamSchema } from './schemas';
-import { clearTournamentDataCache, requireTournament } from './utils.server';
+import {
+	clearTournamentDataCache,
+	inGameNameIfNeeded,
+	requireNotBannedByOrganization,
+	requireTournament
+} from './utils.server';
 import * as TeamRepository from '$lib/server/db/repositories/team';
-import type { TournamentCore } from '$lib/core/tournament/tournament-core';
-import * as TournamentOrganizationRepository from '$lib/server/db/repositories/tournament-organization';
 import * as UserAPI from '$lib/api/user';
-import * as UserRepository from '$lib/server/db/repositories/user';
 import invariant from '$lib/utils/invariant';
 import * as ShowcaseTournaments from '$lib/core/tournament/ShowcaseTournament.server';
 import { m } from '$lib/paraglide/messages';
@@ -184,39 +186,3 @@ export const unregisterFromTournament = command(id, async (tournamentId) => {
 	clearTournamentDataCache(tournamentId);
 	myRegistrationById(tournamentId).refresh();
 });
-
-async function requireNotBannedByOrganization({
-	tournament,
-	user,
-	message = 'You are banned from events hosted by this organization'
-}: {
-	tournament: TournamentCore;
-	user: { id: number };
-	message?: string;
-}) {
-	if (!tournament.ctx.organization) return;
-
-	const isBanned = await TournamentOrganizationRepository.isUserBannedByOrganization({
-		organizationId: tournament.ctx.organization.id,
-		userId: user.id
-	});
-
-	if (isBanned) {
-		badRequest(message);
-	}
-}
-async function inGameNameIfNeeded({
-	tournament,
-	userId
-}: {
-	tournament: TournamentCore;
-	userId: number;
-}) {
-	if (!tournament.ctx.settings.requireInGameNames) return null;
-
-	const inGameName = await UserRepository.inGameNameByUserId(userId);
-
-	if (!inGameName) badRequest('No in-game name');
-
-	return inGameName;
-}

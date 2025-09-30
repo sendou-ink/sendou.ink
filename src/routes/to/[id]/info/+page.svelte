@@ -11,7 +11,7 @@
 	let { params }: PageProps = $props();
 	const tournament = $derived(await TournamentAPI.queries.infoById(params.id));
 
-	const quickInfos = $derived(
+	const standardInfos = $derived(
 		[
 			tournament.infos.isRanked ? m.deft_red_platypus_fall() : m.front_showcase_card_unranked(),
 			`${tournament.infos.minMembersPerTeam}v${tournament.infos.minMembersPerTeam}`,
@@ -21,45 +21,42 @@
 	);
 </script>
 
-<!-- xxx: register now button -->
-
 <div class="main stack md-plus">
 	<div class="stack sm items-center justify-center">
 		<img src={tournament.logoSrc} alt="" class="tournament-logo" />
-		<div>
-			<h2>{tournament.name}</h2>
-			{#if tournament.organization}
-				<div class="org">
-					{#if tournament.organization.logoSrc}
-						<img src={tournament.organization.logoSrc} alt="" class="org-logo" />
-					{/if}
-					<a href={resolve('/org/[slug]', { slug: tournament.organization.slug })}>
-						{tournament.organization.name}
-					</a>
-				</div>
-			{:else}
-				<div class="org">
-					{#if tournament.author.discordAvatar}
-						<Avatar size="xxs" user={tournament.author} />
-					{/if}
-					<a
-						href={resolve('/u/[identifier]', {
-							identifier: tournament.author.customUrl ?? tournament.author.discordId
-						})}
-					>
-						{tournament.author.username}
-					</a>
-				</div>
-			{/if}
-		</div>
+		<h2>{tournament.name}</h2>
 	</div>
 
 	<div class="quick-infos">
-		{#each quickInfos as info, i (info)}
+		{#if tournament.organization}
+			<div class="org-info">
+				By
+				{#if tournament.organization.logoSrc}
+					<img src={tournament.organization.logoSrc} alt="" class="org-logo" />
+				{/if}
+				<a href={resolve('/org/[slug]', { slug: tournament.organization.slug })}>
+					{tournament.organization.name}
+				</a>
+			</div>
+		{:else}
+			<div class="org-info">
+				By
+				{#if tournament.author.discordAvatar}
+					<Avatar size="xxs" user={tournament.author} />
+				{/if}
+				<a
+					href={resolve('/u/[identifier]', {
+						identifier: tournament.author.customUrl ?? tournament.author.discordId
+					})}
+				>
+					{tournament.author.username}
+				</a>
+			</div>
+		{/if}
+
+		{#each standardInfos as info (info)}
+			<div class="line"></div>
 			<span class="badge">{info}</span>
-			{#if i < quickInfos.length - 1}
-				<div class="line"></div>
-			{/if}
 		{/each}
 	</div>
 
@@ -75,24 +72,6 @@
 		height: 7.5rem;
 	}
 
-	.org {
-		display: flex;
-		align-items: center;
-		justify-self: center;
-		gap: var(--s-1);
-		font-size: var(--fonts-sm);
-		font-weight: var(--semi-bold);
-
-		a {
-			color: var(--color-base-content-secondary);
-		}
-
-		img {
-			border-radius: 100%;
-			height: 24px;
-		}
-	}
-
 	.quick-infos {
 		display: flex;
 		gap: var(--s-2-5);
@@ -102,6 +81,25 @@
 		text-transform: uppercase;
 		font-size: var(--fonts-xs);
 		color: var(--color-secondary);
+	}
+
+	.org-info {
+		display: flex;
+		align-items: center;
+		gap: var(--s-1);
+		font-size: var(--fonts-xs);
+		font-weight: var(--semi-bold);
+		text-transform: uppercase;
+
+		a {
+			color: var(--color-base-content);
+		}
+
+		.org-logo {
+			border-radius: 100%;
+			height: 16px;
+			width: 16px;
+		}
 	}
 
 	.line {
