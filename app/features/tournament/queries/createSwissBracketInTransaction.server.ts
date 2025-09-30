@@ -18,7 +18,7 @@ const createTournamentStageStm = sql.prepare(/* sql */ `
     @type,
     @createdAt,
     @settings,
-    @number,
+    (select coalesce(max("number"), 0) + 1 from "TournamentStage" where "tournamentId" = @tournamentId),
     @name
   ) returning *
 `);
@@ -81,7 +81,6 @@ export function createSwissBracketInTransaction(
 		type: stageInput.type,
 		createdAt: dateToDatabaseTimestamp(new Date()),
 		settings: JSON.stringify(stageInput.settings),
-		number: stageInput.number,
 		name: stageInput.name,
 	}) as Tables["TournamentStage"];
 

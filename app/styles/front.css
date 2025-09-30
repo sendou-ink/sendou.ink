@@ -253,3 +253,15 @@
 	gap: var(--s-2);
 	flex-wrap: wrap;
 }
+
+.front__oktofest-banner {
+	background-color: #ffad32;
+	color: #000;
+	border-radius: var(--rounded);
+	padding: var(--s-2);
+	justify-content: center;
+	display: flex;
+	gap: var(--s-2);
+	flex-wrap: wrap;
+	text-align: center;
+}
