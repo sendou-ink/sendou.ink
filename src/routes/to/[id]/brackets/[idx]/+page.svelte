@@ -15,17 +15,19 @@
 </script>
 
 <div class="stack lg">
-	<div>
-		<Button
-			onclick={() => {
-				bracketState.isCompact = !bracketState.isCompact;
-			}}
-			icon={bracketState.isCompact ? Eye : EyeOff}
-			variant="outlined"
-			size="miniscule"
-		>
-			{bracketState.isCompact ? 'Show all' : 'Compactify'}
-		</Button>
-	</div>
+	{#if bracket.showCompactify}
+		<div>
+			<Button
+				onclick={() => {
+					bracketState.isCompact = !bracketState.isCompact;
+				}}
+				icon={bracketState.isCompact ? Eye : EyeOff}
+				variant="outlined"
+				size="miniscule"
+			>
+				{bracketState.isCompact ? 'Show all' : 'Compactify'}
+			</Button>
+		</div>
+	{/if}
 	<Bracket {bracket} tournamentId={params.id} />
 </div>

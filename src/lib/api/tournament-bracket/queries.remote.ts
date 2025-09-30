@@ -9,6 +9,7 @@ import type { BracketCore } from '$lib/core/tournament-bracket/bracket-core';
 import { getEliminationBracketRounds } from '$lib/core/tournament/rounds';
 import type { TournamentCore } from '$lib/core/tournament/tournament-core';
 import invariant from '$lib/utils/invariant';
+import { groupNumberToLetters } from '$lib/core/tournament-bracket/utils';
 
 export const findBracket = query(
 	z.object({
@@ -25,6 +26,52 @@ export const findBracket = query(
 
 function bracketManagerDataSetToBracketData(bracket: BracketCore): BracketData {
 	switch (bracket.data.stage[0].type) {
+		case 'round_robin': {
+			return {
+				type: 'round_robin',
+				showCompactify: false,
+				isPreview: bracket.preview,
+				groups: bracket.data.group.map((group) => {
+					const groupMatches = bracket.data.match.filter((match) => match.group_id === group.id);
+					const groupRounds = bracket.data.round.filter((round) => round.group_id === group.id);
+
+					return {
+						letters: groupNumberToLetters(group.number),
+						standings: [],
+						rounds: groupRounds.map((round): RoundData => {
+							const roundMatches = groupMatches.filter((match) => match.round_id === round.id);
+
+							return {
+								name: `Round ${round.number}`,
+								id: round.id,
+								deadline: undefined, // xxx: add deadline info
+								maps: round.maps ?? undefined,
+								matches: roundMatches.map((match) =>
+									mapMatch({
+										match,
+										tournament: bracket.tournament,
+										identifier: `${groupNumberToLetters(group.number)}${round.number}.${match.number}`
+									})
+								)
+							};
+						})
+					};
+				})
+			};
+		}
+		case 'single_elimination': {
+			const rounds = getEliminationBracketRounds({
+				bracketData: bracket.data,
+				type: 'single'
+			});
+
+			return {
+				type: 'single_elimination',
+				showCompactify: rounds.length > 2,
+				isPreview: bracket.preview,
+				rounds: rounds.map(getEliminationRoundMapper(bracket.tournament, () => ''))
+			};
+		}
 		case 'double_elimination': {
 			const winnersRounds = getEliminationBracketRounds({
 				bracketData: bracket.data,
@@ -37,13 +84,14 @@ function bracketManagerDataSetToBracketData(bracket: BracketCore): BracketData {
 
 			return {
 				type: 'double_elimination',
+				showCompactify: winnersRounds.length > 3,
 				isPreview: bracket.preview,
 				winners: winnersRounds.map(
-					getRoundMapper(bracket.tournament, (round) =>
+					getEliminationRoundMapper(bracket.tournament, (round) =>
 						round.name.includes('Grand') || round.name.includes('Bracket') ? 'GF' : 'WB'
 					)
 				),
-				losers: losersRounds.map(getRoundMapper(bracket.tournament, () => 'LB'))
+				losers: losersRounds.map(getEliminationRoundMapper(bracket.tournament, () => 'LB'))
 			};
 		}
 		default: {
@@ -52,7 +100,51 @@ function bracketManagerDataSetToBracketData(bracket: BracketCore): BracketData {
 	}
 }
 
-function getRoundMapper(
+function mapMatch({
+	match,
+	tournament,
+	identifier
+}: {
+	match: BracketCore['data']['match'][number];
+	tournament: TournamentCore;
+	identifier: string;
+}): BracketMatchData {
+	function resolveTeam(side: 0 | 1): BracketTeamData | null | undefined {
+		const team = side === 0 ? match.opponent1 : match.opponent2;
+		if (!team) return null;
+		if (!team.id) return undefined;
+
+		const fullTeam = tournament.teamById(team.id);
+		invariant(fullTeam);
+
+		return {
+			isSimulated: false,
+			seed: fullTeam.seed,
+			name: fullTeam.name,
+			logoUrl: tournament.tournamentTeamLogoSrc(fullTeam) ?? null,
+			result: team.result ?? null,
+			roster: fullTeam.members.map((member) => member.username)
+		};
+	}
+
+	return {
+		id: match.id,
+		identifier,
+		teams: [resolveTeam(0), resolveTeam(1)],
+		score:
+			resolveTeam(0) && resolveTeam(1)
+				? [match.opponent1?.score ?? 0, match.opponent2?.score ?? 0]
+				: null,
+		isOver:
+			match.opponent1?.result === 'win' ||
+			match.opponent2?.result === 'win' ||
+			match.opponent1 === null ||
+			match.opponent2 === null,
+		stream: null
+	};
+}
+
+function getEliminationRoundMapper(
 	tournament: TournamentCore,
 	identifierPrefix: (round: ReturnType<typeof getEliminationBracketRounds>[number]) => string
 ) {
@@ -62,38 +154,13 @@ function getRoundMapper(
 			id: round.id,
 			deadline: undefined, // xxx: add deadline info
 			maps: round.maps ?? undefined,
-			matches: round.matches.map((match) => {
-				function resolveTeam(side: 0 | 1): BracketTeamData | null | undefined {
-					const team = side === 0 ? match.opponent1 : match.opponent2;
-					if (!team) return null;
-					if (!team.id) return undefined;
-
-					const fullTeam = tournament.teamById(team.id);
-					invariant(fullTeam);
-
-					return {
-						isSimulated: false,
-						seed: fullTeam.seed,
-						name: fullTeam.name,
-						logoUrl: tournament.tournamentTeamLogoSrc(fullTeam) ?? null,
-						result: team.result ?? null,
-						roster: fullTeam.members.map((member) => member.username)
-					};
-				}
-
-				return {
-					id: match.id,
-					identifier: `${identifierPrefix(round)} ${round.number}.${match.number}`,
-					teams: [resolveTeam(0), resolveTeam(1)],
-					score: null,
-					isOver:
-						match.opponent1?.result === 'win' ||
-						match.opponent2?.result === 'win' ||
-						match.opponent1 === null ||
-						match.opponent2 === null,
-					stream: null
-				};
-			})
+			matches: round.matches.map((match) =>
+				mapMatch({
+					match,
+					tournament,
+					identifier: `${identifierPrefix(round)} ${round.number}.${match.number}`
+				})
+			)
 		};
 	};
 }
@@ -126,15 +193,40 @@ export interface RoundData {
 	matches: Array<BracketMatchData>;
 }
 
+export interface StandingsData {
+	team: BracketTeamData;
+	stats: Array<{
+		identifier: 'SET_WL' | 'TB' | 'MAP_WL' | 'SCORE';
+		value: string;
+	}>;
+	destination?: {
+		bracket: string;
+		overridden: boolean;
+		tentative: boolean;
+	};
+}
+
 export type BracketData =
 	| {
 			type: 'double_elimination';
 			isPreview: boolean;
+			showCompactify: boolean;
 			winners: Array<RoundData>;
 			losers: Array<RoundData>;
 	  }
 	| {
 			type: 'single_elimination';
 			isPreview: boolean;
+			showCompactify: boolean;
 			rounds: Array<RoundData>;
+	  }
+	| {
+			type: 'round_robin';
+			isPreview: boolean;
+			showCompactify: boolean;
+			groups: Array<{
+				letters: string;
+				rounds: Array<RoundData>;
+				standings: Array<StandingsData>;
+			}>;
 	  };
