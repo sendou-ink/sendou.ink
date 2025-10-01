@@ -938,3 +938,31 @@ export function deleteSwissMatches({ groupId, roundId }: { groupId: number; roun
 		.where('roundId', '=', roundId)
 		.execute();
 }
+
+export async function searchByName({ query, limit }: { query: string; limit: number }) {
+	const results = await db
+		.selectFrom('Tournament')
+		.innerJoin('CalendarEvent', 'Tournament.id', 'CalendarEvent.tournamentId')
+		.innerJoin('CalendarEventDate', 'CalendarEvent.id', 'CalendarEventDate.eventId')
+		.leftJoin(
+			'UnvalidatedUserSubmittedImage',
+			'CalendarEvent.avatarImgId',
+			'UnvalidatedUserSubmittedImage.id'
+		)
+		.select([
+			'Tournament.id',
+			'CalendarEvent.name',
+			'CalendarEventDate.startTime',
+			'UnvalidatedUserSubmittedImage.url as logoUrl'
+		])
+		.where('CalendarEvent.name', 'like', `%${query}%`)
+		.where('CalendarEvent.hidden', '=', 0)
+		.orderBy('CalendarEventDate.startTime', 'desc')
+		.limit(limit)
+		.execute();
+
+	return results.map((result) => ({
+		...result,
+		logoSrc: result.logoUrl ? userSubmittedImage(result.logoUrl) : '' // xxx: fix HACKY_resolvePicture(result)
+	}));
+}

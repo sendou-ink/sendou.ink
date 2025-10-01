@@ -38,6 +38,12 @@
 	});
 	const usersResult = $derived(await usersPromise);
 
+	const tournamentsPromise = $derived.by(() => {
+		if (tabState.state !== 'tournaments' || searchState.state === '') return Promise.resolve(null);
+		return SearchAPI.queries.searchTournaments(searchState.state);
+	});
+	const tournamentsResult = $derived(await tournamentsPromise);
+
 	let search = $derived(searchState.state);
 
 	const teamsResult = $derived(await SearchAPI.queries.getAllTeams());
@@ -98,7 +104,7 @@
 	>
 		<TabPanel value="users">{@render usersList()}</TabPanel>
 		<TabPanel value="teams">{@render teamsList()}</TabPanel>
-		<TabPanel value="tournaments">Tournaments</TabPanel>
+		<TabPanel value="tournaments">{@render tournamentsList()}</TabPanel>
 	</Tabs>
 </Main>
 
@@ -145,6 +151,31 @@
 			</ul>
 		{/snippet}
 	</Pagination>
+{/snippet}
+
+{#snippet tournamentsList()}
+	{#if tournamentsResult === undefined}
+		<p>You need to be logged in to search tournaments</p>
+	{:else if tournamentsResult !== null}
+		<ul>
+			{#each tournamentsResult as tournament (tournament.id)}
+				<li>
+					<a
+						class="link-item"
+						href={resolve('/to/[id]', {
+							id: String(tournament.id)
+						})}
+					>
+						<Avatar url={tournament.logoSrc ?? ''} size="sm" />
+						<div class="item-info">
+							<p>{tournament.name}</p>
+							<p>{new Date(tournament.startTime).toLocaleDateString()}</p>
+						</div>
+					</a>
+				</li>
+			{/each}
+		</ul>
+	{/if}
 {/snippet}
 
 <style>

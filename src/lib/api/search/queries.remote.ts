@@ -2,11 +2,14 @@ import { prerender, query } from '$app/server';
 import { z } from 'zod/v4';
 import * as UserRepository from '$lib/server/db/repositories/user';
 import * as TeamRepository from '$lib/server/db/repositories/team';
-import { getUser } from '$lib/server/auth/session';
+import { getUser, requireUser } from '$lib/server/auth/session';
 import { queryToUserIdentifier } from '$lib/utils/users';
 import { membersToCommonPlusTierRating } from './utils';
 import { redirect } from '@sveltejs/kit';
 import { resolve } from '$app/paths';
+import * as TournamentRepository from '$lib/server/db/repositories/tournament';
+
+const DEFAULT_SEARCH_ITEMS_LIMIT = 25;
 
 export const getAllTeams = query(z.void(), async () => {
 	const user = await getUser();
@@ -54,10 +57,13 @@ export const getAllTeams = query(z.void(), async () => {
 export const searchUsers = query(
 	z.object({
 		input: z.string().max(100).catch(''),
-		limit: z.coerce.number().int().min(1).max(25).catch(25)
+		limit: z.coerce.number().int().min(1).max(25).catch(DEFAULT_SEARCH_ITEMS_LIMIT)
 	}),
 	async ({ input, limit }) => {
-		if (process.env.NODE_ENV === 'production' && !(await getUser())) return;
+		// allowed in development because needed to impersonate a user
+		if (process.env.NODE_ENV === 'production') {
+			await requireUser();
+		}
 
 		const identifier = queryToUserIdentifier(input);
 		const data = identifier
@@ -68,6 +74,16 @@ export const searchUsers = query(
 	}
 );
 
+export const searchTournaments = query(z.string().max(100), async (input) => {
+	await requireUser();
+
+	return await TournamentRepository.searchByName({
+		query: input,
+		limit: DEFAULT_SEARCH_ITEMS_LIMIT
+	});
+});
+
+export type TournamentSearchData = Awaited<ReturnType<typeof searchTournaments>>;
 export type AllTeamsData = Awaited<ReturnType<typeof getAllTeams>>;
 export type UserSearchData = Awaited<ReturnType<typeof searchUsers>>;
 
