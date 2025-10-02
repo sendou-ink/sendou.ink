@@ -14,17 +14,19 @@ import { groupNumberToLetters } from '$lib/core/tournament-bracket/utils';
 export const findBracket = query(
 	z.object({
 		tournamentId: id,
-		bracketIdx: z.coerce.number().min(0).max(10)
+		bracketIdx: z.coerce.number().min(0).max(10),
+		// group index for swiss brackets (not RR)
+		groupIdx: z.coerce.number().min(0).optional().default(0)
 	}),
-	async ({ tournamentId, bracketIdx }) => {
+	async ({ tournamentId, bracketIdx, groupIdx }) => {
 		const tournament = await requireTournament(tournamentId);
 		const bracket = notFoundIfFalsy(tournament.bracketByIdx(bracketIdx));
 
-		return bracketManagerDataSetToBracketData(bracket);
+		return bracketManagerDataSetToBracketData(bracket, groupIdx);
 	}
 );
 
-function bracketManagerDataSetToBracketData(bracket: BracketCore): BracketData {
+function bracketManagerDataSetToBracketData(bracket: BracketCore, groupIdx: number): BracketData {
 	switch (bracket.data.stage[0].type) {
 		case 'round_robin': {
 			return {
@@ -92,6 +94,44 @@ function bracketManagerDataSetToBracketData(bracket: BracketCore): BracketData {
 					)
 				),
 				losers: losersRounds.map(getEliminationRoundMapper(bracket.tournament, () => 'LB'))
+			};
+		}
+		case 'swiss': {
+			const allRounds = bracket.data.round;
+			const allMatches = bracket.data.match;
+			const groups = bracket.data.group.map((group) => groupNumberToLetters(group.number));
+			const selectedGroupId = bracket.data.group[groupIdx]?.id ?? bracket.data.group[0].id;
+
+			const rounds = allRounds
+				.filter((round) => round.group_id === selectedGroupId)
+				.map((round): RoundData => {
+					const roundMatches = allMatches.filter((match) => match.round_id === round.id);
+
+					return {
+						name: `Round ${round.number}`,
+						id: round.id,
+						deadline: undefined, // xxx: add deadline info
+						maps: round.maps ?? undefined,
+						matches: roundMatches.map((match) =>
+							mapMatch({
+								match,
+								tournament: bracket.tournament,
+								identifier: `${groups[groupIdx]}${round.number}.${match.number}`
+							})
+						)
+					};
+				});
+
+			const showCompactify = rounds.some((round) => round.matches.every((match) => match.isOver));
+
+			return {
+				type: 'swiss',
+				showCompactify,
+				isPreview: bracket.preview,
+				groups,
+				currentGroupIdx: groupIdx,
+				standings: [],
+				rounds
 			};
 		}
 		default: {
@@ -165,6 +205,31 @@ function getEliminationRoundMapper(
 	};
 }
 
+// xxx: handle preparing maps, SE/DE autogenerate 64 maps, "teamCountAdjustedBracketData" logic
+export const findBracketMapListPickerData = query(
+	z.object({
+		tournamentId: id,
+		bracketIdx: z.coerce.number().min(0).max(10)
+	}),
+	async ({ tournamentId, bracketIdx }) => {
+		const data = await findBracket({ bracketIdx, tournamentId });
+
+		// xxx: for all
+		invariant(
+			data.type === 'double_elimination',
+			'Map list picker is only available for DE brackets'
+		);
+
+		const result: MapListPickerRoundData[] = [...data.winners, ...data.losers].map((round) => ({
+			id: round.id,
+			name: round.name,
+			maps: null as any
+		}));
+
+		return result;
+	}
+);
+
 export type BracketTeamData = {
 	result: 'win' | 'loss' | null;
 	isSimulated: boolean;
@@ -193,6 +258,10 @@ export interface RoundData {
 	matches: Array<BracketMatchData>;
 }
 
+export type MapListPickerRoundData = Pick<RoundData, 'id' | 'name'> & {
+	maps: TournamentRoundMaps;
+};
+
 export interface StandingsData {
 	team: BracketTeamData;
 	stats: Array<{
@@ -204,6 +273,7 @@ export interface StandingsData {
 		overridden: boolean;
 		tentative: boolean;
 	};
+	// xxx: swiss early qualification
 }
 
 export type BracketData =
@@ -229,4 +299,13 @@ export type BracketData =
 				rounds: Array<RoundData>;
 				standings: Array<StandingsData>;
 			}>;
+	  }
+	| {
+			type: 'swiss';
+			isPreview: boolean;
+			showCompactify: boolean;
+			rounds: Array<RoundData>;
+			groups: Array<string>;
+			currentGroupIdx: number;
+			standings: Array<StandingsData>;
 	  };

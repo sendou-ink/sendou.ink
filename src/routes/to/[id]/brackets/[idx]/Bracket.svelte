@@ -1,14 +1,17 @@
 <script lang="ts">
 	import EliminationBracketSide from './EliminationBracketSide.svelte';
 	import RoundRobinBracket from './RoundRobinBracket.svelte';
+	import SwissBracket from './SwissBracket.svelte';
 	import type * as BracketAPI from '$lib/api/tournament-bracket';
 
 	interface Props {
 		tournamentId: string;
 		bracket: BracketAPI.queries.BracketData;
+		currentGroupIdx: number;
+		onGroupChange: (idx: number) => void;
 	}
 
-	const { bracket, tournamentId }: Props = $props();
+	const { bracket, tournamentId, currentGroupIdx, onGroupChange }: Props = $props();
 
 	const matchPageBaseHref = $derived(bracket.isPreview ? undefined : `/to/${tournamentId}/matches`);
 
@@ -25,6 +28,9 @@
 	{/if}
 	{#if bracket.type === 'round_robin'}
 		<RoundRobinBracket {bracket} {matchPageBaseHref} />
+	{/if}
+	{#if bracket.type === 'swiss'}
+		<SwissBracket {bracket} {matchPageBaseHref} {currentGroupIdx} {onGroupChange} />
 	{/if}
 </div>
 

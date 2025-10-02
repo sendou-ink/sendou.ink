@@ -34,7 +34,7 @@ export function* generate(args: {
 
 	const firstArgs = yield [];
 	let amount = firstArgs.amount;
-	let pattern = firstArgs.pattern ? parsePattern(firstArgs.pattern).unwrapOr(null) : undefined;
+	let pattern = firstArgs.pattern ? parsePattern(firstArgs.pattern).unwrapOr(null) : null;
 
 	while (true) {
 		const result: ModeWithStage[] = [];
@@ -59,7 +59,7 @@ export function* generate(args: {
 		currentOrderIndex++;
 		const nextArgs = yield result;
 		amount = nextArgs.amount;
-		pattern = nextArgs.pattern ? parsePattern(nextArgs.pattern).unwrapOr(null) : undefined;
+		pattern = nextArgs.pattern ? parsePattern(nextArgs.pattern).unwrapOr(null) : null;
 	}
 }
 

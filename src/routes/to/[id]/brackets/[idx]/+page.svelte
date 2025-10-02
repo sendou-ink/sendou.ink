@@ -4,13 +4,25 @@
 	import Bracket from './Bracket.svelte';
 	import Button from '$lib/components/buttons/Button.svelte';
 	import { bracketState } from './compact.svelte';
+	import { SearchParamState } from '$lib/runes/search-param-state.svelte';
+	import { z } from 'zod';
 	import EyeOff from '@lucide/svelte/icons/eye-off';
 	import Eye from '@lucide/svelte/icons/eye';
 
 	const { params }: PageProps = $props();
 
+	const selectedGroup = new SearchParamState({
+		key: 'group',
+		schema: z.number().int().nonnegative(),
+		defaultValue: 0
+	});
+
 	const bracket = $derived(
-		await BracketAPI.queries.findBracket({ bracketIdx: params.idx, tournamentId: params.id })
+		await BracketAPI.queries.findBracket({
+			bracketIdx: params.idx,
+			tournamentId: params.id,
+			groupIdx: selectedGroup.state
+		})
 	);
 </script>
 
@@ -29,5 +41,10 @@
 			</Button>
 		</div>
 	{/if}
-	<Bracket {bracket} tournamentId={params.id} />
+	<Bracket
+		{bracket}
+		tournamentId={params.id}
+		currentGroupIdx={selectedGroup.state}
+		onGroupChange={(idx) => selectedGroup.update(idx)}
+	/>
 </div>
