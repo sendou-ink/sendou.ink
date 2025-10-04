@@ -48,6 +48,7 @@
 		display: flex;
 		align-items: flex-end;
 		gap: var(--s-2);
+		user-select: none;
 	}
 
 	.value {

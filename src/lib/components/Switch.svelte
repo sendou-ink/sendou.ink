@@ -31,7 +31,7 @@
 			<button {...props} class={['root', { small: size === 'small' }]}>
 				<Switch.Thumb>
 					{#snippet child({ props })}
-						<div {...props} class="thumb"></div>
+						<span {...props} class="thumb"></span>
 					{/snippet}
 				</Switch.Thumb>
 			</button>
@@ -49,6 +49,10 @@
 </div>
 
 <style>
+	/* Force higher specificity
+	 * because depending on how Vite chunks the CSS
+	 * it might be imported before the global CSS and get overridden.
+	 */
 	.reverse.reverse {
 		flex-direction: row-reverse;
 	}
