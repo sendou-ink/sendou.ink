@@ -13,6 +13,7 @@
 	import DataTable from './DataTable.svelte';
 	import SortableHeader from './builders/SortableHeader.svelte';
 	import RowActions from './builders/RowActions.svelte';
+	import Checkbox from '../Checkbox.svelte';
 
 	type Payment = {
 		id: string;
@@ -31,6 +32,21 @@
 	 * Docs: https://tanstack.com/table/latest/docs/guide/column-defs
 	 */
 	const columnsA: ColumnDef<Payment>[] = [
+		{
+			id: 'select',
+			header: ({ table }) =>
+				renderComponent(Checkbox, {
+					checked: table.getIsAllPageRowsSelected(),
+					indeterminate: table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected(),
+					onchange: (value) => table.toggleAllPageRowsSelected(!!value)
+				}),
+			cell: ({ row }) =>
+				renderComponent(Checkbox, {
+					checked: row.getIsSelected(),
+					indeterminate: false,
+					onchange: (value) => row.toggleSelected(!!value)
+				})
+		},
 		{
 			accessorKey: 'status',
 			header: 'Status',
@@ -181,6 +197,7 @@
 	filterColumn="email"
 	pageSize={5}
 	toggleColumns={['email', 'createdAt', 'amount']}
+	withSelection
 />
 
 <!-- 

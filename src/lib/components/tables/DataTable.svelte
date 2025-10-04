@@ -1,6 +1,5 @@
 <script lang="ts" generics="TData, TValue">
 	import {
-		type Column,
 		type ColumnDef,
 		type ColumnFiltersState,
 		type PaginationState,
@@ -18,17 +17,27 @@
 	import VisibilityMenu from './builders/VisibilityMenu.svelte';
 	import ColumnFilter from './builders/ColumnFilter.svelte';
 	import RowPagination from './builders/RowPagination.svelte';
+	import SelectionInfo from './builders/SelectionInfo.svelte';
 
 	type Props<TData, TValue> = {
 		columns: ColumnDef<TData, TValue>[];
 		data: TData[];
 		pageSize?: number;
+		withSelection?: boolean;
 		filterColumn?: keyof TData & string;
 		toggleColumns?: (keyof TData & string)[];
 	};
 
-	let { columns, data, pageSize, filterColumn, toggleColumns }: Props<TData, TValue> = $props();
+	let {
+		columns,
+		data,
+		pageSize,
+		withSelection,
+		filterColumn,
+		toggleColumns
+	}: Props<TData, TValue> = $props();
 
+	let selection = $state<RowSelectionState>({});
 	let sorting = $state<SortingState>([]);
 	let filters = $state<ColumnFiltersState | undefined>(filterColumn ? [] : undefined);
 	let visibility = $state<VisibilityState | undefined>(toggleColumns ? {} : undefined);
@@ -42,6 +51,9 @@
 		},
 		columns,
 		state: {
+			get rowSelection() {
+				return selection;
+			},
 			get sorting() {
 				return sorting;
 			},
@@ -59,6 +71,13 @@
 					};
 				}
 				return pagination;
+			}
+		},
+		onRowSelectionChange: (updater) => {
+			if (typeof updater === 'function') {
+				selection = updater(selection);
+			} else {
+				selection = updater;
 			}
 		},
 		onSortingChange: (updater) => {
@@ -139,13 +158,17 @@
 				</tr>
 			{:else}
 				<tr>
-					<td colspan={columns.length}>{m.tables_noData()}</td>
+					<td class="empty" colspan={columns.length}>{m.tables_noData()}</td>
 				</tr>
 			{/each}
 		</tbody>
 	</Table>
 	<div class="bottom-controls">
-		<span></span>
+		<span>
+			{#if withSelection}
+				<SelectionInfo {table} />
+			{/if}
+		</span>
 		<span>
 			<RowPagination {table} {pageSize} />
 		</span>
@@ -165,5 +188,13 @@
 		gap: var(--s-2);
 		justify-content: space-between;
 		align-items: center;
+		font-size: var(--fonts-xs);
+		color: var(--color-base-content-secondary);
+	}
+
+	.empty {
+		text-align: center;
+		padding: var(--s-4) 0;
+		color: var(--color-base-content-secondary);
 	}
 </style>

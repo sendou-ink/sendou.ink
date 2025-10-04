@@ -58,6 +58,7 @@
 		gap: var(--s-4);
 		align-items: center;
 		font-size: var(--fonts-xs);
+		color: var(--color-base-content-secondary);
 		user-select: none;
 	}
 

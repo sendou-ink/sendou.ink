@@ -41,7 +41,7 @@
 
 			tbody {
 				td {
-					padding: var(--s-2) var(--s-2-5);
+					padding: var(--s-2);
 					vertical-align: middle;
 					border-bottom: 1px solid var(--color-base-border);
 				}
