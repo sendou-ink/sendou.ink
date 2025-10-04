@@ -2,8 +2,6 @@
 
 - only rarely use comments, prefer descriptive variable and function names (leave existing comments as is)
 - if you encounter an existing TODO comment assume it is there for a reason and do not remove it
-- for running scripts `npm` is used
-- all the imports should be at the top of the file
 
 ## Commands
 
@@ -15,8 +13,6 @@
 ## Typescript
 
 - prefer early return over nesting if statements
-- prefer using `const` over `let` when the variable is not reassigned
-- never use `var`
 - do not use `any` type
 - for constants use ALL_CAPS
 - always use named exports
