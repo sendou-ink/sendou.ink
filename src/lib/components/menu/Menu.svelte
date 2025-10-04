@@ -55,7 +55,12 @@
 										{/snippet}
 									</DropdownMenu.Item>
 								{:else}
-									<DropdownMenu.CheckboxItem onclick={!disabled ? onclick : undefined} {disabled}>
+									<DropdownMenu.CheckboxItem
+										onclick={!disabled ? onclick : undefined}
+										closeOnSelect={false}
+										{disabled}
+										{checked}
+									>
 										{#snippet child({ props })}
 											<div {...props} class="item checkbox">
 												{#if checked}
@@ -135,6 +140,7 @@
 		}
 
 		&.checkbox {
+			user-select: none;
 			position: relative;
 			padding-inline-start: calc(var(--s-3-5) + var(--s-2-5) + 24px);
 
