@@ -341,24 +341,38 @@ export function BracketMapListDialog({
 								<PickBanSelect
 									pickBanStyle={pickBanStyle}
 									isOneModeOnly={tournament.modesIncluded.length === 1}
-									onPickBanStyleChange={(pickBanStyle) => {
+									onPickBanStyleChange={(newPickBanStyle) => {
 										let newRoundsWithPickBan = roundsWithPickBan;
 										if (globalSelections) {
 											newRoundsWithPickBan =
-												mapCountsWithGlobalPickBanStyle(pickBanStyle);
+												mapCountsWithGlobalPickBanStyle(newPickBanStyle);
 										}
 
-										setPickBanStyle(pickBanStyle);
-										setMaps(
-											generateTournamentRoundMaplist({
-												mapCounts,
-												pool: tournament.ctx.toSetMapPool,
-												rounds,
-												type: bracket.type,
-												roundsWithPickBan: newRoundsWithPickBan,
-												pickBanStyle,
-											}),
-										);
+										setPickBanStyle(newPickBanStyle);
+
+										const noPickBanSetBeforeOrAfter =
+											!roundsWithPickBan.size && !newRoundsWithPickBan.size;
+										const switchedFromCounterpickToAnother =
+											(pickBanStyle === "COUNTERPICK" &&
+												newPickBanStyle === "COUNTERPICK_MODE_REPEAT_OK") ||
+											(pickBanStyle === "COUNTERPICK_MODE_REPEAT_OK" &&
+												newPickBanStyle === "COUNTERPICK");
+										const shouldSkipRegenerateMaps =
+											noPickBanSetBeforeOrAfter ||
+											switchedFromCounterpickToAnother;
+
+										if (!shouldSkipRegenerateMaps) {
+											setMaps(
+												generateTournamentRoundMaplist({
+													mapCounts,
+													pool: tournament.ctx.toSetMapPool,
+													rounds,
+													type: bracket.type,
+													roundsWithPickBan: newRoundsWithPickBan,
+													pickBanStyle: newPickBanStyle,
+												}),
+											);
+										}
 									}}
 								/>
 								{isPreparing &&
