@@ -195,14 +195,21 @@ function modifyModeOrderByPattern(
 		.slice(0, amount);
 
 	if (pattern.mustInclude) {
-		for (const { mode } of pattern.mustInclude) {
+		for (const { mode, isGuaranteed } of pattern.mustInclude) {
 			// impossible must include, mode is not in the pool
 			if (!modeOrder.includes(mode)) continue;
 
-			const possibleIndices = expandedPattern.every((part) => part !== "ANY")
+			let possibleIndices = expandedPattern.every((part) => part !== "ANY")
 				? // inflexible pattern fallback
 					expandedPattern.map((_, idx) => idx)
 				: expandedPattern.flatMap((part, idx) => (part === "ANY" ? [idx] : []));
+
+			if (isGuaranteed) {
+				const guaranteedPositions = Math.ceil(amount / 2);
+				possibleIndices = possibleIndices.filter(
+					(idx) => idx < guaranteedPositions,
+				);
+			}
 
 			const isAlreadyIncluded = result.includes(mode);
 			// "good spot" means a spot where the pattern allows ANY mode
