@@ -1,7 +1,6 @@
 import type { Tables } from "~/db/tables";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import { mapPoolListToMapPoolObject } from "./map-list-generator/utils";
 import {
 	mapPoolToSerializedString,
 	serializedStringToMapPool,
@@ -21,7 +20,9 @@ export class MapPool {
 	private asObject?: ReadonlyMapPoolObject;
 
 	constructor(init: ReadonlyMapPoolObject | string | DbMapPoolList) {
-		this.source = Array.isArray(init) ? mapPoolListToMapPoolObject(init) : init;
+		this.source = Array.isArray(init)
+			? this.mapPoolListToMapPoolObject(init)
+			: init;
 	}
 
 	static serialize(init: ReadonlyMapPoolObject | string | DbMapPoolList) {
@@ -131,6 +132,24 @@ export class MapPool {
 		return {
 			next: () => ({ value: data[++index], done: !(index in data) }),
 		};
+	}
+
+	private mapPoolListToMapPoolObject(
+		mapPoolList: Array<Pick<Tables["MapPoolMap"], "stageId" | "mode">>,
+	) {
+		const result: MapPoolObject = {
+			TW: [],
+			SZ: [],
+			TC: [],
+			RM: [],
+			CB: [],
+		};
+
+		for (const { stageId, mode } of mapPoolList) {
+			result[mode].push(stageId);
+		}
+
+		return result;
 	}
 
 	static EMPTY = new MapPool({
