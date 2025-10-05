@@ -16,6 +16,7 @@ import {
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
+import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { nullFilledArray } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -1019,15 +1020,27 @@ function MapListRow({
 							});
 						}}
 					>
-						{tournament.ctx.toSetMapPool.map((map) => (
-							<option
-								key={serializedMapMode(map)}
-								value={serializedMapMode(map)}
-							>
-								{t(`game-misc:MODE_SHORT_${map.mode}`)}{" "}
-								{t(`game-misc:STAGE_${map.stageId}`)}
-							</option>
-						))}
+						{modesShort.map((mode) => {
+							const mapsForMode = tournament.ctx.toSetMapPool.filter(
+								(map) => map.mode === mode,
+							);
+
+							if (mapsForMode.length === 0) return null;
+
+							return (
+								<optgroup key={mode} label={t(`game-misc:MODE_LONG_${mode}`)}>
+									{mapsForMode.map((map) => (
+										<option
+											key={serializedMapMode(map)}
+											value={serializedMapMode(map)}
+										>
+											{t(`game-misc:MODE_SHORT_${mode}`)}{" "}
+											{t(`game-misc:STAGE_${map.stageId}`)}
+										</option>
+									))}
+								</optgroup>
+							);
+						})}
 					</select>
 				</div>
 			</li>
