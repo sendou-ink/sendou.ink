@@ -966,7 +966,8 @@ function RoundMapList({
 					}
 
 					const isTeamsPick = !maps.list && i === 0;
-					const isLast = i === maps.count - 1;
+					const isLast =
+						i === (maps.pickBan === "BAN_2" ? maps.count + 2 : maps.count) - 1;
 
 					return (
 						<MysteryRow
