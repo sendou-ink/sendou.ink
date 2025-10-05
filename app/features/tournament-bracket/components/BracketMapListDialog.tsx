@@ -535,15 +535,16 @@ export function BracketMapListDialog({
 														count: newCount,
 													});
 
-													const newMaps = generateTournamentRoundMaplist({
+													const newMap = generateTournamentRoundMaplist({
 														mapCounts: newMapCounts,
 														pool: tournament.ctx.toSetMapPool,
 														rounds,
 														type: bracket.type,
 														roundsWithPickBan,
 														pickBanStyle,
-													});
-													setMaps(newMaps);
+													}).get(round.id);
+
+													setMaps(new Map(maps).set(round.id, newMap!));
 												}}
 												onPickBanChange={
 													pickBanStyle
@@ -557,16 +558,16 @@ export function BracketMapListDialog({
 																	newRoundsWithPickBan.delete(round.id);
 																}
 
-																setMaps(
-																	generateTournamentRoundMaplist({
-																		mapCounts,
-																		pool: tournament.ctx.toSetMapPool,
-																		rounds,
-																		type: bracket.type,
-																		roundsWithPickBan: newRoundsWithPickBan,
-																		pickBanStyle,
-																	}),
-																);
+																const newMap = generateTournamentRoundMaplist({
+																	mapCounts,
+																	pool: tournament.ctx.toSetMapPool,
+																	rounds,
+																	type: bracket.type,
+																	roundsWithPickBan: newRoundsWithPickBan,
+																	pickBanStyle,
+																}).get(round.id);
+
+																setMaps(new Map(maps).set(round.id, newMap!));
 															}
 														: undefined
 												}
