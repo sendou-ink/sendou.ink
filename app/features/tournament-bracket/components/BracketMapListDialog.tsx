@@ -69,7 +69,6 @@ export function BracketMapListDialog({
 				})
 			: untrimmedPreparedMaps;
 
-	const [szFirst, setSzFirst] = React.useState(false);
 	const [eliminationTeamCount, setEliminationTeamCount] = React.useState<
 		number | null
 	>(() => {
@@ -138,8 +137,6 @@ export function BracketMapListDialog({
 		preparedMaps?.maps[0].type ?? "BEST_OF",
 	);
 
-	const flavor = szFirst ? "SZ_FIRST" : null;
-
 	const [maps, setMaps] = React.useState(() => {
 		if (preparedMaps) {
 			return new Map(preparedMaps.maps.map((map) => [map.roundId, map]));
@@ -152,7 +149,6 @@ export function BracketMapListDialog({
 			rounds,
 			type: bracket.type,
 			pickBanStyle: null,
-			flavor,
 		});
 	});
 	const [pickBanStyle, setPickBanStyle] = React.useState(
@@ -351,7 +347,6 @@ export function BracketMapListDialog({
 												type: bracket.type,
 												roundsWithPickBan: newRoundsWithPickBan,
 												pickBanStyle,
-												flavor,
 											}),
 										);
 									}}
@@ -382,7 +377,6 @@ export function BracketMapListDialog({
 													type: bracket.type,
 													roundsWithPickBan,
 													pickBanStyle,
-													flavor,
 												}),
 											);
 											setEliminationTeamCount(newCount);
@@ -405,7 +399,6 @@ export function BracketMapListDialog({
 												type: bracket.type,
 												roundsWithPickBan,
 												pickBanStyle,
-												flavor,
 											});
 											setMaps(newMaps);
 										}}
@@ -417,25 +410,9 @@ export function BracketMapListDialog({
 										onSetCountType={setCountType}
 									/>
 								) : null}
-								{tournament.ctx.mapPickingStyle === "TO" ? (
-									<SZFirstToggle
-										szFirst={szFirst}
-										setSzFirst={(newSzFirst) => {
-											setSzFirst(newSzFirst);
-											setMaps(
-												generateTournamentRoundMaplist({
-													mapCounts,
-													pool: tournament.ctx.toSetMapPool,
-													rounds,
-													type: bracket.type,
-													roundsWithPickBan,
-													pickBanStyle,
-													flavor: newSzFirst ? "SZ_FIRST" : null,
-												}),
-											);
-										}}
-									/>
-								) : null}
+								{tournament.ctx.mapPickingStyle === "TO"
+									? "TODO: patterns"
+									: null}
 							</div>
 							{tournament.ctx.toSetMapPool.length > 0 ? (
 								<SendouButton
@@ -451,7 +428,6 @@ export function BracketMapListDialog({
 												type: bracket.type,
 												roundsWithPickBan,
 												pickBanStyle,
-												flavor,
 											}),
 										)
 									}
@@ -542,7 +518,6 @@ export function BracketMapListDialog({
 														type: bracket.type,
 														roundsWithPickBan,
 														pickBanStyle,
-														flavor,
 													});
 													setMaps(newMaps);
 												}}
@@ -566,7 +541,6 @@ export function BracketMapListDialog({
 																		type: bracket.type,
 																		roundsWithPickBan: newRoundsWithPickBan,
 																		pickBanStyle,
-																		flavor,
 																	}),
 																);
 															}
@@ -846,21 +820,6 @@ function PickBanSelect({
 						</option>
 					))}
 			</select>
-		</div>
-	);
-}
-
-function SZFirstToggle({
-	szFirst,
-	setSzFirst,
-}: {
-	szFirst: boolean;
-	setSzFirst: (szFirst: boolean) => void;
-}) {
-	return (
-		<div className="stack items-center">
-			<Label htmlFor="sz-first">SZ first</Label>
-			<SendouSwitch id="sz-first" isSelected={szFirst} onChange={setSzFirst} />
 		</div>
 	);
 }
