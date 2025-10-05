@@ -238,7 +238,6 @@ export function BracketMapListDialog({
 		return newRoundsWithPickBan;
 	};
 
-	// TODO: could also validate you aren't going up from winners finals to grands etc. (different groups)
 	const validateNoDecreasingCount = () => {
 		for (const groupCounts of mapCounts.values()) {
 			let roundPreviousValue = 0;
@@ -251,6 +250,17 @@ export function BracketMapListDialog({
 				}
 
 				roundPreviousValue = roundValue.count;
+			}
+		}
+
+		// check grands have at least as many maps as winners final (different groups)
+		if (bracket.type === "double_elimination") {
+			const grandsCounts = Array.from(mapCounts.get(2)?.values() ?? []);
+			const winnersCounts = Array.from(mapCounts.get(0)?.values() ?? []);
+			const maxWinnersCount = Math.max(...winnersCounts.map((c) => c.count));
+
+			if (grandsCounts.some(({ count }) => count < maxWinnersCount)) {
+				return false;
 			}
 		}
 
