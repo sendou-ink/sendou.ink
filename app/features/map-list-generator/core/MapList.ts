@@ -21,14 +21,24 @@ interface GenerateNext {
 interface MaplistPattern {
 	mustInclude?: Array<{
 		mode: ModeShort;
+		/** Should the mode appear in the guaranteed to be played maps of a Best of set e.g. first 3 of a Bo5? */
 		isGuaranteed: boolean;
 	}>;
 	pattern: Array<"ANY" | ModeShort>;
 }
 
+/**
+ * Generates map lists that avoid repeating stages and optionally allows providing mode pattern.
+ *
+ * @example
+ * const generator = generate({ mapPool: new MapPool(pool) });
+ * generator.next();
+ * const firstSet = generator.next({ amount: 5 }).value;
+ * const secondSet = generator.next({ amount: 3, pattern: "SZ*TC" }).value; // remembers stages used in firstSet
+ */
 export function* generate(args: {
+	/** The map pool to use for generating map lists (MapPool class) */
 	mapPool: MapPool;
-	preferences?: ModeWithStagePreferences;
 	/** Should the function bias in favor of maps not played? E.g. maps 4 & 5 in a Bo5 format (not every team plays them). Should be true if generating for tournament with best of format. */
 	considerGuaranteed?: boolean;
 }): Generator<Array<ModeWithStage>, Array<ModeWithStage>, GenerateNext> {
@@ -256,6 +266,14 @@ function modifyModeOrderByPattern(
 }
 
 const validPatternParts = new Set(["*", ...modesShort] as const);
+
+/**
+ * Parses a pattern string into structured pattern data for map list generation.
+ *
+ * @example
+ * parsePattern("SZ*TC").unwrapOr(null); // { pattern: ["SZ", "ANY", "TC"] }
+ * parsePattern("[RM!]*SZ").unwrapOr(null); // { pattern: ["ANY", "SZ"], mustInclude: [{ mode: "RM", isGuaranteed: true }] }
+ */
 export function parsePattern(pattern: string) {
 	const mustInclude: Array<{ mode: ModeShort; isGuaranteed: boolean }> = [];
 	let mutablePattern = pattern;
