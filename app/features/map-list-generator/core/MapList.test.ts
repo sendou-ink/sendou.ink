@@ -1,6 +1,7 @@
 import { Err } from "neverthrow";
 import { describe, expect, it } from "vitest";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import type { StageId } from "~/modules/in-game-lists/types";
 import * as MapList from "./MapList";
 import { MapPool } from "./map-pool";
 
@@ -124,6 +125,20 @@ describe("MapList.generate()", () => {
 			expect(maps[0].mode).toBe("SZ");
 			expect(maps[1].mode).toBe("SZ");
 			expect(maps[2].mode).toBe("SZ");
+		});
+
+		it("follows a pattern where starting and ending mode is the same", () => {
+			const gen = initGenerator(
+				new MapPool({
+					...ALL_MODES_TEST_MAP_POOL.getClonedObject(),
+					TW: [] as StageId[],
+				}),
+			);
+			const maps = gen.next({ amount: 5, pattern: "SZ***SZ" }).value;
+
+			expect(maps[0].mode, "Map 0 is not SZ").toBe("SZ");
+			// 1, 2 and 3 indexes would be any order of TC/RM/CB
+			expect(maps[4].mode, "Map 5 is not SZ").toBe("SZ");
 		});
 
 		it("follows a one mode only pattern (Bo9)", () => {

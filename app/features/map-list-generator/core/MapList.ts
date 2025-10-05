@@ -185,14 +185,19 @@ function modifyModeOrderByPattern(
 	pattern: MaplistPattern,
 	amount: number,
 ) {
-	const result: ModeShort[] = modeOrder
-		.filter((mode) => !pattern.pattern.includes(mode))
-		.slice(0, amount);
+	const filteredModes = modeOrder.filter(
+		(mode) => !pattern.pattern.includes(mode),
+	);
+	const modesToUse = filteredModes.length > 0 ? filteredModes : modeOrder;
+	const result: ModeShort[] = Array.from(
+		{ length: amount },
+		(_, i) => modesToUse[i % modesToUse.length],
+	);
 
-	const expandedPattern = new Array(result.length)
-		.fill(null)
-		.map((_, i) => pattern.pattern[i % pattern.pattern.length])
-		.slice(0, amount);
+	const expandedPattern = Array.from(
+		{ length: amount },
+		(_, i) => pattern.pattern[i % pattern.pattern.length],
+	);
 
 	if (pattern.mustInclude) {
 		for (const { mode, isGuaranteed } of pattern.mustInclude) {
@@ -242,7 +247,9 @@ function modifyModeOrderByPattern(
 	for (const [idx, mode] of expandedPattern.entries()) {
 		if (mode === "ANY") continue;
 
-		result[idx] = mode;
+		if (modeOrder.includes(mode)) {
+			result[idx] = mode;
+		}
 	}
 
 	return result;
