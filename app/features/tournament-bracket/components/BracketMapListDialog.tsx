@@ -154,6 +154,7 @@ export function BracketMapListDialog({
 			type: bracket.type,
 			pickBanStyle: null,
 			patterns,
+			countType,
 		});
 	});
 	const [pickBanStyle, setPickBanStyle] = React.useState(
@@ -376,6 +377,7 @@ export function BracketMapListDialog({
 													roundsWithPickBan: newRoundsWithPickBan,
 													pickBanStyle: newPickBanStyle,
 													patterns,
+													countType,
 												}),
 											);
 										}
@@ -408,6 +410,7 @@ export function BracketMapListDialog({
 													roundsWithPickBan,
 													pickBanStyle,
 													patterns,
+													countType,
 												}),
 											);
 											setEliminationTeamCount(newCount);
@@ -431,6 +434,7 @@ export function BracketMapListDialog({
 												roundsWithPickBan,
 												pickBanStyle,
 												patterns,
+												countType,
 											});
 											setMaps(newMaps);
 										}}
@@ -467,6 +471,7 @@ export function BracketMapListDialog({
 												roundsWithPickBan,
 												pickBanStyle,
 												patterns,
+												countType,
 											}),
 										)
 									}
@@ -558,6 +563,7 @@ export function BracketMapListDialog({
 														roundsWithPickBan,
 														pickBanStyle,
 														patterns,
+														countType,
 													}).get(round.id);
 
 													setMaps(new Map(maps).set(round.id, newMap!));
@@ -582,6 +588,7 @@ export function BracketMapListDialog({
 																	roundsWithPickBan: newRoundsWithPickBan,
 																	pickBanStyle,
 																	patterns,
+																	countType,
 																}).get(round.id);
 
 																setMaps(new Map(maps).set(round.id, newMap!));

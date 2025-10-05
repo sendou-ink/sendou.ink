@@ -26,6 +26,8 @@ interface MaplistPattern {
 export function* generate(args: {
 	mapPool: MapPool;
 	preferences?: ModeWithStagePreferences;
+	/** Should the function bias in favor of maps not played? E.g. maps 4 & 5 in a Bo5 format (not every team plays them). Should be true if generating for tournament with best of format. */
+	considerGuaranteed?: boolean;
 }): Generator<Array<ModeWithStage>, Array<ModeWithStage>, GenerateNext> {
 	if (args.mapPool.isEmpty()) {
 		while (true) yield [];
@@ -60,12 +62,18 @@ export function* generate(args: {
 		for (let i = 0; i < amount; i++) {
 			const mode = currentModeOrder[i % currentModeOrder.length];
 			const possibleStages = R.shuffle(args.mapPool.parsed[mode]);
+			const isNotGuaranteedToBePlayed = args.considerGuaranteed
+				? Math.ceil(amount / 2) <= i
+				: false;
 
 			replenishStageIds({ possibleStages, stageCounts, stageUsageTracker });
 			const stageId = mostRarelySeenStage(possibleStages, stageCounts);
 
 			result.push({ mode, stageId });
-			stageCounts.set(stageId, stageCounts.get(stageId)! + 1);
+			stageCounts.set(
+				stageId,
+				stageCounts.get(stageId)! + (isNotGuaranteedToBePlayed ? 0.5 : 1),
+			);
 			stageUsageTracker.set(stageId, currentOrderIndex);
 		}
 

@@ -23,13 +23,13 @@ export interface GenerateTournamentRoundMaplistArgs {
 	roundsWithPickBan: Set<number>;
 	pickBanStyle: TournamentRoundMaps["pickBan"];
 	patterns: Map<number, string>;
+	countType: TournamentRoundMaps["type"];
 }
 
 export type TournamentRoundMapList = ReturnType<
 	typeof generateTournamentRoundMaplist
 >;
 
-// TODO: future improvement could be slightly biasing against maps that appear in slots that are not guaranteed to be played
 export function generateTournamentRoundMaplist(
 	args: GenerateTournamentRoundMaplistArgs,
 ) {
@@ -44,7 +44,10 @@ export function generateTournamentRoundMaplist(
 	//                roundId
 	const result: Map<number, Omit<TournamentRoundMaps, "type">> = new Map();
 
-	const generator = MapList.generate({ mapPool: new MapPool(args.pool) });
+	const generator = MapList.generate({
+		mapPool: new MapPool(args.pool),
+		considerGuaranteed: args.countType === "BEST_OF",
+	});
 	generator.next();
 
 	for (const round of sortedRounds.values()) {

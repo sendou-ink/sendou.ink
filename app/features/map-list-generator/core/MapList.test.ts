@@ -329,6 +329,63 @@ describe("MapList.generate()", () => {
 
 			expect(someDifferent).toBe(true);
 		});
+
+		it("replenishes accordingly if considerGuaranteed is true (Bo3)", () => {
+			for (let i = 0; i < 10; i++) {
+				const gen = MapList.generate({
+					mapPool: new MapPool({
+						TW: [1, 2, 3],
+						SZ: [],
+						TC: [],
+						RM: [],
+						CB: [],
+					}),
+					considerGuaranteed: true,
+				});
+				gen.next();
+				const maps1 = gen.next({ amount: 3 }).value;
+
+				const notGuaranteedToBePlayed = maps1[2].stageId;
+
+				const maps2 = gen.next({ amount: 3 }).value;
+
+				expect([maps2[0].stageId, maps2[1].stageId]).toContain(
+					notGuaranteedToBePlayed,
+				);
+			}
+		});
+
+		it("replenishes accordingly if considerGuaranteed is true (Bo5)", () => {
+			for (let i = 0; i < 10; i++) {
+				const gen = MapList.generate({
+					mapPool: new MapPool({
+						TW: [1, 2, 3, 4, 5],
+						SZ: [],
+						TC: [],
+						RM: [],
+						CB: [],
+					}),
+					considerGuaranteed: true,
+				});
+				gen.next();
+				const maps1 = gen.next({ amount: 5 }).value;
+
+				const notGuaranteedToBePlayed = [maps1[3].stageId, maps1[4].stageId];
+
+				const maps2 = gen.next({ amount: 5 }).value;
+
+				expect([
+					maps2[0].stageId,
+					maps2[1].stageId,
+					maps2[2].stageId,
+				]).toContain(notGuaranteedToBePlayed[0]);
+				expect([
+					maps2[0].stageId,
+					maps2[1].stageId,
+					maps2[2].stageId,
+				]).toContain(notGuaranteedToBePlayed[1]);
+			}
+		});
 	});
 });
 
