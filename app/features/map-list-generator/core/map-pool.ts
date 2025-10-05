@@ -70,6 +70,12 @@ export class MapPool {
 		return Object.values(this.parsed).flat();
 	}
 
+	get modes() {
+		return Object.keys(this.parsed).filter(
+			(key) => this.parsed[key as ModeShort].length > 0,
+		) as ModeShort[];
+	}
+
 	get stageModePairs() {
 		return Object.entries(this.parsed).flatMap(([mode, stages]) =>
 			stages.map((stageId) => ({ mode: mode as ModeShort, stageId })),
