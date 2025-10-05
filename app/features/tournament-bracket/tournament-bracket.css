@@ -562,6 +562,10 @@
 	text-align: start;
 }
 
+.map-list-dialog__pattern-input {
+	max-width: 10rem;
+}
+
 .finalize__badge-container {
 	padding: var(--s-2);
 	background-color: black;

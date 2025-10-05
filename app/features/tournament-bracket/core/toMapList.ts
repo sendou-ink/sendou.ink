@@ -22,6 +22,7 @@ export interface GenerateTournamentRoundMaplistArgs {
 	type: Tables["TournamentStage"]["type"];
 	roundsWithPickBan: Set<number>;
 	pickBanStyle: TournamentRoundMaps["pickBan"];
+	patterns: Map<number, string>;
 }
 
 export type TournamentRoundMapList = ReturnType<
@@ -64,6 +65,8 @@ export function generateTournamentRoundMaplist(
 			assertUnreachable(args.pickBanStyle);
 		};
 
+		const pattern = !args.pickBanStyle ? args.patterns.get(count) : undefined;
+
 		result.set(round.id, {
 			count,
 			pickBan: args.roundsWithPickBan.has(round.id)
@@ -76,6 +79,7 @@ export function generateTournamentRoundMaplist(
 					: // TO pick
 						generator.next({
 							amount: amountOfMapsToGenerate(),
+							pattern,
 						}).value,
 		});
 	}

@@ -5,6 +5,8 @@ import { useTranslation } from "react-i18next";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { ModeImage, StageImage } from "~/components/Image";
+import { InfoPopover } from "~/components/InfoPopover";
+import { Input } from "~/components/Input";
 import { RefreshArrowsIcon } from "~/components/icons/RefreshArrows";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
@@ -124,6 +126,7 @@ export function BracketMapListDialog({
 			);
 		},
 	);
+	const [patterns, setPatterns] = React.useState(new Map<number, string>());
 
 	const bracketData = isPreparing
 		? teamCountAdjustedBracketData({
@@ -150,6 +153,7 @@ export function BracketMapListDialog({
 			rounds,
 			type: bracket.type,
 			pickBanStyle: null,
+			patterns,
 		});
 	});
 	const [pickBanStyle, setPickBanStyle] = React.useState(
@@ -371,6 +375,7 @@ export function BracketMapListDialog({
 													type: bracket.type,
 													roundsWithPickBan: newRoundsWithPickBan,
 													pickBanStyle: newPickBanStyle,
+													patterns,
 												}),
 											);
 										}
@@ -402,6 +407,7 @@ export function BracketMapListDialog({
 													type: bracket.type,
 													roundsWithPickBan,
 													pickBanStyle,
+													patterns,
 												}),
 											);
 											setEliminationTeamCount(newCount);
@@ -424,6 +430,7 @@ export function BracketMapListDialog({
 												type: bracket.type,
 												roundsWithPickBan,
 												pickBanStyle,
+												patterns,
 											});
 											setMaps(newMaps);
 										}}
@@ -435,9 +442,13 @@ export function BracketMapListDialog({
 										onSetCountType={setCountType}
 									/>
 								) : null}
-								{tournament.ctx.mapPickingStyle === "TO"
-									? "TODO: patterns"
-									: null}
+								{tournament.ctx.mapPickingStyle === "TO" ? (
+									<PatternInputs
+										patterns={patterns}
+										mapCounts={mapCounts}
+										onPatternsChange={setPatterns}
+									/>
+								) : null}
 							</div>
 							{tournament.ctx.toSetMapPool.length > 0 ? (
 								<SendouButton
@@ -453,6 +464,7 @@ export function BracketMapListDialog({
 												type: bracket.type,
 												roundsWithPickBan,
 												pickBanStyle,
+												patterns,
 											}),
 										)
 									}
@@ -543,6 +555,7 @@ export function BracketMapListDialog({
 														type: bracket.type,
 														roundsWithPickBan,
 														pickBanStyle,
+														patterns,
 													}).get(round.id);
 
 													setMaps(new Map(maps).set(round.id, newMap!));
@@ -566,6 +579,7 @@ export function BracketMapListDialog({
 																	type: bracket.type,
 																	roundsWithPickBan: newRoundsWithPickBan,
 																	pickBanStyle,
+																	patterns,
 																}).get(round.id);
 
 																setMaps(new Map(maps).set(round.id, newMap!));
@@ -1088,5 +1102,58 @@ function MysteryRow({
 						: "Team's pick"}
 			</div>
 		</li>
+	);
+}
+
+function PatternInputs({
+	patterns,
+	mapCounts,
+	onPatternsChange,
+}: {
+	patterns: Map<number, string>;
+	mapCounts: BracketMapCounts;
+	onPatternsChange: (patterns: Map<number, string>) => void;
+}) {
+	const uniqueCounts = new Set<number>();
+	for (const groupCounts of mapCounts.values()) {
+		for (const { count } of groupCounts.values()) {
+			uniqueCounts.add(count);
+		}
+	}
+
+	const sortedCounts = Array.from(uniqueCounts).sort((a, b) => a - b);
+
+	return (
+		<div>
+			<div className="stack horizontal xs items-center">
+				<Label>Mode patterns</Label>
+				<InfoPopover tiny>
+					Control how maps are generated. E.g. *SZ* would mean every 2nd mode
+					needs to be Splat Zones. [SZ] means Splat Zones must appear at least
+					once. You can also combine these patterns. [SZ]*TC* means SZ must
+					appear at least once and that every 2nd mode must be TC.
+				</InfoPopover>
+			</div>
+			<div className="stack horizontal xs">
+				{sortedCounts.map((count) => (
+					<Input
+						key={count}
+						className="map-list-dialog__pattern-input"
+						leftAddon={`Bo${count}`}
+						value={patterns.get(count) ?? ""}
+						placeholder="[TC]*SZ*"
+						onChange={(e) => {
+							const newPatterns = new Map(patterns);
+							if (e.target.value) {
+								newPatterns.set(count, e.target.value);
+							} else {
+								newPatterns.delete(count);
+							}
+							onPatternsChange(newPatterns);
+						}}
+					/>
+				))}
+			</div>
+		</div>
 	);
 }
