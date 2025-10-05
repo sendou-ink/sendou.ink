@@ -442,7 +442,9 @@ export function BracketMapListDialog({
 										onSetCountType={setCountType}
 									/>
 								) : null}
-								{tournament.ctx.mapPickingStyle === "TO" ? (
+								{tournament.ctx.mapPickingStyle === "TO" &&
+								tournament.modesIncluded.length > 1 &&
+								!needsToPickEliminationTeamCount ? (
 									<PatternInputs
 										patterns={patterns}
 										mapCounts={mapCounts}
