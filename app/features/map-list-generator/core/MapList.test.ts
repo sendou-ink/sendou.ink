@@ -420,21 +420,31 @@ describe("MapList.parsePattern()", () => {
 
 	it("parses a mustInclude mode", () => {
 		expect(MapList.parsePattern("[SZ]")._unsafeUnwrap()).toEqual({
-			mustInclude: ["SZ"],
+			mustInclude: [{ mode: "SZ", isGuaranteed: false }],
+			pattern: [],
+		});
+	});
+
+	it("parses a guaranteed mustInclude mode", () => {
+		expect(MapList.parsePattern("[SZ!]")._unsafeUnwrap()).toEqual({
+			mustInclude: [{ mode: "SZ", isGuaranteed: true }],
 			pattern: [],
 		});
 	});
 
 	it("parses a complex pattern", () => {
 		expect(MapList.parsePattern(" * [SZ] * TC [TW]")._unsafeUnwrap()).toEqual({
-			mustInclude: ["TW", "SZ"],
+			mustInclude: [
+				{ mode: "TW", isGuaranteed: false },
+				{ mode: "SZ", isGuaranteed: false },
+			],
 			pattern: ["ANY", "ANY", "TC"],
 		});
 	});
 
 	it("ignores repeated must include mode", () => {
 		expect(MapList.parsePattern("[SZ][SZ]")._unsafeUnwrap()).toEqual({
-			mustInclude: ["SZ"],
+			mustInclude: [{ mode: "SZ", isGuaranteed: false }],
 			pattern: [],
 		});
 	});

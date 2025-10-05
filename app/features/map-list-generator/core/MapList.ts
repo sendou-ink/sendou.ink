@@ -19,7 +19,10 @@ interface GenerateNext {
 }
 
 interface MaplistPattern {
-	mustInclude?: ModeShort[];
+	mustInclude?: Array<{
+		mode: ModeShort;
+		isGuaranteed: boolean;
+	}>;
 	pattern: Array<"ANY" | ModeShort>;
 }
 
@@ -192,7 +195,7 @@ function modifyModeOrderByPattern(
 		.slice(0, amount);
 
 	if (pattern.mustInclude) {
-		for (const mode of pattern.mustInclude) {
+		for (const { mode } of pattern.mustInclude) {
 			// impossible must include, mode is not in the pool
 			if (!modeOrder.includes(mode)) continue;
 
@@ -240,11 +243,14 @@ function modifyModeOrderByPattern(
 
 const validPatternParts = new Set(["*", ...modesShort] as const);
 export function parsePattern(pattern: string) {
-	const mustInclude: ModeShort[] = [];
+	const mustInclude: Array<{ mode: ModeShort; isGuaranteed: boolean }> = [];
 	let mutablePattern = pattern;
 	for (const mode of modesShort) {
-		if (mutablePattern.includes(`[${mode}]`)) {
-			mustInclude.push(mode);
+		if (mutablePattern.includes(`[${mode}!]`)) {
+			mustInclude.push({ mode, isGuaranteed: true });
+			mutablePattern = mutablePattern.replaceAll(`[${mode}!]`, "");
+		} else if (mutablePattern.includes(`[${mode}]`)) {
+			mustInclude.push({ mode, isGuaranteed: false });
 			mutablePattern = mutablePattern.replaceAll(`[${mode}]`, "");
 		}
 	}
