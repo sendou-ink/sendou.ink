@@ -126,7 +126,7 @@ describe("MapList.generate()", () => {
 			expect(maps[2].mode).toBe("SZ");
 		});
 
-		it.todo("follows a one mode only pattern (Bo9)", () => {
+		it("follows a one mode only pattern (Bo9)", () => {
 			const gen = initGenerator();
 			const maps = gen.next({ amount: 9, pattern: "SZ" }).value;
 
@@ -144,8 +144,8 @@ describe("MapList.generate()", () => {
 			}
 		});
 
-		it.todo("includes a mustInclude mode with pattern", () => {
-			for (let i = 0; i < 10; i++) {
+		it("includes a mustInclude mode with pattern", () => {
+			for (let i = 0; i < 50; i++) {
 				const gen = initGenerator();
 				const maps = gen.next({ amount: 3, pattern: "[SZ]*TC*" }).value;
 
@@ -158,8 +158,8 @@ describe("MapList.generate()", () => {
 			const maps = gen.next({ amount: 5, pattern: "SZ*TC" }).value;
 
 			expect(maps).toHaveLength(5);
-			expect(maps[0].mode).toBe("SZ");
-			expect(maps[2].mode).toBe("TC");
+			expect(maps[0].mode, "missing SZ (must include mode)").toBe("SZ");
+			expect(maps[2].mode, "missign TC (required by pattern)").toBe("TC");
 		});
 
 		it("handles a conflict between pattern and must include", () => {

@@ -174,17 +174,45 @@ function modifyModeOrderByPattern(
 	pattern: MaplistPattern,
 	amount: number,
 ) {
-	const result: ModeShort[] = modeOrder.filter(
-		(mode) => !pattern.pattern.includes(mode),
-	);
+	const result: ModeShort[] = modeOrder
+		.filter((mode) => !pattern.pattern.includes(mode))
+		.slice(0, amount);
+
+	const expandedPattern = new Array(result.length)
+		.fill(null)
+		.map((_, i) => pattern.pattern[i % pattern.pattern.length])
+		.slice(0, amount);
 
 	if (pattern.mustInclude) {
 		for (const mode of pattern.mustInclude) {
+			// impossible must include, mode is not in the pool
 			if (!modeOrder.includes(mode)) continue;
 
-			if (!result.slice(0, amount).includes(mode)) {
-				const randomIndex = Math.floor(Math.random() * amount);
-				result.splice(randomIndex, 0, mode);
+			const possibleIndices = expandedPattern.every((part) => part !== "ANY")
+				? // inflexible pattern fallback
+					expandedPattern.map((_, idx) => idx)
+				: expandedPattern.flatMap((part, idx) => (part === "ANY" ? [idx] : []));
+
+			const isAlreadyIncluded = result.includes(mode);
+			// "good spot" means a spot where the pattern allows ANY mode
+			const isInGoodSpot = possibleIndices.includes(result.indexOf(mode));
+
+			if (!isAlreadyIncluded) {
+				const randomIndex = R.sample(possibleIndices, 1)[0];
+				invariant(typeof randomIndex === "number");
+				result[randomIndex] = mode;
+			} else if (!isInGoodSpot) {
+				const currentIndex = result.indexOf(mode);
+				const targetIndex = R.sample(
+					possibleIndices.filter((idx) => idx !== currentIndex),
+					1,
+				)[0];
+				invariant(typeof targetIndex === "number");
+
+				[result[currentIndex], result[targetIndex]] = [
+					result[targetIndex],
+					result[currentIndex],
+				];
 			}
 		}
 	}
@@ -193,14 +221,10 @@ function modifyModeOrderByPattern(
 		return result;
 	}
 
-	const expandedPattern = new Array(modeOrder.length)
-		.fill(null)
-		.map((_, i) => pattern.pattern[i % pattern.pattern.length]);
-
 	for (const [idx, mode] of expandedPattern.entries()) {
 		if (mode === "ANY") continue;
 
-		result.splice(idx, 0, mode);
+		result[idx] = mode;
 	}
 
 	return result;
