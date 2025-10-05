@@ -126,12 +126,30 @@ describe("MapList.generate()", () => {
 			expect(maps[2].mode).toBe("SZ");
 		});
 
+		it.todo("follows a one mode only pattern (Bo9)", () => {
+			const gen = initGenerator();
+			const maps = gen.next({ amount: 9, pattern: "SZ" }).value;
+
+			for (const [idx, map] of maps.entries()) {
+				expect(map.mode, `Map ${idx} is not SZ`).toBe("SZ");
+			}
+		});
+
 		it("includes a mustInclude mode", () => {
 			for (let i = 0; i < 10; i++) {
 				const gen = initGenerator();
 				const maps = gen.next({ amount: 1, pattern: "[SZ]" }).value;
 
 				expect(maps[0].mode).toBe("SZ");
+			}
+		});
+
+		it.todo("includes a mustInclude mode with pattern", () => {
+			for (let i = 0; i < 10; i++) {
+				const gen = initGenerator();
+				const maps = gen.next({ amount: 3, pattern: "[SZ]*TC*" }).value;
+
+				expect([maps[0].mode, maps[2].mode]).toContain("SZ");
 			}
 		});
 
