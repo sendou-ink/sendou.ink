@@ -68,7 +68,9 @@ export function generateTournamentRoundMaplist(
 			assertUnreachable(args.pickBanStyle);
 		};
 
-		const pattern = !args.pickBanStyle ? args.patterns.get(count) : undefined;
+		const pattern = !args.roundsWithPickBan.has(round.id)
+			? args.patterns.get(count)
+			: undefined;
 
 		result.set(round.id, {
 			count,

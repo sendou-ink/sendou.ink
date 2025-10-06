@@ -548,6 +548,12 @@
 	gap: var(--s-5);
 }
 
+.map-list-dialog__rounds-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	gap: var(--s-8);
+}
+
 .map-list-dialog__pick-ban-select {
 	text-align: start;
 }
@@ -562,8 +568,113 @@
 	text-align: start;
 }
 
+.map-list-dialog__map-select-container {
+	display: flex;
+	gap: var(--s-2);
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
+	align-items: center;
+	position: relative;
+	flex: 1;
+}
+
+.map-list-dialog__map-select-container:focus-within {
+	outline: 2px solid var(--theme);
+	outline-offset: 2px;
+	border-radius: var(--rounded);
+}
+
+.map-list-dialog__map-select {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	opacity: 0;
+	cursor: pointer;
+}
+
+.map-list-dialog__map-select-icon {
+	width: 1.25rem;
+	height: 1.25rem;
+	color: var(--text-lighter);
+	margin-left: auto;
+	stroke-width: 2px;
+}
+
 .map-list-dialog__pattern-input {
 	max-width: 10rem;
+}
+
+.map-list-dialog__info-popover {
+	margin-block-start: -6px;
+}
+
+.map-list-dialog__round-controls {
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+	margin-block-start: var(--s-2);
+	margin-block-end: var(--s-3);
+}
+
+.map-list-dialog__round-controls-divider {
+	width: 3px;
+	height: 2rem;
+	border-radius: var(--rounded);
+	background-color: var(--bg-lightest-solid);
+	margin-inline: var(--s-1);
+}
+
+.map-list-dialog__round-button {
+	width: 2rem;
+	height: 2rem;
+	border-radius: 50%;
+	border: 2px solid var(--bg-lightest-solid);
+	background-color: var(--bg-lighter);
+	color: var(--text);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+}
+
+.map-list-dialog__round-button:hover:not(:disabled) {
+	background-color: var(--bg-lightest);
+}
+
+.map-list-dialog__round-button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.map-list-dialog__round-button:focus-visible {
+	outline: 2px solid var(--theme);
+	outline-offset: 2px;
+}
+
+.map-list-dialog__round-button--number {
+	cursor: default;
+	background-color: var(--bg-lightest);
+}
+
+.map-list-dialog__round-button--active {
+	background-color: var(--theme);
+	color: var(--button-text);
+	border-color: var(--theme);
+}
+
+.map-list-dialog__round-button--active:hover {
+	background-color: var(--theme-transparent);
+	color: var(--text);
+}
+
+.map-list-dialog__round-button svg {
+	width: 1rem;
+	height: 1rem;
 }
 
 .finalize__badge-container {

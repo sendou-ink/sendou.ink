@@ -160,8 +160,8 @@ describe("MapList.generate()", () => {
 		});
 
 		it("includes a mustInclude mode (guaranteed)", () => {
-			for (let i = 0; i < 10; i++) {
-				const gen = initGenerator();
+			const gen = initGenerator();
+			for (let i = 0; i < 50; i++) {
 				const maps = gen.next({ amount: 5, pattern: "[SZ!]" }).value;
 
 				expect([maps[0].mode, maps[1].mode, maps[2].mode]).toContain("SZ");
@@ -169,8 +169,8 @@ describe("MapList.generate()", () => {
 		});
 
 		it("includes a mustInclude mode with pattern", () => {
+			const gen = initGenerator();
 			for (let i = 0; i < 50; i++) {
-				const gen = initGenerator();
 				const maps = gen.next({ amount: 3, pattern: "[SZ]*TC*" }).value;
 
 				expect([maps[0].mode, maps[2].mode]).toContain("SZ");
