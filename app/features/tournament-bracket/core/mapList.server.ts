@@ -29,6 +29,8 @@ interface ResolveCurrentMapListArgs {
 		stageId: StageId;
 		type: Tables["TournamentMatchPickBanEvent"]["type"];
 	}>;
+	/** Maps that both teams (interleaved) have recently played in the tournament with the most recent being first. */
+	recentlyPlayedMaps: Array<{ mode: ModeShort; stageId: StageId }>;
 }
 
 export function resolveMapList(
@@ -140,6 +142,7 @@ export function resolveFreshTeamPickedMapList(
 					maps: new MapPool(findMapPoolByTeamId(args.teams[1])),
 				},
 			],
+			recentlyPlayedMaps: args.recentlyPlayedMaps,
 		});
 	}
 
@@ -159,6 +162,7 @@ export function resolveFreshTeamPickedMapList(
 					maps: new MapPool(findMapPoolByTeamId(args.teams[1])),
 				},
 			],
+			recentlyPlayedMaps: args.recentlyPlayedMaps,
 		});
 	} catch (e) {
 		logger.error("Failed to create map list. Falling back to default maps.", e);
@@ -178,6 +182,7 @@ export function resolveFreshTeamPickedMapList(
 					maps: new MapPool([]),
 				},
 			],
+			recentlyPlayedMaps: args.recentlyPlayedMaps,
 		});
 	}
 }

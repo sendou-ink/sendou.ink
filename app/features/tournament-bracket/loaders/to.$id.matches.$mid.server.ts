@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { resolveMapList } from "../core/mapList.server";
 import { findMatchById } from "../queries/findMatchById.server";
@@ -34,6 +35,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 					mapPickingStyle: match.mapPickingStyle,
 					maps: match.roundMaps,
 					pickBanEvents,
+					recentlyPlayedMaps:
+						await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
+							teamIds: [match.opponentOne.id, match.opponentTwo.id],
+						}),
 				})
 			: null;
 

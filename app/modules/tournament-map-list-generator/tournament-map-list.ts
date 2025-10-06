@@ -385,6 +385,24 @@ export function createTournamentMapList(
 			score += 100;
 		}
 
+		if (input.recentlyPlayedMaps) {
+			for (const map of mapList) {
+				const recentIndex = input.recentlyPlayedMaps.findIndex(
+					(recent) =>
+						recent.stageId === map.stageId && recent.mode === map.mode,
+				);
+
+				if (recentIndex !== -1) {
+					// xxx: fix this to consider up to 10 recent maps with decreasing penalty
+					const recencyPenalty = Math.max(
+						5 - Math.floor(recentIndex / 2) * 2,
+						1,
+					);
+					score += recencyPenalty;
+				}
+			}
+		}
+
 		return score;
 	}
 

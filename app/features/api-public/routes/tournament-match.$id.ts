@@ -4,6 +4,7 @@ import { cors } from "remix-utils/cors";
 import { z } from "zod/v4";
 import { db } from "~/db/sql";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { resolveMapList } from "~/features/tournament-bracket/core/mapList.server";
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import i18next from "~/modules/i18n/i18next.server";
@@ -127,6 +128,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			mapPickingStyle: match.mapPickingStyle,
 			maps: match.maps,
 			pickBanEvents,
+			recentlyPlayedMaps:
+				await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
+					teamIds: [match.opponentOne.id, match.opponentTwo.id],
+				}),
 		}).map((mapListMap) => {
 			return {
 				map: {
