@@ -393,7 +393,10 @@ export function generateBalancedMapList(
 				);
 
 				if (recentIndex !== -1) {
-					const recencyPenalty = Math.max(10 - Math.floor(recentIndex / 2) * 2, 0);
+					const recencyPenalty = Math.max(
+						10 - Math.floor(recentIndex / 2) * 2,
+						0,
+					);
 					score += recencyPenalty;
 				}
 			}
