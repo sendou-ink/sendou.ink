@@ -12,11 +12,9 @@ import type { LookingGroupWithInviteCode } from "~/features/sendouq/q-types";
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import {
-	generateBalancedMapList,
-	type TournamentMapListMap,
-} from "~/modules/tournament-map-list-generator";
 import { SENDOUQ_DEFAULT_MAPS } from "~/modules/tournament-map-list-generator/constants";
+import { generateBalancedMapList } from "~/modules/tournament-map-list-generator/tournament-map-list";
+import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { averageArray } from "~/utils/number";

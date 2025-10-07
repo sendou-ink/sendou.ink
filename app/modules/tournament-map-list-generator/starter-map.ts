@@ -6,11 +6,8 @@ import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { logger } from "~/utils/logger";
 import { modesShort } from "../in-game-lists/modes";
 import type { ModeWithStage } from "../in-game-lists/types";
-import {
-	seededRandom,
-	type TournamentMapListMap,
-	type TournamentMaplistInput,
-} from ".";
+import type { TournamentMapListMap, TournamentMaplistInput } from "./types";
+import { seededRandom } from "./utils";
 
 type StarterMapArgs = Pick<
 	TournamentMaplistInput,

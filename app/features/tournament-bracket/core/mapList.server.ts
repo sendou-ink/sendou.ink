@@ -4,12 +4,12 @@ import { mapPickingStyleToModes } from "~/features/tournament/tournament-utils";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { Round } from "~/modules/brackets-model";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
-import {
-	generateBalancedMapList,
-	type TournamentMaplistSource,
-} from "~/modules/tournament-map-list-generator";
 import { starterMap } from "~/modules/tournament-map-list-generator/starter-map";
+import { generateBalancedMapList } from "~/modules/tournament-map-list-generator/tournament-map-list";
+import type {
+	TournamentMapListMap,
+	TournamentMaplistSource,
+} from "~/modules/tournament-map-list-generator/types";
 import { syncCached } from "~/utils/cache.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
