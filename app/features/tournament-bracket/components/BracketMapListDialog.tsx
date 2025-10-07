@@ -41,6 +41,7 @@ import {
 	generateTournamentRoundMaplist,
 	type TournamentRoundMapList,
 } from "../core/toMapList";
+import styles from "./BracketMapListDialog.module.css";
 
 export function BracketMapListDialog({
 	isOpen,
@@ -297,7 +298,7 @@ export function BracketMapListDialog({
 			onClose={close}
 			isFullScreen
 		>
-			<fetcher.Form method="post" className="map-list-dialog__container">
+			<fetcher.Form method="post" className={styles.container}>
 				<input type="hidden" name="bracketIdx" value={bracketIdx} />
 				<input
 					type="hidden"
@@ -349,45 +350,6 @@ export function BracketMapListDialog({
 					<>
 						<div className="stack horizontal items-center justify-between">
 							<div className="stack horizontal lg flex-wrap">
-								<PickBanSelect
-									pickBanStyle={pickBanStyle}
-									isOneModeOnly={tournament.modesIncluded.length === 1}
-									onPickBanStyleChange={(newPickBanStyle) => {
-										let newRoundsWithPickBan = roundsWithPickBan;
-										if (globalSelections) {
-											newRoundsWithPickBan =
-												mapCountsWithGlobalPickBanStyle(newPickBanStyle);
-										}
-
-										setPickBanStyle(newPickBanStyle);
-
-										const noPickBanSetBeforeOrAfter =
-											!roundsWithPickBan.size && !newRoundsWithPickBan.size;
-										const switchedFromCounterpickToAnother =
-											(pickBanStyle === "COUNTERPICK" &&
-												newPickBanStyle === "COUNTERPICK_MODE_REPEAT_OK") ||
-											(pickBanStyle === "COUNTERPICK_MODE_REPEAT_OK" &&
-												newPickBanStyle === "COUNTERPICK");
-										const shouldSkipRegenerateMaps =
-											noPickBanSetBeforeOrAfter ||
-											switchedFromCounterpickToAnother;
-
-										if (!shouldSkipRegenerateMaps) {
-											setMaps(
-												generateTournamentRoundMaplist({
-													mapCounts,
-													pool: tournament.ctx.toSetMapPool,
-													rounds,
-													type: bracket.type,
-													roundsWithPickBan: newRoundsWithPickBan,
-													pickBanStyle: newPickBanStyle,
-													patterns,
-													countType,
-												}),
-											);
-										}
-									}}
-								/>
 								{isPreparing &&
 								(bracket.type === "single_elimination" ||
 									bracket.type === "double_elimination") ? (
@@ -422,6 +384,47 @@ export function BracketMapListDialog({
 										}}
 									/>
 								) : null}
+								{!needsToPickEliminationTeamCount ? (
+									<PickBanSelect
+										pickBanStyle={pickBanStyle}
+										isOneModeOnly={tournament.modesIncluded.length === 1}
+										onPickBanStyleChange={(newPickBanStyle) => {
+											let newRoundsWithPickBan = roundsWithPickBan;
+											if (globalSelections) {
+												newRoundsWithPickBan =
+													mapCountsWithGlobalPickBanStyle(newPickBanStyle);
+											}
+
+											setPickBanStyle(newPickBanStyle);
+
+											const noPickBanSetBeforeOrAfter =
+												!roundsWithPickBan.size && !newRoundsWithPickBan.size;
+											const switchedFromCounterpickToAnother =
+												(pickBanStyle === "COUNTERPICK" &&
+													newPickBanStyle === "COUNTERPICK_MODE_REPEAT_OK") ||
+												(pickBanStyle === "COUNTERPICK_MODE_REPEAT_OK" &&
+													newPickBanStyle === "COUNTERPICK");
+											const shouldSkipRegenerateMaps =
+												noPickBanSetBeforeOrAfter ||
+												switchedFromCounterpickToAnother;
+
+											if (!shouldSkipRegenerateMaps) {
+												setMaps(
+													generateTournamentRoundMaplist({
+														mapCounts,
+														pool: tournament.ctx.toSetMapPool,
+														rounds,
+														type: bracket.type,
+														roundsWithPickBan: newRoundsWithPickBan,
+														pickBanStyle: newPickBanStyle,
+														patterns,
+														countType,
+													}),
+												);
+											}
+										}}
+									/>
+								) : null}
 								{globalSelections ? (
 									<GlobalCountTypeSelect
 										defaultValue={countType}
@@ -438,7 +441,8 @@ export function BracketMapListDialog({
 									/>
 								) : null}
 							</div>
-							{tournament.ctx.toSetMapPool.length > 0 ? (
+							{tournament.ctx.toSetMapPool.length > 0 &&
+							!needsToPickEliminationTeamCount ? (
 								<SendouButton
 									size="small"
 									icon={<RefreshArrowsIcon />}
@@ -473,7 +477,7 @@ export function BracketMapListDialog({
 							</div>
 						) : (
 							<>
-								<div className="map-list-dialog__rounds-grid">
+								<div className={styles.roundsGrid}>
 									{roundsWithNames.map((round) => {
 										const roundMaps = maps.get(round.id);
 										invariant(roundMaps, "Expected maps to be defined");
@@ -840,7 +844,7 @@ function PickBanSelect({
 				<Label htmlFor="pick-ban-style">Pick/ban style</Label>
 			</div>
 			<select
-				className="map-list-dialog__pick-ban-select"
+				className={styles.pickBanSelect}
 				id="pick-ban-style"
 				value={pickBanStyle}
 				onChange={(e) =>
@@ -892,31 +896,31 @@ function RoundMapList({
 	return (
 		<div>
 			<h3>{name}</h3>
-			<div className="map-list-dialog__round-controls">
+			<div className={styles.roundControls}>
 				<button
 					type="button"
-					className="map-list-dialog__round-button"
+					className={styles.roundButton}
 					onClick={() => onCountChange(Math.max(minCount, maps.count - 2))}
 					disabled={maps.count <= minCount}
 				>
 					<MinusIcon />
 				</button>
-				<div className="map-list-dialog__round-button map-list-dialog__round-button--number">
+				<div className={clsx(styles.roundButton, styles.roundButtonNumber)}>
 					{maps.count}
 				</div>
 				<button
 					type="button"
-					className="map-list-dialog__round-button"
+					className={styles.roundButton}
 					onClick={() => onCountChange(Math.min(maxCount, maps.count + 2))}
 					disabled={maps.count >= maxCount}
 				>
 					<PlusIcon />
 				</button>
-				<div className="map-list-dialog__round-controls-divider" />
+				<div className={styles.roundControlsDivider} />
 				<button
 					type="button"
-					className={clsx("map-list-dialog__round-button", {
-						"map-list-dialog__round-button--active": maps.pickBan,
+					className={clsx(styles.roundButton, {
+						[styles.roundButtonActive]: maps.pickBan,
 					})}
 					onClick={() => onPickBanChange(!maps.pickBan)}
 					title="Toggle counterpick/ban"
@@ -926,7 +930,7 @@ function RoundMapList({
 				{unlink ? (
 					<button
 						type="button"
-						className="map-list-dialog__round-button"
+						className={styles.roundButton}
 						onClick={unlink}
 						title="Enter finals and 3rd place match separately"
 					>
@@ -936,7 +940,7 @@ function RoundMapList({
 				{link ? (
 					<button
 						type="button"
-						className="map-list-dialog__round-button"
+						className={styles.roundButton}
 						onClick={link}
 						title="Link finals and 3rd place match to use the same maps"
 					>
@@ -1006,18 +1010,18 @@ function MapListRow({
 
 	return (
 		<li
-			className={clsx("map-list-dialog__map-list-row", {
+			className={clsx(styles.mapListRow, {
 				"text-theme-secondary underline": serializedMapMode(map) === hoveredMap,
 			})}
 			onMouseEnter={() => onHoverMap(serializedMapMode(map))}
 		>
-			<div className="map-list-dialog__map-select-container">
+			<div className={styles.mapSelectContainer}>
 				<span className="text-sm text-lighter font-semi-bold">{number}.</span>
 				<ModeImage mode={map.mode} size={24} />
 				<StageImage stageId={map.stageId} height={24} className="rounded-sm" />
 				{t(`game-misc:STAGE_${map.stageId}`)}
 				<select
-					className="map-list-dialog__map-select"
+					className={styles.mapSelect}
 					value={serializedMapMode(map)}
 					onChange={(e) => {
 						const [mode, stageId] = e.target.value.split("-");
@@ -1049,7 +1053,7 @@ function MapListRow({
 						);
 					})}
 				</select>
-				<ChevronUpDownIcon className="map-list-dialog__map-select-icon" />
+				<ChevronUpDownIcon className={styles.mapSelectIcon} />
 			</div>
 		</li>
 	);
@@ -1065,7 +1069,7 @@ function MysteryRow({
 	isTiebreaker: boolean;
 }) {
 	return (
-		<li className="map-list-dialog__map-list-row">
+		<li className={styles.mapListRow}>
 			<div
 				className={clsx("stack horizontal items-center xs text-lighter", {
 					"text-info": isCounterpicks,
@@ -1104,7 +1108,7 @@ function PatternInputs({
 		<div>
 			<div className="stack horizontal xs items-center">
 				<Label>Mode patterns</Label>
-				<InfoPopover tiny className="map-list-dialog__info-popover">
+				<InfoPopover tiny className={styles.infoPopover}>
 					Control how maps are generated. E.g. *SZ* would mean every 2nd mode
 					needs to be Splat Zones. [SZ] means Splat Zones must appear at least
 					once. [SZ!] means means Splat Zones must appear in the maps that are
@@ -1117,7 +1121,7 @@ function PatternInputs({
 				{sortedCounts.map((count) => (
 					<Input
 						key={count}
-						className="map-list-dialog__pattern-input"
+						className={styles.patternInput}
 						leftAddon={`Bo${count}`}
 						value={patterns.get(count) ?? ""}
 						placeholder="[TC]*SZ*"
