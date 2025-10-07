@@ -4,8 +4,8 @@ import { mapPickingStyleToModes } from "~/features/tournament/tournament-utils";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { Round } from "~/modules/brackets-model";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import { generateBalancedMapList } from "~/modules/tournament-map-list-generator/balanced-map-list";
 import { starterMap } from "~/modules/tournament-map-list-generator/starter-map";
-import { generateBalancedMapList } from "~/modules/tournament-map-list-generator/tournament-map-list";
 import type {
 	TournamentMapListMap,
 	TournamentMaplistSource,

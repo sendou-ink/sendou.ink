@@ -2,8 +2,8 @@ import { describe, expect, test } from "vitest";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { rankedModesShort } from "../in-game-lists/modes";
 import type { RankedModeShort } from "../in-game-lists/types";
+import { generateBalancedMapList } from "./balanced-map-list";
 import { DEFAULT_MAP_POOL } from "./constants";
-import { generateBalancedMapList } from "./tournament-map-list";
 import type { TournamentMaplistInput } from "./types";
 
 const team1Picks = new MapPool([
