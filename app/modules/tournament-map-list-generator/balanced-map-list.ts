@@ -393,11 +393,7 @@ export function generateBalancedMapList(
 				);
 
 				if (recentIndex !== -1) {
-					// xxx: fix this to consider up to 10 recent maps with decreasing penalty
-					const recencyPenalty = Math.max(
-						5 - Math.floor(recentIndex / 2) * 2,
-						1,
-					);
+					const recencyPenalty = Math.max(10 - Math.floor(recentIndex / 2) * 2, 0);
 					score += recencyPenalty;
 				}
 			}
