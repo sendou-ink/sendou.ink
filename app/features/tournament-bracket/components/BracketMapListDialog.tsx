@@ -913,6 +913,7 @@ function RoundMapList({
 					className={styles.roundButton}
 					onClick={() => onCountChange(Math.min(maxCount, maps.count + 2))}
 					disabled={maps.count >= maxCount}
+					data-testid="increase-map-count-button"
 				>
 					<PlusIcon />
 				</button>
@@ -933,6 +934,7 @@ function RoundMapList({
 						className={styles.roundButton}
 						onClick={unlink}
 						title="Enter finals and 3rd place match separately"
+						data-testid="unlink-finals-3rd-place-match-button"
 					>
 						<UnlinkIcon />
 					</button>
@@ -943,6 +945,7 @@ function RoundMapList({
 						className={styles.roundButton}
 						onClick={link}
 						title="Link finals and 3rd place match to use the same maps"
+						data-testid="link-finals-3rd-place-match-button"
 					>
 						<LinkIcon />
 					</button>

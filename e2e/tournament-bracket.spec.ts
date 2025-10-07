@@ -661,7 +661,7 @@ test.describe("Tournament bracket", () => {
 
 		await page.getByTestId("brackets-tab").click();
 		await page.getByTestId("finalize-bracket-button").click();
-		await page.getByLabel("Count", { exact: true }).selectOption("5");
+		await page.getByTestId("increase-map-count-button").first().click();
 		await page.getByTestId("confirm-finalize-bracket-button").click();
 
 		await page.locator('[data-match-id="1"]').click();
@@ -970,10 +970,9 @@ test.describe("Tournament bracket", () => {
 
 		await page.getByTestId("prepare-maps-button").click();
 
-		await page.getByRole("button", { name: "Unlink" }).click();
+		await page.getByTestId("unlink-finals-3rd-place-match-button").click();
 
-		await page.getByRole("button", { name: "Edit" }).last().click();
-		await page.getByLabel("Bo9").click();
+		await page.getByTestId("increase-map-count-button").last().click();
 
 		await page.getByTestId("confirm-finalize-bracket-button").click();
 
@@ -987,7 +986,9 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("prepare-maps-button").click();
 
 		// link button should be visible because we unlinked and made finals and third place match maps different earlier
-		expect(page.getByRole("button", { name: "Link" })).toBeVisible();
+		await expect(
+			page.getByTestId("link-finals-3rd-place-match-button"),
+		).toBeVisible();
 	});
 
 	for (const pickBan of ["COUNTERPICK", "BAN_2"]) {
