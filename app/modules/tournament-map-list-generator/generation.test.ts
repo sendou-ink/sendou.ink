@@ -790,3 +790,74 @@ describe("TournamentMapListGeneratorOneMode", () => {
 		).toThrowError("Duplicate map");
 	});
 });
+
+describe("Recently played maps", () => {
+	test("Avoids recently played maps when possible", () => {
+		const recentlyPlayedMaps = [
+			{ mode: "SZ" as const, stageId: 4 as const },
+			{ mode: "TC" as const, stageId: 5 as const },
+		];
+
+		const mapList = generateMaps({
+			seed: "recent-test",
+			recentlyPlayedMaps,
+		});
+
+		const hasRecentMap = mapList.some((map) =>
+			recentlyPlayedMaps.some(
+				(recent) => recent.mode === map.mode && recent.stageId === map.stageId,
+			),
+		);
+
+		expect(hasRecentMap).toBe(false);
+	});
+
+	test("Works correctly with no recently played maps", () => {
+		const mapList = generateMaps({
+			recentlyPlayedMaps: [],
+		});
+
+		expect(mapList.length).toBe(5);
+	});
+
+	test("Penalties decrease for maps further back in history", () => {
+		const recentlyPlayedMaps = [
+			{ mode: "SZ" as const, stageId: 4 as const },
+			{ mode: "SZ" as const, stageId: 5 as const },
+			{ mode: "TC" as const, stageId: 5 as const },
+			{ mode: "TC" as const, stageId: 6 as const },
+			{ mode: "RM" as const, stageId: 7 as const },
+			{ mode: "RM" as const, stageId: 8 as const },
+		];
+
+		const mapListWithRecent = generateMaps({
+			seed: "history-test",
+			recentlyPlayedMaps,
+		});
+
+		const hasVeryRecentMap = mapListWithRecent.some((map) =>
+			recentlyPlayedMaps
+				.slice(0, 2)
+				.some(
+					(recent) =>
+						recent.mode === map.mode && recent.stageId === map.stageId,
+				),
+		);
+
+		expect(hasVeryRecentMap).toBe(false);
+	});
+
+	test("Still generates valid maplist even with many recently played maps", () => {
+		const recentlyPlayedMaps = [
+			...team1Picks.stageModePairs,
+			...team2Picks.stageModePairs,
+		];
+
+		const mapList = generateMaps({
+			seed: "many-recent",
+			recentlyPlayedMaps,
+		});
+
+		expect(mapList.length).toBe(5);
+	});
+});
