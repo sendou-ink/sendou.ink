@@ -13,7 +13,7 @@ type ModeWithStageAndScore = TournamentMapListMap & { score: number };
 
 const OPTIMAL_MAPLIST_SCORE = 0;
 
-export function createTournamentMapList(
+export function generateBalancedMapList(
 	input: TournamentMaplistInput,
 ): Array<TournamentMapListMap> {
 	validateInput(input);

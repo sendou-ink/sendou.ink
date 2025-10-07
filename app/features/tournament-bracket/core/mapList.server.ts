@@ -6,7 +6,7 @@ import type { Round } from "~/modules/brackets-model";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
 import {
-	createTournamentMapList,
+	generateBalancedMapList,
 	type TournamentMaplistSource,
 } from "~/modules/tournament-map-list-generator";
 import { starterMap } from "~/modules/tournament-map-list-generator/starter-map";
@@ -147,7 +147,7 @@ export function resolveFreshTeamPickedMapList(
 	}
 
 	try {
-		return createTournamentMapList({
+		return generateBalancedMapList({
 			count: count(),
 			seed: String(args.matchId),
 			modesIncluded: mapPickingStyleToModes(args.mapPickingStyle),
@@ -167,7 +167,7 @@ export function resolveFreshTeamPickedMapList(
 	} catch (e) {
 		logger.error("Failed to create map list. Falling back to default maps.", e);
 
-		return createTournamentMapList({
+		return generateBalancedMapList({
 			count: count(),
 			seed: String(args.matchId),
 			modesIncluded: mapPickingStyleToModes(args.mapPickingStyle),

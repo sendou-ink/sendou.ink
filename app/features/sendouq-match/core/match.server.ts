@@ -13,7 +13,7 @@ import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
-	createTournamentMapList,
+	generateBalancedMapList,
 	type TournamentMapListMap,
 } from "~/modules/tournament-map-list-generator";
 import { SENDOUQ_DEFAULT_MAPS } from "~/modules/tournament-map-list-generator/constants";
@@ -44,7 +44,7 @@ export function matchMapList(
 	);
 
 	try {
-		return createTournamentMapList({
+		return generateBalancedMapList({
 			count: SENDOUQ_BEST_OF,
 			seed: String(groupOne.id),
 			modesIncluded,
@@ -71,7 +71,7 @@ export function matchMapList(
 		// in that case, just return a map list from our default set of maps
 	} catch (e) {
 		logger.error(e);
-		return createTournamentMapList({
+		return generateBalancedMapList({
 			count: SENDOUQ_BEST_OF,
 			seed: String(groupOne.id),
 			modesIncluded,
