@@ -380,8 +380,8 @@ export function generateBalancedMapList(
 			score += 1;
 		}
 
-		const scoreSum = mapList.reduce((acc, cur) => acc + cur.score, 0);
-		if (scoreSum !== 0) {
+		const fairnessBalance = mapList.reduce((acc, cur) => acc + cur.score, 0);
+		if (fairnessBalance !== 0) {
 			score += 100;
 		}
 
