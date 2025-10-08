@@ -4,12 +4,12 @@ import { mapPickingStyleToModes } from "~/features/tournament/tournament-utils";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { Round } from "~/modules/brackets-model";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
-import {
-	createTournamentMapList,
-	type TournamentMaplistSource,
-} from "~/modules/tournament-map-list-generator";
+import { generateBalancedMapList } from "~/modules/tournament-map-list-generator/balanced-map-list";
 import { starterMap } from "~/modules/tournament-map-list-generator/starter-map";
+import type {
+	TournamentMapListMap,
+	TournamentMaplistSource,
+} from "~/modules/tournament-map-list-generator/types";
 import { syncCached } from "~/utils/cache.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -29,6 +29,8 @@ interface ResolveCurrentMapListArgs {
 		stageId: StageId;
 		type: Tables["TournamentMatchPickBanEvent"]["type"];
 	}>;
+	/** Maps that both teams (interleaved) have recently played in the tournament with the most recent being first. */
+	recentlyPlayedMaps: Array<{ mode: ModeShort; stageId: StageId }>;
 }
 
 export function resolveMapList(
@@ -140,11 +142,12 @@ export function resolveFreshTeamPickedMapList(
 					maps: new MapPool(findMapPoolByTeamId(args.teams[1])),
 				},
 			],
+			recentlyPlayedMaps: args.recentlyPlayedMaps,
 		});
 	}
 
 	try {
-		return createTournamentMapList({
+		return generateBalancedMapList({
 			count: count(),
 			seed: String(args.matchId),
 			modesIncluded: mapPickingStyleToModes(args.mapPickingStyle),
@@ -159,11 +162,12 @@ export function resolveFreshTeamPickedMapList(
 					maps: new MapPool(findMapPoolByTeamId(args.teams[1])),
 				},
 			],
+			recentlyPlayedMaps: args.recentlyPlayedMaps,
 		});
 	} catch (e) {
 		logger.error("Failed to create map list. Falling back to default maps.", e);
 
-		return createTournamentMapList({
+		return generateBalancedMapList({
 			count: count(),
 			seed: String(args.matchId),
 			modesIncluded: mapPickingStyleToModes(args.mapPickingStyle),
@@ -178,6 +182,7 @@ export function resolveFreshTeamPickedMapList(
 					maps: new MapPool([]),
 				},
 			],
+			recentlyPlayedMaps: args.recentlyPlayedMaps,
 		});
 	}
 }

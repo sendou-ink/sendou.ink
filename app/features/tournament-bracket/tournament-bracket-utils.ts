@@ -4,11 +4,9 @@ import type { TournamentRoundMaps } from "~/db/tables";
 import type { TournamentBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator";
-import {
-	seededRandom,
-	sourceTypes,
-} from "~/modules/tournament-map-list-generator";
+import { sourceTypes } from "~/modules/tournament-map-list-generator/constants";
+import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
+import { seededRandom } from "~/modules/tournament-map-list-generator/utils";
 import { logger } from "~/utils/logger";
 import type { TournamentLoaderData } from "../tournament/loaders/to.$id.server";
 import type { FindMatchById } from "../tournament-bracket/queries/findMatchById.server";

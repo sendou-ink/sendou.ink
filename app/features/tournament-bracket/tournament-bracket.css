@@ -542,26 +542,6 @@
 	width: 280px;
 }
 
-.map-list-dialog__container {
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-5);
-}
-
-.map-list-dialog__pick-ban-select {
-	text-align: start;
-}
-
-.map-list-dialog__map-list-row {
-	display: flex;
-	gap: var(--s-2);
-	align-items: center;
-	margin-block: var(--s-2);
-	list-style: none;
-	min-width: 275px;
-	text-align: start;
-}
-
 .finalize__badge-container {
 	padding: var(--s-2);
 	background-color: black;

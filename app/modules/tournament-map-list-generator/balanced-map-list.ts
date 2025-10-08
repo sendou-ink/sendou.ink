@@ -1,5 +1,8 @@
+import type { Result } from "neverthrow";
+import { err, ok } from "neverthrow";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import invariant from "~/utils/invariant";
+import { logger } from "~/utils/logger";
 import type { ModeShort, StageId } from "../in-game-lists/types";
 import { DEFAULT_MAP_POOL } from "./constants";
 import type {
@@ -12,10 +15,39 @@ import { seededRandom } from "./utils";
 type ModeWithStageAndScore = TournamentMapListMap & { score: number };
 
 const OPTIMAL_MAPLIST_SCORE = 0;
+const MAX_RECURSION_DEPTH = 5_000;
 
-export function createTournamentMapList(
+export function generateBalancedMapList(
 	input: TournamentMaplistInput,
 ): Array<TournamentMapListMap> {
+	const result = generateWithInput(input);
+
+	if (result.isErr()) {
+		if (
+			result.error === "MAX_RECURSION_DEPTH_EXCEEDED" &&
+			input.recentlyPlayedMaps
+		) {
+			logger.error(
+				`Failed to generate map list with recently played maps consideration. Retrying without recently played maps. Team IDs: ${input.teams.map((t) => t.id).join(", ")}`,
+			);
+			return generateWithInput({
+				...input,
+				recentlyPlayedMaps: undefined,
+			})._unsafeUnwrap();
+		}
+
+		throw new Error(`couldn't generate maplist: ${result.error}`);
+	}
+
+	return result.value;
+}
+
+function generateWithInput(
+	input: TournamentMaplistInput,
+): Result<
+	Array<TournamentMapListMap>,
+	"MAX_RECURSION_DEPTH_EXCEEDED" | "COULD_NOT_GENERATE_MAPLIST"
+> {
 	validateInput(input);
 
 	const { shuffle } = seededRandom(input.seed);
@@ -25,8 +57,12 @@ export function createTournamentMapList(
 		score: Number.POSITIVE_INFINITY,
 	};
 	const usedStages = new Set<number>();
+	let depth = 0;
 
-	const backtrack = () => {
+	const backtrack = (): boolean => {
+		if (++depth > MAX_RECURSION_DEPTH) {
+			return false;
+		}
 		invariant(mapList.length <= input.count, "mapList.length > input.count");
 		const mapListScore = rateMapList();
 		if (typeof mapListScore === "number" && mapListScore < bestMapList.score) {
@@ -36,7 +72,7 @@ export function createTournamentMapList(
 
 		// There can't be better map list than this
 		if (bestMapList.score === OPTIMAL_MAPLIST_SCORE) {
-			return;
+			return true;
 		}
 
 		const stageList =
@@ -53,18 +89,22 @@ export function createTournamentMapList(
 			mapList.push(stage);
 			usedStages.add(i);
 
-			backtrack();
+			const continueSearch = backtrack();
+			if (!continueSearch) return false;
 
 			usedStages.delete(i);
 			mapList.pop();
 		}
+
+		return true;
 	};
 
-	backtrack();
+	const success = backtrack();
 
-	if (bestMapList.maps) return bestMapList.maps;
+	if (!success) return err("MAX_RECURSION_DEPTH_EXCEEDED");
+	if (bestMapList.maps) return ok(bestMapList.maps);
 
-	throw new Error("couldn't generate maplist");
+	return err("COULD_NOT_GENERATE_MAPLIST");
 
 	function resolveCommonStages() {
 		const sorted = input.teams
@@ -380,9 +420,26 @@ export function createTournamentMapList(
 			score += 1;
 		}
 
-		const scoreSum = mapList.reduce((acc, cur) => acc + cur.score, 0);
-		if (scoreSum !== 0) {
+		const fairnessBalance = mapList.reduce((acc, cur) => acc + cur.score, 0);
+		if (fairnessBalance !== 0) {
 			score += 100;
+		}
+
+		if (input.recentlyPlayedMaps) {
+			for (const map of mapList) {
+				const recentIndex = input.recentlyPlayedMaps.findIndex(
+					(recent) =>
+						recent.stageId === map.stageId && recent.mode === map.mode,
+				);
+
+				if (recentIndex !== -1) {
+					const recencyPenalty = Math.max(
+						10 - Math.floor(recentIndex / 2) * 2,
+						0,
+					);
+					score += recencyPenalty;
+				}
+			}
 		}
 
 		return score;
