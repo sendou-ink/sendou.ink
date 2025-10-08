@@ -49,7 +49,7 @@ export function userRoles(
 		result.push("TOURNAMENT_ADDER");
 	}
 
-	if (userDiscordIdIsAged(user)) {
+	if (userDiscordIdIsAged(user) || isSupporter(user)) {
 		result.push("CALENDAR_EVENT_ADDER");
 	}
 

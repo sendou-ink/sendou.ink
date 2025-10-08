@@ -43,6 +43,10 @@
 		"displayName": "Art Supplies Pencil Award (Silver)",
 		"authorDiscordId": "1320944066002681876"
 	},
+	"asaudinationaldayevent": {
+		"displayName": "A Saudi national day event",
+		"authorDiscordId": "754368445910614046"
+	},
 	"ausflag": {
 		"displayName": "OCE Open",
 		"authorDiscordId": "1170249805373657093"
@@ -252,7 +256,7 @@
 		"authorDiscordId": "178733052762128385"
 	},
 	"csblast": {
-		"displayName": "10 ST! Tournaments",
+		"displayName": "S-BLAST '91",
 		"authorDiscordId": "752582395076673577"
 	},
 	"ctrl_ink_delete": {
@@ -319,8 +323,12 @@
 		"displayName": "Wheel of Names",
 		"authorDiscordId": "336683473714544641"
 	},
+	"finallife": {
+		"displayName": "Final Life",
+		"authorDiscordId": "338806780446638082"
+	},
 	"fl-collegiate": {
-		"displayName": "Florida Collegiate Draft Cup",
+		"displayName": "Florida Collegiate Cephalopods Event",
 		"authorDiscordId": "285504780154044416"
 	},
 	"fluttermane": {
@@ -491,6 +499,18 @@
 		"displayName": "Inkstrike Invitational",
 		"authorDiscordId": "789943264370884708"
 	},
+	"inkvasionzone": {
+		"displayName": "Zones Inkvasion",
+		"authorDiscordId": "338806780446638082"
+	},
+	"inthepaddock1st": {
+		"displayName": "In the Paddock",
+		"authorDiscordId": "683603297839743009"
+	},
+	"inthepaddock2nd": {
+		"displayName": "In the Paddock 2nd",
+		"authorDiscordId": "683603297839743009"
+	},
 	"jamboree": {
 		"displayName": "JJaeigh's Jamboree",
 		"authorDiscordId": "528851510222782474"
@@ -523,6 +543,18 @@
 		"displayName": "Reef Reunion (500 KT Power)",
 		"authorDiscordId": "1170249805373657093"
 	},
+	"ld4copper": {
+		"displayName": "LD4 (3eme)",
+		"authorDiscordId": "570323825669963972"
+	},
+	"ld4gold": {
+		"displayName": "LD4 (1er)",
+		"authorDiscordId": "570323825669963972"
+	},
+	"ld4silver": {
+		"displayName": "LD4 (2eme)",
+		"authorDiscordId": "570323825669963972"
+	},
 	"lemoncider": {
 		"displayName": "Lemon Cider Birthday Bash",
 		"authorDiscordId": "1320944066002681876"
@@ -534,6 +566,14 @@
 	"liftoff": {
 		"displayName": "Liftoff",
 		"authorDiscordId": "789943264370884708"
+	},
+	"lockmadness": {
+		"displayName": "Lock [Madness]",
+		"authorDiscordId": "528851510222782474"
+	},
+	"lockwonderland": {
+		"displayName": "Lock [Wonderland]",
+		"authorDiscordId": "528851510222782474"
 	},
 	"lone_sailor": {
 		"displayName": "Lone Sailor",
@@ -594,6 +634,14 @@
 	"matchmeetex": {
 		"displayName": "Meet Your Match Counterpick Gauntlet",
 		"authorDiscordId": "631246535560265749"
+	},
+	"mayadiamond1": {
+		"displayName": "Maya's Diamond Heist",
+		"authorDiscordId": "338806780446638082"
+	},
+	"mayadiamond2": {
+		"displayName": "Golden Diamond Heist",
+		"authorDiscordId": "338806780446638082"
 	},
 	"meadowscow": {
 		"displayName": "Moo Moo Cup",
@@ -710,6 +758,10 @@
 	"oktofest-silver": {
 		"displayName": "Oktofest LAN (Second)",
 		"authorDiscordId": "751912670403362836"
+	},
+	"order1": {
+		"displayName": "ORDR S1",
+		"authorDiscordId": "338806780446638082"
 	},
 	"original-message-deleted": {
 		"displayName": "[Original Message Deleted]",
@@ -1207,6 +1259,10 @@
 		"displayName": "Tough Tides",
 		"authorDiscordId": "1170249805373657093"
 	},
+	"weaponlockdownspecial": {
+		"displayName": "Weapon Lockdown Special Edition",
+		"authorDiscordId": "338806780446638082"
+	},
 	"whitecat": {
 		"displayName": "White Cat Achievement",
 		"authorDiscordId": "631246535560265749"
@@ -1218,6 +1274,18 @@
 	"wiper": {
 		"displayName": "Squeaky Clean Scrap",
 		"authorDiscordId": "528851510222782474"
+	},
+	"worlddriverschampionship": {
+		"displayName": "WDC #0",
+		"authorDiscordId": "752582395076673577"
+	},
+	"worldendurancechampionship": {
+		"displayName": "WEC #0",
+		"authorDiscordId": "683603297839743009"
+	},
+	"worldrallychampionship": {
+		"displayName": "WRC #0",
+		"authorDiscordId": "683603297839743009"
 	},
 	"zekkocup": {
 		"displayName": "Zekko Cup",

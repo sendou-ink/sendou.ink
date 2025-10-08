@@ -74,11 +74,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 					eb
 						.selectFrom("TeamMemberWithSecondary")
 						.innerJoin("Team", "Team.id", "TeamMemberWithSecondary.teamId")
-						.select([
-							"Team.name",
-							"Team.customUrl",
-							"TeamMemberWithSecondary.role",
-						])
+						.select(["Team.id", "TeamMemberWithSecondary.role"])
 						.whereRef("TeamMemberWithSecondary.userId", "=", "User.id")
 						.orderBy("TeamMemberWithSecondary.isMainTeam", "desc")
 						.orderBy("TeamMemberWithSecondary.createdAt", "asc"),
@@ -143,9 +139,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			imageUrl: `https://sendou.ink/static-assets/badges/${badge.code}.png`,
 		})),
 		teams: user.teams.map((team) => ({
-			name: team.name,
+			id: team.id,
 			role: team.role,
-			teamPageUrl: `https://sendou.ink/t/${team.customUrl}`,
 		})),
 	};
 
