@@ -10,8 +10,6 @@ import invariant from "~/utils/invariant";
 import type { MapPool } from "./map-pool";
 import type { ReadonlyMapPoolObject } from "./map-pool-serializer/types";
 
-type ModeWithStagePreferences = Map<string, number>;
-
 interface GenerateNext {
 	/** How many maps to return? E.g. for a Bo5 set, amount should be 5 */
 	amount: number;
@@ -185,11 +183,6 @@ function modeOrders(modes: ModeShort[]) {
 	return result;
 }
 
-export function* generateBalanced(_args: {
-	mapPool: MapPool;
-	preferences: [ModeWithStagePreferences, ModeWithStagePreferences];
-}) {}
-
 function modifyModeOrderByPattern(
 	modeOrder: ModeShort[],
 	pattern: MaplistPattern,
@@ -275,6 +268,10 @@ const validPatternParts = new Set(["*", ...modesShort] as const);
  * parsePattern("[RM!]*SZ").unwrapOr(null); // { pattern: ["ANY", "SZ"], mustInclude: [{ mode: "RM", isGuaranteed: true }] }
  */
 export function parsePattern(pattern: string) {
+	if (pattern.length > 50) {
+		return err("pattern too long");
+	}
+
 	const mustInclude: Array<{ mode: ModeShort; isGuaranteed: boolean }> = [];
 	let mutablePattern = pattern;
 	for (const mode of modesShort) {

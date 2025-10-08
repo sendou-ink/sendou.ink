@@ -479,6 +479,15 @@ describe("MapList.parsePattern()", () => {
 		});
 	});
 
+	it("returns error when pattern is too long", () => {
+		const longPattern = "a".repeat(51);
+		const result = MapList.parsePattern(longPattern);
+		expect(result.isErr()).toBe(true);
+		if (result.isErr()) {
+			expect(result.error).toBe("pattern too long");
+		}
+	});
+
 	it("return error on lorem ipsum", () => {
 		expect(
 			MapList.parsePattern(

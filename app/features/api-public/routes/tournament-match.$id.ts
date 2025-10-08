@@ -8,6 +8,7 @@ import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamR
 import { resolveMapList } from "~/features/tournament-bracket/core/mapList.server";
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import i18next from "~/modules/i18n/i18next.server";
+import { logger } from "~/utils/logger";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import {
@@ -131,6 +132,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			recentlyPlayedMaps:
 				await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
 					teamIds: [match.opponentOne.id, match.opponentTwo.id],
+				}).catch((error) => {
+					logger.error("Failed to fetch recently played maps", error);
+					return [];
 				}),
 		}).map((mapListMap) => {
 			return {

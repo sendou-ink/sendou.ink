@@ -2,10 +2,10 @@
 
 import type { Transaction } from "kysely";
 import { sql } from "kysely";
-import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import { flatZip } from "~/utils/arrays";
 import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
@@ -395,5 +395,5 @@ export async function findRecentlyPlayedMapsByIds({
 		findTeamRecentMaps(teamIds[1], limit),
 	]);
 
-	return R.pipe(R.zip(teamOneMaps, teamTwoMaps), R.flat());
+	return flatZip(teamOneMaps, teamTwoMaps);
 }

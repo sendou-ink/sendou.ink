@@ -97,6 +97,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 					recentlyPlayedMaps:
 						await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
 							teamIds: [match.opponentOne.id, match.opponentTwo.id],
+						}).catch((error) => {
+							logger.error("Failed to fetch recently played maps", error);
+							return [];
 						}),
 				})
 			: null;

@@ -18,8 +18,10 @@ export function starterMap(args: StarterMapArgs): Array<TournamentMapListMap> {
 	const { shuffle } = seededRandom(args.seed);
 
 	const isRecentlyPlayed = (map: ModeWithStage) => {
-		return args.recentlyPlayedMaps?.some(
-			(recent) => recent.stageId === map.stageId && recent.mode === map.mode,
+		return Boolean(
+			args.recentlyPlayedMaps?.some(
+				(recent) => recent.stageId === map.stageId && recent.mode === map.mode,
+			),
 		);
 	};
 
@@ -89,7 +91,7 @@ export function starterMap(args: StarterMapArgs): Array<TournamentMapListMap> {
 function resolveRandomCommonMap(
 	teams: StarterMapArgs["teams"],
 	shuffle: <T>(o: T[]) => T[],
-	isRecentlyPlayed: (map: ModeWithStage) => boolean | undefined,
+	isRecentlyPlayed: (map: ModeWithStage) => boolean,
 ): ModeWithStage | null {
 	const teamOnePicks = shuffle(teams[0].maps.stageModePairs);
 	const teamTwoPicks = shuffle(teams[1].maps.stageModePairs);
