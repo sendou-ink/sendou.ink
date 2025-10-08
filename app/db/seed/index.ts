@@ -1723,57 +1723,59 @@ function otherTeams() {
 }
 
 async function realVideo() {
-	await VodRepository.createVod({
-		type: "TOURNAMENT",
-		youtubeUrl: youtubeIdToYoutubeUrl("M4aV-BQWlVg"),
-		date: { day: 2, month: 2, year: 2023 },
-		submitterUserId: ADMIN_ID,
-		title: "LUTI Division X Tournament - ABBF (THRONE) vs. Ascension",
-		pov: {
-			type: "USER",
-			userId: NZAP_TEST_ID,
-		},
-		isValidated: true,
-		matches: [
-			{
-				mode: "SZ",
-				stageId: 8,
-				startsAt: secondsToHoursMinutesSecondString(13),
-				weapons: [3040],
+	for (let i = 0; i < 5; i++) {
+		await VodRepository.createVod({
+			type: "TOURNAMENT",
+			youtubeUrl: youtubeIdToYoutubeUrl("M4aV-BQWlVg"),
+			date: { day: 2, month: 2, year: 2023 },
+			submitterUserId: ADMIN_ID,
+			title: "LUTI Division X Tournament - ABBF (THRONE) vs. Ascension",
+			pov: {
+				type: "USER",
+				userId: faker.helpers.arrayElement(userIdsInRandomOrder()),
 			},
-			{
-				mode: "CB",
-				stageId: 6,
-				startsAt: secondsToHoursMinutesSecondString(307),
-				weapons: [3040],
-			},
-			{
-				mode: "TC",
-				stageId: 2,
-				startsAt: secondsToHoursMinutesSecondString(680),
-				weapons: [3040],
-			},
-			{
-				mode: "SZ",
-				stageId: 9,
-				startsAt: secondsToHoursMinutesSecondString(1186),
-				weapons: [3040],
-			},
-			{
-				mode: "RM",
-				stageId: 2,
-				startsAt: secondsToHoursMinutesSecondString(1386),
-				weapons: [3000],
-			},
-			{
-				mode: "TC",
-				stageId: 4,
-				startsAt: secondsToHoursMinutesSecondString(1586),
-				weapons: [1110],
-			},
-			// there are other matches too...
-		],
-	});
+			isValidated: true,
+			matches: [
+				{
+					mode: "SZ",
+					stageId: 8,
+					startsAt: secondsToHoursMinutesSecondString(13),
+					weapons: [3040],
+				},
+				{
+					mode: "CB",
+					stageId: 6,
+					startsAt: secondsToHoursMinutesSecondString(307),
+					weapons: [3040],
+				},
+				{
+					mode: "TC",
+					stageId: 2,
+					startsAt: secondsToHoursMinutesSecondString(680),
+					weapons: [3040],
+				},
+				{
+					mode: "SZ",
+					stageId: 9,
+					startsAt: secondsToHoursMinutesSecondString(1186),
+					weapons: [3040],
+				},
+				{
+					mode: "RM",
+					stageId: 2,
+					startsAt: secondsToHoursMinutesSecondString(1386),
+					weapons: [3000],
+				},
+				{
+					mode: "TC",
+					stageId: 4,
+					startsAt: secondsToHoursMinutesSecondString(1586),
+					weapons: [1110],
+				},
+				// there are other matches too...
+			],
+		});
+	}
 }
 
 async function realVideoCast() {
