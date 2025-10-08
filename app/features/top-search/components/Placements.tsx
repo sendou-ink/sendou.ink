@@ -7,11 +7,11 @@ import {
 	topSearchPage,
 	topSearchPlayerPage,
 } from "~/utils/urls";
-import type { FindPlacement } from "../SplatoonPlayerRepository.server";
+import type * as SplatoonPlayerRepositoy from "../SplatoonPlayerRepository.server";
 import { monthYearToSpan } from "../top-search-utils";
 
 interface PlacementsTableProps {
-	placements: Array<FindPlacement>;
+	placements: Array<SplatoonPlayerRepositoy.FindPlacement>;
 	type?: "PLAYER_NAME" | "MODE_INFO";
 }
 
