@@ -77,6 +77,8 @@
 	"notifications.text.SCRIM_SCHEDULED": "New scrim scheduled at {{timeString}}",
 	"notifications.title.SCRIM_CANCELED": "Scrim Canceled",
 	"notifications.text.SCRIM_CANCELED": "The scrim at {{timeString}} was canceled",
+	"notifications.title.COMMISSIONS_CLOSED": "Commissions Closed",
+	"notifications.text.COMMISSIONS_CLOSED": "If your commissions are still open, please re-enable them",
 	"auth.errors.aborted": "Login Aborted",
 	"auth.errors.failed": "Login Failed",
 	"auth.errors.discordPermissions": "For your sendou.ink profile, the site needs access to your Discord profile's name, avatar and social connections.",

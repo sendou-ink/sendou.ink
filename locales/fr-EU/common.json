@@ -77,6 +77,8 @@
 	"notifications.text.SCRIM_SCHEDULED": "Nouveau scrim programmé à {{timeString}}",
 	"notifications.title.SCRIM_CANCELED": "",
 	"notifications.text.SCRIM_CANCELED": "",
+	"notifications.title.COMMISSIONS_CLOSED": "",
+	"notifications.text.COMMISSIONS_CLOSED": "",
 	"auth.errors.aborted": "Connexion abandonnée",
 	"auth.errors.failed": "Connexion échouée",
 	"auth.errors.discordPermissions": "Pour mettre en place votre profil, sendou.ink a besoin de votre nom de profil Discord, de votre avatar et de vos réseaux connectés.",

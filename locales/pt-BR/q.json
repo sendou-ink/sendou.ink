@@ -67,6 +67,7 @@
 	"settings.sounds.likeReceived": "Curtida recebida",
 	"settings.sounds.groupNewMember": "Agrupar novo membro",
 	"settings.sounds.matchStarted": "A partida começou",
+	"settings.sounds.tournamentMatchStarted": "",
 	"settings.mapPool.notOk": "Escolha {{count}} mapas por modo que você não evitou para salvar suas preferências",
 	"settings.misc.header": "Diversos",
 	"settings.banned": "Banido(a)",

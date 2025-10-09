@@ -77,6 +77,8 @@
 	"notifications.text.SCRIM_SCHEDULED": "",
 	"notifications.title.SCRIM_CANCELED": "",
 	"notifications.text.SCRIM_CANCELED": "",
+	"notifications.title.COMMISSIONS_CLOSED": "",
+	"notifications.text.COMMISSIONS_CLOSED": "",
 	"auth.errors.aborted": "Login Abortado",
 	"auth.errors.failed": "Login Falhou",
 	"auth.errors.discordPermissions": "Para o seu perfil do sendou.ink, o site precisa de acesso ao nome do perfil do seu Discord, incluindo também o avatar e conexões sociais.",

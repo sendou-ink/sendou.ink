@@ -17,6 +17,7 @@
 	"forms.showDiscordUniqueName": "Vis Discord-brugernavn",
 	"forms.showDiscordUniqueName.info": "Vil du gøre dit unikke Discord-brugernavn ({{discordUniqueName}}) synligt for offentligheden?",
 	"forms.commissionsOpen": "Åben for bestillinger",
+	"forms.commissionsOpen.info": "",
 	"forms.commissionText": "info om bestilling",
 	"forms.commissionText.info": "Pris, åbne pladser eller andre relevante informationer der er relateret til at afgive en bestilling til dig.",
 	"forms.customName.info": "Hvis feltet ikke udfyldes bruges dit discordbrugernavn: \"{{discordName}}\"",
