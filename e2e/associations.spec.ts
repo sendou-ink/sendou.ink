@@ -63,7 +63,7 @@ test.describe("Associations", () => {
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({
 			page,
-			url: inviteLink.replace("https://sendou.ink", "http://localhost:5173"),
+			url: inviteLink.replace("https://sendou.ink", "http://localhost:6173"),
 		});
 
 		await submit(page);

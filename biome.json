@@ -6,7 +6,8 @@
 			"!scripts/dicts/**/*",
 			"!scripts/output/**/*",
 			"!app/db/seed/placements.json",
-			"!build/**/*"
+			"!build/**/*",
+			"!test-results/**/*"
 		]
 	},
 	"linter": {
