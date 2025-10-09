@@ -1257,25 +1257,58 @@ function MapPoolValidationStatusMessage({
 function MemberCountSelect() {
 	const baseEvent = useBaseEvent();
 	const id = React.useId();
+	const [memberCount, setMemberCount] = React.useState(
+		baseEvent?.tournament?.ctx.settings.minMembersPerTeam ?? 4,
+	);
+
+	return (
+		<>
+			<div>
+				<label htmlFor={id} className="w-max">
+					Players count
+				</label>
+				<select
+					name="minMembersPerTeam"
+					value={memberCount}
+					onChange={(e) => setMemberCount(Number(e.target.value))}
+					className="w-max"
+				>
+					{[4, 3, 2, 1].map((count) => (
+						<option key={count} value={count}>
+							{`${count}v${count}`}
+						</option>
+					))}
+				</select>
+			</div>
+			{memberCount === 4 ? <MaxTeamMemberCountInput /> : null}
+		</>
+	);
+}
+
+function MaxTeamMemberCountInput() {
+	const baseEvent = useBaseEvent();
+	const id = React.useId();
 
 	return (
 		<div>
 			<label htmlFor={id} className="w-max">
-				Players count
+				Max team size
 			</label>
-			<select
-				name="minMembersPerTeam"
+			<input
+				type="number"
+				id={id}
+				name="maxTeamMemberCount"
+				min={4}
+				max={10}
 				defaultValue={
-					baseEvent?.tournament?.ctx.settings.minMembersPerTeam ?? 4
+					baseEvent?.tournament?.ctx.settings.maxTeamMemberCount ?? undefined
 				}
 				className="w-max"
-			>
-				{[4, 3, 2, 1].map((count) => (
-					<option key={count} value={count}>
-						{`${count}v${count}`}
-					</option>
-				))}
-			</select>
+			/>
+			<FormMessage type="info">
+				Maximum number of players that can be registered per team. Doesn't apply
+				to tournament organizers. Default is 6.
+			</FormMessage>
 		</div>
 	);
 }

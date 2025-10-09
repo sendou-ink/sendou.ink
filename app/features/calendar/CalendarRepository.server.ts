@@ -477,6 +477,7 @@ type CreateArgs = Pick<
 	mapPickingStyle: Tables["Tournament"]["mapPickingStyle"];
 	bracketProgression: TournamentSettings["bracketProgression"] | null;
 	minMembersPerTeam?: number;
+	maxTeamMemberCount?: number;
 	teamsPerGroup?: number;
 	thirdPlaceMatch?: boolean;
 	requireInGameNames?: boolean;
@@ -525,6 +526,7 @@ export async function create(args: CreateArgs) {
 				regClosesAt: args.regClosesAt,
 				requireInGameNames: args.requireInGameNames,
 				minMembersPerTeam: args.minMembersPerTeam,
+				maxTeamMemberCount: args.maxTeamMemberCount,
 				swiss:
 					args.swissGroupCount && args.swissRoundCount
 						? {
@@ -725,6 +727,7 @@ async function updateTournamentTables(
 		regClosesAt: args.regClosesAt,
 		requireInGameNames: args.requireInGameNames,
 		minMembersPerTeam: args.minMembersPerTeam,
+		maxTeamMemberCount: args.maxTeamMemberCount,
 		swiss:
 			args.swissGroupCount && args.swissRoundCount
 				? {

@@ -867,20 +867,11 @@ export class Tournament {
 		// special format
 		if (this.minMembersPerTeam !== 4) return this.minMembersPerTeam;
 
-		if (this.isLeagueSignup || this.isLeagueDivision) return 8;
-
-		// TODO: retire this hack by making it user configurable
-		if (this.ctx.organization?.id === 19 && this.ctx.name.includes("FLUTI")) {
-			return 8;
+		if (this.ctx.settings.maxTeamMemberCount) {
+			return this.ctx.settings.maxTeamMemberCount;
 		}
 
-		const maxMembersBeforeStart = 6;
-
-		if (this.hasStarted) {
-			return maxMembersBeforeStart + 1;
-		}
-
-		return maxMembersBeforeStart;
+		return 6;
 	}
 
 	/** Is the regular check-in (check-in for the whole tournament) open at this time? */
