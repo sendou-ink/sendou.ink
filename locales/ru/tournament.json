@@ -139,5 +139,6 @@
 	"progression.error.NAME_MISSING": "Имя сетки отсутствует",
 	"progression.error.NEGATIVE_PROGRESSION": "Отрицательная прогрессия возможна только в Double Elimination турнирах",
 	"progression.error.NO_SE_SOURCE": "Single elimination не валидная сетка-исток",
-	"progression.error.NO_DE_POSITIVE": "Double elimination не валидно для позитивной прогрессии"
+	"progression.error.NO_DE_POSITIVE": "Double elimination не валидно для позитивной прогрессии",
+	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": ""
 }

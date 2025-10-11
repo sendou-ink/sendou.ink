@@ -1,9 +1,13 @@
 import type { TournamentData } from "~/features/tournament-bracket/core/Tournament.server";
 import { getStreams } from "~/modules/twitch";
+import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 
 export async function streamsByTournamentId(tournament: TournamentData["ctx"]) {
 	// prevent error logs in development
-	if (process.env.NODE_ENV === "development" && !process.env.TWITCH_CLIENT_ID) {
+	if (
+		(process.env.NODE_ENV === "development" && !process.env.TWITCH_CLIENT_ID) ||
+		IS_E2E_TEST_RUN
+	) {
 		return [];
 	}
 	const twitchUsersOfTournament = tournament.teams

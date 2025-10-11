@@ -11,6 +11,7 @@ import {
 	tournamentRegisterPage,
 	tournamentTeamPage,
 	userArtPage,
+	userEditProfilePage,
 } from "~/utils/urls";
 import type { Notification } from "./notifications-types";
 
@@ -27,6 +28,7 @@ export const notificationNavIcon = (type: Notification["type"]) => {
 		case "SEASON_STARTED":
 			return "sendouq";
 		case "TAGGED_TO_ART":
+		case "COMMISSIONS_CLOSED":
 			return "art";
 		case "TO_ADDED_TO_TEAM":
 		case "TO_BRACKET_STARTED":
@@ -82,6 +84,9 @@ export const notificationLink = (notification: Notification) => {
 		case "SCRIM_CANCELED":
 		case "SCRIM_SCHEDULED": {
 			return scrimPage(notification.meta.id);
+		}
+		case "COMMISSIONS_CLOSED": {
+			return userEditProfilePage({ discordId: notification.meta.discordId });
 		}
 		default:
 			assertUnreachable(notification);

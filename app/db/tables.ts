@@ -827,6 +827,7 @@ export interface User {
 	bannedReason: string | null;
 	bio: string | null;
 	commissionsOpen: Generated<number | null>;
+	commissionsOpenedAt: number | null;
 	commissionText: string | null;
 	country: string | null;
 	css: JSONColumnTypeNullable<Record<string, string>>;

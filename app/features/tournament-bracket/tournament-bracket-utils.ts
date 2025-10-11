@@ -6,8 +6,8 @@ import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types"
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { sourceTypes } from "~/modules/tournament-map-list-generator/constants";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
-import { seededRandom } from "~/modules/tournament-map-list-generator/utils";
 import { logger } from "~/utils/logger";
+import { seededRandom } from "~/utils/random";
 import type { TournamentLoaderData } from "../tournament/loaders/to.$id.server";
 import type { FindMatchById } from "../tournament-bracket/queries/findMatchById.server";
 import type { Standing } from "./core/Bracket";
@@ -40,11 +40,11 @@ const NUM_MAP = {
 export function resolveRoomPass(seed: number | string) {
 	let pass = "5";
 	for (let i = 0; i < 3; i++) {
-		const { shuffle } = seededRandom(`${seed}-${i}`);
+		const { seededShuffle } = seededRandom(`${seed}-${i}`);
 
 		const key = pass[i] as keyof typeof NUM_MAP;
 		const opts = NUM_MAP[key];
-		const next = shuffle(opts)[0];
+		const next = seededShuffle(opts)[0];
 		pass += next;
 	}
 

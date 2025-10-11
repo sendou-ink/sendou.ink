@@ -17,6 +17,7 @@
 	"forms.showDiscordUniqueName": "Показать пользовательское имя Discord",
 	"forms.showDiscordUniqueName.info": "Показывать ваше уникальное Discord имя ({{discordUniqueName}})?",
 	"forms.commissionsOpen": "Коммишены открыты",
+	"forms.commissionsOpen.info": "",
 	"forms.commissionText": "Информация о коммишенах",
 	"forms.commissionText.info": "Цена, слоты и другая информация о ваших коммишенах",
 	"forms.customName.info": "Если пользовательское имя отсутствует, то будет использовано ваше имя в Discord: \"{{discordName}}\"",
