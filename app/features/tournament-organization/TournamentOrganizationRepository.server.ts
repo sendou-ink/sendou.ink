@@ -1,3 +1,4 @@
+import { isFuture } from "date-fns";
 import { sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
@@ -514,5 +515,5 @@ export async function isUserBannedByOrganization({
 
 	if (!result.expiresAt) return true;
 
-	return databaseTimestampToDate(result.expiresAt).getTime() > Date.now();
+	return isFuture(databaseTimestampToDate(result.expiresAt));
 }
