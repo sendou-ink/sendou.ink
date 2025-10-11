@@ -27,6 +27,10 @@ export { loader };
 
 const OPEN_COMMISIONS_KEY = "open";
 const TAB_KEY = "tab";
+const TABS = {
+	RECENTLY_UPLOADED: "recently-uploaded",
+	SHOWCASE: "showcase",
+} as const;
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	const currentFilteredTag = args.currentUrl.searchParams.get(
@@ -70,7 +74,7 @@ export default function ArtPage() {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const switchId = React.useId();
 
-	const selectedTab = searchParams.get(TAB_KEY) ?? "recently-uploaded";
+	const selectedTab = searchParams.get(TAB_KEY) ?? TABS.RECENTLY_UPLOADED;
 	const filteredTag = searchParams.get(FILTERED_TAG_KEY_SEARCH_PARAM_KEY);
 	const showOpenCommissions = searchParams.get(OPEN_COMMISIONS_KEY) === "true";
 
@@ -103,7 +107,7 @@ export default function ArtPage() {
 				<div className="stack horizontal sm items-center">
 					<div
 						className={clsx({
-							invisible: selectedTab !== "showcase",
+							invisible: selectedTab !== TABS.SHOWCASE,
 						})}
 					>
 						<TagSelect
@@ -147,7 +151,7 @@ export default function ArtPage() {
 				onSelectionChange={(key) => {
 					setSearchParams((prev) => {
 						prev.set(TAB_KEY, key as string);
-						if (key === "recently-uploaded") {
+						if (key === TABS.RECENTLY_UPLOADED) {
 							prev.delete(FILTERED_TAG_KEY_SEARCH_PARAM_KEY);
 						}
 						return prev;
@@ -155,15 +159,15 @@ export default function ArtPage() {
 				}}
 			>
 				<SendouTabList>
-					<SendouTab id="recently-uploaded">
+					<SendouTab id={TABS.RECENTLY_UPLOADED}>
 						{t("art:tabs.recentlyUploaded")}
 					</SendouTab>
-					<SendouTab id="showcase">{t("art:tabs.showcase")}</SendouTab>
+					<SendouTab id={TABS.SHOWCASE}>{t("art:tabs.showcase")}</SendouTab>
 				</SendouTabList>
-				<SendouTabPanel id="recently-uploaded">
+				<SendouTabPanel id={TABS.RECENTLY_UPLOADED}>
 					<ArtGrid arts={recentlyUploadedArts} showUploadDate />
 				</SendouTabPanel>
-				<SendouTabPanel id="showcase">
+				<SendouTabPanel id={TABS.SHOWCASE}>
 					<ArtGrid arts={showcaseArts} />
 				</SendouTabPanel>
 			</SendouTabs>

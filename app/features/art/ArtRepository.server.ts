@@ -89,9 +89,7 @@ export async function findShowcaseArtsByTag(
 				return false;
 			}
 
-			if (row.userId) {
-				encounteredUserIds.add(row.userId);
-			}
+			encounteredUserIds.add(row.userId);
 
 			return true;
 		})
