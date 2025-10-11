@@ -36,3 +36,8 @@
 	display: flex;
 	justify-content: flex-end;
 }
+
+.expiredBan {
+	text-decoration: line-through;
+	color: var(--text-lighter);
+}

@@ -1,7 +1,12 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
+import { isFuture } from "date-fns";
 import { requireUser } from "~/features/auth/core/user.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
-import { dateToDatabaseTimestamp, dayMonthYearToDate } from "~/utils/dates";
+import {
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+	dayMonthYearToDate,
+} from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import { errorToast, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
@@ -22,12 +27,18 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	switch (data._action) {
 		case "BAN_USER": {
-			const bannedUsers =
+			const allBannedUsers =
 				await TournamentOrganizationRepository.allBannedUsersByOrganizationId(
 					organization.id,
 				);
+			const currentlyBannedUsers = allBannedUsers.filter(
+				(bu) =>
+					!bu.expiresAt || isFuture(databaseTimestampToDate(bu.expiresAt)),
+			);
 
-			if (bannedUsers.length >= TOURNAMENT_ORGANIZATION.MAX_BANNED_USERS) {
+			if (
+				currentlyBannedUsers.length >= TOURNAMENT_ORGANIZATION.MAX_BANNED_USERS
+			) {
 				errorToast(
 					`Organization cannot ban more than ${TOURNAMENT_ORGANIZATION.MAX_BANNED_USERS} users`,
 				);

@@ -7,7 +7,8 @@
 			"!scripts/output/**/*",
 			"!app/db/seed/placements.json",
 			"!build/**/*",
-			"!test-results/**/*"
+			"!test-results/**/*",
+			"!playwright-report/**/*"
 		]
 	},
 	"linter": {
