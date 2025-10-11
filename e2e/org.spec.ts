@@ -35,8 +35,11 @@ test.describe("Tournament Organization", () => {
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url });
 		await editButtonLocator.click();
-		// Add member as admin
-		await page.getByLabel("Role").first().selectOption("ADMIN");
+		// Add member as admin - find the N-ZAP user's fieldset and change their role
+		const nzapFieldset = page
+			.locator("fieldset")
+			.filter({ hasText: "N-ZAP" });
+		await nzapFieldset.getByLabel("Role", { exact: true }).selectOption("ADMIN");
 		await submit(page);
 
 		// 3. As the promoted user, verify edit controls are visible and page can be accessed
