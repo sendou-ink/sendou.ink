@@ -111,6 +111,7 @@ const config: PlaywrightTestConfig = {
 		command: "npm run build && npm start",
 		port: 6173,
 		reuseExistingServer: false,
+		timeout: 60_000 * 2, // 2 minutes
 	},
 	build: {
 		external: ["**/*.json"],
