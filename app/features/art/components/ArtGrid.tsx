@@ -1,5 +1,6 @@
 import { Link } from "@remix-run/react";
 import clsx from "clsx";
+import { formatDistanceToNow } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
@@ -26,10 +27,12 @@ export function ArtGrid({
 	arts,
 	enablePreview = false,
 	canEdit = false,
+	showUploadDate = false,
 }: {
 	arts: ListedArt[];
 	enablePreview?: boolean;
 	canEdit?: boolean;
+	showUploadDate?: boolean;
 }) {
 	const {
 		itemsToDisplay,
@@ -67,18 +70,21 @@ export function ArtGrid({
 						art={art}
 						canEdit={canEdit}
 						enablePreview={enablePreview}
+						showUploadDate={showUploadDate}
 						onClick={enablePreview ? () => setBigArtId(art.id) : undefined}
 					/>
 				))}
 			</ResponsiveMasonry>
 			{!everythingVisible ? (
-				<Pagination
-					currentPage={currentPage}
-					pagesCount={pagesCount}
-					nextPage={nextPage}
-					previousPage={previousPage}
-					setPage={setPage}
-				/>
+				<div className="mt-6">
+					<Pagination
+						currentPage={currentPage}
+						pagesCount={pagesCount}
+						nextPage={nextPage}
+						previousPage={previousPage}
+						setPage={setPage}
+					/>
+				</div>
 			) : null}
 		</>
 	);
@@ -154,11 +160,13 @@ function ImagePreview({
 	onClick,
 	enablePreview = false,
 	canEdit = false,
+	showUploadDate = false,
 }: {
 	art: ListedArt;
 	onClick?: () => void;
 	enablePreview?: boolean;
 	canEdit?: boolean;
+	showUploadDate?: boolean;
 }) {
 	const [imageLoaded, setImageLoaded] = React.useState(false);
 	const { t } = useTranslation(["common", "art"]);
@@ -211,6 +219,12 @@ function ImagePreview({
 	}
 	if (!art.author) return img;
 
+	const uploadDateText = showUploadDate
+		? formatDistanceToNow(databaseTimestampToDate(art.createdAt), {
+				addSuffix: true,
+			})
+		: null;
+
 	// whole thing is not a link so we can preview the image
 	if (enablePreview) {
 		return (
@@ -230,6 +244,15 @@ function ImagePreview({
 						<Avatar user={art.author} size="xxs" />
 						{t("art:madeBy")} {art.author.username}
 					</Link>
+					{uploadDateText ? (
+						<div
+							className={clsx("text-xs text-lighter", {
+								invisible: !imageLoaded,
+							})}
+						>
+							{uploadDateText}
+						</div>
+					) : null}
 					{canEdit ? (
 						<FormWithConfirm
 							dialogHeading={t("art:unlink.title", {
@@ -256,13 +279,24 @@ function ImagePreview({
 	return (
 		<Link to={userArtPage(art.author, "MADE-BY")}>
 			{img}
-			<div
-				className={clsx("stack sm horizontal text-xs items-center mt-1", {
-					invisible: !imageLoaded,
-				})}
-			>
-				<Avatar user={art.author} size="xxs" />
-				{art.author.username}
+			<div className="stack horizontal justify-between">
+				<div
+					className={clsx("stack sm horizontal text-xs items-center mt-1", {
+						invisible: !imageLoaded,
+					})}
+				>
+					<Avatar user={art.author} size="xxs" />
+					{art.author.username}
+				</div>
+				{uploadDateText ? (
+					<div
+						className={clsx("text-xxs mt-1 text-lighter", {
+							invisible: !imageLoaded,
+						})}
+					>
+						{uploadDateText}
+					</div>
+				) : null}
 			</div>
 		</Link>
 	);

@@ -2,6 +2,7 @@
 
 - only rarely use comments, prefer descriptive variable and function names (leave existing comments as is)
 - if you encounter an existing TODO comment assume it is there for a reason and do not remove it
+- task is not considered completely until `npm run checks` passes
 
 ## Commands
 
@@ -19,6 +20,7 @@
 - for constants use ALL_CAPS
 - always use named exports
 - Remeda is the utility library of choice
+- date-fns should be used for date related logic
 
 ## React
 
@@ -46,6 +48,10 @@
 - database code should only be written in Repository files
 - down migrations are not needed, only up migrations
 - every database id is of type number
+- `/app/db/tables.ts` contains all tables and columns available
+- `db.sqlite3` is development database
+- `db-test.sqlite3` is the unit test database (should be blank sans migrations ran)
+- `db-prod.sqlite3` is a copy of the production environment db
 
 ## E2E testing
 

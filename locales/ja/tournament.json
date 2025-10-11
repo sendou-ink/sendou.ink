@@ -135,5 +135,6 @@
 	"progression.error.NAME_MISSING": "ブラケットの名前がありません",
 	"progression.error.NEGATIVE_PROGRESSION": "逆の進行はダブルエリ三ネーションの時のみ可能です",
 	"progression.error.NO_SE_SOURCE": "シングルエリ三ネーションは妥当なブラケットではないです",
-	"progression.error.NO_DE_POSITIVE": "ダブルエリミネーションは普通の進行(前向き)では妥当ではないです"
+	"progression.error.NO_DE_POSITIVE": "ダブルエリミネーションは普通の進行(前向き)では妥当ではないです",
+	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": ""
 }

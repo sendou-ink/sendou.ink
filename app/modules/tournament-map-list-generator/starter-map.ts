@@ -4,10 +4,10 @@
 
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { logger } from "~/utils/logger";
+import { seededRandom } from "~/utils/random";
 import { modesShort } from "../in-game-lists/modes";
 import type { ModeWithStage } from "../in-game-lists/types";
 import type { TournamentMapListMap, TournamentMaplistInput } from "./types";
-import { seededRandom } from "./utils";
 
 type StarterMapArgs = Pick<
 	TournamentMaplistInput,
@@ -15,7 +15,7 @@ type StarterMapArgs = Pick<
 >;
 
 export function starterMap(args: StarterMapArgs): Array<TournamentMapListMap> {
-	const { shuffle } = seededRandom(args.seed);
+	const { seededShuffle } = seededRandom(args.seed);
 
 	const isRecentlyPlayed = (map: ModeWithStage) => {
 		return Boolean(
@@ -27,7 +27,7 @@ export function starterMap(args: StarterMapArgs): Array<TournamentMapListMap> {
 
 	const commonMap = resolveRandomCommonMap(
 		args.teams,
-		shuffle,
+		seededShuffle,
 		isRecentlyPlayed,
 	);
 	if (commonMap) {
@@ -35,7 +35,7 @@ export function starterMap(args: StarterMapArgs): Array<TournamentMapListMap> {
 	}
 
 	if (!args.tiebreakerMaps.isEmpty()) {
-		const tiebreakers = shuffle(args.tiebreakerMaps.stageModePairs);
+		const tiebreakers = seededShuffle(args.tiebreakerMaps.stageModePairs);
 		const nonRecentTiebreaker = tiebreakers.find((tb) => !isRecentlyPlayed(tb));
 		const randomTiebreaker = nonRecentTiebreaker ?? tiebreakers[0];
 
@@ -50,7 +50,7 @@ export function starterMap(args: StarterMapArgs): Array<TournamentMapListMap> {
 
 	// should be only one mode here always but just in case
 	// making it capable of handling many modes too
-	const allAvailableMaps = shuffle(
+	const allAvailableMaps = seededShuffle(
 		args.modesIncluded
 			.sort((a, b) => modesShort.indexOf(a) - modesShort.indexOf(b))
 			.flatMap((mode) => stageIds.map((stageId) => ({ mode, stageId }))),

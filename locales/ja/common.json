@@ -77,6 +77,8 @@
 	"notifications.text.SCRIM_SCHEDULED": "",
 	"notifications.title.SCRIM_CANCELED": "",
 	"notifications.text.SCRIM_CANCELED": "",
+	"notifications.title.COMMISSIONS_CLOSED": "",
+	"notifications.text.COMMISSIONS_CLOSED": "",
 	"auth.errors.aborted": "ログインを中断しました",
 	"auth.errors.failed": "ログインに失敗しました",
 	"auth.errors.discordPermissions": "sendou.ink は、Discord のプロファイル名、アバター、SNS連携をサイトのプロファイルに使用します。",

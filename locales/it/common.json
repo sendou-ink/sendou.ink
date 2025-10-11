@@ -77,6 +77,8 @@
 	"notifications.text.SCRIM_SCHEDULED": "",
 	"notifications.title.SCRIM_CANCELED": "",
 	"notifications.text.SCRIM_CANCELED": "",
+	"notifications.title.COMMISSIONS_CLOSED": "",
+	"notifications.text.COMMISSIONS_CLOSED": "",
 	"auth.errors.aborted": "Accesso cancellato",
 	"auth.errors.failed": "Accesso fallito",
 	"auth.errors.discordPermissions": "Per il tuo profilo di sendou.ink, il sito ha bisogno di accesso al nome utente, avatar e connessioni social del tuo profilo Discord.",

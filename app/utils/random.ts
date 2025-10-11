@@ -1,5 +1,3 @@
-// https://stackoverflow.com/a/68523152
-
 function cyrb128(str: string) {
 	let h1 = 1779033703;
 	let h2 = 3144134277;
@@ -36,27 +34,38 @@ function mulberry32(a: number) {
 	};
 }
 
+/**
+ * Creates a seeded pseudo-random number generator that produces consistent results for the same seed.
+ * Uses mulberry32 algorithm with cyrb128 hash function for string-to-number conversion.
+ *
+ * @param seed - String seed value (e.g., "2025-1-8" for daily rotation)
+ * @returns Object with random number generation methods:
+ *   - `random(lo?, hi?)` - Returns random float between lo (inclusive) and hi (exclusive)
+ *   - `randomInteger(lo, hi?)` - Returns random integer between lo (inclusive) and hi (exclusive)
+ *   - `seededShuffle(array)` - Returns shuffled copy of array using seeded Fisher-Yates algorithm
+ *
+ * @example
+ * const { seededShuffle } = seededRandom("2025-1-8");
+ * const shuffled = seededShuffle([1, 2, 3, 4, 5]);
+ */
 export const seededRandom = (seed: string) => {
 	const rng = mulberry32(cyrb128(seed)[0]);
 
-	const rnd = (lo: number, hi?: number, defaultHi = 1) => {
-		if (hi === undefined) {
-			// biome-ignore lint/style/noParameterAssign: biome migration
-			hi = lo === undefined ? defaultHi : lo;
-			// biome-ignore lint/style/noParameterAssign: biome migration
-			lo = 0;
-		}
+	const random = (lo?: number, hi?: number, defaultHi = 1) => {
+		const actualLo = hi === undefined ? 0 : (lo ?? 0);
+		const actualHi = hi === undefined ? (lo ?? defaultHi) : hi;
 
-		return rng() * (hi - lo) + lo;
+		return rng() * (actualHi - actualLo) + actualLo;
 	};
 
-	const rndInt = (lo: number, hi?: number) => Math.floor(rnd(lo, hi, 2));
+	const randomInteger = (lo: number, hi?: number) =>
+		Math.floor(random(lo, hi, 2));
 
-	const shuffle = <T>(o: T[]) => {
+	const seededShuffle = <T>(o: T[]) => {
 		const a = o.slice();
 
 		for (let i = a.length - 1; i > 0; i--) {
-			const j = rndInt(i + 1);
+			const j = randomInteger(i + 1);
 			const x = a[i];
 			a[i] = a[j]!;
 			a[j] = x!;
@@ -65,5 +74,5 @@ export const seededRandom = (seed: string) => {
 		return a;
 	};
 
-	return { rnd, rndInt, shuffle };
+	return { random, randomInteger, seededShuffle };
 };
