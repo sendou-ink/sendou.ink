@@ -1268,6 +1268,7 @@ function MemberCountSelect() {
 					Players count
 				</label>
 				<select
+					id={id}
 					name="minMembersPerTeam"
 					value={memberCount}
 					onChange={(e) => setMemberCount(Number(e.target.value))}
