@@ -1,3 +1,4 @@
+import type { InferResult } from "kysely";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 
@@ -9,7 +10,7 @@ export function unlinkPlayerByUserId(userId: number) {
 		.execute();
 }
 
-function selector() {
+function xRankPlacementsQueryBase() {
 	return db
 		.selectFrom("XRankPlacement")
 		.select([
@@ -32,7 +33,7 @@ function selector() {
 export async function findPlacementsOfMonth(
 	args: Pick<Tables["XRankPlacement"], "mode" | "region" | "month" | "year">,
 ) {
-	return await selector()
+	return await xRankPlacementsQueryBase()
 		.where("XRankPlacement.mode", "=", args.mode)
 		.where("XRankPlacement.region", "=", args.region)
 		.where("XRankPlacement.month", "=", args.month)
@@ -44,11 +45,11 @@ export async function findPlacementsOfMonth(
 export async function findPlacementsByPlayerId(
 	playerId: Tables["XRankPlacement"]["playerId"],
 ) {
-	const result = await selector()
+	const result = await xRankPlacementsQueryBase()
 		.where("XRankPlacement.playerId", "=", playerId)
 		.orderBy("XRankPlacement.year", "desc")
 		.orderBy("XRankPlacement.month", "desc")
-		.orderBy("XRankPlacement.rank", "desc")
+		.orderBy("XRankPlacement.rank", "asc")
 		.execute();
 	return result.length ? result : null;
 }
@@ -58,21 +59,11 @@ export async function monthYears() {
 		.selectFrom("XRankPlacement")
 		.select(["month", "year"])
 		.distinct()
+		.orderBy("year", "desc")
+		.orderBy("month", "desc")
 		.execute();
 }
 
-export type FindPlacement = Pick<
-	Tables["XRankPlacement"],
-	| "id"
-	| "weaponSplId"
-	| "name"
-	| "power"
-	| "rank"
-	| "month"
-	| "year"
-	| "region"
-	| "playerId"
-	| "mode"
-> &
-	Pick<Tables["User"], "customUrl"> &
-	(Pick<Tables["User"], "discordId"> | { discordId: null });
+export type FindPlacement = InferResult<
+	ReturnType<typeof xRankPlacementsQueryBase>
+>[number];
