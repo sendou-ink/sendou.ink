@@ -45,7 +45,7 @@ import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { createVod } from "~/features/vods/queries/createVod.server";
+import * as VodRepository from "~/features/vods/VodRepository.server";
 import {
 	secondsToHoursMinutesSecondString,
 	youtubeIdToYoutubeUrl,
@@ -64,8 +64,8 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
-import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
 import { SENDOUQ_DEFAULT_MAPS } from "~/modules/tournament-map-list-generator/constants";
+import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { nullFilledArray } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
@@ -1722,62 +1722,64 @@ function otherTeams() {
 	}
 }
 
-function realVideo() {
-	createVod({
-		type: "TOURNAMENT",
-		youtubeUrl: youtubeIdToYoutubeUrl("M4aV-BQWlVg"),
-		date: { day: 2, month: 2, year: 2023 },
-		submitterUserId: ADMIN_ID,
-		title: "LUTI Division X Tournament - ABBF (THRONE) vs. Ascension",
-		pov: {
-			type: "USER",
-			userId: NZAP_TEST_ID,
-		},
-		isValidated: true,
-		matches: [
-			{
-				mode: "SZ",
-				stageId: 8,
-				startsAt: secondsToHoursMinutesSecondString(13),
-				weapons: [3040],
+async function realVideo() {
+	for (let i = 0; i < 5; i++) {
+		await VodRepository.createVod({
+			type: "TOURNAMENT",
+			youtubeUrl: youtubeIdToYoutubeUrl("M4aV-BQWlVg"),
+			date: { day: 2, month: 2, year: 2023 },
+			submitterUserId: ADMIN_ID,
+			title: "LUTI Division X Tournament - ABBF (THRONE) vs. Ascension",
+			pov: {
+				type: "USER",
+				userId: faker.helpers.arrayElement(userIdsInRandomOrder()),
 			},
-			{
-				mode: "CB",
-				stageId: 6,
-				startsAt: secondsToHoursMinutesSecondString(307),
-				weapons: [3040],
-			},
-			{
-				mode: "TC",
-				stageId: 2,
-				startsAt: secondsToHoursMinutesSecondString(680),
-				weapons: [3040],
-			},
-			{
-				mode: "SZ",
-				stageId: 9,
-				startsAt: secondsToHoursMinutesSecondString(1186),
-				weapons: [3040],
-			},
-			{
-				mode: "RM",
-				stageId: 2,
-				startsAt: secondsToHoursMinutesSecondString(1386),
-				weapons: [3000],
-			},
-			{
-				mode: "TC",
-				stageId: 4,
-				startsAt: secondsToHoursMinutesSecondString(1586),
-				weapons: [1110],
-			},
-			// there are other matches too...
-		],
-	});
+			isValidated: true,
+			matches: [
+				{
+					mode: "SZ",
+					stageId: 8,
+					startsAt: secondsToHoursMinutesSecondString(13),
+					weapons: [3040],
+				},
+				{
+					mode: "CB",
+					stageId: 6,
+					startsAt: secondsToHoursMinutesSecondString(307),
+					weapons: [3040],
+				},
+				{
+					mode: "TC",
+					stageId: 2,
+					startsAt: secondsToHoursMinutesSecondString(680),
+					weapons: [3040],
+				},
+				{
+					mode: "SZ",
+					stageId: 9,
+					startsAt: secondsToHoursMinutesSecondString(1186),
+					weapons: [3040],
+				},
+				{
+					mode: "RM",
+					stageId: 2,
+					startsAt: secondsToHoursMinutesSecondString(1386),
+					weapons: [3000],
+				},
+				{
+					mode: "TC",
+					stageId: 4,
+					startsAt: secondsToHoursMinutesSecondString(1586),
+					weapons: [1110],
+				},
+				// there are other matches too...
+			],
+		});
+	}
 }
 
-function realVideoCast() {
-	createVod({
+async function realVideoCast() {
+	await VodRepository.createVod({
 		type: "CAST",
 		youtubeUrl: youtubeIdToYoutubeUrl("M4aV-BQWlVg"),
 		date: { day: 2, month: 2, year: 2023 },

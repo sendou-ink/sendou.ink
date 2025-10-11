@@ -17,7 +17,11 @@ export function VodListing({
 	return (
 		<div className="vods__listing">
 			<Link to={vodVideoPage(vod.id)} className="stack sm">
-				<img alt="" src={youtubeIdToThumbnailUrl(vod.youtubeId)} />
+				<img
+					className="vods__listing__thumbnail"
+					alt=""
+					src={youtubeIdToThumbnailUrl(vod.youtubeId)}
+				/>
 				<h2 className="text-sm text-main-forced">{vod.title}</h2>
 			</Link>
 			<div className="vods__listing__info">
@@ -63,5 +67,5 @@ function WeaponsPeek({ weapons }: { weapons: ListVod["weapons"] }) {
 }
 
 function youtubeIdToThumbnailUrl(youtubeId: string) {
-	return `http://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
+	return `http://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
 }
