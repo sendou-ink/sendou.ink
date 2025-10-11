@@ -110,3 +110,34 @@ export function mostPopularArrayElement<T>(arr: T[]): T | null {
 
 	return mostPopularElement;
 }
+
+/**
+ * Safely zips two arrays together by alternating elements. If arrays have different lengths,
+ * zips as much as possible, then appends remaining elements from the longer array.
+ *
+ * @param arr1 - The first array
+ * @param arr2 - The second array
+ * @returns Alternating elements from both arrays: [arr1[0], arr2[0], arr1[1], arr2[1], ...]
+ *          followed by any remaining elements from the longer array
+ *
+ * @example
+ * zipSafe([1, 2], ['a', 'b']) // [1, 'a', 2, 'b']
+ * zipSafe([1, 2], ['a', 'b', 'c']) // [1, 'a', 2, 'b', 'c']
+ * zipSafe([1, 2, 3], ['a', 'b']) // [1, 'a', 2, 'b', 3]
+ */
+export function flatZip<T, U>(arr1: T[], arr2: U[]): Array<T | U> {
+	const result: Array<T | U> = [];
+	const minLength = Math.min(arr1.length, arr2.length);
+
+	for (let i = 0; i < minLength; i++) {
+		result.push(arr1[i], arr2[i]);
+	}
+
+	if (arr1.length > minLength) {
+		result.push(...arr1.slice(minLength));
+	} else if (arr2.length > minLength) {
+		result.push(...arr2.slice(minLength));
+	}
+
+	return result;
+}

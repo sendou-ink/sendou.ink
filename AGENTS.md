@@ -22,6 +22,7 @@
 
 ## React
 
+- project uses Remix as metaframework
 - prefer functional components over class components
 - prefer using hooks over class lifecycle methods
 - do not use `useMemo`, `useCallback` or `useReducer` at all

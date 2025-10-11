@@ -56,6 +56,14 @@
 	max-width: 355px;
 }
 
+.vods__listing__thumbnail {
+	aspect-ratio: 16 / 9;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	min-width: 355px;
+}
+
 .vods__listing__info {
 	display: flex;
 	justify-content: space-between;

@@ -16,9 +16,7 @@ import invariant from "~/utils/invariant";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { ipLabsMaps, MAPS_URL, navIconUrl } from "~/utils/urls";
-import { generateMapList } from "../core/map-list-generator/map-list";
-import { modesOrder } from "../core/map-list-generator/modes";
-import { mapPoolToNonEmptyModes } from "../core/map-list-generator/utils";
+import * as MapList from "../core/MapList";
 import { MapPool } from "../core/map-pool";
 
 import styles from "./maps.module.css";
@@ -121,14 +119,13 @@ function MapListCreator({ mapPool }: { mapPool: MapPool }) {
 	const [, copyToClipboard] = useCopyToClipboard();
 
 	const handleCreateMaplist = () => {
-		const [list] = generateMapList(
-			mapPool,
-			modesOrder(
-				szEveryOther ? "SZ_EVERY_OTHER" : "EQUAL",
-				mapPoolToNonEmptyModes(mapPool),
-			),
-			[AMOUNT_OF_MAPS_IN_MAP_LIST],
-		);
+		const generator = MapList.generate({ mapPool });
+		generator.next();
+
+		const list = generator.next({
+			amount: AMOUNT_OF_MAPS_IN_MAP_LIST,
+			pattern: szEveryOther ? (Math.random() > 0.5 ? "SZ*" : "*SZ") : undefined,
+		}).value;
 
 		invariant(list);
 

@@ -1,6 +1,6 @@
 import { sql } from "~/db/sql";
 import type { ParsedMemento, Tables } from "~/db/tables";
-import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
+import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { shortNanoid } from "~/utils/id";
 import { syncGroupTeamId } from "./syncGroupTeamId.server";
 
