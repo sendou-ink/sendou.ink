@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
+import { dateToDatabaseTimestamp, dayMonthYearToDate } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import { errorToast, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
@@ -36,6 +37,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				organizationId: organization.id,
 				userId: data.userId,
 				privateNote: data.privateNote,
+				expiresAt: data.expiresAt
+					? dateToDatabaseTimestamp(dayMonthYearToDate(data.expiresAt))
+					: null,
 			});
 
 			logger.info(

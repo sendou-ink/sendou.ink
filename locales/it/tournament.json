@@ -138,5 +138,6 @@
 	"progression.error.NAME_MISSING": "Nome bracket mancante",
 	"progression.error.NEGATIVE_PROGRESSION": "La progressione negativa è disponibile solo in doppia eliminazione",
 	"progression.error.NO_SE_SOURCE": "Eliminazione singola non è un bracket sorgente valido",
-	"progression.error.NO_DE_POSITIVE": "Doppia eliminazione non è valida per progressione positiva"
+	"progression.error.NO_DE_POSITIVE": "Doppia eliminazione non è valida per progressione positiva",
+	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": ""
 }

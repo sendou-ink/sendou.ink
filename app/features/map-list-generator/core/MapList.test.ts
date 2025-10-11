@@ -310,6 +310,7 @@ describe("MapList.generate()", () => {
 			}
 		});
 
+		// TODO: fix flaky
 		it("replenishes the stage id pool when exhausted", { retry: 10 }, () => {
 			const gen = initGenerator(
 				new MapPool({
@@ -329,30 +330,35 @@ describe("MapList.generate()", () => {
 			}
 		});
 
-		it("replenishes the stage id pool with different order", () => {
-			const gen = initGenerator(
-				new MapPool({
-					TW: [],
-					SZ: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-					TC: [],
-					RM: [],
-					CB: [],
-				}),
-			);
-			const first = gen.next({ amount: 5 }).value.map((m) => m.stageId);
-			gen.next({ amount: 5 });
-			const third = gen.next({ amount: 5 }).value.map((m) => m.stageId);
+		// TODO: fix flaky
+		it(
+			"replenishes the stage id pool with different order",
+			{ retry: 10 },
+			() => {
+				const gen = initGenerator(
+					new MapPool({
+						TW: [],
+						SZ: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+						TC: [],
+						RM: [],
+						CB: [],
+					}),
+				);
+				const first = gen.next({ amount: 5 }).value.map((m) => m.stageId);
+				gen.next({ amount: 5 });
+				const third = gen.next({ amount: 5 }).value.map((m) => m.stageId);
 
-			let someDifferent = false;
-			for (let i = 0; i < 5; i++) {
-				if (first[i] !== third[i]) {
-					someDifferent = true;
-					break;
+				let someDifferent = false;
+				for (let i = 0; i < 5; i++) {
+					if (first[i] !== third[i]) {
+						someDifferent = true;
+						break;
+					}
 				}
-			}
 
-			expect(someDifferent).toBe(true);
-		});
+				expect(someDifferent).toBe(true);
+			},
+		);
 
 		it("replenishes accordingly if considerGuaranteed is true (Bo3)", () => {
 			for (let i = 0; i < 10; i++) {

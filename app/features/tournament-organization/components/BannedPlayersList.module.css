@@ -9,9 +9,27 @@
 
 .reasonCell {
 	max-width: 250px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+}
+
+.noteContainer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.expandButton {
+	background: none;
+	border: none;
+	color: var(--theme);
+	cursor: pointer;
+	font-size: var(--fonts-xxs);
+	padding: 0;
+	text-align: left;
+	text-decoration: underline;
+}
+
+.expandButton:hover {
+	opacity: 0.8;
 }
 
 .banPlayerButton {
