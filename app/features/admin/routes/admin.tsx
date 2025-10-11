@@ -35,6 +35,7 @@ import {
 	userPage,
 } from "~/utils/urls";
 import { action } from "../actions/admin.server";
+import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "../core/dev-controls";
 import { loader } from "../loaders/admin.server";
 export { loader, action };
 
@@ -111,10 +112,8 @@ function AdminActions() {
 
 	return (
 		<div className="stack lg">
-			{process.env.NODE_ENV !== "production" && <Seed />}
-			{process.env.NODE_ENV !== "production" || isAdmin ? (
-				<Impersonate />
-			) : null}
+			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS && <Seed />}
+			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS || isAdmin ? <Impersonate /> : null}
 
 			{isStaff ? <LinkPlayer /> : null}
 			{isStaff ? <GiveArtist /> : null}

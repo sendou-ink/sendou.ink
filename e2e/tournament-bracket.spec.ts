@@ -273,7 +273,7 @@ test.describe("Tournament bracket", () => {
 		);
 		const inviteLink = inviteLinkProd.replace(
 			"https://sendou.ink",
-			"http://localhost:5173",
+			"http://localhost:6173",
 		);
 
 		await impersonate(page, NZAP_TEST_ID);

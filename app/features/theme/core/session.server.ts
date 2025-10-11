@@ -1,5 +1,5 @@
 import { createCookieSessionStorage } from "@remix-run/node";
-
+import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import invariant from "~/utils/invariant";
 import type { Theme } from "./provider";
 import { isTheme } from "./provider";
@@ -14,7 +14,7 @@ const sessionSecret = process.env.SESSION_SECRET ?? "secret";
 const themeStorage = createCookieSessionStorage({
 	cookie: {
 		name: "theme",
-		secure: process.env.NODE_ENV === "production",
+		secure: process.env.NODE_ENV === "production" && !IS_E2E_TEST_RUN,
 		secrets: [sessionSecret],
 		sameSite: "lax",
 		path: "/",

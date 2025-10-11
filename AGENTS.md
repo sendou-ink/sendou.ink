@@ -8,6 +8,8 @@
 - `npm run typecheck` runs TypeScript type checking
 - `npm run biome:fix` runs Biome code formatter and linter
 - `npm run test:unit` runs all unit tests
+- `npm run test:e2e` runs all e2e tests
+- `npm run test:e2e:flaky-detect` runs all e2e tests and repeats each 10 times
 - `npm run i18n:sync` syncs translation jsons with English and should always be run after adding new text to an English translation file 
 
 ## Typescript
