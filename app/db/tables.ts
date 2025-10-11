@@ -456,6 +456,8 @@ export interface TournamentSettings {
 		roundCount: number;
 	};
 	minMembersPerTeam?: number;
+	/** Maximum number of team members that can be registered (only applies to 4v4 tournaments) */
+	maxMembersPerTeam?: number;
 	isTest?: boolean;
 }
 
