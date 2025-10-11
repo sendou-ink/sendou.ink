@@ -1272,7 +1272,7 @@ function MemberCountSelect() {
 					name="minMembersPerTeam"
 					value={memberCount}
 					onChange={(e) => setMemberCount(Number(e.target.value))}
-					className="w-max"
+					className="input__extra-small"
 				>
 					{[4, 3, 2, 1].map((count) => (
 						<option key={count} value={count}>
@@ -1298,13 +1298,13 @@ function MaxTeamMemberCountInput() {
 			<input
 				type="number"
 				id={id}
-				name="maxTeamMemberCount"
+				name="maxMembersPerTeam"
 				min={4}
 				max={10}
 				defaultValue={
-					baseEvent?.tournament?.ctx.settings.maxTeamMemberCount ?? undefined
+					baseEvent?.tournament?.ctx.settings.maxMembersPerTeam ?? undefined
 				}
-				className="w-max"
+				className="input__extra-small"
 			/>
 			<FormMessage type="info">
 				Maximum number of players that can be registered per team. Doesn't apply

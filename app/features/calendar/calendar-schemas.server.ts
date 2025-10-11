@@ -87,7 +87,7 @@ export const newCalendarEventActionSchema = z
 			z.boolean().nullish(),
 		),
 		minMembersPerTeam: z.coerce.number().int().min(1).max(4).nullish(),
-		maxTeamMemberCount: z.coerce.number().int().min(4).max(10).nullish(),
+		maxMembersPerTeam: z.coerce.number().int().min(4).max(10).nullish(),
 		bracketProgression: bracketProgressionSchema.nullish(),
 	})
 	.refine(

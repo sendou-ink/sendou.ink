@@ -863,12 +863,12 @@ export class Tournament {
 	}
 
 	/** what is the max amount of members teams can add in total? This limit doesn't apply to the organizer adding members to a team. */
-	get maxTeamMemberCount() {
+	get maxMembersPerTeam() {
 		// special format
 		if (this.minMembersPerTeam !== 4) return this.minMembersPerTeam;
 
-		if (this.ctx.settings.maxTeamMemberCount) {
-			return this.ctx.settings.maxTeamMemberCount;
+		if (this.ctx.settings.maxMembersPerTeam) {
+			return this.ctx.settings.maxMembersPerTeam;
 		}
 
 		return 6;

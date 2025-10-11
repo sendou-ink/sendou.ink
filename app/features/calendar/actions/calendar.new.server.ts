@@ -79,7 +79,7 @@ export const action: ActionFunction = async ({ request }) => {
 			rankedModesShort.find((mode) => mode === data.toToolsMode) ?? null,
 		bracketProgression: data.bracketProgression ?? null,
 		minMembersPerTeam: data.minMembersPerTeam ?? undefined,
-		maxTeamMemberCount: data.maxTeamMemberCount ?? undefined,
+		maxMembersPerTeam: data.maxMembersPerTeam ?? undefined,
 		isRanked: data.isRanked ?? undefined,
 		isTest: data.isTest ?? undefined,
 		isInvitational: data.isInvitational ?? false,
