@@ -334,6 +334,22 @@
 	width: 2rem;
 }
 
+.tournament__roster-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, 110px);
+	gap: var(--s-4);
+	margin-block-start: var(--s-2);
+	width: 100%;
+	justify-content: center;
+}
+
+.tournament__roster-grid__member-name {
+	max-width: 110px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 .tournament__missing-player {
 	width: 62px;
 	height: 62px;
@@ -342,6 +358,7 @@
 	border: 2px solid var(--theme-transparent);
 	display: grid;
 	place-items: center;
+	margin: 0 auto;
 }
 
 .tournament__missing-player__optional {

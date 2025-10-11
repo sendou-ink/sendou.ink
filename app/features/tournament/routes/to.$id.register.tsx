@@ -1026,7 +1026,7 @@ function FillRoster({
 						</div>
 					</div>
 				) : null}
-				<div className="stack lg horizontal mt-2 flex-wrap justify-center">
+				<div className="tournament__roster-grid">
 					{ownTeamMembers.map((member, i) => {
 						return (
 							<div
@@ -1036,7 +1036,7 @@ function FillRoster({
 							>
 								<Avatar size="xsm" user={member} />
 								{tournament.ctx.settings.requireInGameNames ? (
-									<div>
+									<div className="tournament__roster-grid__member-name">
 										<div className="text-center">
 											{member.inGameName ?? member.username}
 										</div>
@@ -1047,7 +1047,9 @@ function FillRoster({
 										) : null}
 									</div>
 								) : (
-									member.username
+									<div className="tournament__roster-grid__member-name">
+										{member.username}
+									</div>
 								)}
 							</div>
 						);
