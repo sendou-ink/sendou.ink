@@ -752,6 +752,7 @@ export interface TournamentOrganizationBannedUser {
 	userId: number;
 	privateNote: string | null;
 	updatedAt: Generated<number>;
+	expiresAt: number | null;
 }
 
 /** Indicates a user trusts another. Allows direct adding to groups/teams without invite links. */

@@ -28,6 +28,8 @@
 	"banned.player": "Player",
 	"banned.note": "Note",
 	"banned.date": "Banned on",
+	"banned.expires": "Expires",
+	"banned.permanent": "Permanent",
 	"banned.actions": "Actions",
 	"banned.unban": "Unban",
 	"banned.unbanConfirm": "Are you sure you want to unban {{username}}?",
@@ -35,5 +37,7 @@
 	"banned.banModal.title": "Banning a player",
 	"banned.banModal.player": "Player",
 	"banned.banModal.note": "Private note",
-	"banned.banModal.noteHelp": "This note is only visible to organization admins."
+	"banned.banModal.noteHelp": "This note is only visible to organization admins.",
+	"banned.banModal.expiresAt": "Ban expiration date",
+	"banned.banModal.expiresAtHelp": "Leave empty for a permanent ban"
 }

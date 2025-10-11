@@ -1,5 +1,7 @@
 import { Link } from "@remix-run/react";
 import clsx from "clsx";
+import { isFuture } from "date-fns";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
@@ -10,6 +12,8 @@ import type { OrganizationPageLoaderData } from "~/features/tournament-organizat
 import { databaseTimestampToDate } from "~/utils/dates";
 import { userPage } from "~/utils/urls";
 import styles from "../components/BannedPlayersList.module.css";
+
+const MAX_NOTE_LENGTH = 30;
 
 export function BannedUsersList({
 	bannedUsers,
@@ -43,60 +47,113 @@ export function BannedUsersList({
 							<th>{t("org:banned.player")}</th>
 							<th>{t("org:banned.note")}</th>
 							<th>{t("org:banned.date")}</th>
+							<th>{t("org:banned.expires")}</th>
 							<th>{t("org:banned.actions")}</th>
 						</tr>
 					</thead>
 					<tbody>
-						{bannedUsers.map((bannedUser) => (
-							<tr key={bannedUser.id}>
-								<td>
-									<Link
-										to={userPage(bannedUser)}
-										className="stack horizontal xs items-center w-max"
+						{bannedUsers.map((bannedUser) => {
+							const isExpired =
+								bannedUser.expiresAt &&
+								isFuture(databaseTimestampToDate(bannedUser.expiresAt));
+
+							return (
+								<tr key={bannedUser.id}>
+									<td>
+										<Link
+											to={userPage(bannedUser)}
+											className="stack horizontal xs items-center w-max"
+										>
+											<Avatar user={bannedUser} size="xs" />
+											<span
+												className={clsx({ [styles.expiredBan]: isExpired })}
+											>
+												{bannedUser.username}
+											</span>
+										</Link>
+									</td>
+									<td
+										className={clsx("text-sm text-lighter", styles.reasonCell)}
 									>
-										<Avatar user={bannedUser} size="xs" />
-										{bannedUser.username}
-									</Link>
-								</td>
-								<td
-									className={clsx("text-sm text-lighter", styles.reasonCell)}
-									title={bannedUser.privateNote ?? undefined}
-								>
-									{bannedUser.privateNote ?? "-"}
-								</td>
-								<td className="text-sm text-lighter whitespace-nowrap">
-									{databaseTimestampToDate(
-										bannedUser.updatedAt,
-									).toLocaleDateString(i18n.language, {
-										day: "numeric",
-										month: "short",
-										year: "numeric",
-									})}
-								</td>
-								<td className={styles.actionsCell}>
-									<FormWithConfirm
-										fields={[
-											["_action", "UNBAN_USER"],
-											["userId", bannedUser.id],
-										]}
-										dialogHeading={t("org:banned.unbanConfirm", {
-											username: bannedUser.username,
+										<BanNote note={bannedUser.privateNote} />
+									</td>
+									<td className="text-sm text-lighter whitespace-nowrap">
+										{databaseTimestampToDate(
+											bannedUser.updatedAt,
+										).toLocaleDateString(i18n.language, {
+											day: "numeric",
+											month: "short",
+											year: "numeric",
 										})}
-										submitButtonText={t("org:banned.unban")}
-									>
-										<SendouButton variant="minimal-destructive" size="small">
-											{t("org:banned.unban")}
-										</SendouButton>
-									</FormWithConfirm>
-								</td>
-							</tr>
-						))}
+									</td>
+									<td className="text-sm text-lighter whitespace-nowrap">
+										{bannedUser.expiresAt
+											? databaseTimestampToDate(
+													bannedUser.expiresAt,
+												).toLocaleDateString(i18n.language, {
+													day: "numeric",
+													month: "short",
+													year: "numeric",
+												})
+											: t("org:banned.permanent")}
+									</td>
+									<td className={styles.actionsCell}>
+										<FormWithConfirm
+											fields={[
+												["_action", "UNBAN_USER"],
+												["userId", bannedUser.id],
+											]}
+											dialogHeading={t("org:banned.unbanConfirm", {
+												username: bannedUser.username,
+											})}
+											submitButtonText={t("org:banned.unban")}
+										>
+											<SendouButton variant="minimal-destructive" size="small">
+												{t("org:banned.unban")}
+											</SendouButton>
+										</FormWithConfirm>
+									</td>
+								</tr>
+							);
+						})}
 					</tbody>
 				</Table>
 			</div>
 			<div className={styles.banPlayerButton}>
 				<BanUserModal key={bannedUsersKey} />
 			</div>
+		</div>
+	);
+}
+
+function BanNote({ note }: { note: string | null }) {
+	const { t } = useTranslation(["common"]);
+	const [isExpanded, setIsExpanded] = React.useState(false);
+
+	if (!note) {
+		return "-";
+	}
+
+	const shouldTruncate = note.length > MAX_NOTE_LENGTH;
+	const displayText =
+		shouldTruncate && !isExpanded
+			? `${note.slice(0, MAX_NOTE_LENGTH)}...`
+			: note;
+
+	return (
+		<div className={styles.noteContainer}>
+			<span>{displayText}</span>
+			{shouldTruncate ? (
+				<button
+					type="button"
+					className={styles.expandButton}
+					onClick={() => setIsExpanded(!isExpanded)}
+				>
+					{isExpanded
+						? t("common:actions.showLess")
+						: t("common:actions.showMore")}
+				</button>
+			) : null}
 		</div>
 	);
 }

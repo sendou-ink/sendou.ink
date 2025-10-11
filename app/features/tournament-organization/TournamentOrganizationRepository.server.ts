@@ -1,8 +1,13 @@
+import { isFuture } from "date-fns";
 import { sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { Tables, TablesInsertable } from "~/db/tables";
-import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import {
+	databaseTimestampNow,
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { mySlugify } from "~/utils/urls";
 import { userSubmittedImage } from "~/utils/urls-img";
@@ -64,7 +69,12 @@ export async function findBySlug(slug: string) {
 						"TournamentOrganizationMember.organizationId",
 						"=",
 						"TournamentOrganization.id",
-					),
+					)
+					.orderBy(
+						sql`coalesce(TournamentOrganizationMember.roleDisplayName, TournamentOrganizationMember.role)`,
+						"asc",
+					)
+					.orderBy("User.username", "asc"),
 			).as("members"),
 			jsonArrayFrom(
 				eb
@@ -472,6 +482,7 @@ export function allBannedUsersByOrganizationId(organizationId: number) {
 		.select([
 			"TournamentOrganizationBannedUser.privateNote",
 			"TournamentOrganizationBannedUser.updatedAt",
+			"TournamentOrganizationBannedUser.expiresAt",
 			...COMMON_USER_FIELDS,
 		])
 		.where(
@@ -495,10 +506,14 @@ export async function isUserBannedByOrganization({
 }) {
 	const result = await db
 		.selectFrom("TournamentOrganizationBannedUser")
-		.select("userId")
+		.select(["userId", "expiresAt"])
 		.where("organizationId", "=", organizationId)
 		.where("userId", "=", userId)
 		.executeTakeFirst();
 
-	return Boolean(result);
+	if (!result) return false;
+
+	if (!result.expiresAt) return true;
+
+	return isFuture(databaseTimestampToDate(result.expiresAt));
 }

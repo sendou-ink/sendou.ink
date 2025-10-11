@@ -1,9 +1,12 @@
+import { isFuture } from "date-fns";
 import { z } from "zod/v4";
 import { TOURNAMENT_ORGANIZATION_ROLES } from "~/db/tables";
 import { TOURNAMENT_ORGANIZATION } from "~/features/tournament-organization/tournament-organization-constants";
+import { dayMonthYearToDate } from "~/utils/dates";
 import { mySlugify } from "~/utils/urls";
 import {
 	_action,
+	dayMonthYear,
 	falsyToNull,
 	id,
 	safeNullableStringSchema,
@@ -93,6 +96,15 @@ export const banUserActionSchema = z.object({
 	privateNote: safeNullableStringSchema({
 		max: TOURNAMENT_ORGANIZATION.BAN_REASON_MAX_LENGTH,
 	}),
+	expiresAt: dayMonthYear.nullish().refine(
+		(data) => {
+			if (!data) return true;
+			return isFuture(dayMonthYearToDate(data));
+		},
+		{
+			message: "Date must be in the future",
+		},
+	),
 });
 
 export const unbanUserActionSchema = z.object({
