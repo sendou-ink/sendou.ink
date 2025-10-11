@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import * as R from "remeda";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
-import * as SplatoonPlayerRepository from "../SplatoonPlayerRepository.server";
+import * as XRankPlacementRepository from "../XRankPlacementRepository.server";
 
 export const loader = async (args: LoaderFunctionArgs) => {
 	const params = parseParams({
@@ -11,7 +11,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 	});
 
 	const placements = notFoundIfFalsy(
-		await SplatoonPlayerRepository.findPlacementsByPlayerId(params.id),
+		await XRankPlacementRepository.findPlacementsByPlayerId(params.id),
 	);
 
 	const primaryName = placements[0].name;

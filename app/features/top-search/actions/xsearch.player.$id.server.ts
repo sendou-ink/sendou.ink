@@ -9,7 +9,7 @@ import {
 	successToast,
 } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
-import * as SplatoonPlayerRepository from "../SplatoonPlayerRepository.server";
+import * as XRankPlacementRepository from "../XRankPlacementRepository.server";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const user = await requireUser(request);
@@ -19,7 +19,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	});
 
 	const placements = notFoundIfFalsy(
-		await SplatoonPlayerRepository.findPlacementsByPlayerId(id),
+		await XRankPlacementRepository.findPlacementsByPlayerId(id),
 	);
 	const currentLinkedUserDiscordId = placements[0].discordId;
 
@@ -33,7 +33,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		userId: user.id,
 	});
 
-	await SplatoonPlayerRepository.unlinkPlayerByUserId(user.id);
+	await XRankPlacementRepository.unlinkPlayerByUserId(user.id);
 
 	syncXPBadges();
 
