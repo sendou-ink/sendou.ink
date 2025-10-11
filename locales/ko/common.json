@@ -77,6 +77,8 @@
 	"notifications.text.SCRIM_SCHEDULED": "",
 	"notifications.title.SCRIM_CANCELED": "",
 	"notifications.text.SCRIM_CANCELED": "",
+	"notifications.title.COMMISSIONS_CLOSED": "",
+	"notifications.text.COMMISSIONS_CLOSED": "",
 	"auth.errors.aborted": "로그인 중단됨",
 	"auth.errors.failed": "로그인 실패",
 	"auth.errors.discordPermissions": "sendou.ink 프로필을 위해 디스코드 프로필의 이름, 아바타와 연락처에 대한 접근이 필요합니다.",

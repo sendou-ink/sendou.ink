@@ -3,6 +3,7 @@ import { err, ok } from "neverthrow";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
+import { seededRandom } from "~/utils/random";
 import type { ModeShort, StageId } from "../in-game-lists/types";
 import { DEFAULT_MAP_POOL } from "./constants";
 import type {
@@ -10,7 +11,6 @@ import type {
 	TournamentMaplistInput,
 	TournamentMaplistSource,
 } from "./types";
-import { seededRandom } from "./utils";
 
 type ModeWithStageAndScore = TournamentMapListMap & { score: number };
 
@@ -50,8 +50,8 @@ function generateWithInput(
 > {
 	validateInput(input);
 
-	const { shuffle } = seededRandom(input.seed);
-	const stages = shuffle(resolveCommonStages());
+	const { seededShuffle } = seededRandom(input.seed);
+	const stages = seededShuffle(resolveCommonStages());
 	const mapList: Array<ModeWithStageAndScore & { score: number }> = [];
 	const bestMapList: { maps?: Array<ModeWithStageAndScore>; score: number } = {
 		score: Number.POSITIVE_INFINITY,
@@ -165,7 +165,7 @@ function generateWithInput(
 			// no overlap so we need to use a random map for tiebreaker
 
 			if (tournamentIsOneModeOnly()) {
-				return shuffle([...stageIds])
+				return seededShuffle([...stageIds])
 					.filter(
 						(stageId) =>
 							!input.teams[0].maps.hasStage(stageId) &&

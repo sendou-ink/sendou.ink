@@ -751,6 +751,10 @@
 		"displayName": "Brush Brawls",
 		"authorDiscordId": "338806780446638082"
 	},
+	"octopipalooza": {
+		"displayName": "Octopi Palooza!",
+		"authorDiscordId": "338806780446638082"
+	},
 	"octoshot": {
 		"displayName": "Weapon Lockdown",
 		"authorDiscordId": "338806780446638082"
@@ -1126,6 +1130,10 @@
 	"tfstourney": {
 		"displayName": "TFS Tourneys",
 		"authorDiscordId": "789943264370884708"
+	},
+	"thekscorner": {
+		"displayName": "The K's corner",
+		"authorDiscordId": "776557393848434718"
 	},
 	"three_course_pal": {
 		"displayName": "Squids For Palestinian Kids",

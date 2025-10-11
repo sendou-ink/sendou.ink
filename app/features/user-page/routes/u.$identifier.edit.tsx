@@ -472,6 +472,9 @@ function CommissionsOpenToggle({
 				onChange={setChecked}
 				name="commissionsOpen"
 			/>
+			<FormMessage type="info">
+				{t("user:forms.commissionsOpen.info")}
+			</FormMessage>
 		</div>
 	);
 }

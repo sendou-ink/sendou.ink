@@ -17,6 +17,7 @@
 	"forms.showDiscordUniqueName": "הראה שם משתמש Discord",
 	"forms.showDiscordUniqueName.info": "להראות את שם ה-Discord היחודי שלכם ({{discordUniqueName}}) בפומבי?",
 	"forms.commissionsOpen": "בקשות פתוחות",
+	"forms.commissionsOpen.info": "",
 	"forms.commissionText": "מידע עבור בקשות",
 	"forms.commissionText.info": "מחיר, כמות בקשות או מידע אחר שקשור לבקשות אלכם",
 	"forms.customName.info": "",

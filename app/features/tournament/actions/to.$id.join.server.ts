@@ -68,7 +68,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			inviteCode,
 			teamToJoin,
 			userId: user.id,
-			maxTeamSize: tournament.maxTeamMemberCount,
+			maxTeamSize: tournament.maxMembersPerTeam,
 		}) === "VALID",
 		"Cannot join this team or invite code is invalid",
 	);

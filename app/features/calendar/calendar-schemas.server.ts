@@ -86,7 +86,14 @@ export const newCalendarEventActionSchema = z
 			checkboxValueToBoolean,
 			z.boolean().nullish(),
 		),
-		minMembersPerTeam: z.coerce.number().int().min(1).max(4).nullish(),
+		minMembersPerTeam: z.preprocess(
+			actualNumber,
+			z.number().int().min(1).max(4).nullish(),
+		),
+		maxMembersPerTeam: z.preprocess(
+			actualNumber,
+			z.number().int().min(4).max(10).nullish(),
+		),
 		bracketProgression: bracketProgressionSchema.nullish(),
 	})
 	.refine(

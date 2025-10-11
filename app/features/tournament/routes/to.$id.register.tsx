@@ -971,7 +971,7 @@ function FillRoster({
 	);
 
 	const optionalMembers = Math.max(
-		tournament.maxTeamMemberCount - ownTeamMembers.length - missingMembers,
+		tournament.maxMembersPerTeam - ownTeamMembers.length - missingMembers,
 		0,
 	);
 
@@ -992,7 +992,7 @@ function FillRoster({
 		});
 	})();
 
-	const teamIsFull = ownTeamMembers.length >= tournament.maxTeamMemberCount;
+	const teamIsFull = ownTeamMembers.length >= tournament.maxMembersPerTeam;
 	const canAddMembers = !teamIsFull && tournament.registrationOpen;
 
 	return (
@@ -1085,7 +1085,7 @@ function FillRoster({
 				<div className="tournament__section__warning">
 					{t("tournament:pre.roster.footer", {
 						atLeastCount: tournament.minMembersPerTeam,
-						maxCount: tournament.maxTeamMemberCount,
+						maxCount: tournament.maxMembersPerTeam,
 					})}
 				</div>
 			)}

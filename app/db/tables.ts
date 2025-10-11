@@ -456,6 +456,8 @@ export interface TournamentSettings {
 		roundCount: number;
 	};
 	minMembersPerTeam?: number;
+	/** Maximum number of team members that can be registered (only applies to 4v4 tournaments) */
+	maxMembersPerTeam?: number;
 	isTest?: boolean;
 }
 
@@ -826,6 +828,7 @@ export interface User {
 	bannedReason: string | null;
 	bio: string | null;
 	commissionsOpen: Generated<number | null>;
+	commissionsOpenedAt: number | null;
 	commissionText: string | null;
 	country: string | null;
 	css: JSONColumnTypeNullable<Record<string, string>>;

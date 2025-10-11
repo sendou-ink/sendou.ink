@@ -48,6 +48,7 @@ import { useIsMounted } from "./hooks/useIsMounted";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
 import i18next, { i18nCookie } from "./modules/i18n/i18next.server";
 import type { Namespace } from "./modules/i18n/resources.server";
+import { IS_E2E_TEST_RUN } from "./utils/e2e";
 import { isRevalidation, metaTags } from "./utils/remix";
 import { SUSPENDED_PAGE } from "./utils/urls";
 
@@ -176,7 +177,7 @@ function Document({
 				<Fonts />
 			</head>
 			<body style={customizedCSSVars}>
-				{process.env.NODE_ENV === "development" && <HydrationTestIndicator />}
+				{IS_E2E_TEST_RUN && <HydrationTestIndicator />}
 				<React.StrictMode>
 					<RouterProvider navigate={navigate} useHref={useHref}>
 						<I18nProvider locale={i18n.language}>
