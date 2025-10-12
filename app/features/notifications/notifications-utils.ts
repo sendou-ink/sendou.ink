@@ -104,14 +104,12 @@ export const mapMetaForTranslation = (
 	) {
 		return {
 			...notification.meta,
-			timeString: notification.meta.at // TODO: after two weeks this check can be removed (all notifications will have `at`)
-				? new Date(notification.meta.at).toLocaleString(language, {
-						day: "numeric",
-						month: "numeric",
-						hour: "numeric",
-						minute: "numeric",
-					})
-				: undefined,
+			timeString: new Date(notification.meta.at).toLocaleString(language, {
+				day: "numeric",
+				month: "numeric",
+				hour: "numeric",
+				minute: "numeric",
+			}),
 		};
 	}
 
