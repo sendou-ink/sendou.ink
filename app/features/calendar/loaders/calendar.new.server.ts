@@ -62,18 +62,31 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		);
 	}
 
+	const managedBadges = await BadgeRepository.findManagedByUserId(user.id);
+
+	const eventToCopyRaw =
+		user.roles.includes("TOURNAMENT_ADDER") && !eventToEdit
+			? await eventWithTournament("copyEventId")
+			: undefined;
+
+	const eventToCopy = eventToCopyRaw
+		? {
+				...eventToCopyRaw,
+				badgePrizes: eventToCopyRaw.badgePrizes?.filter((badge) =>
+					managedBadges.some((mb) => mb.id === badge.id),
+				),
+			}
+		: undefined;
+
 	return {
 		isAddingTournament: Boolean(
 			url.searchParams.has("tournament") ||
 				url.searchParams.has("copyEventId") ||
 				eventToEdit?.tournament,
 		),
-		managedBadges: await BadgeRepository.findManagedByUserId(user.id),
+		managedBadges,
 		eventToEdit: canEditEvent ? eventToEdit : undefined,
-		eventToCopy:
-			user.roles.includes("TOURNAMENT_ADDER") && !eventToEdit
-				? await eventWithTournament("copyEventId")
-				: undefined,
+		eventToCopy,
 		recentTournaments:
 			user.roles.includes("TOURNAMENT_ADDER") && !eventToEdit
 				? await CalendarRepository.findRecentTournamentsByAuthorId(user.id)

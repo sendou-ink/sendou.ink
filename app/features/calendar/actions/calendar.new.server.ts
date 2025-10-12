@@ -5,6 +5,7 @@ import {
 	type AuthenticatedUser,
 	requireUser,
 } from "~/features/auth/core/user.server";
+import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { newCalendarEventActionSchema } from "~/features/calendar/calendar-schemas.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
@@ -22,6 +23,7 @@ import {
 } from "~/utils/dates";
 import {
 	badRequestIfFalsy,
+	errorToast,
 	errorToastIfFalsy,
 	parseFormData,
 	uploadImageIfSubmitted,
@@ -48,6 +50,18 @@ export const action: ActionFunction = async ({ request }) => {
 		isEditing: Boolean(data.eventToEditId),
 		user,
 	});
+
+	if (data.badges && data.badges.length > 0) {
+		const managedBadges = await BadgeRepository.findManagedByUserId(user.id);
+
+		if (
+			data.badges.some((badge) => !managedBadges.some((mb) => mb.id === badge))
+		) {
+			errorToast(
+				"You don't manage any badges, so you cannot add any to the event",
+			);
+		}
+	}
 
 	const startTimes = data.date.map((date) => dateToDatabaseTimestamp(date));
 	const commonArgs = {
