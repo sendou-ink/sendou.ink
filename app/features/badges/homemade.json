@@ -323,6 +323,10 @@
 		"displayName": "Wheel of Names",
 		"authorDiscordId": "336683473714544641"
 	},
+	"finallife": {
+		"displayName": "Final Life",
+		"authorDiscordId": "338806780446638082"
+	},
 	"fl-collegiate": {
 		"displayName": "Florida Collegiate Cephalopods Event",
 		"authorDiscordId": "285504780154044416"
@@ -495,8 +499,20 @@
 		"displayName": "Inkstrike Invitational",
 		"authorDiscordId": "789943264370884708"
 	},
+	"inkvasionzone": {
+		"displayName": "Zones Inkvasion",
+		"authorDiscordId": "338806780446638082"
+	},
 	"inthepaddock1st": {
 		"displayName": "In the Paddock",
+		"authorDiscordId": "683603297839743009"
+	},
+	"inthepaddock2nd": {
+		"displayName": "In the Paddock 2nd",
+		"authorDiscordId": "683603297839743009"
+	},
+	"inthepaddock3rd": {
+		"displayName": "In the Paddock 3rd",
 		"authorDiscordId": "683603297839743009"
 	},
 	"jamboree": {
@@ -631,6 +647,10 @@
 		"displayName": "Golden Diamond Heist",
 		"authorDiscordId": "338806780446638082"
 	},
+	"mclaren": {
+		"displayName": "McLaren",
+		"authorDiscordId": "683603297839743009"
+	},
 	"meadowscow": {
 		"displayName": "Moo Moo Cup",
 		"authorDiscordId": "528851510222782474"
@@ -731,6 +751,10 @@
 		"displayName": "Brush Brawls",
 		"authorDiscordId": "338806780446638082"
 	},
+	"octopipalooza": {
+		"displayName": "Octopi Palooza!",
+		"authorDiscordId": "338806780446638082"
+	},
 	"octoshot": {
 		"displayName": "Weapon Lockdown",
 		"authorDiscordId": "338806780446638082"
@@ -746,6 +770,10 @@
 	"oktofest-silver": {
 		"displayName": "Oktofest LAN (Second)",
 		"authorDiscordId": "751912670403362836"
+	},
+	"order1": {
+		"displayName": "ORDR S1",
+		"authorDiscordId": "338806780446638082"
 	},
 	"original-message-deleted": {
 		"displayName": "[Original Message Deleted]",
@@ -1103,6 +1131,10 @@
 		"displayName": "TFS Tourneys",
 		"authorDiscordId": "789943264370884708"
 	},
+	"thekscorner": {
+		"displayName": "The K's corner",
+		"authorDiscordId": "776557393848434718"
+	},
 	"three_course_pal": {
 		"displayName": "Squids For Palestinian Kids",
 		"authorDiscordId": "338806780446638082"
@@ -1243,6 +1275,10 @@
 		"displayName": "Tough Tides",
 		"authorDiscordId": "1170249805373657093"
 	},
+	"weaponlockdownspecial": {
+		"displayName": "Weapon Lockdown Special Edition",
+		"authorDiscordId": "338806780446638082"
+	},
 	"whitecat": {
 		"displayName": "White Cat Achievement",
 		"authorDiscordId": "631246535560265749"
@@ -1252,7 +1288,7 @@
 		"authorDiscordId": "530722502603833346"
 	},
 	"williamsracing": {
-		"displayName": "WilliamsRacing",
+		"displayName": "Williams Racing",
 		"authorDiscordId": "683603297839743009"
 	},
 	"wiper": {
