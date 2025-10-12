@@ -33,6 +33,7 @@
 	"header.loggedInAs": "{{userName}}로 로그인됨",
 	"header.theme": "테마",
 	"header.adder.tournament": "",
+	"header.adder.organization": "",
 	"header.adder.calendarEvent": "",
 	"header.adder.build": "",
 	"header.adder.team": "",

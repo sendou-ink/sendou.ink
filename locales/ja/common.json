@@ -33,6 +33,7 @@
 	"header.loggedInAs": "{{userName}} でログインしています",
 	"header.theme": "テーマ",
 	"header.adder.tournament": "トーナメント",
+	"header.adder.organization": "",
 	"header.adder.calendarEvent": "カレンダーイベント",
 	"header.adder.build": "ギア",
 	"header.adder.team": "チーム",

@@ -33,6 +33,7 @@
 	"header.loggedInAs": "Connecté en tant que {{userName}}",
 	"header.theme": "Thème",
 	"header.adder.tournament": "Tournois",
+	"header.adder.organization": "",
 	"header.adder.calendarEvent": "Calendrier d'évenement",
 	"header.adder.build": "set",
 	"header.adder.team": "Equipe",

@@ -33,6 +33,7 @@
 	"header.loggedInAs": "Du er logget ind som {{userName}}",
 	"header.theme": "Tema",
 	"header.adder.tournament": "",
+	"header.adder.organization": "",
 	"header.adder.calendarEvent": "",
 	"header.adder.build": "",
 	"header.adder.team": "",

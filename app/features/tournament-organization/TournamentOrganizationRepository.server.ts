@@ -27,10 +27,10 @@ export function create(args: CreateArgs) {
 				name: args.name,
 				slug: mySlugify(args.name),
 			})
-			.returning("id")
+			.returning(["id", "slug"])
 			.executeTakeFirstOrThrow();
 
-		return trx
+		await trx
 			.insertInto("TournamentOrganizationMember")
 			.values({
 				organizationId: org.id,
@@ -38,6 +38,8 @@ export function create(args: CreateArgs) {
 				role: "ADMIN",
 			})
 			.execute();
+
+		return org;
 	});
 }
 
@@ -516,4 +518,17 @@ export async function isUserBannedByOrganization({
 	if (!result.expiresAt) return true;
 
 	return isFuture(databaseTimestampToDate(result.expiresAt));
+}
+
+/**
+ * Returns the number of organizations a user is a member of.
+ */
+export async function countOrganizationsByUserId(userId: number) {
+	const result = await db
+		.selectFrom("TournamentOrganizationMember")
+		.select((eb) => eb.fn.count("organizationId").as("count"))
+		.where("userId", "=", userId)
+		.executeTakeFirstOrThrow();
+
+	return Number(result.count);
 }

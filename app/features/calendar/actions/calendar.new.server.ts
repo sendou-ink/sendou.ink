@@ -23,7 +23,6 @@ import {
 } from "~/utils/dates";
 import {
 	badRequestIfFalsy,
-	errorToast,
 	errorToastIfFalsy,
 	parseFormData,
 	uploadImageIfSubmitted,
@@ -51,17 +50,7 @@ export const action: ActionFunction = async ({ request }) => {
 		user,
 	});
 
-	if (data.badges && data.badges.length > 0) {
-		const managedBadges = await BadgeRepository.findManagedByUserId(user.id);
-
-		if (
-			data.badges.some((badge) => !managedBadges.some((mb) => mb.id === badge))
-		) {
-			errorToast(
-				"You don't manage any badges, so you cannot add any to the event",
-			);
-		}
-	}
+	const managedBadges = await BadgeRepository.findManagedByUserId(user.id);
 
 	const startTimes = data.date.map((date) => dateToDatabaseTimestamp(date));
 	const commonArgs = {
@@ -82,7 +71,10 @@ export const action: ActionFunction = async ({ request }) => {
 					)
 					.join(",")
 			: data.tags,
-		badges: data.badges ?? [],
+		badges:
+			data.badges?.filter((badge) =>
+				managedBadges.some((mb) => mb.id === badge),
+			) ?? [],
 		// newly uploaded avatar
 		avatarFileName,
 		// reused avatar either via edit or template

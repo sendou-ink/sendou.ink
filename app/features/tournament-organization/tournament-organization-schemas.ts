@@ -12,15 +12,21 @@ import {
 	safeNullableStringSchema,
 } from "~/utils/zod";
 
+const nameSchema = z
+	.string()
+	.trim()
+	.min(2)
+	.max(64)
+	.refine((val) => mySlugify(val).length >= 2, {
+		message: "Not enough non-special characters",
+	});
+
+export const newOrganizationSchema = z.object({
+	name: nameSchema,
+});
+
 export const organizationEditSchema = z.object({
-	name: z
-		.string()
-		.trim()
-		.min(2)
-		.max(64)
-		.refine((val) => mySlugify(val).length >= 2, {
-			message: "Not enough non-special characters",
-		}),
+	name: nameSchema,
 	description: z.preprocess(
 		falsyToNull,
 		z

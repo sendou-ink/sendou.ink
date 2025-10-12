@@ -33,6 +33,7 @@
 	"header.loggedInAs": "Вы вошли как {{userName}}",
 	"header.theme": "Тема",
 	"header.adder.tournament": "Турнир",
+	"header.adder.organization": "",
 	"header.adder.calendarEvent": "Календарное событие",
 	"header.adder.build": "Сборка",
 	"header.adder.team": "Команда",

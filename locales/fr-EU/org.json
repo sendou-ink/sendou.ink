@@ -39,5 +39,7 @@
 	"banned.banModal.note": "",
 	"banned.banModal.noteHelp": "",
 	"banned.banModal.expiresAt": "",
-	"banned.banModal.expiresAtHelp": ""
+	"banned.banModal.expiresAtHelp": "",
+	"new.heading": "",
+	"new.noPermissions": ""
 }

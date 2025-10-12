@@ -24,7 +24,6 @@
 
 ## React
 
-- project uses Remix as metaframework
 - prefer functional components over class components
 - prefer using hooks over class lifecycle methods
 - do not use `useMemo`, `useCallback` or `useReducer` at all
@@ -34,6 +33,10 @@
 - one file can have many components
 - all texts should be provided translations via the i18next library's `useTranslations` hook's `t` function
 - instead of `&&` operator for conditional rendering, use the ternary operator
+
+## Remix/React Router
+
+- new routes need to be added to `routes.ts`
 
 ## Styling
 

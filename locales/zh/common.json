@@ -33,6 +33,7 @@
 	"header.loggedInAs": "以 {{userName}} 登录",
 	"header.theme": "主题",
 	"header.adder.tournament": "",
+	"header.adder.organization": "",
 	"header.adder.calendarEvent": "",
 	"header.adder.build": "",
 	"header.adder.team": "",

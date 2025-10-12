@@ -16,6 +16,20 @@ const url = tournamentOrganizationPage({
 });
 
 test.describe("Tournament Organization", () => {
+	test("can create a new organization", async ({ page }) => {
+		await seed(page);
+		await impersonate(page);
+		await navigate({ page, url: "/" });
+
+		await page.getByTestId("anything-adder-menu-button").click();
+		await page.getByTestId("menu-item-organization").click();
+
+		await page.getByLabel("Name").fill("Test Organization");
+		await submit(page);
+
+		await expect(page.getByTestId("edit-org-button")).toBeVisible();
+	});
+
 	test("user can be promoted to admin gaining org controls and can edit tournaments", async ({
 		page,
 	}) => {
