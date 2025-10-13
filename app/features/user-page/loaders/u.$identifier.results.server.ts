@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { notFoundIfFalsy, parseSafeSearchParams } from "~/utils/remix.server";
 import { RESULTS_PER_PAGE } from "../user-page-constants";
@@ -45,11 +46,20 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		UserRepository.countResultsByUserId(userId, { showHighlightsOnly }),
 	]);
 
+	const maxPage = Math.ceil(totalCount / RESULTS_PER_PAGE);
+	if (page > maxPage && page !== 1) {
+		const url = new URL(request.url);
+		const pathname = url.pathname;
+		const searchParams = url.searchParams;
+		searchParams.set("page", String(maxPage));
+		return redirect(`${pathname}?${searchParams.toString()}`);
+	}
+
 	return {
 		results: {
 			value: results,
 			currentPage: page,
-			pages: Math.ceil(totalCount / RESULTS_PER_PAGE),
+			pages: maxPage,
 		},
 		hasHighlightedResults,
 	};
