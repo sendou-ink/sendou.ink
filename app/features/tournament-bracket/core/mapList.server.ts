@@ -30,7 +30,7 @@ interface ResolveCurrentMapListArgs {
 		type: Tables["TournamentMatchPickBanEvent"]["type"];
 	}>;
 	/** Maps that both teams (interleaved) have recently played in the tournament with the most recent being first. */
-	recentlyPlayedMaps: Array<{ mode: ModeShort; stageId: StageId }>;
+	recentlyPlayedMaps?: Array<{ mode: ModeShort; stageId: StageId }>;
 }
 
 export function resolveMapList(
