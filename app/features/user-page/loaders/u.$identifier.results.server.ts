@@ -38,8 +38,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const [results, totalCount] = await Promise.all([
 		UserRepository.findResultsByUserId(userId, {
 			showHighlightsOnly,
-			limit: RESULTS_PER_PAGE,
-			offset: (page - 1) * RESULTS_PER_PAGE,
+			...(isChoosingHighlights
+				? {}
+				: { limit: RESULTS_PER_PAGE, offset: (page - 1) * RESULTS_PER_PAGE }),
 		}),
 		UserRepository.countResultsByUserId(userId, { showHighlightsOnly }),
 	]);
