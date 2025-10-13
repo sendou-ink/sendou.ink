@@ -130,12 +130,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			maps: match.maps,
 			pickBanEvents,
 			recentlyPlayedMaps:
-				await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
-					teamIds: [match.opponentOne.id, match.opponentTwo.id],
-				}).catch((error) => {
-					logger.error("Failed to fetch recently played maps", error);
-					return [];
-				}),
+				match.mapPickingStyle !== "TO"
+					? await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
+							teamIds: [match.opponentOne.id, match.opponentTwo.id],
+						}).catch((error) => {
+							logger.error("Failed to fetch recently played maps", error);
+							return [];
+						})
+					: undefined,
 		}).map((mapListMap) => {
 			return {
 				map: {
