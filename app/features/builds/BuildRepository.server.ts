@@ -4,7 +4,9 @@ import { db } from "~/db/sql";
 import type { BuildWeapon, DB, Tables, TablesInsertable } from "~/db/tables";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type {
+	Ability,
 	BuildAbilitiesTuple,
+	MainWeaponId,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
@@ -211,3 +213,53 @@ export async function update(args: CreateArgs & { id: number }) {
 export function deleteById(id: number) {
 	return db.deleteFrom("Build").where("id", "=", id).execute();
 }
+
+export async function abilityPointAverages(weaponSplId?: MainWeaponId | null) {
+	return db
+		.selectFrom("BuildAbility")
+		.select(({ fn }) => [
+			"BuildAbility.ability",
+			fn.sum<number>("BuildAbility.abilityPoints").as("abilityPointsSum"),
+		])
+		.innerJoin("BuildWeapon", "BuildAbility.buildId", "BuildWeapon.buildId")
+		.innerJoin("Build", "Build.id", "BuildWeapon.buildId")
+		.$if(typeof weaponSplId === "number", (qb) =>
+			qb.where("BuildWeapon.weaponSplId", "=", weaponSplId!),
+		)
+		.groupBy("BuildAbility.ability")
+		.where("Build.private", "=", 0)
+		.execute();
+}
+
+export async function popularAbilitiesByWeaponId(weaponSplId: MainWeaponId) {
+	const result = await db
+		.selectFrom("BuildWeapon")
+		.innerJoin("Build", "Build.id", "BuildWeapon.buildId")
+		.select((eb) => [
+			jsonArrayFrom(
+				eb
+					.selectFrom("BuildAbility")
+					.select(["BuildAbility.ability", "BuildAbility.abilityPoints"])
+					.whereRef("BuildAbility.buildId", "=", "BuildWeapon.buildId"),
+			).as("abilities"),
+		])
+		.where("BuildWeapon.weaponSplId", "=", weaponSplId)
+		.where("Build.private", "=", 0)
+		.groupBy("Build.ownerId") // consider only one build per user
+		.execute();
+
+	return result as Array<{
+		abilities: Array<{
+			ability: Ability;
+			abilityPoints: number;
+		}>;
+	}>;
+}
+
+export type AverageAbilityPointsResult = Awaited<
+	ReturnType<typeof abilityPointAverages>
+>[number];
+
+export type AbilitiesByWeapon = Awaited<
+	ReturnType<typeof popularAbilitiesByWeaponId>
+>[number];
