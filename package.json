@@ -24,7 +24,7 @@
 		"test:e2e": "npx playwright test",
 		"test:e2e:flaky-detect": "npx playwright test --repeat-each=10 --max-failures=1",
 		"checks": "npm run biome:fix && npm run test:unit && npm run check-translation-jsons && npm run typecheck",
-		"setup": "cross-env DB_PATH=db.sqlite3 tsx ./scripts/setup.ts",
+		"setup": "cross-env DB_PATH=db.sqlite3 vite-node ./scripts/setup.ts",
 		"i18n:sync": "i18next-locales-sync -e true -p en -s da de es-ES es-US fr-CA fr-EU he it ja ko nl pl pt-BR ru zh -l locales && npm run biome:fix"
 	},
 	"dependencies": {
@@ -103,6 +103,7 @@
 		"tsx": "^4.19.4",
 		"typescript": "^5.8.3",
 		"vite": "^6.3.6",
+		"vite-node": "^3.2.4",
 		"vite-plugin-babel": "^1.3.2",
 		"vite-tsconfig-paths": "^5.1.4",
 		"vitest": "^3.2.4"

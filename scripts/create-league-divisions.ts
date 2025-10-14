@@ -93,6 +93,7 @@ async function main() {
 			autonomousSubs: false,
 			isRanked: tournament.ctx.settings.isRanked,
 			minMembersPerTeam: tournament.ctx.settings.minMembersPerTeam,
+			maxMembersPerTeam: tournament.ctx.settings.maxMembersPerTeam,
 			regClosesAt: tournament.ctx.settings.regClosesAt,
 			requireInGameNames: tournament.ctx.settings.requireInGameNames,
 			bracketUrl: "https://sendou.ink",

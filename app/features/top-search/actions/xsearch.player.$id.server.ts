@@ -1,7 +1,6 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import { syncXPBadges } from "~/features/badges/queries/syncXPBadges.server";
-import { findPlacementsByPlayerId } from "~/features/top-search/queries/findPlacements.server";
 import { logger } from "~/utils/logger";
 import {
 	errorToastIfFalsy,
@@ -10,7 +9,7 @@ import {
 	successToast,
 } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
-import * as SplatoonPlayerRepository from "../SplatoonPlayerRepository.server";
+import * as XRankPlacementRepository from "../XRankPlacementRepository.server";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const user = await requireUser(request);
@@ -19,7 +18,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		schema: idObject,
 	});
 
-	const placements = notFoundIfFalsy(findPlacementsByPlayerId(id));
+	const placements = notFoundIfFalsy(
+		await XRankPlacementRepository.findPlacementsByPlayerId(id),
+	);
 	const currentLinkedUserDiscordId = placements[0].discordId;
 
 	errorToastIfFalsy(
@@ -32,7 +33,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		userId: user.id,
 	});
 
-	await SplatoonPlayerRepository.unlinkPlayerByUserId(user.id);
+	await XRankPlacementRepository.unlinkPlayerByUserId(user.id);
 
 	syncXPBadges();
 

@@ -5,6 +5,7 @@ import {
 	type AuthenticatedUser,
 	requireUser,
 } from "~/features/auth/core/user.server";
+import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { newCalendarEventActionSchema } from "~/features/calendar/calendar-schemas.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
@@ -49,6 +50,8 @@ export const action: ActionFunction = async ({ request }) => {
 		user,
 	});
 
+	const managedBadges = await BadgeRepository.findManagedByUserId(user.id);
+
 	const startTimes = data.date.map((date) => dateToDatabaseTimestamp(date));
 	const commonArgs = {
 		authorId: user.id,
@@ -68,7 +71,10 @@ export const action: ActionFunction = async ({ request }) => {
 					)
 					.join(",")
 			: data.tags,
-		badges: data.badges ?? [],
+		badges:
+			data.badges?.filter((badge) =>
+				managedBadges.some((mb) => mb.id === badge),
+			) ?? [],
 		// newly uploaded avatar
 		avatarFileName,
 		// reused avatar either via edit or template
@@ -79,6 +85,7 @@ export const action: ActionFunction = async ({ request }) => {
 			rankedModesShort.find((mode) => mode === data.toToolsMode) ?? null,
 		bracketProgression: data.bracketProgression ?? null,
 		minMembersPerTeam: data.minMembersPerTeam ?? undefined,
+		maxMembersPerTeam: data.maxMembersPerTeam ?? undefined,
 		isRanked: data.isRanked ?? undefined,
 		isTest: data.isTest ?? undefined,
 		isInvitational: data.isInvitational ?? false,

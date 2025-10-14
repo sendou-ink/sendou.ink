@@ -1,4 +1,5 @@
 import { nanoid } from "nanoid";
+import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import type { ChatMessage } from "./chat-types";
@@ -13,13 +14,24 @@ interface ChatSystemMessageService {
 	send: (msg: PartialChatMessage | PartialChatMessage[]) => undefined;
 }
 
-invariant(
-	process.env.SKALOP_SYSTEM_MESSAGE_URL,
-	"Missing env var: SKALOP_SYSTEM_MESSAGE_URL",
-);
-invariant(process.env.SKALOP_TOKEN, "Missing env var: SKALOP_TOKEN");
+let systemMessagesDisabled = false;
+
+if (!IS_E2E_TEST_RUN) {
+	invariant(
+		process.env.SKALOP_SYSTEM_MESSAGE_URL,
+		"Missing env var: SKALOP_SYSTEM_MESSAGE_URL",
+	);
+	invariant(process.env.SKALOP_TOKEN, "Missing env var: SKALOP_TOKEN");
+} else if (
+	!process.env.SKALOP_SYSTEM_MESSAGE_URL ||
+	!process.env.SKALOP_TOKEN
+) {
+	systemMessagesDisabled = true;
+}
 
 export const send: ChatSystemMessageService["send"] = (partialMsg) => {
+	if (systemMessagesDisabled) return;
+
 	const msgArr = Array.isArray(partialMsg) ? partialMsg : [partialMsg];
 
 	const fullMessages: ChatMessage[] = msgArr.map((partialMsg) => {

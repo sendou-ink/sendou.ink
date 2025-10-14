@@ -59,22 +59,28 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 	});
 };
 
+function hasUserLinked<T extends { discordId: string | null }>(
+	user: T,
+): user is T & { discordId: string } {
+	return user.discordId !== null;
+}
+
 export default function XSearchPlayerPage() {
 	const { t } = useTranslation(["common"]);
 	const data = useLoaderData<typeof loader>();
 	const user = useUser();
 
-	const hasUserLinked = Boolean(data.placements[0].discordId);
+	const placementUser = data.placements[0];
 
 	const isLinkedToCurrentUser =
-		user && user?.discordId === data.placements[0].discordId;
+		user && user?.discordId === placementUser.discordId;
 
 	return (
 		<Main halfWidth className="stack lg">
 			<div>
 				<h2 className="text-lg">
-					{hasUserLinked ? (
-						<Link to={userPage(data.placements[0])}>{data.names.primary}</Link>
+					{hasUserLinked(placementUser) ? (
+						<Link to={userPage(placementUser)}>{data.names.primary}</Link>
 					) : (
 						data.names.primary
 					)}{" "}

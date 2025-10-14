@@ -4,10 +4,10 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { parseSafeSearchParams } from "~/utils/remix.server";
 import { adminActionSearchParamsSchema } from "../admin-schemas";
+import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "../core/dev-controls";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	// allow unauthorized access in development mode to access impersonation controls
-	if (process.env.NODE_ENV === "production") {
+	if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
 		const user = await requireUser(request);
 		requireRole(user, "STAFF");
 	}

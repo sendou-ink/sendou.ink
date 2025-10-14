@@ -11,6 +11,7 @@ import {
 	tournamentRegisterPage,
 	tournamentTeamPage,
 	userArtPage,
+	userEditProfilePage,
 } from "~/utils/urls";
 import type { Notification } from "./notifications-types";
 
@@ -27,6 +28,7 @@ export const notificationNavIcon = (type: Notification["type"]) => {
 		case "SEASON_STARTED":
 			return "sendouq";
 		case "TAGGED_TO_ART":
+		case "COMMISSIONS_CLOSED":
 			return "art";
 		case "TO_ADDED_TO_TEAM":
 		case "TO_BRACKET_STARTED":
@@ -83,6 +85,9 @@ export const notificationLink = (notification: Notification) => {
 		case "SCRIM_SCHEDULED": {
 			return scrimPage(notification.meta.id);
 		}
+		case "COMMISSIONS_CLOSED": {
+			return userEditProfilePage({ discordId: notification.meta.discordId });
+		}
 		default:
 			assertUnreachable(notification);
 	}
@@ -99,14 +104,12 @@ export const mapMetaForTranslation = (
 	) {
 		return {
 			...notification.meta,
-			timeString: notification.meta.at // TODO: after two weeks this check can be removed (all notifications will have `at`)
-				? new Date(notification.meta.at).toLocaleString(language, {
-						day: "numeric",
-						month: "numeric",
-						hour: "numeric",
-						minute: "numeric",
-					})
-				: undefined,
+			timeString: new Date(notification.meta.at).toLocaleString(language, {
+				day: "numeric",
+				month: "numeric",
+				hour: "numeric",
+				minute: "numeric",
+			}),
 		};
 	}
 

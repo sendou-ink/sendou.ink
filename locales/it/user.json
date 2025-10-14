@@ -17,6 +17,7 @@
 	"forms.showDiscordUniqueName": "Mostra username Discord",
 	"forms.showDiscordUniqueName.info": "Mostrare il proprio nome unico Discord ({{discordUniqueName}}) pubblicamente?",
 	"forms.commissionsOpen": "Commissioni aperte",
+	"forms.commissionsOpen.info": "",
 	"forms.commissionText": "Info sulle commissioni",
 	"forms.commissionText.info": "Prezzo, posti liberi o altre info relative al commissionarti",
 	"forms.customName.info": "Se mancante, viene usato il tuo nome visualizzato Discord: \"{{discordName}}\"",

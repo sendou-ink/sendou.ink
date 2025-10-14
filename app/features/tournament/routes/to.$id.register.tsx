@@ -971,7 +971,7 @@ function FillRoster({
 	);
 
 	const optionalMembers = Math.max(
-		tournament.maxTeamMemberCount - ownTeamMembers.length - missingMembers,
+		tournament.maxMembersPerTeam - ownTeamMembers.length - missingMembers,
 		0,
 	);
 
@@ -992,7 +992,7 @@ function FillRoster({
 		});
 	})();
 
-	const teamIsFull = ownTeamMembers.length >= tournament.maxTeamMemberCount;
+	const teamIsFull = ownTeamMembers.length >= tournament.maxMembersPerTeam;
 	const canAddMembers = !teamIsFull && tournament.registrationOpen;
 
 	return (
@@ -1026,7 +1026,7 @@ function FillRoster({
 						</div>
 					</div>
 				) : null}
-				<div className="stack lg horizontal mt-2 flex-wrap justify-center">
+				<div className="tournament__roster-grid">
 					{ownTeamMembers.map((member, i) => {
 						return (
 							<div
@@ -1036,7 +1036,7 @@ function FillRoster({
 							>
 								<Avatar size="xsm" user={member} />
 								{tournament.ctx.settings.requireInGameNames ? (
-									<div>
+									<div className="tournament__roster-grid__member-name">
 										<div className="text-center">
 											{member.inGameName ?? member.username}
 										</div>
@@ -1047,7 +1047,9 @@ function FillRoster({
 										) : null}
 									</div>
 								) : (
-									member.username
+									<div className="tournament__roster-grid__member-name">
+										{member.username}
+									</div>
 								)}
 							</div>
 						);
@@ -1085,7 +1087,7 @@ function FillRoster({
 				<div className="tournament__section__warning">
 					{t("tournament:pre.roster.footer", {
 						atLeastCount: tournament.minMembersPerTeam,
-						maxCount: tournament.maxTeamMemberCount,
+						maxCount: tournament.maxMembersPerTeam,
 					})}
 				</div>
 			)}

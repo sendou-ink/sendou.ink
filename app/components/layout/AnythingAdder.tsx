@@ -11,6 +11,7 @@ import {
 	newAssociationsPage,
 	newScrimPostPage,
 	newVodPage,
+	ORGANIZATION_NEW_PAGE,
 	plusSuggestionsNewPage,
 	TOURNAMENT_NEW_PAGE,
 	userNewBuildPage,
@@ -36,6 +37,12 @@ export function AnythingAdder() {
 			children: t("header.adder.tournament"),
 			imagePath: navIconUrl("medal"),
 			href: TOURNAMENT_NEW_PAGE,
+		},
+		{
+			id: "organization",
+			children: t("header.adder.organization"),
+			imagePath: navIconUrl("medal"),
+			href: ORGANIZATION_NEW_PAGE,
 		},
 		{
 			id: "calendarEvent",

@@ -8,6 +8,7 @@ import type {
 	UserMapModePreferences,
 } from "~/db/tables";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { shortNanoid } from "~/utils/id";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { userIsBanned } from "../ban/core/banned.server";
@@ -27,7 +28,7 @@ export function mapModePreferencesByGroupId(groupId: number) {
 
 // groups visible for longer to make development easier
 const SECONDS_TILL_STALE =
-	process.env.NODE_ENV === "development" ? 1_000_000 : 1_800;
+	process.env.NODE_ENV === "development" || IS_E2E_TEST_RUN ? 1_000_000 : 1_800;
 
 export async function findLookingGroups({
 	minGroupSize,

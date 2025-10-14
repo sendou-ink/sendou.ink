@@ -835,6 +835,8 @@ export function updateProfile(args: UpdateProfileArgs) {
 				showDiscordUniqueName: args.showDiscordUniqueName,
 				commissionText: args.commissionText,
 				commissionsOpen: args.commissionsOpen,
+				commissionsOpenedAt:
+					args.commissionsOpen === 1 ? databaseTimestampNow() : null,
 			})
 			.where("id", "=", args.userId)
 			.returning(["User.id", "User.customUrl", "User.discordId"])

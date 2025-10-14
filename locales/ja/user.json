@@ -17,6 +17,7 @@
 	"forms.showDiscordUniqueName": "Discord のユーザー名を表示する",
 	"forms.showDiscordUniqueName.info": "Discord のユニーク名 ({{discordUniqueName}}) 公表しますか?",
 	"forms.commissionsOpen": "依頼を受付中",
+	"forms.commissionsOpen.info": "",
 	"forms.commissionText": "依頼に関する情報",
 	"forms.commissionText.info": "価格、受付数、その他依頼に関する情報",
 	"forms.customName.info": "記入されてない場合ディスコードの表示名 \"{{discordName}}\"を使います",

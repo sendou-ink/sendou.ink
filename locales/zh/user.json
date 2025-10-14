@@ -17,6 +17,7 @@
 	"forms.showDiscordUniqueName": "显示Discord用户名",
 	"forms.showDiscordUniqueName.info": "是否公开显示您的Discord用户名 ({{discordUniqueName}}) ？",
 	"forms.commissionsOpen": "开放委托",
+	"forms.commissionsOpen.info": "",
 	"forms.commissionText": "委托信息",
 	"forms.commissionText.info": "你的价格、档期或者其他委托相关的信息",
 	"forms.customName.info": "如果此栏空着，将会显示您的Discord昵称：\"{{discordName}}\"",

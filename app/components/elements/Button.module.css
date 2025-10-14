@@ -105,7 +105,8 @@
 }
 
 .buttonIcon {
-	width: 1.25rem;
+	min-width: 1.25rem;
+	max-width: 1.25rem;
 	margin-inline-end: var(--s-1-5);
 }
 
@@ -114,11 +115,13 @@
 }
 
 .small > .buttonIcon {
-	width: 1rem;
+	min-width: 1rem;
+	max-width: 1rem;
 	margin-inline-end: var(--s-1);
 }
 
 .miniscule > .buttonIcon {
-	width: 0.857rem;
+	min-width: 0.857rem;
+	max-width: 0.857rem;
 	margin-inline-end: var(--s-1);
 }

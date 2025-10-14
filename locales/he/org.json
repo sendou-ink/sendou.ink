@@ -28,6 +28,8 @@
 	"banned.player": "",
 	"banned.note": "",
 	"banned.date": "",
+	"banned.expires": "",
+	"banned.permanent": "",
 	"banned.actions": "",
 	"banned.unban": "",
 	"banned.unbanConfirm": "",
@@ -35,5 +37,9 @@
 	"banned.banModal.title": "",
 	"banned.banModal.player": "",
 	"banned.banModal.note": "",
-	"banned.banModal.noteHelp": ""
+	"banned.banModal.noteHelp": "",
+	"banned.banModal.expiresAt": "",
+	"banned.banModal.expiresAtHelp": "",
+	"new.heading": "",
+	"new.noPermissions": ""
 }

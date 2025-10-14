@@ -11,7 +11,7 @@ import type {
 	TournamentData,
 	TournamentDataTeam,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator";
+import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { metaTags } from "~/utils/remix";
 import {
 	teamPage,

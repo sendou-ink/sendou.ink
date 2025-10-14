@@ -12,11 +12,9 @@ import type { LookingGroupWithInviteCode } from "~/features/sendouq/q-types";
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import {
-	createTournamentMapList,
-	type TournamentMapListMap,
-} from "~/modules/tournament-map-list-generator";
+import { generateBalancedMapList } from "~/modules/tournament-map-list-generator/balanced-map-list";
 import { SENDOUQ_DEFAULT_MAPS } from "~/modules/tournament-map-list-generator/constants";
+import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { averageArray } from "~/utils/number";
@@ -44,7 +42,7 @@ export function matchMapList(
 	);
 
 	try {
-		return createTournamentMapList({
+		return generateBalancedMapList({
 			count: SENDOUQ_BEST_OF,
 			seed: String(groupOne.id),
 			modesIncluded,
@@ -71,7 +69,7 @@ export function matchMapList(
 		// in that case, just return a map list from our default set of maps
 	} catch (e) {
 		logger.error(e);
-		return createTournamentMapList({
+		return generateBalancedMapList({
 			count: SENDOUQ_BEST_OF,
 			seed: String(groupOne.id),
 			modesIncluded,

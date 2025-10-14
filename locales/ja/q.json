@@ -67,6 +67,7 @@
 	"settings.sounds.likeReceived": "いいねをもらいました",
 	"settings.sounds.groupNewMember": "新しいメンバーをグループに入れる",
 	"settings.sounds.matchStarted": "マッチ開始",
+	"settings.sounds.tournamentMatchStarted": "",
 	"settings.mapPool.notOk": "モードにつきステージを {{count}} 個選んでください。（避けるステージに入っていない）",
 	"settings.misc.header": "他",
 	"settings.banned": "禁止",

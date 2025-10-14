@@ -1,0 +1,42 @@
+name: E2E Tests
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'content/**'
+      - 'public/**'
+      - 'locales/**'
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'content/**'
+      - 'public/**'
+      - 'locales/**'
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30

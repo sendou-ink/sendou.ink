@@ -17,6 +17,7 @@
 	"forms.showDiscordUniqueName": "Montrer le pseudo Discord",
 	"forms.showDiscordUniqueName.info": "Show your unique Discord name ({{discordUniqueName}}) publicly?",
 	"forms.commissionsOpen": "Commissions acceptées",
+	"forms.commissionsOpen.info": "",
 	"forms.commissionText": "Info pour les commissions",
 	"forms.commissionText.info": "Prix, disponibilités et tout autres info nécéssaires",
 	"forms.customName.info": "Si il n'est pas présent, votre pseudo discord est utilisé: \"{{discordName}}\"",

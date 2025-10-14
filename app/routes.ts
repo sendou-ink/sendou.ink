@@ -120,6 +120,7 @@ export default [
 	]),
 	route("luti", "features/tournament/routes/luti.ts"),
 
+	route("/org/new", "features/tournament-organization/routes/org.new.tsx"),
 	...prefix("/org/:slug", [
 		index("features/tournament-organization/routes/org.$slug.tsx"),
 		route("edit", "features/tournament-organization/routes/org.$slug.edit.tsx"),

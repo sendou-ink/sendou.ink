@@ -5,7 +5,7 @@ import type {
 	ModeWithStage,
 	StageId,
 } from "~/modules/in-game-lists/types";
-import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
+import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";

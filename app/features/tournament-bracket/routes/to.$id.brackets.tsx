@@ -386,7 +386,7 @@ function AddSubsPopOver() {
 	}
 
 	const subsAvailableToAdd =
-		tournament.maxTeamMemberCount - ownedTeam.members.length;
+		tournament.maxMembersPerTeam - ownedTeam.members.length;
 
 	const inviteLink = `${SENDOU_INK_BASE_URL}${tournamentJoinPage({
 		tournamentId: tournament.ctx.id,

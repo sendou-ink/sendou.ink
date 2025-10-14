@@ -37,7 +37,7 @@ test.describe("User page", () => {
 
 		// test changing the big badge
 		await page.getByAltText("Lobster Crossfire").click();
-		expect(page.getByAltText("Lobster Crossfire")).toHaveAttribute(
+		await expect(page.getByAltText("Lobster Crossfire")).toHaveAttribute(
 			"width",
 			"125",
 		);

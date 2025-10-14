@@ -28,7 +28,7 @@ export default function JoinTeamPage() {
 		inviteCode: data.inviteCode,
 		teamToJoin,
 		userId: user?.id,
-		maxTeamSize: tournament.maxTeamMemberCount,
+		maxTeamSize: tournament.maxMembersPerTeam,
 	});
 
 	const textPrompt = () => {

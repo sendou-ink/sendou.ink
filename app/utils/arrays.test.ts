@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { diff, mostPopularArrayElement } from "./arrays";
+import { diff, flatZip, mostPopularArrayElement } from "./arrays";
 
 describe("diff", () => {
 	it("should return elements in arr2 but not in arr1", () => {
@@ -67,5 +67,56 @@ describe("mostPopularArrayElement", () => {
 		const arr = ["only"];
 		const result = mostPopularArrayElement(arr);
 		expect(result).toBe("only");
+	});
+});
+
+describe("flatZip", () => {
+	it("should zip arrays of equal length by alternating elements", () => {
+		const arr1 = [1, 2, 3];
+		const arr2 = ["a", "b", "c"];
+		const result = flatZip(arr1, arr2);
+		expect(result).toEqual([1, "a", 2, "b", 3, "c"]);
+	});
+
+	it("should zip and append remaining elements when second array is longer", () => {
+		const arr1 = [1, 2];
+		const arr2 = ["a", "b", "c"];
+		const result = flatZip(arr1, arr2);
+		expect(result).toEqual([1, "a", 2, "b", "c"]);
+	});
+
+	it("should zip and append remaining elements when first array is longer", () => {
+		const arr1 = [1, 2, 3, 4];
+		const arr2 = ["a", "b"];
+		const result = flatZip(arr1, arr2);
+		expect(result).toEqual([1, "a", 2, "b", 3, 4]);
+	});
+
+	it("should handle empty first array", () => {
+		const arr1: number[] = [];
+		const arr2 = ["a", "b"];
+		const result = flatZip(arr1, arr2);
+		expect(result).toEqual(["a", "b"]);
+	});
+
+	it("should handle empty second array", () => {
+		const arr1 = [1, 2];
+		const arr2: string[] = [];
+		const result = flatZip(arr1, arr2);
+		expect(result).toEqual([1, 2]);
+	});
+
+	it("should handle both empty arrays", () => {
+		const arr1: number[] = [];
+		const arr2: string[] = [];
+		const result = flatZip(arr1, arr2);
+		expect(result).toEqual([]);
+	});
+
+	it("should handle single element arrays", () => {
+		const arr1 = [1];
+		const arr2 = ["a"];
+		const result = flatZip(arr1, arr2);
+		expect(result).toEqual([1, "a"]);
 	});
 });

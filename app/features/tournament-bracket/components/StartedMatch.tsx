@@ -26,7 +26,7 @@ import { useIsMounted } from "~/hooks/useIsMounted";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import type { StageId } from "~/modules/in-game-lists/types";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
-import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
+import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { nullFilledArray } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { Unpacked } from "~/utils/types";
