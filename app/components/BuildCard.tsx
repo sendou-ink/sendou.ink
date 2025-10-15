@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import type { GearType, Tables, UserWithPlusTier } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
-import type { BuildWeaponWithTop500Info } from "~/features/builds/queries/buildsBy.server";
+import type { BuildWeaponWithTop500Info } from "~/features/builds/builds-types";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import type {
 	Ability as AbilityType,
@@ -47,25 +47,14 @@ interface BuildProps {
 		| "private"
 	> & {
 		abilities: BuildAbilitiesTuple;
-		unsortedAbilities: BuildAbilitiesTuple;
 		modes: ModeShort[] | null;
-		weapons: Array<{
-			weaponSplId: Tables["BuildWeapon"]["weaponSplId"];
-			minRank: number | null;
-			maxPower: number | null;
-		}>;
+		weapons: Array<BuildWeaponWithTop500Info>;
 	};
 	owner?: Pick<UserWithPlusTier, "discordId" | "username" | "plusTier">;
 	canEdit?: boolean;
-	withAbilitySorting?: boolean;
 }
 
-export function BuildCard({
-	build,
-	owner,
-	canEdit = false,
-	withAbilitySorting = true,
-}: BuildProps) {
+export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 	const user = useUser();
 	const { t } = useTranslation(["weapons", "builds", "common", "game-misc"]);
 	const { i18n } = useTranslation();
@@ -81,11 +70,8 @@ export function BuildCard({
 		updatedAt,
 		modes,
 		weapons,
+		abilities,
 	} = build;
-
-	const abilities = withAbilitySorting
-		? build.abilities
-		: build.unsortedAbilities;
 
 	const isNoGear = [headGearSplId, clothesGearSplId, shoesGearSplId].some(
 		(id) => id === -1,
@@ -246,24 +232,21 @@ export function BuildCard({
 }
 
 function RoundWeaponImage({ weapon }: { weapon: BuildWeaponWithTop500Info }) {
-	const { weaponSplId, maxPower, minRank } = weapon;
-	const normalizedWeaponSplId = altWeaponIdToId.get(weaponSplId) ?? weaponSplId;
+	const normalizedWeaponSplId =
+		altWeaponIdToId.get(weapon.weaponSplId) ?? weapon.weaponSplId;
 
 	const { t } = useTranslation(["weapons"]);
 	const slug = mySlugify(
 		t(`weapons:MAIN_${normalizedWeaponSplId}`, { lng: "en" }),
 	);
 
-	const isTop500 = typeof maxPower === "number" && typeof minRank === "number";
-
 	return (
-		<div key={weaponSplId} className={styles.weapon}>
-			{isTop500 ? (
+		<div key={weapon.weaponSplId} className={styles.weapon}>
+			{weapon.isTop500 ? (
 				<Image
 					className={styles.top500}
 					path={navIconUrl("xsearch")}
 					alt=""
-					title={`Max X Power: ${maxPower} | Best Rank: ${minRank}`}
 					height={24}
 					width={24}
 					testId="top500-crown"
@@ -271,9 +254,9 @@ function RoundWeaponImage({ weapon }: { weapon: BuildWeaponWithTop500Info }) {
 			) : null}
 			<Link to={weaponBuildPage(slug)}>
 				<Image
-					path={mainWeaponImageUrl(weaponSplId)}
-					alt={t(`weapons:MAIN_${weaponSplId}` as any)}
-					title={t(`weapons:MAIN_${weaponSplId}` as any)}
+					path={mainWeaponImageUrl(weapon.weaponSplId)}
+					alt={t(`weapons:MAIN_${weapon.weaponSplId}`)}
+					title={t(`weapons:MAIN_${weapon.weaponSplId}`)}
 					height={36}
 					width={36}
 				/>

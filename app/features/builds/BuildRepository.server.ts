@@ -1,5 +1,5 @@
-import type { Transaction } from "kysely";
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
+import type { ExpressionBuilder, Transaction } from "kysely";
+import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { BuildWeapon, DB, Tables, TablesInsertable } from "~/db/tables";
 import { modesShort } from "~/modules/in-game-lists/modes";
@@ -9,41 +9,21 @@ import type {
 	MainWeaponId,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
+import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
+import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { sortAbilities } from "./core/ability-sorting.server";
 
-export async function allByUserId({
-	userId,
-	showPrivate,
-}: {
-	userId: number;
-	showPrivate: boolean;
-}) {
+export async function allByUserId(
+	userId: number,
+	options: {
+		showPrivate?: boolean;
+		sortAbilities?: boolean;
+	} = {},
+) {
+	const { showPrivate = false, sortAbilities: shouldSortAbilities = false } =
+		options;
 	const rows = await db
-		.with("Top500Weapon", (db) =>
-			db
-				.selectFrom("Build")
-				.innerJoin("BuildWeapon", "Build.id", "BuildWeapon.buildId")
-				.leftJoin("SplatoonPlayer", (join) =>
-					join.on("SplatoonPlayer.userId", "=", userId),
-				)
-				.leftJoin("XRankPlacement", (join) =>
-					join
-						.onRef("XRankPlacement.playerId", "=", "SplatoonPlayer.id")
-						.onRef(
-							"XRankPlacement.weaponSplId",
-							"=",
-							"BuildWeapon.weaponSplId",
-						),
-				)
-				.select(({ fn }) => [
-					"BuildWeapon.buildId",
-					"BuildWeapon.weaponSplId",
-					fn.min("XRankPlacement.rank").as("minRank"),
-					fn.max("XRankPlacement.power").as("maxPower"),
-				])
-				.where("Build.ownerId", "=", userId)
-				.groupBy(["BuildWeapon.buildId", "BuildWeapon.weaponSplId"]),
-		)
 		.selectFrom("Build")
 		.select(({ eb }) => [
 			"Build.id",
@@ -57,34 +37,25 @@ export async function allByUserId({
 			"Build.private",
 			jsonArrayFrom(
 				eb
-					.selectFrom("Top500Weapon")
-					.select([
-						"Top500Weapon.weaponSplId",
-						"Top500Weapon.maxPower",
-						"Top500Weapon.minRank",
-					])
-					.orderBy("Top500Weapon.weaponSplId", "asc")
-					.whereRef("Top500Weapon.buildId", "=", "Build.id"),
+					.selectFrom("BuildWeapon")
+					.select(["BuildWeapon.weaponSplId", "BuildWeapon.isTop500"])
+					.orderBy("BuildWeapon.weaponSplId", "asc")
+					.whereRef("BuildWeapon.buildId", "=", "Build.id"),
 			).as("weapons"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("BuildAbility")
-					.select([
-						"BuildAbility.gearType",
-						"BuildAbility.ability",
-						"BuildAbility.slotIndex",
-					])
-					.whereRef("BuildAbility.buildId", "=", "Build.id"),
-			).as("abilities"),
+			withAbilities(eb),
 		])
 		.where("Build.ownerId", "=", userId)
 		.$if(!showPrivate, (qb) => qb.where("Build.private", "=", 0))
 		.execute();
 
-	return rows.map((row) => ({
-		...row,
-		abilities: dbAbilitiesToArrayOfArrays(row.abilities),
-	}));
+	return rows.map((row) => {
+		const abilities = dbAbilitiesToArrayOfArrays(row.abilities);
+
+		return {
+			...row,
+			abilities: shouldSortAbilities ? sortAbilities(abilities) : abilities,
+		};
+	});
 }
 
 const gearOrder: Array<Tables["BuildAbility"]["gearType"]> = [
@@ -185,6 +156,13 @@ export async function createInTrx({
 		.execute();
 
 	await trx
+		.updateTable("BuildWeapon")
+		.set({ isTop500: 1 })
+		.where("buildId", "=", buildId)
+		.where(hasXRankPlacement)
+		.execute();
+
+	await trx
 		.insertInto("BuildAbility")
 		.values(
 			args.abilities.flatMap((row, rowI) =>
@@ -263,3 +241,107 @@ export type AverageAbilityPointsResult = Awaited<
 export type AbilitiesByWeapon = Awaited<
 	ReturnType<typeof popularAbilitiesByWeaponId>
 >[number];
+
+export async function allByWeaponId(
+	weaponId: MainWeaponId,
+	options: { limit: number; sortAbilities?: boolean },
+) {
+	const { limit, sortAbilities: shouldSortAbilities = false } = options;
+	const rows = await db
+		.selectFrom("BuildWeapon")
+		.innerJoin("Build", "Build.id", "BuildWeapon.buildId")
+		.leftJoin("PlusTier", "PlusTier.userId", "Build.ownerId")
+		.select(({ eb }) => [
+			"Build.id",
+			"Build.title",
+			"Build.description",
+			"Build.modes",
+			"Build.headGearSplId",
+			"Build.clothesGearSplId",
+			"Build.shoesGearSplId",
+			"Build.updatedAt",
+			"Build.private",
+			"PlusTier.tier as plusTier",
+			withAbilities(eb),
+			jsonArrayFrom(
+				eb
+					.selectFrom("BuildWeapon as BuildWeaponInner")
+					.select(["BuildWeaponInner.weaponSplId", "BuildWeaponInner.isTop500"])
+					.orderBy("BuildWeaponInner.weaponSplId", "asc")
+					.whereRef("BuildWeaponInner.buildId", "=", "Build.id"),
+			).as("weapons"),
+			jsonObjectFrom(
+				eb
+					.selectFrom("User")
+					.select([...COMMON_USER_FIELDS])
+					.whereRef("User.id", "=", "Build.ownerId"),
+			).as("owner"),
+		])
+		.where("BuildWeapon.weaponSplId", "in", weaponIdToArrayWithAlts(weaponId))
+		.where("Build.private", "=", 0)
+		.orderBy(
+			(eb) =>
+				eb
+					.case()
+					.when("PlusTier.tier", "is", null)
+					.then(4)
+					.else(eb.ref("PlusTier.tier"))
+					.end(),
+			"asc",
+		)
+		.orderBy("BuildWeapon.isTop500", "desc")
+		.orderBy("Build.updatedAt", "desc")
+		.limit(limit)
+		.execute();
+
+	return rows.map((row) => {
+		const abilities = dbAbilitiesToArrayOfArrays(row.abilities);
+
+		return {
+			...row,
+			abilities: shouldSortAbilities ? sortAbilities(abilities) : abilities,
+		};
+	});
+}
+
+function withAbilities(eb: ExpressionBuilder<DB, "Build">) {
+	return jsonArrayFrom(
+		eb
+			.selectFrom("BuildAbility")
+			.select([
+				"BuildAbility.gearType",
+				"BuildAbility.ability",
+				"BuildAbility.slotIndex",
+			])
+			.whereRef("BuildAbility.buildId", "=", "Build.id"),
+	).as("abilities");
+}
+
+function hasXRankPlacement(eb: ExpressionBuilder<DB, "BuildWeapon">) {
+	return eb.exists(
+		eb
+			.selectFrom("Build")
+			.select("BuildWeapon.buildId")
+			.leftJoin("SplatoonPlayer", "SplatoonPlayer.userId", "Build.ownerId")
+			.leftJoin(
+				"XRankPlacement",
+				"XRankPlacement.playerId",
+				"SplatoonPlayer.id",
+			)
+			.whereRef("Build.id", "=", "BuildWeapon.buildId")
+			.whereRef("XRankPlacement.weaponSplId", "=", "BuildWeapon.weaponSplId"),
+	);
+}
+
+/** Recalculates which build weapons are top 500 based on latest X Rank placements data. */
+export async function recalculateAllTop500() {
+	await db.transaction().execute(async (trx) => {
+		await trx.updateTable("BuildWeapon").set({ isTop500: 0 }).execute();
+
+		await trx
+			.updateTable("BuildWeapon")
+			.set({ isTop500: 1 })
+			.where(hasXRankPlacement)
+			.execute();
+	});
+}

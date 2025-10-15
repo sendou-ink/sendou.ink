@@ -131,6 +131,8 @@ export interface BuildAbility {
 export interface BuildWeapon {
 	buildId: number;
 	weaponSplId: MainWeaponId;
+	/** Has the owner of this build reached top 500 of X Rank with this weapon? Denormalized for performance reasons. */
+	isTop500: Generated<DBBoolean>;
 }
 
 export type CalendarEventTag = keyof typeof tags;
