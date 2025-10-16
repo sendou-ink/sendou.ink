@@ -133,6 +133,90 @@ describe("PreparedMaps - resolvePreparedForTheBracket", () => {
 
 		expect(prepared).toBeNull();
 	});
+
+	test("returns sibling bracket maps based on depth, not source indices", () => {
+		const tournamentWithMultipleStarts = testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "round_robin",
+							name: "Group A",
+							requiresCheckIn: false,
+							settings: {},
+						},
+						{
+							type: "round_robin",
+							name: "Group B",
+							requiresCheckIn: false,
+							settings: {},
+						},
+						{
+							type: "single_elimination",
+							name: "Playoffs A",
+							requiresCheckIn: false,
+							settings: {},
+							sources: [
+								{
+									bracketIdx: 0,
+									placements: [1, 2],
+								},
+							],
+						},
+						{
+							type: "single_elimination",
+							name: "Playoffs B",
+							requiresCheckIn: false,
+							settings: {},
+							sources: [
+								{
+									bracketIdx: 1,
+									placements: [1, 2],
+								},
+							],
+						},
+					],
+				},
+			},
+		});
+
+		const prepared = PreparedMaps.resolvePreparedForTheBracket({
+			tournament: tournamentWithMultipleStarts,
+			bracketIdx: 3,
+			preparedByBracket: [
+				null,
+				null,
+				{
+					authorId: 1,
+					createdAt: 1,
+					maps: [],
+				},
+				null,
+			],
+		});
+
+		expect(prepared).not.toBeNull();
+	});
+
+	test("returns null if brackets are at different depths", () => {
+		const tournament = getTestTournament();
+
+		const prepared = PreparedMaps.resolvePreparedForTheBracket({
+			tournament,
+			bracketIdx: 1,
+			preparedByBracket: [
+				{
+					authorId: 1,
+					createdAt: 1,
+					maps: [],
+				},
+				null,
+				null,
+			],
+		});
+
+		expect(prepared).toBeNull();
+	});
 });
 
 describe("PreparedMaps - eliminationTeamCountOptions", () => {
