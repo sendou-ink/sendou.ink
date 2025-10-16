@@ -32,9 +32,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		showHighlightsOnly = false;
 	}
 
-	const page = parsedSearchParams.success
-		? (parsedSearchParams.data.page ?? 1)
-		: 1;
+	const page = parsedSearchParams.success ? parsedSearchParams.data.page : 1;
 
 	const [results, totalCount] = await Promise.all([
 		UserRepository.findResultsByUserId(userId, {
@@ -47,13 +45,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	]);
 
 	const maxPage = Math.ceil(totalCount / RESULTS_PER_PAGE);
-	if (page > maxPage && page !== 1) {
-		const url = new URL(request.url);
-		const pathname = url.pathname;
-		const searchParams = url.searchParams;
-		searchParams.set("page", String(maxPage));
-		return redirect(`${pathname}?${searchParams.toString()}`);
-	}
+
+	redirectIfPageOutOfBounds({ request, page, maxPage });
 
 	return {
 		results: {
@@ -64,3 +57,20 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		hasHighlightedResults,
 	};
 };
+
+function redirectIfPageOutOfBounds({
+	request,
+	page,
+	maxPage,
+}: {
+	request: Request;
+	page: number;
+	maxPage: number;
+}) {
+	if (page <= maxPage || page === 1) return;
+
+	const url = new URL(request.url);
+	const searchParams = new URLSearchParams(url.searchParams);
+	searchParams.set("page", String(maxPage));
+	throw redirect(`${url.pathname}?${searchParams.toString()}`);
+}
