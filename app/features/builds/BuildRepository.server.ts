@@ -123,7 +123,7 @@ export async function createInTrx({
 	args: CreateArgs;
 	trx: Transaction<DB>;
 }) {
-	const { id: buildId } = await trx
+	const { id: buildId, updatedAt } = await trx
 		.insertInto("Build")
 		.values({
 			ownerId: args.ownerId,
@@ -142,7 +142,7 @@ export async function createInTrx({
 			shoesGearSplId: args.shoesGearSplId,
 			private: args.private,
 		})
-		.returning("id")
+		.returningAll()
 		.executeTakeFirstOrThrow();
 
 	await trx
@@ -160,6 +160,24 @@ export async function createInTrx({
 		.set({ isTop500: 1 })
 		.where("buildId", "=", buildId)
 		.where(hasXRankPlacement)
+		.execute();
+
+	const tier =
+		(
+			await trx
+				.selectFrom("PlusTier")
+				.select("tier")
+				.where("userId", "=", args.ownerId)
+				.executeTakeFirst()
+		)?.tier ?? 4;
+
+	await trx
+		.updateTable("BuildWeapon")
+		.set({
+			tier,
+			updatedAt,
+		})
+		.where("buildId", "=", buildId)
 		.execute();
 
 	await trx
@@ -199,10 +217,11 @@ export async function abilityPointAverages(weaponSplId?: MainWeaponId | null) {
 			"BuildAbility.ability",
 			fn.sum<number>("BuildAbility.abilityPoints").as("abilityPointsSum"),
 		])
-		.innerJoin("BuildWeapon", "BuildAbility.buildId", "BuildWeapon.buildId")
-		.innerJoin("Build", "Build.id", "BuildWeapon.buildId")
+		.innerJoin("Build", "Build.id", "BuildAbility.buildId")
 		.$if(typeof weaponSplId === "number", (qb) =>
-			qb.where("BuildWeapon.weaponSplId", "=", weaponSplId!),
+			qb
+				.innerJoin("BuildWeapon", "BuildAbility.buildId", "BuildWeapon.buildId")
+				.where("BuildWeapon.weaponSplId", "=", weaponSplId!),
 		)
 		.groupBy("BuildAbility.ability")
 		.where("Build.private", "=", 0)
@@ -277,20 +296,11 @@ export async function allByWeaponId(
 					.whereRef("User.id", "=", "Build.ownerId"),
 			).as("owner"),
 		])
-		.where("BuildWeapon.weaponSplId", "in", weaponIdToArrayWithAlts(weaponId))
 		.where("Build.private", "=", 0)
-		.orderBy(
-			(eb) =>
-				eb
-					.case()
-					.when("PlusTier.tier", "is", null)
-					.then(4)
-					.else(eb.ref("PlusTier.tier"))
-					.end(),
-			"asc",
-		)
+		.where("BuildWeapon.weaponSplId", "in", weaponIdToArrayWithAlts(weaponId))
+		.orderBy("BuildWeapon.tier", "asc")
 		.orderBy("BuildWeapon.isTop500", "desc")
-		.orderBy("Build.updatedAt", "desc")
+		.orderBy("BuildWeapon.updatedAt", "desc")
 		.limit(limit)
 		.execute();
 
@@ -343,5 +353,37 @@ export async function recalculateAllTop500() {
 			.set({ isTop500: 1 })
 			.where(hasXRankPlacement)
 			.execute();
+	});
+}
+
+export async function recalculateAllTiers() {
+	await db.transaction().execute(async (trx) => {
+		await trx
+			.updateTable("BuildWeapon")
+			.set({
+				tier: 4,
+			})
+			.execute();
+
+		for (const tier of [3, 2, 1]) {
+			const tierMembers = (
+				await trx
+					.selectFrom("PlusTier")
+					.select("userId")
+					.where("tier", "=", tier)
+					.execute()
+			).map((r) => r.userId);
+
+			await trx
+				.updateTable("BuildWeapon")
+				.set({ tier })
+				.where("BuildWeapon.buildId", "in", (eb) =>
+					eb
+						.selectFrom("Build")
+						.select("Build.id")
+						.where("Build.ownerId", "in", tierMembers),
+				)
+				.execute();
+		}
 	});
 }

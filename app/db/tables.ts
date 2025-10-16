@@ -133,6 +133,10 @@ export interface BuildWeapon {
 	weaponSplId: MainWeaponId;
 	/** Has the owner of this build reached top 500 of X Rank with this weapon? Denormalized for performance reasons. */
 	isTop500: Generated<DBBoolean>;
+	/** Plus tier or 4 if none. Denormalized for performance reasons. */
+	tier: Generated<number>;
+	/** Last time the build was updated. Denormalized for performance reasons. */
+	updatedAt: Generated<number>;
 }
 
 export type CalendarEventTag = keyof typeof tags;
