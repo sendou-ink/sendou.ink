@@ -814,3 +814,53 @@ describe("validatedBracketsToInputFormat", () => {
 		]);
 	});
 });
+
+describe("bracketDepth", () => {
+	it("returns 0 for starting bracket with no sources", () => {
+		expect(Progression.bracketDepth(0, progressions.singleElimination)).toBe(0);
+	});
+
+	it("returns 0 for starting bracket and 1 for bracket sourced from it", () => {
+		expect(
+			Progression.bracketDepth(0, progressions.roundRobinToSingleElimination),
+		).toBe(0);
+		expect(
+			Progression.bracketDepth(1, progressions.roundRobinToSingleElimination),
+		).toBe(1);
+	});
+
+	it("handles complex progression with multiple depth levels", () => {
+		expect(Progression.bracketDepth(0, progressions.lowInk)).toBe(0);
+		expect(Progression.bracketDepth(1, progressions.lowInk)).toBe(1);
+		expect(Progression.bracketDepth(2, progressions.lowInk)).toBe(1);
+		expect(Progression.bracketDepth(3, progressions.lowInk)).toBe(2);
+	});
+
+	it("handles multiple starting brackets", () => {
+		expect(Progression.bracketDepth(0, progressions.manyStartBrackets)).toBe(0);
+		expect(Progression.bracketDepth(1, progressions.manyStartBrackets)).toBe(0);
+		expect(Progression.bracketDepth(2, progressions.manyStartBrackets)).toBe(1);
+		expect(Progression.bracketDepth(3, progressions.manyStartBrackets)).toBe(1);
+	});
+
+	it("handles underground brackets", () => {
+		expect(
+			Progression.bracketDepth(
+				0,
+				progressions.doubleEliminationWithUnderground,
+			),
+		).toBe(0);
+		expect(
+			Progression.bracketDepth(
+				1,
+				progressions.doubleEliminationWithUnderground,
+			),
+		).toBe(1);
+	});
+
+	it("throws if given idx is out of bounds", () => {
+		expect(() =>
+			Progression.bracketDepth(1, progressions.singleElimination),
+		).toThrow();
+	});
+});
