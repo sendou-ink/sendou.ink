@@ -10,9 +10,9 @@ import { cachedBannedUsers, userIsBanned } from "../core/banned.server";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const userId = await getUserIdEvenIfBanned(request);
 
-	if (!userId || !userIsBanned(userId)) return redirect("/");
+	if (!userId || !(await userIsBanned(userId))) return redirect("/");
 
-	const bannedStatus = cachedBannedUsers().get(userId)!;
+	const bannedStatus = (await cachedBannedUsers()).get(userId)!;
 
 	return {
 		banned: bannedStatus.banned,
