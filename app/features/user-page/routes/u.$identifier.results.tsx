@@ -1,6 +1,7 @@
 import { useLoaderData, useMatches, useSearchParams } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { LinkButton } from "~/components/elements/Button";
+import { Pagination } from "~/components/Pagination";
 import { useUser } from "~/features/auth/core/user";
 import { UserResultsTable } from "~/features/user-page/components/UserResultsTable";
 import invariant from "~/utils/invariant";
@@ -22,6 +23,13 @@ export default function UserResultsPage() {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const showAll = searchParams.get("all") === "true";
 
+	const setPage = (page: number) => {
+		setSearchParams((params) => {
+			params.set("page", String(page));
+			return params;
+		});
+	};
+
 	return (
 		<div className="stack lg">
 			<div className="stack horizontal justify-between items-center">
@@ -38,7 +46,16 @@ export default function UserResultsPage() {
 					</LinkButton>
 				) : null}
 			</div>
-			<UserResultsTable id="user-results-table" results={data.results} />
+			<UserResultsTable id="user-results-table" results={data.results.value} />
+			{data.results.pages > 1 ? (
+				<Pagination
+					currentPage={data.results.currentPage}
+					pagesCount={data.results.pages}
+					nextPage={() => setPage(data.results.currentPage + 1)}
+					previousPage={() => setPage(data.results.currentPage - 1)}
+					setPage={setPage}
+				/>
+			) : null}
 			{data.hasHighlightedResults ? (
 				<SendouButton
 					variant="minimal"
@@ -46,6 +63,7 @@ export default function UserResultsPage() {
 					onPress={() =>
 						setSearchParams((params) => {
 							params.set("all", showAll ? "false" : "true");
+							params.delete("page");
 
 							return params;
 						})
