@@ -72,6 +72,10 @@ export async function notify({
 
 const sentNotifications = new Set<string>();
 
+export function clearSentNotificationsForTesting() {
+	sentNotifications.clear();
+}
+
 // deduplicates notifications as a failsafe & anti-abuse mechanism
 function isNotificationAlreadySent(
 	notification: Notification,
