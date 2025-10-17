@@ -20,7 +20,7 @@ import type { UserResultsLoaderData } from "../loaders/u.$identifier.results.ser
 import { ParticipationPill } from "./ParticipationPill";
 
 export type UserResultsTableProps = {
-	results: UserResultsLoaderData["results"];
+	results: UserResultsLoaderData["results"]["value"];
 	id: string;
 	hasHighlightCheckboxes?: boolean;
 };
