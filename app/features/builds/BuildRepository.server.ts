@@ -9,7 +9,10 @@ import type {
 	MainWeaponId,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
+import {
+	weaponIdHasAlts,
+	weaponIdToArrayWithAlts,
+} from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { sortAbilities } from "./core/ability-sorting.server";
@@ -266,7 +269,8 @@ export async function allByWeaponId(
 	options: { limit: number; sortAbilities?: boolean },
 ) {
 	const { limit, sortAbilities: shouldSortAbilities = false } = options;
-	const rows = await db
+
+	let query = db
 		.selectFrom("BuildWeapon")
 		.innerJoin("Build", "Build.id", "BuildWeapon.buildId")
 		.leftJoin("PlusTier", "PlusTier.userId", "Build.ownerId")
@@ -301,8 +305,13 @@ export async function allByWeaponId(
 		.orderBy("BuildWeapon.tier", "asc")
 		.orderBy("BuildWeapon.isTop500", "desc")
 		.orderBy("BuildWeapon.updatedAt", "desc")
-		.limit(limit)
-		.execute();
+		.limit(limit);
+
+	if (weaponIdHasAlts(weaponId)) {
+		query = query.groupBy("BuildWeapon.buildId");
+	}
+
+	const rows = await query.execute();
 
 	return rows.map((row) => {
 		const abilities = dbAbilitiesToArrayOfArrays(row.abilities);
