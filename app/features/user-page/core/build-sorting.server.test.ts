@@ -25,7 +25,7 @@ const mockBuild = (
 		private: 0,
 		title: "",
 		updatedAt: databaseTimestampNow(),
-		weapons: [{ weaponSplId: 0, maxPower: null, minRank: null }],
+		weapons: [{ weaponSplId: 0, isTop500: 0 }],
 		...partialBuild,
 	};
 };
@@ -53,13 +53,13 @@ describe("sortBuilds()", () => {
 			mockBuild({ id: 1 }),
 			mockBuild({
 				id: 2,
-				weapons: [{ weaponSplId: 1, maxPower: 3000, minRank: 1 }],
+				weapons: [{ weaponSplId: 1, isTop500: 1 }],
 			}),
 			mockBuild({
 				id: 3,
 				weapons: [
-					{ weaponSplId: 0, maxPower: null, minRank: null },
-					{ weaponSplId: 1, maxPower: 2900, minRank: 1 },
+					{ weaponSplId: 0, isTop500: 0 },
+					{ weaponSplId: 1, isTop500: 1 },
 				],
 			}),
 		];
@@ -111,15 +111,15 @@ describe("sortBuilds()", () => {
 		const builds = [
 			mockBuild({
 				id: 1,
-				weapons: [{ weaponSplId: 1000, maxPower: null, minRank: null }],
+				weapons: [{ weaponSplId: 1000, isTop500: 0 }],
 			}),
 			mockBuild({
 				id: 2,
-				weapons: [{ weaponSplId: 10, maxPower: null, minRank: null }],
+				weapons: [{ weaponSplId: 10, isTop500: 0 }],
 			}),
 			mockBuild({
 				id: 3,
-				weapons: [{ weaponSplId: 1, maxPower: null, minRank: null }],
+				weapons: [{ weaponSplId: 1, isTop500: 0 }],
 			}),
 		];
 
@@ -142,8 +142,7 @@ describe("sortBuilds()", () => {
 				id,
 				weapons: weaponIds.map((wepId) => ({
 					weaponSplId: wepId,
-					maxPower: null,
-					minRank: null,
+					isTop500: 0,
 				})),
 			});
 		};
@@ -223,17 +222,17 @@ describe("sortBuilds()", () => {
 		const builds = [
 			mockBuild({
 				id: 1,
-				weapons: [{ weaponSplId: 1, maxPower: null, minRank: null }],
+				weapons: [{ weaponSplId: 1, isTop500: 0 }],
 			}),
 			mockBuild({
 				id: 2,
-				weapons: [{ weaponSplId: 10, maxPower: null, minRank: null }],
+				weapons: [{ weaponSplId: 10, isTop500: 0 }],
 			}),
 			mockBuild({
 				id: 3,
 				weapons: [
-					{ weaponSplId: 1000, maxPower: null, minRank: null },
-					{ weaponSplId: 1, maxPower: null, minRank: null },
+					{ weaponSplId: 1000, isTop500: 0 },
+					{ weaponSplId: 1, isTop500: 0 },
 				],
 			}),
 		];

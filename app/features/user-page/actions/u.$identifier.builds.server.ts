@@ -3,9 +3,7 @@ import { z } from "zod/v4";
 import { BUILD_SORT_IDENTIFIERS } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
-import { refreshBuildsCacheByWeaponSplIds } from "~/features/builds/core/cached-builds.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { logger } from "~/utils/logger";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { userBuildsPage } from "~/utils/urls";
@@ -28,8 +26,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 	switch (data._action) {
 		case "DELETE_BUILD": {
-			const usersBuilds = await BuildRepository.allByUserId({
-				userId: user.id,
+			const usersBuilds = await BuildRepository.allByUserId(user.id, {
 				showPrivate: true,
 			});
 
@@ -40,14 +37,6 @@ export const action: ActionFunction = async ({ request }) => {
 			errorToastIfFalsy(buildToDelete, "Build to delete not found");
 
 			await BuildRepository.deleteById(data.buildToDeleteId);
-
-			try {
-				refreshBuildsCacheByWeaponSplIds(
-					buildToDelete.weapons.map((weapon) => weapon.weaponSplId),
-				);
-			} catch (error) {
-				logger.warn("Error refreshing builds cache", error);
-			}
 
 			break;
 		}

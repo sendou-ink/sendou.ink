@@ -4,6 +4,7 @@ import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { makeArtist } from "~/features/art/queries/makeArtist.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
+import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import {
@@ -56,6 +57,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			await AdminRepository.replacePlusTiers(
 				await plusTiersFromVotingAndLeaderboard(),
 			);
+
+			await BuildRepository.recalculateAllTiers();
 
 			message = "Plus tiers refreshed";
 			break;

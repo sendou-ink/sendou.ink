@@ -1,11 +1,11 @@
 import { cachified } from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "@remix-run/node";
+import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { i18next } from "~/modules/i18n/i18next.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { notFoundIfNullLike } from "~/utils/remix.server";
 import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import { popularBuilds } from "../build-stats-utils";
-import { abilitiesByWeaponId } from "../queries/abilitiesByWeaponId.server";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const t = await i18next.getFixedT(request, ["builds", "weapons"]);
@@ -19,7 +19,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		cache,
 		ttl: ttl(IN_MILLISECONDS.ONE_HOUR),
 		async getFreshValue() {
-			return popularBuilds(abilitiesByWeaponId(weaponId));
+			return popularBuilds(
+				await BuildRepository.popularAbilitiesByWeaponId(weaponId),
+			);
 		},
 	});
 

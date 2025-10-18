@@ -1,6 +1,7 @@
 import type { Transaction } from "kysely";
 import { db, sql } from "~/db/sql";
 import type { DB, Tables, TablesInsertable } from "~/db/tables";
+import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { syncXPBadges } from "../badges/queries/syncXPBadges.server";
@@ -218,6 +219,7 @@ export async function linkUserAndPlayer({
 		.execute();
 
 	syncXPBadges();
+	await BuildRepository.recalculateAllTop500();
 }
 
 export function forcePatron(args: {

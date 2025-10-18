@@ -18,7 +18,6 @@ import { FilterIcon } from "~/components/icons/Filter";
 import { FireIcon } from "~/components/icons/Fire";
 import { MapIcon } from "~/components/icons/Map";
 import { Main } from "~/components/Main";
-import { useUser } from "~/features/auth/core/user";
 import { safeJSONParse } from "~/utils/json";
 import { isRevalidation, metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -160,8 +159,6 @@ export const handle: SendouRouteHandle = {
 };
 
 export function BuildCards({ data }: { data: SerializeFrom<typeof loader> }) {
-	const user = useUser();
-
 	return (
 		<div className={styles.buildsContainer}>
 			{data.builds.map((build) => {
@@ -169,9 +166,12 @@ export function BuildCards({ data }: { data: SerializeFrom<typeof loader> }) {
 					<BuildCard
 						key={build.id}
 						build={build}
-						owner={build}
+						owner={
+							build.owner
+								? { ...build.owner, plusTier: build.plusTier }
+								: undefined
+						}
 						canEdit={false}
-						withAbilitySorting={!user?.preferences.disableBuildAbilitySorting}
 					/>
 				);
 			})}
