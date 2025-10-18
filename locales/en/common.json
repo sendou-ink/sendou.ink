@@ -78,6 +78,8 @@
 	"notifications.text.SCRIM_SCHEDULED": "New scrim scheduled at {{timeString}}",
 	"notifications.title.SCRIM_CANCELED": "Scrim Canceled",
 	"notifications.text.SCRIM_CANCELED": "The scrim at {{timeString}} was canceled",
+	"notifications.title.SCRIM_STARTING_SOON": "Scrim Starting Soon",
+	"notifications.text.SCRIM_STARTING_SOON": "Your scrim at {{timeString}} is starting soon",
 	"notifications.title.COMMISSIONS_CLOSED": "Commissions Closed",
 	"notifications.text.COMMISSIONS_CLOSED": "If your commissions are still open, please re-enable them",
 	"auth.errors.aborted": "Login Aborted",

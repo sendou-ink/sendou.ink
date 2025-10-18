@@ -38,6 +38,7 @@ export const notificationNavIcon = (type: Notification["type"]) => {
 		case "SCRIM_NEW_REQUEST":
 		case "SCRIM_SCHEDULED":
 		case "SCRIM_CANCELED":
+		case "SCRIM_STARTING_SOON":
 			return "scrims";
 		default:
 			assertUnreachable(type);
@@ -82,7 +83,8 @@ export const notificationLink = (notification: Notification) => {
 			return scrimsPage();
 		}
 		case "SCRIM_CANCELED":
-		case "SCRIM_SCHEDULED": {
+		case "SCRIM_SCHEDULED":
+		case "SCRIM_STARTING_SOON": {
 			return scrimPage(notification.meta.id);
 		}
 		case "COMMISSIONS_CLOSED": {
@@ -100,7 +102,8 @@ export const mapMetaForTranslation = (
 ) => {
 	if (
 		notification.type === "SCRIM_SCHEDULED" ||
-		notification.type === "SCRIM_CANCELED"
+		notification.type === "SCRIM_CANCELED" ||
+		notification.type === "SCRIM_STARTING_SOON"
 	) {
 		return {
 			...notification.meta,

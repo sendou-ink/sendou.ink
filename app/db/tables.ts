@@ -967,6 +967,8 @@ export interface ScrimPost {
 	id: GeneratedAlways<number>;
 	/** When is the scrim scheduled to happen */
 	at: number;
+	/** Optional end of time range indicating team accepts scrims starting between at and rangeEnd */
+	rangeEnd: number | null;
 	/** Highest LUTI div accepted */
 	maxDiv: number | null;
 	/** Lowest LUTI div accepted */
@@ -1004,6 +1006,9 @@ export interface ScrimPostRequest {
 	id: GeneratedAlways<number>;
 	scrimPostId: number;
 	teamId: number | null;
+	message: string | null;
+	/** Specific time selected by requester (required when post has rangeEnd) */
+	at: number | null;
 	isAccepted: Generated<DBBoolean>;
 	createdAt: GeneratedAlways<number>;
 }

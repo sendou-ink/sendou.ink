@@ -1,16 +1,22 @@
 import { Link, useLoaderData } from "@remix-run/react";
+import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod/v4";
 import { Alert } from "~/components/Alert";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
+import { SendouPopover } from "~/components/elements/Popover";
 import { SendouForm } from "~/components/form/SendouForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
+import { Image } from "~/components/Image";
+import { AlertIcon } from "~/components/icons/Alert";
+import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import TimePopover from "~/components/TimePopover";
 import { SCRIM } from "~/features/scrims/scrims-constants";
 import { cancelScrimSchema } from "~/features/scrims/scrims-schemas";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { userSubmittedImage } from "~/utils/urls-img";
@@ -21,6 +27,7 @@ import { logger } from "../../../utils/logger";
 import {
 	navIconUrl,
 	scrimsPage,
+	specialWeaponImageUrl,
 	teamPage,
 	userPage,
 } from "../../../utils/urls";
@@ -96,6 +103,7 @@ export default function ScrimPage() {
 					header={t("q:match.pool")}
 					value={Scrim.resolvePoolCode(data.post.id)}
 				/>
+				<ScreenBanIndicator />
 			</div>
 			<ScrimChat />
 		</Main>
@@ -127,11 +135,14 @@ function ScrimHeader() {
 	const { t } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof loader>();
 
+	const acceptedRequest = data.post.requests.find((r) => r.isAccepted);
+	const scrimTime = acceptedRequest?.at ?? data.post.at;
+
 	return (
 		<div className="line-height-tight" data-testid="match-header">
 			<h2 className="text-lg">
 				<TimePopover
-					time={databaseTimestampToDate(data.post.at)}
+					time={databaseTimestampToDate(scrimTime)}
 					options={{
 						weekday: "long",
 						year: "numeric",
@@ -199,6 +210,50 @@ function InfoWithHeader({ header, value }: { header: string; value: string }) {
 		<div>
 			<div className={styles.infoHeader}>{header}</div>
 			<div className={styles.infoValue}>{value}</div>
+		</div>
+	);
+}
+
+function ScreenBanIndicator() {
+	const { t } = useTranslation(["weapons", "scrims"]);
+	const data = useLoaderData<typeof loader>();
+
+	return (
+		<div>
+			<div className={styles.infoHeader}>{t("scrims:screenBan.header")}</div>
+			<div
+				className={clsx(styles.screenBanIndicator, {
+					[styles.screenBanIndicatorWarning]: data.anyUserPrefersNoScreen,
+				})}
+			>
+				<SendouPopover
+					trigger={
+						<SendouButton variant="minimal" size="miniscule">
+							<div className={styles.screenBanImageWrapper}>
+								<Image
+									path={specialWeaponImageUrl(SPLATTERCOLOR_SCREEN_ID)}
+									width={32}
+									height={32}
+									alt={t(`weapons:SPECIAL_${SPLATTERCOLOR_SCREEN_ID}`)}
+								/>
+								<div className={styles.screenBanIconOverlay}>
+									{data.anyUserPrefersNoScreen ? (
+										<AlertIcon />
+									) : (
+										<CheckmarkIcon />
+									)}
+								</div>
+							</div>
+						</SendouButton>
+					}
+				>
+					<div className="text-xs">
+						{data.anyUserPrefersNoScreen
+							? t("scrims:screenBan.warning")
+							: t("scrims:screenBan.allowed")}
+					</div>
+				</SendouPopover>
+			</div>
 		</div>
 	);
 }

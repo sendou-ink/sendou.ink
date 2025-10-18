@@ -35,3 +35,13 @@ export function participantIdsListFromAccepted(post: ScrimPost) {
 		.map((u) => u.id)
 		.concat(acceptedRequest?.users.map((u) => u.id) ?? []);
 }
+
+/**
+ * Returns the actual start time of the scrim.
+ * When the post has a time range (rangeEnd is set), returns the accepted request's specific time if available.
+ * Otherwise returns the post's start time.
+ */
+export function getStartTime(post: ScrimPost): number {
+	const acceptedRequest = post.requests.find((r) => r.isAccepted);
+	return acceptedRequest?.at ?? post.at;
+}

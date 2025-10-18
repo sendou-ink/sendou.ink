@@ -2,11 +2,20 @@ import type { ActionFunctionArgs } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
-import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
-import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
+import {
+	databaseTimestampToDate,
+	databaseTimestampToJavascriptTimestamp,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
+import {
+	actionError,
+	errorToastIfFalsy,
+	parseRequestPayload,
+} from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
-import { scrimsActionSchema } from "../scrims-schemas";
+import { type newRequestSchema, scrimsActionSchema } from "../scrims-schemas";
+import { generateTimeOptions } from "../scrims-utils";
 import { usersListForPost } from "./scrims.new.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -33,9 +42,33 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				postId: data.scrimPostId,
 			});
 
+			if (post.rangeEnd && !data.at) {
+				return actionError<typeof newRequestSchema>({
+					msg: "Please select a time for the scrim",
+					field: "at",
+				});
+			}
+
+			if (post.rangeEnd && data.at) {
+				const validTimeOptions = generateTimeOptions(
+					databaseTimestampToDate(post.at),
+					databaseTimestampToDate(post.rangeEnd),
+				);
+				const requestTime = data.at.getTime();
+
+				if (!validTimeOptions.includes(requestTime)) {
+					return actionError<typeof newRequestSchema>({
+						msg: "Selected time must be one of the available options",
+						field: "at",
+					});
+				}
+			}
+
 			await ScrimPostRepository.insertRequest({
 				scrimPostId: data.scrimPostId,
 				teamId: data.from.mode === "TEAM" ? data.from.teamId : null,
+				message: data.message,
+				at: data.at ? dateToDatabaseTimestamp(data.at) : null,
 				users: (
 					await usersListForPost({ authorId: user.id, from: data.from })
 				).map((userId) => ({
@@ -79,7 +112,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					type: "SCRIM_SCHEDULED",
 					meta: {
 						id: post.id,
-						at: databaseTimestampToJavascriptTimestamp(post.at),
+						at: databaseTimestampToJavascriptTimestamp(request.at ?? post.at),
 					},
 				},
 			});

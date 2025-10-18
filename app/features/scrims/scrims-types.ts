@@ -7,6 +7,7 @@ export type LutiDiv = (typeof LUTI_DIVS)[number];
 export interface ScrimPost {
 	id: number;
 	at: number;
+	rangeEnd: number | null;
 	createdAt: number;
 	visibility: AssociationVisibility | null;
 	text: string | null;
@@ -42,6 +43,8 @@ export interface ScrimPostRequest {
 	isAccepted: boolean;
 	users: Array<ScrimPostUser>;
 	team: ScrimPostTeam | null;
+	message: string | null;
+	at: number | null;
 	permissions: {
 		CANCEL: number[];
 	};

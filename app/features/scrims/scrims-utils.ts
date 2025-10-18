@@ -53,3 +53,32 @@ export const serializeLutiDiv = (div: LutiDiv): number => {
 
 	return Number(div);
 };
+
+export function generateTimeOptions(startDate: Date, endDate: Date): number[] {
+	const timestamps = new Set<number>();
+
+	const clearSubMinutes = (date: Date) => {
+		const cleared = new Date(date);
+		cleared.setSeconds(0, 0);
+		return cleared;
+	};
+
+	timestamps.add(clearSubMinutes(startDate).getTime());
+	timestamps.add(clearSubMinutes(endDate).getTime());
+
+	const currentDate = clearSubMinutes(startDate);
+	const minutes = currentDate.getMinutes();
+
+	if (minutes > 0 && minutes < 30) {
+		currentDate.setMinutes(30, 0, 0);
+	} else if (minutes > 30) {
+		currentDate.setHours(currentDate.getHours() + 1, 0, 0, 0);
+	}
+
+	while (currentDate <= endDate) {
+		timestamps.add(currentDate.getTime());
+		currentDate.setMinutes(currentDate.getMinutes() + 30);
+	}
+
+	return Array.from(timestamps).sort((a, b) => a - b);
+}

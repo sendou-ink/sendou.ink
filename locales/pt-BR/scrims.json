@@ -5,6 +5,9 @@
 	"now": "",
 	"noneAvailable": "",
 	"requestModal.title": "",
+	"requestModal.message.label": "",
+	"requestModal.at.label": "",
+	"requestModal.at.explanation": "",
 	"table.headers.time": "",
 	"table.headers.team": "",
 	"table.headers.divs": "",
@@ -32,6 +35,8 @@
 	"forms.with.pick-up": "",
 	"forms.when.title": "",
 	"forms.when.explanation": "",
+	"forms.rangeEnd.title": "",
+	"forms.rangeEnd.explanation": "",
 	"forms.text.title": "",
 	"forms.visibility.title": "",
 	"forms.visibility.public": "",
@@ -55,5 +60,8 @@
 	"associations.forms.name.title": "",
 	"forms.managedByAnyone.title": "",
 	"forms.managedByAnyone.explanation": "",
-	"alert.canceled": ""
+	"alert.canceled": "",
+	"screenBan.header": "",
+	"screenBan.warning": "",
+	"screenBan.allowed": ""
 }

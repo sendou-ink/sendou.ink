@@ -46,6 +46,7 @@ export default function NewScrimPage() {
 				defaultValues={{
 					postText: "",
 					at: new Date(),
+					rangeEnd: null,
 					divs: null,
 					baseVisibility: "PUBLIC",
 					notFoundVisibility: DEFAULT_NOT_FOUND_VISIBILITY,
@@ -67,6 +68,12 @@ export default function NewScrimPage() {
 					label={t("scrims:forms.when.title")}
 					name="at"
 					bottomText={t("scrims:forms.when.explanation")}
+					granularity="minute"
+				/>
+				<DateFormField<FormFields>
+					label={t("scrims:forms.rangeEnd.title")}
+					name="rangeEnd"
+					bottomText={t("scrims:forms.rangeEnd.explanation")}
 					granularity="minute"
 				/>
 

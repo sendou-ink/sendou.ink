@@ -67,7 +67,11 @@ import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { SENDOUQ_DEFAULT_MAPS } from "~/modules/tournament-map-list-generator/constants";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { nullFilledArray } from "~/utils/arrays";
-import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import {
+	databaseTimestampNow,
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import { mySlugify } from "~/utils/urls";
@@ -2372,8 +2376,17 @@ async function scrimPosts() {
 
 	for (let i = 0; i < 20; i++) {
 		const divs = divRange();
+		const atTime = date();
+		const hasRangeEnd = Math.random() > 0.5;
 		await ScrimPostRepository.insert({
-			at: date(),
+			at: atTime,
+			rangeEnd: hasRangeEnd
+				? dateToDatabaseTimestamp(
+						add(databaseTimestampToDate(atTime), {
+							hours: faker.helpers.rangeToNumber({ min: 1, max: 3 }),
+						}),
+					)
+				: null,
 			isScheduledForFuture: true,
 			maxDiv: divs?.maxDiv,
 			minDiv: divs?.minDiv,
@@ -2388,8 +2401,9 @@ async function scrimPosts() {
 		});
 	}
 
+	const adminPostAtTime = date(true); // admin's scrim is always at least 1 hour in the future
 	const adminPostId = await ScrimPostRepository.insert({
-		at: date(true), // admin's scrim is always at least 1 hour in the future
+		at: adminPostAtTime,
 		isScheduledForFuture: true,
 		text:
 			faker.number.float(1) > 0.5
@@ -2404,10 +2418,18 @@ async function scrimPosts() {
 	await ScrimPostRepository.insertRequest({
 		scrimPostId: adminPostId,
 		users: users(),
+		message:
+			faker.number.float(1) > 0.5
+				? faker.lorem.sentence({ min: 5, max: 15 })
+				: null,
 	});
 	await ScrimPostRepository.insertRequest({
 		scrimPostId: adminPostId,
 		users: users(),
+		message:
+			faker.number.float(1) > 0.5
+				? faker.lorem.sentence({ min: 5, max: 15 })
+				: null,
 	});
 }
 
@@ -2426,6 +2448,10 @@ async function scrimPostRequests() {
 				isOwner: member.userId === ADMIN_ID ? 1 : 0,
 			})),
 			teamId: 1,
+			message:
+				faker.number.float(1) > 0.5
+					? faker.lorem.sentence({ min: 5, max: 15 })
+					: null,
 		});
 	}
 

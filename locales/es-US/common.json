@@ -78,6 +78,8 @@
 	"notifications.text.SCRIM_SCHEDULED": "",
 	"notifications.title.SCRIM_CANCELED": "",
 	"notifications.text.SCRIM_CANCELED": "",
+	"notifications.title.SCRIM_STARTING_SOON": "",
+	"notifications.text.SCRIM_STARTING_SOON": "",
 	"notifications.title.COMMISSIONS_CLOSED": "",
 	"notifications.text.COMMISSIONS_CLOSED": "",
 	"auth.errors.aborted": "Ingreso cancelado",

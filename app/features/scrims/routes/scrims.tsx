@@ -13,7 +13,9 @@ import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
+import { SelectFormField } from "~/components/form/SelectFormField";
 import { SendouForm } from "~/components/form/SendouForm";
+import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
 import { SpeechBubbleIcon } from "~/components/icons/SpeechBubble";
 import { UsersIcon } from "~/components/icons/Users";
@@ -55,6 +57,7 @@ import { loader } from "../loaders/scrims.server";
 import { SCRIM } from "../scrims-constants";
 import { newRequestSchema } from "../scrims-schemas";
 import type { ScrimPost, ScrimPostRequest } from "../scrims-types";
+import { generateTimeOptions } from "../scrims-utils";
 export { loader, action };
 
 import styles from "./scrims.module.css";
@@ -191,7 +194,7 @@ function RequestScrimModal({
 	postId: number;
 	close: () => void;
 }) {
-	const { t } = useTranslation(["scrims"]);
+	const { t, i18n } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof loader>();
 
 	// both to avoid crash when requesting
@@ -199,6 +202,19 @@ function RequestScrimModal({
 		(post) => post.id === postId,
 	);
 	invariant(post, "Post not found");
+
+	const timeOptions = post.rangeEnd
+		? generateTimeOptions(
+				databaseTimestampToDate(post.at),
+				databaseTimestampToDate(post.rangeEnd),
+			).map((timestamp) => ({
+				value: timestamp,
+				label: new Date(timestamp).toLocaleTimeString(i18n.language, {
+					hour: "numeric",
+					minute: "2-digit",
+				}),
+			}))
+		: [];
 
 	return (
 		<SendouDialog heading={t("scrims:requestModal.title")} onClose={close}>
@@ -216,6 +232,10 @@ function RequestScrimModal({
 										SCRIM.MAX_PICKUP_SIZE_EXCLUDING_OWNER,
 									) as unknown as number[],
 								},
+					message: "",
+					at: post.rangeEnd
+						? (databaseTimestampToDate(post.at).getTime() as unknown as Date)
+						: null,
 				}}
 			>
 				<ScrimsDaySeparatedTables posts={[post]} showPopovers={false} />
@@ -227,6 +247,19 @@ function RequestScrimModal({
 				) : null}
 				<Divider />
 				<WithFormField usersTeams={data.teams} />
+				{post.rangeEnd ? (
+					<SelectFormField<NewRequestFormFields>
+						name="at"
+						label={t("scrims:requestModal.at.label")}
+						bottomText={t("scrims:requestModal.at.explanation")}
+						values={timeOptions}
+					/>
+				) : null}
+				<TextAreaFormField<NewRequestFormFields>
+					name="message"
+					label={t("scrims:requestModal.message.label")}
+					maxLength={SCRIM.REQUEST_MESSAGE_MAX_LENGTH}
+				/>
 			</SendouForm>
 		</SendouDialog>
 	);
@@ -360,6 +393,18 @@ function ScrimsTable({
 
 					const status = getStatus(post);
 
+					const timePopoverFooterText = t("scrims:postModal.footer", {
+						time: formatDistance(
+							databaseTimestampToDate(post.createdAt),
+							new Date(),
+							{
+								addSuffix: true,
+							},
+						),
+					});
+
+					const acceptedRequest = post.requests.find((r) => r.isAccepted);
+
 					return (
 						<React.Fragment key={post.id}>
 							<tr>
@@ -368,6 +413,36 @@ function ScrimsTable({
 										<div className={styles.postTime}>
 											{!post.isScheduledForFuture ? (
 												t("scrims:now")
+											) : acceptedRequest?.at ? (
+												<TimePopover
+													time={databaseTimestampToDate(acceptedRequest.at)}
+													options={{
+														hour: "numeric",
+														minute: "numeric",
+													}}
+													underline={false}
+													footerText={timePopoverFooterText}
+												/>
+											) : post.rangeEnd ? (
+												<>
+													<TimePopover
+														time={databaseTimestampToDate(post.at)}
+														options={{
+															hour: "numeric",
+														}}
+														underline={false}
+														footerText={timePopoverFooterText}
+													/>
+													{" - "}
+													<TimePopover
+														time={databaseTimestampToDate(post.rangeEnd)}
+														options={{
+															hour: "numeric",
+														}}
+														underline={false}
+														footerText={timePopoverFooterText}
+													/>
+												</>
 											) : (
 												<TimePopover
 													time={databaseTimestampToDate(post.at)}
@@ -631,7 +706,20 @@ function RequestRow({
 
 	return (
 		<tr className="bg-theme-transparent-important">
-			<td />
+			<td>
+				{request.at && !request.isAccepted ? (
+					<div className={styles.postTime}>
+						<TimePopover
+							time={databaseTimestampToDate(request.at)}
+							options={{
+								hour: "numeric",
+								minute: "numeric",
+							}}
+							underline={false}
+						/>
+					</div>
+				) : null}
+			</td>
 			<td>
 				<div className="stack horizontal sm items-center">
 					<SendouPopover
@@ -666,7 +754,20 @@ function RequestRow({
 					{groupName}
 				</div>
 			</td>
-			<td />
+			<td>
+				{request.message ? (
+					<SendouPopover
+						trigger={
+							<SendouButton
+								variant="minimal"
+								icon={<SpeechBubbleIcon className={styles.postIcon} />}
+							/>
+						}
+					>
+						{request.message}
+					</SendouPopover>
+				) : null}
+			</td>
 			<td />
 			<td />
 			<td className={styles.postFloatingActionCell}>

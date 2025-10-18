@@ -5,7 +5,10 @@
 	"now": "Jetzt",
 	"noneAvailable": "Zur Zeit sind keine Scrims verfügbar. Schau später vorbei oder erstelle einen Post!",
 	"requestModal.title": "Scrim-Anfrage wird gesendet",
-	"table.headers.time": "Zeitpunkt",
+	"requestModal.message.label": "",
+	"requestModal.at.label": "",
+	"requestModal.at.explanation": "",
+	"table.headers.time": "",
 	"table.headers.team": "Team",
 	"table.headers.divs": "Divs",
 	"table.headers.status": "Status",
@@ -30,8 +33,10 @@
 	"forms.with.explanation": "Du kannst nach Usern per Nutzername, Discord ID oder sendou.ink Profil-URL suchen.",
 	"forms.with.user": "Nutzer {{nth}}",
 	"forms.with.pick-up": "Pick-up",
-	"forms.when.title": "Wann",
+	"forms.when.title": "",
 	"forms.when.explanation": "",
+	"forms.rangeEnd.title": "",
+	"forms.rangeEnd.explanation": "",
 	"forms.text.title": "Text",
 	"forms.visibility.title": "Sichtbarkeit",
 	"forms.visibility.public": "Öffentlich",
@@ -55,5 +60,8 @@
 	"associations.forms.name.title": "Name",
 	"forms.managedByAnyone.title": "",
 	"forms.managedByAnyone.explanation": "",
-	"alert.canceled": ""
+	"alert.canceled": "",
+	"screenBan.header": "",
+	"screenBan.warning": "",
+	"screenBan.allowed": ""
 }

@@ -38,6 +38,11 @@ export const newRequestSchema = z.object({
 	_action: _action("NEW_REQUEST"),
 	scrimPostId: id,
 	from: fromSchema,
+	message: z.preprocess(
+		falsyToNull,
+		z.string().max(SCRIM.REQUEST_MESSAGE_MAX_LENGTH).nullable(),
+	),
+	at: z.preprocess(date, z.date()).nullish(),
 });
 
 export const acceptRequestSchema = z.object({
@@ -90,6 +95,33 @@ export const scrimsNewActionSchema = z
 					},
 				),
 		),
+		rangeEnd: z
+			.preprocess(date, z.date())
+			.nullish()
+			.refine(
+				(date) => {
+					if (!date) return true;
+
+					if (date < sub(new Date(), { days: 1 })) return false;
+
+					return true;
+				},
+				{
+					message: "Date can not be in the past",
+				},
+			)
+			.refine(
+				(date) => {
+					if (!date) return true;
+
+					if (date > add(new Date(), { days: 15 })) return false;
+
+					return true;
+				},
+				{
+					message: "Date can not be more than 2 weeks in the future",
+				},
+			),
 		baseVisibility: associationIdentifierSchema,
 		notFoundVisibility: z.object({
 			at: z
@@ -179,6 +211,26 @@ export const scrimsNewActionSchema = z
 			ctx.addIssue({
 				path: ["notFoundVisibility"],
 				message: "Can not be set if looking for scrim now",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+
+		if (post.rangeEnd && post.rangeEnd <= post.at) {
+			ctx.addIssue({
+				path: ["rangeEnd"],
+				message: "End time must be after start time",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+
+		if (
+			post.rangeEnd &&
+			post.rangeEnd.getTime() - post.at.getTime() > SCRIM.MAX_TIME_RANGE_MS
+		) {
+			ctx.addIssue({
+				path: ["rangeEnd"],
+				message:
+					"Time range can not be more than 3 hours. Make separate posts instead",
 				code: z.ZodIssueCode.custom,
 			});
 		}

@@ -23,10 +23,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		throw new Response(null, { status: 403 });
 	}
 
+	const participantIds = Scrim.participantIdsListFromAccepted(post);
+
 	return {
 		post,
-		chatUsers: await UserRepository.findChatUsersByUserIds(
-			Scrim.participantIdsListFromAccepted(post),
-		),
+		chatUsers: await UserRepository.findChatUsersByUserIds(participantIds),
+		anyUserPrefersNoScreen:
+			await UserRepository.anyUserPrefersNoScreen(participantIds),
 	};
 };

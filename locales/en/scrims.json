@@ -5,7 +5,10 @@
 	"now": "Now",
 	"noneAvailable": "No scrims available right now. Check back later or add your own!",
 	"requestModal.title": "Sending a scrim request",
-	"table.headers.time": "Time",
+	"requestModal.message.label": "Message",
+	"requestModal.at.label": "Preferred time",
+	"requestModal.at.explanation": "Select a time within the post's time range",
+	"table.headers.time": "Start time",
 	"table.headers.team": "Team",
 	"table.headers.divs": "Divs",
 	"table.headers.status": "Status",
@@ -30,8 +33,10 @@
 	"forms.with.explanation": "You can search for users with username, Discord ID or sendou.ink profile URL.",
 	"forms.with.user": "User {{nth}}",
 	"forms.with.pick-up": "Pick-up",
-	"forms.when.title": "When",
+	"forms.when.title": "Start",
 	"forms.when.explanation": "Leave to default if you want to look for a scrim now",
+	"forms.rangeEnd.title": "Start time range end",
+	"forms.rangeEnd.explanation": "If set, allow requests for any time between start and end",
 	"forms.text.title": "Text",
 	"forms.visibility.title": "Visibility",
 	"forms.visibility.public": "Public",
@@ -55,5 +60,8 @@
 	"associations.forms.name.title": "Name",
 	"forms.managedByAnyone.title": "Anyone can manage",
 	"forms.managedByAnyone.explanation": "If enabled, all users in this post can accept requests and delete the post, not just the owner.",
-	"alert.canceled": "This scrim was canceled by {{user}}. Reason: {{reason}}"
+	"alert.canceled": "This scrim was canceled by {{user}}. Reason: {{reason}}",
+	"screenBan.header": "Screen",
+	"screenBan.warning": "Ask before playing Splattercolor Screen",
+	"screenBan.allowed": "Nobody in this scrim has indicated they want to avoid Splattercolor Screen"
 }
