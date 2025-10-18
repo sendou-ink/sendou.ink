@@ -164,6 +164,7 @@ export default function ScrimsPage() {
 						posts={data.posts.requested}
 						requestScrim={setScrimToRequestId}
 						showStatus
+						showAsRequestRows
 					/>
 				</SendouTabPanel>
 				<SendouTabPanel id="available">
@@ -270,6 +271,7 @@ function ScrimsDaySeparatedTables({
 	showPopovers = true,
 	showDeletePost = false,
 	showRequestRows = false,
+	showAsRequestRows = false,
 	showStatus = false,
 	requestScrim,
 }: {
@@ -277,6 +279,7 @@ function ScrimsDaySeparatedTables({
 	showPopovers?: boolean;
 	showDeletePost?: boolean;
 	showRequestRows?: boolean;
+	showAsRequestRows?: boolean;
 	showStatus?: boolean;
 	requestScrim?: (postId: number) => void;
 }) {
@@ -308,6 +311,7 @@ function ScrimsDaySeparatedTables({
 								requestScrim={requestScrim}
 								showDeletePost={showDeletePost}
 								showRequestRows={showRequestRows}
+								showAsRequestRows={showAsRequestRows}
 								showPopovers={showPopovers}
 								showStatus={showStatus}
 							/>
@@ -323,6 +327,7 @@ function ScrimsTable({
 	showPopovers,
 	showDeletePost,
 	showRequestRows,
+	showAsRequestRows,
 	showStatus,
 	requestScrim,
 }: {
@@ -330,6 +335,7 @@ function ScrimsTable({
 	showPopovers: boolean;
 	showDeletePost: boolean;
 	showRequestRows: boolean;
+	showAsRequestRows: boolean;
 	showStatus: boolean;
 	requestScrim?: (postId: number) => void;
 }) {
@@ -381,7 +387,29 @@ function ScrimsTable({
 									postId={post.id}
 								/>
 							))
-						: [];
+						: showAsRequestRows
+							? (() => {
+									const userRequest = post.requests.find((request) =>
+										request.users.some((rUser) => rUser.id === user?.id),
+									);
+									return userRequest
+										? [
+												<RequestRow
+													key={userRequest.id}
+													canAccept={false}
+													request={userRequest}
+													postId={post.id}
+													showActions={false}
+													showCancel={Boolean(
+														user &&
+															!userRequest.isAccepted &&
+															userRequest.permissions.CANCEL.includes(user.id),
+													)}
+												/>,
+											]
+										: [];
+								})()
+							: [];
 
 					const isAccepted = post.requests.some(
 						(request) => request.isAccepted,
@@ -583,8 +611,7 @@ function ScrimsTable({
 											{t("scrims:actions.request")}
 										</SendouButton>
 									</td>
-								) : null}
-								{showDeletePost && !isAccepted ? (
+								) : showDeletePost && !isAccepted ? (
 									<td>
 										{user && post.permissions.DELETE_POST.includes(user.id) ? (
 											<FormWithConfirm
@@ -621,12 +648,12 @@ function ScrimsTable({
 											</SendouPopover>
 										)}
 									</td>
-								) : null}
-								{user &&
-								requestScrim &&
-								post.requests.length !== 0 &&
-								!post.requests.at(0)?.isAccepted &&
-								post.requests.at(0)?.permissions.CANCEL.includes(user.id) ? (
+								) : user &&
+									requestScrim &&
+									!showAsRequestRows &&
+									post.requests.length !== 0 &&
+									!post.requests.at(0)?.isAccepted &&
+									post.requests.at(0)?.permissions.CANCEL.includes(user.id) ? (
 									<td>
 										<FormWithConfirm
 											dialogHeading={t("scrims:cancelModal.title")}
@@ -646,17 +673,17 @@ function ScrimsTable({
 											</SendouButton>
 										</FormWithConfirm>
 									</td>
-								) : null}
-								{showContactButton ? (
+								) : showContactButton ? (
 									<td className={styles.postFloatingActionCell}>
 										<ContactButton postId={post.id} />
 									</td>
-								) : null}
-								{isAccepted &&
-								post.requests.some(
-									(r) =>
-										r.isAccepted && !r.users.some((u) => u.id === user?.id),
-								) ? (
+								) : isAccepted &&
+									post.requests.some(
+										(r) =>
+											r.isAccepted && !r.users.some((u) => u.id === user?.id),
+									) ? (
+									<td />
+								) : requestScrim || showDeletePost ? (
 									<td />
 								) : null}
 							</tr>
@@ -688,10 +715,14 @@ function RequestRow({
 	canAccept,
 	request,
 	postId,
+	showActions = true,
+	showCancel = false,
 }: {
 	canAccept: boolean;
 	request: ScrimPostRequest;
 	postId: number;
+	showActions?: boolean;
+	showCancel?: boolean;
 }) {
 	const { t } = useTranslation(["common", "scrims"]);
 
@@ -771,33 +802,53 @@ function RequestRow({
 			<td />
 			<td />
 			<td className={styles.postFloatingActionCell}>
-				{!request.isAccepted && canAccept ? (
-					<FormWithConfirm
-						dialogHeading={t("scrims:acceptModal.title", { groupName })}
-						fields={[
-							["scrimPostRequestId", request.id],
-							["_action", "ACCEPT_REQUEST"],
-						]}
-						submitButtonVariant="primary"
-						submitButtonText={t("common:actions.accept")}
-					>
-						<SendouButton size="small" className="ml-auto">
-							{t("common:actions.accept")}
-						</SendouButton>
-					</FormWithConfirm>
-				) : !request.isAccepted && !canAccept ? (
-					<SendouPopover
-						trigger={
+				{showActions ? (
+					!request.isAccepted && canAccept ? (
+						<FormWithConfirm
+							dialogHeading={t("scrims:acceptModal.title", { groupName })}
+							fields={[
+								["scrimPostRequestId", request.id],
+								["_action", "ACCEPT_REQUEST"],
+							]}
+							submitButtonVariant="primary"
+							submitButtonText={t("common:actions.accept")}
+						>
 							<SendouButton size="small" className="ml-auto">
 								{t("common:actions.accept")}
 							</SendouButton>
-						}
+						</FormWithConfirm>
+					) : !request.isAccepted && !canAccept ? (
+						<SendouPopover
+							trigger={
+								<SendouButton size="small" className="ml-auto">
+									{t("common:actions.accept")}
+								</SendouButton>
+							}
+						>
+							{t("scrims:acceptModal.prevented")}
+						</SendouPopover>
+					) : (
+						<ContactButton postId={postId} />
+					)
+				) : showCancel ? (
+					<FormWithConfirm
+						dialogHeading={t("scrims:cancelModal.title")}
+						submitButtonText={t("common:actions.cancel")}
+						fields={[
+							["scrimPostRequestId", request.id],
+							["_action", "CANCEL_REQUEST"],
+						]}
 					>
-						{t("scrims:acceptModal.prevented")}
-					</SendouPopover>
-				) : (
-					<ContactButton postId={postId} />
-				)}
+						<SendouButton
+							size="small"
+							variant="destructive"
+							icon={<CrossIcon />}
+							className="ml-auto"
+						>
+							{t("common:actions.cancel")}
+						</SendouButton>
+					</FormWithConfirm>
+				) : null}
 			</td>
 		</tr>
 	);
