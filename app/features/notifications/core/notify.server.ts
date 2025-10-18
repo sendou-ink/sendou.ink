@@ -29,11 +29,11 @@ export async function notify({
 		return;
 	}
 
-	if (isNotificationAlreadySent(notification)) {
+	const dededuplicatedUserIds = Array.from(new Set(userIds));
+
+	if (isNotificationAlreadySent(notification, dededuplicatedUserIds)) {
 		return;
 	}
-
-	const dededuplicatedUserIds = Array.from(new Set(userIds));
 
 	try {
 		await NotificationRepository.insert(
@@ -72,14 +72,27 @@ export async function notify({
 
 const sentNotifications = new Set<string>();
 
+export function clearSentNotificationsForTesting() {
+	sentNotifications.clear();
+}
+
 // deduplicates notifications as a failsafe & anti-abuse mechanism
-function isNotificationAlreadySent(notification: Notification) {
+function isNotificationAlreadySent(
+	notification: Notification,
+	userIds: Array<number>,
+) {
 	// e2e tests should not be affected by this
 	if (IS_E2E_TEST_RUN) {
 		return false;
 	}
 
-	const key = `${notification.type}-${JSON.stringify(notification.meta)}`;
+	// bulk notifications are typically not something you can repeat
+	if (userIds.length > 10) {
+		return false;
+	}
+
+	const sortedUserIds = [...userIds].sort((a, b) => a - b).join(",");
+	const key = `${notification.type}-${JSON.stringify(notification.meta)}-${sortedUserIds}`;
 	if (sentNotifications.has(key)) {
 		return true;
 	}
