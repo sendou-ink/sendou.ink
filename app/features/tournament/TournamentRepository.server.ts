@@ -553,7 +553,7 @@ export function findAllBetweenTwoTimestamps({
 		.select(["Tournament.id as tournamentId"])
 		.where(
 			"CalendarEventDate.startTime",
-			">=",
+			">",
 			dateToDatabaseTimestamp(startTime),
 		)
 		.where(
