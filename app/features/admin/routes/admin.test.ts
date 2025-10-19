@@ -417,10 +417,7 @@ describe("Account migration", () => {
 			private: 0,
 		});
 
-		const buildsBefore = await BuildRepository.allByUserId({
-			userId: 2,
-			showPrivate: false,
-		});
+		const buildsBefore = await BuildRepository.allByUserId(2);
 
 		expect(buildsBefore.length).toBe(1);
 
@@ -430,10 +427,7 @@ describe("Account migration", () => {
 		expect(oldUser).toBeNull();
 
 		for (const userId of [1, 2]) {
-			const buildsAfter = await BuildRepository.allByUserId({
-				userId,
-				showPrivate: false,
-			});
+			const buildsAfter = await BuildRepository.allByUserId(userId);
 			expect(buildsAfter.length).toBe(0);
 		}
 	});

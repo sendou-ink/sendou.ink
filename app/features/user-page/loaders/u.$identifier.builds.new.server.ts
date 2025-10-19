@@ -17,8 +17,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		Object.fromEntries(url.searchParams),
 	);
 
-	const usersBuilds = await BuildRepository.allByUserId({
-		userId: user.id,
+	const usersBuilds = await BuildRepository.allByUserId(user.id, {
 		showPrivate: true,
 	});
 	const buildToEdit = usersBuilds.find(
