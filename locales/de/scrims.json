@@ -13,7 +13,7 @@
 	"table.headers.divs": "Divs",
 	"table.headers.status": "Status",
 	"limitedVisibility": "Diese Anfrage hat aktuell eingeschränkte Sichtbarkeit aufgrund von Assoziationen.",
-	"pickup": "Pickup von {{username}}",
+	"pickupBy": "",
 	"status.booked": "Gebucht",
 	"status.pending": "Ausstehend",
 	"status.canceled": "",

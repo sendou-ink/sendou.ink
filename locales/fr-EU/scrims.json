@@ -13,7 +13,7 @@
 	"table.headers.divs": "Divs",
 	"table.headers.status": "Statut",
 	"limitedVisibility": "Cet article a actuellement une visibilité limitée en fonction des associations.",
-	"pickup": "Pickup de {{username}}",
+	"pickupBy": "",
 	"status.booked": "Réservé",
 	"status.pending": "En attente",
 	"status.canceled": "",

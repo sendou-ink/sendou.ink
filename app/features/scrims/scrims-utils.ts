@@ -1,4 +1,6 @@
+import { differenceInMinutes } from "date-fns";
 import * as R from "remeda";
+import { databaseTimestampToDate } from "~/utils/dates";
 import type { LutiDiv, ScrimPost } from "./scrims-types";
 
 export const getPostRequestCensor =
@@ -81,4 +83,28 @@ export function generateTimeOptions(startDate: Date, endDate: Date): number[] {
 	}
 
 	return Array.from(timestamps).sort((a, b) => a - b);
+}
+
+export function formatFlexTimeDisplay(
+	startTimestamp: number,
+	endTimestamp: number,
+): string | null {
+	const totalMinutes = differenceInMinutes(
+		databaseTimestampToDate(endTimestamp),
+		databaseTimestampToDate(startTimestamp),
+	);
+	const hours = Math.floor(totalMinutes / 60);
+	const remainingMinutes = totalMinutes % 60;
+
+	if (hours > 0 && remainingMinutes > 0) {
+		return `+${hours}h ${remainingMinutes}m`;
+	}
+	if (hours > 0) {
+		return `+${hours}h`;
+	}
+	if (totalMinutes > 0) {
+		return `+${totalMinutes}m`;
+	}
+
+	return null;
 }

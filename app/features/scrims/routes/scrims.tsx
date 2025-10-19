@@ -52,6 +52,7 @@ import { MegaphoneIcon } from "../../../components/icons/MegaphoneIcon";
 import { SpeechBubbleFilledIcon } from "../../../components/icons/SpeechBubbleFilled";
 import { Main } from "../../../components/Main";
 import { action } from "../actions/scrims.server";
+import { ScrimPostCard } from "../components/ScrimCard";
 import { WithFormField } from "../components/WithFormField";
 import { loader } from "../loaders/scrims.server";
 import { SCRIM } from "../scrims-constants";
@@ -169,7 +170,7 @@ export default function ScrimsPage() {
 				</SendouTabPanel>
 				<SendouTabPanel id="available">
 					{data.posts.neutral.length > 0 ? (
-						<ScrimsDaySeparatedTables
+						<ScrimsDaySeparatedCards
 							posts={data.posts.neutral}
 							requestScrim={setScrimToRequestId}
 						/>
@@ -315,6 +316,66 @@ function ScrimsDaySeparatedTables({
 								showPopovers={showPopovers}
 								showStatus={showStatus}
 							/>
+						</div>
+					);
+				})}
+		</div>
+	);
+}
+
+function ScrimsDaySeparatedCards({
+	posts,
+	requestScrim,
+}: {
+	posts: ScrimPost[];
+	requestScrim?: (postId: number) => void;
+}) {
+	const { i18n } = useTranslation();
+	const user = useUser();
+
+	const postsByDay = R.groupBy(posts, (post) =>
+		databaseTimestampToDate(post.at).getDate(),
+	);
+
+	return (
+		<div className="stack lg">
+			{Object.entries(postsByDay)
+				.sort((a, b) => a[1][0].at - b[1][0].at)
+				.map(([day, posts]) => {
+					return (
+						<div key={day} className="stack md">
+							<h2 className="text-sm">
+								{databaseTimestampToDate(posts![0].at).toLocaleDateString(
+									i18n.language,
+									{
+										day: "numeric",
+										month: "long",
+										weekday: "long",
+									},
+								)}
+							</h2>
+							<div className={styles.cardsGrid}>
+								{posts!.map((post) => {
+									const hasRequested = post.requests.some((request) =>
+										request.users.some((rUser) => user?.id === rUser.id),
+									);
+
+									return (
+										<ScrimPostCard
+											key={post.id}
+											post={post}
+											action={
+												user && !hasRequested && post.requests.length === 0
+													? "REQUEST"
+													: undefined
+											}
+											onActionClick={
+												requestScrim ? () => requestScrim(post.id) : undefined
+											}
+										/>
+									);
+								})}
+							</div>
 						</div>
 					);
 				})}
@@ -539,8 +600,7 @@ function ScrimsTable({
 										) : (
 											<Avatar size="xxs" user={owner} />
 										)}
-										{post.team?.name ??
-											t("scrims:pickup", { username: owner.username })}
+										{post.team?.name ?? owner.username}
 									</div>
 								</td>
 								{showPopovers ? (
@@ -729,11 +789,7 @@ function RequestRow({
 	const requestOwner =
 		request.users.find((user) => user.isOwner) ?? request.users[0];
 
-	const groupName =
-		request.team?.name ??
-		t("scrims:pickup", {
-			username: requestOwner.username,
-		});
+	const groupName = request.team?.name ?? requestOwner.username;
 
 	return (
 		<tr className="bg-theme-transparent-important">

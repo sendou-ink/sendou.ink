@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateTimeOptions } from "./scrims-utils";
+import { formatFlexTimeDisplay, generateTimeOptions } from "./scrims-utils";
 
 describe("generateTimeOptions", () => {
 	it("includes both start and end times", () => {
@@ -129,5 +129,107 @@ describe("generateTimeOptions", () => {
 		const result = generateTimeOptions(start, end);
 
 		expect(result.length).toBe(7);
+	});
+});
+
+describe("formatFlexTimeDisplay", () => {
+	it("returns null when totalMinutes is 0", () => {
+		const timestamp = Math.floor(
+			new Date("2025-01-15T14:00:00").getTime() / 1000,
+		);
+
+		const result = formatFlexTimeDisplay(timestamp, timestamp);
+
+		expect(result).toBeNull();
+	});
+
+	it("returns null when endTimestamp is before startTimestamp", () => {
+		const start = Math.floor(new Date("2025-01-15T14:00:00").getTime() / 1000);
+		const end = Math.floor(new Date("2025-01-15T13:00:00").getTime() / 1000);
+
+		const result = formatFlexTimeDisplay(start, end);
+
+		expect(result).toBeNull();
+	});
+
+	it("returns formatted minutes when only minutes (no hours)", () => {
+		const start = Math.floor(new Date("2025-01-15T14:00:00").getTime() / 1000);
+		const end = Math.floor(new Date("2025-01-15T14:45:00").getTime() / 1000);
+
+		const result = formatFlexTimeDisplay(start, end);
+
+		expect(result).toBe("+45m");
+	});
+
+	it("returns formatted hours when exactly on the hour", () => {
+		const start = Math.floor(new Date("2025-01-15T14:00:00").getTime() / 1000);
+		const end = Math.floor(new Date("2025-01-15T16:00:00").getTime() / 1000);
+
+		const result = formatFlexTimeDisplay(start, end);
+
+		expect(result).toBe("+2h");
+	});
+
+	it("returns formatted hours and minutes when both present", () => {
+		const start = Math.floor(new Date("2025-01-15T14:00:00").getTime() / 1000);
+		const end = Math.floor(new Date("2025-01-15T15:30:00").getTime() / 1000);
+
+		const result = formatFlexTimeDisplay(start, end);
+
+		expect(result).toBe("+1h 30m");
+	});
+
+	it("handles 1 minute difference", () => {
+		const start = Math.floor(new Date("2025-01-15T14:00:00").getTime() / 1000);
+		const end = Math.floor(new Date("2025-01-15T14:01:00").getTime() / 1000);
+
+		const result = formatFlexTimeDisplay(start, end);
+
+		expect(result).toBe("+1m");
+	});
+
+	it("handles 1 hour difference", () => {
+		const start = Math.floor(new Date("2025-01-15T14:00:00").getTime() / 1000);
+		const end = Math.floor(new Date("2025-01-15T15:00:00").getTime() / 1000);
+
+		const result = formatFlexTimeDisplay(start, end);
+
+		expect(result).toBe("+1h");
+	});
+
+	it("handles multiple hours and minutes", () => {
+		const start = Math.floor(new Date("2025-01-15T14:00:00").getTime() / 1000);
+		const end = Math.floor(new Date("2025-01-15T17:25:00").getTime() / 1000);
+
+		const result = formatFlexTimeDisplay(start, end);
+
+		expect(result).toBe("+3h 25m");
+	});
+
+	it("handles 59 minutes", () => {
+		const start = Math.floor(new Date("2025-01-15T14:00:00").getTime() / 1000);
+		const end = Math.floor(new Date("2025-01-15T14:59:00").getTime() / 1000);
+
+		const result = formatFlexTimeDisplay(start, end);
+
+		expect(result).toBe("+59m");
+	});
+
+	it("handles exactly 60 minutes as 1 hour", () => {
+		const start = Math.floor(new Date("2025-01-15T14:00:00").getTime() / 1000);
+		const end = Math.floor(new Date("2025-01-15T15:00:00").getTime() / 1000);
+
+		const result = formatFlexTimeDisplay(start, end);
+
+		expect(result).toBe("+1h");
+	});
+
+	it("handles 61 minutes as 1 hour 1 minute", () => {
+		const start = Math.floor(new Date("2025-01-15T14:00:00").getTime() / 1000);
+		const end = Math.floor(new Date("2025-01-15T15:01:00").getTime() / 1000);
+
+		const result = formatFlexTimeDisplay(start, end);
+
+		expect(result).toBe("+1h 1m");
 	});
 });

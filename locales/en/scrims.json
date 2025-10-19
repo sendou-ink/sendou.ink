@@ -13,7 +13,7 @@
 	"table.headers.divs": "Divs",
 	"table.headers.status": "Status",
 	"limitedVisibility": "This post currently has limited visibility based on associations.",
-	"pickup": "{{username}}'s pickup",
+	"pickupBy": "Pickup by",
 	"status.booked": "Booked",
 	"status.pending": "Pending",
 	"status.canceled": "Canceled",
