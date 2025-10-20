@@ -125,6 +125,7 @@
 	"actions.enable": "",
 	"actions.disable": "",
 	"actions.accept": "",
+	"actions.confirm": "",
 	"actions.next": "",
 	"actions.previous": "",
 	"actions.back": "",

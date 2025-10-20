@@ -26,20 +26,11 @@ export function dividePosts(posts: Array<ScrimPost>, userId?: number) {
 			return "OWNED";
 		}
 
-		if (
-			post.requests.some((request) =>
-				request.users.some((user) => user.id === userId),
-			)
-		) {
-			return "REQUESTED";
-		}
-
 		return "NEUTRAL";
 	});
 
 	return {
 		owned: grouped.OWNED ?? [],
-		requested: grouped.REQUESTED ?? [],
 		neutral: grouped.NEUTRAL ?? [],
 	};
 }

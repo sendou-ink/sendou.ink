@@ -125,6 +125,7 @@
 	"actions.enable": "Включить",
 	"actions.disable": "Выключить",
 	"actions.accept": "Подтвердить",
+	"actions.confirm": "",
 	"actions.next": "",
 	"actions.previous": "",
 	"actions.back": "",

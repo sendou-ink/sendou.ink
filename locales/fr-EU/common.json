@@ -125,6 +125,7 @@
 	"actions.enable": "Activer",
 	"actions.disable": "Désactiver",
 	"actions.accept": "Accepter",
+	"actions.confirm": "",
 	"actions.next": "",
 	"actions.previous": "",
 	"actions.back": "",

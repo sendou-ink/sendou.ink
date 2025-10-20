@@ -175,15 +175,6 @@ function findMany() {
 const mapDBRowToScrimPost = (
 	row: Unwrapped<typeof findMany> & { chatCode?: string },
 ): ScrimPost => {
-	const someRequestIsAccepted = row.requests.some(
-		(request) => request.isAccepted,
-	);
-
-	// once one is accepted, rest are not relevant
-	const requests = someRequestIsAccepted
-		? row.requests.filter((request) => request.isAccepted)
-		: row.requests;
-
 	const users: ScrimPostUser[] = row.users.map((user) => ({
 		...user,
 		isOwner: Boolean(user.isOwner),
@@ -198,7 +189,7 @@ const mapDBRowToScrimPost = (
 	if (row.canceledAt && row.cancelReason) {
 		let cancelingUser = users.find((u) => u.id === row.canceledByUserId);
 		if (!cancelingUser) {
-			const allRequestUsers = requests.flatMap((request) => request.users);
+			const allRequestUsers = row.requests.flatMap((request) => request.users);
 			const found = allRequestUsers.find((u) => u.id === row.canceledByUserId);
 			if (found) {
 				cancelingUser = { ...found, isOwner: Boolean(found.isOwner) };
@@ -233,7 +224,7 @@ const mapDBRowToScrimPost = (
 					avatarUrl: row.team.avatarUrl,
 				}
 			: null,
-		requests: requests.map((request) => {
+		requests: row.requests.map((request) => {
 			return {
 				id: request.id,
 				isAccepted: Boolean(request.isAccepted),
@@ -260,7 +251,9 @@ const mapDBRowToScrimPost = (
 		permissions: {
 			MANAGE_REQUESTS: managerIds,
 			DELETE_POST: managerIds,
-			CANCEL: managerIds.concat(requests.at(0)?.users.map((u) => u.id) ?? []),
+			CANCEL: managerIds.concat(
+				row.requests.at(0)?.users.map((u) => u.id) ?? [],
+			),
 		},
 		managedByAnyone: Boolean(row.managedByAnyone),
 		canceled,
@@ -283,11 +276,7 @@ export async function findAllRelevant(userId?: number): Promise<ScrimPost[]> {
 
 	const mapped = rows
 		.map(mapDBRowToScrimPost)
-		.filter(
-			(post) =>
-				!Scrim.isAccepted(post) ||
-				(userId && Scrim.isParticipating(post, userId)),
-		);
+		.filter((post) => !Scrim.isAccepted(post));
 
 	if (!userId) return mapped.map((post) => ({ ...post, requests: [] }));
 

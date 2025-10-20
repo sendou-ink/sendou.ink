@@ -1,32 +1,36 @@
-import { Link } from "@remix-run/react";
+import { Form, Link } from "@remix-run/react";
+import clsx from "clsx";
 import { formatDistance } from "date-fns";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
+import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image } from "~/components/Image";
 import { ArrowUpOnSquareIcon } from "~/components/icons/ArrowUpOnSquare";
+import { CheckmarkIcon } from "~/components/icons/Checkmark";
+import { TrashIcon } from "~/components/icons/Trash";
 import { UsersIcon } from "~/components/icons/Users";
 import TimePopover from "~/components/TimePopover";
+import { useUser } from "~/features/auth/core/user";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { modeImageUrl, userPage } from "~/utils/urls";
 import { userSubmittedImage } from "~/utils/urls-img";
-import type { ScrimPost } from "../scrims-types";
+import type { ScrimPost, ScrimPostRequest } from "../scrims-types";
 import { formatFlexTimeDisplay } from "../scrims-utils";
 import styles from "./ScrimCard.module.css";
+import { ScrimRequestModal } from "./ScrimRequestModal";
+
+// xxx: add back "Limited visibility by association" as an info
 
 interface ScrimPostCardProps {
 	post: ScrimPost;
 	action?: "DELETE" | "REQUEST" | "VIEW_REQUEST";
-	onActionClick?: () => void;
 }
 
-export function ScrimPostCard({
-	post,
-	action,
-	onActionClick,
-}: ScrimPostCardProps) {
+export function ScrimPostCard({ post, action }: ScrimPostCardProps) {
 	const { t } = useTranslation(["scrims"]);
 
 	const owner = post.users.find((user) => user.isOwner) ?? post.users[0];
@@ -94,7 +98,7 @@ export function ScrimPostCard({
 			{post.text ? <ScrimExpandableText text={post.text} /> : null}
 
 			<div className={styles.footer}>
-				<ScrimActionButtons action={action} onActionClick={onActionClick} />
+				<ScrimActionButtons action={action} post={post} />
 			</div>
 		</div>
 	);
@@ -230,32 +234,212 @@ function ScrimExpandableText({ text }: { text: string }) {
 
 function ScrimActionButtons({
 	action,
-	onActionClick,
+	post,
 }: {
 	action: ScrimPostCardProps["action"];
-	onActionClick?: () => void;
+	post: ScrimPost;
 }) {
-	const { t } = useTranslation(["scrims", "common"]);
+	const { t, i18n } = useTranslation(["scrims", "common"]);
+	const user = useUser();
+	const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+	const [isViewRequestModalOpen, setIsViewRequestModalOpen] = useState(false);
 
-	if (!action || !onActionClick) {
+	if (!action) {
 		return null;
 	}
 
+	// xxx: fix making request just insta triggers VIEW_REQUEST modal
 	if (action === "REQUEST") {
 		return (
-			<SendouButton
-				size="small"
-				onPress={onActionClick}
-				icon={<ArrowUpOnSquareIcon />}
-			>
-				{t("scrims:actions.request")}
-			</SendouButton>
+			<>
+				<SendouButton
+					size="small"
+					onPress={() => setIsRequestModalOpen(true)}
+					icon={<ArrowUpOnSquareIcon />}
+				>
+					{t("scrims:actions.request")}
+				</SendouButton>
+				{isRequestModalOpen ? (
+					<ScrimRequestModal
+						post={post}
+						close={() => setIsRequestModalOpen(false)}
+					/>
+				) : null}
+			</>
+		);
+	}
+
+	if (action === "VIEW_REQUEST") {
+		const userRequest = post.requests.find((request) =>
+			request.users.some((rUser) => user?.id === rUser.id),
+		);
+
+		// xxx: better UI, alignment etc.
+		return (
+			<>
+				<SendouButton
+					size="small"
+					onPress={() => setIsViewRequestModalOpen(true)}
+					variant="outlined"
+				>
+					{t("scrims:actions.viewRequest")}
+				</SendouButton>
+				{isViewRequestModalOpen && userRequest ? (
+					<SendouDialog
+						heading={t("scrims:cancelRequestModal.title")}
+						onClose={() => setIsViewRequestModalOpen(false)}
+					>
+						<div className="stack md">
+							{userRequest.message ? (
+								<div>
+									<div className="text-sm font-semi-bold mb-1">
+										{t("scrims:requestModal.message.label")}
+									</div>
+									<div className="text-lighter">{userRequest.message}</div>
+								</div>
+							) : null}
+							{userRequest.at ? (
+								<div>
+									<div className="text-sm font-semi-bold mb-1">
+										{t("scrims:requestModal.at.label")}
+									</div>
+									<div className="text-lighter">
+										{databaseTimestampToDate(userRequest.at).toLocaleString(
+											i18n.language,
+											{
+												hour: "numeric",
+												minute: "2-digit",
+												day: "numeric",
+												month: "long",
+											},
+										)}
+									</div>
+								</div>
+							) : null}
+							<Form method="post">
+								<input
+									type="hidden"
+									name="scrimPostRequestId"
+									value={userRequest.id}
+								/>
+								<input type="hidden" name="_action" value="CANCEL_REQUEST" />
+								<SendouButton
+									type="submit"
+									variant="destructive"
+									icon={<TrashIcon />}
+								>
+									{t("common:actions.cancel")}
+								</SendouButton>
+							</Form>
+						</div>
+					</SendouDialog>
+				) : null}
+			</>
 		);
 	}
 
 	return (
-		<SendouButton size="small" variant="destructive" onPress={onActionClick}>
-			{t("common:actions.delete")}
-		</SendouButton>
+		<FormWithConfirm
+			dialogHeading={t("scrims:deleteModal.title")}
+			submitButtonText={t("common:actions.delete")}
+			fields={[
+				["scrimPostId", post.id],
+				["_action", "DELETE_POST"],
+			]}
+		>
+			<SendouButton size="small" variant="destructive" icon={<TrashIcon />}>
+				{t("common:actions.delete")}
+			</SendouButton>
+		</FormWithConfirm>
+	);
+}
+
+interface ScrimRequestCardProps {
+	request: ScrimPostRequest;
+	postStartTime: number;
+	canAccept: boolean;
+}
+
+export function ScrimRequestCard({
+	request,
+	postStartTime,
+	canAccept,
+}: ScrimRequestCardProps) {
+	const { t, i18n } = useTranslation(["scrims", "common"]);
+
+	const owner = request.users.find((user) => user.isOwner) ?? request.users[0];
+	const isPickup = !request.team?.name;
+	const teamName = request.team?.name ?? owner.username;
+
+	const confirmedTime = request.at
+		? databaseTimestampToDate(request.at)
+		: databaseTimestampToDate(postStartTime);
+
+	return (
+		<div className={clsx(styles.card, styles.requestCard)}>
+			<div className={styles.header}>
+				<div className={styles.avatarContainer}>
+					<ScrimTeamAvatar
+						teamAvatarUrl={request.team?.avatarUrl}
+						teamName={teamName}
+						owner={owner}
+					/>
+				</div>
+				<h3 className={styles.teamName}>
+					{isPickup ? (
+						<>
+							<span className={styles.pickupLabel}>{t("scrims:pickupBy")}</span>
+							<span>{owner.username}</span>
+						</>
+					) : (
+						teamName
+					)}
+				</h3>
+				<div className={styles.usersIconContainer}>
+					<ScrimTeamMembersPopover users={request.users} />
+				</div>
+			</div>
+
+			{request.message ? <ScrimExpandableText text={request.message} /> : null}
+
+			<div className={clsx(styles.footer, styles.requestFooter)}>
+				{canAccept ? (
+					<FormWithConfirm
+						dialogHeading={t("scrims:acceptModal.title", {
+							groupName: teamName,
+						})}
+						fields={[
+							["scrimPostRequestId", request.id],
+							["_action", "ACCEPT_REQUEST"],
+						]}
+						submitButtonVariant="primary"
+						submitButtonText={t("common:actions.confirm")}
+					>
+						<SendouButton size="small" icon={<CheckmarkIcon />}>
+							{`Confirm for ${confirmedTime.toLocaleTimeString(i18n.language, {
+								hour: "numeric",
+								minute: "2-digit",
+							})}`}
+						</SendouButton>
+					</FormWithConfirm>
+				) : (
+					<SendouPopover
+						trigger={
+							<SendouButton size="small">
+								{`Confirm for ${confirmedTime.toLocaleTimeString(
+									i18n.language,
+									{
+										hour: "numeric",
+										minute: "2-digit",
+									},
+								)}`}
+							</SendouButton>
+						}
+					>
+						{t("scrims:acceptModal.prevented")}
+					</SendouPopover>
+				)}
+			</div>
+		</div>
 	);
 }

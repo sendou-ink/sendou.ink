@@ -109,3 +109,17 @@
 	justify-content: center;
 	margin-block-start: auto;
 }
+
+.requestCard {
+	background-color: var(--theme-transparent);
+}
+
+.requestFooter {
+	background-image: repeating-linear-gradient(
+		45deg,
+		var(--bg-darker),
+		var(--bg-darker) 10px,
+		var(--bg-lighter) 10px,
+		var(--bg-lighter) 20px
+	);
+}
