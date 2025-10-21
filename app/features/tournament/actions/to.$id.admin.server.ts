@@ -1,8 +1,6 @@
 import type { ActionFunction } from "@remix-run/node";
-import { z } from "zod/v4";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
-import { bracketProgressionSchema } from "~/features/calendar/calendar-schemas";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -11,7 +9,6 @@ import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import { USER } from "~/features/user-page/user-page-constants";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
@@ -22,13 +19,12 @@ import {
 	successToast,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { _action, id, idObject } from "../../../utils/zod";
-import { bracketIdx } from "../../tournament-bracket/tournament-bracket-schemas.server";
+import { idObject } from "../../../utils/zod";
 import { changeTeamOwner } from "../queries/changeTeamOwner.server";
 import { deleteTeam } from "../queries/deleteTeam.server";
 import { joinTeam, leaveTeam } from "../queries/joinLeaveTeam.server";
 import * as TournamentRepository from "../TournamentRepository.server";
-import { teamName } from "../tournament-schemas.server";
+import { adminActionSchema } from "../tournament-schemas.server";
 import { inGameNameIfNeeded } from "../tournament-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
@@ -458,95 +454,3 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	return successToast(message);
 };
-
-export const adminActionSchema = z.union([
-	z.object({
-		_action: _action("CHANGE_TEAM_OWNER"),
-		teamId: id,
-		memberId: id,
-	}),
-	z.object({
-		_action: _action("CHANGE_TEAM_NAME"),
-		teamId: id,
-		teamName,
-	}),
-	z.object({
-		_action: _action("CHECK_IN"),
-		teamId: id,
-		bracketIdx,
-	}),
-	z.object({
-		_action: _action("CHECK_OUT"),
-		teamId: id,
-		bracketIdx,
-	}),
-	z.object({
-		_action: _action("ADD_MEMBER"),
-		teamId: id,
-		userId: id,
-	}),
-	z.object({
-		_action: _action("REMOVE_MEMBER"),
-		teamId: id,
-		memberId: id,
-	}),
-	z.object({
-		_action: _action("DELETE_TEAM"),
-		teamId: id,
-	}),
-	z.object({
-		_action: _action("ADD_TEAM"),
-		userId: id,
-		teamName,
-	}),
-	z.object({
-		_action: _action("ADD_STAFF"),
-		userId: id,
-		role: z.enum(["ORGANIZER", "STREAMER"]),
-	}),
-	z.object({
-		_action: _action("REMOVE_STAFF"),
-		userId: id,
-	}),
-	z.object({
-		_action: _action("DROP_TEAM_OUT"),
-		teamId: id,
-	}),
-	z.object({
-		_action: _action("UNDO_DROP_TEAM_OUT"),
-		teamId: id,
-	}),
-	z.object({
-		_action: _action("DELETE_LOGO"),
-		teamId: id,
-	}),
-	z.object({
-		_action: _action("UPDATE_CAST_TWITCH_ACCOUNTS"),
-		castTwitchAccounts: z.preprocess(
-			(val) =>
-				typeof val === "string"
-					? val
-							.split(",")
-							.map((account) => account.trim())
-							.map((account) => account.toLowerCase())
-					: val,
-			z.array(z.string()),
-		),
-	}),
-	z.object({
-		_action: _action("RESET_BRACKET"),
-		stageId: id,
-	}),
-	z.object({
-		_action: _action("UPDATE_IN_GAME_NAME"),
-		inGameNameText: z.string().max(USER.IN_GAME_NAME_TEXT_MAX_LENGTH),
-		inGameNameDiscriminator: z
-			.string()
-			.refine((val) => /^[0-9a-z]{4,5}$/.test(val)),
-		memberId: id,
-	}),
-	z.object({
-		_action: _action("UPDATE_TOURNAMENT_PROGRESSION"),
-		bracketProgression: bracketProgressionSchema,
-	}),
-]);

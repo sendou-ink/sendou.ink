@@ -196,10 +196,10 @@ export function PlacementsTable({
 
 					const key = () => {
 						if (overridenDestinationBracket === null) {
-							return "null";
+							return `${s.team.id}-null`;
 						}
 
-						return overridenDestinationBracket?.idx;
+						return `${s.team.id}-${overridenDestinationBracket?.idx}`;
 					};
 
 					const renderQualifiedRow =
