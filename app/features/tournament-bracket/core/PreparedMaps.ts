@@ -3,9 +3,10 @@ import type { PreparedMaps } from "~/db/tables";
 import { nullFilledArray } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import type { Bracket } from "./Bracket";
+import * as Progression from "./Progression";
 import type { Tournament } from "./Tournament";
 
-/** Returns the prepared maps for one exact bracket index OR maps of a "sibling bracket" i.e. bracket that has the same sources  */
+/** Returns the prepared maps for one exact bracket index OR maps of a "sibling bracket" i.e. bracket that has the same depth in progression  */
 export function resolvePreparedForTheBracket({
 	preparedByBracket,
 	bracketIdx,
@@ -23,19 +24,20 @@ export function resolvePreparedForTheBracket({
 	}
 
 	const bracketPreparingFor = tournament.bracketByIdx(bracketIdx)!;
+	const bracketProgression = tournament.ctx.settings.bracketProgression;
+	const targetDepth = Progression.bracketDepth(bracketIdx, bracketProgression);
 
 	// lets look for an "equivalent" prepared bracket to use
 	// e.g. SoS RR -> 4x SE style the SE brackets can share maps
-	for (const [
-		anotherBracketIdx,
-		bracket,
-	] of tournament.ctx.settings.bracketProgression.entries()) {
+	for (const [anotherBracketIdx, bracket] of bracketProgression.entries()) {
+		const depth = Progression.bracketDepth(
+			anotherBracketIdx,
+			bracketProgression,
+		);
+
 		if (
 			bracket.type === bracketPreparingFor.type &&
-			R.isDeepEqual(
-				bracket.sources?.map((s) => s.bracketIdx),
-				bracketPreparingFor.sources?.map((s) => s.bracketIdx),
-			) &&
+			depth === targetDepth &&
 			R.isDeepEqual(bracket.settings, bracketPreparingFor.settings)
 		) {
 			const bracketMaps = preparedByBracket?.[anotherBracketIdx];

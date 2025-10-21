@@ -1,4 +1,13 @@
-import type { Ability, ModeShort } from "~/modules/in-game-lists/types";
+import type {
+	Ability,
+	MainWeaponId,
+	ModeShort,
+} from "~/modules/in-game-lists/types";
+
+export interface BuildWeaponWithTop500Info {
+	weaponSplId: MainWeaponId;
+	isTop500: number;
+}
 
 type WithId<T> = T & { id: string };
 

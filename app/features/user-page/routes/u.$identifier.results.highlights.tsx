@@ -21,7 +21,7 @@ export default function ResultHighlightsEditPage() {
 						<legend>{t("user:results.highlights.explanation")}</legend>
 						<UserResultsTable
 							id="user-results-highlight-selection"
-							results={data.results}
+							results={data.results.value}
 							hasHighlightCheckboxes
 						/>
 					</fieldset>

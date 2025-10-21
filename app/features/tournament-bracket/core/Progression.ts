@@ -598,6 +598,27 @@ export function isUnderground(idx: number, brackets: ParsedBracket[]) {
 	return !resolveMainBracketProgression(brackets).includes(idx);
 }
 
+/**
+ * Returns the depth of a bracket in the tournament progression.
+ * Depth is the distance from a starting bracket (bracket with no sources).
+ * Starting brackets have depth 0, brackets sourced from them have depth 1, etc.
+ */
+export function bracketDepth(idx: number, brackets: ParsedBracket[]): number {
+	invariant(idx < brackets.length, "Bracket index out of bounds");
+
+	const bracket = brackets[idx];
+
+	if (!bracket.sources || bracket.sources.length === 0) {
+		return 0;
+	}
+
+	const sourceDepths = bracket.sources.map((source) =>
+		bracketDepth(source.bracketIdx, brackets),
+	);
+
+	return Math.max(...sourceDepths) + 1;
+}
+
 function resolveMainBracketProgression(brackets: ParsedBracket[]) {
 	if (brackets.length === 1) return [0];
 

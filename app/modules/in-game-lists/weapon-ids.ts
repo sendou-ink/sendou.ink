@@ -133,6 +133,19 @@ const altWeaponIds = new Set(altWeaponIdToId.keys());
 export const weaponIdIsNotAlt = (weaponId: MainWeaponId) =>
 	!altWeaponIds.has(weaponId);
 
+/** Returns true if the weapon ID has alternate skins
+ *
+ *  * @example
+ * // Splattershot, Hero Shot, Order Shot...
+ * weaponIdHasAlts(40); // -> true
+ * weaponIdHasAlts(41); // -> true
+ *
+ * // Sploosh-o-matic has no alt skins
+ * weaponIdHasAlts(0); // -> false
+ */
+export const weaponIdHasAlts = (weaponId: MainWeaponId) =>
+	weaponIdToAltId.has(weaponId) || altWeaponIdToId.has(weaponId);
+
 export const SPLAT_BOMB_ID = 0;
 export const SUCTION_BOMB_ID = 1;
 export const BURST_BOMB_ID = 2;
