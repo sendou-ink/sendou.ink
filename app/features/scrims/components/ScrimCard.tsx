@@ -1,22 +1,26 @@
 import { Form, Link } from "@remix-run/react";
 import clsx from "clsx";
 import { formatDistance } from "date-fns";
+import type React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { Image } from "~/components/Image";
+import { ModeImage } from "~/components/Image";
+import { ArrowDownOnSquareIcon } from "~/components/icons/ArrowDownOnSquare";
 import { ArrowUpOnSquareIcon } from "~/components/icons/ArrowUpOnSquare";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
+import { SpeechBubbleFilledIcon } from "~/components/icons/SpeechBubbleFilled";
 import { TrashIcon } from "~/components/icons/Trash";
 import { UsersIcon } from "~/components/icons/Users";
 import TimePopover from "~/components/TimePopover";
 import { useUser } from "~/features/auth/core/user";
+import type { ModeShort } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { modeImageUrl, userPage } from "~/utils/urls";
+import { scrimPage, tournamentRegisterPage, userPage } from "~/utils/urls";
 import { userSubmittedImage } from "~/utils/urls-img";
 import type { ScrimPost, ScrimPostRequest } from "../scrims-types";
 import { formatFlexTimeDisplay } from "../scrims-utils";
@@ -27,7 +31,7 @@ import { ScrimRequestModal } from "./ScrimRequestModal";
 
 interface ScrimPostCardProps {
 	post: ScrimPost;
-	action?: "DELETE" | "REQUEST" | "VIEW_REQUEST";
+	action?: "DELETE" | "REQUEST" | "VIEW_REQUEST" | "CONTACT";
 }
 
 export function ScrimPostCard({ post, action }: ScrimPostCardProps) {
@@ -78,19 +82,21 @@ export function ScrimPostCard({ post, action }: ScrimPostCardProps) {
 				{flexTimeDisplay ? (
 					<ScrimInfoItem label="Flex">{flexTimeDisplay}</ScrimInfoItem>
 				) : null}
-
-				<ScrimInfoItem label="Modes">
-					<Image
-						path={modeImageUrl("SZ")}
-						alt="Splat Zones"
-						width={18}
-						height={18}
-					/>
-				</ScrimInfoItem>
-
 				{post.divs ? (
 					<ScrimInfoItem label="Div">
 						{post.divs.max}-{post.divs.min}
+					</ScrimInfoItem>
+				) : null}
+
+				{post.maps || post.mapsTournament ? (
+					<ScrimInfoItem label="Modes">
+						{post.mapsTournament ? (
+							<ScrimTournamentPopover tournament={post.mapsTournament} />
+						) : (
+							getModesList(post.maps!).map((mode) => (
+								<ModeImage key={mode} mode={mode} size={18} />
+							))
+						)}
 					</ScrimInfoItem>
 				) : null}
 			</div>
@@ -98,10 +104,20 @@ export function ScrimPostCard({ post, action }: ScrimPostCardProps) {
 			{post.text ? <ScrimExpandableText text={post.text} /> : null}
 
 			<div className={styles.footer}>
-				<ScrimActionButtons action={action} post={post} />
+				<ScrimActionButtons action={action} post={post} key={action} />
 			</div>
 		</div>
 	);
+}
+
+function getModesList(maps: string): ModeShort[] {
+	if (maps === "SZ") {
+		return ["SZ"];
+	}
+	if (maps === "RANKED") {
+		return ["SZ", "TC", "RM", "CB"];
+	}
+	return ["TW", "SZ", "TC", "RM", "CB"];
 }
 
 function ScrimTeamAvatar({
@@ -147,6 +163,35 @@ function ScrimTeamMembersPopover({ users }: { users: ScrimPost["users"] }) {
 						{user.username}
 					</Link>
 				))}
+			</div>
+		</SendouPopover>
+	);
+}
+
+function ScrimTournamentPopover({
+	tournament,
+}: {
+	tournament: NonNullable<ScrimPost["mapsTournament"]>;
+}) {
+	return (
+		<SendouPopover
+			trigger={
+				<SendouButton variant="minimal">
+					<Avatar
+						size="xxxsm"
+						url={tournament.avatarUrl}
+						alt={tournament.name}
+					/>
+				</SendouButton>
+			}
+		>
+			<div className="stack sm text-center">
+				<Link
+					to={`${tournamentRegisterPage(tournament.id)}?tab=description`}
+					className="text-theme text-xxs"
+				>
+					{tournament.name}
+				</Link>
 			</div>
 		</SendouPopover>
 	);
@@ -206,13 +251,21 @@ function ScrimInfoItem({
 	);
 }
 
-function ScrimExpandableText({ text }: { text: string }) {
+function ScrimExpandableText({
+	text,
+	maxBeforeTruncate = 50,
+}: {
+	text: string;
+	maxBeforeTruncate?: number;
+}) {
 	const { t } = useTranslation(["common"]);
 	const [isExpanded, setIsExpanded] = useState(false);
 
-	const shouldTruncate = text.length > 50;
+	const shouldTruncate = text.length > maxBeforeTruncate;
 	const displayText =
-		shouldTruncate && !isExpanded ? `${text.slice(0, 50)}...` : text;
+		shouldTruncate && !isExpanded
+			? `${text.slice(0, maxBeforeTruncate)}...`
+			: text;
 
 	return (
 		<div className={styles.textContent}>
@@ -248,7 +301,6 @@ function ScrimActionButtons({
 		return null;
 	}
 
-	// xxx: fix making request just insta triggers VIEW_REQUEST modal
 	if (action === "REQUEST") {
 		return (
 			<>
@@ -274,13 +326,13 @@ function ScrimActionButtons({
 			request.users.some((rUser) => user?.id === rUser.id),
 		);
 
-		// xxx: better UI, alignment etc.
 		return (
 			<>
 				<SendouButton
 					size="small"
 					onPress={() => setIsViewRequestModalOpen(true)}
 					variant="outlined"
+					icon={<ArrowDownOnSquareIcon />}
 				>
 					{t("scrims:actions.viewRequest")}
 				</SendouButton>
@@ -338,6 +390,18 @@ function ScrimActionButtons({
 		);
 	}
 
+	if (action === "CONTACT") {
+		return (
+			<LinkButton
+				to={scrimPage(post.id)}
+				size="small"
+				icon={<SpeechBubbleFilledIcon />}
+			>
+				{t("scrims:actions.contact")}
+			</LinkButton>
+		);
+	}
+
 	return (
 		<FormWithConfirm
 			dialogHeading={t("scrims:deleteModal.title")}
@@ -358,12 +422,14 @@ interface ScrimRequestCardProps {
 	request: ScrimPostRequest;
 	postStartTime: number;
 	canAccept: boolean;
+	showFooter?: boolean;
 }
 
 export function ScrimRequestCard({
 	request,
 	postStartTime,
 	canAccept,
+	showFooter = true,
 }: ScrimRequestCardProps) {
 	const { t, i18n } = useTranslation(["scrims", "common"]);
 
@@ -400,32 +466,25 @@ export function ScrimRequestCard({
 				</div>
 			</div>
 
-			{request.message ? <ScrimExpandableText text={request.message} /> : null}
+			{request.message ? (
+				<ScrimExpandableText text={request.message} maxBeforeTruncate={100} />
+			) : null}
 
-			<div className={clsx(styles.footer, styles.requestFooter)}>
-				{canAccept ? (
-					<FormWithConfirm
-						dialogHeading={t("scrims:acceptModal.title", {
-							groupName: teamName,
-						})}
-						fields={[
-							["scrimPostRequestId", request.id],
-							["_action", "ACCEPT_REQUEST"],
-						]}
-						submitButtonVariant="primary"
-						submitButtonText={t("common:actions.confirm")}
-					>
-						<SendouButton size="small" icon={<CheckmarkIcon />}>
-							{`Confirm for ${confirmedTime.toLocaleTimeString(i18n.language, {
-								hour: "numeric",
-								minute: "2-digit",
-							})}`}
-						</SendouButton>
-					</FormWithConfirm>
-				) : (
-					<SendouPopover
-						trigger={
-							<SendouButton size="small">
+			{showFooter ? (
+				<div className={clsx(styles.footer, styles.requestFooter)}>
+					{canAccept ? (
+						<FormWithConfirm
+							dialogHeading={t("scrims:acceptModal.title", {
+								groupName: teamName,
+							})}
+							fields={[
+								["scrimPostRequestId", request.id],
+								["_action", "ACCEPT_REQUEST"],
+							]}
+							submitButtonVariant="primary"
+							submitButtonText={t("common:actions.confirm")}
+						>
+							<SendouButton size="small" icon={<CheckmarkIcon />}>
 								{`Confirm for ${confirmedTime.toLocaleTimeString(
 									i18n.language,
 									{
@@ -434,12 +493,26 @@ export function ScrimRequestCard({
 									},
 								)}`}
 							</SendouButton>
-						}
-					>
-						{t("scrims:acceptModal.prevented")}
-					</SendouPopover>
-				)}
-			</div>
+						</FormWithConfirm>
+					) : (
+						<SendouPopover
+							trigger={
+								<SendouButton size="small">
+									{`Confirm for ${confirmedTime.toLocaleTimeString(
+										i18n.language,
+										{
+											hour: "numeric",
+											minute: "2-digit",
+										},
+									)}`}
+								</SendouButton>
+							}
+						>
+							{t("scrims:acceptModal.prevented")}
+						</SendouPopover>
+					)}
+				</div>
+			) : null}
 		</div>
 	);
 }

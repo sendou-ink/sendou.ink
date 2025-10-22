@@ -177,6 +177,7 @@ export const scrimsNewActionSchema = z
 			z.string().max(MAX_SCRIM_POST_TEXT_LENGTH).nullable(),
 		),
 		managedByAnyone: z.boolean(),
+		maps: z.enum(["NO_PREFERENCE", "SZ", "RANKED", "ALL", "TOURNAMENT"]),
 	})
 	.superRefine((post, ctx) => {
 		if (

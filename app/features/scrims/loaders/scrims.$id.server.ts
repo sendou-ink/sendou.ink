@@ -1,14 +1,15 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
+import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { notFoundIfFalsy } from "../../../utils/remix.server";
-import { requireUser } from "../../auth/core/user.server";
+import {
+	type AuthenticatedUser,
+	requireUser,
+} from "../../auth/core/user.server";
 import * as Scrim from "../core/Scrim";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
-import { FF_SCRIMS_ENABLED } from "../scrims-constants";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	notFoundIfFalsy(FF_SCRIMS_ENABLED);
-
 	const user = await requireUser(request);
 
 	const post = notFoundIfFalsy(
@@ -30,5 +31,17 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		chatUsers: await UserRepository.findChatUsersByUserIds(participantIds),
 		anyUserPrefersNoScreen:
 			await UserRepository.anyUserPrefersNoScreen(participantIds),
+		tournamentMapPool: post.mapsTournament
+			? await resolveTournamentMapPool(post.mapsTournament.id, user)
+			: null,
 	};
 };
+
+async function resolveTournamentMapPool(
+	tournamentId: number,
+	user: AuthenticatedUser,
+) {
+	const data = await tournamentDataCached({ tournamentId, user });
+
+	return data.ctx.toSetMapPool;
+}

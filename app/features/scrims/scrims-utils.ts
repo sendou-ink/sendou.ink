@@ -1,6 +1,7 @@
 import { differenceInMinutes } from "date-fns";
 import * as R from "remeda";
 import { databaseTimestampToDate } from "~/utils/dates";
+import * as Scrim from "./core/Scrim";
 import type { LutiDiv, ScrimPost } from "./scrims-types";
 
 export const getPostRequestCensor =
@@ -22,6 +23,15 @@ export const getPostRequestCensor =
 
 export function dividePosts(posts: Array<ScrimPost>, userId?: number) {
 	const grouped = R.groupBy(posts, (post) => {
+		const isAccepted = post.requests.some((request) => request.isAccepted);
+		const isParticipating = userId
+			? Scrim.isParticipating(post, userId)
+			: false;
+
+		if (isAccepted && isParticipating) {
+			return "BOOKED";
+		}
+
 		if (post.users.some((user) => user.id === userId)) {
 			return "OWNED";
 		}
@@ -32,6 +42,7 @@ export function dividePosts(posts: Array<ScrimPost>, userId?: number) {
 	return {
 		owned: grouped.OWNED ?? [],
 		neutral: grouped.NEUTRAL ?? [],
+		booked: grouped.BOOKED ?? [],
 	};
 }
 

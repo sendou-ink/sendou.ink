@@ -20,5 +20,3 @@ export const SCRIM = {
 	REQUEST_MESSAGE_MAX_LENGTH: 200,
 	MAX_TIME_RANGE_MS: 3 * 60 * 60 * 1000, // 3 hours
 };
-
-export const FF_SCRIMS_ENABLED = true;

@@ -5,17 +5,26 @@ import type { Tables, TablesInsertable } from "~/db/tables";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { userSubmittedImage } from "~/utils/urls-img";
 import { db } from "../../db/sql";
 import invariant from "../../utils/invariant";
 import type { Unwrapped } from "../../utils/types";
 import type { AssociationVisibility } from "../associations/associations-types";
+import { HACKY_resolvePicture } from "../tournament/tournament-utils";
 import * as Scrim from "./core/Scrim";
 import type { ScrimPost, ScrimPostUser } from "./scrims-types";
 import { getPostRequestCensor, parseLutiDiv } from "./scrims-utils";
 
 type InsertArgs = Pick<
 	TablesInsertable["ScrimPost"],
-	"at" | "rangeEnd" | "maxDiv" | "minDiv" | "teamId" | "text"
+	| "at"
+	| "rangeEnd"
+	| "maxDiv"
+	| "minDiv"
+	| "teamId"
+	| "text"
+	| "maps"
+	| "mapsTournamentId"
 > & {
 	/** users related to the post other than the author */
 	users: Array<Pick<Insertable<Tables["ScrimPostUser"]>, "userId" | "isOwner">>;
@@ -39,6 +48,8 @@ export function insert(args: InsertArgs) {
 				minDiv: args.minDiv,
 				teamId: args.teamId,
 				text: args.text,
+				maps: args.maps,
+				mapsTournamentId: args.mapsTournamentId,
 				visibility: args.visibility ? JSON.stringify(args.visibility) : null,
 				chatCode: shortNanoid(),
 				managedByAnyone: args.managedByAnyone ? 1 : 0,
@@ -101,6 +112,16 @@ const baseFindQuery = db
 	.selectFrom("ScrimPost")
 	.leftJoin("Team", "ScrimPost.teamId", "Team.id")
 	.leftJoin("UserSubmittedImage", "Team.avatarImgId", "UserSubmittedImage.id")
+	.leftJoin(
+		"CalendarEvent",
+		"ScrimPost.mapsTournamentId",
+		"CalendarEvent.tournamentId",
+	)
+	.leftJoin(
+		"UserSubmittedImage as TournamentAvatar",
+		"CalendarEvent.avatarImgId",
+		"TournamentAvatar.id",
+	)
 	.select((eb) => [
 		"ScrimPost.id",
 		"ScrimPost.at",
@@ -110,6 +131,8 @@ const baseFindQuery = db
 		"ScrimPost.maxDiv",
 		"ScrimPost.minDiv",
 		"ScrimPost.text",
+		"ScrimPost.maps",
+		"ScrimPost.mapsTournamentId",
 		"ScrimPost.managedByAnyone",
 		"ScrimPost.canceledAt",
 		"ScrimPost.canceledByUserId",
@@ -120,6 +143,11 @@ const baseFindQuery = db
 			customUrl: eb.ref("Team.customUrl"),
 			avatarUrl: eb.ref("UserSubmittedImage.url"),
 		}).as("team"),
+		jsonBuildObject({
+			id: eb.ref("CalendarEvent.tournamentId"),
+			name: eb.ref("CalendarEvent.name"),
+			avatarUrl: eb.ref("TournamentAvatar.url"),
+		}).as("mapsTournament"),
 		jsonArrayFrom(
 			eb
 				.selectFrom("ScrimPostUser")
@@ -175,6 +203,15 @@ function findMany() {
 const mapDBRowToScrimPost = (
 	row: Unwrapped<typeof findMany> & { chatCode?: string },
 ): ScrimPost => {
+	const someRequestIsAccepted = row.requests.some(
+		(request) => request.isAccepted,
+	);
+
+	// once one is accepted, rest are not relevant
+	const requests = someRequestIsAccepted
+		? row.requests.filter((request) => request.isAccepted)
+		: row.requests;
+
 	const users: ScrimPostUser[] = row.users.map((user) => ({
 		...user,
 		isOwner: Boolean(user.isOwner),
@@ -189,7 +226,7 @@ const mapDBRowToScrimPost = (
 	if (row.canceledAt && row.cancelReason) {
 		let cancelingUser = users.find((u) => u.id === row.canceledByUserId);
 		if (!cancelingUser) {
-			const allRequestUsers = row.requests.flatMap((request) => request.users);
+			const allRequestUsers = requests.flatMap((request) => request.users);
 			const found = allRequestUsers.find((u) => u.id === row.canceledByUserId);
 			if (found) {
 				cancelingUser = { ...found, isOwner: Boolean(found.isOwner) };
@@ -204,7 +241,7 @@ const mapDBRowToScrimPost = (
 		}
 	}
 
-	return {
+	const result = {
 		id: row.id,
 		at: row.at,
 		rangeEnd: row.rangeEnd,
@@ -216,6 +253,16 @@ const mapDBRowToScrimPost = (
 			typeof row.maxDiv === "number" && typeof row.minDiv === "number"
 				? { max: parseLutiDiv(row.maxDiv), min: parseLutiDiv(row.minDiv) }
 				: null,
+		maps: row.maps,
+		mapsTournament: row.mapsTournament.id
+			? {
+					id: row.mapsTournament.id,
+					name: row.mapsTournament.name!,
+					avatarUrl: row.mapsTournament.avatarUrl
+						? userSubmittedImage(row.mapsTournament.avatarUrl)
+						: HACKY_resolvePicture({ name: row.mapsTournament.name! }),
+				}
+			: null,
 		chatCode: row.chatCode ?? null,
 		team: row.team.name
 			? {
@@ -224,7 +271,7 @@ const mapDBRowToScrimPost = (
 					avatarUrl: row.team.avatarUrl,
 				}
 			: null,
-		requests: row.requests.map((request) => {
+		requests: requests.map((request) => {
 			return {
 				id: request.id,
 				isAccepted: Boolean(request.isAccepted),
@@ -251,12 +298,20 @@ const mapDBRowToScrimPost = (
 		permissions: {
 			MANAGE_REQUESTS: managerIds,
 			DELETE_POST: managerIds,
-			CANCEL: managerIds.concat(
-				row.requests.at(0)?.users.map((u) => u.id) ?? [],
-			),
+			CANCEL: managerIds.concat(requests.at(0)?.users.map((u) => u.id) ?? []),
 		},
 		managedByAnyone: Boolean(row.managedByAnyone),
 		canceled,
+	};
+
+	if (!Scrim.isAccepted(result)) {
+		return result;
+	}
+
+	return {
+		...result,
+		at: Scrim.getStartTime(result),
+		rangeEnd: null,
 	};
 };
 
@@ -276,7 +331,11 @@ export async function findAllRelevant(userId?: number): Promise<ScrimPost[]> {
 
 	const mapped = rows
 		.map(mapDBRowToScrimPost)
-		.filter((post) => !Scrim.isAccepted(post));
+		.filter(
+			(post) =>
+				!Scrim.isAccepted(post) ||
+				(userId && Scrim.isParticipating(post, userId)),
+		);
 
 	if (!userId) return mapped.map((post) => ({ ...post, requests: [] }));
 

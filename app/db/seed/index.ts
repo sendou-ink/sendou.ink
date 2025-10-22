@@ -2358,6 +2358,10 @@ async function scrimPosts() {
 		return { maxDiv, minDiv };
 	};
 
+	const maps = (): "SZ" | "ALL" | "RANKED" | null => {
+		return faker.helpers.arrayElement(["SZ", "ALL", "RANKED", null, null]);
+	};
+
 	const users = () => {
 		const count = faker.helpers.arrayElement([4, 4, 4, 4, 4, 4, 5, 5, 5, 6]);
 
@@ -2398,6 +2402,8 @@ async function scrimPosts() {
 			visibility: null,
 			users: users(),
 			managedByAnyone: true,
+			maps: maps(),
+			mapsTournamentId: null,
 		});
 	}
 
@@ -2414,6 +2420,8 @@ async function scrimPosts() {
 			.map((u) => ({ ...u, isOwner: 0 }))
 			.concat({ userId: ADMIN_ID, isOwner: 1 }),
 		managedByAnyone: true,
+		maps: maps(),
+		mapsTournamentId: null,
 	});
 	await ScrimPostRepository.insertRequest({
 		scrimPostId: adminPostId,

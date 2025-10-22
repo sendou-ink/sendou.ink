@@ -991,6 +991,10 @@ export interface ScrimPost {
 	cancelReason: string | null;
 	/** When the post was made was it scheduled for a future time slot (as opposed to looking now) */
 	isScheduledForFuture: Generated<DBBoolean>;
+	/** Maps/modes the scrim is available for. If null means no preference unless "mapsTournamentId" is set */
+	maps: "SZ" | "ALL" | "RANKED" | null;
+	/** If set, specifies the maps of a tournament to play */
+	mapsTournamentId: number | null;
 	createdAt: GeneratedAlways<number>;
 	updatedAt: Generated<number>;
 }

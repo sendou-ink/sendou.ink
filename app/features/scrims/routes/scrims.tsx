@@ -24,6 +24,7 @@ import {
 	SendouTabs,
 } from "../../../components/elements/Tabs";
 import { ArrowDownOnSquareIcon } from "../../../components/icons/ArrowDownOnSquare";
+import { CheckmarkIcon } from "../../../components/icons/Checkmark";
 import { MegaphoneIcon } from "../../../components/icons/MegaphoneIcon";
 import { Main } from "../../../components/Main";
 import { action } from "../actions/scrims.server";
@@ -56,6 +57,8 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 	});
 };
 
+// xxx: add filters
+// xxx: possibly just hide tabs when not logged in instead of disabling tabs
 export default function ScrimsPage() {
 	const user = useUser();
 	const { t } = useTranslation(["calendar", "scrims"]);
@@ -87,6 +90,14 @@ export default function ScrimsPage() {
 			>
 				<SendouTabList sticky>
 					<SendouTab
+						id="available"
+						icon={<MegaphoneIcon />}
+						number={data.posts.neutral.length}
+						data-testid="available-scrims-tab"
+					>
+						{t("scrims:tabs.available")}
+					</SendouTab>
+					<SendouTab
 						id="owned"
 						isDisabled={!user}
 						icon={<ArrowDownOnSquareIcon />}
@@ -95,14 +106,24 @@ export default function ScrimsPage() {
 						{t("scrims:tabs.owned")}
 					</SendouTab>
 					<SendouTab
-						id="available"
-						icon={<MegaphoneIcon />}
-						number={data.posts.neutral.length}
-						data-testid="available-scrims-tab"
+						id="booked"
+						isDisabled={!user}
+						icon={<CheckmarkIcon />}
+						number={data.posts.booked.length}
+						data-testid="booked-scrims-tab"
 					>
-						{t("scrims:tabs.available")}
+						{t("scrims:tabs.booked")}
 					</SendouTab>
 				</SendouTabList>
+				<SendouTabPanel id="available">
+					{data.posts.neutral.length > 0 ? (
+						<ScrimsDaySeparatedCards posts={data.posts.neutral} />
+					) : (
+						<div className="text-lighter text-lg font-semi-bold text-center mt-6">
+							{t("scrims:noneAvailable")}
+						</div>
+					)}
+				</SendouTabPanel>
 				<SendouTabPanel id="owned">
 					{data.posts.owned.length > 0 ? (
 						<ScrimsDaySeparatedOwnedCards posts={data.posts.owned} />
@@ -112,12 +133,12 @@ export default function ScrimsPage() {
 						</div>
 					)}
 				</SendouTabPanel>
-				<SendouTabPanel id="available">
-					{data.posts.neutral.length > 0 ? (
-						<ScrimsDaySeparatedCards posts={data.posts.neutral} />
+				<SendouTabPanel id="booked">
+					{data.posts.booked.length > 0 ? (
+						<ScrimsDaySeparatedBookedCards posts={data.posts.booked} />
 					) : (
 						<div className="text-lighter text-lg font-semi-bold text-center mt-6">
-							{t("scrims:noneAvailable")}
+							{t("scrims:noBookedScrims")}
 						</div>
 					)}
 				</SendouTabPanel>
@@ -246,6 +267,58 @@ function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ScrimPost[] }) {
 													{t("scrims:noRequestsYet")}
 												</div>
 											)}
+										</div>
+									);
+								})}
+							</div>
+						</div>
+					);
+				})}
+		</div>
+	);
+}
+
+function ScrimsDaySeparatedBookedCards({ posts }: { posts: ScrimPost[] }) {
+	const { i18n } = useTranslation();
+
+	const postsByDay = R.groupBy(posts, (post) =>
+		databaseTimestampToDate(post.at).getDate(),
+	);
+
+	return (
+		<div className="stack lg">
+			{Object.entries(postsByDay)
+				.sort((a, b) => a[1][0].at - b[1][0].at)
+				.map(([day, posts]) => {
+					return (
+						<div key={day} className="stack md">
+							<h2 className="text-sm">
+								{databaseTimestampToDate(posts![0].at).toLocaleDateString(
+									i18n.language,
+									{
+										day: "numeric",
+										month: "long",
+										weekday: "long",
+									},
+								)}
+							</h2>
+							<div className="stack lg">
+								{posts!.map((post) => {
+									const acceptedRequest = post.requests.find(
+										(request) => request.isAccepted,
+									);
+
+									return (
+										<div key={post.id} className="stack sm">
+											<ScrimPostCard post={post} action="CONTACT" />
+											{acceptedRequest ? (
+												<ScrimRequestCard
+													request={acceptedRequest}
+													postStartTime={post.at}
+													canAccept={false}
+													showFooter={false}
+												/>
+											) : null}
 										</div>
 									);
 								})}

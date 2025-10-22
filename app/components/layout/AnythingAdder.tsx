@@ -1,7 +1,6 @@
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useUser } from "~/features/auth/core/user";
-import { FF_SCRIMS_ENABLED } from "~/features/scrims/scrims-constants";
 import {
 	CALENDAR_NEW_PAGE,
 	lfgNewPostPage,
@@ -62,22 +61,18 @@ export function AnythingAdder() {
 			imagePath: navIconUrl("t"),
 			href: NEW_TEAM_PAGE,
 		},
-		FF_SCRIMS_ENABLED
-			? {
-					id: "scrimPost",
-					children: t("header.adder.scrimPost"),
-					imagePath: navIconUrl("scrims"),
-					href: newScrimPostPage(),
-				}
-			: null,
-		FF_SCRIMS_ENABLED
-			? {
-					id: "association",
-					children: t("header.adder.association"),
-					imagePath: navIconUrl("associations"),
-					href: newAssociationsPage(),
-				}
-			: null,
+		{
+			id: "scrimPost",
+			children: t("header.adder.scrimPost"),
+			imagePath: navIconUrl("scrims"),
+			href: newScrimPostPage(),
+		},
+		{
+			id: "association",
+			children: t("header.adder.association"),
+			imagePath: navIconUrl("associations"),
+			href: newAssociationsPage(),
+		},
 		{
 			id: "lfgPost",
 			children: t("header.adder.lfgPost"),

@@ -17,6 +17,12 @@ export interface ScrimPost {
 		/** Min div in the whole system is "11" */
 		min: LutiDiv;
 	} | null;
+	maps: "SZ" | "ALL" | "RANKED" | null;
+	mapsTournament: {
+		id: number;
+		name: string;
+		avatarUrl: string;
+	} | null;
 	team: ScrimPostTeam | null;
 	users: Array<ScrimPostUser>;
 	chatCode: string | null;

@@ -56,6 +56,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		minDiv: data.divs ? serializeLutiDiv(data.divs.min!) : null,
 		text: data.postText,
 		managedByAnyone: data.managedByAnyone,
+		maps:
+			data.maps === "NO_PREFERENCE" || data.maps === "TOURNAMENT"
+				? null
+				: data.maps,
+		mapsTournamentId: null,
 		isScheduledForFuture:
 			data.at >
 			// 10 minutes is an arbitrary threshold

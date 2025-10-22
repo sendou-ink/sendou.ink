@@ -4,6 +4,7 @@ import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod/v4";
 import { DateFormField } from "~/components/form/DateFormField";
+import { SelectFormField } from "~/components/form/SelectFormField";
 import { SendouForm } from "~/components/form/SendouForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import { ToggleFormField } from "~/components/form/ToggleFormField";
@@ -60,6 +61,7 @@ export default function NewScrimPage() {
 									) as unknown as number[],
 								},
 					managedByAnyone: true,
+					maps: "NO_PREFERENCE",
 				}}
 			>
 				<WithFormField usersTeams={data.teams} />
@@ -82,6 +84,21 @@ export default function NewScrimPage() {
 				<NotFoundVisibilityFormField associations={data.associations} />
 
 				<LutiDivsFormField />
+
+				<SelectFormField<FormFields>
+					label={t("scrims:forms.maps.title")}
+					name="maps"
+					values={[
+						{
+							value: "NO_PREFERENCE",
+							label: t("scrims:forms.maps.noPreference"),
+						},
+						{ value: "SZ", label: t("scrims:forms.maps.szOnly") },
+						{ value: "RANKED", label: t("scrims:forms.maps.rankedOnly") },
+						{ value: "ALL", label: t("scrims:forms.maps.allModes") },
+						{ value: "TOURNAMENT", label: t("scrims:forms.maps.tournament") },
+					]}
+				/>
 
 				<TextAreaFormField<FormFields>
 					label={t("scrims:forms.text.title")}

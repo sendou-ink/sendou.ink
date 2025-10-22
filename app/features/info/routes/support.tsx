@@ -5,7 +5,6 @@ import { Badge } from "~/components/Badge";
 import { LinkButton } from "~/components/elements/Button";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { Main } from "~/components/Main";
-import { FF_SCRIMS_ENABLED } from "~/features/scrims/scrims-constants";
 import { metaTags } from "~/utils/remix";
 import {
 	PATREON_HOW_TO_CONNECT_DISCORD_URL,
@@ -169,9 +168,7 @@ function SupportTable() {
 			<div>Support</div>
 			<div>Supporter</div>
 			<div>Supporter+</div>
-			{PERKS.filter(
-				(perk) => FF_SCRIMS_ENABLED || perk.name !== "joinMoreAssociations",
-			).map((perk) => {
+			{PERKS.map((perk) => {
 				return (
 					<React.Fragment key={perk.name}>
 						<div className="justify-self-start">
