@@ -160,6 +160,8 @@
 	"forms.errors.noSearchMatches": "没有找到相关结果",
 	"forms.userSearch.placeholder": "",
 	"forms.userSearch.noResults": "",
+	"forms.tournamentSearch.placeholder": "",
+	"forms.tournamentSearch.noResults": "",
 	"forms.weaponSearch.placeholder": "",
 	"forms.weaponSearch.search.placeholder": "",
 	"forms.weaponSearch.quickSelect": "",

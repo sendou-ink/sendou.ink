@@ -3,6 +3,7 @@ import * as React from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod/v4";
+import { TournamentSearch } from "~/components/elements/TournamentSearch";
 import { DateFormField } from "~/components/form/DateFormField";
 import { SelectFormField } from "~/components/form/SelectFormField";
 import { SendouForm } from "~/components/form/SendouForm";
@@ -62,6 +63,7 @@ export default function NewScrimPage() {
 								},
 					managedByAnyone: true,
 					maps: "NO_PREFERENCE",
+					mapsTournamentId: null,
 				}}
 			>
 				<WithFormField usersTeams={data.teams} />
@@ -99,6 +101,8 @@ export default function NewScrimPage() {
 						{ value: "TOURNAMENT", label: t("scrims:forms.maps.tournament") },
 					]}
 				/>
+
+				<TournamentSearchFormField />
 
 				<TextAreaFormField<FormFields>
 					label={t("scrims:forms.text.title")}
@@ -316,6 +320,42 @@ function LutiDivsSelector({
 					))}
 				</select>
 			</div>
+		</div>
+	);
+}
+
+function TournamentSearchFormField() {
+	const { t } = useTranslation(["scrims"]);
+	const methods = useFormContext<FormFields>();
+	const maps = useWatch<FormFields>({ name: "maps" });
+
+	const error = methods.formState.errors.mapsTournamentId;
+
+	React.useEffect(() => {
+		if (maps !== "TOURNAMENT") {
+			methods.setValue("mapsTournamentId", null);
+		}
+	}, [maps, methods]);
+
+	if (maps !== "TOURNAMENT") return null;
+
+	return (
+		<div>
+			<Controller
+				control={methods.control}
+				name="mapsTournamentId"
+				render={({ field: { onChange, value } }) => (
+					<TournamentSearch
+						label={t("scrims:forms.mapsTournament.title")}
+						initialTournamentId={value ?? undefined}
+						onChange={(tournament) => onChange(tournament.id)}
+					/>
+				)}
+			/>
+
+			{error ? (
+				<FormMessage type="error">{error.message as string}</FormMessage>
+			) : null}
 		</div>
 	);
 }

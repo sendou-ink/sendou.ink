@@ -34,6 +34,7 @@ const defaultNewScrimPostArgs: Parameters<typeof newScrimAction>[0] = {
 		forAssociation: "PUBLIC",
 	},
 	maps: "NO_PREFERENCE",
+	mapsTournamentId: null,
 };
 
 describe("New scrim post action", () => {

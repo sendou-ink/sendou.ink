@@ -163,6 +163,8 @@
 	"forms.errors.noSearchMatches": "Nenhum resultado encontrado",
 	"forms.userSearch.placeholder": "",
 	"forms.userSearch.noResults": "",
+	"forms.tournamentSearch.placeholder": "",
+	"forms.tournamentSearch.noResults": "",
 	"forms.weaponSearch.placeholder": "",
 	"forms.weaponSearch.search.placeholder": "",
 	"forms.weaponSearch.quickSelect": "",

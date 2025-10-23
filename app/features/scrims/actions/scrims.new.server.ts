@@ -60,7 +60,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			data.maps === "NO_PREFERENCE" || data.maps === "TOURNAMENT"
 				? null
 				: data.maps,
-		mapsTournamentId: null,
+		mapsTournamentId: data.mapsTournamentId,
 		isScheduledForFuture:
 			data.at >
 			// 10 minutes is an arbitrary threshold

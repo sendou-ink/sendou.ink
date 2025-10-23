@@ -178,8 +178,24 @@ export const scrimsNewActionSchema = z
 		),
 		managedByAnyone: z.boolean(),
 		maps: z.enum(["NO_PREFERENCE", "SZ", "RANKED", "ALL", "TOURNAMENT"]),
+		mapsTournamentId: z.preprocess(falsyToNull, id.nullable()),
 	})
 	.superRefine((post, ctx) => {
+		if (post.maps === "TOURNAMENT" && !post.mapsTournamentId) {
+			ctx.addIssue({
+				path: ["mapsTournamentId"],
+				message: "Tournament must be selected when maps is tournament",
+				code: z.ZodIssueCode.custom,
+			});
+		}
+
+		if (post.maps !== "TOURNAMENT" && post.mapsTournamentId) {
+			ctx.addIssue({
+				path: ["mapsTournamentId"],
+				message: "Tournament should only be selected when maps is tournament",
+				code: z.ZodIssueCode.custom,
+			});
+		}
 		if (
 			post.notFoundVisibility.at &&
 			post.notFoundVisibility.forAssociation === post.baseVisibility
