@@ -66,3 +66,17 @@ interface ScrimPostTeam {
 	customUrl: string;
 	avatarUrl: string | null;
 }
+
+export interface TimeRange {
+	start: string;
+	end: string;
+}
+
+export interface ScrimFilters {
+	weekdayTimes: TimeRange | null;
+	weekendTimes: TimeRange | null;
+	divs: {
+		min: LutiDiv | null;
+		max: LutiDiv | null;
+	} | null;
+}

@@ -1,6 +1,8 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import {
 	databaseTimestampToDate,
@@ -13,6 +15,7 @@ import {
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
+import { scrimsPage } from "~/utils/urls";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { type newRequestSchema, scrimsActionSchema } from "../scrims-schemas";
 import { generateTimeOptions } from "../scrims-utils";
@@ -20,6 +23,7 @@ import { usersListForPost } from "./scrims.new.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const user = await requireUser(request);
+
 	const data = await parseRequestPayload({
 		request,
 		schema: scrimsActionSchema,
@@ -134,6 +138,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			await ScrimPostRepository.deleteRequest(data.scrimPostRequestId);
 
 			break;
+		}
+		case "PERSIST_SCRIM_FILTERS": {
+			await UserRepository.updatePreferences(user.id, {
+				defaultScrimsFilters: data.filters,
+			});
+
+			return redirect(scrimsPage());
 		}
 		default: {
 			assertUnreachable(data);

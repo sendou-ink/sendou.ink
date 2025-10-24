@@ -32,9 +32,14 @@ import { ScrimRequestModal } from "./ScrimRequestModal";
 interface ScrimPostCardProps {
 	post: ScrimPost;
 	action?: "DELETE" | "REQUEST" | "VIEW_REQUEST" | "CONTACT";
+	isFilteredOut?: boolean;
 }
 
-export function ScrimPostCard({ post, action }: ScrimPostCardProps) {
+export function ScrimPostCard({
+	post,
+	action,
+	isFilteredOut,
+}: ScrimPostCardProps) {
 	const { t } = useTranslation(["scrims"]);
 
 	const owner = post.users.find((user) => user.isOwner) ?? post.users[0];
@@ -84,7 +89,9 @@ export function ScrimPostCard({ post, action }: ScrimPostCardProps) {
 				) : null}
 				{post.divs ? (
 					<ScrimInfoItem label="Div">
-						{post.divs.max}-{post.divs.min}
+						{post.divs.max === post.divs.min
+							? post.divs.max
+							: `${post.divs.min}-${post.divs.max}`}
 					</ScrimInfoItem>
 				) : null}
 
@@ -103,7 +110,9 @@ export function ScrimPostCard({ post, action }: ScrimPostCardProps) {
 
 			{post.text ? <ScrimExpandableText text={post.text} /> : null}
 
-			<div className={styles.footer}>
+			<div
+				className={clsx(styles.footer, isFilteredOut && styles.filteredFooter)}
+			>
 				<ScrimActionButtons action={action} post={post} key={action} />
 			</div>
 		</div>

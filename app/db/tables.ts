@@ -11,6 +11,7 @@ import type { tags } from "~/features/calendar/calendar-constants";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
+import type { ScrimFilters } from "~/features/scrims/scrims-types";
 import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
@@ -820,6 +821,7 @@ export interface UserPreferences {
 	disableBuildAbilitySorting?: boolean;
 	disallowScrimPickupsFromUntrusted?: boolean;
 	defaultCalendarFilters?: CalendarFilters;
+	defaultScrimsFilters?: ScrimFilters;
 }
 
 export interface User {

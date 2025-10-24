@@ -7,6 +7,8 @@ import {
 	filterOutNullishMembers,
 	id,
 	noDuplicates,
+	safeJSONParse,
+	timeString,
 } from "~/utils/zod";
 import { associationIdentifierSchema } from "../associations/associations-schemas";
 import { LUTI_DIVS, SCRIM } from "./scrims-constants";
@@ -59,11 +61,65 @@ export const cancelScrimSchema = z.object({
 	reason: z.string().trim().min(1).max(SCRIM.CANCEL_REASON_MAX_LENGTH),
 });
 
+const timeRangeSchema = z.object({
+	start: timeString,
+	end: timeString,
+});
+
+export const divsSchema = z
+	.object({
+		min: z.enum(LUTI_DIVS).nullable(),
+		max: z.enum(LUTI_DIVS).nullable(),
+	})
+	.refine(
+		(div) => {
+			if (!div) return true;
+
+			if (div.max && !div.min) return false;
+			if (div.min && !div.max) return false;
+
+			return true;
+		},
+		{
+			message: "Both min and max div must be set or neither",
+		},
+	)
+	.transform((divs) => {
+		if (!divs.min || !divs.max) return divs;
+
+		const minIndex = LUTI_DIVS.indexOf(divs.min);
+		const maxIndex = LUTI_DIVS.indexOf(divs.max);
+
+		if (maxIndex > minIndex) {
+			return { min: divs.max, max: divs.min };
+		}
+
+		return divs;
+	});
+
+export const scrimsFiltersSchema = z.object({
+	weekdayTimes: timeRangeSchema.nullable().catch(null),
+	weekendTimes: timeRangeSchema.nullable().catch(null),
+	divs: divsSchema.nullable().catch(null),
+});
+
+export const scrimsFiltersSearchParamsObject = z.object({
+	filters: z
+		.preprocess(safeJSONParse, scrimsFiltersSchema)
+		.catch({ weekdayTimes: null, weekendTimes: null, divs: null }),
+});
+
+export const persistScrimFiltersSchema = z.object({
+	_action: _action("PERSIST_SCRIM_FILTERS"),
+	filters: scrimsFiltersSchema,
+});
+
 export const scrimsActionSchema = z.union([
 	deletePostSchema,
 	newRequestSchema,
 	acceptRequestSchema,
 	cancelRequestSchema,
+	persistScrimFiltersSchema,
 ]);
 
 export const MAX_SCRIM_POST_TEXT_LENGTH = 500;
@@ -141,36 +197,7 @@ export const scrimsNewActionSchema = z
 				),
 			forAssociation: associationIdentifierSchema,
 		}),
-		divs: z
-			.object({
-				min: z.enum(LUTI_DIVS).nullable(),
-				max: z.enum(LUTI_DIVS).nullable(),
-			})
-			.nullable()
-			.refine(
-				(div) => {
-					if (!div) return true;
-
-					if (div.max && !div.min) return false;
-					if (div.min && !div.max) return false;
-
-					return true;
-				},
-				{
-					message: "Both min and max div must be set or neither",
-				},
-			)
-			.refine(
-				(divs) => {
-					if (!divs?.min || !divs.max) return true;
-
-					const minIndex = LUTI_DIVS.indexOf(divs.min);
-					const maxIndex = LUTI_DIVS.indexOf(divs.max);
-
-					return minIndex >= maxIndex;
-				},
-				{ message: "Min div must be less than or equal to max div" },
-			),
+		divs: divsSchema.nullable(),
 		from: fromSchema,
 		postText: z.preprocess(
 			falsyToNull,

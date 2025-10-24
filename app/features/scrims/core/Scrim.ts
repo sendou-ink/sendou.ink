@@ -1,5 +1,9 @@
+import { format, isWeekend } from "date-fns";
+import * as R from "remeda";
+import { databaseTimestampToDate } from "~/utils/dates";
 import { logger } from "~/utils/logger";
-import type { ScrimPost } from "../scrims-types";
+import { LUTI_DIVS } from "../scrims-constants";
+import type { ScrimFilters, ScrimPost } from "../scrims-types";
 
 /** Returns true if the original poster has accepted any of the requests. */
 export function isAccepted(post: ScrimPost) {
@@ -44,4 +48,67 @@ export function participantIdsListFromAccepted(post: ScrimPost) {
 export function getStartTime(post: ScrimPost): number {
 	const acceptedRequest = post.requests.find((r) => r.isAccepted);
 	return acceptedRequest?.at ?? post.at;
+}
+
+export function applyFilters(post: ScrimPost, filters: ScrimFilters): boolean {
+	const hasMinFilter = filters.divs?.min !== null;
+	const hasMaxFilter = filters.divs?.max !== null;
+	if (filters.divs && (hasMinFilter || hasMaxFilter) && post.divs) {
+		const postMinIndex = LUTI_DIVS.indexOf(post.divs.min);
+		const postMaxIndex = LUTI_DIVS.indexOf(post.divs.max);
+
+		if (hasMinFilter && hasMaxFilter) {
+			const filterMinIndex = LUTI_DIVS.indexOf(filters.divs.min!);
+			const filterMaxIndex = LUTI_DIVS.indexOf(filters.divs.max!);
+
+			if (postMinIndex < filterMaxIndex || postMaxIndex > filterMinIndex) {
+				return false;
+			}
+		} else if (hasMinFilter) {
+			const filterMinIndex = LUTI_DIVS.indexOf(filters.divs.min!);
+			if (postMaxIndex > filterMinIndex) {
+				return false;
+			}
+		} else if (hasMaxFilter) {
+			const filterMaxIndex = LUTI_DIVS.indexOf(filters.divs.max!);
+			if (postMinIndex < filterMaxIndex) {
+				return false;
+			}
+		}
+	}
+
+	const timeFilters = isWeekend(databaseTimestampToDate(post.at))
+		? filters.weekendTimes
+		: filters.weekdayTimes;
+
+	if (timeFilters) {
+		const startDate = databaseTimestampToDate(post.at);
+		const endDate = post.rangeEnd
+			? databaseTimestampToDate(post.rangeEnd)
+			: startDate;
+
+		const startTimeString = format(startDate, "HH:mm");
+		const endTimeString = format(endDate, "HH:mm");
+
+		const hasOverlap =
+			startTimeString < timeFilters.end && endTimeString > timeFilters.start;
+
+		if (!hasOverlap) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+export function defaultFilters(): ScrimFilters {
+	return {
+		weekdayTimes: null,
+		weekendTimes: null,
+		divs: null,
+	};
+}
+
+export function filtersAreDefault(filters: ScrimFilters): boolean {
+	return R.isShallowEqual(filters, defaultFilters());
 }

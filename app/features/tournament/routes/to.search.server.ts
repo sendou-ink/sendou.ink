@@ -6,7 +6,6 @@ import { tournamentSearchSearchParamsSchema } from "../tournament-schemas.server
 
 export type TournamentSearchLoaderData = SerializeFrom<typeof loader>;
 
-// xxx: param to also search for calendar events
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await getUserId(request);
 	if (!user) {

@@ -31,9 +31,11 @@ import { MegaphoneIcon } from "../../../components/icons/MegaphoneIcon";
 import { Main } from "../../../components/Main";
 import { action } from "../actions/scrims.server";
 import { ScrimPostCard, ScrimRequestCard } from "../components/ScrimCard";
+import { ScrimFiltersDialog } from "../components/ScrimFiltersDialog";
+import * as Scrim from "../core/Scrim";
 import { loader } from "../loaders/scrims.server";
 import type { newRequestSchema } from "../scrims-schemas";
-import type { ScrimPost } from "../scrims-types";
+import type { ScrimFilters, ScrimPost } from "../scrims-types";
 export { action, loader };
 
 import styles from "./scrims.module.css";
@@ -77,14 +79,22 @@ export default function ScrimsPage() {
 	return (
 		<Main className="stack lg">
 			<div className="stack horizontal justify-between items-center">
-				<LinkButton
-					size="small"
-					to={associationsPage()}
-					className={clsx("mr-auto", { invisible: !user })}
-					variant="outlined"
-				>
-					{t("scrims:associations.title")}
-				</LinkButton>
+				<div className="stack horizontal sm">
+					<LinkButton
+						size="small"
+						to={associationsPage()}
+						className={clsx({ invisible: !user })}
+						variant="outlined"
+					>
+						{t("scrims:associations.title")}
+					</LinkButton>
+					{user ? (
+						<ScrimFiltersDialog
+							key={JSON.stringify(data.filters)}
+							filters={data.filters}
+						/>
+					) : null}
+				</div>
 				<AddNewButton to={newScrimPostPage()} navIcon="scrims" />
 			</div>
 			<SendouTabs
@@ -119,7 +129,10 @@ export default function ScrimsPage() {
 				</SendouTabList>
 				<SendouTabPanel id="available">
 					{data.posts.neutral.length > 0 ? (
-						<ScrimsDaySeparatedCards posts={data.posts.neutral} />
+						<ScrimsDaySeparatedCards
+							posts={data.posts.neutral}
+							filters={data.filters}
+						/>
 					) : (
 						<div className="text-lighter text-lg font-semi-bold text-center mt-6">
 							{t("scrims:noneAvailable")}
@@ -153,7 +166,13 @@ export default function ScrimsPage() {
 	);
 }
 
-function ScrimsDaySeparatedCards({ posts }: { posts: ScrimPost[] }) {
+function ScrimsDaySeparatedCards({
+	posts,
+	filters,
+}: {
+	posts: ScrimPost[];
+	filters: ScrimFilters;
+}) {
 	const postsByDay = R.groupBy(posts, (post) =>
 		databaseTimestampToDate(post.at).getDate(),
 	);
@@ -163,19 +182,29 @@ function ScrimsDaySeparatedCards({ posts }: { posts: ScrimPost[] }) {
 			{Object.entries(postsByDay)
 				.sort((a, b) => a[1][0].at - b[1][0].at)
 				.map(([day, dayPosts]) => (
-					<ScrimsDaySection key={day} posts={dayPosts!} />
+					<ScrimsDaySection key={day} posts={dayPosts!} filters={filters} />
 				))}
 		</div>
 	);
 }
 
-function ScrimsDaySection({ posts }: { posts: ScrimPost[] }) {
+function ScrimsDaySection({
+	posts,
+	filters,
+}: {
+	posts: ScrimPost[];
+	filters: ScrimFilters;
+}) {
 	const { i18n } = useTranslation();
 	const user = useUser();
 	const [showFiltered, setShowFiltered] = React.useState(false);
 	const [showRequestPending, setShowRequestPending] = React.useState(false);
 
-	const pendingRequestsCount = posts.filter((post) =>
+	const filteredPosts = posts.filter((post) =>
+		Scrim.applyFilters(post, filters),
+	);
+
+	const pendingRequestsCount = filteredPosts.filter((post) =>
 		post.requests.some((request) =>
 			request.users.some((rUser) => user?.id === rUser.id),
 		),
@@ -201,11 +230,12 @@ function ScrimsDaySection({ posts }: { posts: ScrimPost[] }) {
 						showRequestPending={showRequestPending}
 						setShowRequestPending={setShowRequestPending}
 						pendingRequestsCount={pendingRequestsCount}
+						filteredCount={posts.length - filteredPosts.length}
 					/>
 				) : null}
 			</div>
 			<div className={styles.cardsGrid}>
-				{posts.map((post) => {
+				{(showFiltered ? posts : filteredPosts).map((post) => {
 					const hasRequested = post.requests.some((request) =>
 						request.users.some((rUser) => user?.id === rUser.id),
 					);
@@ -221,8 +251,16 @@ function ScrimsDaySection({ posts }: { posts: ScrimPost[] }) {
 						return undefined;
 					};
 
+					const isFilteredOut =
+						showFiltered && !Scrim.applyFilters(post, filters);
+
 					return (
-						<ScrimPostCard key={post.id} post={post} action={getAction()} />
+						<ScrimPostCard
+							key={post.id}
+							post={post}
+							action={getAction()}
+							isFilteredOut={isFilteredOut}
+						/>
 					);
 				})}
 			</div>
@@ -236,28 +274,36 @@ function AvailableScrimsFilterButtons({
 	showRequestPending,
 	setShowRequestPending,
 	pendingRequestsCount,
+	filteredCount,
 }: {
 	showFiltered: boolean;
 	setShowFiltered: (value: boolean) => void;
 	showRequestPending: boolean;
 	setShowRequestPending: (value: boolean) => void;
 	pendingRequestsCount: number;
+	filteredCount: number;
 }) {
 	const { t } = useTranslation(["scrims"]);
 
+	if (filteredCount === 0 && pendingRequestsCount === 0) {
+		return null;
+	}
+
 	return (
 		<div className={styles.filterButtons}>
-			<SendouButton
-				variant="minimal"
-				size="miniscule"
-				onPress={() => setShowFiltered(!showFiltered)}
-				icon={<FilterIcon />}
-				className={showFiltered ? styles.active : undefined}
-			>
-				{showFiltered
-					? t("scrims:filters.hideFiltered", { count: 0 })
-					: t("scrims:filters.showFiltered", { count: 0 })}
-			</SendouButton>
+			{filteredCount > 0 ? (
+				<SendouButton
+					variant="minimal"
+					size="miniscule"
+					onPress={() => setShowFiltered(!showFiltered)}
+					icon={<FilterIcon />}
+					className={showFiltered ? styles.active : undefined}
+				>
+					{showFiltered
+						? t("scrims:filters.hideFiltered", { count: filteredCount })
+						: t("scrims:filters.showFiltered", { count: filteredCount })}
+				</SendouButton>
+			) : null}
 			{pendingRequestsCount > 0 ? (
 				<SendouButton
 					variant="minimal"

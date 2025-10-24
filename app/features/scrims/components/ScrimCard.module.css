@@ -123,3 +123,7 @@
 		var(--bg-lighter) 20px
 	);
 }
+
+.filteredFooter {
+	background-color: var(--theme-transparent);
+}
