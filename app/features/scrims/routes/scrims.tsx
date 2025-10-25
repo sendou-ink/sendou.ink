@@ -61,7 +61,6 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 	});
 };
 
-// xxx: possibly just hide tabs when not logged in instead of disabling tabs
 export default function ScrimsPage() {
 	const user = useUser();
 	const { t } = useTranslation(["calendar", "scrims"]);
@@ -97,35 +96,43 @@ export default function ScrimsPage() {
 				<AddNewButton to={newScrimPostPage()} navIcon="scrims" />
 			</div>
 			<SendouTabs
-				defaultSelectedKey={data.posts.owned.length > 0 ? "owned" : "available"}
+				defaultSelectedKey={
+					data.posts.owned.length > 0
+						? "owned"
+						: data.posts.booked.length > 0
+							? "booked"
+							: "available"
+				}
 			>
-				<SendouTabList sticky>
-					<SendouTab
-						id="available"
-						icon={<MegaphoneIcon />}
-						number={data.posts.neutral.length}
-						data-testid="available-scrims-tab"
-					>
-						{t("scrims:tabs.available")}
-					</SendouTab>
-					<SendouTab
-						id="owned"
-						isDisabled={!user}
-						icon={<ArrowDownOnSquareIcon />}
-						number={data.posts.owned.length}
-					>
-						{t("scrims:tabs.owned")}
-					</SendouTab>
-					<SendouTab
-						id="booked"
-						isDisabled={!user}
-						icon={<CheckmarkIcon />}
-						number={data.posts.booked.length}
-						data-testid="booked-scrims-tab"
-					>
-						{t("scrims:tabs.booked")}
-					</SendouTab>
-				</SendouTabList>
+				{user ? (
+					<SendouTabList sticky>
+						<SendouTab
+							id="available"
+							icon={<MegaphoneIcon />}
+							number={data.posts.neutral.length}
+							data-testid="available-scrims-tab"
+						>
+							{t("scrims:tabs.available")}
+						</SendouTab>
+						<SendouTab
+							id="owned"
+							isDisabled={!user}
+							icon={<ArrowDownOnSquareIcon />}
+							number={data.posts.owned.length}
+						>
+							{t("scrims:tabs.owned")}
+						</SendouTab>
+						<SendouTab
+							id="booked"
+							isDisabled={!user}
+							icon={<CheckmarkIcon />}
+							number={data.posts.booked.length}
+							data-testid="booked-scrims-tab"
+						>
+							{t("scrims:tabs.booked")}
+						</SendouTab>
+					</SendouTabList>
+				) : null}
 				<SendouTabPanel id="available">
 					{data.posts.neutral.length > 0 ? (
 						<ScrimsDaySeparatedCards
