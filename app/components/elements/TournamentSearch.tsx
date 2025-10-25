@@ -21,7 +21,7 @@ import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouLabel } from "~/components/elements/Label";
 import { ChevronUpDownIcon } from "~/components/icons/ChevronUpDown";
 import { CrossIcon } from "~/components/icons/Cross";
-import type { TournamentSearchLoaderData } from "~/features/tournament/routes/to.search.server";
+import type { TournamentSearchLoaderData } from "~/features/tournament/routes/to.search";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { SearchIcon } from "../icons/Search";
 
