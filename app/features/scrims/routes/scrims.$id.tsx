@@ -51,7 +51,6 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-// xxx: add button to generate maps according to scrim specs
 export default function ScrimPage() {
 	const { t } = useTranslation(["q", "scrims", "common"]);
 	const data = useLoaderData<typeof loader>();

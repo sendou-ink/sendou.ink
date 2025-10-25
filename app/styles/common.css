@@ -122,6 +122,12 @@ input[type="checkbox"] {
 	display: none !important;
 }
 
+input[type="time"]::-webkit-calendar-picker-indicator {
+	filter: invert(1);
+	opacity: 0.55;
+	cursor: pointer;
+}
+
 label {
 	display: block;
 	font-size: var(--fonts-xs);
@@ -206,6 +212,11 @@ select:disabled {
 .light select {
 	/* TODO: Get color from CSS var */
 	background-image: url('data:image/svg+xml;utf8,<svg width="17px" color="rgb(0 0 0 / 55%)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>');
+}
+
+.light input[type="time"]::-webkit-calendar-picker-indicator {
+	filter: invert(0);
+	opacity: 0.55;
 }
 
 select::selection {

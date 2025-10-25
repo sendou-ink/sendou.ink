@@ -825,9 +825,7 @@ test.describe("Tournament bracket", () => {
 		await expect(page.locator('[data-match-id="1"]')).toBeVisible();
 	});
 
-	test.only("user no screen setting affects tournament match", async ({
-		page,
-	}) => {
+	test("user no screen setting affects tournament match", async ({ page }) => {
 		const tournamentId = 4;
 
 		await seed(page);

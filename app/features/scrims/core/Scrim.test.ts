@@ -313,7 +313,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(false);
 		});
 
-		it("returns false when post time range is exactly at the edge of weekday time filter", () => {
+		it("returns true when post time range ends exactly at the filter start edge", () => {
 			const post = createPostForFilters(
 				new Date("2025-01-15T09:00:00"),
 				new Date("2025-01-15T10:00:00"),
@@ -324,7 +324,7 @@ describe("applyFilters", () => {
 				weekendTimes: null,
 			};
 
-			expect(applyFilters(post, filters)).toBe(false);
+			expect(applyFilters(post, filters)).toBe(true);
 		});
 	});
 

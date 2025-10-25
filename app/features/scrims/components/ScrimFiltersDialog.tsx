@@ -5,13 +5,13 @@ import { FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
+import { InputFormField } from "~/components/form/InputFormField";
 import { FilterFilledIcon } from "~/components/icons/FilterFilled";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import type { ScrimFilters } from "~/features/scrims/scrims-types";
 import { scrimsFiltersSchema } from "../scrims-schemas";
 import { LutiDivsFormField } from "./LutiDivsFormField";
-import { TimeRangeFormField } from "./TimeRangeFormField";
 
 export function ScrimFiltersDialog({ filters }: { filters: ScrimFilters }) {
 	const { t } = useTranslation(["scrims"]);
@@ -100,15 +100,35 @@ function FiltersForm({
 				onSubmit={onApplyAndPersist}
 			>
 				<input type="hidden" name="_action" value="PERSIST_SCRIM_FILTERS" />
-				<TimeRangeFormField<ScrimFilters>
-					label={t("scrims:filters.weekdayTimes")}
-					name={"weekdayTimes" as const}
-				/>
+				<div className="stack sm horizontal">
+					<InputFormField<ScrimFilters>
+						label={t("scrims:filters.weekdayStart")}
+						name={"weekdayTimes.start" as const}
+						type="time"
+						size="extra-small"
+					/>
+					<InputFormField<ScrimFilters>
+						label={t("scrims:filters.weekdayEnd")}
+						name={"weekdayTimes.end" as const}
+						type="time"
+						size="extra-small"
+					/>
+				</div>
 
-				<TimeRangeFormField<ScrimFilters>
-					label={t("scrims:filters.weekendTimes")}
-					name={"weekendTimes" as const}
-				/>
+				<div className="stack sm horizontal">
+					<InputFormField<ScrimFilters>
+						label={t("scrims:filters.weekendStart")}
+						name={"weekendTimes.start" as const}
+						type="time"
+						size="extra-small"
+					/>
+					<InputFormField<ScrimFilters>
+						label={t("scrims:filters.weekendEnd")}
+						name={"weekendTimes.end" as const}
+						type="time"
+						size="extra-small"
+					/>
+				</div>
 
 				<LutiDivsFormField />
 

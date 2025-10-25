@@ -91,7 +91,7 @@ export function applyFilters(post: ScrimPost, filters: ScrimFilters): boolean {
 		const endTimeString = format(endDate, "HH:mm");
 
 		const hasOverlap =
-			startTimeString < timeFilters.end && endTimeString > timeFilters.start;
+			startTimeString <= timeFilters.end && endTimeString >= timeFilters.start;
 
 		if (!hasOverlap) {
 			return false;

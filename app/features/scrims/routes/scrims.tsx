@@ -61,7 +61,6 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 	});
 };
 
-// xxx: add filters
 // xxx: possibly just hide tabs when not logged in instead of disabling tabs
 export default function ScrimsPage() {
 	const user = useUser();

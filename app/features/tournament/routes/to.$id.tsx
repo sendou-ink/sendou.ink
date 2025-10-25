@@ -95,7 +95,6 @@ export const handle: SendouRouteHandle = {
 
 const TournamentContext = React.createContext<Tournament>(null!);
 
-// xxx: warm-up tab
 export default function TournamentLayoutShell() {
 	const isMounted = useIsMounted();
 
