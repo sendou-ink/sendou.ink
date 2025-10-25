@@ -70,7 +70,7 @@ export function ScrimPostCard({
 					)}
 				</h3>
 				<div className={styles.rightIconsContainer}>
-					{!post.isPrivate ? <ScrimVisibilityPopover /> : null}
+					{post.isPrivate ? <ScrimVisibilityPopover /> : null}
 					<ScrimTeamMembersPopover users={post.users} />
 				</div>
 			</div>
@@ -81,6 +81,7 @@ export function ScrimPostCard({
 						isScheduledForFuture={post.isScheduledForFuture}
 						startTimestamp={post.at}
 						createdAtTimestamp={post.createdAt}
+						canceled={post.canceled}
 					/>
 				</ScrimInfoItem>
 
@@ -227,15 +228,24 @@ function ScrimStartTimeDisplay({
 	isScheduledForFuture,
 	startTimestamp,
 	createdAtTimestamp,
+	canceled,
 }: {
 	isScheduledForFuture: boolean;
 	startTimestamp: number;
 	createdAtTimestamp: number;
+	canceled: ScrimPost["canceled"];
 }) {
 	const { t } = useTranslation(["scrims"]);
 
 	if (!isScheduledForFuture) {
-		return t("scrims:now");
+		return canceled ? (
+			<div className={styles.canceledContainer}>
+				<span className={styles.strikethrough}>{t("scrims:now")}</span>
+				<span className={styles.canceledLabel}>Canceled</span>
+			</div>
+		) : (
+			t("scrims:now")
+		);
 	}
 
 	const startTime = databaseTimestampToDate(startTimestamp);
@@ -249,7 +259,7 @@ function ScrimStartTimeDisplay({
 		),
 	});
 
-	return (
+	const timeDisplay = (
 		<TimePopover
 			time={startTime}
 			options={{
@@ -259,6 +269,15 @@ function ScrimStartTimeDisplay({
 			underline={false}
 			footerText={timePopoverFooterText}
 		/>
+	);
+
+	return canceled ? (
+		<div className={styles.canceledContainer}>
+			<span className={styles.strikethrough}>{timeDisplay}</span>
+			<span className={styles.canceledLabel}>Canceled</span>
+		</div>
+	) : (
+		timeDisplay
 	);
 }
 
@@ -334,6 +353,7 @@ function ScrimActionButtons({
 					size="small"
 					onPress={() => setIsRequestModalOpen(true)}
 					icon={<ArrowUpOnSquareIcon />}
+					data-testid="request-scrim-button"
 				>
 					{t("scrims:actions.request")}
 				</SendouButton>
@@ -359,6 +379,7 @@ function ScrimActionButtons({
 					onPress={() => setIsViewRequestModalOpen(true)}
 					variant="outlined"
 					icon={<ArrowDownOnSquareIcon />}
+					data-testid="view-request-button"
 				>
 					{t("scrims:actions.viewRequest")}
 				</SendouButton>
@@ -487,7 +508,7 @@ export function ScrimRequestCard({
 						teamName
 					)}
 				</h3>
-				<div className={styles.usersIconContainer}>
+				<div className={styles.rightIconsContainer}>
 					<ScrimTeamMembersPopover users={request.users} />
 				</div>
 			</div>
@@ -510,7 +531,11 @@ export function ScrimRequestCard({
 							submitButtonVariant="primary"
 							submitButtonText={t("common:actions.confirm")}
 						>
-							<SendouButton size="small" icon={<CheckmarkIcon />}>
+							<SendouButton
+								size="small"
+								icon={<CheckmarkIcon />}
+								data-testid="confirm-modal-trigger-button"
+							>
 								{`Confirm for ${confirmedTime.toLocaleTimeString(
 									i18n.language,
 									{

@@ -55,9 +55,7 @@ export function ScrimRequestModal({
 									) as unknown as number[],
 								},
 					message: "",
-					at: post.rangeEnd
-						? (databaseTimestampToDate(post.at).getTime() as unknown as Date)
-						: null,
+					at: post.rangeEnd ? (timeOptions[0]?.value as unknown as Date) : null,
 				}}
 			>
 				<div className="font-semi-bold text-lighter italic">

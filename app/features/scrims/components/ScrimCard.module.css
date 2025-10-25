@@ -129,3 +129,20 @@
 .filteredFooter {
 	background-color: var(--theme-transparent);
 }
+
+.canceledContainer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.strikethrough button {
+	text-decoration: line-through;
+}
+
+.canceledLabel {
+	color: var(--theme-error);
+	font-size: var(--fonts-xxs);
+	font-weight: var(--bold);
+	text-transform: uppercase;
+}
