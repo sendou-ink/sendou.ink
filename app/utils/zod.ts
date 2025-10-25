@@ -32,6 +32,9 @@ export const dbBoolean = z.coerce.number().min(0).max(1).int();
 const hexCodeRegex = /^#(?:[0-9a-fA-F]{3}){1,2}[0-9]{0,2}$/; // https://stackoverflow.com/a/1636354
 export const hexCode = z.string().regex(hexCodeRegex);
 
+const timeStringRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+export const timeString = z.string().regex(timeStringRegex);
+
 const abilityNameToType = (val: string) =>
 	abilities.find((ability) => ability.name === val)?.type;
 export const headMainSlotAbility = z

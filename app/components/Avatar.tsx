@@ -5,6 +5,7 @@ import { BLANK_IMAGE_URL, discordAvatarUrl } from "~/utils/urls";
 
 const dimensions = {
 	xxxs: 16,
+	xxxsm: 20,
 	xxs: 24,
 	xs: 36,
 	sm: 44,

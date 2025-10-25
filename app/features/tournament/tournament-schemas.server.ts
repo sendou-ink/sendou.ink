@@ -23,7 +23,6 @@ export const registerSchema = z.union([
 		_action: _action("UPSERT_TEAM"),
 		teamName,
 		prefersNotToHost: z.preprocess(checkboxValueToBoolean, z.boolean()),
-		noScreen: z.preprocess(checkboxValueToBoolean, z.boolean()),
 		teamId: optionalId,
 	}),
 	z.object({
@@ -76,6 +75,12 @@ export const seedsActionSchema = z.union([
 
 export const joinSchema = z.object({
 	trust: z.preprocess(checkboxValueToBoolean, z.boolean()),
+});
+
+export const tournamentSearchSearchParamsSchema = z.object({
+	q: z.string().max(100),
+	limit: z.coerce.number().int().min(1).max(25).catch(25),
+	minStartTime: z.coerce.date().optional().catch(undefined),
 });
 
 export const adminActionSchema = z.union([

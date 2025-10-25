@@ -846,8 +846,7 @@ function EnableNoScreenToggle() {
 				onChange={setEnableNoScreen}
 			/>
 			<FormMessage type="info">
-				When registering ask teams if they want to play without Splattercolor
-				Screen.
+				Ban Splattercolor Screen in matches depending on the teams' preferences.
 			</FormMessage>
 		</div>
 	);

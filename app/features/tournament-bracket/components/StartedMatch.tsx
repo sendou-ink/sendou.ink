@@ -160,11 +160,9 @@ export function StartedMatch({
 						bestOf: data.match.bestOf,
 					})}
 		</React.Fragment>,
-		tournament.ctx.settings.enableNoScreenToggle ? (
-			<ScreenBanIcons
-				key="screen-ban"
-				banned={teams.some((team) => team.noScreen)}
-			/>
+		tournament.ctx.settings.enableNoScreenToggle &&
+		typeof data.noScreen === "boolean" ? (
+			<ScreenBanIcons key="screen-ban" banned={data.noScreen} />
 		) : null,
 	];
 

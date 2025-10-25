@@ -409,7 +409,7 @@ export const getWeaponUsage = ({
 };
 
 export const mapsPageWithMapPool = (mapPool: MapPool) =>
-	`/maps?readonly&pool=${mapPool.serialized}`;
+	`${MAPS_URL}?readonly&pool=${mapPool.serialized}`;
 export const articlePage = (slug: string) => `${ARTICLES_MAIN_PAGE}/${slug}`;
 export const analyzerPage = (args?: {
 	weaponId: MainWeaponId;

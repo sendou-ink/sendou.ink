@@ -54,6 +54,8 @@ test.describe("Scrims", () => {
 	test("requests an existing scrim post & cancels the request", async ({
 		page,
 	}) => {
+		const INITIAL_AVAILABLE_TO_REQUEST_COUNT = 15;
+
 		await seed(page);
 		await impersonate(page, ADMIN_ID);
 		await navigate({
@@ -61,20 +63,33 @@ test.describe("Scrims", () => {
 			url: scrimsPage(),
 		});
 
+		const requestScrimButtonLocator = page.getByTestId("request-scrim-button");
+
 		await page.getByTestId("available-scrims-tab").click();
-		await page.getByRole("button", { name: "Request" }).first().click();
+		await requestScrimButtonLocator.first().click();
 
 		await submit(page);
 
-		await page.getByTestId("requests-scrims-tab").click();
+		await expect(requestScrimButtonLocator).toHaveCount(
+			INITIAL_AVAILABLE_TO_REQUEST_COUNT - 1,
+		);
 
-		const cancelRequestButton = page.getByRole("button", {
+		const togglePendingRequestsButton = page.getByTestId(
+			"toggle-pending-requests-button",
+		);
+
+		await togglePendingRequestsButton.first().click();
+
+		await page.getByTestId("view-request-button").first().click();
+
+		const cancelButton = page.getByRole("button", {
 			name: "Cancel",
 		});
-		expect(cancelRequestButton).toHaveCount(5);
-		await cancelRequestButton.first().click();
-		await page.getByTestId("confirm-button").click();
-		await expect(cancelRequestButton).toHaveCount(4);
+		await cancelButton.click();
+
+		await expect(requestScrimButtonLocator).toHaveCount(
+			INITIAL_AVAILABLE_TO_REQUEST_COUNT,
+		);
 	});
 
 	test("accepts a request", async ({ page }) => {
@@ -85,10 +100,16 @@ test.describe("Scrims", () => {
 			url: scrimsPage(),
 		});
 
-		await page.getByRole("button", { name: "Accept" }).first().click();
+		await page.getByTestId("confirm-modal-trigger-button").first().click();
 		await page.getByTestId("confirm-button").click();
 
-		await page.getByRole("link", { name: "Contact" }).click();
+		await page.getByTestId("booked-scrims-tab").click();
+
+		const contactButtonLocator = page.getByRole("link", { name: "Contact" });
+
+		await expect(contactButtonLocator).toHaveCount(2);
+
+		await page.getByRole("link", { name: "Contact" }).first().click();
 
 		await expect(page.getByText("Scheduled scrim")).toBeVisible();
 	});
@@ -102,10 +123,12 @@ test.describe("Scrims", () => {
 		});
 
 		// Accept the first available scrim request to make it possible to access the scrim details page
-		await page.getByRole("button", { name: "Accept" }).first().click();
+		await page.getByTestId("confirm-modal-trigger-button").first().click();
 		await page.getByTestId("confirm-button").click();
 
-		await page.getByRole("link", { name: "Contact" }).click();
+		await page.getByTestId("booked-scrims-tab").click();
+
+		await page.getByRole("link", { name: "Contact" }).first().click();
 
 		// Cancel the scrim
 		await page.getByRole("button", { name: "Cancel" }).click();
