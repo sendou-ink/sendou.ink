@@ -16,5 +16,8 @@ export function up(db) {
 		db.prepare(
 			/* sql */ `create index "scrim_post_maps_tournament_id" on "ScrimPost"("mapsTournamentId")`,
 		).run();
+		db.prepare(
+			/* sql */ `alter table "TournamentTeam" drop column "noScreen"`,
+		).run();
 	})();
 }

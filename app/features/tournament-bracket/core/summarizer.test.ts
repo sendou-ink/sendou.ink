@@ -34,7 +34,6 @@ describe("tournamentSummary()", () => {
 		name: `Team ${teamId}`,
 		prefersNotToHost: 0,
 		droppedOut: 0,
-		noScreen: 0,
 		team: null,
 		seed: 1,
 		activeRosterUserIds: [],

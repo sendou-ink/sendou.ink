@@ -25,7 +25,6 @@
 	"pre.info.unregister": "Se désinscrire",
 	"pre.info.unregister.confirm": "Se désinscrire du tournoi et effacer les info de l'équipe ?",
 	"pre.info.noHost": "Mon équipe préfère ne par héberger",
-	"pre.info.noScreen": "",
 	"pre.roster.header": "Remplir la liste",
 	"pre.roster.footer": "Au moins {{atLeastCount}} membres sont requis pour participer. La taille maximum est de {{maxCount}}",
 	"pre.roster.addTrusted.header": "Ajoutez des personnes avec lesquelles vous avez joué",

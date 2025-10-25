@@ -674,7 +674,6 @@ export interface TournamentTeam {
 	inviteCode: string;
 	name: string;
 	prefersNotToHost: Generated<DBBoolean>;
-	noScreen: Generated<DBBoolean>;
 	droppedOut: Generated<DBBoolean>;
 	seed: number | null;
 	/** For formats that have many starting brackets, where should the team start? */

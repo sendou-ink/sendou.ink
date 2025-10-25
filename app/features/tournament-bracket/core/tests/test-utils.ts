@@ -23,7 +23,6 @@ export const tournamentCtxTeam = (
 		name: `Team ${teamId}`,
 		prefersNotToHost: 0,
 		droppedOut: 0,
-		noScreen: 0,
 		seed: teamId + 1,
 		...partial,
 	};

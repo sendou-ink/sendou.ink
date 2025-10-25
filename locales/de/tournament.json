@@ -25,7 +25,6 @@
 	"pre.info.unregister": "Von Turnier abmelden",
 	"pre.info.unregister.confirm": "Vom Turnier abmelden und Teaminfo löschen?",
 	"pre.info.noHost": "Mein Team zieht es vor, keine Räume zu hosten",
-	"pre.info.noScreen": "Mein Team möchte Unsichtbarriere vermeiden",
 	"pre.roster.header": "Roster füllen",
 	"pre.roster.footer": "Mindestens {{atLeastCount}} Teammitglieder sind zum Spielen erforderlich. Maximale Rostergröße ist {{maxCount}}",
 	"pre.roster.addTrusted.header": "Spieler hinzufügen, mit denen du gespielt hast",

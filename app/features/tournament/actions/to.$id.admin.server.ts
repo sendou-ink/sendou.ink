@@ -69,7 +69,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 				}),
 				team: {
 					name: data.teamName,
-					noScreen: 0,
 					prefersNotToHost: 0,
 					teamId: null,
 				},

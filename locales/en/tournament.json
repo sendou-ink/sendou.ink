@@ -25,7 +25,6 @@
 	"pre.info.unregister": "Unregister",
 	"pre.info.unregister.confirm": "Unregister from the tournament and delete team info?",
 	"pre.info.noHost": "My team prefers not to host rooms",
-	"pre.info.noScreen": "My team prefers to avoid Splattercolor Screen",
 	"pre.roster.header": "Fill roster",
 	"pre.roster.footer": "At least {{atLeastCount}} members are required to participate. Max roster size is {{maxCount}}",
 	"pre.roster.addTrusted.header": "Add people you have played with",

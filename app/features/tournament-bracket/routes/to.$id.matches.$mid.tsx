@@ -29,7 +29,6 @@ export { action, loader };
 
 import "../tournament-bracket.css";
 
-// xxx: migrate to user specific "noScreen"
 export default function TournamentMatchPage() {
 	const user = useUser();
 	const visibility = useVisibilityChange();

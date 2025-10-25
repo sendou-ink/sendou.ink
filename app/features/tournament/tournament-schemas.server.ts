@@ -21,7 +21,6 @@ export const registerSchema = z.union([
 		_action: _action("UPSERT_TEAM"),
 		teamName,
 		prefersNotToHost: z.preprocess(checkboxValueToBoolean, z.boolean()),
-		noScreen: z.preprocess(checkboxValueToBoolean, z.boolean()),
 		teamId: optionalId,
 	}),
 	z.object({
