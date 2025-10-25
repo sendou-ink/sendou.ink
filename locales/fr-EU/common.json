@@ -300,6 +300,8 @@
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText": "En dehors de votre profil, les bonus des sets sont triées de manière à ce que les mêmes bonus soient côte à côte. Ce paramètre vous permet de voir les bonus dans l'ordre dans lequel elles ont été créées partout.",
 	"settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.label": "Scrims: Les ajouts aux pickups peuvent êtres effectuer uniquement par des personnes de confiance",
 	"settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.bottomText": "Par défaut, n'importe qui peut vous ajouter. Si vous préférez autoriser uniquement les utilisateurs que vous avez explicitement définis comme fiables à vous ajouter aux pickups, activez ce paramètre.",
+	"settings.UPDATE_NO_SCREEN.label": "",
+	"settings.UPDATE_NO_SCREEN.bottomText": "",
 	"settings.notifications.title": "Notifications push",
 	"settings.notifications.description": "Recevoir une Receive notification push sur votre appareil quand vous n'êtes pas dessus.",
 	"settings.notifications.disableInfo": "Regarder les paramètre de votre navigateur pour désactiver les notification push.",

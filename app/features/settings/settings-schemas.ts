@@ -11,6 +11,10 @@ export const settingsEditSchema = z.union([
 		newValue: z.boolean(),
 	}),
 	z.object({
+		_action: _action("UPDATE_NO_SCREEN"),
+		newValue: z.boolean(),
+	}),
+	z.object({
 		_action: _action("PLACEHOLDER"),
 	}),
 ]);

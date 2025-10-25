@@ -298,6 +298,8 @@
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText": "",
 	"settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.label": "",
 	"settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.bottomText": "",
+	"settings.UPDATE_NO_SCREEN.label": "",
+	"settings.UPDATE_NO_SCREEN.bottomText": "",
 	"settings.notifications.title": "",
 	"settings.notifications.description": "",
 	"settings.notifications.disableInfo": "",

@@ -301,6 +301,8 @@
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText": "За исключением вашего профиля, свойства в сборках отсортированы так, что одинаковые свойства находятся друг за другом. Эта настройка позволит вам видеть свойства в сборках в порядке, который задал автор.",
 	"settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.label": "Скримы: Не добавляться в пик-апы недоверенными лицами",
 	"settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.bottomText": "По умолчанию вас может добавить в команду кто угодно. Включите эту настройку, если вы хотите, чтобы вас могли добавлять только доверенные лица.",
+	"settings.UPDATE_NO_SCREEN.label": "",
+	"settings.UPDATE_NO_SCREEN.bottomText": "",
 	"settings.notifications.title": "Push-уведомления",
 	"settings.notifications.description": "Получайте push-уведомления на ваше устройство даже если sendou.ink на нём не открыт.",
 	"settings.notifications.disableInfo": "Чтобы отключить push-уведомления проверьте настройки вашего браузера",

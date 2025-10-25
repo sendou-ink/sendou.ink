@@ -300,6 +300,8 @@
 	"settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText": "Aldilà della tua pagina profilo, le build delle abilità sono ordinate in modo tale da rendere vicine le abilità uguali. Quest'impostazione ti permette di vedere le abilità come intese dall'autore ovunque.",
 	"settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.label": "",
 	"settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.bottomText": "",
+	"settings.UPDATE_NO_SCREEN.label": "",
+	"settings.UPDATE_NO_SCREEN.bottomText": "",
 	"settings.notifications.title": "Notifiche push",
 	"settings.notifications.description": "Ricevi notifiche push sul tuo dispositivo anche se non hai attualmente sendou.ink aperto.",
 	"settings.notifications.disableInfo": "Per disattivare le notifiche push, controllare le impostazioni del browser",
