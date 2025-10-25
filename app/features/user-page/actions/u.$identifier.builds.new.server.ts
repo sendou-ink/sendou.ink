@@ -1,25 +1,17 @@
 import { type ActionFunction, redirect } from "@remix-run/node";
-import * as R from "remeda";
 import { z } from "zod/v4";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { BUILD } from "~/features/builds/builds-constants";
-import { refreshBuildsCacheByWeaponSplIds } from "~/features/builds/core/cached-builds.server";
-import type { BuildWeaponWithTop500Info } from "~/features/builds/queries/buildsBy.server";
 import {
 	clothesGearIds,
 	headGearIds,
 	shoesGearIds,
 } from "~/modules/in-game-lists/gear-ids";
 import { modesShort } from "~/modules/in-game-lists/modes";
-import type {
-	BuildAbilitiesTuple,
-	MainWeaponId,
-} from "~/modules/in-game-lists/types";
+import type { BuildAbilitiesTuple } from "~/modules/in-game-lists/types";
 import { unJsonify } from "~/utils/kysely.server";
-import { logger } from "~/utils/logger";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
-import type { Nullish } from "~/utils/types";
 import { userBuildsPage } from "~/utils/urls";
 import {
 	actualNumber,
@@ -46,8 +38,7 @@ export const action: ActionFunction = async ({ request }) => {
 		schema: newBuildActionSchema,
 	});
 
-	const usersBuilds = await BuildRepository.allByUserId({
-		userId: user.id,
+	const usersBuilds = await BuildRepository.allByUserId(user.id, {
 		showPrivate: true,
 	});
 
@@ -78,16 +69,6 @@ export const action: ActionFunction = async ({ request }) => {
 		await BuildRepository.update({ id: data.buildToEditId, ...commonArgs });
 	} else {
 		await BuildRepository.create(commonArgs);
-	}
-
-	try {
-		refreshCache({
-			newWeaponSplIds: commonArgs.weaponSplIds,
-			oldBuilds: usersBuilds,
-			buildToEditId: data.buildToEditId,
-		});
-	} catch (error) {
-		logger.warn("Error refreshing builds cache", error);
 	}
 
 	return redirect(userBuildsPage(user));
@@ -175,25 +156,3 @@ const newBuildActionSchema = z.object({
 		]),
 	),
 });
-
-function refreshCache({
-	newWeaponSplIds,
-	oldBuilds,
-	buildToEditId,
-}: {
-	newWeaponSplIds: Array<MainWeaponId>;
-	buildToEditId: Nullish<number>;
-	oldBuilds: Array<{ id: number; weapons: BuildWeaponWithTop500Info[] }>;
-}) {
-	const oldBuildWeapons =
-		oldBuilds.find((build) => build.id === buildToEditId)?.weapons ?? [];
-
-	const allWeaponSplIds = [
-		...newWeaponSplIds,
-		...oldBuildWeapons.map(({ weaponSplId }) => weaponSplId),
-	];
-
-	const dedupedWeaponSplIds = R.unique(allWeaponSplIds);
-
-	refreshBuildsCacheByWeaponSplIds(dedupedWeaponSplIds);
-}

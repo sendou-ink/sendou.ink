@@ -45,11 +45,11 @@ export function sortBuilds({
 			return aLowestModeIdx - bLowestModeIdx;
 		},
 		TOP_500: (a, b) => {
-			const aHas = a.weapons.some((wpn) => wpn.maxPower !== null);
-			const bHas = b.weapons.some((wpn) => wpn.maxPower !== null);
+			const aHasTop500 = a.weapons.some((wpn) => wpn.isTop500 === 1);
+			const bHasTop500 = b.weapons.some((wpn) => wpn.isTop500 === 1);
 
-			if (aHas && !bHas) return -1;
-			if (!aHas && bHas) return 1;
+			if (aHasTop500 && !bHasTop500) return -1;
+			if (!aHasTop500 && bHasTop500) return 1;
 
 			return 0;
 		},

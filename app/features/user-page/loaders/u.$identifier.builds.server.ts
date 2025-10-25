@@ -1,7 +1,6 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { getUserId } from "~/features/auth/core/user.server";
+import { getUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
-import { sortAbilities } from "~/features/builds/core/ability-sorting.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SerializeFrom } from "~/utils/remix";
@@ -12,15 +11,17 @@ import { userParamsSchema } from "../user-page-schemas";
 export type UserBuildsPageData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const loggedInUser = await getUserId(request);
+	const loggedInUser = await getUser(request);
 	const { identifier } = userParamsSchema.parse(params);
 	const user = notFoundIfFalsy(
 		await UserRepository.identifierToBuildFields(identifier),
 	);
 
-	const builds = await BuildRepository.allByUserId({
-		userId: user.id,
+	const builds = await BuildRepository.allByUserId(user.id, {
 		showPrivate: loggedInUser?.id === user.id,
+		sortAbilities:
+			loggedInUser?.id !== user.id &&
+			!loggedInUser?.preferences?.disableBuildAbilitySorting,
 	});
 
 	if (builds.length === 0 && loggedInUser?.id !== user.id) {
@@ -31,11 +32,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		builds,
 		buildSorting: user.buildSorting,
 		weaponPool: user.weapons,
-	}).map((build) => ({
-		...build,
-		abilities: sortAbilities(build.abilities),
-		unsortedAbilities: build.abilities,
-	}));
+	});
 
 	return privatelyCachedJson({
 		buildSorting: user.buildSorting,

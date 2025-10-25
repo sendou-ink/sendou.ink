@@ -103,14 +103,7 @@ export default function UserBuildsPage() {
 			{builds.length > 0 ? (
 				<div className={styles.buildsContainer}>
 					{builds.map((build) => (
-						<BuildCard
-							key={build.id}
-							build={build}
-							canEdit={isOwnPage}
-							withAbilitySorting={
-								!isOwnPage && !user?.preferences.disableBuildAbilitySorting
-							}
-						/>
+						<BuildCard key={build.id} build={build} canEdit={isOwnPage} />
 					))}
 				</div>
 			) : (
