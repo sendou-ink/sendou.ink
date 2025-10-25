@@ -127,6 +127,10 @@
 		"displayName": "A Splatoon Brazil Tournament",
 		"authorDiscordId": "701870845550657677"
 	},
+	"bronzew": {
+		"displayName": "Salmon Workers",
+		"authorDiscordId": "345996252032401408"
+	},
 	"bss1": {
 		"displayName": "Biggest School in the Sea",
 		"authorDiscordId": "629773997822967819"
@@ -434,6 +438,10 @@
 	"goldnaut": {
 		"displayName": "Golden Ratio: Special Edition",
 		"authorDiscordId": "1160529949531316334"
+	},
+	"goldw": {
+		"displayName": "Salmon Workers",
+		"authorDiscordId": "345996252032401408"
 	},
 	"gyra": {
 		"displayName": "Level Up x2 - Leveled Up!",
@@ -986,6 +994,10 @@
 	"silverstars": {
 		"displayName": "Leblanc Hideout Beta Bracket",
 		"authorDiscordId": "338806780446638082"
+	},
+	"silverw": {
+		"displayName": "Salmon Workers",
+		"authorDiscordId": "345996252032401408"
 	},
 	"slyeion": {
 		"displayName": "Sylveon",
