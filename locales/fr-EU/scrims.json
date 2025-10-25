@@ -26,6 +26,7 @@
 	"filters.hideFiltered": "",
 	"filters.showPendingRequests": "",
 	"filters.hidePendingRequests": "",
+	"limitedVisibility": "Cet article a actuellement une visibilité limitée en fonction des associations.",
 	"actions.request": "Demande",
 	"actions.viewRequest": "",
 	"actions.contact": "",

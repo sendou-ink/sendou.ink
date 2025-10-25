@@ -26,6 +26,7 @@
 	"filters.hideFiltered": "",
 	"filters.showPendingRequests": "",
 	"filters.hidePendingRequests": "",
+	"limitedVisibility": "",
 	"actions.request": "",
 	"actions.viewRequest": "",
 	"actions.contact": "",

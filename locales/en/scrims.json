@@ -26,6 +26,7 @@
 	"filters.hideFiltered": "Hide filtered ({{count}})",
 	"filters.showPendingRequests": "Show pending requests ({{count}})",
 	"filters.hidePendingRequests": "Hide pending requests ({{count}})",
+	"limitedVisibility": "This post currently has limited visibility based on associations.",
 	"actions.request": "Request",
 	"actions.viewRequest": "Request pending...",
 	"actions.contact": "Contact",

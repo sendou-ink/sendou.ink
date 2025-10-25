@@ -26,6 +26,7 @@
 	"filters.hideFiltered": "",
 	"filters.showPendingRequests": "",
 	"filters.hidePendingRequests": "",
+	"limitedVisibility": "Diese Anfrage hat aktuell eingeschränkte Sichtbarkeit aufgrund von Assoziationen.",
 	"actions.request": "Anfragen",
 	"actions.viewRequest": "",
 	"actions.contact": "",

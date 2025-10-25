@@ -37,9 +37,11 @@
 	color: var(--text-lighter);
 }
 
-.usersIconContainer {
+.rightIconsContainer {
 	flex-shrink: 0;
 	align-self: flex-start;
+	display: flex;
+	gap: var(--s-2);
 }
 
 .usersIcon {

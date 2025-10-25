@@ -13,6 +13,7 @@ import { ModeImage } from "~/components/Image";
 import { ArrowDownOnSquareIcon } from "~/components/icons/ArrowDownOnSquare";
 import { ArrowUpOnSquareIcon } from "~/components/icons/ArrowUpOnSquare";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
+import { EyeSlashIcon } from "~/components/icons/EyeSlash";
 import { SpeechBubbleFilledIcon } from "~/components/icons/SpeechBubbleFilled";
 import { TrashIcon } from "~/components/icons/Trash";
 import { UsersIcon } from "~/components/icons/Users";
@@ -26,8 +27,6 @@ import type { ScrimPost, ScrimPostRequest } from "../scrims-types";
 import { formatFlexTimeDisplay } from "../scrims-utils";
 import styles from "./ScrimCard.module.css";
 import { ScrimRequestModal } from "./ScrimRequestModal";
-
-// xxx: add back "Limited visibility by association" as an info
 
 interface ScrimPostCardProps {
 	post: ScrimPost;
@@ -70,7 +69,8 @@ export function ScrimPostCard({
 						teamName
 					)}
 				</h3>
-				<div className={styles.usersIconContainer}>
+				<div className={styles.rightIconsContainer}>
+					{!post.isPrivate ? <ScrimVisibilityPopover /> : null}
 					<ScrimTeamMembersPopover users={post.users} />
 				</div>
 			</div>
@@ -149,6 +149,23 @@ function ScrimTeamAvatar({
 	}
 
 	return <Avatar size="xs" user={owner} alt={owner.username} />;
+}
+
+function ScrimVisibilityPopover() {
+	const { t } = useTranslation(["scrims"]);
+	return (
+		<SendouPopover
+			trigger={
+				<SendouButton
+					variant="minimal"
+					icon={<EyeSlashIcon className={styles.usersIcon} />}
+					data-testid="limited-visibility-popover"
+				/>
+			}
+		>
+			{t("scrims:limitedVisibility")}
+		</SendouPopover>
+	);
 }
 
 function ScrimTeamMembersPopover({ users }: { users: ScrimPost["users"] }) {
