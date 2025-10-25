@@ -4,6 +4,7 @@ import * as TournamentRepository from "~/features/tournament/TournamentRepositor
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
+import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { logger } from "~/utils/logger";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { resolveMapList } from "../core/mapList.server";
@@ -37,7 +38,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			? await cachified({
 					key: `no-screen-mid-${matchId}`,
 					cache,
-					ttl: ttl(IN_MILLISECONDS.TWO_DAYS),
+					// avoid preferences from other test runs leaking in
+					ttl: IS_E2E_TEST_RUN ? -1 : ttl(IN_MILLISECONDS.TWO_DAYS),
 					async getFreshValue() {
 						return UserRepository.anyUserPrefersNoScreen(
 							match.players.map((p) => p.id),
