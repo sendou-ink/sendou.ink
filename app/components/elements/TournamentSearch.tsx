@@ -42,9 +42,6 @@ interface TournamentSearchProps<T extends object>
 	onChange?: (tournament: TournamentSearchItem) => void;
 }
 
-// xxx: make a ticket for the behavior (or check if it already exists) where
-// the selection remains even if the search containing the result is gone
-// (this is also for user search)
 export const TournamentSearch = React.forwardRef(function TournamentSearch<
 	T extends object,
 >(
