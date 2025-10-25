@@ -37,6 +37,7 @@
 	"cancelModal.scrim.reasonExplanation": "Explain why you are cancelling the scrim. This will be visible to the other team.",
 	"acceptModal.title": "Accept the request to scrim by {{groupName}} & reject others (if any)?",
 	"acceptModal.prevented": "Ask the person who posted the scrim to accept this request",
+	"acceptModal.confirmFor": "Confirm for {{time}}",
 	"postModal.footer": "Post created {{time}}",
 	"forms.title": "Creating a new scrim post",
 	"forms.with.title": "With",

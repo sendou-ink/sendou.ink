@@ -536,26 +536,24 @@ export function ScrimRequestCard({
 								icon={<CheckmarkIcon />}
 								data-testid="confirm-modal-trigger-button"
 							>
-								{`Confirm for ${confirmedTime.toLocaleTimeString(
-									i18n.language,
-									{
+								{t("scrims:acceptModal.confirmFor", {
+									time: confirmedTime.toLocaleTimeString(i18n.language, {
 										hour: "numeric",
 										minute: "2-digit",
-									},
-								)}`}
+									}),
+								})}
 							</SendouButton>
 						</FormWithConfirm>
 					) : (
 						<SendouPopover
 							trigger={
 								<SendouButton size="small">
-									{`Confirm for ${confirmedTime.toLocaleTimeString(
-										i18n.language,
-										{
+									{t("scrims:acceptModal.confirmFor", {
+										time: confirmedTime.toLocaleTimeString(i18n.language, {
 											hour: "numeric",
 											minute: "2-digit",
-										},
-									)}`}
+										}),
+									})}
 								</SendouButton>
 							}
 						>

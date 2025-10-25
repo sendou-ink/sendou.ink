@@ -37,6 +37,7 @@
 	"cancelModal.scrim.reasonExplanation": "",
 	"acceptModal.title": "",
 	"acceptModal.prevented": "",
+	"acceptModal.confirmFor": "",
 	"postModal.footer": "",
 	"forms.title": "Neuen Scrim-Post erstellen",
 	"forms.with.title": "Mit",
