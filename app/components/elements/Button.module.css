@@ -114,13 +114,13 @@
 	margin-inline-end: 0 !important;
 }
 
-.small > .buttonIcon {
+.buttonIconSmall {
 	min-width: 1rem;
 	max-width: 1rem;
 	margin-inline-end: var(--s-1);
 }
 
-.miniscule > .buttonIcon {
+.buttonIconMiniscule {
 	min-width: 0.857rem;
 	max-width: 0.857rem;
 	margin-inline-end: var(--s-1);
