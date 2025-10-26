@@ -209,7 +209,7 @@ test.describe("Scrims", () => {
 			userName: "c",
 		});
 
-		await page.getByLabel("Start time").selectOption("1761582600000");
+		await page.getByLabel("Start time").selectOption({ index: 1 });
 
 		await page.getByLabel("Message").fill("Ready to scrim! Let's do this.");
 
