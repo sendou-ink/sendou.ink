@@ -175,8 +175,8 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	groups,
 	friendCodes,
 	lfgPosts,
-	scrimPosts,
-	scrimPostRequests,
+	variation === "NO_SCRIMS" ? undefined : scrimPosts,
+	variation === "NO_SCRIMS" ? undefined : scrimPostRequests,
 	associations,
 	notifications,
 ];

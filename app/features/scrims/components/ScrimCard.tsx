@@ -203,7 +203,10 @@ function ScrimTournamentPopover({
 	return (
 		<SendouPopover
 			trigger={
-				<SendouButton variant="minimal">
+				<SendouButton
+					variant="minimal"
+					data-testid="tournament-popover-trigger"
+				>
 					<Avatar
 						size="xxxsm"
 						url={tournament.avatarUrl}
