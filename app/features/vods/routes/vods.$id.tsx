@@ -31,9 +31,8 @@ import { PovUser } from "../components/VodPov";
 import { loader } from "../loaders/vods.$id.server";
 import type { Vod } from "../vods-types";
 import { canEditVideo, secondsToHoursMinutesSecondString } from "../vods-utils";
+import styles from "./vods.$id.module.css";
 export { loader, action };
-
-import "../vods.css";
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: ({ match }) => {
@@ -143,7 +142,7 @@ export default function VodPage() {
 					) : null}
 				</div>
 			</div>
-			<div className="vods__matches">
+			<div className={styles.matches}>
 				{data.vod.matches.map((match) => (
 					<Match
 						key={match.id}
@@ -173,7 +172,7 @@ function Match({
 	const weapons = match.weapons.length === 8 ? match.weapons : null;
 
 	return (
-		<div className="vods__match">
+		<div className={styles.match}>
 			<Image
 				alt=""
 				path={stageImageUrl(match.stageId)}
@@ -185,20 +184,20 @@ function Match({
 					weaponSplId={weapon}
 					variant="badge"
 					width={42}
-					className="vods__match__weapon"
+					className={styles.matchWeapon}
 					testId={`weapon-img-${weapon}`}
 				/>
 			) : null}
 			<Image
 				path={modeImageUrl(match.mode)}
 				width={32}
-				className={clsx("vods__match__mode", { cast: Boolean(weapons) })}
+				className={clsx(styles.matchMode, { [styles.cast]: Boolean(weapons) })}
 				alt={t(`game-misc:MODE_LONG_${match.mode}`)}
 				title={t(`game-misc:MODE_LONG_${match.mode}`)}
 			/>
 			{weapons ? (
 				<div className="stack horizontal md">
-					<div className="vods__match__weapons">
+					<div className={styles.matchWeapons}>
 						{weapons.slice(0, 4).map((weapon, i) => {
 							return (
 								<WeaponImage
@@ -211,7 +210,7 @@ function Match({
 							);
 						})}
 					</div>
-					<div className="vods__match__weapons">
+					<div className={styles.matchWeapons}>
 						{weapons.slice(4).map((weapon, i) => {
 							const adjustedI = i + 4;
 							return (

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { WeaponImage } from "~/components/Image";
 import { vodVideoPage } from "~/utils/urls";
 import type { ListVod } from "../vods-types";
+import styles from "./VodListing.module.css";
 import { PovUser } from "./VodPov";
 
 export function VodListing({
@@ -15,20 +16,18 @@ export function VodListing({
 	const { t } = useTranslation(["vods"]);
 
 	return (
-		<div className="vods__listing">
+		<div className={styles.listing}>
 			<Link to={vodVideoPage(vod.id)} className="stack sm">
 				<img
-					className="vods__listing__thumbnail"
+					className={styles.thumbnail}
 					alt=""
 					src={youtubeIdToThumbnailUrl(vod.youtubeId)}
 				/>
 				<h2 className="text-sm text-main-forced">{vod.title}</h2>
 			</Link>
-			<div className="vods__listing__info">
+			<div className={styles.info}>
 				{vod.type === "CAST" || !showUser ? (
-					<div className="vods__listing__cast-text">
-						{t(`vods:type.${vod.type}`)}
-					</div>
+					<div className={styles.castText}>{t(`vods:type.${vod.type}`)}</div>
 				) : (
 					<PovUser pov={vod.pov} />
 				)}
@@ -58,9 +57,7 @@ function WeaponsPeek({ weapons }: { weapons: ListVod["weapons"] }) {
 				/>
 			))}
 			{amountOfWeaponsNotShown > 0 ? (
-				<div className="vods__listing__weapons-not-shown">
-					+{amountOfWeaponsNotShown}
-				</div>
+				<div className={styles.weaponsNotShown}>+{amountOfWeaponsNotShown}</div>
 			) : null}
 		</div>
 	);
