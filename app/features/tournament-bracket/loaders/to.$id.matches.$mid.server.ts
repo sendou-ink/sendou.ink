@@ -36,7 +36,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const noScreen =
 		match.opponentOne?.id && match.opponentTwo?.id
 			? await cachified({
-					key: `no-screen-mid-${matchId}`,
+					key: `no-screen-mid-${matchId}-${match.opponentOne.id}-${match.opponentTwo.id}`,
 					cache,
 					// avoid preferences from other test runs leaking in
 					ttl: IS_E2E_TEST_RUN ? -1 : ttl(IN_MILLISECONDS.TWO_DAYS),
