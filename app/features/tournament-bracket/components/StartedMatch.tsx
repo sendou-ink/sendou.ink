@@ -119,12 +119,6 @@ export function StartedMatch({
 		});
 	}, [tournament, hostingTeamId, data.match.id]);
 
-	// using team ids as the seed to ensure grand finals and bracket reset have the same room pass
-	const roomPassSeed = [data.match.opponentOne?.id, data.match.opponentOne?.id]
-		.filter((value) => typeof value === "number")
-		.sort((a, b) => a - b)
-		.join("-");
-
 	const roundInfos = [
 		showFullInfos ? (
 			<React.Fragment key="hosts">
@@ -137,7 +131,7 @@ export function StartedMatch({
 			<React.Fragment key="pass">
 				{t("tournament:match.pass")}{" "}
 				<span className="text-theme font-bold" data-testid="room-pass">
-					{resolveRoomPass(roomPassSeed)}
+					{resolveRoomPass(hostingTeamId)}
 				</span>
 			</React.Fragment>
 		) : null,
