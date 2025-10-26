@@ -317,6 +317,7 @@ function AvailableScrimsFilterButtons({
 					onPress={() => setShowRequestPending(!showRequestPending)}
 					icon={<ArrowDownOnSquareIcon />}
 					className={showRequestPending ? styles.active : undefined}
+					data-testid="toggle-pending-requests-button"
 				>
 					{showRequestPending
 						? t("scrims:filters.hidePendingRequests", {
