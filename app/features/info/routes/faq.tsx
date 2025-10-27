@@ -20,6 +20,7 @@ export const handle: SendouRouteHandle = {
 	i18n: "faq",
 };
 
+// xxx: add established tournaments Q
 export default function FAQPage() {
 	const { t } = useTranslation(["faq", "common"]);
 

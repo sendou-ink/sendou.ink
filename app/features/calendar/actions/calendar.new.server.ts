@@ -30,6 +30,7 @@ import {
 import { calendarEventPage } from "~/utils/urls";
 import { CALENDAR_EVENT } from "../calendar-constants";
 import { canEditCalendarEvent, regClosesAtDate } from "../calendar-utils";
+import { findValidOrganizations } from "../loaders/calendar.new.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = await requireUser(request);
@@ -44,10 +45,19 @@ export const action: ActionFunction = async ({ request }) => {
 		parseAsync: true,
 	});
 
+	if (data.organizationId) {
+		await validateOrganization({
+			userId: user.id,
+			organizationId: data.organizationId,
+			isTournamentAdder: user.roles.includes("TOURNAMENT_ADDER"),
+		});
+	}
+
 	requireRoleIfNeeded({
 		isAddingTournament: data.toToolsEnabled,
 		isEditing: Boolean(data.eventToEditId),
 		user,
+		organizationId: data.organizationId,
 	});
 
 	const managedBadges = await BadgeRepository.findManagedByUserId(user.id);
@@ -188,16 +198,37 @@ export const action: ActionFunction = async ({ request }) => {
 	throw redirect(calendarEventPage(createdEventId));
 };
 
-function requireRoleIfNeeded({
+/** Checks user has permissions to create a tournament in this organization */
+async function validateOrganization({
+	userId,
+	organizationId,
+	isTournamentAdder,
+}: {
+	userId: number;
+	organizationId: number;
+	isTournamentAdder: boolean;
+}) {
+	const orgs = await findValidOrganizations(userId, isTournamentAdder);
+
+	return orgs.some(
+		(org) => typeof org !== "string" && org.id === organizationId,
+	);
+}
+
+/** Checks user has the global role if necessary */
+async function requireRoleIfNeeded({
 	isAddingTournament,
 	isEditing,
 	user,
+	organizationId,
 }: {
 	isAddingTournament: boolean;
 	isEditing: boolean;
 	user: AuthenticatedUser;
+	organizationId?: number | null;
 }) {
 	if (isEditing) return;
+	if (typeof organizationId === "number") return;
 
 	requireRole(
 		user,

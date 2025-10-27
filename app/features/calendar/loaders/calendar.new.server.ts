@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
+import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
@@ -92,7 +93,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				? await CalendarRepository.findRecentTournamentsByAuthorId(user.id)
 				: undefined,
 		organizations: (
-			await TournamentOrganizationRepository.findByOrganizerUserId(user.id)
+			await findValidOrganizations(
+				user.id,
+				user.roles.includes("TOURNAMENT_ADDER"),
+			)
 		).concat(
 			eventToEdit?.tournament?.ctx.organization
 				? eventToEdit.tournament.ctx.organization
@@ -100,3 +104,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		),
 	};
 };
+
+export async function findValidOrganizations(
+	userId: number,
+	isTournamentAdder: boolean,
+) {
+	const orgs =
+		await TournamentOrganizationRepository.findByOrganizerUserId(userId);
+
+	if (isTournamentAdder) {
+		return ["NO_ORG", ...orgs.map((org) => R.omit(org, ["isEstablished"]))];
+	}
+
+	return orgs
+		.filter((org) => org.isEstablished)
+		.map((org) => R.omit(org, ["isEstablished"]));
+}
