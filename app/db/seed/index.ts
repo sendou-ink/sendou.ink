@@ -1450,6 +1450,7 @@ function tournamentSubs() {
 				bestWeapons: nullFilledArray(
 					faker.helpers.arrayElement([1, 1, 1, 2, 2, 3, 4, 5]),
 				)
+					// biome-ignore lint/suspicious/useIterableCallbackReturn: Biome 2.3.1 upgrade
 					.map(() => {
 						while (true) {
 							const weaponId = R.sample(mainWeaponIds, 1)[0]!;
@@ -1466,6 +1467,7 @@ function tournamentSubs() {
 						: nullFilledArray(
 								faker.helpers.arrayElement([1, 1, 1, 2, 2, 3, 4, 5]),
 							)
+								// biome-ignore lint/suspicious/useIterableCallbackReturn: Biome 2.3.1 upgrade
 								.map(() => {
 									while (true) {
 										const weaponId = R.sample(mainWeaponIds, 1)[0]!;

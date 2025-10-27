@@ -393,15 +393,11 @@ function generateWeightedPairs({
 				continue;
 			}
 			let wt =
-				75 -
-				75 /
-					(scoreGroups.findIndex((s) => s === Math.min(curr.score, opp.score)) +
-						2);
+				75 - 75 / (scoreGroups.indexOf(Math.min(curr.score, opp.score)) + 2);
 			wt +=
 				5 - 5 / (scoreSums.findIndex((s) => s === curr.score + opp.score) + 1);
 			const scoreGroupDiff = Math.abs(
-				scoreGroups.findIndex((s) => s === curr.score) -
-					scoreGroups.findIndex((s) => s === opp.score),
+				scoreGroups.indexOf(curr.score) - scoreGroups.indexOf(opp.score),
 			);
 
 			// TODO: consider "pairedUpDown"

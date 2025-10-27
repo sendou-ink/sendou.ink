@@ -95,7 +95,7 @@ export function smallStrToFilter(s: string): LFGFilter | null {
 		case "w": {
 			const weaponIds = val
 				.split(",")
-				.map((x) => Number.parseInt(x) as MainWeaponId)
+				.map((x) => Number.parseInt(x, 10) as MainWeaponId)
 				.filter((x) => x !== null && x !== undefined);
 			if (weaponIds.length === 0) return null;
 			return {
@@ -112,7 +112,7 @@ export function smallStrToFilter(s: string): LFGFilter | null {
 			};
 		}
 		case "tz": {
-			const n = Number.parseInt(val);
+			const n = Number.parseInt(val, 10);
 			if (Number.isNaN(n)) return null;
 			return {
 				_tag: "Timezone",
@@ -127,7 +127,7 @@ export function smallStrToFilter(s: string): LFGFilter | null {
 			};
 		}
 		case "pt": {
-			const n = Number.parseInt(val);
+			const n = Number.parseInt(val, 10);
 			if (Number.isNaN(n)) return null;
 			return {
 				_tag: "PlusTier",

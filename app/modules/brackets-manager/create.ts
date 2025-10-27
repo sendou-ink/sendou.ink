@@ -189,6 +189,7 @@ export class Create {
 			directInWb,
 		);
 
+		// biome-ignore lint/suspicious/noNonNullAssertedOptionalChain: Biome 2.3.1 upgrade
 		if (helpers.isDoubleEliminationNecessary(this.stage.settings?.size!)) {
 			const winnerLb = this.createLowerBracket(stageId, 2, [
 				directInLb,
@@ -214,6 +215,7 @@ export class Create {
 			slots,
 		);
 
+		// biome-ignore lint/suspicious/noNonNullAssertedOptionalChain: Biome 2.3.1 upgrade
 		if (helpers.isDoubleEliminationNecessary(this.stage.settings?.size!)) {
 			const winnerLb = this.createLowerBracket(stageId, 2, losersWb);
 			this.createGrandFinal(stageId, winnerWb, winnerLb);
@@ -302,6 +304,7 @@ export class Create {
 		number: number,
 		losers: ParticipantSlot[][],
 	): ParticipantSlot {
+		// biome-ignore lint/suspicious/noNonNullAssertedOptionalChain: Biome 2.3.1 upgrade
 		const participantCount = this.stage.settings?.size!;
 		const roundPairCount = helpers.getRoundPairCount(participantCount);
 
