@@ -33,26 +33,41 @@ export async function findShowcaseArts(): Promise<ListedArt[]> {
 		.select([
 			"Art.id",
 			"Art.createdAt",
+			"User.id as userId",
 			"User.discordId",
 			"User.username",
 			"User.discordAvatar",
 			"User.commissionsOpen",
 			"UserSubmittedImage.url",
 		])
-		.where("Art.isShowcase", "=", 1)
+		.orderBy("Art.isShowcase", "desc")
+		.orderBy("Art.createdAt", "desc")
+		.orderBy("User.id", "asc")
 		.execute();
 
-	const mappedArts = arts.map((a) => ({
-		id: a.id,
-		createdAt: a.createdAt,
-		url: a.url,
-		author: {
-			commissionsOpen: a.commissionsOpen,
-			discordAvatar: a.discordAvatar,
-			discordId: a.discordId,
-			username: a.username,
-		},
-	}));
+	const encounteredUserIds = new Set<number>();
+
+	const mappedArts = arts
+		.filter((row) => {
+			if (encounteredUserIds.has(row.userId)) {
+				return false;
+			}
+
+			encounteredUserIds.add(row.userId);
+
+			return true;
+		})
+		.map((a) => ({
+			id: a.id,
+			createdAt: a.createdAt,
+			url: a.url,
+			author: {
+				commissionsOpen: a.commissionsOpen,
+				discordAvatar: a.discordAvatar,
+				discordId: a.discordId,
+				username: a.username,
+			},
+		}));
 
 	const { seededShuffle } = seededRandom(getDailySeed());
 	return seededShuffle(mappedArts);
@@ -135,4 +150,8 @@ export async function findRecentlyUploadedArts(): Promise<ListedArt[]> {
 			username: a.username,
 		},
 	}));
+}
+
+export async function findAllTags() {
+	return db.selectFrom("ArtTag").select(["id", "name"]).execute();
 }
