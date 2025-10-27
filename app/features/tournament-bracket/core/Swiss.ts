@@ -314,13 +314,82 @@ export function pairUp(players: SwissPairingTeam[]) {
 			}),
 		),
 	].sort((a, b) => a - b);
-	const pairs = [];
+
+	let pairs = generateWeightedPairs({ playerArray, scoreGroups, scoreSums });
+	if (pairs.length === 0) {
+		// no possible pairs without rematches, try again allowing rematches
+		pairs = generateWeightedPairs({
+			playerArray,
+			scoreGroups,
+			scoreSums,
+			considerAvoid: false,
+		});
+	}
+
+	const blossomPairs = blossom(pairs, true);
+	const playerCopy = [...playerArray];
+	let byeArray = [];
+	do {
+		const indexA = playerCopy[0].index;
+		const indexB = blossomPairs[indexA];
+		if (indexB === -1) {
+			byeArray.push(playerCopy.splice(0, 1)[0]);
+			continue;
+		}
+		playerCopy.splice(0, 1);
+		playerCopy.splice(
+			playerCopy.findIndex((p) => p.index === indexB),
+			1,
+		);
+		const playerA = playerArray.find((p) => p.index === indexA);
+		const playerB = playerArray.find((p) => p.index === indexB);
+		invariant(playerA, "Player A not found");
+		invariant(playerB, "Player B not found");
+
+		matches.push({
+			opponentOne: playerA.id,
+			opponentTwo: playerB.id,
+		});
+	} while (
+		playerCopy.length >
+		blossomPairs.reduce(
+			(sum: number, idx: number) => (idx === -1 ? sum + 1 : sum),
+			0,
+		)
+	);
+	byeArray = [...byeArray, ...playerCopy];
+	for (let i = 0; i < byeArray.length; i++) {
+		matches.push({
+			opponentOne: byeArray[i].id,
+			opponentTwo: null,
+		});
+	}
+
+	return matches;
+}
+
+function generateWeightedPairs({
+	playerArray,
+	scoreGroups,
+	scoreSums,
+	considerAvoid = true,
+}: {
+	playerArray: (SwissPairingTeam & { index: number })[];
+	scoreGroups: number[];
+	scoreSums: number[];
+	considerAvoid?: boolean;
+}) {
+	const pairs: [number, number, number][] = [];
 	for (let i = 0; i < playerArray.length; i++) {
 		const curr = playerArray[i];
 		const next = playerArray.slice(i + 1);
 		for (let j = 0; j < next.length; j++) {
 			const opp = next[j];
-			if (Object.hasOwn(curr, "avoid") && curr.avoid.includes(opp.id)) {
+			if (
+				considerAvoid &&
+				Object.hasOwn(curr, "avoid") &&
+				curr.avoid.includes(opp.id)
+			) {
 				continue;
 			}
 			let wt =
@@ -368,46 +437,8 @@ export function pairUp(players: SwissPairingTeam[]) {
 			pairs.push([curr.index, opp.index, wt]);
 		}
 	}
-	const blossomPairs = blossom(pairs, true);
-	const playerCopy = [...playerArray];
-	let byeArray = [];
-	do {
-		const indexA = playerCopy[0].index;
-		const indexB = blossomPairs[indexA];
-		if (indexB === -1) {
-			byeArray.push(playerCopy.splice(0, 1)[0]);
-			continue;
-		}
-		playerCopy.splice(0, 1);
-		playerCopy.splice(
-			playerCopy.findIndex((p) => p.index === indexB),
-			1,
-		);
-		const playerA = playerArray.find((p) => p.index === indexA);
-		const playerB = playerArray.find((p) => p.index === indexB);
-		invariant(playerA, "Player A not found");
-		invariant(playerB, "Player B not found");
 
-		matches.push({
-			opponentOne: playerA.id,
-			opponentTwo: playerB.id,
-		});
-	} while (
-		playerCopy.length >
-		blossomPairs.reduce(
-			(sum: number, idx: number) => (idx === -1 ? sum + 1 : sum),
-			0,
-		)
-	);
-	byeArray = [...byeArray, ...playerCopy];
-	for (let i = 0; i < byeArray.length; i++) {
-		matches.push({
-			opponentOne: byeArray[i].id,
-			opponentTwo: null,
-		});
-	}
-
-	return matches;
+	return pairs;
 }
 
 export type SwissTeamStatus = "active" | "advanced" | "eliminated";
