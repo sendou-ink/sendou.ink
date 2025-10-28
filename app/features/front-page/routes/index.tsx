@@ -54,7 +54,6 @@ export default function FrontPage() {
 	return (
 		<Main className="front-page__container">
 			<LeagueBanner />
-			<OktofestBanner />
 			<DesktopSideNav />
 			<SeasonBanner />
 			<TournamentCards />
@@ -164,23 +163,6 @@ function LeagueBanner() {
 			Registration now open for Leagues Under The Ink (LUTI) Season{" "}
 			{showBannerFor}!
 		</Link>
-	);
-}
-
-function OktofestBanner() {
-	if (new Date() > new Date("2025-10-27")) return null;
-
-	return (
-		<a
-			href="https://www.start.gg/tournament/oktofest-2025/details"
-			target="_blank"
-			rel="noreferrer"
-			className="front__oktofest-banner"
-		>
-			<img src="/static-assets/img/layout/oktofest.png" width={24} alt="" />
-			Register now for the next European LAN MAJOR! - Cologne (Germany) -
-			25th/26th Oct
-		</a>
 	);
 }
 
