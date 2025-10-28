@@ -297,6 +297,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		});
 
 		expect(trimmed?.maps[0].list?.[0].stageId).toBe(
+			// biome-ignore lint/suspicious/noNonNullAssertedOptionalChain: Biome 2.3.1 upgrade
 			EIGHT_TEAM_SE_PREPARED.maps[1].list?.[0].stageId!,
 		);
 	});

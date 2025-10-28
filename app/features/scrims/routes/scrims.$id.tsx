@@ -1,17 +1,25 @@
 import { Link, useLoaderData } from "@remix-run/react";
+import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod/v4";
 import { Alert } from "~/components/Alert";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
+import { SendouPopover } from "~/components/elements/Popover";
 import { SendouForm } from "~/components/form/SendouForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
+import { Image } from "~/components/Image";
+import { AlertIcon } from "~/components/icons/Alert";
+import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import TimePopover from "~/components/TimePopover";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { SCRIM } from "~/features/scrims/scrims-constants";
 import { cancelScrimSchema } from "~/features/scrims/scrims-schemas";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { useHasPermission } from "~/modules/permissions/hooks";
+import type { SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { userSubmittedImage } from "~/utils/urls-img";
 import { Avatar } from "../../../components/Avatar";
@@ -19,8 +27,10 @@ import { Main } from "../../../components/Main";
 import { databaseTimestampToDate } from "../../../utils/dates";
 import { logger } from "../../../utils/logger";
 import {
+	mapsPageWithMapPool,
 	navIconUrl,
 	scrimsPage,
+	specialWeaponImageUrl,
 	teamPage,
 	userPage,
 } from "../../../utils/urls";
@@ -28,10 +38,9 @@ import { ConnectedChat } from "../../chat/components/Chat";
 import { action } from "../actions/scrims.$id.server";
 import * as Scrim from "../core/Scrim";
 import { loader } from "../loaders/scrims.$id.server";
-import type { ScrimPost as ScrimPostType } from "../scrims-types";
-export { loader, action };
-
+import type { ScrimPost, ScrimPost as ScrimPostType } from "../scrims-types";
 import styles from "./scrims.$id.module.css";
+export { loader, action };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["scrims", "q"],
@@ -96,6 +105,13 @@ export default function ScrimPage() {
 					header={t("q:match.pool")}
 					value={Scrim.resolvePoolCode(data.post.id)}
 				/>
+				<ScreenBanIndicator />
+				{data.post.maps || data.tournamentMapPool ? (
+					<MapsLink
+						maps={data.post.maps}
+						tournamentMapPool={data.tournamentMapPool}
+					/>
+				) : null}
 			</div>
 			<ScrimChat />
 		</Main>
@@ -127,11 +143,14 @@ function ScrimHeader() {
 	const { t } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof loader>();
 
+	const acceptedRequest = data.post.requests.find((r) => r.isAccepted);
+	const scrimTime = acceptedRequest?.at ?? data.post.at;
+
 	return (
 		<div className="line-height-tight" data-testid="match-header">
 			<h2 className="text-lg">
 				<TimePopover
-					time={databaseTimestampToDate(data.post.at)}
+					time={databaseTimestampToDate(scrimTime)}
 					options={{
 						weekday: "long",
 						year: "numeric",
@@ -199,6 +218,83 @@ function InfoWithHeader({ header, value }: { header: string; value: string }) {
 		<div>
 			<div className={styles.infoHeader}>{header}</div>
 			<div className={styles.infoValue}>{value}</div>
+		</div>
+	);
+}
+
+function ScreenBanIndicator() {
+	const { t } = useTranslation(["weapons", "scrims"]);
+	const data = useLoaderData<typeof loader>();
+
+	return (
+		<div>
+			<div className={styles.infoHeader}>{t("scrims:screenBan.header")}</div>
+			<div
+				className={clsx(styles.screenBanIndicator, {
+					[styles.screenBanIndicatorWarning]: data.anyUserPrefersNoScreen,
+				})}
+			>
+				<SendouPopover
+					trigger={
+						<SendouButton variant="minimal" size="miniscule">
+							<div className={styles.screenBanImageWrapper}>
+								<Image
+									path={specialWeaponImageUrl(SPLATTERCOLOR_SCREEN_ID)}
+									width={32}
+									height={32}
+									alt={t(`weapons:SPECIAL_${SPLATTERCOLOR_SCREEN_ID}`)}
+								/>
+								<div className={styles.screenBanIconOverlay}>
+									{data.anyUserPrefersNoScreen ? (
+										<AlertIcon />
+									) : (
+										<CheckmarkIcon />
+									)}
+								</div>
+							</div>
+						</SendouButton>
+					}
+				>
+					<div className="text-xs">
+						{data.anyUserPrefersNoScreen
+							? t("scrims:screenBan.warning")
+							: t("scrims:screenBan.allowed")}
+					</div>
+				</SendouPopover>
+			</div>
+		</div>
+	);
+}
+
+function MapsLink({
+	maps,
+	tournamentMapPool,
+}: Pick<ScrimPost, "maps"> &
+	Pick<SerializeFrom<typeof loader>, "tournamentMapPool">) {
+	const { t } = useTranslation(["scrims"]);
+
+	const mapPool = () => {
+		if (tournamentMapPool) return new MapPool(tournamentMapPool);
+
+		if (maps === "SZ") return MapPool.SZ;
+		if (maps === "RANKED") return MapPool.ANARCHY;
+		if (maps === "ALL") return MapPool.ALL;
+
+		logger.info(`Unknown scrim maps value: ${maps}`);
+		return MapPool.ALL;
+	};
+
+	return (
+		<div>
+			<div className={styles.infoHeader}>{t("scrims:maps.header")}</div>
+			<Link to={mapsPageWithMapPool(mapPool())}>
+				<Image
+					path={navIconUrl("maps")}
+					width={32}
+					height={32}
+					alt="Generate maplist"
+				/>
+			</Link>
 		</div>
 	);
 }

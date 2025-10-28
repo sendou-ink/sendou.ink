@@ -42,7 +42,7 @@ export function SendouButton({
 		>
 			{icon &&
 				React.cloneElement(icon, {
-					className: iconClassName(icon.props.className, children),
+					className: iconClassName(icon.props.className, children, size),
 				})}
 			{children}
 		</ReactAriaButton>
@@ -88,7 +88,7 @@ export function LinkButton({
 			>
 				{icon &&
 					React.cloneElement(icon, {
-						className: iconClassName(icon.props.className, children),
+						className: iconClassName(icon.props.className, children, size),
 					})}
 				{children}
 			</a>
@@ -105,7 +105,7 @@ export function LinkButton({
 		>
 			{icon &&
 				React.cloneElement(icon, {
-					className: iconClassName(icon.props.className, children),
+					className: iconClassName(icon.props.className, children, size),
 				})}
 			{children}
 		</Link>
@@ -155,8 +155,11 @@ function buttonClassName({
 function iconClassName(
 	baseClassName: string | undefined,
 	children: React.ReactNode,
+	size: SendouButtonProps["size"],
 ) {
 	return clsx(baseClassName, styles.buttonIcon, {
 		[styles.lonely]: !children,
+		[styles.buttonIconSmall]: size === "small",
+		[styles.buttonIconMiniscule]: size === "miniscule",
 	});
 }

@@ -1050,3 +1050,18 @@ export const updateMany = dbDirect.transaction(
 		}
 	},
 );
+
+export async function anyUserPrefersNoScreen(
+	userIds: number[],
+): Promise<boolean> {
+	if (userIds.length === 0) return false;
+
+	const result = await db
+		.selectFrom("User")
+		.select("User.noScreen")
+		.where("User.id", "in", userIds)
+		.where("User.noScreen", "=", 1)
+		.executeTakeFirst();
+
+	return Boolean(result);
+}

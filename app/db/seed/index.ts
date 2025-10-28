@@ -67,7 +67,11 @@ import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { SENDOUQ_DEFAULT_MAPS } from "~/modules/tournament-map-list-generator/constants";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { nullFilledArray } from "~/utils/arrays";
-import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import {
+	databaseTimestampNow,
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import { mySlugify } from "~/utils/urls";
@@ -171,8 +175,8 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	groups,
 	friendCodes,
 	lfgPosts,
-	scrimPosts,
-	scrimPostRequests,
+	variation === "NO_SCRIMS" ? undefined : scrimPosts,
+	variation === "NO_SCRIMS" ? undefined : scrimPostRequests,
 	associations,
 	notifications,
 ];
@@ -1446,6 +1450,7 @@ function tournamentSubs() {
 				bestWeapons: nullFilledArray(
 					faker.helpers.arrayElement([1, 1, 1, 2, 2, 3, 4, 5]),
 				)
+					// biome-ignore lint/suspicious/useIterableCallbackReturn: Biome 2.3.1 upgrade
 					.map(() => {
 						while (true) {
 							const weaponId = R.sample(mainWeaponIds, 1)[0]!;
@@ -1462,6 +1467,7 @@ function tournamentSubs() {
 						: nullFilledArray(
 								faker.helpers.arrayElement([1, 1, 1, 2, 2, 3, 4, 5]),
 							)
+								// biome-ignore lint/suspicious/useIterableCallbackReturn: Biome 2.3.1 upgrade
 								.map(() => {
 									while (true) {
 										const weaponId = R.sample(mainWeaponIds, 1)[0]!;
@@ -2354,6 +2360,10 @@ async function scrimPosts() {
 		return { maxDiv, minDiv };
 	};
 
+	const maps = (): "SZ" | "ALL" | "RANKED" | null => {
+		return faker.helpers.arrayElement(["SZ", "ALL", "RANKED", null, null]);
+	};
+
 	const users = () => {
 		const count = faker.helpers.arrayElement([4, 4, 4, 4, 4, 4, 5, 5, 5, 6]);
 
@@ -2372,8 +2382,17 @@ async function scrimPosts() {
 
 	for (let i = 0; i < 20; i++) {
 		const divs = divRange();
+		const atTime = date();
+		const hasRangeEnd = Math.random() > 0.5;
 		await ScrimPostRepository.insert({
-			at: date(),
+			at: atTime,
+			rangeEnd: hasRangeEnd
+				? dateToDatabaseTimestamp(
+						add(databaseTimestampToDate(atTime), {
+							hours: faker.helpers.rangeToNumber({ min: 1, max: 3 }),
+						}),
+					)
+				: null,
 			isScheduledForFuture: true,
 			maxDiv: divs?.maxDiv,
 			minDiv: divs?.minDiv,
@@ -2385,11 +2404,14 @@ async function scrimPosts() {
 			visibility: null,
 			users: users(),
 			managedByAnyone: true,
+			maps: maps(),
+			mapsTournamentId: null,
 		});
 	}
 
+	const adminPostAtTime = date(true); // admin's scrim is always at least 1 hour in the future
 	const adminPostId = await ScrimPostRepository.insert({
-		at: date(true), // admin's scrim is always at least 1 hour in the future
+		at: adminPostAtTime,
 		isScheduledForFuture: true,
 		text:
 			faker.number.float(1) > 0.5
@@ -2400,14 +2422,24 @@ async function scrimPosts() {
 			.map((u) => ({ ...u, isOwner: 0 }))
 			.concat({ userId: ADMIN_ID, isOwner: 1 }),
 		managedByAnyone: true,
+		maps: maps(),
+		mapsTournamentId: null,
 	});
 	await ScrimPostRepository.insertRequest({
 		scrimPostId: adminPostId,
 		users: users(),
+		message:
+			faker.number.float(1) > 0.5
+				? faker.lorem.sentence({ min: 5, max: 15 })
+				: null,
 	});
 	await ScrimPostRepository.insertRequest({
 		scrimPostId: adminPostId,
 		users: users(),
+		message:
+			faker.number.float(1) > 0.5
+				? faker.lorem.sentence({ min: 5, max: 15 })
+				: null,
 	});
 }
 
@@ -2426,6 +2458,10 @@ async function scrimPostRequests() {
 				isOwner: member.userId === ADMIN_ID ? 1 : 0,
 			})),
 			teamId: 1,
+			message:
+				faker.number.float(1) > 0.5
+					? faker.lorem.sentence({ min: 5, max: 15 })
+					: null,
 		});
 	}
 

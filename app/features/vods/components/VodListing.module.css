@@ -1,0 +1,34 @@
+.listing {
+	max-width: 355px;
+}
+
+.thumbnail {
+	aspect-ratio: 16 / 9;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	min-width: 355px;
+}
+
+.info {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.castText {
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
+	color: var(--text-lighter);
+}
+
+.weaponsNotShown {
+	background-color: var(--bg-lighter);
+	border-radius: 100%;
+	display: grid;
+	place-items: center;
+	font-weight: var(--semi-bold);
+	width: 38px;
+	height: 38px;
+	font-size: var(--fonts-sm);
+}

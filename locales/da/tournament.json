@@ -25,7 +25,6 @@
 	"pre.info.unregister": "Afregistrer",
 	"pre.info.unregister.confirm": "Afregistrer fra turnering og slet holdinformationer?",
 	"pre.info.noHost": "Mit hold foretrækker ikke at være vært for rummet",
-	"pre.info.noScreen": "Mit hold foretrækker at undgå Splattercolor Screen",
 	"pre.roster.header": "Udfyld holdmedlemslisten",
 	"pre.roster.footer": "Mindst {{atLeastCount}} holdmedlemmer kræves for at deltage. Der kan maks være {{maxCount}} på holdet",
 	"pre.roster.addTrusted.header": "Tilføj personer, som du har spillet med",

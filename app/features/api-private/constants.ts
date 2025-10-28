@@ -4,4 +4,5 @@ export const SEED_VARIATIONS = [
 	"REG_OPEN",
 	"SMALL_SOS",
 	"NZAP_IN_TEAM",
+	"NO_SCRIMS",
 ] as const;

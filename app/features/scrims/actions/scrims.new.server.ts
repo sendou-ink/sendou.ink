@@ -51,10 +51,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	await ScrimPostRepository.insert({
 		at: dateToDatabaseTimestamp(data.at),
+		rangeEnd: data.rangeEnd ? dateToDatabaseTimestamp(data.rangeEnd) : null,
 		maxDiv: data.divs ? serializeLutiDiv(data.divs.max!) : null,
 		minDiv: data.divs ? serializeLutiDiv(data.divs.min!) : null,
 		text: data.postText,
 		managedByAnyone: data.managedByAnyone,
+		maps:
+			data.maps === "NO_PREFERENCE" || data.maps === "TOURNAMENT"
+				? null
+				: data.maps,
+		mapsTournamentId: data.mapsTournamentId,
 		isScheduledForFuture:
 			data.at >
 			// 10 minutes is an arbitrary threshold

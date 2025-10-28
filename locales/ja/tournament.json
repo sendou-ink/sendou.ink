@@ -25,7 +25,6 @@
 	"pre.info.unregister": "登録解除",
 	"pre.info.unregister.confirm": "トーナメント登録をキャンセルして、チーム情報を削除しますか?",
 	"pre.info.noHost": "部屋作成はできれば遠慮したい",
-	"pre.info.noScreen": "スミナガシートはできるだけ使ってほしくない",
 	"pre.roster.header": "参加プレイヤーを登録",
 	"pre.roster.footer": "少なくとも {{atLeastCount}} 人の参加が必要です。最大メンバー数は {{maxCount}} です。",
 	"pre.roster.addTrusted.header": "一緒にプレイしたことがあるプレイヤーを追加する",

@@ -25,7 +25,6 @@
 	"pre.info.unregister": "Disiscriviti",
 	"pre.info.unregister.confirm": "Disiscriversi dal torneo e cancellare le info del team?",
 	"pre.info.noHost": "Il mio team preferisce non hostare le stanze",
-	"pre.info.noScreen": "Il mio team preferisce evitare la Cortina ingannevole",
 	"pre.roster.header": "Riempi roster",
 	"pre.roster.footer": "Sono necessari almeno {{atLeastCount}} membri per partecipare. La dimensione massima del roster è {{maxCount}}",
 	"pre.roster.addTrusted.header": "Aggiungi persone con cui hai giocato",

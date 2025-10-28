@@ -36,6 +36,7 @@
 	color: var(--text-lighter);
 	font-size: var(--fonts-xs);
 	line-height: 1.1;
+	font-weight: var(--semi-bold);
 }
 
 .infoValue {
@@ -48,4 +49,47 @@
 	border-radius: var(--rounded);
 	background-color: var(--bg-lighter-solid);
 	padding: var(--s-2-5);
+}
+
+.screenBanIndicator {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.screenBanImageWrapper {
+	position: relative;
+	display: inline-block;
+	line-height: 0;
+}
+
+.screenBanImageWrapper picture {
+	flex-shrink: 0;
+}
+
+.screenBanIconOverlay {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	background-color: var(--bg-lightest-solid);
+	border-radius: 50%;
+	width: 16px;
+	height: 16px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.screenBanIconOverlay svg {
+	width: 14px;
+	height: 14px;
+	color: var(--bg);
+}
+
+.screenBanIndicator svg {
+	color: var(--theme-success);
+}
+
+.screenBanIndicatorWarning svg {
+	color: var(--theme-warning);
 }

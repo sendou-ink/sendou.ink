@@ -314,60 +314,18 @@ export function pairUp(players: SwissPairingTeam[]) {
 			}),
 		),
 	].sort((a, b) => a - b);
-	const pairs = [];
-	for (let i = 0; i < playerArray.length; i++) {
-		const curr = playerArray[i];
-		const next = playerArray.slice(i + 1);
-		for (let j = 0; j < next.length; j++) {
-			const opp = next[j];
-			if (Object.hasOwn(curr, "avoid") && curr.avoid.includes(opp.id)) {
-				continue;
-			}
-			let wt =
-				75 -
-				75 /
-					(scoreGroups.findIndex((s) => s === Math.min(curr.score, opp.score)) +
-						2);
-			wt +=
-				5 - 5 / (scoreSums.findIndex((s) => s === curr.score + opp.score) + 1);
-			const scoreGroupDiff = Math.abs(
-				scoreGroups.findIndex((s) => s === curr.score) -
-					scoreGroups.findIndex((s) => s === opp.score),
-			);
 
-			// TODO: consider "pairedUpDown"
-			// if (
-			// 	scoreGroupDiff === 1 &&
-			// 	curr.hasOwnProperty("pairedUpDown") &&
-			// 	curr.pairedUpDown === false &&
-			// 	opp.hasOwnProperty("pairedUpDown") &&
-			// 	opp.pairedUpDown === false
-			// ) {
-			// 	scoreGroupDiff -= 0.65;
-			// } else if (
-			// 	scoreGroupDiff > 0 &&
-			// 	((curr.hasOwnProperty("pairedUpDown") && curr.pairedUpDown === true) ||
-			// 		(opp.hasOwnProperty("pairedUpDown") && opp.pairedUpDown === true))
-			// ) {
-			// 	scoreGroupDiff += 0.2;
-			// }
-
-			wt += 23 / (2 * (scoreGroupDiff + 2));
-
-			// Lower weight for larger score differences, we really want to avoid 2-0 playing 0-2 etc.
-			if (scoreGroupDiff >= 2) {
-				wt -= 10;
-			}
-
-			if (
-				(Object.hasOwn(curr, "receivedBye") && curr.receivedBye) ||
-				(Object.hasOwn(opp, "receivedBye") && opp.receivedBye)
-			) {
-				wt += 40;
-			}
-			pairs.push([curr.index, opp.index, wt]);
-		}
+	let pairs = generateWeightedPairs({ playerArray, scoreGroups, scoreSums });
+	if (pairs.length === 0) {
+		// no possible pairs without rematches, try again allowing rematches
+		pairs = generateWeightedPairs({
+			playerArray,
+			scoreGroups,
+			scoreSums,
+			considerAvoid: false,
+		});
 	}
+
 	const blossomPairs = blossom(pairs, true);
 	const playerCopy = [...playerArray];
 	let byeArray = [];
@@ -408,6 +366,75 @@ export function pairUp(players: SwissPairingTeam[]) {
 	}
 
 	return matches;
+}
+
+function generateWeightedPairs({
+	playerArray,
+	scoreGroups,
+	scoreSums,
+	considerAvoid = true,
+}: {
+	playerArray: (SwissPairingTeam & { index: number })[];
+	scoreGroups: number[];
+	scoreSums: number[];
+	considerAvoid?: boolean;
+}) {
+	const pairs: [number, number, number][] = [];
+	for (let i = 0; i < playerArray.length; i++) {
+		const curr = playerArray[i];
+		const next = playerArray.slice(i + 1);
+		for (let j = 0; j < next.length; j++) {
+			const opp = next[j];
+			if (
+				considerAvoid &&
+				Object.hasOwn(curr, "avoid") &&
+				curr.avoid.includes(opp.id)
+			) {
+				continue;
+			}
+			let wt =
+				75 - 75 / (scoreGroups.indexOf(Math.min(curr.score, opp.score)) + 2);
+			wt +=
+				5 - 5 / (scoreSums.findIndex((s) => s === curr.score + opp.score) + 1);
+			const scoreGroupDiff = Math.abs(
+				scoreGroups.indexOf(curr.score) - scoreGroups.indexOf(opp.score),
+			);
+
+			// TODO: consider "pairedUpDown"
+			// if (
+			// 	scoreGroupDiff === 1 &&
+			// 	curr.hasOwnProperty("pairedUpDown") &&
+			// 	curr.pairedUpDown === false &&
+			// 	opp.hasOwnProperty("pairedUpDown") &&
+			// 	opp.pairedUpDown === false
+			// ) {
+			// 	scoreGroupDiff -= 0.65;
+			// } else if (
+			// 	scoreGroupDiff > 0 &&
+			// 	((curr.hasOwnProperty("pairedUpDown") && curr.pairedUpDown === true) ||
+			// 		(opp.hasOwnProperty("pairedUpDown") && opp.pairedUpDown === true))
+			// ) {
+			// 	scoreGroupDiff += 0.2;
+			// }
+
+			wt += 23 / (2 * (scoreGroupDiff + 2));
+
+			// Lower weight for larger score differences, we really want to avoid 2-0 playing 0-2 etc.
+			if (scoreGroupDiff >= 2) {
+				wt -= 10;
+			}
+
+			if (
+				(Object.hasOwn(curr, "receivedBye") && curr.receivedBye) ||
+				(Object.hasOwn(opp, "receivedBye") && opp.receivedBye)
+			) {
+				wt += 40;
+			}
+			pairs.push([curr.index, opp.index, wt]);
+		}
+	}
+
+	return pairs;
 }
 
 export type SwissTeamStatus = "active" | "advanced" | "eliminated";

@@ -509,7 +509,8 @@
 }
 
 .tournament-bracket__compactify-button svg {
-	width: 0.85rem;
+	min-width: 0.85rem;
+	max-width: 0.85rem;
 }
 
 .tournament-bracket__cast-info-container {

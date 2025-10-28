@@ -9,6 +9,8 @@
 	padding: var(--s-0-5) var(--s-2);
 	font-weight: var(--bold);
 	width: max-content;
+	display: flex;
+	gap: var(--s-0-5);
 }
 
 .postPrivateCell {
@@ -64,4 +66,20 @@
 .postFloatingActionCell {
 	position: sticky;
 	right: 0;
+}
+
+.cardsGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+	gap: var(--s-4);
+}
+
+.filterButtons {
+	display: flex;
+	gap: var(--s-6);
+	align-items: center;
+}
+
+.filterButtons button:not(.active) {
+	color: var(--text-lighter);
 }

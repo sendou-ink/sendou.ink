@@ -416,6 +416,38 @@ describe("MapList.generate()", () => {
 				]).toContain(notGuaranteedToBePlayed[1]);
 			}
 		});
+
+		it.fails(
+			"should find unique maps when possible (All 4 One #50 bug)",
+			() => {
+				const mapPool = new MapPool({
+					TW: [],
+					SZ: [1, 2, 3, 4, 5, 6, 7],
+					TC: [],
+					RM: [],
+					CB: [],
+				});
+
+				for (let i = 0; i < 50; i++) {
+					const gen = MapList.generate({
+						mapPool,
+						considerGuaranteed: true,
+					});
+					gen.next();
+
+					gen.next({ amount: 5 });
+
+					const maps = gen.next({ amount: 5 }).value;
+
+					const stageIds = maps.map((m) => m.stageId);
+					const uniqueStageIds = new Set(stageIds);
+
+					expect(uniqueStageIds.size).toBe(5);
+				}
+			},
+		);
+
+		// also add test about Bo7 not having repeat maps
 	});
 });
 

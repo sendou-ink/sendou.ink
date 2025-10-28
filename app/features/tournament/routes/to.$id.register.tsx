@@ -819,21 +819,6 @@ function TeamInfo({
 									{t("tournament:pre.info.noHost")}
 								</label>
 							</div>
-
-							{tournament.ctx.settings.enableNoScreenToggle ? (
-								<div className="text-lighter text-sm stack horizontal sm items-center">
-									<input
-										id="no-screen"
-										type="checkbox"
-										name="noScreen"
-										defaultChecked={Boolean(ownTeam?.noScreen)}
-										data-testid="no-screen-checkbox"
-									/>
-									<label htmlFor="no-screen" className="mb-0">
-										{t("tournament:pre.info.noScreen")}
-									</label>
-								</div>
-							) : null}
 						</div>
 					</div>
 					<SendouButton

@@ -1,5 +1,10 @@
 import type { MetaFunction } from "@remix-run/node";
-import { useFetcher, useNavigate, useSearchParams } from "@remix-run/react";
+import {
+	useFetcher,
+	useLoaderData,
+	useNavigate,
+	useSearchParams,
+} from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouSwitch } from "~/components/elements/Switch";
@@ -7,7 +12,6 @@ import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
-import { FF_SCRIMS_ENABLED } from "~/features/scrims/scrims-constants";
 import { Theme, useTheme } from "~/features/theme/core/provider";
 import { languages } from "~/modules/i18n/config";
 import { metaTags } from "~/utils/remix";
@@ -15,9 +19,9 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, SETTINGS_PAGE } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
-
 import { action } from "../actions/settings.server";
-export { action };
+import { loader } from "../loaders/settings.server";
+export { loader, action };
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: () => ({
@@ -28,6 +32,7 @@ export const handle: SendouRouteHandle = {
 };
 
 export default function SettingsPage() {
+	const data = useLoaderData<typeof loader>();
 	const user = useUser();
 	const { t } = useTranslation(["common"]);
 
@@ -53,20 +58,24 @@ export default function SettingsPage() {
 									"common:settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText",
 								)}
 							/>
-							{FF_SCRIMS_ENABLED ? (
-								<PreferenceSelectorSwitch
-									_action="DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED"
-									defaultSelected={
-										user?.preferences.disallowScrimPickupsFromUntrusted ?? false
-									}
-									label={t(
-										"common:settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.label",
-									)}
-									bottomText={t(
-										"common:settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.bottomText",
-									)}
-								/>
-							) : null}
+							<PreferenceSelectorSwitch
+								_action="DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED"
+								defaultSelected={
+									user?.preferences.disallowScrimPickupsFromUntrusted ?? false
+								}
+								label={t(
+									"common:settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.label",
+								)}
+								bottomText={t(
+									"common:settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.bottomText",
+								)}
+							/>
+							<PreferenceSelectorSwitch
+								_action="UPDATE_NO_SCREEN"
+								defaultSelected={Boolean(data.noScreen)}
+								label={t("common:settings.UPDATE_NO_SCREEN.label")}
+								bottomText={t("common:settings.UPDATE_NO_SCREEN.bottomText")}
+							/>
 						</div>
 					</>
 				) : null}

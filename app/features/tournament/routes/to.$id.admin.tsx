@@ -330,7 +330,17 @@ function TeamActions() {
 						<label htmlFor="bracket">Bracket</label>
 						<select id="bracket" name="bracketIdx">
 							{tournament.brackets.map((bracket, bracketIdx) => (
-								<option key={bracket.name} value={bracketIdx}>
+								<option
+									key={bracket.name}
+									value={
+										// no sources means it's a starting bracket
+										// in terms of check out and check in
+										// bracket idx = 0 refers to the check-in for the tournament as a whole
+										!bracket.sources || bracket.sources.length === 0
+											? 0
+											: bracketIdx
+									}
+								>
 									{bracket.name}
 								</option>
 							))}

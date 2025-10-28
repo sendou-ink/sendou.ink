@@ -5,17 +5,26 @@ import type { Tables, TablesInsertable } from "~/db/tables";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { userSubmittedImage } from "~/utils/urls-img";
 import { db } from "../../db/sql";
 import invariant from "../../utils/invariant";
 import type { Unwrapped } from "../../utils/types";
 import type { AssociationVisibility } from "../associations/associations-types";
+import { HACKY_resolvePicture } from "../tournament/tournament-utils";
 import * as Scrim from "./core/Scrim";
 import type { ScrimPost, ScrimPostUser } from "./scrims-types";
 import { getPostRequestCensor, parseLutiDiv } from "./scrims-utils";
 
 type InsertArgs = Pick<
 	TablesInsertable["ScrimPost"],
-	"at" | "maxDiv" | "minDiv" | "teamId" | "text"
+	| "at"
+	| "rangeEnd"
+	| "maxDiv"
+	| "minDiv"
+	| "teamId"
+	| "text"
+	| "maps"
+	| "mapsTournamentId"
 > & {
 	/** users related to the post other than the author */
 	users: Array<Pick<Insertable<Tables["ScrimPostUser"]>, "userId" | "isOwner">>;
@@ -34,10 +43,13 @@ export function insert(args: InsertArgs) {
 			.insertInto("ScrimPost")
 			.values({
 				at: args.at,
+				rangeEnd: args.rangeEnd,
 				maxDiv: args.maxDiv,
 				minDiv: args.minDiv,
 				teamId: args.teamId,
 				text: args.text,
+				maps: args.maps,
+				mapsTournamentId: args.mapsTournamentId,
 				visibility: args.visibility ? JSON.stringify(args.visibility) : null,
 				chatCode: shortNanoid(),
 				managedByAnyone: args.managedByAnyone ? 1 : 0,
@@ -57,7 +69,7 @@ export function insert(args: InsertArgs) {
 
 type InsertRequestArgs = Pick<
 	Insertable<Tables["ScrimPostRequest"]>,
-	"scrimPostId" | "teamId"
+	"scrimPostId" | "teamId" | "message" | "at"
 > & {
 	users: Array<
 		Pick<Insertable<Tables["ScrimPostRequestUser"]>, "userId" | "isOwner">
@@ -73,6 +85,8 @@ export function insertRequest(args: InsertRequestArgs) {
 			.values({
 				scrimPostId: args.scrimPostId,
 				teamId: args.teamId,
+				message: args.message,
+				at: args.at,
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();
@@ -98,14 +112,27 @@ const baseFindQuery = db
 	.selectFrom("ScrimPost")
 	.leftJoin("Team", "ScrimPost.teamId", "Team.id")
 	.leftJoin("UserSubmittedImage", "Team.avatarImgId", "UserSubmittedImage.id")
+	.leftJoin(
+		"CalendarEvent",
+		"ScrimPost.mapsTournamentId",
+		"CalendarEvent.tournamentId",
+	)
+	.leftJoin(
+		"UserSubmittedImage as TournamentAvatar",
+		"CalendarEvent.avatarImgId",
+		"TournamentAvatar.id",
+	)
 	.select((eb) => [
 		"ScrimPost.id",
 		"ScrimPost.at",
+		"ScrimPost.rangeEnd",
 		"ScrimPost.createdAt",
 		"ScrimPost.visibility",
 		"ScrimPost.maxDiv",
 		"ScrimPost.minDiv",
 		"ScrimPost.text",
+		"ScrimPost.maps",
+		"ScrimPost.mapsTournamentId",
 		"ScrimPost.managedByAnyone",
 		"ScrimPost.canceledAt",
 		"ScrimPost.canceledByUserId",
@@ -116,6 +143,11 @@ const baseFindQuery = db
 			customUrl: eb.ref("Team.customUrl"),
 			avatarUrl: eb.ref("UserSubmittedImage.url"),
 		}).as("team"),
+		jsonBuildObject({
+			id: eb.ref("CalendarEvent.tournamentId"),
+			name: eb.ref("CalendarEvent.name"),
+			avatarUrl: eb.ref("TournamentAvatar.url"),
+		}).as("mapsTournament"),
 		jsonArrayFrom(
 			eb
 				.selectFrom("ScrimPostUser")
@@ -136,6 +168,8 @@ const baseFindQuery = db
 					"ScrimPostRequest.id",
 					"ScrimPostRequest.isAccepted",
 					"ScrimPostRequest.createdAt",
+					"ScrimPostRequest.message",
+					"ScrimPostRequest.at",
 					jsonBuildObject({
 						name: innerEb.ref("Team.name"),
 						customUrl: innerEb.ref("Team.customUrl"),
@@ -207,9 +241,10 @@ const mapDBRowToScrimPost = (
 		}
 	}
 
-	return {
+	const result = {
 		id: row.id,
 		at: row.at,
+		rangeEnd: row.rangeEnd,
 		createdAt: row.createdAt,
 		visibility: row.visibility,
 		text: row.text,
@@ -218,6 +253,16 @@ const mapDBRowToScrimPost = (
 			typeof row.maxDiv === "number" && typeof row.minDiv === "number"
 				? { max: parseLutiDiv(row.maxDiv), min: parseLutiDiv(row.minDiv) }
 				: null,
+		maps: row.maps,
+		mapsTournament: row.mapsTournament.id
+			? {
+					id: row.mapsTournament.id,
+					name: row.mapsTournament.name!,
+					avatarUrl: row.mapsTournament.avatarUrl
+						? userSubmittedImage(row.mapsTournament.avatarUrl)
+						: HACKY_resolvePicture({ name: row.mapsTournament.name! }),
+				}
+			: null,
 		chatCode: row.chatCode ?? null,
 		team: row.team.name
 			? {
@@ -231,6 +276,8 @@ const mapDBRowToScrimPost = (
 				id: request.id,
 				isAccepted: Boolean(request.isAccepted),
 				createdAt: request.createdAt,
+				message: request.message,
+				at: request.at,
 				team: request.team.name
 					? {
 							name: request.team.name,
@@ -255,6 +302,16 @@ const mapDBRowToScrimPost = (
 		},
 		managedByAnyone: Boolean(row.managedByAnyone),
 		canceled,
+	};
+
+	if (!Scrim.isAccepted(result)) {
+		return result;
+	}
+
+	return {
+		...result,
+		at: Scrim.getStartTime(result),
+		rangeEnd: null,
 	};
 };
 
@@ -314,4 +371,35 @@ export async function cancelScrim(
 		.where("id", "=", id)
 		.where("canceledAt", "is", null)
 		.execute();
+}
+
+/**
+ * Finds all accepted scrims scheduled within a specific time range.
+ *
+ * @returns Array of accepted (matched) scrim posts within the time range
+ */
+export async function findAcceptedScrimsBetweenTwoTimestamps({
+	/** The earliest scrim start time to include (inclusive) */
+	startTime,
+	/** The latest scrim start time to include (exclusive) */
+	endTime,
+	/** Exclude scrims created after this timestamp */
+	excludeRecentlyCreated,
+}: {
+	startTime: Date;
+	endTime: Date;
+	excludeRecentlyCreated: Date;
+}) {
+	const rows = await baseFindQuery
+		.where("ScrimPost.at", ">=", dateToDatabaseTimestamp(startTime))
+		.where("ScrimPost.at", "<", dateToDatabaseTimestamp(endTime))
+		.where("ScrimPost.canceledAt", "is", null)
+		.where(
+			"ScrimPost.createdAt",
+			"<",
+			dateToDatabaseTimestamp(excludeRecentlyCreated),
+		)
+		.execute();
+
+	return rows.map(mapDBRowToScrimPost).filter((post) => Scrim.isAccepted(post));
 }

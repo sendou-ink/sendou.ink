@@ -29,4 +29,5 @@ export const IN_MILLISECONDS = {
 	HALF_HOUR: 30 * 60 * 1000,
 	ONE_HOUR: 60 * 60 * 1000,
 	TWO_HOURS: 2 * 60 * 60 * 1000,
+	TWO_DAYS: 2 * 24 * 60 * 60 * 1000,
 };

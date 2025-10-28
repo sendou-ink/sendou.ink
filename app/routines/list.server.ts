@@ -3,6 +3,7 @@ import { DeleteOldNotificationsRoutine } from "./deleteOldNotifications";
 import { DeleteOldTrustRoutine } from "./deleteOldTrusts";
 import { NotifyCheckInStartRoutine } from "./notifyCheckInStart";
 import { NotifyPlusServerVotingRoutine } from "./notifyPlusServerVoting";
+import { NotifyScrimStartingSoonRoutine } from "./notifyScrimStartingSoon";
 import { NotifySeasonStartRoutine } from "./notifySeasonStart";
 import { SetOldGroupsAsInactiveRoutine } from "./setOldGroupsAsInactive";
 import { UpdatePatreonDataRoutine } from "./updatePatreonData";
@@ -12,6 +13,7 @@ export const everyHourAt00 = [
 	NotifySeasonStartRoutine,
 	NotifyPlusServerVotingRoutine,
 	NotifyCheckInStartRoutine,
+	NotifyScrimStartingSoonRoutine,
 ];
 
 /** List of Routines that should occur hourly at XX:30 */

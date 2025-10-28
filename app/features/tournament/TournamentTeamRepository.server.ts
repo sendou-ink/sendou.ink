@@ -115,10 +115,7 @@ export function create({
 	tournamentId,
 	ownerInGameName,
 }: {
-	team: Pick<
-		Tables["TournamentTeam"],
-		"name" | "prefersNotToHost" | "noScreen" | "teamId"
-	>;
+	team: Pick<Tables["TournamentTeam"], "name" | "prefersNotToHost" | "teamId">;
 	avatarFileName?: string;
 	userId: number;
 	tournamentId: number;
@@ -140,7 +137,6 @@ export function create({
 				name: team.name,
 				inviteCode: shortNanoid(),
 				prefersNotToHost: team.prefersNotToHost,
-				noScreen: team.noScreen,
 				teamId: team.teamId,
 				avatarImgId,
 			})
@@ -179,7 +175,6 @@ export function copyFromAnotherTournament({
 				"TournamentTeam.avatarImgId",
 				"TournamentTeam.createdAt",
 				"TournamentTeam.name",
-				"TournamentTeam.noScreen",
 				"TournamentTeam.prefersNotToHost",
 				"TournamentTeam.teamId",
 
@@ -270,7 +265,7 @@ export function update({
 }: {
 	team: Pick<
 		Tables["TournamentTeam"],
-		"id" | "name" | "prefersNotToHost" | "noScreen" | "teamId"
+		"id" | "name" | "prefersNotToHost" | "teamId"
 	>;
 	avatarFileName?: string;
 	userId: number;
@@ -291,7 +286,6 @@ export function update({
 			.set({
 				name: team.name,
 				prefersNotToHost: team.prefersNotToHost,
-				noScreen: team.noScreen,
 				teamId: team.teamId,
 				avatarImgId,
 			})

@@ -1,0 +1,148 @@
+.card {
+	border: 1px solid var(--border);
+	border-radius: var(--rounded);
+	overflow: hidden;
+	background-color: var(--bg-darker);
+	display: flex;
+	flex-direction: column;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	padding: var(--s-4);
+	padding-bottom: var(--s-3);
+}
+
+.avatarContainer {
+	flex-shrink: 0;
+}
+
+.teamName {
+	flex: 1;
+	font-size: var(--text-lg);
+	font-weight: var(--semi-bold);
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+	line-height: 1.2;
+}
+
+.pickupLabel {
+	font-size: var(--fonts-xxxs);
+	font-weight: var(--bold);
+	text-transform: uppercase;
+	color: var(--text-lighter);
+}
+
+.rightIconsContainer {
+	flex-shrink: 0;
+	align-self: flex-start;
+	display: flex;
+	gap: var(--s-2);
+}
+
+.usersIcon {
+	width: 18px;
+	height: 18px;
+}
+
+.infoRow {
+	display: flex;
+	gap: var(--s-6);
+	padding-inline: var(--s-4);
+	padding-bottom: var(--s-3);
+	flex-wrap: wrap;
+}
+
+.infoItem {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.infoLabel {
+	text-transform: uppercase;
+	color: var(--text-lighter);
+	font-weight: var(--bold);
+	font-size: var(--fonts-xxs);
+}
+
+.infoValue {
+	font-weight: var(--semi-bold);
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--fonts-xs);
+}
+
+.textContent {
+	padding-inline: var(--s-4);
+	padding-bottom: var(--s-3);
+	font-size: var(--fonts-sm);
+	line-height: 1.4;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.expandButton {
+	background: none;
+	border: none;
+	color: var(--theme);
+	cursor: pointer;
+	font-size: var(--fonts-xxs);
+	font-weight: var(--semi-bold);
+	padding: 0;
+	text-align: left;
+	text-decoration: underline;
+}
+
+.expandButton:hover {
+	opacity: 0.8;
+}
+
+.footer {
+	background-color: var(--bg-lighter);
+	padding: var(--s-2) var(--s-4);
+	display: flex;
+	justify-content: center;
+	margin-block-start: auto;
+}
+
+.requestCard {
+	background-color: var(--theme-transparent);
+}
+
+.requestFooter {
+	background-image: repeating-linear-gradient(
+		45deg,
+		var(--bg-darker),
+		var(--bg-darker) 10px,
+		var(--bg-lighter) 10px,
+		var(--bg-lighter) 20px
+	);
+}
+
+.filteredFooter {
+	background-color: var(--theme-transparent);
+}
+
+.canceledContainer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.strikethrough button {
+	text-decoration: line-through;
+}
+
+.canceledLabel {
+	color: var(--theme-error);
+	font-size: var(--fonts-xxs);
+	font-weight: var(--bold);
+	text-transform: uppercase;
+}

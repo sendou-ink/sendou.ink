@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
@@ -22,6 +23,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		case "DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED": {
 			await UserRepository.updatePreferences(user.id, {
 				disallowScrimPickupsFromUntrusted: data.newValue,
+			});
+			break;
+		}
+		case "UPDATE_NO_SCREEN": {
+			await QSettingsRepository.updateNoScreen({
+				userId: user.id,
+				noScreen: Number(data.newValue),
 			});
 			break;
 		}

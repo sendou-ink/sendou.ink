@@ -25,7 +25,6 @@
 	"pre.info.unregister": "取消报名",
 	"pre.info.unregister.confirm": "取消报名并删除队伍信息？",
 	"pre.info.noHost": "我的队伍倾向于不当房主",
-	"pre.info.noScreen": "我的队伍不希望使用浮墨幕墙",
 	"pre.roster.header": "填写阵容",
 	"pre.roster.footer": "需要至少 {{atLeastCount}} 名成员，成员数量上限为 {{maxCount}}",
 	"pre.roster.addTrusted.header": "添加与您游玩过的玩家",

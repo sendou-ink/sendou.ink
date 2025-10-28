@@ -22,6 +22,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const subs = findSubsByTournamentId({
 		tournamentId,
 		userId: user?.id,
+		// biome-ignore lint/suspicious/useIterableCallbackReturn: Biome 2.3.1 upgrade
 	}).filter((sub) => {
 		if (sub.visibility === "ALL") return true;
 

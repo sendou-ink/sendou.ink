@@ -11,6 +11,7 @@ import type { tags } from "~/features/calendar/calendar-constants";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
+import type { ScrimFilters } from "~/features/scrims/scrims-types";
 import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
@@ -681,7 +682,6 @@ export interface TournamentTeam {
 	inviteCode: string;
 	name: string;
 	prefersNotToHost: Generated<DBBoolean>;
-	noScreen: Generated<DBBoolean>;
 	droppedOut: Generated<DBBoolean>;
 	seed: number | null;
 	/** For formats that have many starting brackets, where should the team start? */
@@ -828,6 +828,7 @@ export interface UserPreferences {
 	disableBuildAbilitySorting?: boolean;
 	disallowScrimPickupsFromUntrusted?: boolean;
 	defaultCalendarFilters?: CalendarFilters;
+	defaultScrimsFilters?: ScrimFilters;
 }
 
 export interface User {
@@ -975,6 +976,8 @@ export interface ScrimPost {
 	id: GeneratedAlways<number>;
 	/** When is the scrim scheduled to happen */
 	at: number;
+	/** Optional end of time range indicating team accepts scrims starting between at and rangeEnd */
+	rangeEnd: number | null;
 	/** Highest LUTI div accepted */
 	maxDiv: number | null;
 	/** Lowest LUTI div accepted */
@@ -997,6 +1000,10 @@ export interface ScrimPost {
 	cancelReason: string | null;
 	/** When the post was made was it scheduled for a future time slot (as opposed to looking now) */
 	isScheduledForFuture: Generated<DBBoolean>;
+	/** Maps/modes the scrim is available for. If null means no preference unless "mapsTournamentId" is set */
+	maps: "SZ" | "ALL" | "RANKED" | null;
+	/** If set, specifies the maps of a tournament to play */
+	mapsTournamentId: number | null;
 	createdAt: GeneratedAlways<number>;
 	updatedAt: Generated<number>;
 }
@@ -1012,6 +1019,9 @@ export interface ScrimPostRequest {
 	id: GeneratedAlways<number>;
 	scrimPostId: number;
 	teamId: number | null;
+	message: string | null;
+	/** Specific time selected by requester (required when post has rangeEnd) */
+	at: number | null;
 	isAccepted: Generated<DBBoolean>;
 	createdAt: GeneratedAlways<number>;
 }

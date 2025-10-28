@@ -44,13 +44,11 @@ import {
 import styles from "./BracketMapListDialog.module.css";
 
 export function BracketMapListDialog({
-	isOpen,
 	close,
 	bracket,
 	bracketIdx,
 	isPreparing,
 }: {
-	isOpen: boolean;
 	close: () => void;
 	bracket: Bracket;
 	bracketIdx: number;
@@ -294,7 +292,7 @@ export function BracketMapListDialog({
 	return (
 		<SendouDialog
 			heading={`Maplist selection (${bracket.name})`}
-			isOpen={isOpen}
+			isOpen
 			onClose={close}
 			isFullScreen
 		>

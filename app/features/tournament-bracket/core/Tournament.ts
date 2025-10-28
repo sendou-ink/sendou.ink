@@ -470,10 +470,7 @@ export class Tournament {
 			const [oneId, twoId] = replays[0];
 
 			const lowerSeedId =
-				newOrder.findIndex((t) => t === oneId) <
-				newOrder.findIndex((t) => t === twoId)
-					? twoId
-					: oneId;
+				newOrder.indexOf(oneId) < newOrder.indexOf(twoId) ? twoId : oneId;
 
 			if (!potentialSwitchCandidates.some((t) => t === lowerSeedId)) {
 				logger.warn(
@@ -487,8 +484,8 @@ export class Tournament {
 				// can't switch place with itself
 				if (candidate === lowerSeedId) continue;
 
-				const candidateIdx = newOrder.findIndex((t) => t === candidate);
-				const otherIdx = newOrder.findIndex((t) => t === lowerSeedId);
+				const candidateIdx = newOrder.indexOf(candidate);
+				const otherIdx = newOrder.indexOf(lowerSeedId);
 
 				const temp = newOrder[candidateIdx];
 				newOrder[candidateIdx] = newOrder[otherIdx];

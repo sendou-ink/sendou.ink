@@ -90,7 +90,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 						id: ownTeam.id,
 						name: data.teamName,
 						prefersNotToHost: Number(data.prefersNotToHost),
-						noScreen: Number(data.noScreen),
 						teamId: data.teamId ?? null,
 					},
 				});
@@ -125,7 +124,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 					}),
 					team: {
 						name: data.teamName,
-						noScreen: Number(data.noScreen),
 						prefersNotToHost: Number(data.prefersNotToHost),
 						teamId: data.teamId ?? null,
 					},

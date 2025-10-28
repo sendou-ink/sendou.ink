@@ -12,11 +12,11 @@ import {
 } from "~/utils/playwright";
 import {
 	NOTIFICATIONS_URL,
+	SETTINGS_PAGE,
 	tournamentAdminPage,
 	tournamentBracketsPage,
 	tournamentMatchPage,
 	tournamentPage,
-	tournamentRegisterPage,
 	userResultsPage,
 } from "~/utils/urls";
 
@@ -825,7 +825,7 @@ test.describe("Tournament bracket", () => {
 		await expect(page.locator('[data-match-id="1"]')).toBeVisible();
 	});
 
-	test("tournament no screen toggle works", async ({ page }) => {
+	test("user no screen setting affects tournament match", async ({ page }) => {
 		const tournamentId = 4;
 
 		await seed(page);
@@ -833,22 +833,25 @@ test.describe("Tournament bracket", () => {
 
 		await navigate({
 			page,
-			url: tournamentRegisterPage(tournamentId),
+			url: SETTINGS_PAGE,
 		});
 
-		await page.getByTestId("no-screen-checkbox").click();
-		await page.getByTestId("save-team-button").click();
+		await page.getByTestId("UPDATE_NO_SCREEN-switch").click();
 
-		await page.getByTestId("brackets-tab").click();
+		await navigate({
+			page,
+			url: tournamentBracketsPage({ tournamentId }),
+		});
+
 		await page.getByTestId("finalize-bracket-button").click();
 		await page.getByTestId("confirm-finalize-bracket-button").click();
 
-		await page.locator('[data-match-id="2"]').click();
-		await expect(page.getByTestId("screen-allowed")).toBeVisible();
-		await backToBracket(page);
-
 		await page.locator('[data-match-id="1"]').click();
 		await expect(page.getByTestId("screen-banned")).toBeVisible();
+
+		await backToBracket(page);
+		await page.locator('[data-match-id="2"]').click();
+		await expect(page.getByTestId("screen-allowed")).toBeVisible();
 	});
 
 	test("hosts a 'play all' round robin stage", async ({ page }) => {

@@ -62,7 +62,6 @@ export async function dbInsertTournamentTeam({
 		ownerInGameName: null,
 		team: {
 			name: `Test Team ${ownerId}`,
-			noScreen: 0,
 			prefersNotToHost: 0,
 			teamId: null,
 		},

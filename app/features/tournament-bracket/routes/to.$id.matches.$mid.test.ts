@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { adminActionSchema } from "~/features/tournament/actions/to.$id.admin.server";
+import type { adminActionSchema } from "~/features/tournament/tournament-schemas.server";
 import {
 	dbInsertTournament,
 	dbInsertTournamentTeam,
