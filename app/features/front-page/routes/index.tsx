@@ -29,6 +29,7 @@ import { TournamentCard } from "~/features/calendar/components/TournamentCard";
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import styles from "~/styles/front.module.css";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BLANK_IMAGE_URL,
@@ -44,15 +45,13 @@ import {
 import { type LeaderboardEntry, loader } from "../loaders/index.server";
 export { loader };
 
-import "~/styles/front.css";
-
 export const handle: SendouRouteHandle = {
 	i18n: ["front"],
 };
 
 export default function FrontPage() {
 	return (
-		<Main className="front-page__container">
+		<Main className={styles.frontPageContainer}>
 			<LeagueBanner />
 			<DesktopSideNav />
 			<SeasonBanner />
@@ -68,14 +67,14 @@ function DesktopSideNav() {
 	const { t } = useTranslation(["common"]);
 
 	return (
-		<nav className="front-page__side-nav">
+		<nav className={styles.frontPageSideNav}>
 			{navItems.map((item) => {
 				return (
 					<Link
 						to={`/${item.url}`}
 						key={item.name}
 						prefetch={item.prefetch ? "render" : undefined}
-						className="front-page__side-nav-item"
+						className={styles.frontPageSideNavItem}
 					>
 						<Image
 							path={navIconUrl(item.name)}
@@ -94,7 +93,7 @@ function DesktopSideNav() {
 						variant="minimal"
 						icon={<LogOutIcon />}
 						type="submit"
-						className="front-page__side-nav__log-out"
+						className={styles.frontPageSideNavLogOut}
 					>
 						{t("common:header.logout")}
 					</SendouButton>
@@ -117,12 +116,12 @@ function SeasonBanner() {
 
 	return (
 		<div className="stack xs">
-			<Link to={SENDOUQ_PAGE} className="front__season-banner">
-				<div className="front__season-banner__header">
+			<Link to={SENDOUQ_PAGE} className={styles.seasonBanner}>
+				<div className={styles.seasonBannerHeader}>
 					{t("front:sq.season", { nth: season.nth })}
 				</div>
 				{isMounted ? (
-					<div className="front__season-banner__dates">
+					<div className={styles.seasonBannerDates}>
 						{season.starts.toLocaleDateString(i18n.language, {
 							month: "long",
 							day: "numeric",
@@ -134,15 +133,15 @@ function SeasonBanner() {
 						})}
 					</div>
 				) : (
-					<div className="front__season-banner__dates invisible">X</div>
+					<div className={clsx(styles.seasonBannerDates, "invisible")}>X</div>
 				)}
 				<Image
-					className="front__season-banner__img"
+					className={styles.seasonBannerImg}
 					path={sqHeaderGuyImageUrl(season.nth)}
 					alt=""
 				/>
 			</Link>
-			<Link to={SENDOUQ_PAGE} className="front__season-banner__link">
+			<Link to={SENDOUQ_PAGE} className={styles.seasonBannerLink}>
 				<div className="stack horizontal xs items-center">
 					<Image path={navIconUrl("sendouq")} width={24} alt="" />
 					{isInFuture ? t("front:sq.prepare") : t("front:sq.participate")}
@@ -158,7 +157,7 @@ function LeagueBanner() {
 	if (!showBannerFor) return null;
 
 	return (
-		<Link to={LUTI_PAGE} className="front__luti-banner">
+		<Link to={LUTI_PAGE} className={styles.lutiBanner}>
 			<Image path={navIconUrl("luti")} size={24} alt="" />
 			Registration now open for Leagues Under The Ink (LUTI) Season{" "}
 			{showBannerFor}!
@@ -226,8 +225,8 @@ function ShowcaseTournamentScroller({
 	tournaments: ShowcaseCalendarEvent[];
 }) {
 	return (
-		<div className="front__tournament-cards">
-			<div className="front__tournament-cards__spacer overflow-x-scroll">
+		<div className={styles.tournamentCards}>
+			<div className={clsx(styles.tournamentCardsSpacer, "overflow-x-scroll")}>
 				{tournaments.map((tournament) => (
 					<TournamentCard
 						key={tournament.id}
@@ -247,7 +246,7 @@ function AllTournamentsLinkCard() {
 	return (
 		<Link
 			to={CALENDAR_TOURNAMENTS_PAGE}
-			className="front__tournament-cards__view-all-card mt-4"
+			className={clsx(styles.tournamentCardsViewAllCard, "mt-4")}
 		>
 			<Image path={navIconUrl("medal")} size={36} alt="" />
 			{t("front:showcase.viewAll")}
@@ -272,10 +271,15 @@ function ResultHighlights() {
 
 	const recentResults = (
 		<>
-			<h2 className="front__result-highlights__title front__result-highlights__title__tournaments">
+			<h2
+				className={clsx(
+					styles.resultHighlightsTitle,
+					styles.resultHighlightsTitleTournaments,
+				)}
+			>
 				{t("front:showcase.results")}
 			</h2>
-			<div className="front__tournament-cards__spacer">
+			<div className={styles.tournamentCardsSpacer}>
 				{data.tournaments.results.map((tournament) => (
 					<TournamentCard key={tournament.id} tournament={tournament} />
 				))}
@@ -285,9 +289,9 @@ function ResultHighlights() {
 
 	return (
 		<>
-			<div className="front__result-highlights overflow-x-auto">
+			<div className={clsx(styles.resultHighlights, "overflow-x-auto")}>
 				<div className="stack sm text-center">
-					<h2 className="front__result-highlights__title">
+					<h2 className={styles.resultHighlightsTitle}>
 						{t("front:leaderboards.topPlayers")}
 					</h2>
 					<Leaderboard
@@ -299,7 +303,7 @@ function ResultHighlights() {
 					/>
 				</div>
 				<div className="stack sm text-center">
-					<h2 className="front__result-highlights__title">
+					<h2 className={styles.resultHighlightsTitle}>
 						{t("front:leaderboards.topTeams")}
 					</h2>
 					<Leaderboard
@@ -314,7 +318,7 @@ function ResultHighlights() {
 					{recentResults}
 				</div>
 			</div>
-			<div className="front__result-highlights overflow-x-auto">
+			<div className={clsx(styles.resultHighlights, "overflow-x-auto")}>
 				<div className="stack sm text-center desktop-hidden">
 					{recentResults}
 				</div>
@@ -334,7 +338,7 @@ function Leaderboard({
 
 	return (
 		<div className="stack xs items-center">
-			<div className="front__leaderboard">
+			<div className={styles.leaderboard}>
 				{entries.map((entry, index) => (
 					<Link
 						to={entry.url}
@@ -344,7 +348,7 @@ function Leaderboard({
 						<div className="mx-1">{index + 1}</div>
 						<Avatar url={entry.avatarUrl ?? BLANK_IMAGE_URL} size="xs" />
 						<div className="stack items-start">
-							<div className="front__leaderboard__name">{entry.name}</div>
+							<div className={styles.leaderboardName}>{entry.name}</div>
 							<div className="text-xs font-semi-bold text-lighter">
 								{entry.power.toFixed(2)}
 							</div>
@@ -352,7 +356,7 @@ function Leaderboard({
 					</Link>
 				))}
 			</div>
-			<Link to={fullLeaderboardUrl} className="front__leaderboard__view-all">
+			<Link to={fullLeaderboardUrl} className={styles.leaderboardViewAll}>
 				<Image path={navIconUrl("leaderboards")} size={16} alt="" />
 				{t("front:leaderboards.viewFull")}
 			</Link>
@@ -384,7 +388,7 @@ function ChangelogList() {
 				className="stack horizontal sm mx-auto text-xs font-bold"
 			>
 				{t("front:updates.viewPast")}{" "}
-				<ExternalIcon className="front__external-link-icon" />
+				<ExternalIcon className={styles.externalLinkIcon} />
 			</a>
 		</div>
 	);
@@ -410,7 +414,7 @@ function ChangelogItem({ item }: { item: Changelog.ChangelogItem }) {
 								key={image.thumb}
 								src={image.thumb}
 								alt=""
-								className="front__change-log__img"
+								className={styles.changeLogImg}
 							/>
 						))}
 					</div>
@@ -445,7 +449,7 @@ function BSKYIconLink({
 			href={postUrl}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="front__change-log__icon-button"
+			className={styles.changeLogIconButton}
 		>
 			{children}
 			<span
