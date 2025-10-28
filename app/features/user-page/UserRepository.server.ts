@@ -762,6 +762,21 @@ export async function currentFriendCodeByUserId(userId: number) {
 		.executeTakeFirst();
 }
 
+/** Returns all friend codes submitted by a user (both present and past) */
+export async function friendCodesByUserId(userId: number) {
+	return db
+		.selectFrom("UserFriendCode")
+		.leftJoin("User", "User.id", "UserFriendCode.submitterUserId")
+		.select([
+			"UserFriendCode.friendCode",
+			"UserFriendCode.createdAt",
+			"User.username as submitterUsername",
+		])
+		.where("UserFriendCode.userId", "=", userId)
+		.orderBy("UserFriendCode.createdAt", "desc")
+		.execute();
+}
+
 let cachedFriendCodes: Set<string> | null = null;
 
 export async function allCurrentFriendCodes() {
