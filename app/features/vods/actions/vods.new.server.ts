@@ -33,14 +33,14 @@ export const action: ActionFunction = async ({ request }) => {
 			throw new Response("no permissions to edit this vod", { status: 401 });
 		}
 
-		video = await VodRepository.updateVodByReplacing({
+		video = await VodRepository.update({
 			...data.video,
 			submitterUserId: user.id,
 			isValidated: true,
 			id: data.vodToEditId,
 		});
 	} else {
-		video = await VodRepository.createVod({
+		video = await VodRepository.insert({
 			...data.video,
 			submitterUserId: user.id,
 			isValidated: true,

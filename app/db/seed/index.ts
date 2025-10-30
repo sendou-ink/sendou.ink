@@ -1730,7 +1730,7 @@ function otherTeams() {
 
 async function realVideo() {
 	for (let i = 0; i < 5; i++) {
-		await VodRepository.createVod({
+		await VodRepository.insert({
 			type: "TOURNAMENT",
 			youtubeUrl: youtubeIdToYoutubeUrl("M4aV-BQWlVg"),
 			date: { day: 2, month: 2, year: 2023 },
@@ -1785,7 +1785,7 @@ async function realVideo() {
 }
 
 async function realVideoCast() {
-	await VodRepository.createVod({
+	await VodRepository.insert({
 		type: "CAST",
 		youtubeUrl: youtubeIdToYoutubeUrl("M4aV-BQWlVg"),
 		date: { day: 2, month: 2, year: 2023 },
