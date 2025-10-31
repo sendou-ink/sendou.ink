@@ -107,7 +107,12 @@ function StatSquares({
 	const data = useLoaderData<typeof loader>();
 	const tournament = useTournament();
 
-	const placement = Standings.tournamentStandings(tournament).find(
+	const standingsResult = Standings.tournamentStandings(tournament);
+	const overallStandings =
+		standingsResult.type === "single"
+			? standingsResult.standings
+			: standingsResult.standings.flatMap((div) => div.standings);
+	const placement = overallStandings.find(
 		(s) => s.team.id === data.tournamentTeamId,
 	)?.placement;
 
@@ -168,6 +173,15 @@ function StatSquares({
 				{undergroundPlacement ? (
 					<div className="tournament__team__stat__sub">
 						{t("tournament:team.placement.footer")}
+					</div>
+				) : null}
+				{standingsResult.type === "multi" ? (
+					<div className="tournament__team__stat__sub">
+						{
+							standingsResult.standings.find((s) =>
+								s.standings.some((s) => s.team.id === data.tournamentTeamId),
+							)?.div
+						}
 					</div>
 				) : null}
 			</div>
