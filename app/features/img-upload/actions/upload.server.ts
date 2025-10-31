@@ -19,8 +19,7 @@ import {
 	parseSearchParams,
 } from "~/utils/remix.server";
 import { teamPage, tournamentOrganizationPage } from "~/utils/urls";
-import { addNewImage } from "../queries/addNewImage";
-import { countUnvalidatedImg } from "../queries/countUnvalidatedImg.server";
+import * as ImageRepository from "../ImageRepository.server";
 import { s3UploadHandler } from "../s3.server";
 import { MAX_UNVALIDATED_IMG_COUNT } from "../upload-constants";
 import { requestToImgType } from "../upload-utils";
@@ -41,7 +40,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			: undefined;
 
 	errorToastIfFalsy(
-		countUnvalidatedImg(user.id) < MAX_UNVALIDATED_IMG_COUNT,
+		(await ImageRepository.countUnvalidatedBySubmitterUserId(user.id)) <
+			MAX_UNVALIDATED_IMG_COUNT,
 		"Too many unvalidated images",
 	);
 
@@ -60,7 +60,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const shouldAutoValidate =
 		user.roles.includes("SUPPORTER") || validatedType === "org-pfp";
 
-	addNewImage({
+	await ImageRepository.addNewImage({
 		submitterUserId: user.id,
 		teamId: team?.id,
 		organizationId: organization?.id,
