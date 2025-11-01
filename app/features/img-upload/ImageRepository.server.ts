@@ -45,16 +45,8 @@ const unvalidatedImagesBaseQuery = db
 	.leftJoin("Team", (join) =>
 		join.on((eb) =>
 			eb.or([
-				eb(
-					"UnvalidatedUserSubmittedImage.id",
-					"=",
-					eb.ref("Team.avatarImgId"),
-				),
-				eb(
-					"UnvalidatedUserSubmittedImage.id",
-					"=",
-					eb.ref("Team.bannerImgId"),
-				),
+				eb("UnvalidatedUserSubmittedImage.id", "=", eb.ref("Team.avatarImgId")),
+				eb("UnvalidatedUserSubmittedImage.id", "=", eb.ref("Team.bannerImgId")),
 			]),
 		),
 	)
