@@ -86,7 +86,7 @@ export const action: ActionFunction = async ({ request }) => {
 			schema: newArtSchema,
 		});
 
-		const addedArtId = await ArtRepository.insert({
+		const addedArt = await ArtRepository.insert({
 			authorId: user.id,
 			description: data.description,
 			url: fileName,
@@ -102,7 +102,7 @@ export const action: ActionFunction = async ({ request }) => {
 				meta: {
 					adderUsername: user.username,
 					adderDiscordId: user.discordId,
-					artId: addedArtId,
+					artId: addedArt.id,
 				},
 			},
 		});

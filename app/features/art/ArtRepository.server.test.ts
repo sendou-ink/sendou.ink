@@ -7,7 +7,7 @@ let imageCounter = 0;
 const createArt = async ({ authorId }: { authorId: number }) => {
 	imageCounter++;
 
-	return ArtRepository.insert({
+	const art = await ArtRepository.insert({
 		authorId,
 		url: `https://example.com/image-${authorId}-${imageCounter}.png`,
 		validatedAt: Date.now(),
@@ -15,6 +15,8 @@ const createArt = async ({ authorId }: { authorId: number }) => {
 		linkedUsers: [],
 		tags: [],
 	});
+
+	return art.id;
 };
 
 describe("findShowcaseArts", () => {
@@ -126,7 +128,7 @@ describe("unlinkUserFromArt", () => {
 	});
 
 	test("removes user link from art", async () => {
-		const artId = await ArtRepository.insert({
+		const art = await ArtRepository.insert({
 			authorId: 1,
 			url: "https://example.com/image-1.png",
 			validatedAt: Date.now(),
@@ -135,7 +137,7 @@ describe("unlinkUserFromArt", () => {
 			tags: [],
 		});
 
-		await ArtRepository.unlinkUserFromArt({ userId: 2, artId });
+		await ArtRepository.unlinkUserFromArt({ userId: 2, artId: art.id });
 
 		const result = await ArtRepository.findArtsByUserId(2, {
 			includeAuthored: false,
@@ -155,7 +157,7 @@ describe("findShowcaseArtsByTag", () => {
 	});
 
 	test("returns arts filtered by tag", async () => {
-		const art1Id = await ArtRepository.insert({
+		const art1 = await ArtRepository.insert({
 			authorId: 1,
 			url: "https://example.com/image-1.png",
 			validatedAt: Date.now(),
@@ -181,7 +183,7 @@ describe("findShowcaseArtsByTag", () => {
 		);
 
 		expect(result).toHaveLength(1);
-		expect(result[0].id).toBe(art1Id);
+		expect(result[0].id).toBe(art1.id);
 	});
 
 	test("shows only one art per artist", async () => {
@@ -254,7 +256,7 @@ describe("findArtsByUserId", () => {
 	});
 
 	test("returns tagged art", async () => {
-		const artId = await ArtRepository.insert({
+		const art = await ArtRepository.insert({
 			authorId: 1,
 			url: "https://example.com/image-1.png",
 			validatedAt: Date.now(),
@@ -266,7 +268,7 @@ describe("findArtsByUserId", () => {
 		const result = await ArtRepository.findArtsByUserId(2);
 
 		expect(result).toHaveLength(1);
-		expect(result[0].id).toBe(artId);
+		expect(result[0].id).toBe(art.id);
 	});
 });
 
@@ -312,7 +314,7 @@ describe("insert", () => {
 	});
 
 	test("inserts art with all metadata", async () => {
-		const artId = await ArtRepository.insert({
+		const art = await ArtRepository.insert({
 			authorId: 1,
 			url: "https://example.com/image-1.png",
 			validatedAt: Date.now(),
@@ -324,7 +326,7 @@ describe("insert", () => {
 		const result = await ArtRepository.findArtsByUserId(1);
 
 		expect(result).toHaveLength(1);
-		expect(result[0].id).toBe(artId);
+		expect(result[0].id).toBe(art.id);
 		expect(result[0].description).toBe("Test description");
 		expect(result[0].tags).toHaveLength(1);
 		expect(result[0].linkedUsers).toHaveLength(1);
@@ -350,7 +352,7 @@ describe("update", () => {
 	});
 
 	test("updates art metadata", async () => {
-		const artId = await ArtRepository.insert({
+		const art = await ArtRepository.insert({
 			authorId: 1,
 			url: "https://example.com/image-1.png",
 			validatedAt: Date.now(),
@@ -359,7 +361,7 @@ describe("update", () => {
 			tags: [{ name: "Character" }],
 		});
 
-		await ArtRepository.update(artId, {
+		await ArtRepository.update(art.id, {
 			description: "Updated",
 			linkedUsers: [3],
 			tags: [{ name: "Weapon" }],

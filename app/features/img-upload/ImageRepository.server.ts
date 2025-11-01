@@ -3,8 +3,6 @@ import { databaseTimestampNow } from "~/utils/dates";
 import { IMAGES_TO_VALIDATE_AT_ONCE } from "./upload-constants";
 import type { ImageUploadType } from "./upload-types";
 
-// xxx: unit tests
-
 /** Finds an unvalidated image by ID with associated calendar event data */
 export function findById(id: number) {
 	return db
