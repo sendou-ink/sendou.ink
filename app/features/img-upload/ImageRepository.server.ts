@@ -44,18 +44,18 @@ export async function countUnvalidatedArt(authorId: number) {
 export async function countAllUnvalidated() {
 	const result = await db
 		.selectFrom("UnvalidatedUserSubmittedImage")
-		.leftJoin("AllTeam", (join) =>
+		.leftJoin("Team", (join) =>
 			join.on((eb) =>
 				eb.or([
 					eb(
 						"UnvalidatedUserSubmittedImage.id",
 						"=",
-						eb.ref("AllTeam.avatarImgId"),
+						eb.ref("Team.avatarImgId"),
 					),
 					eb(
 						"UnvalidatedUserSubmittedImage.id",
 						"=",
-						eb.ref("AllTeam.bannerImgId"),
+						eb.ref("Team.bannerImgId"),
 					),
 				]),
 			),
@@ -70,7 +70,7 @@ export async function countAllUnvalidated() {
 		.where("UnvalidatedUserSubmittedImage.validatedAt", "is", null)
 		.where((eb) =>
 			eb.or([
-				eb("AllTeam.id", "is not", null),
+				eb("Team.id", "is not", null),
 				eb("Art.id", "is not", null),
 				eb("CalendarEvent.id", "is not", null),
 			]),
@@ -83,18 +83,18 @@ export async function countAllUnvalidated() {
 export async function countUnvalidatedBySubmitterUserId(userId: number) {
 	const result = await db
 		.selectFrom("UnvalidatedUserSubmittedImage")
-		.innerJoin("AllTeam", (join) =>
+		.innerJoin("Team", (join) =>
 			join.on((eb) =>
 				eb.or([
 					eb(
 						"UnvalidatedUserSubmittedImage.id",
 						"=",
-						eb.ref("AllTeam.avatarImgId"),
+						eb.ref("Team.avatarImgId"),
 					),
 					eb(
 						"UnvalidatedUserSubmittedImage.id",
 						"=",
-						eb.ref("AllTeam.bannerImgId"),
+						eb.ref("Team.bannerImgId"),
 					),
 				]),
 			),
@@ -124,18 +124,18 @@ export function unvalidatedImages() {
 			"UnvalidatedUserSubmittedImage.submitterUserId",
 			"User.id",
 		)
-		.leftJoin("AllTeam", (join) =>
+		.leftJoin("Team", (join) =>
 			join.on((eb) =>
 				eb.or([
 					eb(
 						"UnvalidatedUserSubmittedImage.id",
 						"=",
-						eb.ref("AllTeam.avatarImgId"),
+						eb.ref("Team.avatarImgId"),
 					),
 					eb(
 						"UnvalidatedUserSubmittedImage.id",
 						"=",
-						eb.ref("AllTeam.bannerImgId"),
+						eb.ref("Team.bannerImgId"),
 					),
 				]),
 			),
@@ -155,7 +155,7 @@ export function unvalidatedImages() {
 		.where("UnvalidatedUserSubmittedImage.validatedAt", "is", null)
 		.where((eb) =>
 			eb.or([
-				eb("AllTeam.id", "is not", null),
+				eb("Team.id", "is not", null),
 				eb("Art.id", "is not", null),
 				eb("CalendarEvent.id", "is not", null),
 			]),
