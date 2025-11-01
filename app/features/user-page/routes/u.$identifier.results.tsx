@@ -34,7 +34,9 @@ export default function UserResultsPage() {
 		<div className="stack lg">
 			<div className="stack horizontal justify-between items-center">
 				<h2 className="text-lg">
-					{showAll ? t("results.title") : t("results.highlights")}
+					{showAll || !data.hasHighlightedResults
+						? t("results.title")
+						: t("results.highlights")}
 				</h2>
 				{user?.id === layoutData.user.id ? (
 					<LinkButton
