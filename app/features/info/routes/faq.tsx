@@ -6,7 +6,7 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 
 import styles from "./faq.module.css";
 
-const AMOUNT_OF_QUESTIONS = 9;
+const AMOUNT_OF_QUESTIONS = 10;
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -20,7 +20,6 @@ export const handle: SendouRouteHandle = {
 	i18n: "faq",
 };
 
-// xxx: add established tournaments Q
 export default function FAQPage() {
 	const { t } = useTranslation(["faq", "common"]);
 

@@ -364,10 +364,12 @@ function OrganizationSelect() {
 			<select
 				id={id}
 				name="organizationId"
-				defaultValue={baseEvent?.organization?.id}
+				defaultValue={baseEvent?.organization?.id ?? ""}
 			>
 				{data.organizations.includes("NO_ORG") ? (
-					<option key="NO_ORG">None</option>
+					<option key="NO_ORG" value="">
+						None
+					</option>
 				) : null}
 				{data.organizations
 					.filter((org) => typeof org !== "string")

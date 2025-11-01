@@ -1,10 +1,7 @@
 import type { ActionFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import type { CalendarEventTag } from "~/db/tables";
-import {
-	type AuthenticatedUser,
-	requireUser,
-} from "~/features/auth/core/user.server";
+import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { newCalendarEventActionSchema } from "~/features/calendar/calendar-schemas.server";
@@ -23,6 +20,7 @@ import {
 } from "~/utils/dates";
 import {
 	badRequestIfFalsy,
+	errorToast,
 	errorToastIfFalsy,
 	parseFormData,
 	uploadImageIfSubmitted,
@@ -45,20 +43,21 @@ export const action: ActionFunction = async ({ request }) => {
 		parseAsync: true,
 	});
 
+	const isEditing = Boolean(data.eventToEditId);
+	const isAddingTournament = data.toToolsEnabled;
+
 	if (data.organizationId) {
 		await validateOrganization({
 			userId: user.id,
 			organizationId: data.organizationId,
 			isTournamentAdder: user.roles.includes("TOURNAMENT_ADDER"),
 		});
+	} else if (!isEditing) {
+		requireRole(
+			user,
+			isAddingTournament ? "TOURNAMENT_ADDER" : "CALENDAR_EVENT_ADDER",
+		);
 	}
-
-	requireRoleIfNeeded({
-		isAddingTournament: data.toToolsEnabled,
-		isEditing: Boolean(data.eventToEditId),
-		user,
-		organizationId: data.organizationId,
-	});
 
 	const managedBadges = await BadgeRepository.findManagedByUserId(user.id);
 
@@ -210,28 +209,9 @@ async function validateOrganization({
 }) {
 	const orgs = await findValidOrganizations(userId, isTournamentAdder);
 
-	return orgs.some(
+	const isValid = orgs.some(
 		(org) => typeof org !== "string" && org.id === organizationId,
 	);
-}
 
-/** Checks user has the global role if necessary */
-async function requireRoleIfNeeded({
-	isAddingTournament,
-	isEditing,
-	user,
-	organizationId,
-}: {
-	isAddingTournament: boolean;
-	isEditing: boolean;
-	user: AuthenticatedUser;
-	organizationId?: number | null;
-}) {
-	if (isEditing) return;
-	if (typeof organizationId === "number") return;
-
-	requireRole(
-		user,
-		isAddingTournament ? "TOURNAMENT_ADDER" : "CALENDAR_EVENT_ADDER",
-	);
+	if (!isValid) errorToast("Not authorized to add event for this organization");
 }
