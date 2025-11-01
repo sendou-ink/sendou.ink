@@ -47,10 +47,20 @@ export async function countAllUnvalidated() {
 	const result = await db
 		.selectFrom("UnvalidatedUserSubmittedImage")
 		.leftJoin("AllTeam", (join) =>
-			// xxx: should be or
-			join
-				.onRef("UnvalidatedUserSubmittedImage.id", "=", "AllTeam.avatarImgId")
-				.onRef("UnvalidatedUserSubmittedImage.id", "=", "AllTeam.bannerImgId"),
+			join.on((eb) =>
+				eb.or([
+					eb(
+						"UnvalidatedUserSubmittedImage.id",
+						"=",
+						eb.ref("AllTeam.avatarImgId"),
+					),
+					eb(
+						"UnvalidatedUserSubmittedImage.id",
+						"=",
+						eb.ref("AllTeam.bannerImgId"),
+					),
+				]),
+			),
 		)
 		.leftJoin("Art", "UnvalidatedUserSubmittedImage.id", "Art.imgId")
 		.leftJoin(
@@ -76,10 +86,20 @@ export async function countUnvalidatedBySubmitterUserId(userId: number) {
 	const result = await db
 		.selectFrom("UnvalidatedUserSubmittedImage")
 		.innerJoin("AllTeam", (join) =>
-			// xxx: should be or
-			join
-				.onRef("UnvalidatedUserSubmittedImage.id", "=", "AllTeam.avatarImgId")
-				.onRef("UnvalidatedUserSubmittedImage.id", "=", "AllTeam.bannerImgId"),
+			join.on((eb) =>
+				eb.or([
+					eb(
+						"UnvalidatedUserSubmittedImage.id",
+						"=",
+						eb.ref("AllTeam.avatarImgId"),
+					),
+					eb(
+						"UnvalidatedUserSubmittedImage.id",
+						"=",
+						eb.ref("AllTeam.bannerImgId"),
+					),
+				]),
+			),
 		)
 		.select(({ fn }) => fn.countAll<number>().as("count"))
 		.where("UnvalidatedUserSubmittedImage.validatedAt", "is", null)
@@ -107,10 +127,20 @@ export function unvalidatedImages() {
 			"User.id",
 		)
 		.leftJoin("AllTeam", (join) =>
-			// xxx: should be or
-			join
-				.onRef("UnvalidatedUserSubmittedImage.id", "=", "AllTeam.avatarImgId")
-				.onRef("UnvalidatedUserSubmittedImage.id", "=", "AllTeam.bannerImgId"),
+			join.on((eb) =>
+				eb.or([
+					eb(
+						"UnvalidatedUserSubmittedImage.id",
+						"=",
+						eb.ref("AllTeam.avatarImgId"),
+					),
+					eb(
+						"UnvalidatedUserSubmittedImage.id",
+						"=",
+						eb.ref("AllTeam.bannerImgId"),
+					),
+				]),
+			),
 		)
 		.leftJoin("Art", "UnvalidatedUserSubmittedImage.id", "Art.imgId")
 		.leftJoin(
