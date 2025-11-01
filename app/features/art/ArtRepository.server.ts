@@ -294,7 +294,7 @@ type InsertArtArgs = Pick<Tables["Art"], "authorId" | "description"> &
 		tags: TagsToAdd;
 	};
 
-export async function insert(args: InsertArtArgs): Promise<number> {
+export async function insert(args: InsertArtArgs) {
 	return await db.transaction().execute(async (trx) => {
 		const img = await trx
 			.insertInto("UnvalidatedUserSubmittedImage")
@@ -336,7 +336,7 @@ export async function insert(args: InsertArtArgs): Promise<number> {
 			artId: art.id,
 		});
 
-		return art.id;
+		return art;
 	});
 }
 
