@@ -125,7 +125,15 @@ export async function findBySlug(slug: string) {
 	};
 }
 
-export function findByOrganizerUserId(userId: number) {
+export function findByUserId(
+	userId: number,
+	{
+		roles = [],
+	}: {
+		/** If set, filters organizations by user's org member role */
+		roles?: Array<Tables["TournamentOrganizationMember"]["role"]>;
+	} = {},
+) {
 	return db
 		.selectFrom("TournamentOrganizationMember")
 		.innerJoin(
@@ -139,12 +147,8 @@ export function findByOrganizerUserId(userId: number) {
 			"TournamentOrganization.isEstablished",
 		])
 		.where("TournamentOrganizationMember.userId", "=", userId)
-		.where((eb) =>
-			eb("TournamentOrganizationMember.role", "=", "ADMIN").or(
-				"TournamentOrganizationMember.role",
-				"=",
-				"ORGANIZER",
-			),
+		.$if(roles.length > 0, (qb) =>
+			qb.where("TournamentOrganizationMember.role", "in", roles),
 		)
 		.orderBy("TournamentOrganization.id", "asc")
 		.execute();

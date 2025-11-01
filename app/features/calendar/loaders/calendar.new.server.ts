@@ -109,8 +109,9 @@ export async function findValidOrganizations(
 	userId: number,
 	isTournamentAdder: boolean,
 ) {
-	const orgs =
-		await TournamentOrganizationRepository.findByOrganizerUserId(userId);
+	const orgs = await TournamentOrganizationRepository.findByUserId(userId, {
+		roles: ["ADMIN"],
+	});
 
 	if (isTournamentAdder) {
 		return ["NO_ORG", ...orgs.map((org) => R.omit(org, ["isEstablished"]))];
