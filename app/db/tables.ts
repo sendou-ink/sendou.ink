@@ -718,6 +718,7 @@ export interface TournamentOrganization {
 	description: string | null;
 	socials: JSONColumnTypeNullable<string[]>;
 	avatarImgId: number | null;
+	isEstablished: Generated<DBBoolean>;
 }
 
 export const TOURNAMENT_ORGANIZATION_ROLES = [

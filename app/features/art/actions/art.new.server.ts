@@ -8,7 +8,7 @@ import {
 import { nanoid } from "nanoid";
 import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
-import { s3UploadHandler } from "~/features/img-upload";
+import { s3UploadHandler } from "~/features/img-upload/s3.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -86,7 +86,7 @@ export const action: ActionFunction = async ({ request }) => {
 			schema: newArtSchema,
 		});
 
-		const addedArtId = await ArtRepository.insert({
+		const addedArt = await ArtRepository.insert({
 			authorId: user.id,
 			description: data.description,
 			url: fileName,
@@ -102,7 +102,7 @@ export const action: ActionFunction = async ({ request }) => {
 				meta: {
 					adderUsername: user.username,
 					adderDiscordId: user.discordId,
-					artId: addedArtId,
+					artId: addedArt.id,
 				},
 			},
 		});

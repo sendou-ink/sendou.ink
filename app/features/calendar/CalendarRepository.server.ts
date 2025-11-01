@@ -89,6 +89,7 @@ function tournamentOrganization(organizationId: Expression<number | null>) {
 				"TournamentOrganization.id",
 				"TournamentOrganization.name",
 				"TournamentOrganization.slug",
+				"TournamentOrganization.isEstablished",
 				"UserSubmittedImage.url as avatarUrl",
 			])
 			.whereRef("TournamentOrganization.id", "=", organizationId),

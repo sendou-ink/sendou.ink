@@ -2624,6 +2624,11 @@ async function organization() {
 				role: "MEMBER",
 				roleDisplayName: null,
 			},
+			{
+				userId: 3,
+				role: "ADMIN",
+				roleDisplayName: null,
+			},
 		],
 		series: [],
 		badges: [],

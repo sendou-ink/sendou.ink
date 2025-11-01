@@ -118,7 +118,13 @@ export const unbanUserActionSchema = z.object({
 	userId: id,
 });
 
+export const updateIsEstablishedActionSchema = z.object({
+	_action: _action("UPDATE_IS_ESTABLISHED"),
+	isEstablished: z.boolean(),
+});
+
 export const orgPageActionSchema = z.union([
 	banUserActionSchema,
 	unbanUserActionSchema,
+	updateIsEstablishedActionSchema,
 ]);

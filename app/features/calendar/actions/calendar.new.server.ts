@@ -1,10 +1,7 @@
 import type { ActionFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import type { CalendarEventTag } from "~/db/tables";
-import {
-	type AuthenticatedUser,
-	requireUser,
-} from "~/features/auth/core/user.server";
+import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { newCalendarEventActionSchema } from "~/features/calendar/calendar-schemas.server";
@@ -23,6 +20,7 @@ import {
 } from "~/utils/dates";
 import {
 	badRequestIfFalsy,
+	errorToast,
 	errorToastIfFalsy,
 	parseFormData,
 	uploadImageIfSubmitted,
@@ -30,6 +28,7 @@ import {
 import { calendarEventPage } from "~/utils/urls";
 import { CALENDAR_EVENT } from "../calendar-constants";
 import { canEditCalendarEvent, regClosesAtDate } from "../calendar-utils";
+import { findValidOrganizations } from "../loaders/calendar.new.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = await requireUser(request);
@@ -44,11 +43,21 @@ export const action: ActionFunction = async ({ request }) => {
 		parseAsync: true,
 	});
 
-	requireRoleIfNeeded({
-		isAddingTournament: data.toToolsEnabled,
-		isEditing: Boolean(data.eventToEditId),
-		user,
-	});
+	const isEditing = Boolean(data.eventToEditId);
+	const isAddingTournament = data.toToolsEnabled;
+
+	if (data.organizationId) {
+		await validateOrganization({
+			userId: user.id,
+			organizationId: data.organizationId,
+			isTournamentAdder: user.roles.includes("TOURNAMENT_ADDER"),
+		});
+	} else if (!isEditing) {
+		requireRole(
+			user,
+			isAddingTournament ? "TOURNAMENT_ADDER" : "CALENDAR_EVENT_ADDER",
+		);
+	}
 
 	const managedBadges = await BadgeRepository.findManagedByUserId(user.id);
 
@@ -188,19 +197,21 @@ export const action: ActionFunction = async ({ request }) => {
 	throw redirect(calendarEventPage(createdEventId));
 };
 
-function requireRoleIfNeeded({
-	isAddingTournament,
-	isEditing,
-	user,
+/** Checks user has permissions to create a tournament in this organization */
+async function validateOrganization({
+	userId,
+	organizationId,
+	isTournamentAdder,
 }: {
-	isAddingTournament: boolean;
-	isEditing: boolean;
-	user: AuthenticatedUser;
+	userId: number;
+	organizationId: number;
+	isTournamentAdder: boolean;
 }) {
-	if (isEditing) return;
+	const orgs = await findValidOrganizations(userId, isTournamentAdder);
 
-	requireRole(
-		user,
-		isAddingTournament ? "TOURNAMENT_ADDER" : "CALENDAR_EVENT_ADDER",
+	const isValid = orgs.some(
+		(org) => typeof org !== "string" && org.id === organizationId,
 	);
+
+	if (!isValid) errorToast("Not authorized to add event for this organization");
 }
