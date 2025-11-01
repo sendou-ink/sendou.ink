@@ -40,43 +40,63 @@ export async function countUnvalidatedArt(authorId: number) {
 	return result.count;
 }
 
+const unvalidatedImagesBaseQuery = db
+	.selectFrom("UnvalidatedUserSubmittedImage")
+	.leftJoin("Team", (join) =>
+		join.on((eb) =>
+			eb.or([
+				eb(
+					"UnvalidatedUserSubmittedImage.id",
+					"=",
+					eb.ref("Team.avatarImgId"),
+				),
+				eb(
+					"UnvalidatedUserSubmittedImage.id",
+					"=",
+					eb.ref("Team.bannerImgId"),
+				),
+			]),
+		),
+	)
+	.leftJoin("Art", "UnvalidatedUserSubmittedImage.id", "Art.imgId")
+	.leftJoin(
+		"CalendarEvent",
+		"UnvalidatedUserSubmittedImage.id",
+		"CalendarEvent.avatarImgId",
+	)
+	.where("UnvalidatedUserSubmittedImage.validatedAt", "is", null)
+	.where((eb) =>
+		eb.or([
+			eb("Team.id", "is not", null),
+			eb("Art.id", "is not", null),
+			eb("CalendarEvent.id", "is not", null),
+		]),
+	);
+
 /** Counts all unvalidated images used in teams, art, or calendar events */
 export async function countAllUnvalidated() {
-	const result = await db
-		.selectFrom("UnvalidatedUserSubmittedImage")
-		.leftJoin("Team", (join) =>
-			join.on((eb) =>
-				eb.or([
-					eb(
-						"UnvalidatedUserSubmittedImage.id",
-						"=",
-						eb.ref("Team.avatarImgId"),
-					),
-					eb(
-						"UnvalidatedUserSubmittedImage.id",
-						"=",
-						eb.ref("Team.bannerImgId"),
-					),
-				]),
-			),
-		)
-		.leftJoin("Art", "UnvalidatedUserSubmittedImage.id", "Art.imgId")
-		.leftJoin(
-			"CalendarEvent",
-			"UnvalidatedUserSubmittedImage.id",
-			"CalendarEvent.avatarImgId",
-		)
+	const result = await unvalidatedImagesBaseQuery
 		.select(({ fn }) => fn.countAll<number>().as("count"))
-		.where("UnvalidatedUserSubmittedImage.validatedAt", "is", null)
-		.where((eb) =>
-			eb.or([
-				eb("Team.id", "is not", null),
-				eb("Art.id", "is not", null),
-				eb("CalendarEvent.id", "is not", null),
-			]),
-		)
 		.executeTakeFirstOrThrow();
 	return result.count;
+}
+
+/** Fetches unvalidated images for admin review with submitter info */
+export function unvalidatedImages() {
+	return unvalidatedImagesBaseQuery
+		.leftJoin(
+			"User",
+			"UnvalidatedUserSubmittedImage.submitterUserId",
+			"User.id",
+		)
+		.select([
+			"UnvalidatedUserSubmittedImage.id",
+			"UnvalidatedUserSubmittedImage.url",
+			"UnvalidatedUserSubmittedImage.submitterUserId",
+			"User.username",
+		])
+		.limit(IMAGES_TO_VALIDATE_AT_ONCE)
+		.execute();
 }
 
 /** Counts unvalidated team images submitted by a specific user */
@@ -112,55 +132,6 @@ export function validateImage(id: number) {
 		.updateTable("UnvalidatedUserSubmittedImage")
 		.set({ validatedAt: databaseTimestampNow() })
 		.where("id", "=", id)
-		.execute();
-}
-
-/** Fetches unvalidated images for admin review with submitter info */
-export function unvalidatedImages() {
-	return db
-		.selectFrom("UnvalidatedUserSubmittedImage")
-		.leftJoin(
-			"User",
-			"UnvalidatedUserSubmittedImage.submitterUserId",
-			"User.id",
-		)
-		.leftJoin("Team", (join) =>
-			join.on((eb) =>
-				eb.or([
-					eb(
-						"UnvalidatedUserSubmittedImage.id",
-						"=",
-						eb.ref("Team.avatarImgId"),
-					),
-					eb(
-						"UnvalidatedUserSubmittedImage.id",
-						"=",
-						eb.ref("Team.bannerImgId"),
-					),
-				]),
-			),
-		)
-		.leftJoin("Art", "UnvalidatedUserSubmittedImage.id", "Art.imgId")
-		.leftJoin(
-			"CalendarEvent",
-			"UnvalidatedUserSubmittedImage.id",
-			"CalendarEvent.avatarImgId",
-		)
-		.select([
-			"UnvalidatedUserSubmittedImage.id",
-			"UnvalidatedUserSubmittedImage.url",
-			"UnvalidatedUserSubmittedImage.submitterUserId",
-			"User.username",
-		])
-		.where("UnvalidatedUserSubmittedImage.validatedAt", "is", null)
-		.where((eb) =>
-			eb.or([
-				eb("Team.id", "is not", null),
-				eb("Art.id", "is not", null),
-				eb("CalendarEvent.id", "is not", null),
-			]),
-		)
-		.limit(IMAGES_TO_VALIDATE_AT_ONCE)
 		.execute();
 }
 

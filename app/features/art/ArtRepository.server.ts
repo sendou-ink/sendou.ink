@@ -336,10 +336,7 @@ export async function insert(args: InsertArtArgs) {
 			artId: art.id,
 		});
 
-		return {
-			...art,
-			imgId: img.id,
-		};
+		return art;
 	});
 }
 
