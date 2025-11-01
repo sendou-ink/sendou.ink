@@ -70,7 +70,9 @@ export function TournamentCard({
 						</div>
 					) : null}
 					{tournament.organization ? (
-						<div className={styles.org}>{tournament.organization.name}</div>
+						<div className={styles.org}>
+							<span>{tournament.organization.name}</span>
+						</div>
 					) : null}
 				</div>
 				<div

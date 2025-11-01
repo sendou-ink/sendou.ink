@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { getUserId } from "~/features/auth/core/user.server";
-import { countUnvalidatedArt } from "~/features/img-upload";
+import * as ImageRepository from "~/features/img-upload/ImageRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 import { userParamsSchema } from "../user-page-schemas";
@@ -36,6 +36,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		arts,
 		tagCounts: tagCountsSortedArr.length > 0 ? tagCountsSortedArr : null,
 		unvalidatedArtCount:
-			user.id === loggedInUser?.id ? countUnvalidatedArt(user.id) : 0,
+			user.id === loggedInUser?.id
+				? await ImageRepository.countUnvalidatedArt(user.id)
+				: 0,
 	};
 };

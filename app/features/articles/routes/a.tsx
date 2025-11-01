@@ -10,8 +10,6 @@ import { metaTags } from "../../../utils/remix";
 import { loader } from "../loaders/a.server";
 export { loader };
 
-import "~/styles/front.css";
-
 export const handle: SendouRouteHandle = {
 	breadcrumb: () => ({
 		imgPath: navIconUrl("articles"),

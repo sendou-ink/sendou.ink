@@ -57,6 +57,7 @@ export async function findBySlug(slug: string) {
 			"TournamentOrganization.description",
 			"TournamentOrganization.socials",
 			"TournamentOrganization.slug",
+			"TournamentOrganization.isEstablished",
 			"UserSubmittedImage.url as avatarUrl",
 			jsonArrayFrom(
 				eb
@@ -124,7 +125,15 @@ export async function findBySlug(slug: string) {
 	};
 }
 
-export function findByOrganizerUserId(userId: number) {
+export function findByUserId(
+	userId: number,
+	{
+		roles = [],
+	}: {
+		/** If set, filters organizations by user's org member role */
+		roles?: Array<Tables["TournamentOrganizationMember"]["role"]>;
+	} = {},
+) {
 	return db
 		.selectFrom("TournamentOrganizationMember")
 		.innerJoin(
@@ -132,14 +141,14 @@ export function findByOrganizerUserId(userId: number) {
 			"TournamentOrganization.id",
 			"TournamentOrganizationMember.organizationId",
 		)
-		.select(["TournamentOrganization.id", "TournamentOrganization.name"])
+		.select([
+			"TournamentOrganization.id",
+			"TournamentOrganization.name",
+			"TournamentOrganization.isEstablished",
+		])
 		.where("TournamentOrganizationMember.userId", "=", userId)
-		.where((eb) =>
-			eb("TournamentOrganizationMember.role", "=", "ADMIN").or(
-				"TournamentOrganizationMember.role",
-				"=",
-				"ORGANIZER",
-			),
+		.$if(roles.length > 0, (qb) =>
+			qb.where("TournamentOrganizationMember.role", "in", roles),
 		)
 		.orderBy("TournamentOrganization.id", "asc")
 		.execute();
@@ -531,4 +540,18 @@ export async function countOrganizationsByUserId(userId: number) {
 		.executeTakeFirstOrThrow();
 
 	return Number(result.count);
+}
+
+/**
+ * Updates the isEstablished status for a tournament organization.
+ */
+export function updateIsEstablished(
+	organizationId: number,
+	isEstablished: boolean,
+) {
+	return db
+		.updateTable("TournamentOrganization")
+		.set({ isEstablished: Number(isEstablished) })
+		.where("id", "=", organizationId)
+		.execute();
 }
