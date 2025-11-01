@@ -127,10 +127,6 @@
 		"displayName": "A Splatoon Brazil Tournament",
 		"authorDiscordId": "701870845550657677"
 	},
-	"bronzeegg": {
-		"displayName": "Salmon Workers",
-		"authorDiscordId": "345996252032401408"
-	},
 	"bss1": {
 		"displayName": "Biggest School in the Sea",
 		"authorDiscordId": "629773997822967819"
@@ -144,11 +140,11 @@
 		"authorDiscordId": "308313761779941376"
 	},
 	"buddies1": {
-		"displayName": "Buddies 2vs2",
+		"displayName": "Buddies 2vs2 (1st Place)",
 		"authorDiscordId": "671419359058722826"
 	},
 	"buddies2": {
-		"displayName": "Buddies 2vs2",
+		"displayName": "Buddies 2vs2 (2nd Place)",
 		"authorDiscordId": "671419359058722826"
 	},
 	"calliesit": {
@@ -323,6 +319,10 @@
 		"displayName": "Proxy Training",
 		"authorDiscordId": "528851510222782474"
 	},
+	"excaliburtierx": {
+		"displayName": "Excalibur's Oath Grandmaster Bracket",
+		"authorDiscordId": "338806780446638082"
+	},
 	"ferris_wheel": {
 		"displayName": "Wheel of Names",
 		"authorDiscordId": "336683473714544641"
@@ -334,6 +334,10 @@
 	"fl-collegiate": {
 		"displayName": "Florida Collegiate Cephalopods Event",
 		"authorDiscordId": "285504780154044416"
+	},
+	"flounderfish": {
+		"displayName": "Don't Flounder at the Function",
+		"authorDiscordId": "528851510222782474"
 	},
 	"fluttermane": {
 		"displayName": "Push Paradox: Zones Only",
@@ -436,8 +440,12 @@
 		"authorDiscordId": "338806780446638082"
 	},
 	"goldenegg": {
-		"displayName": "Salmon Workers",
+		"displayName": "Salmon Workers: Gold Bracket",
 		"authorDiscordId": "345996252032401408"
+	},
+	"goldnaut": {
+		"displayName": "Golden Ratio: Special Edition",
+		"authorDiscordId": "1160529949531316334"
 	},
 	"gyra": {
 		"displayName": "Level Up x2 - Leveled Up!",
@@ -522,6 +530,18 @@
 	"inthepaddock3rd": {
 		"displayName": "In the Paddock 3rd",
 		"authorDiscordId": "683603297839743009"
+	},
+	"isopodcup": {
+		"displayName": "Isopod Cup (1st)",
+		"authorDiscordId": "824681527815438337"
+	},
+	"isopodcup2": {
+		"displayName": "Isopod Cup (2nd)",
+		"authorDiscordId": "824681527815438337"
+	},
+	"isopodcup3": {
+		"displayName": "Isopod Cup (3rd)",
+		"authorDiscordId": "824681527815438337"
 	},
 	"jamboree": {
 		"displayName": "JJaeigh's Jamboree",
@@ -683,10 +703,6 @@
 		"displayName": "Minus One Open",
 		"authorDiscordId": "569271521776762896"
 	},
-	"moxiaward": {
-		"displayName": "Moxi Achievement",
-		"authorDiscordId": "1131109226551459881"
-	},
 	"muchen": {
 		"displayName": "Bastard München",
 		"authorDiscordId": "528851510222782474"
@@ -698,6 +714,10 @@
 	"nascar": {
 		"displayName": "NASCAR",
 		"authorDiscordId": "683603297839743009"
+	},
+	"nautilus47": {
+		"displayName": "Golden Ratio",
+		"authorDiscordId": "1160529949531316334"
 	},
 	"new-game-plus": {
 		"displayName": "New Game +",
@@ -790,6 +810,10 @@
 	"paraflinch": {
 		"displayName": "Paraflinch",
 		"authorDiscordId": "528851510222782474"
+	},
+	"paralarvae": {
+		"displayName": "Paralarvae Parfait",
+		"authorDiscordId": "338806780446638082"
 	},
 	"peashooter": {
 		"displayName": "Peashooter Achievement",
@@ -982,10 +1006,6 @@
 	"shrimpoftheday": {
 		"displayName": "Shrimp of the Day",
 		"authorDiscordId": "309327923129745409"
-	},
-	"silveregg": {
-		"displayName": "Salmon Workers",
-		"authorDiscordId": "345996252032401408"
 	},
 	"silverstars": {
 		"displayName": "Leblanc Hideout Beta Bracket",
