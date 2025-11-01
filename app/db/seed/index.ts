@@ -2621,7 +2621,12 @@ async function organization() {
 			},
 			{
 				userId: NZAP_TEST_ID,
-				role: "ORGANIZER",
+				role: "MEMBER",
+				roleDisplayName: null,
+			},
+			{
+				userId: 3,
+				role: "ADMIN",
 				roleDisplayName: null,
 			},
 		],

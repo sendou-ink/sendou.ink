@@ -153,9 +153,11 @@ test.describe("Tournament Organization", () => {
 	test("allows member of established org to create tournament", async ({
 		page,
 	}) => {
+		const ORG_ADMIN_ID = 3; // 3 = org admin, but not site admin
+
 		await seed(page);
 
-		await impersonate(page, NZAP_TEST_ID);
+		await impersonate(page, ORG_ADMIN_ID);
 		await navigate({
 			page,
 			url: TOURNAMENT_NEW_PAGE,
@@ -173,7 +175,7 @@ test.describe("Tournament Organization", () => {
 
 		await page.getByTestId("is-established-switch").click();
 
-		await impersonate(page, NZAP_TEST_ID);
+		await impersonate(page, ORG_ADMIN_ID);
 		await navigate({
 			page,
 			url: TOURNAMENT_NEW_PAGE,
