@@ -9,7 +9,11 @@ import {
 	selectUser,
 	submit,
 } from "~/utils/playwright";
-import { tournamentOrganizationPage, tournamentPage } from "~/utils/urls";
+import {
+	TOURNAMENT_NEW_PAGE,
+	tournamentOrganizationPage,
+	tournamentPage,
+} from "~/utils/urls";
 
 const url = tournamentOrganizationPage({
 	organizationSlug: "sendouink",
@@ -144,5 +148,40 @@ test.describe("Tournament Organization", () => {
 		await page.getByRole("button", { name: "Save" }).click();
 
 		await expect(page.getByText("Teams (1)")).toBeVisible();
+	});
+
+	test("allows member of established org to create tournament", async ({
+		page,
+	}) => {
+		await seed(page);
+
+		await impersonate(page, NZAP_TEST_ID);
+		await navigate({
+			page,
+			url: TOURNAMENT_NEW_PAGE,
+		});
+		await expect(
+			page.getByText("No permissions to add tournaments"),
+		).toBeVisible();
+		await expect(page.getByText("New tournament")).not.toBeVisible();
+
+		await impersonate(page, ADMIN_ID);
+		await navigate({
+			page,
+			url: "/org/sendouink",
+		});
+
+		await page.getByTestId("is-established-switch").click();
+
+		await impersonate(page, NZAP_TEST_ID);
+		await navigate({
+			page,
+			url: TOURNAMENT_NEW_PAGE,
+		});
+
+		await expect(
+			page.getByText("No permissions to add tournaments"),
+		).not.toBeVisible();
+		await expect(page.getByText("New tournament")).toBeVisible();
 	});
 });
