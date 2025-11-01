@@ -51,10 +51,8 @@
 				"useLiteralKeys": {
 					"fix": "safe",
 					"level": "error"
-				}
-			},
-			"nursery": {
-				"useUniqueElementIds": "off"
+				},
+				"noImportantStyles": "off"
 			}
 		}
 	},

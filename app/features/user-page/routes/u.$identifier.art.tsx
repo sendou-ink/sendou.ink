@@ -47,7 +47,7 @@ export default function UserArtPage() {
 				: data.arts.filter((a) => a.author);
 
 	if (filteredTag) {
-		arts = arts.filter((a) => a.tags?.includes(filteredTag));
+		arts = arts.filter((a) => a.tags?.some((tag) => tag.name === filteredTag));
 	}
 
 	return (

@@ -191,6 +191,14 @@ export function makeVideoAdderByUserId(userId: number) {
 		.execute();
 }
 
+export function makeArtistByUserId(userId: number) {
+	return db
+		.updateTable("User")
+		.set({ isArtist: 1 })
+		.where("User.id", "=", userId)
+		.execute();
+}
+
 export function makeTournamentOrganizerByUserId(userId: number) {
 	return db
 		.updateTable("User")

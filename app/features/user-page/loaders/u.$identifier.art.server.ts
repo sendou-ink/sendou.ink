@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { artsByUserId } from "~/features/art/queries/artsByUserId.server";
+import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { getUserId } from "~/features/auth/core/user.server";
 import { countUnvalidatedArt } from "~/features/img-upload";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -14,14 +14,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		await UserRepository.identifierToUserId(identifier),
 	);
 
-	const arts = artsByUserId(user.id);
+	const arts = await ArtRepository.findArtsByUserId(user.id);
 
 	const tagCounts = arts.reduce(
 		(acc, art) => {
 			if (!art.tags) return acc;
 
 			for (const tag of art.tags) {
-				acc[tag] = (acc[tag] ?? 0) + 1;
+				acc[tag.name] = (acc[tag.name] ?? 0) + 1;
 			}
 			return acc;
 		},

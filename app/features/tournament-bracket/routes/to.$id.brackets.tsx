@@ -293,13 +293,11 @@ function BracketStarter({
 
 	return (
 		<>
-			{isMounted ? (
+			{isMounted && dialogOpen ? (
 				<BracketMapListDialog
-					isOpen={dialogOpen}
 					close={close}
 					bracket={bracket}
 					bracketIdx={bracketIdx}
-					key={bracketIdx}
 				/>
 			) : null}
 			<SendouButton
@@ -340,14 +338,12 @@ function MapPreparer({
 
 	return (
 		<>
-			{isMounted ? (
+			{isMounted && dialogOpen ? (
 				<BracketMapListDialog
-					isOpen={dialogOpen}
 					close={close}
 					bracket={bracket}
 					bracketIdx={bracketIdx}
 					isPreparing
-					key={bracketIdx}
 				/>
 			) : null}
 			<div className="stack sm horizontal ml-auto">

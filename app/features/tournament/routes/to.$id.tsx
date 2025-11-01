@@ -129,8 +129,8 @@ export function TournamentLayout() {
 			window.tourney = tournament;
 		}, [tournament]);
 	}
-
 	const subsCount = () =>
+		// biome-ignore lint/suspicious/useIterableCallbackReturn: Biome 2.3.1 upgrade
 		tournament.ctx.subCounts.reduce((acc, cur) => {
 			if (cur.visibility === "ALL") return acc + cur.count;
 

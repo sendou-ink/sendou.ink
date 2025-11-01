@@ -1450,6 +1450,7 @@ function tournamentSubs() {
 				bestWeapons: nullFilledArray(
 					faker.helpers.arrayElement([1, 1, 1, 2, 2, 3, 4, 5]),
 				)
+					// biome-ignore lint/suspicious/useIterableCallbackReturn: Biome 2.3.1 upgrade
 					.map(() => {
 						while (true) {
 							const weaponId = R.sample(mainWeaponIds, 1)[0]!;
@@ -1466,6 +1467,7 @@ function tournamentSubs() {
 						: nullFilledArray(
 								faker.helpers.arrayElement([1, 1, 1, 2, 2, 3, 4, 5]),
 							)
+								// biome-ignore lint/suspicious/useIterableCallbackReturn: Biome 2.3.1 upgrade
 								.map(() => {
 									while (true) {
 										const weaponId = R.sample(mainWeaponIds, 1)[0]!;
@@ -1728,7 +1730,7 @@ function otherTeams() {
 
 async function realVideo() {
 	for (let i = 0; i < 5; i++) {
-		await VodRepository.createVod({
+		await VodRepository.insert({
 			type: "TOURNAMENT",
 			youtubeUrl: youtubeIdToYoutubeUrl("M4aV-BQWlVg"),
 			date: { day: 2, month: 2, year: 2023 },
@@ -1783,7 +1785,7 @@ async function realVideo() {
 }
 
 async function realVideoCast() {
-	await VodRepository.createVod({
+	await VodRepository.insert({
 		type: "CAST",
 		youtubeUrl: youtubeIdToYoutubeUrl("M4aV-BQWlVg"),
 		date: { day: 2, month: 2, year: 2023 },

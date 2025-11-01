@@ -1,7 +1,6 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { z } from "zod/v4";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
-import { makeArtist } from "~/features/art/queries/makeArtist.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
@@ -88,7 +87,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		case "ARTIST": {
 			requireRole(user, "STAFF");
 
-			makeArtist(data.user);
+			await AdminRepository.makeArtistByUserId(data.user);
 
 			message = "Artist permissions given";
 			break;

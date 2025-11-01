@@ -14,6 +14,7 @@ import {
 	dayMonthYearToDatabaseTimestamp,
 } from "~/utils/dates";
 import invariant from "~/utils/invariant";
+import { type CommonUser, commonUserJsonObject } from "~/utils/kysely.server";
 import { VODS_PAGE_BATCH_SIZE } from "./vods-constants";
 import type { VideoBeingAdded, Vod } from "./vods-types";
 import {
@@ -21,14 +22,7 @@ import {
 	hoursMinutesSecondsStringToSeconds,
 } from "./vods-utils";
 
-export function deleteById(id: number) {
-	return db.deleteFrom("UnvalidatedVideo").where("id", "=", id).execute();
-}
-
-export async function findVodsByUserId(
-	userId: Tables["User"]["id"],
-	limit = 100,
-) {
+export async function findByUserId(userId: Tables["User"]["id"], limit = 100) {
 	return findVods({ userId, limit });
 }
 
@@ -152,18 +146,14 @@ export async function findVodById(id: Tables["Video"]["id"]) {
 					.as("weapons"),
 				fn
 					.agg("json_group_array", ["VideoMatchPlayer.playerName"])
+					.filterWhere("VideoMatchPlayer.playerName", "is not", null)
+					.$castTo<string[]>()
 					.as("playerNames"),
-				jsonArrayFrom(
-					eb
-						.selectFrom("User")
-						.select([
-							"User.username",
-							"User.discordId",
-							"User.discordAvatar",
-							"User.customUrl",
-						])
-						.whereRef("User.id", "=", "VideoMatchPlayer.playerUserId"),
-				).as("players"),
+				fn
+					.agg("json_group_array", [commonUserJsonObject(eb)])
+					.filterWhere("User.username", "is not", null)
+					.$castTo<CommonUser[]>()
+					.as("players"),
 			])
 			.where("VideoMatch.videoId", "=", id)
 			.groupBy("VideoMatch.id")
@@ -181,7 +171,9 @@ export async function findVodById(id: Tables["Video"]["id"]) {
 	return null;
 }
 
-function resolvePov(matches: any): Vod["pov"] {
+function resolvePov(
+	matches: Array<{ playerNames: string[]; players: CommonUser[] }>,
+): Vod["pov"] {
 	for (const match of matches) {
 		if (match.playerNames.length > 0) {
 			return match.playerNames[0];
@@ -195,17 +187,17 @@ function resolvePov(matches: any): Vod["pov"] {
 	return;
 }
 
-export async function updateVodByReplacing(
+export async function update(
 	args: VideoBeingAdded & {
 		submitterUserId: number;
 		isValidated: boolean;
 		id: number;
 	},
 ) {
-	return createVod(args);
+	return insert(args);
 }
 
-export async function createVod(
+export async function insert(
 	args: VideoBeingAdded & {
 		submitterUserId: number;
 		isValidated: boolean;
@@ -275,4 +267,8 @@ export async function createVod(
 		}
 		return { ...video, id: videoId };
 	});
+}
+
+export function deleteById(id: number) {
+	return db.deleteFrom("UnvalidatedVideo").where("id", "=", id).execute();
 }

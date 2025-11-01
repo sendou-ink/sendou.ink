@@ -319,8 +319,11 @@ function LinkedUsers() {
 	const [users, setUsers] = React.useState<
 		{ inputId: string; userId?: number }[]
 	>(
-		(data.art?.linkedUsers ?? []).length > 0
-			? data.art!.linkedUsers.map((userId) => ({ userId, inputId: nanoid() }))
+		data.art?.linkedUsers && data.art.linkedUsers.length > 0
+			? data.art.linkedUsers.map((user) => ({
+					userId: user.id,
+					inputId: nanoid(),
+				}))
 			: [{ inputId: nanoid() }],
 	);
 

@@ -21,6 +21,14 @@ export default function UserAdminPage() {
 	return (
 		<Main className="stack xl">
 			<AccountInfos />
+
+			<div className="stack sm">
+				<Divider smallText className="font-bold">
+					Friend codes
+				</Divider>
+				<FriendCodes />
+			</div>
+
 			<div className="stack sm">
 				<Divider smallText className="font-bold">
 					Mod notes
@@ -224,6 +232,35 @@ function BanLog() {
 							)}
 						</p>
 					) : null}
+				</div>
+			))}
+		</div>
+	);
+}
+
+function FriendCodes() {
+	const data = useLoaderData<typeof loader>();
+
+	if (!data.friendCodes || data.friendCodes.length === 0) {
+		return <p className="text-center text-lighter italic">No friend codes</p>;
+	}
+
+	return (
+		<div className="stack lg">
+			{data.friendCodes.map((fc, index) => (
+				<div key={fc.createdAt}>
+					<p className="font-bold">{fc.friendCode}</p>
+					<p className="ml-2">
+						{index === 0 ? "Current" : "Past"} - Added on{" "}
+						{databaseTimestampToDate(fc.createdAt).toLocaleString("en-US", {
+							year: "numeric",
+							month: "long",
+							day: "numeric",
+							hour: "2-digit",
+							minute: "2-digit",
+						})}
+					</p>
+					<p className="ml-2">Submitted by: {fc.submitterUsername}</p>
 				</div>
 			))}
 		</div>
