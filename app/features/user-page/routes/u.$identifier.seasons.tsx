@@ -40,7 +40,6 @@ import type {
 	SeasonGroupMatch,
 	SeasonTournamentResult,
 } from "~/features/sendouq-match/QMatchRepository.server";
-import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { useWeaponUsage } from "~/hooks/swr";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { modesShort } from "~/modules/in-game-lists/modes";
@@ -57,7 +56,6 @@ import {
 	tournamentTeamPage,
 	userSeasonsPage,
 } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
 import {
 	loader,
 	type UserSeasonsPageLoaderData,
@@ -845,10 +843,6 @@ function GroupMatchResult({ match }: { match: SeasonGroupMatch }) {
 }
 
 function TournamentResult({ result }: { result: SeasonTournamentResult }) {
-	const logoUrl = result.logoUrl
-		? userSubmittedImage(result.logoUrl)
-		: HACKY_resolvePicture({ name: result.tournamentName });
-
 	return (
 		<div data-testid="seasons-tournament-result">
 			<Link
@@ -859,7 +853,7 @@ function TournamentResult({ result }: { result: SeasonTournamentResult }) {
 			>
 				<div className="stack font-bold items-center text-lg text-center">
 					<img
-						src={logoUrl}
+						src={result.logoUrl}
 						width={36}
 						height={36}
 						alt=""

@@ -53,7 +53,7 @@ export const meta: MetaFunction = (args) => {
 			? removeMarkdown(data.tournament.ctx.description)
 			: undefined,
 		image: {
-			url: data.tournament.ctx.logoSrc,
+			url: data.tournament.ctx.logoUrl,
 			dimensions: { width: 124, height: 124 },
 		},
 		location: args.location,
@@ -83,7 +83,7 @@ export const handle: SendouRouteHandle = {
 					}
 				: null,
 			{
-				imgPath: data.tournament.ctx.logoSrc,
+				imgPath: data.tournament.ctx.logoUrl,
 				href: tournamentPage(data.tournament.ctx.id),
 				type: "IMAGE" as const,
 				text: data.tournament.ctx.name,
@@ -111,6 +111,7 @@ export default function TournamentLayoutShell() {
 	return <TournamentLayout />;
 }
 
+// xxx: make tournament logos autovalidate
 export function TournamentLayout() {
 	const { t } = useTranslation(["tournament"]);
 	const user = useUser();

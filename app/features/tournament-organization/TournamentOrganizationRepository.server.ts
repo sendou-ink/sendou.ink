@@ -8,10 +8,11 @@ import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import {
+	COMMON_USER_FIELDS,
+	tournamentLogoWithDefault,
+} from "~/utils/kysely.server";
 import { mySlugify } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
-import { HACKY_resolvePicture } from "../tournament/tournament-utils";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "./tournament-organization-constants";
 
 interface CreateArgs {
@@ -173,11 +174,7 @@ const findEventsBaseQuery = (organizationId: number) =>
 			"CalendarEvent.name",
 			"CalendarEvent.tournamentId",
 			eb.fn.min("CalendarEventDate.startTime").as("startTime"),
-			eb
-				.selectFrom("UserSubmittedImage")
-				.select(["UserSubmittedImage.url"])
-				.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id")
-				.as("logoUrl"),
+			tournamentLogoWithDefault(eb).as("logoUrl"),
 			jsonObjectFrom(
 				eb
 					.selectFrom("TournamentResult")
@@ -250,7 +247,7 @@ const findEventsBaseQuery = (organizationId: number) =>
 const mapEvent = <
 	T extends {
 		tournamentId: number | null;
-		logoUrl: string | null;
+		logoUrl: string;
 		name: string;
 	},
 >(
@@ -258,11 +255,7 @@ const mapEvent = <
 ) => {
 	return {
 		...event,
-		logoUrl: !event.tournamentId
-			? null
-			: event.logoUrl
-				? userSubmittedImage(event.logoUrl)
-				: HACKY_resolvePicture(event),
+		logoUrl: !event.tournamentId ? null : event.logoUrl,
 	};
 };
 

@@ -69,22 +69,16 @@ import { useTournament } from "./to.$id";
 export { loader, action };
 
 export default function TournamentRegisterPage() {
-	const user = useUser();
 	const isMounted = useIsMounted();
 	const tournament = useTournament();
 
 	const startsAtEvenHour = tournament.ctx.startTime.getMinutes() === 0;
 
-	const showAvatarPendingApprovalText =
-		tournament.ctx.logoUrl &&
-		!tournament.ctx.logoValidatedAt &&
-		tournament.isOrganizer(user);
-
 	return (
 		<div className={clsx("stack lg", containerClassName("normal"))}>
 			<div className="tournament__logo-container">
 				<img
-					src={tournament.ctx.logoSrc}
+					src={tournament.ctx.logoUrl}
 					alt=""
 					className="tournament__logo"
 					width={124}
@@ -159,12 +153,6 @@ export default function TournamentRegisterPage() {
 					</div>
 				</div>
 			</div>
-			{showAvatarPendingApprovalText ? (
-				<div className="text-warning text-sm font-semi-bold">
-					Tournament logo pending moderator review. Will be shown publicly once
-					approved.
-				</div>
-			) : null}
 			<TournamentRegisterInfoTabs />
 		</div>
 	);

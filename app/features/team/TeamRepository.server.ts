@@ -7,7 +7,10 @@ import { subsOfResult } from "~/features/team/team-utils";
 import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import {
+	COMMON_USER_FIELDS,
+	tournamentLogoOrNull,
+} from "~/utils/kysely.server";
 
 export function findAllUndisbanded() {
 	return db
@@ -166,11 +169,7 @@ export async function findResultsById(teamId: number) {
 			"results.tournamentTeamId",
 			"CalendarEvent.name as tournamentName",
 			"CalendarEventDate.startTime",
-			eb
-				.selectFrom("UserSubmittedImage")
-				.select(["UserSubmittedImage.url"])
-				.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id")
-				.as("logoUrl"),
+			tournamentLogoOrNull(eb).as("logoUrl"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("results as results2")

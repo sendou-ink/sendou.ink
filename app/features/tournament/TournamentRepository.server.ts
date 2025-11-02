@@ -14,10 +14,12 @@ import { modesShort } from "~/modules/in-game-lists/modes";
 import { nullFilledArray, nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
-import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
+import {
+	COMMON_USER_FIELDS,
+	tournamentLogoWithDefault,
+	userChatNameColor,
+} from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
-import { userSubmittedImage } from "~/utils/urls-img";
-import { HACKY_resolvePicture } from "./tournament-utils";
 
 export type FindById = NonNullable<Unwrapped<typeof findById>>;
 export async function findById(id: number) {
@@ -91,24 +93,7 @@ export async function findById(id: number) {
 						"CalendarEvent.organizationId",
 					),
 			).as("organization"),
-			eb
-				.selectFrom("UnvalidatedUserSubmittedImage")
-				.select(["UnvalidatedUserSubmittedImage.url"])
-				.whereRef(
-					"CalendarEvent.avatarImgId",
-					"=",
-					"UnvalidatedUserSubmittedImage.id",
-				)
-				.as("logoUrl"),
-			eb
-				.selectFrom("UnvalidatedUserSubmittedImage")
-				.select(["UnvalidatedUserSubmittedImage.validatedAt"])
-				.whereRef(
-					"CalendarEvent.avatarImgId",
-					"=",
-					"UnvalidatedUserSubmittedImage.id",
-				)
-				.as("logoValidatedAt"),
+			tournamentLogoWithDefault(eb).as("logoUrl"),
 			jsonObjectFrom(
 				eb
 					.selectFrom("User")
@@ -306,9 +291,6 @@ export async function findById(id: number) {
 					.filter((ordinal) => typeof ordinal === "number"),
 			),
 		})),
-		logoSrc: result.logoUrl
-			? userSubmittedImage(result.logoUrl)
-			: HACKY_resolvePicture(result),
 		participatedUsers: result.participatedUsers.map((user) => user.userId),
 	};
 }
@@ -471,11 +453,7 @@ export function forShowcase() {
 				)
 				.select(({ fn }) => [fn.countAll<number>().as("teamsCount")])
 				.as("teamsCount"),
-			eb
-				.selectFrom("UserSubmittedImage")
-				.select(["UserSubmittedImage.url"])
-				.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id")
-				.as("logoUrl"),
+			tournamentLogoWithDefault(eb).as("logoUrl"),
 			jsonObjectFrom(
 				eb
 					.selectFrom("TournamentOrganization")
@@ -1153,16 +1131,11 @@ export async function searchByName({
 			"CalendarEvent.id",
 			"CalendarEventDate.eventId",
 		)
-		.leftJoin(
-			"UnvalidatedUserSubmittedImage",
-			"CalendarEvent.avatarImgId",
-			"UnvalidatedUserSubmittedImage.id",
-		)
-		.select([
+		.select((eb) => [
 			"Tournament.id",
 			"CalendarEvent.name",
 			"CalendarEventDate.startTime",
-			"UnvalidatedUserSubmittedImage.url as logoUrl",
+			tournamentLogoWithDefault(eb).as("logoUrl"),
 		])
 		.where("CalendarEvent.name", "like", `%${query}%`)
 		.where("CalendarEvent.hidden", "=", 0)
@@ -1177,12 +1150,5 @@ export async function searchByName({
 		);
 	}
 
-	const results = await sqlQuery.execute();
-
-	return results.map((result) => ({
-		...result,
-		logoSrc: result.logoUrl
-			? userSubmittedImage(result.logoUrl)
-			: HACKY_resolvePicture({ name: result.name }),
-	}));
+	return sqlQuery.execute();
 }

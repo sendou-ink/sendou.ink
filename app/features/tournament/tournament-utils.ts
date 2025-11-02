@@ -3,7 +3,6 @@ import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { weekNumberToDate } from "~/utils/dates";
 import { SHORT_NANOID_LENGTH } from "~/utils/id";
-import { tournamentLogoUrl } from "~/utils/urls";
 import type { Tables, TournamentStageSettings } from "../../db/tables";
 import { assertUnreachable } from "../../utils/types";
 import { MapPool } from "../map-list-generator/core/map-pool";
@@ -65,129 +64,6 @@ export function tournamentRoundI18nKey(round: PlayedSet["round"]) {
 	if (round.round === "finals") return `bracket.${round.type}.finals` as const;
 
 	return `bracket.${round.type}` as const;
-}
-
-// legacy approach, new tournament should use the avatarImgId column in CalendarEvent
-export function HACKY_resolvePicture(event: { name: string }) {
-	const normalizedEventName = event.name.toLowerCase();
-
-	if (normalizedEventName.includes("sendouq")) {
-		return tournamentLogoUrl("sf");
-	}
-
-	if (normalizedEventName.includes("paddling pool")) {
-		return tournamentLogoUrl("pp");
-	}
-
-	if (normalizedEventName.includes("in the zone")) {
-		return tournamentLogoUrl("itz");
-	}
-
-	if (normalizedEventName.includes("picnic")) {
-		return tournamentLogoUrl("pn");
-	}
-
-	if (normalizedEventName.includes("proving grounds")) {
-		return tournamentLogoUrl("pg");
-	}
-
-	if (normalizedEventName.includes("triton")) {
-		return tournamentLogoUrl("tc");
-	}
-
-	if (normalizedEventName.includes("swim or sink")) {
-		return tournamentLogoUrl("sos");
-	}
-
-	if (normalizedEventName.includes("from the ink up")) {
-		return tournamentLogoUrl("ftiu");
-	}
-
-	if (normalizedEventName.includes("coral clash")) {
-		return tournamentLogoUrl("cc");
-	}
-
-	if (normalizedEventName.includes("level up")) {
-		return tournamentLogoUrl("lu");
-	}
-
-	if (normalizedEventName.includes("all 4 one")) {
-		return tournamentLogoUrl("a41");
-	}
-
-	if (normalizedEventName.includes("fry basket")) {
-		return tournamentLogoUrl("fb");
-	}
-
-	if (normalizedEventName.includes("the depths")) {
-		return tournamentLogoUrl("d");
-	}
-
-	if (normalizedEventName.includes("eclipse")) {
-		return tournamentLogoUrl("e");
-	}
-
-	if (normalizedEventName.includes("homecoming")) {
-		return tournamentLogoUrl("hc");
-	}
-
-	if (normalizedEventName.includes("bad ideas")) {
-		return tournamentLogoUrl("bio");
-	}
-
-	if (normalizedEventName.includes("tenoch")) {
-		return tournamentLogoUrl("ai");
-	}
-
-	if (normalizedEventName.includes("megalodon monday")) {
-		return tournamentLogoUrl("mm");
-	}
-
-	if (normalizedEventName.includes("heaven 2 ocean")) {
-		return tournamentLogoUrl("ho");
-	}
-
-	if (normalizedEventName.includes("kraken royale")) {
-		return tournamentLogoUrl("kr");
-	}
-
-	if (normalizedEventName.includes("menu royale")) {
-		return tournamentLogoUrl("mr");
-	}
-
-	if (normalizedEventName.includes("barracuda co")) {
-		return tournamentLogoUrl("bc");
-	}
-
-	if (normalizedEventName.includes("crimson ink")) {
-		return tournamentLogoUrl("ci");
-	}
-
-	if (normalizedEventName.includes("mesozoic mayhem")) {
-		return tournamentLogoUrl("me");
-	}
-
-	if (normalizedEventName.includes("rain or shine")) {
-		return tournamentLogoUrl("ros");
-	}
-
-	if (normalizedEventName.includes("squid junction")) {
-		return tournamentLogoUrl("sj");
-	}
-
-	if (normalizedEventName.includes("silly sausage")) {
-		return tournamentLogoUrl("ss");
-	}
-
-	if (normalizedEventName.includes("united-lan")) {
-		return tournamentLogoUrl("ul");
-	}
-
-	if (normalizedEventName.includes("soul cup")) {
-		return tournamentLogoUrl("sc");
-	}
-
-	return tournamentLogoUrl("default");
 }
 
 export type CounterPickValidationStatus =

@@ -113,6 +113,16 @@ async function updateCalendarEvents(
 async function main() {
 	logger.info("Starting tournament logo migration to S3...");
 
+	const defaultLogoPath = path.join(TOURNAMENT_LOGO_PATH, "default.png");
+	if (fs.existsSync(defaultLogoPath)) {
+		logger.info("\n=== Uploading default tournament logo ===");
+		const defaultS3Url = await uploadLogoFile(defaultLogoPath, "default");
+		const defaultImageId = await createImageRecord(defaultS3Url);
+		logger.info(
+			`Created UnvalidatedUserSubmittedImage record for default logo with ID ${defaultImageId}\n`,
+		);
+	}
+
 	const logoFiles = fs
 		.readdirSync(TOURNAMENT_LOGO_PATH)
 		.filter((file) => file.endsWith(".png") && file !== "default.png");

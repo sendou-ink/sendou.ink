@@ -8,7 +8,6 @@ import { Image, ModeImage } from "~/components/Image";
 import { TrophyIcon } from "~/components/icons/Trophy";
 import { UsersIcon } from "~/components/icons/Users";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
-import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl } from "~/utils/urls";
@@ -54,14 +53,10 @@ export function TournamentCard({
 		>
 			<Link to={tournament.url} className={styles.card}>
 				<div className="stack horizontal justify-between">
-					{isHostedOnSendouInk ? (
+					{tournament.logoUrl ? (
 						<div className={styles.imgContainer}>
 							<img
-								src={
-									tournament.logoUrl
-										? userSubmittedImage(tournament.logoUrl)
-										: HACKY_resolvePicture(tournament)
-								}
+								src={tournament.logoUrl}
 								width={32}
 								height={32}
 								className={styles.avatarImg}

@@ -15,7 +15,11 @@ import { isSupporter } from "~/modules/permissions/utils";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
-import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
+import {
+	COMMON_USER_FIELDS,
+	tournamentLogoOrNull,
+	userChatNameColor,
+} from "~/utils/kysely.server";
 import { safeNumberParse } from "~/utils/number";
 import type { ChatUser } from "../chat/chat-types";
 
@@ -123,8 +127,8 @@ export function findLayoutDataByIdentifier(
 				.select(({ fn }) => fn.count<number>("Art.id").distinct().as("count"))
 				.where((innerEb) =>
 					innerEb.or([
-						innerEb("Art.authorId", "=", sql.raw<any>("User.id")),
-						innerEb("ArtUserMetadata.userId", "=", sql.raw<any>("User.id")),
+						innerEb("Art.authorId", "=", eb.ref("User.id")),
+						innerEb("ArtUserMetadata.userId", "=", eb.ref("User.id")),
 					]),
 				)
 				.as("artCount"),
@@ -520,11 +524,7 @@ export function findResultsByUserId(
 			"TournamentResult.placement",
 			"TournamentResult.participantCount",
 			"TournamentResult.setResults",
-			eb
-				.selectFrom("UserSubmittedImage")
-				.select(["UserSubmittedImage.url"])
-				.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id")
-				.as("logoUrl"),
+			tournamentLogoOrNull(eb).as("logoUrl"),
 			"CalendarEvent.name as eventName",
 			"TournamentTeam.id as teamId",
 			"TournamentTeam.name as teamName",

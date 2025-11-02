@@ -4,13 +4,14 @@ import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
 import type { Tables, TablesInsertable } from "~/db/tables";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
-import { userSubmittedImage } from "~/utils/urls-img";
+import {
+	COMMON_USER_FIELDS,
+	tournamentLogoWithDefault,
+} from "~/utils/kysely.server";
 import { db } from "../../db/sql";
 import invariant from "../../utils/invariant";
 import type { Unwrapped } from "../../utils/types";
 import type { AssociationVisibility } from "../associations/associations-types";
-import { HACKY_resolvePicture } from "../tournament/tournament-utils";
 import * as Scrim from "./core/Scrim";
 import type { ScrimPost, ScrimPostUser } from "./scrims-types";
 import { getPostRequestCensor, parseLutiDiv } from "./scrims-utils";
@@ -117,11 +118,6 @@ const baseFindQuery = db
 		"ScrimPost.mapsTournamentId",
 		"CalendarEvent.tournamentId",
 	)
-	.leftJoin(
-		"UserSubmittedImage as TournamentAvatar",
-		"CalendarEvent.avatarImgId",
-		"TournamentAvatar.id",
-	)
 	.select((eb) => [
 		"ScrimPost.id",
 		"ScrimPost.at",
@@ -146,7 +142,7 @@ const baseFindQuery = db
 		jsonBuildObject({
 			id: eb.ref("CalendarEvent.tournamentId"),
 			name: eb.ref("CalendarEvent.name"),
-			avatarUrl: eb.ref("TournamentAvatar.url"),
+			avatarUrl: tournamentLogoWithDefault(eb),
 		}).as("mapsTournament"),
 		jsonArrayFrom(
 			eb
@@ -258,9 +254,7 @@ const mapDBRowToScrimPost = (
 			? {
 					id: row.mapsTournament.id,
 					name: row.mapsTournament.name!,
-					avatarUrl: row.mapsTournament.avatarUrl
-						? userSubmittedImage(row.mapsTournament.avatarUrl)
-						: HACKY_resolvePicture({ name: row.mapsTournament.name! }),
+					avatarUrl: row.mapsTournament.avatarUrl,
 				}
 			: null,
 		chatCode: row.chatCode ?? null,

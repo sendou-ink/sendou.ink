@@ -1,4 +1,5 @@
 // TODO: separating this file from urls.ts is a temporary solution. The reason is that import.meta.env cannot currently be used in files that are consumed by plain Node.js
+// xxx: deprecate this file
 
 import { IS_E2E_TEST_RUN } from "./e2e";
 
