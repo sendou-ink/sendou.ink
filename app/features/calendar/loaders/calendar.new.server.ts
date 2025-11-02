@@ -65,8 +65,21 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	const managedBadges = await BadgeRepository.findManagedByUserId(user.id);
 
+	const organizations = (
+		await findValidOrganizations(
+			user.id,
+			user.roles.includes("TOURNAMENT_ADDER"),
+		)
+	).concat(
+		eventToEdit?.tournament?.ctx.organization
+			? eventToEdit.tournament.ctx.organization
+			: [],
+	);
+
+	const canAddTournaments = organizations.length > 0;
+
 	const eventToCopyRaw =
-		user.roles.includes("TOURNAMENT_ADDER") && !eventToEdit
+		canAddTournaments && !eventToEdit
 			? await eventWithTournament("copyEventId")
 			: undefined;
 
@@ -89,19 +102,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		eventToEdit: canEditEvent ? eventToEdit : undefined,
 		eventToCopy,
 		recentTournaments:
-			user.roles.includes("TOURNAMENT_ADDER") && !eventToEdit
+			canAddTournaments && !eventToEdit
 				? await CalendarRepository.findRecentTournamentsByAuthorId(user.id)
 				: undefined,
-		organizations: (
-			await findValidOrganizations(
-				user.id,
-				user.roles.includes("TOURNAMENT_ADDER"),
-			)
-		).concat(
-			eventToEdit?.tournament?.ctx.organization
-				? eventToEdit.tournament.ctx.organization
-				: [],
-		),
+		organizations,
 	};
 };
 
@@ -110,7 +114,7 @@ export async function findValidOrganizations(
 	isTournamentAdder: boolean,
 ) {
 	const orgs = await TournamentOrganizationRepository.findByUserId(userId, {
-		roles: ["ADMIN"],
+		roles: ["ADMIN", "ORGANIZER"],
 	});
 
 	if (isTournamentAdder) {
