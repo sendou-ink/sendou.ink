@@ -9,6 +9,7 @@ import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
 	COMMON_USER_FIELDS,
+	concatUserSubmittedImagePrefix,
 	tournamentLogoOrNull,
 } from "~/utils/kysely.server";
 
@@ -77,8 +78,8 @@ export function findByCustomUrl(
 			"Team.bio",
 			"Team.customUrl",
 			"Team.css",
-			"AvatarImage.url as avatarSrc",
-			"BannerImage.url as bannerSrc",
+			concatUserSubmittedImagePrefix(eb.ref("AvatarImage.url")).as("avatarUrl"),
+			concatUserSubmittedImagePrefix(eb.ref("BannerImage.url")).as("bannerUrl"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TeamMemberWithSecondary")

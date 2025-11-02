@@ -569,7 +569,6 @@ export async function create(args: CreateArgs) {
 			? await createSubmittedImageInTrx({
 					trx,
 					avatarFileName: args.avatarFileName,
-					autoValidateAvatar: args.autoValidateAvatar,
 					userId: args.authorId,
 				})
 			: null;
@@ -610,20 +609,18 @@ export async function create(args: CreateArgs) {
 
 async function createSubmittedImageInTrx({
 	trx,
-	autoValidateAvatar,
 	avatarFileName,
 	userId,
 }: {
 	trx: Transaction<DB>;
 	avatarFileName: string;
-	autoValidateAvatar?: boolean;
 	userId: number;
 }) {
 	const result = await trx
 		.insertInto("UnvalidatedUserSubmittedImage")
 		.values({
 			url: avatarFileName,
-			validatedAt: autoValidateAvatar ? databaseTimestampNow() : null,
+			validatedAt: databaseTimestampNow(),
 			submitterUserId: userId,
 		})
 		.returning("id")
@@ -644,7 +641,6 @@ export async function update(args: UpdateArgs) {
 			? await createSubmittedImageInTrx({
 					trx,
 					avatarFileName: args.avatarFileName,
-					autoValidateAvatar: args.autoValidateAvatar,
 					userId: args.authorId,
 				})
 			: null;

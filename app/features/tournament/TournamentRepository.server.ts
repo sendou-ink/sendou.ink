@@ -16,6 +16,7 @@ import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import {
 	COMMON_USER_FIELDS,
+	concatUserSubmittedImagePrefix,
 	tournamentLogoWithDefault,
 	userChatNameColor,
 } from "~/utils/kysely.server";
@@ -153,7 +154,9 @@ export async function findById(id: number) {
 						"TournamentTeam.createdAt",
 						"TournamentTeam.activeRosterUserIds",
 						"TournamentTeam.startingBracketIdx",
-						"UserSubmittedImage.url as pickupAvatarUrl",
+						concatUserSubmittedImagePrefix(
+							innerEb.ref("UserSubmittedImage.url"),
+						).as("pickupAvatarUrl"),
 						jsonArrayFrom(
 							innerEb
 								.selectFrom("TournamentTeamMember")
@@ -223,10 +226,12 @@ export async function findById(id: number) {
 									"UserSubmittedImage.id",
 								)
 								.whereRef("AllTeam.id", "=", "TournamentTeam.teamId")
-								.select([
+								.select((eb) => [
 									"AllTeam.id",
 									"AllTeam.customUrl",
-									"UserSubmittedImage.url as logoUrl",
+									concatUserSubmittedImagePrefix(
+										eb.ref("UserSubmittedImage.url"),
+									).as("logoUrl"),
 									"AllTeam.deletedAt",
 								]),
 						).as("team"),
@@ -489,12 +494,14 @@ export function forShowcase() {
 					)
 					.whereRef("TournamentResult.tournamentId", "=", "Tournament.id")
 					.where("TournamentResult.placement", "=", 1)
-					.select([
+					.select((eb) => [
 						...COMMON_USER_FIELDS,
 						"User.country",
 						"TournamentTeam.name as teamName",
 						"TeamAvatar.url as teamLogoUrl",
-						"TournamentTeamAvatar.url as pickupAvatarUrl",
+						concatUserSubmittedImagePrefix(
+							eb.ref("TournamentTeamAvatar.url"),
+						).as("pickupAvatarUrl"),
 					]),
 			).as("firstPlacers"),
 		])

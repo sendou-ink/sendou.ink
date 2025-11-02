@@ -17,6 +17,7 @@ import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
 import {
 	COMMON_USER_FIELDS,
+	concatUserSubmittedImagePrefix,
 	tournamentLogoOrNull,
 	userChatNameColor,
 } from "~/utils/kysely.server";
@@ -182,13 +183,15 @@ export async function findProfileByIdentifier(
 						"UserSubmittedImage.id",
 						"Team.avatarImgId",
 					)
-					.select([
+					.select((eb) => [
 						"Team.name",
 						"Team.customUrl",
 						"Team.id",
 						"TeamMemberWithSecondary.isMainTeam",
 						"TeamMemberWithSecondary.role as userTeamRole",
-						"UserSubmittedImage.url as avatarUrl",
+						concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+							"avatarUrl",
+						),
 					])
 					.whereRef("TeamMemberWithSecondary.userId", "=", "User.id"),
 			).as("teams"),

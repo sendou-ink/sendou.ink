@@ -1,6 +1,12 @@
-import { type ColumnType, type ExpressionBuilder, sql } from "kysely";
+import {
+	type ColumnType,
+	type Expression,
+	type ExpressionBuilder,
+	expressionBuilder,
+	sql,
+} from "kysely";
 import { jsonBuildObject } from "kysely/helpers/sqlite";
-import type { Tables } from "~/db/tables";
+import type { DB, Tables } from "~/db/tables";
 import { IS_E2E_TEST_RUN } from "./e2e";
 
 export const COMMON_USER_FIELDS = [
@@ -50,9 +56,9 @@ export function tournamentLogoOrNull(
 	/** Expression builder scoped to the CalendarEvent table */
 	eb: ExpressionBuilder<Tables, "CalendarEvent">,
 ) {
-	return sql.raw<string | null>(`IIF(
-		"CalendarEvent"."avatarImgId",
-		${eb.fn<string>("concat", [
+	return eb.fn<string | null>("iif", [
+		eb("CalendarEvent.avatarImgId", "is not", null),
+		eb.fn<string>("concat", [
 			sql.lit(`${USER_SUBMITTED_IMAGE_ROOT}/`),
 			eb
 				.selectFrom("UnvalidatedUserSubmittedImage")
@@ -62,9 +68,9 @@ export function tournamentLogoOrNull(
 					"=",
 					"UnvalidatedUserSubmittedImage.id",
 				),
-		])},
-		NULL
-	)`);
+			sql`null`,
+		]),
+	]);
 }
 
 /**
@@ -78,25 +84,31 @@ export function tournamentLogoWithDefault(
 	/** Expression builder scoped to the CalendarEvent table */
 	eb: ExpressionBuilder<Tables, "CalendarEvent">,
 ) {
-	// xxx: check other places where we could use coalesce
-	return eb.fn<string>("concat", [
-		sql.lit(`${USER_SUBMITTED_IMAGE_ROOT}/`),
-		eb.fn.coalesce(
-			eb
-				.selectFrom("UnvalidatedUserSubmittedImage")
-				.select(["UnvalidatedUserSubmittedImage.url"])
-				.whereRef(
-					"CalendarEvent.avatarImgId",
-					"=",
-					"UnvalidatedUserSubmittedImage.id",
-				),
-			sql.lit(`${import.meta.env.VITE_TOURNAMENT_DEFAULT_LOGO}`),
-		),
-	]);
+	return concatUserSubmittedImagePrefix(
+		eb
+			.selectFrom("UnvalidatedUserSubmittedImage")
+			.select(["UnvalidatedUserSubmittedImage.url"])
+			.whereRef(
+				"CalendarEvent.avatarImgId",
+				"=",
+				"UnvalidatedUserSubmittedImage.id",
+			)
+			.$asScalar(),
+	);
 }
 
-// xxx: how to do this?
-// export function userSubmittedImagePrefix()
+// xxx: could this be a Kysely plugin?
+export function concatUserSubmittedImagePrefix<T extends string | null>(
+	expr: Expression<T>,
+) {
+	const eb = expressionBuilder<DB>();
+
+	return eb.fn<T extends null ? string | null : string>("iif", [
+		eb(expr, "is not", null),
+		eb.fn<string>("concat", [sql.lit(`${USER_SUBMITTED_IMAGE_ROOT}/`), expr]),
+		sql`null`,
+	]);
+}
 
 /** Prevents ParseJSONResultsPlugin from trying to parse this as JSON */
 export function unJsonify<T>(value: T) {
