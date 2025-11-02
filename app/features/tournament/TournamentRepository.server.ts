@@ -66,7 +66,9 @@ export async function findById(id: number) {
 						"TournamentOrganization.id",
 						"TournamentOrganization.name",
 						"TournamentOrganization.slug",
-						"UserSubmittedImage.url as avatarUrl",
+						concatUserSubmittedImagePrefix(
+							innerEb.ref("UserSubmittedImage.url"),
+						).as("avatarUrl"),
 						jsonArrayFrom(
 							innerEb
 								.selectFrom("TournamentOrganizationMember")
@@ -498,7 +500,9 @@ export function forShowcase() {
 						...COMMON_USER_FIELDS,
 						"User.country",
 						"TournamentTeam.name as teamName",
-						"TeamAvatar.url as teamLogoUrl",
+						concatUserSubmittedImagePrefix(eb.ref("TeamAvatar.url")).as(
+							"teamLogoUrl",
+						),
 						concatUserSubmittedImagePrefix(
 							eb.ref("TournamentTeamAvatar.url"),
 						).as("pickupAvatarUrl"),

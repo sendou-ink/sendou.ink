@@ -6,6 +6,7 @@ import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import {
 	COMMON_USER_FIELDS,
+	concatUserSubmittedImagePrefix,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import { db } from "../../db/sql";
@@ -137,7 +138,9 @@ const baseFindQuery = db
 		jsonBuildObject({
 			name: eb.ref("Team.name"),
 			customUrl: eb.ref("Team.customUrl"),
-			avatarUrl: eb.ref("UserSubmittedImage.url"),
+			avatarUrl: concatUserSubmittedImagePrefix(
+				eb.ref("UserSubmittedImage.url"),
+			),
 		}).as("team"),
 		jsonBuildObject({
 			id: eb.ref("CalendarEvent.tournamentId"),
@@ -169,7 +172,9 @@ const baseFindQuery = db
 					jsonBuildObject({
 						name: innerEb.ref("Team.name"),
 						customUrl: innerEb.ref("Team.customUrl"),
-						avatarUrl: innerEb.ref("UserSubmittedImage.url"),
+						avatarUrl: concatUserSubmittedImagePrefix(
+							innerEb.ref("UserSubmittedImage.url"),
+						),
 					}).as("team"),
 					jsonArrayFrom(
 						innerEb

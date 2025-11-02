@@ -41,7 +41,8 @@ export function commonUserJsonObject(eb: ExpressionBuilder<Tables, "User">) {
 const USER_SUBMITTED_IMAGE_ROOT =
 	(process.env.NODE_ENV === "development" &&
 		import.meta.env.VITE_PROD_MODE !== "true") ||
-	IS_E2E_TEST_RUN
+	IS_E2E_TEST_RUN ||
+	process.env.NODE_ENV === "test"
 		? "http://127.0.0.1:9000/sendou"
 		: "https://sendou.nyc3.cdn.digitaloceanspaces.com";
 

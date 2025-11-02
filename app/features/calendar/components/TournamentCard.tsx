@@ -11,7 +11,6 @@ import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
 import type { CalendarEvent, ShowcaseCalendarEvent } from "../calendar-types";
 import { Tags } from "./Tags";
 import styles from "./TournamentCard.module.css";
@@ -137,7 +136,7 @@ function TournamentFirstPlacers({
 			<div className="stack xs horizontal items-center text-xs">
 				{firstPlacer.logoUrl ? (
 					<img
-						src={userSubmittedImage(firstPlacer.logoUrl)}
+						src={firstPlacer.logoUrl}
 						alt=""
 						width={24}
 						className="rounded-full"

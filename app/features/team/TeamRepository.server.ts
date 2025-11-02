@@ -16,14 +16,13 @@ import {
 export function findAllUndisbanded() {
 	return db
 		.selectFrom("Team")
+		.leftJoin("UserSubmittedImage", "UserSubmittedImage.id", "Team.avatarImgId")
 		.select(({ eb }) => [
 			"Team.customUrl",
 			"Team.name",
-			eb
-				.selectFrom("UserSubmittedImage")
-				.whereRef("UserSubmittedImage.id", "=", "Team.avatarImgId")
-				.select("UserSubmittedImage.url")
-				.as("avatarSrc"),
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"avatarUrl",
+			),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TeamMemberWithSecondary")

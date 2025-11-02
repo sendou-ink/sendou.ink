@@ -22,7 +22,6 @@ import {
 	tournamentPage,
 	tournamentRegisterPage,
 } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
 import { metaTags } from "../../../utils/remix";
 
 import { loader, type TournamentLoaderData } from "../loaders/to.$id.server";
@@ -71,9 +70,7 @@ export const handle: SendouRouteHandle = {
 		return [
 			data.tournament.ctx.organization?.avatarUrl
 				? {
-						imgPath: userSubmittedImage(
-							data.tournament.ctx.organization.avatarUrl,
-						),
+						imgPath: data.tournament.ctx.organization.avatarUrl,
 						href: tournamentOrganizationPage({
 							organizationSlug: data.tournament.ctx.organization.slug,
 						}),

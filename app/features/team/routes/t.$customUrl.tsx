@@ -8,7 +8,6 @@ import { Main } from "~/components/Main";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { bskyUrl, navIconUrl, TEAM_SEARCH_PAGE, teamPage } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
 import { loader } from "../loaders/t.$customUrl.server";
 export { loader };
 
@@ -23,7 +22,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 		location: args.location,
 		image: args.data.team.avatarUrl
 			? {
-					url: userSubmittedImage(args.data.team.avatarUrl),
+					url: args.data.team.avatarUrl,
 					dimensions: {
 						width: 124,
 						height: 124,
@@ -78,7 +77,7 @@ function TeamBanner() {
 				})}
 				style={{
 					"--team-banner-img": team.bannerUrl
-						? `url("${userSubmittedImage(team.bannerUrl)}")`
+						? `url("${team.bannerUrl}")`
 						: undefined,
 				}}
 			>

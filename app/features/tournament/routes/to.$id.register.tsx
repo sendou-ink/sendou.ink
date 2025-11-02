@@ -55,7 +55,6 @@ import {
 	userEditProfilePage,
 	userPage,
 } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
 import { AlertIcon } from "../../../components/icons/Alert";
 import { action } from "../actions/to.$id.register.server";
 import type { TournamentRegisterPageLoader } from "../loaders/to.$id.register.server";
@@ -96,13 +95,7 @@ export default function TournamentRegisterPage() {
 								className="stack horizontal sm items-center text-xs text-main-forced"
 							>
 								<Avatar
-									url={
-										tournament.ctx.organization.avatarUrl
-											? userSubmittedImage(
-													tournament.ctx.organization.avatarUrl,
-												)
-											: undefined
-									}
+									url={tournament.ctx.organization.avatarUrl ?? undefined}
 									size="xxs"
 								/>
 								{tournament.ctx.organization.name}
@@ -647,16 +640,11 @@ function TeamInfo({
 			const teamToSignUpWith = data?.teams.find(
 				(team) => team.id === signUpWithTeamId,
 			);
-			return teamToSignUpWith?.logoUrl
-				? userSubmittedImage(teamToSignUpWith.logoUrl)
-				: null;
+			return teamToSignUpWith?.logoUrl;
 		}
 		if (uploadedAvatar) return URL.createObjectURL(uploadedAvatar);
-		if (ownTeam?.pickupAvatarUrl) {
-			return userSubmittedImage(ownTeam.pickupAvatarUrl);
-		}
 
-		return null;
+		return ownTeam?.pickupAvatarUrl;
 	})();
 
 	const canEditAvatar =

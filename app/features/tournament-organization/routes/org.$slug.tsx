@@ -39,7 +39,6 @@ import {
 	tournamentPage,
 	userPage,
 } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
 import { action } from "../actions/org.$slug.server";
 import { EventCalendar } from "../components/EventCalendar";
 import { SocialLinksList } from "../components/SocialLinksList";
@@ -58,7 +57,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 		description: args.data.organization.description ?? undefined,
 		image: args.data.organization.avatarUrl
 			? {
-					url: userSubmittedImage(args.data.organization.avatarUrl),
+					url: args.data.organization.avatarUrl,
 					dimensions: { width: 124, height: 124 },
 				}
 			: undefined,
@@ -75,7 +74,7 @@ export const handle: SendouRouteHandle = {
 		return [
 			data.organization.avatarUrl
 				? {
-						imgPath: userSubmittedImage(data.organization.avatarUrl),
+						imgPath: data.organization.avatarUrl,
 						href: tournamentOrganizationPage({
 							organizationSlug: data.organization.slug,
 						}),
@@ -121,14 +120,7 @@ function LogoHeader() {
 
 	return (
 		<div className="stack horizontal md">
-			<Avatar
-				size="lg"
-				url={
-					data.organization.avatarUrl
-						? userSubmittedImage(data.organization.avatarUrl)
-						: undefined
-				}
-			/>
+			<Avatar size="lg" url={data.organization.avatarUrl ?? undefined} />
 			<div className="stack sm">
 				<div className="text-xl font-bold">{data.organization.name}</div>
 				{canEditOrganization ? (
@@ -276,7 +268,7 @@ function AllTournamentsView() {
 				events={data.events}
 				fallbackLogoUrl={
 					data.organization.avatarUrl
-						? userSubmittedImage(data.organization.avatarUrl)
+						? data.organization.avatarUrl
 						: BLANK_IMAGE_URL
 				}
 			/>
@@ -510,7 +502,7 @@ function EventWinners({
 				<Placement placement={1} size={24} />
 				{winner.avatarUrl ? (
 					<img
-						src={userSubmittedImage(winner.avatarUrl)}
+						src={winner.avatarUrl}
 						alt=""
 						width={24}
 						height={24}

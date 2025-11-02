@@ -15,6 +15,7 @@ import { mostPopularArrayElement } from "~/utils/arrays";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
 	COMMON_USER_FIELDS,
+	concatUserSubmittedImagePrefix,
 	tournamentLogoWithDefault,
 	userChatNameColor,
 } from "~/utils/kysely.server";
@@ -116,10 +117,12 @@ export async function findGroupById({
 						"AllTeam.avatarImgId",
 						"UserSubmittedImage.id",
 					)
-					.select([
+					.select((eb) => [
 						"AllTeam.name",
 						"AllTeam.customUrl",
-						"UserSubmittedImage.url as avatarUrl",
+						concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+							"avatarUrl",
+						),
 					])
 					.where("AllTeam.id", "=", eb.ref("Group.teamId")),
 			).as("team"),

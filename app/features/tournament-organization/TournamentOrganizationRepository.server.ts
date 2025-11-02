@@ -10,6 +10,7 @@ import {
 } from "~/utils/dates";
 import {
 	COMMON_USER_FIELDS,
+	concatUserSubmittedImagePrefix,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import { mySlugify } from "~/utils/urls";
@@ -59,7 +60,9 @@ export async function findBySlug(slug: string) {
 			"TournamentOrganization.socials",
 			"TournamentOrganization.slug",
 			"TournamentOrganization.isEstablished",
-			"UserSubmittedImage.url as avatarUrl",
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"avatarUrl",
+			),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TournamentOrganizationMember")
@@ -192,7 +195,9 @@ const findEventsBaseQuery = (organizationId: number) =>
 					)
 					.select(({ eb: innerEb }) => [
 						"TournamentTeam.name",
-						innerEb.fn.coalesce("u1.url", "u2.url").as("avatarUrl"),
+						concatUserSubmittedImagePrefix(
+							innerEb.fn.coalesce("u1.url", "u2.url"),
+						).as("avatarUrl"),
 						jsonArrayFrom(
 							innerEb
 								.selectFrom("TournamentTeamMember")

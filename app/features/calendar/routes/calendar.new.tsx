@@ -33,7 +33,6 @@ import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { pathnameFromPotentialURL } from "~/utils/strings";
 import { CREATING_TOURNAMENT_DOC_LINK, FAQ_PAGE } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
 import {
 	CALENDAR_EVENT,
 	REG_CLOSES_AT_OPTIONS,
@@ -719,14 +718,12 @@ function AvatarImageInput({
 		baseEvent?.tournament?.ctx.logoUrl &&
 		showPrevious
 	) {
-		const logoImgUrl = userSubmittedImage(baseEvent.tournament.ctx.logoUrl);
-
 		return (
 			<div className="stack horizontal md flex-wrap">
 				<input type="hidden" name="avatarImgId" value={baseEvent.avatarImgId} />
 				<div className="stack md items-center">
 					<img
-						src={logoImgUrl}
+						src={baseEvent.tournament.ctx.logoUrl}
 						alt=""
 						className="calendar-new__avatar-preview"
 					/>
