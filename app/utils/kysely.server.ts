@@ -98,7 +98,7 @@ export function tournamentLogoWithDefault(
 	);
 }
 
-// xxx: could this be a Kysely plugin?
+/** Concats the file name (a bit misleadingly called `url` in the DB schema) with the root URL, giving the full URL for the image */
 export function concatUserSubmittedImagePrefix<T extends string | null>(
 	expr: Expression<T>,
 ) {

@@ -108,7 +108,6 @@ export default function TournamentLayoutShell() {
 	return <TournamentLayout />;
 }
 
-// xxx: make tournament logos autovalidate
 export function TournamentLayout() {
 	const { t } = useTranslation(["tournament"]);
 	const user = useUser();
