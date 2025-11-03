@@ -46,6 +46,7 @@ describe("tournamentSummary()", () => {
 		withMemberInTwoTeams = false,
 		teamsWithStartingBrackets,
 		progression,
+		finalStandings,
 	}: {
 		results?: AllMatchResult[];
 		seedingSkillCountsFor?: Tables["SeedingSkill"]["type"];
@@ -60,6 +61,10 @@ describe("tournamentSummary()", () => {
 			settings: Record<string, never>;
 			requiresCheckIn: boolean;
 			sources?: Array<{ bracketIdx: number; placements: number[] }>;
+		}>;
+		finalStandings?: Array<{
+			placement: number;
+			team: TournamentDataTeam;
 		}>;
 	} = {}) {
 		const defaultTeams = [
@@ -110,7 +115,7 @@ describe("tournamentSummary()", () => {
 			: defaultTeams;
 
 		return tournamentSummary({
-			finalStandings: [
+			finalStandings: finalStandings ?? [
 				{
 					placement: 1,
 					team: createTeam(
@@ -684,6 +689,24 @@ describe("tournamentSummary()", () => {
 					type: "single_elimination",
 					settings: {},
 					requiresCheckIn: false,
+				},
+			],
+			finalStandings: [
+				{
+					placement: 1,
+					team: createTeam(1, [1, 2, 3, 4]),
+				},
+				{
+					placement: 1,
+					team: createTeam(2, [5, 6, 7, 8]),
+				},
+				{
+					placement: 2,
+					team: createTeam(3, [9, 10, 11, 12]),
+				},
+				{
+					placement: 2,
+					team: createTeam(4, [13, 14, 15, 16]),
 				},
 			],
 		});

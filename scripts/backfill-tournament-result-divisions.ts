@@ -63,9 +63,7 @@ async function main() {
 					`Expected multiple starting brackets for tournament ${tournamentId}`,
 				);
 			}
-			const finalStandings = standingsResult.standings.flatMap(
-				(div) => div.standings,
-			);
+			const finalStandings = Standings.flattenStandings(standingsResult);
 			const summary = tournamentSummary({
 				teams: tournament.ctx.teams,
 				finalStandings,

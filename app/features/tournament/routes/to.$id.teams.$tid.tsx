@@ -108,10 +108,7 @@ function StatSquares({
 	const tournament = useTournament();
 
 	const standingsResult = Standings.tournamentStandings(tournament);
-	const overallStandings =
-		standingsResult.type === "single"
-			? standingsResult.standings
-			: standingsResult.standings.flatMap((div) => div.standings);
+	const overallStandings = Standings.flattenStandings(standingsResult);
 	const placement = overallStandings.find(
 		(s) => s.team.id === data.tournamentTeamId,
 	)?.placement;

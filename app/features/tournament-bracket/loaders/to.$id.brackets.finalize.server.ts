@@ -55,10 +55,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 async function standingsWithSetParticipation(tournament: Tournament) {
 	const standingsResult = Standings.tournamentStandings(tournament);
-	const finalStandings =
-		standingsResult.type === "single"
-			? standingsResult.standings
-			: standingsResult.standings.flatMap((div) => div.standings);
+	const finalStandings = Standings.flattenStandings(standingsResult);
 
 	const results = allMatchResultsByTournamentId(tournament.ctx.id);
 	invariant(results.length > 0, "No results found");

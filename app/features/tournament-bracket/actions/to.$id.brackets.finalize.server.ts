@@ -66,10 +66,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	const seedingSkillCountsFor = tournament.skillCountsFor;
 	const standingsResult = Standings.tournamentStandings(tournament);
-	const finalStandings =
-		standingsResult.type === "single"
-			? standingsResult.standings
-			: standingsResult.standings.flatMap((div) => div.standings);
+	const finalStandings = Standings.flattenStandings(standingsResult);
 	const summary = tournamentSummary({
 		teams: tournament.ctx.teams,
 		finalStandings,
