@@ -595,7 +595,17 @@ export function isFinals(idx: number, brackets: ParsedBracket[]) {
 export function isUnderground(idx: number, brackets: ParsedBracket[]) {
 	invariant(idx < brackets.length, "Bracket index out of bounds");
 
-	return !resolveMainBracketProgression(brackets).includes(idx);
+	const startBrackets = startingBrackets(brackets);
+
+	for (const startBracketIdx of startBrackets) {
+		if (
+			resolveMainBracketProgression(brackets, startBracketIdx).includes(idx)
+		) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 /**
@@ -619,11 +629,14 @@ export function bracketDepth(idx: number, brackets: ParsedBracket[]): number {
 	return Math.max(...sourceDepths) + 1;
 }
 
-function resolveMainBracketProgression(brackets: ParsedBracket[]) {
+function resolveMainBracketProgression(
+	brackets: ParsedBracket[],
+	startBracketIdx = 0,
+) {
 	if (brackets.length === 1) return [0];
 
-	let bracketIdxToFind = 0;
-	const result = [0];
+	let bracketIdxToFind = startBracketIdx;
+	const result = [startBracketIdx];
 	while (true) {
 		const bracket = brackets.findIndex((bracket) =>
 			bracket.sources?.some(
@@ -685,8 +698,11 @@ export function changedBracketProgressionFormat(
 	return false;
 }
 
-/** Returns the order of brackets as is to be considered for standings. Teams from the bracket of lower index are considered to be above those from the lower bracket.
- *  A participant's standing is the first bracket to appear in order that has the participant in it.
+/**
+ * Returns the order of brackets as is to be considered for standings. Teams from the bracket of lower index are considered to be above those from the lower bracket.
+ * A participant's standing is the first bracket to appear in order that has the participant in it.
+ *
+ * The order is so that most significant brackets (i.e. finals) appear first.
  */
 export function bracketIdxsForStandings(progression: ParsedBracket[]) {
 	const bracketsToConsider = bracketsReachableFrom(0, progression);
@@ -734,7 +750,7 @@ export function bracketIdxsForStandings(progression: ParsedBracket[]) {
 	});
 }
 
-function bracketsReachableFrom(
+export function bracketsReachableFrom(
 	bracketIdx: number,
 	progression: ParsedBracket[],
 ): number[] {
@@ -793,4 +809,11 @@ export function destinationByPlacement({
 	);
 
 	return destination ?? null;
+}
+
+export function startingBrackets(progression: ParsedBracket[]): number[] {
+	return progression
+		.map((bracket, idx) => ({ bracket, idx }))
+		.filter(({ bracket }) => !bracket.sources)
+		.map(({ idx }) => idx);
 }

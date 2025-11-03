@@ -600,6 +600,8 @@ export interface TournamentResult {
 	/** The SP change in total after the finalization of a ranked tournament. */
 	spDiff: number | null;
 	userId: number;
+	/** Division label for tournaments with multiple starting brackets (e.g., "D1", "D2") */
+	div: string | null;
 }
 
 export interface TournamentRoundMaps {

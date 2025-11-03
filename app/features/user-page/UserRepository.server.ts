@@ -483,6 +483,7 @@ export function findResultsByUserId(
 			"CalendarEventResultTeam.placement",
 			"CalendarEvent.participantCount",
 			sql<Tables["TournamentResult"]["setResults"]>`null`.as("setResults"),
+			sql<string | null>`null`.as("div"),
 			sql<string | null>`null`.as("logoUrl"),
 			"CalendarEvent.name as eventName",
 			"CalendarEventResultTeam.id as teamId",
@@ -520,6 +521,7 @@ export function findResultsByUserId(
 			"TournamentResult.placement",
 			"TournamentResult.participantCount",
 			"TournamentResult.setResults",
+			"TournamentResult.div",
 			eb
 				.selectFrom("UserSubmittedImage")
 				.select(["UserSubmittedImage.url"])

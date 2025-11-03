@@ -638,13 +638,13 @@ describe("isUnderground", () => {
 			false,
 		);
 		expect(Progression.isUnderground(1, progressions.manyStartBrackets)).toBe(
-			true,
+			false,
 		);
 		expect(Progression.isUnderground(2, progressions.manyStartBrackets)).toBe(
 			false,
 		);
 		expect(Progression.isUnderground(3, progressions.manyStartBrackets)).toBe(
-			true,
+			false,
 		);
 	});
 
@@ -717,6 +717,26 @@ describe("bracketIdxsForStandings", () => {
 				progressions.doubleEliminationWithUnderground,
 			),
 		).toEqual([0]); // missing 1 because it's underground when DE is the source
+	});
+});
+
+describe("startingBrackets", () => {
+	it("handles SE", () => {
+		expect(
+			Progression.startingBrackets(progressions.singleElimination),
+		).toEqual([0]);
+	});
+
+	it("handles many starter brackets", () => {
+		expect(
+			Progression.startingBrackets(progressions.manyStartBrackets),
+		).toEqual([0, 1]);
+	});
+
+	it("handles swiss (one group)", () => {
+		expect(Progression.startingBrackets(progressions.swissOneGroup)).toEqual([
+			0,
+		]);
 	});
 });
 
