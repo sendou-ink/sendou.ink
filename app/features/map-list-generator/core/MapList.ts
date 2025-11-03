@@ -85,13 +85,19 @@ export function* generate(args: {
 				mode,
 				stageWeights,
 				stageModeWeights,
-				stageModeLastUsed,
 			});
 
 			result.push({ mode, stageId });
 
-			const stageWeightPenalty = isNotGuaranteedToBePlayed ? -2.5 : -5;
-			const stageModeWeightPenalty = isNotGuaranteedToBePlayed ? -5 : -10;
+			for (const [key, value] of stageWeights.entries()) {
+				stageWeights.set(key, value + 1);
+			}
+			for (const [key, value] of stageModeWeights.entries()) {
+				stageModeWeights.set(key, value + 1);
+			}
+
+			const stageWeightPenalty = isNotGuaranteedToBePlayed ? -2 : -5;
+			const stageModeWeightPenalty = args.mapPool.modes.length > 1 ? -10 : 0;
 
 			stageWeights.set(stageId, stageWeightPenalty);
 			stageModeWeights.set(`${stageId}-${mode}`, stageModeWeightPenalty);
@@ -151,13 +157,11 @@ function selectStageWeighted({
 	mode,
 	stageWeights,
 	stageModeWeights,
-	stageModeLastUsed,
 }: {
 	possibleStages: readonly StageId[];
 	mode: ModeShort;
 	stageWeights: Map<StageId, number>;
 	stageModeWeights: Map<string, number>;
-	stageModeLastUsed: Map<string, number>;
 }): StageId {
 	const getCandidates = () =>
 		possibleStages.filter((stageId) => {
@@ -178,18 +182,7 @@ function selectStageWeighted({
 		candidates = getCandidates();
 	}
 
-	const oldestLastUsed = Math.min(
-		...candidates.map(
-			(stageId) => stageModeLastUsed.get(`${stageId}-${mode}`) ?? -1,
-		),
-	);
-
-	const oldestCandidates = candidates.filter(
-		(stageId) =>
-			(stageModeLastUsed.get(`${stageId}-${mode}`) ?? -1) === oldestLastUsed,
-	);
-
-	return weightedRandomSelect(oldestCandidates, (stageId) => {
+	return weightedRandomSelect(candidates, (stageId) => {
 		const stageWeight = stageWeights.get(stageId) ?? 0;
 		const stageModeWeight = stageModeWeights.get(`${stageId}-${mode}`) ?? 0;
 		return stageWeight + stageModeWeight + 1;
