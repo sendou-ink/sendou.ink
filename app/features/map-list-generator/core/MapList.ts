@@ -51,7 +51,6 @@ export function* generate(args: {
 		args.mapPool.parsed,
 	);
 	const orderedModes = modeOrders(modes);
-	const stageModeLastUsed = new Map<string, number>();
 	let currentOrderIndex = 0;
 
 	const firstArgs = yield [];
@@ -101,7 +100,6 @@ export function* generate(args: {
 
 			stageWeights.set(stageId, stageWeightPenalty);
 			stageModeWeights.set(`${stageId}-${mode}`, stageModeWeightPenalty);
-			stageModeLastUsed.set(`${stageId}-${mode}`, currentOrderIndex);
 		}
 
 		currentOrderIndex++;
