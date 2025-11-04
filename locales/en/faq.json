@@ -16,5 +16,7 @@
 	"q8": "How can I show X Battle results on my profile?",
 	"a8": "Find your player page from the Top Search page. Post the link to the helpdesk on our Discord saying you want it linked. Note that the linking is not possible if you have not finished a season in the Top 500.",
 	"q9": "How can I upload art that I commissioned?",
-	"a9": "You can only upload art that you made yourself. It also has to be Splatoon related. For commissioned work please ask the artist to upload it themselves to the site. They are able to link your user profile and that will make it show on your profile."
+	"a9": "You can only upload art that you made yourself. It also has to be Splatoon related. For commissioned work please ask the artist to upload it themselves to the site. They are able to link your user profile and that will make it show on your profile.",
+	"q10": "What are established tournament organizations?",
+	"a10": "These are organizations that have permissions to host tournaments on sendou.ink. To become an established organization you need 150 monthly active users in your tournaments over 6 month period (checked in June and December). This can be either on sendou.ink or another platform. In addition patrons (of Supporter tier or above) have the tournament permissions."
 }

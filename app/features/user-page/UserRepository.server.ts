@@ -483,6 +483,7 @@ export function findResultsByUserId(
 			"CalendarEventResultTeam.placement",
 			"CalendarEvent.participantCount",
 			sql<Tables["TournamentResult"]["setResults"]>`null`.as("setResults"),
+			sql<string | null>`null`.as("div"),
 			sql<string | null>`null`.as("logoUrl"),
 			"CalendarEvent.name as eventName",
 			"CalendarEventResultTeam.id as teamId",
@@ -520,6 +521,7 @@ export function findResultsByUserId(
 			"TournamentResult.placement",
 			"TournamentResult.participantCount",
 			"TournamentResult.setResults",
+			"TournamentResult.div",
 			eb
 				.selectFrom("UserSubmittedImage")
 				.select(["UserSubmittedImage.url"])
@@ -760,6 +762,21 @@ export async function currentFriendCodeByUserId(userId: number) {
 		.orderBy("UserFriendCode.createdAt", "desc")
 		.limit(1)
 		.executeTakeFirst();
+}
+
+/** Returns all friend codes submitted by a user (both present and past) */
+export async function friendCodesByUserId(userId: number) {
+	return db
+		.selectFrom("UserFriendCode")
+		.leftJoin("User", "User.id", "UserFriendCode.submitterUserId")
+		.select([
+			"UserFriendCode.friendCode",
+			"UserFriendCode.createdAt",
+			"User.username as submitterUsername",
+		])
+		.where("UserFriendCode.userId", "=", userId)
+		.orderBy("UserFriendCode.createdAt", "desc")
+		.execute();
 }
 
 let cachedFriendCodes: Set<string> | null = null;

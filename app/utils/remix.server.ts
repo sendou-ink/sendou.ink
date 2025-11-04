@@ -11,7 +11,7 @@ import { nanoid } from "nanoid";
 import type { Ok, Result } from "neverthrow";
 import type { z } from "zod/v4";
 import type { navItems } from "~/components/layout/nav-items";
-import { s3UploadHandler } from "~/features/img-upload";
+import { s3UploadHandler } from "~/features/img-upload/s3.server";
 import invariant from "./invariant";
 import { logger } from "./logger";
 

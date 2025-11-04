@@ -22,6 +22,10 @@ Name of the tournament.
 
 Description of the tournament, shown when registering. Supports Markdown including embedding images.
 
+### Organization
+
+Which organization to host the tournament under. Note that if you do not have global tournament adder permissions (patron perk) you can only host tournaments for organizations that are "established". To host a tournament for such an organization you need either the Admin or Organizer role.
+
 ### Rules
 
 Rules of the tournament. Supports Markdown including embedding images.

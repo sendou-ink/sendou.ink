@@ -1,9 +1,15 @@
 import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
+import {
+	Link,
+	useFetcher,
+	useLoaderData,
+	useSearchParams,
+} from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { LinkButton } from "~/components/elements/Button";
+import { SendouSwitch } from "~/components/elements/Switch";
 import {
 	SendouTab,
 	SendouTabList,
@@ -20,7 +26,7 @@ import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { BannedUsersList } from "~/features/tournament-organization/components/BannedPlayersList";
-import { useHasPermission } from "~/modules/permissions/hooks";
+import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -94,6 +100,7 @@ export default function TournamentOrganizationPage() {
 	return (
 		<Main className="stack lg">
 			<LogoHeader />
+			<AdminControls />
 			<InfoTabs />
 			{data.organization.series.length > 0 ? (
 				<SeriesSelector series={data.organization.series} />
@@ -140,6 +147,37 @@ function LogoHeader() {
 				<div className="whitespace-pre-wrap text-sm text-lighter">
 					{data.organization.description}
 				</div>
+			</div>
+		</div>
+	);
+}
+
+function AdminControls() {
+	const data = useLoaderData<typeof loader>();
+	const fetcher = useFetcher();
+	const isAdmin = useHasRole("ADMIN");
+
+	if (!isAdmin) return null;
+
+	const onChange = (isSelected: boolean) => {
+		fetcher.submit(
+			{ _action: "UPDATE_IS_ESTABLISHED", isEstablished: isSelected },
+			{ method: "post", encType: "application/json" },
+		);
+	};
+
+	return (
+		<div className="stack sm">
+			<div className="text-sm font-semi-bold">Admin Controls</div>
+			<div>
+				<SendouSwitch
+					defaultSelected={Boolean(data.organization.isEstablished)}
+					onChange={onChange}
+					isDisabled={fetcher.state !== "idle"}
+					data-testid="is-established-switch"
+				>
+					Is Established Organization
+				</SendouSwitch>
 			</div>
 		</div>
 	);

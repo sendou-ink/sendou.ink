@@ -9,7 +9,6 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import * as ImageRepository from "../ImageRepository.server";
-import { validateImage } from "../queries/validateImage";
 import { validateImageSchema } from "../upload-schemas.server";
 
 export const action: ActionFunction = async ({ request }) => {
@@ -28,7 +27,7 @@ export const action: ActionFunction = async ({ request }) => {
 					await ImageRepository.findById(imageId),
 				);
 
-				validateImage(imageId);
+				await ImageRepository.validateImage(imageId);
 
 				if (image.tournamentId) {
 					clearTournamentDataCache(imageId);

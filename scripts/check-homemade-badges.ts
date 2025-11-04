@@ -35,6 +35,19 @@ for (const key of Object.keys(badges)) {
 	lastKey = key;
 }
 
+// check for duplicate displayName values
+const displayNames = new Map<string, string>();
+for (const [key, badge] of Object.entries(badges)) {
+	const existingKey = displayNames.get(badge.displayName);
+	if (existingKey) {
+		console.error(
+			`Duplicate displayName "${badge.displayName}" found in keys: ${existingKey} and ${key}`,
+		);
+		process.exit(1);
+	}
+	displayNames.set(badge.displayName, key);
+}
+
 // check each key has the 3 matching files in the right location
 const badgesLocation = path.join("public", "static-assets", "badges");
 

@@ -23,9 +23,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		await UserRepository.findModInfoById(user.id),
 	);
 
+	const friendCodes = await UserRepository.friendCodesByUserId(user.id);
+
 	return {
 		...userData,
 		discordId: user.discordId,
 		discordAccountCreatedAt: convertSnowflakeToDate(user.discordId).getTime(),
+		friendCodes,
 	};
 };

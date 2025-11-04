@@ -1,4 +1,4 @@
-.front-page__side-nav {
+.frontPageSideNav {
 	display: none;
 	position: fixed;
 	left: 15px;
@@ -11,13 +11,13 @@
 	padding-inline-end: var(--s-4);
 }
 
-.front-page__side-nav picture {
+.frontPageSideNav picture {
 	background-color: var(--bg-lightest);
 	border-radius: var(--rounded);
 	padding: 0.225rem;
 }
 
-.front-page__side-nav-item {
+.frontPageSideNavItem {
 	display: flex;
 	color: var(--text);
 	font-size: var(--fonts-xs);
@@ -26,11 +26,11 @@
 	align-items: center;
 }
 
-.front-page__side-nav-item img {
+.frontPageSideNavItem img {
 	min-width: 20px;
 }
 
-.front-page__side-nav__log-out {
+.frontPageSideNavLogOut {
 	display: flex;
 	font-size: var(--fonts-xs);
 	font-weight: var(--bold);
@@ -39,7 +39,7 @@
 	color: var(--text-lighter) !important;
 }
 
-.front-page__side-nav__log-out svg {
+.frontPageSideNavLogOut svg {
 	background-color: var(--bg-lightest);
 	border-radius: var(--rounded);
 	min-width: 28px;
@@ -47,22 +47,22 @@
 	padding: var(--s-1-5);
 }
 
-.front-page__side-nav__log-out path {
+.frontPageSideNavLogOut path {
 	margin-inline-end: -1px;
 }
 
-.front-page__side-nav-item:hover picture {
+.frontPageSideNavItem:hover picture {
 	background-color: var(--theme-transparent);
 }
 
 /** Reference to .layout__hamburger-fab **/
 @media screen and (min-width: 1130px) {
-	.front-page__side-nav {
+	.frontPageSideNav {
 		display: flex;
 	}
 }
 
-.front-page__container {
+.frontPageContainer {
 	--card-width: 225px;
 	--card-height: 90px;
 	display: flex;
@@ -70,12 +70,12 @@
 	gap: var(--s-8);
 }
 
-.front__change-log__img {
+.changeLogImg {
 	max-height: 300px;
 	border-radius: var(--rounded-sm);
 }
 
-.front__change-log__icon-button {
+.changeLogIconButton {
 	display: flex;
 	flex-direction: row;
 	gap: var(--s-1-5);
@@ -87,11 +87,11 @@
 	color: var(--text-lighter);
 }
 
-.front__change-log__icon-button:hover {
+.changeLogIconButton:hover {
 	color: var(--theme);
 }
 
-.front__external-link-icon {
+.externalLinkIcon {
 	width: 18px;
 	stroke-width: 2px;
 }
@@ -102,7 +102,7 @@
 	initial-value: 50%;
 }
 
-.front__season-banner {
+.seasonBanner {
 	/*  needed for firefox to have a valid output */
 	--l: 50%;
 
@@ -122,28 +122,28 @@
 	margin-block-start: var(--s-4);
 }
 
-.front__season-banner:hover {
+.seasonBanner:hover {
 	--l: 75%;
 }
 
-.front__season-banner__header {
+.seasonBannerHeader {
 	font-size: var(--fonts-xl);
 	font-weight: var(--bold);
 }
 
-.front__season-banner__dates {
+.seasonBannerDates {
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
 }
 
-.front__season-banner__img {
+.seasonBannerImg {
 	position: absolute;
 	width: 95px;
 	right: 8px;
 	top: -29.5px;
 }
 
-.front__season-banner__link {
+.seasonBannerLink {
 	background-color: var(--bg-lightest);
 	border-radius: var(--rounded);
 	width: max-content;
@@ -155,28 +155,28 @@
 	align-items: center;
 }
 
-.front__season-banner__link svg {
+.seasonBannerLink svg {
 	width: 24px;
 	transition: all 0.2s ease-out;
 }
 
-.front__season-banner__link:hover svg {
+.seasonBannerLink:hover svg {
 	translate: 2px;
 }
 
-.front__tournament-cards {
+.tournamentCards {
 	display: flex;
 	justify-content: space-between;
 	gap: var(--s-2);
 }
 
-.front__tournament-cards__spacer {
+.tournamentCardsSpacer {
 	display: flex;
 	gap: var(--s-2);
 	height: 100%;
 }
 
-.front__tournament-cards__view-all-card {
+.tournamentCardsViewAllCard {
 	background-color: var(--bg-lighter);
 	height: var(--card-height);
 	border-radius: var(--rounded);
@@ -193,25 +193,25 @@
 	border: 2.5px solid var(--bg-lightest-solid);
 }
 
-.front__tournament-cards__view-all-card:hover {
+.tournamentCardsViewAllCard:hover {
 	background-color: var(--bg-lightest);
 }
 
-.front__result-highlights {
+.resultHighlights {
 	display: flex;
 	gap: var(--s-2);
 }
 
-.front__result-highlights__title {
+.resultHighlightsTitle {
 	font-size: var(--fonts-xs);
 }
 
-.front__result-highlights__title__tournaments {
+.resultHighlightsTitleTournaments {
 	align-self: flex-start;
 	margin-inline-start: 65px;
 }
 
-.front__leaderboard {
+.leaderboard {
 	min-width: var(--card-width);
 	max-width: var(--card-width);
 	background-color: var(--bg-lightest);
@@ -222,7 +222,7 @@
 	padding: var(--s-2);
 }
 
-.front__leaderboard__name {
+.leaderboardName {
 	font-size: var(--fonts-sm);
 	font-weight: var(--bold);
 	white-space: nowrap;
@@ -231,7 +231,7 @@
 	overflow: hidden;
 }
 
-.front__leaderboard__view-all {
+.leaderboardViewAll {
 	font-size: var(--fonts-xxs);
 	color: var(--text);
 	background-color: var(--bg-lightest);
@@ -243,7 +243,7 @@
 	padding: var(--s-0-5) var(--s-1-5);
 }
 
-.front__luti-banner {
+.lutiBanner {
 	background-color: #4874a0;
 	color: #fff;
 	border-radius: var(--rounded);
@@ -252,16 +252,4 @@
 	display: flex;
 	gap: var(--s-2);
 	flex-wrap: wrap;
-}
-
-.front__oktofest-banner {
-	background-color: #ffad32;
-	color: #000;
-	border-radius: var(--rounded);
-	padding: var(--s-2);
-	justify-content: center;
-	display: flex;
-	gap: var(--s-2);
-	flex-wrap: wrap;
-	text-align: center;
 }

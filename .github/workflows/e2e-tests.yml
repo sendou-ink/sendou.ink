@@ -6,6 +6,7 @@ on:
       - 'content/**'
       - 'public/**'
       - 'locales/**'
+      - 'app/features/badges/homemade.json'
   push:
     branches:
       - main
@@ -13,6 +14,7 @@ on:
       - 'content/**'
       - 'public/**'
       - 'locales/**'
+      - 'app/features/badges/homemade.json'
 
 jobs:
   e2e:

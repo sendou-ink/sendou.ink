@@ -113,7 +113,7 @@ export const action: ActionFunction = async ({ request }) => {
 					bannedByUserId: null,
 				});
 
-				refreshBannedCache();
+				await refreshBannedCache();
 
 				throw redirect(SUSPENDED_PAGE);
 			}

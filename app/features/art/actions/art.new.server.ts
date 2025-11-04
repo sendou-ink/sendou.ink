@@ -6,8 +6,9 @@ import {
 	redirect,
 } from "@remix-run/node";
 import { nanoid } from "nanoid";
+import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
-import { s3UploadHandler } from "~/features/img-upload";
+import { s3UploadHandler } from "~/features/img-upload/s3.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -20,8 +21,6 @@ import {
 import { userArtPage } from "~/utils/urls";
 import { NEW_ART_EXISTING_SEARCH_PARAM_KEY } from "../art-constants";
 import { editArtSchema, newArtSchema } from "../art-schemas.server";
-import { addNewArt, editArt } from "../queries/addNewArt.server";
-import { findArtById } from "../queries/findArtById.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = await requireUser(request);
@@ -34,28 +33,28 @@ export const action: ActionFunction = async ({ request }) => {
 	if (artIdRaw) {
 		const artId = Number(artIdRaw);
 
-		const existingArt = findArtById(artId);
-		errorToastIfFalsy(
-			existingArt?.authorId === user.id,
-			"Art author is someone else",
-		);
+		const userArts = await ArtRepository.findArtsByUserId(user.id, {
+			includeTagged: false,
+		});
+		const existingArt = userArts.find((art) => art.id === artId);
+		errorToastIfFalsy(existingArt, "Art author is someone else");
 
 		const data = await parseRequestPayload({
 			request,
 			schema: editArtSchema,
 		});
 
-		const editedArtId = editArt({
-			authorId: user.id,
-			artId,
+		const editedArtId = await ArtRepository.update(artId, {
 			description: data.description,
 			isShowcase: data.isShowcase,
 			linkedUsers: data.linkedUsers,
 			tags: data.tags,
 		});
 
+		const existingLinkedUserIds =
+			existingArt.linkedUsers?.map((u) => u.id) ?? [];
 		const newLinkedUsers = data.linkedUsers.filter(
-			(userId) => !existingArt.linkedUsers.includes(userId),
+			(userId) => !existingLinkedUserIds.includes(userId),
 		);
 
 		notify({
@@ -87,7 +86,7 @@ export const action: ActionFunction = async ({ request }) => {
 			schema: newArtSchema,
 		});
 
-		const addedArtId = addNewArt({
+		const addedArt = await ArtRepository.insert({
 			authorId: user.id,
 			description: data.description,
 			url: fileName,
@@ -103,7 +102,7 @@ export const action: ActionFunction = async ({ request }) => {
 				meta: {
 					adderUsername: user.username,
 					adderDiscordId: user.discordId,
-					artId: addedArtId,
+					artId: addedArt.id,
 				},
 			},
 		});

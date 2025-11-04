@@ -2,7 +2,6 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ArtRepository from "../ArtRepository.server";
 import { NEW_ART_EXISTING_SEARCH_PARAM_KEY } from "../art-constants";
-import { findArtById } from "../queries/findArtById.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await requireUser(request);
@@ -13,8 +12,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	if (!artIdRaw) return { art: null, tags: await ArtRepository.findAllTags() };
 	const artId = Number(artIdRaw);
 
-	const art = findArtById(artId);
-	if (!art || art.authorId !== user.id) {
+	const userArts = await ArtRepository.findArtsByUserId(user.id, {
+		includeTagged: false,
+	});
+	const art = userArts.find((a) => a.id === artId);
+	if (!art) {
 		return { art: null, tags: await ArtRepository.findAllTags() };
 	}
 

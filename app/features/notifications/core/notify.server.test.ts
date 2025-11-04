@@ -342,4 +342,46 @@ describe("notify() - web push notifications", () => {
 
 		expect(mockSendNotification).not.toHaveBeenCalled();
 	});
+
+	test("formats timestamp for scrim notifications", async () => {
+		const mockSubscription = {
+			endpoint: "https://fcm.googleapis.com/fcm/send/test",
+			keys: {
+				auth: "test-auth-key",
+				p256dh: "test-p256dh-key",
+			},
+		};
+
+		vi.spyOn(
+			NotificationRepository,
+			"subscriptionsByUserIds",
+		).mockResolvedValue([
+			{
+				id: 1,
+				subscription: mockSubscription,
+			},
+		]);
+
+		mockWebPushEnabled.value = true;
+
+		const testTimestamp = new Date("2024-01-15T15:30:00Z").getTime();
+
+		await notify({
+			userIds: [1],
+			notification: {
+				type: "SCRIM_SCHEDULED",
+				meta: { id: 1, at: testTimestamp },
+			},
+		});
+
+		expect(mockSendNotification).toHaveBeenCalledTimes(1);
+
+		const callArgs = mockSendNotification.mock.calls[0][1];
+		const payload = JSON.parse(callArgs);
+
+		expect(payload.title).toBe("Scrim Scheduled");
+		expect(payload.body).toMatch(
+			/New scrim scheduled at \d+\/\d+, \d+:\d+ (AM|PM)/,
+		);
+	});
 });

@@ -128,8 +128,12 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 						</Link>
 					))}
 					{art.tags?.map((tag) => (
-						<Link to={artPage(tag)} key={tag} className="art__dialog__tag">
-							#{tag}
+						<Link
+							to={artPage(tag.name)}
+							key={tag.id}
+							className="art__dialog__tag"
+						>
+							#{tag.name}
 						</Link>
 					))}
 				</div>
