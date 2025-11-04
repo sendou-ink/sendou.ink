@@ -143,7 +143,7 @@ function MapPicker() {
 			if (mp?.preference === "AVOID") continue;
 
 			const pool = preferences.pool.find((p) => p.mode === mode);
-			if (!pool || pool.stages.length !== AMOUNT_OF_MAPS_IN_POOL_PER_MODE) {
+			if (pool && pool.stages.length > AMOUNT_OF_MAPS_IN_POOL_PER_MODE) {
 				return false;
 			}
 		}

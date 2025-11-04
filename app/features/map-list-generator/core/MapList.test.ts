@@ -479,3 +479,85 @@ describe("MapList.parsePattern()", () => {
 		).toBeInstanceOf(Err);
 	});
 });
+
+describe("MapList.generate() with initialWeights", () => {
+	it("accepts initialWeights parameter without errors", () => {
+		const mapPool = new MapPool({
+			SZ: [1, 2, 3],
+			TC: [4, 5],
+			RM: [],
+			CB: [],
+			TW: [],
+		});
+
+		const initialWeights = new Map<string, number>();
+		initialWeights.set("1-SZ", 100);
+		initialWeights.set("4-TC", -10);
+
+		const gen = MapList.generate({ mapPool, initialWeights });
+		gen.next();
+
+		const maps = gen.next({ amount: 3 }).value;
+
+		expect(maps).toHaveLength(3);
+		expect(maps.every((m) => mapPool.has(m))).toBe(true);
+	});
+
+	it("handles empty initialWeights", () => {
+		const mapPool = new MapPool({
+			SZ: [1, 2],
+			TC: [],
+			RM: [],
+			CB: [],
+			TW: [],
+		});
+
+		const gen = MapList.generate({ mapPool, initialWeights: new Map() });
+		gen.next();
+
+		const maps = gen.next({ amount: 2 }).value;
+
+		expect(maps).toHaveLength(2);
+	});
+
+	it("handles undefined initialWeights", () => {
+		const mapPool = new MapPool({
+			SZ: [1, 2],
+			TC: [],
+			RM: [],
+			CB: [],
+			TW: [],
+		});
+
+		const gen = MapList.generate({ mapPool });
+		gen.next();
+
+		const maps = gen.next({ amount: 2 }).value;
+
+		expect(maps).toHaveLength(2);
+	});
+
+	it("initialWeights affect stage selection", () => {
+		const mapPool = new MapPool({
+			SZ: [1, 2, 3, 4, 5],
+			TC: [],
+			RM: [],
+			CB: [],
+			TW: [],
+		});
+
+		const initialWeights = new Map<string, number>();
+		initialWeights.set("1-SZ", 1);
+		initialWeights.set("2-SZ", -1);
+		initialWeights.set("3-SZ", -1);
+		initialWeights.set("4-SZ", -1);
+		initialWeights.set("5-SZ", -1);
+
+		const gen = MapList.generate({ mapPool, initialWeights });
+		gen.next();
+
+		const maps = gen.next({ amount: 3 }).value;
+
+		expect(maps[0].stageId).toBe(1);
+	});
+});

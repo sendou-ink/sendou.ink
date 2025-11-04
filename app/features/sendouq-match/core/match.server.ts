@@ -1,26 +1,110 @@
 import * as R from "remeda";
 import type { ParsedMemento, UserMapModePreferences } from "~/db/tables";
-import {
-	type DbMapPoolList,
-	MapPool,
-} from "~/features/map-list-generator/core/map-pool";
+import * as MapList from "~/features/map-list-generator/core/MapList";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { userSkills } from "~/features/mmr/tiered.server";
+import { getDefaultMapWeights } from "~/features/sendouq/core/defaultMaps.server";
 import { addSkillsToGroups } from "~/features/sendouq/core/groups.server";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import type { LookingGroupWithInviteCode } from "~/features/sendouq/q-types";
-import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
+import {
+	BANNED_MAPS,
+	SENDOUQ_MAP_POOL,
+} from "~/features/sendouq-settings/banned-maps";
 import { modesShort } from "~/modules/in-game-lists/modes";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import { generateBalancedMapList } from "~/modules/tournament-map-list-generator/balanced-map-list";
-import { SENDOUQ_DEFAULT_MAPS } from "~/modules/tournament-map-list-generator/constants";
-import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
-import invariant from "~/utils/invariant";
+import type { ModeShort, ModeWithStage } from "~/modules/in-game-lists/types";
+import type {
+	TournamentMapListMap,
+	TournamentMaplistSource,
+} from "~/modules/tournament-map-list-generator/types";
 import { logger } from "~/utils/logger";
 import { averageArray } from "~/utils/number";
 import type { MatchById } from "../queries/findMatchById.server";
 
-export function matchMapList(
+async function calculateMapWeights(
+	groupOnePreferences: UserMapModePreferences[],
+	groupTwoPreferences: UserMapModePreferences[],
+	modesIncluded: ModeShort[],
+): Promise<Map<string, number>> {
+	const defaultWeights = await getDefaultMapWeights();
+
+	const teamOneVotes = new Map<string, number>();
+	const teamTwoVotes = new Map<string, number>();
+
+	countVotesForTeam(modesIncluded, groupOnePreferences, teamOneVotes);
+	countVotesForTeam(modesIncluded, groupTwoPreferences, teamTwoVotes);
+
+	const applyWeightFormula = (voteCount: number) => voteCount * voteCount;
+
+	const teamOneWeights = new Map<string, number>();
+	const teamTwoWeights = new Map<string, number>();
+
+	for (const [key, votes] of teamOneVotes) {
+		teamOneWeights.set(key, applyWeightFormula(votes));
+	}
+	for (const [key, votes] of teamTwoVotes) {
+		teamTwoWeights.set(key, applyWeightFormula(votes));
+	}
+
+	const teamOneTotal = Array.from(teamOneWeights.values()).reduce(
+		(sum, w) => sum + w,
+		0,
+	);
+	const teamTwoTotal = Array.from(teamTwoWeights.values()).reduce(
+		(sum, w) => sum + w,
+		0,
+	);
+
+	const combinedWeights = new Map<string, number>();
+	const allKeys = new Set([...teamOneWeights.keys(), ...teamTwoWeights.keys()]);
+
+	for (const key of allKeys) {
+		const teamOneWeight = teamOneWeights.get(key) ?? 0;
+		const teamTwoWeight = teamTwoWeights.get(key) ?? 0;
+
+		if (teamOneTotal > 0 && teamTwoTotal > 0) {
+			// xxx: extract (?) and some unit tests to verify this works correctly
+			const normalizedTeamOne = (teamOneWeight / teamOneTotal) * teamTwoTotal;
+			combinedWeights.set(key, normalizedTeamOne + teamTwoWeight);
+		} else {
+			combinedWeights.set(key, teamOneWeight + teamTwoWeight);
+		}
+	}
+
+	for (const [key, weight] of defaultWeights) {
+		if (!combinedWeights.has(key)) {
+			combinedWeights.set(key, weight);
+		}
+	}
+
+	return combinedWeights;
+}
+
+function countVotesForTeam(
+	modesIncluded: ModeShort[],
+	preferences: UserMapModePreferences[],
+	votesMap: Map<string, number>,
+) {
+	for (const preference of preferences) {
+		for (const poolEntry of preference.pool) {
+			if (!modesIncluded.includes(poolEntry.mode)) continue;
+
+			const avoidedMode = preference.modes.find(
+				(m) => m.mode === poolEntry.mode && m.preference === "AVOID",
+			);
+			if (avoidedMode) continue;
+
+			for (const stageId of poolEntry.stages) {
+				if (BANNED_MAPS[poolEntry.mode].includes(stageId)) continue;
+
+				const key = `${stageId}-${poolEntry.mode}`;
+				votesMap.set(key, (votesMap.get(key) ?? 0) + 1);
+			}
+		}
+	}
+}
+
+export async function matchMapList(
 	groupOne: {
 		preferences: { userId: number; preferences: UserMapModePreferences }[];
 		id: number;
@@ -31,7 +115,7 @@ export function matchMapList(
 		id: number;
 		ignoreModePreferences?: boolean;
 	},
-) {
+): Promise<TournamentMapListMap[]> {
 	const modesIncluded = mapModePreferencesToModeList(
 		groupOne.ignoreModePreferences
 			? []
@@ -41,107 +125,54 @@ export function matchMapList(
 			: groupTwo.preferences.map(({ preferences }) => preferences.modes),
 	);
 
-	try {
-		return generateBalancedMapList({
-			count: SENDOUQ_BEST_OF,
-			seed: String(groupOne.id),
-			modesIncluded,
-			tiebreakerMaps: new MapPool([]),
-			followModeOrder: true,
-			teams: [
-				{
-					id: groupOne.id,
-					maps: mapLottery(
-						groupOne.preferences.map((p) => p.preferences),
-						modesIncluded,
-					),
-				},
-				{
-					id: groupTwo.id,
-					maps: mapLottery(
-						groupTwo.preferences.map((p) => p.preferences),
-						modesIncluded,
-					),
-				},
-			],
-		});
-		// in rare cases, the map list generator can fail
-		// in that case, just return a map list from our default set of maps
-	} catch (e) {
-		logger.error(e);
-		return generateBalancedMapList({
-			count: SENDOUQ_BEST_OF,
-			seed: String(groupOne.id),
-			modesIncluded,
-			tiebreakerMaps: new MapPool([]),
-			teams: [
-				{
-					id: groupOne.id,
-					maps: new MapPool([]),
-				},
-				{
-					id: groupTwo.id,
-					maps: new MapPool([]),
-				},
-			],
-		});
-	}
-}
+	const weights = await calculateMapWeights(
+		groupOne.preferences.map((p) => p.preferences),
+		groupTwo.preferences.map((p) => p.preferences),
+		modesIncluded,
+	);
 
-const MAPS_PER_MODE = 7;
+	const generator = MapList.generate({
+		mapPool: SENDOUQ_MAP_POOL,
+		initialWeights: weights,
+	});
+	generator.next();
 
-export function mapLottery(
-	preferences: UserMapModePreferences[],
-	modes: ModeShort[],
-) {
-	invariant(modes.length > 0, "mapLottery: no modes");
+	const maps = generator.next({ amount: SENDOUQ_BEST_OF }).value;
 
-	const mapPoolList: DbMapPoolList = [];
-
-	for (const mode of modes) {
-		const stageIdsFromPools = R.shuffle(
-			preferences.flatMap((preference) => {
-				// if they disliked the mode don't include their maps
-				// they are just saved in the DB so they can be restored later
-				if (
-					preference.modes.find((mp) => mp.mode === mode)?.preference ===
-					"AVOID"
-				) {
-					return [];
-				}
-
-				return preference.pool.find((pool) => pool.mode === mode)?.stages ?? [];
-			}),
+	const resolveSource = (map: ModeWithStage): TournamentMaplistSource => {
+		const groupOnePrefers = groupOne.preferences.some((p) =>
+			p.preferences.pool.some(
+				(pool) => pool.mode === map.mode && pool.stages.includes(map.stageId),
+			),
+		);
+		const groupTwoPrefers = groupTwo.preferences.some((p) =>
+			p.preferences.pool.some(
+				(pool) => pool.mode === map.mode && pool.stages.includes(map.stageId),
+			),
 		);
 
-		const modeStageIdsForMatch: StageId[] = [];
-		for (const stageId of stageIdsFromPools) {
-			if (modeStageIdsForMatch.length === MAPS_PER_MODE) break;
-			if (
-				modeStageIdsForMatch.includes(stageId) ||
-				BANNED_MAPS[mode].includes(stageId)
-			) {
-				continue;
-			}
-
-			modeStageIdsForMatch.push(stageId);
+		if (groupOnePrefers && groupTwoPrefers) {
+			return "BOTH";
+		}
+		if (groupOnePrefers) {
+			return groupOne.id;
+		}
+		if (groupTwoPrefers) {
+			return groupTwo.id;
 		}
 
-		if (modeStageIdsForMatch.length === MAPS_PER_MODE) {
-			for (const stageId of modeStageIdsForMatch) {
-				mapPoolList.push({ mode, stageId });
-			}
-			// this should only happen if they made no map picks at all yet
-			// as when everyone avoids a mode it can't appear
-			// and if they select mode as neutral/prefer you need to pick 7 maps
-		} else {
-			mapPoolList.push(
-				...SENDOUQ_DEFAULT_MAPS[mode].map((stageId) => ({ mode, stageId })),
-			);
-		}
+		return "DEFAULT";
+	};
+
+	const result = maps.map((map) => ({ ...map, source: resolveSource(map) }));
+
+	if (result.some((m) => m.source === "DEFAULT")) {
+		logger.info(
+			`[matchMapList] Some maps were selected from DEFAULT source. groupOne: ${JSON.stringify(groupOne)}, groupTwo: ${JSON.stringify(groupTwo)}`,
+		);
 	}
 
-	return new MapPool(mapPoolList);
+	return result;
 }
 
 export function mapModePreferencesToModeList(

@@ -226,7 +226,7 @@ export const action: ActionFunction = async ({ request }) => {
 			);
 			const theirGroupPreferences =
 				await QRepository.mapModePreferencesByGroupId(theirGroup.id);
-			const mapList = matchMapList(
+			const mapList = await matchMapList(
 				{
 					id: ourGroup.id,
 					preferences: ourGroupPreferences,

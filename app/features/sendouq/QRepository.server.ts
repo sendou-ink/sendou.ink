@@ -395,3 +395,16 @@ export async function setOldGroupsAsInactive() {
 			.executeTakeFirst();
 	});
 }
+
+export async function mapModePreferencesBySeasonNth(seasonNth: number) {
+	return db
+		.selectFrom("Skill")
+		.innerJoin("User", "User.id", "Skill.userId")
+		.select("User.mapModePreferences")
+		.where("Skill.season", "=", seasonNth)
+		.where("Skill.userId", "is not", null)
+		.where("User.mapModePreferences", "is not", null)
+		.groupBy("Skill.userId")
+		.$narrowType<{ mapModePreferences: UserMapModePreferences }>()
+		.execute();
+}
