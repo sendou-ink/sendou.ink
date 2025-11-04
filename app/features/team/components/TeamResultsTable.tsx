@@ -8,6 +8,7 @@ import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
 import type { TeamResultsLoaderData } from "~/features/team/loaders/t.$customUrl.results.server";
 import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { tournamentLogoUrl, tournamentTeamPage, userPage } from "~/utils/urls";
 import { userSubmittedImage } from "~/utils/urls-img";
@@ -19,7 +20,8 @@ interface TeamResultsTableProps {
 }
 
 export function TeamResultsTable({ results }: TeamResultsTableProps) {
-	const { t, i18n } = useTranslation("user");
+	const { t } = useTranslation("user");
+	const { formatDate } = useTimeFormat();
 
 	return (
 		<Table>
@@ -48,14 +50,11 @@ export function TeamResultsTable({ results }: TeamResultsTableProps) {
 								</div>
 							</td>
 							<td className="whitespace-nowrap">
-								{databaseTimestampToDate(result.startTime).toLocaleDateString(
-									i18n.language,
-									{
-										day: "numeric",
-										month: "short",
-										year: "numeric",
-									},
-								)}
+								{formatDate(databaseTimestampToDate(result.startTime), {
+									day: "numeric",
+									month: "short",
+									year: "numeric",
+								})}
 							</td>
 							<td>
 								<div className="stack horizontal xs items-center">

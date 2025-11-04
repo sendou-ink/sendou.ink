@@ -33,6 +33,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			});
 			break;
 		}
+		case "UPDATE_CLOCK_FORMAT": {
+			await UserRepository.updatePreferences(user.id, {
+				clockFormat: data.newValue,
+			});
+			break;
+		}
 		case "PLACEHOLDER": {
 			break;
 		}

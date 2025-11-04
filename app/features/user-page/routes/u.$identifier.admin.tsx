@@ -11,6 +11,7 @@ import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
 import { USER } from "~/features/user-page/user-page-constants";
 import { addModNoteSchema } from "~/features/user-page/user-page-schemas";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { action } from "../actions/u.$identifier.admin.server";
 import { loader } from "../loaders/u.$identifier.admin.server";
@@ -48,13 +49,14 @@ export default function UserAdminPage() {
 
 function AccountInfos() {
 	const data = useLoaderData<typeof loader>();
+	const { formatDateTime } = useTimeFormat();
 
 	return (
 		<dl className={styles.dl}>
 			<dt>User account created at</dt>
 			<dd>
 				{data.createdAt
-					? databaseTimestampToDate(data.createdAt).toLocaleString("en-US", {
+					? formatDateTime(databaseTimestampToDate(data.createdAt), {
 							year: "numeric",
 							month: "long",
 							day: "numeric",
@@ -66,7 +68,7 @@ function AccountInfos() {
 
 			<dt>Discord account created at</dt>
 			<dd>
-				{new Date(data.discordAccountCreatedAt).toLocaleString("en-US", {
+				{formatDateTime(new Date(data.discordAccountCreatedAt), {
 					year: "numeric",
 					month: "long",
 					day: "numeric",
@@ -103,6 +105,7 @@ function AccountInfos() {
 function ModNotes() {
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
+	const { formatDateTime } = useTimeFormat();
 
 	if (!data.modNotes || data.modNotes.length === 0) {
 		return (
@@ -118,7 +121,7 @@ function ModNotes() {
 			{data.modNotes.map((note) => (
 				<div key={note.noteId}>
 					<p className="font-bold">
-						{databaseTimestampToDate(note.createdAt).toLocaleString("en-US", {
+						{formatDateTime(databaseTimestampToDate(note.createdAt), {
 							year: "numeric",
 							month: "long",
 							day: "numeric",
@@ -186,6 +189,7 @@ function NewModNoteDialog() {
 
 function BanLog() {
 	const data = useLoaderData<typeof loader>();
+	const { formatDateTime } = useTimeFormat();
 
 	if (!data.banLogs || data.banLogs.length === 0) {
 		return <p className="text-center text-lighter italic">No bans</p>;
@@ -196,7 +200,7 @@ function BanLog() {
 			{data.banLogs.map((ban) => (
 				<div key={ban.createdAt}>
 					<p className="font-bold">
-						{databaseTimestampToDate(ban.createdAt).toLocaleString("en-US", {
+						{formatDateTime(databaseTimestampToDate(ban.createdAt), {
 							year: "numeric",
 							month: "long",
 							day: "numeric",
@@ -214,7 +218,7 @@ function BanLog() {
 						<p className="ml-2">
 							Banned till:{" "}
 							{ban.banned !== 1
-								? databaseTimestampToDate(ban.banned).toLocaleString("en-US", {
+								? formatDateTime(databaseTimestampToDate(ban.banned), {
 										year: "numeric",
 										month: "long",
 										day: "numeric",
@@ -240,6 +244,7 @@ function BanLog() {
 
 function FriendCodes() {
 	const data = useLoaderData<typeof loader>();
+	const { formatDateTime } = useTimeFormat();
 
 	if (!data.friendCodes || data.friendCodes.length === 0) {
 		return <p className="text-center text-lighter italic">No friend codes</p>;
@@ -252,7 +257,7 @@ function FriendCodes() {
 					<p className="font-bold">{fc.friendCode}</p>
 					<p className="ml-2">
 						{index === 0 ? "Current" : "Past"} - Added on{" "}
-						{databaseTimestampToDate(fc.createdAt).toLocaleString("en-US", {
+						{formatDateTime(databaseTimestampToDate(fc.createdAt), {
 							year: "numeric",
 							month: "long",
 							day: "numeric",

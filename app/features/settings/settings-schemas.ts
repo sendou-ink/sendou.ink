@@ -15,6 +15,10 @@ export const settingsEditSchema = z.union([
 		newValue: z.boolean(),
 	}),
 	z.object({
+		_action: _action("UPDATE_CLOCK_FORMAT"),
+		newValue: z.enum(["auto", "24h", "12h"]),
+	}),
+	z.object({
 		_action: _action("PLACEHOLDER"),
 	}),
 ]);

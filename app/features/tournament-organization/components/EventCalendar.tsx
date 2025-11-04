@@ -3,6 +3,7 @@ import clsx from "clsx";
 import { LinkButton } from "~/components/elements/Button";
 import type { MonthYear } from "~/features/plus-voting/core";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate, nullPaddedDatesOfMonth } from "~/utils/dates";
 import type { loader } from "../loaders/org.$slug.server";
 
@@ -105,6 +106,7 @@ const monthYearSearchParams = ({ month, year }: MonthYear) =>
 	]).toString();
 function MonthSelector({ month, year }: { month: number; year: number }) {
 	const date = new Date(Date.UTC(year, month, 15));
+	const { formatDate } = useTimeFormat();
 
 	return (
 		<div className="org__calendar__month-selector">
@@ -123,7 +125,7 @@ function MonthSelector({ month, year }: { month: number; year: number }) {
 				{"<"}
 			</LinkButton>
 			<div>
-				{date.toLocaleDateString("en-US", {
+				{formatDate(date, {
 					year: "numeric",
 					month: "long",
 				})}
