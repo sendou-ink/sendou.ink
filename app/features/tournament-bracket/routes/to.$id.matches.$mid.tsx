@@ -47,6 +47,25 @@ export default function TournamentMatchPage() {
 		revalidate();
 	}, [visibility, revalidate, tournament.ctx.isFinalized]);
 
+	const [selectedResultIndex, setSelectedResultIndex] = useSearchParamState({
+		defaultValue: data.matchIsOver ? data.results.length - 1 : undefined,
+		name: "result",
+		revive: (value) => {
+			const maybeIndex = Number(value);
+			if (!Number.isInteger(maybeIndex)) return;
+			if (maybeIndex < 0 || maybeIndex >= data.results.length) return;
+
+			return maybeIndex;
+		},
+	});
+
+	const [selectedTabKey, setSelectedTabKey] = useSearchParamState({
+		defaultValue: "rosters",
+		name: "tab",
+		revive: (value) =>
+			["chat", "rosters", "actions"].includes(value) ? value : null,
+	});
+
 	const type =
 		tournament.canReportScore({ matchId: data.match.id, user }) ||
 		tournament.isOrganizerOrStreamer(user)
@@ -113,13 +132,22 @@ export default function TournamentMatchPage() {
 						data.match.opponentOne?.id && data.match.opponentTwo?.id,
 					)}
 				/>
-				{data.matchIsOver ? <ResultsSection /> : null}
-				{!data.matchIsOver &&
-				typeof data.match.opponentOne?.id === "number" &&
-				typeof data.match.opponentTwo?.id === "number" ? (
+				{typeof selectedResultIndex === "number" &&
+				data.results[selectedResultIndex] ? (
+					<ResultsSection
+						selectedResultIndex={selectedResultIndex}
+						setSelectedResultIndex={setSelectedResultIndex}
+						selectedTabKey={selectedTabKey}
+						setSelectedTabKey={setSelectedTabKey}
+					/>
+				) : typeof data.match.opponentOne?.id === "number" &&
+					typeof data.match.opponentTwo?.id === "number" ? (
 					<MapListSection
 						teams={[data.match.opponentOne.id, data.match.opponentTwo.id]}
 						type={type}
+						setSelectedResultIndex={setSelectedResultIndex}
+						selectedTabKey={selectedTabKey}
+						setSelectedTabKey={setSelectedTabKey}
 					/>
 				) : null}
 				{showRosterPeek() ? (
@@ -286,9 +314,15 @@ function MatchHeader() {
 function MapListSection({
 	teams,
 	type,
+	setSelectedResultIndex,
+	selectedTabKey,
+	setSelectedTabKey,
 }: {
 	teams: [id: number, id: number];
 	type: "EDIT" | "OTHER";
+	setSelectedResultIndex: (index: number) => void;
+	selectedTabKey: string;
+	setSelectedTabKey: (key: string) => void;
 }) {
 	const data = useLoaderData<typeof loader>();
 	const tournament = useTournament();
@@ -320,24 +354,26 @@ function MapListSection({
 			currentStageWithMode={currentMap}
 			teams={[teamOne, teamTwo]}
 			type={type}
+			setSelectedResultIndex={setSelectedResultIndex}
+			selectedTabKey={selectedTabKey}
+			setSelectedTabKey={setSelectedTabKey}
 		/>
 	);
 }
 
-function ResultsSection() {
+function ResultsSection({
+	selectedResultIndex,
+	setSelectedResultIndex,
+	selectedTabKey,
+	setSelectedTabKey,
+}: {
+	selectedResultIndex: number;
+	setSelectedResultIndex: (index: number) => void;
+	selectedTabKey: string;
+	setSelectedTabKey: (key: string) => void;
+}) {
 	const data = useLoaderData<typeof loader>();
 	const tournament = useTournament();
-	const [selectedResultIndex, setSelectedResultIndex] = useSearchParamState({
-		defaultValue: data.results.length - 1,
-		name: "result",
-		revive: (value) => {
-			const maybeIndex = Number(value);
-			if (!Number.isInteger(maybeIndex)) return;
-			if (maybeIndex < 0 || maybeIndex >= data.results.length) return;
-
-			return maybeIndex;
-		},
-	});
 
 	const result = data.results[selectedResultIndex];
 	invariant(result, "Result is missing");
@@ -365,6 +401,8 @@ function ResultsSection() {
 			setSelectedResultIndex={setSelectedResultIndex}
 			result={result}
 			type="OTHER"
+			selectedTabKey={selectedTabKey}
+			setSelectedTabKey={setSelectedTabKey}
 		/>
 	);
 }
