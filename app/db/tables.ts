@@ -45,6 +45,8 @@ export interface Team {
 	inviteCode: string;
 	name: string;
 	bsky: string | null;
+	/** Team's tag, typically used in-game in front of users' names to indicate they are a member of the team. */
+	tag: string | null;
 }
 
 export interface TeamMember {

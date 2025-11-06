@@ -59,6 +59,7 @@ export default function EditTeamPage() {
 						<CustomizedColorsInput initialColors={css} />
 					) : null}
 					<NameInput />
+					<TagInput />
 					<BlueskyInput />
 					<BioTextarea />
 					<SubmitButton
@@ -170,6 +171,26 @@ function NameInput() {
 				data-testid="name-input"
 			/>
 			<FormMessage type="info">{t("team:forms.info.name")}</FormMessage>
+		</div>
+	);
+}
+
+function TagInput() {
+	const { t } = useTranslation(["team"]);
+	const { team } = useLoaderData<typeof loader>();
+	const [value, setValue] = React.useState(team.tag ?? "");
+
+	return (
+		<div>
+			<Label htmlFor="tag">{t("team:forms.fields.tag")}</Label>
+			<input
+				id="tag"
+				name="tag"
+				maxLength={TEAM.TAG_MAX_LENGTH}
+				value={value}
+				onChange={(e) => setValue(e.target.value)}
+			/>
+			<FormMessage type="info">{t("team:forms.info.tag")}</FormMessage>
 		</div>
 	);
 }

@@ -99,6 +99,11 @@ function TeamBanner() {
 					})}
 				</div>
 				<div className="team__banner__name">
+					{team.tag ? (
+						<div className="team__banner__tag team__banner__tag__desktop">
+							{team.tag}
+						</div>
+					) : null}
 					{team.name} <BskyLink />
 				</div>
 			</div>
@@ -125,6 +130,11 @@ function MobileTeamNameCountry() {
 				{team.name}
 				<BskyLink />
 			</div>
+			{team.tag ? (
+				<div className="team__banner__tag team__banner__tag__mobile">
+					{team.tag}
+				</div>
+			) : null}
 		</div>
 	);
 }

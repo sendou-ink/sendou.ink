@@ -15,6 +15,7 @@ export function findAllUndisbanded() {
 		.select(({ eb }) => [
 			"Team.customUrl",
 			"Team.name",
+			"Team.tag",
 			eb
 				.selectFrom("UserSubmittedImage")
 				.whereRef("UserSubmittedImage.id", "=", "Team.avatarImgId")
@@ -72,6 +73,7 @@ export function findByCustomUrl(
 			"Team.name",
 			"Team.bsky",
 			"Team.bio",
+			"Team.tag",
 			"Team.customUrl",
 			"Team.css",
 			"AvatarImage.url as avatarSrc",
@@ -278,10 +280,11 @@ export async function update({
 	customUrl,
 	bio,
 	bsky,
+	tag,
 	css,
 }: Pick<
 	Insertable<Tables["Team"]>,
-	"id" | "name" | "customUrl" | "bio" | "bsky"
+	"id" | "name" | "customUrl" | "bio" | "bsky" | "tag"
 > & { css: string | null }) {
 	return db
 		.updateTable("AllTeam")
@@ -290,6 +293,7 @@ export async function update({
 			customUrl,
 			bio,
 			bsky,
+			tag,
 			css,
 		})
 		.where("id", "=", id)
