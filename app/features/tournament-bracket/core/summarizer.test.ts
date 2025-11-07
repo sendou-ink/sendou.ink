@@ -721,4 +721,65 @@ describe("tournamentSummary()", () => {
 		expect(team1Results.every((r) => r.div === "Division 1")).toBeTruthy();
 		expect(team2Results.every((r) => r.div === "Division 2")).toBeTruthy();
 	});
+
+	test("participantCount is correct for multi-division tournaments", () => {
+		const summary = summarize({
+			teamsWithStartingBrackets: [
+				{ id: 1, startingBracketIdx: 0 },
+				{ id: 2, startingBracketIdx: 1 },
+				{ id: 3, startingBracketIdx: 0 },
+				{ id: 4, startingBracketIdx: 1 },
+			],
+			progression: [
+				{
+					name: "Division 1",
+					type: "single_elimination",
+					settings: {},
+					requiresCheckIn: false,
+				},
+				{
+					name: "Division 2",
+					type: "single_elimination",
+					settings: {},
+					requiresCheckIn: false,
+				},
+			],
+			finalStandings: [
+				{
+					placement: 1,
+					team: createTeam(1, [1, 2, 3, 4]),
+				},
+				{
+					placement: 1,
+					team: createTeam(2, [5, 6, 7, 8]),
+				},
+				{
+					placement: 2,
+					team: createTeam(3, [9, 10, 11, 12]),
+				},
+				{
+					placement: 2,
+					team: createTeam(4, [13, 14, 15, 16]),
+				},
+			],
+		});
+
+		const team1Results = summary.tournamentResults.filter(
+			(r) => r.tournamentTeamId === 1,
+		);
+		const team2Results = summary.tournamentResults.filter(
+			(r) => r.tournamentTeamId === 2,
+		);
+		const team3Results = summary.tournamentResults.filter(
+			(r) => r.tournamentTeamId === 3,
+		);
+		const team4Results = summary.tournamentResults.filter(
+			(r) => r.tournamentTeamId === 4,
+		);
+
+		expect(team1Results.every((r) => r.participantCount === 2)).toBeTruthy();
+		expect(team2Results.every((r) => r.participantCount === 2)).toBeTruthy();
+		expect(team3Results.every((r) => r.participantCount === 2)).toBeTruthy();
+		expect(team4Results.every((r) => r.participantCount === 2)).toBeTruthy();
+	});
 });

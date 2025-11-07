@@ -302,11 +302,7 @@ function GroupMember({
 					) : (
 						<Avatar user={member} size="xs" />
 					)}
-					<Link
-						to={userPage(member)}
-						className="q__group-member__name"
-						target="_blank"
-					>
+					<Link to={userPage(member)} className="q__group-member__name">
 						{member.inGameName ? (
 							<>
 								<span className="text-lighter font-bold text-xxxs">
@@ -752,7 +748,7 @@ function TierInfo({ skill }: { skill: TieredSkill | "CALCULATING" }) {
 							{skill.tier.name}
 							{skill.tier.isPlus ? "+" : ""}
 						</div>
-						<Link to={TIERS_PAGE} className="text-xxs" target="_blank">
+						<Link to={TIERS_PAGE} className="text-xxs">
 							{t("q:looking.allTiers")}
 						</Link>
 					</div>

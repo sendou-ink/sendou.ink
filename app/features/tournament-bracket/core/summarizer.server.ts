@@ -526,9 +526,15 @@ function tournamentResults({
 				? getBracketProgressionLabel(team.startingBracketIdx, progression)
 				: null;
 
+		const divisionParticipantCount =
+			div !== null
+				? teams.filter((t) => t.startingBracketIdx === team.startingBracketIdx)
+						.length
+				: participantCount;
+
 		for (const player of standing.team.members) {
 			result.push({
-				participantCount,
+				participantCount: divisionParticipantCount,
 				placement: standing.placement,
 				tournamentTeamId: standing.team.id,
 				userId: player.userId,

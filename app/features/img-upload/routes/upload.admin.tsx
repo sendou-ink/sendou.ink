@@ -56,12 +56,7 @@ function ImageValidator() {
 								</FormWithConfirm>
 							</div>
 							<img src={userSubmittedImage(image.url)} alt="" />
-							<Link
-								to={`/u/${image.submitterUserId}`}
-								className="text-xs"
-								target="_blank"
-								rel="noopener noreferrer"
-							>
+							<Link to={`/u/${image.submitterUserId}`} className="text-xs">
 								From: {image.username}
 							</Link>
 						</div>
