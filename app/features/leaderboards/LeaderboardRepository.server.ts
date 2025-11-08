@@ -3,7 +3,10 @@ import type { InferResult } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
 import { db } from "~/db/sql";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import {
+	COMMON_USER_FIELDS,
+	concatUserSubmittedImagePrefix,
+} from "~/utils/kysely.server";
 import { dateToDatabaseTimestamp } from "../../utils/dates";
 import invariant from "../../utils/invariant";
 import * as Seasons from "../mmr/core/Seasons";
@@ -72,10 +75,12 @@ const teamLeaderboardBySeasonQuery = (season: number) =>
 						"UserSubmittedImage.id",
 						"Team.avatarImgId",
 					)
-					.select([
+					.select((eb) => [
 						"Team.id",
 						"Team.name",
-						"UserSubmittedImage.url as avatarUrl",
+						concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+							"avatarUrl",
+						),
 						"Team.customUrl",
 						"TeamMemberWithSecondary.isMainTeam",
 						"TeamMemberWithSecondary.userId",

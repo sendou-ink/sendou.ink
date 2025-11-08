@@ -8,8 +8,8 @@ import * as TournamentRepository from "~/features/tournament/TournamentRepositor
 import i18next from "~/modules/i18n/i18next.server";
 import { nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
+import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
 import { parseParams } from "~/utils/remix.server";
-import { userSubmittedImage } from "~/utils/urls-img";
 import { id } from "~/utils/zod";
 import {
 	handleOptionsRequest,
@@ -49,7 +49,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			"TournamentTeam.seed",
 			"TournamentTeam.createdAt",
 			"TournamentTeamCheckIn.checkedInAt",
-			"UserSubmittedImage.url as avatarUrl",
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"avatarUrl",
+			),
 			jsonObjectFrom(
 				eb
 					.selectFrom("AllTeam")
@@ -61,7 +63,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 					.whereRef("AllTeam.id", "=", "TournamentTeam.teamId")
 					.select([
 						"AllTeam.customUrl",
-						"UserSubmittedImage.url as logoUrl",
+						concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+							"logoUrl",
+						),
 						"AllTeam.deletedAt",
 					]),
 			).as("team"),
@@ -112,13 +116,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 	const friendCodes = await TournamentRepository.friendCodesByTournamentId(id);
 
-	const logoUrl = (team: (typeof teams)[number]) => {
-		const url = team.team?.logoUrl ?? team.avatarUrl;
-		if (!url) return null;
-
-		return userSubmittedImage(url);
-	};
-
 	const result: GetTournamentTeamsResponse = teams.map((team) => {
 		return {
 			id: team.id,
@@ -155,7 +152,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 					joinedAt: databaseTimestampToDate(member.createdAt).toISOString(),
 				};
 			}),
-			logoUrl: logoUrl(team),
+			logoUrl: team.team?.logoUrl ?? team.avatarUrl,
 			mapPool:
 				team.mapPool.length > 0
 					? team.mapPool.map((map) => {

@@ -394,14 +394,12 @@ function RowContents({
 }) {
 	const tournament = useTournament();
 
+	const logoUrl = tournament.tournamentTeamLogoSrc(team);
+
 	return (
 		<>
 			<div>{seed}</div>
-			<div>
-				{team.team?.logoUrl ? (
-					<Avatar url={tournament.tournamentTeamLogoSrc(team)} size="xxs" />
-				) : null}
-			</div>
+			<div>{logoUrl ? <Avatar url={logoUrl} size="xxs" /> : null}</div>
 			<div className="tournament__seeds__team-name">
 				{team.checkIns.length > 0 ? "✅ " : "❌ "} {team.name}
 			</div>

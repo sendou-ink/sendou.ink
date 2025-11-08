@@ -2256,8 +2256,7 @@ export const SWIM_OR_SINK_167 = (
 				},
 			],
 		},
-		logoUrl: null,
-		logoValidatedAt: null,
+		logoUrl: "test.png",
 		author: {
 			id: 1402,
 			username: "grace",
@@ -7626,6 +7625,5 @@ export const SWIM_OR_SINK_167 = (
 			40505, 41797, 42409, 42703, 43847, 43850, 44751, 45163, 45635, 45980,
 			46045, 46099, 46101,
 		],
-		logoSrc: "/static-assets/img/tournament-logos/sos.png",
 	},
 });

@@ -4,13 +4,15 @@ import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
 import type { Tables, TablesInsertable } from "~/db/tables";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
-import { userSubmittedImage } from "~/utils/urls-img";
+import {
+	COMMON_USER_FIELDS,
+	concatUserSubmittedImagePrefix,
+	tournamentLogoWithDefault,
+} from "~/utils/kysely.server";
 import { db } from "../../db/sql";
 import invariant from "../../utils/invariant";
 import type { Unwrapped } from "../../utils/types";
 import type { AssociationVisibility } from "../associations/associations-types";
-import { HACKY_resolvePicture } from "../tournament/tournament-utils";
 import * as Scrim from "./core/Scrim";
 import type { ScrimPost, ScrimPostUser } from "./scrims-types";
 import { getPostRequestCensor, parseLutiDiv } from "./scrims-utils";
@@ -117,11 +119,6 @@ const baseFindQuery = db
 		"ScrimPost.mapsTournamentId",
 		"CalendarEvent.tournamentId",
 	)
-	.leftJoin(
-		"UserSubmittedImage as TournamentAvatar",
-		"CalendarEvent.avatarImgId",
-		"TournamentAvatar.id",
-	)
 	.select((eb) => [
 		"ScrimPost.id",
 		"ScrimPost.at",
@@ -141,12 +138,14 @@ const baseFindQuery = db
 		jsonBuildObject({
 			name: eb.ref("Team.name"),
 			customUrl: eb.ref("Team.customUrl"),
-			avatarUrl: eb.ref("UserSubmittedImage.url"),
+			avatarUrl: concatUserSubmittedImagePrefix(
+				eb.ref("UserSubmittedImage.url"),
+			),
 		}).as("team"),
 		jsonBuildObject({
 			id: eb.ref("CalendarEvent.tournamentId"),
 			name: eb.ref("CalendarEvent.name"),
-			avatarUrl: eb.ref("TournamentAvatar.url"),
+			avatarUrl: tournamentLogoWithDefault(eb),
 		}).as("mapsTournament"),
 		jsonArrayFrom(
 			eb
@@ -173,7 +172,9 @@ const baseFindQuery = db
 					jsonBuildObject({
 						name: innerEb.ref("Team.name"),
 						customUrl: innerEb.ref("Team.customUrl"),
-						avatarUrl: innerEb.ref("UserSubmittedImage.url"),
+						avatarUrl: concatUserSubmittedImagePrefix(
+							innerEb.ref("UserSubmittedImage.url"),
+						),
 					}).as("team"),
 					jsonArrayFrom(
 						innerEb
@@ -258,9 +259,7 @@ const mapDBRowToScrimPost = (
 			? {
 					id: row.mapsTournament.id,
 					name: row.mapsTournament.name!,
-					avatarUrl: row.mapsTournament.avatarUrl
-						? userSubmittedImage(row.mapsTournament.avatarUrl)
-						: HACKY_resolvePicture({ name: row.mapsTournament.name! }),
+					avatarUrl: row.mapsTournament.avatarUrl,
 				}
 			: null,
 		chatCode: row.chatCode ?? null,

@@ -2,8 +2,8 @@ import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { cors } from "remix-utils/cors";
 import { z } from "zod/v4";
 import { db } from "~/db/sql";
+import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
-import { userSubmittedImage } from "~/utils/urls-img";
 import { id } from "~/utils/zod";
 import {
 	handleOptionsRequest,
@@ -29,23 +29,23 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 				"UserSubmittedImage.id",
 				"Team.avatarImgId",
 			)
-			.select([
+			.select((eb) => [
 				"Team.id",
 				"Team.name",
 				"Team.customUrl",
-				"UserSubmittedImage.url as logoUrl",
+				concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+					"logoUrl",
+				),
 			])
 			.where("Team.id", "=", teamId)
 			.executeTakeFirst(),
 	);
 
-	const logoUrl = team.logoUrl ? userSubmittedImage(team.logoUrl) : null;
-
 	const result: GetTeamResponse = {
 		id: team.id,
 		name: team.name,
+		logoUrl: team.logoUrl,
 		teamPageUrl: `https://sendou.ink/t/${team.customUrl}`,
-		logoUrl,
 	};
 
 	return await cors(request, json(result));
