@@ -55,7 +55,7 @@ export function userRoles(
 	}
 
 	if (user.isTournamentOrganizer || user.isApiAccesser || isSupporter(user)) {
-		result.push("API_ACCESS");
+		result.push("API_ACCESSER");
 	}
 
 	return result;

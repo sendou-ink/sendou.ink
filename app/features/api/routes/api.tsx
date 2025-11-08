@@ -47,7 +47,7 @@ export default function ApiPage() {
 			) : data.apiToken ? (
 				<div className="stack md">
 					<div>
-						<label htmlFor="token">{t("common:api.tokenLabel")}</label>
+						<label>{t("common:api.tokenLabel")}</label>
 						<CopyToClipboardPopover
 							url={data.apiToken}
 							trigger={

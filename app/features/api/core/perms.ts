@@ -3,7 +3,7 @@ import * as TournamentOrganizationRepository from "~/features/tournament-organiz
 
 /**
  * Checks whether a user has permission to access the API.
- * A user has API access if they either have the API_ACCESS role (includes supporters),
+ * A user has API access if they either have the API_ACCESSER role (includes supporters),
  * or are an admin/organizer/streamer of an established tournament organization.
  *
  * @param user - The authenticated user to check permissions for
@@ -11,7 +11,7 @@ import * as TournamentOrganizationRepository from "~/features/tournament-organiz
  */
 export async function checkUserHasApiAccess(user: AuthenticatedUser) {
 	// NOTE: permissions logic also exists in ApiRepository.allApiTokens function
-	if (user.roles.includes("API_ACCESS")) {
+	if (user.roles.includes("API_ACCESSER")) {
 		return true;
 	}
 

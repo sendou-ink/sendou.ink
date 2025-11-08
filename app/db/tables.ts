@@ -915,6 +915,7 @@ export interface UserFriendCode {
 }
 
 export interface ApiToken {
+	id: GeneratedAlways<number>;
 	userId: number;
 	token: string;
 	createdAt: GeneratedAlways<number>;

@@ -5,6 +5,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import { parseRequestPayload, successToast } from "~/utils/remix.server";
 import { _action } from "~/utils/zod";
 import * as ApiRepository from "../ApiRepository.server";
+import { checkUserHasApiAccess } from "../core/perms";
 
 const apiActionSchema = z.object({
 	_action: _action("GENERATE"),
@@ -16,6 +17,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		schema: apiActionSchema,
 	});
 	const user = await requireUser(request);
+
+	const hasApiAccess = await checkUserHasApiAccess(user);
+	if (!hasApiAccess) {
+		throw new Response("Forbidden", { status: 403 });
+	}
 
 	switch (data._action) {
 		case "GENERATE": {
