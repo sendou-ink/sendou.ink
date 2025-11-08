@@ -54,7 +54,7 @@ export function userRoles(
 		result.push("CALENDAR_EVENT_ADDER");
 	}
 
-	if (user.isApiAccesser || isSupporter(user)) {
+	if (user.isTournamentOrganizer || user.isApiAccesser || isSupporter(user)) {
 		result.push("API_ACCESS");
 	}
 
