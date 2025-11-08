@@ -3,8 +3,8 @@ export function up(db) {
 		db.prepare(
 			/* sql */ `
       create table "ApiToken" (
-        "userId" integer primary key,
-        "token" text not null,
+        "token" text not null primary key,
+        "userId" integer,
         "createdAt" integer default (strftime('%s', 'now')) not null,
         foreign key ("userId") references "User"("id") on delete cascade
       ) strict

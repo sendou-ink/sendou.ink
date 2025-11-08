@@ -62,6 +62,8 @@ export async function allApiTokens() {
 		.where((eb) =>
 			eb.or([
 				eb("User.isApiAccesser", "=", 1),
+				eb("User.isTournamentOrganizer", "=", 1),
+				eb("User.patronTier", ">=", 2),
 				eb.and([
 					eb("TournamentOrganization.isEstablished", "=", 1),
 					eb.or([
