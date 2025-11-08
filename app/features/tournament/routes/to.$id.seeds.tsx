@@ -412,7 +412,6 @@ function RowContents({
 						<div key={member.userId} className="tournament__seeds__team-member">
 							<Link
 								to={userResultsPage(member, true)}
-								target="_blank"
 								className="tournament__seeds__team-member__name"
 							>
 								{member.username}

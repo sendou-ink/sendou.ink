@@ -65,9 +65,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const season = Seasons.current(tournament.ctx.startTime)?.nth;
 
 	const seedingSkillCountsFor = tournament.skillCountsFor;
+	const standingsResult = Standings.tournamentStandings(tournament);
+	const finalStandings = Standings.flattenStandings(standingsResult);
 	const summary = tournamentSummary({
 		teams: tournament.ctx.teams,
-		finalStandings: Standings.tournamentStandings(tournament),
+		finalStandings,
 		results,
 		calculateSeasonalStats: tournament.ranked,
 		queryCurrentTeamRating: (identifier) =>
@@ -85,6 +87,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				type: seedingSkillCountsFor!,
 			}),
 		seedingSkillCountsFor,
+		progression: tournament.ctx.settings.bracketProgression,
 	});
 
 	const tournamentSummaryString = `Tournament id: ${tournamentId}, mapResultDeltas.lenght: ${summary.mapResultDeltas.length}, playerResultDeltas.length ${summary.playerResultDeltas.length}, tournamentResults.length ${summary.tournamentResults.length}, skills.length ${summary.skills.length}, seedingSkills.length ${summary.seedingSkills.length}`;

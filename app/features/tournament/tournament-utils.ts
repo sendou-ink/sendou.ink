@@ -8,6 +8,8 @@ import { assertUnreachable } from "../../utils/types";
 import { MapPool } from "../map-list-generator/core/map-pool";
 import * as Seasons from "../mmr/core/Seasons";
 import { BANNED_MAPS } from "../sendouq-settings/banned-maps";
+import type { ParsedBracket } from "../tournament-bracket/core/Progression";
+import * as Progression from "../tournament-bracket/core/Progression";
 import type { Tournament as TournamentClass } from "../tournament-bracket/core/Tournament";
 import type { TournamentData } from "../tournament-bracket/core/Tournament.server";
 import type { PlayedSet } from "./core/sets.server";
@@ -269,4 +271,46 @@ export function normalizedTeamCount({
 	minMembersPerTeam: number;
 }) {
 	return teamsCount * minMembersPerTeam;
+}
+
+export function getBracketProgressionLabel(
+	startingBracketIdx: number,
+	progression: ParsedBracket[],
+): string {
+	const reachableBracketIdxs = Progression.bracketsReachableFrom(
+		startingBracketIdx,
+		progression,
+	);
+
+	const uniqueBracketIdxs = Array.from(new Set(reachableBracketIdxs));
+	const bracketNames = uniqueBracketIdxs.map((idx) => progression[idx].name);
+
+	if (bracketNames.length === 1) {
+		return bracketNames[0];
+	}
+
+	let prefix = bracketNames[0];
+	for (let i = 1; i < bracketNames.length; i++) {
+		const name = bracketNames[i];
+		let j = 0;
+		while (j < prefix.length && j < name.length && prefix[j] === name[j]) {
+			j++;
+		}
+		prefix = prefix.substring(0, j);
+		if (prefix === "") break;
+	}
+
+	prefix = prefix.trim();
+
+	if (!prefix) {
+		const deepestBracketIdx = uniqueBracketIdxs.reduce((deepest, current) => {
+			const currentDepth = Progression.bracketDepth(current, progression);
+			const deepestDepth = Progression.bracketDepth(deepest, progression);
+			return currentDepth > deepestDepth ? current : deepest;
+		}, uniqueBracketIdxs[0]);
+
+		return progression[deepestBracketIdx].name;
+	}
+
+	return prefix;
 }

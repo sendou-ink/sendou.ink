@@ -117,6 +117,9 @@ export function UserResultsTable({
 											>
 												{result.eventName}
 											</Link>
+											{result.div ? (
+												<span className="text-lighter">({result.div})</span>
+											) : null}
 										</>
 									) : null}
 								</div>

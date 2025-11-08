@@ -234,7 +234,7 @@ function Languages() {
 			</div>
 			<FormMessage type="info">
 				{t("lfg:new.editOn")}{" "}
-				<Link to={SENDOUQ_SETTINGS_PAGE} target="_blank" rel="noreferrer">
+				<Link to={SENDOUQ_SETTINGS_PAGE}>
 					{t("lfg:new.languages.sqSettingsPage")}
 				</Link>
 			</FormMessage>
@@ -262,7 +262,7 @@ function WeaponPool() {
 			</div>
 			<FormMessage type="info">
 				{t("lfg:new.editOn")}{" "}
-				<Link to={userEditProfilePage(user!)} target="_blank" rel="noreferrer">
+				<Link to={userEditProfilePage(user!)}>
 					{t("lfg:new.weaponPool.userProfile")}
 				</Link>
 			</FormMessage>
