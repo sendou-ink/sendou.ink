@@ -39,7 +39,7 @@ export function generateToken(userId: number) {
 
 /**
  * Retrieves all valid API tokens from users with API access.
- * Includes tokens from users with the isApiAccesser flag enabled (includes supporters),
+ * Includes tokens from users with the isApiAccesser flag enabled (includes supporters tier 2+),
  * or users who are ADMIN, ORGANIZER, or STREAMER members of established tournament organizations.
  * @returns Array of valid API token strings
  */
