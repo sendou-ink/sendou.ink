@@ -18,7 +18,6 @@ import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { artPage, navIconUrl } from "~/utils/urls";
-import { conditionalUserSubmittedImage } from "~/utils/urls-img";
 import { metaTitle } from "../../../utils/remix";
 import { action } from "../actions/art.new.server";
 import { ART } from "../art-constants";
@@ -113,12 +112,7 @@ function ImageUpload({
 	const id = React.useId();
 
 	if (data.art) {
-		return (
-			<img
-				src={conditionalUserSubmittedImage(previewUrl(data.art.url))}
-				alt=""
-			/>
-		);
+		return <img src={previewUrl(data.art.url)} alt="" />;
 	}
 
 	return (
