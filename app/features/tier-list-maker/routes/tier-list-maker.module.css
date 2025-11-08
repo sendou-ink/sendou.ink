@@ -1,0 +1,13 @@
+.header {
+	display: flex;
+	justify-content: end;
+	align-items: center;
+	margin-bottom: var(--s-6);
+}
+
+.tierList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	margin-bottom: var(--s-6);
+}

@@ -1,0 +1,73 @@
+.container {
+	display: flex;
+	gap: var(--s-1);
+	min-height: 68px;
+}
+
+.tierLabel {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 68px;
+	padding: var(--s-2);
+	font-size: var(--fonts-lg);
+	font-weight: var(--bold);
+	color: var(--text);
+	border-radius: var(--rounded-sm);
+	cursor: pointer;
+	transition: opacity 0.2s;
+	border: none;
+}
+
+.tierLabel:hover {
+	opacity: 0.9;
+}
+
+.tierName {
+	font-size: var(--fonts-xl);
+	color: var(--button-text);
+}
+
+.popupContent {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+	padding: var(--s-2);
+}
+
+.nameInput {
+	max-width: 125px;
+	text-align: center;
+}
+
+.weaponZone {
+	flex: 1;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1);
+	padding: var(--s-2);
+	background: var(--bg-lighter);
+	border: 2px dashed transparent;
+	border-radius: var(--rounded-sm);
+	align-content: flex-start;
+	transition: all 0.2s;
+}
+
+.weaponZoneOver {
+	border-color: var(--theme-transparent);
+	background: var(--bg-lightest);
+}
+
+.emptyMessage {
+	width: 100%;
+	height: 100%;
+	text-align: center;
+	margin: auto;
+	color: var(--text-lighter);
+	font-size: var(--fonts-md);
+	font-weight: var(--semi-bold);
+	font-style: italic;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
