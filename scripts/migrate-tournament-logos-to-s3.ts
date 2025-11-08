@@ -52,15 +52,14 @@ async function uploadLogoFile(
 	const fileBuffer = fs.readFileSync(filePath);
 	const stream = Readable.from(fileBuffer);
 
-	const s3Url = await uploadStreamToS3(
-		stream,
-		`tournament-logo-${identifier}.png`,
-	);
+	const fileName = `tournament-logo-${identifier}.png`;
+
+	const s3Url = await uploadStreamToS3(stream, fileName);
 
 	invariant(s3Url, `Failed to upload ${identifier}.png to S3`);
 
 	logger.info(`Uploaded ${identifier}.png to ${s3Url}`);
-	return s3Url;
+	return fileName;
 }
 
 async function createImageRecord(url: string): Promise<number> {

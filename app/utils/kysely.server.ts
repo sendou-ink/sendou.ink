@@ -54,7 +54,6 @@ const USER_SUBMITTED_IMAGE_ROOT =
  * @returns A SQL expression that concatenates the image root URL with either the custom logo URL or default logo
  */
 export function tournamentLogoOrNull(
-	/** Expression builder scoped to the CalendarEvent table */
 	eb: ExpressionBuilder<Tables, "CalendarEvent">,
 ) {
 	return eb.fn<string | null>("iif", [
@@ -69,8 +68,8 @@ export function tournamentLogoOrNull(
 					"=",
 					"UnvalidatedUserSubmittedImage.id",
 				),
-			sql`null`,
 		]),
+		sql`null`,
 	]);
 }
 
@@ -88,7 +87,14 @@ export function tournamentLogoWithDefault(
 	return concatUserSubmittedImagePrefix(
 		eb
 			.selectFrom("UnvalidatedUserSubmittedImage")
-			.select(["UnvalidatedUserSubmittedImage.url"])
+			.select((eb) => [
+				eb.fn
+					.coalesce(
+						"UnvalidatedUserSubmittedImage.url",
+						sql.lit(`${import.meta.env.VITE_TOURNAMENT_DEFAULT_LOGO}`),
+					)
+					.as("url"),
+			])
 			.whereRef(
 				"CalendarEvent.avatarImgId",
 				"=",
