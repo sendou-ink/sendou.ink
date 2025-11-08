@@ -169,7 +169,9 @@ function Match({
 	const { t } = useTranslation(["game-misc", "weapons"]);
 
 	const weapon = match.weapons.length === 1 ? match.weapons[0] : null;
-	const weapons = match.weapons.length === 8 ? match.weapons : null;
+	const weapons = match.weapons.length > 1 ? match.weapons : null;
+
+	const teamSize = weapons ? weapons.length / 2 : 0;
 
 	return (
 		<div className={styles.match}>
@@ -198,7 +200,7 @@ function Match({
 			{weapons ? (
 				<div className="stack horizontal md">
 					<div className={styles.matchWeapons}>
-						{weapons.slice(0, 4).map((weapon, i) => {
+						{weapons.slice(0, teamSize).map((weapon, i) => {
 							return (
 								<WeaponImage
 									key={i}
@@ -211,8 +213,8 @@ function Match({
 						})}
 					</div>
 					<div className={styles.matchWeapons}>
-						{weapons.slice(4).map((weapon, i) => {
-							const adjustedI = i + 4;
+						{weapons.slice(teamSize).map((weapon, i) => {
+							const adjustedI = i + teamSize;
 							return (
 								<WeaponImage
 									key={i}
