@@ -23,6 +23,7 @@ import type { CalendarEventTag, Tables } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import {
 	databaseTimestampToDate,
@@ -136,6 +137,7 @@ export default function CalendarNewEventPage() {
 function TemplateTournamentForm() {
 	const { recentTournaments } = useLoaderData<typeof loader>();
 	const [eventId, setEventId] = React.useState("");
+	const { formatDate } = useTimeFormat();
 
 	if (!recentTournaments) return null;
 
@@ -154,10 +156,10 @@ function TemplateTournamentForm() {
 						{recentTournaments.map((event) => (
 							<option key={event.id} value={event.id} suppressHydrationWarning>
 								{event.name} (
-								{databaseTimestampToDate(event.startTime).toLocaleDateString(
-									"en-US",
-									{ month: "numeric", day: "numeric" },
-								)}
+								{formatDate(databaseTimestampToDate(event.startTime), {
+									month: "numeric",
+									day: "numeric",
+								})}
 								)
 							</option>
 						))}

@@ -40,6 +40,7 @@ import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tour
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -376,9 +377,10 @@ function RegistrationProgress({
 	members?: unknown[];
 	mapPool?: unknown[];
 }) {
-	const { i18n, t } = useTranslation(["tournament"]);
+	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 	const isMounted = useIsMounted();
+	const { formatTime } = useTimeFormat();
 
 	const completedIfTruthy = (condition: unknown) =>
 		condition ? "completed" : "incomplete";
@@ -419,15 +421,17 @@ function RegistrationProgress({
 		tournament.ctx.startTime.getTime();
 
 	const registrationClosesAtString = isMounted
-		? (tournament.isLeagueSignup
-				? tournament.ctx.startTime
-				: tournament.registrationClosesAt
-			).toLocaleTimeString(i18n.language, {
-				minute: "numeric",
-				hour: "numeric",
-				day: "2-digit",
-				month: "2-digit",
-			})
+		? formatTime(
+				tournament.isLeagueSignup
+					? tournament.ctx.startTime
+					: tournament.registrationClosesAt,
+				{
+					minute: "numeric",
+					hour: "numeric",
+					day: "2-digit",
+					month: "2-digit",
+				},
+			)
 		: "";
 
 	return (
@@ -502,14 +506,15 @@ function CheckIn({
 	endDate: Date;
 	checkedIn?: boolean;
 }) {
-	const { t, i18n } = useTranslation(["tournament"]);
+	const { t } = useTranslation(["tournament"]);
 	const isMounted = useIsMounted();
 	const fetcher = useFetcher();
+	const { formatTime } = useTimeFormat();
 
 	useAutoRerender();
 
 	const checkInStartsString = isMounted
-		? startDate.toLocaleTimeString(i18n.language, {
+		? formatTime(startDate, {
 				minute: "numeric",
 				hour: "numeric",
 				day: "2-digit",
@@ -518,7 +523,7 @@ function CheckIn({
 		: "";
 
 	const checkInEndsString = isMounted
-		? endDate.toLocaleTimeString(i18n.language, {
+		? formatTime(endDate, {
 				minute: "numeric",
 				hour: "numeric",
 				day: "2-digit",

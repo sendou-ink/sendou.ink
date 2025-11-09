@@ -6,6 +6,7 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { UsersIcon } from "~/components/icons/Users";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import {
 	calendarEventPage,
@@ -30,7 +31,8 @@ export function UserResultsTable({
 	id,
 	hasHighlightCheckboxes,
 }: UserResultsTableProps) {
-	const { t, i18n } = useTranslation("user");
+	const { t } = useTranslation("user");
+	const { formatDate } = useTimeFormat();
 
 	const placementHeaderId = `${id}-th-placement`;
 
@@ -82,14 +84,11 @@ export function UserResultsTable({
 								</div>
 							</td>
 							<td className="whitespace-nowrap">
-								{databaseTimestampToDate(result.startTime).toLocaleDateString(
-									i18n.language,
-									{
-										day: "numeric",
-										month: "short",
-										year: "numeric",
-									},
-								)}
+								{formatDate(databaseTimestampToDate(result.startTime), {
+									day: "numeric",
+									month: "short",
+									year: "numeric",
+								})}
 							</td>
 							<td id={nameCellId}>
 								<div className="stack horizontal xs items-center">

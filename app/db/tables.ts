@@ -832,6 +832,14 @@ export interface UserPreferences {
 	disallowScrimPickupsFromUntrusted?: boolean;
 	defaultCalendarFilters?: CalendarFilters;
 	defaultScrimsFilters?: ScrimFilters;
+	/**
+	 * What time format the user prefers?
+	 *
+	 * "auto" = use browser default (default value)
+	 * "24h" = 24 hour format (e.g. 14:00)
+	 * "12h" = 12 hour format (e.g. 2:00 PM)
+	 * */
+	clockFormat?: "24h" | "12h" | "auto";
 }
 
 export interface User {

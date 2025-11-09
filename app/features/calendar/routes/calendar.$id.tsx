@@ -16,6 +16,7 @@ import { Table } from "~/components/Table";
 import { useUser } from "~/features/auth/core/user";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -80,8 +81,9 @@ export const handle: SendouRouteHandle = {
 export default function CalendarEventPage() {
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
-	const { i18n, t } = useTranslation(["common", "calendar"]);
+	const { t } = useTranslation(["common", "calendar"]);
 	const isMounted = useIsMounted();
+	const { formatDateTime } = useTimeFormat();
 
 	return (
 		<Main className="stack lg">
@@ -100,17 +102,14 @@ export default function CalendarEventPage() {
 							</span>
 							<time dateTime={databaseTimestampToDate(startTime).toISOString()}>
 								{isMounted
-									? databaseTimestampToDate(startTime).toLocaleDateString(
-											i18n.language,
-											{
-												hour: "numeric",
-												minute: "numeric",
-												day: "numeric",
-												month: "long",
-												weekday: "long",
-												year: "numeric",
-											},
-										)
+									? formatDateTime(databaseTimestampToDate(startTime), {
+											hour: "numeric",
+											minute: "numeric",
+											day: "numeric",
+											month: "long",
+											weekday: "long",
+											year: "numeric",
+										})
 									: null}
 							</time>
 						</React.Fragment>

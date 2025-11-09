@@ -5,6 +5,7 @@ import { SendouDialog } from "~/components/elements/Dialog";
 import { SelectFormField } from "~/components/form/SelectFormField";
 import { SendouForm } from "~/components/form/SendouForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { joinListToNaturalString, nullFilledArray } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { loader as scrimsLoader } from "../loaders/scrims.server";
@@ -22,8 +23,9 @@ export function ScrimRequestModal({
 	post: ScrimPost;
 	close: () => void;
 }) {
-	const { t, i18n } = useTranslation(["scrims"]);
+	const { t } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof scrimsLoader>();
+	const { formatTime } = useTimeFormat();
 
 	const timeOptions = post.rangeEnd
 		? generateTimeOptions(
@@ -31,7 +33,7 @@ export function ScrimRequestModal({
 				databaseTimestampToDate(post.rangeEnd),
 			).map((timestamp) => ({
 				value: timestamp,
-				label: new Date(timestamp).toLocaleTimeString(i18n.language, {
+				label: formatTime(new Date(timestamp), {
 					hour: "numeric",
 					minute: "2-digit",
 				}),

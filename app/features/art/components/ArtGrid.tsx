@@ -15,6 +15,7 @@ import { Pagination } from "~/components/Pagination";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { usePagination } from "~/hooks/usePagination";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { artPage, newArtPage, userArtPage, userPage } from "~/utils/urls";
 import { ResponsiveMasonry } from "../../../modules/responsive-masonry/components/ResponsiveMasonry";
@@ -90,19 +91,16 @@ export function ArtGrid({
 }
 
 function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
-	const { i18n } = useTranslation();
 	const [imageLoaded, setImageLoaded] = React.useState(false);
+	const { formatDate } = useTimeFormat();
 
 	return (
 		<SendouDialog
-			heading={databaseTimestampToDate(art.createdAt).toLocaleDateString(
-				i18n.language,
-				{
-					year: "numeric",
-					month: "long",
-					day: "numeric",
-				},
-			)}
+			heading={formatDate(databaseTimestampToDate(art.createdAt), {
+				year: "numeric",
+				month: "long",
+				day: "numeric",
+			})}
 			onClose={close}
 			isFullScreen
 		>

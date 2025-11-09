@@ -45,6 +45,7 @@ import { AddPrivateNoteDialog } from "~/features/sendouq-match/components/AddPri
 import type { ReportedWeaponForMerging } from "~/features/sendouq-match/core/reported-weapons.server";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useWindowSize } from "~/hooks/useWindowSize";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
@@ -105,7 +106,8 @@ export default function QMatchPage() {
 	const user = useUser();
 	const isStaff = useHasRole("STAFF");
 	const isMounted = useIsMounted();
-	const { t, i18n } = useTranslation(["q"]);
+	const { t } = useTranslation(["q"]);
+	const { formatDateTime } = useTimeFormat();
 	const data = useLoaderData<typeof loader>();
 	const [showWeaponsForm, setShowWeaponsForm] = React.useState(false);
 	const [searchParams] = useSearchParams();
@@ -154,16 +156,13 @@ export default function QMatchPage() {
 					})}
 				>
 					{isMounted
-						? databaseTimestampToDate(data.match.createdAt).toLocaleString(
-								i18n.language,
-								{
-									day: "numeric",
-									month: "numeric",
-									year: "numeric",
-									hour: "numeric",
-									minute: "numeric",
-								},
-							)
+						? formatDateTime(databaseTimestampToDate(data.match.createdAt), {
+								day: "numeric",
+								month: "numeric",
+								year: "numeric",
+								hour: "numeric",
+								minute: "numeric",
+							})
 						: // reserve place
 							"0/0/0 0:00"}
 				</div>
@@ -243,7 +242,8 @@ function Score({
 	ownTeamReported: boolean;
 }) {
 	const isMounted = useIsMounted();
-	const { t, i18n } = useTranslation(["q"]);
+	const { t } = useTranslation(["q"]);
+	const { formatDateTime } = useTimeFormat();
 	const data = useLoaderData<typeof loader>();
 	const reporter =
 		data.groupAlpha.members.find((m) => m.id === data.match.reportedByUserId) ??
@@ -292,16 +292,13 @@ function Score({
 				>
 					{t("q:match.reportedBy", { name: reporter?.username ?? "admin" })}{" "}
 					{isMounted
-						? databaseTimestampToDate(reportedAt).toLocaleString(
-								i18n.language,
-								{
-									day: "numeric",
-									month: "numeric",
-									year: "numeric",
-									hour: "numeric",
-									minute: "numeric",
-								},
-							)
+						? formatDateTime(databaseTimestampToDate(reportedAt), {
+								day: "numeric",
+								month: "numeric",
+								year: "numeric",
+								hour: "numeric",
+								minute: "numeric",
+							})
 						: ""}
 				</div>
 			) : (

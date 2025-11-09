@@ -42,6 +42,7 @@ import type {
 } from "~/features/sendouq-match/QMatchRepository.server";
 import { useWeaponUsage } from "~/hooks/swr";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -180,7 +181,8 @@ function SeasonHeader({
 	seasonViewed: number;
 	seasonsParticipatedIn: number[];
 }) {
-	const { t, i18n } = useTranslation(["user"]);
+	const { t } = useTranslation(["user"]);
+	const { formatDate } = useTimeFormat();
 	const isMounted = useIsMounted();
 	const { starts, ends } = Seasons.nthToDateRange(seasonViewed);
 	const navigate = useNavigate();
@@ -218,13 +220,13 @@ function SeasonHeader({
 			>
 				{isMounted ? (
 					<>
-						{new Date(starts).toLocaleString(i18n.language, {
+						{formatDate(new Date(starts), {
 							day: "numeric",
 							month: "long",
 							year: isDifferentYears ? "numeric" : undefined,
 						})}{" "}
 						-{" "}
-						{new Date(ends).toLocaleString(i18n.language, {
+						{formatDate(new Date(ends), {
 							day: "numeric",
 							month: "long",
 							year: "numeric",
@@ -667,6 +669,8 @@ function CanceledMatchesDialog({
 }: {
 	canceledMatches: NonNullable<UserSeasonsPageLoaderData["canceled"]>;
 }) {
+	const { formatDateTime } = useTimeFormat();
+
 	return (
 		<SendouDialog
 			trigger={
@@ -684,7 +688,7 @@ function CanceledMatchesDialog({
 					<div key={match.id}>
 						<Link to={sendouQMatchPage(match.id)}>#{match.id}</Link>
 						<div>
-							{databaseTimestampToDate(match.createdAt).toLocaleString()}
+							{formatDateTime(databaseTimestampToDate(match.createdAt))}
 						</div>
 					</div>
 				))}
@@ -701,6 +705,7 @@ function Results({
 	results: UserSeasonsPageLoaderData["results"];
 }) {
 	const isMounted = useIsMounted();
+	const { formatDate } = useTimeFormat();
 	const [, setSearchParams] = useSearchParams();
 	const ref = React.useRef<HTMLDivElement>(null);
 
@@ -737,14 +742,11 @@ function Results({
 									)}
 								>
 									{isMounted
-										? databaseTimestampToDate(result.createdAt).toLocaleString(
-												"en",
-												{
-													weekday: "long",
-													month: "long",
-													day: "numeric",
-												},
-											)
+										? formatDate(databaseTimestampToDate(result.createdAt), {
+												weekday: "long",
+												month: "long",
+												day: "numeric",
+											})
 										: "t"}
 								</div>
 								{result.type === "GROUP_MATCH" ? (
