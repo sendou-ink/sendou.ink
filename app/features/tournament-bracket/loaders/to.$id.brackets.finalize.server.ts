@@ -54,7 +54,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 };
 
 async function standingsWithSetParticipation(tournament: Tournament) {
-	const finalStandings = Standings.tournamentStandings(tournament);
+	const standingsResult = Standings.tournamentStandings(tournament);
+	const finalStandings = Standings.flattenStandings(standingsResult);
 
 	const results = allMatchResultsByTournamentId(tournament.ctx.id);
 	invariant(results.length > 0, "No results found");
@@ -83,6 +84,7 @@ async function standingsWithSetParticipation(tournament: Tournament) {
 				type: seedingSkillCountsFor!,
 			}),
 		seedingSkillCountsFor,
+		progression: tournament.ctx.settings.bracketProgression,
 	});
 
 	return finalStandings.map((standing) => {

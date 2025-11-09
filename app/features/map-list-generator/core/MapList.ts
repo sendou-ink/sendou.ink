@@ -46,9 +46,11 @@ export function* generate(args: {
 
 	const modes = args.mapPool.modes;
 
-	const stageCounts = initializeStageCounts(modes, args.mapPool.parsed);
+	const { stageWeights, stageModeWeights } = initializeWeights(
+		modes,
+		args.mapPool.parsed,
+	);
 	const orderedModes = modeOrders(modes);
-	const stageUsageTracker = new Map<StageId, number>();
 	let currentOrderIndex = 0;
 
 	const firstArgs = yield [];
@@ -72,20 +74,34 @@ export function* generate(args: {
 
 		for (let i = 0; i < amount; i++) {
 			const mode = currentModeOrder[i % currentModeOrder.length];
-			const possibleStages = R.shuffle(args.mapPool.parsed[mode]);
+			const possibleStages = args.mapPool.parsed[mode];
 			const isNotGuaranteedToBePlayed = args.considerGuaranteed
 				? Math.ceil(amount / 2) <= i
 				: false;
 
-			replenishStageIds({ possibleStages, stageCounts, stageUsageTracker });
-			const stageId = mostRarelySeenStage(possibleStages, stageCounts);
+			const stageId = selectStageWeighted({
+				possibleStages,
+				mode,
+				stageWeights,
+				stageModeWeights,
+			});
 
 			result.push({ mode, stageId });
-			stageCounts.set(
-				stageId,
-				stageCounts.get(stageId)! + (isNotGuaranteedToBePlayed ? 0.5 : 1),
-			);
-			stageUsageTracker.set(stageId, currentOrderIndex);
+
+			for (const [key, value] of stageWeights.entries()) {
+				stageWeights.set(key, value + 1);
+			}
+			for (const [key, value] of stageModeWeights.entries()) {
+				stageModeWeights.set(key, value + 1);
+			}
+
+			const stageWeightPenalty = isNotGuaranteedToBePlayed
+				? -2
+				: -Math.max(5, amount);
+			const stageModeWeightPenalty = args.mapPool.modes.length > 1 ? -10 : 0;
+
+			stageWeights.set(stageId, stageWeightPenalty);
+			stageModeWeights.set(`${stageId}-${mode}`, stageModeWeightPenalty);
 		}
 
 		currentOrderIndex++;
@@ -97,65 +113,80 @@ export function* generate(args: {
 	}
 }
 
-function initializeStageCounts(
-	modes: ModeShort[],
-	mapPool: ReadonlyMapPoolObject,
-) {
-	const counts = new Map<StageId, number>();
-	const stageIds = modes.flatMap((mode) => mapPool[mode]);
+function initializeWeights(modes: ModeShort[], mapPool: ReadonlyMapPoolObject) {
+	const stageWeights = new Map<StageId, number>();
+	const stageModeWeights = new Map<string, number>();
 
-	for (const stageId of stageIds) {
-		counts.set(stageId, 0);
+	for (const mode of modes) {
+		const stageIds = mapPool[mode];
+		for (const stageId of stageIds) {
+			stageWeights.set(stageId, 0);
+			stageModeWeights.set(`${stageId}-${mode}`, 0);
+		}
 	}
 
-	return counts;
+	return { stageWeights, stageModeWeights };
 }
 
-/** This function is used for controlling in which order we start reusing the stage ids */
-function replenishStageIds({
+function weightedRandomSelect<T>(
+	candidates: T[],
+	getWeight: (candidate: T) => number,
+): T {
+	const totalWeight = candidates.reduce(
+		(sum, candidate) => sum + Math.max(0, getWeight(candidate)),
+		0,
+	);
+
+	invariant(totalWeight > 0, "Expected at least one candidate with weight > 0");
+
+	let random = Math.random() * totalWeight;
+
+	for (const candidate of candidates) {
+		const weight = Math.max(0, getWeight(candidate));
+		random -= weight;
+		if (random <= 0) {
+			return candidate;
+		}
+	}
+
+	return candidates[candidates.length - 1];
+}
+
+function selectStageWeighted({
 	possibleStages,
-	stageCounts,
-	stageUsageTracker,
+	mode,
+	stageWeights,
+	stageModeWeights,
 }: {
-	possibleStages: StageId[];
-	stageCounts: Map<StageId, number>;
-	stageUsageTracker: Map<StageId, number>;
-}) {
-	const allOptionsEqual = possibleStages.every(
-		(stageId) =>
-			stageCounts.get(stageId) === stageCounts.get(possibleStages[0]),
-	);
-	if (!allOptionsEqual) return;
+	possibleStages: readonly StageId[];
+	mode: ModeShort;
+	stageWeights: Map<StageId, number>;
+	stageModeWeights: Map<string, number>;
+}): StageId {
+	const getCandidates = () =>
+		possibleStages.filter((stageId) => {
+			const stageWeight = stageWeights.get(stageId) ?? 0;
+			const stageModeWeight = stageModeWeights.get(`${stageId}-${mode}`) ?? 0;
+			return stageWeight >= 0 && stageModeWeight >= 0;
+		});
 
-	const relevantStageUsage = Array.from(stageUsageTracker.entries())
-		.filter(([stageId]) => possibleStages.includes(stageId))
-		.sort((a, b) => a[1] - b[1]);
+	let candidates = getCandidates();
 
-	const stagesToReplenish: StageId[] = [];
-
-	for (const [stageId] of relevantStageUsage) {
-		stagesToReplenish.push(stageId);
-		if (stagesToReplenish.length >= possibleStages.length / 2) break;
+	while (candidates.length === 0) {
+		for (const [key, value] of stageWeights.entries()) {
+			stageWeights.set(key, value + 1);
+		}
+		for (const [key, value] of stageModeWeights.entries()) {
+			stageModeWeights.set(key, value + 1);
+		}
+		candidates = getCandidates();
 	}
 
-	for (const stageId of stagesToReplenish) {
-		stageCounts.set(stageId, (stageCounts.get(stageId) ?? 0) - 0.5);
-	}
-}
-
-function mostRarelySeenStage(
-	possibleStages: StageId[],
-	stageCounts: Map<StageId, number>,
-) {
-	const result = possibleStages.toSorted(
-		(a, b) => stageCounts.get(a)! - stageCounts.get(b)!,
-	)[0];
-	invariant(
-		typeof result === "number",
-		"Expected to find at least one stage ID",
-	);
-
-	return result;
+	return weightedRandomSelect(candidates, (stageId) => {
+		const stageWeight = stageWeights.get(stageId) ?? 0;
+		const stageModeWeight = stageModeWeights.get(`${stageId}-${mode}`) ?? 0;
+		return stageWeight + stageModeWeight + 1;
+	});
 }
 
 const MAX_MODE_ORDERS_ITERATIONS = 100;

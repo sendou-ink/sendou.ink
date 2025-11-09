@@ -15,7 +15,12 @@ import { isSupporter } from "~/modules/permissions/utils";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
-import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
+import {
+	COMMON_USER_FIELDS,
+	concatUserSubmittedImagePrefix,
+	tournamentLogoOrNull,
+	userChatNameColor,
+} from "~/utils/kysely.server";
 import { safeNumberParse } from "~/utils/number";
 import type { ChatUser } from "../chat/chat-types";
 
@@ -123,8 +128,8 @@ export function findLayoutDataByIdentifier(
 				.select(({ fn }) => fn.count<number>("Art.id").distinct().as("count"))
 				.where((innerEb) =>
 					innerEb.or([
-						innerEb("Art.authorId", "=", sql.raw<any>("User.id")),
-						innerEb("ArtUserMetadata.userId", "=", sql.raw<any>("User.id")),
+						innerEb("Art.authorId", "=", eb.ref("User.id")),
+						innerEb("ArtUserMetadata.userId", "=", eb.ref("User.id")),
 					]),
 				)
 				.as("artCount"),
@@ -178,13 +183,15 @@ export async function findProfileByIdentifier(
 						"UserSubmittedImage.id",
 						"Team.avatarImgId",
 					)
-					.select([
+					.select((eb) => [
 						"Team.name",
 						"Team.customUrl",
 						"Team.id",
 						"TeamMemberWithSecondary.isMainTeam",
 						"TeamMemberWithSecondary.role as userTeamRole",
-						"UserSubmittedImage.url as avatarUrl",
+						concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+							"avatarUrl",
+						),
 					])
 					.whereRef("TeamMemberWithSecondary.userId", "=", "User.id"),
 			).as("teams"),
@@ -316,6 +323,7 @@ export async function findLeanById(id: number) {
 			"User.isArtist",
 			"User.isVideoAdder",
 			"User.isTournamentOrganizer",
+			"User.isApiAccesser",
 			"User.patronTier",
 			"User.languages",
 			"User.inGameName",
@@ -334,7 +342,12 @@ export async function findLeanById(id: number) {
 	if (!user) return;
 
 	return {
-		...R.omit(user, ["isArtist", "isVideoAdder", "isTournamentOrganizer"]),
+		...R.omit(user, [
+			"isArtist",
+			"isVideoAdder",
+			"isTournamentOrganizer",
+			"isApiAccesser",
+		]),
 		roles: userRoles(user),
 	};
 }
@@ -483,6 +496,7 @@ export function findResultsByUserId(
 			"CalendarEventResultTeam.placement",
 			"CalendarEvent.participantCount",
 			sql<Tables["TournamentResult"]["setResults"]>`null`.as("setResults"),
+			sql<string | null>`null`.as("div"),
 			sql<string | null>`null`.as("logoUrl"),
 			"CalendarEvent.name as eventName",
 			"CalendarEventResultTeam.id as teamId",
@@ -520,11 +534,8 @@ export function findResultsByUserId(
 			"TournamentResult.placement",
 			"TournamentResult.participantCount",
 			"TournamentResult.setResults",
-			eb
-				.selectFrom("UserSubmittedImage")
-				.select(["UserSubmittedImage.url"])
-				.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id")
-				.as("logoUrl"),
+			"TournamentResult.div",
+			tournamentLogoOrNull(eb).as("logoUrl"),
 			"CalendarEvent.name as eventName",
 			"TournamentTeam.id as teamId",
 			"TournamentTeam.name as teamName",

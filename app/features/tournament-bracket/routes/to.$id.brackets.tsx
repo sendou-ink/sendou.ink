@@ -20,6 +20,7 @@ import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { tournamentWebsocketRoom } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useVisibilityChange } from "~/hooks/useVisibilityChange";
 import { SENDOU_INK_BASE_URL, tournamentJoinPage } from "~/utils/urls";
 import {
@@ -40,6 +41,7 @@ import "../components/Bracket/bracket.css";
 
 export default function TournamentBracketsPage() {
 	const { t } = useTranslation(["tournament"]);
+	const { formatDateTime, formatTime } = useTimeFormat();
 	const visibility = useVisibilityChange();
 	const { revalidate } = useRevalidator();
 	const user = useUser();
@@ -253,16 +255,13 @@ export default function TournamentBracketsPage() {
 							{bracket.startTime ? (
 								<span suppressHydrationWarning>
 									(open{" "}
-									{sub(bracket.startTime, { hours: 1 }).toLocaleString(
-										"en-US",
-										{
-											hour: "numeric",
-											minute: "numeric",
-											weekday: "long",
-										},
-									)}{" "}
+									{formatDateTime(sub(bracket.startTime, { hours: 1 }), {
+										hour: "numeric",
+										minute: "numeric",
+										weekday: "long",
+									})}{" "}
 									-{" "}
-									{bracket.startTime.toLocaleTimeString("en-US", {
+									{formatTime(bracket.startTime, {
 										hour: "numeric",
 										minute: "numeric",
 									})}

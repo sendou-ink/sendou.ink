@@ -1,6 +1,10 @@
 # API
 
-API for external projects to access sendou.ink data for projects such as streams is available. This API is for reading data, writing is not supported. You will need a token to access the API. Currently access is limited but you can request a token from Sendou.
+API for external projects to access sendou.ink data for projects such as streams is available. This API is for reading data, writing is not supported. You will need a token to access the API. If you have permissions (supporters of Supporter tier or higher, or any admin, organizer or streamer of an established organization has access), you can access the https://sendou.ink/api page to generate one.
+
+## Rules
+
+Primarily the API is meant to be used to provide data for tournament stream layouts. Check other usecases with Sendou ahead of time. Cache everything that you can. For anything that is not time sensitive prefer times outside of peak hours (EU/NA evenings). API tokens can be rate limited or disabled if the load causes risks other users using the site.
 
 ## Endpoints
 

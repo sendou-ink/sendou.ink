@@ -1,5 +1,5 @@
 import type { MetaFunction } from "@remix-run/node";
-import { Form, useFetcher, useLoaderData } from "@remix-run/react";
+import { Form, Link, useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import Compressor from "compressorjs";
 import * as React from "react";
@@ -23,6 +23,7 @@ import type { CalendarEventTag, Tables } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import {
 	databaseTimestampToDate,
@@ -32,8 +33,7 @@ import {
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { pathnameFromPotentialURL } from "~/utils/strings";
-import { CREATING_TOURNAMENT_DOC_LINK } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
+import { CREATING_TOURNAMENT_DOC_LINK, FAQ_PAGE } from "~/utils/urls";
 import {
 	CALENDAR_EVENT,
 	REG_CLOSES_AT_OPTIONS,
@@ -80,7 +80,6 @@ const useBaseEvent = () => {
 export default function CalendarNewEventPage() {
 	const baseEvent = useBaseEvent();
 	const isCalendarEventAdder = useHasRole("CALENDAR_EVENT_ADDER");
-	const isTournamentAdder = useHasRole("TOURNAMENT_ADDER");
 	const data = useLoaderData<typeof loader>();
 
 	if (!data.eventToEdit && !isCalendarEventAdder) {
@@ -93,12 +92,17 @@ export default function CalendarNewEventPage() {
 		);
 	}
 
-	if (!data.eventToEdit && data.isAddingTournament && !isTournamentAdder) {
+	if (
+		!data.eventToEdit &&
+		data.isAddingTournament &&
+		data.organizations.length === 0
+	) {
 		return (
 			<Main className="stack items-center">
 				<Alert variation="WARNING">
 					No permissions to add tournaments. Tournaments are in beta, accessible
-					by Patreon supporters and established TO&apos;s.
+					by Patreon supporters and established TO&apos;s. See{" "}
+					<Link to={FAQ_PAGE}>FAQ</Link> for more info.
 				</Alert>
 			</Main>
 		);
@@ -133,6 +137,7 @@ export default function CalendarNewEventPage() {
 function TemplateTournamentForm() {
 	const { recentTournaments } = useLoaderData<typeof loader>();
 	const [eventId, setEventId] = React.useState("");
+	const { formatDate } = useTimeFormat();
 
 	if (!recentTournaments) return null;
 
@@ -151,10 +156,10 @@ function TemplateTournamentForm() {
 						{recentTournaments.map((event) => (
 							<option key={event.id} value={event.id} suppressHydrationWarning>
 								{event.name} (
-								{databaseTimestampToDate(event.startTime).toLocaleDateString(
-									"en-US",
-									{ month: "numeric", day: "numeric" },
-								)}
+								{formatDate(databaseTimestampToDate(event.startTime), {
+									month: "numeric",
+									day: "numeric",
+								})}
 								)
 							</option>
 						))}
@@ -360,14 +365,20 @@ function OrganizationSelect() {
 			<select
 				id={id}
 				name="organizationId"
-				defaultValue={baseEvent?.organization?.id}
+				defaultValue={baseEvent?.organization?.id ?? ""}
 			>
-				<option>Select an organization</option>
-				{data.organizations.map((org) => (
-					<option key={org.id} value={org.id}>
-						{org.name}
+				{data.organizations.includes("NO_ORG") ? (
+					<option key="NO_ORG" value="">
+						None
 					</option>
-				))}
+				) : null}
+				{data.organizations
+					.filter((org) => typeof org !== "string")
+					.map((org) => (
+						<option key={org.id} value={org.id}>
+							{org.name}
+						</option>
+					))}
 			</select>
 		</div>
 	);
@@ -709,14 +720,12 @@ function AvatarImageInput({
 		baseEvent?.tournament?.ctx.logoUrl &&
 		showPrevious
 	) {
-		const logoImgUrl = userSubmittedImage(baseEvent.tournament.ctx.logoUrl);
-
 		return (
 			<div className="stack horizontal md flex-wrap">
 				<input type="hidden" name="avatarImgId" value={baseEvent.avatarImgId} />
 				<div className="stack md items-center">
 					<img
-						src={logoImgUrl}
+						src={baseEvent.tournament.ctx.logoUrl}
 						alt=""
 						className="calendar-new__avatar-preview"
 					/>

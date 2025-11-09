@@ -207,6 +207,14 @@ export function makeTournamentOrganizerByUserId(userId: number) {
 		.execute();
 }
 
+export function makeApiAccesserByUserId(userId: number) {
+	return db
+		.updateTable("User")
+		.set({ isApiAccesser: 1 })
+		.where("User.id", "=", userId)
+		.execute();
+}
+
 export async function linkUserAndPlayer({
 	userId,
 	playerId,
@@ -245,6 +253,22 @@ export function forcePatron(args: {
 		})
 		.where("User.id", "=", args.id)
 		.execute();
+}
+
+export async function allBannedUsers() {
+	const rows = await db
+		.selectFrom("User")
+		.select(["User.id as userId", "User.banned", "User.bannedReason"])
+		.where("User.banned", "!=", 0)
+		.execute();
+
+	const result: Map<number, (typeof rows)[number]> = new Map();
+
+	for (const row of rows) {
+		result.set(row.userId, row);
+	}
+
+	return result;
 }
 
 export function banUser({

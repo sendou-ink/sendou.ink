@@ -64,10 +64,11 @@ import "~/styles/vars.css";
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	if (isRevalidation(args)) return true;
 
-	// // reload on language change so the selected language gets set into the cookie
-	const lang = args.nextUrl.searchParams.get("lng");
+	// user settings, lang change etc. require revalidation on root loader
+	const isSettingsPage = args.currentUrl.pathname === "/settings";
+	if (isSettingsPage) return true;
 
-	return Boolean(lang);
+	return false;
 };
 
 export const meta: MetaFunction = (args) => {

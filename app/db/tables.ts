@@ -45,6 +45,8 @@ export interface Team {
 	inviteCode: string;
 	name: string;
 	bsky: string | null;
+	/** Team's tag, typically used in-game in front of users' names to indicate they are a member of the team. */
+	tag: string | null;
 }
 
 export interface TeamMember {
@@ -600,6 +602,8 @@ export interface TournamentResult {
 	/** The SP change in total after the finalization of a ranked tournament. */
 	spDiff: number | null;
 	userId: number;
+	/** Division label for tournaments with multiple starting brackets (e.g., "D1", "D2") */
+	div: string | null;
 }
 
 export interface TournamentRoundMaps {
@@ -716,6 +720,7 @@ export interface TournamentOrganization {
 	description: string | null;
 	socials: JSONColumnTypeNullable<string[]>;
 	avatarImgId: number | null;
+	isEstablished: Generated<DBBoolean>;
 }
 
 export const TOURNAMENT_ORGANIZATION_ROLES = [
@@ -829,6 +834,14 @@ export interface UserPreferences {
 	disallowScrimPickupsFromUntrusted?: boolean;
 	defaultCalendarFilters?: CalendarFilters;
 	defaultScrimsFilters?: ScrimFilters;
+	/**
+	 * What time format the user prefers?
+	 *
+	 * "auto" = use browser default (default value)
+	 * "24h" = 24 hour format (e.g. 14:00)
+	 * "12h" = 12 hour format (e.g. 2:00 PM)
+	 * */
+	clockFormat?: "24h" | "12h" | "auto";
 }
 
 export interface User {
@@ -856,6 +869,7 @@ export interface User {
 	isArtist: Generated<DBBoolean | null>;
 	isVideoAdder: Generated<DBBoolean | null>;
 	isTournamentOrganizer: Generated<DBBoolean | null>;
+	isApiAccesser: Generated<DBBoolean | null>;
 	languages: string | null;
 	motionSens: number | null;
 	patronSince: number | null;
@@ -907,6 +921,13 @@ export interface UserFriendCode {
 	friendCode: string;
 	userId: number;
 	submitterUserId: number;
+	createdAt: GeneratedAlways<number>;
+}
+
+export interface ApiToken {
+	id: GeneratedAlways<number>;
+	userId: number;
+	token: string;
 	createdAt: GeneratedAlways<number>;
 }
 
@@ -1082,6 +1103,7 @@ export type TablesUpdatable = { [P in keyof DB]: Updateable<DB[P]> };
 export interface DB {
 	AllTeam: Team;
 	AllTeamMember: TeamMember;
+	ApiToken: ApiToken;
 	Art: Art;
 	ArtTag: ArtTag;
 	ArtUserMetadata: ArtUserMetadata;

@@ -44,13 +44,78 @@ describe("tournamentSummary()", () => {
 		results,
 		seedingSkillCountsFor,
 		withMemberInTwoTeams = false,
+		teamsWithStartingBrackets,
+		progression,
+		finalStandings,
 	}: {
 		results?: AllMatchResult[];
 		seedingSkillCountsFor?: Tables["SeedingSkill"]["type"];
 		withMemberInTwoTeams?: boolean;
+		teamsWithStartingBrackets?: Array<{
+			id: number;
+			startingBracketIdx: number | null;
+		}>;
+		progression?: Array<{
+			name: string;
+			type: "single_elimination";
+			settings: Record<string, never>;
+			requiresCheckIn: boolean;
+			sources?: Array<{ bracketIdx: number; placements: number[] }>;
+		}>;
+		finalStandings?: Array<{
+			placement: number;
+			team: TournamentDataTeam;
+		}>;
 	} = {}) {
+		const defaultTeams = [
+			{
+				id: 1,
+				members: [
+					{ userId: 1 },
+					{ userId: 2 },
+					{ userId: 3 },
+					{ userId: 4 },
+					{ userId: 20 },
+				],
+			},
+			{
+				id: 2,
+				members: [{ userId: 5 }, { userId: 6 }, { userId: 7 }, { userId: 8 }],
+			},
+			{
+				id: 3,
+				members: [
+					{ userId: 9 },
+					{ userId: 10 },
+					{ userId: 11 },
+					{ userId: 12 },
+				],
+			},
+			{
+				id: 4,
+				members: [
+					{ userId: 13 },
+					{ userId: 14 },
+					{ userId: 15 },
+					{ userId: 16 },
+				],
+			},
+		];
+
+		const teams = teamsWithStartingBrackets
+			? defaultTeams.map((team) => {
+					const startingBracket = teamsWithStartingBrackets.find(
+						(t) => t.id === team.id,
+					);
+					return {
+						...team,
+						startingBracketIdx: startingBracket?.startingBracketIdx ?? null,
+					};
+				})
+			: defaultTeams;
+
 		return tournamentSummary({
-			finalStandings: [
+			finalStandings: finalStandings ?? [
 				{
 					placement: 1,
 					team: createTeam(
@@ -117,45 +182,20 @@ describe("tournamentSummary()", () => {
 					},
 				},
 			],
-			teams: [
-				{
-					id: 1,
-					members: [
-						{ userId: 1 },
-						{ userId: 2 },
-						{ userId: 3 },
-						{ userId: 4 },
-						{ userId: 20 },
-					],
-				},
-				{
-					id: 2,
-					members: [{ userId: 5 }, { userId: 6 }, { userId: 7 }, { userId: 8 }],
-				},
-				{
-					id: 3,
-					members: [
-						{ userId: 9 },
-						{ userId: 10 },
-						{ userId: 11 },
-						{ userId: 12 },
-					],
-				},
-				{
-					id: 4,
-					members: [
-						{ userId: 13 },
-						{ userId: 14 },
-						{ userId: 15 },
-						{ userId: 16 },
-					],
-				},
-			],
+			teams,
 			queryCurrentTeamRating: () => rating(),
 			queryCurrentUserRating: () => ({ rating: rating(), matchesCount: 0 }),
 			queryTeamPlayerRatingAverage: () => rating(),
 			queryCurrentSeedingRating: () => rating(),
 			seedingSkillCountsFor: seedingSkillCountsFor ?? null,
+			progression: progression ?? [
+				{
+					name: "Main Bracket",
+					type: "single_elimination",
+					settings: {},
+					requiresCheckIn: false,
+				},
+			],
 		});
 	}
 
@@ -619,5 +659,127 @@ describe("tournamentSummary()", () => {
 			invariant(results, `results for user ${userId} should be defined`);
 			expect(results).toEqual(["W"]);
 		}
+	});
+
+	test("div is null when teams have no startingBracketIdx", () => {
+		const summary = summarize();
+
+		for (const result of summary.tournamentResults) {
+			expect(result.div).toBeNull();
+		}
+	});
+
+	test("div is set correctly for teams with startingBracketIdx", () => {
+		const summary = summarize({
+			teamsWithStartingBrackets: [
+				{ id: 1, startingBracketIdx: 0 },
+				{ id: 2, startingBracketIdx: 1 },
+				{ id: 3, startingBracketIdx: 0 },
+				{ id: 4, startingBracketIdx: 1 },
+			],
+			progression: [
+				{
+					name: "Division 1",
+					type: "single_elimination",
+					settings: {},
+					requiresCheckIn: false,
+				},
+				{
+					name: "Division 2",
+					type: "single_elimination",
+					settings: {},
+					requiresCheckIn: false,
+				},
+			],
+			finalStandings: [
+				{
+					placement: 1,
+					team: createTeam(1, [1, 2, 3, 4]),
+				},
+				{
+					placement: 1,
+					team: createTeam(2, [5, 6, 7, 8]),
+				},
+				{
+					placement: 2,
+					team: createTeam(3, [9, 10, 11, 12]),
+				},
+				{
+					placement: 2,
+					team: createTeam(4, [13, 14, 15, 16]),
+				},
+			],
+		});
+
+		const team1Results = summary.tournamentResults.filter(
+			(r) => r.tournamentTeamId === 1,
+		);
+		const team2Results = summary.tournamentResults.filter(
+			(r) => r.tournamentTeamId === 2,
+		);
+
+		expect(team1Results.every((r) => r.div === "Division 1")).toBeTruthy();
+		expect(team2Results.every((r) => r.div === "Division 2")).toBeTruthy();
+	});
+
+	test("participantCount is correct for multi-division tournaments", () => {
+		const summary = summarize({
+			teamsWithStartingBrackets: [
+				{ id: 1, startingBracketIdx: 0 },
+				{ id: 2, startingBracketIdx: 1 },
+				{ id: 3, startingBracketIdx: 0 },
+				{ id: 4, startingBracketIdx: 1 },
+			],
+			progression: [
+				{
+					name: "Division 1",
+					type: "single_elimination",
+					settings: {},
+					requiresCheckIn: false,
+				},
+				{
+					name: "Division 2",
+					type: "single_elimination",
+					settings: {},
+					requiresCheckIn: false,
+				},
+			],
+			finalStandings: [
+				{
+					placement: 1,
+					team: createTeam(1, [1, 2, 3, 4]),
+				},
+				{
+					placement: 1,
+					team: createTeam(2, [5, 6, 7, 8]),
+				},
+				{
+					placement: 2,
+					team: createTeam(3, [9, 10, 11, 12]),
+				},
+				{
+					placement: 2,
+					team: createTeam(4, [13, 14, 15, 16]),
+				},
+			],
+		});
+
+		const team1Results = summary.tournamentResults.filter(
+			(r) => r.tournamentTeamId === 1,
+		);
+		const team2Results = summary.tournamentResults.filter(
+			(r) => r.tournamentTeamId === 2,
+		);
+		const team3Results = summary.tournamentResults.filter(
+			(r) => r.tournamentTeamId === 3,
+		);
+		const team4Results = summary.tournamentResults.filter(
+			(r) => r.tournamentTeamId === 4,
+		);
+
+		expect(team1Results.every((r) => r.participantCount === 2)).toBeTruthy();
+		expect(team2Results.every((r) => r.participantCount === 2)).toBeTruthy();
+		expect(team3Results.every((r) => r.participantCount === 2)).toBeTruthy();
+		expect(team4Results.every((r) => r.participantCount === 2)).toBeTruthy();
 	});
 });

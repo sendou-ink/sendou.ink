@@ -19,7 +19,6 @@ import {
 	tournamentTeamPage,
 	userPage,
 } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
 import { TeamWithRoster } from "../components/TeamWithRoster";
 import * as Standings from "../core/Standings";
 import type { PlayedSet } from "../core/sets.server";
@@ -42,7 +41,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 		description: `${team.name} roster (${team.members.map((m) => m.username).join(", ")}) and sets in ${tournamentData.ctx.name}.`,
 		image: teamLogoUrl
 			? {
-					url: userSubmittedImage(teamLogoUrl),
+					url: teamLogoUrl,
 					dimensions: { width: 124, height: 124 },
 				}
 			: undefined,
@@ -107,7 +106,9 @@ function StatSquares({
 	const data = useLoaderData<typeof loader>();
 	const tournament = useTournament();
 
-	const placement = Standings.tournamentStandings(tournament).find(
+	const standingsResult = Standings.tournamentStandings(tournament);
+	const overallStandings = Standings.flattenStandings(standingsResult);
+	const placement = overallStandings.find(
 		(s) => s.team.id === data.tournamentTeamId,
 	)?.placement;
 
@@ -168,6 +169,15 @@ function StatSquares({
 				{undergroundPlacement ? (
 					<div className="tournament__team__stat__sub">
 						{t("tournament:team.placement.footer")}
+					</div>
+				) : null}
+				{standingsResult.type === "multi" ? (
+					<div className="tournament__team__stat__sub">
+						{
+							standingsResult.standings.find((s) =>
+								s.standings.some((s) => s.team.id === data.tournamentTeamId),
+							)?.div
+						}
 					</div>
 				) : null}
 			</div>

@@ -1,7 +1,10 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { isFuture } from "date-fns";
 import { requireUser } from "~/features/auth/core/user.server";
-import { requirePermission } from "~/modules/permissions/guards.server";
+import {
+	requirePermission,
+	requireRole,
+} from "~/modules/permissions/guards.server";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
@@ -23,10 +26,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		schema: orgPageActionSchema,
 	});
 
-	requirePermission(organization, "BAN", user);
-
 	switch (data._action) {
 		case "BAN_USER": {
+			requirePermission(organization, "BAN", user);
+
 			const allBannedUsers =
 				await TournamentOrganizationRepository.allBannedUsersByOrganizationId(
 					organization.id,
@@ -60,6 +63,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			break;
 		}
 		case "UNBAN_USER": {
+			requirePermission(organization, "BAN", user);
+
 			await TournamentOrganizationRepository.unbanUser({
 				organizationId: organization.id,
 				userId: data.userId,
@@ -67,6 +72,20 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			logger.info(
 				`User unbanned: organization=${organization.name} (${organization.id}), userId=${data.userId}, unbanned by userId=${user.id}`,
+			);
+
+			break;
+		}
+		case "UPDATE_IS_ESTABLISHED": {
+			requireRole(user, "ADMIN");
+
+			await TournamentOrganizationRepository.updateIsEstablished(
+				organization.id,
+				data.isEstablished,
+			);
+
+			logger.info(
+				`Organization isEstablished updated: organization=${organization.name} (${organization.id}), isEstablished=${data.isEstablished}, updated by userId=${user.id}`,
 			);
 
 			break;

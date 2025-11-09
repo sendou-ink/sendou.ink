@@ -7,12 +7,14 @@ import {
 	rate,
 	userIdsToIdentifier,
 } from "~/features/mmr/mmr-utils";
+import { getBracketProgressionLabel } from "~/features/tournament/tournament-utils";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import type { Tables, WinLossParticipationArray } from "../../../db/tables";
 import type { AllMatchResult } from "../queries/allMatchResultsByTournamentId.server";
 import { ensureOneStandingPerUser } from "../tournament-bracket-utils";
 import type { Standing } from "./Bracket";
+import type { ParsedBracket } from "./Progression";
 
 export interface TournamentSummary {
 	skills: Omit<
@@ -35,6 +37,7 @@ export interface TournamentSummary {
 type TeamsArg = Array<{
 	id: number;
 	members: Array<{ userId: number }>;
+	startingBracketIdx?: number | null;
 }>;
 
 type Rating = Pick<Tables["Skill"], "mu" | "sigma">;
@@ -53,6 +56,7 @@ export function tournamentSummary({
 	queryCurrentSeedingRating,
 	seedingSkillCountsFor,
 	calculateSeasonalStats = true,
+	progression,
 }: {
 	results: AllMatchResult[];
 	teams: TeamsArg;
@@ -63,6 +67,7 @@ export function tournamentSummary({
 	queryCurrentSeedingRating: (userId: number) => Rating;
 	seedingSkillCountsFor: Tables["SeedingSkill"]["type"] | null;
 	calculateSeasonalStats?: boolean;
+	progression: ParsedBracket[];
 }): TournamentSummary {
 	const skills = calculateSeasonalStats
 		? calculateSkills({
@@ -95,6 +100,8 @@ export function tournamentSummary({
 		tournamentResults: tournamentResults({
 			participantCount: teams.length,
 			finalStandings: ensureOneStandingPerUser(finalStandings),
+			teams,
+			progression,
 		}),
 		spDiffs: calculateSeasonalStats
 			? spDiffs({ skills, queryCurrentUserRating })
@@ -495,19 +502,43 @@ function playerResultDeltas(
 function tournamentResults({
 	participantCount,
 	finalStandings,
+	teams,
+	progression,
 }: {
 	participantCount: number;
 	finalStandings: Standing[];
+	teams: TeamsArg;
+	progression: ParsedBracket[];
 }) {
 	const result: TournamentSummary["tournamentResults"] = [];
 
+	const firstPlaceFinishesCount = finalStandings.filter(
+		(s) => s.placement === 1,
+	).length;
+	const isMultiStartingBracket = firstPlaceFinishesCount > 1;
+
 	for (const standing of finalStandings) {
+		const team = teams.find((t) => t.id === standing.team.id);
+		invariant(team);
+		const div =
+			// second check should be redundant, but just here in case
+			typeof team.startingBracketIdx === "number" && isMultiStartingBracket
+				? getBracketProgressionLabel(team.startingBracketIdx, progression)
+				: null;
+
+		const divisionParticipantCount =
+			div !== null
+				? teams.filter((t) => t.startingBracketIdx === team.startingBracketIdx)
+						.length
+				: participantCount;
+
 		for (const player of standing.team.members) {
 			result.push({
-				participantCount,
+				participantCount: divisionParticipantCount,
 				placement: standing.placement,
 				tournamentTeamId: standing.team.id,
 				userId: player.userId,
+				div,
 			});
 		}
 	}

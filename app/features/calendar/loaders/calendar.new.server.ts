@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
+import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
@@ -64,8 +65,21 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	const managedBadges = await BadgeRepository.findManagedByUserId(user.id);
 
+	const organizations = (
+		await findValidOrganizations(
+			user.id,
+			user.roles.includes("TOURNAMENT_ADDER"),
+		)
+	).concat(
+		eventToEdit?.tournament?.ctx.organization
+			? eventToEdit.tournament.ctx.organization
+			: [],
+	);
+
+	const canAddTournaments = organizations.length > 0;
+
 	const eventToCopyRaw =
-		user.roles.includes("TOURNAMENT_ADDER") && !eventToEdit
+		canAddTournaments && !eventToEdit
 			? await eventWithTournament("copyEventId")
 			: undefined;
 
@@ -88,15 +102,26 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		eventToEdit: canEditEvent ? eventToEdit : undefined,
 		eventToCopy,
 		recentTournaments:
-			user.roles.includes("TOURNAMENT_ADDER") && !eventToEdit
+			canAddTournaments && !eventToEdit
 				? await CalendarRepository.findRecentTournamentsByAuthorId(user.id)
 				: undefined,
-		organizations: (
-			await TournamentOrganizationRepository.findByOrganizerUserId(user.id)
-		).concat(
-			eventToEdit?.tournament?.ctx.organization
-				? eventToEdit.tournament.ctx.organization
-				: [],
-		),
+		organizations,
 	};
 };
+
+export async function findValidOrganizations(
+	userId: number,
+	isTournamentAdder: boolean,
+) {
+	const orgs = await TournamentOrganizationRepository.findByUserId(userId, {
+		roles: ["ADMIN", "ORGANIZER"],
+	});
+
+	if (isTournamentAdder) {
+		return ["NO_ORG", ...orgs.map((org) => R.omit(org, ["isEstablished"]))];
+	}
+
+	return orgs
+		.filter((org) => org.isEstablished)
+		.map((org) => R.omit(org, ["isEstablished"]));
+}

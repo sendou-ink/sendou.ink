@@ -22,7 +22,6 @@ import {
 	tournamentPage,
 	tournamentRegisterPage,
 } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
 import { metaTags } from "../../../utils/remix";
 
 import { loader, type TournamentLoaderData } from "../loaders/to.$id.server";
@@ -53,7 +52,7 @@ export const meta: MetaFunction = (args) => {
 			? removeMarkdown(data.tournament.ctx.description)
 			: undefined,
 		image: {
-			url: data.tournament.ctx.logoSrc,
+			url: data.tournament.ctx.logoUrl,
 			dimensions: { width: 124, height: 124 },
 		},
 		location: args.location,
@@ -71,9 +70,7 @@ export const handle: SendouRouteHandle = {
 		return [
 			data.tournament.ctx.organization?.avatarUrl
 				? {
-						imgPath: userSubmittedImage(
-							data.tournament.ctx.organization.avatarUrl,
-						),
+						imgPath: data.tournament.ctx.organization.avatarUrl,
 						href: tournamentOrganizationPage({
 							organizationSlug: data.tournament.ctx.organization.slug,
 						}),
@@ -83,7 +80,7 @@ export const handle: SendouRouteHandle = {
 					}
 				: null,
 			{
-				imgPath: data.tournament.ctx.logoSrc,
+				imgPath: data.tournament.ctx.logoUrl,
 				href: tournamentPage(data.tournament.ctx.id),
 				type: "IMAGE" as const,
 				text: data.tournament.ctx.name,

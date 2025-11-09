@@ -3,6 +3,7 @@ import fs from "node:fs";
 import { seed } from "~/db/seed";
 import { db } from "~/db/sql";
 import { logger } from "~/utils/logger";
+import { seedImages } from "./seed-images";
 
 async function main() {
 	// Step 1: Create .env if it doesn't exist
@@ -32,6 +33,14 @@ async function main() {
 			);
 			process.exit(1);
 		}
+	}
+
+	// Step 3: Seed images to Minio
+	logger.info("🖼️  Seeding images to Minio...");
+	try {
+		await seedImages();
+	} catch (err) {
+		logger.error("Error seeding images:", (err as Error).message);
 	}
 }
 

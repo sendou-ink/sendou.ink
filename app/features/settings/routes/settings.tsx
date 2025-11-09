@@ -42,6 +42,7 @@ export default function SettingsPage() {
 				<h2 className="text-lg">{t("common:pages.settings")}</h2>
 				<LanguageSelector />
 				<ThemeSelector />
+				{user ? <ClockFormatSelector /> : null}
 				{user ? (
 					<>
 						<PushNotificationsEnabler />
@@ -152,6 +153,38 @@ function ThemeSelector() {
 						</option>
 					);
 				})}
+			</select>
+		</div>
+	);
+}
+
+function ClockFormatSelector() {
+	const { t } = useTranslation(["common"]);
+	const user = useUser();
+	const fetcher = useFetcher();
+
+	const handleClockFormatChange = (
+		event: React.ChangeEvent<HTMLSelectElement>,
+	) => {
+		const newFormat = event.target.value as "auto" | "24h" | "12h";
+		fetcher.submit(
+			{ _action: "UPDATE_CLOCK_FORMAT", newValue: newFormat },
+			{ method: "post", encType: "application/json" },
+		);
+	};
+
+	return (
+		<div>
+			<Label htmlFor="clock-format">{t("common:settings.clockFormat")}</Label>
+			<select
+				id="clock-format"
+				defaultValue={user?.preferences.clockFormat ?? "auto"}
+				onChange={handleClockFormatChange}
+				disabled={fetcher.state !== "idle"}
+			>
+				<option value="auto">{t("common:clockFormat.auto")}</option>
+				<option value="24h">{t("common:clockFormat.24h")}</option>
+				<option value="12h">{t("common:clockFormat.12h")}</option>
 			</select>
 		</div>
 	);

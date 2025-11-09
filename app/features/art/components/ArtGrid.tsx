@@ -15,9 +15,9 @@ import { Pagination } from "~/components/Pagination";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { usePagination } from "~/hooks/usePagination";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { artPage, newArtPage, userArtPage, userPage } from "~/utils/urls";
-import { conditionalUserSubmittedImage } from "~/utils/urls-img";
 import { ResponsiveMasonry } from "../../../modules/responsive-masonry/components/ResponsiveMasonry";
 import { ART_PER_PAGE } from "../art-constants";
 import type { ListedArt } from "../art-types";
@@ -91,25 +91,22 @@ export function ArtGrid({
 }
 
 function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
-	const { i18n } = useTranslation();
 	const [imageLoaded, setImageLoaded] = React.useState(false);
+	const { formatDate } = useTimeFormat();
 
 	return (
 		<SendouDialog
-			heading={databaseTimestampToDate(art.createdAt).toLocaleDateString(
-				i18n.language,
-				{
-					year: "numeric",
-					month: "long",
-					day: "numeric",
-				},
-			)}
+			heading={formatDate(databaseTimestampToDate(art.createdAt), {
+				year: "numeric",
+				month: "long",
+				day: "numeric",
+			})}
 			onClose={close}
 			isFullScreen
 		>
 			<img
 				alt=""
-				src={conditionalUserSubmittedImage(art.url)}
+				src={art.url}
 				loading="lazy"
 				className="art__dialog__img"
 				onLoad={() => setImageLoaded(true)}
@@ -179,7 +176,7 @@ function ImagePreview({
 		// biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration
 		<img
 			alt=""
-			src={conditionalUserSubmittedImage(previewUrl(art.url))}
+			src={previewUrl(art.url)}
 			loading="lazy"
 			onClick={onClick}
 			onLoad={() => setImageLoaded(true)}

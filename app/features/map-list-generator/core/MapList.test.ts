@@ -311,26 +311,6 @@ describe("MapList.generate()", () => {
 		});
 
 		// TODO: fix flaky
-		it("replenishes the stage id pool when exhausted", { retry: 10 }, () => {
-			const gen = initGenerator(
-				new MapPool({
-					TW: [],
-					SZ: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-					TC: [],
-					RM: [],
-					CB: [],
-				}),
-			);
-			const first = gen.next({ amount: 5 }).value.map((m) => m.stageId);
-			gen.next({ amount: 5 });
-			const third = gen.next({ amount: 5 }).value.map((m) => m.stageId);
-
-			for (const stageId of third) {
-				expect(first).toContainEqual(stageId);
-			}
-		});
-
-		// TODO: fix flaky
 		it(
 			"replenishes the stage id pool with different order",
 			{ retry: 10 },
@@ -360,7 +340,7 @@ describe("MapList.generate()", () => {
 			},
 		);
 
-		it("replenishes accordingly if considerGuaranteed is true (Bo3)", () => {
+		it("considerGuaranteed affects the order maps are reused", () => {
 			for (let i = 0; i < 10; i++) {
 				const gen = MapList.generate({
 					mapPool: new MapPool({
@@ -385,69 +365,56 @@ describe("MapList.generate()", () => {
 			}
 		});
 
-		it("replenishes accordingly if considerGuaranteed is true (Bo5)", () => {
-			for (let i = 0; i < 10; i++) {
+		it("should find unique maps when possible (All 4 One #50 bug)", () => {
+			const mapPool = new MapPool({
+				TW: [],
+				SZ: [1, 2, 3, 4, 5, 6, 7],
+				TC: [],
+				RM: [],
+				CB: [],
+			});
+
+			for (let i = 0; i < 50; i++) {
 				const gen = MapList.generate({
-					mapPool: new MapPool({
-						TW: [1, 2, 3, 4, 5],
-						SZ: [],
-						TC: [],
-						RM: [],
-						CB: [],
-					}),
+					mapPool,
 					considerGuaranteed: true,
 				});
 				gen.next();
-				const maps1 = gen.next({ amount: 5 }).value;
 
-				const notGuaranteedToBePlayed = [maps1[3].stageId, maps1[4].stageId];
+				gen.next({ amount: 5 });
 
-				const maps2 = gen.next({ amount: 5 }).value;
+				const maps = gen.next({ amount: 5 }).value;
 
-				expect([
-					maps2[0].stageId,
-					maps2[1].stageId,
-					maps2[2].stageId,
-				]).toContain(notGuaranteedToBePlayed[0]);
-				expect([
-					maps2[0].stageId,
-					maps2[1].stageId,
-					maps2[2].stageId,
-				]).toContain(notGuaranteedToBePlayed[1]);
+				const stageIds = maps.map((m) => m.stageId);
+				const uniqueStageIds = new Set(stageIds);
+
+				expect(uniqueStageIds.size).toBe(5);
 			}
 		});
 
-		it.fails(
-			"should find unique maps when possible (All 4 One #50 bug)",
-			() => {
-				const mapPool = new MapPool({
-					TW: [],
-					SZ: [1, 2, 3, 4, 5, 6, 7],
-					TC: [],
-					RM: [],
-					CB: [],
+		it("should find unique maps when possible (All 4 One #51 bug)", () => {
+			const mapPool = new MapPool({
+				TW: [],
+				SZ: [1, 2, 3, 4, 5, 6, 7],
+				TC: [],
+				RM: [],
+				CB: [],
+			});
+
+			for (let i = 0; i < 50; i++) {
+				const gen = MapList.generate({
+					mapPool,
 				});
+				gen.next();
 
-				for (let i = 0; i < 50; i++) {
-					const gen = MapList.generate({
-						mapPool,
-						considerGuaranteed: true,
-					});
-					gen.next();
+				const maps = gen.next({ amount: 7 }).value;
 
-					gen.next({ amount: 5 });
+				const stageIds = maps.map((m) => m.stageId);
+				const uniqueStageIds = new Set(stageIds);
 
-					const maps = gen.next({ amount: 5 }).value;
-
-					const stageIds = maps.map((m) => m.stageId);
-					const uniqueStageIds = new Set(stageIds);
-
-					expect(uniqueStageIds.size).toBe(5);
-				}
-			},
-		);
-
-		// also add test about Bo7 not having repeat maps
+				expect(uniqueStageIds.size).toBe(7);
+			}
+		});
 	});
 });
 

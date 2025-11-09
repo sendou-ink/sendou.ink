@@ -19,10 +19,10 @@ import { TrashIcon } from "~/components/icons/Trash";
 import { UsersIcon } from "~/components/icons/Users";
 import TimePopover from "~/components/TimePopover";
 import { useUser } from "~/features/auth/core/user";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { scrimPage, tournamentRegisterPage, userPage } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
 import type { ScrimPost, ScrimPostRequest } from "../scrims-types";
 import { formatFlexTimeDisplay } from "../scrims-utils";
 import styles from "./ScrimCard.module.css";
@@ -140,13 +140,7 @@ function ScrimTeamAvatar({
 	owner: ScrimPost["users"][number];
 }) {
 	if (teamAvatarUrl) {
-		return (
-			<Avatar
-				size="xs"
-				url={userSubmittedImage(teamAvatarUrl)}
-				alt={teamName}
-			/>
-		);
+		return <Avatar size="xs" url={teamAvatarUrl} alt={teamName} />;
 	}
 
 	return <Avatar size="xs" user={owner} alt={owner.username} />;
@@ -340,7 +334,8 @@ function ScrimActionButtons({
 	action: ScrimPostCardProps["action"];
 	post: ScrimPost;
 }) {
-	const { t, i18n } = useTranslation(["scrims", "common"]);
+	const { t } = useTranslation(["scrims", "common"]);
+	const { formatDateTime } = useTimeFormat();
 	const user = useUser();
 	const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
 	const [isViewRequestModalOpen, setIsViewRequestModalOpen] = useState(false);
@@ -406,15 +401,12 @@ function ScrimActionButtons({
 										{t("scrims:requestModal.at.label")}
 									</div>
 									<div className="text-lighter">
-										{databaseTimestampToDate(userRequest.at).toLocaleString(
-											i18n.language,
-											{
-												hour: "numeric",
-												minute: "2-digit",
-												day: "numeric",
-												month: "long",
-											},
-										)}
+										{formatDateTime(databaseTimestampToDate(userRequest.at), {
+											hour: "numeric",
+											minute: "2-digit",
+											day: "numeric",
+											month: "long",
+										})}
 									</div>
 								</div>
 							) : null}
@@ -481,7 +473,8 @@ export function ScrimRequestCard({
 	canAccept,
 	showFooter = true,
 }: ScrimRequestCardProps) {
-	const { t, i18n } = useTranslation(["scrims", "common"]);
+	const { t } = useTranslation(["scrims", "common"]);
+	const { formatTime } = useTimeFormat();
 
 	const owner = request.users.find((user) => user.isOwner) ?? request.users[0];
 	const isPickup = !request.team?.name;
@@ -540,7 +533,7 @@ export function ScrimRequestCard({
 								data-testid="confirm-modal-trigger-button"
 							>
 								{t("scrims:acceptModal.confirmFor", {
-									time: confirmedTime.toLocaleTimeString(i18n.language, {
+									time: formatTime(confirmedTime, {
 										hour: "numeric",
 										minute: "2-digit",
 									}),
@@ -552,7 +545,7 @@ export function ScrimRequestCard({
 							trigger={
 								<SendouButton size="small">
 									{t("scrims:acceptModal.confirmFor", {
-										time: confirmedTime.toLocaleTimeString(i18n.language, {
+										time: formatTime(confirmedTime, {
 											hour: "numeric",
 											minute: "2-digit",
 										}),

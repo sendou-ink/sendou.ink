@@ -22,6 +22,7 @@ const DEFAULT_FIELDS = {
 	name: "Team 1",
 	bio: "",
 	bsky: "",
+	tag: "",
 } as const;
 
 describe("team page editing", () => {
