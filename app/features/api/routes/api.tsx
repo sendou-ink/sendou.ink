@@ -1,5 +1,5 @@
 import type { MetaFunction } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
 import { Trans, useTranslation } from "react-i18next";
 import { CopyToClipboardPopover } from "~/components/CopyToClipboardPopover";
 import { SendouButton } from "~/components/elements/Button";
@@ -10,6 +10,7 @@ import { RefreshArrowsIcon } from "~/components/icons/RefreshArrows";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { metaTags } from "~/utils/remix";
+import { API_DOC_LINK } from "~/utils/urls";
 import { action } from "../actions/api.server";
 import { loader } from "../loaders/api.server";
 export { loader, action };
@@ -32,9 +33,9 @@ export default function ApiPage() {
 				<p className="text-sm">
 					<Trans t={t} i18nKey="common:api.description">
 						Generate an API token to access the sendou.ink API. See the
-						<Link to="/docs/dev/api.md" className="text-theme">
+						<a href={API_DOC_LINK} className="text-theme">
 							API documentation
-						</Link>
+						</a>
 						for available endpoints, usage examples and guidelines to follow.
 					</Trans>
 				</p>
