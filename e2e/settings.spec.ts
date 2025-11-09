@@ -39,10 +39,20 @@ test.describe("Settings", () => {
 		expect(newContents).not.toBe(oldContents);
 	});
 
-	// xxx: what da hell is this
 	test("updates clock format preference", async ({ page }) => {
 		await seed(page);
 		await impersonate(page);
+
+		await navigate({
+			page,
+			url: "/",
+		});
+
+		const tournamentCard = page.getByTestId("tournament-card").first();
+		const timeElement = tournamentCard.locator("time");
+		const initialTime = await timeElement.textContent();
+
+		expect(initialTime).toMatch(/AM|PM/);
 
 		await navigate({
 			page,
@@ -50,17 +60,19 @@ test.describe("Settings", () => {
 		});
 
 		const clockFormatSelect = page.locator("#clock-format");
-
 		await clockFormatSelect.selectOption("24h");
+
 		await page.waitForTimeout(500);
 
-		await clockFormatSelect.selectOption("12h");
-		await page.waitForTimeout(500);
+		await navigate({
+			page,
+			url: "/",
+		});
 
-		await clockFormatSelect.selectOption("auto");
-		await page.waitForTimeout(500);
+		const newTime = await tournamentCard.locator("time").textContent();
 
-		const selectedValue = await clockFormatSelect.inputValue();
-		expect(selectedValue).toBe("auto");
+		expect(newTime).not.toMatch(/AM|PM/);
+		expect(newTime).not.toBe(initialTime);
+		expect(newTime).toContain(":");
 	});
 });
