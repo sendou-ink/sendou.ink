@@ -183,6 +183,10 @@
 		"displayName": "Champions Cup",
 		"authorDiscordId": "752582395076673577"
 	},
+	"championsinv": {
+		"displayName": "Champions Cup Invitational",
+		"authorDiscordId": "752582395076673577"
+	},
 	"chao": {
 		"displayName": "Chao Garden",
 		"authorDiscordId": "528851510222782474"

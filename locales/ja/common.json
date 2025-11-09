@@ -1,5 +1,6 @@
 {
 	"pages.admin": "管理",
+	"pages.api": "",
 	"pages.articles": "記事一覧",
 	"pages.badges": "バッジ",
 	"pages.plus": "Plus Server",
@@ -306,5 +307,14 @@
 	"clockFormat.24h": "",
 	"clockFormat.12h": "",
 	"badges.selector.none": "",
-	"badges.selector.select": ""
+	"badges.selector.select": "",
+	"api.title": "",
+	"api.description": "",
+	"api.noAccess": "",
+	"api.tokenLabel": "",
+	"api.revealButton": "",
+	"api.regenerate.heading": "",
+	"api.regenerate.button": "",
+	"api.regenerate.confirm": "",
+	"api.generate": ""
 }

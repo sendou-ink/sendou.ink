@@ -301,7 +301,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 							tournamentName: tournament.ctx.name,
 							tournamentTeamId: ownTeam.id,
 						},
-						pictureUrl: tournament.ctx.logoSrc,
+						pictureUrl: tournament.ctx.logoUrl,
 					},
 				});
 			}

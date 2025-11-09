@@ -70,7 +70,6 @@ import {
 	specialWeaponImageUrl,
 	teamPage,
 } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
 import { action } from "../actions/q.match.$id.server";
 import { matchEndedAtIndex } from "../core/match";
 import { loader } from "../loaders/q.match.$id.server";
@@ -207,10 +206,7 @@ export default function QMatchPage() {
 												className="stack horizontal items-center xs font-bold"
 											>
 												{group.team.avatarUrl ? (
-													<Avatar
-														url={userSubmittedImage(group.team.avatarUrl)}
-														size="xxs"
-													/>
+													<Avatar url={group.team.avatarUrl} size="xxs" />
 												) : null}
 												{group.team.name}
 											</Link>

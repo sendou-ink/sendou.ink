@@ -23,7 +23,6 @@ import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { scrimPage, tournamentRegisterPage, userPage } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
 import type { ScrimPost, ScrimPostRequest } from "../scrims-types";
 import { formatFlexTimeDisplay } from "../scrims-utils";
 import styles from "./ScrimCard.module.css";
@@ -141,13 +140,7 @@ function ScrimTeamAvatar({
 	owner: ScrimPost["users"][number];
 }) {
 	if (teamAvatarUrl) {
-		return (
-			<Avatar
-				size="xs"
-				url={userSubmittedImage(teamAvatarUrl)}
-				alt={teamName}
-			/>
-		);
+		return <Avatar size="xs" url={teamAvatarUrl} alt={teamName} />;
 	}
 
 	return <Avatar size="xs" user={owner} alt={owner.username} />;

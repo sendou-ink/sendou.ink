@@ -6,17 +6,14 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { UsersIcon } from "~/components/icons/Users";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
-import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import {
 	calendarEventPage,
 	tournamentBracketsPage,
-	tournamentLogoUrl,
 	tournamentTeamPage,
 	userPage,
 } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
 import type { UserResultsLoaderData } from "../loaders/u.$identifier.results.server";
 import { ParticipationPill } from "./ParticipationPill";
 
@@ -61,10 +58,6 @@ export function UserResultsTable({
 					const nameCellId = `${id}-${result.teamId}-name`;
 					const checkboxLabelIds = `${nameCellId} ${placementHeaderId} ${placementCellId}`;
 
-					const logoUrl = result.logoUrl
-						? userSubmittedImage(result.logoUrl)
-						: HACKY_resolvePicture({ name: result.eventName });
-
 					return (
 						<tr key={result.teamId}>
 							{hasHighlightCheckboxes && (
@@ -106,9 +99,9 @@ export function UserResultsTable({
 									) : null}
 									{result.tournamentId ? (
 										<>
-											{logoUrl !== tournamentLogoUrl("default") ? (
+											{result.logoUrl ? (
 												<img
-													src={logoUrl}
+													src={result.logoUrl}
 													alt=""
 													width={18}
 													height={18}

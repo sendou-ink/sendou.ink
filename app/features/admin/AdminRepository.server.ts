@@ -207,6 +207,14 @@ export function makeTournamentOrganizerByUserId(userId: number) {
 		.execute();
 }
 
+export function makeApiAccesserByUserId(userId: number) {
+	return db
+		.updateTable("User")
+		.set({ isApiAccesser: 1 })
+		.where("User.id", "=", userId)
+		.execute();
+}
+
 export async function linkUserAndPlayer({
 	userId,
 	playerId,

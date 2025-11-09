@@ -1,5 +1,6 @@
 {
 	"pages.admin": "Админ",
+	"pages.api": "",
 	"pages.articles": "Статьи",
 	"pages.badges": "Значки",
 	"pages.plus": "Plus Server",
@@ -313,5 +314,14 @@
 	"clockFormat.24h": "",
 	"clockFormat.12h": "",
 	"badges.selector.none": "Награды не выбраны",
-	"badges.selector.select": "Выберите награды для добавления"
+	"badges.selector.select": "Выберите награды для добавления",
+	"api.title": "",
+	"api.description": "",
+	"api.noAccess": "",
+	"api.tokenLabel": "",
+	"api.revealButton": "",
+	"api.regenerate.heading": "",
+	"api.regenerate.button": "",
+	"api.regenerate.confirm": "",
+	"api.generate": ""
 }

@@ -7,11 +7,9 @@ import { UsersIcon } from "~/components/icons/Users";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
 import type { TeamResultsLoaderData } from "~/features/team/loaders/t.$customUrl.results.server";
-import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { tournamentLogoUrl, tournamentTeamPage, userPage } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
+import { tournamentTeamPage, userPage } from "~/utils/urls";
 
 import styles from "./TeamResultsTable.module.css";
 
@@ -35,10 +33,6 @@ export function TeamResultsTable({ results }: TeamResultsTableProps) {
 			</thead>
 			<tbody>
 				{results.map((result) => {
-					const logoUrl = result.logoUrl
-						? userSubmittedImage(result.logoUrl)
-						: HACKY_resolvePicture({ name: result.tournamentName });
-
 					return (
 						<tr key={result.tournamentId}>
 							<td className="pl-4 whitespace-nowrap">
@@ -58,9 +52,9 @@ export function TeamResultsTable({ results }: TeamResultsTableProps) {
 							</td>
 							<td>
 								<div className="stack horizontal xs items-center">
-									{logoUrl !== tournamentLogoUrl("default") ? (
+									{result.logoUrl ? (
 										<img
-											src={logoUrl}
+											src={result.logoUrl}
 											alt=""
 											width={18}
 											height={18}
