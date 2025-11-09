@@ -861,6 +861,7 @@ export interface User {
 	isArtist: Generated<DBBoolean | null>;
 	isVideoAdder: Generated<DBBoolean | null>;
 	isTournamentOrganizer: Generated<DBBoolean | null>;
+	isApiAccesser: Generated<DBBoolean | null>;
 	languages: string | null;
 	motionSens: number | null;
 	patronSince: number | null;
@@ -912,6 +913,13 @@ export interface UserFriendCode {
 	friendCode: string;
 	userId: number;
 	submitterUserId: number;
+	createdAt: GeneratedAlways<number>;
+}
+
+export interface ApiToken {
+	id: GeneratedAlways<number>;
+	userId: number;
+	token: string;
 	createdAt: GeneratedAlways<number>;
 }
 
@@ -1087,6 +1095,7 @@ export type TablesUpdatable = { [P in keyof DB]: Updateable<DB[P]> };
 export interface DB {
 	AllTeam: Team;
 	AllTeamMember: TeamMember;
+	ApiToken: ApiToken;
 	Art: Art;
 	ArtTag: ArtTag;
 	ArtUserMetadata: ArtUserMetadata;

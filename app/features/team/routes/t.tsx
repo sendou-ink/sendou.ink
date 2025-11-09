@@ -23,7 +23,6 @@ import {
 	TEAM_SEARCH_PAGE,
 	teamPage,
 } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
 import { action } from "../actions/t.server";
 import { loader } from "../loaders/t.server";
 import { TEAM, TEAMS_PER_PAGE } from "../team-constants";
@@ -117,9 +116,9 @@ export default function TeamSearchPage() {
 						to={teamPage(team.customUrl)}
 						className="team-search__team"
 					>
-						{team.avatarSrc ? (
+						{team.avatarUrl ? (
 							<img
-								src={userSubmittedImage(team.avatarSrc)}
+								src={team.avatarUrl}
 								alt=""
 								width={64}
 								height={64}

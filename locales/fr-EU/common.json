@@ -1,5 +1,6 @@
 {
 	"pages.admin": "Admin",
+	"pages.api": "",
 	"pages.articles": "Articles",
 	"pages.badges": "Badges",
 	"pages.plus": "Plus Serveur",
@@ -308,5 +309,14 @@
 	"settings.notifications.browserNotSupported": "Les notifications push ne sont pas supporter par cet navigateur",
 	"settings.notifications.permissionDenied": "Les notifications push ont été refusées. Vérifiez les paramètres de votre navigateur pour les réactiver",
 	"badges.selector.none": "Aucun badges est sélectionné",
-	"badges.selector.select": "Selectionner un badge pour l'ajouter"
+	"badges.selector.select": "Selectionner un badge pour l'ajouter",
+	"api.title": "",
+	"api.description": "",
+	"api.noAccess": "",
+	"api.tokenLabel": "",
+	"api.revealButton": "",
+	"api.regenerate.heading": "",
+	"api.regenerate.button": "",
+	"api.regenerate.confirm": "",
+	"api.generate": ""
 }

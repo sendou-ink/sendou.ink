@@ -1,5 +1,6 @@
 {
 	"pages.admin": "מנהל",
+	"pages.api": "",
 	"pages.articles": "כתבות",
 	"pages.badges": "תגים",
 	"pages.plus": "שרת פלוס",
@@ -307,5 +308,14 @@
 	"settings.notifications.browserNotSupported": "",
 	"settings.notifications.permissionDenied": "",
 	"badges.selector.none": "",
-	"badges.selector.select": ""
+	"badges.selector.select": "",
+	"api.title": "",
+	"api.description": "",
+	"api.noAccess": "",
+	"api.tokenLabel": "",
+	"api.revealButton": "",
+	"api.regenerate.heading": "",
+	"api.regenerate.button": "",
+	"api.regenerate.confirm": "",
+	"api.generate": ""
 }

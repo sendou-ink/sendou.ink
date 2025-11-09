@@ -1,5 +1,6 @@
 {
 	"pages.admin": "Admin",
+	"pages.api": "",
 	"pages.articles": "Articles",
 	"pages.badges": "Badges",
 	"pages.plus": "Plus Server",
@@ -308,5 +309,14 @@
 	"settings.notifications.browserNotSupported": "",
 	"settings.notifications.permissionDenied": "",
 	"badges.selector.none": "",
-	"badges.selector.select": ""
+	"badges.selector.select": "",
+	"api.title": "",
+	"api.description": "",
+	"api.noAccess": "",
+	"api.tokenLabel": "",
+	"api.revealButton": "",
+	"api.regenerate.heading": "",
+	"api.regenerate.button": "",
+	"api.regenerate.confirm": "",
+	"api.generate": ""
 }

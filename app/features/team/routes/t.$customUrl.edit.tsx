@@ -113,11 +113,11 @@ function ImageRemoveButtons() {
 	const { t } = useTranslation(["common", "team"]);
 	const { team } = useLoaderData<typeof loader>();
 
-	return team.avatarSrc || team.bannerSrc ? (
+	return team.avatarUrl || team.bannerUrl ? (
 		<div>
 			<Label>{t("team:forms.fields.removeImages")}</Label>
 			<ol className="team__image-links-list">
-				{team.avatarSrc ? (
+				{team.avatarUrl ? (
 					<li>
 						<FormWithConfirm
 							dialogHeading={t("team:deleteTeam.profilePicture.header", {
@@ -132,7 +132,7 @@ function ImageRemoveButtons() {
 						</FormWithConfirm>
 					</li>
 				) : null}
-				{team.bannerSrc ? (
+				{team.bannerUrl ? (
 					<li>
 						<FormWithConfirm
 							dialogHeading={t("team:deleteTeam.banner.header", {
