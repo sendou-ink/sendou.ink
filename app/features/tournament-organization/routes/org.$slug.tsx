@@ -26,6 +26,7 @@ import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { BannedUsersList } from "~/features/tournament-organization/components/BannedPlayersList";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
@@ -324,7 +325,8 @@ function SeriesHeader({
 }: {
 	series: NonNullable<SerializeFrom<typeof loader>["series"]>;
 }) {
-	const { i18n, t } = useTranslation(["org"]);
+	const { t } = useTranslation(["org"]);
+	const { formatDate } = useTimeFormat();
 
 	return (
 		<div className="stack md">
@@ -343,13 +345,10 @@ function SeriesHeader({
 					{series.established ? (
 						<div className="text-lighter text-italic text-xs">
 							{t("org:events.established.short")}{" "}
-							{databaseTimestampToDate(series.established).toLocaleDateString(
-								i18n.language,
-								{
-									month: "long",
-									year: "numeric",
-								},
-							)}
+							{formatDate(databaseTimestampToDate(series.established), {
+								month: "long",
+								year: "numeric",
+							})}
 						</div>
 					) : null}
 				</div>
@@ -450,7 +449,7 @@ function EventInfo({
 	event: SerializeFrom<typeof loader>["events"][number];
 	showYear?: boolean;
 }) {
-	const { i18n } = useTranslation();
+	const { formatDateTime } = useTimeFormat();
 
 	return (
 		<div className="stack sm">
@@ -468,16 +467,13 @@ function EventInfo({
 				<div>
 					<div className="org__event-info__name">{event.name}</div>
 					<time className="org__event-info__time" suppressHydrationWarning>
-						{databaseTimestampToDate(event.startTime).toLocaleString(
-							i18n.language,
-							{
-								day: "numeric",
-								month: "numeric",
-								hour: "numeric",
-								minute: "numeric",
-								year: showYear ? "numeric" : undefined,
-							},
-						)}
+						{formatDateTime(databaseTimestampToDate(event.startTime), {
+							day: "numeric",
+							month: "numeric",
+							hour: "numeric",
+							minute: "numeric",
+							year: showYear ? "numeric" : undefined,
+						})}
 					</time>
 				</div>
 			</Link>

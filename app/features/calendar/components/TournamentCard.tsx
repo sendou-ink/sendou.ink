@@ -9,6 +9,7 @@ import { TrophyIcon } from "~/components/icons/Trophy";
 import { UsersIcon } from "~/components/icons/Users";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl } from "~/utils/urls";
 import type { CalendarEvent, ShowcaseCalendarEvent } from "../calendar-types";
@@ -23,7 +24,7 @@ export function TournamentCard({
 	className?: string;
 }) {
 	const isMounted = useIsMounted();
-	const { i18n } = useTranslation(["front", "common"]);
+	const { formatDateTime } = useTimeFormat();
 
 	const isShowcase = tournament.type === "showcase";
 	const isCalendar = tournament.type === "calendar";
@@ -34,7 +35,7 @@ export function TournamentCard({
 		if (!isMounted) return "Placeholder";
 
 		const date = databaseTimestampToDate(tournament.startTime);
-		return date.toLocaleString(i18n.language, {
+		return formatDateTime(date, {
 			month: "short",
 			day: "numeric",
 			hour: "numeric",

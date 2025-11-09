@@ -13,6 +13,7 @@ import { YouTubeEmbed } from "~/components/YouTubeEmbed";
 import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -72,12 +73,12 @@ export default function VodPage() {
 		defaultValue: 0,
 		revive: Number,
 	});
-	const { i18n } = useTranslation();
 	const isMounted = useIsMounted();
 	const [autoplay, setAutoplay] = React.useState(false);
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["common", "vods"]);
 	const user = useUser();
+	const { formatDate } = useTimeFormat();
 
 	return (
 		<Main className="stack lg">
@@ -98,9 +99,7 @@ export default function VodPage() {
 							})}
 						>
 							{isMounted
-								? databaseTimestampToDate(
-										data.vod.youtubeDate,
-									).toLocaleDateString(i18n.language, {
+								? formatDate(databaseTimestampToDate(data.vod.youtubeDate), {
 										day: "numeric",
 										month: "numeric",
 										year: "numeric",
