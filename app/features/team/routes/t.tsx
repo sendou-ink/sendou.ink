@@ -54,7 +54,7 @@ export default function TeamSearchPage() {
 	const [inputValue, setInputValue] = React.useState("");
 	const data = useLoaderData<typeof loader>();
 
-	const filteredTeams = React.useMemo(() => {
+	const filteredTeams = () => {
 		if (!inputValue) return data.teams;
 
 		const lowerCaseInput = inputValue.toLowerCase();
@@ -80,7 +80,7 @@ export default function TeamSearchPage() {
 			if (!aTagExactMatch && bTagExactMatch) return 1;
 			return 0;
 		});
-	}, [data.teams, inputValue]);
+	};
 
 	const {
 		itemsToDisplay,
@@ -91,7 +91,7 @@ export default function TeamSearchPage() {
 		previousPage,
 		setPage,
 	} = usePagination({
-		items: filteredTeams,
+		items: filteredTeams(),
 		pageSize: TEAMS_PER_PAGE,
 	});
 
