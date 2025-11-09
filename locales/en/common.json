@@ -1,5 +1,6 @@
 {
 	"pages.admin": "Admin",
+	"pages.api": "API",
 	"pages.articles": "Articles",
 	"pages.badges": "Badges",
 	"pages.plus": "Plus Server",
@@ -306,5 +307,14 @@
 	"settings.notifications.browserNotSupported": "Push notifications are not supported on this browser",
 	"settings.notifications.permissionDenied": "Push notifications were denied. Check your browser settings to re-enable",
 	"badges.selector.none": "No badges selected",
-	"badges.selector.select": "Select badge to add"
+	"badges.selector.select": "Select badge to add",
+	"api.title": "API Access",
+	"api.description": "Generate an API token to access the sendou.ink API. See the <1>API documentation</1> for available endpoints, usage examples and guidelines to follow.",
+	"api.noAccess": "You do not have access to the API. Access is granted to supporters (Supporter tier or higher) and admins, organizers, or streamers of established tournament organizations.",
+	"api.tokenLabel": "Your API Token",
+	"api.revealButton": "Click to reveal",
+	"api.regenerate.heading": "Regenerating will invalidate your current token. Any applications using the old token will stop working.",
+	"api.regenerate.button": "Regenerate token",
+	"api.regenerate.confirm": "Confirm Regenerate",
+	"api.generate": "Generate Token"
 }

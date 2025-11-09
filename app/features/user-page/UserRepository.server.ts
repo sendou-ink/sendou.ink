@@ -323,6 +323,7 @@ export async function findLeanById(id: number) {
 			"User.isArtist",
 			"User.isVideoAdder",
 			"User.isTournamentOrganizer",
+			"User.isApiAccesser",
 			"User.patronTier",
 			"User.languages",
 			"User.inGameName",
@@ -341,7 +342,12 @@ export async function findLeanById(id: number) {
 	if (!user) return;
 
 	return {
-		...R.omit(user, ["isArtist", "isVideoAdder", "isTournamentOrganizer"]),
+		...R.omit(user, [
+			"isArtist",
+			"isVideoAdder",
+			"isTournamentOrganizer",
+			"isApiAccesser",
+		]),
 		roles: userRoles(user),
 	};
 }
