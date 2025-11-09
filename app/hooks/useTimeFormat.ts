@@ -50,7 +50,17 @@ export function useTimeFormat() {
 	const clockOptions = getClockFormatOptions(clockFormat, i18n.language);
 
 	const formatDateTime = (date: Date, options?: Intl.DateTimeFormatOptions) => {
-		return date.toLocaleString(i18n.language, { ...options, ...clockOptions });
+		return date.toLocaleString(
+			i18n.language,
+			options?.hour
+				? {
+						...options,
+						...clockOptions,
+					}
+				: {
+						...options,
+					},
+		);
 	};
 
 	const formatTime = (date: Date, options?: Intl.DateTimeFormatOptions) => {
