@@ -83,7 +83,7 @@ export default function CalendarEventPage() {
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["common", "calendar"]);
 	const isMounted = useIsMounted();
-	const { formatDate } = useTimeFormat();
+	const { formatDateTime } = useTimeFormat();
 
 	return (
 		<Main className="stack lg">
@@ -102,7 +102,7 @@ export default function CalendarEventPage() {
 							</span>
 							<time dateTime={databaseTimestampToDate(startTime).toISOString()}>
 								{isMounted
-									? formatDate(databaseTimestampToDate(startTime), {
+									? formatDateTime(databaseTimestampToDate(startTime), {
 											hour: "numeric",
 											minute: "numeric",
 											day: "numeric",
