@@ -36,7 +36,6 @@ import styles from "./tier-list-maker.module.css";
 // xxx: stage+modes
 // xxx: persist to search params
 // xxx: add to navigation
-// xxx: buttons to move tiers up/down
 // xxx: popover jank
 // xxx: popover input too big?
 // xxx: to remove images, need to drag precisely between the wpn images

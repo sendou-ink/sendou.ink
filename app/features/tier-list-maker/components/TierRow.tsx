@@ -9,6 +9,8 @@ import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import { ChevronDownIcon } from "~/components/icons/ChevronDown";
+import { ChevronUpIcon } from "~/components/icons/ChevronUp";
 import { TrashIcon } from "~/components/icons/Trash";
 import { useTierListState } from "../contexts/TierListContext";
 import type { Tier } from "../tier-list-maker-types";
@@ -21,10 +23,13 @@ interface TierRowProps {
 
 export function TierRow({ tier }: TierRowProps) {
 	const {
+		state,
 		getItemsInTier,
 		handleRemoveTier,
 		handleRenameTier,
 		handleChangeTierColor,
+		handleMoveTierUp,
+		handleMoveTierDown,
 	} = useTierListState();
 
 	const items = getItemsInTier(tier.id);
@@ -32,6 +37,10 @@ export function TierRow({ tier }: TierRowProps) {
 	const { setNodeRef, isOver } = useDroppable({
 		id: tier.id,
 	});
+
+	const tierIndex = state.tiers.findIndex((t) => t.id === tier.id);
+	const isFirstTier = tierIndex === 0;
+	const isLastTier = tierIndex === state.tiers.length - 1;
 
 	const [isPopupOpen, setIsPopupOpen] = useState(false);
 	const [name, setName] = useState(tier.name);
@@ -125,6 +134,27 @@ export function TierRow({ tier }: TierRowProps) {
 						))}
 					</SortableContext>
 				)}
+			</div>
+
+			<div className={styles.arrowControls}>
+				<button
+					className={styles.arrowButton}
+					onClick={() => handleMoveTierUp(tier.id)}
+					disabled={isFirstTier}
+					type="button"
+					aria-label="Move tier up"
+				>
+					<ChevronUpIcon className={styles.arrowIcon} />
+				</button>
+				<button
+					className={styles.arrowButton}
+					onClick={() => handleMoveTierDown(tier.id)}
+					disabled={isLastTier}
+					type="button"
+					aria-label="Move tier down"
+				>
+					<ChevronDownIcon className={styles.arrowIcon} />
+				</button>
 			</div>
 		</div>
 	);

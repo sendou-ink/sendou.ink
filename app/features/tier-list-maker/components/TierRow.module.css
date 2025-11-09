@@ -71,3 +71,40 @@
 	align-items: center;
 	justify-content: center;
 }
+
+.arrowControls {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	margin: auto;
+}
+
+.arrowButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	padding: var(--s-1);
+	background: var(--bg-lighter);
+	border: none;
+	border-radius: var(--rounded-sm);
+	cursor: pointer;
+	transition: opacity 0.2s;
+}
+
+.arrowButton:hover:not(:disabled) {
+	opacity: 0.8;
+}
+
+.arrowButton:disabled {
+	opacity: 0.3;
+	cursor: not-allowed;
+}
+
+.arrowIcon {
+	width: 20px;
+	height: 20px;
+	stroke-width: 2.5;
+	fill: var(--text);
+}

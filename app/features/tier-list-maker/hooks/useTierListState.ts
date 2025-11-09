@@ -252,6 +252,44 @@ export function useTierListState() {
 			.filter((item) => !placedItems.has(`${item.type}:${item.id}`));
 	};
 
+	const handleMoveTierUp = (tierId: string) => {
+		setState((prev) => {
+			const currentIndex = prev.tiers.findIndex((tier) => tier.id === tierId);
+			if (currentIndex <= 0) return prev;
+
+			const newTiers = [...prev.tiers];
+			[newTiers[currentIndex - 1], newTiers[currentIndex]] = [
+				newTiers[currentIndex],
+				newTiers[currentIndex - 1],
+			];
+
+			return {
+				...prev,
+				tiers: newTiers,
+			};
+		});
+	};
+
+	const handleMoveTierDown = (tierId: string) => {
+		setState((prev) => {
+			const currentIndex = prev.tiers.findIndex((tier) => tier.id === tierId);
+			if (currentIndex === -1 || currentIndex >= prev.tiers.length - 1) {
+				return prev;
+			}
+
+			const newTiers = [...prev.tiers];
+			[newTiers[currentIndex], newTiers[currentIndex + 1]] = [
+				newTiers[currentIndex + 1],
+				newTiers[currentIndex],
+			];
+
+			return {
+				...prev,
+				tiers: newTiers,
+			};
+		});
+	};
+
 	return {
 		itemType,
 		setItemType,
@@ -264,6 +302,8 @@ export function useTierListState() {
 		handleRemoveTier,
 		handleRenameTier,
 		handleChangeTierColor,
+		handleMoveTierUp,
+		handleMoveTierDown,
 		getItemsInTier,
 		availableItems: getAvailableItems(),
 	};
