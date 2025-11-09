@@ -54,22 +54,33 @@ export default function TeamSearchPage() {
 	const [inputValue, setInputValue] = React.useState("");
 	const data = useLoaderData<typeof loader>();
 
-	const filteredTeams = data.teams.filter((team) => {
-		if (!inputValue) return true;
+	const filteredTeams = () => {
+		if (!inputValue) return data.teams;
 
 		const lowerCaseInput = inputValue.toLowerCase();
+		const matchingTeams = data.teams.filter((team) => {
+			if (team.name.toLowerCase().includes(lowerCaseInput)) return true;
+			if (team.tag && team.tag.toLowerCase() === lowerCaseInput) return true;
+			if (
+				team.members.some((m) =>
+					m.username.toLowerCase().includes(lowerCaseInput),
+				)
+			) {
+				return true;
+			}
 
-		if (team.name.toLowerCase().includes(lowerCaseInput)) return true;
-		if (
-			team.members.some((m) =>
-				m.username.toLowerCase().includes(lowerCaseInput),
-			)
-		) {
-			return true;
-		}
+			return false;
+		});
 
-		return false;
-	});
+		return matchingTeams.sort((a, b) => {
+			const aTagExactMatch = a.tag && a.tag.toLowerCase() === lowerCaseInput;
+			const bTagExactMatch = b.tag && b.tag.toLowerCase() === lowerCaseInput;
+
+			if (aTagExactMatch && !bTagExactMatch) return -1;
+			if (!aTagExactMatch && bTagExactMatch) return 1;
+			return 0;
+		});
+	};
 
 	const {
 		itemsToDisplay,
@@ -80,7 +91,7 @@ export default function TeamSearchPage() {
 		previousPage,
 		setPage,
 	} = usePagination({
-		items: filteredTeams,
+		items: filteredTeams(),
 		pageSize: TEAMS_PER_PAGE,
 	});
 
@@ -125,6 +136,9 @@ export default function TeamSearchPage() {
 								data-testid={`team-${i}`}
 							>
 								{team.name}
+								{team.tag ? (
+									<span className="team-search__team__tag">{team.tag}</span>
+								) : null}
 							</div>
 							<div className="team-search__team__members">
 								{team.members.length === 1
