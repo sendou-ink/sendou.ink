@@ -138,7 +138,7 @@ export function TierRow({ tier }: TierRowProps) {
 
 			<div className={styles.arrowControls}>
 				<button
-					className={styles.arrowButton}
+					className={clsx(styles.arrowButton, styles.arrowButtonUpper)}
 					onClick={() => handleMoveTierUp(tier.id)}
 					disabled={isFirstTier}
 					type="button"
@@ -147,7 +147,7 @@ export function TierRow({ tier }: TierRowProps) {
 					<ChevronUpIcon className={styles.arrowIcon} />
 				</button>
 				<button
-					className={styles.arrowButton}
+					className={clsx(styles.arrowButton, styles.arrowButtonLower)}
 					onClick={() => handleMoveTierDown(tier.id)}
 					disabled={isLastTier}
 					type="button"

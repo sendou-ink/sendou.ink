@@ -48,7 +48,7 @@
 	padding: var(--s-2);
 	background: var(--bg-lighter);
 	border: 2px dashed transparent;
-	border-radius: var(--rounded-sm);
+	border-radius: var(--rounded-sm) 0 0 var(--rounded-sm);
 	align-content: flex-start;
 	transition: all 0.2s;
 }
@@ -88,9 +88,16 @@
 	padding: var(--s-1);
 	background: var(--bg-lighter);
 	border: none;
-	border-radius: var(--rounded-sm);
 	cursor: pointer;
 	transition: opacity 0.2s;
+}
+
+.arrowButtonUpper {
+	border-radius: 0 var(--rounded-sm) 0 0;
+}
+
+.arrowButtonLower {
+	border-radius: 0 0 var(--rounded-sm) 0;
 }
 
 .arrowButton:hover:not(:disabled) {
@@ -105,6 +112,6 @@
 .arrowIcon {
 	width: 20px;
 	height: 20px;
-	stroke-width: 2.5;
-	fill: var(--text);
+	stroke-width: 3;
+	color: var(--text);
 }
