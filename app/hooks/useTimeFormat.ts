@@ -59,9 +59,17 @@ export function useTimeFormat() {
 	const clockFormat = user?.preferences?.clockFormat;
 	const clockOptions = getClockFormatOptions(clockFormat, i18n.language);
 
+	const language = () => {
+		// this is needed to ensure the time format used doesn't say e.g. "03:00" when we want "3:00"
+		if (clockFormat === "24h" && i18n.language === "en") {
+			return "en-GB";
+		}
+		return i18n.language;
+	};
+
 	const formatDateTime = (date: Date, options?: Intl.DateTimeFormatOptions) => {
 		return date.toLocaleString(
-			i18n.language,
+			language(),
 			options?.hour
 				? {
 						...options,
@@ -74,14 +82,14 @@ export function useTimeFormat() {
 	};
 
 	const formatTime = (date: Date, options?: Intl.DateTimeFormatOptions) => {
-		return date.toLocaleTimeString(i18n.language, {
+		return date.toLocaleTimeString(language(), {
 			...options,
 			...clockOptions,
 		});
 	};
 
 	const formatDate = (date: Date, options?: Intl.DateTimeFormatOptions) => {
-		return date.toLocaleDateString(i18n.language, options);
+		return date.toLocaleDateString(language(), options);
 	};
 
 	return { formatDateTime, formatTime, formatDate };
