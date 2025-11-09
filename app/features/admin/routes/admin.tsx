@@ -119,6 +119,7 @@ function AdminActions() {
 			{isStaff ? <GiveArtist /> : null}
 			{isStaff ? <GiveVideoAdder /> : null}
 			{isAdmin ? <GiveTournamentOrganizer /> : null}
+			{isAdmin ? <GiveApiAccess /> : null}
 			{isStaff ? <UpdateFriendCode /> : null}
 			{isStaff ? <MigrateUser /> : null}
 			{isAdmin ? <ForcePatron /> : null}
@@ -270,6 +271,22 @@ function GiveTournamentOrganizer() {
 					state={fetcher.state}
 				>
 					Add as tournament organizer
+				</SubmitButton>
+			</div>
+		</fetcher.Form>
+	);
+}
+
+function GiveApiAccess() {
+	const fetcher = useFetcher();
+
+	return (
+		<fetcher.Form className="stack md" method="post">
+			<h2>Give API access</h2>
+			<UserSearch label="User" name="user" />
+			<div className="stack horizontal md">
+				<SubmitButton type="submit" _action="API_ACCESS" state={fetcher.state}>
+					Grant API access
 				</SubmitButton>
 			</div>
 		</fetcher.Form>

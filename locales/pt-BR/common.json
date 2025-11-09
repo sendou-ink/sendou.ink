@@ -1,5 +1,6 @@
 {
 	"pages.admin": "Administrador",
+	"pages.api": "",
 	"pages.articles": "Artigos",
 	"pages.badges": "Insígnias",
 	"pages.plus": "Servidor Plus",
@@ -307,6 +308,19 @@
 	"settings.notifications.disableInfo": "",
 	"settings.notifications.browserNotSupported": "",
 	"settings.notifications.permissionDenied": "",
+	"settings.clockFormat": "",
+	"clockFormat.auto": "",
+	"clockFormat.24h": "",
+	"clockFormat.12h": "",
 	"badges.selector.none": "",
-	"badges.selector.select": ""
+	"badges.selector.select": "",
+	"api.title": "",
+	"api.description": "",
+	"api.noAccess": "",
+	"api.tokenLabel": "",
+	"api.revealButton": "",
+	"api.regenerate.heading": "",
+	"api.regenerate.button": "",
+	"api.regenerate.confirm": "",
+	"api.generate": ""
 }

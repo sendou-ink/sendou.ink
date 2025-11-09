@@ -4,7 +4,10 @@ import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, TablesInsertable } from "~/db/tables";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import {
+	COMMON_USER_FIELDS,
+	concatUserSubmittedImagePrefix,
+} from "~/utils/kysely.server";
 import { LFG } from "./lfg-constants";
 
 export async function posts(user?: { id: number; plusTier: number | null }) {
@@ -51,7 +54,9 @@ export async function posts(user?: { id: number; plusTier: number | null }) {
 					.select(({ eb: innerEb }) => [
 						"Team.id",
 						"Team.name",
-						"UserSubmittedImage.url as avatarUrl",
+						concatUserSubmittedImagePrefix(
+							innerEb.ref("UserSubmittedImage.url"),
+						).as("avatarUrl"),
 						jsonArrayFrom(
 							innerEb
 								.selectFrom("TeamMemberWithSecondary")

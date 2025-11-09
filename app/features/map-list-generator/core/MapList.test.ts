@@ -392,7 +392,29 @@ describe("MapList.generate()", () => {
 			}
 		});
 
-		// also add test about Bo7 not having repeat maps
+		it("should find unique maps when possible (All 4 One #51 bug)", () => {
+			const mapPool = new MapPool({
+				TW: [],
+				SZ: [1, 2, 3, 4, 5, 6, 7],
+				TC: [],
+				RM: [],
+				CB: [],
+			});
+
+			for (let i = 0; i < 50; i++) {
+				const gen = MapList.generate({
+					mapPool,
+				});
+				gen.next();
+
+				const maps = gen.next({ amount: 7 }).value;
+
+				const stageIds = maps.map((m) => m.stageId);
+				const uniqueStageIds = new Set(stageIds);
+
+				expect(uniqueStageIds.size).toBe(7);
+			}
+		});
 	});
 });
 

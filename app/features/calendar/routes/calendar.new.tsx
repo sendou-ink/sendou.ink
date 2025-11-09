@@ -23,6 +23,7 @@ import type { CalendarEventTag, Tables } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import {
 	databaseTimestampToDate,
@@ -33,7 +34,6 @@ import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { pathnameFromPotentialURL } from "~/utils/strings";
 import { CREATING_TOURNAMENT_DOC_LINK, FAQ_PAGE } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
 import {
 	CALENDAR_EVENT,
 	REG_CLOSES_AT_OPTIONS,
@@ -137,6 +137,7 @@ export default function CalendarNewEventPage() {
 function TemplateTournamentForm() {
 	const { recentTournaments } = useLoaderData<typeof loader>();
 	const [eventId, setEventId] = React.useState("");
+	const { formatDate } = useTimeFormat();
 
 	if (!recentTournaments) return null;
 
@@ -155,10 +156,10 @@ function TemplateTournamentForm() {
 						{recentTournaments.map((event) => (
 							<option key={event.id} value={event.id} suppressHydrationWarning>
 								{event.name} (
-								{databaseTimestampToDate(event.startTime).toLocaleDateString(
-									"en-US",
-									{ month: "numeric", day: "numeric" },
-								)}
+								{formatDate(databaseTimestampToDate(event.startTime), {
+									month: "numeric",
+									day: "numeric",
+								})}
 								)
 							</option>
 						))}
@@ -719,14 +720,12 @@ function AvatarImageInput({
 		baseEvent?.tournament?.ctx.logoUrl &&
 		showPrevious
 	) {
-		const logoImgUrl = userSubmittedImage(baseEvent.tournament.ctx.logoUrl);
-
 		return (
 			<div className="stack horizontal md flex-wrap">
 				<input type="hidden" name="avatarImgId" value={baseEvent.avatarImgId} />
 				<div className="stack md items-center">
 					<img
-						src={logoImgUrl}
+						src={baseEvent.tournament.ctx.logoUrl}
 						alt=""
 						className="calendar-new__avatar-preview"
 					/>

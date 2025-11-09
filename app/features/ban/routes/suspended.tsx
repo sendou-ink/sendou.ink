@@ -1,5 +1,6 @@
 import { useLoaderData } from "@remix-run/react";
 import { Main } from "~/components/Main";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 
 import { loader } from "../loaders/suspended.server";
@@ -7,6 +8,7 @@ export { loader };
 
 export default function SuspendedPage() {
 	const data = useLoaderData<typeof loader>();
+	const { formatDateTime } = useTimeFormat();
 
 	const ends = (() => {
 		if (!data.banned || data.banned === 1) return null;
@@ -21,7 +23,7 @@ export default function SuspendedPage() {
 			{ends ? (
 				<div suppressHydrationWarning>
 					Ends:{" "}
-					{ends.toLocaleString("en-US", {
+					{formatDateTime(ends, {
 						month: "long",
 						day: "numeric",
 						year: "numeric",

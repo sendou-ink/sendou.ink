@@ -9,6 +9,7 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Table } from "~/components/Table";
 import { BanUserModal } from "~/features/tournament-organization/components/BanUserModal";
 import type { OrganizationPageLoaderData } from "~/features/tournament-organization/loaders/org.$slug.server";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { userPage } from "~/utils/urls";
 import styles from "../components/BannedPlayersList.module.css";
@@ -20,7 +21,8 @@ export function BannedUsersList({
 }: {
 	bannedUsers: NonNullable<OrganizationPageLoaderData["bannedUsers"]>;
 }) {
-	const { t, i18n } = useTranslation(["org"]);
+	const { t } = useTranslation(["org"]);
+	const { formatDate } = useTimeFormat();
 
 	const bannedUsersKey = (bannedUsers ?? [])
 		.map((u) => [u.id, u.privateNote].join("-"))
@@ -78,9 +80,7 @@ export function BannedUsersList({
 										<BanNote note={bannedUser.privateNote} />
 									</td>
 									<td className="text-sm text-lighter whitespace-nowrap">
-										{databaseTimestampToDate(
-											bannedUser.updatedAt,
-										).toLocaleDateString(i18n.language, {
+										{formatDate(databaseTimestampToDate(bannedUser.updatedAt), {
 											day: "numeric",
 											month: "short",
 											year: "numeric",
@@ -88,13 +88,14 @@ export function BannedUsersList({
 									</td>
 									<td className="text-sm text-lighter whitespace-nowrap">
 										{bannedUser.expiresAt
-											? databaseTimestampToDate(
-													bannedUser.expiresAt,
-												).toLocaleDateString(i18n.language, {
-													day: "numeric",
-													month: "short",
-													year: "numeric",
-												})
+											? formatDate(
+													databaseTimestampToDate(bannedUser.expiresAt),
+													{
+														day: "numeric",
+														month: "short",
+														year: "numeric",
+													},
+												)
 											: t("org:banned.permanent")}
 									</td>
 									<td className={styles.actionsCell}>

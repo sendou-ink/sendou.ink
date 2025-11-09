@@ -212,6 +212,7 @@ export default [
 	]),
 
 	route("/admin", "features/admin/routes/admin.tsx"),
+	route("/api", "features/api/routes/api.tsx"),
 
 	...prefix("/a", [
 		index("features/articles/routes/a.tsx"),
