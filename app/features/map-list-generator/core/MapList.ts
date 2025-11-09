@@ -95,7 +95,9 @@ export function* generate(args: {
 				stageModeWeights.set(key, value + 1);
 			}
 
-			const stageWeightPenalty = isNotGuaranteedToBePlayed ? -2 : -5;
+			const stageWeightPenalty = isNotGuaranteedToBePlayed
+				? -2
+				: -Math.max(5, amount);
 			const stageModeWeightPenalty = args.mapPool.modes.length > 1 ? -10 : 0;
 
 			stageWeights.set(stageId, stageWeightPenalty);
