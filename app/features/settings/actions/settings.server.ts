@@ -2,7 +2,7 @@ import type { ActionFunctionArgs } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as QSettingsRepository from "~/features/sendouq-settings/QSettingsRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { parseRequestPayload } from "~/utils/remix.server";
+import { parseRequestPayload, successToast } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { settingsEditSchema } from "../settings-schemas";
 
@@ -39,13 +39,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			});
 			break;
 		}
-		case "PLACEHOLDER": {
-			break;
-		}
 		default: {
 			assertUnreachable(data);
 		}
 	}
 
-	return null;
+	return successToast("Settings updated");
 };

@@ -1,6 +1,16 @@
 import { useTranslation } from "react-i18next";
 import { useUser } from "~/features/auth/core/user";
 
+const H12_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
+	hour12: true,
+	hourCycle: "h12" as const,
+};
+const H24_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
+	hour12: false,
+	hourCycle: "h23" as const,
+	minute: "2-digit",
+};
+
 function getClockFormatOptions(
 	clockFormat: "auto" | "24h" | "12h" | undefined,
 	language: string,
@@ -8,16 +18,16 @@ function getClockFormatOptions(
 	if (!clockFormat || clockFormat === "auto") {
 		const isEnglish = language === "en";
 		if (isEnglish) {
-			return { hour12: true, hourCycle: "h12" as const };
+			return H12_TIME_OPTIONS;
 		}
-		return { hour12: false, hourCycle: "h23" as const, minute: "2-digit" };
+		return H24_TIME_OPTIONS;
 	}
 
 	if (clockFormat === "24h") {
-		return { hour12: false, hourCycle: "h23" as const, minute: "2-digit" };
+		return H24_TIME_OPTIONS;
 	}
 
-	return { hour12: true, hourCycle: "h12" as const };
+	return H12_TIME_OPTIONS;
 }
 
 /**
@@ -64,17 +74,10 @@ export function useTimeFormat() {
 	};
 
 	const formatTime = (date: Date, options?: Intl.DateTimeFormatOptions) => {
-		return date.toLocaleTimeString(
-			i18n.language,
-			options?.hour
-				? {
-						...options,
-						...clockOptions,
-					}
-				: {
-						...options,
-					},
-		);
+		return date.toLocaleTimeString(i18n.language, {
+			...options,
+			...clockOptions,
+		});
 	};
 
 	const formatDate = (date: Date, options?: Intl.DateTimeFormatOptions) => {

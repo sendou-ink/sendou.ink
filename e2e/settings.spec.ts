@@ -62,7 +62,7 @@ test.describe("Settings", () => {
 		const clockFormatSelect = page.locator("#clock-format");
 		await clockFormatSelect.selectOption("24h");
 
-		await page.waitForTimeout(500);
+		await expect(page.getByText("Settings updated")).toBeVisible();
 
 		await navigate({
 			page,
