@@ -1,11 +1,9 @@
 import { describe, expect, test } from "vitest";
-import type { UserMapModePreferences } from "~/db/tables";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import type { StageId } from "~/modules/in-game-lists/types";
-import { SENDOUQ_DEFAULT_MAPS } from "~/modules/tournament-map-list-generator/constants";
-import { nullFilledArray } from "~/utils/arrays";
 import * as Test from "~/utils/Test";
-import { mapLottery, mapModePreferencesToModeList } from "./match.server";
+import {
+	mapModePreferencesToModeList,
+	normalizeAndCombineWeights,
+} from "./match.server";
 
 describe("mapModePreferencesToModeList()", () => {
 	test("returns default list if no preferences", () => {
@@ -126,74 +124,97 @@ describe("mapModePreferencesToModeList()", () => {
 	});
 });
 
-const MODES_COUNT = 4;
-const STAGES_PER_MODE = 7;
+describe("normalizeAndCombineWeights()", () => {
+	test("normalizes and combines weights when both teams have weights", () => {
+		const teamOneWeights = new Map([
+			["map1-SZ", 100],
+			["map2-TC", 50],
+		]);
+		const teamTwoWeights = new Map([
+			["map1-SZ", 200],
+			["map2-TC", 100],
+		]);
 
-describe("mapLottery()", () => {
-	test("returns maps even if no preferences", () => {
-		const mapPool = mapLottery([], rankedModesShort);
+		const result = normalizeAndCombineWeights(teamOneWeights, teamTwoWeights);
 
-		expect(mapPool.stageModePairs.length).toBe(STAGES_PER_MODE * MODES_COUNT);
+		expect(result.get("map1-SZ")).toBe(400);
+		expect(result.get("map2-TC")).toBe(200);
 	});
 
-	test("returns some maps from the map pools", () => {
-		const memberOnePool: UserMapModePreferences["pool"] = rankedModesShort.map(
-			(mode) => ({
-				mode,
-				stages: nullFilledArray(7).map((_, i) => (i + 1) as StageId),
-			}),
-		);
-		const memberTwoPool: UserMapModePreferences["pool"] = rankedModesShort.map(
-			(mode) => ({
-				mode,
-				stages: nullFilledArray(7).map((_, i) => (i + 10) as StageId),
-			}),
-		);
+	test("normalizes correctly when team totals differ", () => {
+		const teamOneWeights = new Map([["map1-SZ", 100]]);
+		const teamTwoWeights = new Map([["map1-SZ", 50]]);
 
-		const pool = mapLottery(
-			[
-				{ modes: [], pool: memberOnePool },
-				{ modes: [], pool: memberTwoPool },
-			],
-			rankedModesShort,
-		);
+		const result = normalizeAndCombineWeights(teamOneWeights, teamTwoWeights);
 
-		expect(pool.stageModePairs.some((p) => p.stageId <= 7)).toBe(true);
-		expect(pool.stageModePairs.some((p) => p.stageId > 10)).toBe(true);
+		expect(result.get("map1-SZ")).toBe(100);
 	});
 
-	test("includes modes that were given and nothing else", () => {
-		const memberOnePool: UserMapModePreferences["pool"] = rankedModesShort.map(
-			(mode) => ({
-				mode,
-				stages: nullFilledArray(7).map((_, i) => (i + 1) as StageId),
-			}),
-		);
+	test("includes all keys from both teams", () => {
+		const teamOneWeights = new Map([
+			["map1-SZ", 100],
+			["map2-TC", 50],
+		]);
+		const teamTwoWeights = new Map([
+			["map1-SZ", 100],
+			["map3-RM", 50],
+		]);
 
-		const pool = mapLottery([{ modes: [], pool: memberOnePool }], ["SZ", "TC"]);
+		const result = normalizeAndCombineWeights(teamOneWeights, teamTwoWeights);
 
-		expect(
-			pool.stageModePairs.every((p) => p.mode === "SZ" || p.mode === "TC"),
-		).toBe(true);
+		expect(result.has("map1-SZ")).toBe(true);
+		expect(result.has("map2-TC")).toBe(true);
+		expect(result.has("map3-RM")).toBe(true);
+		expect(result.size).toBe(3);
 	});
 
-	test("excludes map preferences if mode is avoided", () => {
-		const memberOnePool: UserMapModePreferences["pool"] = [
-			{
-				mode: "SZ",
-				stages: nullFilledArray(7).map((_, i) => (i + 1) as StageId),
-			},
-		];
+	test("handles team one having zero weights", () => {
+		const teamOneWeights = new Map<string, number>();
+		const teamTwoWeights = new Map([["map1-SZ", 100]]);
 
-		const pool = mapLottery(
-			[{ modes: [{ preference: "AVOID", mode: "SZ" }], pool: memberOnePool }],
-			["SZ"],
-		);
+		const result = normalizeAndCombineWeights(teamOneWeights, teamTwoWeights);
 
-		expect(
-			pool.stageModePairs.every((p) =>
-				SENDOUQ_DEFAULT_MAPS.SZ.some((stageId) => stageId === p.stageId),
-			),
-		).toBe(true);
+		expect(result.get("map1-SZ")).toBe(100);
+	});
+
+	test("handles team two having zero weights", () => {
+		const teamOneWeights = new Map([["map1-SZ", 100]]);
+		const teamTwoWeights = new Map<string, number>();
+
+		const result = normalizeAndCombineWeights(teamOneWeights, teamTwoWeights);
+
+		expect(result.get("map1-SZ")).toBe(100);
+	});
+
+	test("handles both teams having zero weights", () => {
+		const teamOneWeights = new Map<string, number>();
+		const teamTwoWeights = new Map<string, number>();
+
+		const result = normalizeAndCombineWeights(teamOneWeights, teamTwoWeights);
+
+		expect(result.size).toBe(0);
+	});
+
+	test("handles keys present in one team but not the other", () => {
+		const teamOneWeights = new Map([["map1-SZ", 100]]);
+		const teamTwoWeights = new Map([["map2-TC", 200]]);
+
+		const result = normalizeAndCombineWeights(teamOneWeights, teamTwoWeights);
+
+		expect(result.get("map1-SZ")).toBe(200);
+		expect(result.get("map2-TC")).toBe(200);
+	});
+
+	test("normalizes team one weight proportionally to team two total", () => {
+		const teamOneWeights = new Map([["map1-SZ", 40]]);
+		const teamTwoWeights = new Map([
+			["map1-SZ", 60],
+			["map2-TC", 40],
+		]);
+
+		const result = normalizeAndCombineWeights(teamOneWeights, teamTwoWeights);
+
+		expect(result.get("map1-SZ")).toBe(160);
+		expect(result.get("map2-TC")).toBe(40);
 	});
 });
