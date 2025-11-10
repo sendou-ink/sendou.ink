@@ -26,6 +26,15 @@ interface MaplistPattern {
 }
 
 /**
+ * Creates a unique key for a stage-mode combination.
+ * @example
+ * stageModeKey("SZ", 1); // "1-SZ"
+ */
+export function modeStageKey(mode: ModeShort, stageId: StageId): string {
+	return `${mode}-${stageId}`;
+}
+
+/**
  * Generates map lists that avoid repeating stages and optionally allows providing mode pattern.
  *
  * @example
@@ -39,7 +48,7 @@ export function* generate(args: {
 	mapPool: MapPool;
 	/** Should the function bias in favor of maps not played? E.g. maps 4 & 5 in a Bo5 format (not every team plays them). Should be true if generating for tournament with best of format. */
 	considerGuaranteed?: boolean;
-	/** Initial weights for specific stage-mode combinations. Key format: `${stageId}-${mode}`. Negative weights can be used to deprioritize certain maps. */
+	/** Initial weights for specific stage-mode combinations. Key format: `${mode}-${stageId}` (generate via `MapList.stageModeKey`). Negative weights can be used to deprioritize certain maps. */
 	initialWeights?: Map<string, number>;
 }): Generator<Array<ModeWithStage>, Array<ModeWithStage>, GenerateNext> {
 	if (args.mapPool.isEmpty()) {
@@ -102,7 +111,7 @@ export function* generate(args: {
 			const stageModeWeightPenalty = args.mapPool.modes.length > 1 ? -10 : 0;
 
 			stageWeights.set(stageId, stageWeightPenalty);
-			stageModeWeights.set(`${stageId}-${mode}`, stageModeWeightPenalty);
+			stageModeWeights.set(modeStageKey(mode, stageId), stageModeWeightPenalty);
 		}
 
 		currentOrderIndex++;
@@ -126,7 +135,7 @@ function initializeWeights(
 		const stageIds = mapPool[mode];
 		for (const stageId of stageIds) {
 			stageWeights.set(stageId, 0);
-			const key = `${stageId}-${mode}`;
+			const key = modeStageKey(mode, stageId);
 			const initialWeight = initialWeights?.get(key) ?? 0;
 			stageModeWeights.set(key, initialWeight);
 		}
@@ -173,7 +182,8 @@ function selectStageWeighted({
 	const getCandidates = () =>
 		possibleStages.filter((stageId) => {
 			const stageWeight = stageWeights.get(stageId) ?? 0;
-			const stageModeWeight = stageModeWeights.get(`${stageId}-${mode}`) ?? 0;
+			const stageModeWeight =
+				stageModeWeights.get(modeStageKey(mode, stageId)) ?? 0;
 			return stageWeight >= 0 && stageModeWeight >= 0;
 		});
 
@@ -191,7 +201,8 @@ function selectStageWeighted({
 
 	return weightedRandomSelect(candidates, (stageId) => {
 		const stageWeight = stageWeights.get(stageId) ?? 0;
-		const stageModeWeight = stageModeWeights.get(`${stageId}-${mode}`) ?? 0;
+		const stageModeWeight =
+			stageModeWeights.get(modeStageKey(mode, stageId)) ?? 0;
 		return stageWeight + stageModeWeight + 1;
 	});
 }

@@ -1,6 +1,9 @@
 import { describe, expect, test } from "vitest";
 import * as Test from "~/utils/Test";
-import { mapModePreferencesToModeList } from "./match.server";
+import {
+	mapModePreferencesToModeList,
+	normalizeAndCombineWeights,
+} from "./match.server";
 
 describe("mapModePreferencesToModeList()", () => {
 	test("returns default list if no preferences", () => {
@@ -118,5 +121,100 @@ describe("mapModePreferencesToModeList()", () => {
 		expect(
 			Test.arrayContainsSameItems(["SZ", "TC", "RM", "CB"], modeList),
 		).toBe(true);
+	});
+});
+
+describe("normalizeAndCombineWeights()", () => {
+	test("normalizes and combines weights when both teams have weights", () => {
+		const teamOneWeights = new Map([
+			["map1-SZ", 100],
+			["map2-TC", 50],
+		]);
+		const teamTwoWeights = new Map([
+			["map1-SZ", 200],
+			["map2-TC", 100],
+		]);
+
+		const result = normalizeAndCombineWeights(teamOneWeights, teamTwoWeights);
+
+		expect(result.get("map1-SZ")).toBe(400);
+		expect(result.get("map2-TC")).toBe(200);
+	});
+
+	test("normalizes correctly when team totals differ", () => {
+		const teamOneWeights = new Map([["map1-SZ", 100]]);
+		const teamTwoWeights = new Map([["map1-SZ", 50]]);
+
+		const result = normalizeAndCombineWeights(teamOneWeights, teamTwoWeights);
+
+		expect(result.get("map1-SZ")).toBe(100);
+	});
+
+	test("includes all keys from both teams", () => {
+		const teamOneWeights = new Map([
+			["map1-SZ", 100],
+			["map2-TC", 50],
+		]);
+		const teamTwoWeights = new Map([
+			["map1-SZ", 100],
+			["map3-RM", 50],
+		]);
+
+		const result = normalizeAndCombineWeights(teamOneWeights, teamTwoWeights);
+
+		expect(result.has("map1-SZ")).toBe(true);
+		expect(result.has("map2-TC")).toBe(true);
+		expect(result.has("map3-RM")).toBe(true);
+		expect(result.size).toBe(3);
+	});
+
+	test("handles team one having zero weights", () => {
+		const teamOneWeights = new Map<string, number>();
+		const teamTwoWeights = new Map([["map1-SZ", 100]]);
+
+		const result = normalizeAndCombineWeights(teamOneWeights, teamTwoWeights);
+
+		expect(result.get("map1-SZ")).toBe(100);
+	});
+
+	test("handles team two having zero weights", () => {
+		const teamOneWeights = new Map([["map1-SZ", 100]]);
+		const teamTwoWeights = new Map<string, number>();
+
+		const result = normalizeAndCombineWeights(teamOneWeights, teamTwoWeights);
+
+		expect(result.get("map1-SZ")).toBe(100);
+	});
+
+	test("handles both teams having zero weights", () => {
+		const teamOneWeights = new Map<string, number>();
+		const teamTwoWeights = new Map<string, number>();
+
+		const result = normalizeAndCombineWeights(teamOneWeights, teamTwoWeights);
+
+		expect(result.size).toBe(0);
+	});
+
+	test("handles keys present in one team but not the other", () => {
+		const teamOneWeights = new Map([["map1-SZ", 100]]);
+		const teamTwoWeights = new Map([["map2-TC", 200]]);
+
+		const result = normalizeAndCombineWeights(teamOneWeights, teamTwoWeights);
+
+		expect(result.get("map1-SZ")).toBe(200);
+		expect(result.get("map2-TC")).toBe(200);
+	});
+
+	test("normalizes team one weight proportionally to team two total", () => {
+		const teamOneWeights = new Map([["map1-SZ", 40]]);
+		const teamTwoWeights = new Map([
+			["map1-SZ", 60],
+			["map2-TC", 40],
+		]);
+
+		const result = normalizeAndCombineWeights(teamOneWeights, teamTwoWeights);
+
+		expect(result.get("map1-SZ")).toBe(160);
+		expect(result.get("map2-TC")).toBe(40);
 	});
 });

@@ -3,7 +3,7 @@ import type { ParsedMemento, UserMapModePreferences } from "~/db/tables";
 import * as MapList from "~/features/map-list-generator/core/MapList";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { userSkills } from "~/features/mmr/tiered.server";
-import { getDefaultMapWeights } from "~/features/sendouq/core/defaultMaps.server";
+import { getDefaultMapWeights } from "~/features/sendouq/core/default-maps.server";
 import { addSkillsToGroups } from "~/features/sendouq/core/groups.server";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import type { LookingGroupWithInviteCode } from "~/features/sendouq/q-types";
@@ -21,23 +21,25 @@ import { logger } from "~/utils/logger";
 import { averageArray } from "~/utils/number";
 import type { MatchById } from "../queries/findMatchById.server";
 
+type WeightsMap = Map<string, number>;
+
 async function calculateMapWeights(
 	groupOnePreferences: UserMapModePreferences[],
 	groupTwoPreferences: UserMapModePreferences[],
 	modesIncluded: ModeShort[],
-): Promise<Map<string, number>> {
-	const defaultWeights = await getDefaultMapWeights();
-
-	const teamOneVotes = new Map<string, number>();
-	const teamTwoVotes = new Map<string, number>();
+): Promise<WeightsMap> {
+	const teamOneVotes: WeightsMap = new Map();
+	const teamTwoVotes: WeightsMap = new Map();
 
 	countVotesForTeam(modesIncluded, groupOnePreferences, teamOneVotes);
 	countVotesForTeam(modesIncluded, groupTwoPreferences, teamTwoVotes);
 
-	const applyWeightFormula = (voteCount: number) => voteCount * voteCount;
+	const applyWeightFormula = (voteCount: number) =>
+		// 1, 4 or 9 (cap)
+		Math.min(voteCount * voteCount, 9);
 
-	const teamOneWeights = new Map<string, number>();
-	const teamTwoWeights = new Map<string, number>();
+	const teamOneWeights: WeightsMap = new Map();
+	const teamTwoWeights: WeightsMap = new Map();
 
 	for (const [key, votes] of teamOneVotes) {
 		teamOneWeights.set(key, applyWeightFormula(votes));
@@ -46,6 +48,27 @@ async function calculateMapWeights(
 		teamTwoWeights.set(key, applyWeightFormula(votes));
 	}
 
+	const combinedWeights = normalizeAndCombineWeights(
+		teamOneWeights,
+		teamTwoWeights,
+	);
+
+	return applyDefaultWeights(combinedWeights);
+}
+
+/**
+ * Normalizes and combines map weights from two teams.
+ *
+ * When both teams have weights, team one's weights are normalized to match
+ * team two's total before combining. This ensures fair weighting when teams
+ * have different numbers of preferences.
+ *
+ * @returns Combined weights map with all keys from both teams
+ */
+export function normalizeAndCombineWeights(
+	teamOneWeights: Map<string, number>,
+	teamTwoWeights: Map<string, number>,
+): Map<string, number> {
 	const teamOneTotal = Array.from(teamOneWeights.values()).reduce(
 		(sum, w) => sum + w,
 		0,
@@ -63,12 +86,36 @@ async function calculateMapWeights(
 		const teamTwoWeight = teamTwoWeights.get(key) ?? 0;
 
 		if (teamOneTotal > 0 && teamTwoTotal > 0) {
-			// xxx: extract (?) and some unit tests to verify this works correctly
 			const normalizedTeamOne = (teamOneWeight / teamOneTotal) * teamTwoTotal;
 			combinedWeights.set(key, normalizedTeamOne + teamTwoWeight);
 		} else {
 			combinedWeights.set(key, teamOneWeight + teamTwoWeight);
 		}
+	}
+
+	return combinedWeights;
+}
+
+/**
+ * Applies default map weights to combined weights for any maps not already weighted.
+ *
+ * Fetches global default weights and adds them to the combined weights map for any
+ * map-mode combinations that don't already have weights. This ensures the pool always
+ * has a baseline selection of maps.
+ *
+ * @returns Combined weights with defaults applied
+ */
+async function applyDefaultWeights(
+	combinedWeights: WeightsMap,
+): Promise<WeightsMap> {
+	let defaultWeights: WeightsMap;
+	try {
+		defaultWeights = await getDefaultMapWeights();
+	} catch (err) {
+		logger.error(
+			`[calculateMapWeights] Failed to get default map weights: ${err}`,
+		);
+		defaultWeights = new Map();
 	}
 
 	for (const [key, weight] of defaultWeights) {
@@ -83,7 +130,7 @@ async function calculateMapWeights(
 function countVotesForTeam(
 	modesIncluded: ModeShort[],
 	preferences: UserMapModePreferences[],
-	votesMap: Map<string, number>,
+	votesMap: WeightsMap,
 ) {
 	for (const preference of preferences) {
 		for (const poolEntry of preference.pool) {
@@ -97,8 +144,11 @@ function countVotesForTeam(
 			for (const stageId of poolEntry.stages) {
 				if (BANNED_MAPS[poolEntry.mode].includes(stageId)) continue;
 
-				const key = `${stageId}-${poolEntry.mode}`;
-				votesMap.set(key, (votesMap.get(key) ?? 0) + 1);
+				votesMap.set(
+					MapList.modeStageKey(poolEntry.mode, stageId),
+					(votesMap.get(MapList.modeStageKey(poolEntry.mode, stageId)) ?? 0) +
+						1,
+				);
 			}
 		}
 	}

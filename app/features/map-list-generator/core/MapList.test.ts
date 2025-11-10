@@ -53,7 +53,7 @@ describe("MapList.generate()", () => {
 			const maps = gen.next({ amount: 3 }).value;
 
 			expect(maps).toHaveLength(
-				new Set(maps.map((m) => `${m.mode}-${m.stageId}`)).size,
+				new Set(maps.map((m) => MapList.modeStageKey(m.mode, m.stageId))).size,
 			);
 		});
 
@@ -491,8 +491,8 @@ describe("MapList.generate() with initialWeights", () => {
 		});
 
 		const initialWeights = new Map<string, number>();
-		initialWeights.set("1-SZ", 100);
-		initialWeights.set("4-TC", -10);
+		initialWeights.set("SZ-1", 100);
+		initialWeights.set("TC-44", -10);
 
 		const gen = MapList.generate({ mapPool, initialWeights });
 		gen.next();
@@ -547,11 +547,11 @@ describe("MapList.generate() with initialWeights", () => {
 		});
 
 		const initialWeights = new Map<string, number>();
-		initialWeights.set("1-SZ", 1);
-		initialWeights.set("2-SZ", -1);
-		initialWeights.set("3-SZ", -1);
-		initialWeights.set("4-SZ", -1);
-		initialWeights.set("5-SZ", -1);
+		initialWeights.set("SZ-1", 1);
+		initialWeights.set("SZ-2", -1);
+		initialWeights.set("SZ-3", -1);
+		initialWeights.set("SZ-4", -1);
+		initialWeights.set("SZ-5", -1);
 
 		const gen = MapList.generate({ mapPool, initialWeights });
 		gen.next();

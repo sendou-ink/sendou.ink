@@ -1,4 +1,5 @@
 import { differenceInDays } from "date-fns";
+import * as MapList from "~/features/map-list-generator/core/MapList";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { logger } from "~/utils/logger";
@@ -10,11 +11,16 @@ const ONE_WEEK_IN_DAYS = 7;
 const DEFAULT_MAP_WEIGHT = -1;
 const TOP_MAPS_PER_MODE = 7;
 
-// xxx: do we want any fallback? if this fails for some reason
-// xxx: unit test
+export function clearCacheForTesting() {
+	cachedDefaults = null;
+}
+
 export async function getDefaultMapWeights(): Promise<Map<string, number>> {
 	const season = resolveSeasonForDefaults();
 	if (!season) {
+		logger.warn(
+			"[getDefaultMapWeights] No season found for default map weights",
+		);
 		return new Map();
 	}
 
@@ -67,8 +73,11 @@ async function calculateSeasonDefaultMaps(
 			if (avoidedMode) continue;
 
 			for (const stageId of poolEntry.stages) {
-				const key = `${stageId}-${poolEntry.mode}`;
-				mapModeCounts.set(key, (mapModeCounts.get(key) ?? 0) + 1);
+				mapModeCounts.set(
+					MapList.modeStageKey(poolEntry.mode, stageId),
+					(mapModeCounts.get(MapList.modeStageKey(poolEntry.mode, stageId)) ??
+						0) + 1,
+				);
 			}
 		}
 	}
@@ -76,7 +85,7 @@ async function calculateSeasonDefaultMaps(
 	const weights = new Map<string, number>();
 	for (const mode of modesShort) {
 		const mapsForMode = Array.from(mapModeCounts.entries())
-			.filter(([key]) => key.endsWith(`-${mode}`))
+			.filter(([key]) => key.includes(mode))
 			.sort((a, b) => b[1] - a[1])
 			.slice(0, TOP_MAPS_PER_MODE);
 
