@@ -1,6 +1,7 @@
 import type { z } from "zod/v4";
 import type {
 	MainWeaponId,
+	ModeShort,
 	SpecialWeaponId,
 	StageId,
 	SubWeaponId,
@@ -10,6 +11,8 @@ import type { tierListItemTypeSchema } from "./tier-list-maker-schemas";
 
 export type TierListItemType = TierListItem["type"];
 assertType<z.infer<typeof tierListItemTypeSchema>, TierListItemType>();
+
+export type StageModeId = `${StageId}-${ModeShort}`;
 
 // xxx: infer from schema
 export type TierListItem =
@@ -28,6 +31,14 @@ export type TierListItem =
 	| {
 			id: StageId;
 			type: "stage";
+	  }
+	| {
+			id: ModeShort;
+			type: "mode";
+	  }
+	| {
+			id: StageModeId;
+			type: "stage-mode";
 	  };
 
 // xxx: infer from schema

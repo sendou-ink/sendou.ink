@@ -4,5 +4,7 @@
 	"subWeapons": "Sub Weapons",
 	"specialWeapons": "Special Weapons",
 	"stages": "Stages",
+	"modes": "Modes",
+	"stageModes": "Stage + Modes",
 	"dropItems": "Drop items here"
 }

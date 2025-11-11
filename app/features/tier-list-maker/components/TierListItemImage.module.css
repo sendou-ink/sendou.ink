@@ -1,0 +1,13 @@
+.stageModeContainer {
+	position: relative;
+	display: inline-block;
+}
+
+.modeOverlay {
+	position: absolute;
+	bottom: 2px;
+	right: 2px;
+	background-color: var(--bg-lighter-solid);
+	border-radius: 100%;
+	padding: var(--s-1);
+}

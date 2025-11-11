@@ -6,6 +6,7 @@ import type {
 import { arrayMove } from "@dnd-kit/sortable";
 import { useState } from "react";
 import { useSearchParamStateZod } from "~/hooks/useSearchParamState";
+import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import {
 	mainWeaponIds,
@@ -44,6 +45,14 @@ export function useTierListState() {
 	const parseItemFromId = (id: string): TierListItem | null => {
 		const [type, idStr] = String(id).split(":");
 		if (!type || !idStr) return null;
+
+		if (type === "mode" || type === "stage-mode") {
+			return {
+				type: type as TierListItemType,
+				id: idStr,
+			} as TierListItem;
+		}
+
 		return {
 			type: type as TierListItemType,
 			id: Number(idStr) as number & {},
@@ -229,7 +238,9 @@ export function useTierListState() {
 		return (state.tierItems.get(tierId) || []) as TierListItem[]; // xxx: remove as
 	};
 
-	const getAllItemIdsForType = (type: TierListItemType): number[] => {
+	const getAllItemIdsForType = (
+		type: TierListItemType,
+	): Array<number | string> => {
 		switch (type) {
 			case "main-weapon":
 				return [...mainWeaponIds];
@@ -239,6 +250,17 @@ export function useTierListState() {
 				return [...specialWeaponIds];
 			case "stage":
 				return [...stageIds];
+			case "mode":
+				return [...modesShort];
+			case "stage-mode": {
+				const combinations: string[] = [];
+				for (const stageId of stageIds) {
+					for (const mode of modesShort) {
+						combinations.push(`${stageId}-${mode}`);
+					}
+				}
+				return combinations;
+			}
 		}
 	};
 

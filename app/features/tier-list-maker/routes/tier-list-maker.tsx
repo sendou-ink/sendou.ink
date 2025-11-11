@@ -33,8 +33,6 @@ import styles from "./tier-list-maker.module.css";
 // xxx: button to generate/ share an image
 // xxx: switch to toggle off round labels
 // xxx: switch to allow having a weapon many times
-// xxx: stage+modes
-// xxx: persist to search params
 // xxx: add to navigation
 // xxx: popover jank
 // xxx: popover input too big?
@@ -117,6 +115,10 @@ function TierListMakerContent() {
 							{t("tier-list-maker:specialWeapons")}
 						</SendouTab>
 						<SendouTab id="stage">{t("tier-list-maker:stages")}</SendouTab>
+						<SendouTab id="mode">{t("tier-list-maker:modes")}</SendouTab>
+						<SendouTab id="stage-mode">
+							{t("tier-list-maker:stageModes")}
+						</SendouTab>
 					</SendouTabList>
 
 					<SendouTabPanel id="main-weapon">
@@ -132,6 +134,14 @@ function TierListMakerContent() {
 					</SendouTabPanel>
 
 					<SendouTabPanel id="stage">
+						<ItemPool />
+					</SendouTabPanel>
+
+					<SendouTabPanel id="mode">
+						<ItemPool />
+					</SendouTabPanel>
+
+					<SendouTabPanel id="stage-mode">
 						<ItemPool />
 					</SendouTabPanel>
 				</SendouTabs>

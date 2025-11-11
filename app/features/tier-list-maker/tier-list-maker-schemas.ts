@@ -5,6 +5,8 @@ export const tierListItemTypeSchema = z.enum([
 	"sub-weapon",
 	"special-weapon",
 	"stage",
+	"mode",
+	"stage-mode",
 ]);
 
 // xxx: proper id schemas here
@@ -24,6 +26,14 @@ const tierListItemSchema = z.union([
 	z.object({
 		id: z.number(),
 		type: z.literal("stage"),
+	}),
+	z.object({
+		id: z.string(),
+		type: z.literal("mode"),
+	}),
+	z.object({
+		id: z.string(),
+		type: z.literal("stage-mode"),
 	}),
 ]);
 
