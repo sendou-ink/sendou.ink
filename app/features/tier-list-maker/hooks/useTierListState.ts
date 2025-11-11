@@ -5,12 +5,14 @@ import type {
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { useState } from "react";
+import { useSearchParamStateZod } from "~/hooks/useSearchParamState";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import {
 	mainWeaponIds,
 	specialWeaponIds,
 	subWeaponIds,
 } from "~/modules/in-game-lists/weapon-ids";
+import { tierListItemTypeSchema } from "../tier-list-maker-schemas";
 import {
 	DEFAULT_TIERS,
 	type Tier,
@@ -20,7 +22,12 @@ import {
 } from "../tier-list-maker-types";
 
 export function useTierListState() {
-	const [itemType, setItemType] = useState<TierListItemType>("main-weapon");
+	const [itemType, setItemType] = useSearchParamStateZod({
+		key: "type",
+		defaultValue: "main-weapon",
+		schema: tierListItemTypeSchema,
+	});
+
 	const [state, setState] = useState<TierListState>({
 		tiers: DEFAULT_TIERS,
 		tierItems: new Map(),

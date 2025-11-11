@@ -1,11 +1,15 @@
+import type { z } from "zod/v4";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	StageId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
+import { assertType } from "~/utils/types";
+import type { tierListItemTypeSchema } from "./tier-list-maker-schemas";
 
 export type TierListItemType = TierListItem["type"];
+assertType<z.infer<typeof tierListItemTypeSchema>, TierListItemType>();
 
 export type TierListItem =
 	| {
