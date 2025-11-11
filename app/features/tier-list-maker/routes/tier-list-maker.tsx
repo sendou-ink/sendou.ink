@@ -41,6 +41,8 @@ import styles from "./tier-list-maker.module.css";
 // xxx: to remove images, need to drag precisely between the wpn images
 // xxx: test in mobile
 // xxx: toggle under main weapons to not show alt skins?
+// xxx: zod v4 imports
+// xxx: reset button
 
 export default function TierListMakerPage() {
 	const isMounted = useIsMounted();

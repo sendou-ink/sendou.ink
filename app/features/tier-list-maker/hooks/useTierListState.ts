@@ -12,13 +12,16 @@ import {
 	specialWeaponIds,
 	subWeaponIds,
 } from "~/modules/in-game-lists/weapon-ids";
-import { tierListItemTypeSchema } from "../tier-list-maker-schemas";
+import { jsonCrushCodec } from "~/utils/zod";
+import {
+	tierListItemTypeSchema,
+	tierListStateSchema,
+} from "../tier-list-maker-schemas";
 import {
 	DEFAULT_TIERS,
 	type Tier,
 	type TierListItem,
 	type TierListItemType,
-	type TierListState,
 } from "../tier-list-maker-types";
 
 export function useTierListState() {
@@ -28,9 +31,13 @@ export function useTierListState() {
 		schema: tierListItemTypeSchema,
 	});
 
-	const [state, setState] = useState<TierListState>({
-		tiers: DEFAULT_TIERS,
-		tierItems: new Map(),
+	const [state, setState] = useSearchParamStateZod({
+		key: "state",
+		defaultValue: {
+			tiers: DEFAULT_TIERS,
+			tierItems: new Map(),
+		},
+		schema: jsonCrushCodec(tierListStateSchema),
 	});
 	const [activeItem, setActiveItem] = useState<TierListItem | null>(null);
 
@@ -81,71 +88,65 @@ export function useTierListState() {
 
 		if (!overContainer || activeContainer === overContainer) {
 			if (activeContainer && overContainer === activeContainer) {
-				setState((prev) => {
-					const newTierItems = new Map(prev.tierItems);
-					const containerItems = newTierItems.get(activeContainer) || [];
-					const oldIndex = containerItems.findIndex(
-						(item) =>
-							item.id === activeItem.id && item.type === activeItem.type,
+				const newTierItems = new Map(state.tierItems);
+				const containerItems = newTierItems.get(activeContainer) || [];
+				const oldIndex = containerItems.findIndex(
+					(item) => item.id === activeItem.id && item.type === activeItem.type,
+				);
+				const newIndex = overItem
+					? containerItems.findIndex(
+							(item) => item.id === overItem.id && item.type === overItem.type,
+						)
+					: -1;
+
+				if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+					newTierItems.set(
+						activeContainer,
+						arrayMove(containerItems, oldIndex, newIndex),
 					);
-					const newIndex = overItem
-						? containerItems.findIndex(
-								(item) =>
-									item.id === overItem.id && item.type === overItem.type,
-							)
-						: -1;
+				}
 
-					if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-						newTierItems.set(
-							activeContainer,
-							arrayMove(containerItems, oldIndex, newIndex),
-						);
-					}
-
-					return {
-						...prev,
-						tierItems: newTierItems,
-					};
+				setState({
+					...state,
+					tierItems: newTierItems,
 				});
 			}
 			return;
 		}
 
-		setState((prev) => {
-			const newTierItems = new Map(prev.tierItems);
-			const activeItems = activeContainer
-				? newTierItems.get(activeContainer) || []
-				: [];
-			const overItems = newTierItems.get(overContainer) || [];
+		const newTierItems = new Map(state.tierItems);
+		const activeItems = activeContainer
+			? newTierItems.get(activeContainer) || []
+			: [];
+		const overItems = newTierItems.get(overContainer) || [];
 
-			const overIndex = overItem
-				? overItems.findIndex(
-						(item) => item.id === overItem.id && item.type === overItem.type,
-					)
-				: overItems.length;
+		const overIndex = overItem
+			? overItems.findIndex(
+					(item) => item.id === overItem.id && item.type === overItem.type,
+				)
+			: overItems.length;
 
-			if (activeContainer) {
-				newTierItems.set(
-					activeContainer,
-					activeItems.filter(
-						(item) =>
-							!(item.id === activeItem.id && item.type === activeItem.type),
-					),
-				);
-			}
-
-			const newOverItems = [...overItems];
-			newOverItems.splice(
-				overIndex === -1 ? newOverItems.length : overIndex,
-				0,
-				activeItem,
+		if (activeContainer) {
+			newTierItems.set(
+				activeContainer,
+				activeItems.filter(
+					(item) =>
+						!(item.id === activeItem.id && item.type === activeItem.type),
+				),
 			);
-			newTierItems.set(overContainer, newOverItems);
+		}
 
-			return {
-				...prev,
-				tierItems: newTierItems,
-			};
+		const newOverItems = [...overItems];
+		newOverItems.splice(
+			overIndex === -1 ? newOverItems.length : overIndex,
+			0,
+			activeItem,
+		);
+		newTierItems.set(overContainer, newOverItems);
+
+		setState({
+			...state,
+			tierItems: newTierItems,
 		});
 	};
 
@@ -163,24 +164,22 @@ export function useTierListState() {
 		const overId = over.id;
 
 		if (overId === "item-pool") {
-			setState((prev) => {
-				const newTierItems = new Map(prev.tierItems);
-				const currentContainer = findContainer(item);
+			const newTierItems = new Map(state.tierItems);
+			const currentContainer = findContainer(item);
 
-				if (currentContainer) {
-					const containerItems = newTierItems.get(currentContainer) || [];
-					newTierItems.set(
-						currentContainer,
-						containerItems.filter(
-							(i) => !(i.id === item.id && i.type === item.type),
-						),
-					);
-				}
+			if (currentContainer) {
+				const containerItems = newTierItems.get(currentContainer) || [];
+				newTierItems.set(
+					currentContainer,
+					containerItems.filter(
+						(i) => !(i.id === item.id && i.type === item.type),
+					),
+				);
+			}
 
-				return {
-					...prev,
-					tierItems: newTierItems,
-				};
+			setState({
+				...state,
+				tierItems: newTierItems,
 			});
 		}
 	};
@@ -192,44 +191,42 @@ export function useTierListState() {
 			color: "#888888",
 		};
 
-		setState((prev) => ({
-			...prev,
-			tiers: [...prev.tiers, newTier],
-		}));
+		setState({
+			...state,
+			tiers: [...state.tiers, newTier],
+		});
 	};
 
 	const handleRemoveTier = (tierId: string) => {
-		setState((prev) => {
-			const newTierItems = new Map(prev.tierItems);
-			newTierItems.delete(tierId);
+		const newTierItems = new Map(state.tierItems);
+		newTierItems.delete(tierId);
 
-			return {
-				tiers: prev.tiers.filter((tier) => tier.id !== tierId),
-				tierItems: newTierItems,
-			};
+		setState({
+			tiers: state.tiers.filter((tier) => tier.id !== tierId),
+			tierItems: newTierItems,
 		});
 	};
 
 	const handleRenameTier = (tierId: string, newName: string) => {
-		setState((prev) => ({
-			...prev,
-			tiers: prev.tiers.map((tier) =>
+		setState({
+			...state,
+			tiers: state.tiers.map((tier) =>
 				tier.id === tierId ? { ...tier, name: newName } : tier,
 			),
-		}));
+		});
 	};
 
 	const handleChangeTierColor = (tierId: string, newColor: string) => {
-		setState((prev) => ({
-			...prev,
-			tiers: prev.tiers.map((tier) =>
+		setState({
+			...state,
+			tiers: state.tiers.map((tier) =>
 				tier.id === tierId ? { ...tier, color: newColor } : tier,
 			),
-		}));
+		});
 	};
 
 	const getItemsInTier = (tierId: string): TierListItem[] => {
-		return state.tierItems.get(tierId) || [];
+		return (state.tierItems.get(tierId) || []) as TierListItem[]; // xxx: remove as
 	};
 
 	const getAllItemIdsForType = (type: TierListItemType): number[] => {
@@ -260,40 +257,36 @@ export function useTierListState() {
 	};
 
 	const handleMoveTierUp = (tierId: string) => {
-		setState((prev) => {
-			const currentIndex = prev.tiers.findIndex((tier) => tier.id === tierId);
-			if (currentIndex <= 0) return prev;
+		const currentIndex = state.tiers.findIndex((tier) => tier.id === tierId);
+		if (currentIndex <= 0) return;
 
-			const newTiers = [...prev.tiers];
-			[newTiers[currentIndex - 1], newTiers[currentIndex]] = [
-				newTiers[currentIndex],
-				newTiers[currentIndex - 1],
-			];
+		const newTiers = [...state.tiers];
+		[newTiers[currentIndex - 1], newTiers[currentIndex]] = [
+			newTiers[currentIndex],
+			newTiers[currentIndex - 1],
+		];
 
-			return {
-				...prev,
-				tiers: newTiers,
-			};
+		setState({
+			...state,
+			tiers: newTiers,
 		});
 	};
 
 	const handleMoveTierDown = (tierId: string) => {
-		setState((prev) => {
-			const currentIndex = prev.tiers.findIndex((tier) => tier.id === tierId);
-			if (currentIndex === -1 || currentIndex >= prev.tiers.length - 1) {
-				return prev;
-			}
+		const currentIndex = state.tiers.findIndex((tier) => tier.id === tierId);
+		if (currentIndex === -1 || currentIndex >= state.tiers.length - 1) {
+			return;
+		}
 
-			const newTiers = [...prev.tiers];
-			[newTiers[currentIndex], newTiers[currentIndex + 1]] = [
-				newTiers[currentIndex + 1],
-				newTiers[currentIndex],
-			];
+		const newTiers = [...state.tiers];
+		[newTiers[currentIndex], newTiers[currentIndex + 1]] = [
+			newTiers[currentIndex + 1],
+			newTiers[currentIndex],
+		];
 
-			return {
-				...prev,
-				tiers: newTiers,
-			};
+		setState({
+			...state,
+			tiers: newTiers,
 		});
 	};
 

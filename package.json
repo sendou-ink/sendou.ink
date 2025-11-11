@@ -84,7 +84,7 @@
 		"slugify": "^1.6.6",
 		"swr": "^2.3.3",
 		"web-push": "^3.6.7",
-		"zod": "^3.25.61"
+		"zod": "^4.1.12"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.1",

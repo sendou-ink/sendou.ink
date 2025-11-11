@@ -11,6 +11,7 @@ import type { tierListItemTypeSchema } from "./tier-list-maker-schemas";
 export type TierListItemType = TierListItem["type"];
 assertType<z.infer<typeof tierListItemTypeSchema>, TierListItemType>();
 
+// xxx: infer from schema
 export type TierListItem =
 	| {
 			id: MainWeaponId;
@@ -29,15 +30,11 @@ export type TierListItem =
 			type: "stage";
 	  };
 
+// xxx: infer from schema
 export interface Tier {
 	id: string;
 	name: string;
 	color: string;
-}
-
-export interface TierListState {
-	tiers: Tier[];
-	tierItems: Map<string, TierListItem[]>;
 }
 
 // xxx: this should go to constants file

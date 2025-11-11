@@ -102,8 +102,7 @@ export function useSearchParamStateZod<S extends z4.$ZodType<unknown>>({
 
 		const searchParams = new URLSearchParams(window.location.search);
 		const encoded = isCodec
-			? // @ts-expect-error - Zod codec API
-				z.encode(schema, newValue)
+			? z.encode(schema, newValue)
 			: typeof newValue === "string"
 				? newValue
 				: JSON.stringify(newValue);
