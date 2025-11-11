@@ -21,7 +21,6 @@ import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import type { SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { userSubmittedImage } from "~/utils/urls-img";
 import { Avatar } from "../../../components/Avatar";
 import { Main } from "../../../components/Main";
 import { databaseTimestampToDate } from "../../../utils/dates";
@@ -192,10 +191,7 @@ function GroupCard({
 						className="stack horizontal items-center xs font-bold text-xs"
 					>
 						{group.team.avatarUrl ? (
-							<Avatar
-								url={userSubmittedImage(group.team.avatarUrl)}
-								size="xxs"
-							/>
+							<Avatar url={group.team.avatarUrl} size="xxs" />
 						) : null}
 						{group.team.name}
 					</Link>

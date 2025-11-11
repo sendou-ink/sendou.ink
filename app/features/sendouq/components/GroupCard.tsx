@@ -22,6 +22,7 @@ import { useUser } from "~/features/auth/core/user";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { ordinalToRoundedSp } from "~/features/mmr/mmr-utils";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { languagesUnified } from "~/modules/i18n/config";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
@@ -253,8 +254,9 @@ function GroupMember({
 	showAddNote?: SqlBool;
 	showNote?: boolean;
 }) {
-	const { t, i18n } = useTranslation(["q", "user"]);
+	const { t } = useTranslation(["q", "user"]);
 	const user = useUser();
+	const { formatDateTime } = useTimeFormat();
 
 	return (
 		<div className="stack xxs">
@@ -283,15 +285,16 @@ function GroupMember({
 								)}
 							>
 								<div className="text-xxs text-lighter">
-									{databaseTimestampToDate(
-										member.privateNote.updatedAt,
-									).toLocaleString(i18n.language, {
-										hour: "numeric",
-										minute: "numeric",
-										day: "numeric",
-										month: "long",
-										year: "numeric",
-									})}
+									{formatDateTime(
+										databaseTimestampToDate(member.privateNote.updatedAt),
+										{
+											hour: "numeric",
+											minute: "numeric",
+											day: "numeric",
+											month: "long",
+											year: "numeric",
+										},
+									)}
 								</div>
 								<DeletePrivateNoteForm
 									name={member.username}

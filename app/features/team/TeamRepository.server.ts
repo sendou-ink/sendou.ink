@@ -7,19 +7,23 @@ import { subsOfResult } from "~/features/team/team-utils";
 import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import {
+	COMMON_USER_FIELDS,
+	concatUserSubmittedImagePrefix,
+	tournamentLogoOrNull,
+} from "~/utils/kysely.server";
 
 export function findAllUndisbanded() {
 	return db
 		.selectFrom("Team")
+		.leftJoin("UserSubmittedImage", "UserSubmittedImage.id", "Team.avatarImgId")
 		.select(({ eb }) => [
 			"Team.customUrl",
 			"Team.name",
-			eb
-				.selectFrom("UserSubmittedImage")
-				.whereRef("UserSubmittedImage.id", "=", "Team.avatarImgId")
-				.select("UserSubmittedImage.url")
-				.as("avatarSrc"),
+			"Team.tag",
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"avatarUrl",
+			),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TeamMemberWithSecondary")
@@ -72,10 +76,11 @@ export function findByCustomUrl(
 			"Team.name",
 			"Team.bsky",
 			"Team.bio",
+			"Team.tag",
 			"Team.customUrl",
 			"Team.css",
-			"AvatarImage.url as avatarSrc",
-			"BannerImage.url as bannerSrc",
+			concatUserSubmittedImagePrefix(eb.ref("AvatarImage.url")).as("avatarUrl"),
+			concatUserSubmittedImagePrefix(eb.ref("BannerImage.url")).as("bannerUrl"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TeamMemberWithSecondary")
@@ -166,11 +171,7 @@ export async function findResultsById(teamId: number) {
 			"results.tournamentTeamId",
 			"CalendarEvent.name as tournamentName",
 			"CalendarEventDate.startTime",
-			eb
-				.selectFrom("UserSubmittedImage")
-				.select(["UserSubmittedImage.url"])
-				.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id")
-				.as("logoUrl"),
+			tournamentLogoOrNull(eb).as("logoUrl"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("results as results2")
@@ -278,10 +279,11 @@ export async function update({
 	customUrl,
 	bio,
 	bsky,
+	tag,
 	css,
 }: Pick<
 	Insertable<Tables["Team"]>,
-	"id" | "name" | "customUrl" | "bio" | "bsky"
+	"id" | "name" | "customUrl" | "bio" | "bsky" | "tag"
 > & { css: string | null }) {
 	return db
 		.updateTable("AllTeam")
@@ -290,6 +292,7 @@ export async function update({
 			customUrl,
 			bio,
 			bsky,
+			tag,
 			css,
 		})
 		.where("id", "=", id)

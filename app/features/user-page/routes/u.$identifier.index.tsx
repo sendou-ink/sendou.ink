@@ -24,7 +24,6 @@ import {
 	teamPage,
 	topSearchPlayerPage,
 } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
 import { loader } from "../loaders/u.$identifier.index.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 export { loader };
@@ -94,7 +93,7 @@ function TeamInfo() {
 				{data.user.team.avatarUrl ? (
 					<img
 						alt=""
-						src={userSubmittedImage(data.user.team.avatarUrl)}
+						src={data.user.team.avatarUrl}
 						width={32}
 						height={32}
 						className="rounded-full"
@@ -151,7 +150,7 @@ function SecondaryTeamsPopover() {
 							{team.avatarUrl ? (
 								<img
 									alt=""
-									src={userSubmittedImage(team.avatarUrl)}
+									src={team.avatarUrl}
 									width={24}
 									height={24}
 									className="rounded-full"

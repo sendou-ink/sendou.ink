@@ -169,7 +169,7 @@ function TournamentItem({
 			}
 			data-testid="tournament-search-item"
 		>
-			<img src={item.logoSrc} alt="" className={tournamentSearchStyles.logo} />
+			<img src={item.logoUrl} alt="" className={tournamentSearchStyles.logo} />
 			<div className={tournamentSearchStyles.itemTextsContainer}>
 				<span>{item.name}</span>
 				{additionalText() ? (

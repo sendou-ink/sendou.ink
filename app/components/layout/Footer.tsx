@@ -2,6 +2,7 @@ import { Link } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { usePatrons } from "~/hooks/swr";
 import {
+	API_PAGE,
 	CONTRIBUTIONS_PAGE,
 	FAQ_PAGE,
 	NINTENDO_COMMUNITY_TOURNAMENTS_GUIDELINES_URL,
@@ -28,6 +29,7 @@ export function Footer() {
 				<Link to={PRIVACY_POLICY_PAGE}>{t("pages.privacy")}</Link>
 				<Link to={CONTRIBUTIONS_PAGE}>{t("pages.contributors")}</Link>
 				<Link to={FAQ_PAGE}>{t("pages.faq")}</Link>
+				<Link to={API_PAGE}>{t("pages.api")}</Link>
 			</div>
 			<div className="layout__footer__socials">
 				<a

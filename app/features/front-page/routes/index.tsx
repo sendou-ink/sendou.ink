@@ -29,6 +29,7 @@ import { TournamentCard } from "~/features/calendar/components/TournamentCard";
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import styles from "~/styles/front.module.css";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -104,10 +105,11 @@ function DesktopSideNav() {
 }
 
 function SeasonBanner() {
-	const { t, i18n } = useTranslation(["front"]);
+	const { t } = useTranslation(["front"]);
 	const season = Seasons.next(new Date()) ?? Seasons.currentOrPrevious()!;
 	const _previousSeason = Seasons.previous();
 	const isMounted = useIsMounted();
+	const { formatDate } = useTimeFormat();
 
 	const isInFuture = new Date() < season.starts;
 	const isShowingPreviousSeason = _previousSeason?.nth === season.nth;
@@ -122,12 +124,12 @@ function SeasonBanner() {
 				</div>
 				{isMounted ? (
 					<div className={styles.seasonBannerDates}>
-						{season.starts.toLocaleDateString(i18n.language, {
+						{formatDate(season.starts, {
 							month: "long",
 							day: "numeric",
 						})}{" "}
 						-{" "}
-						{season.ends.toLocaleDateString(i18n.language, {
+						{formatDate(season.ends, {
 							month: "long",
 							day: "numeric",
 						})}

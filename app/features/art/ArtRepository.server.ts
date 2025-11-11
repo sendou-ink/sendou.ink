@@ -2,6 +2,7 @@ import type { Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
+import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
 import { seededRandom } from "~/utils/random";
 import type { ListedArt } from "./art-types";
 
@@ -32,7 +33,7 @@ export async function findShowcaseArts(): Promise<ListedArt[]> {
 		.selectFrom("Art")
 		.innerJoin("User", "User.id", "Art.authorId")
 		.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
-		.select([
+		.select((eb) => [
 			"Art.id",
 			"Art.createdAt",
 			"Art.isShowcase",
@@ -41,7 +42,9 @@ export async function findShowcaseArts(): Promise<ListedArt[]> {
 			"User.username",
 			"User.discordAvatar",
 			"User.commissionsOpen",
-			"UserSubmittedImage.url",
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"url",
+			),
 		])
 		.orderBy("Art.isShowcase", "desc")
 		.orderBy("Art.createdAt", "desc")
@@ -85,7 +88,7 @@ export async function findShowcaseArtsByTag(
 		.innerJoin("Art", "Art.id", "TaggedArt.artId")
 		.innerJoin("User", "User.id", "Art.authorId")
 		.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
-		.select([
+		.select((eb) => [
 			"Art.id",
 			"Art.createdAt",
 			"Art.isShowcase",
@@ -94,7 +97,9 @@ export async function findShowcaseArtsByTag(
 			"User.username",
 			"User.discordAvatar",
 			"User.commissionsOpen",
-			"UserSubmittedImage.url",
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"url",
+			),
 		])
 		.where("TaggedArt.tagId", "=", tagId)
 		.orderBy("Art.isShowcase", "desc")
@@ -132,7 +137,7 @@ export async function findRecentlyUploadedArts(): Promise<ListedArt[]> {
 		.selectFrom("Art")
 		.innerJoin("User", "User.id", "Art.authorId")
 		.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
-		.select([
+		.select((eb) => [
 			"Art.id",
 			"Art.createdAt",
 			"Art.isShowcase",
@@ -140,7 +145,9 @@ export async function findRecentlyUploadedArts(): Promise<ListedArt[]> {
 			"User.username",
 			"User.discordAvatar",
 			"User.commissionsOpen",
-			"UserSubmittedImage.url",
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"url",
+			),
 		])
 		.orderBy("Art.createdAt", "desc")
 		.limit(100)
@@ -179,7 +186,9 @@ export async function findArtsByUserId(
 					"Art.description",
 					"Art.createdAt",
 					"Art.isShowcase",
-					"UserSubmittedImage.url",
+					concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+						"url",
+					),
 					"User.discordId",
 					"User.username",
 					"User.discordAvatar",
@@ -222,7 +231,9 @@ export async function findArtsByUserId(
 					"Art.description",
 					"Art.createdAt",
 					"Art.isShowcase",
-					"UserSubmittedImage.url",
+					concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+						"url",
+					),
 					jsonArrayFrom(
 						eb
 							.selectFrom("TaggedArt")

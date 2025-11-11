@@ -28,6 +28,15 @@
 	color: var(--text-lighter);
 }
 
+.team-search__team__tag {
+	font-size: var(--fonts-xs);
+	color: var(--theme);
+	padding: var(--s-0-5) var(--s-1);
+	border-radius: var(--rounded-xs);
+	margin-left: var(--s-2);
+	font-weight: var(--bold);
+}
+
 .team-search__team__avatar-placeholder {
 	height: 64px;
 	min-width: 64px;
@@ -78,6 +87,7 @@
 	display: none;
 	align-items: center;
 	gap: var(--s-3);
+	position: relative;
 }
 
 .team__bsky-link {
@@ -132,6 +142,27 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
+}
+
+.team__banner__tag {
+	font-size: var(--fonts-sm);
+	background-color: var(--theme-transparent);
+	color: var(--theme);
+	padding: var(--s-1) var(--s-1-5);
+	border-radius: var(--rounded);
+}
+
+.team__banner__tag__desktop {
+	position: absolute;
+	bottom: 41px;
+	right: 0;
+	display: none;
+}
+
+.team__banner__tag__mobile {
+	font-size: var(--fonts-xs);
+	padding: var(--s-0-5) var(--s-1);
+	margin-block: var(--s-1);
 }
 
 .team__banner__avatar img {
@@ -300,6 +331,9 @@
 	}
 	.team__banner__name {
 		display: flex;
+	}
+	.team__banner__tag__desktop {
+		display: initial;
 	}
 
 	.team__banner__avatar > div {

@@ -3,4 +3,5 @@ interface ImportMetaEnv {
 	VITE_PLAYWIRE_PUBLISHER_ID?: string;
 	VITE_PLAYWIRE_WEBSITE_ID?: string;
 	VITE_SITE_DOMAIN: string;
+	VITE_TOURNAMENT_DEFAULT_LOGO: string;
 }

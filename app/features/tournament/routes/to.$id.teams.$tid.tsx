@@ -19,7 +19,6 @@ import {
 	tournamentTeamPage,
 	userPage,
 } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
 import { TeamWithRoster } from "../components/TeamWithRoster";
 import * as Standings from "../core/Standings";
 import type { PlayedSet } from "../core/sets.server";
@@ -42,7 +41,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 		description: `${team.name} roster (${team.members.map((m) => m.username).join(", ")}) and sets in ${tournamentData.ctx.name}.`,
 		image: teamLogoUrl
 			? {
-					url: userSubmittedImage(teamLogoUrl),
+					url: teamLogoUrl,
 					dimensions: { width: 124, height: 124 },
 				}
 			: undefined,

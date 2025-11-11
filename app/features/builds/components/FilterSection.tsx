@@ -5,6 +5,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { ModeImage } from "~/components/Image";
 import { CrossIcon } from "~/components/icons/Cross";
 import { possibleApValues } from "~/features/build-analyzer";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { abilities } from "~/modules/in-game-lists/abilities";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type {
@@ -194,7 +195,8 @@ function DateFilter({
 	filter: DateBuildFilter;
 	onChange: (filter: Partial<DateBuildFilter>) => void;
 }) {
-	const { t, i18n } = useTranslation(["builds"]);
+	const { t } = useTranslation(["builds"]);
+	const { formatDate } = useTimeFormat();
 
 	const selectValue = () => {
 		const dateString = dateToYYYYMMDD(new Date(filter.date));
@@ -239,7 +241,7 @@ function DateFilter({
 					return (
 						<option key={patch} value={dateString}>
 							{patch} (
-							{date.toLocaleDateString(i18n.language, {
+							{formatDate(date, {
 								day: "numeric",
 								month: "long",
 								year: "numeric",

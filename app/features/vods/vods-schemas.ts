@@ -63,24 +63,18 @@ export const videoSchema = z.preprocess(
 					}),
 				])
 				.optional(),
+			teamSize: z.number().int().min(1).max(4).optional(),
 			matches: z.array(videoMatchSchema),
 		})
 		.refine((data) => {
-			if (
-				data.type === "CAST" &&
-				data.matches.some((match) => match.weapons.length !== 8)
-			) {
-				return false;
+			if (data.type === "CAST") {
+				const teamSize = data.teamSize ?? 4;
+				return data.matches.every(
+					(match) => match.weapons.length === teamSize * 2,
+				);
 			}
 
-			if (
-				data.type !== "CAST" &&
-				data.matches.some((match) => match.weapons.length !== 1)
-			) {
-				return false;
-			}
-
-			return true;
+			return data.matches.every((match) => match.weapons.length === 1);
 		}),
 );
 

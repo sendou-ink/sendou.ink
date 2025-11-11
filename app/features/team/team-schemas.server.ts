@@ -47,6 +47,10 @@ export const editTeamSchema = z.union([
 			falsyToNull,
 			z.string().max(TEAM.BSKY_MAX_LENGTH).nullable(),
 		),
+		tag: z.preprocess(
+			falsyToNull,
+			z.string().max(TEAM.TAG_MAX_LENGTH).nullable(),
+		),
 		css: customCssVarObject,
 	}),
 ]);

@@ -7409,7 +7409,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			],
 		},
 		logoUrl: "tournament-logo-0r1Pt_6Ho7qb6UF7VM4yD-1733156154857.webp",
-		logoValidatedAt: 1733164146,
 		author: {
 			id: 4941,
 			username: "HoeenHero",
@@ -15061,7 +15060,5 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			45194, 45250, 45290, 45295, 45391, 45778, 45806, 46245, 46289, 46305,
 			46394, 46451, 46501, 46518, 46523, 46538, 46586, 46637, 46648, 46771,
 		],
-		logoSrc:
-			"https://sendou.nyc3.cdn.digitaloceanspaces.com/tournament-logo-0r1Pt_6Ho7qb6UF7VM4yD-1733156154857.webp",
 	},
 });

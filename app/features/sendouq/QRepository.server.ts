@@ -312,7 +312,7 @@ export async function usersThatTrusted(userId: number) {
 				.select([
 					...COMMON_USER_FIELDS,
 					"User.inGameName",
-					sql.raw<any>("null").as("teamId"),
+					sql<any>`null`.as("teamId"),
 				])
 				.where("TrustRelationship.trustReceiverUserId", "=", userId),
 		)

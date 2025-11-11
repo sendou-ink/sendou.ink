@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Avatar } from "../../../components/Avatar";
 import { SendouButton } from "../../../components/elements/Button";
 import { SubmitButton } from "../../../components/SubmitButton";
+import { useTimeFormat } from "../../../hooks/useTimeFormat";
 import { MESSAGE_MAX_LENGTH } from "../chat-constants";
 import { useChat, useChatAutoScroll } from "../chat-hooks";
 import type { ChatMessage, ChatProps, ChatUser } from "../chat-types";
@@ -269,19 +270,19 @@ function SystemMessage({
 }
 
 function MessageTimestamp({ timestamp }: { timestamp: number }) {
-	const { i18n } = useTranslation();
+	const { formatDateTime, formatTime } = useTimeFormat();
 	const moreThanDayAgo = sub(new Date(), { days: 1 }) > new Date(timestamp);
 
 	return (
 		<time className="chat__message__time">
 			{moreThanDayAgo
-				? new Date(timestamp).toLocaleString(i18n.language, {
+				? formatDateTime(new Date(timestamp), {
 						day: "numeric",
 						month: "numeric",
 						hour: "numeric",
 						minute: "numeric",
 					})
-				: new Date(timestamp).toLocaleTimeString(i18n.language)}
+				: formatTime(new Date(timestamp))}
 		</time>
 	);
 }

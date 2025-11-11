@@ -23,7 +23,11 @@ import {
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
 import invariant from "~/utils/invariant";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import {
+	COMMON_USER_FIELDS,
+	concatUserSubmittedImagePrefix,
+	tournamentLogoWithDefault,
+} from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
 import { calendarEventPage, tournamentPage } from "~/utils/urls";
 import {
@@ -85,12 +89,14 @@ function tournamentOrganization(organizationId: Expression<number | null>) {
 				"TournamentOrganization.avatarImgId",
 				"UserSubmittedImage.id",
 			)
-			.select([
+			.select((eb) => [
 				"TournamentOrganization.id",
 				"TournamentOrganization.name",
 				"TournamentOrganization.slug",
 				"TournamentOrganization.isEstablished",
-				"UserSubmittedImage.url as avatarUrl",
+				concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+					"avatarUrl",
+				),
 			])
 			.whereRef("TournamentOrganization.id", "=", organizationId),
 	);
@@ -143,12 +149,6 @@ const withTeamsCount = (
 		)
 		.select(({ fn }) => [fn.countAll<number>().as("teamsCount")]);
 
-const withLogoUrl = (eb: ExpressionBuilder<DB, "CalendarEvent">) =>
-	eb
-		.selectFrom("UserSubmittedImage")
-		.select(["UserSubmittedImage.url"])
-		.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id");
-
 function findAllBetweenTwoTimestampsQuery({
 	startTime,
 	endTime,
@@ -176,7 +176,7 @@ function findAllBetweenTwoTimestampsQuery({
 			),
 			withOrganization(eb).as("organization"),
 			withTeamsCount(eb).as("teamsCount"),
-			withLogoUrl(eb).as("logoUrl"),
+			tournamentLogoWithDefault(eb).as("logoUrl"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("MapPoolMap")
@@ -290,7 +290,7 @@ export function forShowcase() {
 			"CalendarEvent.name",
 			"CalendarEventDate.startTime",
 			withTeamsCount(eb).as("teamsCount"),
-			withLogoUrl(eb).as("logoUrl"),
+			tournamentLogoWithDefault(eb).as("logoUrl"),
 			withOrganization(eb).as("organization"),
 			jsonArrayFrom(
 				eb
@@ -314,12 +314,16 @@ export function forShowcase() {
 					)
 					.whereRef("TournamentResult.tournamentId", "=", "Tournament.id")
 					.where("TournamentResult.placement", "=", 1)
-					.select([
+					.select((eb) => [
 						...COMMON_USER_FIELDS,
 						"User.country",
 						"TournamentTeam.name as teamName",
-						"TeamAvatar.url as teamLogoUrl",
-						"TournamentTeamAvatar.url as pickupAvatarUrl",
+						concatUserSubmittedImagePrefix(eb.ref("TeamAvatar.url")).as(
+							"teamLogoUrl",
+						),
+						concatUserSubmittedImagePrefix(
+							eb.ref("TournamentTeamAvatar.url"),
+						).as("pickupAvatarUrl"),
 					]),
 			).as("firstPlacers"),
 		])
@@ -569,7 +573,6 @@ export async function create(args: CreateArgs) {
 			? await createSubmittedImageInTrx({
 					trx,
 					avatarFileName: args.avatarFileName,
-					autoValidateAvatar: args.autoValidateAvatar,
 					userId: args.authorId,
 				})
 			: null;
@@ -610,20 +613,18 @@ export async function create(args: CreateArgs) {
 
 async function createSubmittedImageInTrx({
 	trx,
-	autoValidateAvatar,
 	avatarFileName,
 	userId,
 }: {
 	trx: Transaction<DB>;
 	avatarFileName: string;
-	autoValidateAvatar?: boolean;
 	userId: number;
 }) {
 	const result = await trx
 		.insertInto("UnvalidatedUserSubmittedImage")
 		.values({
 			url: avatarFileName,
-			validatedAt: autoValidateAvatar ? databaseTimestampNow() : null,
+			validatedAt: databaseTimestampNow(),
 			submitterUserId: userId,
 		})
 		.returning("id")
@@ -644,7 +645,6 @@ export async function update(args: UpdateArgs) {
 			? await createSubmittedImageInTrx({
 					trx,
 					avatarFileName: args.avatarFileName,
-					autoValidateAvatar: args.autoValidateAvatar,
 					userId: args.authorId,
 				})
 			: null;

@@ -341,7 +341,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 		isFinalized: 0,
 		organization: null,
 		logoUrl: "tournament-logo-hfX5gzVyrt5QCV8fiQA4n-1716906622859.webp",
-		logoValidatedAt: 1716949983,
 		author: {
 			id: 13370,
 			username: "Puma",
@@ -1080,7 +1079,5 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 			17855, 21689, 26992, 30176, 31148, 33047, 33491, 33578, 33611, 37632,
 			37901, 43518, 43662, 45879, 46006, 46467, 46813,
 		],
-		logoSrc:
-			"https://sendou.nyc3.cdn.digitaloceanspaces.com/tournament-logo-hfX5gzVyrt5QCV8fiQA4n-1716906622859.webp",
 	},
 });

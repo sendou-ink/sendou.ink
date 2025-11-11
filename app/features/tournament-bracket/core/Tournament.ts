@@ -24,7 +24,6 @@ import {
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
-import { userSubmittedImage } from "~/utils/urls-img";
 import {
 	fillWithNullTillPowerOfTwo,
 	groupNumberToLetters,
@@ -664,11 +663,7 @@ export class Tournament {
 
 	/** Tournament teams logo image path, either from the team or the pickup avatar uploaded specifically for this tournament */
 	tournamentTeamLogoSrc(team: TournamentDataTeam) {
-		const url = team.team?.logoUrl ?? team.pickupAvatarUrl;
-
-		if (!url) return;
-
-		return userSubmittedImage(url);
+		return team.team?.logoUrl ?? team.pickupAvatarUrl;
 	}
 
 	/** Generates a Splatoon 3 pool code to join the tournament match. It tries to make it so that teams don't need to change the pool all the time, but provides different ones not to run into the in-game limit of max people in a pool at a time. */

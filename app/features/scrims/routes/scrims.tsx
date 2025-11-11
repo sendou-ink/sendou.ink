@@ -9,6 +9,7 @@ import { AddNewButton } from "~/components/AddNewButton";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -201,10 +202,10 @@ function ScrimsDaySection({
 	posts: ScrimPost[];
 	filters: ScrimFilters;
 }) {
-	const { i18n } = useTranslation();
 	const user = useUser();
 	const [showFiltered, setShowFiltered] = React.useState(false);
 	const [showRequestPending, setShowRequestPending] = React.useState(false);
+	const { formatDate } = useTimeFormat();
 
 	const filteredPosts = posts.filter((post) =>
 		Scrim.applyFilters(post, filters),
@@ -220,14 +221,11 @@ function ScrimsDaySection({
 		<div className="stack md">
 			<div className="stack xxs">
 				<h2 className="text-sm">
-					{databaseTimestampToDate(posts[0].at).toLocaleDateString(
-						i18n.language,
-						{
-							day: "numeric",
-							month: "long",
-							weekday: "long",
-						},
-					)}
+					{formatDate(databaseTimestampToDate(posts[0].at), {
+						day: "numeric",
+						month: "long",
+						weekday: "long",
+					})}
 				</h2>
 				{user ? (
 					<AvailableScrimsFilterButtons
@@ -333,8 +331,9 @@ function AvailableScrimsFilterButtons({
 }
 
 function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ScrimPost[] }) {
-	const { i18n, t } = useTranslation(["scrims"]);
+	const { t } = useTranslation(["scrims"]);
 	const user = useUser();
+	const { formatDate } = useTimeFormat();
 
 	const postsByDay = R.groupBy(posts, (post) =>
 		databaseTimestampToDate(post.at).getDate(),
@@ -348,14 +347,11 @@ function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ScrimPost[] }) {
 					return (
 						<div key={day} className="stack md">
 							<h2 className="text-sm">
-								{databaseTimestampToDate(posts![0].at).toLocaleDateString(
-									i18n.language,
-									{
-										day: "numeric",
-										month: "long",
-										weekday: "long",
-									},
-								)}
+								{formatDate(databaseTimestampToDate(posts![0].at), {
+									day: "numeric",
+									month: "long",
+									weekday: "long",
+								})}
 							</h2>
 							<div className="stack lg">
 								{posts!.map((post) => {
@@ -406,7 +402,7 @@ function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ScrimPost[] }) {
 }
 
 function ScrimsDaySeparatedBookedCards({ posts }: { posts: ScrimPost[] }) {
-	const { i18n } = useTranslation();
+	const { formatDate } = useTimeFormat();
 
 	const postsByDay = R.groupBy(posts, (post) =>
 		databaseTimestampToDate(post.at).getDate(),
@@ -420,14 +416,11 @@ function ScrimsDaySeparatedBookedCards({ posts }: { posts: ScrimPost[] }) {
 					return (
 						<div key={day} className="stack md">
 							<h2 className="text-sm">
-								{databaseTimestampToDate(posts![0].at).toLocaleDateString(
-									i18n.language,
-									{
-										day: "numeric",
-										month: "long",
-										weekday: "long",
-									},
-								)}
+								{formatDate(databaseTimestampToDate(posts![0].at), {
+									day: "numeric",
+									month: "long",
+									weekday: "long",
+								})}
 							</h2>
 							<div className="stack lg">
 								{posts!.map((post) => {

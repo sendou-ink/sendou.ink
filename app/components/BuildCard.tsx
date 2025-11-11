@@ -5,6 +5,7 @@ import type { GearType, Tables, UserWithPlusTier } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import type { BuildWeaponWithTop500Info } from "~/features/builds/builds-types";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type {
 	Ability as AbilityType,
 	BuildAbilitiesTuple,
@@ -57,7 +58,7 @@ interface BuildProps {
 export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 	const user = useUser();
 	const { t } = useTranslation(["weapons", "builds", "common", "game-misc"]);
-	const { i18n } = useTranslation();
+	const { formatDate } = useTimeFormat();
 	const isMounted = useIsMounted();
 
 	const {
@@ -129,14 +130,11 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 							className={clsx("whitespace-nowrap", { invisible: !isMounted })}
 						>
 							{isMounted
-								? databaseTimestampToDate(updatedAt).toLocaleDateString(
-										i18n.language,
-										{
-											day: "numeric",
-											month: "long",
-											year: "numeric",
-										},
-									)
+								? formatDate(databaseTimestampToDate(updatedAt), {
+										day: "numeric",
+										month: "long",
+										year: "numeric",
+									})
 								: "t"}
 						</time>
 					</div>

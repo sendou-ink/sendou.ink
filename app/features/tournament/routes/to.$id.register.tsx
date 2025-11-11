@@ -40,6 +40,7 @@ import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tour
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -55,7 +56,6 @@ import {
 	userEditProfilePage,
 	userPage,
 } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
 import { AlertIcon } from "../../../components/icons/Alert";
 import { action } from "../actions/to.$id.register.server";
 import type { TournamentRegisterPageLoader } from "../loaders/to.$id.register.server";
@@ -69,22 +69,16 @@ import { useTournament } from "./to.$id";
 export { loader, action };
 
 export default function TournamentRegisterPage() {
-	const user = useUser();
 	const isMounted = useIsMounted();
 	const tournament = useTournament();
 
 	const startsAtEvenHour = tournament.ctx.startTime.getMinutes() === 0;
 
-	const showAvatarPendingApprovalText =
-		tournament.ctx.logoUrl &&
-		!tournament.ctx.logoValidatedAt &&
-		tournament.isOrganizer(user);
-
 	return (
 		<div className={clsx("stack lg", containerClassName("normal"))}>
 			<div className="tournament__logo-container">
 				<img
-					src={tournament.ctx.logoSrc}
+					src={tournament.ctx.logoUrl}
 					alt=""
 					className="tournament__logo"
 					width={124}
@@ -102,13 +96,7 @@ export default function TournamentRegisterPage() {
 								className="stack horizontal sm items-center text-xs text-main-forced"
 							>
 								<Avatar
-									url={
-										tournament.ctx.organization.avatarUrl
-											? userSubmittedImage(
-													tournament.ctx.organization.avatarUrl,
-												)
-											: undefined
-									}
+									url={tournament.ctx.organization.avatarUrl ?? undefined}
 									size="xxs"
 								/>
 								{tournament.ctx.organization.name}
@@ -159,12 +147,6 @@ export default function TournamentRegisterPage() {
 					</div>
 				</div>
 			</div>
-			{showAvatarPendingApprovalText ? (
-				<div className="text-warning text-sm font-semi-bold">
-					Tournament logo pending moderator review. Will be shown publicly once
-					approved.
-				</div>
-			) : null}
 			<TournamentRegisterInfoTabs />
 		</div>
 	);
@@ -395,9 +377,10 @@ function RegistrationProgress({
 	members?: unknown[];
 	mapPool?: unknown[];
 }) {
-	const { i18n, t } = useTranslation(["tournament"]);
+	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 	const isMounted = useIsMounted();
+	const { formatTime } = useTimeFormat();
 
 	const completedIfTruthy = (condition: unknown) =>
 		condition ? "completed" : "incomplete";
@@ -438,15 +421,17 @@ function RegistrationProgress({
 		tournament.ctx.startTime.getTime();
 
 	const registrationClosesAtString = isMounted
-		? (tournament.isLeagueSignup
-				? tournament.ctx.startTime
-				: tournament.registrationClosesAt
-			).toLocaleTimeString(i18n.language, {
-				minute: "numeric",
-				hour: "numeric",
-				day: "2-digit",
-				month: "2-digit",
-			})
+		? formatTime(
+				tournament.isLeagueSignup
+					? tournament.ctx.startTime
+					: tournament.registrationClosesAt,
+				{
+					minute: "numeric",
+					hour: "numeric",
+					day: "2-digit",
+					month: "2-digit",
+				},
+			)
 		: "";
 
 	return (
@@ -521,14 +506,15 @@ function CheckIn({
 	endDate: Date;
 	checkedIn?: boolean;
 }) {
-	const { t, i18n } = useTranslation(["tournament"]);
+	const { t } = useTranslation(["tournament"]);
 	const isMounted = useIsMounted();
 	const fetcher = useFetcher();
+	const { formatTime } = useTimeFormat();
 
 	useAutoRerender();
 
 	const checkInStartsString = isMounted
-		? startDate.toLocaleTimeString(i18n.language, {
+		? formatTime(startDate, {
 				minute: "numeric",
 				hour: "numeric",
 				day: "2-digit",
@@ -537,7 +523,7 @@ function CheckIn({
 		: "";
 
 	const checkInEndsString = isMounted
-		? endDate.toLocaleTimeString(i18n.language, {
+		? formatTime(endDate, {
 				minute: "numeric",
 				hour: "numeric",
 				day: "2-digit",
@@ -659,16 +645,11 @@ function TeamInfo({
 			const teamToSignUpWith = data?.teams.find(
 				(team) => team.id === signUpWithTeamId,
 			);
-			return teamToSignUpWith?.logoUrl
-				? userSubmittedImage(teamToSignUpWith.logoUrl)
-				: null;
+			return teamToSignUpWith?.logoUrl;
 		}
 		if (uploadedAvatar) return URL.createObjectURL(uploadedAvatar);
-		if (ownTeam?.pickupAvatarUrl) {
-			return userSubmittedImage(ownTeam.pickupAvatarUrl);
-		}
 
-		return null;
+		return ownTeam?.pickupAvatarUrl;
 	})();
 
 	const canEditAvatar =

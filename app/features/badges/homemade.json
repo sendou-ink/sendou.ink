@@ -99,6 +99,10 @@
 		"displayName": "Shark Tank: Deep Waters",
 		"authorDiscordId": "528851510222782474"
 	},
+	"blahajrising": {
+		"displayName": "Shark Tank: Rising Waters",
+		"authorDiscordId": "528851510222782474"
+	},
 	"bluelock": {
 		"displayName": "Blue Lock",
 		"authorDiscordId": "528851510222782474"
@@ -181,6 +185,10 @@
 	},
 	"champions": {
 		"displayName": "Champions Cup",
+		"authorDiscordId": "752582395076673577"
+	},
+	"championsinv": {
+		"displayName": "Champions Cup Invitational",
 		"authorDiscordId": "752582395076673577"
 	},
 	"chao": {
@@ -1010,6 +1018,10 @@
 	"slyeion": {
 		"displayName": "Sylveon",
 		"authorDiscordId": "338806780446638082"
+	},
+	"smollusk": {
+		"displayName": "Smollusk Low-Level Spire",
+		"authorDiscordId": "1160529949531316334"
 	},
 	"solosquidshowdown": {
 		"displayName": "Solo Squid Showdown",

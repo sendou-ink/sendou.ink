@@ -1,5 +1,6 @@
 {
 	"pages.admin": "管理",
+	"pages.api": "",
 	"pages.articles": "文章",
 	"pages.badges": "徽章",
 	"pages.plus": "Plus Server",
@@ -301,6 +302,19 @@
 	"settings.notifications.disableInfo": "",
 	"settings.notifications.browserNotSupported": "",
 	"settings.notifications.permissionDenied": "",
+	"settings.clockFormat": "",
+	"clockFormat.auto": "",
+	"clockFormat.24h": "",
+	"clockFormat.12h": "",
 	"badges.selector.none": "没有选择任何徽章",
-	"badges.selector.select": "选择徽章并添加"
+	"badges.selector.select": "选择徽章并添加",
+	"api.title": "",
+	"api.description": "",
+	"api.noAccess": "",
+	"api.tokenLabel": "",
+	"api.revealButton": "",
+	"api.regenerate.heading": "",
+	"api.regenerate.button": "",
+	"api.regenerate.confirm": "",
+	"api.generate": ""
 }

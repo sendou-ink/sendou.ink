@@ -19,7 +19,7 @@ const createImage = async ({
 	validatedAt?: number | null;
 }) => {
 	imageCounter++;
-	const url = `https://example.com/image-${submitterUserId}-${imageCounter}.png`;
+	const url = `image-${submitterUserId}-${imageCounter}.png`;
 
 	return ImageRepository.addNewImage({
 		submitterUserId,
@@ -130,7 +130,7 @@ describe("deleteImageById", () => {
 		imageCounter++;
 		const art = await ArtRepository.insert({
 			authorId: 1,
-			url: `https://example.com/art-${imageCounter}.png`,
+			url: `art-${imageCounter}.png`,
 			validatedAt: Date.now(),
 			description: null,
 			linkedUsers: [],
@@ -167,7 +167,7 @@ describe("countUnvalidatedArt", () => {
 		imageCounter++;
 		await ArtRepository.insert({
 			authorId: 1,
-			url: `https://example.com/art-${imageCounter}.png`,
+			url: `art-${imageCounter}.png`,
 			validatedAt: null,
 			description: null,
 			linkedUsers: [],
@@ -177,7 +177,7 @@ describe("countUnvalidatedArt", () => {
 		imageCounter++;
 		await ArtRepository.insert({
 			authorId: 1,
-			url: `https://example.com/art-${imageCounter}.png`,
+			url: `art-${imageCounter}.png`,
 			validatedAt: null,
 			description: null,
 			linkedUsers: [],
@@ -193,7 +193,7 @@ describe("countUnvalidatedArt", () => {
 		imageCounter++;
 		await ArtRepository.insert({
 			authorId: 1,
-			url: `https://example.com/art-${imageCounter}.png`,
+			url: `art-${imageCounter}.png`,
 			validatedAt: null,
 			description: null,
 			linkedUsers: [],
@@ -203,7 +203,7 @@ describe("countUnvalidatedArt", () => {
 		imageCounter++;
 		await ArtRepository.insert({
 			authorId: 1,
-			url: `https://example.com/art-${imageCounter}.png`,
+			url: `art-${imageCounter}.png`,
 			validatedAt: Date.now(),
 			description: null,
 			linkedUsers: [],
@@ -238,7 +238,7 @@ describe("countAllUnvalidated", () => {
 		imageCounter++;
 		await ImageRepository.addNewImage({
 			submitterUserId: 1,
-			url: `https://example.com/team-avatar-${imageCounter}.png`,
+			url: `team-avatar-${imageCounter}.png`,
 			validatedAt: null,
 			teamId: team.id,
 			type: "team-pfp",
@@ -253,7 +253,7 @@ describe("countAllUnvalidated", () => {
 		imageCounter++;
 		await ArtRepository.insert({
 			authorId: 1,
-			url: `https://example.com/art-${imageCounter}.png`,
+			url: `art-${imageCounter}.png`,
 			validatedAt: null,
 			description: null,
 			linkedUsers: [],
@@ -279,7 +279,7 @@ describe("countAllUnvalidated", () => {
 		imageCounter++;
 		await ImageRepository.addNewImage({
 			submitterUserId: 1,
-			url: `https://example.com/team-avatar-${imageCounter}.png`,
+			url: `team-avatar-${imageCounter}.png`,
 			validatedAt: Date.now(),
 			teamId: team.id,
 			type: "team-pfp",
@@ -295,7 +295,7 @@ describe("countAllUnvalidated", () => {
 		imageCounter++;
 		await ImageRepository.addNewImage({
 			submitterUserId: 1,
-			url: `https://example.com/team-avatar-${imageCounter}.png`,
+			url: `team-avatar-${imageCounter}.png`,
 			validatedAt: null,
 			teamId: team.id,
 			type: "team-pfp",
@@ -304,7 +304,7 @@ describe("countAllUnvalidated", () => {
 		imageCounter++;
 		await ArtRepository.insert({
 			authorId: 1,
-			url: `https://example.com/art-${imageCounter}.png`,
+			url: `art-${imageCounter}.png`,
 			validatedAt: null,
 			description: null,
 			linkedUsers: [],
@@ -339,7 +339,7 @@ describe("countUnvalidatedBySubmitterUserId", () => {
 		imageCounter++;
 		await ImageRepository.addNewImage({
 			submitterUserId: 1,
-			url: `https://example.com/team-avatar-${imageCounter}.png`,
+			url: `team-avatar-${imageCounter}.png`,
 			validatedAt: null,
 			teamId: team.id,
 			type: "team-pfp",
@@ -355,7 +355,7 @@ describe("countUnvalidatedBySubmitterUserId", () => {
 		imageCounter++;
 		await ImageRepository.addNewImage({
 			submitterUserId: 1,
-			url: `https://example.com/team-avatar-${imageCounter}.png`,
+			url: `team-avatar-${imageCounter}.png`,
 			validatedAt: Date.now(),
 			teamId: team.id,
 			type: "team-pfp",
@@ -373,7 +373,7 @@ describe("countUnvalidatedBySubmitterUserId", () => {
 		imageCounter++;
 		await ImageRepository.addNewImage({
 			submitterUserId: 1,
-			url: `https://example.com/team1-avatar-${imageCounter}.png`,
+			url: `team1-avatar-${imageCounter}.png`,
 			validatedAt: null,
 			teamId: team1.id,
 			type: "team-pfp",
@@ -382,7 +382,7 @@ describe("countUnvalidatedBySubmitterUserId", () => {
 		imageCounter++;
 		await ImageRepository.addNewImage({
 			submitterUserId: 2,
-			url: `https://example.com/team2-avatar-${imageCounter}.png`,
+			url: `team2-avatar-${imageCounter}.png`,
 			validatedAt: null,
 			teamId: team2.id,
 			type: "team-pfp",
@@ -424,7 +424,7 @@ describe("validateImage", () => {
 		imageCounter++;
 		const img = await ImageRepository.addNewImage({
 			submitterUserId: 1,
-			url: `https://example.com/team-avatar-${imageCounter}.png`,
+			url: `team-avatar-${imageCounter}.png`,
 			validatedAt: null,
 			teamId: team.id,
 			type: "team-pfp",
@@ -454,10 +454,10 @@ describe("unvalidatedImages", () => {
 	test("fetches unvalidated images with submitter info", async () => {
 		const team = await createTeam(1);
 		imageCounter++;
-		const url = `https://example.com/team-avatar-${imageCounter}.png`;
+		const filename = `team-avatar-${imageCounter}.png`;
 		await ImageRepository.addNewImage({
 			submitterUserId: 1,
-			url,
+			url: filename,
 			validatedAt: null,
 			teamId: team.id,
 			type: "team-pfp",
@@ -468,7 +468,7 @@ describe("unvalidatedImages", () => {
 		expect(result).toHaveLength(1);
 		expect(result[0].submitterUserId).toBe(1);
 		expect(result[0].username).toBe("user1");
-		expect(result[0].url).toBe(url);
+		expect(result[0].url).toBe(`http://127.0.0.1:9000/sendou/${filename}`);
 	});
 
 	test("does not fetch validated images", async () => {
@@ -476,7 +476,7 @@ describe("unvalidatedImages", () => {
 		imageCounter++;
 		await ImageRepository.addNewImage({
 			submitterUserId: 1,
-			url: `https://example.com/team-avatar-${imageCounter}.png`,
+			url: `team-avatar-${imageCounter}.png`,
 			validatedAt: Date.now(),
 			teamId: team.id,
 			type: "team-pfp",
@@ -492,7 +492,7 @@ describe("unvalidatedImages", () => {
 		imageCounter++;
 		await ImageRepository.addNewImage({
 			submitterUserId: 1,
-			url: `https://example.com/team-avatar-${imageCounter}.png`,
+			url: `team-avatar-${imageCounter}.png`,
 			validatedAt: null,
 			teamId: team.id,
 			type: "team-pfp",
@@ -501,7 +501,7 @@ describe("unvalidatedImages", () => {
 		imageCounter++;
 		await ArtRepository.insert({
 			authorId: 2,
-			url: `https://example.com/art-${imageCounter}.png`,
+			url: `art-${imageCounter}.png`,
 			validatedAt: null,
 			description: null,
 			linkedUsers: [],
@@ -523,7 +523,7 @@ describe("unvalidatedImages", () => {
 
 			await ImageRepository.addNewImage({
 				submitterUserId: teamOwnerId,
-				url: `https://example.com/team-avatar-${i}.png`,
+				url: `team-avatar-${i}.png`,
 				validatedAt: null,
 				teamId: team.id,
 				type: "team-pfp",
@@ -557,17 +557,17 @@ describe("addNewImage", () => {
 	test("creates image for team avatar", async () => {
 		const team = await createTeam(1);
 		imageCounter++;
-		const url = `https://example.com/team-avatar-${imageCounter}.png`;
+		const filename = `team-avatar-${imageCounter}.png`;
 
 		const img = await ImageRepository.addNewImage({
 			submitterUserId: 1,
-			url,
+			url: filename,
 			validatedAt: null,
 			teamId: team.id,
 			type: "team-pfp",
 		});
 
-		expect(img.url).toBe(url);
+		expect(img.url).toBe(filename);
 		expect(img.submitterUserId).toBe(1);
 		expect(img.validatedAt).toBeNull();
 
@@ -578,17 +578,17 @@ describe("addNewImage", () => {
 	test("creates image for team banner", async () => {
 		const team = await createTeam(1);
 		imageCounter++;
-		const url = `https://example.com/team-banner-${imageCounter}.png`;
+		const filename = `team-banner-${imageCounter}.png`;
 
 		const img = await ImageRepository.addNewImage({
 			submitterUserId: 1,
-			url,
+			url: filename,
 			validatedAt: null,
 			teamId: team.id,
 			type: "team-banner",
 		});
 
-		expect(img.url).toBe(url);
+		expect(img.url).toBe(filename);
 		expect(img.submitterUserId).toBe(1);
 		expect(img.validatedAt).toBeNull();
 
@@ -599,17 +599,17 @@ describe("addNewImage", () => {
 	test("creates image for organization avatar", async () => {
 		const org = await createOrganization(1);
 		imageCounter++;
-		const url = `https://example.com/org-avatar-${imageCounter}.png`;
+		const filename = `org-avatar-${imageCounter}.png`;
 
 		const img = await ImageRepository.addNewImage({
 			submitterUserId: 1,
-			url,
+			url: filename,
 			validatedAt: null,
 			organizationId: org.id,
 			type: "org-pfp",
 		});
 
-		expect(img.url).toBe(url);
+		expect(img.url).toBe(filename);
 		expect(img.submitterUserId).toBe(1);
 		expect(img.validatedAt).toBeNull();
 
@@ -624,7 +624,7 @@ describe("addNewImage", () => {
 
 		const img = await ImageRepository.addNewImage({
 			submitterUserId: 1,
-			url: `https://example.com/team-avatar-${imageCounter}.png`,
+			url: `team-avatar-${imageCounter}.png`,
 			validatedAt,
 			teamId: team.id,
 			type: "team-pfp",
@@ -642,7 +642,7 @@ describe("addNewImage", () => {
 
 		await ImageRepository.addNewImage({
 			submitterUserId: 1,
-			url: `https://example.com/team-avatar-${imageCounter}.png`,
+			url: `team-avatar-${imageCounter}.png`,
 			validatedAt: null,
 			teamId: team.id,
 			type: "team-pfp",

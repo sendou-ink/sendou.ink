@@ -50,6 +50,25 @@ test.describe("Team search page", () => {
 
 		await expect(page).toHaveURL(/chimera/);
 	});
+
+	test("filters teams by tag & displays tag", async ({ page }) => {
+		await seed(page);
+		await impersonate(page, ADMIN_ID);
+		await navigate({ page, url: teamPage("alliance-rogue") });
+
+		await page.getByTestId("edit-team-button").click();
+		await page.getByLabel("Tag").fill("AR");
+		await page.getByTestId("edit-team-submit-button").click();
+
+		await navigate({ page, url: TEAM_SEARCH_PAGE });
+
+		const searchInput = page.getByTestId("team-search-input");
+		await searchInput.fill("ar");
+
+		const firstTeamName = page.getByTestId("team-0");
+		await expect(firstTeamName).toContainText("Alliance Rogue");
+		await expect(firstTeamName).toContainText("AR");
+	});
 });
 
 test.describe("Team page", () => {
