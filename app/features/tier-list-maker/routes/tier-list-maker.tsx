@@ -10,6 +10,7 @@ import {
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
+import { SendouSwitch } from "~/components/elements/Switch";
 import {
 	SendouTab,
 	SendouTabList,
@@ -38,7 +39,6 @@ import styles from "./tier-list-maker.module.css";
 // xxx: popover input too big?
 // xxx: to remove images, need to drag precisely between the wpn images
 // xxx: test in mobile
-// xxx: toggle under main weapons to not show alt skins?
 // xxx: zod v4 imports -> need to upgrade to RR7 if we want encode/decode
 // xxx: reset button
 
@@ -70,6 +70,10 @@ function TierListMakerContent() {
 		handleDragOver,
 		handleDragEnd,
 		handleAddTier,
+		hideAltKits,
+		setHideAltKits,
+		hideAltSkins,
+		setHideAltSkins,
 	} = useTierListState();
 
 	const sensors = useSensors(
@@ -122,7 +126,23 @@ function TierListMakerContent() {
 					</SendouTabList>
 
 					<SendouTabPanel id="main-weapon">
-						<ItemPool />
+						<div className="stack md">
+							<ItemPool />
+							<div className={styles.filters}>
+								<SendouSwitch
+									isSelected={hideAltKits}
+									onChange={setHideAltKits}
+								>
+									{t("tier-list-maker:hideAltKits")}
+								</SendouSwitch>
+								<SendouSwitch
+									isSelected={hideAltSkins}
+									onChange={setHideAltSkins}
+								>
+									{t("tier-list-maker:hideAltSkins")}
+								</SendouSwitch>
+							</div>
+						</div>
 					</SendouTabPanel>
 
 					<SendouTabPanel id="sub-weapon">

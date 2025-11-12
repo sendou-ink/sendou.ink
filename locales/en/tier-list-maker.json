@@ -6,5 +6,7 @@
 	"stages": "Stages",
 	"modes": "Modes",
 	"stageModes": "Stage + Modes",
-	"dropItems": "Drop items here"
+	"dropItems": "Drop items here",
+	"hideAltKits": "Hide alt kits",
+	"hideAltSkins": "Hide alt skins"
 }

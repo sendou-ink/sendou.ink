@@ -129,9 +129,27 @@ export function weaponIdToArrayWithAlts(weaponId: MainWeaponId) {
 	return [weaponId];
 }
 
-const altWeaponIds = new Set(altWeaponIdToId.keys());
-export const weaponIdIsNotAlt = (weaponId: MainWeaponId) =>
-	!altWeaponIds.has(weaponId);
+/**
+ * Determines the type of weapon based on its ID
+ *
+ * @returns "ALT_SKIN" if the weapon is an alternate skin, "BASE" if it's a base weapon, or "ALT_KIT" if it's an alternate kit
+ *
+ * @example
+ * // Splattershot is a base weapon
+ * weaponIdToType(40); // -> "BASE"
+ *
+ * // Tentatek Splattershot is an alternate kit
+ * weaponIdToType(41); // -> "ALT_KIT"
+ *
+ * // Hero Shot Replica is an alternate skin
+ * weaponIdToType(45); // -> "ALT_SKIN"
+ */
+export const weaponIdToType = (weaponId: MainWeaponId) => {
+	if (altWeaponIdToId.has(weaponId)) return "ALT_SKIN";
+	if (weaponId === weaponIdToBaseWeaponId(weaponId)) return "BASE";
+
+	return "ALT_KIT";
+};
 
 /** Returns true if the weapon ID has alternate skins
  *

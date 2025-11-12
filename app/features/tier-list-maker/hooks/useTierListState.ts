@@ -5,6 +5,7 @@ import type {
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { useState } from "react";
+import { z } from "zod/v4";
 import { useSearchParamStateZod } from "~/hooks/useSearchParamState";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
@@ -12,6 +13,7 @@ import {
 	mainWeaponIds,
 	specialWeaponIds,
 	subWeaponIds,
+	weaponIdToType,
 } from "~/modules/in-game-lists/weapon-ids";
 import { assertUnreachable } from "~/utils/types";
 import { jsonCrushCodec } from "~/utils/zod";
@@ -39,6 +41,18 @@ export function useTierListState() {
 		schema: jsonCrushCodec(tierListStateSchema),
 	});
 	const [activeItem, setActiveItem] = useState<TierListItem | null>(null);
+
+	const [hideAltKits, setHideAltKits] = useSearchParamStateZod({
+		key: "hideAltKits",
+		defaultValue: false,
+		schema: z.boolean(),
+	});
+
+	const [hideAltSkins, setHideAltSkins] = useSearchParamStateZod({
+		key: "hideAltSkins",
+		defaultValue: false,
+		schema: z.boolean(),
+	});
 
 	const parseItemFromId = (id: string): TierListItem | null => {
 		const [type, idStr] = String(id).split(":");
@@ -274,7 +288,17 @@ export function useTierListState() {
 		const allItemIds = getAllItemIdsForType(itemType);
 		return allItemIds
 			.map((id) => ({ id, type: itemType }) as TierListItem)
-			.filter((item) => !placedItems.has(`${item.type}:${item.id}`));
+			.filter((item) => {
+				if (placedItems.has(`${item.type}:${item.id}`)) return false;
+
+				if (item.type === "main-weapon" && typeof item.id === "number") {
+					const weaponType = weaponIdToType(item.id);
+					if (hideAltKits && weaponType === "ALT_KIT") return false;
+					if (hideAltSkins && weaponType === "ALT_SKIN") return false;
+				}
+
+				return true;
+			});
 	};
 
 	const handleMoveTierUp = (tierId: string) => {
@@ -327,5 +351,9 @@ export function useTierListState() {
 		handleMoveTierDown,
 		getItemsInTier,
 		availableItems: getAvailableItems(),
+		hideAltKits,
+		setHideAltKits,
+		hideAltSkins,
+		setHideAltSkins,
 	};
 }

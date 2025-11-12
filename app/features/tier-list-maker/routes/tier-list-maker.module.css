@@ -11,3 +11,8 @@
 	gap: var(--s-2);
 	margin-bottom: var(--s-6);
 }
+
+.filters {
+	display: flex;
+	gap: var(--s-4);
+}
