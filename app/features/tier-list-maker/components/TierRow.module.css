@@ -40,11 +40,11 @@
 	text-align: center;
 }
 
-.weaponZone {
+.targetZone {
 	flex: 1;
 	display: flex;
 	flex-wrap: wrap;
-	gap: var(--s-1);
+	gap: var(--s-1-5);
 	padding: var(--s-2);
 	background: var(--bg-lighter);
 	border: 2px dashed transparent;
@@ -53,7 +53,7 @@
 	transition: all 0.2s;
 }
 
-.weaponZoneOver {
+.targetZoneOver {
 	border-color: var(--theme-transparent);
 	background: var(--bg-lightest);
 }

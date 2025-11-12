@@ -115,9 +115,9 @@ export function TierRow({ tier }: TierRowProps) {
 
 			<div
 				ref={setNodeRef}
-				className={clsx(styles.weaponZone, {
+				className={clsx(styles.targetZone, {
 					// xxx: probably makes no sense? text better?
-					[styles.weaponZoneOver]: isOver,
+					[styles.targetZoneOver]: isOver,
 				})}
 			>
 				{items.length === 0 ? (

@@ -29,7 +29,7 @@ export function TierListItemImage({ item }: TierListItemImageProps) {
 			const [stageIdStr, mode] = item.id.split("-");
 			const stageId = Number(stageIdStr) as StageId;
 			return (
-				<div className={styles.stageModeContainer}>
+				<div className="relative">
 					<StageImage stageId={stageId} width={80} className="rounded-sm" />
 					<ModeImage
 						mode={mode as ModeShort}

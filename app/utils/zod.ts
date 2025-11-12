@@ -138,7 +138,8 @@ export const modeShortWithSpecial = z.enum([
 
 export const gamesShortSchema = z.enum(["S1", "S2", "S3"]);
 
-export const stageId = z.preprocess(actualNumber, numericEnum(stageIds));
+// xxx: add z.preprocess(actualNumber, stageId); @ usage where needed
+export const stageId = numericEnum(stageIds);
 
 export function processMany(
 	...processFuncs: Array<(value: unknown) => unknown>
