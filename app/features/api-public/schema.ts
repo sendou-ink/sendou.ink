@@ -182,8 +182,8 @@ export type GetTournamentTeamsResponse = Array<{
 		unranked: number | null;
 	};
 	/**
-	 * The raw OpenSkill ordinal value used to compute {@code seedingPower}. It is roughly equivalent to
-	 * {@code (seedingPower - 1000) / 15}, but with more precision.
+	 * The raw OpenSkill ordinal value used to compute seedingPower. It is roughly equivalent to
+	 * "(seedingPower - 1000) / 15", but with more precision.
 	 */
 	rawSeedingOrdinal: {
 		ranked: number | null;
