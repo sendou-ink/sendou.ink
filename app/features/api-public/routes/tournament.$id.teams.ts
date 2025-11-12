@@ -117,6 +117,12 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const friendCodes = await TournamentRepository.friendCodesByTournamentId(id);
 
 	const result: GetTournamentTeamsResponse = teams.map((team) => {
+		const rankedSeedingOrdinal = toSeedingPowerOrdinal(
+			team.members.map((member) => member.rankedOrdinal),
+		);
+		const unrankedSeedingOrdinal = toSeedingPowerOrdinal(
+			team.members.map((member) => member.unrankedOrdinal),
+		);
 		return {
 			id: team.id,
 			name: team.name,
@@ -129,12 +135,12 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			registeredAt: databaseTimestampToDate(team.createdAt).toISOString(),
 			checkedIn: Boolean(team.checkedInAt),
 			seedingPower: {
-				ranked: toSeedingPowerSP(
-					team.members.map((member) => member.rankedOrdinal),
-				),
-				unranked: toSeedingPowerSP(
-					team.members.map((member) => member.unrankedOrdinal),
-				),
+				ranked: ordinalOrNullToSp(rankedSeedingOrdinal),
+				unranked: ordinalOrNullToSp(unrankedSeedingOrdinal),
+			},
+			rawSeedingOrdinal: {
+				ranked: rankedSeedingOrdinal,
+				unranked: unrankedSeedingOrdinal,
 			},
 			members: team.members.map((member) => {
 				return {
@@ -171,12 +177,12 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	return await cors(request, json(result));
 };
 
-function toSeedingPowerSP(ordinals: (number | null)[]) {
-	const avg = nullifyingAvg(
+function toSeedingPowerOrdinal(ordinals: (number | null)[]) {
+	return nullifyingAvg(
 		ordinals.filter((ordinal) => typeof ordinal === "number"),
 	);
+}
 
-	if (typeof avg !== "number") return null;
-
-	return ordinalToSp(avg);
+function ordinalOrNullToSp(ordinal: number | null) {
+	return typeof ordinal === "number" ? ordinalToSp(ordinal) : null;
 }

@@ -173,11 +173,19 @@ export type GetTournamentTeamsResponse = Array<{
 	seed: number | null;
 	mapPool: Array<StageWithMode> | null;
 	/**
-	 *  Seeding power is a non-resetting MMR value that is used for sendou.ink's autoseeding capabilities.
-	 *  It is calculated as the average of the team's members' seeding power.
-	 *  Ranked and unranked tournaments contribute to different seeding power values.
+	 * Seeding power is a non-resetting MMR value that is used for sendou.ink's autoseeding capabilities.
+	 * It is calculated as the average of the team's members' seeding power.
+	 * Ranked and unranked tournaments contribute to different seeding power values.
 	 */
 	seedingPower: {
+		ranked: number | null;
+		unranked: number | null;
+	};
+	/**
+	 * The raw OpenSkill ordinal value used to compute {@code seedingPower}. It is roughly equivalent to
+	 * {@code (seedingPower - 1000) / 15}, but with more precision.
+	 */
+	rawSeedingOrdinal: {
 		ranked: number | null;
 		unranked: number | null;
 	};
