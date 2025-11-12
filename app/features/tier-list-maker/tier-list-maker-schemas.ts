@@ -1,4 +1,13 @@
 import { z } from "zod/v4";
+import { assertType } from "~/utils/types";
+import {
+	hexCode,
+	modeShort,
+	specialWeaponId,
+	stageId,
+	subWeaponId,
+	weaponId,
+} from "~/utils/zod";
 
 export const tierListItemTypeSchema = z.enum([
 	"main-weapon",
@@ -8,27 +17,27 @@ export const tierListItemTypeSchema = z.enum([
 	"mode",
 	"stage-mode",
 ]);
+assertType<z.infer<typeof tierListItemTypeSchema>, TierListItem["type"]>();
 
-// xxx: proper id schemas here
 const tierListItemSchema = z.union([
 	z.object({
-		id: z.number(),
+		id: weaponId,
 		type: z.literal("main-weapon"),
 	}),
 	z.object({
-		id: z.number(),
+		id: subWeaponId,
 		type: z.literal("sub-weapon"),
 	}),
 	z.object({
-		id: z.number(),
+		id: specialWeaponId,
 		type: z.literal("special-weapon"),
 	}),
 	z.object({
-		id: z.number(),
+		id: stageId,
 		type: z.literal("stage"),
 	}),
 	z.object({
-		id: z.string(),
+		id: modeShort,
 		type: z.literal("mode"),
 	}),
 	z.object({
@@ -37,12 +46,15 @@ const tierListItemSchema = z.union([
 	}),
 ]);
 
-// xxx: can we get more specific?
+export type TierListItem = z.infer<typeof tierListItemSchema>;
+
 const tierSchema = z.object({
 	id: z.string(),
 	name: z.string(),
-	color: z.string(),
+	color: hexCode,
 });
+
+export type TierListMakerTier = z.infer<typeof tierSchema>;
 
 type TierListItemSchemaType = z.infer<typeof tierListItemSchema>;
 
@@ -52,7 +64,7 @@ const tierListStateSerializedSchema = z.object({
 });
 
 type TierListStateDecoded = {
-	tiers: Array<z.infer<typeof tierSchema>>;
+	tiers: Array<TierListMakerTier>;
 	tierItems: Map<string, TierListItemSchemaType[]>;
 };
 

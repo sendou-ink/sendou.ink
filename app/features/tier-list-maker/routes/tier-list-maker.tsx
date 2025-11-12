@@ -27,7 +27,7 @@ import {
 	TierListProvider,
 	useTierListState,
 } from "../contexts/TierListContext";
-import type { TierListItemType } from "../tier-list-maker-types";
+import type { TierListItem } from "../tier-list-maker-schemas";
 import styles from "./tier-list-maker.module.css";
 
 // xxx: button to generate/ share an image
@@ -39,7 +39,7 @@ import styles from "./tier-list-maker.module.css";
 // xxx: to remove images, need to drag precisely between the wpn images
 // xxx: test in mobile
 // xxx: toggle under main weapons to not show alt skins?
-// xxx: zod v4 imports
+// xxx: zod v4 imports -> need to upgrade to RR7 if we want encode/decode
 // xxx: reset button
 
 export default function TierListMakerPage() {
@@ -102,7 +102,7 @@ function TierListMakerContent() {
 
 				<SendouTabs
 					selectedKey={itemType}
-					onSelectionChange={(key) => setItemType(key as TierListItemType)}
+					onSelectionChange={(key) => setItemType(key as TierListItem["type"])}
 				>
 					<SendouTabList>
 						<SendouTab id="main-weapon">

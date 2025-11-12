@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { TierListItem } from "../tier-list-maker-types";
+import type { TierListItem } from "../tier-list-maker-schemas";
 import styles from "./DraggableItem.module.css";
 import { TierListItemImage } from "./TierListItemImage";
 

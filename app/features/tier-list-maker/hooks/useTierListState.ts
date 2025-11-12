@@ -13,17 +13,15 @@ import {
 	specialWeaponIds,
 	subWeaponIds,
 } from "~/modules/in-game-lists/weapon-ids";
+import { assertUnreachable } from "~/utils/types";
 import { jsonCrushCodec } from "~/utils/zod";
+import { DEFAULT_TIERS } from "../tier-list-maker-constants";
 import {
+	type TierListItem,
+	type TierListMakerTier,
 	tierListItemTypeSchema,
 	tierListStateSchema,
 } from "../tier-list-maker-schemas";
-import {
-	DEFAULT_TIERS,
-	type Tier,
-	type TierListItem,
-	type TierListItemType,
-} from "../tier-list-maker-types";
 
 export function useTierListState() {
 	const [itemType, setItemType] = useSearchParamStateZod({
@@ -48,14 +46,14 @@ export function useTierListState() {
 
 		if (type === "mode" || type === "stage-mode") {
 			return {
-				type: type as TierListItemType,
+				type: type as TierListItem["type"],
 				id: idStr,
 			} as TierListItem;
 		}
 
 		return {
-			type: type as TierListItemType,
-			id: Number(idStr) as number & {},
+			type: type as TierListItem["type"],
+			id: Number(idStr),
 		} as TierListItem;
 	};
 
@@ -194,7 +192,7 @@ export function useTierListState() {
 	};
 
 	const handleAddTier = () => {
-		const newTier: Tier = {
+		const newTier: TierListMakerTier = {
 			id: `tier-${Date.now()}`,
 			name: "New Tier",
 			color: "#888888",
@@ -235,12 +233,10 @@ export function useTierListState() {
 	};
 
 	const getItemsInTier = (tierId: string): TierListItem[] => {
-		return (state.tierItems.get(tierId) || []) as TierListItem[]; // xxx: remove as
+		return state.tierItems.get(tierId) || [];
 	};
 
-	const getAllItemIdsForType = (
-		type: TierListItemType,
-	): Array<number | string> => {
+	const getAllItemIdsForType = (type: TierListItem["type"]) => {
 		switch (type) {
 			case "main-weapon":
 				return [...mainWeaponIds];
@@ -260,6 +256,9 @@ export function useTierListState() {
 					}
 				}
 				return combinations;
+			}
+			default: {
+				assertUnreachable(type);
 			}
 		}
 	};

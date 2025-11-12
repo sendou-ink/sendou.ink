@@ -1,4 +1,4 @@
-import type { TierListItem } from "../tier-list-maker-types";
+import type { TierListItem } from "../tier-list-maker-schemas";
 import styles from "./ItemDragPreview.module.css";
 import { TierListItemImage } from "./TierListItemImage";
 

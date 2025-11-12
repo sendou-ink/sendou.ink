@@ -13,12 +13,12 @@ import { ChevronDownIcon } from "~/components/icons/ChevronDown";
 import { ChevronUpIcon } from "~/components/icons/ChevronUp";
 import { TrashIcon } from "~/components/icons/Trash";
 import { useTierListState } from "../contexts/TierListContext";
-import type { Tier } from "../tier-list-maker-types";
+import type { TierListMakerTier } from "../tier-list-maker-schemas";
 import { DraggableItem } from "./DraggableItem";
 import styles from "./TierRow.module.css";
 
 interface TierRowProps {
-	tier: Tier;
+	tier: TierListMakerTier;
 }
 
 export function TierRow({ tier }: TierRowProps) {
