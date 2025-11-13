@@ -184,7 +184,11 @@ export function useTierListState() {
 
 		const overId = over.id;
 
-		if (overId === "item-pool") {
+		const overItem = parseItemFromId(String(overId));
+		const isDroppedInPool =
+			overId === "item-pool" || (overItem && !findContainer(overItem));
+
+		if (isDroppedInPool) {
 			const newTierItems = new Map(state.tierItems);
 			const currentContainer = findContainer(item);
 
@@ -335,6 +339,13 @@ export function useTierListState() {
 		});
 	};
 
+	const handleReset = () => {
+		setState({
+			tiers: DEFAULT_TIERS,
+			tierItems: new Map(),
+		});
+	};
+
 	return {
 		itemType,
 		setItemType,
@@ -349,6 +360,7 @@ export function useTierListState() {
 		handleChangeTierColor,
 		handleMoveTierUp,
 		handleMoveTierDown,
+		handleReset,
 		getItemsInTier,
 		availableItems: getAvailableItems(),
 		hideAltKits,

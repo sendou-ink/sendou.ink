@@ -3,8 +3,3 @@
 	flex-wrap: wrap;
 	gap: var(--s-2-5);
 }
-
-.poolOver {
-	background-color: var(--bg-lighter);
-	border-color: var(--theme);
-}

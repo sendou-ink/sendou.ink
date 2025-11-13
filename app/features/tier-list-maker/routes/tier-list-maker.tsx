@@ -8,8 +8,10 @@ import {
 	useSensors,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import type { MetaFunction } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { SendouSwitch } from "~/components/elements/Switch";
 import {
 	SendouTab,
@@ -18,9 +20,13 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { PlusIcon } from "~/components/icons/Plus";
+import { RefreshIcon } from "~/components/icons/Refresh";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { metaTags } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
+import { navIconUrl, TIER_LIST_MAKER_URL } from "~/utils/urls";
 import { ItemDragPreview } from "../components/ItemDragPreview";
 import { ItemPool } from "../components/ItemPool";
 import { TierRow } from "../components/TierRow";
@@ -31,16 +37,31 @@ import {
 import type { TierListItem } from "../tier-list-maker-schemas";
 import styles from "./tier-list-maker.module.css";
 
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Tier List Maker",
+		ogTitle: "Splatoon 3 tier list maker",
+		description:
+			"Generate Splatoon tier lists featuring main weapons, sub weapons, special weapons or stages.",
+		location: args.location,
+	});
+};
+
+export const handle: SendouRouteHandle = {
+	i18n: "tier-list-maker",
+	breadcrumb: () => ({
+		imgPath: navIconUrl("tier-list-maker"),
+		href: TIER_LIST_MAKER_URL,
+		type: "IMAGE",
+	}),
+};
+
 // xxx: button to generate/ share an image
 // xxx: switch to toggle off round labels
 // xxx: switch to allow having a weapon many times
-// xxx: add to navigation
-// xxx: popover jank
-// xxx: popover input too big?
-// xxx: to remove images, need to drag precisely between the wpn images
 // xxx: test in mobile
 // xxx: zod v4 imports -> need to upgrade to RR7 if we want encode/decode
-// xxx: reset button
+// xxx: only jsoncrush on drop?
 
 export default function TierListMakerPage() {
 	const isMounted = useIsMounted();
@@ -70,6 +91,7 @@ function TierListMakerContent() {
 		handleDragOver,
 		handleDragEnd,
 		handleAddTier,
+		handleReset,
 		hideAltKits,
 		setHideAltKits,
 		hideAltSkins,
@@ -89,6 +111,7 @@ function TierListMakerContent() {
 				<SendouButton onPress={handleAddTier} size="small" icon={<PlusIcon />}>
 					{t("tier-list-maker:addTier")}
 				</SendouButton>
+				<ResetPopover key={state.tierItems.size} handleReset={handleReset} />
 			</div>
 
 			<DndContext
@@ -171,5 +194,38 @@ function TierListMakerContent() {
 				</DragOverlay>
 			</DndContext>
 		</Main>
+	);
+}
+
+function ResetPopover({ handleReset }: { handleReset: () => void }) {
+	const { t } = useTranslation(["tier-list-maker", "common"]);
+
+	return (
+		<SendouPopover
+			trigger={
+				<SendouButton
+					size="small"
+					icon={<RefreshIcon />}
+					variant="minimal-destructive"
+				>
+					{t("common:actions.reset")}
+				</SendouButton>
+			}
+		>
+			<div className="stack sm items-center">
+				<div>{t("tier-list-maker:resetConfirmation")}</div>
+				<div className="stack horizontal sm">
+					<SendouButton
+						size="miniscule"
+						variant="destructive"
+						onPress={() => {
+							handleReset();
+						}}
+					>
+						{t("common:actions.reset")}
+					</SendouButton>
+				</div>
+			</div>
+		</SendouPopover>
 	);
 }
