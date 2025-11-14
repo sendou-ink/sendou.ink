@@ -23,7 +23,6 @@ import { Chat } from "~/features/chat/components/Chat";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { resolveLeagueRoundStartDate } from "~/features/tournament/tournament-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
 import type { StageId } from "~/modules/in-game-lists/types";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
@@ -62,6 +61,8 @@ export function StartedMatch({
 	setSelectedResultIndex,
 	result,
 	type,
+	selectedTabKey,
+	setSelectedTabKey,
 }: {
 	teams: [TournamentDataTeam, TournamentDataTeam];
 	result?: Result;
@@ -70,6 +71,8 @@ export function StartedMatch({
 	// if this is set it means the component is being used in presentation manner
 	setSelectedResultIndex?: (index: number) => void;
 	type: "EDIT" | "OTHER";
+	selectedTabKey?: string;
+	setSelectedTabKey?: (key: string) => void;
 }) {
 	const { t } = useTranslation(["tournament"]);
 	const isMounted = useIsMounted();
@@ -221,6 +224,8 @@ export function StartedMatch({
 					scores={[scoreOne, scoreTwo]}
 					teams={teams}
 					result={result}
+					selectedTabKey={selectedTabKey}
+					setSelectedTabKey={setSelectedTabKey}
 				/>
 			) : null}
 			{result ? (
@@ -531,6 +536,11 @@ function ModeProgressIndicator({
 						);
 					}
 
+					const currentPosition = scores[0] + scores[1];
+					const isClickable =
+						Boolean(setSelectedResultIndex) &&
+						(Boolean(data.results[adjustedI]) || adjustedI === currentPosition);
+
 					return (
 						<Image
 							containerClassName={clsx(
@@ -548,7 +558,7 @@ function ModeProgressIndicator({
 											data.match.opponentTwo?.id,
 									"tournament-bracket__mode-progress__image__selected":
 										adjustedI === selectedResultIndex,
-									"cursor-pointer": Boolean(setSelectedResultIndex),
+									"cursor-pointer": isClickable,
 								},
 							)}
 							key={i}
@@ -557,7 +567,11 @@ function ModeProgressIndicator({
 							width={20}
 							alt={t(`game-misc:MODE_LONG_${map.mode}`)}
 							title={t(`game-misc:MODE_LONG_${map.mode}`)}
-							onClick={() => setSelectedResultIndex?.(adjustedI)}
+							onClick={() => {
+								if (isClickable) {
+									setSelectedResultIndex?.(adjustedI);
+								}
+							}}
 							testId={`mode-progress-${map.mode}`}
 						/>
 					);
@@ -572,23 +586,24 @@ function StartedMatchTabs({
 	scores,
 	teams,
 	result,
+	selectedTabKey,
+	setSelectedTabKey,
 }: {
 	presentational?: boolean;
 	scores: [number, number];
 	teams: [TournamentDataTeam, TournamentDataTeam];
 	result?: Result;
+	selectedTabKey?: string;
+	setSelectedTabKey?: (key: string) => void;
 }) {
 	const user = useUser();
 	const tournament = useTournament();
 	const data = useLoaderData<TournamentMatchLoaderData>();
 	const [_unseenMessages, setUnseenMessages] = React.useState(0);
 	const [chatVisible, setChatVisible] = React.useState(false);
-	const [selectedTabKey, setSelectedTabKey] = useSearchParamState({
-		defaultValue: "rosters",
-		name: "tab",
-		revive: (value) =>
-			["chat", "rosters", "actions"].includes(value) ? value : null,
-	});
+
+	const tabKey = selectedTabKey ?? "rosters";
+	const setTabKey = setSelectedTabKey ?? (() => {});
 
 	// TODO: resolve this on server (notice it is copy-pasted now)
 	const chatUsers = React.useMemo(() => {
@@ -683,8 +698,8 @@ function StartedMatchTabs({
 	return (
 		<ActionSectionWrapper>
 			<SendouTabs
-				selectedKey={selectedTabKey}
-				onSelectionChange={(key) => setSelectedTabKey(String(key))}
+				selectedKey={tabKey}
+				onSelectionChange={(key) => setTabKey(String(key))}
 			>
 				<SendouTabList>
 					{showChat && (
@@ -719,7 +734,7 @@ function StartedMatchTabs({
 					id="actions"
 					shouldForceMount
 					className={clsx({
-						hidden: selectedTabKey !== "actions",
+						hidden: tabKey !== "actions",
 					})}
 				>
 					<MatchActions
