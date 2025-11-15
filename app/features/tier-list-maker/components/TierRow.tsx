@@ -59,8 +59,9 @@ export function TierRow({ tier }: TierRowProps) {
 			>
 				<div className={styles.popupContent}>
 					<div className="stack horizontal justify-between">
-						{/** xxx: translate */}
-						<span className="font-bold text-md">Editing tier</span>
+						<span className="font-bold text-md">
+							{t("tier-list-maker:editingTier")}
+						</span>
 					</div>
 					<div className="stack md">
 						<input

@@ -7,6 +7,7 @@
 	"modes": "Modes",
 	"stageModes": "Stage + Modes",
 	"dropItems": "Drop items here",
+	"editingTier": "Editing tier",
 	"hideAltKits": "Hide alt kits",
 	"hideAltSkins": "Hide alt skins",
 	"resetConfirmation": "Are you sure you want to reset the tier list? This will remove all items and restore default tiers."
