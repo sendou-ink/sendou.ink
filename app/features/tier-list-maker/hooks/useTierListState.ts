@@ -4,9 +4,8 @@ import type {
 	DragStartEvent,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import { useState } from "react";
-import { z } from "zod/v4";
-import { useSearchParamStateZod } from "~/hooks/useSearchParamState";
+import * as React from "react";
+import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import {
@@ -16,42 +15,40 @@ import {
 	weaponIdToType,
 } from "~/modules/in-game-lists/weapon-ids";
 import { assertUnreachable } from "~/utils/types";
-import { jsonCrushCodec } from "~/utils/zod";
 import { DEFAULT_TIERS } from "../tier-list-maker-constants";
 import {
 	type TierListItem,
 	type TierListMakerTier,
+	type TierListState,
 	tierListItemTypeSchema,
-	tierListStateSchema,
 } from "../tier-list-maker-schemas";
 
 export function useTierListState() {
-	const [itemType, setItemType] = useSearchParamStateZod({
-		key: "type",
+	const [itemType, setItemType] = useSearchParamState<TierListItem["type"]>({
+		name: "type",
 		defaultValue: "main-weapon",
-		schema: tierListItemTypeSchema,
-	});
-
-	const [state, setState] = useSearchParamStateZod({
-		key: "state",
-		defaultValue: {
-			tiers: DEFAULT_TIERS,
-			tierItems: new Map(),
+		revive: (value) => {
+			const parsed = tierListItemTypeSchema.safeParse(value);
+			return parsed.success ? parsed.data : "main-weapon";
 		},
-		schema: jsonCrushCodec(tierListStateSchema),
-	});
-	const [activeItem, setActiveItem] = useState<TierListItem | null>(null);
-
-	const [hideAltKits, setHideAltKits] = useSearchParamStateZod({
-		key: "hideAltKits",
-		defaultValue: false,
-		schema: z.boolean(),
 	});
 
-	const [hideAltSkins, setHideAltSkins] = useSearchParamStateZod({
-		key: "hideAltSkins",
+	const [state, setState] = React.useState<TierListState>({
+		tiers: DEFAULT_TIERS,
+		tierItems: new Map(),
+	});
+	const [activeItem, setActiveItem] = React.useState<TierListItem | null>(null);
+
+	const [hideAltKits, setHideAltKits] = useSearchParamState({
+		name: "hideAltKits",
 		defaultValue: false,
-		schema: z.boolean(),
+		revive: (value) => value === "true",
+	});
+
+	const [hideAltSkins, setHideAltSkins] = useSearchParamState({
+		name: "hideAltSkins",
+		defaultValue: false,
+		revive: (value) => value === "true",
 	});
 
 	const parseItemFromId = (id: string): TierListItem | null => {

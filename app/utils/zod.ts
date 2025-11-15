@@ -1,4 +1,3 @@
-import JSONCrush from "jsoncrush";
 import type { ZodType } from "zod/v4";
 import { z } from "zod/v4";
 import { CUSTOM_CSS_VAR_COLORS } from "~/features/user-page/user-page-constants";
@@ -395,16 +394,4 @@ function validSerializedCustomCssVarObject(value: unknown) {
 	} catch {
 		return false;
 	}
-}
-
-export function jsonCrushCodec<T>(schema: ZodType<T>) {
-	return z.codec(z.string(), schema, {
-		decode: (crushedString) => {
-			const uncrushed = JSONCrush.uncrush(crushedString);
-			return JSON.parse(uncrushed);
-		},
-		encode: (value) => {
-			return JSONCrush.crush(JSON.stringify(value));
-		},
-	});
 }

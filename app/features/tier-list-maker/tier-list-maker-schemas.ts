@@ -58,27 +58,12 @@ export type TierListMakerTier = z.infer<typeof tierSchema>;
 
 type TierListItemSchemaType = z.infer<typeof tierListItemSchema>;
 
-const tierListStateSerializedSchema = z.object({
-	tiers: z.array(tierSchema),
-	tierItems: z.array(z.tuple([z.string(), z.array(tierListItemSchema)])),
-});
+// const tierListStateSerializedSchema = z.object({
+// 	tiers: z.array(tierSchema),
+// 	tierItems: z.array(z.tuple([z.string(), z.array(tierListItemSchema)])),
+// });
 
-type TierListStateDecoded = {
+export type TierListState = {
 	tiers: Array<TierListMakerTier>;
 	tierItems: Map<string, TierListItemSchemaType[]>;
 };
-
-export const tierListStateSchema = z.codec(
-	tierListStateSerializedSchema,
-	z.custom<TierListStateDecoded>(),
-	{
-		decode: (data): TierListStateDecoded => ({
-			tiers: data.tiers,
-			tierItems: new Map(data.tierItems),
-		}),
-		encode: (data: TierListStateDecoded) => ({
-			tiers: data.tiers,
-			tierItems: Array.from(data.tierItems.entries()),
-		}),
-	},
-);
