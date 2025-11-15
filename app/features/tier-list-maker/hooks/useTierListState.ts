@@ -4,7 +4,10 @@ import type {
 	DragStartEvent,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
+import { useSearchParams } from "@remix-run/react";
+import JSONCrush from "jsoncrush";
 import * as React from "react";
+import { flushSync } from "react-dom";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
@@ -21,9 +24,10 @@ import {
 	type TierListMakerTier,
 	type TierListState,
 	tierListItemTypeSchema,
+	tierListStateSerializedSchema,
 } from "../tier-list-maker-schemas";
 
-export function useTierListState() {
+export function useTierList() {
 	const [itemType, setItemType] = useSearchParamState<TierListItem["type"]>({
 		name: "type",
 		defaultValue: "main-weapon",
@@ -33,10 +37,8 @@ export function useTierListState() {
 		},
 	});
 
-	const [state, setState] = React.useState<TierListState>({
-		tiers: DEFAULT_TIERS,
-		tierItems: new Map(),
-	});
+	const { tiers, setTiers, persistTiersStateToParams } =
+		useSearchParamTiersState();
 	const [activeItem, setActiveItem] = React.useState<TierListItem | null>(null);
 
 	const [hideAltKits, setHideAltKits] = useSearchParamState({
@@ -69,7 +71,7 @@ export function useTierListState() {
 	};
 
 	const findContainer = (item: TierListItem): string | null => {
-		for (const [tierId, items] of state.tierItems.entries()) {
+		for (const [tierId, items] of tiers.tierItems.entries()) {
 			if (items.some((i) => i.id === item.id && i.type === item.type)) {
 				return tierId;
 			}
@@ -106,7 +108,7 @@ export function useTierListState() {
 
 		if (!overContainer || activeContainer === overContainer) {
 			if (activeContainer && overContainer === activeContainer) {
-				const newTierItems = new Map(state.tierItems);
+				const newTierItems = new Map(tiers.tierItems);
 				const containerItems = newTierItems.get(activeContainer) || [];
 				const oldIndex = containerItems.findIndex(
 					(item) => item.id === activeItem.id && item.type === activeItem.type,
@@ -124,15 +126,15 @@ export function useTierListState() {
 					);
 				}
 
-				setState({
-					...state,
+				setTiers({
+					...tiers,
 					tierItems: newTierItems,
 				});
 			}
 			return;
 		}
 
-		const newTierItems = new Map(state.tierItems);
+		const newTierItems = new Map(tiers.tierItems);
 		const activeItems = activeContainer
 			? newTierItems.get(activeContainer) || []
 			: [];
@@ -162,8 +164,8 @@ export function useTierListState() {
 		);
 		newTierItems.set(overContainer, newOverItems);
 
-		setState({
-			...state,
+		setTiers({
+			...tiers,
 			tierItems: newTierItems,
 		});
 	};
@@ -186,7 +188,7 @@ export function useTierListState() {
 			overId === "item-pool" || (overItem && !findContainer(overItem));
 
 		if (isDroppedInPool) {
-			const newTierItems = new Map(state.tierItems);
+			const newTierItems = new Map(tiers.tierItems);
 			const currentContainer = findContainer(item);
 
 			if (currentContainer) {
@@ -199,11 +201,14 @@ export function useTierListState() {
 				);
 			}
 
-			setState({
-				...state,
-				tierItems: newTierItems,
+			flushSync(() => {
+				setTiers({
+					...tiers,
+					tierItems: newTierItems,
+				});
 			});
 		}
+		persistTiersStateToParams();
 	};
 
 	const handleAddTier = () => {
@@ -213,42 +218,46 @@ export function useTierListState() {
 			color: "#888888",
 		};
 
-		setState({
-			...state,
-			tiers: [...state.tiers, newTier],
+		setTiers({
+			...tiers,
+			tiers: [...tiers.tiers, newTier],
 		});
+		persistTiersStateToParams();
 	};
 
 	const handleRemoveTier = (tierId: string) => {
-		const newTierItems = new Map(state.tierItems);
+		const newTierItems = new Map(tiers.tierItems);
 		newTierItems.delete(tierId);
 
-		setState({
-			tiers: state.tiers.filter((tier) => tier.id !== tierId),
+		setTiers({
+			tiers: tiers.tiers.filter((tier) => tier.id !== tierId),
 			tierItems: newTierItems,
 		});
+		persistTiersStateToParams();
 	};
 
 	const handleRenameTier = (tierId: string, newName: string) => {
-		setState({
-			...state,
-			tiers: state.tiers.map((tier) =>
+		setTiers({
+			...tiers,
+			tiers: tiers.tiers.map((tier) =>
 				tier.id === tierId ? { ...tier, name: newName } : tier,
 			),
 		});
+		persistTiersStateToParams();
 	};
 
 	const handleChangeTierColor = (tierId: string, newColor: string) => {
-		setState({
-			...state,
-			tiers: state.tiers.map((tier) =>
+		setTiers({
+			...tiers,
+			tiers: tiers.tiers.map((tier) =>
 				tier.id === tierId ? { ...tier, color: newColor } : tier,
 			),
 		});
+		persistTiersStateToParams();
 	};
 
 	const getItemsInTier = (tierId: string): TierListItem[] => {
-		return state.tierItems.get(tierId) || [];
+		return tiers.tierItems.get(tierId) || [];
 	};
 
 	const getAllItemIdsForType = (type: TierListItem["type"]) => {
@@ -280,7 +289,7 @@ export function useTierListState() {
 
 	const getAvailableItems = (): TierListItem[] => {
 		const placedItems = new Set<string>();
-		for (const items of state.tierItems.values()) {
+		for (const items of tiers.tierItems.values()) {
 			for (const item of items) {
 				placedItems.add(`${item.type}:${item.id}`);
 			}
@@ -303,41 +312,41 @@ export function useTierListState() {
 	};
 
 	const handleMoveTierUp = (tierId: string) => {
-		const currentIndex = state.tiers.findIndex((tier) => tier.id === tierId);
+		const currentIndex = tiers.tiers.findIndex((tier) => tier.id === tierId);
 		if (currentIndex <= 0) return;
 
-		const newTiers = [...state.tiers];
+		const newTiers = [...tiers.tiers];
 		[newTiers[currentIndex - 1], newTiers[currentIndex]] = [
 			newTiers[currentIndex],
 			newTiers[currentIndex - 1],
 		];
 
-		setState({
-			...state,
+		setTiers({
+			...tiers,
 			tiers: newTiers,
 		});
 	};
 
 	const handleMoveTierDown = (tierId: string) => {
-		const currentIndex = state.tiers.findIndex((tier) => tier.id === tierId);
-		if (currentIndex === -1 || currentIndex >= state.tiers.length - 1) {
+		const currentIndex = tiers.tiers.findIndex((tier) => tier.id === tierId);
+		if (currentIndex === -1 || currentIndex >= tiers.tiers.length - 1) {
 			return;
 		}
 
-		const newTiers = [...state.tiers];
+		const newTiers = [...tiers.tiers];
 		[newTiers[currentIndex], newTiers[currentIndex + 1]] = [
 			newTiers[currentIndex + 1],
 			newTiers[currentIndex],
 		];
 
-		setState({
-			...state,
+		setTiers({
+			...tiers,
 			tiers: newTiers,
 		});
 	};
 
 	const handleReset = () => {
-		setState({
+		setTiers({
 			tiers: DEFAULT_TIERS,
 			tierItems: new Map(),
 		});
@@ -346,7 +355,7 @@ export function useTierListState() {
 	return {
 		itemType,
 		setItemType,
-		state,
+		state: tiers,
 		activeItem,
 		handleDragStart,
 		handleDragOver,
@@ -364,5 +373,56 @@ export function useTierListState() {
 		setHideAltKits,
 		hideAltSkins,
 		setHideAltSkins,
+	};
+}
+
+const TIER_SEARCH_PARAM_NAME = "state";
+
+export function useSearchParamTiersState() {
+	const [initialSearchParams] = useSearchParams();
+	const [tiers, setTiers] = React.useState<TierListState>(() => {
+		const param = initialSearchParams.get(TIER_SEARCH_PARAM_NAME);
+
+		try {
+			if (param) {
+				const uncrushed = JSONCrush.uncrush(param);
+
+				const parsed = tierListStateSerializedSchema.parse(
+					JSON.parse(uncrushed),
+				);
+
+				return {
+					tiers: parsed.tiers,
+					tierItems: new Map(parsed.tierItems),
+				};
+			}
+		} catch {} // ignored on purpose
+
+		return {
+			tiers: DEFAULT_TIERS,
+			tierItems: new Map(),
+		};
+	});
+
+	const persistTiersStateToParams = () => {
+		const searchParams = new URLSearchParams(window.location.search);
+
+		const serializedState = JSON.stringify({
+			tiers: tiers.tiers,
+			tierItems: Array.from(tiers.tierItems.entries()),
+		});
+
+		searchParams.set(TIER_SEARCH_PARAM_NAME, JSONCrush.crush(serializedState));
+		window.history.replaceState(
+			{},
+			"",
+			`${window.location.pathname}?${String(searchParams)}`,
+		);
+	};
+
+	return {
+		tiers,
+		setTiers,
+		persistTiersStateToParams,
 	};
 }

@@ -6,7 +6,7 @@ import {
 	specialWeaponId,
 	stageId,
 	subWeaponId,
-	weaponId,
+	weaponSplId,
 } from "~/utils/zod";
 
 export const tierListItemTypeSchema = z.enum([
@@ -21,7 +21,7 @@ assertType<z.infer<typeof tierListItemTypeSchema>, TierListItem["type"]>();
 
 const tierListItemSchema = z.union([
 	z.object({
-		id: weaponId,
+		id: weaponSplId,
 		type: z.literal("main-weapon"),
 	}),
 	z.object({
@@ -58,10 +58,10 @@ export type TierListMakerTier = z.infer<typeof tierSchema>;
 
 type TierListItemSchemaType = z.infer<typeof tierListItemSchema>;
 
-// const tierListStateSerializedSchema = z.object({
-// 	tiers: z.array(tierSchema),
-// 	tierItems: z.array(z.tuple([z.string(), z.array(tierListItemSchema)])),
-// });
+export const tierListStateSerializedSchema = z.object({
+	tiers: z.array(tierSchema),
+	tierItems: z.array(z.tuple([z.string(), z.array(tierListItemSchema)])),
+});
 
 export type TierListState = {
 	tiers: Array<TierListMakerTier>;

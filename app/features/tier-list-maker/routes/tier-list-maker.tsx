@@ -60,8 +60,6 @@ export const handle: SendouRouteHandle = {
 // xxx: switch to toggle off round labels
 // xxx: switch to allow having a weapon many times
 // xxx: test in mobile
-// xxx: zod v4 imports -> need to upgrade to RR7 if we want encode/decode
-// xxx: only jsoncrush on drop?
 
 export default function TierListMakerPage() {
 	const isMounted = useIsMounted();

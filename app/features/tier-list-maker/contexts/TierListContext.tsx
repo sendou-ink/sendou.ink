@@ -1,13 +1,13 @@
 import type { ReactNode } from "react";
 import { createContext, useContext } from "react";
-import { useTierListState as useTierListStateHook } from "../hooks/useTierListState";
+import { useTierList } from "../hooks/useTierListState";
 
-type TierListContextType = ReturnType<typeof useTierListStateHook>;
+type TierListContextType = ReturnType<typeof useTierList>;
 
 const TierListContext = createContext<TierListContextType | null>(null);
 
 export function TierListProvider({ children }: { children: ReactNode }) {
-	const state = useTierListStateHook();
+	const state = useTierList();
 
 	return (
 		<TierListContext.Provider value={state}>

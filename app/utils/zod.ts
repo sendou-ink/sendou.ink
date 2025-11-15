@@ -107,13 +107,10 @@ export const ability = z.enum([
 // keep in-game-lists and the zod enum in sync
 assertType<z.infer<typeof ability>, Unpacked<typeof abilitiesShort>>();
 
-// xxx: remove actualNumber? -> "Transforms" in https://colinhacks.com/essays/introducing-zod-codecs
 export const weaponSplId = z.preprocess(
 	actualNumber,
 	numericEnum(mainWeaponIds),
 );
-
-export const weaponId = numericEnum(mainWeaponIds);
 
 export const subWeaponId = numericEnum(subWeaponIds);
 
@@ -137,8 +134,7 @@ export const modeShortWithSpecial = z.enum([
 
 export const gamesShortSchema = z.enum(["S1", "S2", "S3"]);
 
-// xxx: add z.preprocess(actualNumber, stageId); @ usage where needed
-export const stageId = numericEnum(stageIds);
+export const stageId = z.preprocess(actualNumber, numericEnum(stageIds));
 
 export function processMany(
 	...processFuncs: Array<(value: unknown) => unknown>
