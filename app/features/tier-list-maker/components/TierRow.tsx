@@ -91,7 +91,6 @@ export function TierRow({ tier }: TierRowProps) {
 			<div
 				ref={setNodeRef}
 				className={clsx(styles.targetZone, {
-					// xxx: probably makes no sense? text better?
 					[styles.targetZoneOver]: isOver,
 				})}
 			>
