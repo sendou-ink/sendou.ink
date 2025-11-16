@@ -11,7 +11,6 @@ import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import type { MetaFunction } from "@remix-run/react";
 import { snapdom } from "@zumer/snapdom";
 import clsx from "clsx";
-import * as React from "react";
 import { useRef } from "react";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -87,9 +86,6 @@ function TierListMakerContent() {
 	const { t } = useTranslation(["tier-list-maker"]);
 	const user = useUser();
 
-	// xxx: this could also be inside useTierListState if we want to access it via the context
-	const [screenshotMode, setScreenshotMode] = React.useState(false);
-
 	const {
 		itemType,
 		setItemType,
@@ -112,6 +108,8 @@ function TierListMakerContent() {
 		setShowArrowControls,
 		title,
 		setTitle,
+		screenshotMode,
+		setScreenshotMode,
 	} = useTierListState();
 
 	const sensors = useSensors(
@@ -128,33 +126,6 @@ function TierListMakerContent() {
 
 		flushSync(() => setScreenshotMode(true));
 
-		const canvasElements: HTMLCanvasElement[] = [];
-		const images = tierListRef.current.querySelectorAll("img");
-
-		for (const img of images) {
-			const canvas = document.createElement("canvas");
-			const ctx = canvas.getContext("2d");
-
-			const pictureElement = img.parentElement;
-			const parentElement = pictureElement?.parentElement;
-
-			if (!ctx || !pictureElement || !parentElement) continue;
-
-			[canvas.width, canvas.height, canvas.className, canvas.style.cssText] = [
-				img.width,
-				img.height,
-				img.className,
-				img.style.cssText,
-			];
-
-			ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-			pictureElement.style.display = "none";
-			parentElement.insertBefore(canvas, pictureElement);
-
-			canvasElements.push(canvas);
-		}
-
 		await snapdom.download(tierListRef.current, {
 			format: "png",
 			filename: "tier-list",
@@ -164,17 +135,6 @@ function TierListMakerContent() {
 			embedFonts: true,
 			backgroundColor: getComputedStyle(document.body).backgroundColor,
 		});
-
-		for (const canvas of canvasElements) {
-			canvas.remove();
-		}
-
-		for (const img of images) {
-			const pictureElement = img.parentElement;
-			if (pictureElement) {
-				pictureElement.style.display = "";
-			}
-		}
 
 		setScreenshotMode(false);
 	};

@@ -34,6 +34,7 @@ interface ImageProps {
 	testId?: string;
 	onClick?: () => void;
 	loading?: "lazy";
+	forcePng?: boolean;
 }
 
 export function Image({
@@ -50,7 +51,32 @@ export function Image({
 	containerStyle,
 	onClick,
 	loading,
+	forcePng,
 }: ImageProps) {
+	if (forcePng) {
+		return (
+			// biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration
+			<div
+				title={title}
+				className={containerClassName}
+				style={containerStyle}
+				onClick={onClick}
+			>
+				<img
+					alt={alt}
+					src={`${path}.png`}
+					className={className}
+					width={size ?? width}
+					height={size ?? height}
+					style={style}
+					draggable="false"
+					loading={loading}
+					data-testid={testId}
+				/>
+			</div>
+		);
+	}
+
 	return (
 		// biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration
 		<picture

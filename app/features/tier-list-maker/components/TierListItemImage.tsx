@@ -11,38 +11,58 @@ import styles from "./TierListItemImage.module.css";
 
 interface TierListItemImageProps {
 	item: TierListItem;
+	forcePng?: boolean;
 }
 
-export function TierListItemImage({ item }: TierListItemImageProps) {
+export function TierListItemImage({ item, forcePng }: TierListItemImageProps) {
 	switch (item.type) {
 		case "main-weapon":
 			return (
 				<div className={styles.imageWrapper}>
-					<WeaponImage weaponSplId={item.id} variant="badge" size={48} />
+					<WeaponImage
+						weaponSplId={item.id}
+						variant="badge"
+						size={48}
+						forcePng={forcePng}
+					/>
 				</div>
 			);
 		case "sub-weapon":
 			return (
 				<div className={styles.imageWrapper}>
-					<SubWeaponImage subWeaponId={item.id} size={48} />
+					<SubWeaponImage subWeaponId={item.id} size={48} forcePng={forcePng} />
 				</div>
 			);
 		case "special-weapon":
 			return (
 				<div className={styles.imageWrapper}>
-					<SpecialWeaponImage specialWeaponId={item.id} size={48} />
+					<SpecialWeaponImage
+						specialWeaponId={item.id}
+						size={48}
+						forcePng={forcePng}
+					/>
 				</div>
 			);
 		case "stage":
 			return (
 				<div className={styles.imageWrapper}>
-					<StageImage stageId={item.id} width={80} className="rounded-sm" />
+					<StageImage
+						stageId={item.id}
+						width={80}
+						className="rounded-sm"
+						forcePng={forcePng}
+					/>
 				</div>
 			);
 		case "mode":
 			return (
 				<div className={styles.imageWrapper}>
-					<ModeImage mode={item.id} width={48} height={48} />
+					<ModeImage
+						mode={item.id}
+						width={48}
+						height={48}
+						forcePng={forcePng}
+					/>
 				</div>
 			);
 		case "stage-mode": {
@@ -51,12 +71,18 @@ export function TierListItemImage({ item }: TierListItemImageProps) {
 			return (
 				<div className={styles.imageWrapper}>
 					<div className="relative">
-						<StageImage stageId={stageId} width={80} className="rounded-sm" />
+						<StageImage
+							stageId={stageId}
+							width={80}
+							className="rounded-sm"
+							forcePng={forcePng}
+						/>
 						<ModeImage
 							mode={mode as ModeShort}
 							width={24}
 							height={24}
 							className={styles.modeOverlay}
+							forcePng={forcePng}
 						/>
 					</div>
 				</div>

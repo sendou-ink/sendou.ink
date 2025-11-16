@@ -32,6 +32,7 @@ export function TierRow({ tier }: TierRowProps) {
 		handleMoveTierDown,
 		showTierHeaders,
 		showArrowControls,
+		screenshotMode,
 	} = useTierListState();
 
 	const items = getItemsInTier(tier.id);
@@ -110,7 +111,11 @@ export function TierRow({ tier }: TierRowProps) {
 						strategy={horizontalListSortingStrategy}
 					>
 						{items.map((item) => (
-							<DraggableItem key={tierListItemId(item)} item={item} />
+							<DraggableItem
+								key={tierListItemId(item)}
+								item={item}
+								forcePng={screenshotMode}
+							/>
 						))}
 					</SortableContext>
 				)}
