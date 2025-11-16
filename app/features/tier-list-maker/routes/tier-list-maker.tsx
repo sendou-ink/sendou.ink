@@ -143,16 +143,22 @@ function TierListMakerContent() {
 	return (
 		<Main bigger className={clsx(styles.container, "stack lg")}>
 			<div className={styles.header}>
-				<SendouButton onPress={handleAddTier} size="small" icon={<PlusIcon />}>
-					{t("tier-list-maker:addTier")}
-				</SendouButton>
-				<SendouButton
-					onPress={handleDownload}
-					size="small"
-					icon={<DownloadIcon />}
-				>
-					{t("tier-list-maker:download")}
-				</SendouButton>
+				<div className="stack horizontal md">
+					<SendouButton
+						onPress={handleAddTier}
+						size="small"
+						icon={<PlusIcon />}
+					>
+						{t("tier-list-maker:addTier")}
+					</SendouButton>
+					<SendouButton
+						onPress={handleDownload}
+						size="small"
+						icon={<DownloadIcon />}
+					>
+						{t("tier-list-maker:download")}
+					</SendouButton>
+				</div>
 				<ResetPopover key={state.tierItems.size} handleReset={handleReset} />
 			</div>
 
