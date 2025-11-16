@@ -136,7 +136,7 @@ function TierListMakerContent() {
 			scale: 1.75,
 			embedFonts: true,
 			// xxx: light mode?
-			backgroundColor: "#02011e",
+			backgroundColor: getComputedStyle(document.body).backgroundColor,
 		});
 
 		setScreenshotMode(false);
