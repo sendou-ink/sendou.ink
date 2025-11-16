@@ -58,6 +58,10 @@
 	background: var(--bg-lightest);
 }
 
+.targetZoneFullRadius {
+	border-radius: var(--rounded-sm);
+}
+
 .emptyMessage {
 	width: 100%;
 	height: 100%;

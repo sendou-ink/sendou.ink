@@ -56,11 +56,6 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-// xxx: button to generate/ share an image
-// xxx: switch to toggle off round labels
-// xxx: switch to allow having a weapon many times
-// xxx: test in mobile
-
 export default function TierListMakerPage() {
 	const isMounted = useIsMounted();
 
@@ -94,6 +89,12 @@ function TierListMakerContent() {
 		setHideAltKits,
 		hideAltSkins,
 		setHideAltSkins,
+		canAddDuplicates,
+		setCanAddDuplicates,
+		showTierHeaders,
+		setShowTierHeaders,
+		showArrowControls,
+		setShowArrowControls,
 	} = useTierListState();
 
 	const sensors = useSensors(
@@ -119,10 +120,36 @@ function TierListMakerContent() {
 				onDragOver={handleDragOver}
 				onDragEnd={handleDragEnd}
 			>
-				<div className={styles.tierList}>
-					{state.tiers.map((tier) => (
-						<TierRow key={tier.id} tier={tier} />
-					))}
+				<div className="stack">
+					<div className={styles.tierList}>
+						{state.tiers.map((tier) => (
+							<TierRow key={tier.id} tier={tier} />
+						))}
+					</div>
+
+					<div className="stack horizontal md flex-wrap">
+						<SendouSwitch
+							isSelected={canAddDuplicates}
+							onChange={setCanAddDuplicates}
+							size="small"
+						>
+							{t("tier-list-maker:allowDuplicates")}
+						</SendouSwitch>
+						<SendouSwitch
+							isSelected={showTierHeaders}
+							onChange={setShowTierHeaders}
+							size="small"
+						>
+							{t("tier-list-maker:showTierHeaders")}
+						</SendouSwitch>
+						<SendouSwitch
+							isSelected={showArrowControls}
+							onChange={setShowArrowControls}
+							size="small"
+						>
+							{t("tier-list-maker:showArrowControls")}
+						</SendouSwitch>
+					</div>
 				</div>
 
 				<SendouTabs

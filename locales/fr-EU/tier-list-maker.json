@@ -10,5 +10,8 @@
 	"editingTier": "",
 	"hideAltKits": "",
 	"hideAltSkins": "",
-	"resetConfirmation": ""
+	"resetConfirmation": "",
+	"allowDuplicates": "",
+	"showTierHeaders": "",
+	"showArrowControls": ""
 }

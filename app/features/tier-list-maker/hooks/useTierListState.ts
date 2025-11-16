@@ -28,8 +28,6 @@ import {
 } from "../tier-list-maker-schemas";
 import { getNextNthForItem } from "../tier-list-maker-utils";
 
-const canAddDuplicates = true;
-
 export function useTierList() {
 	const [itemType, setItemType] = useSearchParamState<TierListItem["type"]>({
 		name: "type",
@@ -53,6 +51,24 @@ export function useTierList() {
 	const [hideAltSkins, setHideAltSkins] = useSearchParamState({
 		name: "hideAltSkins",
 		defaultValue: false,
+		revive: (value) => value === "true",
+	});
+
+	const [canAddDuplicates, setCanAddDuplicates] = useSearchParamState({
+		name: "canAddDuplicates",
+		defaultValue: true,
+		revive: (value) => value === "true",
+	});
+
+	const [showTierHeaders, setShowTierHeaders] = useSearchParamState({
+		name: "showTierHeaders",
+		defaultValue: true,
+		revive: (value) => value === "true",
+	});
+
+	const [showArrowControls, setShowArrowControls] = useSearchParamState({
+		name: "showArrowControls",
+		defaultValue: true,
 		revive: (value) => value === "true",
 	});
 
@@ -403,6 +419,12 @@ export function useTierList() {
 		setHideAltKits,
 		hideAltSkins,
 		setHideAltSkins,
+		canAddDuplicates,
+		setCanAddDuplicates,
+		showTierHeaders,
+		setShowTierHeaders,
+		showArrowControls,
+		setShowArrowControls,
 	};
 }
 
