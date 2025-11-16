@@ -98,14 +98,14 @@ export function TierRow({ tier }: TierRowProps) {
 				ref={setNodeRef}
 				className={clsx(styles.targetZone, {
 					[styles.targetZoneOver]: isOver,
-					[styles.targetZoneFullRadius]: !showArrowControls,
+					[styles.targetZoneFullRadius]: !showArrowControls || screenshotMode,
 				})}
 			>
-				{items.length === 0 ? (
+				{items.length === 0 && !screenshotMode ? (
 					<div className={styles.emptyMessage}>
 						{t("tier-list-maker:dropItems")}
 					</div>
-				) : (
+				) : items.length > 0 ? (
 					<SortableContext
 						items={items.map(tierListItemId)}
 						strategy={horizontalListSortingStrategy}
@@ -118,10 +118,10 @@ export function TierRow({ tier }: TierRowProps) {
 							/>
 						))}
 					</SortableContext>
-				)}
+				) : null}
 			</div>
 
-			{showArrowControls ? (
+			{showArrowControls && !screenshotMode ? (
 				<div className={styles.arrowControls}>
 					<button
 						className={clsx(styles.arrowButton, styles.arrowButtonUpper)}

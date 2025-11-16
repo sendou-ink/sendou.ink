@@ -80,8 +80,6 @@ export default function TierListMakerPage() {
 	);
 }
 
-// xxx: also hide "Drop here" text when screeshotting
-
 function TierListMakerContent() {
 	const { t } = useTranslation(["tier-list-maker"]);
 	const user = useUser();
@@ -126,10 +124,12 @@ function TierListMakerContent() {
 
 		flushSync(() => setScreenshotMode(true));
 
+		// xxx: why is this needed? if you remove this you see the screenshotMode is not rounding off the
+		await new Promise((resolve) => setTimeout(resolve, 1000));
+
 		await snapdom.download(tierListRef.current, {
 			format: "png",
 			filename: "tier-list",
-			// xxx: is 1 needed? or can we go lower
 			quality: 1,
 			scale: 1.75,
 			embedFonts: true,
@@ -188,7 +188,7 @@ function TierListMakerContent() {
 							<div className={styles.authorSection}>
 								<div className={styles.authorBy}>{t("tier-list-maker:by")}</div>
 								<div className={styles.authorInfo}>
-									<Avatar user={user} size="xxs" alt={user.username} />
+									<Avatar user={user} size="xxxs" alt={user.username} />
 									<span className={styles.authorUsername}>{user.username}</span>
 								</div>
 							</div>

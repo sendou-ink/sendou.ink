@@ -51,7 +51,7 @@
 	flex-direction: row;
 	justify-content: center;
 	align-items: center;
-	gap: var(--s-2);
+	gap: var(--s-0-5);
 	margin-bottom: var(--s-3);
 	margin-top: -15px;
 }
@@ -70,7 +70,7 @@
 }
 
 .authorUsername {
-	font-weight: var(--semi-bold);
+	font-weight: var(--bold);
 	font-size: var(--fonts-xs);
 	color: var(--text);
 }
