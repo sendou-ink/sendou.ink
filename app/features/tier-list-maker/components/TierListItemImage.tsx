@@ -16,27 +16,49 @@ interface TierListItemImageProps {
 export function TierListItemImage({ item }: TierListItemImageProps) {
 	switch (item.type) {
 		case "main-weapon":
-			return <WeaponImage weaponSplId={item.id} variant="badge" size={48} />;
+			return (
+				<div className={styles.imageWrapper}>
+					<WeaponImage weaponSplId={item.id} variant="badge" size={48} />
+				</div>
+			);
 		case "sub-weapon":
-			return <SubWeaponImage subWeaponId={item.id} size={48} />;
+			return (
+				<div className={styles.imageWrapper}>
+					<SubWeaponImage subWeaponId={item.id} size={48} />
+				</div>
+			);
 		case "special-weapon":
-			return <SpecialWeaponImage specialWeaponId={item.id} size={48} />;
+			return (
+				<div className={styles.imageWrapper}>
+					<SpecialWeaponImage specialWeaponId={item.id} size={48} />
+				</div>
+			);
 		case "stage":
-			return <StageImage stageId={item.id} width={80} className="rounded-sm" />;
+			return (
+				<div className={styles.imageWrapper}>
+					<StageImage stageId={item.id} width={80} className="rounded-sm" />
+				</div>
+			);
 		case "mode":
-			return <ModeImage mode={item.id} width={48} height={48} />;
+			return (
+				<div className={styles.imageWrapper}>
+					<ModeImage mode={item.id} width={48} height={48} />
+				</div>
+			);
 		case "stage-mode": {
 			const [stageIdStr, mode] = item.id.split("-");
 			const stageId = Number(stageIdStr) as StageId;
 			return (
-				<div className="relative">
-					<StageImage stageId={stageId} width={80} className="rounded-sm" />
-					<ModeImage
-						mode={mode as ModeShort}
-						width={24}
-						height={24}
-						className={styles.modeOverlay}
-					/>
+				<div className={styles.imageWrapper}>
+					<div className="relative">
+						<StageImage stageId={stageId} width={80} className="rounded-sm" />
+						<ModeImage
+							mode={mode as ModeShort}
+							width={24}
+							height={24}
+							className={styles.modeOverlay}
+						/>
+					</div>
 				</div>
 			);
 		}

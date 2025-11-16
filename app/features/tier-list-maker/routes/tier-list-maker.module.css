@@ -1,7 +1,10 @@
+.container {
+	user-select: none;
+}
+
 .header {
 	display: flex;
 	justify-content: space-between;
-	margin-bottom: var(--s-6);
 }
 
 .tierList {

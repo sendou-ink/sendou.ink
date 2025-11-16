@@ -9,6 +9,7 @@ import {
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import type { MetaFunction } from "@remix-run/react";
+import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -105,7 +106,7 @@ function TierListMakerContent() {
 	);
 
 	return (
-		<Main bigger className="stack lg">
+		<Main bigger className={clsx(styles.container, "stack lg")}>
 			<div className={styles.header}>
 				<SendouButton onPress={handleAddTier} size="small" icon={<PlusIcon />}>
 					{t("tier-list-maker:addTier")}
