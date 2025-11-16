@@ -46,7 +46,7 @@
 	flex-wrap: wrap;
 	gap: var(--s-1-5);
 	padding: var(--s-2);
-	background: var(--bg-lighter);
+	background: var(--bg-lighter-solid);
 	border: 2px dashed transparent;
 	border-radius: var(--rounded-sm) 0 0 var(--rounded-sm);
 	align-content: flex-start;

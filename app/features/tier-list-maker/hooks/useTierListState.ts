@@ -72,6 +72,12 @@ export function useTierList() {
 		revive: (value) => value === "true",
 	});
 
+	const [title, setTitle] = useSearchParamState({
+		name: "title",
+		defaultValue: "",
+		revive: (value) => value,
+	});
+
 	const parseItemFromId = (id: string): TierListItem | null => {
 		const [type, idStr, nth] = String(id).split(":");
 		if (!type || !idStr) return null;
@@ -425,6 +431,8 @@ export function useTierList() {
 		setShowTierHeaders,
 		showArrowControls,
 		setShowArrowControls,
+		title,
+		setTitle,
 	};
 }
 

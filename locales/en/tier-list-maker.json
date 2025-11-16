@@ -1,5 +1,6 @@
 {
 	"addTier": "Add tier",
+	"download": "Download (.png)",
 	"mainWeapons": "Main Weapons",
 	"subWeapons": "Sub Weapons",
 	"specialWeapons": "Special Weapons",
@@ -13,5 +14,7 @@
 	"resetConfirmation": "Are you sure you want to reset the tier list? This will remove all items and restore default tiers.",
 	"allowDuplicates": "Allow duplicates",
 	"showTierHeaders": "Show tier headers",
-	"showArrowControls": "Show arrow controls"
+	"showArrowControls": "Show arrow controls",
+	"titlePlaceholder": "Click to add title...",
+	"by": "Made by"
 }
