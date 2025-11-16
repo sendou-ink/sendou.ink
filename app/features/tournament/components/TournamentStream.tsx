@@ -43,7 +43,7 @@ export function TournamentStream({
 					</div>
 				) : (
 					<div className="tournament__stream__user-container">
-						<Avatar size="xxs" url={tournament.ctx.logoSrc} />
+						<Avatar size="xxs" url={tournament.ctx.logoUrl} />
 						Cast <span className="text-lighter">{stream.twitchUserName}</span>
 					</div>
 				)}

@@ -49,6 +49,8 @@ export const SENDOU_INK_BASE_URL = "https://sendou.ink";
 
 export const BADGES_DOC_LINK =
 	"https://github.com/sendou-ink/sendou.ink/blob/rewrite/docs/badges.md";
+export const API_DOC_LINK =
+	"https://github.com/sendou-ink/sendou.ink/blob/rewrite/docs/dev/api.md";
 
 export const CREATING_TOURNAMENT_DOC_LINK =
 	"https://github.com/sendou-ink/sendou.ink/blob/rewrite/docs/tournament-creation.md";
@@ -79,6 +81,7 @@ export const twitchUrl = (accountName: string) =>
 export const LOG_IN_URL = "/auth";
 export const LOG_OUT_URL = "/auth/logout";
 export const ADMIN_PAGE = "/admin";
+export const API_PAGE = "/api";
 export const ARTICLES_MAIN_PAGE = "/a";
 export const FAQ_PAGE = "/faq";
 export const PRIVACY_POLICY_PAGE = "/privacy-policy";
@@ -98,6 +101,7 @@ export const STOP_IMPERSONATING_URL = "/auth/impersonate/stop";
 export const SEED_URL = "/seed";
 export const PLANNER_URL = "/plans";
 export const MAPS_URL = "/maps";
+export const TIER_LIST_MAKER_URL = "/tier-list-maker";
 export const ANALYZER_URL = "/analyzer";
 export const OBJECT_DAMAGE_CALCULATOR_URL = "/object-damage-calculator";
 export const VODS_PAGE = "/vods";
@@ -498,8 +502,6 @@ export const preferenceEmojiUrl = (preference?: Preference) => {
 
 	return `/static-assets/img/emoji/${emoji}.svg`;
 };
-export const tournamentLogoUrl = (identifier: string) =>
-	`/static-assets/img/tournament-logos/${identifier}.png`;
 export const TIER_PLUS_URL = "/static-assets/img/tiers/plus";
 
 export const winnersImageUrl = ({

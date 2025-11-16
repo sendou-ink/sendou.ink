@@ -1,0 +1,5 @@
+.pool {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-2-5);
+}

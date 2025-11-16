@@ -5,7 +5,6 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { TrashIcon } from "~/components/icons/Trash";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
-import { userSubmittedImage } from "~/utils/urls-img";
 
 import { action } from "../actions/upload.admin.server";
 import { loader } from "../loaders/upload.admin.server";
@@ -55,13 +54,8 @@ function ImageValidator() {
 									/>
 								</FormWithConfirm>
 							</div>
-							<img src={userSubmittedImage(image.url)} alt="" />
-							<Link
-								to={`/u/${image.submitterUserId}`}
-								className="text-xs"
-								target="_blank"
-								rel="noopener noreferrer"
-							>
+							<img src={image.url} alt="" />
+							<Link to={`/u/${image.submitterUserId}`} className="text-xs">
 								From: {image.username}
 							</Link>
 						</div>

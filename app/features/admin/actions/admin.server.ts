@@ -159,6 +159,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			message = "Friend code updated";
 			break;
 		}
+		case "API_ACCESS": {
+			requireRole(user, "ADMIN");
+
+			await AdminRepository.makeApiAccesserByUserId(data.user);
+
+			message = "API access granted";
+			break;
+		}
 		default: {
 			assertUnreachable(data);
 		}
@@ -215,6 +223,10 @@ export const adminActionSchema = z.union([
 	z.object({
 		_action: _action("UPDATE_FRIEND_CODE"),
 		friendCode,
+		user: z.preprocess(actualNumber, z.number().positive()),
+	}),
+	z.object({
+		_action: _action("API_ACCESS"),
 		user: z.preprocess(actualNumber, z.number().positive()),
 	}),
 ]);

@@ -4,14 +4,18 @@ import type { TierName } from "~/features/mmr/mmr-constants";
 import type {
 	MainWeaponId,
 	ModeShortWithSpecial,
+	SpecialWeaponId,
 	StageId,
+	SubWeaponId,
 } from "~/modules/in-game-lists/types";
 import {
 	mainWeaponImageUrl,
 	modeImageUrl,
 	outlinedFiveStarMainWeaponImageUrl,
 	outlinedMainWeaponImageUrl,
+	specialWeaponImageUrl,
 	stageImageUrl,
+	subWeaponImageUrl,
 	TIER_PLUS_URL,
 	tierImageUrl,
 } from "~/utils/urls";
@@ -141,6 +145,50 @@ export function StageImage({ stageId, testId, ...rest }: StageImageProps) {
 			testId={testId}
 			path={stageImageUrl(stageId)}
 			height={rest.height ?? (rest.width ? rest.width * 0.5625 : undefined)}
+		/>
+	);
+}
+
+type SubWeaponImageProps = {
+	subWeaponId: SubWeaponId;
+} & Omit<ImageProps, "path" | "alt" | "title">;
+
+export function SubWeaponImage({
+	subWeaponId,
+	testId,
+	...rest
+}: SubWeaponImageProps) {
+	const { t } = useTranslation(["weapons"]);
+
+	return (
+		<Image
+			{...rest}
+			alt={t(`weapons:SUB_${subWeaponId}`)}
+			title={t(`weapons:SUB_${subWeaponId}`)}
+			testId={testId}
+			path={subWeaponImageUrl(subWeaponId)}
+		/>
+	);
+}
+
+type SpecialWeaponImageProps = {
+	specialWeaponId: SpecialWeaponId;
+} & Omit<ImageProps, "path" | "alt" | "title">;
+
+export function SpecialWeaponImage({
+	specialWeaponId,
+	testId,
+	...rest
+}: SpecialWeaponImageProps) {
+	const { t } = useTranslation(["weapons"]);
+
+	return (
+		<Image
+			{...rest}
+			alt={t(`weapons:SPECIAL_${specialWeaponId}`)}
+			title={t(`weapons:SPECIAL_${specialWeaponId}`)}
+			testId={testId}
+			path={specialWeaponImageUrl(specialWeaponId)}
 		/>
 	);
 }

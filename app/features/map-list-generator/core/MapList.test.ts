@@ -340,31 +340,6 @@ describe("MapList.generate()", () => {
 			},
 		);
 
-		it("considerGuaranteed affects the order maps are reused", () => {
-			for (let i = 0; i < 10; i++) {
-				const gen = MapList.generate({
-					mapPool: new MapPool({
-						TW: [1, 2, 3],
-						SZ: [],
-						TC: [],
-						RM: [],
-						CB: [],
-					}),
-					considerGuaranteed: true,
-				});
-				gen.next();
-				const maps1 = gen.next({ amount: 3 }).value;
-
-				const notGuaranteedToBePlayed = maps1[2].stageId;
-
-				const maps2 = gen.next({ amount: 3 }).value;
-
-				expect([maps2[0].stageId, maps2[1].stageId]).toContain(
-					notGuaranteedToBePlayed,
-				);
-			}
-		});
-
 		it("should find unique maps when possible (All 4 One #50 bug)", () => {
 			const mapPool = new MapPool({
 				TW: [],
@@ -392,7 +367,75 @@ describe("MapList.generate()", () => {
 			}
 		});
 
-		// also add test about Bo7 not having repeat maps
+		it("should find unique maps when possible (All 4 One #51 bug)", () => {
+			const mapPool = new MapPool({
+				TW: [],
+				SZ: [1, 2, 3, 4, 5, 6, 7],
+				TC: [],
+				RM: [],
+				CB: [],
+			});
+
+			for (let i = 0; i < 50; i++) {
+				const gen = MapList.generate({
+					mapPool,
+				});
+				gen.next();
+
+				const maps = gen.next({ amount: 7 }).value;
+
+				const stageIds = maps.map((m) => m.stageId);
+				const uniqueStageIds = new Set(stageIds);
+
+				expect(uniqueStageIds.size).toBe(7);
+			}
+		});
+
+		it("applies different weight penalties based on guaranteed positions when considerGuaranteed is true", () => {
+			const mapPool = new MapPool({
+				TW: [],
+				SZ: [1, 2, 3, 4, 5],
+				TC: [],
+				RM: [],
+				CB: [],
+			});
+
+			let slot4RepeatsWithFlag = 0;
+			let slot4RepeatsWithoutFlag = 0;
+
+			for (let i = 0; i < 50; i++) {
+				const genWith = MapList.generate({ mapPool, considerGuaranteed: true });
+				genWith.next();
+				const genWithout = MapList.generate({
+					mapPool,
+					considerGuaranteed: false,
+				});
+				genWithout.next();
+
+				const firstWith = genWith.next({ amount: 5 }).value;
+				const secondWith = genWith.next({ amount: 5 }).value;
+
+				const firstWithout = genWithout.next({ amount: 5 }).value;
+				const secondWithout = genWithout.next({ amount: 5 }).value;
+
+				if (
+					[firstWith[3].stageId, firstWith[4].stageId].includes(
+						secondWith[0].stageId,
+					)
+				) {
+					slot4RepeatsWithFlag++;
+				}
+				if (
+					[firstWithout[3].stageId, firstWithout[4].stageId].includes(
+						secondWithout[0].stageId,
+					)
+				) {
+					slot4RepeatsWithoutFlag++;
+				}
+			}
+
+			expect(slot4RepeatsWithFlag).toBeGreaterThan(slot4RepeatsWithoutFlag);
+		});
 	});
 });
 

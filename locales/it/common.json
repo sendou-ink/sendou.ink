@@ -1,5 +1,6 @@
 {
 	"pages.admin": "Admin",
+	"pages.api": "",
 	"pages.articles": "Articoli",
 	"pages.badges": "Medaglie",
 	"pages.plus": "Server Plus",
@@ -25,6 +26,7 @@
 	"pages.lfg": "LFG",
 	"pages.scrims": "",
 	"pages.settings": "Impostazioni",
+	"pages.tier-list-maker": "",
 	"pages.luti": "LUTI",
 	"header.profile": "Profilo",
 	"header.logout": "Esci",
@@ -307,6 +309,19 @@
 	"settings.notifications.disableInfo": "Per disattivare le notifiche push, controllare le impostazioni del browser",
 	"settings.notifications.browserNotSupported": "Le notifiche push non sono supportate su questo browser",
 	"settings.notifications.permissionDenied": "Le notifiche push sono state negate. Controlla le impostazioni del browser per riattivarle",
+	"settings.clockFormat": "",
+	"clockFormat.auto": "",
+	"clockFormat.24h": "",
+	"clockFormat.12h": "",
 	"badges.selector.none": "Nessuna medaglia selezionata",
-	"badges.selector.select": "Seleziona medaglia da aggiungere"
+	"badges.selector.select": "Seleziona medaglia da aggiungere",
+	"api.title": "",
+	"api.description": "",
+	"api.noAccess": "",
+	"api.tokenLabel": "",
+	"api.revealButton": "",
+	"api.regenerate.heading": "",
+	"api.regenerate.button": "",
+	"api.regenerate.confirm": "",
+	"api.generate": ""
 }

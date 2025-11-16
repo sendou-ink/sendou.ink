@@ -4,6 +4,7 @@ import { useTournament } from "~/features/tournament/routes/to.$id";
 import { resolveLeagueRoundStartDate } from "~/features/tournament/tournament-utils";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { TOURNAMENT } from "../../../tournament/tournament-constants";
 import { useDeadline } from "./useDeadline";
 
@@ -51,15 +52,7 @@ export function RoundHeader({
 					{hasDeadline ? <Deadline roundId={roundId} bestOf={bestOf} /> : null}
 				</div>
 			) : leagueRoundStartDate ? (
-				<div className="elim-bracket__round-header__infos">
-					<div>
-						{leagueRoundStartDate.toLocaleDateString("en-US", {
-							month: "short",
-							day: "numeric",
-						})}{" "}
-						→
-					</div>
-				</div>
+				<LeagueRoundStartDate date={leagueRoundStartDate} />
 			) : (
 				<div className="elim-bracket__round-header__infos invisible">
 					Hidden
@@ -69,10 +62,27 @@ export function RoundHeader({
 	);
 }
 
+function LeagueRoundStartDate({ date }: { date: Date }) {
+	const { formatDate } = useTimeFormat();
+
+	return (
+		<div className="elim-bracket__round-header__infos">
+			<div>
+				{formatDate(date, {
+					month: "short",
+					day: "numeric",
+				})}{" "}
+				→
+			</div>
+		</div>
+	);
+}
+
 function Deadline({ roundId, bestOf }: { roundId: number; bestOf: number }) {
 	useAutoRerender("ten seconds");
 	const isMounted = useIsMounted();
 	const deadline = useDeadline(roundId, bestOf);
+	const { formatTime } = useTimeFormat();
 
 	if (!deadline) return null;
 
@@ -83,7 +93,7 @@ function Deadline({ roundId, bestOf }: { roundId: number; bestOf: number }) {
 			})}
 		>
 			DL{" "}
-			{deadline.toLocaleTimeString("en-US", {
+			{formatTime(deadline, {
 				hour: "numeric",
 				minute: "numeric",
 			})}

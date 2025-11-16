@@ -13,6 +13,7 @@ import { YouTubeEmbed } from "~/components/YouTubeEmbed";
 import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -72,12 +73,12 @@ export default function VodPage() {
 		defaultValue: 0,
 		revive: Number,
 	});
-	const { i18n } = useTranslation();
 	const isMounted = useIsMounted();
 	const [autoplay, setAutoplay] = React.useState(false);
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["common", "vods"]);
 	const user = useUser();
+	const { formatDate } = useTimeFormat();
 
 	return (
 		<Main className="stack lg">
@@ -98,9 +99,7 @@ export default function VodPage() {
 							})}
 						>
 							{isMounted
-								? databaseTimestampToDate(
-										data.vod.youtubeDate,
-									).toLocaleDateString(i18n.language, {
+								? formatDate(databaseTimestampToDate(data.vod.youtubeDate), {
 										day: "numeric",
 										month: "numeric",
 										year: "numeric",
@@ -169,7 +168,9 @@ function Match({
 	const { t } = useTranslation(["game-misc", "weapons"]);
 
 	const weapon = match.weapons.length === 1 ? match.weapons[0] : null;
-	const weapons = match.weapons.length === 8 ? match.weapons : null;
+	const weapons = match.weapons.length > 1 ? match.weapons : null;
+
+	const teamSize = weapons ? weapons.length / 2 : 0;
 
 	return (
 		<div className={styles.match}>
@@ -198,7 +199,7 @@ function Match({
 			{weapons ? (
 				<div className="stack horizontal md">
 					<div className={styles.matchWeapons}>
-						{weapons.slice(0, 4).map((weapon, i) => {
+						{weapons.slice(0, teamSize).map((weapon, i) => {
 							return (
 								<WeaponImage
 									key={i}
@@ -211,8 +212,8 @@ function Match({
 						})}
 					</div>
 					<div className={styles.matchWeapons}>
-						{weapons.slice(4).map((weapon, i) => {
-							const adjustedI = i + 4;
+						{weapons.slice(teamSize).map((weapon, i) => {
+							const adjustedI = i + teamSize;
 							return (
 								<WeaponImage
 									key={i}

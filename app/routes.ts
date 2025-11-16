@@ -188,6 +188,11 @@ export default [
 
 	route("/tiers", "features/sendouq/routes/tiers.tsx"),
 
+	route(
+		"/tier-list-maker",
+		"features/tier-list-maker/routes/tier-list-maker.tsx",
+	),
+
 	...prefix("/lfg", [
 		index("features/lfg/routes/lfg.tsx"),
 		route("new", "features/lfg/routes/lfg.new.tsx"),
@@ -207,6 +212,7 @@ export default [
 	]),
 
 	route("/admin", "features/admin/routes/admin.tsx"),
+	route("/api", "features/api/routes/api.tsx"),
 
 	...prefix("/a", [
 		index("features/articles/routes/a.tsx"),

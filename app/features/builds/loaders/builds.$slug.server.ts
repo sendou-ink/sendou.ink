@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { getUser } from "~/features/auth/core/user.server";
 import { i18next } from "~/modules/i18n/i18next.server";
-import { weaponIdIsNotAlt } from "~/modules/in-game-lists/weapon-ids";
+import { weaponIdToType } from "~/modules/in-game-lists/weapon-ids";
 import { logger } from "~/utils/logger";
 import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import { mySlugify } from "~/utils/urls";
@@ -21,7 +21,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	});
 	const weaponId = weaponNameSlugToId(params.slug);
 
-	if (typeof weaponId !== "number" || !weaponIdIsNotAlt(weaponId)) {
+	if (typeof weaponId !== "number" || weaponIdToType(weaponId) === "ALT_SKIN") {
 		throw new Response(null, { status: 404 });
 	}
 

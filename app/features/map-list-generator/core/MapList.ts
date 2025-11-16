@@ -84,6 +84,12 @@ export function* generate(args: {
 			);
 		}
 
+		ensureMinimumCandidates({
+			mapPool: args.mapPool,
+			stageWeights,
+			stageModeWeights,
+		});
+
 		for (let i = 0; i < amount; i++) {
 			const mode = currentModeOrder[i % currentModeOrder.length];
 			const possibleStages = args.mapPool.parsed[mode];
@@ -107,7 +113,9 @@ export function* generate(args: {
 				stageModeWeights.set(key, value + 1);
 			}
 
-			const stageWeightPenalty = isNotGuaranteedToBePlayed ? -2 : -5;
+			const stageWeightPenalty = isNotGuaranteedToBePlayed
+				? -2
+				: -Math.max(5, amount);
 			const stageModeWeightPenalty = args.mapPool.modes.length > 1 ? -10 : 0;
 
 			stageWeights.set(stageId, stageWeightPenalty);
@@ -205,6 +213,35 @@ function selectStageWeighted({
 			stageModeWeights.get(modeStageKey(mode, stageId)) ?? 0;
 		return stageWeight + stageModeWeight + 1;
 	});
+}
+
+/** Ensure that stage map pool has at least half the total options at the start of a round to avoid predictable replay order */
+function ensureMinimumCandidates({
+	mapPool,
+	stageWeights,
+	stageModeWeights,
+}: {
+	mapPool: MapPool;
+	stageWeights: Map<StageId, number>;
+	stageModeWeights: Map<string, number>;
+}) {
+	const countAvailableStages = () => {
+		return mapPool.stages.filter((stageId) => {
+			const stageWeight = stageWeights.get(stageId) ?? 0;
+			return stageWeight >= 0;
+		}).length;
+	};
+
+	const requiredCandidates = Math.ceil(mapPool.stages.length / 2);
+
+	while (countAvailableStages() < requiredCandidates) {
+		for (const [key, value] of stageWeights.entries()) {
+			stageWeights.set(key, value + 1);
+		}
+		for (const [key, value] of stageModeWeights.entries()) {
+			stageModeWeights.set(key, value + 1);
+		}
+	}
 }
 
 const MAX_MODE_ORDERS_ITERATIONS = 100;

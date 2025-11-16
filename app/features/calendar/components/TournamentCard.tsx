@@ -8,11 +8,10 @@ import { Image, ModeImage } from "~/components/Image";
 import { TrophyIcon } from "~/components/icons/Trophy";
 import { UsersIcon } from "~/components/icons/Users";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
-import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
 import type { CalendarEvent, ShowcaseCalendarEvent } from "../calendar-types";
 import { Tags } from "./Tags";
 import styles from "./TournamentCard.module.css";
@@ -25,7 +24,7 @@ export function TournamentCard({
 	className?: string;
 }) {
 	const isMounted = useIsMounted();
-	const { i18n } = useTranslation(["front", "common"]);
+	const { formatDateTime } = useTimeFormat();
 
 	const isShowcase = tournament.type === "showcase";
 	const isCalendar = tournament.type === "calendar";
@@ -36,7 +35,7 @@ export function TournamentCard({
 		if (!isMounted) return "Placeholder";
 
 		const date = databaseTimestampToDate(tournament.startTime);
-		return date.toLocaleString(i18n.language, {
+		return formatDateTime(date, {
 			month: "short",
 			day: "numeric",
 			hour: "numeric",
@@ -54,14 +53,10 @@ export function TournamentCard({
 		>
 			<Link to={tournament.url} className={styles.card}>
 				<div className="stack horizontal justify-between">
-					{isHostedOnSendouInk ? (
+					{tournament.logoUrl ? (
 						<div className={styles.imgContainer}>
 							<img
-								src={
-									tournament.logoUrl
-										? userSubmittedImage(tournament.logoUrl)
-										: HACKY_resolvePicture(tournament)
-								}
+								src={tournament.logoUrl}
 								width={32}
 								height={32}
 								className={styles.avatarImg}
@@ -142,7 +137,7 @@ function TournamentFirstPlacers({
 			<div className="stack xs horizontal items-center text-xs">
 				{firstPlacer.logoUrl ? (
 					<img
-						src={userSubmittedImage(firstPlacer.logoUrl)}
+						src={firstPlacer.logoUrl}
 						alt=""
 						width={24}
 						className="rounded-full"

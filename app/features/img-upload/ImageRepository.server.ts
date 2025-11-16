@@ -1,5 +1,6 @@
 import { db } from "~/db/sql";
 import { databaseTimestampNow } from "~/utils/dates";
+import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
 import { IMAGES_TO_VALIDATE_AT_ONCE } from "./upload-constants";
 import type { ImageUploadType } from "./upload-types";
 
@@ -81,9 +82,11 @@ export function unvalidatedImages() {
 			"UnvalidatedUserSubmittedImage.submitterUserId",
 			"User.id",
 		)
-		.select([
+		.select((eb) => [
 			"UnvalidatedUserSubmittedImage.id",
-			"UnvalidatedUserSubmittedImage.url",
+			concatUserSubmittedImagePrefix(
+				eb.ref("UnvalidatedUserSubmittedImage.url"),
+			).as("url"),
 			"UnvalidatedUserSubmittedImage.submitterUserId",
 			"User.username",
 		])
