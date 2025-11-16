@@ -128,6 +128,33 @@ function TierListMakerContent() {
 
 		flushSync(() => setScreenshotMode(true));
 
+		const canvasElements: HTMLCanvasElement[] = [];
+		const images = tierListRef.current.querySelectorAll("img");
+
+		for (const img of images) {
+			const canvas = document.createElement("canvas");
+			const ctx = canvas.getContext("2d");
+
+			const pictureElement = img.parentElement;
+			const parentElement = pictureElement?.parentElement;
+
+			if (!ctx || !pictureElement || !parentElement) continue;
+
+			[canvas.width, canvas.height, canvas.className, canvas.style.cssText] = [
+				img.width,
+				img.height,
+				img.className,
+				img.style.cssText,
+			];
+
+			ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+			pictureElement.style.display = "none";
+			parentElement.insertBefore(canvas, pictureElement);
+
+			canvasElements.push(canvas);
+		}
+
 		await snapdom.download(tierListRef.current, {
 			format: "png",
 			filename: "tier-list",
@@ -135,9 +162,19 @@ function TierListMakerContent() {
 			quality: 1,
 			scale: 1.75,
 			embedFonts: true,
-			// xxx: light mode?
 			backgroundColor: getComputedStyle(document.body).backgroundColor,
 		});
+
+		for (const canvas of canvasElements) {
+			canvas.remove();
+		}
+
+		for (const img of images) {
+			const pictureElement = img.parentElement;
+			if (pictureElement) {
+				pictureElement.style.display = "";
+			}
+		}
 
 		setScreenshotMode(false);
 	};
