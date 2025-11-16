@@ -1,6 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { TierListItem } from "../tier-list-maker-schemas";
+import { tierListItemId } from "../tier-list-maker-utils";
 import styles from "./DraggableItem.module.css";
 import { TierListItemImage } from "./TierListItemImage";
 
@@ -9,8 +10,7 @@ interface DraggableItemProps {
 }
 
 export function DraggableItem({ item }: DraggableItemProps) {
-	// xxx: this is incorrect when we have the mode to add multiple of the same item
-	const uniqueId = `${item.type}:${item.id}`;
+	const uniqueId = tierListItemId(item);
 
 	const {
 		attributes,

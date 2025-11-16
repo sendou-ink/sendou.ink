@@ -26,6 +26,9 @@ import {
 	tierListItemTypeSchema,
 	tierListStateSerializedSchema,
 } from "../tier-list-maker-schemas";
+import { getNextNthForItem } from "../tier-list-maker-utils";
+
+const canAddDuplicates = true;
 
 export function useTierList() {
 	const [itemType, setItemType] = useSearchParamState<TierListItem["type"]>({
@@ -54,25 +57,31 @@ export function useTierList() {
 	});
 
 	const parseItemFromId = (id: string): TierListItem | null => {
-		const [type, idStr] = String(id).split(":");
+		const [type, idStr, nth] = String(id).split(":");
 		if (!type || !idStr) return null;
 
 		if (type === "mode" || type === "stage-mode") {
 			return {
 				type: type as TierListItem["type"],
 				id: idStr,
+				nth: nth ? Number(nth) : undefined,
 			} as TierListItem;
 		}
 
 		return {
 			type: type as TierListItem["type"],
 			id: Number(idStr),
+			nth: nth ? Number(nth) : undefined,
 		} as TierListItem;
 	};
 
 	const findContainer = (item: TierListItem): string | null => {
 		for (const [tierId, items] of tiers.tierItems.entries()) {
-			if (items.some((i) => i.id === item.id && i.type === item.type)) {
+			if (
+				items.some(
+					(i) => i.id === item.id && i.type === item.type && i.nth === item.nth,
+				)
+			) {
 				return tierId;
 			}
 		}
@@ -111,11 +120,17 @@ export function useTierList() {
 				const newTierItems = new Map(tiers.tierItems);
 				const containerItems = newTierItems.get(activeContainer) || [];
 				const oldIndex = containerItems.findIndex(
-					(item) => item.id === activeItem.id && item.type === activeItem.type,
+					(item) =>
+						item.id === activeItem.id &&
+						item.type === activeItem.type &&
+						item.nth === activeItem.nth,
 				);
 				const newIndex = overItem
 					? containerItems.findIndex(
-							(item) => item.id === overItem.id && item.type === overItem.type,
+							(item) =>
+								item.id === overItem.id &&
+								item.type === overItem.type &&
+								item.nth === overItem.nth,
 						)
 					: -1;
 
@@ -142,7 +157,10 @@ export function useTierList() {
 
 		const overIndex = overItem
 			? overItems.findIndex(
-					(item) => item.id === overItem.id && item.type === overItem.type,
+					(item) =>
+						item.id === overItem.id &&
+						item.type === overItem.type &&
+						item.nth === overItem.nth,
 				)
 			: overItems.length;
 
@@ -151,7 +169,11 @@ export function useTierList() {
 				activeContainer,
 				activeItems.filter(
 					(item) =>
-						!(item.id === activeItem.id && item.type === activeItem.type),
+						!(
+							item.id === activeItem.id &&
+							item.type === activeItem.type &&
+							item.nth === activeItem.nth
+						),
 				),
 			);
 		}
@@ -196,7 +218,8 @@ export function useTierList() {
 				newTierItems.set(
 					currentContainer,
 					containerItems.filter(
-						(i) => !(i.id === item.id && i.type === item.type),
+						(i) =>
+							!(i.id === item.id && i.type === item.type && i.nth === item.nth),
 					),
 				);
 			}
@@ -214,7 +237,7 @@ export function useTierList() {
 	const handleAddTier = () => {
 		const newTier: TierListMakerTier = {
 			id: `tier-${Date.now()}`,
-			name: "New Tier",
+			name: "New",
 			color: "#888888",
 		};
 
@@ -298,16 +321,23 @@ export function useTierList() {
 		const allItemIds = getAllItemIdsForType(itemType);
 		return allItemIds
 			.map((id) => ({ id, type: itemType }) as TierListItem)
-			.filter((item) => {
-				if (placedItems.has(`${item.type}:${item.id}`)) return false;
+			.flatMap((item) => {
+				if (placedItems.has(`${item.type}:${item.id}`)) {
+					if (!canAddDuplicates) return [];
+
+					return {
+						...item,
+						nth: getNextNthForItem(item, tiers),
+					};
+				}
 
 				if (item.type === "main-weapon" && typeof item.id === "number") {
 					const weaponType = weaponIdToType(item.id);
-					if (hideAltKits && weaponType === "ALT_KIT") return false;
-					if (hideAltSkins && weaponType === "ALT_SKIN") return false;
+					if (hideAltKits && weaponType === "ALT_KIT") return [];
+					if (hideAltSkins && weaponType === "ALT_SKIN") return [];
 				}
 
-				return true;
+				return item;
 			});
 	};
 

@@ -22,26 +22,32 @@ assertType<z.infer<typeof tierListItemTypeSchema>, TierListItem["type"]>();
 const tierListItemSchema = z.union([
 	z.object({
 		id: weaponSplId,
+		nth: z.number().optional(),
 		type: z.literal("main-weapon"),
 	}),
 	z.object({
 		id: subWeaponId,
+		nth: z.number().optional(),
 		type: z.literal("sub-weapon"),
 	}),
 	z.object({
 		id: specialWeaponId,
+		nth: z.number().optional(),
 		type: z.literal("special-weapon"),
 	}),
 	z.object({
 		id: stageId,
+		nth: z.number().optional(),
 		type: z.literal("stage"),
 	}),
 	z.object({
 		id: modeShort,
+		nth: z.number().optional(),
 		type: z.literal("mode"),
 	}),
 	z.object({
 		id: z.string(),
+		nth: z.number().optional(),
 		type: z.literal("stage-mode"),
 	}),
 ]);
