@@ -81,6 +81,8 @@ export default function TierListMakerPage() {
 	);
 }
 
+// xxx: also hide "Drop here" text when screeshotting
+
 function TierListMakerContent() {
 	const { t } = useTranslation(["tier-list-maker"]);
 	const user = useUser();
