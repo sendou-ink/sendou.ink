@@ -95,9 +95,11 @@ export function TierRow({ tier }: TierRowProps) {
 
 			<div
 				ref={setNodeRef}
+				style={{
+					borderRadius: screenshotMode ? "var(--rounded-sm)" : undefined,
+				}}
 				className={clsx(styles.targetZone, {
 					[styles.targetZoneOver]: isOver,
-					[styles.targetZoneFullRadius]: screenshotMode,
 				})}
 			>
 				{items.length === 0 && !screenshotMode ? (

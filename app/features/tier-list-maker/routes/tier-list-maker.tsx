@@ -122,9 +122,6 @@ function TierListMakerContent() {
 
 		flushSync(() => setScreenshotMode(true));
 
-		// for some reason we need a small wait so all the CSS has time to apply
-		await new Promise((resolve) => setTimeout(resolve, 50));
-
 		await snapdom.download(tierListRef.current, {
 			format: "png",
 			filename: "tier-list",
