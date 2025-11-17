@@ -102,8 +102,6 @@ function TierListMakerContent() {
 		setCanAddDuplicates,
 		showTierHeaders,
 		setShowTierHeaders,
-		showArrowControls,
-		setShowArrowControls,
 		title,
 		setTitle,
 		screenshotMode,
@@ -124,8 +122,8 @@ function TierListMakerContent() {
 
 		flushSync(() => setScreenshotMode(true));
 
-		// xxx: why is this needed? if you remove this you see the screenshotMode is not rounding off the
-		await new Promise((resolve) => setTimeout(resolve, 1000));
+		// for some reason we need a small wait so all the CSS has time to apply
+		await new Promise((resolve) => setTimeout(resolve, 50));
 
 		await snapdom.download(tierListRef.current, {
 			format: "png",
@@ -212,13 +210,6 @@ function TierListMakerContent() {
 							size="small"
 						>
 							{t("tier-list-maker:showTierHeaders")}
-						</SendouSwitch>
-						<SendouSwitch
-							isSelected={showArrowControls}
-							onChange={setShowArrowControls}
-							size="small"
-						>
-							{t("tier-list-maker:showArrowControls")}
 						</SendouSwitch>
 					</div>
 				</div>

@@ -14,7 +14,6 @@
 	"resetConfirmation": "Are you sure you want to reset the tier list? This will remove all items and restore default tiers.",
 	"allowDuplicates": "Allow duplicates",
 	"showTierHeaders": "Show tier headers",
-	"showArrowControls": "Show arrow controls",
 	"titlePlaceholder": "Click to add title...",
 	"by": "Made by"
 }

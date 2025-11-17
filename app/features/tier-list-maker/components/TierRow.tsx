@@ -31,7 +31,6 @@ export function TierRow({ tier }: TierRowProps) {
 		handleMoveTierUp,
 		handleMoveTierDown,
 		showTierHeaders,
-		showArrowControls,
 		screenshotMode,
 	} = useTierListState();
 
@@ -98,7 +97,7 @@ export function TierRow({ tier }: TierRowProps) {
 				ref={setNodeRef}
 				className={clsx(styles.targetZone, {
 					[styles.targetZoneOver]: isOver,
-					[styles.targetZoneFullRadius]: !showArrowControls || screenshotMode,
+					[styles.targetZoneFullRadius]: screenshotMode,
 				})}
 			>
 				{items.length === 0 && !screenshotMode ? (
@@ -121,7 +120,7 @@ export function TierRow({ tier }: TierRowProps) {
 				) : null}
 			</div>
 
-			{showArrowControls && !screenshotMode ? (
+			{!screenshotMode ? (
 				<div className={styles.arrowControls}>
 					<button
 						className={clsx(styles.arrowButton, styles.arrowButtonUpper)}
