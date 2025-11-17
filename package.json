@@ -42,6 +42,7 @@
 		"@remix-run/react": "^2.16.8",
 		"@remix-run/serve": "^2.16.8",
 		"@tldraw/tldraw": "^3.12.1",
+		"@zumer/snapdom": "^1.9.14",
 		"aws-sdk": "^2.1692.0",
 		"better-sqlite3": "^11.9.1",
 		"clsx": "^2.1.1",

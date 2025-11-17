@@ -66,10 +66,10 @@ export function useTierList() {
 		revive: (value) => value === "true",
 	});
 
-	const [showArrowControls, setShowArrowControls] = useSearchParamState({
-		name: "showArrowControls",
-		defaultValue: true,
-		revive: (value) => value === "true",
+	const [title, setTitle] = useSearchParamState({
+		name: "title",
+		defaultValue: "",
+		revive: (value) => value,
 	});
 
 	const parseItemFromId = (id: string): TierListItem | null => {
@@ -423,8 +423,8 @@ export function useTierList() {
 		setCanAddDuplicates,
 		showTierHeaders,
 		setShowTierHeaders,
-		showArrowControls,
-		setShowArrowControls,
+		title,
+		setTitle,
 	};
 }
 

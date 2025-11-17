@@ -31,7 +31,7 @@ export function TierRow({ tier }: TierRowProps) {
 		handleMoveTierUp,
 		handleMoveTierDown,
 		showTierHeaders,
-		showArrowControls,
+		screenshotMode,
 	} = useTierListState();
 
 	const items = getItemsInTier(tier.id);
@@ -95,28 +95,34 @@ export function TierRow({ tier }: TierRowProps) {
 
 			<div
 				ref={setNodeRef}
+				style={{
+					borderRadius: screenshotMode ? "var(--rounded-sm)" : undefined,
+				}}
 				className={clsx(styles.targetZone, {
 					[styles.targetZoneOver]: isOver,
-					[styles.targetZoneFullRadius]: !showArrowControls,
 				})}
 			>
-				{items.length === 0 ? (
+				{items.length === 0 && !screenshotMode ? (
 					<div className={styles.emptyMessage}>
 						{t("tier-list-maker:dropItems")}
 					</div>
-				) : (
+				) : items.length > 0 ? (
 					<SortableContext
 						items={items.map(tierListItemId)}
 						strategy={horizontalListSortingStrategy}
 					>
 						{items.map((item) => (
-							<DraggableItem key={tierListItemId(item)} item={item} />
+							<DraggableItem
+								key={tierListItemId(item)}
+								item={item}
+								forcePng={screenshotMode}
+							/>
 						))}
 					</SortableContext>
-				)}
+				) : null}
 			</div>
 
-			{showArrowControls ? (
+			{!screenshotMode ? (
 				<div className={styles.arrowControls}>
 					<button
 						className={clsx(styles.arrowButton, styles.arrowButtonUpper)}

@@ -9,8 +9,12 @@ import {
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import type { MetaFunction } from "@remix-run/react";
+import { snapdom } from "@zumer/snapdom";
 import clsx from "clsx";
+import { useRef } from "react";
+import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { SendouSwitch } from "~/components/elements/Switch";
@@ -20,10 +24,12 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { DownloadIcon } from "~/components/icons/Download";
 import { PlusIcon } from "~/components/icons/Plus";
 import { RefreshIcon } from "~/components/icons/Refresh";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
+import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -76,6 +82,8 @@ export default function TierListMakerPage() {
 
 function TierListMakerContent() {
 	const { t } = useTranslation(["tier-list-maker"]);
+	const user = useUser();
+
 	const {
 		itemType,
 		setItemType,
@@ -94,8 +102,10 @@ function TierListMakerContent() {
 		setCanAddDuplicates,
 		showTierHeaders,
 		setShowTierHeaders,
-		showArrowControls,
-		setShowArrowControls,
+		title,
+		setTitle,
+		screenshotMode,
+		setScreenshotMode,
 	} = useTierListState();
 
 	const sensors = useSensors(
@@ -105,12 +115,44 @@ function TierListMakerContent() {
 		}),
 	);
 
+	const tierListRef = useRef<HTMLDivElement>(null);
+
+	const handleDownload = async () => {
+		if (!tierListRef.current) return;
+
+		flushSync(() => setScreenshotMode(true));
+
+		await snapdom.download(tierListRef.current, {
+			format: "png",
+			filename: "tier-list",
+			quality: 1,
+			scale: 1.75,
+			embedFonts: true,
+			backgroundColor: getComputedStyle(document.body).backgroundColor,
+		});
+
+		setScreenshotMode(false);
+	};
+
 	return (
 		<Main bigger className={clsx(styles.container, "stack lg")}>
 			<div className={styles.header}>
-				<SendouButton onPress={handleAddTier} size="small" icon={<PlusIcon />}>
-					{t("tier-list-maker:addTier")}
-				</SendouButton>
+				<div className="stack horizontal md">
+					<SendouButton
+						onPress={handleAddTier}
+						size="small"
+						icon={<PlusIcon />}
+					>
+						{t("tier-list-maker:addTier")}
+					</SendouButton>
+					<SendouButton
+						onPress={handleDownload}
+						size="small"
+						icon={<DownloadIcon />}
+					>
+						{t("tier-list-maker:download")}
+					</SendouButton>
+				</div>
 				<ResetPopover key={state.tierItems.size} handleReset={handleReset} />
 			</div>
 
@@ -122,7 +164,30 @@ function TierListMakerContent() {
 				onDragEnd={handleDragEnd}
 			>
 				<div className="stack">
-					<div className={styles.tierList}>
+					<div
+						className={clsx(styles.tierList, {
+							[styles.tierListScreenshotMode]: screenshotMode,
+						})}
+						ref={tierListRef}
+					>
+						{title || !screenshotMode ? (
+							<input
+								type="text"
+								value={title}
+								onChange={(e) => setTitle(e.target.value)}
+								placeholder={t("tier-list-maker:titlePlaceholder")}
+								className={clsx(styles.titleInput, "plain")}
+							/>
+						) : null}
+						{screenshotMode && title && user ? (
+							<div className={styles.authorSection}>
+								<div className={styles.authorBy}>{t("tier-list-maker:by")}</div>
+								<div className={styles.authorInfo}>
+									<Avatar user={user} size="xxxs" alt={user.username} />
+									<span className={styles.authorUsername}>{user.username}</span>
+								</div>
+							</div>
+						) : null}
 						{state.tiers.map((tier) => (
 							<TierRow key={tier.id} tier={tier} />
 						))}
@@ -142,13 +207,6 @@ function TierListMakerContent() {
 							size="small"
 						>
 							{t("tier-list-maker:showTierHeaders")}
-						</SendouSwitch>
-						<SendouSwitch
-							isSelected={showArrowControls}
-							onChange={setShowArrowControls}
-							size="small"
-						>
-							{t("tier-list-maker:showArrowControls")}
 						</SendouSwitch>
 					</div>
 				</div>

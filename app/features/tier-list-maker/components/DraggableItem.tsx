@@ -7,9 +7,10 @@ import { TierListItemImage } from "./TierListItemImage";
 
 interface DraggableItemProps {
 	item: TierListItem;
+	forcePng?: boolean;
 }
 
-export function DraggableItem({ item }: DraggableItemProps) {
+export function DraggableItem({ item, forcePng }: DraggableItemProps) {
 	const uniqueId = tierListItemId(item);
 
 	const {
@@ -32,7 +33,7 @@ export function DraggableItem({ item }: DraggableItemProps) {
 	return (
 		<div ref={setNodeRef} className={styles.item} style={style}>
 			<div data-item-id={uniqueId} {...listeners} {...attributes}>
-				<TierListItemImage item={item} />
+				<TierListItemImage item={item} forcePng={forcePng} />
 			</div>
 		</div>
 	);
