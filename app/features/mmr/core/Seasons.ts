@@ -1,3 +1,5 @@
+import { IS_E2E_TEST_RUN } from "~/utils/e2e";
+
 /**
  * List of seasons with their respective start and end dates.
  *
@@ -15,6 +17,7 @@
 export const list =
 	// when we do npm run setup NODE_ENV is not set -> use test seasons
 	!process.env.NODE_ENV ||
+	IS_E2E_TEST_RUN ||
 	// this gets checked when the project is running
 	(process.env.NODE_ENV === "development" &&
 		import.meta.env.VITE_PROD_MODE !== "true")
