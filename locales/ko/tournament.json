@@ -48,6 +48,7 @@
 	"pickInfo.tiebreaker": "",
 	"pickInfo.both": "",
 	"pickInfo.default": "",
+	"pickInfo.default.explanation": "",
 	"pickInfo.counterpick": "",
 	"generator.error": "",
 	"teams.mapsPickedStatus": "",

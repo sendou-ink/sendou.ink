@@ -120,6 +120,7 @@
 	"looking.allTiers": "Todas as tiers",
 	"looking.joinQPrompt": "Entre na fila para achar um grupo",
 	"looking.range.or": "",
+	"looking.range.or.explanation": "",
 	"match.header": "Partida #{{number}}",
 	"match.spInfo": "SP será ajustado depois que ambos os times declarem o mesmo resultado",
 	"match.dispute.button": "Disputar?",

@@ -29,6 +29,7 @@ import { ArchiveBoxIcon } from "~/components/icons/ArchiveBox";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { RefreshArrowsIcon } from "~/components/icons/RefreshArrows";
 import { ScaleIcon } from "~/components/icons/Scale";
+import { UsersIcon } from "~/components/icons/Users";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { WeaponSelect } from "~/components/WeaponSelect";
@@ -1294,18 +1295,24 @@ function MapListMapPickInfo({
 
 	const pickInfo = (source: string) => {
 		if (source === "TIEBREAKER") return t("tournament:pickInfo.tiebreaker");
-		if (source === "BOTH") return t("tournament:pickInfo.both");
 		if (source === "DEFAULT") return t("tournament:pickInfo.default");
 
-		if (source === String(data.match.alphaGroupId)) {
-			return t("tournament:pickInfo.team.specific", {
-				team: t("q:match.sides.alpha"),
-			});
-		}
+		const poolMemberIds = sourcePoolMemberIds();
+		const playerCount =
+			poolMemberIds.length > 0
+				? poolMemberIds.length
+				: (mapPreferences?.length ?? 0);
 
-		return t("tournament:pickInfo.team.specific", {
-			team: t("q:match.sides.bravo"),
-		});
+		return (
+			<div className="stack horizontal xs items-center">
+				<UsersIcon className="w-4" />
+				<span>
+					{t("tournament:pickInfo.votes", {
+						count: playerCount,
+					})}
+				</span>
+			</div>
+		);
 	};
 
 	const userIdToUser = (userId: number) => {
@@ -1348,6 +1355,8 @@ function MapListMapPickInfo({
 		// legacy preference system (season 2)
 		if (mapPreferences && mapPreferences.length > 0) return true;
 
+		if (map.source === "DEFAULT") return true;
+
 		return sourcePoolMemberIds().length > 0;
 	};
 
@@ -1365,7 +1374,11 @@ function MapListMapPickInfo({
 					{t(`game-misc:MODE_SHORT_${map.mode}`)}{" "}
 					{t(`game-misc:STAGE_${map.stageId}`)}
 				</div>
-				{sourcePoolMemberIds().length > 0 ? (
+				{map.source === "DEFAULT" ? (
+					<div className="text-sm text-center text-lighter">
+						{t("tournament:pickInfo.default.explanation")}
+					</div>
+				) : sourcePoolMemberIds().length > 0 ? (
 					<div className="stack sm">
 						{sourcePoolMemberIds().map((userId) => {
 							const user = userIdToUser(userId);
