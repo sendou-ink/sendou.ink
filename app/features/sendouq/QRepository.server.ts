@@ -1,5 +1,5 @@
 import { sub } from "date-fns";
-import { sql } from "kysely";
+import { type NotNull, sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type {
@@ -21,9 +21,8 @@ export function mapModePreferencesByGroupId(groupId: number) {
 		.select(["User.id as userId", "User.mapModePreferences as preferences"])
 		.where("GroupMember.groupId", "=", groupId)
 		.where("User.mapModePreferences", "is not", null)
-		.execute() as Promise<
-		{ userId: number; preferences: UserMapModePreferences }[]
-	>;
+		.$narrowType<{ preferences: NotNull }>()
+		.execute();
 }
 
 // groups visible for longer to make development easier

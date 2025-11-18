@@ -1,6 +1,7 @@
 import * as R from "remeda";
 import type { ParsedMemento, UserMapModePreferences } from "~/db/tables";
 import * as MapList from "~/features/map-list-generator/core/MapList";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { userSkills } from "~/features/mmr/tiered.server";
 import { getDefaultMapWeights } from "~/features/sendouq/core/default-maps.server";
@@ -181,8 +182,18 @@ export async function matchMapList(
 		modesIncluded,
 	);
 
+	logger.info(
+		`[matchMapList] Generated map weights: ${JSON.stringify(
+			Array.from(weights.entries()),
+		)}`,
+	);
+
 	const generator = MapList.generate({
-		mapPool: SENDOUQ_MAP_POOL,
+		mapPool: new MapPool(
+			SENDOUQ_MAP_POOL.stageModePairs.filter((pair) =>
+				modesIncluded.includes(pair.mode),
+			),
+		),
 		initialWeights: weights,
 	});
 	generator.next();
