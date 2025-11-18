@@ -101,6 +101,7 @@ export const STOP_IMPERSONATING_URL = "/auth/impersonate/stop";
 export const SEED_URL = "/seed";
 export const PLANNER_URL = "/plans";
 export const MAPS_URL = "/maps";
+export const TIER_LIST_MAKER_URL = "/tier-list-maker";
 export const ANALYZER_URL = "/analyzer";
 export const OBJECT_DAMAGE_CALCULATOR_URL = "/object-damage-calculator";
 export const VODS_PAGE = "/vods";

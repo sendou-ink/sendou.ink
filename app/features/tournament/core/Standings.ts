@@ -66,13 +66,32 @@ export function matchesPlayed({
 	tournament: Tournament;
 	teamId: number;
 }) {
-	const brackets = Progression.bracketIdxsForStandings(
-		tournament.ctx.settings.bracketProgression,
-	)
+	const startingBracketIdx = tournament.teamById(teamId)?.startingBracketIdx;
+
+	let bracketIdxs: number[];
+
+	if (typeof startingBracketIdx !== "number" || startingBracketIdx === 0) {
+		bracketIdxs = Progression.bracketIdxsForStandings(
+			tournament.ctx.settings.bracketProgression,
+		);
+	} else {
+		const reachableBrackets = Progression.bracketsReachableFrom(
+			startingBracketIdx,
+			tournament.ctx.settings.bracketProgression,
+		);
+		const reachableSet = new Set(reachableBrackets);
+
+		const allBracketIdxs = tournament.ctx.settings.bracketProgression
+			.map((_, idx) => idx)
+			.sort((a, b) => b - a);
+		bracketIdxs = allBracketIdxs.filter((idx) => reachableSet.has(idx));
+	}
+
+	const brackets = bracketIdxs
 		.reverse()
 		.map((bracketIdx) => tournament.bracketByIdx(bracketIdx)!);
 
-	const matches = brackets.flatMap((bracket, bracketIdx) =>
+	const matches = brackets.flatMap((bracket, i) =>
 		bracket.data.match
 			.filter(
 				(match) =>
@@ -82,7 +101,10 @@ export function matchesPlayed({
 					(match.opponent1.result === "win" ||
 						match.opponent2?.result === "win"),
 			)
-			.map((match) => ({ ...match, bracketIdx })),
+			.map((match) => ({
+				...match,
+				bracketIdx: bracketIdxs[bracketIdxs.length - 1 - i],
+			})),
 	);
 
 	return matches.map((match) => {

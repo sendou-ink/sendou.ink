@@ -1,0 +1,4 @@
+.item {
+	cursor: move;
+	touch-action: none;
+}

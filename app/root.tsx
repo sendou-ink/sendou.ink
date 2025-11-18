@@ -265,6 +265,7 @@ export const namespaceJsonsToPreloadObj: Record<Namespace, boolean> = {
 	scrims: true,
 	tournament: true,
 	team: true,
+	"tier-list-maker": true,
 	vods: true,
 	art: true,
 	q: true,

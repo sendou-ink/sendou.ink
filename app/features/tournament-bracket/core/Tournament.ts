@@ -55,6 +55,10 @@ export class Tournament {
 		const hasStarted = data.stage.length > 0;
 
 		const teamsInSeedOrder = ctx.teams.sort((a, b) => {
+			if (a.startingBracketIdx !== b.startingBracketIdx) {
+				return (a.startingBracketIdx ?? 0) - (b.startingBracketIdx ?? 0);
+			}
+
 			if (a.seed && b.seed) {
 				return a.seed - b.seed;
 			}
@@ -718,11 +722,27 @@ export class Tournament {
 	}
 
 	teamById(id: number) {
-		const teamIdx = this.ctx.teams.findIndex((team) => team.id === id);
+		let result: (typeof this.ctx.teams)[number] | null = null;
+		let seed = 0;
+		let currStartingBracketIdx = this.ctx.teams.at(0)?.startingBracketIdx;
 
-		if (teamIdx === -1) return;
+		for (const team of this.ctx.teams) {
+			if (team.startingBracketIdx !== currStartingBracketIdx) {
+				currStartingBracketIdx = team.startingBracketIdx;
+				seed = 1;
+			} else {
+				seed++;
+			}
 
-		return { ...this.ctx.teams[teamIdx], seed: teamIdx + 1 };
+			if (team.id === id) {
+				result = team;
+				break;
+			}
+		}
+
+		if (!result) return;
+
+		return { ...result, seed };
 	}
 
 	participatedPlayersByTeamId(id: number) {

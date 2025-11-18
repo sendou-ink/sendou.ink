@@ -9,7 +9,7 @@ import { useUser } from "~/features/auth/core/user";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	weaponCategories,
-	weaponIdIsNotAlt,
+	weaponIdToType,
 } from "~/modules/in-game-lists/weapon-ids";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -72,7 +72,7 @@ export default function BuildsPage() {
 					</div>
 					<div className={styles.categoryWeapons}>
 						{(category.weaponIds as readonly MainWeaponId[])
-							.filter(weaponIdIsNotAlt)
+							.filter((weaponId) => weaponIdToType(weaponId) !== "ALT_SKIN")
 							.map((weaponId, i) => (
 								<React.Fragment key={weaponId}>
 									{i !== 0 && weaponId % 10 === 0 ? (
