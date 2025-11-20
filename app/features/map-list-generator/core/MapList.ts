@@ -50,6 +50,8 @@ export function* generate(args: {
 	considerGuaranteed?: boolean;
 	/** Initial weights for specific stage-mode combinations. Key format: `${mode}-${stageId}` (generate via `MapList.stageModeKey`). Negative weights can be used to deprioritize certain maps. */
 	initialWeights?: Map<string, number>;
+	/** Skip the ensureMinimumCandidates check that inflates weights to ensure half the pool is available. Useful when initial weights already define the desired selection. */
+	skipEnsureMinimumCandidates?: boolean;
 }): Generator<Array<ModeWithStage>, Array<ModeWithStage>, GenerateNext> {
 	if (args.mapPool.isEmpty()) {
 		while (true) yield [];
@@ -84,11 +86,13 @@ export function* generate(args: {
 			);
 		}
 
-		ensureMinimumCandidates({
-			mapPool: args.mapPool,
-			stageWeights,
-			stageModeWeights,
-		});
+		if (!args.skipEnsureMinimumCandidates) {
+			ensureMinimumCandidates({
+				mapPool: args.mapPool,
+				stageWeights,
+				stageModeWeights,
+			});
+		}
 
 		for (let i = 0; i < amount; i++) {
 			const mode = currentModeOrder[i % currentModeOrder.length];
@@ -139,12 +143,15 @@ function initializeWeights(
 	const stageWeights = new Map<StageId, number>();
 	const stageModeWeights = new Map<string, number>();
 
+	const hasInitialWeights = initialWeights && initialWeights.size > 0;
+
 	for (const mode of modes) {
 		const stageIds = mapPool[mode];
 		for (const stageId of stageIds) {
 			stageWeights.set(stageId, 0);
 			const key = modeStageKey(mode, stageId);
-			const initialWeight = initialWeights?.get(key) ?? 0;
+			const initialWeight =
+				initialWeights?.get(key) ?? (hasInitialWeights ? -1000 : 0);
 			stageModeWeights.set(key, initialWeight);
 		}
 	}

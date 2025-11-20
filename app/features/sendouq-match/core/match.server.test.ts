@@ -1,9 +1,18 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import type { StageId } from "~/modules/in-game-lists/types";
 import * as Test from "~/utils/Test";
 import {
 	mapModePreferencesToModeList,
+	matchMapList,
 	normalizeAndCombineWeights,
 } from "./match.server";
+
+vi.mock("~/features/sendouq/core/default-maps.server", () => ({
+	getDefaultMapWeights: vi.fn(),
+}));
+
+import { getDefaultMapWeights } from "~/features/sendouq/core/default-maps.server";
+import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 
 describe("mapModePreferencesToModeList()", () => {
 	test("returns default list if no preferences", () => {
@@ -216,5 +225,105 @@ describe("normalizeAndCombineWeights()", () => {
 
 		expect(result.get("map1-SZ")).toBe(160);
 		expect(result.get("map2-TC")).toBe(40);
+	});
+});
+
+describe("matchMapList()", () => {
+	afterEach(() => {
+		vi.clearAllMocks();
+	});
+
+	test("maps not in team preferences or defaults should not be preferred over default maps", async () => {
+		// Note stage 23 (Lemuria Hub) is NOT in defaults
+		const defaultStageIds: StageId[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+		const mockDefaults = new Map<string, number>();
+
+		for (const stageId of defaultStageIds) {
+			mockDefaults.set(`SZ-${stageId}`, -1);
+		}
+
+		vi.mocked(getDefaultMapWeights).mockResolvedValue(mockDefaults);
+
+		// Both teams have empty preferences (no map pools set)
+		// This forces the system to rely entirely on defaults
+		const emptyPreferences = {
+			modes: [{ mode: "SZ" as const, preference: "PREFER" as const }],
+			pool: [],
+		};
+
+		const result = await matchMapList(
+			{
+				preferences: [{ userId: 1, preferences: emptyPreferences }],
+				id: 1,
+			},
+			{
+				preferences: [{ userId: 2, preferences: emptyPreferences }],
+				id: 2,
+			},
+		);
+
+		const szMaps = result.filter((m) => m.mode === "SZ");
+
+		for (const map of szMaps) {
+			expect(defaultStageIds).toContain(map.stageId);
+		}
+	});
+
+	test("user selected maps should be preferred over default maps even with small pool", async () => {
+		// User selected stages - just 7 stages per mode (less than half of 25)
+		// Note: stages 1 (EELTAIL_ALLEY) and 9 (STURGEON_SHIPYARD) are banned for SZ
+		const userSelectedStageIds: StageId[] = [0, 2, 3, 4, 5, 6, 7];
+
+		// Default stages include many more maps that users did NOT select
+		const defaultStageIds: StageId[] = [
+			8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+		];
+
+		const mockDefaults = new Map<string, number>();
+		for (const stageId of defaultStageIds) {
+			mockDefaults.set(`SZ-${stageId}`, -SENDOUQ_BEST_OF);
+		}
+
+		vi.mocked(getDefaultMapWeights).mockResolvedValue(mockDefaults);
+
+		// Both teams have selected the same 5 stages
+		const teamPreferences = {
+			modes: [{ mode: "SZ" as const, preference: "PREFER" as const }],
+			pool: [
+				{
+					mode: "SZ" as const,
+					stages: userSelectedStageIds,
+				},
+			],
+		};
+
+		const result = await matchMapList(
+			{
+				preferences: [
+					{ userId: 1, preferences: teamPreferences },
+					{ userId: 2, preferences: teamPreferences },
+					{ userId: 3, preferences: teamPreferences },
+					{ userId: 4, preferences: teamPreferences },
+				],
+				id: 1,
+			},
+			{
+				preferences: [
+					{ userId: 5, preferences: teamPreferences },
+					{ userId: 6, preferences: teamPreferences },
+					{ userId: 7, preferences: teamPreferences },
+					{ userId: 8, preferences: teamPreferences },
+				],
+				id: 2,
+			},
+		);
+
+		const szMaps = result.filter((m) => m.mode === "SZ");
+
+		// All selected maps should come from user preferences, not defaults
+		for (const map of szMaps) {
+			expect(userSelectedStageIds).toContain(map.stageId);
+		}
 	});
 });
