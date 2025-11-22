@@ -6,7 +6,11 @@ import {
 	type abilitiesShort,
 } from "~/modules/in-game-lists/abilities";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
-import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
+import {
+	mainWeaponIds,
+	specialWeaponIds,
+	subWeaponIds,
+} from "~/modules/in-game-lists/weapon-ids";
 import { FRIEND_CODE_REGEXP } from "../features/sendouq/q-constants";
 import { SHORT_NANOID_LENGTH } from "./id";
 import type { Unpacked } from "./types";
@@ -107,6 +111,10 @@ export const weaponSplId = z.preprocess(
 	actualNumber,
 	numericEnum(mainWeaponIds),
 );
+
+export const subWeaponId = numericEnum(subWeaponIds);
+
+export const specialWeaponId = numericEnum(specialWeaponIds);
 
 export const qWeapon = z.object({
 	weaponSplId,

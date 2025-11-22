@@ -316,8 +316,16 @@
 	transform: translate(-50%, -50%);
 }
 
-.q__group__tier-diff-text {
-	font-size: 3rem;
+.q__group__or-popover-button {
+	background-color: transparent;
+	color: var(--text-lighter);
+	font-size: var(--fonts-xs);
+	padding: 0;
+	border: none;
+	text-decoration: underline;
+	text-decoration-style: dotted;
+	font-weight: var(--bold);
+	height: 19.8281px;
 }
 
 .q__member-adder__input {

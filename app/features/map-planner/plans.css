@@ -178,3 +178,37 @@ img[src$="?outline=red"] {
 		drop-shadow(0 0 var(--outline-width) var(--outline-color))
 		drop-shadow(0 0 var(--outline-width) var(--outline-color));
 }
+
+.plans__draggable-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--s-0-5);
+	border: none;
+	border-radius: var(--rounded);
+	background: transparent;
+	cursor: grab;
+	touch-action: none;
+}
+
+.plans__draggable-button:hover {
+	background-color: var(--bg-lighter);
+}
+
+.plans__weapon-dragging {
+	opacity: 0.5;
+}
+
+.plans__drag-preview-container {
+	display: block;
+	min-width: 45px;
+	min-height: 45px;
+}
+
+.plans__drag-preview {
+	cursor: grabbing;
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}

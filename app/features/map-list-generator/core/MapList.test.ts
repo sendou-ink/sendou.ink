@@ -53,7 +53,7 @@ describe("MapList.generate()", () => {
 			const maps = gen.next({ amount: 3 }).value;
 
 			expect(maps).toHaveLength(
-				new Set(maps.map((m) => `${m.mode}-${m.stageId}`)).size,
+				new Set(maps.map((m) => MapList.modeStageKey(m.mode, m.stageId))).size,
 			);
 		});
 
@@ -394,14 +394,14 @@ describe("MapList.generate()", () => {
 		it("applies different weight penalties based on guaranteed positions when considerGuaranteed is true", () => {
 			const mapPool = new MapPool({
 				TW: [],
-				SZ: [1, 2, 3],
+				SZ: [1, 2, 3, 4, 5],
 				TC: [],
 				RM: [],
 				CB: [],
 			});
 
-			let totalRepeatsWithFlag = 0;
-			let totalRepeatsWithoutFlag = 0;
+			let slot4RepeatsWithFlag = 0;
+			let slot4RepeatsWithoutFlag = 0;
 
 			for (let i = 0; i < 50; i++) {
 				const genWith = MapList.generate({ mapPool, considerGuaranteed: true });
@@ -418,17 +418,23 @@ describe("MapList.generate()", () => {
 				const firstWithout = genWithout.next({ amount: 5 }).value;
 				const secondWithout = genWithout.next({ amount: 5 }).value;
 
-				for (let pos = 0; pos < 5; pos++) {
-					if (firstWith[pos].stageId === secondWith[pos].stageId) {
-						totalRepeatsWithFlag++;
-					}
-					if (firstWithout[pos].stageId === secondWithout[pos].stageId) {
-						totalRepeatsWithoutFlag++;
-					}
+				if (
+					[firstWith[3].stageId, firstWith[4].stageId].includes(
+						secondWith[0].stageId,
+					)
+				) {
+					slot4RepeatsWithFlag++;
+				}
+				if (
+					[firstWithout[3].stageId, firstWithout[4].stageId].includes(
+						secondWithout[0].stageId,
+					)
+				) {
+					slot4RepeatsWithoutFlag++;
 				}
 			}
 
-			expect(totalRepeatsWithFlag).toBeLessThan(totalRepeatsWithoutFlag);
+			expect(slot4RepeatsWithFlag).toBeGreaterThan(slot4RepeatsWithoutFlag);
 		});
 	});
 });
@@ -514,5 +520,87 @@ describe("MapList.parsePattern()", () => {
 				"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi ut varius velit. Ut egestas lacus dolor, sit amet iaculis justo dictum sed. Fusce aliquet sed nunc sit amet ullamcorper. Interdum et malesuada fames ac ante ipsum primis in faucibus. Integer leo ex, congue eu porta nec, imperdiet sed neque.",
 			),
 		).toBeInstanceOf(Err);
+	});
+});
+
+describe("MapList.generate() with initialWeights", () => {
+	it("accepts initialWeights parameter without errors", () => {
+		const mapPool = new MapPool({
+			SZ: [1, 2, 3],
+			TC: [4, 5],
+			RM: [],
+			CB: [],
+			TW: [],
+		});
+
+		const initialWeights = new Map<string, number>();
+		initialWeights.set("SZ-1", 100);
+		initialWeights.set("TC-44", -10);
+
+		const gen = MapList.generate({ mapPool, initialWeights });
+		gen.next();
+
+		const maps = gen.next({ amount: 3 }).value;
+
+		expect(maps).toHaveLength(3);
+		expect(maps.every((m) => mapPool.has(m))).toBe(true);
+	});
+
+	it("handles empty initialWeights", () => {
+		const mapPool = new MapPool({
+			SZ: [1, 2],
+			TC: [],
+			RM: [],
+			CB: [],
+			TW: [],
+		});
+
+		const gen = MapList.generate({ mapPool, initialWeights: new Map() });
+		gen.next();
+
+		const maps = gen.next({ amount: 2 }).value;
+
+		expect(maps).toHaveLength(2);
+	});
+
+	it("handles undefined initialWeights", () => {
+		const mapPool = new MapPool({
+			SZ: [1, 2],
+			TC: [],
+			RM: [],
+			CB: [],
+			TW: [],
+		});
+
+		const gen = MapList.generate({ mapPool });
+		gen.next();
+
+		const maps = gen.next({ amount: 2 }).value;
+
+		expect(maps).toHaveLength(2);
+	});
+
+	it("initialWeights affect stage selection", () => {
+		const mapPool = new MapPool({
+			SZ: [1, 2, 3, 4, 5],
+			TC: [],
+			RM: [],
+			CB: [],
+			TW: [],
+		});
+
+		const initialWeights = new Map<string, number>();
+		initialWeights.set("SZ-1", 1);
+		initialWeights.set("SZ-2", -1);
+		initialWeights.set("SZ-3", -1);
+		initialWeights.set("SZ-4", -1);
+		initialWeights.set("SZ-5", -1);
+
+		const gen = MapList.generate({ mapPool, initialWeights });
+		gen.next();
+
+		const maps = gen.next({ amount: 3 }).value;
+
+		expect(maps[0].stageId).toBe(1);
 	});
 });

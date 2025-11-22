@@ -1498,6 +1498,10 @@ class SwissBracket extends Bracket {
 						if (a.setWins > b.setWins) return -1;
 						if (a.setWins < b.setWins) return 1;
 
+						// also set losses because we want a team who dropped more sets ranked lower (early advance format)
+						if (a.setLosses < b.setLosses) return -1;
+						if (a.setLosses > b.setLosses) return 1;
+
 						// TIEBREAKER 2) wins against tied - ensure that a team who beat more teams that are tied with them is placed higher
 						if (a.lossesAgainstTied > b.lossesAgainstTied) return 1;
 						if (a.lossesAgainstTied < b.lossesAgainstTied) return -1;

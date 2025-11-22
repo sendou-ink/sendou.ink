@@ -120,6 +120,7 @@
 	"looking.allTiers": "全てのティア",
 	"looking.joinQPrompt": "グループを見つけるには列に入ってください",
 	"looking.range.or": "か",
+	"looking.range.or.explanation": "",
 	"match.header": "マッチ #{{number}}番",
 	"match.spInfo": "SP は両チームが同じ結果を報告してからアップデートされます。",
 	"match.dispute.button": "異議を唱えますか?",
