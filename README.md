@@ -134,6 +134,10 @@ Undo at any time with `Remove-MpPreference -ExclusionPath "..."`.
 
 Alternatively, keep the repository on a [Dev Drive](https://learn.microsoft.com/en-us/windows/dev-drive/). On a Dev Drive, Defender scans files asynchronously instead of blocking, so you keep most of the speedup without giving up scanning entirely.
 
+### Discord Linked Roles Development
+
+If you want to develop Discord linked roles features, you need to set up all the `DISCORD_` environment variables in your `.env` file and configure interactivity with a tunneling service like ngrok. Refer to the [Discord Linked Roles Sample](https://github.com/discord/linked-roles-sample?tab=readme-ov-file#set-up-interactivity) for a bit more detailed setup instructions.
+
 ## Contributing
 
 - **Developers**: Read [Contributing](https://docs.sendou.ink/project/contributing/)
