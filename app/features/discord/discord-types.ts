@@ -8,5 +8,5 @@ export interface MetadataField {
 }
 
 export interface SendouInkDiscordMetadata {
-	plusTier: number;
+	plustier?: number;
 }

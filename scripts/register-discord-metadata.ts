@@ -3,7 +3,7 @@ import type { MetadataField } from "~/features/discord/discord-types";
 import { logger } from "~/utils/logger";
 
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
-const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
+const DISCORD_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
 if (!DISCORD_TOKEN)
 	throw new Error("DISCORD_TOKEN is not set in environment variables");
@@ -40,8 +40,9 @@ const response = await fetch(url, {
 if (response.ok) {
 	const data = await response.json();
 	logger.info(data);
+	logger.info("Successfully registered Discord metadata fields.");
 } else {
 	throw new Error(
-		`Error pushing discord metadata schema: [${response.status}] ${response.statusText}`,
+		`Error pushing discord metadata schema: [${response.status}] ${response.statusText}: ${await response.text()}`,
 	);
 }
