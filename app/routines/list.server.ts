@@ -24,6 +24,7 @@ import { NotifyScrimStartingSoonRoutine } from "./notifyScrimStartingSoon";
 import { NotifySeasonEndRoutine } from "./notifySeasonEnd";
 import { NotifySeasonStartRoutine } from "./notifySeasonStart";
 import { OptimizeDatabaseRoutine } from "./optimizeDatabase";
+import { RefreshDiscordTokensRoutine } from "./refreshDiscordTokens";
 import { ResolveStaleSQMatchesRoutine } from "./resolveStaleSQMatches";
 import { SetOldGroupsAsInactiveRoutine } from "./setOldGroupsAsInactive";
 import { SyncLiveStreamsRoutine } from "./syncLiveStreams";
@@ -63,6 +64,7 @@ export const daily = [
 	DeleteOldAvailabilityRoutine,
 	NotifyScheduleTeamReminderRoutine,
 	CloseExpiredCommissionsRoutine,
+	RefreshDiscordTokensRoutine,
 	CloseExpiredChatRoomsRoutine,
 	DeleteOldVoiceTelemetryRoutine,
 	DeleteOldUnlinkedScannerMatchesRoutine,
