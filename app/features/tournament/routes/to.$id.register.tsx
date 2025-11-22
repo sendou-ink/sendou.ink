@@ -380,7 +380,7 @@ function RegistrationProgress({
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 	const isMounted = useIsMounted();
-	const { formatTime } = useTimeFormat();
+	const { formatDate } = useTimeFormat();
 
 	const completedIfTruthy = (condition: unknown) =>
 		condition ? "completed" : "incomplete";
@@ -421,7 +421,7 @@ function RegistrationProgress({
 		tournament.ctx.startTime.getTime();
 
 	const registrationClosesAtString = isMounted
-		? formatTime(
+		? formatDate(
 				tournament.isLeagueSignup
 					? tournament.ctx.startTime
 					: tournament.registrationClosesAt,

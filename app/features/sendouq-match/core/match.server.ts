@@ -195,6 +195,7 @@ export async function matchMapList(
 			),
 		),
 		initialWeights: weights,
+		skipEnsureMinimumCandidates: true,
 	});
 	generator.next();
 

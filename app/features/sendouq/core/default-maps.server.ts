@@ -4,11 +4,12 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { logger } from "~/utils/logger";
 import * as QRepository from "../QRepository.server";
+import { SENDOUQ_BEST_OF } from "../q-constants";
 
 let cachedDefaults: Map<string, number> | null = null;
 
 const ONE_WEEK_IN_DAYS = 7;
-const DEFAULT_MAP_WEIGHT = -1;
+const DEFAULT_MAP_WEIGHT = -SENDOUQ_BEST_OF;
 const TOP_MAPS_PER_MODE = 7;
 
 export function clearCacheForTesting() {

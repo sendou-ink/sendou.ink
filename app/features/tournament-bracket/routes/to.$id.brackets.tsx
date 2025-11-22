@@ -260,12 +260,7 @@ export default function TournamentBracketsPage() {
 										minute: "numeric",
 										weekday: "long",
 									})}{" "}
-									-{" "}
-									{formatTime(bracket.startTime, {
-										hour: "numeric",
-										minute: "numeric",
-									})}
-									)
+									- {formatTime(bracket.startTime)})
 								</span>
 							) : null}
 						</div>

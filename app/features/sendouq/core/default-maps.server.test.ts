@@ -3,6 +3,7 @@ import { db } from "~/db/sql";
 import type { UserMapModePreferences } from "~/db/tables";
 import type { StageId } from "~/modules/in-game-lists/types";
 import { dbInsertUsers, dbReset } from "~/utils/Test";
+import { SENDOUQ_BEST_OF } from "../q-constants";
 import {
 	clearCacheForTesting,
 	getDefaultMapWeights,
@@ -178,7 +179,7 @@ describe("getDefaultMapWeights()", () => {
 		expect(tcMaps.length).toBe(7);
 	});
 
-	test("assigns weight of -1 to all selected maps", async () => {
+	test("assigns weight of -SENDOUQ_BEST_OF to all selected maps", async () => {
 		mockSeasonCurrent.mockReturnValue({
 			nth: 1,
 			starts: new Date("2023-01-01"),
@@ -201,7 +202,7 @@ describe("getDefaultMapWeights()", () => {
 		const result = await getDefaultMapWeights();
 
 		for (const weight of result.values()) {
-			expect(weight).toBe(-1);
+			expect(weight).toBe(-SENDOUQ_BEST_OF);
 		}
 	});
 
