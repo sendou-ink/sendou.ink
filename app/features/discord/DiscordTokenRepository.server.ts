@@ -19,6 +19,15 @@ export async function findByDiscordId(discordId: string) {
 		.executeTakeFirst();
 }
 
+export async function allUserIds() {
+	const rows = await db
+		.selectFrom("UserDiscordToken")
+		.select("userId")
+		.execute();
+
+	return rows.map((row) => row.userId);
+}
+
 export async function upsert(
 	args: Omit<TablesInsertable["UserDiscordToken"], "userId"> & {
 		discordId: string;
