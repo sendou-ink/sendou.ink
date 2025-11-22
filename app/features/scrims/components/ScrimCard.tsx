@@ -533,10 +533,7 @@ export function ScrimRequestCard({
 								data-testid="confirm-modal-trigger-button"
 							>
 								{t("scrims:acceptModal.confirmFor", {
-									time: formatTime(confirmedTime, {
-										hour: "numeric",
-										minute: "2-digit",
-									}),
+									time: formatTime(confirmedTime),
 								})}
 							</SendouButton>
 						</FormWithConfirm>
@@ -545,10 +542,7 @@ export function ScrimRequestCard({
 							trigger={
 								<SendouButton size="small">
 									{t("scrims:acceptModal.confirmFor", {
-										time: formatTime(confirmedTime, {
-											hour: "numeric",
-											minute: "2-digit",
-										}),
+										time: formatTime(confirmedTime),
 									})}
 								</SendouButton>
 							}

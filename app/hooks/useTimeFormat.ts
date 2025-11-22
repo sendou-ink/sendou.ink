@@ -8,9 +8,7 @@ const H12_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
 const H24_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
 	hour12: false,
 	hourCycle: "h23" as const,
-	minute: "2-digit",
 };
-
 function getClockFormatOptions(
 	clockFormat: "auto" | "24h" | "12h" | undefined,
 	language: string,
@@ -59,17 +57,9 @@ export function useTimeFormat() {
 	const clockFormat = user?.preferences?.clockFormat;
 	const clockOptions = getClockFormatOptions(clockFormat, i18n.language);
 
-	const language = () => {
-		// this is needed to ensure the time format used doesn't say e.g. "03:00" when we want "3:00"
-		if (clockFormat === "24h" && i18n.language === "en") {
-			return "en-GB";
-		}
-		return i18n.language;
-	};
-
 	const formatDateTime = (date: Date, options?: Intl.DateTimeFormatOptions) => {
-		return date.toLocaleString(
-			language(),
+		const result = date.toLocaleString(
+			i18n.language,
 			options?.hour
 				? {
 						...options,
@@ -79,18 +69,35 @@ export function useTimeFormat() {
 						...options,
 					},
 		);
+		return clockOptions.hourCycle === "h23" && options?.hour
+			? stripLeadingZeroFromHour(result)
+			: result;
 	};
 
-	const formatTime = (date: Date, options?: Intl.DateTimeFormatOptions) => {
-		return date.toLocaleTimeString(language(), {
+	const formatTime = (
+		date: Date,
+		options: Intl.DateTimeFormatOptions = {
+			hour: "numeric",
+			minute: "2-digit",
+		},
+	) => {
+		const result = date.toLocaleTimeString(i18n.language, {
 			...options,
 			...clockOptions,
 		});
+		return clockOptions.hourCycle === "h23"
+			? stripLeadingZeroFromHour(result)
+			: result;
 	};
 
 	const formatDate = (date: Date, options?: Intl.DateTimeFormatOptions) => {
-		return date.toLocaleDateString(language(), options);
+		return date.toLocaleDateString(i18n.language, options);
 	};
 
 	return { formatDateTime, formatTime, formatDate };
+}
+
+// Example: "09:00" -> "9:00"
+function stripLeadingZeroFromHour(timeString: string) {
+	return timeString.replace(/\b0(\d:\d{2})/g, "$1");
 }

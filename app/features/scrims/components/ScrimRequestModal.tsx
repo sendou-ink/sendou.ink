@@ -33,10 +33,7 @@ export function ScrimRequestModal({
 				databaseTimestampToDate(post.rangeEnd),
 			).map((timestamp) => ({
 				value: timestamp,
-				label: formatTime(new Date(timestamp), {
-					hour: "numeric",
-					minute: "2-digit",
-				}),
+				label: formatTime(new Date(timestamp)),
 			}))
 		: [];
 
