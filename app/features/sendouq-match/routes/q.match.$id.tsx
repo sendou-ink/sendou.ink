@@ -51,7 +51,6 @@ import { useWindowSize } from "~/hooks/useWindowSize";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { useHasRole } from "~/modules/permissions/hooks";
-import { joinListToNaturalString } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { animate } from "~/utils/flip";
 import invariant from "~/utils/invariant";
@@ -85,9 +84,9 @@ export const meta: MetaFunction = (args) => {
 
 	return metaTags({
 		title: `SendouQ - Match #${data.match.id}`,
-		description: `${joinListToNaturalString(
+		description: `${new Intl.ListFormat("en-US").format(
 			data.groupAlpha.members.map((m) => m.username),
-		)} vs. ${joinListToNaturalString(
+		)} vs. ${new Intl.ListFormat("en-US").format(
 			data.groupBravo.members.map((m) => m.username),
 		)}`,
 		location: args.location,

@@ -4,6 +4,7 @@
 - if you encounter an existing TODO comment assume it is there for a reason and do not remove it
 - task is not considered completely until `npm run checks` passes
 - normal file structure has constants at the top immediately followed by the main function body of the file. Helpers are used to structure the code and they are at the bottom of the file (then hoisted to the top)
+- note: any formatting issue (such as tabs vs. spaces) can be resolved by running the `npm run biome:fix` command
 
 ## Commands
 

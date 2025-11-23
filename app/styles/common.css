@@ -49,8 +49,6 @@ progress {
 
 textarea:not(.plain, [name="text"]):focus-within {
 	border-color: transparent;
-
-	/* TODO: rectangle on Safari */
 	outline: 2px solid var(--theme);
 }
 
@@ -96,8 +94,6 @@ input:user-invalid {
 
 input:not(.plain, .combobox-input):focus-within {
 	border-color: transparent;
-
-	/* TODO: rectangle on Safari */
 	outline: 2px solid var(--theme);
 }
 
@@ -191,8 +187,6 @@ select {
 	border: 2px solid var(--border);
 	border-radius: var(--rounded-sm);
 	background: var(--select-background, var(--bg-input));
-
-	/* TODO: Get color from CSS var */
 	background-image: url('data:image/svg+xml;utf8,<svg width="17px" color="rgb(255 255 255 / 55%)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>');
 	background-position: center right var(--s-3);
 	background-repeat: no-repeat;
@@ -208,9 +202,7 @@ select:disabled {
 	transform: initial;
 }
 
-/* Temporary solution for issue: https://github.com/sendou-ink/sendou.ink/issues/1141 */
 .light select {
-	/* TODO: Get color from CSS var */
 	background-image: url('data:image/svg+xml;utf8,<svg width="17px" color="rgb(0 0 0 / 55%)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>');
 }
 
@@ -308,8 +300,6 @@ abbr[title] {
 
 .input-container:focus-within {
 	border-color: transparent;
-
-	/* TODO: rectangle on Safari */
 	outline: 2px solid var(--theme);
 }
 

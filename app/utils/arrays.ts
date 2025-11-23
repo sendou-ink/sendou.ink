@@ -30,17 +30,6 @@ function at<T>(arr: T[], n: number) {
 	return arr[n];
 }
 
-// TODO: i18n (at least for SendouQ)
-export function joinListToNaturalString(arg: string[], lastSeparator = "and") {
-	if (arg.length === 1) return arg[0];
-
-	const list = [...arg];
-	const last = list.pop();
-	const commaJoined = list.join(", ");
-
-	return last ? `${commaJoined} ${lastSeparator} ${last}` : commaJoined;
-}
-
 export function normalizeFormFieldArray(
 	value: undefined | null | string | string[],
 ): string[] {

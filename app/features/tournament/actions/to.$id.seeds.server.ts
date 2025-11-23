@@ -8,6 +8,7 @@ import {
 	errorToastIfFalsy,
 	parseParams,
 	parseRequestPayload,
+	successToast,
 } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
 import { updateTeamSeeds } from "../queries/updateTeamSeeds.server";
@@ -32,7 +33,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 	switch (data._action) {
 		case "UPDATE_SEEDS": {
 			updateTeamSeeds({ tournamentId, teamIds: data.seeds });
-			break;
+			clearTournamentDataCache(tournamentId);
+			return successToast("Seeds saved successfully");
 		}
 		case "UPDATE_STARTING_BRACKETS": {
 			const validBracketIdxs =

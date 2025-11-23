@@ -41,7 +41,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		filters.success && filters.data && filters.data.length > 0;
 
 	const builds = await BuildRepository.allByWeaponId(weaponId, {
-		limit: hasActiveFilters ? BUILDS_PAGE_MAX_BUILDS : limit,
+		limit: hasActiveFilters ? BUILDS_PAGE_MAX_BUILDS : limit + 1,
 		sortAbilities: !user?.preferences?.disableBuildAbilitySorting,
 	});
 
@@ -56,15 +56,25 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		? filterBuilds({
 				builds,
 				filters: filters.data!,
-				count: limit,
+				count: limit + 1,
 			})
 		: builds;
+
+	let hasMoreBuilds = false;
+	if (filteredBuilds.length > limit) {
+		filteredBuilds.pop();
+
+		if (limit < BUILDS_PAGE_MAX_BUILDS) {
+			hasMoreBuilds = true;
+		}
+	}
 
 	return {
 		weaponId,
 		weaponName,
 		builds: filteredBuilds,
 		limit,
+		hasMoreBuilds,
 		slug,
 		filters: filters.success ? filters.data : [],
 	};

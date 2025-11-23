@@ -14,7 +14,6 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { usePagination } from "~/hooks/usePagination";
 import { useHasRole } from "~/modules/permissions/hooks";
-import { joinListToNaturalString } from "~/utils/arrays";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -50,7 +49,7 @@ export const handle: SendouRouteHandle = {
 };
 
 export default function TeamSearchPage() {
-	const { t } = useTranslation(["team"]);
+	const { t, i18n } = useTranslation(["team"]);
 	const [inputValue, setInputValue] = React.useState("");
 	const data = useLoaderData<typeof loader>();
 
@@ -143,10 +142,9 @@ export default function TeamSearchPage() {
 							<div className="team-search__team__members">
 								{team.members.length === 1
 									? team.members[0].username
-									: joinListToNaturalString(
-											team.members.map((member) => member.username),
-											"&",
-										)}
+									: new Intl.ListFormat(i18n.language, {
+											style: "short",
+										}).format(team.members.map((member) => member.username))}
 							</div>
 						</div>
 					</Link>

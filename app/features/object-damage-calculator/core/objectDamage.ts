@@ -86,8 +86,7 @@ function resolveRelevantKey({
 		if (!weaponIds.includes(normalizedWeaponId)) continue;
 		if (damageType !== type) continue;
 
-		// @ts-expect-error TODO: fix this (5.5 version)
-		if (!actualKeys.includes(key)) {
+		if (!actualKeys.includes(key as Exclude<typeof key, "Default">)) {
 			throw new Error(
 				`Invalid damagePriorities (no key in object-dmg.json for the weapon): ${JSON.stringify(
 					[weaponType, weaponIds, damageType, key],

@@ -443,7 +443,11 @@ function Seed() {
 		>
 			<div className="stack horizontal md items-end">
 				<SubmitButton state={fetcher.state}>Seed</SubmitButton>
-				<SendouSelect label="Variation" name="variation">
+				<SendouSelect
+					label="Variation"
+					name="variation"
+					defaultSelectedKey="DEFAULT"
+				>
 					{SEED_VARIATIONS.map((variation) => (
 						<SendouSelectItem key={variation} id={variation}>
 							{variation}

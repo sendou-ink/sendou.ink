@@ -27,6 +27,7 @@
 	"pre.info.noHost": "הצוות שלי מעדיף לא לארח חדרים",
 	"pre.roster.header": "מלא צוות",
 	"pre.roster.footer": "לפחות {{atLeastCount}} חברי צוות נדרשים כדי להשתתף. גודל הצוות המרבי הוא {{maxCount}}",
+	"pre.roster.footer.noSubs": "",
 	"pre.roster.addTrusted.header": "הוסיפו אנשים ששיחקתם איתם",
 	"pre.roster.delete.button": "מחקו חבר צוות",
 	"pre.roster.delete.header": "חבר צוות למחיקה",
