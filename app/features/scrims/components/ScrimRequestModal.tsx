@@ -6,7 +6,7 @@ import { SelectFormField } from "~/components/form/SelectFormField";
 import { SendouForm } from "~/components/form/SendouForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
-import { joinListToNaturalString, nullFilledArray } from "~/utils/arrays";
+import { nullFilledArray } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { loader as scrimsLoader } from "../loaders/scrims.server";
 import type { NewRequestFormFields } from "../routes/scrims";
@@ -23,7 +23,7 @@ export function ScrimRequestModal({
 	post: ScrimPost;
 	close: () => void;
 }) {
-	const { t } = useTranslation(["scrims"]);
+	const { t, i18n } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof scrimsLoader>();
 	const { formatTime } = useTimeFormat();
 
@@ -58,7 +58,9 @@ export function ScrimRequestModal({
 				}}
 			>
 				<div className="font-semi-bold text-lighter italic">
-					{joinListToNaturalString(post.users.map((u) => u.username))}
+					{new Intl.ListFormat(i18n.language).format(
+						post.users.map((u) => u.username),
+					)}
 				</div>
 				{post.text ? (
 					<div className="text-sm text-lighter italic">{post.text}</div>

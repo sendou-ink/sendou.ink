@@ -64,8 +64,8 @@ export function isFirstSuggestion({
 	suggestions,
 }: Pick<CanDeleteCommentArgs, "suggestionId" | "suggestions">) {
 	for (const suggestedUser of Object.values(suggestions).flat()) {
-		for (const [i, suggestion] of suggestedUser.suggestions.entries()) {
-			if (suggestion.id !== suggestionId) continue;
+		for (const [i, entry] of suggestedUser.entries.entries()) {
+			if (entry.id !== suggestionId) continue;
 
 			return i === 0;
 		}
@@ -84,9 +84,7 @@ function alreadyCommentedByUser({
 		(suggestion) =>
 			suggestion.tier === targetPlusTier &&
 			suggestion.suggested.id === suggested.id &&
-			suggestion.suggestions.some(
-				(suggestion) => suggestion.author.id === user?.id,
-			),
+			suggestion.entries.some((entry) => entry.author.id === user?.id),
 	);
 }
 
@@ -121,10 +119,10 @@ function suggestionHasNoOtherComments({
 	suggestionId,
 }: Pick<CanDeleteCommentArgs, "suggestionId" | "suggestions">) {
 	for (const suggestedUser of Object.values(suggestions).flat()) {
-		for (const suggestion of suggestedUser.suggestions) {
-			if (suggestion.id !== suggestionId) continue;
+		for (const entry of suggestedUser.entries) {
+			if (entry.id !== suggestionId) continue;
 
-			return suggestedUser.suggestions.length === 1;
+			return suggestedUser.entries.length === 1;
 		}
 	}
 
@@ -171,6 +169,6 @@ function hasUserSuggestedThisMonth({
 	suggestions,
 }: Pick<CanSuggestNewUserArgs, "user" | "suggestions">) {
 	return suggestions.some(
-		(suggestion) => suggestion.suggestions[0].author.id === user?.id,
+		(suggestion) => suggestion.entries[0].author.id === user?.id,
 	);
 }

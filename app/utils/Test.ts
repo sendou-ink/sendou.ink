@@ -31,7 +31,6 @@ export function wrappedAction<T extends z.ZodTypeAny>({
 	/** Is this action submitted as json (via SendouForm) */
 	isJsonSubmission = false,
 }: {
-	// TODO: strongly type this
 	action: (args: ActionFunctionArgs) => any;
 	isJsonSubmission?: boolean;
 }) {
@@ -86,7 +85,6 @@ export function wrappedAction<T extends z.ZodTypeAny>({
 export function wrappedLoader<T>({
 	loader,
 }: {
-	// TODO: strongly type this
 	loader: (args: LoaderFunctionArgs) => any;
 }) {
 	return async ({

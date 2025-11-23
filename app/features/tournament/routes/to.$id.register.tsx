@@ -1049,12 +1049,15 @@ function FillRoster({
 					might result in disqualification.
 				</div>
 			) : (
-				// TODO: proper English for 1v1 "At least 1 members are required to participate. Max roster size is 1"
 				<div className="tournament__section__warning">
-					{t("tournament:pre.roster.footer", {
-						atLeastCount: tournament.minMembersPerTeam,
-						maxCount: tournament.maxMembersPerTeam,
-					})}
+					{tournament.minMembersPerTeam <= 3
+						? t("tournament:pre.roster.footer.noSubs", {
+								format: `${tournament.minMembersPerTeam}v${tournament.minMembersPerTeam}`,
+							})
+						: t("tournament:pre.roster.footer", {
+								atLeastCount: tournament.minMembersPerTeam,
+								maxCount: tournament.maxMembersPerTeam,
+							})}
 				</div>
 			)}
 		</div>
@@ -1165,7 +1168,6 @@ function DeleteMember({ members }: { members: TournamentDataTeam["members"] }) {
 	);
 }
 
-// TODO: useBlocker to prevent leaving page if made changes without saving
 function CounterPickMapPoolPicker() {
 	const { t } = useTranslation(["common", "game-misc", "tournament"]);
 	const tournament = useTournament();

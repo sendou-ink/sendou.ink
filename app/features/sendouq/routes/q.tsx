@@ -20,7 +20,6 @@ import type * as Seasons from "~/features/mmr/core/Seasons";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useHasRole } from "~/modules/permissions/hooks";
-import { joinListToNaturalString } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -254,7 +253,7 @@ function JoinTeamDialog({
 		role: Tables["GroupMember"]["role"];
 	}[];
 }) {
-	const { t } = useTranslation(["q"]);
+	const { t, i18n } = useTranslation(["q"]);
 	const fetcher = useFetcher();
 
 	const owner = members.find((m) => m.role === "OWNER");
@@ -267,7 +266,9 @@ function JoinTeamDialog({
 			isDismissable
 			className="text-center"
 			heading={t("q:front.join.header", {
-				members: joinListToNaturalString(members.map((m) => m.username)),
+				members: new Intl.ListFormat(i18n.language).format(
+					members.map((m) => m.username),
+				),
 			})}
 		>
 			<fetcher.Form

@@ -39,7 +39,7 @@ interface WeaponSelectProps<
 	) => void;
 	clearable?: Clearable;
 	includeSubSpecial?: IncludeSubSpecial;
-	disabledWeaponIds?: Array<MainWeaponId>; // TODO: implement for `AnyWeapon` if needed
+	disabledWeaponIds?: Array<MainWeaponId>;
 	testId?: string;
 	isRequired?: boolean;
 	/** If set, selection of weapons that user sees when search input is empty allowing for quick select for e.g. previous selections */

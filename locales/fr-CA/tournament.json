@@ -27,6 +27,7 @@
 	"pre.info.noHost": "Mon équipe préfère ne par héberger",
 	"pre.roster.header": "Remplir la liste",
 	"pre.roster.footer": "Au moins {{atLeastCount}} membres sont requis pour participer. La taille maximum est de {{maxCount}}",
+	"pre.roster.footer.noSubs": "",
 	"pre.roster.addTrusted.header": "Ajoutez des personnes avec lesquelles vous avez joué",
 	"pre.roster.delete.button": "Effacer membre",
 	"pre.roster.delete.header": "Membre à effacer",

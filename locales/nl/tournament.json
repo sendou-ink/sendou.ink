@@ -27,6 +27,7 @@
 	"pre.info.noHost": "",
 	"pre.roster.header": "",
 	"pre.roster.footer": "",
+	"pre.roster.footer.noSubs": "",
 	"pre.roster.addTrusted.header": "",
 	"pre.roster.delete.button": "",
 	"pre.roster.delete.header": "",

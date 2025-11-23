@@ -82,11 +82,13 @@ export default function TournamentBracketsPage() {
 		revalidate();
 	}, [visibility, revalidate, tournament.ctx.isFinalized]);
 
+	const teamProgressStatus = tournament.teamMemberOfProgressStatus(user);
 	const showAddSubsButton =
 		!tournament.canFinalize(user) &&
 		!tournament.everyBracketOver &&
 		tournament.hasStarted &&
-		tournament.autonomousSubs;
+		tournament.autonomousSubs &&
+		teamProgressStatus?.type !== "THANKS_FOR_PLAYING";
 
 	const showPrepareMapsButton =
 		tournament.isOrganizer(user) &&
@@ -217,10 +219,7 @@ export default function TournamentBracketsPage() {
 			<div className="stack horizontal mb-4 sm justify-between items-center">
 				{/** TournamentTeamActions more confusing than helpful for leagues, for example might say "Waiting for match..." when previous match was rescheduled  */}
 				{!tournament.isLeagueDivision ? <TournamentTeamActions /> : null}
-				{showAddSubsButton ? (
-					// TODO: could also hide this when team is not in any bracket anymore
-					<AddSubsPopOver />
-				) : null}
+				{showAddSubsButton ? <AddSubsPopOver /> : null}
 			</div>
 			<div className="stack md">
 				<div className="stack horizontal sm">

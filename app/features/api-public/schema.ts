@@ -466,5 +466,4 @@ type TournamentBracket = {
 	name: string;
 };
 
-// TODO: use a better documented type here
 type TournamentBracketData = ValueToArray<DataTypes>;

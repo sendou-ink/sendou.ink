@@ -29,7 +29,7 @@ export default function Chart({
 	const primaryAxis = React.useMemo<
 		AxisOptions<(typeof options)[number]["data"][number]>
 	>(
-		// @ts-expect-error TODO: type this
+		// @ts-expect-error - some weirdness here but maybe not worth fixing as the whole library needs to be replaced (it is unmaintained/deprecated)
 		() => ({
 			getValue: (datum) => datum.primary,
 			scaleType: xAxis,
