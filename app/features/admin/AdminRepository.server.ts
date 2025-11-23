@@ -95,7 +95,7 @@ export function migrate(args: { newUserId: number; oldUserId: number }) {
 			.where((eb) =>
 				eb(
 					"AllTeamMember.teamId",
-					"=",
+					"in",
 					eb
 						.selectFrom("AllTeamMember")
 						.select("teamId")
