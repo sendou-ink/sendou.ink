@@ -99,6 +99,10 @@
 		"displayName": "Shark Tank: Deep Waters",
 		"authorDiscordId": "528851510222782474"
 	},
+	"blahajrising": {
+		"displayName": "Shark Tank: Rising Waters",
+		"authorDiscordId": "528851510222782474"
+	},
 	"bluelock": {
 		"displayName": "Blue Lock",
 		"authorDiscordId": "528851510222782474"
@@ -140,11 +144,11 @@
 		"authorDiscordId": "308313761779941376"
 	},
 	"buddies1": {
-		"displayName": "Buddies 2vs2",
+		"displayName": "Buddies 2vs2 (1st Place)",
 		"authorDiscordId": "671419359058722826"
 	},
 	"buddies2": {
-		"displayName": "Buddies 2vs2",
+		"displayName": "Buddies 2vs2 (2nd Place)",
 		"authorDiscordId": "671419359058722826"
 	},
 	"calliesit": {
@@ -181,6 +185,10 @@
 	},
 	"champions": {
 		"displayName": "Champions Cup",
+		"authorDiscordId": "752582395076673577"
+	},
+	"championsinv": {
+		"displayName": "Champions Cup Invitational",
 		"authorDiscordId": "752582395076673577"
 	},
 	"chao": {
@@ -297,7 +305,7 @@
 	},
 	"draftzerobuzz": {
 		"displayName": "Draft 0 Buzz",
-		"authorDiscordId": "1225053678634008659"
+		"authorDiscordId": "309327923129745409"
 	},
 	"dreadnoughtus": {
 		"displayName": "Mesozoic Mayhem: Dreadnoughtus Undefeated",
@@ -323,6 +331,10 @@
 		"displayName": "Proxy Training",
 		"authorDiscordId": "528851510222782474"
 	},
+	"excaliburtierx": {
+		"displayName": "Excalibur's Oath Grandmaster Bracket",
+		"authorDiscordId": "338806780446638082"
+	},
 	"ferris_wheel": {
 		"displayName": "Wheel of Names",
 		"authorDiscordId": "336683473714544641"
@@ -334,6 +346,10 @@
 	"fl-collegiate": {
 		"displayName": "Florida Collegiate Cephalopods Event",
 		"authorDiscordId": "285504780154044416"
+	},
+	"flounderfish": {
+		"displayName": "Don't Flounder at the Function",
+		"authorDiscordId": "528851510222782474"
 	},
 	"fluttermane": {
 		"displayName": "Push Paradox: Zones Only",
@@ -364,7 +380,7 @@
 		"authorDiscordId": "960213930586824766"
 	},
 	"freedomdive": {
-		"displayName": "Freedom Dive ↓",
+		"displayName": "Freedom Dive â",
 		"authorDiscordId": "631246535560265749"
 	},
 	"friendsofveater": {
@@ -523,6 +539,18 @@
 		"displayName": "In the Paddock 3rd",
 		"authorDiscordId": "683603297839743009"
 	},
+	"isopodcup": {
+		"displayName": "Isopod Cup (1st)",
+		"authorDiscordId": "824681527815438337"
+	},
+	"isopodcup2": {
+		"displayName": "Isopod Cup (2nd)",
+		"authorDiscordId": "824681527815438337"
+	},
+	"isopodcup3": {
+		"displayName": "Isopod Cup (3rd)",
+		"authorDiscordId": "824681527815438337"
+	},
 	"jamboree": {
 		"displayName": "JJaeigh's Jamboree",
 		"authorDiscordId": "528851510222782474"
@@ -534,6 +562,10 @@
 	"jrs_draft": {
 		"displayName": "Junior's Draft",
 		"authorDiscordId": "118724226994667523"
+	},
+	"kitty": {
+		"displayName": "Kitty",
+		"authorDiscordId": "752582395076673577"
 	},
 	"krakenmarepoke": {
 		"displayName": "Gardevoir",
@@ -604,7 +636,7 @@
 		"authorDiscordId": "671419359058722826"
 	},
 	"lumiere": {
-		"displayName": "Stellaris Phantasm: Lumière Bracket",
+		"displayName": "Stellaris Phantasm: LumiÃ¨re Bracket",
 		"authorDiscordId": "617399529532293150"
 	},
 	"lunablaster": {
@@ -683,12 +715,12 @@
 		"displayName": "Minus One Open",
 		"authorDiscordId": "569271521776762896"
 	},
-	"moxiaward": {
-		"displayName": "Moxi Achievement",
-		"authorDiscordId": "1131109226551459881"
+	"mrgrizz": {
+		"displayName": "Salmon Workers",
+		"authorDiscordId": "345996252032401408"
 	},
 	"muchen": {
-		"displayName": "Bastard München",
+		"displayName": "Bastard MÃ¼nchen",
 		"authorDiscordId": "528851510222782474"
 	},
 	"mugcupmini": {
@@ -999,6 +1031,10 @@
 		"displayName": "Sylveon",
 		"authorDiscordId": "338806780446638082"
 	},
+	"smollusk": {
+		"displayName": "Smollusk Low-Level Spire",
+		"authorDiscordId": "1160529949531316334"
+	},
 	"solosquidshowdown": {
 		"displayName": "Solo Squid Showdown",
 		"authorDiscordId": "824681527815438337"
@@ -1170,6 +1206,10 @@
 	"tonytonyc": {
 		"displayName": "Tony Tony Challenge",
 		"authorDiscordId": "338806780446638082"
+	},
+	"torneoes": {
+		"displayName": "PEÑA Tournament",
+		"authorDiscordId": "752582395076673577"
 	},
 	"tralalero": {
 		"displayName": "Tralalero Tralala",
