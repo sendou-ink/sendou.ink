@@ -37,7 +37,7 @@ import {
 	TORPEDO_ID,
 	TOXIC_MIST_ID,
 } from "~/modules/in-game-lists/weapon-ids";
-import { atOrError, nullFilledArray } from "~/utils/arrays";
+import { nullFilledArray } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -1555,7 +1555,9 @@ function DamageTable({
 
 	const showDistanceColumn = values.some((val) => val.distance);
 
-	const firstRow = atOrError(values, 0);
+	const firstRow = values.at(0);
+	invariant(firstRow, "no damage rows found");
+
 	const showDamageColumn =
 		!damageIsSubWeaponDamage(firstRow) ||
 		// essentially checking that we are using some sub resistance up

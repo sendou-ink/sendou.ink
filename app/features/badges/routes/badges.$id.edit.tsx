@@ -7,7 +7,6 @@ import { UserSearch } from "~/components/elements/UserSearch";
 import { TrashIcon } from "~/components/icons/Trash";
 import type { Tables } from "~/db/tables";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
-import { atOrError } from "~/utils/arrays";
 import { action } from "../actions/badges.$id.edit.server";
 import type { BadgeDetailsLoaderData } from "../loaders/badges.$id.server";
 import type { BadgeDetailsContext } from "./badges.$id";
@@ -16,14 +15,15 @@ export { action };
 export default function EditBadgePage() {
 	const isStaff = useHasRole("STAFF");
 	const matches = useMatches();
-	const data = atOrError(matches, -2).data as BadgeDetailsLoaderData;
+	const parentMatch = matches.at(-2)!;
+	const data = parentMatch.data as BadgeDetailsLoaderData;
 	const { badge } = useOutletContext<BadgeDetailsContext>();
 	const canManageBadge = useHasPermission(badge, "MANAGE");
 
 	return (
 		<SendouDialog
 			heading={`Editing winners of ${badge.displayName}`}
-			onCloseTo={atOrError(matches, -2).pathname}
+			onCloseTo={parentMatch.pathname}
 			isFullScreen
 		>
 			<Form method="post" className="stack md">

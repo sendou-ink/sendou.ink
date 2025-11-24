@@ -3,7 +3,6 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { Redirect } from "~/components/Redirect";
 import { useUser } from "~/features/auth/core/user";
-import { atOrError } from "~/utils/arrays";
 import { plusSuggestionPage } from "~/utils/urls";
 import { action } from "../actions/plus.suggestions.comment.$tier.$userId.server";
 import { PLUS_SUGGESTION } from "../plus-suggestions-constants";
@@ -16,7 +15,7 @@ export default function PlusCommentModalPage() {
 	const user = useUser();
 	const matches = useMatches();
 	const params = useParams();
-	const data = atOrError(matches, -2).data as PlusSuggestionsLoaderData;
+	const data = matches.at(-2)!.data as PlusSuggestionsLoaderData;
 
 	const targetUserId = Number(params.userId);
 	const tierSuggestedTo = String(params.tier);

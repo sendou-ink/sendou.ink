@@ -46,7 +46,6 @@ import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import { atOrError } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { cutToNDecimalPlaces, roundToNDecimalPlaces } from "~/utils/number";
@@ -451,7 +450,7 @@ function Stages({
 	stages: NonNullable<UserSeasonsPageLoaderData["info"]["stages"]>;
 }) {
 	const { t } = useTranslation(["user", "game-misc"]);
-	const layoutData = atOrError(useMatches(), -2).data as UserPageLoaderData;
+	const layoutData = useMatches().at(-2)!.data as UserPageLoaderData;
 
 	return (
 		<div className="stack horizontal justify-center md flex-wrap">
