@@ -1,6 +1,5 @@
 import { Link } from "@remix-run/react";
 import clsx from "clsx";
-import { formatDistanceToNow } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
@@ -171,6 +170,7 @@ function ImagePreview({
 }) {
 	const [imageLoaded, setImageLoaded] = React.useState(false);
 	const { t } = useTranslation(["common", "art"]);
+	const { formatDistanceToNow } = useTimeFormat();
 
 	const img = (
 		// biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration

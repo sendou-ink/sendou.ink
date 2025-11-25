@@ -19,12 +19,14 @@ import styles from "./TournamentCard.module.css";
 export function TournamentCard({
 	tournament,
 	className,
+	withRelativeTime = false,
 }: {
 	tournament: CalendarEvent | ShowcaseCalendarEvent;
 	className?: string;
+	withRelativeTime?: boolean;
 }) {
 	const isMounted = useIsMounted();
-	const { formatDateTime } = useTimeFormat();
+	const { formatDateTime, formatDistanceToNow } = useTimeFormat();
 
 	const isShowcase = tournament.type === "showcase";
 	const isCalendar = tournament.type === "calendar";
@@ -35,6 +37,13 @@ export function TournamentCard({
 		if (!isMounted) return "Placeholder";
 
 		const date = databaseTimestampToDate(tournament.startTime);
+
+		if (withRelativeTime) {
+			return formatDistanceToNow(date, {
+				addSuffix: true,
+			});
+		}
+
 		return formatDateTime(date, {
 			month: "short",
 			day: "numeric",

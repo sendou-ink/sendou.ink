@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useUser } from "~/features/auth/core/user";
+import { formatDistanceToNow as formatDistanceToNowUtil } from "~/utils/dates";
 
 const H12_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
 	hour12: true,
@@ -94,7 +95,17 @@ export function useTimeFormat() {
 		return date.toLocaleDateString(i18n.language, options);
 	};
 
-	return { formatDateTime, formatTime, formatDate };
+	const formatDistanceToNow = (
+		date: Parameters<typeof formatDistanceToNowUtil>[0],
+		options?: Omit<Parameters<typeof formatDistanceToNowUtil>[1], "language">,
+	) => {
+		return formatDistanceToNowUtil(date, {
+			...options,
+			language: i18n.language,
+		});
+	};
+
+	return { formatDateTime, formatTime, formatDate, formatDistanceToNow };
 }
 
 // Example: "09:00" -> "9:00"
