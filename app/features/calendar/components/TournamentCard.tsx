@@ -158,6 +158,7 @@ function TournamentFirstPlacers({
 					</span>
 					<div className="text-xxxs text-lighter font-bold text-uppercase">
 						{t("front:showcase.card.winner")}
+						{firstPlacer.div ? ` (${firstPlacer.div})` : null}
 					</div>
 				</div>
 			</div>

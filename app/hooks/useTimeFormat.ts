@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useUser } from "~/features/auth/core/user";
+import type { LanguageCode } from "~/modules/i18n/config";
 import { formatDistanceToNow as formatDistanceToNowUtil } from "~/utils/dates";
 
 const H12_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
@@ -101,7 +102,7 @@ export function useTimeFormat() {
 	) => {
 		return formatDistanceToNowUtil(date, {
 			...options,
-			language: i18n.language,
+			language: i18n.language as LanguageCode,
 		});
 	};
 

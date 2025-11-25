@@ -42,8 +42,8 @@ const LOCALE_MAP: Record<LanguageCode, Locale> = {
 	zh: zhCN,
 };
 
-export function getDateFnsLocale(language: string) {
-	return LOCALE_MAP[language as keyof typeof LOCALE_MAP] ?? enUS;
+export function getDateFnsLocale(language: LanguageCode) {
+	return LOCALE_MAP[language];
 }
 
 export function formatDistanceToNow(
@@ -51,7 +51,7 @@ export function formatDistanceToNow(
 	options: Omit<
 		NonNullable<Parameters<typeof dateFnsFormatDistanceToNow>[1]>,
 		"locale"
-	> & { language: string },
+	> & { language: LanguageCode },
 ) {
 	return dateFnsFormatDistanceToNow(date, {
 		...options,
