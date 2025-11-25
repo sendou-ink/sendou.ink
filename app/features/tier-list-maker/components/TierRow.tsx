@@ -4,6 +4,7 @@ import {
 	SortableContext,
 } from "@dnd-kit/sortable";
 import clsx from "clsx";
+import { useLayoutEffect, useRef } from "react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
@@ -12,6 +13,11 @@ import { ChevronDownIcon } from "~/components/icons/ChevronDown";
 import { ChevronUpIcon } from "~/components/icons/ChevronUp";
 import { TrashIcon } from "~/components/icons/Trash";
 import { useTierListState } from "../contexts/TierListContext";
+import {
+	TIER_NAME_FONT_SIZE_BREAKPOINTS,
+	TIER_NAME_FONT_SIZE_MIN,
+	TIER_NAME_MAX_LENGTH,
+} from "../tier-list-maker-constants";
 import type { TierListMakerTier } from "../tier-list-maker-schemas";
 import { tierListItemId } from "../tier-list-maker-utils";
 import { DraggableItem } from "./DraggableItem";
@@ -32,6 +38,9 @@ export function TierRow({ tier }: TierRowProps) {
 		handleMoveTierDown,
 		showTierHeaders,
 		screenshotMode,
+		tierLabelWidth,
+		registerTierLabelWidth,
+		unregisterTierLabelWidth,
 	} = useTierListState();
 
 	const items = getItemsInTier(tier.id);
@@ -39,12 +48,26 @@ export function TierRow({ tier }: TierRowProps) {
 	const { setNodeRef, isOver } = useDroppable({
 		id: tier.id,
 	});
+	const labelRef = useRef<HTMLButtonElement>(null);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: tier.name impacts width
+	useLayoutEffect(() => {
+		if (labelRef.current) {
+			// Temporarily remove width constraint to measure natural width
+			const currentWidth = labelRef.current.style.width;
+			labelRef.current.style.width = "auto";
+			const naturalWidth = labelRef.current.scrollWidth;
+			labelRef.current.style.width = currentWidth;
+			registerTierLabelWidth(tier.id, naturalWidth);
+		}
+	}, [tier.id, tier.name, registerTierLabelWidth]);
 
 	const tierIndex = state.tiers.findIndex((t) => t.id === tier.id);
 	const isFirstTier = tierIndex === 0;
 	const isLastTier = tierIndex === state.tiers.length - 1;
 
 	const handleDelete = () => {
+		unregisterTierLabelWidth(tier.id);
 		handleRemoveTier(tier.id);
 	};
 
@@ -54,10 +77,19 @@ export function TierRow({ tier }: TierRowProps) {
 				<SendouPopover
 					trigger={
 						<Button
+							ref={labelRef}
 							className={styles.tierLabel}
-							style={{ backgroundColor: tier.color }}
+							style={{
+								backgroundColor: tier.color,
+								width: tierLabelWidth,
+							}}
 						>
-							<span className={styles.tierName}>{tier.name}</span>
+							<span
+								className={styles.tierName}
+								style={{ fontSize: tierNameFontSize(tier.name) }}
+							>
+								{tier.name}
+							</span>
 						</Button>
 					}
 				>
@@ -73,7 +105,7 @@ export function TierRow({ tier }: TierRowProps) {
 								value={tier.name}
 								onChange={(e) => handleRenameTier(tier.id, e.target.value)}
 								className={styles.nameInput}
-								maxLength={10}
+								maxLength={TIER_NAME_MAX_LENGTH}
 							/>
 							<input
 								type="color"
@@ -146,4 +178,14 @@ export function TierRow({ tier }: TierRowProps) {
 			) : null}
 		</div>
 	);
+}
+
+function tierNameFontSize(name: string) {
+	const length = name.length;
+	for (const breakpoint of TIER_NAME_FONT_SIZE_BREAKPOINTS) {
+		if (length <= breakpoint.maxLength) {
+			return breakpoint.fontSize;
+		}
+	}
+	return TIER_NAME_FONT_SIZE_MIN;
 }

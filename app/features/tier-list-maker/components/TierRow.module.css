@@ -24,8 +24,11 @@
 }
 
 .tierName {
-	font-size: var(--fonts-xl);
 	color: var(--button-text);
+	line-height: 1.2;
+	max-width: 90px;
+	overflow-wrap: break-word;
+	word-wrap: break-word;
 }
 
 .popupContent {
@@ -36,7 +39,7 @@
 }
 
 .nameInput {
-	max-width: 125px;
+	width: 250px;
 	text-align: center;
 }
 
@@ -49,7 +52,8 @@
 	background: var(--bg-lighter-solid);
 	border: 2px dashed transparent;
 	border-radius: var(--rounded-sm) 0 0 var(--rounded-sm);
-	align-content: flex-start;
+	align-items: center;
+	align-content: center;
 	transition: all 0.2s;
 }
 
@@ -77,6 +81,7 @@
 	flex-direction: column;
 	gap: var(--s-1);
 	margin: auto;
+	height: 100%;
 }
 
 .arrowButton {
@@ -84,7 +89,7 @@
 	align-items: center;
 	justify-content: center;
 	width: 32px;
-	height: 32px;
+	height: 100%;
 	padding: var(--s-1);
 	background: var(--bg-lighter);
 	border: none;
