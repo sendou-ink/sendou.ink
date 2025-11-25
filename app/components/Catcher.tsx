@@ -4,7 +4,7 @@ import {
 	useRouteError,
 } from "@remix-run/react";
 import * as React from "react";
-import { useCopyToClipboard, useLocation } from "react-use";
+import { useLocation } from "react-use";
 import { useUser } from "~/features/auth/core/user";
 import {
 	ERROR_GIRL_IMAGE_PATH,
@@ -13,6 +13,7 @@ import {
 } from "~/utils/urls";
 import { SendouButton } from "./elements/Button";
 import { Image } from "./Image";
+import { RefreshArrowsIcon } from "./icons/RefreshArrows";
 import { Main } from "./Main";
 
 export function Catcher() {
@@ -20,7 +21,6 @@ export function Catcher() {
 	const user = useUser();
 	const { revalidate } = useRevalidator();
 	const location = useLocation();
-	const [, copyToClipboard] = useCopyToClipboard();
 
 	// refresh user data to make sure it's up to date (e.g. cookie might have been removed, let's show the prompt to log back in)
 	React.useEffect(() => {
@@ -28,6 +28,28 @@ export function Catcher() {
 
 		revalidate();
 	}, [revalidate, error]);
+
+	const isNetworkError =
+		error instanceof Error &&
+		(error.message.includes("Failed to fetch") ||
+			error.message.includes("NetworkError") ||
+			error.message.includes("Load failed"));
+
+	if (isNetworkError) {
+		return (
+			<Main>
+				<ErrorGirlImage />
+				<h2 className="text-center">Connection error</h2>
+				<p className="text-center">
+					The server was temporarily unavailable. This is usually a brief
+					network issue.
+				</p>
+				<div className="mt-4 stack sm items-center">
+					<RefreshPageButton />
+				</div>
+			</Main>
+		);
+	}
 
 	if (!isRouteErrorResponse(error)) {
 		const errorText = (() => {
@@ -38,26 +60,19 @@ export function Catcher() {
 
 		return (
 			<Main>
-				<Image
-					className="m-0-auto"
-					path={ERROR_GIRL_IMAGE_PATH}
-					width={292}
-					height={243.5}
-					alt=""
-				/>
+				<ErrorGirlImage />
 				<h2 className="text-center">Error happened</h2>
 				<p className="text-center">
-					It seems like you encountered a bug. Sorry about that! Please share
-					the diagnostics message below as well as other details (your browser?
-					what were you doing?) on{" "}
-					<a href={SENDOU_INK_DISCORD_URL}>our Discord</a> so it can be fixed.
+					There was an unexpected error. If this keeps happening, please report
+					it on <a href={SENDOU_INK_DISCORD_URL}>our Discord</a> so it can be
+					fixed. Include the error message below.
 				</p>
 				{errorText ? (
 					<div className="mt-4 stack sm items-center">
 						<textarea readOnly defaultValue={errorText} />
-						<SendouButton onPress={() => copyToClipboard(errorText)}>
-							Copy to clipboard
-						</SendouButton>
+						<div className="mt-2">
+							<RefreshPageButton />
+						</div>
 					</div>
 				) : null}
 			</Main>
@@ -126,5 +141,28 @@ function GetHelp() {
 			If you need assistance you can ask for help on{" "}
 			<a href={SENDOU_INK_DISCORD_URL}>our Discord</a>
 		</p>
+	);
+}
+
+function ErrorGirlImage() {
+	return (
+		<Image
+			className="m-0-auto"
+			path={ERROR_GIRL_IMAGE_PATH}
+			width={292}
+			height={243.5}
+			alt=""
+		/>
+	);
+}
+
+function RefreshPageButton() {
+	return (
+		<SendouButton
+			onPress={() => window.location.reload()}
+			icon={<RefreshArrowsIcon />}
+		>
+			Refresh page
+		</SendouButton>
 	);
 }

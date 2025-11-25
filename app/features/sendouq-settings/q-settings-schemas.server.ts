@@ -1,6 +1,5 @@
 import { z } from "zod/v4";
 import { languagesUnified } from "~/modules/i18n/config";
-import { modesShort } from "~/modules/in-game-lists/modes";
 import {
 	_action,
 	checkboxValueToBoolean,
@@ -27,27 +26,19 @@ export const settingsActionSchema = z.union([
 					modes: z.array(z.object({ mode: modeShort, preference })),
 					pool: z.array(
 						z.object({
-							stages: z.array(stageId).length(AMOUNT_OF_MAPS_IN_POOL_PER_MODE),
+							stages: z.array(stageId).max(AMOUNT_OF_MAPS_IN_POOL_PER_MODE),
 							mode: modeShort,
 						}),
 					),
 				})
-				.refine((val) =>
-					val.pool.every((pool) => {
-						const mp = val.modes.find((m) => m.mode === pool.mode);
-						return mp?.preference !== "AVOID";
-					}, "Can't have map pool for a mode that was avoided"),
-				)
-				.refine((val) => {
-					for (const mode of modesShort) {
-						const mp = val.modes.find((m) => m.mode === mode);
-						if (mp?.preference === "AVOID") continue;
-
-						if (!val.pool.some((p) => p.mode === mode)) return false;
-					}
-
-					return true;
-				}, "Pool has to be picked for each mode that wasn't avoided"),
+				.refine(
+					(val) =>
+						val.pool.every((pool) => {
+							const mp = val.modes.find((m) => m.mode === pool.mode);
+							return mp?.preference !== "AVOID";
+						}),
+					"Can't have map pool for a mode that was avoided",
+				),
 		),
 	}),
 	z.object({

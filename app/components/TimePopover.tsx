@@ -75,7 +75,7 @@ export default function TimePopover({
 							{formatTime(time, {
 								timeZoneName: "long",
 								hour: "numeric",
-								minute: "numeric",
+								minute: "2-digit",
 							})}
 						</div>
 						<SendouButton

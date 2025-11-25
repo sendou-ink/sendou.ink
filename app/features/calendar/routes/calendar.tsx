@@ -304,16 +304,8 @@ function ClockHeader({
 						"text-lighter italic": isInThePast,
 					})}
 				>
-					{formatTime(date, {
-						hour: "numeric",
-						minute: "2-digit",
-					})}
-					{toDate
-						? ` - ${formatTime(toDate, {
-								hour: "numeric",
-								minute: "2-digit",
-							})}`
-						: ""}
+					{formatTime(date)}
+					{toDate ? ` - ${formatTime(toDate)}` : ""}
 				</span>
 				{hiddenEventsCount > 0 ? (
 					<SendouButton

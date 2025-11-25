@@ -74,8 +74,6 @@
 	display: flex;
 	justify-content: space-between;
 	padding: var(--s-2);
-
-	/* TODO: add fallback from Firefox */
 	backdrop-filter: blur(5px);
 	background: rgb(0 0 0 / 40%);
 	border-start-end-radius: var(--rounded);

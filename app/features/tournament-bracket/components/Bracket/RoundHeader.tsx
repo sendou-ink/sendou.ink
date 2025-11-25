@@ -92,11 +92,7 @@ function Deadline({ roundId, bestOf }: { roundId: number; bestOf: number }) {
 				"text-warning": isMounted && deadline < new Date(),
 			})}
 		>
-			DL{" "}
-			{formatTime(deadline, {
-				hour: "numeric",
-				minute: "numeric",
-			})}
+			DL {formatTime(deadline)}
 		</div>
 	);
 }

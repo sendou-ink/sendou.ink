@@ -163,10 +163,7 @@ function InfoText() {
 			<span className="text-xxs">
 				{isMounted
 					? t("q:looking.lastUpdatedAt", {
-							time: formatTime(new Date(data.lastUpdated), {
-								hour: "2-digit",
-								minute: "2-digit",
-							}),
+							time: formatTime(new Date(data.lastUpdated)),
 						})
 					: "Placeholder"}
 			</span>

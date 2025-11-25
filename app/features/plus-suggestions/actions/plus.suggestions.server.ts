@@ -33,27 +33,25 @@ export const action: ActionFunction = async ({ request }) => {
 				await PlusSuggestionRepository.findAllByMonth(votingMonthYear);
 
 			const suggestionToDelete = suggestions.find((suggestion) =>
-				suggestion.suggestions.some(
-					(suggestion) => suggestion.id === data.suggestionId,
-				),
+				suggestion.entries.some((entry) => entry.id === data.suggestionId),
 			);
 			invariant(suggestionToDelete);
-			const subSuggestion = suggestionToDelete.suggestions.find(
-				(suggestion) => suggestion.id === data.suggestionId,
+			const entryToDelete = suggestionToDelete.entries.find(
+				(entry) => entry.id === data.suggestionId,
 			);
-			invariant(subSuggestion);
+			invariant(entryToDelete);
 
 			errorToastIfFalsy(
 				canDeleteComment({
 					user,
-					author: subSuggestion.author,
+					author: entryToDelete.author,
 					suggestionId: data.suggestionId,
 					suggestions,
 				}),
 				"No permissions to delete this comment",
 			);
 
-			const suggestionHasComments = suggestionToDelete.suggestions.length > 1;
+			const suggestionHasComments = suggestionToDelete.entries.length > 1;
 
 			if (
 				suggestionHasComments &&

@@ -2,6 +2,7 @@ import type {
 	Expression,
 	ExpressionBuilder,
 	NotNull,
+	SqlBool,
 	Transaction,
 } from "kysely";
 import { sql } from "kysely";
@@ -38,15 +39,20 @@ import {
 import type { CalendarEvent } from "./calendar-types";
 import { calendarEventSorter } from "./calendar-utils";
 
-// TODO: convert from raw to using the "exists" function
-const hasBadge = sql<number> /* sql */`exists (
-  select
-    1
-  from
-    "CalendarEventBadge"
-  where
-    "CalendarEventBadge"."eventId" = "CalendarEventDate"."eventId"
-)`.as("hasBadge");
+function hasBadge(eb: ExpressionBuilder<DB, "CalendarEventDate">) {
+	return eb
+		.exists(
+			eb
+				.selectFrom("CalendarEventBadge")
+				.select("CalendarEventBadge.eventId")
+				.whereRef(
+					"CalendarEventBadge.eventId",
+					"=",
+					"CalendarEventDate.eventId",
+				),
+		)
+		.as("hasBadge");
+}
 
 const withMapPool = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
 	return jsonArrayFrom(
@@ -366,7 +372,7 @@ export async function findById(
 		)
 		.innerJoin("User", "CalendarEvent.authorId", "User.id")
 		.leftJoin("Tournament", "CalendarEvent.tournamentId", "Tournament.id")
-		.select(({ ref }) => [
+		.select((eb) => [
 			"CalendarEvent.name",
 			"CalendarEvent.description",
 			"CalendarEvent.discordInviteCode",
@@ -383,8 +389,8 @@ export async function findById(
 			"User.username",
 			"User.discordId",
 			"User.discordAvatar",
-			hasBadge,
-			tournamentOrganization(ref("CalendarEvent.organizationId")).as(
+			hasBadge(eb),
+			tournamentOrganization(eb.ref("CalendarEvent.organizationId")).as(
 				"organization",
 			),
 		])
@@ -423,7 +429,7 @@ export async function findRecentTournamentsByAuthorId(authorId: number) {
 }
 
 function tagsArray(args: {
-	hasBadge: number;
+	hasBadge: SqlBool;
 	tags?: Tables["CalendarEvent"]["tags"];
 	tournamentId: Tables["CalendarEvent"]["tournamentId"];
 }) {

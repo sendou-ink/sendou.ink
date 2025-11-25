@@ -1,9 +1,8 @@
 import { compareTwoTiers } from "~/features/mmr/mmr-utils";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
-	altWeaponIdToId,
 	mainWeaponIds,
-	weaponIdToAltId,
+	weaponIdToBaseWeaponId,
 } from "~/modules/in-game-lists/weapon-ids";
 import { assertUnreachable } from "~/utils/types";
 import type { LFGFilter } from "../lfg-types";
@@ -128,34 +127,14 @@ const checkMatchesSomeUserInPost = (
 	return false;
 };
 
-// TODO: could be written more clearly, fails in some edge cases like if "Hero Shot" was selected it won't find "Octo Shot"
 const weaponIdToRelated = (weaponSplId: MainWeaponId) => {
-	const idsSet = new Set<MainWeaponId>([weaponSplId]);
+	const result: MainWeaponId[] = [];
 
-	const reg = altWeaponIdToId.get(weaponSplId);
-	if (reg) {
-		idsSet.add(reg);
-	}
-
-	const alt = weaponIdToAltId.get(weaponSplId);
-	if (alt) {
-		for (const id of Array.isArray(alt) ? alt : [alt]) {
-			idsSet.add(id);
+	for (const id of mainWeaponIds) {
+		if (weaponIdToBaseWeaponId(id) === weaponIdToBaseWeaponId(weaponSplId)) {
+			result.push(id);
 		}
 	}
 
-	const finalIdsSet = new Set<MainWeaponId>(idsSet);
-	for (const id of idsSet) {
-		// alt kits
-		const maybeId1 = id - 1;
-		const maybeId2 = id + 1;
-
-		for (const maybeId of [maybeId1, maybeId2]) {
-			if (mainWeaponIds.includes(maybeId as MainWeaponId)) {
-				finalIdsSet.add(maybeId as MainWeaponId);
-			}
-		}
-	}
-
-	return Array.from(finalIdsSet);
+	return result;
 };

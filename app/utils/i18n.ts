@@ -1,4 +1,37 @@
+import type { Namespace } from "~/modules/i18n/resources.server";
 import { logger } from "./logger";
+import { assertType } from "./types";
+
+// note: cannot get from resources.server.ts directly, because that is a server-only file
+const ALL_NAMESPACES = [
+	"common",
+	"analyzer",
+	"badges",
+	"builds",
+	"calendar",
+	"contributions",
+	"faq",
+	"game-misc",
+	"gear",
+	"user",
+	"weapons",
+	"scrims",
+	"tournament",
+	"team",
+	"tier-list-maker",
+	"vods",
+	"art",
+	"q",
+	"lfg",
+	"org",
+	"front",
+] as const;
+assertType<Namespace, (typeof ALL_NAMESPACES)[number]>();
+assertType<(typeof ALL_NAMESPACES)[number], Namespace>();
+
+export function allI18nNamespaces() {
+	return [...ALL_NAMESPACES];
+}
 
 /**
  * Returns the localized display name for a given ISO country code using the specified language. If the country code is unknown or the function fails for othe reason, returns the country code itself as a fallback.

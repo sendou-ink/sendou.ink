@@ -47,8 +47,8 @@ import { getThemeSession } from "./features/theme/core/session.server";
 import { useIsMounted } from "./hooks/useIsMounted";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
 import i18next, { i18nCookie } from "./modules/i18n/i18next.server";
-import type { Namespace } from "./modules/i18n/resources.server";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
+import { allI18nNamespaces } from "./utils/i18n";
 import { isRevalidation, metaTags } from "./utils/remix";
 import { SUSPENDED_PAGE } from "./utils/urls";
 
@@ -147,8 +147,6 @@ function Document({
 	const navigate = useNavigate();
 	const locale = data?.locale ?? DEFAULT_LANGUAGE;
 
-	// TODO: re-enable after testing if it causes bug where JS is not loading on revisit
-	// useRevalidateOnRevisit();
 	useChangeLanguage(locale);
 	usePreloadTranslation();
 	useLoadingIndicator();
@@ -248,36 +246,9 @@ function useLoadingIndicator() {
 	);
 }
 
-// TODO: this should be an array if we can figure out how to make Typescript
-// enforce that it has every member of keyof CustomTypeOptions["resources"] without duplicating the type manually
-export const namespaceJsonsToPreloadObj: Record<Namespace, boolean> = {
-	common: true,
-	analyzer: true,
-	badges: true,
-	builds: true,
-	calendar: true,
-	contributions: true,
-	faq: true,
-	"game-misc": true,
-	gear: true,
-	user: true,
-	weapons: true,
-	scrims: true,
-	tournament: true,
-	team: true,
-	"tier-list-maker": true,
-	vods: true,
-	art: true,
-	q: true,
-	lfg: true,
-	org: true,
-	front: true,
-};
-const namespaceJsonsToPreload = Object.keys(namespaceJsonsToPreloadObj);
-
 function usePreloadTranslation() {
 	React.useEffect(() => {
-		void generalI18next.loadNamespaces(namespaceJsonsToPreload);
+		void generalI18next.loadNamespaces(allI18nNamespaces());
 	}, []);
 }
 

@@ -193,8 +193,6 @@ export function canAccessLohiEndpoint(request: Request) {
 	return request.headers.get(LOHI_TOKEN_HEADER_NAME) === process.env.LOHI_TOKEN;
 }
 
-// TODO: investigate better solution to toasts when middlewares land (current one has a problem of clearing search params)
-
 export function errorToastRedirect(message: string) {
 	return redirect(`?__error=${message}`);
 }

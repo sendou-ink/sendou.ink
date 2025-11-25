@@ -120,6 +120,7 @@
 	"looking.allTiers": "All tiers",
 	"looking.joinQPrompt": "Join the queue to find a group",
 	"looking.range.or": "or",
+	"looking.range.or.explanation": "You will be matched with a group whose average rank is one of these. Exact is not shown to avoid behavior where groups only play against tiers lower than themselves.",
 	"match.header": "Match #{{number}}",
 	"match.spInfo": "SP will be adjusted after both teams report the same result",
 	"match.dispute.button": "Dispute?",

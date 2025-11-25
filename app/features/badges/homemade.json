@@ -559,6 +559,10 @@
 		"displayName": "Junior's Draft",
 		"authorDiscordId": "118724226994667523"
 	},
+	"kitty": {
+		"displayName": "Kitty",
+		"authorDiscordId": "752582395076673577"
+	},
 	"krakenmarepoke": {
 		"displayName": "Gardevoir",
 		"authorDiscordId": "338806780446638082"
@@ -706,6 +710,10 @@
 	"minus-one-open": {
 		"displayName": "Minus One Open",
 		"authorDiscordId": "569271521776762896"
+	},
+	"mrgrizz": {
+		"displayName": "Salmon Workers",
+		"authorDiscordId": "345996252032401408"
 	},
 	"muchen": {
 		"displayName": "Bastard MÃ¼nchen",
@@ -1194,6 +1202,10 @@
 	"tonytonyc": {
 		"displayName": "Tony Tony Challenge",
 		"authorDiscordId": "338806780446638082"
+	},
+	"torneoes": {
+		"displayName": "PEÑA Tournament",
+		"authorDiscordId": "752582395076673577"
 	},
 	"tralalero": {
 		"displayName": "Tralalero Tralala",

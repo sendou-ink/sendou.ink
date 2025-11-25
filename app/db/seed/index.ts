@@ -57,14 +57,14 @@ import {
 	shoesGearIds,
 } from "~/modules/in-game-lists/gear-ids";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import { stagesObj as s, stageIds } from "~/modules/in-game-lists/stage-ids";
 import type {
 	AbilityType,
 	MainWeaponId,
+	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
-import { SENDOUQ_DEFAULT_MAPS } from "~/modules/tournament-map-list-generator/constants";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { nullFilledArray } from "~/utils/arrays";
 import {
@@ -90,6 +90,57 @@ import {
 	NZAP_TEST_ID,
 } from "./constants";
 import placements from "./placements.json";
+
+const SENDOUQ_DEFAULT_MAPS: Record<
+	ModeShort,
+	[StageId, StageId, StageId, StageId, StageId, StageId, StageId]
+> = {
+	TW: [
+		s.EELTAIL_ALLEY,
+		s.HAGGLEFISH_MARKET,
+		s.UNDERTOW_SPILLWAY,
+		s.WAHOO_WORLD,
+		s.UM_AMI_RUINS,
+		s.HUMPBACK_PUMP_TRACK,
+		s.ROBO_ROM_EN,
+	],
+	SZ: [
+		s.HAGGLEFISH_MARKET,
+		s.MAHI_MAHI_RESORT,
+		s.INKBLOT_ART_ACADEMY,
+		s.MAKOMART,
+		s.HUMPBACK_PUMP_TRACK,
+		s.CRABLEG_CAPITAL,
+		s.ROBO_ROM_EN,
+	],
+	TC: [
+		s.ROBO_ROM_EN,
+		s.EELTAIL_ALLEY,
+		s.UNDERTOW_SPILLWAY,
+		s.MUSEUM_D_ALFONSINO,
+		s.MAKOMART,
+		s.MANTA_MARIA,
+		s.SHIPSHAPE_CARGO_CO,
+	],
+	RM: [
+		s.SCORCH_GORGE,
+		s.HAGGLEFISH_MARKET,
+		s.UNDERTOW_SPILLWAY,
+		s.MUSEUM_D_ALFONSINO,
+		s.FLOUNDER_HEIGHTS,
+		s.CRABLEG_CAPITAL,
+		s.MINCEMEAT_METALWORKS,
+	],
+	CB: [
+		s.SCORCH_GORGE,
+		s.INKBLOT_ART_ACADEMY,
+		s.BRINEWATER_SPRINGS,
+		s.MANTA_MARIA,
+		s.HUMPBACK_PUMP_TRACK,
+		s.UM_AMI_RUINS,
+		s.ROBO_ROM_EN,
+	],
+};
 
 const calendarEventWithToToolsRegOpen = () =>
 	calendarEventWithToTools("PICNIC", true);

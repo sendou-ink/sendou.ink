@@ -15,7 +15,6 @@ test.describe("Tier List Maker", () => {
 		// Test that toggles are clickable (just verify they work)
 		await page.getByText("Allow duplicates").click();
 		await page.getByText("Show tier headers").click();
-		await page.getByText("Show arrow controls").click();
 		await page.getByText("Hide alt kits").click();
 		await page.getByText("Hide alt skins").click();
 

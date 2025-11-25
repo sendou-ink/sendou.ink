@@ -120,6 +120,7 @@
 	"looking.allTiers": "Все ранги",
 	"looking.joinQPrompt": "Присоединитесь к очереди, чтобы найти группу",
 	"looking.range.or": "или",
+	"looking.range.or.explanation": "",
 	"match.header": "Матч #{{number}}",
 	"match.spInfo": "SP будет изменено после того, как обе команды сообщат одинаковый счёт.",
 	"match.dispute.button": "Оспорить?",

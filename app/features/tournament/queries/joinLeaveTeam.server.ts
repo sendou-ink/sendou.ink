@@ -26,7 +26,6 @@ const deleteMemberStm = sql.prepare(/*sql*/ `
     and "userId" = @userId
 `);
 
-// TODO: if captain leaves don't delete but give captain to someone else
 export const joinTeam = sql.transaction(
 	({
 		previousTeamId,

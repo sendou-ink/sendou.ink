@@ -10,7 +10,6 @@ export function up(db) {
 		`create unique index calendar_event_custom_url_unique on "CalendarEvent"("customUrl")`,
 	).run();
 
-	// TODO: these should be FK's
 	db.prepare(`alter table "MapPoolMap" add "tournamentTeamId" integer`).run();
 	db.prepare(
 		`alter table "MapPoolMap" add "tieBreakerCalendarEventId" integer`,

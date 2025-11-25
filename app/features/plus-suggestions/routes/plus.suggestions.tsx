@@ -258,33 +258,33 @@ export function PlusSuggestionComments({
 	return (
 		<details open={defaultOpen} className="w-full">
 			<summary className="plus__view-comments-action">
-				Comments ({suggestion.suggestions.length})
+				Comments ({suggestion.entries.length})
 			</summary>
 			<div className="stack sm mt-2">
-				{suggestion.suggestions.map((suggestion) => {
+				{suggestion.entries.map((entry) => {
 					return (
-						<fieldset key={suggestion.id} className="plus__comment">
-							<legend>{suggestion.author.username}</legend>
-							{suggestion.text}
+						<fieldset key={entry.id} className="plus__comment">
+							<legend>{entry.author.username}</legend>
+							{entry.text}
 							<div className="stack horizontal xs items-center">
 								<span className="plus__comment-time">
 									<RelativeTime
 										timestamp={databaseTimestampToDate(
-											suggestion.createdAt,
+											entry.createdAt,
 										).getTime()}
 									>
-										{suggestion.createdAtRelative}
+										{entry.createdAtRelative}
 									</RelativeTime>
 								</span>
 								{deleteButtonArgs &&
 								canDeleteComment({
-									author: suggestion.author,
+									author: entry.author,
 									user: deleteButtonArgs.user,
-									suggestionId: suggestion.id,
+									suggestionId: entry.id,
 									suggestions: deleteButtonArgs.suggestions,
 								}) ? (
 									<CommentDeleteButton
-										suggestionId={suggestion.id}
+										suggestionId={entry.id}
 										tier={deleteButtonArgs.tier}
 										suggestedUsername={deleteButtonArgs.suggested.username}
 										isFirstSuggestion={

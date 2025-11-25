@@ -120,6 +120,7 @@
 	"looking.allTiers": "Tutti i tier",
 	"looking.joinQPrompt": "Unisciti alla coda o trova un gruppo",
 	"looking.range.or": "o",
+	"looking.range.or.explanation": "",
 	"match.header": "Match #{{number}}",
 	"match.spInfo": "Gli SP verranno sistemati una volta che entrambi i team riporteranno lo stesso punteggio",
 	"match.dispute.button": "Disputa?",
