@@ -96,6 +96,22 @@ export function useTimeFormat() {
 		return date.toLocaleDateString(i18n.language, options);
 	};
 
+	/** Same as `formatDateTime` but omits minutes when they are zero and AM/PM format is in use */
+	const formatDateTimeSmartMinutes = (
+		date: Date,
+		options?: Intl.DateTimeFormatOptions,
+	) => {
+		const showMinutes =
+			date.getMinutes() !== 0 ||
+			clockFormat === "24h" ||
+			i18n.language !== "en";
+
+		return formatDateTime(date, {
+			...options,
+			minute: showMinutes ? "numeric" : undefined,
+		});
+	};
+
 	const formatDistanceToNow = (
 		date: Parameters<typeof formatDistanceToNowUtil>[0],
 		options?: Omit<Parameters<typeof formatDistanceToNowUtil>[1], "language">,
@@ -106,7 +122,13 @@ export function useTimeFormat() {
 		});
 	};
 
-	return { formatDateTime, formatTime, formatDate, formatDistanceToNow };
+	return {
+		formatDateTime,
+		formatTime,
+		formatDate,
+		formatDateTimeSmartMinutes,
+		formatDistanceToNow,
+	};
 }
 
 // Example: "09:00" -> "9:00"

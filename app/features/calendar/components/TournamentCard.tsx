@@ -26,7 +26,7 @@ export function TournamentCard({
 	withRelativeTime?: boolean;
 }) {
 	const isMounted = useIsMounted();
-	const { formatDateTime, formatDistanceToNow } = useTimeFormat();
+	const { formatDateTimeSmartMinutes, formatDistanceToNow } = useTimeFormat();
 
 	const isShowcase = tournament.type === "showcase";
 	const isCalendar = tournament.type === "calendar";
@@ -44,12 +44,11 @@ export function TournamentCard({
 			});
 		}
 
-		return formatDateTime(date, {
+		return formatDateTimeSmartMinutes(date, {
 			month: "short",
 			day: "numeric",
 			hour: "numeric",
 			weekday: "short",
-			minute: date.getMinutes() !== 0 ? "numeric" : undefined,
 		});
 	};
 
