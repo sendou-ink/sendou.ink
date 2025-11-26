@@ -7,8 +7,12 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { useSearchParams } from "@remix-run/react";
 import JSONCrush from "jsoncrush";
 import * as React from "react";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
-import { modesShort } from "~/modules/in-game-lists/modes";
+import { z } from "zod/v4";
+import {
+	useSearchParamState,
+	useSearchParamStateEncoder,
+} from "~/hooks/useSearchParamState";
+import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import {
 	mainWeaponIds,
@@ -17,6 +21,7 @@ import {
 	weaponIdToType,
 } from "~/modules/in-game-lists/weapon-ids";
 import { assertUnreachable } from "~/utils/types";
+import { modeShort, safeJSONParse } from "~/utils/zod";
 import { DEFAULT_TIERS } from "../tier-list-maker-constants";
 import {
 	type TierListItem,
@@ -69,6 +74,17 @@ export function useTierList() {
 		name: "title",
 		defaultValue: "",
 		revive: (value) => value,
+	});
+
+	const [selectedModes, setSelectedModes] = useSearchParamStateEncoder({
+		name: "modes",
+		defaultValue: rankedModesShort,
+		revive: (value) =>
+			z
+				.preprocess(safeJSONParse, z.array(modeShort))
+				.catch(() => rankedModesShort)
+				.parse(value),
+		encode: JSON.stringify,
 	});
 
 	const parseItemFromId = (id: string): TierListItem | null => {
@@ -319,7 +335,9 @@ export function useTierList() {
 				const combinations: string[] = [];
 				for (const stageId of stageIds) {
 					for (const mode of modesShort) {
-						combinations.push(`${stageId}-${mode}`);
+						if (selectedModes.includes(mode)) {
+							combinations.push(`${stageId}-${mode}`);
+						}
 					}
 				}
 				return combinations;
@@ -429,6 +447,8 @@ export function useTierList() {
 		setShowTierHeaders,
 		title,
 		setTitle,
+		selectedModes,
+		setSelectedModes,
 	};
 }
 

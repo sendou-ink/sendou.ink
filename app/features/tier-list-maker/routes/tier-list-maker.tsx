@@ -24,6 +24,7 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { ModeImage } from "~/components/Image";
 import { DownloadIcon } from "~/components/icons/Download";
 import { PlusIcon } from "~/components/icons/Plus";
 import { RefreshIcon } from "~/components/icons/Refresh";
@@ -31,6 +32,7 @@ import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { useUser } from "~/features/auth/core/user";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { modesShort } from "~/modules/in-game-lists/modes";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, TIER_LIST_MAKER_URL } from "~/utils/urls";
@@ -106,6 +108,8 @@ function TierListMakerContent() {
 		setTitle,
 		screenshotMode,
 		setScreenshotMode,
+		selectedModes,
+		setSelectedModes,
 	} = useTierListState();
 
 	const sensors = useSensors(
@@ -269,7 +273,31 @@ function TierListMakerContent() {
 					</SendouTabPanel>
 
 					<SendouTabPanel id="stage-mode">
-						<ItemPool />
+						<div className="stack md">
+							<ItemPool />
+							<div className={clsx(styles.filters, styles.modeFilters)}>
+								{modesShort.map((mode) => {
+									const isSelected = selectedModes.includes(mode);
+									return (
+										<SendouSwitch
+											key={mode}
+											isSelected={isSelected}
+											onChange={(selected) => {
+												if (selected) {
+													setSelectedModes([...selectedModes, mode]);
+												} else {
+													setSelectedModes(
+														selectedModes.filter((m) => m !== mode),
+													);
+												}
+											}}
+										>
+											<ModeImage mode={mode} size={32} />
+										</SendouSwitch>
+									);
+								})}
+							</div>
+						</div>
 					</SendouTabPanel>
 				</SendouTabs>
 

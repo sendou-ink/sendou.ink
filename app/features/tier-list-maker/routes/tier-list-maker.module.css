@@ -25,6 +25,12 @@
 	gap: var(--s-4);
 }
 
+.modeFilters {
+	column-gap: var(--s-8);
+	row-gap: var(--s-2);
+	flex-wrap: wrap;
+}
+
 .titleInput {
 	width: 100%;
 	padding: 0 var(--s-2) var(--s-2) var(--s-2);
