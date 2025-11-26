@@ -2,10 +2,9 @@ import { type LoaderFunctionArgs, redirect } from "@remix-run/node";
 import { getUser } from "~/features/auth/core/user.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import { parseParams } from "~/utils/remix.server";
-import { assertUnreachable } from "~/utils/types";
 import { tournamentRegisterPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
-import { findSubsByTournamentId } from "../queries/findSubsByTournamentId.server";
+import * as TournamentSubRepository from "../TournamentSubRepository.server";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const user = await getUser(request);
@@ -19,29 +18,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		throw redirect(tournamentRegisterPage(tournamentId));
 	}
 
-	const subs = findSubsByTournamentId({
+	const subs = await TournamentSubRepository.findSubsVisibleToUser({
 		tournamentId,
 		userId: user?.id,
-		// biome-ignore lint/suspicious/useIterableCallbackReturn: Biome 2.3.1 upgrade
-	}).filter((sub) => {
-		if (sub.visibility === "ALL") return true;
-
-		const userPlusTier = user?.plusTier ?? 4;
-
-		switch (sub.visibility) {
-			case "+1": {
-				return userPlusTier === 1;
-			}
-			case "+2": {
-				return userPlusTier <= 2;
-			}
-			case "+3": {
-				return userPlusTier <= 3;
-			}
-			default: {
-				assertUnreachable(sub.visibility);
-			}
-		}
 	});
 
 	return {

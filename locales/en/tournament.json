@@ -131,6 +131,8 @@
 	"subs.message.header": "Message",
 	"subs.visibility.header": "Visibility",
 	"subs.visibility.everyone": "Everyone",
+	"subs.defaultsNote": "Voice chat and weapon pool defaults can be edited on",
+	"subs.defaultsPage": "SendouQ settings page",
 	"progression.error.PLACEMENTS_PARSE_ERROR": "Error parsing placements",
 	"progression.error.NOT_RESOLVING_WINNER": "Progression does not resolve winner",
 	"progression.error.SAME_PLACEMENT_TO_MULTIPLE_BRACKETS": "Same placement leads to multiple brackets",

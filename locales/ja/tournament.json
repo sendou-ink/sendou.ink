@@ -127,6 +127,8 @@
 	"subs.message.header": "メッセージ",
 	"subs.visibility.header": "公開範囲",
 	"subs.visibility.everyone": "すべてのユーザー",
+	"subs.defaultsNote": "",
+	"subs.defaultsPage": "",
 	"progression.error.PLACEMENTS_PARSE_ERROR": "順位のパースに失敗しました",
 	"progression.error.NOT_RESOLVING_WINNER": "現在の進行から勝者は導けません",
 	"progression.error.SAME_PLACEMENT_TO_MULTIPLE_BRACKETS": "同じ順位はブラケットを多数作ります",

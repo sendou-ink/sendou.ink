@@ -313,6 +313,35 @@ export function findBannedStatusByUserId(userId: number) {
 		.executeTakeFirst();
 }
 
+export async function findSubDefaultsByUserId(userId: number) {
+	const user = await db
+		.selectFrom("User")
+		.select(["User.vc", "User.qWeaponPool", "User.lastSubMessage"])
+		.where("User.id", "=", userId)
+		.executeTakeFirst();
+
+	if (!user) return null;
+
+	const vcToCanVc = (vc: "YES" | "NO" | "LISTEN_ONLY"): 0 | 1 | 2 => {
+		if (vc === "YES") return 1;
+		if (vc === "NO") return 0;
+		return 2;
+	};
+
+	const qWeaponPool = user.qWeaponPool ?? [];
+
+	return {
+		canVc: vcToCanVc(user.vc),
+		bestWeapons: qWeaponPool
+			.filter((w) => w.isFavorite === 1)
+			.map((w) => w.weaponSplId),
+		okWeapons: qWeaponPool
+			.filter((w) => w.isFavorite === 0)
+			.map((w) => w.weaponSplId),
+		message: user.lastSubMessage,
+	};
+}
+
 export async function findLeanById(id: number) {
 	const user = await db
 		.selectFrom("User")

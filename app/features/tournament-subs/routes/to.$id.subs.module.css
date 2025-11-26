@@ -1,4 +1,12 @@
-.sub__section {
+.listPageContainer {
+	max-width: 52rem;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-8);
+	margin-inline: auto;
+}
+
+.section {
 	display: grid;
 	grid-template-columns: max-content 1fr;
 	grid-template-areas:
@@ -14,17 +22,17 @@
 	column-gap: var(--s-2-5);
 }
 
-.sub__section__avatar {
+.sectionAvatar {
 	grid-area: avatar;
 	align-self: center;
 }
 
-.sub__section__name {
+.sectionName {
 	grid-area: name;
 	align-self: flex-end;
 }
 
-.sub__section__info {
+.sectionInfo {
 	grid-area: info;
 	font-size: var(--fonts-sm);
 	gap: var(--s-2);
@@ -35,59 +43,59 @@
 	align-items: center;
 }
 
-.sub__section__info__vc {
+.sectionInfoVc {
 	display: flex;
 	align-items: center;
 	gap: var(--s-0-5);
 }
 
-.sub__section__info__vc > svg {
+.sectionInfoVc > svg {
 	width: 18px;
 }
 
-.sub__section__message {
+.sectionMessage {
 	grid-area: message;
 	font-size: var(--fonts-sm);
 	padding-block-start: var(--s-4);
 	white-space: pre-wrap;
 }
 
-.sub__section__weapon-text {
+.sectionWeaponText {
 	font-weight: var(--semi-bold);
 	font-size: var(--fonts-xs);
 	align-self: center;
 }
 
-.sub__section__weapon-top-text {
+.sectionWeaponTopText {
 	grid-area: weapon-top-text;
 }
 
-.sub__section__weapon-bottom-text {
+.sectionWeaponBottomText {
 	grid-area: weapon-bottom-text;
 }
 
-.sub__section__weapon-images {
+.sectionWeaponImages {
 	display: flex;
 	gap: var(--s-1);
 	width: 11rem;
 	align-items: center;
 }
 
-.sub__section__weapon-top-images {
+.sectionWeaponTopImages {
 	grid-area: weapon-top-images;
 }
 
-.sub__section__weapon-bottom-images {
+.sectionWeaponBottomImages {
 	grid-area: weapon-bottom-images;
 }
 
-.sub__section__spacer {
+.sectionSpacer {
 	grid-area: spacer;
 	height: 18px;
 }
 
 @media screen and (min-width: 640px) {
-	.sub__section {
+	.section {
 		grid-template-columns: max-content 1fr max-content max-content;
 		grid-template-areas:
 			"avatar name weapon-top-text weapon-top-images"
@@ -95,17 +103,7 @@
 			"message message message message";
 	}
 
-	.sub__section__spacer {
+	.sectionSpacer {
 		display: none;
 	}
-}
-
-.sub__selected-weapon {
-	padding: var(--s-2);
-	border-radius: 100%;
-	background-color: var(--bg-lighter);
-}
-
-.sub__weapon-pool {
-	width: 20rem;
 }

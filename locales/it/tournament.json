@@ -133,6 +133,8 @@
 	"subs.message.header": "Messaggio",
 	"subs.visibility.header": "Visibilità",
 	"subs.visibility.everyone": "Tutti",
+	"subs.defaultsNote": "",
+	"subs.defaultsPage": "",
 	"progression.error.PLACEMENTS_PARSE_ERROR": "Errore nell'analisi delle posizioni",
 	"progression.error.NOT_RESOLVING_WINNER": "La progressione non risolve al vincitore",
 	"progression.error.SAME_PLACEMENT_TO_MULTIPLE_BRACKETS": "La stessa posizione porta a più bracket",
