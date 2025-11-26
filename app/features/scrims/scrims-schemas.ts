@@ -124,6 +124,15 @@ export const scrimsActionSchema = z.union([
 
 export const MAX_SCRIM_POST_TEXT_LENGTH = 500;
 
+export const RANGE_END_OPTIONS = [
+	"+30min",
+	"+1hour",
+	"+1.5hours",
+	"+2hours",
+	"+2.5hours",
+	"+3hours",
+] as const;
+
 export const scrimsNewActionSchema = z
 	.object({
 		at: z.preprocess(
@@ -152,32 +161,11 @@ export const scrimsNewActionSchema = z
 				),
 		),
 		rangeEnd: z
-			.preprocess(date, z.date())
-			.nullish()
-			.refine(
-				(date) => {
-					if (!date) return true;
-
-					if (date < sub(new Date(), { days: 1 })) return false;
-
-					return true;
-				},
-				{
-					message: "Date can not be in the past",
-				},
+			.preprocess(
+				(val) => (val === "" ? null : val),
+				z.enum(RANGE_END_OPTIONS).nullable(),
 			)
-			.refine(
-				(date) => {
-					if (!date) return true;
-
-					if (date > add(new Date(), { days: 15 })) return false;
-
-					return true;
-				},
-				{
-					message: "Date can not be more than 2 weeks in the future",
-				},
-			),
+			.catch(null),
 		baseVisibility: associationIdentifierSchema,
 		notFoundVisibility: z.object({
 			at: z
@@ -255,26 +243,6 @@ export const scrimsNewActionSchema = z
 			ctx.addIssue({
 				path: ["notFoundVisibility"],
 				message: "Can not be set if looking for scrim now",
-				code: z.ZodIssueCode.custom,
-			});
-		}
-
-		if (post.rangeEnd && post.rangeEnd <= post.at) {
-			ctx.addIssue({
-				path: ["rangeEnd"],
-				message: "End time must be after start time",
-				code: z.ZodIssueCode.custom,
-			});
-		}
-
-		if (
-			post.rangeEnd &&
-			post.rangeEnd.getTime() - post.at.getTime() > SCRIM.MAX_TIME_RANGE_MS
-		) {
-			ctx.addIssue({
-				path: ["rangeEnd"],
-				message:
-					"Time range can not be more than 3 hours. Make separate posts instead",
 				code: z.ZodIssueCode.custom,
 			});
 		}

@@ -13,6 +13,7 @@ import {
 	errorToastIfFalsy,
 	parseRequestPayload,
 } from "~/utils/remix.server";
+import { assertUnreachable } from "~/utils/types";
 import { scrimsPage } from "~/utils/urls";
 import * as QRepository from "../../sendouq/QRepository.server";
 import * as TeamRepository from "../../team/TeamRepository.server";
@@ -21,6 +22,7 @@ import { SCRIM } from "../scrims-constants";
 import {
 	type fromSchema,
 	type newRequestSchema,
+	type RANGE_END_OPTIONS,
 	scrimsNewActionSchema,
 } from "../scrims-schemas";
 import { serializeLutiDiv } from "../scrims-utils";
@@ -49,9 +51,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		}
 	}
 
+	const rangeEndDate = data.rangeEnd
+		? resolveRangeEndToDate(data.at, data.rangeEnd)
+		: null;
+
 	await ScrimPostRepository.insert({
 		at: dateToDatabaseTimestamp(data.at),
-		rangeEnd: data.rangeEnd ? dateToDatabaseTimestamp(data.rangeEnd) : null,
+		rangeEnd: rangeEndDate ? dateToDatabaseTimestamp(rangeEndDate) : null,
 		maxDiv: data.divs ? serializeLutiDiv(data.divs.max!) : null,
 		minDiv: data.divs ? serializeLutiDiv(data.divs.min!) : null,
 		text: data.postText,
@@ -184,4 +190,27 @@ async function validatePickupAllUnbanned(userIds: number[]) {
 		: {
 				error: "Pickup includes banned users.",
 			};
+}
+
+function resolveRangeEndToDate(
+	startDate: Date,
+	rangeEnd: (typeof RANGE_END_OPTIONS)[number],
+): Date {
+	switch (rangeEnd) {
+		case "+30min":
+			return add(startDate, { minutes: 30 });
+		case "+1hour":
+			return add(startDate, { hours: 1 });
+		case "+1.5hours":
+			return add(startDate, { hours: 1, minutes: 30 });
+		case "+2hours":
+			return add(startDate, { hours: 2 });
+		case "+2.5hours":
+			return add(startDate, { hours: 2, minutes: 30 });
+		case "+3hours":
+			return add(startDate, { hours: 3 });
+		default: {
+			assertUnreachable(rangeEnd);
+		}
+	}
 }

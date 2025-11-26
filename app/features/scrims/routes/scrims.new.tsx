@@ -21,6 +21,7 @@ import { loader, type ScrimsNewLoaderData } from "../loaders/scrims.new.server";
 import { SCRIM } from "../scrims-constants";
 import {
 	MAX_SCRIM_POST_TEXT_LENGTH,
+	RANGE_END_OPTIONS,
 	scrimsNewActionSchema,
 } from "../scrims-schemas";
 export { loader, action };
@@ -69,16 +70,27 @@ export default function NewScrimPage() {
 				<WithFormField usersTeams={data.teams} />
 
 				<DateFormField<FormFields>
+					size="medium"
 					label={t("scrims:forms.when.title")}
 					name="at"
 					bottomText={t("scrims:forms.when.explanation")}
 					granularity="minute"
 				/>
-				<DateFormField<FormFields>
+				<SelectFormField<FormFields>
+					size="medium"
 					label={t("scrims:forms.rangeEnd.title")}
 					name="rangeEnd"
 					bottomText={t("scrims:forms.rangeEnd.explanation")}
-					granularity="minute"
+					values={[
+						{
+							value: "",
+							label: t("scrims:forms.rangeEnd.notFlexible"),
+						},
+						...RANGE_END_OPTIONS.map((option) => ({
+							value: option,
+							label: t(`scrims:forms.rangeEnd.${option}`),
+						})),
+					]}
 				/>
 
 				<BaseVisibilityFormField associations={data.associations} />
