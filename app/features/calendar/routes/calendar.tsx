@@ -119,6 +119,7 @@ export default function CalendarPage() {
 						key={`${date.month}-${date.day}`}
 						date={date.day}
 						month={date.month}
+						year={date.year}
 						eventTimes={data.eventTimes.filter((event) => {
 							const eventDate = new Date(event.at);
 
@@ -217,17 +218,19 @@ function CalendarDatePicker({
 function DayEventsColumn({
 	date,
 	month,
+	year,
 	eventTimes,
 }: {
 	date: number;
 	month: number;
+	year: number;
 	eventTimes: CalendarLoaderData["eventTimes"];
 }) {
 	const eventTimesCollapsed = useCollapsableEvents(eventTimes);
 
 	return (
 		<div>
-			<DayHeader date={date} month={month} />
+			<DayHeader date={date} month={month} year={year} />
 			<div className={styles.dayEvents}>
 				{eventTimesCollapsed.map((eventTime, i) => {
 					return (
@@ -251,10 +254,10 @@ function DayEventsColumn({
 	);
 }
 
-function DayHeader(props: { date: number; month: number }) {
+function DayHeader(props: { date: number; month: number; year: number }) {
 	const { formatDate } = useTimeFormat();
 
-	const date = new Date(new Date().getFullYear(), props.month, props.date);
+	const date = new Date(props.year, props.month, props.date);
 	const isToday = date.toDateString() === new Date().toDateString();
 
 	return (
