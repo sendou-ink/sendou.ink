@@ -6,7 +6,7 @@
 	"tournament_two": "",
 	"tournament_other": "מוענק עבור ניצחון {{tournament}} (×{{count}})",
 	"forYourEvent": "תג לאירוע שלכם?",
-	"managedBy": "מנוהל על ידי {{users}}",
+	"managedBy": "מנוהל על ידי <0></0>",
 	"madeBy": "",
 	"own.divider": "",
 	"other.divider": "",

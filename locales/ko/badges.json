@@ -3,7 +3,7 @@
 	"patreon+": "Patreon에서 sendou.ink Supporter+",
 	"xp": "{{xpText}} 달성 기념",
 	"forYourEvent": "이벤트에 배지를 원하나요?",
-	"managedBy": "{{users}}가 관리",
+	"managedBy": "<0></0>가 관리",
 	"madeBy": "",
 	"own.divider": "",
 	"other.divider": "",
