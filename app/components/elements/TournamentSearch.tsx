@@ -33,7 +33,7 @@ type TournamentSearchItem = NonNullable<
 >["tournaments"][number];
 
 interface TournamentSearchProps<T extends object>
-	extends Omit<SelectProps<T>, "children"> {
+	extends Omit<SelectProps<T>, "children" | "onChange"> {
 	name?: string;
 	label?: string;
 	bottomText?: string;

@@ -30,7 +30,7 @@ import userSearchStyles from "./UserSearch.module.css";
 type UserSearchUserItem = NonNullable<UserSearchLoaderData>["users"][number];
 
 interface UserSearchProps<T extends object>
-	extends Omit<SelectProps<T>, "children"> {
+	extends Omit<SelectProps<T>, "children" | "onChange"> {
 	name?: string;
 	label?: string;
 	bottomText?: string;
