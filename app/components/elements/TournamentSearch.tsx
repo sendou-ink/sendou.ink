@@ -39,7 +39,7 @@ interface TournamentSearchProps<T extends object>
 	bottomText?: string;
 	errorText?: string;
 	initialTournamentId?: number;
-	onChange?: (tournament: TournamentSearchItem) => void;
+	onChange?: (tournament: TournamentSearchItem | null) => void;
 }
 
 export const TournamentSearch = React.forwardRef(function TournamentSearch<
@@ -71,6 +71,19 @@ export const TournamentSearch = React.forwardRef(function TournamentSearch<
 			onChange?.(tournament as TournamentSearchItem);
 		}
 	};
+
+	React.useEffect(() => {
+		if (
+			selectedKey &&
+			!list.items.some(
+				(tournament) =>
+					typeof tournament.id === "number" && tournament.id === selectedKey,
+			)
+		) {
+			setSelectedKey(null);
+			onChange?.(null);
+		}
+	}, [list.items, selectedKey, onChange]);
 
 	return (
 		<Select

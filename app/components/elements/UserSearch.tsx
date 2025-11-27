@@ -36,7 +36,7 @@ interface UserSearchProps<T extends object>
 	bottomText?: string;
 	errorText?: string;
 	initialUserId?: number;
-	onChange?: (user: UserSearchUserItem) => void;
+	onChange?: (user: UserSearchUserItem | null) => void;
 }
 
 export const UserSearch = React.forwardRef(function UserSearch<
@@ -54,14 +54,22 @@ export const UserSearch = React.forwardRef(function UserSearch<
 	ref?: React.Ref<HTMLButtonElement>,
 ) {
 	const [selectedKey, setSelectedKey] = React.useState(initialUserId ?? null);
-	const { initialUser, ...list } = useUserSearch(setSelectedKey, initialUserId);
+	const { initialUser, items, ...list } = useUserSearch(
+		setSelectedKey,
+		initialUserId,
+	);
 
 	const onSelectionChange = (userId: number) => {
 		setSelectedKey(userId);
-		onChange?.(
-			list.items.find((user) => user.id === userId) as UserSearchUserItem,
-		);
+		onChange?.(items.find((user) => user.id === userId) as UserSearchUserItem);
 	};
+
+	React.useEffect(() => {
+		if (selectedKey && !items.some((user) => user.id === selectedKey)) {
+			setSelectedKey(null);
+			onChange?.(null);
+		}
+	}, [items, selectedKey, onChange]);
 
 	return (
 		<Select
@@ -102,9 +110,7 @@ export const UserSearch = React.forwardRef(function UserSearch<
 						</Button>
 					</SearchField>
 					<ListBox
-						items={[initialUser, ...list.items].filter(
-							(user) => user !== undefined,
-						)}
+						items={[initialUser, ...items].filter((user) => user !== undefined)}
 						className={selectStyles.listBox}
 					>
 						{(item) => <UserItem item={item as UserSearchUserItem} />}

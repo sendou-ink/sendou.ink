@@ -233,7 +233,7 @@ function PovFormField() {
 								onChange={(newUser) =>
 									onChange({
 										type: "USER",
-										userId: newUser.id,
+										userId: newUser?.id,
 									})
 								}
 								onBlur={onBlur}
