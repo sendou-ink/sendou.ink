@@ -94,7 +94,7 @@ export const CURRENT_PATCH = "10.1";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
-		title: "Build analyzer",
+		title: "Build Analyzer",
 		ogTitle: "Splatoon 3 build analyzer/simulator",
 		location: args.location,
 		description:
