@@ -120,3 +120,43 @@
 	stroke-width: 3;
 	color: var(--text);
 }
+
+.colorPickerContainer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	align-items: center;
+}
+
+.presetColorsGrid {
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	gap: var(--s-2);
+}
+
+.colorButton {
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	border: 2px solid transparent;
+	cursor: pointer;
+	transition: all 0.2s;
+	padding: 0;
+}
+
+.colorButton:hover {
+	transform: scale(1.1);
+	border-color: var(--text-lighter);
+}
+
+.colorButtonSelected {
+	border-color: var(--text);
+	box-shadow: 0 0 0 2px var(--bg);
+}
+
+.customColorLabel {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	cursor: pointer;
+}

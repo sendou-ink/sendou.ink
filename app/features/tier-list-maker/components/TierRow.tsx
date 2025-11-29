@@ -14,6 +14,7 @@ import { ChevronUpIcon } from "~/components/icons/ChevronUp";
 import { TrashIcon } from "~/components/icons/Trash";
 import { useTierListState } from "../contexts/TierListContext";
 import {
+	PRESET_COLORS,
 	TIER_NAME_FONT_SIZE_BREAKPOINTS,
 	TIER_NAME_FONT_SIZE_MIN,
 	TIER_NAME_MAX_LENGTH,
@@ -107,12 +108,33 @@ export function TierRow({ tier }: TierRowProps) {
 								className={styles.nameInput}
 								maxLength={TIER_NAME_MAX_LENGTH}
 							/>
-							<input
-								type="color"
-								value={tier.color}
-								onChange={(e) => handleChangeTierColor(tier.id, e.target.value)}
-								className="plain"
-							/>
+							<div className={styles.colorPickerContainer}>
+								<div className={styles.presetColorsGrid}>
+									{PRESET_COLORS.map((color) => (
+										<button
+											key={color}
+											type="button"
+											className={clsx(styles.colorButton, {
+												[styles.colorButtonSelected]: tier.color === color,
+											})}
+											style={{ backgroundColor: color }}
+											onClick={() => handleChangeTierColor(tier.id, color)}
+											aria-label={`Select color ${color}`}
+										/>
+									))}
+								</div>
+								<label className={styles.customColorLabel}>
+									<span className="text-xs">{t("tier-list-maker:custom")}</span>
+									<input
+										type="color"
+										value={tier.color}
+										onChange={(e) =>
+											handleChangeTierColor(tier.id, e.target.value)
+										}
+										className="plain"
+									/>
+								</label>
+							</div>
 						</div>
 						<div className="stack horizontal justify-end">
 							<SendouButton

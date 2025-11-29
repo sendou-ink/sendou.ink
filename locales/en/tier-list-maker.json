@@ -15,5 +15,6 @@
 	"allowDuplicates": "Allow duplicates",
 	"showTierHeaders": "Show tier headers",
 	"titlePlaceholder": "Click to add title...",
-	"by": "Made by"
+	"by": "Made by",
+	"custom": "Custom"
 }
