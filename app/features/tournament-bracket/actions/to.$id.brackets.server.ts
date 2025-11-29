@@ -153,10 +153,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 			invariant(bracket, "Bracket not found");
 
 			errorToastIfFalsy(
-				!bracket.canBeStarted,
-				"Bracket can already be started, preparing maps no longer possible",
-			);
-			errorToastIfFalsy(
 				bracket.preview,
 				"Bracket has started, preparing maps no longer possible",
 			);
