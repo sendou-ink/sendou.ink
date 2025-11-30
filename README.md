@@ -100,6 +100,10 @@ docker compose up -d
 
 Minio admin UI to manage uploaded photos should be up and running at http://localhost:9001
 
+### Discord Linked Roles Development
+
+If you want to develop Discord linked roles features, you need to set up all the `DISCORD_` environment variables in your `.env` file and configure interactivity with a tunneling service like ngrok. Refer to the [Discord Linked Roles Sample](https://github.com/discord/linked-roles-sample?tab=readme-ov-file#set-up-interactivity) for a bit more detailed setup instructions.
+
 ## Contributing
 
 - **Developers**: Read [CONTRIBUTING.md](./CONTRIBUTING.md)

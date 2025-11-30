@@ -4,7 +4,6 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import { seasonToVotingRange } from "~/features/plus-voting/core/voting-time";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import invariant from "~/utils/invariant";
-import { userIsBanned } from "../../ban/core/banned.server";
 
 export async function plusTiersFromVotingAndLeaderboard() {
 	const newMembersFromVoting =
@@ -19,7 +18,7 @@ export async function plusTiersFromVotingAndLeaderboard() {
 					(leaderboardMember) => leaderboardMember.userId === member.userId,
 				),
 		),
-	].filter(({ userId }) => !userIsBanned(userId));
+	];
 }
 
 function fromLeaderboard(

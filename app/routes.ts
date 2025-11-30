@@ -306,5 +306,13 @@ export default [
 		route("impersonate", "features/auth/routes/auth.impersonate.ts"),
 		route("impersonate/stop", "features/auth/routes/auth.impersonate.stop.ts"),
 	]),
+
+	...prefix("/discord", [
+		route("linked-role", "features/discord/routes/discord.linked-role.ts"),
+		route(
+			"oauth-callback",
+			"features/discord/routes/discord.oauth-callback.ts",
+		),
+	]),
 	...devOnlyRoutes,
 ] satisfies RouteConfig;
