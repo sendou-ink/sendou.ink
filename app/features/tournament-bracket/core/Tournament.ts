@@ -28,7 +28,7 @@ import {
 	fillWithNullTillPowerOfTwo,
 	groupNumberToLetters,
 } from "../tournament-bracket-utils";
-import { Bracket } from "./Bracket";
+import { type Bracket, createBracket } from "./Bracket";
 import { getTournamentManager } from "./brackets-manager";
 import { getRounds } from "./rounds";
 import * as Swiss from "./Swiss";
@@ -141,7 +141,7 @@ export class Tournament {
 				);
 
 				this.brackets.push(
-					Bracket.create({
+					createBracket({
 						id: inProgressStage.id,
 						idx: bracketIdx,
 						tournament: this,
@@ -182,7 +182,7 @@ export class Tournament {
 					});
 
 				this.brackets.push(
-					Bracket.create({
+					createBracket({
 						id: -1 * bracketIdx,
 						idx: bracketIdx,
 						tournament: this,
@@ -237,7 +237,7 @@ export class Tournament {
 					);
 
 				this.brackets.push(
-					Bracket.create({
+					createBracket({
 						id: -1 * bracketIdx,
 						idx: bracketIdx,
 						tournament: this,
