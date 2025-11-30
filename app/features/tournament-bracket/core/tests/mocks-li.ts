@@ -667,7 +667,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734201381,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37410,
@@ -687,7 +687,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200847,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37411,
@@ -707,7 +707,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200364,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37412,
@@ -727,7 +727,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734201015,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37413,
@@ -747,7 +747,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734201054,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37414,
@@ -767,7 +767,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200952,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37415,
@@ -787,7 +787,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200766,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37416,
@@ -807,7 +807,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734199627,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37417,
@@ -827,7 +827,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200641,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37418,
@@ -847,7 +847,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734201215,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37419,
@@ -867,7 +867,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200654,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37420,
@@ -887,7 +887,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200774,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37421,
@@ -907,7 +907,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200899,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37422,
@@ -927,7 +927,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200927,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37423,
@@ -947,7 +947,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200677,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37424,
@@ -967,7 +967,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734201413,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37425,
@@ -987,7 +987,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200827,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37426,
@@ -1007,7 +1007,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734201138,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37427,
@@ -1027,7 +1027,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200622,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37428,
@@ -1047,7 +1047,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200980,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37429,
@@ -1067,7 +1067,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200773,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37430,
@@ -1087,7 +1087,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200291,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37431,
@@ -1107,7 +1107,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734201239,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37432,
@@ -1127,7 +1127,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200733,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37433,
@@ -1147,7 +1147,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200812,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37434,
@@ -1167,7 +1167,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200467,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37435,
@@ -1187,7 +1187,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200507,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37436,
@@ -1207,7 +1207,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200519,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37437,
@@ -1227,7 +1227,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200986,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37438,
@@ -1247,7 +1247,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200966,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37439,
@@ -1267,7 +1267,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734201110,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37440,
@@ -1287,7 +1287,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200638,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37441,
@@ -1307,7 +1307,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200935,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37442,
@@ -1327,7 +1327,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734201011,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37443,
@@ -1347,7 +1347,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200958,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37444,
@@ -1367,7 +1367,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200548,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37445,
@@ -1387,7 +1387,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734201082,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37446,
@@ -1407,7 +1407,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734201009,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37447,
@@ -1427,7 +1427,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200786,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37448,
@@ -1447,7 +1447,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734200846,
-				createdAt: 1734199362,
+				startedAt: 1734199362,
 			},
 			{
 				id: 37449,
@@ -1467,7 +1467,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734202992,
-				createdAt: 1734201461,
+				startedAt: 1734201461,
 			},
 			{
 				id: 37450,
@@ -1487,7 +1487,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734203240,
-				createdAt: 1734201461,
+				startedAt: 1734201461,
 			},
 			{
 				id: 37451,
@@ -1507,7 +1507,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734203405,
-				createdAt: 1734201461,
+				startedAt: 1734201461,
 			},
 			{
 				id: 37452,
@@ -1527,7 +1527,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734203162,
-				createdAt: 1734201461,
+				startedAt: 1734201461,
 			},
 			{
 				id: 37453,
@@ -1547,7 +1547,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734202823,
-				createdAt: 1734201461,
+				startedAt: 1734201461,
 			},
 			{
 				id: 37454,
@@ -1567,7 +1567,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734202969,
-				createdAt: 1734201461,
+				startedAt: 1734201461,
 			},
 			{
 				id: 37455,
@@ -1587,7 +1587,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734203020,
-				createdAt: 1734201461,
+				startedAt: 1734201461,
 			},
 			{
 				id: 37456,
@@ -1607,7 +1607,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734202993,
-				createdAt: 1734201461,
+				startedAt: 1734201461,
 			},
 			{
 				id: 37457,
@@ -1627,7 +1627,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734203011,
-				createdAt: 1734201461,
+				startedAt: 1734201461,
 			},
 			{
 				id: 37458,
@@ -1647,7 +1647,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734202852,
-				createdAt: 1734201461,
+				startedAt: 1734201461,
 			},
 			{
 				id: 37459,
@@ -1667,7 +1667,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734202837,
-				createdAt: 1734201461,
+				startedAt: 1734201461,
 			},
 			{
 				id: 37460,
@@ -1687,7 +1687,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734202895,
-				createdAt: 1734201461,
+				startedAt: 1734201461,
 			},
 			{
 				id: 37461,
@@ -1707,7 +1707,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734202893,
-				createdAt: 1734201461,
+				startedAt: 1734201461,
 			},
 			{
 				id: 37462,
@@ -1727,7 +1727,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734202350,
-				createdAt: 1734201461,
+				startedAt: 1734201461,
 			},
 			{
 				id: 37463,
@@ -1747,7 +1747,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734203127,
-				createdAt: 1734201461,
+				startedAt: 1734201461,
 			},
 			{
 				id: 37464,
@@ -1767,7 +1767,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734202836,
-				createdAt: 1734201461,
+				startedAt: 1734201461,
 			},
 			{
 				id: 37465,
@@ -1787,7 +1787,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734202713,
-				createdAt: 1734201461,
+				startedAt: 1734201461,
 			},
 			{
 				id: 37466,
@@ -1807,7 +1807,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734203259,
-				createdAt: 1734201461,
+				startedAt: 1734201461,
 			},
 			{
 				id: 37467,
@@ -1827,7 +1827,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734203213,
-				createdAt: 1734201461,
+				startedAt: 1734201461,
 			},
 			{
 				id: 37468,
@@ -1841,7 +1841,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 2,
 				lastGameFinishedAt: null,
-				createdAt: 1734201461,
+				startedAt: 1734201461,
 			},
 			{
 				id: 37469,
@@ -1861,7 +1861,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734202887,
-				createdAt: 1734201464,
+				startedAt: 1734201464,
 			},
 			{
 				id: 37470,
@@ -1881,7 +1881,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734202670,
-				createdAt: 1734201464,
+				startedAt: 1734201464,
 			},
 			{
 				id: 37471,
@@ -1901,7 +1901,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734203090,
-				createdAt: 1734201464,
+				startedAt: 1734201464,
 			},
 			{
 				id: 37472,
@@ -1921,7 +1921,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734203293,
-				createdAt: 1734201464,
+				startedAt: 1734201464,
 			},
 			{
 				id: 37473,
@@ -1941,7 +1941,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734202990,
-				createdAt: 1734201464,
+				startedAt: 1734201464,
 			},
 			{
 				id: 37474,
@@ -1961,7 +1961,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734203133,
-				createdAt: 1734201464,
+				startedAt: 1734201464,
 			},
 			{
 				id: 37475,
@@ -1981,7 +1981,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734202809,
-				createdAt: 1734201464,
+				startedAt: 1734201464,
 			},
 			{
 				id: 37476,
@@ -2001,7 +2001,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734203850,
-				createdAt: 1734201464,
+				startedAt: 1734201464,
 			},
 			{
 				id: 37477,
@@ -2021,7 +2021,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734203018,
-				createdAt: 1734201464,
+				startedAt: 1734201464,
 			},
 			{
 				id: 37478,
@@ -2041,7 +2041,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734202505,
-				createdAt: 1734201464,
+				startedAt: 1734201464,
 			},
 			{
 				id: 37479,
@@ -2061,7 +2061,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734203016,
-				createdAt: 1734201464,
+				startedAt: 1734201464,
 			},
 			{
 				id: 37480,
@@ -2081,7 +2081,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734203065,
-				createdAt: 1734201464,
+				startedAt: 1734201464,
 			},
 			{
 				id: 37481,
@@ -2101,7 +2101,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734203006,
-				createdAt: 1734201464,
+				startedAt: 1734201464,
 			},
 			{
 				id: 37482,
@@ -2121,7 +2121,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734203042,
-				createdAt: 1734201464,
+				startedAt: 1734201464,
 			},
 			{
 				id: 37483,
@@ -2141,7 +2141,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734202639,
-				createdAt: 1734201464,
+				startedAt: 1734201464,
 			},
 			{
 				id: 37484,
@@ -2161,7 +2161,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734203145,
-				createdAt: 1734201464,
+				startedAt: 1734201464,
 			},
 			{
 				id: 37485,
@@ -2181,7 +2181,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734202725,
-				createdAt: 1734201464,
+				startedAt: 1734201464,
 			},
 			{
 				id: 37486,
@@ -2201,7 +2201,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734203118,
-				createdAt: 1734201464,
+				startedAt: 1734201464,
 			},
 			{
 				id: 37487,
@@ -2221,7 +2221,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734203125,
-				createdAt: 1734201464,
+				startedAt: 1734201464,
 			},
 			{
 				id: 37488,
@@ -2241,7 +2241,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734202716,
-				createdAt: 1734201464,
+				startedAt: 1734201464,
 			},
 			{
 				id: 37489,
@@ -2261,7 +2261,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205314,
-				createdAt: 1734203865,
+				startedAt: 1734203865,
 			},
 			{
 				id: 37490,
@@ -2281,7 +2281,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205187,
-				createdAt: 1734203865,
+				startedAt: 1734203865,
 			},
 			{
 				id: 37491,
@@ -2301,7 +2301,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205900,
-				createdAt: 1734203865,
+				startedAt: 1734203865,
 			},
 			{
 				id: 37492,
@@ -2321,7 +2321,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205160,
-				createdAt: 1734203865,
+				startedAt: 1734203865,
 			},
 			{
 				id: 37493,
@@ -2341,7 +2341,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205328,
-				createdAt: 1734203865,
+				startedAt: 1734203865,
 			},
 			{
 				id: 37494,
@@ -2361,7 +2361,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205415,
-				createdAt: 1734203865,
+				startedAt: 1734203865,
 			},
 			{
 				id: 37495,
@@ -2381,7 +2381,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205534,
-				createdAt: 1734203865,
+				startedAt: 1734203865,
 			},
 			{
 				id: 37496,
@@ -2401,7 +2401,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205537,
-				createdAt: 1734203865,
+				startedAt: 1734203865,
 			},
 			{
 				id: 37497,
@@ -2421,7 +2421,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205596,
-				createdAt: 1734203865,
+				startedAt: 1734203865,
 			},
 			{
 				id: 37498,
@@ -2441,7 +2441,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205257,
-				createdAt: 1734203865,
+				startedAt: 1734203865,
 			},
 			{
 				id: 37499,
@@ -2461,7 +2461,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205521,
-				createdAt: 1734203865,
+				startedAt: 1734203865,
 			},
 			{
 				id: 37500,
@@ -2481,7 +2481,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734204996,
-				createdAt: 1734203865,
+				startedAt: 1734203865,
 			},
 			{
 				id: 37501,
@@ -2501,7 +2501,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205846,
-				createdAt: 1734203865,
+				startedAt: 1734203865,
 			},
 			{
 				id: 37502,
@@ -2521,7 +2521,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205069,
-				createdAt: 1734203865,
+				startedAt: 1734203865,
 			},
 			{
 				id: 37503,
@@ -2541,7 +2541,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205202,
-				createdAt: 1734203865,
+				startedAt: 1734203865,
 			},
 			{
 				id: 37504,
@@ -2561,7 +2561,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205292,
-				createdAt: 1734203865,
+				startedAt: 1734203865,
 			},
 			{
 				id: 37505,
@@ -2581,7 +2581,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205696,
-				createdAt: 1734203865,
+				startedAt: 1734203865,
 			},
 			{
 				id: 37506,
@@ -2601,7 +2601,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205099,
-				createdAt: 1734203865,
+				startedAt: 1734203865,
 			},
 			{
 				id: 37507,
@@ -2621,7 +2621,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205086,
-				createdAt: 1734203865,
+				startedAt: 1734203865,
 			},
 			{
 				id: 37508,
@@ -2641,7 +2641,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205480,
-				createdAt: 1734203867,
+				startedAt: 1734203867,
 			},
 			{
 				id: 37509,
@@ -2661,7 +2661,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205405,
-				createdAt: 1734203867,
+				startedAt: 1734203867,
 			},
 			{
 				id: 37510,
@@ -2681,7 +2681,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205519,
-				createdAt: 1734203867,
+				startedAt: 1734203867,
 			},
 			{
 				id: 37511,
@@ -2701,7 +2701,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205437,
-				createdAt: 1734203867,
+				startedAt: 1734203867,
 			},
 			{
 				id: 37512,
@@ -2721,7 +2721,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205082,
-				createdAt: 1734203867,
+				startedAt: 1734203867,
 			},
 			{
 				id: 37513,
@@ -2741,7 +2741,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205410,
-				createdAt: 1734203867,
+				startedAt: 1734203867,
 			},
 			{
 				id: 37514,
@@ -2761,7 +2761,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205330,
-				createdAt: 1734203867,
+				startedAt: 1734203867,
 			},
 			{
 				id: 37515,
@@ -2781,7 +2781,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205198,
-				createdAt: 1734203867,
+				startedAt: 1734203867,
 			},
 			{
 				id: 37516,
@@ -2801,7 +2801,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205001,
-				createdAt: 1734203867,
+				startedAt: 1734203867,
 			},
 			{
 				id: 37517,
@@ -2821,7 +2821,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205352,
-				createdAt: 1734203867,
+				startedAt: 1734203867,
 			},
 			{
 				id: 37518,
@@ -2841,7 +2841,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205392,
-				createdAt: 1734203867,
+				startedAt: 1734203867,
 			},
 			{
 				id: 37519,
@@ -2861,7 +2861,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205455,
-				createdAt: 1734203867,
+				startedAt: 1734203867,
 			},
 			{
 				id: 37520,
@@ -2881,7 +2881,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205401,
-				createdAt: 1734203867,
+				startedAt: 1734203867,
 			},
 			{
 				id: 37521,
@@ -2901,7 +2901,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205800,
-				createdAt: 1734203867,
+				startedAt: 1734203867,
 			},
 			{
 				id: 37522,
@@ -2921,7 +2921,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205609,
-				createdAt: 1734203867,
+				startedAt: 1734203867,
 			},
 			{
 				id: 37523,
@@ -2941,7 +2941,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205654,
-				createdAt: 1734203867,
+				startedAt: 1734203867,
 			},
 			{
 				id: 37524,
@@ -2961,7 +2961,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734205446,
-				createdAt: 1734203867,
+				startedAt: 1734203867,
 			},
 			{
 				id: 37525,
@@ -2981,7 +2981,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734204810,
-				createdAt: 1734203867,
+				startedAt: 1734203867,
 			},
 			{
 				id: 37526,
@@ -3001,7 +3001,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734204985,
-				createdAt: 1734203867,
+				startedAt: 1734203867,
 			},
 			{
 				id: 37591,
@@ -3021,7 +3021,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207405,
-				createdAt: 1734205934,
+				startedAt: 1734205934,
 			},
 			{
 				id: 37592,
@@ -3041,7 +3041,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207190,
-				createdAt: 1734205934,
+				startedAt: 1734205934,
 			},
 			{
 				id: 37593,
@@ -3061,7 +3061,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207437,
-				createdAt: 1734205934,
+				startedAt: 1734205934,
 			},
 			{
 				id: 37594,
@@ -3081,7 +3081,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207475,
-				createdAt: 1734205934,
+				startedAt: 1734205934,
 			},
 			{
 				id: 37595,
@@ -3101,7 +3101,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207326,
-				createdAt: 1734205934,
+				startedAt: 1734205934,
 			},
 			{
 				id: 37596,
@@ -3121,7 +3121,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734206995,
-				createdAt: 1734205934,
+				startedAt: 1734205934,
 			},
 			{
 				id: 37597,
@@ -3141,7 +3141,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207335,
-				createdAt: 1734205934,
+				startedAt: 1734205934,
 			},
 			{
 				id: 37598,
@@ -3161,7 +3161,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207538,
-				createdAt: 1734205934,
+				startedAt: 1734205934,
 			},
 			{
 				id: 37599,
@@ -3181,7 +3181,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207398,
-				createdAt: 1734205934,
+				startedAt: 1734205934,
 			},
 			{
 				id: 37600,
@@ -3201,7 +3201,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207301,
-				createdAt: 1734205934,
+				startedAt: 1734205934,
 			},
 			{
 				id: 37601,
@@ -3221,7 +3221,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207472,
-				createdAt: 1734205934,
+				startedAt: 1734205934,
 			},
 			{
 				id: 37602,
@@ -3241,7 +3241,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207294,
-				createdAt: 1734205934,
+				startedAt: 1734205934,
 			},
 			{
 				id: 37603,
@@ -3261,7 +3261,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207432,
-				createdAt: 1734205934,
+				startedAt: 1734205934,
 			},
 			{
 				id: 37604,
@@ -3281,7 +3281,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207251,
-				createdAt: 1734205934,
+				startedAt: 1734205934,
 			},
 			{
 				id: 37605,
@@ -3301,7 +3301,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207495,
-				createdAt: 1734205934,
+				startedAt: 1734205934,
 			},
 			{
 				id: 37606,
@@ -3321,7 +3321,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207088,
-				createdAt: 1734205934,
+				startedAt: 1734205934,
 			},
 			{
 				id: 37607,
@@ -3341,7 +3341,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207599,
-				createdAt: 1734205934,
+				startedAt: 1734205934,
 			},
 			{
 				id: 37608,
@@ -3361,7 +3361,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207258,
-				createdAt: 1734205934,
+				startedAt: 1734205934,
 			},
 			{
 				id: 37609,
@@ -3381,7 +3381,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207290,
-				createdAt: 1734205934,
+				startedAt: 1734205934,
 			},
 			{
 				id: 37610,
@@ -3401,7 +3401,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207300,
-				createdAt: 1734205937,
+				startedAt: 1734205937,
 			},
 			{
 				id: 37611,
@@ -3421,7 +3421,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207242,
-				createdAt: 1734205937,
+				startedAt: 1734205937,
 			},
 			{
 				id: 37612,
@@ -3441,7 +3441,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207472,
-				createdAt: 1734205937,
+				startedAt: 1734205937,
 			},
 			{
 				id: 37613,
@@ -3461,7 +3461,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207587,
-				createdAt: 1734205937,
+				startedAt: 1734205937,
 			},
 			{
 				id: 37614,
@@ -3481,7 +3481,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207370,
-				createdAt: 1734205937,
+				startedAt: 1734205937,
 			},
 			{
 				id: 37615,
@@ -3501,7 +3501,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734206978,
-				createdAt: 1734205937,
+				startedAt: 1734205937,
 			},
 			{
 				id: 37616,
@@ -3521,7 +3521,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207448,
-				createdAt: 1734205937,
+				startedAt: 1734205937,
 			},
 			{
 				id: 37617,
@@ -3541,7 +3541,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207665,
-				createdAt: 1734205937,
+				startedAt: 1734205937,
 			},
 			{
 				id: 37618,
@@ -3561,7 +3561,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207565,
-				createdAt: 1734205937,
+				startedAt: 1734205937,
 			},
 			{
 				id: 37619,
@@ -3581,7 +3581,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207541,
-				createdAt: 1734205937,
+				startedAt: 1734205937,
 			},
 			{
 				id: 37620,
@@ -3601,7 +3601,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207654,
-				createdAt: 1734205937,
+				startedAt: 1734205937,
 			},
 			{
 				id: 37621,
@@ -3621,7 +3621,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734206287,
-				createdAt: 1734205937,
+				startedAt: 1734205937,
 			},
 			{
 				id: 37622,
@@ -3641,7 +3641,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207527,
-				createdAt: 1734205937,
+				startedAt: 1734205937,
 			},
 			{
 				id: 37623,
@@ -3661,7 +3661,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207255,
-				createdAt: 1734205937,
+				startedAt: 1734205937,
 			},
 			{
 				id: 37624,
@@ -3681,7 +3681,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207477,
-				createdAt: 1734205937,
+				startedAt: 1734205937,
 			},
 			{
 				id: 37625,
@@ -3701,7 +3701,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207914,
-				createdAt: 1734205937,
+				startedAt: 1734205937,
 			},
 			{
 				id: 37626,
@@ -3721,7 +3721,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207454,
-				createdAt: 1734205937,
+				startedAt: 1734205937,
 			},
 			{
 				id: 37627,
@@ -3741,7 +3741,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207384,
-				createdAt: 1734205937,
+				startedAt: 1734205937,
 			},
 			{
 				id: 37628,
@@ -3761,7 +3761,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734207463,
-				createdAt: 1734205937,
+				startedAt: 1734205937,
 			},
 			{
 				id: 37629,
@@ -3781,7 +3781,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209427,
-				createdAt: 1734207931,
+				startedAt: 1734207931,
 			},
 			{
 				id: 37630,
@@ -3801,7 +3801,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209422,
-				createdAt: 1734207931,
+				startedAt: 1734207931,
 			},
 			{
 				id: 37631,
@@ -3821,7 +3821,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209455,
-				createdAt: 1734207931,
+				startedAt: 1734207931,
 			},
 			{
 				id: 37632,
@@ -3841,7 +3841,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209429,
-				createdAt: 1734207931,
+				startedAt: 1734207931,
 			},
 			{
 				id: 37633,
@@ -3861,7 +3861,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209428,
-				createdAt: 1734207931,
+				startedAt: 1734207931,
 			},
 			{
 				id: 37634,
@@ -3881,7 +3881,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209506,
-				createdAt: 1734207931,
+				startedAt: 1734207931,
 			},
 			{
 				id: 37635,
@@ -3901,7 +3901,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734210134,
-				createdAt: 1734207931,
+				startedAt: 1734207931,
 			},
 			{
 				id: 37636,
@@ -3921,7 +3921,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209376,
-				createdAt: 1734207931,
+				startedAt: 1734207931,
 			},
 			{
 				id: 37637,
@@ -3941,7 +3941,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734208989,
-				createdAt: 1734207931,
+				startedAt: 1734207931,
 			},
 			{
 				id: 37638,
@@ -3961,7 +3961,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209472,
-				createdAt: 1734207931,
+				startedAt: 1734207931,
 			},
 			{
 				id: 37639,
@@ -3981,7 +3981,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209546,
-				createdAt: 1734207931,
+				startedAt: 1734207931,
 			},
 			{
 				id: 37640,
@@ -4001,7 +4001,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209511,
-				createdAt: 1734207931,
+				startedAt: 1734207931,
 			},
 			{
 				id: 37641,
@@ -4021,7 +4021,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734210160,
-				createdAt: 1734207931,
+				startedAt: 1734207931,
 			},
 			{
 				id: 37642,
@@ -4041,7 +4041,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209669,
-				createdAt: 1734207931,
+				startedAt: 1734207931,
 			},
 			{
 				id: 37643,
@@ -4061,7 +4061,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209037,
-				createdAt: 1734207931,
+				startedAt: 1734207931,
 			},
 			{
 				id: 37644,
@@ -4081,7 +4081,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209907,
-				createdAt: 1734207931,
+				startedAt: 1734207931,
 			},
 			{
 				id: 37645,
@@ -4101,7 +4101,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209418,
-				createdAt: 1734207931,
+				startedAt: 1734207931,
 			},
 			{
 				id: 37646,
@@ -4121,7 +4121,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209624,
-				createdAt: 1734207931,
+				startedAt: 1734207931,
 			},
 			{
 				id: 37647,
@@ -4135,7 +4135,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 2,
 				lastGameFinishedAt: null,
-				createdAt: 1734207931,
+				startedAt: 1734207931,
 			},
 			{
 				id: 37648,
@@ -4155,7 +4155,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734208969,
-				createdAt: 1734207933,
+				startedAt: 1734207933,
 			},
 			{
 				id: 37649,
@@ -4175,7 +4175,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209574,
-				createdAt: 1734207933,
+				startedAt: 1734207933,
 			},
 			{
 				id: 37650,
@@ -4195,7 +4195,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209389,
-				createdAt: 1734207933,
+				startedAt: 1734207933,
 			},
 			{
 				id: 37651,
@@ -4215,7 +4215,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209008,
-				createdAt: 1734207933,
+				startedAt: 1734207933,
 			},
 			{
 				id: 37652,
@@ -4235,7 +4235,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209727,
-				createdAt: 1734207933,
+				startedAt: 1734207933,
 			},
 			{
 				id: 37653,
@@ -4255,7 +4255,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209389,
-				createdAt: 1734207933,
+				startedAt: 1734207933,
 			},
 			{
 				id: 37654,
@@ -4275,7 +4275,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209267,
-				createdAt: 1734207933,
+				startedAt: 1734207933,
 			},
 			{
 				id: 37655,
@@ -4295,7 +4295,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209646,
-				createdAt: 1734207933,
+				startedAt: 1734207933,
 			},
 			{
 				id: 37656,
@@ -4315,7 +4315,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209344,
-				createdAt: 1734207933,
+				startedAt: 1734207933,
 			},
 			{
 				id: 37657,
@@ -4335,7 +4335,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209405,
-				createdAt: 1734207933,
+				startedAt: 1734207933,
 			},
 			{
 				id: 37658,
@@ -4355,7 +4355,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209283,
-				createdAt: 1734207933,
+				startedAt: 1734207933,
 			},
 			{
 				id: 37659,
@@ -4375,7 +4375,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209500,
-				createdAt: 1734207933,
+				startedAt: 1734207933,
 			},
 			{
 				id: 37660,
@@ -4395,7 +4395,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209709,
-				createdAt: 1734207933,
+				startedAt: 1734207933,
 			},
 			{
 				id: 37661,
@@ -4415,7 +4415,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209910,
-				createdAt: 1734207933,
+				startedAt: 1734207933,
 			},
 			{
 				id: 37662,
@@ -4435,7 +4435,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209045,
-				createdAt: 1734207933,
+				startedAt: 1734207933,
 			},
 			{
 				id: 37663,
@@ -4455,7 +4455,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209776,
-				createdAt: 1734207933,
+				startedAt: 1734207933,
 			},
 			{
 				id: 37664,
@@ -4475,7 +4475,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209957,
-				createdAt: 1734207933,
+				startedAt: 1734207933,
 			},
 			{
 				id: 37665,
@@ -4495,7 +4495,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734209365,
-				createdAt: 1734207933,
+				startedAt: 1734207933,
 			},
 			{
 				id: 37666,
@@ -4515,7 +4515,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211697,
-				createdAt: 1734210194,
+				startedAt: 1734210194,
 			},
 			{
 				id: 37667,
@@ -4535,7 +4535,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211491,
-				createdAt: 1734210194,
+				startedAt: 1734210194,
 			},
 			{
 				id: 37668,
@@ -4555,7 +4555,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211418,
-				createdAt: 1734210194,
+				startedAt: 1734210194,
 			},
 			{
 				id: 37669,
@@ -4575,7 +4575,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211566,
-				createdAt: 1734210194,
+				startedAt: 1734210194,
 			},
 			{
 				id: 37670,
@@ -4595,7 +4595,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211758,
-				createdAt: 1734210194,
+				startedAt: 1734210194,
 			},
 			{
 				id: 37671,
@@ -4615,7 +4615,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211517,
-				createdAt: 1734210194,
+				startedAt: 1734210194,
 			},
 			{
 				id: 37672,
@@ -4635,7 +4635,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211690,
-				createdAt: 1734210194,
+				startedAt: 1734210194,
 			},
 			{
 				id: 37673,
@@ -4655,7 +4655,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211495,
-				createdAt: 1734210194,
+				startedAt: 1734210194,
 			},
 			{
 				id: 37674,
@@ -4675,7 +4675,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211631,
-				createdAt: 1734210194,
+				startedAt: 1734210194,
 			},
 			{
 				id: 37675,
@@ -4695,7 +4695,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211487,
-				createdAt: 1734210194,
+				startedAt: 1734210194,
 			},
 			{
 				id: 37676,
@@ -4715,7 +4715,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211685,
-				createdAt: 1734210194,
+				startedAt: 1734210194,
 			},
 			{
 				id: 37677,
@@ -4735,7 +4735,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211612,
-				createdAt: 1734210194,
+				startedAt: 1734210194,
 			},
 			{
 				id: 37678,
@@ -4755,7 +4755,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211819,
-				createdAt: 1734210194,
+				startedAt: 1734210194,
 			},
 			{
 				id: 37679,
@@ -4775,7 +4775,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734210661,
-				createdAt: 1734210194,
+				startedAt: 1734210194,
 			},
 			{
 				id: 37680,
@@ -4795,7 +4795,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211695,
-				createdAt: 1734210194,
+				startedAt: 1734210194,
 			},
 			{
 				id: 37681,
@@ -4815,7 +4815,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211306,
-				createdAt: 1734210194,
+				startedAt: 1734210194,
 			},
 			{
 				id: 37682,
@@ -4835,7 +4835,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211835,
-				createdAt: 1734210194,
+				startedAt: 1734210194,
 			},
 			{
 				id: 37683,
@@ -4855,7 +4855,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211736,
-				createdAt: 1734210194,
+				startedAt: 1734210194,
 			},
 			{
 				id: 37684,
@@ -4875,7 +4875,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211836,
-				createdAt: 1734210198,
+				startedAt: 1734210198,
 			},
 			{
 				id: 37685,
@@ -4895,7 +4895,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211945,
-				createdAt: 1734210198,
+				startedAt: 1734210198,
 			},
 			{
 				id: 37686,
@@ -4915,7 +4915,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211860,
-				createdAt: 1734210198,
+				startedAt: 1734210198,
 			},
 			{
 				id: 37687,
@@ -4935,7 +4935,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734212033,
-				createdAt: 1734210198,
+				startedAt: 1734210198,
 			},
 			{
 				id: 37688,
@@ -4955,7 +4955,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211894,
-				createdAt: 1734210198,
+				startedAt: 1734210198,
 			},
 			{
 				id: 37689,
@@ -4975,7 +4975,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211502,
-				createdAt: 1734210198,
+				startedAt: 1734210198,
 			},
 			{
 				id: 37690,
@@ -4995,7 +4995,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211861,
-				createdAt: 1734210198,
+				startedAt: 1734210198,
 			},
 			{
 				id: 37691,
@@ -5015,7 +5015,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211864,
-				createdAt: 1734210198,
+				startedAt: 1734210198,
 			},
 			{
 				id: 37692,
@@ -5035,7 +5035,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211849,
-				createdAt: 1734210198,
+				startedAt: 1734210198,
 			},
 			{
 				id: 37693,
@@ -5055,7 +5055,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211699,
-				createdAt: 1734210198,
+				startedAt: 1734210198,
 			},
 			{
 				id: 37694,
@@ -5075,7 +5075,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734210815,
-				createdAt: 1734210198,
+				startedAt: 1734210198,
 			},
 			{
 				id: 37695,
@@ -5095,7 +5095,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211885,
-				createdAt: 1734210198,
+				startedAt: 1734210198,
 			},
 			{
 				id: 37696,
@@ -5115,7 +5115,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211774,
-				createdAt: 1734210198,
+				startedAt: 1734210198,
 			},
 			{
 				id: 37697,
@@ -5135,7 +5135,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211998,
-				createdAt: 1734210198,
+				startedAt: 1734210198,
 			},
 			{
 				id: 37698,
@@ -5155,7 +5155,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211107,
-				createdAt: 1734210198,
+				startedAt: 1734210198,
 			},
 			{
 				id: 37699,
@@ -5175,7 +5175,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734210313,
-				createdAt: 1734210198,
+				startedAt: 1734210198,
 			},
 			{
 				id: 37700,
@@ -5195,7 +5195,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1420,
 				status: 4,
 				lastGameFinishedAt: 1734211125,
-				createdAt: 1734210198,
+				startedAt: 1734210198,
 			},
 			{
 				id: 37875,
@@ -5217,7 +5217,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734287859,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37876,
@@ -5239,7 +5239,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734287685,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37877,
@@ -5261,7 +5261,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734287323,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37878,
@@ -5283,7 +5283,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734287563,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37879,
@@ -5305,7 +5305,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734287264,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37880,
@@ -5327,7 +5327,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734288062,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37881,
@@ -5349,7 +5349,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734288023,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37882,
@@ -5371,7 +5371,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734287344,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37883,
@@ -5391,7 +5391,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734288866,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37884,
@@ -5411,7 +5411,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734289241,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37885,
@@ -5431,7 +5431,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734289085,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37886,
@@ -5451,7 +5451,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734288631,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37887,
@@ -5471,7 +5471,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734291666,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37888,
@@ -5491,7 +5491,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734290374,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37889,
@@ -5511,7 +5511,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734294212,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37890,
@@ -5533,7 +5533,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734289063,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37891,
@@ -5555,7 +5555,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734288695,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37892,
@@ -5577,7 +5577,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734290198,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37893,
@@ -5599,7 +5599,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734289466,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37894,
@@ -5620,7 +5620,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734291096,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37895,
@@ -5641,7 +5641,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734290483,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37896,
@@ -5662,7 +5662,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734291569,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37897,
@@ -5683,7 +5683,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734290847,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37898,
@@ -5703,7 +5703,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734292036,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37899,
@@ -5723,7 +5723,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734293164,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37900,
@@ -5744,7 +5744,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734293878,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37901,
@@ -5765,7 +5765,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734294533,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37902,
@@ -5785,7 +5785,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734295743,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37903,
@@ -5806,7 +5806,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734297703,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37904,
@@ -5827,7 +5827,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 4,
 				lastGameFinishedAt: 1734299326,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37905,
@@ -5843,7 +5843,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1429,
 				status: 0,
 				lastGameFinishedAt: null,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37906,
@@ -5865,7 +5865,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734287457,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37907,
@@ -5887,7 +5887,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734287470,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37908,
@@ -5909,7 +5909,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734287227,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37909,
@@ -5931,7 +5931,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734287925,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37910,
@@ -5953,7 +5953,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734287691,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37911,
@@ -5975,7 +5975,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734288516,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37912,
@@ -5997,7 +5997,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734287452,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37913,
@@ -6019,7 +6019,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734287457,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37914,
@@ -6039,7 +6039,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734288535,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37915,
@@ -6059,7 +6059,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734289712,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37916,
@@ -6079,7 +6079,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734289334,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37917,
@@ -6099,7 +6099,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734289151,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37918,
@@ -6119,7 +6119,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734291648,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37919,
@@ -6139,7 +6139,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734291888,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37920,
@@ -6159,7 +6159,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734294728,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37921,
@@ -6181,7 +6181,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734288552,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37922,
@@ -6203,7 +6203,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734288890,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37923,
@@ -6225,7 +6225,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734289711,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37924,
@@ -6247,7 +6247,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734289042,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37925,
@@ -6268,7 +6268,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734291609,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37926,
@@ -6289,7 +6289,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734289831,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37927,
@@ -6310,7 +6310,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734291399,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37928,
@@ -6331,7 +6331,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734290954,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37929,
@@ -6351,7 +6351,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734292981,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37930,
@@ -6371,7 +6371,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734293211,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37931,
@@ -6392,7 +6392,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734294182,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37932,
@@ -6413,7 +6413,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734294104,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37933,
@@ -6433,7 +6433,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734295760,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37934,
@@ -6454,7 +6454,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734298350,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37935,
@@ -6475,7 +6475,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734300494,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37936,
@@ -6495,7 +6495,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1430,
 				status: 4,
 				lastGameFinishedAt: 1734302545,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37937,
@@ -6517,7 +6517,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734287278,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37938,
@@ -6539,7 +6539,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734287728,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37939,
@@ -6561,7 +6561,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734287903,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37940,
@@ -6583,7 +6583,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734287524,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37941,
@@ -6605,7 +6605,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734287488,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37942,
@@ -6627,7 +6627,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734287479,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37943,
@@ -6649,7 +6649,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734287120,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37944,
@@ -6671,7 +6671,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734288074,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37945,
@@ -6691,7 +6691,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734288706,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37946,
@@ -6711,7 +6711,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734289633,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37947,
@@ -6731,7 +6731,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734288729,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37948,
@@ -6751,7 +6751,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734288929,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37949,
@@ -6771,7 +6771,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734292409,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37950,
@@ -6791,7 +6791,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734291336,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37951,
@@ -6811,7 +6811,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734295383,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37952,
@@ -6833,7 +6833,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734288788,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37953,
@@ -6855,7 +6855,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734289037,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37954,
@@ -6877,7 +6877,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734289147,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37955,
@@ -6899,7 +6899,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734288878,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37956,
@@ -6920,7 +6920,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734291046,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37957,
@@ -6941,7 +6941,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734290444,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37958,
@@ -6962,7 +6962,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734290198,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37959,
@@ -6983,7 +6983,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734289813,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37960,
@@ -7003,7 +7003,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734292299,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37961,
@@ -7023,7 +7023,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734291700,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37962,
@@ -7044,7 +7044,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734293873,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37963,
@@ -7065,7 +7065,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734293799,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37964,
@@ -7085,7 +7085,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734295091,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37965,
@@ -7106,7 +7106,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734296693,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37966,
@@ -7127,7 +7127,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734298720,
-				createdAt: null,
+				startedAt: null,
 			},
 			{
 				id: 37967,
@@ -7147,7 +7147,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				stage_id: 1431,
 				status: 4,
 				lastGameFinishedAt: 1734300174,
-				createdAt: null,
+				startedAt: null,
 			},
 		],
 	},

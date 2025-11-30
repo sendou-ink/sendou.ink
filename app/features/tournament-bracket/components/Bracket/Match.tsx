@@ -26,6 +26,8 @@ interface MatchProps {
 	bracket: Bracket;
 }
 
+// xxx: show how long the match has been ongoing via startedAt
+
 export function Match(props: MatchProps) {
 	const isBye = !props.match.opponent1 || !props.match.opponent2;
 

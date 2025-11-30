@@ -495,4 +495,9 @@ export class SwissBracket extends Bracket {
 
 		return result;
 	}
+
+	ongoingMatches(): number[] {
+		// Swiss matches get startedAt at creation time, not via ongoing detection
+		return [];
+	}
 }

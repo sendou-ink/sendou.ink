@@ -91,7 +91,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				stage_id: 1457,
 				status: 4,
 				lastGameFinishedAt: 1734687487,
-				createdAt: 1734685232,
+				startedAt: 1734685232,
 			},
 			{
 				id: 38585,
@@ -111,7 +111,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				stage_id: 1457,
 				status: 4,
 				lastGameFinishedAt: 1734686471,
-				createdAt: 1734685232,
+				startedAt: 1734685232,
 			},
 			{
 				id: 38586,
@@ -131,7 +131,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				stage_id: 1457,
 				status: 4,
 				lastGameFinishedAt: 1734686359,
-				createdAt: 1734685232,
+				startedAt: 1734685232,
 			},
 			{
 				id: 38587,
@@ -145,7 +145,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				stage_id: 1457,
 				status: 2,
 				lastGameFinishedAt: null,
-				createdAt: 1734685232,
+				startedAt: 1734685232,
 			},
 			{
 				id: 38588,
@@ -165,7 +165,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				stage_id: 1457,
 				status: 4,
 				lastGameFinishedAt: 1734688988,
-				createdAt: 1734687519,
+				startedAt: 1734687519,
 			},
 			{
 				id: 38589,
@@ -185,7 +185,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				stage_id: 1457,
 				status: 4,
 				lastGameFinishedAt: 1734689658,
-				createdAt: 1734687519,
+				startedAt: 1734687519,
 			},
 			{
 				id: 38590,
@@ -205,7 +205,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				stage_id: 1457,
 				status: 4,
 				lastGameFinishedAt: 1734688872,
-				createdAt: 1734687519,
+				startedAt: 1734687519,
 			},
 			{
 				id: 38591,
@@ -219,7 +219,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				stage_id: 1457,
 				status: 2,
 				lastGameFinishedAt: null,
-				createdAt: 1734687519,
+				startedAt: 1734687519,
 			},
 			{
 				id: 38592,
@@ -239,7 +239,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				stage_id: 1457,
 				status: 4,
 				lastGameFinishedAt: 1734691279,
-				createdAt: 1734689680,
+				startedAt: 1734689680,
 			},
 			{
 				id: 38593,
@@ -259,7 +259,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				stage_id: 1457,
 				status: 4,
 				lastGameFinishedAt: 1734690877,
-				createdAt: 1734689680,
+				startedAt: 1734689680,
 			},
 			{
 				id: 38594,
@@ -279,7 +279,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				stage_id: 1457,
 				status: 4,
 				lastGameFinishedAt: 1734690966,
-				createdAt: 1734689680,
+				startedAt: 1734689680,
 			},
 			{
 				id: 38595,
@@ -293,7 +293,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				stage_id: 1457,
 				status: 2,
 				lastGameFinishedAt: null,
-				createdAt: 1734689680,
+				startedAt: 1734689680,
 			},
 		],
 	},

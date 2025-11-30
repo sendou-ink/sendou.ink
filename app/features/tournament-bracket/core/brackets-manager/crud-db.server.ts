@@ -353,9 +353,9 @@ const match_getByRoundAndNumberStm = sql.prepare(/*sql*/ `
 const match_insertStm = sql.prepare(/*sql*/ `
   insert into
     "TournamentMatch"
-    ("roundId", "stageId", "groupId", "number", "opponentOne", "opponentTwo", "status", "chatCode")
+    ("roundId", "stageId", "groupId", "number", "opponentOne", "opponentTwo", "status", "chatCode", "startedAt")
   values
-    (@roundId, @stageId, @groupId, @number, @opponentOne, @opponentTwo, @status, @chatCode)
+    (@roundId, @stageId, @groupId, @number, @opponentOne, @opponentTwo, @status, @chatCode, @startedAt)
   returning *
 `);
 
@@ -413,7 +413,7 @@ export class Match {
 			opponentOnePointsTotal: number | null;
 			opponentTwoPointsTotal: number | null;
 			lastGameFinishedAt: number | null;
-			createdAt: number | null;
+			startedAt: number | null;
 		},
 	): MatchType {
 		return {
@@ -438,7 +438,7 @@ export class Match {
 			stage_id: rawMatch.stageId,
 			status: rawMatch.status,
 			lastGameFinishedAt: rawMatch.lastGameFinishedAt,
-			createdAt: rawMatch.createdAt,
+			startedAt: rawMatch.startedAt,
 		};
 	}
 
@@ -479,6 +479,7 @@ export class Match {
 			opponentTwo: this.opponentTwo ?? "null",
 			status: this.status,
 			chatCode: shortNanoid(),
+			startedAt: null,
 		}) as any;
 
 		this.id = match.id;

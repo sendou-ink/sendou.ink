@@ -4,12 +4,13 @@ import type { Match } from "~/modules/brackets-model";
 import { parseDBArray } from "~/utils/sql";
 
 const stm = sql.prepare(/* sql */ `
-  select 
+  select
     "TournamentMatch"."id",
     "TournamentMatch"."groupId",
     "TournamentMatch"."opponentOne",
     "TournamentMatch"."opponentTwo",
     "TournamentMatch"."chatCode",
+    "TournamentMatch"."startedAt",
     "Tournament"."mapPickingStyle",
     "TournamentRound"."id" as "roundId",
     "TournamentRound"."maps" as "roundMaps",
@@ -49,7 +50,10 @@ export type FindMatchById = ReturnType<typeof findMatchById>;
 
 export const findMatchById = (id: number) => {
 	const row = stm.get({ id }) as
-		| ((Pick<Tables["TournamentMatch"], "id" | "groupId" | "chatCode"> &
+		| ((Pick<
+				Tables["TournamentMatch"],
+				"id" | "groupId" | "chatCode" | "startedAt"
+		  > &
 				Pick<Tables["Tournament"], "mapPickingStyle"> & { players: string }) & {
 				opponentOne: string;
 				opponentTwo: string;

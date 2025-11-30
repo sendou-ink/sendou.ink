@@ -125,6 +125,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 				}
 			})();
 
+			// xxx: run match startedAt logic
+
 			if (!tournament.isTest) {
 				notify({
 					userIds: seeding.flatMap((tournamentTeamId) =>

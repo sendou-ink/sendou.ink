@@ -29,6 +29,8 @@ export { action, loader };
 
 import "../tournament-bracket.css";
 
+// xxx: show progress bar
+// xxx: admin end early action
 export default function TournamentMatchPage() {
 	const user = useUser();
 	const visibility = useVisibilityChange();
@@ -99,6 +101,14 @@ export default function TournamentMatchPage() {
 					</LinkButton>
 				</div>
 			</div>
+			{/** xxx: delete */}
+			{data.match.startedAt ? (
+				<div style={{ backgroundColor: "yellow", padding: "8px" }}>
+					DEV: startedAt = {new Date(data.match.startedAt * 1000).toISOString()}
+				</div>
+			) : (
+				<div>DEV: not started yet</div>
+			)}
 			<div className="stack md">
 				<CastInfo
 					matchIsOngoing={Boolean(

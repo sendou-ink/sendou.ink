@@ -219,6 +219,18 @@ export const action: ActionFunction = async ({ params, request }) => {
 				}
 			})();
 
+			// xxx: this is not correct, it is the old bracket
+			if (setOver) {
+				const bracket = tournament.brackets.find((b) =>
+					b.data.match.some((m) => m.id === match.id),
+				);
+				invariant(bracket, "Bracket not found");
+
+				await TournamentMatchRepository.markManyAsStarted(
+					bracket.ongoingMatches(),
+				);
+			}
+
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
 

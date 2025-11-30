@@ -1,4 +1,5 @@
 import { db } from "~/db/sql";
+import { databaseTimestampNow } from "~/utils/dates";
 
 export function findResultById(id: number) {
 	return db
@@ -36,5 +37,17 @@ export async function userParticipationByTournamentId(tournamentId: number) {
 				.as("matchIds"),
 		])
 		.groupBy("playerMatches.userId")
+		.execute();
+}
+
+/**
+ * Marks tournament matches as started by setting their startedAt timestamp to the current time.
+ * @param ids - Array of tournament match IDs to mark as started
+ */
+export function markManyAsStarted(ids: number[]) {
+	return db
+		.updateTable("TournamentMatch")
+		.set({ startedAt: databaseTimestampNow() })
+		.where("id", "in", ids)
 		.execute();
 }

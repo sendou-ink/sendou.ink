@@ -7,6 +7,8 @@ import {
 import { logger } from "~/utils/logger";
 import type { Bracket } from "../../core/Bracket";
 
+// xxx: delete
+
 const MINUTES = {
 	BO1: 20,
 	BO3: 30,
@@ -136,11 +138,11 @@ function dateByPreviousRound(bracket: Bracket, round: Round) {
 function dateByRoundMatch(bracket: Bracket, round: Round) {
 	const roundMatch = bracket.data.match.find((m) => m.round_id === round.id);
 
-	if (!roundMatch?.createdAt) {
+	if (!roundMatch?.startedAt) {
 		return null;
 	}
 
-	return databaseTimestampToDate(roundMatch.createdAt);
+	return databaseTimestampToDate(roundMatch.startedAt);
 }
 
 function dateByManyPreviousRounds(bracket: Bracket, round: Round) {
