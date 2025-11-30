@@ -13,7 +13,6 @@ import {
 	mainWeaponIds,
 	nonBombSubWeaponIds,
 	nonDamagingSpecialWeaponIds,
-	specialWeaponIds,
 	subWeaponIds,
 	weaponCategories,
 	weaponIdToBaseWeaponId,
@@ -208,11 +207,7 @@ export function validatedAnyWeaponFromSearchParams(
 	if (rawWeapon?.startsWith("SPECIAL_")) {
 		const id = Number(rawWeapon.replace("SPECIAL_", ""));
 
-		if (
-			!specialWeaponIds
-				.filter((id) => !nonDamagingSpecialWeaponIds.includes(id))
-				.includes(id as any)
-		) {
+		if (nonDamagingSpecialWeaponIds.includes(id)) {
 			return DEFAULT_ANY_WEAPON;
 		}
 

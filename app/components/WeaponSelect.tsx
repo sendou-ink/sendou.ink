@@ -11,6 +11,8 @@ import type { AnyWeapon } from "~/features/build-analyzer";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { filterWeapon } from "~/modules/in-game-lists/utils";
 import {
+	mainWeaponIds,
+	nonDamagingSpecialWeaponIds,
 	SPLAT_BOMB_ID,
 	specialWeaponIds,
 	subWeaponIds,
@@ -46,7 +48,6 @@ interface WeaponSelectProps<
 	quickSelectWeaponsIds?: Array<MainWeaponId>;
 }
 
-// TODO: fix selected value disappears when filtered out. This is because `items` is filtered in a controlled manner and the selected key might not be included in the filtered items.
 export function WeaponSelect<
 	Clearable extends boolean | undefined = undefined,
 	IncludeSubSpecial extends boolean | undefined = undefined,
@@ -63,10 +64,11 @@ export function WeaponSelect<
 	quickSelectWeaponsIds,
 }: WeaponSelectProps<Clearable, IncludeSubSpecial>) {
 	const { t } = useTranslation(["common"]);
-	const { items, filterValue, setFilterValue } = useFilteredWeaponItems({
+	const { items, filterValue, setFilterValue } = useWeaponItems({
 		includeSubSpecial,
 		quickSelectWeaponsIds,
 	});
+	const filter = useWeaponFilter();
 
 	const isControlled = value !== undefined;
 
@@ -113,6 +115,7 @@ export function WeaponSelect<
 			clearable={clearable}
 			data-testid={testId}
 			isRequired={isRequired}
+			filter={filter}
 		>
 			{({ key, items: weapons, name, idx }) => (
 				<SendouSelectItemSection
@@ -178,7 +181,40 @@ export function WeaponSelect<
 	);
 }
 
-function useFilteredWeaponItems({
+function useWeaponFilter() {
+	const { t } = useTranslation(["weapons"]);
+
+	const weaponNameToWeaponMap = (() => {
+		const map = new Map<string, AnyWeapon>();
+
+		for (const id of mainWeaponIds) {
+			map.set(t(`weapons:MAIN_${id}`), { id, type: "MAIN" });
+		}
+
+		for (const id of subWeaponIds) {
+			map.set(t(`weapons:SUB_${id}`), { id, type: "SUB" });
+		}
+
+		for (const id of specialWeaponIds) {
+			map.set(t(`weapons:SPECIAL_${id}`), { id, type: "SPECIAL" });
+		}
+
+		return map;
+	})();
+
+	return (value: string, searchValue: string) => {
+		const weapon = weaponNameToWeaponMap.get(value);
+		if (!weapon) return false;
+
+		return filterWeapon({
+			weapon,
+			weaponName: value,
+			searchTerm: searchValue,
+		});
+	};
+}
+
+function useWeaponItems({
 	includeSubSpecial,
 	quickSelectWeaponsIds,
 }: {
@@ -192,58 +228,41 @@ function useFilteredWeaponItems({
 	const showQuickSelectWeapons =
 		filterValue === "" && quickSelectWeaponsIds?.length;
 
-	const filteredItems = () => {
-		if (showQuickSelectWeapons) {
-			return [
-				{
-					idx: 0,
-					key: "quick-select" as const,
-					name: t("common:forms.weaponSearch.quickSelect"),
-					items: items
-						.flatMap((c) =>
-							c.items
-								.map((item) => (item.weapon.type === "MAIN" ? item : null))
-								.filter((val) => val !== null),
-						)
-						.filter((item) =>
-							quickSelectWeaponsIds.includes(item.weapon.id as MainWeaponId),
-						)
-						.sort((a, b) => {
-							const aIdx = quickSelectWeaponsIds.indexOf(
-								a.weapon.id as MainWeaponId,
-							);
-							const bIdx = quickSelectWeaponsIds.indexOf(
-								b.weapon.id as MainWeaponId,
-							);
-							return aIdx - bIdx;
-						}),
-				},
-			];
-		}
+	if (showQuickSelectWeapons) {
+		const quickSelectCategory = {
+			idx: 0,
+			key: "quick-select" as const,
+			name: t("common:forms.weaponSearch.quickSelect"),
+			items: items
+				.flatMap((c) =>
+					c.items
+						.map((item) => (item.weapon.type === "MAIN" ? item : null))
+						.filter((val) => val !== null),
+				)
+				.filter((item) =>
+					quickSelectWeaponsIds.includes(item.weapon.id as MainWeaponId),
+				)
+				.sort((a, b) => {
+					const aIdx = quickSelectWeaponsIds.indexOf(
+						a.weapon.id as MainWeaponId,
+					);
+					const bIdx = quickSelectWeaponsIds.indexOf(
+						b.weapon.id as MainWeaponId,
+					);
+					return aIdx - bIdx;
+				}),
+		};
 
-		return !filterValue
-			? items
-			: items
-					.map((category) => {
-						const filteredItems = category.items.filter((item) =>
-							filterWeapon({
-								weapon: item.weapon,
-								weaponName: item.name,
-								searchTerm: filterValue,
-							}),
-						);
-
-						return {
-							...category,
-							items: filteredItems,
-						};
-					})
-					.filter((category) => category.items.length > 0)
-					.map((category, idx) => ({ ...category, idx }));
-	};
+		return {
+			// not too sure why we need to type cast here.. was working fine before refactoring
+			items: [quickSelectCategory] as typeof items,
+			filterValue,
+			setFilterValue,
+		};
+	}
 
 	return {
-		items: filteredItems(),
+		items,
 		filterValue,
 		setFilterValue,
 	};
@@ -288,14 +307,17 @@ function useAllWeaponCategories(withSubSpecial = false) {
 		name: "specials" as const,
 		key: "specials",
 		idx: 1,
-		items: specialWeaponIds.map((id) => ({
-			name: t(`weapons:SPECIAL_${id}`),
-			weapon: {
-				anyWeaponId: `SPECIAL_${id}`,
-				id,
-				type: "SPECIAL" as const,
-			},
-		})),
+		items: specialWeaponIds
+			// currently no use-case exists to select big bubbler or tacticooler
+			.filter((id) => !nonDamagingSpecialWeaponIds.includes(id))
+			.map((id) => ({
+				name: t(`weapons:SPECIAL_${id}`),
+				weapon: {
+					anyWeaponId: `SPECIAL_${id}`,
+					id,
+					type: "SPECIAL" as const,
+				},
+			})),
 	};
 
 	return [

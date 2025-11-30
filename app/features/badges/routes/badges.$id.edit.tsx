@@ -61,6 +61,7 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 					className="text-center mx-auto"
 					name="new-manager"
 					onChange={(user) => {
+						if (!user) return;
 						if (managers.some((m) => m.id === user.id)) {
 							return;
 						}
@@ -127,6 +128,7 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 					name="new-owner"
 					key={userInputKey}
 					onChange={(user) => {
+						if (!user) return;
 						setOwners((previousOwners) => {
 							const existingOwner = previousOwners.find(
 								(o) => o.id === user.id,

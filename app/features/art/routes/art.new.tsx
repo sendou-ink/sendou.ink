@@ -338,7 +338,7 @@ function LinkedUsers() {
 							name="user"
 							onChange={(newUser) => {
 								const newUsers = structuredClone(users);
-								newUsers[i] = { ...newUsers[i], userId: newUser.id };
+								newUsers[i] = { ...newUsers[i], userId: newUser?.id };
 
 								setUsers(newUsers);
 							}}

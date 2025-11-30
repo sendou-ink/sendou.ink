@@ -28,7 +28,7 @@ export function UserSearchFormField<T extends FieldValues>({
 				name={name}
 				render={({ field: { onChange, onBlur, value, ref } }) => (
 					<UserSearch
-						onChange={(newUser) => onChange(newUser.id)}
+						onChange={(newUser) => onChange(newUser?.id)}
 						initialUserId={value}
 						onBlur={onBlur}
 						ref={ref}
