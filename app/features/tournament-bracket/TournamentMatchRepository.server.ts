@@ -40,8 +40,10 @@ export async function userParticipationByTournamentId(tournamentId: number) {
 		.execute();
 }
 
+// xxx: not quite correct as now we are not handling match unlocked scenario (the old startedAt stays), maybe DB trigger to clear?
 /**
  * Marks tournament matches as started by setting their startedAt timestamp to the current time.
+ * Skips matches that are already marked as started.
  * @param ids - Array of tournament match IDs to mark as started
  */
 export function markManyAsStarted(ids: number[]) {
@@ -49,5 +51,6 @@ export function markManyAsStarted(ids: number[]) {
 		.updateTable("TournamentMatch")
 		.set({ startedAt: databaseTimestampNow() })
 		.where("id", "in", ids)
+		.where("startedAt", "is", null)
 		.execute();
 }
