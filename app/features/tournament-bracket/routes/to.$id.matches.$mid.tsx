@@ -103,7 +103,7 @@ export default function TournamentMatchPage() {
 			</div>
 			{/** xxx: delete */}
 			{data.match.startedAt ? (
-				<div style={{ backgroundColor: "yellow", padding: "8px" }}>
+				<div style={{ backgroundColor: "black", padding: "8px" }}>
 					DEV: startedAt = {new Date(data.match.startedAt * 1000).toISOString()}
 				</div>
 			) : (

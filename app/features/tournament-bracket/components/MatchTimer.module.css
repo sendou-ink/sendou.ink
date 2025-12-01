@@ -1,0 +1,52 @@
+.progressContainer {
+	position: relative;
+	width: 100%;
+	height: 18px;
+	background-color: var(--bg-lightest);
+}
+
+.progressBar {
+	position: absolute;
+	left: 0;
+	top: 0;
+	height: 100%;
+	background-color: var(--theme-transparent);
+	transition:
+		width 0.5s ease-in-out,
+		background-color 0.3s ease;
+	z-index: 1;
+}
+
+.gameMarker {
+	position: absolute;
+	top: 0;
+	height: 100%;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	z-index: 2;
+	pointer-events: none;
+}
+
+.gameMarkerLine {
+	width: 1.5px;
+	height: 100%;
+	background-color: var(--text-lighter);
+	opacity: 0.6;
+}
+
+/** xxx: For mobile not enough space */
+.gameMarkerText {
+	font-size: var(--fonts-xxxs);
+	font-weight: var(--semi-bold);
+	color: var(--text-lighter);
+	white-space: nowrap;
+}
+
+.gameMarkerLabel {
+	padding-right: var(--s-1);
+}
+
+.gameMarkerTime {
+	padding-left: var(--s-1);
+}

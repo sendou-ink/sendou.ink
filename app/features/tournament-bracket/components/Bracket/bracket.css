@@ -41,6 +41,13 @@
 	height: 18.86px;
 }
 
+.bracket__match__timer {
+	position: absolute;
+	bottom: 0;
+	right: 32px;
+	margin-block-end: -16px;
+}
+
 .bracket__match {
 	width: var(--match-width);
 	min-height: var(--match-height);

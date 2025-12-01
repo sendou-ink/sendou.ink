@@ -50,6 +50,7 @@ import {
 } from "../tournament-bracket-utils";
 import { MatchActions } from "./MatchActions";
 import { MatchRosters } from "./MatchRosters";
+import { MatchTimer } from "./MatchTimer";
 
 export type Result = Unpacked<
 	SerializeFrom<TournamentMatchLoaderData>["results"]
@@ -420,6 +421,13 @@ function FancyStageBanner({
 					{children}
 				</div>
 			)}
+			{/** xxx: only show if member of the match or organizer and match is not over */}
+			{!matchIsLocked && data.match.startedAt ? (
+				<MatchTimer
+					startedAt={databaseTimestampToDate(data.match.startedAt)}
+					bestOf={data.match.bestOf}
+				/>
+			) : null}
 			{infos && (
 				<div className="tournament-bracket__infos">
 					{infos.filter(Boolean).map((info, i) => (

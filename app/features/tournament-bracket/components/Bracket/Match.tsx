@@ -1,5 +1,6 @@
 import { Link, useFetcher } from "@remix-run/react";
 import clsx from "clsx";
+import { differenceInMinutes } from "date-fns";
 import * as React from "react";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
@@ -11,9 +12,11 @@ import {
 	useStreamingParticipants,
 	useTournament,
 } from "~/features/tournament/routes/to.$id";
+import { databaseTimestampToDate } from "~/utils/dates";
 import type { Unpacked } from "~/utils/types";
 import { tournamentMatchPage, tournamentStreamsPage } from "~/utils/urls";
 import type { Bracket } from "../../core/Bracket";
+import * as Deadline from "../../core/Deadline";
 import type { TournamentData } from "../../core/Tournament.server";
 
 interface MatchProps {
@@ -25,8 +28,6 @@ interface MatchProps {
 	showSimulation: boolean;
 	bracket: Bracket;
 }
-
-// xxx: show how long the match has been ongoing via startedAt
 
 export function Match(props: MatchProps) {
 	const isBye = !props.match.opponent1 || !props.match.opponent2;
@@ -43,6 +44,7 @@ export function Match(props: MatchProps) {
 				<div className="bracket__match__separator" />
 				<MatchRow {...props} side={2} />
 			</MatchWrapper>
+			<MatchTimer match={props.match} bracket={props.bracket} />
 		</div>
 	);
 }
@@ -266,6 +268,61 @@ function MatchStreams({ match }: Pick<MatchProps, "match">) {
 					withThumbnail={false}
 				/>
 			))}
+		</div>
+	);
+}
+
+function MatchTimer({ match, bracket }: Pick<MatchProps, "match" | "bracket">) {
+	const [now, setNow] = React.useState(new Date());
+
+	React.useEffect(() => {
+		const interval = setInterval(() => {
+			setNow(new Date());
+		}, 60000);
+
+		return () => clearInterval(interval);
+	}, []);
+
+	if (!match.startedAt) return null;
+
+	const isOver =
+		match.opponent1?.result === "win" || match.opponent2?.result === "win";
+
+	if (isOver) return null;
+
+	const round = bracket.data.round.find((r) => r.id === match.round_id);
+	const bestOf = round?.maps?.count;
+
+	if (!bestOf) return null;
+
+	const elapsedMinutes = differenceInMinutes(
+		now,
+		databaseTimestampToDate(match.startedAt),
+	);
+	const status = Deadline.matchStatus({
+		elapsedMinutes,
+		gamesCompleted:
+			(match.opponent1?.score ?? 0) + (match.opponent2?.score ?? 0),
+		maxGamesCount: bestOf,
+	});
+
+	const displayText = elapsedMinutes >= 60 ? "1h+" : `${elapsedMinutes}m`;
+
+	const statusColor =
+		status === "error"
+			? "var(--theme-error)"
+			: status === "warning"
+				? "var(--theme-warning)"
+				: "var(--text)";
+
+	return (
+		<div className="bracket__match__timer">
+			<div
+				className="bracket__match__header__box"
+				style={{ color: statusColor }}
+			>
+				{displayText}
+			</div>
 		</div>
 	);
 }
