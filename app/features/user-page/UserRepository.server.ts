@@ -330,14 +330,22 @@ export async function findSubDefaultsByUserId(userId: number) {
 
 	const qWeaponPool = user.qWeaponPool ?? [];
 
+	let bestWeapons = qWeaponPool
+		.filter((w) => w.isFavorite === 1)
+		.map((w) => w.weaponSplId);
+	let okWeapons = qWeaponPool
+		.filter((w) => w.isFavorite === 0)
+		.map((w) => w.weaponSplId);
+
+	if (bestWeapons.length === 0) {
+		bestWeapons = okWeapons;
+		okWeapons = [];
+	}
+
 	return {
 		canVc: vcToCanVc(user.vc),
-		bestWeapons: qWeaponPool
-			.filter((w) => w.isFavorite === 1)
-			.map((w) => w.weaponSplId),
-		okWeapons: qWeaponPool
-			.filter((w) => w.isFavorite === 0)
-			.map((w) => w.weaponSplId),
+		bestWeapons,
+		okWeapons,
 		message: user.lastSubMessage,
 	};
 }
