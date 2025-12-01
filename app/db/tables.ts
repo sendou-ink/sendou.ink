@@ -933,6 +933,13 @@ export interface ApiToken {
 	createdAt: GeneratedAlways<number>;
 }
 
+export interface UserDiscordToken {
+	userId: number;
+	accessToken: string;
+	refreshToken: string;
+	expiresAt: number;
+}
+
 export interface BanLog {
 	id: GeneratedAlways<number>;
 	userId: number;
@@ -1189,4 +1196,5 @@ export interface DB {
 	Notification: Notification;
 	NotificationUser: NotificationUser;
 	NotificationUserSubscription: NotificationUserSubscription;
+	UserDiscordToken: UserDiscordToken;
 }

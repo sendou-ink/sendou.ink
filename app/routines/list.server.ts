@@ -5,6 +5,7 @@ import { NotifyCheckInStartRoutine } from "./notifyCheckInStart";
 import { NotifyPlusServerVotingRoutine } from "./notifyPlusServerVoting";
 import { NotifyScrimStartingSoonRoutine } from "./notifyScrimStartingSoon";
 import { NotifySeasonStartRoutine } from "./notifySeasonStart";
+import { RefreshDiscordTokensRoutine } from "./refreshDiscordTokens";
 import { SetOldGroupsAsInactiveRoutine } from "./setOldGroupsAsInactive";
 import { UpdatePatreonDataRoutine } from "./updatePatreonData";
 
@@ -27,4 +28,5 @@ export const daily = [
 	DeleteOldTrustRoutine,
 	DeleteOldNotificationsRoutine,
 	CloseExpiredCommissionsRoutine,
+	RefreshDiscordTokensRoutine,
 ];
