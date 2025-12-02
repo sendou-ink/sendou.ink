@@ -1,7 +1,6 @@
 import { cachified } from "@epic-web/cachified";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN } from "~/features/mmr/mmr-constants";
-import { spToOrdinal } from "~/features/mmr/mmr-utils";
 import { freshUserSkills, userSkills } from "~/features/mmr/tiered.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
@@ -164,15 +163,17 @@ export function ownEntryPeek({
 
 	const { intervals } = userSkills(season);
 
+	const currentTierIndex = intervals.findIndex(
+		(interval) =>
+			interval.name === withTier.tier.name &&
+			interval.isPlus === withTier.tier.isPlus,
+	);
+
+	const nextTier =
+		currentTierIndex > 0 ? intervals[currentTierIndex - 1] : undefined;
+
 	return {
 		entry: withTier,
-		nextTier: intervals
-			.slice()
-			.reverse()
-			.find(
-				(tier) =>
-					tier.neededOrdinal &&
-					tier.neededOrdinal > spToOrdinal(withTier.power),
-			),
+		nextTier,
 	};
 }

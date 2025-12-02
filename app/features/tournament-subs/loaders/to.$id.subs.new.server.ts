@@ -1,10 +1,11 @@
 import { type LoaderFunctionArgs, redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseParams } from "~/utils/remix.server";
 import { tournamentSubsPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
-import { findSubsByTournamentId } from "../queries/findSubsByTournamentId.server";
+import * as TournamentSubRepository from "../TournamentSubRepository.server";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 	const user = await requireUser(request);
@@ -18,11 +19,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		throw redirect(tournamentSubsPage(tournamentId));
 	}
 
-	const sub = findSubsByTournamentId({ tournamentId }).find(
-		(sub) => sub.userId === user.id,
-	);
-
 	return {
-		sub,
+		sub: await TournamentSubRepository.findUserSubPost({
+			tournamentId,
+			userId: user.id,
+		}),
+		userDefaults: await UserRepository.findSubDefaultsByUserId(user.id),
 	};
 };

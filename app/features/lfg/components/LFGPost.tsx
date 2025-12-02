@@ -1,6 +1,5 @@
 import { Link, useFetcher } from "@remix-run/react";
 import clsx from "clsx";
-import { formatDistanceToNow } from "date-fns";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
@@ -260,7 +259,7 @@ function PostTime({
 	updatedAt: number;
 }) {
 	const { t } = useTranslation(["lfg"]);
-	const { formatDate } = useTimeFormat();
+	const { formatDate, formatDistanceToNow } = useTimeFormat();
 
 	const createdAtDate = databaseTimestampToDate(createdAt);
 	const updatedAtDate = databaseTimestampToDate(updatedAt);

@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import { deleteSub } from "~/features/tournament-subs";
+import { deleteSub } from "~/features/tournament-subs/queries/deleteSub.server";
 import invariant from "~/utils/invariant";
 import { checkOut } from "./checkOut.server";
 

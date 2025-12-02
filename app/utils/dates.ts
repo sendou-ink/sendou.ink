@@ -1,7 +1,63 @@
 import { CalendarDateTime, parseDate } from "@internationalized/date";
-import { getWeek } from "date-fns";
+import type { Locale } from "date-fns";
+import {
+	formatDistanceToNow as dateFnsFormatDistanceToNow,
+	getWeek,
+} from "date-fns";
+import { da } from "date-fns/locale/da";
+import { de } from "date-fns/locale/de";
+import { enUS } from "date-fns/locale/en-US";
+import { es } from "date-fns/locale/es";
+import { fr } from "date-fns/locale/fr";
+import { frCA } from "date-fns/locale/fr-CA";
+import { he } from "date-fns/locale/he";
+import { it } from "date-fns/locale/it";
+import { ja } from "date-fns/locale/ja";
+import { ko } from "date-fns/locale/ko";
+import { nl } from "date-fns/locale/nl";
+import { pl } from "date-fns/locale/pl";
+import { ptBR } from "date-fns/locale/pt-BR";
+import { ru } from "date-fns/locale/ru";
+import { zhCN } from "date-fns/locale/zh-CN";
 import type { MonthYear } from "~/features/plus-voting/core";
+import type { LanguageCode } from "~/modules/i18n/config";
 import type { DayMonthYear } from "./zod";
+
+const LOCALE_MAP: Record<LanguageCode, Locale> = {
+	da,
+	de,
+	en: enUS,
+	"es-ES": es,
+	"es-US": es,
+	"fr-CA": frCA,
+	"fr-EU": fr,
+	he,
+	it,
+	ja,
+	ko,
+	nl,
+	pl,
+	"pt-BR": ptBR,
+	ru,
+	zh: zhCN,
+};
+
+export function getDateFnsLocale(language: LanguageCode) {
+	return LOCALE_MAP[language];
+}
+
+export function formatDistanceToNow(
+	date: Parameters<typeof dateFnsFormatDistanceToNow>[0],
+	options: Omit<
+		NonNullable<Parameters<typeof dateFnsFormatDistanceToNow>[1]>,
+		"locale"
+	> & { language: LanguageCode },
+) {
+	return dateFnsFormatDistanceToNow(date, {
+		...options,
+		locale: getDateFnsLocale(options.language),
+	});
+}
 
 export function databaseTimestampToDate(timestamp: number) {
 	return new Date(databaseTimestampToJavascriptTimestamp(timestamp));

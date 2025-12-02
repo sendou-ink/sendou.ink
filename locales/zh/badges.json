@@ -3,7 +3,7 @@
 	"patreon+": "Patreon上的sendou.ink Supporter+",
 	"xp": "到达{{xpText}}的奖励",
 	"forYourEvent": "在我的活动中设置徽章",
-	"managedBy": "由{{users}}管理",
+	"managedBy": "由<0></0>管理",
 	"madeBy": "",
 	"own.divider": "管理徽章",
 	"other.divider": "其他徽章",

@@ -9,6 +9,7 @@ import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import { deleteSub } from "~/features/tournament-subs/queries/deleteSub.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
@@ -71,6 +72,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 				tournamentId,
 			});
+			deleteSub({ tournamentId, userId: data.userId });
 
 			ShowcaseTournaments.addToCached({
 				tournamentId,

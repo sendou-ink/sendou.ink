@@ -1,0 +1,9 @@
+.selectedWeapon {
+	padding: var(--s-2);
+	border-radius: 100%;
+	background-color: var(--bg-lighter);
+}
+
+.weaponPool {
+	width: 20rem;
+}

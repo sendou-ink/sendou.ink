@@ -5,7 +5,7 @@
 	"tournament_one": "Verliehen für den Sieg von {{tournament}}",
 	"tournament_other": "Verliehen für den Sieg von {{tournament}} (×{{count}})",
 	"forYourEvent": "Abzeichen für dein Event?",
-	"managedBy": "Verwaltet durch {{users}}",
+	"managedBy": "Verwaltet durch <0></0>",
 	"madeBy": "",
 	"own.divider": "",
 	"other.divider": "",

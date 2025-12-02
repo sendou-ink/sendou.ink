@@ -3,8 +3,8 @@
 	"patreon+": "Patoreon での sendou.ink Supporter+",
 	"xp": "{{xpText}} に到達したことで獲得",
 	"forYourEvent": "イベント専用のバッジ?",
-	"managedBy": "{{users}} によって管理されています",
-	"madeBy": "製作者: {{user}}",
+	"managedBy": "<0></0> によって管理されています",
+	"madeBy": "製作者: <0></0>",
 	"own.divider": "管理しているバッジ",
 	"other.divider": "他のバッジ",
 	"noBadgesFound": ""

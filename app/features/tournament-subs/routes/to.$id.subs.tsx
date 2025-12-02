@@ -1,4 +1,5 @@
 import { Link, useLoaderData } from "@remix-run/react";
+import clsx from "clsx";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
@@ -12,13 +13,13 @@ import { TrashIcon } from "~/components/icons/Trash";
 import { Redirect } from "~/components/Redirect";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import type { SerializeFrom } from "~/utils/remix";
 import { tournamentRegisterPage, userPage } from "~/utils/urls";
 import { action } from "../actions/to.$id.subs.server";
 import { loader } from "../loaders/to.$id.subs.server";
-import type { SubByTournamentId } from "../queries/findSubsByTournamentId.server";
 export { action, loader };
 
-import "../tournament-subs.css";
+import styles from "./to.$id.subs.module.css";
 
 export default function TournamentSubsPage() {
 	const user = useUser();
@@ -30,7 +31,7 @@ export default function TournamentSubsPage() {
 	}
 
 	return (
-		<div className="stack lg">
+		<div className={styles.listPageContainer}>
 			{!tournament.teamMemberOfByUser(user) && user ? (
 				<div className="stack items-end">
 					<AddOrEditSubButton />
@@ -71,13 +72,17 @@ function AddOrEditSubButton() {
 	);
 }
 
-function SubInfoSection({ sub }: { sub: SubByTournamentId }) {
+function SubInfoSection({
+	sub,
+}: {
+	sub: SerializeFrom<typeof loader>["subs"][number];
+}) {
 	const { t } = useTranslation(["common", "tournament"]);
 	const user = useUser();
 	const tournament = useTournament();
 
 	const infos = [
-		<div key="vc" className="sub__section__info__vc">
+		<div key="vc" className={styles.sectionInfoVc}>
 			<MicrophoneIcon
 				className={
 					sub.canVc === 1
@@ -105,17 +110,27 @@ function SubInfoSection({ sub }: { sub: SubByTournamentId }) {
 
 	return (
 		<div>
-			<section className="sub__section">
-				<Avatar user={sub} size="sm" className="sub__section__avatar" />
-				<Link to={userPage(sub)} className="sub__section__name">
+			<section className={styles.section}>
+				<Avatar user={sub} size="sm" className={styles.sectionAvatar} />
+				<Link to={userPage(sub)} className={styles.sectionName}>
 					{sub.username}
 				</Link>
-				<div className="sub__section__spacer" />
-				<div className="sub__section__info">{infos}</div>
-				<div className="sub__section__weapon-top-text sub__section__weapon-text">
+				<div className={styles.sectionSpacer} />
+				<div className={styles.sectionInfo}>{infos}</div>
+				<div
+					className={clsx(
+						styles.sectionWeaponTopText,
+						styles.sectionWeaponText,
+					)}
+				>
 					{t("tournament:subs.prefersToPlay")}
 				</div>
-				<div className="sub__section__weapon-top-images sub__section__weapon-images">
+				<div
+					className={clsx(
+						styles.sectionWeaponTopImages,
+						styles.sectionWeaponImages,
+					)}
+				>
 					{sub.bestWeapons.map((wpn) => (
 						<WeaponImage
 							key={wpn}
@@ -127,10 +142,20 @@ function SubInfoSection({ sub }: { sub: SubByTournamentId }) {
 				</div>
 				{sub.okWeapons ? (
 					<>
-						<div className="sub__section__weapon-bottom-text sub__section__weapon-text">
+						<div
+							className={clsx(
+								styles.sectionWeaponBottomText,
+								styles.sectionWeaponText,
+							)}
+						>
 							{t("tournament:subs.canPlay")}
 						</div>
-						<div className="sub__section__weapon-bottom-images sub__section__weapon-images">
+						<div
+							className={clsx(
+								styles.sectionWeaponBottomImages,
+								styles.sectionWeaponImages,
+							)}
+						>
 							{sub.okWeapons.map((wpn) => (
 								<WeaponImage
 									key={wpn}
@@ -143,7 +168,7 @@ function SubInfoSection({ sub }: { sub: SubByTournamentId }) {
 					</>
 				) : null}
 				{sub.message ? (
-					<div className="sub__section__message">{sub.message}</div>
+					<div className={styles.sectionMessage}>{sub.message}</div>
 				) : null}
 			</section>
 			{user?.id === sub.userId || tournament.isOrganizer(user) ? (

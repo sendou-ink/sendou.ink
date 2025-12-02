@@ -37,7 +37,7 @@ import {
 	TORPEDO_ID,
 	TOXIC_MIST_ID,
 } from "~/modules/in-game-lists/weapon-ids";
-import { atOrError, nullFilledArray } from "~/utils/arrays";
+import { nullFilledArray } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -94,7 +94,7 @@ export const CURRENT_PATCH = "10.1";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
-		title: "Build analyzer",
+		title: "Build Analyzer",
 		ogTitle: "Splatoon 3 build analyzer/simulator",
 		location: args.location,
 		description:
@@ -1555,7 +1555,9 @@ function DamageTable({
 
 	const showDistanceColumn = values.some((val) => val.distance);
 
-	const firstRow = atOrError(values, 0);
+	const firstRow = values.at(0);
+	invariant(firstRow, "no damage rows found");
+
 	const showDamageColumn =
 		!damageIsSubWeaponDamage(firstRow) ||
 		// essentially checking that we are using some sub resistance up

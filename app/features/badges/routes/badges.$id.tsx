@@ -1,10 +1,11 @@
-import { Outlet, useLoaderData } from "@remix-run/react";
+import { Link, Outlet, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { Badge } from "~/components/Badge";
 import { LinkButton } from "~/components/elements/Button";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import type { SerializeFrom } from "~/utils/remix";
+import { userPage } from "~/utils/urls";
 import { badgeExplanationText } from "../badges-utils";
 
 import { loader } from "../loaders/badges.$id.server";
@@ -23,22 +24,6 @@ export default function BadgeDetailsPage() {
 
 	const context: BadgeDetailsContext = { badge: data.badge };
 
-	const badgeMaker = () => {
-		if (data.badge.author?.username) return data.badge.author?.username;
-		if (
-			[
-				"XP3500 (Splatoon 3)",
-				"XP4000 (Splatoon 3)",
-				"XP4500 (Splatoon 3)",
-				"XP5000 (Splatoon 3)",
-			].includes(data.badge.displayName)
-		) {
-			return "Dreamy";
-		}
-
-		return "borzoic";
-	};
-
 	return (
 		<div className="stack md items-center">
 			<Outlet context={context} />
@@ -48,14 +33,30 @@ export default function BadgeDetailsPage() {
 					{badgeExplanationText(t, data.badge)}
 				</div>
 				<div className="badges__managers">
-					{t("managedBy", {
-						users:
-							data.badge.managers.map((m) => m.username).join(", ") || "???",
-					})}{" "}
+					<Trans
+						i18nKey="managedBy"
+						ns="badges"
+						components={[
+							<span key="managers">
+								{data.badge.managers.length > 0 ? (
+									data.badge.managers.map((manager, idx) => (
+										<span key={manager.userId}>
+											<Link to={userPage(manager)}>{manager.username}</Link>
+											{idx < data.badge.managers.length - 1 ? ", " : ""}
+										</span>
+									))
+								) : (
+									<span>???</span>
+								)}
+							</span>,
+						]}
+					/>{" "}
 					(
-					{t("madeBy", {
-						user: badgeMaker(),
-					})}
+					<Trans
+						i18nKey="madeBy"
+						ns="badges"
+						components={[<BadgeMaker key="maker" badge={data.badge} />]}
+					/>
 					)
 				</div>
 			</div>
@@ -82,4 +83,32 @@ export default function BadgeDetailsPage() {
 			</div>
 		</div>
 	);
+}
+
+function BadgeMaker({
+	badge,
+}: {
+	badge: SerializeFrom<typeof loader>["badge"];
+}) {
+	const badgeMakerName = () => {
+		if (badge.author?.username) return badge.author.username;
+		if (
+			[
+				"XP3500 (Splatoon 3)",
+				"XP4000 (Splatoon 3)",
+				"XP4500 (Splatoon 3)",
+				"XP5000 (Splatoon 3)",
+			].includes(badge.displayName)
+		) {
+			return "Dreamy";
+		}
+
+		return "borzoic";
+	};
+
+	if (badge.author) {
+		return <Link to={userPage(badge.author)}>{badge.author.username}</Link>;
+	}
+
+	return <span>{badgeMakerName()}</span>;
 }

@@ -45,6 +45,7 @@ export interface ShowcaseCalendarEvent extends CommonEvent {
 		logoUrl: string | null;
 		members: (CommonUser & { country: Tables["User"]["country"] })[];
 		notShownMembersCount: number;
+		div: string | null;
 	} | null;
 }
 

@@ -18,7 +18,6 @@ import { useUser } from "~/features/auth/core/user";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
-import { atOrError } from "~/utils/arrays";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { userNewBuildPage, weaponCategoryUrl } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.builds.server";
@@ -41,7 +40,7 @@ type BuildFilter = "ALL" | "PUBLIC" | "PRIVATE" | MainWeaponId;
 export default function UserBuildsPage() {
 	const { t } = useTranslation(["builds", "user"]);
 	const user = useUser();
-	const layoutData = atOrError(useMatches(), -2).data as UserPageLoaderData;
+	const layoutData = useMatches().at(-2)!.data as UserPageLoaderData;
 	const data = useLoaderData<typeof loader>();
 	const [weaponFilter, setWeaponFilter] = useSearchParamState<BuildFilter>({
 		defaultValue: "ALL",
@@ -125,7 +124,7 @@ function BuildsFilters({
 	const { t } = useTranslation(["weapons", "builds"]);
 	const data = useLoaderData<typeof loader>();
 	const user = useUser();
-	const layoutData = atOrError(useMatches(), -2).data as UserPageLoaderData;
+	const layoutData = useMatches().at(-2)!.data as UserPageLoaderData;
 
 	if (data.builds.length === 0) return null;
 

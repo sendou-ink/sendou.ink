@@ -7,9 +7,12 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { useSearchParams } from "@remix-run/react";
 import JSONCrush from "jsoncrush";
 import * as React from "react";
-import { flushSync } from "react-dom";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
-import { modesShort } from "~/modules/in-game-lists/modes";
+import { z } from "zod/v4";
+import {
+	useSearchParamState,
+	useSearchParamStateEncoder,
+} from "~/hooks/useSearchParamState";
+import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import {
 	mainWeaponIds,
@@ -18,6 +21,7 @@ import {
 	weaponIdToType,
 } from "~/modules/in-game-lists/weapon-ids";
 import { assertUnreachable } from "~/utils/types";
+import { modeShort, safeJSONParse } from "~/utils/zod";
 import { DEFAULT_TIERS } from "../tier-list-maker-constants";
 import {
 	type TierListItem,
@@ -70,6 +74,17 @@ export function useTierList() {
 		name: "title",
 		defaultValue: "",
 		revive: (value) => value,
+	});
+
+	const [selectedModes, setSelectedModes] = useSearchParamStateEncoder({
+		name: "modes",
+		defaultValue: rankedModesShort,
+		revive: (value) =>
+			z
+				.preprocess(safeJSONParse, z.array(modeShort))
+				.catch(() => rankedModesShort)
+				.parse(value),
+		encode: JSON.stringify,
 	});
 
 	const parseItemFromId = (id: string): TierListItem | null => {
@@ -240,14 +255,15 @@ export function useTierList() {
 				);
 			}
 
-			flushSync(() => {
-				setTiers({
-					...tiers,
-					tierItems: newTierItems,
-				});
-			});
+			const newState = {
+				...tiers,
+				tierItems: newTierItems,
+			};
+			setTiers(newState);
+			persistTiersStateToParams(newState);
+			return;
 		}
-		persistTiersStateToParams();
+		persistTiersStateToParams(tiers);
 	};
 
 	const handleAddTier = () => {
@@ -257,42 +273,46 @@ export function useTierList() {
 			color: "#888888",
 		};
 
-		setTiers({
+		const newState = {
 			...tiers,
 			tiers: [...tiers.tiers, newTier],
-		});
-		persistTiersStateToParams();
+		};
+		setTiers(newState);
+		persistTiersStateToParams(newState);
 	};
 
 	const handleRemoveTier = (tierId: string) => {
 		const newTierItems = new Map(tiers.tierItems);
 		newTierItems.delete(tierId);
 
-		setTiers({
+		const newState = {
 			tiers: tiers.tiers.filter((tier) => tier.id !== tierId),
 			tierItems: newTierItems,
-		});
-		persistTiersStateToParams();
+		};
+		setTiers(newState);
+		persistTiersStateToParams(newState);
 	};
 
 	const handleRenameTier = (tierId: string, newName: string) => {
-		setTiers({
+		const newState = {
 			...tiers,
 			tiers: tiers.tiers.map((tier) =>
 				tier.id === tierId ? { ...tier, name: newName } : tier,
 			),
-		});
-		persistTiersStateToParams();
+		};
+		setTiers(newState);
+		persistTiersStateToParams(newState);
 	};
 
 	const handleChangeTierColor = (tierId: string, newColor: string) => {
-		setTiers({
+		const newState = {
 			...tiers,
 			tiers: tiers.tiers.map((tier) =>
 				tier.id === tierId ? { ...tier, color: newColor } : tier,
 			),
-		});
-		persistTiersStateToParams();
+		};
+		setTiers(newState);
+		persistTiersStateToParams(newState);
 	};
 
 	const getItemsInTier = (tierId: string): TierListItem[] => {
@@ -315,7 +335,9 @@ export function useTierList() {
 				const combinations: string[] = [];
 				for (const stageId of stageIds) {
 					for (const mode of modesShort) {
-						combinations.push(`${stageId}-${mode}`);
+						if (selectedModes.includes(mode)) {
+							combinations.push(`${stageId}-${mode}`);
+						}
 					}
 				}
 				return combinations;
@@ -425,6 +447,8 @@ export function useTierList() {
 		setShowTierHeaders,
 		title,
 		setTitle,
+		selectedModes,
+		setSelectedModes,
 	};
 }
 
@@ -456,12 +480,12 @@ export function useSearchParamTiersState() {
 		};
 	});
 
-	const persistTiersStateToParams = () => {
+	const persistTiersStateToParams = (state: TierListState) => {
 		const searchParams = new URLSearchParams(window.location.search);
 
 		const serializedState = JSON.stringify({
-			tiers: tiers.tiers,
-			tierItems: Array.from(tiers.tierItems.entries()),
+			tiers: state.tiers,
+			tierItems: Array.from(state.tierItems.entries()),
 		});
 
 		searchParams.set(TIER_SEARCH_PARAM_NAME, JSONCrush.crush(serializedState));

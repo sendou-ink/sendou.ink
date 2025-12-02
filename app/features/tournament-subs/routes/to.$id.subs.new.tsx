@@ -1,4 +1,4 @@
-import { Form, useLoaderData } from "@remix-run/react";
+import { Form, Link, useLoaderData } from "@remix-run/react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
@@ -12,12 +12,14 @@ import { WeaponSelect } from "~/components/WeaponSelect";
 import { useUser } from "~/features/auth/core/user";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+import { SENDOUQ_SETTINGS_PAGE } from "~/utils/urls";
 import { action } from "../actions/to.$id.subs.new.server";
 import { loader } from "../loaders/to.$id.subs.new.server";
 import { TOURNAMENT_SUB } from "../tournament-subs-constants";
 export { action, loader };
 
-import "../tournament-subs.css";
+import clsx from "clsx";
+import styles from "./to.$id.subs.new.module.css";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["user"],
@@ -27,17 +29,26 @@ export default function NewTournamentSubPage() {
 	const user = useUser();
 	const { t } = useTranslation(["common", "tournament"]);
 	const data = useLoaderData<typeof loader>();
+
 	const [bestWeapons, setBestWeapons] = React.useState<MainWeaponId[]>(
-		data.sub?.bestWeapons ?? [],
+		data.sub?.bestWeapons ?? data.userDefaults?.bestWeapons ?? [],
 	);
 	const [okWeapons, setOkWeapons] = React.useState<MainWeaponId[]>(
-		data.sub?.okWeapons ?? [],
+		data.sub?.okWeapons ?? data.userDefaults?.okWeapons ?? [],
 	);
 
 	return (
 		<div className="half-width">
 			<Form method="post" className="stack md items-start">
-				<h2>{t("tournament:subs.addPost")}</h2>
+				<div className="stack">
+					<h2>{t("tournament:subs.addPost")}</h2>
+					<FormMessage type="info">
+						{t("tournament:subs.defaultsNote")}{" "}
+						<Link to={SENDOUQ_SETTINGS_PAGE}>
+							{t("tournament:subs.defaultsPage")}
+						</Link>
+					</FormMessage>
+				</div>
 				<VCRadios />
 				<WeaponPoolSelect
 					label={t("tournament:subs.weapons.prefer.header")}
@@ -74,6 +85,16 @@ function VCRadios() {
 	const { t } = useTranslation(["common", "tournament"]);
 	const data = useLoaderData<typeof loader>();
 
+	const isDefaultChecked = (value: number) => {
+		if (data.sub) {
+			return data.sub.canVc === value;
+		}
+
+		const defaultCanVc = data.userDefaults?.canVc ?? 1;
+
+		return defaultCanVc === value;
+	};
+
 	return (
 		<div>
 			<Label required>{t("tournament:subs.vc.header")}</Label>
@@ -85,7 +106,7 @@ function VCRadios() {
 						name="canVc"
 						value="1"
 						required
-						defaultChecked={data.sub && data.sub.canVc === 1}
+						defaultChecked={isDefaultChecked(1)}
 					/>
 					<label htmlFor="vc-true" className="mb-0">
 						{t("common:yes")}
@@ -97,7 +118,7 @@ function VCRadios() {
 						id="vc-false"
 						name="canVc"
 						value="0"
-						defaultChecked={data.sub && data.sub.canVc === 0}
+						defaultChecked={isDefaultChecked(0)}
 					/>
 					<label htmlFor="vc-false" className="mb-0">
 						{t("common:no")}
@@ -109,7 +130,7 @@ function VCRadios() {
 						id="vc-listen-only"
 						name="canVc"
 						value="2"
-						defaultChecked={data.sub && data.sub.canVc === 2}
+						defaultChecked={isDefaultChecked(2)}
 					/>
 					<label htmlFor="vc-listen-only" className="mb-0">
 						{t("tournament:subs.listenOnlyVC")}
@@ -123,7 +144,9 @@ function VCRadios() {
 function Message() {
 	const { t } = useTranslation(["tournament"]);
 	const data = useLoaderData<typeof loader>();
-	const [value, setValue] = React.useState(data.sub?.message ?? "");
+	const [value, setValue] = React.useState(
+		data.sub?.message ?? data.userDefaults?.message ?? "",
+	);
 
 	return (
 		<div className="u-edit__bio-container">
@@ -216,7 +239,7 @@ function WeaponPoolSelect({
 	const { t } = useTranslation(["user"]);
 
 	return (
-		<div className="stack md sub__weapon-pool">
+		<div className={clsx("stack md", styles.weaponPool)}>
 			<RequiredHiddenInput
 				isValid={!required || weapons.length > 0}
 				name={id}
@@ -245,7 +268,7 @@ function WeaponPoolSelect({
 					{weapons.map((weapon) => {
 						return (
 							<div key={weapon} className="stack xs">
-								<div className="sub__selected-weapon">
+								<div className={styles.selectedWeapon}>
 									<WeaponImage
 										weaponSplId={weapon}
 										variant="badge"

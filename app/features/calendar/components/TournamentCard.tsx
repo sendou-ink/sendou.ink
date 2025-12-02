@@ -19,12 +19,14 @@ import styles from "./TournamentCard.module.css";
 export function TournamentCard({
 	tournament,
 	className,
+	withRelativeTime = false,
 }: {
 	tournament: CalendarEvent | ShowcaseCalendarEvent;
 	className?: string;
+	withRelativeTime?: boolean;
 }) {
 	const isMounted = useIsMounted();
-	const { formatDateTime } = useTimeFormat();
+	const { formatDateTimeSmartMinutes, formatDistanceToNow } = useTimeFormat();
 
 	const isShowcase = tournament.type === "showcase";
 	const isCalendar = tournament.type === "calendar";
@@ -35,12 +37,18 @@ export function TournamentCard({
 		if (!isMounted) return "Placeholder";
 
 		const date = databaseTimestampToDate(tournament.startTime);
-		return formatDateTime(date, {
+
+		if (withRelativeTime) {
+			return formatDistanceToNow(date, {
+				addSuffix: true,
+			});
+		}
+
+		return formatDateTimeSmartMinutes(date, {
 			month: "short",
 			day: "numeric",
 			hour: "numeric",
 			weekday: "short",
-			minute: date.getMinutes() !== 0 ? "numeric" : undefined,
 		});
 	};
 
@@ -149,6 +157,7 @@ function TournamentFirstPlacers({
 					</span>
 					<div className="text-xxxs text-lighter font-bold text-uppercase">
 						{t("front:showcase.card.winner")}
+						{firstPlacer.div ? ` (${firstPlacer.div})` : null}
 					</div>
 				</div>
 			</div>

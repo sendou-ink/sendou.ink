@@ -1,5 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { useUser } from "~/features/auth/core/user";
+import type { LanguageCode } from "~/modules/i18n/config";
+import { formatDistanceToNow as formatDistanceToNowUtil } from "~/utils/dates";
 
 const H12_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
 	hour12: true,
@@ -94,7 +96,39 @@ export function useTimeFormat() {
 		return date.toLocaleDateString(i18n.language, options);
 	};
 
-	return { formatDateTime, formatTime, formatDate };
+	/** Same as `formatDateTime` but omits minutes when they are zero and AM/PM format is in use */
+	const formatDateTimeSmartMinutes = (
+		date: Date,
+		options?: Intl.DateTimeFormatOptions,
+	) => {
+		const showMinutes =
+			date.getMinutes() !== 0 ||
+			clockFormat === "24h" ||
+			i18n.language !== "en";
+
+		return formatDateTime(date, {
+			...options,
+			minute: showMinutes ? "numeric" : undefined,
+		});
+	};
+
+	const formatDistanceToNow = (
+		date: Parameters<typeof formatDistanceToNowUtil>[0],
+		options?: Omit<Parameters<typeof formatDistanceToNowUtil>[1], "language">,
+	) => {
+		return formatDistanceToNowUtil(date, {
+			...options,
+			language: i18n.language as LanguageCode,
+		});
+	};
+
+	return {
+		formatDateTime,
+		formatTime,
+		formatDate,
+		formatDateTimeSmartMinutes,
+		formatDistanceToNow,
+	};
 }
 
 // Example: "09:00" -> "9:00"

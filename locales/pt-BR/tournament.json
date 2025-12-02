@@ -133,6 +133,8 @@
 	"subs.message.header": "Mensagem",
 	"subs.visibility.header": "Visibilidade",
 	"subs.visibility.everyone": "Todos",
+	"subs.defaultsNote": "",
+	"subs.defaultsPage": "",
 	"progression.error.PLACEMENTS_PARSE_ERROR": "",
 	"progression.error.NOT_RESOLVING_WINNER": "",
 	"progression.error.SAME_PLACEMENT_TO_MULTIPLE_BRACKETS": "",

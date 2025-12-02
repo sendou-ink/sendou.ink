@@ -7,7 +7,7 @@
 	"tournament_many": "",
 	"tournament_other": "Nagrodzony/a {{tournament}} (×{{count}})",
 	"forYourEvent": "Odznaka dla twojego eventu?",
-	"managedBy": "Zarządzane przez {{users}}",
+	"managedBy": "Zarządzane przez <0></0>",
 	"madeBy": "",
 	"own.divider": "",
 	"other.divider": "",

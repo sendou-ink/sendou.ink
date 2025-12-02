@@ -127,6 +127,8 @@
 	"subs.message.header": "信息",
 	"subs.visibility.header": "可见范围",
 	"subs.visibility.everyone": "所有人",
+	"subs.defaultsNote": "",
+	"subs.defaultsPage": "",
 	"progression.error.PLACEMENTS_PARSE_ERROR": "",
 	"progression.error.NOT_RESOLVING_WINNER": "",
 	"progression.error.SAME_PLACEMENT_TO_MULTIPLE_BRACKETS": "",

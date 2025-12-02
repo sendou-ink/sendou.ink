@@ -499,6 +499,7 @@ export function forShowcase() {
 					.select((eb) => [
 						...COMMON_USER_FIELDS,
 						"User.country",
+						"TournamentResult.div",
 						"TournamentTeam.name as teamName",
 						concatUserSubmittedImagePrefix(eb.ref("TeamAvatar.url")).as(
 							"teamLogoUrl",

@@ -3,6 +3,7 @@
 	grid-template-columns: repeat(7, max-content);
 	gap: var(--s-2);
 	--cell-size: 55px;
+	overflow-x: auto;
 }
 
 .org__calendar__container {
@@ -10,6 +11,7 @@
 	flex-direction: column;
 	gap: var(--s-2);
 	height: max-content;
+	overflow-x: visible;
 }
 
 .org__calendar__day-header {
@@ -68,12 +70,13 @@
 .org__calendar__month-selector {
 	display: flex;
 	align-items: center;
+	justify-content: space-between;
 	gap: var(--s-2);
 	font-weight: var(--bold);
 }
 
 .org__calendar__month-selector a {
-	font-size: var(--fonts-lg);
+	font-size: var(--fonts-xl);
 }
 
 .org__calendar__month-selector > div {
@@ -94,7 +97,6 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-16);
-	overflow-x: auto;
 }
 
 @media screen and (min-width: 768px) {

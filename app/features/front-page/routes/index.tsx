@@ -283,7 +283,11 @@ function ResultHighlights() {
 			</h2>
 			<div className={styles.tournamentCardsSpacer}>
 				{data.tournaments.results.map((tournament) => (
-					<TournamentCard key={tournament.id} tournament={tournament} />
+					<TournamentCard
+						key={tournament.id}
+						tournament={tournament}
+						withRelativeTime
+					/>
 				))}
 			</div>
 		</>

@@ -1,5 +1,4 @@
 import test, { expect } from "@playwright/test";
-import { add } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import {
@@ -162,11 +161,7 @@ test.describe("Scrims", () => {
 
 		await setDateTime({ page, date: tomorrowDate, label: "Start" });
 
-		await setDateTime({
-			page,
-			date: add(tomorrowDate, { hours: 2 }),
-			label: "Start time range end",
-		});
+		await page.getByLabel("Start time flexibility").selectOption("+2hours");
 
 		await page.getByLabel("Maps").selectOption("TOURNAMENT");
 
