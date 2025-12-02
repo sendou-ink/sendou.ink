@@ -237,6 +237,7 @@ export async function matchMapList(
 	return result;
 }
 
+// xxx: delete
 export function mapModePreferencesToModeList(
 	groupOnePreferences: UserMapModePreferences["modes"][],
 	groupTwoPreferences: UserMapModePreferences["modes"][],

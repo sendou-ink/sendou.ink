@@ -1,6 +1,10 @@
 import { sub } from "date-fns";
 import { type NotNull, sql } from "kysely";
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
+import {
+	jsonArrayFrom,
+	jsonBuildObject,
+	jsonObjectFrom,
+} from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type {
 	Tables,
@@ -13,6 +17,8 @@ import { shortNanoid } from "~/utils/id";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { userIsBanned } from "../ban/core/banned.server";
 import type { LookingGroupWithInviteCode } from "./q-types";
+
+// xxx: rename to SQGroupRepository
 
 export function mapModePreferencesByGroupId(groupId: number) {
 	return db
@@ -28,6 +34,64 @@ export function mapModePreferencesByGroupId(groupId: number) {
 // groups visible for longer to make development easier
 const SECONDS_TILL_STALE =
 	process.env.NODE_ENV === "development" || IS_E2E_TEST_RUN ? 1_000_000 : 1_800;
+
+export async function findCurrentGroups() {
+	type SendouQMemberObject = Pick<
+		Tables["User"],
+		| "id"
+		| "username"
+		| "discordId"
+		| "discordAvatar"
+		| "customUrl"
+		| "mapModePreferences"
+		| "noScreen"
+	>;
+
+	return db
+		.selectFrom("Group")
+		.innerJoin("GroupMember", "GroupMember.groupId", "Group.id")
+		.innerJoin("User", "User.id", "GroupMember.userId")
+		.leftJoin("GroupMatch", (join) =>
+			join.on((eb) =>
+				eb.or([
+					eb("GroupMatch.alphaGroupId", "=", eb.ref("Group.id")),
+					eb("GroupMatch.bravoGroupId", "=", eb.ref("Group.id")),
+				]),
+			),
+		)
+		.select(({ fn, eb }) => [
+			"Group.id",
+			"Group.chatCode",
+			"Group.inviteCode",
+			"Group.latestActionAt",
+			"Group.chatCode",
+			"Group.inviteCode",
+			"Group.status",
+			"GroupMatch.id as matchId",
+			fn
+				.agg("json_group_array", [
+					jsonBuildObject({
+						id: eb.ref("User.id"),
+						username: eb.ref("User.username"),
+						discordId: eb.ref("User.discordId"),
+						discordAvatar: eb.ref("User.discordAvatar"),
+						customUrl: eb.ref("User.customUrl"),
+						mapModePreferences: eb.ref("User.mapModePreferences"),
+						noScreen: eb.ref("User.noScreen"),
+					}),
+				])
+				.$castTo<SendouQMemberObject[]>()
+				.as("members"),
+		])
+		.where((eb) =>
+			eb.or([
+				eb("Group.status", "=", "ACTIVE"),
+				eb("Group.status", "=", "PREPARING"),
+			]),
+		)
+		.groupBy("Group.id")
+		.execute();
+}
 
 export async function findLookingGroups({
 	minGroupSize,
