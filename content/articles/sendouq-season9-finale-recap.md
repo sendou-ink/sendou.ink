@@ -1,6 +1,6 @@
 ---
 title: "SendouQ Season 9 Finale Recap"
-date: 2025-12-2
+date: 2025-12-02
 author:
    - name: YELLOW
      link: https://sendou.ink/u/great-hero-yellow
