@@ -72,9 +72,11 @@ export const TournamentSearch = React.forwardRef(function TournamentSearch<
 		}
 	};
 
+	// clear if selected user is not in the new filtered items
 	React.useEffect(() => {
 		if (
 			selectedKey &&
+			selectedKey !== initialTournamentId &&
 			!list.items.some(
 				(tournament) =>
 					typeof tournament.id === "number" && tournament.id === selectedKey,
@@ -83,7 +85,7 @@ export const TournamentSearch = React.forwardRef(function TournamentSearch<
 			setSelectedKey(null);
 			onChange?.(null);
 		}
-	}, [list.items, selectedKey, onChange]);
+	}, [list.items, selectedKey, onChange, initialTournamentId]);
 
 	return (
 		<Select
