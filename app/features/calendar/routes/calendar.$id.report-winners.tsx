@@ -278,7 +278,10 @@ function Players({
 								id={formId}
 								name="team-player"
 								initialUserId={player.id}
-								onChange={(newUser) => handleInputChange(i, newUser.id)}
+								onChange={(newUser) => {
+									if (!newUser) return;
+									handleInputChange(i, newUser.id);
+								}}
 							/>
 						)}
 					</div>
