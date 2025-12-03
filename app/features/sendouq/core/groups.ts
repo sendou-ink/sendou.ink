@@ -1,5 +1,6 @@
 import type { Tables } from "~/db/tables";
-import type { LookingGroup } from "../q-types";
+import { databaseTimestampToDate } from "~/utils/dates";
+import type { GroupExpiryStatus, LookingGroup } from "../q-types";
 
 // logic is that team who is bigger decides the settings
 // but if groups are the same size then the one who liked
@@ -31,6 +32,29 @@ export function groupAfterMorph({
 	return ourGroup;
 }
 
+// xxx: delete
 export function hasGroupManagerPerms(role: Tables["GroupMember"]["role"]) {
 	return role === "OWNER" || role === "MANAGER";
+}
+
+export function groupExpiryStatus(
+	latestActionAt: number,
+): GroupExpiryStatus | null {
+	// group expires in 30min without actions performed
+	const groupExpiresAt =
+		databaseTimestampToDate(latestActionAt).getTime() + 30 * 60 * 1000;
+
+	const now = Date.now();
+
+	if (now > groupExpiresAt) {
+		return "EXPIRED";
+	}
+
+	const tenMinutesFromNow = now + 10 * 60 * 1000;
+
+	if (tenMinutesFromNow > groupExpiresAt) {
+		return "EXPIRING_SOON";
+	}
+
+	return null;
 }

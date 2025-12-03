@@ -9,13 +9,16 @@ import {
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
+import invariant from "~/utils/invariant";
 import { FULL_GROUP_SIZE } from "../q-constants";
 
 type DBGroupRow = Awaited<
 	ReturnType<typeof QRepository.findCurrentGroups>
 >[number];
 
-class SQManager {
+export type SQGroup = ReturnType<SQManagerClass["lookingGroups"]>[number];
+
+class SQManagerClass {
 	groups;
 
 	constructor(groups: DBGroupRow[]) {
@@ -66,7 +69,20 @@ class SQManager {
 		return [];
 	}
 
-	lookingGroups(currentMemberCountOptions: number[]) {
+	lookingGroups(userId: number) {
+		const ownGroup = this.findOwnGroup(userId);
+		invariant(ownGroup, "ownGroup is undefined");
+
+		const currentMemberCountOptions =
+			ownGroup.members.length === 4
+				? [4]
+				: ownGroup.members.length === 3
+					? [1]
+					: ownGroup.members.length === 2
+						? [1, 2]
+						: [1, 2, 3];
+
+		// xxx: tier range, if full
 		return this.groups
 			.filter((group) =>
 				currentMemberCountOptions.includes(group.members.length),
@@ -155,8 +171,7 @@ class SQManager {
 	}
 }
 
-export async function initSQManager() {
-	const groups = await QRepository.findCurrentGroups();
-	// Initialization logic here
-	return new SQManager(groups);
-}
+const groups = await QRepository.findCurrentGroups();
+// Initialization logic here
+export const SQManager = new SQManagerClass(groups);
+// xxx: is manager the best name?

@@ -45,7 +45,12 @@ export async function findCurrentGroups() {
 		| "customUrl"
 		| "mapModePreferences"
 		| "noScreen"
-	>;
+		| "languages"
+	> &
+		// xxx: refactor everything to {}
+		Pick<Tables["GroupMember"], "role"> & {
+			weapons: Tables["User"]["qWeaponPool"];
+		};
 
 	return db
 		.selectFrom("Group")
@@ -78,6 +83,9 @@ export async function findCurrentGroups() {
 						customUrl: eb.ref("User.customUrl"),
 						mapModePreferences: eb.ref("User.mapModePreferences"),
 						noScreen: eb.ref("User.noScreen"),
+						role: eb.ref("GroupMember.role"),
+						weapons: eb.ref("User.qWeaponPool"),
+						languages: eb.ref("User.languages"),
 					}),
 				])
 				.$castTo<SendouQMemberObject[]>()
@@ -291,6 +299,38 @@ export async function createGroupFromPrevious(
 	});
 }
 
+export async function allLikesByGroupId(groupId: number) {
+	const rows = await db
+		.selectFrom("GroupLike")
+		.select([
+			"GroupLike.likerGroupId",
+			"GroupLike.targetGroupId",
+			"GroupLike.isRechallenge",
+		])
+		.where((eb) =>
+			eb.or([
+				eb("GroupLike.likerGroupId", "=", groupId),
+				eb("GroupLike.targetGroupId", "=", groupId),
+			]),
+		)
+		.execute();
+
+	return {
+		given: rows
+			.filter((row) => row.likerGroupId === groupId)
+			.map((row) => ({
+				groupId: row.targetGroupId,
+				isRechallenge: row.isRechallenge,
+			})),
+		received: rows
+			.filter((row) => row.targetGroupId === groupId)
+			.map((row) => ({
+				groupId: row.likerGroupId,
+				isRechallenge: row.isRechallenge,
+			})),
+	};
+}
+
 export function rechallenge({
 	likerGroupId,
 	targetGroupId,
@@ -303,6 +343,19 @@ export function rechallenge({
 		.set({ isRechallenge: 1 })
 		.where("likerGroupId", "=", likerGroupId)
 		.where("targetGroupId", "=", targetGroupId)
+		.execute();
+}
+
+export function allPrivateUserNotesByAuthorUserId(authorId: number) {
+	return db
+		.selectFrom("PrivateUserNote")
+		.select([
+			"PrivateUserNote.sentiment",
+			"PrivateUserNote.targetId as userId",
+			"PrivateUserNote.text",
+			"PrivateUserNote.updatedAt",
+		])
+		.where("authorId", "=", authorId)
 		.execute();
 }
 

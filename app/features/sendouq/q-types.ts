@@ -3,6 +3,8 @@ import type { ModeShort } from "~/modules/in-game-lists/types";
 import type { TieredSkill } from "../mmr/tiered.server";
 import type { GroupForMatch } from "../sendouq-match/QMatchRepository.server";
 
+// xxx: delete file
+
 export type LookingGroup = {
 	id: number;
 	createdAt: Tables["Group"]["createdAt"];

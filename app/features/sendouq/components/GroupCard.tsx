@@ -17,7 +17,7 @@ import { StarIcon } from "~/components/icons/Star";
 import { StarFilledIcon } from "~/components/icons/StarFilled";
 import { TrashIcon } from "~/components/icons/Trash";
 import { SubmitButton } from "~/components/SubmitButton";
-import type { ParsedMemento, Tables } from "~/db/tables";
+import type { ParsedMemento } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { ordinalToRoundedSp } from "~/features/mmr/mmr-utils";
@@ -36,14 +36,13 @@ import {
 	tierImageUrl,
 	userPage,
 } from "~/utils/urls";
+import type { SQGroup } from "../core/SQManager.server";
 import { FULL_GROUP_SIZE, SENDOUQ } from "../q-constants";
 import type { LookingGroup } from "../q-types";
 
 export function GroupCard({
 	group,
 	action,
-	ownRole,
-	ownGroup = false,
 	isExpired = false,
 	displayOnly = false,
 	hideVc = false,
@@ -53,11 +52,9 @@ export function GroupCard({
 	showAddNote,
 	showNote = false,
 }: {
-	group: Omit<LookingGroup, "createdAt" | "chatCode">;
+	group: SQGroup;
 	action?: "LIKE" | "UNLIKE" | "GROUP_UP" | "MATCH_UP" | "MATCH_UP_RECHALLENGE";
-	ownRole?: Tables["GroupMember"]["role"] | "PREVIEWER";
-	ownGroup?: boolean;
-	isExpired?: boolean;
+	isExpired?: boolean; // xxx: delete
 	displayOnly?: boolean;
 	hideVc?: SqlBool;
 	hideWeapons?: SqlBool;
@@ -76,8 +73,11 @@ export function GroupCard({
 		group.members.length === FULL_GROUP_SIZE ||
 		_hidenote;
 
+	const ownRole = group.members?.find((member) => member.id === user?.id)?.role;
+	const isOwnGroup = Boolean(ownRole);
+
 	return (
-		<GroupCardContainer groupId={group.id} ownGroup={ownGroup}>
+		<GroupCardContainer groupId={group.id} isOwnGroup={isOwnGroup}>
 			<section
 				className={clsx("q__group", { "q__group__display-only": displayOnly })}
 			>
@@ -87,7 +87,7 @@ export function GroupCard({
 							return (
 								<GroupMember
 									member={member}
-									showActions={ownGroup && ownRole === "OWNER"}
+									showActions={isOwnGroup && ownRole === "OWNER"}
 									key={member.discordId}
 									displayOnly={displayOnly}
 									hideVc={hideVc}
@@ -123,7 +123,7 @@ export function GroupCard({
 								);
 							})}
 						</div>
-						{group.isNoScreen ? (
+						{group.noScreen ? (
 							<div className="q__group__no-screen">
 								<Image
 									path={specialWeaponImageUrl(SPLATTERCOLOR_SCREEN_ID)}
@@ -233,16 +233,16 @@ export function GroupCard({
 }
 
 function GroupCardContainer({
-	ownGroup,
+	isOwnGroup,
 	groupId,
 	children,
 }: {
-	ownGroup: boolean;
+	isOwnGroup: boolean;
 	groupId: number;
 	children: React.ReactNode;
 }) {
 	// we don't want it to animate
-	if (ownGroup) return <>{children}</>;
+	if (isOwnGroup) return <>{children}</>;
 
 	return <Flipped flipId={groupId}>{children}</Flipped>;
 }
@@ -258,7 +258,7 @@ function GroupMember({
 	showAddNote,
 	showNote,
 }: {
-	member: NonNullable<LookingGroup["members"]>[number];
+	member: NonNullable<SQGroup["members"]>[number];
 	showActions: boolean;
 	displayOnly?: boolean;
 	hideVc?: SqlBool;
