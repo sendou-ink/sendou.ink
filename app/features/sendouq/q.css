@@ -268,10 +268,6 @@
 	padding: var(--s-1-5);
 }
 
-.q__group__future-match-mode__rechallenge {
-	outline: 2px solid var(--theme-secondary);
-}
-
 .q__group-member-weapons {
 	display: flex;
 	gap: var(--s-1);

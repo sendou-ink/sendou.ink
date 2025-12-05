@@ -1,5 +1,5 @@
 import type { Tables } from "~/db/tables";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
+import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { databaseTimestampToDate } from "~/utils/dates";
 import {
@@ -10,6 +10,7 @@ import {
 } from "~/utils/urls";
 import { accountCreatedInTheLastSixMonths } from "~/utils/users";
 import type { MapPool } from "../map-list-generator/core/map-pool";
+import type { SQGroup } from "./core/SQManager.server";
 import { SENDOUQ } from "./q-constants";
 
 function groupRedirectLocation(
@@ -93,4 +94,26 @@ export function userCanJoinQueueAt(
 	canJoinQueueAt.setDate(canJoinQueueAt.getDate() + 1);
 
 	return canJoinQueueAt;
+}
+
+export function resolveFutureMatchModes({
+	ownGroup,
+	theirGroup,
+}: {
+	ownGroup: SQGroup;
+	theirGroup: SQGroup;
+}) {
+	const ourModes = ownGroup.modePreferences;
+	const theirModes = theirGroup.modePreferences;
+
+	const overlap = ourModes.filter((mode) => theirModes.includes(mode));
+	if (overlap.length > 0) {
+		return overlap;
+	}
+
+	const union = modesShort.filter(
+		(mode) => ourModes.includes(mode) || theirModes.includes(mode),
+	);
+
+	return union;
 }

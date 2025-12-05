@@ -24,7 +24,6 @@ import { ordinalToRoundedSp } from "~/features/mmr/mmr-utils";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { languagesUnified } from "~/modules/i18n/config";
-import type { ModeShort } from "~/modules/in-game-lists/types";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
@@ -36,14 +35,15 @@ import {
 	tierImageUrl,
 	userPage,
 } from "~/utils/urls";
-import type { SQGroup } from "../core/SQManager.server";
+import { useOwnGroup } from "../contexts/GroupContext";
+import type { SQGroup, SQOwnGroup } from "../core/SQManager.server";
 import { FULL_GROUP_SIZE, SENDOUQ } from "../q-constants";
 import type { LookingGroup } from "../q-types";
+import { resolveFutureMatchModes } from "../q-utils";
 
 export function GroupCard({
 	group,
 	action,
-	isExpired = false,
 	displayOnly = false,
 	hideVc = false,
 	hideWeapons = false,
@@ -52,9 +52,8 @@ export function GroupCard({
 	showAddNote,
 	showNote = false,
 }: {
-	group: SQGroup;
+	group: SQGroup | SQOwnGroup;
 	action?: "LIKE" | "UNLIKE" | "GROUP_UP" | "MATCH_UP" | "MATCH_UP_RECHALLENGE";
-	isExpired?: boolean; // xxx: delete
 	displayOnly?: boolean;
 	hideVc?: SqlBool;
 	hideWeapons?: SqlBool;
@@ -66,6 +65,7 @@ export function GroupCard({
 	const { t } = useTranslation(["q"]);
 	const user = useUser();
 	const fetcher = useFetcher();
+	const { ownGroup, isGroupOwner, isGroupManager, isExpired } = useOwnGroup();
 
 	const hideNote =
 		displayOnly ||
@@ -73,8 +73,14 @@ export function GroupCard({
 		group.members.length === FULL_GROUP_SIZE ||
 		_hidenote;
 
-	const ownRole = group.members?.find((member) => member.id === user?.id)?.role;
-	const isOwnGroup = Boolean(ownRole);
+	const isOwnGroup = group.id === ownGroup?.id;
+
+	const futureMatchModes = ownGroup
+		? resolveFutureMatchModes({
+				ownGroup,
+				theirGroup: group,
+			})
+		: null;
 
 	return (
 		<GroupCardContainer groupId={group.id} isOwnGroup={isOwnGroup}>
@@ -87,7 +93,7 @@ export function GroupCard({
 							return (
 								<GroupMember
 									member={member}
-									showActions={isOwnGroup && ownRole === "OWNER"}
+									showActions={isOwnGroup && isGroupOwner}
 									key={member.discordId}
 									displayOnly={displayOnly}
 									hideVc={hideVc}
@@ -101,23 +107,17 @@ export function GroupCard({
 						})}
 					</div>
 				) : null}
-				{group.futureMatchModes && !group.members ? (
+				{futureMatchModes && !group.members ? (
 					<div
 						className={clsx("stack horizontal", {
-							"justify-between": group.isNoScreen,
-							"justify-center": !group.isNoScreen,
+							"justify-between": group.noScreen,
+							"justify-center": !group.noScreen,
 						})}
 					>
 						<div className="stack horizontal sm justify-center">
-							{group.futureMatchModes.map((mode) => {
+							{futureMatchModes.map((mode) => {
 								return (
-									<div
-										key={mode}
-										className={clsx("q__group__future-match-mode", {
-											"q__group__future-match-mode__rechallenge":
-												group.isRechallenge,
-										})}
-									>
+									<div key={mode} className="q__group__future-match-mode">
 										<ModeImage mode={mode} />
 									</div>
 								);
@@ -195,9 +195,7 @@ export function GroupCard({
 				{group.skillDifference ? (
 					<GroupSkillDifference skillDifference={group.skillDifference} />
 				) : null}
-				{action &&
-				(ownRole === "OWNER" || ownRole === "MANAGER") &&
-				!isExpired ? (
+				{action && (isGroupOwner || isGroupManager) && !isExpired ? (
 					<fetcher.Form className="stack items-center" method="post">
 						<input type="hidden" name="targetGroupId" value={group.id} />
 						<SubmitButton
@@ -217,15 +215,6 @@ export function GroupCard({
 											: t("q:looking.groups.actions.undo")}
 						</SubmitButton>
 					</fetcher.Form>
-				) : null}
-				{!group.isRechallenge &&
-				group.rechallengeMatchModes &&
-				(ownRole === "OWNER" || ownRole === "MANAGER") &&
-				!isExpired ? (
-					<RechallengeForm
-						modes={group.rechallengeMatchModes}
-						targetGroupId={group.id}
-					/>
 				) : null}
 			</section>
 		</GroupCardContainer>
@@ -515,36 +504,6 @@ function AddPrivateNoteForm({
 	);
 }
 
-function RechallengeForm({
-	modes,
-	targetGroupId,
-}: {
-	modes: ModeShort[];
-	targetGroupId: number;
-}) {
-	const { t } = useTranslation(["q"]);
-	const fetcher = useFetcher();
-
-	return (
-		<fetcher.Form method="post" className="stack sm justify-center horizontal">
-			<input type="hidden" name="targetGroupId" value={targetGroupId} />
-			<SubmitButton
-				_action="RECHALLENGE"
-				state={fetcher.state}
-				size="miniscule"
-				variant="minimal"
-			>
-				{t("q:looking.groups.actions.rechallenge")}
-				<div className="stack xs items-center horizontal ml-2 -mt-1px">
-					{modes.map((mode) => (
-						<ModeImage key={mode} mode={mode} size={18} />
-					))}
-				</div>
-			</SubmitButton>
-		</fetcher.Form>
-	);
-}
-
 function DeletePrivateNoteForm({
 	targetId,
 	name,
@@ -785,7 +744,7 @@ function TierInfo({ skill }: { skill: TieredSkill | "CALCULATING" }) {
 function VoiceChatInfo({
 	member,
 }: {
-	member: NonNullable<LookingGroup["members"]>[number];
+	member: Pick<SQGroup["members"][number], "id" | "vc" | "languages">;
 }) {
 	const user = useUser();
 	const { t } = useTranslation(["q"]);

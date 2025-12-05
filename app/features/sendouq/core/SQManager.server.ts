@@ -10,13 +10,22 @@ import * as QRepository from "~/features/sendouq/QRepository.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
+import type { SerializeFrom } from "~/utils/remix";
 import { FULL_GROUP_SIZE } from "../q-constants";
 
 type DBGroupRow = Awaited<
 	ReturnType<typeof QRepository.findCurrentGroups>
 >[number];
+type DBPrivateNoteRow = Awaited<
+	ReturnType<typeof QRepository.allPrivateUserNotesByAuthorUserId>
+>[number];
 
-export type SQGroup = ReturnType<SQManagerClass["lookingGroups"]>[number];
+export type SQGroup = SerializeFrom<
+	ReturnType<SQManagerClass["lookingGroups"]>[number]
+>;
+export type SQOwnGroup = SerializeFrom<
+	NonNullable<ReturnType<SQManagerClass["findOwnGroup"]>>
+>;
 
 class SQManagerClass {
 	groups;
@@ -41,9 +50,13 @@ class SQManagerClass {
 
 				return {
 					...member,
+					privateNote: null as DBPrivateNoteRow | null,
+					languages: member.languages?.split(",") || [],
 					skill: !skill || skill.approximate ? ("CALCULATING" as const) : skill,
 					mapModePreferences: undefined,
 					noScreen: undefined,
+					friendCode: null as string | null,
+					inGameName: null as string | null,
 				};
 			}),
 		}));
@@ -69,7 +82,7 @@ class SQManagerClass {
 		return [];
 	}
 
-	lookingGroups(userId: number) {
+	lookingGroups(userId: number, notes: DBPrivateNoteRow[]) {
 		const ownGroup = this.findOwnGroup(userId);
 		invariant(ownGroup, "ownGroup is undefined");
 
@@ -84,10 +97,13 @@ class SQManagerClass {
 
 		// xxx: tier range, if full
 		return this.groups
-			.filter((group) =>
-				currentMemberCountOptions.includes(group.members.length),
+			.filter(
+				(group) =>
+					group.id !== ownGroup.id &&
+					currentMemberCountOptions.includes(group.members.length),
 			)
-			.map(this.#censorGroup);
+			.map(this.#censorGroup)
+			.map(this.getAddMemberPrivateNoteMapper(notes));
 	}
 
 	#censorGroup(group: (typeof this.groups)[number]) {
@@ -98,13 +114,30 @@ class SQManagerClass {
 		return R.omit(group, ["inviteCode", "chatCode"]);
 	}
 
+	getAddMemberPrivateNoteMapper(notes: DBPrivateNoteRow[]) {
+		return <T extends { members: { id: number }[] }>(group: T) => {
+			const membersWithNotes = group.members.map((member) => {
+				const note = notes.find((n) => n.targetUserId === member.id);
+				return {
+					...member,
+					privateNote: note ?? null,
+				};
+			});
+
+			return {
+				...group,
+				members: membersWithNotes,
+			};
+		};
+	}
+
 	#groupNoScreen(group: DBGroupRow) {
 		return this.#groupIsFull(group)
 			? group.members.some((member) => member.noScreen)
 			: null;
 	}
 
-	#groupModePreferences(group: DBGroupRow) {
+	#groupModePreferences(group: DBGroupRow): ModeShort[] {
 		const modePreferences: ModeShort[] = [];
 
 		for (const mode of modesShort) {

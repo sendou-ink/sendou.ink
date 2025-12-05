@@ -14,7 +14,7 @@ import type {
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { shortNanoid } from "~/utils/id";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
 import { userIsBanned } from "../ban/core/banned.server";
 import type { LookingGroupWithInviteCode } from "./q-types";
 
@@ -46,16 +46,20 @@ export async function findCurrentGroups() {
 		| "mapModePreferences"
 		| "noScreen"
 		| "languages"
+		| "vc"
 	> &
 		// xxx: refactor everything to {}
 		Pick<Tables["GroupMember"], "role"> & {
 			weapons: Tables["User"]["qWeaponPool"];
+			chatNameColor: string | null;
+			plusTier: Tables["PlusTier"]["tier"] | null;
 		};
 
 	return db
 		.selectFrom("Group")
 		.innerJoin("GroupMember", "GroupMember.groupId", "Group.id")
 		.innerJoin("User", "User.id", "GroupMember.userId")
+		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.leftJoin("GroupMatch", (join) =>
 			join.on((eb) =>
 				eb.or([
@@ -86,6 +90,10 @@ export async function findCurrentGroups() {
 						role: eb.ref("GroupMember.role"),
 						weapons: eb.ref("User.qWeaponPool"),
 						languages: eb.ref("User.languages"),
+						plusTier: eb.ref("PlusTier.tier"),
+						vc: eb.ref("User.vc"),
+						// @ts-expect-error xxx: why?
+						chatNameColor: userChatNameColor,
 					}),
 				])
 				.$castTo<SendouQMemberObject[]>()
@@ -351,7 +359,7 @@ export function allPrivateUserNotesByAuthorUserId(authorId: number) {
 		.selectFrom("PrivateUserNote")
 		.select([
 			"PrivateUserNote.sentiment",
-			"PrivateUserNote.targetId as userId",
+			"PrivateUserNote.targetId as targetUserId",
 			"PrivateUserNote.text",
 			"PrivateUserNote.updatedAt",
 		])

@@ -36,6 +36,7 @@ import { action } from "../actions/q.looking.server";
 import { GroupCard } from "../components/GroupCard";
 import { GroupLeaver } from "../components/GroupLeaver";
 import { MemberAdder } from "../components/MemberAdder";
+import { GroupProvider } from "../contexts/GroupContext";
 import { groupExpiryStatus } from "../core/groups";
 import { loader } from "../loaders/q.looking.server";
 import { FULL_GROUP_SIZE } from "../q-constants";
@@ -96,18 +97,41 @@ function QLookingPage() {
 	};
 
 	return (
-		<Main className="stack md">
-			<InfoText />
-			{wasTryingToJoinAnotherTeam ? (
-				<div className="text-warning text-center">
-					{t("q:looking.joiningGroupError")}
-				</div>
-			) : null}
-			{showGoToSettingPrompt() ? (
-				<Alert variation="INFO">{t("q:looking.goToSettingsPrompt")}</Alert>
-			) : null}
-			<Groups />
-		</Main>
+		<GroupProvider
+			ownGroup={data.ownGroup}
+			isGroupOwner={
+				data.ownGroup
+					? data.ownGroup.members.some(
+							(m) => m.id === user?.id && m.role === "OWNER",
+						)
+					: false
+			}
+			isGroupManager={
+				data.ownGroup
+					? data.ownGroup.members.some(
+							(m) => m.id === user?.id && m.role === "MANAGER",
+						)
+					: false
+			}
+			isExpired={
+				data.ownGroup
+					? groupExpiryStatus(data.ownGroup.latestActionAt) === "EXPIRED"
+					: false
+			}
+		>
+			<Main className="stack md">
+				<InfoText />
+				{wasTryingToJoinAnotherTeam ? (
+					<div className="text-warning text-center">
+						{t("q:looking.joiningGroupError")}
+					</div>
+				) : null}
+				{showGoToSettingPrompt() ? (
+					<Alert variation="INFO">{t("q:looking.goToSettingsPrompt")}</Alert>
+				) : null}
+				<Groups />
+			</Main>
+		</GroupProvider>
 	);
 }
 
@@ -272,13 +296,7 @@ function Groups() {
 				)
 				.map((group) => {
 					return (
-						<GroupCard
-							key={group.id}
-							group={group}
-							action="UNLIKE"
-							isExpired={data.expiryStatus === "EXPIRED"}
-							showNote
-						/>
+						<GroupCard key={group.id} group={group} action="UNLIKE" showNote />
 					);
 				})}
 		</div>
@@ -311,10 +329,10 @@ function Groups() {
 				<ColumnHeader>{t("q:looking.columns.myGroup")}</ColumnHeader>
 			)}
 			<GroupCard group={data.ownGroup} showNote />
-			{data.ownGroup?.inviteCode ? (
+			{data.ownGroup.inviteCode ? (
 				<MemberAdder
-					inviteCode={ownGroup.inviteCode}
-					groupMemberIds={(ownGroup.members ?? [])?.map((m) => m.id)}
+					inviteCode={data.ownGroup.inviteCode}
+					groupMemberIds={data.ownGroup.members.map((m) => m.id)}
 				/>
 			) : null}
 			<GroupLeaver
@@ -324,10 +342,22 @@ function Groups() {
 		</div>
 	) : null;
 
+	const neutralGroups = data.groups.filter(
+		(group) =>
+			!data.likes.given.some((like) => like.groupId === group.id) &&
+			!data.likes.received.some((like) => like.groupId === group.id),
+	);
+	const groupsReceivedLikesFrom = data.groups.filter((group) =>
+		data.likes.received.some((like) => like.groupId === group.id),
+	);
+
 	// no animations needed if liking group on mobile as they stay in place
-	const flipKey = `${data.groups.neutral
-		.map((g) => `${g.id}-${isMobile ? true : g.isLiked}`)
-		.join(":")};${data.groups.likesReceived.map((g) => g.id).join(":")}`;
+	const flipKey = `${neutralGroups
+		.map(
+			(g) =>
+				`${g.id}-${isMobile ? true : data.likes.given.some((l) => l.groupId === g.id)}`,
+		)
+		.join(":")};${groupsReceivedLikesFrom.map((g) => g.id).join(":")}`;
 
 	return (
 		<Flipper flipKey={flipKey}>
@@ -340,8 +370,8 @@ function Groups() {
 					<div>
 						<SendouTabs>
 							<SendouTabList>
-								{data.groups.own && (
-									<SendouTab id="own" number={data.groups.own.members!.length}>
+								{data.ownGroup && (
+									<SendouTab id="own" number={data.ownGroup.members.length}>
 										{t("q:looking.columns.myGroup")}
 									</SendouTab>
 								)}
@@ -361,13 +391,13 @@ function Groups() {
 				<div className="q__groups-inner-container">
 					<SendouTabs>
 						<SendouTabList scrolling={isMobile}>
-							<SendouTab id="groups" number={data.groups.neutral.length}>
+							<SendouTab id="groups" number={neutralGroups.length}>
 								{t("q:looking.columns.groups")}
 							</SendouTab>
 							{isMobile && (
 								<SendouTab
 									id="received"
-									number={data.groups.likesReceived.length}
+									number={groupsReceivedLikesFrom.length}
 								>
 									{t(
 										isFullGroup
@@ -390,16 +420,26 @@ function Groups() {
 						<SendouTabPanel id="groups">
 							<div className="stack sm">
 								<ColumnHeader>{t("q:looking.columns.available")}</ColumnHeader>
-								{data.groups.neutral
-									.filter((group) => isMobile || !group.isLiked)
+								{neutralGroups
+									.filter(
+										(group) =>
+											isMobile ||
+											data.likes.given.some(
+												(like) => like.groupId === group.id,
+											),
+									)
 									.map((group) => {
 										return (
 											<GroupCard
 												key={group.id}
 												group={group}
-												action={group.isLiked ? "UNLIKE" : "LIKE"}
-												ownRole={data.role}
-												isExpired={data.expiryStatus === "EXPIRED"}
+												action={
+													data.likes.given.some(
+														(like) => like.groupId === group.id,
+													)
+														? "UNLIKE"
+														: "LIKE"
+												}
 												showNote
 											/>
 										);
@@ -409,11 +449,15 @@ function Groups() {
 						<SendouTabPanel id="received">
 							<div className="stack sm">
 								{!data.ownGroup ? <JoinQueuePrompt /> : null}
-								{data.groups.likesReceived.map((group) => {
+								{groupsReceivedLikesFrom.map((group) => {
+									const like = data.likes.received.find(
+										(l) => l.groupId === group.id,
+									)!;
+
 									const action = () => {
 										if (!isFullGroup) return "GROUP_UP";
 
-										if (group.isRechallenge) return "MATCH_UP_RECHALLENGE";
+										if (like.isRechallenge) return "MATCH_UP_RECHALLENGE";
 										return "MATCH_UP";
 									};
 
@@ -422,8 +466,6 @@ function Groups() {
 											key={group.id}
 											group={group}
 											action={action()}
-											ownRole={data.role}
-											isExpired={data.expiryStatus === "EXPIRED"}
 											showNote
 										/>
 									);
@@ -444,11 +486,15 @@ function Groups() {
 							)}
 						</ColumnHeader>
 						{!data.ownGroup ? <JoinQueuePrompt /> : null}
-						{data.groups.likesReceived.map((group) => {
+						{groupsReceivedLikesFrom.map((group) => {
+							const like = data.likes.received.find(
+								(l) => l.groupId === group.id,
+							)!;
+
 							const action = () => {
 								if (!isFullGroup) return "GROUP_UP";
 
-								if (group.isRechallenge) return "MATCH_UP_RECHALLENGE";
+								if (like.isRechallenge) return "MATCH_UP_RECHALLENGE";
 								return "MATCH_UP";
 							};
 
@@ -457,8 +503,6 @@ function Groups() {
 									key={group.id}
 									group={group}
 									action={action()}
-									ownRole={data.role}
-									isExpired={data.expiryStatus === "EXPIRED"}
 									showNote
 								/>
 							);
