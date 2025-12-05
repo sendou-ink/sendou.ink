@@ -16,6 +16,7 @@ import type {
 	GroupExpiryStatus,
 	LookingGroup,
 	LookingGroupWithInviteCode,
+	TierDifference,
 } from "../q-types";
 import type { RecentMatchPlayer } from "../queries/findRecentMatchPlayersByUserId.server";
 
@@ -517,10 +518,7 @@ export function tierDifferenceToRangeOrExact({
 	ourTier: TieredSkill["tier"];
 	theirTier: TieredSkill["tier"];
 	hasLeviathan: boolean;
-}): {
-	diff: number;
-	tier: TieredSkill["tier"] | [TieredSkill["tier"], TieredSkill["tier"]];
-} {
+}): TierDifference {
 	if (ourTier.name === theirTier.name && ourTier.isPlus === theirTier.isPlus) {
 		return { diff: 0, tier: structuredClone(ourTier) };
 	}

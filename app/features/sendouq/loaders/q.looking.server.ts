@@ -4,6 +4,7 @@ import * as QRepository from "~/features/sendouq/QRepository.server";
 import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
 import { SQManager } from "../core/SQManager.server";
 
+// xxx: redirect to correct route
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await requireUser(request);
 
@@ -16,7 +17,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	);
 
 	const groups = isPreview
-		? SQManager.previewGroups()
+		? SQManager.previewGroups(privateNotes)
 		: SQManager.lookingGroups(user.id, privateNotes);
 	const ownGroup = SQManager.findOwnGroup(user.id);
 

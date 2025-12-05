@@ -100,8 +100,8 @@ export function resolveFutureMatchModes({
 	ownGroup,
 	theirGroup,
 }: {
-	ownGroup: SQGroup;
-	theirGroup: SQGroup;
+	ownGroup: Pick<SQGroup, "modePreferences">;
+	theirGroup: Pick<SQGroup, "modePreferences">;
 }) {
 	const ourModes = ownGroup.modePreferences;
 	const theirModes = theirGroup.modePreferences;

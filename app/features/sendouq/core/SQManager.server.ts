@@ -1,4 +1,5 @@
 import * as R from "remeda";
+import { ParsedMemento } from "~/db/tables";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { defaultOrdinal } from "~/features/mmr/mmr-utils";
 import {
@@ -12,6 +13,8 @@ import type { ModeShort } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import type { SerializeFrom } from "~/utils/remix";
 import { FULL_GROUP_SIZE } from "../q-constants";
+import type { TierDifference } from "../q-types";
+import { tierDifferenceToRangeOrExact } from "./groups.server";
 
 type DBGroupRow = Awaited<
 	ReturnType<typeof QRepository.findCurrentGroups>
@@ -27,15 +30,21 @@ export type SQOwnGroup = SerializeFrom<
 	NonNullable<ReturnType<SQManagerClass["findOwnGroup"]>>
 >;
 
+const FALLBACK_TIER = { isPlus: false, name: "IRON" } as const;
+
 class SQManagerClass {
 	groups;
+	isAccurateTiers;
 
 	constructor(groups: DBGroupRow[]) {
 		const season = Seasons.currentOrPrevious();
-		const { intervals, userSkills: calculatedUserSkills } = userSkills(
-			season!.nth,
-		);
+		const {
+			intervals,
+			userSkills: calculatedUserSkills,
+			isAccurateTiers,
+		} = userSkills(season!.nth);
 
+		this.isAccurateTiers = isAccurateTiers;
 		this.groups = groups.map((group) => ({
 			...group,
 			noScreen: this.#groupNoScreen(group),
@@ -44,7 +53,10 @@ class SQManagerClass {
 				group,
 				userSkills: calculatedUserSkills,
 				intervals,
-			}),
+			}) as TieredSkill["tier"] | null,
+			tierRange: null as TierDifference | null,
+			skillDifference:
+				undefined as ParsedMemento["groups"][number]["skillDifference"],
 			members: group.members.map((member) => {
 				const skill = calculatedUserSkills[String(member.id)];
 
@@ -57,6 +69,8 @@ class SQManagerClass {
 					noScreen: undefined,
 					friendCode: null as string | null,
 					inGameName: null as string | null,
+					skillDifference:
+						undefined as ParsedMemento["users"][number]["skillDifference"],
 				};
 			}),
 		}));
@@ -78,8 +92,11 @@ class SQManagerClass {
 		);
 	}
 
-	previewGroups() {
-		return [];
+	previewGroups(notes: DBPrivateNoteRow[]) {
+		return this.groups
+			.map(this.#addPreviewTierRange)
+			.map(this.#censorGroup)
+			.map(this.getAddMemberPrivateNoteMapper(notes));
 	}
 
 	lookingGroups(userId: number, notes: DBPrivateNoteRow[]) {
@@ -95,18 +112,63 @@ class SQManagerClass {
 						? [1, 2]
 						: [1, 2, 3];
 
-		// xxx: tier range, if full
 		return this.groups
 			.filter(
 				(group) =>
 					group.id !== ownGroup.id &&
 					currentMemberCountOptions.includes(group.members.length),
 			)
+			.map(this.#getAddTierRangeMapper(ownGroup.tier))
 			.map(this.#censorGroup)
 			.map(this.getAddMemberPrivateNoteMapper(notes));
 	}
 
-	#censorGroup(group: (typeof this.groups)[number]) {
+	#getAddTierRangeMapper(ownTier?: TieredSkill["tier"] | null) {
+		return <T extends (typeof this.groups)[number]>(group: T) => {
+			if (!this.#groupIsFull(group)) {
+				return group;
+			}
+
+			const range = tierDifferenceToRangeOrExact({
+				ourTier: ownTier ?? FALLBACK_TIER,
+				theirTier: group.tier ?? FALLBACK_TIER,
+				hasLeviathan: this.isAccurateTiers,
+			});
+
+			if (!Array.isArray(range.tier)) {
+				return {
+					...group,
+					tierRange: { range: null, diff: range.diff },
+				};
+			}
+
+			return {
+				...group,
+				tierRange: { range: range.tier, diff: range.diff },
+				tier: null,
+			};
+		};
+	}
+
+	#addPreviewTierRange<T extends (typeof this.groups)[number]>(group: T) {
+		if (!this.#groupIsFull(group)) {
+			return group;
+		}
+
+		return {
+			...group,
+			tierRange: {
+				range: [
+					{ name: "IRON", isPlus: false } as TieredSkill["tier"],
+					{ name: "LEVIATHAN", isPlus: true } as TieredSkill["tier"],
+				],
+				diff: 0,
+			},
+			tier: null,
+		};
+	}
+
+	#censorGroup<T extends (typeof this.groups)[number]>(group: T) {
 		if (this.#groupIsFull(group)) {
 			R.omit(group, ["inviteCode", "chatCode", "members"]);
 		}
@@ -205,6 +267,5 @@ class SQManagerClass {
 }
 
 const groups = await QRepository.findCurrentGroups();
-// Initialization logic here
 export const SQManager = new SQManagerClass(groups);
 // xxx: is manager the best name?

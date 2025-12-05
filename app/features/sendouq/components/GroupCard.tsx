@@ -38,7 +38,6 @@ import {
 import { useOwnGroup } from "../contexts/GroupContext";
 import type { SQGroup, SQOwnGroup } from "../core/SQManager.server";
 import { FULL_GROUP_SIZE, SENDOUQ } from "../q-constants";
-import type { LookingGroup } from "../q-types";
 import { resolveFutureMatchModes } from "../q-utils";
 
 export function GroupCard({
@@ -247,7 +246,7 @@ function GroupMember({
 	showAddNote,
 	showNote,
 }: {
-	member: NonNullable<SQGroup["members"]>[number];
+	member: SQGroup["members"][number];
 	showActions: boolean;
 	displayOnly?: boolean;
 	hideVc?: SqlBool;
@@ -389,7 +388,10 @@ function GroupMember({
 				) : null}
 			</div>
 			{!hideNote ? (
-				<MemberNote note={member.note} editable={user?.id === member.id} />
+				<MemberNote
+					note={member.privateNote?.text}
+					editable={user?.id === member.id}
+				/>
 			) : null}
 		</div>
 	);
@@ -610,7 +612,7 @@ function MemberRoleManager({
 	displayOnly,
 	enableKicking,
 }: {
-	member: NonNullable<LookingGroup["members"]>[number];
+	member: Pick<SQGroup["members"][number], "id" | "role">;
 	displayOnly?: boolean;
 	enableKicking?: boolean;
 }) {
