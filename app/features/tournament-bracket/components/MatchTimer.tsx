@@ -1,5 +1,5 @@
 import { clsx } from "clsx";
-import { differenceInMinutes } from "date-fns";
+import { differenceInSeconds } from "date-fns";
 import * as React from "react";
 import * as Deadline from "../core/Deadline";
 import styles from "./MatchTimer.module.css";
@@ -15,12 +15,12 @@ export function MatchTimer({ startedAt, bestOf }: MatchTimerProps) {
 	React.useEffect(() => {
 		const interval = setInterval(() => {
 			setCurrentTime(new Date());
-		}, 10000);
+		}, 5_000);
 
 		return () => clearInterval(interval);
 	}, []);
 
-	const elapsedMinutes = differenceInMinutes(currentTime, startedAt);
+	const elapsedMinutes = differenceInSeconds(currentTime, startedAt) / 60;
 
 	const progressPercentage = Deadline.progressPercentage(
 		elapsedMinutes,
