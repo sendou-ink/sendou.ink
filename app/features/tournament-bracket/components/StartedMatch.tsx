@@ -48,6 +48,7 @@ import {
 	resolveRoomPass,
 	tournamentTeamToActiveRosterUserIds,
 } from "../tournament-bracket-utils";
+import { DeadlineInfoPopover } from "./DeadlineInfoPopover";
 import { MatchActions } from "./MatchActions";
 import { MatchRosters } from "./MatchRosters";
 import { MatchTimer } from "./MatchTimer";
@@ -257,6 +258,8 @@ function FancyStageBanner({
 	const { t } = useTranslation(["game-misc", "tournament"]);
 	const tournament = useTournament();
 
+	const gamesCompleted = data.results.length;
+
 	const stageNameToBannerImageUrl = (stageId: StageId) => {
 		return `${stageImageUrl(stageId)}.png`;
 	};
@@ -418,6 +421,13 @@ function FancyStageBanner({
 							})}
 						</h4>
 					</div>
+					{data.match.startedAt && !data.matchIsOver ? (
+						<DeadlineInfoPopover
+							startedAt={databaseTimestampToDate(data.match.startedAt)}
+							bestOf={data.match.bestOf}
+							gamesCompleted={gamesCompleted}
+						/>
+					) : null}
 					{children}
 				</div>
 			)}

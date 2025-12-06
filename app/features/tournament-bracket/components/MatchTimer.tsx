@@ -9,6 +9,7 @@ interface MatchTimerProps {
 	bestOf: number;
 }
 
+// xxx: mobile styles
 export function MatchTimer({ startedAt, bestOf }: MatchTimerProps) {
 	const [currentTime, setCurrentTime] = React.useState(new Date());
 
