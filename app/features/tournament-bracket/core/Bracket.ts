@@ -275,6 +275,11 @@ export abstract class Bracket {
 		return;
 	}
 
+	/** Returns true if this bracket is a starting bracket (i.e., teams in it start their tournament from this bracket). Note: there can be more than one starting bracket. */
+	get isStartingBracket() {
+		return !this.sources || this.sources.length === 0;
+	}
+
 	protected standingsWithoutNonParticipants(standings: Standing[]): Standing[] {
 		return standings.map((standing) => {
 			return {
