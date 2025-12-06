@@ -19,7 +19,6 @@ export async function dbInsertTournament() {
 		bracketUrl: "https://example.com/bracket",
 		description: null,
 		discordInviteCode: "test-discord",
-		deadlines: "DEFAULT",
 		name: "Test Tournament",
 		organizationId: null,
 		rules: null,

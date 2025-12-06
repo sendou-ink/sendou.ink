@@ -2063,7 +2063,6 @@ export const SWIM_OR_SINK_167 = (
 			teamsPerGroup: 4,
 			thirdPlaceMatch: true,
 			isRanked: true,
-			deadlines: "DEFAULT",
 			isInvitational: false,
 			enableNoScreenToggle: true,
 			autonomousSubs: false,

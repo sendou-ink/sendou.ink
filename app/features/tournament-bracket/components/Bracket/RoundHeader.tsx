@@ -1,12 +1,7 @@
-import clsx from "clsx";
 import type { TournamentRoundMaps } from "~/db/tables";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { resolveLeagueRoundStartDate } from "~/features/tournament/tournament-utils";
-import { useAutoRerender } from "~/hooks/useAutoRerender";
-import { useIsMounted } from "~/hooks/useIsMounted";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
-import { TOURNAMENT } from "../../../tournament/tournament-constants";
-import { useDeadline } from "./useDeadline";
 
 export function RoundHeader({
 	roundId,
@@ -22,13 +17,6 @@ export function RoundHeader({
 	maps?: TournamentRoundMaps | null;
 }) {
 	const leagueRoundStartDate = useLeagueWeekStart(roundId);
-
-	const hasDeadline = ![
-		TOURNAMENT.ROUND_NAMES.WB_FINALS,
-		TOURNAMENT.ROUND_NAMES.GRAND_FINALS,
-		TOURNAMENT.ROUND_NAMES.BRACKET_RESET,
-		TOURNAMENT.ROUND_NAMES.FINALS,
-	].includes(name as any);
 
 	const countPrefix = maps?.type === "PLAY_ALL" ? "Play all " : "Bo";
 
@@ -49,7 +37,6 @@ export function RoundHeader({
 						{bestOf}
 						{pickBanSuffix}
 					</div>
-					{hasDeadline ? <Deadline roundId={roundId} bestOf={bestOf} /> : null}
 				</div>
 			) : leagueRoundStartDate ? (
 				<LeagueRoundStartDate date={leagueRoundStartDate} />
@@ -74,25 +61,6 @@ function LeagueRoundStartDate({ date }: { date: Date }) {
 				})}{" "}
 				→
 			</div>
-		</div>
-	);
-}
-
-function Deadline({ roundId, bestOf }: { roundId: number; bestOf: number }) {
-	useAutoRerender("ten seconds");
-	const isMounted = useIsMounted();
-	const deadline = useDeadline(roundId, bestOf);
-	const { formatTime } = useTimeFormat();
-
-	if (!deadline) return null;
-
-	return (
-		<div
-			className={clsx({
-				"text-warning": isMounted && deadline < new Date(),
-			})}
-		>
-			DL {formatTime(deadline)}
 		</div>
 	);
 }

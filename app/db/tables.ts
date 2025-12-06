@@ -454,7 +454,6 @@ export interface TournamentSettings {
 	enableNoScreenToggle?: boolean;
 	/** Enable the subs tab, default true */
 	enableSubs?: boolean;
-	deadlines?: "STRICT" | "DEFAULT";
 	requireInGameNames?: boolean;
 	isInvitational?: boolean;
 	/** Can teams add subs on their own while tournament is in progress? */

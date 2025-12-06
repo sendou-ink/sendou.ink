@@ -495,7 +495,6 @@ type CreateArgs = Pick<
 	isRanked?: boolean;
 	isTest?: boolean;
 	isInvitational?: boolean;
-	deadlines: TournamentSettings["deadlines"];
 	enableNoScreenToggle?: boolean;
 	enableSubs?: boolean;
 	autonomousSubs?: boolean;
@@ -529,7 +528,6 @@ export async function create(args: CreateArgs) {
 				thirdPlaceMatch: args.thirdPlaceMatch,
 				isRanked: args.isRanked,
 				isTest: args.isTest,
-				deadlines: args.deadlines,
 				isInvitational: args.isInvitational,
 				enableNoScreenToggle: args.enableNoScreenToggle,
 				enableSubs: args.enableSubs,
@@ -726,7 +724,6 @@ async function updateTournamentTables(
 		thirdPlaceMatch: args.thirdPlaceMatch,
 		isRanked: args.isRanked,
 		isTest: existingSettings.isTest, // this one is not editable after creation
-		deadlines: args.deadlines,
 		isInvitational: args.isInvitational,
 		enableNoScreenToggle: args.enableNoScreenToggle,
 		enableSubs: args.enableSubs,

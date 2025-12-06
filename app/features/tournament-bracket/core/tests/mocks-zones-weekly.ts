@@ -315,7 +315,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 			],
 			thirdPlaceMatch: false,
 			isRanked: false,
-			deadlines: "DEFAULT",
 			isInvitational: false,
 			enableNoScreenToggle: true,
 			enableSubs: true,

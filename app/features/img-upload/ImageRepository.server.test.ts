@@ -65,7 +65,6 @@ const createCalendarEvent = async (authorId: number, avatarImgId?: number) => {
 		tags: null,
 		mapPickingStyle: "AUTO_SZ",
 		bracketProgression: null,
-		deadlines: "DEFAULT",
 		rules: null,
 		avatarImgId,
 	});

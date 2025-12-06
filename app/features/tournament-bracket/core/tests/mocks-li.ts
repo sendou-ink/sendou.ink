@@ -7210,7 +7210,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			],
 			thirdPlaceMatch: false,
 			isRanked: false,
-			deadlines: "DEFAULT",
 			isInvitational: false,
 			enableNoScreenToggle: true,
 			enableSubs: false,
