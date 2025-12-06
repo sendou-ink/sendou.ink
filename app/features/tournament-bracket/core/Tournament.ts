@@ -1228,8 +1228,8 @@ export class Tournament {
 					match.opponent1?.id === team.id || match.opponent2?.id === team.id,
 			).length;
 			const notAllRoundsGenerated =
-				this.ctx.settings.swiss?.roundCount &&
-				setsGeneratedCount !== this.ctx.settings.swiss?.roundCount;
+				bracket.settings?.roundCount &&
+				setsGeneratedCount !== bracket.settings.roundCount;
 
 			if (isParticipant && notAllRoundsGenerated) {
 				return { type: "WAITING_FOR_ROUND" } as const;
