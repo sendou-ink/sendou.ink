@@ -1,11 +1,12 @@
-import type {
-	Group,
-	InputStage,
-	Match,
-	Round,
-	Seeding,
-	SeedOrdering,
-	Stage,
+import {
+	type Group,
+	type InputStage,
+	type Match,
+	type Round,
+	type Seeding,
+	type SeedOrdering,
+	type Stage,
+	Status,
 } from "~/modules/brackets-model";
 import type { BracketsManager } from ".";
 import * as helpers from "./helpers";
@@ -381,8 +382,9 @@ export class Create {
 
 		if (roundId === -1) throw Error("Could not insert the round.");
 
-		for (let i = 0; i < matchCount; i++)
-			this.createMatch(stageId, groupId, roundId, i + 1, duels[i]);
+		for (let i = 0; i < matchCount; i++) {
+			this.createMatch(stageId, groupId, roundId, i + 1, roundNumber, duels[i]);
+		}
 	}
 
 	/**
@@ -399,6 +401,7 @@ export class Create {
 		groupId: number,
 		roundId: number,
 		matchNumber: number,
+		roundNumber: number,
 		opponents: Duel,
 	): void {
 		const opponent1 = helpers.toResultWithPosition(opponents[0]);
@@ -412,13 +415,21 @@ export class Create {
 		)
 			return;
 
+		let status = helpers.getMatchStatus(opponents);
+
+		// In round-robin, only the first round is ready to play at the beginning.
+		// other matches have teams set but they are busy playing the first round.
+		if (this.stage.type === "round_robin" && roundNumber > 1) {
+			status = Status.Locked;
+		}
+
 		const parentId = this.insertMatch(
 			{
 				number: matchNumber,
 				stage_id: stageId,
 				group_id: groupId,
 				round_id: roundId,
-				status: helpers.getMatchStatus(opponents),
+				status,
 				opponent1,
 				opponent2,
 			},
