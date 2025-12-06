@@ -422,7 +422,7 @@ function FancyStageBanner({
 				</div>
 			)}
 			{/** xxx: only show if member of the match or organizer and match is not over */}
-			{!matchIsLocked && data.match.startedAt ? (
+			{!matchIsLocked && data.match.startedAt && !data.matchIsOver ? (
 				<MatchTimer
 					startedAt={databaseTimestampToDate(data.match.startedAt)}
 					bestOf={data.match.bestOf}

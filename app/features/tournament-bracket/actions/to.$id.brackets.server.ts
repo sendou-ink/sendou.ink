@@ -7,7 +7,6 @@ import { createSwissBracketInTransaction } from "~/features/tournament/queries/c
 import { updateRoundMaps } from "~/features/tournament/queries/updateRoundMaps.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
-import * as TournamentMatchRepository from "~/features/tournament-bracket/TournamentMatchRepository.server";
 import invariant from "~/utils/invariant";
 import {
 	errorToastIfErr,
@@ -26,7 +25,6 @@ import type { Tournament } from "../core/Tournament";
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
-	tournamentFromDBCached,
 } from "../core/Tournament.server";
 import { bracketSchema } from "../tournament-bracket-schemas.server";
 import {
@@ -45,7 +43,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 	const manager = getServerTournamentManager();
 
 	let emitTournamentUpdate = false;
-	let recalculateStartedAtForBracketIdx = null;
 
 	switch (data._action) {
 		case "START_BRACKET": {
@@ -143,11 +140,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 						},
 					},
 				});
-			}
-
-			// for swiss bracket set in `createSwissBracketInTransaction` already
-			if (bracket.type !== "swiss") {
-				recalculateStartedAtForBracketIdx = data.bracketIdx;
 			}
 
 			emitTournamentUpdate = true;
@@ -278,14 +270,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 	}
 
 	clearTournamentDataCache(tournamentId);
-
-	if (typeof recalculateStartedAtForBracketIdx === "number") {
-		const tournament = await tournamentFromDBCached({ tournamentId, user });
-		const bracket = tournament.bracketByIdx(recalculateStartedAtForBracketIdx);
-		invariant(bracket, "Bracket not found");
-
-		await TournamentMatchRepository.markManyAsStarted(bracket.ongoingMatches());
-	}
 
 	if (emitTournamentUpdate) {
 		ChatSystemMessage.send([

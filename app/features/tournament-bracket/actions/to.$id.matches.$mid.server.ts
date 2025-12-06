@@ -20,7 +20,6 @@ import * as PickBan from "../core/PickBan";
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
-	tournamentFromDBCached,
 } from "../core/Tournament.server";
 import { deleteMatchPickBanEvents } from "../queries/deleteMatchPickBanEvents.server";
 import { deleteParticipantsByMatchGameResultId } from "../queries/deleteParticipantsByMatchGameResultId.server";
@@ -109,7 +108,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 	let emitMatchUpdate = false;
 	let emitTournamentUpdate = false;
-	let recalculateStartedAt = false;
 
 	switch (data._action) {
 		case "REPORT_SCORE": {
@@ -224,9 +222,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
-			if (setOver) {
-				recalculateStartedAt = true;
-			}
 
 			break;
 		}
@@ -573,17 +568,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 	}
 
 	clearTournamentDataCache(tournamentId);
-
-	// xxx: doing it like this likely not correct as cache will lack latest startedAt info +1 more place
-	if (recalculateStartedAt) {
-		const tournament = await tournamentFromDBCached({ tournamentId, user });
-		const bracket = tournament.brackets.find((b) =>
-			b.data.match.some((m) => m.id === match.id),
-		);
-		invariant(bracket, "Bracket not found");
-
-		await TournamentMatchRepository.markManyAsStarted(bracket.ongoingMatches());
-	}
 
 	// TODO: we could optimize this in the future by including an `authorUserId` field and skip revalidation if the author is the same as the current user
 	if (emitMatchUpdate) {
