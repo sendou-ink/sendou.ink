@@ -100,6 +100,41 @@
 	bottom: 8px;
 }
 
+.tournament-bracket__deadline-popover {
+	position: absolute;
+	left: 8px;
+	bottom: 8px;
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.tournament-bracket__deadline-popover__trigger {
+	margin-block-start: 0;
+	background-color: var(--bg-lightest-solid) !important;
+}
+
+.tournament-bracket__deadline-indicator {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	font-weight: bold;
+	font-size: var(--fonts-sm);
+}
+
+.tournament-bracket__deadline-indicator__warning {
+	background-color: var(--theme-warning);
+	color: var(--button-text);
+}
+
+.tournament-bracket__deadline-indicator__error {
+	background-color: var(--theme-error);
+	color: var(--button-text);
+}
+
 .tournament-bracket__stage-banner__top-bar__header {
 	display: flex;
 	align-items: center;

@@ -48,8 +48,10 @@ import {
 	resolveRoomPass,
 	tournamentTeamToActiveRosterUserIds,
 } from "../tournament-bracket-utils";
+import { DeadlineInfoPopover } from "./DeadlineInfoPopover";
 import { MatchActions } from "./MatchActions";
 import { MatchRosters } from "./MatchRosters";
+import { MatchTimer } from "./MatchTimer";
 
 export type Result = Unpacked<
 	SerializeFrom<TournamentMatchLoaderData>["results"]
@@ -256,6 +258,8 @@ function FancyStageBanner({
 	const { t } = useTranslation(["game-misc", "tournament"]);
 	const tournament = useTournament();
 
+	const gamesCompleted = data.results.length;
+
 	const stageNameToBannerImageUrl = (stageId: StageId) => {
 		return `${stageImageUrl(stageId)}.png`;
 	};
@@ -417,9 +421,23 @@ function FancyStageBanner({
 							})}
 						</h4>
 					</div>
+					{data.match.startedAt && !data.matchIsOver ? (
+						<DeadlineInfoPopover
+							startedAt={databaseTimestampToDate(data.match.startedAt)}
+							bestOf={data.match.bestOf}
+							gamesCompleted={gamesCompleted}
+						/>
+					) : null}
 					{children}
 				</div>
 			)}
+			{/** xxx: only show if member of the match or organizer and match is not over */}
+			{!matchIsLocked && data.match.startedAt && !data.matchIsOver ? (
+				<MatchTimer
+					startedAt={databaseTimestampToDate(data.match.startedAt)}
+					bestOf={data.match.bestOf}
+				/>
+			) : null}
 			{infos && (
 				<div className="tournament-bracket__infos">
 					{infos.filter(Boolean).map((info, i) => (

@@ -105,6 +105,7 @@
 	"match.score.playAll": "",
 	"match.action.undoLastScore": "",
 	"match.action.reopenMatch": "",
+	"match.deadline.explanation": "",
 	"join.error.MISSING_CODE": "",
 	"join.error.SHORT_CODE": "",
 	"join.error.NO_TEAM_MATCHING_CODE": "",

@@ -1,11 +1,12 @@
-import type {
-	Group,
-	InputStage,
-	Match,
-	Round,
-	Seeding,
-	SeedOrdering,
-	Stage,
+import {
+	type Group,
+	type InputStage,
+	type Match,
+	type Round,
+	type Seeding,
+	type SeedOrdering,
+	type Stage,
+	Status,
 } from "~/modules/brackets-model";
 import type { BracketsManager } from ".";
 import * as helpers from "./helpers";
@@ -33,9 +34,7 @@ export class Create {
 	private storage: Storage;
 	private stage: InputStage;
 	private readonly seedOrdering: SeedOrdering[];
-	private updateMode: boolean;
 	private enableByesInUpdate: boolean;
-	private currentStageId!: number;
 
 	/**
 	 * Creates an instance of Create, which will handle the creation of the stage.
@@ -48,7 +47,6 @@ export class Create {
 		this.stage = stage;
 		this.stage.settings = this.stage.settings || {};
 		this.seedOrdering = this.stage.settings.seedOrdering || [];
-		this.updateMode = false;
 		this.enableByesInUpdate = false;
 
 		if (!this.stage.name) throw Error("You must provide a name for the stage.");
@@ -94,18 +92,6 @@ export class Create {
 		this.ensureSeedOrdering(stage.id);
 
 		return stage;
-	}
-
-	/**
-	 * Enables the update mode.
-	 *
-	 * @param stageId ID of the stage.
-	 * @param enableByes Whether to use BYEs or TBDs for `null` values in an input seeding.
-	 */
-	public setExisting(stageId: number, enableByes: boolean): void {
-		this.updateMode = true;
-		this.currentStageId = stageId;
-		this.enableByesInUpdate = enableByes;
 	}
 
 	/**
@@ -396,8 +382,9 @@ export class Create {
 
 		if (roundId === -1) throw Error("Could not insert the round.");
 
-		for (let i = 0; i < matchCount; i++)
-			this.createMatch(stageId, groupId, roundId, i + 1, duels[i]);
+		for (let i = 0; i < matchCount; i++) {
+			this.createMatch(stageId, groupId, roundId, i + 1, roundNumber, duels[i]);
+		}
 	}
 
 	/**
@@ -414,6 +401,7 @@ export class Create {
 		groupId: number,
 		roundId: number,
 		matchNumber: number,
+		roundNumber: number,
 		opponents: Duel,
 	): void {
 		const opponent1 = helpers.toResultWithPosition(opponents[0]);
@@ -427,20 +415,12 @@ export class Create {
 		)
 			return;
 
-		let existing: Match | null = null;
 		let status = helpers.getMatchStatus(opponents);
 
-		if (this.updateMode) {
-			existing = this.storage.selectFirst("match", {
-				round_id: roundId,
-				number: matchNumber,
-			});
-
-			if (existing) {
-				// Keep the most advanced status when updating a match.
-				const existingStatus = helpers.getMatchStatus(existing);
-				if (existingStatus > status) status = existingStatus;
-			}
+		// In round-robin, only the first round is ready to play at the beginning.
+		// other matches have teams set but they are busy playing the first round.
+		if (this.stage.type === "round_robin" && roundNumber > 1) {
+			status = Status.Locked;
 		}
 
 		const parentId = this.insertMatch(
@@ -449,11 +429,11 @@ export class Create {
 				stage_id: stageId,
 				group_id: groupId,
 				round_id: roundId,
-				status: status,
+				status,
 				opponent1,
 				opponent2,
 			},
-			existing,
+			null,
 		);
 
 		if (parentId === -1) throw Error("Could not insert the match.");
@@ -755,14 +735,7 @@ export class Create {
 	 * @param stage The stage to insert.
 	 */
 	private insertStage(stage: OmitId<Stage>): number {
-		let existing: Stage | null = null;
-
-		if (this.updateMode)
-			existing = this.storage.select("stage", this.currentStageId);
-
-		if (!existing) return this.storage.insert("stage", stage);
-
-		return existing.id;
+		return this.storage.insert("stage", stage);
 	}
 
 	/**
@@ -771,18 +744,7 @@ export class Create {
 	 * @param group The group to insert.
 	 */
 	private insertGroup(group: OmitId<Group>): number {
-		let existing: Group | null = null;
-
-		if (this.updateMode) {
-			existing = this.storage.selectFirst("group", {
-				stage_id: group.stage_id,
-				number: group.number,
-			});
-		}
-
-		if (!existing) return this.storage.insert("group", group);
-
-		return existing.id;
+		return this.storage.insert("group", group);
 	}
 
 	/**
@@ -791,18 +753,7 @@ export class Create {
 	 * @param round The round to insert.
 	 */
 	private insertRound(round: OmitId<Round>): number {
-		let existing: Round | null = null;
-
-		if (this.updateMode) {
-			existing = this.storage.selectFirst("round", {
-				group_id: round.group_id,
-				number: round.number,
-			});
-		}
-
-		if (!existing) return this.storage.insert("round", round);
-
-		return existing.id;
+		return this.storage.insert("round", round);
 	}
 
 	/**

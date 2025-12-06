@@ -113,6 +113,7 @@
 	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (Играть все {{bestOf}})",
 	"match.action.undoLastScore": "Отменить последний результат",
 	"match.action.reopenMatch": "Открыть матч заново",
+	"match.deadline.explanation": "",
 	"join.error.MISSING_CODE": "Код приглашения отсутствует. Был ли URL скопирован полностью?",
 	"join.error.SHORT_CODE": "Длина кода приглашения неверна. Был ли URL скопирован полностью?",
 	"join.error.NO_TEAM_MATCHING_CODE": "Нет команды, соответствующей коду приглашения.",

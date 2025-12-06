@@ -111,6 +111,7 @@
 	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (Jugar todos los {{bestOf}})",
 	"match.action.undoLastScore": "Anular resultado previo",
 	"match.action.reopenMatch": "Reabrir partido",
+	"match.deadline.explanation": "",
 	"join.error.MISSING_CODE": "Falta código de invitación. ¿Copiaste el enlace completo?",
 	"join.error.SHORT_CODE": "Código de invitación es de cantidad incorrecata. ¿Copiaste el enlace completo?",
 	"join.error.NO_TEAM_MATCHING_CODE": "Ningún equipo coincide con el código de invitación.",

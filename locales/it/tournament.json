@@ -111,6 +111,7 @@
 	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (Play all {{bestOf}})",
 	"match.action.undoLastScore": "Annulla ultimo punteggio",
 	"match.action.reopenMatch": "Riapri match",
+	"match.deadline.explanation": "",
 	"join.error.MISSING_CODE": "Il codice invito è mancante. Hai copiato l'intero URL?",
 	"join.error.SHORT_CODE": "Il codice invito non ha la lunghezza giusta. Hai copiato l'intero URL?",
 	"join.error.NO_TEAM_MATCHING_CODE": "Nessun team associato a questo codice invito.",

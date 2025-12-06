@@ -63,8 +63,11 @@ export class BaseUpdater extends BaseGetter {
 		// Don't update related matches if it's a simple score update.
 		if (!statusChanged && !resultChanged) return;
 
-		if (!helpers.isRoundRobin(stage) && !helpers.isSwiss(stage))
+		if (!helpers.isRoundRobin(stage) && !helpers.isSwiss(stage)) {
 			this.updateRelatedMatches(stored, statusChanged, resultChanged);
+		} else if (helpers.isRoundRobin(stage) && resultChanged) {
+			this.unlockNextRoundRobinRound(stored);
+		}
 	}
 
 	/**
@@ -249,5 +252,80 @@ export class BaseUpdater extends BaseGetter {
 		this.applyMatchUpdate(match);
 
 		if (helpers.hasBye(match)) this.updateRelatedMatches(match, true, true);
+	}
+
+	/**
+	 * Unlocks matches in the next round of a round-robin group if both participants are ready.
+	 *
+	 * @param match The match that was just completed.
+	 */
+	protected unlockNextRoundRobinRound(match: Match): void {
+		const round = this.storage.select("round", match.round_id);
+		if (!round) throw Error("Round not found.");
+
+		const nextRound = this.storage.selectFirst("round", {
+			group_id: round.group_id,
+			number: round.number + 1,
+		});
+		if (!nextRound) return;
+
+		const currentRoundMatches = this.storage.select("match", {
+			round_id: round.id,
+		});
+		if (!currentRoundMatches) return;
+
+		const nextRoundMatches = this.storage.select("match", {
+			round_id: nextRound.id,
+		});
+		if (!nextRoundMatches) return;
+
+		for (const nextMatch of nextRoundMatches) {
+			if (nextMatch.status !== Status.Locked) continue;
+
+			const participant1Id = nextMatch.opponent1?.id;
+			const participant2Id = nextMatch.opponent2?.id;
+
+			if (!participant1Id || !participant2Id) continue;
+
+			const participant1Ready = this.isParticipantReadyForNextRound(
+				participant1Id,
+				currentRoundMatches,
+			);
+			const participant2Ready = this.isParticipantReadyForNextRound(
+				participant2Id,
+				currentRoundMatches,
+			);
+
+			if (participant1Ready && participant2Ready) {
+				nextMatch.status = Status.Ready;
+				this.applyMatchUpdate(nextMatch);
+			}
+		}
+	}
+
+	/**
+	 * Checks if a participant has completed their match in the current round.
+	 *
+	 * @param participantId The participant to check.
+	 * @param roundMatches All matches in the round.
+	 */
+	protected isParticipantReadyForNextRound(
+		participantId: number,
+		roundMatches: Match[],
+	): boolean {
+		const participantMatch = roundMatches.find(
+			(m) =>
+				m.opponent1?.id === participantId || m.opponent2?.id === participantId,
+		);
+
+		// If the participant doesn't have a match in this round, they had a bye/didn't play
+		// and are considered ready
+		if (!participantMatch) return true;
+
+		// If the match has a BYE (one opponent is null), it's considered completed
+		if (!participantMatch.opponent1?.id || !participantMatch.opponent2?.id)
+			return true;
+
+		return participantMatch.status >= Status.Completed;
 	}
 }

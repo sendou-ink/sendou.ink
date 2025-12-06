@@ -108,6 +108,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 	let emitMatchUpdate = false;
 	let emitTournamentUpdate = false;
+
 	switch (data._action) {
 		case "REPORT_SCORE": {
 			// they are trying to report score that was already reported
