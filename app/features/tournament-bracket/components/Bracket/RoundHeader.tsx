@@ -20,12 +20,12 @@ export function RoundHeader({
 
 	const countPrefix = maps?.type === "PLAY_ALL" ? "Play all " : "Bo";
 
-	const pickBanSuffix =
+	const pickBanText =
 		maps?.pickBan === "COUNTERPICK"
-			? " (C)"
+			? "Counterpicks"
 			: maps?.pickBan === "BAN_2"
-				? " (B)"
-				: "";
+				? "Ban 2"
+				: null;
 
 	return (
 		<div>
@@ -35,8 +35,8 @@ export function RoundHeader({
 					<div>
 						{countPrefix}
 						{bestOf}
-						{pickBanSuffix}
 					</div>
+					{pickBanText ? <div>{pickBanText}</div> : null}
 				</div>
 			) : leagueRoundStartDate ? (
 				<LeagueRoundStartDate date={leagueRoundStartDate} />
