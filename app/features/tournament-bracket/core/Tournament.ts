@@ -1206,16 +1206,6 @@ export class Tournament {
 		}
 
 		for (const bracket of this.brackets) {
-			if (!bracket.preview) continue;
-
-			const isParticipant = bracket.seeding?.includes(team.id);
-
-			if (isParticipant) {
-				return { type: "WAITING_FOR_BRACKET" } as const;
-			}
-		}
-
-		for (const bracket of this.brackets) {
 			if (bracket.preview || bracket.type !== "swiss") continue;
 
 			// TODO: both seeding and participantTournamentTeamIds are used for the same thing
@@ -1233,6 +1223,16 @@ export class Tournament {
 
 			if (isParticipant && notAllRoundsGenerated) {
 				return { type: "WAITING_FOR_ROUND" } as const;
+			}
+		}
+
+		for (const bracket of this.brackets) {
+			if (!bracket.preview) continue;
+
+			const isParticipant = bracket.seeding?.includes(team.id);
+
+			if (isParticipant) {
+				return { type: "WAITING_FOR_BRACKET" } as const;
 			}
 		}
 

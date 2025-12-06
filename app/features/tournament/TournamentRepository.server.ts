@@ -1116,7 +1116,6 @@ export function insertSwissMatches(
 				roundId: match.roundId,
 				stageId: match.stageId,
 				status: Status.Ready,
-				createdAt: dateToDatabaseTimestamp(new Date()),
 				chatCode: shortNanoid(),
 			})),
 		)
