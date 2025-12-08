@@ -116,12 +116,10 @@ export default function TournamentMatchPage() {
 						data.match.opponentOne?.id && data.match.opponentTwo?.id,
 					)}
 				/>
-				{data.matchIsOver && data.results.length > 0 ? (
+				{data.matchIsOver && !data.endedEarly && data.results.length > 0 ? (
 					<ResultsSection />
 				) : null}
-				{data.matchIsOver && data.results.length === 0 ? (
-					<EndedEarlyMessage />
-				) : null}
+				{data.matchIsOver && data.endedEarly ? <EndedEarlyMessage /> : null}
 				{!data.matchIsOver &&
 				typeof data.match.opponentOne?.id === "number" &&
 				typeof data.match.opponentTwo?.id === "number" ? (

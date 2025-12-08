@@ -12,7 +12,6 @@ const stm = sql.prepare(/* sql */ `
     "TournamentMatch"."chatCode",
     "TournamentMatch"."startedAt",
     "TournamentMatch"."status",
-    "TournamentMatch"."endedEarly",
     "Tournament"."mapPickingStyle",
     "TournamentRound"."id" as "roundId",
     "TournamentRound"."maps" as "roundMaps",
@@ -54,7 +53,7 @@ export const findMatchById = (id: number) => {
 	const row = stm.get({ id }) as
 		| ((Pick<
 				Tables["TournamentMatch"],
-				"id" | "groupId" | "chatCode" | "startedAt" | "status" | "endedEarly"
+				"id" | "groupId" | "chatCode" | "startedAt" | "status"
 		  > &
 				Pick<Tables["Tournament"], "mapPickingStyle"> & { players: string }) & {
 				opponentOne: string;

@@ -12,7 +12,10 @@ import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import type { Tables, WinLossParticipationArray } from "../../../db/tables";
 import type { AllMatchResult } from "../queries/allMatchResultsByTournamentId.server";
-import { ensureOneStandingPerUser } from "../tournament-bracket-utils";
+import {
+	ensureOneStandingPerUser,
+	matchEndedEarly,
+} from "../tournament-bracket-utils";
 import type { Standing } from "./Bracket";
 import type { ParsedBracket } from "./Progression";
 
@@ -69,9 +72,14 @@ export function tournamentSummary({
 	calculateSeasonalStats?: boolean;
 	progression: ParsedBracket[];
 }): TournamentSummary {
-	const resultsWithoutEarlyEndedSets = results.filter(
-		(match) => !match.endedEarly,
-	);
+	const resultsWithoutEarlyEndedSets = results.filter((match) => {
+		return !matchEndedEarly({
+			opponentOne: match.opponentOne,
+			opponentTwo: match.opponentTwo,
+			count: match.roundMaps.count,
+			countType: match.roundMaps.type,
+		});
+	});
 
 	const skills = calculateSeasonalStats
 		? calculateSkills({

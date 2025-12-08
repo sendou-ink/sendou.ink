@@ -94,6 +94,4 @@ export interface Match extends MatchResults {
 	lastGameFinishedAt?: number | null;
 
 	startedAt?: number | null;
-
-	endedEarly?: number;
 }

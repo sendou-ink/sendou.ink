@@ -11,6 +11,7 @@ import { resolveMapList } from "../core/mapList.server";
 import { findMatchById } from "../queries/findMatchById.server";
 import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
 import { matchPageParamsSchema } from "../tournament-bracket-schemas.server";
+import { matchEndedEarly } from "../tournament-bracket-utils";
 
 export type TournamentMatchLoaderData = typeof loader;
 
@@ -69,13 +70,30 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				})
 			: null;
 
+	const matchIsOver =
+		match.opponentOne?.result === "win" || match.opponentTwo?.result === "win";
+
+	const endedEarly = matchIsOver
+		? matchEndedEarly({
+				opponentOne: {
+					score: match.opponentOne?.score,
+					result: match.opponentOne?.result,
+				},
+				opponentTwo: {
+					score: match.opponentTwo?.score,
+					result: match.opponentTwo?.result,
+				},
+				count: match.roundMaps.count,
+				countType: match.roundMaps.type,
+			})
+		: false;
+
 	return {
 		match,
 		results: findResultsByMatchId(matchId),
 		mapList,
-		matchIsOver:
-			match.opponentOne?.result === "win" ||
-			match.opponentTwo?.result === "win",
+		matchIsOver,
+		endedEarly,
 		noScreen,
 	};
 };

@@ -553,8 +553,6 @@ export interface TournamentMatch {
 	// set when match becomes ongoing (both teams ready and no earlier matches for either team)
 	// for swiss: set at creation time
 	startedAt: number | null;
-	/** True, if the organizer forced the match to end early due to it running too long */
-	endedEarly: Generated<DBBoolean>; // xxx: maybe we should just infer this from the score
 }
 
 /** Represents one decision, pick or ban, during tournaments pick/ban (counterpick, ban 2) phase. */

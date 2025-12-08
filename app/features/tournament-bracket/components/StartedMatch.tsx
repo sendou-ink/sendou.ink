@@ -869,7 +869,7 @@ function EndSetPopover({
 			trigger={
 				<SendouButton
 					variant="minimal"
-					className="tournament-bracket__stage-banner__undo-button"
+					className="tournament-bracket__stage-banner__undo-button tournament-bracket__stage-banner__end-set-button"
 				>
 					{t("tournament:match.action.endSet")}
 				</SendouButton>

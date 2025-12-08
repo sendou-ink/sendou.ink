@@ -1,4 +1,5 @@
 import { sql } from "~/db/sql";
+import type { TournamentRoundMaps } from "~/db/tables";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { parseDBArray, parseDBJsonArray } from "~/utils/sql";
@@ -24,7 +25,7 @@ const stm = sql.prepare(/* sql */ `
     "m"."opponentTwo" ->> '$.score' as "opponentTwoScore",
     "m"."opponentOne" ->> '$.result' as "opponentOneResult",
     "m"."opponentTwo" ->> '$.result' as "opponentTwoResult",
-    "m"."endedEarly",
+    "TournamentRound"."maps" as "roundMaps",
     json_group_array(
       json_object(
         'stageId',
@@ -39,6 +40,7 @@ const stm = sql.prepare(/* sql */ `
       ) as "maps"
   from
     "TournamentMatch" as "m"
+  inner join "TournamentRound" on "TournamentRound"."id" = "m"."roundId"
   left join "TournamentStage" on "TournamentStage"."id" = "m"."stageId"
   left join "q1" on "q1"."matchId" = "m"."id"
   where "TournamentStage"."tournamentId" = @tournamentId
@@ -57,7 +59,7 @@ interface Opponent {
 export interface AllMatchResult {
 	opponentOne: Opponent;
 	opponentTwo: Opponent;
-	endedEarly: number;
+	roundMaps: TournamentRoundMaps;
 	maps: Array<{
 		stageId: StageId;
 		mode: ModeShort;
@@ -76,18 +78,23 @@ export function allMatchResultsByTournamentId(
 	const rows = stm.all({ tournamentId }) as unknown as any[];
 
 	return rows.map((row) => {
+		const roundMaps = JSON.parse(row.roundMaps) as TournamentRoundMaps;
+
+		const opponentOne = {
+			id: row.opponentOneId,
+			score: row.opponentOneScore,
+			result: row.opponentOneResult,
+		};
+		const opponentTwo = {
+			id: row.opponentTwoId,
+			score: row.opponentTwoScore,
+			result: row.opponentTwoResult,
+		};
+
 		return {
-			opponentOne: {
-				id: row.opponentOneId,
-				score: row.opponentOneScore,
-				result: row.opponentOneResult,
-			},
-			opponentTwo: {
-				id: row.opponentTwoId,
-				score: row.opponentTwoScore,
-				result: row.opponentTwoResult,
-			},
-			endedEarly: row.endedEarly,
+			opponentOne,
+			opponentTwo,
+			roundMaps,
 			maps: parseDBJsonArray(row.maps).map((map: any) => {
 				const participants = parseDBArray(map.participants);
 				invariant(participants.length > 0, "No participants found");

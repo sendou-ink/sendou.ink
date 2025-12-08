@@ -3,11 +3,11 @@ import * as Deadline from "./Deadline";
 
 describe("totalMatchTime", () => {
 	it("calculates total time for best of 3", () => {
-		expect(Deadline.totalMatchTime(3)).toBe(28);
+		expect(Deadline.totalMatchTime(3)).toBe(26);
 	});
 
 	it("calculates total time for best of 5", () => {
-		expect(Deadline.totalMatchTime(5)).toBe(42);
+		expect(Deadline.totalMatchTime(5)).toBe(39);
 	});
 });
 
@@ -35,22 +35,22 @@ describe("gameMarkers", () => {
 		expect(markers).toHaveLength(3);
 		expect(markers[0].gameNumber).toBe(1);
 		expect(markers[0].percentage).toBe(25);
-		expect(markers[0].gameStartMinute).toBe(7);
+		expect(markers[0].gameStartMinute).toBe(6.5);
 		expect(markers[1].percentage).toBe(50);
-		expect(markers[1].gameStartMinute).toBe(14);
+		expect(markers[1].gameStartMinute).toBe(13);
 		expect(markers[2].percentage).toBe(75);
-		expect(markers[2].gameStartMinute).toBe(21);
+		expect(markers[2].gameStartMinute).toBe(19.5);
 	});
 
 	it("returns correct markers for best of 5", () => {
 		const markers = Deadline.gameMarkers(5);
 		expect(markers).toHaveLength(5);
 		expect(markers[0].gameNumber).toBe(1);
-		expect(markers[0].gameStartMinute).toBe(7);
-		expect(markers[1].gameStartMinute).toBe(14);
-		expect(markers[2].gameStartMinute).toBe(21);
-		expect(markers[3].gameStartMinute).toBe(28);
-		expect(markers[4].gameStartMinute).toBe(35);
+		expect(markers[0].gameStartMinute).toBe(6.5);
+		expect(markers[1].gameStartMinute).toBe(13);
+		expect(markers[2].gameStartMinute).toBe(19.5);
+		expect(markers[3].gameStartMinute).toBe(26);
+		expect(markers[4].gameStartMinute).toBe(32.5);
 	});
 });
 

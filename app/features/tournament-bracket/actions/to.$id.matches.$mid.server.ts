@@ -39,6 +39,7 @@ import {
 } from "../tournament-bracket-schemas.server";
 import {
 	isSetOverByScore,
+	matchEndedEarly,
 	matchIsLocked,
 	tournamentMatchWebsocketRoom,
 	tournamentTeamToActiveRosterUserIds,
@@ -460,13 +461,11 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			break;
 		}
-		// xxx: handle early ended match reopening
 		case "REOPEN_MATCH": {
 			const scoreOne = match.opponentOne?.score ?? 0;
 			const scoreTwo = match.opponentTwo?.score ?? 0;
 			invariant(typeof scoreOne === "number", "Score one is missing");
 			invariant(typeof scoreTwo === "number", "Score two is missing");
-			invariant(scoreOne !== scoreTwo, "Scores are equal");
 
 			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
 			errorToastIfFalsy(
@@ -476,16 +475,27 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			const results = findResultsByMatchId(matchId);
 			const lastResult = results[results.length - 1];
-			invariant(lastResult, "Last result is missing");
 
-			if (scoreOne > scoreTwo) {
-				scores[0]--;
-			} else {
-				scores[1]--;
+			const endedEarly = matchEndedEarly({
+				opponentOne: { score: scoreOne, result: match.opponentOne?.result },
+				opponentTwo: { score: scoreTwo, result: match.opponentTwo?.result },
+				count: match.roundMaps.count,
+				countType: match.roundMaps.type,
+			});
+
+			if (!endedEarly) {
+				invariant(scoreOne !== scoreTwo, "Scores are equal");
+				invariant(lastResult, "Last result is missing");
+
+				if (scoreOne > scoreTwo) {
+					scores[0]--;
+				} else {
+					scores[1]--;
+				}
 			}
 
 			logger.info(
-				`Reopening match: User ID: ${user.id}; Match ID: ${match.id}`,
+				`Reopening match: User ID: ${user.id}; Match ID: ${match.id}; Ended early: ${endedEarly}`,
 			);
 
 			const followingMatches = tournament.followingMatches(match.id);
@@ -493,15 +503,15 @@ export const action: ActionFunction = async ({ params, request }) => {
 				for (const match of followingMatches) {
 					deleteMatchPickBanEvents({ matchId: match.id });
 				}
-				deleteTournamentMatchGameResultById(lastResult.id);
+				if (lastResult) deleteTournamentMatchGameResultById(lastResult.id);
 				manager.update.match({
 					id: match.id,
 					opponent1: {
-						score: scores[0],
+						score: endedEarly ? scoreOne : scores[0],
 						result: undefined,
 					},
 					opponent2: {
-						score: scores[1],
+						score: endedEarly ? scoreTwo : scores[1],
 						result: undefined,
 					},
 				});
@@ -607,13 +617,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 						result: winnerTeamId === match.opponentTwo!.id ? "win" : "loss",
 					},
 				});
-
-				// xxx: do in brackets-manager
-				sql
-					.prepare(
-						/* sql */ `update "TournamentMatch" set "endedEarly" = 1 where "id" = ?`,
-					)
-					.run(match.id);
 			})();
 
 			emitMatchUpdate = true;

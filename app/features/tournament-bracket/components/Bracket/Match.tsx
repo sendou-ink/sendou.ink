@@ -18,6 +18,7 @@ import { tournamentMatchPage, tournamentStreamsPage } from "~/utils/urls";
 import type { Bracket } from "../../core/Bracket";
 import * as Deadline from "../../core/Deadline";
 import type { TournamentData } from "../../core/Tournament.server";
+import { matchEndedEarly } from "../../tournament-bracket-utils";
 
 interface MatchProps {
 	match: Unpacked<TournamentData["data"]["match"]>;
@@ -161,8 +162,17 @@ function MatchRow({
 		const opponentScore = opponent!.score;
 		const opponentResult = opponent!.result;
 
-		// Match ended early by TO - display W/L instead of scores
-		if (match.endedEarly) {
+		// Display W/L as the score might not reflect the winner set in the early ending
+		const round = bracket.data.round.find((r) => r.id === match.round_id);
+		if (
+			round?.maps &&
+			matchEndedEarly({
+				opponentOne: match.opponent1,
+				opponentTwo: match.opponent2,
+				count: round.maps.count,
+				countType: round.maps.type,
+			})
+		) {
 			if (opponentResult === "win") return "W";
 			if (opponentResult === "loss") return "L";
 		}

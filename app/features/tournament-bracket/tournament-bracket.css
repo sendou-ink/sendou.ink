@@ -104,6 +104,20 @@
 	bottom: 8px;
 }
 
+.tournament-bracket__stage-banner__end-set-button {
+	right: 8px;
+	bottom: 8px;
+}
+
+.tournament-bracket__stage-banner:has(
+		.tournament-bracket__stage-banner__end-set-button
+	)
+	.tournament-bracket__stage-banner__undo-button:not(
+		.tournament-bracket__stage-banner__end-set-button
+	) {
+	right: 72px;
+}
+
 .tournament-bracket__deadline-popover {
 	position: absolute;
 	left: 8px;

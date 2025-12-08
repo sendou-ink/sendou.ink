@@ -180,7 +180,10 @@ describe("tournamentSummary()", () => {
 						result: "loss",
 						score: 0,
 					},
-					endedEarly: 0,
+					roundMaps: {
+						count: 3,
+						type: "BEST_OF",
+					},
 				},
 			],
 			teams,
@@ -294,7 +297,10 @@ describe("tournamentSummary()", () => {
 				result: "loss",
 				score: 0,
 			},
-			endedEarly: 0,
+			roundMaps: {
+				count: 3,
+				type: "BEST_OF",
+			},
 		},
 		{
 			maps: [
@@ -339,7 +345,10 @@ describe("tournamentSummary()", () => {
 				result: "loss",
 				score: 0,
 			},
-			endedEarly: 0,
+			roundMaps: {
+				count: 3,
+				type: "BEST_OF",
+			},
 		},
 	];
 
@@ -430,7 +439,10 @@ describe("tournamentSummary()", () => {
 				result: "loss",
 				score: 1,
 			},
-			endedEarly: 0,
+			roundMaps: {
+				count: 3,
+				type: "BEST_OF",
+			},
 		},
 	];
 
@@ -600,7 +612,10 @@ describe("tournamentSummary()", () => {
 						result: "loss",
 						score: 0,
 					},
-					endedEarly: 0,
+					roundMaps: {
+						count: 3,
+						type: "BEST_OF",
+					},
 				},
 			],
 		});
@@ -655,7 +670,10 @@ describe("tournamentSummary()", () => {
 						result: "loss",
 						score: 0,
 					},
-					endedEarly: 0,
+					roundMaps: {
+						count: 3,
+						type: "BEST_OF",
+					},
 				},
 			],
 		});
@@ -820,7 +838,10 @@ describe("tournamentSummary()", () => {
 						result: "loss",
 						score: 0,
 					},
-					endedEarly: 1,
+					roundMaps: {
+						count: 3,
+						type: "BEST_OF",
+					},
 				},
 			],
 		});
@@ -861,7 +882,10 @@ describe("tournamentSummary()", () => {
 						result: "loss",
 						score: 0,
 					},
-					endedEarly: 0,
+					roundMaps: {
+						count: 3,
+						type: "BEST_OF",
+					},
 				},
 				{
 					maps: [
@@ -891,7 +915,10 @@ describe("tournamentSummary()", () => {
 						result: "loss",
 						score: 0,
 					},
-					endedEarly: 1,
+					roundMaps: {
+						count: 3,
+						type: "BEST_OF",
+					},
 				},
 			],
 		});
@@ -909,8 +936,8 @@ describe("tournamentSummary()", () => {
 			[13, 14, 15, 16].includes(s.userId ?? 0),
 		);
 
-		expect(skillsFromTeam1.length).toBeGreaterThan(0);
-		expect(skillsFromTeam2.length).toBeGreaterThan(0);
+		expect(skillsFromTeam1.length).toBe(0);
+		expect(skillsFromTeam2.length).toBe(0);
 		expect(skillsFromTeam3.length).toBe(0);
 		expect(skillsFromTeam4.length).toBe(0);
 	});
