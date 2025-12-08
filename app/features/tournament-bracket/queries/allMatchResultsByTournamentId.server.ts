@@ -24,6 +24,7 @@ const stm = sql.prepare(/* sql */ `
     "m"."opponentTwo" ->> '$.score' as "opponentTwoScore",
     "m"."opponentOne" ->> '$.result' as "opponentOneResult",
     "m"."opponentTwo" ->> '$.result' as "opponentTwoResult",
+    "m"."endedEarly",
     json_group_array(
       json_object(
         'stageId',
@@ -34,7 +35,7 @@ const stm = sql.prepare(/* sql */ `
         "q1"."winnerTeamId",
         'participants',
         "q1"."participants"
-        ) 
+        )
       ) as "maps"
   from
     "TournamentMatch" as "m"
@@ -56,6 +57,7 @@ interface Opponent {
 export interface AllMatchResult {
 	opponentOne: Opponent;
 	opponentTwo: Opponent;
+	endedEarly: number;
 	maps: Array<{
 		stageId: StageId;
 		mode: ModeShort;
@@ -85,6 +87,7 @@ export function allMatchResultsByTournamentId(
 				score: row.opponentTwoScore,
 				result: row.opponentTwoResult,
 			},
+			endedEarly: row.endedEarly,
 			maps: parseDBJsonArray(row.maps).map((map: any) => {
 				const participants = parseDBArray(map.participants);
 				invariant(participants.length > 0, "No participants found");

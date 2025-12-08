@@ -1,5 +1,5 @@
-const PREP_TIME_MINUTES = 7;
-const MINUTES_PER_GAME = 7;
+const PREP_TIME_MINUTES = 6.5;
+const MINUTES_PER_GAME = 6.5;
 
 /**
  * Calculates the max duration for a match considered acceptable.
@@ -28,20 +28,25 @@ export function progressPercentage(
  * @param maxGamesCount - The maximum number of games in the match
  * @returns Array of game markers with their position as a percentage
  */
-export function gameMarkers(
-	maxGamesCount: number,
-): Array<{ gameNumber: number; percentage: number; gameStartMinute: number }> {
+export function gameMarkers(maxGamesCount: number): Array<{
+	gameNumber: number;
+	percentage: number;
+	gameStartMinute: number;
+	maxMinute: number;
+}> {
 	const totalMinutes = totalMatchTime(maxGamesCount);
 	const markers = [];
 
 	for (let i = 1; i <= maxGamesCount; i++) {
 		const gameStartMinute = PREP_TIME_MINUTES + MINUTES_PER_GAME * (i - 1);
+		const maxMinute = PREP_TIME_MINUTES + MINUTES_PER_GAME * i;
 		const percentage = (gameStartMinute / totalMinutes) * 100;
 
 		markers.push({
 			gameNumber: i,
 			percentage: Math.min(percentage, 100),
 			gameStartMinute,
+			maxMinute,
 		});
 	}
 

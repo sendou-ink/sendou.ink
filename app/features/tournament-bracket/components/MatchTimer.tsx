@@ -23,9 +23,10 @@ export function MatchTimer({ startedAt, bestOf }: MatchTimerProps) {
 
 	const elapsedMinutes = differenceInSeconds(currentTime, startedAt) / 60;
 
+	const totalMinutes = Deadline.totalMatchTime(bestOf);
 	const progressPercentage = Deadline.progressPercentage(
 		elapsedMinutes,
-		Deadline.totalMatchTime(bestOf),
+		totalMinutes,
 	);
 	const gameMarkers = Deadline.gameMarkers(bestOf);
 
@@ -42,7 +43,10 @@ export function MatchTimer({ startedAt, bestOf }: MatchTimerProps) {
 				{gameMarkers.map((marker) => (
 					<div
 						key={marker.gameNumber}
-						className={styles.gameMarker}
+						className={clsx(
+							styles.gameMarker,
+							marker.gameNumber !== 1 && styles.gameMarkerHidden,
+						)}
 						style={{ left: `${marker.percentage}%` }}
 					>
 						<div
@@ -51,11 +55,22 @@ export function MatchTimer({ startedAt, bestOf }: MatchTimerProps) {
 							G{marker.gameNumber}
 						</div>
 						<div className={styles.gameMarkerLine} />
-						<div className={clsx(styles.gameMarkerText, styles.gameMarkerTime)}>
-							{marker.gameStartMinute}min
+						<div
+							className={clsx(styles.gameMarkerText, styles.gameMarkerLabel)}
+						>
+							Start
 						</div>
 					</div>
 				))}
+
+				<div className={styles.maxTimeMarker}>
+					<div className={clsx(styles.gameMarkerText, styles.gameMarkerTime)}>
+						Max
+					</div>
+					<div className={clsx(styles.gameMarkerText, styles.gameMarkerTime)}>
+						{totalMinutes}min
+					</div>
+				</div>
 			</div>
 		</div>
 	);

@@ -158,7 +158,16 @@ function MatchRow({
 	const score = () => {
 		if (!match.opponent1?.id || !match.opponent2?.id || isPreview) return null;
 
-		return opponent!.score ?? 0;
+		const opponentScore = opponent!.score;
+		const opponentResult = opponent!.result;
+
+		// Match ended early by TO - display W/L instead of scores
+		if (match.endedEarly) {
+			if (opponentResult === "win") return "W";
+			if (opponentResult === "loss") return "L";
+		}
+
+		return opponentScore ?? 0;
 	};
 
 	const isLoser = opponent?.result === "loss";
@@ -274,6 +283,7 @@ function MatchStreams({ match }: Pick<MatchProps, "match">) {
 
 function MatchTimer({ match, bracket }: Pick<MatchProps, "match" | "bracket">) {
 	const [now, setNow] = React.useState(new Date());
+	const tournament = useTournament();
 
 	React.useEffect(() => {
 		const interval = setInterval(() => {
@@ -289,6 +299,11 @@ function MatchTimer({ match, bracket }: Pick<MatchProps, "match" | "bracket">) {
 		match.opponent1?.result === "win" || match.opponent2?.result === "win";
 
 	if (isOver) return null;
+
+	const isLocked = tournament.ctx.castedMatchesInfo?.lockedMatches?.includes(
+		match.id,
+	);
+	if (isLocked) return null;
 
 	const round = bracket.data.round.find((r) => r.id === match.round_id);
 	const bestOf = round?.maps?.count;

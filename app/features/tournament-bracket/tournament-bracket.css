@@ -54,6 +54,10 @@
 	padding-inline: var(--s-2);
 }
 
+.tournament-bracket__locked-banner__lonely {
+	border-radius: var(--rounded);
+}
+
 .tournament-bracket__stage-banner {
 	display: flex;
 	width: 100%;

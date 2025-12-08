@@ -69,9 +69,13 @@ export function tournamentSummary({
 	calculateSeasonalStats?: boolean;
 	progression: ParsedBracket[];
 }): TournamentSummary {
+	const resultsWithoutEarlyEndedSets = results.filter(
+		(match) => !match.endedEarly,
+	);
+
 	const skills = calculateSeasonalStats
 		? calculateSkills({
-				results,
+				results: resultsWithoutEarlyEndedSets,
 				queryCurrentTeamRating,
 				queryCurrentUserRating,
 				queryTeamPlayerRatingAverage,
@@ -86,16 +90,18 @@ export function tournamentSummary({
 						rating: queryCurrentSeedingRating(userId),
 						matchesCount: 0, // Seeding skills do not have matches count
 					}),
-					results,
+					results: resultsWithoutEarlyEndedSets,
 				}).map((skill) => ({
 					...skill,
 					type: seedingSkillCountsFor,
 					ordinal: ordinal(skill),
 				}))
 			: [],
-		mapResultDeltas: calculateSeasonalStats ? mapResultDeltas(results) : [],
+		mapResultDeltas: calculateSeasonalStats
+			? mapResultDeltas(resultsWithoutEarlyEndedSets)
+			: [],
 		playerResultDeltas: calculateSeasonalStats
-			? playerResultDeltas(results)
+			? playerResultDeltas(resultsWithoutEarlyEndedSets)
 			: [],
 		tournamentResults: tournamentResults({
 			participantCount: teams.length,

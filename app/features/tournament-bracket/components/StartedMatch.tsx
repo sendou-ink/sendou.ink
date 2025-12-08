@@ -1,6 +1,7 @@
 import type { SerializeFrom } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
+import { differenceInMinutes } from "date-fns";
 import type { TFunction } from "i18next";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -16,6 +17,7 @@ import { Image } from "~/components/Image";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { CrossIcon } from "~/components/icons/Cross";
 import { PickIcon } from "~/components/icons/Pick";
+import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useChat } from "~/features/chat/chat-hooks";
@@ -36,6 +38,7 @@ import {
 	stageImageUrl,
 } from "~/utils/urls";
 import type { Bracket } from "../core/Bracket";
+import * as Deadline from "../core/Deadline";
 import * as PickBan from "../core/PickBan";
 import type { TournamentDataTeam } from "../core/Tournament.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
@@ -91,6 +94,8 @@ export function StartedMatch({
 	const isMemberOfTeamParticipating = data.match.players.some(
 		(p) => p.id === user?.id,
 	);
+
+	const waitingForPreviousMatch = data.match.status === 0;
 
 	const hostingTeamId = resolveHostingTeam(teams).id;
 	const poolCode = React.useMemo(() => {
@@ -173,6 +178,7 @@ export function StartedMatch({
 					scores: [scoreOne, scoreTwo],
 					tournament,
 				})}
+				waitingForPreviousMatch={waitingForPreviousMatch}
 			>
 				{currentPosition > 0 &&
 					!presentational &&
@@ -210,6 +216,19 @@ export function StartedMatch({
 							</div>
 						</Form>
 					)}
+				{tournament.isOrganizer(user) &&
+				!data.matchIsOver &&
+				data.match.startedAt &&
+				Deadline.matchStatus({
+					elapsedMinutes: differenceInMinutes(
+						new Date(),
+						databaseTimestampToDate(data.match.startedAt),
+					),
+					gamesCompleted: scoreOne + scoreTwo,
+					maxGamesCount: data.match.bestOf,
+				}) === "error" ? (
+					<EndSetPopover teams={teams} />
+				) : null}
 			</FancyStageBanner>
 			<ModeProgressIndicator
 				scores={[scoreOne, scoreTwo]}
@@ -217,7 +236,7 @@ export function StartedMatch({
 				selectedResultIndex={selectedResultIndex}
 				setSelectedResultIndex={setSelectedResultIndex}
 			/>
-			{type === "EDIT" || presentational ? (
+			{!waitingForPreviousMatch && (type === "EDIT" || presentational) ? (
 				<StartedMatchTabs
 					presentational={presentational}
 					scores={[scoreOne, scoreTwo]}
@@ -247,13 +266,16 @@ function FancyStageBanner({
 	children,
 	teams,
 	matchIsLocked,
+	waitingForPreviousMatch,
 }: {
 	stage?: TournamentMapListMap;
 	infos?: (JSX.Element | null)[];
 	children?: React.ReactNode;
 	teams: [TournamentDataTeam, TournamentDataTeam];
 	matchIsLocked: boolean;
+	waitingForPreviousMatch: boolean;
 }) {
+	const user = useUser();
 	const data = useLoaderData<TournamentMatchLoaderData>();
 	const { t } = useTranslation(["game-misc", "tournament"]);
 	const tournament = useTournament();
@@ -371,6 +393,15 @@ function FancyStageBanner({
 						</div>
 					</div>
 				</div>
+			) : waitingForPreviousMatch ? (
+				<div className="tournament-bracket__locked-banner">
+					<div className="stack sm items-center">
+						<div className="text-lg text-center font-bold">
+							Previous match ongoing
+						</div>
+						<div>Please wait for both teams to finish</div>
+					</div>
+				</div>
 			) : waitingForActiveRosterSelectionFor ? (
 				<div className="tournament-bracket__locked-banner">
 					<div className="stack sm items-center">
@@ -387,6 +418,15 @@ function FancyStageBanner({
 								: waitingForActiveRosterSelectionFor}
 						</div>
 					</div>
+					{data.match.startedAt &&
+					!tournament.isLeagueDivision &&
+					(waitingForActiveRosterSelectionFor || !stage || inBanPhase) ? (
+						<DeadlineInfoPopover
+							startedAt={databaseTimestampToDate(data.match.startedAt)}
+							bestOf={data.match.bestOf}
+							gamesCompleted={gamesCompleted}
+						/>
+					) : null}
 				</div>
 			) : (
 				<div
@@ -431,8 +471,12 @@ function FancyStageBanner({
 					{children}
 				</div>
 			)}
-			{/** xxx: only show if member of the match or organizer and match is not over */}
-			{!matchIsLocked && data.match.startedAt && !data.matchIsOver ? (
+			{(tournament.isOrganizer(user) ||
+				teams.some((t) => t.members.some((m) => m.userId === user?.id))) &&
+			!tournament.isLeagueDivision &&
+			!matchIsLocked &&
+			data.match.startedAt &&
+			!data.matchIsOver ? (
 				<MatchTimer
 					startedAt={databaseTimestampToDate(data.match.startedAt)}
 					bestOf={data.match.bestOf}
@@ -806,5 +850,87 @@ function ScreenBanIcons({ banned }: { banned: boolean }) {
 				alt={t(`weapons:SPECIAL_${SPLATTERCOLOR_SCREEN_ID}`)}
 			/>
 		</div>
+	);
+}
+
+function EndSetPopover({
+	teams,
+}: {
+	teams: [TournamentDataTeam, TournamentDataTeam];
+}) {
+	const { t } = useTranslation(["tournament"]);
+	const [selectedWinner, setSelectedWinner] = React.useState<
+		number | null | undefined
+	>(undefined);
+
+	return (
+		<SendouPopover
+			placement="top"
+			trigger={
+				<SendouButton
+					variant="minimal"
+					className="tournament-bracket__stage-banner__undo-button"
+				>
+					{t("tournament:match.action.endSet")}
+				</SendouButton>
+			}
+		>
+			<Form method="post" className="stack md">
+				<div className="stack sm">
+					<Label className="mx-auto">
+						{t("tournament:match.endSet.selectWinner")}
+					</Label>
+
+					<label className="stack horizontal sm items-center">
+						<input
+							type="radio"
+							name="winnerSelection"
+							value="random"
+							checked={selectedWinner === null}
+							onChange={() => setSelectedWinner(null)}
+						/>
+						<span>{t("tournament:match.endSet.randomWinner")}</span>
+					</label>
+
+					<label className="stack horizontal sm items-center">
+						<input
+							type="radio"
+							name="winnerSelection"
+							value={teams[0].id}
+							checked={selectedWinner === teams[0].id}
+							onChange={() => setSelectedWinner(teams[0].id)}
+						/>
+						<span>{teams[0].name}</span>
+					</label>
+
+					<label className="stack horizontal sm items-center">
+						<input
+							type="radio"
+							name="winnerSelection"
+							value={teams[1].id}
+							checked={selectedWinner === teams[1].id}
+							onChange={() => setSelectedWinner(teams[1].id)}
+						/>
+						<span>{teams[1].name}</span>
+					</label>
+				</div>
+
+				<input
+					type="hidden"
+					name="winnerTeamId"
+					value={selectedWinner === null ? "null" : (selectedWinner ?? "")}
+				/>
+
+				<SubmitButton
+					_action="END_SET"
+					testId="end-set-button"
+					size="miniscule"
+					className="mx-auto"
+					isDisabled={selectedWinner === undefined}
+				>
+					{t("tournament:match.action.confirmEndSet")}
+				</SubmitButton>
+			</Form>
+		</SendouPopover>
 	);
 }

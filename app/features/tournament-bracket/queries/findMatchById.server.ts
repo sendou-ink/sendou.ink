@@ -11,6 +11,8 @@ const stm = sql.prepare(/* sql */ `
     "TournamentMatch"."opponentTwo",
     "TournamentMatch"."chatCode",
     "TournamentMatch"."startedAt",
+    "TournamentMatch"."status",
+    "TournamentMatch"."endedEarly",
     "Tournament"."mapPickingStyle",
     "TournamentRound"."id" as "roundId",
     "TournamentRound"."maps" as "roundMaps",
@@ -52,7 +54,7 @@ export const findMatchById = (id: number) => {
 	const row = stm.get({ id }) as
 		| ((Pick<
 				Tables["TournamentMatch"],
-				"id" | "groupId" | "chatCode" | "startedAt"
+				"id" | "groupId" | "chatCode" | "startedAt" | "status" | "endedEarly"
 		  > &
 				Pick<Tables["Tournament"], "mapPickingStyle"> & { players: string }) & {
 				opponentOne: string;
@@ -73,6 +75,7 @@ export const findMatchById = (id: number) => {
 		roundMaps,
 		opponentOne: JSON.parse(row.opponentOne) as Match["opponent1"],
 		opponentTwo: JSON.parse(row.opponentTwo) as Match["opponent2"],
+		status: row.status,
 		players: (
 			parseDBArray(row.players) as Array<{
 				id: Tables["User"]["id"];

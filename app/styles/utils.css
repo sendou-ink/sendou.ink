@@ -310,6 +310,10 @@
 	margin-inline-start: var(--s-4);
 }
 
+.ml-6 {
+	margin-inline-start: var(--s-6);
+}
+
 .mr-auto {
 	margin-inline-end: auto;
 }
@@ -402,6 +406,10 @@
 
 .italic {
 	font-style: italic;
+}
+
+.contents {
+	display: contents;
 }
 
 .flex {

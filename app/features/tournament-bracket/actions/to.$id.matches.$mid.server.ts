@@ -460,6 +460,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			break;
 		}
+		// xxx: handle early ended match reopening
 		case "REOPEN_MATCH": {
 			const scoreOne = match.opponentOne?.score ?? 0;
 			const scoreTwo = match.opponentTwo?.score ?? 0;
@@ -559,6 +560,64 @@ export const action: ActionFunction = async ({ params, request }) => {
 			});
 
 			emitMatchUpdate = true;
+
+			break;
+		}
+		case "END_SET": {
+			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			errorToastIfFalsy(
+				match.opponentOne?.id && match.opponentTwo?.id,
+				"Teams are missing",
+			);
+			errorToastIfFalsy(
+				match.opponentOne?.result !== "win" &&
+					match.opponentTwo?.result !== "win",
+				"Match is already over",
+			);
+
+			// Determine winner (random if not specified)
+			const winnerTeamId = (() => {
+				if (data.winnerTeamId) {
+					errorToastIfFalsy(
+						data.winnerTeamId === match.opponentOne.id ||
+							data.winnerTeamId === match.opponentTwo.id,
+						"Invalid winner team id",
+					);
+					return data.winnerTeamId;
+				}
+
+				// Random winner: true 50/50 selection
+				return Math.random() < 0.5
+					? match.opponentOne.id
+					: match.opponentTwo.id;
+			})();
+
+			logger.info(
+				`Ending set by organizer: User ID: ${user.id}; Match ID: ${match.id}; Winner: ${winnerTeamId}; Random: ${!data.winnerTeamId}`,
+			);
+
+			// xxx: how to handle that we want to give the win to a team that is currently losing?
+			sql.transaction(() => {
+				manager.update.match({
+					id: match.id,
+					opponent1: {
+						result: winnerTeamId === match.opponentOne!.id ? "win" : "loss",
+					},
+					opponent2: {
+						result: winnerTeamId === match.opponentTwo!.id ? "win" : "loss",
+					},
+				});
+
+				// xxx: do in brackets-manager
+				sql
+					.prepare(
+						/* sql */ `update "TournamentMatch" set "endedEarly" = 1 where "id" = ?`,
+					)
+					.run(match.id);
+			})();
+
+			emitMatchUpdate = true;
+			emitTournamentUpdate = true;
 
 			break;
 		}

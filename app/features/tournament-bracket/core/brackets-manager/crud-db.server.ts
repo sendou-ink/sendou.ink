@@ -439,6 +439,7 @@ export class Match {
 			status: rawMatch.status,
 			lastGameFinishedAt: rawMatch.lastGameFinishedAt,
 			startedAt: rawMatch.startedAt,
+			endedEarly: rawMatch.endedEarly,
 		};
 	}
 

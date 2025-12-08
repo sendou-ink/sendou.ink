@@ -24,8 +24,10 @@
 	display: flex;
 	flex-direction: row;
 	align-items: center;
+	gap: var(--s-1);
 	z-index: 2;
 	pointer-events: none;
+	transform: translateX(-50%);
 }
 
 .gameMarkerLine {
@@ -33,6 +35,20 @@
 	height: 100%;
 	background-color: var(--text-lighter);
 	opacity: 0.6;
+}
+
+.maxTimeMarker {
+	position: absolute;
+	right: 0;
+	top: 0;
+	height: 100%;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--s-1);
+	z-index: 2;
+	pointer-events: none;
+	padding-right: var(--s-1);
 }
 
 /** xxx: For mobile not enough space */
@@ -43,10 +59,6 @@
 	white-space: nowrap;
 }
 
-.gameMarkerLabel {
-	padding-right: var(--s-1);
-}
-
-.gameMarkerTime {
-	padding-left: var(--s-1);
+.gameMarkerHidden .gameMarkerText {
+	visibility: hidden;
 }

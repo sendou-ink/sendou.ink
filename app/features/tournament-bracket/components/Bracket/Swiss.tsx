@@ -16,6 +16,7 @@ import { Match } from "./Match";
 import { PlacementsTable } from "./PlacementsTable";
 import { RoundHeader } from "./RoundHeader";
 
+// xxx: lacks margin left
 export function SwissBracket({
 	bracket,
 	bracketIdx,
