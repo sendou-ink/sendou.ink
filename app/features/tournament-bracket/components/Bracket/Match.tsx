@@ -101,7 +101,7 @@ function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 				>
 					Match is scheduled to be casted
 				</SendouPopover>
-			) : hasStreams() ? (
+			) : hasStreams() && match.startedAt ? (
 				<SendouPopover
 					placement="top"
 					popoverClassName="w-max"
