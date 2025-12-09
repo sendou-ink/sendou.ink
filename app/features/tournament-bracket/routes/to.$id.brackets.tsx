@@ -205,7 +205,7 @@ export default function TournamentBracketsPage() {
 						{!bracket.canBeStarted ? (
 							<div className="tournament-bracket__mini-alert">
 								⚠️{" "}
-								{bracketIdx === 0
+								{bracket.isStartingBracket
 									? "Tournament start time is in the future"
 									: bracket.startTime && bracket.startTime > new Date()
 										? "Bracket start time is in the future"
