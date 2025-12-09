@@ -30,8 +30,6 @@ export { action, loader };
 
 import "../tournament-bracket.css";
 
-// xxx: admin end early action
-// xxx: show match as locked for round robin
 export default function TournamentMatchPage() {
 	const user = useUser();
 	const visibility = useVisibilityChange();

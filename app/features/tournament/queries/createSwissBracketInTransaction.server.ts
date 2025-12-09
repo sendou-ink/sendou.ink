@@ -54,8 +54,7 @@ const createTournamentMatchStm = sql.prepare(/* sql */ `
     "opponentTwo",
     "roundId",
     "stageId",
-    "status",
-    "startedAt"
+    "status"
   ) values (
     @chatCode,
     @groupId,
@@ -64,8 +63,7 @@ const createTournamentMatchStm = sql.prepare(/* sql */ `
     @opponentTwo,
     @roundId,
     @stageId,
-    @status,
-    @startedAt
+    @status
   )
 `);
 
@@ -119,7 +117,6 @@ export function createSwissBracketInTransaction(
 					roundId: roundFromDB.id,
 					stageId: stageFromDB.id,
 					status: match.status,
-					startedAt: databaseTimestampNow(),
 				});
 			}
 		}

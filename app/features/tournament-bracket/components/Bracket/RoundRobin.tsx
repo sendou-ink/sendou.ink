@@ -9,7 +9,7 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 	const groups = getGroups(bracket);
 
 	return (
-		<div className="stack xl ml-6">
+		<div className="stack xl">
 			{groups.map(({ groupName, groupId }) => {
 				const rounds = bracket.data.round.filter((r) => r.group_id === groupId);
 
@@ -28,7 +28,7 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 				});
 
 				return (
-					<div key={groupName} className="stack lg">
+					<div key={groupName} className="stack lg ml-4">
 						<h2 className="text-lg">{groupName}</h2>
 						<div
 							className="elim-bracket__container"

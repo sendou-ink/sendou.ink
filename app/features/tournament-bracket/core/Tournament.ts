@@ -1281,6 +1281,11 @@ export class Tournament {
 		// BYE match
 		if (!match.opponent1 || !match.opponent2) return false;
 
+		// in round robin all matches are independent from one another
+		if (bracket.type === "round_robin") {
+			return true;
+		}
+
 		const anotherMatchBlocking = this.followingMatches(matchId).some(
 			(match) =>
 				// in swiss matches are generated round by round and the existance
@@ -1337,10 +1342,6 @@ export class Tournament {
 		);
 		if (!bracket) {
 			logger.error("followingMatches: Bracket not found");
-			return [];
-		}
-
-		if (bracket.type === "round_robin") {
 			return [];
 		}
 

@@ -31,7 +31,7 @@
 }
 
 .gameMarkerLine {
-	width: 1.5px;
+	width: 2px;
 	height: 100%;
 	background-color: var(--text-lighter);
 	opacity: 0.6;
@@ -51,7 +51,6 @@
 	padding-right: var(--s-1);
 }
 
-/** xxx: For mobile not enough space */
 .gameMarkerText {
 	font-size: var(--fonts-xxxs);
 	font-weight: var(--semi-bold);

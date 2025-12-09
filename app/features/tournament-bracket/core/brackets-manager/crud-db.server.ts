@@ -332,11 +332,10 @@ const match_getByRoundIdStm = sql.prepare(/*sql*/ `
 `);
 
 const match_getByStageIdStm = sql.prepare(/*sql*/ `
-  select 
-    "TournamentMatch".*, 
+  select
+    "TournamentMatch".*,
     sum("TournamentMatchGameResult"."opponentOnePoints") as "opponentOnePointsTotal",
-    sum("TournamentMatchGameResult"."opponentTwoPoints") as "opponentTwoPointsTotal",
-    max("TournamentMatchGameResult"."createdAt") as "lastGameFinishedAt"
+    sum("TournamentMatchGameResult"."opponentTwoPoints") as "opponentTwoPointsTotal"
   from "TournamentMatch"
   left join "TournamentMatchGameResult" on "TournamentMatch"."id" = "TournamentMatchGameResult"."matchId"
   where "TournamentMatch"."stageId" = @stageId
@@ -412,7 +411,6 @@ export class Match {
 			opponentTwo: string;
 			opponentOnePointsTotal: number | null;
 			opponentTwoPointsTotal: number | null;
-			lastGameFinishedAt: number | null;
 			startedAt: number | null;
 		},
 	): MatchType {
@@ -437,7 +435,6 @@ export class Match {
 			round_id: rawMatch.roundId,
 			stage_id: rawMatch.stageId,
 			status: rawMatch.status,
-			lastGameFinishedAt: rawMatch.lastGameFinishedAt,
 			startedAt: rawMatch.startedAt,
 		};
 	}

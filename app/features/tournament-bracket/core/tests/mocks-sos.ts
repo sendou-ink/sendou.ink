@@ -432,7 +432,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10930,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942920,
 				startedAt: null,
 			},
 			{
@@ -456,7 +455,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10930,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942228,
 				startedAt: null,
 			},
 			{
@@ -480,7 +478,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10931,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943838,
 				startedAt: null,
 			},
 			{
@@ -504,7 +501,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10931,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943744,
 				startedAt: null,
 			},
 			{
@@ -528,7 +524,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10932,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730944396,
 				startedAt: null,
 			},
 			{
@@ -552,7 +547,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10932,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730944433,
 				startedAt: null,
 			},
 			{
@@ -576,7 +570,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10933,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942292,
 				startedAt: null,
 			},
 			{
@@ -600,7 +593,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10933,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942228,
 				startedAt: null,
 			},
 			{
@@ -624,7 +616,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10934,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943087,
 				startedAt: null,
 			},
 			{
@@ -648,7 +639,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10934,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943362,
 				startedAt: null,
 			},
 			{
@@ -672,7 +662,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10935,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730944650,
 				startedAt: null,
 			},
 			{
@@ -696,7 +685,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10935,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730944060,
 				startedAt: null,
 			},
 			{
@@ -720,7 +708,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10936,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942499,
 				startedAt: null,
 			},
 			{
@@ -744,7 +731,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10936,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942637,
 				startedAt: null,
 			},
 			{
@@ -768,7 +754,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10937,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943675,
 				startedAt: null,
 			},
 			{
@@ -792,7 +777,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10937,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943519,
 				startedAt: null,
 			},
 			{
@@ -816,7 +800,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10938,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730944582,
 				startedAt: null,
 			},
 			{
@@ -840,7 +823,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10938,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730944327,
 				startedAt: null,
 			},
 			{
@@ -864,7 +846,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10939,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942138,
 				startedAt: null,
 			},
 			{
@@ -888,7 +869,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10939,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942201,
 				startedAt: null,
 			},
 			{
@@ -912,7 +892,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10940,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943191,
 				startedAt: null,
 			},
 			{
@@ -936,7 +915,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10940,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943041,
 				startedAt: null,
 			},
 			{
@@ -960,7 +938,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10941,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730944267,
 				startedAt: null,
 			},
 			{
@@ -984,7 +961,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10941,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943864,
 				startedAt: null,
 			},
 			{
@@ -1008,7 +984,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10942,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942106,
 				startedAt: null,
 			},
 			{
@@ -1032,7 +1007,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10942,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942409,
 				startedAt: null,
 			},
 			{
@@ -1056,7 +1030,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10943,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943667,
 				startedAt: null,
 			},
 			{
@@ -1080,7 +1053,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10943,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943191,
 				startedAt: null,
 			},
 			{
@@ -1104,7 +1076,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10944,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730945077,
 				startedAt: null,
 			},
 			{
@@ -1128,7 +1099,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10944,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730945049,
 				startedAt: null,
 			},
 			{
@@ -1152,7 +1122,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10945,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730941825,
 				startedAt: null,
 			},
 			{
@@ -1176,7 +1145,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10945,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942866,
 				startedAt: null,
 			},
 			{
@@ -1200,7 +1168,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10946,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943771,
 				startedAt: null,
 			},
 			{
@@ -1224,7 +1191,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10946,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943477,
 				startedAt: null,
 			},
 			{
@@ -1248,7 +1214,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10947,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730944650,
 				startedAt: null,
 			},
 			{
@@ -1272,7 +1237,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10947,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730944986,
 				startedAt: null,
 			},
 			{
@@ -1296,7 +1260,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10948,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942080,
 				startedAt: null,
 			},
 			{
@@ -1320,7 +1283,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10948,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942458,
 				startedAt: null,
 			},
 			{
@@ -1344,7 +1306,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10949,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943825,
 				startedAt: null,
 			},
 			{
@@ -1368,7 +1329,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10949,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943451,
 				startedAt: null,
 			},
 			{
@@ -1392,7 +1352,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10950,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730944753,
 				startedAt: null,
 			},
 			{
@@ -1416,7 +1375,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10950,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730944776,
 				startedAt: null,
 			},
 			{
@@ -1440,7 +1398,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10951,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942138,
 				startedAt: null,
 			},
 			{
@@ -1464,7 +1421,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10951,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942432,
 				startedAt: null,
 			},
 			{
@@ -1488,7 +1444,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10952,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943047,
 				startedAt: null,
 			},
 			{
@@ -1512,7 +1467,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10952,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943314,
 				startedAt: null,
 			},
 			{
@@ -1536,7 +1490,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10953,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730944305,
 				startedAt: null,
 			},
 			{
@@ -1560,7 +1513,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10953,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730944405,
 				startedAt: null,
 			},
 			{
@@ -1584,7 +1536,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10954,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942135,
 				startedAt: null,
 			},
 			{
@@ -1608,7 +1559,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10954,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942303,
 				startedAt: null,
 			},
 			{
@@ -1632,7 +1582,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10955,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943438,
 				startedAt: null,
 			},
 			{
@@ -1656,7 +1605,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10955,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943267,
 				startedAt: null,
 			},
 			{
@@ -1680,7 +1628,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10956,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730944307,
 				startedAt: null,
 			},
 			{
@@ -1704,7 +1651,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10956,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730944545,
 				startedAt: null,
 			},
 			{
@@ -1728,7 +1674,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10957,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942186,
 				startedAt: null,
 			},
 			{
@@ -1752,7 +1697,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10957,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942783,
 				startedAt: null,
 			},
 			{
@@ -1776,7 +1720,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10958,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943564,
 				startedAt: null,
 			},
 			{
@@ -1800,7 +1743,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10958,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730944295,
 				startedAt: null,
 			},
 			{
@@ -1824,7 +1766,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10959,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730945002,
 				startedAt: null,
 			},
 			{
@@ -1848,7 +1789,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10959,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730945693,
 				startedAt: null,
 			},
 			{
@@ -1872,7 +1812,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10960,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942355,
 				startedAt: null,
 			},
 			{
@@ -1896,7 +1835,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10960,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730942198,
 				startedAt: null,
 			},
 			{
@@ -1920,7 +1858,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10961,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943233,
 				startedAt: null,
 			},
 			{
@@ -1944,7 +1881,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10961,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730943206,
 				startedAt: null,
 			},
 			{
@@ -1968,7 +1904,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10962,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730944334,
 				startedAt: null,
 			},
 			{
@@ -1992,7 +1927,6 @@ export const SWIM_OR_SINK_167 = (
 				round_id: 10962,
 				stage_id: 1118,
 				status: 4,
-				lastGameFinishedAt: 1730944217,
 				startedAt: null,
 			},
 		],

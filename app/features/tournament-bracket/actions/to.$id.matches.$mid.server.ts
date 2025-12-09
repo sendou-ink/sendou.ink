@@ -32,6 +32,7 @@ import {
 import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
 import { insertTournamentMatchGameResult } from "../queries/insertTournamentMatchGameResult.server";
 import { insertTournamentMatchGameResultParticipant } from "../queries/insertTournamentMatchGameResultParticipant.server";
+import { resetMatchStatus } from "../queries/resetMatchStatus.server";
 import { updateMatchGameResultPoints } from "../queries/updateMatchGameResultPoints.server";
 import {
 	matchPageParamsSchema,
@@ -499,11 +500,22 @@ export const action: ActionFunction = async ({ params, request }) => {
 			);
 
 			const followingMatches = tournament.followingMatches(match.id);
+			const bracketFormat = tournament.bracketByIdx(
+				tournament.matchIdToBracketIdx(match.id)!,
+			)!.type;
 			sql.transaction(() => {
 				for (const match of followingMatches) {
-					deleteMatchPickBanEvents({ matchId: match.id });
+					// for other formats the database triggers handle the startedAt clearing. Status reset for those is managed by the brackets-manager
+					if (bracketFormat === "round_robin") {
+						resetMatchStatus(match.id);
+					} else {
+						// edge case but for round robin we can just leave the match as is, lock it then unlock later to continue where they left off (should not really ever happen)
+						deleteMatchPickBanEvents(match.id);
+					}
 				}
+
 				if (lastResult) deleteTournamentMatchGameResultById(lastResult.id);
+
 				manager.update.match({
 					id: match.id,
 					opponent1: {
@@ -606,7 +618,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 				`Ending set by organizer: User ID: ${user.id}; Match ID: ${match.id}; Winner: ${winnerTeamId}; Random: ${!data.winnerTeamId}`,
 			);
 
-			// xxx: how to handle that we want to give the win to a team that is currently losing?
 			sql.transaction(() => {
 				manager.update.match({
 					id: match.id,

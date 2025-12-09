@@ -9,7 +9,6 @@ interface MatchTimerProps {
 	bestOf: number;
 }
 
-// xxx: mobile styles
 export function MatchTimer({ startedAt, bestOf }: MatchTimerProps) {
 	const [currentTime, setCurrentTime] = React.useState(new Date());
 
@@ -31,7 +30,7 @@ export function MatchTimer({ startedAt, bestOf }: MatchTimerProps) {
 	const gameMarkers = Deadline.gameMarkers(bestOf);
 
 	return (
-		<div>
+		<div data-testid="match-timer">
 			<div className={styles.progressContainer}>
 				<div
 					className={styles.progressBar}
@@ -43,10 +42,9 @@ export function MatchTimer({ startedAt, bestOf }: MatchTimerProps) {
 				{gameMarkers.map((marker) => (
 					<div
 						key={marker.gameNumber}
-						className={clsx(
-							styles.gameMarker,
-							marker.gameNumber !== 1 && styles.gameMarkerHidden,
-						)}
+						className={clsx(styles.gameMarker, {
+							[styles.gameMarkerHidden]: marker.gameNumber !== 1,
+						})}
 						style={{ left: `${marker.percentage}%` }}
 					>
 						<div

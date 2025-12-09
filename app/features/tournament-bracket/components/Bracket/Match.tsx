@@ -28,6 +28,7 @@ interface MatchProps {
 	roundNumber: number;
 	showSimulation: boolean;
 	bracket: Bracket;
+	hideMatchTimer?: boolean;
 }
 
 export function Match(props: MatchProps) {
@@ -45,7 +46,9 @@ export function Match(props: MatchProps) {
 				<div className="bracket__match__separator" />
 				<MatchRow {...props} side={2} />
 			</MatchWrapper>
-			<MatchTimer match={props.match} bracket={props.bracket} />
+			{!props.hideMatchTimer ? (
+				<MatchTimer match={props.match} bracket={props.bracket} />
+			) : null}
 		</div>
 	);
 }

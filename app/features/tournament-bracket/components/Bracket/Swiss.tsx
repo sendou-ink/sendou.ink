@@ -16,7 +16,6 @@ import { Match } from "./Match";
 import { PlacementsTable } from "./PlacementsTable";
 import { RoundHeader } from "./RoundHeader";
 
-// xxx: lacks margin left
 export function SwissBracket({
 	bracket,
 	bracketIdx,
@@ -139,6 +138,19 @@ export function SwissBracket({
 
 						const bestOf = round.maps?.count;
 
+						const ongoingMatches = matches.filter(
+							(m) =>
+								m.opponent1 &&
+								m.opponent2 &&
+								!m.opponent1.result &&
+								!m.opponent2.result,
+						);
+						const startedAtValues = ongoingMatches
+							.map((m) => m.startedAt)
+							.filter((t): t is number => typeof t === "number");
+						const roundStartedAt =
+							startedAtValues.length > 0 ? Math.min(...startedAtValues) : null;
+
 						const teamWithByeId = matches.find((m) => !m.opponent2)?.opponent1
 							?.id;
 						const teamWithBye = teamWithByeId
@@ -157,6 +169,8 @@ export function SwissBracket({
 										bestOf={bestOf}
 										showInfos={someMatchOngoing(matches)}
 										maps={round.maps}
+										roundStartedAt={roundStartedAt}
+										matches={ongoingMatches}
 									/>
 									{roundThatCanBeStartedId() === round.id ? (
 										<fetcher.Form method="post">
@@ -224,6 +238,7 @@ export function SwissBracket({
 												bracket={bracket}
 												type="groups"
 												group={selectedGroup.groupName.split(" ")[1]}
+												hideMatchTimer
 											/>
 										);
 									})}

@@ -90,7 +90,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				round_id: 13715,
 				stage_id: 1457,
 				status: 4,
-				lastGameFinishedAt: 1734687487,
 				startedAt: 1734685232,
 			},
 			{
@@ -110,7 +109,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				round_id: 13715,
 				stage_id: 1457,
 				status: 4,
-				lastGameFinishedAt: 1734686471,
 				startedAt: 1734685232,
 			},
 			{
@@ -130,7 +128,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				round_id: 13715,
 				stage_id: 1457,
 				status: 4,
-				lastGameFinishedAt: 1734686359,
 				startedAt: 1734685232,
 			},
 			{
@@ -144,7 +141,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				round_id: 13715,
 				stage_id: 1457,
 				status: 2,
-				lastGameFinishedAt: null,
 				startedAt: 1734685232,
 			},
 			{
@@ -164,7 +160,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				round_id: 13716,
 				stage_id: 1457,
 				status: 4,
-				lastGameFinishedAt: 1734688988,
 				startedAt: 1734687519,
 			},
 			{
@@ -184,7 +179,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				round_id: 13716,
 				stage_id: 1457,
 				status: 4,
-				lastGameFinishedAt: 1734689658,
 				startedAt: 1734687519,
 			},
 			{
@@ -204,7 +198,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				round_id: 13716,
 				stage_id: 1457,
 				status: 4,
-				lastGameFinishedAt: 1734688872,
 				startedAt: 1734687519,
 			},
 			{
@@ -218,7 +211,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				round_id: 13716,
 				stage_id: 1457,
 				status: 2,
-				lastGameFinishedAt: null,
 				startedAt: 1734687519,
 			},
 			{
@@ -238,7 +230,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				round_id: 13717,
 				stage_id: 1457,
 				status: 4,
-				lastGameFinishedAt: 1734691279,
 				startedAt: 1734689680,
 			},
 			{
@@ -258,7 +249,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				round_id: 13717,
 				stage_id: 1457,
 				status: 4,
-				lastGameFinishedAt: 1734690877,
 				startedAt: 1734689680,
 			},
 			{
@@ -278,7 +268,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				round_id: 13717,
 				stage_id: 1457,
 				status: 4,
-				lastGameFinishedAt: 1734690966,
 				startedAt: 1734689680,
 			},
 			{
@@ -292,7 +281,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				round_id: 13717,
 				stage_id: 1457,
 				status: 2,
-				lastGameFinishedAt: null,
 				startedAt: 1734689680,
 			},
 		],

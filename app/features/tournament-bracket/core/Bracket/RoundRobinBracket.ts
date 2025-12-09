@@ -127,9 +127,7 @@ export class RoundRobinBracket extends Bracket {
 				invariant(
 					typeof winner.id === "number" &&
 						typeof loser.id === "number" &&
-						typeof winner.score === "number" &&
-						typeof loser.score === "number",
-					"RoundRobinBracket.standings: winner or loser id not found",
+						"RoundRobinBracket.standings: winner or loser id not found",
 				);
 
 				if (
@@ -141,20 +139,22 @@ export class RoundRobinBracket extends Bracket {
 					);
 				}
 
+				// note: score might be missing in the case the set was ended early. In the future we might want to handle this differently than defaulting both to 0.
+
 				updateTeam({
 					teamId: winner.id,
 					setWins: 1,
 					setLosses: 0,
-					mapWins: winner.score,
-					mapLosses: loser.score,
+					mapWins: winner.score ?? 0,
+					mapLosses: loser.score ?? 0,
 					points: winner.totalPoints ?? 0,
 				});
 				updateTeam({
 					teamId: loser.id,
 					setWins: 0,
 					setLosses: 1,
-					mapWins: loser.score,
-					mapLosses: winner.score,
+					mapWins: loser.score ?? 0,
+					mapLosses: winner.score ?? 0,
 					points: loser.totalPoints ?? 0,
 				});
 			}

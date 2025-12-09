@@ -399,7 +399,9 @@ function FancyStageBanner({
 						<div className="text-lg text-center font-bold">
 							Previous match ongoing
 						</div>
-						<div>Please wait for both teams to finish</div>
+						<div>
+							Match will be reportable when both teams are ready to play
+						</div>
 					</div>
 				</div>
 			) : waitingForActiveRosterSelectionFor ? (

@@ -997,6 +997,8 @@ export function unlockMatch({
 				startedAt: databaseTimestampNow(),
 			})
 			.where("id", "=", matchId)
+			// ensure we don't set startedAt if it was never set before
+			.where("TournamentMatch.startedAt", "is not", null)
 			.execute();
 	});
 }

@@ -75,7 +75,6 @@ function dataMapped({
 	};
 }
 
-// xxx: why are these two different in fact?
 export async function tournamentFromDB(args: {
 	user: { id: number } | undefined;
 	tournamentId: number;
