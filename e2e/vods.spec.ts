@@ -11,12 +11,11 @@ import {
 import { newVodPage, VODS_PAGE, vodVideoPage } from "~/utils/urls";
 
 const chooseVideoDate = async (page: Page) => {
-	await page.getByTestId("open-calendar-button").click();
 	await page
-		.getByTestId("choose-date-button")
-		.filter({ has: page.locator(`text="1"`) })
-		.first()
-		.click();
+		.getByRole("spinbutton", { name: "year, Video date *" })
+		.fill("2024");
+	await page.getByRole("spinbutton", { name: "month, Video date *" }).fill("5");
+	await page.getByRole("spinbutton", { name: "day, Video date *" }).fill("15");
 };
 
 test.describe("VoDs page", () => {

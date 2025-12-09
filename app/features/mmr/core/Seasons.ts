@@ -84,6 +84,11 @@ export const list =
 					starts: new Date("2025-09-08T17:00:00.000Z"),
 					ends: new Date("2025-11-23T22:00:00.000Z"),
 				},
+				{
+					nth: 10,
+					starts: new Date("2025-12-08T17:00:00.000Z"),
+					ends: new Date("2026-02-22T22:00:00.000Z"),
+				},
 			] as const);
 
 /**

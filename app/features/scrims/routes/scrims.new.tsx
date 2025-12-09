@@ -273,7 +273,7 @@ function TournamentSearchFormField() {
 					<TournamentSearch
 						label={t("scrims:forms.mapsTournament.title")}
 						initialTournamentId={value ?? undefined}
-						onChange={(tournament) => onChange(tournament.id)}
+						onChange={(tournament) => onChange(tournament?.id)}
 					/>
 				)}
 			/>

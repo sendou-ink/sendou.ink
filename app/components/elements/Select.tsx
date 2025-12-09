@@ -1,6 +1,10 @@
 import clsx from "clsx";
 import * as React from "react";
-import type { ListBoxItemProps, SelectProps } from "react-aria-components";
+import type {
+	AutocompleteProps,
+	ListBoxItemProps,
+	SelectProps,
+} from "react-aria-components";
 import {
 	Autocomplete,
 	Button,
@@ -45,6 +49,7 @@ export interface SendouSelectProps<T extends object>
 	/** Callback for when the search input value changes. When defined `items` has to be filtered on the caller side (automatic filtering in component disabled). */
 	onSearchInputChange?: (value: string) => void;
 	clearable?: boolean;
+	filter?: AutocompleteProps<object>["filter"];
 }
 
 /**
@@ -74,6 +79,7 @@ export function SendouSelect<T extends object>({
 	onSearchInputChange,
 	clearable = false,
 	className,
+	filter,
 	...props
 }: SendouSelectProps<T>) {
 	const { t } = useTranslation(["common"]);
@@ -106,7 +112,7 @@ export function SendouSelect<T extends object>({
 			<SendouBottomTexts bottomText={bottomText} errorText={errorText} />
 			<Popover className={clsx(popoverClassName, styles.popover)}>
 				<Autocomplete
-					filter={isControlled ? undefined : contains}
+					filter={filter ? filter : isControlled ? undefined : contains}
 					inputValue={searchInputValue}
 					onInputChange={onSearchInputChange}
 				>
