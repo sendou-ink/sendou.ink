@@ -682,6 +682,16 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("finalize-bracket-button").click();
 		await page.getByTestId("confirm-finalize-bracket-button").click();
 
+		// needs also to be completed so 9 unlocks
+		await navigateToMatch(page, 7);
+		await reportResult({
+			page,
+			amountOfMapsToReport: 2,
+			sidesWithMoreThanFourPlayers: ["last"],
+			points: [100, 0],
+		});
+		await backToBracket(page);
+
 		// set situation where match A is completed and its participants also completed their follow up matches B & C
 		// and then we go back and change the winner of A
 		await navigateToMatch(page, 8);
@@ -1079,4 +1089,42 @@ test.describe("Tournament bracket", () => {
 			}
 		});
 	}
+
+	test("can end set early when past time limit and shows timer on bracket and match page", async ({
+		page,
+	}) => {
+		const tournamentId = 2;
+		const matchId = 5;
+
+		await startBracket(page, tournamentId);
+		await navigateToMatch(page, matchId);
+
+		await page.clock.install({ time: new Date() });
+
+		await reportResult({ page, amountOfMapsToReport: 1, winner: 1 });
+
+		await expect(page.getByTestId("match-timer")).toBeVisible();
+
+		await backToBracket(page);
+
+		// Fast forward a bit to ensure timer shows on bracket
+		await page.clock.fastForward("00:10"); // 10 seconds
+		await page.waitForTimeout(1000);
+
+		const bracketMatch = page.locator('[data-match-id="5"]');
+		await expect(bracketMatch).toBeVisible();
+
+		// Fast forward time past limit (30 minutes for Bo3 = 26min limit)
+		await page.clock.fastForward("29:50"); // Total 30 minutes
+		await page.reload();
+
+		await navigateToMatch(page, matchId);
+
+		await page.getByText("End Set").click();
+		await page.getByRole("radio", { name: /Random/ }).check();
+		await page.getByTestId("end-set-button").click();
+
+		// Verify match ended early
+		await expect(page.getByText("Match ended early")).toBeVisible();
+	});
 });

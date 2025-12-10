@@ -987,6 +987,19 @@ export function unlockMatch({
 			})
 			.where("id", "=", tournamentId)
 			.execute();
+
+		// Make sure that a match is not marked as started when it is unlocked
+		// as we use this timestamp to determine the "deadline" for the match
+		// so it doesn't make sense for that timer to run if players can't play yet
+		await trx
+			.updateTable("TournamentMatch")
+			.set({
+				startedAt: databaseTimestampNow(),
+			})
+			.where("id", "=", matchId)
+			// ensure we don't set startedAt if it was never set before
+			.where("TournamentMatch.startedAt", "is not", null)
+			.execute();
 	});
 }
 
@@ -1105,7 +1118,6 @@ export function insertSwissMatches(
 				roundId: match.roundId,
 				stageId: match.stageId,
 				status: Status.Ready,
-				createdAt: dateToDatabaseTimestamp(new Date()),
 				chatCode: shortNanoid(),
 			})),
 		)
