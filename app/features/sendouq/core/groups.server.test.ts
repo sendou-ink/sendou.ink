@@ -6,7 +6,7 @@ const paramsToExpected = new Map<
 		Parameters<typeof tierDifferenceToRangeOrExact>[0]["ourTier"],
 		Parameters<typeof tierDifferenceToRangeOrExact>[0]["theirTier"],
 	],
-	ReturnType<typeof tierDifferenceToRangeOrExact>["tier"]
+	ReturnType<typeof tierDifferenceToRangeOrExact>
 >()
 	// exact
 	.set(
@@ -14,7 +14,7 @@ const paramsToExpected = new Map<
 			{ isPlus: false, name: "GOLD" },
 			{ isPlus: false, name: "GOLD" },
 		],
-		{ isPlus: false, name: "GOLD" },
+		{ type: "exact", diff: 0, tier: { isPlus: false, name: "GOLD" } },
 	)
 	// 1 place difference
 	.set(
@@ -22,10 +22,14 @@ const paramsToExpected = new Map<
 			{ isPlus: false, name: "GOLD" },
 			{ isPlus: true, name: "GOLD" },
 		],
-		[
-			{ isPlus: true, name: "SILVER" },
-			{ isPlus: true, name: "GOLD" },
-		],
+		{
+			type: "range",
+			diff: 1,
+			range: [
+				{ isPlus: true, name: "SILVER" },
+				{ isPlus: true, name: "GOLD" },
+			],
+		},
 	)
 	// 2 places difference
 	.set(
@@ -33,10 +37,14 @@ const paramsToExpected = new Map<
 			{ isPlus: false, name: "GOLD" },
 			{ isPlus: false, name: "PLATINUM" },
 		],
-		[
-			{ isPlus: false, name: "SILVER" },
-			{ isPlus: false, name: "PLATINUM" },
-		],
+		{
+			type: "range",
+			diff: 2,
+			range: [
+				{ isPlus: false, name: "SILVER" },
+				{ isPlus: false, name: "PLATINUM" },
+			],
+		},
 	)
 	// too high, has to be exact
 	.set(
@@ -44,7 +52,7 @@ const paramsToExpected = new Map<
 			{ isPlus: true, name: "LEVIATHAN" },
 			{ isPlus: false, name: "LEVIATHAN" },
 		],
-		{ isPlus: false, name: "LEVIATHAN" },
+		{ type: "exact", diff: 1, tier: { isPlus: false, name: "LEVIATHAN" } },
 	)
 	// too low, has to be exact
 	.set(
@@ -52,7 +60,7 @@ const paramsToExpected = new Map<
 			{ isPlus: false, name: "IRON" },
 			{ isPlus: true, name: "IRON" },
 		],
-		{ isPlus: true, name: "IRON" },
+		{ type: "exact", diff: 1, tier: { isPlus: true, name: "IRON" } },
 	)
 	// not max rank but still too high
 	.set(
@@ -60,7 +68,7 @@ const paramsToExpected = new Map<
 			{ isPlus: false, name: "LEVIATHAN" },
 			{ isPlus: false, name: "DIAMOND" },
 		],
-		{ isPlus: false, name: "DIAMOND" },
+		{ type: "exact", diff: 2, tier: { isPlus: false, name: "DIAMOND" } },
 	);
 
 describe("tierDifferenceToRangeOrExact()", () => {
@@ -70,7 +78,7 @@ describe("tierDifferenceToRangeOrExact()", () => {
 				ourTier: input[0],
 				theirTier: input[1],
 				hasLeviathan: true,
-			}).tier;
+			});
 			expect(result).toEqual(expected);
 		});
 	}
@@ -80,7 +88,11 @@ describe("tierDifferenceToRangeOrExact()", () => {
 			ourTier: { isPlus: true, name: "DIAMOND" },
 			theirTier: { isPlus: false, name: "DIAMOND" },
 			hasLeviathan: false,
-		}).tier;
-		expect(result).toEqual({ isPlus: false, name: "DIAMOND" });
+		});
+		expect(result).toEqual({
+			type: "exact",
+			diff: 1,
+			tier: { isPlus: false, name: "DIAMOND" },
+		});
 	});
 });

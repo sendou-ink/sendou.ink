@@ -3,6 +3,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
 import { SQManager } from "../core/SQManager.server";
+import { sqRedirectIfNeeded } from "../q-utils";
 
 // xxx: redirect to correct route
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -20,6 +21,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		? SQManager.previewGroups(privateNotes)
 		: SQManager.lookingGroups(user.id, privateNotes);
 	const ownGroup = SQManager.findOwnGroup(user.id);
+
+	sqRedirectIfNeeded({
+		ownGroup,
+		currentLocation: "looking",
+	});
 
 	return {
 		groups,

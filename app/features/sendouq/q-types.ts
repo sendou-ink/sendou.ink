@@ -67,8 +67,10 @@ export interface DividedGroupsUncensored {
 
 export type GroupExpiryStatus = "EXPIRING_SOON" | "EXPIRED";
 
-// xxx: something wrong
-export type TierDifference = {
-	diff: number;
-	tier: TieredSkill["tier"] | [TieredSkill["tier"], TieredSkill["tier"]] | null;
-};
+export type TierDifference =
+	| { type: "exact"; diff: number; tier: TieredSkill["tier"] }
+	| {
+			type: "range";
+			diff: number;
+			range: [TieredSkill["tier"], TieredSkill["tier"]];
+	  };

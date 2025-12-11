@@ -383,60 +383,6 @@ export function addSkillsToGroups({
 	};
 }
 
-const FALLBACK_TIER = { isPlus: false, name: "IRON" } as const;
-export function addSkillRangeToGroups({
-	groups,
-	hasLeviathan,
-	isPreview,
-}: {
-	groups: DividedGroups;
-	hasLeviathan: boolean;
-	isPreview: boolean;
-}): DividedGroups {
-	const addRange = (group: LookingGroup) => {
-		if (group.members && group.members.length !== FULL_GROUP_SIZE) return group;
-
-		if (isPreview) {
-			return {
-				...group,
-				tierRange: {
-					range: [
-						{ name: "IRON", isPlus: false },
-						{ name: "LEVIATHAN", isPlus: true },
-					] as [TieredSkill["tier"], TieredSkill["tier"]],
-					diff: 0,
-				},
-				tier: undefined,
-			};
-		}
-
-		const range = tierDifferenceToRangeOrExact({
-			ourTier: groups.own?.tier ?? FALLBACK_TIER,
-			theirTier: group.tier ?? FALLBACK_TIER,
-			hasLeviathan,
-		});
-
-		if (!Array.isArray(range.tier)) {
-			return {
-				...group,
-				tierRange: { diff: range.diff },
-			};
-		}
-
-		return {
-			...group,
-			tierRange: { range: range.tier, diff: range.diff },
-			tier: undefined,
-		};
-	};
-
-	return {
-		own: groups.own,
-		neutral: groups.neutral.map(addRange),
-		likesReceived: groups.likesReceived.map(addRange),
-	};
-}
-
 export function membersNeededForFull(currentSize: number) {
 	return FULL_GROUP_SIZE - currentSize;
 }
@@ -520,7 +466,7 @@ export function tierDifferenceToRangeOrExact({
 	hasLeviathan: boolean;
 }): TierDifference {
 	if (ourTier.name === theirTier.name && ourTier.isPlus === theirTier.isPlus) {
-		return { diff: 0, tier: structuredClone(ourTier) };
+		return { type: "exact", diff: 0, tier: structuredClone(ourTier) };
 	}
 
 	const tiers = hasLeviathan
@@ -542,14 +488,15 @@ export function tierDifferenceToRangeOrExact({
 	const upperBound = tier1Idx + idxDiff;
 
 	if (lowerBound < 0 || upperBound >= tiers.length) {
-		return { diff: idxDiff, tier: structuredClone(theirTier) };
+		return { type: "exact", diff: idxDiff, tier: structuredClone(theirTier) };
 	}
 
 	const lowerTier = tiers[lowerBound];
 	const upperTier = tiers[upperBound];
 
 	return {
+		type: "range",
 		diff: idxDiff,
-		tier: [structuredClone(lowerTier), structuredClone(upperTier)],
+		range: [structuredClone(lowerTier), structuredClone(upperTier)],
 	};
 }

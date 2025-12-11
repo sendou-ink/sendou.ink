@@ -532,3 +532,32 @@ export async function mapModePreferencesBySeasonNth(seasonNth: number) {
 		.$narrowType<{ mapModePreferences: UserMapModePreferences }>()
 		.execute();
 }
+
+export async function findRecentlyFinishedMatches() {
+	const twoHoursAgo = sub(new Date(), { hours: 2 });
+
+	const rows = await db
+		.selectFrom("GroupMatch")
+		.select((eb) => [
+			jsonArrayFrom(
+				eb
+					.selectFrom("GroupMember")
+					.select("GroupMember.userId")
+					.whereRef("GroupMember.groupId", "=", "GroupMatch.alphaGroupId"),
+			).as("groupAlphaMemberIds"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("GroupMember")
+					.select("GroupMember.userId")
+					.whereRef("GroupMember.groupId", "=", "GroupMatch.bravoGroupId"),
+			).as("groupBravoMemberIds"),
+		])
+		.where("GroupMatch.reportedAt", "is not", null)
+		.where("GroupMatch.reportedAt", ">", dateToDatabaseTimestamp(twoHoursAgo))
+		.execute();
+
+	return rows.map((row) => ({
+		groupAlphaMemberIds: row.groupAlphaMemberIds.map((m) => m.userId),
+		groupBravoMemberIds: row.groupBravoMemberIds.map((m) => m.userId),
+	}));
+}

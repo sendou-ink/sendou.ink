@@ -47,7 +47,6 @@ export function GroupCard({
 	hideVc = false,
 	hideWeapons = false,
 	hideNote: _hidenote = false,
-	enableKicking,
 	showAddNote,
 	showNote = false,
 }: {
@@ -57,7 +56,6 @@ export function GroupCard({
 	hideVc?: SqlBool;
 	hideWeapons?: SqlBool;
 	hideNote?: boolean;
-	enableKicking?: boolean;
 	showAddNote?: SqlBool;
 	showNote?: boolean;
 }) {
@@ -80,6 +78,8 @@ export function GroupCard({
 				theirGroup: group,
 			})
 		: null;
+
+	const enableKicking = isGroupOwner && !displayOnly;
 
 	return (
 		<GroupCardContainer groupId={group.id} isOwnGroup={isOwnGroup}>
@@ -158,7 +158,7 @@ export function GroupCard({
 						{group.tier.isPlus ? "+" : ""}
 					</div>
 				) : null}
-				{group.tierRange?.range ? (
+				{group.tierRange?.type === "range" ? (
 					<div className="stack md items-center">
 						<div className="stack sm horizontal items-center justify-center">
 							<div className="stack xs items-center">

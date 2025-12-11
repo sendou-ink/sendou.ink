@@ -1,4 +1,4 @@
-import type { Tables } from "~/db/tables";
+import { redirect } from "@remix-run/node";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -10,12 +10,10 @@ import {
 } from "~/utils/urls";
 import { accountCreatedInTheLastSixMonths } from "~/utils/users";
 import type { MapPool } from "../map-list-generator/core/map-pool";
-import type { SQGroup } from "./core/SQManager.server";
+import type { SQGroup, SQOwnGroup } from "./core/SQManager.server";
 import { SENDOUQ } from "./q-constants";
 
-function groupRedirectLocation(
-	group?: Pick<Tables["Group"], "status"> & { matchId?: number },
-) {
+function groupRedirectLocation(group?: SQOwnGroup) {
 	if (group?.status === "PREPARING") return SENDOUQ_PREPARING_PAGE;
 	if (group?.matchId) return sendouQMatchPage(group.matchId);
 	if (group) return SENDOUQ_LOOKING_PAGE;
@@ -23,14 +21,15 @@ function groupRedirectLocation(
 	return SENDOUQ_PAGE;
 }
 
-export function groupRedirectLocationByCurrentLocation({
-	group,
+/** User needs to be on certain page depending on their SendouQ group status. This functions throws a `Redirect` if they are trying to load the wrong page. */
+export function sqRedirectIfNeeded({
+	ownGroup,
 	currentLocation,
 }: {
-	group?: Pick<Tables["Group"], "status"> & { matchId?: number };
+	ownGroup?: SQOwnGroup;
 	currentLocation: "default" | "preparing" | "looking" | "match";
 }) {
-	const newLocation = groupRedirectLocation(group);
+	const newLocation = groupRedirectLocation(ownGroup);
 
 	// we are already in the correct location, don't redirect
 	if (currentLocation === "default" && newLocation === SENDOUQ_PAGE) return;
@@ -40,7 +39,7 @@ export function groupRedirectLocationByCurrentLocation({
 		return;
 	if (currentLocation === "match" && newLocation.includes("match")) return;
 
-	return newLocation;
+	throw redirect(newLocation);
 }
 
 export function mapPoolOk(mapPool: MapPool) {

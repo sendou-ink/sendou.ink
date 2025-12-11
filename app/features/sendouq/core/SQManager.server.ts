@@ -1,5 +1,5 @@
 import * as R from "remeda";
-import { ParsedMemento } from "~/db/tables";
+import type { ParsedMemento } from "~/db/tables";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { defaultOrdinal } from "~/features/mmr/mmr-utils";
 import {
@@ -22,6 +22,9 @@ type DBGroupRow = Awaited<
 type DBPrivateNoteRow = Awaited<
 	ReturnType<typeof QRepository.allPrivateUserNotesByAuthorUserId>
 >[number];
+type DBRecentlyFinishedMatchRow = Awaited<
+	ReturnType<typeof QRepository.findRecentlyFinishedMatches>
+>[number];
 
 export type SQGroup = SerializeFrom<
 	ReturnType<SQManagerClass["lookingGroups"]>[number]
@@ -34,9 +37,13 @@ const FALLBACK_TIER = { isPlus: false, name: "IRON" } as const;
 
 class SQManagerClass {
 	groups;
+	recentMatches;
 	isAccurateTiers;
 
-	constructor(groups: DBGroupRow[]) {
+	constructor(
+		groups: DBGroupRow[],
+		recentMatches: DBRecentlyFinishedMatchRow[],
+	) {
 		const season = Seasons.currentOrPrevious();
 		const {
 			intervals,
@@ -44,6 +51,7 @@ class SQManagerClass {
 			isAccurateTiers,
 		} = userSkills(season!.nth);
 
+		this.recentMatches = recentMatches;
 		this.isAccurateTiers = isAccurateTiers;
 		this.groups = groups.map((group) => ({
 			...group,
@@ -57,6 +65,7 @@ class SQManagerClass {
 			tierRange: null as TierDifference | null,
 			skillDifference:
 				undefined as ParsedMemento["groups"][number]["skillDifference"],
+			isReplay: false,
 			members: group.members.map((member) => {
 				const skill = calculatedUserSkills[String(member.id)];
 
@@ -92,11 +101,15 @@ class SQManagerClass {
 		);
 	}
 
+	findGroupByInviteCode(inviteCode: string) {
+		return this.groups.find((group) => group.inviteCode === inviteCode);
+	}
+
 	previewGroups(notes: DBPrivateNoteRow[]) {
 		return this.groups
 			.map(this.#addPreviewTierRange)
 			.map(this.#censorGroup)
-			.map(this.getAddMemberPrivateNoteMapper(notes));
+			.map(this.#getAddMemberPrivateNoteMapper(notes));
 	}
 
 	lookingGroups(userId: number, notes: DBPrivateNoteRow[]) {
@@ -115,12 +128,47 @@ class SQManagerClass {
 		return this.groups
 			.filter(
 				(group) =>
+					group.status === "ACTIVE" &&
+					!group.matchId &&
 					group.id !== ownGroup.id &&
 					currentMemberCountOptions.includes(group.members.length),
 			)
+			.map(this.#getGroupReplayMapper(userId))
 			.map(this.#getAddTierRangeMapper(ownGroup.tier))
 			.map(this.#censorGroup)
-			.map(this.getAddMemberPrivateNoteMapper(notes));
+			.map(this.#getAddMemberPrivateNoteMapper(notes));
+	}
+
+	#getGroupReplayMapper(userId: number) {
+		const recentOpponents = this.recentMatches.flatMap((match) => {
+			if (match.groupAlphaMemberIds.includes(userId)) {
+				return [match.groupBravoMemberIds];
+			}
+
+			if (match.groupBravoMemberIds.includes(userId)) {
+				return [match.groupAlphaMemberIds];
+			}
+
+			return [];
+		});
+
+		return <T extends (typeof this.groups)[number]>(group: T) => {
+			if (recentOpponents.length === 0) return group;
+
+			const isReplay = recentOpponents.some((opponentIds) => {
+				const duplicateCount =
+					R.countBy(opponentIds, (id) =>
+						group.members.some((m) => m.id === id) ? "match" : "no-match",
+					).match ?? 0;
+
+				return duplicateCount >= 3;
+			});
+
+			return {
+				...group,
+				isReplay,
+			};
+		};
 	}
 
 	#getAddTierRangeMapper(ownTier?: TieredSkill["tier"] | null) {
@@ -135,16 +183,9 @@ class SQManagerClass {
 				hasLeviathan: this.isAccurateTiers,
 			});
 
-			if (!Array.isArray(range.tier)) {
-				return {
-					...group,
-					tierRange: { range: null, diff: range.diff },
-				};
-			}
-
 			return {
 				...group,
-				tierRange: { range: range.tier, diff: range.diff },
+				range, // xxx: rename from range?
 				tier: null,
 			};
 		};
@@ -176,7 +217,7 @@ class SQManagerClass {
 		return R.omit(group, ["inviteCode", "chatCode"]);
 	}
 
-	getAddMemberPrivateNoteMapper(notes: DBPrivateNoteRow[]) {
+	#getAddMemberPrivateNoteMapper(notes: DBPrivateNoteRow[]) {
 		return <T extends { members: { id: number }[] }>(group: T) => {
 			const membersWithNotes = group.members.map((member) => {
 				const note = notes.find((n) => n.targetUserId === member.id);
@@ -267,5 +308,6 @@ class SQManagerClass {
 }
 
 const groups = await QRepository.findCurrentGroups();
-export const SQManager = new SQManagerClass(groups);
+const recentMatches = await QRepository.findRecentlyFinishedMatches();
+export const SQManager = new SQManagerClass(groups, recentMatches);
 // xxx: is manager the best name?
