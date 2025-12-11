@@ -7,7 +7,7 @@ import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { logger } from "~/utils/logger";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
-import { resolveMapList } from "../core/mapList.server";
+import { mapListFromResults, resolveMapList } from "../core/mapList.server";
 import { findMatchById } from "../queries/findMatchById.server";
 import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
 import { matchPageParamsSchema } from "../tournament-bracket-schemas.server";
@@ -32,6 +32,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		? await TournamentRepository.pickBanEventsByMatchId(match.id)
 		: [];
 
+	const results = findResultsByMatchId(matchId);
+
+	const matchIsOver =
+		match.opponentOne?.result === "win" || match.opponentTwo?.result === "win";
+
 	// cached so that some user changing their noScreen preference doesn't
 	// change the selection once the match has started
 	const noScreen =
@@ -51,27 +56,26 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const mapList =
 		match.opponentOne?.id && match.opponentTwo?.id
-			? resolveMapList({
-					tournamentId,
-					matchId,
-					teams: [match.opponentOne.id, match.opponentTwo.id],
-					mapPickingStyle: match.mapPickingStyle,
-					maps: match.roundMaps,
-					pickBanEvents,
-					recentlyPlayedMaps:
-						match.mapPickingStyle !== "TO"
-							? await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
-									teamIds: [match.opponentOne.id, match.opponentTwo.id],
-								}).catch((error) => {
-									logger.error("Failed to fetch recently played maps", error);
-									return [];
-								})
-							: undefined,
-				})
+			? matchIsOver
+				? mapListFromResults(results)
+				: resolveMapList({
+						tournamentId,
+						matchId,
+						teams: [match.opponentOne.id, match.opponentTwo.id],
+						mapPickingStyle: match.mapPickingStyle,
+						maps: match.roundMaps,
+						pickBanEvents,
+						recentlyPlayedMaps:
+							match.mapPickingStyle !== "TO"
+								? await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
+										teamIds: [match.opponentOne.id, match.opponentTwo.id],
+									}).catch((error) => {
+										logger.error("Failed to fetch recently played maps", error);
+										return [];
+									})
+								: undefined,
+					})
 			: null;
-
-	const matchIsOver =
-		match.opponentOne?.result === "win" || match.opponentTwo?.result === "win";
 
 	const endedEarly = matchIsOver
 		? matchEndedEarly({
@@ -90,7 +94,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	return {
 		match,
-		results: findResultsByMatchId(matchId),
+		results,
 		mapList,
 		matchIsOver,
 		endedEarly,
