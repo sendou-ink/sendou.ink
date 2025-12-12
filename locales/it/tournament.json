@@ -46,6 +46,7 @@
 	"bestOf.label.short": "★",
 	"pickInfo.team": "Scelta del team {{number}}",
 	"pickInfo.team.specific": "{{team}} ha scelto",
+	"pickInfo.team.counterpick": "",
 	"pickInfo.tiebreaker": "Spareggio",
 	"pickInfo.both": "Scelto da entrambi",
 	"pickInfo.default": "",

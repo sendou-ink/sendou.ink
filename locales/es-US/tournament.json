@@ -46,6 +46,7 @@
 	"bestOf.label.short": "Mejor de",
 	"pickInfo.team": "Equipo {{number}} elige",
 	"pickInfo.team.specific": "{{team}} eligió",
+	"pickInfo.team.counterpick": "",
 	"pickInfo.tiebreaker": "Desempate",
 	"pickInfo.both": "Ambos eligieron",
 	"pickInfo.default": "",

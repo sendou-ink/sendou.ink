@@ -46,6 +46,7 @@
 	"bestOf.label.short": "Bo",
 	"pickInfo.team": "チーム {{number}} の選択",
 	"pickInfo.team.specific": "{{team}} picked",
+	"pickInfo.team.counterpick": "",
 	"pickInfo.tiebreaker": "タイブレイカー",
 	"pickInfo.both": "両者選択",
 	"pickInfo.default": "",

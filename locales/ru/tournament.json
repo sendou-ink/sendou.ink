@@ -46,6 +46,7 @@
 	"bestOf.label.short": "Лучшее из ",
 	"pickInfo.team": "Выбор команды {{number}}",
 	"pickInfo.team.specific": "",
+	"pickInfo.team.counterpick": "",
 	"pickInfo.tiebreaker": "Тай-брейк",
 	"pickInfo.both": "Выбрано обеими",
 	"pickInfo.default": "",

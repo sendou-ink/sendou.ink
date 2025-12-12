@@ -46,6 +46,7 @@
 	"bestOf.label.short": "Bo",
 	"pickInfo.team": "队伍 {{number}} 选择",
 	"pickInfo.team.specific": "{{team}} 选择",
+	"pickInfo.team.counterpick": "",
 	"pickInfo.tiebreaker": "决胜局",
 	"pickInfo.both": "双方都选择",
 	"pickInfo.default": "",

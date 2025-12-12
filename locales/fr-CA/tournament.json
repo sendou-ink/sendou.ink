@@ -46,6 +46,7 @@
 	"bestOf.label.short": "Md",
 	"pickInfo.team": "L'équipe {{number}} fait son choix.",
 	"pickInfo.team.specific": "{{team}} a fait son choix.",
+	"pickInfo.team.counterpick": "",
 	"pickInfo.tiebreaker": "Tiebreaker",
 	"pickInfo.both": "Les deux ont choisi",
 	"pickInfo.default": "",

@@ -46,6 +46,7 @@
 	"bestOf.label.short": "Bo",
 	"pickInfo.team": "Team {{number}} Auswahl",
 	"pickInfo.team.specific": "Von {{team}} ausgewählt",
+	"pickInfo.team.counterpick": "",
 	"pickInfo.tiebreaker": "Tiebreaker",
 	"pickInfo.both": "Von beiden ausgewählt",
 	"pickInfo.default": "",
