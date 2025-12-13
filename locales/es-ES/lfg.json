@@ -28,5 +28,6 @@
 	"new.weaponPool.header": "Grupo de armas",
 	"new.weaponPool.userProfile": "perfil de usuario",
 	"new.languages.header": "Idiomas",
+	"new.languages.placeholder": "Elegir los que correspondan",
 	"new.languages.sqSettingsPage": "página de ajustes de SendouQ"
 }

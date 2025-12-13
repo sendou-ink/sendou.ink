@@ -28,5 +28,6 @@
 	"new.weaponPool.header": "Våbenpulje",
 	"new.weaponPool.userProfile": "Brugerprofil",
 	"new.languages.header": "Sprog",
+	"new.languages.placeholder": "",
 	"new.languages.sqSettingsPage": "SendouQ opsætnings-side"
 }
