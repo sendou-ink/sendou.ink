@@ -69,14 +69,9 @@ export default function LFGNewPostPage() {
 				) : null}
 				<Languages />
 				{type !== "COACH_FOR_TEAM" && <WeaponPool />}
-				<div className="stack horizontal md">
-					<SubmitButton state={fetcher.state}>
-						{t("common:actions.submit")}
-					</SubmitButton>
-					<LinkButton variant="outlined" to={LFG_PAGE}>
-						{t("common:actions.cancel")}
-					</LinkButton>
-				</div>
+				<SubmitButton state={fetcher.state}>
+					{t("common:actions.submit")}
+				</SubmitButton>
 			</fetcher.Form>
 		</Main>
 	);
