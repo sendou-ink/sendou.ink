@@ -28,5 +28,6 @@
 	"new.weaponPool.header": "武器プール",
 	"new.weaponPool.userProfile": "ユーザープロファイル",
 	"new.languages.header": "言語",
+	"new.languages.placeholder": "該当するものを全て選んでください。",
 	"new.languages.sqSettingsPage": "SendouQ 設定"
 }

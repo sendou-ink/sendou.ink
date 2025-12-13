@@ -28,5 +28,6 @@
 	"new.weaponPool.header": "Пул оружия",
 	"new.weaponPool.userProfile": "профиль пользователя",
 	"new.languages.header": "Языки",
+	"new.languages.placeholder": "Выбрать языки",
 	"new.languages.sqSettingsPage": "Страница настроек SendouQ"
 }

@@ -28,5 +28,6 @@
 	"new.weaponPool.header": "Weapon pool",
 	"new.weaponPool.userProfile": "user profile",
 	"new.languages.header": "Languages",
+	"new.languages.placeholder": "Select all that apply",
 	"new.languages.sqSettingsPage": "SendouQ settings page"
 }

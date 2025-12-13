@@ -56,7 +56,7 @@ function Filter({
 	return (
 		<div>
 			<div className="stack horizontal justify-between">
-				<Label>
+				<Label htmlFor={`${filter._tag.toLowerCase()}-filter`}>
 					{t(`lfg:filters.${filter._tag}`)} {t("lfg:filters.suffix")}
 				</Label>
 				<SendouButton
@@ -166,6 +166,7 @@ function TypeFilterFields({
 	return (
 		<div>
 			<select
+				id="type-filter"
 				className="w-max"
 				value={value}
 				onChange={(e) =>
@@ -195,6 +196,7 @@ function TimezoneFilterFields({
 	return (
 		<div>
 			<input
+				id="timezone-filter"
 				type="number"
 				value={value}
 				min={0}
@@ -220,6 +222,7 @@ function LanguageFilterFields({
 	return (
 		<div>
 			<select
+				id="language-filter"
 				className="w-max"
 				value={value}
 				onChange={(e) =>
@@ -251,6 +254,7 @@ function PlusTierFilterFields({
 	return (
 		<div>
 			<select
+				id="plustier-filter"
 				value={value}
 				onChange={(e) =>
 					changeFilter({ _tag: "PlusTier", tier: Number(e.target.value) })
@@ -277,6 +281,7 @@ function TierFilterFields({
 	return (
 		<div>
 			<select
+				id={`${_tag.toLowerCase()}-filter`}
 				value={value}
 				onChange={(e) =>
 					changeFilter({ _tag, tier: e.target.value as TierName })
