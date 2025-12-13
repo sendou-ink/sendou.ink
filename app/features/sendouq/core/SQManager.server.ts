@@ -10,7 +10,6 @@ import {
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
-import invariant from "~/utils/invariant";
 import type { SerializeFrom } from "~/utils/remix";
 import { FULL_GROUP_SIZE } from "../q-constants";
 import type { TierDifference } from "../q-types";
@@ -136,6 +135,7 @@ class SQManagerClass {
 			.map(this.#getGroupReplayMapper(userId))
 			.map(this.#getAddTierRangeMapper(ownGroup.tier))
 			.map(this.#getAddMemberPrivateNoteMapper(notes))
+			.sort(this.#getNoteSortComparator())
 			.map((group) => this.#censorGroup(group));
 	}
 
@@ -236,6 +236,31 @@ class SQManagerClass {
 				...group,
 				members: membersWithNotes,
 			};
+		};
+	}
+
+	#getNoteSortComparator() {
+		return <T extends { members: { privateNote: DBPrivateNoteRow | null }[] }>(
+			a: T,
+			b: T,
+		) => {
+			const getGroupSentimentScore = (group: T) => {
+				const hasNegative = group.members.some(
+					(m) => m.privateNote?.sentiment === "NEGATIVE",
+				);
+				const hasPositive = group.members.some(
+					(m) => m.privateNote?.sentiment === "POSITIVE",
+				);
+
+				if (hasNegative) return -1;
+				if (hasPositive) return 1;
+				return 0;
+			};
+
+			const scoreA = getGroupSentimentScore(a);
+			const scoreB = getGroupSentimentScore(b);
+
+			return scoreB - scoreA;
 		};
 	}
 

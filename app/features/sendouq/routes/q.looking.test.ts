@@ -13,6 +13,7 @@ import {
 	wrappedAction,
 	wrappedLoader,
 } from "~/utils/Test";
+import { refreshSQManagerInstance } from "../core/SQManager.server";
 import type { lookingSchema } from "../q-schemas.server";
 import { loader, action as rawLookingAction } from "./q.looking";
 
@@ -194,6 +195,8 @@ describe("Private user note sorting", () => {
 			.insertInto("GroupMatch")
 			.values({ alphaGroupId: 2, bravoGroupId: 3 })
 			.execute();
+
+		await refreshSQManagerInstance();
 	});
 
 	afterEach(() => {
@@ -222,7 +225,7 @@ describe("Private user note sorting", () => {
 
 		const data = await lookingLoader({ user: "admin" });
 
-		expect(data.groups.neutral[0].members![0].id).toBe(5);
+		expect(data.groups[0].members![0].id).toBe(5);
 	});
 
 	test("users with negative note sorted last", async () => {
@@ -238,9 +241,7 @@ describe("Private user note sorting", () => {
 
 		const data = await lookingLoader({ user: "admin" });
 
-		expect(
-			data.groups.neutral[data.groups.neutral.length - 1].members![0].id,
-		).toBe(5);
+		expect(data.groups[data.groups.length - 1].members![0].id).toBe(5);
 	});
 
 	test("group with both negative and positive sentiment sorted last", async () => {
@@ -266,9 +267,7 @@ describe("Private user note sorting", () => {
 		const data = await lookingLoader({ user: "admin" });
 
 		expect(
-			data.groups.neutral[data.groups.neutral.length - 1].members?.some(
-				(m) => m.id === 6,
-			),
+			data.groups[data.groups.length - 1].members?.some((m) => m.id === 6),
 		).toBe(true);
 	});
 });
