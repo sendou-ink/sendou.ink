@@ -63,9 +63,7 @@ function filterMatchesPost(
 			);
 		}
 		case "Language":
-			return checkMatchesSomeUserInPost(post, (user) =>
-				user.languages?.includes(filter.language),
-			);
+			return !!post.languages?.includes(filter.language);
 		case "PlusTier":
 			return checkMatchesSomeUserInPost(
 				post,

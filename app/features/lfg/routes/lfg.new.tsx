@@ -1,23 +1,20 @@
 import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { LinkButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
 import { WeaponImage } from "~/components/Image";
 import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
+import { CrossIcon } from "~/components/icons/Cross";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
+import { languagesUnified } from "~/modules/i18n/config";
 import { useHasRole } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import {
-	LFG_PAGE,
-	navIconUrl,
-	SENDOUQ_SETTINGS_PAGE,
-	userEditProfilePage,
-} from "~/utils/urls";
+import { LFG_PAGE, navIconUrl, userEditProfilePage } from "~/utils/urls";
 import { action } from "../actions/lfg.new.server";
 import { LFG, TEAM_POST_TYPES, TIMEZONES } from "../lfg-constants";
 import { loader } from "../loaders/lfg.new.server";
@@ -72,9 +69,14 @@ export default function LFGNewPostPage() {
 				) : null}
 				<Languages />
 				{type !== "COACH_FOR_TEAM" && <WeaponPool />}
-				<SubmitButton state={fetcher.state}>
-					{t("common:actions.submit")}
-				</SubmitButton>
+				<div className="stack horizontal md">
+					<SubmitButton state={fetcher.state}>
+						{t("common:actions.submit")}
+					</SubmitButton>
+					<LinkButton variant="outlined" to={LFG_PAGE}>
+						{t("common:actions.cancel")}
+					</LinkButton>
+				</div>
 			</fetcher.Form>
 		</Main>
 	);
@@ -225,19 +227,53 @@ function PlusVisibilitySelect() {
 function Languages() {
 	const { t } = useTranslation(["lfg"]);
 	const data = useLoaderData<typeof loader>();
+	const [value, setValue] = React.useState(data.languages ?? []);
 
 	return (
 		<div>
+			<input type="hidden" name="languages" value={JSON.stringify(value)} />
 			<Label>{t("lfg:new.languages.header")}</Label>
-			<div className="stack horizontal sm">
-				{data.languages?.join(" / ").toUpperCase()}
+			<select
+				className="w-max"
+				onChange={(e) => {
+					const newLanguages = [...value, e.target.value].sort((a, b) =>
+						a.localeCompare(b),
+					);
+					setValue(newLanguages);
+				}}
+			>
+				<option value="">{t("lfg:new.languages.placeholder")}</option>
+				{languagesUnified
+					.filter((lang) => !value.includes(lang.code))
+					.map((option) => {
+						return (
+							<option key={option.code} value={option.code}>
+								{option.name}
+							</option>
+						);
+					})}
+			</select>
+			<div className="mt-2">
+				{value.map((code) => {
+					const name = languagesUnified.find((l) => l.code === code)?.name;
+
+					return (
+						<div key={code} className="stack horizontal items-center sm">
+							<span>{name}</span>
+							<SendouButton
+								icon={<CrossIcon />}
+								variant="minimal-destructive"
+								onPress={() => {
+									const newLanguages = value.filter(
+										(codeInArr) => codeInArr !== code,
+									);
+									setValue(newLanguages);
+								}}
+							/>
+						</div>
+					);
+				})}
 			</div>
-			<FormMessage type="info">
-				{t("lfg:new.editOn")}{" "}
-				<Link to={SENDOUQ_SETTINGS_PAGE}>
-					{t("lfg:new.languages.sqSettingsPage")}
-				</Link>
-			</FormMessage>
 		</div>
 	);
 }
