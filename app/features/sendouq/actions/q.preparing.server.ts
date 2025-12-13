@@ -10,9 +10,7 @@ import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 import { hasGroupManagerPerms } from "../core/groups";
-import { FULL_GROUP_SIZE } from "../q-constants";
 import { preparingSchema } from "../q-schemas.server";
-import { addMember } from "../queries/addMember.server";
 import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
 import { refreshGroup } from "../queries/refreshGroup.server";
 import { setGroupAsActive } from "../queries/setGroupAsActive.server";
@@ -64,13 +62,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				groupId: currentGroup.id,
 			});
 			invariant(ownGroupWithMembers, "No own group found");
-			errorToastIfFalsy(
-				ownGroupWithMembers.members.length < FULL_GROUP_SIZE,
-				"Group is full",
-			);
 
-			addMember({
-				groupId: currentGroup.id,
+			await QRepository.addMember(currentGroup.id, {
 				userId: data.id,
 				role: "MANAGER",
 			});

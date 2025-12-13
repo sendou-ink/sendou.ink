@@ -1,6 +1,5 @@
 import type { ActionFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
-import { sql } from "~/db/sql";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
@@ -17,12 +16,9 @@ import {
 	SUSPENDED_PAGE,
 } from "~/utils/urls";
 import { refreshSQManagerInstance } from "../core/SQManager.server";
-import { FULL_GROUP_SIZE, JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
+import { JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
 import { frontPageSchema } from "../q-schemas.server";
 import { userCanJoinQueueAt } from "../q-utils";
-import { addMember } from "../queries/addMember.server";
-import { deleteLikesByGroupId } from "../queries/deleteLikesByGroupId.server";
-import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
 import { findGroupByInviteCode } from "../queries/findGroupByInviteCode.server";
 
 export const action: ActionFunction = async ({ request }) => {
@@ -61,29 +57,21 @@ export const action: ActionFunction = async ({ request }) => {
 				groupInvitedTo,
 				"Invite code doesn't match any active team",
 			);
-			errorToastIfFalsy(
-				groupInvitedTo.members.length < FULL_GROUP_SIZE,
-				"Team is full",
-			);
 
-			sql.transaction(() => {
-				addMember({
-					groupId: groupInvitedTo.id,
-					userId: user.id,
-					role: "MANAGER",
+			await QRepository.addMember(groupInvitedTo.id, {
+				userId: user.id,
+				role: "MANAGER",
+			});
+
+			if (data._action === "JOIN_TEAM_WITH_TRUST") {
+				const owner = groupInvitedTo.members.find((m) => m.role === "OWNER");
+				invariant(owner, "Owner not found");
+
+				giveTrust({
+					trustGiverUserId: user.id,
+					trustReceiverUserId: owner.id,
 				});
-				deleteLikesByGroupId(groupInvitedTo.id);
-
-				if (data._action === "JOIN_TEAM_WITH_TRUST") {
-					const owner = groupInvitedTo.members.find((m) => m.role === "OWNER");
-					invariant(owner, "Owner not found");
-
-					giveTrust({
-						trustGiverUserId: user.id,
-						trustReceiverUserId: owner.id,
-					});
-				}
-			})();
+			}
 
 			await refreshSQManagerInstance();
 
@@ -137,6 +125,5 @@ async function validateCanJoinQ(user: { id: number; discordId: string }) {
 	const canJoinQueue = userCanJoinQueueAt(user, friendCode) === "NOW";
 
 	errorToastIfFalsy(Seasons.current(), "Season is not active");
-	errorToastIfFalsy(!findCurrentGroupByUserId(user.id), "Already in a group");
 	errorToastIfFalsy(canJoinQueue, "Can't join queue right now");
 }

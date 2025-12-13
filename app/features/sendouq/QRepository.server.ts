@@ -1,5 +1,5 @@
 import { sub } from "date-fns";
-import { type NotNull, sql } from "kysely";
+import { type NotNull, sql, type Transaction } from "kysely";
 import {
 	jsonArrayFrom,
 	jsonBuildObject,
@@ -7,6 +7,7 @@ import {
 } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type {
+	DB,
 	Tables,
 	TablesInsertable,
 	UserMapModePreferences,
@@ -19,6 +20,7 @@ import {
 	userChatNameColorForJson,
 } from "~/utils/kysely.server";
 import { userIsBanned } from "../ban/core/banned.server";
+import { FULL_GROUP_SIZE } from "./q-constants";
 import type { LookingGroupWithInviteCode } from "./q-types";
 
 // xxx: rename to SQGroupRepository
@@ -306,6 +308,82 @@ export async function createGroupFromPrevious(
 			.execute();
 
 		return createdGroup;
+	});
+}
+
+function deleteLikesByGroupId(groupId: number, trx: Transaction<DB>) {
+	return trx
+		.deleteFrom("GroupLike")
+		.where((eb) =>
+			eb.or([
+				eb("GroupLike.likerGroupId", "=", groupId),
+				eb("GroupLike.targetGroupId", "=", groupId),
+			]),
+		)
+		.execute();
+}
+
+/** Check that the group has at most FULL_GROUP_SIZE members and each member is only in this group */
+async function groupCorrect(
+	groupId: number,
+	trx: Transaction<DB>,
+): Promise<boolean> {
+	const members = await trx
+		.selectFrom("GroupMember")
+		.select("GroupMember.userId")
+		.where("GroupMember.groupId", "=", groupId)
+		.execute();
+
+	if (members.length > FULL_GROUP_SIZE) {
+		return false;
+	}
+
+	for (const member of members) {
+		const otherGroup = await trx
+			.selectFrom("GroupMember")
+			.innerJoin("Group", "Group.id", "GroupMember.groupId")
+			.select(["Group.id"])
+			.where("GroupMember.userId", "=", member.userId)
+			.where("Group.status", "!=", "INACTIVE")
+			.where("GroupMember.groupId", "!=", groupId)
+			.executeTakeFirst();
+
+		if (otherGroup) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+export function addMember(
+	groupId: number,
+	{
+		userId,
+		role = "REGULAR",
+	}: {
+		userId: number;
+		role?: Tables["GroupMember"]["role"];
+	},
+) {
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.insertInto("GroupMember")
+			.values({
+				groupId,
+				userId,
+				role,
+			})
+			.execute();
+
+		await deleteLikesByGroupId(groupId, trx);
+
+		if (!(await groupCorrect(groupId, trx))) {
+			// xxx: how to handle with good error message to user?
+			throw new Error(
+				"Group has too many members or member in multiple groups",
+			);
+		}
 	});
 }
 

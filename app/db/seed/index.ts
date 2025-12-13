@@ -22,7 +22,6 @@ import {
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
-import { addMember } from "~/features/sendouq/queries/addMember.server";
 import { createMatch } from "~/features/sendouq/queries/createMatch.server";
 import { calculateMatchSkills } from "~/features/sendouq-match/core/skills.server";
 import {
@@ -2205,8 +2204,7 @@ async function playedMatches() {
 
 			// -> add regular members of groups
 			for (let i = 0; i < 3; i++) {
-				addMember({
-					groupId: group.id,
+				await QRepository.addMember(group.id, {
 					userId: users.pop()!,
 				});
 			}
