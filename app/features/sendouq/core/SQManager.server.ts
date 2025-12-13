@@ -154,6 +154,7 @@ class SQManagerClass {
 
 		return <T extends (typeof this.groups)[number]>(group: T) => {
 			if (recentOpponents.length === 0) return group;
+			if (!this.#groupIsFull(group)) return group;
 
 			const isReplay = recentOpponents.some((opponentIds) => {
 				const duplicateCount =
@@ -199,6 +200,7 @@ class SQManagerClass {
 		return {
 			...group,
 			tierRange: {
+				type: "range" as const,
 				range: [
 					{ name: "IRON", isPlus: false } as TieredSkill["tier"],
 					{ name: "LEVIATHAN", isPlus: true } as TieredSkill["tier"],
