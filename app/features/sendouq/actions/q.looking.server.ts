@@ -21,6 +21,7 @@ import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
 import { groupAfterMorph } from "../core/groups";
 import { membersNeededForFull } from "../core/groups.server";
+import { refreshSQManagerInstance } from "../core/SQManager.server";
 import { FULL_GROUP_SIZE } from "../q-constants";
 import { lookingSchema } from "../q-schemas.server";
 import { addLike } from "../queries/addLike.server";
@@ -159,6 +160,8 @@ export const action: ActionFunction = async ({ request }) => {
 			});
 			refreshGroup(survivingGroupId);
 
+			await refreshSQManagerInstance();
+
 			if (ourGroup.chatCode && theirGroup.chatCode) {
 				ChatSystemMessage.send([
 					{
@@ -263,6 +266,8 @@ export const action: ActionFunction = async ({ request }) => {
 				}),
 			});
 
+			await refreshSQManagerInstance();
+
 			if (ourGroup.chatCode && theirGroup.chatCode) {
 				ChatSystemMessage.send([
 					{
@@ -301,6 +306,8 @@ export const action: ActionFunction = async ({ request }) => {
 				groupId: currentGroup.id,
 				userId: data.userId,
 			});
+
+			await refreshSQManagerInstance();
 			refreshGroup(currentGroup.id);
 
 			break;
@@ -312,6 +319,8 @@ export const action: ActionFunction = async ({ request }) => {
 				groupId: currentGroup.id,
 				userId: data.userId,
 			});
+
+			await refreshSQManagerInstance();
 			refreshGroup(currentGroup.id);
 
 			break;
@@ -332,6 +341,8 @@ export const action: ActionFunction = async ({ request }) => {
 				newOwnerId,
 				wasOwner: currentGroup.role === "OWNER",
 			});
+
+			await refreshSQManagerInstance();
 
 			const targetChatCode = chatCodeByGroupId(currentGroup.id);
 			if (targetChatCode) {
@@ -355,6 +366,8 @@ export const action: ActionFunction = async ({ request }) => {
 				wasOwner: false,
 			});
 
+			await refreshSQManagerInstance();
+
 			break;
 		}
 		case "REFRESH_GROUP": {
@@ -369,6 +382,8 @@ export const action: ActionFunction = async ({ request }) => {
 				userId: user.id,
 			});
 			refreshGroup(currentGroup.id);
+
+			await refreshSQManagerInstance();
 
 			break;
 		}

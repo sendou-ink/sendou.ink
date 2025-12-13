@@ -424,7 +424,7 @@ function Groups() {
 									.filter(
 										(group) =>
 											isMobile ||
-											data.likes.given.some(
+											!data.likes.given.some(
 												(like) => like.groupId === group.id,
 											),
 									)

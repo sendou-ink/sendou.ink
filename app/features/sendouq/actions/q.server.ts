@@ -16,6 +16,7 @@ import {
 	SENDOUQ_PREPARING_PAGE,
 	SUSPENDED_PAGE,
 } from "~/utils/urls";
+import { refreshSQManagerInstance } from "../core/SQManager.server";
 import { FULL_GROUP_SIZE, JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
 import { frontPageSchema } from "../q-schemas.server";
 import { userCanJoinQueueAt } from "../q-utils";
@@ -39,6 +40,8 @@ export const action: ActionFunction = async ({ request }) => {
 				status: data.direct === "true" ? "ACTIVE" : "PREPARING",
 				userId: user.id,
 			});
+
+			await refreshSQManagerInstance();
 
 			return redirect(
 				data.direct === "true" ? SENDOUQ_LOOKING_PAGE : SENDOUQ_PREPARING_PAGE,
@@ -81,6 +84,8 @@ export const action: ActionFunction = async ({ request }) => {
 					});
 				}
 			})();
+
+			await refreshSQManagerInstance();
 
 			return redirect(
 				groupInvitedTo.status === "PREPARING"

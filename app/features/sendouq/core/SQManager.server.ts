@@ -108,13 +108,13 @@ class SQManagerClass {
 	previewGroups(notes: DBPrivateNoteRow[]) {
 		return this.groups
 			.map((group) => this.#addPreviewTierRange(group))
-			.map((group) => this.#censorGroup(group))
-			.map(this.#getAddMemberPrivateNoteMapper(notes));
+			.map(this.#getAddMemberPrivateNoteMapper(notes))
+			.map((group) => this.#censorGroup(group));
 	}
 
 	lookingGroups(userId: number, notes: DBPrivateNoteRow[]) {
 		const ownGroup = this.findOwnGroup(userId);
-		invariant(ownGroup, "ownGroup is undefined");
+		if (!ownGroup) return [];
 
 		const currentMemberCountOptions =
 			ownGroup.members.length === 4
@@ -135,8 +135,8 @@ class SQManagerClass {
 			)
 			.map(this.#getGroupReplayMapper(userId))
 			.map(this.#getAddTierRangeMapper(ownGroup.tier))
-			.map((group) => this.#censorGroup(group))
-			.map(this.#getAddMemberPrivateNoteMapper(notes));
+			.map(this.#getAddMemberPrivateNoteMapper(notes))
+			.map((group) => this.#censorGroup(group));
 	}
 
 	#getGroupReplayMapper(userId: number) {
@@ -177,7 +177,7 @@ class SQManagerClass {
 				return group;
 			}
 
-			const range = tierDifferenceToRangeOrExact({
+			const tierRange = tierDifferenceToRangeOrExact({
 				ourTier: ownTier ?? FALLBACK_TIER,
 				theirTier: group.tier ?? FALLBACK_TIER,
 				hasLeviathan: this.isAccurateTiers,
@@ -185,7 +185,7 @@ class SQManagerClass {
 
 			return {
 				...group,
-				range, // xxx: rename from range?
+				tierRange, // xxx: rename from range?
 				tier: null,
 			};
 		};
@@ -210,11 +210,16 @@ class SQManagerClass {
 	}
 
 	#censorGroup<T extends (typeof this.groups)[number]>(group: T) {
+		const censored = R.omit(group, ["inviteCode", "chatCode"]);
+
 		if (this.#groupIsFull(group)) {
-			R.omit(group, ["inviteCode", "chatCode", "members"]);
+			return {
+				...censored,
+				members: undefined,
+			};
 		}
 
-		return R.omit(group, ["inviteCode", "chatCode"]);
+		return censored;
 	}
 
 	#getAddMemberPrivateNoteMapper(notes: DBPrivateNoteRow[]) {
@@ -309,5 +314,11 @@ class SQManagerClass {
 
 const groups = await QRepository.findCurrentGroups();
 const recentMatches = await QRepository.findRecentlyFinishedMatches();
-export const SQManager = new SQManagerClass(groups, recentMatches);
+export let SQManager = new SQManagerClass(groups, recentMatches);
 // xxx: is manager the best name?
+
+export async function refreshSQManagerInstance() {
+	const groups = await QRepository.findCurrentGroups();
+	const recentMatches = await QRepository.findRecentlyFinishedMatches();
+	SQManager = new SQManagerClass(groups, recentMatches);
+}
