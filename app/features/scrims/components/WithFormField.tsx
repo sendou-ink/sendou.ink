@@ -79,7 +79,7 @@ export function WithFormField({ usersTeams }: FromFormFieldProps) {
 												onChange({
 													mode: "PICKUP",
 													users: value.users.map((u, j) =>
-														j === i ? user.id : u,
+														j === i ? user?.id : u,
 													),
 												})
 											}

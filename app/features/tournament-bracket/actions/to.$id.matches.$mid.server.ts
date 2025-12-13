@@ -32,6 +32,7 @@ import {
 import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
 import { insertTournamentMatchGameResult } from "../queries/insertTournamentMatchGameResult.server";
 import { insertTournamentMatchGameResultParticipant } from "../queries/insertTournamentMatchGameResultParticipant.server";
+import { resetMatchStatus } from "../queries/resetMatchStatus.server";
 import { updateMatchGameResultPoints } from "../queries/updateMatchGameResultPoints.server";
 import {
 	matchPageParamsSchema,
@@ -39,6 +40,7 @@ import {
 } from "../tournament-bracket-schemas.server";
 import {
 	isSetOverByScore,
+	matchEndedEarly,
 	matchIsLocked,
 	tournamentMatchWebsocketRoom,
 	tournamentTeamToActiveRosterUserIds,
@@ -108,6 +110,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 	let emitMatchUpdate = false;
 	let emitTournamentUpdate = false;
+
 	switch (data._action) {
 		case "REPORT_SCORE": {
 			// they are trying to report score that was already reported
@@ -464,7 +467,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const scoreTwo = match.opponentTwo?.score ?? 0;
 			invariant(typeof scoreOne === "number", "Score one is missing");
 			invariant(typeof scoreTwo === "number", "Score two is missing");
-			invariant(scoreOne !== scoreTwo, "Scores are equal");
 
 			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
 			errorToastIfFalsy(
@@ -474,32 +476,54 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			const results = findResultsByMatchId(matchId);
 			const lastResult = results[results.length - 1];
-			invariant(lastResult, "Last result is missing");
 
-			if (scoreOne > scoreTwo) {
-				scores[0]--;
-			} else {
-				scores[1]--;
+			const endedEarly = matchEndedEarly({
+				opponentOne: { score: scoreOne, result: match.opponentOne?.result },
+				opponentTwo: { score: scoreTwo, result: match.opponentTwo?.result },
+				count: match.roundMaps.count,
+				countType: match.roundMaps.type,
+			});
+
+			if (!endedEarly) {
+				invariant(scoreOne !== scoreTwo, "Scores are equal");
+				invariant(lastResult, "Last result is missing");
+
+				if (scoreOne > scoreTwo) {
+					scores[0]--;
+				} else {
+					scores[1]--;
+				}
 			}
 
 			logger.info(
-				`Reopening match: User ID: ${user.id}; Match ID: ${match.id}`,
+				`Reopening match: User ID: ${user.id}; Match ID: ${match.id}; Ended early: ${endedEarly}`,
 			);
 
 			const followingMatches = tournament.followingMatches(match.id);
+			const bracketFormat = tournament.bracketByIdx(
+				tournament.matchIdToBracketIdx(match.id)!,
+			)!.type;
 			sql.transaction(() => {
 				for (const match of followingMatches) {
-					deleteMatchPickBanEvents({ matchId: match.id });
+					// for other formats the database triggers handle the startedAt clearing. Status reset for those is managed by the brackets-manager
+					if (bracketFormat === "round_robin") {
+						resetMatchStatus(match.id);
+					} else {
+						// edge case but for round robin we can just leave the match as is, lock it then unlock later to continue where they left off (should not really ever happen)
+						deleteMatchPickBanEvents(match.id);
+					}
 				}
-				deleteTournamentMatchGameResultById(lastResult.id);
+
+				if (lastResult) deleteTournamentMatchGameResultById(lastResult.id);
+
 				manager.update.match({
 					id: match.id,
 					opponent1: {
-						score: scores[0],
+						score: endedEarly ? scoreOne : scores[0],
 						result: undefined,
 					},
 					opponent2: {
-						score: scores[1],
+						score: endedEarly ? scoreTwo : scores[1],
 						result: undefined,
 					},
 				});
@@ -558,6 +582,56 @@ export const action: ActionFunction = async ({ params, request }) => {
 			});
 
 			emitMatchUpdate = true;
+
+			break;
+		}
+		case "END_SET": {
+			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			errorToastIfFalsy(
+				match.opponentOne?.id && match.opponentTwo?.id,
+				"Teams are missing",
+			);
+			errorToastIfFalsy(
+				match.opponentOne?.result !== "win" &&
+					match.opponentTwo?.result !== "win",
+				"Match is already over",
+			);
+
+			// Determine winner (random if not specified)
+			const winnerTeamId = (() => {
+				if (data.winnerTeamId) {
+					errorToastIfFalsy(
+						data.winnerTeamId === match.opponentOne.id ||
+							data.winnerTeamId === match.opponentTwo.id,
+						"Invalid winner team id",
+					);
+					return data.winnerTeamId;
+				}
+
+				// Random winner: true 50/50 selection
+				return Math.random() < 0.5
+					? match.opponentOne.id
+					: match.opponentTwo.id;
+			})();
+
+			logger.info(
+				`Ending set by organizer: User ID: ${user.id}; Match ID: ${match.id}; Winner: ${winnerTeamId}; Random: ${!data.winnerTeamId}`,
+			);
+
+			sql.transaction(() => {
+				manager.update.match({
+					id: match.id,
+					opponent1: {
+						result: winnerTeamId === match.opponentOne!.id ? "win" : "loss",
+					},
+					opponent2: {
+						result: winnerTeamId === match.opponentTwo!.id ? "win" : "loss",
+					},
+				});
+			})();
+
+			emitMatchUpdate = true;
+			emitTournamentUpdate = true;
 
 			break;
 		}
