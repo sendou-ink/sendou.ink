@@ -145,7 +145,7 @@ function Impersonate() {
 			<h2>Impersonate user</h2>
 			<UserSearch
 				label="User to log in as"
-				onChange={(newUser) => setUserId(newUser.id)}
+				onChange={(newUser) => setUserId(newUser?.id)}
 			/>
 			<div className="stack horizontal md">
 				<SendouButton type="submit" isDisabled={!userId}>
@@ -174,12 +174,12 @@ function MigrateUser() {
 				<UserSearch
 					label="Old user"
 					name="old-user"
-					onChange={(newUser) => setOldUserId(newUser.id)}
+					onChange={(newUser) => setOldUserId(newUser?.id)}
 				/>
 				<UserSearch
 					label="New user"
 					name="new-user"
-					onChange={(newUser) => setNewUserId(newUser.id)}
+					onChange={(newUser) => setNewUserId(newUser?.id)}
 				/>
 			</div>
 			<div className="stack horizontal md">

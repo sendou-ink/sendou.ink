@@ -4,7 +4,7 @@ import { MapPool } from "../map-list-generator/core/map-pool";
 
 export const BANNED_MAPS: Record<ModeShort, StageId[]> = {
 	TW: [],
-	SZ: [s.STURGEON_SHIPYARD, s.EELTAIL_ALLEY],
+	SZ: [],
 	TC: [
 		s.WAHOO_WORLD,
 		s.FLOUNDER_HEIGHTS,
@@ -24,7 +24,7 @@ export const BANNED_MAPS: Record<ModeShort, StageId[]> = {
 		s.BRINEWATER_SPRINGS,
 		s.BLUEFIN_DEPOT,
 		s.STURGEON_SHIPYARD,
-		s.INKBLOT_ART_ACADEMY,
+		s.MAKOMART,
 		s.SHIPSHAPE_CARGO_CO,
 		s.MAHI_MAHI_RESORT,
 		s.MARLIN_AIRPORT,

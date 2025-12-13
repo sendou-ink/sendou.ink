@@ -455,7 +455,6 @@ export interface TournamentSettings {
 	enableNoScreenToggle?: boolean;
 	/** Enable the subs tab, default true */
 	enableSubs?: boolean;
-	deadlines?: "STRICT" | "DEFAULT";
 	requireInGameNames?: boolean;
 	isInvitational?: boolean;
 	/** Can teams add subs on their own while tournament is in progress? */
@@ -552,8 +551,9 @@ export interface TournamentMatch {
 	roundId: number;
 	stageId: number;
 	status: (typeof TournamentMatchStatus)[keyof typeof TournamentMatchStatus];
-	// used only for swiss because it's the only stage type where matches are not created in advance
-	createdAt: Generated<number>;
+	// set when match becomes ongoing (both teams ready and no earlier matches for either team)
+	// for swiss: set at creation time
+	startedAt: number | null;
 }
 
 /** Represents one decision, pick or ban, during tournaments pick/ban (counterpick, ban 2) phase. */

@@ -5,6 +5,6 @@ const stm = sql.prepare(/* sql */ `
     where "matchId" = @matchId
 `);
 
-export function deleteMatchPickBanEvents({ matchId }: { matchId: number }) {
+export function deleteMatchPickBanEvents(matchId: number) {
 	return stm.run({ matchId });
 }
