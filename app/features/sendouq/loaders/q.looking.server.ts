@@ -3,7 +3,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
 import { SQManager } from "../core/SQManager.server";
-import { sqRedirectIfNeeded } from "../q-utils";
+import { sqRedirectIfNeeded } from "../q-utils.server";
 
 // xxx: redirect to correct route
 export const loader = async ({ request }: LoaderFunctionArgs) => {

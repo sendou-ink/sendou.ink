@@ -107,8 +107,8 @@ class SQManagerClass {
 
 	previewGroups(notes: DBPrivateNoteRow[]) {
 		return this.groups
-			.map(this.#addPreviewTierRange)
-			.map(this.#censorGroup)
+			.map((group) => this.#addPreviewTierRange(group))
+			.map((group) => this.#censorGroup(group))
 			.map(this.#getAddMemberPrivateNoteMapper(notes));
 	}
 
@@ -135,7 +135,7 @@ class SQManagerClass {
 			)
 			.map(this.#getGroupReplayMapper(userId))
 			.map(this.#getAddTierRangeMapper(ownGroup.tier))
-			.map(this.#censorGroup)
+			.map((group) => this.#censorGroup(group))
 			.map(this.#getAddMemberPrivateNoteMapper(notes));
 	}
 

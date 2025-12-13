@@ -4,7 +4,7 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { SQManager } from "../core/SQManager.server";
 import { JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
-import { sqRedirectIfNeeded } from "../q-utils";
+import { sqRedirectIfNeeded } from "../q-utils.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await getUserId(request);

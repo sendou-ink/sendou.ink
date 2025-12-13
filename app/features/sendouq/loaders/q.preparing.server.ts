@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { requireUserId } from "~/features/auth/core/user.server";
 import { SQManager } from "../core/SQManager.server";
-import { sqRedirectIfNeeded } from "../q-utils";
+import { sqRedirectIfNeeded } from "../q-utils.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await requireUserId(request);

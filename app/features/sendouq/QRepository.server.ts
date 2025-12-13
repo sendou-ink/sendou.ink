@@ -14,7 +14,10 @@ import type {
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { shortNanoid } from "~/utils/id";
-import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
+import {
+	COMMON_USER_FIELDS,
+	userChatNameColorForJson,
+} from "~/utils/kysely.server";
 import { userIsBanned } from "../ban/core/banned.server";
 import type { LookingGroupWithInviteCode } from "./q-types";
 
@@ -92,8 +95,7 @@ export async function findCurrentGroups() {
 						languages: eb.ref("User.languages"),
 						plusTier: eb.ref("PlusTier.tier"),
 						vc: eb.ref("User.vc"),
-						// @ts-expect-error xxx: why?
-						chatNameColor: userChatNameColor,
+						chatNameColor: userChatNameColorForJson,
 					}),
 				])
 				.$castTo<SendouQMemberObject[]>()
