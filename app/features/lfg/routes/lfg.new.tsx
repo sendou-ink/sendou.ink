@@ -232,8 +232,9 @@ function Languages() {
 	return (
 		<div>
 			<input type="hidden" name="languages" value={JSON.stringify(value)} />
-			<Label>{t("lfg:new.languages.header")}</Label>
+			<Label htmlFor="postLanguage">{t("lfg:new.languages.header")}</Label>
 			<select
+				id="postLanguage"
 				className="w-max"
 				onChange={(e) => {
 					const newLanguages = [...value, e.target.value].sort((a, b) =>
