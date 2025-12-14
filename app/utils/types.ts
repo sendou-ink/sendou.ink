@@ -28,7 +28,3 @@ export type Nullish<T> = T | null | undefined;
 export type Unwrapped<T extends (...args: any) => any> = Unpacked<
 	Awaited<ReturnType<T>>
 >;
-
-export type UnwrappedNonNullable<T extends (...args: any) => any> = NonNullable<
-	Unwrapped<T>
->;

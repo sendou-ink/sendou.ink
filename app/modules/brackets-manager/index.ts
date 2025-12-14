@@ -1,4 +1,3 @@
-import * as helpers from "./helpers";
 import { BracketsManager } from "./manager";
 
 import type {
@@ -28,5 +27,4 @@ export {
 	type StandardBracketResults,
 	type Storage,
 	type Table,
-	helpers,
 };

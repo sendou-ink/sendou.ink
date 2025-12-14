@@ -23,7 +23,7 @@ import type { GearType } from "~/db/tables";
 import {
 	validatedBuildFromSearchParams,
 	validatedWeaponIdFromSearchParams,
-} from "~/features/build-analyzer";
+} from "~/features/build-analyzer/core/utils";
 import { BUILD } from "~/features/builds/builds-constants";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import type {

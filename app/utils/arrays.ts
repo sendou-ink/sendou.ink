@@ -27,7 +27,7 @@ export function nullifyingAvg(values: number[]) {
 	return values.reduce((acc, cur) => acc + cur, 0) / values.length;
 }
 
-export function countElements<T>(arr: T[]): Map<T, number> {
+function countElements<T>(arr: T[]): Map<T, number> {
 	const counts = new Map<T, number>();
 
 	for (const element of arr) {

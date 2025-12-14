@@ -126,10 +126,6 @@ export function findResultPlacementsById(teamId: number) {
 		.execute();
 }
 
-export type FindResultsById = NonNullable<
-	Awaited<ReturnType<typeof findResultsById>>
->;
-
 /**
  * Retrieves tournament results for a given team by its ID.
  */

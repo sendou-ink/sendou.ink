@@ -1,4 +1,3 @@
-import type { Tables } from "~/db/tables";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { GroupExpiryStatus } from "../q-types";
 import type { SQGroup } from "./SQManager.server";
@@ -31,11 +30,6 @@ export function groupAfterMorph({
 	}
 
 	return ourGroup;
-}
-
-// xxx: delete
-export function hasGroupManagerPerms(role: Tables["GroupMember"]["role"]) {
-	return role === "OWNER" || role === "MANAGER";
 }
 
 export function groupExpiryStatus(

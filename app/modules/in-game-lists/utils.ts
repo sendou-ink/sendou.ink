@@ -1,4 +1,4 @@
-import type { AnyWeapon } from "~/features/build-analyzer";
+import type { AnyWeapon } from "~/features/build-analyzer/analyzer-types";
 import { weaponAltNames } from "~/modules/in-game-lists/weapon-alt-names";
 import { abilities } from "./abilities";
 import type { Ability } from "./types";

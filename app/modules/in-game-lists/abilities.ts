@@ -74,10 +74,6 @@ export const abilities = [
 
 export const abilitiesShort = abilities.map((ability) => ability.name);
 
-export const stackableAbilitiesShort = abilities
-	.filter((ability) => ability.type === "STACKABLE")
-	.map((ability) => ability.name);
-
 export const mainOnlyAbilitiesShort = abilities
 	.filter((ability) => ability.type !== "STACKABLE")
 	.map((ability) => ability.name);

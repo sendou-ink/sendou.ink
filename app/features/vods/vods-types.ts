@@ -1,13 +1,9 @@
 import type { z } from "zod/v4";
 import type { Tables } from "~/db/tables";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import type { videoMatchSchema, videoSchema } from "./vods-schemas";
-
-export type VideoBeingAddedPartial = Partial<VideoBeingAdded>;
+import type { videoSchema } from "./vods-schemas";
 
 export type VideoBeingAdded = z.infer<typeof videoSchema>;
-
-export type VideoMatchBeingAdded = z.infer<typeof videoMatchSchema>;
 
 export interface Vod {
 	id: Tables["Video"]["id"];

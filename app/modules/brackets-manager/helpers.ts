@@ -1,5 +1,4 @@
 import type {
-	GrandFinalType,
 	GroupType,
 	Match,
 	MatchResults,
@@ -13,7 +12,6 @@ import type {
 } from "~/modules/brackets-model";
 import { Status } from "~/modules/brackets-model";
 
-import invariant from "~/utils/invariant";
 import { ordering } from "./ordering";
 import type {
 	Database,
@@ -23,7 +21,6 @@ import type {
 	Nullable,
 	ParitySplit,
 	ParticipantSlot,
-	Scores,
 	Side,
 } from "./types";
 
@@ -68,7 +65,7 @@ export function makeRoundRobinMatches<T>(
  *
  * @param participants The participants to distribute.
  */
-export function makeRoundRobinDistribution<T>(participants: T[]): [T, T][][] {
+function makeRoundRobinDistribution<T>(participants: T[]): [T, T][][] {
 	const n = participants.length;
 	const n1 = n % 2 === 0 ? n : n + 1;
 	const roundCount = n1 - 1;
@@ -248,7 +245,7 @@ export function normalizeIds(data: Database): Database {
  *
  * @param elements A list of elements with IDs.
  */
-export function makeNormalizedIdMapping(elements: { id: number }[]): IdMapping {
+function makeNormalizedIdMapping(elements: { id: number }[]): IdMapping {
 	let currentId = 0;
 
 	return elements.reduce(
@@ -262,35 +259,13 @@ export function makeNormalizedIdMapping(elements: { id: number }[]): IdMapping {
 }
 
 /**
- * Apply a normalizing mapping to a participant.
- *
- * @param participant The participant.
- * @param mapping The mapping of IDs.
- */
-export function normalizeParticipant(
-	participant: ParticipantResult | null,
-	mapping: IdMapping,
-): ParticipantResult | null {
-	if (participant === null) return null;
-
-	return {
-		...participant,
-		id: participant.id !== null ? mapping[participant.id] : null,
-	};
-}
-
-/**
  * Sets the size of an array with a placeholder if the size is bigger.
  *
  * @param array The original array.
  * @param length The new length.
  * @param placeholder A placeholder to use to fill the empty space.
  */
-export function setArraySize<T>(
-	array: T[],
-	length: number,
-	placeholder: T,
-): T[] {
+function setArraySize<T>(array: T[], length: number, placeholder: T): T[] {
 	return Array.from(Array(length), (_, i) => array[i] || placeholder);
 }
 
@@ -304,15 +279,6 @@ export function makePairs<T>(array: T[]): [T, T][] {
 	return array
 		.map((_, i) => (i % 2 === 0 ? [array[i], array[i + 1]] : []))
 		.filter((v): v is [T, T] => v.length === 2);
-}
-
-/**
- * Ensures that a list of elements has an even size.
- *
- * @param array A list of elements.
- */
-export function ensureEvenSized<T>(array: T[]): void {
-	if (array.length % 2 === 1) throw Error("Array size must be even.");
 }
 
 /**
@@ -332,16 +298,6 @@ export function ensureNoDuplicates<T>(array: Nullable<T>[]): void {
 
 	if (unique.length < nonNull.length)
 		throw new Error("The seeding has a duplicate participant.");
-}
-
-/**
- * Ensures that two lists of elements have the same size.
- *
- * @param left The first list of elements.
- * @param right The second list of elements.
- */
-export function ensureEquallySized<T>(left: T[], right: T[]): void {
-	if (left.length !== right.length) throw Error("Arrays' size must be equal.");
 }
 
 /**
@@ -395,41 +351,6 @@ export function ensureValidSize(
 }
 
 /**
- * Ensures that a match scores aren't tied.
- *
- * @param scores Two numbers which are scores.
- */
-export function ensureNotTied(scores: [number, number]): void {
-	if (scores[0] === scores[1])
-		throw Error(`${scores[0]} and ${scores[1]} are tied. It cannot be.`);
-}
-
-/**
- * Converts a TBD to a BYE.
- *
- * @param slot The slot to convert.
- */
-export function convertTBDtoBYE(slot: ParticipantSlot): ParticipantSlot {
-	if (slot === null) return null; // Already a BYE.
-	if (slot?.id === null) return null; // It's a TBD: make it a BYE.
-
-	return slot; // It's a determined participant.
-}
-
-/**
- * Converts a participant slot to a result stored in storage.
- *
- * @param slot A participant slot.
- */
-export function toResult(slot: ParticipantSlot): ParticipantSlot {
-	return (
-		slot && {
-			id: slot.id,
-		}
-	);
-}
-
-/**
  * Converts a participant slot to a result stored in storage, with the position the participant is coming from.
  *
  * @param slot A participant slot.
@@ -441,28 +362,6 @@ export function toResultWithPosition(slot: ParticipantSlot): ParticipantSlot {
 			position: slot.position,
 		}
 	);
-}
-
-/**
- * Returns the winner of a match.
- *
- * @param match The match.
- */
-export function getWinner(match: MatchResults): ParticipantSlot {
-	const winnerSide = getMatchResult(match);
-	if (!winnerSide) return null;
-	return match[winnerSide];
-}
-
-/**
- * Returns the loser of a match.
- *
- * @param match The match.
- */
-export function getLoser(match: MatchResults): ParticipantSlot {
-	const winnerSide = getMatchResult(match);
-	if (!winnerSide) return null;
-	return match[getOtherSide(winnerSide)];
 }
 
 /**
@@ -537,45 +436,11 @@ export function getMatchResult(match: MatchResults): Side | null {
 }
 
 /**
- * Finds a position in a list of matches.
- *
- * @param matches A list of matches to search into.
- * @param position The position to find.
- */
-export function findPosition(
-	matches: Match[],
-	position: number,
-): ParticipantSlot {
-	for (const match of matches) {
-		if (match.opponent1?.position === position) return match.opponent1;
-
-		if (match.opponent2?.position === position) return match.opponent2;
-	}
-
-	return null;
-}
-
-/**
- * Checks if a participant is involved in a given match.
- *
- * @param match A match.
- * @param participantId ID of a participant.
- */
-export function isParticipantInMatch(
-	match: MatchResults,
-	participantId: number,
-): boolean {
-	return [match.opponent1, match.opponent2].some(
-		(m) => m?.id === participantId,
-	);
-}
-
-/**
  * Gets the side where the winner of the given match will go in the next match.
  *
  * @param matchNumber Number of the match.
  */
-export function getSide(matchNumber: number): Side {
+function getSide(matchNumber: number): Side {
 	return matchNumber % 2 === 1 ? "opponent1" : "opponent2";
 }
 
@@ -593,7 +458,7 @@ export function getOtherSide(side: Side): Side {
  *
  * @param match Partial match results.
  */
-export function isMatchStarted(match: DeepPartial<MatchResults>): boolean {
+function isMatchStarted(match: DeepPartial<MatchResults>): boolean {
 	return (
 		match.opponent1?.score !== undefined || match.opponent2?.score !== undefined
 	);
@@ -604,7 +469,7 @@ export function isMatchStarted(match: DeepPartial<MatchResults>): boolean {
  *
  * @param match Partial match results.
  */
-export function isMatchCompleted(match: DeepPartial<MatchResults>): boolean {
+function isMatchCompleted(match: DeepPartial<MatchResults>): boolean {
 	return isMatchByeCompleted(match) || isMatchResultCompleted(match);
 }
 
@@ -613,7 +478,7 @@ export function isMatchCompleted(match: DeepPartial<MatchResults>): boolean {
  *
  * @param match Partial match results.
  */
-export function isMatchResultCompleted(
+function isMatchResultCompleted(
 	match: DeepPartial<MatchResults>,
 ): boolean {
 	return isMatchWinCompleted(match);
@@ -624,7 +489,7 @@ export function isMatchResultCompleted(
  *
  * @param match Partial match results.
  */
-export function isMatchWinCompleted(match: DeepPartial<MatchResults>): boolean {
+function isMatchWinCompleted(match: DeepPartial<MatchResults>): boolean {
 	return (
 		match.opponent1?.result === "win" ||
 		match.opponent2?.result === "win" ||
@@ -655,15 +520,6 @@ export function isMatchByeCompleted(match: DeepPartial<MatchResults>): boolean {
  */
 export function isMatchUpdateLocked(match: MatchResults): boolean {
 	return match.status === Status.Locked || match.status === Status.Waiting;
-}
-
-/**
- * Checks if a match's participants can't be updated.
- *
- * @param match The match to check.
- */
-export function isMatchParticipantLocked(match: MatchResults): boolean {
-	return match.status >= Status.Running;
 }
 
 /**
@@ -785,7 +641,7 @@ export function resetMatchResults(stored: MatchResults): void {
  * @param stored A reference to what will be updated in the storage.
  * @param match Input of the update.
  */
-export function setExtraFields(
+function setExtraFields(
 	stored: MatchResults,
 	match: DeepPartial<MatchResults>,
 ): void {
@@ -837,7 +693,7 @@ export function setExtraFields(
  * @param match The match to get the opponent from.
  * @param side The side where to get the opponent from.
  */
-export function getOpponentId(match: MatchResults, side: Side): number | null {
+function getOpponentId(match: MatchResults, side: Side): number | null {
 	const opponent = match[side];
 	return opponent?.id ?? null;
 }
@@ -853,58 +709,6 @@ export function getOriginPosition(match: Match, side: Side): number {
 	if (matchNumber === undefined) throw Error("Position is undefined.");
 
 	return matchNumber;
-}
-
-/**
- * Returns every loser in a list of matches.
- *
- * @param participants The list of participants.
- * @param matches A list of matches to get losers of.
- */
-export function getLosers(matches: Match[]): number[][] {
-	const losers: number[][] = [];
-
-	let currentRound: number | null = null;
-	let roundIndex = -1;
-
-	for (const match of matches) {
-		if (match.round_id !== currentRound) {
-			currentRound = match.round_id;
-			roundIndex++;
-			losers[roundIndex] = [];
-		}
-
-		const loser = getLoser(match);
-		if (loser === null) continue;
-
-		invariant(loser.id, "Loser id not found");
-		losers[roundIndex].push(loser.id);
-	}
-
-	return losers;
-}
-
-/**
- * Returns the decisive match of a Grand Final.
- *
- * @param type The type of Grand Final.
- * @param matches The matches in the Grand Final.
- */
-export function getGrandFinalDecisiveMatch(
-	type: GrandFinalType,
-	matches: Match[],
-): Match {
-	if (type === "simple") return matches[0];
-
-	if (type === "double") {
-		const result = getMatchResult(matches[0]);
-
-		if (result === "opponent2") return matches[1];
-
-		return matches[0];
-	}
-
-	throw Error("The Grand Final is disabled.");
 }
 
 /**
@@ -1005,7 +809,7 @@ export function resetNextOpponent(nextMatch: Match, nextSide: Side): void {
  * @param stored A reference to what will be updated in the storage.
  * @param match Input of the update.
  */
-export function handleOpponentsInversion(
+function handleOpponentsInversion(
 	stored: MatchResults,
 	match: DeepPartial<MatchResults>,
 ): void {
@@ -1033,7 +837,7 @@ export function handleOpponentsInversion(
  *
  * @param match A match to update.
  */
-export function invertOpponents(match: DeepPartial<MatchResults>): void {
+function invertOpponents(match: DeepPartial<MatchResults>): void {
 	[match.opponent1, match.opponent2] = [match.opponent2, match.opponent1];
 }
 
@@ -1044,7 +848,7 @@ export function invertOpponents(match: DeepPartial<MatchResults>): void {
  * @param match Input of the update.
  * @returns `true` if the status of the match changed, `false` otherwise.
  */
-export function setScores(
+function setScores(
 	stored: MatchResults,
 	match: DeepPartial<MatchResults>,
 ): boolean {
@@ -1073,7 +877,7 @@ export function setScores(
  * @param stored A reference to what will be updated in the storage.
  * @param match Input of the update.
  */
-export function setCompleted(
+function setCompleted(
 	stored: MatchResults,
 	match: DeepPartial<MatchResults>,
 ): void {
@@ -1097,7 +901,7 @@ export function setCompleted(
  * @param check A result to check in each opponent.
  * @param change A result to set in each other opponent if `check` is correct.
  */
-export function setResults(
+function setResults(
 	stored: MatchResults,
 	match: DeepPartial<MatchResults>,
 	check: Result,
@@ -1129,81 +933,14 @@ export function setResults(
 }
 
 /**
- * Converts a list of matches to a seeding.
- *
- * @param matches The input matches.
- */
-export function convertMatchesToSeeding(matches: Match[]): ParticipantSlot[] {
-	const flattened = ([] as ParticipantSlot[]).concat(
-		...matches.map((match) => [match.opponent1, match.opponent2]),
-	);
-	return sortSeeding(flattened);
-}
-
-/**
- * Converts a list of slots to an input seeding.
- *
- * @param slots The slots to convert.
- */
-export function convertSlotsToSeeding(slots: ParticipantSlot[]): Seeding {
-	return slots.map((slot) => {
-		if (slot === null || slot.id === null) return null; // BYE or TBD.
-		return slot.id; // Let's return the ID instead of the name to be sure we keep the same reference.
-	});
-}
-
-/**
- * Sorts the seeding with the BYEs in the correct position.
- *
- * @param slots A list of slots to sort.
- */
-export function sortSeeding(slots: ParticipantSlot[]): ParticipantSlot[] {
-	const withoutByes = slots.filter((v) => v !== null);
-
-	// a and b are not null because of the filter.
-	// The slots are from seeding slots, thus they have a position.
-	withoutByes.sort((a, b) => a.position! - b.position!);
-
-	if (withoutByes.length === slots.length) return withoutByes;
-
-	// Same for v and position.
-	const placed = Object.fromEntries(
-		withoutByes.map((v) => [v.position! - 1, v]),
-	);
-	const sortedWithByes = Array.from(
-		{ length: slots.length },
-		(_, i) => placed[i] || null,
-	);
-
-	return sortedWithByes;
-}
-
-/**
  * Returns only the non null elements.
  *
  * @param array The array to process.
  */
-export function getNonNull<T>(array: Nullable<T>[]): T[] {
+function getNonNull<T>(array: Nullable<T>[]): T[] {
 	// Use a TS type guard to exclude null from the resulting type.
 	const nonNull = array.filter((element): element is T => element !== null);
 	return nonNull;
-}
-
-/**
- * Returns a list of objects which have unique values of a specific key.
- *
- * @param array The array to process.
- * @param key The key to filter by.
- */
-export function uniqueBy<T>(array: T[], key: (obj: T) => unknown): T[] {
-	const seen = new Set();
-	return array.filter((item) => {
-		const value = key(item);
-		if (!value) return true;
-		if (seen.has(value)) return false;
-		seen.add(value);
-		return true;
-	});
 }
 
 /**
@@ -1254,28 +991,6 @@ export function transitionToMinor(
 }
 
 /**
- * Returns a parent match results based on its child games scores.
- *
- * @param storedParent The parent match stored in the database.
- * @param scores The scores of the match child games.
- */
-export function getParentMatchResults(
-	storedParent: Match,
-	scores: Scores,
-): Pick<MatchResults, "opponent1" | "opponent2"> {
-	return {
-		opponent1: {
-			id: storedParent.opponent1?.id ?? null,
-			score: scores.opponent1,
-		},
-		opponent2: {
-			id: storedParent.opponent2?.id ?? null,
-			score: scores.opponent2,
-		},
-	};
-}
-
-/**
  * Gets the values which need to be updated in a match when it's updated on insertion.
  *
  * @param match The up to date match.
@@ -1312,81 +1027,6 @@ export function getUpdatedMatchResults<T extends MatchResults>(
 							: { ...existing.opponent2, ...match.opponent2 },
 				}),
 	};
-}
-
-/**
- * Gets the default list of seeds for a round's matches.
- *
- * @param inLoserBracket Whether the match is in the loser bracket.
- * @param roundNumber The number of the current round.
- * @param roundCountLB The count of rounds in loser bracket.
- * @param matchCount The count of matches in the round.
- */
-export function getSeeds(
-	inLoserBracket: boolean,
-	roundNumber: number,
-	roundCountLB: number,
-	matchCount: number,
-): number[] {
-	const seedCount = getSeedCount(
-		inLoserBracket,
-		roundNumber,
-		roundCountLB,
-		matchCount,
-	);
-	return Array.from(Array(seedCount), (_, i) => i + 1);
-}
-
-/**
- * Gets the number of seeds for a round's matches.
- *
- * @param inLoserBracket Whether the match is in the loser bracket.
- * @param roundNumber The number of the current round.
- * @param roundCountLB The count of rounds in loser bracket.
- * @param matchCount The count of matches in the round.
- */
-export function getSeedCount(
-	inLoserBracket: boolean,
-	roundNumber: number,
-	roundCountLB: number,
-	matchCount: number,
-): number {
-	ensureOrderingSupported(inLoserBracket, roundNumber, roundCountLB);
-
-	return roundNumber === 1
-		? matchCount * 2 // Two per match for upper or lower bracket round 1.
-		: matchCount; // One per match for loser bracket minor rounds.
-}
-
-/**
- * Throws if the ordering is not supported on the given round number.
- *
- * @param inLoserBracket Whether the match is in the loser bracket.
- * @param roundNumber The number of the round.
- * @param roundCountLB The count of rounds in loser bracket.
- */
-export function ensureOrderingSupported(
-	inLoserBracket: boolean,
-	roundNumber: number,
-	roundCountLB: number,
-): void {
-	if (
-		inLoserBracket &&
-		!isOrderingSupportedLoserBracket(roundNumber, roundCountLB)
-	)
-		throw Error("This round does not support ordering.");
-
-	if (!inLoserBracket && !isOrderingSupportedUpperBracket(roundNumber))
-		throw Error("This round does not support ordering.");
-}
-
-/**
- * Indicates whether the ordering is supported in upper bracket, given the round number.
- *
- * @param roundNumber The number of the round.
- */
-export function isOrderingSupportedUpperBracket(roundNumber: number): boolean {
-	return roundNumber === 1;
 }
 
 /**
@@ -1466,7 +1106,7 @@ export function findLoserMatchNumber(
  * @param participantCount The number of participants in a stage.
  * @param roundNumber Number of the round.
  */
-export function getLoserRoundMatchCount(
+function getLoserRoundMatchCount(
 	participantCount: number,
 	roundNumber: number,
 ): number {
@@ -1482,7 +1122,7 @@ export function getLoserRoundMatchCount(
  * @param participantCount The number of participants in a stage.
  * @param roundNumber Number of the round.
  */
-export function getLoserRoundLoserCount(
+function getLoserRoundLoserCount(
 	participantCount: number,
 	roundNumber: number,
 ): number {
@@ -1509,16 +1149,6 @@ export function getLoserOrdering(
 }
 
 /**
- * Returns the number of rounds a lower bracket has given the number of participants in a double elimination stage.
- *
- * @param participantCount The number of participants in the stage.
- */
-export function getLowerBracketRoundCount(participantCount: number): number {
-	const roundPairCount = getRoundPairCount(participantCount);
-	return roundPairCount * 2;
-}
-
-/**
  * Returns the match number of the corresponding match in the next round by dividing by two.
  *
  * @param matchNumber The current match number.
@@ -1532,17 +1162,8 @@ export function getDiagonalMatchNumber(matchNumber: number): number {
  *
  * @param input The input number.
  */
-export function getNearestPowerOfTwo(input: number): number {
+function getNearestPowerOfTwo(input: number): number {
 	return 2 ** Math.ceil(Math.log2(input));
-}
-
-/**
- * Returns the minimum score a participant must have to win a Best Of X series match.
- *
- * @param x The count of child games in the series.
- */
-export function minScoreToWinBestOfX(x: number): number {
-	return (x + 1) / 2;
 }
 
 /**
@@ -1559,26 +1180,6 @@ export function isSwiss(stage: Stage): boolean {
 }
 
 /**
- * Throws if a stage is round-robin.
- *
- * @param stage The stage to check.
- */
-export function ensureNotRoundRobin(stage: Stage): void {
-	const inRoundRobin = isRoundRobin(stage);
-	if (inRoundRobin)
-		throw Error("Impossible to update ordering in a round-robin stage.");
-}
-
-/**
- * Checks if a round is completed based on its matches.
- *
- * @param roundMatches Matches of the round.
- */
-export function isRoundCompleted(roundMatches: Match[]): boolean {
-	return roundMatches.every((match) => match.status >= Status.Completed);
-}
-
-/**
  * Checks if a group is a winner bracket.
  *
  * It's not always the opposite of `inLoserBracket()`: it could be the only bracket of a single elimination stage.
@@ -1586,7 +1187,7 @@ export function isRoundCompleted(roundMatches: Match[]): boolean {
  * @param stageType Type of the stage.
  * @param groupNumber Number of the group.
  */
-export function isWinnerBracket(
+function isWinnerBracket(
 	stageType: StageType,
 	groupNumber: number,
 ): boolean {
@@ -1599,7 +1200,7 @@ export function isWinnerBracket(
  * @param stageType Type of the stage.
  * @param groupNumber Number of the group.
  */
-export function isLoserBracket(
+function isLoserBracket(
 	stageType: StageType,
 	groupNumber: number,
 ): boolean {
@@ -1612,7 +1213,7 @@ export function isLoserBracket(
  * @param stageType Type of the stage.
  * @param groupNumber Number of the group.
  */
-export function isFinalGroup(
+function isFinalGroup(
 	stageType: StageType,
 	groupNumber: number,
 ): boolean {
@@ -1639,26 +1240,4 @@ export function getMatchLocation(
 	if (isFinalGroup(stageType, groupNumber)) return "final_group";
 
 	return "single_bracket";
-}
-
-/**
- * Returns the fraction of final for the current round (e.g. `1/2` for semi finals or `1/4` for quarter finals).
- *
- * @param roundNumber Number of the current round.
- * @param roundCount Count of rounds.
- */
-export function getFractionOfFinal(
-	roundNumber: number,
-	roundCount: number,
-): number {
-	if (roundNumber > roundCount)
-		throw Error(
-			`There are more rounds than possible. ${JSON.stringify({
-				roundNumber,
-				roundCount,
-			})}`,
-		);
-
-	const denominator = 2 ** (roundCount - roundNumber);
-	return 1 / denominator;
 }

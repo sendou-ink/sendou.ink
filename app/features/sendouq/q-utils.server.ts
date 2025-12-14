@@ -1,15 +1,11 @@
 import { redirect } from "@remix-run/node";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import {
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PAGE,
 	SENDOUQ_PREPARING_PAGE,
 	sendouQMatchPage,
 } from "~/utils/urls";
-import type { MapPool } from "../map-list-generator/core/map-pool";
 import type { SQOwnGroup } from "./core/SQManager.server";
-import { SENDOUQ } from "./q-constants";
 
 function groupRedirectLocation(group?: SQOwnGroup) {
 	if (group?.status === "PREPARING") return SENDOUQ_PREPARING_PAGE;
@@ -38,33 +34,4 @@ export function sqRedirectIfNeeded({
 	if (currentLocation === "match" && newLocation.includes("match")) return;
 
 	throw redirect(newLocation);
-}
-
-export function mapPoolOk(mapPool: MapPool) {
-	for (const modeShort of rankedModesShort) {
-		if (
-			modeShort === "SZ" &&
-			mapPool.countMapsByMode(modeShort) !== SENDOUQ.SZ_MAP_COUNT
-		) {
-			return false;
-		}
-
-		if (
-			modeShort !== "SZ" &&
-			mapPool.countMapsByMode(modeShort) !== SENDOUQ.OTHER_MODE_MAP_COUNT
-		) {
-			return false;
-		}
-	}
-
-	for (const stageId of stageIds) {
-		if (
-			mapPool.stageModePairs.filter((pair) => pair.stageId === stageId).length >
-			SENDOUQ.MAX_STAGE_REPEAT_COUNT
-		) {
-			return false;
-		}
-	}
-
-	return true;
 }
