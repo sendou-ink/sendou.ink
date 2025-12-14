@@ -3,7 +3,6 @@ import { useFetcher, useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
-import { useUser } from "~/features/auth/core/user";
 import { useAutoRefresh } from "~/hooks/useAutoRefresh";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -36,31 +35,20 @@ export const meta: MetaFunction = (args) => {
 };
 
 export default function QPreparingPage() {
-	const user = useUser();
 	const { t } = useTranslation(["q"]);
 	const data = useLoaderData<typeof loader>();
 	const joinQFetcher = useFetcher();
 	useAutoRefresh(data.lastUpdated);
 
-	const isGroupOwner = data.group
-		? data.group.members.some((m) => m.id === user?.id && m.role === "OWNER")
-		: false;
-	const isGroupManager = data.group
-		? data.group.members.some((m) => m.id === user?.id && m.role === "MANAGER")
-		: false;
-
 	return (
-		<GroupProvider
-			ownGroup={data.group}
-			isGroupOwner={isGroupOwner}
-			isGroupManager={isGroupManager}
-			isExpired={false}
-		>
+		<GroupProvider ownGroup={data.group} isExpired={false}>
 			<Main className="stack lg items-center">
 				<div className="q-preparing__card-container">
 					<GroupCard group={data.group} hideNote />
 				</div>
-				{data.group.members.length < FULL_GROUP_SIZE && isGroupManager ? (
+				{data.group.members.length < FULL_GROUP_SIZE &&
+				(data.group.usersRole === "OWNER" ||
+					data.group.usersRole === "MANAGER") ? (
 					<MemberAdder
 						inviteCode={data.group.inviteCode}
 						groupMemberIds={data.group.members.map((m) => m.id)}

@@ -31,6 +31,7 @@ import { RefreshArrowsIcon } from "~/components/icons/RefreshArrows";
 import { ScaleIcon } from "~/components/icons/Scale";
 import { UsersIcon } from "~/components/icons/Users";
 import { Main } from "~/components/Main";
+import { Placeholder } from "~/components/Placeholder";
 import { SubmitButton } from "~/components/SubmitButton";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import type { Tables } from "~/db/tables";
@@ -102,7 +103,20 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export default function QMatchPage() {
+export default function QMatchShell() {
+	const isMounted = useIsMounted();
+
+	if (!isMounted)
+		return (
+			<Main>
+				<Placeholder />
+			</Main>
+		);
+
+	return <QMatchPage />;
+}
+
+function QMatchPage() {
 	const user = useUser();
 	const isStaff = useHasRole("STAFF");
 	const isMounted = useIsMounted();

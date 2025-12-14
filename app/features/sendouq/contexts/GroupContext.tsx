@@ -4,8 +4,6 @@ import type { SQOwnGroup } from "../core/SQManager.server";
 
 type GroupContextType = {
 	ownGroup?: SQOwnGroup;
-	isGroupOwner: boolean;
-	isGroupManager: boolean;
 	isExpired: boolean; // xxx: rename
 };
 
@@ -14,16 +12,12 @@ const GroupContext = createContext<GroupContextType | null>(null);
 export function GroupProvider({
 	children,
 	ownGroup,
-	isGroupOwner,
-	isGroupManager,
 	isExpired,
 }: {
 	children: ReactNode;
 } & GroupContextType) {
 	return (
-		<GroupContext.Provider
-			value={{ ownGroup, isGroupOwner, isGroupManager, isExpired }}
-		>
+		<GroupContext.Provider value={{ ownGroup, isExpired }}>
 			{children}
 		</GroupContext.Provider>
 	);

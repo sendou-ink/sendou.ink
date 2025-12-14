@@ -99,20 +99,6 @@ function QLookingPage() {
 	return (
 		<GroupProvider
 			ownGroup={data.ownGroup}
-			isGroupOwner={
-				data.ownGroup
-					? data.ownGroup.members.some(
-							(m) => m.id === user?.id && m.role === "OWNER",
-						)
-					: false
-			}
-			isGroupManager={
-				data.ownGroup
-					? data.ownGroup.members.some(
-							(m) => m.id === user?.id && m.role === "MANAGER",
-						)
-					: false
-			}
 			isExpired={
 				data.ownGroup
 					? groupExpiryStatus(data.ownGroup.latestActionAt) === "EXPIRED"

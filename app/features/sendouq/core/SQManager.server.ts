@@ -1,6 +1,6 @@
 import { isWithinInterval, sub } from "date-fns";
 import * as R from "remeda";
-import type { DBBoolean, ParsedMemento } from "~/db/tables";
+import type { DBBoolean, ParsedMemento, Tables } from "~/db/tables";
 import type { AuthenticatedUser } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { defaultOrdinal } from "~/features/mmr/mmr-utils";
@@ -74,6 +74,7 @@ class SQManagerClass {
 			skillDifference:
 				undefined as ParsedMemento["groups"][number]["skillDifference"],
 			isReplay: false,
+			usersRole: null as Tables["GroupMember"]["role"] | null,
 			members: group.members.map((member) => {
 				const skill = calculatedUserSkills[String(member.id)];
 
@@ -107,13 +108,13 @@ class SQManagerClass {
 		const result = this.groups.find((group) =>
 			group.members.some((member) => member.id === userId),
 		);
-		if (!result) return null;
+		if (!result) return;
 
 		const member = result.members.find((m) => m.id === userId)!;
 
 		return {
-			usersRole: member.role,
 			...result,
+			usersRole: member.role,
 		};
 	}
 
@@ -156,6 +157,7 @@ class SQManagerClass {
 				tier: null as TieredSkill["tier"] | null,
 				skillDifference: "idk" as any,
 				modePreferences: this.#groupModePreferences(group),
+				usersRole: null as Tables["GroupMember"]["role"] | null,
 				members: group.members.map((m) => ({
 					...m,
 					skill: "idk" as any,

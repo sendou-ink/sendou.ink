@@ -66,7 +66,7 @@ export function GroupCard({
 	const { t } = useTranslation(["q"]);
 	const user = useUser();
 	const fetcher = useFetcher();
-	const { ownGroup, isGroupOwner, isGroupManager, isExpired } = useOwnGroup();
+	const { ownGroup, isExpired } = useOwnGroup();
 
 	const hideNote =
 		displayOnly ||
@@ -83,7 +83,7 @@ export function GroupCard({
 			})
 		: null;
 
-	const enableKicking = isGroupOwner && !displayOnly;
+	const enableKicking = group.usersRole === "OWNER" && !displayOnly;
 
 	return (
 		<GroupCardContainer groupId={group.id} isOwnGroup={isOwnGroup}>
@@ -96,7 +96,7 @@ export function GroupCard({
 							return (
 								<GroupMember
 									member={member}
-									showActions={isOwnGroup && isGroupOwner}
+									showActions={group.usersRole === "OWNER"}
 									key={member.discordId}
 									displayOnly={displayOnly}
 									hideVc={hideVc}
@@ -198,7 +198,9 @@ export function GroupCard({
 				{group.skillDifference ? (
 					<GroupSkillDifference skillDifference={group.skillDifference} />
 				) : null}
-				{action && (isGroupOwner || isGroupManager) && !isExpired ? (
+				{action &&
+				(group.usersRole === "OWNER" || group.usersRole === "MANAGER") &&
+				!isExpired ? (
 					<fetcher.Form className="stack items-center" method="post">
 						<input type="hidden" name="targetGroupId" value={group.id} />
 						<SubmitButton
