@@ -16,12 +16,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	);
 	const userQSettingsData = await QSettingsRepository.settingsByUserId(user.id);
 	const allPosts = await LFGRepository.posts(user);
+	const postToEdit = searchParamsToBuildToEdit(request, user.id, allPosts);
 
 	return {
 		team: userProfileData?.team,
 		weaponPool: userProfileData?.weapons,
-		languages: userQSettingsData.languages,
-		postToEdit: searchParamsToBuildToEdit(request, user.id, allPosts),
+		languages: postToEdit?.languages?.split(",") ?? userQSettingsData.languages,
+		postToEdit,
 		userPostTypes: userPostTypes(allPosts, user.id),
 	};
 };

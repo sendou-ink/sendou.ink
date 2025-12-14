@@ -321,6 +321,7 @@ export interface LFGPost {
 	authorId: number;
 	teamId: number | null;
 	plusTierVisibility: number | null;
+	languages: string | null;
 	updatedAt: Generated<number>;
 	createdAt: GeneratedAlways<number>;
 }

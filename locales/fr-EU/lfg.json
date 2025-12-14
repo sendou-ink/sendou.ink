@@ -28,5 +28,6 @@
 	"new.weaponPool.header": "Arme utilisé",
 	"new.weaponPool.userProfile": "profil",
 	"new.languages.header": "Langues",
+	"new.languages.placeholder": "Selectionner",
 	"new.languages.sqSettingsPage": "page de paramètres SendouQ"
 }
