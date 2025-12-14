@@ -618,5 +618,75 @@ describe("SQManager", () => {
 				}
 			});
 		});
+
+		describe("private note sorting", () => {
+			beforeEach(async () => {
+				await dbInsertUsers(8);
+			});
+
+			afterEach(() => {
+				dbReset();
+			});
+
+			test("users with positive note sorted first", async () => {
+				await createGroup([1]);
+				await createGroup([2]);
+				await createGroup([3]);
+				await createGroup([4]);
+				await createGroup([5]);
+				await createGroup([6, 7]);
+				await createGroup([8]);
+
+				await createPrivateNote(1, 5, "POSITIVE");
+
+				await refreshSQManagerInstance();
+
+				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+				const groups = SQManager.lookingGroups(1, notes);
+
+				expect(groups[0].members![0].id).toBe(5);
+			});
+
+			test("users with negative note sorted last", async () => {
+				await createGroup([1]);
+				await createGroup([2]);
+				await createGroup([3]);
+				await createGroup([4]);
+				await createGroup([5]);
+				await createGroup([6, 7]);
+				await createGroup([8]);
+
+				await createPrivateNote(1, 5, "NEGATIVE");
+
+				await refreshSQManagerInstance();
+
+				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+				const groups = SQManager.lookingGroups(1, notes);
+
+				expect(groups[groups.length - 1].members![0].id).toBe(5);
+			});
+
+			test("group with both negative and positive sentiment sorted last", async () => {
+				await createGroup([1]);
+				await createGroup([2]);
+				await createGroup([3]);
+				await createGroup([4]);
+				await createGroup([5]);
+				await createGroup([6, 7]);
+				await createGroup([8]);
+
+				await createPrivateNote(1, 6, "POSITIVE");
+				await createPrivateNote(1, 7, "NEGATIVE");
+
+				await refreshSQManagerInstance();
+
+				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+				const groups = SQManager.lookingGroups(1, notes);
+
+				expect(groups[groups.length - 1].members?.some((m) => m.id === 6)).toBe(
+					true,
+				);
+			});
+		});
 	});
 });

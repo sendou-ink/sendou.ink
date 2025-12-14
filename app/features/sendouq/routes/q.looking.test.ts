@@ -1,21 +1,12 @@
-import type { SerializeFrom } from "@remix-run/server-runtime";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
 import type { UserMapModePreferences } from "~/db/tables";
-import type { matchSchema } from "~/features/sendouq-match/q-match-schemas";
-import { action as rawMatchAction } from "~/features/sendouq-match/routes/q.match.$id";
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import invariant from "~/utils/invariant";
-import {
-	dbInsertUsers,
-	dbReset,
-	wrappedAction,
-	wrappedLoader,
-} from "~/utils/Test";
-import { refreshSQManagerInstance } from "../core/SQManager.server";
+import { dbInsertUsers, dbReset, wrappedAction } from "~/utils/Test";
 import type { lookingSchema } from "../q-schemas.server";
-import { loader, action as rawLookingAction } from "./q.looking";
+import { action as rawLookingAction } from "./q.looking";
 
 const createGroup = async (userIds: number[]) => {
 	const group = await db
@@ -176,98 +167,5 @@ describe("SendouQ match creation", () => {
 
 		expect(modePreferences?.SZ?.length).toBe(3);
 		expect(modePreferences?.SZ?.some((p) => !p.preference)).toBe(true);
-	});
-});
-
-describe("Private user note sorting", () => {
-	beforeEach(async () => {
-		await dbInsertUsers(8);
-
-		await createGroup([1]);
-		await createGroup([2]);
-		await createGroup([3]);
-		await createGroup([4]);
-		await createGroup([5]);
-		await createGroup([6, 7]);
-		await createGroup([8]);
-
-		await db
-			.insertInto("GroupMatch")
-			.values({ alphaGroupId: 2, bravoGroupId: 3 })
-			.execute();
-
-		await refreshSQManagerInstance();
-	});
-
-	afterEach(() => {
-		dbReset();
-	});
-
-	const lookingLoader = wrappedLoader<SerializeFrom<typeof loader>>({
-		loader,
-	});
-	const matchAction = wrappedAction<typeof matchSchema>({
-		action: rawMatchAction,
-	});
-
-	const matchActionParams = { id: "1" };
-
-	test("users with positive note sorted first", async () => {
-		await matchAction(
-			{
-				_action: "ADD_PRIVATE_USER_NOTE",
-				targetId: 5,
-				sentiment: "POSITIVE",
-				comment: "test",
-			},
-			{ user: "admin", params: matchActionParams },
-		);
-
-		const data = await lookingLoader({ user: "admin" });
-
-		expect(data.groups[0].members![0].id).toBe(5);
-	});
-
-	test("users with negative note sorted last", async () => {
-		await matchAction(
-			{
-				_action: "ADD_PRIVATE_USER_NOTE",
-				targetId: 5,
-				sentiment: "NEGATIVE",
-				comment: "test",
-			},
-			{ user: "admin", params: matchActionParams },
-		);
-
-		const data = await lookingLoader({ user: "admin" });
-
-		expect(data.groups[data.groups.length - 1].members![0].id).toBe(5);
-	});
-
-	test("group with both negative and positive sentiment sorted last", async () => {
-		await matchAction(
-			{
-				_action: "ADD_PRIVATE_USER_NOTE",
-				targetId: 6,
-				sentiment: "POSITIVE",
-				comment: "test",
-			},
-			{ user: "admin", params: matchActionParams },
-		);
-		await matchAction(
-			{
-				_action: "ADD_PRIVATE_USER_NOTE",
-				targetId: 7,
-				sentiment: "NEGATIVE",
-				comment: "test",
-			},
-			{ user: "admin", params: matchActionParams },
-		);
-
-		const data = await lookingLoader({ user: "admin" });
-
-		expect(
-			data.groups[data.groups.length - 1].members?.some((m) => m.id === 6),
-		).toBe(true);
 	});
 });
