@@ -85,9 +85,9 @@ export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: `SendouQ - Match #${data.match.id}`,
 		description: `${new Intl.ListFormat("en-US").format(
-			data.groupAlpha.members.map((m) => m.username),
+			data.match.groupAlpha.members.map((m) => m.username),
 		)} vs. ${new Intl.ListFormat("en-US").format(
-			data.groupBravo.members.map((m) => m.username),
+			data.match.groupBravo.members.map((m) => m.username),
 		)}`,
 		location: args.location,
 	});
@@ -119,16 +119,16 @@ export default function QMatchPage() {
 	}, [data.reportedWeapons, data.match.id]);
 
 	const ownMember =
-		data.groupAlpha.members.find((m) => m.id === user?.id) ??
-		data.groupBravo.members.find((m) => m.id === user?.id);
+		data.match.groupAlpha.members.find((m) => m.id === user?.id) ??
+		data.match.groupBravo.members.find((m) => m.id === user?.id);
 	const canReportScore = Boolean(
 		!data.match.isLocked && (ownMember || isStaff),
 	);
 
-	const ownGroup = data.groupAlpha.members.some((m) => m.id === user?.id)
-		? data.groupAlpha
-		: data.groupBravo.members.some((m) => m.id === user?.id)
-			? data.groupBravo
+	const ownGroup = data.match.groupAlpha.members.some((m) => m.id === user?.id)
+		? data.match.groupAlpha
+		: data.match.groupBravo.members.some((m) => m.id === user?.id)
+			? data.match.groupBravo
 			: null;
 
 	const ownTeamReported = Boolean(
@@ -138,8 +138,16 @@ export default function QMatchPage() {
 	const showScore =
 		data.match.isLocked || (data.match.reportedByUserId && ownGroup);
 
+	const groupMemberOf = data.match.groupAlpha.members.some(
+		(m) => m.id === user?.id,
+	)
+		? "ALPHA"
+		: data.match.groupBravo.members.some((m) => m.id === user?.id)
+			? "BRAVO"
+			: null;
+
 	const addingNoteFor = (
-		data.groupMemberOf === "ALPHA" ? data.groupAlpha : data.groupBravo
+		groupMemberOf === "ALPHA" ? data.match.groupAlpha : data.match.groupBravo
 	).members.find((m) => m.id === safeNumberParse(searchParams.get("note")));
 
 	return (
@@ -188,14 +196,13 @@ export default function QMatchPage() {
 			{!showWeaponsForm ? (
 				<>
 					<div className="q-match__teams-container">
-						{[data.groupAlpha, data.groupBravo].map((group, i) => {
+						{[data.match.groupAlpha, data.match.groupBravo].map((group, i) => {
 							const side = i === 0 ? "ALPHA" : "BRAVO";
-							const isOwnGroup = data.groupMemberOf === side;
+							const isOwnGroup = groupMemberOf === side;
 
 							const matchHasBeenReported = Boolean(data.match.reportedByUserId);
 							const showAddNote =
-								data.groupMemberOf === side && matchHasBeenReported;
-
+								groupMemberOf === side && matchHasBeenReported;
 							return (
 								<div className="stack sm text-lighter text-xs" key={group.id}>
 									<div className="stack horizontal justify-between items-center">
@@ -246,14 +253,18 @@ function Score({
 	const { formatDateTime } = useTimeFormat();
 	const data = useLoaderData<typeof loader>();
 	const reporter =
-		data.groupAlpha.members.find((m) => m.id === data.match.reportedByUserId) ??
-		data.groupBravo.members.find((m) => m.id === data.match.reportedByUserId);
+		data.match.groupAlpha.members.find(
+			(m) => m.id === data.match.reportedByUserId,
+		) ??
+		data.match.groupBravo.members.find(
+			(m) => m.id === data.match.reportedByUserId,
+		);
 
 	const score = data.match.mapList.reduce(
 		(acc, cur) => {
 			if (!cur.winnerGroupId) return acc;
 
-			if (cur.winnerGroupId === data.match.alphaGroupId) {
+			if (cur.winnerGroupId === data.match.groupAlpha.id) {
 				return [acc[0] + 1, acc[1]];
 			}
 
@@ -411,7 +422,7 @@ function ReportWeaponsForm() {
 
 	const playedMaps = data.match.mapList.filter((m) => m.winnerGroupId);
 	const winners = playedMaps.map((m) =>
-		m.winnerGroupId === data.match.alphaGroupId ? "ALPHA" : "BRAVO",
+		m.winnerGroupId === data.match.groupAlpha.id ? "ALPHA" : "BRAVO",
 	);
 
 	const handleCopyWeaponsFromPreviousMap =
@@ -441,8 +452,19 @@ function ReportWeaponsForm() {
 			});
 		};
 
+	const groupMemberOf = data.match.groupAlpha.members.some(
+		(m) => m.id === user?.id,
+	)
+		? "ALPHA"
+		: data.match.groupBravo.members.some((m) => m.id === user?.id)
+			? "BRAVO"
+			: null;
+
 	const playersToReport = () => {
-		const allPlayers = [...data.groupAlpha.members, ...data.groupBravo.members];
+		const allPlayers = [
+			...data.match.groupAlpha.members,
+			...data.match.groupBravo.members,
+		];
 
 		switch (reportingMode) {
 			case "ALL": {
@@ -455,9 +477,9 @@ function ReportWeaponsForm() {
 				return [me];
 			}
 			case "MY_TEAM": {
-				return data.groupMemberOf === "ALPHA"
-					? data.groupAlpha.members
-					: data.groupBravo.members;
+				return groupMemberOf === "ALPHA"
+					? data.match.groupAlpha.members
+					: data.match.groupBravo.members;
 			}
 			default:
 				assertUnreachable(reportingMode);
@@ -638,10 +660,9 @@ function BottomSection({
 
 	const chatUsers = React.useMemo(() => {
 		return Object.fromEntries(
-			[...data.groupAlpha.members, ...data.groupBravo.members].map((m) => [
-				m.id,
-				m,
-			]),
+			[...data.match.groupAlpha.members, ...data.match.groupBravo.members].map(
+				(m) => [m.id, m],
+			),
 		);
 	}, [data]);
 
@@ -652,12 +673,17 @@ function BottomSection({
 		setUnseenMessages((msg) => msg + 1);
 	}, []);
 
+	const groupChatCode =
+		data.match.groupAlpha.chatCode ?? data.match.groupBravo.chatCode;
+
 	const chatRooms = React.useMemo(() => {
 		return [
-			data.matchChatCode ? { code: data.matchChatCode, label: "Match" } : null,
-			data.groupChatCode ? { code: data.groupChatCode, label: "Group" } : null,
+			data.match.chatCode
+				? { code: data.match.chatCode, label: "Match" }
+				: null,
+			groupChatCode ? { code: groupChatCode, label: "Group" } : null,
 		].filter(Boolean) as ChatProps["rooms"];
-	}, [data.matchChatCode, data.groupChatCode]);
+	}, [data.match.chatCode, groupChatCode]);
 
 	const chatHidden = chatRooms.length === 0;
 
@@ -706,7 +732,7 @@ function BottomSection({
 			onUnmount={onChatUnmount}
 			users={chatUsers}
 			rooms={chatRooms}
-			disabled={!data.canPostChatMessages}
+			disabled={!groupChatCode} // no message sending by staff to match chat
 		/>
 	);
 
@@ -755,6 +781,15 @@ function BottomSection({
 		</LinkButton>
 	);
 
+	// xxx: extract to helper
+	const groupMemberOf = data.match.groupAlpha.members.some(
+		(m) => m.id === user?.id,
+	)
+		? "ALPHA"
+		: data.match.groupBravo.members.some((m) => m.id === user?.id)
+			? "BRAVO"
+			: null;
+
 	const cancelMatchElement =
 		canReportScore && !data.match.isLocked ? (
 			<FormWithConfirm
@@ -762,7 +797,7 @@ function BottomSection({
 				fields={[
 					["_action", "REPORT_SCORE"],
 					["winners", "[]"],
-					...(!data.groupMemberOf ? [["adminReport", "on"] as const] : []),
+					...(!groupMemberOf ? [["adminReport", "on"] as const] : []),
 				]}
 				submitButtonText={t("common:actions.cancel")}
 				fetcher={cancelFetcher}
@@ -779,10 +814,13 @@ function BottomSection({
 			</FormWithConfirm>
 		) : null;
 
-	const screenLegalityInfoElement =
-		data.banScreen !== null ? (
-			<ScreenLegalityInfo ban={data.banScreen} />
-		) : null;
+	const screenBanned = Boolean(
+		data.match.groupAlpha.noScreen || data.match.groupBravo.noScreen,
+	);
+
+	const screenLegalityInfoElement = !data.match.isLocked ? (
+		<ScreenLegalityInfo ban={screenBanned} />
+	) : null;
 
 	if (!showMid && chatHidden) {
 		return mapListElement;
@@ -937,7 +975,7 @@ function MapList({
 		? data.match.mapList
 				.filter((m) => m.winnerGroupId)
 				.map((m) =>
-					m.winnerGroupId === data.groupAlpha.id ? "ALPHA" : "BRAVO",
+					m.winnerGroupId === data.match.groupAlpha.id ? "ALPHA" : "BRAVO",
 				)
 		: [];
 	const [winners, setWinners] = React.useState<("ALPHA" | "BRAVO")[]>(
@@ -1093,25 +1131,33 @@ function MapListMap({
 			);
 
 		const winnerSide =
-			winnerId === data.match.alphaGroupId
+			winnerId === data.match.groupAlpha.id
 				? t("q:match.sides.alpha")
 				: t("q:match.sides.bravo");
 
 		return <>• {t("q:match.won", { side: winnerSide })}</>;
 	};
 
-	const relativeSideText = (side: "ALPHA" | "BRAVO") => {
-		if (!data.groupMemberOf) return "";
+	const groupMemberOf = data.match.groupAlpha.members.some(
+		(m) => m.id === user?.id,
+	)
+		? "ALPHA"
+		: data.match.groupBravo.members.some((m) => m.id === user?.id)
+			? "BRAVO"
+			: null;
 
-		return data.groupMemberOf === side ? " (us)" : " (them)";
+	const relativeSideText = (side: "ALPHA" | "BRAVO") => {
+		if (!groupMemberOf) return "";
+
+		return groupMemberOf === side ? " (us)" : " (them)";
 	};
 
 	const modePreferences = data.match.memento?.modePreferences?.[map.mode];
 
 	const userIdToName = (userId: number) => {
 		const member = [
-			...data.groupAlpha.members,
-			...data.groupBravo.members,
+			...data.match.groupAlpha.members,
+			...data.match.groupBravo.members,
 		].find((m) => m.id === userId);
 
 		return member?.username ?? "";
@@ -1216,7 +1262,7 @@ function MapListMap({
 									{t("q:match.sides.alpha")}
 									<span
 										className={clsx({
-											"text-success": data.groupMemberOf === "ALPHA",
+											"text-success": groupMemberOf === "ALPHA",
 										})}
 									>
 										{relativeSideText("ALPHA")}
@@ -1236,7 +1282,7 @@ function MapListMap({
 									{t("q:match.sides.bravo")}
 									<span
 										className={clsx({
-											"text-success": data.groupMemberOf === "BRAVO",
+											"text-success": groupMemberOf === "BRAVO",
 										})}
 									>
 										{relativeSideText("BRAVO")}
@@ -1316,8 +1362,8 @@ function MapListMapPickInfo({
 
 	const userIdToUser = (userId: number) => {
 		const member = [
-			...data.groupAlpha.members,
-			...data.groupBravo.members,
+			...data.match.groupAlpha.members,
+			...data.match.groupBravo.members,
 		].find((m) => m.id === userId);
 
 		return member;
@@ -1328,7 +1374,7 @@ function MapListMapPickInfo({
 
 		if (!data.match.memento?.pools) return result;
 
-		const pickerGroups = [data.groupAlpha, data.groupBravo].filter(
+		const pickerGroups = [data.match.groupAlpha, data.match.groupBravo].filter(
 			(g) => map.source === "BOTH" || String(g.id) === map.source,
 		);
 		if (pickerGroups.length === 0) return result;
@@ -1419,7 +1465,7 @@ function ResultSummary({ winners }: { winners: ("ALPHA" | "BRAVO")[] }) {
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
 
-	const ownSide = data.groupAlpha.members.some((m) => m.id === user?.id)
+	const ownSide = data.match.groupAlpha.members.some((m) => m.id === user?.id)
 		? "ALPHA"
 		: "BRAVO";
 

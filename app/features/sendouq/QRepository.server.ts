@@ -1,10 +1,6 @@
 import { sub } from "date-fns";
 import { type NotNull, sql, type Transaction } from "kysely";
-import {
-	jsonArrayFrom,
-	jsonBuildObject,
-	jsonObjectFrom,
-} from "kysely/helpers/sqlite";
+import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type {
 	DB,
@@ -13,7 +9,6 @@ import type {
 	UserMapModePreferences,
 } from "~/db/tables";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
-import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { shortNanoid } from "~/utils/id";
 import {
 	COMMON_USER_FIELDS,
@@ -21,7 +16,6 @@ import {
 } from "~/utils/kysely.server";
 import { userIsBanned } from "../ban/core/banned.server";
 import { FULL_GROUP_SIZE } from "./q-constants";
-import type { LookingGroupWithInviteCode } from "./q-types";
 
 // xxx: rename to SQGroupRepository
 
@@ -35,10 +29,6 @@ export function mapModePreferencesByGroupId(groupId: number) {
 		.$narrowType<{ preferences: NotNull }>()
 		.execute();
 }
-
-// groups visible for longer to make development easier
-const SECONDS_TILL_STALE =
-	process.env.NODE_ENV === "development" || IS_E2E_TEST_RUN ? 1_000_000 : 1_800;
 
 export async function findCurrentGroups() {
 	type SendouQMemberObject = Pick<
@@ -111,123 +101,6 @@ export async function findCurrentGroups() {
 		)
 		.groupBy("Group.id")
 		.execute();
-}
-
-export async function findLookingGroups({
-	minGroupSize,
-	maxGroupSize,
-	ownGroupId,
-	includeChatCode = false,
-	includeMapModePreferences = false,
-	loggedInUserId,
-}: {
-	minGroupSize?: number;
-	maxGroupSize?: number;
-	ownGroupId?: number;
-	includeChatCode?: boolean;
-	includeMapModePreferences?: boolean;
-	loggedInUserId?: number;
-}): Promise<LookingGroupWithInviteCode[]> {
-	const rows = await db
-		.selectFrom("Group")
-		.leftJoin("GroupMatch", (join) =>
-			join.on((eb) =>
-				eb.or([
-					eb("GroupMatch.alphaGroupId", "=", eb.ref("Group.id")),
-					eb("GroupMatch.bravoGroupId", "=", eb.ref("Group.id")),
-				]),
-			),
-		)
-		.select((eb) => [
-			"Group.id",
-			"Group.createdAt",
-			"Group.chatCode",
-			"Group.inviteCode",
-			jsonArrayFrom(
-				eb
-					.selectFrom("GroupMember")
-					.innerJoin("User", "User.id", "GroupMember.userId")
-					.leftJoin("PlusTier", "PlusTier.userId", "GroupMember.userId")
-					.select((arrayEb) => [
-						...COMMON_USER_FIELDS,
-						"User.qWeaponPool as weapons",
-						"PlusTier.tier as plusTier",
-						"GroupMember.note",
-						"GroupMember.role",
-						"User.languages",
-						"User.vc",
-						"User.noScreen",
-						jsonObjectFrom(
-							eb
-								.selectFrom("PrivateUserNote")
-								.select([
-									"PrivateUserNote.sentiment",
-									"PrivateUserNote.text",
-									"PrivateUserNote.updatedAt",
-								])
-								.where("authorId", "=", loggedInUserId ?? -1)
-								.where("targetId", "=", arrayEb.ref("User.id")),
-						).as("privateNote"),
-						sql<
-							string | null
-						>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."css" ->> 'chat', null)`.as(
-							"chatNameColor",
-						),
-					])
-					.where("GroupMember.groupId", "=", eb.ref("Group.id"))
-					.groupBy("GroupMember.userId"),
-			).as("members"),
-		])
-		.$if(includeMapModePreferences, (qb) =>
-			qb.select((eb) =>
-				jsonArrayFrom(
-					eb
-						.selectFrom("GroupMember")
-						.innerJoin("User", "User.id", "GroupMember.userId")
-						.select("User.mapModePreferences")
-						.where("GroupMember.groupId", "=", eb.ref("Group.id"))
-						.where("User.mapModePreferences", "is not", null),
-				).as("mapModePreferences"),
-			),
-		)
-		.where("Group.status", "=", "ACTIVE")
-		.where("GroupMatch.id", "is", null)
-		.where((eb) =>
-			eb.or([
-				eb(
-					"Group.latestActionAt",
-					">",
-					sql<number>`(unixepoch() - ${SECONDS_TILL_STALE})`,
-				),
-				eb("Group.id", "=", ownGroupId ?? -1),
-			]),
-		)
-		.execute();
-
-	// TODO: a bit weird we filter chatCode here but not inviteCode and do some logic about filtering
-	return rows
-		.map((row) => {
-			return {
-				...row,
-				chatCode: includeChatCode ? row.chatCode : undefined,
-				mapModePreferences: row.mapModePreferences?.map(
-					(c) => c.mapModePreferences,
-				) as NonNullable<Tables["User"]["mapModePreferences"]>[],
-				members: row.members.map((member) => {
-					return {
-						...member,
-						languages: member.languages ? member.languages.split(",") : [],
-					} as LookingGroupWithInviteCode["members"][number];
-				}),
-			};
-		})
-		.filter((group) => {
-			if (group.id === ownGroupId) return true;
-			if (maxGroupSize && group.members.length > maxGroupSize) return false;
-			if (minGroupSize && group.members.length < minGroupSize) return false;
-
-			return true;
-		});
 }
 
 export async function findActiveGroupMembers() {

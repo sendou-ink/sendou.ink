@@ -6,16 +6,16 @@ import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { Tables } from "~/db/tables";
+import type { SQMatchGroup } from "~/features/sendouq/core/SQManager.server";
 import { SENDOUQ } from "~/features/sendouq/q-constants";
 import { preferenceEmojiUrl } from "~/utils/urls";
-import type { GroupForMatch } from "../QMatchRepository.server";
 
 export function AddPrivateNoteDialog({
 	aboutUser,
 	close,
 }: {
 	aboutUser?: Pick<
-		GroupForMatch["members"][number],
+		SQMatchGroup["members"][number],
 		"id" | "username" | "privateNote"
 	>;
 	close: () => void;

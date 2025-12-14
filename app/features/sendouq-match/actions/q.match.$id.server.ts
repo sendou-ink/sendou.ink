@@ -7,6 +7,7 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import type { ChatMessage } from "~/features/chat/chat-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
+import { SQManager } from "~/features/sendouq/core/SQManager.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import { findCurrentGroupByUserId } from "~/features/sendouq/queries/findCurrentGroupByUserId.server";
 import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
@@ -72,7 +73,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				})();
 			};
 
-			const match = notFoundIfFalsy(findMatchById(matchId));
+			const unmappedMatch = notFoundIfFalsy(
+				await QMatchRepository.findById(matchId),
+			);
+			const match = SQManager.mapMatch(unmappedMatch, user);
 			if (match.isLocked) {
 				reportWeapons();
 				return null;
@@ -83,17 +87,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				"Only mods can report scores as admin",
 			);
 			const members = [
-				...(await QMatchRepository.findGroupById({
-					groupId: match.alphaGroupId,
-				}))!.members.map((m) => ({
+				...match.groupAlpha.members.map((m) => ({
 					...m,
-					groupId: match.alphaGroupId,
+					groupId: match.groupAlpha.id,
 				})),
-				...(await QMatchRepository.findGroupById({
-					groupId: match.bravoGroupId,
-				}))!.members.map((m) => ({
+				...match.groupBravo.members.map((m) => ({
 					...m,
-					groupId: match.bravoGroupId,
+					groupId: match.groupBravo.id,
 				})),
 			];
 
@@ -105,9 +105,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			const winner = winnersArrayToWinner(data.winners);
 			const winnerGroupId =
-				winner === "ALPHA" ? match.alphaGroupId : match.bravoGroupId;
+				winner === "ALPHA" ? match.groupAlpha.id : match.groupBravo.id;
 			const loserGroupId =
-				winner === "ALPHA" ? match.bravoGroupId : match.alphaGroupId;
+				winner === "ALPHA" ? match.groupBravo.id : match.groupAlpha.id;
 
 			// when admin reports match gets locked right away
 			const compared = data.adminReport
@@ -133,12 +133,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				compared === "SAME" && !matchIsBeingCanceled
 					? calculateMatchSkills({
 							groupMatchId: match.id,
-							winner: (await QMatchRepository.findGroupById({
-								groupId: winnerGroupId,
-							}))!.members.map((m) => m.id),
-							loser: (await QMatchRepository.findGroupById({
-								groupId: loserGroupId,
-							}))!.members.map((m) => m.id),
+							winner: (match.groupAlpha.id === winnerGroupId
+								? match.groupAlpha
+								: match.groupBravo
+							).members.map((m) => m.id),
+							loser: (match.groupAlpha.id === loserGroupId
+								? match.groupAlpha
+								: match.groupBravo
+							).members.map((m) => m.id),
 							winnerGroupId,
 							loserGroupId,
 						})
@@ -188,8 +190,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				}
 				// admin reporting, just set both groups inactive
 				if (data.adminReport) {
-					setGroupAsInactive(match.alphaGroupId);
-					setGroupAsInactive(match.bravoGroupId);
+					setGroupAsInactive(match.groupAlpha.id);
+					setGroupAsInactive(match.groupBravo.id);
 				}
 			})();
 
@@ -242,10 +244,17 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			const season = Seasons.current();
 			errorToastIfFalsy(season, "Season is not active");
 
-			const previousGroup = await QMatchRepository.findGroupById({
-				groupId: data.previousGroupId,
-			});
-			errorToastIfFalsy(previousGroup, "Previous group not found");
+			const match = notFoundIfFalsy(await QMatchRepository.findById(matchId));
+			const previousGroup =
+				match.groupAlpha.id === data.previousGroupId
+					? match.groupAlpha
+					: match.groupBravo.id === data.previousGroupId
+						? match.groupBravo
+						: null;
+			errorToastIfFalsy(
+				previousGroup,
+				"Previous group not found in this match",
+			);
 
 			for (const member of previousGroup.members) {
 				const currentGroup = findCurrentGroupByUserId(member.id);

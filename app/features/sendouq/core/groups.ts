@@ -1,6 +1,7 @@
 import type { Tables } from "~/db/tables";
 import { databaseTimestampToDate } from "~/utils/dates";
-import type { GroupExpiryStatus, LookingGroup } from "../q-types";
+import type { GroupExpiryStatus } from "../q-types";
+import type { SQGroup } from "./SQManager.server";
 
 // logic is that team who is bigger decides the settings
 // but if groups are the same size then the one who liked
@@ -10,8 +11,8 @@ export function groupAfterMorph({
 	theirGroup,
 	liker,
 }: {
-	ourGroup: LookingGroup;
-	theirGroup: LookingGroup;
+	ourGroup: SQGroup;
+	theirGroup: SQGroup;
 	liker: "US" | "THEM";
 }) {
 	const ourMembers = ourGroup.members ?? [];

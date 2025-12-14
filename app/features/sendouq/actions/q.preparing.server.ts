@@ -4,14 +4,11 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
-import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
-import invariant from "~/utils/invariant";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
-import { hasGroupManagerPerms } from "../core/groups";
+import { SQManager } from "../core/SQManager.server";
 import { preparingSchema } from "../q-schemas.server";
-import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
 import { refreshGroup } from "../queries/refreshGroup.server";
 import { setGroupAsActive } from "../queries/setGroupAsActive.server";
 
@@ -24,10 +21,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		schema: preparingSchema,
 	});
 
-	const currentGroup = findCurrentGroupByUserId(user.id);
-	errorToastIfFalsy(currentGroup, "No group found");
+	const ownGroup = SQManager.findOwnGroup(user.id);
+	errorToastIfFalsy(ownGroup, "No group found");
 
-	if (!hasGroupManagerPerms(currentGroup.role)) {
+	// no perms, possibly just lost them so no more graceful degradation
+	if (ownGroup.usersRole === "REGULAR") {
 		return null;
 	}
 
@@ -36,12 +34,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	switch (data._action) {
 		case "JOIN_QUEUE": {
-			if (currentGroup.status !== "PREPARING") {
+			if (ownGroup.status !== "PREPARING") {
 				return null;
 			}
 
-			setGroupAsActive(currentGroup.id);
-			refreshGroup(currentGroup.id);
+			setGroupAsActive(ownGroup.id);
+			refreshGroup(ownGroup.id);
 
 			return redirect(SENDOUQ_LOOKING_PAGE);
 		}
@@ -58,12 +56,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				"Not trusted",
 			);
 
-			const ownGroupWithMembers = await QMatchRepository.findGroupById({
-				groupId: currentGroup.id,
-			});
-			invariant(ownGroupWithMembers, "No own group found");
-
-			await QRepository.addMember(currentGroup.id, {
+			await QRepository.addMember(ownGroup.id, {
 				userId: data.id,
 				role: "MANAGER",
 			});

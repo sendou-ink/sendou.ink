@@ -1,5 +1,7 @@
+import { isWithinInterval, sub } from "date-fns";
 import * as R from "remeda";
-import type { ParsedMemento } from "~/db/tables";
+import type { DBBoolean, ParsedMemento } from "~/db/tables";
+import type { AuthenticatedUser } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { defaultOrdinal } from "~/features/mmr/mmr-utils";
 import {
@@ -8,8 +10,10 @@ import {
 	userSkills,
 } from "~/features/mmr/tiered.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
+import type * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
+import { databaseTimestampToDate } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
 import { FULL_GROUP_SIZE } from "../q-constants";
 import type { TierDifference } from "../q-types";
@@ -24,6 +28,9 @@ type DBPrivateNoteRow = Awaited<
 type DBRecentlyFinishedMatchRow = Awaited<
 	ReturnType<typeof QRepository.findRecentlyFinishedMatches>
 >[number];
+type DBMatch = NonNullable<
+	Awaited<ReturnType<typeof QMatchRepository.findById>>
+>;
 
 export type SQGroup = SerializeFrom<
 	ReturnType<SQManagerClass["lookingGroups"]>[number]
@@ -31,6 +38,8 @@ export type SQGroup = SerializeFrom<
 export type SQOwnGroup = SerializeFrom<
 	NonNullable<ReturnType<SQManagerClass["findOwnGroup"]>>
 >;
+export type SQMatch = SerializeFrom<ReturnType<SQManagerClass["mapMatch"]>>;
+export type SQMatchGroup = SQMatch["groupAlpha"] | SQMatch["groupBravo"];
 
 const FALLBACK_TIER = { isPlus: false, name: "IRON" } as const;
 
@@ -95,13 +104,77 @@ class SQManagerClass {
 	}
 
 	findOwnGroup(userId: number) {
-		return this.groups.find((group) =>
+		const result = this.groups.find((group) =>
 			group.members.some((member) => member.id === userId),
 		);
+		if (!result) return null;
+
+		const member = result.members.find((m) => m.id === userId)!;
+
+		return {
+			usersRole: member.role,
+			...result,
+		};
 	}
 
 	findGroupByInviteCode(inviteCode: string) {
 		return this.groups.find((group) => group.inviteCode === inviteCode);
+	}
+
+	mapMatch(match: DBMatch, user?: AuthenticatedUser) {
+		const isTeamAlphaMember = match.groupAlpha.members.some(
+			(m) => m.id === user?.id,
+		);
+		const isTeamBravoMember = match.groupBravo.members.some(
+			(m) => m.id === user?.id,
+		);
+		const isMatchInsider =
+			isTeamAlphaMember || isTeamBravoMember || user?.roles.includes("STAFF");
+		const happenedInLastMonth = isWithinInterval(
+			databaseTimestampToDate(match.createdAt),
+			{
+				start: sub(new Date(), { months: 1 }),
+				end: new Date(),
+			},
+		);
+
+		const season = Seasons.currentOrPrevious();
+		/*const { intervals, userSkills: calculatedUserSkills } = */ userSkills(
+			season!.nth,
+		);
+
+		const matchGroupCensorer = (
+			group: DBMatch["groupAlpha"] | DBMatch["groupBravo"],
+			isTeamMember: boolean,
+		) => {
+			return {
+				...group,
+				isReplay: false,
+				tierRange: null as TierDifference | null,
+				chatCode: isTeamMember ? group.chatCode : undefined,
+				noScreen: this.#groupNoScreen(group),
+				tier: null as TieredSkill["tier"] | null,
+				skillDifference: "idk" as any,
+				modePreferences: this.#groupModePreferences(group),
+				members: group.members.map((m) => ({
+					...m,
+					skill: "idk" as any,
+					privateNote: "idk" as any,
+					skillDifference: "idk" as any,
+					noScreen: undefined,
+					languages: m.languages?.split(",") || [],
+					friendCode:
+						isMatchInsider && happenedInLastMonth ? m.friendCode : undefined,
+				})),
+			};
+		};
+
+		return {
+			...match,
+			chatCode: isMatchInsider ? match.chatCode : undefined,
+			groupAlpha: matchGroupCensorer(match.groupAlpha, isTeamAlphaMember),
+			groupBravo: matchGroupCensorer(match.groupBravo, isTeamBravoMember),
+		};
 	}
 
 	previewGroups(notes: DBPrivateNoteRow[]) {
@@ -111,7 +184,7 @@ class SQManagerClass {
 			.map((group) => this.#censorGroup(group));
 	}
 
-	lookingGroups(userId: number, notes: DBPrivateNoteRow[]) {
+	lookingGroups(userId: number, notes: DBPrivateNoteRow[] = []) {
 		const ownGroup = this.findOwnGroup(userId);
 		if (!ownGroup) return [];
 
@@ -124,6 +197,7 @@ class SQManagerClass {
 						? [1, 2]
 						: [1, 2, 3];
 
+		// xxx: handle stale groups somewhere
 		return this.groups
 			.filter(
 				(group) =>
@@ -135,7 +209,7 @@ class SQManagerClass {
 			.map(this.#getGroupReplayMapper(userId))
 			.map(this.#getAddTierRangeMapper(ownGroup.tier))
 			.map(this.#getAddMemberPrivateNoteMapper(notes))
-			.sort(this.#getNoteSortComparator())
+			.sort(this.#getNoteSortComparator()) // xxx: sort by skill too
 			.map((group) => this.#censorGroup(group));
 	}
 
@@ -266,13 +340,15 @@ class SQManagerClass {
 		};
 	}
 
-	#groupNoScreen(group: DBGroupRow) {
+	#groupNoScreen(group: { members: { noScreen: DBBoolean }[] }) {
 		return this.#groupIsFull(group)
 			? group.members.some((member) => member.noScreen)
 			: null;
 	}
 
-	#groupModePreferences(group: DBGroupRow): ModeShort[] {
+	#groupModePreferences(
+		group: DBGroupRow | DBMatch["groupAlpha"] | DBMatch["groupBravo"],
+	): ModeShort[] {
 		const modePreferences: ModeShort[] = [];
 
 		for (const mode of modesShort) {
@@ -318,7 +394,7 @@ class SQManagerClass {
 		userSkills,
 		intervals,
 	}: {
-		group: DBGroupRow;
+		group: DBGroupRow | DBMatch["groupAlpha"] | DBMatch["groupBravo"];
 		userSkills: Record<string, TieredSkill>;
 		intervals: SkillTierInterval[];
 	}): TieredSkill["tier"] | undefined {

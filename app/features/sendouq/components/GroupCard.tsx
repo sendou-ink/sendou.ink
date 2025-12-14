@@ -36,7 +36,11 @@ import {
 	userPage,
 } from "~/utils/urls";
 import { useOwnGroup } from "../contexts/GroupContext";
-import type { SQGroup, SQOwnGroup } from "../core/SQManager.server";
+import type {
+	SQGroup,
+	SQMatchGroup,
+	SQOwnGroup,
+} from "../core/SQManager.server";
 import { FULL_GROUP_SIZE, SENDOUQ } from "../q-constants";
 import { resolveFutureMatchModes } from "../q-utils";
 
@@ -50,7 +54,7 @@ export function GroupCard({
 	showAddNote,
 	showNote = false,
 }: {
-	group: SQGroup | SQOwnGroup;
+	group: SQGroup | SQOwnGroup | SQMatchGroup;
 	action?: "LIKE" | "UNLIKE" | "GROUP_UP" | "MATCH_UP" | "MATCH_UP_RECHALLENGE";
 	displayOnly?: boolean;
 	hideVc?: SqlBool;
@@ -246,7 +250,7 @@ function GroupMember({
 	showAddNote,
 	showNote,
 }: {
-	member: SQGroup["members"][number];
+	member: SQGroup["members"][number] | SQMatchGroup["members"][number];
 	showActions: boolean;
 	displayOnly?: boolean;
 	hideVc?: SqlBool;
@@ -746,7 +750,7 @@ function TierInfo({ skill }: { skill: TieredSkill | "CALCULATING" }) {
 function VoiceChatInfo({
 	member,
 }: {
-	member: Pick<SQGroup["members"][number], "id" | "vc" | "languages">;
+	member: Pick<SQMatchGroup["members"][number], "id" | "vc" | "languages">;
 }) {
 	const user = useUser();
 	const { t } = useTranslation(["q"]);

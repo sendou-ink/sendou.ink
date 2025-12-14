@@ -4,25 +4,16 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
-import type { LookingGroupWithInviteCode } from "~/features/sendouq/q-types";
 import {
 	createMatchMemento,
 	matchMapList,
 } from "~/features/sendouq-match/core/match.server";
-import invariant from "~/utils/invariant";
-import { logger } from "~/utils/logger";
-import {
-	errorToast,
-	errorToastIfFalsy,
-	parseRequestPayload,
-} from "~/utils/remix.server";
+import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
 import { groupAfterMorph } from "../core/groups";
-import { membersNeededForFull } from "../core/groups.server";
-import { refreshSQManagerInstance } from "../core/SQManager.server";
-import { FULL_GROUP_SIZE } from "../q-constants";
+import { refreshSQManagerInstance, SQManager } from "../core/SQManager.server";
 import { lookingSchema } from "../q-schemas.server";
 import { addLike } from "../queries/addLike.server";
 import { addManagerRole } from "../queries/addManagerRole.server";
@@ -30,15 +21,14 @@ import { chatCodeByGroupId } from "../queries/chatCodeByGroupId.server";
 import { createMatch } from "../queries/createMatch.server";
 import { deleteLike } from "../queries/deleteLike.server";
 import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
-import { groupHasMatch } from "../queries/groupHasMatch.server";
-import { groupSize } from "../queries/groupSize.server";
 import { groupSuccessorOwner } from "../queries/groupSuccessorOwner";
 import { leaveGroup } from "../queries/leaveGroup.server";
-import { likeExists } from "../queries/likeExists.server";
 import { morphGroups } from "../queries/morphGroups.server";
 import { refreshGroup } from "../queries/refreshGroup.server";
 import { removeManagerRole } from "../queries/removeManagerRole.server";
 import { updateNote } from "../queries/updateNote.server";
+
+// xxx: refactor to action -> check DB style
 
 // this function doesn't throw normally because we are assuming
 // if there is a validation error the user saw stale data
@@ -117,29 +107,12 @@ export const action: ActionFunction = async ({ request }) => {
 		}
 		case "GROUP_UP": {
 			if (!isGroupManager()) return null;
-			if (
-				!likeExists({
-					targetGroupId: currentGroup.id,
-					likerGroupId: data.targetGroupId,
-				})
-			) {
-				return null;
-			}
 
-			const lookingGroups = await QRepository.findLookingGroups({
-				maxGroupSize: membersNeededForFull(groupSize(currentGroup.id)),
-				ownGroupId: currentGroup.id,
-				includeChatCode: true,
-			});
-
-			const ourGroup = lookingGroups.find(
-				(group) => group.id === currentGroup.id,
-			);
-			if (!ourGroup) return null;
-			const theirGroup = lookingGroups.find(
+			const ourGroup = SQManager.findOwnGroup(user.id);
+			const theirGroup = SQManager.lookingGroups(user.id).find(
 				(group) => group.id === data.targetGroupId,
 			);
-			if (!theirGroup) return null;
+			if (!ourGroup || !theirGroup) return null;
 
 			const { id: survivingGroupId } = groupAfterMorph({
 				liker: "THEM",
@@ -150,9 +123,7 @@ export const action: ActionFunction = async ({ request }) => {
 			const otherGroup =
 				ourGroup.id === survivingGroupId ? theirGroup : ourGroup;
 
-			invariant(ourGroup.members, "our group has no members");
-			invariant(otherGroup.members, "other group has no members");
-
+			// xxx: with checks this one
 			morphGroups({
 				survivingGroupId,
 				otherGroupId: otherGroup.id,
@@ -162,18 +133,19 @@ export const action: ActionFunction = async ({ request }) => {
 
 			await refreshSQManagerInstance();
 
-			if (ourGroup.chatCode && theirGroup.chatCode) {
+			// xxx: both chat codes
+			if (ourGroup.chatCode /*&& theirGroup.chatCode*/) {
 				ChatSystemMessage.send([
 					{
 						room: ourGroup.chatCode,
 						type: "NEW_GROUP",
 						revalidateOnly: true,
 					},
-					{
-						room: theirGroup.chatCode,
-						type: "NEW_GROUP",
-						revalidateOnly: true,
-					},
+					// {
+					// 	room: theirGroup.chatCode,
+					// 	type: "NEW_GROUP",
+					// 	revalidateOnly: true,
+					// },
 				]);
 			}
 
@@ -182,47 +154,12 @@ export const action: ActionFunction = async ({ request }) => {
 		case "MATCH_UP_RECHALLENGE":
 		case "MATCH_UP": {
 			if (!isGroupManager()) return null;
-			if (
-				!likeExists({
-					targetGroupId: currentGroup.id,
-					likerGroupId: data.targetGroupId,
-				})
-			) {
-				return null;
-			}
 
-			const lookingGroups = await QRepository.findLookingGroups({
-				minGroupSize: FULL_GROUP_SIZE,
-				ownGroupId: currentGroup.id,
-				includeChatCode: true,
-			});
-
-			const ourGroup = lookingGroups.find(
-				(group) => group.id === currentGroup.id,
-			);
-			if (!ourGroup) return null;
-			const theirGroup = lookingGroups.find(
+			const ourGroup = SQManager.findOwnGroup(user.id);
+			const theirGroup = SQManager.lookingGroups(user.id).find(
 				(group) => group.id === data.targetGroupId,
 			);
-			if (!theirGroup) return null;
-
-			errorToastIfFalsy(
-				ourGroup.members.length === FULL_GROUP_SIZE,
-				"Our group is not full",
-			);
-			errorToastIfFalsy(
-				theirGroup.members.length === FULL_GROUP_SIZE,
-				"Their group is not full",
-			);
-
-			errorToastIfFalsy(
-				!groupHasMatch(ourGroup.id),
-				"Our group already has a match",
-			);
-			errorToastIfFalsy(
-				!groupHasMatch(theirGroup.id),
-				"Their group already has a match",
-			);
+			if (!ourGroup || !theirGroup) return null;
 
 			const ourGroupPreferences = await QRepository.mapModePreferencesByGroupId(
 				ourGroup.id,
@@ -241,20 +178,6 @@ export const action: ActionFunction = async ({ request }) => {
 				},
 			);
 
-			const memberInManyGroups = verifyNoMemberInTwoGroups(
-				[...ourGroup.members, ...theirGroup.members],
-				lookingGroups,
-			);
-			if (memberInManyGroups) {
-				logger.error("User in two groups preventing match creation", {
-					userId: memberInManyGroups.id,
-				});
-
-				errorToast(
-					`${memberInManyGroups.username} is in two groups so match can't be started`,
-				);
-			}
-
 			const createdMatch = createMatch({
 				alphaGroupId: ourGroup.id,
 				bravoGroupId: theirGroup.id,
@@ -268,18 +191,19 @@ export const action: ActionFunction = async ({ request }) => {
 
 			await refreshSQManagerInstance();
 
-			if (ourGroup.chatCode && theirGroup.chatCode) {
+			// xxx: both chat codes
+			if (ourGroup.chatCode /* && theirGroup.chatCode*/) {
 				ChatSystemMessage.send([
 					{
 						room: ourGroup.chatCode,
 						type: "MATCH_STARTED",
 						revalidateOnly: true,
 					},
-					{
-						room: theirGroup.chatCode,
-						type: "MATCH_STARTED",
-						revalidateOnly: true,
-					},
+					// {
+					// 	room: theirGroup.chatCode,
+					// 	type: "MATCH_STARTED",
+					// 	revalidateOnly: true,
+					// },
 				]);
 			}
 
@@ -402,23 +326,3 @@ export const action: ActionFunction = async ({ request }) => {
 
 	return null;
 };
-
-/** Sanity check that no member is in two groups due to a bug or race condition.
- *
- * @returns null if no member is in two groups, otherwise return the problematic member
- */
-function verifyNoMemberInTwoGroups(
-	members: LookingGroupWithInviteCode["members"],
-	allGroups: LookingGroupWithInviteCode[],
-) {
-	for (const member of members) {
-		if (
-			allGroups.filter((group) => group.members.some((m) => m.id === member.id))
-				.length > 1
-		) {
-			return member;
-		}
-	}
-
-	return null;
-}

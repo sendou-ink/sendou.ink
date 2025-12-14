@@ -21,6 +21,7 @@ import {
 } from "~/features/plus-voting/core";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
+import { SQManager } from "~/features/sendouq/core/SQManager.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import { createMatch } from "~/features/sendouq/queries/createMatch.server";
 import { calculateMatchSkills } from "~/features/sendouq-match/core/skills.server";
@@ -34,7 +35,6 @@ import { addMapResults } from "~/features/sendouq-match/queries/addMapResults.se
 import { addPlayerResults } from "~/features/sendouq-match/queries/addPlayerResults.server";
 import { addReportedWeapons } from "~/features/sendouq-match/queries/addReportedWeapons.server";
 import { addSkills } from "~/features/sendouq-match/queries/addSkills.server";
-import { findMatchById } from "~/features/sendouq-match/queries/findMatchById.server";
 import { reportScore } from "~/features/sendouq-match/queries/reportScore.server";
 import { setGroupAsInactive } from "~/features/sendouq-match/queries/setGroupAsInactive.server";
 import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
@@ -2256,7 +2256,9 @@ async function playedMatches() {
 			["ALPHA", "BRAVO", "ALPHA", "BRAVO", "BRAVO", "BRAVO"],
 		]) as ("ALPHA" | "BRAVO")[];
 		const winner = winnersArrayToWinner(winners);
-		const finishedMatch = findMatchById(match.id)!;
+		const finishedMatch = SQManager.mapMatch(
+			(await QMatchRepository.findById(match.id))!,
+		);
 
 		const { newSkills, differences } = calculateMatchSkills({
 			groupMatchId: match.id,
@@ -2265,16 +2267,13 @@ async function playedMatches() {
 			loserGroupId: winner === "ALPHA" ? groupBravo : groupAlpha,
 			winnerGroupId: winner === "ALPHA" ? groupAlpha : groupBravo,
 		});
+
 		const members = [
-			...(await QMatchRepository.findGroupById({
-				groupId: match.alphaGroupId,
-			}))!.members.map((m) => ({
+			...finishedMatch.groupAlpha.members.map((m) => ({
 				...m,
 				groupId: match.alphaGroupId,
 			})),
-			...(await QMatchRepository.findGroupById({
-				groupId: match.alphaGroupId,
-			}))!.members.map((m) => ({
+			...finishedMatch.groupBravo.members.map((m) => ({
 				...m,
 				groupId: match.bravoGroupId,
 			})),
