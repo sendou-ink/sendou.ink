@@ -1,9 +1,15 @@
 import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
+import {
+	Link,
+	useFetcher,
+	useLoaderData,
+	useSearchParams,
+} from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { LinkButton } from "~/components/elements/Button";
+import { SendouSwitch } from "~/components/elements/Switch";
 import {
 	SendouTab,
 	SendouTabList,
@@ -20,7 +26,8 @@ import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { BannedUsersList } from "~/features/tournament-organization/components/BannedPlayersList";
-import { useHasPermission } from "~/modules/permissions/hooks";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
+import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -32,7 +39,6 @@ import {
 	tournamentOrganizationPage,
 	tournamentPage,
 	userPage,
-	userSubmittedImage,
 } from "~/utils/urls";
 import { action } from "../actions/org.$slug.server";
 import { EventCalendar } from "../components/EventCalendar";
@@ -52,7 +58,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 		description: args.data.organization.description ?? undefined,
 		image: args.data.organization.avatarUrl
 			? {
-					url: userSubmittedImage(args.data.organization.avatarUrl),
+					url: args.data.organization.avatarUrl,
 					dimensions: { width: 124, height: 124 },
 				}
 			: undefined,
@@ -69,7 +75,7 @@ export const handle: SendouRouteHandle = {
 		return [
 			data.organization.avatarUrl
 				? {
-						imgPath: userSubmittedImage(data.organization.avatarUrl),
+						imgPath: data.organization.avatarUrl,
 						href: tournamentOrganizationPage({
 							organizationSlug: data.organization.slug,
 						}),
@@ -94,6 +100,7 @@ export default function TournamentOrganizationPage() {
 	return (
 		<Main className="stack lg">
 			<LogoHeader />
+			<AdminControls />
 			<InfoTabs />
 			{data.organization.series.length > 0 ? (
 				<SeriesSelector series={data.organization.series} />
@@ -114,14 +121,7 @@ function LogoHeader() {
 
 	return (
 		<div className="stack horizontal md">
-			<Avatar
-				size="lg"
-				url={
-					data.organization.avatarUrl
-						? userSubmittedImage(data.organization.avatarUrl)
-						: undefined
-				}
-			/>
+			<Avatar size="lg" url={data.organization.avatarUrl ?? undefined} />
 			<div className="stack sm">
 				<div className="text-xl font-bold">{data.organization.name}</div>
 				{canEditOrganization ? (
@@ -140,6 +140,37 @@ function LogoHeader() {
 				<div className="whitespace-pre-wrap text-sm text-lighter">
 					{data.organization.description}
 				</div>
+			</div>
+		</div>
+	);
+}
+
+function AdminControls() {
+	const data = useLoaderData<typeof loader>();
+	const fetcher = useFetcher();
+	const isAdmin = useHasRole("ADMIN");
+
+	if (!isAdmin) return null;
+
+	const onChange = (isSelected: boolean) => {
+		fetcher.submit(
+			{ _action: "UPDATE_IS_ESTABLISHED", isEstablished: isSelected },
+			{ method: "post", encType: "application/json" },
+		);
+	};
+
+	return (
+		<div className="stack sm">
+			<div className="text-sm font-semi-bold">Admin Controls</div>
+			<div>
+				<SendouSwitch
+					defaultSelected={Boolean(data.organization.isEstablished)}
+					onChange={onChange}
+					isDisabled={fetcher.state !== "idle"}
+					data-testid="is-established-switch"
+				>
+					Is Established Organization
+				</SendouSwitch>
 			</div>
 		</div>
 	);
@@ -238,7 +269,7 @@ function AllTournamentsView() {
 				events={data.events}
 				fallbackLogoUrl={
 					data.organization.avatarUrl
-						? userSubmittedImage(data.organization.avatarUrl)
+						? data.organization.avatarUrl
 						: BLANK_IMAGE_URL
 				}
 			/>
@@ -294,7 +325,8 @@ function SeriesHeader({
 }: {
 	series: NonNullable<SerializeFrom<typeof loader>["series"]>;
 }) {
-	const { i18n, t } = useTranslation(["org"]);
+	const { t } = useTranslation(["org"]);
+	const { formatDate } = useTimeFormat();
 
 	return (
 		<div className="stack md">
@@ -313,13 +345,10 @@ function SeriesHeader({
 					{series.established ? (
 						<div className="text-lighter text-italic text-xs">
 							{t("org:events.established.short")}{" "}
-							{databaseTimestampToDate(series.established).toLocaleDateString(
-								i18n.language,
-								{
-									month: "long",
-									year: "numeric",
-								},
-							)}
+							{formatDate(databaseTimestampToDate(series.established), {
+								month: "long",
+								year: "numeric",
+							})}
 						</div>
 					) : null}
 				</div>
@@ -420,7 +449,7 @@ function EventInfo({
 	event: SerializeFrom<typeof loader>["events"][number];
 	showYear?: boolean;
 }) {
-	const { i18n } = useTranslation();
+	const { formatDateTime } = useTimeFormat();
 
 	return (
 		<div className="stack sm">
@@ -438,16 +467,13 @@ function EventInfo({
 				<div>
 					<div className="org__event-info__name">{event.name}</div>
 					<time className="org__event-info__time" suppressHydrationWarning>
-						{databaseTimestampToDate(event.startTime).toLocaleString(
-							i18n.language,
-							{
-								day: "numeric",
-								month: "numeric",
-								hour: "numeric",
-								minute: "numeric",
-								year: showYear ? "numeric" : undefined,
-							},
-						)}
+						{formatDateTime(databaseTimestampToDate(event.startTime), {
+							day: "numeric",
+							month: "numeric",
+							hour: "numeric",
+							minute: "numeric",
+							year: showYear ? "numeric" : undefined,
+						})}
 					</time>
 				</div>
 			</Link>
@@ -472,7 +498,7 @@ function EventWinners({
 				<Placement placement={1} size={24} />
 				{winner.avatarUrl ? (
 					<img
-						src={userSubmittedImage(winner.avatarUrl)}
+						src={winner.avatarUrl}
 						alt=""
 						width={24}
 						height={24}

@@ -19,7 +19,6 @@
 	"privateNote.sentiment.NEUTRAL": "Neutrale",
 	"privateNote.sentiment.NEGATIVE": "Negativo",
 	"privateNote.delete.header": "Cancellare la tua nota su {{name}}?",
-
 	"front.cities.la": "Los Angeles",
 	"front.cities.nyc": "New York",
 	"front.cities.paris": "Parigi",
@@ -51,7 +50,6 @@
 	"front.seasonOpen": "Stagione {{nth}} aperta",
 	"front.preview": "Visualizza gruppi nella coda prima di unirti",
 	"front.preview.explanation": "Questa funzione è disponibile solo per iscritti al Patreon di sendou.ink di tier Supporter o più",
-
 	"settings.maps.header": "Mappe e modalità",
 	"settings.maps.avoid": "Evita",
 	"settings.maps.prefer": "Preferisci",
@@ -69,6 +67,7 @@
 	"settings.sounds.likeReceived": "Ricevuto un like",
 	"settings.sounds.groupNewMember": "Nuovo membro nel gruppo",
 	"settings.sounds.matchStarted": "Match iniziato",
+	"settings.sounds.tournamentMatchStarted": "",
 	"settings.mapPool.notOk": "Scegli {{count}} mappe per modalità che non hai evitato per salvare le tue preferenze",
 	"settings.misc.header": "Misc",
 	"settings.banned": "Bannata",
@@ -78,7 +77,6 @@
 	"settings.trusted.trustedExplanation": "Gli utenti fidati possono aggiungerti direttamente al proprio gruppo SendouQ o ad un torneo. Se rimossi da questa lista, nel futuro necessiterai di unirti tramite un link che loro condividono",
 	"settings.trusted.noTrustedExplanation": "Non hai nessun utente fidato. Possono essere aggiunti quando entri nel loro gruppo SendouQ o torneo tramite un link. Gli utenti fidati possono aggiungerti direttamente al proprio gruppo SendouQ o ad un torneo.",
 	"settings.trusted.teamExplanation": "Oltre agli utenti sopracitati, un membro del tuo team <2>{{name}}</2> può aggiungerti direttamente.",
-
 	"looking.joiningGroupError": "Prima di unirti a un nuovo gruppo, lascia quello attuale",
 	"looking.goToSettingsPrompt": "Per aiutarti a trovare un gruppo, imposta la tua pool armi e stato voice chat nella pagina delle impostazioni",
 	"looking.inactiveGroup.soon": "Il gruppo verrà segnato come inattivo. Stai ancora cercando?",
@@ -122,7 +120,7 @@
 	"looking.allTiers": "Tutti i tier",
 	"looking.joinQPrompt": "Unisciti alla coda o trova un gruppo",
 	"looking.range.or": "o",
-
+	"looking.range.or.explanation": "",
 	"match.header": "Match #{{number}}",
 	"match.spInfo": "Gli SP verranno sistemati una volta che entrambi i team riporteranno lo stesso punteggio",
 	"match.dispute.button": "Disputa?",
@@ -165,14 +163,11 @@
 	"match.outcome.loss": "sconfitta",
 	"match.screen.ban": "Armi con {{special}} non sono permesse in questo match",
 	"match.screen.allowed": "Armi con {{special}} non sono permesse in questo match",
-
 	"preparing.joinQ": "Unisciti alla coda",
-
 	"tiers.currentCriteria": "Criterio corrente",
 	"tiers.info.p1": "Per esempio Leviathan è la top 5% dei giocatori. Diamante è l' 85esimo percentile etc.",
 	"tiers.info.p2": "Nota bene: Nessuno ha rango Leviathan prima che ci siano {{usersMin}} giocatori sulla classifica (o {{teamsMin}} per i team)",
 	"tiers.info.p3": "Ogni rango ha anche un tier + (see BRONZE+ as an example below). Ciò significa che sei nella top 50% di quel rango.",
-
 	"streams.noStreams": "Nessun match streammato al momento",
 	"streams.ownStreamInfo": "La tua stream è mancante? Assicurati che il tuo account Twitch sia collegato e il gioco settato sia Splatoon 3.",
 	"streams.ownStreamInfo.linkText": "Consulta il FAQ per ulteriori informazioni su come collegare il tuo account Twitch."

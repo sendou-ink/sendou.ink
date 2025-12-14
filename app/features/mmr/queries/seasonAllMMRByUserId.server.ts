@@ -11,7 +11,6 @@ const groupedSkillsStm = sql.prepare(/* sql */ `
     "Skill"
   left join "GroupMatch" on "GroupMatch"."id" = "Skill"."groupMatchId"
   left join "Tournament" on "Tournament"."id" = "Skill"."tournamentId"
-  -- TODO: support tournament having many start dates
   left join "CalendarEvent" on "Tournament"."id" = "CalendarEvent"."tournamentId"
   left join "CalendarEventDate" on "CalendarEvent"."id" = "CalendarEventDate"."eventId"
   where

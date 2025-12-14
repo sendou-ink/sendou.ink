@@ -29,7 +29,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	requirePermission(post, "CANCEL", user);
 
-	if (databaseTimestampToDate(post.at) < new Date()) {
+	if (databaseTimestampToDate(Scrim.getStartTime(post)) < new Date()) {
 		errorToast("Cannot cancel a scrim that was already scheduled to start");
 	}
 
@@ -45,7 +45,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			type: "SCRIM_CANCELED",
 			meta: {
 				id: post.id,
-				at: databaseTimestampToJavascriptTimestamp(post.at),
+				at: databaseTimestampToJavascriptTimestamp(Scrim.getStartTime(post)),
 			},
 		},
 	});

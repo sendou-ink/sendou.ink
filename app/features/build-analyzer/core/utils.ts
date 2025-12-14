@@ -13,7 +13,6 @@ import {
 	mainWeaponIds,
 	nonBombSubWeaponIds,
 	nonDamagingSpecialWeaponIds,
-	specialWeaponIds,
 	subWeaponIds,
 	weaponCategories,
 	weaponIdToBaseWeaponId,
@@ -208,11 +207,7 @@ export function validatedAnyWeaponFromSearchParams(
 	if (rawWeapon?.startsWith("SPECIAL_")) {
 		const id = Number(rawWeapon.replace("SPECIAL_", ""));
 
-		if (
-			!specialWeaponIds
-				.filter((id) => !nonDamagingSpecialWeaponIds.includes(id))
-				.includes(id as any)
-		) {
+		if (nonDamagingSpecialWeaponIds.includes(id)) {
 			return DEFAULT_ANY_WEAPON;
 		}
 
@@ -229,12 +224,15 @@ export function validatedAnyWeaponFromSearchParams(
 		return { type: "MAIN", id: id as MainWeaponId };
 	}
 
-	return { type: "MAIN", id: validatedWeaponIdFromSearchParams(searchParams) };
+	return {
+		type: "MAIN",
+		id: validatedWeaponIdFromSearchParams(searchParams) ?? 0,
+	};
 }
 
 export function validatedWeaponIdFromSearchParams(
 	searchParams: URLSearchParams,
-): MainWeaponId {
+) {
 	const weaponId = searchParams.get("weapon")
 		? Number(searchParams.get("weapon"))
 		: null;
@@ -243,7 +241,7 @@ export function validatedWeaponIdFromSearchParams(
 		return weaponId as MainWeaponId;
 	}
 
-	return weaponCategories[0].weaponIds[0];
+	return null;
 }
 
 function validateAbility(

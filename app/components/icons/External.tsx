@@ -8,7 +8,6 @@ export function ExternalIcon({ className }: { className?: string }) {
 			stroke="currentColor"
 			className={className}
 		>
-			<title>External Link Icon</title>
 			<path
 				strokeLinecap="round"
 				strokeLinejoin="round"

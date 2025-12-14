@@ -4,13 +4,14 @@ import type { Match } from "~/modules/brackets-model";
 import { parseDBArray } from "~/utils/sql";
 
 const stm = sql.prepare(/* sql */ `
-  select 
+  select
     "TournamentMatch"."id",
     "TournamentMatch"."groupId",
     "TournamentMatch"."opponentOne",
     "TournamentMatch"."opponentTwo",
-    "TournamentMatch"."bestOf",
     "TournamentMatch"."chatCode",
+    "TournamentMatch"."startedAt",
+    "TournamentMatch"."status",
     "Tournament"."mapPickingStyle",
     "TournamentRound"."id" as "roundId",
     "TournamentRound"."maps" as "roundMaps",
@@ -52,29 +53,28 @@ export const findMatchById = (id: number) => {
 	const row = stm.get({ id }) as
 		| ((Pick<
 				Tables["TournamentMatch"],
-				"id" | "groupId" | "bestOf" | "chatCode"
+				"id" | "groupId" | "chatCode" | "startedAt" | "status"
 		  > &
 				Pick<Tables["Tournament"], "mapPickingStyle"> & { players: string }) & {
 				opponentOne: string;
 				opponentTwo: string;
 				roundId: number;
-				roundMaps: string | null;
+				roundMaps: string;
 		  })
 		| undefined;
 
 	if (!row) return;
 
-	const roundMaps = row.roundMaps
-		? (JSON.parse(row.roundMaps) as TournamentRoundMaps)
-		: null;
+	const roundMaps = JSON.parse(row.roundMaps) as TournamentRoundMaps;
 
 	return {
 		...row,
-		bestOf: (roundMaps?.count ?? row.bestOf) as 3 | 5 | 7,
+		bestOf: roundMaps.count,
 		roundId: row.roundId,
 		roundMaps,
 		opponentOne: JSON.parse(row.opponentOne) as Match["opponent1"],
 		opponentTwo: JSON.parse(row.opponentTwo) as Match["opponent2"],
+		status: row.status,
 		players: (
 			parseDBArray(row.players) as Array<{
 				id: Tables["User"]["id"];

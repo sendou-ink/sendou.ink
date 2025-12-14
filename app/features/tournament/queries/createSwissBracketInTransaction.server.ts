@@ -1,8 +1,8 @@
-import { nanoid } from "nanoid";
 import { sql } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow } from "~/utils/dates";
+import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 
 const createTournamentStageStm = sql.prepare(/* sql */ `
@@ -18,7 +18,7 @@ const createTournamentStageStm = sql.prepare(/* sql */ `
     @type,
     @createdAt,
     @settings,
-    @number,
+    (select coalesce(max("number"), 0) + 1 from "TournamentStage" where "tournamentId" = @tournamentId),
     @name
   ) returning *
 `);
@@ -54,8 +54,7 @@ const createTournamentMatchStm = sql.prepare(/* sql */ `
     "opponentTwo",
     "roundId",
     "stageId",
-    "status",
-    "createdAt"
+    "status"
   ) values (
     @chatCode,
     @groupId,
@@ -64,8 +63,7 @@ const createTournamentMatchStm = sql.prepare(/* sql */ `
     @opponentTwo,
     @roundId,
     @stageId,
-    @status,
-    @createdAt
+    @status
   )
 `);
 
@@ -79,9 +77,8 @@ export function createSwissBracketInTransaction(
 	const stageFromDB = createTournamentStageStm.get({
 		tournamentId: stageInput.tournament_id,
 		type: stageInput.type,
-		createdAt: dateToDatabaseTimestamp(new Date()),
+		createdAt: databaseTimestampNow(),
 		settings: JSON.stringify(stageInput.settings),
-		number: stageInput.number,
 		name: stageInput.name,
 	}) as Tables["TournamentStage"];
 
@@ -108,7 +105,7 @@ export function createSwissBracketInTransaction(
 				}
 
 				createTournamentMatchStm.run({
-					chatCode: nanoid(10),
+					chatCode: shortNanoid(),
 					groupId: groupFromDB.id,
 					number: match.number,
 					opponentOne: match.opponent1
@@ -120,7 +117,6 @@ export function createSwissBracketInTransaction(
 					roundId: roundFromDB.id,
 					stageId: stageFromDB.id,
 					status: match.status,
-					createdAt: dateToDatabaseTimestamp(new Date()),
 				});
 			}
 		}

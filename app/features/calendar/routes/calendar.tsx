@@ -21,6 +21,7 @@ import { LinkIcon } from "~/components/icons/Link";
 import { Main } from "~/components/Main";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
 import { useCollapsableEvents } from "~/features/calendar/calendar-hooks";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { dayMonthYearToDateValue } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -118,6 +119,7 @@ export default function CalendarPage() {
 						key={`${date.month}-${date.day}`}
 						date={date.day}
 						month={date.month}
+						year={date.year}
 						eventTimes={data.eventTimes.filter((event) => {
 							const eventDate = new Date(event.at);
 
@@ -144,20 +146,17 @@ function NavigateButton({
 	daysInterval: ReturnType<typeof daysForCalendar>["shown"];
 	filters?: CalendarLoaderData["filters"];
 }) {
-	const { i18n } = useTranslation();
+	const { formatDate } = useTimeFormat();
 	const lowestDate = daysInterval[0];
 	const highestDate = daysInterval[daysInterval.length - 1];
 
 	const dateToString = (
 		day: ReturnType<typeof daysForCalendar>["shown"][number],
 	) =>
-		new Date(new Date().getFullYear(), day.month, day.day).toLocaleDateString(
-			i18n.language,
-			{
-				day: "numeric",
-				month: "short",
-			},
-		);
+		formatDate(new Date(new Date().getFullYear(), day.month, day.day), {
+			day: "numeric",
+			month: "short",
+		});
 
 	return (
 		<Link
@@ -219,17 +218,19 @@ function CalendarDatePicker({
 function DayEventsColumn({
 	date,
 	month,
+	year,
 	eventTimes,
 }: {
 	date: number;
 	month: number;
+	year: number;
 	eventTimes: CalendarLoaderData["eventTimes"];
 }) {
 	const eventTimesCollapsed = useCollapsableEvents(eventTimes);
 
 	return (
 		<div>
-			<DayHeader date={date} month={month} />
+			<DayHeader date={date} month={month} year={year} />
 			<div className={styles.dayEvents}>
 				{eventTimesCollapsed.map((eventTime, i) => {
 					return (
@@ -253,10 +254,10 @@ function DayEventsColumn({
 	);
 }
 
-function DayHeader(props: { date: number; month: number }) {
-	const { i18n } = useTranslation();
+function DayHeader(props: { date: number; month: number; year: number }) {
+	const { formatDate } = useTimeFormat();
 
-	const date = new Date(new Date().getFullYear(), props.month, props.date);
+	const date = new Date(props.year, props.month, props.date);
 	const isToday = date.toDateString() === new Date().toDateString();
 
 	return (
@@ -266,12 +267,12 @@ function DayHeader(props: { date: number; month: number }) {
 			})}
 			data-testid={isToday ? "today-header" : undefined}
 		>
-			{date.toLocaleDateString(i18n.language, {
+			{formatDate(date, {
 				day: "numeric",
 				month: "long",
 			})}
 			<div className={styles.dayHeaderWeekday}>
-				{date.toLocaleDateString(i18n.language, {
+				{formatDate(date, {
 					weekday: "long",
 				})}
 			</div>
@@ -294,7 +295,7 @@ function ClockHeader({
 	hiddenShown: boolean;
 	className?: string;
 }) {
-	const { i18n } = useTranslation();
+	const { formatTime } = useTimeFormat();
 
 	const isInThePast = (toDate ?? date).getTime() < Date.now();
 
@@ -306,16 +307,8 @@ function ClockHeader({
 						"text-lighter italic": isInThePast,
 					})}
 				>
-					{date.toLocaleTimeString(i18n.language, {
-						hour: "numeric",
-						minute: "2-digit",
-					})}
-					{toDate
-						? ` - ${toDate.toLocaleTimeString(i18n.language, {
-								hour: "numeric",
-								minute: "2-digit",
-							})}`
-						: ""}
+					{formatTime(date)}
+					{toDate ? ` - ${formatTime(toDate)}` : ""}
 				</span>
 				{hiddenEventsCount > 0 ? (
 					<SendouButton

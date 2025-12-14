@@ -1,7 +1,7 @@
-import { nanoid } from "nanoid";
 import { sql } from "~/db/sql";
 import type { ParsedMemento, Tables } from "~/db/tables";
-import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
+import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
+import { shortNanoid } from "~/utils/id";
 import { syncGroupTeamId } from "./syncGroupTeamId.server";
 
 const createMatchStm = sql.prepare(/* sql */ `
@@ -50,7 +50,7 @@ export const createMatch = sql.transaction(
 		const match = createMatchStm.get({
 			alphaGroupId,
 			bravoGroupId,
-			chatCode: nanoid(10),
+			chatCode: shortNanoid(),
 			memento: JSON.stringify(memento),
 		}) as Tables["GroupMatch"];
 

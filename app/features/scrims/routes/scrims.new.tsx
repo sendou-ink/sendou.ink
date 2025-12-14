@@ -3,7 +3,9 @@ import * as React from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod/v4";
+import { TournamentSearch } from "~/components/elements/TournamentSearch";
 import { DateFormField } from "~/components/form/DateFormField";
+import { SelectFormField } from "~/components/form/SelectFormField";
 import { SendouForm } from "~/components/form/SendouForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import { ToggleFormField } from "~/components/form/ToggleFormField";
@@ -13,14 +15,15 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FormMessage } from "../../../components/FormMessage";
 import { Main } from "../../../components/Main";
 import { action } from "../actions/scrims.new.server";
+import { LutiDivsFormField } from "../components/LutiDivsFormField";
 import { WithFormField } from "../components/WithFormField";
 import { loader, type ScrimsNewLoaderData } from "../loaders/scrims.new.server";
-import { LUTI_DIVS, SCRIM } from "../scrims-constants";
+import { SCRIM } from "../scrims-constants";
 import {
 	MAX_SCRIM_POST_TEXT_LENGTH,
+	RANGE_END_OPTIONS,
 	scrimsNewActionSchema,
 } from "../scrims-schemas";
-import type { LutiDiv } from "../scrims-types";
 export { loader, action };
 
 export const handle: SendouRouteHandle = {
@@ -46,6 +49,7 @@ export default function NewScrimPage() {
 				defaultValues={{
 					postText: "",
 					at: new Date(),
+					rangeEnd: null,
 					divs: null,
 					baseVisibility: "PUBLIC",
 					notFoundVisibility: DEFAULT_NOT_FOUND_VISIBILITY,
@@ -59,15 +63,34 @@ export default function NewScrimPage() {
 									) as unknown as number[],
 								},
 					managedByAnyone: true,
+					maps: "NO_PREFERENCE",
+					mapsTournamentId: null,
 				}}
 			>
 				<WithFormField usersTeams={data.teams} />
 
 				<DateFormField<FormFields>
+					size="medium"
 					label={t("scrims:forms.when.title")}
 					name="at"
 					bottomText={t("scrims:forms.when.explanation")}
 					granularity="minute"
+				/>
+				<SelectFormField<FormFields>
+					size="medium"
+					label={t("scrims:forms.rangeEnd.title")}
+					name="rangeEnd"
+					bottomText={t("scrims:forms.rangeEnd.explanation")}
+					values={[
+						{
+							value: "",
+							label: t("scrims:forms.rangeEnd.notFlexible"),
+						},
+						...RANGE_END_OPTIONS.map((option) => ({
+							value: option,
+							label: t(`scrims:forms.rangeEnd.${option}`),
+						})),
+					]}
 				/>
 
 				<BaseVisibilityFormField associations={data.associations} />
@@ -75,6 +98,23 @@ export default function NewScrimPage() {
 				<NotFoundVisibilityFormField associations={data.associations} />
 
 				<LutiDivsFormField />
+
+				<SelectFormField<FormFields>
+					label={t("scrims:forms.maps.title")}
+					name="maps"
+					values={[
+						{
+							value: "NO_PREFERENCE",
+							label: t("scrims:forms.maps.noPreference"),
+						},
+						{ value: "SZ", label: t("scrims:forms.maps.szOnly") },
+						{ value: "RANKED", label: t("scrims:forms.maps.rankedOnly") },
+						{ value: "ALL", label: t("scrims:forms.maps.allModes") },
+						{ value: "TOURNAMENT", label: t("scrims:forms.maps.tournament") },
+					]}
+				/>
+
+				<TournamentSearchFormField />
 
 				<TextAreaFormField<FormFields>
 					label={t("scrims:forms.text.title")}
@@ -209,89 +249,38 @@ const AssociationSelect = React.forwardRef<
 	);
 });
 
-function LutiDivsFormField() {
+function TournamentSearchFormField() {
+	const { t } = useTranslation(["scrims"]);
 	const methods = useFormContext<FormFields>();
+	const maps = useWatch<FormFields>({ name: "maps" });
 
-	const error = methods.formState.errors.divs;
+	const error = methods.formState.errors.mapsTournamentId;
+
+	React.useEffect(() => {
+		if (maps !== "TOURNAMENT") {
+			methods.setValue("mapsTournamentId", null);
+		}
+	}, [maps, methods]);
+
+	if (maps !== "TOURNAMENT") return null;
 
 	return (
 		<div>
 			<Controller
 				control={methods.control}
-				name="divs"
-				render={({ field: { onChange, onBlur, value } }) => (
-					<LutiDivsSelector value={value} onChange={onChange} onBlur={onBlur} />
+				name="mapsTournamentId"
+				render={({ field: { onChange, value } }) => (
+					<TournamentSearch
+						label={t("scrims:forms.mapsTournament.title")}
+						initialTournamentId={value ?? undefined}
+						onChange={(tournament) => onChange(tournament?.id)}
+					/>
 				)}
 			/>
 
-			{error && (
+			{error ? (
 				<FormMessage type="error">{error.message as string}</FormMessage>
-			)}
-		</div>
-	);
-}
-
-type LutiDivEdit = {
-	max: LutiDiv | null;
-	min: LutiDiv | null;
-};
-
-function LutiDivsSelector({
-	value,
-	onChange,
-	onBlur,
-}: {
-	value: LutiDivEdit | null;
-	onChange: (value: LutiDivEdit | null) => void;
-	onBlur: () => void;
-}) {
-	const { t } = useTranslation(["scrims"]);
-
-	const onChangeMin = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		const newValue = e.target.value === "" ? null : (e.target.value as LutiDiv);
-
-		onChange(
-			newValue || value?.max
-				? { min: newValue, max: value?.max ?? null }
-				: null,
-		);
-	};
-
-	const onChangeMax = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		const newValue = e.target.value === "" ? null : (e.target.value as LutiDiv);
-
-		onChange(
-			newValue || value?.min
-				? { max: newValue, min: value?.min ?? null }
-				: null,
-		);
-	};
-
-	return (
-		<div className="stack horizontal sm">
-			<div>
-				<Label htmlFor="max-div">{t("scrims:forms.divs.maxDiv.title")}</Label>
-				<select id="max-div" onChange={onChangeMax} onBlur={onBlur}>
-					<option value="">—</option>
-					{LUTI_DIVS.map((div) => (
-						<option key={div} value={div}>
-							{div}
-						</option>
-					))}
-				</select>
-			</div>
-
-			<div>
-				<Label htmlFor="min-div">{t("scrims:forms.divs.minDiv.title")}</Label>
-				<select id="min-div" onChange={onChangeMin} onBlur={onBlur}>
-					<option value="">—</option>
-					{LUTI_DIVS.map((div) => (
-						<option key={div} value={div}>
-							{div}
-						</option>
-					))}
-				</select>
-			</div>
+			) : null}
 		</div>
 	);
 }

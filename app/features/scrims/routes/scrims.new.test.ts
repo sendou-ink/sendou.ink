@@ -22,6 +22,7 @@ const scrimPostsLoader = wrappedLoader<SerializeFrom<typeof loader>>({
 
 const defaultNewScrimPostArgs: Parameters<typeof newScrimAction>[0] = {
 	at: new Date(),
+	rangeEnd: null,
 	baseVisibility: "PUBLIC",
 	divs: { min: null, max: null },
 	from: {
@@ -33,6 +34,8 @@ const defaultNewScrimPostArgs: Parameters<typeof newScrimAction>[0] = {
 	notFoundVisibility: {
 		forAssociation: "PUBLIC",
 	},
+	maps: "NO_PREFERENCE",
+	mapsTournamentId: null,
 };
 
 describe("New scrim post action", () => {

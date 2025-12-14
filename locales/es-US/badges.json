@@ -6,7 +6,7 @@
 	"tournament_many": "",
 	"tournament_other": "Recibido por ganar {{tournament}} (×{{count}})",
 	"forYourEvent": "¿Insignia para tu evento?",
-	"managedBy": "Administrado por {{users}}",
+	"managedBy": "Administrado por <0></0>",
 	"madeBy": "",
 	"own.divider": "Insignias administradas",
 	"other.divider": "Otras insignias",

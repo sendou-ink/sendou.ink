@@ -1,7 +1,3 @@
-.tournament__placeholder {
-	min-height: 100vh;
-}
-
 .tournament__action-section {
 	padding: var(--s-0-5) var(--s-6) var(--s-6) var(--s-6);
 	border-radius: var(--rounded);
@@ -338,6 +334,22 @@
 	width: 2rem;
 }
 
+.tournament__roster-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, 110px);
+	gap: var(--s-4);
+	margin-block-start: var(--s-2);
+	width: 100%;
+	justify-content: center;
+}
+
+.tournament__roster-grid__member-name {
+	max-width: 110px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 .tournament__missing-player {
 	width: 62px;
 	height: 62px;
@@ -346,6 +358,7 @@
 	border: 2px solid var(--theme-transparent);
 	display: grid;
 	place-items: center;
+	margin: 0 auto;
 }
 
 .tournament__missing-player__optional {
@@ -697,4 +710,59 @@
 .tournament__div__participant-counts > svg {
 	width: 1rem;
 	margin-block-end: 1px;
+}
+
+.tournament__standings__divider-row {
+	background: transparent !important;
+	height: auto;
+}
+
+.tournament__standings__divider {
+	padding-block: var(--s-2);
+	background: transparent;
+}
+
+.tournament__standings__divider-content {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	gap: var(--s-2);
+}
+
+.tournament__standings__divider-line {
+	flex: 1;
+	height: 4px;
+	border-radius: var(--rounded);
+}
+
+.tournament__standings__divider-text {
+	font-size: var(--fonts-xs);
+	font-weight: var(--bold);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	white-space: nowrap;
+	padding: var(--s-0-5) var(--s-1-5);
+	border-radius: var(--rounded);
+}
+
+.tournament__standings__divider--qualified
+	.tournament__standings__divider-line {
+	background-color: var(--theme-success);
+}
+
+.tournament__standings__divider--qualified
+	.tournament__standings__divider-text {
+	color: var(--theme-success);
+	background-color: transparent;
+}
+
+.tournament__standings__divider--eliminated
+	.tournament__standings__divider-line {
+	background-color: var(--theme-error);
+}
+
+.tournament__standings__divider--eliminated
+	.tournament__standings__divider-text {
+	color: var(--theme-error);
+	background-color: transparent;
 }

@@ -4,6 +4,8 @@ import type { Transaction } from "kysely";
 import { sql } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import { flatZip } from "~/utils/arrays";
 import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
@@ -113,10 +115,7 @@ export function create({
 	tournamentId,
 	ownerInGameName,
 }: {
-	team: Pick<
-		Tables["TournamentTeam"],
-		"name" | "prefersNotToHost" | "noScreen" | "teamId"
-	>;
+	team: Pick<Tables["TournamentTeam"], "name" | "prefersNotToHost" | "teamId">;
 	avatarFileName?: string;
 	userId: number;
 	tournamentId: number;
@@ -138,7 +137,6 @@ export function create({
 				name: team.name,
 				inviteCode: shortNanoid(),
 				prefersNotToHost: team.prefersNotToHost,
-				noScreen: team.noScreen,
 				teamId: team.teamId,
 				avatarImgId,
 			})
@@ -177,7 +175,6 @@ export function copyFromAnotherTournament({
 				"TournamentTeam.avatarImgId",
 				"TournamentTeam.createdAt",
 				"TournamentTeam.name",
-				"TournamentTeam.noScreen",
 				"TournamentTeam.prefersNotToHost",
 				"TournamentTeam.teamId",
 
@@ -268,7 +265,7 @@ export function update({
 }: {
 	team: Pick<
 		Tables["TournamentTeam"],
-		"id" | "name" | "prefersNotToHost" | "noScreen" | "teamId"
+		"id" | "name" | "prefersNotToHost" | "teamId"
 	>;
 	avatarFileName?: string;
 	userId: number;
@@ -289,7 +286,6 @@ export function update({
 			.set({
 				name: team.name,
 				prefersNotToHost: team.prefersNotToHost,
-				noScreen: team.noScreen,
 				teamId: team.teamId,
 				avatarImgId,
 			})
@@ -356,4 +352,42 @@ export function updateStartingBrackets(
 				.execute();
 		}
 	});
+}
+
+async function findTeamRecentMaps(teamId: number, limit: number) {
+	return db
+		.selectFrom("TournamentMatchGameResult")
+		.innerJoin(
+			"TournamentMatchGameResultParticipant",
+			"TournamentMatchGameResultParticipant.matchGameResultId",
+			"TournamentMatchGameResult.id",
+		)
+		.select([
+			"TournamentMatchGameResult.mode",
+			"TournamentMatchGameResult.stageId",
+		])
+		.where("TournamentMatchGameResultParticipant.tournamentTeamId", "=", teamId)
+		.orderBy("TournamentMatchGameResult.createdAt", "desc")
+		.limit(limit)
+		.execute();
+}
+
+export async function findRecentlyPlayedMapsByIds({
+	teamIds,
+	limit = 5,
+}: {
+	/** Team IDs to retrieve recent maps for */
+	teamIds: [number, number];
+	/** Limit of recent maps to retrieve per team
+	 *
+	 * @default 5
+	 */
+	limit?: number;
+}): Promise<Array<{ mode: ModeShort; stageId: StageId }>> {
+	const [teamOneMaps, teamTwoMaps] = await Promise.all([
+		findTeamRecentMaps(teamIds[0], limit),
+		findTeamRecentMaps(teamIds[1], limit),
+	]);
+
+	return flatZip(teamOneMaps, teamTwoMaps);
 }

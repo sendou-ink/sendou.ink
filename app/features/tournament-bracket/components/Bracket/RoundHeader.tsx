@@ -1,11 +1,13 @@
-import clsx from "clsx";
+import { differenceInMinutes } from "date-fns";
+import * as React from "react";
 import type { TournamentRoundMaps } from "~/db/tables";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { resolveLeagueRoundStartDate } from "~/features/tournament/tournament-utils";
-import { useAutoRerender } from "~/hooks/useAutoRerender";
-import { useIsMounted } from "~/hooks/useIsMounted";
-import { TOURNAMENT } from "../../../tournament/tournament-constants";
-import { useDeadline } from "./useDeadline";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
+import { databaseTimestampToDate } from "~/utils/dates";
+import type { Unpacked } from "~/utils/types";
+import * as Deadline from "../../core/Deadline";
+import type { TournamentData } from "../../core/Tournament.server";
 
 export function RoundHeader({
 	roundId,
@@ -13,21 +15,18 @@ export function RoundHeader({
 	bestOf,
 	showInfos,
 	maps,
+	roundStartedAt = null,
+	matches = [],
 }: {
 	roundId: number;
 	name: string;
 	bestOf?: number;
 	showInfos?: boolean;
 	maps?: TournamentRoundMaps | null;
+	roundStartedAt?: number | null;
+	matches?: Array<Unpacked<TournamentData["data"]["match"]>>;
 }) {
 	const leagueRoundStartDate = useLeagueWeekStart(roundId);
-
-	const hasDeadline = ![
-		TOURNAMENT.ROUND_NAMES.WB_FINALS,
-		TOURNAMENT.ROUND_NAMES.GRAND_FINALS,
-		TOURNAMENT.ROUND_NAMES.BRACKET_RESET,
-		TOURNAMENT.ROUND_NAMES.FINALS,
-	].includes(name as any);
 
 	const countPrefix = maps?.type === "PLAY_ALL" ? "Play all " : "Bo";
 
@@ -48,18 +47,16 @@ export function RoundHeader({
 						{bestOf}
 						{pickBanSuffix}
 					</div>
-					{hasDeadline ? <Deadline roundId={roundId} bestOf={bestOf} /> : null}
+					{roundStartedAt && matches && matches.length > 0 ? (
+						<RoundTimer
+							startedAt={roundStartedAt}
+							bestOf={bestOf}
+							matches={matches}
+						/>
+					) : null}
 				</div>
 			) : leagueRoundStartDate ? (
-				<div className="elim-bracket__round-header__infos">
-					<div>
-						{leagueRoundStartDate.toLocaleDateString("en-US", {
-							month: "short",
-							day: "numeric",
-						})}{" "}
-						→
-					</div>
-				</div>
+				<LeagueRoundStartDate date={leagueRoundStartDate} />
 			) : (
 				<div className="elim-bracket__round-header__infos invisible">
 					Hidden
@@ -69,26 +66,79 @@ export function RoundHeader({
 	);
 }
 
-function Deadline({ roundId, bestOf }: { roundId: number; bestOf: number }) {
-	useAutoRerender("ten seconds");
-	const isMounted = useIsMounted();
-	const deadline = useDeadline(roundId, bestOf);
-
-	if (!deadline) return null;
+function LeagueRoundStartDate({ date }: { date: Date }) {
+	const { formatDate } = useTimeFormat();
 
 	return (
-		<div
-			className={clsx({
-				"text-warning": isMounted && deadline < new Date(),
-			})}
-		>
-			DL{" "}
-			{deadline.toLocaleTimeString("en-US", {
-				hour: "numeric",
-				minute: "numeric",
-			})}
+		<div className="elim-bracket__round-header__infos">
+			<div>
+				{formatDate(date, {
+					month: "short",
+					day: "numeric",
+				})}{" "}
+				→
+			</div>
 		</div>
 	);
+}
+
+function RoundTimer({
+	startedAt,
+	bestOf,
+	matches,
+}: {
+	startedAt: number;
+	bestOf: number;
+	matches: Array<Unpacked<TournamentData["data"]["match"]>>;
+}) {
+	const [now, setNow] = React.useState(new Date());
+
+	React.useEffect(() => {
+		const interval = setInterval(() => {
+			setNow(new Date());
+		}, 60000);
+
+		return () => clearInterval(interval);
+	}, []);
+
+	const elapsedMinutes = differenceInMinutes(
+		now,
+		databaseTimestampToDate(startedAt),
+	);
+
+	const matchStatuses = matches
+		.filter((match) => match.startedAt)
+		.map((match) => {
+			const matchElapsedMinutes = differenceInMinutes(
+				now,
+				databaseTimestampToDate(match.startedAt!),
+			);
+			const gamesCompleted =
+				(match.opponent1?.score ?? 0) + (match.opponent2?.score ?? 0);
+
+			return Deadline.matchStatus({
+				elapsedMinutes: matchElapsedMinutes,
+				gamesCompleted,
+				maxGamesCount: bestOf,
+			});
+		});
+
+	const worstStatus = matchStatuses.includes("error")
+		? "error"
+		: matchStatuses.includes("warning")
+			? "warning"
+			: "normal";
+
+	const displayText = elapsedMinutes >= 60 ? "1h+" : `${elapsedMinutes}m`;
+
+	const statusColor =
+		worstStatus === "error"
+			? "var(--theme-error)"
+			: worstStatus === "warning"
+				? "var(--theme-warning)"
+				: "var(--text)";
+
+	return <div style={{ color: statusColor }}>{displayText}</div>;
 }
 
 function useLeagueWeekStart(roundId: number) {

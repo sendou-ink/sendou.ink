@@ -1,3 +1,13 @@
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import {
+	DndContext,
+	DragOverlay,
+	PointerSensor,
+	useDraggable,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import { snapCenterToCursor } from "@dnd-kit/modifiers";
 import type {
 	Editor,
 	TLAssetId,
@@ -17,8 +27,7 @@ import {
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import * as R from "remeda";
-import { usePlannerBg } from "~/hooks/usePlannerBg";
+import { useTheme } from "~/features/theme/core/provider";
 import type { LanguageCode } from "~/modules/i18n/config";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
@@ -42,21 +51,32 @@ import { SendouButton } from "../../../components/elements/Button";
 import { Image } from "../../../components/Image";
 import type { StageBackgroundStyle } from "../plans-types";
 
+const DROPPED_IMAGE_SIZE_PX = 45;
+const BACKGROUND_WIDTH = 1127;
+const BACKGROUND_HEIGHT = 634;
+
 export default function Planner() {
 	const { i18n } = useTranslation();
-	const plannerBgParams = usePlannerBg();
+	const { htmlThemeClass } = useTheme();
 
 	const [editor, setEditor] = React.useState<Editor | null>(null);
 	const [imgOutlined, setImgOutlined] = React.useState(false);
+	const [activeDragItem, setActiveDragItem] = React.useState<{
+		src: string;
+		previewPath: string;
+	} | null>(null);
+
+	const sensors = useSensors(useSensor(PointerSensor));
 
 	const handleMount = React.useCallback(
 		(mountedEditor: Editor) => {
 			setEditor(mountedEditor);
 			mountedEditor.user.updateUserPreferences({
 				locale: ourLanguageToTldrawLanguage(i18n.language),
+				colorScheme: htmlThemeClass === "dark" ? "dark" : "light",
 			});
 		},
-		[i18n],
+		[i18n, htmlThemeClass],
 	);
 
 	const handleAddImage = React.useCallback(
@@ -121,57 +141,47 @@ export default function Planner() {
 		[editor, imgOutlined],
 	);
 
-	const handleAddWeapon = React.useCallback(
-		(src: string) => {
-			// Adjustable parameters for image spawning
-			const imageSizePx = 45;
-			const imageSpawnBoxSizeFactorX = 0.15;
-			const imageSpawnBoxSizeFactorY = 0.3;
-			const imageSpawnBoxOffsetFactorX = 0;
-			const imageSpawnBoxOffsetFactorY = 0.2;
-
-			// Get positions of the background rectangle
-			const bgRectangleLeft = plannerBgParams.pointOffsetX;
-			const bgRectangleTop = plannerBgParams.pointOffsetY;
-
-			// Subtract the size of the image here to correct the image spawn location at the right-most & bottom-most boundaries
-			const bgRectangleRight =
-				bgRectangleLeft + plannerBgParams.bgWidth - imageSizePx;
-			const bgRectangleBottom =
-				plannerBgParams.pointOffsetY + plannerBgParams.bgHeight - imageSizePx;
-
-			// Derived values for image spawn box
-			const imageSpawnBoxLeft =
-				bgRectangleLeft + plannerBgParams.bgWidth * imageSpawnBoxOffsetFactorX;
-			const imageSpawnBoxRight =
-				imageSpawnBoxSizeFactorX * (bgRectangleRight - bgRectangleLeft) +
-				imageSpawnBoxLeft;
-			const imageSpawnBoxTop =
-				bgRectangleTop + plannerBgParams.bgHeight * imageSpawnBoxOffsetFactorY;
-			const imageSpawnBoxBottom =
-				imageSpawnBoxSizeFactorY * (bgRectangleBottom - bgRectangleTop) +
-				imageSpawnBoxTop;
+	const handleAddWeaponAtPosition = React.useCallback(
+		(src: string, point: [number, number]) => {
+			const centeredPoint: [number, number] = [
+				point[0] - DROPPED_IMAGE_SIZE_PX / 2,
+				point[1] - DROPPED_IMAGE_SIZE_PX / 2,
+			];
 
 			handleAddImage({
 				src,
-				size: [imageSizePx, imageSizePx],
+				size: [DROPPED_IMAGE_SIZE_PX, DROPPED_IMAGE_SIZE_PX],
 				isLocked: false,
-				point: [
-					R.randomInteger(imageSpawnBoxLeft, imageSpawnBoxRight),
-					R.randomInteger(imageSpawnBoxTop, imageSpawnBoxBottom),
-				],
+				point: centeredPoint,
 				cb: () => editor?.setCurrentTool("select"),
 			});
 		},
-		[
-			editor,
-			handleAddImage,
-			plannerBgParams.bgHeight,
-			plannerBgParams.bgWidth,
-			plannerBgParams.pointOffsetX,
-			plannerBgParams.pointOffsetY,
-		],
+		[editor, handleAddImage],
 	);
+
+	const handleDragStart = (event: DragStartEvent) => {
+		const { src, previewPath } = event.active.data.current as {
+			src: string;
+			previewPath: string;
+		};
+		setActiveDragItem({ src, previewPath });
+	};
+
+	const handleDragEnd = (event: DragEndEvent) => {
+		setActiveDragItem(null);
+
+		if (!editor) return;
+
+		const { active } = event;
+		const { src } = active.data.current as { src: string };
+
+		const pointerPosition = event.activatorEvent as PointerEvent;
+		const dropX = pointerPosition.clientX + (event.delta?.x ?? 0);
+		const dropY = pointerPosition.clientY + (event.delta?.y ?? 0);
+
+		const pagePoint = editor.screenToPage({ x: dropX, y: dropY });
+		handleAddWeaponAtPosition(src, [pagePoint.x, pagePoint.y]);
+	};
 
 	const handleAddBackgroundImage = React.useCallback(
 		(urlArgs: {
@@ -192,19 +202,14 @@ export default function Planner() {
 
 			handleAddImage({
 				src: stageMinimapImageUrlWithEnding(urlArgs),
-				size: [plannerBgParams.bgWidth, plannerBgParams.bgHeight],
+				size: [BACKGROUND_WIDTH, BACKGROUND_HEIGHT],
 				isLocked: true,
-				point: [plannerBgParams.pointOffsetX, plannerBgParams.pointOffsetY],
+				point: [0, 0],
 			});
+
+			editor.zoomToFit();
 		},
-		[
-			editor,
-			handleAddImage,
-			plannerBgParams.bgHeight,
-			plannerBgParams.bgWidth,
-			plannerBgParams.pointOffsetX,
-			plannerBgParams.pointOffsetY,
-		],
+		[editor, handleAddImage],
 	);
 
 	// removes all tldraw ui that isnt needed
@@ -229,18 +234,30 @@ export default function Planner() {
 	};
 
 	return (
-		<>
+		<DndContext
+			sensors={sensors}
+			onDragStart={handleDragStart}
+			onDragEnd={handleDragEnd}
+		>
 			<StageBackgroundSelector onAddBackground={handleAddBackgroundImage} />
 			<OutlineToggle outlined={imgOutlined} setImgOutlined={setImgOutlined} />
-			<WeaponImageSelector handleAddWeapon={handleAddWeapon} />
+			<WeaponImageSelector />
 			<div style={{ position: "fixed", inset: 0 }}>
-				<Tldraw
-					onMount={handleMount}
-					components={tldrawComponents}
-					inferDarkMode
-				/>
+				<Tldraw onMount={handleMount} components={tldrawComponents} />
 			</div>
-		</>
+			<DragOverlay dropAnimation={null} modifiers={[snapCenterToCursor]}>
+				{activeDragItem ? (
+					<Image
+						path={activeDragItem.previewPath}
+						width={DROPPED_IMAGE_SIZE_PX}
+						height={DROPPED_IMAGE_SIZE_PX}
+						alt=""
+						className="plans__drag-preview"
+						containerClassName="plans__drag-preview-container"
+					/>
+				) : null}
+			</DragOverlay>
+		</DndContext>
 	);
 }
 
@@ -291,11 +308,50 @@ function OutlineToggle({
 	);
 }
 
-function WeaponImageSelector({
-	handleAddWeapon,
+function DraggableWeaponButton({
+	id,
+	src,
+	imgPath,
+	previewPath,
+	alt,
+	title,
+	size,
 }: {
-	handleAddWeapon: (src: string) => void;
+	id: string;
+	src: string;
+	imgPath: string;
+	previewPath: string;
+	alt: string;
+	title: string;
+	size: number;
 }) {
+	const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+		id,
+		data: { src, previewPath },
+	});
+
+	return (
+		<button
+			type="button"
+			ref={setNodeRef}
+			className={clsx("plans__draggable-button", {
+				"plans__weapon-dragging": isDragging,
+			})}
+			{...listeners}
+			{...attributes}
+		>
+			<Image
+				alt={alt}
+				title={title}
+				path={imgPath}
+				width={size}
+				height={size}
+			/>
+		</button>
+	);
+}
+
+function WeaponImageSelector() {
 	const { t, i18n } = useTranslation(["weapons", "common", "game-misc"]);
 
 	const isWide = i18n.language === "fr";
@@ -321,23 +377,16 @@ function WeaponImageSelector({
 						<div className="plans__weapons-container">
 							{category.weaponIds.map((weaponId) => {
 								return (
-									<SendouButton
+									<DraggableWeaponButton
 										key={weaponId}
-										variant="minimal"
-										onPress={() =>
-											handleAddWeapon(
-												`${outlinedMainWeaponImageUrl(weaponId)}.png`,
-											)
-										}
-									>
-										<Image
-											alt={t(`weapons:MAIN_${weaponId}`)}
-											title={t(`weapons:MAIN_${weaponId}`)}
-											path={mainWeaponImageUrl(weaponId)}
-											width={36}
-											height={36}
-										/>
-									</SendouButton>
+										id={`main-${weaponId}`}
+										src={`${outlinedMainWeaponImageUrl(weaponId)}.png`}
+										imgPath={mainWeaponImageUrl(weaponId)}
+										previewPath={outlinedMainWeaponImageUrl(weaponId)}
+										alt={t(`weapons:MAIN_${weaponId}`)}
+										title={t(`weapons:MAIN_${weaponId}`)}
+										size={36}
+									/>
 								);
 							})}
 						</div>
@@ -352,21 +401,16 @@ function WeaponImageSelector({
 				<div className="plans__weapons-container">
 					{subWeaponIds.map((subWeaponId) => {
 						return (
-							<SendouButton
+							<DraggableWeaponButton
 								key={subWeaponId}
-								variant="minimal"
-								onPress={() =>
-									handleAddWeapon(`${subWeaponImageUrl(subWeaponId)}.png`)
-								}
-							>
-								<Image
-									alt={t(`weapons:SUB_${subWeaponId}`)}
-									title={t(`weapons:SUB_${subWeaponId}`)}
-									path={subWeaponImageUrl(subWeaponId)}
-									width={28}
-									height={28}
-								/>
-							</SendouButton>
+								id={`sub-${subWeaponId}`}
+								src={`${subWeaponImageUrl(subWeaponId)}.png`}
+								imgPath={subWeaponImageUrl(subWeaponId)}
+								previewPath={subWeaponImageUrl(subWeaponId)}
+								alt={t(`weapons:SUB_${subWeaponId}`)}
+								title={t(`weapons:SUB_${subWeaponId}`)}
+								size={28}
+							/>
 						);
 					})}
 				</div>
@@ -384,23 +428,16 @@ function WeaponImageSelector({
 				<div className="plans__weapons-container">
 					{specialWeaponIds.map((specialWeaponId) => {
 						return (
-							<SendouButton
+							<DraggableWeaponButton
 								key={specialWeaponId}
-								variant="minimal"
-								onPress={() =>
-									handleAddWeapon(
-										`${specialWeaponImageUrl(specialWeaponId)}.png`,
-									)
-								}
-							>
-								<Image
-									alt={t(`weapons:SPECIAL_${specialWeaponId}`)}
-									title={t(`weapons:SPECIAL_${specialWeaponId}`)}
-									path={specialWeaponImageUrl(specialWeaponId)}
-									width={28}
-									height={28}
-								/>
-							</SendouButton>
+								id={`special-${specialWeaponId}`}
+								src={`${specialWeaponImageUrl(specialWeaponId)}.png`}
+								imgPath={specialWeaponImageUrl(specialWeaponId)}
+								previewPath={specialWeaponImageUrl(specialWeaponId)}
+								alt={t(`weapons:SPECIAL_${specialWeaponId}`)}
+								title={t(`weapons:SPECIAL_${specialWeaponId}`)}
+								size={28}
+							/>
 						);
 					})}
 				</div>
@@ -413,19 +450,16 @@ function WeaponImageSelector({
 				<div className="plans__weapons-container">
 					{(["TC", "RM", "CB"] as const).map((mode) => {
 						return (
-							<SendouButton
+							<DraggableWeaponButton
 								key={mode}
-								variant="minimal"
-								onPress={() => handleAddWeapon(`${modeImageUrl(mode)}.png`)}
-							>
-								<Image
-									alt={t(`game-misc:MODE_LONG_${mode}`)}
-									title={t(`game-misc:MODE_LONG_${mode}`)}
-									path={modeImageUrl(mode)}
-									width={28}
-									height={28}
-								/>
-							</SendouButton>
+								id={`mode-${mode}`}
+								src={`${modeImageUrl(mode)}.png`}
+								imgPath={modeImageUrl(mode)}
+								previewPath={modeImageUrl(mode)}
+								alt={t(`game-misc:MODE_LONG_${mode}`)}
+								title={t(`game-misc:MODE_LONG_${mode}`)}
+								size={28}
+							/>
 						);
 					})}
 				</div>
@@ -434,7 +468,7 @@ function WeaponImageSelector({
 	);
 }
 
-const LAST_STAGE_ID_WITH_IMAGES = 23;
+const LAST_STAGE_ID_WITH_IMAGES = 24;
 function StageBackgroundSelector({
 	onAddBackground,
 }: {

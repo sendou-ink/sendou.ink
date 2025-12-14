@@ -35,6 +35,27 @@ for (const key of Object.keys(badges)) {
 	lastKey = key;
 }
 
+// check for duplicate displayName values and encoding issues
+const displayNames = new Map<string, string>();
+for (const [key, badge] of Object.entries(badges)) {
+	const existingKey = displayNames.get(badge.displayName);
+	if (existingKey) {
+		console.error(
+			`Duplicate displayName "${badge.displayName}" found in keys: ${existingKey} and ${key}`,
+		);
+		process.exit(1);
+	}
+	displayNames.set(badge.displayName, key);
+
+	// check for Unicode replacement characters (encoding issues)
+	if (badge.displayName.includes("\uFFFD")) {
+		console.error(
+			`Invalid encoding in displayName for badge "${key}": contains replacement character (�). This usually means the file was saved with incorrect encoding.`,
+		);
+		process.exit(1);
+	}
+}
+
 // check each key has the 3 matching files in the right location
 const badgesLocation = path.join("public", "static-assets", "badges");
 

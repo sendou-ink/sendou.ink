@@ -11,6 +11,7 @@ export const USER = {
 };
 
 export const MATCHES_PER_SEASONS_PAGE = 8;
+export const RESULTS_PER_PAGE = 25;
 export const DEFAULT_BUILD_SORT = ["WEAPON_POOL", "UPDATED_AT"] as const;
 
 export const CUSTOM_CSS_VAR_COLORS = [
@@ -110,6 +111,10 @@ export const COUNTRY_CODES = [
 	"FR",
 	"GA",
 	"GB",
+	"GB-ENG",
+	"GB-NIR",
+	"GB-SCT",
+	"GB-WLS",
 	"GD",
 	"GE",
 	"GF",

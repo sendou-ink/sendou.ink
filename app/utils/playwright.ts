@@ -81,7 +81,7 @@ export function modalClickConfirmButton(page: Page) {
 }
 
 export async function fetchSendouInk<T>(url: string) {
-	const res = await fetch(`http://localhost:5173${url}`);
+	const res = await fetch(`http://localhost:6173${url}`);
 	if (!res.ok) throw new Error("Response not successful");
 
 	return res.json() as T;
@@ -99,3 +99,70 @@ export const startBracket = async (page: Page, tournamentId = 2) => {
 	await page.getByTestId("finalize-bracket-button").click();
 	await page.getByTestId("confirm-finalize-bracket-button").click();
 };
+
+/** Sets a date using the `<SendouDatePicker />` component */
+export async function setDateTime({
+	page,
+	date,
+	label,
+}: {
+	page: Page;
+	date: Date;
+	label: string;
+}) {
+	const hours = date.getHours();
+
+	await selectSpinbuttonValue({
+		page,
+		name: `year, ${label}`,
+		value: date.getFullYear().toString(),
+	});
+
+	await selectSpinbuttonValue({
+		page,
+		name: `month, ${label}`,
+		value: (date.getMonth() + 1).toString(),
+	});
+
+	await selectSpinbuttonValue({
+		page,
+		name: `day, ${label}`,
+		value: date.getDate().toString(),
+	});
+
+	await selectSpinbuttonValue({
+		page,
+		name: `hour, ${label}`,
+		value: String(hours % 12 || 12),
+	});
+
+	await selectSpinbuttonValue({
+		page,
+		name: `minute, ${label}`,
+		value: date.getMinutes().toString().padStart(2, "0"),
+	});
+
+	await selectSpinbuttonValue({
+		page,
+		name: `AM/PM, ${label}`,
+		value: hours >= 12 ? "PM" : "AM",
+	});
+}
+
+async function selectSpinbuttonValue({
+	page,
+	name,
+	value,
+}: {
+	page: Page;
+	name: string;
+	value: string;
+}) {
+	const locator = page.getByRole("spinbutton", {
+		name,
+		exact: true,
+	});
+	await locator.click();
+	await locator.clear();
+	await locator.fill(value);
+}

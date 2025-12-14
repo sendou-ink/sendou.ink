@@ -1,0 +1,162 @@
+.container {
+	display: flex;
+	gap: var(--s-1);
+	min-height: 68px;
+}
+
+.tierLabel {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 68px;
+	padding: var(--s-2);
+	font-size: var(--fonts-lg);
+	font-weight: var(--bold);
+	color: var(--text);
+	border-radius: var(--rounded-sm);
+	cursor: pointer;
+	transition: opacity 0.2s;
+	border: none;
+}
+
+.tierLabel:hover {
+	opacity: 0.9;
+}
+
+.tierName {
+	color: var(--button-text);
+	line-height: 1.2;
+	max-width: 90px;
+	overflow-wrap: break-word;
+	word-wrap: break-word;
+}
+
+.popupContent {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+	padding: var(--s-2);
+}
+
+.nameInput {
+	width: 250px;
+	text-align: center;
+}
+
+.targetZone {
+	flex: 1;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1-5);
+	padding: var(--s-2);
+	background: var(--bg-lighter-solid);
+	border: 2px dashed transparent;
+	border-radius: var(--rounded-sm) 0 0 var(--rounded-sm);
+	align-items: center;
+	align-content: center;
+	transition: all 0.2s;
+}
+
+.targetZoneOver {
+	border-color: var(--theme-transparent);
+	background: var(--bg-lightest);
+}
+
+.emptyMessage {
+	width: 100%;
+	height: 100%;
+	text-align: center;
+	margin: auto;
+	color: var(--text-lighter);
+	font-size: var(--fonts-md);
+	font-weight: var(--semi-bold);
+	font-style: italic;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.arrowControls {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	margin: auto;
+	height: 100%;
+}
+
+.arrowButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 100%;
+	padding: var(--s-1);
+	background: var(--bg-lighter);
+	border: none;
+	cursor: pointer;
+	transition: opacity 0.2s;
+}
+
+.arrowButtonUpper {
+	border-radius: 0 var(--rounded-sm) 0 0;
+}
+
+.arrowButtonLower {
+	border-radius: 0 0 var(--rounded-sm) 0;
+}
+
+.arrowButton:hover:not(:disabled) {
+	opacity: 0.8;
+}
+
+.arrowButton:disabled {
+	opacity: 0.3;
+	cursor: not-allowed;
+}
+
+.arrowIcon {
+	width: 20px;
+	height: 20px;
+	stroke-width: 3;
+	color: var(--text);
+}
+
+.colorPickerContainer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	align-items: center;
+}
+
+.presetColorsGrid {
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	gap: var(--s-2);
+}
+
+.colorButton {
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	border: 2px solid transparent;
+	cursor: pointer;
+	transition: all 0.2s;
+	padding: 0;
+}
+
+.colorButton:hover {
+	transform: scale(1.1);
+	border-color: var(--text-lighter);
+}
+
+.colorButtonSelected {
+	border-color: var(--text);
+	box-shadow: 0 0 0 2px var(--bg);
+}
+
+.customColorLabel {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	cursor: pointer;
+}

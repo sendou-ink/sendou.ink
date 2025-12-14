@@ -6,8 +6,8 @@
 	"tournament_many": "",
 	"tournament_other": "Premio per aver vinto {{tournament}} (×{{count}})",
 	"forYourEvent": "Vuoi creare una medaglia per il tuo evento?",
-	"managedBy": "Gestito da {{users}}",
-	"madeBy": "creato da {{user}}",
+	"managedBy": "Gestito da <0></0>",
+	"madeBy": "creato da <0></0>",
 	"own.divider": "Medaglie amministrate",
 	"other.divider": "Altre medaglie",
 	"noBadgesFound": "Nessuna medaglia per la tua ricerca"

@@ -14,14 +14,9 @@ import { Pagination } from "~/components/Pagination";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { usePagination } from "~/hooks/usePagination";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
-import {
-	artPage,
-	conditionalUserSubmittedImage,
-	newArtPage,
-	userArtPage,
-	userPage,
-} from "~/utils/urls";
+import { artPage, newArtPage, userArtPage, userPage } from "~/utils/urls";
 import { ResponsiveMasonry } from "../../../modules/responsive-masonry/components/ResponsiveMasonry";
 import { ART_PER_PAGE } from "../art-constants";
 import type { ListedArt } from "../art-types";
@@ -31,10 +26,12 @@ export function ArtGrid({
 	arts,
 	enablePreview = false,
 	canEdit = false,
+	showUploadDate = false,
 }: {
 	arts: ListedArt[];
 	enablePreview?: boolean;
 	canEdit?: boolean;
+	showUploadDate?: boolean;
 }) {
 	const {
 		itemsToDisplay,
@@ -72,43 +69,43 @@ export function ArtGrid({
 						art={art}
 						canEdit={canEdit}
 						enablePreview={enablePreview}
+						showUploadDate={showUploadDate}
 						onClick={enablePreview ? () => setBigArtId(art.id) : undefined}
 					/>
 				))}
 			</ResponsiveMasonry>
 			{!everythingVisible ? (
-				<Pagination
-					currentPage={currentPage}
-					pagesCount={pagesCount}
-					nextPage={nextPage}
-					previousPage={previousPage}
-					setPage={setPage}
-				/>
+				<div className="mt-6">
+					<Pagination
+						currentPage={currentPage}
+						pagesCount={pagesCount}
+						nextPage={nextPage}
+						previousPage={previousPage}
+						setPage={setPage}
+					/>
+				</div>
 			) : null}
 		</>
 	);
 }
 
 function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
-	const { i18n } = useTranslation();
 	const [imageLoaded, setImageLoaded] = React.useState(false);
+	const { formatDate } = useTimeFormat();
 
 	return (
 		<SendouDialog
-			heading={databaseTimestampToDate(art.createdAt).toLocaleDateString(
-				i18n.language,
-				{
-					year: "numeric",
-					month: "long",
-					day: "numeric",
-				},
-			)}
+			heading={formatDate(databaseTimestampToDate(art.createdAt), {
+				year: "numeric",
+				month: "long",
+				day: "numeric",
+			})}
 			onClose={close}
 			isFullScreen
 		>
 			<img
 				alt=""
-				src={conditionalUserSubmittedImage(art.url)}
+				src={art.url}
 				loading="lazy"
 				className="art__dialog__img"
 				onLoad={() => setImageLoaded(true)}
@@ -127,8 +124,12 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 						</Link>
 					))}
 					{art.tags?.map((tag) => (
-						<Link to={artPage(tag)} key={tag} className="art__dialog__tag">
-							#{tag}
+						<Link
+							to={artPage(tag.name)}
+							key={tag.id}
+							className="art__dialog__tag"
+						>
+							#{tag.name}
 						</Link>
 					))}
 				</div>
@@ -159,20 +160,23 @@ function ImagePreview({
 	onClick,
 	enablePreview = false,
 	canEdit = false,
+	showUploadDate = false,
 }: {
 	art: ListedArt;
 	onClick?: () => void;
 	enablePreview?: boolean;
 	canEdit?: boolean;
+	showUploadDate?: boolean;
 }) {
 	const [imageLoaded, setImageLoaded] = React.useState(false);
 	const { t } = useTranslation(["common", "art"]);
+	const { formatDistanceToNow } = useTimeFormat();
 
 	const img = (
 		// biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration
 		<img
 			alt=""
-			src={conditionalUserSubmittedImage(previewUrl(art.url))}
+			src={previewUrl(art.url)}
 			loading="lazy"
 			onClick={onClick}
 			onLoad={() => setImageLoaded(true)}
@@ -216,6 +220,12 @@ function ImagePreview({
 	}
 	if (!art.author) return img;
 
+	const uploadDateText = showUploadDate
+		? formatDistanceToNow(databaseTimestampToDate(art.createdAt), {
+				addSuffix: true,
+			})
+		: null;
+
 	// whole thing is not a link so we can preview the image
 	if (enablePreview) {
 		return (
@@ -235,6 +245,15 @@ function ImagePreview({
 						<Avatar user={art.author} size="xxs" />
 						{t("art:madeBy")} {art.author.username}
 					</Link>
+					{uploadDateText ? (
+						<div
+							className={clsx("text-xs text-lighter", {
+								invisible: !imageLoaded,
+							})}
+						>
+							{uploadDateText}
+						</div>
+					) : null}
 					{canEdit ? (
 						<FormWithConfirm
 							dialogHeading={t("art:unlink.title", {
@@ -261,13 +280,24 @@ function ImagePreview({
 	return (
 		<Link to={userArtPage(art.author, "MADE-BY")}>
 			{img}
-			<div
-				className={clsx("stack sm horizontal text-xs items-center mt-1", {
-					invisible: !imageLoaded,
-				})}
-			>
-				<Avatar user={art.author} size="xxs" />
-				{art.author.username}
+			<div className="stack horizontal justify-between">
+				<div
+					className={clsx("stack sm horizontal text-xs items-center mt-1", {
+						invisible: !imageLoaded,
+					})}
+				>
+					<Avatar user={art.author} size="xxs" />
+					{art.author.username}
+				</div>
+				{uploadDateText ? (
+					<div
+						className={clsx("text-xxs mt-1 text-lighter", {
+							invisible: !imageLoaded,
+						})}
+					>
+						{uploadDateText}
+					</div>
+				) : null}
 			</div>
 		</Link>
 	);

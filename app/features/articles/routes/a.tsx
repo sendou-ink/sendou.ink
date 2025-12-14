@@ -4,13 +4,10 @@ import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { ARTICLES_MAIN_PAGE, articlePage, navIconUrl } from "~/utils/urls";
-import { joinListToNaturalString } from "../../../utils/arrays";
 import { metaTags } from "../../../utils/remix";
 
 import { loader } from "../loaders/a.server";
 export { loader };
-
-import "~/styles/front.css";
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: () => ({
@@ -31,7 +28,7 @@ export const meta: MetaFunction = (args) => {
 };
 
 export default function ArticlesMainPage() {
-	const { t } = useTranslation(["common"]);
+	const { t, i18n } = useTranslation(["common"]);
 	const data = useLoaderData<typeof loader>();
 
 	return (
@@ -47,10 +44,9 @@ export default function ArticlesMainPage() {
 						</Link>
 						<div className="text-xs text-lighter">
 							{t("common:articles.by", {
-								author: joinListToNaturalString(
-									article.authors.map((a) => a.name),
-									"&",
-								),
+								author: new Intl.ListFormat(i18n.language, {
+									style: "short",
+								}).format(article.authors.map((a) => a.name)),
 							})}{" "}
 							• <time>{article.dateString}</time>
 						</div>

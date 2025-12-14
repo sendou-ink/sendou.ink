@@ -4,12 +4,12 @@ import { mapPickingStyleToModes } from "~/features/tournament/tournament-utils";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { Round } from "~/modules/brackets-model";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator";
-import {
-	createTournamentMapList,
-	type TournamentMaplistSource,
-} from "~/modules/tournament-map-list-generator";
+import { generateBalancedMapList } from "~/modules/tournament-map-list-generator/balanced-map-list";
 import { starterMap } from "~/modules/tournament-map-list-generator/starter-map";
+import type {
+	TournamentMapListMap,
+	TournamentMaplistSource,
+} from "~/modules/tournament-map-list-generator/types";
 import { syncCached } from "~/utils/cache.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -21,16 +21,16 @@ import type { Bracket } from "./Bracket";
 interface ResolveCurrentMapListArgs {
 	tournamentId: number;
 	mapPickingStyle: Tables["Tournament"]["mapPickingStyle"];
-	/** @deprecated use maps.count instead */
-	bestOf: 3 | 5 | 7;
 	matchId: number;
 	teams: [teamOneId: number, teamTwoId: number];
-	maps: TournamentRoundMaps | null;
+	maps: TournamentRoundMaps;
 	pickBanEvents: Array<{
 		mode: ModeShort;
 		stageId: StageId;
 		type: Tables["TournamentMatchPickBanEvent"]["type"];
 	}>;
+	/** Maps that both teams (interleaved) have recently played in the tournament with the most recent being first. */
+	recentlyPlayedMaps?: Array<{ mode: ModeShort; stageId: StageId }>;
 }
 
 export function resolveMapList(
@@ -72,6 +72,28 @@ export function resolveMapList(
 					bannedByTournamentTeamId: undefined,
 				})),
 		);
+}
+
+export function mapListFromResults(
+	results: Array<{
+		mode: ModeShort;
+		stageId: StageId;
+		source: string;
+	}>,
+): TournamentMapListMap[] {
+	return results.map((result) => {
+		const parsedSource: TournamentMaplistSource = /^\d+$/.test(result.source)
+			? Number(result.source)
+			: (result.source as TournamentMaplistSource);
+
+		return {
+			mode: result.mode,
+			stageId: result.stageId,
+			source: parsedSource,
+			// Banned maps are not relevant for completed matches
+			bannedByTournamentTeamId: undefined,
+		};
+	});
 }
 
 function resolveBannedByTeamId(
@@ -120,8 +142,6 @@ export function resolveFreshTeamPickedMapList(
 	};
 
 	const count = () => {
-		if (!args.maps?.count) return args.bestOf;
-
 		if (args.maps.pickBan) {
 			return pickBanCount(args.maps.pickBan, args.maps.count);
 		}
@@ -144,11 +164,12 @@ export function resolveFreshTeamPickedMapList(
 					maps: new MapPool(findMapPoolByTeamId(args.teams[1])),
 				},
 			],
+			recentlyPlayedMaps: args.recentlyPlayedMaps,
 		});
 	}
 
 	try {
-		return createTournamentMapList({
+		return generateBalancedMapList({
 			count: count(),
 			seed: String(args.matchId),
 			modesIncluded: mapPickingStyleToModes(args.mapPickingStyle),
@@ -163,11 +184,12 @@ export function resolveFreshTeamPickedMapList(
 					maps: new MapPool(findMapPoolByTeamId(args.teams[1])),
 				},
 			],
+			recentlyPlayedMaps: args.recentlyPlayedMaps,
 		});
 	} catch (e) {
 		logger.error("Failed to create map list. Falling back to default maps.", e);
 
-		return createTournamentMapList({
+		return generateBalancedMapList({
 			count: count(),
 			seed: String(args.matchId),
 			modesIncluded: mapPickingStyleToModes(args.mapPickingStyle),
@@ -182,6 +204,7 @@ export function resolveFreshTeamPickedMapList(
 					maps: new MapPool([]),
 				},
 			],
+			recentlyPlayedMaps: args.recentlyPlayedMaps,
 		});
 	}
 }

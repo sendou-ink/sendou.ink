@@ -23,7 +23,6 @@ export const tournamentCtxTeam = (
 		name: `Team ${teamId}`,
 		prefersNotToHost: 0,
 		droppedOut: 0,
-		noScreen: 0,
 		seed: teamId + 1,
 		...partial,
 	};
@@ -66,9 +65,7 @@ export const testTournament = ({
 			organization: null,
 			parentTournamentId: null,
 			rules: null,
-			logoUrl: null,
-			logoSrc: "/test.png",
-			logoValidatedAt: null,
+			logoUrl: "/test.png",
 			discordUrl: null,
 			startTime: 1705858842,
 			isFinalized: 0,
@@ -264,6 +261,26 @@ export const progressions = {
 			settings: {
 				groupCount: 1,
 			},
+		},
+	],
+	swissEarlyAdvance: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "swiss",
+			settings: {
+				advanceThreshold: 3,
+			},
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "B1",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [],
+				},
+			],
 		},
 	],
 	doubleEliminationWithUnderground: [

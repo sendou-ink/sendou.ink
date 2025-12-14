@@ -19,7 +19,6 @@ export async function dbInsertTournament() {
 		bracketUrl: "https://example.com/bracket",
 		description: null,
 		discordInviteCode: "test-discord",
-		deadlines: "DEFAULT",
 		name: "Test Tournament",
 		organizationId: null,
 		rules: null,
@@ -62,7 +61,6 @@ export async function dbInsertTournamentTeam({
 		ownerInGameName: null,
 		team: {
 			name: `Test Team ${ownerId}`,
-			noScreen: 0,
 			prefersNotToHost: 0,
 			teamId: null,
 		},

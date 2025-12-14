@@ -1,5 +1,3 @@
-import { FF_SCRIMS_ENABLED } from "~/features/scrims/scrims-constants";
-
 export const navItems = [
 	{
 		name: "settings",
@@ -38,13 +36,11 @@ export const navItems = [
 		url: "leaderboards",
 		prefetch: false,
 	},
-	FF_SCRIMS_ENABLED
-		? {
-				name: "scrims",
-				url: "scrims",
-				prefetch: false,
-			}
-		: null,
+	{
+		name: "scrims",
+		url: "scrims",
+		prefetch: false,
+	},
 	{
 		name: "lfg",
 		url: "lfg",
@@ -98,6 +94,11 @@ export const navItems = [
 	{
 		name: "t",
 		url: "t",
+		prefetch: false,
+	},
+	{
+		name: "tier-list-maker",
+		url: "tier-list-maker",
 		prefetch: false,
 	},
 	{

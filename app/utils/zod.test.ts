@@ -3,6 +3,7 @@ import {
 	actuallyNonEmptyStringOrNull,
 	hasZalgo,
 	normalizeFriendCode,
+	timeString,
 } from "./zod";
 
 describe("normalizeFriendCode", () => {
@@ -75,5 +76,47 @@ describe("actuallyNonEmptyStringOrNull", () => {
 
 	it("returns null for a string with only tag space emoji", () => {
 		expect(actuallyNonEmptyStringOrNull("󠀠󠀠󠀠󠀠󠀠")).toBeNull();
+	});
+});
+
+describe("timeString", () => {
+	it("accepts valid time in HH:MM format", () => {
+		expect(timeString.safeParse("00:00").success).toBe(true);
+		expect(timeString.safeParse("12:30").success).toBe(true);
+		expect(timeString.safeParse("23:59").success).toBe(true);
+	});
+
+	it("accepts times with leading zeros", () => {
+		expect(timeString.safeParse("01:05").success).toBe(true);
+		expect(timeString.safeParse("09:00").success).toBe(true);
+	});
+
+	it("rejects invalid hour values", () => {
+		expect(timeString.safeParse("24:00").success).toBe(false);
+		expect(timeString.safeParse("25:30").success).toBe(false);
+		expect(timeString.safeParse("99:00").success).toBe(false);
+	});
+
+	it("rejects invalid minute values", () => {
+		expect(timeString.safeParse("12:60").success).toBe(false);
+		expect(timeString.safeParse("12:99").success).toBe(false);
+	});
+
+	it("rejects malformed time strings", () => {
+		expect(timeString.safeParse("1:30").success).toBe(false);
+		expect(timeString.safeParse("12:3").success).toBe(false);
+		expect(timeString.safeParse("12-30").success).toBe(false);
+		expect(timeString.safeParse("1230").success).toBe(false);
+		expect(timeString.safeParse("12:30:00").success).toBe(false);
+	});
+
+	it("rejects non-string values", () => {
+		expect(timeString.safeParse(1230).success).toBe(false);
+		expect(timeString.safeParse(null).success).toBe(false);
+		expect(timeString.safeParse(undefined).success).toBe(false);
+	});
+
+	it("rejects empty string", () => {
+		expect(timeString.safeParse("").success).toBe(false);
 	});
 });

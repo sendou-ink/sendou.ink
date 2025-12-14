@@ -24,12 +24,11 @@ import {
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
-import { userSubmittedImage } from "~/utils/urls";
 import {
 	fillWithNullTillPowerOfTwo,
 	groupNumberToLetters,
 } from "../tournament-bracket-utils";
-import { Bracket } from "./Bracket";
+import { type Bracket, createBracket } from "./Bracket";
 import { getTournamentManager } from "./brackets-manager";
 import { getRounds } from "./rounds";
 import * as Swiss from "./Swiss";
@@ -56,6 +55,10 @@ export class Tournament {
 		const hasStarted = data.stage.length > 0;
 
 		const teamsInSeedOrder = ctx.teams.sort((a, b) => {
+			if (a.startingBracketIdx !== b.startingBracketIdx) {
+				return (a.startingBracketIdx ?? 0) - (b.startingBracketIdx ?? 0);
+			}
+
 			if (a.seed && b.seed) {
 				return a.seed - b.seed;
 			}
@@ -138,7 +141,7 @@ export class Tournament {
 				);
 
 				this.brackets.push(
-					Bracket.create({
+					createBracket({
 						id: inProgressStage.id,
 						idx: bracketIdx,
 						tournament: this,
@@ -179,7 +182,7 @@ export class Tournament {
 					});
 
 				this.brackets.push(
-					Bracket.create({
+					createBracket({
 						id: -1 * bracketIdx,
 						idx: bracketIdx,
 						tournament: this,
@@ -234,7 +237,7 @@ export class Tournament {
 					);
 
 				this.brackets.push(
-					Bracket.create({
+					createBracket({
 						id: -1 * bracketIdx,
 						idx: bracketIdx,
 						tournament: this,
@@ -272,7 +275,10 @@ export class Tournament {
 			invariant(sourceBracket, "Bracket not found");
 
 			const { teams: sourcedTeams, relevantMatchesFinished } =
-				sourceBracket.source(source.placements);
+				sourceBracket.source({
+					placements: source.placements,
+					advanceThreshold: sourceBracket.settings?.advanceThreshold,
+				});
 			if (!relevantMatchesFinished) {
 				allRelevantMatchesFinished = false;
 			}
@@ -467,10 +473,7 @@ export class Tournament {
 			const [oneId, twoId] = replays[0];
 
 			const lowerSeedId =
-				newOrder.findIndex((t) => t === oneId) <
-				newOrder.findIndex((t) => t === twoId)
-					? twoId
-					: oneId;
+				newOrder.indexOf(oneId) < newOrder.indexOf(twoId) ? twoId : oneId;
 
 			if (!potentialSwitchCandidates.some((t) => t === lowerSeedId)) {
 				logger.warn(
@@ -484,8 +487,8 @@ export class Tournament {
 				// can't switch place with itself
 				if (candidate === lowerSeedId) continue;
 
-				const candidateIdx = newOrder.findIndex((t) => t === candidate);
-				const otherIdx = newOrder.findIndex((t) => t === lowerSeedId);
+				const candidateIdx = newOrder.indexOf(candidate);
+				const otherIdx = newOrder.indexOf(lowerSeedId);
 
 				const temp = newOrder[candidateIdx];
 				newOrder[candidateIdx] = newOrder[otherIdx];
@@ -664,11 +667,7 @@ export class Tournament {
 
 	/** Tournament teams logo image path, either from the team or the pickup avatar uploaded specifically for this tournament */
 	tournamentTeamLogoSrc(team: TournamentDataTeam) {
-		const url = team.team?.logoUrl ?? team.pickupAvatarUrl;
-
-		if (!url) return;
-
-		return userSubmittedImage(url);
+		return team.team?.logoUrl ?? team.pickupAvatarUrl;
 	}
 
 	/** Generates a Splatoon 3 pool code to join the tournament match. It tries to make it so that teams don't need to change the pool all the time, but provides different ones not to run into the in-game limit of max people in a pool at a time. */
@@ -723,11 +722,27 @@ export class Tournament {
 	}
 
 	teamById(id: number) {
-		const teamIdx = this.ctx.teams.findIndex((team) => team.id === id);
+		let result: (typeof this.ctx.teams)[number] | null = null;
+		let seed = 0;
+		let currStartingBracketIdx = this.ctx.teams.at(0)?.startingBracketIdx;
 
-		if (teamIdx === -1) return;
+		for (const team of this.ctx.teams) {
+			if (team.startingBracketIdx !== currStartingBracketIdx) {
+				currStartingBracketIdx = team.startingBracketIdx;
+				seed = 1;
+			} else {
+				seed++;
+			}
 
-		return { ...this.ctx.teams[teamIdx], seed: teamIdx + 1 };
+			if (team.id === id) {
+				result = team;
+				break;
+			}
+		}
+
+		if (!result) return;
+
+		return { ...result, seed };
 	}
 
 	participatedPlayersByTeamId(id: number) {
@@ -860,24 +875,15 @@ export class Tournament {
 	}
 
 	/** what is the max amount of members teams can add in total? This limit doesn't apply to the organizer adding members to a team. */
-	get maxTeamMemberCount() {
+	get maxMembersPerTeam() {
 		// special format
 		if (this.minMembersPerTeam !== 4) return this.minMembersPerTeam;
 
-		if (this.isLeagueSignup || this.isLeagueDivision) return 8;
-
-		// TODO: retire this hack by making it user configurable
-		if (this.ctx.organization?.id === 19 && this.ctx.name.includes("FLUTI")) {
-			return 8;
+		if (this.ctx.settings.maxMembersPerTeam) {
+			return this.ctx.settings.maxMembersPerTeam;
 		}
 
-		const maxMembersBeforeStart = 6;
-
-		if (this.hasStarted) {
-			return maxMembersBeforeStart + 1;
-		}
-
-		return maxMembersBeforeStart;
+		return 6;
 	}
 
 	/** Is the regular check-in (check-in for the whole tournament) open at this time? */
@@ -1200,16 +1206,6 @@ export class Tournament {
 		}
 
 		for (const bracket of this.brackets) {
-			if (!bracket.preview) continue;
-
-			const isParticipant = bracket.seeding?.includes(team.id);
-
-			if (isParticipant) {
-				return { type: "WAITING_FOR_BRACKET" } as const;
-			}
-		}
-
-		for (const bracket of this.brackets) {
 			if (bracket.preview || bracket.type !== "swiss") continue;
 
 			// TODO: both seeding and participantTournamentTeamIds are used for the same thing
@@ -1222,11 +1218,21 @@ export class Tournament {
 					match.opponent1?.id === team.id || match.opponent2?.id === team.id,
 			).length;
 			const notAllRoundsGenerated =
-				this.ctx.settings.swiss?.roundCount &&
-				setsGeneratedCount !== this.ctx.settings.swiss?.roundCount;
+				bracket.settings?.roundCount &&
+				setsGeneratedCount !== bracket.settings.roundCount;
 
 			if (isParticipant && notAllRoundsGenerated) {
 				return { type: "WAITING_FOR_ROUND" } as const;
+			}
+		}
+
+		for (const bracket of this.brackets) {
+			if (!bracket.preview) continue;
+
+			const isParticipant = bracket.seeding?.includes(team.id);
+
+			if (isParticipant) {
+				return { type: "WAITING_FOR_BRACKET" } as const;
 			}
 		}
 
@@ -1274,6 +1280,11 @@ export class Tournament {
 
 		// BYE match
 		if (!match.opponent1 || !match.opponent2) return false;
+
+		// in round robin all matches are independent from one another
+		if (bracket.type === "round_robin") {
+			return true;
+		}
 
 		const anotherMatchBlocking = this.followingMatches(matchId).some(
 			(match) =>
@@ -1331,10 +1342,6 @@ export class Tournament {
 		);
 		if (!bracket) {
 			logger.error("followingMatches: Bracket not found");
-			return [];
-		}
-
-		if (bracket.type === "round_robin") {
 			return [];
 		}
 

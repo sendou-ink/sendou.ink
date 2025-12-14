@@ -18,7 +18,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		throw new Response(null, { status: 404 });
 	}
 
-	// TODO: could be inferred from tournament data (winCounts too)
 	const sets = tournamentTeamSets({ tournamentTeamId, tournamentId });
 
 	return {

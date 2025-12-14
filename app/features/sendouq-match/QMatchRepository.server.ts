@@ -13,7 +13,12 @@ import type {
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { mostPopularArrayElement } from "~/utils/arrays";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
+import {
+	COMMON_USER_FIELDS,
+	concatUserSubmittedImagePrefix,
+	tournamentLogoWithDefault,
+	userChatNameColor,
+} from "~/utils/kysely.server";
 import type { Unpacked } from "~/utils/types";
 import { MATCHES_PER_SEASONS_PAGE } from "../user-page/user-page-constants";
 
@@ -112,10 +117,12 @@ export async function findGroupById({
 						"AllTeam.avatarImgId",
 						"UserSubmittedImage.id",
 					)
-					.select([
+					.select((eb) => [
 						"AllTeam.name",
 						"AllTeam.customUrl",
-						"UserSubmittedImage.url as avatarUrl",
+						concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+							"avatarUrl",
+						),
 					])
 					.where("AllTeam.id", "=", eb.ref("Group.teamId")),
 			).as("team"),
@@ -229,19 +236,14 @@ const tournamentResultsSubQuery = (
 			"CalendarEvent.id",
 			"CalendarEventDate.eventId",
 		)
-		.leftJoin(
-			"UserSubmittedImage",
-			"CalendarEvent.avatarImgId",
-			"UserSubmittedImage.id",
-		)
-		.select([
+		.select((eb) => [
 			"TournamentResult.spDiff",
 			"TournamentResult.setResults",
 			"TournamentResult.tournamentId",
 			"TournamentResult.tournamentTeamId",
 			"CalendarEventDate.startTime as tournamentStartTime",
 			"CalendarEvent.name as tournamentName",
-			"UserSubmittedImage.url as logoUrl",
+			tournamentLogoWithDefault(eb).as("logoUrl"),
 		])
 		.whereRef("TournamentResult.tournamentId", "=", "Skill.tournamentId")
 		.where("TournamentResult.userId", "=", userId);

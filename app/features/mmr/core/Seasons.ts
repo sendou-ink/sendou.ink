@@ -1,3 +1,5 @@
+import { IS_E2E_TEST_RUN } from "~/utils/e2e";
+
 /**
  * List of seasons with their respective start and end dates.
  *
@@ -15,6 +17,7 @@
 export const list =
 	// when we do npm run setup NODE_ENV is not set -> use test seasons
 	!process.env.NODE_ENV ||
+	IS_E2E_TEST_RUN ||
 	// this gets checked when the project is running
 	(process.env.NODE_ENV === "development" &&
 		import.meta.env.VITE_PROD_MODE !== "true")
@@ -75,6 +78,16 @@ export const list =
 					nth: 8,
 					starts: new Date("2025-06-16T18:00:00.000Z"),
 					ends: new Date("2025-08-24T22:00:00.000Z"),
+				},
+				{
+					nth: 9,
+					starts: new Date("2025-09-08T17:00:00.000Z"),
+					ends: new Date("2025-11-23T22:00:00.000Z"),
+				},
+				{
+					nth: 10,
+					starts: new Date("2025-12-08T17:00:00.000Z"),
+					ends: new Date("2026-02-22T22:00:00.000Z"),
 				},
 			] as const);
 

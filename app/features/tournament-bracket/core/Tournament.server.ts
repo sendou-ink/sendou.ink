@@ -1,5 +1,4 @@
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import { isAdmin } from "~/modules/permissions/utils";
 import { notFoundIfFalsy } from "~/utils/remix.server";
@@ -53,19 +52,12 @@ function dataMapped({
 			(staff) => staff.id === user?.id && staff.role === "ORGANIZER",
 		) ||
 		isAdmin(user);
-	const logoIsFromStaticAssets = ctx.logoSrc.includes("static-assets");
 	const revealInfo = tournamentHasStarted || isOrganizer;
-
-	const defaultLogo = HACKY_resolvePicture({ name: "default" });
 
 	return {
 		data,
 		ctx: {
 			...ctx,
-			logoSrc:
-				isOrganizer || ctx.logoValidatedAt || logoIsFromStaticAssets
-					? ctx.logoSrc
-					: defaultLogo,
 			teams: ctx.teams.map((team) => {
 				const isOwnTeam = team.members.some(
 					(member) => member.userId === user?.id,

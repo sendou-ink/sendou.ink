@@ -1,6 +1,5 @@
 import { Link, useFetcher } from "@remix-run/react";
 import clsx from "clsx";
-import { formatDistanceToNow } from "date-fns";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
@@ -15,14 +14,10 @@ import { useUser } from "~/features/auth/core/user";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
-import {
-	lfgNewPostPage,
-	navIconUrl,
-	userPage,
-	userSubmittedImage,
-} from "~/utils/urls";
+import { lfgNewPostPage, navIconUrl, userPage } from "~/utils/urls";
 import { hourDifferenceBetweenTimezones } from "../core/timezone";
 import type { LFGLoaderData, TiersMap } from "../routes/lfg";
 
@@ -149,9 +144,7 @@ function TeamLFGPost({
 function PostTeamLogoHeader({ team }: { team: NonNullable<Post["team"]> }) {
 	return (
 		<div className="stack horizontal sm items-center font-bold">
-			{team.avatarUrl ? (
-				<Avatar size="xs" url={userSubmittedImage(team.avatarUrl)} />
-			) : null}
+			{team.avatarUrl ? <Avatar size="xs" url={team.avatarUrl} /> : null}
 			{team.name}
 		</div>
 	);
@@ -265,7 +258,8 @@ function PostTime({
 	createdAt: number;
 	updatedAt: number;
 }) {
-	const { t, i18n } = useTranslation(["lfg"]);
+	const { t } = useTranslation(["lfg"]);
+	const { formatDate, formatDistanceToNow } = useTimeFormat();
 
 	const createdAtDate = databaseTimestampToDate(createdAt);
 	const updatedAtDate = databaseTimestampToDate(updatedAt);
@@ -274,7 +268,7 @@ function PostTime({
 
 	return (
 		<div className="text-lighter text-xs font-bold">
-			{createdAtDate.toLocaleString(i18n.language, {
+			{formatDate(createdAtDate, {
 				month: "long",
 				day: "numeric",
 			})}{" "}

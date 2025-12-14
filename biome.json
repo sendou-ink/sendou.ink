@@ -6,7 +6,9 @@
 			"!scripts/dicts/**/*",
 			"!scripts/output/**/*",
 			"!app/db/seed/placements.json",
-			"!build/**/*"
+			"!build/**/*",
+			"!test-results/**/*",
+			"!playwright-report/**/*"
 		]
 	},
 	"linter": {
@@ -42,16 +44,15 @@
 			},
 			"a11y": {
 				"useKeyWithClickEvents": "off",
-				"noLabelWithoutControl": "off"
+				"noLabelWithoutControl": "off",
+				"noSvgWithoutTitle": "off"
 			},
 			"complexity": {
 				"useLiteralKeys": {
 					"fix": "safe",
 					"level": "error"
-				}
-			},
-			"nursery": {
-				"useUniqueElementIds": "off"
+				},
+				"noImportantStyles": "off"
 			}
 		}
 	},

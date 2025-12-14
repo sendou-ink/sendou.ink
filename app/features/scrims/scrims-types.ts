@@ -7,6 +7,7 @@ export type LutiDiv = (typeof LUTI_DIVS)[number];
 export interface ScrimPost {
 	id: number;
 	at: number;
+	rangeEnd: number | null;
 	createdAt: number;
 	visibility: AssociationVisibility | null;
 	text: string | null;
@@ -15,6 +16,12 @@ export interface ScrimPost {
 		max: LutiDiv;
 		/** Min div in the whole system is "11" */
 		min: LutiDiv;
+	} | null;
+	maps: "SZ" | "ALL" | "RANKED" | null;
+	mapsTournament: {
+		id: number;
+		name: string;
+		avatarUrl: string;
 	} | null;
 	team: ScrimPostTeam | null;
 	users: Array<ScrimPostUser>;
@@ -42,6 +49,8 @@ export interface ScrimPostRequest {
 	isAccepted: boolean;
 	users: Array<ScrimPostUser>;
 	team: ScrimPostTeam | null;
+	message: string | null;
+	at: number | null;
 	permissions: {
 		CANCEL: number[];
 	};
@@ -56,4 +65,18 @@ interface ScrimPostTeam {
 	name: string;
 	customUrl: string;
 	avatarUrl: string | null;
+}
+
+export interface TimeRange {
+	start: string;
+	end: string;
+}
+
+export interface ScrimFilters {
+	weekdayTimes: TimeRange | null;
+	weekendTimes: TimeRange | null;
+	divs: {
+		min: LutiDiv | null;
+		max: LutiDiv | null;
+	} | null;
 }

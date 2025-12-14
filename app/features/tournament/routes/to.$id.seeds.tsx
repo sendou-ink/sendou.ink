@@ -24,7 +24,6 @@ import { SendouDialog } from "~/components/elements/Dialog";
 import { SubmitButton } from "~/components/SubmitButton";
 import { Table } from "~/components/Table";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
-import { useTimeoutState } from "~/hooks/useTimeoutState";
 import invariant from "~/utils/invariant";
 import { userResultsPage } from "~/utils/urls";
 import { Avatar } from "../../../components/Avatar";
@@ -55,7 +54,7 @@ export default function TournamentSeedsPage() {
 		}),
 	);
 
-	const teamsSorted = tournament.ctx.teams.sort(
+	const teamsSorted = [...tournament.ctx.teams].sort(
 		(a, b) => teamOrder.indexOf(a.id) - teamOrder.indexOf(b.id),
 	);
 
@@ -333,20 +332,9 @@ function StartingBracketDialog() {
 
 function SeedAlert({ teamOrder }: { teamOrder: number[] }) {
 	const tournament = useTournament();
-	const [teamOrderInDb, setTeamOrderInDb] = React.useState(teamOrder);
-	const [showSuccess, setShowSuccess] = useTimeoutState(false);
 	const fetcher = useFetcher();
 
-	// TODO: figure out a better way
-	// biome-ignore lint/correctness/useExhaustiveDependencies: biome migration
-	React.useEffect(() => {
-		// TODO: what if error?
-		if (fetcher.state !== "loading") return;
-
-		setTeamOrderInDb(teamOrder);
-		setShowSuccess(true, { timeout: 3000 });
-	}, [fetcher.state]);
-
+	const teamOrderInDb = tournament.ctx.teams.map((t) => t.id);
 	const teamOrderChanged = teamOrder.some((id, i) => id !== teamOrderInDb[i]);
 
 	return (
@@ -355,26 +343,20 @@ function SeedAlert({ teamOrder }: { teamOrder: number[] }) {
 			<input type="hidden" name="seeds" value={JSON.stringify(teamOrder)} />
 			<input type="hidden" name="_action" value="UPDATE_SEEDS" />
 			<Alert
-				variation={
-					teamOrderChanged ? "WARNING" : showSuccess ? "SUCCESS" : "INFO"
-				}
+				variation={teamOrderChanged ? "WARNING" : "INFO"}
 				alertClassName="tournament-bracket__start-bracket-alert"
 				textClassName="stack horizontal md items-center"
 			>
 				{teamOrderChanged
-					? "You have unchanged changes to seeding"
-					: showSuccess
-						? "Seeds saved successfully!"
-						: "Drag teams to adjust their seeding"}
-				{(!showSuccess || teamOrderChanged) && (
-					<SubmitButton
-						state={fetcher.state}
-						isDisabled={!teamOrderChanged}
-						size="small"
-					>
-						Save seeds
-					</SubmitButton>
-				)}
+					? "You have unsaved changes to seeding"
+					: "Drag teams to adjust their seeding"}
+				<SubmitButton
+					state={fetcher.state}
+					isDisabled={!teamOrderChanged}
+					size="small"
+				>
+					Save seeds
+				</SubmitButton>
 			</Alert>
 		</fetcher.Form>
 	);
@@ -394,14 +376,12 @@ function RowContents({
 }) {
 	const tournament = useTournament();
 
+	const logoUrl = tournament.tournamentTeamLogoSrc(team);
+
 	return (
 		<>
 			<div>{seed}</div>
-			<div>
-				{team.team?.logoUrl ? (
-					<Avatar url={tournament.tournamentTeamLogoSrc(team)} size="xxs" />
-				) : null}
-			</div>
+			<div>{logoUrl ? <Avatar url={logoUrl} size="xxs" /> : null}</div>
 			<div className="tournament__seeds__team-name">
 				{team.checkIns.length > 0 ? "✅ " : "❌ "} {team.name}
 			</div>
@@ -414,7 +394,6 @@ function RowContents({
 						<div key={member.userId} className="tournament__seeds__team-member">
 							<Link
 								to={userResultsPage(member, true)}
-								target="_blank"
 								className="tournament__seeds__team-member__name"
 							>
 								{member.username}

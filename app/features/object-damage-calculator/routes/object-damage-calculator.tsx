@@ -41,7 +41,7 @@ import { WeaponSelect } from "~/components/WeaponSelect";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import { metaTags } from "~/utils/remix";
 
-export const CURRENT_PATCH = "10.0";
+export const CURRENT_PATCH = "10.1";
 
 export const shouldRevalidate: ShouldRevalidateFunction = () => false;
 
@@ -85,6 +85,7 @@ export default function ObjectDamagePage() {
 						<Label htmlFor="weapon">{t("analyzer:labels.weapon")}</Label>
 						<WeaponSelect
 							includeSubSpecial
+							value={weapon}
 							onChange={(newAnyWeapon) => {
 								handleChange({
 									newAnyWeapon,

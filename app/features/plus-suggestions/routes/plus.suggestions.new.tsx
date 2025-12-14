@@ -6,7 +6,6 @@ import { Label } from "~/components/Label";
 import { Redirect } from "~/components/Redirect";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
-import { atOrError } from "~/utils/arrays";
 import { plusSuggestionPage } from "~/utils/urls";
 import { action } from "../actions/plus.suggestions.new.server";
 import { PLUS_SUGGESTION, PLUS_TIERS } from "../plus-suggestions-constants";
@@ -17,7 +16,7 @@ export { action };
 export default function PlusNewSuggestionModalPage() {
 	const user = useUser();
 	const matches = useMatches();
-	const data = atOrError(matches, -2).data as PlusSuggestionsLoaderData;
+	const data = matches.at(-2)!.data as PlusSuggestionsLoaderData;
 
 	const tierOptions = PLUS_TIERS.filter((tier) => {
 		// user will be redirected anyway

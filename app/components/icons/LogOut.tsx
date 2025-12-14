@@ -8,7 +8,6 @@ export function LogOutIcon({ className }: { className?: string }) {
 			stroke="currentColor"
 			strokeWidth={2}
 		>
-			<title>LogOut Icon</title>
 			<path
 				strokeLinecap="round"
 				strokeLinejoin="round"

@@ -35,7 +35,7 @@ const config: PlaywrightTestConfig = {
 		/* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
 		actionTimeout: 0,
 		/* Base URL to use in actions like `await page.goto('/')`. */
-		baseURL: "http://localhost:5173",
+		baseURL: "http://localhost:6173",
 
 		trace: "retain-on-failure",
 
@@ -99,9 +99,19 @@ const config: PlaywrightTestConfig = {
 
 	/* Run your local dev server before starting the tests */
 	webServer: {
-		command: "npm run dev",
-		port: 5173,
-		reuseExistingServer: !process.env.CI,
+		env: {
+			DB_PATH: "db-test-e2e.sqlite3",
+			DISCORD_CLIENT_ID: "123",
+			DISCORD_CLIENT_SECRET: "secret",
+			SESSION_SECRET: "secret",
+			PORT: "6173",
+			VITE_SITE_DOMAIN: "http://localhost:6173",
+			VITE_E2E_TEST_RUN: "true",
+		},
+		command: "npm run build && npm start",
+		port: 6173,
+		reuseExistingServer: false,
+		timeout: 60_000 * 2, // 2 minutes
 	},
 	build: {
 		external: ["**/*.json"],

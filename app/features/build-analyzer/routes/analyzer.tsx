@@ -37,7 +37,7 @@ import {
 	TORPEDO_ID,
 	TOXIC_MIST_ID,
 } from "~/modules/in-game-lists/weapon-ids";
-import { atOrError, nullFilledArray } from "~/utils/arrays";
+import { nullFilledArray } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -86,14 +86,15 @@ import {
 import "../analyzer.css";
 import * as R from "remeda";
 import { SendouSwitch } from "~/components/elements/Switch";
+import { Placeholder } from "~/components/Placeholder";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import { logger } from "~/utils/logger";
 
-export const CURRENT_PATCH = "10.0";
+export const CURRENT_PATCH = "10.1";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
-		title: "Build analyzer",
+		title: "Build Analyzer",
 		ogTitle: "Splatoon 3 build analyzer/simulator",
 		location: args.location,
 		description:
@@ -117,7 +118,7 @@ export default function BuildAnalyzerShell() {
 	const isMounted = useIsMounted();
 
 	if (!isMounted) {
-		return null;
+		return <Placeholder />;
 	}
 
 	return <BuildAnalyzerPage />;
@@ -249,7 +250,7 @@ function BuildAnalyzerPage() {
 						<div className="w-full">
 							<WeaponSelect
 								label={t("analyzer:weaponSelect.label")}
-								initialValue={mainWeaponId}
+								value={mainWeaponId}
 								onChange={(val) =>
 									handleChange({
 										newMainWeaponId: val,
@@ -1554,7 +1555,9 @@ function DamageTable({
 
 	const showDistanceColumn = values.some((val) => val.distance);
 
-	const firstRow = atOrError(values, 0);
+	const firstRow = values.at(0);
+	invariant(firstRow, "no damage rows found");
+
 	const showDamageColumn =
 		!damageIsSubWeaponDamage(firstRow) ||
 		// essentially checking that we are using some sub resistance up

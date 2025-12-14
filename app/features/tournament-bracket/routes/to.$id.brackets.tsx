@@ -5,7 +5,6 @@ import * as React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
-import { useEventSource } from "remix-utils/sse/react";
 import { Alert } from "~/components/Alert";
 import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -16,15 +15,14 @@ import { EyeIcon } from "~/components/icons/Eye";
 import { EyeSlashIcon } from "~/components/icons/EyeSlash";
 import { MapIcon } from "~/components/icons/Map";
 import { useUser } from "~/features/auth/core/user";
+import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import { tournamentWebsocketRoom } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useVisibilityChange } from "~/hooks/useVisibilityChange";
-import {
-	SENDOU_INK_BASE_URL,
-	tournamentBracketsSubscribePage,
-	tournamentJoinPage,
-} from "~/utils/urls";
+import { SENDOU_INK_BASE_URL, tournamentJoinPage } from "~/utils/urls";
 import {
 	useBracketExpanded,
 	useTournament,
@@ -36,20 +34,25 @@ import { BracketMapListDialog } from "../components/BracketMapListDialog";
 import { TournamentTeamActions } from "../components/TournamentTeamActions";
 import type { Bracket as BracketType } from "../core/Bracket";
 import * as PreparedMaps from "../core/PreparedMaps";
-import { bracketSubscriptionKey } from "../tournament-bracket-utils";
 export { action };
 
-import "../components/Bracket/bracket.css";
 import "../tournament-bracket.css";
+import "../components/Bracket/bracket.css";
 
 export default function TournamentBracketsPage() {
 	const { t } = useTranslation(["tournament"]);
+	const { formatDateTime, formatTime } = useTimeFormat();
 	const visibility = useVisibilityChange();
 	const { revalidate } = useRevalidator();
 	const user = useUser();
 	const tournament = useTournament();
 	const isMounted = useIsMounted();
 	const ctx = useOutletContext();
+
+	useWebsocketRevalidation({
+		room: tournamentWebsocketRoom(tournament.ctx.id),
+		connected: !tournament.ctx.isFinalized,
+	});
 
 	const defaultBracketIdx = () => {
 		if (
@@ -74,16 +77,18 @@ export default function TournamentBracketsPage() {
 	);
 
 	React.useEffect(() => {
-		if (visibility !== "visible" || tournament.everyBracketOver) return;
+		if (visibility !== "visible" || tournament.ctx.isFinalized) return;
 
 		revalidate();
-	}, [visibility, revalidate, tournament.everyBracketOver]);
+	}, [visibility, revalidate, tournament.ctx.isFinalized]);
 
+	const teamProgressStatus = tournament.teamMemberOfProgressStatus(user);
 	const showAddSubsButton =
 		!tournament.canFinalize(user) &&
 		!tournament.everyBracketOver &&
 		tournament.hasStarted &&
-		tournament.autonomousSubs;
+		tournament.autonomousSubs &&
+		teamProgressStatus?.type !== "THANKS_FOR_PLAYING";
 
 	const showPrepareMapsButton =
 		tournament.isOrganizer(user) &&
@@ -133,6 +138,15 @@ export default function TournamentBracketsPage() {
 			)} rounds of the losers bracket can play in this bracket`;
 		}
 
+		const advanceThreshold = tournament.brackets[0].settings?.advanceThreshold;
+		if (
+			advanceThreshold &&
+			tournament.ctx.settings.bracketProgression[bracketIdx].sources?.[0]
+				.placements.length === 0
+		) {
+			return `Teams that win at least ${advanceThreshold} sets in the Swiss bracket will advance to this stage`;
+		}
+
 		return null;
 	};
 
@@ -160,9 +174,6 @@ export default function TournamentBracketsPage() {
 	return (
 		<div>
 			<Outlet context={ctx} />
-			{visibility !== "hidden" && !tournament.everyBracketOver ? (
-				<AutoRefresher />
-			) : null}
 			{tournament.canFinalize(user) ? (
 				<div className="tournament-bracket__finalize">
 					<LinkButton
@@ -194,7 +205,7 @@ export default function TournamentBracketsPage() {
 						{!bracket.canBeStarted ? (
 							<div className="tournament-bracket__mini-alert">
 								⚠️{" "}
-								{bracketIdx === 0
+								{bracket.isStartingBracket
 									? "Tournament start time is in the future"
 									: bracket.startTime && bracket.startTime > new Date()
 										? "Bracket start time is in the future"
@@ -208,10 +219,7 @@ export default function TournamentBracketsPage() {
 			<div className="stack horizontal mb-4 sm justify-between items-center">
 				{/** TournamentTeamActions more confusing than helpful for leagues, for example might say "Waiting for match..." when previous match was rescheduled  */}
 				{!tournament.isLeagueDivision ? <TournamentTeamActions /> : null}
-				{showAddSubsButton ? (
-					// TODO: could also hide this when team is not in any bracket anymore
-					<AddSubsPopOver />
-				) : null}
+				{showAddSubsButton ? <AddSubsPopOver /> : null}
 			</div>
 			<div className="stack md">
 				<div className="stack horizontal sm">
@@ -246,20 +254,12 @@ export default function TournamentBracketsPage() {
 							{bracket.startTime ? (
 								<span suppressHydrationWarning>
 									(open{" "}
-									{sub(bracket.startTime, { hours: 1 }).toLocaleString(
-										"en-US",
-										{
-											hour: "numeric",
-											minute: "numeric",
-											weekday: "long",
-										},
-									)}{" "}
-									-{" "}
-									{bracket.startTime.toLocaleTimeString("en-US", {
+									{formatDateTime(sub(bracket.startTime, { hours: 1 }), {
 										hour: "numeric",
 										minute: "numeric",
-									})}
-									)
+										weekday: "long",
+									})}{" "}
+									- {formatTime(bracket.startTime)})
 								</span>
 							) : null}
 						</div>
@@ -268,30 +268,6 @@ export default function TournamentBracketsPage() {
 			) : null}
 		</div>
 	);
-}
-
-function AutoRefresher() {
-	useAutoRefresh();
-
-	return null;
-}
-
-function useAutoRefresh() {
-	const { revalidate } = useRevalidator();
-	const tournament = useTournament();
-	const lastEvent = useEventSource(
-		tournamentBracketsSubscribePage(tournament.ctx.id),
-		{
-			event: bracketSubscriptionKey(tournament.ctx.id),
-		},
-	);
-
-	React.useEffect(() => {
-		if (!lastEvent) return;
-
-		// TODO: maybe later could look into not revalidating unless bracket advanced but do something fancy in the tournament class instead
-		revalidate();
-	}, [lastEvent, revalidate]);
 }
 
 function BracketStarter({
@@ -310,13 +286,11 @@ function BracketStarter({
 
 	return (
 		<>
-			{isMounted ? (
+			{isMounted && dialogOpen ? (
 				<BracketMapListDialog
-					isOpen={dialogOpen}
 					close={close}
 					bracket={bracket}
 					bracketIdx={bracketIdx}
-					key={bracketIdx}
 				/>
 			) : null}
 			<SendouButton
@@ -357,14 +331,12 @@ function MapPreparer({
 
 	return (
 		<>
-			{isMounted ? (
+			{isMounted && dialogOpen ? (
 				<BracketMapListDialog
-					isOpen={dialogOpen}
 					close={close}
 					bracket={bracket}
 					bracketIdx={bracketIdx}
 					isPreparing
-					key={bracketIdx}
 				/>
 			) : null}
 			<div className="stack sm horizontal ml-auto">
@@ -403,7 +375,7 @@ function AddSubsPopOver() {
 	}
 
 	const subsAvailableToAdd =
-		tournament.maxTeamMemberCount - ownedTeam.members.length;
+		tournament.maxMembersPerTeam - ownedTeam.members.length;
 
 	const inviteLink = `${SENDOU_INK_BASE_URL}${tournamentJoinPage({
 		tournamentId: tournament.ctx.id,

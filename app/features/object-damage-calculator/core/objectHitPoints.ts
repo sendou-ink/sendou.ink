@@ -21,7 +21,7 @@ const SPRINKLER_HP = 120;
 const RAINMAKER_HP = 1000;
 const SPLAT_BRELLA_SHIELD_HP = 500;
 const BOOYAH_BOMB_ARMOR_HP = 470;
-const INK_VAC_HP = 800;
+const INK_VAC_HP = 1200;
 const BEAKON_HP = 120;
 const TORPEDO_HP = 20;
 const SUPER_CHUMP_HP = 60;
@@ -65,7 +65,7 @@ export const objectHitPoints = (abilityPoints: AbilityPoints): HitPoints => {
 			weaponParams.mainWeapons[6010].CanopyHP * (10 / 6),
 		),
 		BulletShelterCanopyFocus_Launched: hpDivided(
-			weaponParams.mainWeapons[6030].CanopyHP * 2,
+			weaponParams.mainWeapons[6030].CanopyHP * (10 / 6),
 		),
 		Wsb_Shield,
 		Bomb_TorpedoBullet: TORPEDO_HP,

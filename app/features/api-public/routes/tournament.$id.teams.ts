@@ -8,8 +8,8 @@ import * as TournamentRepository from "~/features/tournament/TournamentRepositor
 import i18next from "~/modules/i18n/i18next.server";
 import { nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
+import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
 import { parseParams } from "~/utils/remix.server";
-import { userSubmittedImage } from "~/utils/urls";
 import { id } from "~/utils/zod";
 import {
 	handleOptionsRequest,
@@ -49,7 +49,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			"TournamentTeam.seed",
 			"TournamentTeam.createdAt",
 			"TournamentTeamCheckIn.checkedInAt",
-			"UserSubmittedImage.url as avatarUrl",
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"avatarUrl",
+			),
 			jsonObjectFrom(
 				eb
 					.selectFrom("AllTeam")
@@ -61,7 +63,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 					.whereRef("AllTeam.id", "=", "TournamentTeam.teamId")
 					.select([
 						"AllTeam.customUrl",
-						"UserSubmittedImage.url as logoUrl",
+						concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+							"logoUrl",
+						),
 						"AllTeam.deletedAt",
 					]),
 			).as("team"),
@@ -85,6 +89,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 						"User.discordId",
 						"User.discordAvatar",
 						"User.battlefy",
+						"User.country",
 						"TournamentTeamMember.inGameName",
 						"TournamentTeamMember.isOwner",
 						"TournamentTeamMember.createdAt",
@@ -110,13 +115,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		.execute();
 
 	const friendCodes = await TournamentRepository.friendCodesByTournamentId(id);
-
-	const logoUrl = (team: (typeof teams)[number]) => {
-		const url = team.team?.logoUrl ?? team.avatarUrl;
-		if (!url) return null;
-
-		return userSubmittedImage(url);
-	};
 
 	const result: GetTournamentTeamsResponse = teams.map((team) => {
 		return {
@@ -147,13 +145,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 					avatarUrl: member.discordAvatar
 						? `https://cdn.discordapp.com/avatars/${member.discordId}/${member.discordAvatar}.png`
 						: null,
+					country: member.country,
 					captain: Boolean(member.isOwner),
 					inGameName: member.inGameName,
 					friendCode: friendCodes[member.userId],
 					joinedAt: databaseTimestampToDate(member.createdAt).toISOString(),
 				};
 			}),
-			logoUrl: logoUrl(team),
+			logoUrl: team.team?.logoUrl ?? team.avatarUrl,
 			mapPool:
 				team.mapPool.length > 0
 					? team.mapPool.map((map) => {

@@ -29,12 +29,15 @@ import { ArchiveBoxIcon } from "~/components/icons/ArchiveBox";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { RefreshArrowsIcon } from "~/components/icons/RefreshArrows";
 import { ScaleIcon } from "~/components/icons/Scale";
+import { UsersIcon } from "~/components/icons/Users";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
-import { Chat, type ChatProps, useChat } from "~/features/chat/components/Chat";
+import { useChat } from "~/features/chat/chat-hooks";
+import type { ChatProps } from "~/features/chat/chat-types";
+import { Chat } from "~/features/chat/components/Chat";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { GroupCard } from "~/features/sendouq/components/GroupCard";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
@@ -43,11 +46,11 @@ import { AddPrivateNoteDialog } from "~/features/sendouq-match/components/AddPri
 import type { ReportedWeaponForMerging } from "~/features/sendouq-match/core/reported-weapons.server";
 import { resolveRoomPass } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useWindowSize } from "~/hooks/useWindowSize";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { useHasRole } from "~/modules/permissions/hooks";
-import { joinListToNaturalString } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { animate } from "~/utils/flip";
 import invariant from "~/utils/invariant";
@@ -66,7 +69,6 @@ import {
 	sendouQMatchPage,
 	specialWeaponImageUrl,
 	teamPage,
-	userSubmittedImage,
 } from "~/utils/urls";
 import { action } from "../actions/q.match.$id.server";
 import { matchEndedAtIndex } from "../core/match";
@@ -82,9 +84,9 @@ export const meta: MetaFunction = (args) => {
 
 	return metaTags({
 		title: `SendouQ - Match #${data.match.id}`,
-		description: `${joinListToNaturalString(
+		description: `${new Intl.ListFormat("en-US").format(
 			data.groupAlpha.members.map((m) => m.username),
-		)} vs. ${joinListToNaturalString(
+		)} vs. ${new Intl.ListFormat("en-US").format(
 			data.groupBravo.members.map((m) => m.username),
 		)}`,
 		location: args.location,
@@ -104,7 +106,8 @@ export default function QMatchPage() {
 	const user = useUser();
 	const isStaff = useHasRole("STAFF");
 	const isMounted = useIsMounted();
-	const { t, i18n } = useTranslation(["q"]);
+	const { t } = useTranslation(["q"]);
+	const { formatDateTime } = useTimeFormat();
 	const data = useLoaderData<typeof loader>();
 	const [showWeaponsForm, setShowWeaponsForm] = React.useState(false);
 	const [searchParams] = useSearchParams();
@@ -153,16 +156,13 @@ export default function QMatchPage() {
 					})}
 				>
 					{isMounted
-						? databaseTimestampToDate(data.match.createdAt).toLocaleString(
-								i18n.language,
-								{
-									day: "numeric",
-									month: "numeric",
-									year: "numeric",
-									hour: "numeric",
-									minute: "numeric",
-								},
-							)
+						? formatDateTime(databaseTimestampToDate(data.match.createdAt), {
+								day: "numeric",
+								month: "numeric",
+								year: "numeric",
+								hour: "numeric",
+								minute: "numeric",
+							})
 						: // reserve place
 							"0/0/0 0:00"}
 				</div>
@@ -206,10 +206,7 @@ export default function QMatchPage() {
 												className="stack horizontal items-center xs font-bold"
 											>
 												{group.team.avatarUrl ? (
-													<Avatar
-														url={userSubmittedImage(group.team.avatarUrl)}
-														size="xxs"
-													/>
+													<Avatar url={group.team.avatarUrl} size="xxs" />
 												) : null}
 												{group.team.name}
 											</Link>
@@ -245,7 +242,8 @@ function Score({
 	ownTeamReported: boolean;
 }) {
 	const isMounted = useIsMounted();
-	const { t, i18n } = useTranslation(["q"]);
+	const { t } = useTranslation(["q"]);
+	const { formatDateTime } = useTimeFormat();
 	const data = useLoaderData<typeof loader>();
 	const reporter =
 		data.groupAlpha.members.find((m) => m.id === data.match.reportedByUserId) ??
@@ -294,16 +292,13 @@ function Score({
 				>
 					{t("q:match.reportedBy", { name: reporter?.username ?? "admin" })}{" "}
 					{isMounted
-						? databaseTimestampToDate(reportedAt).toLocaleString(
-								i18n.language,
-								{
-									day: "numeric",
-									month: "numeric",
-									year: "numeric",
-									hour: "numeric",
-									minute: "numeric",
-								},
-							)
+						? formatDateTime(databaseTimestampToDate(reportedAt), {
+								day: "numeric",
+								month: "numeric",
+								year: "numeric",
+								hour: "numeric",
+								minute: "numeric",
+							})
 						: ""}
 				</div>
 			) : (
@@ -1299,18 +1294,24 @@ function MapListMapPickInfo({
 
 	const pickInfo = (source: string) => {
 		if (source === "TIEBREAKER") return t("tournament:pickInfo.tiebreaker");
-		if (source === "BOTH") return t("tournament:pickInfo.both");
 		if (source === "DEFAULT") return t("tournament:pickInfo.default");
 
-		if (source === String(data.match.alphaGroupId)) {
-			return t("tournament:pickInfo.team.specific", {
-				team: t("q:match.sides.alpha"),
-			});
-		}
+		const poolMemberIds = sourcePoolMemberIds();
+		const playerCount =
+			poolMemberIds.length > 0
+				? poolMemberIds.length
+				: (mapPreferences?.length ?? 0);
 
-		return t("tournament:pickInfo.team.specific", {
-			team: t("q:match.sides.bravo"),
-		});
+		return (
+			<div className="stack horizontal xs items-center">
+				<UsersIcon className="w-4" />
+				<span>
+					{t("tournament:pickInfo.votes", {
+						count: playerCount,
+					})}
+				</span>
+			</div>
+		);
 	};
 
 	const userIdToUser = (userId: number) => {
@@ -1353,6 +1354,8 @@ function MapListMapPickInfo({
 		// legacy preference system (season 2)
 		if (mapPreferences && mapPreferences.length > 0) return true;
 
+		if (map.source === "DEFAULT") return true;
+
 		return sourcePoolMemberIds().length > 0;
 	};
 
@@ -1370,7 +1373,11 @@ function MapListMapPickInfo({
 					{t(`game-misc:MODE_SHORT_${map.mode}`)}{" "}
 					{t(`game-misc:STAGE_${map.stageId}`)}
 				</div>
-				{sourcePoolMemberIds().length > 0 ? (
+				{map.source === "DEFAULT" ? (
+					<div className="text-sm text-center text-lighter">
+						{t("tournament:pickInfo.default.explanation")}
+					</div>
+				) : sourcePoolMemberIds().length > 0 ? (
 					<div className="stack sm">
 						{sourcePoolMemberIds().map((userId) => {
 							const user = userIdToUser(userId);

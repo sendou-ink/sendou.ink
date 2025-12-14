@@ -1,0 +1,46 @@
+.matches {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	flex-wrap: wrap;
+	column-gap: var(--s-4);
+	row-gap: var(--s-8);
+	justify-content: space-between;
+	margin-block-start: var(--s-2);
+	place-items: center;
+}
+
+.match {
+	position: relative;
+	display: flex;
+	align-items: center;
+	text-align: center;
+	flex-direction: column;
+	font-size: var(--fonts-xs);
+	line-height: 1.3;
+	font-weight: var(--semi-bold);
+	flex-grow: 1;
+	width: max-content;
+	gap: var(--s-1);
+}
+
+.matchWeapon {
+	position: absolute;
+	top: -15px;
+	left: -20px;
+}
+
+.matchWeapons {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	margin-block-end: var(--s-2);
+}
+
+.matchMode {
+	position: absolute;
+	top: -15px;
+	right: -15px;
+}
+
+.matchMode.cast {
+	right: -8px;
+}

@@ -14,7 +14,6 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { usePagination } from "~/hooks/usePagination";
 import { useHasRole } from "~/modules/permissions/hooks";
-import { joinListToNaturalString } from "~/utils/arrays";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -22,7 +21,6 @@ import {
 	navIconUrl,
 	TEAM_SEARCH_PAGE,
 	teamPage,
-	userSubmittedImage,
 } from "~/utils/urls";
 import { action } from "../actions/t.server";
 import { loader } from "../loaders/t.server";
@@ -51,26 +49,37 @@ export const handle: SendouRouteHandle = {
 };
 
 export default function TeamSearchPage() {
-	const { t } = useTranslation(["team"]);
+	const { t, i18n } = useTranslation(["team"]);
 	const [inputValue, setInputValue] = React.useState("");
 	const data = useLoaderData<typeof loader>();
 
-	const filteredTeams = data.teams.filter((team) => {
-		if (!inputValue) return true;
+	const filteredTeams = () => {
+		if (!inputValue) return data.teams;
 
 		const lowerCaseInput = inputValue.toLowerCase();
+		const matchingTeams = data.teams.filter((team) => {
+			if (team.name.toLowerCase().includes(lowerCaseInput)) return true;
+			if (team.tag && team.tag.toLowerCase() === lowerCaseInput) return true;
+			if (
+				team.members.some((m) =>
+					m.username.toLowerCase().includes(lowerCaseInput),
+				)
+			) {
+				return true;
+			}
 
-		if (team.name.toLowerCase().includes(lowerCaseInput)) return true;
-		if (
-			team.members.some((m) =>
-				m.username.toLowerCase().includes(lowerCaseInput),
-			)
-		) {
-			return true;
-		}
+			return false;
+		});
 
-		return false;
-	});
+		return matchingTeams.sort((a, b) => {
+			const aTagExactMatch = a.tag && a.tag.toLowerCase() === lowerCaseInput;
+			const bTagExactMatch = b.tag && b.tag.toLowerCase() === lowerCaseInput;
+
+			if (aTagExactMatch && !bTagExactMatch) return -1;
+			if (!aTagExactMatch && bTagExactMatch) return 1;
+			return 0;
+		});
+	};
 
 	const {
 		itemsToDisplay,
@@ -81,7 +90,7 @@ export default function TeamSearchPage() {
 		previousPage,
 		setPage,
 	} = usePagination({
-		items: filteredTeams,
+		items: filteredTeams(),
 		pageSize: TEAMS_PER_PAGE,
 	});
 
@@ -106,9 +115,9 @@ export default function TeamSearchPage() {
 						to={teamPage(team.customUrl)}
 						className="team-search__team"
 					>
-						{team.avatarSrc ? (
+						{team.avatarUrl ? (
 							<img
-								src={userSubmittedImage(team.avatarSrc)}
+								src={team.avatarUrl}
 								alt=""
 								width={64}
 								height={64}
@@ -126,14 +135,16 @@ export default function TeamSearchPage() {
 								data-testid={`team-${i}`}
 							>
 								{team.name}
+								{team.tag ? (
+									<span className="team-search__team__tag">{team.tag}</span>
+								) : null}
 							</div>
 							<div className="team-search__team__members">
 								{team.members.length === 1
 									? team.members[0].username
-									: joinListToNaturalString(
-											team.members.map((member) => member.username),
-											"&",
-										)}
+									: new Intl.ListFormat(i18n.language, {
+											style: "short",
+										}).format(team.members.map((member) => member.username))}
 							</div>
 						</div>
 					</Link>

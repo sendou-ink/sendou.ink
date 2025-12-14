@@ -18,7 +18,6 @@ import { FilterIcon } from "~/components/icons/Filter";
 import { FireIcon } from "~/components/icons/Fire";
 import { MapIcon } from "~/components/icons/Map";
 import { Main } from "~/components/Main";
-import { useUser } from "~/features/auth/core/user";
 import { safeJSONParse } from "~/utils/json";
 import { isRevalidation, metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -160,8 +159,6 @@ export const handle: SendouRouteHandle = {
 };
 
 export function BuildCards({ data }: { data: SerializeFrom<typeof loader> }) {
-	const user = useUser();
-
 	return (
 		<div className={styles.buildsContainer}>
 			{data.builds.map((build) => {
@@ -169,9 +166,12 @@ export function BuildCards({ data }: { data: SerializeFrom<typeof loader> }) {
 					<BuildCard
 						key={build.id}
 						build={build}
-						owner={build}
+						owner={
+							build.owner
+								? { ...build.owner, plusTier: build.plusTier }
+								: undefined
+						}
 						canEdit={false}
-						withAbilitySorting={!user?.preferences.disableBuildAbilitySorting}
 					/>
 				);
 			})}
@@ -346,19 +346,16 @@ export default function WeaponsBuildsPage() {
 				</div>
 			) : null}
 			<BuildCards data={data} />
-			{data.limit < BUILDS_PAGE_MAX_BUILDS &&
-				// not considering edge case where there are amount of builds equal to current limit
-				// TODO: this could be fixed by taking example from the vods page
-				data.builds.length === data.limit && (
-					<LinkButton
-						className="m-0-auto"
-						size="small"
-						to={loadMoreLink()}
-						preventScrollReset
-					>
-						{t("common:actions.loadMore")}
-					</LinkButton>
-				)}
+			{data.limit < BUILDS_PAGE_MAX_BUILDS && data.hasMoreBuilds ? (
+				<LinkButton
+					className="m-0-auto"
+					size="small"
+					to={loadMoreLink()}
+					preventScrollReset
+				>
+					{t("common:actions.loadMore")}
+				</LinkButton>
+			) : null}
 		</Main>
 	);
 }

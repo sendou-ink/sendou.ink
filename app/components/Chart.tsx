@@ -5,6 +5,7 @@ import type { TooltipRendererProps } from "react-charts/types/components/Tooltip
 import { useTranslation } from "react-i18next";
 import { Theme, useTheme } from "~/features/theme/core/provider";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 
 export default function Chart({
 	options,
@@ -28,7 +29,7 @@ export default function Chart({
 	const primaryAxis = React.useMemo<
 		AxisOptions<(typeof options)[number]["data"][number]>
 	>(
-		// @ts-expect-error TODO: type this
+		// @ts-expect-error - some weirdness here but maybe not worth fixing as the whole library needs to be replaced (it is unmaintained/deprecated)
 		() => ({
 			getValue: (datum) => datum.primary,
 			scaleType: xAxis,
@@ -104,7 +105,7 @@ function ChartTooltip({
 	headerSuffix = "",
 	valueSuffix = "",
 }: ChartTooltipProps) {
-	const { i18n } = useTranslation();
+	const { formatDate } = useTimeFormat();
 	const dataPoints = focusedDatum?.interactiveGroup ?? [];
 
 	const header = () => {
@@ -112,7 +113,7 @@ function ChartTooltip({
 		if (!primaryValue) return null;
 
 		if (primaryValue instanceof Date) {
-			return primaryValue.toLocaleDateString(i18n.language, {
+			return formatDate(primaryValue, {
 				weekday: "short",
 				day: "numeric",
 				month: "long",

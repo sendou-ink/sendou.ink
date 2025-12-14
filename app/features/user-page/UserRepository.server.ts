@@ -10,14 +10,19 @@ import type {
 	TablesInsertable,
 	UserPreferences,
 } from "~/db/tables";
-import type { ChatUser } from "~/features/chat/components/Chat";
 import { userRoles } from "~/modules/permissions/mapper.server";
 import { isSupporter } from "~/modules/permissions/utils";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
-import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
+import {
+	COMMON_USER_FIELDS,
+	concatUserSubmittedImagePrefix,
+	tournamentLogoOrNull,
+	userChatNameColor,
+} from "~/utils/kysely.server";
 import { safeNumberParse } from "~/utils/number";
+import type { ChatUser } from "../chat/chat-types";
 
 const identifierToUserIdQuery = (identifier: string) =>
 	db
@@ -123,8 +128,8 @@ export function findLayoutDataByIdentifier(
 				.select(({ fn }) => fn.count<number>("Art.id").distinct().as("count"))
 				.where((innerEb) =>
 					innerEb.or([
-						innerEb("Art.authorId", "=", sql.raw<any>("User.id")),
-						innerEb("ArtUserMetadata.userId", "=", sql.raw<any>("User.id")),
+						innerEb("Art.authorId", "=", eb.ref("User.id")),
+						innerEb("ArtUserMetadata.userId", "=", eb.ref("User.id")),
 					]),
 				)
 				.as("artCount"),
@@ -178,13 +183,15 @@ export async function findProfileByIdentifier(
 						"UserSubmittedImage.id",
 						"Team.avatarImgId",
 					)
-					.select([
+					.select((eb) => [
 						"Team.name",
 						"Team.customUrl",
 						"Team.id",
 						"TeamMemberWithSecondary.isMainTeam",
 						"TeamMemberWithSecondary.role as userTeamRole",
-						"UserSubmittedImage.url as avatarUrl",
+						concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+							"avatarUrl",
+						),
 					])
 					.whereRef("TeamMemberWithSecondary.userId", "=", "User.id"),
 			).as("teams"),
@@ -306,6 +313,43 @@ export function findBannedStatusByUserId(userId: number) {
 		.executeTakeFirst();
 }
 
+export async function findSubDefaultsByUserId(userId: number) {
+	const user = await db
+		.selectFrom("User")
+		.select(["User.vc", "User.qWeaponPool", "User.lastSubMessage"])
+		.where("User.id", "=", userId)
+		.executeTakeFirst();
+
+	if (!user) return null;
+
+	const vcToCanVc = (vc: "YES" | "NO" | "LISTEN_ONLY"): 0 | 1 | 2 => {
+		if (vc === "YES") return 1;
+		if (vc === "NO") return 0;
+		return 2;
+	};
+
+	const qWeaponPool = user.qWeaponPool ?? [];
+
+	let bestWeapons = qWeaponPool
+		.filter((w) => w.isFavorite === 1)
+		.map((w) => w.weaponSplId);
+	let okWeapons = qWeaponPool
+		.filter((w) => w.isFavorite === 0)
+		.map((w) => w.weaponSplId);
+
+	if (bestWeapons.length === 0) {
+		bestWeapons = okWeapons;
+		okWeapons = [];
+	}
+
+	return {
+		canVc: vcToCanVc(user.vc),
+		bestWeapons,
+		okWeapons,
+		message: user.lastSubMessage,
+	};
+}
+
 export async function findLeanById(id: number) {
 	const user = await db
 		.selectFrom("User")
@@ -316,6 +360,7 @@ export async function findLeanById(id: number) {
 			"User.isArtist",
 			"User.isVideoAdder",
 			"User.isTournamentOrganizer",
+			"User.isApiAccesser",
 			"User.patronTier",
 			"User.languages",
 			"User.inGameName",
@@ -334,7 +379,12 @@ export async function findLeanById(id: number) {
 	if (!user) return;
 
 	return {
-		...R.omit(user, ["isArtist", "isVideoAdder", "isTournamentOrganizer"]),
+		...R.omit(user, [
+			"isArtist",
+			"isVideoAdder",
+			"isTournamentOrganizer",
+			"isApiAccesser",
+		]),
 		roles: userRoles(user),
 	};
 }
@@ -432,11 +482,9 @@ const withMaxEventStartTime = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
 		.whereRef("CalendarEventDate.eventId", "=", "CalendarEvent.id")
 		.as("startTime");
 };
-export function findResultsByUserId(
-	userId: number,
-	{ showHighlightsOnly = false }: { showHighlightsOnly?: boolean } = {},
-) {
-	let calendarEventResultsQuery = db
+
+const baseCalendarEventResultsQuery = (userId: number) =>
+	db
 		.selectFrom("CalendarEventResultPlayer")
 		.innerJoin(
 			"CalendarEventResultTeam",
@@ -453,12 +501,39 @@ export function findResultsByUserId(
 				.onRef("UserResultHighlight.teamId", "=", "CalendarEventResultTeam.id")
 				.on("UserResultHighlight.userId", "=", userId),
 		)
-		.select(({ eb, fn }) => [
+		.where("CalendarEventResultPlayer.userId", "=", userId);
+
+const baseTournamentResultsQuery = (userId: number) =>
+	db
+		.selectFrom("TournamentResult")
+		.innerJoin(
+			"TournamentTeam",
+			"TournamentTeam.id",
+			"TournamentResult.tournamentTeamId",
+		)
+		.innerJoin(
+			"CalendarEvent",
+			"CalendarEvent.tournamentId",
+			"TournamentResult.tournamentId",
+		)
+		.where("TournamentResult.userId", "=", userId);
+
+export function findResultsByUserId(
+	userId: number,
+	{
+		showHighlightsOnly = false,
+		limit,
+		offset,
+	}: { showHighlightsOnly?: boolean; limit?: number; offset?: number } = {},
+) {
+	let calendarEventResultsQuery = baseCalendarEventResultsQuery(userId).select(
+		({ eb, fn }) => [
 			"CalendarEvent.id as eventId",
 			sql<number>`null`.as("tournamentId"),
 			"CalendarEventResultTeam.placement",
 			"CalendarEvent.participantCount",
 			sql<Tables["TournamentResult"]["setResults"]>`null`.as("setResults"),
+			sql<string | null>`null`.as("div"),
 			sql<string | null>`null`.as("logoUrl"),
 			"CalendarEvent.name as eventName",
 			"CalendarEventResultTeam.id as teamId",
@@ -486,32 +561,18 @@ export function findResultsByUserId(
 						]),
 					),
 			).as("mates"),
-		])
-		.where("CalendarEventResultPlayer.userId", "=", userId);
+		],
+	);
 
-	let tournamentResultsQuery = db
-		.selectFrom("TournamentResult")
-		.innerJoin(
-			"TournamentTeam",
-			"TournamentTeam.id",
-			"TournamentResult.tournamentTeamId",
-		)
-		.innerJoin(
-			"CalendarEvent",
-			"CalendarEvent.tournamentId",
-			"TournamentResult.tournamentId",
-		)
-		.select(({ eb }) => [
+	let tournamentResultsQuery = baseTournamentResultsQuery(userId).select(
+		({ eb }) => [
 			sql<number>`null`.as("eventId"),
 			"TournamentResult.tournamentId",
 			"TournamentResult.placement",
 			"TournamentResult.participantCount",
 			"TournamentResult.setResults",
-			eb
-				.selectFrom("UserSubmittedImage")
-				.select(["UserSubmittedImage.url"])
-				.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id")
-				.as("logoUrl"),
+			"TournamentResult.div",
+			tournamentLogoOrNull(eb).as("logoUrl"),
 			"CalendarEvent.name as eventName",
 			"TournamentTeam.id as teamId",
 			"TournamentTeam.name as teamName",
@@ -529,8 +590,8 @@ export function findResultsByUserId(
 					)
 					.where("TournamentResult2.userId", "!=", userId),
 			).as("mates"),
-		])
-		.where("TournamentResult.userId", "=", userId);
+		],
+	);
 
 	if (showHighlightsOnly) {
 		calendarEventResultsQuery = calendarEventResultsQuery.where(
@@ -545,11 +606,53 @@ export function findResultsByUserId(
 		);
 	}
 
-	return calendarEventResultsQuery
+	let query = calendarEventResultsQuery
 		.unionAll(tournamentResultsQuery)
 		.orderBy("startTime", "desc")
-		.$narrowType<{ startTime: NotNull }>()
-		.execute();
+		.$narrowType<{ startTime: NotNull }>();
+
+	if (limit !== undefined) {
+		query = query.limit(limit);
+	}
+
+	if (offset !== undefined) {
+		query = query.offset(offset);
+	}
+
+	return query.execute();
+}
+
+export async function countResultsByUserId(
+	userId: number,
+	{ showHighlightsOnly = false }: { showHighlightsOnly?: boolean } = {},
+) {
+	let calendarEventResultsQuery = baseCalendarEventResultsQuery(userId).select(
+		({ fn }) => [fn.countAll<number>().as("count")],
+	);
+
+	let tournamentResultsQuery = baseTournamentResultsQuery(userId).select(
+		({ fn }) => [fn.countAll<number>().as("count")],
+	);
+
+	if (showHighlightsOnly) {
+		calendarEventResultsQuery = calendarEventResultsQuery.where(
+			"UserResultHighlight.userId",
+			"is not",
+			null,
+		);
+		tournamentResultsQuery = tournamentResultsQuery.where(
+			"TournamentResult.isHighlight",
+			"=",
+			1,
+		);
+	}
+
+	const [calendarEventResults, tournamentResults] = await Promise.all([
+		calendarEventResultsQuery.executeTakeFirst(),
+		tournamentResultsQuery.executeTakeFirst(),
+	]);
+
+	return (calendarEventResults?.count ?? 0) + (tournamentResults?.count ?? 0);
 }
 
 export async function hasHighlightedResultsByUserId(userId: number) {
@@ -707,6 +810,21 @@ export async function currentFriendCodeByUserId(userId: number) {
 		.executeTakeFirst();
 }
 
+/** Returns all friend codes submitted by a user (both present and past) */
+export async function friendCodesByUserId(userId: number) {
+	return db
+		.selectFrom("UserFriendCode")
+		.leftJoin("User", "User.id", "UserFriendCode.submitterUserId")
+		.select([
+			"UserFriendCode.friendCode",
+			"UserFriendCode.createdAt",
+			"User.username as submitterUsername",
+		])
+		.where("UserFriendCode.userId", "=", userId)
+		.orderBy("UserFriendCode.createdAt", "desc")
+		.execute();
+}
+
 let cachedFriendCodes: Set<string> | null = null;
 
 export async function allCurrentFriendCodes() {
@@ -835,6 +953,8 @@ export function updateProfile(args: UpdateProfileArgs) {
 				showDiscordUniqueName: args.showDiscordUniqueName,
 				commissionText: args.commissionText,
 				commissionsOpen: args.commissionsOpen,
+				commissionsOpenedAt:
+					args.commissionsOpen === 1 ? databaseTimestampNow() : null,
 			})
 			.where("id", "=", args.userId)
 			.returning(["User.id", "User.customUrl", "User.discordId"])
@@ -993,3 +1113,18 @@ export const updateMany = dbDirect.transaction(
 		}
 	},
 );
+
+export async function anyUserPrefersNoScreen(
+	userIds: number[],
+): Promise<boolean> {
+	if (userIds.length === 0) return false;
+
+	const result = await db
+		.selectFrom("User")
+		.select("User.noScreen")
+		.where("User.id", "in", userIds)
+		.where("User.noScreen", "=", 1)
+		.executeTakeFirst();
+
+	return Boolean(result);
+}

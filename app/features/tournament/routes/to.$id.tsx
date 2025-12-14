@@ -8,6 +8,7 @@ import {
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
+import { Placeholder } from "~/components/Placeholder";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { useUser } from "~/features/auth/core/user";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
@@ -20,7 +21,6 @@ import {
 	tournamentOrganizationPage,
 	tournamentPage,
 	tournamentRegisterPage,
-	userSubmittedImage,
 } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
 
@@ -32,7 +32,9 @@ import "../tournament.css";
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	const navigatedToMatchPage =
-		typeof args.nextParams.mid === "string" && args.formMethod !== "POST";
+		typeof args.nextParams.mid === "string" &&
+		args.formMethod !== "POST" &&
+		args.currentParams.mid !== args.nextParams.mid;
 
 	if (navigatedToMatchPage) return false;
 
@@ -50,7 +52,7 @@ export const meta: MetaFunction = (args) => {
 			? removeMarkdown(data.tournament.ctx.description)
 			: undefined,
 		image: {
-			url: data.tournament.ctx.logoSrc,
+			url: data.tournament.ctx.logoUrl,
 			dimensions: { width: 124, height: 124 },
 		},
 		location: args.location,
@@ -68,9 +70,7 @@ export const handle: SendouRouteHandle = {
 		return [
 			data.tournament.ctx.organization?.avatarUrl
 				? {
-						imgPath: userSubmittedImage(
-							data.tournament.ctx.organization.avatarUrl,
-						),
+						imgPath: data.tournament.ctx.organization.avatarUrl,
 						href: tournamentOrganizationPage({
 							organizationSlug: data.tournament.ctx.organization.slug,
 						}),
@@ -80,7 +80,7 @@ export const handle: SendouRouteHandle = {
 					}
 				: null,
 			{
-				imgPath: data.tournament.ctx.logoSrc,
+				imgPath: data.tournament.ctx.logoUrl,
 				href: tournamentPage(data.tournament.ctx.id),
 				type: "IMAGE" as const,
 				text: data.tournament.ctx.name,
@@ -101,7 +101,7 @@ export default function TournamentLayoutShell() {
 	if (!isMounted)
 		return (
 			<Main bigger>
-				<div className="tournament__placeholder" />
+				<Placeholder />
 			</Main>
 		);
 
@@ -126,8 +126,8 @@ export function TournamentLayout() {
 			window.tourney = tournament;
 		}, [tournament]);
 	}
-
 	const subsCount = () =>
+		// biome-ignore lint/suspicious/useIterableCallbackReturn: Biome 2.3.1 upgrade
 		tournament.ctx.subCounts.reduce((acc, cur) => {
 			if (cur.visibility === "ALL") return acc + cur.count;
 

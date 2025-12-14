@@ -22,6 +22,7 @@ import { useUser } from "~/features/auth/core/user";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { ordinalToRoundedSp } from "~/features/mmr/mmr-utils";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { languagesUnified } from "~/modules/i18n/config";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
@@ -159,22 +160,36 @@ export function GroupCard({
 					</div>
 				) : null}
 				{group.tierRange?.range ? (
-					<div className="stack sm items-center">
-						<div className="q__group__tier-diff-text">
-							±{group.tierRange.diff}
-						</div>
-						<div className="stack items-center">
-							<div className="stack sm horizontal items-center text-sm font-bold">
-								<TierImage tier={group.tierRange.range[0]} width={38} />
-								{t("q:looking.range.or")}
-								<TierImage tier={group.tierRange.range[1]} width={38} />
-							</div>
-							{group.isReplay ? (
-								<div className="text-theme-secondary text-uppercase text-xs font-bold">
-									{t("q:looking.replay")}
+					<div className="stack md items-center">
+						<div className="stack sm horizontal items-center justify-center">
+							<div className="stack xs items-center">
+								<TierImage tier={group.tierRange.range[0]} width={80} />
+								<div className="text-lighter text-sm font-bold">
+									(-{group.tierRange.diff})
 								</div>
-							) : null}
+							</div>
+							<SendouPopover
+								popoverClassName="text-main-forced"
+								trigger={
+									<SendouButton className="q__group__or-popover-button">
+										{t("q:looking.range.or")}
+									</SendouButton>
+								}
+							>
+								{t("q:looking.range.or.explanation")}
+							</SendouPopover>
+							<div className="stack xs items-center">
+								<TierImage tier={group.tierRange.range[1]} width={80} />
+								<div className="text-lighter text-sm font-bold">
+									(+{group.tierRange.diff})
+								</div>
+							</div>
 						</div>
+						{group.isReplay ? (
+							<div className="text-theme-secondary text-uppercase text-xs font-bold">
+								{t("q:looking.replay")}
+							</div>
+						) : null}
 					</div>
 				) : null}
 				{group.skillDifference ? (
@@ -253,8 +268,9 @@ function GroupMember({
 	showAddNote?: SqlBool;
 	showNote?: boolean;
 }) {
-	const { t, i18n } = useTranslation(["q", "user"]);
+	const { t } = useTranslation(["q", "user"]);
 	const user = useUser();
+	const { formatDateTime } = useTimeFormat();
 
 	return (
 		<div className="stack xxs">
@@ -283,15 +299,16 @@ function GroupMember({
 								)}
 							>
 								<div className="text-xxs text-lighter">
-									{databaseTimestampToDate(
-										member.privateNote.updatedAt,
-									).toLocaleString(i18n.language, {
-										hour: "numeric",
-										minute: "numeric",
-										day: "numeric",
-										month: "long",
-										year: "numeric",
-									})}
+									{formatDateTime(
+										databaseTimestampToDate(member.privateNote.updatedAt),
+										{
+											hour: "numeric",
+											minute: "numeric",
+											day: "numeric",
+											month: "long",
+											year: "numeric",
+										},
+									)}
 								</div>
 								<DeletePrivateNoteForm
 									name={member.username}
@@ -302,11 +319,7 @@ function GroupMember({
 					) : (
 						<Avatar user={member} size="xs" />
 					)}
-					<Link
-						to={userPage(member)}
-						className="q__group-member__name"
-						target="_blank"
-					>
+					<Link to={userPage(member)} className="q__group-member__name">
 						{member.inGameName ? (
 							<>
 								<span className="text-lighter font-bold text-xxxs">
@@ -752,7 +765,7 @@ function TierInfo({ skill }: { skill: TieredSkill | "CALCULATING" }) {
 							{skill.tier.name}
 							{skill.tier.isPlus ? "+" : ""}
 						</div>
-						<Link to={TIERS_PAGE} className="text-xxs" target="_blank">
+						<Link to={TIERS_PAGE} className="text-xxs">
 							{t("q:looking.allTiers")}
 						</Link>
 					</div>

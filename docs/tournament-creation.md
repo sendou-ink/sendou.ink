@@ -22,6 +22,10 @@ Name of the tournament.
 
 Description of the tournament, shown when registering. Supports Markdown including embedding images.
 
+### Organization
+
+Which organization to host the tournament under. Note that if you do not have global tournament adder permissions (patron perk) you can only host tournaments for organizations that are "established". To host a tournament for such an organization you need either the Admin or Organizer role.
+
 ### Rules
 
 Rules of the tournament. Supports Markdown including embedding images.
@@ -74,10 +78,6 @@ Especially for tournaments where verification is important. Players need to have
 ### Invitational
 
 All teams added by the tournament organizer manually. No open registration or subs list. In addition for invitational teams can add only 5 members before the tournament starts on their own (and 6 during it if autonomous subs are enabled).
-
-### Strict deadlines
-
-Display the "deadline" for each round as 5 minutes stricter. Note that this is only visual and it's up to the tournament organizer how to enforce these if at all.
 
 ## Tournament maps
 

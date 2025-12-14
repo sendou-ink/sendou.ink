@@ -1,6 +1,5 @@
 import { type Insertable, type NotNull, sql, type Transaction } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
-import { nanoid } from "nanoid";
 import { db } from "~/db/sql";
 import type {
 	CastedMatchesInfo,
@@ -14,10 +13,14 @@ import { Status } from "~/modules/brackets-model";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { nullFilledArray, nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
-import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
+import { shortNanoid } from "~/utils/id";
+import {
+	COMMON_USER_FIELDS,
+	concatUserSubmittedImagePrefix,
+	tournamentLogoWithDefault,
+	userChatNameColor,
+} from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
-import { userSubmittedImage } from "~/utils/urls";
-import { HACKY_resolvePicture } from "./tournament-utils";
 
 export type FindById = NonNullable<Unwrapped<typeof findById>>;
 export async function findById(id: number) {
@@ -63,7 +66,9 @@ export async function findById(id: number) {
 						"TournamentOrganization.id",
 						"TournamentOrganization.name",
 						"TournamentOrganization.slug",
-						"UserSubmittedImage.url as avatarUrl",
+						concatUserSubmittedImagePrefix(
+							innerEb.ref("UserSubmittedImage.url"),
+						).as("avatarUrl"),
 						jsonArrayFrom(
 							innerEb
 								.selectFrom("TournamentOrganizationMember")
@@ -91,24 +96,7 @@ export async function findById(id: number) {
 						"CalendarEvent.organizationId",
 					),
 			).as("organization"),
-			eb
-				.selectFrom("UnvalidatedUserSubmittedImage")
-				.select(["UnvalidatedUserSubmittedImage.url"])
-				.whereRef(
-					"CalendarEvent.avatarImgId",
-					"=",
-					"UnvalidatedUserSubmittedImage.id",
-				)
-				.as("logoUrl"),
-			eb
-				.selectFrom("UnvalidatedUserSubmittedImage")
-				.select(["UnvalidatedUserSubmittedImage.validatedAt"])
-				.whereRef(
-					"CalendarEvent.avatarImgId",
-					"=",
-					"UnvalidatedUserSubmittedImage.id",
-				)
-				.as("logoValidatedAt"),
+			tournamentLogoWithDefault(eb).as("logoUrl"),
 			jsonObjectFrom(
 				eb
 					.selectFrom("User")
@@ -163,13 +151,14 @@ export async function findById(id: number) {
 						"TournamentTeam.name",
 						"TournamentTeam.seed",
 						"TournamentTeam.prefersNotToHost",
-						"TournamentTeam.noScreen",
 						"TournamentTeam.droppedOut",
 						"TournamentTeam.inviteCode",
 						"TournamentTeam.createdAt",
 						"TournamentTeam.activeRosterUserIds",
 						"TournamentTeam.startingBracketIdx",
-						"UserSubmittedImage.url as pickupAvatarUrl",
+						concatUserSubmittedImagePrefix(
+							innerEb.ref("UserSubmittedImage.url"),
+						).as("pickupAvatarUrl"),
 						jsonArrayFrom(
 							innerEb
 								.selectFrom("TournamentTeamMember")
@@ -239,10 +228,12 @@ export async function findById(id: number) {
 									"UserSubmittedImage.id",
 								)
 								.whereRef("AllTeam.id", "=", "TournamentTeam.teamId")
-								.select([
+								.select((eb) => [
 									"AllTeam.id",
 									"AllTeam.customUrl",
-									"UserSubmittedImage.url as logoUrl",
+									concatUserSubmittedImagePrefix(
+										eb.ref("UserSubmittedImage.url"),
+									).as("logoUrl"),
 									"AllTeam.deletedAt",
 								]),
 						).as("team"),
@@ -307,9 +298,6 @@ export async function findById(id: number) {
 					.filter((ordinal) => typeof ordinal === "number"),
 			),
 		})),
-		logoSrc: result.logoUrl
-			? userSubmittedImage(result.logoUrl)
-			: HACKY_resolvePicture(result),
 		participatedUsers: result.participatedUsers.map((user) => user.userId),
 	};
 }
@@ -472,11 +460,7 @@ export function forShowcase() {
 				)
 				.select(({ fn }) => [fn.countAll<number>().as("teamsCount")])
 				.as("teamsCount"),
-			eb
-				.selectFrom("UserSubmittedImage")
-				.select(["UserSubmittedImage.url"])
-				.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id")
-				.as("logoUrl"),
+			tournamentLogoWithDefault(eb).as("logoUrl"),
 			jsonObjectFrom(
 				eb
 					.selectFrom("TournamentOrganization")
@@ -512,12 +496,17 @@ export function forShowcase() {
 					)
 					.whereRef("TournamentResult.tournamentId", "=", "Tournament.id")
 					.where("TournamentResult.placement", "=", 1)
-					.select([
+					.select((eb) => [
 						...COMMON_USER_FIELDS,
 						"User.country",
+						"TournamentResult.div",
 						"TournamentTeam.name as teamName",
-						"TeamAvatar.url as teamLogoUrl",
-						"TournamentTeamAvatar.url as pickupAvatarUrl",
+						concatUserSubmittedImagePrefix(eb.ref("TeamAvatar.url")).as(
+							"teamLogoUrl",
+						),
+						concatUserSubmittedImagePrefix(
+							eb.ref("TournamentTeamAvatar.url"),
+						).as("pickupAvatarUrl"),
 					]),
 			).as("firstPlacers"),
 		])
@@ -553,7 +542,7 @@ export function findAllBetweenTwoTimestamps({
 		.select(["Tournament.id as tournamentId"])
 		.where(
 			"CalendarEventDate.startTime",
-			">=",
+			">",
 			dateToDatabaseTimestamp(startTime),
 		)
 		.where(
@@ -998,6 +987,19 @@ export function unlockMatch({
 			})
 			.where("id", "=", tournamentId)
 			.execute();
+
+		// Make sure that a match is not marked as started when it is unlocked
+		// as we use this timestamp to determine the "deadline" for the match
+		// so it doesn't make sense for that timer to run if players can't play yet
+		await trx
+			.updateTable("TournamentMatch")
+			.set({
+				startedAt: databaseTimestampNow(),
+			})
+			.where("id", "=", matchId)
+			// ensure we don't set startedAt if it was never set before
+			.where("TournamentMatch.startedAt", "is not", null)
+			.execute();
 	});
 }
 
@@ -1095,7 +1097,7 @@ export function resetBracket(tournamentStageId: number) {
 
 export type TournamentRepositoryInsertableMatch = Omit<
 	Insertable<DB["TournamentMatch"]>,
-	"status" | "bestOf" | "chatCode"
+	"status" | "chatCode"
 >;
 
 export function insertSwissMatches(
@@ -1116,8 +1118,7 @@ export function insertSwissMatches(
 				roundId: match.roundId,
 				stageId: match.stageId,
 				status: Status.Ready,
-				createdAt: dateToDatabaseTimestamp(new Date()),
-				chatCode: nanoid(10),
+				chatCode: shortNanoid(),
 			})),
 		)
 		.execute();
@@ -1135,4 +1136,43 @@ export function deleteSwissMatches({
 		.where("groupId", "=", groupId)
 		.where("roundId", "=", roundId)
 		.execute();
+}
+
+export async function searchByName({
+	query,
+	limit,
+	minStartTime,
+}: {
+	query: string;
+	limit: number;
+	minStartTime?: Date;
+}) {
+	let sqlQuery = db
+		.selectFrom("Tournament")
+		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEvent.id",
+			"CalendarEventDate.eventId",
+		)
+		.select((eb) => [
+			"Tournament.id",
+			"CalendarEvent.name",
+			"CalendarEventDate.startTime",
+			tournamentLogoWithDefault(eb).as("logoUrl"),
+		])
+		.where("CalendarEvent.name", "like", `%${query}%`)
+		.where("CalendarEvent.hidden", "=", 0)
+		.orderBy("CalendarEventDate.startTime", "desc")
+		.limit(limit);
+
+	if (minStartTime) {
+		sqlQuery = sqlQuery.where(
+			"CalendarEventDate.startTime",
+			">=",
+			dateToDatabaseTimestamp(minStartTime),
+		);
+	}
+
+	return sqlQuery.execute();
 }

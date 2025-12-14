@@ -54,6 +54,10 @@
 	padding-inline: var(--s-2);
 }
 
+.tournament-bracket__locked-banner__lonely {
+	border-radius: var(--rounded);
+}
+
 .tournament-bracket__stage-banner {
 	display: flex;
 	width: 100%;
@@ -74,8 +78,6 @@
 	display: flex;
 	justify-content: space-between;
 	padding: var(--s-2);
-
-	/* TODO: add fallback from Firefox */
 	backdrop-filter: blur(5px);
 	background: rgb(0 0 0 / 40%);
 	border-start-end-radius: var(--rounded);
@@ -100,6 +102,55 @@
 	position: absolute;
 	right: 8px;
 	bottom: 8px;
+}
+
+.tournament-bracket__stage-banner__end-set-button {
+	right: 8px;
+	bottom: 8px;
+}
+
+.tournament-bracket__stage-banner:has(
+		.tournament-bracket__stage-banner__end-set-button
+	)
+	.tournament-bracket__stage-banner__undo-button:not(
+		.tournament-bracket__stage-banner__end-set-button
+	) {
+	right: 72px;
+}
+
+.tournament-bracket__deadline-popover {
+	position: absolute;
+	left: 8px;
+	bottom: 8px;
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.tournament-bracket__deadline-popover__trigger {
+	margin-block-start: 0;
+	background-color: var(--bg-lightest-solid) !important;
+}
+
+.tournament-bracket__deadline-indicator {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	font-weight: bold;
+	font-size: var(--fonts-sm);
+}
+
+.tournament-bracket__deadline-indicator__warning {
+	background-color: var(--theme-warning);
+	color: var(--button-text);
+}
+
+.tournament-bracket__deadline-indicator__error {
+	background-color: var(--theme-error);
+	color: var(--button-text);
 }
 
 .tournament-bracket__stage-banner__top-bar__header {
@@ -509,7 +560,8 @@
 }
 
 .tournament-bracket__compactify-button svg {
-	width: 0.85rem;
+	min-width: 0.85rem;
+	max-width: 0.85rem;
 }
 
 .tournament-bracket__cast-info-container {
@@ -540,26 +592,6 @@
 
 .tournament-bracket__stream-popover {
 	width: 280px;
-}
-
-.map-list-dialog__container {
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-5);
-}
-
-.map-list-dialog__pick-ban-select {
-	text-align: start;
-}
-
-.map-list-dialog__map-list-row {
-	display: flex;
-	gap: var(--s-2);
-	align-items: center;
-	margin-block: var(--s-2);
-	list-style: none;
-	min-width: 275px;
-	text-align: start;
 }
 
 .finalize__badge-container {

@@ -16,9 +16,11 @@ import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
-import { Chat, useChat } from "~/features/chat/components/Chat";
+import { useChat } from "~/features/chat/chat-hooks";
+import { Chat } from "~/features/chat/components/Chat";
 import { useAutoRefresh } from "~/hooks/useAutoRefresh";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useWindowSize } from "~/hooks/useWindowSize";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -96,10 +98,11 @@ export default function QLookingPage() {
 }
 
 function InfoText() {
-	const { t, i18n } = useTranslation(["q"]);
+	const { t } = useTranslation(["q"]);
 	const isMounted = useIsMounted();
 	const data = useLoaderData<typeof loader>();
 	const fetcher = useFetcher();
+	const { formatTime } = useTimeFormat();
 
 	if (data.expiryStatus === "EXPIRED") {
 		return (
@@ -160,13 +163,7 @@ function InfoText() {
 			<span className="text-xxs">
 				{isMounted
 					? t("q:looking.lastUpdatedAt", {
-							time: new Date(data.lastUpdated).toLocaleTimeString(
-								i18n.language,
-								{
-									hour: "2-digit",
-									minute: "2-digit",
-								},
-							),
+							time: formatTime(new Date(data.lastUpdated)),
 						})
 					: "Placeholder"}
 			</span>

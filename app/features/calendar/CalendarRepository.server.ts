@@ -2,6 +2,7 @@ import type {
 	Expression,
 	ExpressionBuilder,
 	NotNull,
+	SqlBool,
 	Transaction,
 } from "kysely";
 import { sql } from "kysely";
@@ -23,7 +24,11 @@ import {
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
 import invariant from "~/utils/invariant";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import {
+	COMMON_USER_FIELDS,
+	concatUserSubmittedImagePrefix,
+	tournamentLogoWithDefault,
+} from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
 import { calendarEventPage, tournamentPage } from "~/utils/urls";
 import {
@@ -34,15 +39,20 @@ import {
 import type { CalendarEvent } from "./calendar-types";
 import { calendarEventSorter } from "./calendar-utils";
 
-// TODO: convert from raw to using the "exists" function
-const hasBadge = sql<number> /* sql */`exists (
-  select
-    1
-  from
-    "CalendarEventBadge"
-  where
-    "CalendarEventBadge"."eventId" = "CalendarEventDate"."eventId"
-)`.as("hasBadge");
+function hasBadge(eb: ExpressionBuilder<DB, "CalendarEventDate">) {
+	return eb
+		.exists(
+			eb
+				.selectFrom("CalendarEventBadge")
+				.select("CalendarEventBadge.eventId")
+				.whereRef(
+					"CalendarEventBadge.eventId",
+					"=",
+					"CalendarEventDate.eventId",
+				),
+		)
+		.as("hasBadge");
+}
 
 const withMapPool = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
 	return jsonArrayFrom(
@@ -85,11 +95,14 @@ function tournamentOrganization(organizationId: Expression<number | null>) {
 				"TournamentOrganization.avatarImgId",
 				"UserSubmittedImage.id",
 			)
-			.select([
+			.select((eb) => [
 				"TournamentOrganization.id",
 				"TournamentOrganization.name",
 				"TournamentOrganization.slug",
-				"UserSubmittedImage.url as avatarUrl",
+				"TournamentOrganization.isEstablished",
+				concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+					"avatarUrl",
+				),
 			])
 			.whereRef("TournamentOrganization.id", "=", organizationId),
 	);
@@ -142,12 +155,6 @@ const withTeamsCount = (
 		)
 		.select(({ fn }) => [fn.countAll<number>().as("teamsCount")]);
 
-const withLogoUrl = (eb: ExpressionBuilder<DB, "CalendarEvent">) =>
-	eb
-		.selectFrom("UserSubmittedImage")
-		.select(["UserSubmittedImage.url"])
-		.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id");
-
 function findAllBetweenTwoTimestampsQuery({
 	startTime,
 	endTime,
@@ -175,7 +182,7 @@ function findAllBetweenTwoTimestampsQuery({
 			),
 			withOrganization(eb).as("organization"),
 			withTeamsCount(eb).as("teamsCount"),
-			withLogoUrl(eb).as("logoUrl"),
+			tournamentLogoWithDefault(eb).as("logoUrl"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("MapPoolMap")
@@ -289,7 +296,7 @@ export function forShowcase() {
 			"CalendarEvent.name",
 			"CalendarEventDate.startTime",
 			withTeamsCount(eb).as("teamsCount"),
-			withLogoUrl(eb).as("logoUrl"),
+			tournamentLogoWithDefault(eb).as("logoUrl"),
 			withOrganization(eb).as("organization"),
 			jsonArrayFrom(
 				eb
@@ -313,12 +320,16 @@ export function forShowcase() {
 					)
 					.whereRef("TournamentResult.tournamentId", "=", "Tournament.id")
 					.where("TournamentResult.placement", "=", 1)
-					.select([
+					.select((eb) => [
 						...COMMON_USER_FIELDS,
 						"User.country",
 						"TournamentTeam.name as teamName",
-						"TeamAvatar.url as teamLogoUrl",
-						"TournamentTeamAvatar.url as pickupAvatarUrl",
+						concatUserSubmittedImagePrefix(eb.ref("TeamAvatar.url")).as(
+							"teamLogoUrl",
+						),
+						concatUserSubmittedImagePrefix(
+							eb.ref("TournamentTeamAvatar.url"),
+						).as("pickupAvatarUrl"),
 					]),
 			).as("firstPlacers"),
 		])
@@ -361,7 +372,7 @@ export async function findById(
 		)
 		.innerJoin("User", "CalendarEvent.authorId", "User.id")
 		.leftJoin("Tournament", "CalendarEvent.tournamentId", "Tournament.id")
-		.select(({ ref }) => [
+		.select((eb) => [
 			"CalendarEvent.name",
 			"CalendarEvent.description",
 			"CalendarEvent.discordInviteCode",
@@ -378,8 +389,8 @@ export async function findById(
 			"User.username",
 			"User.discordId",
 			"User.discordAvatar",
-			hasBadge,
-			tournamentOrganization(ref("CalendarEvent.organizationId")).as(
+			hasBadge(eb),
+			tournamentOrganization(eb.ref("CalendarEvent.organizationId")).as(
 				"organization",
 			),
 		])
@@ -418,7 +429,7 @@ export async function findRecentTournamentsByAuthorId(authorId: number) {
 }
 
 function tagsArray(args: {
-	hasBadge: number;
+	hasBadge: SqlBool;
 	tags?: Tables["CalendarEvent"]["tags"];
 	tournamentId: Tables["CalendarEvent"]["tournamentId"];
 }) {
@@ -477,13 +488,13 @@ type CreateArgs = Pick<
 	mapPickingStyle: Tables["Tournament"]["mapPickingStyle"];
 	bracketProgression: TournamentSettings["bracketProgression"] | null;
 	minMembersPerTeam?: number;
+	maxMembersPerTeam?: number;
 	teamsPerGroup?: number;
 	thirdPlaceMatch?: boolean;
 	requireInGameNames?: boolean;
 	isRanked?: boolean;
 	isTest?: boolean;
 	isInvitational?: boolean;
-	deadlines: TournamentSettings["deadlines"];
 	enableNoScreenToggle?: boolean;
 	enableSubs?: boolean;
 	autonomousSubs?: boolean;
@@ -517,7 +528,6 @@ export async function create(args: CreateArgs) {
 				thirdPlaceMatch: args.thirdPlaceMatch,
 				isRanked: args.isRanked,
 				isTest: args.isTest,
-				deadlines: args.deadlines,
 				isInvitational: args.isInvitational,
 				enableNoScreenToggle: args.enableNoScreenToggle,
 				enableSubs: args.enableSubs,
@@ -525,6 +535,7 @@ export async function create(args: CreateArgs) {
 				regClosesAt: args.regClosesAt,
 				requireInGameNames: args.requireInGameNames,
 				minMembersPerTeam: args.minMembersPerTeam,
+				maxMembersPerTeam: args.maxMembersPerTeam,
 				swiss:
 					args.swissGroupCount && args.swissRoundCount
 						? {
@@ -566,7 +577,6 @@ export async function create(args: CreateArgs) {
 			? await createSubmittedImageInTrx({
 					trx,
 					avatarFileName: args.avatarFileName,
-					autoValidateAvatar: args.autoValidateAvatar,
 					userId: args.authorId,
 				})
 			: null;
@@ -607,20 +617,18 @@ export async function create(args: CreateArgs) {
 
 async function createSubmittedImageInTrx({
 	trx,
-	autoValidateAvatar,
 	avatarFileName,
 	userId,
 }: {
 	trx: Transaction<DB>;
 	avatarFileName: string;
-	autoValidateAvatar?: boolean;
 	userId: number;
 }) {
 	const result = await trx
 		.insertInto("UnvalidatedUserSubmittedImage")
 		.values({
 			url: avatarFileName,
-			validatedAt: autoValidateAvatar ? databaseTimestampNow() : null,
+			validatedAt: databaseTimestampNow(),
 			submitterUserId: userId,
 		})
 		.returning("id")
@@ -641,7 +649,6 @@ export async function update(args: UpdateArgs) {
 			? await createSubmittedImageInTrx({
 					trx,
 					avatarFileName: args.avatarFileName,
-					autoValidateAvatar: args.autoValidateAvatar,
 					userId: args.authorId,
 				})
 			: null;
@@ -717,7 +724,6 @@ async function updateTournamentTables(
 		thirdPlaceMatch: args.thirdPlaceMatch,
 		isRanked: args.isRanked,
 		isTest: existingSettings.isTest, // this one is not editable after creation
-		deadlines: args.deadlines,
 		isInvitational: args.isInvitational,
 		enableNoScreenToggle: args.enableNoScreenToggle,
 		enableSubs: args.enableSubs,
@@ -725,6 +731,7 @@ async function updateTournamentTables(
 		regClosesAt: args.regClosesAt,
 		requireInGameNames: args.requireInGameNames,
 		minMembersPerTeam: args.minMembersPerTeam,
+		maxMembersPerTeam: args.maxMembersPerTeam,
 		swiss:
 			args.swissGroupCount && args.swissRoundCount
 				? {

@@ -1,6 +1,7 @@
 import { Link, useFetcher } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
+import invariant from "~/utils/invariant";
 import { SendouButton } from "../../../../components/elements/Button";
 import { CheckmarkIcon } from "../../../../components/icons/Checkmark";
 import { CrossIcon } from "../../../../components/icons/Cross";
@@ -8,8 +9,10 @@ import { EditIcon } from "../../../../components/icons/Edit";
 import { logger } from "../../../../utils/logger";
 import { tournamentTeamPage } from "../../../../utils/urls";
 import { useUser } from "../../../auth/core/user";
+import { TOURNAMENT } from "../../../tournament/tournament-constants";
 import type { Bracket } from "../../core/Bracket";
 import * as Progression from "../../core/Progression";
+import * as Swiss from "../../core/Swiss";
 
 export function PlacementsTable({
 	groupId,
@@ -73,8 +76,28 @@ export function PlacementsTable({
 			return a.placement - b.placement;
 		});
 
-	const destinationBracket = (placement: number) =>
-		bracket.tournament.brackets.find(
+	const destinationBracket = (placement: number) => {
+		if (bracket.type === "swiss" && bracket.settings?.advanceThreshold) {
+			const standing = standings[placement - 1];
+			const stats = standing.stats;
+			invariant(stats);
+
+			return Swiss.calculateTeamStatus({
+				advanceThreshold: bracket.settings.advanceThreshold,
+				losses: stats.setLosses,
+				wins: stats.setWins,
+				roundCount:
+					bracket.settings.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+			}) === "advanced"
+				? bracket.tournament.brackets.find((otherBracket) =>
+						otherBracket.sources?.some(
+							(source) => source.bracketIdx === bracket.idx,
+						),
+					)
+				: undefined;
+		}
+
+		return bracket.tournament.brackets.find(
 			(b) =>
 				b.idx ===
 				Progression.destinationByPlacement({
@@ -83,6 +106,7 @@ export function PlacementsTable({
 					progression: bracket.tournament.ctx.settings.bracketProgression,
 				}),
 		);
+	};
 
 	const possibleDestinationBrackets = Progression.destinationsFromBracketIdx(
 		bracket.idx,
@@ -101,6 +125,9 @@ export function PlacementsTable({
 			allMatchesFinished
 		);
 	})();
+
+	let qualifiedRowRendered = false;
+	let eliminatedRowRendered = false;
 
 	return (
 		<table className="rr__placements-table" cellSpacing={0}>
@@ -169,76 +196,128 @@ export function PlacementsTable({
 
 					const key = () => {
 						if (overridenDestinationBracket === null) {
-							return "null";
+							return `${s.team.id}-null`;
 						}
 
-						return overridenDestinationBracket?.idx;
+						return `${s.team.id}-${overridenDestinationBracket?.idx}`;
 					};
 
+					const renderQualifiedRow =
+						!qualifiedRowRendered &&
+						bracket.settings?.advanceThreshold &&
+						s.stats &&
+						s.stats.setWins < bracket.settings.advanceThreshold;
+					const renderEliminatedRow =
+						!eliminatedRowRendered &&
+						bracket.settings?.advanceThreshold &&
+						s.stats &&
+						Swiss.calculateTeamStatus({
+							advanceThreshold: bracket.settings.advanceThreshold,
+							losses: s.stats.setLosses,
+							wins: s.stats.setWins,
+							roundCount:
+								bracket.settings.roundCount ??
+								TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+						}) === "eliminated";
+
+					if (renderQualifiedRow) qualifiedRowRendered = true;
+					if (renderEliminatedRow) eliminatedRowRendered = true;
+
 					return (
-						<tr key={s.team.id}>
-							<td>
-								<Link
-									to={tournamentTeamPage({
-										tournamentId: bracket.tournament.ctx.id,
-										tournamentTeamId: s.team.id,
-									})}
-								>
-									{s.team.name}{" "}
-								</Link>
-								{s.team.droppedOut ? (
-									<span className="text-warning text-xxxs font-bold">
-										Drop-out
+						<React.Fragment key={s.team.id}>
+							{renderQualifiedRow ? (
+								<SwissDividerRow
+									key="qualified"
+									type="qualified"
+									threshold={bracket.settings!.advanceThreshold!}
+									// TODO: get columns from the tiebreakers array
+									columnCount={8 + (canEditDestination ? 1 : 0)}
+								/>
+							) : null}
+							{renderEliminatedRow ? (
+								<SwissDividerRow
+									key="eliminated"
+									type="eliminated"
+									threshold={bracket.settings!.advanceThreshold!}
+									// TODO: get columns from the tiebreakers array
+									columnCount={8 + (canEditDestination ? 1 : 0)}
+								/>
+							) : null}
+							<tr>
+								<td>
+									<Link
+										to={tournamentTeamPage({
+											tournamentId: bracket.tournament.ctx.id,
+											tournamentTeamId: s.team.id,
+										})}
+									>
+										{s.team.name}{" "}
+									</Link>
+									{s.team.droppedOut ? (
+										<span className="text-warning text-xxxs font-bold">
+											Drop-out
+										</span>
+									) : null}
+								</td>
+								<td>
+									<span>
+										{stats.setWins}/{stats.setLosses}
 									</span>
+								</td>
+								{bracket.type === "round_robin" ? (
+									<td>
+										<span>{stats.winsAgainstTied}</span>
+									</td>
 								) : null}
-							</td>
-							<td>
-								<span>
-									{stats.setWins}/{stats.setLosses}
-								</span>
-							</td>
-							{bracket.type === "round_robin" ? (
+								{bracket.type === "swiss" ? (
+									<td>
+										<span>{(stats.lossesAgainstTied ?? 0) * -1}</span>
+									</td>
+								) : null}
+								{bracket.type === "swiss" ? (
+									<td>
+										<span>{stats.opponentSetWinPercentage?.toFixed(2)}</span>
+									</td>
+								) : null}
 								<td>
-									<span>{stats.winsAgainstTied}</span>
+									<span>
+										{stats.mapWins}/{stats.mapLosses}
+									</span>
 								</td>
+								{bracket.type === "swiss" ? (
+									<td>
+										<span>{stats.opponentMapWinPercentage?.toFixed(2)}</span>
+									</td>
+								) : null}
+								{bracket.type === "round_robin" ? (
+									<td>
+										<span>{stats.points}</span>
+									</td>
+								) : null}
+								<td>{team?.seed}</td>
+								<EditableDestination
+									key={key()}
+									source={bracket}
+									destination={dest}
+									overridenDestination={overridenDestinationBracket}
+									possibleDestinations={possibleDestinationBrackets}
+									allMatchesFinished={allMatchesFinished}
+									canEditDestination={canEditDestination}
+									tournamentTeamId={s.team.id}
+								/>
+							</tr>
+							{!eliminatedRowRendered &&
+							i === standings.length - 1 &&
+							bracket.settings?.advanceThreshold ? (
+								<SwissDividerRow
+									key="eliminated"
+									type="eliminated"
+									threshold={bracket.settings.advanceThreshold}
+									// TODO: get columns from the tiebreakers array
+									columnCount={8 + (canEditDestination ? 1 : 0)}
+								/>
 							) : null}
-							{bracket.type === "swiss" ? (
-								<td>
-									<span>{(stats.lossesAgainstTied ?? 0) * -1}</span>
-								</td>
-							) : null}
-							{bracket.type === "swiss" ? (
-								<td>
-									<span>{stats.opponentSetWinPercentage?.toFixed(2)}</span>
-								</td>
-							) : null}
-							<td>
-								<span>
-									{stats.mapWins}/{stats.mapLosses}
-								</span>
-							</td>
-							{bracket.type === "swiss" ? (
-								<td>
-									<span>{stats.opponentMapWinPercentage?.toFixed(2)}</span>
-								</td>
-							) : null}
-							{bracket.type === "round_robin" ? (
-								<td>
-									<span>{stats.points}</span>
-								</td>
-							) : null}
-							<td>{team?.seed}</td>
-							<EditableDestination
-								key={key()}
-								source={bracket}
-								destination={dest}
-								overridenDestination={overridenDestinationBracket}
-								possibleDestinations={possibleDestinationBrackets}
-								allMatchesFinished={allMatchesFinished}
-								canEditDestination={canEditDestination}
-								tournamentTeamId={s.team.id}
-							/>
-						</tr>
+						</React.Fragment>
 					);
 				})}
 			</tbody>
@@ -354,5 +433,37 @@ function EditableDestination({
 				</td>
 			) : null}
 		</>
+	);
+}
+
+function SwissDividerRow({
+	type,
+	threshold,
+	columnCount,
+}: {
+	type: "qualified" | "eliminated";
+	threshold: number;
+	columnCount: number;
+}) {
+	const isQualified = type === "qualified";
+	const message = isQualified
+		? `Qualified (@ ${threshold} wins)`
+		: `Eliminated (@ ${threshold} losses)`;
+
+	return (
+		<tr className="tournament__standings__divider-row">
+			<td colSpan={columnCount} className="tournament__standings__divider">
+				<div
+					className={clsx("tournament__standings__divider-content", {
+						"tournament__standings__divider--qualified": isQualified,
+						"tournament__standings__divider--eliminated": !isQualified,
+					})}
+				>
+					<div className="tournament__standings__divider-line" />
+					<span className="tournament__standings__divider-text">{message}</span>
+					<div className="tournament__standings__divider-line" />
+				</div>
+			</td>
+		</tr>
 	);
 }

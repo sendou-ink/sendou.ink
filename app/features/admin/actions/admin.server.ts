@@ -1,9 +1,9 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { z } from "zod/v4";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
-import { makeArtist } from "~/features/art/queries/makeArtist.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
+import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import {
@@ -57,6 +57,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				await plusTiersFromVotingAndLeaderboard(),
 			);
 
+			await BuildRepository.recalculateAllTiers();
+
 			message = "Plus tiers refreshed";
 			break;
 		}
@@ -85,7 +87,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		case "ARTIST": {
 			requireRole(user, "STAFF");
 
-			makeArtist(data.user);
+			await AdminRepository.makeArtistByUserId(data.user);
 
 			message = "Artist permissions given";
 			break;
@@ -99,7 +101,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "TOURNAMENT_ORGANIZER": {
-			requireRole(user, "STAFF");
+			requireRole(user, "ADMIN");
 
 			await AdminRepository.makeTournamentOrganizerByUserId(data.user);
 
@@ -127,7 +129,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				bannedByUserId: user.id,
 			});
 
-			refreshBannedCache();
+			await refreshBannedCache();
 
 			message = "User banned";
 			break;
@@ -140,7 +142,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				unbannedByUserId: user.id,
 			});
 
-			refreshBannedCache();
+			await refreshBannedCache();
 
 			message = "User unbanned";
 			break;
@@ -155,6 +157,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			});
 
 			message = "Friend code updated";
+			break;
+		}
+		case "API_ACCESS": {
+			requireRole(user, "ADMIN");
+
+			await AdminRepository.makeApiAccesserByUserId(data.user);
+
+			message = "API access granted";
 			break;
 		}
 		default: {
@@ -213,6 +223,10 @@ export const adminActionSchema = z.union([
 	z.object({
 		_action: _action("UPDATE_FRIEND_CODE"),
 		friendCode,
+		user: z.preprocess(actualNumber, z.number().positive()),
+	}),
+	z.object({
+		_action: _action("API_ACCESS"),
 		user: z.preprocess(actualNumber, z.number().positive()),
 	}),
 ]);

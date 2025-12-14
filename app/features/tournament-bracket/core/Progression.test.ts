@@ -173,6 +173,89 @@ describe("validatedSources - PLACEMENTS_PARSE_ERROR", () => {
 
 		expect(error.type).toBe("PLACEMENTS_PARSE_ERROR");
 	});
+
+	it("allows empty string placements for Swiss brackets with early advance", () => {
+		const result = Progression.validatedBrackets([
+			{
+				id: "1",
+				name: "Swiss Bracket",
+				type: "swiss",
+				settings: {
+					advanceThreshold: 3,
+				},
+				requiresCheckIn: false,
+			},
+			{
+				id: "2",
+				name: "Final Bracket",
+				type: "single_elimination",
+				settings: {},
+				requiresCheckIn: false,
+				sources: [
+					{
+						bracketId: "1",
+						placements: "",
+					},
+				],
+			},
+		]) as Progression.ParsedBracket[];
+
+		expect(result[1].sources).toEqual([{ bracketIdx: 0, placements: [] }]);
+	});
+
+	it("parsing fails with empty string placements for non-Swiss brackets", () => {
+		const error = Progression.validatedBrackets([
+			{
+				id: "1",
+				name: "Round Robin Bracket",
+				type: "round_robin",
+				settings: {},
+				requiresCheckIn: false,
+			},
+			{
+				id: "2",
+				name: "Final Bracket",
+				type: "single_elimination",
+				settings: {},
+				requiresCheckIn: false,
+				sources: [
+					{
+						bracketId: "1",
+						placements: "",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("PLACEMENTS_PARSE_ERROR");
+	});
+
+	it("parsing fails with empty string placements for Swiss brackets without early advance", () => {
+		const error = Progression.validatedBrackets([
+			{
+				id: "1",
+				name: "Swiss Bracket",
+				type: "swiss",
+				settings: {},
+				requiresCheckIn: false,
+			},
+			{
+				id: "2",
+				name: "Final Bracket",
+				type: "single_elimination",
+				settings: {},
+				requiresCheckIn: false,
+				sources: [
+					{
+						bracketId: "1",
+						placements: "",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("PLACEMENTS_PARSE_ERROR");
+	});
 });
 
 const getValidatedBrackets = (
@@ -446,6 +529,46 @@ describe("validatedSources - other rules", () => {
 		expect(error.type).toBe("NO_DE_POSITIVE");
 		expect((error as any).bracketIdx).toEqual(1);
 	});
+
+	it("handles SWISS_EARLY_ADVANCE_NO_DESTINATION", () => {
+		// Swiss bracket with early advance but no destination
+		const error = getValidatedBrackets([
+			{
+				settings: {
+					advanceThreshold: 3,
+				},
+				type: "swiss",
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("SWISS_EARLY_ADVANCE_NO_DESTINATION");
+		expect((error as any).bracketIdx).toEqual(0);
+	});
+
+	it("allows Swiss early advance when bracket has destination", () => {
+		// Swiss bracket with early advance that leads to another bracket should be valid
+		const result = getValidatedBrackets([
+			{
+				settings: {
+					advanceThreshold: 3,
+				},
+				type: "swiss",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-4",
+					},
+				],
+			},
+		]);
+
+		// Should be valid (no error returned)
+		expect(Array.isArray(result)).toBe(true);
+	});
 });
 
 describe("isFinals", () => {
@@ -467,6 +590,10 @@ describe("isFinals", () => {
 		expect(Progression.isFinals(1, progressions.lowInk)).toBe(false);
 		expect(Progression.isFinals(2, progressions.lowInk)).toBe(false);
 		expect(Progression.isFinals(3, progressions.lowInk)).toBe(true);
+	});
+
+	it("handles swiss (early advance", () => {
+		expect(Progression.isFinals(1, progressions.swissEarlyAdvance)).toBe(true);
 	});
 
 	it("many starter brackets", () => {
@@ -511,13 +638,13 @@ describe("isUnderground", () => {
 			false,
 		);
 		expect(Progression.isUnderground(1, progressions.manyStartBrackets)).toBe(
-			true,
+			false,
 		);
 		expect(Progression.isUnderground(2, progressions.manyStartBrackets)).toBe(
 			false,
 		);
 		expect(Progression.isUnderground(3, progressions.manyStartBrackets)).toBe(
-			true,
+			false,
 		);
 	});
 
@@ -593,6 +720,26 @@ describe("bracketIdxsForStandings", () => {
 	});
 });
 
+describe("startingBrackets", () => {
+	it("handles SE", () => {
+		expect(
+			Progression.startingBrackets(progressions.singleElimination),
+		).toEqual([0]);
+	});
+
+	it("handles many starter brackets", () => {
+		expect(
+			Progression.startingBrackets(progressions.manyStartBrackets),
+		).toEqual([0, 1]);
+	});
+
+	it("handles swiss (one group)", () => {
+		expect(Progression.startingBrackets(progressions.swissOneGroup)).toEqual([
+			0,
+		]);
+	});
+});
+
 describe("destinationsFromBracketIdx", () => {
 	it("returns correct destination (one destination)", () => {
 		expect(
@@ -651,5 +798,89 @@ describe("destinationByPlacement", () => {
 			progression: progressions.manyStartBrackets,
 		});
 		expect(result).toBe(3);
+	});
+});
+
+describe("validatedBracketsToInputFormat", () => {
+	it("converts empty placements back to empty string", () => {
+		const parsedBrackets: Progression.ParsedBracket[] = [
+			{
+				type: "swiss",
+				settings: { advanceThreshold: 3 },
+				name: "Swiss Bracket",
+				requiresCheckIn: false,
+			},
+			{
+				type: "single_elimination",
+				settings: {},
+				name: "Final Bracket",
+				requiresCheckIn: false,
+				sources: [
+					{
+						bracketIdx: 0,
+						placements: [],
+					},
+				],
+			},
+		];
+
+		const result = Progression.validatedBracketsToInputFormat(parsedBrackets);
+
+		expect(result[1].sources).toEqual([
+			{
+				bracketId: "0",
+				placements: "",
+			},
+		]);
+	});
+});
+
+describe("bracketDepth", () => {
+	it("returns 0 for starting bracket with no sources", () => {
+		expect(Progression.bracketDepth(0, progressions.singleElimination)).toBe(0);
+	});
+
+	it("returns 0 for starting bracket and 1 for bracket sourced from it", () => {
+		expect(
+			Progression.bracketDepth(0, progressions.roundRobinToSingleElimination),
+		).toBe(0);
+		expect(
+			Progression.bracketDepth(1, progressions.roundRobinToSingleElimination),
+		).toBe(1);
+	});
+
+	it("handles complex progression with multiple depth levels", () => {
+		expect(Progression.bracketDepth(0, progressions.lowInk)).toBe(0);
+		expect(Progression.bracketDepth(1, progressions.lowInk)).toBe(1);
+		expect(Progression.bracketDepth(2, progressions.lowInk)).toBe(1);
+		expect(Progression.bracketDepth(3, progressions.lowInk)).toBe(2);
+	});
+
+	it("handles multiple starting brackets", () => {
+		expect(Progression.bracketDepth(0, progressions.manyStartBrackets)).toBe(0);
+		expect(Progression.bracketDepth(1, progressions.manyStartBrackets)).toBe(0);
+		expect(Progression.bracketDepth(2, progressions.manyStartBrackets)).toBe(1);
+		expect(Progression.bracketDepth(3, progressions.manyStartBrackets)).toBe(1);
+	});
+
+	it("handles underground brackets", () => {
+		expect(
+			Progression.bracketDepth(
+				0,
+				progressions.doubleEliminationWithUnderground,
+			),
+		).toBe(0);
+		expect(
+			Progression.bracketDepth(
+				1,
+				progressions.doubleEliminationWithUnderground,
+			),
+		).toBe(1);
+	});
+
+	it("throws if given idx is out of bounds", () => {
+		expect(() =>
+			Progression.bracketDepth(1, progressions.singleElimination),
+		).toThrow();
 	});
 });

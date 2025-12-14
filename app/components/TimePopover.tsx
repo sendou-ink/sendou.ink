@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Dialog, Popover } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "react-use";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { SendouButton } from "./elements/Button";
 import { CheckmarkIcon } from "./icons/Checkmark";
 import { ClipboardIcon } from "./icons/Clipboard";
@@ -26,7 +27,7 @@ export default function TimePopover({
 	className?: string;
 	footerText?: string;
 }) {
-	const { i18n } = useTranslation();
+	const { formatDateTime, formatTime } = useTimeFormat();
 
 	const [open, setOpen] = useState(false);
 
@@ -60,7 +61,7 @@ export default function TimePopover({
 					setOpen(true);
 				}}
 			>
-				{time.toLocaleString(i18n.language, options)}
+				{formatDateTime(time, options)}
 			</button>
 			<Popover
 				isOpen={open}
@@ -71,10 +72,10 @@ export default function TimePopover({
 				<Dialog>
 					<div className="stack sm">
 						<div className="text-center" suppressHydrationWarning>
-							{time.toLocaleTimeString(i18n.language, {
+							{formatTime(time, {
 								timeZoneName: "long",
 								hour: "numeric",
-								minute: "numeric",
+								minute: "2-digit",
 							})}
 						</div>
 						<SendouButton

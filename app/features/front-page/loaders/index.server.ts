@@ -7,12 +7,7 @@ import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderbo
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
-import {
-	discordAvatarUrl,
-	teamPage,
-	userPage,
-	userSubmittedImage,
-} from "~/utils/urls";
+import { discordAvatarUrl, teamPage, userPage } from "~/utils/urls";
 import * as ShowcaseTournaments from "../core/ShowcaseTournaments.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -94,9 +89,7 @@ function cachedLeaderboards(): Promise<{
 							power: entry.power,
 							name: team.name,
 							url: teamPage(team.customUrl),
-							avatarUrl: team.avatarUrl
-								? userSubmittedImage(team.avatarUrl)
-								: null,
+							avatarUrl: team.avatarUrl,
 						};
 					}),
 			};

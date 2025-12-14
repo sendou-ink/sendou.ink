@@ -1,6 +1,5 @@
 // this file offers database functions specifically for the crud.server.ts file
 
-import { nanoid } from "nanoid";
 import { sql } from "~/db/sql";
 import type { Tables, TournamentRoundMaps } from "~/db/tables";
 import type {
@@ -10,6 +9,7 @@ import type {
 	Stage as StageType,
 } from "~/modules/brackets-model";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { shortNanoid } from "~/utils/id";
 
 const stage_getByIdStm = sql.prepare(/*sql*/ `
   select
@@ -332,11 +332,10 @@ const match_getByRoundIdStm = sql.prepare(/*sql*/ `
 `);
 
 const match_getByStageIdStm = sql.prepare(/*sql*/ `
-  select 
-    "TournamentMatch".*, 
+  select
+    "TournamentMatch".*,
     sum("TournamentMatchGameResult"."opponentOnePoints") as "opponentOnePointsTotal",
-    sum("TournamentMatchGameResult"."opponentTwoPoints") as "opponentTwoPointsTotal",
-    max("TournamentMatchGameResult"."createdAt") as "lastGameFinishedAt"
+    sum("TournamentMatchGameResult"."opponentTwoPoints") as "opponentTwoPointsTotal"
   from "TournamentMatch"
   left join "TournamentMatchGameResult" on "TournamentMatch"."id" = "TournamentMatchGameResult"."matchId"
   where "TournamentMatch"."stageId" = @stageId
@@ -353,9 +352,9 @@ const match_getByRoundAndNumberStm = sql.prepare(/*sql*/ `
 const match_insertStm = sql.prepare(/*sql*/ `
   insert into
     "TournamentMatch"
-    ("roundId", "stageId", "groupId", "number", "opponentOne", "opponentTwo", "status", "chatCode")
+    ("roundId", "stageId", "groupId", "number", "opponentOne", "opponentTwo", "status", "chatCode", "startedAt")
   values
-    (@roundId, @stageId, @groupId, @number, @opponentOne, @opponentTwo, @status, @chatCode)
+    (@roundId, @stageId, @groupId, @number, @opponentOne, @opponentTwo, @status, @chatCode, @startedAt)
   returning *
 `);
 
@@ -412,8 +411,7 @@ export class Match {
 			opponentTwo: string;
 			opponentOnePointsTotal: number | null;
 			opponentTwoPointsTotal: number | null;
-			lastGameFinishedAt: number | null;
-			createdAt: number | null;
+			startedAt: number | null;
 		},
 	): MatchType {
 		return {
@@ -437,8 +435,7 @@ export class Match {
 			round_id: rawMatch.roundId,
 			stage_id: rawMatch.stageId,
 			status: rawMatch.status,
-			lastGameFinishedAt: rawMatch.lastGameFinishedAt,
-			createdAt: rawMatch.createdAt,
+			startedAt: rawMatch.startedAt,
 		};
 	}
 
@@ -478,7 +475,8 @@ export class Match {
 			opponentOne: this.opponentOne ?? "null",
 			opponentTwo: this.opponentTwo ?? "null",
 			status: this.status,
-			chatCode: nanoid(10),
+			chatCode: shortNanoid(),
+			startedAt: null,
 		}) as any;
 
 		this.id = match.id;

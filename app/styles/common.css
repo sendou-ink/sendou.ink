@@ -49,8 +49,6 @@ progress {
 
 textarea:not(.plain, [name="text"]):focus-within {
 	border-color: transparent;
-
-	/* TODO: rectangle on Safari */
 	outline: 2px solid var(--theme);
 }
 
@@ -81,20 +79,21 @@ input:user-invalid {
 
 .input__extra-small {
 	min-width: var(--input-width-extra-small);
+	max-width: var(--input-width-extra-small);
 }
 
 .input__small {
 	min-width: var(--input-width-small);
+	max-width: var(--input-width-small);
 }
 
 .input__medium {
 	min-width: var(--input-width-medium);
+	max-width: var(--input-width-medium);
 }
 
 input:not(.plain, .combobox-input):focus-within {
 	border-color: transparent;
-
-	/* TODO: rectangle on Safari */
 	outline: 2px solid var(--theme);
 }
 
@@ -117,6 +116,12 @@ input[type="checkbox"] {
 
 [list]::-webkit-calendar-picker-indicator {
 	display: none !important;
+}
+
+input[type="time"]::-webkit-calendar-picker-indicator {
+	filter: invert(1);
+	opacity: 0.55;
+	cursor: pointer;
 }
 
 label {
@@ -182,8 +187,6 @@ select {
 	border: 2px solid var(--border);
 	border-radius: var(--rounded-sm);
 	background: var(--select-background, var(--bg-input));
-
-	/* TODO: Get color from CSS var */
 	background-image: url('data:image/svg+xml;utf8,<svg width="17px" color="rgb(255 255 255 / 55%)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>');
 	background-position: center right var(--s-3);
 	background-repeat: no-repeat;
@@ -199,10 +202,13 @@ select:disabled {
 	transform: initial;
 }
 
-/* Temporary solution for issue: https://github.com/sendou-ink/sendou.ink/issues/1141 */
 .light select {
-	/* TODO: Get color from CSS var */
-	background-image: url('data:image/svg+xml;utf8,<svg width="1rem" color="rgb(0 0 0 / 55%)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>');
+	background-image: url('data:image/svg+xml;utf8,<svg width="17px" color="rgb(0 0 0 / 55%)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>');
+}
+
+.light input[type="time"]::-webkit-calendar-picker-indicator {
+	filter: invert(0);
+	opacity: 0.55;
 }
 
 select::selection {
@@ -294,8 +300,6 @@ abbr[title] {
 
 .input-container:focus-within {
 	border-color: transparent;
-
-	/* TODO: rectangle on Safari */
 	outline: 2px solid var(--theme);
 }
 
@@ -961,6 +965,15 @@ abbr[title] {
 	font-size: var(--fonts-sm);
 	text-align: center;
 	color: #fff;
+}
+
+.art__dialog__img {
+	max-width: 100%;
+	max-height: 75vh;
+	width: 100%;
+	height: auto;
+	object-fit: contain;
+	display: block;
 }
 
 .art__dialog__image-container img {

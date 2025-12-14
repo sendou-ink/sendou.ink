@@ -19,7 +19,6 @@
 	"privateNote.sentiment.NEUTRAL": "Нейтральное",
 	"privateNote.sentiment.NEGATIVE": "Отрицательное",
 	"privateNote.delete.header": "Удалить заметку о {{name}}?",
-
 	"front.cities.la": "Лос-Анджелес",
 	"front.cities.nyc": "Нью-Йорк",
 	"front.cities.paris": "Париж",
@@ -51,7 +50,6 @@
 	"front.seasonOpen": "Сезон {{nth}} открыт",
 	"front.preview": "Предпросмотр груп в очереди без присоединения",
 	"front.preview.explanation": "Данная функция доступна только меценатам sendou.imk уровня Supporter (или выше)",
-
 	"settings.maps.header": "Арены и режимы",
 	"settings.maps.avoid": "Избегаю",
 	"settings.maps.prefer": "Предпочитаю",
@@ -69,6 +67,7 @@
 	"settings.sounds.likeReceived": "Получен лайк",
 	"settings.sounds.groupNewMember": "Новый участник команды",
 	"settings.sounds.matchStarted": "Матч начался",
+	"settings.sounds.tournamentMatchStarted": "",
 	"settings.mapPool.notOk": "Выберите по {{count}} арен за каждый режим, который вы не избегаете, чтобы сохранить настройки",
 	"settings.misc.header": "Прочее",
 	"settings.banned": "Запрещённый режим",
@@ -78,7 +77,6 @@
 	"settings.trusted.trustedExplanation": "Доверенный пользователь может добавлять вас в группы без ссылки на приглашение. При удаления из списка они теряют это право, и вам придётся пользоваться их ссылками на приглашение.",
 	"settings.trusted.noTrustedExplanation": "На данный момент вы не доверяете ни одному пользователю. Доверенный пользователь может добавлять вас в различные группы без ссылки на приглашение",
 	"settings.trusted.teamExplanation": "В добавок к пользователям выше, члены вашей команды <2>{{name}}</2> также могут вас добавить.",
-
 	"looking.joiningGroupError": "Перед тем как присоединиться к новой группе, покиньте текущую",
 	"looking.goToSettingsPrompt": "Чтобы облегчить процесс нахождения группы, настройте ваш пул оружия и статус голосового чата на странице настроек",
 	"looking.inactiveGroup.soon": "Группа будет помечена, как неактивная. Ещё ищете?",
@@ -122,7 +120,7 @@
 	"looking.allTiers": "Все ранги",
 	"looking.joinQPrompt": "Присоединитесь к очереди, чтобы найти группу",
 	"looking.range.or": "или",
-
+	"looking.range.or.explanation": "",
 	"match.header": "Матч #{{number}}",
 	"match.spInfo": "SP будет изменено после того, как обе команды сообщат одинаковый счёт.",
 	"match.dispute.button": "Оспорить?",
@@ -165,14 +163,11 @@
 	"match.outcome.loss": "проигрыш",
 	"match.screen.ban": "Оружия с {{special}} запрещены в этом матче",
 	"match.screen.allowed": "Оружия с {{special}} разрешены в этом матче",
-
 	"preparing.joinQ": "Присоединиться к очереди",
-
 	"tiers.currentCriteria": "Текущие критерии",
 	"tiers.info.p1": "Например, Leviathan - топ 5% игроков, Diamond - 85 процентиль и т.д.",
 	"tiers.info.p2": "Учтите, что ни у кого нет ранга Leviathan пока как минимум {{usersMin}} игроков не появилось на таблице лидеров (или {{teamsMin}} для команд)",
 	"tiers.info.p3": "У каждого ранга также есть + ранг (например BRONZE+). Это значит, что вы в первой половине вашего ранга.",
-
 	"streams.noStreams": "Прямых трансляций матчей на данный момент нет",
 	"streams.ownStreamInfo": "Нет вашей трансляции? Проверьте, что ваш аккаунт Twitch привязан и выбранная игра - Splatoon 3.",
 	"streams.ownStreamInfo.linkText": "Подробная информация о привязке аккаунта Twitch в FAQ."

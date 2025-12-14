@@ -1,8 +1,5 @@
 import type { AnyWeapon } from "~/features/build-analyzer";
-import {
-	allWeaponAltNames,
-	weaponAltNames,
-} from "~/modules/in-game-lists/weapon-alt-names";
+import { weaponAltNames } from "~/modules/in-game-lists/weapon-alt-names";
 import { abilities } from "./abilities";
 import type { Ability } from "./types";
 
@@ -26,12 +23,15 @@ export function filterWeapon({
 	const normalizedSearchTerm = normalizeTerm(searchTerm);
 	const normalizedWeaponName = normalizeTerm(weaponName);
 
-	const isAlt = allWeaponAltNames.has(normalizedSearchTerm);
-	if (weapon.type === "MAIN" && isAlt) {
+	if (normalizedWeaponName.includes(normalizedSearchTerm)) {
+		return true;
+	}
+
+	if (weapon.type === "MAIN") {
 		return (
 			weaponAltNames.get(weapon.id)?.includes(normalizedSearchTerm) ?? false
 		);
 	}
 
-	return normalizedWeaponName.includes(normalizedSearchTerm);
+	return false;
 }

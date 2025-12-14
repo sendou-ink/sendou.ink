@@ -11,7 +11,7 @@ import {
 } from "~/utils/remix.server";
 import { tournamentSubsPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
-import { upsertSub } from "../queries/upsertSub.server";
+import * as TournamentSubRepository from "../TournamentSubRepository.server";
 import { subSchema } from "../tournament-subs-schemas.server";
 
 export const action: ActionFunction = async ({ params, request }) => {
@@ -36,9 +36,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 		"Can't register as a sub and be in a team at the same time",
 	);
 
-	upsertSub({
-		bestWeapons: data.bestWeapons.join(","),
-		okWeapons: data.okWeapons.join(","),
+	await TournamentSubRepository.upsert({
+		bestWeapons: data.bestWeapons,
+		okWeapons: data.okWeapons,
 		canVc: data.canVc,
 		visibility: data.visibility,
 		message: data.message ?? null,

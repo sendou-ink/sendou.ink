@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { findVods } from "~/features/vods/queries/findVods.server";
+import * as VodRepository from "~/features/vods/VodRepository.server";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
@@ -10,6 +10,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	return {
 		// TODO: add pagination instead of not showing oldest vods at all
-		vods: findVods({ userId, limit: 100 }),
+		vods: await VodRepository.findByUserId(userId),
 	};
 };

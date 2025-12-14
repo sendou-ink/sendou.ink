@@ -13,20 +13,26 @@ export default function ResultHighlightsEditPage() {
 	const data = useLoaderData<typeof loader>();
 
 	return (
-		<Form method="post" className="stack md items-start">
-			<h2 className="text-start">{t("user:results.highlights.choose")}</h2>
-			<div className="u__results-table-wrapper">
-				<fieldset className="u__results-table-highlights">
-					<legend>{t("user:results.highlights.explanation")}</legend>
-					<UserResultsTable
-						id="user-results-highlight-selection"
-						results={data.results}
-						hasHighlightCheckboxes
-					/>
-				</fieldset>
+		<div className="u__highlights-container">
+			<Form id="highlights-form" method="post" className="stack md items-start">
+				<h2 className="text-start">{t("user:results.highlights.choose")}</h2>
+				<div className="u__results-table-wrapper">
+					<fieldset className="u__results-table-highlights">
+						<legend>{t("user:results.highlights.explanation")}</legend>
+						<UserResultsTable
+							id="user-results-highlight-selection"
+							results={data.results.value}
+							hasHighlightCheckboxes
+						/>
+					</fieldset>
+				</div>
+			</Form>
+			<div className="u__highlights-sticky-button">
+				<FormErrors namespace="user" />
+				<SubmitButton form="highlights-form">
+					{t("common:actions.save")}
+				</SubmitButton>
 			</div>
-			<SubmitButton>{t("common:actions.save")}</SubmitButton>
-			<FormErrors namespace="user" />
-		</Form>
+		</div>
 	);
 }

@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import type { z } from "zod/v4";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
+import { DateFormField } from "~/components/form/DateFormField";
 import { SendouForm } from "~/components/form/SendouForm";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import { UserSearchFormField } from "~/components/form/UserSearchFormField";
@@ -29,6 +30,7 @@ export function BanUserModal() {
 					_action: "BAN_USER",
 					userId: undefined,
 					privateNote: null,
+					expiresAt: null,
 				}}
 			>
 				<UserSearchFormField<FormFields>
@@ -41,6 +43,12 @@ export function BanUserModal() {
 					name="privateNote"
 					maxLength={TOURNAMENT_ORGANIZATION.BAN_REASON_MAX_LENGTH}
 					bottomText={t("org:banned.banModal.noteHelp")}
+				/>
+
+				<DateFormField<FormFields>
+					label={t("org:banned.banModal.expiresAt")}
+					name="expiresAt"
+					bottomText={t("org:banned.banModal.expiresAtHelp")}
 				/>
 			</SendouForm>
 		</SendouDialog>

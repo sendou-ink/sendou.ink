@@ -143,7 +143,7 @@ function MapPicker() {
 			if (mp?.preference === "AVOID") continue;
 
 			const pool = preferences.pool.find((p) => p.mode === mode);
-			if (!pool || pool.stages.length !== AMOUNT_OF_MAPS_IN_POOL_PER_MODE) {
+			if (pool && pool.stages.length > AMOUNT_OF_MAPS_IN_POOL_PER_MODE) {
 				return false;
 			}
 		}
@@ -519,6 +519,10 @@ function SoundCheckboxes() {
 		{
 			code: "sq_match",
 			name: t("q:settings.sounds.matchStarted"),
+		},
+		{
+			code: "tournament_match",
+			name: t("q:settings.sounds.tournamentMatchStarted"),
 		},
 	];
 

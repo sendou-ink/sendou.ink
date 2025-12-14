@@ -1,6 +1,15 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
+import { isFuture } from "date-fns";
 import { requireUser } from "~/features/auth/core/user.server";
-import { requirePermission } from "~/modules/permissions/guards.server";
+import {
+	requirePermission,
+	requireRole,
+} from "~/modules/permissions/guards.server";
+import {
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+	dayMonthYearToDate,
+} from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import { errorToast, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
@@ -17,16 +26,22 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		schema: orgPageActionSchema,
 	});
 
-	requirePermission(organization, "BAN", user);
-
 	switch (data._action) {
 		case "BAN_USER": {
-			const bannedUsers =
+			requirePermission(organization, "BAN", user);
+
+			const allBannedUsers =
 				await TournamentOrganizationRepository.allBannedUsersByOrganizationId(
 					organization.id,
 				);
+			const currentlyBannedUsers = allBannedUsers.filter(
+				(bu) =>
+					!bu.expiresAt || isFuture(databaseTimestampToDate(bu.expiresAt)),
+			);
 
-			if (bannedUsers.length >= TOURNAMENT_ORGANIZATION.MAX_BANNED_USERS) {
+			if (
+				currentlyBannedUsers.length >= TOURNAMENT_ORGANIZATION.MAX_BANNED_USERS
+			) {
 				errorToast(
 					`Organization cannot ban more than ${TOURNAMENT_ORGANIZATION.MAX_BANNED_USERS} users`,
 				);
@@ -36,6 +51,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				organizationId: organization.id,
 				userId: data.userId,
 				privateNote: data.privateNote,
+				expiresAt: data.expiresAt
+					? dateToDatabaseTimestamp(dayMonthYearToDate(data.expiresAt))
+					: null,
 			});
 
 			logger.info(
@@ -45,6 +63,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			break;
 		}
 		case "UNBAN_USER": {
+			requirePermission(organization, "BAN", user);
+
 			await TournamentOrganizationRepository.unbanUser({
 				organizationId: organization.id,
 				userId: data.userId,
@@ -52,6 +72,20 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			logger.info(
 				`User unbanned: organization=${organization.name} (${organization.id}), userId=${data.userId}, unbanned by userId=${user.id}`,
+			);
+
+			break;
+		}
+		case "UPDATE_IS_ESTABLISHED": {
+			requireRole(user, "ADMIN");
+
+			await TournamentOrganizationRepository.updateIsEstablished(
+				organization.id,
+				data.isEstablished,
+			);
+
+			logger.info(
+				`Organization isEstablished updated: organization=${organization.name} (${organization.id}), isEstablished=${data.isEstablished}, updated by userId=${user.id}`,
 			);
 
 			break;

@@ -69,8 +69,14 @@ export default function NewVodPage() {
 						: {
 								video: {
 									type: "TOURNAMENT",
+									teamSize: 4,
 									matches: [
-										{ mode: "SZ", stageId: 1, startsAt: "", weapons: [] },
+										{
+											mode: "SZ",
+											stageId: 1,
+											startsAt: "",
+											weapons: [],
+										},
 									],
 									pov: { type: "USER" } as VodFormFields["video"]["pov"],
 								},
@@ -124,10 +130,54 @@ function FormFields() {
 				required
 			/>
 
-			{videoType !== "CAST" ? <PovFormField /> : null}
+			{videoType === "CAST" ? <TeamSizeField /> : <PovFormField />}
 
 			<MatchesFormfield videoType={videoType} />
 		</>
+	);
+}
+
+function TeamSizeField() {
+	const { t } = useTranslation(["vods"]);
+	const { setValue } = useFormContext<VodFormFields>();
+	const matches = useWatch<VodFormFields>({
+		name: "video.matches",
+	}) as VodFormFields["video"]["matches"];
+
+	return (
+		<Controller
+			control={useFormContext<VodFormFields>().control}
+			name="video.teamSize"
+			render={({ field: { onChange, value } }) => {
+				return (
+					<div>
+						<Label required htmlFor="teamSize">
+							{t("vods:forms.title.teamSize")}
+						</Label>
+						<select
+							id="teamSize"
+							value={value ?? 4}
+							onChange={(e) => {
+								const newTeamSize = Number(e.target.value);
+								onChange(newTeamSize);
+
+								if (matches && Array.isArray(matches)) {
+									matches.forEach((_, idx) => {
+										setValue(`video.matches.${idx}.weapons`, []);
+									});
+								}
+							}}
+							required
+						>
+							<option value={1}>{t("vods:teamSize.1v1")}</option>
+							<option value={2}>{t("vods:teamSize.2v2")}</option>
+							<option value={3}>{t("vods:teamSize.3v3")}</option>
+							<option value={4}>{t("vods:teamSize.4v4")}</option>
+						</select>
+					</div>
+				);
+			}}
+		/>
 	);
 }
 
@@ -183,7 +233,7 @@ function PovFormField() {
 								onChange={(newUser) =>
 									onChange({
 										type: "USER",
-										userId: newUser.id,
+										userId: newUser?.id,
 									})
 								}
 								onBlur={onBlur}
@@ -244,7 +294,12 @@ function MatchesFormfield({
 				})}
 				<AddFieldButton
 					onClick={() => {
-						append({ mode: "SZ", stageId: 1, startsAt: "", weapons: [] });
+						append({
+							mode: "SZ",
+							stageId: 1,
+							startsAt: "",
+							weapons: [],
+						});
 					}}
 				/>
 				{rootError && (
@@ -304,26 +359,66 @@ function MatchesFieldset({
 				/>
 			</div>
 
-			<Controller
-				control={useFormContext<VodFormFields>().control}
-				name={`video.matches.${idx}.weapons`}
-				render={({ field: { onChange, value } }) => {
-					return (
-						<div>
-							{videoType === "CAST" ? (
-								<div>
-									<Label required>{t("vods:forms.title.weaponsTeamOne")}</Label>
+			<WeaponsField idx={idx} videoType={videoType} />
+		</div>
+	);
+}
+
+function WeaponsField({
+	idx,
+	videoType,
+}: {
+	idx: number;
+	videoType: Tables["Video"]["type"];
+}) {
+	const { t } = useTranslation(["vods"]);
+	const watchedTeamSize = useWatch<VodFormFields>({
+		name: "video.teamSize",
+	});
+	const teamSize = typeof watchedTeamSize === "number" ? watchedTeamSize : 4;
+
+	return (
+		<Controller
+			control={useFormContext<VodFormFields>().control}
+			name={`video.matches.${idx}.weapons`}
+			render={({ field: { onChange, value } }) => {
+				return (
+					<div>
+						{videoType === "CAST" ? (
+							<div>
+								<Label required>{t("vods:forms.title.weaponsTeamOne")}</Label>
+								<div className="stack sm">
+									{new Array(teamSize).fill(null).map((_, i) => {
+										return (
+											<WeaponSelect
+												key={i}
+												isRequired
+												testId={`player-${i}-weapon`}
+												value={value[i] ?? null}
+												onChange={(weaponId) => {
+													const weapons = [...value];
+													weapons[i] = weaponId;
+
+													onChange(weapons);
+												}}
+											/>
+										);
+									})}
+								</div>
+								<div className="mt-4">
+									<Label required>{t("vods:forms.title.weaponsTeamTwo")}</Label>
 									<div className="stack sm">
-										{new Array(4).fill(null).map((_, i) => {
+										{new Array(teamSize).fill(null).map((_, i) => {
+											const adjustedI = i + teamSize;
 											return (
 												<WeaponSelect
 													key={i}
 													isRequired
-													testId={`player-${i}-weapon`}
-													initialValue={value[i]}
+													testId={`player-${adjustedI}-weapon`}
+													value={value[adjustedI] ?? null}
 													onChange={(weaponId) => {
 														const weapons = [...value];
-														weapons[i] = weaponId;
+														weapons[adjustedI] = weaponId;
 
 														onChange(weapons);
 													}}
@@ -331,44 +426,20 @@ function MatchesFieldset({
 											);
 										})}
 									</div>
-									<div className="mt-4">
-										<Label required>
-											{t("vods:forms.title.weaponsTeamTwo")}
-										</Label>
-										<div className="stack sm">
-											{new Array(4).fill(null).map((_, i) => {
-												const adjustedI = i + 4;
-												return (
-													<WeaponSelect
-														key={i}
-														isRequired
-														testId={`player-${adjustedI}-weapon`}
-														initialValue={value[adjustedI]}
-														onChange={(weaponId) => {
-															const weapons = [...value];
-															weapons[adjustedI] = weaponId;
-
-															onChange(weapons);
-														}}
-													/>
-												);
-											})}
-										</div>
-									</div>
 								</div>
-							) : (
-								<WeaponSelect
-									label={t("vods:forms.title.weapon")}
-									isRequired
-									testId={`match-${idx}-weapon`}
-									initialValue={value[0]}
-									onChange={(weaponId) => onChange([weaponId])}
-								/>
-							)}
-						</div>
-					);
-				}}
-			/>
-		</div>
+							</div>
+						) : (
+							<WeaponSelect
+								label={t("vods:forms.title.weapon")}
+								isRequired
+								testId={`match-${idx}-weapon`}
+								value={value[0] ?? null}
+								onChange={(weaponId) => onChange([weaponId])}
+							/>
+						)}
+					</div>
+				);
+			}}
+		/>
 	);
 }

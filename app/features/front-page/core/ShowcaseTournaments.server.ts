@@ -1,7 +1,10 @@
 import cachified from "@epic-web/cachified";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import { tournamentIsRanked } from "~/features/tournament/tournament-utils";
+import {
+	getBracketProgressionLabel,
+	tournamentIsRanked,
+} from "~/features/tournament/tournament-utils";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import {
 	databaseTimestampToDate,
@@ -271,6 +274,8 @@ const MEMBERS_TO_SHOW = 5;
 function mapTournamentFromDB(
 	tournament: TournamentRepository.ForShowcase,
 ): ShowcaseCalendarEvent {
+	const highestDivWinners = resolveHighestDivisionWinners(tournament);
+
 	return {
 		type: "showcase",
 		url: tournamentPage(tournament.id),
@@ -295,13 +300,14 @@ function mapTournamentFromDB(
 		hidden: Boolean(tournament.hidden),
 		modes: null, // no need to show modes for front page, maybe could in the future?
 		firstPlacer:
-			tournament.firstPlacers.length > 0
+			highestDivWinners.length > 0
 				? {
-						teamName: tournament.firstPlacers[0].teamName,
+						teamName: highestDivWinners[0].teamName,
 						logoUrl:
-							tournament.firstPlacers[0].teamLogoUrl ??
-							tournament.firstPlacers[0].pickupAvatarUrl,
-						members: tournament.firstPlacers
+							highestDivWinners[0].teamLogoUrl ??
+							highestDivWinners[0].pickupAvatarUrl,
+						div: highestDivWinners[0].div,
+						members: highestDivWinners
 							.slice(0, MEMBERS_TO_SHOW)
 							.map((firstPlacer) => ({
 								customUrl: firstPlacer.customUrl,
@@ -312,12 +318,39 @@ function mapTournamentFromDB(
 								country: firstPlacer.country,
 							})),
 						notShownMembersCount:
-							tournament.firstPlacers.length > MEMBERS_TO_SHOW
-								? tournament.firstPlacers.length - MEMBERS_TO_SHOW
+							highestDivWinners.length > MEMBERS_TO_SHOW
+								? highestDivWinners.length - MEMBERS_TO_SHOW
 								: 0,
 					}
 				: null,
 	};
+}
+
+function resolveHighestDivisionWinners(
+	tournament: TournamentRepository.ForShowcase,
+) {
+	if (tournament.firstPlacers.length === 0) {
+		return [];
+	}
+
+	// not a "many starting brackets" tournament
+	if (tournament.firstPlacers.every((p) => p.div === null)) {
+		return tournament.firstPlacers;
+	}
+
+	const highestDivName = getBracketProgressionLabel(
+		0,
+		tournament.settings.bracketProgression,
+	);
+
+	// Filter to only include winners from the highest division
+	const highestDivWinners = tournament.firstPlacers.filter(
+		(p) => p.div === highestDivName,
+	);
+
+	return highestDivWinners.length > 0
+		? highestDivWinners
+		: tournament.firstPlacers;
 }
 
 function databaseTimestampWeekFromNow() {

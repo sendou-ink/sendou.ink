@@ -35,6 +35,7 @@ import {
 	userPage,
 } from "~/utils/urls";
 import { action } from "../actions/admin.server";
+import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "../core/dev-controls";
 import { loader } from "../loaders/admin.server";
 export { loader, action };
 
@@ -111,15 +112,14 @@ function AdminActions() {
 
 	return (
 		<div className="stack lg">
-			{process.env.NODE_ENV !== "production" && <Seed />}
-			{process.env.NODE_ENV !== "production" || isAdmin ? (
-				<Impersonate />
-			) : null}
+			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS && <Seed />}
+			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS || isAdmin ? <Impersonate /> : null}
 
 			{isStaff ? <LinkPlayer /> : null}
 			{isStaff ? <GiveArtist /> : null}
 			{isStaff ? <GiveVideoAdder /> : null}
-			{isStaff ? <GiveTournamentOrganizer /> : null}
+			{isAdmin ? <GiveTournamentOrganizer /> : null}
+			{isAdmin ? <GiveApiAccess /> : null}
 			{isStaff ? <UpdateFriendCode /> : null}
 			{isStaff ? <MigrateUser /> : null}
 			{isAdmin ? <ForcePatron /> : null}
@@ -145,7 +145,7 @@ function Impersonate() {
 			<h2>Impersonate user</h2>
 			<UserSearch
 				label="User to log in as"
-				onChange={(newUser) => setUserId(newUser.id)}
+				onChange={(newUser) => setUserId(newUser?.id)}
 			/>
 			<div className="stack horizontal md">
 				<SendouButton type="submit" isDisabled={!userId}>
@@ -174,12 +174,12 @@ function MigrateUser() {
 				<UserSearch
 					label="Old user"
 					name="old-user"
-					onChange={(newUser) => setOldUserId(newUser.id)}
+					onChange={(newUser) => setOldUserId(newUser?.id)}
 				/>
 				<UserSearch
 					label="New user"
 					name="new-user"
-					onChange={(newUser) => setNewUserId(newUser.id)}
+					onChange={(newUser) => setNewUserId(newUser?.id)}
 				/>
 			</div>
 			<div className="stack horizontal md">
@@ -271,6 +271,22 @@ function GiveTournamentOrganizer() {
 					state={fetcher.state}
 				>
 					Add as tournament organizer
+				</SubmitButton>
+			</div>
+		</fetcher.Form>
+	);
+}
+
+function GiveApiAccess() {
+	const fetcher = useFetcher();
+
+	return (
+		<fetcher.Form className="stack md" method="post">
+			<h2>Give API access</h2>
+			<UserSearch label="User" name="user" />
+			<div className="stack horizontal md">
+				<SubmitButton type="submit" _action="API_ACCESS" state={fetcher.state}>
+					Grant API access
 				</SubmitButton>
 			</div>
 		</fetcher.Form>
@@ -427,7 +443,11 @@ function Seed() {
 		>
 			<div className="stack horizontal md items-end">
 				<SubmitButton state={fetcher.state}>Seed</SubmitButton>
-				<SendouSelect label="Variation" name="variation">
+				<SendouSelect
+					label="Variation"
+					name="variation"
+					defaultSelectedKey="DEFAULT"
+				>
 					{SEED_VARIATIONS.map((variation) => (
 						<SendouSelectItem key={variation} id={variation}>
 							{variation}

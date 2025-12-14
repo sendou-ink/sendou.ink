@@ -35,7 +35,35 @@ export interface GetUserResponse {
 	plusServerTier: 1 | 2 | 3 | null;
 	weaponPool: Array<ProfileWeapon>;
 	badges: Array<Badge>;
+	/** Teams user is member of. The main team is always first in the array. */
+	teams: Array<GlobalTeamMembership>;
 	peakXp: number | null;
+	/** Users current (or previous if it's off-season) ranked season (SendouQ & ranked tournaments) rank. Null if no rank for the season in question or the season does not have yet enough players on the leaderboard. */
+	currentRank: SeasonalRank | null;
+}
+
+/** GET /api/team/{teamId} */
+
+export interface GetTeamResponse {
+	id: number;
+	/**
+	 * Name of the global team.
+	 *
+	 * @example "Moonlight"
+	 */
+	name: string;
+	/**
+	 * URL for the global team page.
+	 *
+	 * @example "https://sendou.ink/t/moonlight"
+	 */
+	teamPageUrl: string;
+	/**
+	 * URL for the global team logo.
+	 *
+	 * @example "https://sendou.nyc3.cdn.digitaloceanspaces.com/pickup-logo-uReSb1b1XS3TWGLCKMDUD-1719054364813.webp"
+	 */
+	logoUrl: string | null;
 }
 
 /** GET /api/calendar/{year}/{week} */
@@ -171,6 +199,10 @@ export type GetTournamentTeamsResponse = Array<{
 		 * @example "https://cdn.discordapp.com/avatars/79237403620945920/6fc41a44b069a0d2152ac06d1e496c6c.png"
 		 */
 		avatarUrl: string | null;
+		/**
+		 * @example "FI"
+		 */
+		country: string | null;
 		captain: boolean;
 		/**
 		 * Splatoon 3 splashtag name & ID. Notice the value returned is the player's set name at the time of the tournament.
@@ -190,6 +222,13 @@ export type GetTournamentTeamsResponse = Array<{
 		 */
 		joinedAt: string;
 	}>;
+}>;
+
+/** GET /api/tournament/{tournamentId}/players */
+
+export type GetTournamentPlayersResponse = Array<{
+	userId: number;
+	matchIds: number[];
 }>;
 
 /** GET /api/tournament/{tournamentId}/casted */
@@ -325,6 +364,53 @@ type Weapon = {
 
 type ProfileWeapon = Weapon & { isFiveStar: boolean };
 
+interface GlobalTeamMembership {
+	/**
+	 * ID for the global team page.
+	 */
+	id: number;
+	/**
+	 * Role of the user in the team.
+	 */
+	role: TeamMemberRole | null;
+}
+
+type TeamMemberRole =
+	| "CAPTAIN"
+	| "CO_CAPTAIN"
+	| "FRONTLINE"
+	| "SLAYER"
+	| "SKIRMISHER"
+	| "SUPPORT"
+	| "MIDLINE"
+	| "BACKLINE"
+	| "FLEX"
+	| "SUB"
+	| "COACH"
+	| "CHEERLEADER";
+
+interface SeasonalRank {
+	tier: {
+		name: RankTierName;
+		isPlus: boolean;
+	};
+	/**
+	 * Which season this rank is for.
+	 *
+	 * @example 7
+	 */
+	season: number;
+}
+
+type RankTierName =
+	| "LEVIATHAN"
+	| "DIAMOND"
+	| "PLATINUM"
+	| "GOLD"
+	| "SILVER"
+	| "BRONZE"
+	| "IRON";
+
 type Badge = {
 	/**
 	 * @example "Monday Afterparty"
@@ -380,5 +466,4 @@ type TournamentBracket = {
 	name: string;
 };
 
-// TODO: use a better documented type here
 type TournamentBracketData = ValueToArray<DataTypes>;

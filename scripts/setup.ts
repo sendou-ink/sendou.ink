@@ -3,13 +3,19 @@ import fs from "node:fs";
 import { seed } from "~/db/seed";
 import { db } from "~/db/sql";
 import { logger } from "~/utils/logger";
+import { seedImages } from "./seed-images";
 
 async function main() {
 	// Step 1: Create .env if it doesn't exist
 	if (!fs.existsSync(".env")) {
 		logger.info("📄 .env not found. Creating from .env.example...");
-		fs.copyFileSync(".env.example", ".env");
-		logger.info(".env created with defaults values");
+		const envContent = fs.readFileSync(".env.example", "utf-8");
+		const filteredEnv = envContent
+			.split("\n")
+			.filter((line) => !line.trim().startsWith("//")) // remove comments to prevent issues with Docker
+			.join("\n");
+		fs.writeFileSync(".env", filteredEnv);
+		logger.info(".env created with default values");
 	}
 
 	const dbEmpty = !(await db.selectFrom("User").selectAll().executeTakeFirst());
@@ -27,6 +33,14 @@ async function main() {
 			);
 			process.exit(1);
 		}
+	}
+
+	// Step 3: Seed images to Minio
+	logger.info("🖼️  Seeding images to Minio...");
+	try {
+		await seedImages();
+	} catch (err) {
+		logger.error("Error seeding images:", (err as Error).message);
 	}
 }
 

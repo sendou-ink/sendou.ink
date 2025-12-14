@@ -1,12 +1,16 @@
 import type { TFunction } from "i18next";
 import pLimit from "p-limit";
 import { WebPushError } from "web-push";
+import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import type { NotificationSubscription } from "../../../db/tables";
 import i18next from "../../../modules/i18n/i18next.server";
 import { logger } from "../../../utils/logger";
 import * as NotificationRepository from "../NotificationRepository.server";
 import type { Notification } from "../notifications-types";
-import { notificationLink } from "../notifications-utils";
+import {
+	mapMetaForTranslation,
+	notificationLink,
+} from "../notifications-utils";
 import webPush, { webPushEnabled } from "./webPush.server";
 
 /**
@@ -28,11 +32,11 @@ export async function notify({
 		return;
 	}
 
-	if (isNotificationAlreadySent(notification)) {
+	const dededuplicatedUserIds = Array.from(new Set(userIds));
+
+	if (isNotificationAlreadySent(notification, dededuplicatedUserIds)) {
 		return;
 	}
-
-	const dededuplicatedUserIds = Array.from(new Set(userIds));
 
 	try {
 		await NotificationRepository.insert(
@@ -71,14 +75,27 @@ export async function notify({
 
 const sentNotifications = new Set<string>();
 
+export function clearSentNotificationsForTesting() {
+	sentNotifications.clear();
+}
+
 // deduplicates notifications as a failsafe & anti-abuse mechanism
-function isNotificationAlreadySent(notification: Notification) {
+function isNotificationAlreadySent(
+	notification: Notification,
+	userIds: Array<number>,
+) {
 	// e2e tests should not be affected by this
-	if (process.env.NODE_ENV !== "production") {
+	if (IS_E2E_TEST_RUN) {
 		return false;
 	}
 
-	const key = `${notification.type}-${JSON.stringify(notification.meta)}`;
+	// bulk notifications are typically not something you can repeat
+	if (userIds.length > 10) {
+		return false;
+	}
+
+	const sortedUserIds = [...userIds].sort((a, b) => a - b).join(",");
+	const key = `${notification.type}-${JSON.stringify(notification.meta)}-${sortedUserIds}`;
 	if (sentNotifications.has(key)) {
 		return true;
 	}
@@ -127,12 +144,10 @@ function pushNotificationOptions(
 ): Parameters<ServiceWorkerRegistration["showNotification"]>[1] & {
 	title: string;
 } {
+	const meta = mapMetaForTranslation(notification, "en-US");
 	return {
 		title: t(`common:notifications.title.${notification.type}`),
-		body: t(
-			`common:notifications.text.${notification.type}`,
-			notification.meta,
-		),
+		body: t(`common:notifications.text.${notification.type}`, meta),
 		icon: notification.pictureUrl ?? "/static-assets/img/app-icon.png",
 		data: { url: notificationLink(notification) },
 	};

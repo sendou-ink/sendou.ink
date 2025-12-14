@@ -4,9 +4,11 @@ import { cors } from "remix-utils/cors";
 import { z } from "zod/v4";
 import { db } from "~/db/sql";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { resolveMapList } from "~/features/tournament-bracket/core/mapList.server";
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import i18next from "~/modules/i18n/i18next.server";
+import { logger } from "~/utils/logger";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import {
@@ -49,7 +51,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 				"TournamentMatch.opponentOne",
 				"TournamentMatch.opponentTwo",
 				"Tournament.mapPickingStyle",
-				"TournamentMatch.bestOf",
 				"TournamentRound.maps",
 				jsonArrayFrom(
 					eb
@@ -122,13 +123,21 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			: [];
 
 		return resolveMapList({
-			bestOf: match.bestOf,
 			tournamentId: match.tournamentId,
 			matchId: id,
 			teams: [match.opponentOne.id, match.opponentTwo.id],
 			mapPickingStyle: match.mapPickingStyle,
 			maps: match.maps,
 			pickBanEvents,
+			recentlyPlayedMaps:
+				match.mapPickingStyle !== "TO"
+					? await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
+							teamIds: [match.opponentOne.id, match.opponentTwo.id],
+						}).catch((error) => {
+							logger.error("Failed to fetch recently played maps", error);
+							return [];
+						})
+					: undefined,
 		}).map((mapListMap) => {
 			return {
 				map: {

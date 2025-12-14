@@ -1,11 +1,19 @@
+import { isFuture } from "date-fns";
 import { sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { Tables, TablesInsertable } from "~/db/tables";
-import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
-import { mySlugify, userSubmittedImage } from "~/utils/urls";
-import { HACKY_resolvePicture } from "../tournament/tournament-utils";
+import {
+	databaseTimestampNow,
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
+import {
+	COMMON_USER_FIELDS,
+	concatUserSubmittedImagePrefix,
+	tournamentLogoWithDefault,
+} from "~/utils/kysely.server";
+import { mySlugify } from "~/utils/urls";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "./tournament-organization-constants";
 
 interface CreateArgs {
@@ -21,10 +29,10 @@ export function create(args: CreateArgs) {
 				name: args.name,
 				slug: mySlugify(args.name),
 			})
-			.returning("id")
+			.returning(["id", "slug"])
 			.executeTakeFirstOrThrow();
 
-		return trx
+		await trx
 			.insertInto("TournamentOrganizationMember")
 			.values({
 				organizationId: org.id,
@@ -32,6 +40,8 @@ export function create(args: CreateArgs) {
 				role: "ADMIN",
 			})
 			.execute();
+
+		return org;
 	});
 }
 
@@ -49,7 +59,10 @@ export async function findBySlug(slug: string) {
 			"TournamentOrganization.description",
 			"TournamentOrganization.socials",
 			"TournamentOrganization.slug",
-			"UserSubmittedImage.url as avatarUrl",
+			"TournamentOrganization.isEstablished",
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"avatarUrl",
+			),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TournamentOrganizationMember")
@@ -63,7 +76,12 @@ export async function findBySlug(slug: string) {
 						"TournamentOrganizationMember.organizationId",
 						"=",
 						"TournamentOrganization.id",
-					),
+					)
+					.orderBy(
+						sql`coalesce(TournamentOrganizationMember.roleDisplayName, TournamentOrganizationMember.role)`,
+						"asc",
+					)
+					.orderBy("User.username", "asc"),
 			).as("members"),
 			jsonArrayFrom(
 				eb
@@ -111,7 +129,15 @@ export async function findBySlug(slug: string) {
 	};
 }
 
-export function findByOrganizerUserId(userId: number) {
+export function findByUserId(
+	userId: number,
+	{
+		roles = [],
+	}: {
+		/** If set, filters organizations by user's org member role */
+		roles?: Array<Tables["TournamentOrganizationMember"]["role"]>;
+	} = {},
+) {
 	return db
 		.selectFrom("TournamentOrganizationMember")
 		.innerJoin(
@@ -119,14 +145,14 @@ export function findByOrganizerUserId(userId: number) {
 			"TournamentOrganization.id",
 			"TournamentOrganizationMember.organizationId",
 		)
-		.select(["TournamentOrganization.id", "TournamentOrganization.name"])
+		.select([
+			"TournamentOrganization.id",
+			"TournamentOrganization.name",
+			"TournamentOrganization.isEstablished",
+		])
 		.where("TournamentOrganizationMember.userId", "=", userId)
-		.where((eb) =>
-			eb("TournamentOrganizationMember.role", "=", "ADMIN").or(
-				"TournamentOrganizationMember.role",
-				"=",
-				"ORGANIZER",
-			),
+		.$if(roles.length > 0, (qb) =>
+			qb.where("TournamentOrganizationMember.role", "in", roles),
 		)
 		.orderBy("TournamentOrganization.id", "asc")
 		.execute();
@@ -151,11 +177,7 @@ const findEventsBaseQuery = (organizationId: number) =>
 			"CalendarEvent.name",
 			"CalendarEvent.tournamentId",
 			eb.fn.min("CalendarEventDate.startTime").as("startTime"),
-			eb
-				.selectFrom("UserSubmittedImage")
-				.select(["UserSubmittedImage.url"])
-				.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id")
-				.as("logoUrl"),
+			tournamentLogoWithDefault(eb).as("logoUrl"),
 			jsonObjectFrom(
 				eb
 					.selectFrom("TournamentResult")
@@ -173,7 +195,9 @@ const findEventsBaseQuery = (organizationId: number) =>
 					)
 					.select(({ eb: innerEb }) => [
 						"TournamentTeam.name",
-						innerEb.fn.coalesce("u1.url", "u2.url").as("avatarUrl"),
+						concatUserSubmittedImagePrefix(
+							innerEb.fn.coalesce("u1.url", "u2.url"),
+						).as("avatarUrl"),
 						jsonArrayFrom(
 							innerEb
 								.selectFrom("TournamentTeamMember")
@@ -228,7 +252,7 @@ const findEventsBaseQuery = (organizationId: number) =>
 const mapEvent = <
 	T extends {
 		tournamentId: number | null;
-		logoUrl: string | null;
+		logoUrl: string;
 		name: string;
 	},
 >(
@@ -236,11 +260,7 @@ const mapEvent = <
 ) => {
 	return {
 		...event,
-		logoUrl: !event.tournamentId
-			? null
-			: event.logoUrl
-				? userSubmittedImage(event.logoUrl)
-				: HACKY_resolvePicture(event),
+		logoUrl: !event.tournamentId ? null : event.logoUrl,
 	};
 };
 
@@ -471,6 +491,7 @@ export function allBannedUsersByOrganizationId(organizationId: number) {
 		.select([
 			"TournamentOrganizationBannedUser.privateNote",
 			"TournamentOrganizationBannedUser.updatedAt",
+			"TournamentOrganizationBannedUser.expiresAt",
 			...COMMON_USER_FIELDS,
 		])
 		.where(
@@ -494,10 +515,41 @@ export async function isUserBannedByOrganization({
 }) {
 	const result = await db
 		.selectFrom("TournamentOrganizationBannedUser")
-		.select("userId")
+		.select(["userId", "expiresAt"])
 		.where("organizationId", "=", organizationId)
 		.where("userId", "=", userId)
 		.executeTakeFirst();
 
-	return Boolean(result);
+	if (!result) return false;
+
+	if (!result.expiresAt) return true;
+
+	return isFuture(databaseTimestampToDate(result.expiresAt));
+}
+
+/**
+ * Returns the number of organizations a user is a member of.
+ */
+export async function countOrganizationsByUserId(userId: number) {
+	const result = await db
+		.selectFrom("TournamentOrganizationMember")
+		.select((eb) => eb.fn.count("organizationId").as("count"))
+		.where("userId", "=", userId)
+		.executeTakeFirstOrThrow();
+
+	return Number(result.count);
+}
+
+/**
+ * Updates the isEstablished status for a tournament organization.
+ */
+export function updateIsEstablished(
+	organizationId: number,
+	isEstablished: boolean,
+) {
+	return db
+		.updateTable("TournamentOrganization")
+		.set({ isEstablished: Number(isEstablished) })
+		.where("id", "=", organizationId)
+		.execute();
 }

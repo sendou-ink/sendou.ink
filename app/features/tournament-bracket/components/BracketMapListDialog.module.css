@@ -1,0 +1,128 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-5);
+}
+
+.pickBanSelect {
+	text-align: start;
+}
+
+.roundsGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	gap: var(--s-8);
+}
+
+.roundControls {
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+	margin-block-start: var(--s-2);
+	margin-block-end: var(--s-3);
+}
+
+.roundButton {
+	width: 2rem;
+	height: 2rem;
+	border-radius: 50%;
+	border: 2px solid var(--bg-lightest-solid);
+	background-color: var(--bg-lighter);
+	color: var(--text);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+}
+
+.roundButton:hover:not(:disabled) {
+	background-color: var(--bg-lightest);
+}
+
+.roundButton:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.roundButton:focus-visible {
+	outline: 2px solid var(--theme);
+	outline-offset: 2px;
+}
+
+.roundButton svg {
+	width: 1rem;
+	height: 1rem;
+}
+
+.roundButtonActive {
+	background-color: var(--theme);
+	color: var(--button-text);
+	border-color: var(--theme);
+}
+
+.roundButtonActive:hover {
+	background-color: var(--theme-transparent);
+	color: var(--text);
+}
+
+.roundButtonNumber {
+	cursor: default;
+	background-color: var(--bg-lightest);
+}
+
+.roundControlsDivider {
+	width: 3px;
+	height: 2rem;
+	border-radius: var(--rounded);
+	background-color: var(--bg-lightest-solid);
+	margin-inline: var(--s-1);
+}
+
+.mapListRow {
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+	margin-block: var(--s-2);
+	list-style: none;
+	min-width: 275px;
+	text-align: start;
+}
+
+.mapSelectContainer {
+	display: flex;
+	gap: var(--s-2);
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
+	align-items: center;
+	position: relative;
+	flex: 1;
+}
+
+.mapSelect {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	opacity: 0;
+	cursor: pointer;
+}
+
+.mapSelectIcon {
+	width: 1.25rem;
+	height: 1.25rem;
+	color: var(--text-lighter);
+	margin-left: auto;
+	stroke-width: 2px;
+}
+
+.infoPopover {
+	margin-block-start: -6px;
+}
+
+.patternInput {
+	max-width: 10rem;
+}

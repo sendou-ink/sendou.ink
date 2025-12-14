@@ -7,13 +7,7 @@ import { BskyIcon } from "~/components/icons/Bsky";
 import { Main } from "~/components/Main";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import {
-	bskyUrl,
-	navIconUrl,
-	TEAM_SEARCH_PAGE,
-	teamPage,
-	userSubmittedImage,
-} from "~/utils/urls";
+import { bskyUrl, navIconUrl, TEAM_SEARCH_PAGE, teamPage } from "~/utils/urls";
 import { loader } from "../loaders/t.$customUrl.server";
 export { loader };
 
@@ -26,9 +20,9 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 		title: args.data.team.name,
 		description: args.data.team.bio ?? undefined,
 		location: args.location,
-		image: args.data.team.avatarSrc
+		image: args.data.team.avatarUrl
 			? {
-					url: userSubmittedImage(args.data.team.avatarSrc),
+					url: args.data.team.avatarUrl,
 					dimensions: {
 						width: 124,
 						height: 124,
@@ -79,18 +73,18 @@ function TeamBanner() {
 		<>
 			<div
 				className={clsx("team__banner", {
-					team__banner__placeholder: !team.bannerSrc,
+					team__banner__placeholder: !team.bannerUrl,
 				})}
 				style={{
-					"--team-banner-img": team.bannerSrc
-						? `url("${userSubmittedImage(team.bannerSrc)}")`
+					"--team-banner-img": team.bannerUrl
+						? `url("${team.bannerUrl}")`
 						: undefined,
 				}}
 			>
-				{team.avatarSrc ? (
+				{team.avatarUrl ? (
 					<div className="team__banner__avatar">
 						<div>
-							<img src={userSubmittedImage(team.avatarSrc)} alt="" />
+							<img src={team.avatarUrl} alt="" />
 						</div>
 					</div>
 				) : null}
@@ -104,10 +98,15 @@ function TeamBanner() {
 					})}
 				</div>
 				<div className="team__banner__name">
+					{team.tag ? (
+						<div className="team__banner__tag team__banner__tag__desktop">
+							{team.tag}
+						</div>
+					) : null}
 					{team.name} <BskyLink />
 				</div>
 			</div>
-			{team.avatarSrc ? <div className="team__banner__avatar__spacer" /> : null}
+			{team.avatarUrl ? <div className="team__banner__avatar__spacer" /> : null}
 		</>
 	);
 }
@@ -130,6 +129,11 @@ function MobileTeamNameCountry() {
 				{team.name}
 				<BskyLink />
 			</div>
+			{team.tag ? (
+				<div className="team__banner__tag team__banner__tag__mobile">
+					{team.tag}
+				</div>
+			) : null}
 		</div>
 	);
 }

@@ -2,14 +2,15 @@ import { type ActionFunctionArgs, redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import { badRequestIfFalsy, unauthorizedIfFalsy } from "~/utils/remix.server";
 import { userVodsPage } from "~/utils/urls";
-import { findVodById } from "../queries/findVodById.server";
 import * as VodRepository from "../VodRepository.server";
 import { canEditVideo } from "../vods-utils";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const user = await requireUser(request);
 
-	const vod = badRequestIfFalsy(findVodById(Number(params.id)));
+	const vod = badRequestIfFalsy(
+		await VodRepository.findVodById(Number(params.id)),
+	);
 
 	unauthorizedIfFalsy(
 		canEditVideo({

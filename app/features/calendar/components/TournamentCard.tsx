@@ -8,10 +8,10 @@ import { Image, ModeImage } from "~/components/Image";
 import { TrophyIcon } from "~/components/icons/Trophy";
 import { UsersIcon } from "~/components/icons/Users";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
-import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { navIconUrl, userSubmittedImage } from "~/utils/urls";
+import { navIconUrl } from "~/utils/urls";
 import type { CalendarEvent, ShowcaseCalendarEvent } from "../calendar-types";
 import { Tags } from "./Tags";
 import styles from "./TournamentCard.module.css";
@@ -19,12 +19,14 @@ import styles from "./TournamentCard.module.css";
 export function TournamentCard({
 	tournament,
 	className,
+	withRelativeTime = false,
 }: {
 	tournament: CalendarEvent | ShowcaseCalendarEvent;
 	className?: string;
+	withRelativeTime?: boolean;
 }) {
 	const isMounted = useIsMounted();
-	const { i18n } = useTranslation(["front", "common"]);
+	const { formatDateTimeSmartMinutes, formatDistanceToNow } = useTimeFormat();
 
 	const isShowcase = tournament.type === "showcase";
 	const isCalendar = tournament.type === "calendar";
@@ -35,12 +37,18 @@ export function TournamentCard({
 		if (!isMounted) return "Placeholder";
 
 		const date = databaseTimestampToDate(tournament.startTime);
-		return date.toLocaleString(i18n.language, {
+
+		if (withRelativeTime) {
+			return formatDistanceToNow(date, {
+				addSuffix: true,
+			});
+		}
+
+		return formatDateTimeSmartMinutes(date, {
 			month: "short",
 			day: "numeric",
 			hour: "numeric",
 			weekday: "short",
-			minute: date.getMinutes() !== 0 ? "numeric" : undefined,
 		});
 	};
 
@@ -53,14 +61,10 @@ export function TournamentCard({
 		>
 			<Link to={tournament.url} className={styles.card}>
 				<div className="stack horizontal justify-between">
-					{isHostedOnSendouInk ? (
+					{tournament.logoUrl ? (
 						<div className={styles.imgContainer}>
 							<img
-								src={
-									tournament.logoUrl
-										? userSubmittedImage(tournament.logoUrl)
-										: HACKY_resolvePicture(tournament)
-								}
+								src={tournament.logoUrl}
 								width={32}
 								height={32}
 								className={styles.avatarImg}
@@ -69,7 +73,9 @@ export function TournamentCard({
 						</div>
 					) : null}
 					{tournament.organization ? (
-						<div className={styles.org}>{tournament.organization.name}</div>
+						<div className={styles.org}>
+							<span>{tournament.organization.name}</span>
+						</div>
 					) : null}
 				</div>
 				<div
@@ -139,7 +145,7 @@ function TournamentFirstPlacers({
 			<div className="stack xs horizontal items-center text-xs">
 				{firstPlacer.logoUrl ? (
 					<img
-						src={userSubmittedImage(firstPlacer.logoUrl)}
+						src={firstPlacer.logoUrl}
 						alt=""
 						width={24}
 						className="rounded-full"
@@ -151,6 +157,7 @@ function TournamentFirstPlacers({
 					</span>
 					<div className="text-xxxs text-lighter font-bold text-uppercase">
 						{t("front:showcase.card.winner")}
+						{firstPlacer.div ? ` (${firstPlacer.div})` : null}
 					</div>
 				</div>
 			</div>

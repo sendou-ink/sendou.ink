@@ -3,10 +3,8 @@ import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { cors } from "remix-utils/cors";
 import { z } from "zod/v4";
 import { db } from "~/db/sql";
-import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
-import { userSubmittedImage } from "~/utils/urls";
 import { id } from "~/utils/zod";
 import {
 	handleOptionsRequest,
@@ -72,9 +70,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		name: tournament.name,
 		startTime: databaseTimestampToDate(tournament.startTime).toISOString(),
 		url: `https://sendou.ink/to/${id}/brackets`,
-		logoUrl: tournament.logoUrl
-			? userSubmittedImage(tournament.logoUrl)
-			: `https://sendou.ink${HACKY_resolvePicture(tournament)}`,
+		logoUrl: tournament.logoUrl,
 		teams: {
 			checkedInCount: tournament.teams.filter((team) => team.checkedInAt)
 				.length,

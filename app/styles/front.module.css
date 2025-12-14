@@ -1,0 +1,255 @@
+.frontPageSideNav {
+	display: none;
+	position: fixed;
+	left: 15px;
+	top: 60px;
+	flex-direction: column;
+	gap: var(--s-3);
+	overflow-y: auto;
+	height: 100vh;
+	padding-block-end: var(--s-48);
+	padding-inline-end: var(--s-4);
+}
+
+.frontPageSideNav picture {
+	background-color: var(--bg-lightest);
+	border-radius: var(--rounded);
+	padding: 0.225rem;
+}
+
+.frontPageSideNavItem {
+	display: flex;
+	color: var(--text);
+	font-size: var(--fonts-xs);
+	font-weight: var(--bold);
+	gap: var(--s-1-5);
+	align-items: center;
+}
+
+.frontPageSideNavItem img {
+	min-width: 20px;
+}
+
+.frontPageSideNavLogOut {
+	display: flex;
+	font-size: var(--fonts-xs);
+	font-weight: var(--bold);
+	gap: var(--s-1-5);
+	align-items: center;
+	color: var(--text-lighter) !important;
+}
+
+.frontPageSideNavLogOut svg {
+	background-color: var(--bg-lightest);
+	border-radius: var(--rounded);
+	min-width: 28px;
+	margin-inline-end: 0 !important;
+	padding: var(--s-1-5);
+}
+
+.frontPageSideNavLogOut path {
+	margin-inline-end: -1px;
+}
+
+.frontPageSideNavItem:hover picture {
+	background-color: var(--theme-transparent);
+}
+
+/** Reference to .layout__hamburger-fab **/
+@media screen and (min-width: 1130px) {
+	.frontPageSideNav {
+		display: flex;
+	}
+}
+
+.frontPageContainer {
+	--card-width: 225px;
+	--card-height: 90px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-8);
+}
+
+.changeLogImg {
+	max-height: 300px;
+	border-radius: var(--rounded-sm);
+}
+
+.changeLogIconButton {
+	display: flex;
+	flex-direction: row;
+	gap: var(--s-1-5);
+	justify-content: center;
+	align-items: center;
+	font-weight: var(--bold);
+	font-size: var(--fonts-xs);
+	border-radius: 100%;
+	color: var(--text-lighter);
+}
+
+.changeLogIconButton:hover {
+	color: var(--theme);
+}
+
+.externalLinkIcon {
+	width: 18px;
+	stroke-width: 2px;
+}
+
+@property --l {
+	syntax: "<percentage>";
+	inherits: false;
+	initial-value: 50%;
+}
+
+.seasonBanner {
+	/*  needed for firefox to have a valid output */
+	--l: 50%;
+
+	background: linear-gradient(
+		to right,
+		var(--bg-lightest),
+		var(--l),
+		var(--bg-darker)
+	);
+	border-radius: var(--rounded);
+	padding: var(--s-2) var(--s-3);
+	line-height: 1.35;
+	position: relative;
+	color: var(--text);
+	border: 2.5px solid var(--bg-lightest-solid);
+	transition: --l 0.2s ease-out;
+	margin-block-start: var(--s-4);
+}
+
+.seasonBanner:hover {
+	--l: 75%;
+}
+
+.seasonBannerHeader {
+	font-size: var(--fonts-xl);
+	font-weight: var(--bold);
+}
+
+.seasonBannerDates {
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+}
+
+.seasonBannerImg {
+	position: absolute;
+	width: 83px;
+	right: 8px;
+	top: -44.5px;
+}
+
+.seasonBannerLink {
+	background-color: var(--bg-lightest);
+	border-radius: var(--rounded);
+	width: max-content;
+	padding: var(--s-0-5) var(--s-1-5);
+	font-size: var(--fonts-xs);
+	color: var(--text);
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+}
+
+.seasonBannerLink svg {
+	width: 24px;
+	transition: all 0.2s ease-out;
+}
+
+.seasonBannerLink:hover svg {
+	translate: 2px;
+}
+
+.tournamentCards {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--s-2);
+}
+
+.tournamentCardsSpacer {
+	display: flex;
+	gap: var(--s-2);
+	height: 100%;
+}
+
+.tournamentCardsViewAllCard {
+	background-color: var(--bg-lighter);
+	height: var(--card-height);
+	border-radius: var(--rounded);
+	display: grid;
+	place-items: center;
+	padding: var(--s-2);
+	font-size: var(--fonts-xxs);
+	font-weight: var(--bold);
+	text-align: center;
+	color: var(--text);
+	transition: 0.2s ease-out;
+	min-width: 90px;
+	max-width: 90px;
+	border: 2.5px solid var(--bg-lightest-solid);
+}
+
+.tournamentCardsViewAllCard:hover {
+	background-color: var(--bg-lightest);
+}
+
+.resultHighlights {
+	display: flex;
+	gap: var(--s-2);
+}
+
+.resultHighlightsTitle {
+	font-size: var(--fonts-xs);
+}
+
+.resultHighlightsTitleTournaments {
+	align-self: flex-start;
+	margin-inline-start: 65px;
+}
+
+.leaderboard {
+	min-width: var(--card-width);
+	max-width: var(--card-width);
+	background-color: var(--bg-lightest);
+	border-radius: var(--rounded);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	padding: var(--s-2);
+}
+
+.leaderboardName {
+	font-size: var(--fonts-sm);
+	font-weight: var(--bold);
+	white-space: nowrap;
+	max-width: 140px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.leaderboardViewAll {
+	font-size: var(--fonts-xxs);
+	color: var(--text);
+	background-color: var(--bg-lightest);
+	border-radius: var(--rounded);
+	width: max-content;
+	padding-inline: var(--s-2);
+	display: flex;
+	gap: var(--s-1);
+	padding: var(--s-0-5) var(--s-1-5);
+}
+
+.lutiBanner {
+	background-color: #4874a0;
+	color: #fff;
+	border-radius: var(--rounded);
+	padding: var(--s-2);
+	justify-content: center;
+	display: flex;
+	gap: var(--s-2);
+	flex-wrap: wrap;
+}

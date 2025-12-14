@@ -80,13 +80,19 @@ export const newCalendarEventActionSchema = z
 		),
 		enableSubs: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
 		autonomousSubs: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
-		strictDeadline: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
 		isInvitational: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
 		requireInGameNames: z.preprocess(
 			checkboxValueToBoolean,
 			z.boolean().nullish(),
 		),
-		minMembersPerTeam: z.coerce.number().int().min(1).max(4).nullish(),
+		minMembersPerTeam: z.preprocess(
+			actualNumber,
+			z.number().int().min(1).max(4).nullish(),
+		),
+		maxMembersPerTeam: z.preprocess(
+			actualNumber,
+			z.number().int().min(4).max(10).nullish(),
+		),
 		bracketProgression: bracketProgressionSchema.nullish(),
 	})
 	.refine(

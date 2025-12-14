@@ -133,6 +133,66 @@ describe("PreparedMaps - resolvePreparedForTheBracket", () => {
 
 		expect(prepared).toBeNull();
 	});
+
+	test("multiple starting brackets (RR) feeding into SE brackets at same depth should share maps", () => {
+		const tournamentWithTwoStartingBrackets = testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "round_robin",
+							name: "Group A",
+							requiresCheckIn: false,
+							settings: {},
+						},
+						{
+							type: "round_robin",
+							name: "Group B",
+							requiresCheckIn: false,
+							settings: {},
+						},
+						{
+							type: "single_elimination",
+							name: "SE from Group A",
+							requiresCheckIn: false,
+							settings: {},
+							sources: [
+								{
+									bracketIdx: 0,
+									placements: [1, 2],
+								},
+							],
+						},
+						{
+							type: "single_elimination",
+							name: "SE from Group B",
+							requiresCheckIn: false,
+							settings: {},
+							sources: [
+								{
+									bracketIdx: 1,
+									placements: [1, 2],
+								},
+							],
+						},
+					],
+				},
+			},
+		});
+
+		const prepared = PreparedMaps.resolvePreparedForTheBracket({
+			tournament: tournamentWithTwoStartingBrackets,
+			bracketIdx: 3,
+			preparedByBracket: [
+				null,
+				null,
+				{ authorId: 1, createdAt: 1, maps: [] },
+				null,
+			],
+		});
+
+		expect(prepared).not.toBeNull();
+	});
 });
 
 describe("PreparedMaps - eliminationTeamCountOptions", () => {
@@ -237,6 +297,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		});
 
 		expect(trimmed?.maps[0].list?.[0].stageId).toBe(
+			// biome-ignore lint/suspicious/noNonNullAssertedOptionalChain: Biome 2.3.1 upgrade
 			EIGHT_TEAM_SE_PREPARED.maps[1].list?.[0].stageId!,
 		);
 	});

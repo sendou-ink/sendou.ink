@@ -78,7 +78,6 @@ function NotificationContent({
 	const { t } = useTranslation(["common"]);
 	const { revalidate, state } = useRevalidator();
 
-	// TODO: for some reason this makes "adds a badge owner sending a notification" E2E test flaky, figure out why and fix
 	useMarkNotificationsAsSeen(unseenIds);
 
 	return (

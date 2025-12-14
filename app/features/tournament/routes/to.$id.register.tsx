@@ -40,6 +40,7 @@ import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tour
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -54,7 +55,6 @@ import {
 	tournamentSubsPage,
 	userEditProfilePage,
 	userPage,
-	userSubmittedImage,
 } from "~/utils/urls";
 import { AlertIcon } from "../../../components/icons/Alert";
 import { action } from "../actions/to.$id.register.server";
@@ -69,22 +69,16 @@ import { useTournament } from "./to.$id";
 export { loader, action };
 
 export default function TournamentRegisterPage() {
-	const user = useUser();
 	const isMounted = useIsMounted();
 	const tournament = useTournament();
 
 	const startsAtEvenHour = tournament.ctx.startTime.getMinutes() === 0;
 
-	const showAvatarPendingApprovalText =
-		tournament.ctx.logoUrl &&
-		!tournament.ctx.logoValidatedAt &&
-		tournament.isOrganizer(user);
-
 	return (
 		<div className={clsx("stack lg", containerClassName("normal"))}>
 			<div className="tournament__logo-container">
 				<img
-					src={tournament.ctx.logoSrc}
+					src={tournament.ctx.logoUrl}
 					alt=""
 					className="tournament__logo"
 					width={124}
@@ -102,13 +96,7 @@ export default function TournamentRegisterPage() {
 								className="stack horizontal sm items-center text-xs text-main-forced"
 							>
 								<Avatar
-									url={
-										tournament.ctx.organization.avatarUrl
-											? userSubmittedImage(
-													tournament.ctx.organization.avatarUrl,
-												)
-											: undefined
-									}
+									url={tournament.ctx.organization.avatarUrl ?? undefined}
 									size="xxs"
 								/>
 								{tournament.ctx.organization.name}
@@ -159,12 +147,6 @@ export default function TournamentRegisterPage() {
 					</div>
 				</div>
 			</div>
-			{showAvatarPendingApprovalText ? (
-				<div className="text-warning text-sm font-semi-bold">
-					Tournament logo pending moderator review. Will be shown publicly once
-					approved.
-				</div>
-			) : null}
 			<TournamentRegisterInfoTabs />
 		</div>
 	);
@@ -395,9 +377,10 @@ function RegistrationProgress({
 	members?: unknown[];
 	mapPool?: unknown[];
 }) {
-	const { i18n, t } = useTranslation(["tournament"]);
+	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 	const isMounted = useIsMounted();
+	const { formatDate } = useTimeFormat();
 
 	const completedIfTruthy = (condition: unknown) =>
 		condition ? "completed" : "incomplete";
@@ -438,15 +421,17 @@ function RegistrationProgress({
 		tournament.ctx.startTime.getTime();
 
 	const registrationClosesAtString = isMounted
-		? (tournament.isLeagueSignup
-				? tournament.ctx.startTime
-				: tournament.registrationClosesAt
-			).toLocaleTimeString(i18n.language, {
-				minute: "numeric",
-				hour: "numeric",
-				day: "2-digit",
-				month: "2-digit",
-			})
+		? formatDate(
+				tournament.isLeagueSignup
+					? tournament.ctx.startTime
+					: tournament.registrationClosesAt,
+				{
+					minute: "numeric",
+					hour: "numeric",
+					day: "2-digit",
+					month: "2-digit",
+				},
+			)
 		: "";
 
 	return (
@@ -521,14 +506,15 @@ function CheckIn({
 	endDate: Date;
 	checkedIn?: boolean;
 }) {
-	const { t, i18n } = useTranslation(["tournament"]);
+	const { t } = useTranslation(["tournament"]);
 	const isMounted = useIsMounted();
 	const fetcher = useFetcher();
+	const { formatTime } = useTimeFormat();
 
 	useAutoRerender();
 
 	const checkInStartsString = isMounted
-		? startDate.toLocaleTimeString(i18n.language, {
+		? formatTime(startDate, {
 				minute: "numeric",
 				hour: "numeric",
 				day: "2-digit",
@@ -537,7 +523,7 @@ function CheckIn({
 		: "";
 
 	const checkInEndsString = isMounted
-		? endDate.toLocaleTimeString(i18n.language, {
+		? formatTime(endDate, {
 				minute: "numeric",
 				hour: "numeric",
 				day: "2-digit",
@@ -659,16 +645,11 @@ function TeamInfo({
 			const teamToSignUpWith = data?.teams.find(
 				(team) => team.id === signUpWithTeamId,
 			);
-			return teamToSignUpWith?.logoUrl
-				? userSubmittedImage(teamToSignUpWith.logoUrl)
-				: null;
+			return teamToSignUpWith?.logoUrl;
 		}
 		if (uploadedAvatar) return URL.createObjectURL(uploadedAvatar);
-		if (ownTeam?.pickupAvatarUrl) {
-			return userSubmittedImage(ownTeam.pickupAvatarUrl);
-		}
 
-		return null;
+		return ownTeam?.pickupAvatarUrl;
 	})();
 
 	const canEditAvatar =
@@ -819,21 +800,6 @@ function TeamInfo({
 									{t("tournament:pre.info.noHost")}
 								</label>
 							</div>
-
-							{tournament.ctx.settings.enableNoScreenToggle ? (
-								<div className="text-lighter text-sm stack horizontal sm items-center">
-									<input
-										id="no-screen"
-										type="checkbox"
-										name="noScreen"
-										defaultChecked={Boolean(ownTeam?.noScreen)}
-										data-testid="no-screen-checkbox"
-									/>
-									<label htmlFor="no-screen" className="mb-0">
-										{t("tournament:pre.info.noScreen")}
-									</label>
-								</div>
-							) : null}
 						</div>
 					</div>
 					<SendouButton
@@ -971,7 +937,7 @@ function FillRoster({
 	);
 
 	const optionalMembers = Math.max(
-		tournament.maxTeamMemberCount - ownTeamMembers.length - missingMembers,
+		tournament.maxMembersPerTeam - ownTeamMembers.length - missingMembers,
 		0,
 	);
 
@@ -992,7 +958,7 @@ function FillRoster({
 		});
 	})();
 
-	const teamIsFull = ownTeamMembers.length >= tournament.maxTeamMemberCount;
+	const teamIsFull = ownTeamMembers.length >= tournament.maxMembersPerTeam;
 	const canAddMembers = !teamIsFull && tournament.registrationOpen;
 
 	return (
@@ -1026,7 +992,7 @@ function FillRoster({
 						</div>
 					</div>
 				) : null}
-				<div className="stack lg horizontal mt-2 flex-wrap justify-center">
+				<div className="tournament__roster-grid">
 					{ownTeamMembers.map((member, i) => {
 						return (
 							<div
@@ -1036,7 +1002,7 @@ function FillRoster({
 							>
 								<Avatar size="xsm" user={member} />
 								{tournament.ctx.settings.requireInGameNames ? (
-									<div>
+									<div className="tournament__roster-grid__member-name">
 										<div className="text-center">
 											{member.inGameName ?? member.username}
 										</div>
@@ -1047,7 +1013,9 @@ function FillRoster({
 										) : null}
 									</div>
 								) : (
-									member.username
+									<div className="tournament__roster-grid__member-name">
+										{member.username}
+									</div>
 								)}
 							</div>
 						);
@@ -1081,12 +1049,15 @@ function FillRoster({
 					might result in disqualification.
 				</div>
 			) : (
-				// TODO: proper English for 1v1 "At least 1 members are required to participate. Max roster size is 1"
 				<div className="tournament__section__warning">
-					{t("tournament:pre.roster.footer", {
-						atLeastCount: tournament.minMembersPerTeam,
-						maxCount: tournament.maxTeamMemberCount,
-					})}
+					{tournament.minMembersPerTeam <= 3
+						? t("tournament:pre.roster.footer.noSubs", {
+								format: `${tournament.minMembersPerTeam}v${tournament.minMembersPerTeam}`,
+							})
+						: t("tournament:pre.roster.footer", {
+								atLeastCount: tournament.minMembersPerTeam,
+								maxCount: tournament.maxMembersPerTeam,
+							})}
 				</div>
 			)}
 		</div>
@@ -1197,7 +1168,6 @@ function DeleteMember({ members }: { members: TournamentDataTeam["members"] }) {
 	);
 }
 
-// TODO: useBlocker to prevent leaving page if made changes without saving
 function CounterPickMapPoolPicker() {
 	const { t } = useTranslation(["common", "game-misc", "tournament"]);
 	const tournament = useTournament();

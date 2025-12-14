@@ -11,7 +11,7 @@ import { nanoid } from "nanoid";
 import type { Ok, Result } from "neverthrow";
 import type { z } from "zod/v4";
 import type { navItems } from "~/components/layout/nav-items";
-import { s3UploadHandler } from "~/features/img-upload";
+import { s3UploadHandler } from "~/features/img-upload/s3.server";
 import invariant from "./invariant";
 import { logger } from "./logger";
 
@@ -192,8 +192,6 @@ export function canAccessLohiEndpoint(request: Request) {
 	invariant(process.env.LOHI_TOKEN, "LOHI_TOKEN is required");
 	return request.headers.get(LOHI_TOKEN_HEADER_NAME) === process.env.LOHI_TOKEN;
 }
-
-// TODO: investigate better solution to toasts when middlewares land (current one has a problem of clearing search params)
 
 export function errorToastRedirect(message: string) {
 	return redirect(`?__error=${message}`);

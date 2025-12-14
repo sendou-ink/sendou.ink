@@ -85,6 +85,7 @@ export default [
 		"features/object-damage-calculator/routes/object-damage-calculator.tsx",
 	),
 
+	route("/to/search", "features/tournament/routes/to.search.ts"),
 	route("/to/:id", "features/tournament/routes/to.$id.tsx", [
 		index("features/tournament/routes/to.$id.index.ts"),
 		route("register", "features/tournament/routes/to.$id.register.tsx"),
@@ -114,20 +115,13 @@ export default [
 			],
 		),
 		route(
-			"brackets/subscribe",
-			"features/tournament-bracket/routes/to.$id.brackets.subscribe.ts",
-		),
-		route(
 			"matches/:mid",
 			"features/tournament-bracket/routes/to.$id.matches.$mid.tsx",
-		),
-		route(
-			"matches/:mid/subscribe",
-			"features/tournament-bracket/routes/to.$id.matches.$mid.subscribe.ts",
 		),
 	]),
 	route("luti", "features/tournament/routes/luti.ts"),
 
+	route("/org/new", "features/tournament-organization/routes/org.new.tsx"),
 	...prefix("/org/:slug", [
 		index("features/tournament-organization/routes/org.$slug.tsx"),
 		route("edit", "features/tournament-organization/routes/org.$slug.edit.tsx"),
@@ -194,6 +188,11 @@ export default [
 
 	route("/tiers", "features/sendouq/routes/tiers.tsx"),
 
+	route(
+		"/tier-list-maker",
+		"features/tier-list-maker/routes/tier-list-maker.tsx",
+	),
+
 	...prefix("/lfg", [
 		index("features/lfg/routes/lfg.tsx"),
 		route("new", "features/lfg/routes/lfg.new.tsx"),
@@ -213,6 +212,7 @@ export default [
 	]),
 
 	route("/admin", "features/admin/routes/admin.tsx"),
+	route("/api", "features/api/routes/api.tsx"),
 
 	...prefix("/a", [
 		index("features/articles/routes/a.tsx"),
@@ -270,6 +270,10 @@ export default [
 			"features/api-public/routes/tournament.$id.teams.ts",
 		),
 		route(
+			"/tournament/:id/players",
+			"features/api-public/routes/tournament.$id.players.ts",
+		),
+		route(
 			"/tournament/:id/casted",
 			"features/api-public/routes/tournament.$id.casted.ts",
 		),
@@ -286,6 +290,7 @@ export default [
 			"features/api-public/routes/tournament-match.$id.ts",
 		),
 		route("/org/:id", "features/api-public/routes/org.$id.ts"),
+		route("/team/:id", "features/api-public/routes/team.$id.ts"),
 	]),
 
 	route("/short/:customUrl", "features/user-page/routes/short.$customUrl.ts"),

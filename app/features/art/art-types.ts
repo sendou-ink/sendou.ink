@@ -5,8 +5,13 @@ export interface ListedArt {
 	createdAt: Tables["Art"]["createdAt"];
 	url: Tables["UserSubmittedImage"]["url"];
 	description?: Tables["Art"]["description"];
-	tags?: string[];
+	isShowcase: boolean;
+	tags?: Array<{
+		id: Tables["ArtTag"]["id"];
+		name: Tables["ArtTag"]["name"];
+	}>;
 	linkedUsers?: Array<{
+		id: Tables["User"]["id"];
 		discordId: Tables["User"]["discordId"];
 		username: Tables["User"]["username"];
 		customUrl: Tables["User"]["customUrl"];

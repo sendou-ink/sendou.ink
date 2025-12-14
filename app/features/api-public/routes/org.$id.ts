@@ -3,8 +3,8 @@ import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { cors } from "remix-utils/cors";
 import { z } from "zod/v4";
 import { db } from "~/db/sql";
+import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
-import { userSubmittedImage } from "~/utils/urls";
 import { id } from "~/utils/zod";
 import {
 	handleOptionsRequest,
@@ -36,7 +36,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 				"TournamentOrganization.description",
 				"TournamentOrganization.socials",
 				"TournamentOrganization.slug",
-				"UserSubmittedImage.url as logoUrl",
+				concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+					"logoUrl",
+				),
 				jsonArrayFrom(
 					eb
 						.selectFrom("TournamentOrganizationMember")
@@ -59,9 +61,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		id: organization.id,
 		name: organization.name,
 		description: organization.description,
-		logoUrl: organization.logoUrl
-			? userSubmittedImage(organization.logoUrl)
-			: null,
+		logoUrl: organization.logoUrl,
 		socialLinkUrls: organization.socials ?? [],
 		url: `https://sendou.ink/org/${organization.slug}`,
 		members: organization.members.map((member) => ({

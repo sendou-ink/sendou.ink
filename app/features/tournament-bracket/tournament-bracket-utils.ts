@@ -4,17 +4,21 @@ import type { TournamentRoundMaps } from "~/db/tables";
 import type { TournamentBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator";
-import {
-	seededRandom,
-	sourceTypes,
-} from "~/modules/tournament-map-list-generator";
+import { sourceTypes } from "~/modules/tournament-map-list-generator/constants";
+import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { logger } from "~/utils/logger";
+import { seededRandom } from "~/utils/random";
 import type { TournamentLoaderData } from "../tournament/loaders/to.$id.server";
 import type { FindMatchById } from "../tournament-bracket/queries/findMatchById.server";
 import type { Standing } from "./core/Bracket";
 import type { Tournament } from "./core/Tournament";
 import type { TournamentDataTeam } from "./core/Tournament.server";
+
+export const tournamentWebsocketRoom = (tournamentId: number) =>
+	`tournament__${tournamentId}`;
+
+export const tournamentMatchWebsocketRoom = (matchId: number) =>
+	`match__${matchId}`;
 
 const NUM_MAP = {
 	"1": ["1", "2", "4"],
@@ -36,11 +40,11 @@ const NUM_MAP = {
 export function resolveRoomPass(seed: number | string) {
 	let pass = "5";
 	for (let i = 0; i < 3; i++) {
-		const { shuffle } = seededRandom(`${seed}-${i}`);
+		const { seededShuffle } = seededRandom(`${seed}-${i}`);
 
 		const key = pass[i] as keyof typeof NUM_MAP;
 		const opts = NUM_MAP[key];
-		const next = shuffle(opts)[0];
+		const next = seededShuffle(opts)[0];
 		pass += next;
 	}
 
@@ -94,14 +98,6 @@ export function checkSourceIsValid({
 	if (match.opponentTwo?.id === asTeamId) return true;
 
 	return false;
-}
-
-export function bracketSubscriptionKey(tournamentId: number) {
-	return `BRACKET_CHANGED_${tournamentId}`;
-}
-
-export function matchSubscriptionKey(matchId: number) {
-	return `MATCH_CHANGED_${matchId}`;
 }
 
 export function fillWithNullTillPowerOfTwo<T>(arr: T[]) {
@@ -271,6 +267,29 @@ export function isSetOverByScore({
 
 	const matchOverAtXWins = Math.ceil(count / 2);
 	return scores[0] === matchOverAtXWins || scores[1] === matchOverAtXWins;
+}
+
+export function matchEndedEarly({
+	opponentOne,
+	opponentTwo,
+	count,
+	countType,
+}: {
+	opponentOne: { score?: number; result?: "win" | "loss" };
+	opponentTwo: { score?: number; result?: "win" | "loss" };
+	count: number;
+	countType: TournamentRoundMaps["type"];
+}) {
+	if (opponentOne.result !== "win" && opponentTwo.result !== "win") {
+		return false;
+	}
+
+	const scores: [number, number] = [
+		opponentOne.score ?? 0,
+		opponentTwo.score ?? 0,
+	];
+
+	return !isSetOverByScore({ scores, count, countType });
 }
 
 export function tournamentTeamToActiveRosterUserIds(

@@ -6,21 +6,19 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { UsersIcon } from "~/components/icons/Users";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
-import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import {
 	calendarEventPage,
 	tournamentBracketsPage,
-	tournamentLogoUrl,
 	tournamentTeamPage,
 	userPage,
-	userSubmittedImage,
 } from "~/utils/urls";
 import type { UserResultsLoaderData } from "../loaders/u.$identifier.results.server";
 import { ParticipationPill } from "./ParticipationPill";
 
 export type UserResultsTableProps = {
-	results: UserResultsLoaderData["results"];
+	results: UserResultsLoaderData["results"]["value"];
 	id: string;
 	hasHighlightCheckboxes?: boolean;
 };
@@ -33,7 +31,8 @@ export function UserResultsTable({
 	id,
 	hasHighlightCheckboxes,
 }: UserResultsTableProps) {
-	const { t, i18n } = useTranslation("user");
+	const { t } = useTranslation("user");
+	const { formatDate } = useTimeFormat();
 
 	const placementHeaderId = `${id}-th-placement`;
 
@@ -58,10 +57,6 @@ export function UserResultsTable({
 					const placementCellId = `${id}-${result.teamId}-placement`;
 					const nameCellId = `${id}-${result.teamId}-name`;
 					const checkboxLabelIds = `${nameCellId} ${placementHeaderId} ${placementCellId}`;
-
-					const logoUrl = result.logoUrl
-						? userSubmittedImage(result.logoUrl)
-						: HACKY_resolvePicture({ name: result.eventName });
 
 					return (
 						<tr key={result.teamId}>
@@ -89,14 +84,11 @@ export function UserResultsTable({
 								</div>
 							</td>
 							<td className="whitespace-nowrap">
-								{databaseTimestampToDate(result.startTime).toLocaleDateString(
-									i18n.language,
-									{
-										day: "numeric",
-										month: "short",
-										year: "numeric",
-									},
-								)}
+								{formatDate(databaseTimestampToDate(result.startTime), {
+									day: "numeric",
+									month: "short",
+									year: "numeric",
+								})}
 							</td>
 							<td id={nameCellId}>
 								<div className="stack horizontal xs items-center">
@@ -107,9 +99,9 @@ export function UserResultsTable({
 									) : null}
 									{result.tournamentId ? (
 										<>
-											{logoUrl !== tournamentLogoUrl("default") ? (
+											{result.logoUrl ? (
 												<img
-													src={logoUrl}
+													src={result.logoUrl}
 													alt=""
 													width={18}
 													height={18}
@@ -124,6 +116,9 @@ export function UserResultsTable({
 											>
 												{result.eventName}
 											</Link>
+											{result.div ? (
+												<span className="text-lighter">({result.div})</span>
+											) : null}
 										</>
 									) : null}
 								</div>

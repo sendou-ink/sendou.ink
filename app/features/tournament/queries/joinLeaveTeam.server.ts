@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import { deleteSub } from "~/features/tournament-subs";
+import { deleteSub } from "~/features/tournament-subs/queries/deleteSub.server";
 import invariant from "~/utils/invariant";
 import { checkOut } from "./checkOut.server";
 
@@ -26,7 +26,6 @@ const deleteMemberStm = sql.prepare(/*sql*/ `
     and "userId" = @userId
 `);
 
-// TODO: if captain leaves don't delete but give captain to someone else
 export const joinTeam = sql.transaction(
 	({
 		previousTeamId,

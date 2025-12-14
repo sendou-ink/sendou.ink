@@ -15,9 +15,8 @@ import { navIconUrl, newVodPage, VODS_PAGE } from "~/utils/urls";
 import { VodListing } from "../components/VodListing";
 import { loader } from "../loaders/vods.server";
 import { VODS_PAGE_BATCH_SIZE, videoMatchTypes } from "../vods-constants";
+import styles from "./vods.module.css";
 export { loader };
-
-import "../vods.css";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["vods"],
@@ -58,7 +57,7 @@ export default function VodsSearchPage() {
 			</div>
 			{data.vods.length > 0 ? (
 				<>
-					<div className="vods__listing__list">
+					<div className={styles.listingList}>
 						{data.vods.map((vod) => (
 							<VodListing key={vod.id} vod={vod} />
 						))}
@@ -145,7 +144,7 @@ function Filters({
 
 			<WeaponSelect
 				label={t("vods:forms.title.weapon")}
-				initialValue={weapon}
+				value={weapon ?? null}
 				onChange={(weaponId) => {
 					addToSearchParams("weapon", weaponId ?? "");
 				}}
@@ -156,7 +155,7 @@ function Filters({
 				<Label>{t("vods:forms.title.type")}</Label>
 				<select
 					name="type"
-					className="vods__type-select"
+					className={styles.typeSelect}
 					value={type ?? ""}
 					onChange={(e) => addToSearchParams("type", e.target.value)}
 				>

@@ -1,5 +1,5 @@
 import { sub } from "date-fns";
-import { sql } from "kysely";
+import { type NotNull, sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type {
@@ -8,6 +8,7 @@ import type {
 	UserMapModePreferences,
 } from "~/db/tables";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { shortNanoid } from "~/utils/id";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
 import { userIsBanned } from "../ban/core/banned.server";
@@ -20,14 +21,13 @@ export function mapModePreferencesByGroupId(groupId: number) {
 		.select(["User.id as userId", "User.mapModePreferences as preferences"])
 		.where("GroupMember.groupId", "=", groupId)
 		.where("User.mapModePreferences", "is not", null)
-		.execute() as Promise<
-		{ userId: number; preferences: UserMapModePreferences }[]
-	>;
+		.$narrowType<{ preferences: NotNull }>()
+		.execute();
 }
 
 // groups visible for longer to make development easier
 const SECONDS_TILL_STALE =
-	process.env.NODE_ENV === "development" ? 1_000_000 : 1_800;
+	process.env.NODE_ENV === "development" || IS_E2E_TEST_RUN ? 1_000_000 : 1_800;
 
 export async function findLookingGroups({
 	minGroupSize,
@@ -311,7 +311,7 @@ export async function usersThatTrusted(userId: number) {
 				.select([
 					...COMMON_USER_FIELDS,
 					"User.inGameName",
-					sql.raw<any>("null").as("teamId"),
+					sql<any>`null`.as("teamId"),
 				])
 				.where("TrustRelationship.trustReceiverUserId", "=", userId),
 		)
@@ -393,4 +393,17 @@ export async function setOldGroupsAsInactive() {
 			)
 			.executeTakeFirst();
 	});
+}
+
+export async function mapModePreferencesBySeasonNth(seasonNth: number) {
+	return db
+		.selectFrom("Skill")
+		.innerJoin("User", "User.id", "Skill.userId")
+		.select("User.mapModePreferences")
+		.where("Skill.season", "=", seasonNth)
+		.where("Skill.userId", "is not", null)
+		.where("User.mapModePreferences", "is not", null)
+		.groupBy("Skill.userId")
+		.$narrowType<{ mapModePreferences: UserMapModePreferences }>()
+		.execute();
 }

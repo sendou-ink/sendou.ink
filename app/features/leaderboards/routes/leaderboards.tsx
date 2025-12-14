@@ -19,7 +19,6 @@ import {
 	topSearchPlayerPage,
 	userPage,
 	userSeasonsPage,
-	userSubmittedImage,
 } from "~/utils/urls";
 import { InfoPopover } from "../../../components/InfoPopover";
 import { TopTenPlayer } from "../components/TopTenPlayer";
@@ -374,14 +373,12 @@ function TeamTable({
 								</div>
 								{entry.team?.avatarUrl ? (
 									<Link
-										// TODO: can be made better when $narrowNotNull lands
-										to={teamPage(entry.team.customUrl!)}
-										// TODO: can be made better when $narrowNotNull lands
-										title={entry.team.name!}
+										to={teamPage(entry.team.customUrl)}
+										title={entry.team.name}
 									>
 										<Avatar
 											size="xxs"
-											url={userSubmittedImage(entry.team.avatarUrl)}
+											url={entry.team.avatarUrl}
 											className="placements__avatar"
 										/>
 									</Link>

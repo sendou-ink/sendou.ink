@@ -1,8 +1,10 @@
 import type { SerializeFrom } from "@remix-run/node";
 import clsx from "clsx";
+import { useTranslation } from "react-i18next";
 import { LinkButton } from "~/components/elements/Button";
 import type { MonthYear } from "~/features/plus-voting/core";
 import { useIsMounted } from "~/hooks/useIsMounted";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate, nullPaddedDatesOfMonth } from "~/utils/dates";
 import type { loader } from "../loaders/org.$slug.server";
 
@@ -13,9 +15,6 @@ interface EventCalendarProps {
 	fallbackLogoUrl: string;
 }
 
-// TODO: i18n
-const DAY_HEADERS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
 export function EventCalendar({
 	month,
 	year,
@@ -24,12 +23,20 @@ export function EventCalendar({
 }: EventCalendarProps) {
 	const dates = nullPaddedDatesOfMonth({ month, year });
 	const isMounted = useIsMounted();
+	const { i18n } = useTranslation();
+
+	const dayHeaders = Array.from({ length: 7 }, (_, i) => {
+		const date = new Date(2024, 0, 1 + i);
+		return new Intl.DateTimeFormat(i18n.language, { weekday: "short" }).format(
+			date,
+		);
+	});
 
 	return (
 		<div className="org__calendar__container">
 			<MonthSelector month={month} year={year} />
 			<div className="org__calendar">
-				{DAY_HEADERS.map((day) => (
+				{dayHeaders.map((day) => (
 					<div key={day} className="org__calendar__day-header">
 						{day}
 					</div>
@@ -105,6 +112,7 @@ const monthYearSearchParams = ({ month, year }: MonthYear) =>
 	]).toString();
 function MonthSelector({ month, year }: { month: number; year: number }) {
 	const date = new Date(Date.UTC(year, month, 15));
+	const { formatDate } = useTimeFormat();
 
 	return (
 		<div className="org__calendar__month-selector">
@@ -123,7 +131,7 @@ function MonthSelector({ month, year }: { month: number; year: number }) {
 				{"<"}
 			</LinkButton>
 			<div>
-				{date.toLocaleDateString("en-US", {
+				{formatDate(date, {
 					year: "numeric",
 					month: "long",
 				})}

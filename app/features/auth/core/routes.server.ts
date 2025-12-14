@@ -2,6 +2,7 @@ import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { isbot } from "isbot";
 import { z } from "zod/v4";
+import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { logger } from "~/utils/logger";
@@ -74,7 +75,7 @@ export const logInAction: ActionFunction = async ({ request }) => {
 };
 
 export const impersonateAction: ActionFunction = async ({ request }) => {
-	if (process.env.NODE_ENV === "production") {
+	if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
 		const user = await requireUser(request);
 		requireRole(user, "ADMIN");
 	}

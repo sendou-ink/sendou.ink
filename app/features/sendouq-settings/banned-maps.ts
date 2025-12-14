@@ -1,9 +1,10 @@
-import { stagesObj as s } from "~/modules/in-game-lists/stage-ids";
+import { stagesObj as s, stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import { MapPool } from "../map-list-generator/core/map-pool";
 
 export const BANNED_MAPS: Record<ModeShort, StageId[]> = {
 	TW: [],
-	SZ: [s.STURGEON_SHIPYARD, s.EELTAIL_ALLEY],
+	SZ: [],
 	TC: [
 		s.WAHOO_WORLD,
 		s.FLOUNDER_HEIGHTS,
@@ -23,7 +24,7 @@ export const BANNED_MAPS: Record<ModeShort, StageId[]> = {
 		s.BRINEWATER_SPRINGS,
 		s.BLUEFIN_DEPOT,
 		s.STURGEON_SHIPYARD,
-		s.INKBLOT_ART_ACADEMY,
+		s.MAKOMART,
 		s.SHIPSHAPE_CARGO_CO,
 		s.MAHI_MAHI_RESORT,
 		s.MARLIN_AIRPORT,
@@ -44,3 +45,11 @@ export const BANNED_MAPS: Record<ModeShort, StageId[]> = {
 		s.LEMURIA_HUB,
 	],
 };
+
+export const SENDOUQ_MAP_POOL = new MapPool({
+	TW: stageIds.filter((stageId) => !BANNED_MAPS.TW.includes(stageId)),
+	SZ: stageIds.filter((stageId) => !BANNED_MAPS.SZ.includes(stageId)),
+	TC: stageIds.filter((stageId) => !BANNED_MAPS.TC.includes(stageId)),
+	RM: stageIds.filter((stageId) => !BANNED_MAPS.RM.includes(stageId)),
+	CB: stageIds.filter((stageId) => !BANNED_MAPS.CB.includes(stageId)),
+});

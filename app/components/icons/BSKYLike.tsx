@@ -7,7 +7,6 @@ export function BSKYLikeIcon({ className }: { className?: string }) {
 			height="18"
 			className={className}
 		>
-			<title>Like Icon</title>
 			<path
 				fill="currentColor"
 				fillRule="evenodd"

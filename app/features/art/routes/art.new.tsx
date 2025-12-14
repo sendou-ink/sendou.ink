@@ -17,11 +17,7 @@ import { useHasRole } from "~/modules/permissions/hooks";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import {
-	artPage,
-	conditionalUserSubmittedImage,
-	navIconUrl,
-} from "~/utils/urls";
+import { artPage, navIconUrl } from "~/utils/urls";
 import { metaTitle } from "../../../utils/remix";
 import { action } from "../actions/art.new.server";
 import { ART } from "../art-constants";
@@ -116,12 +112,7 @@ function ImageUpload({
 	const id = React.useId();
 
 	if (data.art) {
-		return (
-			<img
-				src={conditionalUserSubmittedImage(previewUrl(data.art.url))}
-				alt=""
-			/>
-		);
+		return <img src={previewUrl(data.art.url)} alt="" />;
 	}
 
 	return (
@@ -322,8 +313,11 @@ function LinkedUsers() {
 	const [users, setUsers] = React.useState<
 		{ inputId: string; userId?: number }[]
 	>(
-		(data.art?.linkedUsers ?? []).length > 0
-			? data.art!.linkedUsers.map((userId) => ({ userId, inputId: nanoid() }))
+		data.art?.linkedUsers && data.art.linkedUsers.length > 0
+			? data.art.linkedUsers.map((user) => ({
+					userId: user.id,
+					inputId: nanoid(),
+				}))
 			: [{ inputId: nanoid() }],
 	);
 
@@ -344,7 +338,7 @@ function LinkedUsers() {
 							name="user"
 							onChange={(newUser) => {
 								const newUsers = structuredClone(users);
-								newUsers[i] = { ...newUsers[i], userId: newUser.id };
+								newUsers[i] = { ...newUsers[i], userId: newUser?.id };
 
 								setUsers(newUsers);
 							}}

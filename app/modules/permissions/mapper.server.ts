@@ -12,6 +12,7 @@ export function userRoles(
 		| "isArtist"
 		| "isTournamentOrganizer"
 		| "isVideoAdder"
+		| "isApiAccesser"
 		| "patronTier"
 	>,
 ) {
@@ -49,8 +50,12 @@ export function userRoles(
 		result.push("TOURNAMENT_ADDER");
 	}
 
-	if (userDiscordIdIsAged(user)) {
+	if (userDiscordIdIsAged(user) || isSupporter(user)) {
 		result.push("CALENDAR_EVENT_ADDER");
+	}
+
+	if (user.isTournamentOrganizer || user.isApiAccesser || isSupporter(user)) {
+		result.push("API_ACCESSER");
 	}
 
 	return result;

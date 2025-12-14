@@ -461,7 +461,7 @@ function TeamRosterInputsCheckboxes({
 								</span>
 							</label>
 						</div>
-						<Link to={userPage(member)} target="_blank">
+						<Link to={userPage(member)}>
 							<Avatar size="xxs" user={member} />
 						</Link>
 					</div>
