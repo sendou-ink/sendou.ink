@@ -10,8 +10,8 @@ import {
 	userSkills,
 } from "~/features/mmr/tiered.server";
 import type * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
-import * as QRepository from "~/features/sendouq/QRepository.server";
-import type * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
+import type * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -23,16 +23,16 @@ import { getTierIndex } from "../q-utils.server";
 import { tierDifferenceToRangeOrExact } from "./groups.server";
 
 type DBGroupRow = Awaited<
-	ReturnType<typeof QRepository.findCurrentGroups>
+	ReturnType<typeof SQGroupRepository.findCurrentGroups>
 >[number];
 type DBPrivateNoteRow = Awaited<
 	ReturnType<typeof PrivateUserNoteRepository.byAuthorUserId>
 >[number];
 type DBRecentlyFinishedMatchRow = Awaited<
-	ReturnType<typeof QRepository.findRecentlyFinishedMatches>
+	ReturnType<typeof SQGroupRepository.findRecentlyFinishedMatches>
 >[number];
 type DBMatch = NonNullable<
-	Awaited<ReturnType<typeof QMatchRepository.findById>>
+	Awaited<ReturnType<typeof SQMatchRepository.findById>>
 >;
 
 export type SQUncensoredGroup = SerializeFrom<
@@ -531,8 +531,8 @@ class SendouQClass {
 	}
 }
 
-const groups = await QRepository.findCurrentGroups();
-const recentMatches = await QRepository.findRecentlyFinishedMatches();
+const groups = await SQGroupRepository.findCurrentGroups();
+const recentMatches = await SQGroupRepository.findRecentlyFinishedMatches();
 /** Global instance of the SendouQ manager. Manages all active groups and matchmaking state. */
 export let SendouQ = new SendouQClass(groups, recentMatches);
 
@@ -541,7 +541,7 @@ export let SendouQ = new SendouQClass(groups, recentMatches);
  * Should be called after any database changes that affect groups or matches.
  */
 export async function refreshSendouQInstance() {
-	const groups = await QRepository.findCurrentGroups();
-	const recentMatches = await QRepository.findRecentlyFinishedMatches();
+	const groups = await SQGroupRepository.findCurrentGroups();
+	const recentMatches = await SQGroupRepository.findRecentlyFinishedMatches();
 	SendouQ = new SendouQClass(groups, recentMatches);
 }

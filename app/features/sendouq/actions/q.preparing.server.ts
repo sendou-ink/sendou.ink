@@ -3,7 +3,7 @@ import { redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { notify } from "~/features/notifications/core/notify.server";
-import * as QRepository from "~/features/sendouq/QRepository.server";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
@@ -32,29 +32,29 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	switch (data._action) {
 		case "JOIN_QUEUE": {
-			await QRepository.setPreparingGroupAsActive(ownGroup.id);
+			await SQGroupRepository.setPreparingGroupAsActive(ownGroup.id);
 
 			return redirect(SENDOUQ_LOOKING_PAGE);
 		}
 		case "ADD_TRUSTED": {
-			const available = await QRepository.findActiveGroupMembers();
+			const available = await SQGroupRepository.findActiveGroupMembers();
 			if (available.some(({ userId }) => userId === data.id)) {
 				return { error: "taken" } as const;
 			}
 
 			errorToastIfFalsy(
-				(await QRepository.usersThatTrusted(user.id)).trusters.some(
+				(await SQGroupRepository.usersThatTrusted(user.id)).trusters.some(
 					(trusterUser) => trusterUser.id === data.id,
 				),
 				"Not trusted",
 			);
 
-			await QRepository.addMember(ownGroup.id, {
+			await SQGroupRepository.addMember(ownGroup.id, {
 				userId: data.id,
 				role: "MANAGER",
 			});
 
-			await QRepository.refreshTrust({
+			await SQGroupRepository.refreshTrust({
 				trustGiverUserId: data.id,
 				trustReceiverUserId: user.id,
 			});

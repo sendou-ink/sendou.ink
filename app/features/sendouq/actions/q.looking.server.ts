@@ -3,12 +3,12 @@ import { redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
-import * as QRepository from "~/features/sendouq/QRepository.server";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import {
 	createMatchMemento,
 	matchMapList,
 } from "~/features/sendouq-match/core/match.server";
-import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
+import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
@@ -39,7 +39,7 @@ export const action: ActionFunction = async ({ request }) => {
 		case "LIKE": {
 			if (!isGroupManager()) return null;
 
-			await QRepository.addLike({
+			await SQGroupRepository.addLike({
 				likerGroupId: currentGroup.id,
 				targetGroupId: data.targetGroupId,
 			});
@@ -60,7 +60,7 @@ export const action: ActionFunction = async ({ request }) => {
 		case "RECHALLENGE": {
 			if (!isGroupManager()) return null;
 
-			await QRepository.rechallenge({
+			await SQGroupRepository.rechallenge({
 				likerGroupId: currentGroup.id,
 				targetGroupId: data.targetGroupId,
 			});
@@ -80,7 +80,7 @@ export const action: ActionFunction = async ({ request }) => {
 		case "UNLIKE": {
 			if (!isGroupManager()) return null;
 
-			await QRepository.deleteLike({
+			await SQGroupRepository.deleteLike({
 				likerGroupId: currentGroup.id,
 				targetGroupId: data.targetGroupId,
 			});
@@ -90,7 +90,9 @@ export const action: ActionFunction = async ({ request }) => {
 		case "GROUP_UP": {
 			if (!isGroupManager()) return null;
 
-			const allLikes = await QRepository.allLikesByGroupId(data.targetGroupId);
+			const allLikes = await SQGroupRepository.allLikesByGroupId(
+				data.targetGroupId,
+			);
 			if (!allLikes.given.some((like) => like.groupId === currentGroup.id)) {
 				return null;
 			}
@@ -108,7 +110,7 @@ export const action: ActionFunction = async ({ request }) => {
 			const otherGroup =
 				ourGroup.id === survivingGroupId ? theirGroup : ourGroup;
 
-			await QRepository.morphGroups({
+			await SQGroupRepository.morphGroups({
 				survivingGroupId,
 				otherGroupId: otherGroup.id,
 			});
@@ -140,11 +142,10 @@ export const action: ActionFunction = async ({ request }) => {
 			const theirGroup = SendouQ.findUncensoredGroupById(data.targetGroupId);
 			if (!ourGroup || !theirGroup) return null;
 
-			const ourGroupPreferences = await QRepository.mapModePreferencesByGroupId(
-				ourGroup.id,
-			);
+			const ourGroupPreferences =
+				await SQGroupRepository.mapModePreferencesByGroupId(ourGroup.id);
 			const theirGroupPreferences =
-				await QRepository.mapModePreferencesByGroupId(theirGroup.id);
+				await SQGroupRepository.mapModePreferencesByGroupId(theirGroup.id);
 			const mapList = await matchMapList(
 				{
 					id: ourGroup.id,
@@ -157,7 +158,7 @@ export const action: ActionFunction = async ({ request }) => {
 				},
 			);
 
-			const createdMatch = await QMatchRepository.create({
+			const createdMatch = await SQMatchRepository.create({
 				alphaGroupId: ourGroup.id,
 				bravoGroupId: theirGroup.id,
 				mapList,
@@ -204,7 +205,7 @@ export const action: ActionFunction = async ({ request }) => {
 		case "GIVE_MANAGER": {
 			validateIsGroupOwner();
 
-			await QRepository.updateMemberRole({
+			await SQGroupRepository.updateMemberRole({
 				groupId: currentGroup.id,
 				userId: data.userId,
 				role: "MANAGER",
@@ -217,7 +218,7 @@ export const action: ActionFunction = async ({ request }) => {
 		case "REMOVE_MANAGER": {
 			validateIsGroupOwner();
 
-			await QRepository.updateMemberRole({
+			await SQGroupRepository.updateMemberRole({
 				groupId: currentGroup.id,
 				userId: data.userId,
 				role: "REGULAR",
@@ -228,7 +229,7 @@ export const action: ActionFunction = async ({ request }) => {
 			break;
 		}
 		case "LEAVE_GROUP": {
-			await QRepository.leaveGroup(user.id);
+			await SQGroupRepository.leaveGroup(user.id);
 
 			await refreshSendouQInstance();
 
@@ -249,21 +250,21 @@ export const action: ActionFunction = async ({ request }) => {
 			validateIsGroupOwner();
 			errorToastIfFalsy(data.userId !== user.id, "Can't kick yourself");
 
-			await QRepository.leaveGroup(data.userId);
+			await SQGroupRepository.leaveGroup(data.userId);
 
 			await refreshSendouQInstance();
 
 			break;
 		}
 		case "REFRESH_GROUP": {
-			await QRepository.refreshGroup(currentGroup.id);
+			await SQGroupRepository.refreshGroup(currentGroup.id);
 
 			await refreshSendouQInstance();
 
 			break;
 		}
 		case "UPDATE_NOTE": {
-			await QRepository.updateMemberNote({
+			await SQGroupRepository.updateMemberNote({
 				groupId: currentGroup.id,
 				userId: user.id,
 				value: data.value,

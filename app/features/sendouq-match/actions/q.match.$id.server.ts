@@ -9,8 +9,8 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
-import * as QRepository from "~/features/sendouq/QRepository.server";
-import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
+import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -74,7 +74,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			};
 
 			const unmappedMatch = notFoundIfFalsy(
-				await QMatchRepository.findById(matchId),
+				await SQMatchRepository.findById(matchId),
 			);
 			const match = SendouQ.mapMatch(unmappedMatch, user);
 			if (match.isLocked) {
@@ -244,7 +244,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			const season = Seasons.current();
 			errorToastIfFalsy(season, "Season is not active");
 
-			const match = notFoundIfFalsy(await QMatchRepository.findById(matchId));
+			const match = notFoundIfFalsy(await SQMatchRepository.findById(matchId));
 			const previousGroup =
 				match.groupAlpha.id === data.previousGroupId
 					? match.groupAlpha
@@ -267,7 +267,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				}
 			}
 
-			await QRepository.createGroupFromPrevious({
+			await SQGroupRepository.createGroupFromPrevious({
 				previousGroupId: data.previousGroupId,
 				members: previousGroup.members.map((m) => ({ id: m.id, role: m.role })),
 			});

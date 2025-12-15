@@ -3,8 +3,8 @@ import { getUser } from "~/features/auth/core/user.server";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import { reportedWeaponsToArrayOfArrays } from "~/features/sendouq-match/core/reported-weapons.server";
-import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
 import { reportedWeaponsByMatchId } from "~/features/sendouq-match/queries/reportedWeaponsByMatchId.server";
+import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { qMatchPageParamsSchema } from "../q-match-schemas";
 
@@ -15,7 +15,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		schema: qMatchPageParamsSchema,
 	}).id;
 	const matchUnmapped = notFoundIfFalsy(
-		await QMatchRepository.findById(matchId),
+		await SQMatchRepository.findById(matchId),
 	);
 
 	const matchUsers = [

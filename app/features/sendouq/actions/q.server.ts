@@ -4,7 +4,7 @@ import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import * as QRepository from "~/features/sendouq/QRepository.server";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { giveTrust } from "~/features/tournament/queries/giveTrust.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
@@ -31,7 +31,7 @@ export const action: ActionFunction = async ({ request }) => {
 		case "JOIN_QUEUE": {
 			await validateCanJoinQ(user);
 
-			await QRepository.createGroup({
+			await SQGroupRepository.createGroup({
 				status: data.direct === "true" ? "ACTIVE" : "PREPARING",
 				userId: user.id,
 			});
@@ -57,7 +57,7 @@ export const action: ActionFunction = async ({ request }) => {
 				"Invite code doesn't match any active team",
 			);
 
-			await QRepository.addMember(groupInvitedTo.id, {
+			await SQGroupRepository.addMember(groupInvitedTo.id, {
 				userId: user.id,
 				role: "MANAGER",
 			});

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { db } from "~/db/sql";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import { dbInsertUsers, dbReset } from "~/utils/Test";
-import * as QRepository from "../QRepository.server";
+import * as SQGroupRepository from "../SQGroupRepository.server";
 import { refreshSendouQInstance, SendouQ } from "./SendouQ.server";
 
 const { mockSeasonCurrentOrPrevious } = vi.hoisted(() => ({
@@ -26,7 +26,7 @@ const createGroup = async (
 ) => {
 	const { status = "ACTIVE", inviteCode } = options;
 
-	const groupResult = await QRepository.createGroup({
+	const groupResult = await SQGroupRepository.createGroup({
 		status,
 		userId: userIds[0],
 	});
@@ -40,7 +40,7 @@ const createGroup = async (
 	}
 
 	for (let i = 1; i < userIds.length; i++) {
-		await QRepository.addMember(groupResult.id, {
+		await SQGroupRepository.addMember(groupResult.id, {
 			userId: userIds[i],
 			role: "REGULAR",
 		});

@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
-import * as QRepository from "~/features/sendouq/QRepository.server";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
 import { groupExpiryStatus } from "../core/groups";
 import { SendouQ } from "../core/SendouQ.server";
@@ -36,7 +36,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				: groups,
 		ownGroup,
 		likes: ownGroup
-			? await QRepository.allLikesByGroupId(ownGroup.id)
+			? await SQGroupRepository.allLikesByGroupId(ownGroup.id)
 			: {
 					given: [],
 					received: [],
