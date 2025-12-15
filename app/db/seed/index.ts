@@ -21,7 +21,7 @@ import {
 } from "~/features/plus-voting/core";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
-import { SQManager } from "~/features/sendouq/core/SQManager.server";
+import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import { calculateMatchSkills } from "~/features/sendouq-match/core/skills.server";
 import {
@@ -2255,7 +2255,7 @@ async function playedMatches() {
 			["ALPHA", "BRAVO", "ALPHA", "BRAVO", "BRAVO", "BRAVO"],
 		]) as ("ALPHA" | "BRAVO")[];
 		const winner = winnersArrayToWinner(winners);
-		const finishedMatch = SQManager.mapMatch(
+		const finishedMatch = SendouQ.mapMatch(
 			(await QMatchRepository.findById(match.id))!,
 		);
 

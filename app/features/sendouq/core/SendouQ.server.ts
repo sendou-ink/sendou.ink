@@ -36,15 +36,15 @@ type DBMatch = NonNullable<
 >;
 
 export type SQUncensoredGroup = SerializeFrom<
-	(typeof SQManagerClass.prototype.groups)[number]
+	(typeof SendouQClass.prototype.groups)[number]
 >;
 export type SQGroup = SerializeFrom<
-	ReturnType<SQManagerClass["lookingGroups"]>[number]
+	ReturnType<SendouQClass["lookingGroups"]>[number]
 >;
 export type SQOwnGroup = SerializeFrom<
-	NonNullable<ReturnType<SQManagerClass["findOwnGroup"]>>
+	NonNullable<ReturnType<SendouQClass["findOwnGroup"]>>
 >;
-export type SQMatch = SerializeFrom<ReturnType<SQManagerClass["mapMatch"]>>;
+export type SQMatch = SerializeFrom<ReturnType<SendouQClass["mapMatch"]>>;
 export type SQMatchGroup = SQMatch["groupAlpha"] | SQMatch["groupBravo"];
 export type SQGroupMember = NonNullable<SQGroup["members"]>[number];
 export type SQMatchGroupMember = SQMatchGroup["members"][number];
@@ -53,7 +53,7 @@ const FALLBACK_TIER = { isPlus: false, name: "IRON" } as const;
 const SECONDS_TILL_STALE =
 	process.env.NODE_ENV === "development" || IS_E2E_TEST_RUN ? 1_000_000 : 1_800;
 
-class SQManagerClass {
+class SendouQClass {
 	groups;
 	#recentMatches;
 	#isAccurateTiers;
@@ -534,15 +534,14 @@ class SQManagerClass {
 const groups = await QRepository.findCurrentGroups();
 const recentMatches = await QRepository.findRecentlyFinishedMatches();
 /** Global instance of the SendouQ manager. Manages all active groups and matchmaking state. */
-export let SQManager = new SQManagerClass(groups, recentMatches);
-// xxx: is manager the best name?
+export let SendouQ = new SendouQClass(groups, recentMatches);
 
 /**
- * Refreshes the global SQManager instance with the latest data from the database.
+ * Refreshes the global SendouQ instance with the latest data from the database.
  * Should be called after any database changes that affect groups or matches.
  */
-export async function refreshSQManagerInstance() {
+export async function refreshSendouQInstance() {
 	const groups = await QRepository.findCurrentGroups();
 	const recentMatches = await QRepository.findRecentlyFinishedMatches();
-	SQManager = new SQManagerClass(groups, recentMatches);
+	SendouQ = new SendouQClass(groups, recentMatches);
 }

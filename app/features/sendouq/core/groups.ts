@@ -1,6 +1,6 @@
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { GroupExpiryStatus } from "../q-types";
-import type { SQGroup } from "./SQManager.server";
+import type { SQGroup } from "./SendouQ.server";
 
 // logic is that team who is bigger decides the settings
 // but if groups are the same size then the one who liked

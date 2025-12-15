@@ -1,6 +1,6 @@
 import type { Tables } from "~/db/tables";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import type { SQMatch } from "~/features/sendouq/core/SQManager.server";
+import type { SQMatch } from "~/features/sendouq/core/SendouQ.server";
 import invariant from "~/utils/invariant";
 import { winnersArrayToWinner } from "../q-match-utils";
 

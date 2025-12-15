@@ -3,7 +3,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
 import { groupExpiryStatus } from "../core/groups";
-import { SQManager } from "../core/SQManager.server";
+import { SendouQ } from "../core/SendouQ.server";
 import * as PrivateUserNoteRepository from "../PrivateUserNoteRepository.server";
 import { sqRedirectIfNeeded } from "../q-utils.server";
 
@@ -16,13 +16,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	const privateNotes = await PrivateUserNoteRepository.byAuthorUserId(
 		user.id,
-		SQManager.usersInQueue,
+		SendouQ.usersInQueue,
 	);
 
 	const groups = isPreview
-		? SQManager.previewGroups(privateNotes)
-		: SQManager.lookingGroups(user.id, privateNotes);
-	const ownGroup = SQManager.findOwnGroup(user.id);
+		? SendouQ.previewGroups(privateNotes)
+		: SendouQ.lookingGroups(user.id, privateNotes);
+	const ownGroup = SendouQ.findOwnGroup(user.id);
 
 	sqRedirectIfNeeded({
 		ownGroup,

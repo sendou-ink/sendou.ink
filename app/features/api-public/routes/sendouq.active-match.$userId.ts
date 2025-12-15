@@ -1,7 +1,7 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { cors } from "remix-utils/cors";
 import { z } from "zod/v4";
-import { SQManager } from "~/features/sendouq/core/SQManager.server";
+import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import { parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import {
@@ -23,7 +23,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		schema: paramsSchema,
 	});
 
-	const current = SQManager.findOwnGroup(userId);
+	const current = SendouQ.findOwnGroup(userId);
 
 	const result: GetUsersActiveSendouqMatchResponse = {
 		matchId: current?.matchId ?? null,

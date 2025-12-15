@@ -6,7 +6,7 @@ import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { Tables } from "~/db/tables";
-import type { SQMatchGroup } from "~/features/sendouq/core/SQManager.server";
+import type { SQMatchGroup } from "~/features/sendouq/core/SendouQ.server";
 import { SENDOUQ } from "~/features/sendouq/q-constants";
 import { preferenceEmojiUrl } from "~/utils/urls";
 

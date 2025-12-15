@@ -1,7 +1,7 @@
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { accountCreatedInTheLastSixMonths } from "~/utils/users";
-import type { SQGroup } from "./core/SQManager.server";
+import type { SQGroup } from "./core/SendouQ.server";
 
 export function userCanJoinQueueAt(
 	user: { id: number; discordId: string },

@@ -3,7 +3,7 @@ import { db } from "~/db/sql";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import { dbInsertUsers, dbReset } from "~/utils/Test";
 import * as QRepository from "../QRepository.server";
-import { refreshSQManagerInstance, SQManager } from "./SQManager.server";
+import { refreshSendouQInstance, SendouQ } from "./SendouQ.server";
 
 const { mockSeasonCurrentOrPrevious } = vi.hoisted(() => ({
 	mockSeasonCurrentOrPrevious: vi.fn(() => ({
@@ -94,7 +94,7 @@ const insertSkill = async (userId: number, ordinal: number, season = 1) => {
 		.execute();
 };
 
-describe("SQManager", () => {
+describe("SendouQ", () => {
 	describe("currentViewByUserId", () => {
 		beforeEach(async () => {
 			await dbInsertUsers(4);
@@ -105,18 +105,18 @@ describe("SQManager", () => {
 		});
 
 		test("returns 'default' when user not in any group", async () => {
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
-			const view = SQManager.currentViewByUserId(1);
+			const view = SendouQ.currentViewByUserId(1);
 
 			expect(view).toBe("default");
 		});
 
 		test("returns 'preparing' when user in PREPARING group", async () => {
 			await createGroup([1], { status: "PREPARING" });
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
-			const view = SQManager.currentViewByUserId(1);
+			const view = SendouQ.currentViewByUserId(1);
 
 			expect(view).toBe("preparing");
 		});
@@ -127,18 +127,18 @@ describe("SQManager", () => {
 
 			await createMatch(groupId1, groupId2);
 
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
-			const view = SQManager.currentViewByUserId(1);
+			const view = SendouQ.currentViewByUserId(1);
 
 			expect(view).toBe("match");
 		});
 
 		test("returns 'looking' when user in ACTIVE group without matchId", async () => {
 			await createGroup([1], { status: "ACTIVE" });
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
-			const view = SQManager.currentViewByUserId(1);
+			const view = SendouQ.currentViewByUserId(1);
 
 			expect(view).toBe("looking");
 		});
@@ -155,9 +155,9 @@ describe("SQManager", () => {
 
 		test("returns group when user is a member", async () => {
 			await createGroup([1, 2, 3]);
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
-			const group = SQManager.findOwnGroup(1);
+			const group = SendouQ.findOwnGroup(1);
 
 			expect(group).toBeDefined();
 			expect(group?.members.some((m) => m.id === 1)).toBe(true);
@@ -165,18 +165,18 @@ describe("SQManager", () => {
 
 		test("returns undefined when user not in any group", async () => {
 			await createGroup([1, 2, 3]);
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
-			const group = SQManager.findOwnGroup(4);
+			const group = SendouQ.findOwnGroup(4);
 
 			expect(group).toBeUndefined();
 		});
 
 		test("returns group with correct role when user is OWNER", async () => {
 			await createGroup([1, 2]);
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
-			const group = SQManager.findOwnGroup(1);
+			const group = SendouQ.findOwnGroup(1);
 
 			expect(group).toBeDefined();
 			const member = group?.members.find((m) => m.id === 1);
@@ -185,9 +185,9 @@ describe("SQManager", () => {
 
 		test("returns group with correct role when user is REGULAR member", async () => {
 			await createGroup([1, 2]);
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
-			const group = SQManager.findOwnGroup(2);
+			const group = SendouQ.findOwnGroup(2);
 
 			expect(group).toBeDefined();
 			const member = group?.members.find((m) => m.id === 2);
@@ -198,9 +198,9 @@ describe("SQManager", () => {
 			await createGroup([1, 2]);
 			await createGroup([3, 4]);
 			await createGroup([5, 6]);
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
-			const group = SQManager.findOwnGroup(5);
+			const group = SendouQ.findOwnGroup(5);
 
 			expect(group).toBeDefined();
 			expect(group?.members.some((m) => m.id === 5)).toBe(true);
@@ -219,9 +219,9 @@ describe("SQManager", () => {
 
 		test("returns group when invite code is valid", async () => {
 			await createGroup([1], { inviteCode: "ABC123" });
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
-			const group = SQManager.findGroupByInviteCode("ABC123");
+			const group = SendouQ.findGroupByInviteCode("ABC123");
 
 			expect(group).toBeDefined();
 			expect(group?.inviteCode).toBe("ABC123");
@@ -229,9 +229,9 @@ describe("SQManager", () => {
 
 		test("returns undefined when invite code is invalid", async () => {
 			await createGroup([1], { inviteCode: "ABC123" });
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
-			const group = SQManager.findGroupByInviteCode("INVALID");
+			const group = SendouQ.findGroupByInviteCode("INVALID");
 
 			expect(group).toBeUndefined();
 		});
@@ -240,9 +240,9 @@ describe("SQManager", () => {
 			await createGroup([1], { inviteCode: "CODE1" });
 			await createGroup([2], { inviteCode: "CODE2" });
 			await createGroup([3], { inviteCode: "CODE3" });
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
-			const group = SQManager.findGroupByInviteCode("CODE2");
+			const group = SendouQ.findGroupByInviteCode("CODE2");
 
 			expect(group).toBeDefined();
 			expect(group?.members[0].id).toBe(2);
@@ -259,20 +259,20 @@ describe("SQManager", () => {
 		});
 
 		test("returns empty array when no groups exist", async () => {
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
 			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-			const groups = SQManager.previewGroups(notes);
+			const groups = SendouQ.previewGroups(notes);
 
 			expect(groups).toEqual([]);
 		});
 
 		test("censors members for full groups", async () => {
 			await createGroup([1, 2, 3, 4]);
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
 			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-			const groups = SQManager.previewGroups(notes);
+			const groups = SendouQ.previewGroups(notes);
 
 			expect(groups).toHaveLength(1);
 			expect(groups[0].members).toBeUndefined();
@@ -280,10 +280,10 @@ describe("SQManager", () => {
 
 		test("shows members for partial groups", async () => {
 			await createGroup([1, 2]);
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
 			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-			const groups = SQManager.previewGroups(notes);
+			const groups = SendouQ.previewGroups(notes);
 
 			expect(groups).toHaveLength(1);
 			expect(groups[0].members).toBeDefined();
@@ -293,10 +293,10 @@ describe("SQManager", () => {
 		test("attaches private notes to members", async () => {
 			await createGroup([1, 2]);
 			await createPrivateNote(3, 2, "POSITIVE", "Great player");
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
 			const notes = await PrivateUserNoteRepository.byAuthorUserId(3);
-			const groups = SQManager.previewGroups(notes);
+			const groups = SendouQ.previewGroups(notes);
 
 			expect(groups).toHaveLength(1);
 			const member = groups[0].members?.find((m) => m.id === 2);
@@ -307,10 +307,10 @@ describe("SQManager", () => {
 		test("removes inviteCode and chatCode from all groups", async () => {
 			await createGroup([1, 2], { inviteCode: "CODE1" });
 			await createGroup([3, 4, 5, 6], { inviteCode: "CODE2" });
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
 			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-			const groups = SQManager.previewGroups(notes);
+			const groups = SendouQ.previewGroups(notes);
 
 			expect(groups).toHaveLength(2);
 			for (const group of groups) {
@@ -323,10 +323,10 @@ describe("SQManager", () => {
 			await createGroup([1, 2]);
 			await createGroup([3, 4, 5, 6]);
 			await createGroup([7, 8, 9]);
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
 			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-			const groups = SQManager.previewGroups(notes);
+			const groups = SendouQ.previewGroups(notes);
 
 			expect(groups).toHaveLength(3);
 
@@ -340,10 +340,10 @@ describe("SQManager", () => {
 		test("censors tier and sets tier range for full groups", async () => {
 			await createGroup([1, 2, 3, 4]);
 			await createGroup([5, 6]);
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
 			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-			const groups = SQManager.previewGroups(notes);
+			const groups = SendouQ.previewGroups(notes);
 
 			const fullGroup = groups.find((g) => g.members === undefined);
 			const partialGroup = groups.find((g) => g.members !== undefined);
@@ -371,10 +371,10 @@ describe("SQManager", () => {
 
 			test("returns empty array when user not in a group", async () => {
 				await createGroup([1, 2, 3, 4]);
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(5);
-				const groups = SQManager.lookingGroups(5, notes);
+				const groups = SendouQ.lookingGroups(5, notes);
 
 				expect(groups).toEqual([]);
 			});
@@ -389,10 +389,10 @@ describe("SQManager", () => {
 					.where("id", "=", group3)
 					.execute();
 				await createGroup([4], { status: "ACTIVE" });
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(1);
 				expect(groups[0].members![0].id).toBe(4);
@@ -405,10 +405,10 @@ describe("SQManager", () => {
 
 				await createMatch(1, 2);
 
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(1);
 				expect(groups[0].members![0].id).toBe(3);
@@ -417,10 +417,10 @@ describe("SQManager", () => {
 			test("excludes own group from results", async () => {
 				await createGroup([1, 2]);
 				await createGroup([3, 4]);
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(1);
 				expect(groups[0].members?.some((m) => m.id === 1)).toBe(false);
@@ -432,10 +432,10 @@ describe("SQManager", () => {
 				await createGroup([6, 7]);
 				await createGroup([8, 9, 10]);
 				await createGroup([11, 12, 13, 14]);
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(1);
 				expect(groups[0].members).toBeUndefined();
@@ -447,10 +447,10 @@ describe("SQManager", () => {
 				await createGroup([5, 6]);
 				await createGroup([7, 8, 9]);
 				await createGroup([10, 11, 12, 13]);
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(1);
 				expect(groups[0].members).toHaveLength(1);
@@ -463,10 +463,10 @@ describe("SQManager", () => {
 				await createGroup([4, 5]);
 				await createGroup([6, 7, 8]);
 				await createGroup([9, 10, 11, 12]);
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(2);
 				const groupSizes = groups.map((g) => g.members!.length);
@@ -480,10 +480,10 @@ describe("SQManager", () => {
 				await createGroup([3, 4]);
 				await createGroup([5, 6, 7]);
 				await createGroup([8, 9, 10, 11]);
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(3);
 				const groupSizes = groups.map((g) => g.members!.length);
@@ -518,10 +518,10 @@ describe("SQManager", () => {
 				await createGroup([5, 6, 7, 8]);
 				await createGroup([9, 10, 11, 12]);
 
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				const replayGroup = groups.find((g) => g.members === undefined);
 				expect(replayGroup?.isReplay).toBe(true);
@@ -542,10 +542,10 @@ describe("SQManager", () => {
 				await createGroup([1, 2, 3, 4]);
 				await createGroup([5, 6, 9, 10]);
 
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				for (const group of groups) {
 					expect(group.isReplay).toBe(false);
@@ -556,10 +556,10 @@ describe("SQManager", () => {
 				await createGroup([1]);
 				await createGroup([2]);
 				await createGroup([3]);
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				for (const group of groups) {
 					expect(group.isReplay).toBe(false);
@@ -581,10 +581,10 @@ describe("SQManager", () => {
 				await createGroup([1]);
 				await createGroup([5, 6, 7]);
 
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				const partialGroup = groups.find((g) =>
 					g.members?.some((m) => m.id === 5),
@@ -605,10 +605,10 @@ describe("SQManager", () => {
 			test("full groups have members undefined", async () => {
 				await createGroup([1, 2, 3, 4]);
 				await createGroup([5, 6, 7, 8]);
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				const fullGroup = groups.find((g) => g.members === undefined);
 				expect(fullGroup).toBeDefined();
@@ -617,10 +617,10 @@ describe("SQManager", () => {
 			test("partial groups have members visible", async () => {
 				await createGroup([1]);
 				await createGroup([2, 3]);
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				const partialGroup = groups.find((g) => g.members?.length === 2);
 				expect(partialGroup).toBeDefined();
@@ -631,10 +631,10 @@ describe("SQManager", () => {
 				await createGroup([1]);
 				await createGroup([2]);
 				await createGroup([3, 4, 5, 6]);
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				for (const group of groups) {
 					expect(group).not.toHaveProperty("inviteCode");
@@ -663,10 +663,10 @@ describe("SQManager", () => {
 
 				await createPrivateNote(1, 5, "POSITIVE");
 
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups[0].members![0].id).toBe(5);
 			});
@@ -682,10 +682,10 @@ describe("SQManager", () => {
 
 				await createPrivateNote(1, 5, "NEGATIVE");
 
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups[groups.length - 1].members![0].id).toBe(5);
 			});
@@ -702,10 +702,10 @@ describe("SQManager", () => {
 				await createPrivateNote(1, 6, "POSITIVE");
 				await createPrivateNote(1, 7, "NEGATIVE");
 
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups[groups.length - 1].members?.some((m) => m.id === 6)).toBe(
 					true,
@@ -733,10 +733,10 @@ describe("SQManager", () => {
 
 				await createPrivateNote(1, 4, "POSITIVE");
 
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups[0].members![0].id).toBe(4);
 			});
@@ -752,10 +752,10 @@ describe("SQManager", () => {
 				await createGroup([3]);
 				await createGroup([4]);
 
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups[0].members![0].id).toBe(2);
 			});
@@ -776,10 +776,10 @@ describe("SQManager", () => {
 				const closerGroup = await createGroup([5, 6, 7, 8]);
 				await createGroup([9, 10]);
 
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups.length).toBeGreaterThan(0);
 				expect(groups[0].id).toBe(closerGroup);
@@ -808,10 +808,10 @@ describe("SQManager", () => {
 					.execute();
 
 				await createGroup([1]);
-				await refreshSQManagerInstance();
+				await refreshSendouQInstance();
 
 				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-				const groups = SQManager.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1, notes);
 
 				expect(groups[0].members![0].id).toBe(3);
 				expect(groups[1].members![0].id).toBe(2);

@@ -42,7 +42,7 @@ import type {
 	SQMatchGroup,
 	SQMatchGroupMember,
 	SQOwnGroup,
-} from "../core/SQManager.server";
+} from "../core/SendouQ.server";
 import { FULL_GROUP_SIZE, SENDOUQ } from "../q-constants";
 import { resolveFutureMatchModes } from "../q-utils";
 

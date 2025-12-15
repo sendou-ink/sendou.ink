@@ -15,7 +15,7 @@ import {
 	SENDOUQ_PREPARING_PAGE,
 	SUSPENDED_PAGE,
 } from "~/utils/urls";
-import { refreshSQManagerInstance, SQManager } from "../core/SQManager.server";
+import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import { JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
 import { frontPageSchema } from "../q-schemas.server";
 import { userCanJoinQueueAt } from "../q-utils";
@@ -36,7 +36,7 @@ export const action: ActionFunction = async ({ request }) => {
 				userId: user.id,
 			});
 
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
 			return redirect(
 				data.direct === "true" ? SENDOUQ_LOOKING_PAGE : SENDOUQ_PREPARING_PAGE,
@@ -51,7 +51,7 @@ export const action: ActionFunction = async ({ request }) => {
 			);
 
 			const groupInvitedTo =
-				code && user ? SQManager.findGroupByInviteCode(code) : undefined;
+				code && user ? SendouQ.findGroupByInviteCode(code) : undefined;
 			errorToastIfFalsy(
 				groupInvitedTo,
 				"Invite code doesn't match any active team",
@@ -72,7 +72,7 @@ export const action: ActionFunction = async ({ request }) => {
 				});
 			}
 
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
 			return redirect(
 				groupInvitedTo.status === "PREPARING"

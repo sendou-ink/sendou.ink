@@ -1,4 +1,4 @@
-import type { SQMatchGroup } from "~/features/sendouq/core/SQManager.server";
+import type { SQMatchGroup } from "~/features/sendouq/core/SendouQ.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { MatchById } from "../queries/findMatchById.server";
 import type { reportedWeaponsByMatchId } from "../queries/reportedWeaponsByMatchId.server";

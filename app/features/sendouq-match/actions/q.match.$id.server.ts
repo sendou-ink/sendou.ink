@@ -7,7 +7,7 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import type { ChatMessage } from "~/features/chat/chat-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
-import { SQManager } from "~/features/sendouq/core/SQManager.server";
+import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
@@ -76,7 +76,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			const unmappedMatch = notFoundIfFalsy(
 				await QMatchRepository.findById(matchId),
 			);
-			const match = SQManager.mapMatch(unmappedMatch, user);
+			const match = SendouQ.mapMatch(unmappedMatch, user);
 			if (match.isLocked) {
 				reportWeapons();
 				return null;
@@ -257,7 +257,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			);
 
 			for (const member of previousGroup.members) {
-				const currentGroup = SQManager.findOwnGroup(member.id);
+				const currentGroup = SendouQ.findOwnGroup(member.id);
 				errorToastIfFalsy(!currentGroup, "Member is already in a group");
 				if (member.id === user.id) {
 					errorToastIfFalsy(

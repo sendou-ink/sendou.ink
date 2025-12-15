@@ -7,7 +7,7 @@ import {
 	SENDOUQ_PREPARING_PAGE,
 	sendouQMatchPage,
 } from "~/utils/urls";
-import type { SQOwnGroup } from "./core/SQManager.server";
+import type { SQOwnGroup } from "./core/SendouQ.server";
 
 function groupRedirectLocation(group?: SQOwnGroup) {
 	if (group?.status === "PREPARING") return SENDOUQ_PREPARING_PAGE;

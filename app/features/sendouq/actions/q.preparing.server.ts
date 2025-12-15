@@ -7,7 +7,7 @@ import * as QRepository from "~/features/sendouq/QRepository.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
-import { SQManager } from "../core/SQManager.server";
+import { SendouQ } from "../core/SendouQ.server";
 import { preparingSchema } from "../q-schemas.server";
 
 export type SendouQPreparingAction = typeof action;
@@ -19,7 +19,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		schema: preparingSchema,
 	});
 
-	const ownGroup = SQManager.findOwnGroup(user.id);
+	const ownGroup = SendouQ.findOwnGroup(user.id);
 	errorToastIfFalsy(ownGroup, "No group found");
 
 	// no perms, possibly just lost them so no more graceful degradation

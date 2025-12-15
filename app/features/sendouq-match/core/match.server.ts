@@ -8,7 +8,7 @@ import { getDefaultMapWeights } from "~/features/sendouq/core/default-maps.serve
 import type {
 	SQMatch,
 	SQUncensoredGroup,
-} from "~/features/sendouq/core/SQManager.server";
+} from "~/features/sendouq/core/SendouQ.server";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import {
 	BANNED_MAPS,

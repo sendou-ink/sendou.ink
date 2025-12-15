@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { createContext, useContext } from "react";
-import type { SQOwnGroup } from "../core/SQManager.server";
+import type { SQOwnGroup } from "../core/SendouQ.server";
 
 type GroupContextType = {
 	ownGroup?: SQOwnGroup;

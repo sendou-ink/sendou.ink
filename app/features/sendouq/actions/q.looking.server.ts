@@ -13,11 +13,9 @@ import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
 import { groupAfterMorph } from "../core/groups";
-import { refreshSQManagerInstance, SQManager } from "../core/SQManager.server";
+import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import * as PrivateUserNoteRepository from "../PrivateUserNoteRepository.server";
 import { lookingSchema } from "../q-schemas.server";
-
-// xxx: refactor to action -> check DB style
 
 // this function doesn't throw normally because we are assuming
 // if there is a validation error the user saw stale data
@@ -28,7 +26,7 @@ export const action: ActionFunction = async ({ request }) => {
 		request,
 		schema: lookingSchema,
 	});
-	const currentGroup = SQManager.findOwnGroup(user.id);
+	const currentGroup = SendouQ.findOwnGroup(user.id);
 	if (!currentGroup) return null;
 
 	// this throws because there should normally be no way user loses ownership by the action of some other user
@@ -46,7 +44,7 @@ export const action: ActionFunction = async ({ request }) => {
 				targetGroupId: data.targetGroupId,
 			});
 
-			const targetChatCode = SQManager.findUncensoredGroupById(
+			const targetChatCode = SendouQ.findUncensoredGroupById(
 				data.targetGroupId,
 			)?.chatCode;
 			if (targetChatCode) {
@@ -67,7 +65,7 @@ export const action: ActionFunction = async ({ request }) => {
 				targetGroupId: data.targetGroupId,
 			});
 
-			const targetChatCode = SQManager.findUncensoredGroupById(
+			const targetChatCode = SendouQ.findUncensoredGroupById(
 				data.targetGroupId,
 			)?.chatCode;
 			if (targetChatCode) {
@@ -97,8 +95,8 @@ export const action: ActionFunction = async ({ request }) => {
 				return null;
 			}
 
-			const ourGroup = SQManager.findOwnGroup(user.id);
-			const theirGroup = SQManager.findUncensoredGroupById(data.targetGroupId);
+			const ourGroup = SendouQ.findOwnGroup(user.id);
+			const theirGroup = SendouQ.findUncensoredGroupById(data.targetGroupId);
 			if (!ourGroup || !theirGroup) return null;
 
 			const { id: survivingGroupId } = groupAfterMorph({
@@ -115,7 +113,7 @@ export const action: ActionFunction = async ({ request }) => {
 				otherGroupId: otherGroup.id,
 			});
 
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
 			if (ourGroup.chatCode && theirGroup.chatCode) {
 				ChatSystemMessage.send([
@@ -138,8 +136,8 @@ export const action: ActionFunction = async ({ request }) => {
 		case "MATCH_UP": {
 			if (!isGroupManager()) return null;
 
-			const ourGroup = SQManager.findOwnGroup(user.id);
-			const theirGroup = SQManager.findUncensoredGroupById(data.targetGroupId);
+			const ourGroup = SendouQ.findOwnGroup(user.id);
+			const theirGroup = SendouQ.findUncensoredGroupById(data.targetGroupId);
 			if (!ourGroup || !theirGroup) return null;
 
 			const ourGroupPreferences = await QRepository.mapModePreferencesByGroupId(
@@ -170,7 +168,7 @@ export const action: ActionFunction = async ({ request }) => {
 				}),
 			});
 
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
 			if (ourGroup.chatCode && theirGroup.chatCode) {
 				ChatSystemMessage.send([
@@ -212,7 +210,7 @@ export const action: ActionFunction = async ({ request }) => {
 				role: "MANAGER",
 			});
 
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
 			break;
 		}
@@ -225,16 +223,16 @@ export const action: ActionFunction = async ({ request }) => {
 				role: "REGULAR",
 			});
 
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
 			break;
 		}
 		case "LEAVE_GROUP": {
 			await QRepository.leaveGroup(user.id);
 
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
-			const targetChatCode = SQManager.findUncensoredGroupById(
+			const targetChatCode = SendouQ.findUncensoredGroupById(
 				currentGroup.id,
 			)?.chatCode;
 			if (targetChatCode) {
@@ -253,14 +251,14 @@ export const action: ActionFunction = async ({ request }) => {
 
 			await QRepository.leaveGroup(data.userId);
 
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
 			break;
 		}
 		case "REFRESH_GROUP": {
 			await QRepository.refreshGroup(currentGroup.id);
 
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
 			break;
 		}
@@ -271,7 +269,7 @@ export const action: ActionFunction = async ({ request }) => {
 				value: data.value,
 			});
 
-			await refreshSQManagerInstance();
+			await refreshSendouQInstance();
 
 			break;
 		}
