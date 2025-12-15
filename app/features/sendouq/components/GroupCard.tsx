@@ -35,7 +35,6 @@ import {
 	tierImageUrl,
 	userPage,
 } from "~/utils/urls";
-import { useOwnGroup } from "../contexts/GroupContext";
 import type {
 	SQGroup,
 	SQGroupMember,
@@ -55,6 +54,7 @@ export function GroupCard({
 	hideNote: _hidenote = false,
 	showAddNote,
 	showNote = false,
+	ownGroup,
 }: {
 	group: SQGroup | SQOwnGroup | SQMatchGroup;
 	action?: "LIKE" | "UNLIKE" | "GROUP_UP" | "MATCH_UP" | "MATCH_UP_RECHALLENGE";
@@ -64,11 +64,11 @@ export function GroupCard({
 	hideNote?: boolean;
 	showAddNote?: SqlBool;
 	showNote?: boolean;
+	ownGroup?: SQOwnGroup;
 }) {
 	const { t } = useTranslation(["q"]);
 	const user = useUser();
 	const fetcher = useFetcher();
-	const { ownGroup, isExpired } = useOwnGroup();
 
 	const hideNote =
 		displayOnly ||
@@ -202,8 +202,7 @@ export function GroupCard({
 				) : null}
 				{action &&
 				(ownGroup?.usersRole === "OWNER" ||
-					ownGroup?.usersRole === "MANAGER") &&
-				!isExpired ? (
+					ownGroup?.usersRole === "MANAGER") ? (
 					<fetcher.Form className="stack items-center" method="post">
 						<input type="hidden" name="targetGroupId" value={group.id} />
 						<SubmitButton

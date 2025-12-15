@@ -41,7 +41,6 @@ import type { ChatProps } from "~/features/chat/chat-types";
 import { Chat } from "~/features/chat/components/Chat";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { GroupCard } from "~/features/sendouq/components/GroupCard";
-import { GroupProvider } from "~/features/sendouq/contexts/GroupContext";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import { useRecentlyReportedWeapons } from "~/features/sendouq/q-hooks";
 import { AddPrivateNoteDialog } from "~/features/sendouq-match/components/AddPrivateNoteDialog";
@@ -165,102 +164,93 @@ function QMatchPage() {
 	).members.find((m) => m.id === safeNumberParse(searchParams.get("note")));
 
 	return (
-		<GroupProvider ownGroup={undefined} isExpired={false}>
-			<Main className="q-match__container stack xl">
-				<AddPrivateNoteDialog
-					aboutUser={addingNoteFor}
-					close={() => navigate(sendouQMatchPage(data.match.id))}
-				/>
-				<div className="q-match__header">
-					<h2>{t("q:match.header", { number: data.match.id })}</h2>
-					<div
-						className={clsx("text-xs text-lighter", {
-							invisible: !isMounted,
-						})}
-					>
-						{isMounted
-							? formatDateTime(databaseTimestampToDate(data.match.createdAt), {
-									day: "numeric",
-									month: "numeric",
-									year: "numeric",
-									hour: "numeric",
-									minute: "numeric",
-								})
-							: // reserve place
-								"0/0/0 0:00"}
-					</div>
+		<Main className="q-match__container stack xl">
+			<AddPrivateNoteDialog
+				aboutUser={addingNoteFor}
+				close={() => navigate(sendouQMatchPage(data.match.id))}
+			/>
+			<div className="q-match__header">
+				<h2>{t("q:match.header", { number: data.match.id })}</h2>
+				<div
+					className={clsx("text-xs text-lighter", {
+						invisible: !isMounted,
+					})}
+				>
+					{isMounted
+						? formatDateTime(databaseTimestampToDate(data.match.createdAt), {
+								day: "numeric",
+								month: "numeric",
+								year: "numeric",
+								hour: "numeric",
+								minute: "numeric",
+							})
+						: // reserve place
+							"0/0/0 0:00"}
 				</div>
-				{showScore ? (
-					<>
-						<Score
-							reportedAt={data.match.reportedAt!}
-							ownTeamReported={ownTeamReported}
+			</div>
+			{showScore ? (
+				<>
+					<Score
+						reportedAt={data.match.reportedAt!}
+						ownTeamReported={ownTeamReported}
+					/>
+					{ownGroup && ownMember && data.match.reportedAt ? (
+						<AfterMatchActions
+							ownGroupId={ownGroup.id}
+							role={ownMember.role}
+							reportedAt={data.match.reportedAt}
+							showWeaponsForm={showWeaponsForm}
+							setShowWeaponsForm={setShowWeaponsForm}
+							key={data.reportedWeapons?.join("")}
 						/>
-						{ownGroup && ownMember && data.match.reportedAt ? (
-							<AfterMatchActions
-								ownGroupId={ownGroup.id}
-								role={ownMember.role}
-								reportedAt={data.match.reportedAt}
-								showWeaponsForm={showWeaponsForm}
-								setShowWeaponsForm={setShowWeaponsForm}
-								key={data.reportedWeapons?.join("")}
-							/>
-						) : null}
-					</>
-				) : null}
-				{!showWeaponsForm ? (
-					<>
-						<div className="q-match__teams-container">
-							{[data.match.groupAlpha, data.match.groupBravo].map(
-								(group, i) => {
-									const side = i === 0 ? "ALPHA" : "BRAVO";
-									const isOwnGroup = groupMemberOf === side;
+					) : null}
+				</>
+			) : null}
+			{!showWeaponsForm ? (
+				<>
+					<div className="q-match__teams-container">
+						{[data.match.groupAlpha, data.match.groupBravo].map((group, i) => {
+							const side = i === 0 ? "ALPHA" : "BRAVO";
+							const isOwnGroup = groupMemberOf === side;
 
-									const matchHasBeenReported = Boolean(
-										data.match.reportedByUserId,
-									);
-									const showAddNote =
-										groupMemberOf === side && matchHasBeenReported;
-									return (
-										<div
-											className="stack sm text-lighter text-xs"
-											key={group.id}
-										>
-											<div className="stack horizontal justify-between items-center">
-												{i === 0 ? "Alpha" : "Bravo"}
-												{group.team ? (
-													<Link
-														to={teamPage(group.team.customUrl)}
-														className="stack horizontal items-center xs font-bold"
-													>
-														{group.team.avatarUrl ? (
-															<Avatar url={group.team.avatarUrl} size="xxs" />
-														) : null}
-														{group.team.name}
-													</Link>
+							const matchHasBeenReported = Boolean(data.match.reportedByUserId);
+							const showAddNote =
+								groupMemberOf === side && matchHasBeenReported;
+							return (
+								<div className="stack sm text-lighter text-xs" key={group.id}>
+									<div className="stack horizontal justify-between items-center">
+										{i === 0 ? "Alpha" : "Bravo"}
+										{group.team ? (
+											<Link
+												to={teamPage(group.team.customUrl)}
+												className="stack horizontal items-center xs font-bold"
+											>
+												{group.team.avatarUrl ? (
+													<Avatar url={group.team.avatarUrl} size="xxs" />
 												) : null}
-											</div>
-											<GroupCard
-												group={group}
-												displayOnly
-												hideVc={matchHasBeenReported || !isOwnGroup}
-												hideWeapons={matchHasBeenReported}
-												showAddNote={showAddNote}
-											/>
-										</div>
-									);
-								},
-							)}
-						</div>
-						<BottomSection
-							canReportScore={canReportScore}
-							ownTeamReported={ownTeamReported}
-							participatingInTheMatch={Boolean(ownMember)}
-						/>
-					</>
-				) : null}
-			</Main>
-		</GroupProvider>
+												{group.team.name}
+											</Link>
+										) : null}
+									</div>
+									<GroupCard
+										group={group}
+										displayOnly
+										hideVc={matchHasBeenReported || !isOwnGroup}
+										hideWeapons={matchHasBeenReported}
+										showAddNote={showAddNote}
+									/>
+								</div>
+							);
+						})}
+					</div>
+					<BottomSection
+						canReportScore={canReportScore}
+						ownTeamReported={ownTeamReported}
+						participatingInTheMatch={Boolean(ownMember)}
+					/>
+				</>
+			) : null}
+		</Main>
 	);
 }
 

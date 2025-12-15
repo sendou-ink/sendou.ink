@@ -11,7 +11,6 @@ import { action } from "../actions/q.preparing.server";
 import { GroupCard } from "../components/GroupCard";
 import { GroupLeaver } from "../components/GroupLeaver";
 import { MemberAdder } from "../components/MemberAdder";
-import { GroupProvider } from "../contexts/GroupContext";
 import { loader } from "../loaders/q.preparing.server";
 import { FULL_GROUP_SIZE } from "../q-constants";
 export { loader, action };
@@ -41,32 +40,30 @@ export default function QPreparingPage() {
 	useAutoRefresh(data.lastUpdated);
 
 	return (
-		<GroupProvider ownGroup={data.group} isExpired={false}>
-			<Main className="stack lg items-center">
-				<div className="q-preparing__card-container">
-					<GroupCard group={data.group} hideNote />
-				</div>
-				{data.group.members.length < FULL_GROUP_SIZE &&
-				(data.group.usersRole === "OWNER" ||
-					data.group.usersRole === "MANAGER") ? (
-					<MemberAdder
-						inviteCode={data.group.inviteCode}
-						groupMemberIds={data.group.members.map((m) => m.id)}
-					/>
-				) : null}
-				<joinQFetcher.Form method="post">
-					<SubmitButton
-						size="big"
-						state={joinQFetcher.state}
-						_action="JOIN_QUEUE"
-					>
-						{t("q:preparing.joinQ")}
-					</SubmitButton>
-				</joinQFetcher.Form>
-				<GroupLeaver
-					type={data.group.members.length === 1 ? "GO_BACK" : "LEAVE_GROUP"}
+		<Main className="stack lg items-center">
+			<div className="q-preparing__card-container">
+				<GroupCard group={data.group} hideNote ownGroup={data.group} />
+			</div>
+			{data.group.members.length < FULL_GROUP_SIZE &&
+			(data.group.usersRole === "OWNER" ||
+				data.group.usersRole === "MANAGER") ? (
+				<MemberAdder
+					inviteCode={data.group.inviteCode}
+					groupMemberIds={data.group.members.map((m) => m.id)}
 				/>
-			</Main>
-		</GroupProvider>
+			) : null}
+			<joinQFetcher.Form method="post">
+				<SubmitButton
+					size="big"
+					state={joinQFetcher.state}
+					_action="JOIN_QUEUE"
+				>
+					{t("q:preparing.joinQ")}
+				</SubmitButton>
+			</joinQFetcher.Form>
+			<GroupLeaver
+				type={data.group.members.length === 1 ? "GO_BACK" : "LEAVE_GROUP"}
+			/>
+		</Main>
 	);
 }

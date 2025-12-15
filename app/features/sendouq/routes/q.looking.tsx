@@ -36,7 +36,6 @@ import { action } from "../actions/q.looking.server";
 import { GroupCard } from "../components/GroupCard";
 import { GroupLeaver } from "../components/GroupLeaver";
 import { MemberAdder } from "../components/MemberAdder";
-import { GroupProvider } from "../contexts/GroupContext";
 import { groupExpiryStatus } from "../core/groups";
 import { loader } from "../loaders/q.looking.server";
 import { FULL_GROUP_SIZE } from "../q-constants";
@@ -97,27 +96,18 @@ function QLookingPage() {
 	};
 
 	return (
-		<GroupProvider
-			ownGroup={data.ownGroup}
-			isExpired={
-				data.ownGroup
-					? groupExpiryStatus(data.ownGroup.latestActionAt) === "EXPIRED"
-					: false
-			}
-		>
-			<Main className="stack md">
-				<InfoText />
-				{wasTryingToJoinAnotherTeam ? (
-					<div className="text-warning text-center">
-						{t("q:looking.joiningGroupError")}
-					</div>
-				) : null}
-				{showGoToSettingPrompt() ? (
-					<Alert variation="INFO">{t("q:looking.goToSettingsPrompt")}</Alert>
-				) : null}
-				<Groups />
-			</Main>
-		</GroupProvider>
+		<Main className="stack md">
+			<InfoText />
+			{wasTryingToJoinAnotherTeam ? (
+				<div className="text-warning text-center">
+					{t("q:looking.joiningGroupError")}
+				</div>
+			) : null}
+			{showGoToSettingPrompt() ? (
+				<Alert variation="INFO">{t("q:looking.goToSettingsPrompt")}</Alert>
+			) : null}
+			<Groups />
+		</Main>
 	);
 }
 
@@ -282,7 +272,13 @@ function Groups() {
 				)
 				.map((group) => {
 					return (
-						<GroupCard key={group.id} group={group} action="UNLIKE" showNote />
+						<GroupCard
+							key={group.id}
+							group={group}
+							action="UNLIKE"
+							showNote
+							ownGroup={data.ownGroup}
+						/>
 					);
 				})}
 		</div>
@@ -314,7 +310,7 @@ function Groups() {
 			{!showChat && (
 				<ColumnHeader>{t("q:looking.columns.myGroup")}</ColumnHeader>
 			)}
-			<GroupCard group={data.ownGroup} showNote />
+			<GroupCard group={data.ownGroup} showNote ownGroup={data.ownGroup} />
 			{data.ownGroup.inviteCode ? (
 				<MemberAdder
 					inviteCode={data.ownGroup.inviteCode}
@@ -427,6 +423,7 @@ function Groups() {
 														: "LIKE"
 												}
 												showNote
+												ownGroup={data.ownGroup}
 											/>
 										);
 									})}
@@ -453,6 +450,7 @@ function Groups() {
 											group={group}
 											action={action()}
 											showNote
+											ownGroup={data.ownGroup}
 										/>
 									);
 								})}
@@ -490,6 +488,7 @@ function Groups() {
 									group={group}
 									action={action()}
 									showNote
+									ownGroup={data.ownGroup}
 								/>
 							);
 						})}
