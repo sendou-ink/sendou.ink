@@ -61,8 +61,6 @@ import "~/styles/reset.css";
 import "~/styles/utils.css";
 import "~/styles/vars.css";
 
-// xxx: add knip (production) to checks & github actions
-
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	if (isRevalidation(args)) return true;
 

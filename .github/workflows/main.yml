@@ -33,6 +33,8 @@ jobs:
         run: npm run typecheck
       - name: Unit tests
         run: npm run test:unit
+      - name: Knip unused check
+        run: npm run knip
       - name: Check translations jsons
         run: npm run check-translation-jsons:no-write
       - name: Check homemade badges

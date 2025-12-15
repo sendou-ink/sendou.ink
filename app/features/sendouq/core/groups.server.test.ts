@@ -24,7 +24,7 @@ const paramsToExpected = new Map<
 		],
 		{
 			type: "range",
-			diff: 1,
+			diff: [-1, 1],
 			range: [
 				{ isPlus: true, name: "SILVER" },
 				{ isPlus: true, name: "GOLD" },
@@ -39,7 +39,7 @@ const paramsToExpected = new Map<
 		],
 		{
 			type: "range",
-			diff: 2,
+			diff: [-2, 2],
 			range: [
 				{ isPlus: false, name: "SILVER" },
 				{ isPlus: false, name: "PLATINUM" },

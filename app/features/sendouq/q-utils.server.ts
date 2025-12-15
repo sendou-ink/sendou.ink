@@ -1,4 +1,6 @@
 import { redirect } from "@remix-run/node";
+import { TIERS } from "~/features/mmr/mmr-constants";
+import type { TieredSkill } from "~/features/mmr/tiered.server";
 import {
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PAGE,
@@ -34,4 +36,29 @@ export function sqRedirectIfNeeded({
 	if (currentLocation === "match" && newLocation.includes("match")) return;
 
 	throw redirect(newLocation);
+}
+
+const allTiersOrdered = TIERS.flatMap((t) => [
+	{ name: t.name, isPlus: true },
+	{ name: t.name, isPlus: false },
+]).reverse();
+const allTiersOrderedWithLeviathan = allTiersOrdered.filter(
+	(t) => t.name !== "LEVIATHAN",
+);
+
+export function getTierIndex(
+	tier: TieredSkill["tier"] | null | undefined,
+	isAccurateTiers: boolean,
+) {
+	if (!tier) return null;
+
+	const tiers = isAccurateTiers
+		? allTiersOrdered
+		: allTiersOrderedWithLeviathan;
+
+	const index = tiers.findIndex(
+		(t) => t.name === tier.name && t.isPlus === tier.isPlus,
+	);
+
+	return index === -1 ? null : index;
 }

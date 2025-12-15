@@ -47,7 +47,7 @@ export function tierDifferenceToRangeOrExact({
 
 	return {
 		type: "range",
-		diff: idxDiff,
+		diff: [-idxDiff, idxDiff],
 		range: [structuredClone(lowerTier), structuredClone(upperTier)],
 	};
 }

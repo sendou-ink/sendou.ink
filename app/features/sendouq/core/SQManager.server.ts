@@ -9,21 +9,24 @@ import {
 	type TieredSkill,
 	userSkills,
 } from "~/features/mmr/tiered.server";
+import type * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import type * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
+import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import type { SerializeFrom } from "~/utils/remix";
 import { FULL_GROUP_SIZE } from "../q-constants";
-import type { TierDifference } from "../q-types";
+import type { TierRange } from "../q-types";
+import { getTierIndex } from "../q-utils.server";
 import { tierDifferenceToRangeOrExact } from "./groups.server";
 
 type DBGroupRow = Awaited<
 	ReturnType<typeof QRepository.findCurrentGroups>
 >[number];
 type DBPrivateNoteRow = Awaited<
-	ReturnType<typeof QRepository.allPrivateUserNotesByAuthorUserId>
+	ReturnType<typeof PrivateUserNoteRepository.byAuthorUserId>
 >[number];
 type DBRecentlyFinishedMatchRow = Awaited<
 	ReturnType<typeof QRepository.findRecentlyFinishedMatches>
@@ -32,6 +35,9 @@ type DBMatch = NonNullable<
 	Awaited<ReturnType<typeof QMatchRepository.findById>>
 >;
 
+export type SQUncensoredGroup = SerializeFrom<
+	(typeof SQManagerClass.prototype.groups)[number]
+>;
 export type SQGroup = SerializeFrom<
 	ReturnType<SQManagerClass["lookingGroups"]>[number]
 >;
@@ -40,13 +46,19 @@ export type SQOwnGroup = SerializeFrom<
 >;
 export type SQMatch = SerializeFrom<ReturnType<SQManagerClass["mapMatch"]>>;
 export type SQMatchGroup = SQMatch["groupAlpha"] | SQMatch["groupBravo"];
+export type SQGroupMember = NonNullable<SQGroup["members"]>[number];
+export type SQMatchGroupMember = SQMatchGroup["members"][number];
 
 const FALLBACK_TIER = { isPlus: false, name: "IRON" } as const;
+const SECONDS_TILL_STALE =
+	process.env.NODE_ENV === "development" || IS_E2E_TEST_RUN ? 1_000_000 : 1_800;
 
 class SQManagerClass {
 	groups;
-	recentMatches;
-	isAccurateTiers;
+	#recentMatches;
+	#isAccurateTiers;
+	/** Array of user IDs currently in the queue */
+	usersInQueue;
 
 	constructor(
 		groups: DBGroupRow[],
@@ -59,8 +71,11 @@ class SQManagerClass {
 			isAccurateTiers,
 		} = userSkills(season!.nth);
 
-		this.recentMatches = recentMatches;
-		this.isAccurateTiers = isAccurateTiers;
+		this.#recentMatches = recentMatches;
+		this.#isAccurateTiers = isAccurateTiers;
+		this.usersInQueue = groups.flatMap((group) =>
+			group.members.map((member) => member.id),
+		);
 		this.groups = groups.map((group) => ({
 			...group,
 			noScreen: this.#groupNoScreen(group),
@@ -70,7 +85,7 @@ class SQManagerClass {
 				userSkills: calculatedUserSkills,
 				intervals,
 			}) as TieredSkill["tier"] | null,
-			tierRange: null as TierDifference | null,
+			tierRange: null as TierRange | null,
 			skillDifference:
 				undefined as ParsedMemento["groups"][number]["skillDifference"],
 			isReplay: false,
@@ -94,7 +109,13 @@ class SQManagerClass {
 		}));
 	}
 
-	currentViewByUserId(userId: number) {
+	/**
+	 * Determines the current view state for a user based on their group status.
+	 */
+	currentViewByUserId(
+		/** The ID of the logged in user */
+		userId: number,
+	) {
 		const ownGroup = this.findOwnGroup(userId);
 
 		if (!ownGroup) return "default";
@@ -104,6 +125,10 @@ class SQManagerClass {
 		return "looking";
 	}
 
+	/**
+	 * Finds the group that a user belongs to.
+	 * @returns The user's group with their role, or undefined if not in a group
+	 */
 	findOwnGroup(userId: number) {
 		const result = this.groups.find((group) =>
 			group.members.some((member) => member.id === userId),
@@ -118,11 +143,35 @@ class SQManagerClass {
 		};
 	}
 
+	/**
+	 * Finds a group by its ID without censoring sensitive data.
+	 * @returns The uncensored group, or undefined if not found
+	 */
+	findUncensoredGroupById(groupId: number) {
+		return this.groups.find((group) => group.id === groupId);
+	}
+
+	/**
+	 * Finds a group by its invite code.
+	 * @returns The group with matching invite code, or undefined if not found
+	 */
 	findGroupByInviteCode(inviteCode: string) {
 		return this.groups.find((group) => group.inviteCode === inviteCode);
 	}
 
-	mapMatch(match: DBMatch, user?: AuthenticatedUser) {
+	/**
+	 * Maps a database match to a format with appropriate censoring based on user permissions.
+	 * Includes private notes for team members and censors sensitive data for non-participants.
+	 * @returns The mapped match with censored data based on user permissions
+	 */
+	mapMatch(
+		/** The database match object to map */
+		match: DBMatch,
+		/** The authenticated user viewing the match (if any) */
+		user?: AuthenticatedUser,
+		/** Array of private user notes to include */
+		notes: DBPrivateNoteRow[] = [],
+	) {
 		const isTeamAlphaMember = match.groupAlpha.members.some(
 			(m) => m.id === user?.id,
 		);
@@ -139,11 +188,6 @@ class SQManagerClass {
 			},
 		);
 
-		const season = Seasons.currentOrPrevious();
-		/*const { intervals, userSkills: calculatedUserSkills } = */ userSkills(
-			season!.nth,
-		);
-
 		const matchGroupCensorer = (
 			group: DBMatch["groupAlpha"] | DBMatch["groupBravo"],
 			isTeamMember: boolean,
@@ -151,42 +195,68 @@ class SQManagerClass {
 			return {
 				...group,
 				isReplay: false,
-				tierRange: null as TierDifference | null,
+				tierRange: null as TierRange | null,
 				chatCode: isTeamMember ? group.chatCode : undefined,
 				noScreen: this.#groupNoScreen(group),
-				tier: null as TieredSkill["tier"] | null,
-				skillDifference: "idk" as any,
+				tier: match.memento?.groups[group.id]?.tier,
+				skillDifference: match.memento?.groups[group.id]?.skillDifference,
 				modePreferences: this.#groupModePreferences(group),
 				usersRole: null as Tables["GroupMember"]["role"] | null,
-				members: group.members.map((m) => ({
-					...m,
-					skill: "idk" as any,
-					privateNote: "idk" as any,
-					skillDifference: "idk" as any,
-					noScreen: undefined,
-					languages: m.languages?.split(",") || [],
-					friendCode:
-						isMatchInsider && happenedInLastMonth ? m.friendCode : undefined,
-				})),
+				members: group.members.map((member) => {
+					return {
+						...member,
+						skill: match.memento?.users[member.id]?.skill,
+						privateNote: null as DBPrivateNoteRow | null,
+						skillDifference: match.memento?.users[member.id]?.skillDifference,
+						noScreen: undefined,
+						languages: member.languages?.split(",") || [],
+						friendCode:
+							isMatchInsider && happenedInLastMonth
+								? member.friendCode
+								: undefined,
+					};
+				}),
 			};
 		};
 
 		return {
 			...match,
 			chatCode: isMatchInsider ? match.chatCode : undefined,
-			groupAlpha: matchGroupCensorer(match.groupAlpha, isTeamAlphaMember),
-			groupBravo: matchGroupCensorer(match.groupBravo, isTeamBravoMember),
+			groupAlpha: this.#getAddMemberPrivateNoteMapper(notes)(
+				matchGroupCensorer(match.groupAlpha, isTeamAlphaMember),
+			),
+			groupBravo: this.#getAddMemberPrivateNoteMapper(notes)(
+				matchGroupCensorer(match.groupBravo, isTeamBravoMember),
+			),
 		};
 	}
 
-	previewGroups(notes: DBPrivateNoteRow[]) {
+	/**
+	 * Returns all groups with wide tier ranges for preview purposes. Full groups being preview always show the full range (IRON-LEVIATHAN)
+	 * @returns Array of censored groups with preview tier ranges
+	 */
+	previewGroups(
+		/** Array of private user notes to include */
+		notes: DBPrivateNoteRow[],
+	) {
 		return this.groups
 			.map((group) => this.#addPreviewTierRange(group))
 			.map(this.#getAddMemberPrivateNoteMapper(notes))
 			.map((group) => this.#censorGroup(group));
 	}
 
-	lookingGroups(userId: number, notes: DBPrivateNoteRow[] = []) {
+	/**
+	 * Returns groups that are available for matchmaking for a specific user based on their current group size.
+	 * Filters groups based on member count compatibility, activity status, and excludes stale groups.
+	 * Results are sorted by sentiment (notes), tier difference, and activity.
+	 * @returns Array of compatible groups sorted by relevance, or empty array if user has no group
+	 */
+	lookingGroups(
+		/** The ID of the user looking for groups */
+		userId: number,
+		/** Array of private user notes to include */
+		notes: DBPrivateNoteRow[] = [],
+	) {
 		const ownGroup = this.findOwnGroup(userId);
 		if (!ownGroup) return [];
 
@@ -199,24 +269,27 @@ class SQManagerClass {
 						? [1, 2]
 						: [1, 2, 3];
 
-		// xxx: handle stale groups somewhere
+		const staleThreshold = sub(new Date(), { seconds: SECONDS_TILL_STALE });
 		return this.groups
-			.filter(
-				(group) =>
+			.filter((group) => {
+				const groupLastAction = databaseTimestampToDate(group.latestActionAt);
+				return (
 					group.status === "ACTIVE" &&
 					!group.matchId &&
 					group.id !== ownGroup.id &&
-					currentMemberCountOptions.includes(group.members.length),
-			)
+					currentMemberCountOptions.includes(group.members.length) &&
+					groupLastAction >= staleThreshold
+				);
+			})
 			.map(this.#getGroupReplayMapper(userId))
 			.map(this.#getAddTierRangeMapper(ownGroup.tier))
 			.map(this.#getAddMemberPrivateNoteMapper(notes))
-			.sort(this.#getNoteSortComparator()) // xxx: sort by skill too
+			.sort(this.#getSkillAndNoteSortComparator(ownGroup.tier))
 			.map((group) => this.#censorGroup(group));
 	}
 
 	#getGroupReplayMapper(userId: number) {
-		const recentOpponents = this.recentMatches.flatMap((match) => {
+		const recentOpponents = this.#recentMatches.flatMap((match) => {
 			if (match.groupAlphaMemberIds.includes(userId)) {
 				return [match.groupBravoMemberIds];
 			}
@@ -254,15 +327,19 @@ class SQManagerClass {
 				return group;
 			}
 
-			const tierRange = tierDifferenceToRangeOrExact({
+			const tierRangeOrExact = tierDifferenceToRangeOrExact({
 				ourTier: ownTier ?? FALLBACK_TIER,
 				theirTier: group.tier ?? FALLBACK_TIER,
-				hasLeviathan: this.isAccurateTiers,
+				hasLeviathan: this.#isAccurateTiers,
 			});
+
+			if (tierRangeOrExact.type === "exact") {
+				return group;
+			}
 
 			return {
 				...group,
-				tierRange, // xxx: rename from range?
+				tierRange: R.omit(tierRangeOrExact, ["type"]),
 				tier: null,
 			};
 		};
@@ -287,17 +364,24 @@ class SQManagerClass {
 		};
 	}
 
-	#censorGroup<T extends (typeof this.groups)[number]>(group: T) {
-		const censored = R.omit(group, ["inviteCode", "chatCode"]);
+	#censorGroup<T extends (typeof this.groups)[number]>(
+		group: T,
+	): Omit<T, "inviteCode" | "chatCode" | "members"> & {
+		members: T["members"] | undefined;
+	} {
+		const baseGroup = R.omit(group, ["inviteCode", "chatCode", "members"]);
 
 		if (this.#groupIsFull(group)) {
 			return {
-				...censored,
+				...baseGroup,
 				members: undefined,
 			};
 		}
 
-		return censored;
+		return {
+			...baseGroup,
+			members: group.members,
+		};
 	}
 
 	#getAddMemberPrivateNoteMapper(notes: DBPrivateNoteRow[]) {
@@ -317,8 +401,15 @@ class SQManagerClass {
 		};
 	}
 
-	#getNoteSortComparator() {
-		return <T extends { members: { privateNote: DBPrivateNoteRow | null }[] }>(
+	#getSkillAndNoteSortComparator(ownTier?: TieredSkill["tier"] | null) {
+		return <
+			T extends {
+				members: { privateNote: DBPrivateNoteRow | null }[];
+				tierRange: TierRange | null;
+				tier: TieredSkill["tier"] | null;
+				latestActionAt: number;
+			},
+		>(
 			a: T,
 			b: T,
 		) => {
@@ -338,7 +429,30 @@ class SQManagerClass {
 			const scoreA = getGroupSentimentScore(a);
 			const scoreB = getGroupSentimentScore(b);
 
-			return scoreB - scoreA;
+			if (scoreA !== scoreB) {
+				return scoreB - scoreA;
+			}
+
+			if (a.tierRange && b.tierRange) {
+				if (a.tierRange.diff[1] !== b.tierRange.diff[1]) {
+					return a.tierRange.diff[1] - b.tierRange.diff[1];
+				}
+			}
+
+			const ownTierIndex = getTierIndex(ownTier, this.#isAccurateTiers);
+			if (typeof ownTierIndex === "number") {
+				const diffA = Math.abs(
+					ownTierIndex - (getTierIndex(a.tier, this.#isAccurateTiers) ?? 999),
+				);
+				const diffB = Math.abs(
+					ownTierIndex - (getTierIndex(b.tier, this.#isAccurateTiers) ?? 999),
+				);
+				if (diffA !== diffB) {
+					return diffA - diffB;
+				}
+			}
+
+			return b.latestActionAt - a.latestActionAt;
 		};
 	}
 
@@ -419,9 +533,14 @@ class SQManagerClass {
 
 const groups = await QRepository.findCurrentGroups();
 const recentMatches = await QRepository.findRecentlyFinishedMatches();
+/** Global instance of the SendouQ manager. Manages all active groups and matchmaking state. */
 export let SQManager = new SQManagerClass(groups, recentMatches);
 // xxx: is manager the best name?
 
+/**
+ * Refreshes the global SQManager instance with the latest data from the database.
+ * Should be called after any database changes that affect groups or matches.
+ */
 export async function refreshSQManagerInstance() {
 	const groups = await QRepository.findCurrentGroups();
 	const recentMatches = await QRepository.findRecentlyFinishedMatches();

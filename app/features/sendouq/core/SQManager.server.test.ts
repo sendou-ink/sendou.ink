@@ -1,8 +1,21 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { db } from "~/db/sql";
+import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import { dbInsertUsers, dbReset } from "~/utils/Test";
 import * as QRepository from "../QRepository.server";
 import { refreshSQManagerInstance, SQManager } from "./SQManager.server";
+
+const { mockSeasonCurrentOrPrevious } = vi.hoisted(() => ({
+	mockSeasonCurrentOrPrevious: vi.fn(() => ({
+		nth: 1,
+		starts: new Date("2023-01-01"),
+		ends: new Date("2030-12-31"),
+	})),
+}));
+
+vi.mock("~/features/mmr/core/Seasons", () => ({
+	currentOrPrevious: mockSeasonCurrentOrPrevious,
+}));
 
 const createGroup = async (
 	userIds: number[],
@@ -59,12 +72,26 @@ const createPrivateNote = async (
 	sentiment: "POSITIVE" | "NEUTRAL" | "NEGATIVE",
 	text = "test note",
 ) => {
-	await QRepository.upsertPrivateUserNote({
+	await PrivateUserNoteRepository.upsert({
 		authorId,
 		targetId,
 		sentiment,
 		text,
 	});
+};
+
+const insertSkill = async (userId: number, ordinal: number, season = 1) => {
+	await db
+		.insertInto("Skill")
+		.values({
+			userId,
+			season,
+			mu: 25,
+			sigma: 8.333,
+			ordinal,
+			matchesCount: 10,
+		})
+		.execute();
 };
 
 describe("SQManager", () => {
@@ -234,7 +261,7 @@ describe("SQManager", () => {
 		test("returns empty array when no groups exist", async () => {
 			await refreshSQManagerInstance();
 
-			const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 			const groups = SQManager.previewGroups(notes);
 
 			expect(groups).toEqual([]);
@@ -244,7 +271,7 @@ describe("SQManager", () => {
 			await createGroup([1, 2, 3, 4]);
 			await refreshSQManagerInstance();
 
-			const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 			const groups = SQManager.previewGroups(notes);
 
 			expect(groups).toHaveLength(1);
@@ -255,7 +282,7 @@ describe("SQManager", () => {
 			await createGroup([1, 2]);
 			await refreshSQManagerInstance();
 
-			const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 			const groups = SQManager.previewGroups(notes);
 
 			expect(groups).toHaveLength(1);
@@ -268,7 +295,7 @@ describe("SQManager", () => {
 			await createPrivateNote(3, 2, "POSITIVE", "Great player");
 			await refreshSQManagerInstance();
 
-			const notes = await QRepository.allPrivateUserNotesByAuthorUserId(3);
+			const notes = await PrivateUserNoteRepository.byAuthorUserId(3);
 			const groups = SQManager.previewGroups(notes);
 
 			expect(groups).toHaveLength(1);
@@ -282,7 +309,7 @@ describe("SQManager", () => {
 			await createGroup([3, 4, 5, 6], { inviteCode: "CODE2" });
 			await refreshSQManagerInstance();
 
-			const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 			const groups = SQManager.previewGroups(notes);
 
 			expect(groups).toHaveLength(2);
@@ -298,7 +325,7 @@ describe("SQManager", () => {
 			await createGroup([7, 8, 9]);
 			await refreshSQManagerInstance();
 
-			const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 			const groups = SQManager.previewGroups(notes);
 
 			expect(groups).toHaveLength(3);
@@ -315,7 +342,7 @@ describe("SQManager", () => {
 			await createGroup([5, 6]);
 			await refreshSQManagerInstance();
 
-			const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 			const groups = SQManager.previewGroups(notes);
 
 			const fullGroup = groups.find((g) => g.members === undefined);
@@ -324,11 +351,8 @@ describe("SQManager", () => {
 			expect(fullGroup?.tier).toBeNull();
 			expect(fullGroup?.tierRange).toBeDefined();
 
-			if (fullGroup?.tierRange?.type !== "range")
-				throw new Error("Unexpected tierRange type");
-
-			expect(fullGroup?.tierRange.range[0].name).toBe("IRON");
-			expect(fullGroup?.tierRange.range[1].name).toBe("LEVIATHAN");
+			expect(fullGroup?.tierRange?.range[0].name).toBe("IRON");
+			expect(fullGroup?.tierRange?.range[1].name).toBe("LEVIATHAN");
 
 			expect(partialGroup?.tier).toBeDefined();
 			expect(partialGroup?.tierRange).toBeNull();
@@ -349,7 +373,7 @@ describe("SQManager", () => {
 				await createGroup([1, 2, 3, 4]);
 				await refreshSQManagerInstance();
 
-				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(5);
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(5);
 				const groups = SQManager.lookingGroups(5, notes);
 
 				expect(groups).toEqual([]);
@@ -367,7 +391,7 @@ describe("SQManager", () => {
 				await createGroup([4], { status: "ACTIVE" });
 				await refreshSQManagerInstance();
 
-				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 				const groups = SQManager.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(1);
@@ -383,7 +407,7 @@ describe("SQManager", () => {
 
 				await refreshSQManagerInstance();
 
-				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 				const groups = SQManager.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(1);
@@ -395,7 +419,7 @@ describe("SQManager", () => {
 				await createGroup([3, 4]);
 				await refreshSQManagerInstance();
 
-				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 				const groups = SQManager.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(1);
@@ -410,7 +434,7 @@ describe("SQManager", () => {
 				await createGroup([11, 12, 13, 14]);
 				await refreshSQManagerInstance();
 
-				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 				const groups = SQManager.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(1);
@@ -425,7 +449,7 @@ describe("SQManager", () => {
 				await createGroup([10, 11, 12, 13]);
 				await refreshSQManagerInstance();
 
-				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 				const groups = SQManager.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(1);
@@ -441,7 +465,7 @@ describe("SQManager", () => {
 				await createGroup([9, 10, 11, 12]);
 				await refreshSQManagerInstance();
 
-				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 				const groups = SQManager.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(2);
@@ -458,7 +482,7 @@ describe("SQManager", () => {
 				await createGroup([8, 9, 10, 11]);
 				await refreshSQManagerInstance();
 
-				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 				const groups = SQManager.lookingGroups(1, notes);
 
 				expect(groups).toHaveLength(3);
@@ -496,7 +520,7 @@ describe("SQManager", () => {
 
 				await refreshSQManagerInstance();
 
-				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 				const groups = SQManager.lookingGroups(1, notes);
 
 				const replayGroup = groups.find((g) => g.members === undefined);
@@ -520,7 +544,7 @@ describe("SQManager", () => {
 
 				await refreshSQManagerInstance();
 
-				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 				const groups = SQManager.lookingGroups(1, notes);
 
 				for (const group of groups) {
@@ -534,7 +558,7 @@ describe("SQManager", () => {
 				await createGroup([3]);
 				await refreshSQManagerInstance();
 
-				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 				const groups = SQManager.lookingGroups(1, notes);
 
 				for (const group of groups) {
@@ -559,7 +583,7 @@ describe("SQManager", () => {
 
 				await refreshSQManagerInstance();
 
-				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 				const groups = SQManager.lookingGroups(1, notes);
 
 				const partialGroup = groups.find((g) =>
@@ -583,7 +607,7 @@ describe("SQManager", () => {
 				await createGroup([5, 6, 7, 8]);
 				await refreshSQManagerInstance();
 
-				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 				const groups = SQManager.lookingGroups(1, notes);
 
 				const fullGroup = groups.find((g) => g.members === undefined);
@@ -595,7 +619,7 @@ describe("SQManager", () => {
 				await createGroup([2, 3]);
 				await refreshSQManagerInstance();
 
-				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 				const groups = SQManager.lookingGroups(1, notes);
 
 				const partialGroup = groups.find((g) => g.members?.length === 2);
@@ -609,7 +633,7 @@ describe("SQManager", () => {
 				await createGroup([3, 4, 5, 6]);
 				await refreshSQManagerInstance();
 
-				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 				const groups = SQManager.lookingGroups(1, notes);
 
 				for (const group of groups) {
@@ -641,7 +665,7 @@ describe("SQManager", () => {
 
 				await refreshSQManagerInstance();
 
-				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 				const groups = SQManager.lookingGroups(1, notes);
 
 				expect(groups[0].members![0].id).toBe(5);
@@ -660,7 +684,7 @@ describe("SQManager", () => {
 
 				await refreshSQManagerInstance();
 
-				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 				const groups = SQManager.lookingGroups(1, notes);
 
 				expect(groups[groups.length - 1].members![0].id).toBe(5);
@@ -680,12 +704,117 @@ describe("SQManager", () => {
 
 				await refreshSQManagerInstance();
 
-				const notes = await QRepository.allPrivateUserNotesByAuthorUserId(1);
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
 				const groups = SQManager.lookingGroups(1, notes);
 
 				expect(groups[groups.length - 1].members?.some((m) => m.id === 6)).toBe(
 					true,
 				);
+			});
+		});
+
+		describe("skill-based sorting", () => {
+			beforeEach(async () => {
+				await dbInsertUsers(10);
+			});
+
+			afterEach(() => {
+				dbReset();
+			});
+
+			test("sentiment still takes priority over skill", async () => {
+				await insertSkill(1, 1000);
+				await insertSkill(2, 500);
+				await insertSkill(4, 2000);
+
+				await createGroup([1]);
+				await createGroup([2]);
+				await createGroup([4]);
+
+				await createPrivateNote(1, 4, "POSITIVE");
+
+				await refreshSQManagerInstance();
+
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const groups = SQManager.lookingGroups(1, notes);
+
+				expect(groups[0].members![0].id).toBe(4);
+			});
+
+			test("groups with closer skill sorted first within same sentiment", async () => {
+				await insertSkill(1, 1000);
+				await insertSkill(2, 1050);
+				await insertSkill(3, 500);
+				await insertSkill(4, 2000);
+
+				await createGroup([1]);
+				await createGroup([2]);
+				await createGroup([3]);
+				await createGroup([4]);
+
+				await refreshSQManagerInstance();
+
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const groups = SQManager.lookingGroups(1, notes);
+
+				expect(groups[0].members![0].id).toBe(2);
+			});
+
+			test("full groups sorted by average skill", async () => {
+				await insertSkill(1, 1000);
+				await insertSkill(2, 1000);
+				await insertSkill(3, 1000);
+				await insertSkill(4, 1000);
+				await insertSkill(5, 1100);
+				await insertSkill(6, 1100);
+				await insertSkill(7, 1100);
+				await insertSkill(8, 1100);
+				await insertSkill(9, 500);
+				await insertSkill(10, 500);
+
+				await createGroup([1, 2, 3, 4]);
+				const closerGroup = await createGroup([5, 6, 7, 8]);
+				await createGroup([9, 10]);
+
+				await refreshSQManagerInstance();
+
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const groups = SQManager.lookingGroups(1, notes);
+
+				expect(groups.length).toBeGreaterThan(0);
+				expect(groups[0].id).toBe(closerGroup);
+			});
+
+			test("newer groups sorted first when skill is equal", async () => {
+				await insertSkill(1, 1000);
+				await insertSkill(2, 1000);
+				await insertSkill(3, 1000);
+
+				const group1Id = await createGroup([2]);
+				await new Promise((resolve) => setTimeout(resolve, 10));
+				const group2Id = await createGroup([3]);
+
+				const currentTimeInSeconds = Math.floor(Date.now() / 1000);
+				await db
+					.updateTable("Group")
+					.set({ latestActionAt: currentTimeInSeconds - 100 })
+					.where("id", "=", group1Id)
+					.execute();
+
+				await db
+					.updateTable("Group")
+					.set({ latestActionAt: currentTimeInSeconds - 50 })
+					.where("id", "=", group2Id)
+					.execute();
+
+				await createGroup([1]);
+				await refreshSQManagerInstance();
+
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const groups = SQManager.lookingGroups(1, notes);
+
+				expect(groups[0].members![0].id).toBe(3);
+				expect(groups[1].members![0].id).toBe(2);
 			});
 		});
 	});

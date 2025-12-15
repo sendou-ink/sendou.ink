@@ -478,9 +478,7 @@ function isMatchCompleted(match: DeepPartial<MatchResults>): boolean {
  *
  * @param match Partial match results.
  */
-function isMatchResultCompleted(
-	match: DeepPartial<MatchResults>,
-): boolean {
+function isMatchResultCompleted(match: DeepPartial<MatchResults>): boolean {
 	return isMatchWinCompleted(match);
 }
 
@@ -1187,10 +1185,7 @@ export function isSwiss(stage: Stage): boolean {
  * @param stageType Type of the stage.
  * @param groupNumber Number of the group.
  */
-function isWinnerBracket(
-	stageType: StageType,
-	groupNumber: number,
-): boolean {
+function isWinnerBracket(stageType: StageType, groupNumber: number): boolean {
 	return stageType === "double_elimination" && groupNumber === 1;
 }
 
@@ -1200,10 +1195,7 @@ function isWinnerBracket(
  * @param stageType Type of the stage.
  * @param groupNumber Number of the group.
  */
-function isLoserBracket(
-	stageType: StageType,
-	groupNumber: number,
-): boolean {
+function isLoserBracket(stageType: StageType, groupNumber: number): boolean {
 	return stageType === "double_elimination" && groupNumber === 2;
 }
 
@@ -1213,10 +1205,7 @@ function isLoserBracket(
  * @param stageType Type of the stage.
  * @param groupNumber Number of the group.
  */
-function isFinalGroup(
-	stageType: StageType,
-	groupNumber: number,
-): boolean {
+function isFinalGroup(stageType: StageType, groupNumber: number): boolean {
 	return (
 		(stageType === "single_elimination" && groupNumber === 2) ||
 		(stageType === "double_elimination" && groupNumber === 3)

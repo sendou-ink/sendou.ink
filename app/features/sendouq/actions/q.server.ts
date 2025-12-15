@@ -15,11 +15,10 @@ import {
 	SENDOUQ_PREPARING_PAGE,
 	SUSPENDED_PAGE,
 } from "~/utils/urls";
-import { refreshSQManagerInstance } from "../core/SQManager.server";
+import { refreshSQManagerInstance, SQManager } from "../core/SQManager.server";
 import { JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
 import { frontPageSchema } from "../q-schemas.server";
 import { userCanJoinQueueAt } from "../q-utils";
-import { findGroupByInviteCode } from "../queries/findGroupByInviteCode.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = await requireUser(request);
@@ -52,7 +51,7 @@ export const action: ActionFunction = async ({ request }) => {
 			);
 
 			const groupInvitedTo =
-				code && user ? findGroupByInviteCode(code) : undefined;
+				code && user ? SQManager.findGroupByInviteCode(code) : undefined;
 			errorToastIfFalsy(
 				groupInvitedTo,
 				"Invite code doesn't match any active team",

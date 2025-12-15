@@ -6,8 +6,8 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import { userSkills } from "~/features/mmr/tiered.server";
 import { getDefaultMapWeights } from "~/features/sendouq/core/default-maps.server";
 import type {
-	SQGroup,
 	SQMatch,
+	SQUncensoredGroup,
 } from "~/features/sendouq/core/SQManager.server";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import {
@@ -238,7 +238,6 @@ export async function matchMapList(
 	return result;
 }
 
-// xxx: delete
 export function mapModePreferencesToModeList(
 	groupOnePreferences: UserMapModePreferences["modes"][],
 	groupTwoPreferences: UserMapModePreferences["modes"][],
@@ -357,11 +356,11 @@ export function compareMatchToReportedScores({
 
 type CreateMatchMementoArgs = {
 	own: {
-		group: SQGroup;
+		group: SQUncensoredGroup;
 		preferences: { userId: number; preferences: UserMapModePreferences }[];
 	};
 	their: {
-		group: SQGroup;
+		group: SQUncensoredGroup;
 		preferences: { userId: number; preferences: UserMapModePreferences }[];
 	};
 	mapList: TournamentMapListMap[];
@@ -370,19 +369,9 @@ export function createMatchMemento(
 	args: CreateMatchMementoArgs,
 ): Omit<ParsedMemento, "mapPreferences"> {
 	const skills = userSkills(Seasons.currentOrPrevious()!.nth);
-	// xxx: fix
-	// @ts-expect-error
-	const withTiers = addSkillsToGroups({
-		groups: {
-			neutral: [],
-			likesReceived: [args.their.group],
-			own: args.own.group,
-		},
-		...skills,
-	});
 
-	const ownWithTier = withTiers.own;
-	const theirWithTier = withTiers.likesReceived[0];
+	const ownWithTier = args.own.group;
+	const theirWithTier = args.their.group;
 
 	return {
 		modePreferences: modePreferencesMemento(args),
@@ -405,7 +394,7 @@ export function createMatchMemento(
 			[ownWithTier, theirWithTier].map((group) => [
 				group!.id,
 				{
-					tier: group!.tier,
+					tier: group!.tier!,
 				},
 			]),
 		),

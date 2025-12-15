@@ -9,8 +9,6 @@ import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 import { SQManager } from "../core/SQManager.server";
 import { preparingSchema } from "../q-schemas.server";
-import { refreshGroup } from "../queries/refreshGroup.server";
-import { setGroupAsActive } from "../queries/setGroupAsActive.server";
 
 export type SendouQPreparingAction = typeof action;
 
@@ -34,12 +32,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	switch (data._action) {
 		case "JOIN_QUEUE": {
-			if (ownGroup.status !== "PREPARING") {
-				return null;
-			}
-
-			setGroupAsActive(ownGroup.id);
-			refreshGroup(ownGroup.id);
+			await QRepository.setPreparingGroupAsActive(ownGroup.id);
 
 			return redirect(SENDOUQ_LOOKING_PAGE);
 		}

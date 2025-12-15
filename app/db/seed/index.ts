@@ -23,7 +23,6 @@ import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingReposito
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import { SQManager } from "~/features/sendouq/core/SQManager.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
-import { createMatch } from "~/features/sendouq/queries/createMatch.server";
 import { calculateMatchSkills } from "~/features/sendouq-match/core/skills.server";
 import {
 	summarizeMaps,
@@ -2218,7 +2217,7 @@ async function playedMatches() {
 
 		invariant(groupAlpha !== 0 && groupBravo !== 0, "groups not created");
 
-		const match = createMatch({
+		const match = await QMatchRepository.create({
 			alphaGroupId: groupAlpha,
 			bravoGroupId: groupBravo,
 			mapList: randomMapList(groupAlpha, groupBravo),

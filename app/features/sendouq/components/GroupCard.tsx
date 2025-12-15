@@ -38,7 +38,9 @@ import {
 import { useOwnGroup } from "../contexts/GroupContext";
 import type {
 	SQGroup,
+	SQGroupMember,
 	SQMatchGroup,
+	SQMatchGroupMember,
 	SQOwnGroup,
 } from "../core/SQManager.server";
 import { FULL_GROUP_SIZE, SENDOUQ } from "../q-constants";
@@ -138,7 +140,7 @@ export function GroupCard({
 						) : null}
 					</div>
 				) : null}
-				{group.tier && !displayOnly ? (
+				{group.tier && !displayOnly && !group.members ? (
 					<div className="stack xs text-lighter font-bold items-center justify-center text-xs">
 						<TierImage tier={group.tier} width={100} />
 						<div>
@@ -155,20 +157,20 @@ export function GroupCard({
 						</div>
 					</div>
 				) : null}
-				{group.tier && displayOnly ? (
+				{group.tier && displayOnly && !group.members ? (
 					<div className="q__group__display-group-tier">
 						<TierImage tier={group.tier} width={38} />
 						{group.tier.name}
 						{group.tier.isPlus ? "+" : ""}
 					</div>
 				) : null}
-				{group.tierRange?.type === "range" ? (
+				{group.tierRange ? (
 					<div className="stack md items-center">
 						<div className="stack sm horizontal items-center justify-center">
 							<div className="stack xs items-center">
 								<TierImage tier={group.tierRange.range[0]} width={80} />
 								<div className="text-lighter text-sm font-bold">
-									(-{group.tierRange.diff})
+									({group.tierRange.diff[0]})
 								</div>
 							</div>
 							<SendouPopover
@@ -184,7 +186,7 @@ export function GroupCard({
 							<div className="stack xs items-center">
 								<TierImage tier={group.tierRange.range[1]} width={80} />
 								<div className="text-lighter text-sm font-bold">
-									(+{group.tierRange.diff})
+									(+{group.tierRange.diff[1]})
 								</div>
 							</div>
 						</div>
@@ -199,7 +201,8 @@ export function GroupCard({
 					<GroupSkillDifference skillDifference={group.skillDifference} />
 				) : null}
 				{action &&
-				(group.usersRole === "OWNER" || group.usersRole === "MANAGER") &&
+				(ownGroup?.usersRole === "OWNER" ||
+					ownGroup?.usersRole === "MANAGER") &&
 				!isExpired ? (
 					<fetcher.Form className="stack items-center" method="post">
 						<input type="hidden" name="targetGroupId" value={group.id} />
@@ -252,7 +255,7 @@ function GroupMember({
 	showAddNote,
 	showNote,
 }: {
-	member: SQGroup["members"][number] | SQMatchGroup["members"][number];
+	member: SQGroupMember | SQMatchGroupMember;
 	showActions: boolean;
 	displayOnly?: boolean;
 	hideVc?: SqlBool;
@@ -618,7 +621,7 @@ function MemberRoleManager({
 	displayOnly,
 	enableKicking,
 }: {
-	member: Pick<SQGroup["members"][number], "id" | "role">;
+	member: Pick<SQGroupMember, "id" | "role">;
 	displayOnly?: boolean;
 	enableKicking?: boolean;
 }) {
@@ -752,7 +755,7 @@ function TierInfo({ skill }: { skill: TieredSkill | "CALCULATING" }) {
 function VoiceChatInfo({
 	member,
 }: {
-	member: Pick<SQMatchGroup["members"][number], "id" | "vc" | "languages">;
+	member: Pick<SQMatchGroupMember, "id" | "vc" | "languages">;
 }) {
 	const user = useUser();
 	const { t } = useTranslation(["q"]);

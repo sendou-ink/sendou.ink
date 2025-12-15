@@ -1,12 +1,14 @@
 import { add } from "date-fns";
-import type { ExpressionBuilder, NotNull } from "kysely";
+import type { ExpressionBuilder, NotNull, Transaction } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
 import { db } from "~/db/sql";
-import type { DB } from "~/db/tables";
+import type { DB, ParsedMemento } from "~/db/tables";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { mostPopularArrayElement } from "~/utils/arrays";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
 	COMMON_USER_FIELDS,
@@ -15,6 +17,7 @@ import {
 	userChatNameColor,
 } from "~/utils/kysely.server";
 import type { Unpacked } from "~/utils/types";
+import { FULL_GROUP_SIZE } from "../sendouq/q-constants";
 import { MATCHES_PER_SEASONS_PAGE } from "../user-page/user-page-constants";
 
 export async function findById(id: number) {
@@ -367,4 +370,119 @@ export async function seasonCanceledMatchesByUserId({
 		)
 		.orderBy("GroupMatch.createdAt", "desc")
 		.execute();
+}
+
+export function create({
+	alphaGroupId,
+	bravoGroupId,
+	mapList,
+	memento,
+}: {
+	alphaGroupId: number;
+	bravoGroupId: number;
+	mapList: TournamentMapListMap[];
+	memento: ParsedMemento;
+}) {
+	return db.transaction().execute(async (trx) => {
+		const match = await trx
+			.insertInto("GroupMatch")
+			.values({
+				alphaGroupId,
+				bravoGroupId,
+				chatCode: shortNanoid(),
+				memento: JSON.stringify(memento),
+			})
+			.returningAll()
+			.executeTakeFirstOrThrow();
+
+		await trx
+			.insertInto("GroupMatchMap")
+			.values(
+				mapList.map((map, i) => ({
+					matchId: match.id,
+					index: i,
+					mode: map.mode,
+					stageId: map.stageId,
+					source: String(map.source),
+				})),
+			)
+			.execute();
+
+		await syncGroupTeamId(alphaGroupId, trx);
+		await syncGroupTeamId(bravoGroupId, trx);
+
+		await validateCreatedMatch(trx, alphaGroupId, bravoGroupId);
+
+		return match;
+	});
+}
+
+async function syncGroupTeamId(groupId: number, trx: Transaction<DB>) {
+	const members = await trx
+		.selectFrom("GroupMember")
+		.leftJoin(
+			"TeamMemberWithSecondary",
+			"TeamMemberWithSecondary.userId",
+			"GroupMember.userId",
+		)
+		.select(["TeamMemberWithSecondary.teamId"])
+		.where("GroupMember.groupId", "=", groupId)
+		.execute();
+
+	const teamIds = members.map((m) => m.teamId).filter((id) => id !== null);
+
+	const counts = new Map<number, number>();
+
+	for (const teamId of teamIds) {
+		const newCount = (counts.get(teamId) ?? 0) + 1;
+		if (newCount === 4) {
+			await trx
+				.updateTable("Group")
+				.set({ teamId })
+				.where("id", "=", groupId)
+				.execute();
+			return;
+		}
+
+		counts.set(teamId, newCount);
+	}
+
+	await trx
+		.updateTable("Group")
+		.set({ teamId: null })
+		.where("id", "=", groupId)
+		.execute();
+}
+
+async function validateCreatedMatch(
+	trx: Transaction<DB>,
+	alphaGroupId: number,
+	bravoGroupId: number,
+) {
+	for (const groupId of [alphaGroupId, bravoGroupId]) {
+		const members = await trx
+			.selectFrom("GroupMember")
+			.select("GroupMember.userId")
+			.where("GroupMember.groupId", "=", groupId)
+			.execute();
+
+		if (members.length !== FULL_GROUP_SIZE) {
+			throw new Error(`Group ${groupId} does not have full group members`);
+		}
+
+		const matches = await trx
+			.selectFrom("GroupMatch")
+			.select("GroupMatch.id")
+			.where((eb) =>
+				eb.or([
+					eb("GroupMatch.alphaGroupId", "=", groupId),
+					eb("GroupMatch.bravoGroupId", "=", groupId),
+				]),
+			)
+			.execute();
+
+		if (matches.length !== 1) {
+			throw new Error(`Group ${groupId} is already in a match`);
+		}
+	}
 }

@@ -36,7 +36,7 @@ import "../calculator.css";
 import type { MetaFunction } from "@remix-run/node";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { WeaponSelect } from "~/components/WeaponSelect";
-import { DamageType } from "~/features/build-analyzer/analyzer-types";
+import type { DamageType } from "~/features/build-analyzer/analyzer-types";
 import { possibleApValues } from "~/features/build-analyzer/core/utils";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import { metaTags } from "~/utils/remix";

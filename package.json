@@ -24,7 +24,7 @@
 		"test:unit": "cross-env VITE_SITE_DOMAIN=http://localhost:5173 vitest --silent=passed-only run",
 		"test:e2e": "npx playwright test",
 		"test:e2e:flaky-detect": "npx playwright test --repeat-each=10 --max-failures=1",
-		"checks": "npm run biome:fix && npm run test:unit && npm run check-translation-jsons && npm run typecheck",
+		"checks": "npm run biome:fix && npm run test:unit && npm run check-translation-jsons && npm run typecheck && npm run knip",
 		"setup": "cross-env DB_PATH=db.sqlite3 vite-node ./scripts/setup.ts",
 		"i18n:sync": "i18next-locales-sync -e true -p en -s da de es-ES es-US fr-CA fr-EU he it ja ko nl pl pt-BR ru zh -l locales && npm run biome:fix",
 		"knip": "knip"

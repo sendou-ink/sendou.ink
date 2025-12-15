@@ -3,6 +3,7 @@ import { z } from "zod/v4";
 import { seed } from "~/db/seed";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { SEED_VARIATIONS } from "~/features/api-private/constants";
+import { refreshSQManagerInstance } from "~/features/sendouq/core/SQManager.server";
 import { parseRequestPayload } from "~/utils/remix.server";
 
 const seedSchema = z.object({
@@ -24,6 +25,8 @@ export const action: ActionFunction = async ({ request }) => {
 	});
 
 	await seed(variation);
+
+	await refreshSQManagerInstance();
 
 	return null;
 };

@@ -5,6 +5,7 @@ import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import invariant from "~/utils/invariant";
 import { dbInsertUsers, dbReset, wrappedAction } from "~/utils/Test";
+import { refreshSQManagerInstance } from "../core/SQManager.server";
 import type { lookingSchema } from "../q-schemas.server";
 import { action as rawLookingAction } from "./q.looking";
 
@@ -95,6 +96,7 @@ const findMatch = () =>
 describe("SendouQ match creation", () => {
 	beforeEach(async () => {
 		await prepareGroups();
+		await refreshSQManagerInstance();
 	});
 
 	afterEach(() => {

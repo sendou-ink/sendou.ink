@@ -2,10 +2,11 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
 import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
+import { groupExpiryStatus } from "../core/groups";
 import { SQManager } from "../core/SQManager.server";
+import * as PrivateUserNoteRepository from "../PrivateUserNoteRepository.server";
 import { sqRedirectIfNeeded } from "../q-utils.server";
 
-// xxx: redirect to correct route
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = await requireUser(request);
 
@@ -13,8 +14,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		new URL(request.url).searchParams.get("preview") === "true" &&
 		user.roles.includes("SUPPORTER");
 
-	const privateNotes = await QRepository.allPrivateUserNotesByAuthorUserId(
+	const privateNotes = await PrivateUserNoteRepository.byAuthorUserId(
 		user.id,
+		SQManager.usersInQueue,
 	);
 
 	const groups = isPreview
@@ -28,7 +30,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	});
 
 	return {
-		groups,
+		groups:
+			ownGroup && groupExpiryStatus(ownGroup.latestActionAt) === "EXPIRED"
+				? []
+				: groups,
 		ownGroup,
 		likes: ownGroup
 			? await QRepository.allLikesByGroupId(ownGroup.id)

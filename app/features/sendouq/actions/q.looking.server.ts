@@ -8,25 +8,14 @@ import {
 	createMatchMemento,
 	matchMapList,
 } from "~/features/sendouq-match/core/match.server";
+import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
-import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
 import { groupAfterMorph } from "../core/groups";
 import { refreshSQManagerInstance, SQManager } from "../core/SQManager.server";
+import * as PrivateUserNoteRepository from "../PrivateUserNoteRepository.server";
 import { lookingSchema } from "../q-schemas.server";
-import { addLike } from "../queries/addLike.server";
-import { addManagerRole } from "../queries/addManagerRole.server";
-import { chatCodeByGroupId } from "../queries/chatCodeByGroupId.server";
-import { createMatch } from "../queries/createMatch.server";
-import { deleteLike } from "../queries/deleteLike.server";
-import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
-import { groupSuccessorOwner } from "../queries/groupSuccessorOwner";
-import { leaveGroup } from "../queries/leaveGroup.server";
-import { morphGroups } from "../queries/morphGroups.server";
-import { refreshGroup } from "../queries/refreshGroup.server";
-import { removeManagerRole } from "../queries/removeManagerRole.server";
-import { updateNote } from "../queries/updateNote.server";
 
 // xxx: refactor to action -> check DB style
 
@@ -39,33 +28,27 @@ export const action: ActionFunction = async ({ request }) => {
 		request,
 		schema: lookingSchema,
 	});
-	const currentGroup = findCurrentGroupByUserId(user.id);
+	const currentGroup = SQManager.findOwnGroup(user.id);
 	if (!currentGroup) return null;
 
 	// this throws because there should normally be no way user loses ownership by the action of some other user
 	const validateIsGroupOwner = () =>
-		errorToastIfFalsy(currentGroup.role === "OWNER", "Not  owner");
+		errorToastIfFalsy(currentGroup.usersRole === "OWNER", "Not  owner");
 	const isGroupManager = () =>
-		currentGroup.role === "MANAGER" || currentGroup.role === "OWNER";
+		currentGroup.usersRole === "MANAGER" || currentGroup.usersRole === "OWNER";
 
 	switch (data._action) {
 		case "LIKE": {
 			if (!isGroupManager()) return null;
 
-			try {
-				addLike({
-					likerGroupId: currentGroup.id,
-					targetGroupId: data.targetGroupId,
-				});
-			} catch (e) {
-				// the group disbanded before we could like it
-				if (errorIsSqliteForeignKeyConstraintFailure(e)) return null;
+			await QRepository.addLike({
+				likerGroupId: currentGroup.id,
+				targetGroupId: data.targetGroupId,
+			});
 
-				throw e;
-			}
-			refreshGroup(currentGroup.id);
-
-			const targetChatCode = chatCodeByGroupId(data.targetGroupId);
+			const targetChatCode = SQManager.findUncensoredGroupById(
+				data.targetGroupId,
+			)?.chatCode;
 			if (targetChatCode) {
 				ChatSystemMessage.send({
 					room: targetChatCode,
@@ -84,7 +67,9 @@ export const action: ActionFunction = async ({ request }) => {
 				targetGroupId: data.targetGroupId,
 			});
 
-			const targetChatCode = chatCodeByGroupId(data.targetGroupId);
+			const targetChatCode = SQManager.findUncensoredGroupById(
+				data.targetGroupId,
+			)?.chatCode;
 			if (targetChatCode) {
 				ChatSystemMessage.send({
 					room: targetChatCode,
@@ -97,21 +82,23 @@ export const action: ActionFunction = async ({ request }) => {
 		case "UNLIKE": {
 			if (!isGroupManager()) return null;
 
-			deleteLike({
+			await QRepository.deleteLike({
 				likerGroupId: currentGroup.id,
 				targetGroupId: data.targetGroupId,
 			});
-			refreshGroup(currentGroup.id);
 
 			break;
 		}
 		case "GROUP_UP": {
 			if (!isGroupManager()) return null;
 
+			const allLikes = await QRepository.allLikesByGroupId(data.targetGroupId);
+			if (!allLikes.given.some((like) => like.groupId === currentGroup.id)) {
+				return null;
+			}
+
 			const ourGroup = SQManager.findOwnGroup(user.id);
-			const theirGroup = SQManager.lookingGroups(user.id).find(
-				(group) => group.id === data.targetGroupId,
-			);
+			const theirGroup = SQManager.findUncensoredGroupById(data.targetGroupId);
 			if (!ourGroup || !theirGroup) return null;
 
 			const { id: survivingGroupId } = groupAfterMorph({
@@ -123,29 +110,25 @@ export const action: ActionFunction = async ({ request }) => {
 			const otherGroup =
 				ourGroup.id === survivingGroupId ? theirGroup : ourGroup;
 
-			// xxx: with checks this one
-			morphGroups({
+			await QRepository.morphGroups({
 				survivingGroupId,
 				otherGroupId: otherGroup.id,
-				newMembers: otherGroup.members.map((m) => m.id),
 			});
-			refreshGroup(survivingGroupId);
 
 			await refreshSQManagerInstance();
 
-			// xxx: both chat codes
-			if (ourGroup.chatCode /*&& theirGroup.chatCode*/) {
+			if (ourGroup.chatCode && theirGroup.chatCode) {
 				ChatSystemMessage.send([
 					{
 						room: ourGroup.chatCode,
 						type: "NEW_GROUP",
 						revalidateOnly: true,
 					},
-					// {
-					// 	room: theirGroup.chatCode,
-					// 	type: "NEW_GROUP",
-					// 	revalidateOnly: true,
-					// },
+					{
+						room: theirGroup.chatCode,
+						type: "NEW_GROUP",
+						revalidateOnly: true,
+					},
 				]);
 			}
 
@@ -156,9 +139,7 @@ export const action: ActionFunction = async ({ request }) => {
 			if (!isGroupManager()) return null;
 
 			const ourGroup = SQManager.findOwnGroup(user.id);
-			const theirGroup = SQManager.lookingGroups(user.id).find(
-				(group) => group.id === data.targetGroupId,
-			);
+			const theirGroup = SQManager.findUncensoredGroupById(data.targetGroupId);
 			if (!ourGroup || !theirGroup) return null;
 
 			const ourGroupPreferences = await QRepository.mapModePreferencesByGroupId(
@@ -178,7 +159,7 @@ export const action: ActionFunction = async ({ request }) => {
 				},
 			);
 
-			const createdMatch = createMatch({
+			const createdMatch = await QMatchRepository.create({
 				alphaGroupId: ourGroup.id,
 				bravoGroupId: theirGroup.id,
 				mapList,
@@ -191,19 +172,18 @@ export const action: ActionFunction = async ({ request }) => {
 
 			await refreshSQManagerInstance();
 
-			// xxx: both chat codes
-			if (ourGroup.chatCode /* && theirGroup.chatCode*/) {
+			if (ourGroup.chatCode && theirGroup.chatCode) {
 				ChatSystemMessage.send([
 					{
 						room: ourGroup.chatCode,
 						type: "MATCH_STARTED",
 						revalidateOnly: true,
 					},
-					// {
-					// 	room: theirGroup.chatCode,
-					// 	type: "MATCH_STARTED",
-					// 	revalidateOnly: true,
-					// },
+					{
+						room: theirGroup.chatCode,
+						type: "MATCH_STARTED",
+						revalidateOnly: true,
+					},
 				]);
 			}
 
@@ -226,49 +206,37 @@ export const action: ActionFunction = async ({ request }) => {
 		case "GIVE_MANAGER": {
 			validateIsGroupOwner();
 
-			addManagerRole({
+			await QRepository.updateMemberRole({
 				groupId: currentGroup.id,
 				userId: data.userId,
+				role: "MANAGER",
 			});
 
 			await refreshSQManagerInstance();
-			refreshGroup(currentGroup.id);
 
 			break;
 		}
 		case "REMOVE_MANAGER": {
 			validateIsGroupOwner();
 
-			removeManagerRole({
+			await QRepository.updateMemberRole({
 				groupId: currentGroup.id,
 				userId: data.userId,
+				role: "REGULAR",
 			});
 
 			await refreshSQManagerInstance();
-			refreshGroup(currentGroup.id);
 
 			break;
 		}
 		case "LEAVE_GROUP": {
-			errorToastIfFalsy(
-				!currentGroup.matchId,
-				"Can't leave group while in a match",
-			);
-			let newOwnerId: number | null = null;
-			if (currentGroup.role === "OWNER") {
-				newOwnerId = groupSuccessorOwner(currentGroup.id);
-			}
-
-			leaveGroup({
-				groupId: currentGroup.id,
-				userId: user.id,
-				newOwnerId,
-				wasOwner: currentGroup.role === "OWNER",
-			});
+			await QRepository.leaveGroup(user.id);
 
 			await refreshSQManagerInstance();
 
-			const targetChatCode = chatCodeByGroupId(currentGroup.id);
+			const targetChatCode = SQManager.findUncensoredGroupById(
+				currentGroup.id,
+			)?.chatCode;
 			if (targetChatCode) {
 				ChatSystemMessage.send({
 					room: targetChatCode,
@@ -283,36 +251,32 @@ export const action: ActionFunction = async ({ request }) => {
 			validateIsGroupOwner();
 			errorToastIfFalsy(data.userId !== user.id, "Can't kick yourself");
 
-			leaveGroup({
-				groupId: currentGroup.id,
-				userId: data.userId,
-				newOwnerId: null,
-				wasOwner: false,
-			});
+			await QRepository.leaveGroup(data.userId);
 
 			await refreshSQManagerInstance();
 
 			break;
 		}
 		case "REFRESH_GROUP": {
-			refreshGroup(currentGroup.id);
+			await QRepository.refreshGroup(currentGroup.id);
+
+			await refreshSQManagerInstance();
 
 			break;
 		}
 		case "UPDATE_NOTE": {
-			updateNote({
-				note: data.value,
+			await QRepository.updateMemberNote({
 				groupId: currentGroup.id,
 				userId: user.id,
+				value: data.value,
 			});
-			refreshGroup(currentGroup.id);
 
 			await refreshSQManagerInstance();
 
 			break;
 		}
 		case "DELETE_PRIVATE_USER_NOTE": {
-			await QRepository.deletePrivateUserNote({
+			await PrivateUserNoteRepository.del({
 				authorId: user.id,
 				targetId: data.targetId,
 			});

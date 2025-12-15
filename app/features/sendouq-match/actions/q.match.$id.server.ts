@@ -8,8 +8,8 @@ import type { ChatMessage } from "~/features/chat/chat-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import { SQManager } from "~/features/sendouq/core/SQManager.server";
+import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import * as QRepository from "~/features/sendouq/QRepository.server";
-import { findCurrentGroupByUserId } from "~/features/sendouq/queries/findCurrentGroupByUserId.server";
 import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
 import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.server";
 import invariant from "~/utils/invariant";
@@ -257,7 +257,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			);
 
 			for (const member of previousGroup.members) {
-				const currentGroup = findCurrentGroupByUserId(member.id);
+				const currentGroup = SQManager.findOwnGroup(member.id);
 				errorToastIfFalsy(!currentGroup, "Member is already in a group");
 				if (member.id === user.id) {
 					errorToastIfFalsy(
@@ -296,7 +296,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			break;
 		}
 		case "ADD_PRIVATE_USER_NOTE": {
-			await QRepository.upsertPrivateUserNote({
+			await PrivateUserNoteRepository.upsert({
 				authorId: user.id,
 				sentiment: data.sentiment,
 				targetId: data.targetId,

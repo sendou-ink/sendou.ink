@@ -2,14 +2,10 @@ import { sub } from "date-fns";
 import { type NotNull, sql, type Transaction } from "kysely";
 import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type {
-	DB,
-	Tables,
-	TablesInsertable,
-	UserMapModePreferences,
-} from "~/db/tables";
+import type { DB, Tables, UserMapModePreferences } from "~/db/tables";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
+import invariant from "~/utils/invariant";
 import {
 	COMMON_USER_FIELDS,
 	userChatNameColorForJson,
@@ -31,24 +27,21 @@ export function mapModePreferencesByGroupId(groupId: number) {
 }
 
 export async function findCurrentGroups() {
-	type SendouQMemberObject = Pick<
-		Tables["User"],
-		| "id"
-		| "username"
-		| "discordId"
-		| "discordAvatar"
-		| "customUrl"
-		| "mapModePreferences"
-		| "noScreen"
-		| "languages"
-		| "vc"
-	> &
-		// xxx: refactor everything to {}
-		Pick<Tables["GroupMember"], "role"> & {
-			weapons: Tables["User"]["qWeaponPool"];
-			chatNameColor: string | null;
-			plusTier: Tables["PlusTier"]["tier"] | null;
-		};
+	type SendouQMemberObject = {
+		id: Tables["User"]["id"];
+		username: Tables["User"]["username"];
+		discordId: Tables["User"]["discordId"];
+		discordAvatar: Tables["User"]["discordAvatar"];
+		customUrl: Tables["User"]["customUrl"];
+		mapModePreferences: Tables["User"]["mapModePreferences"];
+		noScreen: Tables["User"]["noScreen"];
+		languages: Tables["User"]["languages"];
+		vc: Tables["User"]["vc"];
+		role: Tables["GroupMember"]["role"];
+		weapons: Tables["User"]["qWeaponPool"];
+		chatNameColor: string | null;
+		plusTier: Tables["PlusTier"]["tier"] | null;
+	};
 
 	return db
 		.selectFrom("Group")
@@ -180,6 +173,12 @@ export async function createGroupFromPrevious(
 			)
 			.execute();
 
+		if (!(await isGroupCorrect(createdGroup.id, trx))) {
+			throw new Error(
+				"Group has too many members or member in multiple groups",
+			);
+		}
+
 		return createdGroup;
 	});
 }
@@ -196,8 +195,67 @@ function deleteLikesByGroupId(groupId: number, trx: Transaction<DB>) {
 		.execute();
 }
 
+export function morphGroups({
+	survivingGroupId,
+	otherGroupId,
+}: {
+	survivingGroupId: number;
+	otherGroupId: number;
+}) {
+	return db.transaction().execute(async (trx) => {
+		// reset chat code so previous messages are not visible
+		await trx
+			.updateTable("Group")
+			.set({ chatCode: shortNanoid() })
+			.where("Group.id", "=", survivingGroupId)
+			.execute();
+
+		const otherGroupMembers = await trx
+			.selectFrom("GroupMember")
+			.select(["GroupMember.userId", "GroupMember.role"])
+			.where("GroupMember.groupId", "=", otherGroupId)
+			.execute();
+
+		for (const member of otherGroupMembers) {
+			const oldRole = otherGroupMembers.find(
+				(m) => m.userId === member.userId,
+			)?.role;
+			invariant(oldRole, "Member lacking a role");
+
+			await trx
+				.updateTable("GroupMember")
+				.set({
+					role:
+						oldRole === "OWNER"
+							? "MANAGER"
+							: oldRole === "MANAGER"
+								? "MANAGER"
+								: "REGULAR",
+					groupId: survivingGroupId,
+				})
+				.where("GroupMember.groupId", "=", otherGroupId)
+				.where("GroupMember.userId", "=", member.userId)
+				.execute();
+		}
+
+		await deleteLikesByGroupId(survivingGroupId, trx);
+		await refreshGroup(survivingGroupId, trx);
+
+		await trx
+			.deleteFrom("Group")
+			.where("Group.id", "=", otherGroupId)
+			.execute();
+
+		if (!(await isGroupCorrect(survivingGroupId, trx))) {
+			throw new Error(
+				"Group has too many members or member in multiple groups",
+			);
+		}
+	});
+}
+
 /** Check that the group has at most FULL_GROUP_SIZE members and each member is only in this group */
-async function groupCorrect(
+async function isGroupCorrect(
 	groupId: number,
 	trx: Transaction<DB>,
 ): Promise<boolean> {
@@ -251,7 +309,7 @@ export function addMember(
 
 		await deleteLikesByGroupId(groupId, trx);
 
-		if (!(await groupCorrect(groupId, trx))) {
+		if (!(await isGroupCorrect(groupId, trx))) {
 			// xxx: how to handle with good error message to user?
 			throw new Error(
 				"Group has too many members or member in multiple groups",
@@ -304,54 +362,6 @@ export function rechallenge({
 		.set({ isRechallenge: 1 })
 		.where("likerGroupId", "=", likerGroupId)
 		.where("targetGroupId", "=", targetGroupId)
-		.execute();
-}
-
-export function allPrivateUserNotesByAuthorUserId(authorId: number) {
-	return db
-		.selectFrom("PrivateUserNote")
-		.select([
-			"PrivateUserNote.sentiment",
-			"PrivateUserNote.targetId as targetUserId",
-			"PrivateUserNote.text",
-			"PrivateUserNote.updatedAt",
-		])
-		.where("authorId", "=", authorId)
-		.execute();
-}
-
-export function upsertPrivateUserNote(
-	args: TablesInsertable["PrivateUserNote"],
-) {
-	return db
-		.insertInto("PrivateUserNote")
-		.values({
-			authorId: args.authorId,
-			targetId: args.targetId,
-			sentiment: args.sentiment,
-			text: args.text,
-		})
-		.onConflict((oc) =>
-			oc.columns(["authorId", "targetId"]).doUpdateSet({
-				sentiment: args.sentiment,
-				text: args.text,
-				updatedAt: dateToDatabaseTimestamp(new Date()),
-			}),
-		)
-		.execute();
-}
-
-export function deletePrivateUserNote({
-	authorId,
-	targetId,
-}: {
-	authorId: number;
-	targetId: number;
-}) {
-	return db
-		.deleteFrom("PrivateUserNote")
-		.where("authorId", "=", authorId)
-		.where("targetId", "=", targetId)
 		.execute();
 }
 
@@ -513,4 +523,163 @@ export async function findRecentlyFinishedMatches() {
 		groupAlphaMemberIds: row.groupAlphaMemberIds.map((m) => m.userId),
 		groupBravoMemberIds: row.groupBravoMemberIds.map((m) => m.userId),
 	}));
+}
+
+// xxx: handle foreign key error
+export function addLike({
+	likerGroupId,
+	targetGroupId,
+}: {
+	likerGroupId: number;
+	targetGroupId: number;
+}) {
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.insertInto("GroupLike")
+			.values({ likerGroupId, targetGroupId })
+			.onConflict((oc) =>
+				oc.columns(["likerGroupId", "targetGroupId"]).doNothing(),
+			)
+			.execute();
+
+		await refreshGroup(likerGroupId, trx);
+	});
+}
+
+// xxx: handle foreign key error
+export function deleteLike({
+	likerGroupId,
+	targetGroupId,
+}: {
+	likerGroupId: number;
+	targetGroupId: number;
+}) {
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.deleteFrom("GroupLike")
+			.where("likerGroupId", "=", likerGroupId)
+			.where("targetGroupId", "=", targetGroupId)
+			.execute();
+
+		await refreshGroup(likerGroupId, trx);
+	});
+}
+
+export function leaveGroup(userId: number) {
+	return db.transaction().execute(async (trx) => {
+		const userGroup = await trx
+			.selectFrom("GroupMember")
+			.innerJoin("Group", "Group.id", "GroupMember.groupId")
+			.select(["Group.id", "GroupMember.role"])
+			.where("userId", "=", userId)
+			.where("Group.status", "!=", "INACTIVE")
+			.executeTakeFirstOrThrow();
+
+		await trx
+			.deleteFrom("GroupMember")
+			.where("userId", "=", userId)
+			.where("GroupMember.groupId", "=", userGroup.id)
+			.execute();
+
+		const remainingMembers = await trx
+			.selectFrom("GroupMember")
+			.select(["userId", "role"])
+			.where("groupId", "=", userGroup.id)
+			.execute();
+
+		if (remainingMembers.length === 0) {
+			await trx.deleteFrom("Group").where("id", "=", userGroup.id).execute();
+			return;
+		}
+
+		if (userGroup.role === "OWNER") {
+			const newOwner =
+				remainingMembers.find((m) => m.role === "MANAGER") ??
+				remainingMembers[0];
+
+			await trx
+				.updateTable("GroupMember")
+				.set({ role: "OWNER" })
+				.where("userId", "=", newOwner.userId)
+				.where("groupId", "=", userGroup.id)
+				.execute();
+		}
+
+		const match = await trx
+			.selectFrom("GroupMatch")
+			.where((eb) =>
+				eb.or([
+					eb("alphaGroupId", "=", userGroup.id),
+					eb("bravoGroupId", "=", userGroup.id),
+				]),
+			)
+			.executeTakeFirst();
+
+		if (match) {
+			throw new Error("Can't leave group when already in a match");
+		}
+	});
+}
+
+export function refreshGroup(groupId: number, trx?: Transaction<DB>) {
+	return (trx ?? db)
+		.updateTable("Group")
+		.set({ latestActionAt: databaseTimestampNow() })
+		.where("Group.id", "=", groupId)
+		.execute();
+}
+
+export function updateMemberNote({
+	groupId,
+	userId,
+	value,
+}: {
+	groupId: number;
+	userId: number;
+	value: string | null;
+}) {
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.updateTable("GroupMember")
+			.set({ note: value })
+			.where("groupId", "=", groupId)
+			.where("userId", "=", userId)
+			.execute();
+
+		await refreshGroup(groupId, trx);
+	});
+}
+
+export function updateMemberRole({
+	userId,
+	groupId,
+	role,
+}: {
+	userId: number;
+	groupId: number;
+	role: Tables["GroupMember"]["role"];
+}) {
+	if (role === "OWNER") {
+		throw new Error("Can't set role to OWNER with this function");
+	}
+
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.updateTable("GroupMember")
+			.set({ role })
+			.where("userId", "=", userId)
+			.where("groupId", "=", groupId)
+			.execute();
+
+		await refreshGroup(groupId, trx);
+	});
+}
+
+export function setPreparingGroupAsActive(groupId: number) {
+	return db
+		.updateTable("Group")
+		.set({ status: "ACTIVE", latestActionAt: databaseTimestampNow() })
+		.where("id", "=", groupId)
+		.where("status", "=", "PREPARING")
+		.execute();
 }
