@@ -13,8 +13,6 @@ import {
 import { userIsBanned } from "../ban/core/banned.server";
 import { FULL_GROUP_SIZE } from "./q-constants";
 
-// xxx: rename to SQGroupRepository
-
 export function mapModePreferencesByGroupId(groupId: number) {
 	return db
 		.selectFrom("GroupMember")
