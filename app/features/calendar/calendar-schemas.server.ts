@@ -80,7 +80,6 @@ export const newCalendarEventActionSchema = z
 		),
 		enableSubs: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
 		autonomousSubs: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
-		strictDeadline: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
 		isInvitational: z.preprocess(checkboxValueToBoolean, z.boolean().nullish()),
 		requireInGameNames: z.preprocess(
 			checkboxValueToBoolean,

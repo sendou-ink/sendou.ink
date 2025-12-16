@@ -70,7 +70,6 @@ async function main() {
 			authorId: tournament.ctx.author.id,
 			bracketProgression: tournament.ctx.settings.bracketProgression,
 			description: tournament.ctx.description,
-			deadlines: tournament.ctx.settings.deadlines,
 			discordInviteCode:
 				tournament.ctx.discordUrl?.replace("https://discord.gg/", "") ?? null,
 			mapPickingStyle: tournament.ctx.mapPickingStyle,

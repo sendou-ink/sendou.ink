@@ -8,6 +8,7 @@ const stm = sql.prepare(/* sql */ `
     "TournamentMatchGameResult"."winnerTeamId",
     "TournamentMatchGameResult"."stageId",
     "TournamentMatchGameResult"."mode",
+    "TournamentMatchGameResult"."source",
     "TournamentMatchGameResult"."createdAt",
     "TournamentMatchGameResult"."opponentOnePoints",
     "TournamentMatchGameResult"."opponentTwoPoints",
@@ -30,6 +31,7 @@ interface FindResultsByMatchIdResult {
 	winnerTeamId: Tables["TournamentMatchGameResult"]["winnerTeamId"];
 	stageId: Tables["TournamentMatchGameResult"]["stageId"];
 	mode: Tables["TournamentMatchGameResult"]["mode"];
+	source: Tables["TournamentMatchGameResult"]["source"];
 	participants: Array<
 		Pick<
 			Tables["TournamentMatchGameResultParticipant"],

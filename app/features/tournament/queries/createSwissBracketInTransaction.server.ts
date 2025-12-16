@@ -1,7 +1,7 @@
 import { sql } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 
@@ -54,8 +54,7 @@ const createTournamentMatchStm = sql.prepare(/* sql */ `
     "opponentTwo",
     "roundId",
     "stageId",
-    "status",
-    "createdAt"
+    "status"
   ) values (
     @chatCode,
     @groupId,
@@ -64,8 +63,7 @@ const createTournamentMatchStm = sql.prepare(/* sql */ `
     @opponentTwo,
     @roundId,
     @stageId,
-    @status,
-    @createdAt
+    @status
   )
 `);
 
@@ -79,7 +77,7 @@ export function createSwissBracketInTransaction(
 	const stageFromDB = createTournamentStageStm.get({
 		tournamentId: stageInput.tournament_id,
 		type: stageInput.type,
-		createdAt: dateToDatabaseTimestamp(new Date()),
+		createdAt: databaseTimestampNow(),
 		settings: JSON.stringify(stageInput.settings),
 		name: stageInput.name,
 	}) as Tables["TournamentStage"];
@@ -119,7 +117,6 @@ export function createSwissBracketInTransaction(
 					roundId: roundFromDB.id,
 					stageId: stageFromDB.id,
 					status: match.status,
-					createdAt: dateToDatabaseTimestamp(new Date()),
 				});
 			}
 		}

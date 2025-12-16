@@ -98,7 +98,6 @@ export const action: ActionFunction = async ({ request }) => {
 		isRanked: data.isRanked ?? undefined,
 		isTest: data.isTest ?? undefined,
 		isInvitational: data.isInvitational ?? false,
-		deadlines: data.strictDeadline ? ("STRICT" as const) : ("DEFAULT" as const),
 		enableNoScreenToggle: data.enableNoScreenToggle ?? undefined,
 		enableSubs: data.enableSubs ?? undefined,
 		requireInGameNames: data.requireInGameNames ?? undefined,

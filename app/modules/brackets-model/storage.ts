@@ -91,7 +91,5 @@ export interface Match extends MatchResults {
 	/** The number of the match in its round. */
 	number: number;
 
-	lastGameFinishedAt?: number | null;
-
-	createdAt?: number | null;
+	startedAt?: number | null;
 }

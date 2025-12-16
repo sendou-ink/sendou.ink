@@ -258,7 +258,6 @@ function EventForm() {
 						isInvitational={isInvitational}
 						setIsInvitational={setIsInvitational}
 					/>
-					<StrictDeadlinesToggle />
 					{!eventToEdit ? <TestToggle /> : null}
 				</>
 			) : null}
@@ -967,33 +966,6 @@ function InvitationalToggle({
 			<FormMessage type="info">
 				No open registration or subs list. All teams must be added by the
 				organizer.
-			</FormMessage>
-		</div>
-	);
-}
-
-function StrictDeadlinesToggle() {
-	const baseEvent = useBaseEvent();
-	const [strictDeadlines, setStrictDeadlines] = React.useState(
-		baseEvent?.tournament?.ctx.settings.deadlines === "STRICT",
-	);
-	const id = React.useId();
-
-	return (
-		<div>
-			<label htmlFor={id} className="w-max">
-				Strict deadlines
-			</label>
-			<SendouSwitch
-				name="strictDeadline"
-				id={id}
-				size="small"
-				isSelected={strictDeadlines}
-				onChange={setStrictDeadlines}
-			/>
-			<FormMessage type="info">
-				Strict deadlines has 5 minutes less for the target time of each round
-				(25min Bo3, 35min Bo5 compared to 30min Bo3, 40min Bo5 normal).
 			</FormMessage>
 		</div>
 	);

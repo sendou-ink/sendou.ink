@@ -95,6 +95,10 @@ export const matchSchema = z.union([
 	z.object({
 		_action: _action("UNLOCK"),
 	}),
+	z.object({
+		_action: _action("END_SET"),
+		winnerTeamId: z.preprocess(nullLiteraltoNull, id.nullable()),
+	}),
 ]);
 
 export const bracketIdx = z.coerce.number().int().min(0).max(100);

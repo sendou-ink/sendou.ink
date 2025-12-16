@@ -74,6 +74,28 @@ export function resolveMapList(
 		);
 }
 
+export function mapListFromResults(
+	results: Array<{
+		mode: ModeShort;
+		stageId: StageId;
+		source: string;
+	}>,
+): TournamentMapListMap[] {
+	return results.map((result) => {
+		const parsedSource: TournamentMaplistSource = /^\d+$/.test(result.source)
+			? Number(result.source)
+			: (result.source as TournamentMaplistSource);
+
+		return {
+			mode: result.mode,
+			stageId: result.stageId,
+			source: parsedSource,
+			// Banned maps are not relevant for completed matches
+			bannedByTournamentTeamId: undefined,
+		};
+	});
+}
+
 function resolveBannedByTeamId(
 	args: ResolveCurrentMapListArgs,
 	map: { stageId: StageId; mode: ModeShort },

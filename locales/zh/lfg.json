@@ -28,5 +28,6 @@
 	"new.weaponPool.header": "武器池",
 	"new.weaponPool.userProfile": "用户主页",
 	"new.languages.header": "语言",
+	"new.languages.placeholder": "选择所有符合的选项",
 	"new.languages.sqSettingsPage": "SendouQ设定页面"
 }

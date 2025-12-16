@@ -228,4 +228,96 @@ describe("Update scores in a round-robin stage", () => {
 			});
 		});
 	});
+
+	test("should unlock next round matches as soon as both participants are ready", () => {
+		// Round robin with 4 teams: [1, 2, 3, 4]
+		// Round 1: Match 0 (1 vs 2), Match 1 (3 vs 4)
+		// Round 2: Match 2 (1 vs 3), Match 3 (2 vs 4)
+		// Round 3: Match 4 (1 vs 4), Match 5 (2 vs 3)
+
+		const round1Match1 = storage.select<any>("match", 0)!;
+		const round1Match2 = storage.select<any>("match", 1)!;
+		const round2Match1 = storage.select<any>("match", 2)!;
+		const round2Match2 = storage.select<any>("match", 3)!;
+
+		// Initially, only round 1 matches should be ready
+		expect(round1Match1.status).toBe(2); // Ready (1 vs 2)
+		expect(round1Match2.status).toBe(2); // Ready (3 vs 4)
+		expect(round2Match1.status).toBe(0); // Locked (1 vs 3)
+		expect(round2Match2.status).toBe(0); // Locked (2 vs 4)
+
+		// Complete first match of round 1 (1 vs 2)
+		manager.update.match({
+			id: 0,
+			opponent1: { score: 16, result: "win" }, // Team 1 wins
+			opponent2: { score: 9 }, // Team 2 loses
+		});
+
+		// Round 2 Match 1 (1 vs 3) should still be locked because team 3 hasn't finished
+		// Round 2 Match 2 (2 vs 4) should still be locked because team 4 hasn't finished
+		let round2Match1After = storage.select<any>("match", 2)!;
+		let round2Match2After = storage.select<any>("match", 3)!;
+		expect(round2Match1After.status).toBe(0); // Still Locked
+		expect(round2Match2After.status).toBe(0); // Still Locked
+
+		// Complete second match of round 1 (3 vs 4)
+		manager.update.match({
+			id: 1,
+			opponent1: { score: 3 }, // Team 3 loses
+			opponent2: { score: 16, result: "win" }, // Team 4 wins
+		});
+
+		// Now both matches in round 2 should be unlocked
+		// Match 2 (1 vs 3): both team 1 and team 3 have finished round 1
+		// Match 3 (2 vs 4): both team 2 and team 4 have finished round 1
+		round2Match1After = storage.select<any>("match", 2)!;
+		round2Match2After = storage.select<any>("match", 3)!;
+		expect(round2Match1After.status).toBe(2); // Ready
+		expect(round2Match2After.status).toBe(2); // Ready
+	});
+
+	test("should unlock next round matches with BYE participants", () => {
+		storage.reset();
+		// Create a round robin with 3 teams (odd number creates rounds where one team doesn't play)
+		manager.create({
+			name: "Example with BYEs",
+			tournamentId: 0,
+			type: "round_robin",
+			seeding: [1, 2, 3],
+			settings: { groupCount: 1 },
+		});
+
+		// With 3 teams, the rounds look like:
+		// Round 1: Match (teams 3 vs 2) - Team 1 doesn't play
+		// Round 2: Match (teams 1 vs 3) - Team 2 doesn't play
+		// Round 3: Match (teams 2 vs 1) - Team 3 doesn't play
+
+		const allMatches = storage.select<any>("match")!;
+		const allRounds = storage.select<any>("round")!;
+
+		// Find the actual match (not BYE vs BYE which doesn't exist)
+		const round1RealMatch = allMatches.find(
+			(m: any) => m.round_id === allRounds[0].id && m.opponent1 && m.opponent2,
+		)!;
+		const round2RealMatch = allMatches.find(
+			(m: any) => m.round_id === allRounds[1].id && m.opponent1 && m.opponent2,
+		)!;
+
+		expect(round1RealMatch.status).toBe(2); // Ready
+		expect(round2RealMatch.status).toBe(0); // Locked initially
+
+		// Complete the only real match in round 1 (teams 3 vs 2)
+		// Team 1 didn't play in round 1
+		manager.update.match({
+			id: round1RealMatch.id,
+			opponent1: { score: 16, result: "win" },
+			opponent2: { score: 9 },
+		});
+
+		// The real match in round 2 (teams 1 vs 3) should now be unlocked
+		// because team 1 didn't play in round 1 (considered ready)
+		// and team 3 just finished their match
+		const round2AfterUpdate = storage.select<any>("match", round2RealMatch.id)!;
+		expect(round2AfterUpdate.status).toBe(2); // Ready
+	});
 });

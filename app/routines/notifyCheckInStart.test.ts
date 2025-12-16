@@ -32,7 +32,6 @@ async function createTestTournament({
 		bracketUrl: "https://example.com/bracket",
 		description: null,
 		discordInviteCode,
-		deadlines: "DEFAULT",
 		name,
 		organizationId: null,
 		rules: null,

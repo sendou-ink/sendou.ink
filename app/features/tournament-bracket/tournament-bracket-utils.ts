@@ -269,6 +269,29 @@ export function isSetOverByScore({
 	return scores[0] === matchOverAtXWins || scores[1] === matchOverAtXWins;
 }
 
+export function matchEndedEarly({
+	opponentOne,
+	opponentTwo,
+	count,
+	countType,
+}: {
+	opponentOne: { score?: number; result?: "win" | "loss" };
+	opponentTwo: { score?: number; result?: "win" | "loss" };
+	count: number;
+	countType: TournamentRoundMaps["type"];
+}) {
+	if (opponentOne.result !== "win" && opponentTwo.result !== "win") {
+		return false;
+	}
+
+	const scores: [number, number] = [
+		opponentOne.score ?? 0,
+		opponentTwo.score ?? 0,
+	];
+
+	return !isSetOverByScore({ scores, count, countType });
+}
+
 export function tournamentTeamToActiveRosterUserIds(
 	team: TournamentLoaderData["tournament"]["ctx"]["teams"][number],
 	teamMinMemberCount: number,

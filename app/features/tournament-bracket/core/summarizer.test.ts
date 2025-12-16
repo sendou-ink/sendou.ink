@@ -180,6 +180,10 @@ describe("tournamentSummary()", () => {
 						result: "loss",
 						score: 0,
 					},
+					roundMaps: {
+						count: 3,
+						type: "BEST_OF",
+					},
 				},
 			],
 			teams,
@@ -293,6 +297,10 @@ describe("tournamentSummary()", () => {
 				result: "loss",
 				score: 0,
 			},
+			roundMaps: {
+				count: 3,
+				type: "BEST_OF",
+			},
 		},
 		{
 			maps: [
@@ -336,6 +344,10 @@ describe("tournamentSummary()", () => {
 				id: 2,
 				result: "loss",
 				score: 0,
+			},
+			roundMaps: {
+				count: 3,
+				type: "BEST_OF",
 			},
 		},
 	];
@@ -426,6 +438,10 @@ describe("tournamentSummary()", () => {
 				id: 2,
 				result: "loss",
 				score: 1,
+			},
+			roundMaps: {
+				count: 3,
+				type: "BEST_OF",
 			},
 		},
 	];
@@ -596,6 +612,10 @@ describe("tournamentSummary()", () => {
 						result: "loss",
 						score: 0,
 					},
+					roundMaps: {
+						count: 3,
+						type: "BEST_OF",
+					},
 				},
 			],
 		});
@@ -649,6 +669,10 @@ describe("tournamentSummary()", () => {
 						id: 2,
 						result: "loss",
 						score: 0,
+					},
+					roundMaps: {
+						count: 3,
+						type: "BEST_OF",
 					},
 				},
 			],
@@ -781,5 +805,140 @@ describe("tournamentSummary()", () => {
 		expect(team2Results.every((r) => r.participantCount === 2)).toBeTruthy();
 		expect(team3Results.every((r) => r.participantCount === 2)).toBeTruthy();
 		expect(team4Results.every((r) => r.participantCount === 2)).toBeTruthy();
+	});
+
+	test("excludes matches ended early by organizer from calculations", () => {
+		const summary = summarize({
+			results: [
+				{
+					maps: [
+						{
+							mode: "SZ",
+							stageId: 1,
+							participants: [
+								{ tournamentTeamId: 1, userId: 1 },
+								{ tournamentTeamId: 1, userId: 2 },
+								{ tournamentTeamId: 1, userId: 3 },
+								{ tournamentTeamId: 1, userId: 4 },
+								{ tournamentTeamId: 2, userId: 5 },
+								{ tournamentTeamId: 2, userId: 6 },
+								{ tournamentTeamId: 2, userId: 7 },
+								{ tournamentTeamId: 2, userId: 8 },
+							],
+							winnerTeamId: 1,
+						},
+					],
+					opponentOne: {
+						id: 1,
+						result: "win",
+						score: 0,
+					},
+					opponentTwo: {
+						id: 2,
+						result: "loss",
+						score: 0,
+					},
+					roundMaps: {
+						count: 3,
+						type: "BEST_OF",
+					},
+				},
+			],
+		});
+
+		expect(summary.skills.length).toBe(0);
+		expect(summary.mapResultDeltas.length).toBe(0);
+		expect(summary.playerResultDeltas.length).toBe(0);
+	});
+
+	test("includes normal matches but excludes early-ended matches from calculations", () => {
+		const summary = summarize({
+			results: [
+				{
+					maps: [
+						{
+							mode: "SZ",
+							stageId: 1,
+							participants: [
+								{ tournamentTeamId: 1, userId: 1 },
+								{ tournamentTeamId: 1, userId: 2 },
+								{ tournamentTeamId: 1, userId: 3 },
+								{ tournamentTeamId: 1, userId: 4 },
+								{ tournamentTeamId: 2, userId: 5 },
+								{ tournamentTeamId: 2, userId: 6 },
+								{ tournamentTeamId: 2, userId: 7 },
+								{ tournamentTeamId: 2, userId: 8 },
+							],
+							winnerTeamId: 1,
+						},
+					],
+					opponentOne: {
+						id: 1,
+						result: "win",
+						score: 1,
+					},
+					opponentTwo: {
+						id: 2,
+						result: "loss",
+						score: 0,
+					},
+					roundMaps: {
+						count: 3,
+						type: "BEST_OF",
+					},
+				},
+				{
+					maps: [
+						{
+							mode: "TC",
+							stageId: 2,
+							participants: [
+								{ tournamentTeamId: 3, userId: 9 },
+								{ tournamentTeamId: 3, userId: 10 },
+								{ tournamentTeamId: 3, userId: 11 },
+								{ tournamentTeamId: 3, userId: 12 },
+								{ tournamentTeamId: 4, userId: 13 },
+								{ tournamentTeamId: 4, userId: 14 },
+								{ tournamentTeamId: 4, userId: 15 },
+								{ tournamentTeamId: 4, userId: 16 },
+							],
+							winnerTeamId: 3,
+						},
+					],
+					opponentOne: {
+						id: 3,
+						result: "win",
+						score: 0,
+					},
+					opponentTwo: {
+						id: 4,
+						result: "loss",
+						score: 0,
+					},
+					roundMaps: {
+						count: 3,
+						type: "BEST_OF",
+					},
+				},
+			],
+		});
+
+		const skillsFromTeam1 = summary.skills.filter((s) =>
+			[1, 2, 3, 4].includes(s.userId ?? 0),
+		);
+		const skillsFromTeam2 = summary.skills.filter((s) =>
+			[5, 6, 7, 8].includes(s.userId ?? 0),
+		);
+		const skillsFromTeam3 = summary.skills.filter((s) =>
+			[9, 10, 11, 12].includes(s.userId ?? 0),
+		);
+		const skillsFromTeam4 = summary.skills.filter((s) =>
+			[13, 14, 15, 16].includes(s.userId ?? 0),
+		);
+
+		expect(skillsFromTeam1.length).toBe(0);
+		expect(skillsFromTeam2.length).toBe(0);
+		expect(skillsFromTeam3.length).toBe(0);
+		expect(skillsFromTeam4.length).toBe(0);
 	});
 });

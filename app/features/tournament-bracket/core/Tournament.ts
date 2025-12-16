@@ -28,7 +28,7 @@ import {
 	fillWithNullTillPowerOfTwo,
 	groupNumberToLetters,
 } from "../tournament-bracket-utils";
-import { Bracket } from "./Bracket";
+import { type Bracket, createBracket } from "./Bracket";
 import { getTournamentManager } from "./brackets-manager";
 import { getRounds } from "./rounds";
 import * as Swiss from "./Swiss";
@@ -141,7 +141,7 @@ export class Tournament {
 				);
 
 				this.brackets.push(
-					Bracket.create({
+					createBracket({
 						id: inProgressStage.id,
 						idx: bracketIdx,
 						tournament: this,
@@ -182,7 +182,7 @@ export class Tournament {
 					});
 
 				this.brackets.push(
-					Bracket.create({
+					createBracket({
 						id: -1 * bracketIdx,
 						idx: bracketIdx,
 						tournament: this,
@@ -237,7 +237,7 @@ export class Tournament {
 					);
 
 				this.brackets.push(
-					Bracket.create({
+					createBracket({
 						id: -1 * bracketIdx,
 						idx: bracketIdx,
 						tournament: this,
@@ -1206,16 +1206,6 @@ export class Tournament {
 		}
 
 		for (const bracket of this.brackets) {
-			if (!bracket.preview) continue;
-
-			const isParticipant = bracket.seeding?.includes(team.id);
-
-			if (isParticipant) {
-				return { type: "WAITING_FOR_BRACKET" } as const;
-			}
-		}
-
-		for (const bracket of this.brackets) {
 			if (bracket.preview || bracket.type !== "swiss") continue;
 
 			// TODO: both seeding and participantTournamentTeamIds are used for the same thing
@@ -1228,11 +1218,21 @@ export class Tournament {
 					match.opponent1?.id === team.id || match.opponent2?.id === team.id,
 			).length;
 			const notAllRoundsGenerated =
-				this.ctx.settings.swiss?.roundCount &&
-				setsGeneratedCount !== this.ctx.settings.swiss?.roundCount;
+				bracket.settings?.roundCount &&
+				setsGeneratedCount !== bracket.settings.roundCount;
 
 			if (isParticipant && notAllRoundsGenerated) {
 				return { type: "WAITING_FOR_ROUND" } as const;
+			}
+		}
+
+		for (const bracket of this.brackets) {
+			if (!bracket.preview) continue;
+
+			const isParticipant = bracket.seeding?.includes(team.id);
+
+			if (isParticipant) {
+				return { type: "WAITING_FOR_BRACKET" } as const;
 			}
 		}
 
@@ -1280,6 +1280,11 @@ export class Tournament {
 
 		// BYE match
 		if (!match.opponent1 || !match.opponent2) return false;
+
+		// in round robin all matches are independent from one another
+		if (bracket.type === "round_robin") {
+			return true;
+		}
 
 		const anotherMatchBlocking = this.followingMatches(matchId).some(
 			(match) =>
@@ -1337,10 +1342,6 @@ export class Tournament {
 		);
 		if (!bracket) {
 			logger.error("followingMatches: Bracket not found");
-			return [];
-		}
-
-		if (bracket.type === "round_robin") {
 			return [];
 		}
 
