@@ -1062,7 +1062,11 @@ function MapList({
 			{scoreCanBeReported ? (
 				<div className="stack md items-center mt-4">
 					<ResultSummary winners={winners} />
-					<SubmitButton _action="REPORT_SCORE" state={fetcher.state}>
+					<SubmitButton
+						_action="REPORT_SCORE"
+						state={fetcher.state}
+						testId="submit-score-button"
+					>
 						{isResubmission
 							? t("q:match.submitScores.adjusted")
 							: t("q:match.submitScores")}

@@ -7,7 +7,10 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import type { ChatMessage } from "~/features/chat/chat-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
-import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
+import {
+	refreshSendouQInstance,
+	SendouQ,
+} from "~/features/sendouq/core/SendouQ.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
@@ -218,6 +221,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			// in a different transaction but it's okay
 			reportWeapons();
 
+			await refreshSendouQInstance();
+
 			if (match.chatCode) {
 				const type = (): NonNullable<ChatMessage["type"]> => {
 					if (compared === "SAME") {
@@ -271,6 +276,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				previousGroupId: data.previousGroupId,
 				members: previousGroup.members.map((m) => ({ id: m.id, role: m.role })),
 			});
+
+			await refreshSendouQInstance();
 
 			throw redirect(SENDOUQ_PREPARING_PAGE);
 		}

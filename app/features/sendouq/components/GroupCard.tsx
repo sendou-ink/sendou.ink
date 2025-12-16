@@ -91,6 +91,7 @@ export function GroupCard({
 		<GroupCardContainer groupId={group.id} isOwnGroup={isOwnGroup}>
 			<section
 				className={clsx("q__group", { "q__group__display-only": displayOnly })}
+				data-testid="sendouq-group-card"
 			>
 				{group.members ? (
 					<div className="stack md">
@@ -269,7 +270,7 @@ function GroupMember({
 	const { formatDateTime } = useTimeFormat();
 
 	return (
-		<div className="stack xxs">
+		<div className="stack xxs" data-testid="sendouq-group-card-member">
 			<div className="q__group-member">
 				<div className="text-main-forced stack xs horizontal items-center">
 					{showNote && member.privateNote ? (

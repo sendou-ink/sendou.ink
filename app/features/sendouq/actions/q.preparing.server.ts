@@ -7,7 +7,7 @@ import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server"
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
-import { SendouQ } from "../core/SendouQ.server";
+import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import { preparingSchema } from "../q-schemas.server";
 
 export type SendouQPreparingAction = typeof action;
@@ -34,6 +34,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		case "JOIN_QUEUE": {
 			await SQGroupRepository.setPreparingGroupAsActive(ownGroup.id);
 
+			await refreshSendouQInstance();
+
 			return redirect(SENDOUQ_LOOKING_PAGE);
 		}
 		case "ADD_TRUSTED": {
@@ -58,6 +60,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				trustGiverUserId: data.id,
 				trustReceiverUserId: user.id,
 			});
+
+			await refreshSendouQInstance();
 
 			notify({
 				userIds: [data.id],

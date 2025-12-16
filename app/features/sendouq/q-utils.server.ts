@@ -9,6 +9,14 @@ import {
 } from "~/utils/urls";
 import type { SQOwnGroup } from "./core/SendouQ.server";
 
+/** Error class for SendouQ (expected) errors */
+export class SendouQError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "SendouQError";
+	}
+}
+
 function groupRedirectLocation(group?: SQOwnGroup) {
 	if (group?.status === "PREPARING") return SENDOUQ_PREPARING_PAGE;
 	if (group?.matchId) return sendouQMatchPage(group.matchId);

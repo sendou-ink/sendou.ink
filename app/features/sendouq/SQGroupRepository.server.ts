@@ -10,8 +10,10 @@ import {
 	COMMON_USER_FIELDS,
 	userChatNameColorForJson,
 } from "~/utils/kysely.server";
+import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { userIsBanned } from "../ban/core/banned.server";
 import { FULL_GROUP_SIZE } from "./q-constants";
+import { SendouQError } from "./q-utils.server";
 
 export function mapModePreferencesByGroupId(groupId: number) {
 	return db
@@ -128,6 +130,10 @@ export function createGroup(args: CreateGroupArgs) {
 			})
 			.execute();
 
+		if (!(await isGroupCorrect(createdGroup.id, trx))) {
+			throw new SendouQError("Group has a member in multiple groups");
+		}
+
 		return createdGroup;
 	});
 }
@@ -172,7 +178,7 @@ export async function createGroupFromPrevious(
 			.execute();
 
 		if (!(await isGroupCorrect(createdGroup.id, trx))) {
-			throw new Error(
+			throw new SendouQError(
 				"Group has too many members or member in multiple groups",
 			);
 		}
@@ -245,7 +251,7 @@ export function morphGroups({
 			.execute();
 
 		if (!(await isGroupCorrect(survivingGroupId, trx))) {
-			throw new Error(
+			throw new SendouQError(
 				"Group has too many members or member in multiple groups",
 			);
 		}
@@ -308,8 +314,7 @@ export function addMember(
 		await deleteLikesByGroupId(groupId, trx);
 
 		if (!(await isGroupCorrect(groupId, trx))) {
-			// xxx: how to handle with good error message to user?
-			throw new Error(
+			throw new SendouQError(
 				"Group has too many members or member in multiple groups",
 			);
 		}
@@ -523,7 +528,6 @@ export async function findRecentlyFinishedMatches() {
 	}));
 }
 
-// xxx: handle foreign key error
 export function addLike({
 	likerGroupId,
 	targetGroupId,
@@ -532,19 +536,25 @@ export function addLike({
 	targetGroupId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
-		await trx
-			.insertInto("GroupLike")
-			.values({ likerGroupId, targetGroupId })
-			.onConflict((oc) =>
-				oc.columns(["likerGroupId", "targetGroupId"]).doNothing(),
-			)
-			.execute();
+		try {
+			await trx
+				.insertInto("GroupLike")
+				.values({ likerGroupId, targetGroupId })
+				.onConflict((oc) =>
+					oc.columns(["likerGroupId", "targetGroupId"]).doNothing(),
+				)
+				.execute();
+		} catch (error) {
+			if (errorIsSqliteForeignKeyConstraintFailure(error)) {
+				throw new SendouQError(error.message);
+			}
+			throw error;
+		}
 
 		await refreshGroup(likerGroupId, trx);
 	});
 }
 
-// xxx: handle foreign key error
 export function deleteLike({
 	likerGroupId,
 	targetGroupId,
@@ -605,6 +615,7 @@ export function leaveGroup(userId: number) {
 
 		const match = await trx
 			.selectFrom("GroupMatch")
+			.select(["GroupMatch.id"])
 			.where((eb) =>
 				eb.or([
 					eb("alphaGroupId", "=", userGroup.id),
@@ -614,7 +625,7 @@ export function leaveGroup(userId: number) {
 			.executeTakeFirst();
 
 		if (match) {
-			throw new Error("Can't leave group when already in a match");
+			throw new SendouQError("Can't leave group when already in a match");
 		}
 	});
 }
