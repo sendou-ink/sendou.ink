@@ -1,4 +1,5 @@
 import { useLoaderData } from "@remix-run/react";
+import { useEffect, useState } from "react";
 import {
 	Controller,
 	get,
@@ -12,11 +13,14 @@ import { SendouButton } from "~/components/elements/Button";
 import { UserSearch } from "~/components/elements/UserSearch";
 import { FormMessage } from "~/components/FormMessage";
 import { AddFieldButton } from "~/components/form/AddFieldButton";
+import { InputGroupFormField } from "~/components/form/InputGroupFormField";
 import { RemoveFieldButton } from "~/components/form/RemoveFieldButton";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { WeaponSelect } from "~/components/WeaponSelect";
+import { YouTubeEmbed } from "~/components/YouTubeEmbed";
 import type { Tables } from "~/db/tables";
+import { useRecentlyReportedWeapons } from "~/features/sendouq/q-hooks";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { useHasRole } from "~/modules/permissions/hooks";
@@ -30,6 +34,8 @@ import { action } from "../actions/vods.new.server";
 import { loader } from "../loaders/vods.new.server";
 import { videoMatchTypes } from "../vods-constants";
 import { videoInputSchema } from "../vods-schemas";
+import { extractYoutubeIdFromVideoUrl } from "../vods-utils";
+import styles from "./vods.new.module.css";
 export { action, loader };
 
 export const handle: SendouRouteHandle = {
@@ -42,6 +48,7 @@ export default function NewVodPage() {
 	const isVideoAdder = useHasRole("VIDEO_ADDER");
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["vods"]);
+	const [player, setPlayer] = useState<YT.Player | null>(null);
 
 	if (!isVideoAdder) {
 		return (
@@ -52,7 +59,7 @@ export default function NewVodPage() {
 	}
 
 	return (
-		<Main halfWidth>
+		<Main halfWidth className={styles.layout}>
 			<SendouForm
 				heading={
 					data.vodToEdit
@@ -83,13 +90,35 @@ export default function NewVodPage() {
 							}
 				}
 			>
-				<FormFields />
+				<YouTubeEmbedWrapper onPlayerReady={setPlayer} />
+				<FormFields player={player} />
 			</SendouForm>
 		</Main>
 	);
 }
 
-function FormFields() {
+function YouTubeEmbedWrapper({
+	onPlayerReady,
+}: {
+	onPlayerReady: (player: YT.Player) => void;
+}) {
+	const youtubeUrl = useWatch<VodFormFields>({
+		name: "video.youtubeUrl",
+	}) as string | undefined;
+
+	if (!youtubeUrl) return null;
+
+	const videoId = extractYoutubeIdFromVideoUrl(youtubeUrl);
+	if (!videoId) return null;
+
+	return (
+		<div className={styles.embedContainer}>
+			<YouTubeEmbed id={videoId} enableApi onPlayerReady={onPlayerReady} />
+		</div>
+	);
+}
+
+function FormFields({ player }: { player: YT.Player | null }) {
 	const { t } = useTranslation(["vods"]);
 	const videoType = useWatch({
 		name: "video.type",
@@ -132,7 +161,7 @@ function FormFields() {
 
 			{videoType === "CAST" ? <TeamSizeField /> : <PovFormField />}
 
-			<MatchesFormfield videoType={videoType} />
+			<MatchesFormfield videoType={videoType} player={player} />
 		</>
 	);
 }
@@ -266,8 +295,10 @@ function PovFormField() {
 
 function MatchesFormfield({
 	videoType,
+	player,
 }: {
 	videoType: Tables["Video"]["type"];
+	player: YT.Player | null;
 }) {
 	const {
 		formState: { errors },
@@ -289,6 +320,7 @@ function MatchesFormfield({
 							remove={remove}
 							canRemove={fields.length > 1}
 							videoType={videoType}
+							player={player}
 						/>
 					);
 				})}
@@ -315,13 +347,30 @@ function MatchesFieldset({
 	remove,
 	canRemove,
 	videoType,
+	player,
 }: {
 	idx: number;
 	remove: (idx: number) => void;
 	canRemove: boolean;
 	videoType: Tables["Video"]["type"];
+	player: YT.Player | null;
 }) {
 	const { t } = useTranslation(["vods", "game-misc"]);
+	const { setValue } = useFormContext<VodFormFields>();
+	const [currentTime, setCurrentTime] = useState<string>("");
+
+	useEffect(() => {
+		if (!player) return;
+
+		const interval = setInterval(() => {
+			const time = player.getCurrentTime();
+			if (time) {
+				setCurrentTime(formatTime(time));
+			}
+		}, 100);
+
+		return () => clearInterval(interval);
+	}, [player]);
 
 	return (
 		<div className="stack md">
@@ -330,34 +379,47 @@ function MatchesFieldset({
 				{canRemove ? <RemoveFieldButton onClick={() => remove(idx)} /> : null}
 			</div>
 
-			<InputFormField<VodFormFields>
-				required
-				label={t("vods:forms.title.startTimestamp")}
-				name={`video.matches.${idx}.startsAt`}
-				placeholder="10:22"
+			<div>
+				<InputFormField<VodFormFields>
+					required
+					label={t("vods:forms.title.startTimestamp")}
+					name={`video.matches.${idx}.startsAt`}
+					placeholder="10:22"
+				/>
+				{currentTime ? (
+					<SendouButton
+						variant="minimal"
+						size="miniscule"
+						onPress={() =>
+							setValue(`video.matches.${idx}.startsAt`, currentTime)
+						}
+						className="mt-2"
+					>
+						Set as current ({currentTime})
+					</SendouButton>
+				) : null}
+			</div>
+
+			<InputGroupFormField<VodFormFields>
+				type="radio"
+				label={t("vods:forms.title.mode")}
+				name={`video.matches.${idx}.mode`}
+				values={modesShort.map((mode) => ({
+					value: mode,
+					label: t(`game-misc:MODE_SHORT_${mode}`),
+				}))}
+				direction="horizontal"
 			/>
 
-			<div className="stack horizontal sm">
-				<SelectFormField<VodFormFields>
-					required
-					label={t("vods:forms.title.mode")}
-					name={`video.matches.${idx}.mode`}
-					values={modesShort.map((mode) => ({
-						value: mode,
-						label: t(`game-misc:MODE_SHORT_${mode}`),
-					}))}
-				/>
-
-				<SelectFormField<VodFormFields>
-					required
-					label={t("vods:forms.title.stage")}
-					name={`video.matches.${idx}.stageId`}
-					values={stageIds.map((stageId) => ({
-						value: stageId,
-						label: t(`game-misc:STAGE_${stageId}`),
-					}))}
-				/>
-			</div>
+			<SelectFormField<VodFormFields>
+				required
+				label={t("vods:forms.title.stage")}
+				name={`video.matches.${idx}.stageId`}
+				values={stageIds.map((stageId) => ({
+					value: stageId,
+					label: t(`game-misc:STAGE_${stageId}`),
+				}))}
+			/>
 
 			<WeaponsField idx={idx} videoType={videoType} />
 		</div>
@@ -376,6 +438,8 @@ function WeaponsField({
 		name: "video.teamSize",
 	});
 	const teamSize = typeof watchedTeamSize === "number" ? watchedTeamSize : 4;
+	const { recentlyReportedWeapons, addRecentlyReportedWeapon } =
+		useRecentlyReportedWeapons();
 
 	return (
 		<Controller
@@ -395,11 +459,15 @@ function WeaponsField({
 												isRequired
 												testId={`player-${i}-weapon`}
 												value={value[i] ?? null}
+												quickSelectWeaponsIds={recentlyReportedWeapons}
 												onChange={(weaponId) => {
 													const weapons = [...value];
 													weapons[i] = weaponId;
 
 													onChange(weapons);
+													if (weaponId) {
+														addRecentlyReportedWeapon(weaponId);
+													}
 												}}
 											/>
 										);
@@ -416,11 +484,15 @@ function WeaponsField({
 													isRequired
 													testId={`player-${adjustedI}-weapon`}
 													value={value[adjustedI] ?? null}
+													quickSelectWeaponsIds={recentlyReportedWeapons}
 													onChange={(weaponId) => {
 														const weapons = [...value];
 														weapons[adjustedI] = weaponId;
 
 														onChange(weapons);
+														if (weaponId) {
+															addRecentlyReportedWeapon(weaponId);
+														}
 													}}
 												/>
 											);
@@ -434,7 +506,13 @@ function WeaponsField({
 								isRequired
 								testId={`match-${idx}-weapon`}
 								value={value[0] ?? null}
-								onChange={(weaponId) => onChange([weaponId])}
+								quickSelectWeaponsIds={recentlyReportedWeapons}
+								onChange={(weaponId) => {
+									onChange([weaponId]);
+									if (weaponId) {
+										addRecentlyReportedWeapon(weaponId);
+									}
+								}}
 							/>
 						)}
 					</div>
@@ -442,4 +520,10 @@ function WeaponsField({
 			}}
 		/>
 	);
+}
+
+function formatTime(seconds: number): string {
+	const minutes = Math.floor(seconds / 60);
+	const secs = Math.floor(seconds % 60);
+	return `${minutes}:${secs.toString().padStart(2, "0")}`;
 }
