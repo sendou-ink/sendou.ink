@@ -15,7 +15,7 @@ import { loader } from "../loaders/q.preparing.server";
 import { FULL_GROUP_SIZE } from "../q-constants";
 export { loader, action };
 
-import "../q.css";
+import styles from "./q.preparing.module.css";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q", "user"],
@@ -41,7 +41,7 @@ export default function QPreparingPage() {
 
 	return (
 		<Main className="stack lg items-center">
-			<div className="q-preparing__card-container">
+			<div className={styles.cardContainer}>
 				<GroupCard group={data.group} hideNote ownGroup={data.group} />
 			</div>
 			{data.group.members.length < FULL_GROUP_SIZE &&

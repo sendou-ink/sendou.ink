@@ -77,7 +77,7 @@ import { loader } from "../loaders/q.match.$id.server";
 import { resolveGroupMemberOf } from "../q-match-utils";
 export { loader, action };
 
-import "~/features/sendouq/q.css";
+import styles from "./q.match.$id.module.css";
 
 export const meta: MetaFunction = (args) => {
 	const data = args.data as SerializeFrom<typeof loader> | null;
@@ -164,12 +164,12 @@ function QMatchPage() {
 	).members.find((m) => m.id === safeNumberParse(searchParams.get("note")));
 
 	return (
-		<Main className="q-match__container stack xl">
+		<Main className={`${styles.container} stack xl`}>
 			<AddPrivateNoteDialog
 				aboutUser={addingNoteFor}
 				close={() => navigate(sendouQMatchPage(data.match.id))}
 			/>
-			<div className="q-match__header">
+			<div className={styles.header}>
 				<h2>{t("q:match.header", { number: data.match.id })}</h2>
 				<div
 					className={clsx("text-xs text-lighter", {
@@ -208,7 +208,7 @@ function QMatchPage() {
 			) : null}
 			{!showWeaponsForm ? (
 				<>
-					<div className="q-match__teams-container">
+					<div className={styles.teamsContainer}>
 						{[data.match.groupAlpha, data.match.groupBravo].map((group, i) => {
 							const side = i === 0 ? "ALPHA" : "BRAVO";
 							const isOwnGroup = groupMemberOf === side;
@@ -582,7 +582,7 @@ function ReportWeaponsForm() {
 												key={member.id}
 												className="stack horizontal sm justify-between items-center flex-wrap"
 											>
-												<div className="q-match__report__user-name-container">
+												<div className={styles.userNameContainer}>
 													<Avatar user={member} size="xxs" />{" "}
 													{member.inGameName ? (
 														<>
@@ -758,9 +758,7 @@ function BottomSection({
 	);
 
 	const roomJoiningInfoElement = (
-		<div
-			className={clsx("q-match__pool-pass-container", { "mx-auto": !isMobile })}
-		>
+		<div className={clsx(styles.poolPassContainer, { "mx-auto": !isMobile })}>
 			<InfoWithHeader header={t("q:match.pool")} value={poolCode()} />
 			<InfoWithHeader
 				header={t("q:match.password.short")}
@@ -878,10 +876,10 @@ function BottomSection({
 
 	return (
 		<>
-			<div className="q-match__map-list-chat-container">
+			<div className={styles.mapListChatContainer}>
 				{mapListElement}
 				<div
-					className={clsx("q-match__bottom-mid-section", {
+					className={clsx(styles.bottomMidSection, {
 						invisible: !showMid,
 					})}
 				>
@@ -893,7 +891,7 @@ function BottomSection({
 						{cancelMatchElement}
 					</div>
 				</div>
-				<div className="q-match__chat-container">
+				<div className={styles.chatContainer}>
 					{chatRooms.length > 0 ? chatElement : null}
 				</div>
 			</div>
@@ -915,13 +913,13 @@ function ScreenLegalityInfo({ ban }: { ban: boolean }) {
 	const { t } = useTranslation(["q", "weapons"]);
 
 	return (
-		<div className="q-match__screen-legality">
+		<div className={styles.screenLegality}>
 			<SendouPopover
 				trigger={
 					<SendouButton
 						variant="minimal"
 						size="small"
-						className="q-match__screen-legality__button"
+						className={styles.screenLegalityButton}
 					>
 						<Alert variation={ban ? "ERROR" : "SUCCESS"}>
 							<div className="stack xs horizontal items-center">
@@ -951,8 +949,8 @@ function ScreenLegalityInfo({ ban }: { ban: boolean }) {
 function InfoWithHeader({ header, value }: { header: string; value: string }) {
 	return (
 		<div>
-			<div className="q-match__info__header">{header}</div>
-			<div className="q-match__info__value">{value}</div>
+			<div className={styles.infoHeader}>{header}</div>
+			<div className={styles.infoValue}>{value}</div>
 		</div>
 	);
 }
@@ -1185,7 +1183,7 @@ function MapListMap({
 								<SendouPopover
 									popoverClassName="text-main-forced"
 									trigger={
-										<SendouButton className="q-match__mode-popover-button">
+										<SendouButton className={styles.modePopoverButton}>
 											<ModeImage mode={map.mode} size={18} />
 										</SendouButton>
 									}
@@ -1254,7 +1252,7 @@ function MapListMap({
 						el.style.opacity = "1";
 					}}
 				>
-					<div className="q-match__report-section">
+					<div className={styles.reportSection}>
 						<label className="mb-0 text-theme-secondary">
 							{t("q:match.report.winnerLabel")}
 						</label>
@@ -1420,7 +1418,7 @@ function MapListMapPickInfo({
 			<SendouPopover
 				popoverClassName="text-main-forced"
 				trigger={
-					<SendouButton className="q-match__stage-popover-button">
+					<SendouButton className={styles.stagePopoverButton}>
 						{pickInfo(map.source)}
 					</SendouButton>
 				}

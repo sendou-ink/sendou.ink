@@ -1,5 +1,11 @@
+import type { MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
+import { SendouButton } from "~/components/elements/Button";
+import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
+import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
+import { USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN } from "~/features/mmr/mmr-constants";
+import { metaTags } from "~/utils/remix";
 import {
 	CALENDAR_PAGE,
 	FAQ_PAGE,
@@ -8,13 +14,7 @@ import {
 	SENDOUQ_SETTINGS_PAGE,
 	TIERS_PAGE,
 } from "~/utils/urls";
-import "../q.css";
-import type { MetaFunction } from "@remix-run/node";
-import { SendouButton } from "~/components/elements/Button";
-import { Image } from "~/components/Image";
-import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
-import { USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN } from "~/features/mmr/mmr-constants";
-import { metaTags } from "~/utils/remix";
+import styles from "./q.info.module.css";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -26,7 +26,7 @@ export const meta: MetaFunction = (args) => {
 
 export default function SendouQInfoPage() {
 	return (
-		<Main className="q-info__container">
+		<Main className={styles.container}>
 			<TableOfContents />
 			<GeneralInfo />
 			<BeforeJoining />
@@ -53,7 +53,7 @@ function TableOfContents() {
 	};
 
 	return (
-		<nav className="q-info__table-of-contents">
+		<nav className={styles.tableOfContents}>
 			<h2>Table of contents</h2>
 			<ul>
 				<li>

@@ -41,7 +41,7 @@ import { loader } from "../loaders/q.looking.server";
 import { FULL_GROUP_SIZE } from "../q-constants";
 export { action, loader };
 
-import "../q.css";
+import styles from "./q.looking.module.css";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["user", "q"],
@@ -292,7 +292,7 @@ function Groups() {
 						rooms={rooms}
 						users={chatUsers}
 						className="w-full"
-						messagesContainerClassName="q__chat-messages-container"
+						messagesContainerClassName={styles.messagesContainer}
 						chat={chat}
 						onMount={onChatMount}
 						onUnmount={onChatUnmount}
@@ -344,8 +344,8 @@ function Groups() {
 	return (
 		<Flipper flipKey={flipKey}>
 			<div
-				className={clsx("q__groups-container", {
-					"q__groups-container__mobile": isMobile,
+				className={clsx(styles.container, {
+					[styles.containerMobile]: isMobile,
 				})}
 			>
 				{!isMobile ? (
@@ -370,7 +370,7 @@ function Groups() {
 						</SendouTabs>
 					</div>
 				) : null}
-				<div className="q__groups-inner-container">
+				<div className={styles.innerContainer}>
 					<SendouTabs>
 						<SendouTabList scrolling={isMobile}>
 							<SendouTab id="groups" number={neutralGroups.length}>
@@ -506,7 +506,7 @@ function ColumnHeader({ children }: { children: React.ReactNode }) {
 
 	if (isMobile) return null;
 
-	return <div className="q__column-header">{children}</div>;
+	return <div className={styles.header}>{children}</div>;
 }
 
 function JoinQueuePrompt() {

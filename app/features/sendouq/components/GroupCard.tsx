@@ -44,6 +44,7 @@ import type {
 } from "../core/SendouQ.server";
 import { FULL_GROUP_SIZE, SENDOUQ } from "../q-constants";
 import { resolveFutureMatchModes } from "../q-utils";
+import styles from "./GroupCard.module.css";
 
 export function GroupCard({
 	group,
@@ -90,7 +91,7 @@ export function GroupCard({
 	return (
 		<GroupCardContainer groupId={group.id} isOwnGroup={isOwnGroup}>
 			<section
-				className={clsx("q__group", { "q__group__display-only": displayOnly })}
+				className={clsx(styles.group, { [styles.displayOnly]: displayOnly })}
 				data-testid="sendouq-group-card"
 			>
 				{group.members ? (
@@ -123,14 +124,14 @@ export function GroupCard({
 						<div className="stack horizontal sm justify-center">
 							{futureMatchModes.map((mode) => {
 								return (
-									<div key={mode} className="q__group__future-match-mode">
+									<div key={mode} className={styles.futureMatchMode}>
 										<ModeImage mode={mode} />
 									</div>
 								);
 							})}
 						</div>
 						{group.noScreen ? (
-							<div className="q__group__no-screen">
+							<div className={styles.noScreen}>
 								<Image
 									path={specialWeaponImageUrl(SPLATTERCOLOR_SCREEN_ID)}
 									width={22}
@@ -159,7 +160,7 @@ export function GroupCard({
 					</div>
 				) : null}
 				{group.tier && displayOnly && !group.members ? (
-					<div className="q__group__display-group-tier">
+					<div className={styles.displayTier}>
 						<TierImage tier={group.tier} width={38} />
 						{group.tier.name}
 						{group.tier.isPlus ? "+" : ""}
@@ -177,7 +178,7 @@ export function GroupCard({
 							<SendouPopover
 								popoverClassName="text-main-forced"
 								trigger={
-									<SendouButton className="q__group__or-popover-button">
+									<SendouButton className={styles.popoverButton}>
 										{t("q:looking.range.or")}
 									</SendouButton>
 								}
@@ -271,7 +272,7 @@ function GroupMember({
 
 	return (
 		<div className="stack xxs" data-testid="sendouq-group-card-member">
-			<div className="q__group-member">
+			<div className={styles.member}>
 				<div className="text-main-forced stack xs horizontal items-center">
 					{showNote && member.privateNote ? (
 						<SendouPopover
@@ -281,8 +282,10 @@ function GroupMember({
 										user={member}
 										size="xs"
 										className={clsx(
-											"q__group-member__avatar",
-											`q__group-member__avatar__${member.privateNote.sentiment}`,
+											styles.avatar,
+											styles[
+												`avatar${member.privateNote.sentiment.charAt(0).toUpperCase() + member.privateNote.sentiment.slice(1).toLowerCase()}`
+											],
 										)}
 									/>
 								</SendouButton>
@@ -316,7 +319,7 @@ function GroupMember({
 					) : (
 						<Avatar user={member} size="xs" />
 					)}
-					<Link to={userPage(member)} className="q__group-member__name">
+					<Link to={userPage(member)} className={styles.name}>
 						{member.inGameName ? (
 							<>
 								<span className="text-lighter font-bold text-xxxs">
@@ -343,12 +346,12 @@ function GroupMember({
 			<div className="stack horizontal justify-between">
 				<div className="stack horizontal items-center xxs">
 					{member.vc && !hideVc ? (
-						<div className="q__group-member__extra-info">
+						<div className={styles.extraInfo}>
 							<VoiceChatInfo member={member} />
 						</div>
 					) : null}
 					{member.plusTier ? (
-						<div className="q__group-member__extra-info">
+						<div className={styles.extraInfo}>
 							<Image path={navIconUrl("plus")} width={20} height={20} alt="" />
 							{member.plusTier}
 						</div>
@@ -356,7 +359,7 @@ function GroupMember({
 					{member.friendCode ? (
 						<SendouPopover
 							trigger={
-								<SendouButton className="q__group-member__extra-info-button">
+								<SendouButton className={styles.extraInfoButton}>
 									FC
 								</SendouButton>
 							}
@@ -368,8 +371,8 @@ function GroupMember({
 						<LinkButton
 							to={`?note=${member.id}`}
 							icon={<EditIcon />}
-							className={clsx("q__group-member__add-note-button", {
-								"q__group-member__add-note-button__edit": member.privateNote,
+							className={clsx(styles.addNoteButton, {
+								[styles.addNoteButtonEdit]: member.privateNote,
 							})}
 						>
 							{member.privateNote
@@ -379,7 +382,7 @@ function GroupMember({
 					) : null}
 				</div>
 				{member.weapons && member.weapons.length > 0 && !hideWeapons ? (
-					<div className="q__group-member__extra-info">
+					<div className={styles.extraInfo}>
 						{member.weapons?.map((weapon) => {
 							return (
 								<WeaponImage
@@ -485,7 +488,7 @@ function AddPrivateNoteForm({
 				value={value}
 				onChange={(e) => setValue(e.target.value)}
 				rows={2}
-				className="q__group-member__note-textarea mt-1"
+				className={`${styles.noteTextarea} mt-1`}
 				name="value"
 				ref={textareaRef}
 			/>
@@ -592,7 +595,7 @@ function MemberSkillDifference({
 				<span className="text-warning">▼</span>
 			);
 		return (
-			<div className="q__group-member__extra-info">
+			<div className={styles.extraInfo}>
 				{symbol}
 				{Math.abs(skillDifference.spDiff)}SP
 			</div>
@@ -601,7 +604,7 @@ function MemberSkillDifference({
 
 	if (skillDifference.matchesCount === skillDifference.matchesCountNeeded) {
 		return (
-			<div className="q__group-member__extra-info">
+			<div className={styles.extraInfo}>
 				<span className="text-lighter">{t("q:looking.sp.calculated")}:</span>{" "}
 				{skillDifference.newSp ? <>{skillDifference.newSp}SP</> : null}
 			</div>
@@ -609,7 +612,7 @@ function MemberSkillDifference({
 	}
 
 	return (
-		<div className="q__group-member__extra-info">
+		<div className={styles.extraInfo}>
 			<span className="text-lighter">{t("q:looking.sp.calculating")}</span> (
 			{skillDifference.matchesCount}/{skillDifference.matchesCountNeeded})
 		</div>
@@ -639,8 +642,8 @@ function MemberRoleManager({
 					variant="minimal"
 					icon={
 						<Icon
-							className={clsx("q__group-member__star", {
-								"q__group-member__star__inactive": member.role === "REGULAR",
+							className={clsx(styles.star, {
+								[styles.starInactive]: member.role === "REGULAR",
 							})}
 						/>
 					}
@@ -698,7 +701,7 @@ function TierInfo({ skill }: { skill: TieredSkill | "CALCULATING" }) {
 
 	if (skill === "CALCULATING") {
 		return (
-			<div className="q__group-member__tier">
+			<div className={styles.tier}>
 				<SendouPopover
 					trigger={
 						<SendouButton variant="minimal">
@@ -706,7 +709,7 @@ function TierInfo({ skill }: { skill: TieredSkill | "CALCULATING" }) {
 								path={tierImageUrl("CALCULATING")}
 								alt=""
 								height={32.965}
-								className="q__group-member__tier__placeholder"
+								className={styles.tierPlaceholder}
 							/>
 						</SendouButton>
 					}
@@ -720,7 +723,7 @@ function TierInfo({ skill }: { skill: TieredSkill | "CALCULATING" }) {
 	}
 
 	return (
-		<div className="q__group-member__tier">
+		<div className={styles.tier}>
 			<SendouPopover
 				trigger={
 					<SendouButton variant="minimal">
@@ -800,7 +803,7 @@ function VoiceChatInfo({
 				<SendouButton
 					variant="minimal"
 					size="small"
-					icon={<Icon className={clsx("q__group-member-vc-icon", color())} />}
+					icon={<Icon className={clsx(styles.vcIcon, color())} />}
 				/>
 			}
 		>

@@ -1,0 +1,45 @@
+.clocksContainer {
+	display: flex;
+	gap: var(--s-2);
+}
+
+.clock {
+	font-size: var(--fonts-sm);
+	font-weight: var(--bold);
+	color: var(--text-lighter);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	flex: 1 1 0;
+	line-height: 1.3;
+}
+
+.clockCountry {
+	color: var(--text) !important;
+	white-space: nowrap;
+	font-size: var(--fonts-xs);
+}
+
+.frontPageLink {
+	background-color: var(--bg-lighter);
+	border-radius: var(--rounded-sm);
+	padding: var(--s-2);
+	font-size: var(--fonts-sm);
+	color: var(--text);
+	font-weight: var(--bold);
+	display: flex;
+	align-items: center;
+	gap: var(--s-2-5);
+	transition: background-color 0.2s;
+}
+
+.frontPageLink:hover {
+	background-color: var(--theme-transparent);
+}
+
+.linkSubText {
+	color: var(--text-lighter);
+	font-size: var(--fonts-xxs);
+	font-weight: var(--body);
+}
