@@ -1147,6 +1147,10 @@
 		"displayName": "Switzerland",
 		"authorDiscordId": "338005893377556480"
 	},
+	"switzerland_2000sp": {
+		"displayName": "2000 SP in Switzerland",
+		"authorDiscordId": "338005893377556480"
+	},
 	"sys_strike": {
 		"displayName": "SYS://STRIKE Invitational",
 		"authorDiscordId": "751912670403362836"
