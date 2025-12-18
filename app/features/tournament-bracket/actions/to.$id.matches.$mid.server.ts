@@ -1,5 +1,6 @@
 import type { ActionFunction } from "@remix-run/node";
 import { sql } from "~/db/sql";
+import { TournamentMatchStatus } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
@@ -556,8 +557,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Not an organizer or streamer",
 			);
 
-			// can't lock, let's update their view to reflect that
-			if (match.opponentOne?.id && match.opponentTwo?.id) {
+			// can't lock if match status is not Locked (team(s) busy with previous match), let's update their view to reflect that
+			if (match.status !== TournamentMatchStatus.Locked) {
 				return null;
 			}
 

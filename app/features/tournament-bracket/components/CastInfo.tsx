@@ -3,6 +3,7 @@ import { InfoPopover } from "~/components/InfoPopover";
 import { LockIcon } from "~/components/icons/Lock";
 import { UnlockIcon } from "~/components/icons/Unlock";
 import { SubmitButton } from "~/components/SubmitButton";
+import { TournamentMatchStatus } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 
@@ -14,13 +15,13 @@ const setAsCastedInfo =
 export function CastInfo({
 	matchIsOngoing,
 	matchId,
-	hasBothParticipants,
 	matchIsOver,
+	matchStatus,
 }: {
 	matchIsOngoing: boolean;
 	matchId: number;
-	hasBothParticipants: boolean;
 	matchIsOver: boolean;
+	matchStatus: number;
 }) {
 	const user = useUser();
 	const tournament = useTournament();
@@ -36,8 +37,8 @@ export function CastInfo({
 
 	if (castTwitchAccounts.length === 0 || !hasPerms || matchIsOver) return null;
 
-	// match has to be locked beforehand, can't be done when both participants are there already
-	if (!hasBothParticipants && !isLocked) {
+	// match can only be locked when status is Locked (team(s) busy with previous match)
+	if (matchStatus === TournamentMatchStatus.Locked && !isLocked) {
 		return (
 			<CastInfoWrapper
 				submitButtonText="Lock to be casted"
