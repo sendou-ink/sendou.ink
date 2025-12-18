@@ -557,8 +557,11 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Not an organizer or streamer",
 			);
 
-			// can't lock if match status is not Locked (team(s) busy with previous match), let's update their view to reflect that
-			if (match.status !== TournamentMatchStatus.Locked) {
+			// can't lock if match status is not Locked or Waiting (team(s) busy with previous match), let's update their view to reflect that
+			if (
+				match.status !== TournamentMatchStatus.Locked &&
+				match.status !== TournamentMatchStatus.Waiting
+			) {
 				return null;
 			}
 

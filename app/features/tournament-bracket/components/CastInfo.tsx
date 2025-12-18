@@ -37,8 +37,12 @@ export function CastInfo({
 
 	if (castTwitchAccounts.length === 0 || !hasPerms || matchIsOver) return null;
 
-	// match can only be locked when status is Locked (team(s) busy with previous match)
-	if (matchStatus === TournamentMatchStatus.Locked && !isLocked) {
+	// match can only be locked when status is Locked or Waiting (team(s) busy with previous match)
+	if (
+		(matchStatus === TournamentMatchStatus.Locked ||
+			matchStatus === TournamentMatchStatus.Waiting) &&
+		!isLocked
+	) {
 		return (
 			<CastInfoWrapper
 				submitButtonText="Lock to be casted"
