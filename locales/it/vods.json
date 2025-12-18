@@ -27,7 +27,10 @@
 	"teamSize.4v4": "",
 	"forms.action.addMatch": "Aggiungi partita",
 	"forms.action.deleteMatch": "Elimina partita",
+	"forms.action.setAsCurrent": "",
+	"forms.action.copyFromPrevious": "",
 	"noVods": "Nessun video trovato con questo filtro. Ci stiamo dimenticando di qualcosa? Consulta il FAQ per informazioni su come ottenere il permesso per caricare VoD",
 	"gainPerms": "Si prega di postare sull'helpdesk del nostro Discord per ottenere permessi per caricare VoD",
-	"deleteConfirm": "Cancellare video il titolo '{{title}}'?"
+	"deleteConfirm": "Cancellare video il titolo '{{title}}'?",
+	"errors.youtubePreviewFailed": ""
 }

@@ -27,7 +27,10 @@
 	"teamSize.4v4": "4v4",
 	"forms.action.addMatch": "Add match",
 	"forms.action.deleteMatch": "Delete match",
+	"forms.action.setAsCurrent": "Set as current ({{time}})",
+	"forms.action.copyFromPrevious": "Copy from previous game",
 	"noVods": "No videos found matching this filter. Are we missing something? See the FAQ page on information about how to gain VoD uploading permissions.",
 	"gainPerms": "Please post on the helpdesk of our Discord to gain permissions to upload videos",
-	"deleteConfirm": "Delete video with the title '{{title}}'?"
+	"deleteConfirm": "Delete video with the title '{{title}}'?",
+	"errors.youtubePreviewFailed": "Failed to load YouTube preview"
 }

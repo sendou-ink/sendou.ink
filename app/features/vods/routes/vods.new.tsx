@@ -17,12 +17,12 @@ import { InputGroupFormField } from "~/components/form/InputGroupFormField";
 import { RemoveFieldButton } from "~/components/form/RemoveFieldButton";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
+import { StageSelect } from "~/components/StageSelect";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import { YouTubeEmbed } from "~/components/YouTubeEmbed";
 import type { Tables } from "~/db/tables";
 import { useRecentlyReportedWeapons } from "~/features/sendouq/q-hooks";
 import { modesShort } from "~/modules/in-game-lists/modes";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { useHasRole } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Alert } from "../../../components/Alert";
@@ -363,11 +363,15 @@ function MatchesFieldset({
 		if (!player) return;
 
 		const interval = setInterval(() => {
-			const time = player.getCurrentTime();
-			if (time) {
-				setCurrentTime(formatTime(time));
+			try {
+				const time = player.getCurrentTime();
+				if (time) {
+					setCurrentTime(formatTime(time));
+				}
+			} catch {
+				// Silently ignore errors when getting current time
 			}
-		}, 100);
+		}, 250);
 
 		return () => clearInterval(interval);
 	}, [player]);
@@ -395,7 +399,7 @@ function MatchesFieldset({
 						}
 						className="mt-2"
 					>
-						Set as current ({currentTime})
+						{t("vods:forms.action.setAsCurrent", { time: currentTime })}
 					</SendouButton>
 				) : null}
 			</div>
@@ -411,14 +415,17 @@ function MatchesFieldset({
 				direction="horizontal"
 			/>
 
-			<SelectFormField<VodFormFields>
-				required
-				label={t("vods:forms.title.stage")}
+			<Controller
+				control={useFormContext<VodFormFields>().control}
 				name={`video.matches.${idx}.stageId`}
-				values={stageIds.map((stageId) => ({
-					value: stageId,
-					label: t(`game-misc:STAGE_${stageId}`),
-				}))}
+				render={({ field: { onChange, value } }) => (
+					<StageSelect
+						isRequired
+						label={t("vods:forms.title.stage")}
+						value={value}
+						onChange={onChange}
+					/>
+				)}
 			/>
 
 			<WeaponsField idx={idx} videoType={videoType} />
@@ -440,12 +447,19 @@ function WeaponsField({
 	const teamSize = typeof watchedTeamSize === "number" ? watchedTeamSize : 4;
 	const { recentlyReportedWeapons, addRecentlyReportedWeapon } =
 		useRecentlyReportedWeapons();
+	const matches = useWatch<VodFormFields>({
+		name: "video.matches",
+	}) as VodFormFields["video"]["matches"];
 
 	return (
 		<Controller
 			control={useFormContext<VodFormFields>().control}
 			name={`video.matches.${idx}.weapons`}
 			render={({ field: { onChange, value } }) => {
+				const previousWeapons =
+					idx > 0 && matches?.[idx - 1]?.weapons
+						? matches[idx - 1].weapons
+						: null;
 				return (
 					<div>
 						{videoType === "CAST" ? (
@@ -515,6 +529,18 @@ function WeaponsField({
 								}}
 							/>
 						)}
+						{previousWeapons && previousWeapons.length > 0 ? (
+							<SendouButton
+								variant="minimal"
+								size="miniscule"
+								onPress={() => {
+									onChange([...previousWeapons]);
+								}}
+								className="mt-2"
+							>
+								{t("vods:forms.action.copyFromPrevious")}
+							</SendouButton>
+						) : null}
 					</div>
 				);
 			}}

@@ -20,6 +20,7 @@ declare namespace YT {
 				};
 				events?: {
 					onReady?: () => void;
+					onError?: (event: { data: number }) => void;
 				};
 			},
 		);
