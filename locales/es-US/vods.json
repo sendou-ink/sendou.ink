@@ -27,7 +27,10 @@
 	"teamSize.4v4": "",
 	"forms.action.addMatch": "Agregar partido",
 	"forms.action.deleteMatch": "Borrar partido",
+	"forms.action.setAsCurrent": "",
+	"forms.action.copyFromPrevious": "",
 	"noVods": "",
 	"gainPerms": "Por favor envia un mensaje en el 'helpdesk' de nuestro Discord para obtener permiso para subir videos.",
-	"deleteConfirm": "¿Borrar video con el título de '{{title}}'?"
+	"deleteConfirm": "¿Borrar video con el título de '{{title}}'?",
+	"errors.youtubePreviewFailed": ""
 }

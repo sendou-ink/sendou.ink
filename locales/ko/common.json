@@ -169,6 +169,8 @@
 	"forms.weaponSearch.quickSelect": "",
 	"forms.gearSearch.placeholder": "",
 	"forms.gearSearch.search.placeholder": "",
+	"forms.stageSearch.placeholder": "",
+	"forms.stageSearch.search.placeholder": "",
 	"tag.name.SPECIAL": "특별 규칙",
 	"tag.name.ART": "그림 상품",
 	"tag.name.MONEY": "상금",

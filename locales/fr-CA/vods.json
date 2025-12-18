@@ -27,7 +27,10 @@
 	"teamSize.4v4": "",
 	"forms.action.addMatch": "Ajouter un match",
 	"forms.action.deleteMatch": "Effacer un match",
+	"forms.action.setAsCurrent": "",
+	"forms.action.copyFromPrevious": "",
 	"noVods": "",
 	"gainPerms": "",
-	"deleteConfirm": ""
+	"deleteConfirm": "",
+	"errors.youtubePreviewFailed": ""
 }

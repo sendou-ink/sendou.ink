@@ -171,6 +171,8 @@
 	"forms.weaponSearch.quickSelect": "",
 	"forms.gearSearch.placeholder": "",
 	"forms.gearSearch.search.placeholder": "",
+	"forms.stageSearch.placeholder": "",
+	"forms.stageSearch.search.placeholder": "",
 	"tag.name.SPECIAL": "Spezielle Regeln",
 	"tag.name.ART": "Kunst-Preise",
 	"tag.name.MONEY": "Geld-Preise",
