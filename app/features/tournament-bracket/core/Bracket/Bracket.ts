@@ -365,7 +365,7 @@ export abstract class Bracket {
 			if (!checkInOpen) return false;
 		}
 
-		const team = this.tournament.ownedTeamByUser(user);
+		const team = this.tournament.teamMemberOfByUser(user);
 		if (!team) return false;
 
 		return this.teamsPendingCheckIn.includes(team.id);
