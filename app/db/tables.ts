@@ -15,6 +15,7 @@ import type { ScrimFilters } from "~/features/scrims/scrims-types";
 import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
+import type { StoredWidget } from "~/features/user-page/core/widgets/types";
 import type { ParticipantResult } from "~/modules/brackets-model";
 import type {
 	Ability,
@@ -927,6 +928,13 @@ export interface UserFriendCode {
 	createdAt: GeneratedAlways<number>;
 }
 
+// xxx: other fields here
+export interface UserWidget {
+	userId: number;
+	index: number;
+	widget: JSONColumnType<StoredWidget>;
+}
+
 export interface ApiToken {
 	id: GeneratedAlways<number>;
 	userId: number;
@@ -1177,6 +1185,7 @@ export interface DB {
 	UserSubmittedImage: UserSubmittedImage;
 	UserWeapon: UserWeapon;
 	UserFriendCode: UserFriendCode;
+	UserWidget: UserWidget;
 	Video: Video;
 	VideoMatch: VideoMatch;
 	VideoMatchPlayer: VideoMatchPlayer;

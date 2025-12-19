@@ -148,7 +148,10 @@ export function findByUserId(
 		.select([
 			"TournamentOrganization.id",
 			"TournamentOrganization.name",
+			"TournamentOrganization.slug",
 			"TournamentOrganization.isEstablished",
+			"TournamentOrganizationMember.role",
+			"TournamentOrganizationMember.roleDisplayName",
 		])
 		.where("TournamentOrganizationMember.userId", "=", userId)
 		.$if(roles.length > 0, (qb) =>

@@ -24,8 +24,10 @@ import {
 	teamPage,
 	topSearchPlayerPage,
 } from "~/utils/urls";
+import { Widget } from "../components/Widget";
 import { loader } from "../loaders/u.$identifier.index.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+import styles from "./u.$identifier.module.css";
 export { loader };
 
 export const handle: SendouRouteHandle = {
@@ -34,9 +36,70 @@ export const handle: SendouRouteHandle = {
 
 export default function UserInfoPage() {
 	const data = useLoaderData<typeof loader>();
+
+	if (data.type === "new") {
+		return <NewUserInfoPage />;
+	}
+	return <OldUserInfoPage />;
+}
+
+function NewUserInfoPage() {
+	const data = useLoaderData<typeof loader>();
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
 	const layoutData = parentRoute.data as UserPageLoaderData;
+
+	if (data.type !== "new") {
+		throw new Error("Expected new user data");
+	}
+
+	const mainWidgets = data.widgets.filter((w) => w.slot === "main");
+	const sideWidgets = data.widgets.filter((w) => w.slot === "side");
+
+	return (
+		<div className={styles.container}>
+			<div className={styles.header}>
+				<Avatar user={layoutData.user} size="xmd" />
+				<h1 className={styles.username}>{layoutData.user.username}</h1>
+			</div>
+
+			<div className={styles.sideCarousel}>
+				{sideWidgets.map((widget) => (
+					<Widget key={widget.id} widget={widget} />
+				))}
+			</div>
+
+			<div className={styles.mainStack}>
+				{mainWidgets.map((widget) => (
+					<Widget key={widget.id} widget={widget} />
+				))}
+			</div>
+
+			<div className={styles.grid}>
+				<div className={styles.main}>
+					{mainWidgets.map((widget) => (
+						<Widget key={widget.id} widget={widget} />
+					))}
+				</div>
+				<div className={styles.side}>
+					{sideWidgets.map((widget) => (
+						<Widget key={widget.id} widget={widget} />
+					))}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+export function OldUserInfoPage() {
+	const data = useLoaderData<typeof loader>();
+	const [, parentRoute] = useMatches();
+	invariant(parentRoute);
+	const layoutData = parentRoute.data as UserPageLoaderData;
+
+	if (data.type !== "old") {
+		throw new Error("Expected old user data");
+	}
 
 	return (
 		<div className="u__container">
@@ -81,6 +144,10 @@ function TeamInfo() {
 	const { t } = useTranslation(["team"]);
 	const data = useLoaderData<typeof loader>();
 
+	if (data.type !== "old") {
+		throw new Error("Expected old user data");
+	}
+
 	if (!data.user.team) return null;
 
 	return (
@@ -117,6 +184,10 @@ function SecondaryTeamsPopover() {
 	const { t } = useTranslation(["team"]);
 
 	const data = useLoaderData<typeof loader>();
+
+	if (data.type !== "old") {
+		throw new Error("Expected old user data");
+	}
 
 	if (data.user.secondaryTeams.length === 0) return null;
 
@@ -231,6 +302,10 @@ function ExtraInfos() {
 	const { t } = useTranslation(["user"]);
 	const data = useLoaderData<typeof loader>();
 
+	if (data.type !== "old") {
+		throw new Error("Expected old user data");
+	}
+
 	const motionSensText =
 		typeof data.user.motionSens === "number"
 			? `${t("user:motion")} ${rawSensToString(data.user.motionSens)}`
@@ -286,6 +361,10 @@ function ExtraInfos() {
 function WeaponPool() {
 	const data = useLoaderData<typeof loader>();
 
+	if (data.type !== "old") {
+		throw new Error("Expected old user data");
+	}
+
 	if (data.user.weapons.length === 0) return null;
 
 	return (
@@ -309,6 +388,10 @@ function WeaponPool() {
 
 function TopPlacements() {
 	const data = useLoaderData<typeof loader>();
+
+	if (data.type !== "old") {
+		throw new Error("Expected old user data");
+	}
 
 	if (data.user.topPlacements.length === 0) return null;
 

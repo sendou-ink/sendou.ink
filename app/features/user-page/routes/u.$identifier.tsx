@@ -1,5 +1,10 @@
 import type { MetaFunction } from "@remix-run/node";
-import { Outlet, useLoaderData, useLocation } from "@remix-run/react";
+import {
+	Outlet,
+	useLoaderData,
+	useLocation,
+	useMatches,
+} from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Main } from "~/components/Main";
 import { SubNav, SubNavLink } from "~/components/SubNav";
@@ -66,73 +71,81 @@ export default function UserPageLayout() {
 	const isStaff = useHasRole("STAFF");
 	const location = useLocation();
 	const { t } = useTranslation(["common", "user"]);
+	const matches = useMatches();
 
 	const isOwnPage = data.user.id === user?.id;
 
 	const allResultsCount =
 		data.user.calendarEventResultsCount + data.user.tournamentResultsCount;
 
+	const isNewUserPage = matches.some((m) => (m.data as any)?.type === "new");
+
 	return (
 		<Main bigger={location.pathname.includes("results")}>
-			<SubNav>
-				<SubNavLink to={userPage(data.user)} data-testid="user-profile-tab">
-					{t("common:header.profile")}
-				</SubNavLink>
-				<SubNavLink
-					to={userSeasonsPage({ user: data.user })}
-					data-testid="user-seasons-tab"
-				>
-					{t("user:seasons")}
-				</SubNavLink>
-				{isOwnPage ? (
+			{!isNewUserPage ? (
+				<SubNav>
+					<SubNavLink to={userPage(data.user)} data-testid="user-profile-tab">
+						{t("common:header.profile")}
+					</SubNavLink>
 					<SubNavLink
-						to={userEditProfilePage(data.user)}
-						prefetch="intent"
-						data-testid="user-edit-tab"
+						to={userSeasonsPage({ user: data.user })}
+						data-testid="user-seasons-tab"
 					>
-						{t("common:actions.edit")}
+						{t("user:seasons")}
 					</SubNavLink>
-				) : null}
-				{allResultsCount > 0 ? (
-					<SubNavLink
-						to={userResultsPage(data.user)}
-						data-testid="user-results-tab"
-					>
-						{t("common:results")} ({allResultsCount})
-					</SubNavLink>
-				) : null}
-				{data.user.buildsCount > 0 || isOwnPage ? (
-					<SubNavLink
-						to={userBuildsPage(data.user)}
-						prefetch="intent"
-						data-testid="user-builds-tab"
-					>
-						{t("common:pages.builds")} ({data.user.buildsCount})
-					</SubNavLink>
-				) : null}
-				{data.user.vodsCount > 0 || isOwnPage ? (
-					<SubNavLink to={userVodsPage(data.user)} data-testid="user-vods-tab">
-						{t("common:pages.vods")} ({data.user.vodsCount})
-					</SubNavLink>
-				) : null}
-				{data.user.artCount > 0 || isOwnPage ? (
-					<SubNavLink
-						to={userArtPage(data.user)}
-						end={false}
-						data-testid="user-art-tab"
-					>
-						{t("common:pages.art")} ({data.user.artCount})
-					</SubNavLink>
-				) : null}
-				{isStaff ? (
-					<SubNavLink
-						to={userAdminPage(data.user)}
-						data-testid="user-admin-tab"
-					>
-						Admin
-					</SubNavLink>
-				) : null}
-			</SubNav>
+					{isOwnPage ? (
+						<SubNavLink
+							to={userEditProfilePage(data.user)}
+							prefetch="intent"
+							data-testid="user-edit-tab"
+						>
+							{t("common:actions.edit")}
+						</SubNavLink>
+					) : null}
+					{allResultsCount > 0 ? (
+						<SubNavLink
+							to={userResultsPage(data.user)}
+							data-testid="user-results-tab"
+						>
+							{t("common:results")} ({allResultsCount})
+						</SubNavLink>
+					) : null}
+					{data.user.buildsCount > 0 || isOwnPage ? (
+						<SubNavLink
+							to={userBuildsPage(data.user)}
+							prefetch="intent"
+							data-testid="user-builds-tab"
+						>
+							{t("common:pages.builds")} ({data.user.buildsCount})
+						</SubNavLink>
+					) : null}
+					{data.user.vodsCount > 0 || isOwnPage ? (
+						<SubNavLink
+							to={userVodsPage(data.user)}
+							data-testid="user-vods-tab"
+						>
+							{t("common:pages.vods")} ({data.user.vodsCount})
+						</SubNavLink>
+					) : null}
+					{data.user.artCount > 0 || isOwnPage ? (
+						<SubNavLink
+							to={userArtPage(data.user)}
+							end={false}
+							data-testid="user-art-tab"
+						>
+							{t("common:pages.art")} ({data.user.artCount})
+						</SubNavLink>
+					) : null}
+					{isStaff ? (
+						<SubNavLink
+							to={userAdminPage(data.user)}
+							data-testid="user-admin-tab"
+						>
+							Admin
+						</SubNavLink>
+					) : null}
+				</SubNav>
+			) : null}
 			<Outlet />
 		</Main>
 	);

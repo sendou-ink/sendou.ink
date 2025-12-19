@@ -107,6 +107,22 @@ export function findManagedByUserId(userId: number) {
 		.execute();
 }
 
+export function findByOwnerUserId(userId: number) {
+	return db
+		.selectFrom("BadgeOwner")
+		.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
+		.select(({ fn }) => [
+			fn.count<number>("BadgeOwner.badgeId").as("count"),
+			"Badge.id",
+			"Badge.displayName",
+			"Badge.code",
+			"Badge.hue",
+		])
+		.where("BadgeOwner.userId", "=", userId)
+		.groupBy(["BadgeOwner.badgeId", "BadgeOwner.userId"])
+		.execute();
+}
+
 export function replaceManagers({
 	badgeId,
 	managerIds,

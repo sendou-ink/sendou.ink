@@ -21,8 +21,12 @@ import {
 	tournamentLogoOrNull,
 	userChatNameColor,
 } from "~/utils/kysely.server";
+import { logger } from "~/utils/logger";
 import { safeNumberParse } from "~/utils/number";
+import { ADMIN_ID } from "../admin/admin-constants";
 import type { ChatUser } from "../chat/chat-types";
+import { ALL_WIDGETS } from "./core/widgets/portfolio.server";
+import type { LoadedWidget } from "./core/widgets/types";
 
 const identifierToUserIdQuery = (identifier: string) =>
 	db
@@ -259,6 +263,67 @@ export async function findProfileByIdentifier(
 				? row.discordUniqueName
 				: null,
 	};
+}
+
+export async function widgetsEnabledByUserId(
+	_identifier: string,
+): Promise<boolean> {
+	return Promise.resolve(true);
+}
+
+export async function upsertWidgets(
+	userId: number,
+	widgets: Array<Tables["UserWidget"]["widget"]>,
+) {
+	return db.transaction().execute(async (trx) => {
+		await trx.deleteFrom("UserWidget").where("userId", "=", userId).execute();
+
+		await trx
+			.insertInto("UserWidget")
+			.values(
+				widgets.map((widget, index) => ({
+					userId,
+					index,
+					widget: JSON.stringify(widget),
+				})),
+			)
+			.execute();
+	});
+}
+
+export async function widgetsByUserId(
+	_identifier: string,
+): Promise<LoadedWidget[]> {
+	const widgets = await db
+		.selectFrom("UserWidget")
+		.select(["widget"])
+		.where("userId", "=", ADMIN_ID) // xxx: real
+		.orderBy("index", "asc")
+		.execute();
+
+	const loadedWidgets = await Promise.all(
+		widgets.map(async (widget) => {
+			const definition = ALL_WIDGETS.find((w) => w.id === widget.widget.id);
+
+			if (!definition) {
+				logger.warn(
+					`Unknown widget id found for user ${_identifier}: ${widget.widget.id}`,
+				);
+				return null;
+			}
+
+			const data = await definition.load(ADMIN_ID);
+
+			return {
+				id: widget.widget.id,
+				data,
+				settings: data,
+				slot: definition.slot,
+			} as LoadedWidget;
+		}),
+	);
+
+	return loadedWidgets.filter((w) => w !== null);
 }
 
 function favoriteBadgesOwnedAndSupporterStatusAdjusted(row: {

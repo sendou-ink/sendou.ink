@@ -45,6 +45,7 @@ export function findAllMemberOfByUserId(userId: number) {
 			"Team.id",
 			"Team.customUrl",
 			"Team.name",
+			"TeamMemberWithSecondary.role",
 			"UserSubmittedImage.url as logoUrl",
 		])
 		.where("TeamMemberWithSecondary.userId", "=", userId)
