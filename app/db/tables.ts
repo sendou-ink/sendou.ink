@@ -928,7 +928,6 @@ export interface UserFriendCode {
 	createdAt: GeneratedAlways<number>;
 }
 
-// xxx: other fields here
 export interface UserWidget {
 	userId: number;
 	index: number;

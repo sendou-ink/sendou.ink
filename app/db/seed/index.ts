@@ -363,27 +363,21 @@ export async function adminUserWidgets() {
 	await UserRepository.upsertWidgets(ADMIN_ID, [
 		{
 			id: "bio",
-			data: "N/A",
 		},
 		{
 			id: "badges-owned",
-			data: "N/A",
 		},
 		{
 			id: "teams",
-			data: "N/A",
 		},
 		{
 			id: "organizations",
-			data: "N/A",
 		},
 		{
 			id: "peak-sp",
-			data: "N/A",
 		},
 		{
 			id: "peak-xp",
-			data: "N/A",
 		},
 	]);
 }

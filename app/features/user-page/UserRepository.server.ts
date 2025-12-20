@@ -321,7 +321,7 @@ export async function widgetsByUserId(
 			return {
 				id: widget.widget.id,
 				data,
-				settings: data,
+				settings: widget.widget.settings,
 				slot: definition.slot,
 			} as LoadedWidget;
 		}),

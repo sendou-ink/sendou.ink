@@ -87,10 +87,12 @@ export const ALL_WIDGETS = [
 		category: "misc",
 		slot: "side",
 		load: async (userId: number) => {
-			const placements =
-				await XRankPlacementRepository.findPlacementsByUserId(userId, {
+			const placements = await XRankPlacementRepository.findPlacementsByUserId(
+				userId,
+				{
 					limit: 1,
-				});
+				},
+			);
 
 			if (!placements || placements.length === 0) {
 				return null;

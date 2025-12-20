@@ -13,13 +13,13 @@ export function Widget({ widget }: { widget: SerializeFrom<LoadedWidget> }) {
 	const content = () => {
 		switch (widget.id) {
 			case "bio":
-				return widget.settings ? <article>{widget.settings}</article> : null;
+				return widget.data ? <article>{widget.data}</article> : null;
 			case "badges-owned":
-				return <BadgeDisplay badges={widget.settings} />;
+				return <BadgeDisplay badges={widget.data} />;
 			case "teams":
 				return (
 					<Memberships
-						memberships={widget.settings.map((team) => ({
+						memberships={widget.data.map((team) => ({
 							id: team.id,
 							url: teamPage(team.customUrl),
 							name: team.name,
@@ -31,7 +31,7 @@ export function Widget({ widget }: { widget: SerializeFrom<LoadedWidget> }) {
 			case "organizations":
 				return (
 					<Memberships
-						memberships={widget.settings.map((org) => ({
+						memberships={widget.data.map((org) => ({
 							id: org.id,
 							url: tournamentOrganizationPage({
 								organizationSlug: org.slug,
@@ -44,21 +44,21 @@ export function Widget({ widget }: { widget: SerializeFrom<LoadedWidget> }) {
 					/>
 				);
 			case "peak-sp":
-				if (!widget.settings) return null;
+				if (!widget.data) return null;
 				return (
 					<PeakValue
-						value={widget.settings.peakSp}
+						value={widget.data.peakSp}
 						unit="SP"
-						footer={`${widget.settings.tierName}${widget.settings.isPlus ? "+" : ""} / ${t("user:seasons.season.short")}${widget.settings.season}`}
+						footer={`${widget.data.tierName}${widget.data.isPlus ? "+" : ""} / ${t("user:seasons.season.short")}${widget.data.season}`}
 					/>
 				);
 			case "peak-xp":
-				if (!widget.settings) return null;
+				if (!widget.data) return null;
 				return (
 					<PeakValue
-						value={widget.settings.peakXp}
+						value={widget.data.peakXp}
 						unit="XP"
-						footer={`${widget.settings.division}${widget.settings.topRating ? ` / #${widget.settings.topRating}` : ""}`}
+						footer={`${widget.data.division}${widget.data.topRating ? ` / #${widget.data.topRating}` : ""}`}
 					/>
 				);
 			default:
