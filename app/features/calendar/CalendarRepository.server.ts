@@ -101,7 +101,7 @@ function tournamentOrganization(organizationId: Expression<number | null>) {
 				"TournamentOrganization.slug",
 				"TournamentOrganization.isEstablished",
 				concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
-					"avatarUrl",
+					"logoUrl",
 				),
 			])
 			.whereRef("TournamentOrganization.id", "=", organizationId),

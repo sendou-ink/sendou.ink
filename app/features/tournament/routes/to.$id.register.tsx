@@ -96,7 +96,7 @@ export default function TournamentRegisterPage() {
 								className="stack horizontal sm items-center text-xs text-main-forced"
 							>
 								<Avatar
-									url={tournament.ctx.organization.avatarUrl ?? undefined}
+									url={tournament.ctx.organization.logoUrl ?? undefined}
 									size="xxs"
 								/>
 								{tournament.ctx.organization.name}

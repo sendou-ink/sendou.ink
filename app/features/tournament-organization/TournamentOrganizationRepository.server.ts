@@ -145,13 +145,21 @@ export function findByUserId(
 			"TournamentOrganization.id",
 			"TournamentOrganizationMember.organizationId",
 		)
-		.select([
+		.leftJoin(
+			"UserSubmittedImage",
+			"UserSubmittedImage.id",
+			"TournamentOrganization.avatarImgId",
+		)
+		.select(({ eb }) => [
 			"TournamentOrganization.id",
 			"TournamentOrganization.name",
 			"TournamentOrganization.slug",
 			"TournamentOrganization.isEstablished",
 			"TournamentOrganizationMember.role",
 			"TournamentOrganizationMember.roleDisplayName",
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"logoUrl",
+			),
 		])
 		.where("TournamentOrganizationMember.userId", "=", userId)
 		.$if(roles.length > 0, (qb) =>

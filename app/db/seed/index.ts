@@ -359,7 +359,7 @@ function adminUserWeaponPool() {
 	}
 }
 
-async function adminUserWidgets() {
+export async function adminUserWidgets() {
 	await UserRepository.upsertWidgets(ADMIN_ID, [
 		{
 			id: "bio",
@@ -375,6 +375,14 @@ async function adminUserWidgets() {
 		},
 		{
 			id: "organizations",
+			data: "N/A",
+		},
+		{
+			id: "peak-sp",
+			data: "N/A",
+		},
+		{
+			id: "peak-xp",
 			data: "N/A",
 		},
 	]);

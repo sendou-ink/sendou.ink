@@ -55,3 +55,24 @@
 	font-size: var(--fonts-xxs);
 	color: var(--text-lighter);
 }
+
+.peakValue {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.peakValueMain {
+	font-size: var(--fonts-xl);
+	font-weight: var(--semi-bold);
+	color: var(--text);
+}
+
+.peakValueFooter {
+	font-size: var(--fonts-xxs);
+	font-weight: var(--semi-bold);
+	color: var(--text-lighter);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}

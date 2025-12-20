@@ -292,12 +292,16 @@ export async function upsertWidgets(
 }
 
 export async function widgetsByUserId(
-	_identifier: string,
-): Promise<LoadedWidget[]> {
+	identifier: string,
+): Promise<LoadedWidget[] | null> {
+	const user = await identifierToUserId(identifier);
+
+	if (!user) return null;
+
 	const widgets = await db
 		.selectFrom("UserWidget")
 		.select(["widget"])
-		.where("userId", "=", ADMIN_ID) // xxx: real
+		.where("userId", "=", user.id)
 		.orderBy("index", "asc")
 		.execute();
 
@@ -307,7 +311,7 @@ export async function widgetsByUserId(
 
 			if (!definition) {
 				logger.warn(
-					`Unknown widget id found for user ${_identifier}: ${widget.widget.id}`,
+					`Unknown widget id found for user ${user.id}: ${widget.widget.id}`,
 				);
 				return null;
 			}

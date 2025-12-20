@@ -37,11 +37,28 @@ export function Widget({ widget }: { widget: SerializeFrom<LoadedWidget> }) {
 								organizationSlug: org.slug,
 							}),
 							name: org.name,
-							// xxx: define
-							logoUrl: null,
+							logoUrl: org.logoUrl,
 							roleDisplayName:
 								org.roleDisplayName ?? t(`org:roles.${org.role}`),
 						}))}
+					/>
+				);
+			case "peak-sp":
+				if (!widget.settings) return null;
+				return (
+					<PeakValue
+						value={widget.settings.peakSp}
+						unit="SP"
+						footer={`${widget.settings.tierName}${widget.settings.isPlus ? "+" : ""} / ${t("user:seasons.season.short")}${widget.settings.season}`}
+					/>
+				);
+			case "peak-xp":
+				if (!widget.settings) return null;
+				return (
+					<PeakValue
+						value={widget.settings.peakXp}
+						unit="XP"
+						footer={`${widget.settings.division}${widget.settings.topRating ? ` / #${widget.settings.topRating}` : ""}`}
 					/>
 				);
 			default:
@@ -53,6 +70,25 @@ export function Widget({ widget }: { widget: SerializeFrom<LoadedWidget> }) {
 		<div className={styles.widget}>
 			<h2 className={styles.header}>{t(`user:widget.${widget.id}`)}</h2>
 			<div className={styles.content}>{content()}</div>
+		</div>
+	);
+}
+
+function PeakValue({
+	value,
+	unit,
+	footer,
+}: {
+	value: number;
+	unit: string;
+	footer: string;
+}) {
+	return (
+		<div className={styles.peakValue}>
+			<div className={styles.peakValueMain}>
+				{value} {unit}
+			</div>
+			<div className={styles.peakValueFooter}>{footer}</div>
 		</div>
 	);
 }
@@ -80,8 +116,8 @@ function Memberships({
 						<img
 							alt=""
 							src={membership.logoUrl}
-							width={32}
-							height={32}
+							width={42}
+							height={42}
 							className="rounded-full"
 						/>
 					) : null}

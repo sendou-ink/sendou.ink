@@ -10,7 +10,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	if (widgetsEnabled) {
 		return {
 			type: "new" as const,
-			widgets: await UserRepository.widgetsByUserId(params.identifier!),
+			widgets: notFoundIfFalsy(
+				await UserRepository.widgetsByUserId(params.identifier!),
+			),
 		};
 	}
 

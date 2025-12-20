@@ -6922,7 +6922,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			id: 3,
 			name: "Inkling Performance Labs",
 			slug: "inkling-performance-labs",
-			avatarUrl: "fZrToLQrkqV3UZkdgwp0Q-1722263644749.webp",
+			logoUrl: "fZrToLQrkqV3UZkdgwp0Q-1722263644749.webp",
 			members: [
 				{
 					userId: 405,

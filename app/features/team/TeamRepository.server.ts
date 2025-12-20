@@ -41,12 +41,14 @@ export function findAllMemberOfByUserId(userId: number) {
 		.selectFrom("TeamMemberWithSecondary")
 		.innerJoin("Team", "Team.id", "TeamMemberWithSecondary.teamId")
 		.leftJoin("UserSubmittedImage", "UserSubmittedImage.id", "Team.avatarImgId")
-		.select([
+		.select(({ eb }) => [
 			"Team.id",
 			"Team.customUrl",
 			"Team.name",
 			"TeamMemberWithSecondary.role",
-			"UserSubmittedImage.url as logoUrl",
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"logoUrl",
+			),
 		])
 		.where("TeamMemberWithSecondary.userId", "=", userId)
 		.execute();

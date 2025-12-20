@@ -54,6 +54,22 @@ export async function findPlacementsByPlayerId(
 	return result.length ? result : null;
 }
 
+export async function findPlacementsByUserId(
+	userId: Tables["User"]["id"],
+	options?: { limit: number },
+) {
+	let query = xRankPlacementsQueryBase()
+		.where("SplatoonPlayer.userId", "=", userId)
+		.orderBy("XRankPlacement.power", "desc");
+
+	if (options?.limit) {
+		query = query.limit(options.limit);
+	}
+
+	const result = await query.execute();
+	return result.length ? result : null;
+}
+
 export async function monthYears() {
 	return await db
 		.selectFrom("XRankPlacement")
