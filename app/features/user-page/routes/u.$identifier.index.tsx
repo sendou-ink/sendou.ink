@@ -11,6 +11,7 @@ import { BskyIcon } from "~/components/icons/Bsky";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { TwitchIcon } from "~/components/icons/Twitch";
 import { YouTubeIcon } from "~/components/icons/YouTube";
+import { useUser } from "~/features/auth/core/user";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import invariant from "~/utils/invariant";
@@ -44,7 +45,9 @@ export default function UserInfoPage() {
 }
 
 function NewUserInfoPage() {
+	const { t } = useTranslation(["user"]);
 	const data = useLoaderData<typeof loader>();
+	const user = useUser();
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
 	const layoutData = parentRoute.data as UserPageLoaderData;
@@ -56,11 +59,20 @@ function NewUserInfoPage() {
 	const mainWidgets = data.widgets.filter((w) => w.slot === "main");
 	const sideWidgets = data.widgets.filter((w) => w.slot === "side");
 
+	const isOwnPage = layoutData.user.id === user?.id;
+
 	return (
 		<div className={styles.container}>
 			<div className={styles.header}>
 				<Avatar user={layoutData.user} size="xmd" />
 				<h1 className={styles.username}>{layoutData.user.username}</h1>
+				{isOwnPage ? (
+					<Link to={`/u/${layoutData.user.customUrl}/edit-widgets`}>
+						<SendouButton variant="outlined" size="small">
+							{t("user:widgets.edit")}
+						</SendouButton>
+					</Link>
+				) : null}
 			</div>
 
 			<div className={styles.sideCarousel}>

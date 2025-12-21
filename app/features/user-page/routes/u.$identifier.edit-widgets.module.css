@@ -1,0 +1,166 @@
+.container {
+	container-type: inline-size;
+	width: 100%;
+	max-width: 80rem;
+	margin: 0 auto;
+	padding: var(--s-4);
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: var(--s-6);
+	flex-wrap: wrap;
+	gap: var(--s-4);
+}
+
+.header h1 {
+	font-size: var(--text-xl);
+	font-weight: 600;
+}
+
+.actions {
+	display: flex;
+	gap: var(--s-2);
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: var(--s-6);
+}
+
+@container (min-width: 768px) {
+	.grid {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+.available,
+.selected {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.available h2,
+.selected h2 {
+	font-size: var(--text-lg);
+	font-weight: 600;
+}
+
+.categoryGroup {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.categoryTitle {
+	font-size: var(--fonts-sm);
+	font-weight: 600;
+	color: var(--text-lighter);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin-top: var(--s-4);
+}
+
+.widgetCard {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+	padding: var(--s-3);
+	border: 1px solid var(--border);
+	border-radius: var(--rounded);
+	background-color: var(--bg-lighter);
+}
+
+.widgetHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+}
+
+.widgetName {
+	font-weight: 500;
+	font-size: var(--text-sm);
+}
+
+.widgetDescription {
+	font-size: var(--fonts-xs);
+	color: var(--text-lighter);
+}
+
+.slotSection {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.slotHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-size: var(--text-sm);
+	font-weight: 600;
+}
+
+.slotCount {
+	font-size: var(--fonts-xxs);
+	color: var(--text-lighter);
+	font-weight: var(--bold);
+}
+
+.widgetList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	min-height: 3rem;
+}
+
+.draggableWidget {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+	padding: var(--s-3);
+	border: 1px solid var(--border);
+	border-radius: var(--rounded);
+	background-color: var(--bg-lighter);
+	transition: opacity 0.2s;
+}
+
+.draggableWidget .widgetName {
+	cursor: grab;
+	user-select: none;
+}
+
+.draggableWidget .widgetName:active {
+	cursor: grabbing;
+}
+
+.draggableWidget.isDragging {
+	opacity: 0.5;
+}
+
+.selectedWidgetsList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.empty {
+	padding: var(--s-4);
+	text-align: center;
+	color: var(--text-lighter);
+	font-size: var(--text-sm);
+	border: 1px dashed var(--border);
+	border-radius: var(--rounded);
+}

@@ -1,5 +1,6 @@
 import type { z } from "zod/v4";
-import type { ALL_WIDGETS } from "./portfolio.server";
+import type { ALL_WIDGETS } from "./portfolio";
+import type { WIDGET_LOADERS } from "./portfolio-loaders.server";
 
 export interface Widget<T, S extends z.ZodTypeAny | undefined = undefined> {
 	id: string;
@@ -27,12 +28,14 @@ export type StoredWidget = {
 		: { settings: z.infer<ExtractSchema<K>> });
 }[WidgetUnion["id"]];
 
+type InferLoaderReturn<T> = T extends (...args: any[]) => Promise<infer R>
+	? R
+	: never;
+
 export type LoadedWidget = {
-	[K in WidgetUnion as K["id"]]: {
-		id: K["id"];
-		data: K extends Widget<infer U, any> ? U : never;
-		slot: K["slot"];
-	} & (ExtractSchema<K> extends never
-		? { settings?: never }
-		: { settings: z.infer<ExtractSchema<K>> });
-}[WidgetUnion["id"]];
+	[K in keyof typeof WIDGET_LOADERS]: {
+		id: K;
+		data: InferLoaderReturn<(typeof WIDGET_LOADERS)[K]>;
+		slot: Extract<WidgetUnion, { id: K }>["slot"];
+	};
+}[keyof typeof WIDGET_LOADERS];

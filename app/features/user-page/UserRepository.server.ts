@@ -23,9 +23,9 @@ import {
 } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 import { safeNumberParse } from "~/utils/number";
-import { ADMIN_ID } from "../admin/admin-constants";
 import type { ChatUser } from "../chat/chat-types";
-import { ALL_WIDGETS } from "./core/widgets/portfolio.server";
+import { ALL_WIDGETS } from "./core/widgets/portfolio";
+import { WIDGET_LOADERS } from "./core/widgets/portfolio-loaders.server";
 import type { LoadedWidget } from "./core/widgets/types";
 
 const identifierToUserIdQuery = (identifier: string) =>
@@ -291,6 +291,19 @@ export async function upsertWidgets(
 	});
 }
 
+export async function storedWidgetsByUserId(
+	userId: number,
+): Promise<Array<Tables["UserWidget"]["widget"]>> {
+	const rows = await db
+		.selectFrom("UserWidget")
+		.select(["widget"])
+		.where("userId", "=", userId)
+		.orderBy("index", "asc")
+		.execute();
+
+	return rows.map((row) => row.widget);
+}
+
 export async function widgetsByUserId(
 	identifier: string,
 ): Promise<LoadedWidget[] | null> {
@@ -316,7 +329,8 @@ export async function widgetsByUserId(
 				return null;
 			}
 
-			const data = await definition.load(ADMIN_ID);
+			const loader = WIDGET_LOADERS[widget.widget.id];
+			const data = await loader(user.id);
 
 			return {
 				id: widget.widget.id,
