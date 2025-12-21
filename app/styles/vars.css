@@ -150,14 +150,6 @@ html.dark {
 	--inactive-image-filter: grayscale(100%) brightness(130%);
 }
 
-html.dark .light-mode-only {
-	display: none;
-}
-
-html.light .dark-mode-only {
-	display: none;
-}
-
 /* xs: "(min-width: 480px)",
   sm: "(min-width: 640px)",
   md: "(min-width: 768px)",
