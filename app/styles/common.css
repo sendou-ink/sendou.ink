@@ -1,24 +1,84 @@
 /** biome-ignore-all lint/style/noDescendingSpecificity: Biome v2 migration */
-*,
-*::before,
-*::after {
-	box-sizing: border-box;
-}
 
-body {
-	width: 100%;
-	background-color: var(--bg);
-	color: var(--text);
-	font-family: lexend, sans-serif;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: antialiased;
-	line-height: 1.5;
-	overflow-x: hidden;
-	-webkit-tap-highlight-color: transparent;
+* {
+	margin: 0;
+	overflow-wrap: break-word;
 }
 
 *:focus:not(:focus-visible):not([data-focus-visible]) {
 	outline: none !important;
+}
+
+html {
+	color-scheme: light dark;
+	accent-color: var(--theme);
+
+	/* TODO: update colors */
+	@supports not selector(::-webkit-scrollbar) {
+		scrollbar-width: thin;
+		scrollbar-color: var(--color-primary-transparent) var(--color-base-section);
+	}
+
+	&::-webkit-scrollbar,
+	&::-webkit-scrollbar-track {
+		background-color: var(--color-base-section);
+		height: 6px;
+		width: 6px;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background-color: var(--color-primary-transparent);
+		border-radius: 99999px;
+	}
+}
+
+body {
+	width: 100%;
+	line-height: 1.5;
+	overflow-x: hidden;
+	color: var(--text);
+	background-color: var(--bg);
+	font-family: lexend, sans-serif;
+
+	-moz-osx-font-smoothing: antialiased;
+	-webkit-font-smoothing: antialiased;
+	-webkit-tab-highlight-color: transparent;
+	-webkit-text-size-adjust: 100%;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+	overflow-wrap: anywhere;
+}
+
+img,
+svg,
+canvas,
+video,
+audio,
+iframe,
+embed,
+object {
+	display: block;
+	max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+	font: inherit;
+}
+
+details summary {
+	cursor: pointer;
+	user-select: none;
+	-webkit-user-select: none;
 }
 
 a {
@@ -41,10 +101,6 @@ textarea:not(.plain, [name="text"]) {
 	outline: none;
 	overflow-wrap: normal;
 	overflow-x: auto;
-}
-
-progress {
-	accent-color: var(--theme);
 }
 
 textarea:not(.plain, [name="text"]):focus-within {
@@ -129,11 +185,6 @@ label {
 	font-size: var(--fonts-xs);
 	font-weight: var(--bold);
 	margin-block-end: var(--label-margin);
-}
-
-details summary {
-	cursor: pointer;
-	user-select: none;
 }
 
 .text-only-button {

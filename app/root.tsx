@@ -57,7 +57,7 @@ import "~/styles/common.css";
 import "~/styles/elements.css";
 import "~/styles/flags.css";
 import "~/styles/layout.css";
-import "~/styles/reset.css";
+import "~/styles/normalize.css";
 import "~/styles/utils.css";
 import "~/styles/vars.css";
 
