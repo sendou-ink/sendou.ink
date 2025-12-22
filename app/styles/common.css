@@ -82,7 +82,7 @@ details summary {
 }
 
 a {
-	color: var(--theme);
+	color: var(--color-text-accent);
 	font-weight: var(--semi-bold);
 	text-decoration: none;
 }

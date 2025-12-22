@@ -1,7 +1,4 @@
 html.light {
-	--color-base: oklch(100% 0 0);
-	--color-text: oklch(21% 0.01 285);
-
 	--color-accent-low: oklch(32% 0.17 355);
 	--color-accent: oklch(53% 0.24 355);
 	--color-accent-high: oklch(87% 0.06 355);
@@ -21,12 +18,13 @@ html.light {
 	--color-error-high: oklch(41.268% 0.15511 8.446);
 	--color-error: oklch(65.223% 0.22164 5.216);
 	--color-error-low: oklch(89.949% 0.04928 355.498);
+
+	--color-base: oklch(100% 0 0);
+	--color-text: oklch(21% 0.01 285);
+	--color-text-accent: var(--color-accent);
 }
 
 html.dark {
-	--color-base: oklch(25.33% 0.016 255);
-	--color-text: oklch(97.807% 0.029 255);
-
 	--color-accent-low: oklch(28% 0.08 355);
 	--color-accent: oklch(57% 0.23 355);
 	--color-accent-high: oklch(83% 0.08 355);
@@ -46,6 +44,10 @@ html.dark {
 	--color-error-low: oklch(31% 0.07 10);
 	--color-error: oklch(65% 0.19 10);
 	--color-error-high: oklch(87% 0.07 10);
+
+	--color-base: oklch(25.33% 0.016 255);
+	--color-text: oklch(97.807% 0.029 255);
+	--color-text-accent: var(--color-accent-high);
 }
 
 html {
