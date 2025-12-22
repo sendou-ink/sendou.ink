@@ -400,10 +400,7 @@ function GroupMember({
 				) : null}
 			</div>
 			{!hideNote ? (
-				<MemberNote
-					note={member.privateNote?.text}
-					editable={user?.id === member.id}
-				/>
+				<MemberNote note={member.note} editable={user?.id === member.id} />
 			) : null}
 		</div>
 	);

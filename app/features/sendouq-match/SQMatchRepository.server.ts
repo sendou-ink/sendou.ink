@@ -101,6 +101,7 @@ function groupWithTeamAndMembers(
 						.select((arrayEb) => [
 							...COMMON_USER_FIELDS,
 							"GroupMember.role",
+							"GroupMember.note",
 							"User.inGameName",
 							"User.vc",
 							"User.languages",
