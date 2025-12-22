@@ -2,16 +2,6 @@ import type { z } from "zod/v4";
 import type { ALL_WIDGETS } from "./portfolio";
 import type { WIDGET_LOADERS } from "./portfolio-loaders.server";
 
-export interface Widget<T, S extends z.ZodTypeAny | undefined = undefined> {
-	id: string;
-	category: "misc" | "badges" | "teams";
-	slot: "main" | "side";
-	schema?: S;
-	load: S extends z.ZodTypeAny
-		? (userId: number, data: z.infer<S>) => Promise<T>
-		: (userId: number) => Promise<T>;
-}
-
 type WidgetUnion = (typeof ALL_WIDGETS)[number];
 
 type ExtractSchema<W> = W extends { schema: infer S }
