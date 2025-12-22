@@ -93,6 +93,21 @@
 	font-size: var(--text-sm);
 }
 
+.widgetFooter {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.widgetSlot {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--fonts-xs);
+	color: var(--text-lighter);
+	flex-shrink: 0;
+}
+
 .widgetDescription {
 	font-size: var(--fonts-xs);
 	color: var(--text-lighter);

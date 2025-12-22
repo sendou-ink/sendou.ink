@@ -20,6 +20,8 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
 import { SendouButton } from "~/components/elements/Button";
+import { MainSlotIcon } from "~/components/icons/MainSlot";
+import { SideSlotIcon } from "~/components/icons/SideSlot";
 import type { Tables } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import { ALL_WIDGETS } from "~/features/user-page/core/widgets/portfolio";
@@ -137,6 +139,16 @@ export default function EditWidgetsPage() {
 				/>
 
 				<div className={styles.grid}>
+					<section className={styles.selected}>
+						<DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+							<SelectedWidgetsList
+								mainWidgets={mainWidgets}
+								sideWidgets={sideWidgets}
+								onRemoveWidget={removeWidget}
+							/>
+						</DndContext>
+					</section>
+
 					<section className={styles.available}>
 						<h2>{t("user:widgets.available")}</h2>
 						<AvailableWidgetsList
@@ -145,17 +157,6 @@ export default function EditWidgetsPage() {
 							sideWidgets={sideWidgets}
 							onAddWidget={addWidget}
 						/>
-					</section>
-
-					<section className={styles.selected}>
-						<h2>{t("user:widgets.selected")}</h2>
-						<DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-							<SelectedWidgetsList
-								mainWidgets={mainWidgets}
-								sideWidgets={sideWidgets}
-								onRemoveWidget={removeWidget}
-							/>
-						</DndContext>
 					</section>
 				</div>
 			</Form>
@@ -215,8 +216,24 @@ function AvailableWidgetsList({
 										{t("user:widgets.add")}
 									</SendouButton>
 								</div>
-								<div className={styles.widgetDescription}>
-									{t(`user:widgets.description.${widget.id}` as const)}
+								<div className={styles.widgetFooter}>
+									<div className={styles.widgetSlot}>
+										{widget.slot === "main" ? (
+											<>
+												<MainSlotIcon size={16} />
+												<span>{t("user:widgets.main")}</span>
+											</>
+										) : (
+											<>
+												<SideSlotIcon size={16} />
+												<span>{t("user:widgets.side")}</span>
+											</>
+										)}
+									</div>
+									<div className="text-xs font-bold">{"//"}</div>
+									<div className={styles.widgetDescription}>
+										{t(`user:widgets.description.${widget.id}` as const)}
+									</div>
 								</div>
 							</div>
 						);
@@ -244,7 +261,9 @@ function SelectedWidgetsList({
 		<div className={styles.selectedWidgetsList}>
 			<div className={styles.slotSection}>
 				<div className={styles.slotHeader}>
-					<span>{t("user:widgets.mainSlot")}</span>
+					<span className="stack horizontal xs">
+						<MainSlotIcon size={24} /> {t("user:widgets.mainSlot")}
+					</span>
 					<span className={styles.slotCount}>
 						{mainWidgets.length}/{USER.MAX_MAIN_WIDGETS}
 					</span>
@@ -270,7 +289,9 @@ function SelectedWidgetsList({
 
 			<div className={styles.slotSection}>
 				<div className={styles.slotHeader}>
-					<span>{t("user:widgets.sideSlot")}</span>
+					<span className="stack horizontal xs">
+						<SideSlotIcon size={24} /> {t("user:widgets.sideSlot")}
+					</span>
 					<span className={styles.slotCount}>
 						{sideWidgets.length}/{USER.MAX_SIDE_WIDGETS}
 					</span>
