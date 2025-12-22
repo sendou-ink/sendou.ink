@@ -995,6 +995,8 @@ function StatChartPopover(props: StatChartProps) {
 					className={
 						props.simple ? undefined : "analyzer__stat-popover-trigger"
 					}
+					variant="minimal"
+					size="small"
 					icon={
 						<BeakerIcon
 							className="analyzer__stat-popover-trigger__icon"
