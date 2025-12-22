@@ -142,7 +142,9 @@ export function GroupCard({
 						) : null}
 					</div>
 				) : null}
-				{group.tier && !displayOnly && !group.members ? (
+				{group.tier &&
+				!displayOnly &&
+				(!group.members || group.members.length === FULL_GROUP_SIZE) ? (
 					<div className="stack xs text-lighter font-bold items-center justify-center text-xs">
 						<TierImage tier={group.tier} width={100} />
 						<div>
