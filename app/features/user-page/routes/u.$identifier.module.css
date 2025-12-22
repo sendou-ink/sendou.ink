@@ -16,10 +16,25 @@
 	padding-block: var(--s-4);
 }
 
+.userInfo {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-2);
+}
+
 .username {
 	font-size: var(--fonts-xl);
 	font-weight: var(--bold);
 	margin: 0;
+}
+
+.mobileIconNav {
+	display: block;
+}
+
+.desktopIconNav {
+	display: none;
 }
 
 .sideCarousel {
@@ -50,7 +65,23 @@
 	.header {
 		flex-direction: row;
 		justify-content: flex-start;
+		align-items: center;
 		padding-block: var(--s-6);
+	}
+
+	.userInfo {
+		flex-direction: row;
+		align-items: center;
+		gap: var(--s-3);
+	}
+
+	.desktopIconNav {
+		display: block;
+		margin-left: auto;
+	}
+
+	.mobileIconNav {
+		display: none;
 	}
 
 	.mainStack {

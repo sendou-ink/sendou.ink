@@ -1,4 +1,9 @@
-import { Link, useLoaderData, useMatches } from "@remix-run/react";
+import {
+	Link,
+	useLoaderData,
+	useMatches,
+	useOutletContext,
+} from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
@@ -25,6 +30,8 @@ import {
 	teamPage,
 	topSearchPlayerPage,
 } from "~/utils/urls";
+import type { UserPageNavItem } from "../components/UserPageIconNav";
+import { UserPageIconNav } from "../components/UserPageIconNav";
 import { Widget } from "../components/Widget";
 import { loader } from "../loaders/u.$identifier.index.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
@@ -51,6 +58,7 @@ function NewUserInfoPage() {
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
 	const layoutData = parentRoute.data as UserPageLoaderData;
+	const { navItems } = useOutletContext<{ navItems: UserPageNavItem[] }>();
 
 	if (data.type !== "new") {
 		throw new Error("Expected new user data");
@@ -65,14 +73,23 @@ function NewUserInfoPage() {
 		<div className={styles.container}>
 			<div className={styles.header}>
 				<Avatar user={layoutData.user} size="xmd" />
-				<h1 className={styles.username}>{layoutData.user.username}</h1>
-				{isOwnPage ? (
-					<Link to={`/u/${layoutData.user.customUrl}/edit-widgets`}>
-						<SendouButton variant="outlined" size="small">
-							{t("user:widgets.edit")}
-						</SendouButton>
-					</Link>
-				) : null}
+				<div className={styles.userInfo}>
+					<h1 className={styles.username}>{layoutData.user.username}</h1>
+					{isOwnPage ? (
+						<Link to={`/u/${layoutData.user.customUrl}/edit-widgets`}>
+							<SendouButton variant="outlined" size="small">
+								{t("user:widgets.edit")}
+							</SendouButton>
+						</Link>
+					) : null}
+				</div>
+				<div className={styles.desktopIconNav}>
+					<UserPageIconNav items={navItems} />
+				</div>
+			</div>
+
+			<div className={styles.mobileIconNav}>
+				<UserPageIconNav items={navItems} />
 			</div>
 
 			<div className={styles.sideCarousel}>

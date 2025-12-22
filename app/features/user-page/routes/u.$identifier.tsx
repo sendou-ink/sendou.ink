@@ -24,6 +24,8 @@ import {
 	userSeasonsPage,
 	userVodsPage,
 } from "~/utils/urls";
+import { SubPageHeader } from "../components/SubPageHeader";
+import type { UserPageNavItem } from "../components/UserPageIconNav";
 
 import {
 	loader,
@@ -79,10 +81,66 @@ export default function UserPageLayout() {
 		data.user.calendarEventResultsCount + data.user.tournamentResultsCount;
 
 	const isNewUserPage = matches.some((m) => (m.data as any)?.type === "new");
+	const isIndexPage = location.pathname === userPage(data.user);
+
+	const navItems: UserPageNavItem[] = [
+		{
+			to: userSeasonsPage({ user: data.user }),
+			iconName: "sendouq",
+			label: t("user:seasons"),
+			isVisible: true,
+			testId: "user-seasons-tab",
+		},
+		{
+			to: userResultsPage(data.user),
+			iconName: "medal",
+			label: t("common:results"),
+			count: allResultsCount,
+			isVisible: allResultsCount > 0,
+			testId: "user-results-tab",
+		},
+		{
+			to: userBuildsPage(data.user),
+			iconName: "builds",
+			label: t("common:pages.builds"),
+			count: data.user.buildsCount,
+			isVisible: data.user.buildsCount > 0 || isOwnPage,
+			testId: "user-builds-tab",
+			prefetch: "intent",
+		},
+		{
+			to: userVodsPage(data.user),
+			iconName: "vods",
+			label: t("common:pages.vods"),
+			count: data.user.vodsCount,
+			isVisible: data.user.vodsCount > 0 || isOwnPage,
+			testId: "user-vods-tab",
+		},
+		{
+			to: userArtPage(data.user),
+			iconName: "art",
+			label: t("common:pages.art"),
+			count: data.user.artCount,
+			isVisible: data.user.artCount > 0 || isOwnPage,
+			testId: "user-art-tab",
+			end: false,
+		},
+		{
+			to: userAdminPage(data.user),
+			iconName: "admin",
+			label: "Admin",
+			isVisible: isStaff,
+			testId: "user-admin-tab",
+		},
+	];
 
 	return (
 		<Main bigger={location.pathname.includes("results")}>
-			{!isNewUserPage ? (
+			{isNewUserPage ? (
+				!isIndexPage ? (
+					<SubPageHeader user={data.user} backTo={userPage(data.user)} />
+				) : null
+			) : (
 				<SubNav>
 					<SubNavLink to={userPage(data.user)} data-testid="user-profile-tab">
 						{t("common:header.profile")}
@@ -145,8 +203,8 @@ export default function UserPageLayout() {
 						</SubNavLink>
 					) : null}
 				</SubNav>
-			) : null}
-			<Outlet />
+			)}
+			<Outlet context={{ navItems }} />
 		</Main>
 	);
 }

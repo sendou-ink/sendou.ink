@@ -21,5 +21,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			css: undefined,
 		},
 		css: user.css,
+		// xxx: resolve real
+		type: "new" as const,
 	};
 };

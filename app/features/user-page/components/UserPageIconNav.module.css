@@ -1,0 +1,51 @@
+.iconNav {
+	display: flex;
+	justify-content: center;
+	gap: var(--s-2);
+	overflow-x: auto;
+	scroll-snap-type: x mandatory;
+	padding-block: var(--s-2);
+	scrollbar-width: thin;
+}
+
+.iconNavItem {
+	flex: 0 0 auto;
+	scroll-snap-align: start;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 42px;
+	height: 42px;
+	background-color: var(--bg);
+	border: 2px solid var(--bg-lightest);
+	border-radius: var(--rounded);
+	color: var(--text);
+	transition: all 0.2s;
+	cursor: pointer;
+}
+
+.iconNavItem:hover {
+	background-color: var(--bg-lightest);
+}
+
+.iconNavItem:focus-visible {
+	outline: 2px solid var(--theme-secondary);
+	outline-offset: 2px;
+}
+
+.iconNavItem.active {
+	border-color: var(--theme-secondary);
+	background-color: var(--bg-lightest);
+}
+
+@media screen and (min-width: 768px) {
+	.iconNav {
+		display: grid;
+		grid-template-columns: repeat(4, 42px);
+		grid-auto-rows: 42px;
+		gap: var(--s-2);
+		overflow-x: visible;
+		scroll-snap-type: none;
+		padding-block: 0;
+	}
+}

@@ -1,0 +1,39 @@
+.subPageHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding-block: var(--s-4);
+	margin-block-end: var(--s-4);
+}
+
+.backButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border-radius: var(--rounded);
+	background-color: var(--bg);
+	border: 2px solid var(--bg-lightest);
+	color: var(--text);
+	transition: all 0.2s;
+}
+
+.backButton:hover {
+	background-color: var(--bg-lightest);
+	border-color: var(--theme-secondary);
+}
+
+.backIcon {
+	width: 18px;
+	height: 18px;
+}
+
+.avatar {
+	border-radius: 50%;
+}
+
+.username {
+	font-weight: var(--semi-bold);
+	font-size: var(--fonts-sm);
+}
