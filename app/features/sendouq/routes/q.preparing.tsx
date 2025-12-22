@@ -11,12 +11,11 @@ import { action } from "../actions/q.preparing.server";
 import { GroupCard } from "../components/GroupCard";
 import { GroupLeaver } from "../components/GroupLeaver";
 import { MemberAdder } from "../components/MemberAdder";
-import { hasGroupManagerPerms } from "../core/groups";
 import { loader } from "../loaders/q.preparing.server";
 import { FULL_GROUP_SIZE } from "../q-constants";
 export { loader, action };
 
-import "../q.css";
+import styles from "./q.preparing.module.css";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q", "user"],
@@ -42,17 +41,12 @@ export default function QPreparingPage() {
 
 	return (
 		<Main className="stack lg items-center">
-			<div className="q-preparing__card-container">
-				<GroupCard
-					group={data.group}
-					ownRole={data.role}
-					ownGroup
-					hideNote
-					enableKicking={data.role === "OWNER"}
-				/>
+			<div className={styles.cardContainer}>
+				<GroupCard group={data.group} hideNote ownGroup={data.group} />
 			</div>
 			{data.group.members.length < FULL_GROUP_SIZE &&
-			hasGroupManagerPerms(data.role) ? (
+			(data.group.usersRole === "OWNER" ||
+				data.group.usersRole === "MANAGER") ? (
 				<MemberAdder
 					inviteCode={data.group.inviteCode}
 					groupMemberIds={data.group.members.map((m) => m.id)}

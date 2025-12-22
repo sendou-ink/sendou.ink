@@ -25,11 +25,9 @@ import {
 } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import {
-	COMMON_USER_FIELDS,
 	concatUserSubmittedImagePrefix,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
-import type { Unwrapped } from "~/utils/types";
 import { calendarEventPage, tournamentPage } from "~/utils/urls";
 import {
 	modesIncluded,
@@ -276,76 +274,6 @@ function findAllBetweenTwoTimestampsMapped(
 		.sort((a, b) => a.at - b.at);
 
 	return dates;
-}
-
-export type ForShowcase = Unwrapped<typeof forShowcase>;
-
-export function forShowcase() {
-	return db
-		.selectFrom("Tournament")
-		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
-		.innerJoin(
-			"CalendarEventDate",
-			"CalendarEvent.id",
-			"CalendarEventDate.eventId",
-		)
-		.select((eb) => [
-			"Tournament.id",
-			"Tournament.settings",
-			"CalendarEvent.authorId",
-			"CalendarEvent.name",
-			"CalendarEventDate.startTime",
-			withTeamsCount(eb).as("teamsCount"),
-			tournamentLogoWithDefault(eb).as("logoUrl"),
-			withOrganization(eb).as("organization"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("TournamentResult")
-					.innerJoin("User", "TournamentResult.userId", "User.id")
-					.innerJoin(
-						"TournamentTeam",
-						"TournamentResult.tournamentTeamId",
-						"TournamentTeam.id",
-					)
-					.leftJoin("AllTeam", "TournamentTeam.teamId", "AllTeam.id")
-					.leftJoin(
-						"UserSubmittedImage as TeamAvatar",
-						"AllTeam.avatarImgId",
-						"TeamAvatar.id",
-					)
-					.leftJoin(
-						"UserSubmittedImage as TournamentTeamAvatar",
-						"TournamentTeam.avatarImgId",
-						"TournamentTeamAvatar.id",
-					)
-					.whereRef("TournamentResult.tournamentId", "=", "Tournament.id")
-					.where("TournamentResult.placement", "=", 1)
-					.select((eb) => [
-						...COMMON_USER_FIELDS,
-						"User.country",
-						"TournamentTeam.name as teamName",
-						concatUserSubmittedImagePrefix(eb.ref("TeamAvatar.url")).as(
-							"teamLogoUrl",
-						),
-						concatUserSubmittedImagePrefix(
-							eb.ref("TournamentTeamAvatar.url"),
-						).as("pickupAvatarUrl"),
-					]),
-			).as("firstPlacers"),
-		])
-		.where("CalendarEvent.hidden", "=", 0)
-		.where("CalendarEventDate.startTime", ">", databaseTimestampWeekAgo())
-		.orderBy("CalendarEventDate.startTime", "asc")
-		.$narrowType<{ teamsCount: NotNull }>()
-		.execute();
-}
-
-function databaseTimestampWeekAgo() {
-	const now = new Date();
-
-	now.setDate(now.getDate() - 7);
-
-	return dateToDatabaseTimestamp(now);
 }
 
 export async function findById(

@@ -1,6 +1,6 @@
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type { TablesInsertable, TablesUpdatable } from "~/db/tables";
+import type { TablesInsertable } from "~/db/tables";
 import type { AssociationVirtualIdentifier } from "~/features/associations/associations-constants";
 import { shortNanoid } from "~/utils/id";
 import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
@@ -138,17 +138,6 @@ export function insert({ userId, ...associationArgs }: InsertArgs) {
 			.values({ userId, associationId: association.id, role: "ADMIN" })
 			.execute();
 	});
-}
-
-export function update(
-	associationId: number,
-	args: Partial<TablesUpdatable["Association"]>,
-) {
-	return db
-		.updateTable("Association")
-		.set(args)
-		.where("id", "=", associationId)
-		.execute();
 }
 
 export function refreshInviteCode(associationId: number) {

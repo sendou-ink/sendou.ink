@@ -149,7 +149,7 @@ export const addModNoteSchema = z.object({
 	value: z.string().trim().min(1).max(USER.MOD_NOTE_MAX_LENGTH),
 });
 
-export const deleteModNoteSchema = z.object({
+const deleteModNoteSchema = z.object({
 	_action: _action("DELETE_MOD_NOTE"),
 	noteId: id,
 });

@@ -388,14 +388,6 @@ export function findByFriendCode(friendCode: string) {
 		.execute();
 }
 
-export function findBannedStatusByUserId(userId: number) {
-	return db
-		.selectFrom("User")
-		.select(["User.banned", "User.bannedReason"])
-		.where("User.id", "=", userId)
-		.executeTakeFirst();
-}
-
 export async function findSubDefaultsByUserId(userId: number) {
 	const user = await db
 		.selectFrom("User")

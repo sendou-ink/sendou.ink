@@ -3,9 +3,9 @@ import type {
 	AbilityPoints,
 	AnalyzedBuild,
 	AnyWeapon,
+	Damage,
 	DamageType,
-} from "~/features/build-analyzer";
-import type { Damage } from "~/features/build-analyzer/analyzer-types";
+} from "~/features/build-analyzer/analyzer-types";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
@@ -23,7 +23,7 @@ import type { CombineWith, DamageReceiver } from "../calculator-types";
 import objectDamages from "./object-dmg.json";
 import { objectHitPoints } from "./objectHitPoints";
 
-export function damageTypeToMultipliers({
+function damageTypeToMultipliers({
 	type,
 	weapon,
 }: {
@@ -104,7 +104,7 @@ function resolveRelevantKey({
 	);
 }
 
-export function multipliersToRecordWithFallbacks(
+function multipliersToRecordWithFallbacks(
 	multipliers: ReturnType<typeof damageTypeToMultipliers>,
 ) {
 	return Object.fromEntries(

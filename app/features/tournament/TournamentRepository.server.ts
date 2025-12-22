@@ -573,40 +573,6 @@ export function topThreeResultsByTournamentId(tournamentId: number) {
 		.execute();
 }
 
-export async function findCastTwitchAccountsByTournamentId(
-	tournamentId: number,
-) {
-	const result = await db
-		.selectFrom("Tournament")
-		.select("castTwitchAccounts")
-		.where("id", "=", tournamentId)
-		.executeTakeFirst();
-
-	if (!result) return null;
-
-	return result.castTwitchAccounts;
-}
-
-export function checkedInTournamentTeamsByBracket({
-	tournamentId,
-	bracketIdx,
-}: {
-	tournamentId: number;
-	bracketIdx: number;
-}) {
-	return db
-		.selectFrom("TournamentTeamCheckIn")
-		.innerJoin(
-			"TournamentTeam",
-			"TournamentTeamCheckIn.tournamentTeamId",
-			"TournamentTeam.id",
-		)
-		.select(["TournamentTeamCheckIn.tournamentTeamId"])
-		.where("TournamentTeamCheckIn.bracketIdx", "=", bracketIdx)
-		.where("TournamentTeam.tournamentId", "=", tournamentId)
-		.execute();
-}
-
 export async function friendCodesByTournamentId(tournamentId: number) {
 	const values = await db
 		.selectFrom("TournamentTeam")
