@@ -14,7 +14,7 @@ import { bracketIdx } from "../tournament-bracket/tournament-bracket-schemas.ser
 import { USER } from "../user-page/user-page-constants";
 import { TOURNAMENT } from "./tournament-constants";
 
-export const teamName = safeStringSchema({
+const teamName = safeStringSchema({
 	max: TOURNAMENT.TEAM_NAME_MAX_LENGTH,
 });
 

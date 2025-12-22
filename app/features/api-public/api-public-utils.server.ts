@@ -1,7 +1,7 @@
 import { cors } from "remix-utils/cors";
 import * as ApiRepository from "~/features/api/ApiRepository.server";
 
-export async function loadApiTokensCache() {
+async function loadApiTokensCache() {
 	const envTokens = process.env.PUBLIC_API_TOKENS?.split(",") ?? [];
 	const dbTokens = await ApiRepository.allApiTokens();
 	return new Set([...envTokens, ...dbTokens]);

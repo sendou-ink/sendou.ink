@@ -1,9 +1,6 @@
 import { CalendarDateTime, parseDate } from "@internationalized/date";
 import type { Locale } from "date-fns";
-import {
-	formatDistanceToNow as dateFnsFormatDistanceToNow,
-	getWeek,
-} from "date-fns";
+import { formatDistanceToNow as dateFnsFormatDistanceToNow } from "date-fns";
 import { da } from "date-fns/locale/da";
 import { de } from "date-fns/locale/de";
 import { enUS } from "date-fns/locale/en-US";
@@ -42,10 +39,6 @@ const LOCALE_MAP: Record<LanguageCode, Locale> = {
 	zh: zhCN,
 };
 
-export function getDateFnsLocale(language: LanguageCode) {
-	return LOCALE_MAP[language];
-}
-
 export function formatDistanceToNow(
 	date: Parameters<typeof dateFnsFormatDistanceToNow>[0],
 	options: Omit<
@@ -55,7 +48,7 @@ export function formatDistanceToNow(
 ) {
 	return dateFnsFormatDistanceToNow(date, {
 		...options,
-		locale: getDateFnsLocale(options.language),
+		locale: LOCALE_MAP[options.language],
 	});
 }
 
@@ -112,44 +105,6 @@ export function dayMonthYearToDatabaseTimestamp(args: DayMonthYear) {
 	return dateToDatabaseTimestamp(dayMonthYearToDate(args));
 }
 
-export function databaseCreatedAt() {
-	return dateToDatabaseTimestamp(new Date());
-}
-
-export function dateToWeekNumber(date: Date) {
-	return getWeek(date, { weekStartsOn: 1, firstWeekContainsDate: 4 });
-}
-
-export function dateToThisWeeksMonday(date: Date) {
-	const copiedDate = new Date(date.getTime());
-
-	while (copiedDate.getDay() !== 1) {
-		copiedDate.setDate(copiedDate.getDate() - 1);
-	}
-
-	return copiedDate;
-}
-
-export function dateToThisWeeksSunday(date: Date) {
-	const copiedDate = new Date(date.getTime());
-
-	while (copiedDate.getDay() !== 0) {
-		copiedDate.setDate(copiedDate.getDate() + 1);
-	}
-
-	return copiedDate;
-}
-
-export function getWeekStartsAtMondayDay(date: Date) {
-	const currentDay = date.getDay();
-
-	return dayToWeekStartsAtMondayDay(currentDay);
-}
-
-export function dayToWeekStartsAtMondayDay(day: number) {
-	return day === 0 ? 7 : day;
-}
-
 // https://stackoverflow.com/a/71336659
 export function weekNumberToDate({
 	week,
@@ -200,21 +155,6 @@ export function dateToYearMonthDayHourMinuteString(date: Date) {
 	return `${year}-${prefixZero(month)}-${prefixZero(day)}T${prefixZero(
 		hour,
 	)}:${prefixZero(minute)}`;
-}
-
-/** Returns date as a string with the format YYYY-MM-DD in user's time zone */
-export function dateToYearMonthDayString(date: Date) {
-	const copiedDate = new Date(date.getTime());
-
-	if (!isValidDate(copiedDate)) {
-		throw new Error("tried to format string from invalid date");
-	}
-
-	const year = copiedDate.getFullYear();
-	const month = copiedDate.getMonth() + 1;
-	const day = copiedDate.getDate();
-
-	return `${year}-${prefixZero(month)}-${prefixZero(day)}`;
 }
 
 function prefixZero(number: number) {

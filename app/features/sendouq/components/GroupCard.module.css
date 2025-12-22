@@ -1,0 +1,174 @@
+.group {
+	background-color: var(--bg-lighter-solid);
+	width: 100%;
+	border-radius: var(--rounded);
+	padding: var(--s-2-5);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+	position: relative;
+	color: var(--text);
+}
+
+.noScreen {
+	background-color: var(--theme-error-transparent);
+	border-radius: 100%;
+	padding: var(--s-1);
+	width: 30px;
+	height: 30px;
+	display: grid;
+	place-items: center;
+}
+
+.displayOnly {
+	height: 100%;
+	padding-block-end: var(--s-10);
+}
+
+.member {
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+	background-color: var(--bg-darker);
+	border-radius: var(--rounded);
+	font-size: var(--fonts-xsm);
+	font-weight: var(--semi-bold);
+	padding-inline-end: var(--s-2-5);
+}
+
+.name {
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	max-width: 7.5rem;
+	font-size: var(--fonts-xs);
+	color: var(--text);
+}
+
+.avatar {
+	min-width: 36px;
+}
+
+.avatarPositive {
+	outline: 2px solid var(--theme-success-transparent);
+}
+
+.avatarNeutral {
+	outline: 2px solid var(--theme-warning-transparent);
+}
+
+.avatarNegative {
+	outline: 2px solid var(--theme-error-transparent);
+}
+
+.tier {
+	margin-inline-start: auto;
+}
+
+.tierPlaceholder {
+	min-width: 26.58px;
+}
+
+.extraInfo {
+	font-size: var(--fonts-xs);
+	background-color: var(--bg-darker);
+	border-radius: var(--rounded);
+	padding: var(--s-0-5) var(--s-1-5);
+	width: max-content;
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-weight: var(--semi-bold);
+	min-height: 24px;
+}
+
+.extraInfoButton {
+	font-size: var(--fonts-xs);
+	background-color: var(--bg-darker);
+	border-radius: var(--rounded);
+	padding: var(--s-0-5) var(--s-1-5);
+	width: max-content;
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-weight: var(--semi-bold);
+	color: var(--text);
+	border: none;
+	min-height: 24px;
+}
+
+.addNoteButton {
+	border: none;
+	padding: 0 var(--s-1-5);
+	color: var(--body);
+	font-size: var(--fonts-xxs);
+	font-weight: var(--semi-bold);
+	background-color: var(--bg-darker);
+	white-space: nowrap;
+}
+
+.addNoteButtonEdit > svg {
+	color: var(--theme);
+}
+
+.addNoteButton > svg {
+	width: 14px;
+	margin-inline-end: var(--s-1);
+}
+
+.noteTextarea {
+	height: 4rem !important;
+}
+
+.futureMatchMode {
+	border-radius: 100%;
+	background-color: var(--bg-lightest);
+	height: 30px;
+	width: 30px;
+	display: grid;
+	place-items: center;
+	padding: var(--s-1-5);
+}
+
+.vcIcon {
+	height: 15px;
+	stroke-width: 2;
+}
+
+.star {
+	min-width: 18px;
+	max-width: 18px;
+	color: var(--theme-secondary);
+	stroke-width: 2;
+}
+
+.starInactive {
+	color: var(--text-lighter);
+}
+
+.displayTier {
+	display: flex;
+	gap: var(--s-1);
+	align-items: center;
+	position: absolute;
+	border-radius: var(--rounded);
+	background-color: var(--bg-darker);
+	padding: var(--s-0-5) var(--s-2-5);
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	bottom: -36px;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.popoverButton {
+	background-color: transparent;
+	color: var(--text-lighter);
+	font-size: var(--fonts-xs);
+	padding: 0;
+	border: none;
+	text-decoration: underline;
+	text-decoration-style: dotted;
+	font-weight: var(--bold);
+	height: 19.8281px;
+}

@@ -43,12 +43,12 @@ export const editArtSchema = z.object({
 	isShowcase: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
 });
 
-export const deleteArtSchema = z.object({
+const deleteArtSchema = z.object({
 	_action: _action("DELETE_ART"),
 	id,
 });
 
-export const unlinkArtSchema = z.object({
+const unlinkArtSchema = z.object({
 	_action: _action("UNLINK_ART"),
 	id,
 });

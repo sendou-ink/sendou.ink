@@ -63,6 +63,7 @@
 - library used for E2E testing is Playwright
 - `page.goto` is forbidden, use the `navigate` function to do a page navigation
 - to submit a form you use the `submit` function
+- `page.waitForTimeout` should be avoided 
 
 ## Unit testing
 

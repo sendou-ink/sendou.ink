@@ -1,75 +1,7 @@
-import type { Tables } from "~/db/tables";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import { modesShort } from "~/modules/in-game-lists/modes";
 import { databaseTimestampToDate } from "~/utils/dates";
-import {
-	SENDOUQ_LOOKING_PAGE,
-	SENDOUQ_PAGE,
-	SENDOUQ_PREPARING_PAGE,
-	sendouQMatchPage,
-} from "~/utils/urls";
 import { accountCreatedInTheLastSixMonths } from "~/utils/users";
-import type { MapPool } from "../map-list-generator/core/map-pool";
-import { SENDOUQ } from "./q-constants";
-
-function groupRedirectLocation(
-	group?: Pick<Tables["Group"], "status"> & { matchId?: number },
-) {
-	if (group?.status === "PREPARING") return SENDOUQ_PREPARING_PAGE;
-	if (group?.matchId) return sendouQMatchPage(group.matchId);
-	if (group) return SENDOUQ_LOOKING_PAGE;
-
-	return SENDOUQ_PAGE;
-}
-
-export function groupRedirectLocationByCurrentLocation({
-	group,
-	currentLocation,
-}: {
-	group?: Pick<Tables["Group"], "status"> & { matchId?: number };
-	currentLocation: "default" | "preparing" | "looking" | "match";
-}) {
-	const newLocation = groupRedirectLocation(group);
-
-	// we are already in the correct location, don't redirect
-	if (currentLocation === "default" && newLocation === SENDOUQ_PAGE) return;
-	if (currentLocation === "preparing" && newLocation === SENDOUQ_PREPARING_PAGE)
-		return;
-	if (currentLocation === "looking" && newLocation === SENDOUQ_LOOKING_PAGE)
-		return;
-	if (currentLocation === "match" && newLocation.includes("match")) return;
-
-	return newLocation;
-}
-
-export function mapPoolOk(mapPool: MapPool) {
-	for (const modeShort of rankedModesShort) {
-		if (
-			modeShort === "SZ" &&
-			mapPool.countMapsByMode(modeShort) !== SENDOUQ.SZ_MAP_COUNT
-		) {
-			return false;
-		}
-
-		if (
-			modeShort !== "SZ" &&
-			mapPool.countMapsByMode(modeShort) !== SENDOUQ.OTHER_MODE_MAP_COUNT
-		) {
-			return false;
-		}
-	}
-
-	for (const stageId of stageIds) {
-		if (
-			mapPool.stageModePairs.filter((pair) => pair.stageId === stageId).length >
-			SENDOUQ.MAX_STAGE_REPEAT_COUNT
-		) {
-			return false;
-		}
-	}
-
-	return true;
-}
+import type { SQGroup } from "./core/SendouQ.server";
 
 export function userCanJoinQueueAt(
 	user: { id: number; discordId: string },
@@ -93,4 +25,26 @@ export function userCanJoinQueueAt(
 	canJoinQueueAt.setDate(canJoinQueueAt.getDate() + 1);
 
 	return canJoinQueueAt;
+}
+
+export function resolveFutureMatchModes({
+	ownGroup,
+	theirGroup,
+}: {
+	ownGroup: Pick<SQGroup, "modePreferences">;
+	theirGroup: Pick<SQGroup, "modePreferences">;
+}) {
+	const ourModes = ownGroup.modePreferences;
+	const theirModes = theirGroup.modePreferences;
+
+	const overlap = ourModes.filter((mode) => theirModes.includes(mode));
+	if (overlap.length > 0) {
+		return overlap;
+	}
+
+	const union = modesShort.filter(
+		(mode) => ourModes.includes(mode) || theirModes.includes(mode),
+	);
+
+	return union;
 }

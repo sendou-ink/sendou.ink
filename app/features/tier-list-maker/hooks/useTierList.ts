@@ -454,7 +454,7 @@ export function useTierList() {
 
 const TIER_SEARCH_PARAM_NAME = "state";
 
-export function useSearchParamTiersState() {
+function useSearchParamTiersState() {
 	const [initialSearchParams] = useSearchParams();
 	const [tiers, setTiers] = React.useState<TierListState>(() => {
 		const param = initialSearchParams.get(TIER_SEARCH_PARAM_NAME);

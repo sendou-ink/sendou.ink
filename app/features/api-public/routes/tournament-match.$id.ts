@@ -7,7 +7,7 @@ import * as TournamentRepository from "~/features/tournament/TournamentRepositor
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { resolveMapList } from "~/features/tournament-bracket/core/mapList.server";
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
-import i18next from "~/modules/i18n/i18next.server";
+import { i18next } from "~/modules/i18n/i18next.server";
 import { logger } from "~/utils/logger";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";

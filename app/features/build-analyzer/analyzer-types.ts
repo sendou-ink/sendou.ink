@@ -7,7 +7,6 @@ import type {
 } from "~/modules/in-game-lists/types";
 import type { DAMAGE_TYPE } from "./analyzer-constants";
 import type { SPECIAL_EFFECTS } from "./core/specialEffects";
-import type { abilityValues } from "./core/utils";
 import type { weaponParams } from "./core/weapon-params";
 
 type Overwrites = Record<
@@ -287,8 +286,6 @@ export interface AnalyzedBuild {
 }
 
 export type SpecialEffectType = (typeof SPECIAL_EFFECTS)[number]["type"];
-
-export type AbilityValuesKeys = keyof typeof abilityValues;
 
 export type AnyWeapon =
 	| { type: "MAIN"; id: MainWeaponId }

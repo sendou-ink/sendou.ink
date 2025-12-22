@@ -103,55 +103,6 @@ export const testTournament = ({
 	});
 };
 
-export const adjustResults = (
-	data: TournamentManagerDataSet,
-	adjustedArr: Array<{
-		ids: [number, number];
-		score: [number, number];
-		points?: [number, number];
-	}>,
-): TournamentManagerDataSet => {
-	return {
-		...data,
-		match: data.match.map((match, idx) => {
-			const adjusted = adjustedArr[idx];
-			if (!adjusted) throw new Error(`No adjusted result for match ${idx}`);
-
-			if (adjusted.ids[0] !== match.opponent1!.id) {
-				throw new Error("Adjusted match opponent1 id does not match");
-			}
-
-			if (adjusted.ids[1] !== match.opponent2!.id) {
-				throw new Error("Adjusted match opponent2 id does not match");
-			}
-
-			return {
-				...match,
-				opponent1: {
-					...match.opponent1!,
-					score: adjusted.score[0],
-					result: adjusted.score[0] > adjusted.score[1] ? "win" : "loss",
-					totalPoints: adjusted.points
-						? adjusted.points[0]
-						: adjusted.score[0] > adjusted.score[1]
-							? 100
-							: 0,
-				},
-				opponent2: {
-					...match.opponent2!,
-					score: adjusted.score[1],
-					result: adjusted.score[1] > adjusted.score[0] ? "win" : "loss",
-					totalPoints: adjusted.points
-						? adjusted.points[1]
-						: adjusted.score[1] > adjusted.score[0]
-							? 100
-							: 0,
-				},
-			};
-		}),
-	};
-};
-
 const DEFAULT_PROGRESSION_ARGS = {
 	requiresCheckIn: false,
 	settings: {},

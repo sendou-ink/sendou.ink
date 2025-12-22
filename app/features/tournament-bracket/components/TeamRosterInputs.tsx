@@ -86,7 +86,7 @@ export function TeamRosterInputs({
 	);
 }
 
-export function TeamRoster({
+function TeamRoster({
 	team,
 	bothTeamsHaveActiveRosters,
 	presentational,
@@ -241,7 +241,7 @@ export function TeamRoster({
 	);
 }
 
-export function TeamRosterHeader({
+function TeamRosterHeader({
 	idx,
 	team,
 	tournamentId,
@@ -337,7 +337,7 @@ function WinnerRadio({
 	);
 }
 
-export function PointInput({
+function PointInput({
 	value,
 	onChange,
 	presentational,

@@ -39,7 +39,7 @@ import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import type {
 	SeasonGroupMatch,
 	SeasonTournamentResult,
-} from "~/features/sendouq-match/QMatchRepository.server";
+} from "~/features/sendouq-match/SQMatchRepository.server";
 import { useWeaponUsage } from "~/hooks/swr";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useTimeFormat } from "~/hooks/useTimeFormat";

@@ -1,5 +1,8 @@
+import type {
+	AnyWeapon,
+	DamageType,
+} from "~/features/build-analyzer/analyzer-types";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import type { AnyWeapon, DamageType } from "../build-analyzer";
 import type { CombineWith } from "./calculator-types";
 import type objectDamages from "./core/object-dmg.json";
 

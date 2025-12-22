@@ -1,5 +1,4 @@
-import type { LoaderFunction } from "@remix-run/node";
-import { redirect } from "react-router-dom";
+import { type LoaderFunction, redirect } from "@remix-run/node";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { isSupporter } from "~/modules/permissions/utils";
 import { userPage } from "~/utils/urls";

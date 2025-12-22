@@ -15,7 +15,7 @@ import { extractYoutubeIdFromVideoUrl } from "./vods-utils";
 
 export const HOURS_MINUTES_SECONDS_REGEX = /^(\d{1,2}:)?\d{1,2}:\d{2}$/;
 
-export const videoMatchSchema = z.object({
+const videoMatchSchema = z.object({
 	startsAt: z.string().regex(HOURS_MINUTES_SECONDS_REGEX, {
 		message: "Invalid time format. Use HH:MM:SS or MM:SS",
 	}),
