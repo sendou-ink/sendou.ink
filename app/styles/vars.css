@@ -43,11 +43,13 @@ html {
 	--input-icon: #6a6a6c;
 	--backdrop-filter: blur(10px) brightness(95%);
 	--inactive-image-filter: grayscale(100%) brightness(30%); */
-	/* --rounded: 16px;
+
+	--rounded: 16px;
 	--rounded-full: 200px;
 	--rounded-xs: 8px;
-	--rounded-sm: 10px; */
-	/* --fonts-xl: 1.5rem;
+	--rounded-sm: 10px;
+
+	--fonts-xl: 1.5rem;
 	--fonts-lg: 1.2rem;
 	--fonts-md: 1rem;
 	--fonts-sm: 0.92rem;
@@ -56,12 +58,14 @@ html {
 	--fonts-xxsm: 0.75rem;
 	--fonts-xxs: 0.7rem;
 	--fonts-xxxs: 0.6rem;
-	--fonts-xxxxs: 0.5rem; */
-	/* --extra-bold: 700;
+	--fonts-xxxxs: 0.5rem;
+
+	--extra-bold: 700;
 	--bold: 600;
 	--semi-bold: 500;
-	--body: 400; */
-	/* --s-0-5: 0.125rem;
+	--body: 400;
+
+	--s-0-5: 0.125rem;
 	--s-1: 0.25rem;
 	--s-1-5: 0.375rem;
 	--s-2: 0.5rem;
@@ -84,13 +88,15 @@ html {
 	--s-28: 7rem;
 	--s-32: 8rem;
 	--s-40: 10rem;
-	--s-48: 12rem; */
-	/* --input-width-extra-small: 10rem;
+	--s-48: 12rem;
+
+	--input-width-extra-small: 10rem;
 	--input-width-small: 12rem;
-	--input-width-medium: 18rem; */
-	/* --label-margin: var(--s-1);
+	--input-width-medium: 18rem;
+
+	--label-margin: var(--s-1);
 	--select-width: 225px;
-	--sticky-top: 60px; */
+	--sticky-top: 60px;
 }
 
 html.dark {
