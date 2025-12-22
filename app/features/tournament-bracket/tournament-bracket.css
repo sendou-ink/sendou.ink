@@ -297,7 +297,7 @@
 	content: "Inactive";
 	font-size: var(--fonts-xxs);
 	font-weight: var(--bold);
-	letter-spacing: var(--sparse);
+	letter-spacing: 0.4px;
 	padding-block-end: 1px;
 }
 
