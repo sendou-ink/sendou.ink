@@ -29,4 +29,9 @@ export const ALL_WIDGETS = [
 		category: "xrank",
 		slot: "side",
 	},
+	{
+		id: "highlighted-results",
+		category: "tournaments",
+		slot: "side",
+	},
 ] as const;

@@ -1,9 +1,17 @@
 import { Link } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import { Placement } from "~/components/Placement";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
+import { useTimeFormat } from "~/hooks/useTimeFormat";
+import { databaseTimestampToDate } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
 import { assertUnreachable } from "~/utils/types";
-import { teamPage, tournamentOrganizationPage } from "~/utils/urls";
+import {
+	calendarEventPage,
+	teamPage,
+	tournamentBracketsPage,
+	tournamentOrganizationPage,
+} from "~/utils/urls";
 import type { LoadedWidget } from "../core/widgets/types";
 import styles from "./Widget.module.css";
 
@@ -60,6 +68,10 @@ export function Widget({ widget }: { widget: SerializeFrom<LoadedWidget> }) {
 						unit="XP"
 						footer={`${widget.data.division}${widget.data.topRating ? ` / #${widget.data.topRating}` : ""}`}
 					/>
+				);
+			case "highlighted-results":
+				return widget.data.length === 0 ? null : (
+					<HighlightedResults results={widget.data} />
 				);
 			default:
 				assertUnreachable(widget);
@@ -130,6 +142,73 @@ function Memberships({
 						) : null}
 					</div>
 				</Link>
+			))}
+		</div>
+	);
+}
+
+function HighlightedResults({
+	results,
+}: {
+	results: Array<{
+		eventId?: number;
+		tournamentId?: number;
+		placement: number;
+		eventName: string;
+		logoUrl: string | null;
+		startTime: number;
+	}>;
+}) {
+	const { formatDate } = useTimeFormat();
+
+	return (
+		<div className={styles.highlightedResults}>
+			{results.map((result, i) => (
+				<div key={i} className={styles.result}>
+					<div className={styles.resultPlacement}>
+						<Placement placement={result.placement} size={28} />
+					</div>
+					<div className={styles.resultInfo}>
+						<div className={styles.resultName}>
+							{result.eventId ? (
+								<Link
+									to={calendarEventPage(result.eventId)}
+									className="text-main-forced"
+								>
+									{result.eventName}
+								</Link>
+							) : null}
+							{result.tournamentId ? (
+								<div className={styles.tournamentName}>
+									{result.logoUrl ? (
+										<img
+											src={result.logoUrl}
+											alt=""
+											width={18}
+											height={18}
+											className="rounded-full"
+										/>
+									) : null}
+									<Link
+										to={tournamentBracketsPage({
+											tournamentId: result.tournamentId,
+										})}
+										className="text-main-forced"
+									>
+										{result.eventName}
+									</Link>
+								</div>
+							) : null}
+						</div>
+						<div className={styles.resultDate}>
+							{formatDate(databaseTimestampToDate(result.startTime), {
+								day: "numeric",
+								month: "short",
+								year: "numeric",
+							})}
+						</div>
+					</div>
+				</div>
 			))}
 		</div>
 	);

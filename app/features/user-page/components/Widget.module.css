@@ -76,3 +76,52 @@
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
 }
+
+.highlightedResults {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.result {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2-5);
+}
+
+.resultPlacement {
+	flex-shrink: 0;
+}
+
+.resultInfo {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+	flex: 1;
+	line-height: 1.25;
+}
+
+.resultName {
+	font-weight: var(--semi-bold);
+}
+
+.tournamentName {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	max-width: 100%;
+	overflow: hidden;
+}
+
+.tournamentName a {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+	max-width: 175px;
+}
+
+.resultDate {
+	font-size: var(--fonts-xxs);
+	color: var(--text-lighter);
+}

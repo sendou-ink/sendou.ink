@@ -78,4 +78,15 @@ export const WIDGET_LOADERS = {
 			topRating: leaderboardEntry?.placementRank ?? null,
 		};
 	},
+	"highlighted-results": async (userId: number) => {
+		const hasHighlightedResults =
+			await UserRepository.hasHighlightedResultsByUserId(userId);
+
+		const results = await UserRepository.findResultsByUserId(userId, {
+			showHighlightsOnly: hasHighlightedResults,
+			limit: 3,
+		});
+
+		return results;
+	},
 } as const;

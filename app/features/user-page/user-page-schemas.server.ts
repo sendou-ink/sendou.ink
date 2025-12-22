@@ -15,6 +15,7 @@ export const widgetsEditSchema = z.object({
 						"organizations",
 						"peak-sp",
 						"peak-xp",
+						"highlighted-results",
 					]),
 					settings: z.any().optional(),
 				}),
