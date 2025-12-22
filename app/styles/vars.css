@@ -1,3 +1,64 @@
+html.light {
+	--color-base: oklch(100% 0 0);
+	--color-text: oklch(21% 0.01 285);
+
+	--color-accent-low: oklch(32% 0.17 355);
+	--color-accent: oklch(53% 0.24 355);
+	--color-accent-high: oklch(87% 0.06 355);
+
+	--color-info-high: oklch(31.865% 0.1766 267.138);
+	--color-info: oklch(53.03% 0.24331 270.147);
+	--color-info-low: oklch(87.897% 0.0555 279.573);
+
+	--color-success-high: oklch(44.893% 0.13293 138.416);
+	--color-success: oklch(79.407% 0.25035 139.5);
+	--color-success-low: oklch(95.604% 0.06419 135.506);
+
+	--color-warning-high: oklch(46.236% 0.09033 79.825);
+	--color-warning: oklch(82.426% 0.15029 82.564);
+	--color-warning-low: oklch(94.216% 0.05193 85.101);
+
+	--color-error-high: oklch(41.268% 0.15511 8.446);
+	--color-error: oklch(65.223% 0.22164 5.216);
+	--color-error-low: oklch(89.949% 0.04928 355.498);
+}
+
+html.dark {
+	--color-base: oklch(25.33% 0.016 255);
+	--color-text: oklch(97.807% 0.029 255);
+
+	--color-accent-low: oklch(28% 0.08 355);
+	--color-accent: oklch(57% 0.23 355);
+	--color-accent-high: oklch(83% 0.08 355);
+
+	--color-info-low: oklch(26% 0.09 275);
+	--color-info: oklch(52% 0.27 275);
+	--color-info-high: oklch(83% 0.08 275);
+
+	--color-success-low: oklch(39% 0.08 135);
+	--color-success: oklch(85% 0.22 135);
+	--color-success-high: oklch(91% 0.12 135);
+
+	--color-warning-low: oklch(38% 0.05 85);
+	--color-warning: oklch(82% 0.14 85);
+	--color-warning-high: oklch(94% 0.05 85);
+
+	--color-error-low: oklch(31% 0.07 10);
+	--color-error: oklch(65% 0.19 10);
+	--color-error-high: oklch(87% 0.07 10);
+}
+
+html {
+	--color-base-100: var(--color-base);
+	--color-base-200: oklch(from var(--color-base) calc(l - 4%) c h);
+	--color-base-300: oklch(from var(--color-base) calc(l - 8%) c h);
+	--color-base-400: oklch(from var(--color-base) calc(l - 12%) c h);
+
+	--color-text-light: oklch(from var(--color-text) calc(l - 0.2) c h);
+	--color-text-lighter: oklch(from var(--color-text) calc(l - 0.4) c h);
+	--color-text-inverse: var(--color-base);
+}
+
 html {
 	/* --bg: var(--preview-bg, #ebebf0);
 	--bg-darker: var(--preview-bg-darker, #f8f8f8);
