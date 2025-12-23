@@ -169,25 +169,34 @@ export function GroupCard({
 						<div className="stack sm horizontal items-center justify-center">
 							<div className="stack xs items-center">
 								<TierImage tier={group.tierRange.range[0]} width={80} />
-								<div className="text-lighter text-sm font-bold">
-									({group.tierRange.diff[0]})
-								</div>
+								{group.tierRange.diff[0] ? (
+									<div className="text-lighter text-sm font-bold">
+										({group.tierRange.diff[0]})
+									</div>
+								) : null}
 							</div>
-							<SendouPopover
-								popoverClassName="text-main-forced"
-								trigger={
-									<SendouButton className={styles.popoverButton}>
-										{t("q:looking.range.or")}
-									</SendouButton>
-								}
-							>
-								{t("q:looking.range.or.explanation")}
-							</SendouPopover>
+							{/** in preview mode they don't see full group tiers (because they don't have a group to compare against) so it is a "true range" */}
+							{group.tierRange.diff[0] ? (
+								<SendouPopover
+									popoverClassName="text-main-forced"
+									trigger={
+										<SendouButton className={styles.popoverButton}>
+											{t("q:looking.range.or")}
+										</SendouButton>
+									}
+								>
+									{t("q:looking.range.or.explanation")}
+								</SendouPopover>
+							) : (
+								"—"
+							)}
 							<div className="stack xs items-center">
 								<TierImage tier={group.tierRange.range[1]} width={80} />
-								<div className="text-lighter text-sm font-bold">
-									(+{group.tierRange.diff[1]})
-								</div>
+								{group.tierRange.diff[1] ? (
+									<div className="text-lighter text-sm font-bold">
+										(+{group.tierRange.diff[1]})
+									</div>
+								) : null}
 							</div>
 						</div>
 						{group.isReplay ? (
