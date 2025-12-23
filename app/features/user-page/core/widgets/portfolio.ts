@@ -49,6 +49,66 @@ export const ALL_WIDGETS = [
 		category: "vods",
 		slot: "main",
 	},
+	{
+		id: "top-500-weapons",
+		category: "xrank",
+		slot: "side",
+	},
+	{
+		id: "top-500-weapons-shooters",
+		category: "xrank",
+		slot: "side",
+	},
+	{
+		id: "top-500-weapons-blasters",
+		category: "xrank",
+		slot: "side",
+	},
+	{
+		id: "top-500-weapons-rollers",
+		category: "xrank",
+		slot: "side",
+	},
+	{
+		id: "top-500-weapons-brushes",
+		category: "xrank",
+		slot: "side",
+	},
+	{
+		id: "top-500-weapons-chargers",
+		category: "xrank",
+		slot: "side",
+	},
+	{
+		id: "top-500-weapons-sloshers",
+		category: "xrank",
+		slot: "side",
+	},
+	{
+		id: "top-500-weapons-splatlings",
+		category: "xrank",
+		slot: "side",
+	},
+	{
+		id: "top-500-weapons-dualies",
+		category: "xrank",
+		slot: "side",
+	},
+	{
+		id: "top-500-weapons-brellas",
+		category: "xrank",
+		slot: "side",
+	},
+	{
+		id: "top-500-weapons-stringers",
+		category: "xrank",
+		slot: "side",
+	},
+	{
+		id: "top-500-weapons-splatanas",
+		category: "xrank",
+		slot: "side",
+	},
 ] as const;
 
 export const ALL_WIDGET_IDS = ALL_WIDGETS.map((w) => w.id);

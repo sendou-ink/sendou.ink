@@ -146,3 +146,22 @@
 	flex-direction: column;
 	gap: var(--s-3);
 }
+
+.weaponGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+	gap: var(--s-2);
+	justify-items: center;
+}
+
+.weaponCount {
+	margin-top: var(--s-3);
+	text-align: center;
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	color: var(--text-lighter);
+}
+
+.weaponCountComplete {
+	color: var(--theme-success);
+}

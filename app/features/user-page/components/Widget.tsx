@@ -1,10 +1,13 @@
 import { Link } from "@remix-run/react";
+import clsx from "clsx";
 import { useTranslation } from "react-i18next";
+import { WeaponImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
 import type { Tables } from "~/db/tables";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { VodListing } from "~/features/vods/components/VodListing";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
 import { assertUnreachable } from "~/utils/types";
@@ -100,6 +103,30 @@ export function Widget({
 				return widget.data.length === 0 ? null : (
 					<Videos videos={widget.data} />
 				);
+			case "top-500-weapons":
+				if (!widget.data) return null;
+				return <Top500Weapons weaponIds={widget.data} />;
+			case "top-500-weapons-shooters":
+			case "top-500-weapons-blasters":
+			case "top-500-weapons-rollers":
+			case "top-500-weapons-brushes":
+			case "top-500-weapons-chargers":
+			case "top-500-weapons-sloshers":
+			case "top-500-weapons-splatlings":
+			case "top-500-weapons-dualies":
+			case "top-500-weapons-brellas":
+			case "top-500-weapons-stringers":
+			case "top-500-weapons-splatanas": {
+				if (!widget.data) return null;
+
+				return (
+					<Top500Weapons
+						weaponIds={widget.data.weaponIds}
+						count={widget.data.weaponIds.length}
+						total={widget.data.total}
+					/>
+				);
+			}
 			default:
 				assertUnreachable(widget);
 		}
@@ -260,6 +287,38 @@ function Videos({
 			{videos.map((video) => (
 				<VodListing key={video.id} vod={video} showUser={false} />
 			))}
+		</div>
+	);
+}
+
+function Top500Weapons({
+	weaponIds,
+	count,
+	total,
+}: {
+	weaponIds: MainWeaponId[];
+	count?: number;
+	total?: number;
+}) {
+	const isComplete =
+		typeof count === "number" && typeof total === "number" && count === total;
+
+	return (
+		<div>
+			<div className={styles.weaponGrid}>
+				{weaponIds.map((weaponId) => (
+					<WeaponImage key={weaponId} weaponSplId={weaponId} variant="badge" />
+				))}
+			</div>
+			{typeof count === "number" && typeof total === "number" ? (
+				<div
+					className={clsx(styles.weaponCount, {
+						[styles.weaponCountComplete]: isComplete,
+					})}
+				>
+					{count} / {total}
+				</div>
+			) : null}
 		</div>
 	);
 }

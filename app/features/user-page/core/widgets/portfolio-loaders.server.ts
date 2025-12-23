@@ -8,6 +8,7 @@ import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementR
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
+import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
 
 export const WIDGET_LOADERS = {
 	bio: async (userId: number) => {
@@ -99,4 +100,82 @@ export const WIDGET_LOADERS = {
 	videos: async (userId: number) => {
 		return VodRepository.findByUserId(userId, 3);
 	},
+	"top-500-weapons": async (userId: number) => {
+		const placements =
+			await XRankPlacementRepository.findPlacementsByUserId(userId);
+
+		if (!placements || placements.length === 0) {
+			return null;
+		}
+
+		const uniqueWeaponIds = [...new Set(placements.map((p) => p.weaponSplId))];
+
+		return uniqueWeaponIds.sort((a, b) => a - b);
+	},
+	"top-500-weapons-shooters": async (userId: number) => {
+		return getTop500WeaponsByCategory(userId, "SHOOTERS");
+	},
+	"top-500-weapons-blasters": async (userId: number) => {
+		return getTop500WeaponsByCategory(userId, "BLASTERS");
+	},
+	"top-500-weapons-rollers": async (userId: number) => {
+		return getTop500WeaponsByCategory(userId, "ROLLERS");
+	},
+	"top-500-weapons-brushes": async (userId: number) => {
+		return getTop500WeaponsByCategory(userId, "BRUSHES");
+	},
+	"top-500-weapons-chargers": async (userId: number) => {
+		return getTop500WeaponsByCategory(userId, "CHARGERS");
+	},
+	"top-500-weapons-sloshers": async (userId: number) => {
+		return getTop500WeaponsByCategory(userId, "SLOSHERS");
+	},
+	"top-500-weapons-splatlings": async (userId: number) => {
+		return getTop500WeaponsByCategory(userId, "SPLATLINGS");
+	},
+	"top-500-weapons-dualies": async (userId: number) => {
+		return getTop500WeaponsByCategory(userId, "DUALIES");
+	},
+	"top-500-weapons-brellas": async (userId: number) => {
+		return getTop500WeaponsByCategory(userId, "BRELLAS");
+	},
+	"top-500-weapons-stringers": async (userId: number) => {
+		return getTop500WeaponsByCategory(userId, "STRINGERS");
+	},
+	"top-500-weapons-splatanas": async (userId: number) => {
+		return getTop500WeaponsByCategory(userId, "SPLATANAS");
+	},
 } as const;
+
+async function getTop500WeaponsByCategory(
+	userId: number,
+	categoryName?: string,
+) {
+	const placements =
+		await XRankPlacementRepository.findPlacementsByUserId(userId);
+
+	if (!placements || placements.length === 0) {
+		return null;
+	}
+
+	const allWeaponIds = placements.map((p) => p.weaponSplId);
+	const uniqueWeaponIds = [...new Set(allWeaponIds)];
+
+	const category = weaponCategories.find((c) => c.name === categoryName);
+	if (!category) {
+		return null;
+	}
+
+	const categoryWeaponIds = uniqueWeaponIds.filter((id) =>
+		(category.weaponIds as readonly number[]).includes(id),
+	);
+
+	if (categoryWeaponIds.length === 0) {
+		return null;
+	}
+
+	return {
+		weaponIds: categoryWeaponIds.sort((a, b) => a - b),
+		total: category.weaponIds.length,
+	};
+}
