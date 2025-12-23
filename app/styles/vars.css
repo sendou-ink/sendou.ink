@@ -51,10 +51,10 @@ html.dark {
 }
 
 html {
-	--color-base-100: var(--color-base);
-	--color-base-200: oklch(from var(--color-base) calc(l - 4%) c h);
-	--color-base-300: oklch(from var(--color-base) calc(l - 8%) c h);
-	--color-base-400: oklch(from var(--color-base) calc(l - 12%) c h);
+	--color-base-light: oklch(from var(--color-base) calc(l + 0.04) c h);
+	--color-base-lighter: oklch(from var(--color-base) calc(l + 0.08) c h);
+	--color-base-dark: oklch(from var(--color-base) calc(l - 0.04) c h);
+	--color-base-darker: oklch(from var(--color-base) calc(l - 0.08) c h);
 
 	--color-text-light: oklch(from var(--color-text) calc(l - 0.2) c h);
 	--color-text-lighter: oklch(from var(--color-text) calc(l - 0.4) c h);
