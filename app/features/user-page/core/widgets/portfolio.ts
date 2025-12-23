@@ -50,6 +50,11 @@ export const ALL_WIDGETS = [
 		slot: "main",
 	},
 	{
+		id: "lfg-posts",
+		category: "misc",
+		slot: "main",
+	},
+	{
 		id: "top-500-weapons",
 		category: "xrank",
 		slot: "side",

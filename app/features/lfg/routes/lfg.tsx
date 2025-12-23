@@ -1,5 +1,6 @@
 import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import { useFetcher, useLoaderData } from "@remix-run/react";
+import clsx from "clsx";
 import { add, sub } from "date-fns";
 import React from "react";
 import { useTranslation } from "react-i18next";
@@ -26,6 +27,7 @@ import {
 	smallStrToFilter,
 } from "../lfg-types";
 import { loader } from "../loaders/lfg.server";
+import styles from "./lfg.module.css";
 export { loader, action };
 
 export const handle: SendouRouteHandle = {
@@ -124,7 +126,11 @@ export default function LFGPage() {
 				}
 			/>
 			{filteredPosts.map((post) => (
-				<div key={post.id} className="stack sm">
+				<div
+					key={post.id}
+					id={String(post.id)}
+					className={clsx("stack sm", styles.post)}
+				>
 					{showExpiryAlert(post) ? <PostExpiryAlert postId={post.id} /> : null}
 					<LFGPost post={post} tiersMap={tiersMap} />
 				</div>

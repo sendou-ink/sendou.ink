@@ -1,6 +1,7 @@
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import { allXPLeaderboard } from "~/features/leaderboards/queries/XPLeaderboard.server";
+import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
@@ -99,6 +100,9 @@ export const WIDGET_LOADERS = {
 	},
 	videos: async (userId: number) => {
 		return VodRepository.findByUserId(userId, 3);
+	},
+	"lfg-posts": async (userId: number) => {
+		return LFGRepository.findByAuthorUserId(userId);
 	},
 	"top-500-weapons": async (userId: number) => {
 		const placements =

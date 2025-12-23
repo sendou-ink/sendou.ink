@@ -165,3 +165,22 @@
 .weaponCountComplete {
 	color: var(--theme-success);
 }
+
+.lfgPosts {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.lfgPost {
+	color: var(--text);
+	font-size: var(--fonts-sm);
+	border-radius: var(--rounded-sm);
+	padding: var(--s-2);
+	transition: background-color 0.2s;
+	background-color: var(--bg-lighter);
+}
+
+.lfgPost:hover {
+	background-color: var(--bg-lightest);
+}

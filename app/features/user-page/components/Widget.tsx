@@ -13,6 +13,7 @@ import type { SerializeFrom } from "~/utils/remix";
 import { assertUnreachable } from "~/utils/types";
 import {
 	calendarEventPage,
+	LFG_PAGE,
 	teamPage,
 	tournamentBracketsPage,
 	tournamentOrganizationPage,
@@ -28,7 +29,7 @@ export function Widget({
 	widget: SerializeFrom<LoadedWidget>;
 	user: Pick<Tables["User"], "discordId" | "customUrl">;
 }) {
-	const { t } = useTranslation(["user", "badges", "team", "org"]);
+	const { t } = useTranslation(["user", "badges", "team", "org", "lfg"]);
 	const { formatDate } = useTimeFormat();
 
 	const content = () => {
@@ -102,6 +103,10 @@ export function Widget({
 			case "videos":
 				return widget.data.length === 0 ? null : (
 					<Videos videos={widget.data} />
+				);
+			case "lfg-posts":
+				return widget.data.length === 0 ? null : (
+					<LFGPosts posts={widget.data} />
 				);
 			case "top-500-weapons":
 				if (!widget.data) return null;
@@ -319,6 +324,28 @@ function Top500Weapons({
 					{count} / {total}
 				</div>
 			) : null}
+		</div>
+	);
+}
+
+function LFGPosts({
+	posts,
+}: {
+	posts: Extract<LoadedWidget, { id: "lfg-posts" }>["data"];
+}) {
+	const { t } = useTranslation(["lfg"]);
+
+	return (
+		<div className={styles.lfgPosts}>
+			{posts.map((post) => (
+				<Link
+					key={post.id}
+					to={`${LFG_PAGE}#${post.id}`}
+					className={styles.lfgPost}
+				>
+					{t(`lfg:types.${post.type}`)}
+				</Link>
+			))}
 		</div>
 	);
 }
