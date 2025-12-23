@@ -123,6 +123,15 @@ export function findByOwnerUserId(userId: number) {
 		.execute();
 }
 
+export function findByAuthorUserId(userId: number) {
+	return db
+		.selectFrom("Badge")
+		.select(["Badge.id", "Badge.displayName", "Badge.code", "Badge.hue"])
+		.where("Badge.authorId", "=", userId)
+		.groupBy("Badge.id")
+		.execute();
+}
+
 export function replaceManagers({
 	badgeId,
 	managerIds,

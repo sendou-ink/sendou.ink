@@ -10,6 +10,11 @@ export const ALL_WIDGETS = [
 		slot: "main",
 	},
 	{
+		id: "badges-authored",
+		category: "badges",
+		slot: "main",
+	},
+	{
 		id: "teams",
 		category: "teams",
 		slot: "side",

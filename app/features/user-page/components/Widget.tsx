@@ -25,6 +25,8 @@ export function Widget({ widget }: { widget: SerializeFrom<LoadedWidget> }) {
 				return widget.data ? <article>{widget.data}</article> : null;
 			case "badges-owned":
 				return <BadgeDisplay badges={widget.data} />;
+			case "badges-authored":
+				return <BadgeDisplay badges={widget.data} />;
 			case "teams":
 				return (
 					<Memberships

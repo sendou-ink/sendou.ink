@@ -15,6 +15,9 @@ export const WIDGET_LOADERS = {
 	"badges-owned": async (userId: number) => {
 		return BadgeRepository.findByOwnerUserId(userId);
 	},
+	"badges-authored": async (userId: number) => {
+		return BadgeRepository.findByAuthorUserId(userId);
+	},
 	teams: async (userId: number) => {
 		return TeamRepository.findAllMemberOfByUserId(userId);
 	},
