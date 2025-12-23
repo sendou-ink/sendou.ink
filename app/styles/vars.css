@@ -1,7 +1,18 @@
+html {
+	--accent-hue: 355;
+	--accent-chroma: 0.24;
+	--base-hue: 255;
+	--base-chroma: 0.016;
+}
+
 html.light {
-	--color-accent-low: oklch(32% 0.17 355);
-	--color-accent: oklch(53% 0.24 355);
-	--color-accent-high: oklch(87% 0.06 355);
+	--color-accent-low: oklch(
+		32% calc(var(--accent-chroma) * 0.7) var(--accent-hue)
+	);
+	--color-accent: oklch(53% var(--accent-chroma) var(--accent-hue));
+	--color-accent-high: oklch(
+		87% calc(var(--accent-chroma) * 0.25) var(--accent-hue)
+	);
 
 	--color-info-high: oklch(31.865% 0.1766 267.138);
 	--color-info: oklch(53.03% 0.24331 270.147);
@@ -19,16 +30,20 @@ html.light {
 	--color-error: oklch(65.223% 0.22164 5.216);
 	--color-error-low: oklch(89.949% 0.04928 355.498);
 
-	--color-base: oklch(100% 0 0);
+	--color-base: oklch(100% var(--base-chroma) var(--base-hue));
 	--color-text: oklch(21% 0.01 285);
 	--color-text-inverse: oklch(97.807% 0.029 255);
 	--color-text-accent: var(--color-accent);
 }
 
 html.dark {
-	--color-accent-low: oklch(28% 0.08 355);
-	--color-accent: oklch(57% 0.23 355);
-	--color-accent-high: oklch(83% 0.08 355);
+	--color-accent-low: oklch(
+		28% calc(var(--accent-chroma) * 0.35) var(--accent-hue)
+	);
+	--color-accent: oklch(57% var(--accent-chroma) var(--accent-hue));
+	--color-accent-high: oklch(
+		83% calc(var(--accent-chroma) * 0.35) var(--accent-hue)
+	);
 
 	--color-info-low: oklch(26% 0.09 275);
 	--color-info: oklch(52% 0.27 275);
@@ -46,7 +61,7 @@ html.dark {
 	--color-error: oklch(65% 0.19 10);
 	--color-error-high: oklch(87% 0.07 10);
 
-	--color-base: oklch(25.33% 0.016 255);
+	--color-base: oklch(25.33% var(--base-chroma) var(--base-hue));
 	--color-text: oklch(97.807% 0.029 255);
 	--color-text-inverse: oklch(21% 0.01 285);
 	--color-text-accent: var(--color-accent-high);
