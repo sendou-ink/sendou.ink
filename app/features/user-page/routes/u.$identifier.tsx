@@ -24,7 +24,6 @@ import {
 	userSeasonsPage,
 	userVodsPage,
 } from "~/utils/urls";
-import { SubPageHeader } from "../components/SubPageHeader";
 import type { UserPageNavItem } from "../components/UserPageIconNav";
 
 import {
@@ -81,7 +80,6 @@ export default function UserPageLayout() {
 		data.user.calendarEventResultsCount + data.user.tournamentResultsCount;
 
 	const isNewUserPage = matches.some((m) => (m.data as any)?.type === "new");
-	const isIndexPage = location.pathname === userPage(data.user);
 
 	const navItems: UserPageNavItem[] = [
 		{
@@ -136,11 +134,7 @@ export default function UserPageLayout() {
 
 	return (
 		<Main bigger={location.pathname.includes("results")}>
-			{isNewUserPage ? (
-				!isIndexPage ? (
-					<SubPageHeader user={data.user} backTo={userPage(data.user)} />
-				) : null
-			) : (
+			{isNewUserPage ? null : (
 				<SubNav>
 					<SubNavLink to={userPage(data.user)} data-testid="user-profile-tab">
 						{t("common:header.profile")}

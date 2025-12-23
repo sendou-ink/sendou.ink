@@ -7,8 +7,9 @@ import { useUser } from "~/features/auth/core/user";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { newArtPage } from "~/utils/urls";
+import { newArtPage, userPage } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.art.server";
+import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.art.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 export { action, loader };
@@ -52,9 +53,9 @@ export default function UserArtPage() {
 
 	return (
 		<div className="stack md">
-			<div className="stack items-end">
+			<SubPageHeader user={layoutData.user} backTo={userPage(layoutData.user)}>
 				<AddNewButton navIcon="art" to={newArtPage()} />
-			</div>
+			</SubPageHeader>
 			<div className="stack horizontal justify-between items-start text-xs text-lighter">
 				<div>
 					{data.unvalidatedArtCount > 0
