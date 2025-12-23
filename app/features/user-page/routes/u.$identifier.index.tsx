@@ -39,7 +39,7 @@ import styles from "./u.$identifier.module.css";
 export { loader };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["badges", "team", "org"],
+	i18n: ["badges", "team", "org", "vods"],
 };
 
 export default function UserInfoPage() {
@@ -94,25 +94,25 @@ function NewUserInfoPage() {
 
 			<div className={styles.sideCarousel}>
 				{sideWidgets.map((widget) => (
-					<Widget key={widget.id} widget={widget} />
+					<Widget key={widget.id} widget={widget} user={layoutData.user} />
 				))}
 			</div>
 
 			<div className={styles.mainStack}>
 				{mainWidgets.map((widget) => (
-					<Widget key={widget.id} widget={widget} />
+					<Widget key={widget.id} widget={widget} user={layoutData.user} />
 				))}
 			</div>
 
 			<div className={styles.grid}>
 				<div className={styles.main}>
 					{mainWidgets.map((widget) => (
-						<Widget key={widget.id} widget={widget} />
+						<Widget key={widget.id} widget={widget} user={layoutData.user} />
 					))}
 				</div>
 				<div className={styles.side}>
 					{sideWidgets.map((widget) => (
-						<Widget key={widget.id} widget={widget} />
+						<Widget key={widget.id} widget={widget} user={layoutData.user} />
 					))}
 				</div>
 			</div>

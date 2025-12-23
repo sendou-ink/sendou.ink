@@ -44,6 +44,11 @@ export const ALL_WIDGETS = [
 		category: "misc",
 		slot: "side",
 	},
+	{
+		id: "videos",
+		category: "vods",
+		slot: "main",
+	},
 ] as const;
 
 export const ALL_WIDGET_IDS = ALL_WIDGETS.map((w) => w.id);

@@ -1,7 +1,9 @@
 import { Link } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
 import { Placement } from "~/components/Placement";
+import type { Tables } from "~/db/tables";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
+import { VodListing } from "~/features/vods/components/VodListing";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
@@ -11,11 +13,18 @@ import {
 	teamPage,
 	tournamentBracketsPage,
 	tournamentOrganizationPage,
+	userVodsPage,
 } from "~/utils/urls";
 import type { LoadedWidget } from "../core/widgets/types";
 import styles from "./Widget.module.css";
 
-export function Widget({ widget }: { widget: SerializeFrom<LoadedWidget> }) {
+export function Widget({
+	widget,
+	user,
+}: {
+	widget: SerializeFrom<LoadedWidget>;
+	user: Pick<Tables["User"], "discordId" | "customUrl">;
+}) {
 	const { t } = useTranslation(["user", "badges", "team", "org"]);
 	const { formatDate } = useTimeFormat();
 
@@ -87,14 +96,34 @@ export function Widget({ widget }: { widget: SerializeFrom<LoadedWidget> }) {
 						})}
 					/>
 				);
+			case "videos":
+				return widget.data.length === 0 ? null : (
+					<Videos videos={widget.data} />
+				);
 			default:
 				assertUnreachable(widget);
 		}
 	};
 
+	const widgetLink = (() => {
+		switch (widget.id) {
+			case "videos":
+				return userVodsPage(user);
+			default:
+				return null;
+		}
+	})();
+
 	return (
 		<div className={styles.widget}>
-			<h2 className={styles.header}>{t(`user:widget.${widget.id}`)}</h2>
+			<div className={styles.header}>
+				<h2 className={styles.headerText}>{t(`user:widget.${widget.id}`)}</h2>
+				{widgetLink ? (
+					<Link to={widgetLink} className={styles.headerLink}>
+						{t("user:widget.link.all")}
+					</Link>
+				) : null}
+			</div>
 			<div className={styles.content}>{content()}</div>
 		</div>
 	);
@@ -164,14 +193,7 @@ function Memberships({
 function HighlightedResults({
 	results,
 }: {
-	results: Array<{
-		eventId?: number;
-		tournamentId?: number;
-		placement: number;
-		eventName: string;
-		logoUrl: string | null;
-		startTime: number;
-	}>;
+	results: Extract<LoadedWidget, { id: "highlighted-results" }>["data"];
 }) {
 	const { formatDate } = useTimeFormat();
 
@@ -223,6 +245,20 @@ function HighlightedResults({
 						</div>
 					</div>
 				</div>
+			))}
+		</div>
+	);
+}
+
+function Videos({
+	videos,
+}: {
+	videos: Extract<LoadedWidget, { id: "videos" }>["data"];
+}) {
+	return (
+		<div className={styles.videos}>
+			{videos.map((video) => (
+				<VodListing key={video.id} vod={video} showUser={false} />
 			))}
 		</div>
 	);

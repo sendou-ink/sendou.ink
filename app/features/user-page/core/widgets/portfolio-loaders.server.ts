@@ -7,6 +7,7 @@ import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import * as VodRepository from "~/features/vods/VodRepository.server";
 
 export const WIDGET_LOADERS = {
 	bio: async (userId: number) => {
@@ -94,5 +95,8 @@ export const WIDGET_LOADERS = {
 	},
 	"patron-since": async (userId: number) => {
 		return UserRepository.patronSinceByUserId(userId);
+	},
+	videos: async (userId: number) => {
+		return VodRepository.findByUserId(userId, 3);
 	},
 } as const;
