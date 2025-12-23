@@ -402,31 +402,31 @@ function Groups() {
 						<SendouTabPanel id="groups">
 							<div className="stack sm">
 								<ColumnHeader>{t("q:looking.columns.available")}</ColumnHeader>
-								{neutralGroups
-									.filter(
-										(group) =>
-											isMobile ||
-											!data.likes.given.some(
-												(like) => like.groupId === group.id,
-											),
-									)
-									.map((group) => {
-										return (
-											<GroupCard
-												key={group.id}
-												group={group}
-												action={
-													data.likes.given.some(
-														(like) => like.groupId === group.id,
-													)
-														? "UNLIKE"
-														: "LIKE"
-												}
-												showNote
-												ownGroup={data.ownGroup}
-											/>
-										);
-									})}
+								{(isMobile
+									? data.groups.filter(
+											(group) =>
+												!data.likes.received.some(
+													(like) => like.groupId === group.id,
+												),
+										)
+									: neutralGroups
+								).map((group) => {
+									return (
+										<GroupCard
+											key={group.id}
+											group={group}
+											action={
+												data.likes.given.some(
+													(like) => like.groupId === group.id,
+												)
+													? "UNLIKE"
+													: "LIKE"
+											}
+											showNote
+											ownGroup={data.ownGroup}
+										/>
+									);
+								})}
 							</div>
 						</SendouTabPanel>
 						<SendouTabPanel id="received">
