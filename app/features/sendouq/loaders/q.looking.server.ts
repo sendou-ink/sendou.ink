@@ -24,10 +24,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		: SendouQ.lookingGroups(user.id, privateNotes);
 	const ownGroup = SendouQ.findOwnGroup(user.id);
 
-	sqRedirectIfNeeded({
-		ownGroup,
-		currentLocation: "looking",
-	});
+	if (!isPreview) {
+		sqRedirectIfNeeded({
+			ownGroup,
+			currentLocation: "looking",
+		});
+	}
 
 	return {
 		groups:
