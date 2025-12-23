@@ -21,6 +21,7 @@ html.light {
 
 	--color-base: oklch(100% 0 0);
 	--color-text: oklch(21% 0.01 285);
+	--color-text-inverse: oklch(97.807% 0.029 255);
 	--color-text-accent: var(--color-accent);
 }
 
@@ -47,6 +48,7 @@ html.dark {
 
 	--color-base: oklch(25.33% 0.016 255);
 	--color-text: oklch(97.807% 0.029 255);
+	--color-text-inverse: oklch(21% 0.01 285);
 	--color-text-accent: var(--color-accent-high);
 }
 
@@ -58,7 +60,6 @@ html {
 
 	--color-text-light: oklch(from var(--color-text) calc(l - 0.2) c h);
 	--color-text-lighter: oklch(from var(--color-text) calc(l - 0.4) c h);
-	--color-text-inverse: var(--color-base);
 }
 
 html {
