@@ -90,10 +90,7 @@ export function GroupCard({
 
 	return (
 		<GroupCardContainer groupId={group.id} isOwnGroup={isOwnGroup}>
-			<section
-				className={clsx(styles.group, { [styles.displayOnly]: displayOnly })}
-				data-testid="sendouq-group-card"
-			>
+			<section className={styles.group} data-testid="sendouq-group-card">
 				{group.members ? (
 					<div className="stack md">
 						{group.members.map((member) => {
@@ -143,7 +140,6 @@ export function GroupCard({
 					</div>
 				) : null}
 				{group.tier &&
-				!displayOnly &&
 				(!group.members || group.members.length === FULL_GROUP_SIZE) ? (
 					<div className="stack xs text-lighter font-bold items-center justify-center text-xs">
 						<TierImage tier={group.tier} width={100} />

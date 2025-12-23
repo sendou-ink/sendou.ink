@@ -20,11 +20,6 @@
 	place-items: center;
 }
 
-.displayOnly {
-	height: 100%;
-	padding-block-end: var(--s-10);
-}
-
 .member {
 	display: flex;
 	gap: var(--s-2);
