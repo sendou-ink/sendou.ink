@@ -13,8 +13,6 @@ import {
 	useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -23,37 +21,14 @@ import { SendouButton } from "~/components/elements/Button";
 import { MainSlotIcon } from "~/components/icons/MainSlot";
 import { SideSlotIcon } from "~/components/icons/SideSlot";
 import type { Tables } from "~/db/tables";
-import { requireUser } from "~/features/auth/core/user.server";
 import { ALL_WIDGETS } from "~/features/user-page/core/widgets/portfolio";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { USER } from "~/features/user-page/user-page-constants";
-import { widgetsEditSchema } from "~/features/user-page/user-page-schemas";
-import { parseRequestPayload } from "~/utils/remix.server";
-import { userPage } from "~/utils/urls";
+import { action } from "../actions/u.$identifier.edit-widgets.server";
+import { loader } from "../loaders/u.$identifier.edit-widgets.server";
 import styles from "./u.$identifier.edit-widgets.module.css";
 
-// xxx: move action and loader to different file
-
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await requireUser(request);
-
-	const currentWidgets = await UserRepository.storedWidgetsByUserId(user.id);
-
-	return { currentWidgets };
-};
-
-export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = await requireUser(request);
-
-	const payload = await parseRequestPayload({
-		request,
-		schema: widgetsEditSchema,
-	});
-
-	await UserRepository.upsertWidgets(user.id, payload.widgets);
-
-	return redirect(userPage(user));
-};
+export { action };
+export { loader };
 
 export default function EditWidgetsPage() {
 	const { t } = useTranslation(["user", "common"]);
