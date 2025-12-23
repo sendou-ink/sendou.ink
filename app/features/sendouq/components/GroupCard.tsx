@@ -90,10 +90,7 @@ export function GroupCard({
 
 	return (
 		<GroupCardContainer groupId={group.id} isOwnGroup={isOwnGroup}>
-			<section
-				className={clsx(styles.group, { [styles.displayOnly]: displayOnly })}
-				data-testid="sendouq-group-card"
-			>
+			<section className={styles.group} data-testid="sendouq-group-card">
 				{group.members ? (
 					<div className="stack md">
 						{group.members.map((member) => {
@@ -142,7 +139,8 @@ export function GroupCard({
 						) : null}
 					</div>
 				) : null}
-				{group.tier && !displayOnly && !group.members ? (
+				{group.tier &&
+				(!group.members || group.members.length === FULL_GROUP_SIZE) ? (
 					<div className="stack xs text-lighter font-bold items-center justify-center text-xs">
 						<TierImage tier={group.tier} width={100} />
 						<div>
@@ -171,25 +169,34 @@ export function GroupCard({
 						<div className="stack sm horizontal items-center justify-center">
 							<div className="stack xs items-center">
 								<TierImage tier={group.tierRange.range[0]} width={80} />
-								<div className="text-lighter text-sm font-bold">
-									({group.tierRange.diff[0]})
-								</div>
+								{group.tierRange.diff[0] ? (
+									<div className="text-lighter text-sm font-bold">
+										({group.tierRange.diff[0]})
+									</div>
+								) : null}
 							</div>
-							<SendouPopover
-								popoverClassName="text-main-forced"
-								trigger={
-									<SendouButton className={styles.popoverButton}>
-										{t("q:looking.range.or")}
-									</SendouButton>
-								}
-							>
-								{t("q:looking.range.or.explanation")}
-							</SendouPopover>
+							{/** in preview mode they don't see full group tiers (because they don't have a group to compare against) so it is a "true range" */}
+							{group.tierRange.diff[0] ? (
+								<SendouPopover
+									popoverClassName="text-main-forced"
+									trigger={
+										<SendouButton className={styles.popoverButton}>
+											{t("q:looking.range.or")}
+										</SendouButton>
+									}
+								>
+									{t("q:looking.range.or.explanation")}
+								</SendouPopover>
+							) : (
+								"—"
+							)}
 							<div className="stack xs items-center">
 								<TierImage tier={group.tierRange.range[1]} width={80} />
-								<div className="text-lighter text-sm font-bold">
-									(+{group.tierRange.diff[1]})
-								</div>
+								{group.tierRange.diff[1] ? (
+									<div className="text-lighter text-sm font-bold">
+										(+{group.tierRange.diff[1]})
+									</div>
+								) : null}
 							</div>
 						</div>
 						{group.isReplay ? (
@@ -400,10 +407,7 @@ function GroupMember({
 				) : null}
 			</div>
 			{!hideNote ? (
-				<MemberNote
-					note={member.privateNote?.text}
-					editable={user?.id === member.id}
-				/>
+				<MemberNote note={member.note} editable={user?.id === member.id} />
 			) : null}
 		</div>
 	);

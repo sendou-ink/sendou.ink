@@ -38,6 +38,7 @@ export async function findCurrentGroups() {
 		languages: Tables["User"]["languages"];
 		vc: Tables["User"]["vc"];
 		role: Tables["GroupMember"]["role"];
+		note: Tables["GroupMember"]["note"];
 		weapons: Tables["User"]["qWeaponPool"];
 		chatNameColor: string | null;
 		plusTier: Tables["PlusTier"]["tier"] | null;
@@ -76,6 +77,7 @@ export async function findCurrentGroups() {
 						mapModePreferences: eb.ref("User.mapModePreferences"),
 						noScreen: eb.ref("User.noScreen"),
 						role: eb.ref("GroupMember.role"),
+						note: eb.ref("GroupMember.note"),
 						weapons: eb.ref("User.qWeaponPool"),
 						languages: eb.ref("User.languages"),
 						plusTier: eb.ref("PlusTier.tier"),
