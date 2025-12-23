@@ -89,4 +89,7 @@ export const WIDGET_LOADERS = {
 
 		return results;
 	},
+	"patron-since": async (userId: number) => {
+		return UserRepository.patronSinceByUserId(userId);
+	},
 } as const;

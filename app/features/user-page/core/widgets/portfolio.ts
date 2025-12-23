@@ -34,4 +34,11 @@ export const ALL_WIDGETS = [
 		category: "tournaments",
 		slot: "side",
 	},
+	{
+		id: "patron-since",
+		category: "misc",
+		slot: "side",
+	},
 ] as const;
+
+export const ALL_WIDGET_IDS = ALL_WIDGETS.map((w) => w.id);

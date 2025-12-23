@@ -27,7 +27,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import { ALL_WIDGETS } from "~/features/user-page/core/widgets/portfolio";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { USER } from "~/features/user-page/user-page-constants";
-import { widgetsEditSchema } from "~/features/user-page/user-page-schemas.server";
+import { widgetsEditSchema } from "~/features/user-page/user-page-schemas";
 import { parseRequestPayload } from "~/utils/remix.server";
 import { userPage } from "~/utils/urls";
 import styles from "./u.$identifier.edit-widgets.module.css";

@@ -17,6 +17,7 @@ import styles from "./Widget.module.css";
 
 export function Widget({ widget }: { widget: SerializeFrom<LoadedWidget> }) {
 	const { t } = useTranslation(["user", "badges", "team", "org"]);
+	const { formatDate } = useTimeFormat();
 
 	const content = () => {
 		switch (widget.id) {
@@ -54,7 +55,7 @@ export function Widget({ widget }: { widget: SerializeFrom<LoadedWidget> }) {
 			case "peak-sp":
 				if (!widget.data) return null;
 				return (
-					<PeakValue
+					<BigValue
 						value={widget.data.peakSp}
 						unit="SP"
 						footer={`${widget.data.tierName}${widget.data.isPlus ? "+" : ""} / ${t("user:seasons.season.short")}${widget.data.season}`}
@@ -63,7 +64,7 @@ export function Widget({ widget }: { widget: SerializeFrom<LoadedWidget> }) {
 			case "peak-xp":
 				if (!widget.data) return null;
 				return (
-					<PeakValue
+					<BigValue
 						value={widget.data.peakXp}
 						unit="XP"
 						footer={`${widget.data.division}${widget.data.topRating ? ` / #${widget.data.topRating}` : ""}`}
@@ -72,6 +73,17 @@ export function Widget({ widget }: { widget: SerializeFrom<LoadedWidget> }) {
 			case "highlighted-results":
 				return widget.data.length === 0 ? null : (
 					<HighlightedResults results={widget.data} />
+				);
+			case "patron-since":
+				if (!widget.data) return null;
+				return (
+					<BigValue
+						value={formatDate(databaseTimestampToDate(widget.data), {
+							day: "numeric",
+							month: "short",
+							year: "numeric",
+						})}
+					/>
 				);
 			default:
 				assertUnreachable(widget);
@@ -86,21 +98,21 @@ export function Widget({ widget }: { widget: SerializeFrom<LoadedWidget> }) {
 	);
 }
 
-function PeakValue({
+function BigValue({
 	value,
 	unit,
 	footer,
 }: {
-	value: number;
-	unit: string;
-	footer: string;
+	value: number | string;
+	unit?: string;
+	footer?: string;
 }) {
 	return (
 		<div className={styles.peakValue}>
 			<div className={styles.peakValueMain}>
-				{value} {unit}
+				{value} {unit ? unit : null}
 			</div>
-			<div className={styles.peakValueFooter}>{footer}</div>
+			{footer ? <div className={styles.peakValueFooter}>{footer}</div> : null}
 		</div>
 	);
 }

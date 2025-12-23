@@ -940,6 +940,16 @@ export async function inGameNameByUserId(userId: number) {
 	)?.inGameName;
 }
 
+export async function patronSinceByUserId(userId: number) {
+	return (
+		await db
+			.selectFrom("User")
+			.select("User.patronSince")
+			.where("id", "=", userId)
+			.executeTakeFirst()
+	)?.patronSince;
+}
+
 export function insertFriendCode(args: TablesInsertable["UserFriendCode"]) {
 	cachedFriendCodes?.add(args.friendCode);
 
