@@ -10,7 +10,9 @@ import {
 export const patronResponseSchema = z.object({
 	data: z.array(
 		z.object({
-			attributes: z.object({}),
+			attributes: z.object({
+				pledge_relationship_start: z.string().nullish(),
+			}),
 			id: z.string(),
 			relationships: z.object({
 				currently_entitled_tiers: z.object({
@@ -24,11 +26,6 @@ export const patronResponseSchema = z.object({
 								UNKNOWN_TIER_ID,
 							]),
 							type: z.string(),
-							attributes: z
-								.object({
-									created_at: z.string(),
-								})
-								.nullish(),
 						}),
 					),
 				}),

@@ -1,4 +1,4 @@
-import type { GroupForMatch } from "~/features/sendouq-match/QMatchRepository.server";
+import type { SQMatchGroup } from "~/features/sendouq/core/SendouQ.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { MatchById } from "../queries/findMatchById.server";
 import type { reportedWeaponsByMatchId } from "../queries/reportedWeaponsByMatchId.server";
@@ -67,8 +67,8 @@ export function reportedWeaponsToArrayOfArrays({
 }: {
 	reportedWeapons: ReturnType<typeof reportedWeaponsByMatchId>;
 	mapList: MatchById["mapList"];
-	groupAlpha: GroupForMatch;
-	groupBravo: GroupForMatch;
+	groupAlpha: SQMatchGroup;
+	groupBravo: SQMatchGroup;
 }) {
 	if (!reportedWeapons) return null;
 

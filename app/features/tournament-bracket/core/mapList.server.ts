@@ -119,7 +119,7 @@ function resolveBannedByTeamId(
 	return;
 }
 
-export function resolveFreshTeamPickedMapList(
+function resolveFreshTeamPickedMapList(
 	args: ResolveCurrentMapListArgs & {
 		mapPickingStyle: Exclude<Tables["Tournament"]["mapPickingStyle"], "TO">;
 	},

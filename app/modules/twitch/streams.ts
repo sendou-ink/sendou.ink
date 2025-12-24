@@ -134,7 +134,7 @@ async function getAllStreams() {
 	}
 }
 
-export async function getStreamsChunk({
+async function getStreamsChunk({
 	isRetry = false,
 	cursor,
 }: {

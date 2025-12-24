@@ -3,19 +3,12 @@ import { redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { notify } from "~/features/notifications/core/notify.server";
-import * as QRepository from "~/features/sendouq/QRepository.server";
-import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
-import invariant from "~/utils/invariant";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
-import { hasGroupManagerPerms } from "../core/groups";
-import { FULL_GROUP_SIZE } from "../q-constants";
+import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import { preparingSchema } from "../q-schemas.server";
-import { addMember } from "../queries/addMember.server";
-import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
-import { refreshGroup } from "../queries/refreshGroup.server";
-import { setGroupAsActive } from "../queries/setGroupAsActive.server";
 
 export type SendouQPreparingAction = typeof action;
 
@@ -26,10 +19,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		schema: preparingSchema,
 	});
 
-	const currentGroup = findCurrentGroupByUserId(user.id);
-	errorToastIfFalsy(currentGroup, "No group found");
+	const ownGroup = SendouQ.findOwnGroup(user.id);
+	errorToastIfFalsy(ownGroup, "No group found");
 
-	if (!hasGroupManagerPerms(currentGroup.role)) {
+	// no perms, possibly just lost them so no more graceful degradation
+	if (ownGroup.usersRole === "REGULAR") {
 		return null;
 	}
 
@@ -38,47 +32,36 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	switch (data._action) {
 		case "JOIN_QUEUE": {
-			if (currentGroup.status !== "PREPARING") {
-				return null;
-			}
+			await SQGroupRepository.setPreparingGroupAsActive(ownGroup.id);
 
-			setGroupAsActive(currentGroup.id);
-			refreshGroup(currentGroup.id);
+			await refreshSendouQInstance();
 
 			return redirect(SENDOUQ_LOOKING_PAGE);
 		}
 		case "ADD_TRUSTED": {
-			const available = await QRepository.findActiveGroupMembers();
+			const available = await SQGroupRepository.findActiveGroupMembers();
 			if (available.some(({ userId }) => userId === data.id)) {
 				return { error: "taken" } as const;
 			}
 
 			errorToastIfFalsy(
-				(await QRepository.usersThatTrusted(user.id)).trusters.some(
+				(await SQGroupRepository.usersThatTrusted(user.id)).trusters.some(
 					(trusterUser) => trusterUser.id === data.id,
 				),
 				"Not trusted",
 			);
 
-			const ownGroupWithMembers = await QMatchRepository.findGroupById({
-				groupId: currentGroup.id,
-			});
-			invariant(ownGroupWithMembers, "No own group found");
-			errorToastIfFalsy(
-				ownGroupWithMembers.members.length < FULL_GROUP_SIZE,
-				"Group is full",
-			);
-
-			addMember({
-				groupId: currentGroup.id,
+			await SQGroupRepository.addMember(ownGroup.id, {
 				userId: data.id,
 				role: "MANAGER",
 			});
 
-			await QRepository.refreshTrust({
+			await SQGroupRepository.refreshTrust({
 				trustGiverUserId: data.id,
 				trustReceiverUserId: user.id,
 			});
+
+			await refreshSendouQInstance();
 
 			notify({
 				userIds: [data.id],

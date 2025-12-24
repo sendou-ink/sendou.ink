@@ -1,12 +1,14 @@
+import type {
+	AbilityPoints,
+	SpecialWeaponParams,
+	SubWeaponParams,
+} from "~/features/build-analyzer/analyzer-types";
 import {
-	type AbilityPoints,
-	hpDivided,
-	type SpecialWeaponParams,
-	type SubWeaponParams,
 	specialDeviceHp,
 	specialFieldHp,
 	subStats,
-} from "~/features/build-analyzer";
+} from "~/features/build-analyzer/core/stats";
+import { hpDivided } from "~/features/build-analyzer/core/utils";
 import { weaponParams } from "~/features/build-analyzer/core/weapon-params";
 import {
 	BIG_BUBBLER_ID,

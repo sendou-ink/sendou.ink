@@ -110,9 +110,7 @@ export default function TournamentMatchPage() {
 					)}
 					matchIsOver={data.matchIsOver}
 					matchId={data.match.id}
-					hasBothParticipants={Boolean(
-						data.match.opponentOne?.id && data.match.opponentTwo?.id,
-					)}
+					matchStatus={data.match.status}
 				/>
 				{data.matchIsOver && !data.endedEarly && data.results.length > 0 ? (
 					<ResultsSection />

@@ -8,6 +8,7 @@ import { updateRoundMaps } from "~/features/tournament/queries/updateRoundMaps.s
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import invariant from "~/utils/invariant";
+import { logger } from "~/utils/logger";
 import {
 	errorToastIfErr,
 	errorToastIfFalsy,
@@ -223,15 +224,23 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			invariant(bracket, "Bracket not found");
 
-			const ownTeam = tournament.ownedTeamByUser(user);
-			invariant(ownTeam, "User doesn't have owned team");
+			const teamMemberOf = tournament.teamMemberOfByUser(user);
+			invariant(teamMemberOf, "User is not in a team");
 
 			errorToastIfFalsy(bracket.canCheckIn(user), "Not an organizer");
 
+			logger.info(
+				`Checking in (bracket try): tournament team id: ${teamMemberOf.id} - user id: ${user.id} - tournament id: ${tournament.ctx.id} - bracket idx: ${data.bracketIdx}`,
+			);
+
 			await TournamentRepository.checkIn({
 				bracketIdx: data.bracketIdx,
-				tournamentTeamId: ownTeam.id,
+				tournamentTeamId: teamMemberOf.id,
 			});
+
+			logger.info(
+				`Checking in (bracket success): tournament team id: ${teamMemberOf.id} - user id: ${user.id} - tournament id: ${tournament.ctx.id} - bracket idx: ${data.bracketIdx}`,
+			);
 			break;
 		}
 		case "OVERRIDE_BRACKET_PROGRESSION": {

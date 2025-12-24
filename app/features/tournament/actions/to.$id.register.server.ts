@@ -3,7 +3,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
-import * as QRepository from "~/features/sendouq/QRepository.server";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
@@ -254,7 +254,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			);
 			errorToastIfFalsy(ownTeam, "You are not registered to this tournament");
 			errorToastIfFalsy(
-				(await QRepository.usersThatTrusted(user.id)).trusters.some(
+				(await SQGroupRepository.usersThatTrusted(user.id)).trusters.some(
 					(trusterPlayer) => trusterPlayer.id === data.userId,
 				),
 				"No trust given from this user",
@@ -280,7 +280,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 					userId: data.userId,
 				}),
 			});
-			await QRepository.refreshTrust({
+			await SQGroupRepository.refreshTrust({
 				trustGiverUserId: data.userId,
 				trustReceiverUserId: user.id,
 			});

@@ -1,11 +1,10 @@
 import type { ActionFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
-import { sql } from "~/db/sql";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import * as QRepository from "~/features/sendouq/QRepository.server";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { giveTrust } from "~/features/tournament/queries/giveTrust.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
@@ -16,13 +15,10 @@ import {
 	SENDOUQ_PREPARING_PAGE,
 	SUSPENDED_PAGE,
 } from "~/utils/urls";
-import { FULL_GROUP_SIZE, JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
+import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
+import { JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
 import { frontPageSchema } from "../q-schemas.server";
 import { userCanJoinQueueAt } from "../q-utils";
-import { addMember } from "../queries/addMember.server";
-import { deleteLikesByGroupId } from "../queries/deleteLikesByGroupId.server";
-import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
-import { findGroupByInviteCode } from "../queries/findGroupByInviteCode.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = await requireUser(request);
@@ -35,10 +31,12 @@ export const action: ActionFunction = async ({ request }) => {
 		case "JOIN_QUEUE": {
 			await validateCanJoinQ(user);
 
-			await QRepository.createGroup({
+			await SQGroupRepository.createGroup({
 				status: data.direct === "true" ? "ACTIVE" : "PREPARING",
 				userId: user.id,
 			});
+
+			await refreshSendouQInstance();
 
 			return redirect(
 				data.direct === "true" ? SENDOUQ_LOOKING_PAGE : SENDOUQ_PREPARING_PAGE,
@@ -53,34 +51,28 @@ export const action: ActionFunction = async ({ request }) => {
 			);
 
 			const groupInvitedTo =
-				code && user ? findGroupByInviteCode(code) : undefined;
+				code && user ? SendouQ.findGroupByInviteCode(code) : undefined;
 			errorToastIfFalsy(
 				groupInvitedTo,
 				"Invite code doesn't match any active team",
 			);
-			errorToastIfFalsy(
-				groupInvitedTo.members.length < FULL_GROUP_SIZE,
-				"Team is full",
-			);
 
-			sql.transaction(() => {
-				addMember({
-					groupId: groupInvitedTo.id,
-					userId: user.id,
-					role: "MANAGER",
+			await SQGroupRepository.addMember(groupInvitedTo.id, {
+				userId: user.id,
+				role: "MANAGER",
+			});
+
+			if (data._action === "JOIN_TEAM_WITH_TRUST") {
+				const owner = groupInvitedTo.members.find((m) => m.role === "OWNER");
+				invariant(owner, "Owner not found");
+
+				giveTrust({
+					trustGiverUserId: user.id,
+					trustReceiverUserId: owner.id,
 				});
-				deleteLikesByGroupId(groupInvitedTo.id);
+			}
 
-				if (data._action === "JOIN_TEAM_WITH_TRUST") {
-					const owner = groupInvitedTo.members.find((m) => m.role === "OWNER");
-					invariant(owner, "Owner not found");
-
-					giveTrust({
-						trustGiverUserId: user.id,
-						trustReceiverUserId: owner.id,
-					});
-				}
-			})();
+			await refreshSendouQInstance();
 
 			return redirect(
 				groupInvitedTo.status === "PREPARING"
@@ -132,6 +124,5 @@ async function validateCanJoinQ(user: { id: number; discordId: string }) {
 	const canJoinQueue = userCanJoinQueueAt(user, friendCode) === "NOW";
 
 	errorToastIfFalsy(Seasons.current(), "Season is not active");
-	errorToastIfFalsy(!findCurrentGroupByUserId(user.id), "Already in a group");
 	errorToastIfFalsy(canJoinQueue, "Can't join queue right now");
 }

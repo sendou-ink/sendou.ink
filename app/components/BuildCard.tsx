@@ -1,6 +1,6 @@
+import { Link } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
 import type { GearType, Tables, UserWithPlusTier } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import type { BuildWeaponWithTop500Info } from "~/features/builds/builds-types";

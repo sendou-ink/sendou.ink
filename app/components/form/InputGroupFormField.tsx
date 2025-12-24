@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import * as React from "react";
 import {
 	Controller,
@@ -11,6 +12,7 @@ interface InputGroupFormFieldProps<T extends FieldValues> {
 	label: string;
 	name: FieldPath<T>;
 	bottomText?: string;
+	direction?: "horizontal" | "vertical";
 	type: "checkbox" | "radio";
 	values: Array<{
 		label: string;
@@ -24,6 +26,7 @@ export function InputGroupFormField<T extends FieldValues>({
 	bottomText,
 	values,
 	type,
+	direction = "vertical",
 }: InputGroupFormFieldProps<T>) {
 	const methods = useFormContext();
 
@@ -50,7 +53,12 @@ export function InputGroupFormField<T extends FieldValues>({
 
 				return (
 					<div>
-						<fieldset className="stack sm" ref={ref}>
+						<fieldset
+							className={clsx("stack sm", {
+								"horizontal md": direction === "horizontal",
+							})}
+							ref={ref}
+						>
 							<legend>{label}</legend>
 
 							{values.map((checkbox) => {

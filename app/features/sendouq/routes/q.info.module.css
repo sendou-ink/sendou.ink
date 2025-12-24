@@ -1,0 +1,40 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+	font-size: var(--fonts-md);
+}
+
+.container h2 {
+	font-size: var(--fonts-lg);
+	margin-block-end: var(--s-2);
+	color: var(--theme-secondary);
+}
+
+.container h3 {
+	font-size: var(--fonts-md);
+	margin-block-end: var(--s-3);
+}
+
+.container p {
+	margin-block: var(--s-2);
+}
+
+.tableOfContents ul {
+	padding-left: 0;
+}
+
+.tableOfContents li {
+	list-style: none;
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
+}
+
+.tableOfContents li:has(button) {
+	margin-block-start: var(--s-2);
+}
+
+.tableOfContents li:not(:has(button)) {
+	margin-inline-start: var(--s-2);
+	font-size: var(--fonts-xs);
+}

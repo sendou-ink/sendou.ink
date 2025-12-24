@@ -20,6 +20,26 @@ export async function selectWeapon({
 		.click();
 }
 
+export async function selectStage({
+	page,
+	name,
+	testId = "stage-select",
+	nth,
+}: {
+	page: Page;
+	name: string;
+	testId?: string;
+	nth?: number;
+}) {
+	const select =
+		nth !== undefined
+			? page.getByTestId(testId).nth(nth)
+			: page.getByTestId(testId);
+	await select.click();
+	await page.getByPlaceholder("Search stages...").fill(name);
+	await page.getByTestId(`stage-select-option-${name}`).click();
+}
+
 export async function selectUser({
 	page,
 	userName,

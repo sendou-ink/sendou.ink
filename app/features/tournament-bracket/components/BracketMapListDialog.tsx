@@ -1110,12 +1110,31 @@ function PatternInputs({
 			<div className="stack horizontal xs items-center">
 				<Label>Mode patterns</Label>
 				<InfoPopover tiny className={styles.infoPopover}>
-					Control how maps are generated. E.g. *SZ* would mean every 2nd mode
-					needs to be Splat Zones. [SZ] means Splat Zones must appear at least
-					once. [SZ!] means means Splat Zones must appear in the maps that are
-					guaranteed to be played (e.g. first two maps of Bo3). You can also
-					combine these patterns. [SZ]*TC* means SZ must appear at least once
-					and that every 2nd mode must be TC.
+					<div>Control the mode selection with a pattern. Examples:</div>
+					<div className={styles.patternExample}>
+						<code className={styles.patternCode}>*SZ*</code>
+						<span className={styles.patternExplanation}>Any, SZ, any mode</span>
+					</div>
+					<div className={styles.patternExample}>
+						<code className={styles.patternCode}>SZ*RM</code>
+						<span className={styles.patternExplanation}>SZ, any, RM</span>
+					</div>
+					<div className={styles.patternExample}>
+						<code className={styles.patternCode}>[TC]</code>
+						<span className={styles.patternExplanation}>Must include TC</span>
+					</div>
+					<div className={styles.patternExample}>
+						<code className={styles.patternCode}>[RM!]</code>
+						<span className={styles.patternExplanation}>
+							RM in guaranteed spots
+						</span>
+					</div>
+					<div className={styles.patternExample}>
+						<code className={styles.patternCode}>[TC]*SZ*</code>
+						<span className={styles.patternExplanation}>
+							TC once + every 2nd is SZ
+						</span>
+					</div>
 				</InfoPopover>
 			</div>
 			<div className="stack horizontal xs">

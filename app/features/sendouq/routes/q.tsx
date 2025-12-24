@@ -43,7 +43,7 @@ import { FULL_GROUP_SIZE } from "../q-constants";
 import { userCanJoinQueueAt } from "../q-utils";
 export { loader, action };
 
-import "../q.css";
+import styles from "./q.module.css";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
@@ -208,11 +208,11 @@ function Clocks() {
 	useAutoRerender();
 
 	return (
-		<div className="q__clocks-container">
+		<div className={styles.clocksContainer}>
 			{countries.map((country) => {
 				return (
-					<div key={country.id} className="q__clock">
-						<div className="q__clock-country">
+					<div key={country.id} className={styles.clock}>
+						<div className={styles.clockCountry}>
 							{t(`q:front.cities.${country.city}`)}
 						</div>
 						<Flag countryCode={country.countryCode} />
@@ -392,11 +392,11 @@ function QLink({
 	subText: string;
 }) {
 	return (
-		<Link to={url} className="q__front-page-link">
+		<Link to={url} className={styles.frontPageLink}>
 			<Image path={navIconUrl(navIcon)} alt="" width={32} />
 			<div>
 				{title}
-				<div className="q__front-page-link__sub-text">{subText}</div>
+				<div className={styles.linkSubText}>{subText}</div>
 			</div>
 		</Link>
 	);

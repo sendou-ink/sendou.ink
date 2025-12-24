@@ -89,23 +89,6 @@ function dbAbilitiesToArrayOfArrays(
 	];
 }
 
-export async function countByUserId({
-	userId,
-	showPrivate,
-}: {
-	userId: number;
-	showPrivate: boolean;
-}) {
-	return (
-		await db
-			.selectFrom("Build")
-			.select(({ fn }) => fn.countAll<number>().as("count"))
-			.where("ownerId", "=", userId)
-			.$if(!showPrivate, (qb) => qb.where("Build.private", "=", 0))
-			.executeTakeFirstOrThrow()
-	).count;
-}
-
 interface CreateArgs {
 	ownerId: TablesInsertable["Build"]["ownerId"];
 	title: TablesInsertable["Build"]["title"];
@@ -119,7 +102,7 @@ interface CreateArgs {
 	private: TablesInsertable["Build"]["private"];
 }
 
-export async function createInTrx({
+async function createInTrx({
 	args,
 	trx,
 }: {

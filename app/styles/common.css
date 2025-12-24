@@ -805,6 +805,10 @@ abbr[title] {
 	padding-bottom: 56.25%;
 }
 
+.youtube__container--api {
+	width: fit-content;
+}
+
 .youtube__iframe {
 	position: absolute;
 	top: 0;

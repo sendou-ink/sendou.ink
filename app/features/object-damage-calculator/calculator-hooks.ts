@@ -1,15 +1,17 @@
 import { useSearchParams } from "@remix-run/react";
-import {
-	type AnalyzedBuild,
-	buildStats,
-	type DAMAGE_TYPE,
-	type DamageType,
-	possibleApValues,
-	validatedAnyWeaponFromSearchParams,
-} from "~/features/build-analyzer";
 import { exampleMainWeaponIdWithSpecialWeaponId } from "~/modules/in-game-lists/weapon-ids";
 import { assertType } from "~/utils/types";
-import type { AnyWeapon } from "../build-analyzer/analyzer-types";
+import type { DAMAGE_TYPE } from "../build-analyzer/analyzer-constants";
+import type {
+	AnalyzedBuild,
+	AnyWeapon,
+	DamageType,
+} from "../build-analyzer/analyzer-types";
+import { buildStats } from "../build-analyzer/core/stats";
+import {
+	possibleApValues,
+	validatedAnyWeaponFromSearchParams,
+} from "../build-analyzer/core/utils";
 import {
 	calculateDamage,
 	resolveAllUniqueDamageTypes,
@@ -99,7 +101,7 @@ function validatedMultiShotFromSearchParams(searchParams: URLSearchParams) {
 	return searchParams.get(MULTI_SHOT_SP_KEY) !== "false";
 }
 
-export const damageTypePriorityList = [
+const damageTypePriorityList = [
 	"TURRET_MAX",
 	"TURRET_MIN",
 	"DIRECT_MAX",

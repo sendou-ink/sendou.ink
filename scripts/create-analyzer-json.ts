@@ -11,8 +11,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod/v4";
-import type { MainWeaponParams, SubWeaponParams } from "~/modules/analyzer";
-import type { ParamsJson } from "~/modules/analyzer/types";
+import type {
+	MainWeaponParams,
+	ParamsJson,
+	SubWeaponParams,
+} from "~/features/build-analyzer/analyzer-types";
 import {
 	type SpecialWeaponId,
 	SQUID_BEAKON_ID,

@@ -113,12 +113,12 @@ export const banUserActionSchema = z.object({
 	),
 });
 
-export const unbanUserActionSchema = z.object({
+const unbanUserActionSchema = z.object({
 	_action: _action("UNBAN_USER"),
 	userId: id,
 });
 
-export const updateIsEstablishedActionSchema = z.object({
+const updateIsEstablishedActionSchema = z.object({
 	_action: _action("UPDATE_IS_ESTABLISHED"),
 	isEstablished: z.boolean(),
 });

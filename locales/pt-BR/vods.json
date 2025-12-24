@@ -27,7 +27,10 @@
 	"teamSize.4v4": "",
 	"forms.action.addMatch": "Adicionar partida",
 	"forms.action.deleteMatch": "Excluir partida",
+	"forms.action.setAsCurrent": "",
+	"forms.action.copyFromPrevious": "",
 	"noVods": "",
 	"gainPerms": "Por favor, faça uma postagem (em Inglês) no helpdesk do nosso Discord para obter permissões de upload de vídeos.",
-	"deleteConfirm": ""
+	"deleteConfirm": "",
+	"errors.youtubePreviewFailed": ""
 }

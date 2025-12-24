@@ -126,3 +126,26 @@
 .patternInput {
 	max-width: 10rem;
 }
+
+.patternCode {
+	background-color: var(--bg-lightest);
+	padding: 2px 6px;
+	border-radius: var(--rounded-sm);
+	font-size: var(--fonts-xs);
+	font-weight: var(--semi-bold);
+	display: inline-block;
+	min-width: 4.5rem;
+	text-align: center;
+}
+
+.patternExample {
+	display: flex;
+	gap: var(--s-2);
+	align-items: baseline;
+	font-size: var(--fonts-xs);
+	margin-block: var(--s-2);
+}
+
+.patternExplanation {
+	flex: 1;
+}

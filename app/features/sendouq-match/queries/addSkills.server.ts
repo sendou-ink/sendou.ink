@@ -60,7 +60,7 @@ export function addSkills({
 		Tables["Skill"],
 		"groupMatchId" | "identifier" | "mu" | "season" | "sigma" | "userId"
 	>[];
-	oldMatchMemento: ParsedMemento;
+	oldMatchMemento: ParsedMemento | null;
 	differences: MementoSkillDifferences;
 }) {
 	for (const skill of skills) {

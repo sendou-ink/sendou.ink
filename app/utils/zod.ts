@@ -216,21 +216,6 @@ export function actuallyNonEmptyStringOrNull(value: unknown) {
 	return trimmed === "" ? null : trimmed;
 }
 
-/**
- * Safely splits a string by a specified delimiter as Zod preprocess function.
- *
- * @param splitBy - The delimiter to split the string by. Defaults to a comma (",").
- * @returns A function that takes a value and returns the split string if the value is a string,
- *          otherwise returns the original value.
- */
-export const safeSplit =
-	(splitBy = ",") =>
-	(value: unknown): unknown => {
-		if (typeof value !== "string") return value;
-
-		return value.split(splitBy);
-	};
-
 export function falsyToNull(value: unknown): unknown {
 	if (value) return value;
 
@@ -241,15 +226,6 @@ export function nullLiteraltoNull(value: unknown): unknown {
 	if (value === "null") return null;
 
 	return value;
-}
-
-export function jsonParseable(value: unknown) {
-	try {
-		JSON.parse(value as string);
-		return true;
-	} catch {
-		return false;
-	}
 }
 
 export function undefinedToNull(value: unknown): unknown {

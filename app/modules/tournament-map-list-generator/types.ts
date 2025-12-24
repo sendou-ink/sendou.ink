@@ -2,13 +2,6 @@ import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { ModeShort, ModeWithStage } from "../in-game-lists/types";
 import type { sourceTypes } from "./constants";
 
-export type BracketType =
-	| "GROUPS"
-	| "SE"
-	| "DE_WINNERS"
-	| "DE_LOSERS"
-	| "SWISS";
-
 export interface TournamentMaplistInput {
 	count: number;
 	seed: string;

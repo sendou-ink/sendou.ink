@@ -4,22 +4,6 @@ export function seasonHasTopTen(season: number) {
 	return !!playerData[season];
 }
 
-export function playerTopTenData({
-	season,
-	userId,
-}: {
-	season: number;
-	userId: number;
-}) {
-	for (const player of playerData[season] ?? []) {
-		if (player.id === userId) {
-			return player;
-		}
-	}
-
-	return null;
-}
-
 export function playerTopTenPlacement({
 	season,
 	userId,

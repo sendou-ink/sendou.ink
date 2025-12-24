@@ -157,7 +157,7 @@ async function cachedParticipationInfo(
 	return participation.get(userId) ?? emptyParticipationInfo();
 }
 
-export const SHOWCASE_TOURNAMENTS_CACHE_KEY = "front-tournaments-list";
+const SHOWCASE_TOURNAMENTS_CACHE_KEY = "front-tournaments-list";
 
 export const clearCachedTournaments = () =>
 	cache.delete(SHOWCASE_TOURNAMENTS_CACHE_KEY);

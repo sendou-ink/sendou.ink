@@ -27,7 +27,10 @@
 	"teamSize.4v4": "",
 	"forms.action.addMatch": "Tilføj kamp",
 	"forms.action.deleteMatch": "Slet kamp",
+	"forms.action.setAsCurrent": "",
+	"forms.action.copyFromPrevious": "",
 	"noVods": "",
 	"gainPerms": "Skriv venligst en besked til helpdesken på vores Discordserver for at få rettigheder til at uploade videoer.",
-	"deleteConfirm": "Vil du slette videoen: '{{title}}'?"
+	"deleteConfirm": "Vil du slette videoen: '{{title}}'?",
+	"errors.youtubePreviewFailed": ""
 }

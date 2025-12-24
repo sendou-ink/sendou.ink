@@ -136,13 +136,6 @@ export function filterByWeaponCategory<
 	);
 }
 
-export function addPlacementRank<T>(entries: T[]) {
-	return entries.map((entry, index) => ({
-		...entry,
-		placementRank: index + 1,
-	}));
-}
-
 export function ownEntryPeek({
 	leaderboard,
 	userId,

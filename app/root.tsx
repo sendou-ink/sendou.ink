@@ -46,7 +46,7 @@ import {
 import { getThemeSession } from "./features/theme/core/session.server";
 import { useIsMounted } from "./hooks/useIsMounted";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
-import i18next, { i18nCookie } from "./modules/i18n/i18next.server";
+import { i18nCookie, i18next } from "./modules/i18n/i18next.server";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 import { allI18nNamespaces } from "./utils/i18n";
 import { isRevalidation, metaTags } from "./utils/remix";

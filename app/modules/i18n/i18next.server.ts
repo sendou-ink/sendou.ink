@@ -22,5 +22,3 @@ export const i18next = new RemixI18Next({
 		resources: resources,
 	},
 });
-
-export default i18next;

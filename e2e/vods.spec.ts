@@ -4,6 +4,7 @@ import {
 	isNotVisible,
 	navigate,
 	seed,
+	selectStage,
 	selectUser,
 	selectWeapon,
 	submit,
@@ -46,8 +47,8 @@ test.describe("VoDs page", () => {
 		});
 
 		await page.getByLabel("Start timestamp").fill("0:20");
-		await page.getByLabel("Mode").selectOption("TC");
-		await page.getByLabel("Stage").selectOption("5");
+		await page.getByRole("radio", { name: "TC" }).click();
+		await selectStage({ page, name: "Hammerhead Bridge", nth: 0 });
 		await selectWeapon({
 			name: "Zink Mini Splatling",
 			page,
@@ -57,8 +58,8 @@ test.describe("VoDs page", () => {
 		await page.getByTestId("add-field-button").click();
 
 		await page.getByLabel("Start timestamp").last().fill("5:55");
-		await page.getByLabel("Mode").last().selectOption("RM");
-		await page.getByLabel("Stage").last().selectOption("6");
+		await page.getByRole("radio", { name: "RM" }).last().click();
+		await selectStage({ page, name: "Museum d'Alfonsino", nth: 1 });
 		await selectWeapon({
 			name: "Tenta Brella",
 			page,
@@ -97,8 +98,8 @@ test.describe("VoDs page", () => {
 		await page.keyboard.press("Enter");
 
 		await page.getByLabel("Start timestamp").fill("0:25");
-		await page.getByLabel("Mode").selectOption("CB");
-		await page.getByLabel("Stage").selectOption("10");
+		await page.getByRole("radio", { name: "CB" }).click();
+		await selectStage({ page, name: "MakoMart" });
 
 		for (let i = 0; i < 8; i++) {
 			await selectWeapon({

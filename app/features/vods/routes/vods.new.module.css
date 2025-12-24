@@ -1,0 +1,24 @@
+.layout {
+	position: relative;
+}
+
+.embedContainer {
+	margin-block: var(--s-2);
+}
+
+@media (min-width: 1425px) {
+	.embedContainer {
+		position: fixed;
+		left: max(24px, calc((100vw - 800px) / 2 - 320px - 48px));
+		top: 120px;
+		width: 320px;
+		margin-block: 0;
+	}
+}
+
+@media (min-width: 1700px) {
+	.embedContainer {
+		left: max(24px, calc((100vw - 800px) / 2 - 400px - 48px));
+		width: 400px;
+	}
+}

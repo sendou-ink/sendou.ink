@@ -15,7 +15,7 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { scrimsPage } from "~/utils/urls";
-import * as QRepository from "../../sendouq/QRepository.server";
+import * as SQGroupRepository from "../../sendouq/SQGroupRepository.server";
 import * as TeamRepository from "../../team/TeamRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { SCRIM } from "../scrims-constants";
@@ -161,7 +161,7 @@ async function validatePickup(userIds: number[], authorId: number) {
 async function validatePickupTrust(userIds: number[], authorId: number) {
 	const unconsentingUsers: string[] = [];
 
-	const trustedBy = await QRepository.usersThatTrusted(authorId);
+	const trustedBy = await SQGroupRepository.usersThatTrusted(authorId);
 
 	for (const userId of userIds) {
 		const user = await UserRepository.findLeanById(userId);

@@ -5,7 +5,7 @@ import { z } from "zod/v4";
 import { db } from "~/db/sql";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import i18next from "~/modules/i18n/i18next.server";
+import { i18next } from "~/modules/i18n/i18next.server";
 import { nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";

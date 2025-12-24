@@ -10,7 +10,7 @@ import cron from "node-cron";
 import { renderToPipeableStream } from "react-dom/server";
 import { I18nextProvider, initReactI18next } from "react-i18next";
 import { config } from "~/modules/i18n/config"; // your i18n configuration file
-import i18next from "~/modules/i18n/i18next.server";
+import { i18next } from "~/modules/i18n/i18next.server";
 import { resources } from "./modules/i18n/resources.server";
 import { daily, everyHourAt00, everyHourAt30 } from "./routines/list.server";
 import { logger } from "./utils/logger";

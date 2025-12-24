@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { getUser } from "~/features/auth/core/user.server";
-import * as QRepository from "~/features/sendouq/QRepository.server";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { findMapPoolByTeamId } from "~/features/tournament-bracket/queries/findMapPoolByTeamId.server";
 import { parseParams } from "~/utils/remix.server";
@@ -29,7 +29,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 	return {
 		mapPool: findMapPoolByTeamId(ownTournamentTeam.id),
-		trusterPlayers: await QRepository.usersThatTrusted(user.id),
+		trusterPlayers: await SQGroupRepository.usersThatTrusted(user.id),
 		teams: await TeamRepository.findAllMemberOfByUserId(user.id),
 	};
 };

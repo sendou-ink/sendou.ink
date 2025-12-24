@@ -1,9 +1,8 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { cors } from "remix-utils/cors";
 import { z } from "zod/v4";
-import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
-import i18next from "~/modules/i18n/i18next.server";
-import invariant from "~/utils/invariant";
+import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import { i18next } from "~/modules/i18n/i18next.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import {
@@ -25,19 +24,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		schema: paramsSchema,
 	});
 
-	const match = notFoundIfFalsy(await QMatchRepository.findById(matchId));
-
-	const [groupAlpha, groupBravo] = await Promise.all([
-		QMatchRepository.findGroupById({
-			groupId: match.alphaGroupId,
-		}),
-		QMatchRepository.findGroupById({
-			groupId: match.bravoGroupId,
-		}),
-	]);
-
-	invariant(groupAlpha, "Group alpha not found");
-	invariant(groupBravo, "Group bravo not found");
+	const match = notFoundIfFalsy(await SQMatchRepository.findById(matchId));
 
 	const t = await i18next.getFixedT("en", ["game-misc"]);
 
@@ -56,7 +43,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		(acc, cur) => {
 			if (!cur.winnerGroupId) return acc;
 
-			if (cur.winnerGroupId === match.alphaGroupId) {
+			if (cur.winnerGroupId === match.groupAlpha.id) {
 				return [acc[0] + 1, acc[1]];
 			}
 
@@ -83,14 +70,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		})),
 		teamAlpha: {
 			score: score[0],
-			players: groupAlpha.members.map((member) => ({
+			players: match.groupAlpha.members.map((member) => ({
 				userId: member.id,
 				rank: userIdToRank(member.id),
 			})),
 		},
 		teamBravo: {
 			score: score[1],
-			players: groupBravo.members.map((member) => ({
+			players: match.groupBravo.members.map((member) => ({
 				userId: member.id,
 				rank: userIdToRank(member.id),
 			})),

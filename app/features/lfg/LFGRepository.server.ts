@@ -87,6 +87,7 @@ export async function posts(user?: { id: number; plusTier: number | null }) {
 		])
 		.orderBy(sql`LFGPost.authorId = ${sql`${userId}`} desc`)
 		.orderBy("LFGPost.updatedAt", "desc")
+		.orderBy("LFGPost.type", "asc")
 		.where((eb) =>
 			eb.or([
 				eb(

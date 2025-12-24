@@ -27,7 +27,10 @@
 	"teamSize.4v4": "",
 	"forms.action.addMatch": "対戦を追加",
 	"forms.action.deleteMatch": "対戦を削除",
+	"forms.action.setAsCurrent": "",
+	"forms.action.copyFromPrevious": "",
 	"noVods": "",
 	"gainPerms": "動画をアップロードする権限を取得するためディスコードのヘルプデスクにメッセージを送ってください。",
-	"deleteConfirm": "動画:'{{title}}'を消去しますか？?"
+	"deleteConfirm": "動画:'{{title}}'を消去しますか？?",
+	"errors.youtubePreviewFailed": ""
 }

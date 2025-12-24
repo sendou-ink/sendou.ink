@@ -851,6 +851,10 @@
 		"displayName": "Piston Cup",
 		"authorDiscordId": "752582395076673577"
 	},
+	"plusl": {
+		"displayName": "+L Tournament",
+		"authorDiscordId": "643355948265766912"
+	},
 	"pou": {
 		"displayName": "Pou Basket",
 		"authorDiscordId": "285896534380511234"
@@ -963,6 +967,10 @@
 		"displayName": "Turf War Tomatoes",
 		"authorDiscordId": "336683473714544641"
 	},
+	"sbrella": {
+		"displayName": "Sorella Brella",
+		"authorDiscordId": "752582395076673577"
+	},
 	"seabattle": {
 		"displayName": "Seabattle",
 		"authorDiscordId": "528851510222782474"
@@ -1026,6 +1034,10 @@
 	"shrimpoftheday": {
 		"displayName": "Shrimp of the Day",
 		"authorDiscordId": "309327923129745409"
+	},
+	"shscap": {
+		"displayName": "Sheep Happens (Skill Capped)",
+		"authorDiscordId": "758345384585592902"
 	},
 	"silverstars": {
 		"displayName": "Leblanc Hideout Beta Bracket",
@@ -1145,6 +1157,14 @@
 	},
 	"switzerland": {
 		"displayName": "Switzerland",
+		"authorDiscordId": "338005893377556480"
+	},
+	"switzerland_2000sp": {
+		"displayName": "2000 SP in Switzerland",
+		"authorDiscordId": "338005893377556480"
+	},
+	"switzerland_2500sp": {
+		"displayName": "2500 SP in Switzerland",
 		"authorDiscordId": "338005893377556480"
 	},
 	"sys_strike": {
@@ -1350,6 +1370,10 @@
 	"wiper": {
 		"displayName": "Squeaky Clean Scrap",
 		"authorDiscordId": "528851510222782474"
+	},
+	"wkitty": {
+		"displayName": "White Kitty",
+		"authorDiscordId": "752582395076673577"
 	},
 	"worlddriverschampionship": {
 		"displayName": "WDC #0",

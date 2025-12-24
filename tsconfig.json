@@ -1,5 +1,5 @@
 {
-	"include": ["./types/env.d.ts", "**/*.ts", "**/*.tsx"],
+	"include": ["./types/**/*.d.ts", "**/*.ts", "**/*.tsx"],
 	"compilerOptions": {
 		"lib": ["DOM", "DOM.Iterable", "es2024"],
 		"module": "ESNext",

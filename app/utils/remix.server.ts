@@ -193,7 +193,7 @@ export function canAccessLohiEndpoint(request: Request) {
 	return request.headers.get(LOHI_TOKEN_HEADER_NAME) === process.env.LOHI_TOKEN;
 }
 
-export function errorToastRedirect(message: string) {
+function errorToastRedirect(message: string) {
 	return redirect(`?__error=${message}`);
 }
 

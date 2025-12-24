@@ -57,7 +57,7 @@ export function TagsFormField<T extends FieldValues>({
 	);
 }
 
-export const SelectableTags = React.forwardRef<
+const SelectableTags = React.forwardRef<
 	HTMLDivElement,
 	{
 		selectedTags: Array<CalendarEventTag>;

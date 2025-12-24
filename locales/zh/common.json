@@ -169,6 +169,8 @@
 	"forms.weaponSearch.quickSelect": "",
 	"forms.gearSearch.placeholder": "",
 	"forms.gearSearch.search.placeholder": "",
+	"forms.stageSearch.placeholder": "",
+	"forms.stageSearch.search.placeholder": "",
 	"tag.name.SPECIAL": "特殊规则",
 	"tag.name.ART": "插画奖励",
 	"tag.name.MONEY": "奖金",

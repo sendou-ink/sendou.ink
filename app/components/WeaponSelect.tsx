@@ -7,7 +7,7 @@ import {
 	SendouSelectItemSection,
 } from "~/components/elements/Select";
 import { Image, WeaponImage } from "~/components/Image";
-import type { AnyWeapon } from "~/features/build-analyzer";
+import type { AnyWeapon } from "~/features/build-analyzer/analyzer-types";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { filterWeapon } from "~/modules/in-game-lists/utils";
 import {

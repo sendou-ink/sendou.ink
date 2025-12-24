@@ -3,41 +3,20 @@ import { redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
-import * as QRepository from "~/features/sendouq/QRepository.server";
-import type { LookingGroupWithInviteCode } from "~/features/sendouq/q-types";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import {
 	createMatchMemento,
 	matchMapList,
 } from "~/features/sendouq-match/core/match.server";
-import invariant from "~/utils/invariant";
-import { logger } from "~/utils/logger";
-import {
-	errorToast,
-	errorToastIfFalsy,
-	parseRequestPayload,
-} from "~/utils/remix.server";
-import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
+import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
 import { groupAfterMorph } from "../core/groups";
-import { membersNeededForFull } from "../core/groups.server";
-import { FULL_GROUP_SIZE } from "../q-constants";
+import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
+import * as PrivateUserNoteRepository from "../PrivateUserNoteRepository.server";
 import { lookingSchema } from "../q-schemas.server";
-import { addLike } from "../queries/addLike.server";
-import { addManagerRole } from "../queries/addManagerRole.server";
-import { chatCodeByGroupId } from "../queries/chatCodeByGroupId.server";
-import { createMatch } from "../queries/createMatch.server";
-import { deleteLike } from "../queries/deleteLike.server";
-import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
-import { groupHasMatch } from "../queries/groupHasMatch.server";
-import { groupSize } from "../queries/groupSize.server";
-import { groupSuccessorOwner } from "../queries/groupSuccessorOwner";
-import { leaveGroup } from "../queries/leaveGroup.server";
-import { likeExists } from "../queries/likeExists.server";
-import { morphGroups } from "../queries/morphGroups.server";
-import { refreshGroup } from "../queries/refreshGroup.server";
-import { removeManagerRole } from "../queries/removeManagerRole.server";
-import { updateNote } from "../queries/updateNote.server";
+import { SendouQError } from "../q-utils.server";
 
 // this function doesn't throw normally because we are assuming
 // if there is a validation error the user saw stale data
@@ -48,362 +27,278 @@ export const action: ActionFunction = async ({ request }) => {
 		request,
 		schema: lookingSchema,
 	});
-	const currentGroup = findCurrentGroupByUserId(user.id);
+	const currentGroup = SendouQ.findOwnGroup(user.id);
 	if (!currentGroup) return null;
 
-	// this throws because there should normally be no way user loses ownership by the action of some other user
-	const validateIsGroupOwner = () =>
-		errorToastIfFalsy(currentGroup.role === "OWNER", "Not  owner");
-	const isGroupManager = () =>
-		currentGroup.role === "MANAGER" || currentGroup.role === "OWNER";
+	try {
+		// this throws because there should normally be no way user loses ownership by the action of some other user
+		const validateIsGroupOwner = () =>
+			errorToastIfFalsy(currentGroup.usersRole === "OWNER", "Not  owner");
+		const isGroupManager = () =>
+			currentGroup.usersRole === "MANAGER" ||
+			currentGroup.usersRole === "OWNER";
 
-	switch (data._action) {
-		case "LIKE": {
-			if (!isGroupManager()) return null;
+		switch (data._action) {
+			case "LIKE": {
+				if (!isGroupManager()) return null;
 
-			try {
-				addLike({
+				await SQGroupRepository.addLike({
 					likerGroupId: currentGroup.id,
 					targetGroupId: data.targetGroupId,
 				});
-			} catch (e) {
-				// the group disbanded before we could like it
-				if (errorIsSqliteForeignKeyConstraintFailure(e)) return null;
 
-				throw e;
-			}
-			refreshGroup(currentGroup.id);
-
-			const targetChatCode = chatCodeByGroupId(data.targetGroupId);
-			if (targetChatCode) {
-				ChatSystemMessage.send({
-					room: targetChatCode,
-					type: "LIKE_RECEIVED",
-					revalidateOnly: true,
-				});
-			}
-
-			break;
-		}
-		case "RECHALLENGE": {
-			if (!isGroupManager()) return null;
-
-			await QRepository.rechallenge({
-				likerGroupId: currentGroup.id,
-				targetGroupId: data.targetGroupId,
-			});
-
-			const targetChatCode = chatCodeByGroupId(data.targetGroupId);
-			if (targetChatCode) {
-				ChatSystemMessage.send({
-					room: targetChatCode,
-					type: "LIKE_RECEIVED",
-					revalidateOnly: true,
-				});
-			}
-			break;
-		}
-		case "UNLIKE": {
-			if (!isGroupManager()) return null;
-
-			deleteLike({
-				likerGroupId: currentGroup.id,
-				targetGroupId: data.targetGroupId,
-			});
-			refreshGroup(currentGroup.id);
-
-			break;
-		}
-		case "GROUP_UP": {
-			if (!isGroupManager()) return null;
-			if (
-				!likeExists({
-					targetGroupId: currentGroup.id,
-					likerGroupId: data.targetGroupId,
-				})
-			) {
-				return null;
-			}
-
-			const lookingGroups = await QRepository.findLookingGroups({
-				maxGroupSize: membersNeededForFull(groupSize(currentGroup.id)),
-				ownGroupId: currentGroup.id,
-				includeChatCode: true,
-			});
-
-			const ourGroup = lookingGroups.find(
-				(group) => group.id === currentGroup.id,
-			);
-			if (!ourGroup) return null;
-			const theirGroup = lookingGroups.find(
-				(group) => group.id === data.targetGroupId,
-			);
-			if (!theirGroup) return null;
-
-			const { id: survivingGroupId } = groupAfterMorph({
-				liker: "THEM",
-				ourGroup,
-				theirGroup,
-			});
-
-			const otherGroup =
-				ourGroup.id === survivingGroupId ? theirGroup : ourGroup;
-
-			invariant(ourGroup.members, "our group has no members");
-			invariant(otherGroup.members, "other group has no members");
-
-			morphGroups({
-				survivingGroupId,
-				otherGroupId: otherGroup.id,
-				newMembers: otherGroup.members.map((m) => m.id),
-			});
-			refreshGroup(survivingGroupId);
-
-			if (ourGroup.chatCode && theirGroup.chatCode) {
-				ChatSystemMessage.send([
-					{
-						room: ourGroup.chatCode,
-						type: "NEW_GROUP",
+				const targetChatCode = SendouQ.findUncensoredGroupById(
+					data.targetGroupId,
+				)?.chatCode;
+				if (targetChatCode) {
+					ChatSystemMessage.send({
+						room: targetChatCode,
+						type: "LIKE_RECEIVED",
 						revalidateOnly: true,
-					},
-					{
-						room: theirGroup.chatCode,
-						type: "NEW_GROUP",
-						revalidateOnly: true,
-					},
-				]);
+					});
+				}
+
+				break;
 			}
+			case "RECHALLENGE": {
+				if (!isGroupManager()) return null;
 
-			break;
-		}
-		case "MATCH_UP_RECHALLENGE":
-		case "MATCH_UP": {
-			if (!isGroupManager()) return null;
-			if (
-				!likeExists({
-					targetGroupId: currentGroup.id,
-					likerGroupId: data.targetGroupId,
-				})
-			) {
-				return null;
-			}
-
-			const lookingGroups = await QRepository.findLookingGroups({
-				minGroupSize: FULL_GROUP_SIZE,
-				ownGroupId: currentGroup.id,
-				includeChatCode: true,
-			});
-
-			const ourGroup = lookingGroups.find(
-				(group) => group.id === currentGroup.id,
-			);
-			if (!ourGroup) return null;
-			const theirGroup = lookingGroups.find(
-				(group) => group.id === data.targetGroupId,
-			);
-			if (!theirGroup) return null;
-
-			errorToastIfFalsy(
-				ourGroup.members.length === FULL_GROUP_SIZE,
-				"Our group is not full",
-			);
-			errorToastIfFalsy(
-				theirGroup.members.length === FULL_GROUP_SIZE,
-				"Their group is not full",
-			);
-
-			errorToastIfFalsy(
-				!groupHasMatch(ourGroup.id),
-				"Our group already has a match",
-			);
-			errorToastIfFalsy(
-				!groupHasMatch(theirGroup.id),
-				"Their group already has a match",
-			);
-
-			const ourGroupPreferences = await QRepository.mapModePreferencesByGroupId(
-				ourGroup.id,
-			);
-			const theirGroupPreferences =
-				await QRepository.mapModePreferencesByGroupId(theirGroup.id);
-			const mapList = await matchMapList(
-				{
-					id: ourGroup.id,
-					preferences: ourGroupPreferences,
-				},
-				{
-					id: theirGroup.id,
-					preferences: theirGroupPreferences,
-					ignoreModePreferences: data._action === "MATCH_UP_RECHALLENGE",
-				},
-			);
-
-			const memberInManyGroups = verifyNoMemberInTwoGroups(
-				[...ourGroup.members, ...theirGroup.members],
-				lookingGroups,
-			);
-			if (memberInManyGroups) {
-				logger.error("User in two groups preventing match creation", {
-					userId: memberInManyGroups.id,
+				await SQGroupRepository.rechallenge({
+					likerGroupId: currentGroup.id,
+					targetGroupId: data.targetGroupId,
 				});
 
-				errorToast(
-					`${memberInManyGroups.username} is in two groups so match can't be started`,
+				const targetChatCode = SendouQ.findUncensoredGroupById(
+					data.targetGroupId,
+				)?.chatCode;
+				if (targetChatCode) {
+					ChatSystemMessage.send({
+						room: targetChatCode,
+						type: "LIKE_RECEIVED",
+						revalidateOnly: true,
+					});
+				}
+				break;
+			}
+			case "UNLIKE": {
+				if (!isGroupManager()) return null;
+
+				await SQGroupRepository.deleteLike({
+					likerGroupId: currentGroup.id,
+					targetGroupId: data.targetGroupId,
+				});
+
+				break;
+			}
+			case "GROUP_UP": {
+				if (!isGroupManager()) return null;
+
+				const allLikes = await SQGroupRepository.allLikesByGroupId(
+					data.targetGroupId,
 				);
-			}
+				if (!allLikes.given.some((like) => like.groupId === currentGroup.id)) {
+					return null;
+				}
 
-			const createdMatch = createMatch({
-				alphaGroupId: ourGroup.id,
-				bravoGroupId: theirGroup.id,
-				mapList,
-				memento: createMatchMemento({
-					own: { group: ourGroup, preferences: ourGroupPreferences },
-					their: { group: theirGroup, preferences: theirGroupPreferences },
-					mapList,
-				}),
-			});
+				const ourGroup = SendouQ.findOwnGroup(user.id);
+				const theirGroup = SendouQ.findUncensoredGroupById(data.targetGroupId);
+				if (!ourGroup || !theirGroup) return null;
 
-			if (ourGroup.chatCode && theirGroup.chatCode) {
-				ChatSystemMessage.send([
-					{
-						room: ourGroup.chatCode,
-						type: "MATCH_STARTED",
-						revalidateOnly: true,
-					},
-					{
-						room: theirGroup.chatCode,
-						type: "MATCH_STARTED",
-						revalidateOnly: true,
-					},
-				]);
-			}
-
-			notify({
-				userIds: [
-					...ourGroup.members.map((m) => m.id),
-					...theirGroup.members.map((m) => m.id),
-				],
-				defaultSeenUserIds: [user.id],
-				notification: {
-					type: "SQ_NEW_MATCH",
-					meta: {
-						matchId: createdMatch.id,
-					},
-				},
-			});
-
-			throw redirect(sendouQMatchPage(createdMatch.id));
-		}
-		case "GIVE_MANAGER": {
-			validateIsGroupOwner();
-
-			addManagerRole({
-				groupId: currentGroup.id,
-				userId: data.userId,
-			});
-			refreshGroup(currentGroup.id);
-
-			break;
-		}
-		case "REMOVE_MANAGER": {
-			validateIsGroupOwner();
-
-			removeManagerRole({
-				groupId: currentGroup.id,
-				userId: data.userId,
-			});
-			refreshGroup(currentGroup.id);
-
-			break;
-		}
-		case "LEAVE_GROUP": {
-			errorToastIfFalsy(
-				!currentGroup.matchId,
-				"Can't leave group while in a match",
-			);
-			let newOwnerId: number | null = null;
-			if (currentGroup.role === "OWNER") {
-				newOwnerId = groupSuccessorOwner(currentGroup.id);
-			}
-
-			leaveGroup({
-				groupId: currentGroup.id,
-				userId: user.id,
-				newOwnerId,
-				wasOwner: currentGroup.role === "OWNER",
-			});
-
-			const targetChatCode = chatCodeByGroupId(currentGroup.id);
-			if (targetChatCode) {
-				ChatSystemMessage.send({
-					room: targetChatCode,
-					type: "USER_LEFT",
-					context: { name: user.username },
+				const { id: survivingGroupId } = groupAfterMorph({
+					liker: "THEM",
+					ourGroup,
+					theirGroup,
 				});
+
+				const otherGroup =
+					ourGroup.id === survivingGroupId ? theirGroup : ourGroup;
+
+				await SQGroupRepository.morphGroups({
+					survivingGroupId,
+					otherGroupId: otherGroup.id,
+				});
+
+				await refreshSendouQInstance();
+
+				if (ourGroup.chatCode && theirGroup.chatCode) {
+					ChatSystemMessage.send([
+						{
+							room: ourGroup.chatCode,
+							type: "NEW_GROUP",
+							revalidateOnly: true,
+						},
+						{
+							room: theirGroup.chatCode,
+							type: "NEW_GROUP",
+							revalidateOnly: true,
+						},
+					]);
+				}
+
+				break;
 			}
+			case "MATCH_UP_RECHALLENGE":
+			case "MATCH_UP": {
+				if (!isGroupManager()) return null;
 
-			throw redirect(SENDOUQ_PAGE);
-		}
-		case "KICK_FROM_GROUP": {
-			validateIsGroupOwner();
-			errorToastIfFalsy(data.userId !== user.id, "Can't kick yourself");
+				const ourGroup = SendouQ.findOwnGroup(user.id);
+				const theirGroup = SendouQ.findUncensoredGroupById(data.targetGroupId);
+				if (!ourGroup || !theirGroup) return null;
 
-			leaveGroup({
-				groupId: currentGroup.id,
-				userId: data.userId,
-				newOwnerId: null,
-				wasOwner: false,
-			});
+				const ourGroupPreferences =
+					await SQGroupRepository.mapModePreferencesByGroupId(ourGroup.id);
+				const theirGroupPreferences =
+					await SQGroupRepository.mapModePreferencesByGroupId(theirGroup.id);
+				const mapList = await matchMapList(
+					{
+						id: ourGroup.id,
+						preferences: ourGroupPreferences,
+					},
+					{
+						id: theirGroup.id,
+						preferences: theirGroupPreferences,
+						ignoreModePreferences: data._action === "MATCH_UP_RECHALLENGE",
+					},
+				);
 
-			break;
-		}
-		case "REFRESH_GROUP": {
-			refreshGroup(currentGroup.id);
+				const createdMatch = await SQMatchRepository.create({
+					alphaGroupId: ourGroup.id,
+					bravoGroupId: theirGroup.id,
+					mapList,
+					memento: createMatchMemento({
+						own: { group: ourGroup, preferences: ourGroupPreferences },
+						their: { group: theirGroup, preferences: theirGroupPreferences },
+						mapList,
+					}),
+				});
 
-			break;
-		}
-		case "UPDATE_NOTE": {
-			updateNote({
-				note: data.value,
-				groupId: currentGroup.id,
-				userId: user.id,
-			});
-			refreshGroup(currentGroup.id);
+				await refreshSendouQInstance();
 
-			break;
-		}
-		case "DELETE_PRIVATE_USER_NOTE": {
-			await QRepository.deletePrivateUserNote({
-				authorId: user.id,
-				targetId: data.targetId,
-			});
+				if (ourGroup.chatCode && theirGroup.chatCode) {
+					ChatSystemMessage.send([
+						{
+							room: ourGroup.chatCode,
+							type: "MATCH_STARTED",
+							revalidateOnly: true,
+						},
+						{
+							room: theirGroup.chatCode,
+							type: "MATCH_STARTED",
+							revalidateOnly: true,
+						},
+					]);
+				}
 
-			break;
+				notify({
+					userIds: [
+						...ourGroup.members.map((m) => m.id),
+						...theirGroup.members.map((m) => m.id),
+					],
+					defaultSeenUserIds: [user.id],
+					notification: {
+						type: "SQ_NEW_MATCH",
+						meta: {
+							matchId: createdMatch.id,
+						},
+					},
+				});
+
+				throw redirect(sendouQMatchPage(createdMatch.id));
+			}
+			case "GIVE_MANAGER": {
+				validateIsGroupOwner();
+
+				await SQGroupRepository.updateMemberRole({
+					groupId: currentGroup.id,
+					userId: data.userId,
+					role: "MANAGER",
+				});
+
+				await refreshSendouQInstance();
+
+				break;
+			}
+			case "REMOVE_MANAGER": {
+				validateIsGroupOwner();
+
+				await SQGroupRepository.updateMemberRole({
+					groupId: currentGroup.id,
+					userId: data.userId,
+					role: "REGULAR",
+				});
+
+				await refreshSendouQInstance();
+
+				break;
+			}
+			case "LEAVE_GROUP": {
+				await SQGroupRepository.leaveGroup(user.id);
+
+				await refreshSendouQInstance();
+
+				const targetChatCode = SendouQ.findUncensoredGroupById(
+					currentGroup.id,
+				)?.chatCode;
+				if (targetChatCode) {
+					ChatSystemMessage.send({
+						room: targetChatCode,
+						type: "USER_LEFT",
+						context: { name: user.username },
+					});
+				}
+
+				throw redirect(SENDOUQ_PAGE);
+			}
+			case "KICK_FROM_GROUP": {
+				validateIsGroupOwner();
+				errorToastIfFalsy(data.userId !== user.id, "Can't kick yourself");
+
+				await SQGroupRepository.leaveGroup(data.userId);
+
+				await refreshSendouQInstance();
+
+				break;
+			}
+			case "REFRESH_GROUP": {
+				await SQGroupRepository.refreshGroup(currentGroup.id);
+
+				await refreshSendouQInstance();
+
+				break;
+			}
+			case "UPDATE_NOTE": {
+				await SQGroupRepository.updateMemberNote({
+					groupId: currentGroup.id,
+					userId: user.id,
+					value: data.value,
+				});
+
+				await refreshSendouQInstance();
+
+				break;
+			}
+			case "DELETE_PRIVATE_USER_NOTE": {
+				await PrivateUserNoteRepository.del({
+					authorId: user.id,
+					targetId: data.targetId,
+				});
+
+				break;
+			}
+			default: {
+				assertUnreachable(data);
+			}
 		}
-		default: {
-			assertUnreachable(data);
+
+		return null;
+	} catch (error) {
+		// some errors are expected to happen, for example they might request two groups at the same time
+		// then after morphing one group the other request fails because the group no longer exists
+		// return null causes loaders to run and they see the fresh state again instead of error page
+		if (error instanceof SendouQError) {
+			return null;
 		}
+
+		throw error;
 	}
-
-	return null;
 };
-
-/** Sanity check that no member is in two groups due to a bug or race condition.
- *
- * @returns null if no member is in two groups, otherwise return the problematic member
- */
-function verifyNoMemberInTwoGroups(
-	members: LookingGroupWithInviteCode["members"],
-	allGroups: LookingGroupWithInviteCode[],
-) {
-	for (const member of members) {
-		if (
-			allGroups.filter((group) => group.members.some((m) => m.id === member.id))
-				.length > 1
-		) {
-			return member;
-		}
-	}
-
-	return null;
-}

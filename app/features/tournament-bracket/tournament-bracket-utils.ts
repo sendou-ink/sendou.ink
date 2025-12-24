@@ -2,14 +2,11 @@ import type { TFunction } from "i18next";
 import * as R from "remeda";
 import type { TournamentRoundMaps } from "~/db/tables";
 import type { TournamentBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
-import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import { sourceTypes } from "~/modules/tournament-map-list-generator/constants";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { logger } from "~/utils/logger";
 import { seededRandom } from "~/utils/random";
 import type { TournamentLoaderData } from "../tournament/loaders/to.$id.server";
-import type { FindMatchById } from "../tournament-bracket/queries/findMatchById.server";
 import type { Standing } from "./core/Bracket";
 import type { Tournament } from "./core/Tournament";
 import type { TournamentDataTeam } from "./core/Tournament.server";
@@ -83,82 +80,12 @@ export function mapCountPlayedInSetWithCertainty({
 	return scoreSum + (Math.ceil(bestOf / 2) - maxScore);
 }
 
-export function checkSourceIsValid({
-	source,
-	match,
-}: {
-	source: string;
-	match: NonNullable<FindMatchById>;
-}) {
-	if (sourceTypes.includes(source as any)) return true;
-
-	const asTeamId = Number(source);
-
-	if (match.opponentOne?.id === asTeamId) return true;
-	if (match.opponentTwo?.id === asTeamId) return true;
-
-	return false;
-}
-
 export function fillWithNullTillPowerOfTwo<T>(arr: T[]) {
 	const nextPowerOfTwo = 2 ** Math.ceil(Math.log2(arr.length));
 	const nullsToAdd = nextPowerOfTwo - arr.length;
 
 	return [...arr, ...new Array(nullsToAdd).fill(null)];
 }
-
-export function everyMatchIsOver(
-	bracket: Pick<TournamentManagerDataSet, "match">,
-) {
-	// winners, losers & grand finals+bracket reset are all different stages
-	const isDoubleElimination =
-		R.unique(bracket.match.map((match) => match.group_id)).length === 3;
-
-	// tournament didn't start yet
-	if (bracket.match.length === 0) return false;
-
-	let lastWinner = -1;
-	for (const [i, match] of bracket.match.entries()) {
-		// special case - bracket reset might not be played depending on who wins in the grands
-		const isLast = i === bracket.match.length - 1;
-		if (isLast && lastWinner === 1 && isDoubleElimination) {
-			continue;
-		}
-		// BYE
-		if (match.opponent1 === null || match.opponent2 === null) {
-			continue;
-		}
-		if (
-			match.opponent1?.result !== "win" &&
-			match.opponent2?.result !== "win"
-		) {
-			return false;
-		}
-
-		lastWinner = match.opponent1?.result === "win" ? 1 : 2;
-	}
-
-	return true;
-}
-
-export function everyBracketOver(tournament: TournamentManagerDataSet) {
-	const stageIds = tournament.stage.map((stage) => stage.id);
-
-	for (const stageId of stageIds) {
-		const matches = tournament.match.filter(
-			(match) => match.stage_id === stageId,
-		);
-
-		if (!everyMatchIsOver({ match: matches })) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
-export const bracketHasStarted = (bracket: TournamentManagerDataSet) =>
-	bracket.stage[0] && bracket.stage[0].id !== 0;
 
 export function matchIsLocked({
 	tournament,

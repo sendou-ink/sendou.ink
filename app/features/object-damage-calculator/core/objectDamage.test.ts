@@ -3,8 +3,8 @@ import type {
 	AbilityPoints,
 	AnalyzedBuild,
 	DamageType,
-} from "~/features/build-analyzer";
-import { buildStats } from "~/features/build-analyzer";
+} from "~/features/build-analyzer/analyzer-types";
+import { buildStats } from "~/features/build-analyzer/core/stats";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
