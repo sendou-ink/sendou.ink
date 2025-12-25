@@ -35,7 +35,7 @@
 }
 
 .card:hover .avatarImg {
-	outline: 6px solid var(--color-bg-high);
+	outline: 6px solid var(--color-bg-higher);
 }
 
 .org {
