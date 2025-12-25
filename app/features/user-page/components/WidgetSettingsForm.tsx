@@ -1,9 +1,11 @@
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useEffect, useRef } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { SelectFormField } from "~/components/form/SelectFormField";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import type { Tables } from "~/db/tables";
+import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import { ALL_WIDGETS } from "../core/widgets/portfolio";
 import { USER } from "../user-page-constants";
 
@@ -38,6 +40,7 @@ function WidgetSettingsFormInner({
 	schema: WidgetWithSettings["schema"];
 	onSettingsChange: (widgetId: string, settings: any) => void;
 }) {
+	const { t } = useTranslation(["user"]);
 	const methods = useForm({
 		resolver: standardSchemaResolver(schema),
 		defaultValues: (widget.settings ?? {}) as any,
@@ -67,7 +70,7 @@ function WidgetSettingsFormInner({
 			case "bio":
 				return (
 					<TextAreaFormField
-						label="Bio"
+						label={t("widgets.forms.bio")}
 						name="bio"
 						maxLength={USER.BIO_MAX_LENGTH}
 					/>
@@ -75,22 +78,36 @@ function WidgetSettingsFormInner({
 			case "bio-md":
 				return (
 					<TextAreaFormField
-						label="Bio"
+						label={t("widgets.forms.bio")}
 						name="bio"
-						bottomText="Supports Markdown"
+						bottomText={t("widgets.forms.bio.markdownSupport")}
 						maxLength={USER.BIO_MD_MAX_LENGTH}
 					/>
 				);
 			case "x-rank-peaks":
 				return (
 					<SelectFormField
-						label="Division"
+						label={t("widgets.forms.division")}
 						name="division"
 						values={[
-							{ value: "both", label: "Both divisions" },
-							{ value: "tentatek", label: "Tentatek only" },
-							{ value: "takoroka", label: "Takoroka only" },
+							{ value: "both", label: t("widgets.forms.division.both") },
+							{
+								value: "tentatek",
+								label: t("widgets.forms.division.tentatek"),
+							},
+							{
+								value: "takoroka",
+								label: t("widgets.forms.division.takoroka"),
+							},
 						]}
+					/>
+				);
+			case "timezone":
+				return (
+					<SelectFormField
+						label={t("widgets.forms.timezone")}
+						name="timezone"
+						values={TIMEZONES.map((tz) => ({ value: tz, label: tz }))}
 					/>
 				);
 			default:

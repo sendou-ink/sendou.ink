@@ -115,6 +115,8 @@ export function Widget({
 						})}
 					/>
 				);
+			case "timezone":
+				return <TimezoneWidget timezone={widget.data.timezone} />;
 			case "videos":
 				return widget.data.length === 0 ? null : (
 					<Videos videos={widget.data} />
@@ -410,6 +412,44 @@ function XRankPeaks({
 					</div>
 				</div>
 			))}
+		</div>
+	);
+}
+
+function TimezoneWidget({ timezone }: { timezone: string }) {
+	const [currentTime, setCurrentTime] = React.useState(() => new Date());
+
+	React.useEffect(() => {
+		const interval = setInterval(() => {
+			setCurrentTime(new Date());
+		}, 1000);
+
+		return () => clearInterval(interval);
+	}, []);
+
+	const formatter = new Intl.DateTimeFormat("en-US", {
+		timeZone: timezone,
+		hour: "numeric",
+		minute: "2-digit",
+		second: "2-digit",
+		hour12: true,
+	});
+
+	const dateFormatter = new Intl.DateTimeFormat("en-US", {
+		timeZone: timezone,
+		weekday: "short",
+		day: "numeric",
+		month: "short",
+	});
+
+	return (
+		<div className="stack sm items-center">
+			<div className={styles.peakValueMain}>
+				{formatter.format(currentTime)}
+			</div>
+			<div className={styles.peakValueFooter}>
+				{dateFormatter.format(currentTime)}
+			</div>
 		</div>
 	);
 }
