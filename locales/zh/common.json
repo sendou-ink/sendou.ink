@@ -131,6 +131,8 @@
 	"actions.next": "",
 	"actions.previous": "",
 	"actions.back": "",
+	"actions.hide": "",
+	"actions.settings": "",
 	"noResults": "",
 	"maps.createMapList": "创建地图列表",
 	"maps.halfSz": "50%为真格区域",

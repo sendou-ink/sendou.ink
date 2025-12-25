@@ -319,23 +319,23 @@ export async function widgetsByUserId(
 		.execute();
 
 	const loadedWidgets = await Promise.all(
-		widgets.map(async (widget) => {
-			const definition = ALL_WIDGETS.find((w) => w.id === widget.widget.id);
+		widgets.map(async ({ widget }) => {
+			const definition = ALL_WIDGETS.find((w) => w.id === widget.id);
 
 			if (!definition) {
 				logger.warn(
-					`Unknown widget id found for user ${user.id}: ${widget.widget.id}`,
+					`Unknown widget id found for user ${user.id}: ${widget.id}`,
 				);
 				return null;
 			}
 
-			const loader = WIDGET_LOADERS[widget.widget.id];
-			const data = await loader(user.id);
+			const loader = WIDGET_LOADERS[widget.id as keyof typeof WIDGET_LOADERS];
+			const data = loader ? await loader(user.id) : widget.settings;
 
 			return {
-				id: widget.widget.id,
+				id: widget.id,
 				data,
-				settings: widget.widget.settings,
+				settings: widget.settings,
 				slot: definition.slot,
 			} as LoadedWidget;
 		}),

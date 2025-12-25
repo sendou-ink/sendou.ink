@@ -24,6 +24,7 @@ import type { Tables } from "~/db/tables";
 import { ALL_WIDGETS } from "~/features/user-page/core/widgets/portfolio";
 import { USER } from "~/features/user-page/user-page-constants";
 import { action } from "../actions/u.$identifier.edit-widgets.server";
+import { WidgetSettingsForm } from "../components/WidgetSettingsForm";
 import { loader } from "../loaders/u.$identifier.edit-widgets.server";
 import styles from "./u.$identifier.edit-widgets.module.css";
 
@@ -37,6 +38,7 @@ export default function EditWidgetsPage() {
 	const [selectedWidgets, setSelectedWidgets] = useState<
 		Array<Tables["UserWidget"]["widget"]>
 	>(data.currentWidgets);
+	const [expandedWidgetId, setExpandedWidgetId] = useState<string | null>(null);
 
 	const mainWidgets = selectedWidgets.filter((w) => {
 		const def = ALL_WIDGETS.find((widget) => widget.id === w.id);
@@ -54,6 +56,10 @@ export default function EditWidgetsPage() {
 			coordinateGetter: sortableKeyboardCoordinates,
 		}),
 	);
+
+	const handleDragStart = () => {
+		setExpandedWidgetId(null);
+	};
 
 	const handleDragEnd = (event: DragEndEvent) => {
 		const { active, over } = event;
@@ -79,14 +85,37 @@ export default function EditWidgetsPage() {
 
 		if (currentCount >= maxCount) return;
 
-		setSelectedWidgets([
-			...selectedWidgets,
-			{ id: widgetId as typeof widget.id },
-		]);
+		let newWidget: Tables["UserWidget"]["widget"];
+		// xxx: something better here
+		if (widgetId === "bio") {
+			newWidget = { id: "bio", settings: { bio: "" } };
+		} else {
+			newWidget = { id: widgetId as any };
+		}
+
+		setSelectedWidgets([...selectedWidgets, newWidget]);
+
+		const widgetDef = ALL_WIDGETS.find((w) => w.id === widgetId);
+		if (widgetDef && "schema" in widgetDef) {
+			setExpandedWidgetId(widgetId);
+		}
 	};
 
 	const removeWidget = (widgetId: string) => {
 		setSelectedWidgets(selectedWidgets.filter((w) => w.id !== widgetId));
+		if (expandedWidgetId === widgetId) {
+			setExpandedWidgetId(null);
+		}
+	};
+
+	const handleSettingsChange = (widgetId: string, settings: any) => {
+		setSelectedWidgets(
+			selectedWidgets.map((w) => (w.id === widgetId ? { ...w, settings } : w)),
+		);
+	};
+
+	const toggleExpanded = (widgetId: string) => {
+		setExpandedWidgetId(expandedWidgetId === widgetId ? null : widgetId);
 	};
 
 	return (
@@ -115,11 +144,18 @@ export default function EditWidgetsPage() {
 
 				<div className={styles.grid}>
 					<section className={styles.selected}>
-						<DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+						<DndContext
+							sensors={sensors}
+							onDragStart={handleDragStart}
+							onDragEnd={handleDragEnd}
+						>
 							<SelectedWidgetsList
 								mainWidgets={mainWidgets}
 								sideWidgets={sideWidgets}
 								onRemoveWidget={removeWidget}
+								onSettingsChange={handleSettingsChange}
+								expandedWidgetId={expandedWidgetId}
+								onToggleExpanded={toggleExpanded}
 							/>
 						</DndContext>
 					</section>
@@ -223,12 +259,18 @@ interface SelectedWidgetsListProps {
 	mainWidgets: Array<Tables["UserWidget"]["widget"]>;
 	sideWidgets: Array<Tables["UserWidget"]["widget"]>;
 	onRemoveWidget: (widgetId: string) => void;
+	onSettingsChange: (widgetId: string, settings: any) => void;
+	expandedWidgetId: string | null;
+	onToggleExpanded: (widgetId: string) => void;
 }
 
 function SelectedWidgetsList({
 	mainWidgets,
 	sideWidgets,
 	onRemoveWidget,
+	onSettingsChange,
+	expandedWidgetId,
+	onToggleExpanded,
 }: SelectedWidgetsListProps) {
 	const { t } = useTranslation(["user"]);
 
@@ -255,6 +297,9 @@ function SelectedWidgetsList({
 									key={widget.id}
 									widget={widget}
 									onRemove={onRemoveWidget}
+									onSettingsChange={onSettingsChange}
+									isExpanded={expandedWidgetId === widget.id}
+									onToggleExpanded={onToggleExpanded}
 								/>
 							))
 						)}
@@ -283,6 +328,9 @@ function SelectedWidgetsList({
 									key={widget.id}
 									widget={widget}
 									onRemove={onRemoveWidget}
+									onSettingsChange={onSettingsChange}
+									isExpanded={expandedWidgetId === widget.id}
+									onToggleExpanded={onToggleExpanded}
 								/>
 							))
 						)}
@@ -296,10 +344,20 @@ function SelectedWidgetsList({
 interface DraggableWidgetItemProps {
 	widget: Tables["UserWidget"]["widget"];
 	onRemove: (widgetId: string) => void;
+	onSettingsChange: (widgetId: string, settings: any) => void;
+	isExpanded: boolean;
+	onToggleExpanded: (widgetId: string) => void;
 }
 
-function DraggableWidgetItem({ widget, onRemove }: DraggableWidgetItemProps) {
-	const { t } = useTranslation(["user"]);
+function DraggableWidgetItem({
+	widget,
+	onRemove,
+	onSettingsChange,
+	isExpanded,
+	onToggleExpanded,
+}: DraggableWidgetItemProps) {
+	const { t } = useTranslation(["user", "common"]);
+
 	const {
 		attributes,
 		listeners,
@@ -314,6 +372,9 @@ function DraggableWidgetItem({ widget, onRemove }: DraggableWidgetItemProps) {
 		transition,
 	};
 
+	const widgetDef = ALL_WIDGETS.find((w) => w.id === widget.id);
+	const hasSettings = widgetDef && "schema" in widgetDef;
+
 	return (
 		<div
 			ref={setNodeRef}
@@ -321,16 +382,40 @@ function DraggableWidgetItem({ widget, onRemove }: DraggableWidgetItemProps) {
 			className={`${styles.draggableWidget} ${isDragging ? styles.isDragging : ""}`}
 			{...attributes}
 		>
-			<span className={styles.widgetName} {...listeners}>
-				☰ {t(`user:widget.${widget.id}` as const)}
-			</span>
-			<SendouButton
-				size="miniscule"
-				variant="minimal-destructive"
-				onPress={() => onRemove(widget.id)}
-			>
-				{t("user:widgets.remove")}
-			</SendouButton>
+			<div className={styles.widgetHeader}>
+				<span className={styles.widgetName} {...listeners}>
+					☰ {t(`user:widget.${widget.id}` as const)}
+				</span>
+				<div className={styles.widgetActions}>
+					{hasSettings ? (
+						<SendouButton
+							size="miniscule"
+							variant="outlined"
+							onPress={() => onToggleExpanded(widget.id)}
+						>
+							{isExpanded
+								? t("common:actions.hide")
+								: t("common:actions.settings")}
+						</SendouButton>
+					) : null}
+					<SendouButton
+						size="miniscule"
+						variant="minimal-destructive"
+						onPress={() => onRemove(widget.id)}
+					>
+						{t("user:widgets.remove")}
+					</SendouButton>
+				</div>
+			</div>
+
+			{isExpanded && hasSettings ? (
+				<div className={styles.widgetSettings}>
+					<WidgetSettingsForm
+						widget={widget}
+						onSettingsChange={onSettingsChange}
+					/>
+				</div>
+			) : null}
 		</div>
 	);
 }

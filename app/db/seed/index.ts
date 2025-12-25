@@ -361,6 +361,7 @@ export async function adminUserWidgets() {
 	await UserRepository.upsertWidgets(ADMIN_ID, [
 		{
 			id: "bio",
+			settings: { bio: "" },
 		},
 		{
 			id: "badges-owned",

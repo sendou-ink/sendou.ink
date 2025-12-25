@@ -1,8 +1,16 @@
+import { z } from "zod/v4";
+import { USER } from "../../user-page-constants";
+
+const BIO_WIDGET_SETTINGS_SCHEMA = z.object({
+	bio: z.string().min(1).max(USER.BIO_MAX_LENGTH),
+});
+
 export const ALL_WIDGETS = [
 	{
 		id: "bio",
 		category: "misc",
 		slot: "main",
+		schema: BIO_WIDGET_SETTINGS_SCHEMA,
 	},
 	{
 		id: "badges-owned",
@@ -115,5 +123,3 @@ export const ALL_WIDGETS = [
 		slot: "side",
 	},
 ] as const;
-
-export const ALL_WIDGET_IDS = ALL_WIDGETS.map((w) => w.id);

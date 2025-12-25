@@ -21,7 +21,7 @@ import {
 	HIGHLIGHT_CHECKBOX_NAME,
 	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
 } from "./components/UserResultsTable";
-import { ALL_WIDGET_IDS } from "./core/widgets/portfolio";
+import { ALL_WIDGETS } from "./core/widgets/portfolio";
 import { COUNTRY_CODES, USER } from "./user-page-constants";
 
 export const userParamsSchema = z.object({ identifier: z.string() });
@@ -165,17 +165,25 @@ export const userResultsPageSearchParamsSchema = z.object({
 	page: z.coerce.number().min(1).max(1_000).catch(1),
 });
 
-// xxx: placeholder
+const widgetSettingsSchemas = ALL_WIDGETS.map((widget) => {
+	if ("schema" in widget) {
+		return z.object({
+			id: z.literal(widget.id),
+			settings: widget.schema,
+		});
+	}
+	return z.object({
+		id: z.literal(widget.id),
+	});
+});
+
+const widgetSettingsSchema = z.union(widgetSettingsSchemas);
+
 export const widgetsEditSchema = z.object({
 	widgets: z.preprocess(
 		safeJSONParse,
 		z
-			.array(
-				z.object({
-					id: z.enum(ALL_WIDGET_IDS),
-					settings: z.any().optional(),
-				}),
-			)
+			.array(widgetSettingsSchema)
 			.max(9), // 5 main + 4 side
 	),
 });

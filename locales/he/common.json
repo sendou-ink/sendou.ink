@@ -131,6 +131,8 @@
 	"actions.next": "",
 	"actions.previous": "",
 	"actions.back": "",
+	"actions.hide": "",
+	"actions.settings": "",
 	"noResults": "",
 	"maps.createMapList": "יצירת רשימת מפות",
 	"maps.halfSz": "50% SZ",

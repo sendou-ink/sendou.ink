@@ -131,6 +131,8 @@
 	"actions.next": "",
 	"actions.previous": "",
 	"actions.back": "",
+	"actions.hide": "",
+	"actions.settings": "",
 	"noResults": "",
 	"maps.createMapList": "Criar lista de mapas",
 	"maps.halfSz": "50% Zones",

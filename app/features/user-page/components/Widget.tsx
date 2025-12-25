@@ -22,6 +22,8 @@ import {
 import type { LoadedWidget } from "../core/widgets/types";
 import styles from "./Widget.module.css";
 
+// xxx: make side widgets sticky
+
 export function Widget({
 	widget,
 	user,
@@ -35,7 +37,7 @@ export function Widget({
 	const content = () => {
 		switch (widget.id) {
 			case "bio":
-				return widget.data ? <article>{widget.data}</article> : null;
+				return <article>{widget.data.bio}</article>;
 			case "badges-owned":
 				return <BadgeDisplay badges={widget.data} />;
 			case "badges-authored":

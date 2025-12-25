@@ -12,9 +12,6 @@ import * as VodRepository from "~/features/vods/VodRepository.server";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
 
 export const WIDGET_LOADERS = {
-	bio: async (userId: number) => {
-		return (await UserRepository.findProfileByIdentifier(String(userId)))?.bio;
-	},
 	"badges-owned": async (userId: number) => {
 		return BadgeRepository.findByOwnerUserId(userId);
 	},
@@ -149,7 +146,7 @@ export const WIDGET_LOADERS = {
 	"top-500-weapons-splatanas": async (userId: number) => {
 		return getTop500WeaponsByCategory(userId, "SPLATANAS");
 	},
-} as const;
+};
 
 async function getTop500WeaponsByCategory(
 	userId: number,

@@ -86,6 +86,13 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: var(--s-2);
+	width: 100%;
+}
+
+.widgetActions {
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
 }
 
 .widgetName {
@@ -142,14 +149,20 @@
 
 .draggableWidget {
 	display: flex;
-	align-items: center;
-	justify-content: space-between;
+	flex-direction: column;
 	gap: var(--s-2);
 	padding: var(--s-3);
 	border: 1px solid var(--border);
 	border-radius: var(--rounded);
 	background-color: var(--bg-lighter);
 	transition: opacity 0.2s;
+}
+
+.widgetSettings {
+	padding: var(--s-3);
+	margin-top: var(--s-1);
+	background-color: var(--bg-darker);
+	border-radius: var(--rounded);
 }
 
 .draggableWidget .widgetName {
