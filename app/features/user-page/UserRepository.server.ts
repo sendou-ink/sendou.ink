@@ -24,7 +24,7 @@ import {
 import { logger } from "~/utils/logger";
 import { safeNumberParse } from "~/utils/number";
 import type { ChatUser } from "../chat/chat-types";
-import { ALL_WIDGETS } from "./core/widgets/portfolio";
+import { findWidgetById } from "./core/widgets/portfolio";
 import { WIDGET_LOADERS } from "./core/widgets/portfolio-loaders.server";
 import type { LoadedWidget } from "./core/widgets/types";
 
@@ -320,7 +320,7 @@ export async function widgetsByUserId(
 
 	const loadedWidgets = await Promise.all(
 		widgets.map(async ({ widget }) => {
-			const definition = ALL_WIDGETS.find((w) => w.id === widget.id);
+			const definition = findWidgetById(widget.id);
 
 			if (!definition) {
 				logger.warn(

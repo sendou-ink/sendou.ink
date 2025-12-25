@@ -1,8 +1,8 @@
 import type { z } from "zod/v4";
-import type { ALL_WIDGETS } from "./portfolio";
+import type { allWidgetsFlat } from "./portfolio";
 import type { WIDGET_LOADERS } from "./portfolio-loaders.server";
 
-type WidgetUnion = (typeof ALL_WIDGETS)[number];
+type WidgetUnion = ReturnType<typeof allWidgetsFlat>[number];
 
 export type WidgetId = WidgetUnion["id"];
 

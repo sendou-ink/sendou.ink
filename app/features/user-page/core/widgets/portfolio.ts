@@ -23,145 +23,140 @@ const FAVORITE_STAGE_WIDGET_SETTINGS_SCHEMA = z.object({
 	stageId: z.number().refine((val) => stageIds.includes(val as any)),
 });
 
-export const ALL_WIDGETS = [
-	{
-		id: "bio",
-		category: "misc",
-		slot: "main",
-		schema: BIO_WIDGET_SETTINGS_SCHEMA,
-	},
-	{
-		id: "bio-md",
-		category: "misc",
-		slot: "main",
-		schema: BIO_MD_WIDGET_SETTINGS_SCHEMA,
-	},
-	{
-		id: "badges-owned",
-		category: "badges",
-		slot: "main",
-	},
-	{
-		id: "badges-authored",
-		category: "badges",
-		slot: "main",
-	},
-	{
-		id: "teams",
-		category: "teams",
-		slot: "side",
-	},
-	{
-		id: "organizations",
-		category: "misc",
-		slot: "side",
-	},
-	{
-		id: "peak-sp",
-		category: "sendouq",
-		slot: "side",
-	},
-	{
-		id: "peak-xp",
-		category: "xrank",
-		slot: "side",
-	},
-	{
-		id: "highlighted-results",
-		category: "tournaments",
-		slot: "side",
-	},
-	{
-		id: "patron-since",
-		category: "misc",
-		slot: "side",
-	},
-	{
-		id: "timezone",
-		category: "misc",
-		slot: "side",
-		schema: TIMEZONE_WIDGET_SETTINGS_SCHEMA,
-	},
-	{
-		id: "favorite-stage",
-		category: "misc",
-		slot: "side",
-		schema: FAVORITE_STAGE_WIDGET_SETTINGS_SCHEMA,
-	},
-	{
-		id: "videos",
-		category: "vods",
-		slot: "main",
-	},
-	{
-		id: "lfg-posts",
-		category: "misc",
-		slot: "main",
-	},
-	{
-		id: "x-rank-peaks",
-		category: "xrank",
-		slot: "main",
-		schema: X_RANK_PEAKS_WIDGET_SETTINGS_SCHEMA,
-	},
-	{
-		id: "top-500-weapons",
-		category: "xrank",
-		slot: "side",
-	},
-	{
-		id: "top-500-weapons-shooters",
-		category: "xrank",
-		slot: "side",
-	},
-	{
-		id: "top-500-weapons-blasters",
-		category: "xrank",
-		slot: "side",
-	},
-	{
-		id: "top-500-weapons-rollers",
-		category: "xrank",
-		slot: "side",
-	},
-	{
-		id: "top-500-weapons-brushes",
-		category: "xrank",
-		slot: "side",
-	},
-	{
-		id: "top-500-weapons-chargers",
-		category: "xrank",
-		slot: "side",
-	},
-	{
-		id: "top-500-weapons-sloshers",
-		category: "xrank",
-		slot: "side",
-	},
-	{
-		id: "top-500-weapons-splatlings",
-		category: "xrank",
-		slot: "side",
-	},
-	{
-		id: "top-500-weapons-dualies",
-		category: "xrank",
-		slot: "side",
-	},
-	{
-		id: "top-500-weapons-brellas",
-		category: "xrank",
-		slot: "side",
-	},
-	{
-		id: "top-500-weapons-stringers",
-		category: "xrank",
-		slot: "side",
-	},
-	{
-		id: "top-500-weapons-splatanas",
-		category: "xrank",
-		slot: "side",
-	},
-] as const;
+export const ALL_WIDGETS = {
+	misc: [
+		{
+			id: "bio",
+			slot: "main",
+			schema: BIO_WIDGET_SETTINGS_SCHEMA,
+		},
+		{
+			id: "bio-md",
+			slot: "main",
+			schema: BIO_MD_WIDGET_SETTINGS_SCHEMA,
+		},
+		{
+			id: "organizations",
+			slot: "side",
+		},
+		{
+			id: "patron-since",
+			slot: "side",
+		},
+		{
+			id: "timezone",
+			slot: "side",
+			schema: TIMEZONE_WIDGET_SETTINGS_SCHEMA,
+		},
+		{
+			id: "favorite-stage",
+			slot: "side",
+			schema: FAVORITE_STAGE_WIDGET_SETTINGS_SCHEMA,
+		},
+		{
+			id: "lfg-posts",
+			slot: "main",
+		},
+	],
+	badges: [
+		{
+			id: "badges-owned",
+			slot: "main",
+		},
+		{
+			id: "badges-authored",
+			slot: "main",
+		},
+	],
+	teams: [
+		{
+			id: "teams",
+			slot: "side",
+		},
+	],
+	sendouq: [
+		{
+			id: "peak-sp",
+			slot: "side",
+		},
+	],
+	xrank: [
+		{
+			id: "peak-xp",
+			slot: "side",
+		},
+		{
+			id: "x-rank-peaks",
+			slot: "main",
+			schema: X_RANK_PEAKS_WIDGET_SETTINGS_SCHEMA,
+		},
+		{
+			id: "top-500-weapons",
+			slot: "side",
+		},
+		{
+			id: "top-500-weapons-shooters",
+			slot: "side",
+		},
+		{
+			id: "top-500-weapons-blasters",
+			slot: "side",
+		},
+		{
+			id: "top-500-weapons-rollers",
+			slot: "side",
+		},
+		{
+			id: "top-500-weapons-brushes",
+			slot: "side",
+		},
+		{
+			id: "top-500-weapons-chargers",
+			slot: "side",
+		},
+		{
+			id: "top-500-weapons-sloshers",
+			slot: "side",
+		},
+		{
+			id: "top-500-weapons-splatlings",
+			slot: "side",
+		},
+		{
+			id: "top-500-weapons-dualies",
+			slot: "side",
+		},
+		{
+			id: "top-500-weapons-brellas",
+			slot: "side",
+		},
+		{
+			id: "top-500-weapons-stringers",
+			slot: "side",
+		},
+		{
+			id: "top-500-weapons-splatanas",
+			slot: "side",
+		},
+	],
+	tournaments: [
+		{
+			id: "highlighted-results",
+			slot: "side",
+		},
+	],
+	vods: [
+		{
+			id: "videos",
+			slot: "main",
+		},
+	],
+} as const;
+
+export function allWidgetsFlat() {
+	return Object.values(ALL_WIDGETS).flat();
+}
+
+export function findWidgetById(widgetId: string) {
+	return allWidgetsFlat().find((w) => w.id === widgetId);
+}

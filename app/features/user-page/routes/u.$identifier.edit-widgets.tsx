@@ -16,12 +16,14 @@ import { CSS } from "@dnd-kit/utilities";
 import { Form, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import * as R from "remeda";
 import { SendouButton } from "~/components/elements/Button";
 import { MainSlotIcon } from "~/components/icons/MainSlot";
 import { SideSlotIcon } from "~/components/icons/SideSlot";
 import type { Tables } from "~/db/tables";
-import { ALL_WIDGETS } from "~/features/user-page/core/widgets/portfolio";
+import {
+	ALL_WIDGETS,
+	findWidgetById,
+} from "~/features/user-page/core/widgets/portfolio";
 import { USER } from "~/features/user-page/user-page-constants";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { action } from "../actions/u.$identifier.edit-widgets.server";
@@ -43,12 +45,12 @@ export default function EditWidgetsPage() {
 	const [expandedWidgetId, setExpandedWidgetId] = useState<string | null>(null);
 
 	const mainWidgets = selectedWidgets.filter((w) => {
-		const def = ALL_WIDGETS.find((widget) => widget.id === w.id);
+		const def = findWidgetById(w.id);
 		return def?.slot === "main";
 	});
 
 	const sideWidgets = selectedWidgets.filter((w) => {
-		const def = ALL_WIDGETS.find((widget) => widget.id === w.id);
+		const def = findWidgetById(w.id);
 		return def?.slot === "side";
 	});
 
@@ -77,7 +79,7 @@ export default function EditWidgetsPage() {
 	};
 
 	const addWidget = (widgetId: string) => {
-		const widget = ALL_WIDGETS.find((w) => w.id === widgetId);
+		const widget = findWidgetById(widgetId);
 		if (!widget) return;
 
 		const currentCount =
@@ -97,7 +99,7 @@ export default function EditWidgetsPage() {
 
 		setSelectedWidgets([...selectedWidgets, newWidget]);
 
-		const widgetDef = ALL_WIDGETS.find((w) => w.id === widgetId);
+		const widgetDef = findWidgetById(widgetId);
 		if (widgetDef && "schema" in widgetDef) {
 			setExpandedWidgetId(widgetId);
 		}
@@ -200,7 +202,7 @@ function AvailableWidgetsList({
 }: AvailableWidgetsListProps) {
 	const { t } = useTranslation(["user"]);
 
-	const widgetsByCategory = R.groupBy(ALL_WIDGETS, (widget) => widget.category);
+	const widgetsByCategory = ALL_WIDGETS;
 	const categoryKeys = (
 		Object.keys(widgetsByCategory) as Array<keyof typeof widgetsByCategory>
 	).sort((a, b) => a.localeCompare(b));
@@ -382,7 +384,7 @@ function DraggableWidgetItem({
 		transition,
 	};
 
-	const widgetDef = ALL_WIDGETS.find((w) => w.id === widget.id);
+	const widgetDef = findWidgetById(widget.id);
 	const hasSettings = widgetDef && "schema" in widgetDef;
 
 	return (

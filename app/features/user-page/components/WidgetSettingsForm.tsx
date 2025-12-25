@@ -7,7 +7,7 @@ import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import { StageSelect } from "~/components/StageSelect";
 import type { Tables } from "~/db/tables";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
-import { ALL_WIDGETS } from "../core/widgets/portfolio";
+import { type allWidgetsFlat, findWidgetById } from "../core/widgets/portfolio";
 import { USER } from "../user-page-constants";
 
 export function WidgetSettingsForm({
@@ -128,12 +128,12 @@ function WidgetSettingsFormInner({
 }
 
 type WidgetWithSettings = Extract<
-	(typeof ALL_WIDGETS)[number],
+	ReturnType<typeof allWidgetsFlat>[number],
 	{ schema: unknown }
 >;
 
 function getWidgetSchema(widgetId: string) {
-	const widget = ALL_WIDGETS.find((w) => w.id === widgetId);
+	const widget = findWidgetById(widgetId);
 	if (widget && "schema" in widget) {
 		return widget.schema;
 	}
