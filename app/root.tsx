@@ -52,14 +52,14 @@ import { allI18nNamespaces } from "./utils/i18n";
 import { isRevalidation, metaTags } from "./utils/remix";
 import { SUSPENDED_PAGE } from "./utils/urls";
 
-import "nprogress/nprogress.css";
+import "~/styles/normalize.css";
 import "~/styles/common.css";
 import "~/styles/elements.css";
+import "~/styles/utils.css";
 import "~/styles/flags.css";
 import "~/styles/layout.css";
-import "~/styles/normalize.css";
-import "~/styles/utils.css";
 import "~/styles/vars.css";
+import "nprogress/nprogress.css";
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	if (isRevalidation(args)) return true;

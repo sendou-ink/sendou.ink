@@ -152,7 +152,7 @@
 .react-aria-Switch .indicator {
 	width: var(--s-11);
 	height: var(--s-6);
-	background: var(--color-accent-low);
+	background: var(--color-bg-higher);
 	border-radius: 1.143rem;
 }
 
@@ -183,7 +183,7 @@
 }
 
 .react-aria-Switch[data-selected] .indicator {
-	background: var(--color-accent-high);
+	background: var(--color-text-accent);
 }
 
 .react-aria-Switch[data-selected] .indicator:before {

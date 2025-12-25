@@ -2,13 +2,12 @@
 	width: var(--ability-size);
 	height: var(--ability-size);
 	padding: 0;
-	border: 2px solid var(--color-accent-low);
+	border: 2px solid var(--color-bg-higher);
 	border-radius: 50%;
 	border-right: 0;
 	border-bottom: 0;
 	background: var(--bg-ability);
 	background-size: 100%;
-	box-shadow: 0 0 0 1px var(--bg-ability);
 	transform: scale(1);
 	transition: all 0.1s ease;
 	user-select: none;

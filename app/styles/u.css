@@ -110,7 +110,7 @@
 .u__extra-info {
 	padding: var(--s-1) var(--s-1-5);
 	border-radius: var(--rounded);
-	background-color: var(--color-bg);
+	background-color: var(--color-bg-high);
 	font-size: var(--fonts-xxs);
 	display: flex;
 	align-items: center;
@@ -118,7 +118,7 @@
 }
 
 .u__extra-info__heading {
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 	font-weight: var(--bold);
 }
 
@@ -269,7 +269,7 @@
 .u__season__weapon-border__outer {
 	--degree: 80deg;
 	--smoothing: 0.5deg;
-	--color: var(--color-accent);
+	--color: var(--color-text-accent);
 
 	display: block;
 	content: "";

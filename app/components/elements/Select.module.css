@@ -17,6 +17,11 @@
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
 	letter-spacing: 0.5px;
+	cursor: pointer;
+}
+
+.button:hover {
+	border-color: var(--color-border-high);
 }
 
 .button[data-focus-visible] {
@@ -86,12 +91,12 @@
 }
 
 .itemFocused {
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-high);
 	color: var(--color-text);
 }
 
 .itemSelected {
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 	font-weight: var(--bold);
 }
 

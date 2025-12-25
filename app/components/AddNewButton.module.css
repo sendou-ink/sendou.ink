@@ -27,7 +27,7 @@
 	max-height: var(--icon-size);
 	min-width: var(--icon-size);
 	min-height: var(--icon-size);
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 	stroke-width: 4px;
 }
 
@@ -40,7 +40,7 @@
 
 .textContainer {
 	padding-inline: var(--s-1-5);
-	background-color: var(--color-accent) !important;
+	background-color: var(--color-text-accent) !important;
 	height: calc(var(--button-height) - var(--border-width) * 2);
 	display: flex;
 	align-items: center;

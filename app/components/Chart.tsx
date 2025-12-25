@@ -85,7 +85,7 @@ export default function Chart({
 					secondaryAxes,
 					dark: theme.htmlThemeClass === Theme.DARK,
 					defaultColors: [
-						"var(--color-accent)",
+						"var(--color-text-accent)",
 						"var(--color-accent)",
 						"var(--color-info)",
 					],

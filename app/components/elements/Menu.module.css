@@ -54,7 +54,7 @@
 }
 
 .item[data-focused] {
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-high);
 }
 
 .itemDisabled {
@@ -63,12 +63,12 @@
 }
 
 .itemSelected {
-	background-color: var(--color-accent-low);
+	background-color: var(--color-text-accent);
 	font-weight: var(--extra-bold);
 }
 
 .itemActive {
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 }
 
 .itemIcon {

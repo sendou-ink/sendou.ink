@@ -3,10 +3,10 @@
 	width: auto;
 	align-items: center;
 	justify-content: center;
-	border: 2px solid var(--color-accent);
+	border: 2px solid var(--color-text-accent);
 	border-radius: var(--rounded-sm);
 	appearance: none;
-	background: var(--color-accent);
+	background: var(--color-text-accent);
 	color: var(--color-text-inverse);
 	cursor: pointer;
 	font-size: var(--fonts-sm);
@@ -20,7 +20,7 @@
 
 .button[data-focus-visible],
 .button:focus-visible {
-	outline: 2px solid var(--color-accent);
+	outline: 2px solid var(--color-text-accent);
 }
 
 .button[data-pressed],
@@ -37,7 +37,7 @@
 
 .outlined {
 	background-color: var(--color-accent-low);
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 }
 
 .outlinedSuccess {
@@ -68,7 +68,7 @@
 	padding: 0;
 	border: none;
 	background-color: transparent;
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 	outline: initial;
 }
 

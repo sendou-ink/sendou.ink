@@ -90,8 +90,7 @@
 	height: var(--item-size);
 	outline-offset: 2px;
 	padding: 0.25rem;
-	border: 2px solid;
-	border-color: var(--color-accent-low);
+	border: 2px solid var(--color-border);
 	border-radius: 50%;
 	background-color: transparent;
 	color: inherit;
@@ -202,7 +201,7 @@
 	justify-content: space-between;
 	padding: var(--s-4);
 	border-radius: var(--rounded);
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-higher);
 	cursor: pointer;
 	font-size: var(--fonts-lg);
 }

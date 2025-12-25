@@ -35,7 +35,7 @@
 }
 
 .card:hover .avatarImg {
-	outline: 6px solid var(--color-accent-low);
+	outline: 6px solid var(--color-bg-high);
 }
 
 .org {
@@ -121,7 +121,7 @@
 
 .pillRanked {
 	background-color: var(--color-info-low);
-	color: var(--color-info);
+	color: var(--color-text-accent);
 }
 
 .pillRanked svg {

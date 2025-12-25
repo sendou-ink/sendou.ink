@@ -71,11 +71,11 @@
 }
 
 .text-theme {
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 }
 
 .text-theme-secondary {
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 }
 
 .text-uppercase {

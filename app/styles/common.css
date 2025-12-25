@@ -101,11 +101,16 @@ textarea:not(.plain, [name="text"]) {
 	outline: none;
 	overflow-wrap: normal;
 	overflow-x: auto;
+	resize: vertical;
+}
+
+textarea:not(.plain, [name="text"]):hover {
+	border-color: var(--color-border-high);
 }
 
 textarea:not(.plain, [name="text"]):focus-within {
 	border-color: transparent;
-	outline: 2px solid var(--color-accent);
+	outline: 2px solid var(--color-text-accent);
 }
 
 input:not(.plain, [type="radio"]) {
@@ -242,15 +247,23 @@ select {
 	background-position: center right var(--s-3);
 	background-repeat: no-repeat;
 	cursor: pointer;
-	font-weight: 500;
-	padding-block: 3.5px;
 	padding-inline: var(--s-3) var(--s-9);
+	padding-block: 3.5px;
+	-moz-appearance: none;
+	-webkit-appearance: none;
+	appearance: none;
+	height: 2rem;
+	line-height: 1.25;
 }
 
 select:disabled {
 	cursor: not-allowed;
 	opacity: 0.5;
 	transform: initial;
+}
+
+select:hover {
+	border-color: var(--color-border-high);
 }
 
 .light select {
@@ -268,7 +281,8 @@ select::selection {
 }
 
 select:focus {
-	outline: 2px solid var(--color-accent);
+	border-color: transparent;
+	outline: 2px solid var(--color-text-accent);
 }
 
 .my-table {
@@ -349,9 +363,13 @@ abbr[title] {
 	outline: none;
 }
 
+.input-container:hover {
+	border-color: var(--color-border-high);
+}
+
 .input-container:focus-within {
 	border-color: transparent;
-	outline: 2px solid var(--color-accent);
+	outline: 2px solid var(--color-text-accent);
 }
 
 .input-container > input {
@@ -399,7 +417,7 @@ abbr[title] {
 }
 
 .sub-nav__link__container.active {
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 }
 
 .sub-nav__link {
@@ -872,7 +890,7 @@ abbr[title] {
 	display: flex;
 	width: 100%;
 	align-items: center;
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 	font-size: var(--fonts-lg);
 	text-align: center;
 }
