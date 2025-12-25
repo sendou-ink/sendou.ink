@@ -75,7 +75,7 @@ a.bracket__match:hover {
 	min-height: 2px;
 	max-height: 2px;
 	width: 100%;
-	background-color: var(--color-bg-high);
+	background-color: var(--color-bg-higher);
 }
 
 .bracket__match__bye {
