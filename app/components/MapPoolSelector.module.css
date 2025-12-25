@@ -51,9 +51,9 @@
 
 .modeButton {
 	padding: var(--s-1);
-	border: 2px solid var(--color-bg);
+	border: 2px solid var(--color-border);
 	border-radius: var(--rounded-full);
-	background-color: transparent;
+	background-color: var(--color-bg);
 	color: var(--color-accent);
 	opacity: 1 !important;
 	outline: initial;
@@ -61,15 +61,14 @@
 
 .modeButton.selected {
 	border: 2px solid transparent;
-	background-color: var(--color-accent-high);
+	background-color: var(--color-bg-higher);
 }
 
 .modeButton.preselected {
-	border: 2px solid var(--color-info);
-	background-color: var(--color-accent-high);
+	border: 2px solid var(--color-text-accent);
+	background-color: var(--color-bg-higher);
 }
 
 .mode:not(.selected, .preselected) {
-	filter: grayscale(100%) brightness(30%);
-	opacity: 0.6;
+	filter: grayscale(100%) brightness(50%);
 }

@@ -522,8 +522,6 @@
 }
 
 .scrollbar {
-	scrollbar-gutter: stable;
-
 	@supports not selector(::-webkit-scrollbar) {
 		scrollbar-width: thin;
 		scrollbar-color: var(--color-bg-higher) transparent;

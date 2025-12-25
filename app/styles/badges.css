@@ -31,7 +31,7 @@
 }
 
 .badges__explanation {
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 	font-weight: var(--semi-bold);
 	text-align: center;
 }

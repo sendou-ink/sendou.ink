@@ -85,7 +85,7 @@
 
 .dayHeaderToday {
 	background-color: var(--color-bg-higher);
-	border: 2px solid var(--color-accent-low);
+	border: 2px solid var(--color-border-high);
 }
 
 .dayHeaderWeekday {
@@ -109,7 +109,7 @@
 .clockHeaderDivider {
 	width: 100%;
 	height: 3px;
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-high);
 	border-radius: var(--rounded);
 }
 

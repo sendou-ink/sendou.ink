@@ -39,20 +39,6 @@
 	}
 }
 
-.object-damage__grid::-webkit-scrollbar {
-	width: 4px;
-	height: 8px;
-}
-
-.object-damage__grid::-webkit-scrollbar-corner {
-	background-color: var(--color-bg-high);
-}
-
-.object-damage__grid::-webkit-scrollbar-thumb {
-	background-color: var(--color-accent-low);
-	border-radius: 4px;
-}
-
 .object-damage__hp {
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
@@ -127,7 +113,7 @@
 }
 
 .object-damage__multiplier {
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 	font-size: var(--fonts-xxs);
 	font-weight: var(--bold);
 	letter-spacing: 0.5px;
@@ -144,9 +130,9 @@
 .object-damage__patch {
 	border-radius: var(--rounded);
 	background-color: var(--color-accent-low);
-	color: var(--color-text-high);
+	color: var(--color-accent-high);
 	font-size: var(--fonts-xxxs);
 	font-weight: var(--bold);
 	padding-block: var(--s-0-5);
-	padding-inline: var(--s-1);
+	padding-inline: var(--s-2);
 }

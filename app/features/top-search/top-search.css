@@ -37,7 +37,7 @@
 }
 
 a.placements__table__row:hover {
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-higher);
 }
 
 .placements__table__row:first-of-type {

@@ -85,7 +85,7 @@ a.bracket__match:hover {
 }
 
 .bracket__match__seed {
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 	margin-inline-end: var(--s-0-5);
 	min-width: 15px;
 	max-width: 15px;

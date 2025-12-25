@@ -32,7 +32,7 @@
 
 .analyzer__ap-compare__bar {
 	height: 100%;
-	background-color: var(--color-accent);
+	background-color: var(--color-info);
 }
 
 .analyzer__ap-compare__bar.analyzer__better {
@@ -100,7 +100,7 @@
 }
 
 .analyzer__details:has(.analyzer__stat-card-highlighted) .analyzer__summary {
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-higher);
 }
 
 .analyzer__weapon-info-badge {
@@ -151,7 +151,7 @@
 }
 
 .analyzer__stat-card-highlighted {
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-higher);
 }
 
 .analyzer__stat-card__title-and-value-container {
@@ -249,11 +249,11 @@
 .analyzer__patch {
 	border-radius: var(--rounded);
 	background-color: var(--color-accent-low);
-	color: var(--color-text-high);
+	color: var(--color-accent-high);
 	font-size: var(--fonts-xxxs);
 	font-weight: var(--bold);
 	padding-block: var(--s-0-5);
-	padding-inline: var(--s-1);
+	padding-inline: var(--s-2);
 }
 
 @media screen and (max-width: 640px) {

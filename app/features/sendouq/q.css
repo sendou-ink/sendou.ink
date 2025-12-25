@@ -40,7 +40,7 @@
 }
 
 .q__front-page-link:hover {
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-higher);
 }
 
 .q__front-page-link__sub-text {
@@ -121,7 +121,7 @@
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
 	text-transform: uppercase;
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 	display: flex;
 	align-items: center;
 }
@@ -131,7 +131,7 @@
 	flex: 1;
 	content: "";
 	padding: 2px;
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-high);
 	margin: 5px;
 	border-radius: var(--rounded);
 }
@@ -293,7 +293,7 @@
 .q__group-member__star {
 	min-width: 18px;
 	max-width: 18px;
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 	stroke-width: 2;
 }
 
@@ -528,7 +528,7 @@
 .q-info__container h2 {
 	font-size: var(--fonts-lg);
 	margin-block-end: var(--s-2);
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 }
 
 .q-info__container h3 {

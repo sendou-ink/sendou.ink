@@ -192,6 +192,7 @@
 	min-width: 90px;
 	max-width: 90px;
 	border: 2.5px solid var(--color-bg-higher);
+	margin-top: calc((var(--s-2) * 2) + var(--s-2));
 }
 
 .tournamentCardsViewAllCard:hover {

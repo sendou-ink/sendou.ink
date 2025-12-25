@@ -230,7 +230,7 @@
 }
 
 .u__placements:hover {
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-higher);
 }
 
 .u__placements__mode {

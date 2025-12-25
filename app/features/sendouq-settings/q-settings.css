@@ -46,7 +46,7 @@
 
 .q-settings__summary svg {
 	width: 24px;
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 	position: absolute;
 	right: 20px;
 	top: 14px;

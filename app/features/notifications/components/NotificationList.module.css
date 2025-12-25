@@ -1,7 +1,7 @@
 .itemDivider {
 	margin-inline: var(--s-2-5);
 	border-width: 0.5px;
-	border-color: var(--color-border);
+	border-color: var(--color-bg-high);
 }
 
 .item {

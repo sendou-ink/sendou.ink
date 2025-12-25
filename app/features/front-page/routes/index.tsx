@@ -253,7 +253,7 @@ function AllTournamentsLinkCard() {
 	return (
 		<Link
 			to={CALENDAR_TOURNAMENTS_PAGE}
-			className={clsx(styles.tournamentCardsViewAllCard, "mt-4")}
+			className={clsx(styles.tournamentCardsViewAllCard)}
 		>
 			<Image path={navIconUrl("medal")} size={36} alt="" />
 			{t("front:showcase.viewAll")}

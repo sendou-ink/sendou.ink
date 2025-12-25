@@ -358,7 +358,7 @@ function WeaponImageSelector() {
 
 	return (
 		<div
-			className={clsx("plans__weapons-section", {
+			className={clsx("plans__weapons-section scrollbar", {
 				"plans__weapons-section__wide": isWide,
 			})}
 		>

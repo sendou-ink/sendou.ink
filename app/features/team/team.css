@@ -44,7 +44,7 @@
 	place-items: center;
 	font-size: var(--fonts-xl);
 	border-radius: 100%;
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-high);
 }
 
 .team__banner {

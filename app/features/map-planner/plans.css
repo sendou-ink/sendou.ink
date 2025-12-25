@@ -83,7 +83,8 @@ button[data-state="closed"][aria-haspopup="dialog"] {
 	display: flex;
 	align-items: center;
 	padding: var(--s-3);
-	border: 1px solid var(--color-accent-low);
+	border: 2px solid var(--color-border);
+	border-top: transparent;
 	border-radius: 0 0 var(--rounded) var(--rounded);
 	background-color: var(--color-bg);
 	gap: var(--s-4);
@@ -98,15 +99,16 @@ button[data-state="closed"][aria-haspopup="dialog"] {
 }
 
 .plans__outline-toggle > .plans__outline-toggle__button {
-	background-color: grey;
+	background-color: var(--color-bg-high);
+	color: var(--color-text);
 	font-size: var(--fonts-xs);
 	padding: var(--s-2);
-	color: var(--color-text-inverse);
 	width: 140px;
 }
 
 .plans__outline-toggle > .plans__outline-toggle__button__outlined {
-	background-color: var(--color-accent);
+	background-color: var(--color-text-accent);
+	color: var(--color-text-inverse);
 }
 
 .plans__weapons-section {
@@ -115,7 +117,8 @@ button[data-state="closed"][aria-haspopup="dialog"] {
 	top: 15%;
 	width: 150px;
 	max-height: 85vh;
-	border: 1px solid var(--color-accent-low);
+	border: 2px solid var(--color-border);
+	border-left: transparent;
 	border-radius: 0 var(--rounded) var(--rounded) 0;
 	background: var(--color-bg);
 	gap: 2px;

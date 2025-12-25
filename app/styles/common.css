@@ -110,6 +110,10 @@ input:not(.plain) {
 	outline: none;
 }
 
+input:not(.plain):hover {
+	border-color: var(--color-border-high);
+}
+
 input:user-invalid {
 	border-color: transparent;
 	outline: 2px solid var(--color-error);
@@ -137,7 +141,7 @@ input:user-invalid {
 
 input:not(.plain, .combobox-input):focus-within {
 	border-color: transparent;
-	outline: 2px solid var(--color-accent);
+	outline: 2px solid var(--color-text-accent);
 }
 
 input:not(.plain)::placeholder {
@@ -311,7 +315,7 @@ td > input[type="checkbox"] {
 }
 
 hr {
-	border-color: var(--color-accent-low);
+	border: 1px solid var(--color-bg-high);
 }
 
 abbr:not([title]) {
@@ -469,7 +473,7 @@ abbr[title] {
 }
 
 .articles-list__title {
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 	font-size: var(--fonts-md);
 }
 
@@ -534,7 +538,7 @@ abbr[title] {
 	justify-content: center;
 	border-radius: var(--rounded);
 	background-color: var(--color-info-low);
-	color: var(--color-text);
+	color: var(--color-info-high);
 	font-size: var(--fonts-sm);
 	font-weight: var(--semi-bold);
 	gap: var(--s-2);
@@ -880,7 +884,7 @@ abbr[title] {
 .divider::before,
 .divider::after {
 	flex: 1;
-	border-bottom: 2px solid var(--color-border);
+	border-bottom: 2px solid var(--color-bg-high);
 	content: "";
 }
 
@@ -1077,12 +1081,12 @@ html[dir="rtl"] .fix-rtl {
 	width: 0.6rem;
 	height: 0.6rem;
 	border-radius: 50%;
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-higher);
 	transition: all 0.2s ease;
 }
 
 .pagination__dot__active {
-	background-color: var(--color-accent);
+	background-color: var(--color-text-accent);
 }
 
 .pagination__page-count {
@@ -1429,13 +1433,13 @@ html[dir="rtl"] .fix-rtl {
 }
 
 .format-selector__count {
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 	font-size: var(--fonts-sm);
 	white-space: nowrap;
 }
 
 .format-selector__divider {
-	background-color: var(--color-accent-low);
+	background-color: var(--color-text-accent);
 	width: 2px;
 	align-self: stretch;
 }

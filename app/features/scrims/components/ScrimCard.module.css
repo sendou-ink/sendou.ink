@@ -91,7 +91,7 @@
 .expandButton {
 	background: none;
 	border: none;
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 	cursor: pointer;
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
@@ -113,7 +113,7 @@
 }
 
 .requestCard {
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-higher);
 }
 
 .requestFooter {
