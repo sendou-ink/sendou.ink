@@ -6,7 +6,7 @@
 .clock {
 	font-size: var(--fonts-sm);
 	font-weight: var(--bold);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -16,17 +16,17 @@
 }
 
 .clockCountry {
-	color: var(--text) !important;
+	color: var(--color-text) !important;
 	white-space: nowrap;
 	font-size: var(--fonts-xs);
 }
 
 .frontPageLink {
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	border-radius: var(--rounded-sm);
 	padding: var(--s-2);
 	font-size: var(--fonts-sm);
-	color: var(--text);
+	color: var(--color-text);
 	font-weight: var(--bold);
 	display: flex;
 	align-items: center;
@@ -35,11 +35,11 @@
 }
 
 .frontPageLink:hover {
-	background-color: var(--theme-transparent);
+	background-color: var(--color-bg-higher);
 }
 
 .linkSubText {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xxs);
 	font-weight: var(--body);
 }

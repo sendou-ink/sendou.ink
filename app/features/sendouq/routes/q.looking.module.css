@@ -29,7 +29,7 @@
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
 	text-transform: uppercase;
-	color: var(--theme);
+	color: var(--color-text-accent);
 	display: flex;
 	align-items: center;
 }
@@ -39,7 +39,7 @@
 	flex: 1;
 	content: "";
 	padding: 2px;
-	background-color: var(--theme-transparent);
+	background-color: var(--color-bg-high);
 	margin: 5px;
 	border-radius: var(--rounded);
 }

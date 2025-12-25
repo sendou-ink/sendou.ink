@@ -13,7 +13,7 @@
 	gap: var(--s-2);
 	align-items: center;
 	margin-block-start: -5px;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }
 
 .viewerCount > svg {
@@ -22,6 +22,6 @@
 
 .infoCircle {
 	border-radius: 100%;
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	padding: var(--s-1);
 }

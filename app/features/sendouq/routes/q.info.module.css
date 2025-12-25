@@ -8,7 +8,7 @@
 .container h2 {
 	font-size: var(--fonts-lg);
 	margin-block-end: var(--s-2);
-	color: var(--theme-secondary);
+	color: var(--color-text-accent);
 }
 
 .container h3 {
