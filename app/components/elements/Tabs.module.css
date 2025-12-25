@@ -2,6 +2,7 @@
 	display: flex;
 	flex-direction: row;
 	border-bottom: 2px solid var(--color-border);
+	overflow-x: visible;
 }
 
 .tabList svg {
@@ -39,10 +40,11 @@
 	white-space: nowrap;
 	flex: 1;
 	transform: none !important;
+	margin-bottom: -2px;
 }
 
 .tabButton[data-selected] {
-	border-color: var(--color-accent);
+	border-color: var(--color-text-accent);
 	color: var(--color-text);
 }
 
