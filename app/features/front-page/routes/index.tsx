@@ -68,7 +68,7 @@ function DesktopSideNav() {
 	const { t } = useTranslation(["common"]);
 
 	return (
-		<nav className={styles.frontPageSideNav}>
+		<nav className={clsx(styles.frontPageSideNav, "scrollbar")}>
 			{navItems.map((item) => {
 				return (
 					<Link
@@ -228,7 +228,12 @@ function ShowcaseTournamentScroller({
 }) {
 	return (
 		<div className={styles.tournamentCards}>
-			<div className={clsx(styles.tournamentCardsSpacer, "overflow-x-scroll")}>
+			<div
+				className={clsx(
+					styles.tournamentCardsSpacer,
+					"overflow-x-auto scrollbar",
+				)}
+			>
 				{tournaments.map((tournament) => (
 					<TournamentCard
 						key={tournament.id}

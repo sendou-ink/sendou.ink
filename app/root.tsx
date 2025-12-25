@@ -60,6 +60,7 @@ import "~/styles/flags.css";
 import "~/styles/layout.css";
 import "~/styles/vars.css";
 import "nprogress/nprogress.css";
+import clsx from "clsx";
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	if (isRevalidation(args)) return true;
@@ -154,7 +155,11 @@ function Document({
 	const customizedCSSVars = useCustomizedCSSVars();
 
 	return (
-		<html lang={locale} dir={i18n.dir()} className={htmlThemeClass}>
+		<html
+			lang={locale}
+			dir={i18n.dir()}
+			className={clsx(htmlThemeClass, "scrollbar")}
+		>
 			<head>
 				<meta charSet="utf-8" />
 				<meta

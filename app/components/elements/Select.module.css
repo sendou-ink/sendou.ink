@@ -69,9 +69,6 @@
 .listBox {
 	overflow: auto;
 	flex: 1;
-	scrollbar-color: rgb(83 65 91) rgba(83 65 91 / 0.3);
-	scrollbar-width: thin;
-	scrollbar-gutter: stable;
 }
 
 .item {

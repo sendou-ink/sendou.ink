@@ -12,24 +12,6 @@
 html {
 	color-scheme: light dark;
 	accent-color: var(--color-accent);
-
-	/* TODO: update colors */
-	@supports not selector(::-webkit-scrollbar) {
-		scrollbar-width: thin;
-		scrollbar-color: var(--color-primary-transparent) var(--color-base-section);
-	}
-
-	&::-webkit-scrollbar,
-	&::-webkit-scrollbar-track {
-		background-color: var(--color-base-section);
-		height: 6px;
-		width: 6px;
-	}
-
-	&::-webkit-scrollbar-thumb {
-		background-color: var(--color-primary-transparent);
-		border-radius: 99999px;
-	}
 }
 
 body {
@@ -929,14 +911,6 @@ abbr[title] {
 
 .menu__items-container__opens-left {
 	right: 0;
-}
-
-.menu-container__scrolling {
-	max-height: 300px;
-	overflow-y: auto;
-	scrollbar-color: rgb(83 65 91) transparent;
-	scrollbar-width: thin;
-	scrollbar-gutter: stable;
 }
 
 .menu__item {

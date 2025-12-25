@@ -135,7 +135,7 @@ export function SendouSelect<T extends object>({
 					<Virtualizer layout={ListLayout} layoutOptions={{ rowHeight: 33 }}>
 						<ListBox
 							items={items}
-							className={styles.listBox}
+							className={clsx(styles.listBox, "scrollbar")}
 							renderEmptyState={() => (
 								<div className={styles.noResults}>{t("common:noResults")}</div>
 							)}
