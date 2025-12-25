@@ -9,6 +9,10 @@ const BIO_MD_WIDGET_SETTINGS_SCHEMA = z.object({
 	bio: z.string().min(1).max(USER.BIO_MD_MAX_LENGTH),
 });
 
+const X_RANK_PEAKS_WIDGET_SETTINGS_SCHEMA = z.object({
+	division: z.enum(["both", "tentatek", "takoroka"]),
+});
+
 export const ALL_WIDGETS = [
 	{
 		id: "bio",
@@ -71,6 +75,12 @@ export const ALL_WIDGETS = [
 		id: "lfg-posts",
 		category: "misc",
 		slot: "main",
+	},
+	{
+		id: "x-rank-peaks",
+		category: "xrank",
+		slot: "main",
+		schema: X_RANK_PEAKS_WIDGET_SETTINGS_SCHEMA,
 	},
 	{
 		id: "top-500-weapons",

@@ -10,6 +10,7 @@ import * as TournamentOrganizationRepository from "~/features/tournament-organiz
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
+import type { ExtractWidgetSettings } from "./types";
 
 export const WIDGET_LOADERS = {
 	"badges-owned": async (userId: number) => {
@@ -145,6 +146,15 @@ export const WIDGET_LOADERS = {
 	},
 	"top-500-weapons-splatanas": async (userId: number) => {
 		return getTop500WeaponsByCategory(userId, "SPLATANAS");
+	},
+	"x-rank-peaks": async (
+		userId: number,
+		settings: ExtractWidgetSettings<"x-rank-peaks">,
+	) => {
+		return XRankPlacementRepository.findPeaksByUserId(
+			userId,
+			settings.division,
+		);
 	},
 };
 

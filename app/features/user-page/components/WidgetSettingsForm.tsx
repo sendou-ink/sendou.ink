@@ -1,6 +1,7 @@
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useEffect, useRef } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
+import { SelectFormField } from "~/components/form/SelectFormField";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import type { Tables } from "~/db/tables";
 import { ALL_WIDGETS } from "../core/widgets/portfolio";
@@ -39,7 +40,7 @@ function WidgetSettingsFormInner({
 }) {
 	const methods = useForm({
 		resolver: standardSchemaResolver(schema),
-		defaultValues: widget.settings ?? {},
+		defaultValues: (widget.settings ?? {}) as any,
 	});
 
 	const values = useWatch({ control: methods.control });
@@ -76,7 +77,20 @@ function WidgetSettingsFormInner({
 					<TextAreaFormField
 						label="Bio"
 						name="bio"
+						bottomText="Supports Markdown"
 						maxLength={USER.BIO_MD_MAX_LENGTH}
+					/>
+				);
+			case "x-rank-peaks":
+				return (
+					<SelectFormField
+						label="Division"
+						name="division"
+						values={[
+							{ value: "both", label: "Both divisions" },
+							{ value: "tentatek", label: "Tentatek only" },
+							{ value: "takoroka", label: "Takoroka only" },
+						]}
 					/>
 				);
 			default:

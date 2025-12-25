@@ -184,3 +184,37 @@
 .lfgPost:hover {
 	background-color: var(--bg-lightest);
 }
+
+.xRankPeaks {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-3);
+	justify-content: center;
+	font-size: var(--fonts-sm);
+	font-weight: var(--semi-bold);
+}
+
+.xRankPeakMode {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.xRankPeakModeIconWrapper {
+	position: relative;
+	width: 24px;
+	height: 24px;
+}
+
+.xRankPeakDivision {
+	position: absolute;
+	bottom: -2px;
+	right: -2px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--bg-lightest);
+	border-radius: 50%;
+	padding: 1px;
+}

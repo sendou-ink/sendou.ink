@@ -3,20 +3,23 @@ import clsx from "clsx";
 import Markdown from "markdown-to-jsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { WeaponImage } from "~/components/Image";
+import { Image, WeaponImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
 import type { Tables } from "~/db/tables";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { VodListing } from "~/features/vods/components/VodListing";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type { MainWeaponId, ModeShort } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
 import { assertUnreachable } from "~/utils/types";
 import {
+	brandImageUrl,
 	calendarEventPage,
 	LFG_PAGE,
+	modeImageUrl,
 	teamPage,
+	topSearchPlayerPage,
 	tournamentBracketsPage,
 	tournamentOrganizationPage,
 	userVodsPage,
@@ -144,6 +147,10 @@ export function Widget({
 					/>
 				);
 			}
+			case "x-rank-peaks":
+				return widget.data.length === 0 ? null : (
+					<XRankPeaks peaks={widget.data} />
+				);
 			default:
 				assertUnreachable(widget);
 		}
@@ -153,6 +160,10 @@ export function Widget({
 		switch (widget.id) {
 			case "videos":
 				return userVodsPage(user);
+			case "x-rank-peaks":
+				return widget.data.length > 0
+					? topSearchPlayerPage(widget.data[0].playerId)
+					: null;
 			default:
 				return null;
 		}
@@ -357,6 +368,47 @@ function LFGPosts({
 				>
 					{t(`lfg:types.${post.type}`)}
 				</Link>
+			))}
+		</div>
+	);
+}
+
+const TENTATEK_BRAND_ID = "B10";
+const TAKOROKA_BRAND_ID = "B11";
+
+function XRankPeaks({
+	peaks,
+}: {
+	peaks: Extract<LoadedWidget, { id: "x-rank-peaks" }>["data"];
+}) {
+	return (
+		<div className={styles.xRankPeaks}>
+			{peaks.map((peak) => (
+				<div key={peak.mode} className={styles.xRankPeakMode}>
+					<div className={styles.xRankPeakModeIconWrapper}>
+						<Image
+							path={modeImageUrl(peak.mode as ModeShort)}
+							alt=""
+							width={24}
+							height={24}
+						/>
+						<div className={styles.xRankPeakDivision}>
+							<Image
+								path={brandImageUrl(
+									peak.region === "WEST"
+										? TENTATEK_BRAND_ID
+										: TAKOROKA_BRAND_ID,
+								)}
+								alt={peak.region === "WEST" ? "Tentatek" : "Takoroka"}
+								width={12}
+								height={12}
+							/>
+						</div>
+					</div>
+					<div>
+						{peak.rank} / {peak.power.toFixed(1)}
+					</div>
+				</div>
 			))}
 		</div>
 	);

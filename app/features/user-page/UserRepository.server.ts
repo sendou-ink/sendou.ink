@@ -330,7 +330,9 @@ export async function widgetsByUserId(
 			}
 
 			const loader = WIDGET_LOADERS[widget.id as keyof typeof WIDGET_LOADERS];
-			const data = loader ? await loader(user.id) : widget.settings;
+			const data = loader
+				? await loader(user.id, widget.settings as any)
+				: widget.settings;
 
 			return {
 				id: widget.id,
