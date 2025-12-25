@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { useEffect, useRef } from "react";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
+import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import type { Tables } from "~/db/tables";
+import { ALL_WIDGETS } from "../core/widgets/portfolio";
 import { USER } from "../user-page-constants";
-
-// xxx: can we somehow have the value be only widgets that have settings?
-// xxx: can we use existing TextareaFormField?
 
 export function WidgetSettingsForm({
 	widget,
@@ -12,47 +13,89 @@ export function WidgetSettingsForm({
 	widget: Tables["UserWidget"]["widget"];
 	onSettingsChange: (widgetId: string, settings: any) => void;
 }) {
-	switch (widget.id) {
-		case "bio":
-			return (
-				<BioWidgetSettings
-					widget={widget}
-					onSettingsChange={onSettingsChange}
-				/>
-			);
-		default:
-			return null;
+	const schema = getWidgetSchema(widget.id);
+
+	if (!schema) {
+		return null;
 	}
-}
-
-function BioWidgetSettings({
-	widget,
-	onSettingsChange,
-}: {
-	widget: Extract<Tables["UserWidget"]["widget"], { id: "bio" }>;
-	onSettingsChange: (widgetId: string, settings: any) => void;
-}) {
-	const [bio, setBio] = useState(widget.settings?.bio ?? "");
-
-	const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-		const newBio = e.target.value;
-		setBio(newBio);
-		onSettingsChange(widget.id, { bio: newBio });
-	};
 
 	return (
-		<div>
-			<label htmlFor="bio-widget-textarea">
-				Bio ({bio.length}/{USER.BIO_MAX_LENGTH})
-			</label>
-			<textarea
-				id="bio-widget-textarea"
-				value={bio}
-				onChange={handleChange}
-				maxLength={USER.BIO_MAX_LENGTH}
-				rows={4}
-				style={{ width: "100%" }}
-			/>
-		</div>
+		<WidgetSettingsFormInner
+			widget={widget}
+			schema={schema}
+			onSettingsChange={onSettingsChange}
+		/>
 	);
+}
+
+function WidgetSettingsFormInner({
+	widget,
+	schema,
+	onSettingsChange,
+}: {
+	widget: Tables["UserWidget"]["widget"];
+	schema: WidgetWithSettings["schema"];
+	onSettingsChange: (widgetId: string, settings: any) => void;
+}) {
+	const methods = useForm({
+		resolver: standardSchemaResolver(schema),
+		defaultValues: widget.settings ?? {},
+	});
+
+	const values = useWatch({ control: methods.control });
+	const isFirstRender = useRef(true);
+	const onSettingsChangeRef = useRef(onSettingsChange);
+	const widgetIdRef = useRef(widget.id);
+
+	onSettingsChangeRef.current = onSettingsChange;
+	widgetIdRef.current = widget.id;
+
+	useEffect(() => {
+		if (isFirstRender.current) {
+			isFirstRender.current = false;
+			return;
+		}
+
+		if (Object.keys(values).length > 0) {
+			onSettingsChangeRef.current(widgetIdRef.current, values);
+		}
+	}, [values]);
+
+	const formFields = (() => {
+		switch (widget.id) {
+			case "bio":
+				return (
+					<TextAreaFormField
+						label="Bio"
+						name="bio"
+						maxLength={USER.BIO_MAX_LENGTH}
+					/>
+				);
+			case "bio-md":
+				return (
+					<TextAreaFormField
+						label="Bio"
+						name="bio"
+						maxLength={USER.BIO_MD_MAX_LENGTH}
+					/>
+				);
+			default:
+				return null;
+		}
+	})();
+
+	return <FormProvider {...methods}>{formFields}</FormProvider>;
+}
+
+type WidgetWithSettings = Extract<
+	(typeof ALL_WIDGETS)[number],
+	{ schema: unknown }
+>;
+
+function getWidgetSchema(widgetId: string) {
+	const widget = ALL_WIDGETS.find((w) => w.id === widgetId);
+	if (widget && "schema" in widget) {
+		return widget.schema;
+	}
+	return null;
 }

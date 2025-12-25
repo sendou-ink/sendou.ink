@@ -5,12 +5,22 @@ const BIO_WIDGET_SETTINGS_SCHEMA = z.object({
 	bio: z.string().min(1).max(USER.BIO_MAX_LENGTH),
 });
 
+const BIO_MD_WIDGET_SETTINGS_SCHEMA = z.object({
+	bio: z.string().min(1).max(USER.BIO_MD_MAX_LENGTH),
+});
+
 export const ALL_WIDGETS = [
 	{
 		id: "bio",
 		category: "misc",
 		slot: "main",
 		schema: BIO_WIDGET_SETTINGS_SCHEMA,
+	},
+	{
+		id: "bio-md",
+		category: "misc",
+		slot: "main",
+		schema: BIO_MD_WIDGET_SETTINGS_SCHEMA,
 	},
 	{
 		id: "badges-owned",

@@ -1,5 +1,7 @@
 import { Link } from "@remix-run/react";
 import clsx from "clsx";
+import Markdown from "markdown-to-jsx";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { WeaponImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
@@ -38,6 +40,14 @@ export function Widget({
 		switch (widget.id) {
 			case "bio":
 				return <article>{widget.data.bio}</article>;
+			case "bio-md":
+				return (
+					<article>
+						<Markdown options={{ wrapper: React.Fragment }}>
+							{widget.data.bio}
+						</Markdown>
+					</article>
+				);
 			case "badges-owned":
 				return <BadgeDisplay badges={widget.data} />;
 			case "badges-authored":
