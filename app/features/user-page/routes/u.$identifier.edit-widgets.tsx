@@ -23,6 +23,7 @@ import { SideSlotIcon } from "~/components/icons/SideSlot";
 import type { Tables } from "~/db/tables";
 import { ALL_WIDGETS } from "~/features/user-page/core/widgets/portfolio";
 import { USER } from "~/features/user-page/user-page-constants";
+import { useIsMounted } from "~/hooks/useIsMounted";
 import { action } from "../actions/u.$identifier.edit-widgets.server";
 import { WidgetSettingsForm } from "../components/WidgetSettingsForm";
 import { loader } from "../loaders/u.$identifier.edit-widgets.server";
@@ -34,6 +35,7 @@ export { loader };
 export default function EditWidgetsPage() {
 	const { t } = useTranslation(["user", "common"]);
 	const data = useLoaderData<typeof loader>();
+	const isMounted = useIsMounted();
 
 	const [selectedWidgets, setSelectedWidgets] = useState<
 		Array<Tables["UserWidget"]["widget"]>
@@ -118,6 +120,17 @@ export default function EditWidgetsPage() {
 		setExpandedWidgetId(expandedWidgetId === widgetId ? null : widgetId);
 	};
 
+	const selectedWidgetsListElement = (
+		<SelectedWidgetsList
+			mainWidgets={mainWidgets}
+			sideWidgets={sideWidgets}
+			onRemoveWidget={removeWidget}
+			onSettingsChange={handleSettingsChange}
+			expandedWidgetId={expandedWidgetId}
+			onToggleExpanded={toggleExpanded}
+		/>
+	);
+
 	return (
 		<div className={styles.container}>
 			<header className={styles.header}>
@@ -144,20 +157,17 @@ export default function EditWidgetsPage() {
 
 				<div className={styles.grid}>
 					<section className={styles.selected}>
-						<DndContext
-							sensors={sensors}
-							onDragStart={handleDragStart}
-							onDragEnd={handleDragEnd}
-						>
-							<SelectedWidgetsList
-								mainWidgets={mainWidgets}
-								sideWidgets={sideWidgets}
-								onRemoveWidget={removeWidget}
-								onSettingsChange={handleSettingsChange}
-								expandedWidgetId={expandedWidgetId}
-								onToggleExpanded={toggleExpanded}
-							/>
-						</DndContext>
+						{isMounted ? (
+							<DndContext
+								sensors={sensors}
+								onDragStart={handleDragStart}
+								onDragEnd={handleDragEnd}
+							>
+								{selectedWidgetsListElement}
+							</DndContext>
+						) : (
+							selectedWidgetsListElement
+						)}
 					</section>
 
 					<section className={styles.available}>

@@ -31,7 +31,11 @@ export function SendouForm<T extends z.ZodTypeAny>({
 		defaultValues,
 	});
 
-	if (methods.formState.isSubmitted && methods.formState.errors) {
+	if (
+		methods.formState.isSubmitted &&
+		methods.formState.errors &&
+		Object.keys(methods.formState.errors).length > 0
+	) {
 		logger.error(methods.formState.errors);
 	}
 
