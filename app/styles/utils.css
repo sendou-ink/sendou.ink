@@ -35,47 +35,47 @@
 }
 
 .text-main-forced {
-	color: var(--text) !important;
+	color: var(--color-text) !important;
 }
 
 .text-lighter {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }
 
 .text-lighter-important {
-	color: var(--text-lighter) !important;
+	color: var(--color-text-high) !important;
 }
 
 .text-theme-transparent {
-	color: var(--theme-transparent);
+	color: var(--color-accent-low);
 }
 
 .text-error {
-	color: var(--theme-error);
+	color: var(--color-error);
 }
 
 .text-success {
-	color: var(--theme-success);
+	color: var(--color-success);
 }
 
 .text-info {
-	color: var(--theme-info);
+	color: var(--color-info);
 }
 
 .text-warning {
-	color: var(--theme-warning);
+	color: var(--color-warning);
 }
 
 .text-warning-important {
-	color: var(--theme-warning) !important;
+	color: var(--color-warning) !important;
 }
 
 .text-theme {
-	color: var(--theme);
+	color: var(--color-accent);
 }
 
 .text-theme-secondary {
-	color: var(--theme-secondary);
+	color: var(--color-accent);
 }
 
 .text-uppercase {
@@ -91,27 +91,27 @@
 }
 
 .fill-success {
-	fill: var(--theme-success);
+	fill: var(--color-success);
 }
 
 .fill-warning {
-	fill: var(--theme-warning);
+	fill: var(--color-warning);
 }
 
 .fill-error {
-	fill: var(--theme-error);
+	fill: var(--color-error);
 }
 
 .fill-info {
-	fill: var(--theme-info);
+	fill: var(--color-info);
 }
 
 .bg {
-	background-color: var(--bg);
+	background-color: var(--color-bg);
 }
 
 .bg-lighter {
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 }
 
 .bg-transparent-important {
@@ -119,11 +119,11 @@
 }
 
 .bg-darker-transparent {
-	background-color: var(--bg-darker-transparent);
+	background-color: var(--color-bg);
 }
 
 .bg-theme-transparent-important {
-	background-color: var(--theme-transparent) !important;
+	background-color: var(--color-accent-low) !important;
 }
 
 .rounded {
@@ -477,7 +477,7 @@
 }
 
 .outline-theme:focus {
-	outline: 2px solid var(--theme);
+	outline: 2px solid var(--color-accent);
 }
 
 .focus-text-decoration:focus-visible {

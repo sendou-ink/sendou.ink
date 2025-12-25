@@ -12,7 +12,7 @@
 }
 
 .tournament-bracket__mini-alert {
-	background-color: var(--theme-info-transparent);
+	background-color: var(--color-info-low);
 	font-size: var(--fonts-xxs);
 	border-radius: var(--rounded);
 	padding: var(--s-1) var(--s-2);
@@ -24,7 +24,7 @@
 	align-items: center;
 	justify-content: center;
 	margin-bottom: var(--s-3);
-	background: var(--bg-lighter);
+	background: var(--color-bg-high);
 	border-end-end-radius: var(--rounded);
 	border-end-start-radius: var(--rounded);
 	color: var(--tournaments-text);
@@ -44,7 +44,7 @@
 .tournament-bracket__locked-banner {
 	width: 100%;
 	height: 10rem;
-	background-color: var(--bg-lightest-solid);
+	background-color: var(--color-bg-higher);
 	border-start-end-radius: var(--rounded);
 	border-start-start-radius: var(--rounded);
 	grid-area: img;
@@ -82,7 +82,7 @@
 	background: rgb(0 0 0 / 40%);
 	border-start-end-radius: var(--rounded);
 	border-start-start-radius: var(--rounded);
-	color: var(--badge-text);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xs);
 }
 
@@ -94,8 +94,8 @@
 
 .tournament-bracket__stage-banner__undo-button {
 	border: 0;
-	background-color: var(--theme-error-semi-transparent);
-	color: var(--text);
+	background-color: var(--color-error);
+	color: var(--color-text);
 	font-size: var(--fonts-xxs);
 	padding-block: var(--s-1);
 	padding-inline: var(--s-2);
@@ -129,7 +129,7 @@
 
 .tournament-bracket__deadline-popover__trigger {
 	margin-block-start: 0;
-	background-color: var(--bg-lightest-solid) !important;
+	background-color: var(--color-bg-higher) !important;
 }
 
 .tournament-bracket__deadline-indicator {
@@ -144,13 +144,13 @@
 }
 
 .tournament-bracket__deadline-indicator__warning {
-	background-color: var(--theme-warning);
-	color: var(--button-text);
+	background-color: var(--color-warning);
+	color: var(--color-text-inverse);
 }
 
 .tournament-bracket__deadline-indicator__error {
-	background-color: var(--theme-error);
-	color: var(--button-text);
+	background-color: var(--color-error);
+	color: var(--color-text-inverse);
 }
 
 .tournament-bracket__stage-banner__top-bar__header {
@@ -185,11 +185,11 @@
 
 .tournament-bracket__no-screen > svg {
 	width: 24px;
-	fill: var(--theme-success);
+	fill: var(--color-success);
 }
 
 .tournament-bracket__no-screen__banned > svg {
-	fill: var(--theme-error);
+	fill: var(--color-error);
 }
 
 .tournament-bracket__during-match-actions {
@@ -204,7 +204,7 @@
 .tournament-bracket__during-match-actions__actions {
 	display: flex;
 	justify-content: center;
-	color: var(--theme-warning);
+	color: var(--color-warning);
 	margin-block-start: var(--s-6);
 }
 
@@ -217,7 +217,7 @@
 
 .tournament-bracket__during-match-actions__confirm-score-text {
 	font-size: var(--fonts-xs);
-	color: var(--text);
+	color: var(--color-text);
 	text-align: center;
 }
 
@@ -269,7 +269,7 @@
 	):not(.presentational):hover {
 	border-radius: var(--rounded);
 	cursor: pointer;
-	outline: 2px solid var(--theme-transparent);
+	outline: 2px solid var(--color-accent-low);
 	outline-offset: 2px;
 }
 
@@ -277,14 +277,14 @@
 	width: 40% !important;
 	height: 1.5rem !important;
 	appearance: none;
-	background-color: var(--theme-transparent);
+	background-color: var(--color-accent-low);
 	border-end-start-radius: var(--rounded);
 	border-start-start-radius: var(--rounded);
 	cursor: pointer;
 }
 
 .tournament-bracket__during-match-actions__checkbox:checked {
-	background-color: var(--theme);
+	background-color: var(--color-accent);
 }
 
 .tournament-bracket__during-match-actions__checkbox::after {
@@ -293,7 +293,7 @@
 	height: 100%;
 	align-items: center;
 	justify-content: center;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	content: "Inactive";
 	font-size: var(--fonts-xxs);
 	font-weight: var(--bold);
@@ -302,7 +302,7 @@
 }
 
 .tournament-bracket__during-match-actions__checkbox:checked::after {
-	color: var(--button-text);
+	color: var(--color-text-inverse);
 	content: "Playing";
 }
 
@@ -313,7 +313,7 @@
 	align-items: center;
 	justify-content: center;
 	margin: 0;
-	background-color: var(--bg);
+	background-color: var(--color-bg);
 	border-end-end-radius: var(--rounded);
 	border-start-end-radius: var(--rounded);
 	overflow-x: hidden;
@@ -333,11 +333,11 @@
 
 .tournament-bracket__during-match-actions__seed {
 	font-size: var(--fonts-xxs);
-	color: var(--theme);
+	color: var(--color-accent);
 }
 
 .tournament-bracket__during-match-actions__team-name {
-	color: var(--text);
+	color: var(--color-text);
 	font-weight: var(--bold);
 }
 
@@ -383,10 +383,10 @@
 }
 
 .tournament-bracket__mode-progress__image {
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	border-radius: 100%;
 	padding: var(--s-2-5);
-	outline: 2px solid var(--bg-lightest);
+	outline: 2px solid var(--color-bg-higher);
 	min-width: 40px;
 }
 
@@ -396,26 +396,26 @@
 }
 
 .tournament-bracket__mode-progress__image__notable {
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-higher);
 	border: none;
-	outline: 2px solid var(--bg-lightest);
+	outline: 2px solid var(--color-bg-higher);
 }
 
 .tournament-bracket__mode-progress__image__team-one-win {
-	outline: 2px solid var(--theme);
+	outline: 2px solid var(--color-accent);
 }
 
 .tournament-bracket__mode-progress__image__team-two-win {
-	outline: 2px solid var(--theme-secondary);
+	outline: 2px solid var(--color-accent);
 }
 
 .tournament-bracket__mode-progress__image__selected {
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 }
 
 .tournament-bracket__mode-progress__image__banned {
-	outline: 2px solid var(--theme-error-transparent);
-	background-color: var(--bg-lighter);
+	outline: 2px solid var(--color-error);
+	background-color: var(--color-bg-high);
 }
 
 .tournament-bracket__mode-progress__image__banned > img {
@@ -428,14 +428,14 @@
 
 .tournament-bracket__team-one-dot {
 	border-radius: 100%;
-	background-color: var(--theme);
+	background-color: var(--color-accent);
 	width: 8px;
 	height: 8px;
 }
 
 .tournament-bracket__team-two-dot {
 	border-radius: 100%;
-	background-color: var(--theme-secondary);
+	background-color: var(--color-accent);
 	width: 8px;
 	height: 8px;
 }
@@ -449,7 +449,7 @@
 .tournament-bracket__progress {
 	display: flex;
 	align-items: center;
-	background-color: var(--bg-lighter-transparent);
+	background-color: var(--color-bg-higher);
 	border-radius: var(--rounded);
 	padding: var(--s-2) var(--s-5);
 	font-weight: var(--semi-bold);
@@ -469,9 +469,9 @@
 
 .tournament-bracket__bracket-nav__link {
 	font-size: var(--fonts-xxs);
-	color: var(--text-lighter);
-	border-color: var(--bg-lightest-solid);
-	background-color: var(--bg);
+	color: var(--color-text-high);
+	border-color: var(--color-bg-higher);
+	background-color: var(--color-bg);
 	border-radius: 0;
 }
 
@@ -500,16 +500,16 @@
 }
 
 .tournament-bracket__bracket-nav__link__selected {
-	color: var(--text);
-	background-color: var(--bg-lighter);
+	color: var(--color-text);
+	background-color: var(--color-bg-high);
 }
 
 .tournament-bracket__quick-action {
 	font-size: var(--fonts-xs);
-	color: var(--text);
-	background-color: var(--bg);
+	color: var(--color-text);
+	background-color: var(--color-bg);
 	border-radius: var(--rounded);
-	border: 2px solid var(--bg-lightest-solid);
+	border: 2px solid var(--color-bg-higher);
 	padding-block: var(--s-1-5);
 	padding-inline: var(--s-2-5);
 	font-weight: var(--bold);
@@ -528,7 +528,7 @@
 
 .tournament-bracket__quick-action__checkmark {
 	width: 1rem;
-	color: var(--theme-success);
+	color: var(--color-success);
 }
 
 .tournament-bracket__bracket-nav__chevron {
@@ -553,9 +553,9 @@
 
 .tournament-bracket__compactify-button {
 	font-size: var(--fonts-xxs);
-	color: var(--text-lighter);
-	border-color: var(--bg-lightest-solid);
-	background-color: var(--bg);
+	color: var(--color-text-high);
+	border-color: var(--color-bg-higher);
+	background-color: var(--color-bg);
 	border-radius: var(--rounded);
 }
 
@@ -568,17 +568,17 @@
 	display: flex;
 	gap: var(--s-2);
 	border-radius: var(--rounded);
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	width: max-content;
 }
 
 .tournament-bracket__cast-info-container__label {
 	padding: var(--s-2) var(--s-3-5);
 	text-transform: uppercase;
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-higher);
 	border-radius: var(--rounded) 0 0 var(--rounded);
 	font-weight: var(--bold);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	display: grid;
 	place-items: center;
 	justify-content: center;

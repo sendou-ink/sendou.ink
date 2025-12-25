@@ -37,8 +37,8 @@
 	max-width: 28rem;
 	overflow: hidden;
 	border-radius: 1rem;
-	background-color: var(--bg-lighter-solid);
-	border: 2.5px solid var(--border);
+	background-color: var(--color-bg-high);
+	border: 2.5px solid var(--color-border);
 	padding: var(--s-6);
 	text-align: left;
 	vertical-align: middle;
@@ -76,7 +76,7 @@
 }
 
 .headingContainer {
-	border-bottom: 2px solid var(--border);
+	border-bottom: 2px solid var(--color-border);
 	padding-block-end: var(--s-2);
 	margin-block-end: var(--s-4);
 	display: flex;

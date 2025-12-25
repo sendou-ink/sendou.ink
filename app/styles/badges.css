@@ -4,7 +4,7 @@
 	align-items: center;
 	border-radius: var(--rounded);
 	background-color: var(--bg-badge);
-	color: var(--badge-text);
+	color: var(--color-text-high);
 	gap: var(--s-6);
 	padding-block: var(--s-2);
 	padding-inline: var(--s-3);
@@ -25,19 +25,19 @@
 .badges__general-info-texts {
 	display: flex;
 	justify-content: space-between;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xs);
 	padding-inline: var(--s-1);
 }
 
 .badges__explanation {
-	color: var(--theme);
+	color: var(--color-accent);
 	font-weight: var(--semi-bold);
 	text-align: center;
 }
 
 .badges__managers {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xxs);
 	text-align: center;
 }
@@ -65,7 +65,7 @@
 }
 
 .badges__count {
-	color: var(--theme-vibrant);
+	color: var(--color-accent-high);
 	font-size: var(--fonts-xs);
 }
 

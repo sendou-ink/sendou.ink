@@ -11,7 +11,7 @@
 .q__clock {
 	font-size: var(--fonts-sm);
 	font-weight: var(--bold);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -21,17 +21,17 @@
 }
 
 .q__clock-country {
-	color: var(--text) !important;
+	color: var(--color-text) !important;
 	white-space: nowrap;
 	font-size: var(--fonts-xs);
 }
 
 .q__front-page-link {
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	border-radius: var(--rounded-sm);
 	padding: var(--s-2);
 	font-size: var(--fonts-sm);
-	color: var(--text);
+	color: var(--color-text);
 	font-weight: var(--bold);
 	display: flex;
 	align-items: center;
@@ -40,19 +40,19 @@
 }
 
 .q__front-page-link:hover {
-	background-color: var(--theme-transparent);
+	background-color: var(--color-accent-low);
 }
 
 .q__front-page-link__sub-text {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xxs);
 	font-weight: var(--body);
 }
 
 .q__tab-button {
 	width: 100px;
-	background-color: var(--bg-lighter-solid);
-	color: var(--text);
+	background-color: var(--color-bg-high);
+	color: var(--color-text);
 	font-size: var(--fonts-sm);
 	border-color: transparent;
 	gap: var(--s-2);
@@ -67,14 +67,14 @@
 	font-size: var(--fonts-xxs);
 	display: grid;
 	place-items: center;
-	background-color: var(--theme);
+	background-color: var(--color-accent);
 	position: absolute;
 	top: -4px;
 	right: -1px;
 	border-radius: 100%;
 	width: 17px;
 	height: 17px;
-	color: var(--button-text);
+	color: var(--color-text-inverse);
 }
 
 .q__top-container {
@@ -85,7 +85,7 @@
 
 .q__top-container__divider {
 	min-width: 3px;
-	background-color: var(--border);
+	background-color: var(--color-border);
 	height: 100%;
 	border-radius: var(--rounded);
 }
@@ -121,7 +121,7 @@
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
 	text-transform: uppercase;
-	color: var(--theme);
+	color: var(--color-accent);
 	display: flex;
 	align-items: center;
 }
@@ -131,13 +131,13 @@
 	flex: 1;
 	content: "";
 	padding: 2px;
-	background-color: var(--theme-transparent);
+	background-color: var(--color-accent-low);
 	margin: 5px;
 	border-radius: var(--rounded);
 }
 
 .q__group {
-	background-color: var(--bg-lighter-solid);
+	background-color: var(--color-bg-high);
 	width: 100%;
 	border-radius: var(--rounded);
 	padding: var(--s-2-5);
@@ -145,11 +145,11 @@
 	flex-direction: column;
 	gap: var(--s-4);
 	position: relative;
-	color: var(--text);
+	color: var(--color-text);
 }
 
 .q__group__no-screen {
-	background-color: var(--theme-error-transparent);
+	background-color: var(--color-error);
 	border-radius: 100%;
 	padding: var(--s-1);
 	width: 30px;
@@ -167,7 +167,7 @@
 	display: flex;
 	gap: var(--s-2);
 	align-items: center;
-	background-color: var(--bg-darker);
+	background-color: var(--color-bg);
 	border-radius: var(--rounded);
 	font-size: var(--fonts-xsm);
 	font-weight: var(--semi-bold);
@@ -180,7 +180,7 @@
 	overflow: hidden;
 	max-width: 7.5rem;
 	font-size: var(--fonts-xs);
-	color: var(--text);
+	color: var(--color-text);
 }
 
 .q__group-member__avatar {
@@ -188,15 +188,15 @@
 }
 
 .q__group-member__avatar__POSITIVE {
-	outline: 2px solid var(--theme-success-transparent);
+	outline: 2px solid var(--color-success-high);
 }
 
 .q__group-member__avatar__NEUTRAL {
-	outline: 2px solid var(--theme-warning-transparent);
+	outline: 2px solid var(--color-warning-high);
 }
 
 .q__group-member__avatar__NEGATIVE {
-	outline: 2px solid var(--theme-error-transparent);
+	outline: 2px solid var(--color-error);
 }
 
 .q__group-member__tier {
@@ -209,7 +209,7 @@
 
 .q__group-member__extra-info {
 	font-size: var(--fonts-xs);
-	background-color: var(--bg-darker);
+	background-color: var(--color-bg);
 	border-radius: var(--rounded);
 	padding: var(--s-0-5) var(--s-1-5);
 	width: max-content;
@@ -222,7 +222,7 @@
 
 .q__group-member__extra-info-button {
 	font-size: var(--fonts-xs);
-	background-color: var(--bg-darker);
+	background-color: var(--color-bg);
 	border-radius: var(--rounded);
 	padding: var(--s-0-5) var(--s-1-5);
 	width: max-content;
@@ -230,7 +230,7 @@
 	align-items: center;
 	gap: var(--s-1);
 	font-weight: var(--semi-bold);
-	color: var(--text);
+	color: var(--color-text);
 	border: none;
 	min-height: 24px;
 }
@@ -241,12 +241,12 @@
 	color: var(--body);
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
-	background-color: var(--bg-darker);
+	background-color: var(--color-bg);
 	white-space: nowrap;
 }
 
 .q__group-member__add-note-button__edit > svg {
-	color: var(--theme);
+	color: var(--color-accent);
 }
 
 .q__group-member__add-note-button > svg {
@@ -260,7 +260,7 @@
 
 .q__group__future-match-mode {
 	border-radius: 100%;
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-higher);
 	height: 30px;
 	width: 30px;
 	display: grid;
@@ -269,7 +269,7 @@
 }
 
 .q__group__future-match-mode__rechallenge {
-	outline: 2px solid var(--theme-secondary);
+	outline: 2px solid var(--color-accent);
 }
 
 .q__group-member-weapons {
@@ -279,7 +279,7 @@
 }
 
 .q__group-member-weapon {
-	background-color: var(--bg);
+	background-color: var(--color-bg);
 	border-radius: 100%;
 	padding: var(--s-1);
 	overflow: visible;
@@ -293,12 +293,12 @@
 .q__group-member__star {
 	min-width: 18px;
 	max-width: 18px;
-	color: var(--theme-secondary);
+	color: var(--color-accent);
 	stroke-width: 2;
 }
 
 .q__group-member__star__inactive {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }
 
 .q__group__display-group-tier {
@@ -307,7 +307,7 @@
 	align-items: center;
 	position: absolute;
 	border-radius: var(--rounded);
-	background-color: var(--bg-darker);
+	background-color: var(--color-bg);
 	padding: var(--s-0-5) var(--s-2-5);
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
@@ -318,7 +318,7 @@
 
 .q__group__or-popover-button {
 	background-color: transparent;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xs);
 	padding: 0;
 	border: none;
@@ -340,7 +340,7 @@
 
 .q-match__stage-popover-button {
 	background-color: transparent;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xs);
 	padding: 0;
 	border: none;
@@ -352,7 +352,7 @@
 
 .q-match__stage-popover-button:focus {
 	outline: none;
-	color: var(--theme);
+	color: var(--color-accent);
 }
 
 .q-match__mode-popover-button {
@@ -366,17 +366,17 @@
 }
 
 .q-match__join-discord-section {
-	border-left: 4px solid var(--theme);
+	border-left: 4px solid var(--color-accent);
 	padding-inline-start: var(--s-4);
 	font-size: var(--fonts-sm);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	margin-block-start: var(--s-1);
 }
 
 .q-match__join-discord-section__highlighted {
 	font-size: var(--fonts-md);
 	letter-spacing: 1px;
-	color: var(--text);
+	color: var(--color-text);
 	font-weight: var(--semi-bold);
 }
 
@@ -448,7 +448,7 @@
 
 .q-match__info__header {
 	text-transform: uppercase;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xs);
 	line-height: 1.1;
 }
@@ -477,7 +477,7 @@
 }
 
 .q-match__screen-legality__button:focus-visible .alert {
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 }
 
 @media screen and (min-width: 640px) {
@@ -492,11 +492,11 @@
 	gap: var(--s-2);
 	align-items: center;
 	font-weight: var(--semi-bold);
-	color: var(--text);
+	color: var(--color-text);
 }
 
 .q-stream__stream__team-name {
-	color: var(--theme-secondary);
+	color: var(--color-accent);
 }
 
 .q-stream__stream__viewer-count {
@@ -505,7 +505,7 @@
 	gap: var(--s-2);
 	align-items: center;
 	margin-block-start: -5px;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }
 
 .q-stream__stream__viewer-count > svg {
@@ -514,7 +514,7 @@
 
 .q-stream__info-circle {
 	border-radius: 100%;
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	padding: var(--s-1);
 }
 
@@ -528,7 +528,7 @@
 .q-info__container h2 {
 	font-size: var(--fonts-lg);
 	margin-block-end: var(--s-2);
-	color: var(--theme-secondary);
+	color: var(--color-accent);
 }
 
 .q-info__container h3 {

@@ -3,7 +3,7 @@
 	margin: auto 0;
 	width: 4px;
 	border-radius: var(--rounded);
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-higher);
 }
 
 .topContainer {
@@ -17,7 +17,7 @@
 	flex-direction: column;
 	padding: var(--s-3);
 	border-radius: var(--rounded);
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	font-size: var(--fonts-sm);
 	font-weight: 600;
 	gap: var(--s-4);
@@ -38,7 +38,7 @@
 .categoryWeapon {
 	display: flex;
 	align-items: center;
-	color: var(--text);
+	color: var(--color-text);
 	font-size: var(--fonts-xs);
 	font-weight: var(--body);
 	gap: var(--s-1);
@@ -46,5 +46,5 @@
 
 .categoryWeaponImg {
 	border-radius: var(--rounded);
-	background-color: var(--bg-darker);
+	background-color: var(--color-bg);
 }

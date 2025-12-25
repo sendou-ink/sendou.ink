@@ -39,12 +39,12 @@
 	text-align: center;
 	background: transparent;
 	border: none;
-	color: var(--text);
+	color: var(--color-text);
 	outline: none;
 }
 
 .titleInput::placeholder {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	opacity: 0.3;
 }
 
@@ -65,7 +65,7 @@
 .authorBy {
 	font-size: var(--fonts-xxs);
 	font-weight: var(--bold);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	text-transform: lowercase;
 }
 
@@ -78,5 +78,5 @@
 .authorUsername {
 	font-weight: var(--bold);
 	font-size: var(--fonts-xs);
-	color: var(--text);
+	color: var(--color-text);
 }

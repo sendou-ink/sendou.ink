@@ -24,9 +24,9 @@
 
 .abilityButton {
 	padding: var(--s-0-5);
-	border-color: var(--abilities-button-bg);
+	border: 2px solid var(--color-bg-high);
 	border-radius: 50%;
-	background-color: var(--abilities-button-bg);
+	background-color: var(--bg-ability);
 }
 
 .abilityButton.isDragging {

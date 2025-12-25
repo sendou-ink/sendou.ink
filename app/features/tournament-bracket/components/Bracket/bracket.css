@@ -14,7 +14,7 @@
 	max-height: min(1000px, 70vh);
 	-ms-overflow-style: none;
 	scrollbar-width: none;
-	border: 2px solid var(--border);
+	border: 2px solid var(--color-border);
 	border-radius: var(--rounded-sm);
 	overflow: scroll;
 }
@@ -28,12 +28,12 @@
 }
 
 .bracket__match__header__box {
-	background-color: var(--bg-lightest-solid);
+	background-color: var(--color-bg-higher);
 	padding: var(--s-0-5) var(--s-1);
 	border-radius: var(--rounded-sm);
 	font-size: var(--fonts-xxxs) !important;
 	font-weight: var(--semi-bold);
-	color: var(--text);
+	color: var(--color-text);
 	border: 0;
 }
 
@@ -54,7 +54,7 @@
 	min-height: var(--match-height);
 	max-height: var(--match-height);
 	border-radius: var(--rounded-sm);
-	background-color: var(--bg-light-variation);
+	background-color: var(--color-bg-high);
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
 	padding: 0 var(--s-2);
@@ -67,7 +67,7 @@
 }
 
 a.bracket__match:hover {
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	border-radius: var(--rounded-sm);
 }
 
@@ -75,7 +75,7 @@ a.bracket__match:hover {
 	min-height: 2px;
 	max-height: 2px;
 	width: 100%;
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 }
 
 .bracket__match__bye {
@@ -85,7 +85,7 @@ a.bracket__match:hover {
 }
 
 .bracket__match__seed {
-	color: var(--theme);
+	color: var(--color-accent);
 	margin-inline-end: var(--s-0-5);
 	min-width: 15px;
 	max-width: 15px;
@@ -141,7 +141,7 @@ a.bracket__match:hover {
 
 .elim-bracket__round-header {
 	text-align: center;
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-higher);
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
 	padding-block: var(--s-2);
@@ -154,7 +154,7 @@ a.bracket__match:hover {
 	display: flex;
 	justify-content: space-between;
 	font-size: var(--fonts-xxs);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-weight: var(--semi-bold);
 }
 
@@ -172,7 +172,7 @@ a.bracket__match:hover {
 }
 
 .rr__placements-table thead {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }
 
 .rr__placements-table th {
@@ -188,9 +188,9 @@ a.bracket__match:hover {
 }
 
 .rr__placements-table tbody tr:nth-child(odd) {
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 }
 
 .rr__placements-table tbody tr:nth-child(even) {
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-higher);
 }

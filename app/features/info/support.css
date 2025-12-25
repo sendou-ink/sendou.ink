@@ -7,7 +7,7 @@
 }
 
 .support__checkmark {
-	color: var(--theme-success);
+	color: var(--color-success);
 	width: 25px;
 }
 
@@ -17,7 +17,7 @@
 	padding: 0;
 	border: none;
 	background-color: transparent;
-	color: var(--theme);
+	color: var(--color-accent);
 	font-size: var(--fonts-md);
 	font-weight: var(--bold);
 	outline: initial;

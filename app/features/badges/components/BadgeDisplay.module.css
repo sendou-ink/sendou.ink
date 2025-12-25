@@ -20,7 +20,7 @@
 }
 
 .badgeExplanation {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xs);
 	display: flex;
 	align-items: center;
@@ -40,7 +40,7 @@
 	margin-top: -8px;
 	margin-right: auto;
 	margin-left: auto;
-	color: var(--theme-vibrant);
+	color: var(--color-accent-high);
 	font-size: var(--fonts-xxxs);
 	font-weight: var(--bold);
 }
@@ -57,17 +57,17 @@
 }
 
 .paginationButton {
-	background-color: var(--bg-darker);
+	background-color: var(--color-bg);
 	border-radius: 100%;
 	padding: var(--s-1);
 	height: 24px;
 	width: 24px;
-	border: 2px solid var(--border);
+	border: 2px solid var(--color-border);
 	font-size: var(--fonts-xs);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }
 
 .paginationButtonActive {
-	color: var(--theme);
-	background-color: var(--bg-lightest);
+	color: var(--color-accent);
+	background-color: var(--color-bg-higher);
 }

@@ -41,21 +41,21 @@
 	display: grid;
 	place-items: center;
 	font-weight: var(--semi-bold);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	margin-block-start: 65px;
 }
 
 .divider {
-	border-color: var(--border);
+	border-color: var(--color-border);
 }
 
 .unseenDot {
-	background-color: var(--theme);
+	background-color: var(--color-accent);
 	border-radius: 100%;
 	width: 8px;
 	height: 8px;
 	position: absolute;
 	top: 1px;
 	left: 1px;
-	outline: 2px solid var(--theme-transparent);
+	outline: 2px solid var(--color-accent-low);
 }

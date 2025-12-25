@@ -12,7 +12,7 @@
 	padding: var(--s-2);
 	font-size: var(--fonts-lg);
 	font-weight: var(--bold);
-	color: var(--text);
+	color: var(--color-text);
 	border-radius: var(--rounded-sm);
 	cursor: pointer;
 	transition: opacity 0.2s;
@@ -24,7 +24,7 @@
 }
 
 .tierName {
-	color: var(--button-text);
+	color: var(--color-text-inverse);
 	line-height: 1.2;
 	max-width: 90px;
 	overflow-wrap: break-word;
@@ -49,7 +49,7 @@
 	flex-wrap: wrap;
 	gap: var(--s-1-5);
 	padding: var(--s-2);
-	background: var(--bg-lighter-solid);
+	background: var(--color-bg-high);
 	border: 2px dashed transparent;
 	border-radius: var(--rounded-sm) 0 0 var(--rounded-sm);
 	align-items: center;
@@ -58,8 +58,8 @@
 }
 
 .targetZoneOver {
-	border-color: var(--theme-transparent);
-	background: var(--bg-lightest);
+	border-color: var(--color-accent-low);
+	background: var(--color-bg-higher);
 }
 
 .emptyMessage {
@@ -67,7 +67,7 @@
 	height: 100%;
 	text-align: center;
 	margin: auto;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-md);
 	font-weight: var(--semi-bold);
 	font-style: italic;
@@ -91,7 +91,7 @@
 	width: 32px;
 	height: 100%;
 	padding: var(--s-1);
-	background: var(--bg-lighter);
+	background: var(--color-bg-high);
 	border: none;
 	cursor: pointer;
 	transition: opacity 0.2s;
@@ -118,7 +118,7 @@
 	width: 20px;
 	height: 20px;
 	stroke-width: 3;
-	color: var(--text);
+	color: var(--color-text);
 }
 
 .colorPickerContainer {
@@ -146,12 +146,12 @@
 
 .colorButton:hover {
 	transform: scale(1.1);
-	border-color: var(--text-lighter);
+	border-color: var(--color-text-high);
 }
 
 .colorButtonSelected {
-	border-color: var(--text);
-	box-shadow: 0 0 0 2px var(--bg);
+	border-color: var(--color-text);
+	box-shadow: 0 0 0 2px var(--color-bg);
 }
 
 .customColorLabel {

@@ -4,7 +4,7 @@
 
 .postTime {
 	border-radius: var(--rounded-sm);
-	background-color: var(--border);
+	background-color: var(--color-border);
 	text-transform: uppercase;
 	padding: var(--s-0-5) var(--s-2);
 	font-weight: var(--bold);
@@ -36,7 +36,7 @@
 }
 
 .postStatusConfirmed {
-	background-color: var(--theme-success-transparent);
+	background-color: var(--color-success-high);
 }
 
 .postStatus svg {
@@ -44,23 +44,23 @@
 }
 
 .postStatusConfirmed svg {
-	fill: var(--theme-success);
+	fill: var(--color-success);
 }
 
 .postStatusPending {
-	background-color: var(--theme-info-transparent);
+	background-color: var(--color-info-low);
 }
 
 .postStatusPending svg {
-	fill: var(--theme-info);
+	fill: var(--color-info);
 }
 
 .postStatusCanceled {
-	background-color: var(--theme-warning-transparent);
+	background-color: var(--color-warning-high);
 }
 
 .postStatusCanceled svg {
-	fill: var(--theme-warning);
+	fill: var(--color-warning);
 }
 
 .postFloatingActionCell {
@@ -81,5 +81,5 @@
 }
 
 .filterButtons button:not(.active) {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }

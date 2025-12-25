@@ -4,7 +4,7 @@
 }
 
 .plus__suggested-info-text {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-lg);
 }
 
@@ -38,7 +38,7 @@
 }
 
 .plus__users-count {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xxs);
 }
 
@@ -58,13 +58,13 @@
 }
 
 .plus__view-comments-action {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
 }
 
 .plus__comment-time {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xxs);
 }
 
@@ -91,9 +91,9 @@
 }
 
 .plus-voting__vote-button.downvote {
-	border-color: var(--theme-error-transparent);
-	color: var(--theme-error);
-	outline-color: var(--theme-error);
+	border-color: var(--color-error);
+	color: var(--color-error);
+	outline-color: var(--color-error);
 }
 
 .plus-voting__submit-button {
@@ -113,8 +113,8 @@
 	align-items: center;
 	justify-content: center;
 	border-radius: var(--rounded);
-	background-color: var(--theme-success-transparent);
-	color: var(--text);
+	background-color: var(--color-success-high);
+	color: var(--color-text);
 	font-size: var(--fonts-sm);
 	font-weight: var(--semi-bold);
 	gap: var(--s-2);
@@ -126,7 +126,7 @@
 
 .plus-voting__alert > svg {
 	height: 1.75rem;
-	fill: var(--theme-success);
+	fill: var(--color-success);
 }
 
 .plus-voting__bio-header {

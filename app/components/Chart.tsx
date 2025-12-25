@@ -85,9 +85,9 @@ export default function Chart({
 					secondaryAxes,
 					dark: theme.htmlThemeClass === Theme.DARK,
 					defaultColors: [
-						"var(--theme)",
-						"var(--theme-secondary)",
-						"var(--theme-info)",
+						"var(--color-accent)",
+						"var(--color-accent)",
+						"var(--color-info)",
 					],
 				}}
 			/>
@@ -130,7 +130,7 @@ function ChartTooltip({
 				{headerSuffix}
 			</h3>
 			{dataPoints.map((dataPoint, index) => {
-				const color = dataPoint.style?.fill ?? "var(--theme)";
+				const color = dataPoint.style?.fill ?? "var(--color-accent)";
 
 				return (
 					<div key={index} className="stack horizontal items-center sm">

@@ -24,7 +24,7 @@
 	align-items: center;
 	justify-content: space-between;
 	border-radius: var(--rounded);
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
 	gap: var(--s-2);
@@ -51,25 +51,25 @@
 
 .modeButton {
 	padding: var(--s-1);
-	border: 2px solid var(--bg-darker);
+	border: 2px solid var(--color-bg);
 	border-radius: var(--rounded-full);
 	background-color: transparent;
-	color: var(--theme);
+	color: var(--color-accent);
 	opacity: 1 !important;
 	outline: initial;
 }
 
 .modeButton.selected {
 	border: 2px solid transparent;
-	background-color: var(--bg-mode-active);
+	background-color: var(--color-accent-high);
 }
 
 .modeButton.preselected {
-	border: 2px solid var(--theme-info);
-	background-color: var(--bg-mode-active);
+	border: 2px solid var(--color-info);
+	background-color: var(--color-accent-high);
 }
 
 .mode:not(.selected, .preselected) {
-	filter: var(--inactive-image-filter);
+	filter: grayscale(100%) brightness(30%);
 	opacity: 0.6;
 }

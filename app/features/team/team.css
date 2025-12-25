@@ -12,7 +12,7 @@
 
 .team-search__team {
 	display: flex;
-	color: var(--text);
+	color: var(--color-text);
 	gap: var(--s-3);
 	align-items: center;
 }
@@ -25,12 +25,12 @@
 
 .team-search__team__members {
 	font-size: var(--fonts-xs);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }
 
 .team-search__team__tag {
 	font-size: var(--fonts-xs);
-	color: var(--theme);
+	color: var(--color-accent);
 	padding: var(--s-0-5) var(--s-1);
 	border-radius: var(--rounded-xs);
 	margin-left: var(--s-2);
@@ -44,7 +44,7 @@
 	place-items: center;
 	font-size: var(--fonts-xl);
 	border-radius: 100%;
-	background-color: var(--theme-transparent);
+	background-color: var(--color-accent-low);
 }
 
 .team__banner {
@@ -66,7 +66,7 @@
 
 .team__banner__placeholder {
 	height: 6rem;
-	background-color: var(--theme-transparent);
+	background-color: var(--color-accent-low);
 }
 
 .team__banner__flags {
@@ -118,7 +118,7 @@
 
 .team__banner__avatar > div {
 	padding: var(--s-2);
-	background-color: var(--bg);
+	background-color: var(--color-bg);
 	border-radius: 100%;
 	display: grid;
 	place-items: center;
@@ -146,8 +146,8 @@
 
 .team__banner__tag {
 	font-size: var(--fonts-sm);
-	background-color: var(--theme-transparent);
-	color: var(--theme);
+	background-color: var(--color-accent-low);
+	color: var(--color-accent);
 	padding: var(--s-1) var(--s-1-5);
 	border-radius: var(--rounded);
 }
@@ -176,7 +176,7 @@
 }
 
 .team__badges > div {
-	background-color: var(--theme-semi-transparent);
+	background-color: var(--color-accent-low);
 	border-radius: var(--rounded);
 	font-size: var(--fonts-xs);
 	padding-inline: var(--s-2);
@@ -195,7 +195,7 @@
 }
 
 .team__results {
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-higher);
 	max-width: 32rem;
 	margin: 0 auto;
 	border-radius: var(--rounded);
@@ -205,7 +205,7 @@
 	display: flex;
 	justify-content: space-between;
 	width: min(100%, 48rem);
-	color: var(--text);
+	color: var(--color-text);
 	white-space: nowrap;
 }
 
@@ -227,7 +227,7 @@
 }
 
 .team__member__section {
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	border-radius: var(--rounded);
 	padding: var(--s-2) var(--s-4);
 	font-size: var(--fonts-xl);
@@ -242,12 +242,12 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-4);
-	color: var(--text);
+	color: var(--color-text);
 	font-weight: var(--bold);
 }
 
 .team__member__avatar {
-	background-color: var(--bg);
+	background-color: var(--color-bg);
 	padding: var(--s-2);
 	border-radius: 100%;
 }
@@ -255,13 +255,13 @@
 .team__member__role {
 	margin-left: auto;
 	font-size: var(--fonts-sm);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	margin-inline-end: var(--s-2-5);
 	font-weight: var(--bold);
 }
 
 .team__member__role__mobile {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-weight: var(--bold);
 }
 
@@ -279,14 +279,14 @@
 	align-items: center;
 	gap: var(--s-2);
 	padding: var(--s-3);
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	border-radius: var(--rounded);
 	font-size: var(--fonts-lg);
 	font-weight: var(--bold);
 }
 
 .team__member-card__name {
-	color: var(--text);
+	color: var(--color-text);
 	font-weight: var(--bold);
 	margin-block-start: var(--s-2);
 }

@@ -3,7 +3,7 @@
 }
 
 .event__day {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }
 
 .event__times {
@@ -38,7 +38,7 @@
 .event__author {
 	display: flex;
 	align-items: center;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-weight: var(--semi-bold);
 	gap: var(--s-1);
 }
@@ -59,6 +59,6 @@
 }
 
 .event__results-participant-count {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xs);
 }

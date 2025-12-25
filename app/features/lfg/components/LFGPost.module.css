@@ -29,7 +29,7 @@
 	text-overflow: ellipsis;
 	overflow: hidden;
 	white-space: nowrap;
-	color: var(--text);
+	color: var(--color-text);
 }
 
 .teamMemberName {
@@ -39,7 +39,7 @@
 	white-space: nowrap;
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
-	color: var(--text);
+	color: var(--color-text);
 }
 
 .textContainer {
@@ -60,7 +60,7 @@
 }
 
 .textCut {
-	background-image: linear-gradient(to bottom, transparent, var(--bg));
+	background-image: linear-gradient(to bottom, transparent, var(--color-bg));
 	width: 100%;
 	position: absolute;
 	top: 0;
@@ -86,7 +86,7 @@
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
 	border-radius: var(--rounded);
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-higher);
 	padding: var(--s-0-5) var(--s-2);
 	display: flex;
 	align-items: center;
@@ -103,9 +103,9 @@
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
 	border-radius: var(--rounded);
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-higher);
 	padding: var(--s-0-5) var(--s-2);
-	color: var(--text);
+	color: var(--color-text);
 	display: flex;
 	gap: var(--s-1);
 }

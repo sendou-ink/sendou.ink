@@ -1,8 +1,8 @@
 .card {
-	border: 1px solid var(--border);
+	border: 1px solid var(--color-border);
 	border-radius: var(--rounded);
 	overflow: hidden;
-	background-color: var(--bg-darker);
+	background-color: var(--color-bg);
 	display: flex;
 	flex-direction: column;
 }
@@ -34,7 +34,7 @@
 	font-size: var(--fonts-xxxs);
 	font-weight: var(--bold);
 	text-transform: uppercase;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }
 
 .rightIconsContainer {
@@ -65,7 +65,7 @@
 
 .infoLabel {
 	text-transform: uppercase;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-weight: var(--bold);
 	font-size: var(--fonts-xxs);
 }
@@ -91,7 +91,7 @@
 .expandButton {
 	background: none;
 	border: none;
-	color: var(--theme);
+	color: var(--color-accent);
 	cursor: pointer;
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
@@ -105,7 +105,7 @@
 }
 
 .footer {
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	padding: var(--s-2) var(--s-4);
 	display: flex;
 	justify-content: center;
@@ -113,21 +113,21 @@
 }
 
 .requestCard {
-	background-color: var(--theme-transparent);
+	background-color: var(--color-accent-low);
 }
 
 .requestFooter {
 	background-image: repeating-linear-gradient(
 		45deg,
-		var(--bg-darker),
-		var(--bg-darker) 10px,
-		var(--bg-lighter) 10px,
-		var(--bg-lighter) 20px
+		var(--color-bg),
+		var(--color-bg) 10px,
+		var(--color-bg-high) 10px,
+		var(--color-bg-high) 20px
 	);
 }
 
 .filteredFooter {
-	background-color: var(--theme-transparent);
+	background-color: var(--color-accent-low);
 }
 
 .canceledContainer {
@@ -141,7 +141,7 @@
 }
 
 .canceledLabel {
-	color: var(--theme-error);
+	color: var(--color-error);
 	font-size: var(--fonts-xxs);
 	font-weight: var(--bold);
 	text-transform: uppercase;

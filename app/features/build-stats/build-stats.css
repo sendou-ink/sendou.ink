@@ -15,7 +15,7 @@
 }
 
 .build-stats__bar {
-	background-color: var(--theme);
+	background-color: var(--color-accent);
 	height: 100%;
 }
 

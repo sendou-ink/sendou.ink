@@ -338,10 +338,10 @@ function MatchTimer({ match, bracket }: Pick<MatchProps, "match" | "bracket">) {
 
 	const statusColor =
 		status === "error"
-			? "var(--theme-error)"
+			? "var(--color-error)"
 			: status === "warning"
-				? "var(--theme-warning)"
-				: "var(--text)";
+				? "var(--color-warning)"
+				: "var(--color-text)";
 
 	return (
 		<div className="bracket__match__timer">

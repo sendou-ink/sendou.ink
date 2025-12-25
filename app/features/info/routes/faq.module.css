@@ -1,7 +1,7 @@
 .summary {
 	padding: var(--s-3);
 	border-radius: var(--rounded);
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	font-size: var(--fonts-lg);
 	font-weight: var(--bold);
 }

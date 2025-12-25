@@ -12,14 +12,14 @@
 }
 
 .frontPageSideNav picture {
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-higher);
 	border-radius: var(--rounded);
 	padding: 0.225rem;
 }
 
 .frontPageSideNavItem {
 	display: flex;
-	color: var(--text);
+	color: var(--color-text);
 	font-size: var(--fonts-xs);
 	font-weight: var(--bold);
 	gap: var(--s-1-5);
@@ -36,11 +36,11 @@
 	font-weight: var(--bold);
 	gap: var(--s-1-5);
 	align-items: center;
-	color: var(--text-lighter) !important;
+	color: var(--color-text-high) !important;
 }
 
 .frontPageSideNavLogOut svg {
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-higher);
 	border-radius: var(--rounded);
 	min-width: 28px;
 	margin-inline-end: 0 !important;
@@ -52,7 +52,7 @@
 }
 
 .frontPageSideNavItem:hover picture {
-	background-color: var(--theme-transparent);
+	background-color: var(--color-accent-low);
 }
 
 /** Reference to .layout__hamburger-fab **/
@@ -84,11 +84,11 @@
 	font-weight: var(--bold);
 	font-size: var(--fonts-xs);
 	border-radius: 100%;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }
 
 .changeLogIconButton:hover {
-	color: var(--theme);
+	color: var(--color-accent);
 }
 
 .externalLinkIcon {
@@ -108,16 +108,16 @@
 
 	background: linear-gradient(
 		to right,
-		var(--bg-lightest),
+		var(--color-bg-higher),
 		var(--l),
-		var(--bg-darker)
+		var(--color-bg)
 	);
 	border-radius: var(--rounded);
 	padding: var(--s-2) var(--s-3);
 	line-height: 1.35;
 	position: relative;
-	color: var(--text);
-	border: 2.5px solid var(--bg-lightest-solid);
+	color: var(--color-text);
+	border: 2.5px solid var(--color-bg-higher);
 	transition: --l 0.2s ease-out;
 	margin-block-start: var(--s-4);
 }
@@ -144,12 +144,12 @@
 }
 
 .seasonBannerLink {
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-higher);
 	border-radius: var(--rounded);
 	width: max-content;
 	padding: var(--s-0-5) var(--s-1-5);
 	font-size: var(--fonts-xs);
-	color: var(--text);
+	color: var(--color-text);
 	display: flex;
 	gap: var(--s-2);
 	align-items: center;
@@ -177,7 +177,7 @@
 }
 
 .tournamentCardsViewAllCard {
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	height: var(--card-height);
 	border-radius: var(--rounded);
 	display: grid;
@@ -186,15 +186,15 @@
 	font-size: var(--fonts-xxs);
 	font-weight: var(--bold);
 	text-align: center;
-	color: var(--text);
+	color: var(--color-text);
 	transition: 0.2s ease-out;
 	min-width: 90px;
 	max-width: 90px;
-	border: 2.5px solid var(--bg-lightest-solid);
+	border: 2.5px solid var(--color-bg-higher);
 }
 
 .tournamentCardsViewAllCard:hover {
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-higher);
 }
 
 .resultHighlights {
@@ -214,7 +214,7 @@
 .leaderboard {
 	min-width: var(--card-width);
 	max-width: var(--card-width);
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-higher);
 	border-radius: var(--rounded);
 	display: flex;
 	flex-direction: column;
@@ -233,8 +233,8 @@
 
 .leaderboardViewAll {
 	font-size: var(--fonts-xxs);
-	color: var(--text);
-	background-color: var(--bg-lightest);
+	color: var(--color-text);
+	background-color: var(--color-bg-higher);
 	border-radius: var(--rounded);
 	width: max-content;
 	padding-inline: var(--s-2);

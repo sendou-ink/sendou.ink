@@ -20,15 +20,15 @@
 
 .tag[data-selected] {
 	background-color: var(--tag-color) !important;
-	color: var(--black-text);
+	color: var(--color-text-inverse);
 }
 
 .tag[data-focus-visible] {
 	outline: 2px solid var(--tag-color);
 	outline-offset: 1px;
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 }
 
 .tag[data-hovered] {
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 }

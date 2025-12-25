@@ -19,11 +19,11 @@
 .castText {
 	font-size: var(--fonts-sm);
 	font-weight: var(--semi-bold);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }
 
 .weaponsNotShown {
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	border-radius: 100%;
 	display: grid;
 	place-items: center;

@@ -1,9 +1,9 @@
 .q-settings__radio {
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	font-size: var(--fonts-xs);
 	text-transform: uppercase;
 	font-weight: var(--semi-bold);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	padding: var(--s-1) var(--s-2);
 	border-radius: var(--rounded);
 	display: flex;
@@ -18,8 +18,8 @@
 }
 
 .q-settings__radio__checked {
-	color: var(--text);
-	outline: 2px solid var(--bg-lightest);
+	color: var(--color-text);
+	outline: 2px solid var(--color-bg-higher);
 }
 
 .q-settings__radio__checked .q-settings__radio__emoji {
@@ -33,7 +33,7 @@
 .q-settings__summary {
 	padding: var(--s-3);
 	border-radius: var(--rounded);
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	font-size: var(--fonts-lg);
 	font-weight: var(--bold);
 	margin-block-end: var(--s-4);
@@ -46,7 +46,7 @@
 
 .q-settings__summary svg {
 	width: 24px;
-	color: var(--theme);
+	color: var(--color-accent);
 	position: absolute;
 	right: 20px;
 	top: 14px;

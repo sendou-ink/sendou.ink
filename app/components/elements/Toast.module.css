@@ -9,7 +9,7 @@
 }
 
 .toast {
-	background: var(--bg-lighter-solid);
+	background: var(--color-bg-high);
 	border-radius: var(--rounded);
 	padding: var(--s-1-5) var(--s-3);
 	align-items: center;
@@ -17,7 +17,7 @@
 	font-size: var(--fonts-xsm);
 	font-weight: var(--semi-bold);
 	gap: var(--s-1);
-	border: 2px solid var(--border);
+	border: 2px solid var(--color-border);
 	width: 250px;
 	outline: none;
 	view-transition-class: toast;
@@ -44,13 +44,13 @@
 }
 
 .errorToast {
-	border-color: var(--theme-error);
+	border-color: var(--color-error);
 }
 
 .topRow {
 	display: flex;
 	text-transform: uppercase;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xxsm);
 	gap: var(--s-2);
 	align-items: center;
@@ -59,12 +59,12 @@
 
 .closeButton {
 	margin-inline-start: auto;
-	outline-color: var(--text-lighter) !important;
+	outline-color: var(--color-text-high) !important;
 }
 
 .closeButton svg {
 	width: 1rem;
-	fill: var(--text-lighter);
+	fill: var(--color-text-high);
 }
 
 .alertIcon {
@@ -72,13 +72,13 @@
 }
 
 .errorToast .alertIcon {
-	fill: var(--theme-error);
+	fill: var(--color-error);
 }
 
 .infoToast .alertIcon {
-	fill: var(--theme-info);
+	fill: var(--color-info);
 }
 
 .successToast .alertIcon {
-	fill: var(--theme-success);
+	fill: var(--color-success);
 }

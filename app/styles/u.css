@@ -19,7 +19,7 @@
 .u__team {
 	display: flex;
 	font-weight: var(--bold);
-	color: var(--text);
+	color: var(--color-text);
 	gap: var(--s-1-5);
 	grid-area: team;
 	align-items: center;
@@ -35,7 +35,7 @@
 }
 
 .u__country-name {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-weight: var(--bold);
 }
 
@@ -110,7 +110,7 @@
 .u__extra-info {
 	padding: var(--s-1) var(--s-1-5);
 	border-radius: var(--rounded);
-	background-color: var(--bg-darker);
+	background-color: var(--color-bg);
 	font-size: var(--fonts-xxs);
 	display: flex;
 	align-items: center;
@@ -118,7 +118,7 @@
 }
 
 .u__extra-info__heading {
-	color: var(--theme);
+	color: var(--color-accent);
 	font-weight: var(--bold);
 }
 
@@ -128,7 +128,7 @@
 }
 
 .u__results-table-highlights {
-	border: var(--s-2) solid var(--bg-lighter);
+	border: var(--s-2) solid var(--color-bg-high);
 	padding-inline: 0 !important;
 }
 
@@ -163,14 +163,14 @@
 .u-search__user {
 	display: flex;
 	align-items: center;
-	color: var(--text);
+	color: var(--color-text);
 	font-weight: var(--body);
 	gap: var(--s-4);
 	line-height: 1.2rem;
 }
 
 .u-search__ign {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-sm);
 	font-weight: var(--body);
 }
@@ -192,7 +192,7 @@
 }
 
 .u-search__info {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-sm);
 	text-align: center;
 }
@@ -200,7 +200,7 @@
 .u__weapon {
 	padding: var(--s-2);
 	border-radius: 100%;
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 }
 
 .u__build-form {
@@ -223,14 +223,14 @@
 	padding: var(--s-4);
 	border-radius: var(--rounded);
 	margin: 0 auto;
-	background-color: var(--bg-lighter);
-	color: var(--text);
+	background-color: var(--color-bg-high);
+	color: var(--color-text);
 	gap: var(--s-6);
 	transition: 0.1s ease-in-out background-color;
 }
 
 .u__placements:hover {
-	background-color: var(--theme-transparent);
+	background-color: var(--color-accent-low);
 }
 
 .u__placements__mode {
@@ -269,7 +269,7 @@
 .u__season__weapon-border__outer {
 	--degree: 80deg;
 	--smoothing: 0.5deg;
-	--color: var(--theme);
+	--color: var(--color-accent);
 
 	display: block;
 	content: "";
@@ -286,7 +286,7 @@
 .u__season__weapon-border__outer-static {
 	height: 60px;
 	width: 60px;
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	position: absolute;
 	border-radius: 50%;
 }
@@ -298,7 +298,7 @@
 	left: 8%;
 	position: relative;
 	border-radius: 50%;
-	background: var(--bg);
+	background: var(--color-bg);
 	display: grid;
 	place-items: center;
 }
@@ -318,10 +318,10 @@
 }
 
 .u__season__match {
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	border-radius: var(--rounded);
 	padding: var(--s-2) var(--s-2-5);
-	color: var(--text);
+	color: var(--color-text);
 	transition: ease-in 0.2s background-color;
 	display: flex;
 	flex-direction: column;
@@ -334,7 +334,7 @@
 
 .u__season__match__sub-section {
 	border-radius: 0 0 var(--rounded) var(--rounded);
-	background-color: var(--bg-light-variation);
+	background-color: var(--color-bg-high);
 	font-size: var(--fonts-xs);
 	text-align: center;
 	font-weight: var(--bold);
@@ -345,7 +345,7 @@
 }
 
 .u__season__match:hover {
-	background-color: var(--theme-transparent);
+	background-color: var(--color-accent-low);
 }
 
 .u__season__match__user {
@@ -385,24 +385,24 @@
 	place-items: center;
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
-	border: 3px solid var(--theme);
+	border: 3px solid var(--color-accent);
 	border-radius: var(--rounded-sm);
-	color: var(--text);
-	border-color: var(--theme-error);
+	color: var(--color-text);
+	border-color: var(--color-error);
 }
 
 .u__season__match__set-results li[data-is-win="true"] {
-	border-color: var(--theme-success);
+	border-color: var(--color-success);
 }
 
 .u__season__info-container {
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	padding: var(--s-2-5) var(--s-2);
 	border-radius: var(--rounded);
 }
 
 .u__season__winrate {
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	padding: var(--s-0-5) var(--s-2);
 	border-radius: var(--rounded);
 	font-size: var(--fonts-xs);
@@ -428,14 +428,14 @@
 
 .u__season__weapon-usage__weapon {
 	border-radius: 100%;
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	padding: var(--s-1-5);
 }
 
 .u__season__tentative {
 	text-transform: uppercase;
 	font-weight: var(--semi-bold);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xxs);
 	margin-top: -8px;
 	display: flex;
@@ -456,9 +456,9 @@
 .u__highlights-sticky-button {
 	position: sticky;
 	bottom: 0;
-	background-color: var(--bg);
+	background-color: var(--color-bg);
 	padding: var(--s-2) 0;
-	border-top: 1px solid var(--bg-lighter);
+	border-top: 1px solid var(--color-bg-high);
 	z-index: 10;
 	display: flex;
 	flex-direction: column;

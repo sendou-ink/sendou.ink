@@ -4,12 +4,12 @@
 	flex-direction: column;
 	padding: var(--s-3);
 	border-radius: var(--rounded);
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	gap: var(--s-3);
 }
 
 .private {
-	background-color: var(--bg-lighter-transparent);
+	background-color: var(--color-bg-higher);
 }
 
 .privateText {
@@ -63,7 +63,7 @@
 	position: relative;
 	padding: var(--s-0-5);
 	border-radius: 50%;
-	background-color: var(--bg-darker-very-transparent);
+	background-color: var(--color-bg);
 }
 
 .top500 {
@@ -74,7 +74,7 @@
 
 .weaponText {
 	padding-left: var(--s-1);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
 }
@@ -104,7 +104,7 @@
 
 .gear {
 	border-radius: 50%;
-	background-color: var(--bg-darker-very-transparent);
+	background-color: var(--color-bg);
 	overflow: visible;
 }
 

@@ -20,7 +20,7 @@
 .expandButton {
 	background: none;
 	border: none;
-	color: var(--theme);
+	color: var(--color-accent);
 	cursor: pointer;
 	font-size: var(--fonts-xxs);
 	padding: 0;
@@ -39,5 +39,5 @@
 
 .expiredBan {
 	text-decoration: line-through;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }

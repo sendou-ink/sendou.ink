@@ -133,10 +133,10 @@ function RoundTimer({
 
 	const statusColor =
 		worstStatus === "error"
-			? "var(--theme-error)"
+			? "var(--color-error)"
 			: worstStatus === "warning"
-				? "var(--theme-warning)"
-				: "var(--text)";
+				? "var(--color-warning)"
+				: "var(--color-text)";
 
 	return <div style={{ color: statusColor }}>{displayText}</div>;
 }

@@ -45,11 +45,11 @@
 }
 
 .object-damage__grid::-webkit-scrollbar-corner {
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 }
 
 .object-damage__grid::-webkit-scrollbar-thumb {
-	background-color: var(--theme-transparent);
+	background-color: var(--color-accent-low);
 	border-radius: 4px;
 }
 
@@ -60,7 +60,7 @@
 
 .object-damage__table-header {
 	align-items: center;
-	background-color: var(--bg-lightest-solid);
+	background-color: var(--color-bg-higher);
 	border-radius: var(--rounded);
 	display: flex;
 	flex-direction: column;
@@ -69,7 +69,7 @@
 	gap: var(--s-1);
 	height: 100%;
 	left: 0;
-	outline: 5px solid var(--bg);
+	outline: 5px solid var(--color-bg);
 	padding-block: var(--s-2);
 	padding-inline: var(--s-2);
 	position: sticky;
@@ -84,7 +84,7 @@
 }
 
 .object-damage__distance {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xxs);
 	margin-block-start: var(--s-0-5);
 }
@@ -92,7 +92,7 @@
 .object-damage__receiver-image {
 	padding: var(--s-2);
 	border-radius: var(--rounded);
-	background-color: var(--bg-darker-transparent);
+	background-color: var(--color-bg);
 }
 
 .object-damage__table-card {
@@ -101,7 +101,7 @@
 	height: 100%;
 	padding: var(--s-2);
 	border-radius: var(--rounded);
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
 	place-items: center;
@@ -121,13 +121,13 @@
 }
 
 .object-damage__abbr {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-weight: var(--bold);
 	text-decoration: none;
 }
 
 .object-damage__multiplier {
-	color: var(--theme);
+	color: var(--color-accent);
 	font-size: var(--fonts-xxs);
 	font-weight: var(--bold);
 	letter-spacing: 0.5px;
@@ -143,8 +143,8 @@
 
 .object-damage__patch {
 	border-radius: var(--rounded);
-	background-color: var(--theme-transparent);
-	color: var(--text-lighter);
+	background-color: var(--color-accent-low);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xxxs);
 	font-weight: var(--bold);
 	padding-block: var(--s-0-5);

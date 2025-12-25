@@ -12,7 +12,7 @@
 
 .groupCard {
 	border-radius: var(--rounded);
-	background-color: var(--bg-lighter-solid);
+	background-color: var(--color-bg-high);
 	padding: var(--s-2-5);
 	display: flex;
 	gap: var(--s-4);
@@ -23,17 +23,17 @@
 	display: flex;
 	gap: var(--s-2);
 	align-items: center;
-	background-color: var(--bg-darker);
+	background-color: var(--color-bg);
 	border-radius: var(--rounded);
 	font-size: var(--fonts-xsm);
 	font-weight: var(--semi-bold);
 	padding-inline-end: var(--s-2-5);
-	color: var(--text);
+	color: var(--color-text);
 }
 
 .infoHeader {
 	text-transform: uppercase;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xs);
 	line-height: 1.1;
 	font-weight: var(--semi-bold);
@@ -47,7 +47,7 @@
 
 .chatContainer {
 	border-radius: var(--rounded);
-	background-color: var(--bg-lighter-solid);
+	background-color: var(--color-bg-high);
 	padding: var(--s-2-5);
 }
 
@@ -71,7 +71,7 @@
 	position: absolute;
 	bottom: 0;
 	right: 0;
-	background-color: var(--bg-lightest-solid);
+	background-color: var(--color-bg-higher);
 	border-radius: 50%;
 	width: 16px;
 	height: 16px;
@@ -83,13 +83,13 @@
 .screenBanIconOverlay svg {
 	width: 14px;
 	height: 14px;
-	color: var(--bg);
+	color: var(--color-bg);
 }
 
 .screenBanIndicator svg {
-	color: var(--theme-success);
+	color: var(--color-success);
 }
 
 .screenBanIndicatorWarning svg {
-	color: var(--theme-warning);
+	color: var(--color-warning);
 }

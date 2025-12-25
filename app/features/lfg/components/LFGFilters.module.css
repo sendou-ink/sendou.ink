@@ -1,5 +1,5 @@
 .filter {
 	padding: var(--s-1-5) var(--s-2);
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	border-radius: var(--rounded);
 }

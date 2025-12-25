@@ -32,11 +32,11 @@
 
 .analyzer__ap-compare__bar {
 	height: 100%;
-	background-color: var(--theme);
+	background-color: var(--color-accent);
 }
 
 .analyzer__ap-compare__bar.analyzer__better {
-	background-color: var(--theme-success);
+	background-color: var(--color-success);
 }
 
 .analyzer__effects-selector {
@@ -53,7 +53,7 @@
 .analyzer__ap-summary {
 	width: 100%;
 	border-radius: var(--rounded);
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
 	padding-block: var(--s-1);
@@ -65,7 +65,7 @@
 	width: 100%;
 	align-items: center;
 	border-radius: var(--rounded);
-	background-color: var(--theme-transparent);
+	background-color: var(--color-accent-low);
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
 	gap: var(--s-2);
@@ -84,14 +84,14 @@
 }
 
 .analyzer__ap-text {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
 }
 
 .analyzer__summary {
 	border-radius: var(--rounded);
-	background-color: var(--bg-light-variation);
+	background-color: var(--color-bg-high);
 	font-size: var(--fonts-md);
 	font-weight: var(--bold);
 	padding-block: var(--s-2);
@@ -100,7 +100,7 @@
 }
 
 .analyzer__details:has(.analyzer__stat-card-highlighted) .analyzer__summary {
-	background-color: var(--theme-transparent);
+	background-color: var(--color-accent-low);
 }
 
 .analyzer__weapon-info-badge {
@@ -108,7 +108,7 @@
 	font-size: var(--fonts-xs);
 	gap: var(--s-2);
 	align-items: center;
-	background-color: var(--bg-darker);
+	background-color: var(--color-bg);
 	border-radius: var(--rounded);
 	padding: var(--s-1) var(--s-3);
 	margin-inline-start: auto;
@@ -146,12 +146,12 @@
 	justify-content: space-between;
 	padding: var(--s-2);
 	border-radius: var(--rounded);
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	gap: var(--s-4);
 }
 
 .analyzer__stat-card-highlighted {
-	background-color: var(--theme-transparent);
+	background-color: var(--color-accent-low);
 }
 
 .analyzer__stat-card__title-and-value-container {
@@ -182,7 +182,7 @@
 	padding: 0;
 	border: none;
 	background-color: transparent;
-	color: var(--theme);
+	color: var(--color-accent);
 	font-size: var(--fonts-md);
 	font-weight: var(--bold);
 	outline: initial;
@@ -203,7 +203,7 @@
 }
 
 .analyzer__stat-card__value__title {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xxs);
 	font-weight: 400;
 	letter-spacing: 0.5px;
@@ -219,25 +219,25 @@
 	width: 100%;
 	padding: var(--s-3);
 	border-radius: var(--rounded);
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	margin-block-start: var(--s-4);
 	padding-block: var(--s-2);
 }
 
 .analyzer__shots-to-splat {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xxxs);
 	margin-inline-start: var(--s-4);
 }
 
 .analyzer__consumption-table-explanation {
 	margin-top: var(--s-2);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xxs);
 }
 
 .analyzer__stat-category-explanation {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xxs);
 	margin-block-start: var(--s-3);
 }
@@ -248,8 +248,8 @@
 
 .analyzer__patch {
 	border-radius: var(--rounded);
-	background-color: var(--theme-transparent);
-	color: var(--text-lighter);
+	background-color: var(--color-accent-low);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xxxs);
 	font-weight: var(--bold);
 	padding-block: var(--s-0-5);
@@ -314,7 +314,7 @@
 }
 
 .analyzer__ink-grid__ap__focused {
-	color: var(--theme-secondary);
+	color: var(--color-accent);
 	font-weight: var(--bold);
 	text-decoration: underline;
 }

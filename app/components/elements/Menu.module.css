@@ -2,7 +2,7 @@
 	position: absolute;
 	top: 32px;
 	border-radius: var(--rounded);
-	background-color: var(--bg-darker);
+	background-color: var(--color-bg);
 	border: var(--border-style);
 	z-index: 10;
 	display: flex;
@@ -33,12 +33,12 @@
 	align-items: center;
 	font-weight: var(--bold);
 	font-size: var(--fonts-xs);
-	color: var(--text);
+	color: var(--color-text);
 	white-space: nowrap;
 	gap: var(--s-2);
 	border-radius: var(--rounded-xs);
 	padding: var(--s-1-5) var(--s-2-5);
-	background-color: var(--bg-darker);
+	background-color: var(--color-bg);
 	width: 100%;
 	border: 0;
 	outline: none;
@@ -54,21 +54,21 @@
 }
 
 .item[data-focused] {
-	background-color: var(--theme-very-transparent);
+	background-color: var(--color-accent-low);
 }
 
 .itemDisabled {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	cursor: not-allowed;
 }
 
 .itemSelected {
-	background-color: var(--theme-transparent);
+	background-color: var(--color-accent-low);
 	font-weight: var(--extra-bold);
 }
 
 .itemActive {
-	color: var(--theme);
+	color: var(--color-accent);
 }
 
 .itemIcon {

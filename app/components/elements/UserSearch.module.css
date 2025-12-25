@@ -31,14 +31,14 @@
 }
 
 button:disabled .selectValue {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-style: italic;
 }
 
 .placeholder {
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	text-align: center;
 	display: grid;
 	place-items: center;
@@ -48,7 +48,7 @@ button:disabled .selectValue {
 
 .itemAdditionalText {
 	font-size: var(--fonts-xxsm);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }
 
 button .itemAdditionalText {

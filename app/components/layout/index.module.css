@@ -8,7 +8,7 @@
 	height: 3.75rem;
 	backdrop-filter: var(--backdrop-filter);
 	background-color: transparent;
-	border-color: var(--theme-transparent);
+	border-color: var(--color-accent-low);
 }
 
 .hamburger.fab svg {

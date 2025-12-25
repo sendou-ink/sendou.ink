@@ -1,9 +1,9 @@
 .sendou-popover-content {
 	max-width: 20rem;
 	padding: var(--s-2);
-	border: 2px solid var(--border);
+	border: 2px solid var(--color-border);
 	border-radius: var(--rounded);
-	background-color: var(--bg-darker);
+	background-color: var(--color-bg);
 	font-size: var(--fonts-sm);
 	font-weight: var(--semi-bold);
 	white-space: pre-wrap;
@@ -22,11 +22,11 @@
 
 .react-aria-DatePicker .react-aria-Group {
 	display: flex;
-	border: 2px solid var(--border);
+	border: 2px solid var(--color-border);
 	border-radius: var(--rounded-sm);
-	accent-color: var(--theme-secondary);
-	background-color: var(--bg-input);
-	color: var(--text);
+	accent-color: var(--color-accent);
+	background-color: var(--color-bg);
+	color: var(--color-text);
 	font-size: var(--fonts-sm);
 	outline: none;
 	height: 1rem;
@@ -36,7 +36,7 @@
 
 .react-aria-DatePicker[data-open] .react-aria-Group {
 	border-color: transparent;
-	outline: 2px solid var(--theme);
+	outline: 2px solid var(--color-accent);
 }
 
 .react-aria-DatePicker .react-aria-DateInput {
@@ -45,7 +45,7 @@
 }
 
 .react-aria-DateSegment {
-	outline-color: var(--theme-transparent);
+	outline-color: var(--color-accent-low);
 }
 
 .react-aria-DatePicker .react-aria-Button {
@@ -58,12 +58,12 @@
 }
 
 .react-aria-DatePicker svg {
-	fill: var(--input-icon);
+	fill: var(--color-text-high);
 	width: 17.5px;
 }
 
 .react-aria-Calendar {
-	background-color: var(--bg-lighter-solid);
+	background-color: var(--color-bg-high);
 	border-radius: var(--rounded);
 	padding: var(--s-4);
 	border: var(--border-style);
@@ -84,19 +84,19 @@
 
 .react-aria-Calendar .react-aria-Button {
 	background-color: transparent;
-	color: var(--theme);
+	color: var(--color-accent);
 	border: none;
 	padding: 0;
 	border-radius: 100%;
 }
 
 .react-aria-Calendar .react-aria-Button svg {
-	fill: var(--theme);
+	fill: var(--color-accent);
 	width: 27.5px;
 }
 
 .react-aria-DatePicker .react-aria-Button[data-focused] svg {
-	fill: var(--theme);
+	fill: var(--color-accent);
 }
 
 .react-aria-CalendarGrid {
@@ -104,7 +104,7 @@
 }
 
 .react-aria-CalendarHeaderCell {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 }
 
 .react-aria-CalendarCell {
@@ -115,7 +115,7 @@
 	width: 35px;
 	height: 35px;
 	border-radius: var(--rounded-sm);
-	outline-color: var(--theme);
+	outline-color: var(--color-accent);
 }
 
 .react-aria-CalendarCell[data-outside-month] {
@@ -128,12 +128,12 @@
 }
 
 .react-aria-Calendar .react-aria-CalendarCell[data-selected] {
-	background-color: var(--theme-transparent);
-	color: var(--theme);
+	background-color: var(--color-accent-low);
+	color: var(--color-accent);
 }
 
 .react-aria-CalendarCell:hover {
-	background-color: var(--theme-transparent);
+	background-color: var(--color-accent-low);
 	outline: initial;
 }
 
@@ -152,7 +152,7 @@
 .react-aria-Switch .indicator {
 	width: var(--s-11);
 	height: var(--s-6);
-	background: var(--theme-transparent);
+	background: var(--color-accent-low);
 	border-radius: 1.143rem;
 }
 
@@ -183,7 +183,7 @@
 }
 
 .react-aria-Switch[data-selected] .indicator {
-	background: var(--theme-vibrant);
+	background: var(--color-accent-high);
 }
 
 .react-aria-Switch[data-selected] .indicator:before {
@@ -195,7 +195,7 @@
 }
 
 .react-aria-Switch[data-focus-visible] .indicator {
-	outline: 2px solid var(--theme-vibrant);
+	outline: 2px solid var(--color-accent-high);
 	outline-offset: 2px;
 }
 

@@ -17,7 +17,7 @@
 		"weapon-bottom-text weapon-bottom-images"
 		"message message";
 	border-radius: var(--rounded);
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	padding: var(--s-4);
 	column-gap: var(--s-2-5);
 }
@@ -36,7 +36,7 @@
 	grid-area: info;
 	font-size: var(--fonts-sm);
 	gap: var(--s-2);
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	display: flex;
 	height: 32px;
 	white-space: nowrap;

@@ -24,7 +24,7 @@
 	height: var(--cell-size);
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	padding: var(--s-1) var(--s-2);
 	position: relative;
 	display: grid;
@@ -51,20 +51,20 @@
 	left: 18px;
 	width: 32px;
 	height: 32px;
-	border: 2px solid var(--border);
+	border: 2px solid var(--color-border);
 	display: grid;
 	place-items: center;
 	font-size: var(--fonts-md);
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-higher);
 }
 
 .org__calendar__day__today {
-	color: var(--theme-secondary);
+	color: var(--color-accent);
 	font-weight: var(--bold);
 }
 
 .org__calendar__day__previous {
-	background-color: var(--bg-darker);
+	background-color: var(--color-bg);
 }
 
 .org__calendar__month-selector {
@@ -87,8 +87,8 @@
 .org__section-divider {
 	font-size: var(--fonts-md);
 	font-weight: var(--bold);
-	color: var(--text-lighter);
-	border-bottom: 2px solid var(--border);
+	color: var(--color-text-high);
+	border-bottom: 2px solid var(--color-border);
 	width: 100%;
 	padding-block: var(--s-1);
 }
@@ -117,7 +117,7 @@
 	align-items: center;
 	gap: var(--s-2);
 	font-weight: var(--semi-bold);
-	color: var(--text);
+	color: var(--color-text);
 	width: max-content;
 }
 
@@ -127,7 +127,7 @@
 
 .org__event-info__time {
 	display: block;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-sm);
 }
 
@@ -140,7 +140,7 @@
 .org__leaderboard-list li::marker {
 	font-size: var(--fonts-lg);
 	font-weight: var(--bold);
-	color: var(--theme);
+	color: var(--color-accent);
 	padding-inline-end: var(--s-2);
 }
 
@@ -165,7 +165,7 @@
 }
 
 .org__social-link__icon-container {
-	background-color: var(--bg-lightest);
+	background-color: var(--color-bg-higher);
 	display: grid;
 	place-items: center;
 	border-radius: var(--rounded);

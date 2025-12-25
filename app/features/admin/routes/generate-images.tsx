@@ -110,7 +110,7 @@ function InfoSquare({
 					marginTop: "1rem",
 					display: "grid",
 					placeItems: "center",
-					borderColor: "var(--border)",
+					borderColor: "var(--color-border)",
 					borderWidth: "2px",
 					borderStyle: "solid",
 				}}

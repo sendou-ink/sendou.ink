@@ -3,11 +3,11 @@
 	width: auto;
 	align-items: center;
 	justify-content: center;
-	border: 2px solid var(--theme);
+	border: 2px solid var(--color-accent);
 	border-radius: var(--rounded-sm);
 	appearance: none;
-	background: var(--theme);
-	color: var(--button-text);
+	background: var(--color-accent);
+	color: var(--color-text-inverse);
 	cursor: pointer;
 	font-size: var(--fonts-sm);
 	font-weight: var(--bold);
@@ -20,7 +20,7 @@
 
 .button[data-focus-visible],
 .button:focus-visible {
-	outline: 2px solid var(--theme);
+	outline: 2px solid var(--color-accent);
 }
 
 .button[data-pressed],
@@ -36,14 +36,14 @@
 }
 
 .outlined {
-	background-color: var(--theme-very-transparent);
-	color: var(--theme);
+	background-color: var(--color-accent-low);
+	color: var(--color-accent);
 }
 
 .outlinedSuccess {
-	border-color: var(--theme-success);
+	border-color: var(--color-success);
 	background-color: transparent;
-	color: var(--theme-success);
+	color: var(--color-success);
 }
 
 .small {
@@ -68,40 +68,40 @@
 	padding: 0;
 	border: none;
 	background-color: transparent;
-	color: var(--theme);
+	color: var(--color-accent);
 	outline: initial;
 }
 
 .minimal[data-focus-visible] {
-	outline: 2px solid var(--theme);
+	outline: 2px solid var(--color-accent);
 }
 
 .minimalSuccess {
 	padding: 0;
 	border: none;
 	background-color: transparent;
-	color: var(--theme-success);
+	color: var(--color-success);
 }
 
 .success {
-	border-color: var(--theme-success);
-	background-color: var(--theme-success);
-	outline-color: var(--theme-success);
+	border-color: var(--color-success);
+	background-color: var(--color-success);
+	outline-color: var(--color-success);
 }
 
 .destructive {
-	border-color: var(--theme-error);
+	border-color: var(--color-error);
 	background-color: transparent;
-	color: var(--theme-error);
-	outline-color: var(--theme-error);
+	color: var(--color-error);
+	outline-color: var(--color-error);
 }
 
 .minimalDestructive {
 	padding: 0;
 	border: none;
 	background-color: transparent;
-	color: var(--theme-error);
-	outline-color: var(--theme-error);
+	color: var(--color-error);
+	outline-color: var(--color-error);
 }
 
 .buttonIcon {

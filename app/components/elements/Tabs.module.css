@@ -1,7 +1,7 @@
 .tabList {
 	display: flex;
 	flex-direction: row;
-	border-bottom: 2px solid var(--border);
+	border-bottom: 2px solid var(--color-border);
 }
 
 .tabList svg {
@@ -35,24 +35,24 @@
 	font-size: var(--fonts-xs);
 	border-radius: 0;
 	border-bottom: 2px solid transparent;
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	white-space: nowrap;
 	flex: 1;
 	transform: none !important;
 }
 
 .tabButton[data-selected] {
-	border-color: var(--theme);
-	color: var(--text);
+	border-color: var(--color-accent);
+	color: var(--color-text);
 }
 
 .tabButton[data-focus-visible] {
-	color: var(--theme) !important;
+	color: var(--color-accent) !important;
 	outline: none;
 }
 
 .tabNumber {
-	color: var(--theme);
+	color: var(--color-accent);
 	margin-inline-start: var(--s-2);
 }
 
@@ -60,5 +60,5 @@
 	position: sticky;
 	top: 47px;
 	z-index: 1;
-	background-color: var(--bg);
+	background-color: var(--color-bg);
 }

@@ -72,7 +72,7 @@ button[data-state="closed"][aria-haspopup="dialog"] {
 }
 
 .tl-canvas {
-	background-color: var(--bg);
+	background-color: var(--color-bg);
 }
 
 .plans__top-section {
@@ -83,9 +83,9 @@ button[data-state="closed"][aria-haspopup="dialog"] {
 	display: flex;
 	align-items: center;
 	padding: var(--s-3);
-	border: 1px solid var(--theme-very-transparent);
+	border: 1px solid var(--color-accent-low);
 	border-radius: 0 0 var(--rounded) var(--rounded);
-	background-color: var(--bg-darker);
+	background-color: var(--color-bg);
 	gap: var(--s-4);
 	transform: translate(-50%, -42%);
 }
@@ -101,12 +101,12 @@ button[data-state="closed"][aria-haspopup="dialog"] {
 	background-color: grey;
 	font-size: var(--fonts-xs);
 	padding: var(--s-2);
-	color: var(--button-text);
+	color: var(--color-text-inverse);
 	width: 140px;
 }
 
 .plans__outline-toggle > .plans__outline-toggle__button__outlined {
-	background-color: var(--theme);
+	background-color: var(--color-accent);
 }
 
 .plans__weapons-section {
@@ -115,9 +115,9 @@ button[data-state="closed"][aria-haspopup="dialog"] {
 	top: 15%;
 	width: 150px;
 	max-height: 85vh;
-	border: 1px solid var(--theme-very-transparent);
+	border: 1px solid var(--color-accent-low);
 	border-radius: 0 var(--rounded) var(--rounded) 0;
-	background: var(--bg-darker);
+	background: var(--color-bg);
 	gap: 2px;
 	overflow-y: auto;
 }
@@ -127,7 +127,7 @@ button[data-state="closed"][aria-haspopup="dialog"] {
 }
 
 .plans__weapons-summary {
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	font-size: var(--fonts-sm);
 	font-weight: var(--bold);
 	padding: var(--s-2-5);
@@ -145,7 +145,7 @@ button[data-state="closed"][aria-haspopup="dialog"] {
 }
 
 .plans__no-img-text {
-	color: var(--theme-error);
+	color: var(--color-error);
 	font-size: var(--fonts-xs);
 }
 
@@ -192,7 +192,7 @@ img[src$="?outline=red"] {
 }
 
 .plans__draggable-button:hover {
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 }
 
 .plans__weapon-dragging {

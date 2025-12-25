@@ -2,7 +2,7 @@
 	padding: var(--s-2);
 	border-radius: var(--rounded);
 	margin: 0 auto;
-	background-color: var(--bg-lighter);
+	background-color: var(--color-bg-high);
 	font-size: var(--fonts-sm);
 	font-weight: var(--semi-bold);
 	list-style-type: none;
@@ -11,23 +11,23 @@
 }
 
 .plus-history__success {
-	color: var(--theme-success);
+	color: var(--color-success);
 }
 
 .plus-history__fail {
-	color: var(--theme-error);
+	color: var(--color-error);
 }
 
 .plus-history__tier-header {
 	display: flex;
 	flex-direction: row;
-	color: var(--theme);
+	color: var(--color-accent);
 }
 
 .plus-history__tier-header::before,
 .plus-history__tier-header::after {
 	flex: 1 1;
-	border-bottom: 3px solid var(--theme-transparent);
+	border-bottom: 3px solid var(--color-accent-low);
 	margin: auto;
 	content: "";
 }
@@ -47,28 +47,28 @@
 }
 
 .plus-history__passed-header {
-	color: var(--text-lighter);
+	color: var(--color-text-high);
 	font-size: var(--fonts-xs);
 }
 
 .plus-history__user-status {
 	border-radius: var(--rounded);
-	background-color: var(--theme);
-	color: var(--button-text);
+	background-color: var(--color-accent);
+	color: var(--color-text-inverse);
 	font-size: var(--fonts-xs);
 	font-weight: var(--semi-bold);
 	padding-inline: var(--s-1-5);
 }
 
 .plus-history__user-status.failed {
-	background-color: var(--theme-error-transparent);
-	color: var(--text);
+	background-color: var(--color-error);
+	color: var(--color-text);
 }
 
 .plus-history__suggestion-s {
 	border-radius: 50%;
-	background-color: var(--bg);
-	color: var(--text);
+	background-color: var(--color-bg);
+	color: var(--color-text);
 	font-weight: var(--bold);
 	margin-inline-end: var(--s-1);
 	padding-inline: var(--s-1);
