@@ -1,8 +1,14 @@
+.tabListContainer {
+	overflow-x: auto;
+	overflow-y: hidden;
+	padding-bottom: var(--s-1);
+}
+
 .tabList {
 	display: flex;
 	flex-direction: row;
 	border-bottom: 2px solid var(--color-border);
-	overflow-x: visible;
+	min-width: fit-content;
 }
 
 .tabList svg {
@@ -22,12 +28,17 @@
 	padding-block-start: var(--s-4);
 }
 
-.disappearing:has(.tabList .tabButton:only-child).padded .tabPanel {
+.disappearing:has(.tabList > div:only-child).padded .tabPanel {
 	padding-top: 0;
 }
 
-.disappearing .tabList:has(.tabButton:only-child) {
+.disappearing .tabList:has(> div:only-child) {
 	display: none;
+}
+
+.tabContainer {
+	min-width: fit-content;
+	margin-bottom: -2px;
 }
 
 .tabButton {
@@ -40,21 +51,20 @@
 	white-space: nowrap;
 	flex: 1;
 	transform: none !important;
-	margin-bottom: -2px;
 }
 
-.tabButton[data-selected] {
+.tabContainer[data-selected] .tabButton {
 	border-color: var(--color-text-accent);
 	color: var(--color-text);
 }
 
-.tabButton[data-focus-visible] {
-	color: var(--color-accent) !important;
+.tabContainer[data-focus-visible] .tabButton {
+	color: var(--color-text-accent) !important;
 	outline: none;
 }
 
 .tabNumber {
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 	margin-inline-start: var(--s-2);
 }
 

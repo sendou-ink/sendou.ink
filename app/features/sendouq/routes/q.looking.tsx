@@ -342,7 +342,7 @@ function Groups() {
 				) : null}
 				<div className="q__groups-inner-container">
 					<SendouTabs>
-						<SendouTabList scrolling={isMobile}>
+						<SendouTabList>
 							<SendouTab id="groups" number={data.groups.neutral.length}>
 								{t("q:looking.columns.groups")}
 							</SendouTab>
