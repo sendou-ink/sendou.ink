@@ -300,7 +300,9 @@ function ResultHighlights() {
 
 	return (
 		<>
-			<div className={clsx(styles.resultHighlights, "overflow-x-auto")}>
+			<div
+				className={clsx(styles.resultHighlights, "overflow-x-auto scrollbar")}
+			>
 				<div className="stack sm text-center">
 					<h2 className={styles.resultHighlightsTitle}>
 						{t("front:leaderboards.topPlayers")}
@@ -329,7 +331,9 @@ function ResultHighlights() {
 					{recentResults}
 				</div>
 			</div>
-			<div className={clsx(styles.resultHighlights, "overflow-x-auto")}>
+			<div
+				className={clsx(styles.resultHighlights, "overflow-x-auto scrollbar")}
+			>
 				<div className="stack sm text-center desktop-hidden">
 					{recentResults}
 				</div>

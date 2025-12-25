@@ -201,6 +201,7 @@
 .resultHighlights {
 	display: flex;
 	gap: var(--s-2);
+	padding-block: var(--s-2);
 }
 
 .resultHighlightsTitle {
