@@ -1155,6 +1155,8 @@ html[dir="rtl"] .fix-rtl {
 }
 
 .chat__messages {
+	border: 2px solid var(--color-bg-high);
+	border-radius: 0 0 var(--rounded) var(--rounded);
 	padding: var(--s-2-5) 0 0 0;
 	display: flex;
 	flex-direction: column;
@@ -1202,6 +1204,7 @@ html[dir="rtl"] .fix-rtl {
 }
 
 .chat__room-button {
+	border: 0;
 	background-color: transparent;
 	color: var(--color-text-high);
 	border-radius: var(--rounded) var(--rounded) 0 0;

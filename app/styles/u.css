@@ -345,7 +345,7 @@
 }
 
 .u__season__match:hover {
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-higher);
 }
 
 .u__season__match__user {

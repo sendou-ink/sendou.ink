@@ -131,7 +131,10 @@ export function Chat({
 			) : null}
 			<div className="chat__input-container">
 				<ol
-					className={clsx("chat__messages", messagesContainerClassName)}
+					className={clsx(
+						"chat__messages scrollbar",
+						messagesContainerClassName,
+					)}
 					ref={messagesContainerRef}
 				>
 					{messages.map((msg) => {
