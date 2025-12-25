@@ -12,9 +12,9 @@
 }
 
 .frontPageSideNav picture {
-	background-color: var(--color-bg-higher);
+	background-color: var(--color-bg-high);
 	border-radius: var(--rounded);
-	padding: 0.225rem;
+	padding: var(--s-1);
 }
 
 .frontPageSideNavItem {
@@ -52,7 +52,7 @@
 }
 
 .frontPageSideNavItem:hover picture {
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-higher);
 }
 
 /** Reference to .layout__hamburger-fab **/
@@ -88,7 +88,7 @@
 }
 
 .changeLogIconButton:hover {
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 }
 
 .externalLinkIcon {

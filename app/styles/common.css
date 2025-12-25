@@ -898,7 +898,7 @@ abbr[title] {
 .divider::before,
 .divider::after {
 	flex: 1;
-	border-bottom: 2px solid var(--color-accent-low);
+	border-bottom: 2px solid var(--color-border);
 	content: "";
 }
 

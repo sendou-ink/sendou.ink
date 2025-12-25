@@ -327,7 +327,7 @@
 }
 
 .layout__overlay-nav__nav-image-container:hover {
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-higher);
 }
 
 .layout__overlay-nav__log-out-container {

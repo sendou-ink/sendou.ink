@@ -3,6 +3,7 @@
 	inset: 0;
 	z-index: 10;
 	overflow-y: auto;
+	overflow-x: hidden;
 	background-color: rgba(0, 0, 0, 0.25);
 	display: flex;
 	min-height: 100%;
@@ -37,7 +38,7 @@
 	max-width: 28rem;
 	overflow: hidden;
 	border-radius: 1rem;
-	background-color: var(--color-bg-high);
+	background-color: var(--color-bg);
 	border: 2.5px solid var(--color-border);
 	padding: var(--s-6);
 	text-align: left;
