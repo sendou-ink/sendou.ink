@@ -410,7 +410,7 @@ abbr[title] {
 	width: 100%;
 	padding: var(--s-1) var(--s-4);
 	border-radius: var(--rounded);
-	background-color: var(--color-bg-higher);
+	background-color: var(--color-bg-high);
 	cursor: pointer;
 	font-size: var(--fonts-xs);
 	text-align: center;

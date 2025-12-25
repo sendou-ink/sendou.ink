@@ -62,12 +62,13 @@
 	padding: var(--s-1);
 	height: 24px;
 	width: 24px;
-	border: 2px solid var(--color-border-high);
+	border: 2px solid var(--color-border);
 	font-size: var(--fonts-xs);
 	color: var(--color-text-high);
 }
 
 .paginationButtonActive {
 	color: var(--color-text-accent);
-	background-color: var(--color-bg-higher);
+	background-color: var(--color-bg-high);
+	border-color: var(--color-border-high);
 }

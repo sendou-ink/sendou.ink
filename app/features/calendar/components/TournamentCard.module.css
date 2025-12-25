@@ -13,7 +13,7 @@
 }
 
 .card {
-	background-color: var(--color-bg-higher);
+	background-color: var(--color-bg-high);
 	border-radius: var(--rounded);
 	color: var(--color-text);
 	padding: var(--s-1) var(--s-2) var(--s-2) var(--s-2);

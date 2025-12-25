@@ -50,7 +50,7 @@ html.light {
 	--color-base-2: oklch(34.138% 0.01632 270.912);
 	--color-base-3: oklch(46.004% 0.01551 266.588);
 	--color-base-4: oklch(63.785% 0.01681 273.715);
-	--color-base-5: oklch(81.397% 0.00741 268.575);
+	--color-base-5: oklch(85.397% 0.00741 268.575);
 	--color-base-6: oklch(94.873% 0.00589 264.66);
 	--color-base-7: oklch(100% 0.00011 271.152);
 
@@ -79,7 +79,7 @@ html.light {
 
 html {
 	--color-text: var(--color-base-0);
-	--color-text-high: var(--color-base-2);
+	--color-text-high: var(--color-base-3);
 	--color-text-inverse: var(--color-base-7);
 
 	--color-bg: var(--color-base-7);
