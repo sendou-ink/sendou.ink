@@ -113,7 +113,7 @@
 }
 
 .requestCard {
-	background-color: var(--color-bg-higher);
+	background-color: var(--color-bg-high);
 }
 
 .requestFooter {
@@ -121,8 +121,8 @@
 		45deg,
 		var(--color-bg),
 		var(--color-bg) 10px,
-		var(--color-bg-high) 10px,
-		var(--color-bg-high) 20px
+		var(--color-bg-higher) 10px,
+		var(--color-bg-higher) 20px
 	);
 }
 
