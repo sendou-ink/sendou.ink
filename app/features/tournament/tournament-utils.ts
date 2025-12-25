@@ -12,7 +12,6 @@ import type { ParsedBracket } from "../tournament-bracket/core/Progression";
 import * as Progression from "../tournament-bracket/core/Progression";
 import type { Tournament as TournamentClass } from "../tournament-bracket/core/Tournament";
 import type { TournamentData } from "../tournament-bracket/core/Tournament.server";
-import type { PlayedSet } from "./core/sets.server";
 import { LEAGUES, TOURNAMENT } from "./tournament-constants";
 
 const mapPickingStyleToModeRecord = {
@@ -56,16 +55,6 @@ export function isOneModeTournamentOf(
 	return modesIncluded(mapPickingStyle, toSetMapPool).length === 1
 		? modesIncluded(mapPickingStyle, toSetMapPool)[0]
 		: null;
-}
-
-export function tournamentRoundI18nKey(round: PlayedSet["round"]) {
-	if (round.round === "grand_finals") return "bracket.grand_finals";
-	if (round.round === "bracket_reset") {
-		return "bracket.grand_finals.bracket_reset";
-	}
-	if (round.round === "finals") return `bracket.${round.type}.finals` as const;
-
-	return `bracket.${round.type}` as const;
 }
 
 export type CounterPickValidationStatus =

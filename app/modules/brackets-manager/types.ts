@@ -104,15 +104,6 @@ export type Database = ValueToArray<DataTypes>;
 export type TournamentManagerDataSet = Database;
 
 /**
- * An item in the final standings of an elimination stage.
- */
-export interface FinalStandingsItem {
-	id: number;
-	name: string;
-	rank: number;
-}
-
-/**
  * Contains the losers and the winner of the bracket.
  */
 export interface StandardBracketResults {

@@ -13,7 +13,7 @@ import {
 import { associationIdentifierSchema } from "../associations/associations-schemas";
 import { LUTI_DIVS, SCRIM } from "./scrims-constants";
 
-export const deletePostSchema = z.object({
+const deletePostSchema = z.object({
 	_action: _action("DELETE_POST"),
 	scrimPostId: id,
 });
@@ -47,12 +47,12 @@ export const newRequestSchema = z.object({
 	at: z.preprocess(date, z.date()).nullish(),
 });
 
-export const acceptRequestSchema = z.object({
+const acceptRequestSchema = z.object({
 	_action: _action("ACCEPT_REQUEST"),
 	scrimPostRequestId: id,
 });
 
-export const cancelRequestSchema = z.object({
+const cancelRequestSchema = z.object({
 	_action: _action("CANCEL_REQUEST"),
 	scrimPostRequestId: id,
 });
@@ -109,7 +109,7 @@ export const scrimsFiltersSearchParamsObject = z.object({
 		.catch({ weekdayTimes: null, weekendTimes: null, divs: null }),
 });
 
-export const persistScrimFiltersSchema = z.object({
+const persistScrimFiltersSchema = z.object({
 	_action: _action("PERSIST_SCRIM_FILTERS"),
 	filters: scrimsFiltersSchema,
 });

@@ -7,9 +7,13 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import type { ChatMessage } from "~/features/chat/chat-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
-import * as QRepository from "~/features/sendouq/QRepository.server";
-import { findCurrentGroupByUserId } from "~/features/sendouq/queries/findCurrentGroupByUserId.server";
-import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
+import {
+	refreshSendouQInstance,
+	SendouQ,
+} from "~/features/sendouq/core/SendouQ.server";
+import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
+import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -72,7 +76,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				})();
 			};
 
-			const match = notFoundIfFalsy(findMatchById(matchId));
+			const unmappedMatch = notFoundIfFalsy(
+				await SQMatchRepository.findById(matchId),
+			);
+			const match = SendouQ.mapMatch(unmappedMatch, user);
 			if (match.isLocked) {
 				reportWeapons();
 				return null;
@@ -83,17 +90,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				"Only mods can report scores as admin",
 			);
 			const members = [
-				...(await QMatchRepository.findGroupById({
-					groupId: match.alphaGroupId,
-				}))!.members.map((m) => ({
+				...match.groupAlpha.members.map((m) => ({
 					...m,
-					groupId: match.alphaGroupId,
+					groupId: match.groupAlpha.id,
 				})),
-				...(await QMatchRepository.findGroupById({
-					groupId: match.bravoGroupId,
-				}))!.members.map((m) => ({
+				...match.groupBravo.members.map((m) => ({
 					...m,
-					groupId: match.bravoGroupId,
+					groupId: match.groupBravo.id,
 				})),
 			];
 
@@ -105,9 +108,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			const winner = winnersArrayToWinner(data.winners);
 			const winnerGroupId =
-				winner === "ALPHA" ? match.alphaGroupId : match.bravoGroupId;
+				winner === "ALPHA" ? match.groupAlpha.id : match.groupBravo.id;
 			const loserGroupId =
-				winner === "ALPHA" ? match.bravoGroupId : match.alphaGroupId;
+				winner === "ALPHA" ? match.groupBravo.id : match.groupAlpha.id;
 
 			// when admin reports match gets locked right away
 			const compared = data.adminReport
@@ -133,12 +136,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				compared === "SAME" && !matchIsBeingCanceled
 					? calculateMatchSkills({
 							groupMatchId: match.id,
-							winner: (await QMatchRepository.findGroupById({
-								groupId: winnerGroupId,
-							}))!.members.map((m) => m.id),
-							loser: (await QMatchRepository.findGroupById({
-								groupId: loserGroupId,
-							}))!.members.map((m) => m.id),
+							winner: (match.groupAlpha.id === winnerGroupId
+								? match.groupAlpha
+								: match.groupBravo
+							).members.map((m) => m.id),
+							loser: (match.groupAlpha.id === loserGroupId
+								? match.groupAlpha
+								: match.groupBravo
+							).members.map((m) => m.id),
 							winnerGroupId,
 							loserGroupId,
 						})
@@ -188,8 +193,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				}
 				// admin reporting, just set both groups inactive
 				if (data.adminReport) {
-					setGroupAsInactive(match.alphaGroupId);
-					setGroupAsInactive(match.bravoGroupId);
+					setGroupAsInactive(match.groupAlpha.id);
+					setGroupAsInactive(match.groupBravo.id);
 				}
 			})();
 
@@ -215,6 +220,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			// in a different transaction but it's okay
 			reportWeapons();
+
+			await refreshSendouQInstance();
 
 			if (match.chatCode) {
 				const type = (): NonNullable<ChatMessage["type"]> => {
@@ -242,13 +249,20 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			const season = Seasons.current();
 			errorToastIfFalsy(season, "Season is not active");
 
-			const previousGroup = await QMatchRepository.findGroupById({
-				groupId: data.previousGroupId,
-			});
-			errorToastIfFalsy(previousGroup, "Previous group not found");
+			const match = notFoundIfFalsy(await SQMatchRepository.findById(matchId));
+			const previousGroup =
+				match.groupAlpha.id === data.previousGroupId
+					? match.groupAlpha
+					: match.groupBravo.id === data.previousGroupId
+						? match.groupBravo
+						: null;
+			errorToastIfFalsy(
+				previousGroup,
+				"Previous group not found in this match",
+			);
 
 			for (const member of previousGroup.members) {
-				const currentGroup = findCurrentGroupByUserId(member.id);
+				const currentGroup = SendouQ.findOwnGroup(member.id);
 				errorToastIfFalsy(!currentGroup, "Member is already in a group");
 				if (member.id === user.id) {
 					errorToastIfFalsy(
@@ -258,10 +272,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				}
 			}
 
-			await QRepository.createGroupFromPrevious({
+			await SQGroupRepository.createGroupFromPrevious({
 				previousGroupId: data.previousGroupId,
 				members: previousGroup.members.map((m) => ({ id: m.id, role: m.role })),
 			});
+
+			await refreshSendouQInstance();
 
 			throw redirect(SENDOUQ_PREPARING_PAGE);
 		}
@@ -287,7 +303,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			break;
 		}
 		case "ADD_PRIVATE_USER_NOTE": {
-			await QRepository.upsertPrivateUserNote({
+			await PrivateUserNoteRepository.upsert({
 				authorId: user.id,
 				sentiment: data.sentiment,
 				targetId: data.targetId,

@@ -31,6 +31,7 @@ import { RefreshArrowsIcon } from "~/components/icons/RefreshArrows";
 import { ScaleIcon } from "~/components/icons/Scale";
 import { UsersIcon } from "~/components/icons/Users";
 import { Main } from "~/components/Main";
+import { Placeholder } from "~/components/Placeholder";
 import { SubmitButton } from "~/components/SubmitButton";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import type { Tables } from "~/db/tables";
@@ -73,9 +74,10 @@ import {
 import { action } from "../actions/q.match.$id.server";
 import { matchEndedAtIndex } from "../core/match";
 import { loader } from "../loaders/q.match.$id.server";
+import { resolveGroupMemberOf } from "../q-match-utils";
 export { loader, action };
 
-import "~/features/sendouq/q.css";
+import styles from "./q.match.$id.module.css";
 
 export const meta: MetaFunction = (args) => {
 	const data = args.data as SerializeFrom<typeof loader> | null;
@@ -85,9 +87,9 @@ export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: `SendouQ - Match #${data.match.id}`,
 		description: `${new Intl.ListFormat("en-US").format(
-			data.groupAlpha.members.map((m) => m.username),
+			data.match.groupAlpha.members.map((m) => m.username),
 		)} vs. ${new Intl.ListFormat("en-US").format(
-			data.groupBravo.members.map((m) => m.username),
+			data.match.groupBravo.members.map((m) => m.username),
 		)}`,
 		location: args.location,
 	});
@@ -102,7 +104,20 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export default function QMatchPage() {
+export default function QMatchShell() {
+	const isMounted = useIsMounted();
+
+	if (!isMounted)
+		return (
+			<Main>
+				<Placeholder />
+			</Main>
+		);
+
+	return <QMatchPage />;
+}
+
+function QMatchPage() {
 	const user = useUser();
 	const isStaff = useHasRole("STAFF");
 	const isMounted = useIsMounted();
@@ -119,16 +134,16 @@ export default function QMatchPage() {
 	}, [data.reportedWeapons, data.match.id]);
 
 	const ownMember =
-		data.groupAlpha.members.find((m) => m.id === user?.id) ??
-		data.groupBravo.members.find((m) => m.id === user?.id);
+		data.match.groupAlpha.members.find((m) => m.id === user?.id) ??
+		data.match.groupBravo.members.find((m) => m.id === user?.id);
 	const canReportScore = Boolean(
 		!data.match.isLocked && (ownMember || isStaff),
 	);
 
-	const ownGroup = data.groupAlpha.members.some((m) => m.id === user?.id)
-		? data.groupAlpha
-		: data.groupBravo.members.some((m) => m.id === user?.id)
-			? data.groupBravo
+	const ownGroup = data.match.groupAlpha.members.some((m) => m.id === user?.id)
+		? data.match.groupAlpha
+		: data.match.groupBravo.members.some((m) => m.id === user?.id)
+			? data.match.groupBravo
 			: null;
 
 	const ownTeamReported = Boolean(
@@ -138,17 +153,23 @@ export default function QMatchPage() {
 	const showScore =
 		data.match.isLocked || (data.match.reportedByUserId && ownGroup);
 
+	const groupMemberOf = resolveGroupMemberOf({
+		groupAlpha: data.match.groupAlpha,
+		groupBravo: data.match.groupBravo,
+		userId: user?.id,
+	});
+
 	const addingNoteFor = (
-		data.groupMemberOf === "ALPHA" ? data.groupAlpha : data.groupBravo
+		groupMemberOf === "ALPHA" ? data.match.groupAlpha : data.match.groupBravo
 	).members.find((m) => m.id === safeNumberParse(searchParams.get("note")));
 
 	return (
-		<Main className="q-match__container stack xl">
+		<Main className={`${styles.container} stack xl`}>
 			<AddPrivateNoteDialog
 				aboutUser={addingNoteFor}
 				close={() => navigate(sendouQMatchPage(data.match.id))}
 			/>
-			<div className="q-match__header">
+			<div className={styles.header}>
 				<h2>{t("q:match.header", { number: data.match.id })}</h2>
 				<div
 					className={clsx("text-xs text-lighter", {
@@ -187,15 +208,14 @@ export default function QMatchPage() {
 			) : null}
 			{!showWeaponsForm ? (
 				<>
-					<div className="q-match__teams-container">
-						{[data.groupAlpha, data.groupBravo].map((group, i) => {
+					<div className={styles.teamsContainer}>
+						{[data.match.groupAlpha, data.match.groupBravo].map((group, i) => {
 							const side = i === 0 ? "ALPHA" : "BRAVO";
-							const isOwnGroup = data.groupMemberOf === side;
+							const isOwnGroup = groupMemberOf === side;
 
 							const matchHasBeenReported = Boolean(data.match.reportedByUserId);
 							const showAddNote =
-								data.groupMemberOf === side && matchHasBeenReported;
-
+								groupMemberOf === side && matchHasBeenReported;
 							return (
 								<div className="stack sm text-lighter text-xs" key={group.id}>
 									<div className="stack horizontal justify-between items-center">
@@ -246,14 +266,18 @@ function Score({
 	const { formatDateTime } = useTimeFormat();
 	const data = useLoaderData<typeof loader>();
 	const reporter =
-		data.groupAlpha.members.find((m) => m.id === data.match.reportedByUserId) ??
-		data.groupBravo.members.find((m) => m.id === data.match.reportedByUserId);
+		data.match.groupAlpha.members.find(
+			(m) => m.id === data.match.reportedByUserId,
+		) ??
+		data.match.groupBravo.members.find(
+			(m) => m.id === data.match.reportedByUserId,
+		);
 
 	const score = data.match.mapList.reduce(
 		(acc, cur) => {
 			if (!cur.winnerGroupId) return acc;
 
-			if (cur.winnerGroupId === data.match.alphaGroupId) {
+			if (cur.winnerGroupId === data.match.groupAlpha.id) {
 				return [acc[0] + 1, acc[1]];
 			}
 
@@ -411,7 +435,7 @@ function ReportWeaponsForm() {
 
 	const playedMaps = data.match.mapList.filter((m) => m.winnerGroupId);
 	const winners = playedMaps.map((m) =>
-		m.winnerGroupId === data.match.alphaGroupId ? "ALPHA" : "BRAVO",
+		m.winnerGroupId === data.match.groupAlpha.id ? "ALPHA" : "BRAVO",
 	);
 
 	const handleCopyWeaponsFromPreviousMap =
@@ -441,8 +465,17 @@ function ReportWeaponsForm() {
 			});
 		};
 
+	const groupMemberOf = resolveGroupMemberOf({
+		groupAlpha: data.match.groupAlpha,
+		groupBravo: data.match.groupBravo,
+		userId: user?.id,
+	});
+
 	const playersToReport = () => {
-		const allPlayers = [...data.groupAlpha.members, ...data.groupBravo.members];
+		const allPlayers = [
+			...data.match.groupAlpha.members,
+			...data.match.groupBravo.members,
+		];
 
 		switch (reportingMode) {
 			case "ALL": {
@@ -455,9 +488,9 @@ function ReportWeaponsForm() {
 				return [me];
 			}
 			case "MY_TEAM": {
-				return data.groupMemberOf === "ALPHA"
-					? data.groupAlpha.members
-					: data.groupBravo.members;
+				return groupMemberOf === "ALPHA"
+					? data.match.groupAlpha.members
+					: data.match.groupBravo.members;
 			}
 			default:
 				assertUnreachable(reportingMode);
@@ -549,7 +582,7 @@ function ReportWeaponsForm() {
 												key={member.id}
 												className="stack horizontal sm justify-between items-center flex-wrap"
 											>
-												<div className="q-match__report__user-name-container">
+												<div className={styles.userNameContainer}>
 													<Avatar user={member} size="xxs" />{" "}
 													{member.inGameName ? (
 														<>
@@ -638,10 +671,9 @@ function BottomSection({
 
 	const chatUsers = React.useMemo(() => {
 		return Object.fromEntries(
-			[...data.groupAlpha.members, ...data.groupBravo.members].map((m) => [
-				m.id,
-				m,
-			]),
+			[...data.match.groupAlpha.members, ...data.match.groupBravo.members].map(
+				(m) => [m.id, m],
+			),
 		);
 	}, [data]);
 
@@ -652,12 +684,17 @@ function BottomSection({
 		setUnseenMessages((msg) => msg + 1);
 	}, []);
 
+	const groupChatCode =
+		data.match.groupAlpha.chatCode ?? data.match.groupBravo.chatCode;
+
 	const chatRooms = React.useMemo(() => {
 		return [
-			data.matchChatCode ? { code: data.matchChatCode, label: "Match" } : null,
-			data.groupChatCode ? { code: data.groupChatCode, label: "Group" } : null,
+			data.match.chatCode
+				? { code: data.match.chatCode, label: "Match" }
+				: null,
+			groupChatCode ? { code: groupChatCode, label: "Group" } : null,
 		].filter(Boolean) as ChatProps["rooms"];
-	}, [data.matchChatCode, data.groupChatCode]);
+	}, [data.match.chatCode, groupChatCode]);
 
 	const chatHidden = chatRooms.length === 0;
 
@@ -706,7 +743,7 @@ function BottomSection({
 			onUnmount={onChatUnmount}
 			users={chatUsers}
 			rooms={chatRooms}
-			disabled={!data.canPostChatMessages}
+			disabled={!groupChatCode} // no message sending by staff to match chat
 		/>
 	);
 
@@ -721,9 +758,7 @@ function BottomSection({
 	);
 
 	const roomJoiningInfoElement = (
-		<div
-			className={clsx("q-match__pool-pass-container", { "mx-auto": !isMobile })}
-		>
+		<div className={clsx(styles.poolPassContainer, { "mx-auto": !isMobile })}>
 			<InfoWithHeader header={t("q:match.pool")} value={poolCode()} />
 			<InfoWithHeader
 				header={t("q:match.password.short")}
@@ -755,6 +790,12 @@ function BottomSection({
 		</LinkButton>
 	);
 
+	const groupMemberOf = resolveGroupMemberOf({
+		groupAlpha: data.match.groupAlpha,
+		groupBravo: data.match.groupBravo,
+		userId: user?.id,
+	});
+
 	const cancelMatchElement =
 		canReportScore && !data.match.isLocked ? (
 			<FormWithConfirm
@@ -762,7 +803,7 @@ function BottomSection({
 				fields={[
 					["_action", "REPORT_SCORE"],
 					["winners", "[]"],
-					...(!data.groupMemberOf ? [["adminReport", "on"] as const] : []),
+					...(!groupMemberOf ? [["adminReport", "on"] as const] : []),
 				]}
 				submitButtonText={t("common:actions.cancel")}
 				fetcher={cancelFetcher}
@@ -779,10 +820,13 @@ function BottomSection({
 			</FormWithConfirm>
 		) : null;
 
-	const screenLegalityInfoElement =
-		data.banScreen !== null ? (
-			<ScreenLegalityInfo ban={data.banScreen} />
-		) : null;
+	const screenBanned = Boolean(
+		data.match.groupAlpha.noScreen || data.match.groupBravo.noScreen,
+	);
+
+	const screenLegalityInfoElement = !data.match.isLocked ? (
+		<ScreenLegalityInfo ban={screenBanned} />
+	) : null;
 
 	if (!showMid && chatHidden) {
 		return mapListElement;
@@ -832,10 +876,10 @@ function BottomSection({
 
 	return (
 		<>
-			<div className="q-match__map-list-chat-container">
+			<div className={styles.mapListChatContainer}>
 				{mapListElement}
 				<div
-					className={clsx("q-match__bottom-mid-section", {
+					className={clsx(styles.bottomMidSection, {
 						invisible: !showMid,
 					})}
 				>
@@ -847,7 +891,7 @@ function BottomSection({
 						{cancelMatchElement}
 					</div>
 				</div>
-				<div className="q-match__chat-container">
+				<div className={styles.chatContainer}>
 					{chatRooms.length > 0 ? chatElement : null}
 				</div>
 			</div>
@@ -869,13 +913,13 @@ function ScreenLegalityInfo({ ban }: { ban: boolean }) {
 	const { t } = useTranslation(["q", "weapons"]);
 
 	return (
-		<div className="q-match__screen-legality">
+		<div className={styles.screenLegality}>
 			<SendouPopover
 				trigger={
 					<SendouButton
 						variant="minimal"
 						size="small"
-						className="q-match__screen-legality__button"
+						className={styles.screenLegalityButton}
 					>
 						<Alert variation={ban ? "ERROR" : "SUCCESS"}>
 							<div className="stack xs horizontal items-center">
@@ -905,8 +949,8 @@ function ScreenLegalityInfo({ ban }: { ban: boolean }) {
 function InfoWithHeader({ header, value }: { header: string; value: string }) {
 	return (
 		<div>
-			<div className="q-match__info__header">{header}</div>
-			<div className="q-match__info__value">{value}</div>
+			<div className={styles.infoHeader}>{header}</div>
+			<div className={styles.infoValue}>{value}</div>
 		</div>
 	);
 }
@@ -937,7 +981,7 @@ function MapList({
 		? data.match.mapList
 				.filter((m) => m.winnerGroupId)
 				.map((m) =>
-					m.winnerGroupId === data.groupAlpha.id ? "ALPHA" : "BRAVO",
+					m.winnerGroupId === data.match.groupAlpha.id ? "ALPHA" : "BRAVO",
 				)
 		: [];
 	const [winners, setWinners] = React.useState<("ALPHA" | "BRAVO")[]>(
@@ -1016,7 +1060,11 @@ function MapList({
 			{scoreCanBeReported ? (
 				<div className="stack md items-center mt-4">
 					<ResultSummary winners={winners} />
-					<SubmitButton _action="REPORT_SCORE" state={fetcher.state}>
+					<SubmitButton
+						_action="REPORT_SCORE"
+						state={fetcher.state}
+						testId="submit-score-button"
+					>
 						{isResubmission
 							? t("q:match.submitScores.adjusted")
 							: t("q:match.submitScores")}
@@ -1093,25 +1141,31 @@ function MapListMap({
 			);
 
 		const winnerSide =
-			winnerId === data.match.alphaGroupId
+			winnerId === data.match.groupAlpha.id
 				? t("q:match.sides.alpha")
 				: t("q:match.sides.bravo");
 
 		return <>• {t("q:match.won", { side: winnerSide })}</>;
 	};
 
-	const relativeSideText = (side: "ALPHA" | "BRAVO") => {
-		if (!data.groupMemberOf) return "";
+	const groupMemberOf = resolveGroupMemberOf({
+		groupAlpha: data.match.groupAlpha,
+		groupBravo: data.match.groupBravo,
+		userId: user?.id,
+	});
 
-		return data.groupMemberOf === side ? " (us)" : " (them)";
+	const relativeSideText = (side: "ALPHA" | "BRAVO") => {
+		if (!groupMemberOf) return "";
+
+		return groupMemberOf === side ? " (us)" : " (them)";
 	};
 
 	const modePreferences = data.match.memento?.modePreferences?.[map.mode];
 
 	const userIdToName = (userId: number) => {
 		const member = [
-			...data.groupAlpha.members,
-			...data.groupBravo.members,
+			...data.match.groupAlpha.members,
+			...data.match.groupBravo.members,
 		].find((m) => m.id === userId);
 
 		return member?.username ?? "";
@@ -1129,7 +1183,7 @@ function MapListMap({
 								<SendouPopover
 									popoverClassName="text-main-forced"
 									trigger={
-										<SendouButton className="q-match__mode-popover-button">
+										<SendouButton className={styles.modePopoverButton}>
 											<ModeImage mode={map.mode} size={18} />
 										</SendouButton>
 									}
@@ -1198,7 +1252,7 @@ function MapListMap({
 						el.style.opacity = "1";
 					}}
 				>
-					<div className="q-match__report-section">
+					<div className={styles.reportSection}>
 						<label className="mb-0 text-theme-secondary">
 							{t("q:match.report.winnerLabel")}
 						</label>
@@ -1216,7 +1270,7 @@ function MapListMap({
 									{t("q:match.sides.alpha")}
 									<span
 										className={clsx({
-											"text-success": data.groupMemberOf === "ALPHA",
+											"text-success": groupMemberOf === "ALPHA",
 										})}
 									>
 										{relativeSideText("ALPHA")}
@@ -1236,7 +1290,7 @@ function MapListMap({
 									{t("q:match.sides.bravo")}
 									<span
 										className={clsx({
-											"text-success": data.groupMemberOf === "BRAVO",
+											"text-success": groupMemberOf === "BRAVO",
 										})}
 									>
 										{relativeSideText("BRAVO")}
@@ -1316,8 +1370,8 @@ function MapListMapPickInfo({
 
 	const userIdToUser = (userId: number) => {
 		const member = [
-			...data.groupAlpha.members,
-			...data.groupBravo.members,
+			...data.match.groupAlpha.members,
+			...data.match.groupBravo.members,
 		].find((m) => m.id === userId);
 
 		return member;
@@ -1328,7 +1382,7 @@ function MapListMapPickInfo({
 
 		if (!data.match.memento?.pools) return result;
 
-		const pickerGroups = [data.groupAlpha, data.groupBravo].filter(
+		const pickerGroups = [data.match.groupAlpha, data.match.groupBravo].filter(
 			(g) => map.source === "BOTH" || String(g.id) === map.source,
 		);
 		if (pickerGroups.length === 0) return result;
@@ -1364,7 +1418,7 @@ function MapListMapPickInfo({
 			<SendouPopover
 				popoverClassName="text-main-forced"
 				trigger={
-					<SendouButton className="q-match__stage-popover-button">
+					<SendouButton className={styles.stagePopoverButton}>
 						{pickInfo(map.source)}
 					</SendouButton>
 				}
@@ -1419,7 +1473,7 @@ function ResultSummary({ winners }: { winners: ("ALPHA" | "BRAVO")[] }) {
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
 
-	const ownSide = data.groupAlpha.members.some((m) => m.id === user?.id)
+	const ownSide = data.match.groupAlpha.members.some((m) => m.id === user?.id)
 		? "ALPHA"
 		: "BRAVO";
 

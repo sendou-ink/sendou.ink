@@ -2,7 +2,7 @@ import { type ActionFunctionArgs, redirect } from "@remix-run/node";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
-import i18next from "~/modules/i18n/i18next.server";
+import { i18next } from "~/modules/i18n/i18next.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { valueArrayToDBFormat } from "~/utils/form";
 import { actionError, parseRequestPayload } from "~/utils/remix.server";

@@ -14,6 +14,7 @@ import {
 } from "~/components/elements/Tabs";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
+import { Placeholder } from "~/components/Placeholder";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useChat } from "~/features/chat/chat-hooks";
@@ -35,12 +36,12 @@ import { action } from "../actions/q.looking.server";
 import { GroupCard } from "../components/GroupCard";
 import { GroupLeaver } from "../components/GroupLeaver";
 import { MemberAdder } from "../components/MemberAdder";
+import { groupExpiryStatus } from "../core/groups";
 import { loader } from "../loaders/q.looking.server";
 import { FULL_GROUP_SIZE } from "../q-constants";
-import type { LookingGroupWithInviteCode } from "../q-types";
 export { action, loader };
 
-import "../q.css";
+import styles from "./q.looking.module.css";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["user", "q"],
@@ -58,7 +59,20 @@ export const meta: MetaFunction = (args) => {
 	});
 };
 
-export default function QLookingPage() {
+export default function QLookingShell() {
+	const isMounted = useIsMounted();
+
+	if (!isMounted)
+		return (
+			<Main>
+				<Placeholder />
+			</Main>
+		);
+
+	return <QLookingPage />;
+}
+
+function QLookingPage() {
 	const { t } = useTranslation(["q"]);
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
@@ -68,14 +82,14 @@ export default function QLookingPage() {
 	const wasTryingToJoinAnotherTeam = searchParams.get("joining") === "true";
 
 	const showGoToSettingPrompt = () => {
-		if (!data.groups.own) return false;
+		if (!data.ownGroup) return false;
 
-		const isAlone = data.groups.own.members!.length === 1;
+		const isAlone = data.ownGroup.members.length === 1;
 		const hasWeaponPool = Boolean(
-			data.groups.own.members!.find((m) => m.id === user?.id)?.weapons,
+			data.ownGroup.members.find((m) => m.id === user?.id)?.weapons,
 		);
 		const hasVCStatus =
-			(data.groups.own.members!.find((m) => m.id === user?.id)?.languages ?? [])
+			(data.ownGroup.members.find((m) => m.id === user?.id)?.languages ?? [])
 				.length > 0;
 
 		return isAlone && (!hasWeaponPool || !hasVCStatus);
@@ -104,7 +118,11 @@ function InfoText() {
 	const fetcher = useFetcher();
 	const { formatTime } = useTimeFormat();
 
-	if (data.expiryStatus === "EXPIRED") {
+	const expiryStatus = data.ownGroup
+		? groupExpiryStatus(data.ownGroup.latestActionAt)
+		: null;
+
+	if (expiryStatus === "EXPIRED") {
 		return (
 			<fetcher.Form
 				method="post"
@@ -123,7 +141,7 @@ function InfoText() {
 		);
 	}
 
-	if (data.expiryStatus === "EXPIRING_SOON") {
+	if (expiryStatus === "EXPIRING_SOON") {
 		return (
 			<fetcher.Form
 				method="post"
@@ -199,20 +217,20 @@ function Groups() {
 
 	const chatUsers = React.useMemo(() => {
 		return Object.fromEntries(
-			(data.groups.own?.members ?? []).map((m) => [m.id, m]),
+			(data.ownGroup?.members ?? []).map((m) => [m.id, m]),
 		);
 	}, [data]);
 
 	const rooms = React.useMemo(() => {
-		return data.chatCode
+		return data.ownGroup?.chatCode
 			? [
 					{
-						code: data.chatCode,
+						code: data.ownGroup.chatCode,
 						label: "Group",
 					},
 				]
 			: [];
-	}, [data.chatCode]);
+	}, [data.ownGroup?.chatCode]);
 
 	const onNewMessage = React.useCallback(() => {
 		setUnseenMessages((msg) => msg + 1);
@@ -235,10 +253,9 @@ function Groups() {
 
 	const isMobile = width < 750;
 	const isFullGroup =
-		data.groups.own && data.groups.own.members!.length === FULL_GROUP_SIZE;
-	const ownGroup = data.groups.own as LookingGroupWithInviteCode | undefined;
+		data.ownGroup && data.ownGroup.members.length === FULL_GROUP_SIZE;
 
-	const renderChat = data.groups.own && data.groups.own.members!.length > 1;
+	const showChat = data.ownGroup && data.ownGroup.members.length > 1;
 
 	const invitedGroupsDesktop = (
 		<div className="stack sm">
@@ -249,17 +266,18 @@ function Groups() {
 						: "q:looking.columns.invited",
 				)}
 			</ColumnHeader>
-			{data.groups.neutral
-				.filter((group) => group.isLiked)
+			{data.groups
+				.filter((group) =>
+					data.likes.given.some((like) => like.groupId === group.id),
+				)
 				.map((group) => {
 					return (
 						<GroupCard
 							key={group.id}
 							group={group}
 							action="UNLIKE"
-							ownRole={data.role}
-							isExpired={data.expiryStatus === "EXPIRED"}
 							showNote
+							ownGroup={data.ownGroup}
 						/>
 					);
 				})}
@@ -268,13 +286,13 @@ function Groups() {
 
 	const chatElement = (
 		<div>
-			{renderChat ? (
+			{showChat ? (
 				<>
 					<Chat
 						rooms={rooms}
 						users={chatUsers}
 						className="w-full"
-						messagesContainerClassName="q__chat-messages-container"
+						messagesContainerClassName={styles.messagesContainer}
 						chat={chat}
 						onMount={onChatMount}
 						onUnmount={onChatUnmount}
@@ -287,69 +305,81 @@ function Groups() {
 		</div>
 	);
 
-	const ownGroupElement = ownGroup ? (
+	const ownGroupElement = data.ownGroup ? (
 		<div className="stack md">
-			{!renderChat && (
+			{!showChat && (
 				<ColumnHeader>{t("q:looking.columns.myGroup")}</ColumnHeader>
 			)}
-			<GroupCard group={ownGroup} ownRole={data.role} ownGroup showNote />
-			{ownGroup?.inviteCode ? (
+			<GroupCard group={data.ownGroup} showNote ownGroup={data.ownGroup} />
+			{data.ownGroup.inviteCode ? (
 				<MemberAdder
-					inviteCode={ownGroup.inviteCode}
-					groupMemberIds={(ownGroup.members ?? [])?.map((m) => m.id)}
+					inviteCode={data.ownGroup.inviteCode}
+					groupMemberIds={data.ownGroup.members.map((m) => m.id)}
 				/>
 			) : null}
 			<GroupLeaver
-				type={ownGroup.members.length === 1 ? "LEAVE_Q" : "LEAVE_GROUP"}
+				type={data?.ownGroup.members.length === 1 ? "LEAVE_Q" : "LEAVE_GROUP"}
 			/>
 			{!isMobile ? invitedGroupsDesktop : null}
 		</div>
 	) : null;
 
+	const neutralGroups = data.groups.filter(
+		(group) =>
+			!data.likes.given.some((like) => like.groupId === group.id) &&
+			!data.likes.received.some((like) => like.groupId === group.id),
+	);
+	const groupsReceivedLikesFrom = data.groups.filter((group) =>
+		data.likes.received.some((like) => like.groupId === group.id),
+	);
+
 	// no animations needed if liking group on mobile as they stay in place
-	const flipKey = `${data.groups.neutral
-		.map((g) => `${g.id}-${isMobile ? true : g.isLiked}`)
-		.join(":")};${data.groups.likesReceived.map((g) => g.id).join(":")}`;
+	const flipKey = `${neutralGroups
+		.map(
+			(g) =>
+				`${g.id}-${isMobile ? true : data.likes.given.some((l) => l.groupId === g.id)}`,
+		)
+		.join(":")};${groupsReceivedLikesFrom.map((g) => g.id).join(":")}`;
 
 	return (
 		<Flipper flipKey={flipKey}>
 			<div
-				className={clsx("q__groups-container", {
-					"q__groups-container__mobile": isMobile,
+				className={clsx(styles.container, {
+					[styles.containerMobile]: isMobile,
 				})}
 			>
 				{!isMobile ? (
 					<div>
 						<SendouTabs>
 							<SendouTabList>
-								{data.groups.own && (
-									<SendouTab id="own" number={data.groups.own.members!.length}>
+								{data.ownGroup && (
+									<SendouTab id="own" number={data.ownGroup.members.length}>
 										{t("q:looking.columns.myGroup")}
 									</SendouTab>
 								)}
-								{renderChat && (
+								{showChat && (
 									<SendouTab id="chat" number={unseenMessages}>
 										{t("q:looking.columns.chat")}
 									</SendouTab>
 								)}
 							</SendouTabList>
 							<SendouTabPanel id="own">{ownGroupElement}</SendouTabPanel>
-							{data.chatCode && (
+							{data.ownGroup?.chatCode && (
 								<SendouTabPanel id="chat">{chatElement}</SendouTabPanel>
 							)}
 						</SendouTabs>
 					</div>
 				) : null}
-				<div className="q__groups-inner-container">
+				<div className={styles.innerContainer}>
 					<SendouTabs>
 						<SendouTabList>
-							<SendouTab id="groups" number={data.groups.neutral.length}>
+							<SendouTab id="groups" number={neutralGroups.length}>
 								{t("q:looking.columns.groups")}
 							</SendouTab>
 							{isMobile && (
 								<SendouTab
 									id="received"
-									number={data.groups.likesReceived.length}
+									number={groupsReceivedLikesFrom.length}
 								>
 									{t(
 										isFullGroup
@@ -358,12 +388,12 @@ function Groups() {
 									)}
 								</SendouTab>
 							)}
-							{isMobile && data.groups.own && (
-								<SendouTab id="own" number={data.groups.own.members!.length}>
+							{isMobile && data.ownGroup && (
+								<SendouTab id="own" number={data.ownGroup.members.length}>
 									{t("q:looking.columns.myGroup")}
 								</SendouTab>
 							)}
-							{isMobile && renderChat && (
+							{isMobile && showChat && (
 								<SendouTab id="chat" number={unseenMessages}>
 									{t("q:looking.columns.chat")}
 								</SendouTab>
@@ -372,30 +402,45 @@ function Groups() {
 						<SendouTabPanel id="groups">
 							<div className="stack sm">
 								<ColumnHeader>{t("q:looking.columns.available")}</ColumnHeader>
-								{data.groups.neutral
-									.filter((group) => isMobile || !group.isLiked)
-									.map((group) => {
-										return (
-											<GroupCard
-												key={group.id}
-												group={group}
-												action={group.isLiked ? "UNLIKE" : "LIKE"}
-												ownRole={data.role}
-												isExpired={data.expiryStatus === "EXPIRED"}
-												showNote
-											/>
-										);
-									})}
+								{(isMobile
+									? data.groups.filter(
+											(group) =>
+												!data.likes.received.some(
+													(like) => like.groupId === group.id,
+												),
+										)
+									: neutralGroups
+								).map((group) => {
+									return (
+										<GroupCard
+											key={group.id}
+											group={group}
+											action={
+												data.likes.given.some(
+													(like) => like.groupId === group.id,
+												)
+													? "UNLIKE"
+													: "LIKE"
+											}
+											showNote
+											ownGroup={data.ownGroup}
+										/>
+									);
+								})}
 							</div>
 						</SendouTabPanel>
 						<SendouTabPanel id="received">
 							<div className="stack sm">
-								{!data.groups.own ? <JoinQueuePrompt /> : null}
-								{data.groups.likesReceived.map((group) => {
+								{!data.ownGroup ? <JoinQueuePrompt /> : null}
+								{groupsReceivedLikesFrom.map((group) => {
+									const like = data.likes.received.find(
+										(l) => l.groupId === group.id,
+									)!;
+
 									const action = () => {
 										if (!isFullGroup) return "GROUP_UP";
 
-										if (group.isRechallenge) return "MATCH_UP_RECHALLENGE";
+										if (like.isRechallenge) return "MATCH_UP_RECHALLENGE";
 										return "MATCH_UP";
 									};
 
@@ -404,9 +449,8 @@ function Groups() {
 											key={group.id}
 											group={group}
 											action={action()}
-											ownRole={data.role}
-											isExpired={data.expiryStatus === "EXPIRED"}
 											showNote
+											ownGroup={data.ownGroup}
 										/>
 									);
 								})}
@@ -425,12 +469,16 @@ function Groups() {
 									: "q:looking.columns.invitations",
 							)}
 						</ColumnHeader>
-						{!data.groups.own ? <JoinQueuePrompt /> : null}
-						{data.groups.likesReceived.map((group) => {
+						{!data.ownGroup ? <JoinQueuePrompt /> : null}
+						{groupsReceivedLikesFrom.map((group) => {
+							const like = data.likes.received.find(
+								(l) => l.groupId === group.id,
+							)!;
+
 							const action = () => {
 								if (!isFullGroup) return "GROUP_UP";
 
-								if (group.isRechallenge) return "MATCH_UP_RECHALLENGE";
+								if (like.isRechallenge) return "MATCH_UP_RECHALLENGE";
 								return "MATCH_UP";
 							};
 
@@ -439,9 +487,8 @@ function Groups() {
 									key={group.id}
 									group={group}
 									action={action()}
-									ownRole={data.role}
-									isExpired={data.expiryStatus === "EXPIRED"}
 									showNote
+									ownGroup={data.ownGroup}
 								/>
 							);
 						})}
@@ -459,7 +506,7 @@ function ColumnHeader({ children }: { children: React.ReactNode }) {
 
 	if (isMobile) return null;
 
-	return <div className="q__column-header">{children}</div>;
+	return <div className={styles.header}>{children}</div>;
 }
 
 function JoinQueuePrompt() {

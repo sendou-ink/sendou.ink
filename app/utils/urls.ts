@@ -2,7 +2,7 @@ import slugify from "slugify";
 import type { GearType, Preference, Tables } from "~/db/tables";
 import type { ArtSource } from "~/features/art/art-types";
 import type { AuthErrorCode } from "~/features/auth/core/errors";
-import { serializeBuild } from "~/features/build-analyzer";
+import { serializeBuild } from "~/features/build-analyzer/core/utils";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
 import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { StageBackgroundStyle } from "~/features/map-planner";
@@ -126,7 +126,6 @@ export const BLANK_IMAGE_URL = "/static-assets/img/blank.gif";
 export const COMMON_PREVIEW_IMAGE =
 	"/static-assets/img/layout/common-preview.png";
 export const ERROR_GIRL_IMAGE_PATH = "/static-assets/img/layout/error-girl";
-export const LOGO_PATH = "/static-assets/img/layout/logo";
 export const SENDOU_LOVE_EMOJI_PATH = "/static-assets/img/layout/sendou_love";
 export const FIRST_PLACEMENT_ICON_PATH =
 	"/static-assets/svg/placements/first.svg";
@@ -310,8 +309,6 @@ export const tournamentTeamPage = ({
 }) => `/to/${tournamentId}/teams/${tournamentTeamId}`;
 export const tournamentRegisterPage = (tournamentId: number) =>
 	`/to/${tournamentId}/register`;
-export const tournamentMapsPage = (tournamentId: number) =>
-	`/to/${tournamentId}/maps`;
 export const tournamentAdminPage = (tournamentId: number) =>
 	`/to/${tournamentId}/admin`;
 export const tournamentBracketsPage = ({
