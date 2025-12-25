@@ -5,45 +5,27 @@ html {
 	--base-chroma: 0.016;
 }
 
-html.light {
-	--color-accent-low: oklch(
-		32% calc(var(--accent-chroma) * 0.7) var(--accent-hue)
-	);
-	--color-accent: oklch(53% var(--accent-chroma) var(--accent-hue));
-	--color-accent-high: oklch(
-		87% calc(var(--accent-chroma) * 0.25) var(--accent-hue)
-	);
+/* 'low' and 'high' do not indicate lightness */
+/* this is important because dark goes from light to dark, and light goes from dark to light */
 
-	--color-info-high: oklch(31.865% 0.1766 267.138);
-	--color-info: oklch(53.03% 0.24331 270.147);
-	--color-info-low: oklch(87.897% 0.0555 279.573);
-
-	--color-success-high: oklch(44.893% 0.13293 138.416);
-	--color-success: oklch(79.407% 0.25035 139.5);
-	--color-success-low: oklch(95.604% 0.06419 135.506);
-
-	--color-warning-high: oklch(46.236% 0.09033 79.825);
-	--color-warning: oklch(82.426% 0.15029 82.564);
-	--color-warning-low: oklch(94.216% 0.05193 85.101);
-
-	--color-error-high: oklch(41.268% 0.15511 8.446);
-	--color-error: oklch(65.223% 0.22164 5.216);
-	--color-error-low: oklch(89.949% 0.04928 355.498);
-
-	--color-base: oklch(100% var(--base-chroma) var(--base-hue));
-	--color-text: oklch(21% 0.01 285);
-	--color-text-inverse: oklch(97.807% 0.029 255);
-	--color-text-accent: var(--color-accent);
-}
+/* --color-base-x should rarely be consumed directly */
+/* they mostly exist as a base for other vars like --color-text and --color-bg  */
 
 html.dark {
-	--color-accent-low: oklch(
-		28% calc(var(--accent-chroma) * 0.35) var(--accent-hue)
-	);
-	--color-accent: oklch(57% var(--accent-chroma) var(--accent-hue));
-	--color-accent-high: oklch(
-		83% calc(var(--accent-chroma) * 0.35) var(--accent-hue)
-	);
+	--color-base-0: oklch(100% 0.00011 271.152);
+	--color-base-1: oklch(94.873% 0.00589 264.66);
+	--color-base-2: oklch(81.397% 0.00741 268.575);
+	--color-base-3: oklch(63.785% 0.01681 273.715);
+	--color-base-4: oklch(46.004% 0.01551 266.588);
+	--color-base-5: oklch(34.138% 0.01632 270.912);
+	--color-base-6: oklch(27.313% 0.01549 269.123);
+	--color-base-7: oklch(20.97% 0.00805 274.53);
+
+	--color-accent-low: oklch(25.912% 0.09109 269.441);
+	--color-accent: oklch(52.262% 0.26613 268.94);
+	--color-accent-high: oklch(83.419% 0.082 269.322);
+
+	--color-text-accent: var(--color-accent-high);
 
 	--color-info-low: oklch(26% 0.09 275);
 	--color-info: oklch(52% 0.27 275);
@@ -60,21 +42,52 @@ html.dark {
 	--color-error-low: oklch(31% 0.07 10);
 	--color-error: oklch(65% 0.19 10);
 	--color-error-high: oklch(87% 0.07 10);
+}
 
-	--color-base: oklch(25.33% var(--base-chroma) var(--base-hue));
-	--color-text: oklch(97.807% 0.029 255);
-	--color-text-inverse: oklch(21% 0.01 285);
-	--color-text-accent: var(--color-accent-high);
+html.light {
+	--color-base-0: oklch(20.97% 0.00805 274.53);
+	--color-base-1: oklch(27.313% 0.01549 269.123);
+	--color-base-2: oklch(34.138% 0.01632 270.912);
+	--color-base-3: oklch(46.004% 0.01551 266.588);
+	--color-base-4: oklch(63.785% 0.01681 273.715);
+	--color-base-5: oklch(81.397% 0.00741 268.575);
+	--color-base-6: oklch(94.873% 0.00589 264.66);
+	--color-base-7: oklch(100% 0.00011 271.152);
+
+	--color-accent-low: oklch(87.817% 0.05924 269.365);
+	--color-accent: oklch(52.919% 0.26185 268.998);
+	--color-accent-high: oklch(31.777% 0.13425 268.754);
+
+	--color-text-accent: var(--color-accent);
+
+	--color-info-low: oklch(87.897% 0.0555 279.573);
+	--color-info: oklch(53.03% 0.24331 270.147);
+	--color-info-high: oklch(31.865% 0.1766 267.138);
+
+	--color-success-low: oklch(95.604% 0.06419 135.506);
+	--color-success: oklch(79.407% 0.25035 139.5);
+	--color-success-high: oklch(44.893% 0.13293 138.416);
+
+	--color-warning-low: oklch(94.216% 0.05193 85.101);
+	--color-warning: oklch(82.426% 0.15029 82.564);
+	--color-warning-high: oklch(46.236% 0.09033 79.825);
+
+	--color-error-low: oklch(89.949% 0.04928 355.498);
+	--color-error: oklch(65.223% 0.22164 5.216);
+	--color-error-high: oklch(41.268% 0.15511 8.446);
 }
 
 html {
-	--color-base-light: oklch(from var(--color-base) calc(l + 0.04) c h);
-	--color-base-lighter: oklch(from var(--color-base) calc(l + 0.08) c h);
-	--color-base-dark: oklch(from var(--color-base) calc(l - 0.04) c h);
-	--color-base-darker: oklch(from var(--color-base) calc(l - 0.08) c h);
+	--color-text: var(--color-base-2);
+	--color-subtext: var(--color-base-3);
+	--color-text-inverse: var(--color-base-7);
 
-	--color-text-light: oklch(from var(--color-text) calc(l - 0.2) c h);
-	--color-text-lighter: oklch(from var(--color-text) calc(l - 0.4) c h);
+	--color-bg-low: var(--color-base-7);
+	--color-bg: var(--color-base-6);
+	--color-bg-high: var(--color-base-5);
+
+	--color-outline: var(--color-base-5);
+	--color-outline-high: var(--color-base-4);
 }
 
 html {
