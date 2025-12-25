@@ -1,5 +1,6 @@
 import { z } from "zod/v4";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
+import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { USER } from "../../user-page-constants";
 
 const BIO_WIDGET_SETTINGS_SCHEMA = z.object({
@@ -16,6 +17,10 @@ const X_RANK_PEAKS_WIDGET_SETTINGS_SCHEMA = z.object({
 
 const TIMEZONE_WIDGET_SETTINGS_SCHEMA = z.object({
 	timezone: z.string().refine((val) => TIMEZONES.includes(val)),
+});
+
+const FAVORITE_STAGE_WIDGET_SETTINGS_SCHEMA = z.object({
+	stageId: z.number().refine((val) => stageIds.includes(val as any)),
 });
 
 export const ALL_WIDGETS = [
@@ -76,6 +81,12 @@ export const ALL_WIDGETS = [
 		category: "misc",
 		slot: "side",
 		schema: TIMEZONE_WIDGET_SETTINGS_SCHEMA,
+	},
+	{
+		id: "favorite-stage",
+		category: "misc",
+		slot: "side",
+		schema: FAVORITE_STAGE_WIDGET_SETTINGS_SCHEMA,
 	},
 	{
 		id: "videos",

@@ -4,6 +4,7 @@ import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { SelectFormField } from "~/components/form/SelectFormField";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
+import { StageSelect } from "~/components/StageSelect";
 import type { Tables } from "~/db/tables";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import { ALL_WIDGETS } from "../core/widgets/portfolio";
@@ -108,6 +109,14 @@ function WidgetSettingsFormInner({
 						label={t("widgets.forms.timezone")}
 						name="timezone"
 						values={TIMEZONES.map((tz) => ({ value: tz, label: tz }))}
+					/>
+				);
+			case "favorite-stage":
+				return (
+					<StageSelect
+						label={t("widgets.forms.favoriteStage")}
+						value={methods.watch("stageId")}
+						onChange={(stageId) => methods.setValue("stageId", stageId)}
 					/>
 				);
 			default:

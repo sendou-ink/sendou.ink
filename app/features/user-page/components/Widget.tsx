@@ -3,13 +3,17 @@ import clsx from "clsx";
 import Markdown from "markdown-to-jsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Image, WeaponImage } from "~/components/Image";
+import { Image, StageImage, WeaponImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
 import type { Tables } from "~/db/tables";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { VodListing } from "~/features/vods/components/VodListing";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
-import type { MainWeaponId, ModeShort } from "~/modules/in-game-lists/types";
+import type {
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
 import { assertUnreachable } from "~/utils/types";
@@ -117,6 +121,8 @@ export function Widget({
 				);
 			case "timezone":
 				return <TimezoneWidget timezone={widget.data.timezone} />;
+			case "favorite-stage":
+				return <FavoriteStageWidget stageId={widget.data.stageId as StageId} />;
 			case "videos":
 				return widget.data.length === 0 ? null : (
 					<Videos videos={widget.data} />
@@ -197,10 +203,10 @@ function BigValue({
 }) {
 	return (
 		<div className={styles.peakValue}>
-			<div className={styles.peakValueMain}>
+			<div className={styles.widgetValueMain}>
 				{value} {unit ? unit : null}
 			</div>
-			{footer ? <div className={styles.peakValueFooter}>{footer}</div> : null}
+			{footer ? <div className={styles.widgetValueFooter}>{footer}</div> : null}
 		</div>
 	);
 }
@@ -444,11 +450,24 @@ function TimezoneWidget({ timezone }: { timezone: string }) {
 
 	return (
 		<div className="stack sm items-center">
-			<div className={styles.peakValueMain}>
+			<div className={styles.widgetValueMain}>
 				{formatter.format(currentTime)}
 			</div>
-			<div className={styles.peakValueFooter}>
+			<div className={styles.widgetValueFooter}>
 				{dateFormatter.format(currentTime)}
+			</div>
+		</div>
+	);
+}
+
+function FavoriteStageWidget({ stageId }: { stageId: StageId }) {
+	const { t } = useTranslation(["game-misc"]);
+
+	return (
+		<div className="stack sm items-center">
+			<StageImage stageId={stageId} width={225} className="rounded" />
+			<div className={styles.widgetValueFooter}>
+				{t(`game-misc:STAGE_${stageId}`)}
 			</div>
 		</div>
 	);

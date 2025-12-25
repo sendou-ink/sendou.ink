@@ -77,13 +77,13 @@
 	gap: var(--s-1);
 }
 
-.peakValueMain {
+.widgetValueMain {
 	font-size: var(--fonts-xl);
 	font-weight: var(--semi-bold);
 	color: var(--text);
 }
 
-.peakValueFooter {
+.widgetValueFooter {
 	font-size: var(--fonts-xxs);
 	font-weight: var(--semi-bold);
 	color: var(--text-lighter);
