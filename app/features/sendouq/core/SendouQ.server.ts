@@ -4,11 +4,7 @@ import type { DBBoolean, ParsedMemento, Tables } from "~/db/tables";
 import type { AuthenticatedUser } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { defaultOrdinal } from "~/features/mmr/mmr-utils";
-import {
-	type SkillTierInterval,
-	type TieredSkill,
-	userSkills,
-} from "~/features/mmr/tiered.server";
+import { type TieredSkill, userSkills } from "~/features/mmr/tiered.server";
 import type * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import type * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
@@ -57,6 +53,8 @@ class SendouQClass {
 	groups;
 	#recentMatches;
 	#isAccurateTiers;
+	#userSkills;
+	#intervals;
 	/** Array of user IDs currently in the queue */
 	usersInQueue;
 
@@ -73,6 +71,8 @@ class SendouQClass {
 
 		this.#recentMatches = recentMatches;
 		this.#isAccurateTiers = isAccurateTiers;
+		this.#userSkills = calculatedUserSkills;
+		this.#intervals = intervals;
 		this.usersInQueue = groups.flatMap((group) =>
 			group.members.map((member) => member.id),
 		);
@@ -80,11 +80,7 @@ class SendouQClass {
 			...group,
 			noScreen: this.#groupNoScreen(group),
 			modePreferences: this.#groupModePreferences(group),
-			tier: this.#groupTier({
-				group,
-				userSkills: calculatedUserSkills,
-				intervals,
-			}) as TieredSkill["tier"] | null,
+			tier: this.#groupTier(group) as TieredSkill["tier"] | null,
 			tierRange: null as TierRange | null,
 			skillDifference:
 				undefined as ParsedMemento["groups"][number]["skillDifference"],
@@ -236,12 +232,16 @@ class SendouQClass {
 	 * @returns Array of censored groups with preview tier ranges
 	 */
 	previewGroups(
+		/** The ID of the user viewing the preview */
+		userId: number,
 		/** Array of private user notes to include */
 		notes: DBPrivateNoteRow[],
 	) {
+		const usersTier = this.#getUserTier(userId);
 		return this.groups
-			.map((group) => this.#addPreviewTierRange(group))
 			.map(this.#getAddMemberPrivateNoteMapper(notes))
+			.sort(this.#getSkillAndNoteSortComparator(usersTier))
+			.map((group) => this.#addPreviewTierRange(group))
 			.map((group) => this.#censorGroup(group));
 	}
 
@@ -384,6 +384,14 @@ class SendouQClass {
 		};
 	}
 
+	#getUserTier(userId: number): TieredSkill["tier"] | null {
+		const skill = this.#userSkills[String(userId)];
+		if (!skill || skill.approximate) {
+			return null;
+		}
+		return skill.tier;
+	}
+
 	#getAddMemberPrivateNoteMapper(notes: DBPrivateNoteRow[]) {
 		return <T extends { members: { id: number }[] }>(group: T) => {
 			const membersWithNotes = group.members.map((member) => {
@@ -413,6 +421,13 @@ class SendouQClass {
 			a: T,
 			b: T,
 		) => {
+			const aIsFull = this.#groupIsFull(a);
+			const bIsFull = this.#groupIsFull(b);
+
+			if (aIsFull !== bIsFull) {
+				return aIsFull ? 1 : -1;
+			}
+
 			const getGroupSentimentScore = (group: T) => {
 				const hasNegative = group.members.some(
 					(m) => m.privateNote?.sentiment === "NEGATIVE",
@@ -505,26 +520,20 @@ class SendouQClass {
 		return group.members.length === FULL_GROUP_SIZE;
 	}
 
-	#groupTier({
-		group,
-		userSkills,
-		intervals,
-	}: {
-		group: DBGroupRow | DBMatch["groupAlpha"] | DBMatch["groupBravo"];
-		userSkills: Record<string, TieredSkill>;
-		intervals: SkillTierInterval[];
-	}): TieredSkill["tier"] | undefined {
+	#groupTier(
+		group: DBGroupRow | DBMatch["groupAlpha"] | DBMatch["groupBravo"],
+	): TieredSkill["tier"] | undefined {
 		if (!group.members) return;
 
 		const skills = group.members.map(
-			(m) => userSkills[String(m.id)] ?? { ordinal: defaultOrdinal() },
+			(m) => this.#userSkills[String(m.id)] ?? { ordinal: defaultOrdinal() },
 		);
 
 		const averageOrdinal =
 			skills.reduce((acc, s) => acc + s.ordinal, 0) / skills.length;
 
 		return (
-			intervals.find(
+			this.#intervals.find(
 				(i) => i.neededOrdinal && averageOrdinal > i.neededOrdinal,
 			) ?? { isPlus: false, name: "IRON" }
 		);
