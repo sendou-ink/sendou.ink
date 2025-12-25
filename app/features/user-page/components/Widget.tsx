@@ -26,6 +26,7 @@ import {
 	topSearchPlayerPage,
 	tournamentBracketsPage,
 	tournamentOrganizationPage,
+	userResultsPage,
 	userVodsPage,
 } from "~/utils/urls";
 import type { LoadedWidget } from "../core/widgets/types";
@@ -108,6 +109,9 @@ export function Widget({
 				return widget.data.length === 0 ? null : (
 					<HighlightedResults results={widget.data} />
 				);
+			case "placement-results":
+				if (!widget.data) return null;
+				return <PlacementResults data={widget.data} />;
 			case "patron-since":
 				if (!widget.data) return null;
 				return (
@@ -172,6 +176,8 @@ export function Widget({
 				return widget.data.length > 0
 					? topSearchPlayerPage(widget.data[0].playerId)
 					: null;
+			case "placement-results":
+				return userResultsPage(user);
 			default:
 				return null;
 		}
@@ -469,6 +475,25 @@ function FavoriteStageWidget({ stageId }: { stageId: StageId }) {
 			<div className={styles.widgetValueFooter}>
 				{t(`game-misc:STAGE_${stageId}`)}
 			</div>
+		</div>
+	);
+}
+
+function PlacementResults({
+	data,
+}: {
+	data: NonNullable<Extract<LoadedWidget, { id: "placement-results" }>["data"]>;
+}) {
+	return (
+		<div className={styles.placementResults}>
+			{data.placements.map(({ placement, count }) => {
+				return (
+					<div key={placement} className={styles.placementResult}>
+						<Placement placement={placement} />
+						<span>×{count}</span>
+					</div>
+				);
+			})}
 		</div>
 	);
 }

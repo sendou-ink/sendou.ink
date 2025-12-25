@@ -144,6 +144,10 @@ export const ALL_WIDGETS = {
 			id: "highlighted-results",
 			slot: "side",
 		},
+		{
+			id: "placement-results",
+			slot: "side",
+		},
 	],
 	vods: [
 		{

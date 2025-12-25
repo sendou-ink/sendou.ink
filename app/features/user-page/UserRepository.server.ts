@@ -755,6 +755,30 @@ export async function hasHighlightedResultsByUserId(userId: number) {
 	return !!highlightedCalendarEventResult;
 }
 
+export async function findResultPlacementsByUserId(userId: number) {
+	const tournamentResults = await db
+		.selectFrom("TournamentResult")
+		.select(["TournamentResult.placement"])
+		.where("userId", "=", userId)
+		.execute();
+
+	const calendarEventResults = await db
+		.selectFrom("CalendarEventResultPlayer")
+		.innerJoin(
+			"CalendarEventResultTeam",
+			"CalendarEventResultTeam.id",
+			"CalendarEventResultPlayer.teamId",
+		)
+		.select(["CalendarEventResultTeam.placement"])
+		.where("CalendarEventResultPlayer.userId", "=", userId)
+		.execute();
+
+	return [
+		...tournamentResults.map((r) => ({ placement: r.placement })),
+		...calendarEventResults.map((r) => ({ placement: r.placement })),
+	];
+}
+
 const searchSelectedFields = ({ fn }: { fn: FunctionModule<DB, "User"> }) =>
 	[
 		...COMMON_USER_FIELDS,

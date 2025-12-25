@@ -93,6 +93,41 @@ export const WIDGET_LOADERS = {
 
 		return results;
 	},
+	"placement-results": async (userId: number) => {
+		const results = await UserRepository.findResultPlacementsByUserId(userId);
+
+		if (results.length === 0) {
+			return null;
+		}
+
+		const firstPlaceResults = results.filter(
+			(result) => result.placement === 1,
+		);
+		const secondPlaceResults = results.filter(
+			(result) => result.placement === 2,
+		);
+		const thirdPlaceResults = results.filter(
+			(result) => result.placement === 3,
+		);
+
+		return {
+			count: results.length,
+			placements: [
+				{
+					placement: 1,
+					count: firstPlaceResults.length,
+				},
+				{
+					placement: 2,
+					count: secondPlaceResults.length,
+				},
+				{
+					placement: 3,
+					count: thirdPlaceResults.length,
+				},
+			],
+		};
+	},
 	"patron-since": async (userId: number) => {
 		return UserRepository.patronSinceByUserId(userId);
 	},
