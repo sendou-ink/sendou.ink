@@ -36,7 +36,7 @@
 
 .react-aria-DatePicker[data-open] .react-aria-Group {
 	border-color: transparent;
-	outline: 2px solid var(--color-accent);
+	outline: 2px solid var(--color-text-accent);
 }
 
 .react-aria-DatePicker .react-aria-DateInput {
@@ -63,7 +63,7 @@
 }
 
 .react-aria-Calendar {
-	background-color: var(--color-bg-high);
+	background-color: var(--color-bg);
 	border-radius: var(--rounded);
 	padding: var(--s-4);
 	border: var(--border-style);
@@ -84,19 +84,19 @@
 
 .react-aria-Calendar .react-aria-Button {
 	background-color: transparent;
-	color: var(--color-accent);
+	color: var(--color-text-accent);
 	border: none;
 	padding: 0;
 	border-radius: 100%;
 }
 
 .react-aria-Calendar .react-aria-Button svg {
-	fill: var(--color-accent);
+	fill: var(--color-text-accent);
 	width: 27.5px;
 }
 
 .react-aria-DatePicker .react-aria-Button[data-focused] svg {
-	fill: var(--color-accent);
+	fill: var(--color-text-accent);
 }
 
 .react-aria-CalendarGrid {
@@ -128,12 +128,12 @@
 }
 
 .react-aria-Calendar .react-aria-CalendarCell[data-selected] {
-	background-color: var(--color-accent-low);
-	color: var(--color-accent);
+	background-color: var(--color-bg-high);
+	color: var(--color-text-accent);
 }
 
 .react-aria-CalendarCell:hover {
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-high);
 	outline: initial;
 }
 
