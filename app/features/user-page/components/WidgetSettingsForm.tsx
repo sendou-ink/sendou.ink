@@ -128,6 +128,16 @@ function WidgetSettingsFormInner({
 						onChange={(stageId) => methods.setValue("stageId", stageId)}
 					/>
 				);
+			case "peak-xp-weapon":
+				return (
+					<WeaponSelect
+						label={t("widgets.forms.weapon")}
+						value={methods.watch("weaponSplId")}
+						onChange={(weaponSplId) =>
+							methods.setValue("weaponSplId", weaponSplId)
+						}
+					/>
+				);
 			case "weapon-pool":
 				return (
 					<WeaponPoolField

@@ -1,7 +1,10 @@
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
-import { allXPLeaderboard } from "~/features/leaderboards/queries/XPLeaderboard.server";
+import {
+	allXPLeaderboard,
+	weaponXPLeaderboard,
+} from "~/features/leaderboards/queries/XPLeaderboard.server";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
@@ -82,6 +85,36 @@ export const WIDGET_LOADERS = {
 			peakXp: peakPlacement.power,
 			division: peakPlacement.region === "WEST" ? "Tentatek" : "Takoroka",
 			topRating: leaderboardEntry?.placementRank ?? null,
+		};
+	},
+	"peak-xp-weapon": async (
+		userId: number,
+		settings: ExtractWidgetSettings<"peak-xp-weapon">,
+	) => {
+		const placements = await XRankPlacementRepository.findPlacementsByUserId(
+			userId,
+			{
+				weaponId: settings.weaponSplId,
+				limit: 1,
+			},
+		);
+
+		if (!placements || placements.length === 0) {
+			return null;
+		}
+
+		const peakPlacement = placements[0];
+
+		const leaderboard = weaponXPLeaderboard(settings.weaponSplId);
+		const leaderboardPosition = leaderboard.findIndex(
+			(entry) => entry.id === userId,
+		);
+
+		return {
+			peakXp: peakPlacement.power,
+			weaponSplId: settings.weaponSplId,
+			leaderboardPosition:
+				leaderboardPosition === -1 ? null : leaderboardPosition + 1,
 		};
 	},
 	"highlighted-results": async (userId: number) => {

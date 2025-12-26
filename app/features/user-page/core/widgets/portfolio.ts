@@ -35,6 +35,10 @@ const WEAPON_POOL_WIDGET_SETTINGS_SCHEMA = z.object({
 		.max(USER.WEAPON_POOL_MAX_SIZE),
 });
 
+const PEAK_XP_WEAPON_WIDGET_SETTINGS_SCHEMA = z.object({
+	weaponSplId,
+});
+
 export const ALL_WIDGETS = {
 	misc: [
 		{
@@ -101,6 +105,11 @@ export const ALL_WIDGETS = {
 		{
 			id: "peak-xp",
 			slot: "side",
+		},
+		{
+			id: "peak-xp-weapon",
+			slot: "side",
+			schema: PEAK_XP_WEAPON_WIDGET_SETTINGS_SCHEMA,
 		},
 		{
 			id: "x-rank-peaks",

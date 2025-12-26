@@ -21,6 +21,7 @@ import { assertUnreachable } from "~/utils/types";
 import {
 	brandImageUrl,
 	calendarEventPage,
+	LEADERBOARDS_PAGE,
 	LFG_PAGE,
 	modeImageUrl,
 	teamPage,
@@ -105,6 +106,15 @@ export function Widget({
 						value={widget.data.peakXp}
 						unit="XP"
 						footer={`${widget.data.division}${widget.data.topRating ? ` / #${widget.data.topRating}` : ""}`}
+					/>
+				);
+			case "peak-xp-weapon":
+				if (!widget.data) return null;
+				return (
+					<PeakXpWeapon
+						weaponSplId={widget.data.weaponSplId as MainWeaponId}
+						peakXp={widget.data.peakXp}
+						leaderboardPosition={widget.data.leaderboardPosition}
 					/>
 				);
 			case "highlighted-results":
@@ -197,6 +207,10 @@ export function Widget({
 				return userResultsPage(user);
 			case "builds":
 				return userBuildsPage(user);
+			case "peak-xp-weapon":
+				return widget.data
+					? `${LEADERBOARDS_PAGE}?type=XP-WEAPON-${widget.data.weaponSplId}`
+					: null;
 			default:
 				return null;
 		}
@@ -550,6 +564,28 @@ function WeaponPool({
 					</div>
 				);
 			})}
+		</div>
+	);
+}
+
+function PeakXpWeapon({
+	weaponSplId,
+	peakXp,
+	leaderboardPosition,
+}: {
+	weaponSplId: MainWeaponId;
+	peakXp: number;
+	leaderboardPosition: number | null;
+}) {
+	return (
+		<div className={styles.peakValue}>
+			<div className="stack horizontal sm items-center justify-center mb-2">
+				<WeaponImage weaponSplId={weaponSplId} variant="badge" size={48} />
+			</div>
+			<div className={styles.widgetValueMain}>{peakXp} XP</div>
+			{leaderboardPosition ? (
+				<div className={styles.widgetValueFooter}>#{leaderboardPosition}</div>
+			) : null}
 		</div>
 	);
 }

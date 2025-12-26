@@ -3,6 +3,7 @@ import { sql } from "kysely";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import { modesShort } from "~/modules/in-game-lists/modes";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 
 export function unlinkPlayerByUserId(userId: number) {
 	return db
@@ -58,11 +59,15 @@ export async function findPlacementsByPlayerId(
 
 export async function findPlacementsByUserId(
 	userId: Tables["User"]["id"],
-	options?: { limit: number },
+	options?: { limit?: number; weaponId?: MainWeaponId },
 ) {
 	let query = xRankPlacementsQueryBase()
 		.where("SplatoonPlayer.userId", "=", userId)
 		.orderBy("XRankPlacement.power", "desc");
+
+	if (options?.weaponId) {
+		query = query.where("XRankPlacement.weaponSplId", "=", options.weaponId);
+	}
 
 	if (options?.limit) {
 		query = query.limit(options.limit);
