@@ -384,6 +384,17 @@ function SelectSection() {
 						)}
 					</SendouSelect>
 				</ComponentRow>
+
+				<ComponentRow label="HTML Select">
+					<select>
+						<option value="">Select...</option>
+						{SELECT_ITEMS.map((item) => (
+							<option key={item.id} value={item.id}>
+								{item.name}
+							</option>
+						))}
+					</select>
+				</ComponentRow>
 			</div>
 		</Section>
 	);
