@@ -883,6 +883,14 @@
 		"displayName": "P.X.G",
 		"authorDiscordId": "528851510222782474"
 	},
+	"rabbithole1st": {
+		"displayName": "Rabbit Hole Cup [Winner]",
+		"authorDiscordId": "528851510222782474"
+	},
+	"rabbithole2nd": {
+		"displayName": "Rabbit Hole Cup [Runner-up]",
+		"authorDiscordId": "528851510222782474"
+	},
 	"raid-weekend": {
 		"displayName": "Raid Weekend",
 		"authorDiscordId": "354880982890971136"
