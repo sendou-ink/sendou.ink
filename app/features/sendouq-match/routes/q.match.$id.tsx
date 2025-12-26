@@ -597,7 +597,12 @@ function ReportWeaponsForm() {
 														member.username
 													)}
 												</div>
-												<div className="stack horizontal sm items-center">
+												<div
+													className={clsx(
+														styles.userWeaponContainer,
+														"stack horizontal sm items-center",
+													)}
+												>
 													<WeaponSelect
 														value={weaponSplId}
 														quickSelectWeaponsIds={recentlyReportedWeapons}

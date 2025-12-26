@@ -529,7 +529,7 @@
 
 	&::-webkit-scrollbar,
 	&::-webkit-scrollbar-track {
-		background-color: var(--color-bg);
+		background-color: transparent;
 		height: 14px;
 		width: 14px;
 	}

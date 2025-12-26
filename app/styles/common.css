@@ -65,10 +65,6 @@ a {
 	text-decoration: none;
 	border-radius: 5px;
 
-	&:hover {
-		text-decoration: underline;
-	}
-
 	&:focus-visible {
 		outline: var(--input-focus-ring);
 		outline-offset: 1px;
@@ -1334,9 +1330,8 @@ html[dir="rtl"] .fix-rtl {
 .chat__bottom-row {
 	display: flex;
 	justify-content: space-between;
-	align-items: flex-start;
+	align-items: center;
 	margin-block-start: var(--s-2);
-	height: 20px;
 }
 
 .chat__unseen-messages {
