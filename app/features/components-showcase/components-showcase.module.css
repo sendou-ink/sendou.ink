@@ -21,8 +21,5 @@
 }
 
 .componentContent {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--spacing-sm);
-	align-items: center;
+	width: 100%;
 }
