@@ -95,7 +95,6 @@ export function CustomizedColorsInput({
 								<div>{t(`custom.colors.${cssVar}`)}</div>
 								<input
 									type="color"
-									className="plain"
 									value={colors[cssVar] ?? "#000000"}
 									onChange={(e) => {
 										const extras: Record<string, string> = {};

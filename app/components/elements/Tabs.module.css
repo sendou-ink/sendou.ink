@@ -1,7 +1,6 @@
 .tabListContainer {
 	overflow-x: auto;
 	overflow-y: hidden;
-	padding-bottom: var(--s-1);
 }
 
 .tabList {

@@ -9,6 +9,7 @@
 }
 
 .tag {
+	cursor: pointer;
 	border: 2px solid var(--tag-color);
 	border-radius: var(--rounded-sm);
 	font-size: var(--fonts-sm);

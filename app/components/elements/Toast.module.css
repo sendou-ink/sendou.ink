@@ -9,7 +9,7 @@
 }
 
 .toast {
-	background: var(--color-bg-high);
+	background: var(--color-info-low);
 	border-radius: var(--rounded);
 	padding: var(--s-1-5) var(--s-3);
 	align-items: center;
@@ -17,7 +17,7 @@
 	font-size: var(--fonts-xsm);
 	font-weight: var(--semi-bold);
 	gap: var(--s-1);
-	border: 2px solid var(--color-border);
+	border: 2px solid var(--color-info);
 	width: 250px;
 	outline: none;
 	view-transition-class: toast;
@@ -43,28 +43,42 @@
 	}
 }
 
-.errorToast {
-	border-color: var(--color-error);
-}
-
 .topRow {
 	display: flex;
 	text-transform: uppercase;
-	color: var(--color-text-high);
+	color: var(--color-info-high);
 	font-size: var(--fonts-xxsm);
 	gap: var(--s-2);
 	align-items: center;
 	margin-block-end: var(--s-1-5);
 }
 
+.errorToast {
+	border-color: var(--color-error);
+	background-color: var(--color-error-low);
+
+	.topRow {
+		color: var(--color-error-high);
+	}
+}
+
+.successToast {
+	border-color: var(--color-success);
+	background-color: var(--color-success-low);
+
+	.topRow {
+		color: var(--color-success-high);
+	}
+}
+
 .closeButton {
 	margin-inline-start: auto;
-	outline-color: var(--color-text-high) !important;
+	outline-color: var(--color-text) !important;
 }
 
 .closeButton svg {
 	width: 1rem;
-	fill: var(--color-text-high);
+	fill: var(--color-text);
 }
 
 .alertIcon {

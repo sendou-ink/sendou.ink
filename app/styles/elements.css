@@ -138,6 +138,9 @@
 }
 
 .react-aria-Switch {
+	--height: var(--toggle-height);
+
+	cursor: pointer;
 	display: grid;
 	grid-template-columns: auto 1fr;
 	align-items: center;
@@ -147,51 +150,40 @@
 	font-size: var(--fonts-xs);
 	font-weight: var(--bold);
 	margin-block-end: 0;
+
+	&.small {
+		--height: var(--toggle-height-small);
+	}
 }
 
 .react-aria-Switch .indicator {
-	width: var(--s-11);
-	height: var(--s-6);
-	background: var(--color-bg-higher);
-	border-radius: 1.143rem;
-}
+	width: calc(var(--height) * 1.75);
+	height: var(--height);
+	background: var(--color-bg);
+	border: 2px solid var(--color-border);
+	border-radius: 99999px;
 
-.react-aria-Switch.small .indicator {
-	width: 2rem;
-	height: 1.143rem;
-}
-
-.react-aria-Switch .indicator:before {
-	content: "";
-	display: block;
-	margin: 0.26rem;
-	width: var(--s-4);
-	height: var(--s-4);
-	background: white;
-	border-radius: 16px;
-	transition: transform 200ms;
-}
-
-.react-aria-Switch.small .indicator:before {
-	width: 0.857rem;
-	height: 0.857rem;
-	margin: 0.143rem;
-}
-
-.react-aria-Switch[data-pressed] .indicator:before {
-	opacity: 0.8;
+	&:before {
+		content: "";
+		display: block;
+		margin: 2px;
+		width: calc(var(--height) - 8px);
+		height: calc(var(--height) - 8px);
+		aspect-ratio: 1 / 1;
+		background: var(--color-border);
+		border-radius: 50%;
+		transition: transform 200ms;
+	}
 }
 
 .react-aria-Switch[data-selected] .indicator {
 	background: var(--color-text-accent);
-}
+	border-color: var(--color-text-accent);
 
-.react-aria-Switch[data-selected] .indicator:before {
-	transform: translateX(125%);
-}
-
-.react-aria-Switch.small[data-selected] .indicator:before {
-	transform: translateX(100%);
+	&:before {
+		transform: translateX(calc(var(--height) * 0.75));
+		background: var(--color-text-inverse);
+	}
 }
 
 .react-aria-Switch[data-focus-visible] .indicator {

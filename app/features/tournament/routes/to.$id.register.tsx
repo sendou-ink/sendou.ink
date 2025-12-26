@@ -824,7 +824,6 @@ function TournamentLogoUpload({
 	return (
 		<input
 			id="img-field"
-			className="plain"
 			type="file"
 			name="img"
 			accept="image/png, image/jpeg, image/webp"

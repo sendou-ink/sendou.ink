@@ -7,7 +7,6 @@ import {
 } from "react-hook-form";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
-import { type FormFieldSize, formFieldSizeToClassName } from "./form-utils";
 
 export function InputFormField<T extends FieldValues>({
 	label,
@@ -15,7 +14,6 @@ export function InputFormField<T extends FieldValues>({
 	bottomText,
 	placeholder,
 	required,
-	size = "small",
 	type,
 }: {
 	label: string;
@@ -23,7 +21,6 @@ export function InputFormField<T extends FieldValues>({
 	bottomText?: string;
 	placeholder?: string;
 	required?: boolean;
-	size?: FormFieldSize;
 	type?: React.HTMLInputTypeAttribute;
 }) {
 	const methods = useFormContext();
@@ -41,7 +38,6 @@ export function InputFormField<T extends FieldValues>({
 				placeholder={placeholder}
 				type={type}
 				{...methods.register(name)}
-				className={formFieldSizeToClassName(size)}
 			/>
 			{error && (
 				<FormMessage type="error">{error.message as string}</FormMessage>

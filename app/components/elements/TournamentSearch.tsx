@@ -120,7 +120,7 @@ export const TournamentSearch = React.forwardRef(function TournamentSearch<
 					>
 						<SearchIcon aria-hidden className={selectStyles.smallIcon} />
 						<Input
-							className={clsx("plain", selectStyles.searchInput)}
+							className={selectStyles.searchInput}
 							data-testid="tournament-search-input"
 						/>
 						<Button className={selectStyles.searchClearButton}>

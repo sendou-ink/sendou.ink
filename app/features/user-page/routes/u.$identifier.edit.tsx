@@ -143,7 +143,6 @@ function InGameNameInputs() {
 			<Label>{t("user:ign")}</Label>
 			<div className="stack horizontal sm items-center">
 				<Input
-					className={styles.inGameNameText}
 					name="inGameNameText"
 					aria-label="In game name"
 					maxLength={USER.IN_GAME_NAME_TEXT_MAX_LENGTH}
@@ -172,7 +171,7 @@ function SensSelects() {
 	const data = useLoaderData<typeof loader>();
 
 	return (
-		<div className="stack horizontal md">
+		<div className={styles.sensContainer}>
 			<div>
 				<Label htmlFor="motionSens">{t("user:motionSens")}</Label>
 				<select
@@ -307,7 +306,7 @@ function WeaponPoolSelect() {
 			<div className="stack horizontal sm justify-center">
 				{weapons.map((weapon) => {
 					return (
-						<div key={weapon.weaponSplId} className="stack xs">
+						<div key={weapon.weaponSplId} className="stack xs items-center">
 							<div className="u__weapon">
 								<WeaponImage
 									weaponSplId={weapon.weaponSplId}
@@ -404,7 +403,7 @@ function FavBadgeSelect() {
 	};
 
 	return (
-		<div>
+		<div className="w-full">
 			<input
 				type="hidden"
 				name="favoriteBadgeIds"

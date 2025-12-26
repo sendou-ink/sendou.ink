@@ -436,7 +436,7 @@ function TeamRosterInputsCheckboxes({
 						>
 							<input
 								className={clsx(
-									"plain tournament-bracket__during-match-actions__checkbox",
+									"tournament-bracket__during-match-actions__checkbox",
 									{
 										opaque: presentational,
 									},

@@ -53,6 +53,7 @@ export function Input({
 		>
 			{leftAddon ? <div className="input-addon">{leftAddon}</div> : null}
 			<input
+				className="in-container"
 				name={name}
 				id={id}
 				minLength={minLength}

@@ -131,7 +131,6 @@ function FormFields({ player }: { player: YT.Player | null }) {
 				name="video.youtubeUrl"
 				placeholder="https://www.youtube.com/watch?v=-dQ6JsVIKdY"
 				required
-				size="medium"
 			/>
 
 			<InputFormField<VodFormFields>
@@ -139,14 +138,12 @@ function FormFields({ player }: { player: YT.Player | null }) {
 				name="video.title"
 				placeholder="[SCL 47] (Grand Finals) Team Olive vs. Kraken Paradise"
 				required
-				size="medium"
 			/>
 
 			<DateFormField<VodFormFields>
 				label={t("vods:forms.title.videoDate")}
 				name="video.date"
 				required
-				size="extra-small"
 			/>
 
 			<SelectFormField<VodFormFields>

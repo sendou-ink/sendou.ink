@@ -126,7 +126,7 @@ function InfoText() {
 		return (
 			<fetcher.Form
 				method="post"
-				className="text-xs text-lighter ml-auto text-error stack horizontal sm"
+				className="text-xs text-lighter ml-auto text-error stack horizontal sm items-center"
 			>
 				{t("q:looking.inactiveGroup")}{" "}
 				<SubmitButton
@@ -306,7 +306,7 @@ function Groups() {
 	);
 
 	const ownGroupElement = data.ownGroup ? (
-		<div className="stack md">
+		<div className="stack sm">
 			{!showChat && (
 				<ColumnHeader>{t("q:looking.columns.myGroup")}</ColumnHeader>
 			)}

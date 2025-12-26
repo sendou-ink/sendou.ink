@@ -65,7 +65,7 @@ export default function BadgesPageLayout() {
 				<Outlet />
 				<Input
 					className="badges-search__input"
-					icon={<SearchIcon className="badges-search__icon" />}
+					icon={<SearchIcon />}
 					value={inputValue}
 					onChange={(e) => setInputValue(e.target.value)}
 				/>

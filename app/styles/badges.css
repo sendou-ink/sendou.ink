@@ -119,9 +119,3 @@
 	margin: 0 auto;
 	font-size: var(--fonts-lg);
 }
-
-.badges-search__icon {
-	height: 25px;
-	margin: auto;
-	margin-right: 15px;
-}

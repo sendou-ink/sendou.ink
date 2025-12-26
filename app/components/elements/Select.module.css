@@ -1,38 +1,30 @@
 .button {
-	height: 1rem;
-	padding: var(--s-4) var(--s-3);
+	height: var(--input-height);
+	padding: 0 var(--input-padding-inline);
 	border: 2px solid var(--color-border);
 	border-radius: var(--rounded-sm);
-	accent-color: var(--color-accent);
 	background-color: var(--color-bg);
-	color: var(--color-text);
 	outline: none;
 
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: var(--s-1-5);
-	min-width: var(--select-width);
-
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
-	letter-spacing: 0.5px;
+	width: 100%;
 	cursor: pointer;
-}
 
-.button:hover {
-	border-color: var(--color-border-high);
-}
+	&[data-focus-visible],
+	&[aria-expanded="true"] {
+		outline: var(--input-focus-ring);
+		outline-offset: 1px;
+	}
 
-.button[data-focus-visible] {
-	outline: 2px solid var(--color-accent);
-}
-
-.selectValue {
-	max-width: calc(var(--select-width) - 55px);
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	overflow: hidden;
+	&[data-disabled] {
+		pointer-events: none;
+		cursor: not-allowed;
+		opacity: 0.5;
+		outline: none;
+	}
 }
 
 .selectValue[data-placeholder] {
@@ -55,12 +47,11 @@
 
 .popover {
 	padding: var(--s-1);
-	min-width: var(--select-width);
-	max-width: var(--select-width);
+	width: var(--trigger-width);
 	border: 2px solid var(--color-border);
 	border-radius: var(--rounded);
 	background-color: var(--color-bg);
-	max-height: 250px !important;
+	outline: none;
 
 	display: flex;
 	flex-direction: column;
@@ -76,7 +67,6 @@
 	font-weight: var(--semi-bold);
 	padding: var(--s-1-5);
 	border-radius: var(--rounded-sm);
-	height: 33px;
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	overflow: hidden;
@@ -84,7 +74,6 @@
 
 .item[data-disabled] {
 	color: var(--color-text-high);
-	font-style: italic;
 }
 
 .itemFocused {
@@ -101,13 +90,13 @@
 	display: flex;
 	gap: var(--s-2);
 
-	border: 2px solid var(--color-border);
-	border-radius: var(--rounded-sm);
+	border-bottom: 2px solid var(--color-border);
+	border-radius: var(--rounded-sm) var(--rounded-sm) 0 0;
 	accent-color: var(--color-accent);
 	background-color: var(--color-bg);
 	color: var(--color-text);
 	outline: none;
-	padding: var(--s-1-5) var(--s-2);
+	padding: var(--s-2) var(--s-1-5) calc(var(--s-1) + var(--s-2)) var(--s-1-5);
 	margin-block-end: var(--s-1-5);
 }
 
@@ -145,6 +134,7 @@
 }
 
 .select {
+	width: 100%;
 	position: relative;
 }
 

@@ -110,9 +110,7 @@ export default function ObjectDamagePage() {
 				</div>
 				{multiShotCount ? (
 					<div className="stack sm horizontal items-center label-no-spacing">
-						<label className="plain" htmlFor="multi">
-							×{multiShotCount}
-						</label>
+						<label htmlFor="multi">×{multiShotCount}</label>
 						<SendouSwitch
 							id="multi"
 							isSelected={isMultiShot}

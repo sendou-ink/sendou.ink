@@ -8,21 +8,18 @@ import {
 import { dateToDateValue, dayMonthYearToDateValue } from "../../utils/dates";
 import type { DayMonthYear } from "../../utils/zod";
 import { SendouDatePicker } from "../elements/DatePicker";
-import type { FormFieldSize } from "./form-utils";
 
 export function DateFormField<T extends FieldValues>({
 	label,
 	name,
 	bottomText,
 	required,
-	size,
 	granularity = "day",
 }: {
 	label: string;
 	name: FieldPath<T>;
 	bottomText?: string;
 	required?: boolean;
-	size?: FormFieldSize;
 	granularity?: "day" | "minute";
 }) {
 	const methods = useFormContext();
@@ -54,7 +51,6 @@ export function DateFormField<T extends FieldValues>({
 						isRequired={required}
 						errorText={error?.message as string | undefined}
 						value={getValue()}
-						size={size}
 						isInvalid={invalid}
 						name={name}
 						onBlur={onBlur}

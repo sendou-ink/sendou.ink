@@ -747,7 +747,6 @@ function AvatarImageInput({
 			<Label htmlFor="avatarImage">Logo</Label>
 			<input
 				id="avatarImage"
-				className="plain"
 				type="file"
 				name="img"
 				accept="image/png, image/jpeg, image/jpg, image/webp"

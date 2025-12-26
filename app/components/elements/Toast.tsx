@@ -59,6 +59,7 @@ export function SendouToastRegion() {
 								icon={<CrossIcon />}
 								className={styles.closeButton}
 								slot="close"
+								size="small"
 							/>
 						</div>
 						<Text slot="title">{toast.content.message}</Text>

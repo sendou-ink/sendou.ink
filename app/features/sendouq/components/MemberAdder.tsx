@@ -14,7 +14,6 @@ import {
 	sendouQInviteLink,
 } from "~/utils/urls";
 import type { SendouQPreparingAction } from "../actions/q.preparing.server";
-import styles from "./MemberAdder.module.css";
 
 export function MemberAdder({
 	inviteCode,
@@ -57,7 +56,6 @@ export function MemberAdder({
 						value={inviteLink}
 						readOnly
 						id="invite"
-						className={styles.input}
 					/>
 					<SendouButton
 						variant={copySuccess ? "outlined-success" : "outlined"}
@@ -102,7 +100,7 @@ function TrusterDropdown({
 	const { trusters, teams } = useTrusted();
 
 	if (!trusters || trusters.length === 0) {
-		return <select name="id" id="players" disabled className={styles.input} />;
+		return <select name="id" id="players" disabled />;
 	}
 
 	const trustersNotInGroup = trusters.filter(
@@ -126,7 +124,6 @@ function TrusterDropdown({
 			onChange={(e) =>
 				setTruster(e.target.value ? Number(e.target.value) : undefined)
 			}
-			className={styles.input}
 		>
 			<option value="">{t("q:looking.groups.adder.select")}</option>
 			{teams?.map((team) => {

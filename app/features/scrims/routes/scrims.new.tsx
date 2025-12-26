@@ -70,14 +70,12 @@ export default function NewScrimPage() {
 				<WithFormField usersTeams={data.teams} />
 
 				<DateFormField<FormFields>
-					size="medium"
 					label={t("scrims:forms.when.title")}
 					name="at"
 					bottomText={t("scrims:forms.when.explanation")}
 					granularity="minute"
 				/>
 				<SelectFormField<FormFields>
-					size="medium"
 					label={t("scrims:forms.rangeEnd.title")}
 					name="rangeEnd"
 					bottomText={t("scrims:forms.rangeEnd.explanation")}

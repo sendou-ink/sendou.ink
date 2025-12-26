@@ -11,16 +11,18 @@
 	cursor: pointer;
 	font-size: var(--fonts-sm);
 	font-weight: var(--bold);
-	line-height: 1.2;
-	outline-offset: 2px;
-	padding-block: var(--s-1-5);
-	padding-inline: var(--s-2-5);
+	line-height: var(--input-line-height);
+	padding: 0 var(--input-padding-inline);
 	user-select: none;
+	outline-color: var(--color-text-accent);
+	height: var(--input-height);
 }
 
 .button[data-focus-visible],
 .button:focus-visible {
-	outline: 2px solid var(--color-text-accent);
+	outline-style: solid;
+	outline-width: 2px;
+	outline-offset: 1px;
 }
 
 .button[data-pressed],
@@ -36,7 +38,7 @@
 }
 
 .outlined {
-	background-color: var(--color-accent-low);
+	background-color: transparent;
 	color: var(--color-text-accent);
 }
 
@@ -44,28 +46,39 @@
 	border-color: var(--color-success);
 	background-color: transparent;
 	color: var(--color-success);
+	outline-color: var(--color-success);
+}
+
+.outlinedDestructive {
+	border-color: var(--color-error);
+	background-color: transparent;
+	color: var(--color-error);
+	outline-color: var(--color-error);
 }
 
 .small {
 	font-size: var(--fonts-xs);
 	padding-block: var(--s-1);
 	padding-inline: var(--s-2);
+	height: var(--input-height-small);
 }
 
 .miniscule {
 	font-size: var(--fonts-xxs);
 	padding-block: var(--s-1);
 	padding-inline: var(--s-2);
+	height: var(--input-height-smaller);
 }
 
 .big {
 	font-size: var(--fonts-md);
 	padding-block: var(--s-2-5);
 	padding-inline: var(--s-6);
+	height: var(--input-height-large);
 }
 
 .minimal {
-	padding: 0;
+	padding: 0 var(--s-1);
 	border: none;
 	background-color: transparent;
 	color: var(--color-text-accent);
@@ -73,14 +86,15 @@
 }
 
 .minimal[data-focus-visible] {
-	outline: 2px solid var(--color-accent);
+	outline: 2px solid var(--color-text-accent);
 }
 
 .minimalSuccess {
-	padding: 0;
+	padding: 0 var(--s-1);
 	border: none;
 	background-color: transparent;
 	color: var(--color-success);
+	outline-color: var(--color-success);
 }
 
 .success {
@@ -91,13 +105,13 @@
 
 .destructive {
 	border-color: var(--color-error);
-	background-color: transparent;
-	color: var(--color-error);
+	background-color: var(--color-error);
+	color: var(--color-text-inverse);
 	outline-color: var(--color-error);
 }
 
 .minimalDestructive {
-	padding: 0;
+	padding: 0 var(--s-1);
 	border: none;
 	background-color: transparent;
 	color: var(--color-error);

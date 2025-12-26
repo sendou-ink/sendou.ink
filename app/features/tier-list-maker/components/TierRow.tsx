@@ -131,7 +131,6 @@ export function TierRow({ tier }: TierRowProps) {
 										onChange={(e) =>
 											handleChangeTierColor(tier.id, e.target.value)
 										}
-										className="plain"
 									/>
 								</label>
 							</div>

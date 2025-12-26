@@ -7,21 +7,18 @@ import {
 } from "react-hook-form";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
-import { type FormFieldSize, formFieldSizeToClassName } from "./form-utils";
 
 export function SelectFormField<T extends FieldValues>({
 	label,
 	name,
 	values,
 	bottomText,
-	size,
 	required,
 }: {
 	label: string;
 	name: FieldPath<T>;
 	values: Array<{ value: string | number; label: string }>;
 	bottomText?: string;
-	size?: FormFieldSize;
 	required?: boolean;
 }) {
 	const methods = useFormContext();
@@ -34,11 +31,7 @@ export function SelectFormField<T extends FieldValues>({
 			<Label htmlFor={id} required={required}>
 				{label}
 			</Label>
-			<select
-				{...methods.register(name)}
-				id={id}
-				className={formFieldSizeToClassName(size)}
-			>
+			<select {...methods.register(name)} id={id}>
 				{values.map((option) => (
 					<option key={option.value} value={option.value}>
 						{option.label}

@@ -32,14 +32,14 @@
 	border-radius: 100%;
 	width: 30px;
 	height: 30px;
-	background-color: var(--color-bg-higher);
+	background-color: var(--color-bg-high);
 	display: grid;
 	place-items: center;
 	position: relative;
 }
 
 .item:hover .imageContainer {
-	outline: 3px solid var(--color-accent-low);
+	outline: 3px solid var(--color-bg-higher);
 }
 
 .item:focus-within .imageContainer {

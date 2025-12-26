@@ -107,7 +107,7 @@ export const UserSearch = React.forwardRef(function UserSearch<
 					>
 						<SearchIcon aria-hidden className={selectStyles.smallIcon} />
 						<Input
-							className={clsx("plain", selectStyles.searchInput)}
+							className={selectStyles.searchInput}
 							data-testid="user-search-input"
 						/>
 						<Button className={selectStyles.searchClearButton}>

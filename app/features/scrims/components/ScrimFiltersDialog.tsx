@@ -105,13 +105,11 @@ function FiltersForm({
 						label={t("scrims:filters.weekdayStart")}
 						name={"weekdayTimes.start" as const}
 						type="time"
-						size="extra-small"
 					/>
 					<InputFormField<ScrimFilters>
 						label={t("scrims:filters.weekdayEnd")}
 						name={"weekdayTimes.end" as const}
 						type="time"
-						size="extra-small"
 					/>
 				</div>
 
@@ -120,13 +118,11 @@ function FiltersForm({
 						label={t("scrims:filters.weekendStart")}
 						name={"weekendTimes.start" as const}
 						type="time"
-						size="extra-small"
 					/>
 					<InputFormField<ScrimFilters>
 						label={t("scrims:filters.weekendEnd")}
 						name={"weekendTimes.end" as const}
 						type="time"
-						size="extra-small"
 					/>
 				</div>
 

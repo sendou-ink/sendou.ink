@@ -6,24 +6,29 @@
 	gap: var(--s-6);
 }
 
-.inGameNameText {
-	max-width: 8rem;
-}
-
 .inGameNameHashtag {
 	font-size: var(--fonts-lg);
 }
 
 .inGameNameDiscriminator {
-	width: 5rem;
+	min-width: 5rem;
+	flex: 1;
+}
+
+.sensContainer {
+	width: 100%;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--s-4);
 }
 
 .sensSelect {
-	width: 6rem;
+	min-width: 100%;
+	flex: 1;
 }
 
 .weaponPool {
-	width: 20rem;
+	width: 100%;
 }
 
 .bioContainer {

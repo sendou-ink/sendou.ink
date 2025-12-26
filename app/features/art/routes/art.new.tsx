@@ -119,7 +119,6 @@ function ImageUpload({
 			<label htmlFor={id}>{t("common:upload.imageToUpload")}</label>
 			<input
 				id={id}
-				className="plain"
 				type="file"
 				name="img"
 				accept="image/png, image/jpeg, image/jpg, image/webp"

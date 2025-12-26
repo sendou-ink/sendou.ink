@@ -125,7 +125,7 @@ export function SendouSelect<T extends object>({
 							<SearchIcon aria-hidden className={styles.smallIcon} />
 							<Input
 								placeholder={search.placeholder}
-								className={clsx("plain", styles.searchInput)}
+								className={clsx(styles.searchInput, "in-container")}
 							/>
 							<Button className={styles.searchClearButton}>
 								<CrossIcon className={styles.smallIcon} />

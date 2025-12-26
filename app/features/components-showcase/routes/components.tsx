@@ -80,6 +80,10 @@ function ButtonsSection() {
 					<SendouButton variant="success">Success Button</SendouButton>
 				</ComponentRow>
 
+				<ComponentRow label="Destructive">
+					<SendouButton variant="destructive">Destructive Button</SendouButton>
+				</ComponentRow>
+
 				<ComponentRow label="Outlined">
 					<SendouButton variant="outlined">Outlined Button</SendouButton>
 				</ComponentRow>
@@ -90,8 +94,10 @@ function ButtonsSection() {
 					</SendouButton>
 				</ComponentRow>
 
-				<ComponentRow label="Destructive">
-					<SendouButton variant="destructive">Destructive Button</SendouButton>
+				<ComponentRow label="Outlined Destructive">
+					<SendouButton variant="outlined-destructive">
+						Outlined Destructive
+					</SendouButton>
 				</ComponentRow>
 
 				<ComponentRow label="Minimal">
@@ -244,6 +250,10 @@ function InputsSection() {
 					/>
 				</ComponentRow>
 
+				<ComponentRow label="Textarea">
+					<textarea placeholder="Enter text..." aria-label="Textarea" />
+				</ComponentRow>
+
 				<Divider smallText>Labels</Divider>
 
 				<ComponentRow label="With Label">
@@ -387,7 +397,6 @@ function SelectSection() {
 
 				<ComponentRow label="HTML Select">
 					<select>
-						<option value="">Select...</option>
 						{SELECT_ITEMS.map((item) => (
 							<option key={item.id} value={item.id}>
 								{item.name}

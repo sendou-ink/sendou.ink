@@ -31,7 +31,7 @@ html.dark {
 	--color-info: oklch(52% 0.27 275);
 	--color-info-high: oklch(83% 0.08 275);
 
-	--color-success-low: oklch(39% 0.08 135);
+	--color-success-low: oklch(35% 0.08 135);
 	--color-success: oklch(85% 0.22 135);
 	--color-success-high: oklch(91% 0.12 135);
 
@@ -93,6 +93,19 @@ html {
 	--border-style: 1px solid var(--color-border);
 
 	--backdrop-filter: blur(10px) brightness(95%);
+
+	--input-height-smaller: 1rem;
+	--input-height-small: 2rem;
+	--input-height: 2.5rem;
+	--input-height-large: 3rem;
+	--input-padding-block: 0.5rem;
+	--input-padding-inline: 1rem;
+	--input-line-height: 1.2rem;
+	--input-focus-ring: 2px solid var(--color-text-accent);
+	--input-focus-ring-error: 2px solid var(--color-error);
+
+	--toggle-height: 1.5rem;
+	--toggle-height-small: 1.25rem;
 }
 
 html {

@@ -11,9 +11,10 @@ import styles from "./Button.module.css";
 type ButtonVariant =
 	| "primary"
 	| "success"
+	| "destructive"
 	| "outlined"
 	| "outlined-success"
-	| "destructive"
+	| "outlined-destructive"
 	| "minimal"
 	| "minimal-success"
 	| "minimal-destructive";
@@ -123,12 +124,14 @@ function buttonClassName({
 				return styles.primary;
 			case "success":
 				return styles.success;
+			case "destructive":
+				return styles.destructive;
 			case "outlined":
 				return styles.outlined;
 			case "outlined-success":
 				return styles.outlinedSuccess;
-			case "destructive":
-				return styles.destructive;
+			case "outlined-destructive":
+				return styles.outlinedDestructive;
 			case "minimal":
 				return styles.minimal;
 			case "minimal-success":
