@@ -108,6 +108,16 @@ export function Widget({
 						footer={`${widget.data.division}${widget.data.topRating ? ` / #${widget.data.topRating}` : ""}`}
 					/>
 				);
+			case "peak-xp-unverified":
+				return (
+					<BigValue
+						value={widget.data.peakXp}
+						unit="XP"
+						footer={
+							widget.data.division === "tentatek" ? "Tentatek" : "Takoroka"
+						}
+					/>
+				);
 			case "peak-xp-weapon":
 				if (!widget.data) return null;
 				return (
@@ -203,6 +213,8 @@ export function Widget({
 				return widget.data.length > 0
 					? topSearchPlayerPage(widget.data[0].playerId)
 					: null;
+			case "highlighted-results":
+				return userResultsPage(user);
 			case "placement-results":
 				return userResultsPage(user);
 			case "builds":

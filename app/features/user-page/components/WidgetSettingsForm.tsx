@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
+import { InputFormField } from "~/components/form/InputFormField";
 import { SelectFormField } from "~/components/form/SelectFormField";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
 import { WeaponImage } from "~/components/Image";
@@ -54,9 +55,12 @@ function WidgetSettingsFormInner({
 	const methods = useForm({
 		resolver: standardSchemaResolver(schema),
 		defaultValues: (widget.settings ?? {}) as any,
+		mode: "onChange",
 	});
 
 	const values = useWatch({ control: methods.control });
+
+	// xxx: something better than refs here? (not even working - error is not cleared)
 	const isFirstRender = useRef(true);
 	const onSettingsChangeRef = useRef(onSettingsChange);
 	const widgetIdRef = useRef(widget.id);
@@ -99,6 +103,7 @@ function WidgetSettingsFormInner({
 					<SelectFormField
 						label={t("widgets.forms.division")}
 						name="division"
+						size="small"
 						values={[
 							{ value: "both", label: t("widgets.forms.division.both") },
 							{
@@ -117,6 +122,7 @@ function WidgetSettingsFormInner({
 					<SelectFormField
 						label={t("widgets.forms.timezone")}
 						name="timezone"
+						size="medium"
 						values={TIMEZONES.map((tz) => ({ value: tz, label: tz }))}
 					/>
 				);
@@ -127,6 +133,32 @@ function WidgetSettingsFormInner({
 						value={methods.watch("stageId")}
 						onChange={(stageId) => methods.setValue("stageId", stageId)}
 					/>
+				);
+			case "peak-xp-unverified":
+				return (
+					<div className="stack md">
+						<InputFormField
+							label={t("widgets.forms.peakXp")}
+							name="peakXp"
+							type="number"
+							size="extra-small"
+						/>
+						<SelectFormField
+							label={t("widgets.forms.division")}
+							name="division"
+							size="small"
+							values={[
+								{
+									value: "tentatek",
+									label: "Tentatek",
+								},
+								{
+									value: "takoroka",
+									label: "Takoroka",
+								},
+							]}
+						/>
+					</div>
 				);
 			case "peak-xp-weapon":
 				return (

@@ -39,6 +39,11 @@ const PEAK_XP_WEAPON_WIDGET_SETTINGS_SCHEMA = z.object({
 	weaponSplId,
 });
 
+const PEAK_XP_UNVERIFIED_WIDGET_SETTINGS_SCHEMA = z.object({
+	peakXp: z.number().min(1500).max(6000),
+	division: z.enum(["tentatek", "takoroka"]),
+});
+
 export const ALL_WIDGETS = {
 	misc: [
 		{
@@ -105,6 +110,11 @@ export const ALL_WIDGETS = {
 		{
 			id: "peak-xp",
 			slot: "side",
+		},
+		{
+			id: "peak-xp-unverified",
+			slot: "side",
+			schema: PEAK_XP_UNVERIFIED_WIDGET_SETTINGS_SCHEMA,
 		},
 		{
 			id: "peak-xp-weapon",

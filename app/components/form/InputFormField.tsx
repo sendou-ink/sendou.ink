@@ -40,7 +40,9 @@ export function InputFormField<T extends FieldValues>({
 				id={id}
 				placeholder={placeholder}
 				type={type}
-				{...methods.register(name)}
+				{...methods.register(name, {
+					valueAsNumber: type === "number",
+				})}
 				className={formFieldSizeToClassName(size)}
 			/>
 			{error && (

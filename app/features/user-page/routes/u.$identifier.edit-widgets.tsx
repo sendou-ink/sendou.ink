@@ -19,6 +19,7 @@ import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
 import { MainSlotIcon } from "~/components/icons/MainSlot";
 import { SideSlotIcon } from "~/components/icons/SideSlot";
+import { Placeholder } from "~/components/Placeholder";
 import type { Tables } from "~/db/tables";
 import {
 	ALL_WIDGETS,
@@ -95,6 +96,11 @@ export default function EditWidgetsPage() {
 			newWidget = { id: "bio", settings: { bio: "" } };
 		} else if (widgetId === "weapon-pool") {
 			newWidget = { id: "weapon-pool", settings: { weapons: [] } };
+		} else if (widgetId === "peak-xp-unverified") {
+			newWidget = {
+				id: "peak-xp-unverified",
+				settings: { peakXp: 2000, division: "tentatek" },
+			};
 		} else {
 			newWidget = { id: widgetId as any };
 		}
@@ -124,16 +130,9 @@ export default function EditWidgetsPage() {
 		setExpandedWidgetId(expandedWidgetId === widgetId ? null : widgetId);
 	};
 
-	const selectedWidgetsListElement = (
-		<SelectedWidgetsList
-			mainWidgets={mainWidgets}
-			sideWidgets={sideWidgets}
-			onRemoveWidget={removeWidget}
-			onSettingsChange={handleSettingsChange}
-			expandedWidgetId={expandedWidgetId}
-			onToggleExpanded={toggleExpanded}
-		/>
-	);
+	if (!isMounted) {
+		return <Placeholder />;
+	}
 
 	return (
 		<div className={styles.container}>
@@ -161,17 +160,20 @@ export default function EditWidgetsPage() {
 
 				<div className={styles.grid}>
 					<section className={styles.selected}>
-						{isMounted ? (
-							<DndContext
-								sensors={sensors}
-								onDragStart={handleDragStart}
-								onDragEnd={handleDragEnd}
-							>
-								{selectedWidgetsListElement}
-							</DndContext>
-						) : (
-							selectedWidgetsListElement
-						)}
+						<DndContext
+							sensors={sensors}
+							onDragStart={handleDragStart}
+							onDragEnd={handleDragEnd}
+						>
+							<SelectedWidgetsList
+								mainWidgets={mainWidgets}
+								sideWidgets={sideWidgets}
+								onRemoveWidget={removeWidget}
+								onSettingsChange={handleSettingsChange}
+								expandedWidgetId={expandedWidgetId}
+								onToggleExpanded={toggleExpanded}
+							/>
+						</DndContext>
 					</section>
 
 					<section className={styles.available}>
