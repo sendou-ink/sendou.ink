@@ -1,6 +1,7 @@
 import { z } from "zod/v4";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import { dbBoolean, weaponSplId } from "~/utils/zod";
 import { USER } from "../../user-page-constants";
 
 const BIO_WIDGET_SETTINGS_SCHEMA = z.object({
@@ -21,6 +22,17 @@ const TIMEZONE_WIDGET_SETTINGS_SCHEMA = z.object({
 
 const FAVORITE_STAGE_WIDGET_SETTINGS_SCHEMA = z.object({
 	stageId: z.number().refine((val) => stageIds.includes(val as any)),
+});
+
+const WEAPON_POOL_WIDGET_SETTINGS_SCHEMA = z.object({
+	weapons: z
+		.array(
+			z.object({
+				weaponSplId,
+				isFavorite: dbBoolean,
+			}),
+		)
+		.max(USER.WEAPON_POOL_MAX_SIZE),
 });
 
 export const ALL_WIDGETS = {
@@ -52,6 +64,11 @@ export const ALL_WIDGETS = {
 			id: "favorite-stage",
 			slot: "side",
 			schema: FAVORITE_STAGE_WIDGET_SETTINGS_SCHEMA,
+		},
+		{
+			id: "weapon-pool",
+			slot: "main",
+			schema: WEAPON_POOL_WIDGET_SETTINGS_SCHEMA,
 		},
 		{
 			id: "lfg-posts",

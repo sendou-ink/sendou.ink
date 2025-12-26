@@ -169,6 +169,17 @@ export function Widget({
 				return widget.data.length === 0 ? null : (
 					<Builds builds={widget.data} />
 				);
+			case "weapon-pool":
+				return widget.data.weapons.length === 0 ? null : (
+					<WeaponPool
+						weapons={
+							widget.data.weapons as Array<{
+								weaponSplId: MainWeaponId;
+								isFavorite: number;
+							}>
+						}
+					/>
+				);
 			default:
 				assertUnreachable(widget);
 		}
@@ -516,6 +527,29 @@ function Builds({
 			{builds.map((build) => (
 				<BuildCard key={build.id} build={build} canEdit={false} />
 			))}
+		</div>
+	);
+}
+
+function WeaponPool({
+	weapons,
+}: {
+	weapons: Array<{ weaponSplId: MainWeaponId; isFavorite: number }>;
+}) {
+	return (
+		<div className="stack horizontal sm justify-center">
+			{weapons.map((weapon) => {
+				return (
+					<div key={weapon.weaponSplId} className="u__weapon">
+						<WeaponImage
+							weaponSplId={weapon.weaponSplId}
+							variant={weapon.isFavorite === 1 ? "badge-5-star" : "badge"}
+							width={38}
+							height={38}
+						/>
+					</div>
+				);
+			})}
 		</div>
 	);
 }

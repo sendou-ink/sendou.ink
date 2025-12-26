@@ -93,6 +93,8 @@ export default function EditWidgetsPage() {
 		// xxx: something better here
 		if (widgetId === "bio") {
 			newWidget = { id: "bio", settings: { bio: "" } };
+		} else if (widgetId === "weapon-pool") {
+			newWidget = { id: "weapon-pool", settings: { weapons: [] } };
 		} else {
 			newWidget = { id: widgetId as any };
 		}
