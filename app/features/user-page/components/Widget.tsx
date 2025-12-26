@@ -21,6 +21,7 @@ import { assertUnreachable } from "~/utils/types";
 import {
 	brandImageUrl,
 	calendarEventPage,
+	controllerImageUrl,
 	LEADERBOARDS_PAGE,
 	LFG_PAGE,
 	modeImageUrl,
@@ -200,6 +201,8 @@ export function Widget({
 						}
 					/>
 				);
+			case "sens":
+				return <SensWidget data={widget.data} />;
 			default:
 				assertUnreachable(widget);
 		}
@@ -563,7 +566,7 @@ function WeaponPool({
 	weapons: Array<{ weaponSplId: MainWeaponId; isFavorite: number }>;
 }) {
 	return (
-		<div className="stack horizontal sm justify-center">
+		<div className="stack horizontal sm justify-center flex-wrap">
 			{weapons.map((weapon) => {
 				return (
 					<div key={weapon.weaponSplId} className="u__weapon">
@@ -598,6 +601,43 @@ function PeakXpWeapon({
 			{leaderboardPosition ? (
 				<div className={styles.widgetValueFooter}>#{leaderboardPosition}</div>
 			) : null}
+		</div>
+	);
+}
+
+function SensWidget({
+	data,
+}: {
+	data: Extract<LoadedWidget, { id: "sens" }>["data"];
+}) {
+	const { t } = useTranslation(["user"]);
+
+	const rawSensToString = (sens: number) =>
+		`${sens > 0 ? "+" : ""}${sens / 10}`;
+
+	return (
+		<div className="stack md items-center">
+			<img
+				src={controllerImageUrl(data.controller)}
+				alt={t(`user:controllers.${data.controller}`)}
+				height={50}
+			/>
+			<div className="stack xs items-center">
+				<div className="stack horizontal md">
+					<div className="stack xs items-center">
+						<div className="text-xs text-lighter">{t("user:motionSens")}</div>
+						<div className={styles.widgetValueMain}>
+							{data.motionSens ? rawSensToString(data.motionSens) : "-"}
+						</div>
+					</div>
+					<div className="stack xs items-center">
+						<div className="text-xs text-lighter">{t("user:stickSens")}</div>
+						<div className={styles.widgetValueMain}>
+							{data.stickSens ? rawSensToString(data.stickSens) : "-"}
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	);
 }

@@ -177,6 +177,19 @@ function WidgetSettingsFormInner({
 						onChange={(weapons) => methods.setValue("weapons", weapons)}
 					/>
 				);
+			case "sens":
+				return (
+					<SensFields
+						controller={methods.watch("controller")}
+						motionSens={methods.watch("motionSens")}
+						stickSens={methods.watch("stickSens")}
+						onControllerChange={(controller) =>
+							methods.setValue("controller", controller)
+						}
+						onMotionSensChange={(sens) => methods.setValue("motionSens", sens)}
+						onStickSensChange={(sens) => methods.setValue("stickSens", sens)}
+					/>
+				);
 			default:
 				return null;
 		}
@@ -282,6 +295,108 @@ function WeaponPoolField({
 						</div>
 					);
 				})}
+			</div>
+		</div>
+	);
+}
+
+const SENS_OPTIONS = [
+	-50, -45, -40, -35, -30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 35,
+	40, 45, 50,
+];
+
+const CONTROLLERS = ["s1-pro-con", "s2-pro-con", "grip", "handheld"] as const;
+
+function SensFields({
+	controller,
+	motionSens,
+	stickSens,
+	onControllerChange,
+	onMotionSensChange,
+	onStickSensChange,
+}: {
+	controller: "s1-pro-con" | "s2-pro-con" | "grip" | "handheld";
+	motionSens: number | null;
+	stickSens: number | null;
+	onControllerChange: (
+		controller: "s1-pro-con" | "s2-pro-con" | "grip" | "handheld",
+	) => void;
+	onMotionSensChange: (sens: number | null) => void;
+	onStickSensChange: (sens: number | null) => void;
+}) {
+	const { t } = useTranslation(["user"]);
+
+	const rawSensToString = (sens: number) =>
+		`${sens > 0 ? "+" : ""}${sens / 10}`;
+
+	return (
+		<div className="stack md">
+			<div>
+				<label htmlFor="controller">{t("widgets.forms.controller")}</label>
+				<select
+					id="controller"
+					value={controller}
+					onChange={(e) =>
+						onControllerChange(
+							e.target.value as
+								| "s1-pro-con"
+								| "s2-pro-con"
+								| "grip"
+								| "handheld",
+						)
+					}
+					className={styles.sensSelect}
+				>
+					{CONTROLLERS.map((ctrl) => (
+						<option key={ctrl} value={ctrl}>
+							{t(`user:controllers.${ctrl}`)}
+						</option>
+					))}
+				</select>
+			</div>
+
+			<div className="stack horizontal md">
+				<div>
+					<label htmlFor="motionSens">{t("user:motionSens")}</label>
+					<select
+						id="motionSens"
+						value={motionSens ?? ""}
+						onChange={(e) =>
+							onMotionSensChange(
+								e.target.value === "" ? null : Number(e.target.value),
+							)
+						}
+						className={styles.sensSelect}
+					>
+						<option value="">{"-"}</option>
+						{SENS_OPTIONS.map((sens) => (
+							<option key={sens} value={sens}>
+								{rawSensToString(sens)}
+							</option>
+						))}
+					</select>
+				</div>
+
+				<div>
+					<label htmlFor="stickSens">{t("user:stickSens")}</label>
+					<select
+						id="stickSens"
+						value={stickSens ?? ""}
+						onChange={(e) =>
+							onStickSensChange(
+								e.target.value === "" ? null : Number(e.target.value),
+							)
+						}
+						className={styles.sensSelect}
+					>
+						<option value="">{"-"}</option>
+						{SENS_OPTIONS.map((sens) => (
+							<option key={sens} value={sens}>
+								{rawSensToString(sens)}
+							</option>
+						))}
+					</select>
+				</div>
 			</div>
 		</div>
 	);

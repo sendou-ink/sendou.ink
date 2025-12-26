@@ -44,6 +44,12 @@ const PEAK_XP_UNVERIFIED_WIDGET_SETTINGS_SCHEMA = z.object({
 	division: z.enum(["tentatek", "takoroka"]),
 });
 
+const SENS_WIDGET_SETTINGS_SCHEMA = z.object({
+	controller: z.enum(["s1-pro-con", "s2-pro-con", "grip", "handheld"]),
+	motionSens: z.number().nullable(),
+	stickSens: z.number().nullable(),
+});
+
 export const ALL_WIDGETS = {
 	misc: [
 		{
@@ -82,6 +88,11 @@ export const ALL_WIDGETS = {
 		{
 			id: "lfg-posts",
 			slot: "main",
+		},
+		{
+			id: "sens",
+			slot: "side",
+			schema: SENS_WIDGET_SETTINGS_SCHEMA,
 		},
 	],
 	badges: [

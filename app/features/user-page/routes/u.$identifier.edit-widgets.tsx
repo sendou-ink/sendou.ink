@@ -101,6 +101,15 @@ export default function EditWidgetsPage() {
 				id: "peak-xp-unverified",
 				settings: { peakXp: 2000, division: "tentatek" },
 			};
+		} else if (widgetId === "sens") {
+			newWidget = {
+				id: "sens",
+				settings: {
+					controller: "s1-pro-con",
+					motionSens: null,
+					stickSens: null,
+				},
+			};
 		} else {
 			newWidget = { id: widgetId as any };
 		}

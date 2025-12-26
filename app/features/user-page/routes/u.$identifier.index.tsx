@@ -39,7 +39,7 @@ import styles from "./u.$identifier.module.css";
 export { loader };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["badges", "team", "org", "vods", "lfg"],
+	i18n: ["badges", "team", "org", "vods", "lfg", "builds", "weapons", "gear"],
 };
 
 export default function UserInfoPage() {
