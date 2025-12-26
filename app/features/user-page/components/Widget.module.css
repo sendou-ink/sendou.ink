@@ -233,3 +233,10 @@
 	font-size: var(--fonts-sm);
 	font-weight: var(--semi-bold);
 }
+
+.builds {
+	display: flex;
+	gap: var(--s-3);
+	overflow-x: auto;
+	padding-block: var(--s-2);
+}

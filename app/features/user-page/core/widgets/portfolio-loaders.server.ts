@@ -1,4 +1,5 @@
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
+import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import { allXPLeaderboard } from "~/features/leaderboards/queries/XPLeaderboard.server";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
@@ -10,6 +11,7 @@ import * as TournamentOrganizationRepository from "~/features/tournament-organiz
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
+import { sortBuilds } from "../build-sorting.server";
 import type { ExtractWidgetSettings } from "./types";
 
 export const WIDGET_LOADERS = {
@@ -190,6 +192,25 @@ export const WIDGET_LOADERS = {
 			userId,
 			settings.division,
 		);
+	},
+	builds: async (userId: number) => {
+		const userData = await UserRepository.identifierToBuildFields(
+			String(userId),
+		);
+
+		if (!userData) return [];
+
+		const builds = await BuildRepository.allByUserId(userId, {
+			showPrivate: false,
+		});
+
+		const sortedBuilds = sortBuilds({
+			builds,
+			buildSorting: userData.buildSorting,
+			weaponPool: userData.weapons,
+		});
+
+		return sortedBuilds.slice(0, 3);
 	},
 };
 

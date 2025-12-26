@@ -3,6 +3,7 @@ import clsx from "clsx";
 import Markdown from "markdown-to-jsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { BuildCard } from "~/components/BuildCard";
 import { Image, StageImage, WeaponImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
 import type { Tables } from "~/db/tables";
@@ -26,6 +27,7 @@ import {
 	topSearchPlayerPage,
 	tournamentBracketsPage,
 	tournamentOrganizationPage,
+	userBuildsPage,
 	userResultsPage,
 	userVodsPage,
 } from "~/utils/urls";
@@ -163,6 +165,10 @@ export function Widget({
 				return widget.data.length === 0 ? null : (
 					<XRankPeaks peaks={widget.data} />
 				);
+			case "builds":
+				return widget.data.length === 0 ? null : (
+					<Builds builds={widget.data} />
+				);
 			default:
 				assertUnreachable(widget);
 		}
@@ -178,6 +184,8 @@ export function Widget({
 					: null;
 			case "placement-results":
 				return userResultsPage(user);
+			case "builds":
+				return userBuildsPage(user);
 			default:
 				return null;
 		}
@@ -494,6 +502,20 @@ function PlacementResults({
 					</div>
 				);
 			})}
+		</div>
+	);
+}
+
+function Builds({
+	builds,
+}: {
+	builds: Extract<LoadedWidget, { id: "builds" }>["data"];
+}) {
+	return (
+		<div className={styles.builds}>
+			{builds.map((build) => (
+				<BuildCard key={build.id} build={build} canEdit={false} />
+			))}
 		</div>
 	);
 }

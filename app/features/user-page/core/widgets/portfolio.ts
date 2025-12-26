@@ -155,6 +155,12 @@ export const ALL_WIDGETS = {
 			slot: "main",
 		},
 	],
+	builds: [
+		{
+			id: "builds",
+			slot: "main",
+		},
+	],
 } as const;
 
 export function allWidgetsFlat() {
