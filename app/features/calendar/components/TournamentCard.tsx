@@ -200,7 +200,11 @@ function BadgePrizesPill({
 	return (
 		<SendouPopover
 			trigger={
-				<SendouButton variant="minimal" className={styles.badgePill}>
+				<SendouButton
+					variant="minimal"
+					size="miniscule"
+					className={styles.badgePill}
+				>
 					<Image
 						size={16}
 						path={navIconUrl("badges")}

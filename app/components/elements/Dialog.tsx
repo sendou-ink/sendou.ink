@@ -111,7 +111,7 @@ function DialogModal({
 			{...rest}
 		>
 			<Modal
-				className={clsx(className, styles.modal, {
+				className={clsx(className, styles.modal, "scrollbar", {
 					[styles.fullScreenModal]: rest.isFullScreen,
 				})}
 			>

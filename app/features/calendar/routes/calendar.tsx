@@ -111,7 +111,7 @@ export default function CalendarPage() {
 				</div>
 			</div>
 			<div
-				className={styles.columnsContainer}
+				className={clsx(styles.columnsContainer, "scrollbar")}
 				style={{ "--columns-count": DAYS_SHOWN_AT_A_TIME }}
 			>
 				{shown.map((date) => (

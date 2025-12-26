@@ -63,6 +63,16 @@ a {
 	color: var(--color-text-accent);
 	font-weight: var(--semi-bold);
 	text-decoration: none;
+	border-radius: 5px;
+
+	&:hover {
+		text-decoration: underline;
+	}
+
+	&:focus-visible {
+		outline: var(--input-focus-ring);
+		outline-offset: 1px;
+	}
 }
 
 /* :not([name="text"]) workaround not to select textarea on map planner  */

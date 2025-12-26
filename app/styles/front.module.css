@@ -83,8 +83,14 @@
 	align-items: center;
 	font-weight: var(--bold);
 	font-size: var(--fonts-xs);
-	border-radius: 100%;
+	border-radius: 10px;
 	color: var(--color-text-high);
+	padding: 0 var(--s-1);
+
+	&:focus-visible {
+		outline: var(--input-focus-ring);
+		outline-offset: 1px;
+	}
 }
 
 .changeLogIconButton:hover {
@@ -147,21 +153,28 @@
 	background-color: var(--color-text-accent);
 	border-radius: var(--rounded);
 	width: max-content;
-	padding: var(--s-0-5) var(--s-1-5);
+	padding: 0 var(--input-padding-inline);
 	font-size: var(--fonts-xs);
 	color: var(--color-text-inverse);
 	display: flex;
 	gap: var(--s-2);
 	align-items: center;
+	height: var(--input-height-small);
+
+	&:hover svg,
+	&:focus-visible svg {
+		translate: 2px;
+	}
+
+	&:focus-visible {
+		outline: var(--input-focus-ring);
+		outline-offset: 1px;
+	}
 }
 
 .seasonBannerLink svg {
 	width: 24px;
 	transition: all 0.2s ease-out;
-}
-
-.seasonBannerLink:hover svg {
-	translate: 2px;
 }
 
 .tournamentCards {
@@ -188,11 +201,16 @@
 	font-weight: var(--bold);
 	text-align: center;
 	color: var(--color-text);
-	transition: 0.2s ease-out;
+	transition: background-color 0.2s ease-out;
 	min-width: 90px;
 	max-width: 90px;
 	border: 2.5px solid var(--color-bg-higher);
 	margin-top: calc((var(--s-2) * 2) + var(--s-2));
+
+	&:focus-visible {
+		outline: var(--input-focus-ring);
+		outline-offset: 1px;
+	}
 }
 
 .tournamentCardsViewAllCard:hover {

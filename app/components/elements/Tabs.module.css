@@ -38,6 +38,11 @@
 .tabContainer {
 	min-width: fit-content;
 	margin-bottom: -2px;
+
+	&:focus-visible {
+		outline: var(--input-focus-ring);
+		outline-offset: -2px;
+	}
 }
 
 .tabButton {

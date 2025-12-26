@@ -117,7 +117,7 @@ function SeasonBanner() {
 	if (isShowingPreviousSeason) return null;
 
 	return (
-		<div className="stack xs">
+		<div className="stack sm">
 			<Link to={SENDOUQ_PAGE} className={styles.seasonBanner}>
 				<div className={styles.seasonBannerHeader}>
 					{t("front:sq.season", { nth: season.nth })}

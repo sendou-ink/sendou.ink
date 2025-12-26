@@ -22,6 +22,7 @@
 
 .header {
 	display: flex;
+	align-items: center;
 	font-size: var(--fonts-sm);
 	padding-inline: var(--s-1);
 	padding-bottom: var(--s-1);

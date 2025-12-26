@@ -94,7 +94,7 @@ html {
 
 	--backdrop-filter: blur(10px) brightness(95%);
 
-	--input-height-smaller: 1rem;
+	--input-height-smaller: 1.5rem;
 	--input-height-small: 2rem;
 	--input-height: 2.5rem;
 	--input-height-large: 3rem;

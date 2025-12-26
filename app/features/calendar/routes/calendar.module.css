@@ -26,7 +26,7 @@
 }
 
 .navigateButton:focus-visible {
-	outline: 2px solid var(--color-accent);
+	outline: 2px solid var(--color-text-accent);
 }
 
 @media screen and (min-width: 600px) {
