@@ -38,8 +38,6 @@ import {
 import type { LoadedWidget } from "../core/widgets/types";
 import styles from "./Widget.module.css";
 
-// xxx: make side widgets sticky
-
 export function Widget({
 	widget,
 	user,

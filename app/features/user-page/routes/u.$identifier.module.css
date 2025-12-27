@@ -106,8 +106,11 @@
 	}
 
 	.side {
+		position: sticky;
+		top: 50px;
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-6);
+		align-self: start;
 	}
 }
