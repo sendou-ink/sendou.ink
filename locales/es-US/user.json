@@ -39,6 +39,7 @@
 	"widget.weapon-pool": "",
 	"widget.sens": "",
 	"widget.art": "",
+	"widget.commissions": "",
 	"widget.link.all": "",
 	"widgets.edit": "",
 	"widgets.editTitle": "",
@@ -93,6 +94,7 @@
 	"widgets.description.weapon-pool": "",
 	"widgets.description.sens": "",
 	"widgets.description.art": "",
+	"widgets.description.commissions": "",
 	"widgets.forms.bio": "",
 	"widgets.forms.bio.markdownSupport": "",
 	"widgets.forms.division": "",
@@ -186,5 +188,7 @@
 	"builds.sorting.CLOTHES_ID": "Ordenación de ropa en juego",
 	"builds.sorting.SHOES_ID": "Ordenación de calzados en juego",
 	"builds.sorting.PUBLIC_BUILD": "Build público",
-	"builds.sorting.PRIVATE_BUILD": "Build privado"
+	"builds.sorting.PRIVATE_BUILD": "Build privado",
+	"commissions.open": "",
+	"commissions.closed": ""
 }

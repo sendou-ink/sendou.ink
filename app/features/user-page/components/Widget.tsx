@@ -209,6 +209,8 @@ export function Widget({
 				return widget.data.length === 0 ? null : (
 					<ArtWidget arts={widget.data} />
 				);
+			case "commissions":
+				return <CommissionsWidget data={widget.data} />;
 			default:
 				assertUnreachable(widget);
 		}
@@ -666,6 +668,29 @@ function ArtWidget({
 					className={styles.artThumbnail}
 				/>
 			))}
+		</div>
+	);
+}
+
+function CommissionsWidget({
+	data,
+}: {
+	data: Extract<LoadedWidget, { id: "commissions" }>["data"];
+}) {
+	const { t } = useTranslation(["user"]);
+
+	if (!data) return null;
+
+	const isOpen = data.commissionsOpen === 1;
+
+	return (
+		<div className="stack sm items-center">
+			<div className={styles.widgetValueMain}>
+				{isOpen ? t("user:commissions.open") : t("user:commissions.closed")}
+			</div>
+			{data.commissionText ? (
+				<div className={styles.widgetValueFooter}>{data.commissionText}</div>
+			) : null}
 		</div>
 	);
 }

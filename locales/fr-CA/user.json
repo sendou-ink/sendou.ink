@@ -39,6 +39,7 @@
 	"widget.weapon-pool": "",
 	"widget.sens": "",
 	"widget.art": "",
+	"widget.commissions": "",
 	"widget.link.all": "",
 	"widgets.edit": "",
 	"widgets.editTitle": "",
@@ -93,6 +94,7 @@
 	"widgets.description.weapon-pool": "",
 	"widgets.description.sens": "",
 	"widgets.description.art": "",
+	"widgets.description.commissions": "",
 	"widgets.forms.bio": "",
 	"widgets.forms.bio.markdownSupport": "",
 	"widgets.forms.division": "",
@@ -186,5 +188,7 @@
 	"builds.sorting.CLOTHES_ID": "",
 	"builds.sorting.SHOES_ID": "",
 	"builds.sorting.PUBLIC_BUILD": "",
-	"builds.sorting.PRIVATE_BUILD": ""
+	"builds.sorting.PRIVATE_BUILD": "",
+	"commissions.open": "",
+	"commissions.closed": ""
 }

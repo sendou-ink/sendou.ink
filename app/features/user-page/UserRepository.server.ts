@@ -976,6 +976,18 @@ export async function patronSinceByUserId(userId: number) {
 	)?.patronSince;
 }
 
+export async function commissionsByUserId(userId: number) {
+	return await db
+		.selectFrom("User")
+		.select([
+			"User.commissionsOpen",
+			"User.commissionsOpenedAt",
+			"User.commissionText",
+		])
+		.where("id", "=", userId)
+		.executeTakeFirst();
+}
+
 export function insertFriendCode(args: TablesInsertable["UserFriendCode"]) {
 	cachedFriendCodes?.add(args.friendCode);
 

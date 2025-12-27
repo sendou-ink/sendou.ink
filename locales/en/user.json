@@ -39,6 +39,7 @@
 	"widget.weapon-pool": "Weapon Pool",
 	"widget.sens": "Sensitivity",
 	"widget.art": "Art",
+	"widget.commissions": "Commissions",
 	"widget.link.all": "All",
 	"widgets.edit": "Edit Profile",
 	"widgets.editTitle": "Edit Profile Widgets",
@@ -93,6 +94,7 @@
 	"widgets.description.weapon-pool": "Display your weapon pool with favorite selection",
 	"widgets.description.sens": "Show your sensitivity settings and controller of choice",
 	"widgets.description.art": "Display your 3 most recent art pieces",
+	"widgets.description.commissions": "Show your commission status and details",
 	"widgets.forms.bio": "Bio",
 	"widgets.forms.bio.markdownSupport": "Supports Markdown",
 	"widgets.forms.division": "Division",
@@ -186,5 +188,7 @@
 	"builds.sorting.CLOTHES_ID": "Clothing in-game order",
 	"builds.sorting.SHOES_ID": "Shoes in-game order",
 	"builds.sorting.PUBLIC_BUILD": "Public build",
-	"builds.sorting.PRIVATE_BUILD": "Private build"
+	"builds.sorting.PRIVATE_BUILD": "Private build",
+	"commissions.open": "Open",
+	"commissions.closed": "Closed"
 }

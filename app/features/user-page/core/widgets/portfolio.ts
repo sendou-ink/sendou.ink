@@ -99,6 +99,10 @@ export const ALL_WIDGETS = {
 			slot: "side",
 			schema: SENS_WIDGET_SETTINGS_SCHEMA,
 		},
+		{
+			id: "commissions",
+			slot: "side",
+		},
 	],
 	badges: [
 		{

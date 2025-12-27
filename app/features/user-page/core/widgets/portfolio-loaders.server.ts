@@ -259,6 +259,9 @@ export const WIDGET_LOADERS = {
 
 		return arts.slice(0, 3);
 	},
+	commissions: async (userId: number) => {
+		return UserRepository.commissionsByUserId(userId);
+	},
 };
 
 async function getTop500WeaponsByCategory(
