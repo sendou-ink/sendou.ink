@@ -1,7 +1,17 @@
-import { useState } from "react";
+import { parseDate } from "@internationalized/date";
+import clsx from "clsx";
+import { useEffect, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { Ability } from "~/components/Ability";
+import { AddNewButton } from "~/components/AddNewButton";
 import { Alert } from "~/components/Alert";
+import { Avatar } from "~/components/Avatar";
+import { Badge } from "~/components/Badge";
+import { CopyToClipboardPopover } from "~/components/CopyToClipboardPopover";
 import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { SendouCalendar } from "~/components/elements/Calendar";
+import { SendouDatePicker } from "~/components/elements/DatePicker";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -14,6 +24,18 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { toastQueue } from "~/components/elements/Toast";
+import { Flag } from "~/components/Flag";
+import { FormMessage } from "~/components/FormMessage";
+import { InputFormField } from "~/components/form/InputFormField";
+import { TextAreaFormField } from "~/components/form/TextAreaFormField";
+import {
+	ModeImage,
+	SpecialWeaponImage,
+	StageImage,
+	SubWeaponImage,
+	TierImage,
+	WeaponImage,
+} from "~/components/Image";
 import { InfoPopover } from "~/components/InfoPopover";
 import { Input } from "~/components/Input";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";
@@ -23,32 +45,157 @@ import { SearchIcon } from "~/components/icons/Search";
 import { TrashIcon } from "~/components/icons/Trash";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
+import { Pagination } from "~/components/Pagination";
+import { Placeholder } from "~/components/Placeholder";
+import { Placement } from "~/components/Placement";
+import { RelativeTime } from "~/components/RelativeTime";
 import { Section } from "~/components/Section";
+import { StageSelect } from "~/components/StageSelect";
 import { SubmitButton } from "~/components/SubmitButton";
+import { SubNav, SubNavLink } from "~/components/SubNav";
+import { Table } from "~/components/Table";
+import { WeaponSelect } from "~/components/WeaponSelect";
+import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import styles from "../components-showcase.module.css";
+
+const SECTIONS = [
+	{ title: "Buttons", id: "buttons", component: ButtonsSection },
+	{ title: "Alerts", id: "alerts", component: AlertsSection },
+	{ title: "Inputs", id: "inputs", component: InputsSection },
+	{ title: "Select", id: "select", component: SelectSection },
+	{ title: "Switch", id: "switch", component: SwitchSection },
+	{ title: "Checkboxes", id: "checkboxes", component: CheckboxSection },
+	{
+		title: "Radio Buttons",
+		id: "radio-buttons",
+		component: RadioButtonSection,
+	},
+	{ title: "Fieldsets", id: "fieldsets", component: FieldsetSection },
+	{ title: "Details", id: "details", component: DetailsSection },
+	{ title: "Tabs", id: "tabs", component: TabsSection },
+	{ title: "Dialog", id: "dialog", component: DialogSection },
+	{ title: "Popover", id: "popover", component: PopoverSection },
+	{ title: "Menu", id: "menu", component: MenuSection },
+	{ title: "Toast", id: "toast", component: ToastSection },
+	{ title: "Divider", id: "divider", component: DividerSection },
+	{ title: "Table", id: "table", component: TableSection },
+	{ title: "Pagination", id: "pagination", component: PaginationSection },
+	{ title: "Avatar", id: "avatar", component: AvatarSection },
+	{
+		title: "Form Messages",
+		id: "form-messages",
+		component: FormMessageSection,
+	},
+	{ title: "Sub Navigation", id: "sub-navigation", component: SubNavSection },
+	{ title: "Date Pickers", id: "date-pickers", component: DatePickerSection },
+	{
+		title: "Form Components",
+		id: "form-components",
+		component: FormComponentsSection,
+	},
+	{
+		title: "Splatoon Images",
+		id: "splatoon-images",
+		component: SplatoonImagesSection,
+	},
+	{ title: "Abilities", id: "abilities", component: AbilitySection },
+	{ title: "Flags", id: "flags", component: FlagSection },
+	{ title: "Placements", id: "placements", component: PlacementSection },
+	{ title: "Badges", id: "badges", component: BadgeSection },
+	{ title: "Game Selects", id: "game-selects", component: GameSelectSection },
+	{ title: "Miscellaneous", id: "miscellaneous", component: MiscSection },
+];
 
 export default function ComponentsShowcasePage() {
 	return (
-		<Main className="stack lg">
-			<h1>Components</h1>
-			<ButtonsSection />
-			<AlertsSection />
-			<InputsSection />
-			<SelectSection />
-			<SwitchSection />
-			<TabsSection />
-			<DialogSection />
-			<PopoverSection />
-			<MenuSection />
-			<ToastSection />
-			<DividerSection />
-			<MiscSection />
-		</Main>
+		<>
+			<SideNav />
+			<Main className="stack lg">
+				<h1>Components</h1>
+				{SECTIONS.map(({ id, component: Component }) => (
+					<Component key={id} id={id} />
+				))}
+			</Main>
+		</>
 	);
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
-	return <h2 className={styles.sectionTitle}>{children}</h2>;
+function SideNav() {
+	const [activeSection, setActiveSection] = useState<string | null>(null);
+
+	useEffect(() => {
+		const sectionIds = SECTIONS.map((s) => s.id);
+		const elements = sectionIds
+			.map((id) => document.getElementById(id))
+			.filter(Boolean) as HTMLElement[];
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				const visibleEntries = entries.filter((entry) => entry.isIntersecting);
+
+				if (visibleEntries.length > 0) {
+					const topMostEntry = visibleEntries.reduce((prev, curr) =>
+						prev.boundingClientRect.top < curr.boundingClientRect.top
+							? prev
+							: curr,
+					);
+
+					setActiveSection(topMostEntry.target.id);
+				}
+			},
+			{ rootMargin: "-10% 0px -80% 0px", threshold: 0 },
+		);
+
+		for (const element of elements) {
+			observer.observe(element);
+		}
+
+		return () => observer.disconnect();
+	}, []);
+
+	const handleClick = (
+		event: React.MouseEvent<HTMLAnchorElement>,
+		id: string,
+	) => {
+		event.preventDefault();
+		const element = document.getElementById(id);
+
+		if (element) {
+			element.scrollIntoView({ behavior: "instant" });
+			window.history.replaceState(null, "", `#${id}`);
+			setActiveSection(id);
+		}
+	};
+
+	return (
+		<nav className={clsx(styles.sideNav, "scrollbar")}>
+			{SECTIONS.map(({ title, id }) => (
+				<a
+					key={id}
+					href={`#${id}`}
+					className={styles.sideNavLink}
+					onClick={(e) => handleClick(e, id)}
+					aria-current={activeSection === id ? "page" : undefined}
+				>
+					{title}
+				</a>
+			))}
+		</nav>
+	);
+}
+
+function SectionTitle({
+	id,
+	children,
+}: {
+	id: string;
+	children: React.ReactNode;
+}) {
+	return (
+		<h2 id={id} className={styles.sectionTitle}>
+			{children}
+		</h2>
+	);
 }
 
 function ComponentRow({
@@ -66,10 +213,10 @@ function ComponentRow({
 	);
 }
 
-function ButtonsSection() {
+function ButtonsSection({ id }: { id: string }) {
 	return (
 		<Section>
-			<SectionTitle>Buttons</SectionTitle>
+			<SectionTitle id={id}>Buttons</SectionTitle>
 
 			<div className="stack md">
 				<ComponentRow label="Primary (default)">
@@ -176,10 +323,10 @@ function ButtonsSection() {
 	);
 }
 
-function AlertsSection() {
+function AlertsSection({ id }: { id: string }) {
 	return (
 		<Section>
-			<SectionTitle>Alerts</SectionTitle>
+			<SectionTitle id={id}>Alerts</SectionTitle>
 
 			<div className="stack md">
 				<ComponentRow label="Info (default)">
@@ -212,10 +359,10 @@ function AlertsSection() {
 	);
 }
 
-function InputsSection() {
+function InputsSection({ id }: { id: string }) {
 	return (
 		<Section>
-			<SectionTitle>Inputs</SectionTitle>
+			<SectionTitle id={id}>Inputs</SectionTitle>
 
 			<div className="stack md">
 				<ComponentRow label="Basic Input">
@@ -300,10 +447,10 @@ const SELECT_ITEMS = [
 	{ id: "5", name: "Option 5" },
 ];
 
-function SelectSection() {
+function SelectSection({ id }: { id: string }) {
 	return (
 		<Section>
-			<SectionTitle>Select</SectionTitle>
+			<SectionTitle id={id}>Select</SectionTitle>
 
 			<div className="stack md">
 				<ComponentRow label="Basic Select">
@@ -409,13 +556,13 @@ function SelectSection() {
 	);
 }
 
-function SwitchSection() {
+function SwitchSection({ id }: { id: string }) {
 	const [isOn, setIsOn] = useState(false);
 	const [isSmallOn, setIsSmallOn] = useState(true);
 
 	return (
 		<Section>
-			<SectionTitle>Switch</SectionTitle>
+			<SectionTitle id={id}>Switch</SectionTitle>
 
 			<div className="stack md">
 				<ComponentRow label="Medium (default)">
@@ -446,10 +593,489 @@ function SwitchSection() {
 	);
 }
 
-function TabsSection() {
+function CheckboxSection({ id }: { id: string }) {
+	const [singleChecked, setSingleChecked] = useState(false);
+	const [checkedItems, setCheckedItems] = useState({
+		option1: true,
+		option2: false,
+		option3: true,
+	});
+
 	return (
 		<Section>
-			<SectionTitle>Tabs</SectionTitle>
+			<SectionTitle id={id}>Checkboxes</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Single Checkbox">
+					<label className="stack horizontal sm items-center">
+						<input
+							type="checkbox"
+							checked={singleChecked}
+							onChange={(e) => setSingleChecked(e.target.checked)}
+						/>
+						<span>Accept terms and conditions</span>
+					</label>
+				</ComponentRow>
+
+				<ComponentRow label="Checkbox Group">
+					<div className="stack sm">
+						<label className="stack horizontal sm items-center">
+							<input
+								type="checkbox"
+								checked={checkedItems.option1}
+								onChange={(e) =>
+									setCheckedItems((prev) => ({
+										...prev,
+										option1: e.target.checked,
+									}))
+								}
+							/>
+							<span>Option 1</span>
+						</label>
+						<label className="stack horizontal sm items-center">
+							<input
+								type="checkbox"
+								checked={checkedItems.option2}
+								onChange={(e) =>
+									setCheckedItems((prev) => ({
+										...prev,
+										option2: e.target.checked,
+									}))
+								}
+							/>
+							<span>Option 2</span>
+						</label>
+						<label className="stack horizontal sm items-center">
+							<input
+								type="checkbox"
+								checked={checkedItems.option3}
+								onChange={(e) =>
+									setCheckedItems((prev) => ({
+										...prev,
+										option3: e.target.checked,
+									}))
+								}
+							/>
+							<span>Option 3</span>
+						</label>
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="Disabled Checkbox">
+					<label className="stack horizontal sm items-center">
+						<input type="checkbox" disabled />
+						<span>Disabled option</span>
+					</label>
+				</ComponentRow>
+
+				<ComponentRow label="Disabled Checked">
+					<label className="stack horizontal sm items-center">
+						<input type="checkbox" disabled checked />
+						<span>Disabled but checked</span>
+					</label>
+				</ComponentRow>
+
+				<ComponentRow label="Indeterminate">
+					<label className="stack horizontal sm items-center">
+						<input
+							type="checkbox"
+							ref={(el) => {
+								if (el) el.indeterminate = true;
+							}}
+						/>
+						<span>Indeterminate state</span>
+					</label>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+function RadioButtonSection({ id }: { id: string }) {
+	const [selectedOption, setSelectedOption] = useState("option2");
+	const [selectedSize, setSelectedSize] = useState("medium");
+
+	return (
+		<Section>
+			<SectionTitle id={id}>Radio Buttons</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Basic Radio Group">
+					<div className="stack sm">
+						<label className="stack horizontal sm items-center">
+							<input
+								type="radio"
+								name="options"
+								value="option1"
+								checked={selectedOption === "option1"}
+								onChange={(e) => setSelectedOption(e.target.value)}
+							/>
+							<span>Option 1</span>
+						</label>
+						<label className="stack horizontal sm items-center">
+							<input
+								type="radio"
+								name="options"
+								value="option2"
+								checked={selectedOption === "option2"}
+								onChange={(e) => setSelectedOption(e.target.value)}
+							/>
+							<span>Option 2</span>
+						</label>
+						<label className="stack horizontal sm items-center">
+							<input
+								type="radio"
+								name="options"
+								value="option3"
+								checked={selectedOption === "option3"}
+								onChange={(e) => setSelectedOption(e.target.value)}
+							/>
+							<span>Option 3</span>
+						</label>
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="With Descriptions">
+					<div className="stack sm">
+						<label className="stack horizontal sm items-start">
+							<input
+								type="radio"
+								name="size"
+								value="small"
+								checked={selectedSize === "small"}
+								onChange={(e) => setSelectedSize(e.target.value)}
+							/>
+							<div className="stack xs">
+								<span>Small</span>
+								<span style={{ fontSize: "0.875rem", opacity: 0.7 }}>
+									Compact size, suitable for limited space
+								</span>
+							</div>
+						</label>
+						<label className="stack horizontal sm items-start">
+							<input
+								type="radio"
+								name="size"
+								value="medium"
+								checked={selectedSize === "medium"}
+								onChange={(e) => setSelectedSize(e.target.value)}
+							/>
+							<div className="stack xs">
+								<span>Medium</span>
+								<span style={{ fontSize: "0.875rem", opacity: 0.7 }}>
+									Default size, balanced for most use cases
+								</span>
+							</div>
+						</label>
+						<label className="stack horizontal sm items-start">
+							<input
+								type="radio"
+								name="size"
+								value="large"
+								checked={selectedSize === "large"}
+								onChange={(e) => setSelectedSize(e.target.value)}
+							/>
+							<div className="stack xs">
+								<span>Large</span>
+								<span style={{ fontSize: "0.875rem", opacity: 0.7 }}>
+									Spacious size, best for emphasis
+								</span>
+							</div>
+						</label>
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="Disabled Options">
+					<div className="stack sm">
+						<label className="stack horizontal sm items-center">
+							<input type="radio" name="disabled-group" value="enabled" />
+							<span>Enabled option</span>
+						</label>
+						<label className="stack horizontal sm items-center">
+							<input
+								type="radio"
+								name="disabled-group"
+								value="disabled"
+								disabled
+							/>
+							<span>Disabled option</span>
+						</label>
+						<label className="stack horizontal sm items-center">
+							<input
+								type="radio"
+								name="disabled-group"
+								value="disabled-checked"
+								disabled
+								checked
+							/>
+							<span>Disabled and checked</span>
+						</label>
+					</div>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+function FieldsetSection({ id }: { id: string }) {
+	const [favoriteColor, setFavoriteColor] = useState("");
+	const [notifications, setNotifications] = useState({
+		email: true,
+		push: false,
+		sms: false,
+	});
+
+	return (
+		<Section>
+			<SectionTitle id={id}>Fieldsets</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Basic Fieldset">
+					<fieldset
+						style={{ padding: "1rem", border: "1px solid var(--gray)" }}
+					>
+						<legend>Personal Information</legend>
+						<div className="stack sm">
+							<div>
+								<Label htmlFor="fieldset-name">Name</Label>
+								<Input id="fieldset-name" placeholder="Enter your name" />
+							</div>
+							<div>
+								<Label htmlFor="fieldset-email">Email</Label>
+								<input
+									id="fieldset-email"
+									type="email"
+									placeholder="Enter your email"
+								/>
+							</div>
+						</div>
+					</fieldset>
+				</ComponentRow>
+
+				<ComponentRow label="Radio Group in Fieldset">
+					<fieldset
+						style={{ padding: "1rem", border: "1px solid var(--gray)" }}
+					>
+						<legend>Favorite Color</legend>
+						<div className="stack sm">
+							<label className="stack horizontal sm items-center">
+								<input
+									type="radio"
+									name="color"
+									value="red"
+									checked={favoriteColor === "red"}
+									onChange={(e) => setFavoriteColor(e.target.value)}
+								/>
+								<span>Red</span>
+							</label>
+							<label className="stack horizontal sm items-center">
+								<input
+									type="radio"
+									name="color"
+									value="blue"
+									checked={favoriteColor === "blue"}
+									onChange={(e) => setFavoriteColor(e.target.value)}
+								/>
+								<span>Blue</span>
+							</label>
+							<label className="stack horizontal sm items-center">
+								<input
+									type="radio"
+									name="color"
+									value="green"
+									checked={favoriteColor === "green"}
+									onChange={(e) => setFavoriteColor(e.target.value)}
+								/>
+								<span>Green</span>
+							</label>
+						</div>
+					</fieldset>
+				</ComponentRow>
+
+				<ComponentRow label="Checkbox Group in Fieldset">
+					<fieldset
+						style={{ padding: "1rem", border: "1px solid var(--gray)" }}
+					>
+						<legend>Notification Preferences</legend>
+						<div className="stack sm">
+							<label className="stack horizontal sm items-center">
+								<input
+									type="checkbox"
+									checked={notifications.email}
+									onChange={(e) =>
+										setNotifications((prev) => ({
+											...prev,
+											email: e.target.checked,
+										}))
+									}
+								/>
+								<span>Email notifications</span>
+							</label>
+							<label className="stack horizontal sm items-center">
+								<input
+									type="checkbox"
+									checked={notifications.push}
+									onChange={(e) =>
+										setNotifications((prev) => ({
+											...prev,
+											push: e.target.checked,
+										}))
+									}
+								/>
+								<span>Push notifications</span>
+							</label>
+							<label className="stack horizontal sm items-center">
+								<input
+									type="checkbox"
+									checked={notifications.sms}
+									onChange={(e) =>
+										setNotifications((prev) => ({
+											...prev,
+											sms: e.target.checked,
+										}))
+									}
+								/>
+								<span>SMS notifications</span>
+							</label>
+						</div>
+					</fieldset>
+				</ComponentRow>
+
+				<ComponentRow label="Disabled Fieldset">
+					<fieldset
+						disabled
+						style={{ padding: "1rem", border: "1px solid var(--gray)" }}
+					>
+						<legend>Disabled Form</legend>
+						<div className="stack sm">
+							<div>
+								<Label htmlFor="disabled-input">Input</Label>
+								<Input id="disabled-input" placeholder="This is disabled" />
+							</div>
+							<label className="stack horizontal sm items-center">
+								<input type="checkbox" />
+								<span>Checkbox in disabled fieldset</span>
+							</label>
+							<SendouButton>Button in disabled fieldset</SendouButton>
+						</div>
+					</fieldset>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+function DetailsSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Details/Summary</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Basic Details">
+					<details>
+						<summary>Click to expand</summary>
+						<p style={{ padding: "1rem 0" }}>
+							This is the hidden content that appears when you expand the
+							details element. It can contain any HTML content.
+						</p>
+					</details>
+				</ComponentRow>
+
+				<ComponentRow label="Open by Default">
+					<details open>
+						<summary>This is open by default</summary>
+						<p style={{ padding: "1rem 0" }}>
+							The details element can be open by default using the "open"
+							attribute.
+						</p>
+					</details>
+				</ComponentRow>
+
+				<ComponentRow label="With Complex Content">
+					<details>
+						<summary>Advanced Settings</summary>
+						<div className="stack sm" style={{ padding: "1rem 0" }}>
+							<div>
+								<Label htmlFor="setting1">Setting 1</Label>
+								<Input id="setting1" placeholder="Enter value" />
+							</div>
+							<div>
+								<Label htmlFor="setting2">Setting 2</Label>
+								<SendouSelect
+									items={SELECT_ITEMS}
+									label="Choose option"
+									placeholder="Select..."
+								>
+									{(item) => (
+										<SendouSelectItem key={item.id} id={item.id}>
+											{item.name}
+										</SendouSelectItem>
+									)}
+								</SendouSelect>
+							</div>
+							<label className="stack horizontal sm items-center">
+								<input type="checkbox" />
+								<span>Enable advanced mode</span>
+							</label>
+						</div>
+					</details>
+				</ComponentRow>
+
+				<ComponentRow label="Nested Details">
+					<details>
+						<summary>Section 1</summary>
+						<div style={{ padding: "1rem 0" }}>
+							<p>Content for section 1.</p>
+							<details style={{ marginTop: "0.5rem" }}>
+								<summary>Subsection 1.1</summary>
+								<p style={{ padding: "0.5rem 0" }}>
+									Nested content in subsection 1.1
+								</p>
+							</details>
+							<details style={{ marginTop: "0.5rem" }}>
+								<summary>Subsection 1.2</summary>
+								<p style={{ padding: "0.5rem 0" }}>
+									Nested content in subsection 1.2
+								</p>
+							</details>
+						</div>
+					</details>
+				</ComponentRow>
+
+				<ComponentRow label="Stacked Details">
+					<div className="stack sm">
+						<details>
+							<summary>What is this component showcase?</summary>
+							<p style={{ padding: "0.5rem 0" }}>
+								This is a showcase of various HTML and custom components used in
+								the application.
+							</p>
+						</details>
+						<details>
+							<summary>How do I use these components?</summary>
+							<p style={{ padding: "0.5rem 0" }}>
+								Each component has examples showing different variations and use
+								cases.
+							</p>
+						</details>
+						<details>
+							<summary>Can I customize the styles?</summary>
+							<p style={{ padding: "0.5rem 0" }}>
+								Yes, most components support custom styling through CSS modules
+								and className props.
+							</p>
+						</details>
+					</div>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+function TabsSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Tabs</SectionTitle>
 
 			<div className="stack lg">
 				<ComponentRow label="Basic Tabs">
@@ -513,12 +1139,12 @@ function TabsSection() {
 	);
 }
 
-function DialogSection() {
+function DialogSection({ id }: { id: string }) {
 	const [isOpen, setIsOpen] = useState(false);
 
 	return (
 		<Section>
-			<SectionTitle>Dialog</SectionTitle>
+			<SectionTitle id={id}>Dialog</SectionTitle>
 
 			<div className="stack md">
 				<ComponentRow label="With Trigger">
@@ -557,10 +1183,10 @@ function DialogSection() {
 	);
 }
 
-function PopoverSection() {
+function PopoverSection({ id }: { id: string }) {
 	return (
 		<Section>
-			<SectionTitle>Popover</SectionTitle>
+			<SectionTitle id={id}>Popover</SectionTitle>
 
 			<div className="stack md">
 				<ComponentRow label="Basic Popover">
@@ -591,10 +1217,10 @@ function PopoverSection() {
 	);
 }
 
-function MenuSection() {
+function MenuSection({ id }: { id: string }) {
 	return (
 		<Section>
-			<SectionTitle>Menu</SectionTitle>
+			<SectionTitle id={id}>Menu</SectionTitle>
 
 			<div className="stack md">
 				<ComponentRow label="Basic Menu">
@@ -646,10 +1272,10 @@ function MenuSection() {
 	);
 }
 
-function ToastSection() {
+function ToastSection({ id }: { id: string }) {
 	return (
 		<Section>
-			<SectionTitle>Toast</SectionTitle>
+			<SectionTitle id={id}>Toast</SectionTitle>
 
 			<div className="stack md">
 				<ComponentRow label="Success Toast">
@@ -697,10 +1323,10 @@ function ToastSection() {
 	);
 }
 
-function DividerSection() {
+function DividerSection({ id }: { id: string }) {
 	return (
 		<Section>
-			<SectionTitle>Divider</SectionTitle>
+			<SectionTitle id={id}>Divider</SectionTitle>
 
 			<div className="stack lg">
 				<ComponentRow label="Basic Divider">
@@ -731,10 +1357,723 @@ function DividerSection() {
 	);
 }
 
-function MiscSection() {
+function TableSection({ id }: { id: string }) {
 	return (
 		<Section>
-			<SectionTitle>Miscellaneous</SectionTitle>
+			<SectionTitle id={id}>Table</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Basic Table">
+					<Table>
+						<thead>
+							<tr>
+								<th>Name</th>
+								<th>Role</th>
+								<th>Status</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>John Doe</td>
+								<td>Developer</td>
+								<td>Active</td>
+							</tr>
+							<tr>
+								<td>Jane Smith</td>
+								<td>Designer</td>
+								<td>Active</td>
+							</tr>
+							<tr>
+								<td>Bob Johnson</td>
+								<td>Manager</td>
+								<td>Inactive</td>
+							</tr>
+						</tbody>
+					</Table>
+				</ComponentRow>
+
+				<ComponentRow label="Table with Actions">
+					<Table>
+						<thead>
+							<tr>
+								<th>Item</th>
+								<th>Price</th>
+								<th>Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>Product A</td>
+								<td>$19.99</td>
+								<td>
+									<div className="stack horizontal xs">
+										<SendouButton size="miniscule" icon={<EditIcon />} />
+										<SendouButton
+											size="miniscule"
+											variant="destructive"
+											icon={<TrashIcon />}
+										/>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td>Product B</td>
+								<td>$29.99</td>
+								<td>
+									<div className="stack horizontal xs">
+										<SendouButton size="miniscule" icon={<EditIcon />} />
+										<SendouButton
+											size="miniscule"
+											variant="destructive"
+											icon={<TrashIcon />}
+										/>
+									</div>
+								</td>
+							</tr>
+						</tbody>
+					</Table>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+function PaginationSection({ id }: { id: string }) {
+	const [currentPage, setCurrentPage] = useState(5);
+	const pagesCount = 50;
+
+	return (
+		<Section>
+			<SectionTitle id={id}>Pagination</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Basic Pagination">
+					<Pagination
+						currentPage={currentPage}
+						pagesCount={pagesCount}
+						nextPage={() => setCurrentPage((p) => Math.min(p + 1, pagesCount))}
+						previousPage={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+						setPage={setCurrentPage}
+					/>
+				</ComponentRow>
+
+				<ComponentRow label="At First Page">
+					<Pagination
+						currentPage={1}
+						pagesCount={5}
+						nextPage={() => {}}
+						previousPage={() => {}}
+						setPage={() => {}}
+					/>
+				</ComponentRow>
+
+				<ComponentRow label="At Last Page">
+					<Pagination
+						currentPage={5}
+						pagesCount={5}
+						nextPage={() => {}}
+						previousPage={() => {}}
+						setPage={() => {}}
+					/>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+function AvatarSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Avatar</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Size xxxs">
+					<Avatar size="xxxs" alt="User avatar" />
+				</ComponentRow>
+
+				<ComponentRow label="Size xxxsm">
+					<Avatar size="xxxsm" alt="User avatar" />
+				</ComponentRow>
+
+				<ComponentRow label="Size xxs">
+					<Avatar size="xxs" alt="User avatar" />
+				</ComponentRow>
+
+				<ComponentRow label="Size xs">
+					<Avatar size="xs" alt="User avatar" />
+				</ComponentRow>
+
+				<ComponentRow label="Size sm (default)">
+					<Avatar size="sm" alt="User avatar" />
+				</ComponentRow>
+
+				<ComponentRow label="Size xsm">
+					<Avatar size="xsm" alt="User avatar" />
+				</ComponentRow>
+
+				<ComponentRow label="Size md">
+					<Avatar size="md" alt="User avatar" />
+				</ComponentRow>
+
+				<ComponentRow label="Size lg">
+					<Avatar size="lg" alt="User avatar" />
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+function FormMessageSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Form Messages</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Error Message">
+					<FormMessage type="error">
+						This field is required. Please enter a value.
+					</FormMessage>
+				</ComponentRow>
+
+				<ComponentRow label="Info Message">
+					<FormMessage type="info">
+						This is an informational message to help you.
+					</FormMessage>
+				</ComponentRow>
+
+				<ComponentRow label="With Input">
+					<div>
+						<Label htmlFor="message-demo">Email</Label>
+						<input id="message-demo" type="email" placeholder="Enter email" />
+						<FormMessage type="error">
+							Please enter a valid email address.
+						</FormMessage>
+					</div>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+function SubNavSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Sub Navigation</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Primary SubNav">
+					<SubNav>
+						<SubNavLink to="#overview" controlled active>
+							Overview
+						</SubNavLink>
+						<SubNavLink to="#details" controlled>
+							Details
+						</SubNavLink>
+						<SubNavLink to="#settings" controlled>
+							Settings
+						</SubNavLink>
+					</SubNav>
+				</ComponentRow>
+
+				<ComponentRow label="Secondary SubNav">
+					<SubNav secondary>
+						<SubNavLink to="#tab1" secondary controlled active>
+							Tab 1
+						</SubNavLink>
+						<SubNavLink to="#tab2" secondary controlled>
+							Tab 2
+						</SubNavLink>
+						<SubNavLink to="#tab3" secondary controlled>
+							Tab 3
+						</SubNavLink>
+					</SubNav>
+				</ComponentRow>
+
+				<ComponentRow label="AddNewButton">
+					<AddNewButton to="/new" navIcon="calendar" />
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+function DatePickerSection({ id }: { id: string }) {
+	const [calendarValue, setCalendarValue] = useState(parseDate("2024-12-27"));
+	const [datePickerValue, setDatePickerValue] = useState(
+		parseDate("2024-12-27"),
+	);
+
+	const handleCalendarChange = (value: typeof calendarValue | null) => {
+		if (value) setCalendarValue(value);
+	};
+
+	const handleDatePickerChange = (value: typeof datePickerValue | null) => {
+		if (value) setDatePickerValue(value);
+	};
+
+	return (
+		<Section>
+			<SectionTitle id={id}>Date Pickers</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Calendar">
+					<SendouCalendar
+						value={calendarValue}
+						onChange={handleCalendarChange}
+					/>
+				</ComponentRow>
+
+				<ComponentRow label="DatePicker">
+					<SendouDatePicker
+						label="Select Date"
+						value={datePickerValue}
+						onChange={handleDatePickerChange}
+					/>
+				</ComponentRow>
+
+				<ComponentRow label="DatePicker with Bottom Text">
+					<SendouDatePicker
+						label="Event Date"
+						value={datePickerValue}
+						onChange={handleDatePickerChange}
+						bottomText="Choose the date for your event"
+					/>
+				</ComponentRow>
+
+				<ComponentRow label="DatePicker Required">
+					<SendouDatePicker
+						label="Required Date"
+						value={datePickerValue}
+						onChange={handleDatePickerChange}
+						isRequired
+					/>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+function FormComponentsSection({ id }: { id: string }) {
+	const methods = useForm();
+
+	return (
+		<Section>
+			<SectionTitle id={id}>Form Components</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="InputFormField">
+					<FormProvider {...methods}>
+						<form>
+							<InputFormField label="Username" name="username" required />
+						</form>
+					</FormProvider>
+				</ComponentRow>
+
+				<ComponentRow label="InputFormField with Placeholder">
+					<FormProvider {...methods}>
+						<form>
+							<InputFormField
+								label="Email"
+								name="email"
+								type="email"
+								placeholder="user@example.com"
+							/>
+						</form>
+					</FormProvider>
+				</ComponentRow>
+
+				<ComponentRow label="InputFormField with Bottom Text">
+					<FormProvider {...methods}>
+						<form>
+							<InputFormField
+								label="Website"
+								name="website"
+								type="url"
+								bottomText="Enter your personal or company website"
+							/>
+						</form>
+					</FormProvider>
+				</ComponentRow>
+
+				<ComponentRow label="TextAreaFormField">
+					<FormProvider {...methods}>
+						<form>
+							<TextAreaFormField
+								label="Description"
+								name="description"
+								maxLength={500}
+							/>
+						</form>
+					</FormProvider>
+				</ComponentRow>
+
+				<ComponentRow label="TextAreaFormField with Bottom Text">
+					<FormProvider {...methods}>
+						<form>
+							<TextAreaFormField
+								label="Bio"
+								name="bio"
+								maxLength={200}
+								bottomText="Tell us about yourself"
+							/>
+						</form>
+					</FormProvider>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+function SplatoonImagesSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Splatoon Images</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="WeaponImage (build)">
+					<div className="stack horizontal sm">
+						<WeaponImage weaponSplId={0} variant="build" size={48} />
+						<WeaponImage weaponSplId={10} variant="build" size={48} />
+						<WeaponImage weaponSplId={40} variant="build" size={48} />
+						<WeaponImage weaponSplId={1000} variant="build" size={48} />
+						<WeaponImage weaponSplId={2000} variant="build" size={48} />
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="WeaponImage (badge)">
+					<div className="stack horizontal sm">
+						<WeaponImage weaponSplId={0} variant="badge" size={48} />
+						<WeaponImage weaponSplId={10} variant="badge" size={48} />
+						<WeaponImage weaponSplId={40} variant="badge" size={48} />
+						<WeaponImage weaponSplId={1000} variant="badge" size={48} />
+						<WeaponImage weaponSplId={2000} variant="badge" size={48} />
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="WeaponImage (badge 5-star)">
+					<div className="stack horizontal sm">
+						<WeaponImage weaponSplId={0} variant="badge-5-star" size={48} />
+						<WeaponImage weaponSplId={10} variant="badge-5-star" size={48} />
+						<WeaponImage weaponSplId={40} variant="badge-5-star" size={48} />
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="SubWeaponImage">
+					<div className="stack horizontal sm">
+						<SubWeaponImage subWeaponId={0} size={32} />
+						<SubWeaponImage subWeaponId={1} size={32} />
+						<SubWeaponImage subWeaponId={2} size={32} />
+						<SubWeaponImage subWeaponId={3} size={32} />
+						<SubWeaponImage subWeaponId={4} size={32} />
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="SpecialWeaponImage">
+					<div className="stack horizontal sm">
+						<SpecialWeaponImage specialWeaponId={1} size={32} />
+						<SpecialWeaponImage specialWeaponId={2} size={32} />
+						<SpecialWeaponImage specialWeaponId={3} size={32} />
+						<SpecialWeaponImage specialWeaponId={4} size={32} />
+						<SpecialWeaponImage specialWeaponId={7} size={32} />
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="ModeImage">
+					<div className="stack horizontal sm">
+						<ModeImage mode="TW" size={32} />
+						<ModeImage mode="SZ" size={32} />
+						<ModeImage mode="TC" size={32} />
+						<ModeImage mode="RM" size={32} />
+						<ModeImage mode="CB" size={32} />
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="StageImage">
+					<div className="stack horizontal sm">
+						<StageImage stageId={0} width={120} />
+						<StageImage stageId={1} width={120} />
+						<StageImage stageId={2} width={120} />
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="TierImage">
+					<div className="stack horizontal sm items-end">
+						<TierImage tier={{ name: "LEVIATHAN", isPlus: false }} width={80} />
+						<TierImage tier={{ name: "DIAMOND", isPlus: true }} width={80} />
+						<TierImage tier={{ name: "GOLD", isPlus: false }} width={80} />
+						<TierImage tier={{ name: "SILVER", isPlus: false }} width={80} />
+						<TierImage tier={{ name: "BRONZE", isPlus: false }} width={80} />
+					</div>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+function AbilitySection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Abilities</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Main Size">
+					<div className="stack horizontal sm">
+						<Ability ability="ISM" size="MAIN" />
+						<Ability ability="ISS" size="MAIN" />
+						<Ability ability="IRU" size="MAIN" />
+						<Ability ability="SSU" size="MAIN" />
+						<Ability ability="RSU" size="MAIN" />
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="Sub Size">
+					<div className="stack horizontal sm">
+						<Ability ability="ISM" size="SUB" />
+						<Ability ability="ISS" size="SUB" />
+						<Ability ability="IRU" size="SUB" />
+						<Ability ability="SSU" size="SUB" />
+						<Ability ability="RSU" size="SUB" />
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="Sub Tiny Size">
+					<div className="stack horizontal sm">
+						<Ability ability="ISM" size="SUBTINY" />
+						<Ability ability="ISS" size="SUBTINY" />
+						<Ability ability="IRU" size="SUBTINY" />
+						<Ability ability="SSU" size="SUBTINY" />
+						<Ability ability="RSU" size="SUBTINY" />
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="Tiny Size">
+					<div className="stack horizontal sm">
+						<Ability ability="ISM" size="TINY" />
+						<Ability ability="ISS" size="TINY" />
+						<Ability ability="IRU" size="TINY" />
+						<Ability ability="SSU" size="TINY" />
+						<Ability ability="RSU" size="TINY" />
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="Unknown Ability">
+					<div className="stack horizontal sm">
+						<Ability ability="UNKNOWN" size="TINY" />
+						<Ability ability="UNKNOWN" size="SUB" />
+						<Ability ability="UNKNOWN" size="MAIN" />
+					</div>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+function FlagSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Flags</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Regular Size">
+					<div className="stack horizontal sm">
+						<Flag countryCode="US" />
+						<Flag countryCode="JP" />
+						<Flag countryCode="GB" />
+						<Flag countryCode="DE" />
+						<Flag countryCode="FR" />
+						<Flag countryCode="KR" />
+						<Flag countryCode="AU" />
+						<Flag countryCode="BR" />
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="Tiny Size">
+					<div className="stack horizontal sm">
+						<Flag countryCode="US" tiny />
+						<Flag countryCode="JP" tiny />
+						<Flag countryCode="GB" tiny />
+						<Flag countryCode="DE" tiny />
+						<Flag countryCode="FR" tiny />
+						<Flag countryCode="KR" tiny />
+						<Flag countryCode="AU" tiny />
+						<Flag countryCode="BR" tiny />
+					</div>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+function PlacementSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Placements</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Top 3 (with icons)">
+					<div className="stack horizontal md items-center">
+						<Placement placement={1} />
+						<Placement placement={2} />
+						<Placement placement={3} />
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="Other Placements">
+					<div className="stack horizontal md items-center">
+						<Placement placement={5} />
+						<Placement placement={10} />
+						<Placement placement={100} />
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="Text Only">
+					<div className="stack horizontal md items-center">
+						<Placement placement={1} textOnly />
+						<Placement placement={2} textOnly />
+						<Placement placement={3} textOnly />
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="Different Sizes">
+					<div className="stack horizontal md items-center">
+						<Placement placement={1} size={16} />
+						<Placement placement={1} size={24} />
+						<Placement placement={1} size={32} />
+						<Placement placement={1} size={48} />
+					</div>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+function BadgeSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Badges</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Basic Badge">
+					<div className="stack horizontal sm">
+						<Badge
+							badge={{
+								displayName: "Example Badge",
+								code: "sundae",
+								hue: null,
+							}}
+							isAnimated={false}
+							size={64}
+						/>
+						<Badge
+							badge={{
+								displayName: "Example Badge",
+								code: "sundae",
+								hue: null,
+							}}
+							isAnimated={true}
+							size={64}
+						/>
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="With Hue Rotation">
+					<div className="stack horizontal sm">
+						<Badge
+							badge={{ displayName: "Badge 0°", code: "sundae", hue: 0 }}
+							isAnimated={false}
+							size={48}
+						/>
+						<Badge
+							badge={{ displayName: "Badge 90°", code: "sundae", hue: 90 }}
+							isAnimated={false}
+							size={48}
+						/>
+						<Badge
+							badge={{ displayName: "Badge 180°", code: "sundae", hue: 180 }}
+							isAnimated={false}
+							size={48}
+						/>
+						<Badge
+							badge={{ displayName: "Badge 270°", code: "sundae", hue: 270 }}
+							isAnimated={false}
+							size={48}
+						/>
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="Different Sizes">
+					<div className="stack horizontal sm items-end">
+						<Badge
+							badge={{ displayName: "Small", code: "sundae", hue: null }}
+							isAnimated={false}
+							size={32}
+						/>
+						<Badge
+							badge={{ displayName: "Medium", code: "sundae", hue: null }}
+							isAnimated={false}
+							size={48}
+						/>
+						<Badge
+							badge={{ displayName: "Large", code: "sundae", hue: null }}
+							isAnimated={false}
+							size={64}
+						/>
+						<Badge
+							badge={{ displayName: "XL", code: "sundae", hue: null }}
+							isAnimated={false}
+							size={96}
+						/>
+					</div>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+function GameSelectSection({ id }: { id: string }) {
+	const [selectedWeapon, setSelectedWeapon] = useState<MainWeaponId | null>(
+		null,
+	);
+	const [selectedStage, setSelectedStage] = useState<StageId | null>(null);
+
+	return (
+		<Section>
+			<SectionTitle id={id}>Game Selects</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="WeaponSelect">
+					<WeaponSelect
+						label="Select Weapon"
+						value={selectedWeapon}
+						onChange={setSelectedWeapon}
+						clearable
+					/>
+				</ComponentRow>
+
+				<ComponentRow label="StageSelect">
+					<StageSelect
+						label="Select Stage"
+						value={selectedStage}
+						onChange={setSelectedStage}
+						clearable
+					/>
+				</ComponentRow>
+
+				<ComponentRow label="WeaponSelect Required">
+					<WeaponSelect label="Required Weapon" isRequired />
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+function MiscSection({ id }: { id: string }) {
+	const [rangeValue, setRangeValue] = useState(50);
+	const [colorValue, setColorValue] = useState("#3b82f6");
+
+	return (
+		<Section>
+			<SectionTitle id={id}>Miscellaneous</SectionTitle>
 
 			<div className="stack md">
 				<ComponentRow label="Section Component">
@@ -742,6 +2081,226 @@ function MiscSection() {
 						<p>This is content inside a Section component.</p>
 						<p>It provides consistent styling for content blocks.</p>
 					</Section>
+				</ComponentRow>
+
+				<ComponentRow label="Placeholder">
+					<div style={{ height: "100px", position: "relative" }}>
+						<Placeholder />
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="Progress Bar">
+					<div className="stack sm" style={{ width: "100%" }}>
+						<progress value={70} max={100} style={{ width: "100%" }} />
+						<progress value={30} max={100} style={{ width: "100%" }} />
+						<progress style={{ width: "100%" }} />
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="Range Slider">
+					<div className="stack sm" style={{ width: "100%" }}>
+						<label className="stack horizontal sm items-center">
+							<span>Volume: {rangeValue}</span>
+						</label>
+						<input
+							type="range"
+							min={0}
+							max={100}
+							value={rangeValue}
+							onChange={(e) => setRangeValue(Number(e.target.value))}
+							style={{ width: "100%" }}
+						/>
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="Color Picker">
+					<div className="stack horizontal sm items-center">
+						<input
+							type="color"
+							value={colorValue}
+							onChange={(e) => setColorValue(e.target.value)}
+						/>
+						<span>{colorValue}</span>
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="File Input">
+					<input type="file" />
+				</ComponentRow>
+
+				<ComponentRow label="Multiple File Input">
+					<input type="file" multiple />
+				</ComponentRow>
+
+				<ComponentRow label="File Input (Accept Images)">
+					<input type="file" accept="image/*" />
+				</ComponentRow>
+
+				<ComponentRow label="Time Input">
+					<input type="time" />
+				</ComponentRow>
+
+				<ComponentRow label="Datetime-local Input">
+					<input type="datetime-local" />
+				</ComponentRow>
+
+				<ComponentRow label="Week Input">
+					<input type="week" />
+				</ComponentRow>
+
+				<ComponentRow label="Month Input">
+					<input type="month" />
+				</ComponentRow>
+
+				<ComponentRow label="Email Input">
+					<input type="email" placeholder="email@example.com" />
+				</ComponentRow>
+
+				<ComponentRow label="URL Input">
+					<input type="url" placeholder="https://example.com" />
+				</ComponentRow>
+
+				<ComponentRow label="Tel Input">
+					<input type="tel" placeholder="+1 (555) 123-4567" />
+				</ComponentRow>
+
+				<ComponentRow label="Search Input">
+					<input type="search" placeholder="Search..." />
+				</ComponentRow>
+
+				<ComponentRow label="Password Input">
+					<input type="password" placeholder="Enter password" />
+				</ComponentRow>
+
+				<ComponentRow label="HTML Tags">
+					<div className="stack sm">
+						<div>
+							<strong>Bold text</strong>
+						</div>
+						<div>
+							<em>Italic text</em>
+						</div>
+						<div>
+							<mark>Highlighted text</mark>
+						</div>
+						<div>
+							<del>Deleted text</del>
+						</div>
+						<div>
+							<ins>Inserted text</ins>
+						</div>
+						<div>
+							<code>Inline code</code>
+						</div>
+						<div>
+							<kbd>Keyboard input</kbd>
+						</div>
+						<div>
+							<samp>Sample output</samp>
+						</div>
+						<div>
+							<var>Variable</var>
+						</div>
+						<div>
+							<small>Small text</small>
+						</div>
+						<div>
+							H<sub>2</sub>O (subscript)
+						</div>
+						<div>
+							E = mc<sup>2</sup> (superscript)
+						</div>
+						<div>
+							<abbr title="HyperText Markup Language">HTML</abbr> (abbreviation)
+						</div>
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="Lists">
+					<div className="stack md">
+						<div>
+							<strong>Unordered List:</strong>
+							<ul>
+								<li>Item 1</li>
+								<li>Item 2</li>
+								<li>
+									Item 3
+									<ul>
+										<li>Nested item 1</li>
+										<li>Nested item 2</li>
+									</ul>
+								</li>
+							</ul>
+						</div>
+						<div>
+							<strong>Ordered List:</strong>
+							<ol>
+								<li>First item</li>
+								<li>Second item</li>
+								<li>Third item</li>
+							</ol>
+						</div>
+						<div>
+							<strong>Description List:</strong>
+							<dl>
+								<dt>Term 1</dt>
+								<dd>Definition for term 1</dd>
+								<dt>Term 2</dt>
+								<dd>Definition for term 2</dd>
+							</dl>
+						</div>
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="Blockquote">
+					<blockquote
+						style={{ borderLeft: "4px solid var(--gray)", paddingLeft: "1rem" }}
+					>
+						<p>
+							This is a blockquote. It's used to represent content quoted from
+							another source.
+						</p>
+						<footer>— Author Name</footer>
+					</blockquote>
+				</ComponentRow>
+
+				<ComponentRow label="Preformatted Text">
+					<pre
+						style={{
+							background: "var(--gray-bg)",
+							padding: "1rem",
+							overflow: "auto",
+						}}
+					>
+						<code>
+							{`function example() {
+  const greeting = "Hello, World!";
+  console.log(greeting);
+  return greeting;
+}`}
+						</code>
+					</pre>
+				</ComponentRow>
+
+				<ComponentRow label="Horizontal Rule">
+					<div style={{ width: "100%" }}>
+						<p>Content above</p>
+						<hr />
+						<p>Content below</p>
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="RelativeTime">
+					<RelativeTime timestamp={Date.now() - 3600000}>
+						1 hour ago
+					</RelativeTime>
+				</ComponentRow>
+
+				<ComponentRow label="CopyToClipboardPopover">
+					<CopyToClipboardPopover
+						trigger={<SendouButton size="small">Share Link</SendouButton>}
+						url="https://sendou.ink/example"
+					/>
 				</ComponentRow>
 			</div>
 		</Section>

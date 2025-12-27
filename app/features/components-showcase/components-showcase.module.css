@@ -23,3 +23,41 @@
 .componentContent {
 	width: 100%;
 }
+
+.sideNav {
+	position: fixed;
+	left: var(--s-4);
+	top: 60px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	max-height: 90dvh;
+	overflow-y: auto;
+	z-index: 100;
+
+	@media (max-width: 1100px) {
+		display: none;
+	}
+}
+
+.sideNavLink {
+	font-size: var(--fonts-xs);
+	color: var(--color-text-high);
+	text-decoration: none;
+	padding: var(--s-1) var(--s-2);
+	border-radius: var(--rounded-xs);
+	transition:
+		background-color 0.15s,
+		color 0.15s;
+
+	&:hover {
+		color: var(--color-text);
+		background-color: var(--color-bg-high);
+	}
+
+	&[aria-current="page"] {
+		color: var(--color-text);
+		background-color: var(--color-bg-high);
+		font-weight: 600;
+	}
+}
