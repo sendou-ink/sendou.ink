@@ -127,7 +127,7 @@ function TierListMakerContent() {
 		flushSync(() => setScreenshotMode(true));
 
 		await snapdom.download(tierListRef.current, {
-			format: "png",
+			type: "png",
 			filename: "tier-list",
 			quality: 1,
 			scale: 1.75,
