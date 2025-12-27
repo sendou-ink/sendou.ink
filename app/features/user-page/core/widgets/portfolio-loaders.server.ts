@@ -1,3 +1,4 @@
+import * as ArtRepository from "~/features/art/ArtRepository.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
@@ -244,6 +245,19 @@ export const WIDGET_LOADERS = {
 		});
 
 		return sortedBuilds.slice(0, 3);
+	},
+	art: async (userId: number, settings: ExtractWidgetSettings<"art">) => {
+		const includeAuthored =
+			settings.source === "ALL" || settings.source === "MADE-BY";
+		const includeTagged =
+			settings.source === "ALL" || settings.source === "MADE-OF";
+
+		const arts = await ArtRepository.findArtsByUserId(userId, {
+			includeAuthored,
+			includeTagged,
+		});
+
+		return arts.slice(0, 3);
 	},
 };
 

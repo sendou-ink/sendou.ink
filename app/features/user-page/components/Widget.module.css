@@ -240,3 +240,16 @@
 	overflow-x: auto;
 	padding-block: var(--s-2);
 }
+
+.artGrid {
+	display: flex;
+	gap: var(--s-3);
+	overflow-x: auto;
+	padding-block: var(--s-2);
+}
+
+.artThumbnail {
+	height: 300px;
+	object-fit: contain;
+	flex-shrink: 0;
+}

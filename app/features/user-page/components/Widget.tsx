@@ -7,6 +7,7 @@ import { BuildCard } from "~/components/BuildCard";
 import { Image, StageImage, WeaponImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
 import type { Tables } from "~/db/tables";
+import { previewUrl } from "~/features/art/art-utils";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { VodListing } from "~/features/vods/components/VodListing";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
@@ -29,6 +30,7 @@ import {
 	topSearchPlayerPage,
 	tournamentBracketsPage,
 	tournamentOrganizationPage,
+	userArtPage,
 	userBuildsPage,
 	userResultsPage,
 	userVodsPage,
@@ -203,6 +205,10 @@ export function Widget({
 				);
 			case "sens":
 				return <SensWidget data={widget.data} />;
+			case "art":
+				return widget.data.length === 0 ? null : (
+					<ArtWidget arts={widget.data} />
+				);
 			default:
 				assertUnreachable(widget);
 		}
@@ -226,6 +232,8 @@ export function Widget({
 				return widget.data
 					? `${LEADERBOARDS_PAGE}?type=XP-WEAPON-${widget.data.weaponSplId}`
 					: null;
+			case "art":
+				return widget.data.length > 0 ? userArtPage(user) : null;
 			default:
 				return null;
 		}
@@ -638,6 +646,26 @@ function SensWidget({
 					</div>
 				</div>
 			</div>
+		</div>
+	);
+}
+
+function ArtWidget({
+	arts,
+}: {
+	arts: Extract<LoadedWidget, { id: "art" }>["data"];
+}) {
+	return (
+		<div className={styles.artGrid}>
+			{arts.map((art) => (
+				<img
+					key={art.id}
+					alt=""
+					src={previewUrl(art.url)}
+					loading="lazy"
+					className={styles.artThumbnail}
+				/>
+			))}
 		</div>
 	);
 }

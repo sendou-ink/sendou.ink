@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { ART_SOURCES } from "~/features/art/art-types";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { dbBoolean, weaponSplId } from "~/utils/zod";
@@ -48,6 +49,10 @@ const SENS_WIDGET_SETTINGS_SCHEMA = z.object({
 	controller: z.enum(["s1-pro-con", "s2-pro-con", "grip", "handheld"]),
 	motionSens: z.number().nullable(),
 	stickSens: z.number().nullable(),
+});
+
+const ART_WIDGET_SETTINGS_SCHEMA = z.object({
+	source: z.enum(ART_SOURCES),
 });
 
 export const ALL_WIDGETS = {
@@ -206,6 +211,13 @@ export const ALL_WIDGETS = {
 		{
 			id: "builds",
 			slot: "main",
+		},
+	],
+	art: [
+		{
+			id: "art",
+			slot: "main",
+			schema: ART_WIDGET_SETTINGS_SCHEMA,
 		},
 	],
 } as const;

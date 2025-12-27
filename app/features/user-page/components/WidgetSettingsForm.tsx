@@ -190,6 +190,19 @@ function WidgetSettingsFormInner({
 						onStickSensChange={(sens) => methods.setValue("stickSens", sens)}
 					/>
 				);
+			case "art":
+				return (
+					<SelectFormField
+						label={t("widgets.forms.source")}
+						name="source"
+						size="small"
+						values={[
+							{ value: "ALL", label: t("widgets.forms.source.ALL") },
+							{ value: "MADE-BY", label: t("widgets.forms.source.MADE-BY") },
+							{ value: "MADE-OF", label: t("widgets.forms.source.MADE-OF") },
+						]}
+					/>
+				);
 			default:
 				return null;
 		}
