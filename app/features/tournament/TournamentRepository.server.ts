@@ -7,6 +7,7 @@ import type {
 	PreparedMaps,
 	Tables,
 	TournamentSettings,
+	TournamentSub,
 } from "~/db/tables";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { Status } from "~/modules/brackets-model";
@@ -289,6 +290,11 @@ export async function findById(id: number) {
 
 	return {
 		...result,
+		// TODO: types broke with dependency update somehow
+		subCounts: result.subCounts as Array<{
+			visibility: TournamentSub["visibility"];
+			count: number;
+		}>,
 		teams: result.teams.map((team) => ({
 			...team,
 			members: team.members.map(({ ordinal, ...member }) => member),

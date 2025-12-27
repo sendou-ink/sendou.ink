@@ -11,8 +11,6 @@
 		"babel-plugin-react-compiler"
 	],
 	"entry": [
-		"app/entry.server.tsx",
-		"app/entry.client.tsx",
 		"app/routes.ts",
 		"app/features/*/routes/**/*.{ts,tsx}",
 		"migrations/**/*.js",
