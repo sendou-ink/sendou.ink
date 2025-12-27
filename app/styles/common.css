@@ -316,6 +316,7 @@ select {
 	background-repeat: no-repeat;
 	cursor: pointer;
 	padding: 0 var(--input-padding-inline);
+	padding-right: 2.25rem;
 	height: var(--input-height);
 	line-height: var(--input-line-height);
 	display: inline-flex;

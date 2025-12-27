@@ -130,7 +130,6 @@ export default function ObjectDamagePage() {
 				>
 					<div>
 						<select
-							className="object-damage__select"
 							id="ap"
 							value={abilityPoints}
 							onChange={(e) =>
@@ -173,7 +172,6 @@ function DamageTypesSelect({
 
 	return (
 		<select
-			className="object-damage__select"
 			id="damage"
 			value={damageType}
 			onChange={(e) =>
