@@ -23,6 +23,7 @@ import {
 } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 import { safeNumberParse } from "~/utils/number";
+import { bskyUrl, twitchUrl, youtubeUrl } from "~/utils/urls";
 import type { ChatUser } from "../chat/chat-types";
 import { findWidgetById } from "./core/widgets/portfolio";
 import { WIDGET_LOADERS } from "./core/widgets/portfolio-loaders.server";
@@ -1250,4 +1251,43 @@ export async function anyUserPrefersNoScreen(
 		.executeTakeFirst();
 
 	return Boolean(result);
+}
+
+export async function socialLinksByUserId(userId: number) {
+	const user = await db
+		.selectFrom("User")
+		.select([
+			"User.twitch",
+			"User.youtubeId",
+			"User.bsky",
+			"User.discordUniqueName",
+		])
+		.where("User.id", "=", userId)
+		.executeTakeFirst();
+
+	if (!user) return [];
+
+	const links: Array<
+		| { type: "url"; value: string }
+		| { type: "popover"; platform: "discord"; value: string }
+	> = [];
+
+	if (user.twitch) {
+		links.push({ type: "url", value: twitchUrl(user.twitch) });
+	}
+	if (user.youtubeId) {
+		links.push({ type: "url", value: youtubeUrl(user.youtubeId) });
+	}
+	if (user.bsky) {
+		links.push({ type: "url", value: bskyUrl(user.bsky) });
+	}
+	if (user.discordUniqueName) {
+		links.push({
+			type: "popover",
+			platform: "discord",
+			value: user.discordUniqueName,
+		});
+	}
+
+	return links;
 }

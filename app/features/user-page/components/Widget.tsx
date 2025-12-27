@@ -4,7 +4,14 @@ import Markdown from "markdown-to-jsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { BuildCard } from "~/components/BuildCard";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { Image, StageImage, WeaponImage } from "~/components/Image";
+import { BskyIcon } from "~/components/icons/Bsky";
+import { DiscordIcon } from "~/components/icons/Discord";
+import { LinkIcon } from "~/components/icons/Link";
+import { TwitchIcon } from "~/components/icons/Twitch";
+import { YouTubeIcon } from "~/components/icons/YouTube";
 import { Placement } from "~/components/Placement";
 import type { Tables } from "~/db/tables";
 import { previewUrl } from "~/features/art/art-utils";
@@ -37,6 +44,8 @@ import {
 } from "~/utils/urls";
 import type { LoadedWidget } from "../core/widgets/types";
 import styles from "./Widget.module.css";
+
+// xxx: for build widget, for lighter loading make it really recent builds so we can limit db side and no JS sorting
 
 export function Widget({
 	widget,
@@ -209,6 +218,12 @@ export function Widget({
 				);
 			case "commissions":
 				return <CommissionsWidget data={widget.data} />;
+			case "social-links":
+				return <SocialLinksWidget data={widget.data} />;
+			case "links":
+				return widget.data.length === 0 ? null : (
+					<LinksWidget links={widget.data} />
+				);
 			default:
 				assertUnreachable(widget);
 		}
@@ -689,6 +704,115 @@ function CommissionsWidget({
 			{data.commissionText ? (
 				<div className={styles.widgetValueFooter}>{data.commissionText}</div>
 			) : null}
+		</div>
+	);
+}
+
+const urlToLinkType = (url: string) => {
+	if (url.includes("twitch.tv")) {
+		return "twitch";
+	}
+	if (url.includes("youtube.com")) {
+		return "youtube";
+	}
+	if (url.includes("bsky.app")) {
+		return "bsky";
+	}
+	return null;
+};
+
+const urlToIcon = (url: string) => {
+	const type = urlToLinkType(url);
+	if (type === "twitch") {
+		return <TwitchIcon />;
+	}
+	if (type === "youtube") {
+		return <YouTubeIcon />;
+	}
+	if (type === "bsky") {
+		return <BskyIcon />;
+	}
+	return null;
+};
+
+function SocialLinksWidget({
+	data,
+}: {
+	data: Extract<LoadedWidget, { id: "social-links" }>["data"];
+}) {
+	if (data.length === 0) return null;
+
+	return (
+		<div className={styles.socialLinksIcons}>
+			{data.map((link, i) => {
+				if (link.type === "popover") {
+					return (
+						<SendouPopover
+							key={i}
+							trigger={
+								<SendouButton
+									variant="minimal"
+									className={clsx(
+										styles.socialLinkIconContainer,
+										styles[link.platform],
+									)}
+								>
+									{link.platform === "discord" ? <DiscordIcon /> : null}
+								</SendouButton>
+							}
+						>
+							{link.value}
+						</SendouPopover>
+					);
+				}
+
+				const type = urlToLinkType(link.value);
+				return (
+					<a
+						key={i}
+						href={link.value}
+						target="_blank"
+						rel="noreferrer"
+						className={clsx(styles.socialLinkIconContainer, {
+							[styles.twitch]: type === "twitch",
+							[styles.youtube]: type === "youtube",
+							[styles.bsky]: type === "bsky",
+						})}
+					>
+						{urlToIcon(link.value)}
+					</a>
+				);
+			})}
+		</div>
+	);
+}
+
+function LinksWidget({ links }: { links: string[] }) {
+	return (
+		<div className={styles.socialLinks}>
+			{links.map((url, i) => {
+				const type = urlToLinkType(url);
+				return (
+					<a
+						key={i}
+						href={url}
+						target="_blank"
+						rel="noreferrer"
+						className={styles.socialLink}
+					>
+						<div
+							className={clsx(styles.socialLinkIconContainer, {
+								[styles.twitch]: type === "twitch",
+								[styles.youtube]: type === "youtube",
+								[styles.bsky]: type === "bsky",
+							})}
+						>
+							{urlToIcon(url)}
+						</div>
+						{url}
+					</a>
+				);
+			})}
 		</div>
 	);
 }

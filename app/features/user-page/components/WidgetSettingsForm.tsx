@@ -7,6 +7,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { InputFormField } from "~/components/form/InputFormField";
 import { SelectFormField } from "~/components/form/SelectFormField";
 import { TextAreaFormField } from "~/components/form/TextAreaFormField";
+import { TextArrayFormField } from "~/components/form/TextArrayFormField";
 import { WeaponImage } from "~/components/Image";
 import { StarIcon } from "~/components/icons/Star";
 import { StarFilledIcon } from "~/components/icons/StarFilled";
@@ -201,6 +202,14 @@ function WidgetSettingsFormInner({
 							{ value: "MADE-BY", label: t("widgets.forms.source.MADE-BY") },
 							{ value: "MADE-OF", label: t("widgets.forms.source.MADE-OF") },
 						]}
+					/>
+				);
+			case "links":
+				return (
+					<TextArrayFormField
+						label={t("widgets.forms.links")}
+						name="links"
+						format="object"
 					/>
 				);
 			default:

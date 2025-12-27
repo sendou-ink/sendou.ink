@@ -253,3 +253,59 @@
 	object-fit: contain;
 	flex-shrink: 0;
 }
+
+.socialLinks {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.socialLink {
+	font-size: var(--fonts-sm);
+	display: flex;
+	gap: var(--s-2);
+	align-items: flex-start;
+	word-break: break-all;
+	overflow-wrap: break-word;
+}
+
+.socialLink svg {
+	width: 18px;
+}
+
+.socialLinkIconContainer {
+	background-color: var(--bg-lightest);
+	display: grid;
+	place-items: center;
+	border-radius: var(--rounded);
+	padding: var(--s-2);
+	flex-shrink: 0;
+}
+
+.socialLinkIconContainer svg {
+	width: 18px;
+	height: 18px;
+}
+
+.socialLinkIconContainer.twitch svg {
+	fill: #9146ff;
+}
+
+.socialLinkIconContainer.youtube svg {
+	fill: #f00;
+}
+
+.socialLinkIconContainer.bsky path {
+	fill: #1285fe;
+}
+
+.socialLinkIconContainer.discord svg {
+	fill: #5865f2;
+}
+
+.socialLinksIcons {
+	display: flex;
+	gap: var(--s-2);
+	justify-content: center;
+	flex-wrap: wrap;
+}

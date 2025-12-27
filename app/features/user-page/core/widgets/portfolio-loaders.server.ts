@@ -262,6 +262,13 @@ export const WIDGET_LOADERS = {
 	commissions: async (userId: number) => {
 		return UserRepository.commissionsByUserId(userId);
 	},
+	"social-links": async (userId: number) => {
+		return UserRepository.socialLinksByUserId(userId);
+	},
+	links: async (_userId: number, settings: ExtractWidgetSettings<"links">) => {
+		// xxx: remove object here
+		return settings.links.map((link) => link.value);
+	},
 };
 
 async function getTop500WeaponsByCategory(

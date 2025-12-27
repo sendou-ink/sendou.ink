@@ -77,6 +77,8 @@ export const bskyUrl = (accountName: string) =>
 	`https://bsky.app/profile/${accountName}`;
 export const twitchUrl = (accountName: string) =>
 	`https://twitch.tv/${accountName}`;
+export const youtubeUrl = (channelId: string) =>
+	`https://youtube.com/channel/${channelId}`;
 
 export const LOG_IN_URL = "/auth";
 export const LOG_OUT_URL = "/auth/logout";
