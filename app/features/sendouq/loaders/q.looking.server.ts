@@ -20,7 +20,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	);
 
 	const groups = isPreview
-		? SendouQ.previewGroups(privateNotes)
+		? SendouQ.previewGroups(user.id, privateNotes)
 		: SendouQ.lookingGroups(user.id, privateNotes);
 	const ownGroup = SendouQ.findOwnGroup(user.id);
 

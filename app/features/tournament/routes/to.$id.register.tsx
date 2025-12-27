@@ -711,6 +711,7 @@ function TeamInfo({
 								<Label htmlFor="signingUpAs">Team signing up as</Label>
 								<select
 									id="signingUpAs"
+									value={signUpWithTeamId ?? ""}
 									onChange={(e) => {
 										if (e.target.value === "") {
 											handleSignUpWithTeamChange(null);

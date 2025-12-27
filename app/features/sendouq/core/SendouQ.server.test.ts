@@ -262,7 +262,7 @@ describe("SendouQ", () => {
 			await refreshSendouQInstance();
 
 			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-			const groups = SendouQ.previewGroups(notes);
+			const groups = SendouQ.previewGroups(1, notes);
 
 			expect(groups).toEqual([]);
 		});
@@ -272,7 +272,7 @@ describe("SendouQ", () => {
 			await refreshSendouQInstance();
 
 			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-			const groups = SendouQ.previewGroups(notes);
+			const groups = SendouQ.previewGroups(1, notes);
 
 			expect(groups).toHaveLength(1);
 			expect(groups[0].members).toBeUndefined();
@@ -283,7 +283,7 @@ describe("SendouQ", () => {
 			await refreshSendouQInstance();
 
 			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-			const groups = SendouQ.previewGroups(notes);
+			const groups = SendouQ.previewGroups(1, notes);
 
 			expect(groups).toHaveLength(1);
 			expect(groups[0].members).toBeDefined();
@@ -296,7 +296,7 @@ describe("SendouQ", () => {
 			await refreshSendouQInstance();
 
 			const notes = await PrivateUserNoteRepository.byAuthorUserId(3);
-			const groups = SendouQ.previewGroups(notes);
+			const groups = SendouQ.previewGroups(3, notes);
 
 			expect(groups).toHaveLength(1);
 			const member = groups[0].members?.find((m) => m.id === 2);
@@ -310,7 +310,7 @@ describe("SendouQ", () => {
 			await refreshSendouQInstance();
 
 			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-			const groups = SendouQ.previewGroups(notes);
+			const groups = SendouQ.previewGroups(1, notes);
 
 			expect(groups).toHaveLength(2);
 			for (const group of groups) {
@@ -326,7 +326,7 @@ describe("SendouQ", () => {
 			await refreshSendouQInstance();
 
 			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-			const groups = SendouQ.previewGroups(notes);
+			const groups = SendouQ.previewGroups(1, notes);
 
 			expect(groups).toHaveLength(3);
 
@@ -343,7 +343,7 @@ describe("SendouQ", () => {
 			await refreshSendouQInstance();
 
 			const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
-			const groups = SendouQ.previewGroups(notes);
+			const groups = SendouQ.previewGroups(1, notes);
 
 			const fullGroup = groups.find((g) => g.members === undefined);
 			const partialGroup = groups.find((g) => g.members !== undefined);
@@ -356,6 +356,107 @@ describe("SendouQ", () => {
 
 			expect(partialGroup?.tier).toBeDefined();
 			expect(partialGroup?.tierRange).toBeNull();
+		});
+
+		describe("tier sorting", () => {
+			test("sorts full groups by tier when viewer has a tier", async () => {
+				await insertSkill(1, 1000);
+				await insertSkill(2, 500);
+				await insertSkill(3, 500);
+				await insertSkill(4, 500);
+				await insertSkill(5, 500);
+				await insertSkill(6, 2000);
+				await insertSkill(7, 2000);
+				await insertSkill(8, 2000);
+				await insertSkill(9, 2000);
+
+				const group1Id = await createGroup([2, 3, 4, 5]);
+				const group2Id = await createGroup([6, 7, 8, 9]);
+				await refreshSendouQInstance();
+
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const groups = SendouQ.previewGroups(1, notes);
+
+				expect(groups).toHaveLength(2);
+				expect(groups[0].id).toBe(group1Id);
+				expect(groups[1].id).toBe(group2Id);
+			});
+
+			test("sorts partial groups by tier relative to viewer", async () => {
+				await insertSkill(1, 1000);
+				await insertSkill(2, 500);
+				await insertSkill(3, 2000);
+				await insertSkill(4, 1050);
+
+				await createGroup([4]);
+				await createGroup([2]);
+				await createGroup([3]);
+				await refreshSendouQInstance();
+
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const groups = SendouQ.previewGroups(1, notes);
+
+				expect(groups).toHaveLength(3);
+				expect(groups[0].members![0].id).toBe(4);
+				expect(groups[1].members![0].id).toBe(2);
+				expect(groups[2].members![0].id).toBe(3);
+			});
+
+			test("full groups are sorted last regardless of tier", async () => {
+				await insertSkill(1, 1000);
+				await insertSkill(2, 1100);
+				await insertSkill(3, 1100);
+				await insertSkill(4, 1100);
+				await insertSkill(5, 1100);
+				await insertSkill(6, 500);
+
+				const fullGroupId = await createGroup([2, 3, 4, 5]);
+				const partialGroupId = await createGroup([6]);
+				await refreshSendouQInstance();
+
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const groups = SendouQ.previewGroups(1, notes);
+
+				expect(groups).toHaveLength(2);
+				expect(groups[0].id).toBe(partialGroupId);
+				expect(groups[1].id).toBe(fullGroupId);
+			});
+
+			test("sorts by sentiment first, then tier within same sentiment", async () => {
+				await insertSkill(1, 1000);
+				await insertSkill(2, 500);
+				await insertSkill(3, 2000);
+				await insertSkill(4, 1050);
+
+				await createGroup([2]);
+				await createGroup([3]);
+				await createGroup([4]);
+				await createPrivateNote(1, 2, "POSITIVE");
+				await createPrivateNote(1, 3, "NEGATIVE");
+				await refreshSendouQInstance();
+
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const groups = SendouQ.previewGroups(1, notes);
+
+				expect(groups).toHaveLength(3);
+				expect(groups[0].members![0].id).toBe(2);
+				expect(groups[1].members![0].id).toBe(4);
+				expect(groups[2].members![0].id).toBe(3);
+			});
+
+			test("handles viewer without skill gracefully", async () => {
+				await insertSkill(2, 500);
+				await insertSkill(3, 2000);
+
+				await createGroup([2]);
+				await createGroup([3]);
+				await refreshSendouQInstance();
+
+				const notes = await PrivateUserNoteRepository.byAuthorUserId(1);
+				const groups = SendouQ.previewGroups(1, notes);
+
+				expect(groups).toHaveLength(2);
+			});
 		});
 	});
 
