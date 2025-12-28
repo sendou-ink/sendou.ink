@@ -16,6 +16,7 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
 import type { ExtractWidgetSettings } from "./types";
+import { cachedUserSQLeaderboardTopData } from "./utils.server";
 
 export const WIDGET_LOADERS = {
 	"badges-owned": async (userId: number) => {
@@ -61,6 +62,26 @@ export const WIDGET_LOADERS = {
 		}
 
 		return peakData;
+	},
+	"top-10-seasons": async (userId: number) => {
+		const cache = cachedUserSQLeaderboardTopData();
+		const userData = cache.get(userId);
+
+		if (!userData || userData.TOP_10.times === 0) {
+			return null;
+		}
+
+		return userData.TOP_10;
+	},
+	"top-100-seasons": async (userId: number) => {
+		const cache = cachedUserSQLeaderboardTopData();
+		const userData = cache.get(userId);
+
+		if (!userData || userData.TOP_100.times === 0) {
+			return null;
+		}
+
+		return userData.TOP_100;
 	},
 	"peak-xp": async (userId: number) => {
 		const placements = await XRankPlacementRepository.findPlacementsByUserId(

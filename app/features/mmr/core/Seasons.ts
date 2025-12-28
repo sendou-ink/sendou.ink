@@ -179,3 +179,12 @@ export function allStarted(date = new Date()) {
 
 	return [0];
 }
+/**
+ * Retrieves a list of season numbers that have finished based on the provided date (defaults to now).
+ *
+ * @returns An array of season numbers in descending order. If no seasons have finished, returns an empty array.
+ */
+export function allFinished(date = new Date()) {
+	const finishedSeasons = list.filter((s) => date > s.ends);
+	return finishedSeasons.map((s) => s.nth).reverse();
+}

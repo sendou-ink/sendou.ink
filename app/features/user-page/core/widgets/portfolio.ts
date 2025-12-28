@@ -143,6 +143,14 @@ export const ALL_WIDGETS = {
 			id: "peak-sp",
 			slot: "side",
 		},
+		{
+			id: "top-10-seasons",
+			slot: "side",
+		},
+		{
+			id: "top-100-seasons",
+			slot: "side",
+		},
 	],
 	xrank: [
 		{

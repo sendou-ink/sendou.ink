@@ -107,6 +107,18 @@ export function Widget({
 						footer={`${widget.data.tierName}${widget.data.isPlus ? "+" : ""} / ${t("user:seasons.season.short")}${widget.data.season}`}
 					/>
 				);
+			case "top-10-seasons":
+			case "top-100-seasons":
+				if (!widget.data) return null;
+				return (
+					<BigValue
+						value={widget.data.times}
+						footer={widget.data.seasons
+							.sort((a, b) => a - b)
+							.map((s) => `S${s}`)
+							.join(" ")}
+					/>
+				);
 			case "peak-xp":
 				if (!widget.data) return null;
 				return (
