@@ -148,12 +148,6 @@ export default function EditWidgetsPage() {
 			<header className={styles.header}>
 				<h1>{t("user:widgets.editTitle")}</h1>
 				<div className={styles.actions}>
-					{/* xxx: Do we want cancel? */}
-					{/* <Link to={`/u/${data.identifier}`}>
-						<SendouButton variant="minimal">
-							{t("common:actions.cancel")}
-						</SendouButton>
-					</Link> */}
 					<SendouButton type="submit" form="widget-form">
 						{t("common:actions.save")}
 					</SendouButton>

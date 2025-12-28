@@ -15,7 +15,6 @@ import * as TournamentOrganizationRepository from "~/features/tournament-organiz
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
-import { sortBuilds } from "../build-sorting.server";
 import type { ExtractWidgetSettings } from "./types";
 
 export const WIDGET_LOADERS = {
@@ -228,23 +227,12 @@ export const WIDGET_LOADERS = {
 		);
 	},
 	builds: async (userId: number) => {
-		const userData = await UserRepository.identifierToBuildFields(
-			String(userId),
-		);
-
-		if (!userData) return [];
-
 		const builds = await BuildRepository.allByUserId(userId, {
 			showPrivate: false,
+			limit: 3,
 		});
 
-		const sortedBuilds = sortBuilds({
-			builds,
-			buildSorting: userData.buildSorting,
-			weaponPool: userData.weapons,
-		});
-
-		return sortedBuilds.slice(0, 3);
+		return builds;
 	},
 	art: async (userId: number, settings: ExtractWidgetSettings<"art">) => {
 		const includeAuthored =

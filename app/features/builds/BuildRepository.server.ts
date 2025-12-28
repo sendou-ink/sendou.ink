@@ -22,10 +22,14 @@ export async function allByUserId(
 	options: {
 		showPrivate?: boolean;
 		sortAbilities?: boolean;
+		limit?: number;
 	} = {},
 ) {
-	const { showPrivate = false, sortAbilities: shouldSortAbilities = false } =
-		options;
+	const {
+		showPrivate = false,
+		sortAbilities: shouldSortAbilities = false,
+		limit,
+	} = options;
 	const rows = await db
 		.selectFrom("Build")
 		.select(({ eb }) => [
@@ -49,6 +53,8 @@ export async function allByUserId(
 		])
 		.where("Build.ownerId", "=", userId)
 		.$if(!showPrivate, (qb) => qb.where("Build.private", "=", 0))
+		.$if(typeof limit === "number", (qb) => qb.limit(limit!))
+		.orderBy("Build.updatedAt", "desc")
 		.execute();
 
 	return rows.map((row) => {

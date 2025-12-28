@@ -45,8 +45,6 @@ import {
 import type { LoadedWidget } from "../core/widgets/types";
 import styles from "./Widget.module.css";
 
-// xxx: for build widget, for lighter loading make it really recent builds so we can limit db side and no JS sorting
-
 export function Widget({
 	widget,
 	user,
