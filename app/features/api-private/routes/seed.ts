@@ -28,5 +28,5 @@ export const action: ActionFunction = async ({ request }) => {
 
 	await refreshSendouQInstance();
 
-	return null;
+	return Response.json(null);
 };

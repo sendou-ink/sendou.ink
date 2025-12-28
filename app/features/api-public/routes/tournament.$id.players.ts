@@ -1,4 +1,4 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "@remix-run/node";
 import { cors } from "remix-utils/cors";
 import { z } from "zod/v4";
 import * as TournamentMatchRepository from "~/features/tournament-bracket/TournamentMatchRepository.server";
@@ -26,5 +26,5 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const participants: GetTournamentPlayersResponse =
 		await TournamentMatchRepository.userParticipationByTournamentId(id);
 
-	return cors(request, json(participants));
+	return cors(request, Response.json(participants));
 };

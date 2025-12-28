@@ -1,4 +1,4 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "@remix-run/node";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { cors } from "remix-utils/cors";
 import { z } from "zod/v4";
@@ -168,7 +168,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		};
 	});
 
-	return await cors(request, json(result));
+	return await cors(request, Response.json(result));
 };
 
 function toSeedingPowerSP(ordinals: (number | null)[]) {
