@@ -2172,6 +2172,16 @@ function MiscSection({ id }: { id: string }) {
 					<input type="password" placeholder="Enter password" />
 				</ComponentRow>
 
+				<ComponentRow label="HTML Select">
+					<select>
+						{SELECT_ITEMS.map((item) => (
+							<option key={item.id} value={item.id}>
+								{item.name}
+							</option>
+						))}
+					</select>
+				</ComponentRow>
+
 				<ComponentRow label="HTML Tags">
 					<div className="stack sm">
 						<div>

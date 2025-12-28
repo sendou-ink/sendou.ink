@@ -17,6 +17,7 @@
 	display: grid;
 	place-items: center;
 	min-width: max-content;
+	height: var(--input-height-small);
 }
 
 .tag[data-selected] {

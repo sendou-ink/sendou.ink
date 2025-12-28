@@ -21,17 +21,18 @@
 }
 
 .react-aria-DatePicker .react-aria-Group {
-	display: flex;
+	height: var(--input-height);
+	padding: 0 var(--input-padding-inline);
 	border: 2px solid var(--color-border);
 	border-radius: var(--rounded-sm);
-	accent-color: var(--color-accent);
 	background-color: var(--color-bg);
-	color: var(--color-text);
-	font-size: var(--fonts-sm);
 	outline: none;
-	height: 1rem;
-	padding: var(--s-4) var(--s-3);
-	width: var(--input-width, var(--input-width-medium));
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-1-5);
+	width: 100%;
+	cursor: pointer;
 }
 
 .react-aria-DatePicker[data-open] .react-aria-Group {
@@ -41,24 +42,28 @@
 
 .react-aria-DatePicker .react-aria-DateInput {
 	display: flex;
-	margin-block-start: -11px;
 }
 
-.react-aria-DateSegment {
-	outline-color: var(--color-accent-low);
+.react-aria-DateSegment:not([data-type="literal"]) {
+	padding: 0 var(--s-1);
+	border-radius: 5px;
+}
+
+.react-aria-DateSegment:focus-visible {
+	background-color: var(--color-bg-high);
+	color: var(--color-text-accent);
+	outline: none;
 }
 
 .react-aria-DatePicker .react-aria-Button {
 	margin-inline-start: auto;
 	background-color: transparent;
 	border: none;
-	margin-block-start: -9px;
-	margin-inline-end: -8px;
 	outline: none;
 }
 
 .react-aria-DatePicker svg {
-	fill: var(--color-text-high);
+	fill: var(--color-text);
 	width: 17.5px;
 }
 
@@ -67,6 +72,7 @@
 	border-radius: var(--rounded);
 	padding: var(--s-4);
 	border: var(--border-style);
+	max-width: fit-content;
 }
 
 .react-aria-Calendar header {
@@ -88,15 +94,16 @@
 	border: none;
 	padding: 0;
 	border-radius: 100%;
+
+	&:focus-visible {
+		outline: var(--input-focus-ring);
+		outline-offset: 1px;
+	}
 }
 
 .react-aria-Calendar .react-aria-Button svg {
 	fill: var(--color-text-accent);
 	width: 27.5px;
-}
-
-.react-aria-DatePicker .react-aria-Button[data-focused] svg {
-	fill: var(--color-text-accent);
 }
 
 .react-aria-CalendarGrid {
@@ -116,6 +123,11 @@
 	height: 35px;
 	border-radius: var(--rounded-sm);
 	outline-color: var(--color-accent);
+
+	&.react-aria-CalendarCell:focus-visible {
+		outline: var(--input-focus-ring);
+		outline-offset: 1px;
+	}
 }
 
 .react-aria-CalendarCell[data-outside-month] {
@@ -188,7 +200,7 @@
 
 .react-aria-Switch[data-focus-visible] .indicator {
 	outline: 2px solid var(--color-accent-high);
-	outline-offset: 2px;
+	outline-offset: 1px;
 }
 
 .react-aria-Switch[data-disabled] .indicator {

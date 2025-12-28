@@ -2,6 +2,7 @@
 	padding: 0;
 	height: var(--input-height-small);
 	overflow: hidden;
+	width: max-content;
 }
 
 .iconsContainer {

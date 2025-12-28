@@ -806,7 +806,7 @@ function VoiceChatInfo({
 			trigger={
 				<SendouButton
 					variant="minimal"
-					size="small"
+					size="miniscule"
 					icon={<Icon className={clsx(styles.vcIcon, color())} />}
 				/>
 			}
