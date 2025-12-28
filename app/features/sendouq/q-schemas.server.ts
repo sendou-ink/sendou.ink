@@ -59,10 +59,6 @@ export const lookingSchema = z.union([
 		targetGroupId: id,
 	}),
 	z.object({
-		_action: _action("MATCH_UP_RECHALLENGE"),
-		targetGroupId: id,
-	}),
-	z.object({
 		_action: _action("GIVE_MANAGER"),
 		userId: id,
 	}),
