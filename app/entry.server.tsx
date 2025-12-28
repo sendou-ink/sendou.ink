@@ -15,7 +15,8 @@ import { resources } from "./modules/i18n/resources.server";
 import { daily, everyHourAt00, everyHourAt30 } from "./routines/list.server";
 import { logger } from "./utils/logger";
 
-const ABORT_DELAY = 5000;
+// Reject/cancel all pending promises after 5 seconds
+export const streamTimeout = 5000;
 
 export default async function handleRequest(
 	request: Request,
@@ -73,7 +74,9 @@ export default async function handleRequest(
 			},
 		);
 
-		setTimeout(abort, ABORT_DELAY);
+		// Automatically timeout the React renderer after 6 seconds, which ensures
+		// React has enough time to flush down the rejected boundary contents
+		setTimeout(abort, streamTimeout + 1000);
 	});
 }
 

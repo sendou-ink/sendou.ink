@@ -1,7 +1,7 @@
 import {
 	unstable_composeUploadHandlers as composeUploadHandlers,
 	unstable_createMemoryUploadHandler as createMemoryUploadHandler,
-	json,
+	data,
 	unstable_parseMultipartFormData as parseMultipartFormData,
 	redirect,
 } from "@remix-run/node";
@@ -289,8 +289,8 @@ export type SendouRouteHandle = {
  * To be used when the response is different for each user. This is especially useful when the response
  * is prefetched on link hover.
  */
-export function privatelyCachedJson<T>(data: T) {
-	return json(data, {
+export function privatelyCachedJson<T>(dataValue: T) {
+	return data(dataValue, {
 		headers: { "Cache-Control": "private, max-age=5" },
 	});
 }

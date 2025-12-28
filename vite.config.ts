@@ -11,6 +11,12 @@ const ReactCompilerConfig = {
 	target: "18",
 };
 
+declare module "@remix-run/node" {
+	interface Future {
+		v3_singleFetch: true;
+	}
+}
+
 export default defineConfig(() => {
 	return {
 		ssr: {
@@ -30,6 +36,7 @@ export default defineConfig(() => {
 					v3_relativeSplatPath: true,
 					v3_throwAbortReason: true,
 					v3_routeConfig: true,
+					v3_singleFetch: true,
 				},
 			}),
 			babel({
