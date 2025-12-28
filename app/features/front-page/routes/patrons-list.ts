@@ -1,7 +1,8 @@
-import type { SerializeFrom } from "@remix-run/node";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 
-export type PatronsListLoaderData = SerializeFrom<typeof loader>;
+export type PatronsListLoaderData = {
+	patrons: Awaited<ReturnType<typeof UserRepository.findAllPatrons>>;
+};
 
 export const loader = async () => {
 	return Response.json(
