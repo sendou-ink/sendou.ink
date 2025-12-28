@@ -1,6 +1,6 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction, SerializeFrom } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { UnlinkIcon } from "~/components/icons/Unlink";

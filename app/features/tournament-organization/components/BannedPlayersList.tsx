@@ -1,8 +1,8 @@
-import { Link } from "@remix-run/react";
 import clsx from "clsx";
 import { isFuture } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";

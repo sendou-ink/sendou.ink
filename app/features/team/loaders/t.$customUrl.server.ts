@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 import * as TeamRepository from "../TeamRepository.server";

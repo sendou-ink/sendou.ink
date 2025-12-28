@@ -1,4 +1,4 @@
-import type { SerializeFrom } from "@remix-run/node";
+import type { SerializeFrom } from "react-router";
 import * as BadgeRepository from "../BadgeRepository.server";
 
 export type BadgesLoaderData = SerializeFrom<typeof loader>;

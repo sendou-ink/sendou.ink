@@ -1,12 +1,12 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
+import { nanoid } from "nanoid";
+import * as React from "react";
+import { useTranslation } from "react-i18next";
+import type { MetaFunction, SerializeFrom } from "react-router";
 import {
 	type ShouldRevalidateFunction,
 	useLoaderData,
 	useSearchParams,
-} from "@remix-run/react";
-import { nanoid } from "nanoid";
-import * as React from "react";
-import { useTranslation } from "react-i18next";
+} from "react-router";
 import * as R from "remeda";
 import { BuildCard } from "~/components/BuildCard";
 import { LinkButton, SendouButton } from "~/components/elements/Button";

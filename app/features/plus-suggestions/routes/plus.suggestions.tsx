@@ -1,7 +1,10 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import type { ShouldRevalidateFunction } from "@remix-run/react";
-import { Link, Outlet, useLoaderData, useSearchParams } from "@remix-run/react";
 import clsx from "clsx";
+import type {
+	MetaFunction,
+	SerializeFrom,
+	ShouldRevalidateFunction,
+} from "react-router";
+import { Link, Outlet, useLoaderData, useSearchParams } from "react-router";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { Catcher } from "~/components/Catcher";

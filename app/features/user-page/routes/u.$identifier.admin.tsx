@@ -1,4 +1,4 @@
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData } from "react-router";
 import type { z } from "zod/v4";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";

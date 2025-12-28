@@ -1,14 +1,14 @@
+import type { Namespace, TFunction } from "i18next";
+import { nanoid } from "nanoid";
+import type { Ok, Result } from "neverthrow";
+import type { Params, UIMatch } from "react-router";
 import {
 	unstable_composeUploadHandlers as composeUploadHandlers,
 	unstable_createMemoryUploadHandler as createMemoryUploadHandler,
 	data,
 	unstable_parseMultipartFormData as parseMultipartFormData,
 	redirect,
-} from "@remix-run/node";
-import type { Params, UIMatch } from "@remix-run/react";
-import type { Namespace, TFunction } from "i18next";
-import { nanoid } from "nanoid";
-import type { Ok, Result } from "neverthrow";
+} from "react-router";
 import type { z } from "zod/v4";
 import type { navItems } from "~/components/layout/nav-items";
 import { s3UploadHandler } from "~/features/img-upload/s3.server";

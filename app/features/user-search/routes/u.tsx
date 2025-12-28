@@ -1,7 +1,7 @@
-import type { MetaFunction } from "@remix-run/node";
-import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { Link, useLoaderData, useSearchParams } from "react-router";
 import { useDebounce } from "react-use";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";

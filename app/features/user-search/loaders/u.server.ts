@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
+import type { LoaderFunctionArgs, SerializeFrom } from "react-router";
 import { z } from "zod/v4";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { getUserId } from "~/features/auth/core/user.server";

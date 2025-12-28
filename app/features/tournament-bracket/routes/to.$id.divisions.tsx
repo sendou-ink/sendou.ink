@@ -1,7 +1,7 @@
-import type { SerializeFrom } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
+import type { SerializeFrom } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import { UsersIcon } from "../../../components/icons/Users";
 import { tournamentBracketsPage } from "../../../utils/urls";
 

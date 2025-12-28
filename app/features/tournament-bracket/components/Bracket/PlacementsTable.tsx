@@ -1,6 +1,6 @@
-import { Link, useFetcher } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
+import { Link, useFetcher } from "react-router";
 import invariant from "~/utils/invariant";
 import { SendouButton } from "../../../../components/elements/Button";
 import { CheckmarkIcon } from "../../../../components/icons/Checkmark";

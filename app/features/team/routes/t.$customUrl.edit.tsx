@@ -1,7 +1,7 @@
-import type { MetaFunction } from "@remix-run/node";
-import { Form, Link, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { Form, Link, useLoaderData } from "react-router";
 import { CustomizedColorsInput } from "~/components/CustomizedColorsInput";
 import { SendouButton } from "~/components/elements/Button";
 import { FormErrors } from "~/components/FormErrors";

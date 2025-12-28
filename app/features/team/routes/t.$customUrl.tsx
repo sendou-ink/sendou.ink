@@ -1,6 +1,6 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import { Outlet, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
+import type { MetaFunction, SerializeFrom } from "react-router";
+import { Outlet, useLoaderData } from "react-router";
 import * as R from "remeda";
 import { Flag } from "~/components/Flag";
 import { BskyIcon } from "~/components/icons/Bsky";

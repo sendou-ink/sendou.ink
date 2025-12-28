@@ -1,8 +1,8 @@
-import type { MetaFunction } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { useLoaderData } from "react-router";
 import * as R from "remeda";
 import type { z } from "zod/v4";
 import { AddNewButton } from "~/components/AddNewButton";

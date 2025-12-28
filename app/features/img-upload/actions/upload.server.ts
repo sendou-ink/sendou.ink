@@ -1,10 +1,10 @@
-import type { ActionFunctionArgs, UploadHandler } from "@remix-run/node";
+import type { ActionFunctionArgs, UploadHandler } from "react-router";
 import {
 	unstable_composeUploadHandlers as composeUploadHandlers,
 	unstable_createMemoryUploadHandler as createMemoryUploadHandler,
 	unstable_parseMultipartFormData as parseMultipartFormData,
 	redirect,
-} from "@remix-run/node";
+} from "react-router";
 import { z } from "zod/v4";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";

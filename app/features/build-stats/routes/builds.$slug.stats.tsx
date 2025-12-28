@@ -1,6 +1,6 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction, SerializeFrom } from "react-router";
+import { useLoaderData } from "react-router";
 import { Ability } from "~/components/Ability";
 import { WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";

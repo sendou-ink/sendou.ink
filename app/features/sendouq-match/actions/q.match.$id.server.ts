@@ -1,5 +1,5 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import type { ActionFunctionArgs } from "react-router";
+import { redirect } from "react-router";
 import { sql } from "~/db/sql";
 import type { ReportedWeapon } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";

@@ -1,5 +1,8 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import type { Params } from "@remix-run/react";
+import type {
+	ActionFunctionArgs,
+	LoaderFunctionArgs,
+	Params,
+} from "react-router";
 import { expect } from "vitest";
 import type { z } from "zod/v4";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";

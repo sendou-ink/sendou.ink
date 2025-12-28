@@ -1,4 +1,5 @@
-import type { MetaFunction } from "@remix-run/node";
+import * as React from "react";
+import type { MetaFunction } from "react-router";
 import {
 	Form,
 	Link,
@@ -6,8 +7,7 @@ import {
 	useLoaderData,
 	useNavigation,
 	useSearchParams,
-} from "@remix-run/react";
-import * as React from "react";
+} from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Catcher } from "~/components/Catcher";
 import { SendouButton } from "~/components/elements/Button";

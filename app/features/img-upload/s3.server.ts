@@ -4,10 +4,10 @@ import { PassThrough } from "node:stream";
 
 import { S3 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
-import type { UploadHandler } from "@remix-run/node";
-import { writeAsyncIterableToWritable } from "@remix-run/node";
+import { writeAsyncIterableToWritable } from "@react-router/node";
 import type AWS from "aws-sdk";
 import { nanoid } from "nanoid";
+import type { UploadHandler } from "react-router";
 import invariant from "~/utils/invariant";
 
 const envVars = () => {

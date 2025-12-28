@@ -1,4 +1,4 @@
-import type { SerializeFrom } from "@remix-run/node";
+import type { SerializeFrom } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { UserIcon } from "~/components/icons/User";
 import { twitchThumbnailUrlToSrc } from "~/modules/twitch/utils";

@@ -1,8 +1,8 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction, SerializeFrom } from "react-router";
+import { Link, useFetcher, useLoaderData } from "react-router";
 import { Alert } from "~/components/Alert";
 import { LinkButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";

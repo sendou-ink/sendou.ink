@@ -1,8 +1,8 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import { useFetcher, useLoaderData } from "@remix-run/react";
 import { add, sub } from "date-fns";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction, SerializeFrom } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { AddNewButton } from "~/components/AddNewButton";
 import { Alert } from "~/components/Alert";
 import { Main } from "~/components/Main";

@@ -1,7 +1,7 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction, SerializeFrom } from "react-router";
+import { Link, useLoaderData, useSearchParams } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { TierImage, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";

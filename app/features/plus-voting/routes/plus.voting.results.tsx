@@ -1,6 +1,6 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
+import type { MetaFunction, SerializeFrom } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import { metaTags } from "~/utils/remix";
 import { PLUS_SERVER_DISCORD_URL, userPage } from "~/utils/urls";
 

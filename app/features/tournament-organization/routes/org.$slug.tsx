@@ -1,11 +1,6 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import {
-	Link,
-	useFetcher,
-	useLoaderData,
-	useSearchParams,
-} from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction, SerializeFrom } from "react-router";
+import { Link, useFetcher, useLoaderData, useSearchParams } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { LinkButton } from "~/components/elements/Button";

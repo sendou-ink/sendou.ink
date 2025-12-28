@@ -1,6 +1,6 @@
-import type { SerializeFrom } from "@remix-run/node";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
+import type { SerializeFrom } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
 import type { MonthYear } from "~/features/plus-voting/core";
 import { useIsMounted } from "~/hooks/useIsMounted";

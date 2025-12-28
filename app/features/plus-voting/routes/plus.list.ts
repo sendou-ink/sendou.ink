@@ -1,4 +1,4 @@
-import type { LoaderFunction } from "@remix-run/node";
+import type { LoaderFunction } from "react-router";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { canAccessLohiEndpoint } from "~/utils/remix.server";
 

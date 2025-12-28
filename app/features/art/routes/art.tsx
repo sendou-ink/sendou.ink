@@ -1,9 +1,12 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import type { ShouldRevalidateFunction } from "@remix-run/react";
-import { useLoaderData, useSearchParams } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import type {
+	MetaFunction,
+	SerializeFrom,
+	ShouldRevalidateFunction,
+} from "react-router";
+import { useLoaderData, useSearchParams } from "react-router";
 import { AddNewButton } from "~/components/AddNewButton";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";

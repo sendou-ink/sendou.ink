@@ -1,7 +1,7 @@
-import { Link, useLocation, useMatches } from "@remix-run/react";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { Link, useLocation, useMatches } from "react-router";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
 import { SendouButton } from "../elements/Button";
