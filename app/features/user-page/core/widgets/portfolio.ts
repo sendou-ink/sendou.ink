@@ -64,6 +64,10 @@ const LINKS_WIDGET_SETTINGS_SCHEMA = z.object({
 		}),
 });
 
+const TIER_LIST_WIDGET_SETTINGS_SCHEMA = z.object({
+	searchParams: z.string().trim().min(1).max(500),
+});
+
 export const ALL_WIDGETS = {
 	misc: [
 		{
@@ -120,6 +124,11 @@ export const ALL_WIDGETS = {
 			id: "links",
 			slot: "side",
 			schema: LINKS_WIDGET_SETTINGS_SCHEMA,
+		},
+		{
+			id: "tier-list",
+			slot: "side",
+			schema: TIER_LIST_WIDGET_SETTINGS_SCHEMA,
 		},
 	],
 	badges: [

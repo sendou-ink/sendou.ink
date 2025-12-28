@@ -212,6 +212,15 @@ function WidgetSettingsFormInner({
 						format="plain"
 					/>
 				);
+			case "tier-list":
+				return (
+					<TierListField
+						searchParams={methods.watch("searchParams")}
+						onChange={(searchParams) =>
+							methods.setValue("searchParams", searchParams)
+						}
+					/>
+				);
 			default:
 				return null;
 		}
@@ -317,6 +326,49 @@ function WeaponPoolField({
 						</div>
 					);
 				})}
+			</div>
+		</div>
+	);
+}
+
+function TierListField({
+	searchParams,
+	onChange,
+}: {
+	searchParams: string;
+	onChange: (searchParams: string) => void;
+}) {
+	const { t } = useTranslation(["user"]);
+
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+
+		if (value.includes("/tier-list-maker")) {
+			try {
+				const url = new URL(value, "https://sendou.ink");
+				const extractedSearchParams = url.search.substring(1);
+				onChange(extractedSearchParams);
+				return;
+			} catch {
+				// not a valid URL, just use the value as-is
+			}
+		}
+
+		onChange(value);
+	};
+
+	return (
+		<div>
+			<label htmlFor="tier-list-searchParams">
+				{t("widgets.forms.tierListUrl")}
+			</label>
+			<div className="input-container">
+				<div className="input-addon">/tier-list-maker?</div>
+				<input
+					id="tier-list-searchParams"
+					value={searchParams ?? ""}
+					onChange={handleChange}
+				/>
 			</div>
 		</div>
 	);

@@ -33,6 +33,7 @@ import {
 	LEADERBOARDS_PAGE,
 	LFG_PAGE,
 	modeImageUrl,
+	navIconUrl,
 	teamPage,
 	topSearchPlayerPage,
 	tournamentBracketsPage,
@@ -234,6 +235,8 @@ export function Widget({
 				return widget.data.length === 0 ? null : (
 					<LinksWidget links={widget.data} />
 				);
+			case "tier-list":
+				return <TierListWidget searchParams={widget.data.searchParams} />;
 			default:
 				assertUnreachable(widget);
 		}
@@ -823,6 +826,24 @@ function LinksWidget({ links }: { links: string[] }) {
 					</a>
 				);
 			})}
+		</div>
+	);
+}
+
+function TierListWidget({ searchParams }: { searchParams: string }) {
+	const fullUrl = `/tier-list-maker?${searchParams}`;
+	const parsedUrl = new URL(fullUrl, "https://sendou.ink");
+	const title = parsedUrl.searchParams.get("title");
+	const { t } = useTranslation(["user"]);
+
+	return (
+		<div className={styles.socialLinks}>
+			<Link to={fullUrl} className={styles.socialLink}>
+				<div className={styles.socialLinkIconContainer}>
+					<Image path={navIconUrl("tier-list-maker")} alt="" width={24} />
+				</div>
+				{title ? title : t("user:widget.tier-list.untitled")}
+			</Link>
 		</div>
 	);
 }
