@@ -3,6 +3,7 @@ node_modules
 /.cache*
 /build
 /public/build
+.react-router/
 .env
 translation-progress.md
 
