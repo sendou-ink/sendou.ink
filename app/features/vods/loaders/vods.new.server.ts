@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 import { actualNumber, id } from "~/utils/zod";

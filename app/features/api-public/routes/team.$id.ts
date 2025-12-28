@@ -1,6 +1,6 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { cors } from "remix-utils/cors";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { db } from "~/db/sql";
 import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";

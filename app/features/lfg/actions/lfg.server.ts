@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { _action, id } from "~/utils/zod";

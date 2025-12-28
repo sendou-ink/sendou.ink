@@ -9,7 +9,7 @@ import type { Params, UIMatch } from "@remix-run/react";
 import type { Namespace, TFunction } from "i18next";
 import { nanoid } from "nanoid";
 import type { Ok, Result } from "neverthrow";
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import type { navItems } from "~/components/layout/nav-items";
 import { s3UploadHandler } from "~/features/img-upload/s3.server";
 import invariant from "./invariant";

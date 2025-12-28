@@ -1,6 +1,6 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { cors } from "remix-utils/cors";
-import { z } from "zod/v4";
+import { z } from "zod";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { i18next } from "~/modules/i18n/i18next.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";

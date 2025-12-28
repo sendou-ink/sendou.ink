@@ -1,5 +1,5 @@
 import { useLoaderData } from "@remix-run/react";
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";

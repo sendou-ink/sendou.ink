@@ -1,5 +1,5 @@
-import type { ZodType } from "zod/v4";
-import { z } from "zod/v4";
+import type { ZodType } from "zod";
+import { z } from "zod";
 import { CUSTOM_CSS_VAR_COLORS } from "~/features/user-page/user-page-constants";
 import {
 	abilities,

@@ -5,7 +5,7 @@ import {
 	unstable_parseMultipartFormData as parseMultipartFormData,
 	redirect,
 } from "@remix-run/node";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { isTeamManager } from "~/features/team/team-utils";

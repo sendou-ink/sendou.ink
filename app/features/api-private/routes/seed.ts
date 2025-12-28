@@ -1,5 +1,5 @@
 import type { ActionFunction } from "@remix-run/node";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { seed } from "~/db/seed";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { SEED_VARIATIONS } from "~/features/api-private/constants";

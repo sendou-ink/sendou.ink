@@ -1,6 +1,6 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { cors } from "remix-utils/cors";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import { parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";

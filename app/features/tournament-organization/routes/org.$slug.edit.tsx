@@ -1,7 +1,7 @@
 import { Link, useLoaderData } from "@remix-run/react";
 import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import { FormMessage } from "~/components/FormMessage";
 import { AddFieldButton } from "~/components/form/AddFieldButton";
 import { FormFieldset } from "~/components/form/FormFieldset";

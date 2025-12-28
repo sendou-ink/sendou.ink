@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 import { languagesUnified } from "~/modules/i18n/config";
 import {
 	_action,

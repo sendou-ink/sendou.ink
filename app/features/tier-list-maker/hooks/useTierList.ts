@@ -7,7 +7,7 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { useSearchParams } from "@remix-run/react";
 import JSONCrush from "jsoncrush";
 import * as React from "react";
-import { z } from "zod/v4";
+import { z } from "zod";
 import {
 	useSearchParamState,
 	useSearchParamStateEncoder,

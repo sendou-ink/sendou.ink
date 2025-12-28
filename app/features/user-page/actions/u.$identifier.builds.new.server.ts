@@ -1,5 +1,5 @@
 import { type ActionFunction, redirect } from "@remix-run/node";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { BUILD } from "~/features/builds/builds-constants";

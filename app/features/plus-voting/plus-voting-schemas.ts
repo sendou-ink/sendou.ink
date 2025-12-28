@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 import type { PlusVoteFromFE } from "~/features/plus-voting/core";
 import { assertType } from "~/utils/types";
 import { safeJSONParse } from "~/utils/zod";
