@@ -27,15 +27,12 @@ export function userCanJoinQueueAt(
 	return canJoinQueueAt;
 }
 
-export function resolveFutureMatchModes({
-	ownGroup,
-	theirGroup,
-}: {
-	ownGroup: Pick<SQGroup, "modePreferences">;
-	theirGroup: Pick<SQGroup, "modePreferences">;
-}) {
-	const ourModes = ownGroup.modePreferences;
-	const theirModes = theirGroup.modePreferences;
+export function resolveFutureMatchModes(
+	groupA: Pick<SQGroup, "modePreferences">,
+	groupB: Pick<SQGroup, "modePreferences">,
+) {
+	const ourModes = groupA.modePreferences;
+	const theirModes = groupB.modePreferences;
 
 	const overlap = ourModes.filter((mode) => theirModes.includes(mode));
 	if (overlap.length > 0) {

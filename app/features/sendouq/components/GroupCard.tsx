@@ -80,10 +80,7 @@ export function GroupCard({
 	const isOwnGroup = group.id === ownGroup?.id;
 
 	const futureMatchModes = ownGroup
-		? resolveFutureMatchModes({
-				ownGroup,
-				theirGroup: group,
-			})
+		? resolveFutureMatchModes(ownGroup, group)
 		: null;
 
 	const enableKicking = group.usersRole === "OWNER" && !displayOnly;

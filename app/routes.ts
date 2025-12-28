@@ -257,6 +257,10 @@ export default [
 			"features/api-public/routes/user.$identifier.ts",
 		),
 		route(
+			"/user/:identifier/ids",
+			"features/api-public/routes/user.$identifier.ids.ts",
+		),
+		route(
 			"/calendar/:year/:week",
 			"features/api-public/routes/calendar.$year.$week.ts",
 		),
