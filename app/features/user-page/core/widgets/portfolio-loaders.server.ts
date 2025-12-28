@@ -266,8 +266,7 @@ export const WIDGET_LOADERS = {
 		return UserRepository.socialLinksByUserId(userId);
 	},
 	links: async (_userId: number, settings: ExtractWidgetSettings<"links">) => {
-		// xxx: remove object here
-		return settings.links.map((link) => link.value);
+		return settings.links;
 	},
 };
 

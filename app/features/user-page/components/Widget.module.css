@@ -264,7 +264,7 @@
 	font-size: var(--fonts-sm);
 	display: flex;
 	gap: var(--s-2);
-	align-items: flex-start;
+	align-items: center;
 	word-break: break-all;
 	overflow-wrap: break-word;
 }
@@ -285,6 +285,7 @@
 .socialLinkIconContainer svg {
 	width: 18px;
 	height: 18px;
+	fill: var(--text);
 }
 
 .socialLinkIconContainer.twitch svg {

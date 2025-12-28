@@ -57,20 +57,11 @@ const ART_WIDGET_SETTINGS_SCHEMA = z.object({
 
 const LINKS_WIDGET_SETTINGS_SCHEMA = z.object({
 	links: z
-		.array(
-			z.object({
-				value: z.string().trim().url().max(150),
-			}),
-		)
+		.array(z.string().trim().url().max(150))
 		.max(10)
-		.refine(
-			(arr) =>
-				arr.map((x) => x.value).length ===
-				new Set(arr.map((x) => x.value)).size,
-			{
-				message: "Duplicate links",
-			},
-		),
+		.refine((arr) => arr.length === new Set(arr).size, {
+			message: "Duplicate links",
+		}),
 });
 
 export const ALL_WIDGETS = {

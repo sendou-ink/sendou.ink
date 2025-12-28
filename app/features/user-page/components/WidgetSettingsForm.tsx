@@ -209,7 +209,7 @@ function WidgetSettingsFormInner({
 					<TextArrayFormField
 						label={t("widgets.forms.links")}
 						name="links"
-						format="object"
+						format="plain"
 					/>
 				);
 			default:

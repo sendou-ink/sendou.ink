@@ -732,7 +732,7 @@ const urlToIcon = (url: string) => {
 	if (type === "bsky") {
 		return <BskyIcon />;
 	}
-	return null;
+	return <LinkIcon />;
 };
 
 function SocialLinksWidget({
