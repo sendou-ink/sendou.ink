@@ -27,5 +27,5 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		customUrl: user.customUrl,
 	};
 
-	return await cors(request, json(result));
+	return await cors(request, Response.json(result));
 };
