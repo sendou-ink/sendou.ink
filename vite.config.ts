@@ -31,6 +31,7 @@ export default defineConfig(() => {
 		],
 		test: {
 			exclude: [...configDefaults.exclude, "e2e/**"],
+			setupFiles: ["./app/test-setup.ts"],
 		},
 		build: {
 			// this is mostly done so that i18n jsons as defined in ./app/modules/i18n/loader.ts

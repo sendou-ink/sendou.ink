@@ -66,6 +66,7 @@ export function wrappedAction<T extends z.ZodTypeAny>({
 				request,
 				context: {},
 				params,
+				unstable_pattern: "",
 			});
 
 			return response;
@@ -110,6 +111,7 @@ export function wrappedLoader<T>({
 				request,
 				params,
 				context: {},
+				unstable_pattern: "",
 			});
 
 			return data as T;

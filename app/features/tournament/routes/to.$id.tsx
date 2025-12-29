@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import type { MetaFunction, SerializeFrom } from "react-router";
+import type { MetaFunction } from "react-router";
 import {
 	Outlet,
 	type ShouldRevalidateFunction,
@@ -22,7 +22,7 @@ import {
 	tournamentPage,
 	tournamentRegisterPage,
 } from "~/utils/urls";
-import { metaTags } from "../../../utils/remix";
+import { metaTags, type SerializeFrom } from "../../../utils/remix";
 
 import { loader, type TournamentLoaderData } from "../loaders/to.$id.server";
 export { loader };

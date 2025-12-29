@@ -220,6 +220,7 @@ export function GroupCard({
 							variant={action === "UNLIKE" ? "destructive" : "outlined"}
 							_action={action}
 							state={fetcher.state}
+							testId="group-card-action-button"
 						>
 							{action === "MATCH_UP" || action === "MATCH_UP_RECHALLENGE"
 								? t("q:looking.groups.actions.startMatch")

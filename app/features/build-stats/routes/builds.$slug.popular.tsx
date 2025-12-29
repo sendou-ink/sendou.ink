@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
-import type { MetaFunction, SerializeFrom } from "react-router";
+import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import { Ability } from "~/components/Ability";
 import { Main } from "~/components/Main";
@@ -11,7 +11,7 @@ import {
 	outlinedMainWeaponImageUrl,
 	weaponBuildPage,
 } from "~/utils/urls";
-import { metaTags } from "../../../utils/remix";
+import { metaTags, type SerializeFrom } from "../../../utils/remix";
 
 import { loader } from "../loaders/builds.$slug.popular.server";
 export { loader };

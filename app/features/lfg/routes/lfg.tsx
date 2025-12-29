@@ -1,7 +1,7 @@
 import { add, sub } from "date-fns";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import type { MetaFunction, SerializeFrom } from "react-router";
+import type { MetaFunction } from "react-router";
 import { useFetcher, useLoaderData } from "react-router";
 import { AddNewButton } from "~/components/AddNewButton";
 import { Alert } from "~/components/Alert";
@@ -10,7 +10,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useSearchParamStateEncoder } from "~/hooks/useSearchParamState";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { metaTags } from "~/utils/remix";
+import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
 import { LFG_PAGE, lfgNewPostPage, navIconUrl } from "~/utils/urls";

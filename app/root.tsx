@@ -8,7 +8,6 @@ import type {
 	LoaderFunctionArgs,
 	MetaFunction,
 	NavigateOptions,
-	SerializeFrom,
 } from "react-router";
 import {
 	data,
@@ -50,7 +49,7 @@ import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
 import { i18nCookie, i18next } from "./modules/i18n/i18next.server";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 import { allI18nNamespaces } from "./utils/i18n";
-import { isRevalidation, metaTags } from "./utils/remix";
+import { isRevalidation, metaTags, type SerializeFrom } from "./utils/remix";
 import { SUSPENDED_PAGE } from "./utils/urls";
 
 import "nprogress/nprogress.css";

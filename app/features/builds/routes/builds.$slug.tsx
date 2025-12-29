@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import type { MetaFunction, SerializeFrom } from "react-router";
+import type { MetaFunction } from "react-router";
 import {
 	type ShouldRevalidateFunction,
 	useLoaderData,
@@ -19,7 +19,7 @@ import { FireIcon } from "~/components/icons/Fire";
 import { MapIcon } from "~/components/icons/Map";
 import { Main } from "~/components/Main";
 import { safeJSONParse } from "~/utils/json";
-import { isRevalidation, metaTags } from "~/utils/remix";
+import { isRevalidation, metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
 import {

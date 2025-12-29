@@ -1,7 +1,6 @@
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import type { SerializeFrom } from "react-router";
 import { Form, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { UserSearch } from "~/components/elements/UserSearch";
@@ -9,6 +8,7 @@ import { FormErrors } from "~/components/FormErrors";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
+import type { SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
 import { action } from "../actions/calendar.$id.report-winners.server";

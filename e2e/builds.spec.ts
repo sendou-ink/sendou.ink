@@ -2,7 +2,13 @@ import { expect, type Page, test } from "@playwright/test";
 import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
 import type { GearType } from "~/db/tables";
 import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
-import { impersonate, navigate, seed, selectWeapon } from "~/utils/playwright";
+import {
+	impersonate,
+	navigate,
+	seed,
+	selectWeapon,
+	submit,
+} from "~/utils/playwright";
 import { BUILDS_PAGE, userBuildsPage, userNewBuildPage } from "~/utils/urls";
 
 test.describe("Builds", () => {
@@ -50,7 +56,7 @@ test.describe("Builds", () => {
 		await page.getByLabel("Description").fill("Test Description");
 		await page.getByTestId("SZ-checkbox").click();
 
-		await page.getByTestId("submit-button").click();
+		await submit(page);
 
 		await expect(page.getByTestId("change-sorting-button")).toBeVisible();
 
@@ -79,7 +85,7 @@ test.describe("Builds", () => {
 
 		await page.getByLabel("Private").click();
 
-		await page.getByTestId("submit-button").click();
+		await submit(page);
 
 		await expect(page.getByTestId("user-builds-tab")).toContainText(
 			"Builds (50)",

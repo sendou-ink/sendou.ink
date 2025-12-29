@@ -3,7 +3,6 @@ import { differenceInMinutes } from "date-fns";
 import type { TFunction } from "i18next";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import type { SerializeFrom } from "react-router";
 import { Form, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -31,6 +30,7 @@ import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { nullFilledArray } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
+import type { SerializeFrom } from "~/utils/remix";
 import type { Unpacked } from "~/utils/types";
 import {
 	modeImageUrl,

@@ -1,4 +1,5 @@
-import type { LoaderFunctionArgs, SerializeFrom } from "react-router";
+import type { LoaderFunctionArgs } from "react-router";
+import type { SerializeFrom } from "~/utils/remix";
 import { parseSearchParams } from "~/utils/remix.server";
 import { weaponUsageSearchParamsSchema } from "../q-schemas.server";
 import { weaponUsageStats } from "../queries/weaponUsageStats.server";

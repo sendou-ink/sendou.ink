@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
-import type { SerializeFrom } from "react-router";
 import { Link, useLoaderData } from "react-router";
+import type { SerializeFrom } from "~/utils/remix";
 import { UsersIcon } from "../../../components/icons/Users";
 import { tournamentBracketsPage } from "../../../utils/urls";
 

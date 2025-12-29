@@ -1,11 +1,7 @@
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import type {
-	MetaFunction,
-	SerializeFrom,
-	ShouldRevalidateFunction,
-} from "react-router";
+import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
 import { useLoaderData, useSearchParams } from "react-router";
 import { AddNewButton } from "~/components/AddNewButton";
 import { SendouButton } from "~/components/elements/Button";
@@ -21,7 +17,7 @@ import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { artPage, navIconUrl, newArtPage } from "~/utils/urls";
-import { metaTags } from "../../../utils/remix";
+import { metaTags, type SerializeFrom } from "../../../utils/remix";
 import { FILTERED_TAG_KEY_SEARCH_PARAM_KEY } from "../art-constants";
 import { ArtGrid } from "../components/ArtGrid";
 import { TagSelect } from "../components/TagSelect";

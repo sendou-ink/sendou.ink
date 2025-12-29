@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import type { MetaFunction, SerializeFrom } from "react-router";
+import type { MetaFunction } from "react-router";
 import { Link, useFetcher, useLoaderData, useSearchParams } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
@@ -24,7 +24,7 @@ import { BannedUsersList } from "~/features/tournament-organization/components/B
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
-import { metaTags } from "~/utils/remix";
+import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BLANK_IMAGE_URL,

@@ -1,6 +1,7 @@
-import type { LoaderFunctionArgs, SerializeFrom } from "react-router";
+import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfFalsy, parseSafeSearchParams } from "~/utils/remix.server";
 import { RESULTS_PER_PAGE } from "../user-page-constants";
 import { userResultsPageSearchParamsSchema } from "../user-page-schemas";

@@ -58,7 +58,7 @@ test.describe("Team search page", () => {
 
 		await page.getByTestId("edit-team-button").click();
 		await page.getByLabel("Tag").fill("AR");
-		await page.getByTestId("edit-team-submit-button").click();
+		await submit(page, "edit-team-submit-button");
 
 		await navigate({ page, url: TEAM_SEARCH_PAGE });
 
@@ -88,7 +88,7 @@ test.describe("Team page", () => {
 		await page.getByTestId("bio-textarea").clear();
 		await page.getByTestId("bio-textarea").fill("shorter bio");
 
-		await page.getByTestId("edit-team-submit-button").click();
+		await submit(page, "edit-team-submit-button");
 
 		await expect(page).toHaveURL(/better-alliance-rogue/);
 		await page.getByText("shorter bio").isVisible();
@@ -145,7 +145,7 @@ test.describe("Team page", () => {
 
 		const oldInviteLink = await page.getByTestId("invite-link").innerText();
 
-		await page.getByTestId("reset-invite-link-button").click();
+		await submit(page, "reset-invite-link-button");
 
 		await expect(page.getByTestId("invite-link")).not.toHaveText(oldInviteLink);
 		const newInviteLink = await page.getByTestId("invite-link").innerText();
@@ -211,7 +211,7 @@ test.describe("Team page", () => {
 
 		await page.getByTestId("bio-textarea").clear();
 		await page.getByTestId("bio-textarea").fill("from editor");
-		await page.getByTestId("edit-team-submit-button").click();
+		await submit(page, "edit-team-submit-button");
 
 		await expect(page).toHaveURL(/alliance-rogue/);
 		await page.getByText("from editor").isVisible();

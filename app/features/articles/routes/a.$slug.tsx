@@ -1,6 +1,6 @@
 import Markdown from "markdown-to-jsx";
 import * as React from "react";
-import type { MetaFunction, SerializeFrom } from "react-router";
+import type { MetaFunction } from "react-router";
 import { Link, useLoaderData } from "react-router";
 import { Main } from "~/components/Main";
 import invariant from "~/utils/invariant";
@@ -11,7 +11,7 @@ import {
 	articlePreviewUrl,
 	navIconUrl,
 } from "~/utils/urls";
-import { metaTags } from "../../../utils/remix";
+import { metaTags, type SerializeFrom } from "../../../utils/remix";
 
 import { loader } from "../loaders/a.$slug.server";
 export { loader };

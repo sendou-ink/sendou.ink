@@ -1,12 +1,12 @@
 import { useTranslation } from "react-i18next";
-import type { MetaFunction, SerializeFrom } from "react-router";
+import type { MetaFunction } from "react-router";
 import { Link, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { UnlinkIcon } from "~/components/icons/Unlink";
 import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
-import { metaTags } from "~/utils/remix";
+import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	navIconUrl,

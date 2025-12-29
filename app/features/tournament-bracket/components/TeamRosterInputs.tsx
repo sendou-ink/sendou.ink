@@ -229,6 +229,7 @@ function TeamRoster({
 			/>
 			{!revising && canEditRoster ? (
 				<RosterFormWithButtons
+					idx={idx}
 					editingRoster={editingRoster}
 					setEditingRoster={setEditingRoster}
 					showCancelButton={Boolean(activeRoster)}
@@ -472,6 +473,7 @@ function TeamRosterInputsCheckboxes({
 }
 
 function RosterFormWithButtons({
+	idx,
 	editingRoster,
 	setEditingRoster,
 	showCancelButton,
@@ -479,6 +481,7 @@ function RosterFormWithButtons({
 	teamId,
 	valid,
 }: {
+	idx: number;
 	editingRoster: boolean;
 	setEditingRoster: (editing: boolean) => void;
 	showCancelButton?: boolean;
@@ -520,7 +523,7 @@ function RosterFormWithButtons({
 				size="small"
 				_action="SET_ACTIVE_ROSTER"
 				isDisabled={!valid}
-				testId="save-active-roster-button"
+				testId={`save-active-roster-button-${idx}`}
 			>
 				Save
 			</SubmitButton>

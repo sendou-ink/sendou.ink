@@ -1,11 +1,11 @@
 import clsx from "clsx";
-import type { MetaFunction, SerializeFrom } from "react-router";
+import type { MetaFunction } from "react-router";
 import { Outlet, useLoaderData } from "react-router";
 import * as R from "remeda";
 import { Flag } from "~/components/Flag";
 import { BskyIcon } from "~/components/icons/Bsky";
 import { Main } from "~/components/Main";
-import { metaTags } from "~/utils/remix";
+import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { bskyUrl, navIconUrl, TEAM_SEARCH_PAGE, teamPage } from "~/utils/urls";
 import { loader } from "../loaders/t.$customUrl.server";

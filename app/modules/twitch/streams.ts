@@ -1,5 +1,6 @@
 import { cachified } from "@epic-web/cachified";
 import { cache } from "~/utils/cache.server";
+import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { logger } from "~/utils/logger";
 import type { Unpacked } from "~/utils/types";
 import { type RawStream, type StreamsResponse, streamsSchema } from "./schemas";
@@ -104,7 +105,7 @@ function mapRawStream(stream: RawStream) {
 
 const SPLATOON_3_TWITCH_GAME_ID = "1158884259";
 async function getAllStreams() {
-	if (process.env.NODE_ENV === "test") return [];
+	if (process.env.NODE_ENV === "test" || IS_E2E_TEST_RUN) return [];
 
 	const result: RawStream[] = [];
 
