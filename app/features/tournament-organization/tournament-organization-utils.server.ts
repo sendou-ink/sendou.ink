@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import * as TournamentOrganizationRepository from "./TournamentOrganizationRepository.server";
 

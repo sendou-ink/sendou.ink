@@ -3,7 +3,7 @@ import * as React from "react";
 import { type DefaultValues, FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import { logger } from "~/utils/logger";
 import type { ActionError } from "~/utils/remix.server";
 import { LinkButton } from "../elements/Button";

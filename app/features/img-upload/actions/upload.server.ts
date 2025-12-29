@@ -2,7 +2,7 @@ import type { FileUpload } from "@remix-run/form-data-parser";
 import { parseFormData } from "@remix-run/form-data-parser";
 import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { isTeamManager } from "~/features/team/team-utils";

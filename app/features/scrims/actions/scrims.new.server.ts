@@ -1,6 +1,6 @@
 import { add } from "date-fns";
 import { type ActionFunctionArgs, redirect } from "react-router";
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import type { Tables } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";

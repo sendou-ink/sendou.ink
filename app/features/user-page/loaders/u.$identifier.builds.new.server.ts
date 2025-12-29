@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { requireUserId } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import type { Ability } from "~/modules/in-game-lists/types";

@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import * as R from "remeda";
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import { AddNewButton } from "~/components/AddNewButton";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";

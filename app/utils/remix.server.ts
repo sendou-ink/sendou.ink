@@ -5,7 +5,7 @@ import { nanoid } from "nanoid";
 import type { Ok, Result } from "neverthrow";
 import type { Params, UIMatch } from "react-router";
 import { data, redirect } from "react-router";
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import type { navItems } from "~/components/layout/nav-items";
 import { uploadStreamToS3 } from "~/features/img-upload/s3.server";
 import invariant from "./invariant";

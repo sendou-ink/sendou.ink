@@ -4,7 +4,7 @@ import type {
 	Params,
 } from "react-router";
 import { expect } from "vitest";
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import { db, sql } from "~/db/sql";
 import { ADMIN_ID } from "~/features/admin/admin-constants";

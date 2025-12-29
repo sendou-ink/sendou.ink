@@ -1,7 +1,7 @@
 import { isbot } from "isbot";
 import type { ActionFunction, LoaderFunction } from "react-router";
 import { redirect } from "react-router";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { requireRole } from "~/modules/permissions/guards.server";

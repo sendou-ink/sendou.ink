@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { cors } from "remix-utils/cors";
-import { z } from "zod/v4";
+import { z } from "zod";
 import * as TournamentMatchRepository from "~/features/tournament-bracket/TournamentMatchRepository.server";
 import { parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";

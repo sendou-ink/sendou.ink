@@ -1,5 +1,5 @@
 import { isFuture } from "date-fns";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { TOURNAMENT_ORGANIZATION_ROLES } from "~/db/tables";
 import { TOURNAMENT_ORGANIZATION } from "~/features/tournament-organization/tournament-organization-constants";
 import { dayMonthYearToDate } from "~/utils/dates";
