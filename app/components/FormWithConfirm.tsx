@@ -8,6 +8,11 @@ import { useIsMounted } from "~/hooks/useIsMounted";
 import invariant from "~/utils/invariant";
 import { SubmitButton } from "./SubmitButton";
 
+interface ChildProps {
+	onPress?: () => void;
+	type?: "button";
+}
+
 export function FormWithConfirm({
 	fields,
 	children,
@@ -22,7 +27,7 @@ export function FormWithConfirm({
 		| [name: string, value: string | number]
 		| readonly [name: string, value: string | number]
 	)[];
-	children: React.ReactNode;
+	children: React.ReactElement<ChildProps>;
 	dialogHeading: string;
 	submitButtonText?: string;
 	action?: string;

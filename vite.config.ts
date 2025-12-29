@@ -4,10 +4,6 @@ import babel from "vite-plugin-babel";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { configDefaults } from "vitest/config";
 
-const ReactCompilerConfig = {
-	target: "18",
-};
-
 export default defineConfig(() => {
 	return {
 		ssr: {
@@ -24,7 +20,7 @@ export default defineConfig(() => {
 				filter: /\.[jt]sx?$/,
 				babelConfig: {
 					presets: ["@babel/preset-typescript"],
-					plugins: [["babel-plugin-react-compiler", ReactCompilerConfig]],
+					plugins: [["babel-plugin-react-compiler", {}]],
 				},
 			}),
 			tsconfigPaths(),

@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import React from "react";
+import React, { type JSX } from "react";
 import { useTranslation } from "react-i18next";
 import type { ShouldRevalidateFunction } from "react-router";
 import { Ability } from "~/components/Ability";

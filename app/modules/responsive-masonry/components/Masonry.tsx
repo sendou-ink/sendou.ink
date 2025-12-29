@@ -1,4 +1,4 @@
-import React from "react";
+import React, { type JSX } from "react";
 
 interface MasonryProps {
 	children: React.ReactNode | React.ReactNode[];
@@ -14,7 +14,7 @@ interface MasonryProps {
 
 interface MasonryState {
 	columns: React.ReactNode[][];
-	childRefs: React.RefObject<HTMLDivElement>[];
+	childRefs: React.RefObject<HTMLDivElement | null>[];
 	hasDistributed: boolean;
 	children?: React.ReactNode | React.ReactNode[];
 }
@@ -101,7 +101,7 @@ class Masonry extends React.Component<MasonryProps, MasonryState> {
 			() => [],
 		);
 		let validIndex = 0;
-		const childRefs: React.RefObject<HTMLDivElement>[] = [];
+		const childRefs: React.RefObject<HTMLDivElement | null>[] = [];
 		React.Children.forEach(children, (child) => {
 			if (child && React.isValidElement(child)) {
 				const ref = React.createRef<HTMLDivElement>();
