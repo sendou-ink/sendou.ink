@@ -1,6 +1,6 @@
-import type { MetaFunction } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
 import * as React from "react";
+import type { MetaFunction } from "react-router";
+import { Form, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { CheckmarkIcon } from "~/components/icons/Checkmark";

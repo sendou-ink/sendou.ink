@@ -1,7 +1,7 @@
-import type { MetaFunction } from "@remix-run/node";
-import { NavLink, Outlet, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { NavLink, Outlet, useLoaderData } from "react-router";
 import { Badge } from "~/components/Badge";
 import { Divider } from "~/components/Divider";
 import { Input } from "~/components/Input";

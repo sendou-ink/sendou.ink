@@ -1,4 +1,4 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";

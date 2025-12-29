@@ -1,4 +1,3 @@
-import { useNavigate } from "@remix-run/react";
 import clsx from "clsx";
 import type { ModalOverlayProps } from "react-aria-components";
 import {
@@ -8,6 +7,7 @@ import {
 	Modal,
 	ModalOverlay,
 } from "react-aria-components";
+import { useNavigate } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { CrossIcon } from "~/components/icons/Cross";
 import styles from "./Dialog.module.css";

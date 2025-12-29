@@ -1,4 +1,4 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import { z } from "zod/v4";
 import { seed } from "~/db/seed";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";

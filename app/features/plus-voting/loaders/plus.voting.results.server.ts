@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import type { UserWithPlusTier } from "~/db/tables";
 import { getUser } from "~/features/auth/core/user.server";
 import { lastCompletedVoting } from "~/features/plus-voting/core";

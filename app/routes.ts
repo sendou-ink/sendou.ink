@@ -3,7 +3,7 @@ import {
 	prefix,
 	type RouteConfig,
 	route,
-} from "@remix-run/route-config";
+} from "@react-router/dev/routes";
 
 const devOnlyRoutes =
 	process.env.NODE_ENV === "development"

@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import { i18next } from "~/modules/i18n/i18next.server";
 import { weaponIdToType } from "~/modules/in-game-lists/weapon-ids";

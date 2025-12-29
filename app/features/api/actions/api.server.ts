@@ -1,4 +1,4 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs } from "react-router";
 import { z } from "zod/v4";
 import { refreshApiTokensCache } from "~/features/api-public/api-public-utils.server";
 import { requireUser } from "~/features/auth/core/user.server";

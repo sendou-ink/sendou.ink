@@ -1,8 +1,7 @@
-import type { MetaFunction } from "@remix-run/node";
-import type { ShouldRevalidateFunction } from "@remix-run/react";
-import { useSearchParams } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
+import { useSearchParams } from "react-router";
 import { useCopyToClipboard } from "react-use";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";

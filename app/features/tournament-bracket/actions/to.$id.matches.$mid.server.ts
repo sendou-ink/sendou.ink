@@ -1,4 +1,4 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import { sql } from "~/db/sql";
 import { TournamentMatchStatus } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";

@@ -1,4 +1,4 @@
-import { type LoaderFunctionArgs, redirect } from "@remix-run/node";
+import { type LoaderFunctionArgs, redirect } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import { parseParams } from "~/utils/remix.server";

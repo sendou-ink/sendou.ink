@@ -1,4 +1,4 @@
-import type { MetaFunction } from "@remix-run/node";
+import type { MetaFunction } from "react-router";
 import { Main } from "~/components/Main";
 import { metaTags } from "~/utils/remix";
 

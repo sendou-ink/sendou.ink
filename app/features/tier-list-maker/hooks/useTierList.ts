@@ -4,9 +4,9 @@ import type {
 	DragStartEvent,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import { useSearchParams } from "@remix-run/react";
 import JSONCrush from "jsoncrush";
 import * as React from "react";
+import { useSearchParams } from "react-router";
 import { z } from "zod/v4";
 import {
 	useSearchParamState,
@@ -358,7 +358,13 @@ export function useTierList() {
 
 		const allItemIds = getAllItemIdsForType(itemType);
 		return allItemIds
-			.map((id) => ({ id, type: itemType }) as TierListItem)
+			.map(
+				(id) =>
+					({
+						id,
+						type: itemType,
+					}) as TierListItem,
+			)
 			.flatMap((item) => {
 				if (placedItems.has(`${item.type}:${item.id}`)) {
 					if (!canAddDuplicates) return [];

@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ArtRepository from "../ArtRepository.server";
 import { NEW_ART_EXISTING_SEARCH_PARAM_KEY } from "../art-constants";

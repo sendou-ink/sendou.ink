@@ -3,7 +3,7 @@ import {
 	data,
 	type LoaderFunction,
 	redirect,
-} from "@remix-run/node";
+} from "react-router";
 import { isTheme } from "../core/provider";
 import { getThemeSession } from "../core/session.server";
 

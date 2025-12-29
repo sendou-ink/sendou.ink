@@ -1,5 +1,5 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import type { ActionFunctionArgs } from "react-router";
+import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { notify } from "~/features/notifications/core/notify.server";

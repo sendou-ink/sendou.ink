@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { cors } from "remix-utils/cors";
 import { z } from "zod/v4";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";

@@ -1,6 +1,7 @@
-import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { getUserId } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import type { SerializeFrom } from "~/utils/remix";
 import { parseSearchParams } from "~/utils/remix.server";
 import { tournamentSearchSearchParamsSchema } from "../tournament-schemas.server";
 

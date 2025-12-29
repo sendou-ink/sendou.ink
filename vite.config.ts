@@ -1,21 +1,12 @@
-import { vitePlugin as remix } from "@remix-run/dev";
-import { installGlobals } from "@remix-run/node";
+import { reactRouter } from "@react-router/dev/vite";
 import { defineConfig } from "vite";
 import babel from "vite-plugin-babel";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { configDefaults } from "vitest/config";
 
-installGlobals();
-
 const ReactCompilerConfig = {
 	target: "18",
 };
-
-declare module "@remix-run/node" {
-	interface Future {
-		v3_singleFetch: true;
-	}
-}
 
 export default defineConfig(() => {
 	return {
@@ -28,17 +19,7 @@ export default defineConfig(() => {
 			},
 		},
 		plugins: [
-			remix({
-				ignoredRouteFiles: ["**/.*", "**/*.json", "**/components/*"],
-				serverModuleFormat: "esm",
-				future: {
-					v3_fetcherPersist: true,
-					v3_relativeSplatPath: true,
-					v3_throwAbortReason: true,
-					v3_routeConfig: true,
-					v3_singleFetch: true,
-				},
-			}),
+			reactRouter(),
 			babel({
 				filter: /\.[jt]sx?$/,
 				babelConfig: {
@@ -50,6 +31,7 @@ export default defineConfig(() => {
 		],
 		test: {
 			exclude: [...configDefaults.exclude, "e2e/**"],
+			setupFiles: ["./app/test-setup.ts"],
 		},
 		build: {
 			// this is mostly done so that i18n jsons as defined in ./app/modules/i18n/loader.ts

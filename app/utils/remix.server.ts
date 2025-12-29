@@ -1,17 +1,13 @@
-import {
-	unstable_composeUploadHandlers as composeUploadHandlers,
-	unstable_createMemoryUploadHandler as createMemoryUploadHandler,
-	data,
-	unstable_parseMultipartFormData as parseMultipartFormData,
-	redirect,
-} from "@remix-run/node";
-import type { Params, UIMatch } from "@remix-run/react";
+import type { FileUpload } from "@remix-run/form-data-parser";
+import { parseFormData as parseMultipartFormData } from "@remix-run/form-data-parser";
 import type { Namespace, TFunction } from "i18next";
 import { nanoid } from "nanoid";
 import type { Ok, Result } from "neverthrow";
+import type { Params, UIMatch } from "react-router";
+import { data, redirect } from "react-router";
 import type { z } from "zod/v4";
 import type { navItems } from "~/components/layout/nav-items";
-import { s3UploadHandler } from "~/features/img-upload/s3.server";
+import { uploadStreamToS3 } from "~/features/img-upload/s3.server";
 import invariant from "./invariant";
 import { logger } from "./logger";
 
@@ -302,15 +298,31 @@ export async function uploadImageIfSubmitted({
 	request: Request;
 	fileNamePrefix: string;
 }) {
-	const uploadHandler = composeUploadHandlers(
-		s3UploadHandler(`${fileNamePrefix}-${nanoid()}-${Date.now()}`),
-		createMemoryUploadHandler(),
-	);
+	const preDecidedFilename = `${fileNamePrefix}-${nanoid()}-${Date.now()}`;
+
+	const uploadHandler = async (fileUpload: FileUpload) => {
+		if (fileUpload.fieldName === "img") {
+			const [, ending] = fileUpload.name.split(".");
+			invariant(ending);
+			const newFilename = `${preDecidedFilename}.${ending}`;
+
+			const uploadedFileLocation = await uploadStreamToS3(
+				fileUpload.stream(),
+				newFilename,
+			);
+			return uploadedFileLocation;
+		}
+		return null;
+	};
+
+	let formData: FormData;
 
 	try {
-		const formData = await parseMultipartFormData(request, uploadHandler);
+		formData = await parseMultipartFormData(request, uploadHandler);
 		const imgSrc = formData.get("img") as string | null;
-		invariant(imgSrc);
+		if (!imgSrc) {
+			throw new TypeError("No image submitted");
+		}
 
 		const urlParts = imgSrc.split("/");
 		const fileName = urlParts[urlParts.length - 1];
@@ -325,7 +337,8 @@ export async function uploadImageIfSubmitted({
 		if (err instanceof TypeError) {
 			return {
 				avatarFileName: undefined,
-				formData: await request.formData(),
+				// @ts-expect-error: TODO: jank but temporary jank. Later lets refactor to a more general and robust way of sending images
+				formData,
 			};
 		}
 

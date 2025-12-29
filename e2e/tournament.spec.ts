@@ -71,11 +71,11 @@ test.describe("Tournament", () => {
 		await page.getByLabel("Pick-up name").fill("Chimera");
 		await page.getByTestId("save-team-button").click();
 
-		await page.getByTestId("add-player-button").click();
+		await submit(page, "add-player-button");
 		await expect(page.getByTestId("member-num-2")).toBeVisible();
-		await page.getByTestId("add-player-button").click();
+		await submit(page, "add-player-button");
 		await expect(page.getByTestId("member-num-3")).toBeVisible();
-		await page.getByTestId("add-player-button").click();
+		await submit(page, "add-player-button");
 		await expect(page.getByTestId("member-num-4")).toBeVisible();
 
 		let stage = 5;
@@ -89,7 +89,7 @@ test.describe("Tournament", () => {
 				stage++;
 			}
 		}
-		await page.getByTestId("save-map-list-button").click();
+		await submit(page, "save-map-list-button");
 
 		await expect(page.getByTestId("checkmark-icon-num-3")).toBeVisible();
 	});
@@ -106,7 +106,7 @@ test.describe("Tournament", () => {
 		await isNotVisible(page.getByText("Chimera"));
 
 		await page.getByTestId("register-tab").click();
-		await page.getByTestId("check-in-button").click();
+		await submit(page, "check-in-button");
 
 		await page.getByTestId("brackets-tab").click();
 		await expect(page.getByTestId("brackets-viewer")).toBeVisible();

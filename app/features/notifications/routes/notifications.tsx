@@ -1,6 +1,6 @@
-import { Link, type MetaFunction, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { Link, type MetaFunction, useLoaderData } from "react-router";
 import { BellIcon } from "~/components/icons/Bell";
 import { Main } from "~/components/Main";
 import { metaTags } from "../../../utils/remix";

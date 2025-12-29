@@ -1,5 +1,5 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
 import { isFuture } from "date-fns";
+import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import {
 	requirePermission,

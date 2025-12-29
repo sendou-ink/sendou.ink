@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { getUserId } from "~/features/auth/core/user.server";
 import * as ImageRepository from "~/features/img-upload/ImageRepository.server";
