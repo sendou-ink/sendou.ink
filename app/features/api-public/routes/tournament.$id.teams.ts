@@ -3,7 +3,7 @@ import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { cors } from "remix-utils/cors";
 import { z } from "zod/v4";
 import { db } from "~/db/sql";
-import { ordinalToSp } from "~/features/mmr/mmr-utils";
+import { ordinalToRawSp } from "~/features/mmr/mmr-utils";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { i18next } from "~/modules/i18n/i18next.server";
 import { nullifyingAvg } from "~/utils/arrays";
@@ -178,5 +178,5 @@ function toSeedingPowerSP(ordinals: (number | null)[]) {
 
 	if (typeof avg !== "number") return null;
 
-	return ordinalToSp(avg);
+	return ordinalToRawSp(avg);
 }

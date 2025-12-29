@@ -6,8 +6,12 @@ import { TIERS } from "./mmr-constants";
 
 const TAU = 0.3;
 
+export function ordinalToRawSp(ordinal: number) {
+	return ordinal * 15 + 1000;
+}
+
 export function ordinalToSp(ordinal: number) {
-	return toTwoDecimals(ordinal * 15 + 1000);
+	return toTwoDecimals(ordinalToRawSp(ordinal));
 }
 
 export function ordinalToRoundedSp(ordinal: number) {
